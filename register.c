@@ -1,4 +1,4 @@
-/* -*- mode: c -*-; coding: koi8-r */
+/* -*- mode: c -*- */
 /* $Id$ */
 
 /* Copyright (C) 2001-2004 Alexander Chernov <cher@ispras.ru> */
@@ -16,6 +16,7 @@
  */
 
 #include "config.h"
+#include "settings.h"
 
 #include "expat_iface.h"
 #include "pathutl.h"
@@ -47,10 +48,8 @@
 #include <locale.h>
 #endif
 
-#if defined EJUDGE_CHARSET
-#define DEFAULT_CHARSET              EJUDGE_CHARSET
-#else
-#define DEFAULT_CHARSET              "iso8859-1"
+#ifndef EJUDGE_CHARSET
+#define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
 #endif /* EJUDGE_CHARSET */
 
 #define FIRST_COOKIE(u) ((struct userlist_cookie*) (u)->cookies->first_down)
@@ -628,7 +627,7 @@ parse_config(char const *path, const unsigned char *default_config)
 #endif
 
   if (!cfg->charset) {
-    cfg->charset = xstrdup(DEFAULT_CHARSET);
+    cfg->charset = xstrdup(EJUDGE_CHARSET);
   }
 #if defined EJUDGE_SOCKET_PATH
   if (!cfg->socket_path) {
@@ -707,7 +706,7 @@ check_config_exist(unsigned char const *path)
 }
 
 static const unsigned char default_config[] =
-"<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n"
+"<?xml version=\"1.0\" ?>\n"
 "<register_config><access default=\"allow\"/></register_config>\n";
 
 static void
@@ -935,7 +934,7 @@ client_put_refresh_header(unsigned char const *coding,
 {
   va_list args;
 
-  if (!coding) coding = DEFAULT_CHARSET;
+  if (!coding) coding = EJUDGE_CHARSET;
 
   va_start(args, format);
   fprintf(stdout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>\n", coding, coding, interval, url);
@@ -1230,7 +1229,7 @@ do_make_user_xml(FILE *f)
   int x, n;
   unsigned char const *val;
 
-  fputs("<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n", f);
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
   fprintf(f, "<user id=\"%d\" use_cookies=\"%s\">\n",
           user_id, unparse_bool(user_use_cookies_default));
   fprintf(f, "  <login public=\"%s\">%s</login>\n",
