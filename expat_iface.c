@@ -461,6 +461,62 @@ xml_unparse_tree(FILE *out,
                       fmt_print);
 }
 
+void
+xml_unlink_node(struct xml_tree *p)
+{
+  struct xml_tree *f;
+
+  if (!p) return;
+  f = p->up;
+  ASSERT(f);
+
+  if (p->left) {
+    p->left->right = p->right;
+  } else {
+    f->first_down = p->right;
+  }
+  if (p->right) {
+    p->right->left = p->left;
+  } else {
+    f->last_down = p->left;
+  }
+  p->up = 0;
+  p->left = 0;
+  p->right = 0;
+}
+
+void
+xml_link_node_first(struct xml_tree *p, struct xml_tree *c)
+{
+  if (!p || !c) return;
+  c->up = p;
+  if (!p->first_down) {
+    c->left = c->right = 0;
+    p->first_down = p->last_down = c;
+  } else {
+    c->left = 0;
+    c->right = p->first_down;
+    p->first_down->left = c;
+    p->first_down = c;
+  }
+}
+
+void
+xml_link_node_last(struct xml_tree *p, struct xml_tree *c)
+{
+  if (!p || !c) return;
+  c->up = p;
+  if (!p->last_down) {
+    c->left = c->right = 0;
+    p->first_down = p->last_down = c;
+  } else {
+    c->right = 0;
+    c->left = p->last_down;
+    p->last_down->right = c;
+    p->last_down = c;
+  }
+}
+
 /**
  * Local variables:
  *  compile-command: "make"
