@@ -45,6 +45,7 @@ clear_directory(char const *path)
   DIR           *d;
   struct dirent *de;
   path_t         fdel;
+  struct stat    sb;
 
   if (!(d = opendir(path))) {
     err("clear_directory: opendir(\"%s\") failed: %s", path, os_ErrorMsg());
@@ -53,8 +54,13 @@ clear_directory(char const *path)
   while ((de = readdir(d))) {
     if (strcmp(de->d_name, ".") && strcmp(de->d_name, "..")) {
       pathmake(fdel, path, "/", de->d_name, NULL);
-      if (unlink(fdel) < 0) {
-        err("unlink(\"%s\") failed: %s", fdel, os_ErrorMsg());
+      if (lstat(fdel, &sb) < 0) continue;
+      if (S_ISDIR(sb.st_mode)) {
+        remove_directory_recursively(fdel);
+      } else {
+        if (unlink(fdel) < 0) {
+          err("unlink(\"%s\") failed: %s", fdel, os_ErrorMsg());
+        }
       }
     }
   }
@@ -353,6 +359,7 @@ dumb_copy_file_to_dos(FILE *s, FILE *d)
       putc('\r', d);
     }
     putc(c, d);
+    c = getc(s);
   }
   return 0;
 }
@@ -381,7 +388,7 @@ dumb_copy_file(int sfd, int sf, int dfd, int df)
     err("dumb_copy_file: fdopen(wb) failed: %s", os_ErrorMsg());
     goto cleanup;
   }
-  if ((sf | CONVERT)) {
+  if ((sf & CONVERT)) {
     if (dumb_copy_file_from_dos(fs, fd) < 0) goto cleanup;
   } else {
     if (dumb_copy_file_to_dos(fs, fd) < 0) goto cleanup;
@@ -734,9 +741,139 @@ sf_mkfifo(char const *path, mode_t mode)
   return -1;
 }
 
+struct dirtree_node
+{
+  unsigned char *name;
+  int is_dir;
+  size_t a, u;
+  struct dirtree_node **v;
+};
+struct dirqueue_node
+{
+  struct dirqueue_node *next;
+  struct dirtree_node *node;
+  unsigned char *fullpath;
+};
+
+static void
+do_remove_recursively(const unsigned char *fullpath,
+                      const struct dirtree_node *node)
+{
+  unsigned char curpath[PATH_MAX];
+  int i;
+
+
+  for (i = 0; i < node->u; i++) {
+    snprintf(curpath, PATH_MAX, "%s/%s", fullpath, node->v[i]->name);
+    if (node->v[i]->is_dir) {
+      do_remove_recursively(curpath, node->v[i]);
+      rmdir(curpath);
+    } else {
+      unlink(curpath);
+    }
+  }
+}
+
+static void
+free_file_hierarchy(struct dirtree_node *node)
+{
+  int i;
+
+  for (i = 0; i < node->u; i++)
+    free_file_hierarchy(node->v[i]);
+  xfree(node->v);
+  xfree(node->name);
+  xfree(node);
+}
+
+/* remove the specified directory and all its contents */
+int
+remove_directory_recursively(const unsigned char *path)
+{
+  struct stat sb;
+  struct dirtree_node *root = 0, *pt;
+  struct dirqueue_node *head = 0, **ptail = &head, *pq;
+  DIR *d;
+  struct dirent *dd;
+  unsigned char fullpath[PATH_MAX];
+  unsigned char rootpath[PATH_MAX];
+  size_t fp_len;
+
+  snprintf(rootpath, PATH_MAX, "%s", path);
+  fp_len = strlen(rootpath);
+  while (fp_len > 1 && rootpath[fp_len - 1] == '/')
+    rootpath[--fp_len] = 0;
+
+  if (lstat(rootpath, &sb) < 0) {
+    err("rm-rf: lstat(\"%s\") failed: %s", rootpath, os_ErrorMsg());
+    return -1;
+  }
+  if (!S_ISDIR(sb.st_mode)) {
+    err("rm-rf: '%s' is not a directory", rootpath);
+    return -1;
+  }
+  XCALLOC(root, 1);
+  root->name = xstrdup(rootpath);
+  root->is_dir = 1;
+  root->a = 8;
+  XCALLOC(root->v, root->a);
+  XCALLOC(head, 1);
+  ptail = &head->next;
+  head->fullpath = xstrdup(rootpath);
+  head->node = root;
+  
+  while (head) {
+    /* ignore the errors */
+    chmod(head->fullpath, 0700);
+
+    if ((d = opendir(head->fullpath))) {
+      while ((dd = readdir(d))) {
+        if (!strcmp(dd->d_name, ".")) continue;
+        if (!strcmp(dd->d_name, "..")) continue;
+        snprintf(fullpath, PATH_MAX, "%s/%s", head->fullpath, dd->d_name);
+        if (lstat(fullpath, &sb) < 0) continue;
+        XCALLOC(pt, 1);
+        pt->name = xstrdup(dd->d_name);
+        if (head->node->u >= head->node->a) {
+          if (!head->node->a) head->node->a = 8;
+          head->node->a *= 2;
+          XREALLOC(head->node->v, head->node->a);
+        }
+        head->node->v[head->node->u++] = pt;
+        if (S_ISDIR(sb.st_mode)) {
+          pt->is_dir = 1;
+          pt->a = 8;
+          XCALLOC(pt->v, pt->a);
+          XCALLOC(pq, 1);
+          pq->node = pt;
+          pq->fullpath = xstrdup(fullpath);
+          *ptail = pq;
+          ptail = &pq->next;
+        }
+      }
+      closedir(d);
+    }
+
+    /* remove the head from the queue */
+    pq = head;
+    head = head->next;
+    if (!head) ptail = &head;
+    xfree(pq->fullpath);
+    xfree(pq);
+  }
+
+  do_remove_recursively(rootpath, root);
+  free_file_hierarchy(root);
+  if (rmdir(rootpath) < 0) {
+    err("rm-rf: rmdir(\"%s\") failed: %s", rootpath, os_ErrorMsg());
+    return -1;
+  }
+  return 0;
+}
+
 /**
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "DIR")
  * End:
  */
