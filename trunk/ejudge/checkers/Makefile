@@ -45,6 +45,7 @@ CFILES=\
  read_file.c\
  read_in_double.c\
  read_in_int.c\
+ read_long_long.c\
  read_team_double.c\
  read_team_int.c\
  read_team_long_double.c\
