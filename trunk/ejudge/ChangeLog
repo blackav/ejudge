@@ -1,3 +1,59 @@
+2003-11-02  Alexander Chernov  <cher@ispras.ru>
+
+	* filter_expr.y: copyright notice is updated.
+
+	* filter_scan.lex:
+	(filter_expr_set_string) bug: the scanner is properly reset using
+	  `yyrestart' and `BEGIN' functions.
+
+	* html.c:
+	(new_write_user_runs) `run_get_entry' function is used instead of
+	  `run_get_record';
+	(do_write_kirov_standings) `run_get_record' is no longer used, the
+	  whole runlog is fetched using `run_get_all_entries' instead;
+	  global configuration variable `prune_empty_users' is supported;
+	(do_write_standings) the same as above;
+	(do_write_public_log) `run_get_record' is no longer used, the
+	  whole runlog is fetched using `run_get_all_entries' instead;
+	(new_write_user_source_view) `run_get_entry' is used instead of
+	  `run_get_entry';
+	(new_write_user_report_view) `run_get_entry' is used instead of
+	  `run_get_entry';
+	  the used_id is checked, and if it does not match, request is
+	  rejected.
+
+	* prepare.c:
+	(parse_variant_map) bug: the pointer should be advanced after a
+	  value is read.
+
+	* prepare.h, prepare.c:
+	new global configuration variable `prune_empty_users'.
+
+	* runlog.c: 
+	(run_get_param) commented out;
+	(run_get_record) commented out;
+	(run_get_virtual_start_time) bug: the real contest start time
+	  should only be returned, if status of the user is `V_REAL_USER'.
+
+	* runlog.h: 
+	(run_get_param) the prototype is removed;
+	(run_get_record) the prototype is removed.
+
+	* serve.c:
+	(cmd_team_get_archive) `run_get_entry' function is used instead of
+	  `run_get_record';
+	(read_compile_packet) `run_get_entry' is used instead of
+	  `run_get_param';
+	(read_run_packet) the same as above;
+	(rejudge_run) `run_get_entry' function is used instead of
+	  `run_get_record';
+	(do_rejudge_all) the same as above;
+	(do_rejudge_problem) the same as above;
+
+2003-11-01  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
 2003-11-01  Alexander Chernov  <cher@ispras.ru>
 
 	* html.c:
