@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
+# Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -13,17 +13,21 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
 
-# You should have received a copy of the GNU Lesser General Public
-# License along with this library; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
-
 # === Configuration options ===
 
 # The following is a path to CGI data directory, which is
-# used by CGI scripts `team' and `master'. The path may either be
+# used by CGI scripts. The path may either be
 # relative or absolute. If the path is relative (ie does not start
 # with /), the start point is the directory, from which CGI scripts
 # are started. The path "../cgi-data" is the default.
+CGI_DATA_PATH_FLAG = -DCGI_DATA_PATH=\"../cgi-data\"
+
+# Change this to point to the actual reuse library installation
+REUSE_DIR=/home/cher/reuse
+
+# Install destination
+INST_BIN_PATH=/home/cher/working-ejudge
+INST_LOCALE_PATH=/home/cher/working-ejudge/locale
 
 ifeq ($(shell uname), Linux)
 REUSE_CONF=ix86-linux
@@ -41,14 +45,10 @@ LDEXTRAFLAGS=
 EXTRALIBS=
 endif
 
-CGI_DATA_PATH_FLAG = -DCGI_DATA_PATH=\"../cgi-data\"
-REUSE_INCLDIR=/home/cher/c-sema/include
+REUSE_INCLDIR=${REUSE_DIR}/include
 REUSE_CONFINCLDIR=${REUSE_INCLDIR}/${REUSE_CONF}
-REUSE_LIBDIR=/home/cher/c-sema/lib/${REUSE_CONF}
+REUSE_LIBDIR=${REUSE_DIR}/lib/${REUSE_CONF}
 REUSE_LIB=-lreuse
-
-INST_BIN_PATH=/home/cher/working-ejudge
-INST_LOCALE_PATH=/home/cher/working-ejudge/locale
 
 # === End of configuration options ===
 
@@ -197,7 +197,6 @@ edit-userlist: $(ED_OBJECTS)
 clean:
 	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog serve_clnt/*.o charsets/*.o userlist_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c
 	-rm -rf locale
-	$(MAKE) -C tex clean
 	$(MAKE) -C extra clean
 
 version.c: revinfo $(HFILES) $(CFILES) $(OTHERFILES)
