@@ -465,3 +465,7 @@ charsets/nls_cp866.c 1 2 1082861
 charsets/nls_iso8859-5.c 1 3 842958
 charsets/nls_koi8-r.c 1 2 1083732
 charsets/nls_utf8.c 1 2 210044
+serve_clnt.h 1 2 224601
+userlist.h 1 8 716255
+userlist-server.c 1 11 9097292
+userlist_xml.c 1 9 3209852
