@@ -33,6 +33,8 @@ enum
   RUN_WRONG_ANSWER_ERR = 5,
   RUN_CHECK_FAILED     = 6,
   RUN_PARTIAL          = 7,
+  RUN_ACCEPTED         = 8,
+  RUN_MAX_STATUS       = 8,
   RUN_RUNNING          = 96,
   RUN_COMPILED         = 97,
   RUN_COMPILING        = 98,
@@ -73,5 +75,6 @@ int  run_get_attempts(int, int *);
 char *run_status_str(int, char *, int);
 
 int run_get_fog_period(unsigned long cur_time, int, int);
+void run_reset(void);
 
 #endif /* __RUNLOG_H__ */
