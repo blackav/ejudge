@@ -17,6 +17,8 @@
  * GNU General Public License for more details.
  */
 
+#include <stdio.h>
+
 extern unsigned long server_cur_time;
 extern unsigned long server_start_time;
 extern unsigned long server_sched_time;
@@ -40,9 +42,6 @@ extern char program_name[];
 extern char form_header_simple[];
 extern char form_header_multipart[];
 
-void  client_put_header(char const *, char const *, ...);
-void  client_put_footer(void);
-void  client_put_copyright(void);
 int   client_lookup_ip(char const *, char const *);
 int   client_check_source_ip(int, char const *, char const *);
 char *client_time_to_str(char *, unsigned long);
@@ -53,4 +52,16 @@ int   client_print_server_status(int, char const *, char const *);
 
 void  client_make_form_headers(unsigned char const *);
 
+void  client_put_header(FILE *out, unsigned char const *template,
+                        unsigned char const *content_type,
+                        unsigned char const *charset,
+                        int http_flag,
+                        unsigned char const *format, ...);
+void  client_put_footer(FILE *out, unsigned char const *template);
+
 #endif /* __CLNTUTIL_H__ */
+/**
+ * Local variables:
+ *  compile-command: "make"
+ * End:
+ */
