@@ -654,8 +654,6 @@ run_tests(struct section_tester_data *tst,
     if (tst->time_limit_adjustment > 0)
       time_limit_value += tst->time_limit_adjustment;
     if (time_limit_value > 0) {
-      /* FIXME: this is temporary hack */
-      if (--time_limit_value <= 0) time_limit_value = 1;
       task_SetMaxTime(tsk, time_limit_value);
     }
     if (prb->real_time_limit>0) task_SetMaxRealTime(tsk,prb->real_time_limit);
@@ -690,7 +688,7 @@ run_tests(struct section_tester_data *tst,
       }
 
       /* restore the terminal state */
-      if (tst->no_redirect && isatty(0) && managed_mode_flag) {
+      if (tst->no_redirect && isatty(0) && !managed_mode_flag) {
         if (tcsetattr(0, TCSADRAIN, &term_attrs) < 0)
           err("tcsetattr failed: %s", os_ErrorMsg());
       }
