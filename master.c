@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "cgi.h"
@@ -681,6 +677,60 @@ print_logout_button(unsigned char const *str)
 }
 
 static void
+print_dump_runs_button(unsigned char const *str)
+{
+  if (!str) str = _("Dump runs database");
+
+  if (client_sid_mode == SID_URL) {
+    printf("<a href=\"%s?sid_mode=%d&SID=%016llx&action=%d\">%s</a>",
+           self_url, SID_URL, client_sid, ACTION_DUMP_RUNS, str);
+  } else if (client_sid_mode == SID_COOKIE) {
+    printf("<a href=\"%s?sid_mode=%d&action=%d\">%s</a>", self_url,
+           SID_COOKIE, ACTION_DUMP_RUNS, str);
+  } else {
+    puts(form_start_simple);
+    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+           ACTION_DUMP_RUNS, str);
+  }
+}
+
+static void
+print_dump_users_button(unsigned char const *str)
+{
+  if (!str) str = _("Dump users database");
+
+  if (client_sid_mode == SID_URL) {
+    printf("<a href=\"%s?sid_mode=%d&SID=%016llx&action=%d\">%s</a>",
+           self_url, SID_URL, client_sid, ACTION_DUMP_USERS, str);
+  } else if (client_sid_mode == SID_COOKIE) {
+    printf("<a href=\"%s?sid_mode=%d&action=%d\">%s</a>", self_url,
+           SID_COOKIE, ACTION_DUMP_USERS, str);
+  } else {
+    puts(form_start_simple);
+    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+           ACTION_DUMP_USERS, str);
+  }
+}
+
+static void
+print_dump_standings_button(unsigned char const *str)
+{
+  if (!str) str = _("Dump standings database");
+
+  if (client_sid_mode == SID_URL) {
+    printf("<a href=\"%s?sid_mode=%d&SID=%016llx&action=%d\">%s</a>",
+           self_url, SID_URL, client_sid, ACTION_DUMP_STANDINGS, str);
+  } else if (client_sid_mode == SID_COOKIE) {
+    printf("<a href=\"%s?sid_mode=%d&action=%d\">%s</a>", self_url,
+           SID_COOKIE, ACTION_DUMP_STANDINGS, str);
+  } else {
+    puts(form_start_simple);
+    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+           ACTION_DUMP_STANDINGS, str);
+  }
+}
+
+static void
 print_reset_button(char const *str)
 {
   if (!str) str = _("Reset the contest!");
@@ -1138,6 +1188,56 @@ view_teams_if_asked(int forced_flag)
 }
 
 static void
+action_dump_runs(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_DUMP_RUNS, 0,
+                      client_sid_mode, self_url, hidden_vars);
+  if (r < 0) {
+    set_cookie_if_needed();
+    client_put_header(global->charset, "Runs database error");
+    printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
+    client_put_footer();
+  }
+  exit(0);
+}
+
+static void
+action_dump_users(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_userlist_cmd(serve_socket_fd, SRV_CMD_DUMP_USERS, 1);
+  if (r < 0) {
+    set_cookie_if_needed();
+    client_put_header(global->charset, "Runs database error");
+    printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
+    client_put_footer();
+  }
+  exit(0);
+}
+
+static void
+action_dump_standings(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_DUMP_STANDINGS, 0,
+                      client_sid_mode, self_url, hidden_vars);
+  if (r < 0) {
+    set_cookie_if_needed();
+    client_put_header(global->charset, "Standings database error");
+    printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
+    client_put_footer();
+  }
+  exit(0);
+}
+
+static void
 confirm_reset_if_asked(void)
 {
   set_cookie_if_needed();
@@ -1257,7 +1357,7 @@ do_generate_passwords_if_asked(void)
   fflush(stdout);
 
   open_serve();
-  r = serve_clnt_gen_passwords(serve_socket_fd, 1);
+  r = serve_clnt_userlist_cmd(serve_socket_fd, SRV_CMD_GEN_PASSWORDS, 1);
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
   }
@@ -1715,6 +1815,18 @@ print_nav_buttons(void)
   printf("</td></tr></table>\n");
 }
 
+static void
+print_dump_buttons(void)
+{
+  printf("<table><tr><td>");
+  print_dump_runs_button(0);
+  printf("</td><td>");
+  print_dump_users_button(0);
+  printf("</td><td>");
+  print_dump_standings_button(0);
+  printf("</td></tr></table>\n");
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1817,6 +1929,15 @@ main(int argc, char *argv[])
     case ACTION_CLEAR_RUN_2:
       action_clear_run();
       break;
+    case ACTION_DUMP_RUNS:
+      action_dump_runs();
+      break;
+    case ACTION_DUMP_USERS:
+      action_dump_users();
+      break;
+    case ACTION_DUMP_STANDINGS:
+      action_dump_standings();
+      break;
     default:
       change_status_if_asked();
       break;
@@ -1855,6 +1976,7 @@ main(int argc, char *argv[])
   view_standings_if_asked();
 
   print_nav_buttons();
+  print_dump_buttons();
   client_print_server_status(priv_level, form_start_simple, 0);
 
   print_nav_buttons();
