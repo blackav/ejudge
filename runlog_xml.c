@@ -76,6 +76,7 @@ enum
   RUNLOG_A_VARIANT,
   RUNLOG_A_READONLY,
   RUNLOG_A_NSEC,
+  RUNLOG_A_SCORE_ADJ,
 
   RUNLOG_LAST_ATTR,
 };
@@ -114,6 +115,7 @@ static const char * const attr_map[] =
   [RUNLOG_A_VARIANT]   "variant",
   [RUNLOG_A_READONLY]  "readonly",
   [RUNLOG_A_NSEC]      "nsec",
+  [RUNLOG_A_SCORE_ADJ] "score_adj",
 };
 static size_t const elem_sizes[RUNLOG_LAST_TAG] =
 {
@@ -386,6 +388,14 @@ process_run_elements(struct xml_tree *xt)
           goto invalid_attr_value;
         if (iv < -1) goto invalid_attr_value;
         xr->r.score = iv;
+        break;
+      case RUNLOG_A_SCORE_ADJ:
+        if (!xa->text) goto empty_attr_value;
+        n = 0;
+        if (sscanf(xa->text, "%d %n", &iv, &n) != 1 || xa->text[n]
+            || iv < -128 || iv > 127)
+          goto invalid_attr_value;
+        xr->r.score_adj = iv;
         break;
       case RUNLOG_A_TEST:
         if (!xa->text) goto empty_attr_value;
@@ -770,6 +780,7 @@ unparse_runlog_xml(FILE *f,
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_LOCALE_ID], pp->locale_id);
     }
     fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_SCORE], pp->score);
+    fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_SCORE_ADJ], pp->score_adj);
     fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_TEST], pp->test);
     if (!external_mode) {
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_AUTHORITATIVE],
