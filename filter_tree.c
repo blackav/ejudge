@@ -19,6 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define YYSTYPE struct filter_tree *
+
 #include "filter_tree.h"
 #include "filter_expr.h"
 #include "runlog.h"
