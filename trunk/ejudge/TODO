@@ -1,3 +1,6 @@
+-*- mode: text; mode: auto-fill -*-
+$Id$
+
 Major bugs/showstoppers
 =======================
 
@@ -31,6 +34,10 @@ o Log analyzing utilities for the log files of the abovementioned
   tools.
 o The `team' utility should report the current total score/the number
   of the solved problems.
+o Implement full support for conditional compilation.
+o Remove limitation on 127 tests in the runlog database.
+  Difficulty: medium. May require changing of the runlog data format.
+  Compatibility problems may appear.
 
 Major enhancements
 ==================
@@ -42,3 +49,5 @@ o Database backend. Support for storing the various data in the
   database (MySQL, Postgress).
   Difficulty: difficult. The data access layer (runlog,
   userlist-server, clarlog) should be rewritten.
+o Port to the Win32 platform. The `run' and `compile' utilities
+  should be ported first to enable mixed judging environment.

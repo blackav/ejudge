@@ -1,6 +1,7 @@
+-*- mode: text; mode: auto-fill -*-
 $Id$
 
-Version 2.1.31 (20040620)
+Version 2.1.32 (200410??)
 =========================
 If no bugs are found in this release, the next release (which
 will be identical or nearly identical to the current release)
@@ -9,6 +10,329 @@ system will be started. The 2.1 branch will be terminated. All
 the support work will go to 2.2 branch, and all the new
 development will go to the future development branch 2.3.
 
+Implemented support for the version 4 of the reuse library. The
+ejudge system may be compiled using both version 3 and version 4
+of the reuse library. The new reuse version 4 is a major upgrade
+of the library, which uses the GNU standard toolkit
+autoconf/automake/libtool. Also, in the reuse 4 certain severe
+bugs in the process support module (exec.[ch]) are fixed. These
+bugs may result in non-detection of the "Time-limit exceeded"
+error in certain cases.
+
+Implemented an interface to the speech synthesizer programs. As
+an example of such program the `festival' speech generator
+program is supported by the ejudge. I. e. a user may specify the
+--with-festival option in the configure's command and enable use
+of the festival speech generator. By default this option is
+disabled.
+
+A new field `spelling' is added to the user database. The value
+of this field is passed as the argument to the speech generator
+instead of the user name. The value of this field may specify
+pronunciation of the user name. The `spelling' field may be
+edited only by an administrator user with the appropriate
+privileges, but not by the user himself.
+
+Added a possibility to route a printing request from a user to a
+specified printer. To specify the name of the printer, a new
+field `printer_name' is added to the user database. This field
+contains the name of the printer, which will be passed as the
+value of the `-P' option of the `lpr' command. The
+`printer_name' field may only be edited by the administrator
+user with the appropriate privileges.
+
+configure
+---------
+The reuse library version 4 is supported. If the `reuse-config'
+script is located in the directory, mentioned in the PATH
+environment variable, all the necessary compiler options for use
+of the reuse library will be detected automatically by the
+`configure' program. In this case the `--with-reuse' configure
+option is not necessary.
+
+A new option `--with-festival=FEST_PATH' is added. This option
+may be used to specify the directory, where the festival speech
+synthesizer is installed. FEST_PATH must be specified so, that
+the `festival' program is located in the ${FEST_PATH}/bin
+directory. The current version of the configure does not check
+the correctness of the FEST_PATH specification.
+
+serve, compile, run
+-------------------
+Support for "conditional compilation" directives in the
+serve.cfg configuration file is implemented. These conditional
+compilation directives are similar to the ones of the C
+preprocessor. The directives allow enabling or disabling the
+fragments of the configuration file depending on the values of
+the conditional variables. In the current version of the ejudge
+only limited support for conditional compilation directives is
+implemented. The full support will be implemented in the next
+versions.
+
+In the current version the relation operations ==, !=, >=, <=,
+>, < are supported for numbers and strings. The logical
+operations && and || are also supported. As primary expressions
+decimal numbers, strings (in C syntax), and predefined variables
+may be used. The 64-bit long long type is used to store the
+integer values during evaluation of conditional expression. The
+following predefined variables are supported:
+
+name    | type      | desc
+--------+-----------+------------------------------------------
+host    | string    | The host name, where the program starts.
+mode    | long long | The program code: 0 - `serve',
+                    | 1 - `compile', 2 - `run'.
+major   | long long | The major version number.
+minor   | long long | The minor version number.
+patch   | long long | The version patch number.
+build   | long long | The version build number.
+managed | long long | 1, if the program is started in the
+        |           | managed mode (i. e. by the `super-serve'
+        |           | program, and 0 otherwise.
+
+The syntax of the conditional compilation directives is similar
+to the syntax of the conditional compilation directives of the C
+preprocessor. The conditional compilation directive in the
+serve.cfg configuration file must start with '@' character,
+which must be the first non-whitespace character in the line.
+The following directives are supported: `@if,' `@elif', `@else',
+`@endif'.  The syntax of each directive is shown below.
+@if expression
+@elif expression
+@else
+@endif
+
+In the `serve.cfg' contest configuration file the numeric
+suffixes are supported. The numeric suffixes may be used after
+any numeric parameter. The suffixes are as follow: `K' means
+multiplication by 1024, `M' means multiplication by 1024*1024.
+For example, 
+max_vm_size = 8M
+
+serve, compile
+--------------
+The format of the compilation control packet is slightly
+changed. The `0' number must present at the end of the packet
+(after all the environment variables).
+
+serve, run
+----------
+The format of the run control packet is changed. The new packet
+format supports passing the string containing arbitrary
+characters and of arbitrary length. Moreover, the `serve'
+program passes to the `run' program the user identifier, the
+user spelling name (the first of the assigned variables from the
+list `spelling', `name', `login'), the problem spelling name
+(the first of the assigned variables from the list `spelling',
+`short_name' of the problem description section). All these new
+parameters are then passed to the speech synthesizer program.
+
+A new problem configuration parameter `spelling' is added to the
+problem configuration section. The variable might be used to
+specify the details of pronunciation of the problem name.
+
+edit-userlist
+-------------
+Editing of the new `spelling' user info field is supported.
+
+Editing of the new `printer_name' user info field is supported.
+
+master
+------
+Error diagnostics is imroved in the case, when a user with all
+necessary administrative privileges attempts to log into the
+contest, and this user is not registered for this contest.
+
+Error diagnostics is improved in the case, when a user attempts
+to log into the contest, but the contest server is down.
+
+run
+---
+The interface with speech synthesizer programs is implemented.
+To the contest configuration file `serve.cfg' a new global
+configuration variable `extended_sound' is added. If this
+configuration variable is set to 1, additional parameters are
+passed to the the sound player program. Note, that the sound
+player program is specified in the `sound_player' global
+configuration parameter of the `serve.cfg' configuration file.
+The additional parameters are as follow: the run completion
+status, the test number, the user spelling name, the problem
+spelling name. The sound player program may use theses
+parameters to generate the corresponding voice message. If the
+`extended_sound' variable is set to 1, the global configuration
+variables `accept_sound', etc, are not used.
+
+Variable substitution is performed for the global configuration
+variable `sound_player' in the `serve.cfg' configuration file.
+Thus, the value of this variable may be set as follows:
+sound_player = "${script_dir}/festival"
+
+run
+---
+The implicit limit on maximal number of tests for one problem of
+254 tests is removed. In the previous version this limit was not
+checked, which resulted in program crash, when the number of
+tests exceeded this number. In the current version the number of
+tests is not limited, the memory for storing internal
+information is extended automatically.
+
+run
+---
+Reworked the rules of naming of test files, correct answer
+files, etc. New configuration variables `test_pat', `corr_pat',
+`info_pat', `tgz_pat' are added to the global configuration
+section and to the problem configuration section of the
+`serve.cfg' configuration file. The values of these variables
+must be the format strings for the `sprintf' function, which is
+used to generate the test file name. The sprintf function is
+passed one parameter - the test number, which is an integer.
+If the X_pat variable is specified, the corresponding X_sfx
+variable is ignored.
+
+For example, the default test file names are generated using the
+followin format specifier:
+test_pat = "%03d.dat"
+Provided, that the variable value test_sfx=".dat".
+
+serve
+-----
+In the ACM contest mode three modes of rounding are supported.
+These modes determine, how the seconds elapsed from the contest
+start to the problem submit are converted to the minutes during
+penalty calculation. The rounding mode is selected by setting
+the `rounding_mode' global configuration variable of the
+`serve.cfg' configuration file. The configuration variable may
+have the foollowing values:
+  o ceil (default) - the resulting number of minutes is
+    calculated as the minimal number of minutes, greater or
+    equal to the elapsed time from the contest start to the
+    problem submit.
+  o floor - the resulting number of minutes is calculated as the
+    maximal number of minutes, less or equal to the elapsed time
+    from the contest start to the problem submit.
+  o round - the resulting number of minutes is calculated by
+    rounding of the seconds to minutes (i. e. if >= 30 seconds
+    elapsed, the number of minutes is increased by 1).
+
+team
+----
+Error diagnostics is improved in case, when a user attempts to
+log into a contest, but the contest server is down.
+
+userlist-server
+---------------
+The daemon mode is implemented. The daemon mode is activated by
+specifying the `-D' option in the userlist-server's command
+line. In the daemon mode the program puts itself into background
+and disables the output to the standard output streams. The logs
+are written to the log file. The path to the log file is
+specified using the new <userlist_log> element of the ejudge.xml
+configuration file. If this element is not specified,
+`userlist-server' refuses to start in the daemon mode. In the
+daemon mode the program produces in somewhat less verbose output
+to the log file, as compared to the foreground mode.
+
+The log format is changed rather seriously. The new format
+contains less redundant information and is more rational. The
+new format should be easier to parse by the log analyzing
+tools.
+
+master,serve
+------------
+A privileged user may add a new runs explicitly specifying many
+run parameters. In the previous version, the privileged user had
+to perform an ordinary run submit, and then edit the parameters
+of the run. In order to add parametrized runs the user must have
+SUBMIT_RUN and EDIT_RUN capability bits set for the current
+contest. The run parameters form is available from the "Add new
+run" link, which is located below regular submit run dialog on
+the master's main page.
+
+The new runs added using this new feature are not judged
+automatically.
+
+serve
+-----
+The hidden runs may be edited and rejudged before the start of
+the contest.
+
+users,register,master,judge,team
+--------------------------------
+Support for the IPv6 localhost address ::1 is implemented. This
+address is converted automatically to 127.0.0.1.
+
+run
+---
+Fixed a bug, when the name of the standard checking program (as
+specified by the `standard_checker' problem configuration
+variable) was not inherited to the tester specification for the
+problem.
+
+edit-userlist
+-------------
+A memory leak is fixed, which manifested itself when the list of
+all the users in the database is viewed.
+
+A memory leak during parsing of all XML-files is fixed. This
+memory leak affects all the programs of the ejudge system.
+
+serve
+-----
+Added support for execution of arbitrary program at the moment
+of contest start. This program may, for example, change the file
+permissions on the web server. To specify the path to the
+program a new `contest_start_cmd' global configuration variable
+is added to the `serve.cfg' contest configuration file. This
+variable may be set to the name of the program to start. If the
+absolute path is specified, that path is not changed. If the
+relative path is specified, the absolute path is calculated
+relative to the value of the `conf_dir' global configuration
+variable.
+
+If the value of one of the following global configuration variables
+`stand_header_file', `stand_footer_file', `stand2_header_file',
+`stand2_footer_file', `plog_header_file', `plog_footer_file' is
+a relative path, the absolute path is calculated relative to the
+value of the `conf_dir' global configuration variable.
+
+contest.xml
+-----------
+If the value of the <root_dir> element is set, the value must be
+the absolute path to a directory.
+
+A new element <conf_dir> is added to the contest configuration
+file contest.xml. The value of this element is the path to the
+contest configuration files (for example, serve.cfg). If the
+<root_dir> element is set, but <conf_dir> is not, the value of
+<conf_dir> element is set to <root_dir>/conf.
+
+If the values of any of the following elements
+<register_header_file>, <register_footer_file>,
+<users_header_file>, <users_footer_file>, <team_header_file>,
+<team_footer_file> are relative paths, the absolute paths are
+calculated relative to the value of the <conf_dir> element.
+
+ejudge.xml
+----------
+A new <var_dir> element is added to the main ejudge
+configuration file `ejudge.xml'. The value of this element is
+the path to the log files of the `userlist-server',
+`super-serve', and `compile' programs. The value of this element
+is used, if the values of the <userlist_log>, <super_serve_log>,
+or <compile_log> elements are not absolute paths.
+
+New elements <super_serve_log>, <compile_log> are added to
+specify the paths to the log files of the `super-serve' and
+`compile' programs in the daemon mode. Note, however, that the
+daemon mode of these programs is not yet implemented.
+
+ejudge-setup
+------------
+Setup of the value of the <var_dir> element of the `ejudge.xml'
+configuration file is supported.
+
+Version 2.1.31 (20040620)
+=========================
 Support for different charset encodings is significantly
 improved. All the explicit references to the "KOI8-R" charset
 encoding are removed from the source code and replaced with the
