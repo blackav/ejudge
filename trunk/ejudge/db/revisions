@@ -172,3 +172,7 @@ serve.c 1 16 3269272
 teamdb.c 1 8 1281322
 register.c 6 2 402566
 html.c 1 12 3283562
+osdeps.h 6 15 264555
+unix/logger.c 6 11 942358
+unix/osdeps.c 6 21 2439886
+win32/osdeps.c 1 19 1467504
