@@ -1,3 +1,10 @@
+2001-06-16  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.h: 1) added prototypes for os_readll, os_readull;
+	2) added prototypes for reuse_strtoll, reuse_strtoull,
+	   these are activated only if __REUSE_FORCE_STRTOLL macro
+	   is set.
+
 2001-05-19  Alexander Chernov  <cher@ispras.ru>
 
 	* html.c: write_judge_allruns: new score textfield
