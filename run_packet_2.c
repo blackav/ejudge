@@ -32,6 +32,134 @@ int
 run_request_packet_write(const struct run_request_packet *in_data,
                          size_t *p_out_size, void **p_out_data)
 {
+  size_t out_size = sizeof(struct run_request_bin_packet);
+  struct run_request_bin_packet *out_data = 0;
+  int errcode = 0;
+  size_t exe_sfx_len = 0, arch_len = 0, user_spelling_len = 0, prob_spelling_len = 0;
+  unsigned char *out_ptr;
+  unsigned int flags = 0;
+
+  /* calculate the size of the output packet */
+  if (in_data->exe_sfx) out_size += (exe_sfx_len = strlen(in_data->exe_sfx));
+  if (in_data->arch) out_size += (arch_len = strlen(in_data->arch));
+  if (in_data->user_spelling)
+    out_size += (user_spelling_len = strlen(in_data->user_spelling));
+  if (in_data->prob_spelling)
+    out_size += (prob_spelling_len = strlen(in_data->prob_spelling));
+  out_size = pkt_bin_align(out_size);
+  if (out_size < sizeof(*out_data) || out_size > MAX_PACKET_SIZE) {
+    errcode = 1;
+    goto failed;
+  }
+  out_data = (typeof(out_data)) xcalloc(1, out_size);
+  out_ptr = (unsigned char*) out_data + sizeof(*out_data);
+
+  out_data->packet_len = cvt_host_to_bin_32(out_size);
+  out_data->version = cvt_host_to_bin_32(1);
+  if (in_data->contest_id <= 0 || in_data->contest_id > MAX_CONTEST_ID) {
+    errcode = 2;
+    goto failed;
+  }
+  out_data->contest_id = cvt_host_to_bin_32(in_data->contest_id);
+  if (in_data->run_id < 0 || in_data->run_id > MAX_RUN_ID) {
+    errcode = 3;
+    goto failed;
+  }
+  out_data->run_id = cvt_host_to_bin_32(in_data->run_id);
+  if (in_data->problem_id <= 0 || in_data->problem_id > MAX_PROB_ID) {
+    errcode = 4;
+    goto failed;
+  }
+  out_data->problem_id = cvt_host_to_bin_32(in_data->problem_id);
+  if (in_data->user_id <= 0 || in_data->user_id > MAX_USER_ID) {
+    errcode = 5;
+    goto failed;
+  }
+  out_data->user_id = cvt_host_to_bin_32(in_data->user_id);
+
+  if (in_data->scoring_system < 0 || in_data->scoring_system > MAX_SCORING_SYSTEM) {
+    errcode = 6;
+    goto failed;
+  }
+  flags |= FLAGS_PUT_SCORING_SYSTEM(in_data->scoring_system);
+  if (in_data->accepting_mode) flags |= FLAGS_ACCEPTING_MODE;
+  if (in_data->team_enable_rep_view) flags |= FLAGS_TEAM_ENABLE_REP_VIEW;
+  if (in_data->report_error_code) flags |= FLAGS_REPORT_ERROR_CODE;
+  if (in_data->accept_partial) flags |= FLAGS_ACCEPT_PARTIAL;
+  if (in_data->html_report) flags |= FLAGS_HTML_REPORT;
+  out_data->flags = cvt_host_to_bin_32(flags);
+
+  /* copy timestamps without care */
+  out_data->ts1 = cvt_host_to_bin_32(in_data->ts1);
+  out_data->ts1_us = cvt_host_to_bin_32(in_data->ts1_us);
+  out_data->ts2 = cvt_host_to_bin_32(in_data->ts2);
+  out_data->ts2_us = cvt_host_to_bin_32(in_data->ts2_us);
+  out_data->ts3 = cvt_host_to_bin_32(in_data->ts3);
+  out_data->ts3_us = cvt_host_to_bin_32(in_data->ts3_us);
+  out_data->ts4 = cvt_host_to_bin_32(in_data->ts4);
+  out_data->ts4_us = cvt_host_to_bin_32(in_data->ts4_us);
+
+  if (in_data->judge_id < 0 || in_data->judge_id > MAX_JUDGE_ID) {
+    errcode = 7;
+    goto failed;
+  }
+  out_data->judge_id = cvt_host_to_bin_16(in_data->judge_id);
+  if (user_spelling_len > MAX_USER_SPELLING_LEN) {
+    errcode = 8;
+    goto failed;
+  }
+  out_data->user_spelling_len = cvt_host_to_bin_16(user_spelling_len);
+  if (prob_spelling_len > MAX_PROB_SPELLING_LEN) {
+    errcode = 9;
+    goto failed;
+  }
+  out_data->prob_spelling_len = cvt_host_to_bin_16(prob_spelling_len);
+  if (exe_sfx_len > MAX_EXE_SFX_LEN) {
+    errcode = 10;
+    goto failed;
+  }
+  out_data->exe_sfx_len = exe_sfx_len;
+  if (arch_len > MAX_ARCH_LEN) {
+    errcode = 11;
+    goto failed;
+  }
+  out_data->arch_len = arch_len;
+  if (in_data->locale_id < 0 || in_data->locale_id > MAX_LOCALE_ID) {
+    errcode = 12;
+    goto failed;
+  }
+  out_data->locale_id = in_data->locale_id;
+  if (in_data->variant < 0 || in_data->variant > MAX_VARIANT) {
+    errcode = 13;
+    goto failed;
+  }
+  out_data->variant = in_data->variant;
+
+  if (exe_sfx_len > 0) {
+    memcpy(out_ptr, in_data->exe_sfx, exe_sfx_len);
+    out_ptr += exe_sfx_len;
+  }
+  if (arch_len > 0) {
+    memcpy(out_ptr, in_data->arch, arch_len);
+    out_ptr += arch_len;
+  }
+  if (user_spelling_len > 0) {
+    memcpy(out_ptr, in_data->user_spelling, user_spelling_len);
+    out_ptr += user_spelling_len;
+  }
+  if (prob_spelling_len > 0) {
+    memcpy(out_ptr, in_data->prob_spelling, prob_spelling_len);
+    out_ptr += prob_spelling_len;
+  }
+
+  *p_out_size = out_size;
+  *p_out_data = out_data;
+  return 0;
+
+ failed:
+  err("run_request_packet_write: error %d", errcode);
+  xfree(out_data);
+  return -1;
 }
 
 /**

@@ -31,6 +31,10 @@
 struct run_reply_packet *
 run_reply_packet_free(struct run_reply_packet *in_data)
 {
+  if (!in_data) return 0;
+
+  xfree(in_data);
+  return 0;
 }
 
 /**

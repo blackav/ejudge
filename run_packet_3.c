@@ -31,6 +31,14 @@
 struct run_request_packet *
 run_request_packet_free(struct run_request_packet *in_data)
 {
+  if (!in_data) return 0;
+
+  xfree(in_data->exe_sfx);
+  xfree(in_data->arch);
+  xfree(in_data->user_spelling);
+  xfree(in_data->prob_spelling);
+  xfree(in_data);
+  return 0;
 }
 
 /**

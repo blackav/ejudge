@@ -21,6 +21,21 @@
 
 /* various private data structures and constants for run packets */
 
+/* bits for flags */
+#define FLAGS_PUT_SCORING_SYSTEM(s) ((s & 0xf))
+#define FLAGS_GET_SCORING_SYSTEM(f) ((f & 0xf))
+
+enum
+{
+  FLAGS_ACCEPTING_MODE       = 0x010,
+  FLAGS_TEAM_ENABLE_REP_VIEW = 0x020,
+  FLAGS_REPORT_ERROR_CODE    = 0x040,
+  FLAGS_ACCEPT_PARTIAL       = 0x080,
+  FLAGS_HTML_REPORT          = 0x100,
+
+  FLAGS_ALL_MASK             = 0x1ff, /* scoring system incl. */
+};
+
 /* serve->run binary packet structure */
 /* little-endian byte ordering is assumed */
 struct run_request_bin_packet
@@ -91,15 +106,20 @@ struct run_reply_bin_packet
 #define pkt_bin_align(v) (((v) + 0xf) & ~0xf)
 #define pkt_bin_align_addr(v,b) ((v) = (typeof(v)) ((unsigned long) b + pkt_bin_align((unsigned long) v - (unsigned long) b)))
 
-/*
-#define MAX_PACKET_SIZE   65535
-#define MAX_JUDGE_ID      65535
-#define MAX_CONTEST_ID    999999
-#define MAX_RUN_ID        999999
-#define MAX_LANG_ID       999999
-#define MAX_RUN_BLOCK_LEN 65535
-#define MAX_ENV_NUM       65535
-#define MAX_ENV_LEN       65535
-*/
+#define MAX_PACKET_SIZE       65535
+#define MAX_JUDGE_ID          65535
+#define MAX_CONTEST_ID        999999
+#define MAX_RUN_ID            999999
+#define MAX_PROB_ID           999999
+#define MAX_USER_ID           999999
+#define MAX_USER_SPELLING_LEN 65535
+#define MAX_PROB_SPELLING_LEN 65535
+#define MAX_EXE_SFX_LEN       255
+#define MAX_ARCH_LEN          255
+#define MAX_LOCALE_ID         127
+#define MAX_VARIANT           255
+#define MAX_SCORING_SYSTEM    2
+#define MAX_FAILED_TEST       127
+#define MAX_SCORE             999999
 
 #endif /* __RUN_PACKET_PRIV_H__ */
