@@ -1100,6 +1100,25 @@ cmd_view(struct client_state *p, int len,
                           self_url_ptr, hidden_vars_ptr,
                           extra_args_ptr, pkt->item, &caps);
     break;
+  case SRV_CMD_NEW_RUN_FORM:
+    if (p->priv_level != PRIV_LEVEL_ADMIN) {
+      err("%d: master privilege required", p->id);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+
+    if (opcaps_check(caps, OPCAP_VIEW_SOURCE) < 0
+        || opcaps_check(caps, OPCAP_SUBMIT_RUN) < 0) {
+      err("%d: user %d cannot add new runs", p->id, p->user_id);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+
+    r = write_new_run_form(f, p->user_id, p->priv_level,
+                           pkt->sid_mode, p->cookie,
+                           self_url_ptr, hidden_vars_ptr,
+                           extra_args_ptr, pkt->item, &caps);
+    break;
   case SRV_CMD_PRIV_DOWNLOAD_RUN:
     if (!p->priv_level) {
       err("%d: not enough privileges", p->id);
@@ -2918,6 +2937,14 @@ cmd_edit_run(struct client_state *p, int len,
     new_bad_packet(p, "edit_run: user_login_len mismatch");
     return;
   }
+  if (pkt->run_src_len < 0) {
+    new_bad_packet(p, "edit_run: src_len < 0");
+    return;
+  }
+  if (pkt->run_src_len > 0) {
+    new_bad_packet(p, "edit_run: src_len > 0");
+    return;
+  }
   if (len != sizeof(*pkt) + pkt->user_login_len) {
     new_bad_packet(p, "edit_run: packet length mismatch");
     return;
@@ -3113,6 +3140,262 @@ cmd_edit_run(struct client_state *p, int len,
   }
   info("%d: edit_run: ok", p->id);
   new_send_reply(p, SRV_RPL_OK);
+  return;
+}
+
+static void
+cmd_new_run(struct client_state *p, int len,
+            struct prot_serve_pkt_run_info *pkt)
+{
+  const unsigned char *user_login_ptr, *run_src_ptr;
+  int user_login_len, run_src_len, packet_len;
+  struct run_entry new_run;
+  int new_run_flags = 0;
+  int run_id, arch_flags, locale_id;
+  unsigned long shaval[5];
+  struct timeval precise_time;
+  path_t run_arch;
+
+  if (get_peer_local_user(p) < 0) return;
+
+  if (len < sizeof(*pkt)) {
+    err("%d: cmd_new_run: packet is too small (%d < %zu)",
+        p->id, len, sizeof(*pkt));
+    goto protocol_error;
+  }
+  user_login_ptr = pkt->data;
+  user_login_len = strlen(user_login_ptr);
+  if (user_login_len != pkt->user_login_len) {
+    err("%d: cmd_new_run: user_login_len mismatch (%d != %d)",
+        p->id, user_login_len, pkt->user_login_len);
+    goto protocol_error;
+  }
+  run_src_ptr = user_login_ptr + user_login_len + 1;
+  run_src_len = strlen(run_src_ptr);
+  if (pkt->run_src_len < 0) {
+    err("%d: cmd_new_run: run_src_len is negative (%d)",
+        p->id, pkt->run_src_len);
+    goto protocol_error;
+  }
+  packet_len = sizeof(*pkt) + user_login_len + run_src_len;
+  if (packet_len != len) {
+    err("%d: cmd_new_run: packet length mismatch (%d != %d)",
+        p->id, packet_len, len);
+    goto protocol_error;
+  }
+
+  info("%d: new_run: %d", p->id, pkt->mask);
+  memset(&new_run, 0, sizeof(new_run));
+
+  if (p->priv_level != PRIV_LEVEL_ADMIN) goto permission_denied;
+  if (!check_cnts_caps(p->user_id, OPCAP_EDIT_RUN)
+      || !check_cnts_caps(p->user_id, OPCAP_SUBMIT_RUN))
+    goto permission_denied;
+
+  // user_id or login, prob_id, lang_id, status must be specified
+  if ((pkt->mask & PROT_SERVE_RUN_UID_SET)
+      && (pkt->mask & PROT_SERVE_RUN_LOGIN_SET)) {
+    err("%d: new_run: both uid and login are set", p->id);
+    goto protocol_error;
+  } else if ((pkt->mask & PROT_SERVE_RUN_UID_SET)) {
+    if (teamdb_lookup(pkt->user_id) != 1) {
+      err("%d: invalid user_id %d", p->id, pkt->user_id);
+      new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+      return;
+    }
+  } else if ((pkt->mask & PROT_SERVE_RUN_LOGIN_SET)) {
+    if ((pkt->user_id = teamdb_lookup_login(user_login_ptr)) <= 0) {
+      err("%d: invalid login <%s>", p->id, user_login_ptr);
+      new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+      return;
+    }
+  } else {
+    err("%d: new_run: uid or login must be specified", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+    return;
+  }
+
+  if ((pkt->mask & PROT_SERVE_RUN_PROB_SET)) {
+    if (pkt->prob_id <= 0 || pkt->prob_id > max_prob || !probs[pkt->prob_id]) {
+      err("%d: new_run: invalid problem %d", p->id, pkt->prob_id);
+      new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
+      return;
+    }
+  } else {
+    err("%d: new_run: problem must be specified", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
+    return;
+  }
+
+  if ((pkt->mask & PROT_SERVE_RUN_LANG_SET)) {
+    if (pkt->lang_id <= 0 || pkt->lang_id > max_lang || !langs[pkt->lang_id]) {
+      err("%d: new_run: invalid language %d", p->id, pkt->lang_id);
+      new_send_reply(p, -SRV_ERR_BAD_LANG_ID);
+      return;
+    }
+  } else {
+    err("%d: new_run: language must be specified", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_LANG_ID);
+    return;
+  }
+
+  if (!langs[pkt->lang_id]->binary) {
+    if (pkt->run_src_len != run_src_len) {
+      err("%d: new_run: source length mismatch (%d != %d)",
+          p->id, run_src_len, pkt->run_src_len);
+      goto protocol_error;
+    }
+  }
+
+  if ((pkt->mask & PROT_SERVE_RUN_STATUS_SET)) {
+    if (!is_valid_status(pkt->status, 1)) {
+      err("%d: new_run: invalid status %d", p->id, pkt->status);
+      new_send_reply(p, -SRV_ERR_BAD_STATUS);
+      return;
+    }
+    new_run.status = pkt->status;
+    new_run_flags = RUN_ENTRY_STATUS;
+  } else {
+    err("%d: new_run: status must be specified", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_STATUS);
+    return;
+  }
+
+  if ((pkt->mask & PROT_SERVE_RUN_VARIANT_SET)) {
+    if (probs[pkt->prob_id]->variant_num <= 0) {
+      err("%d: new_run: problem %d has no variants", p->id, pkt->prob_id);
+      new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
+      return;
+    }
+    if (pkt->variant < 0 || pkt->variant > probs[pkt->prob_id]->variant_num) {
+      err("%d: new_run: invalid variant %d for problem %d",
+          p->id, pkt->variant, pkt->prob_id);
+      new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
+      return;
+    }
+  } else {
+    pkt->variant = 0;
+  }
+
+  // check optional fields
+  if ((pkt->mask & PROT_SERVE_RUN_IMPORTED_SET)) {
+    if (pkt->is_imported < 0 || pkt->is_imported > 1) {
+      err("%d: new_run: invalid is_imported value %d", p->id,pkt->is_imported);
+      goto protocol_error;
+    }
+    new_run.is_imported = pkt->is_imported;
+    new_run_flags |= RUN_ENTRY_IMPORTED;
+  }
+
+  if ((pkt->mask & PROT_SERVE_RUN_HIDDEN_SET)) {
+    if (pkt->is_hidden < 0 || pkt->is_hidden > 1) {
+      err("%d: new_run: invalid is_hidden value %d", p->id, pkt->is_hidden);
+      goto protocol_error;
+    }
+    new_run.is_hidden = pkt->is_hidden;
+    new_run_flags |= RUN_ENTRY_HIDDEN;
+  }
+
+  if ((pkt->mask & PROT_SERVE_RUN_TESTS_SET)) {
+    if (pkt->tests < -1 || pkt->tests > 126) {
+      err("%d: new_run: new test value %d is out of range", p->id, pkt->tests);
+      goto protocol_error;
+    }
+    if (global->score_system_val == SCORE_OLYMPIAD
+        || global->score_system_val == SCORE_KIROV) {
+      pkt->tests++;
+    }
+    if (pkt->tests == -1) pkt->tests = 0;
+    new_run.test = pkt->tests;
+    new_run_flags |= RUN_ENTRY_TEST;
+  }
+
+  if ((pkt->mask & PROT_SERVE_RUN_SCORE_SET)) {
+    if (pkt->score < -1 || pkt->score > 100000) {
+      err("%d: new_run: new score value %d is out of range", p->id,
+          pkt->score);
+      goto protocol_error;
+    }
+    if (global->score_system_val != SCORE_OLYMPIAD
+        && global->score_system_val != SCORE_KIROV) {
+      err("%d: new_run: score cannot be set in the current scoring system",
+          p->id);
+      goto protocol_error;
+    }
+    new_run.score = pkt->score;
+    new_run_flags |= RUN_ENTRY_SCORE;
+  }
+
+  if ((pkt->mask & PROT_SERVE_RUN_READONLY_SET)) {
+    if (pkt->is_readonly < 0 || pkt->is_readonly > 1) {
+      err("%d: new_run: invalid is_readonly value %d", p->id,
+          pkt->is_readonly);
+      goto protocol_error;
+    }
+    new_run.is_readonly = pkt->is_readonly;
+    new_run_flags |= RUN_ENTRY_READONLY;
+  }
+
+  if ((pkt->mask & PROT_SERVE_RUN_PAGES_SET)) {
+    if (pkt->pages < 0 || pkt->pages > 255) {
+      err("%d: new_run: invalid pages value %d", p->id, pkt->pages);
+      goto protocol_error;
+    }
+    new_run.pages = pkt->pages;
+    new_run_flags |= RUN_ENTRY_PAGES;
+  }
+
+  sha_buffer(run_src_ptr, run_src_len, shaval);
+  gettimeofday(&precise_time, 0);
+  locale_id = 0;
+  if ((run_id = run_add_record(precise_time.tv_sec,
+                               precise_time.tv_usec * 1000,
+                               run_src_len,
+                               shaval,
+                               pkt->ip,
+                               locale_id,
+                               pkt->user_id,
+                               pkt->prob_id,
+                               pkt->lang_id,
+                               pkt->variant, 1)) < 0){
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  move_files_to_insert_run(run_id);
+
+  arch_flags = archive_make_write_path(run_arch, sizeof(run_arch),
+                                       global->run_archive_dir, run_id,
+                                       pkt->run_src_len, 0);
+  if (arch_flags < 0) {
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  if (archive_dir_prepare(global->run_archive_dir, run_id) < 0) {
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  if (generic_write_file(run_src_ptr, run_src_len, arch_flags,
+                         0, run_arch, "") < 0) {
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+
+  if (run_set_entry(run_id, new_run_flags, &new_run) < 0) {
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+
+  info("%d: new_run: ok", p->id);
+  new_send_reply(p, SRV_RPL_OK);
+  return;
+
+ protocol_error:
+  new_send_reply(p, -SRV_ERR_PROTOCOL);
+  return;
+
+ permission_denied:
+  err("%d: permission denied", p->id);
+  new_send_reply(p, -SRV_ERR_NO_PERMS);
   return;
 }
 
@@ -3795,6 +4078,8 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_COMPARE_RUNS] { cmd_view },
   [SRV_CMD_UPLOAD_REPORT] { cmd_upload_report },
   [SRV_CMD_REJUDGE_BY_MASK] { cmd_rejudge_by_mask },
+  [SRV_CMD_NEW_RUN_FORM] { cmd_view },
+  [SRV_CMD_NEW_RUN] { cmd_new_run },
 };
 
 static void
@@ -4423,7 +4708,8 @@ main(int argc, char *argv[])
   }
   if (i >= argc) goto print_usage;
 
-  if (prepare(argv[i], p_flags, PREPARE_SERVE, cpp_opts) < 0) return 1;
+  if (prepare(argv[i], p_flags, PREPARE_SERVE, cpp_opts,
+              (cmdline_socket_fd >= 0)) < 0) return 1;
 
   l10n_prepare(global->enable_l10n, global->l10n_dir);
 
