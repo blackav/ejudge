@@ -798,6 +798,7 @@ run_get_attempts(int runid, int *pattempts, int skip_ce_flag)
     if (runs[i].problem != runs[runid].problem) continue;
     if (runs[i].status == RUN_COMPILE_ERR && skip_ce_flag) continue;
     if (runs[i].status == RUN_IGNORED) continue;
+    /* FIXME: what to do with RUN_DISQUALIFIED */
     if (runs[i].is_hidden) continue;
     n++;
   }
@@ -822,6 +823,7 @@ run_status_str(int status, char *out, int len)
   case RUN_PARTIAL:          s = _("Partial solution");    break;
   case RUN_ACCEPTED:         s = _("Accepted for testing"); break;
   case RUN_IGNORED:          s = _("Ignored");             break;
+  case RUN_DISQUALIFIED:     s = _("Disqualified");       break;
   case RUN_RUNNING:          s = _("Running...");          break;
   case RUN_COMPILED:         s = _("Compiled");            break;
   case RUN_COMPILING:        s = _("Compiling...");        break;
@@ -1460,13 +1462,15 @@ run_clear_variables(void)
 int
 run_write_xml(FILE *f, int export_mode)
 {
-  int i;
+  //int i;
 
   if (!head.start_time) {
     err("Contest is not yet started");
     return -1;
   }
 
+  // this is not necessary such runs are ignored anyway
+  /*
   for (i = 0; i < run_u; i++) {
     switch (runs[i].status) {
     case RUN_OK:
@@ -1489,6 +1493,8 @@ run_write_xml(FILE *f, int export_mode)
       return -1;
     }
   }
+  */
+
   unparse_runlog_xml(f, &head, run_u, runs, export_mode);
   return 0;
 }
