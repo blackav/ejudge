@@ -89,6 +89,7 @@ COMMON_CFILES=\
  sformat.c\
  sha.c\
  teamdb.c\
+ testinfo.c\
  userlist.c\
  userlist_cfg.c\
  userlist_proto.c\
@@ -114,6 +115,7 @@ CFILES=\
  submit.c\
  super-serve.c\
  team.c\
+ testinfo.c\
  userlist-server.c\
  users.c\
  unix/fileutl.c\
@@ -167,6 +169,7 @@ HFILES=\
  sformat.h\
  sha.h\
  teamdb.h\
+ testinfo.h\
  userlist.h\
  userlist_cfg.h\
  userlist_clnt.h\
