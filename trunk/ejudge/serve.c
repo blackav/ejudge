@@ -1133,7 +1133,7 @@ cmd_view(struct client_state *p, int len,
     }
 
     r = write_priv_report(f, p->user_id, p->priv_level,
-                          pkt->sid_mode, p->cookie,
+                          pkt->sid_mode, p->cookie, (int) pkt->flags,
                           self_url_ptr, hidden_vars_ptr, extra_args_ptr,
                           pkt->item, &caps);
     break;
@@ -1799,6 +1799,98 @@ cmd_priv_submit_run(struct client_state *p, int len,
   }
 
   info("%d: team_submit_run: ok", p->id);
+  new_send_reply(p, SRV_RPL_OK);
+}
+
+static void
+cmd_upload_report(struct client_state *p, int len,
+                  struct prot_serve_pkt_upload_report *pkt)
+{
+  path_t wpath;
+  int wflags;
+
+  if (get_peer_local_user(p) < 0) return;
+  if (len < sizeof(*pkt)) {
+    new_bad_packet(p, "cmd_upload_report: packet is too small: %d", len);
+    return;
+  }
+  if (len != sizeof(*pkt) + pkt->report_size) {
+    new_bad_packet(p, "cmd_upload_report: packet size does not match");
+    return;
+  }
+
+  info("%d: upload_report: %d, %d, %d, %zu",
+       p->id, pkt->user_id, pkt->contest_id, pkt->run_id,
+       pkt->report_size);
+
+  if (!global->enable_report_upload) {
+    err("%d: report uploading is disabled", p->id);
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    return;
+  }
+
+  if (p->user_id <= 0) {
+    err("%d: user is not authentificated", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+    return;
+  }
+  if (pkt->contest_id != global->contest_id) {
+    err("%d: contest_id does not match", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (!teamdb_lookup(pkt->user_id)) {
+    err("%d: user_id is invalid", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+    return;
+  }
+  if (p->user_id != pkt->user_id) {
+    err("%d: user_ids do not match", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+    return;
+  }
+  if (!check_cnts_caps(p->user_id, OPCAP_EDIT_RUN)) {
+    err("%d: user has no capability to submit runs", p->id);
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    return;
+  }
+
+  if (pkt->run_id < 0 || pkt->run_id >= run_get_total()) {
+    err("%d: invalid run_id %d", p->id, pkt->run_id);
+    new_send_reply(p, -SRV_ERR_BAD_RUN_ID);
+    return;
+  }
+
+  if (!global->team_enable_rep_view || (pkt->flags & 1)) {
+    wflags = archive_make_write_path(wpath, sizeof(wpath),
+                                     global->report_archive_dir,
+                                     pkt->run_id, pkt->report_size, 0);
+    if (archive_dir_prepare(global->report_archive_dir, pkt->run_id) < 0) {
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    }
+    if (generic_write_file(pkt->data, pkt->report_size, wflags, 0,
+                           wpath, "") < 0) {
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    }
+  }
+
+  if (global->team_enable_rep_view && (pkt->flags & 2)) {
+    wflags = archive_make_write_path(wpath, sizeof(wpath),
+                                     global->team_report_archive_dir,
+                                     pkt->run_id, pkt->report_size, 0);
+    if (archive_dir_prepare(global->team_report_archive_dir, pkt->run_id) < 0){
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    }
+    if (generic_write_file(pkt->data, pkt->report_size, wflags, 0,
+                           wpath, "") < 0) {
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    }
+  }
+  info("%d: cmd_upload_report: ok", p->id);
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -3083,6 +3175,15 @@ read_run_packet(char *pname)
       goto bad_packet_error;
     if (score < 0 || score > probs[re.problem]->full_score)
       goto bad_packet_error;
+    for (n = 0; n < probs[re.problem]->dp_total; n++)
+      if (re.timestamp < probs[re.problem]->dp_infos[n].deadline)
+        break;
+    if (n < probs[re.problem]->dp_total) {
+      score += probs[re.problem]->dp_infos[n].penalty;
+      if (score > probs[re.problem]->full_score)
+        score = probs[re.problem]->full_score;
+      if (score < 0) score = 0;
+    }
   } else {
     score = -1;
   }
@@ -3421,6 +3522,7 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_PRINT_SUSPEND] { cmd_priv_command_0 },
   [SRV_CMD_PRINT_RESUME] { cmd_priv_command_0 },
   [SRV_CMD_COMPARE_RUNS] { cmd_view },
+  [SRV_CMD_UPLOAD_REPORT] { cmd_upload_report },
 };
 
 static void
