@@ -214,6 +214,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(show_deadline, "d"),
   GLOBAL_PARAM(enable_runlog_merge, "d"),
   GLOBAL_PARAM(prune_empty_users, "d"),
+  GLOBAL_PARAM(enable_report_upload, "d"),
 
   GLOBAL_PARAM(use_gzip, "d"),
   GLOBAL_PARAM(min_gzip_size, "d"),
@@ -273,6 +274,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(test_sets, "x"),
   PROBLEM_PARAM(deadline, "s"),
   PROBLEM_PARAM(variant_num, "d"),
+  PROBLEM_PARAM(date_penalty, "x"),
 
   { 0, 0, 0, 0 }
 };
@@ -852,6 +854,61 @@ parse_date(const unsigned char *s, time_t *pd)
   return 0;
 
  failed:
+  return -1;
+}
+
+static int
+parse_deadline_penalties(char **dpstr, int *p_total,
+                         struct penalty_info **p_pens)
+{
+  int total = 0, i, n, x;
+  struct penalty_info *v = 0;
+  const char *s;
+  size_t maxlen = 0, curlen;
+  unsigned char *b1, *b2;
+  time_t tt;
+
+  *p_total = 0;
+  *p_pens = 0;
+  if (!dpstr || !*dpstr) return 0;
+
+  for (i = 0; dpstr[i]; i++) {
+    curlen = strlen(dpstr[i]);
+    if (curlen > maxlen) maxlen = curlen;
+    total++;
+  }
+  if (!total) return 0;
+  XCALLOC(v, total);
+  b1 = (unsigned char*) alloca(maxlen + 10);
+  b2 = (unsigned char*) alloca(maxlen + 10);
+
+  for (i = 0; (s = dpstr[i]); i++) {
+    sscanf(s, "%s %s", b1, b2);
+    n = x = 0;
+    if (sscanf(b2, "%d%n", &x, &n) != 1 || b2[n]) {
+      err("%d: invalid penalty specification %s", i + 1, b2);
+      goto failure;
+    }
+    if (parse_date(b1, &tt) < 0) {
+      err("%d: invalid date specification %s", i + 1, b1);
+      goto failure;
+    }
+    v[i].deadline = tt;
+    v[i].penalty = x;
+  }
+
+  /*
+  fprintf(stderr, ">>Total %d\n", total);
+  for (i = 0; i < total; i++)
+    fprintf(stderr, ">>[%d]: %ld,%d\n", i + 1, v[i].deadline, v[i].penalty);
+  */
+
+  *p_total = total;
+  *p_pens = v;
+  return 0;
+
+ failure:
+  xfree(v);
   return -1;
 }
 
@@ -1799,6 +1856,10 @@ set_defaults(int mode)
         }
         info("problem.%s.deadline is %ld", ish, probs[i]->t_deadline);
       }
+
+      if (parse_deadline_penalties(probs[i]->date_penalty,
+                                   &probs[i]->dp_total,
+                                   &probs[i]->dp_infos) < 0) return -1;
     }
 
     if (mode == PREPARE_RUN) {
