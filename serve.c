@@ -2615,6 +2615,36 @@ cmd_edit_run(struct client_state *p, int len,
     run.variant = pkt->variant;
     run_flags |= RUN_ENTRY_VARIANT;
   }
+  if ((pkt->mask & PROT_SERVE_RUN_TESTS_SET)) {
+    if (pkt->tests < -1 || pkt->tests > 126) {
+      err("%d: new test value %d is out of range", p->id, pkt->tests);
+      new_send_reply(p, -SRV_ERR_PROTOCOL);
+      return;
+    }
+    if (global->score_system_val == SCORE_OLYMPIAD
+        || global->score_system_val == SCORE_KIROV) {
+      pkt->tests++;
+    }
+    if (pkt->tests == -1) pkt->tests = 0;
+
+    run.test = pkt->tests;
+    run_flags |= RUN_ENTRY_TEST;
+  }
+  if ((pkt->mask & PROT_SERVE_RUN_SCORE_SET)) {
+    if (pkt->score < -1 || pkt->score > 100000) {
+      err("%d: new score value %d is out of range", p->id, pkt->score);
+      new_send_reply(p, -SRV_ERR_PROTOCOL);
+      return;
+    }
+    if (global->score_system_val != SCORE_OLYMPIAD
+        && global->score_system_val != SCORE_KIROV) {
+      err("%d: score cannot be set in the current scoring system", p->id);
+      new_send_reply(p, -SRV_ERR_PROTOCOL);
+      return;
+    }
+    run.score = pkt->score;
+    run_flags |= RUN_ENTRY_SCORE;
+  }
 
   // check capabilities
   if (!check_cnts_caps(p->user_id, OPCAP_EDIT_RUN)
