@@ -22,6 +22,9 @@
 #include "nls.h"
 #include "utf8_utils.h"
 #include "userlist.h"
+#include "pathutl.h"
+
+#include <reuse/logger.h>
 
 #include <expat.h>
 
@@ -80,12 +83,13 @@ struct parser_data
   int skipping;
   int skip_stop;
   struct tag_list *tag_stack;
+  int err_cntr;
 
   /* actual data to be parsed */
   struct userlist_data *userlist;
 };
 
-int
+static int
 encoding_hnd(void *data, const XML_Char *name, XML_Encoding *info)
 {
   int i, o;
@@ -108,13 +112,12 @@ encoding_hnd(void *data, const XML_Char *name, XML_Encoding *info)
   return 0;
 }
 
-void
-handle_attrib(struct parser_data *pd, void *tree,
+static void
+handle_attrib(XML_Parser p,
+              struct parser_data *pd, void *tree,
               unsigned char const *name, int itag,
               unsigned char const *attrib, unsigned char const *value)
 {
-  fprintf(stderr, "%s,%s,%s\n", name, attrib, value);
-
   switch (itag) {
   case TAG_USERLIST:
     {
@@ -196,27 +199,33 @@ handle_attrib(struct parser_data *pd, void *tree,
   case TAG_ADDRESS:
     goto invalid_attribute;
   default:
-    fprintf(stderr, "Unknown tag: %s\n", name);
+    err("%d: Unknown tag: %s", XML_GetCurrentLineNumber(p), name);
+    pd->err_cntr++;
     return;
   }
   return;
 
  invalid_value:
-  fprintf(stderr, "Invalid value of attribute `%s'\n", attrib);
+  err("%d: Invalid value of attribute `%s'",
+      XML_GetCurrentLineNumber(p), attrib);
+  pd->err_cntr++;
   return;
 
  invalid_attribute:
-  fprintf(stderr, "Invalid attribute `%s' for tag `%s'\n", attrib, name);
+  err("%d: Invalid attribute `%s' for tag `%s'",
+      XML_GetCurrentLineNumber(p), attrib, name);
+  pd->err_cntr++;
 }
 
-void
+static void
 start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
 {
+  XML_Parser p = (XML_Parser) data;
   int cur_val_size = 0, cur_attr_size = 0, val_len, attr_len;
   char *cur_val = 0, *cur_attr = 0;
   int cur_tag_size = 0, tag_len;
   char *cur_tag = 0;
-  struct parser_data *pd = (struct parser_data*) data;
+  struct parser_data *pd = (struct parser_data*) XML_GetUserData(p);
   struct tag_list *tl = 0;
   void *tree = 0;
   int itag = 0;
@@ -246,7 +255,9 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
       break;
   }
   if (!tag_map[itag]) {
-    fprintf(stderr, "Unknown tag: %s, skipping\n", cur_tag);
+    err("%d: Unknown tag: %s, skipping",
+        XML_GetCurrentLineNumber(p), cur_tag);
+    pd->err_cntr++;
     goto start_skipping;
   }
 
@@ -291,7 +302,9 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
       struct user_data *ud = (struct user_data*) pd->tag_stack->tree;
       char *s = user_data_get_field(ud, itag);
       if (s) {
-        fprintf(stderr, "%s can be specified only once\n", cur_tag);
+        err("%d: %s can be specified only once",
+            XML_GetCurrentLineNumber(p), cur_tag);
+        pd->err_cntr++;
         goto start_skipping;
       }
       tree = pd->tag_stack->tree;
@@ -337,7 +350,9 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
       struct person_data *id = (struct person_data*) pd->tag_stack->tree;
       unsigned char **ps = person_data_get_ptr(id, itag);
       if (*ps) {
-        fprintf(stderr, "%s can be specified only once\n", cur_tag);
+        err("%d: %s can be specified only once",
+            XML_GetCurrentLineNumber(p), cur_tag);
+        pd->err_cntr++;
         goto start_skipping;
       }
       tree = id;
@@ -376,7 +391,9 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
     break;
   default:
   invalid_usage:
-    fprintf(stderr, "Invalid tag `%s' usage\n", cur_tag);
+    err("%d: Invalid tag `%s' usage", XML_GetCurrentLineNumber(p),
+        cur_tag);
+    pd->err_cntr++;
     goto start_skipping;
   }
 
@@ -397,7 +414,7 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
     }
     str_utf8_to_koi8(cur_attr, cur_attr_size, atts[0]);
     str_utf8_to_koi8(cur_val, cur_val_size, atts[1]);
-    handle_attrib(pd, tree, cur_tag, itag, cur_attr, cur_val);
+    handle_attrib(p, pd, tree, cur_tag, itag, cur_attr, cur_val);
     atts += 2;
   }
 
@@ -415,10 +432,11 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
   pd->skip_stop = pd->nest;
 }
 
-void
+static void
 end_hnd(void *data, const XML_Char *name)
 {
-  struct parser_data *pd = (struct parser_data*) data;
+  XML_Parser p = (XML_Parser) data;
+  struct parser_data *pd = (struct parser_data*) XML_GetUserData(p);
   struct tag_list *tl;
 
   if (pd->skipping) {
@@ -461,7 +479,6 @@ end_hnd(void *data, const XML_Char *name)
 
       s = str_utf8_to_koi8_heap(tl->str);
       user_data_set_field(ud, tl->itag, s);
-      fprintf(stderr, ">>%s\n", s);
     }
     break;
   case TAG_NAME:
@@ -478,7 +495,6 @@ end_hnd(void *data, const XML_Char *name)
       ps = person_data_get_ptr(id, tl->itag);
       s = str_utf8_to_koi8_heap(tl->str);
       *ps = s;
-      fprintf(stderr, ">>%s\n", s);
     }
     break;
   case TAG_EMAIL:
@@ -487,20 +503,21 @@ end_hnd(void *data, const XML_Char *name)
     {
       struct addr_data *ad = (struct addr_data *) tl->tree;
       ad->addr = str_utf8_to_koi8_heap(tl->str);
-      fprintf(stderr, ">>%s\n", ad->addr);
     }
     break;
   default:
-    fprintf(stderr, "unexpected closing tag: %s\n", name);
+    err("unexpected closing tag: %s", name);
+    pd->err_cntr++;
   }
 
   free(tl->str);
 }
 
-void
+static void
 chardata_hnd(void *data, const XML_Char *s, int len)
 {
-  struct parser_data *pd = (struct parser_data*) data;
+  XML_Parser p = (XML_Parser) data;
+  struct parser_data *pd = (struct parser_data*) XML_GetUserData(p);
 
   if (!pd->tag_stack) return;
   if (pd->skipping) return;
@@ -541,65 +558,70 @@ chardata_hnd(void *data, const XML_Char *s, int len)
     pd->tag_stack->str[pd->tag_stack->u] = 0;
     break;
   default:
-    fprintf(stderr, "unhandled character data in %d\n",
-            pd->tag_stack->itag);
+    err("unhandled character data in %d", pd->tag_stack->itag);
+    pd->err_cntr++;
     return;
   }
 }
 
-int
-main(int argc, char **argv)
+struct userlist_data *
+userlist_parse(char const *path)
 {
   XML_Parser p = 0;
-  FILE *f;
+  FILE *f = 0;
   char buf[512];
   int len;
   struct parser_data data;
 
-  if (argc != 2) {
-    fprintf(stderr, "invalid number of parameters\n");
-    return 1;
-  }
-
-  if (!(f = fopen(argv[1], "r"))) {
-    fprintf(stderr, "cannot open input file `%s'\n", argv[1]);
-    return 1;
-  }
-
-  if (!(p = XML_ParserCreate(NULL))) {
-    fprintf(stderr, "cannot create an XML parser\n");
-    return 1;
-  }
-
   memset(&data, 0, sizeof(data));
+  ASSERT(path);
+
+  if (!(f = fopen(path, "r"))) {
+    err("cannot open input file `%s'", path);
+    goto cleanup_and_exit;
+  }
+  if (!(p = XML_ParserCreate(NULL))) {
+    err("cannot create an XML parser");
+    goto cleanup_and_exit;
+  }
 
   XML_SetUnknownEncodingHandler(p, encoding_hnd, NULL);
   XML_SetStartElementHandler(p, start_hnd);
   XML_SetEndElementHandler(p, end_hnd);
   XML_SetCharacterDataHandler(p, chardata_hnd);
   XML_SetUserData(p, &data);
+  XML_UseParserAsHandlerArg(p);
 
   while (fgets(buf, sizeof(buf), f)) {
     len = strlen(buf);
     if (XML_Parse(p, buf, len, 0) == XML_STATUS_ERROR) {
-      fprintf(stderr, "parse error at line %d:%s\n",
-              XML_GetCurrentLineNumber(p),
-              XML_ErrorString(XML_GetErrorCode(p)));
-      return 1;
+      err("%s: %d: parse error: %s",
+          path, XML_GetCurrentLineNumber(p),
+          XML_ErrorString(XML_GetErrorCode(p)));
+      goto cleanup_and_exit;
     }
   }
   if (ferror(f)) {
-    fprintf(stderr, "input error\n");
-    return 1;
+    err("%s: input error", path);
+    goto cleanup_and_exit;
   }
+  if (data.err_cntr) goto cleanup_and_exit;
 
+  XML_ParserFree(p);
+  fclose(f);
+  return data.userlist;
+
+ cleanup_and_exit:
+  if (p) XML_ParserFree(p);
+  if (f) fclose(f);
+  if (data.userlist) userlist_free(data.userlist);
   return 0;
 }
 
 /**
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "XML_Parser" "XML_Char" "XML_Encoding")
  *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
