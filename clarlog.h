@@ -46,5 +46,6 @@ int clar_get_total(void);
 
 void clar_get_team_usage(int, int *, unsigned long *);
 char *clar_flags_html(int, int, int, char *, int);
+void clar_reset(void);
 
 #endif /* __CLARLOG_H__ */
