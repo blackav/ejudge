@@ -526,7 +526,7 @@ initialize(int argc, char const *argv[])
   os_rGetBasename(fullname, basename, PATH_MAX);
   strcpy(program_name, basename);
   if (strncmp(basename, "users", 5) != 0) {
-    client_not_configured(0, "bad program name");
+    client_not_configured(0, "bad program name", 0);
     // never get here
   }
   namelen = 5;                  /* "users" */
@@ -612,11 +612,11 @@ initialize(int argc, char const *argv[])
   }
 
   if (!name_ok) {
-    client_not_configured(0, "client is not configured");
+    client_not_configured(0, "client is not configured", 0);
     // never get here
   }
   if (!(config = parse_config(cfgname))) {
-    client_not_configured(0, "config file not parsed");
+    client_not_configured(0, "config file not parsed", 0);
   }
 
   /*
@@ -647,7 +647,7 @@ information_not_available(unsigned char const *header_txt,
                           unsigned char const *footer_txt)
 {
   client_put_header(stdout, header_txt, 0, config->charset, 1,
-                    _("Information is not available"));
+                    client_locale_id, _("Information is not available"));
   printf("<p>%s</p>\n",
          _("Information by your request is not available."));
   client_put_footer(stdout, footer_txt);
@@ -672,7 +672,7 @@ main(int argc, char const *argv[])
   initialize(argc, argv);
 
   if (!check_source_ip()) {
-    client_access_denied(config->charset);
+    client_access_denied(config->charset, client_locale_id);
   }
 
   read_locale_id();
@@ -684,7 +684,7 @@ main(int argc, char const *argv[])
     fprintf(stderr, "cannot set contest directory '%s': %s\n",
             config->contests_dir, contests_strerror(-errcode));
     client_put_header(stdout, header_txt, 0, config->charset, 1,
-                      _("Invalid configuration"));
+                      client_locale_id, _("Invalid configuration"));
     printf("<h2>%s</h2>\n<p>%s</p>\n",
            _("Configuration error"),
            _("This program is configured incorrectly and cannot perform normal operation. Please contact the site (or contest) administrator."));
@@ -721,7 +721,7 @@ main(int argc, char const *argv[])
 
   if (!contests_check_users_ip(user_contest_id, user_ip)) {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
-                      _("Permission denied"));
+                      client_locale_id, _("Permission denied"));
     printf("<h2>%s</h2>\n",_("You have no permissions to view this contest."));
     client_put_footer(stdout, footer_txt);
     return 0;
@@ -729,9 +729,11 @@ main(int argc, char const *argv[])
 
   if (user_id > 0) {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
+                      client_locale_id,
                       _("Detailed information about participant"));
   } else {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
+                      client_locale_id,
                       _("List of registered participants"));
     printf("<h2>%s: %s</h2>\n", _("Contest"), name_str);
   }
