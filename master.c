@@ -55,6 +55,7 @@
 #define DEFAULT_STATUS_FILE    "status/dir/status"
 #define DEFAULT_RUN_PAGE_SIZE  10
 #define DEFAULT_CLAR_PAGE_SIZE 10
+#define DEFAULT_CHARSET        "iso8859-1"
 
 struct section_global_data
 {
@@ -75,6 +76,7 @@ struct section_global_data
   path_t allow_from;
   path_t deny_from;
   path_t standings_url;
+  path_t charset;
 };
 
 static struct generic_section_config *config;
@@ -99,6 +101,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(allow_from, "s"),
   GLOBAL_PARAM(deny_from, "s"),
   GLOBAL_PARAM(standings_url, "s"),
+  GLOBAL_PARAM(charset, "s"),
   { 0, 0, 0, 0 }
 };
 
@@ -176,8 +179,7 @@ read_state_params(void)
 static int
 display_enter_password(void)
 {
-  //client_put_header("Введите пароль");
-  client_put_header(_("Enter password"));
+  client_put_header(global->charset, _("Enter password"));
   puts(form_header_simple);
   puts("<input type=\"password\" size=16 name=\"password\">");
   puts("<input type=\"submit\" value=\"submit\">");
@@ -325,9 +327,13 @@ change_status_if_asked()
   s2 = cgi_param(p2);
   if (!s1 || !s2) return;
   if (sscanf(s1, "%d%n", &status, &n) != 1 || s1[n]) return;
-  if (status < 0 || status > 99 || (status > 5 && status < 99)) return;
-  if (sscanf(s2, "%d%n", &test, &n) != 1 || s2[n]) test = 0;
-  if (test < 0 || test > 99) test = 0;
+  /* FIXME: symbolic constants should be used */
+  /* We don't have information about scoring mode, so allow any */
+  if (status < 0 || status > 99 || (status > 7 && status < 99)
+      || status == 6) return;
+  if (sscanf(s2, "%d%n", &test, &n) != 1 || s2[n]) test = -1;
+  //if (status == 7 && test >= 0) test++;
+  if (test < -1 || test > 99) test = -1;
 
   sprintf(cmd, "CHGSTAT %d %d %d\n", runid, status, test);
   /* FIXME: be less ignorant about completion state */
@@ -353,7 +359,7 @@ view_source_if_asked()
   sprintf(cmd, "SRC %d\n", runid);
   client_transaction(client_packet_name(pname), cmd, &src, &slen);
 
-  printf("Content-Type: %s\n\n", _("text/html"));
+  printf("Content-Type: text/html; charset=%s\n\n", global->charset);
   printf("<html><head><title>%s %d</title></head><body>\n",
          _("View source for run"),
          runid);
@@ -388,7 +394,7 @@ view_report_if_asked()
   sprintf(cmd, "REPORT %d\n", runid);
   client_transaction(client_packet_name(pname), cmd, &src, &slen);
 
-  printf("Content-Type: %s\n\n", _("text/html"));
+  printf("Content-Type: text/html; charset=%s\n\n", global->charset);
   printf("<html><head><title>%s %d</title></head><body>\n",
          _("View report for run"), runid);
   printf("<h1>%s %d</h1>\n", _("View source for run"), runid);
@@ -419,7 +425,7 @@ view_standings_if_asked()
   client_transaction(pk_name, cmd, &stand, &stand_len);
   client_split(stand, 1, &header, &body, 0);
 
-  client_put_header("%s", header);
+  client_put_header(global->charset, "%s", header);
 
   printf("<table><tr><td>");
   print_refresh_button(_("back"));
@@ -459,8 +465,7 @@ view_clar_if_asked()
   sscanf(s, "%d", &enable_reply);
   enable_reply = !!enable_reply;
 
-  //client_put_header("Просмотр сообщения");
-  client_put_header(_("Message view"));
+  client_put_header(global->charset, _("Message view"));
   for (s = src; slen; s++, slen--) putchar(*s);
   xfree(src);
 
@@ -550,16 +555,12 @@ send_reply_if_asked(void)
     txt = cgi_param("reply");
     if (!txt) return;
   } else if (cgi_param("answ_read")) {
-    //txt = xstrdup("См. условие задачи.\n");
     txt = xstrdup(_("Read the problem.\n"));
   } else if (cgi_param("answ_no_comments")) {
-    //txt = xstrdup("Без комментариев.\n");
     txt = xstrdup(_("No comments.\n"));
   } else if (cgi_param("answ_yes")) {
-    //txt = xstrdup("ДА.");
     txt = xstrdup(_("YES."));
   } else if (cgi_param("answ_no")) {
-    //txt = xstrdup("НЕТ.");
     txt = xstrdup(_("NO."));
   } else {
     return;
@@ -665,6 +666,9 @@ set_defaults(void)
   path_init(global->judge_cmd_dir, global->judge_dir, DEFAULT_JUDGE_CMD_DIR);
   path_init(global->judge_data_dir, global->judge_dir, DEFAULT_JUDGE_DATA_DIR);
   path_init(global->status_file, global->var_dir, DEFAULT_STATUS_FILE);
+  if (!global->charset[0]) {
+    pathcpy(global->charset, DEFAULT_CHARSET);
+  }
   return 0;
 }
 
@@ -687,22 +691,25 @@ initialize(int argc, char *argv[])
   } else if (!strncmp(basename, "judge", 5)) {
     judge_mode = 1;
   } else {
-    client_not_configured(_("bad program name"));
+    client_not_configured(global->charset, _("bad program name"));
   }
 
   pathmake(cfgname, dirname, "/", "..", "/", "cgi-data", "/", basename,
            ".cfg", NULL);
   config = parse_param(cfgname, 0, params, 1);
-  if (!config) client_not_configured(_("config file not parsed"));
+  if (!config)
+    client_not_configured(global->charset, _("config file not parsed"));
 
   for (p = config; p; p = p->next) {
     if (!p->name[0] || !strcmp(p->name, "global"))
       break;
   }
-  if (!p) client_not_configured(_("no global section"));
+  if (!p)
+    client_not_configured(global->charset, _("no global section"));
   global = (struct section_global_data *) p;
 
-  if (set_defaults() < 0) client_not_configured(_("bad configuration"));
+  if (set_defaults() < 0)
+    client_not_configured(global->charset, _("bad configuration"));
   logger_set_level(-1, LOG_WARNING);
   client_make_form_headers();
 
@@ -719,18 +726,18 @@ main(int argc, char *argv[])
   if (!client_check_source_ip(global->allow_deny,
                               global->allow_from,
                               global->deny_from))
-    client_access_denied();
+    client_access_denied(global->charset);
 
-  cgi_read();
+  cgi_read(global->charset);
 
   if (ask_passwd()) {
     display_enter_password();
     return 0;
   }
-  if (!check_passwd()) client_access_denied();
+  if (!check_passwd()) client_access_denied(global->charset);
   read_state_params();
 
-  if (!client_check_server_status(global->status_file, 3)) {
+  if (!client_check_server_status(global->charset, global->status_file, 3)) {
     return 0;
   }
 
@@ -754,22 +761,17 @@ main(int argc, char *argv[])
   get_contest_statistics();
 
   if (force_recheck_status) {
-    client_check_server_status(global->status_file, 3);
+    client_check_server_status(global->charset, global->status_file, 3);
     force_recheck_status = 0;
   }
 
   if (global->contest_name[0]) {
-    //client_put_header("Монитор: %s - &quot;%s&quot;",
-    //                  judge_mode?"Судья":"Администратор",
-    //                  global->contest_name);
-    client_put_header("%s: %s - &quot;%s&quot;",
+    client_put_header(global->charset, "%s: %s - &quot;%s&quot;",
                       _("Monitor"),
                       judge_mode?_("Judge"):_("Administrator"),
                       global->contest_name);
   } else {
-    //client_put_header("Монитор: %s",
-    //                  judge_mode?"Судья":"Администратор");
-    client_put_header("%s: %s",
+    client_put_header(global->charset, "%s: %s",
                       _("Monitor"),
                       judge_mode?_("Judge"):_("Administrator"));
   }
@@ -787,7 +789,6 @@ main(int argc, char *argv[])
   printf("</td></tr></table>\n");
 
   if (runs_statistics) {
-    //puts("<hr><h2>Посылки</h2>");
     printf("<hr><h2>%s</h2>", _("Submissions"));
     client_puts(runs_statistics, form_start_simple);
 
