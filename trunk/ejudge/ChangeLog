@@ -1,3 +1,174 @@
+2003-10-20  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* compile.c:
+	(do_loop) a long standing bug is fixed: task structure is
+	  deallocated, when compilation is finished.
+
+	* client_actions.h:
+	new client actions added: EXPORT_XML_RUNS, MERGE_RUNS,
+	  RUN_CHANGE_IMPORTED, CLEAR_TEAM_PASSWORDS_1,
+	  CLEAR_TEAM_PASSWORDS_2.
+
+	* cgi.c: (parse_multipart) maximal content-length is limited with
+	  `MAX_CONTENT_LENGTH' constant, which now have value 256Kb;
+	MAX_VALUE_SIZE constant is increased to 256Kb.
+
+	* files.make: new files added:
+	  userlist_clnt/clear_team_passwords.c,
+	  serve_clnt/import_xml_runs.c,
+	  runlog_import.c,
+	  runlog_xml.c.
+
+	* html.c: (new_write_user_runs) use of `run_get_record' is updated;
+	(do_write_kirov_standings) bug: default header style is "h2", not
+	  "<h2>";
+	  use of `run_get_record' is updated;
+	(do_write_standings) the same as above;
+	(do_write_public_log) use of `run_get_record' is updated;
+	(new_write_user_source_view) the same as above;
+	(new_write_user_report_view) the same as above.
+
+	* master.c:
+	(make_self_url) bug: self-reference URL is constructed correctly.
+	  The variable `SERVER_PORT' value is not used, because the port
+	  number is already included into the value of `HTTP_HOST' variable;
+	(print_export_xml_runs_button) new function to print the
+	  "Export XML runs" button;
+	(print_clear_team_passwords_button) new functio to print the
+	  "Clear team passwords" button;
+	(sched_if_asked) bug: `sscanf' is used instead of `scanf';
+	(change_status_if_asked) use of `serve_clnt_edit_run' is updated,
+	  as this function now has one more parameter;
+	(change_status) the same as above;
+	(change_problem) the same as above;
+	(change_language) the same as above;
+	(change_user_id) the same as above;
+	(change_user_login) the same as above;
+	(change_imported) a new function to change `is_imported' flag;
+	(action_export_xml_runs) new function to handle the corresponding
+	  request;
+	(confirm_clear_team_passwords) a new function;
+	(do_clear_team_passwords) a new function;
+	(action_merge_runs) a new function;
+	(print_dump_buttons) "Export XML" button is printed;
+	(main) new actions handled: `ACTION_CLEAR_TEAM_PASSWORDS_1',
+	  `ACTION_CLEAR_TEAM_PASSWORDS_2', `ACTION_RUN_CHANGE_IMPORTED',
+	  `ACTION_EXPORT_XML_RUNS', `ACTION_MERGE_RUNS';
+	  "Clear team passwords" button is printed.
+
+	* master_html.c:
+	(write_change_status_dialog) new parameter `disable_rejudge_flag'
+	  is added. If this flag is set, "Rejudge" option is disabled;
+	(write_all_runs) imported runs are marked with '*' in runid
+	  column;
+	  "Rejudge" button is disabled for imported runs;
+	  "View source" link is disabled for imported runs;
+	  "View report" link is disabled for imported runs;
+	  if global configuration variable `enable_runlog_merge' is set,
+	  "Import runlog" option is displayed;
+	(write_priv_source) `is_imported' field is displayed;
+	  if `is_imported' flag is set, no source is displayed.
+
+	* opcaps.c, opcaps.h: new capability `IMPORT_XML_RUNS' added.
+
+	* prepare.c, prepare.h:
+	new global configuration variable `enable_runlog_merge'.
+
+	* protocol.h:
+	commands: `CMD_EXPORT_XML_RUNS', `CMD_IMPORT_XML_RUNS' added;
+	field flag `PROT_SERVE_RUN_IMPORTED_SET' is added;
+	(struct prot_serve_pkt_run_info) field `is_imported' added.
+
+	* register.c:
+	(initialize) bug: self-reference URL is constructed correctly:
+	  the value of `SERVER_PORT' is not used, since the number
+	  of port is already contained in `HTTP_HOST' variable value.
+
+	* run.c: (run_tests) time-limit value calculations are redone.
+	  Temporary hack: `task_SetMaxTime' is passed 1 the limit, which is
+	  1 second less, that the actual limit, since currently a process
+	  works one second more, than its time limit;
+	(do_loop) provisions added to quit the program if a special run packet
+	  received.
+
+	* runlog.c:
+	(run_set_runlog) a new function to completely set the runlog with
+	  new values;
+	(run_backup) new function to make a backup copy of the current log;
+	(run_get_record) new parameter `pimported' is added, in which
+	  a pointer, where to store the `is_imported' field value is passed;
+	(run_set_entry) `RUN_ENTRY_IMPORTED' mask is handled and
+	  `is_imported' flag is set;
+	(run_write_xml) a new function to write the runlog in XML format.
+
+	* runlog.h: new run status constants are added to simplify handling:
+	  `RUN_PSEUDO_FIRST', `RUN_TRANSIENT_FIRST', `RUN_TRANSIENT_LAST';
+	(run_get_record) a new parameter added to store the value of
+	  `is_imported' flag;
+	new field mask `RUN_ENTRY_IMPORTED';
+	(struct run_entry) `is_imported' field is added;
+	(run_write_xml) new function prototype;
+	(unparse_runlog_xml) new function prototype;
+	(parse_runlog_xml) new function prototype;
+	(runlog_import_xml) new function prototype;
+	(run_backup) new function prototype;
+	(run_set_runlog) new function prototype.
+
+	* serve.c:
+	(cmd_team_get_archive) `run_get_record' function now has one more
+	  parameter: pointer to store `is_imported' flag;
+	(cmd_view) new `CMD_EXPORT_XML_RUNS' command is supported;
+	(cmd_import_xml_runs) new function to handle `CMD_IMPORT_XML_RUNS'
+	  request;
+	(cmd_edit_run) editing of `is_imported' field is supported;
+	  a run, which has `is_imported' flag set is never rejudged;
+	(rejudge_run) never rejudge a run with `is_imported' flag set;
+	(do_rejudge_all) never rejudge a run with `is_imported' flag set;
+	(do_rejudge_problem) the same as above;
+	(packet_handlers) `CMD_EXPORT_XML_RUNS', `CMD_IMPORT_XML_RUNS'
+	  are handled;
+	(check_sockets) the maximal size of an incoming packet is set to
+	  256 KB.
+
+	* serve_clnt.h:
+	(serve_clnt_edit_run) new: parameter `is_imported' is added;
+	(serve_clnt_import_xml_runs) new function prototype.
+
+	* team.c:
+	(initialize) bug: the default header style variable is initialized
+	  correctly to "h2", not to "<h2>".
+
+	* userlist-server.c:
+	(cmd_clear_team_passwords) new: the function to handle the request
+	  `CLEAR_TEAM_PASSWORDS';
+	(cmd_table) an entry for `CLEAR_TEAM_PASSWORDS' added;
+	(do_work) the maximal size of an incoming packet is increased to
+	  256 KB.
+
+	* userlist-server.c:
+	(do_clear_team_passwords) a new function, which clears the
+	  team passwords for all the non-privileged teams, registered
+	  for the given contest.
+
+	* userlist_clnt.h:
+	(userlist_clnt_clear_team_passwords) new function prototype added;
+
+	* userlist_proto.h:
+	new userlist command added: `CLEAR_TEAM_PASSWORDS'.
+
+	* users.c:
+	(initialize) bug: self-reference URL is now constructed correctly:
+	  the SERVER_PORT variable is not used as the port number is included
+	  in `http_host' variable.
+
+	* runlog_import.c, runlog_xml.c: Initial revision
+
+2003-10-12  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
 2003-10-12  Alexander Chernov  <cher@ispras.ru>
 
 	* makefile: log: checkers directory is traversed.

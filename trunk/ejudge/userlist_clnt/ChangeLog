@@ -1,3 +1,11 @@
+2003-10-20  Alexander Chernov  <cher@ispras.ru>
+
+	* team_set_passwd.c:
+	(userlist_clnt_team_set_passwd) bug: the outbound packet size is
+	  calculated correctly.
+
+	* clear_team_passwords.c: Initial revision
+
 2003-10-06  Alexander Chernov  <cher@ispras.ru>
 
 	* generate_team_passwd.c:
