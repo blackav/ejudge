@@ -40,6 +40,7 @@
 #include <sys/select.h>
 #include <dirent.h>
 #include <time.h>
+#include <string.h>
 
 #define SUSPEND_TIMEOUT 60
 
