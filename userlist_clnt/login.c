@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,11 +32,11 @@ userlist_clnt_login(struct userlist_clnt *clnt,
 {
   struct userlist_pk_do_login * data;
   struct userlist_pk_login_ok * answer;
+  void *void_answer = 0;
   int len;
   int anslen;
   int res;
   int r;
-
 
   len = sizeof(struct userlist_pk_do_login) + strlen(login) + strlen(passwd);
   data = alloca(len);
@@ -51,8 +51,9 @@ userlist_clnt_login(struct userlist_clnt *clnt,
   strcpy(data->data,login);
   strcpy(data->data + data->login_length + 1,passwd);
   if ((r = userlist_clnt_send_packet(clnt,len,data)) < 0) return r;
-  if ((r = userlist_clnt_recv_packet(clnt,&anslen,(void**) &answer)) < 0)
+  if ((r = userlist_clnt_recv_packet(clnt,&anslen, &void_answer)) < 0)
     return r;
+  answer = void_answer;
   if ((answer->reply_id == ULS_LOGIN_OK)||
       (answer->reply_id == ULS_LOGIN_COOKIE)) {
 
