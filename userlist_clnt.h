@@ -189,7 +189,8 @@ int userlist_clnt_get_uid_by_pid(struct userlist_clnt *clnt,
                                  int system_pid,
                                  int *p_uid,
                                  int *p_priv_level,
-                                 unsigned long long *p_cookie);
+                                 unsigned long long *p_cookie,
+                                 unsigned long *p_ip);
 
 int userlist_clnt_priv_login(struct userlist_clnt *clnt,
                              unsigned long origin_ip,
@@ -204,5 +205,22 @@ int userlist_clnt_priv_login(struct userlist_clnt *clnt,
                              int *p_locale_id,
                              int *p_priv_level,
                              unsigned char **p_name);
+
+int userlist_clnt_priv_cookie(struct userlist_clnt *clnt,
+                              unsigned long origin_ip,
+                              int contest_id,
+                              unsigned long long cookie,
+                              int locale_id,
+                              int priv_level,
+                              int *p_user_id,
+                              int *p_contest_id,
+                              int *p_locale_id,
+                              int *p_priv_level,
+                              unsigned char **p_login,
+                              unsigned char **p_name);
+
+int userlist_clnt_logout(struct userlist_clnt *clnt,
+                         unsigned long origin_ip,
+                         unsigned long long cookie);
 
 #endif /* __USERLIST_CLNT_H__ */
