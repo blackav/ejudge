@@ -1,3 +1,69 @@
+2003-10-12  Alexander Chernov  <cher@ispras.ru>
+
+	* makefile: log: checkers directory is traversed.
+
+2003-10-12  Alexander Chernov  <cher@ispras.ru>
+
+	* contests.c:
+	(parse_contest) bug: `users_table_style', `register_table_style',
+	  `users_verb_style' are properly initialized.
+
+	* prepare.c:
+	new global configuration variables: `info_dir', `info_sfx',
+	  `tgz_dir', `tgz_sfx';
+	new problem configuration variables: `info_dir', `info_sfx',
+	  `tgz_dir', `tgz_sfx', `use_info', `use_tgz';
+	(problem_init_func) `use_info', `use_tgz', `info_sfx', `tgz_sfx'
+	  are initialized;
+	(set_defaults) all the new configuration variables are supported.
+
+	* prepare.h:
+	(struct section_global_data) new fields `info_dir', `tgz_dir',
+	  `info_sfx', `tgz_sfx', `max_cmd_length';
+	(struct section_problem_data) new fields `use_info', `use_tgz',
+	  `info_dir', `info_sfx', `tgz_dir', `tgz_sfx'.
+
+	* run.c: "testinfo.h" is included;
+	(struct testinfo) new fields `args', `comment', `team_comment' are
+	  added. This fields are read from the .inf file, if `use_info'
+	  configuration variable is set;
+	(generate_report) test comment is printed, if available;
+	  command line arguments are printed, if available;
+	  the program input is printed before the program output;
+	(generate_team_report) if team comments are defined for some failed
+	  tests, they are printed after the summary;
+	(run_tests) new configuration variables `use_info', `use_tgz',
+	  `info_dir', `tgz_dir' are supported;
+	  the program start name (argv[0]) is set to ../program, if use_tgz
+	  mode is on;
+	  test information is loaded, if use_info mode is on;
+	  the tgz archive is extracted into the testing directory, if the
+	  use_tgz mode is on;
+	  command line arguments are prepared to be inserted into the log;
+	  the checker is passed extra arguments, if use_info or use_tgz modes
+	  are on;
+	(check_config) the new configuration variables `info_dir', `tgz_dir'
+	  are checked for consistency, if `use_info' or `use_tgz' modes
+	  are activated.
+
+	* makefile: subdirs_all: `checkers' directory is traversed;
+	clean: `checkers' directory is traversed.
+
+	* fileutl.h: copyright notice is updated;
+	(remove_directory_recursively) new function prototype added.
+
+	* files.make: testinfo.[ch] files added.
+
+	* userlist-server.c:
+	(attach_contest_extra) bug: wrong contest_extra array expansion
+	  condition is fixed.
+
+	* testinfo.h, testinfo.c: Initial revision
+
+2003-10-06  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
 2003-10-06  Alexander Chernov  <cher@ispras.ru>
 
 	* html.c: (new_write_user_runs) variant problems are supported;
