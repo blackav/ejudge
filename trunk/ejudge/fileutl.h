@@ -22,7 +22,7 @@
 int   scan_dir(char const *dir, char *result);
 
 /* operation flags */
-enum { SAFE = 1, REMOVE = 2, CONVERT = 4, PIPE = 8 };
+enum { SAFE = 1, REMOVE = 2, CONVERT = 4, PIPE = 8, GZIP = 16 };
 
 int generic_read_file(char **buf, size_t maxsz, size_t *readsz, int flags,
                       char const *dir, char const *name, char const *sfx);
@@ -32,6 +32,9 @@ int generic_copy_file(int sflags,
                       char const *sdir, char const *sname, char const *ssfx,
                       int dflags,
                       char const *ddir, char const *dname, char const *dsfx);
+int generic_file_size(const unsigned char *dir,
+                      const unsigned char *name,
+                      const unsigned char *sfx);
 
 int   clear_directory(char const *path);
 int   make_dir(char const *, int);
