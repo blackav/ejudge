@@ -2531,6 +2531,12 @@ set_defaults(int mode)
           snprintf(testers[i]->error_file, sizeof(testers[i]->error_file),
                    "%s", DFLT_T_ERROR_FILE);
         }
+        if (!tp->check_cmd[0] && probs[tp->problem]->standard_checker[0]) {
+          strcpy(tp->check_cmd, probs[tp->problem]->standard_checker);
+          pathmake4(tp->check_cmd, global->ejudge_checkers_dir,
+                    "/", tp->check_cmd, 0);
+          tp->standard_checker_used = 1;
+        }
         if (!tp->check_cmd[0] && atp && atp->check_cmd[0]) {
           sformat_message(tp->check_cmd, PATH_MAX, atp->check_cmd,
                           global, probs[tp->problem], NULL,
