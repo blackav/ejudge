@@ -34,5 +34,7 @@ void write_judge_report_view(char const *, int);
 void write_team_report_view(char const *, int, int);
 void write_team_source_view(char const *, int, int);
 void write_judge_standings(char const *);
+void write_judge_teams_view(char const *, int);
+void write_judge_one_team_view(char const *, int);
 
 #endif /* __HTML_H__ */
