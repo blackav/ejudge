@@ -1289,7 +1289,7 @@ login_team_user(struct client_state *p, int pkt_len,
       if (c->id == data->contest_id) break;
     }
   }
-  if (!c || c->status != USERLIST_REG_OK || (c->status & USERLIST_UC_BANNED)) {
+  if (!c || c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)) {
     err("%d: not allowed to participate", p->id);
     send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
     return;
@@ -1493,7 +1493,7 @@ login_team_cookie(struct client_state *p, int pkt_len,
       if (c->id == data->contest_id) break;
     }
   }
-  if (!c || c->status != USERLIST_REG_OK || (c->status & USERLIST_UC_BANNED)) {
+  if (!c || c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)) {
     err("%d: not allowed to participate", p->id);
     send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
     return;
