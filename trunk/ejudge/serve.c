@@ -261,7 +261,7 @@ static void
 update_standings_file(int force_flag)
 {
   time_t start_time, stop_time, duration;
-  int p;
+  int p = 0;
 
   run_get_times(&start_time, 0, &duration, &stop_time);
 
