@@ -328,7 +328,7 @@ void userlist_unparse_contests(struct userlist_user *p, FILE *f);
 struct xml_tree *userlist_parse_contests_str(unsigned char const *str);
 int userlist_parse_date(unsigned char const *s, unsigned long *pd);
 int userlist_parse_bool(unsigned char const *str);
-
+unsigned char *userlist_unparse_ip(unsigned long ip);
 
 unsigned char const *userlist_unparse_bool(int b);
 unsigned char *userlist_unparse_date(unsigned long d, int show_null);
