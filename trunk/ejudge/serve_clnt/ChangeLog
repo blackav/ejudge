@@ -1,3 +1,15 @@
+2003-12-21  Alexander Chernov  <cher@ispras.ru>
+
+	* edit_run.c:
+	(serve_clnt_edit_run) new parameter `is_readonly' is added. This
+	  parameter is passed to the server.
+
+2003-12-14  Alexander Chernov  <cher@ispras.ru>
+
+	* edit_run.c:
+	(serve_clnt_edit_run) two new parameters added: `tests', `score' to
+	  allow editing of the corresponding runlog entry fields.
+
 2003-12-04  Alexander Chernov  <cher@ispras.ru>
 
 	* edit_run.c:
