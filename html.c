@@ -133,7 +133,6 @@ write_clar_view(int id, char const *clar_dir,
     fprintf(f, "%s", full_txt_armored);
     fprintf(f, "</pre><hr>");
   }
-
   fclose(f);
 }
 
@@ -179,10 +178,22 @@ write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
   /* write run statistics: show last 15 in the reverse order */
   fprintf(f,"<table border=\"1\"><tr><th>%s</th><th>%s</th>"
           "<th>%s</th>"
-          "<th>%s</th><th>%s</th>"
-          "<th>%s</th><th>%s</th></tr>\n",
+          "<th>%s</th><th>%s</th><th>%s</th>",
           _("Run ID"), _("Time"), _("Size"), _("Problem"),
-          _("Language"), _("Result"), _("Failed test"));
+          _("Language"), _("Result"));
+
+  if (global->score_system_val == SCORE_KIROV) {
+    fprintf(f, "<th>%s</th>", _("Tests passed"));
+  } else {
+    fprintf(f, "<th>%s</th>", _("Failed test"));
+  }
+
+  if (global->team_enable_src_view)
+    fprintf(f, "<th>%s</th>", _("View source"));
+  if (global->team_enable_rep_view)
+    fprintf(f, "<th>%s</th>", _("View report"));
+
+  fprintf(f, "</tr>\n");
 
   for (showed = 0, i = run_get_total() - 1;
        i >= 0 && showed < runs_to_show;
@@ -201,16 +212,27 @@ write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
     lang_str = "???";
     if (langs[lang_id]) lang_str = langs[lang_id]->short_name;
 
-    fputs("<tr>\n", f);
+    fputs("$1<tr>\n", f);
     fprintf(f, "<td>%d</td>", i);
     fprintf(f, "<td>%s</td>", dur_str);
     fprintf(f, "<td>%lu</td>", size);
     fprintf(f, "<td>%s</td>", prob_str);
     fprintf(f, "<td>%s</td>", lang_str);
     fprintf(f, "<td>%s</td>", stat_str);
-    if (test <= 0) fprintf(f, "<td>%s</td>", _("N/A"));
-    else fprintf(f, "<td>%d</td>", test);
-    fputs("\n</tr>\n", f);
+    if (test <= 0) {
+      fprintf(f, "<td>%s</td>", _("N/A"));
+    } else if (global->score_system_val == SCORE_KIROV) {
+      fprintf(f, "<td>%d</td>", test - 1);
+    } else {
+      fprintf(f, "<td>%d</td>", test);
+    }
+    if (global->team_enable_src_view) {
+      fprintf(f, "<td><input type=\"image\" name=\"source_%d\" value=\"%s\" alt=\"view\" src=\"/icons/view_btn.gif\"></td>", i, _("view"));
+    }
+    if (global->team_enable_rep_view) {
+      fprintf(f, "<td><input type=\"image\" name=\"report_%d\" value=\"%s\" alt=\"view\" src=\"/icons/view_btn.gif\"></td>", i, _("view"));
+    }
+    fputs("\n</tr></form>\n", f);
   }
   fputs("</table>\n", f);
 
@@ -317,6 +339,7 @@ write_team_clar(int team_id, int clar_id,
   atxt = alloca(atxt_len + 4);
   html_armor_string(csrc, atxt);
   xfree(csrc);
+
   if (!start_time) time = start_time;
   if (time < start_time) time = start_time;
   duration_str(time - start_time, dur_str, 0);
@@ -366,6 +389,236 @@ write_team_clar(int team_id, int clar_id,
 
 }
 
+#define ALLOCAZERO(a,b) do { if (!XALLOCA(a,b)) goto alloca_failed; XMEMZERO(a,b); } while(0)
+
+static void
+do_write_kirov_standings(FILE *f, int client_flag)
+{
+  unsigned long start_time;
+  unsigned long stop_time;
+  unsigned long cur_time;
+
+  int  t_max, t_tot, p_max, p_tot, r_tot;
+  int *t_ind, *t_rev, *p_ind, *p_rev;
+
+  int i, k, j;
+
+  int **prob_score;
+  int **att_num;
+  int  *tot_score;
+  int  *t_sort, *t_n1, *t_n2;
+
+  /* http header */
+  char header[1024];
+  char dur_str[1024];
+
+  /* Check that the contest is started */
+  start_time = run_get_start_time();
+  stop_time = run_get_stop_time();
+  if (!start_time) {
+    if (global->name[0]) {
+      sprintf(header, "%s &quot;%s&quot; - %s",
+              _("Contest"), global->name, _("team standings"));
+    } else {
+      sprintf(header, "%s", _("Team standings"));
+    }
+
+    if (!client_flag) {
+      fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>\n",
+              global->charset,
+              header, header);
+    } else {
+      fprintf(f, "%s%c", header, 1);
+    }
+    fprintf(f, "<h2>%s</h2>", _("The contest is not started"));
+    if (!client_flag) {
+      fprintf(f, "</body></html>");
+    }
+    return;
+  }
+
+  /* The contest is started, so we can collect scores */
+
+  /* make team index */
+  /* t_tot             - total number of teams in index array
+   * t_max             - maximal possible number of teams
+   * t_ind[0..t_tot-1] - index array:   team_idx -> team_id
+   * t_rev[0..t_max-1] - reverse index: team_id -> team_idx
+   */
+  t_max = teamdb_get_max_team_id() + 1;
+  ALLOCAZERO(t_ind, t_max);
+  ALLOCAZERO(t_rev, t_max);
+  for (i = 1, t_tot = 0; i < t_max; i++) {
+    t_rev[i] = -1;
+    if (!teamdb_lookup(i)) continue;
+    if ((teamdb_get_flags(i) & (TEAM_INVISIBLE | TEAM_BANNED))) continue;
+    t_rev[i] = t_tot;
+    t_ind[t_tot++] = i;
+  }
+
+  /* make problem index */
+  /* p_tot             - total number of problems in index array
+   * p_max             - maximal possible number of problems
+   * p_ind[0..p_tot-1] - index array:   prob_idx -> prob_id
+   * p_rev[0..p_max-1] - reverse index: prob_id -> prob_idx
+   */
+  p_max = max_prob + 1;
+  ALLOCAZERO(p_ind, p_max);
+  ALLOCAZERO(p_rev, p_max);
+  for (i = 1, p_tot = 0; i < p_max; i++) {
+    p_rev[i] = -1;
+    if (!probs[i]) continue;
+    p_rev[i] = p_tot;
+    p_ind[p_tot++] = i;
+  }
+
+  /* calculation tables */
+  /* prob_score[0..t_tot-1][0..p_tot-1] - maximum score for the problem
+   * att_num[0..t_tot-1][0..p_tot-1]    - number of attempts made
+   * tot_score[0..t_tot-1]              - total scores for teams
+   */
+  ALLOCAZERO(prob_score, t_tot);
+  ALLOCAZERO(att_num, t_tot);
+  ALLOCAZERO(tot_score, t_tot);
+  for (i = 0; i < t_tot; i++) {
+    ALLOCAZERO(prob_score[i], p_tot);
+    ALLOCAZERO(att_num[i], p_tot);
+  }
+
+  /* auxiluary sorting stuff */
+  /* t_sort[0..t_tot-1] - indices of teams (sorted)
+   * t_n1[0..t_tot-1]   - first place in interval in case of ties
+   * t_n2[0..t_tot-1]   - last place in interval in case of ties
+   */
+  ALLOCAZERO(t_sort, t_tot);
+  ALLOCAZERO(t_n1, t_tot);
+  ALLOCAZERO(t_n2, t_tot);
+  for (i = 0; i < t_tot; i++) t_sort[i] = i;
+
+  r_tot = run_get_total();
+  for (k = 0; k < r_tot; k++) {
+    int team_id;
+    int prob_id;
+    int status;
+    int tests;
+    int tind;
+    int pind;
+    int score;
+
+    struct section_problem_data *p;
+
+    run_get_record(k, 0, 0, 0, &team_id, 0, &prob_id, &status, &tests);
+    if (team_id <= 0 || team_id >= t_max) continue;
+    if (prob_id <= 0 || prob_id > max_prob) continue;
+    tind = t_rev[team_id];
+    pind = p_rev[prob_id];
+    p = probs[prob_id];
+    if (!p || tind < 0 || pind < 0) continue;
+
+    if (status == RUN_OK) {
+      score = p->full_score - p->run_penalty * att_num[tind][pind];
+      if (score < 0) score = 0;
+      if (score > prob_score[tind][pind]) prob_score[tind][pind] = score;
+      att_num[tind][pind]++;
+    } else if (status == RUN_PARTIAL) {
+      score = p->test_score*(tests-1) - p->run_penalty*att_num[tind][pind];
+      if (score < 0) score = 0;
+      if (score > prob_score[tind][pind]) prob_score[tind][pind] = score;
+      att_num[tind][pind]++;
+    } else if (status == RUN_COMPILE_ERR) {
+      att_num[tind][pind]++;
+    } else {
+      /* something like "compiling..." or "running..." */
+    }
+  }
+
+  /* compute the total for each team */
+  for (i = 0; i < t_tot; i++) {
+    for (j = 0; j < p_tot; j++) {
+      tot_score[i] += prob_score[i][j];
+    }
+  }
+
+  /* sort the teams */
+  for (i = 0; i < t_tot - 1; i++) {
+    int maxind = i, temp;
+    for (j = i + 1; j < t_tot; j++) {
+      if (tot_score[t_sort[j]] > tot_score[t_sort[maxind]])
+        maxind = j;
+    }
+    temp = t_sort[i];
+    t_sort[i] = t_sort[maxind];
+    t_sort[maxind] = temp;
+  }
+
+  /* now resolve ties */
+  for(i = 0; i < t_tot;) {
+    for (j = i + 1; j < t_tot; j++) {
+      if (tot_score[t_sort[i]] != tot_score[t_sort[j]]) break;
+    }
+    for (k = i; k < j; k++) {
+      t_n1[k] = i;
+      t_n2[k] = j - 1;
+    }
+    i = j;
+  }
+
+  /* now print HTML table */
+  cur_time = time(0);
+  if (start_time > cur_time) cur_time = start_time;
+  if (stop_time && cur_time > stop_time) cur_time = stop_time;
+  duration_str(cur_time - start_time, dur_str, 0);
+
+  if (global->name[0]) {
+    sprintf(header, "%s &quot;%s&quot; - %s [%s]",
+            _("Contest"), global->name, _("team standings"), dur_str);
+  } else {
+    sprintf(header, "%s [%s]", _("Team standings"), dur_str);
+  }
+
+  if (!client_flag) {
+    fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>",
+            global->charset,
+            header, header);
+  } else {
+    fprintf(f, "%s%c", header, 1);
+  }
+
+  /* print table header */
+  fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th>",
+          _("Place"), _("Team"));
+  for (j = 0; j < p_tot; j++) {
+    fprintf(f, "<th>%s</th>", probs[p_ind[j]]->short_name);
+  }
+  fprintf(f, "<th>%s</th></tr>", _("Score"));
+
+  /* print table contents */
+  for (i = 0; i < t_tot; i++) {
+    int t = t_sort[i];
+    fputs("<tr><td>", f);
+    if (t_n1[i] == t_n2[i]) fprintf(f, "%d", t_n1[i] + 1);
+    else fprintf(f, "%d-%d", t_n1[i] + 1, t_n2[i] + 1);
+    fputs("</td>", f);
+    fprintf(f, "<td>%s</td>", teamdb_get_name(t_ind[t]));
+    for (j = 0; j < p_tot; j++) {
+      if (!prob_score[t][j]) {
+        fprintf(f, "<td>&nbsp;</td>");
+      } else {
+        fprintf(f, "<td>%d</td>", prob_score[t][j]);
+      }
+    }
+    fprintf(f, "<td>%d</td></tr>", tot_score[t]);
+  }
+
+  fputs("</table>\n", f);
+  if (!client_flag) fputs("</body></html>", f);
+
+  return;
+ alloca_failed: 
+  err(_("alloca failed"));
+  return;
+}
+
 static void
 do_write_standings(FILE *f, int client_flag)
 {
@@ -407,14 +660,14 @@ do_write_standings(FILE *f, int client_flag)
   if (!start_time) {
     if (global->name[0]) {
       sprintf(header, "%s &quot;%s&quot; - %s",
-              _("Contest"), _("team standings"),
-              global->name);
+              _("Contest"), global->name, _("team standings"));
     } else {
       sprintf(header, "%s", _("Team standings"));
     }
 
     if (!client_flag) {
-      fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"%s\"><title>%s</title></head><body><h1>%s</h1>\n", _("text/html"),
+      fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>\n",
+              global->charset,
               header, header);
     } else {
       fprintf(f, "%s%c", header, 1);
@@ -534,15 +787,14 @@ do_write_standings(FILE *f, int client_flag)
 
   if (global->name[0]) {
     sprintf(header, "%s &quot;%s&quot; - %s [%s]",
-            _("Contest"), _("team standings"),
-            global->name, dur_str);
+            _("Contest"), global->name, _("team standings"), dur_str);
   } else {
     sprintf(header, "%s [%s]", _("Team standings"), dur_str);
   }
 
   if (!client_flag) {
-    fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"%s\"><title>%s</title></head><body><h1>%s</h1>",
-            _("text/html"),
+    fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>",
+            global->charset,
             header, header);
   } else {
     fprintf(f, "%s%c", header, 1);
@@ -583,12 +835,10 @@ do_write_standings(FILE *f, int client_flag)
 
   fputs("</table>\n", f);
   if (!client_flag) fputs("</body></html>", f);
-  fclose(f);
 
   return;
  alloca_failed: 
   err(_("alloca failed"));
-  fclose(f);
   return;
 }
 
@@ -602,7 +852,10 @@ write_standings(char const *stat_dir, char const *name)
   sprintf(tbuf, "XXX_%lu%d", time(0), getpid());
   pathmake(tpath, stat_dir, "/", tbuf, 0);
   if (!(f = sf_fopen(tpath, "w"))) return;
-  do_write_standings(f, 0);
+  if (global->score_system_val == SCORE_KIROV)
+    do_write_kirov_standings(f, 0);
+  else
+    do_write_standings(f, 0);
   fclose(f);
   generic_copy_file(REMOVE, stat_dir, tbuf, "",
                     SAFE, stat_dir, name, "");
@@ -628,7 +881,6 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
   if (show_all) show_num = total;
 
   /* header */
-  //fprintf(f, "<p><big>Всего посылок: %d</big></p>\n", total);
   fprintf(f, "<p><big>%s: %d</big></p>\n",
           _("Total submissions"), total);
   fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th>"
@@ -638,10 +890,14 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
           "<th>%s</th><th>%s</th>", 
           _("Run ID"), _("Time"), _("Size"), _("IP"),
           _("Team login"), _("Team name"), _("Problem"),
-          _("Language"), _("Result"), _("Failed test"));
+          _("Language"), _("Result"),
+          (global->score_system_val == SCORE_KIROV)
+          ?_("Tests passed"):_("Failed test"));
   if (master_mode) {
     fprintf(f, "<th>%s</th><th>%s</th><th>%s</th>",
-            _("New result"), _("New test"), _("Change result"));
+            _("New result"),
+            (global->score_system_val == SCORE_KIROV)
+            ?_("New passed"):_("New test"), _("Change result"));
   }
   fprintf(f, "<th>%s</th><th>%s</th></tr>\n",
           _("View source"), _("View report"));
@@ -669,23 +925,42 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
     if (langs[langid]) fprintf(f, "<td>%s</td>", langs[langid]->short_name);
     else fprintf(f, "<td>??? - %d</td>", langid);
     fprintf(f, "<td>%s</td>", statstr);
-    if (test <= 0) fprintf(f, "<td>%s</td>\n", _("N/A"));
-    else fprintf(f, "<td>%d</td>\n", test);
+    if (test <= 0) {
+      fprintf(f, "<td>%s</td>\n", _("N/A"));
+    } else if (global->score_system_val == SCORE_KIROV) {
+      fprintf(f, "<td>%d</td>\n", test - 1);
+    } else {
+      fprintf(f, "<td>%d</td>\n", test);
+    }
 
     if (master_mode) {
-      fprintf(f,
-              "<td><select name=\"stat_%d\">"
-              "<option value=\"\"> "
-              "<option value=\"0\">%s"
-              "<option value=\"1\">%s"
-              "<option value=\"2\">%s"
-              "<option value=\"3\">%s"
-              "<option value=\"4\">%s"
-              "<option value=\"5\">%s"
-              "<option value=\"99\">%s"
-              "</select></td>\n", i,
-              _("ACCEPTED"), _("Compilation"), _("Run-time"),
-              _("Time-limit"), _("Presentation"), _("Wrong"), _("Rejudge"));
+      if (global->score_system_val == SCORE_KIROV) {
+        fprintf(f,
+                "<td><select name=\"stat_%d\">"
+                "<option value=\"\"> "
+                "<option value=\"0\">%s"
+                "<option value=\"1\">%s"
+                "<option value=\"7\">%s"
+                "<option value=\"99\">%s"
+                "</select></td>\n", i,
+                _("OK"), _("Compilation"),
+                _("Partial solution"), _("Rejudge"));
+      } else {
+        fprintf(f,
+                "<td><select name=\"stat_%d\">"
+                "<option value=\"\"> "
+                "<option value=\"0\">%s"
+                "<option value=\"1\">%s"
+                "<option value=\"2\">%s"
+                "<option value=\"3\">%s"
+                "<option value=\"4\">%s"
+                "<option value=\"5\">%s"
+                "<option value=\"99\">%s"
+                "</select></td>\n", i,
+                _("OK"), _("Compilation"), _("Run-time"),
+                _("Time-limit"), _("Presentation"), _("Wrong"),
+                _("Rejudge"));
+      }
 
       fprintf(f,
               "<td><input type=\"text\" name=\"failed_%d\" size=\"2\"></td>",
@@ -727,7 +1002,6 @@ write_judge_allclars(int master_mode, int show_all, FILE *f)
   total = clar_get_total();
   if (show_all) show_num = total;
 
-  //fprintf(f, "<p><big>Всего сообщений: %d</big></p>\n", total);
   fprintf(f, "<p><big>%s: %d</big></p>\n", _("Total messages"), total);
   fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th><th>%s</th>"
           "<th>%s</th>"
@@ -835,6 +1109,100 @@ write_judge_source_view(char const *pk_name, int rid)
 }
 
 void
+write_team_source_view(char const *pk_name, int team, int rid)
+{
+  path_t  path;
+  FILE   *f = 0;
+  path_t  src_base;
+  path_t  src_path;
+  char   *src = 0;
+  char   *html = 0;
+  int     src_len = 0;
+  int     html_len;
+  int     run_team;
+
+  ASSERT(rid >= 0 && rid < run_get_total());
+  pathmake(path, global->pipe_dir, "/", pk_name, 0);
+  if (!(f = sf_fopen(path, "w"))) return;
+
+  run_get_record(rid, 0, 0, 0, &run_team, 0, 0, 0, 0);
+  if (team != run_team) {
+    fprintf(f, "<h2>%s</h2><p>%s</p>",
+            _("Permission denied"),
+            _("You don't have permissions to do that"));
+    goto _cleanup;
+  }
+
+  sprintf(src_base, "%06d", rid);
+  pathmake(src_path, global->run_archive_dir, "/", src_base, 0);
+  if (generic_read_file(&src, 0, &src_len, 0, 0, src_path, "") < 0) {
+    fprintf(f, "<h2>%s</h2><p>%s</p>",
+            _("Server is unable to perform your request"),
+            _("Source file is not found"));
+    goto _cleanup;
+  }
+
+  html_len = html_armored_memlen(src, src_len);
+  html = alloca(html_len + 16);
+  html_armor_text(src, src_len, html);
+  html[html_len] = 0;
+
+  fprintf(f, "<pre>%s</pre>", html);
+
+ _cleanup:
+  if (f) fclose(f);
+  if (src) xfree(src);  
+}
+
+void
+write_team_report_view(char const *pk_name, int team, int rid)
+{
+  path_t  out_path;
+  path_t  report_base;
+  path_t  report_path;
+  FILE   *f;
+  char   *report = 0;
+  char   *html_report = 0;
+  int     report_len;
+  int     html_len;
+  int     run_team;
+  int     prob_id;
+
+  ASSERT(rid >= 0 && rid < run_get_total());
+  pathmake(out_path, global->pipe_dir, "/", pk_name, 0);
+  if (!(f = fopen(out_path, "w"))) return;
+
+  run_get_record(rid, 0, 0, 0, &run_team, 0, &prob_id, 0, 0);
+  if (team != run_team || !probs[prob_id]->team_enable_rep_view) {
+    fprintf(f, "<h2>%s</h2><p>%s</p>",
+            _("Permission denied"),
+            _("You don't have permissions to do that"));
+    goto _cleanup;
+  }
+
+  sprintf(report_base, "%06d", rid);
+  pathmake(report_path,
+           global->team_report_archive_dir, "/", report_base, 0);
+  if (generic_read_file(&report, 0, &report_len, 0, 0, report_path, "") < 0) {
+    fprintf(f, "<h2>%s</h2><p>%s</p>",
+            _("Server is unable to perform your request"),
+            _("Report file is not found"));
+    goto _cleanup;
+  }
+  
+  html_len = html_armored_memlen(report, report_len);
+  html_report = alloca(html_len + 16);
+  html_armor_text(report, report_len, html_report);
+  html_report[html_len] = 0;
+
+  fprintf(f, "<pre>%s</pre>", html_report);
+
+ _cleanup:
+  if (f) fclose(f);
+  if (report) xfree(report);
+}
+
+void
 write_judge_report_view(char const *pk_name, int rid)
 {
   path_t  path;
@@ -879,7 +1247,10 @@ write_judge_standings(char const *pk_name)
 
   pathmake(path, global->pipe_dir, "/", pk_name, 0);
   if (!(f = sf_fopen(path, "w"))) return;
-  do_write_standings(f, 1);
+  if (global->score_system_val == SCORE_KIROV)
+    do_write_kirov_standings(f, 1);
+  else
+    do_write_standings(f, 1);
   fclose(f);
 }
 
