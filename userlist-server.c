@@ -3218,6 +3218,11 @@ cmd_register_contest(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_DEADLINE);
     return;
   }
+  if (c->closed) {
+    CONN_ERR("the contest is closed");
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
 
   /* FIXME: check conditions. What conditions? */
 
