@@ -1,3 +1,28 @@
+2003-07-01  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* userlist_cfg.c: `userdb_file' is a new name for `file' element;
+	`socket_path' is a new name for `socket' element;
+	`l10n_dir' attribute is removed, but `l10n_dir' element is added
+	  instead;
+	`user', `path' attributes are removed.
+
+	* users.c, register.c:
+	added element tag `l10n_dir' and removed attribute `l10n_dir';
+	(err_dupl_elem) a new function to display XML configuration file error;
+	(err_attr_not_allowed) the same as above;
+	(err_empty_elem) the same as above;
+	(err_nested_not_allowed) the same as above;
+	(err_invalid_elem) the same as above;
+	(err_invalid_attn) the same as above;
+	(handle_final_tag) new function to check final elements;
+	(parse_config) `l10n_dir' attribute is removed;
+	  new error reporting functions `err_*' (see above) are used;
+	  parsing of `socket_path' and `contests_dir' now uses
+	  `handle_final_tag' function;
+	  `l10n_dir' element is handled.
+
 2003-06-30  Alexander Chernov  <cher@ispras.ru>
 
 	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
