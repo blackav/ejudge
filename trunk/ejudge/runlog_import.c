@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -70,6 +70,7 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
   int r, i, st, j, k, corr_total, i2, j2, i3, j3, cur_out;
   int min_i, min_j;
   time_t prev_time, cur_time = 0;
+  long prev_nsec;
   int *cur_new_map, *cur_merged_map, *new_cur_map, *new_merged_map;
   int update_flag = 0;
   int min_team_id;
@@ -178,6 +179,7 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
     goto done;
   }
   prev_time = 0;
+  prev_nsec = 0;
   for (i = 0; i < in_entries_num; i++) {
     if (in_entries[i].status == RUN_EMPTY) continue;
     ASSERT(in_entries[i].status <= RUN_MAX_STATUS);
@@ -185,11 +187,14 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
       fprintf(flog, "Run %d time is negative\n", i);
       goto done;
     }
-    if (in_entries[i].timestamp < prev_time) {
+    if (in_entries[i].timestamp < prev_time ||
+        (in_entries[i].timestamp == prev_time
+         && in_entries[i].nsec < prev_nsec)) {
       fprintf(flog, "Run %d time is less than previous run time\n", i);
       goto done;
     }
     prev_time = in_entries[i].timestamp;
+    prev_nsec = in_entries[i].nsec;
     if (!teamdb_lookup(in_entries[i].team)) {
       fprintf(flog, "Run %d team %d is not known\n", i, in_entries[i].team);
       goto done;
@@ -202,6 +207,10 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
     r = in_entries[i].language;
     if (r <= 0 || r > max_lang || !langs[r]) {
       fprintf(flog, "Run %d problem %d is not known\n", i, r);
+      goto done;
+    }
+    if (in_entries[i].nsec < 0 || in_entries[i].nsec >= 1000000000) {
+      fprintf(flog, "Run %d nsec %ld is invalid\n", i, in_entries[i].nsec);
       goto done;
     }
   }
@@ -242,8 +251,11 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
         j++;
         continue;
       }
-      if (cur_time == in_entries[j].timestamp) break;
-      if (cur_time < in_entries[j].timestamp)
+      if (cur_time == in_entries[j].timestamp
+          && cur_entries[i].nsec == in_entries[j].nsec) break;
+      if (cur_time < in_entries[j].timestamp
+          || (cur_time == in_entries[j].timestamp
+              && cur_entries[i].nsec < in_entries[j].nsec))
         i++;
       else
         j++;
@@ -253,13 +265,15 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
     for (; k < in_entries_num; k++) {
       if (in_entries[k].status == RUN_EMPTY) continue;
       if (in_entries[k].timestamp != cur_time) break;
+      if (in_entries[k].timestamp != cur_entries[i].nsec) break;
       if (new_cur_map[k] >= 0) continue;
       if (cur_entries[i].team != in_entries[k].team) continue;
       if (cur_entries[i].problem != in_entries[k].problem) continue;
       if (cur_entries[i].language != in_entries[k].language) continue;
       break;
     }
-    if (k < in_entries_num && in_entries[k].timestamp == cur_time) {
+    if (k < in_entries_num && in_entries[k].timestamp == cur_time
+        && in_entries[k].nsec == cur_entries[i].nsec) {
       /* establish correspondence */
       cur_new_map[i] = k;
       new_cur_map[k] = i;
@@ -432,7 +446,9 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
       j++;
       continue;
     }
-    if (cur_entries[i].timestamp < in_entries[j].timestamp) {
+    if (cur_entries[i].timestamp < in_entries[j].timestamp
+        || (cur_entries[i].timestamp == in_entries[j].timestamp
+            && cur_entries[i].nsec < in_entries[j].nsec)) {
       ASSERT(cur_new_map[i] == -1);
       memcpy(&out_entries[cur_out], &cur_entries[i], sizeof(out_entries[0]));
       out_entries[cur_out].submission = cur_out;
@@ -441,7 +457,9 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
       cur_out++;
       continue;
     }
-    if (cur_entries[i].timestamp > in_entries[j].timestamp) {
+    if (cur_entries[i].timestamp > in_entries[j].timestamp
+        || (cur_entries[i].timestamp == in_entries[j].timestamp
+            && cur_entries[i].nsec > in_entries[j].nsec)) {
       ASSERT(new_cur_map[j] == -1);
       memcpy(&out_entries[cur_out], &in_entries[j], sizeof(out_entries[0]));
       out_entries[cur_out].submission = cur_out;
@@ -454,11 +472,13 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
     /* detect entries with the same timestamp */
     for (i2 = i; i2 < cur_entries_num; i2++) {
       if (cur_entries[i2].status == RUN_EMPTY) continue;
-      if (cur_entries[i2].timestamp != cur_entries[i].timestamp) break;
+      if (cur_entries[i2].timestamp != cur_entries[i].timestamp
+          || cur_entries[i2].nsec != cur_entries[i].nsec) break;
     }
     for (j2 = j; j2 < in_entries_num; j2++) {
       if (in_entries[j2].status == RUN_EMPTY) continue;
-      if (in_entries[j2].timestamp != in_entries[j].timestamp) break;
+      if (in_entries[j2].timestamp != in_entries[j].timestamp
+          || cur_entries[j2].nsec != cur_entries[j].nsec) break;
     }
     while (1) {
       min_team_id = INT_MAX, min_i = -1, min_j = -1;
