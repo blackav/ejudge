@@ -1,3 +1,34 @@
+2001-11-08  Alexander Chernov  <cher@ispras.ru>
+
+	* exec.c:
+	(struct tTask) new fields: termsig, max_stack_size, max_data_size,
+	  max_vm_size, disable_core;
+	(task_New) termsig is SIGTERM by default;
+	(task_DisableCoreDump) a new function, which disables core dumps of
+	  the child process;
+	(task_SetDataSize) a new function, which allows setting maximum
+	  data segment size of the process (does not work on Linux by unknown
+	  reason);
+	(task_SetStackSize) a new function, which allows setting maximum
+	  stack segment size;
+	(task_SetVMSize) a new function, which allows setting the overall
+	  maximum virtual memory size of the process;
+	(task_SetKillSignal) a new function, which allows setting the
+	  signal, which is used to kill the process due to timeout;
+	(task_Start) added support for all the new features described above.
+
+2001-11-07  Alexander Chernov  <cher@ispras.ru>
+
+	* exec.c:
+	(task_Wait) the waiting time must be updated if nanosleep returned
+	  due to signal arrived.
+
+2001-06-23  Alexander Chernov  <cher@ispras.ru>
+
+	* logger.c:
+	Include of <string.h> added to eliminate compiler (gcc 3.0)
+	warnings.
+
 2001-06-16  Alexander Chernov  <cher@ispras.ru>
 
 	* osdeps.c:
@@ -221,6 +252,8 @@
 	Адаптация к новому окружению компиляции.
 
 	* exec.c 6.0, logger.c 6.0, osdeps.c 6.0: New file.
+
+END
 
 	$Id$
 
