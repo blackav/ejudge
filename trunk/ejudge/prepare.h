@@ -184,6 +184,8 @@ struct section_global_data
 
   // decorations
   path_t standings_team_color;
+  path_t standings_virtual_team_color;
+  path_t standings_real_team_color;
 };
 
 struct section_problem_data
