@@ -63,6 +63,7 @@ static unsigned char const * const error_map[] =
   _("the run is read-only"),
   _("team pages quota is exceeded"),
   _("the program is already printed"),
+  _("the session identifier is invalid"),
 };
 #undef _
 
