@@ -40,6 +40,7 @@
 #define _(x) x
 #endif
 
+/* these constants are for old text-based runlog */
 #define RUN_MAX_IP_LEN 15
 #define RUN_RECORD_SIZE 105
 #define RUN_HEADER_SIZE 105
@@ -263,6 +264,27 @@ write_full_runlog_current_version(const char *path)
   return run_fd;
 }
 
+int
+run_set_runlog(int total_entries, struct run_entry *entries)
+{
+  if (total_entries > run_a) {
+    if (!run_a) run_a = 128;
+    xfree(runs);
+    while (total_entries > run_a) run_a *= 2;
+    runs = xcalloc(run_a, sizeof(runs[0]));
+  } else {
+    memset(runs, 0, run_a * sizeof(runs[0]));
+  }
+  run_u = total_entries;
+  if (run_u > 0) {
+    memcpy(runs, entries, run_u * sizeof(runs[0]));
+  }
+  sf_lseek(run_fd, sizeof(struct run_header), SEEK_SET, "run");
+  do_write(run_fd, runs, sizeof(runs[0]) * run_u);
+  ftruncate(run_fd, sizeof(runs[0]) * run_u + sizeof(struct run_header));
+  return 0;
+}
+
 static int
 read_runlog(void)
 {
@@ -350,6 +372,24 @@ run_open(const char *path, int flags)
   } else {
     if (read_runlog() < 0) return -1;
   }
+  return 0;
+}
+
+int
+run_backup(const unsigned char *path)
+{
+  unsigned char *newlog;
+  int i = 1, r;
+  struct stat sb;
+
+  if (!path) ERR_R("invalid path");
+  newlog = alloca(strlen(path) + 16);
+  do {
+    sprintf(newlog, "%s.%d", path, i++);
+  } while (stat(newlog, &sb) >= 0);
+  r = write_full_runlog_current_version(newlog);
+  if (r < 0) return r;
+  close(r);
   return 0;
 }
 
@@ -473,7 +513,7 @@ run_get_record(int runid, time_t *ptime,
                unsigned long *psha1,
                unsigned long *pip, int *ploc,
                int *pteamid, int *plangid, int *pprobid,
-               int *pstatus, int *ptest, int *pscore)
+               int *pstatus, int *ptest, int *pscore, int *pimported)
 {
   if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
 
@@ -487,6 +527,7 @@ run_get_record(int runid, time_t *ptime,
   if (ptest)   *ptest   = runs[runid].test;
   if (pscore)  *pscore  = runs[runid].score;
   if (pip)     *pip     = runs[runid].ip;
+  if (pimported) *pimported = runs[runid].is_imported;
   if (psha1)   memcpy(psha1, runs[runid].sha1, sizeof(runs[runid].sha1));
   return 0;
 }
@@ -820,6 +861,10 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
   }
   if ((mask & RUN_ENTRY_SCORE) && out->score != in->score) {
     out->score = in->score;
+    f = 1;
+  }
+  if ((mask & RUN_ENTRY_IMPORTED) && out->is_imported != in->is_imported) {
+    out->is_imported = in->is_imported;
     f = 1;
   }
 
@@ -1201,6 +1246,44 @@ run_clear_variables(void)
     xfree(vt_table);
   }
   vt_table = 0;
+}
+
+int
+run_write_xml(FILE *f)
+{
+  int i;
+
+  if (!head.start_time) {
+    err("Contest is not yet started");
+    return -1;
+  }
+
+  for (i = 0; i < run_u; i++) {
+    switch (runs[i].status) {
+    case RUN_OK:
+    case RUN_COMPILE_ERR:
+    case RUN_RUN_TIME_ERR:
+    case RUN_TIME_LIMIT_ERR:
+    case RUN_PRESENTATION_ERR:
+    case RUN_WRONG_ANSWER_ERR:
+    case RUN_CHECK_FAILED:
+    case RUN_PARTIAL:
+    case RUN_ACCEPTED:
+    case RUN_IGNORED:
+    case RUN_EMPTY:
+      break;
+    case RUN_VIRTUAL_START:
+    case RUN_VIRTUAL_STOP:
+      err("run_write_xml: cannot yet export virtual contests");
+      return -1;
+    default:
+      err("run_write_xml: refuse to export XML: runs[%d].status == \"%s\"",
+          i, run_status_str(runs[i].status, 0, 0));
+      return -1;
+    }
+  }
+  unparse_runlog_xml(f, &head, run_u, runs);
+  return 0;
 }
 
 /**
