@@ -65,6 +65,7 @@ struct section_global_data
   int    team_enable_rep_view;  /* teams are allowed to view reports? */
   int    disable_clars;         /* clarification requests disabled */
   int    disable_team_clars;    /* team cannot compose a clarification */
+  int    ignore_compile_errors; /* ignore CE result for score calculation */
 
   path_t name;                  /* name of the contest */
   path_t root_dir;
@@ -115,12 +116,6 @@ struct section_global_data
   /* --- server status reporting --- */
   path_t status_dir;            /* server status directory */
   path_t work_dir;              /* subdir for working dirs */
-
-  /* --- server <-> clients interaction --- */
-  path_t pipe_dir;              /* server->client pipes directory */
-  path_t judge_dir;             /* judge->server comm. subdir */
-  path_t judge_cmd_dir;         /* judge->server commands directory */
-  path_t judge_data_dir;        /* judge->server data directory */
 
   /* --- server <-> compile interaction --- */
   path_t compile_dir;           /* common subdirectory */
