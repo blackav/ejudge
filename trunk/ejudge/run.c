@@ -653,7 +653,7 @@ run_tests(struct section_tester_data *tst,
     sprintf(reply_string, "%d %d -1\n", status, failed_test);
   } else if (global->score_system_val == SCORE_KIROV
              || global->score_system_val == SCORE_OLYMPIAD) {
-    int jj;
+    int jj, retcode = RUN_OK;
 
     for (jj = 1; jj <= prb->ntests; jj++) {
       tests[jj].score = 0;
@@ -662,13 +662,18 @@ run_tests(struct section_tester_data *tst,
         score += prb->tscores[jj];
         tests[jj].score = prb->tscores[jj];
       }
+      if (tests[jj].status == RUN_CHECK_FAILED) {
+        retcode = RUN_CHECK_FAILED;
+      } else if (tests[jj].status != RUN_OK && retcode != RUN_CHECK_FAILED) {
+        retcode = RUN_PARTIAL;
+      }
     }
 
     if (!total_failed_tests) score = prb->full_score;
 
     /* ATTENTION: number of passed test returned is greater than actual by 1 */
     sprintf(reply_string, "%d %d %d\n",
-            total_failed_tests > 0?RUN_PARTIAL:RUN_OK,
+            retcode,
             total_tests - total_failed_tests,
             score);
   } else {
