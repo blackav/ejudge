@@ -208,6 +208,7 @@ static char const * const field_map[] =
   "city_en",
   "country",
   "country_en",
+  "languages",
 
   0
 };
@@ -248,6 +249,7 @@ parse_date(unsigned char const *s, unsigned long *pd)
   time_t t;
   struct tm tt;
 
+  memset(&tt, 0, sizeof(tt));
   if (!s) goto failed;
   if (sscanf(s, "%d/%d/%d %d:%d:%d %n", &year, &month, &day, &hour,
              &min, &sec, &n) != 6) goto failed;
