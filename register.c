@@ -87,13 +87,13 @@ enum
     TG_IP,
     TG_SOCKET_PATH,
     TG_CONTESTS_DIR,
+    TG_L10N_DIR,
   };
 enum
   {
     AT_ENABLE_L10N = 1,
     AT_DISABLE_L10N,
     AT_L10N,
-    AT_L10N_DIR,
     AT_SHOW_GENERATION_TIME,
     AT_CHARSET,
     AT_DEFAULT,
@@ -304,6 +304,7 @@ static char const * const tag_map[] =
   "ip",
   "socket_path",
   "contests_dir",
+  "l10n_dir",
 
   0
 };
@@ -314,7 +315,6 @@ static char const * const attn_map[] =
   "enable_l10n",
   "disable_l10n",
   "l10n",
-  "l10n_dir",
   "show_generation_time",
   "charset",
   "default",
@@ -334,6 +334,7 @@ node_alloc(int tag)
   case TG_IP: return xcalloc(1, sizeof(struct ip_node));
   case TG_SOCKET_PATH: return xcalloc(1, sizeof(struct xml_tree));
   case TG_CONTESTS_DIR: return xcalloc(1, sizeof(struct xml_tree));
+  case TG_L10N_DIR: return xcalloc(1, sizeof(struct xml_tree));
     //    return xcalloc(1, sizeof(struct xml_tree));
   default:
     SWERR(("unhandled tag: %d", tag));
@@ -345,6 +346,61 @@ attn_alloc(int tag)
 {
   return xcalloc(1, sizeof(struct xml_attn));
 }
+
+static int
+err_dupl_elem(char const *path, struct xml_tree *t)
+{
+  err("%s:%d:%d: element <%s> may appear only once", path, t->line, t->column,
+      attn_map[t->tag]);
+  return -1;
+}
+static int
+err_attr_not_allowed(char const *path, struct xml_tree *t)
+{
+  err("%s:%d:%d: attributes are not allowed for element <%s>",
+      path, t->line, t->column, attn_map[t->tag]);
+  return -1;
+}
+static int
+err_empty_elem(char const *path, struct xml_tree *t)
+{
+  err("%s:%d:%d: element <%s> is empty",
+      path, t->line, t->column, attn_map[t->tag]);
+  return -1;
+}
+static int
+err_nested_not_allowed(char const *path, struct xml_tree *t)
+{
+  err("%s:%d:%d: nested elements are not allowed for element <%s>",
+      path, t->line, t->column, attn_map[t->tag]);
+  return -1;
+}
+static int
+err_invalid_elem(char const *path, struct xml_tree *tag)
+{
+  err("%s:%d:%d: element <%s> is invalid here", path, tag->line, tag->column,
+      attn_map[tag->tag]);
+  return -1;
+}
+static int
+err_invalid_attn(char const *path, struct xml_attn *a)
+{
+  err("%s:%d:%d: attribute \"%s\" is invalid here", path, a->line, a->column,
+      attn_map[a->tag]);
+  return -1;
+}
+
+static int
+handle_final_tag(char const *path, struct xml_tree *t, unsigned char **ps)
+{
+  if (*ps) return err_dupl_elem(path, t);
+  if (!t->text || !*t->text) return err_empty_elem(path, t);
+  if (t->first_down) return err_nested_not_allowed(path, t);
+  if (t->first) return err_attr_not_allowed(path, t);
+  *ps = t->text; t->text = 0;
+  return 0;
+}
+
 static int
 parse_bool(char const *str)
 {
@@ -357,6 +413,7 @@ parse_bool(char const *str)
       || !strcasecmp(str, "0")) return 0;
   return -1;
 }
+
 static struct config_node *
 parse_config(char const *path)
 {
@@ -399,14 +456,6 @@ parse_config(char const *path)
       err("%s:%d: localization support is not compiled", path, a->line);
       goto failed;
 #endif /* CONF_HAS_LIBINTL */
-    case AT_L10N_DIR:
-#if CONF_HAS_LIBINTL - 0 == 1
-      cfg->l10n_dir = a->text;
-      break;
-#else
-      err("%s:%d: localization support is not compiled", path, a->line);
-      goto failed;
-#endif /* CONF_HAS_LIBINTL */
     case AT_SHOW_GENERATION_TIME:
       if ((cfg->show_generation_time = parse_bool(a->text)) < 0) {
         err("%s:%d: invalid boolean value", path, a->line);
@@ -418,61 +467,33 @@ parse_config(char const *path)
       /* FIXME: check charset for validity */
       break;
     default:
-      err("%s:%d: attribute \"%s\" is invalid here",
-          path, a->line, attn_map[a->tag]);
+      err_invalid_attn(path, a);
       goto failed;
     }
-  }
-
-  if (cfg->l10n == -1) cfg->l10n = 0;
-  if (cfg->l10n && !cfg->l10n_dir) {
-    /* FIXME: the locale dir should be guessed... */
-    err("%s: locale directory (\"l10n_dir\" attribute) is not defined", path);
-    goto failed;
   }
 
   /* process subnodes */
   for (p = cfg->b.first_down; p; p = p->right) {
     switch (p->tag) {
     case TG_SOCKET_PATH:
-      if (cfg->socket_path) {
-        err("%s:%d:%d: <socket_path> tag may be defined only once",
-            path, p->line, p->column);
-        goto failed;
-      }
-      if (p->first_down) {
-        err("%s:%d:%d: nested tags are not allowed",
-            path, p->line, p->column);
-        goto failed;
-      }
-      if (p->first) {
-        err("%s:%d:%d: attributes are not allowed",
-            path, p->line, p->column);
-        goto failed;
-      }
-      cfg->socket_path = p->text;
+      if (handle_final_tag(path, p, &cfg->socket_path) < 0) goto failed;
       break;
     case TG_CONTESTS_DIR:
-      if (cfg->contests_dir) {
-        err("%s:%d:%d: <contests_dir> tag may be defined only once",
-            path, p->line, p->column);
-        goto failed;
-      }
-      if (p->first_down) {
-        err("%s:%d:%d: nested tags are not allowed",
-            path, p->line, p->column);
-        goto failed;
-      }
-      if (p->first) {
-        err("%s:%d:%d: attributes are not allowed",
-            path, p->line, p->column);
-        goto failed;
-      }
-      cfg->contests_dir = p->text;
+      if (handle_final_tag(path, p, &cfg->contests_dir) < 0) goto failed;
       break;
+    case TG_L10N_DIR:
+#if CONF_HAS_LIBINTL - 0 == 1
+      if (handle_final_tag(path, p, &cfg->l10n_dir) < 0) goto failed;
+      break;
+#else
+      err("%s:%d:%d: localization support is not compiled",
+          path, p->line, p->column);
+      goto failed;
+#endif /* CONF_HAS_LIBINTL */
+
     case TG_ACCESS:
       if (cfg->access) {
-        err("%s:%d: <access> tag may be defined only once", path, p->line);
+        err_dupl_elem(path, p);
         goto failed;
       }
       cfg->access = (struct access_node*) p;
@@ -491,8 +512,7 @@ parse_config(char const *path)
           }
           break;
         default:
-          err("%s:%d: attribute \"%s\" is invalid here",
-              path, a->line, attn_map[a->tag]);
+          err_invalid_attn(path, a);
           goto failed;
         }
       }
@@ -552,10 +572,16 @@ parse_config(char const *path)
       }
       break;
     default:
-      err("%s: %d: tag <%s> is invalid here", path, p->line,
-          tag_map[p->tag]);
+      err_invalid_elem(path, p);
       goto failed;
     }
+  }
+
+  if (cfg->l10n == -1) cfg->l10n = 0;
+  if (cfg->l10n && !cfg->l10n_dir) {
+    /* FIXME: the locale dir should be guessed... */
+    err("%s: locale directory (\"l10n_dir\" attribute) is not defined", path);
+    goto failed;
   }
 
   if (!cfg->socket_path) {
