@@ -161,8 +161,6 @@ static unsigned char *client_password;
 static unsigned char *client_name;
 static unsigned int client_user_id;
 
-static int force_recheck_status = 0;
-
 /* form headers */
 static char    form_start_simple[1024];
 static char    form_start_multipart[1024];
@@ -1017,7 +1015,6 @@ start_if_asked(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_START, 0, 0);
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1028,7 +1025,6 @@ stop_if_asked(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_STOP, 0, 0);
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1049,7 +1045,6 @@ update_standings_if_asked(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_UPDATE_STAND, 0, 0);
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1069,12 +1064,10 @@ changedur_if_asked(void)
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_DURATION,
                             &d, sizeof(d));
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
   return;
 
  invalid_dur:
   operation_status_page(-1, "Invalid duration specification", -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1103,12 +1096,10 @@ sched_if_asked(void)
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_SCHEDULE,
                             &sloc, sizeof(sloc));
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
   return;
 
  invalid_time:
   operation_status_page(-1, "Invalid time specification", -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1139,12 +1130,10 @@ change_status_if_asked()
                           PROT_SERVE_RUN_STATUS_SET,
                           0, 0, 0, status, 0, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
   return;
 
  invalid_operation:
   operation_status_page(-1, "Invalid operation", -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1173,12 +1162,10 @@ change_status()
                           PROT_SERVE_RUN_STATUS_SET,
                           0, 0, 0, status, 0, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
-  force_recheck_status = 1;
   return;
 
  invalid_operation:
   operation_status_page(-1, "Invalid operation", -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1205,12 +1192,10 @@ change_problem()
                           PROT_SERVE_RUN_PROB_SET,
                           0, prob_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
-  force_recheck_status = 1;
   return;
 
  invalid_operation:
   operation_status_page(-1, "Invalid operation", -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1237,12 +1222,10 @@ change_language()
                           PROT_SERVE_RUN_LANG_SET,
                           0, 0, lang_id, 0, 0, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
-  force_recheck_status = 1;
   return;
 
  invalid_operation:
   operation_status_page(-1, "Invalid operation", -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1269,12 +1252,10 @@ change_variant()
                           PROT_SERVE_RUN_VARIANT_SET,
                           0, 0, 0, 0, 0, variant, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
-  force_recheck_status = 1;
   return;
 
  invalid_operation:
   operation_status_page(-1, "Invalid operation", -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1301,12 +1282,10 @@ action_run_change_pages()
                           PROT_SERVE_RUN_PAGES_SET,
                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, pages, 0);
   operation_status_page(r, 0, run_id);
-  force_recheck_status = 1;
   return;
 
  invalid_operation:
   operation_status_page(-1, "Invalid operation", -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1333,12 +1312,10 @@ change_user_id()
                           PROT_SERVE_RUN_UID_SET,
                           user_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
-  force_recheck_status = 1;
   return;
 
  invalid_operation:
   operation_status_page(-1, "Invalid operation", -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1361,12 +1338,10 @@ change_user_login()
                           PROT_SERVE_RUN_LOGIN_SET,
                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, user_login);
   operation_status_page(r, 0, run_id);
-  force_recheck_status = 1;
   return;
 
  invalid_operation:
   operation_status_page(-1, "Invalid operation", -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1392,12 +1367,10 @@ change_imported(void)
                           PROT_SERVE_RUN_IMPORTED_SET,
                           0, 0, 0, 0, v, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
-  force_recheck_status = 1;
   return;
 
  invalid_operation:
   operation_status_page(-1, "Invalid operation", -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1423,12 +1396,10 @@ change_hidden(void)
                           PROT_SERVE_RUN_HIDDEN_SET,
                           0, 0, 0, 0, 0, 0, v, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
-  force_recheck_status = 1;
   return;
 
  invalid_operation:
   operation_status_page(-1, "Invalid operation", -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1454,12 +1425,10 @@ change_tests(void)
                           PROT_SERVE_RUN_TESTS_SET,
                           0, 0, 0, 0, 0, 0, 0, v, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
-  force_recheck_status = 1;
   return;
 
  invalid_operation:
   operation_status_page(-1, "Invalid operation", -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1485,12 +1454,10 @@ change_score(void)
                           PROT_SERVE_RUN_SCORE_SET,
                           0, 0, 0, 0, 0, 0, 0, 0, v, 0, 0, 0);
   operation_status_page(r, 0, run_id);
-  force_recheck_status = 1;
   return;
 
  invalid_operation:
   operation_status_page(-1, "Invalid operation", -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1516,12 +1483,10 @@ change_readonly(void)
                           PROT_SERVE_RUN_READONLY_SET,
                           0, 0, 0, 0, 0, 0, 0, 0, 0, v, 0, 0);
   operation_status_page(r, 0, run_id);
-  force_recheck_status = 1;
   return;
 
  invalid_operation:
   operation_status_page(-1, "Invalid operation", -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1713,7 +1678,6 @@ action_submit_run(void)
                             client_ip, prob_id, lang_id, variant,
                             prog_size, prog_data);
   operation_status_page(n, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -1846,6 +1810,70 @@ confirm_judge_suspended(void)
   exit(0);  
 }
 
+#define BITS_PER_LONG (8*sizeof(unsigned long)) 
+
+static void
+confirm_rejudge_displayed(void)
+{
+  unsigned char *run_mask_size_str;
+  unsigned char *run_mask_str, *p;
+  int run_mask_size, n = 0, i;
+  unsigned long *run_mask;
+
+  if (!(run_mask_size_str = cgi_param("run_mask_size")))
+    goto invalid_parameters;
+  if (sscanf(run_mask_size_str, "%d%n", &run_mask_size, &n) != 1
+      || run_mask_size_str[n])
+    goto invalid_parameters;
+  if (run_mask_size <= 0
+      || run_mask_size > server_total_runs / BITS_PER_LONG + 1)
+    goto invalid_parameters;
+
+  run_mask = (unsigned long *) alloca(run_mask_size * sizeof(run_mask[0]));
+  memset(run_mask, 0, run_mask_size * sizeof(run_mask[0]));
+  if (!(run_mask_str = cgi_param("run_mask")))
+    goto invalid_parameters;
+  for (i = 0, p = run_mask_str; i < run_mask_size; i++) {
+    n = 0;
+    if (sscanf(p, "%lx%n", &run_mask[i], &n) != 1) goto invalid_parameters;
+    p += n;
+  }
+  if (*p) goto invalid_parameters;
+
+  set_cookie_if_needed();
+  client_put_header(stdout, 0, 0, global->charset, 1, 0,
+                    "Confirm rejudge displayed runs");
+  printf("<p>%s:\n", _("The following runs will be rejudged"));
+  for (i = 0, n = 0; i < server_total_runs; i++) {
+    if ((run_mask[i / BITS_PER_LONG] & (1 << (i % BITS_PER_LONG)))) {
+      if (n) printf(", ");
+      printf("%d", i);
+      n++;
+    }
+  }
+  printf(".\n<p>");
+  print_refresh_button(_("No"));
+  printf("<p>%s\n", form_start_simple);
+
+  printf("<input type=\"hidden\" name=\"run_mask_size\" value=\"%d\">\n",
+         run_mask_size);
+  printf("<input type=\"hidden\" name=\"run_mask\" value=\"");
+  for (i = 0; i < run_mask_size; i++) {
+    if (i > 0) printf(" ");
+    printf("%lx", run_mask[i]);
+  }
+  printf("\">\n");
+
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+         "</form></p>", ACTION_REJUDGE_DISPLAYED_2,
+         _("Yes, rejudge!"));
+  client_put_footer(stdout, 0);
+  exit(0);
+
+ invalid_parameters:
+  operation_status_page(-1, "Invalid parameter", -1);
+}
+
 static void
 confirm_squeeze(void)
 {
@@ -1913,7 +1941,6 @@ do_contest_reset_if_asked(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_RESET, 0, 0);
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -2012,7 +2039,6 @@ do_suspend_if_asked(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_SUSPEND, 0, 0);
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -2023,7 +2049,6 @@ do_resume_if_asked(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_RESUME, 0, 0);
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -2034,7 +2059,6 @@ action_test_suspend(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_TEST_SUSPEND, 0, 0);
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -2045,7 +2069,6 @@ action_test_resume(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_TEST_RESUME, 0, 0);
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -2056,7 +2079,6 @@ action_print_suspend(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_PRINT_SUSPEND, 0, 0);
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -2067,7 +2089,6 @@ action_print_resume(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_PRINT_RESUME, 0, 0);
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -2078,7 +2099,6 @@ action_set_judgind_mode(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_SET_JUDGING_MODE, 0, 0);
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -2089,7 +2109,6 @@ action_set_accepting_mode(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_SET_ACCEPTING_MODE, 0, 0);
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -2100,7 +2119,6 @@ do_rejudge_all_if_asked(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_REJUDGE_ALL, 0, 0);
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -2111,7 +2129,44 @@ action_judge_suspended(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_JUDGE_SUSPENDED, 0, 0);
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
+}
+
+static void
+action_rejudge_displayed(void)
+{
+  unsigned char *run_mask_size_str;
+  unsigned char *run_mask_str, *p;
+  int run_mask_size, n = 0, i, r;
+  unsigned long *run_mask;
+
+  if (!(run_mask_size_str = cgi_param("run_mask_size")))
+    goto invalid_parameters;
+  if (sscanf(run_mask_size_str, "%d%n", &run_mask_size, &n) != 1
+      || run_mask_size_str[n])
+    goto invalid_parameters;
+  if (run_mask_size <= 0
+      || run_mask_size > server_total_runs / BITS_PER_LONG + 1)
+    goto invalid_parameters;
+
+  run_mask = (unsigned long *) alloca(run_mask_size * sizeof(run_mask[0]));
+  memset(run_mask, 0, run_mask_size * sizeof(run_mask[0]));
+  if (!(run_mask_str = cgi_param("run_mask")))
+    goto invalid_parameters;
+  for (i = 0, p = run_mask_str; i < run_mask_size; i++) {
+    n = 0;
+    if (sscanf(p, "%lx%n", &run_mask[i], &n) != 1) goto invalid_parameters;
+    p += n;
+  }
+  if (*p) goto invalid_parameters;
+
+  open_serve();
+  r = serve_clnt_rejudge_by_mask(serve_socket_fd, SRV_CMD_REJUDGE_BY_MASK,
+                                 run_mask_size, run_mask);
+  operation_status_page(r, 0, -1);
+  return;
+
+ invalid_parameters:
+  operation_status_page(-1, "Invalid parameter", -1);
 }
 
 static void
@@ -2122,7 +2177,6 @@ action_squeeze_runs(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_SQUEEZE_RUNS, 0, 0);
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -2133,7 +2187,6 @@ action_continue(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_CONTINUE, 0, 0);
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -2154,7 +2207,6 @@ action_clear_run(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_CLEAR_RUN, &r, sizeof(r));
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -2249,7 +2301,6 @@ action_reset_filter(void)
   r = serve_clnt_reset_filter(serve_socket_fd, SRV_CMD_RESET_FILTER,
                               client_sid, client_user_id, global->contest_id);
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -2327,7 +2378,6 @@ do_rejudge_problem_if_asked(void)
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_REJUDGE_PROBLEM,
                             &prob, sizeof(prob));
   operation_status_page(r, 0, -1);
-  force_recheck_status = 1;
 }
 
 static void
@@ -2924,6 +2974,12 @@ main(int argc, char *argv[])
     case ACTION_JUDGE_SUSPENDED_2:
       action_judge_suspended();
       break;
+    case ACTION_REJUDGE_DISPLAYED_1:
+      confirm_rejudge_displayed();
+      break;
+    case ACTION_REJUDGE_DISPLAYED_2:
+      action_rejudge_displayed();
+      break;
     case ACTION_REJUDGE_PROBLEM:
       do_rejudge_problem_if_asked();
       break;
@@ -3055,11 +3111,6 @@ main(int argc, char *argv[])
   view_teams_if_asked(0);
   send_reply_if_asked();
   send_msg_if_asked();
-
-  if (force_recheck_status) {
-    client_check_server_status(global->charset, global->status_file, 3, 0);
-    force_recheck_status = 0;
-  }
 
   set_cookie_if_needed();
   if (cur_contest->name) {
