@@ -355,6 +355,8 @@ write_change_status_dialog(FILE *f, unsigned char const *var_name,
   }
 }
 
+#define BITS_PER_LONG (8*sizeof(unsigned long)) 
+
 static void
 write_all_runs(FILE *f, struct user_filter_info *u,
                int priv_level, int sid_mode, unsigned long long sid,
@@ -384,6 +386,8 @@ write_all_runs(FILE *f, struct user_filter_info *u,
   unsigned char *prob_str;
   const unsigned char *imported_str;
   const unsigned char *rejudge_dis_str;
+  unsigned long *displayed_mask;
+  int displayed_size;
 
   if (!filter_expr || !*filter_expr ||
       (u->prev_filter_expr && !strcmp(u->prev_filter_expr, filter_expr))){
@@ -451,6 +455,12 @@ write_all_runs(FILE *f, struct user_filter_info *u,
       has_filter_errors = 1;
     }
   }
+
+  /* create the displayed runs mask */
+  displayed_size = (env.rtotal + BITS_PER_LONG - 1) / BITS_PER_LONG;
+  if (!displayed_size) displayed_size = 1;
+  displayed_mask = (unsigned long*) alloca(displayed_size * sizeof(displayed_mask[0]));
+  memset(displayed_mask, 0, displayed_size * sizeof(displayed_mask[0]));
 
   if (!has_parse_errors && !has_filter_errors) {
     list_idx = alloca((env.rtotal + 1) * sizeof(list_idx[0]));
@@ -580,6 +590,8 @@ write_all_runs(FILE *f, struct user_filter_info *u,
       rid = list_idx[i];
       ASSERT(rid >= 0 && rid < env.rtotal);
       pe = &env.rentries[rid];
+
+      displayed_mask[rid / BITS_PER_LONG] |= (1 << (rid % BITS_PER_LONG));
 
       if (pe->status == RUN_EMPTY) {
         run_status_str(pe->status, statstr, 0);
@@ -858,6 +870,19 @@ write_all_runs(FILE *f, struct user_filter_info *u,
     html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
             ACTION_JUDGE_SUSPENDED_1, _("Judge suspended runs"));
+    fprintf(f, "</form></td><td>\n");
+
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
+    fprintf(f, "<input type=\"hidden\" name=\"run_mask_size\" value=\"%d\">\n",
+            displayed_size);
+    fprintf(f, "<input type=\"hidden\" name=\"run_mask\" value=\"");
+    for (i = 0; i < displayed_size; i++) {
+      if (i > 0) fprintf(f, " ");
+      fprintf(f, "%lx", displayed_mask[i]);
+    }
+    fprintf(f, "\">\n");
+    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+            ACTION_REJUDGE_DISPLAYED_1, _("Rejudge displayed runs"));
     fprintf(f, "</form></td><td>\n");
 
     html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
