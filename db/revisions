@@ -225,3 +225,6 @@ run.c 1 18 1882696
 pathutl.c 1 7 351825
 submit.c 1 8 240778
 sformat.c 1 3 784971
+run.c 1 19 1883567
+win32/exec.c 1 10 1430672
+win32/osdeps.c 1 20 1470698
