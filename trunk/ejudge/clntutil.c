@@ -62,6 +62,7 @@ int           server_standings_frozen;
 int           server_score_system;
 int           server_clients_suspended;
 int           server_download_interval;
+int           server_is_virtual;
 
 unsigned long client_cur_time;
 
@@ -238,6 +239,7 @@ client_check_server_status(char const *charset, char const *path, int lag)
   server_score_system = status.score_system;
   server_clients_suspended = status.clients_suspended;
   server_download_interval = status.download_interval;
+  server_is_virtual = status.is_virtual;
   client_cur_time = time(0);
 
   if (client_cur_time>=server_cur_time
@@ -284,20 +286,24 @@ client_print_server_status(int priv_level,
   puts("<hr>");
   if (anchor) printf("<a name=\"%s\">\n", anchor);
   printf("<h2>%s</h2>", _("Server status"));
-  if (server_stop_time) {
-    printf("<p><big><b>%s</b></big></p>", _("The contest is over"));
-  } else if (server_start_time && server_standings_frozen) {
-    printf("<p><big><b>%s</b></big></p>",
-           _("The contest is in progress (standings are frozen)"));    
-  } else if (server_start_time) {
-    printf("<p><big><b>%s</b></big></p>", _("The contest is in progress"));
-  } else {
-    printf("<p><big><b>%s</b></big></p>", _("The contest is not started"));
+  if (!server_is_virtual) {
+    if (server_stop_time) {
+      printf("<p><big><b>%s</b></big></p>", _("The contest is over"));
+    } else if (server_start_time && server_standings_frozen) {
+      printf("<p><big><b>%s</b></big></p>",
+             _("The contest is in progress (standings are frozen)"));    
+    } else if (server_start_time) {
+      printf("<p><big><b>%s</b></big></p>", _("The contest is in progress"));
+    } else {
+      printf("<p><big><b>%s</b></big></p>", _("The contest is not started"));
+    }
   }
   if (server_clients_suspended) {
     printf("<p><big><b>%s</b></big></p>", _("Team requests are suspended"));
   }
   puts("");
+
+  if (server_is_virtual && priv_level == 0) return 0;
 
   if (priv_level == PRIV_LEVEL_ADMIN) puts(form_start);
   puts("<table border=\"0\">");
@@ -360,7 +366,7 @@ client_print_server_status(int priv_level,
   }
   puts("</tr>");
 
-  if (server_start_time && server_duration) {
+  if (server_start_time && server_duration && !server_is_virtual) {
     client_time_to_str(str_end_time, server_start_time + server_duration);
     printf("<tr><td>%s:</td><td>%s</td>", _("End time"), str_end_time);
     if (priv_level == PRIV_LEVEL_ADMIN) puts("<td>&nbsp;</td><td>&nbsp;</td>");
