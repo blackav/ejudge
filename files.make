@@ -25,6 +25,7 @@ CFILES=\
  clntutil.c\
  compile.c\
  contests.c\
+ edit-userlist.c\
  expat_iface.c\
  html.c\
  idmap.c\
