@@ -76,8 +76,8 @@ distclean: clean
 install:
 	mkdir -p "${DESTDIR}${libexecdir}/ejudge"
 	for i in ${TARGETALLWAYS}; do install -m 755 $$i "${DESTDIR}${libexecdir}/ejudge"; done
-	[ x"${NO_KERNEL}" = x ] && install -m 755 capexec "${DESTDIR}${libexecdir}/ejudge"
-	[ x"${NO_KERNEL}" = x -a x"${STATIC}" = x ] && install -m 755 libdropcaps.so "${DESTDIR}${libexecdir}/ejudge"
+	if [ x"${NO_KERNEL}" = x ]; then install -m 755 capexec "${DESTDIR}${libexecdir}/ejudge"; fi
+	if [ x"${NO_KERNEL}" = x -a x"${STATIC}" = x ]; then install -m 755 libdropcaps.so "${DESTDIR}${libexecdir}/ejudge"; fi
 
 bpcemu2: bpcemu2.o
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
