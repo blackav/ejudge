@@ -1985,7 +1985,7 @@ cmd_priv_command_0(struct client_state *p, int len,
 
     /* FIXME: we need to reset all the components (compile, serve) as well */
     /* reset run log */
-    run_reset();
+    run_reset(global->contest_time);
     contest_duration = global->contest_time;
     run_set_duration(contest_duration);
     clar_reset();
@@ -3367,7 +3367,6 @@ main(int argc, char *argv[])
     err("invalid score system for virtual contest");
     return 1;
   }
-  if (global->virtual && run_build_virtual_table() < 0) return 1;
   if (clar_open(global->clar_log_file, 0) < 0) return 1;
   i = do_loop();
   if (i < 0) i = 1;
