@@ -1,7 +1,7 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
-Version 2.1.33 (20041029)
+Version 2.1.34 (20050108)
 =========================
 If no bugs are found in this release, the next release (which
 will be identical or nearly identical to the current release)
@@ -10,6 +10,631 @@ system will be started. The 2.1 branch will be terminated. All
 the support work will go to 2.2 branch, and all the new
 development will go to the future development branch 2.3.
 
+This version fixes several severe bugs and adds a few
+improvements to all the programs of the ejudge system. A several
+new programs are implemented, in particular, a program for
+controlling a contest from the command line `serve-cmd' is
+implemented.
+
+Work on porting the `compile' and the `run' programs to Win32
+platform is started. The server part of the system (i.e.
+userlist-server, serve and other programs) still work only on
+Linux operating system. However, porting of the `compile' and
+`run' programs will allow making available to participants all
+programming systems and languages, which are available on the
+Windows platform. A computer running the Windows operating
+system will be necessary for compiling and testing
+Windows-specific submissions, and one or more computers running
+the Linux OS will be necessary to run the server part and for
+compiling and testing Linux-specific submissions. The porting
+effort is expected to be completed in the next release of the
+ejudge system.
+
+configure
+---------
+A new option `--enable-super-serve-socket' is added. This option
+allows setting the default path to the command socket of the
+`super-serve' program. From this version of the `ejudge' system
+the `super-serve' program accepts control commands via this
+socket like the `userlist-server' and the `serve' programs. The
+current version of the `ejudge' system implements only a limited
+set of control commands, and this feature is not recommended for
+use. Complete support for this feature is expected in the next
+version of the `ejudge' system.
+
+ejudge-setup
+------------
+Editing of the path to the `super-serve' command socket is
+supported (see the `--enable-super-serve-socket' of the
+`configure' script above).
+
+serve-cmd
+---------
+This new program allows controlling the contest server `serve'
+from the command line. A limited set of control commands is
+implemented in the current version, as compared to the complete
+set of commands available using the `master' CGI program.
+
+The `serve-cmd' program supports the following control commands:
+serve-cmd CONTEST-ID login SESSION-ID-FILE LOGIN PASSWORD
+          This command must be used to log into the contest
+          server. The command must be performed before any other
+          operation. CONTEST-ID is the contest identifier (an
+          integer number). SESSION-ID-FILE is the name of the
+          file to store the session identifier (cookie). The
+          correct session identified file must be specified in
+          all other commands, as described below.
+          LOGIN - is the login of the user, PASSWORD - is the
+          user password. The user must have MASTER_LOGIN or
+          JUDGE_LOGIN capability bits set for the specified
+          contest.
+serve-cmd CONTEST-ID logout SESSION-ID-FILE
+          This command ends the session. After this command the
+          session identifier stored in the SESSION-ID-FILE file
+          become invalid. A session identifier is valid for 24
+          hours after the login time, the session identifier
+          became invalid when expired.
+serve-cmd CONTEST-ID write-xml-runs SESSION-ID-FILE
+          This command outputs to the standard output the run
+          log in the internal XML format. See the description of
+          the "write XML runs" commands of the `master' CGI
+          program for further details.
+serve-cmd CONTEST-ID export-xml-runs SESSION-ID-FILE
+          This command outputs to the standard output the run
+          log in the external XML format. See the description of
+          the "export XML runs" command of the `master' CGI
+          program for further details.
+serve-cmd CONTEST-ID dump-runs SESSION-ID-FILE
+          This command outputs to the standard output the run
+          log in the CSV format, i. e. each line of the output
+          is one record, and the fields are separated with ';'
+          (semicolon). See the description of the "dump XML
+          runs" command of the `master' CGI program for further
+          details.
+serve-cmd CONTEST-ID soft-update-stand SESSION-ID-FILE
+          This command updates the current standings table. The
+          fog period (i. e. the specified period before and
+          after the contest end) is supported. The command
+          performs no operation during the fog period. This
+          command should be used after importing new runs using
+          the `import-xml-runs' command (see below).
+serve-cmd CONTEST-ID import-xml-runs SESSION-ID-FILE XML-FILE
+          This command imports new runs into the running
+          contest. XML-FILE is the file name with run log in XML
+          format (either external or internal). See the
+          description of the "import XML runs" command of the
+          `master' CGI program for further details. Note, that
+          the `import-xml-runs' command fails if the running
+          contest is having runs being compiled or tested.
+serve-cmd CONTEST-ID dump-source SESSION-ID-FILE RUN-ID
+          This command outputs to the standard output the source
+          code for the specified run RUN-ID.
+serve-cmd CONTEST-ID dump-report SESSION-ID-FILE RUN-ID
+          This command outputs to the standard output the
+          judge's protocol of testing the run RUN-ID.
+serve-cmd CONTEST-ID dump-team-report SESSION-ID-FILE RUN-ID
+          This command outputs to the standard output the team's
+          protocol of testing the run RUN-ID.
+serve-cmd CONTEST-ID dump-master-runs SESSION-ID-FILE FILTER-EXPR FIRST-RUN LAST-RUN
+          This command outputs to the standard output the runs
+          satisfying the specified filter expression as on the
+          main page of the `master' or `judge' CGI program.
+          FILTER-EXPR is a filter expression (described in the
+          corresponding section of the documentation), FIRST-RUN
+          is the number of the first run, LAST-RUN is the number
+          of the last run. The runs satisfying the given filter
+          expression are printed in the CSV format, i. e. each
+          record occupies one line, and the record's fields are
+          separated with '&'. This field is used because it is
+          not allowed in all the field values. The output record
+          has the following fields:
+          [0]  run_id
+          [1]  imported_flag
+          [2]  hidden_flag
+          [3]  read_only_flag
+          [4]  absolute_time
+          [5]  absolute_time_nsec
+          [6]  time_from_start
+          [7]  ip_address
+          [8]  size
+          [9]  hash_value
+          [10] user_id
+          [11] user_login
+          [12] user_name
+          [13] problem
+          [14] variant
+          [15] language
+          [16] language_suffix
+          [17] status_num
+          [18] status_str
+          [19] tests_passed/failed_test
+          [20] score_gained
+          [21] base_score
+          [22] score_multiplier
+          [23] attempt
+          [24] run_penalty
+          [25] date_penalty
+          [26] score_adjustment
+
+serve-control
+-------------
+A new CGI program for controlling the `super-serve' program.
+The `serve-control' program uses the control socket of the
+`super-serve' program for interaction like `master' program uses
+the control socket of the contest server `serve'. The default
+path to the `super-serve' control socket is specified using the
+`--enable-super-serve-socket' option of the `configure' script.
+In the current version of the `ejudge' system only limited
+functionality is implemented in `super-serve' and
+`serve-control', thus this program is not yet recommented for
+use. Currently only viewing functions are (partially)
+implemented.
+
+A user must have MASTER_LOGIN or JUDGE_LOGIN capability bit set
+in the `ejudge.xml' global configuration file in order to have
+capability to use `serve-control' program.
+
+slice-userlist
+--------------
+A new program, which builds a "slice" of the user database by
+the specified set of contests. The program has usage as follows:
+slice-userlist [ -i CONTEST-ID ]... [CONFIG-FILE]
+CONFIG-FILE is the path to the `ejudge.xml' global configuration
+file. If this path is the default path, as specified in the
+`--enable-ejudge-xml' option of the `configure' script, the path
+may be omitted. CONTEST-ID is the contest identifier. The `-i'
+option may be specified several times. In the latter case the
+"slice" of the user database will contain all the users
+registered to any of the specified contests. The slice is
+printed to the standard output stream. An example of use: 
+slice-userlist -i 10 -i 12
+
+Note, that the user database file is used for building of slice.
+The user database file may be slightly out of date as compared
+to the latest version of the database in the memory of the
+`userlist-server' program.
+
+run
+---
+A bug is fixed, which caused an abnormal termination of the
+`run' program because of "out-of-memory" condition. This
+happened if a program being tested generated huge output to the
+standard output or standard error (the size of the redirected
+output file must be 10 megabytes or more depending on the number
+of tests and the virtual memory size). In the previous version
+of the `ejudge' system all the output files were read into
+memory and then written (or skipped) to the testing protocol
+files. In the current version only files, which sizes do not
+exceed the maximal file size as specified by the
+`max_file_length' global configuration variable of the
+`serve.cfg' contest configuration file, are read into memory.
+
+serve
+-----
+When the scheduled contest start time is set, but the contest
+server `serve' is down at the scheduled start time, the actual
+contest start time is set to the scheduled start time anyway. In
+the previous version the actual contest start time was set to
+the time when the `serve' contest server was started for the
+first time after the scheduled start time.
+
+serve
+-----
+Multiple bugs in the runlog merging code (import XML logs
+command) are fixed. In particular, a bug, which caused removal
+of all the archive run sources is fixed. A bug is fixed, which
+caused duplicating runs in the runlog.
+
+serve,master,judge
+------------------
+A new run status RUN_DISQUALIFIED is added. This status may be
+used, for example, for banning "cheating" submits. The
+DISQUALIFIED status is similar to the IGNORED status, but during
+score calculation DISQUALIFIED status is considered as
+unsuccessfull submit and is penalized as any other unsuccessfull
+submit (the run penalty is specified by the `run_penalty'
+problem configuration variable of the `serve.cfg' contest
+configuration file. The RUN_DISQUALIFIED status is denoted as
+`DQ' in filter expressions, for example, all disqualified
+submits may be listed by specifying the followin filter
+expression: "status == DQ".
+
+contest.xml
+-----------
+Three new elements are added to the `contest.xml' configuration
+file format: <serve_control_access>, <run_user>, <run_group>.
+New attribute "invisible" is added to the <contest> element.
+
+The "invisible" attribute of the <contest> element may take
+boolean values "yes" or "no". If the attribute value is "yes",
+such contest is not displayed in the contest list of the
+`serve-control' main page. The default value of the "invisible"
+attribute is "no".
+
+The <serve_control_access> element allows specifying limitation
+on IP-addresses, which are allowed for the `serve-control'
+program to manage this contest.
+
+The <run_user> element allows specifying the system (Linux) used
+id, under which the `run' program is run when the contest is
+managed by the `super-serve' program. The <run_group> element
+allows specifying the system (Linux) group id for the `run'
+program. If <run_user> or <run_user> element is not specified,
+the values of the corresponding <serve_user> or <serve_group>
+elements is used. If the values of the latter elements are not
+specified as well, the `run' program is started using the
+current user and/or group id of the `super-serve' program.
+
+serve
+-----
+A bug is fixed, which prevented comparing runs, which were
+stored compressed in the archive directory. In the previous
+version "Compare runs" operation failed with the "System call
+failed" error.
+
+userlist.xml
+------------
+A new attribute "privileged" is added to the <user> element of
+the user description. The attribute may take boolean values
+"yes" or "no". The default value is "no". If the attribute is
+set to "yes", the corresponding user is a privileged user.
+Special capability bits are required to perform operation with
+privileged users. For example, in order to edit the registration
+data of regular users the EDIT_USER capability bit is required,
+but for editing the registration data of a privileged user the
+PRIV_EDIT_USER capability bit is required.
+
+edit-userlist
+-------------
+Editing of the "privileged" attribute value is supported (see
+above). 
+
+userlist-server
+---------------
+Editing of the "privileged" attribute value is supported. An
+ordinary user (which has the "privileged" attribute not set)
+cannot edit the "privileged" attribute. A privileged user may
+only set the attribute value to "yes", but cannot reset the
+value to "no".
+
+ejudge.xml
+----------
+New elements are added to the global ejudge configuration file
+`ejudge.xml'. The element <super_serve_socket> allows specifying
+the path to the `super-serve' control socket (see above), the
+<super_serve_user> allows specifying the system (Linux) user id
+under which the `super-serve' program will be run,
+<super_serve_group> allows specifying the system (Linux) group
+id under which the `super-serve' program will be run, the
+<userlist_user> element allows specifying the system (Linux)
+user id for the `userlist-server' program, and the
+<userlist_group> element allows specifying the system (Linux)
+group id for the `userlist-server' program. In the current
+version of the ejudge system changing of the user and group id
+in the `super-serve' and `userlist-server' programs is not
+supported, so the four latter elements are ignored.
+
+serve,master,judge
+------------------
+New field `score_adj' is added to the run log. This field is
+used in the contests in the KIROV or OLYMPIAD scoring systems.
+The field stores additional adjustment to the score gained for
+this run after automatic testing. The `score_adj' field may take
+integer values in range from -128 to 127 (1 signed byte). For
+example, if after automatic testing a run gained 50 points, and
+the value of the `score_adj' field is equal to -20 points, the
+run gains 30 points, this number of points is then penalized for
+previous runs or time of submit.
+
+If the value of `score_adj' is positive, and after adding it to
+the testing score the resulting score is greater than the
+maximal score for the problem as specified in the `full_score'
+problem configuration variable, the resulting score is truncated
+to the value of the `full_score' configuration variable.
+
+A new problem configuration variable `score_multiplier' is added
+to the `serve.cfg' contest configuration file. This variable
+allows specifying the coefficient, on which the score stored in
+the `score' field of the run record is multiplied. The default
+value of the `score_multiplier' variable is 1.
+
+Therefore, the overall score for a run in a KIROV or OLYMPIAD
+contest is calculated using the following formula:
+S = I * M - A * P + D + J
+here `I' is the original score for the run as stored in the
+`score' field of the runlog record (usually it is the score
+gained after automatic testing of the submit). Note, that if the
+run status is OK, and the `variable_full_score' problem
+configuration variable is not set for the problem of the run the
+`I' value is always taken as the value of the `full_score'
+problem configuration variable, i.e. the value of the `score'
+field is actually ignored. `M' is the score multiplier as
+specified in the `score_multiplier' problem configuration
+variable (default value is 1). `A' is the number of the previous
+attempts for this problem by this user. `P' is the penalty for
+one run as specified by the `run_penalty' problem configuration
+variable. `D' is the date penalty as specified by the
+`date_penalty' problem configuration variable. `J' is an
+additional score adjustment as specified in the `score_adj'
+field of the run record. The resulting value `S' cannot be
+greater than the value of the `full_score' problem configuration
+variable (in this case `S' is set to the value of the
+`full_score' variable) or cannot be less than 0 (in this case
+`S' is set to 0).
+
+serve,master,judge,team
+-----------------------
+In the KIROV or OLYMPIAD scoring system in the "score" column of
+the user submits table the formula which is used for calculation
+of the overall score for the run is displayed. The formula is
+displayed in one of the following two forms:
+S
+(i.e. just the score), if
+M == 1 && (A == 0 || P == 0) && D == 0 && J == 0, i.e. when the
+original score `I' is not modified. The second form is the full
+form: 
+S = I [ * M ] [ - A * P ] [ +/- D ] [ +/- J ]
+if M == 1, the corresponding part of the formula is not
+displayed, this rule also works when A * P == 0, D == 0, J == 0.
+
+serve,master,judge
+------------------
+In order to support new features of participant management the
+participant viewing page in `master' and `judge' CGI programs is
+reworked. Instead of the three buttons "Ban", "Make Invisible",
+etc. one link to the participant's detailed information is
+generated.
+
+On the participant's detailed information page the following
+information is displayed: the participant's user identifier,
+login, whether this participant is a privileged user, whether
+this participant is invisible, the change visibility button (if
+the current user, who views the participant details page has
+enough privileges), whether this participant is banned, the
+change ban status button (if the current user has enough
+privileges), whether this participant is locked, the change lock
+status button (if enough privileges), the number of runs
+submitted, the total size of the submits, the number of
+messages, the total size of the messages, the number of printed
+pages, the auxiluary participant's status (see below), the
+change participant's status button (if enough privileges), the
+number of warnings (see below), all the warnings issued to this
+user, the new warning form (if enough privileges).
+
+A new feature of issuing warnings to participants is supported.
+Warnings may be issued for contest rule violations, cheating,
+etc).
+
+In order for user to view the participant list of some contest,
+he must have the capability bits MASTER_LOGIN or JUDGE_LOGIN and
+LIST_CONTEST_USERS set in the contest.xml configuration file. In
+order for user to view the detailed information about a user, he
+must additionally have the capability bit GET_USER set. In order
+to change the participant's parameters (visibility status,
+warnings, auxiluary status) the EDIT_REG capability bit is
+required.
+
+serve
+-----
+A possibility for specifying the auxiluary status of
+participants is implemented. The auxiluary status of a
+participant is a string chosen from the defined in the serve.cfg
+configuration file set. The auxiluary status may be changed on
+the participant's detailed information page.
+
+The total number of auxiluary status entries is defined by the
+`contestant_status_num' global configuration file of the
+`serve.cfg' configuration file. The valid status strings must be
+defined using the `contestant_status_legend' global
+configuration variable. The first status string gets the number
+0, the second - 1, etc. Each participant has initial auxiluary
+status 0, which can be later changed. An example of specifying
+the set of status strings is shown below:
+contestant_status_num = 3
+contestant_status_legend = "Status 0"
+contestant_status_legend = "Status 1"
+contestant_status_legend = "Status 2"
+
+Additionally, for a part of status strings or for all the status
+strings HTML attributes may be specified. These attributes are
+assigned to the participant's row in the contest standings. To
+specify HTML attributes the `contestant_status_row_attr' global
+configuration variable is used. The variable may be undefined in
+the configuration file (in this case no HTML attributes are
+specified to the rows). If the variable is defined in the
+configuration file, the HTML attributes must be defined for all
+the status strings. The HTML attributes are specified in the
+same order as the status strings themselves. For example:
+contestant_status_row_attr = ' bgcolor="#ff00ff"'
+contestant_status_row_attr = ""
+contestant_status_row_attr = ' bgcolor="#00ff00"'
+sets the HTML row attribute ` bgcolor="#ff00ff"' for the
+`Status 0' contestant status, the HTML row attribute
+` bgcolor="#00ff00"' for the `Status 2' contestant status, and
+the empty string (i.e. no HTML attribute) for the `Status 1'
+contestant status. Note, that the additional "space" character
+in the attribute values is necessary to separate the <tr> tag of
+the HTML table from the attribute string.
+
+Using the new global variable `stand_show_contestant_status' it
+is possible to add a column with the auxiluary contestant
+status strings to the current standings table. The new global
+configuration variable `stand_contestant_status_attr' may be
+used to specify additional HTML attributes of this column, for
+example:
+stand_show_contestant_status
+stand_contestant_status_attr = ' width = "10%"'
+Note, that the "space" character in the attribute value is
+necessary to separate the <td> tag of the HTML table from the
+attribute string.
+
+serve,master,judge,team
+-----------------------
+Added possibility of issuing warnings to the participants of a
+contest. Each warning is displayed to the user on its personal
+participation page (`team' CGI program) in its beginning. The
+participant may view the primary text of the warning and the
+time of issuing.
+
+If a user has enough privileges to view the detailed information
+about the participant (i.e. the user has the capability bits
+MASTER_LOGIN/JUDGE_LOGIN + LIST_CONTEST_USERS + GET_USER set for
+the contest), on the detailed information page all the warnings
+issued to this participant are displayed. For each warnings the
+following information is displayed: 1) the time of issuing this
+worning, 2) the name of a privileged user, who issued the
+warning, 3) the IP address of the issuer, 4) the primary warning
+text, 5) the auxiluary warning text, which is not available to
+the participant, but is available to the privileged users.
+
+If the user has the capability bit EDIT_REG set for this
+contest, he can issue warnings. In order to issue a warning, the
+user must specify the primary warning text and may specify the
+auxiluary warning text. Then the "Issue Warning" button should
+be pressed.
+
+If the new global configuration variable
+`stand_show_warn_number' (see below) is set in the `serve.cfg'
+contest configuration file, the current standings table includes
+a column containing the total number of warnings for each
+participant.
+
+serve
+-----
+The new global configuration variable `stand_show_warn_number'
+is added. If this variable is set to non-zero value, in the
+current standings table the column with the total number of the
+warning for each participant is printed. The new global
+configuration variable `stand_warn_number_attr' may be used to
+specify additional HTML attributes of this column, for example:
+stand_show_warn_number
+stand_warn_number_attr = ' width = "5%"'
+Note, that the "space" character in the attribute value is
+necessary to separate the <td> HTML tag and the attribute
+value.
+
+serve
+-----
+The format of the additional participant information file is
+changed to store the warnings and the status of the
+participant. The format is upward compatible with the previous
+versions of the ejudge system. The new elements <warnings>,
+<warning>, <text>, <comment>, <status> and the new attribute
+"ussuer_id", "issuer_ip", "date" for the <warning> element are
+added.
+
+serve
+-----
+When the table of the current standings of non-virtual contests
+is generated the runs with the submit time greater then the
+current time (the "future" runs) are ignored. The "future" runs
+may appear after merging the run logs when the contest has
+several sites and the start time of the contest differs
+significantly from site to site.
+
+serve
+-----
+If some file is absent in the archive directories (the source
+code, the master protocol of testing or the user's protocol of
+testing), the "File not found" error is reported instead of
+"System call failed" upon viewing this file.
+
+serve
+-----
+The new problem configuration variable `personal_deadline' of
+the `serve.cfg' contest configuration file is added. This
+variable allows specifying the deadline for the given problem
+for the given participant. The variable may be used several time
+in one problem definition section, thus setting the personal
+deadlines for several users. The format of the configuration
+variable is as follows:
+LOGIN [DATE [TIME]]
+here LOGIN is the login of the participant, for which the
+deadline is being set, TIME is the optional time of day in the
+HH:MM:SS format, DATE is the date in the YYYY/MM/DD format. If
+the TIME is omitted, the 00:00:00 is used by default. When both
+TIME and DATE are omitted, the deadline is set to 2038/01/19
+00:00:00. The personal deadline has priority over the proble
+deadline as specified in the `deadline' problem configuration
+variable.
+
+serve,master,judge,team
+-----------------------
+The date penalty is shown in the pull-down menu of choosing the
+problem in the submit run dialog along with the deadline for
+this problem.
+
+master
+------
+The "Schedule start time" command now supports both reduced form
+HH:MM as in the previous versions and the full form "YYYY/MM/DD
+hh:mm:ss". Thus, the contest start time may now be not in the
+current day.
+
+serve
+-----
+The new command line option `-f' is added. If this option is
+specified, the old file of the control socket is removed before
+creating the control socket. This option is useful when the
+ejudge system is restarted after crash or unclean computer
+reboot.
+
+The new command line option `-i' is added. If this option is
+specified, all actions for the contest initialization (creation
+of the necessary directories and files) are performed and the
+`serve' exits instead of going into the serve loop.
+
+A bug is fixed, due to which the `serve' program might "hang"
+for some time for all the users, because it was blocked on
+waiting for completing data transfer over a slow connection.
+
+When a privileged command is received over a control socket, the
+correct user identifier in the packet is no longer required,
+because the user identifier is taken from the connection
+information structure in the `serve' program.
+
+userlist-server
+---------------
+The new command line option `-f' is added. If this option is
+specified, the old file of the control socket is removed before
+creating the control socket. This option is useful when the
+ejudge system is restarted after crash or unclean computer
+reboot.
+
+A bug is fixed, due to which the `userlist-server' program might
+"hang" for some time for all the users, because it was blocked
+on waiting for completing data transfer over a slow connection.
+
+The same cookie may be used for privileged login into different
+contests, if a user has enough privileges. In the previous
+version of the ejudge system each cookie was bound to only one
+contest.
+
+If the requiested privilege level during the privileged login is
+higher, than the maximal privilege level for some user (for
+example, the requested privilege level is ADMIN, but the user
+has only JUDGE privilege level), the privilege level is
+decreased to the maximal allowed. In the previous version of the
+ejudge system this situation caused "Permission denied" error.
+
+The contest identifier may be set to 0 during a privileged
+login. Login to the `serve-control' program is assumed in this
+case. The user capabilities are taken from the `ejudge.xml'
+global configuration file.
+
+Random passwords are not generated automatically for invisible,
+banned, locked and privileged users.
+
+run
+---
+A critical error is fixed. The path to the input file in the
+test directory is given to the checker instead of the path to
+the input file in the current (working) directory. This fixes a
+critical error, because the program being tested may (under
+certain conditions) modify the input file.
+
+Version 2.1.33 (20041029)
+=========================
 Support for the Java JDK (JSE) compiler and runtime environment
 is implemented (tested with Sun J2SE 1.4.2 and Sun JSE 1.5.0,
 should work with other compatible implementations). The
