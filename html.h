@@ -70,6 +70,15 @@ void write_priv_standings(FILE *f,
                           unsigned char const *hidden_vars,
                           unsigned char const *extra_args);
 
+struct user_filter_info;
+int write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
+                        int priv_level, int sid_mode, unsigned long long sid,
+                        int first_run, int last_run,
+                        unsigned char const *self_url,
+                        unsigned char const *filter_expr,
+                        unsigned char const *hidden_vars,
+                        unsigned char const *extra_args);
+
 void write_standings_header(FILE *f,
                             int client_flag,
                             int user_id,
@@ -139,7 +148,9 @@ void html_reset_filter(int user_id, unsigned long long session_id);
 void write_runs_dump(FILE *f, const unsigned char *,
                      unsigned char const *charset);
 void write_raw_standings(FILE *f, unsigned char const *charset);
-int write_raw_source(FILE *f, int run_id);
+int write_raw_source(FILE *f, const unsigned char *, int run_id);
+int write_raw_report(FILE *f, const unsigned char *self_url, int run_id,
+                     int team_report_flag);
 
 struct run_entry;
 struct section_problem_data;
@@ -147,7 +158,8 @@ struct section_problem_data;
 int calc_kirov_score(unsigned char *outbuf, size_t outsize,
                      struct run_entry *pe,
                      struct section_problem_data *pr,
-                     int attempts);
+                     int attempts,
+                     int *p_date_penalty);
 void write_html_run_status(FILE *f, struct run_entry *pe,
                            int priv_level, int attempts);
 
