@@ -1,3 +1,230 @@
+2002-12-08  Alexander Chernov  <cher@ispras.ru>
+
+	* filter_test.c, filter_tree.h, filter_tree.c, filter_scan.lex, filter_expr.y:
+	Initial revision
+
+	* makefile:
+	userlist_clnt.c is removed and replaced with libuserlist_clnt.a;
+	clean rule is updated;
+	deps ruls is removed;
+	version.c now depends on OTHERFILES as well;
+	libuserlist_clnt.a rule are added;
+	experimental rules for filter expression parsing are added.
+
+	* files.make: OTHERFILES variable added.
+
+	* files.make:
+	new variable USERLIST_CLNT_CFILES to list all the modules in
+	  userlist_clnt subdirectory;
+	filter_test.c, filter_tree.[ch] modules are added;
+	userlist_clnt.c is removed;
+	userlist_clnt/private.h is added.
+
+	* userlist_cfg.h:
+	(struct userlist_cfg_user_map) a new structure to store the
+	  parsed mapping from the system uids to the local uids;
+	(struct userlist_cfg) `user_map' field is added.
+
+	* userlist_cfg.c: new tags: `user_map', `map';
+	new attributes `system_user', `local_user';
+	(parse_user_map) a new function;
+	(userlist_cfg_parse) <map> element is handled;
+
+	* userlist-server.c:
+	(detach_contest_extra) `vintage' of the shared data is set to the
+	  invalid value just for the client to mention the change;
+	(update_userlist_table) BANNED teams are also added to the table;
+	  0xffff and 0x0000 vintage values are skipped;
+	(build_system_uid_map) a new function, which builds mapping from
+	  the system uids to the local uids;
+	(remove_from_system_uid_map) a new function to remove the local uid
+	  from the mapping;
+	(do_remove_user) the user is also removed from system uid mapping;
+	(set_user_info) `city' and `country' fields are supported;
+	  member's `occupation' field is updated, if changed: bug fixed;
+	(do_list_users) `city' and `country' are reported;
+	(cmd_get_uid_by_pid) a new function to handle ULS_GET_UID_BY_PID
+	  requests from the `serve' process;
+	(process_packet) ULS_GET_UID_BY_PID command is handled;
+	(main) the mapping from the system uids to the local uids is built.
+
+	* serve.c:
+	(get_peer_local_user) a new function to request the connection
+	  credentials from the userlist-server;
+	(cmd_pass_descriptors) connection credentials are requested;
+	(cmd_team_get_archive) connection credentials are requested and
+	  checked;
+	(cmd_team_list_runs) the same as above;
+	(cmd_team_page) the same as above;
+	(cmd_team_show_item) the same as above;
+	(cmd_team_submit_run) the same as above;
+	(cmd_team_submit_clar) the same as above;
+	(check_sockets) function returns, if no file descriptors to wait on;
+	(do_loop) check for exit condition is performed in the beginning
+	  of the main loop;
+	(main) old the teamdb files authentification-related code is
+	  removed.
+
+	* teamdb.c:
+	all the old files-related authentification stuff is removed;
+	userlist-server disconnection is now handled properly;
+	<signal.h> is included;
+	(handler) new function: a temporary handler for user termination
+	  signal, installed for the time of reestablishing server connection;
+	(restore_connection) a new function to restore the lost connection
+	  to the server;
+	(lock_userlist_table) server disconnect is handled properly;
+	(unlock_userlist_table) semop errors are reported, but otherwise
+	  ignored;
+	(teamdb_refresh) termination of `lock_userlist_table' due to
+	  impossibility to restore connection to server is handled;
+	(verify_passwd) removed;
+	(read_fields) removed;
+	(parse_teamdb_flags) removed;
+	(parse_passwd_flags) removed;
+	(unparse_passwd_flags) removed;
+	(teamdb_open) removed;
+	(teamdb_open_client) socket_path is saved for possible reconnection;
+	  obsoleted files authentification stuff is removed;
+	(teamdb_lookup_client) `cached_map == NULL' size is handled;
+	(teamdb_lookup) obsoleted stuff is removed;
+	(teamdb_lookup_login) obsoleted stuff is removed;
+	(teamdb_get_login) obsoleted stuff is removed;
+	(teamdb_get_name) the same;
+	(teamdb_scramble_passwd) always reports "Not supported" error;
+	(teamdb_check_scrambled_passwd) the same;
+	(teamdb_check_passwd) the same;
+	(teamdb_set_scrambled_passwd) the same;
+	(teamdb_get_plain_password) the same;
+	(teamdb_get_flags) BANNED flag may be also returned;
+	(teamdb_write_passwd) always reports "Not supported" error;
+	(teamdb_write_teamdb) the same;
+	(teamdb_get_max_team_id) obsoleted stuff is removed;
+	(teamdb_get_total_teams) the same;
+	(teamdb_is_valid_login) always reports "Not supported" error;
+	(teamdb_is_valid_name) the same;
+	(teamdb_change_login) the same;
+	(teamdb_change_name) the same;
+	(teamdb_toggle_vis) the same;
+	(teamdb_toggle_ban) the same;
+	(teamdb_add_team) the same;
+	(teamdb_transaction) the same;
+	(teamdb_commit) the same;
+	(teamdb_rollback) the same;
+	(save_undo) removed;
+	(teamdb_export_team) obsoleted stuff is removed;
+	(teamdb_regenerate_passwords) server disconnect is handled;
+	(syncronize_team_extra) return immediately, if not connected to server;
+	(teamdb_get_archive_time) `server_conn' is asserted;
+	(teamdb_set_archive_time) `server_conn' is asserted;
+	(teamdb_get_uid_by_pid) a new function to request the local process
+	  credentials by is pid.
+
+	* teamdb.h: 
+	(teamdb_get_uid_by_pid) prototype added.
+
+	* run.c: <termios.h> is included;
+	(generate_team_report) the process exit code is not reported to
+	  the user unless global parameter `report_error_code' is set;
+	(run_tests) terminal state is saved before starting the program
+	  being judged and restored afterwards.
+
+	* register.c:
+	new global variables `user_city', `user_country' to store the
+	  corresponding fields;
+	(field_desc) description of "City", "Country" fields added;
+	(read_user_info_from_server) `user_country', `user_city' are read;
+	(edit_registration_data) the generated HTML is slightly changed.
+
+	* html.c:
+	(do_write_kirov_standings) fully solved problems are printed in bold;
+	  an extra column with the total number of fully solved problems
+	  is printed for each user.
+
+	* expat_iface.c:
+	<reuse/logger.h>, <reuse/xalloc.h> are included this way.
+
+	* edit-userlist.c:
+	(print_help) a new function to print a short help in the bottom line;
+	(vis_err) help is displayed;
+	(okcancel) help is displayed;
+	(yesno) help is displayed;
+	(display_reg_status_menu) help is displayed;
+	(display_role_menu) help is displayed;
+	(display_member_status_menu) help is displayed;
+	(edit_string) help is displayed;
+	(display_user) help is displayed;
+	  new fields `city', `country' are supported;
+	(display_registered_users) the help is displayed via `print_help';
+	(display_contests_menu) help is displayed;
+	(display_user_menu) help is displayed;
+	(display_main_menu) help is displayed.
+
+	* userlist_xml.c:
+	(tag_map) element tags `city', `country' are supported;
+	(tag_sizes) the same as above;
+	(node_free) `city', `country' fields are freed;
+	(do_parse_user) `city', `country' elements are parsed;
+	(unparse_user) `city', `country' elements are unparsed.
+
+	* userlist_clnt.h: 
+	(userlist_clnt_get_uid_by_pid) new prototype added.
+
+	* userlist.h: new tags: USERLIST_T_CITY, USERLIST_T_COUNTRY;
+	new field ids: USERLIST_NN_CITY, USERLIST_NN_COUNTRY;
+	(struct userlist_user) fields `city', `country' are added.
+
+	* userlist.c:
+	(userlist_get_user_field_str) new fields `city' and `country'
+	  are supported;
+	(userlist_set_user_field_str) the same as above;
+	(userlist_delete_user_field) the same as above.
+
+	* team.c: 
+	(main) minor change in the generated HTML text.
+
+	* runlog.c:
+	(read_runlog) when runlog is empty the file version in the header
+	  is set to 1.
+
+	* protocol.h: new server error SRV_ERR_NO_PERMS.
+
+	* protocol.c: new error message: "permission denied".
+
+	* prepare.h, prepare.c:
+	new global parameter `report_error_code' is supported.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* contests.h: new constants CONTEST_F_CITY, CONTEST_F_COUNTRY added.
+
+	* contests.c:
+	(field_map) new userlist user fields `city' and `country' are
+	  handled.
+
+	* .cvsignore: *** empty log message ***
+
+2002-12-06  Alexander Chernov  <cher@ispras.ru>
+
+	* userlist_clnt.c:
+	Removed. All the functions are moved to individual files
+	in userlist_clnt directory.
+
+	* userlist_clnt.h: <string.h> is included;
+	(userlist_clnt_send_packet) new function prototype. It was
+	  previously a static function;
+	(userlist_clnt_recv_packet) new function prototype. The same as
+	  above;
+	(userlist_clnt_do_pass_fd) new function prototype. The same.
+
+	* userlist_proto.h: new request ULS_GET_UID_BY_PID;
+	new reply ULS_UID;
+	new error code ULS_ERR_DISCONNECT;
+	new request structure userlist_pk_get_uid_by_pid;
+	new reply structure userlist_pk_uid.
+
+	* userlist_proto.c: new error code verbose message.
+
 2002-12-03  Alexander Chernov  <cher@ispras.ru>
 
 	* .cvsignore, .cvsignore: *** empty log message ***
