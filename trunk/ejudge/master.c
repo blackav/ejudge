@@ -48,6 +48,7 @@
 
 /* defaults */
 #define DEFAULT_VAR_DIR        "var"
+#define DEFAULT_CONF_DIR       "conf"
 #define DEFAULT_PIPE_DIR       "pipe"
 #define DEFAULT_JUDGE_DIR      "judge"
 #define DEFAULT_JUDGE_CMD_DIR  "cmd"
@@ -67,6 +68,7 @@ struct section_global_data
   path_t contest_name;
   path_t password;
   path_t root_dir;
+  path_t conf_dir;
   path_t var_dir;
   path_t pipe_dir;
   path_t judge_dir;
