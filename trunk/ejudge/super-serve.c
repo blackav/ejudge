@@ -1001,12 +1001,14 @@ do_loop(void)
   return 0;
 }
 
+#if 0
 static void
 print_info(unsigned char const *program_path)
 {
   printf("super-serve %s, compiled %s\n", compile_version, compile_date);
   printf("Usage: %s config-file\n", program_path);
 }
+#endif
 
 int
 main(int argc, char **argv)
