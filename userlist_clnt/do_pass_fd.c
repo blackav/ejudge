@@ -57,8 +57,9 @@ userlist_clnt_do_pass_fd(struct userlist_clnt *clnt,
   val = 0;
   ret = sendmsg(clnt->fd, &msg, 0);
   if (ret < 0) {
+    ret = errno;
     err("sendmsg() failed: %s", os_ErrorMsg());
-    if (errno == EPIPE) return -ULS_ERR_DISCONNECT;
+    if (ret == EPIPE) return -ULS_ERR_DISCONNECT;
     return -ULS_ERR_WRITE_ERROR;
   }
   if (ret != 4) {
