@@ -1,3 +1,82 @@
+2002-01-09  Alexander Chernov  <cher@ispras.ru>
+
+	* sformat.c: copyright notice is updated;
+	"number_io.h" is included instead of "osdeps.h" to import os_snprintf.
+
+	* serve.c, run.c: copyright notice is updated;
+	"number_io.h" is included to import os_snprintf.
+
+	* makefile: copyright notice is updated;
+	number_io.[ch] added to the list of all C and H files;
+	-DR_HAS_LONGLONG added to compiler options;
+	number_io.c is required to compile most of compiled binaries.
+
+	* number_io.h:
+	(os_readdf,os_readdd,os_readdld) prototypes added.
+
+	* number_io.c:
+	(os_readhf,os_readhd,os_readhld) only if endptr == 1, format error
+	  is reported, if there is a garbage after number;
+	(os_readdf,os_readdd,os_readdld) new functions are implemented to
+	  convert floating-point number in decimal character notation into
+	  internal form for floats, doubles and long doubles respectively.
+	  These functions currenly use sscanf, so underflows and overflows
+	  are not properly reported.
+
+2002-01-08  Alexander Chernov  <cher@ispras.ru>
+
+	* number_io.h: (os_readint) moved from `reuse/osdeps';
+	(os_readdouble) moved from `reuse/osdeps';
+	(reuse_strtoll) moved from `reuse/osdeps';
+	(reuse_strtoull) moved from `reuse/osdeps';
+	(os_readll) moved from `reuse/osdeps';
+	(os_readull) moved from `reuse/osdeps';
+	(os_writell) moved from `reuse/osdeps';
+	(os_writeull) moved from `reuse/osdeps';
+	(os_snprintf) moved from `reuse/osdeps';
+	(os_vsnprintf) moved from `reuse/osdeps';
+	(os_writehf) prototype for this new function added;
+	(os_writehd) prototype for this new function added;
+	(os_writehld) prototype for this new function added;
+	(os_readhf) prototype for this new function added;
+	(os_readhd) prototype for this new function added;
+	(os_readhld) prototype for this new function added.
+
+	* number_io.c: (os_readint) moved from `reuse/osdeps';
+	(os_readdouble) moved from `reuse/osdeps';
+	(reuse_strtoll) moved from `reuse/osdeps';
+	(reuse_strtoull) moved from `reuse/osdeps';
+	(os_readll) moved from `reuse/osdeps';
+	(os_readull) moved from `reuse/osdeps';
+	(os_writell) moved from `reuse/osdeps';
+	(os_writeull) moved from `reuse/osdeps';
+	(os_snprintf) moved from `reuse/osdeps';
+	(os_vsnprintf) moved from `reuse/osdeps';
+	(copy_to_buf) a new static helper function to work with limited
+	  buffers;
+	(os_writehf) a new function to convert `float' values to hex strings;
+	(os_writehd) a new function to convert `double' values to hex strings;
+	(os_writehld) a new function to convert `long double' values to hex;
+	(os_readhf) a new function to parse `float' hex strings;
+	(os_readhd) a new function to parse `double' hex strings;
+	(os_readhld) a new function to parse `long double' hex strings.
+
+	* osdeps.h: copyright notice is updated;
+	(os_readint) moved to `reuse/number_io';
+	(os_readdouble) moved to `reuse/number_io';
+	(reuse_strtoll) moved to `reuse/number_io';
+	(reuse_strtoull) moved to `reuse/number_io';
+	(os_readll) moved to `reuse/number_io';
+	(os_readull) moved to `reuse/number_io';
+	(os_writell) moved to `reuse/number_io';
+	(os_writeull) moved to `reuse/number_io';
+	(os_snprintf) moved to `reuse/number_io';
+	(os_vsnprintf) moved to `reuse/number_io'.
+
+2002-01-07  Alexander Chernov  <cher@ispras.ru>
+
+	* number_io.h, number_io.c: Initial revision
+
 2001-12-26  Alexander Chernov  <cher@ispras.ru>
 
 	* osdeps.h:
