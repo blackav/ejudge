@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <zlib.h>
 
 void
 get_uniq_prefix(char *prefix)
@@ -161,6 +162,45 @@ do_write_file(char const *buf, size_t sz, char const *dst, int flags)
   return -1;
 }
 
+static int
+gzip_write_file(const unsigned char *buf, size_t size,
+                const unsigned char *path, int flags)
+{
+  gzFile gz_dst = 0;
+  int wsz, do_conv = 1;
+
+  if (!(gz_dst = gzopen(path, "wb9"))) {
+    err("gzip_write_file: cannot open file `%s'", path);
+    goto cleanup;
+  }
+
+  if ((flags & CONVERT)) {
+    while (size > 0) {
+      if (*buf == '\r') do_conv = 0;
+      if (*buf == '\n' && do_conv) gzputc(gz_dst, '\r');
+      gzputc(gz_dst, *buf);
+      buf++;
+      size--;
+    }
+  } else {
+    while (size > 0) {
+      if ((wsz = gzwrite(gz_dst, (void*) buf, size)) <= 0) {
+        err("gzip_write_file: write error `%s'", path);
+        goto cleanup;
+      }
+      buf += wsz;
+      size -= wsz;
+    }
+  }
+
+  gzclose(gz_dst);
+  return 0;
+
+ cleanup:
+  gzclose(gz_dst);
+  return -1;
+}
+
 int
 generic_write_file(char const *buf, size_t size, int flags,
                    char const *dir, char const *name, char const *sfx)
@@ -187,7 +227,15 @@ generic_write_file(char const *buf, size_t size, int flags,
     }
   }
   info("writing file %s", wrt_path);
-  if ((r = do_write_file(buf, size, wrt_path,flags)) < 0) return r;
+  if ((flags & GZIP)) {
+    r = gzip_write_file(buf, size, wrt_path, flags);
+  } else {
+    r = do_write_file(buf, size, wrt_path,flags);
+  }
+  if (r < 0) {
+    if (!(flags & PIPE)) unlink(wrt_path);
+    return r;
+  }
   if ((flags & SAFE)) {
     pathmake(out_path, dir, "/", "dir", "/", name, sfx, NULL);
     info("Move: %s -> %s", wrt_path, out_path);
@@ -292,6 +340,98 @@ do_alloc_pipe_read_file(char **pbuf, size_t maxsz, size_t *prsz,
   return -1;
 }
 
+static int
+gzip_read_file(char **pbuf, size_t maxsz, size_t *prsz, int flags,
+               const unsigned char *path)
+{
+  int rsz, c, bsz, sz;
+  gzFile gz_src = 0;
+  unsigned char *rbuf;
+  size_t rbuf_a, rbuf_u;
+  unsigned char zbuf[2048];
+
+  if (!(gz_src = gzopen(path, "rb"))) {
+    err("gzip_read_file: cannot open file `%s'", path);
+    goto cleanup;
+  }
+
+  /* flags horored: CONVERT */
+
+  if (maxsz > 1 && *pbuf) {
+    /* read into a fixed buffer */
+    rbuf = (unsigned char*) *pbuf;
+    if ((flags & CONVERT)) {
+      rsz = 0;
+      while (rsz < maxsz - 1 && (c = gzgetc(gz_src)) != EOF) {
+        if (c != '\r') {
+          *rbuf++ = c, rsz++;
+        }
+      }
+      *rbuf = 0;
+      if (c != EOF) {
+        while ((c = gzgetc(gz_src)) != EOF) {
+          if (c != '\r') rsz++;
+        }
+      }
+      if (prsz) *prsz = rsz;
+    } else {
+      bsz = maxsz - 1;
+      sz = 0;
+      while (bsz > 0 && (rsz = gzread(gz_src, rbuf, bsz)) > 0) {
+        rbuf += rsz;
+        sz += rsz;
+        bsz -= rsz;
+      }
+      if (rsz < 0) {
+        err("gzip_read_file: GZIP read error");
+        goto cleanup;
+      }
+      *rbuf = 0;
+      if (!bsz) {
+        while ((c = gzgetc(gz_src)) != EOF) sz++;
+      }
+      if (prsz) *prsz = sz;
+    }
+  } else {
+    rbuf_a = 4096;
+    rbuf_u = 0;
+    rbuf = xmalloc(rbuf_a);
+
+    /* read into a variable-size buffer */
+    if ((flags & CONVERT)) {
+      while ((c = gzgetc(gz_src)) != EOF) {
+        if (c == '\r') continue;
+        if (rbuf_u + 1 == rbuf_a) {
+          rbuf_a *= 2;
+          rbuf = xrealloc(rbuf, rbuf_a);
+        }
+        rbuf[rbuf_u++] = c;
+      }
+    } else {
+      while ((rsz = gzread(gz_src, zbuf, sizeof(zbuf))) > 0) {
+        if (rbuf_u + 1 + rsz >= rbuf_a) {
+          while (rbuf_u + 1 + rsz >= rbuf_a) rbuf_a *= 2;
+          rbuf = xrealloc(rbuf, rbuf_a);
+        }
+        memcpy(rbuf + rbuf_u, zbuf, rsz);
+        rbuf_u += rsz;
+      }
+      /* FIXME: handle read error */
+    }
+
+    rbuf[rbuf_u] = 0;
+    *pbuf = rbuf;
+    if (prsz) *prsz = rbuf_u;
+  }
+
+  if (!gz_src) gzclose(gz_src);
+  return 0;
+
+ cleanup:
+  if (!gz_src) gzclose(gz_src);
+  return -1;
+}
+
 int
 generic_read_file(char **pbuf, size_t maxsz, size_t *prsz, int flags,
                   char const *dir, char const *name, char const *sfx)
@@ -329,7 +469,9 @@ generic_read_file(char **pbuf, size_t maxsz, size_t *prsz, int flags,
     }
   }
   info("reading file %s", read_path);
-  if ((flags & PIPE)) {
+  if ((flags & GZIP)) {
+    r = gzip_read_file(pbuf, maxsz, prsz, flags, read_path);
+  } else if ((flags & PIPE)) {
     if (*pbuf) r = do_fixed_pipe_read_file(pbuf, maxsz, prsz, read_path);
     else r = do_alloc_pipe_read_file(pbuf, maxsz, prsz, read_path);
   } else {
@@ -414,6 +556,131 @@ dumb_copy_file(int sfd, int sf, int dfd, int df)
 }
 
 static int
+gzip_copy_file(int sfd, int sf, int dfd, int df)
+{
+  gzFile gz_src = 0, gz_dst = 0;
+  FILE *f_src = 0, *f_dst = 0;
+  int c, do_conv = 1;
+  unsigned char buf[4096], *p;
+  int sz, wsz;
+
+  /* (sf & CONVERT) do dos->unix conversion sfd - DOS file, dfd - UNIX file */
+  /* (df & CONVERT) vice versa */
+
+  if ((sf & GZIP)) {
+    if (!(gz_src = gzdopen(sfd, "rb"))) {
+      err("gzip_copy_file: cannot attach input stream");
+      goto cleanup;
+    }
+    sfd = -1;
+  }
+  if (sf == CONVERT) {
+    if (!(f_src = fdopen(sfd, "rb"))) {
+      err("gzip_copy_file: cannot attach input stream");
+      goto cleanup;
+    }
+    sfd = -1;
+  }
+  if ((df & GZIP)) {
+    if (!(gz_dst = gzdopen(dfd, "wb9"))) {
+      err("gzip_copy_file: cannot attach output stream");
+      goto cleanup;
+    }
+    dfd = -1;
+  }
+  if (df == CONVERT) {
+    if (!(f_dst = fdopen(dfd, "wb"))) {
+      err("gzip_copy_file: cannot attach output stream");
+      goto cleanup;
+    }
+    dfd = -1;
+  }
+
+  if (sf == (GZIP|CONVERT) && df == GZIP) {
+    while ((c = gzgetc(gz_src)) != EOF) {
+      if (c != '\r') gzputc(gz_dst, c);
+    }
+  } else if (sf == (GZIP|CONVERT) && df == 0) {
+    while ((c = gzgetc(gz_src)) != EOF) {
+      if (c != '\r') putc(c, f_dst);
+    }
+  } else if (sf == GZIP && df == (GZIP | CONVERT)) {
+    while ((c = gzgetc(gz_src)) != EOF) {
+      if (c == '\r') do_conv = 0;
+      if (c == '\n' && do_conv) gzputc(gz_dst, '\r');
+      gzputc(gz_dst, c);
+    }
+  } else if (sf == GZIP && df == CONVERT) {
+    while ((c = gzgetc(gz_src)) != EOF) {
+      if (c == '\r') do_conv = 0;
+      if (c == '\n' && do_conv) putc('\r', gz_dst);
+      putc(c, gz_dst);
+    }
+  } else if (sf == GZIP && df == 0) {
+    while ((sz = gzread(gz_src, buf, sizeof(buf))) > 0) {
+      p = buf;
+      while (sz > 0) {
+        if ((wsz = write(dfd, p, sz)) <= 0) {
+          err("gzip_copy_file: gzip write error");
+          goto cleanup;
+        }
+        p += wsz;
+        sz -= wsz;
+      }
+    }
+    if (sz < 0) {
+      err("gzip_copy_file: GZIP read error: %s", os_ErrorMsg());
+      goto cleanup;
+    }
+  } else if (sf == CONVERT && df == GZIP) {
+    while ((c = getc(f_src)) != EOF) {
+      if (c != '\r') gzputc(gz_dst, c);
+    }
+  } else if (sf == 0 && df == (GZIP|CONVERT)) {
+    while ((c = getc(gz_src)) != EOF) {
+      if (c == '\r') do_conv = 0;
+      if (c == '\n' && do_conv) gzputc(gz_dst, '\r');
+      gzputc(gz_dst, c);
+    }
+  } else if (sf == 0 && df == GZIP) {
+    while ((sz = read(sfd, buf, sizeof(buf))) > 0) {
+      p = buf;
+      while (sz > 0) {
+        if ((wsz = gzwrite(gz_dst, p, sz)) <= 0) {
+          err("gzip_copy_file: gzip write error");
+          goto cleanup;
+        }
+        p += wsz;
+        sz -= wsz;
+      }
+    }
+    if (sz < 0) {
+      err("gzip_copy_file: read error: %s", os_ErrorMsg());
+      goto cleanup;
+    }
+  } else {
+    SWERR(("gzip_copy_file: unhandled case: sf = %d, df = %d", sf, df));
+  }
+
+  if (gz_src) gzclose(gz_src);
+  if (gz_dst) gzclose(gz_dst);
+  if (f_src) fclose(f_src);
+  if (f_dst) fclose(f_dst);
+  if (sfd >= 0) close(sfd);
+  if (dfd >= 0) close(dfd);
+  return 0;
+
+ cleanup:
+  if (gz_src) gzclose(gz_src);
+  if (gz_dst) gzclose(gz_dst);
+  if (f_src) fclose(f_src);
+  if (f_dst) fclose(f_dst);
+  if (sfd >= 0) close(sfd);
+  if (dfd >= 0) close(dfd);
+  return -1;
+}
+
+static int
 do_copy_file(char const *src, int sf, char const *dst, int df)
 {
   int   sfd = -1;
@@ -426,9 +693,17 @@ do_copy_file(char const *src, int sf, char const *dst, int df)
   if ((sfd = sf_open(src, O_RDONLY, 0)) < 0) goto _cleanup;
   if ((dfd = sf_open(dst, O_WRONLY|O_CREAT|O_TRUNC, 0644)) < 0) goto _cleanup;
 
-  /* if conversion requested, use dumb copy method */
-  if ((sf & CONVERT) || (df & CONVERT))
-    return dumb_copy_file(sfd, sf, dfd, df);
+  sf &= (GZIP | CONVERT);
+  df &= (GZIP | CONVERT);
+  if ((sf || df) && sf != df) {
+    /* if compression requested, work differently */
+    if ((sf & GZIP) || (df & GZIP))
+      return gzip_copy_file(sfd, sf, dfd, df);
+
+    /* if conversion requested, use dumb copy method */
+    if ((sf & CONVERT) || (df & CONVERT))
+      return dumb_copy_file(sfd, sf, dfd, df);
+  }
 
   while ((sz = sf_read(sfd, buf, sizeof(buf), src)) > 0) {
     p = buf;
@@ -466,6 +741,11 @@ generic_copy_file(int sflags,
 
   ASSERT(sname);
   ASSERT(dname);
+
+  if ((sflags & CONVERT) && (dflags & CONVERT)) {
+    sflags &= ~CONVERT;
+    dflags &= ~CONVERT;
+  }
 
   if ((sflags & SAFE) || (dflags & SAFE)) {
     get_uniq_prefix(uniq_pfx);
@@ -871,9 +1151,36 @@ remove_directory_recursively(const unsigned char *path)
   return 0;
 }
 
+int
+generic_file_size(const unsigned char *dir,
+                  const unsigned char *name,
+                  const unsigned char *sfx)
+{
+  path_t path;
+  struct stat sb;
+
+  ASSERT(name);
+  if (!sfx) sfx = "";
+  if (!dir || !*dir) {
+    snprintf(path, sizeof(path), "%s%s", name, sfx);
+  } else {
+    snprintf(path, sizeof(path), "%s/%s%s", dir, name, sfx);
+  }
+
+  if (stat(path, &sb) < 0) {
+    err("generic_file_size: stat failed on `%s'", path);
+    return -1;
+  }
+  if (!S_ISREG(sb.st_mode)) {
+    err("generic_file_size: file `%s' is not a regular file", path);
+    return -1;
+  }
+  return sb.st_size;
+}
+
 /**
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "DIR")
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "DIR" "gzFile")
  * End:
  */
