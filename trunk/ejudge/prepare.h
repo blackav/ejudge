@@ -136,6 +136,7 @@ struct section_global_data
   path_t score_system;          /* scoring system */
   int    score_system_val;      /* internal int value */
   int    tests_to_accept;       /* how many tests to accept a submit */
+  int    virtual;               /* 1, if virtual contest */
 
   int    max_file_length;       /* maximal length of the file in reports */
   int    max_line_length;       /* maximal length of line in reports */
@@ -180,6 +181,9 @@ struct section_global_data
   int show_astr_time;
   int ignore_duplicated_runs;
   int report_error_code;
+
+  // decorations
+  path_t standings_team_color;
 };
 
 struct section_problem_data
