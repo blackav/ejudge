@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003,2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -100,6 +100,11 @@ archive_dir_prepare(const unsigned char *base_dir, int serial)
       }
     }
   }
+
+  sprintf(pp, "/%06d", serial);
+  unlink(path);
+  strcat(pp, ".gz");
+  unlink(path);
 
   return 0;
 }
@@ -286,17 +291,28 @@ archive_rename(const unsigned char *dir, FILE *flog,
 
 int
 archive_remove(const unsigned char *base_dir, int serial,
-               const unsigned char *name_prefix, int gzip_preferred)
+               const unsigned char *name_prefix)
 {
-  unsigned char path[PATH_MAX];
+  unsigned char *path, *pp;
+  size_t plen;
 
-  if (archive_make_read_path(path, sizeof(path), base_dir,
-                             serial, name_prefix, gzip_preferred) < 0)
-    return -1;
-  if (unlink(path) < 0) {
-    err("archive_remove: unlink failed for `%s': %s", path, os_ErrorMsg());
-    return -1;
+  if (!name_prefix) name_prefix = "";
+  plen = strlen(base_dir) + strlen(name_prefix) + 128;
+  path = (unsigned char *) alloca(plen);
+
+  if (global->use_dir_hierarchy) {
+    pp = path + make_hier_path(path, plen, base_dir, serial);
+    pp += sprintf(pp, "/%s%06d", name_prefix, serial);
+    unlink(path);
+    strcpy(pp, ".gz");
+    unlink(path);
   }
+
+  pp = path + sprintf(path, "%s/%s%06d", base_dir, name_prefix, serial);
+  unlink(path);
+  strcpy(pp, ".gz");
+  unlink(path);
+
   return 0;
 }
 
