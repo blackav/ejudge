@@ -3,7 +3,7 @@
 #ifndef __CLNTUTIL_H__
 #define __CLNTUTIL_H__
 
-/* Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,9 @@ extern unsigned long server_duration;
 extern unsigned long server_stop_time;
 extern int           server_total_runs;
 extern int           server_total_clars;
+extern int           server_clars_disabled;
+extern int           server_team_clars_disabled;
+extern int           server_standings_frozen;
 
 extern unsigned long client_cur_time;
 extern char          client_pipe_dir[];
