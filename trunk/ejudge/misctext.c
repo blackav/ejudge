@@ -21,6 +21,7 @@
 #include "base64.h"
 
 #include <reuse/logger.h>
+#include <reuse/xalloc.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -138,6 +139,21 @@ int
 html_armor_string(char const *str, char *out)
 {
   return html_armor_text(str, strlen(str), out);
+}
+
+unsigned char *
+html_armor_string_dup(const unsigned char *str)
+{
+  int inlen;
+  int outlen;
+  unsigned char *buf;
+
+  if (!str) str = "";
+  inlen = strlen(str);
+  outlen = html_armored_memlen(str, inlen);
+  buf = (unsigned char*) xmalloc(outlen + 1);
+  html_armor_text(str, inlen, buf);
+  return buf;
 }
 
 char *
