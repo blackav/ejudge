@@ -342,6 +342,7 @@ struct section_problem_data
   struct penalty_info *dp_infos;
 
   char **disable_language;
+  char **checker_env;           /* environment variables for checker */
 };
 
 struct section_language_data
@@ -411,6 +412,7 @@ struct section_tester_data
   path_t check_cmd;             /* checker */
 
   char **start_env;             /* environment variables for start_cmd */
+  char **checker_env;           /* environment variables for checker */
 
   int standard_checker_used;    /* internal: the standard checker is used */
 };
