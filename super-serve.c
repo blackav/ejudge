@@ -626,7 +626,7 @@ start_serve(struct contest_extra *cur,
   } // child ends here
 
   if (!test_mode) {
-    info("contest %d new run process %d", cur->id, pid);
+    info("contest %d new serve process %d", cur->id, pid);
     cur->serve_pid = pid;
     return;
   }
