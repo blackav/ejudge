@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 1.5\n"
-"POT-Creation-Date: 2002-12-14 09:32+0300\n"
+"POT-Creation-Date: 2002-12-14 14:42+0300\n"
 "PO-Revision-Date: 2002-12-14 09:33+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -40,7 +40,7 @@ msgstr ""
 "%s, тест #%d\n"
 "\n"
 
-#: master.c:1161 misctext.c:270 misctext.c:272 serve.c:1272 team.c:472
+#: master.c:1144 misctext.c:270 misctext.c:272 serve.c:1272 team.c:472
 msgid "(no subject)"
 msgstr "(без темы)"
 
@@ -228,11 +228,11 @@ msgstr "Запрос успешно выполнен"
 msgid "Add new member"
 msgstr "Добавить нового члена команды"
 
-#: master.c:690
+#: master.c:673
 msgid "Add new team"
 msgstr "Добавить новую команду"
 
-#: master.c:706
+#: master.c:689
 msgid "Add!"
 msgstr "Добавить!"
 
@@ -244,19 +244,19 @@ msgstr "Руководитель команды"
 msgid "Advisors"
 msgstr "Руководители"
 
-#: master.c:1131
+#: master.c:1114
 msgid "Answer: NO"
 msgstr "Ответ: НЕТ"
 
-#: master.c:1131
+#: master.c:1114
 msgid "Answer: No comments"
 msgstr "Ответ: Без комментариев"
 
-#: master.c:1129
+#: master.c:1112
 msgid "Answer: Read the problem"
 msgstr "Ответ: См. условие задачи"
 
-#: master.c:1131
+#: master.c:1114
 msgid "Answer: YES"
 msgstr "Ответ: ДА"
 
@@ -281,7 +281,7 @@ msgstr "Назад"
 msgid "Bad packet (internal error)"
 msgstr "Неверный формат пакета обмена (внутренняя ошибка)"
 
-#: master.c:705
+#: master.c:688
 msgid "Banned?"
 msgstr "Заблокирована?"
 
@@ -322,7 +322,7 @@ msgstr "Не удалось обновить базу паролей"
 msgid "Cannot write teamdb file"
 msgstr "Не удалось обновить базу команд"
 
-#: master.c:669
+#: master.c:652
 msgid "Change"
 msgstr "Изменить"
 
@@ -366,7 +366,7 @@ msgstr "Выбрать язык"
 msgid "City"
 msgstr "Город"
 
-#: html.c:268 html.c:1378 master_html.c:572
+#: html.c:268 html.c:1378 master_html.c:574
 msgid "Clar ID"
 msgstr "Номер сообщения"
 
@@ -399,7 +399,7 @@ msgstr "Скомпилировано"
 msgid "Compiling..."
 msgstr "Компилируется..."
 
-#: master.c:1505
+#: master.c:1486
 msgid "Compose a message to all the teams"
 msgstr "Написать сообщение всем командам"
 
@@ -495,7 +495,7 @@ msgstr "Английский"
 msgid "Enter password"
 msgstr "Введите пароль"
 
-#: master.c:662
+#: master.c:645
 msgid "Existing teams"
 msgstr "Зарегистрированные команды"
 
@@ -578,7 +578,7 @@ msgstr "Отобрано"
 msgid "Finalize registration"
 msgstr "Завершить регистрацию"
 
-#: master_html.c:562
+#: master_html.c:564
 msgid "First clar"
 msgstr "Первое сообщение"
 
@@ -590,7 +590,7 @@ msgstr "Имя"
 msgid "First run"
 msgstr "Первая посылка"
 
-#: html.c:103 html.c:268 html.c:1378 master.c:667 master_html.c:572
+#: html.c:103 html.c:268 html.c:1378 master.c:650 master_html.c:574
 msgid "Flags"
 msgstr "Флаги"
 
@@ -611,7 +611,7 @@ msgstr ""
 msgid "Form checking results"
 msgstr "Результаты проверки анкеты"
 
-#: html.c:268 html.c:1379 master_html.c:573
+#: html.c:268 html.c:1379 master_html.c:575
 msgid "From"
 msgstr "От"
 
@@ -687,7 +687,7 @@ msgstr ""
 msgid "Homepage"
 msgstr "Личная страница WEB"
 
-#: html.c:1197 html.c:1378 master_html.c:317 master_html.c:572
+#: html.c:1197 html.c:1378 master_html.c:317 master_html.c:574
 msgid "IP"
 msgstr "IP"
 
@@ -751,7 +751,7 @@ msgstr "Учебное заведение (сокр.)"
 msgid "Internal error: insufficient memory."
 msgstr "Внутренняя ошибка: недостаточно памяти."
 
-#: master.c:905
+#: master.c:888
 msgid "Invalid banned flag"
 msgstr "Неверное значение флага заблокированности"
 
@@ -759,7 +759,7 @@ msgstr "Неверное значение флага заблокированности"
 msgid "Invalid contest"
 msgstr "Неверный турнир"
 
-#: master.c:869
+#: master.c:852
 msgid "Invalid team id"
 msgstr "Неверный идентификатор команды"
 
@@ -771,7 +771,7 @@ msgstr "Неверное регистрационное имя команды"
 msgid "Invalid team name"
 msgstr "Неверное имя команды"
 
-#: master.c:896
+#: master.c:879
 msgid "Invalid visible flag"
 msgstr "Неверное значение флага видимости"
 
@@ -789,7 +789,7 @@ msgstr "Вердикты"
 msgid "Language"
 msgstr "Язык программирования"
 
-#: master_html.c:563
+#: master_html.c:565
 msgid "Last clar"
 msgstr "Последнее сообщение"
 
@@ -813,7 +813,7 @@ msgstr "Список пользователей (команд)"
 msgid "Log into the system"
 msgstr "Войти в систему"
 
-#: master.c:258 register.c:1936 register.c:2147 register.c:2293 team.c:411
+#: master.c:254 register.c:1936 register.c:2147 register.c:2293 team.c:411
 #: userlist-server.c:2756
 msgid "Login"
 msgstr "Регистрационное имя (login)"
@@ -864,11 +864,11 @@ msgstr "Уникальный номер участника"
 msgid "Message"
 msgstr "Сообщение"
 
-#: master.c:1117 team.c:594
+#: master.c:1100 team.c:594
 msgid "Message view"
 msgstr "Список сообщений"
 
-#: html.c:1810 master_html.c:508
+#: html.c:1810 master_html.c:510
 msgid "Messages"
 msgstr "Сообщения"
 
@@ -888,7 +888,7 @@ msgstr "Отчество"
 msgid "Misformed request"
 msgstr "Неверно сформированный запрос"
 
-#: master.c:1460 master.c:1465 team.c:816 team.c:820
+#: master.c:1441 master.c:1446 team.c:816 team.c:820
 msgid "Monitor"
 msgstr "Монитор"
 
@@ -898,7 +898,7 @@ msgstr "Монитор"
 msgid "N/A"
 msgstr "Неизв."
 
-#: master.c:1213
+#: master.c:1196
 msgid "NO."
 msgstr "НЕТ."
 
@@ -930,19 +930,19 @@ msgstr "Новый вердикт"
 msgid "New score"
 msgstr "Новые баллы"
 
-#: master.c:789
+#: master.c:772
 msgid "New team login is too long"
 msgstr "Новое регистрационное имя команды слишком длинно"
 
-#: master.c:783
+#: master.c:766
 msgid "New team login not specified"
 msgstr "Новое регистрационное имя команды не задано"
 
-#: master.c:804
+#: master.c:787
 msgid "New team name is too long"
 msgstr "Новое имя команды слишком длинно"
 
-#: master.c:798
+#: master.c:781
 msgid "New team name not specified"
 msgstr "Новое имя команды не задано"
 
@@ -950,7 +950,7 @@ msgstr "Новое имя команды не задано"
 msgid "New test"
 msgstr "???Новый тест???"
 
-#: master.c:1209
+#: master.c:1192
 msgid "No comments.\n"
 msgstr "Без комментариев.\n"
 
@@ -1000,7 +1000,7 @@ msgstr "Старый пароль"
 msgid "Only %d members \"%s\" are specified instead of minimum %d."
 msgstr "Только %d участников \"%s\" указаны вместо минимальных %d."
 
-#: master.c:845 master.c:931
+#: master.c:828 master.c:914
 msgid "Operation is not performed"
 msgstr "Операция не выполнена"
 
@@ -1028,7 +1028,7 @@ msgstr "Время генерации страницы"
 msgid "Partial solution"
 msgstr "Неполное решение"
 
-#: master.c:258 master.c:699 register.c:2150 team.c:413
+#: master.c:254 master.c:682 register.c:2150 team.c:413
 msgid "Password"
 msgstr "Пароль"
 
@@ -1052,7 +1052,7 @@ msgstr "Изменение пароля не удалось по следующим причинам."
 msgid "Password contain invalid characters."
 msgstr "Пароль содержит недопустимые символы."
 
-#: master.c:827
+#: master.c:810
 msgid "Password is too long (>16 characters)"
 msgstr "Пароль слишком длинный (>16 символов)"
 
@@ -1060,11 +1060,11 @@ msgstr "Пароль слишком длинный (>16 символов)"
 msgid "Password is too long (>16 characters)."
 msgstr "Пароль слишком длинный (>16 символов)"
 
-#: master.c:884
+#: master.c:867
 msgid "Password not specified"
 msgstr "Пароль не задан"
 
-#: master.c:823 master.c:888
+#: master.c:806 master.c:871
 msgid "Passwords do not match"
 msgstr "Пароли не совпадают"
 
@@ -1072,7 +1072,7 @@ msgstr "Пароли не совпадают"
 msgid "Passwords do not match."
 msgstr "Пароли не совпадают"
 
-#: master.c:820
+#: master.c:803
 msgid "Passwords not specified"
 msgstr "Пароли не заданы"
 
@@ -1080,7 +1080,7 @@ msgstr "Пароли не заданы"
 msgid "Penalty"
 msgstr "Штраф"
 
-#: master.c:302
+#: master.c:298
 msgid "Permission denied"
 msgstr "В доступе отказано"
 
@@ -1184,16 +1184,16 @@ msgstr "Re"
 msgid "Re: Your question"
 msgstr "Re: Ваш вопрос"
 
-#: master.c:1207
+#: master.c:1190
 msgid "Read the problem.\n"
 msgstr "Читайте условие задачи.\n"
 
-#: html.c:1759 html.c:1773 html.c:1804 html.c:1817 master.c:321 master.c:965
-#: master.c:973 master_html.c:463 master_html.c:622 team.c:434
+#: html.c:1759 html.c:1773 html.c:1804 html.c:1817 master.c:317 master.c:948
+#: master.c:956 master_html.c:463 master_html.c:624 team.c:434
 msgid "Refresh"
 msgstr "Обновить"
 
-#: master.c:366
+#: master.c:362
 msgid "Regenerate user passwords!"
 msgstr "Сгенерировать пароли заново!"
 
@@ -1223,15 +1223,15 @@ msgstr "Правила регистрации"
 msgid "Rejudge"
 msgstr "Пересудить"
 
-#: master_html.c:468
+#: master_html.c:469
 msgid "Rejudge all"
 msgstr "Пересудить всё"
 
-#: master_html.c:473
+#: master_html.c:474
 msgid "Rejudge problem"
 msgstr "Пересудить задачу"
 
-#: master_html.c:481
+#: master_html.c:482
 msgid "Rejudge!"
 msgstr "Пересудить!"
 
@@ -1267,7 +1267,7 @@ msgstr "Запасной участник"
 msgid "Reserves"
 msgstr "Запасные участники"
 
-#: master.c:358
+#: master.c:354
 msgid "Reset the contest!"
 msgstr "Сбросить турнир!"
 
@@ -1279,7 +1279,7 @@ msgstr "Очистить"
 msgid "Result"
 msgstr "Результат"
 
-#: master.c:383
+#: master.c:379
 msgid "Resume clients"
 msgstr "Приостановить клиентов"
 
@@ -1287,7 +1287,7 @@ msgstr "Приостановить клиентов"
 msgid "Retype new password"
 msgstr "Пароль ещё раз"
 
-#: html.c:1717 master.c:701
+#: html.c:1717 master.c:684
 msgid "Retype password"
 msgstr "Введите пароль ещё раз"
 
@@ -1340,7 +1340,7 @@ msgstr "Баллы   "
 msgid "Scores gained: %d (out of %d)\n"
 msgstr "Получено баллов: %d (из %d)\n"
 
-#: master.c:1512
+#: master.c:1493
 msgid "Send"
 msgstr "Послать"
 
@@ -1352,11 +1352,11 @@ msgstr "Послать сообщение судьям"
 msgid "Send a submission"
 msgstr "Послать решение"
 
-#: master.c:1135
+#: master.c:1118
 msgid "Send to all"
 msgstr "Послать всем"
 
-#: master.c:1135
+#: master.c:1118
 msgid "Send to sender"
 msgstr "Послать отправителю"
 
@@ -1380,11 +1380,11 @@ msgstr "Порядковый<br>номер"
 msgid "Server configuration error."
 msgstr "Ошибка конфигурации сервера."
 
-#: master.c:310 team.c:719
+#: master.c:306 team.c:719
 msgid "Server error"
 msgstr "Ошибка сервера"
 
-#: clntutil.c:320 master.c:283
+#: clntutil.c:320 master.c:279
 msgid "Server is down"
 msgstr "Сервер не работает"
 
@@ -1434,12 +1434,12 @@ msgstr "Показывать всем Ваш адрес электронной почты?"
 msgid "Show your login to the public?"
 msgstr "Показывать всем Ваше регистрационное имя?"
 
-#: master_html.c:273 master_html.c:551
+#: master_html.c:273 master_html.c:553
 msgid "Shown"
 msgstr "Показано"
 
 #: html.c:107 html.c:164 html.c:268 html.c:388 html.c:1197 html.c:1378
-#: master_html.c:317 master_html.c:572
+#: master_html.c:317 master_html.c:574
 msgid "Size"
 msgstr "Размер"
 
@@ -1455,7 +1455,7 @@ msgstr "Файл с текстом программы не найден"
 msgid "Source view"
 msgstr "Просмотр исходного текста"
 
-#: master_html.c:463 master_html.c:622
+#: master_html.c:463 master_html.c:624
 msgid "Standings"
 msgstr "Положение команд"
 
@@ -1468,8 +1468,8 @@ msgstr "Статус"
 msgid "Student"
 msgstr "Студент"
 
-#: html.c:123 html.c:269 html.c:404 html.c:1379 html.c:1801 master.c:1508
-#: master_html.c:573
+#: html.c:123 html.c:269 html.c:404 html.c:1379 html.c:1801 master.c:1489
+#: master_html.c:575
 msgid "Subject"
 msgstr "Тема"
 
@@ -1481,7 +1481,7 @@ msgstr "Журнал посылок"
 msgid "Submissions"
 msgstr "Посылки"
 
-#: master.c:258 register.c:2163
+#: master.c:254 register.c:2163
 msgid "Submit"
 msgstr "Послать"
 
@@ -1489,7 +1489,7 @@ msgstr "Послать"
 msgid "Submit solution"
 msgstr "Сдача решений"
 
-#: master.c:375
+#: master.c:371
 msgid "Suspend clients"
 msgstr "Приостановить клиентов"
 
@@ -1501,24 +1501,24 @@ msgstr "Команда"
 msgid "Team ID"
 msgstr "ID Команды"
 
-#: html.c:1703 master.c:667 master.c:692
+#: html.c:1703 master.c:650 master.c:675
 msgid "Team id"
 msgstr "Номер команды"
 
-#: html.c:1198 html.c:1704 master.c:667 master.c:695
+#: html.c:1198 html.c:1704 master.c:650 master.c:678
 msgid "Team login"
 msgstr "Рег. имя команды"
 
-#: master.c:874
+#: master.c:857
 msgid "Team login not specified"
 msgstr "Регистрационное имя команды не задано"
 
-#: html.c:1079 html.c:1198 html.c:1705 master.c:667 master.c:697
+#: html.c:1079 html.c:1198 html.c:1705 master.c:650 master.c:680
 #: master_html.c:318
 msgid "Team name"
 msgstr "Название команды"
 
-#: master.c:878
+#: master.c:861
 msgid "Team name not specified"
 msgstr "Имя команды не задано"
 
@@ -1585,7 +1585,7 @@ msgstr "Сообщение не может быть послано. Турнир не начался."
 msgid "The message cannot be sent. The contest is over."
 msgstr "Сообщение не может быть послано. Турнир закончился."
 
-#: master.c:285
+#: master.c:281
 msgid "The server is down. Try again later."
 msgstr "Сервер не работает. Пожалуйста, повторите операцию позднее."
 
@@ -1604,7 +1604,7 @@ msgid "The submission cannot be sent. The contest is over."
 msgstr "Решение не может быть послано. Турнир окончен."
 
 #: html.c:105 html.c:164 html.c:268 html.c:387 html.c:1078 html.c:1197
-#: html.c:1378 master_html.c:317 master_html.c:572
+#: html.c:1378 master_html.c:317 master_html.c:574
 msgid "Time"
 msgstr "Время"
 
@@ -1613,7 +1613,7 @@ msgstr "Время"
 msgid "Time-limit exceeded"
 msgstr "Превышено максимальное время работы"
 
-#: html.c:114 html.c:269 html.c:395 html.c:1379 master_html.c:573
+#: html.c:114 html.c:269 html.c:395 html.c:1379 master_html.c:575
 msgid "To"
 msgstr "Кому"
 
@@ -1621,7 +1621,7 @@ msgstr "Кому"
 msgid "Total"
 msgstr "Всего"
 
-#: html.c:1372 master_html.c:550
+#: html.c:1372 master_html.c:552
 msgid "Total messages"
 msgstr "Всего сообщений"
 
@@ -1690,11 +1690,11 @@ msgid "User registration is complete"
 msgstr "Регистрация пользователя завершена"
 
 #: html.c:269 html.c:1379 master_html.c:152 master_html.c:213
-#: master_html.c:295 master_html.c:564 master_html.c:573
+#: master_html.c:295 master_html.c:566 master_html.c:575
 msgid "View"
 msgstr "Просмотр"
 
-#: html.c:1770 html.c:1814 master_html.c:463 master_html.c:622
+#: html.c:1770 html.c:1814 master_html.c:463 master_html.c:624
 msgid "View all"
 msgstr "Посмотреть всё"
 
@@ -1702,7 +1702,7 @@ msgstr "Посмотреть всё"
 msgid "View report"
 msgstr "Просмотреть протокол"
 
-#: master.c:623 master.c:624
+#: master.c:606 master.c:607
 msgid "View report for run"
 msgstr "Просмотреть протокол для решения"
 
@@ -1710,7 +1710,7 @@ msgstr "Просмотреть протокол для решения"
 msgid "View source"
 msgstr "Посмотреть исходный текст"
 
-#: master.c:588 master.c:590
+#: master.c:571 master.c:573
 msgid "View source for run"
 msgstr "Посмотреть исходный текст для решения"
 
@@ -1718,7 +1718,7 @@ msgstr "Посмотреть исходный текст для решения"
 msgid "Visibility"
 msgstr "Видимость"
 
-#: master.c:703
+#: master.c:686
 msgid "Visible?"
 msgstr "Видимая?"
 
@@ -1731,7 +1731,7 @@ msgstr "Неправильный ответ"
 msgid "XML parse error"
 msgstr "ошибка разбора XML"
 
-#: master.c:1211
+#: master.c:1194
 msgid "YES."
 msgstr "ДА."
 
@@ -1772,13 +1772,13 @@ msgid "action is temporarily unavailable"
 msgstr "запрос временно не может быть выполнен"
 
 #: html.c:116 html.c:303 html.c:397 html.c:1406 html.c:1766 html.c:1810
-#: master_html.c:603
+#: master_html.c:605
 msgid "all"
 msgstr "все"
 
-#: master.c:591 master.c:596 master.c:625 master.c:630 master.c:660
-#: master.c:709 master.c:716 master.c:745 master.c:758 master.c:939
-#: master.c:963 master.c:971 master.c:1034 master.c:1122
+#: master.c:574 master.c:579 master.c:608 master.c:613 master.c:643
+#: master.c:692 master.c:699 master.c:728 master.c:741 master.c:922
+#: master.c:946 master.c:954 master.c:1017 master.c:1105
 msgid "back"
 msgstr "назад"
 
@@ -1882,7 +1882,7 @@ msgstr "файл имеет слишком большой размер"
 msgid "generic server error"
 msgstr "неопределённая ошибка сервера"
 
-#: master.c:693
+#: master.c:676
 msgid "if empty, assigned automatically"
 msgstr "если поле оставлено пустым, значение выбирается автоматически"
 
@@ -1943,7 +1943,7 @@ msgid "invisible"
 msgstr "невидима"
 
 #: html.c:110 html.c:118 html.c:298 html.c:305 html.c:391 html.c:399
-#: html.c:1401 html.c:1408 master_html.c:598 master_html.c:605
+#: html.c:1401 html.c:1408 master_html.c:600 master_html.c:607
 msgid "judges"
 msgstr "судьи"
 
@@ -1995,7 +1995,7 @@ msgstr "новый пароль имеет слишком большую длину"
 msgid "new passwords does not match"
 msgstr "новые пароли не совпадают друг с другом"
 
-#: master.c:703 master.c:705 master.c:986 master.c:1001 register.c:2159
+#: master.c:686 master.c:688 master.c:969 master.c:984 register.c:2159
 #: register.c:2306
 msgid "no"
 msgstr "нет"
@@ -2084,7 +2084,7 @@ msgstr "по умолчанию сервера"
 msgid "some component of request is too large"
 msgstr "некоторые компоненты запроса имеют слишком большой размер"
 
-#: master.c:331
+#: master.c:327
 msgid "standings"
 msgstr "положение команд"
 
@@ -2144,7 +2144,7 @@ msgstr "этот пользователь не может участвовать в этом турнире"
 msgid "this user is not registered for this contest"
 msgstr "этот пользователь не зарегистрирован на данный турнир"
 
-#: master.c:743 master.c:756 master.c:937
+#: master.c:726 master.c:739 master.c:920
 msgid "top"
 msgstr "наверх"
 
@@ -2160,7 +2160,7 @@ msgstr "неожиданный конец файла от сервера"
 msgid "unknown error"
 msgstr "неизвестная ошибка"
 
-#: master.c:340
+#: master.c:336
 msgid "update public standings"
 msgstr "обновить публичную таблицу положения команд"
 
@@ -2173,11 +2173,11 @@ msgid "user's runs downloading disabled"
 msgstr "загрузка пользовательских посылок запрещена"
 
 #: html.c:232 html.c:235 html.c:310 html.c:1341 html.c:1342 html.c:1415
-#: master_html.c:450 master_html.c:451 master_html.c:612
+#: master_html.c:450 master_html.c:451 master_html.c:614
 msgid "view"
 msgstr "посмотреть"
 
-#: master.c:349
+#: master.c:345
 msgid "view teams"
 msgstr "посмотреть команды"
 
@@ -2201,15 +2201,15 @@ msgstr "ошибка записи"
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
 
-#: master.c:703 master.c:705 register.c:2161 register.c:2308
+#: master.c:686 master.c:688 register.c:2161 register.c:2308
 msgid "yes"
 msgstr "да"
 
-#: master.c:1004
+#: master.c:987
 msgid "yes, generate passwords!"
 msgstr "да, перегенерировать пароли!"
 
-#: master.c:989
+#: master.c:972
 msgid "yes, reset the contest!"
 msgstr "да, сбросить турнир!"
 
