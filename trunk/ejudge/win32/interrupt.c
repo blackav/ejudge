@@ -17,6 +17,32 @@
 
 #include "interrupt.h"
 
+#include <reuse/logger.h>
+
+void
+interrupt_init(void)
+{
+  SWERR(("Not implemented"));
+}
+
+void
+interrupt_enable(void)
+{
+  SWERR(("Not implemented"));
+}
+
+void
+interrupt_disable(void)
+{
+  SWERR(("Not implemented"));
+}
+
+int
+interrupt_get_status(void)
+{
+  SWERR(("Not implemented"));
+}
+
 /**
  * Local variables:
  *  compile-command: "make -C .."
