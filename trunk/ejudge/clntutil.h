@@ -31,6 +31,8 @@ extern int           server_total_clars;
 extern int           server_clars_disabled;
 extern int           server_team_clars_disabled;
 extern int           server_standings_frozen;
+extern int           server_score_system;
+extern int           server_clients_suspended;
 
 extern unsigned long client_cur_time;
 extern char          client_pipe_dir[];
