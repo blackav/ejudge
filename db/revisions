@@ -451,3 +451,11 @@ teamdb.c 1 15 2113245
 serve_clnt/show_item.c 1 1 263781
 serve_clnt/submit_clar.c 1 1 225564
 serve_clnt/submit_run.c 1 1 212834
+charsets/nls.c 1 3 146091
+charsets/nls_cp1251.c 1 1 951433
+charsets/nls_cp866.c 1 1 1075272
+charsets/nls_iso8859-5.c 1 2 835362
+charsets/nls_koi8-r.c 1 1 1076142
+charsets/nls_utf8.c 1 1 195846
+charsets/utf8_utils.c 1 1 159222
+serve_clnt/team_page.c 1 1 315880
