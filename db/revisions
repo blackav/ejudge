@@ -760,3 +760,8 @@ userlist_clnt/team_login.c 1 3 252646
 userlist_clnt.h 1 15 588333
 clean-users.c 1 1 680093
 super-serve.c 1 1 1308606
+clarlog.h 1 7 125900
+contests.h 1 13 413931
+clarlog.c 1 11 708641
+clntutil.c 1 27 1092844
+contests.c 1 14 2300419
