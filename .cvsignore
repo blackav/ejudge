@@ -1,3 +1,3 @@
 var compile serve run submit clar master team mkpasswd revinfo version.c .build
 register make-teamdb make-teamdb-inet send-passwords mkChangeLog
-userlist-server locale users
+userlist-server locale users edit-userlist
