@@ -2504,12 +2504,14 @@ display_registered_users(unsigned char const *upper,
     } else if (c == 'j') {
       /* find a user by number */
       unsigned char number_buf[256], *endptr;
+      char *tmpendptr = 0;
 
       memset(number_buf, 0, sizeof(number_buf));
       i = edit_string(LINES / 2, COLS, "Jump to user id?", number_buf, 200);
       if (i >= 0) {
         errno = 0;
-        i = strtol(number_buf, (char **) &endptr, 10);
+        i = strtol(number_buf, &tmpendptr, 10);
+        endptr = tmpendptr;
         if (!errno && !*endptr) {
           if (i <= uu[0]->id) {
             j = 0;
@@ -2952,12 +2954,14 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
     if (c == 'j') {
       /* find a user by number */
       unsigned char number_buf[256], *endptr;
+      char *tmpendptr = 0;
 
       memset(number_buf, 0, sizeof(number_buf));
       i = edit_string(LINES / 2, COLS, "Jump to user id?", number_buf, 200);
       if (i >= 0) {
         errno = 0;
-        i = strtol(number_buf, (char **) &endptr, 10);
+        i = strtol(number_buf, &tmpendptr, 10);
+        endptr = tmpendptr;
         if (!errno && !*endptr) {
           if (i <= uu[0]->id) {
             j = 0;
