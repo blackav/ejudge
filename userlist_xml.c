@@ -431,11 +431,13 @@ parse_passwd(char const *path, struct xml_tree *t)
       err("%s:%d:%d: invalid password method", path, a->line, a->column);
       return 0;
     }
+    /*
     if (pwd->method != USERLIST_PWD_PLAIN) {
       err("%s:%d:%d: this password method not yet supported",
           path, a->line, a->column);
       return 0;
     }
+    */
   }
   return pwd;
 }
