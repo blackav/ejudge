@@ -500,6 +500,29 @@ permission_denied(void)
   client_put_footer(stdout, 0);
   exit(0);
 }
+
+static void
+error_not_registered(void)
+{
+  set_cookie_if_needed();
+  client_put_header(stdout, 0, 0, global->charset, 1, 0, _("Not registered"));
+  printf("<p>%s</p>", _("You are not registered for this contest."));
+  client_put_footer(stdout, 0);
+  exit(0);
+}
+
+static void
+error_cannot_participate(void)
+{
+  set_cookie_if_needed();
+  client_put_header(stdout, 0, 0, global->charset, 1, 0,
+                    _("Cannot participate"));
+  printf("<p>%s</p>",
+         _("You cannot participate in this contest. Your registration is not confirmed, or you have been banned."));
+  client_put_footer(stdout, 0);
+  exit(0);
+}
+
 static void
 fatal_server_error(int r)
 {
@@ -508,15 +531,6 @@ fatal_server_error(int r)
   printf("<p>Server error: %s</p>", userlist_strerror(-r));
   client_put_footer(stdout, 0);
   exit(0);
-}
-static int
-is_auth_error(int r)
-{
-  return r == -ULS_ERR_INVALID_LOGIN
-    || r == -ULS_ERR_INVALID_PASSWORD
-    || r == -ULS_ERR_NO_PERMS
-    || r == -ULS_ERR_NO_COOKIE
-    || r == -ULS_ERR_BAD_CONTEST_ID;
 }
 
 static int
@@ -588,7 +602,16 @@ authentificate(void)
       client_password = "";
       return 1;
     }
-    if (!is_auth_error(r)) fatal_server_error(r);
+    if (r != -ULS_ERR_NO_COOKIE) {
+      switch (-r) {
+      case ULS_ERR_NOT_REGISTERED:
+        error_cannot_participate();
+      case ULS_ERR_CANNOT_PARTICIPATE:
+        error_not_registered();
+      default:
+        fatal_server_error(r);
+      }
+    }
     client_cookie = 0;
     need_set_cookie = 1;
   }
@@ -610,7 +633,16 @@ authentificate(void)
       client_password = "";
       return 1;
     }
-    if (!is_auth_error(r)) fatal_server_error(r);
+    if (r != -ULS_ERR_NO_COOKIE) {
+      switch (-r) {
+      case ULS_ERR_NOT_REGISTERED:
+        error_cannot_participate();
+      case ULS_ERR_CANNOT_PARTICIPATE:
+        error_not_registered();
+      default:
+        fatal_server_error(r);
+      }
+    }
   }
 
   client_login = cgi_param("login");
@@ -635,8 +667,22 @@ authentificate(void)
                                0, /* p_locale_id */
                                &priv_level,
                                &client_name);
-  if (r < 0 && is_auth_error(r)) permission_denied();
-  if (r < 0) fatal_server_error(r);
+  if (r < 0) {
+    switch (-r) {
+    case ULS_ERR_INVALID_LOGIN:
+    case ULS_ERR_INVALID_PASSWORD:
+    case ULS_ERR_BAD_CONTEST_ID:
+    case ULS_ERR_IP_NOT_ALLOWED:
+    case ULS_ERR_NO_PERMS:
+      permission_denied();
+    case ULS_ERR_NOT_REGISTERED:
+      error_not_registered();
+    case ULS_ERR_CANNOT_PARTICIPATE:
+      error_cannot_participate();
+    default:
+      fatal_server_error(r);
+    }
+  }
   if (client_sid_mode == SID_COOKIE) {
     client_cookie = client_sid;
     need_set_cookie = 1;
@@ -2737,7 +2783,7 @@ initialize(int argc, char *argv[])
   if (!check_config_exist(cfgname)) {
     config = param_make_global_section(params);
   } else {
-    config = parse_param(cfgname, 0, params, 1);
+    config = parse_param(cfgname, 0, params, 1, 0, 0);
   }
   if (!config)
     client_not_configured(0, "config file not parsed", 0);
