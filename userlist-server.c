@@ -111,6 +111,7 @@ struct client_state
   // database user_id for access control
   // 0 - root, -1 - unknown (anonymous)
   int user_id;
+  int priv_level;
 
   // passed file descriptors
   int client_fds[2];
@@ -1338,6 +1339,160 @@ login_team_user(struct client_state *p, int pkt_len,
   dirty = 1;
   u->last_login_time = cur_time;
   info("%d: login_team_user: %d,%s,%llx", p->id, u->id, u->login,out->cookie);
+}
+
+static void
+cmd_login_priv_user(struct client_state *p, int len,
+                    struct userlist_pk_do_login *data)
+{
+  unsigned char *login_ptr, *passwd_ptr, *name_ptr;
+  struct contest_desc *cnts;
+  struct passwd_internal pwdint;
+  struct userlist_user *u;
+  struct xml_tree *t;
+  struct userlist_pk_login_ok *out = 0;
+  int i, priv_level, login_len, name_len;
+  size_t out_size = 0;
+  struct userlist_cookie *cookie;
+
+  if (len < sizeof(*data)) {
+    bad_packet(p, "login_priv_user: packet length too small: %d", len);
+    return;
+  }
+  login_ptr = data->data;
+  if (strlen(login_ptr) != data->login_length) {
+    bad_packet(p, "login_priv_user: login length mismatch");
+    return;
+  }
+  passwd_ptr = login_ptr + data->login_length + 1;
+  if (strlen(passwd_ptr) != data->password_length) {
+    bad_packet(p, "login_priv_user: password length mismatch");
+    return;
+  }
+  if (len != sizeof(*data) + data->login_length + data->password_length) {
+    bad_packet(p, "login_priv_user: packet length mismatch");
+    return;
+  }
+
+  info("%d: login_priv_user: %s, %s, %ld, %d, %d", p->id,
+       unparse_ip(data->origin_ip), login_ptr, data->contest_id,
+       data->locale_id, data->use_cookies);
+  if (p->user_id >= 0) {
+    err("%d: this connection already authentificated", p->id);
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+  if (passwd_convert_to_internal(passwd_ptr, &pwdint) < 0) {
+    bad_packet(p, "password parse error");
+    return;
+  }
+  if (data->contest_id <= 0
+      || data->contest_id >= contests->id_map_size
+      || !(cnts = contests->id_map[data->contest_id])) {
+    err("%d: invalid contest identifier", p->id);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (data->priv_level <= 0 || data->priv_level > PRIV_LEVEL_ADMIN) {
+    err("%d: invalid privelege level: %d", p->id, data->priv_level);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  for (i = 1; i < userlist->user_map_size; i++) {
+    if (!(u = userlist->user_map[i])) continue;
+    if (!strcmp(u->login, login_ptr)) break;
+  }
+  if (i >= userlist->user_map_size) {
+    err("%d: BAD LOGIN", p->id);
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+  if (passwd_check(&pwdint, u->register_passwd) < 0) {
+    err("%d: BAD PASSWORD", p->id);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+
+  t = 0;
+  if (cnts->priv_users) {
+    ASSERT(cnts->priv_users->tag == CONTEST_PRIVILEGED_USERS);
+    for (t = cnts->priv_users->first_down; t; t = t->right) {
+      if (!t->text) continue;
+      if (!strcmp(login_ptr, t->text)) break;
+    }
+  }
+  if (!t) {
+    err("%d: the user is not privileged", p->id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  priv_level = 0;
+  switch (t->tag) {
+  case CONTEST_OBSERVER:
+    priv_level = PRIV_LEVEL_OBSERVER;
+    break;
+  case CONTEST_JUDGE:
+    priv_level = PRIV_LEVEL_JUDGE;
+    break;
+  case CONTEST_ADMINISTRATOR:
+    priv_level = PRIV_LEVEL_ADMIN;
+    break;
+  default:
+    SWERR(("unhandled tag"));
+  }
+  ASSERT(priv_level >= 1 && priv_level <= PRIV_LEVEL_ADMIN);
+  if (data->priv_level > priv_level) {
+    err("%d: the user cannot have the required privilege level", p->id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  login_len = strlen(u->login);
+  name_len = strlen(u->name);
+  out_size = sizeof(*out) + login_len + name_len;
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  login_ptr = out->data;
+  name_ptr = login_ptr + login_len + 1;
+  if (data->use_cookies == -1) {
+    data->use_cookies = u->default_use_cookies;
+  }
+  if (data->use_cookies == -1) {
+    // FIXME: system default
+    data->use_cookies = 0;
+  }
+  if (data->locale_id == -1) {
+    data->locale_id = 0;
+  }
+  if (data->use_cookies) {
+    cookie = create_cookie(u);
+    cookie->user = u;
+    cookie->ip = data->origin_ip;
+    cookie->cookie = generate_random_cookie();
+    cookie->expire = cur_time + 60 * 60 * 24;
+    cookie->contest_id = data->contest_id;
+    cookie->locale_id = data->locale_id;
+    out->cookie = cookie->cookie;
+    out->reply_id = ULS_LOGIN_COOKIE;
+  } else {
+    out->reply_id = ULS_LOGIN_OK;
+  }
+  out->user_id = u->id;
+  out->contest_id = data->contest_id;
+  out->locale_id = data->locale_id;
+  out->priv_level = data->priv_level;
+  out->login_len = login_len;
+  out->name_len = name_len;
+  strcpy(login_ptr, u->login);
+  strcpy(name_ptr, u->name);
+  
+  p->user_id = u->id;
+  p->priv_level = data->priv_level;
+  enqueue_reply_to_client(p, out_size, out);
+  dirty = 1;
+  u->last_login_time = cur_time;
+  info("%d: login_priv_user: %d,%s,%llx", p->id, u->id, u->login,out->cookie);
 }
 
 static void
@@ -3550,9 +3705,11 @@ cmd_get_uid_by_pid(struct client_state *p, int len,
   memset(&out, 0, sizeof(out));
   out.reply_id = ULS_UID;
   out.uid = q->user_id;
+  out.priv_level = q->priv_level;
   // FIXME: fetch the actual cookie
   out.cookie = 0;
-  info("%d: get_uid_by_pid: %d, %016llx", p->id, out.uid, out.cookie);
+  info("%d: get_uid_by_pid: %d, %d, %016llx", p->id, out.uid,
+       out.priv_level, out.cookie);
   enqueue_reply_to_client(p, sizeof(out), &out);
 }
 
@@ -3667,6 +3824,10 @@ process_packet(struct client_state *p, int len, unsigned char *pack)
 
   case ULS_GET_UID_BY_PID:
     cmd_get_uid_by_pid(p, len, (struct userlist_pk_get_uid_by_pid*) pack);
+    break;
+
+  case ULS_PRIV_LOGIN:
+    cmd_login_priv_user(p, len, (struct userlist_pk_do_login*) pack);
     break;
 
   default:
