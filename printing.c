@@ -24,6 +24,7 @@
 #include "archive_paths.h"
 #include "fileutl.h"
 #include "protocol.h"
+#include "userlist.h"
 
 #include <reuse/exec.h>
 
@@ -40,6 +41,7 @@ print_banner_page(const unsigned char *banner_path, int run_id,
   time_t start_time;
   unsigned char *s;
   int i, variant;
+  struct teamdb_export teaminfo;
 
   if (run_id < 0 || run_id >= run_get_total()) goto cleanup;
   run_get_entry(run_id, &info);
@@ -48,6 +50,8 @@ print_banner_page(const unsigned char *banner_path, int run_id,
       || info.status == RUN_EMPTY) {
     return -1;
   }
+  if (teamdb_export_team(info.team, &teaminfo) < 0)
+    return -1;
   start_time = run_get_start_time();
 
   if (!(f = fopen(banner_path, "w"))) goto cleanup;
@@ -80,6 +84,9 @@ print_banner_page(const unsigned char *banner_path, int run_id,
   }
   fprintf(f, "Language:         %s\n",
           (langs[info.language])?((char*)langs[info.language]->short_name):"");
+  if (teaminfo.user && teaminfo.user->location) {
+    fprintf(f, "Location:         %s\n", teaminfo.user->location);
+  }
   fprintf(f, "Status:           %s\n", run_status_str(info.status, 0, 0));
   fclose(f);
 
