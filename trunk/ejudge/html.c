@@ -83,7 +83,11 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
   unsigned char *lang_str;
   unsigned char href[128];
 
-  start_time = run_get_start_time();
+  if (global->virtual) {
+    start_time = run_get_virtual_start_time(uid);
+  } else {
+    start_time = run_get_start_time();
+  }
   runs_to_show = 15;
   if (show_flags) runs_to_show = 100000;
 
@@ -114,6 +118,8 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
        i--) {
     run_get_record(i, &time, &size, 0, 0, 0,
                    &team_id, &lang_id, &prob_id, &status, &test, &score);
+    if (status == RUN_VIRTUAL_START || status == RUN_VIRTUAL_STOP)
+      continue;
     if (global->score_system_val == SCORE_KIROV)
       run_get_attempts(i, &attempts, global->ignore_compile_errors);
     if (team_id != uid) continue;
@@ -202,6 +208,7 @@ new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
   int from, to, flags, n;
   size_t size;
   time_t start_time, time;
+  int show_astr_time = 0;
 
   char  dur_str[64];
   char  subj[CLAR_MAX_SUBJ_LEN + 4];      /* base64 subj */
@@ -213,6 +220,8 @@ new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
   start_time = run_get_start_time();
   clars_to_show = 15;
   if (show_flags) clars_to_show = 100000;
+  show_astr_time = global->show_astr_time;
+  if (global->virtual) show_astr_time = 1;
 
   /* write clars statistics for the last 15 in the reverse order */
   fprintf(f,"<table border=\"1\"><tr><th>%s</th><th>%s</th><th>%s</th>"
@@ -240,7 +249,7 @@ new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
     html_armor_string(psubj, asubj);
     if (!start_time) time = start_time;
     if (start_time > time) time = start_time;
-    duration_str(global->show_astr_time, time, start_time, dur_str, 0);
+    duration_str(show_astr_time, time, start_time, dur_str, 0);
 
     if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
       html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars);
@@ -294,6 +303,7 @@ new_write_user_clar(FILE *f, int uid, int cid)
   char cname[64];
   char *csrc = 0;
   int  csize = 0;
+  int show_astr_time;
 
   if (global->disable_clars) {
     err("clarifications are disabled");
@@ -304,6 +314,8 @@ new_write_user_clar(FILE *f, int uid, int cid)
     return -SRV_ERR_BAD_CLAR_ID;
   }
 
+  show_astr_time = global->show_astr_time;
+  if (global->virtual) show_astr_time = 1;
   start_time = run_get_start_time();
   if (clar_get_record(cid, &time, &size, NULL,
                       &from, &to, NULL, subj) < 0) {
@@ -329,7 +341,7 @@ new_write_user_clar(FILE *f, int uid, int cid)
 
   if (!start_time) time = start_time;
   if (time < start_time) time = start_time;
-  duration_str(global->show_astr_time, time, start_time, dur_str, 0);
+  duration_str(show_astr_time, time, start_time, dur_str, 0);
 
   fprintf(f, "<h2>%s #%d</h2>\n", _("Message"), cid);
   fprintf(f, "<table border=\"0\">\n");
@@ -362,20 +374,37 @@ new_write_user_clar(FILE *f, int uid, int cid)
 
 void
 write_standings_header(FILE *f, int client_flag,
-                       unsigned char const *header_str)
+                       int user_id,
+                       unsigned char const *header_str,
+                       unsigned char const *user_name)
 {
   time_t start_time, stop_time, cur_time;
   unsigned char header[1024];
   unsigned char dur_str[64];
+  int show_astr_time;
 
   start_time = run_get_start_time();
   stop_time = run_get_stop_time();
+  if (global->virtual && user_id > 0) {
+    start_time = run_get_virtual_start_time(user_id);
+    stop_time = run_get_virtual_stop_time(user_id);
+  }
+
   if (!start_time) {
-    if (global->name[0] && !client_flag) {
-      sprintf(header, "%s &quot;%s&quot; - %s",
-              _("Contest"), global->name, _("team standings"));
+    if (user_name) {
+      if (global->name[0] && !client_flag) {
+        sprintf(header, "%s - &quot;%s&quot; - %s",
+                user_name, global->name, _("team standings"));
+      } else {
+        sprintf(header, "%s - %s", user_name, _("Team standings"));
+      }
     } else {
-      sprintf(header, "%s", _("Team standings"));
+      if (global->name[0] && !client_flag) {
+        sprintf(header, "%s &quot;%s&quot; - %s",
+                _("Contest"), global->name, _("team standings"));
+      } else {
+        sprintf(header, "%s", _("Team standings"));
+      }
     }
 
     if (!client_flag) {
@@ -395,13 +424,25 @@ write_standings_header(FILE *f, int client_flag,
   cur_time = time(0);
   if (start_time > cur_time) cur_time = start_time;
   if (stop_time && cur_time > stop_time) cur_time = stop_time;
-  duration_str(global->show_astr_time, cur_time, start_time, dur_str, 0);
+  show_astr_time = global->show_astr_time;
+  if (global->virtual && !user_id) show_astr_time = 1;
+  duration_str(show_astr_time, cur_time, start_time, dur_str, 0);
 
-  if (global->name[0] && !client_flag) {
-    sprintf(header, "%s &quot;%s&quot; - %s [%s]",
-            _("Contest"), global->name, _("team standings"), dur_str);
+  if (user_name) {
+    if (global->name[0] && !client_flag) {
+      sprintf(header, "%s  - &quot;%s&quot; - %s [%s]",
+              user_name, global->name, _("team standings"), dur_str);
+    } else {
+      sprintf(header, "%s - %s [%s]",
+              user_name, _("Team standings"), dur_str);
+    }
   } else {
-    sprintf(header, "%s [%s]", _("Team standings"), dur_str);
+    if (global->name[0] && !client_flag) {
+      sprintf(header, "%s &quot;%s&quot; - %s [%s]",
+              _("Contest"), global->name, _("team standings"), dur_str);
+    } else {
+      sprintf(header, "%s [%s]", _("Team standings"), dur_str);
+    }
   }
 
   if (!client_flag) {
@@ -533,6 +574,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
 
     run_get_record(k, 0, 0, 0, 0, 0, &team_id, 0, &prob_id, &status, &tests,
                    &run_score);
+    if (status == RUN_VIRTUAL_START || status == RUN_VIRTUAL_STOP) continue;
     if (team_id <= 0 || team_id >= t_max) continue;
     if (prob_id <= 0 || prob_id > max_prob) continue;
     tind = t_rev[team_id];
@@ -686,7 +728,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
 }
 
 void
-do_write_standings(FILE *f, int client_flag,
+do_write_standings(FILE *f, int client_flag, int user_id,
                    unsigned char const *footer_str)
 {
   int      i, j;
@@ -714,6 +756,9 @@ do_write_standings(FILE *f, int client_flag,
   unsigned long stop_time;
   unsigned long cur_time;
   unsigned long run_time;
+  time_t        contest_dur;
+  time_t        current_dur;
+  time_t        tdur, tstart;
   int           team_id;
   int           prob_id;
   int           score;
@@ -721,8 +766,24 @@ do_write_standings(FILE *f, int client_flag,
 
   char          url_str[1024];
 
+  cur_time = time(0);
   start_time = run_get_start_time();
   stop_time = run_get_stop_time();
+  contest_dur = run_get_duration();
+  if (start_time && global->virtual && user_id > 0) {
+    start_time = run_get_virtual_start_time(user_id);
+    stop_time = run_get_virtual_stop_time(user_id);
+  }
+  if (start_time && !stop_time && cur_time >= start_time + contest_dur) {
+    stop_time = start_time + contest_dur;
+  }
+  if (start_time && cur_time < start_time) {
+    cur_time = start_time;
+  }
+  if (stop_time && cur_time > stop_time) {
+    cur_time = stop_time;
+  }
+  current_dur = cur_time - start_time;
   if (!start_time) {
     fprintf(f, "<h2>%s</h2>", _("The contest is not started"));
     if (!client_flag) {
@@ -787,10 +848,19 @@ do_write_standings(FILE *f, int client_flag,
   for (k = 0; k < r_tot; k++) {
     run_get_record(k, &run_time, 0, 0, 0, 0, &team_id, 0, &prob_id, &status, 0,
                    &score);
+    if (status == RUN_VIRTUAL_START || status == RUN_VIRTUAL_STOP) continue;
     if (team_id <= 0 || team_id >= t_max) continue;
     if (t_rev[team_id] < 0) continue;
     if (prob_id <= 0 || prob_id > max_prob) continue;
     if (p_rev[prob_id] < 0) continue;
+    if (global->virtual) {
+      // filter "future" virtual runs
+      tstart = run_get_virtual_start_time(team_id);
+      ASSERT(run_time >= tstart);
+      tdur = run_time - tstart;
+      ASSERT(tdur <= contest_dur);
+      if (user_id > 0 && tdur > current_dur) continue;
+    }
     tt = t_rev[team_id];
     pp = p_rev[prob_id];
 
@@ -801,9 +871,14 @@ do_write_standings(FILE *f, int client_flag,
       t_pen[tt] += 20 * -calc[tt][pp];
       calc[tt][pp] = 1 - calc[tt][pp];
       t_prob[tt]++;
-      if (run_time < start_time) run_time = start_time;
-      ok_time[tt][pp] = (run_time - start_time + 59) / 60;
-      t_pen[tt] += ok_time[tt][pp];
+      if (global->virtual) {
+        ok_time[tt][pp] = (tdur + 59) / 60;
+        t_pen[tt] += ok_time[tt][pp];
+      } else {
+        if (run_time < start_time) run_time = start_time;
+        ok_time[tt][pp] = (run_time - start_time + 59) / 60;
+        t_pen[tt] += ok_time[tt][pp];
+      }
     } else if (status == RUN_COMPILE_ERR && !global->ignore_compile_errors) {
       if (calc[tt][pp] <= 0) calc[tt][pp]--;
     } else if (status > 0 && status < 6) {
@@ -838,11 +913,6 @@ do_write_standings(FILE *f, int client_flag,
     i = j;
   }
 
-  /* now print this stuff */
-  cur_time = time(0);
-  if (start_time > cur_time) cur_time = start_time;
-  if (stop_time && cur_time > stop_time) cur_time = stop_time;
-
   /* print table header */
   fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th>",
           _("Place"), _("Team"));
@@ -864,7 +934,12 @@ do_write_standings(FILE *f, int client_flag,
 
   for (i = 0; i < t_tot; i++) {
     int t = t_sort[i];
-    fputs("<tr><td>", f);
+    if (user_id > 0 && user_id == t_ind[t] &&
+        global->standings_team_color[0]) {
+      fprintf(f, "<tr bgcolor=\"%s\"><td>", global->standings_team_color);
+    } else {
+      fputs("<tr><td>", f);
+    }
     if (t_n1[i] == t_n2[i]) fprintf(f, "%d", t_n1[i] + 1);
     else fprintf(f, "%d-%d", t_n1[i] + 1, t_n2[i] + 1);
     fputs("</td>", f);
@@ -928,12 +1003,12 @@ write_standings(char const *stat_dir, char const *name,
     size_t html_len = 0;
 
     f = open_memstream((char**) &html_ptr, &html_len);
-    write_standings_header(f, 0, header_str);
+    write_standings_header(f, 0, 0, header_str, 0);
     if (global->score_system_val == SCORE_KIROV
         || global->score_system_val == SCORE_OLYMPIAD)
       do_write_kirov_standings(f, 0, footer_str);
     else
-      do_write_standings(f, 0, footer_str);
+      do_write_standings(f, 0, 0, footer_str);
     fclose(f);
     if (!html_ptr) {
       html_ptr = xstrdup("");
@@ -949,12 +1024,12 @@ write_standings(char const *stat_dir, char const *name,
   sprintf(tbuf, "XXX_%lu%d", time(0), getpid());
   pathmake(tpath, stat_dir, "/", tbuf, 0);
   if (!(f = sf_fopen(tpath, "w"))) return;
-  write_standings_header(f, 0, header_str);
+  write_standings_header(f, 0, 0, header_str, 0);
   if (global->score_system_val == SCORE_KIROV
       || global->score_system_val == SCORE_OLYMPIAD)
     do_write_kirov_standings(f, 0, footer_str);
   else
-    do_write_standings(f, 0, footer_str);
+    do_write_standings(f, 0, 0, footer_str);
   fclose(f);
   generic_copy_file(REMOVE, stat_dir, tbuf, "",
                     SAFE, stat_dir, name, "");
@@ -1164,29 +1239,53 @@ print_nav_buttons(FILE *f,
                   unsigned char const *self_url,
                   unsigned char const *hidden_vars,
                   unsigned char const *t1,
-                  unsigned char const *t2)
+                  unsigned char const *t2,
+                  unsigned char const *t3)
 {
   unsigned char hbuf[128];
 
   if (!t1) t1 = _("Refresh");
-  if (!t2) t2 = _("Log out");
+  if (!t2) t2 = _("Virtual standings");
+  if (!t3) t3 = _("Log out");
 
   if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
     html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars);
     fprintf(f, "<table><tr>"
-            "<td><input type=\"submit\" name=\"refresh\" value=\"%s\"></td>"
+            "<td><input type=\"submit\" name=\"refresh\" value=\"%s\"></td>",
+            t1);
+    if (global->virtual) {
+      fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_STANGINGS, t2);
+    }
+    fprintf(f, 
             "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>"
-            "</tr></table></form>\n", t1, ACTION_LOGOUT, t2);
+            "</tr></table></form>\n",
+            ACTION_LOGOUT, t3);
   } else {
     fprintf(f, "<table><tr><td>");
     fprintf(f, "%s",
             html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url, 0));
     fprintf(f, "%s</a></td><td>", t1);
+    if (global->virtual) {
+      fprintf(f, "%s",
+              html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url,
+                            "action=%d", ACTION_STANGINGS));
+      fprintf(f, "%s</a></td><td>", t2);
+    }
     fprintf(f, "%s",
             html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url,
                      "action=%d", ACTION_LOGOUT));
-    fprintf(f, "%s</a></td></tr></table>", t2);
+    fprintf(f, "%s</a></td></tr></table>", t3);
   }
+}
+
+static unsigned char *
+time_to_str(unsigned char *buf, time_t time)
+{
+  unsigned char *s = ctime(&time);
+  int l = strlen(s);
+  strcpy(buf, s);
+  if (l > 0) buf[l - 1] = 0;
+  return buf;
 }
 
 void
@@ -1199,6 +1298,77 @@ write_team_page(FILE *f, int user_id,
 {
   int i;
   unsigned char hbuf[128];
+
+  if (global->virtual) {
+    time_t dur;
+    time_t cur;
+    unsigned char tbuf[64];
+    unsigned char *ststr;
+    time_t global_server_start;
+    time_t global_server_end;
+
+    global_server_start = server_start;
+    global_server_end = server_end;
+    server_start = run_get_virtual_start_time(user_id);
+    server_end = run_get_virtual_stop_time(user_id);
+    dur = run_get_duration();
+    cur = time(0);
+    if (server_start && !server_end && dur > 0) {
+      if (server_start + dur < cur) {
+        server_end = server_start + dur;
+      }
+    }
+
+    fprintf(f, "<table border=\"0\">\n");
+    if (!server_start) {
+      ststr = _("Virtual contest is not started");
+    } else if (server_end) {
+      ststr = _("Virtual contest is finished");
+    } else {
+      ststr = _("Virtual contest is in progress");
+    }
+    fprintf(f, "<tr><td colspan=\"2\"><b><big>%s</big></b></td></tr>\n",
+            ststr);
+    fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Server time"), time_to_str(tbuf, cur));
+    if (dur) {
+      duration_str(0, dur, 0, tbuf, 0);
+    } else {
+      snprintf(tbuf, sizeof(tbuf), _("Unlimited"));
+    }
+    fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Duration"), tbuf);
+    if (server_start) {
+      fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("Contest start time"), time_to_str(tbuf, server_start));
+      if (server_end) {
+        fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Contest stop time"), time_to_str(tbuf, server_end));
+      } else if (dur) {
+        fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Expected stop time"),
+                time_to_str(tbuf, server_start + dur));
+        duration_str(0, cur, server_start, tbuf, 0);
+        fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Elapsed time"), tbuf);
+        duration_str(0, server_start + dur, cur, tbuf, 0);
+        fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+                _("Remaining time"), tbuf);
+      }
+    }
+    fprintf(f, "</table>\n");
+    if (!server_start && global_server_start) {
+      html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+      fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+              ACTION_START_VIRTUAL, _("Start virtual contest"));
+      fprintf(f, "</form>\n");
+    } else if (server_start && !server_end) {
+      html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+      fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+              ACTION_STOP_VIRTUAL, _("Stop virtual contest"));
+      fprintf(f, "</form>\n");
+    }
+    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, 0, 0, 0);
+  }
 
   if (server_start && !server_end) {
     fprintf(f, "<hr><a name=\"submit\"><h2>%s</h2>\n", _("Send a submission"));
@@ -1228,7 +1398,7 @@ write_team_page(FILE *f, int user_id,
             "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>",
             _("File"), _("Send!"), ACTION_SUBMIT_RUN, _("Send!"));
     fprintf(f, "</table></form>\n");
-    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, 0, 0);
+    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, 0, 0, 0);
   }
 
   if (server_start) {
@@ -1251,7 +1421,7 @@ write_team_page(FILE *f, int user_id,
               _("View all"));
     }
 
-    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, 0, 0);
+    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, 0, 0, 0);
     if (global->team_download_time > 0) {
       fprintf(f, "<p>");
       html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
@@ -1282,7 +1452,7 @@ write_team_page(FILE *f, int user_id,
             "<tr><td colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n"
             "</table></form>\n",
             _("Subject"), ACTION_SUBMIT_CLAR, _("Send!"));
-    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, 0, 0);
+    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, 0, 0, 0);
   }
 
   if (!global->disable_clars) {
@@ -1305,8 +1475,25 @@ write_team_page(FILE *f, int user_id,
               _("View all"));
     }
 
-    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, 0, 0);
+    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, 0, 0, 0);
   }
+}
+
+int
+write_virtual_standings(FILE *f, int user_id)
+{
+  unsigned char *user_name, *astr;
+  size_t alen;
+
+  user_name = teamdb_get_name(user_id);
+  if (!user_name || !*user_name) user_name = teamdb_get_login(user_id);
+  if (!user_name) user_name = "";
+  alen = html_armored_strlen(user_name);
+  astr = alloca(alen + 16);
+  html_armor_string(user_name, astr);
+  write_standings_header(f, 1, user_id, 0, astr);
+  do_write_standings(f, 1, user_id, 0);
+  return 0;
 }
 
 /**
