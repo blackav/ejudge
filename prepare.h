@@ -200,6 +200,8 @@ struct section_global_data
   int ignore_duplicated_runs;
   int report_error_code;
   int auto_short_problem_name;  /* automatically construct short name */
+  int compile_real_time_limit;
+  int checker_real_time_limit;
 
   // decorations
   path_t standings_team_color;
@@ -224,6 +226,7 @@ struct section_problem_data
   int    run_penalty;           /* penalty for one run */
   int    use_corr;              /* whether the correct answers defined */
   int    tests_to_accept;       /* how many tests to accept a submit */
+  int    checker_real_time_limit;
   path_t super;                 /* superproblem's short_name */
   path_t short_name;            /* short problem name, eg A, B, ... */
   path_t long_name;             /* long problem name */
@@ -250,6 +253,7 @@ struct section_language_data
   int    id;                    /* language id */
   int    compile_id;            /* language id for compilation */
   int    disabled;              /* a participant cannot use this language */
+  int    compile_real_time_limit;
   path_t short_name;            /* language short name */
   path_t long_name;             /* language long name */
   path_t key;                   /* configuration key */
