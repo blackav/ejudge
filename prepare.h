@@ -68,6 +68,7 @@ struct section_global_data
   int    autoupdate_standings;  /* update standings automatically? */
   int    inactivity_timeout;    /* timeout for slave case */
   int    disable_auto_testing;  /* do not test automatically */
+  int    disable_testing;       /* do not test the submit at all */
   int    enable_runlog_merge;   /* enable runlog merging */
 
   int    fog_standings_updated; /* INTERNAL: updated at the moment of fog? */
@@ -267,6 +268,7 @@ struct section_problem_data
   int    tests_to_accept;       /* how many tests to accept a submit */
   int    checker_real_time_limit;
   int    disable_auto_testing;
+  int    disable_testing;
   puc_t super[32];              /* superproblem's short_name */
   puc_t short_name[32];         /* short problem name, eg A, B, ... */
   puc_t long_name[128];         /* long problem name */
