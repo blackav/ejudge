@@ -60,6 +60,7 @@
 #define DEFAULT_SERVER_LAG           10
 #define DEFAULT_MAX_RUN_SIZE         65536
 #define DEFAULT_MAX_CLAR_SIZE        1024
+#define DEFAULT_CHARSET              "iso8859-1"
 
 /* global configuration settings */
 struct section_global_data
@@ -88,6 +89,7 @@ struct section_global_data
   path_t team_data_dir;
   path_t standings_url;
   path_t problems_url;
+  path_t charset;
 };
 
 /* configuration information */
@@ -147,6 +149,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(team_data_dir, "s"),
   GLOBAL_PARAM(standings_url, "s"),
   GLOBAL_PARAM(problems_url, "s"),
+  GLOBAL_PARAM(charset, "s"),
   { 0, 0, 0, 0 }
 };
 static struct config_section_info params[] =
@@ -165,12 +168,12 @@ set_defaults(void)
   path_init(global->var_dir, global->root_dir, DEFAULT_VAR_DIR);
   path_init(global->conf_dir, global->root_dir, DEFAULT_CONF_DIR);
   if (!global->teamdb_file[0]) {
-    err(0, LOG_ERR, _("teamdb_file must be set"));
+    err(_("teamdb_file must be set"));
     return -1;
   }
   path_add_dir(global->teamdb_file, global->conf_dir);
   if (!global->passwd_file[0]) {
-    err(0, LOG_ERR, _("passwd_file must be set"));
+    err(_("passwd_file must be set"));
     return -1;
   }
   path_add_dir(global->passwd_file, global->conf_dir);
@@ -193,12 +196,15 @@ set_defaults(void)
     err(_("invalid max_run_size"));
     return -1;
   }
-  if (global->max_run_size) global->max_run_size = DEFAULT_MAX_RUN_SIZE;
+  if (!global->max_run_size) global->max_run_size = DEFAULT_MAX_RUN_SIZE;
   if (global->max_clar_size < 0 || global->max_clar_size > 16 * 1024) {
     err(_("invalid max_clar_size"));
     return -1;
   }
-  if (global->max_clar_size) global->max_clar_size = DEFAULT_MAX_CLAR_SIZE;
+  if (!global->max_clar_size) global->max_clar_size = DEFAULT_MAX_CLAR_SIZE;
+  if (!global->charset[0]) {
+    pathcpy(global->charset, DEFAULT_CHARSET);
+  }
   return 0;
 }
 
@@ -219,29 +225,31 @@ initialize(int argc, char *argv[])
   os_rGetBasename(fullname, basename, PATH_MAX);
   strcpy(program_name, basename);
   if (strncmp(basename, "team", 4))
-    client_not_configured(_("bad program_name"));
+    client_not_configured(global->charset, _("bad program_name"));
 
   pathmake(cfgname, dirname, "/", "..", "/", "cgi-data", "/", basename,
            ".cfg", NULL);
   config = parse_param(cfgname, 0, params, 1);
-  if (!config) client_not_configured(_("config file not parsed"));
+  if (!config)
+    client_not_configured(global->charset, _("config file not parsed"));
 
   /* find global section */
   for (p = config; p; p = p->next) {
     if (!p->name[0] || !strcmp(p->name, "global"))
       break;
   }
-  if (!p) client_not_configured(_("no global section"));
+  if (!p) client_not_configured(global->charset, _("no global section"));
   global = (struct section_global_data *) p;
 
-  if (set_defaults() < 0) client_not_configured(_("bad defaults"));
+  if (set_defaults() < 0)
+    client_not_configured(global->charset, _("bad defaults"));
   logger_set_level(-1, LOG_WARNING);
 
   /* check directory structure */
   if (check_writable_dir(global->pipe_dir) < 0
       || check_writable_dir(global->team_data_dir) < 0
       || check_writable_spool(global->team_cmd_dir, SPOOL_IN))
-    client_not_configured(_("bad directory configuration"));
+    client_not_configured(global->charset, _("bad directory configuration"));
 
   client_make_form_headers();
   pathcpy(client_pipe_dir, global->pipe_dir);
@@ -317,8 +325,7 @@ check_passwd(void)
 static int
 display_enter_password(void)
 {
-  //client_put_header("Введите пароль");
-  client_put_header(_("Enter password"));
+  client_put_header(global->charset, _("Enter password"));
   puts(form_header_simple);
   printf("<p>%s: <input type=\"text\" size=\"16\" name=\"login\">\n",
          _("Login"));
@@ -370,12 +377,10 @@ send_clar_if_asked(void)
   if (!cgi_param("msg")) return;
 
   if (!server_start_time) {
-    //server_last_cmd_status = "<p>Сообщение не может быть послано, так как соревнование еще не началось.";
     server_last_cmd_status = _("<p>The message cannot be sent. The contest is not started.");
     return;
   }
   if (server_stop_time) {
-    //server_last_cmd_status = "<p>Сообщение не может быть послано, так как соревнование уже закончилось.";
     server_last_cmd_status = _("<p>The message cannot be sent. The contest is over.");
     return;
   }
@@ -410,7 +415,6 @@ send_clar_if_asked(void)
           full_subj, t);
 
   if (strlen(full_txt) > global->max_clar_size) {
-    //server_last_cmd_status = "<p>Сообщение не может быть послано, так как его размер превысил максимально допустимый.";
     server_last_cmd_status = _("<p>The message cannot be sent because its size exceeds maximal allowed.");
     return;
   }
@@ -418,8 +422,7 @@ send_clar_if_asked(void)
   /* send it */
   client_packet_name(pname);
   if (generic_write_file(full_txt, strlen(full_txt), 0,
-                         global->team_cmd_dir, pname, "") < 0) {
-    //server_last_cmd_status = "<p>Сообщение не может быть послано. Ошибка записи в разделяемый каталог.";
+                         global->team_data_dir, pname, "") < 0) {
     server_last_cmd_status = _("<p>The message cannot be sent. Error writing to the spool directory.");
     return;
   }
@@ -442,12 +445,10 @@ submit_if_asked(void)
   if (!cgi_param("send")) return;
 
   if (!server_start_time) {
-    //server_last_cmd_status = "<p>Решение не может быть послано, так как соревнование еще не началось."; 
     server_last_cmd_status = _("<p>The submission cannot be sent. The contest is not started.");
     return;
   }
   if (server_stop_time) {
-    //server_last_cmd_status = "<p>Решение не может быть послано, так как соревнование уже закончилось.";
     server_last_cmd_status = _("<p>The submission cannot be sent. The contest is over.");
     return;
   }
@@ -465,7 +466,6 @@ submit_if_asked(void)
   }
 
   if (strlen(t) > global->max_run_size) {
-    //server_last_cmd_status = "<p>Решение не может быть послано, так как его размер превысил максимально допустимый.";
     server_last_cmd_status = _("<p>The submission cannot be sent because its size exceeds maximal allowed.");
     return;
   }
@@ -473,8 +473,7 @@ submit_if_asked(void)
   /* send it */
   client_packet_name(pname);
   if (generic_write_file(t, strlen(t), 0,
-                         global->team_cmd_dir, pname, "") < 0) {
-    //server_last_cmd_status = "<p>Решение не может быть послано. Ошибка записи в разделяемый каталог.";
+                         global->team_data_dir, pname, "") < 0) {
     server_last_cmd_status = _("<p>The solution cannot be sent. Error writing to the spool directory.");
     return;
   }
@@ -499,12 +498,10 @@ change_passwd_if_asked(void)
   if (!p1 || !p2 || !*p1 || !*p2) return;
 
   if (strcmp(p1, p2)) {
-    //server_last_cmd_status = "<p>Пароли не совпадают.";
     server_last_cmd_status = _("<p>Passwords do not match.");
     return;
   }
   if (strlen(p1) > 16) {
-    //server_last_cmd_status = "<p>Пароль слишком длинный (>16 символов).";
     server_last_cmd_status = _("<p>Password is too long (>16 characters).");
     return;
   }
@@ -535,11 +532,60 @@ show_clar_if_asked(void)
   sprintf(cmd, "VIEW %d %d\n", client_team_id, clar_id);
   client_transaction(client_packet_name(pname), cmd, &src, 0);
 
-  //client_put_header("Просмотр сообщения");
-  client_put_header(_("Message view"));
+  client_put_header(global->charset, _("Message view"));
   puts(src);
   printf("<hr>%s<input type=\"submit\" name=\"refresh\" value=\"%s\"></form>",
          form_start_simple, _("Back"));
+  client_put_footer();
+  exit(0);
+}
+
+static void
+request_source_if_asked(void)
+{
+  char *s, cmd[64], pname[64], *src = 0;
+  int   n, run_id;
+
+  if (!(s = cgi_nname("source_", 7))) return;
+  if (sscanf(s, "source_%d%n", &run_id, &n) != 1
+      || (s[n] && s[n] != '.'))
+    return;
+  if (run_id < 0 || run_id >= server_total_runs) return;
+
+  sprintf(cmd, "SOURCE %d %d\n", client_team_id, run_id);
+  client_transaction(client_packet_name(pname), cmd, &src, 0);
+  client_put_header(global->charset, _("Source view"));
+  printf("<hr>");
+  
+  puts(src);
+  printf("<hr>%s<input type=\"submit\" name=\"refresh\" value=\"%s\"></form>",
+         form_start_simple, _("Back"));
+
+  client_put_footer();
+  exit(0);
+}
+
+static void
+request_report_if_asked(void)
+{
+  char *s, cmd[64], pname[64], *src = 0;
+  int   n, run_id;
+
+  if (!(s = cgi_nname("report_", 7))) return;
+  if (sscanf(s, "report_%d%n", &run_id, &n) != 1
+      || (s[n] && s[n] != '.'))
+    return;
+  if (run_id < 0 || run_id >= server_total_runs) return;
+
+  sprintf(cmd, "REPORT %d %d\n", client_team_id, run_id);
+  client_transaction(client_packet_name(pname), cmd, &src, 0);
+  client_put_header(global->charset, _("Report view"));
+  printf("<hr>");
+  
+  puts(src);
+  printf("<hr>%s<input type=\"submit\" name=\"refresh\" value=\"%s\"></form>",
+         form_start_simple, _("Back"));
+
   client_put_footer();
   exit(0);
 }
@@ -555,9 +601,9 @@ main(int argc, char *argv[])
   if (!client_check_source_ip(global->allow_deny,
                               global->allow_from,
                               global->deny_from))
-    client_access_denied();
+    client_access_denied(global->charset);
 
-  cgi_read();
+  cgi_read(global->charset);
 
   if (ask_passwd()) {
     display_enter_password();
@@ -565,12 +611,13 @@ main(int argc, char *argv[])
   }
 
   if (teamdb_open(global->teamdb_file, global->passwd_file, 0) < 0)
-    client_not_configured(_("bad team database"));
-  if (!check_passwd()) client_access_denied();
+    client_not_configured(global->charset, _("bad team database"));
+  if (!check_passwd()) client_access_denied(global->charset);
 
   read_state_params();
 
-  if (!client_check_server_status(global->status_file, global->server_lag)) {
+  if (!client_check_server_status(global->charset,
+                                  global->status_file, global->server_lag)) {
     return 0;
   }
 
@@ -578,25 +625,25 @@ main(int argc, char *argv[])
 
   send_clar_if_asked();
   show_clar_if_asked();
+  request_source_if_asked();
+  request_report_if_asked();
   submit_if_asked();
   change_passwd_if_asked();
   get_team_statistics();
 
   if (force_recheck_status) {
-    client_check_server_status(global->status_file, global->server_lag);
+    client_check_server_status(global->charset,
+                               global->status_file, global->server_lag);
     force_recheck_status = 0;
   }
 
   if (global->contest_name[0]) {
-    //client_put_header("Монитор: &quot;%s&quot - &quot;%s&quot;",
-    //                  client_team_name, global->contest_name);
-    client_put_header("%s: &quot;%s&quot - &quot;%s&quot;",
+    client_put_header(global->charset,
+                       "%s: &quot;%s&quot - &quot;%s&quot;",
                       _("Monitor"),
                       client_team_name, global->contest_name);
   } else {
-    //client_put_header("Монитор: &quot;%s&quot",
-    //                  client_team_name);
-    client_put_header("%s: &quot;%s&quot",
+    client_put_header(global->charset, "%s: &quot;%s&quot",
                       _("Monitor"),
                       client_team_name);
   }
@@ -641,7 +688,6 @@ main(int argc, char *argv[])
   }
 
   if (need_show_submit) {
-    //puts(("<hr><a name=\"submit\"><h2>Отослать задачу</h2>"));
     printf("<hr><a name=\"submit\"><h2>%s</h2>\n", _("Send a submission"));
     printf("<table>%s\n"
            "<tr><td>%s:</td><td>%s</td></tr>\n"
@@ -660,13 +706,12 @@ main(int argc, char *argv[])
     printf("<hr><a name=\"runstat\"><h2>%s (%s)</h2>\n",
            _("Sent submissions"),
            client_view_all_runs?_("all"):_("last 15"));
-    client_puts(server_runs_stat);
+    client_puts(server_runs_stat, form_start_simple);
     printf("<p>%s<input type=\"submit\" name=\"view_all_runs\" value=\"%s\"></form>\n", form_start_simple, _("View all"));
     print_refresh_button("#runstat");
   }
 
   if (need_show_clar) {
-    //puts(("<hr><a name=\"clar\"><h2>Задать вопрос Жюри</h2>"));
     printf("<hr><a name=\"clar\"><h2>%s</h2>\n",_("Send a message to judges"));
     printf("<table>%s\n"
            "<tr><td>%s:</td><td>%s</td></tr>\n"
@@ -681,8 +726,6 @@ main(int argc, char *argv[])
   }
 
   if (server_clars_stat) {
-    //    printf(("<hr><a name=\"clarstat\"><h2>Вопросы/ответы (%s)</h2>\n"),
-    //           client_view_all_clars?("все"):("последние 15"));
     printf("<hr><a name=\"clarstat\"><h2>%s (%s)</h2>\n",
            _("Messages"), client_view_all_clars?_("all"):_("last 15"));
     client_puts(server_clars_stat, form_start_simple);
