@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -39,6 +39,12 @@ get_uniq_prefix(char *prefix)
   sprintf(prefix, "%d_%s_", getpid(), os_NodeName());
 }
 
+struct direlem_node
+{
+  struct direlem_node *next;
+  unsigned char *name;
+}; 
+
 /* remove all files in the specified directory */
 int
 clear_directory(char const *path)
@@ -47,44 +53,63 @@ clear_directory(char const *path)
   struct dirent *de;
   path_t         fdel;
   struct stat    sb;
+  int saved_errno, r;
+  struct direlem_node *first = 0, **plast = &first, *p;
 
   if (!(d = opendir(path))) {
+    saved_errno = errno;
     err("clear_directory: opendir(\"%s\") failed: %s", path, os_ErrorMsg());
-    return -1;
+    errno = saved_errno;
+    return -saved_errno;
   }
   while ((de = readdir(d))) {
-    if (strcmp(de->d_name, ".") && strcmp(de->d_name, "..")) {
-      pathmake(fdel, path, "/", de->d_name, NULL);
-      if (lstat(fdel, &sb) < 0) continue;
-      if (S_ISDIR(sb.st_mode)) {
-        remove_directory_recursively(fdel);
-      } else {
-        if (unlink(fdel) < 0) {
-          err("unlink(\"%s\") failed: %s", fdel, os_ErrorMsg());
-        }
+    if (!strcmp(de->d_name, ".")) continue;
+    if (!strcmp(de->d_name, "..")) continue;
+    p = (struct direlem_node*) alloca(sizeof(*p));
+    p->next = 0;
+    p->name = (unsigned char*) alloca(strlen(de->d_name) + 1);
+    strcpy(p->name, de->d_name);
+    *plast = p;
+    plast = &p->next;
+  }
+  closedir(d);
+
+  saved_errno = 0;
+  for (p = first; p; p = p->next) {
+    pathmake(fdel, path, "/", p->name, NULL);
+    if (lstat(fdel, &sb) < 0) continue;
+    if (S_ISDIR(sb.st_mode)) {
+      if ((r = remove_directory_recursively(fdel)) < 0) {
+        saved_errno = -r;
+      }
+    } else {
+      if (unlink(fdel) < 0 && errno != ENOENT) {
+        saved_errno = errno;
+        err("unlink(\"%s\") failed: %s", fdel, os_ErrorMsg());
       }
     }
   }
 
   info("clear_directory: %s cleared", path);
-  closedir(d);
-  return 0;
+  return -saved_errno;
 }
 
 int
 make_dir(char const *path, int access)
 {
-  if (mkdir(path, 0755) < 0) {
-    if (errno == EEXIST) {
-      //info("make_dir: %s exists", path);
-    } else {
-      err("make_dir: mkdir(\"%s\") failed: %s", path, os_ErrorMsg());
-      return -1;
-    }
-  } else {
-    if (sf_chmod(path, access) < 0) return -1;
-    info("make_dir: %s created", path);
+  int saved_errno;
+  int prev_umask = umask(0);
+
+  if (!access) access = 0755 & ~prev_umask;
+  if (mkdir(path, access) < 0 && errno != EEXIST) {
+    saved_errno = errno;
+    umask(prev_umask);
+    err("make_dir: mkdir(\"%s\") failed: %s", path, os_ErrorMsg());
+    errno = saved_errno;
+    return -saved_errno;
   }
+  umask(prev_umask);
+  info("make_dir: %s created", path);
   return 0;
 }
 
@@ -94,6 +119,7 @@ make_all_dir(char const *path, int access)
   path_t inpath;
   path_t dirpath;
   path_t outpath;
+  int r;
 
   pathcpy(inpath, path);
   pathcat(inpath, "/in");
@@ -102,10 +128,10 @@ make_all_dir(char const *path, int access)
   pathcpy(outpath, path);
   pathcat(outpath, "/out");
 
-  if (make_dir(path, 0) < 0) return -1;
-  if (make_dir(inpath, access) < 0) return -1;
-  if (make_dir(dirpath, access) < 0) return -1;
-  if (make_dir(outpath, access) < 0) return -1;
+  if ((r = make_dir(path, 0)) < 0) return r;
+  if ((r = make_dir(inpath, access)) < 0) return r;
+  if ((r = make_dir(dirpath, access)) < 0) return r;
+  if ((r = make_dir(outpath, access)) < 0) return r;
 
   return 0;
 }
@@ -117,11 +143,14 @@ scan_dir(char const *partial_path, char *found_item)
   path_t         dir_path;
   DIR           *d;
   struct dirent *de;
+  int saved_errno;
 
   pathmake(dir_path, partial_path, "/", "dir", NULL);
   if (!(d = opendir(dir_path))) {
+    saved_errno = errno;
     err("scan_dir: opendir(\"%s\") failed: %s", dir_path, os_ErrorMsg());
-    return -1;
+    errno = saved_errno;
+    return -saved_errno;
   }
 
   while ((de = readdir(d))) {
@@ -145,21 +174,26 @@ do_write_file(char const *buf, size_t sz, char const *dst, int flags)
   char const *p;
   int         wsz;
   int         dfd = -1;
+  int         errcode;
   int         open_flags = O_WRONLY | ((flags & PIPE)?0:(O_CREAT|O_TRUNC));
 
-  if ((dfd = sf_open(dst, open_flags, 0644)) < 0) goto _cleanup;
+  if ((dfd = errcode = sf_open(dst, open_flags, 0644)) < 0) goto _cleanup;
   p = buf;
   while (sz > 0) {
-    if ((wsz = sf_write(dfd, p, sz, dst)) <= 0) goto _cleanup;
+    if ((wsz = errcode = sf_write(dfd, p, sz, dst)) <= 0) goto _cleanup;
     p += wsz;
     sz -= wsz;
   }
-  if (sf_close(dfd, dst) < 0) return -1;
+  if ((errcode = sf_close(dfd, dst)) < 0) {
+    dfd = -1;
+    goto _cleanup;
+  }
   return 0;
 
  _cleanup:
   if (dfd >= 0) close(dfd);
-  return -1;
+  errno = -errcode;
+  return errcode;
 }
 
 static int
@@ -168,8 +202,12 @@ gzip_write_file(const unsigned char *buf, size_t size,
 {
   gzFile gz_dst = 0;
   int wsz, do_conv = 1;
+  int saved_errno;
+  const unsigned char *z_msg;
 
   if (!(gz_dst = gzopen(path, "wb9"))) {
+    saved_errno = errno;
+    if (!saved_errno) saved_errno = 1000 - Z_MEM_ERROR;
     err("gzip_write_file: cannot open file `%s'", path);
     goto cleanup;
   }
@@ -177,28 +215,43 @@ gzip_write_file(const unsigned char *buf, size_t size,
   if ((flags & CONVERT)) {
     while (size > 0) {
       if (*buf == '\r') do_conv = 0;
-      if (*buf == '\n' && do_conv) gzputc(gz_dst, '\r');
-      gzputc(gz_dst, *buf);
+      if (*buf == '\n' && do_conv) {
+        if (gzputc(gz_dst, '\r') < 0) goto write_error;
+      }
+      if (gzputc(gz_dst, *buf) < 0) goto write_error;
       buf++;
       size--;
     }
   } else {
     while (size > 0) {
-      if ((wsz = gzwrite(gz_dst, (void*) buf, size)) <= 0) {
-        err("gzip_write_file: write error `%s'", path);
-        goto cleanup;
-      }
+      if ((wsz = gzwrite(gz_dst, (void*) buf, size)) <= 0)
+        goto write_error;
       buf += wsz;
       size -= wsz;
     }
   }
 
-  gzclose(gz_dst);
+  if (gzclose(gz_dst) < 0) {
+    gz_dst = 0;
+    goto write_error;
+  }
   return 0;
 
+ write_error:
+  z_msg = gzerror(gz_dst, &saved_errno);
+  if (saved_errno == Z_ERRNO) {
+    saved_errno = errno;
+    z_msg = strerror(errno);
+  } else {
+    saved_errno = 1000 - saved_errno;
+  }
+  err("gzip_write_file: write error: %s", z_msg);
+  goto cleanup;
+
  cleanup:
-  gzclose(gz_dst);
-  return -1;
+  if (gz_dst) gzclose(gz_dst);
+  errno = saved_errno;
+  return -saved_errno;
 }
 
 int
@@ -234,110 +287,78 @@ generic_write_file(char const *buf, size_t size, int flags,
   }
   if (r < 0) {
     if (!(flags & PIPE)) unlink(wrt_path);
+    errno = -r;
     return r;
   }
   if ((flags & SAFE)) {
     pathmake(out_path, dir, "/", "dir", "/", name, sfx, NULL);
     info("Move: %s -> %s", wrt_path, out_path);
     if (rename(wrt_path, out_path) < 0) {
+      r = errno;
       err("rename failed: %s", os_ErrorMsg());
-      return -1;
+      if (!(flags & PIPE)) unlink(wrt_path);
+      errno = r;
+      return -r;
     }
   }
   return size;
 }
 
 static int
-do_read_file(char **pbuf, size_t maxsz, size_t *prsz, char const *path)
+do_read_file(char **pbuf, size_t maxsz, size_t *prsz,
+             const unsigned char *path)
 {
-  int   fd = -1;
   char *buf = *pbuf;
-  char *hptr = 0;
-  int   rsz;
-  char *p;
+  int fd = -1, errcode = 0;
+  int rsz;
+  unsigned char *hbuf = 0;
+  unsigned char sbuf[4096];
+  size_t hbuf_a = 0, hbuf_u = 0;
 
-  size_t      lsize, bsize;
-  struct stat stat_info;
+  if ((fd = errcode = sf_open(path, O_RDONLY, 0)) < 0) goto cleanup;
 
-  if ((fd = sf_open(path, O_RDONLY, 0)) < 0) goto _cleanup;
-  if (!buf) {
-    if (fstat(fd, &stat_info) < 0) {
-      err("do_read_file: fstat failed: %s", os_ErrorMsg());
-      goto _cleanup;
+  /* fixed-size buffer */
+  if (buf) {
+    if (!maxsz) {
+      close(fd);
+      if (prsz) *prsz = 0;
+      return 0;
     }
-    hptr = buf = xcalloc(stat_info.st_size + 16, 1);
-    p = buf; lsize = stat_info.st_size;
-    while (1) {
-      bsize = 4096;
-      if (lsize < bsize) bsize = lsize;
-      if (bsize == 0) bsize = 1;
-      if ((rsz = sf_read(fd, p, bsize, path)) < 0) goto _cleanup;
-      if (!rsz) break;
-      p += rsz;
-      lsize -= rsz;
-      if (lsize == -1) break;
-    }
-    if (lsize > 0) {
-      info("do_read_file: file shrunk");
-    } else if (lsize < 0) {
-      info("do_read_file: file extended");
-    }
-    if (prsz) *prsz = p - buf;
-  } else {
-    /* read a size limited packet */
-    if ((rsz = sf_read(fd, buf, maxsz, path)) < 0) goto _cleanup;
-    if (rsz == maxsz) {
-      err("do_read_file: oversized packet: %d", rsz);
-      goto _cleanup;
-    }
+    if ((rsz = errcode = sf_read(fd, buf, maxsz, path)) < 0) goto cleanup;
+    if (rsz + 1 <= maxsz) buf[rsz] = 0;
     if (prsz) *prsz = rsz;
+    close(fd);
+    return 0;
   }
 
-  *pbuf = buf;
-  close(fd);
-  return 0;
-
- _cleanup:
-  if (fd >= 0) close(fd);
-  xfree(hptr);
-  return -1;
-}
-
-int
-do_fixed_pipe_read_file(char **pbuf, size_t maxsz, size_t *prsz,
-                        char const *path)
-{
-  SWERR(("sorry, not implemented"));
-}
-
-int
-do_alloc_pipe_read_file(char **pbuf, size_t maxsz, size_t *prsz,
-                        char const *path)
-{
-  char          read_buf[4096];
-  char         *mem = 0;
-  unsigned int  cursz = 0;
-  int           fd = -1;
-  int           rsz;
-
-  if ((fd = sf_open(path, O_RDONLY, 0)) < 0) goto cleanup;
-  while ((rsz = sf_read(fd, read_buf, sizeof(read_buf), path)) > 0) {
-    mem = (char*) xrealloc(mem, cursz + rsz + 1);
-    memcpy(mem + cursz, read_buf, rsz);
-    cursz += rsz;
-    mem[cursz] = 0;
+  /* variable-size buffer: maxsz is ignored */
+  while (1) {
+    if ((rsz = errcode = sf_read(fd,sbuf,sizeof(sbuf),path)) < 0) goto cleanup;
+    if (!rsz) break;
+    if (hbuf_u + rsz > hbuf_a) {
+      if (!hbuf_a) hbuf_a = 128;
+      while (hbuf_u + rsz > hbuf_a) hbuf_a *= 2;
+      hbuf = xrealloc(hbuf, hbuf_a);
+    }
+    memcpy(hbuf + hbuf_u, sbuf, rsz);
+    hbuf_u += rsz;
   }
-  if (rsz < 0) goto cleanup;
+  if (hbuf_u == hbuf_a) {
+    if (!hbuf_a) hbuf_a = 8;
+    hbuf_a *= 2;
+    hbuf = xrealloc(hbuf, hbuf_a);
+  }
+  hbuf[hbuf_u] = 0;
 
-  *pbuf = mem;
-  if (prsz) *prsz = cursz;
+  if (prsz) *prsz = hbuf_u;
+  *pbuf = hbuf;
   close(fd);
   return 0;
 
  cleanup:
-  xfree(mem);
   if (fd >= 0) close(fd);
-  return -1;
+  if (!hbuf) xfree(hbuf);
+  return errcode;
 }
 
 static int
@@ -349,13 +370,17 @@ gzip_read_file(char **pbuf, size_t maxsz, size_t *prsz, int flags,
   unsigned char *rbuf;
   size_t rbuf_a, rbuf_u;
   unsigned char zbuf[2048];
+  const unsigned char *msg;
+  int saved_errno;
 
   if (!(gz_src = gzopen(path, "rb"))) {
+    saved_errno = errno;
+    if (!saved_errno) saved_errno = 1000 - Z_MEM_ERROR;
     err("gzip_read_file: cannot open file `%s'", path);
     goto cleanup;
   }
 
-  /* flags horored: CONVERT */
+  /* flags honored: CONVERT */
 
   if (maxsz > 1 && *pbuf) {
     /* read into a fixed buffer */
@@ -367,12 +392,19 @@ gzip_read_file(char **pbuf, size_t maxsz, size_t *prsz, int flags,
           *rbuf++ = c, rsz++;
         }
       }
+      if (c == EOF) {
+        msg = gzerror(gz_src, &saved_errno);
+        if (saved_errno < 0) goto read_error;
+      }
+
       *rbuf = 0;
       if (c != EOF) {
         while ((c = gzgetc(gz_src)) != EOF) {
           if (c != '\r') rsz++;
         }
       }
+      msg = gzerror(gz_src, &saved_errno);
+      if (saved_errno < 0) goto read_error;
       if (prsz) *prsz = rsz;
     } else {
       bsz = maxsz - 1;
@@ -383,8 +415,8 @@ gzip_read_file(char **pbuf, size_t maxsz, size_t *prsz, int flags,
         bsz -= rsz;
       }
       if (rsz < 0) {
-        err("gzip_read_file: GZIP read error");
-        goto cleanup;
+        msg = gzerror(gz_src, &saved_errno);
+        goto read_error;
       }
       *rbuf = 0;
       if (!bsz) {
@@ -407,6 +439,11 @@ gzip_read_file(char **pbuf, size_t maxsz, size_t *prsz, int flags,
         }
         rbuf[rbuf_u++] = c;
       }
+      msg = gzerror(gz_src, &saved_errno);
+      if (saved_errno < 0) {
+        xfree(rbuf);
+        goto read_error;
+      }
     } else {
       while ((rsz = gzread(gz_src, zbuf, sizeof(zbuf))) > 0) {
         if (rbuf_u + 1 + rsz >= rbuf_a) {
@@ -416,7 +453,11 @@ gzip_read_file(char **pbuf, size_t maxsz, size_t *prsz, int flags,
         memcpy(rbuf + rbuf_u, zbuf, rsz);
         rbuf_u += rsz;
       }
-      /* FIXME: handle read error */
+      if (rsz < 0) {
+        msg = gzerror(gz_src, &saved_errno);
+        xfree(rbuf);
+        goto read_error;
+      }
     }
 
     rbuf[rbuf_u] = 0;
@@ -424,12 +465,23 @@ gzip_read_file(char **pbuf, size_t maxsz, size_t *prsz, int flags,
     if (prsz) *prsz = rbuf_u;
   }
 
-  if (!gz_src) gzclose(gz_src);
+  if (gz_src) gzclose(gz_src);
   return 0;
 
+ read_error:
+  if (saved_errno == Z_ERRNO) {
+    saved_errno = errno;
+    msg = strerror(errno);
+  } else {
+    // note, that gzip's error codes are negative
+    saved_errno = 1000 - saved_errno;
+  }
+  err("gzip_read_file: GZIP read error: %s", msg);
+
  cleanup:
-  if (!gz_src) gzclose(gz_src);
-  return -1;
+  if (gz_src) gzclose(gz_src);
+  errno = saved_errno;
+  return -saved_errno;
 }
 
 int
@@ -440,7 +492,7 @@ generic_read_file(char **pbuf, size_t maxsz, size_t *prsz, int flags,
   path_t read_path;
   path_t in_path;
 
-  int    r = 0;
+  int    r = 0, saved_errno;
 
   ASSERT(pbuf);
   ASSERT(maxsz >= 0);
@@ -458,8 +510,11 @@ generic_read_file(char **pbuf, size_t maxsz, size_t *prsz, int flags,
         write_log(0, LOG_WARN, "rename: no source file %s", in_path);
         return 0;
       }
+      saved_errno = errno;
+      if ((flags & REMOVE)) unlink(in_path);
       err("rename failed: %s", os_ErrorMsg());
-      return -1;
+      errno = saved_errno;
+      return -saved_errno;
     }
   } else {
     if (!dir || !*dir) {
@@ -471,18 +526,22 @@ generic_read_file(char **pbuf, size_t maxsz, size_t *prsz, int flags,
   info("reading file %s", read_path);
   if ((flags & GZIP)) {
     r = gzip_read_file(pbuf, maxsz, prsz, flags, read_path);
-  } else if ((flags & PIPE)) {
-    if (*pbuf) r = do_fixed_pipe_read_file(pbuf, maxsz, prsz, read_path);
-    else r = do_alloc_pipe_read_file(pbuf, maxsz, prsz, read_path);
   } else {
     r = do_read_file(pbuf, maxsz, prsz, read_path);
   }
-  if (r < 0) return r;
+
+  if (r < 0) {
+    if ((flags & REMOVE)) unlink(read_path);
+    errno = -r;
+    return r;
+  }
 
   if ((flags & REMOVE)) {
     if (unlink(read_path) < 0) {
+      saved_errno = errno;
       err("unlink failed: %s", os_ErrorMsg());
-      return -1;
+      errno = saved_errno;
+      return -saved_errno;
     }
   }
   return 1;
@@ -494,15 +553,16 @@ dumb_copy_file_to_dos(FILE *s, FILE *d)
   int do_conv = 1;
   int c;
 
-  c = getc(s);
+  c = getc_unlocked(s);
   while (c != EOF) {
     if (c == '\r') do_conv = 0;
     if (c == '\n' && do_conv) {
-      putc('\r', d);
+      if (putc_unlocked('\r', d) < 0) return -errno;
     }
-    putc(c, d);
-    c = getc(s);
+    if (putc_unlocked(c, d) < 0) return -errno;
+    c = getc_unlocked(s);
   }
+  if (ferror_unlocked(s)) return -errno;
   return 0;
 }
 
@@ -511,9 +571,12 @@ dumb_copy_file_from_dos(FILE *s, FILE *d)
 {
   int c;
 
-  while ((c = getc(s)) != EOF) {
-    if (c != '\r') putc(c, d);
+  while ((c = getc_unlocked(s)) != EOF) {
+    if (c != '\r') {
+      if (putc_unlocked(c, d) < 0) return -errno;
+    }
   }
+  if (ferror_unlocked(s)) return -errno;
   return 0;
 }
 
@@ -521,27 +584,41 @@ static int
 dumb_copy_file(int sfd, int sf, int dfd, int df)
 {
   FILE *fs = 0, *fd = 0;
+  int saved_errno, e;
 
   if (!(fs = fdopen(sfd, "rb"))) {
+    saved_errno = errno;
     err("dumb_copy_file: fdopen(rb) failed: %s", os_ErrorMsg());
     goto cleanup;
   }
+  sfd = -1;
   if (!(fd = fdopen(dfd, "wb"))) {
+    saved_errno = errno;
     err("dumb_copy_file: fdopen(wb) failed: %s", os_ErrorMsg());
     goto cleanup;
   }
+  dfd = -1;
   if ((sf & CONVERT)) {
-    if (dumb_copy_file_from_dos(fs, fd) < 0) goto cleanup;
+    if ((e = dumb_copy_file_from_dos(fs, fd)) < 0) {
+      saved_errno = -e;
+      goto cleanup;
+    }
   } else {
-    if (dumb_copy_file_to_dos(fs, fd) < 0) goto cleanup;
+    if ((e = dumb_copy_file_to_dos(fs, fd)) < 0) {
+      saved_errno = -e;
+      goto cleanup;
+    }
   }
   if (fclose(fs) < 0) {
     fs = 0;
+    saved_errno = errno;
     err("dumb_copy_file: fclose(rb) failed: %s", os_ErrorMsg());
     goto cleanup;
   }
+  fs = 0;
   if (fclose(fd) < 0) {
     fd = 0;
+    saved_errno = errno;
     err("dumb_copy_file: fclose(wb) failed: %s", os_ErrorMsg());
     goto cleanup;
   }
@@ -549,10 +626,11 @@ dumb_copy_file(int sfd, int sf, int dfd, int df)
 
  cleanup:
   if (fs) fclose(fs);
-  fs = 0;
   if (fd) fclose(fd);
-  fd = 0;
-  return -1;
+  if (sfd >= 0) close(sfd);
+  if (dfd >= 0) close(dfd);
+  errno = saved_errno;
+  return -saved_errno;
 }
 
 static int
@@ -560,15 +638,18 @@ gzip_copy_file(int sfd, int sf, int dfd, int df)
 {
   gzFile gz_src = 0, gz_dst = 0;
   FILE *f_src = 0, *f_dst = 0;
-  int c, do_conv = 1;
+  int c, do_conv = 1, saved_errno;
   unsigned char buf[4096], *p;
   int sz, wsz;
+  const unsigned char *z_msg = 0, *z_func = 0;
 
   /* (sf & CONVERT) do dos->unix conversion sfd - DOS file, dfd - UNIX file */
   /* (df & CONVERT) vice versa */
 
   if ((sf & GZIP)) {
     if (!(gz_src = gzdopen(sfd, "rb"))) {
+      saved_errno = errno;
+      if (!saved_errno) saved_errno = 1000 - Z_MEM_ERROR;
       err("gzip_copy_file: cannot attach input stream");
       goto cleanup;
     }
@@ -576,6 +657,7 @@ gzip_copy_file(int sfd, int sf, int dfd, int df)
   }
   if (sf == CONVERT) {
     if (!(f_src = fdopen(sfd, "rb"))) {
+      saved_errno = errno;
       err("gzip_copy_file: cannot attach input stream");
       goto cleanup;
     }
@@ -583,6 +665,8 @@ gzip_copy_file(int sfd, int sf, int dfd, int df)
   }
   if ((df & GZIP)) {
     if (!(gz_dst = gzdopen(dfd, "wb9"))) {
+      saved_errno = errno;
+      if (!saved_errno) saved_errno = 1000 - Z_MEM_ERROR;
       err("gzip_copy_file: cannot attach output stream");
       goto cleanup;
     }
@@ -590,6 +674,7 @@ gzip_copy_file(int sfd, int sf, int dfd, int df)
   }
   if (df == CONVERT) {
     if (!(f_dst = fdopen(dfd, "wb"))) {
+      saved_errno = errno;
       err("gzip_copy_file: cannot attach output stream");
       goto cleanup;
     }
@@ -598,30 +683,47 @@ gzip_copy_file(int sfd, int sf, int dfd, int df)
 
   if (sf == (GZIP|CONVERT) && df == GZIP) {
     while ((c = gzgetc(gz_src)) != EOF) {
-      if (c != '\r') gzputc(gz_dst, c);
+      if (c != '\r') {
+        if (gzputc(gz_dst, c) < 0) goto gzputc_error;
+      }
     }
+    gzerror(gz_src, &saved_errno);
+    if (saved_errno < 0) goto gzgetc_error;
   } else if (sf == (GZIP|CONVERT) && df == 0) {
     while ((c = gzgetc(gz_src)) != EOF) {
-      if (c != '\r') putc(c, f_dst);
+      if (c != '\r') {
+        if (putc_unlocked(c, f_dst) < 0) goto putc_error;
+      }
     }
+    gzerror(gz_src, &saved_errno);
+    if (saved_errno < 0) goto gzgetc_error;
   } else if (sf == GZIP && df == (GZIP | CONVERT)) {
     while ((c = gzgetc(gz_src)) != EOF) {
       if (c == '\r') do_conv = 0;
-      if (c == '\n' && do_conv) gzputc(gz_dst, '\r');
-      gzputc(gz_dst, c);
+      if (c == '\n' && do_conv) {
+        if (gzputc(gz_dst, '\r') < 0) goto gzputc_error;
+      }
+      if (gzputc(gz_dst, c) < 0) goto gzputc_error;
     }
+    gzerror(gz_src, &saved_errno);
+    if (saved_errno < 0) goto gzgetc_error;
   } else if (sf == GZIP && df == CONVERT) {
     while ((c = gzgetc(gz_src)) != EOF) {
       if (c == '\r') do_conv = 0;
-      if (c == '\n' && do_conv) putc('\r', gz_dst);
-      putc(c, gz_dst);
+      if (c == '\n' && do_conv) {
+        if (putc_unlocked('\r', f_dst) < 0) goto putc_error;
+      }
+      if (putc_unlocked(c, f_dst) < 0) goto putc_error;
     }
+    gzerror(gz_src, &saved_errno);
+    if (saved_errno < 0) goto gzgetc_error;
   } else if (sf == GZIP && df == 0) {
     while ((sz = gzread(gz_src, buf, sizeof(buf))) > 0) {
       p = buf;
       while (sz > 0) {
         if ((wsz = write(dfd, p, sz)) <= 0) {
-          err("gzip_copy_file: gzip write error");
+          saved_errno = errno;
+          err("gzip_copy_file: write error: %s", os_ErrorMsg());
           goto cleanup;
         }
         p += wsz;
@@ -629,32 +731,47 @@ gzip_copy_file(int sfd, int sf, int dfd, int df)
       }
     }
     if (sz < 0) {
-      err("gzip_copy_file: GZIP read error: %s", os_ErrorMsg());
-      goto cleanup;
+      z_func = "gzread";
+      goto z_error;
     }
   } else if (sf == CONVERT && df == GZIP) {
-    while ((c = getc(f_src)) != EOF) {
-      if (c != '\r') gzputc(gz_dst, c);
+    while ((c = getc_unlocked(f_src)) != EOF) {
+      if (c != '\r') {
+        if (gzputc(gz_dst, c) < 0) goto gzputc_error;
+      }
+    }
+    if (ferror_unlocked(f_src)) {
+      saved_errno = errno;
+      err("gzip_copy_file: getc failed: %s", os_ErrorMsg());
+      goto cleanup;
     }
   } else if (sf == 0 && df == (GZIP|CONVERT)) {
     while ((c = getc(gz_src)) != EOF) {
       if (c == '\r') do_conv = 0;
-      if (c == '\n' && do_conv) gzputc(gz_dst, '\r');
-      gzputc(gz_dst, c);
+      if (c == '\n' && do_conv) {
+        if (gzputc(gz_dst, '\r') < 0) goto gzputc_error;
+      }
+      if (gzputc(gz_dst, c) < 0) goto gzputc_error;
+    }
+    if (ferror_unlocked(f_src)) {
+      saved_errno = errno;
+      err("gzip_copy_file: getc failed: %s", os_ErrorMsg());
+      goto cleanup;
     }
   } else if (sf == 0 && df == GZIP) {
     while ((sz = read(sfd, buf, sizeof(buf))) > 0) {
       p = buf;
       while (sz > 0) {
         if ((wsz = gzwrite(gz_dst, p, sz)) <= 0) {
-          err("gzip_copy_file: gzip write error");
-          goto cleanup;
+          z_func = "gzwrite";
+          goto z_error;
         }
         p += wsz;
         sz -= wsz;
       }
     }
     if (sz < 0) {
+      saved_errno = errno;
       err("gzip_copy_file: read error: %s", os_ErrorMsg());
       goto cleanup;
     }
@@ -663,12 +780,68 @@ gzip_copy_file(int sfd, int sf, int dfd, int df)
   }
 
   if (gz_src) gzclose(gz_src);
-  if (gz_dst) gzclose(gz_dst);
+  gz_src = 0;
+  if (gz_dst) {
+    if ((saved_errno = gzclose(gz_dst)) < 0) {
+      if (saved_errno == Z_ERRNO) {
+        saved_errno = errno;
+        z_msg = strerror(saved_errno);
+      } else {
+        z_msg = zError(saved_errno);
+        saved_errno = 1000 - saved_errno;
+      }
+      gz_dst = 0;
+      err("gzip_copy_file: gzclose failed: %s", z_msg);
+      goto cleanup;
+    }
+  }
+  gz_dst = 0;
   if (f_src) fclose(f_src);
-  if (f_dst) fclose(f_dst);
+  f_src = 0;
+  if (f_dst) {
+    if (fclose(f_dst) < 0) {
+      saved_errno = errno;
+      f_dst = 0;
+      err("gzip_copy_file: fclose failed: %s", os_ErrorMsg());
+      goto cleanup;
+    }
+  }
+  f_dst = 0;
   if (sfd >= 0) close(sfd);
-  if (dfd >= 0) close(dfd);
+  sfd = -1;
+  if (dfd >= 0) {
+    if (close(dfd) < 0) {
+      saved_errno = errno;
+      dfd = -1;
+      err("gzip_copy_file: close failed: %s", os_ErrorMsg());
+      goto cleanup;
+    }
+  }
   return 0;
+
+ putc_error:
+  saved_errno = errno;
+  err("gzip_copy_file: putc failed: %s", os_ErrorMsg());
+  goto cleanup;
+
+ gzgetc_error:
+  z_func = "gzgetc";
+  goto z_error;
+
+ gzputc_error:
+  z_func = "gzputc";
+  goto z_error;
+
+ z_error:
+  z_msg = gzerror(gz_dst, &saved_errno);
+  if (saved_errno == Z_ERRNO) {
+    saved_errno = errno;
+    z_msg = strerror(saved_errno);
+  } else {
+    saved_errno = 1000 - saved_errno;
+  }
+  err("gzip_copy_file: %s failed: %s", z_func, z_msg);
+  goto cleanup;
 
  cleanup:
   if (gz_src) gzclose(gz_src);
@@ -677,7 +850,8 @@ gzip_copy_file(int sfd, int sf, int dfd, int df)
   if (f_dst) fclose(f_dst);
   if (sfd >= 0) close(sfd);
   if (dfd >= 0) close(dfd);
-  return -1;
+  errno = saved_errno;
+  return -saved_errno;
 }
 
 static int
@@ -689,40 +863,53 @@ do_copy_file(char const *src, int sf, char const *dst, int df)
   char *p;
   int   sz;
   int   wsz;
+  int   errcode;
 
-  if ((sfd = sf_open(src, O_RDONLY, 0)) < 0) goto _cleanup;
-  if ((dfd = sf_open(dst, O_WRONLY|O_CREAT|O_TRUNC, 0644)) < 0) goto _cleanup;
+  if ((sfd = errcode = sf_open(src, O_RDONLY, 0)) < 0) goto _cleanup;
+  if ((dfd = errcode = sf_open(dst, O_WRONLY|O_CREAT|O_TRUNC, 0644)) < 0)
+    goto _cleanup;
 
   sf &= (GZIP | CONVERT);
   df &= (GZIP | CONVERT);
   if ((sf || df) && sf != df) {
     /* if compression requested, work differently */
-    if ((sf & GZIP) || (df & GZIP))
-      return gzip_copy_file(sfd, sf, dfd, df);
+    if ((sf & GZIP) || (df & GZIP)) {
+      if ((errcode = gzip_copy_file(sfd, sf, dfd, df)) >= 0) return errcode;
+      sfd = dfd = -1;
+      goto _unlink_and_cleanup;
+    }
 
     /* if conversion requested, use dumb copy method */
-    if ((sf & CONVERT) || (df & CONVERT))
-      return dumb_copy_file(sfd, sf, dfd, df);
+    if ((sf & CONVERT) || (df & CONVERT)) {
+      if ((errcode = dumb_copy_file(sfd, sf, dfd, df)) >= 0) return errcode;
+      sfd = dfd = -1;
+      goto _unlink_and_cleanup;
+    }
   }
 
-  while ((sz = sf_read(sfd, buf, sizeof(buf), src)) > 0) {
+  while ((sz = errcode = sf_read(sfd, buf, sizeof(buf), src)) > 0) {
     p = buf;
     while (sz > 0) {
-      if ((wsz = sf_write(dfd, p, sz, dst)) <= 0) goto _cleanup;
+      if ((wsz = errcode = sf_write(dfd, p, sz, dst)) <= 0)
+        goto _unlink_and_cleanup;
       p += wsz;
       sz -= wsz;
     }
   }
-  if (sz < 0) goto _cleanup;
+  if (sz < 0) goto _unlink_and_cleanup;
 
   close(sfd); sfd = -1;
-  if (sf_close(dfd, dst) < 0) return -1;
+  if ((errcode = sf_close(dfd, dst)) < 0) goto _unlink_and_cleanup;
   return 0;
+
+ _unlink_and_cleanup:
+  unlink(dst);
 
  _cleanup:
   if (sfd >= 0) close(sfd);
   if (dfd >= 0) close(dfd);
-  return -1;
+  errno = errcode;
+  return -errcode;
 }
 
 int
@@ -736,8 +923,7 @@ generic_copy_file(int sflags,
   path_t copy_dst;
   path_t move_src;
   path_t move_dst;
-
-  int r;
+  int r, saved_errno;
 
   ASSERT(sname);
   ASSERT(dname);
@@ -762,8 +948,10 @@ generic_copy_file(int sflags,
         write_log(0, LOG_WARN, "rename: no source file %s", move_src);
         return 0;
       }
+      saved_errno = errno;
       err("rename failed: %s", os_ErrorMsg());
-      return -1;
+      errno = saved_errno;
+      return -saved_errno;
     }
   } else {
     if (!sdir || !*sdir) {
@@ -785,19 +973,31 @@ generic_copy_file(int sflags,
   }
 
   write_log(0, LOG_INFO, "Copy: %s -> %s", copy_src, copy_dst);
-  if ((r = do_copy_file(copy_src, sflags, copy_dst, dflags)) < 0) return r;
+  if ((r = do_copy_file(copy_src, sflags, copy_dst, dflags)) < 0) {
+    if ((sflags & SAFE)) rename(copy_src, move_src);
+    return r;
+  }
 
   if ((dflags & SAFE)) {
     write_log(0, LOG_INFO, "Move: %s -> %s", copy_dst, move_dst);
     if (rename(copy_dst, move_dst) < 0) {
+      saved_errno = errno;
       err("rename failed: %s", os_ErrorMsg());
-      return -1;
+      if ((sflags & SAFE)) rename(copy_src, move_src);
+      unlink(copy_dst);
+      errno = saved_errno;
+      return -saved_errno;
     }
   }
   if ((sflags & REMOVE)) {
     if (unlink(copy_src) < 0) {
+      saved_errno = errno;
       err("generic_copy_file: unlink failed: %s", os_ErrorMsg());
-      return -1;
+      if ((sflags & SAFE)) rename(copy_src, move_src);
+      if ((dflags & SAFE)) unlink(move_dst);
+      else unlink(copy_dst);
+      errno = saved_errno;
+      return -saved_errno;
     }
   }
   return 1;
@@ -918,6 +1118,7 @@ sf_read(int fd, void *buf, size_t count, char const *name)
   if (r >= 0) return r;
   if (name) err("read from %s failed: %s", name, os_ErrorMsg());
   else err("read failed: %s", os_ErrorMsg());
+  errno = e;
   return -e;
 }
 
@@ -980,6 +1181,7 @@ sf_open(char const *path, int flags, mode_t mode)
       err("open(\"%s\", %s, 0%o) failed: %s", path,sflags,mode,os_ErrorMsg());
     else
       err("open(\"%s\", %s) failed: %s", path, sflags, os_ErrorMsg());
+    errno = e;
     return -e;
   }
 }
