@@ -25,6 +25,7 @@
 #include "prepare.h"
 #include "html.h"
 #include "clarlog.h"
+#include "protocol.h"
 
 #include "misctext.h"
 #include "base64.h"
@@ -43,6 +44,7 @@
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
+#include <locale.h>
 #define _(x) gettext(x)
 #else
 #define _(x) x
@@ -66,23 +68,76 @@ struct server_cmd
   void        *ptr;
 };
 
+static int
+setup_locale(int locale_id)
+{
+#if CONF_HAS_LIBINTL - 0 == 1
+  char *e = 0;
+  char env_buf[128];
+
+  if (!global->enable_l10n) return 0;
+
+  switch (locale_id) {
+  case 1:
+    e = "ru_RU.KOI8-R";
+    break;
+  case 0:
+  default:
+    locale_id = 0;
+    e = "C";
+    break;
+  }
+
+  sprintf(env_buf, "LC_ALL=%s", e);
+  putenv(env_buf);
+  setlocale(LC_ALL, "");
+  return locale_id;
+#else
+  return 0;
+#endif /* CONF_HAS_LIBINTL */
+}
+
 void
 update_standings_file(int force_flag)
 {
   time_t cur_time = time(0);
-  time_t start_time, stop_time, duration, start_fog_time;
+  time_t start_time, stop_time, duration;
+  int p;
 
   run_get_times(&start_time, 0, &duration, &stop_time);
-  start_fog_time = start_time + duration - global->board_fog_time;
 
-  if (!force_flag) {
-    if (start_time) ASSERT(cur_time >= start_time);
-    if (stop_time)  ASSERT(cur_time >= stop_time);
-    if (stop_time && cur_time <= stop_time + global->board_unfog_time) return;
-    if (start_time && cur_time >= start_fog_time) return;
+  while (1) {
+    if (force_flag) break;
+    if (!global->autoupdate_standings) return;
+    if (!duration) break;
+    if (!global->board_fog_time) break;
+
+    ASSERT(cur_time >= start_time);
+    ASSERT(global->board_fog_time >= 0);
+    ASSERT(global->board_unfog_time >= 0);
+    
+    p = run_get_fog_period(cur_time, global->board_fog_time,
+                           global->board_unfog_time);
+    if (p == 1) return;
+    break;
   }
 
+  p = run_get_fog_period(cur_time, global->board_fog_time,
+                         global->board_unfog_time);
+  setup_locale(global->standings_locale_id);
   write_standings(global->status_dir, "standings.html");
+  setup_locale(0);
+  switch (p) {
+  case 0:
+    global->start_standings_updated = 1;
+    break;
+  case 1:
+    global->fog_standings_updated = 1;
+    break;
+  case 2:
+    global->unfog_standings_updated = 1;
+    break;
+  }
 }
 
 int
@@ -90,25 +145,32 @@ update_status_file(int force_flag)
 {
   static time_t prev_status_update = 0;
   time_t cur_time;
-  char buf[256];
-
-  unsigned long start_time;
-  unsigned long sched_time;
-  unsigned long duration;
-  unsigned long stop_time;
-  int           total_runs;
-  int           total_clars;
+  struct prot_serve_status status;
+  int p;
 
   cur_time = time(0);
   if (!force_flag && cur_time <= prev_status_update) return 0;
 
-  run_get_times(&start_time, &sched_time, &duration, &stop_time);
-  total_runs = run_get_total();
-  total_clars = clar_get_total();
-  sprintf(buf, "%lu %lu %lu %lu %lu %d %d\n",
-          cur_time, start_time, sched_time, duration, stop_time,
-          total_runs, total_clars);
-  generic_write_file(buf, strlen(buf), SAFE,
+  memset(&status, 0, sizeof(status));
+  status.magic = PROT_SERVE_STATUS_MAGIC;
+
+  status.cur_time = cur_time;
+  run_get_times(&status.start_time,
+                &status.sched_time,
+                &status.duration,
+                &status.stop_time);
+  status.total_runs = run_get_total();
+  status.total_clars = clar_get_total();
+  status.clars_disabled = global->disable_clars;
+  status.team_clars_disabled = global->disable_team_clars;
+
+  p = run_get_fog_period(cur_time,
+                         global->board_fog_time, global->board_unfog_time);
+  if (p == 1 && global->autoupdate_standings) {
+    status.standings_frozen = 1;
+  }
+
+  generic_write_file((char*) &status, sizeof(status), SAFE,
                      global->status_dir, "status", "");
   prev_status_update = cur_time;
   return 1;
@@ -271,10 +333,17 @@ int
 team_view_clar(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   packet_t cmd;
-  int  team_id, clar_id, n;
+  int  locale_id, team_id, clar_id, n;
 
-  if (sscanf(pk_str, "%s %d %d %n", cmd, &team_id, &clar_id, &n) != 3)
+  if (sscanf(pk_str, "%s %d %d %d %n", cmd, &locale_id,
+             &team_id, &clar_id, &n) != 4)
     return report_bad_packet(pk_name ,1);
+
+  setup_locale(locale_id);
+  if (global->disable_clars) {
+    err("attempt to read a clar, but clars are disabled");
+    return report_error(pk_name, 0, 0, _("Clarifications are disabled"));
+  }
   if (pk_str[n] || !teamdb_lookup(team_id))
     return report_bad_packet(pk_name, 1);
   if (clar_id < 0 || clar_id >= clar_get_total())
@@ -288,7 +357,7 @@ int
 team_send_clar(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   packet_t cmd, subj, ip;
-  int  team, n;
+  int  locale_id, team, n;
 
   char *msg = 0;
   int   rsize = 0;
@@ -296,8 +365,14 @@ team_send_clar(char const *pk_name, const packet_t pk_str, void *ptr)
   int   clar_id;
   char  clar_name[64];
 
-  if (sscanf(pk_str, "%s %d %s %s %n", cmd, &team, subj, ip, &n) != 4)
+  if (sscanf(pk_str, "%s %d %d %s %s %n", cmd,
+             &locale_id, &team, subj, ip, &n) != 5)
     return report_bad_packet(pk_name, 1);
+  setup_locale(locale_id);
+  if (global->disable_clars || global->disable_team_clars) {
+    err("clarifications are disabled!");
+    return report_error(pk_name, 1, 0, _("Clarifications are disabled"));
+  }
   if (pk_str[n] || !teamdb_lookup(team))
     return report_bad_packet(pk_name, 1);
   if (strlen(subj) > CLAR_MAX_SUBJ_LEN)
@@ -359,12 +434,16 @@ team_submit(char const *pk_name, const packet_t pk_str, void *ptr)
   char *src = 0;
   int   src_len = 0;
   int   run_id;
+  int   locale_id;
   char  run_name[64];
   char  run_full[64];
   int   needs_remove = 1;
 
-  if (sscanf(pk_str, "%s %d %d %d %s %n",
-             cmd, &team, &prob, &lang, ip, &n) != 5
+  char comp_pkt_buf[128];
+  char comp_pkt_len;
+
+  if (sscanf(pk_str, "%s %d %d %d %d %s %n",
+             cmd, &locale_id, &team, &prob, &lang, ip, &n) != 6
       || pk_str[n]
       || strlen(ip) > RUN_MAX_IP_LEN
       || !teamdb_lookup(team)
@@ -373,6 +452,8 @@ team_submit(char const *pk_name, const packet_t pk_str, void *ptr)
       || prob < 1 || prob > max_prob
       || !(probs[prob]))
     return report_bad_packet(pk_name, 1);
+
+  locale_id = setup_locale(locale_id);
 
   /* disallow submissions out of contest time */
   if (check_period(pk_name, "SUBMIT", teamdb_get_login(team), 0, 1, 0) < 0)
@@ -397,7 +478,8 @@ team_submit(char const *pk_name, const packet_t pk_str, void *ptr)
   }
 
     /* now save the source and create a log record */
-  if ((run_id = run_add_record(time(NULL),src_len,ip,team, prob, lang)) < 0){
+  if ((run_id = run_add_record(time(NULL),src_len,ip,
+                               locale_id, team, prob, lang)) < 0){
     reply = _("<p>Server failed to update submission log.");
     goto report_to_client;
   }
@@ -410,10 +492,17 @@ team_submit(char const *pk_name, const packet_t pk_str, void *ptr)
     reply = _("<p>Server failed to save the program in the archive.");
     goto report_to_client;
   }
-  if (generic_write_file(src, src_len, SAFE,
-                         langs[lang]->src_dir, run_name,
-                         langs[lang]->src_sfx) < 0) {
-    reply = _("<p>Server failed to pass the program for compilation.");
+
+  if (generic_write_file(src, src_len, 0,
+                         global->compile_src_dir, run_full, "") < 0) {
+    reply = _("<p>Server failed to pass the program for compilation");
+    goto report_to_client;
+  }
+
+  comp_pkt_len = sprintf(comp_pkt_buf, "%s %d\n", run_full, 0);
+  if (generic_write_file(comp_pkt_buf, comp_pkt_len, SAFE,
+                         langs[lang]->queue_dir, run_name, "") < 0) {
+    reply = _("<p>Server failed to pass the program for compilation");
     goto report_to_client;
   }
 
@@ -442,13 +531,16 @@ team_change_passwd(char const *pk_name, const packet_t pk_str, void *ptr)
   char  passwd[256];
   int   team_id, n;
   char *reply = 0;
+  int   locale_id;
 
-  if (sscanf(pk_str, "%s %d %s %n", cmd, &team_id, passwd, &n) != 3
+  if (sscanf(pk_str, "%s %d %d %s %n", cmd, &locale_id,
+             &team_id, passwd, &n) != 4
       || pk_str[n]
       || !teamdb_lookup(team_id)
       || strlen(passwd) > TEAMDB_MAX_SCRAMBLED_PASSWD_SIZE)
     report_bad_packet(pk_name, 0);
 
+  setup_locale(locale_id);
   if (!teamdb_set_scrambled_passwd(team_id, passwd)) {
     reply = _("<p>New password cannot be set.");
     goto report_to_client;
@@ -472,12 +564,14 @@ int
 team_stat(char const *pk_name, packet_t const pk_str, void *ptr)
 {
   packet_t cmd;
-  int      team, p1, p2, n;
+  int      team, p1, p2, n, locale_id;
 
-  if (sscanf(pk_str, "%s %d %d %d %n", cmd, &team, &p1, &p2, &n) != 4
+  if (sscanf(pk_str, "%s %d %d %d %d %n", cmd, &locale_id,
+             &team, &p1, &p2, &n) != 5
       || pk_str[n] || !teamdb_lookup(team))
     return report_bad_packet(pk_name, 0);
 
+  setup_locale(locale_id);
   write_team_statistics(team, p1, p2, global->pipe_dir, pk_name);
   return 0;
 }
@@ -485,19 +579,20 @@ team_stat(char const *pk_name, packet_t const pk_str, void *ptr)
 int
 team_view_report(char const *pk_name, const packet_t pk_str, void *ptr)
 {
-  int      n, rid, team;
+  int      n, rid, team, locale_id;
   packet_t cmd;
 
   /* teams not allowed to do that */
   if (!global->team_enable_rep_view)
     return report_bad_packet(pk_name, 1);
 
-  if (sscanf(pk_str, "%s %d %d %n", cmd, &team, &rid, &n) != 3
+  if (sscanf(pk_str, "%s %d %d %d %n", cmd, &locale_id, &team, &rid, &n) != 4
       || pk_str[n]
       || rid < 0 || rid >= run_get_total()
       || !teamdb_lookup(team))
     return report_bad_packet(pk_name, 1);
 
+  setup_locale(locale_id);
   write_team_report_view(pk_name, team, rid);
   return 0;
 }
@@ -505,18 +600,19 @@ team_view_report(char const *pk_name, const packet_t pk_str, void *ptr)
 int
 team_view_source(char const *pk_name, const packet_t pk_str, void *ptr)
 {
-  int      n, rid, team;
+  int      n, rid, team, locale_id;
   packet_t cmd;
 
   if (!global->team_enable_src_view)
     return report_bad_packet(pk_name, 1);
 
-  if (sscanf(pk_str, "%s %d %d %n", cmd, &team, &rid, &n) != 3
+  if (sscanf(pk_str, "%s %d %d %d %n", cmd, &locale_id, &team, &rid, &n) != 4
       || pk_str[n]
       || rid < 0 || rid >= run_get_total()
       || !teamdb_lookup(team))
     return report_bad_packet(pk_name, 0);
 
+  setup_locale(locale_id);
   write_team_source_view(pk_name, team, rid);
   return 0;
 }
@@ -549,8 +645,11 @@ read_team_packet(char const *pk_name)
   info("packet: %s", chop(pk_str));
   sscanf(pk_str, "%s", cmd);
   for (i = 0; team_commands[i].cmd; i++) {
-    if (!strcmp(team_commands[i].cmd, cmd))
-      return team_commands[i].func(pk_name, pk_str, team_commands[i].ptr);
+    if (!strcmp(team_commands[i].cmd, cmd)) {
+      r = team_commands[i].func(pk_name, pk_str, team_commands[i].ptr);
+      setup_locale(0);
+      return r;
+    }
   }
   report_bad_packet(pk_name, 0);
   return 0;
@@ -561,14 +660,15 @@ read_compile_packet(char *pname)
 {
   char   buf[256];
   char   exe_name[64];
+  char   pkt_name[64];
 
   int  r, n;
-  int  rsize;
+  int  rsize, wsize;
   int  code;
   int  runid;
   int  cn;
 
-  int  lang, prob, stat;
+  int  lang, prob, stat, loc;
 
   char *pbuf = buf;
 
@@ -583,7 +683,7 @@ read_compile_packet(char *pname)
     goto bad_packet_error;
   if (sscanf(buf, "%d %n", &code, &n) != 1 || buf[n])
     goto bad_packet_error;
-  if (run_get_param(runid, &lang, &prob, &stat) < 0)
+  if (run_get_param(runid, &loc, &lang, &prob, &stat) < 0)
     goto bad_packet_error;
   if (stat != RUN_COMPILING) goto bad_packet_error;
   if (code != RUN_OK && code != RUN_COMPILE_ERR) goto bad_packet_error;
@@ -611,7 +711,14 @@ read_compile_packet(char *pname)
   /* copy the executable into the testers's queue */
   sprintf(exe_name, "%06d%s", runid, langs[lang]->exe_sfx);
   if (generic_copy_file(REMOVE, global->compile_report_dir, exe_name, "",
-                        SAFE, testers[cn]->exe_dir, exe_name, "") < 0)
+                        0, global->run_exe_dir, exe_name, "") < 0)
+    return -1;
+
+  /* create tester packet */
+  sprintf(pkt_name, "%06d", runid);
+  wsize = sprintf(buf, "%s %d\n", exe_name, loc);
+  if (generic_write_file(buf, wsize, SAFE, testers[cn]->queue_dir,
+                         pkt_name, "") < 0)
     return -1;
 
   /* update status */
@@ -649,7 +756,7 @@ read_run_packet(char *pname)
     goto bad_packet_error;
   if (sscanf(buf, "%d%d%d %n", &status, &test, &score, &n) != 3 || buf[n])
     goto bad_packet_error;
-  if (run_get_param(runid, &log_lang, &log_prob, &log_stat) < 0)
+  if (run_get_param(runid, 0, &log_lang, &log_prob, &log_stat) < 0)
     goto bad_packet_error;
   if (log_stat != RUN_RUNNING) goto bad_packet_error;
   if (status<0 || status>RUN_PARTIAL || test<0) goto bad_packet_error;
@@ -753,10 +860,12 @@ process_judge_reply(int clar_ref, int to_all,
 void
 rejudge_run(int run_id)
 {
-  int lang;
+  int lang, loc;
   char run_name[64];
+  char pkt_buf[128];
+  char pkt_len;
 
-  if (run_get_record(run_id, 0, 0, 0, 0, &lang, 0, 0, 0, 0) < 0) return;
+  if (run_get_record(run_id, 0, 0, 0, &loc, 0, &lang, 0, 0, 0, 0) < 0) return;
   if (lang <= 0 || lang > max_lang || !langs[lang]) {
     err("rejudge_run: bad language: %d", lang);
     return;
@@ -764,9 +873,14 @@ rejudge_run(int run_id)
 
   sprintf(run_name, "%06d", run_id);
   if (generic_copy_file(0, global->run_archive_dir, run_name, "",
-                        SAFE, langs[lang]->src_dir, run_name,
+                        0, global->compile_src_dir, run_name,
                         langs[lang]->src_sfx) < 0)
     return;
+  pkt_len = sprintf(pkt_buf, "%s%s %d\n", run_name, langs[lang]->src_sfx, loc);
+  if (generic_write_file(pkt_buf, pkt_len, SAFE,
+                         langs[lang]->queue_dir, run_name, "") < 0) {
+    return;
+  }
 
   run_change_status(run_id, RUN_COMPILING, 0, -1);
 }
@@ -886,7 +1000,6 @@ judge_start(char const *pk_name, const packet_t pk_str, void *ptr)
   run_start_contest(time(&ts));
   contest_start_time = ts;
   info("contest started: %lu", ts);
-  update_standings_file(0);
   update_status_file(1);
   report_ok(pk_name);
   return 0;
@@ -906,7 +1019,6 @@ judge_stop(char const *pk_name, const packet_t pk_str, void *ptr)
   run_stop_contest(time(&ts));
   contest_stop_time = ts;
   info("contest stopped: %lu", ts);
-  update_standings_file(0);
   update_status_file(1);
   report_ok(pk_name);
   return 0;
@@ -1362,8 +1474,13 @@ int
 do_loop(void)
 {
   path_t packetname;
-  int    r;
+  int    r, p;
 
+  p = run_get_fog_period(time(0), global->board_fog_time,
+                         global->board_unfog_time);
+  if (p == 1) {
+    global->fog_standings_updated = 1;
+  }
   update_standings_file(0);
 
   run_get_times(&contest_start_time, &contest_sched_time,
@@ -1399,6 +1516,19 @@ do_loop(void)
       logger_set_level(-1, LOG_WARNING);
       update_status_file(0);
       logger_set_level(-1, 0);
+
+      /* automatically update standings in certain situations */
+      p = run_get_fog_period(time(0),
+                             global->board_fog_time, global->board_unfog_time);
+      if (p == 0 && !global->start_standings_updated) {
+        update_standings_file(0);
+      } else if (global->autoupdate_standings
+                 && p == 1 && !global->fog_standings_updated) {
+        update_standings_file(1);
+      } else if (global->autoupdate_standings
+                 && p == 2 && !global->unfog_standings_updated) {
+        update_standings_file(0);
+      }
 
       r = scan_dir(global->team_cmd_dir, packetname);
       if (r < 0) return -1;
@@ -1504,6 +1634,15 @@ main(int argc, char *argv[])
   if (i >= argc) goto print_usage;
 
   if (prepare(argv[i], p_flags, PREPARE_SERVE, cpp_opts) < 0) return 1;
+
+#if CONF_HAS_LIBINTL - 0 == 1
+  /* load the language used */
+  if (global->enable_l10n) {
+    bindtextdomain("ejudge", global->l10n_dir);
+    textdomain("ejudge");
+  }
+#endif /* CONF_HAS_LIBINTL */
+
   if (T_flag) {
     print_configuration(stdout);
     return 0;
