@@ -225,4 +225,7 @@ int userlist_clnt_logout(struct userlist_clnt *clnt,
 int userlist_clnt_dump_database(struct userlist_clnt *clnt,
                                 int contest_id, int out_fd);
 
+int userlist_clnt_clear_team_passwords(struct userlist_clnt *clnt,
+                                       int contest_id);
+
 #endif /* __USERLIST_CLNT_H__ */
