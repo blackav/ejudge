@@ -1,4 +1,4 @@
-/* -*- mode: c -*- */
+/* -*- mode: fundamental -*- */
 /* $Id$ */
 
 /* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
@@ -50,6 +50,7 @@ ws      [\000-\040]
 hexd    [0-9a-fA-F]
 octd    [0-7]
 decd    [0-9]
+lett    [A-Za-z_]
 %option noyywrap
 %%
 "||" { T(TOK_LOGOR); }
@@ -171,7 +172,8 @@ decd    [0-9]
 \"[^\"]*\" |
 \'[^\']*\' { filter_expr_lval = filter_tree_new_buf(tree_mem, yytext + 1, yyleng - 2); return TOK_STRING_L; }
 
-. { (*scan_err)("invalid character \\%03o", (unsigned char) *yytext); }
+{lett}+ { (*scan_err)("invalid keyword `%.*s'", yyleng, yytext); }
+[\040-\377] { (*scan_err)("invalid character `%c'", *yytext); }
 %%
 
 static void
