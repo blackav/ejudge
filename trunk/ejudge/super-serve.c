@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003,2004 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2003-2005 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -228,6 +228,7 @@ delete_contest_extra(int contest_id)
   if (contest_id <= 0 || contest_id >= extra_a) return 0;
   if (!(p = extras[contest_id])) return 0;
 
+  if (p->socket_path) unlink(p->socket_path);
   if (p->socket_fd >= 0) close(p->socket_fd);
   if (p->run_dir_fd >= 0) close(p->run_dir_fd);
   xfree(p->root_dir);
@@ -625,6 +626,7 @@ start_serve(struct contest_extra *cur,
   } // child ends here
 
   if (!test_mode) {
+    info("contest %d new run process %d", cur->id, pid);
     cur->serve_pid = pid;
     return;
   }
