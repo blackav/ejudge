@@ -3317,11 +3317,6 @@ cmd_priv_register_contest(struct client_state *p, int pkt_len,
   CONN_INFO("registered");
   send_reply(p, ULS_OK);
   return;
-
-
-
-
-  SWERR(("not implemented yet!"));
 }
 
 static void
@@ -5249,11 +5244,13 @@ flush_database(void)
   info("bdflush: flushing database to `%s'", tempname);
   if ((fd = open(tempname, O_CREAT | O_WRONLY | O_TRUNC, 0600)) < 0) {
     err("bdflush: fopen for `%s' failed: %s", tempname, os_ErrorMsg());
+    unlink(tempname);
     xfree(tempname);
     return;
   }
   if (!(f = fdopen(fd, "w"))) {
-    err("bdflush: fopen for `%s' failed: %s", tempname, os_ErrorMsg());
+    err("bdflush: fdopen for `%s' failed: %s", tempname, os_ErrorMsg());
+    unlink(tempname);
     xfree(tempname);
     close(fd);
     return;
@@ -5262,11 +5259,13 @@ flush_database(void)
   userlist_unparse(userlist, f);
   if (ferror(f)) {
     err("bdflush: write failed: %s", os_ErrorMsg());
+    unlink(tempname);
     xfree(tempname);
     return;
   }
   if (fclose(f) < 0) {
     err("bdflush: fclose() failed: %s", os_ErrorMsg());
+    unlink(tempname);
     xfree(tempname);
     return;
   }
