@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -523,7 +523,7 @@ filter_tree_print(struct filter_tree *p, FILE *out, unsigned char const *ind)
     fprintf(out, " %s\n", buf);
     break;
   case TOK_RESULT_L:
-    filter_tree_result_str(buf, sizeof(buf), p->v.r);
+    run_status_to_str_short(buf, sizeof(buf), p->v.r);
     fprintf(out, " %s\n", buf);
     break;
   case TOK_HASH_L:
@@ -585,55 +585,6 @@ int
 filter_tree_size_str(unsigned char *buf, size_t size, size_t val)
 {
   return snprintf(buf, size, "%zu", val);
-}
-
-int
-filter_tree_result_str(unsigned char *buf, size_t size, int val)
-{
-  unsigned char tmp[32];
-
-  switch (val) {
-  case RUN_OK:
-    strcpy(tmp, "OK"); break;
-  case RUN_COMPILE_ERR:
-    strcpy(tmp, "CE"); break;
-  case RUN_RUN_TIME_ERR:
-    strcpy(tmp, "RT"); break;
-  case RUN_TIME_LIMIT_ERR:
-    strcpy(tmp, "TL"); break;
-  case RUN_PRESENTATION_ERR:
-    strcpy(tmp, "PE"); break;
-  case RUN_WRONG_ANSWER_ERR:
-    strcpy(tmp, "WA"); break;
-  case RUN_CHECK_FAILED:
-    strcpy(tmp, "CF"); break;
-  case RUN_PARTIAL:
-    strcpy(tmp, "PT"); break;
-  case RUN_ACCEPTED:
-    strcpy(tmp, "AC"); break;
-  case RUN_IGNORED:
-    strcpy(tmp, "IG"); break;
-  case RUN_DISQUALIFIED:
-    strcpy(tmp, "DQ"); break;
-  case RUN_VIRTUAL_START:
-    strcpy(tmp, "VS"); break;
-  case RUN_VIRTUAL_STOP:
-    strcpy(tmp, "VT"); break;
-  case RUN_EMPTY:
-    strcpy(tmp, "EM"); break;
-  case RUN_RUNNING:
-    strcpy(tmp, "RU"); break;
-  case RUN_COMPILED:
-    strcpy(tmp, "CD"); break;
-  case RUN_COMPILING:
-    strcpy(tmp, "CG"); break;
-  case RUN_AVAILABLE:
-    strcpy(tmp, "AV"); break;
-  default:
-    snprintf(tmp, sizeof(tmp), "result_%d", val);
-    break;
-  }
-  return snprintf(buf, size, "%s", tmp);
 }
 
 int
@@ -1282,7 +1233,7 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
         filter_tree_size_str(val, sizeof(val), p1->v.z);
         break;
       case TOK_RESULT_L:
-        filter_tree_result_str(val, sizeof(val), p1->v.r);
+        run_status_to_str_short(val, sizeof(val), p1->v.r);
         break;
       case TOK_HASH_L:
         filter_tree_hash_str(val, sizeof(val), p1->v.h);
@@ -1521,6 +1472,10 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
       case RUN_ACCEPTED:
       case RUN_IGNORED:
       case RUN_DISQUALIFIED:
+      case RUN_PENDING:
+      case RUN_MEM_LIMIT_ERR:
+      case RUN_SECURITY_ERR:
+      case RUN_FULL_REJUDGE:
       case RUN_RUNNING:
       case RUN_COMPILED:
       case RUN_COMPILING:
@@ -1532,47 +1487,8 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
       }
       break;
     case TOK_STRING_L:
-      if (!strcasecmp(p1->v.s, "OK")) {
-        res->v.r = RUN_OK;
-      } else if (!strcasecmp(p1->v.s, "CE")) {
-        res->v.r = RUN_COMPILE_ERR;
-      } else if (!strcasecmp(p1->v.s, "RT")) {
-        res->v.r = RUN_RUN_TIME_ERR;
-      } else if (!strcasecmp(p1->v.s, "TL")) {
-        res->v.r = RUN_TIME_LIMIT_ERR;
-      } else if (!strcasecmp(p1->v.s, "PE")) {
-        res->v.r = RUN_PRESENTATION_ERR;
-      } else if (!strcasecmp(p1->v.s, "WA")) {
-        res->v.r = RUN_WRONG_ANSWER_ERR;
-      } else if (!strcasecmp(p1->v.s, "CF")) {
-        res->v.r = RUN_CHECK_FAILED;
-      } else if (!strcasecmp(p1->v.s, "PT")) {
-        res->v.r = RUN_PARTIAL;
-      } else if (!strcasecmp(p1->v.s, "AC")) {
-        res->v.r = RUN_ACCEPTED;
-      } else if (!strcasecmp(p1->v.s, "IG")) {
-        res->v.r = RUN_IGNORED;
-      } else if (!strcasecmp(p1->v.s, "DQ")) {
-        res->v.r = RUN_DISQUALIFIED;
-      } else if (!strcasecmp(p1->v.s, "VS")) {
-        res->v.r = RUN_VIRTUAL_START;
-      } else if (!strcasecmp(p1->v.s, "VT")) {
-        res->v.r = RUN_VIRTUAL_STOP;
-      } else if (!strcasecmp(p1->v.s, "EM")) {
-        res->v.r = RUN_EMPTY;
-      } else if (!strcasecmp(p1->v.s, "RU")) {
-        res->v.r = RUN_RUNNING;
-      } else if (!strcasecmp(p1->v.s, "CD")) {
-        res->v.r = RUN_COMPILED;
-      } else if (!strcasecmp(p1->v.s, "CG")) {
-        res->v.r = RUN_COMPILING;
-      } else if (!strcasecmp(p1->v.s, "AV")) {
-        res->v.r = RUN_AVAILABLE;
-      } else if (!strcasecmp(p1->v.s, "RJ")) {
-        res->v.r = RUN_REJUDGE;
-      } else {
+      if (run_str_short_to_status(p1->v.s, &res->v.r) < 0)
         return -FILTER_ERR_RESULT_CVT;
-      }
       break;
     case TOK_RESULT_L:
       res->v.r = p1->v.r;
