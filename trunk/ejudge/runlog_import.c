@@ -55,7 +55,8 @@ void
 runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
 {
   size_t armor_len, flog_len = 0;
-  unsigned char *armor_str, *flog_text = 0;
+  unsigned char *armor_str;
+  char *flog_text = 0;
   FILE *flog;
 
   struct run_header in_header;
@@ -77,7 +78,7 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
   unsigned char *cur_used_flag, *in_used_flag;
   int both_auth_warn_printed = 0;
 
-  flog = open_memstream((char**) &flog_text, &flog_len);
+  flog = open_memstream(&flog_text, &flog_len);
   memset(&in_header, 0, sizeof(in_header));
   memset(&cur_header, 0, sizeof(cur_header));
 
