@@ -930,6 +930,20 @@ do_write_kirov_standings(FILE *f, int client_flag,
   return;
 }
 
+static int
+sec_to_min(int secs)
+{
+  switch (global->rounding_mode_val) {
+  case SEC_CEIL:
+    return (secs + 59) / 60;
+  case SEC_FLOOR:
+    return secs / 60;
+  case SEC_ROUND:
+    return (secs + 30) / 60;
+  }
+  abort();
+}
+
 void
 do_write_standings(FILE *f, int client_flag, int user_id,
                    unsigned char const *footer_str, int raw_flag)
@@ -1104,13 +1118,13 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       calc[tt][pp] = 1 - calc[tt][pp];
       t_prob[tt]++;
       if (global->virtual) {
-        ok_time[tt][pp] = (tdur + 59) / 60;
+        ok_time[tt][pp] = sec_to_min(tdur);
         t_pen[tt] += ok_time[tt][pp];
         last_success_time = run_time;
         last_success_start = tstart;
       } else {
         if (run_time < start_time) run_time = start_time;
-        ok_time[tt][pp] = (run_time - start_time + 59) / 60;
+        ok_time[tt][pp] = sec_to_min(run_time - start_time);
         t_pen[tt] += ok_time[tt][pp];
         last_success_time = run_time;
         last_success_start = start_time;
