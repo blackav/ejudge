@@ -105,9 +105,13 @@ struct section_global_data
                                  * and run scripts */
   path_t test_dir;              /* common prefix dir for tests */
   path_t corr_dir;              /* common prefix dir for correct answers */
+  path_t info_dir;              /* common prefix dir for test infos */
+  path_t tgz_dir;               /* common prefix dir for directory tests */
   path_t checker_dir;           /* default location of checkers */
   path_t test_sfx;              /* default test files suffix */
   path_t corr_sfx;              /* default correct files suffix */
+  path_t info_sfx;              /* default info files suffix */
+  path_t tgz_sfx;               /* default tar files suffix */
 
   /* ====== VARIABLE FILES/DIRECTORIES SETUP ====== */
   path_t var_dir;               /* variable files dir */
@@ -162,6 +166,7 @@ struct section_global_data
 
   int    max_file_length;       /* maximal length of the file in reports */
   int    max_line_length;       /* maximal length of line in reports */
+  int    max_cmd_length;        /* maximal length of command line in reports */
 
   path_t team_info_url;         /* the team info URL template */
   path_t prob_info_url;         /* the problem info URL template */
@@ -234,6 +239,8 @@ struct section_problem_data
   int    test_score;            /* score for one test */
   int    run_penalty;           /* penalty for one run */
   int    use_corr;              /* whether the correct answers defined */
+  int    use_info;              /* whether use the info files */
+  int    use_tgz;               /* whether use tar test files */
   int    tests_to_accept;       /* how many tests to accept a submit */
   int    checker_real_time_limit;
   int    disable_auto_testing;
@@ -244,6 +251,10 @@ struct section_problem_data
   path_t test_sfx;              /* test files suffix */
   path_t corr_dir;              /* directory with correct answers */
   path_t corr_sfx;              /* correct files suffix */
+  path_t info_dir;              /* directory with info files */
+  path_t info_sfx;              /* info files suffix */
+  path_t tgz_dir;               /* directory with tar test archive */
+  path_t tgz_sfx;               /* tar test archive suffix */
   path_t input_file;            /* input file name */
   path_t output_file;           /* output file name */
   path_t test_score_list;       /* scores for individual tests */
