@@ -1,3 +1,4 @@
 #!/bin/sh
 
+PATH=/usr/local/pkg/gpc-2.1/bin:$PATH
 exec gpc -static -s -O2 $1 -o $2
