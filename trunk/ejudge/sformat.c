@@ -480,6 +480,5 @@ sformat_message(char *buf, size_t maxsize, char const *format,
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  *  eval: (set-language-environment "Cyrillic-KOI8")
- *  enable-multibute-characters: nil
  * End:
  */
