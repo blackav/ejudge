@@ -87,6 +87,7 @@ struct contest_desc
   int id;
   unsigned char *name;
   struct contest_access *access;
+  struct contest_field *fields[CONTEST_LAST_FIELD];
 };
 
 struct contest_list

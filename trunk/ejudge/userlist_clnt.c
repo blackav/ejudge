@@ -175,7 +175,7 @@ userlist_clnt_login(struct userlist_clnt *clnt,
     }
     return ULS_LOGIN_OK;
   } else if (!strcmp(login, "t2")) {
-    if (strcmp(passwd, "team1")) return ULS_ERR_INVALID_PASSWORD;
+    if (strcmp(passwd, "team2")) return ULS_ERR_INVALID_PASSWORD;
     *p_user_id = 2;
     *p_name = xstrdup("Team 2");
     *p_locale_id = -1;
@@ -206,7 +206,7 @@ userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
                             int *p_locale_id,
                             int *p_contest_id)
 {
-  if (origin_ip != 0x7f000001) return ULS_ERR_NO_COOKIE;
+  //if (origin_ip != 0x7f000001) return ULS_ERR_NO_COOKIE;
   if (cookie == 0x0101010101010101) {
     *p_user_id = 1;
     *p_locale_id = 0;
@@ -230,6 +230,31 @@ userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
     return ULS_OK;
   } else {
     return ULS_ERR_NO_COOKIE;
+  }
+}
+
+int
+userlist_clnt_get_login(struct userlist_clnt *clnt,
+                        int req_user_id, int my_user_id)
+{
+}
+
+int
+userlist_clnt_get_name(struct userlist_clnt *clnt,
+                       int req_user_id, int my_user_id)
+{
+}
+
+int
+userlist_clnt_get_email(struct userlist_clnt *clnt,
+                        int uid, unsigned char **p_email)
+{
+  switch (uid) {
+  case 1: *p_email = xstrdup("team1@xxx"); return ULS_EMAIL;
+  case 2: *p_email = xstrdup("team2@xxx"); return ULS_EMAIL;
+  case 3: *p_email = xstrdup("team3@xxx"); return ULS_EMAIL;
+  default:
+    return ULS_ERR_BAD_UID;
   }
 }
 
