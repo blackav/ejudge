@@ -246,6 +246,7 @@ struct userlist_pk_login_ok
   short              reply_id;
   long               user_id;
   unsigned long long cookie;
+  int                contest_id;
   signed char        locale_id;
   unsigned char      login_len;
   unsigned char      name_len;
