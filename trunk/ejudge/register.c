@@ -66,6 +66,7 @@ enum
     F_LOGIN = 1,
     F_EMAIL,
     F_NAME,
+    F_HOMEPAGE,
 
     F_ARRAY_SIZE
   };
@@ -108,6 +109,7 @@ static int client_locale_id;
 static unsigned char *user_login;
 static unsigned char *user_email;
 static unsigned char *user_name;
+static unsigned char *user_homepage;
 
 static unsigned char *submission_log;
 
@@ -130,6 +132,9 @@ static char const name_accept_chars[] =
 "abcdefghijklmnopqrstuvwxyz{|}~"
 " ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞß"
 "àáâãäåæçèéêëìíîïğñòóôõö÷øùúûüışÿ";
+static char const homepage_accept_chars[] =
+" :!#$%*+,-./0123456789=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_"
+"abcdefghijklmnopqrstuvwxyz{|}~";
 
 #define _(x) x
 static struct field_desc field_descs[F_ARRAY_SIZE] = 
@@ -139,6 +144,7 @@ static struct field_desc field_descs[F_ARRAY_SIZE] =
   { _("Login"), "login", &user_login, login_accept_chars, '?' },
   { _("E-mail"), "email", &user_email, email_accept_chars, '_' },
   { _("Name"), "name", &user_name, name_accept_chars, '?' },
+  { _("Homepage"), "homepage", &user_homepage, homepage_accept_chars, '?' },
 };
 #undef _
 #if CONF_HAS_LIBINTL - 0 == 1
@@ -184,6 +190,7 @@ static char const * const field_map[] =
   "login",
   "email",
   "name",
+  "homepage",
 
   0
 };
