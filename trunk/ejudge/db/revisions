@@ -261,3 +261,10 @@ userlist_cfg.h 1 2 102147
 nls.c 1 2 144331
 userlist-server.c 1 1 373836
 userlist_cfg.c 1 2 712793
+userlist.h 1 2 271983
+userlist_clnt.h 1 1 94185
+nls.c 1 3 146091
+userlist.c 1 2 345030
+userlist-server.c 1 2 802887
+userlist_clnt.c 1 1 287514
+userlist_xml.c 1 3 1134990
