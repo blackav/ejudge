@@ -95,6 +95,8 @@ enum
     SRV_CMD_DUMP_STANDINGS,
     SRV_CMD_SET_JUDGING_MODE,
     SRV_CMD_CONTINUE,
+    SRV_CMD_EXPORT_XML_RUNS,
+    SRV_CMD_IMPORT_XML_RUNS,
 
     SRV_CMD_LAST
   };
@@ -300,6 +302,7 @@ enum
     PROT_SERVE_RUN_PROB_SET = 4,
     PROT_SERVE_RUN_LANG_SET = 8,
     PROT_SERVE_RUN_STATUS_SET = 16,
+    PROT_SERVE_RUN_IMPORTED_SET = 32,
   };
 
 struct prot_serve_pkt_run_info
@@ -312,6 +315,7 @@ struct prot_serve_pkt_run_info
   int prob_id;
   int lang_id;
   int status;
+  int is_imported;
   int user_login_len;
   unsigned char data[1];
 };
