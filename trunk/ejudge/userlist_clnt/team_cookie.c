@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,7 @@ userlist_clnt_team_cookie(struct userlist_clnt *clnt,
   struct userlist_pk_login_ok *in = 0;
   int out_size = 0, in_size = 0, r;
   unsigned char *login_ptr, *name_ptr;
+  void *void_in = 0;
 
   if (!clnt) return -ULS_ERR_NO_CONNECT;
   if (!origin_ip) return -ULS_ERR_IP_NOT_ALLOWED;
@@ -47,8 +48,9 @@ userlist_clnt_team_cookie(struct userlist_clnt *clnt,
   out->cookie = cookie;
   out->locale_id = locale_id;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
-  if ((r = userlist_clnt_recv_packet(clnt, &in_size, (void**) &in)) < 0)
+  if ((r = userlist_clnt_recv_packet(clnt, &in_size, &void_in)) < 0)
     return r;
+  in = void_in;
   if (in->reply_id != ULS_LOGIN_COOKIE) {
     r = in->reply_id;
     goto cleanup;
