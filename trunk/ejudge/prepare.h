@@ -45,18 +45,31 @@ struct section_global_data
   int    max_clar_size;         /* max size of a clar */
   int    max_clar_total;        /* max total of all clars for each team */
   int    max_clar_num;          /* max number of clars for each team */
+
   int    board_fog_time;        /* time before the end when the board
                                  * is not updated */
   int    board_unfog_time;      /* time after the end of the contest
                                  * when the board is again updated */
+  int    autoupdate_standings;  /* update standings automatically? */
+
+  int    fog_standings_updated; /* INTERNAL: updated at the moment of fog? */
+  int    start_standings_updated; /* INTERNAL: updated at the start */
+  int    unfog_standings_updated; /* INTERNAL: updated after the fog */
 
   int    team_enable_src_view;  /* teams are allowed to view sources? */
   int    team_enable_rep_view;  /* teams are allowed to view reports? */
+  int    disable_clars;         /* clarification requests disabled */
+  int    disable_team_clars;    /* team cannot compose a clarification */
 
   path_t charset;               /* html pages charset */
 
   path_t name;                  /* name of the contest */
   path_t root_dir;
+
+  int    enable_l10n;           /* enable string translation? */
+  path_t l10n_dir;              /* localization message catalog */
+  path_t standings_locale;
+  int    standings_locale_id;
 
   /* ====== CONFIGURATION FILES/DIRECTORIES SETUP ====== */
   path_t conf_dir;              /* configuration dir */
@@ -99,13 +112,15 @@ struct section_global_data
 
   /* --- server <-> compile interaction --- */
   path_t compile_dir;           /* common subdirectory */
-  path_t compile_src_dir;       /* common prefix dir for serve->compile */
+  path_t compile_queue_dir;     /* directory for serve->compile packets */
+  path_t compile_src_dir;       /* directory for source files */
   path_t compile_status_dir;    /* compile->serve status dir */
   path_t compile_report_dir;    /* compile->serve report dir */
 
   /* --- serve <-> run interaction --- */
   path_t run_dir;               /* common subdirectory */
-  path_t run_exe_dir;           /* common prefix dir for serve->run */
+  path_t run_queue_dir;         /* common prefix dir for serve->run packets */
+  path_t run_exe_dir;           /* run->serve executables */
   path_t run_status_dir;        /* run->serve status dir */
   path_t run_report_dir;        /* run->serve report dir */
   path_t run_team_report_dir;   /* run->serve team report dir */
@@ -177,10 +192,11 @@ struct section_language_data
   path_t server_root_dir;       /* server root directory */
   path_t server_var_dir;        /* server variable directory */
   path_t server_compile_dir;    /* global.compile_dir override */
+  path_t server_queue_dir;      /* server->compile queue dir */
   path_t server_src_dir;        /* server src directory */
   path_t compile_status_dir;
   path_t compile_report_dir;
-  path_t src_dir;               /* source subdirectory */
+  path_t queue_dir;             /* queue subdirectory */
 
   path_t work_dir;              /* working directory */
 };
@@ -215,10 +231,11 @@ struct section_tester_data
   path_t server_var_dir;
   path_t server_run_dir;
   path_t server_exe_dir;
+  path_t server_queue_dir;
   path_t run_status_dir;
   path_t run_report_dir;
   path_t run_team_report_dir;
-  path_t exe_dir;               /* incoming executable subdirectory */
+  path_t queue_dir;             /* incoming executable subdirectory */
 
   path_t tester_dir;            /* tester private subdirectory */
   path_t tmp_dir;               /* temporary directory (report, prepare) */
