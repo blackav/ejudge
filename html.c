@@ -605,17 +605,19 @@ do_write_kirov_standings(FILE *f, int client_flag,
   int *t_ind, *t_rev, *p_ind, *p_rev;
   unsigned char *t_runs;
 
-  int i, k, j;
+  int i, k, j, dpi;
 
   int **prob_score;
   int **att_num;
   int **full_sol;
-  int  *tot_score, *tot_full;
+  time_t **sol_time;
+  int  *tot_score, *tot_full, *succ_att, *tot_att;
   int  *t_sort, *t_n1, *t_n2;
   char dur_str[1024];
   unsigned char *head_style;
   struct teamdb_export ttt;
   struct run_entry *runs;
+  int ttot_att, ttot_succ, perc;
 
   if (client_flag) head_style = cur_contest->team_head_style;
   else head_style = "h2";
@@ -700,16 +702,23 @@ do_write_kirov_standings(FILE *f, int client_flag,
    * tot_score[0..t_tot-1]              - total scores for teams
    * full_sol[0..t_tot-1][0..p_tot-1]   - 1, if full solution
    * tot_full[0..t_tot-1]               - total number of fully solved
+   * sol_time[0..t_tot-1][0..p_tot-1]   - solution time
+   * succ_att[0..p_tot-1]               - successfull attempts
+   * tot_att[0..p_tot-1]                - total attempt
    */
   ALLOCAZERO(prob_score, t_tot);
   ALLOCAZERO(att_num, t_tot);
   ALLOCAZERO(full_sol, t_tot);
   ALLOCAZERO(tot_score, t_tot);
   ALLOCAZERO(tot_full, t_tot);
+  ALLOCAZERO(sol_time, t_tot);
+  ALLOCAZERO(succ_att, p_tot);
+  ALLOCAZERO(tot_att, p_tot);
   for (i = 0; i < t_tot; i++) {
     ALLOCAZERO(prob_score[i], p_tot);
     ALLOCAZERO(att_num[i], p_tot);
     ALLOCAZERO(full_sol[i], p_tot);
+    ALLOCAZERO(sol_time[i], p_tot);
   }
 
   /* auxiluary sorting stuff */
@@ -765,17 +774,44 @@ do_write_kirov_standings(FILE *f, int client_flag,
       if (pe->status == RUN_OK) {
         if (!p->variable_full_score) run_score = p->full_score;
         score = run_score - p->run_penalty * att_num[tind][pind];
+        // here goes date penalty
+        for (dpi = 0; dpi < p->dp_total; dpi++)
+          if (pe->timestamp < p->dp_infos[dpi].deadline)
+            break;
+        if (dpi < p->dp_total) {
+          score += p->dp_infos[dpi].penalty;
+          if (score > p->full_score) score = p->full_score;
+        }
         if (score < 0) score = 0;
-        if (score > prob_score[tind][pind]) prob_score[tind][pind] = score;
+        if (score > prob_score[tind][pind]) {
+          prob_score[tind][pind] = score;
+          if (!p->stand_hide_time) sol_time[tind][pind] = pe->timestamp;
+        }
+        if (!sol_time[tind][pind] && !p->stand_hide_time)
+          sol_time[tind][pind] = pe->timestamp;
+        if (!full_sol[tind][pind]) {
+          succ_att[pind]++;
+          tot_att[pind]++;
+        }
         att_num[tind][pind]++;
         full_sol[tind][pind] = 1;
       } else if (pe->status == RUN_PARTIAL) {
         score = run_score - p->run_penalty*att_num[tind][pind];
+        // here goes date penalty
+        for (dpi = 0; dpi < p->dp_total; dpi++)
+          if (pe->timestamp < p->dp_infos[dpi].deadline)
+            break;
+        if (dpi < p->dp_total) {
+          score += p->dp_infos[dpi].penalty;
+          if (score > p->full_score) score = p->full_score;
+        }
         if (score < 0) score = 0;
         if (score > prob_score[tind][pind]) prob_score[tind][pind] = score;
         att_num[tind][pind]++;
+        if (!full_sol[tind][pind]) tot_att[pind]++;
       } else if (pe->status==RUN_COMPILE_ERR&&!global->ignore_compile_errors) {
         att_num[tind][pind]++;
+        if (!full_sol[tind][pind]) tot_att[pind]++;
       } else {
         /* something like "compiling..." or "running..." */
       }
@@ -902,17 +938,83 @@ do_write_kirov_standings(FILE *f, int client_flag,
         if (!att_num[t][j]) {
           fprintf(f, "<td%s>&nbsp;</td>", global->stand_prob_attr);
         } else if (full_sol[t][j]) {
-          fprintf(f, "<td%s><b>%d</b></td>", global->stand_prob_attr, 
-                  prob_score[t][j]);
+          if (global->stand_show_ok_time && sol_time[t][j] > 0) {
+            duration_str(global->show_astr_time, sol_time[t][j], start_time,
+                         dur_str, 0);
+            fprintf(f, "<td%s><b>%d</b><div%s>%s</div></td>",
+                    global->stand_prob_attr, prob_score[t][j],
+                    global->stand_time_attr, dur_str);
+          } else {
+            fprintf(f, "<td%s><b>%d</b></td>", global->stand_prob_attr, 
+                    prob_score[t][j]);
+          }
         } else {
-          fprintf(f, "<td%s>%d</td>", global->stand_prob_attr, 
-                  prob_score[t][j]);
+          if (global->stand_show_ok_time && sol_time[t][j] > 0) {
+            duration_str(global->show_astr_time, sol_time[t][j], start_time,
+                         dur_str, 0);
+            fprintf(f, "<td%s>%d<div%s>%s</div></td>",
+                    global->stand_prob_attr, prob_score[t][j],
+                    global->stand_time_attr, dur_str);
+          } else {
+            fprintf(f, "<td%s>%d</td>", global->stand_prob_attr, 
+                    prob_score[t][j]);
+          }
         }
       }
       fprintf(f, "<td%s>%d</td><td%s>%d</td></tr>",
               global->stand_solved_attr, tot_full[t],
               global->stand_score_attr, tot_score[t]);
     }
+
+    // print row of total
+    fputs("<tr>", f);
+    fprintf(f, "<td%s>&nbsp;</td>", global->stand_place_attr);
+    fprintf(f, "<td%s>Total:</td>", global->stand_team_attr);
+    if (global->stand_extra_format[0]) {
+      fprintf(f, "<td%s>&nbsp;</td>", global->stand_extra_attr);
+    }
+    for (j = 0, ttot_att = 0; j < p_tot; j++) {
+      fprintf(f, "<td%s>%d</td>", global->stand_prob_attr, tot_att[j]);
+      ttot_att += tot_att[j];
+    }
+    fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>",
+            global->stand_solved_attr, ttot_att, global->stand_penalty_attr);
+    fputs("</tr>\n", f);
+    // print row of success
+    fputs("<tr>", f);
+    fprintf(f, "<td%s>&nbsp;</td>", global->stand_place_attr);
+    fprintf(f, "<td%s>Success:</td>", global->stand_team_attr);
+    if (global->stand_extra_format[0]) {
+      fprintf(f, "<td%s>&nbsp;</td>", global->stand_extra_attr);
+    }
+    for (j = 0, ttot_succ = 0; j < p_tot; j++) {
+      fprintf(f, "<td%s>%d</td>", global->stand_prob_attr, succ_att[j]);
+      ttot_succ += succ_att[j];
+    }
+    fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>",
+            global->stand_solved_attr, ttot_succ, global->stand_penalty_attr);
+    fputs("</tr>\n", f);
+    // print row of percentage
+    fputs("<tr>", f);
+    fprintf(f, "<td%s>&nbsp;</td>", global->stand_place_attr);
+    fprintf(f, "<td%s>%%:</td>", global->stand_team_attr);
+    if (global->stand_extra_format[0]) {
+      fprintf(f, "<td%s>&nbsp;</td>", global->stand_extra_attr);
+    }
+    for (j = 0; j < p_tot; j++) {
+      perc = 0;
+      if (tot_att[j] > 0) {
+        perc = (int) ((double) succ_att[j] / tot_att[j] * 100.0 + 0.5);
+      }
+      fprintf(f, "<td%s>%d%%</td>", global->stand_prob_attr, perc);
+    }
+    perc = 0;
+    if (ttot_att > 0) {
+      perc = (int) ((double) ttot_succ / ttot_att * 100.0 + 0.5);
+    }
+    fprintf(f, "<td%s>%d%%</td><td%s>&nbsp;</td></tr>",
+            global->stand_solved_attr, perc, global->stand_penalty_attr);
+    fputs("</tr>\n", f);
 
     fputs("</table>\n", f);
     if (!client_flag) {
@@ -966,6 +1068,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   int    **calc;
   int      r_tot, k;
   int      tt, pp;
+  int      ttot_att, ttot_succ, perc;
 
   unsigned long **ok_time;
 
@@ -985,6 +1088,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   int last_success_run = -1;
   time_t last_success_time = 0;
   time_t last_success_start = 0;
+  int *tot_att, *succ_att;
 
   if (client_flag) head_style = cur_contest->team_head_style;
   else head_style = "h2";
@@ -1087,6 +1191,9 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     XMEMZERO(ok_time[i], p_tot);
   }
 
+  XALLOCAZ(succ_att, p_tot);
+  XALLOCAZ(tot_att, p_tot);
+
   /* now scan runs log */
   for (k = 0; k < r_tot; k++) {
     pe = &runs[k];
@@ -1117,6 +1224,8 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       t_pen[tt] += 20 * -calc[tt][pp];
       calc[tt][pp] = 1 - calc[tt][pp];
       t_prob[tt]++;
+      succ_att[pp]++;
+      tot_att[pp]++;
       if (global->virtual) {
         ok_time[tt][pp] = sec_to_min(tdur);
         t_pen[tt] += ok_time[tt][pp];
@@ -1130,10 +1239,17 @@ do_write_standings(FILE *f, int client_flag, int user_id,
         last_success_start = start_time;
       }
     } else if (pe->status==RUN_COMPILE_ERR && !global->ignore_compile_errors) {
-      if (calc[tt][pp] <= 0) calc[tt][pp]--;
-    } else if (pe->status > RUN_OK && pe->status < RUN_CHECK_FAILED) {
+      if (calc[tt][pp] <= 0) {
+        calc[tt][pp]--;
+        tot_att[pp]++;
+      }
+    } else if (pe->status > RUN_OK && pe->status < RUN_CHECK_FAILED
+               && pe->status != RUN_COMPILE_ERR) {
       /* some error */
-      if (calc[tt][pp] <= 0) calc[tt][pp]--;
+      if (calc[tt][pp] <= 0) {
+        calc[tt][pp]--;
+        tot_att[pp]++;
+      }
     }
   }
 
@@ -1328,6 +1444,56 @@ do_write_standings(FILE *f, int client_flag, int user_id,
               global->stand_solved_attr, t_prob[t],
               global->stand_penalty_attr, t_pen[t]);
     }
+
+    // print row of total
+    fputs("<tr>", f);
+    fprintf(f, "<td%s>&nbsp;</td>", global->stand_place_attr);
+    fprintf(f, "<td%s>Total:</td>", global->stand_team_attr);
+    if (global->stand_extra_format[0]) {
+      fprintf(f, "<td%s>&nbsp;</td>", global->stand_extra_attr);
+    }
+    for (j = 0, ttot_att = 0; j < p_tot; j++) {
+      fprintf(f, "<td%s>%d</td>", global->stand_prob_attr, tot_att[j]);
+      ttot_att += tot_att[j];
+    }
+    fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>",
+            global->stand_solved_attr, ttot_att, global->stand_penalty_attr);
+    fputs("</tr>\n", f);
+    // print row of success
+    fputs("<tr>", f);
+    fprintf(f, "<td%s>&nbsp;</td>", global->stand_place_attr);
+    fprintf(f, "<td%s>Success:</td>", global->stand_team_attr);
+    if (global->stand_extra_format[0]) {
+      fprintf(f, "<td%s>&nbsp;</td>", global->stand_extra_attr);
+    }
+    for (j = 0, ttot_succ = 0; j < p_tot; j++) {
+      fprintf(f, "<td%s>%d</td>", global->stand_prob_attr, succ_att[j]);
+      ttot_succ += succ_att[j];
+    }
+    fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>",
+            global->stand_solved_attr, ttot_succ, global->stand_penalty_attr);
+    fputs("</tr>\n", f);
+    // print row of percentage
+    fputs("<tr>", f);
+    fprintf(f, "<td%s>&nbsp;</td>", global->stand_place_attr);
+    fprintf(f, "<td%s>%%:</td>", global->stand_team_attr);
+    if (global->stand_extra_format[0]) {
+      fprintf(f, "<td%s>&nbsp;</td>", global->stand_extra_attr);
+    }
+    for (j = 0; j < p_tot; j++) {
+      perc = 0;
+      if (tot_att[j] > 0) {
+        perc = (int) ((double) succ_att[j] / tot_att[j] * 100.0 + 0.5);
+      }
+      fprintf(f, "<td%s>%d%%</td>", global->stand_prob_attr, perc);
+    }
+    perc = 0;
+    if (ttot_att > 0) {
+      perc = (int) ((double) ttot_succ / ttot_att * 100.0 + 0.5);
+    }
+    fprintf(f, "<td%s>%d%%</td><td%s>&nbsp;</td></tr>",
+            global->stand_solved_attr, perc, global->stand_penalty_attr);
+    fputs("</tr>\n", f);
     
     fputs("</table>\n", f);
     if (!client_flag) {
@@ -1797,6 +1963,8 @@ write_team_page(FILE *f, int user_id,
       if (probs[i]) {
         if (probs[i]->t_deadline && current_time >= probs[i]->t_deadline)
           continue;
+        if (probs[i]->t_start_date && current_time < probs[i]->t_start_date)
+          continue;
 
         dl_time_str[0] = 0;
         if (probs[i]->t_deadline && global->show_deadline) {
@@ -1888,6 +2056,8 @@ write_team_page(FILE *f, int user_id,
     for (i = 1; i <= max_prob; i++)
       if (probs[i]) {
         if (probs[i]->t_deadline && current_time >= probs[i]->t_deadline)
+          continue;
+        if (probs[i]->t_start_date && current_time < probs[i]->t_start_date)
           continue;
 
         dl_time_str[0] = 0;
