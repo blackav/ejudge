@@ -22,6 +22,7 @@
 #include "nls.h"
 #include "userlist.h"
 #include "pathutl.h"
+#include "protocol.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -99,6 +100,7 @@ static char const * const attn_map[] =
   "member_serial",
   "serial",
   "read_only",
+  "priv_level",
 
   0
 };
@@ -305,6 +307,19 @@ parse_bool(char const *path, int l, int c, char const *str, int *pval)
     }
   }
   err("%s:%d:%d: invalid boolean value", path, l, c);
+  return -1;
+}
+static int
+parse_priv_level(char const *path, int l, int c, char const *str)
+{
+  if (str) {
+    if (!strcasecmp(str, "user")) return PRIV_LEVEL_USER;
+    if (!strcasecmp(str, "observer")) return PRIV_LEVEL_OBSERVER;
+    if (!strcasecmp(str, "judge")) return PRIV_LEVEL_JUDGE;
+    if (!strcasecmp(str, "administrator")) return PRIV_LEVEL_ADMIN;
+    if (!strcasecmp(str, "admin")) return PRIV_LEVEL_ADMIN;
+  }
+  err("%s:%d:%d: invalid priv_level value", path, l, c);
   return -1;
 }
 
@@ -532,6 +547,10 @@ parse_cookies(char const *path, struct xml_tree *cookies,
           return -1;
         if (c->contest_id < 0)
           return invalid_attn_value(path, a);
+        break;
+      case USERLIST_A_PRIV_LEVEL:
+        c->priv_level = parse_priv_level(path, a->line, a->column, a->text);
+        if (c->priv_level < 0 || c->priv_level > PRIV_LEVEL_ADMIN) return -1;
         break;
       default:
         return invalid_attn(path, a);
@@ -1198,11 +1217,13 @@ unparse_cookies(struct xml_tree *p, FILE *f)
   for (p = p->first_down; p; p = p->right) {
     ASSERT(p->tag == USERLIST_T_COOKIE);
     c = (struct userlist_cookie*) p;
-    fprintf(f, "      <%s %s=\"%s\" %s=\"%llx\" %s=\"%s\"",
+    fprintf(f, "      <%s %s=\"%s\" %s=\"%llx\" %s=\"%s\" %s=\"%s\"",
             tag_map[USERLIST_T_COOKIE],
             attn_map[USERLIST_A_IP], userlist_unparse_ip(c->ip),
             attn_map[USERLIST_A_VALUE], c->cookie,
-            attn_map[USERLIST_A_EXPIRE], unparse_date(c->expire));
+            attn_map[USERLIST_A_EXPIRE], unparse_date(c->expire),
+            attn_map[USERLIST_A_PRIV_LEVEL],
+            protocol_priv_level_str(c->priv_level));
     if (c->locale_id >= 0) {
       fprintf(f, " %s=\"%d\"", attn_map[USERLIST_A_LOCALE_ID], c->locale_id);
     }
