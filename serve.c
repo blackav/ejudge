@@ -409,7 +409,7 @@ team_submit(char const *pk_name, const packet_t pk_str, void *ptr)
     goto report_to_client;
   }
 
-  if (run_change_status(run_id, RUN_COMPILING, 0) < 0) {
+  if (run_change_status(run_id, RUN_COMPILING, 0, -1) < 0) {
     reply = _("<p>Server failed to update submission log.");
     goto report_to_client;
   }
@@ -581,7 +581,7 @@ read_compile_packet(char *pname)
   if (code != RUN_OK && code != RUN_COMPILE_ERR) goto bad_packet_error;
   if (code == RUN_COMPILE_ERR) {
     /* compilation error */
-    if (run_change_status(runid, RUN_COMPILE_ERR, 0) < 0) return -1;
+    if (run_change_status(runid, RUN_COMPILE_ERR, 0, -1) < 0) return -1;
     /* probably we need a user's copy of compilation log */
     if (global->team_enable_rep_view) {
       if (generic_copy_file(0, global->compile_report_dir, pname, "",
@@ -594,7 +594,7 @@ read_compile_packet(char *pname)
     update_standings_file(0);
     return 1;
   }
-  if (run_change_status(runid, RUN_COMPILED, 0) < 0) return -1;
+  if (run_change_status(runid, RUN_COMPILED, 0, -1) < 0) return -1;
 
   /* find appropriate checker */
   cn = find_tester(prob, langs[lang]->arch);
@@ -607,7 +607,7 @@ read_compile_packet(char *pname)
     return -1;
 
   /* update status */
-  if (run_change_status(runid, RUN_RUNNING, 0) < 0) return -1;
+  if (run_change_status(runid, RUN_RUNNING, 0, -1) < 0) return -1;
 
   return 1;
 
@@ -626,6 +626,7 @@ read_run_packet(char *pname)
   int   runid;
   int   status;
   int   test;
+  int   score;
 
   int   log_stat, log_prob, log_lang;
 
@@ -638,13 +639,23 @@ read_run_packet(char *pname)
   info(_("run packed: %s"), chop(buf));
   if (sscanf(pname, "%d%n", &runid, &n) != 1 || pname[n])
     goto bad_packet_error;
-  if (sscanf(buf, "%d%d %n", &status, &test, &n) != 2 || buf[n])
+  if (sscanf(buf, "%d%d%d %n", &status, &test, &score, &n) != 3 || buf[n])
     goto bad_packet_error;
   if (run_get_param(runid, &log_lang, &log_prob, &log_stat) < 0)
     goto bad_packet_error;
   if (log_stat != RUN_RUNNING) goto bad_packet_error;
   if (status<0 || status>RUN_PARTIAL || test<0) goto bad_packet_error;
-  if (run_change_status(runid, status, test) < 0) return -1;
+  if (global->score_system_val == SCORE_KIROV
+      && (status == RUN_PARTIAL || status == RUN_OK)) {
+    // paranoidal?
+    if (log_prob < 1 || log_prob > max_prob || !probs[log_prob])
+      goto bad_packet_error;
+    if (score < 0 || score > probs[log_prob]->full_score)
+      goto bad_packet_error;
+  } else {
+    score = -1;
+  }
+  if (run_change_status(runid, status, test, score) < 0) return -1;
   update_standings_file(0);
   if (generic_copy_file(REMOVE, global->run_report_dir, pname, "",
                         0, global->report_archive_dir, pname, "") < 0)
@@ -737,7 +748,7 @@ rejudge_run(int run_id)
   int lang;
   char run_name[64];
 
-  if (run_get_record(run_id, 0, 0, 0, 0, &lang, 0, 0, 0) < 0) return;
+  if (run_get_record(run_id, 0, 0, 0, 0, &lang, 0, 0, 0, 0) < 0) return;
   if (lang <= 0 || lang > max_lang || !langs[lang]) {
     err(_("rejudge_run: bad language: %d"), lang);
     return;
@@ -749,7 +760,7 @@ rejudge_run(int run_id)
                         langs[lang]->src_sfx) < 0)
     return;
 
-  run_change_status(run_id, RUN_COMPILING, 0);
+  run_change_status(run_id, RUN_COMPILING, 0, -1);
 }
 
 int
@@ -948,13 +959,15 @@ int
 judge_change_status(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   packet_t cmd;
-  int      runid, status, test, n;
+  int      runid, status, test, score, n;
 
-  if (sscanf(pk_str, "%s %d %d %d %n", cmd, &runid, &status, &test, &n) != 4
+  if (sscanf(pk_str, "%s %d %d %d %d %n", cmd, &runid, &status, &test,
+             &score, &n) != 5
       || pk_str[n]
       || runid < 0 || runid >= run_get_total()
       || !is_valid_status(status, 1)
-      || test < -1 || test > 99)
+      || test < -1 || test > 99
+      || score < -1 || score > 99)
     return report_bad_packet(pk_name, 0);
 
   if (global->score_system_val == SCORE_KIROV) {
@@ -963,7 +976,8 @@ judge_change_status(char const *pk_name, const packet_t pk_str, void *ptr)
   } else {
   }
 
-  run_change_status(runid, status, test);
+  // FIXME: probably score should not be changed, if -1?
+  run_change_status(runid, status, test, score);
   if (status == RUN_REJUDGE) {
     rejudge_run(runid);
   }
