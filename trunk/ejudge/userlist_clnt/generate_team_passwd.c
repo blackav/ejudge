@@ -19,12 +19,17 @@
 
 int
 userlist_clnt_generate_team_passwd(struct userlist_clnt *clnt,
+                                   int cmd,
                                    int contest_id, int out_fd)
 {
   struct userlist_pk_map_contest *out = 0;
   struct userlist_packet *in = 0;
   int out_size = 0, in_size = 0, r;
   int pfd[2], pp[2];
+
+  if (cmd != ULS_GENERATE_TEAM_PASSWORDS && cmd != ULS_GENERATE_PASSWORDS) {
+    return -ULS_ERR_PROTOCOL;
+  }
 
   if (pipe(pp) < 0) {
     err("pipe() failed: %s", os_ErrorMsg());
@@ -36,7 +41,7 @@ userlist_clnt_generate_team_passwd(struct userlist_clnt *clnt,
   out_size = sizeof(*out);
   out = alloca(out_size);
   memset(out, 0, out_size);
-  out->request_id = ULS_GENERATE_TEAM_PASSWORDS;
+  out->request_id = cmd;
   out->contest_id = contest_id;
   if ((r = userlist_clnt_pass_fd(clnt, 2, pfd)) < 0) return r;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
