@@ -115,7 +115,8 @@ clar.exe:
 clar : $(CLAR_OBJECTS)
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
-run$(EXESFX) : $(RUN_OBJECTS)
+run.exe:
+run : $(RUN_OBJECTS)
 	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS)
 
 master.exe:
