@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -109,6 +109,8 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(run_exe_dir, "s"),
   GLOBAL_PARAM(run_status_dir, "s"),
   GLOBAL_PARAM(run_report_dir, "s"),
+
+  GLOBAL_PARAM(score_system, "s"),
 
   { 0, 0, 0, 0 }
 };
@@ -423,6 +425,20 @@ set_defaults(int mode)
     GLOBAL_INIT_FIELD(run_report_dir, DFLT_G_RUN_REPORT_DIR, run_dir);
   }
   GLOBAL_INIT_FIELD(work_dir, DFLT_G_WORK_DIR, var_dir);
+
+  /* score_system must be either "acm", either "kirov"
+   * "acm" is the default
+   */
+  if (!global->score_system[0]) {
+    global->score_system_val = SCORE_ACM;
+  } else if (!strcmp(global->score_system, "acm")) {
+    global->score_system_val = SCORE_ACM;
+  } else if (!strcmp(global->score_system, "kirov")) {
+    global->score_system_val = SCORE_KIROV;
+  } else {
+    /* FIXME: localize the string */
+    err("Invalid scoring system: %s", global->score_system);
+  }
 
   for (i = 1; i <= max_lang && mode != PREPARE_RUN; i++) {
     if (!langs[i]) continue;

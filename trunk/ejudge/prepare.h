@@ -3,7 +3,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,9 @@
 
 enum { PREPARE_SERVE, PREPARE_COMPILE, PREPARE_RUN };
 enum { PREPARE_QUIET = 1, PREPARE_USE_CPP = 2 };
+
+/* scoring systems */
+enum { SCORE_ACM, SCORE_KIROV };
 
 struct section_global_data
 {
@@ -97,6 +100,10 @@ struct section_global_data
   path_t run_exe_dir;           /* common prefix dir for serve->run */
   path_t run_status_dir;        /* run->serve status dir */
   path_t run_report_dir;        /* run->serve report dir */
+
+  /* scoring settings */
+  path_t score_system;          /* scoring system */
+  int    score_system_val;      /* internal int value */
 };
 
 struct section_problem_data
