@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@ userlist_clnt_logout(struct userlist_clnt *clnt,
 {
   struct userlist_pk_do_logout out;
   struct userlist_packet *in = 0;
+  void *void_in = 0;
   size_t in_size = 0;
   int r;
 
@@ -32,8 +33,9 @@ userlist_clnt_logout(struct userlist_clnt *clnt,
   out.origin_ip = origin_ip;
   out.cookie = cookie;
   if ((r = userlist_clnt_send_packet(clnt, sizeof(out), &out)) < 0) return r;
-  if ((r = userlist_clnt_recv_packet(clnt, &in_size, (void**) &in)) < 0)
+  if ((r = userlist_clnt_recv_packet(clnt, &in_size, &void_in)) < 0)
     return r;
+  in = void_in;
   if (in_size != sizeof(*in) || in->id > 0) {
     xfree(in);
     return -ULS_ERR_PROTOCOL;
