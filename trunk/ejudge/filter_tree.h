@@ -37,6 +37,19 @@ enum
     FILTER_TYPE_LAST
   };
 
+/* error codes */
+enum
+  {
+    FILTER_ERR_OK = 0,
+    FILTER_ERR_ERROR = 1,       /* unknown error */
+    FILTER_ERR_INT_OVF,         /* integer overflow */
+    FILTER_ERR_DIV0,            /* division by zero */
+    FILTER_ERR_INT_CVT,         /* string->int conversion failed */
+    FILTER_ERR_DUR_CVT,         /* string->dur_t conversion failed */
+
+    FILTER_ERR_LAST
+  };
+
 struct filter_tree
 {
   int kind;
@@ -72,6 +85,8 @@ struct filter_tree *filter_tree_new_int(struct filter_tree_mem *,
                                         int);
 struct filter_tree *filter_tree_new_bool(struct filter_tree_mem *,
                                          int);
+struct filter_tree *filter_tree_new_dur(struct filter_tree_mem *,
+                                        time_t);
 
 void filter_tree_print(struct filter_tree *p, FILE *out,
                        unsigned char const *ind);
@@ -92,5 +107,10 @@ int filter_tree_dur_str(unsigned char *, size_t, time_t);
 int filter_tree_size_str(unsigned char *, size_t, size_t);
 int filter_tree_result_str(unsigned char *, size_t, int);
 int filter_tree_hash_str(unsigned char *, size_t, unsigned long *);
+
+int filter_tree_eval_node(int kind, struct filter_tree *res,
+                          struct filter_tree *p1, struct filter_tree *p2);
+
+unsigned char const *filter_strerror(int n);
 
 #endif /* __FILTER_TREE_H__ */
