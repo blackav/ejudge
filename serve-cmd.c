@@ -296,18 +296,24 @@ static int
 handle_dump_master_runs(const unsigned char *cmd,
                         int srv_cmd, int argc, char *argv[])
 {
-  int n, first_run, last_run, r;
+  int n, first_run = 0, last_run = 0, r;
 
   if (argc < 4) return too_few_params(cmd);
   if (argc > 4) return too_many_params(cmd);
 
-  if (sscanf(argv[2], "%d%n", &first_run, &n) != 1 || argv[2][n]) {
-    err("value of first_run is invalid");
-    return 1;
+  if (argv[2] && argv[2][0]) {
+    if (sscanf(argv[2], "%d%n", &first_run, &n) != 1 || argv[2][n]) {
+      err("value of first_run is invalid");
+      return 1;
+    }
+    if (first_run >= 0) first_run++;
   }
-  if (sscanf(argv[3], "%d%n", &last_run, &n) != 1 || argv[3][n]) {
-    err("value of last_run is invalid");
-    return 1;
+  if (argv[3] && argv[3][0]) {
+    if (sscanf(argv[3], "%d%n", &last_run, &n) != 1 || argv[3][n]) {
+      err("value of last_run is invalid");
+      return 1;
+    }
+    if (last_run >= 0) last_run++;
   }
 
   authentificate(argv[0]);
