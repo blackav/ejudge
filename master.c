@@ -27,6 +27,11 @@
 #include "parsecfg.h"
 #include "clntutil.h"
 #include "misctext.h"
+#include "serve_clnt.h"
+#include "contests.h"
+#include "protocol.h"
+#include "userlist_proto.h"
+#include "userlist_clnt.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -67,6 +72,7 @@
 #define DEFAULT_RUN_PAGE_SIZE  10
 #define DEFAULT_CLAR_PAGE_SIZE 10
 #define DEFAULT_CHARSET        "iso8859-1"
+#define DEFAULT_SERVE_SOCKET   "serve"
 
 struct section_global_data
 {
@@ -75,8 +81,6 @@ struct section_global_data
   int    run_page_size;
   int    clar_page_size;
   int    allow_deny;
-  path_t contest_name;
-  path_t password;
   path_t root_dir;
   path_t conf_dir;
   path_t var_dir;
@@ -85,15 +89,19 @@ struct section_global_data
   path_t judge_cmd_dir;
   path_t judge_data_dir;
   path_t status_file;
-  path_t problems_submit_file;
   path_t allow_from;
   path_t deny_from;
-  path_t standings_url;
   path_t charset;
 
   /* locallization stuff */
   int    enable_l10n;
   path_t l10n_dir;
+
+  /* userlist-server stuff */
+  int contest_id;
+  path_t socket_path;
+  path_t contests_path;
+  path_t serve_socket;
 };
 
 static struct generic_section_config *config;
@@ -106,8 +114,6 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(run_page_size, "d"),
   GLOBAL_PARAM(clar_page_size, "d"),
   GLOBAL_PARAM(allow_deny, "d"),
-  GLOBAL_PARAM(contest_name, "s"),
-  GLOBAL_PARAM(password, "s"),
   GLOBAL_PARAM(root_dir, "s"),
   GLOBAL_PARAM(var_dir, "s"),
   GLOBAL_PARAM(pipe_dir, "s"),
@@ -115,13 +121,16 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(judge_cmd_dir, "s"),
   GLOBAL_PARAM(judge_data_dir, "s"),
   GLOBAL_PARAM(status_file, "s"),
-  GLOBAL_PARAM(problems_submit_file, "s"),
   GLOBAL_PARAM(allow_from, "s"),
   GLOBAL_PARAM(deny_from, "s"),
-  GLOBAL_PARAM(standings_url, "s"),
   GLOBAL_PARAM(charset, "s"),
   GLOBAL_PARAM(enable_l10n, "d"),
   GLOBAL_PARAM(l10n_dir, "s"),
+
+  GLOBAL_PARAM(contest_id, "d"),
+  GLOBAL_PARAM(socket_path, "s"),
+  GLOBAL_PARAM(contests_path, "s"),
+  GLOBAL_PARAM(serve_socket, "s"),
 
   { 0, 0, 0, 0 }
 };
@@ -132,19 +141,28 @@ static struct config_section_info params[] =
   { NULL, 0, NULL }
 };
 
-static char *client_password;
-//static int   client_first_runid;
-//static int   client_first_clarid;
+/* new userlist-server related variables */
+static struct contest_list *contests;
+static struct contest_desc *cur_contest;
+static struct userlist_clnt *userlist_conn;
+static unsigned long client_ip;
+static int serve_socket_fd = -1;
+static int serve_last_error = 0;
+static unsigned char *self_url = 0;
+static unsigned char hidden_vars[1024];
+static unsigned char *filter_expr;
+static int filter_first_run;
+static int filter_last_run;
+static int filter_first_clar;
+static int filter_last_clar;
+static int priv_level;
+
+static unsigned char *client_login;
+static unsigned char *client_password;
+static unsigned char *client_name;
+static unsigned int client_user_id;
 
 static int force_recheck_status = 0;
-
-static char *runs_statistics = 0;
-static char *clars_statistics = 0;
-
-static int    judge_mode = 0;
-
-int view_all_runs = 0;
-int view_all_clars = 0;
 
 /* form headers */
 static char    form_start_simple[1024];
@@ -153,58 +171,87 @@ static char    form_start_multipart[1024];
 static void
 read_state_params(void)
 {
-  if (cgi_param("view_all_runs")) view_all_runs = 1;
-  if (cgi_param("view_all_clars")) view_all_clars = 1;
+  unsigned char *a_passwd;
+  int passwd_len;
+
+  passwd_len = html_armored_strlen(client_password);
+  a_passwd = alloca(passwd_len + 10);
+  html_armor_string(client_password, a_passwd);
 
   sprintf(form_start_simple,
           "%s"
+          "<input type=\"hidden\" name=\"login\" value=\"%s\">"
           "<input type=\"hidden\" name=\"password\" value=\"%s\">",
-          form_header_simple, client_password);
+          form_header_simple, client_login, a_passwd);
 
   sprintf(form_start_multipart,
           "%s"
+          "<input type=\"hidden\" name=\"login\" value=\"%s\">"
           "<input type=\"hidden\" name=\"password\" value=\"%s\">",
-          form_header_multipart, client_password);
+          form_header_multipart, client_login, a_passwd);
 
-  /*
-  t = cgi_param("first_runid");
-  client_first_runid = 0;
-  if (t) sscanf(t, "%d", &client_first_runid);
+  snprintf(hidden_vars, sizeof(hidden_vars),
+          "<input type=\"hidden\" name=\"login\" value=\"%s\">"
+          "<input type=\"hidden\" name=\"password\" value=\"%s\">",
+           client_login, a_passwd);
+}
 
-  t = cgi_param("first_clarid");
-  client_first_clarid = 0;
-  if (t) sscanf(t, "%d", &client_first_clarid);
+static void
+make_self_url(void)
+{
+  unsigned char *http_host = getenv("HTTP_HOST");
+  unsigned char *server_port = getenv("SERVER_PORT");
+  unsigned char *script_name = getenv("SCRIPT_NAME");
+  unsigned char fullname[1024];
 
-  sprintf(form_start_simple,
-          "%s"
-          "<input type=\"hidden\" name=\"password\" value=\"%s\">"
-          "<input type=\"hidden\" name=\"first_runid\" value=\"%d\">"
-          "<input type=\"hidden\" name=\"first_clarid\" value=\"%d\">",
-          form_header_simple,
-          client_password,
-          client_first_runid,
-          client_first_clarid);
-
-  sprintf(form_start_multipart,
-          "%s"
-          "<input type=\"hidden\" name=\"password\" value=\"%s\">"
-          "<input type=\"hidden\" name=\"first_runid\" value=\"%d\">"
-          "<input type=\"hidden\" name=\"first_clarid\" value=\"%d\">",
-          form_header_multipart,
-          client_password,
-          client_first_runid,
-          client_first_clarid);
-  */
+  if (!http_host) http_host = "localhost";
+  if (!script_name) script_name = "/cgi-bin/master";
+  if (server_port) {
+    snprintf(fullname, sizeof(fullname),
+             "http://%s:%s%s", http_host, server_port, script_name);
+  } else {
+    snprintf(fullname, sizeof(fullname),
+             "http://%s%s", http_host, script_name);
+  }
+  self_url = xstrdup(fullname);
 }
 
 static int
 display_enter_password(void)
 {
-  client_put_header(global->charset, _("Enter password"));
+  unsigned char *a_name = 0;
+  int a_len;
+
+  if (cur_contest->name) {
+    a_len = html_armored_strlen(cur_contest->name);
+    a_name = alloca(a_len + 10);
+    html_armor_string(cur_contest->name, a_name);
+  }
+  if (a_name) {
+    client_put_header(global->charset, "Enter password - %s - &quot;%s&quot;",
+                      protocol_priv_level_str(priv_level), a_name);
+  } else {
+    client_put_header(global->charset, "Enter password - %s",
+                      protocol_priv_level_str(priv_level));
+  }
+
   puts(form_header_simple);
-  puts("<input type=\"password\" size=16 name=\"password\">");
-  puts("<input type=\"submit\" value=\"submit\">");
-  puts("</form>");
+  printf("<table>"
+         "<tr>"
+         "<td>%s:</td>"
+         "<td><input type=\"text\" size=16 name=\"login\"></td>"
+         "</tr>"
+         "<tr>"
+         "<td>%s:</td>"
+         "<td><input type=\"password\" size=16 name=\"password\"></td>"
+         "</tr>"
+         "<tr>"
+         "<td><input type=\"submit\" value=\"%s\"></td>"
+         "<td>&nbsp;</td>"
+         "</tr>"
+         "</table>"
+         "</form>",
+         _("Login"), _("Password"), _("Submit"));
   client_put_footer();
   return 0;
 }
@@ -212,19 +259,56 @@ display_enter_password(void)
 static int
 ask_passwd(void)
 {
-  char *passwd = cgi_param("password");
-  return passwd == 0;
+  // FIXME: support cookies
+  return !cgi_param("password") || !cgi_param("login");
 }
 
 static int
 check_passwd(void)
 {
-  char *passwd = cgi_param("password");
-
+  unsigned char *login = cgi_param("login");
+  unsigned char *passwd = cgi_param("password");
+  int r;
+  
+  client_login = login;
   client_password = passwd;
-  if (!passwd) return 0;
-  if (!strcmp(passwd, global->password)) return 1;
-  return 0;
+  if (!login || !passwd) return 0;
+
+  if (!userlist_conn) {
+    if (!(userlist_conn = userlist_clnt_open(global->socket_path))) {
+      client_put_header(global->charset, _("Server is down"));
+      printf("<p>%s</p>",
+             _("The server is down. Try again later."));
+      client_put_footer();
+      exit(0);
+    }
+  }
+
+  r = userlist_clnt_priv_login(userlist_conn, client_ip, global->contest_id,
+                               0, /* locale_id */
+                               0, /* use_cookies */
+                               priv_level, login, passwd,
+                               &client_user_id,
+                               0, /* p_cookie */
+                               0, /* p_locale_id */
+                               &priv_level,
+                               &client_name);
+  if (r == -ULS_ERR_INVALID_LOGIN || r == -ULS_ERR_INVALID_PASSWORD
+      || r == -ULS_ERR_NO_PERMS) {
+    client_put_header(global->charset, _("Permission denied"));
+    printf("<p>%s</p>",
+           "Permission denied. You have typed invalid login, invalid password,"
+           " or do not have enough privileges.");
+    client_put_footer();
+    exit(0);
+  }
+  if (r < 0) {
+    client_put_header(global->charset, _("Server error"));
+    printf("<p>Server error: %s</p>", userlist_strerror(-r));
+    client_put_footer();
+    exit(0);
+  }
+  return 1;
 }
 
 static void
@@ -295,6 +379,51 @@ print_resume_button(char const *str)
   if (!str) str = _("Resume clients");
   puts(form_start_simple);
   printf("<input type=\"submit\" name=\"resume\" value=\"%s\"></form>", str);
+}
+
+static void
+read_view_params(void)
+{
+  unsigned char *s;
+  int x, n;
+
+  if (cgi_param("view_all_runs")) {
+    filter_first_run = -1;
+    filter_last_run = 1;
+  }
+  if (cgi_param("view_all_clars")) {
+    filter_first_clar = -1;
+    filter_last_clar = 1;
+  }
+  if (cgi_param("filter_view_clars")) {
+    s = cgi_param("filter_first_clar");
+    n = 0;
+    if (s && sscanf(s, "%d %n", &x, &n) == 1 && !s[n]) {
+      if (x >= 0) x++;
+      filter_first_clar = x;
+    }
+    s = cgi_param("filter_last_clar");
+    n = 0;
+    if (s && sscanf(s, "%d %n", &x, &n) == 1 && !s[n]) {
+      if (x >= 0) x++;
+      filter_last_clar = x;
+    }
+  }
+  if (cgi_param("filter_view")) {
+    s = cgi_param("filter_first_run");
+    n = 0;
+    if (s && sscanf(s, "%d %n", &x, &n) == 1 && !s[n]) {
+      if (x >= 0) x++;
+      filter_first_run = x;
+    }
+    s = cgi_param("filter_last_run");
+    n = 0;
+    if (s && sscanf(s, "%d %n", &x, &n) == 1 && !s[n]) {
+      if (x >= 0) x++;
+      filter_last_run = x;
+    }
+    filter_expr = cgi_param("filter_expr");
+  }
 }
 
 static void
@@ -520,7 +649,7 @@ view_teams_if_asked(int forced_flag)
 
   if (!forced_flag && !cgi_param("viewteams")) return;
 
-  sprintf(cmd, "%cTEAMS\n", judge_mode?'J':'M');
+  sprintf(cmd, "%cTEAMS\n", (priv_level == PRIV_LEVEL_ADMIN)?'M':'J');
   client_transaction(pk_name, cmd, &teams, &teams_len);
   client_put_header(global->charset, "Teams information");
   printf("<table><tr><td>");
@@ -532,7 +661,7 @@ view_teams_if_asked(int forced_flag)
   if (nteams <= 0 || nteams > 10000) goto _format_error;
   printf("<table border=\"1\"><tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th>",
          _("Team login"), _("Team id"), _("Team name"), _("Flags"));
-  if (!judge_mode) {
+  if (priv_level == PRIV_LEVEL_ADMIN) {
     printf("<th>%s</th>", _("Change"));
   }
   printf("</tr>\n");
@@ -973,7 +1102,8 @@ view_clar_if_asked()
   if (sscanf(s, "clar_%d%n", &clarid, &n) != 1 || (s[n] && s[n]!='.')) return;
   if (clarid < 0 || clarid >= server_total_clars) return;
 
-  sprintf(cmd, "%s %d\n", judge_mode?"JPEEK":"MPEEK", clarid);
+  sprintf(cmd, "%s %d\n", (priv_level == PRIV_LEVEL_ADMIN)?"MPEEK":"JPEEK",
+          clarid);
   client_transaction(client_packet_name(pname), cmd, &src, &slen);
 
   s = cgi_param("enable_reply");
@@ -1093,71 +1223,6 @@ send_reply_if_asked(void)
   client_transaction(pname, cmd, 0, 0);
 }
 
-/*
-void
-navigate_if_asked()
-{
-  if (cgi_param("go_first")) {
-    client_first_runid = 0;
-  } else if (cgi_param("go_last")) {
-    client_first_runid = server_total_runs;
-  } else if (cgi_param("go_next")) {
-    client_first_runid += global->run_page_size;
-  } else if (cgi_param("go_prev")) {
-    client_first_runid -= global->run_page_size;
-  } else if (cgi_param("go_to")) {
-    char *s = cgi_param("new_first_runid");
-    if (s) sscanf(s, "%d", &client_first_runid);
-  }
-
-  if (client_first_runid < 0)
-    client_first_runid = server_total_runs + client_first_runid;
-  if (client_first_runid + global->run_page_size > server_total_runs)
-    client_first_runid = server_total_runs - global->run_page_size;
-  if (client_first_runid < 0) client_first_runid = 0;
-}
-*/
-
-/*
-void
-clar_navigate_if_asked()
-{
-  if (cgi_param("clar_first")) {
-    client_first_clarid = 0;
-  } else if (cgi_param("clar_last")) {
-    client_first_clarid = server_total_clars;
-  } else if (cgi_param("clar_next")) {
-    client_first_clarid += global->clar_page_size;
-  } else if (cgi_param("clar_prev")) {
-    client_first_clarid -= global->clar_page_size;
-  } else if (cgi_param("clar_to")) {
-    char *s = cgi_param("new_first_clarid");
-    if (s) sscanf(s, "%d", &client_first_clarid);
-  }
-
-  if (client_first_clarid < 0)
-    client_first_clarid = server_total_clars + client_first_clarid;
-  if (client_first_clarid + global->clar_page_size > server_total_clars)
-    client_first_clarid = server_total_clars - global->clar_page_size;
-  if (client_first_clarid < 0) client_first_clarid = 0;
-}
-*/
-
-void
-get_contest_statistics()
-{
-  char   tname[64];
-  char   cmd[64];
-  char  *reply = 0;
-
-  sprintf(cmd, "%cSTAT %d %d\n", judge_mode?'J':'M', 
-          view_all_runs, view_all_clars);
-  client_transaction(client_packet_name(tname), cmd, &reply, 0);
-
-  client_split(reply, 1, &runs_statistics, &clars_statistics, NULL);
-  xfree(reply);
-}
-
 static int
 set_defaults(void)
 {
@@ -1167,10 +1232,7 @@ set_defaults(void)
   if (global->clar_page_size <= 0 || global->clar_page_size > 25) {
     global->clar_page_size = DEFAULT_CLAR_PAGE_SIZE;
   }
-  if (!global->password[0]) {
-    err("password must be set");
-    return -1;
-  }
+
   if (!global->root_dir[0]) {
     err("root_dir must be set");
     return -1;
@@ -1181,12 +1243,42 @@ set_defaults(void)
   path_init(global->judge_cmd_dir, global->judge_dir, DEFAULT_JUDGE_CMD_DIR);
   path_init(global->judge_data_dir, global->judge_dir, DEFAULT_JUDGE_DATA_DIR);
   path_init(global->status_file, global->var_dir, DEFAULT_STATUS_FILE);
-  path_init(global->problems_submit_file, global->var_dir,
-            DEFAULT_PROBLEMS_SUBMIT_FILE);
   if (!global->charset[0]) {
     pathcpy(global->charset, DEFAULT_CHARSET);
   }
+
+  if (global->contest_id <= 0) {
+    err("contest_id must be set");
+    return -1;
+  }
+  path_init(global->serve_socket, global->var_dir, DEFAULT_SERVE_SOCKET);
+
+  /* FIXME: should we support localization */
+  /*
+  if (!global->l10n_dir[0] || !global->enable_l10n) {
+    global->enable_l10n = 0;
+    global->l10n_dir[0] = 0;
+  }
+  */
   return 0;
+}
+
+static void
+parse_client_ip(void)
+{
+  unsigned int b1, b2, b3, b4;
+  int n;
+  unsigned char *s = getenv("REMOTE_ADDR");
+
+  client_ip = 0;
+  if (!s) return;
+  n = 0;
+  if (sscanf(s, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4
+      || s[n] || b1 > 255 || b2 > 255 || b3 > 255 || b4 > 255) {
+    client_ip = 0xffffffff;
+    return;
+  }
+  client_ip = b1 << 24 | b2 << 16 | b3 << 8 | b4;
 }
 
 static void
@@ -1205,8 +1297,11 @@ initialize(int argc, char *argv[])
   os_rGetBasename(fullname, basename, PATH_MAX);
   strcpy(program_name, basename);
   if (!strncmp(basename, "master", 6)) {
+    priv_level = PRIV_LEVEL_ADMIN;
   } else if (!strncmp(basename, "judge", 5)) {
-    judge_mode = 1;
+    priv_level = PRIV_LEVEL_JUDGE;
+  } else if (!strncmp(basename, "observer", 8)) {
+    priv_level = PRIV_LEVEL_OBSERVER;
   } else {
     client_not_configured(0, "bad program name");
   }
@@ -1237,9 +1332,65 @@ initialize(int argc, char *argv[])
   logger_set_level(-1, LOG_WARNING);
   client_make_form_headers();
 
+  parse_client_ip();
+
+  if (!(contests = parse_contest_xml(global->contests_path))) {
+    client_not_configured(global->charset, "no contests are defined");
+  }
+  if (global->contest_id <= 0
+      || global->contest_id >= contests->id_map_size
+      || !(cur_contest = contests->id_map[global->contest_id])) {
+    client_not_configured(global->charset, "invalid contest");
+  }
+
+  make_self_url();
+
   /* copy this to help client utility functions */
   pathcpy(client_pipe_dir, global->pipe_dir);
   pathcpy(client_cmd_dir, global->judge_cmd_dir);
+}
+
+static int
+open_serve(void)
+{
+  if (serve_socket_fd >= 0) return 0;
+  if (serve_socket_fd < 0 && serve_last_error > 0) return serve_last_error;
+  serve_socket_fd = serve_clnt_open(global->serve_socket);
+  if (serve_socket_fd < 0) {
+    serve_last_error = -serve_socket_fd;
+    serve_socket_fd = -1;
+    return -serve_last_error;
+  }
+  return 0;
+}
+
+static void
+display_master_page(void)
+{
+  int r;
+
+  if (open_serve() < 0) {
+    printf("<h2><font color=\"red\">Cannot connect to the server</font></h2>\n");
+    return;
+  }
+
+  r = serve_clnt_master_page(serve_socket_fd, 1,
+                             client_user_id,
+                             global->contest_id, 0,
+                             client_ip,
+                             priv_level,
+                             filter_first_run,
+                             filter_last_run,
+                             filter_first_clar,
+                             filter_last_clar,
+                             self_url,
+                             filter_expr,
+                             hidden_vars);
+  if (r < 0) {
+    printf("<h2><font color=\"red\">%s</font></h2>\n",
+           protocol_strerror(-r));
+    return;
+  }
 }
 
 int
@@ -1260,12 +1411,13 @@ main(int argc, char *argv[])
   }
   if (!check_passwd()) client_access_denied(global->charset);
   read_state_params();
+  read_view_params();
 
   if (!client_check_server_status(global->charset, global->status_file, 3)) {
     return 0;
   }
 
-  if (!judge_mode) {
+  if (priv_level == PRIV_LEVEL_ADMIN) {
     stop_if_asked();
     start_if_asked();
     changedur_if_asked();
@@ -1284,10 +1436,6 @@ main(int argc, char *argv[])
     do_suspend_if_asked();
     do_resume_if_asked();
   }
-  /*
-  navigate_if_asked();
-  clar_navigate_if_asked();
-  */
   view_source_if_asked();
   view_report_if_asked();
   view_clar_if_asked();
@@ -1295,23 +1443,23 @@ main(int argc, char *argv[])
   view_standings_if_asked();
   send_reply_if_asked();
   send_msg_if_asked();
-  get_contest_statistics();
 
   if (force_recheck_status) {
     client_check_server_status(global->charset, global->status_file, 3);
     force_recheck_status = 0;
   }
 
-  if (global->contest_name[0]) {
+  if (cur_contest->name) {
     client_put_header(global->charset, "%s: %s - &quot;%s&quot;",
                       _("Monitor"),
-                      judge_mode?_("Judge"):_("Administrator"),
-                      global->contest_name);
+                      protocol_priv_level_str(priv_level),
+                      cur_contest->name);
   } else {
     client_put_header(global->charset, "%s: %s",
                       _("Monitor"),
-                      judge_mode?_("Judge"):_("Administrator"));
+                      protocol_priv_level_str(priv_level));
   }
+
   printf("<table><tr><td>");
   print_refresh_button(0);
   printf("</td><td>");
@@ -1319,13 +1467,13 @@ main(int argc, char *argv[])
   printf("</td><td>");
   print_teamview_button(0);
   printf("</td></tr></table>\n");
-  client_print_server_status(judge_mode, form_start_simple, 0);
+  client_print_server_status(priv_level, form_start_simple, 0);
   printf("<table><tr><td>");
   print_refresh_button(0);
   printf("</td><td>");
   print_standings_button(0);
   printf("</td></tr></table>");
-  if (!judge_mode) {
+  if (priv_level == PRIV_LEVEL_ADMIN) {
     printf("<table><tr><td>");
     print_teamview_button(0);
     printf("</td><td>");
@@ -1344,87 +1492,20 @@ main(int argc, char *argv[])
     printf("</td></tr></table>\n");
   }
 
-  if (runs_statistics) {
-    printf("<hr><h2>%s</h2>", _("Submissions"));
-    client_puts(runs_statistics, form_start_simple);
+  fflush(stdout);
+  display_master_page();
 
-    //puts(runs_statistics);
-    
-    /*
-    printf("<p>%s"
-           "<input type=\"text\" size=\"8\" name=\"new_first_runid\">\n"
-           "<input type=\"submit\" name=\"go_to\" value=\"go\"><br>\n"
-           "<input type=\"submit\" name=\"go_first\" value=\"first %d\">\n"
-           "<input type=\"submit\" name=\"go_prev\" value=\"prev %d\">\n"
-           "<input type=\"submit\" name=\"go_next\" value=\"next %d\">\n"
-           "<input type=\"submit\" name=\"go_last\" value=\"last %d\">\n"
-           "</form></p>\n",
-           form_start_simple,
-           global->run_page_size, global->run_page_size,
-           global->run_page_size, global->run_page_size);
-    */
-
-    printf("<table><tr><td>");
-    printf("%s<input type=\"submit\" name=\"view_all_runs\" value=\"%s\"></form>", form_start_simple, _("View all"));
-    printf("</td><td>");
-    print_refresh_button(0);
-    printf("</td><td>");
-    print_standings_button(0);
-    if (!judge_mode && server_start_time) {
-      char *tmpl = 0;
-      int sz;
-
-      generic_read_file(&tmpl, 0, &sz, 0,
-                        0, global->problems_submit_file, "");
-
-      printf("</td><td>%s<input type=\"submit\" name=\"rejudge_all\" value=\"%s\"></form>", form_start_simple, _("Rejudge all"));
-      if (tmpl) {
-        printf("</td></tr></table><br><table><tr><td>%s%s%s<input type=\"submit\" name=\"rejudge_problem\" value=\"%s\"></form>", form_start_simple, _("Rejudge problem: "),
-               tmpl, _("Rejudge!"));
-      }
-    }
-    printf("</td></tr></table>\n");
+  if (priv_level >= PRIV_LEVEL_JUDGE) {
+    printf("<hr><h2>%s</h2>", _("Compose a message to all the teams"));
+    puts(form_start_multipart);
+    printf("<p>%s: <input type=\"text\" size=\"64\" name=\"msg_subj\"></p>\n",
+           _("Subject"));
+    printf("<p><textarea name=\"msg_text\" rows=\"20\" cols=\"60\">"
+           "</textarea></p>");
+    printf("<p><input type=\"submit\" name=\"msg_send\" value=\"%s\">",
+           _("Send"));
+    printf("</form>\n");
   }
-
-  if (clars_statistics) {
-    printf("<hr><h2>%s</h2>\n", _("Messages"));
-    client_puts(clars_statistics, form_start_simple);
-
-    /* navigation */
-    /*
-    printf("<p>%s"
-           "<input type=\"text\" size=\"8\" name=\"new_first_clarid\">\n"
-           "<input type=\"submit\" name=\"clar_to\" value=\"go\"><br>\n"
-           "<input type=\"submit\" name=\"clar_first\" value=\"first %d\">\n"
-           "<input type=\"submit\" name=\"clar_prev\" value=\"prev %d\">\n"
-           "<input type=\"submit\" name=\"clar_next\" value=\"next %d\">\n"
-           "<input type=\"submit\" name=\"clar_last\" value=\"last %d\">\n"
-           "</form></p>\n",
-           form_start_simple,
-           global->clar_page_size, global->clar_page_size,
-           global->clar_page_size, global->clar_page_size);
-    */
-
-    printf("<table><tr><td>");
-    printf("%s<input type=\"submit\" name=\"view_all_clars\" value=\"%s\"></form>", form_start_simple, _("View all"));
-    printf("</td><td>");
-    print_refresh_button(0);
-    printf("</td><td>");
-    print_standings_button(0);
-    printf("</td></tr></table>\n");
-  }
-
-  printf("<hr><h2>%s</h2>", _("Compose a message to all the teams"));
-  puts(form_start_multipart);
-  printf("<p>%s: <input type=\"text\" size=\"64\" name=\"msg_subj\"></p>\n",
-         _("Subject"));
-  printf("<p><textarea name=\"msg_text\" rows=\"20\" cols=\"60\">"
-         "</textarea></p>");
-
-
-  printf("<p><input type=\"submit\" name=\"msg_send\" value=\"%s\">",
-         _("Send"));
-  printf("</form>\n");
 
   printf("<p><table><tr><td>");
   print_refresh_button(0);
