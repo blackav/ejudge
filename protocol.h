@@ -4,7 +4,7 @@
 #ifndef __PROTOCOL_H__
 #define __PROTOCOL_H__
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -150,6 +150,7 @@ enum
     SRV_CMD_PRIV_DOWNLOAD_REPORT,
     SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT,
     SRV_CMD_DUMP_MASTER_RUNS,
+    SRV_CMD_RESET_CLAR_FILTER,
 
     SRV_CMD_LAST
   };
@@ -310,6 +311,7 @@ struct prot_serve_pkt_master_page
   int sid_mode;
   int first_run;
   int last_run;
+  int mode_clar;
   int first_clar;
   int last_clar;
   int self_url_len;
