@@ -1890,7 +1890,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
       || probs[pkt->prob_id]->disable_testing
       || langs[pkt->lang_id]->disable_auto_testing
       || langs[pkt->lang_id]->disable_testing) {
-    info("%d: team_submit_run: auto testing disabled", p->id);
+    info("%d: priv_submit_run: auto testing disabled", p->id);
     run_change_status(run_id, RUN_ACCEPTED, 0, -1);
     new_send_reply(p, SRV_RPL_OK);
     return;
@@ -1909,7 +1909,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
     return;
   }
 
-  info("%d: team_submit_run: ok", p->id);
+  info("%d: priv_submit_run: ok", p->id);
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -2175,21 +2175,25 @@ cmd_team_submit_run(struct client_state *p, int len,
                                        global->run_archive_dir, run_id,
                                        pkt->run_len, 0);
   if (arch_flags < 0) {
+    run_undo_add_record(run_id);
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
   if (archive_dir_prepare(global->run_archive_dir, run_id, 0) < 0) {
+    run_undo_add_record(run_id);
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
   if (generic_write_file(pkt->data, pkt->run_len, arch_flags,
                          0, run_arch, "") < 0) {
+    run_undo_add_record(run_id);
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
 
   if (global->ignore_duplicated_runs) {
     if ((r = run_check_duplicate(run_id)) < 0) {
+      run_undo_add_record(run_id);
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
     } else if (r) {
