@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "serve_clnt.h"
@@ -48,6 +44,7 @@ serve_clnt_show_item(int sock_fd, int out_fd, int cmd,
   int out_size, in_size, r;
   int pipe_fd[2], pass_fd[2];
   unsigned char c;
+  void *void_in = 0;
 
   if (sock_fd < 0) return -SRV_ERR_NOT_CONNECTED;
   if (cmd != SRV_CMD_SHOW_CLAR
@@ -82,10 +79,11 @@ serve_clnt_show_item(int sock_fd, int out_fd, int cmd,
     close(pipe_fd[0]);
     return r;
   }
-  if ((r = serve_clnt_recv_packet(sock_fd, &in_size, (void**) &in)) < 0) {
+  if ((r = serve_clnt_recv_packet(sock_fd, &in_size, &void_in)) < 0) {
     close(pipe_fd[0]);
     return r;
   }
+  in = void_in;
   if (in->id < 0) {
     r = in->id;
     close(pipe_fd[0]);
