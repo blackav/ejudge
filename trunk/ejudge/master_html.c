@@ -528,6 +528,31 @@ write_all_runs(FILE *f, struct user_state_info *u,
       ASSERT(rid >= 0 && rid < env.rtotal);
       pe = &env.rentries[rid];
 
+      if (pe->status == RUN_EMPTY) {
+        run_status_str(pe->status, statstr, 0);
+
+        fprintf(f, "<tr>");
+        fprintf(f, "<td>%d</td>", rid);
+        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td><b>%s</b></td>", statstr);
+        fprintf(f, "<td>&nbsp;</td>");
+        if (global->score_system_val == SCORE_KIROV ||
+            global->score_system_val == SCORE_OLYMPIAD) {
+          fprintf(f, "<td>&nbsp;</td>");
+        }
+        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "</tr>\n");
+        continue;
+      }
       if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP) {
         run_time = pe->timestamp;
         if (!env.rhead.start_time) run_time = 0;
@@ -551,7 +576,17 @@ write_all_runs(FILE *f, struct user_state_info *u,
           fprintf(f, "<td>&nbsp;</td>");
         }
         fprintf(f, "<td>&nbsp;</td>");
-        fprintf(f, "<td>&nbsp;</td>");
+        if (priv_level == PRIV_LEVEL_ADMIN) {
+          fprintf(f, "<td>");
+          html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+          fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">",
+                  rid);
+          fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+                  ACTION_CLEAR_RUN, _("clear"));
+          fprintf(f, "</form></td>");
+        } else {
+          fprintf(f, "<td>&nbsp;</td>");
+        }
         fprintf(f, "<td>&nbsp;</td>");
         fprintf(f, "<td>&nbsp;</td>");
         fprintf(f, "</tr>\n");
@@ -716,10 +751,16 @@ write_all_runs(FILE *f, struct user_state_info *u,
   print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, 0, 0, 0, 0);
 
   if (priv_level == PRIV_LEVEL_ADMIN &&!has_parse_errors&&!has_filter_errors) {
+    fprintf(f, "<table border=\"0\"><tr><td>");
     html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
     fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
             ACTION_REJUDGE_ALL_1, _("Rejudge all"));
-    fprintf(f, "</form></p>\n");
+    fprintf(f, "</form></td><td>\n");
+
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+            ACTION_SQUEEZE_RUNS, _("Squeeze runs"));
+    fprintf(f, "</form></td></tr></table>\n");
 
     html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
     fprintf(f, "%s: <select name=\"problem\"><option value=\"\">\n",
@@ -974,8 +1015,9 @@ write_priv_source(FILE *f, int user_id, int priv_level,
 
   fprintf(f, "<h2>%s %d</h2>\n",
           _("Information about run"), run_id);
-  if (info.status == RUN_VIRTUAL_START ||
-      info.status == RUN_VIRTUAL_STOP) {
+  if (info.status == RUN_VIRTUAL_START
+      || info.status == RUN_VIRTUAL_STOP
+      || info.status == RUN_EMPTY) {
     fprintf(f, "<p>Information is not available.</p>\n");
     fprintf(f, "<hr>\n");
     print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars,
@@ -1091,6 +1133,11 @@ write_priv_source(FILE *f, int user_id, int priv_level,
     }
   }
   fprintf(f, "</table>\n");
+  if (priv_level == PRIV_LEVEL_ADMIN) {
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
+    fprintf(f, "<p><input type=\"submit\" name=\"action_%d\" value=\"%s\"></p></form>\n", ACTION_CLEAR_RUN, _("Clear this entry"));
+  }
   print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars,
                     _("Main page"), 0, 0, 0);
   fprintf(f, "<hr>\n");
