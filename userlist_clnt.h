@@ -22,11 +22,21 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <string.h>
+
 struct userlist_clnt;
 typedef struct userlist_clnt *userlist_clnt_t;
 
 userlist_clnt_t userlist_clnt_open(char const *);
 userlist_clnt_t userlist_clnt_close(userlist_clnt_t);
+
+int userlist_clnt_send_packet(struct userlist_clnt *clnt,
+                              size_t size, void const *buf);
+int userlist_clnt_recv_packet(struct userlist_clnt *clnt,
+                              size_t *p_size, void **p_data);
+int userlist_clnt_do_pass_fd(struct userlist_clnt *clnt,
+                             int fds_num,
+                             int *fds);
 
 int
 userlist_clnt_register_new(struct userlist_clnt *clnt,
