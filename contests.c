@@ -27,10 +27,12 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <ctype.h>
 #include <limits.h>
+#include <errno.h>
 
 #define MAX_CONTEST_ID 1000
 #define CONTEST_CHECK_TIME 5
@@ -45,6 +47,7 @@ static char const * const tag_map[] =
   "master_access",
   "judge_access",
   "team_access",
+  "serve_control_access",
   "ip",
   "field",
   "name",
@@ -82,6 +85,8 @@ static char const * const tag_map[] =
   "team_head_style",
   "team_par_style",
   "conf_dir",
+  "run_user",
+  "run_group",
 
   0
 };
@@ -104,6 +109,7 @@ static char const * const attn_map[] =
   "clean_users",
   "run_managed",
   "closed",
+  "invisible",
 
   0
 };
@@ -117,6 +123,7 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   sizeof(struct contest_access), /* CONTEST_MASTER_ACCESS */
   sizeof(struct contest_access), /* CONTEST_JUDGE_ACCESS */
   sizeof(struct contest_access), /* CONTEST_TEAM_ACCESS */
+  sizeof(struct contest_access), /* CONTEST_SERVE_CONTROL_ACCESS */
   sizeof(struct contest_ip),    /* CONTEST_IP */
   sizeof(struct contest_field), /* CONTEST_FIELD */
   0,                            /* CONTEST_NAME */
@@ -154,6 +161,8 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   0,                            /* TEAM_HEAD_STYLE */
   0,                            /* TEAM_PAR_STYLE */
   0,                            /* CONTEST_CONF_DIR */
+  0,                            /* CONTEST_RUN_USER */
+  0,                            /* CONTEST_RUN_GROUP */
 };
 static size_t const attn_sizes[CONTEST_LAST_ATTN] =
 {
@@ -689,6 +698,14 @@ parse_contest(struct contest_desc *cnts, char const *path)
       }
       cnts->closed = x;
       break;
+    case CONTEST_A_INVISIBLE:
+      x = parse_bool(a->text);
+      if (x < 0 || x > 1) {
+        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
+        return -1;
+      }
+      cnts->invisible = x;
+      break;
     default:
       err("%s:%d:%d: attribute \"%s\" is invalid here",
           path, a->line, a->column, attn_map[a->tag]);
@@ -782,6 +799,12 @@ parse_contest(struct contest_desc *cnts, char const *path)
     case CONTEST_SERVE_GROUP:
       if (handle_final_tag(path, t, &cnts->serve_group) < 0) return -1;
       break;
+    case CONTEST_RUN_USER:
+      if (handle_final_tag(path, t, &cnts->run_user) < 0) return -1;
+      break;
+    case CONTEST_RUN_GROUP:
+      if (handle_final_tag(path, t, &cnts->run_group) < 0) return -1;
+      break;
     case CONTEST_CLIENT_FLAGS:
       if (t->first_down) {
         err("%s:%d:%d: element <%s> cannot contain nested elements",
@@ -851,6 +874,9 @@ parse_contest(struct contest_desc *cnts, char const *path)
       goto process_access;
     case CONTEST_TEAM_ACCESS:
       pacc = &cnts->team_access;
+      goto process_access;
+    case CONTEST_SERVE_CONTROL_ACCESS:
+      pacc = &cnts->serve_control_access;
     process_access:
       if (*pacc) {
         err("%s:%d:%d: contest access is already defined",
@@ -1041,6 +1067,7 @@ contests_check_ip(int num, int field, unsigned long ip)
   case CONTEST_MASTER_ACCESS:   acc = d->master_access; break;
   case CONTEST_JUDGE_ACCESS:    acc = d->judge_access; break;
   case CONTEST_TEAM_ACCESS:     acc = d->team_access; break;
+  case CONTEST_SERVE_CONTROL_ACCESS: acc = d->serve_control_access; break;
   default:
     err("contests_check_ip: %d: invalid field %d", num, field);
     return 0;
@@ -1054,9 +1081,19 @@ contests_check_register_ip(int num, unsigned long ip)
   return contests_check_ip(num, CONTEST_REGISTER_ACCESS, ip);
 }
 int
+contests_check_register_ip_2(struct contest_desc *cnts, unsigned long ip)
+{
+  return do_check_ip(cnts->register_access, ip);
+}
+int
 contests_check_users_ip(int num, unsigned long ip)
 {
   return contests_check_ip(num, CONTEST_USERS_ACCESS, ip);
+}
+int
+contests_check_users_ip_2(struct contest_desc *cnts, unsigned long ip)
+{
+  return do_check_ip(cnts->users_access, ip);
 }
 int
 contests_check_master_ip(int num, unsigned long ip)
@@ -1064,14 +1101,39 @@ contests_check_master_ip(int num, unsigned long ip)
   return contests_check_ip(num, CONTEST_MASTER_ACCESS, ip);
 }
 int
+contests_check_master_ip_2(struct contest_desc *cnts, unsigned long ip)
+{
+  return do_check_ip(cnts->master_access, ip);
+}
+int
 contests_check_judge_ip(int num, unsigned long ip)
 {
   return contests_check_ip(num, CONTEST_JUDGE_ACCESS, ip);
 }
 int
+contests_check_judge_ip_2(struct contest_desc *cnts, unsigned long ip)
+{
+  return do_check_ip(cnts->judge_access, ip);
+}
+int
 contests_check_team_ip(int num, unsigned long ip)
 {
   return contests_check_ip(num, CONTEST_TEAM_ACCESS, ip);
+}
+int
+contests_check_team_ip_2(struct contest_desc *cnts, unsigned long ip)
+{
+  return do_check_ip(cnts->team_access, ip);
+}
+int
+contests_check_serve_control_ip(int num, unsigned long ip)
+{
+  return contests_check_ip(num, CONTEST_SERVE_CONTROL_ACCESS, ip);
+}
+int
+contests_check_serve_control_ip_2(struct contest_desc *cnts, unsigned long ip)
+{
+  return do_check_ip(cnts->serve_control_access, ip);
 }
 
 struct callback_list_item
@@ -1120,7 +1182,7 @@ contests_free(struct contest_desc *cnts)
   xml_tree_free((struct xml_tree *) cnts, node_free, attn_free);
 }
 
-static int
+int
 contests_make_path(unsigned char *buf, size_t sz, int num)
 {
   return snprintf(buf, sz, "%s/%06d.xml", contests_dir, num);
@@ -1275,6 +1337,8 @@ static unsigned char const * const contests_errors[] =
   "error during XML reading",
   "contest id in the file and file name do not match",
   "contest is removed",
+  "cannot create a file in contest directory",
+  "i/o error",
 
   [CONTEST_ERR_LAST] "unknown error"
 };
@@ -1285,6 +1349,113 @@ contests_strerror(int e)
   if (e < 0) e = -e;
   if (e > CONTEST_ERR_LAST) e = CONTEST_ERR_LAST;
   return (unsigned char *) contests_errors[e];
+}
+
+void
+contests_write_header(FILE *f, struct contest_desc *cnts)
+{
+  fprintf(f,
+          "<%s %s=\"%d\"", tag_map[CONTEST_CONTEST],
+          attn_map[CONTEST_A_ID], cnts->id);
+  if (cnts->autoregister) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attn_map[CONTEST_A_AUTOREGISTER], "yes");
+  }
+  if (cnts->disable_team_password) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attn_map[CONTEST_A_DISABLE_TEAM_PASSWORD], "yes");
+  }
+  if (!cnts->clean_users) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attn_map[CONTEST_A_CLEAN_USERS], "no");
+  }
+
+  if (cnts->closed) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attn_map[CONTEST_A_CLOSED], "yes");
+  }
+  if (cnts->invisible) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attn_map[CONTEST_A_INVISIBLE], "yes");
+  }
+  if (cnts->managed) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attn_map[CONTEST_A_MANAGED], "yes");
+  }
+  if (cnts->run_managed) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attn_map[CONTEST_A_RUN_MANAGED], "yes");
+  }
+  fprintf(f, ">");
+}
+
+int
+contests_save_xml(struct contest_desc *cnts,
+                  const unsigned char *txt1,
+                  const unsigned char *txt2,
+                  const unsigned char *txt3)
+{
+  int serial = 1;
+  unsigned char tmp_path[1024];
+  unsigned char xml_path[1024];
+  int fd;
+  FILE *f;
+  struct stat xml_stat;
+
+  while (1) {
+    snprintf(tmp_path, sizeof(tmp_path), "%s/_contests_tmp_%d.xml",
+             contests_dir, serial++);
+    if ((fd = open(tmp_path, O_WRONLY| O_CREAT| O_TRUNC|O_EXCL, 0600)) >= 0)
+      break;
+    if (errno != EEXIST) return -CONTEST_ERR_FILE_CREATION_ERROR;
+  }
+  if (!(f = fdopen(fd, "w"))) {
+    close(fd);
+    unlink(tmp_path);
+    return -CONTEST_ERR_FILE_CREATION_ERROR;
+  }
+
+  fputs(txt1, f);
+  contests_write_header(f, cnts);
+  fputs(txt2, f);
+  fputs(txt3, f);
+  if (ferror(f)) {
+    fclose(f);
+    unlink(tmp_path);
+    return -CONTEST_ERR_IO_ERROR;
+  }
+  if (fclose(f) < 0) {
+    unlink(tmp_path);
+    return -CONTEST_ERR_IO_ERROR;
+  }
+
+  contests_make_path(xml_path, sizeof(xml_path), cnts->id);
+  if (stat(xml_path, &xml_stat) < 0) {
+    unlink(tmp_path);
+    return -CONTEST_ERR_NO_CONTEST;
+  }
+  if (!S_ISREG(xml_stat.st_mode)) {
+    unlink(tmp_path);
+    return -CONTEST_ERR_NO_CONTEST;
+  }
+
+  // try to change the owner, but ignore the error
+  chown(tmp_path, xml_stat.st_uid, -1);
+  // try to change the group and log errors
+  if (chown(tmp_path, -1, xml_stat.st_gid) < 0) {
+    err("contests_save_xml: chgrp failed: %s", os_ErrorMsg());
+  }
+  // try to change permissions and log errors
+  if (chmod(tmp_path, xml_stat.st_mode & 07777) < 0) {
+    err("contests_save_xml: chmod failed: %s", os_ErrorMsg());
+  }
+
+  if (rename(tmp_path, xml_path) < 0) {
+    err("contests_save_xml: rename failed: %s", os_ErrorMsg());
+    unlink(tmp_path);
+    return -CONTEST_ERR_FILE_CREATION_ERROR;
+  }
+  return 0;
 }
 
 /**
