@@ -111,6 +111,10 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(info_sfx, "s"),
   GLOBAL_PARAM(tgz_sfx, "s"),
   GLOBAL_PARAM(ejudge_checkers_dir, "s"),
+  GLOBAL_PARAM(test_pat, "s"),
+  GLOBAL_PARAM(corr_pat, "s"),
+  GLOBAL_PARAM(info_pat, "s"),
+  GLOBAL_PARAM(tgz_pat, "s"),
 
   GLOBAL_PARAM(var_dir, "s"),
 
@@ -187,6 +191,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(stand_success_attr, "s"),
 
   // just for fun
+  GLOBAL_PARAM(extended_sound, "d"),
   GLOBAL_PARAM(sound_player, "s"),
   GLOBAL_PARAM(accept_sound, "s"),
   GLOBAL_PARAM(runtime_sound, "s"),
@@ -259,6 +264,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(variable_full_score, "d"),
   PROBLEM_PARAM(hidden, "d"),
   PROBLEM_PARAM(priority_adjustment, "d"),
+  PROBLEM_PARAM(spelling, "s"),
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
@@ -281,6 +287,10 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(disable_language, "x"),
   PROBLEM_PARAM(standard_checker, "s"),
   PROBLEM_PARAM(checker_env, "x"),
+  PROBLEM_PARAM(test_pat, "s"),
+  PROBLEM_PARAM(corr_pat, "s"),
+  PROBLEM_PARAM(info_pat, "s"),
+  PROBLEM_PARAM(tgz_pat, "s"),
 
   { 0, 0, 0, 0 }
 };
@@ -544,6 +554,10 @@ problem_init_func(struct generic_section_config *gp)
   p->variable_full_score = -1;
   p->hidden = -1;
   p->priority_adjustment = -1000;
+  p->test_pat[0] = 1;
+  p->corr_pat[0] = 1;
+  p->info_pat[0] = 1;
+  p->tgz_pat[0] = 1;
 }
 
 static void
@@ -1628,6 +1642,18 @@ set_defaults(int mode)
       global->max_cmd_length = DFLT_G_MAX_CMD_LENGTH;
       info("global.max_cmd_length set to %d", global->max_cmd_length);
     }
+
+    if (global->sound_player[0]) {
+      char *tmps;
+
+      tmps = varsubst_heap(global->sound_player, 0,
+                           section_global_params, section_problem_params,
+                           section_language_params, section_tester_params);
+      if (tmps != global->sound_player) {
+        snprintf(global->sound_player, sizeof(global->sound_player),"%s",tmps);
+        xfree(tmps);
+      }
+    }
   }
 
   if (mode == PREPARE_SERVE && global->user_priority_adjustments) {
@@ -1997,6 +2023,67 @@ set_defaults(int mode)
     }
     if (probs[i]->tgz_sfx[0] == 1) {
       probs[i]->tgz_sfx[0] = 0;
+    }
+
+    // set up test pattern
+    if (probs[i]->test_pat[0] == 1 && si != -1 &&
+        abstr_probs[si]->test_pat[0] != 1) {
+      strcpy(probs[i]->test_pat, abstr_probs[si]->test_pat);
+      info("problem.%s.test_pat inherited from problem.%s ('%s')",
+           ish, sish, probs[i]->test_pat);
+    }
+    if (probs[i]->test_pat[0] == 1 && global->test_pat[0] != 1) {
+      strcpy(probs[i]->test_pat, global->test_pat);
+      info("problem.%s.test_pat inherited from global ('%s')",
+           ish, probs[i]->test_pat);
+    }
+    if (probs[i]->test_pat[0] == 1) {
+      probs[i]->test_pat[0] = 0;
+    }
+
+    if (probs[i]->corr_pat[0] == 1 && si != -1 &&
+        abstr_probs[si]->corr_pat[0] != 1) {
+      strcpy(probs[i]->corr_pat, abstr_probs[si]->corr_pat);
+      info("problem.%s.corr_pat inherited from problem.%s ('%s')",
+           ish, sish, probs[i]->corr_pat);
+    }
+    if (probs[i]->corr_pat[0] == 1 && global->corr_pat[0] != 1) {
+      strcpy(probs[i]->corr_pat, global->corr_pat);
+      info("problem.%s.corr_pat inherited from global ('%s')",
+           ish, probs[i]->corr_pat);
+    }
+    if (probs[i]->corr_pat[0] == 1) {
+      probs[i]->corr_pat[0] = 0;
+    }
+
+    if (probs[i]->info_pat[0] == 1 && si != -1 &&
+        abstr_probs[si]->info_pat[0] != 1) {
+      strcpy(probs[i]->info_pat, abstr_probs[si]->info_pat);
+      info("problem.%s.info_pat inherited from problem.%s ('%s')",
+           ish, sish, probs[i]->info_pat);
+    }
+    if (probs[i]->info_pat[0] == 1 && global->info_pat[0]) {
+      strcpy(probs[i]->info_pat, global->info_pat);
+      info("problem.%s.info_pat inherited from global ('%s')",
+           ish, probs[i]->info_pat);
+    }
+    if (probs[i]->info_pat[0] == 1) {
+      probs[i]->info_pat[0] = 0;
+    }
+
+    if (probs[i]->tgz_pat[0] == 1 && si != -1 &&
+        abstr_probs[si]->tgz_pat[0] != 1) {
+      strcpy(probs[i]->tgz_pat, abstr_probs[si]->tgz_pat);
+      info("problem.%s.tgz_pat inherited from problem.%s ('%s')",
+           ish, sish, probs[i]->tgz_pat);
+    }
+    if (probs[i]->tgz_pat[0] == 1 && global->tgz_pat[0]) {
+      strcpy(probs[i]->tgz_pat, global->tgz_pat);
+      info("problem.%s.tgz_pat inherited from global ('%s')",
+           ish, probs[i]->tgz_pat);
+    }
+    if (probs[i]->tgz_pat[0] == 1) {
+      probs[i]->tgz_pat[0] = 0;
     }
 
     if (probs[i]->priority_adjustment == -1000 && si != -1 &&
@@ -2851,6 +2938,19 @@ create_dirs(int mode)
 int
 prepare(char const *config_file, int flags, int mode, char const *opts)
 {
+  cfg_cond_var_t *cond_vars;
+  int ncond_var;
+
+  // initialize predefined variables
+  ncond_var = 2;
+  XALLOCAZ(cond_vars, ncond_var);
+  cond_vars[0].name = "host";
+  cond_vars[0].val.tag = PARSECFG_T_STRING;
+  cond_vars[0].val.s.str = os_NodeName();
+  cond_vars[1].name = "mode";
+  cond_vars[1].val.tag = PARSECFG_T_LONG;
+  cond_vars[1].val.l.val = mode;
+
   if ((flags & PREPARE_USE_CPP)) {
     FILE   *f = 0;
     path_t  cmd;
@@ -2865,10 +2965,10 @@ prepare(char const *config_file, int flags, int mode, char const *opts)
       err("popen(\"%s\") failed: %s", cmd, os_ErrorMsg());
       return -1;
     }
-    config = parse_param(NULL, f, params, 1);
+    config = parse_param(NULL, f, params, 1, ncond_var, cond_vars);
     f = 0;
   } else {
-    config = parse_param(config_file, 0, params, 1);
+    config = parse_param(config_file, 0, params, 1, ncond_var, cond_vars);
   }
   if (!config) return -1;
   write_log(0, LOG_INFO, "Configuration file parsed ok");
