@@ -1,3 +1,105 @@
+2004-04-01  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* clean-users.c:
+	"userlist_clnt.h", "userlist_proto.h", <reuse/osdeps.h>, <ctype.h>
+	  are included;
+	(print_info) usage message is updated;
+	(main) -r and -f options are supported;
+	  user removal is supported.
+
+2004-03-31  Alexander Chernov  <cher@ispras.ru>
+
+	* master.c:
+	(view_source_if_asked) call of `serve_clnt_view' is updated, as the
+	  function now accept one more parameter;
+	(view_report_if_asked) if the `t' CGI variable is set, the flags
+	  parameter, which is passed to `serve_clnt_view' is also set to 1,
+	  thus the participant's version of the judging report is requested;
+	(view_teams_if_asked) call of `serve_clnt_view' is updated, as the
+	  function now accept one more parameter;
+	(action_dump_runs) the same as above;
+	(action_write_xml_runs) the same as above;
+	(action_export_xml_runs) the same as above;
+	(action_dump_standings) the same as above;
+	(action_upload_report) a new function to perform the judging report
+	  upload to the server;
+	(action_priv_download_run) call of `serve_clnt_view' is updated, as the
+	  function now accept one more parameter;
+	(action_compare_runs) the same as above;
+	(view_clar_if_asked) the same as above;
+	(main) UPLOAD_REPORT action is handled and `action_upload_report'
+	  function is called.
+
+	* master_html.c:
+	(print_nav_buttons) new parameter `t7' is added to pass the
+	  string for "View team report" button;
+	  the reference for t7 is generated, if global configuration
+	  variable `team_enable_rep_view' is set to TRUE;
+	(write_all_runs) call of `print_nav_buttons' is updated;
+	(write_all_clars) the same as above;
+	(write_master_page) the same as above;
+	(write_priv_standings) the same as above;
+	(write_priv_source) call of `print_nav_buttons' is updated;
+	  report upload form is generated, if `enable_report_upload'
+	  global configuration variable is set to TRUE;
+	  "View team report" link is generated in updated call to
+	  `print_nav_buttons';
+	(write_priv_report) new parameter `team_report_flag' is added;
+	  if `team_report_flag' is TRUE, the participant's report is
+	  displayed instead of the judge's report;
+	  "View team report" link is generated in updated call to
+	  `print_nav_buttons';
+	(write_priv_clar) call of `print_nav_buttons' is updated;
+	(write_priv_users) the same as above.
+
+	* prepare.c:
+	new global configuration variable `enable_report_upload' is added;
+	new problem configuration variable `date_penalty' is added;
+	(parse_deadline_penalties) a new function to parse the values in
+	  the `date_penalty' variable;
+	(set_defaults) `parse_deadline_penalties' is called.
+
+	* prepare.h:
+	(struct penalty_info) a new structure to store the parsed values
+	  for `date_penalty' problem configuration variable;
+	(struct section_global_data) field `enable_report_upload' is added;
+	(struct section_problem_data) fields `date_penalty', `dp_total',
+	  `dp_infos' are added.
+
+	* protocol.h: new command SRV_CMD_UPLOAD_REPORT is added;
+	(struct prot_serve_pkt_view) field `flags' is added;
+	(struct prot_serve_pkt_upload_report) a new structure to pass
+	  the data for UPLOAD_REPORT request.
+
+	* serve.c:
+	(cmd_view) the value of `flags' field of the incoming packet is
+	  passed to `write_priv_report' function in the VIEW_REPORT
+	  handling code;
+	(cmd_upload_report) a new function to handle UPLOAD_REPORT request;
+	(read_run_packet) the data-dependent penalties (see `data_penalty'
+	  global configuration variable) are applied;
+	(packet_handlers) handler for UPLOAD_REPORT command is added.
+
+	* client_actions.h: added new action UPLOAD_REPORT.
+
+	* html.h:
+	(write_priv_report) a new parameter `team_report_flag' is added.
+	  If this parameter is set to 1, the participant's report is
+	  displayed instead of the judge's report.
+
+	* files.make: serve_clnt/upload_report.c is added.
+
+	* serve_clnt.h: 
+	(serve_clnt_view) a new parameter `flags' is added;
+	(serve_clnt_upload_report) a new function prototype.
+
+	* userlist-server.c:
+	(cmd_get_uid_by_pid) arbitrary system user id and group id are
+	  allowed. This fixes a bug, that in certain setups the web
+	  server operates with gid == -1.
+
 2004-03-27  Alexander Chernov  <cher@ispras.ru>
 
 	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***

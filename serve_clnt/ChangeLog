@@ -1,3 +1,13 @@
+2004-03-31  Alexander Chernov  <cher@ispras.ru>
+
+	* view.c:
+	(serve_clnt_view) parameter `flags' is added, which contains command
+	  flags to be passed to the server.
+
+2004-03-30  Alexander Chernov  <cher@ispras.ru>
+
+	* upload_report.c: initial revision
+
 2004-03-26  Alexander Chernov  <cher@ispras.ru>
 
 	* submit_run.c: copyright notice is updated;
