@@ -366,6 +366,8 @@ update_status_file(int force_flag)
   status.download_interval = global->team_download_time / 60;
   status.is_virtual = global->virtual;
   status.olympiad_judging_mode = olympiad_judging_mode;
+  status.continuation_enabled = global->enable_continue;
+  if (status.duration) status.continuation_enabled = 0;
 
   if (!global->virtual) {
     p = run_get_fog_period(current_time,
@@ -2026,6 +2028,29 @@ cmd_priv_command_0(struct client_state *p, int len,
     info("%d: run %d is cleared", p->id, pkt->v.i);
     new_send_reply(p, SRV_RPL_OK);
     return;
+
+  case SRV_CMD_CONTINUE:
+    if (!contest_start_time) {
+      err("%d: contest is not started", p->id);
+      new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
+      return;
+    }
+    if (!contest_stop_time) {
+      err("%d: contest is not finished", p->id);
+      new_send_reply(p, -SRV_ERR_CONTEST_NOT_FINISHED);
+      return;
+    }
+    if (contest_duration) {
+      err("%d: duration cannot be limited", p->id);
+      new_send_reply(p, -SRV_ERR_BAD_DURATION);
+      return;
+    }
+    contest_stop_time = 0;
+    run_stop_contest(0);
+    update_status_file(1);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+
   default:
     err("%d: unhandled command", p->id);
     new_send_reply(p, -SRV_ERR_PROTOCOL);
@@ -2546,6 +2571,7 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_DUMP_USERS] { cmd_userlist_cmd },
   [SRV_CMD_DUMP_STANDINGS] { cmd_view },
   [SRV_CMD_SET_JUDGING_MODE] { cmd_priv_command_0 },
+  [SRV_CMD_CONTINUE] { cmd_priv_command_0 },
 };
 
 static void
