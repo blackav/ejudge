@@ -1,0 +1,41 @@
+/* -*- mode:c -*- */
+/* $Id$ */
+
+#ifndef __CONFIG_H__
+#define __CONFIG_H__
+
+/* a suffix for CGI programs */
+#undef CGI_PROG_SUFFIX
+
+/* path (absolute or relative) to CGI configuration files */
+#undef CGI_DATA_PATH
+
+/* whether internalization is enabled */
+#undef CONF_HAS_LIBINTL
+
+/* the default path to the l10n_dir */
+#undef EJUDGE_LOCALE_DIR
+
+/* the default location of the ejudge.xml configuration file */
+#undef EJUDGE_XML_PATH
+
+/* the path to the `serve' program */
+#undef EJUDGE_SERVE_PATH
+
+/* the path to the `run' program */
+#undef EJUDGE_RUN_PATH
+
+/* the path to the script directory */
+#undef EJUDGE_SCRIPT_DIR
+
+/* the default charset */
+#undef EJUDGE_CHARSET
+
+/* the default path to the userlist-serve socket */
+#undef EJUDGE_SOCKET_PATH
+
+/* the default path to the contests configuration directory */
+#undef EJUDGE_CONTESTS_DIR
+
+#endif /* __CONFIG_H__ */
+
