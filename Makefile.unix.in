@@ -77,19 +77,19 @@ CC=gcc
 LD=gcc
 EXPAT=-lexpat
 
-C_CFILES=compile.c version.c prepare.c pathutl.c parsecfg.c sformat.c contests.c expat_iface.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c userlist_clnt.o userlist_proto.o $(ARCH)/fileutl.c   
+C_CFILES=compile.c version.c prepare.c pathutl.c parsecfg.c sformat.c contests.c expat_iface.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c userlist_clnt.c userlist_proto.c $(ARCH)/fileutl.c   
 C_OBJECTS=$(C_CFILES:.c=.o)
 
-SERVE_CFILES=serve.c version.c html.c prepare.c runlog.c clarlog.c teamdb.c parsecfg.c pathutl.c misctext.c base64.c sformat.c contests.c expat_iface.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c userlist_clnt.o userlist_proto.o $(ARCH)/fileutl.c  
+SERVE_CFILES=serve.c version.c html.c prepare.c runlog.c clarlog.c teamdb.c parsecfg.c pathutl.c misctext.c base64.c sformat.c contests.c expat_iface.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c userlist_clnt.c userlist_proto.c $(ARCH)/fileutl.c  
 SERVE_OBJECTS=$(SERVE_CFILES:.c=.o)
 
-SUBMIT_CFILES=submit.c version.c prepare.c teamdb.c parsecfg.c pathutl.c sformat.c base64.c contests.c expat_iface.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c userlist_clnt.o userlist_proto.o $(ARCH)/fileutl.c  
+SUBMIT_CFILES=submit.c version.c prepare.c teamdb.c parsecfg.c pathutl.c sformat.c base64.c contests.c expat_iface.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c userlist_clnt.c userlist_proto.c $(ARCH)/fileutl.c  
 SUBMIT_OBJECTS=$(SUBMIT_CFILES:.c=.o)
 
 CLAR_CFILES=clar.c version.c prepare.c teamdb.c parsecfg.c pathutl.c sformat.c $(ARCH)/fileutl.c base64.c misctext.c contests.c expat_iface.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c userlist_clnt.o userlist_proto.o
 CLAR_OBJECTS=$(CLAR_CFILES:.c=.o)
 
-RUN_CFILES=run.c version.c prepare.c parsecfg.c pathutl.c sformat.c contests.c expat_iface.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c userlist_clnt.o userlist_proto.o $(ARCH)/fileutl.c  
+RUN_CFILES=run.c version.c prepare.c parsecfg.c pathutl.c sformat.c contests.c expat_iface.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c userlist_clnt.c userlist_proto.c $(ARCH)/fileutl.c  
 RUN_OBJECTS=$(RUN_CFILES:.c=.o)
 
 M_CFILES=master.c version.c parsecfg.c clntutil.c cgi.c pathutl.c misctext.c base64.c $(ARCH)/fileutl.c  
@@ -98,7 +98,7 @@ M_OBJECTS=$(M_CFILES:.c=.o)
 P_CFILES=mkpasswd.c version.c teamdb.c base64.c pathutl.c userlist_clnt.c userlist_proto.c
 P_OBJECTS=$(P_CFILES:.c=.o)
 
-T_CFILES = team.c version.c cgi.c teamdb.c base64.c clntutil.c parsecfg.c misctext.c pathutl.c contests.c expat_iface.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c userlist_clnt.o userlist_proto.o $(ARCH)/fileutl.c  
+T_CFILES = team.c version.c cgi.c teamdb.c base64.c clntutil.c parsecfg.c misctext.c pathutl.c contests.c expat_iface.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c userlist_clnt.c userlist_proto.c $(ARCH)/fileutl.c  
 T_OBJECTS = $(T_CFILES:.c=.o)
 
 REG_CFILES = register.c contests.c userlist_clnt.c userlist_xml.c userlist_proto.c version.c expat_iface.c cgi.c base64.c clntutil.c pathutl.c misctext.c $(ARCH)/fileutl.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c
@@ -113,13 +113,16 @@ MTI_OBJECTS = ${MTI_CFILES:.c=.o}
 SP_CFILES = send-passwords.c inetdb.c teamdb.c pathutl.c base64.c ${ARCH}/fileutl.c userlist_clnt.c userlist_proto.c
 SP_OBJECTS = ${SP_CFILES:.c=.o}
 
-UL_CFILES = userlist-server.c contests.c userlist_cfg.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c pathutl.c userlist_xml.c userlist.c userlist_clnt.c expat_iface.c base64.c sha.c version.o
+UL_CFILES = userlist-server.c contests.c userlist_cfg.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c pathutl.c userlist_xml.c userlist.c userlist_clnt.c expat_iface.c base64.c sha.c version.c
 UL_OBJECTS = ${UL_CFILES:.c=.o}
 
 US_CFILES = users.c userlist_clnt.c userlist_proto.c contests.c clntutil.c misctext.c base64.c cgi.c expat_iface.o utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c pathutl.c ${ARCH}/fileutl.c version.c
 US_OBJECTS = ${US_CFILES:.c=.o}
 
-TARGETS=compile$(EXESFX) serve$(EXESFX) run$(EXESFX) master$(EXESFX) team$(EXESFX) register${EXESFX} userlist-server${EXESFX} users${EXESFX}
+ED_CFILES = edit-userlist.c userlist_clnt.c userlist_proto.c contests.c userlist_xml.c userlist_cfg.c userlist.c expat_iface.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c pathutl.c
+ED_OBJECTS = ${ED_CFILES:.c=.o}
+
+TARGETS=compile$(EXESFX) serve$(EXESFX) run$(EXESFX) master$(EXESFX) team$(EXESFX) register${EXESFX} userlist-server${EXESFX} users${EXESFX} edit-userlist${EXESFX}
 
 all: $(TARGETS)
 
@@ -182,6 +185,10 @@ userlist-server: ${UL_OBJECTS}
 users.exe:
 users: ${US_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT}
+
+edit-userlist.exe:
+edit-userlist: $(ED_OBJECTS)
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT} -lmenu -lpanel -lncurses
 
 clean:
 	-rm -f *.o *~ $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog
