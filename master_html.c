@@ -371,10 +371,9 @@ static const int acm_status_list[] =
   -1,
 };
 
-extern int olympiad_judging_mode;
 static void
 write_change_status_dialog(FILE *f, unsigned char const *var_name,
-                           int disable_rejudge_flag)
+                           int disable_rejudge_flag, int accepting_mode)
 {
   const int * cur_status_list = 0;
   int i;
@@ -385,7 +384,7 @@ write_change_status_dialog(FILE *f, unsigned char const *var_name,
   if (global->score_system_val == SCORE_KIROV) {
     if (disable_rejudge_flag) cur_status_list = kirov_no_rejudge_status_list;
     else cur_status_list = kirov_status_list;
-  } else if (global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode) {
+  } else if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
     // OLYMPIAD in accepting mode
     if (disable_rejudge_flag) cur_status_list = olymp_accepting_no_rejudge_status_list;
     else cur_status_list = olymp_accepting_status_list;
@@ -582,6 +581,7 @@ int
 write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
                     int priv_level, int sid_mode, unsigned long long sid,
                     int first_run, int last_run,
+                    int accepting_mode,
                     unsigned char const *self_url,
                     unsigned char const *filter_expr,
                     unsigned char const *hidden_vars,
@@ -981,7 +981,8 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
       write_html_run_status(f, pe, priv_level, attempts, disq_attempts);
       if (priv_level == PRIV_LEVEL_ADMIN) {
         snprintf(stat_select_name, sizeof(stat_select_name), "stat_%d", rid);
-        write_change_status_dialog(f, stat_select_name, pe->is_imported);
+        write_change_status_dialog(f, stat_select_name, pe->is_imported,
+                                   accepting_mode);
         fprintf(f,
                 "<td><input type=\"submit\" name=\"change_%d\""
                 " value=\"%s\"></td>\n", rid, _("change"));
@@ -1351,6 +1352,7 @@ write_master_page(FILE *f, int user_id, int priv_level,
                   int sid_mode, unsigned long long sid,
                   int first_run, int last_run,
                   int mode_clar, int first_clar, int last_clar,
+                  int accepting_mode,
                   unsigned char const *self_url,
                   unsigned char const *filter_expr,
                   unsigned char const *hidden_vars,
@@ -1360,8 +1362,8 @@ write_master_page(FILE *f, int user_id, int priv_level,
   struct user_filter_info *u = allocate_user_info(user_id, sid);
 
   write_priv_all_runs(f, user_id, u, priv_level, sid_mode, sid, first_run,
-                      last_run, self_url, filter_expr, hidden_vars,
-                      extra_args);
+                      last_run, accepting_mode, self_url, filter_expr,
+                      hidden_vars, extra_args);
   write_all_clars(f, u, priv_level, sid_mode, sid, mode_clar,
                   first_clar, last_clar,
                   self_url, hidden_vars, extra_args);
@@ -1391,6 +1393,7 @@ write_priv_standings(FILE *f, int sid_mode, unsigned long long sid,
 int
 write_priv_source(FILE *f, int user_id, int priv_level,
                   int sid_mode, unsigned long long sid,
+                  int accepting_mode,
                   unsigned char const *self_url,
                   unsigned char const *hidden_vars,
                   unsigned char const *extra_args,
@@ -1662,7 +1665,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
-    write_change_status_dialog(f, 0, info.is_imported);
+    write_change_status_dialog(f, 0, info.is_imported, accepting_mode);
     fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>\n", ACTION_RUN_CHANGE_STATUS, _("Change"));
   } else {
     fprintf(f, "%s", nbsp);
@@ -1897,7 +1900,7 @@ write_new_run_form(FILE *f, int user_id, int priv_level,
   fprintf(f, "</tr>\n");
 
   fprintf(f, "<tr><td>%s:</td>", _("Status"));
-  write_change_status_dialog(f, 0, 0);
+  write_change_status_dialog(f, 0, 0, 0);
   fprintf(f, "</tr>\n");
 
   if (global->score_system_val == SCORE_KIROV
