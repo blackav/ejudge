@@ -71,6 +71,7 @@ static char const * const attn_map[] =
   "max",
   "autoregister",
   "initial",
+  "disable_team_password",
 
   0
 };
@@ -450,6 +451,14 @@ parse_contest(struct contest_desc *cnts, char const *path)
         return -1;
       }
       cnts->autoregister = x;
+      break;
+    case CONTEST_A_DISABLE_TEAM_PASSWORD:
+      x = parse_bool(a->text);
+      if (x < 0 || x > 1) {
+        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
+        return -1;
+      }
+      cnts->disable_team_password = x;
       break;
     default:
       err("%s:%d:%d: attribute \"%s\" is invalid here",
