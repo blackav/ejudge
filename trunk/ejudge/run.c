@@ -464,11 +464,17 @@ run_tests(struct section_tester_data *tst,
   testinfo_t tstinfo;
   int errcode;
   int time_limit_value;
+  unsigned char ejudge_prefix_dir_env[1024] = { 0 };
 
   ASSERT(tst->problem > 0);
   ASSERT(tst->problem <= max_prob);
   ASSERT(probs[tst->problem]);
   prb = probs[tst->problem];
+
+#ifdef EJUDGE_PREFIX_DIR
+  snprintf(ejudge_prefix_dir_env, sizeof(ejudge_prefix_dir_env),
+           "EJUDGE_PREFIX_DIR=%s", EJUDGE_PREFIX_DIR);
+#endif /* EJUDGE_PREFIX_DIR */
 
   if (cur_variant > 0) {
     var_test_dir = (unsigned char*) alloca(sizeof(path_t));
@@ -666,8 +672,13 @@ run_tests(struct section_tester_data *tst,
     if (tst->clear_env) task_ClearEnv(tsk);
     if (tst->start_env) {
       int jj;
-      for (jj = 0; tst->start_env[jj]; jj++)
-        task_PutEnv(tsk, tst->start_env[jj]);
+      for (jj = 0; tst->start_env[jj]; jj++) {
+        if (!strcmp(tst->start_env[jj], "EJUDGE_PREFIX_DIR")) {
+          task_PutEnv(tsk, ejudge_prefix_dir_env);
+        } else {
+          task_PutEnv(tsk, tst->start_env[jj]);
+        }
+      }
     }
     time_limit_value = 0;
     if (prb->time_limit > 0)
@@ -967,6 +978,32 @@ run_tests(struct section_tester_data *tst,
             retcode,
             total_tests - total_failed_tests,
             score);
+
+    if (global->sound_player[0] && global->extended_sound) {
+      unsigned char b1[64], b2[64], b3[64];
+
+      snprintf(b1, sizeof(b1), "%d", retcode);
+      snprintf(b2, sizeof(b2), "%d", total_tests - total_failed_tests - 1);
+      snprintf(b3, sizeof(b3), "%d", score);
+
+      /*
+      fprintf(stderr, ">>%s %s %s %s %s\n", global->sound_player,
+              b1, b2, user_spelling, problem_spelling);
+      */
+
+      tsk = task_New();
+      task_AddArg(tsk, global->sound_player);
+      task_AddArg(tsk, b1);
+      task_AddArg(tsk, b2);
+      task_AddArg(tsk, user_spelling);
+      task_AddArg(tsk, problem_spelling);
+      task_AddArg(tsk, b3);
+      task_SetPathAsArg0(tsk);
+      task_Start(tsk);
+      task_Wait(tsk);
+      task_Delete(tsk);
+      tsk = 0;
+    }
   } else {
     sprintf(reply_string, "%d %d -1\n", status, failed_test);
 
