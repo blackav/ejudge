@@ -64,7 +64,7 @@ cr_serialize_lock(void)
   struct sembuf ops[1] = {{ 0, -1, SEM_UNDO }};
 
   if (!global->cr_serialization_key) return 0;
-  info("in cr_serialize_lock %d", semid);
+  //info("in cr_serialize_lock %d", semid);
   while (1) {
     if (semop(semid, ops, 1) >= 0) break;
     if (errno == EINTR) {
@@ -74,7 +74,7 @@ cr_serialize_lock(void)
     err("cr_serialize_lock: semop failed: %s", os_ErrorMsg());
     return -1;
   }
-  info("cr_serialize_lock ok");
+  //info("cr_serialize_lock ok");
   return 0;
 }
 
@@ -84,12 +84,12 @@ cr_serialize_unlock(void)
   struct sembuf ops[1] = {{ 0, 1, SEM_UNDO }};
 
   if (!global->cr_serialization_key) return 0;
-  info("in cr_serialize_unlock");
+  //info("in cr_serialize_unlock");
   if (semop(semid, ops, 1) < 0) {
     err("cr_serialize_unlock: semop failed: %s", os_ErrorMsg());
     return -1;
   }
-  info("cr_serialize_unlock ok");
+  //info("cr_serialize_unlock ok");
   return 0;
 }
 
