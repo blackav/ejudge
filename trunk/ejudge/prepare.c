@@ -97,9 +97,13 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(script_dir, "s"),
   GLOBAL_PARAM(test_dir, "s"),
   GLOBAL_PARAM(corr_dir, "s"),
+  GLOBAL_PARAM(info_dir, "s"),
+  GLOBAL_PARAM(tgz_dir, "s"),
   GLOBAL_PARAM(checker_dir, "s"),
   GLOBAL_PARAM(test_sfx, "s"),
   GLOBAL_PARAM(corr_sfx, "s"),
+  GLOBAL_PARAM(info_sfx, "s"),
+  GLOBAL_PARAM(tgz_sfx, "s"),
 
   GLOBAL_PARAM(var_dir, "s"),
 
@@ -194,6 +198,8 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(test_score, "d"),
   PROBLEM_PARAM(run_penalty, "d"),
   PROBLEM_PARAM(use_corr, "d"),
+  PROBLEM_PARAM(use_info, "d"),
+  PROBLEM_PARAM(use_tgz, "d"),
   PROBLEM_PARAM(tests_to_accept, "d"),
   PROBLEM_PARAM(checker_real_time_limit, "d"),
   PROBLEM_PARAM(disable_auto_testing, "d"),
@@ -205,6 +211,10 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(test_sfx, "s"),
   PROBLEM_PARAM(corr_dir, "s"),
   PROBLEM_PARAM(corr_sfx, "s"),
+  PROBLEM_PARAM(info_dir, "s"),
+  PROBLEM_PARAM(info_sfx, "s"),
+  PROBLEM_PARAM(tgz_dir, "s"),
+  PROBLEM_PARAM(tgz_sfx, "s"),
   PROBLEM_PARAM(input_file, "s"),
   PROBLEM_PARAM(output_file, "s"),
   PROBLEM_PARAM(test_score_list, "s"),
@@ -335,6 +345,10 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_SCRIPT_DIR         "scripts"
 #define DFLT_G_TEST_DIR           "tests"
 #define DFLT_G_CORR_DIR           "correct"
+#define DFLT_G_INFO_DIR           "info"
+#define DFLT_G_INFO_SFX           ".inf"
+#define DFLT_G_TGZ_DIR            "info"
+#define DFLT_G_TGZ_SFX            ".tgz"
 #define DFLT_G_CHECKER_DIR        "checkers"
 #define DFLT_G_RUN_LOG_FILE       "run.log"
 #define DFLT_G_CLAR_LOG_FILE      "clar.log"
@@ -370,6 +384,7 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_STANDINGS_FILE_NAME "standings.html"
 #define DFLT_G_MAX_FILE_LENGTH    65535
 #define DFLT_G_MAX_LINE_LENGTH    4096
+#define DFLT_G_MAX_CMD_LENGTH     256
 #define DFLT_G_TEAM_DOWNLOAD_TIME 30
 #define DFLT_G_SERVE_SOCKET       "serve"
 #define DFLT_G_INACTIVITY_TIMEOUT 120
@@ -419,9 +434,13 @@ problem_init_func(struct generic_section_config *gp)
   p->use_stdout = -1;
   p->team_enable_rep_view = -1;
   p->use_corr = -1;
+  p->use_info = -1;
+  p->use_tgz = -1;
   p->tests_to_accept = -1;
   p->test_sfx[0] = 1;
   p->corr_sfx[0] = 1;
+  p->info_sfx[0] = 1;
+  p->tgz_sfx[0] = 1;
   p->run_penalty = -1;
   p->checker_real_time_limit = -1;
   p->variant_num = -1;
@@ -1073,7 +1092,18 @@ set_defaults(int mode)
   if (mode == PREPARE_RUN) {
     GLOBAL_INIT_FIELD(test_dir, DFLT_G_TEST_DIR, conf_dir);
     GLOBAL_INIT_FIELD(corr_dir, DFLT_G_CORR_DIR, conf_dir);
+    GLOBAL_INIT_FIELD(info_dir, DFLT_G_INFO_DIR, conf_dir);
+    GLOBAL_INIT_FIELD(tgz_dir, DFLT_G_TGZ_DIR, conf_dir);
     GLOBAL_INIT_FIELD(checker_dir, DFLT_G_CHECKER_DIR, conf_dir);
+
+    if (!global->info_sfx[0]) {
+      pathcpy(global->info_sfx, DFLT_G_INFO_SFX);
+      info("global.info_sfx set to %s", global->info_sfx);
+    }
+    if (!global->tgz_sfx[0]) {
+      pathcpy(global->tgz_sfx, DFLT_G_TGZ_SFX);
+      info("global.tgz_sfx set to %s", global->tgz_sfx);
+    }
   }
 
   if (mode == PREPARE_SERVE) {
@@ -1283,6 +1313,10 @@ set_defaults(int mode)
     if (!global->max_line_length) {
       global->max_line_length = DFLT_G_MAX_LINE_LENGTH;
       info("global.max_line_length set to %d", global->max_line_length);
+    }
+    if (!global->max_cmd_length) {
+      global->max_cmd_length = DFLT_G_MAX_CMD_LENGTH;
+      info("global.max_cmd_length set to %d", global->max_cmd_length);
     }
   }
 
@@ -1534,6 +1568,36 @@ set_defaults(int mode)
       probs[i]->corr_sfx[0] = 0;
     }
 
+    if (probs[i]->info_sfx[0] == 1 && si != -1 &&
+        abstr_probs[si]->info_sfx[0] != 1) {
+      strcpy(probs[i]->info_sfx, abstr_probs[si]->info_sfx);
+      info("problem.%s.info_sfx inherited from problem.%s ('%s')",
+           ish, sish, probs[i]->info_sfx);
+    }
+    if (probs[i]->info_sfx[0] == 1 && global->info_sfx[0]) {
+      strcpy(probs[i]->info_sfx, global->info_sfx);
+      info("problem.%s.info_sfx inherited from global ('%s')",
+           ish, probs[i]->info_sfx);
+    }
+    if (probs[i]->info_sfx[0] == 1) {
+      probs[i]->info_sfx[0] = 0;
+    }
+
+    if (probs[i]->tgz_sfx[0] == 1 && si != -1 &&
+        abstr_probs[si]->tgz_sfx[0] != 1) {
+      strcpy(probs[i]->tgz_sfx, abstr_probs[si]->tgz_sfx);
+      info("problem.%s.tgz_sfx inherited from problem.%s ('%s')",
+           ish, sish, probs[i]->tgz_sfx);
+    }
+    if (probs[i]->tgz_sfx[0] == 1 && global->tgz_sfx[0]) {
+      strcpy(probs[i]->tgz_sfx, global->tgz_sfx);
+      info("problem.%s.tgz_sfx inherited from global ('%s')",
+           ish, probs[i]->tgz_sfx);
+    }
+    if (probs[i]->tgz_sfx[0] == 1) {
+      probs[i]->tgz_sfx[0] = 0;
+    }
+
     if (mode == PREPARE_SERVE) {
       if (probs[i]->deadline[0]) {
         if (parse_date(probs[i]->deadline, &probs[i]->t_deadline) < 0) {
@@ -1573,6 +1637,60 @@ set_defaults(int mode)
       if (probs[i]->corr_dir[0]) {
         path_add_dir(probs[i]->corr_dir, global->corr_dir);
         info("problem.%s.corr_dir is '%s'", ish, probs[i]->corr_dir);
+      }
+
+      if (probs[i]->use_info == -1 && si != -1
+          && abstr_probs[si]->use_info != -1) {
+        probs[i]->use_info = abstr_probs[si]->use_info;
+        info("problem.%s.use_info taken from problem.%s (%d)",
+             ish, sish, probs[i]->use_info);
+      }
+      if (probs[i]->use_info == -1) {
+        probs[i]->use_info = 0;
+      }
+
+      if (!probs[i]->info_dir[0] && si != -1 && probs[i]->use_info
+          && abstr_probs[si]->info_dir[0]) {
+        sformat_message(probs[i]->info_dir, PATH_MAX,
+                        abstr_probs[si]->info_dir,
+                        NULL, probs[i], NULL, NULL, NULL);
+        info("problem.%s.info_dir taken from problem.%s ('%s')",
+             ish, sish, probs[i]->info_dir);
+      }
+      if (!probs[i]->info_dir[0] && probs[i]->use_info) {
+        pathcpy(probs[i]->info_dir, probs[i]->short_name);
+        info("problem.%s.info_dir is set to '%s'", ish, probs[i]->info_dir);
+      }
+      if (probs[i]->use_info) {
+        path_add_dir(probs[i]->info_dir, global->info_dir);
+        info("problem.%s.info_dir is '%s'", ish, probs[i]->info_dir);
+      }
+
+      if (probs[i]->use_tgz == -1 && si != -1
+          && abstr_probs[si]->use_tgz != -1) {
+        probs[i]->use_tgz = abstr_probs[si]->use_tgz;
+        info("problem.%s.use_tgz taken from problem.%s (%d)",
+             ish, sish, probs[i]->use_tgz);
+      }
+      if (probs[i]->use_tgz == -1) {
+        probs[i]->use_tgz = 0;
+      }
+
+      if (!probs[i]->tgz_dir[0] && si != -1 && probs[i]->use_tgz
+          && abstr_probs[si]->tgz_dir[0]) {
+        sformat_message(probs[i]->tgz_dir, PATH_MAX,
+                        abstr_probs[si]->tgz_dir,
+                        NULL, probs[i], NULL, NULL, NULL);
+        info("problem.%s.tgz_dir taken from problem.%s ('%s')",
+             ish, sish, probs[i]->tgz_dir);
+      }
+      if (!probs[i]->tgz_dir[0] && probs[i]->use_tgz) {
+        pathcpy(probs[i]->tgz_dir, probs[i]->short_name);
+        info("problem.%s.tgz_dir is set to '%s'", ish, probs[i]->tgz_dir);
+      }
+      if (probs[i]->use_tgz) {
+        path_add_dir(probs[i]->tgz_dir, global->tgz_dir);
+        info("problem.%s.tgz_dir is '%s'", ish, probs[i]->tgz_dir);
       }
 
       if (!probs[i]->input_file[0] && si != -1
