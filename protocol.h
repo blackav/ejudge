@@ -35,6 +35,7 @@ struct prot_serve_status
   time_t sched_time;
   time_t duration;
   time_t stop_time;
+  time_t freeze_time;
   int total_runs;
   int total_clars;
   int download_interval;
@@ -99,6 +100,7 @@ enum
     SRV_CMD_IMPORT_XML_RUNS,
     SRV_CMD_QUIT,
     SRV_CMD_EXPORT_XML_RUNS,
+    SRV_CMD_PRIV_SUBMIT_RUN,
 
     SRV_CMD_LAST
   };
@@ -195,6 +197,7 @@ struct prot_serve_pkt_submit_run
   unsigned long ip;
   int prob_id;
   int lang_id;
+  int variant;
   int run_len;
   unsigned char data[1];
 };
@@ -304,6 +307,7 @@ enum
     PROT_SERVE_RUN_LANG_SET = 8,
     PROT_SERVE_RUN_STATUS_SET = 16,
     PROT_SERVE_RUN_IMPORTED_SET = 32,
+    PROT_SERVE_RUN_VARIANT_SET = 64,
   };
 
 struct prot_serve_pkt_run_info
@@ -317,6 +321,7 @@ struct prot_serve_pkt_run_info
   int lang_id;
   int status;
   int is_imported;
+  int variant;
   int user_login_len;
   unsigned char data[1];
 };
