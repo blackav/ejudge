@@ -318,6 +318,11 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
         fprintf(flog,"Local run %d, imported %d: `variant' does not match\n",
                 i, j);
       }
+      if (pa->is_readonly != pb->is_readonly) {
+        fprintf(flog,
+                "Local run %d, imported %d: `is_readonly' does not match\n",
+                i, j);
+      }
     }
   }
 
@@ -377,6 +382,10 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
       }
       if (pa->variant != pb->variant) {
         pa->variant = pb->variant;
+        r = 1;
+      }
+      if (pa->is_readonly != pb->is_readonly) {
+        pa->is_readonly = pb->is_readonly;
         r = 1;
       }
       if (r) {
