@@ -1,10 +1,10 @@
 #!/bin/sh
 
 # $Id$
-# This is a 'compilation' script for yabasic language.
+# This is a 'compilation' script for the Perl language.
 # The idea is to append "#!/usr/bin/perl -W" string
 # to the beginning of the file.
-# Usage: yabasic <input> <output>
+# Usage: perl <input> <output>
 
 echo '#!/usr/bin/perl -W' > $2
 echo >> $2
