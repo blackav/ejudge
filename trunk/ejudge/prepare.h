@@ -45,6 +45,8 @@ struct testset_info
 
 struct variant_map;
 
+#define puc_t unsigned char
+
 struct section_global_data
 {
   struct generic_section_config g;
@@ -79,13 +81,13 @@ struct section_global_data
   int    ignore_compile_errors; /* ignore CE result for score calculation */
   int    enable_continue;       /* enable contest continuation after stop */
 
-  path_t name;                  /* name of the contest */
+  puc_t name[256];              /* name of the contest */
   path_t root_dir;
   path_t serve_socket;          /* serve's socket name */
 
   int    enable_l10n;           /* enable string translation? */
   path_t l10n_dir;              /* localization message catalog */
-  path_t standings_locale;
+  puc_t  standings_locale[32];
   int    standings_locale_id;
 
   /* userlist-server support */
@@ -94,9 +96,9 @@ struct section_global_data
   path_t contests_dir;
 
   /* charsets */
-  path_t charset;               /* html pages charset */
+  puc_t charset[32];            /* html pages charset */
   struct nls_table *charset_ptr; /* internal charset */
-  path_t standings_charset;
+  puc_t standings_charset[32];  /* charset for standings */
   struct nls_table *standings_charset_ptr;
 
   /* ====== CONFIGURATION FILES/DIRECTORIES SETUP ====== */
@@ -109,10 +111,10 @@ struct section_global_data
   path_t info_dir;              /* common prefix dir for test infos */
   path_t tgz_dir;               /* common prefix dir for directory tests */
   path_t checker_dir;           /* default location of checkers */
-  path_t test_sfx;              /* default test files suffix */
-  path_t corr_sfx;              /* default correct files suffix */
-  path_t info_sfx;              /* default info files suffix */
-  path_t tgz_sfx;               /* default tar files suffix */
+  puc_t test_sfx[32];           /* default test files suffix */
+  puc_t corr_sfx[32];           /* default correct files suffix */
+  puc_t info_sfx[32];           /* default info files suffix */
+  puc_t tgz_sfx[32];            /* default tar files suffix */
 
   /* ====== VARIABLE FILES/DIRECTORIES SETUP ====== */
   path_t var_dir;               /* variable files dir */
@@ -160,7 +162,7 @@ struct section_global_data
   path_t run_check_dir;         /* working directory for checked programs */
 
   /* scoring settings */
-  path_t score_system;          /* scoring system */
+  puc_t score_system[32];       /* scoring system */
   int    score_system_val;      /* internal int value */
   int    tests_to_accept;       /* how many tests to accept a submit */
   int    virtual;               /* 1, if virtual contest */
@@ -171,22 +173,38 @@ struct section_global_data
 
   path_t team_info_url;         /* the team info URL template */
   path_t prob_info_url;         /* the problem info URL template */
-  path_t standings_file_name;   /* public standings file name */
+  puc_t standings_file_name[64]; /* public standings file name */
   path_t stand_header_file;     /* file to use as standings header */
   path_t stand_footer_file;     /* file to use as standings footer */
+
+  puc_t stand_extra_format[32]; /* extra standings info */
+  puc_t stand_extra_legend[64]; /* extra standings info legend */
+  puc_t stand_extra_attr[32];   /* extra standings info attributes */
+  puc_t stand_table_attr[32];   /* standings table attributes */
+  puc_t stand_place_attr[32];   /* standings place column attributes */
+  puc_t stand_team_attr[32];    /* standings team column attributes */
+  puc_t stand_prob_attr[32];    /* standings problems column attributes */
+  puc_t stand_solved_attr[32];  /* standings solved column attributes */
+  puc_t stand_score_attr[32];   /* standings solved column attributes */
+  puc_t stand_penalty_attr[32]; /* standings penalty column attributes */
+  puc_t stand_time_attr[32];    /* standings time attributes */
+  puc_t stand_self_row_attr[32]; /* self-row attributes */
+  puc_t stand_r_row_attr[32];   /* standings real team row attributes */
+  puc_t stand_v_row_attr[32];   /* standings virtual team row attributes */
+  puc_t stand_u_row_attr[32];   /* standings unknown team row attributes */
 
   unsigned char *stand_header_txt; /* actual header text */
   unsigned char *stand_footer_txt; /* actual footer text */
 
   // standings2 information
-  path_t stand2_file_name;      /* must be set to standings 2 be activated */
+  puc_t stand2_file_name[64];   /* must be set to standings 2 be activated */
   path_t stand2_header_file;
   path_t stand2_footer_file;
   unsigned char *stand2_header_txt;
   unsigned char *stand2_footer_txt;
 
   // public log information
-  path_t plog_file_name;
+  puc_t plog_file_name[64];
   path_t plog_header_file;
   path_t plog_footer_file;
   unsigned char *plog_header_txt;
@@ -214,11 +232,6 @@ struct section_global_data
   int checker_real_time_limit;
   int show_deadline;       /* show deadlines in problem name? */
 
-  // decorations
-  path_t standings_team_color;
-  path_t standings_virtual_team_color;
-  path_t standings_real_team_color;
-
   // variant support
   path_t variant_map_file;
   struct variant_map *variant_map;
@@ -245,20 +258,20 @@ struct section_problem_data
   int    tests_to_accept;       /* how many tests to accept a submit */
   int    checker_real_time_limit;
   int    disable_auto_testing;
-  path_t super;                 /* superproblem's short_name */
-  path_t short_name;            /* short problem name, eg A, B, ... */
-  path_t long_name;             /* long problem name */
+  puc_t super[32];              /* superproblem's short_name */
+  puc_t short_name[32];         /* short problem name, eg A, B, ... */
+  puc_t long_name[128];         /* long problem name */
   path_t test_dir;              /* directory with tests */
-  path_t test_sfx;              /* test files suffix */
+  puc_t test_sfx[32];           /* test files suffix */
   path_t corr_dir;              /* directory with correct answers */
-  path_t corr_sfx;              /* correct files suffix */
+  puc_t corr_sfx[32];           /* correct files suffix */
   path_t info_dir;              /* directory with info files */
-  path_t info_sfx;              /* info files suffix */
+  puc_t info_sfx[32];           /* info files suffix */
   path_t tgz_dir;               /* directory with tar test archive */
-  path_t tgz_sfx;               /* tar test archive suffix */
-  path_t input_file;            /* input file name */
-  path_t output_file;           /* output file name */
-  path_t test_score_list;       /* scores for individual tests */
+  puc_t tgz_sfx[32];            /* tar test archive suffix */
+  puc_t input_file[64];         /* input file name */
+  puc_t output_file[64];        /* output file name */
+  puc_t test_score_list[256];   /* scores for individual tests */
 
   int     ntests;               /* number of tests found */
   int    *tscores;              /* internal scores array  */
@@ -267,7 +280,7 @@ struct section_problem_data
   int ts_total;
   struct testset_info *ts_infos;
 
-  path_t deadline;              /* deadline for sending this problem */
+  puc_t deadline[64];           /* deadline for sending this problem */
   time_t t_deadline;            /* in UNIX internal format */
   int variant_num;              /* number of variants for this problem */
 };
@@ -280,12 +293,12 @@ struct section_language_data
   int    compile_id;            /* language id for compilation */
   int    disabled;              /* a participant cannot use this language */
   int    compile_real_time_limit;
-  path_t short_name;            /* language short name */
-  path_t long_name;             /* language long name */
-  path_t key;                   /* configuration key */
-  path_t arch;                  /* language architecture */
-  path_t src_sfx;               /* source file suffix */
-  path_t exe_sfx;               /* executable file suffix */
+  puc_t short_name[32];         /* language short name */
+  puc_t long_name[128];         /* language long name */
+  puc_t key[32];                /* configuration key */
+  puc_t arch[32];               /* language architecture */
+  puc_t src_sfx[32];            /* source file suffix */
+  puc_t exe_sfx[32];            /* executable file suffix */
   path_t cmd;                   /* compile command */
 
   path_t compile_dir;           /* common subdirectory */
@@ -299,23 +312,23 @@ struct section_tester_data
   struct generic_section_config g;
 
   int    id;
-  path_t name;                  /* tester name */
+  puc_t name[32];               /* tester name */
   int    problem;               /* reference problem number */
-  path_t problem_name;          /* reference problem name */
+  puc_t problem_name[32];       /* reference problem name */
   int    any;                   /* catch-all entry */
 
   int    is_dos;                /* do unix->dos conversion of tests? */
   int    no_redirect;           /* do not redirect standard streams */
 
-  path_t arch;                  /* checker architecture */
-  path_t key;                   /* configuration key */
+  puc_t arch[32];               /* checker architecture */
+  puc_t key[32];                /* configuration key */
 
   int    abstract;              /* is this tester abstract */
   char **super;                 /* names of the supertesters */
   int    is_processed;          /* whether this tester has been processed */
 
   int no_core_dump;             /* disable core dumps */
-  path_t kill_signal;           /* the signal to kill processes */
+  puc_t kill_signal[32];        /* the signal to kill processes */
   int max_stack_size;           /* max size of the stack */
   int max_data_size;            /* max size of the data */
   int max_vm_size;              /* max size of the virtual memory */
@@ -328,8 +341,8 @@ struct section_tester_data
   path_t run_out_dir;
 
   path_t check_dir;
-  path_t errorcode_file;        /* file that contains completion status */
-  path_t error_file;            /* stderr output of the checked program */
+  puc_t errorcode_file[64];     /* file that contains completion status */
+  puc_t error_file[64];         /* stderr output of the checked program */
 
   path_t prepare_cmd;           /* helper to prepare the executable */
   path_t start_cmd;             /* helper to start testing */
@@ -337,6 +350,8 @@ struct section_tester_data
 
   char **start_env;             /* environment variables for start_cmd */
 };
+
+#undef puc_t
 
 extern struct generic_section_config *config;
 extern struct section_global_data    *global;
