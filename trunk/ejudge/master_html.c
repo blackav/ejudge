@@ -1137,7 +1137,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   }
   fprintf(f, "<tr><td>%s:</td><td>%s</td>",
           _("Language"),
-          (langs[info.language])?(langs[info.language]->short_name):"");
+          (langs[info.language])?((char*)langs[info.language]->short_name):"");
   if (priv_level == PRIV_LEVEL_ADMIN) {
     html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
