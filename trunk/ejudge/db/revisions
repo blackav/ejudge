@@ -519,3 +519,15 @@ userlist_clnt/open.c 1 2 241216
 userlist_clnt/send_packet.c 1 2 120496
 userlist_clnt/get_uid_by_pid.c 1 1 162596
 unix/fileutl.c 1 11 1324270
+contests.h 1 10 266997
+prepare.h 1 25 1065361
+protocol.h 1 4 339005
+userlist.h 1 9 728069
+userlist_clnt.h 1 10 496749
+contests.c 1 10 1364320
+prepare.c 1 36 4938132
+protocol.c 1 3 196921
+runlog.c 1 12 1379156
+team.c 1 20 2137457
+userlist.c 1 6 1325446
+userlist_xml.c 1 10 3257063
