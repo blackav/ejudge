@@ -34,6 +34,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -120,6 +121,12 @@ static unsigned char *user_name;
 static unsigned char *user_homepage;
 static int user_contest_id;
 static struct userlist_clnt *server_conn;
+static unsigned long user_ip;
+static unsigned long long client_cookie;
+static int client_cookie_bad;
+static unsigned long long user_cookie;
+static int user_id;
+static unsigned char *user_name;
 
 static unsigned char *submission_log;
 
@@ -145,6 +152,11 @@ static char const name_accept_chars[] =
 static char const homepage_accept_chars[] =
 " :!#$%*+,-./0123456789=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_"
 "abcdefghijklmnopqrstuvwxyz{|}~";
+static char const password_accept_chars[] =
+" !#$%\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_"
+"`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿"
+"ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ"
+;
 
 #define _(x) x
 static struct field_desc field_descs[F_ARRAY_SIZE] = 
@@ -512,6 +524,24 @@ parse_config(char const *path)
 }
 
 static void
+parse_user_ip(void)
+{
+  unsigned int b1, b2, b3, b4;
+  int n;
+  unsigned char *s = getenv("REMOTE_ADDR");
+
+  user_ip = 0;
+  if (!s) return;
+  n = 0;
+  if (sscanf(s, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4
+      || s[n] || b1 > 255 || b2 > 255 || b3 > 255 || b4 > 255) {
+    user_ip = 0xffffffff;
+    return;
+  }
+  user_ip = b1 << 24 | b2 << 16 | b3 << 8 | b4;
+}
+
+static void
 initialize(int argc, char const *argv[])
 {
   path_t fullname;
@@ -544,7 +574,9 @@ initialize(int argc, char const *argv[])
   if (!(contests = parse_contest_xml(cntsname))) {
     client_not_configured(0, "config file not parsed");
   }
+  parse_user_ip();
 }
+
 static void
 prepare_var_table(void)
 {
@@ -564,26 +596,17 @@ prepare_var_table(void)
 static int
 check_source_ip(void)
 {
-  char *s = getenv("REMOTE_ADDR");
-  unsigned int b1, b2, b3, b4, n;
   struct ip_node *p;
-  unsigned int addr;
 
   if (!config->access) return 0;
-  if (!s) goto invalid_ip;
-  n = 0;
-  if (sscanf(s, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4
-      || s[n] || b1 > 255 || b2 > 255 || b3 > 255 || b4 > 255)
-    goto invalid_ip;
-  addr = b1 << 24 | b2 << 16 | b3 << 8 | b4;
+  if (!user_ip) goto invalid_ip;
   for (p = (struct ip_node*) config->access->b.first_down;
        p; p = (struct ip_node*) p->b.right) {
-    if ((addr & p->mask) == p->addr) return p->allow;
+    if ((user_ip & p->mask) == p->addr) return p->allow;
   }
   return config->access->default_is_allow;
 
  invalid_ip:
-  if (s) err("invalid IP-address: <%s>", s);
   if (config->access->default_is_allow) return 1;
   return 0;
 }
@@ -729,8 +752,115 @@ set_locale_by_id(int id)
 #endif /* CONF_HAS_LIBINTL */
 }
 
+static int
+parse_cookies(unsigned char const *cookie)
+{
+  unsigned char *c_name, *c_value;
+  unsigned char const *s;
+  size_t len;
+  int n;
+  unsigned long long val;
+
+  if (!cookie) return -1;
+  len = strlen(cookie);
+  c_name = (unsigned char *) alloca(len + 1);
+  c_value = (unsigned char *) alloca(len + 1);
+  s = cookie;
+  while (1) {
+    if (sscanf(s, " %[^= ] = %[^; ] %n", c_name, c_value, &n) != 2)
+      return 0;
+    if (!strcmp(c_name, "ID")) {
+      if (sscanf(c_value, "%llu %n", &val, &n) != 1 || c_value[n])
+        return 0;
+      client_cookie = val;
+      return 1;
+    }
+    s += n;
+    if (*s == ';') s++;
+  }
+}
+
+static int
+check_password(void)
+{
+  unsigned char *cookie_str;
+  int err;
+  int new_user_id;
+  unsigned long long new_cookie;
+  unsigned char *new_name;
+  int new_locale_id;
+  int new_contest_id;
+  unsigned char *new_login;
+
+  user_usecookies = 0;
+  if (cgi_param("usecookies")) {
+    user_usecookies = xstrdup("1");
+  }
+
+  cookie_str = getenv("HTTP_COOKIE");
+  if (cookie_str) {
+    fprintf(stderr, "Got cookie string: <%s>\n", cookie_str);
+    if (parse_cookies(cookie_str)) {
+      server_conn = userlist_clnt_open(config->socket_path);
+      err = userlist_clnt_lookup_cookie(server_conn, user_ip,
+                                        client_cookie,
+                                        &new_user_id,
+                                        &new_login,
+                                        &new_name,
+                                        &new_locale_id,
+                                        &new_contest_id);
+      server_conn = userlist_clnt_close(server_conn);
+      if (!err) {
+        // cookie is identified. Good.
+        user_login = new_login;
+        user_contest_id = new_contest_id;
+        user_id = new_user_id;
+        user_name = new_name;
+        if (client_locale_id == -1)
+          client_locale_id = new_locale_id;
+        if (client_locale_id == -1)
+          client_locale_id = 0;
+        return 1;
+      }
+    }
+    client_cookie_bad = 1;
+  }
+
+  if (!(user_login = cgi_param("login"))) {
+    user_login = xstrdup("");
+  }
+  fix_string(user_login, name_accept_chars, '?');
+  if (!(user_password = cgi_param("password"))) {
+    user_password = xstrdup("");
+  }
+  fix_string(user_password, password_accept_chars, '?');
+  read_contest_id();  
+  
+  server_conn = userlist_clnt_open(config->socket_path);
+  err = userlist_clnt_login(server_conn, user_ip, user_contest_id,
+                            client_locale_id,
+                            !!user_usecookies, user_login, user_password,
+                            &new_user_id, &new_cookie, &new_name,
+                            &new_locale_id);
+  server_conn = userlist_clnt_close(server_conn);
+  if (err != ULS_LOGIN_OK && err != ULS_LOGIN_COOKIE) {
+    return 0;
+  }
+  ASSERT(new_user_id > 0);
+  user_id = new_user_id;
+  user_name = new_name;
+  if (client_locale_id == -1)
+    client_locale_id = new_locale_id;
+  if (client_locale_id == -1)
+    client_locale_id = 0;
+  if (ULS_LOGIN_COOKIE) {
+    user_cookie = new_cookie;
+  }
+  return 1;
+}
+
 static void
-initial_login_page(void)
+initial_login_page(int login_only)
 {
   if (client_locale_id == -1) client_locale_id = 0;
   set_locale_by_id(client_locale_id);
@@ -756,14 +886,23 @@ initial_login_page(void)
     printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
            user_contest_id);
   }
+  if (login_only) {
+    printf("<input type=\"hidden\" name=\"login_dlg\" value=\"1\">\n");
+  }
 
-  print_choose_language_button(0, 0);
+  if (!login_only)
+    print_choose_language_button(0, 0);
 
-  printf("<h2>%s</h2><p>%s</p>\n",
-         _("For registered users"),
-         _("If you have registered before, please enter your "
-           "login and password in the corresponding fields. "
-           "Then press the \"Submit\" button."));
+  if (!login_only) {
+    printf("<h2>%s</h2><p>%s</p>\n",
+           _("For registered users"),
+           _("If you have registered before, please enter your "
+             "login and password in the corresponding fields. "
+             "Then press the \"Submit\" button."));
+  } else {
+    printf("<p>%s</p>\n",
+           _("Type your login and password and then press \"Submit\" button"));
+  }
 
   printf("<p>%s: <input type=\"text\" name=\"login\" value=\"%s\""
            " size=\"16\" maxlength=\"16\">\n",
@@ -779,13 +918,18 @@ initial_login_page(void)
 
   printf("<p><input type=\"submit\" name=\"do_login\" value=\"%s\">", _("Submit"));
 
-  printf("<h2>%s</h2><p>%s</p>\n",
-         _("For new users"),
-         _("If you have not registered before, please press "
-           "the \"Register new\" button."));
+  if (!login_only) {
+    printf("<h2>%s</h2><p>%s</p>\n",
+           _("For new users"),
+           _("If you have not registered before, please press "
+             "the \"Register new\" button."));
+    
+    printf("<p><input type=\"submit\" name=\"register\" value=\"%s\">\n",
+           _("Register new"));
+  }
 
-  printf("<p><input type=\"submit\" name=\"register\" value=\"%s\">\n",
-         _("Register new"));
+  if (login_only)
+    print_choose_language_button(0, 0);
 
   printf("</form>");
 }
@@ -793,48 +937,92 @@ initial_login_page(void)
 static void
 registration_is_complete(void)
 {
+  char buf[512];
+  char *p = buf;
+
+  p += sprintf(p, "%s?login=%s&login_dlg=1", program_name, user_login);
+  if (client_locale_id >= 0)
+    p += sprintf(p, "&locale_id=%d", client_locale_id);
+  if (user_contest_id > 0)
+    p += sprintf(p, "&contest_id=%d", user_contest_id);
+  if (user_usecookies)
+    p += sprintf(p, "&usecookies=1");
+
+  client_put_header(config->charset, "%s", _("User registration is complete"));
+
+  printf(_("<p>Registration of a new user is completed successfully. "
+           "An e-mail messages is sent to the address <tt>%s</tt>. "
+           "This message contains the login name, assigned to you, "
+           "as well as your password for initial login. "
+           "To proceed with registration, clink <a href=\"%s\">on this link</a>.</p>"
+           "<p><b>Note</b>, that you should login to the system for "
+           "the first time no later, than in 24 hours after the initial "
+           "user registration, or the registration is void."),
+         user_email, buf);
 }
 
 static void
 register_new_user(int commit_flag)
 {
+  char msgbuf[1024];
+
   if (client_locale_id == -1) client_locale_id = 0;
   set_locale_by_id(client_locale_id);
+  submission_log = 0;
 
   if (!(user_login = cgi_param("login"))) {
     user_login = xstrdup("");
   }
-  fix_string(user_login, name_accept_chars, '?');
+  if (fix_string(user_login, login_accept_chars, '?') > 0) {
+    submission_log = xstrmerge1(submission_log, _("\"Login\" has invalid characters, which were replaced with '?'\n"));
+  }
   if (!(user_email = cgi_param("email"))) {
     user_email = xstrdup("");
   }
-  fix_string(user_email, name_accept_chars, '?');
+  if (fix_string(user_email, email_accept_chars, '?') > 0) {
+    submission_log = xstrmerge1(submission_log, _("\"E-mail\" has invalid characters, which were replaced with '?'\n"));
+  }
+  if (commit_flag && !*user_email) {
+    submission_log = xstrmerge1(submission_log, _("Mandatory \"E-mail\" is empty\n"));
+  }
   if ((user_usecookies = cgi_param("usecookies"))) {
     xfree(user_usecookies);
     user_usecookies = xstrdup("1");
   }
   read_contest_id();  
 
-  if (commit_flag) {
+  while (!submission_log && commit_flag) {
     int err;
+
     server_conn = userlist_clnt_open(config->socket_path);
-    err = userlist_clnt_register_new(server_conn, 0, user_contest_id, client_locale_id, !!user_usecookies, user_login, user_email);
+    err = userlist_clnt_register_new(server_conn, user_ip, user_contest_id, client_locale_id, !!user_usecookies, user_login, user_email);
     server_conn = userlist_clnt_close(server_conn);
     if (!err) {
       registration_is_complete();
       return;
     }
-    // FIXME: handle various error codes
-    ASSERT(err == ULS_LOGIN_USED);
+    switch (err) {
+    case ULS_ERR_LOGIN_USED:
+      sprintf(msgbuf, _("Login \"%s\" is used by someone else\n"),
+              user_login);
+      submission_log = xstrmerge1(submission_log, msgbuf);
+      break;
+    default:
+      sprintf(msgbuf, _("Registration error %d\n"), err);
+      submission_log = xstrmerge1(submission_log, msgbuf);
+      break;
+    }
   }
 
   client_put_header(config->charset, "%s", _("Register a new user"));
 
-  if (commit_flag) {
-    printf("<h2>%s</h2><p>%s</p>\n",
-           _("Registration failed"),
-           _("Unfortunately, this login name is already used "
-             "by someone else. Please, choose a different login name."));
+  if (submission_log) {
+    printf("<h2>%s</h2><p>%s<br><pre><font color=\"red\">%s</font></pre></p>\n",
+           _("The form contains error(s)"),
+           _("Unfortunately, your form cannot be accepted as is, since "
+             "it contains several errors. The list of errors is given "
+             "below."),
+           submission_log);
   }
 
   printf("<form method=\"POST\" action=\"%s\" "
@@ -867,7 +1055,7 @@ register_new_user(int commit_flag)
            " size=\"16\" maxlength=\"16\">\n",
          _("Login"), user_login);
   printf("<p>%s</p>", _("Type your valid e-mail address"));
-  printf("<p>%s: <input type=\"text\" name=\"email\" value=\"%s\""
+  printf("<p>%s (*): <input type=\"text\" name=\"email\" value=\"%s\""
          " size=\"64\" maxlength=\"64\">\n",
          _("E-mail"), user_email);
   printf("<p>%s</p>", _("Check this box to enable cookies"));
@@ -900,30 +1088,16 @@ main(int argc, char const *argv[])
   cgi_read(config->charset);
   read_locale_id();
 
-
-  /*
-  prepare_var_table();
-
-  for (i = 1; i < F_ARRAY_SIZE; i++) {
-    if (config->fields[i]) {
-      var = cgi_param(field_descs[i].var_name);
-    }
-    if (!var) var = xstrdup("");
-    *field_descs[i].var = var;
-  }
-
-  if (cgi_param("submit")) {
-    verify_form_and_submit();
-  }
-  */
-
-  if (cgi_param("do_login")) {
+  if (cgi_param("login_dlg")) {
+    initial_login_page(1);
+  } else if (cgi_param("do_login")) {
+    //perform_login();
   } else if (cgi_param("register")) {
     register_new_user(0);
   } else if (cgi_param("do_register")) {
     register_new_user(1);
   } else {
-    initial_login_page();
+    initial_login_page(0);
   }
 
 #if 0
@@ -940,6 +1114,18 @@ main(int argc, char const *argv[])
   }
 #endif
 
+  if (config->show_generation_time) {
+    gettimeofday(&end_time, 0);
+    end_time.tv_sec -= begin_time.tv_sec;
+    if ((end_time.tv_usec -= begin_time.tv_usec) < 0) {
+      end_time.tv_usec += 1000000;
+      end_time.tv_sec--;
+    }
+    printf("<hr><p>%s: %ld %s\n",
+           _("Page generation time"),
+           end_time.tv_usec / 1000 + end_time.tv_sec * 1000,
+           _("msec"));
+  }
   client_put_footer();
 
   return 0;
@@ -954,6 +1140,23 @@ main(int argc, char const *argv[])
 
 
 
+
+
+  /*
+  prepare_var_table();
+
+  for (i = 1; i < F_ARRAY_SIZE; i++) {
+    if (config->fields[i]) {
+      var = cgi_param(field_descs[i].var_name);
+    }
+    if (!var) var = xstrdup("");
+    *field_descs[i].var = var;
+  }
+
+  if (cgi_param("submit")) {
+    verify_form_and_submit();
+  }
+  */
 
 
   client_put_header(config->charset, "%s", _("Registration form"));
@@ -1020,18 +1223,6 @@ main(int argc, char const *argv[])
   // form footer
   printf("</form>");
 
-  if (config->show_generation_time) {
-    gettimeofday(&end_time, 0);
-    end_time.tv_sec -= begin_time.tv_sec;
-    if ((end_time.tv_usec -= begin_time.tv_usec) < 0) {
-      end_time.tv_usec += 1000000;
-      end_time.tv_sec--;
-    }
-    printf("<hr><p>%s: %ld %s\n",
-           _("Page generation time"),
-           end_time.tv_usec / 1000 + end_time.tv_sec * 1000,
-           _("msec"));
-  }
   client_put_footer();
 
   return 0;

@@ -148,7 +148,7 @@ userlist_clnt_register_new(struct userlist_clnt *clnt,
   }
 
   // simulate an error
-  return ULS_LOGIN_USED;
+  return ULS_ERR_LOGIN_USED;
 }
 
 int
@@ -161,9 +161,76 @@ userlist_clnt_login(struct userlist_clnt *clnt,
                     unsigned char const *passwd,
                     int *p_user_id,
                     unsigned long long *p_cookie,
-                    unsigned char *p_name,
+                    unsigned char **p_name,
                     int *p_locale_id)
 {
+  if (!strcmp(login, "t1")) {
+    if (strcmp(passwd, "team1")) return ULS_ERR_INVALID_PASSWORD;
+    *p_user_id = 1;
+    *p_name = xstrdup("Team 1");
+    *p_locale_id = -1;
+    if (use_cookies) {
+      *p_cookie = 0x0101010101010101;
+      return ULS_LOGIN_COOKIE;
+    }
+    return ULS_LOGIN_OK;
+  } else if (!strcmp(login, "t2")) {
+    if (strcmp(passwd, "team1")) return ULS_ERR_INVALID_PASSWORD;
+    *p_user_id = 2;
+    *p_name = xstrdup("Team 2");
+    *p_locale_id = -1;
+    *p_cookie = 0x0202020202020202;
+    return ULS_LOGIN_COOKIE;
+  } else if (!strcmp(login, "t3")) {
+    if (strcmp(passwd, "team3")) return ULS_ERR_INVALID_PASSWORD;
+    *p_user_id = 3;
+    *p_name = xstrdup("Team 3");
+    *p_locale_id = 1;
+    if (use_cookies) {
+      *p_cookie = 0x0303030303030303;
+      return ULS_LOGIN_COOKIE;
+    }
+    return ULS_LOGIN_OK;
+  } else {
+    return ULS_ERR_INVALID_LOGIN;
+  }
+}
+
+int
+userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
+                            unsigned long origin_ip,
+                            unsigned long long cookie,
+                            int *p_user_id,
+                            unsigned char **p_login,
+                            unsigned char **p_name,
+                            int *p_locale_id,
+                            int *p_contest_id)
+{
+  if (origin_ip != 0x7f000001) return ULS_ERR_NO_COOKIE;
+  if (cookie == 0x0101010101010101) {
+    *p_user_id = 1;
+    *p_locale_id = 0;
+    *p_contest_id = 0;
+    *p_login = xstrdup("t1");
+    *p_name = xstrdup("Team 1");
+    return ULS_OK;
+  } else if (cookie == 0x0202020202020202) {
+    *p_user_id = 2;
+    *p_locale_id = 0;
+    *p_contest_id = 0;
+    *p_login = xstrdup("t2");
+    *p_name = xstrdup("Team 2");
+    return ULS_OK;
+  } else if (cookie == 0x0303030303030303) {
+    *p_user_id = 3;
+    *p_locale_id = 1;
+    *p_contest_id = 0;
+    *p_login = xstrdup("t3");
+    *p_name = xstrdup("Team 3");
+    return ULS_OK;
+  } else {
+    return ULS_ERR_NO_COOKIE;
+  }
 }
 
 /**
