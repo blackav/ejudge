@@ -29,6 +29,7 @@
 #include "prepare.h"
 #include "base64.h"
 #include "sformat.h"
+#include "protocol.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -94,7 +95,7 @@ write_clar_view(int id, char const *clar_dir,
   hsubj_len = (hsubj_len + 7) & ~3;
   hsubj = alloca(hsubj_len);
   html_armor_string(rsubj, hsubj);
-  duration_str(time-start, durstr, 0);
+  duration_str(global->show_astr_time, time, start, durstr, 0);
 
   fprintf(f, "<h2>%s #%d</h2>\n", _("Message"), id);
   fprintf(f, "<table border=\"0\">\n");
@@ -139,46 +140,22 @@ write_clar_view(int id, char const *clar_dir,
 }
 
 void
-write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
-                      char const *dir, char const *name)
+new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
+                    unsigned char const *form)
 {
-  path_t  path;
-  FILE   *f = 0;
-  int     i, n;
-  int     showed;
+  int i, showed, runs_to_show, team_id, lang_id, prob_id;
+  int status, test, score, attempts, score1;
+  size_t size;
+  time_t start_time, time;
+  unsigned char dur_str[64];
+  unsigned char stat_str[64];
+  unsigned char *prob_str;
+  unsigned char *lang_str;
 
-  unsigned long time;
-  unsigned long size;
-  int           team_id;
-  int           lang_id;
-  int           prob_id;
-  int           status;
-  int           test;
-  int           from;
-  int           to;
-  int           flags;
-  int           score;
-  int           attempts;
-  int           score1;
-
-  char           dur_str[64];
-  char           stat_str[64];
-  char          *prob_str;
-  char          *lang_str;
-
-  char           subj[CLAR_MAX_SUBJ_LEN + 4];      /* base64 subj */
-  char           psubj[CLAR_MAX_SUBJ_TXT_LEN + 4]; /* plain text subj */
-  char          *asubj = 0; /* html armored subj */
-  int            asubj_len = 0; /* html armored subj len */
-
-  unsigned long start_time = run_get_start_time();
-
-  int runs_to_show = all_runs_flag?100000:15;
-  int clars_to_show = all_clars_flag?100000:15;
-
-  pathmake(path, dir, "/", name, 0);
-  info("team %d statistics to %s", team, path);
-  if (!(f = sf_fopen(path, "w"))) return;
+  start_time = run_get_start_time();
+  if (form && !*form) form = 0;
+  runs_to_show = 15;
+  if (show_flags) runs_to_show = 100000;
 
   /* write run statistics: show last 15 in the reverse order */
   fprintf(f,"<table border=\"1\"><tr><th>%s</th><th>%s</th>"
@@ -195,9 +172,9 @@ write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
     fprintf(f, "<th>%s</th>", _("Failed test"));
   }
 
-  if (global->team_enable_src_view)
+  if (global->team_enable_src_view && form)
     fprintf(f, "<th>%s</th>", _("View source"));
-  if (global->team_enable_rep_view)
+  if (global->team_enable_rep_view && form)
     fprintf(f, "<th>%s</th>", _("View report"));
 
   fprintf(f, "</tr>\n");
@@ -205,26 +182,27 @@ write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
   for (showed = 0, i = run_get_total() - 1;
        i >= 0 && showed < runs_to_show;
        i--) {
-    run_get_record(i, &time, &size, 0, 0,
+    run_get_record(i, &time, &size, 0, 0, 0,
                    &team_id, &lang_id, &prob_id, &status, &test, &score);
     if (global->score_system_val == SCORE_KIROV)
       run_get_attempts(i, &attempts);
-    if (team_id != team) continue;
+    if (team_id != uid) continue;
     showed++;
 
     if (!start_time) time = start_time;
     if (start_time > time) time = start_time;
-    duration_str(time - start_time, dur_str, 0);
+    duration_str(global->show_astr_time, time, start_time, dur_str, 0);
     run_status_str(status, stat_str, 0);
     prob_str = "???";
     if (probs[prob_id]) prob_str = probs[prob_id]->short_name;
     lang_str = "???";
     if (langs[lang_id]) lang_str = langs[lang_id]->short_name;
 
-    fputs("$1<tr>\n", f);
+    if (form) fprintf(f, "%s", form);
+    fprintf(f, "<tr>\n");
     fprintf(f, "<td>%d</td>", i);
     fprintf(f, "<td>%s</td>", dur_str);
-    fprintf(f, "<td>%lu</td>", size);
+    fprintf(f, "<td>%zu</td>", size);
     fprintf(f, "<td>%s</td>", prob_str);
     fprintf(f, "<td>%s</td>", lang_str);
     fprintf(f, "<td>%s</td>", stat_str);
@@ -256,12 +234,31 @@ write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
     if (global->team_enable_rep_view) {
       fprintf(f, "<td><input type=\"submit\" name=\"report_%d\" value=\"%s\"</td>", i, _("view"));
     }
-    fputs("\n</tr></form>\n", f);
+    fprintf(f, "\n</tr>\n");
+    if (form) fputs("</form>\n", f);
   }
   fputs("</table>\n", f);
+}
 
-  /* separator */
-  putc(1, f);
+void
+new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
+                     unsigned char const *form)
+{
+  int showed, i, clars_to_show;
+  int from, to, flags, n;
+  size_t size;
+  time_t start_time, time;
+
+  char  dur_str[64];
+  char  subj[CLAR_MAX_SUBJ_LEN + 4];      /* base64 subj */
+  char  psubj[CLAR_MAX_SUBJ_TXT_LEN + 4]; /* plain text subj */
+  char *asubj = 0; /* html armored subj */
+  int   asubj_len = 0; /* html armored subj len */
+
+  start_time = run_get_start_time();
+  if (form && !*form) form = 0;
+  clars_to_show = 15;
+  if (show_flags) clars_to_show = 100000;
 
   /* write clars statistics for the last 15 in the reverse order */
   fprintf(f,"<table border=\"1\"><tr><th>%s</th><th>%s</th><th>%s</th>"
@@ -273,10 +270,11 @@ write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
   for (showed = 0, i = clar_get_total() - 1;
        showed < clars_to_show && i >= 0;
        i--) {
-    if (clar_get_record(i, &time, &size, 0, &from, &to, &flags, subj) < 0)
+    if (clar_get_record(i, &time, (unsigned long*) &size,
+                        0, &from, &to, &flags, subj) < 0)
       continue;
-    if (from > 0 && from != team) continue;
-    if (to > 0 && to != team) continue;
+    if (from > 0 && from != uid) continue;
+    if (to > 0 && to != uid) continue;
     showed++;
 
     base64_decode_str(subj, psubj, 0);
@@ -288,13 +286,14 @@ write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
     html_armor_string(psubj, asubj);
     if (!start_time) time = start_time;
     if (start_time > time) time = start_time;
-    duration_str(time - start_time, dur_str, 0);
+    duration_str(global->show_astr_time, time, start_time, dur_str, 0);
 
-    fputs("$1<tr>", f);
+    if (form) fprintf(f, "%s", form);
+    fputs("<tr>", f);
     fprintf(f, "<td>%d</td>", i);
     fprintf(f, "<td>%s</td>", clar_flags_html(flags, from, to, 0, 0));
     fprintf(f, "<td>%s</td>", dur_str);
-    fprintf(f, "<td>%lu</td>", size);
+    fprintf(f, "<td>%zu</td>", size);
     if (!from) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     } else {
@@ -310,50 +309,64 @@ write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
     fprintf(f, "<td>%s</td>", asubj);
     fprintf(f, "<td><input type=\"submit\" name=\"clar_%d\" value=\"%s\"></td>\n", i, _("view"));
 
-    fputs("</tr></form>\n", f);
+    fprintf(f, "</tr>\n");
+    fputs("</form>\n", f);
   }
   fputs("</table>\n", f);
-
-  fclose(f);
 }
 
 void
-write_team_clar(int team_id, int clar_id,
-                char const *clar_dir, char const *dir, char const *name)
+write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
+                      char const *dir, char const *name)
 {
   path_t  path;
-  FILE   *f;
-  char    cname[64];
-  char   *csrc = 0;
-  int     csize = 0;
-
-  unsigned long start_time;
-  unsigned long time;
-  unsigned long size;
-  int from;
-  int to;
-  char subj[CLAR_MAX_SUBJ_LEN + 4];
-  char psubj[CLAR_MAX_SUBJ_TXT_LEN + 4];
-  char *asubj;
-  int  asubj_len;
-  char *atxt;
-  int  atxt_len;
-  char dur_str[64];
+  FILE   *f = 0;
 
   pathmake(path, dir, "/", name, 0);
+  info("team %d statistics to %s", team, path);
   if (!(f = sf_fopen(path, "w"))) return;
+  new_write_user_runs(f, team, all_runs_flag, "$1");
+  putc(1, f);
+  new_write_user_clars(f, team, all_clars_flag, "$1");
+  fclose(f);
+}
+
+int
+new_write_user_clar(FILE *f, int uid, int cid)
+{
+  unsigned long start_time, size, time;
+  int from, to;
+  int  asubj_len, atxt_len;
+  char subj[CLAR_MAX_SUBJ_LEN + 4];
+  char psubj[CLAR_MAX_SUBJ_TXT_LEN + 4];
+  char *asubj, *atxt;
+  char dur_str[64];
+  char cname[64];
+  char *csrc = 0;
+  int  csize = 0;
+
+  if (global->disable_clars) {
+    err("clarifications are disabled");
+    return -SRV_ERR_CLARS_DISABLED;
+  }
+  if (cid < 0 || cid >= clar_get_total()) {
+    err("invalid clar_id %d", cid);
+    return -SRV_ERR_BAD_CLAR_ID;
+  }
 
   start_time = run_get_start_time();
-  if (clar_get_record(clar_id, &time, &size, NULL,
-                      &from, &to, NULL, subj) < 0)
-    goto server_failed;
-  if (from > 0 && from != team_id) goto access_denied;
-  if (to > 0 && to != team_id) goto access_denied;
+  if (clar_get_record(cid, &time, &size, NULL,
+                      &from, &to, NULL, subj) < 0) {
+    return -SRV_ERR_BAD_CLAR_ID;
+  }
+  if (from > 0 && from != uid) return -SRV_ERR_ACCESS_DENIED;
+  if (to > 0 && to != uid) return -SRV_ERR_ACCESS_DENIED;
 
-  sprintf(cname, "%06d", clar_id);
+  sprintf(cname, "%06d", cid);
   if (generic_read_file(&csrc, 0, &csize, 0,
-                        global->clar_archive_dir, cname, "") < 0)
-    goto server_failed;
+                        global->clar_archive_dir, cname, "") < 0) {
+    return -SRV_ERR_SYSTEM_ERROR;
+  }
 
   base64_decode_str(subj, psubj, 0);
   asubj_len = html_armored_strlen(psubj);
@@ -366,11 +379,11 @@ write_team_clar(int team_id, int clar_id,
 
   if (!start_time) time = start_time;
   if (time < start_time) time = start_time;
-  duration_str(time - start_time, dur_str, 0);
+  duration_str(global->show_astr_time, time, start_time, dur_str, 0);
 
-  fprintf(f, "<h2>%s #%d</h2>\n", _("Message"), clar_id);
+  fprintf(f, "<h2>%s #%d</h2>\n", _("Message"), cid);
   fprintf(f, "<table border=\"0\">\n");
-  fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Number"), clar_id);
+  fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Number"), cid);
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Time"), dur_str);
   fprintf(f, "<tr><td>%s:</td><td>%lu</td></tr>\n", _("Size"), size);
   fprintf(f, "<tr><td>%s:</td>", _("Sender"));
@@ -394,22 +407,7 @@ write_team_clar(int team_id, int clar_id,
   fprintf(f, "%s", atxt);
   fprintf(f, "</pre>");
 
-  fclose(f);
-  return;
-
- access_denied:
-  err("write_team_clar: access denied");
-  fprintf(f, "<h2>%s</h2><p>%s</p>", _("Access denied"),
-          _("You do not have permissions to view this message."));
-  fclose(f);
-
- server_failed:
-  err("write_team_clar: server_failed");
-  fprintf(f, "<h2>%s</h2><p>%s</p>",
-          _("Server is unable to perform your request"),
-          _("Internal server error"));
-  fclose(f);
-  return;
+  return 0;
 }
 
 #define ALLOCAZERO(a,b) do { if (!XALLOCA(a,b)) goto alloca_failed; XMEMZERO(a,b); } while(0)
@@ -452,7 +450,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
         fprintf(f, header_str, global->charset, header, header);
       } else {
         fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>\n",
-                global->charset,
+                global->standings_charset,
                 header, header);
       }
     } else {
@@ -540,7 +538,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
 
     struct section_problem_data *p;
 
-    run_get_record(k, 0, 0, 0, 0, &team_id, 0, &prob_id, &status, &tests,
+    run_get_record(k, 0, 0, 0, 0, 0, &team_id, 0, &prob_id, &status, &tests,
                    &run_score);
     if (team_id <= 0 || team_id >= t_max) continue;
     if (prob_id <= 0 || prob_id > max_prob) continue;
@@ -623,7 +621,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
   cur_time = time(0);
   if (start_time > cur_time) cur_time = start_time;
   if (stop_time && cur_time > stop_time) cur_time = stop_time;
-  duration_str(cur_time - start_time, dur_str, 0);
+  duration_str(global->show_astr_time, cur_time, start_time, dur_str, 0);
 
   if (global->name[0]) {
     sprintf(header, "%s &quot;%s&quot; - %s [%s]",
@@ -634,10 +632,10 @@ do_write_kirov_standings(FILE *f, int client_flag,
 
   if (!client_flag) {
     if (header_str) {
-      fprintf(f, header_str, global->charset, header, header);
+      fprintf(f, header_str, global->standings_charset, header, header);
     } else {
       fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>",
-              global->charset,
+              global->standings_charset,
               header, header);
     }
   } else {
@@ -759,10 +757,10 @@ do_write_standings(FILE *f, int client_flag,
 
     if (!client_flag) {
       if (header_str) {
-        fprintf(f, header_str, global->charset, header, header);
+        fprintf(f, header_str, global->standings_charset, header, header);
       } else {
         fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>\n",
-                global->charset,
+                global->standings_charset,
                 header, header);
       }
     } else {
@@ -829,7 +827,7 @@ do_write_standings(FILE *f, int client_flag,
   /* now scan runs log */
   r_tot = run_get_total();
   for (k = 0; k < r_tot; k++) {
-    run_get_record(k, &run_time, 0, 0, 0, &team_id, 0, &prob_id, &status, 0,
+    run_get_record(k, &run_time, 0, 0, 0, 0, &team_id, 0, &prob_id, &status, 0,
                    &score);
     if (team_id <= 0 || team_id >= t_max) continue;
     if (t_rev[team_id] < 0) continue;
@@ -884,7 +882,7 @@ do_write_standings(FILE *f, int client_flag,
   cur_time = time(0);
   if (start_time > cur_time) cur_time = start_time;
   if (stop_time && cur_time > stop_time) cur_time = stop_time;
-  duration_str(cur_time - start_time, dur_str, 0);
+  duration_str(global->show_astr_time, cur_time, start_time, dur_str, 0);
 
   if (global->name[0]) {
     sprintf(header, "%s &quot;%s&quot; - %s [%s]",
@@ -895,10 +893,10 @@ do_write_standings(FILE *f, int client_flag,
 
   if (!client_flag) {
     if (header_str) {
-      fprintf(f, header_str, global->charset, header, header);
+      fprintf(f, header_str, global->standings_charset, header, header);
     } else {
       fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>",
-              global->charset,
+              global->standings_charset,
               header, header);
     }
   } else {
@@ -984,6 +982,29 @@ write_standings(char const *stat_dir, char const *name,
   path_t  tpath;
   FILE   *f;
 
+  if (global->charset_ptr && global->standings_charset_ptr
+      && global->charset_ptr != global->standings_charset_ptr) {
+    unsigned char *html_ptr = 0;
+    size_t html_len = 0;
+
+    f = open_memstream((char**) &html_ptr, &html_len);
+    if (global->score_system_val == SCORE_KIROV
+        || global->score_system_val == SCORE_OLYMPIAD)
+      do_write_kirov_standings(f, 0, header_str, footer_str);
+    else
+      do_write_standings(f, 0, header_str, footer_str);
+    fclose(f);
+    if (!html_ptr) {
+      html_ptr = xstrdup("");
+      html_len = 0;
+    }
+    // FIXME: local encoding might be any
+    str_koi8_to_enc_unchecked(global->standings_charset_ptr,
+                              html_ptr, html_ptr);
+    generic_write_file(html_ptr, html_len, SAFE, stat_dir, name, "");
+    return;
+  }
+
   sprintf(tbuf, "XXX_%lu%d", time(0), getpid());
   pathmake(tpath, stat_dir, "/", tbuf, 0);
   if (!(f = sf_fopen(tpath, "w"))) return;
@@ -1004,11 +1025,12 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
   int total;
   int i;
 
-  unsigned long time, start, size;
+  time_t time, start;
+  size_t size;
+  unsigned long ip;
   int teamid, langid, probid, status, test, score;
   int attempts, score1;
 
-  char ip[RUN_MAX_IP_LEN + 4];
   char durstr[64], statstr[64];
   char *str1 = 0, *str2 = 0;
 
@@ -1050,13 +1072,13 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
   fprintf(f, "</tr>\n");
 
   for (i = total - 1; i >= 0; i--) {
-    run_get_record(i, &time, &size, ip, 0,
+    run_get_record(i, &time, &size, 0, &ip, 0,
                    &teamid, &langid, &probid, &status, &test, &score);
     run_get_attempts(i, &attempts);
 
     if (!start) time = start;
     if (start > time) time = start;
-    duration_str(time - start, durstr, 0);
+    duration_str(global->show_astr_time, time, start, durstr, 0);
     run_status_str(status, statstr, 0);
 
     fputs("<tr>", f);
@@ -1125,11 +1147,12 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
   int show_num;
   int i;
 
-  unsigned long time, start, size;
+  time_t time, start;
+  size_t size;
+  unsigned long ip;
   int teamid, langid, probid, status, test, score;
   int attempts, score1;
 
-  char ip[RUN_MAX_IP_LEN + 4];
   char durstr[64], statstr[64];
   char *str1 = 0, *str2 = 0;
 
@@ -1181,13 +1204,13 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
           _("View source"), _("View report"));
 
   for (i = total - 1; i >= 0 && show_num; i--, show_num--) {
-    run_get_record(i, &time, &size, ip, 0,
+    run_get_record(i, &time, &size, 0, &ip, 0,
                    &teamid, &langid, &probid, &status, &test, &score);
     run_get_attempts(i, &attempts);
 
     if (!start) time = start;
     if (start > time) time = start;
-    duration_str(time - start, durstr, 0);
+    duration_str(global->show_astr_time, time, start, durstr, 0);
     run_status_str(status, statstr, 0);
 
     fputs("$1", f);
@@ -1195,8 +1218,8 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
     fputs("<tr>", f);
     fprintf(f, "<td>%d</td>", i);
     fprintf(f, "<td>%s</td>", durstr);
-    fprintf(f, "<td>%lu</td>", size);
-    fprintf(f, "<td>%s</td>", ip);
+    fprintf(f, "<td>%zu</td>", size);
+    fprintf(f, "<td>%s</td>", run_unparse_ip(ip));
     fprintf(f, "<td>%s</td>", teamdb_get_login(teamid));
     fprintf(f, "<td>%s</td>", teamdb_get_name(teamid));
     if (probs[probid]) fprintf(f, "<td>%s</td>", probs[probid]->short_name);
@@ -1234,13 +1257,14 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
                 "<td><select name=\"stat_%d\">"
                 "<option value=\"\"></option>"
                 "<option value=\"99\">%s</option>"
+                "<option value=\"9\">%s</option>"
                 "<optgroup label=\"%s:\">"
                 "<option value=\"0\">%s</option>"
                 "<option value=\"1\">%s</option>"
                 "<option value=\"7\">%s</option>"
                 "</optgroup>"
                 "</select></td>\n", i,
-                _("Rejudge"), _("Judgements"),
+                _("Rejudge"), _("Ignore"), _("Judgements"),
                 _("OK"), _("Compilation error"),
                 _("Partial solution"));
       } else if (global->score_system_val == SCORE_OLYMPIAD) {
@@ -1248,6 +1272,7 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
                 "<td><select name=\"stat_%d\">"
                 "<option value=\"\"> "
                 "<option value=\"99\">%s"
+                "<option value=\"9\">%s</option>"
                 "<optgroup label=\"%s:\">"
                 "<option value=\"0\">%s</option>"
                 "<option value=\"1\">%s</option>"
@@ -1259,7 +1284,7 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
                 "<option value=\"8\">%s</option>"
                 "</optgroup>"
                 "</select></td>\n", i,
-                _("Rejudge"), _("Judgements"),
+                _("Rejudge"), _("Ignore"), _("Judgements"),
                 _("OK"), _("Compilation error"), _("Run-time error"),
                 _("Time-limit exceeded"), _("Presentation error"),
                 _("Wrong answer"), _("Partial solution"),
@@ -1269,6 +1294,7 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
                 "<td><select name=\"stat_%d\">"
                 "<option value=\"\"> "
                 "<option value=\"99\">%s"
+                "<option value=\"9\">%s</option>"
                 "<optgroup label=\"%s:\">"
                 "<option value=\"0\">%s"
                 "<option value=\"1\">%s"
@@ -1278,7 +1304,7 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
                 "<option value=\"5\">%s"
                 "</optgroup>"
                 "</select></td>\n", i,
-                _("Rejudge"), _("Judgements"),
+                _("Rejudge"), _("Ignore"), _("Judgements"),
                 _("OK"), _("Compilation error"), _("Run-time error"),
                 _("Time-limit exceeded"), _("Presentation error"),
                 _("Wrong answer"));
@@ -1351,7 +1377,7 @@ write_judge_allclars(int master_mode, int show_all, FILE *f)
     html_armor_string(psubj, asubj);
     if (!start) time = start;
     if (start > time) time = start;
-    duration_str(time - start, durstr, 0);
+    duration_str(global->show_astr_time, time, start, durstr, 0);
 
     fputs("$1<tr>", f);
     fprintf(f, "<td>%d</td>", i);
@@ -1437,98 +1463,80 @@ write_judge_source_view(char const *pk_name, int rid)
   if (src) xfree(src);  
 }
 
-void
-write_team_source_view(char const *pk_name, int team, int rid)
+int
+new_write_user_source_view(FILE *f, int uid, int rid)
 {
-  path_t  path;
-  FILE   *f = 0;
-  path_t  src_base;
-  path_t  src_path;
-  char   *src = 0;
-  char   *html = 0;
-  int     src_len = 0;
-  int     html_len;
-  int     run_team;
+  path_t  src_base, src_path;
+  int run_uid, src_len = 0, html_len;
+  char   *src = 0, *html = 0;
 
-  ASSERT(rid >= 0 && rid < run_get_total());
-  pathmake(path, global->pipe_dir, "/", pk_name, 0);
-  if (!(f = sf_fopen(path, "w"))) return;
-
-  run_get_record(rid, 0, 0, 0, 0, &run_team, 0, 0, 0, 0, 0);
-  if (team != run_team) {
-    fprintf(f, "<h2>%s</h2><p>%s</p>",
-            _("Permission denied"),
-            _("You don't have permissions to do that"));
-    goto _cleanup;
+  if (!global->team_enable_src_view) {
+    err("viewing user source is disabled");
+    return -SRV_ERR_SOURCE_DISABLED;
   }
-
+  if (rid < 0 || rid >= run_get_total()) {
+    err("invalid run_id: %d", rid);
+    return -SRV_ERR_BAD_RUN_ID;
+  }
+  run_get_record(rid, 0, 0, 0, 0, 0, &run_uid, 0, 0, 0, 0, 0);
+  if (uid != run_uid) {
+    err("user ids does not match");
+    return -SRV_ERR_ACCESS_DENIED;
+  }
   sprintf(src_base, "%06d", rid);
   pathmake(src_path, global->run_archive_dir, "/", src_base, 0);
   if (generic_read_file(&src, 0, &src_len, 0, 0, src_path, "") < 0) {
-    fprintf(f, "<h2>%s</h2><p>%s</p>",
-            _("Server is unable to perform your request"),
-            _("Source file is not found"));
-    goto _cleanup;
+    return -SRV_ERR_SYSTEM_ERROR;
   }
 
   html_len = html_armored_memlen(src, src_len);
   html = alloca(html_len + 16);
   html_armor_text(src, src_len, html);
   html[html_len] = 0;
+  xfree(src);
 
   fprintf(f, "<pre>%s</pre>", html);
-
- _cleanup:
-  if (f) fclose(f);
-  if (src) xfree(src);  
+  return 0;
 }
 
-void
-write_team_report_view(char const *pk_name, int team, int rid)
+int
+new_write_user_report_view(FILE *f, int uid, int rid)
 {
-  path_t  out_path;
-  path_t  report_base;
-  path_t  report_path;
-  FILE   *f;
-  char   *report = 0;
-  char   *html_report = 0;
-  int     report_len;
-  int     html_len;
-  int     run_team;
-  int     prob_id;
+  int run_uid, report_len = 0, html_len = 0, prob_id;
+  path_t report_base, report_path;
+  char *report = 0, *html_report;
 
-  ASSERT(rid >= 0 && rid < run_get_total());
-  pathmake(out_path, global->pipe_dir, "/", pk_name, 0);
-  if (!(f = fopen(out_path, "w"))) return;
-
-  run_get_record(rid, 0, 0, 0, 0, &run_team, 0, &prob_id, 0, 0, 0);
-  if (team != run_team || !probs[prob_id]->team_enable_rep_view) {
-    fprintf(f, "<h2>%s</h2><p>%s</p>",
-            _("Permission denied"),
-            _("You don't have permissions to do that"));
-    goto _cleanup;
+  if (rid < 0 || rid >= run_get_total()) {
+    err("invalid run_id: %d", rid);
+    return -SRV_ERR_BAD_RUN_ID;
+  }
+  if (run_get_record(rid, 0, 0, 0, 0, 0, &run_uid, 0, &prob_id, 0, 0, 0) < 0) {
+    return -SRV_ERR_BAD_RUN_ID;
+  }
+  if (prob_id <= 0 || prob_id > max_prob || !probs[prob_id]) {
+    err("get_record returned bad prob_id %d", prob_id);
+    return -SRV_ERR_BAD_PROB_ID;
+  }
+  if (!probs[prob_id]->team_enable_rep_view) {
+    err("viewing report is disabled for this problem");
+    return -SRV_ERR_REPORT_DISABLED;
   }
 
   sprintf(report_base, "%06d", rid);
   pathmake(report_path,
            global->team_report_archive_dir, "/", report_base, 0);
   if (generic_read_file(&report, 0, &report_len, 0, 0, report_path, "") < 0) {
-    fprintf(f, "<h2>%s</h2><p>%s</p>",
-            _("Server is unable to perform your request"),
-            _("Report file is not found"));
-    goto _cleanup;
+    return -SRV_ERR_SYSTEM_ERROR;
   }
   
   html_len = html_armored_memlen(report, report_len);
   html_report = alloca(html_len + 16);
   html_armor_text(report, report_len, html_report);
   html_report[html_len] = 0;
+  xfree(report);
 
   fprintf(f, "<pre>%s</pre>", html_report);
-
- _cleanup:
-  if (f) fclose(f);
-  if (report) xfree(report);
+  return 0;
 }
 
 void
@@ -1697,6 +1705,106 @@ write_judge_one_team_view(char const *pk_name, int teamid)
           _("Retype password"), _("change"));
   fprintf(f, "</table>\n");
   fclose(f);
+}
+
+void
+write_team_page(FILE *f, int user_id, int all_runs, int all_clars,
+                unsigned char const *simple_form,
+                unsigned char const *multi_form,
+                time_t server_start, time_t server_end)
+{
+  int i;
+
+  if (server_start && !server_end) {
+    fprintf(f, "<hr><a name=\"submit\"><h2>%s</h2>\n", _("Send a submission"));
+    fprintf(f, "<table>%s\n", multi_form);
+    fprintf(f, "<tr><td>%s:</td><td>", _("Problem"));
+    fprintf(f, "<select name=\"problem\"><option value=\"\">\n");
+    for (i = 1; i <= max_prob; i++)
+      if (probs[i]) {
+        fprintf(f, "<option value=\"%d\">%s - %s\n",
+                probs[i]->id, probs[i]->short_name, probs[i]->long_name);
+      }
+    fprintf(f, "</select>\n");
+    fprintf(f, "</td></tr>\n");
+    fprintf(f, "<tr><td>%s:</td><td>", _("Language"));
+    fprintf(f, "<select name=\"language\"><option value=\"\">\n");
+    for (i = 1; i <= max_lang; i++)
+      if (langs[i]) {
+        fprintf(f, "<option value=\"%d\">%s - %s\n",
+                langs[i]->id, langs[i]->short_name, langs[i]->long_name);
+      }
+    fprintf(f, "</select>\n");
+    fprintf(f, "</td></tr>\n");
+    fprintf(f, "<tr><td>%s:</td>"
+            "<td><input type=\"file\" name=\"file\"></td></tr>\n"
+            "<tr><td>%s</td>"
+            "<td><input type=\"submit\" name=\"send\" value=\"%s\"></td></tr>",
+            _("File"), _("Send!"), _("Send!"));
+    fprintf(f, "</form></table>\n");
+    fprintf(f,
+            "%s<input type=\"submit\" name=\"refresh\" value=\"%s\"></form>\n",
+           simple_form, _("Refresh"));
+    fprintf(f, "</form>");
+  }
+
+  if (server_start) {
+    fprintf(f, "<hr><a name=\"runstat\"><h2>%s (%s)</h2>\n",
+            _("Sent submissions"),
+            all_runs?_("all"):_("last 15"));
+    new_write_user_runs(f, user_id, all_runs, simple_form);
+    fprintf(f, "<p>%s"
+            "<input type=\"submit\" name=\"view_all_runs\" value=\"%s\">"
+            "</form>\n", simple_form, _("View all"));
+    fprintf(f,
+            "%s<input type=\"submit\" name=\"refresh\" value=\"%s\"></form>\n",
+            simple_form, _("Refresh"));
+    fprintf(f, "</form>");
+    if (global->team_download_time > 0) {
+      fprintf(f, "<p>%s"
+              "<input type=\"submit\" name=\"archive\" value=\"%s\"></form>\n",
+              simple_form, _("Download your submits"));
+      fprintf(f, _("<p><b>Note,</b> if downloads are allowed, you may download your runs once per %d minutes. The archive is in <tt>.tar.gz</tt> (<tt>.tgz</tt>) format.</p>\n"), global->team_download_time / 60);
+    }
+  }
+
+  if (!global->disable_clars && !global->disable_team_clars
+      && server_start && !server_end) {
+    fprintf(f, "<hr><a name=\"clar\"><h2>%s</h2>\n",
+            _("Send a message to judges"));
+    fprintf(f, "<table>%s\n<tr><td>%s:</td><td>", multi_form, _("Problem"));
+    fprintf(f, "<select name=\"problem\"><option value=\"\">\n");
+    for (i = 1; i <= max_prob; i++)
+      if (probs[i]) {
+        fprintf(f, "<option value=\"%s\">%s - %s\n",
+                probs[i]->short_name,
+                probs[i]->short_name, probs[i]->long_name);
+      }
+    fprintf(f, "</select>\n");
+    fprintf(f, "<tr><td>%s:</td>"
+            "<td><input type=\"text\" name=\"subject\"></td></tr>\n"
+            "<tr><td colspan=\"2\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
+            "<tr><td colspan=\"2\"><input type=\"submit\" name=\"msg\" value=\"%s\"></td></tr>\n"
+            "</form></table>\n",
+            _("Subject"), _("Send!"));
+    fprintf(f,
+            "%s<input type=\"submit\" name=\"refresh\" value=\"%s\"></form>\n",
+            simple_form, _("Refresh"));
+    fprintf(f, "</form>");
+  }
+
+  if (!global->disable_clars) {
+    fprintf(f, "<hr><a name=\"clarstat\"><h2>%s (%s)</h2>\n",
+            _("Messages"), all_clars?_("all"):_("last 15"));
+    new_write_user_clars(f, user_id, all_clars, simple_form);
+    fprintf(f,"<p>%s"
+            "<input type=\"submit\" name=\"view_all_clars\" value=\"%s\">"
+            "</form>\n", simple_form, _("View all"));
+    fprintf(f,
+            "%s<input type=\"submit\" name=\"refresh\" value=\"%s\"></form>\n",
+           simple_form, _("Refresh"));
+    fprintf(f, "</form>");
+  }
 }
 
 /**
