@@ -568,3 +568,12 @@ master_html.c 1 1 1747927
 teamdb.c 1 17 1255541
 userlist-server.c 1 14 9466245
 serve_clnt/master_page.c 1 2 366206
+filter_eval.h 1 2 97605
+filter_tree.h 1 4 446103
+clntutil.c 1 20 1205274
+filter_eval.c 1 2 648276
+filter_test.c 1 3 358234
+filter_tree.c 1 4 3256189
+run.c 1 35 2379826
+filter_expr.y 1 4 1869985
+filter_scan.lex 1 4 461689
