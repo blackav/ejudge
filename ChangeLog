@@ -1,3 +1,66 @@
+2002-12-28  Alexander Chernov  <cher@ispras.ru>
+
+	* serve.c:
+	(update_standings_file) compiler warning about use of uninitialized
+	  variable is fixed.
+
+	* master_html.c:
+	(write_all_runs) compiler warnings about use of uninitialized
+	  variables are fixed;
+	(write_all_clars) the same.
+
+	* master.c:
+	(send_msg_if_asked) compiler warning about use of uninitialized
+	  variable is fixed.
+
+	* html.c:
+	(do_write_standings) compiler warning about use of uninitialized
+	  variable is fixed.
+
+	* contests.c:
+	(parse_contest_xml) compiler warning about use of uninitialized
+	  variable is fixed.
+
+	* users.c: 
+	(main) a backdoor is removed.
+
+	* userlist-server.c:
+	(login_team_user) "possibly use of unitialized variable" warning
+	  is fixed;
+	(cmd_login_priv_user) the same;
+	(login_team_cookie) the same;
+	(login_priv_cookie) the same;
+	(do_list_users) in raw output mode if a team does not have
+	  participants, it is now printed anyway;
+	  invisible users are not printed in user lists.
+
+	* team.c:
+	(send_clar_if_asked) in virtual contest mode contest start and stop
+	  times are not checked;
+	(submit_if_asked) the same as above.
+
+	* team.c:
+	(display_enter_password) default session mode is 2 (SID_URL).
+
+	* runlog.h: 
+	(run_get_virtual_status) new function prototype.
+
+	* runlog.c:
+	(run_get_virtual_status) a new function, which returns the virtuality
+	  status of the given user;
+	(run_virtual_start) virtuality status of the user is set to virtual;
+	(run_virtual_stop) checked, that the user is virtual.
+
+	* prepare.h, prepare.c:
+	new global parameters: `standings_virtual_team_color',
+	  `standings_real_team_color'.
+
+	* html.c:
+	(do_write_standings) global parameters `standings_real_team_color',
+	  `standings_virtual_team_color' are supported.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
 2002-12-27  Alexander Chernov  <cher@ispras.ru>
 
 	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
