@@ -25,6 +25,7 @@
 
 #include <reuse/xalloc.h>
 #include <reuse/number_io.h>
+#include <reuse/format_io.h>
 
 #include <stdio.h>
 #include <stdlib.h>

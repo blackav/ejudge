@@ -35,6 +35,7 @@
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
 #include <reuse/number_io.h>
+#include <reuse/format_io.h>
 
 #include <time.h>
 #include <stdio.h>
