@@ -244,7 +244,7 @@ parse_param(char const *path,
   while (1) {
     c = read_first_char(f);
     if (c == EOF || c == '[') break;
-    if (c == '#') {
+    if (c == '#' || c== '%' || c == ';') {
       read_comment(f);
       continue;
     }
@@ -284,7 +284,7 @@ parse_param(char const *path,
     while (1) {
       c = read_first_char(f);
       if (c == EOF || c == '[') break;
-      if (c == '#') {
+      if (c == '#' || c == '%' || c == ';') {
         read_comment(f);
         continue;
       }
