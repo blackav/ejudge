@@ -3531,7 +3531,7 @@ cmd_get_uid_by_pid(struct client_state *p, int len,
        pack->system_gid, pack->system_pid);
   if (pack->system_uid < 0 || pack->system_gid < 0 || pack->system_pid <= 1) {
     err("%d: invalid parameters", p->id);
-    send_reply(p, ULS_ERR_BAD_UID);
+    send_reply(p, -ULS_ERR_BAD_UID);
     return;
   }
 
@@ -3543,7 +3543,7 @@ cmd_get_uid_by_pid(struct client_state *p, int len,
   }
   if (!q) {
     err("%d: not found among clients", p->id);
-    send_reply(p, ULS_ERR_INVALID_LOGIN);
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
   }
 
@@ -3780,7 +3780,7 @@ do_work(void)
   int max_fd;
   struct timeval timeout;
   fd_set rset, wset;
-  struct client_state *p;
+  struct client_state *p, *q;
 
   signal(SIGPIPE, SIG_IGN);
   signal(SIGINT, interrupt_signal);
@@ -4181,11 +4181,16 @@ do_work(void)
       p->read_len += r;
       if (p->expected_len == p->read_len) {
         process_packet(p, p->expected_len, p->read_buf);
-        p->read_len = 0;
-        p->expected_len = 0;
-        p->read_state = 0;
-        xfree(p->read_buf);
-        p->read_buf = 0;
+        /* p may be invalid */
+        for (q = first_client; q && q != p; q = q->next);
+        if (q) {
+          /* p is valid! */
+          p->read_len = 0;
+          p->expected_len = 0;
+          p->read_state = 0;
+          xfree(p->read_buf);
+          p->read_buf = 0;
+        }
       }
       FD_CLR(p->fd, &rset);
     }
