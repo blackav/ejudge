@@ -137,6 +137,10 @@ static struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(status_dir, "s"),
   GLOBAL_PARAM(work_dir, "s"),
+  GLOBAL_PARAM(print_work_dir, "s"),
+
+  GLOBAL_PARAM(a2ps_path, "s"),
+  GLOBAL_PARAM(lpr_path, "s"),
 
   GLOBAL_PARAM(compile_dir, "s"),
   GLOBAL_PARAM(compile_work_dir, "s"),
@@ -212,6 +216,9 @@ static struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(variant_map_file, "s"),
 
+  GLOBAL_PARAM(enable_printing, "d"),
+  GLOBAL_PARAM(team_page_quota, "d"),
+
   { 0, 0, 0, 0 }
 };
 
@@ -237,6 +244,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(use_info, "d"),
   PROBLEM_PARAM(use_tgz, "d"),
   PROBLEM_PARAM(tests_to_accept, "d"),
+  PROBLEM_PARAM(accept_partial, "d"),
   PROBLEM_PARAM(checker_real_time_limit, "d"),
   PROBLEM_PARAM(disable_auto_testing, "d"),
   PROBLEM_PARAM(disable_testing, "d"),
@@ -408,6 +416,9 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_JUDGE_DATA_DIR     "data"
 #define DFLT_G_STATUS_DIR         "status"
 #define DFLT_G_WORK_DIR           "work"
+#define DFLT_G_PRINT_WORK_DIR     "print"
+#define DFLT_G_A2PS_PATH          "/usr/bin/a2ps"
+#define DFLT_G_LPR_PATH           "/usr/bin/lpr"
 #define DFLT_G_COMPILE_DIR        "compile"
 #define DFLT_G_COMPILE_QUEUE_DIR  "queue"
 #define DFLT_G_COMPILE_SRC_DIR    "src"
@@ -435,6 +446,7 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_USE_GZIP          1
 #define DFLT_G_USE_DIR_HIERARCHY 1
 #define DFLT_G_MIN_GZIP_SIZE     4096
+#define DFLT_G_TEAM_PAGE_QUOTA   50
 
 #define DFLT_P_INPUT_FILE         "input"
 #define DFLT_P_OUTPUT_FILE        "output"
@@ -466,6 +478,7 @@ global_init_func(struct generic_section_config *gp)
   p->use_gzip = -1;
   p->use_dir_hierarchy = -1;
   p->min_gzip_size = -1;
+  p->team_page_quota = -1;
 }
 
 static void
@@ -490,6 +503,7 @@ problem_init_func(struct generic_section_config *gp)
   p->use_info = -1;
   p->use_tgz = -1;
   p->tests_to_accept = -1;
+  p->accept_partial = -1;
   p->test_sfx[0] = 1;
   p->corr_sfx[0] = 1;
   p->info_sfx[0] = 1;
@@ -1211,6 +1225,18 @@ set_defaults(int mode)
   }
 
   GLOBAL_INIT_FIELD(work_dir, DFLT_G_WORK_DIR, var_dir);
+  GLOBAL_INIT_FIELD(print_work_dir, DFLT_G_PRINT_WORK_DIR, work_dir);
+
+  if (!global->a2ps_path[0]) {
+    strcpy(global->a2ps_path, DFLT_G_A2PS_PATH);
+  }
+  if (!global->lpr_path[0]) {
+    strcpy(global->lpr_path, DFLT_G_LPR_PATH);
+  }
+
+  if (global->team_page_quota < 0) {
+    global->team_page_quota = DFLT_G_TEAM_PAGE_QUOTA;
+  }
 
   if (mode == PREPARE_COMPILE) {
     GLOBAL_INIT_FIELD(compile_work_dir, DFLT_G_COMPILE_WORK_DIR, work_dir);
@@ -1555,6 +1581,16 @@ set_defaults(int mode)
     }
     if (probs[i]->tests_to_accept == -1) {
       probs[i]->tests_to_accept = 0;
+    }
+
+    if (probs[i]->accept_partial == -1 && si != -1
+        && abstr_probs[si]->accept_partial != -1) {
+      probs[i]->accept_partial = abstr_probs[si]->accept_partial;
+      info("problem.%s.accept_partial inherited from problem.%s (%d)",
+           ish, sish, probs[i]->accept_partial);
+    }
+    if (probs[i]->accept_partial == -1) {
+      probs[i]->accept_partial = 0;
     }
 
     if (probs[i]->disable_auto_testing == -1 && si != -1
@@ -2462,6 +2498,7 @@ create_dirs(int mode)
 
     /* working directory (if somebody needs it) */
     if (make_dir(global->work_dir, 0) < 0) return -1;
+    if (make_dir(global->print_work_dir, 0) < 0) return -1;
 
     /* SERVE's archive directories */
     if (make_dir(global->archive_dir, 0) < 0) return -1;
