@@ -22,6 +22,9 @@
 /* the path to the script directory */
 #undef EJUDGE_SCRIPT_DIR
 
+/* the path to the ejudge's cgi programs */
+#undef EJUDGE_CGI_BIN_DIR
+
 /* the default charset */
 #undef EJUDGE_CHARSET
 
@@ -37,8 +40,34 @@
 /* the default path to the contests configuration directory */
 #undef EJUDGE_CONTESTS_DIR
 
+/* the path to the contests home directory */
+#undef EJUDGE_CONTESTS_HOME_DIR
+
 /* path (absolute or relative) to CGI configuration files */
 #undef CGI_DATA_PATH
+
+/* whether kernel patch is ok */
+#undef CONF_HAS_LIBCAP
+
+/* path to the web server cgi-bin dir */
+#undef EJUDGE_HTTPD_CGI_BIN_DIR
+
+/* path to the web server html documents dir */
+#undef EJUDGE_HTTPD_HTDOCS_DIR
+
+/* compiler versions */
+#undef COMPILE_GCC_VERSION
+#undef COMPILE_GPP_VERSION
+#undef COMPILE_FPC_VERSION
+#undef COMPILE_GPC_VERSION
+#undef COMPILE_DCC_VERSION
+#undef COMPILE_G77_VERSION
+#undef COMPILE_GCJ_VERSION
+#undef COMPILE_GPROLOG_VERSION
+#undef COMPILE_YABASIC_VERSION
+#undef COMPILE_MZSCHEME_VERSION
+#undef COMPILE_PERL_VERSION
+#undef COMPILE_PYTHON_VERSION
 
 #endif /* __CONFIG_H__ */
 
