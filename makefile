@@ -20,6 +20,7 @@
 CFILES=base64.c cgi.c clar.c clarlog.c clntutil.c compile.c html.c\
   master.c misctext.c mkpasswd.c parsecfg.c pathutl.c prepare.c\
   run.c runlog.c serve.c submit.c team.c teamdb.c xalloc.c\
+  register.c\
   unix/exec.c unix/fileutl.c unix/logger.c unix/osdeps.c\
   win32/exec.c win32/fileutl.c win32/logger.c win32/osdeps.c
 
@@ -69,7 +70,10 @@ P_OBJECTS=$(P_CFILES:.c=.o)
 T_CFILES = team.c version.c cgi.c teamdb.c base64.c clntutil.c parsecfg.c misctext.c pathutl.c xalloc.c $(ARCH)/fileutl.c $(ARCH)/logger.c $(ARCH)/osdeps.c
 T_OBJECTS = $(T_CFILES:.c=.o)
 
-TARGETS=compile$(EXESFX) serve$(EXESFX) submit$(EXESFX) run$(EXESFX) master$(EXESFX) clar$(EXESFX) mkpasswd$(EXESFX) team$(EXESFX)
+REG_CFILES = register.c
+REG_OBJECTS = ${REG_CFILES:.c=.o}
+
+TARGETS=compile$(EXESFX) serve$(EXESFX) submit$(EXESFX) run$(EXESFX) master$(EXESFX) clar$(EXESFX) mkpasswd$(EXESFX) team$(EXESFX) register${EXESFX}
 
 all: $(TARGETS)
 
@@ -99,10 +103,13 @@ mkpasswd.exe:
 mkpasswd : $(P_OBJECTS)
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
-# we do not compile team on win32
 team.exe:
 team: $(T_OBJECTS)
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS)
+
+register.exe:
+register: ${REG_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
 
 clean:
 	-rm *.o $(TARGETS) revinfo version.c $(ARCH)/*.o
@@ -167,6 +174,9 @@ team.o: team.c cgi.h teamdb.h parsecfg.h pathutl.h osdeps.h logger.h \
 teamdb.o: teamdb.c teamdb.h pathutl.h osdeps.h logger.h xalloc.h \
  base64.h
 xalloc.o: xalloc.c xalloc.h
+
+
+register.o: register.c
 
 unix/exec.o: unix/exec.c exec.h xalloc.h logger.h osdeps.h
 unix/fileutl.o: unix/fileutl.c fileutl.h unix/unix_fileutl.h logger.h \
