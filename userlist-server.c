@@ -211,7 +211,7 @@ attach_contest_extra(int id, struct contest_desc *cnts)
 
   ASSERT(id > 0);
   ASSERT(cnts);
-  if (!contest_extras || contest_extras_size >= id) {
+  if (!contest_extras || id >= contest_extras_size) {
     int new_size = contest_extras_size;
     struct contest_extra **new_extras = 0;
 
