@@ -2263,6 +2263,19 @@ generate_serve_cfg(FILE *f)
           COMPILE_QB_VERSION);
 #endif /* COMPILE_QB_VERSION */
 
+#if defined COMPILE_JAVA_VERSION
+  fprintf(f,
+          "[language]\n"
+          "id = 17\n"
+          "short_name = \"java\"\n"
+          "long_name = \"Java %s\"\n"
+          "src_sfx = \".java\"\n"
+          "exe_sfx = \".jar\"\n"
+          "arch = \"java\"\n"
+          "\n",
+          COMPILE_JAVA_VERSION);
+#endif /* COMPILE_JAVA_VERSION */
+
   fputs("[problem]\n"
         "short_name = Generic\n"
         "abstract\n"
@@ -2334,6 +2347,29 @@ generate_serve_cfg(FILE *f)
   }
   fputs("\n", f);
 
+#if defined COMPILE_JAVA_VERSION
+  fputs("[tester]\n"
+        "name = Linux-java\n"
+        "arch = java\n"
+        "abstract\n"
+        "no_core_dump\n"
+        "kill_signal = TERM\n"
+        "start_cmd = runjava\n"
+        "start_env = \"EJUDGE_PREFIX_DIR\"\n"
+        "start_env = \"EJUDGE_JAVA_FLAGS=-Xmx64M -Xss8M\"\n"
+        "check_cmd = \"check_%lPs\"\n",
+        f);
+
+  if (!strcmp(config_workdisk_flag, "yes")) {
+    fprintf(f, "check_dir = \"%s/work\"\n", config_workdisk_mount_dir);
+  } else {
+    if (config_testing_work_dir[0]) {
+      fprintf(f, "check_dir = \"%s\"\n", config_testing_work_dir);
+    }
+  }
+  fputs("\n", f);
+#endif /* COMPILE_JAVA_VERSION */
+
   fputs("[tester]\n"
         "any\n"
         "super = Generic\n"
@@ -2343,6 +2379,15 @@ generate_serve_cfg(FILE *f)
         "super = Linux-shared\n"
         "arch = linux-shared\n",
         f);
+
+#if defined COMPILE_JAVA_VERSION
+  fputs("\n"
+        "[tester]\n"
+        "any\n"
+        "super = Linux-java\n"
+        "arch = java\n",
+        f);
+#endif /* COMPILE_JAVA_VERSION */
 }
 
 static void
@@ -2618,6 +2663,23 @@ generate_compile_cfg(FILE *f)
           "%sexe_sfx = \".exe\"\n"
           "%scmd = \"qbemu\"\n"
           "%sarch = dos\n"
+          "%s\n",
+          cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt, cmt);
+
+#if defined COMPILE_JAVA_VERSION
+  cmt = ""; version = COMPILE_JAVA_VERSION;
+#else
+  cmt = "; "; version = "";
+#endif /* COMPILE_JAVA_VERSION */
+  fprintf(f,
+          "%s[language]\n"
+          "%sid = 17\n"
+          "%sshort_name = \"java\"\n"
+          "%slong_name = \"Java %s\"\n"
+          "%ssrc_sfx = \".java\"\n"
+          "%sexe_sfx = \".jar\"\n"
+          "%scmd = \"javac\"\n"
+          "%sarch = \"linux-shared\"\n"
           "%s\n",
           cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt, cmt);
 }
