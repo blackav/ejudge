@@ -4,7 +4,7 @@
 #ifndef __USERLIST_CFG_H__
 #define __USERLIST_CFG_H__ 1
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,7 @@ struct userlist_cfg
   struct xml_tree b;
 
   int l10n;
+  int serialization_key;
 
   // these strings actually point into another strings in XML tree
   unsigned char *socket_path;
@@ -48,6 +49,13 @@ struct userlist_cfg
   unsigned char *l10n_dir;
   unsigned char *serve_path;
   unsigned char *run_path;
+  unsigned char *charset;
+  unsigned char *config_dir;
+  unsigned char *contests_home_dir;
+  unsigned char *full_cgi_data_dir;
+  unsigned char *compile_home_dir;
+  unsigned char *testing_work_dir;
+  unsigned char *script_dir;
   struct xml_tree *user_map;
 
   opcaplist_t capabilities;
