@@ -98,6 +98,8 @@ int  checker_read_buf(int, const CHECKER_char_t *, int,
                       CHECKER_char_t *,size_t);
 void checker_read_file(int, CHECKER_char_t **, size_t *);
 void checker_read_file_by_line(int, CHECKER_char_t ***, size_t *);
+void checker_read_file_by_line_f(FILE *f, const unsigned char *,
+                                 CHECKER_char_t ***, size_t *);
 int  checker_read_line(int, const CHECKER_char_t *, int, CHECKER_char_t **);
 int  checker_skip_eoln(int ind, int eof_error_flag);
 void checker_team_close(void);
