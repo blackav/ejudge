@@ -208,6 +208,30 @@ copy_param(void *cfg, struct config_parse_info *params,
     }
     ptr = (char*) cfg + params[i].offset;
     strcpy(ptr, varvalue);
+  } else if (!strcmp(params[i].type, "x")) {
+    char ***ppptr = 0;
+    char **pptr = 0;
+    int    j;
+
+    ppptr = (char***) ((char*) cfg + params[i].offset);
+    if (!*ppptr) {
+      *ppptr = (char**) xcalloc(16, sizeof(char*));
+      (*ppptr)[15] = (char*) 1;
+    }
+    pptr = *ppptr;
+    for (j = 0; pptr[j]; j++) {
+    }
+    if (pptr[j + 1] == (char*) 1) {
+      int newsize = (j + 2) * 2;
+      char **newptr = (char**) xcalloc(newsize, sizeof(char*));
+      newptr[newsize - 1] = (char*) 1;
+      memcpy(newptr, pptr, j * sizeof(char*));
+      xfree(pptr);
+      pptr = newptr;
+      *ppptr = newptr;
+    }
+    pptr[j] = xstrdup(varvalue);
+    pptr[j + 1] = 0;
   }
   return 0;
 }
@@ -320,3 +344,67 @@ parse_param(char const *path,
   return NULL;
 }
 
+int sarray_len(char **a)
+{
+  int i;
+
+  if (!a) return 0;
+  for (i = 0; a[i]; i++);
+  return i;
+}
+
+char **sarray_free(char **a)
+{
+  int i;
+
+  if (!a) return 0;
+  for (i = 0; a[i]; i++) xfree(a[i]);
+  xfree(a);
+  return 0;
+}
+
+char **sarray_merge_pf(char **a1, char **a2)
+{
+  int newlen = 0;
+  char **pptr = 0;
+  int i, j = 0;
+
+  if (!a1 || !a1[0]) return a2;
+  newlen = sarray_len(a1) + sarray_len(a2);
+  pptr = (char**) xcalloc(newlen + 2, sizeof(char*));
+  pptr[newlen + 1] = (char*) 1;
+  if (a1) {
+    for (i = 0; a1[i]; i++) {
+      // FIXME: should we share strings???
+      pptr[j++] = xstrdup(a1[i]);
+    }
+  }
+  if (a2) {
+    for (i = 0; a2[i]; i++) {
+      pptr[j++] = a2[i];
+    }
+  }
+  xfree(a2);
+  return pptr;
+}
+
+char **sarray_merge_arr(int n, char ***pa)
+{
+  int newlen = 0, i, j, k;
+  char **pptr;
+
+  if (!n || !pa) return 0;
+  for (i = 0; i < n; i++)
+    newlen += sarray_len(pa[i]);
+  if (!newlen) return 0;
+  pptr = (char**) xcalloc(newlen + 2, sizeof(char*));
+  pptr[newlen + 1] = (char*) 1;
+  k = 0;
+  for (i = 0; i < n; i++) {
+    if (!pa[i]) continue;
+    for (j = 0; pa[i][j]; j++) {
+      pptr[k++] = xstrdup(pa[i][j]);
+    }
+  }
+  return pptr;
+}
