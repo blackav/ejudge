@@ -795,6 +795,7 @@ judge_update_public_standings(char const     *pk_name,
   if (sscanf(pk_str, "%s %n", cmd, &n) != 1 || pk_str[n])
     return report_bad_packet(pk_name, 0);
   update_standings_file(1);
+  report_ok(pk_name);
   return 0;
 }
 
