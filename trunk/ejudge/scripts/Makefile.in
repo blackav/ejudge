@@ -70,4 +70,4 @@ install :
 clean:
 
 distclean:
-	rm -f Makefile
+	rm -f Makefile ${SCRIPTS}
