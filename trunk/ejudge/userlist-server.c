@@ -25,6 +25,7 @@
 #include "sha.h"
 #include "misctext.h"
 #include "l10n.h"
+#include "tsc.h"
 
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
@@ -45,6 +46,7 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <string.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -439,6 +441,9 @@ build_system_uid_map(struct xml_tree *xml_user_map)
   struct xml_tree *um;
   struct userlist_cfg_user_map *m;
   int max_system_uid = -1, i;
+  userlist_login_hash_t m_hash;
+  struct userlist_user *tmpu;
+  int hash_misses = 0;
 
   if (!xml_user_map || !xml_user_map->first_down) return;
   for (um = xml_user_map->first_down; um; um = um->right) {
@@ -453,30 +458,36 @@ build_system_uid_map(struct xml_tree *xml_user_map)
   XCALLOC(system_uid_map, system_uid_map_size);
   for (i = 0; i < system_uid_map_size; i++)
     system_uid_map[i] = -1;
-  // system root is always mapped to the local root
-  system_uid_map[0] = 0;
   for (um = xml_user_map->first_down; um; um = um->right) {
     m = (struct userlist_cfg_user_map*) um;
     if (m->system_uid < 0) continue;
-    if (!strcmp(m->local_user_str, "root")) {
-      i = 0;
-    } else if (!strcmp(m->local_user_str, "guest")) {
-      i = -1;
+    if (userlist->login_hash_table) {
+      m_hash = userlist_login_hash(m->local_user_str);
+      i = m_hash % userlist->login_hash_size;
+      while ((tmpu = userlist->login_hash_table[i])
+             && (tmpu->login_hash != m_hash
+                 || strcmp(tmpu->login, m->local_user_str))) {
+        hash_misses++;
+        i = (i + userlist->login_hash_step) % userlist->login_hash_size;
+      }
+      if (!tmpu) i = userlist->user_map_size;
+      else i = tmpu->id;
     } else {
       for (i = 1; i < userlist->user_map_size; i++) {
         if (!userlist->user_map[i]) continue;
         if (!userlist->user_map[i]->login) continue;
         if (!strcmp(userlist->user_map[i]->login, m->local_user_str)) break;
       }
-      if (i >= userlist->user_map_size) {
-        err("build_system_uid_map: no local user %s", m->local_user_str);
-        i = -1;
-      }
+    }
+    if (i >= userlist->user_map_size) {
+      err("build_system_uid_map: no local user %s", m->local_user_str);
+      i = -1;
     }
     info("system user %s(%d) is mapped to local user %s(%d)",
          m->system_user_str, m->system_uid, m->local_user_str, i);
     system_uid_map[m->system_uid] = i;
   }
+  if (hash_misses > 0) info("hash misses: %d", hash_misses);
 }
 
 static void
@@ -777,7 +788,7 @@ cmd_register_new(struct client_state *p,
                  int pkt_len,
                  struct userlist_pk_register_new * data)
 {
-  struct userlist_user * user;
+  struct userlist_user * user, *tmpu;
   char * buf;
   unsigned char * login;
   unsigned char * email;
@@ -787,6 +798,8 @@ cmd_register_new(struct client_state *p,
   unsigned char passwd_buf[64];
   struct contest_desc *cnts = 0;
   unsigned char * originator_email = 0;
+  userlist_login_hash_t login_hash;
+  int i;
 
   // validate packet
   login = data->data;
@@ -841,15 +854,30 @@ cmd_register_new(struct client_state *p,
     urlptr += sprintf(urlptr, "&locale_id=%d", data->locale_id);
   }
 
-  user = (struct userlist_user*) userlist->b.first_down;
-  while (user) {
-    if (!strcmp(user->login,login)) {
-      //Login already exists
+  if (userlist->login_hash_table) {
+    login_hash = userlist_login_hash(login);
+    i = login_hash % userlist->login_hash_size;
+    while ((user = userlist->login_hash_table[i])
+           && (user->login_hash != login_hash
+               || strcmp(user->login, login) != 0)) {
+      i = (i + userlist->login_hash_step) % userlist->login_hash_size;
+    }
+    if (user) {
       send_reply(p, -ULS_ERR_LOGIN_USED);
       CONN_ERR("login already exists");
       return;
     }
-    user = (struct userlist_user*) user->b.right;
+  } else {
+    user = (struct userlist_user*) userlist->b.first_down;
+    while (user) {
+      if (!strcmp(user->login,login)) {
+        //Login already exists
+        send_reply(p, -ULS_ERR_LOGIN_USED);
+        CONN_ERR("login already exists");
+        return;
+      }
+      user = (struct userlist_user*) user->b.right;
+    }
   }
 
   ASSERT(!user);
@@ -861,6 +889,26 @@ cmd_register_new(struct client_state *p,
   strcpy(user->email,email);
   user->name = xstrdup("");
   user->default_use_cookies = -1;
+  user->login_hash = login_hash;
+
+  if (userlist->login_hash_table) {
+    if (userlist->login_cur_fill >= userlist->login_thresh) {
+      if (userlist_build_login_hash(userlist) < 0) {
+        // FIXME: handle gracefully?
+        SWERR(("userlist_build_login_hash failed unexpectedly"));
+      }
+    }
+    i = login_hash % userlist->login_hash_size;
+    while ((tmpu = userlist->login_hash_table[i])) {
+      if (tmpu->login_hash == login_hash && !strcmp(tmpu->login, login)) {
+        // FIXME: handle gracefully?
+        SWERR(("Adding non-unique login???"));
+      }
+      i = (i + userlist->login_hash_step) % userlist->login_hash_size;
+    }
+    userlist->login_hash_table[i] = user;
+    userlist->login_cur_fill++;
+  }
 
   generate_random_password(8, passwd_buf);
   pwd = (struct userlist_passwd*) userlist_node_alloc(USERLIST_T_PASSWORD);
@@ -942,8 +990,13 @@ remove_cookie(struct userlist_cookie * cookie)
   struct xml_tree * cookies;
   struct userlist_user * user;
 
+  if (userlist->cookie_hash_table) {
+    userlist_cookie_hash_del(userlist, cookie);
+  }
+
   cookies = cookie->b.up;
   user = (struct userlist_user*) cookies->up;
+  ASSERT(user == cookie->user);
   
   if (cookie->b.left) {
     cookie->b.left->right = cookie->b.right;
@@ -1049,6 +1102,28 @@ check_all_users(void)
   }
 }
 
+static unsigned long long
+generate_random_unique_cookie(void)
+{
+  unsigned long long val;
+  struct userlist_cookie *ck;
+  int i;
+
+  while (1) {
+    val = generate_random_cookie();
+    if (!val) continue;
+    if (!userlist->cookie_hash_table) break;
+    i = val % userlist->cookie_hash_size;
+    while (1) {
+      if (!(ck = userlist->cookie_hash_table[i])) break;
+      if (ck->cookie == val) break;
+      i = (i + userlist->cookie_hash_step) % userlist->cookie_hash_size;
+    }
+    if (!ck) break;
+  }
+  return val;
+}
+
 static void
 cmd_do_login(struct client_state *p,
              int pkt_len,
@@ -1056,12 +1131,14 @@ cmd_do_login(struct client_state *p,
 {
   struct userlist_user * user;
   struct userlist_pk_login_ok * answer;
-  int ans_len, act_pkt_len;
+  int ans_len, act_pkt_len, i;
   char * login;
   char * password;
   char * name;
   struct userlist_cookie * cookie;
   struct passwd_internal pwdint;
+  userlist_login_hash_t login_hash;
+  unsigned long long tsc1, tsc2;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet is too small: %d", pkt_len);
@@ -1097,77 +1174,91 @@ cmd_do_login(struct client_state *p,
     return;
   }
 
-  user = (struct userlist_user*) userlist->b.first_down;
-  while (user) {
-    ASSERT(user->b.tag == USERLIST_T_USER);
-    if (!strcmp(user->login,login)) {
-      if (!user->register_passwd || !user->register_passwd->b.text) {
-        CONN_INFO("EMPTY PASSWORD");
-        send_reply(p, -ULS_ERR_INVALID_PASSWORD);
-        user->last_access_time = cur_time;
-        dirty = 1;
-        return;
-      }
-      if (passwd_check(&pwdint, user->register_passwd) >= 0) {
-        //Login and password correct
-        ans_len = sizeof(struct userlist_pk_login_ok)
-          + strlen(user->name) + 1 + strlen(user->login) + 1;
-        answer = alloca(ans_len);
-
-        if (data->use_cookies == -1) {
-          data->use_cookies = user->default_use_cookies;
-        }
-        if (data->use_cookies == -1) {
-          data->use_cookies = DEFAULT_SERVER_USE_COOKIES;
-        }
-        if (data->use_cookies) {        
-          cookie = create_cookie(user);
-          cookie->user = user;
-          cookie->locale_id = data->locale_id;
-          cookie->ip = data->origin_ip;
-          cookie->contest_id = data->contest_id;
-          cookie->expire = time(0)+24*60*60;
-          answer->reply_id = ULS_LOGIN_COOKIE;
-          cookie->cookie = generate_random_cookie();
-          answer->cookie = cookie->cookie;
-          dirty = 1;
-        } else {
-          answer->reply_id = ULS_LOGIN_OK;
-          answer->cookie = 0;
-        }
-
-        answer->user_id = user->id;
-        answer->contest_id = data->contest_id;
-        answer->login_len = strlen(user->login);
-        name = answer->data + answer->login_len + 1;
-        answer->name_len = strlen(user->name);
-        strcpy(answer->data, user->login);
-        strcpy(name, user->name);
-        enqueue_reply_to_client(p,ans_len,answer);
-
-        user->last_login_time = cur_time;
-        user->last_access_time = cur_time;
-        dirty = 1;
-        CONN_INFO("OK, cookie = %llx", answer->cookie);
-        p->user_id = user->id;
-        p->ip = data->origin_ip;
-        p->cookie = answer->cookie;
-        return;
-      } else {
-        //Incorrect password
-        CONN_INFO("BAD PASSWORD");
-        send_reply(p, -ULS_ERR_INVALID_PASSWORD);
-        user->last_access_time = cur_time;
-        dirty = 1;
-        return;
-      }
+  rdtscll(tsc1);
+  if (userlist->login_hash_table) {
+    login_hash = userlist_login_hash(login);
+    i = login_hash % userlist->login_hash_size;
+    while (1) {
+      if (!(user = userlist->login_hash_table[i])) break;
+      if (user->login_hash == login_hash && !strcmp(user->login, login))
+        break;
+      i = (i + userlist->login_hash_step) % userlist->login_hash_size;
     }
-    user = (struct userlist_user*) user->b.right;
+  } else {
+    for (i = 1; i < userlist->user_map_size; i++) {
+      user = userlist->user_map[i];
+      if (user && !strcmp(user->login, login)) break;
+    }
+    if (i >= userlist->user_map_size) user = 0;
+  }
+  rdtscll(tsc2);
+  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+
+  if (!user) {
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    CONN_INFO("BAD USER");
+    return;
+  }
+  ASSERT(user->b.tag == USERLIST_T_USER);
+  if (!user->register_passwd || !user->register_passwd->b.text) {
+    CONN_INFO("EMPTY PASSWORD");
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    user->last_access_time = cur_time;
+    dirty = 1;
+    return;
+  }
+  if (passwd_check(&pwdint, user->register_passwd) < 0) {
+    CONN_INFO("BAD PASSWORD");
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    user->last_access_time = cur_time;
+    dirty = 1;
+    return;
   }
 
-  //Wrong login
-  send_reply(p, -ULS_ERR_INVALID_LOGIN);
-  CONN_INFO("BAD USER");
+  //Login and password correct
+  ans_len = sizeof(struct userlist_pk_login_ok)
+    + strlen(user->name) + 1 + strlen(user->login) + 1;
+  answer = alloca(ans_len);
+
+  if (data->use_cookies == -1) {
+    data->use_cookies = user->default_use_cookies;
+  }
+  if (data->use_cookies == -1) {
+    data->use_cookies = DEFAULT_SERVER_USE_COOKIES;
+  }
+  if (data->use_cookies) {        
+    cookie = create_cookie(user);
+    cookie->user = user;
+    cookie->locale_id = data->locale_id;
+    cookie->ip = data->origin_ip;
+    cookie->contest_id = data->contest_id;
+    cookie->expire = time(0)+24*60*60;
+    answer->reply_id = ULS_LOGIN_COOKIE;
+    cookie->cookie = generate_random_unique_cookie();
+    answer->cookie = cookie->cookie;
+    userlist_cookie_hash_add(userlist, cookie);
+    dirty = 1;
+  } else {
+    answer->reply_id = ULS_LOGIN_OK;
+    answer->cookie = 0;
+  }
+
+  answer->user_id = user->id;
+  answer->contest_id = data->contest_id;
+  answer->login_len = strlen(user->login);
+  name = answer->data + answer->login_len + 1;
+  answer->name_len = strlen(user->name);
+  strcpy(answer->data, user->login);
+  strcpy(name, user->name);
+  enqueue_reply_to_client(p,ans_len,answer);
+
+  user->last_login_time = cur_time;
+  user->last_access_time = cur_time;
+  dirty = 1;
+  p->user_id = user->id;
+  p->ip = data->origin_ip;
+  p->cookie = answer->cookie;
+  CONN_INFO("OK, cookie = %llx, time = %llu us", answer->cookie, tsc2);
 }
 
 static void
@@ -1183,6 +1274,8 @@ cmd_team_login(struct client_state *p, int pkt_len,
   struct userlist_cookie *cookie;
   int out_size = 0, login_len, name_len;
   int i, errcode;
+  unsigned long long tsc1, tsc2;
+  userlist_login_hash_t login_hash;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet length is too small: %d", pkt_len);
@@ -1230,11 +1323,27 @@ cmd_team_login(struct client_state *p, int pkt_len,
     return;
   }
 
-  for (i = 1; i < userlist->user_map_size; i++) {
-    if (!(u = userlist->user_map[i])) continue;
-    if (!strcmp(u->login, login_ptr)) break;
+  rdtscll(tsc1);
+  if (userlist->login_hash_table) {
+    login_hash = userlist_login_hash(login_ptr);
+    i = login_hash % userlist->login_hash_size;
+    while (1) {
+      if (!(u = userlist->login_hash_table[i])) break;
+      if (u->login_hash == login_hash && !strcmp(u->login, login_ptr))
+        break;
+      i = (i + userlist->login_hash_step) % userlist->login_hash_size;
+    }
+  } else {
+    for (i = 1; i < userlist->user_map_size; i++) {
+      if (!(u = userlist->user_map[i])) continue;
+      if (!strcmp(u->login, login_ptr)) break;
+    }
+    if (i >= userlist->user_map_size) u = 0;
   }
-  if (i >= userlist->user_map_size) {
+  rdtscll(tsc2);
+  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+
+  if (!u) {
     CONN_ERR("BAD LOGIN");
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
@@ -1250,7 +1359,12 @@ cmd_team_login(struct client_state *p, int pkt_len,
       if (c->id == data->contest_id) break;
     }
   }
-  if (!c || c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
+  if (!c) {
+    CONN_ERR("not registered");
+    send_reply(p, -ULS_ERR_NOT_REGISTERED);
+    return;
+  }
+  if (c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
       || (c->flags & USERLIST_UC_LOCKED)) {
     CONN_ERR("not allowed to participate");
     send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
@@ -1278,10 +1392,11 @@ cmd_team_login(struct client_state *p, int pkt_len,
     cookie = create_cookie(u);
     cookie->user = u;
     cookie->ip = data->origin_ip;
-    cookie->cookie = generate_random_cookie();
+    cookie->cookie = generate_random_unique_cookie();
     cookie->expire = cur_time + 60 * 60 * 24;
     cookie->contest_id = data->contest_id;
     cookie->locale_id = data->locale_id;
+    userlist_cookie_hash_add(userlist, cookie);
     out->cookie = cookie->cookie;
     out->reply_id = ULS_LOGIN_COOKIE;
   } else {
@@ -1301,7 +1416,7 @@ cmd_team_login(struct client_state *p, int pkt_len,
   enqueue_reply_to_client(p, out_size, out);
   dirty = 1;
   u->last_login_time = cur_time;
-  CONN_INFO("%d,%s,%llx", u->id, u->login,out->cookie);
+  CONN_INFO("%d,%s,%llx, time = %llu us", u->id, u->login,out->cookie, tsc2);
 }
 
 static void
@@ -1317,6 +1432,8 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   size_t out_size = 0, errcode;
   struct userlist_cookie *cookie;
   opcap_t caps;
+  unsigned long long tsc1, tsc2;
+  userlist_login_hash_t login_hash;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet length too small: %d", pkt_len);
@@ -1360,11 +1477,27 @@ cmd_priv_login(struct client_state *p, int pkt_len,
     return;
   }
 
-  for (i = 1; i < userlist->user_map_size; i++) {
-    if (!(u = userlist->user_map[i])) continue;
-    if (!strcmp(u->login, login_ptr)) break;
+  rdtscll(tsc1);
+  if (userlist->login_hash_table) {
+    login_hash = userlist_login_hash(login_ptr);
+    i = login_hash % userlist->login_hash_size;
+    while (1) {
+      if (!(u = userlist->login_hash_table[i])) break;
+      if (u->login_hash == login_hash && !strcmp(u->login, login_ptr))
+        break;
+      i = (i + userlist->login_hash_step) % userlist->login_hash_size;
+    }
+  } else {
+    for (i = 1; i < userlist->user_map_size; i++) {
+      if (!(u = userlist->user_map[i])) continue;
+      if (!strcmp(u->login, login_ptr)) break;
+    }
+    if (i >= userlist->user_map_size) u = 0;
   }
-  if (i >= userlist->user_map_size) {
+  rdtscll(tsc2);
+  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+
+  if (!u) {
     CONN_ERR("BAD LOGIN");
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
@@ -1422,11 +1555,12 @@ cmd_priv_login(struct client_state *p, int pkt_len,
     cookie = create_cookie(u);
     cookie->user = u;
     cookie->ip = data->origin_ip;
-    cookie->cookie = generate_random_cookie();
+    cookie->cookie = generate_random_unique_cookie();
     cookie->expire = cur_time + 60 * 60 * 24;
     cookie->contest_id = data->contest_id;
     cookie->locale_id = data->locale_id;
     cookie->priv_level = data->priv_level;
+    userlist_cookie_hash_add(userlist, cookie);
     out->cookie = cookie->cookie;
     out->reply_id = ULS_LOGIN_COOKIE;
   } else {
@@ -1448,7 +1582,7 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   enqueue_reply_to_client(p, out_size, out);
   dirty = 1;
   u->last_login_time = cur_time;
-  CONN_INFO("%d,%s,%llx", u->id, u->login,out->cookie);
+  CONN_INFO("%d,%s,%llx, time = %llu us", u->id, u->login,out->cookie, tsc2);
 }
 
 static void
@@ -1461,6 +1595,9 @@ cmd_check_cookie(struct client_state *p,
   int anslen;
   struct userlist_cookie * cookie;
   unsigned char *name_beg;
+  unsigned long long tsc1, tsc2;
+  int i;
+  time_t current_time = time(0);
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -1477,6 +1614,82 @@ cmd_check_cookie(struct client_state *p,
     return;
   }
 
+  rdtscll(tsc1);
+  if (userlist->cookie_hash_table) {
+    i = data->cookie % userlist->cookie_hash_size;
+    while ((cookie = userlist->cookie_hash_table[i])
+           && cookie->cookie != data->cookie) {
+      i = (i + userlist->cookie_hash_step) % userlist->cookie_hash_size;
+    }
+  } else {
+    for (i = 1; i < userlist->user_map_size; i++) {
+      if (!(user = userlist->user_map[i])) continue;
+      if (!user->cookies) continue;
+      cookie = (struct userlist_cookie*) user->cookies->first_down;
+      while (cookie) {
+        if (cookie->cookie == data->cookie) break;
+        cookie = (struct userlist_cookie*) cookie->b.right;
+      }
+      if (cookie) break;
+    }
+    if (i >= userlist->user_map_size) cookie = 0;
+  }
+  rdtscll(tsc2);
+  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+
+  if (!cookie) {
+    CONN_INFO("FAILED: no such cookie");
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  ASSERT(cookie->cookie == data->cookie);
+  user = cookie->user;
+  ASSERT(user);
+  if (cookie->ip != data->origin_ip) {
+    CONN_INFO("FAILED: IP address mismatch");
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  if (current_time > cookie->expire) {
+    CONN_INFO("FAILED: cookie expired");
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+
+  anslen = sizeof(struct userlist_pk_login_ok)
+    + strlen(user->name) + 1 + strlen(user->login) + 1;
+  answer = alloca(anslen);
+  memset(answer, 0, anslen);
+  if (data->locale_id != -1) {
+    cookie->locale_id = data->locale_id;
+    dirty = 1;
+    user->last_minor_change_time = cur_time;
+  }
+  if (data->contest_id != 0) {
+    cookie->contest_id = data->contest_id;
+    dirty = 1;
+    user->last_minor_change_time = cur_time;
+  }
+  answer->locale_id = cookie->locale_id;
+  answer->reply_id = ULS_LOGIN_COOKIE;
+  answer->user_id = user->id;
+  answer->contest_id = cookie->contest_id;
+  answer->login_len = strlen(user->login);
+  name_beg = answer->data + answer->login_len + 1;
+  answer->name_len = strlen(user->name);
+  answer->cookie = cookie->cookie;
+  strcpy(answer->data, user->login);
+  strcpy(name_beg, user->name);
+  enqueue_reply_to_client(p,anslen,answer);
+  user->last_login_time = cur_time;
+  dirty = 1;
+  CONN_INFO("OK: %d, %s, time = %llu us", user->id, user->login, tsc2);
+  p->user_id = user->id;
+  p->ip = data->origin_ip;
+  p->cookie = data->cookie;
+  return;
+
+  /*
   user = (struct userlist_user*) userlist->b.first_down;
   while (user) {
     if (user->cookies) {
@@ -1529,6 +1742,7 @@ cmd_check_cookie(struct client_state *p,
   // cookie not found
   CONN_INFO("FAILED");
   send_reply(p, -ULS_ERR_NO_COOKIE);
+  */
 }
 
 static void
@@ -1542,6 +1756,8 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   struct userlist_pk_login_ok *out = 0;
   int i, out_size = 0, login_len = 0, name_len = 0, errcode;
   unsigned char *login_ptr, *name_ptr;
+  unsigned long long tsc1, tsc2;
+  time_t current_time = time(0);
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -1555,54 +1771,105 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
-  if (data->contest_id) {
-    if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
-      CONN_ERR("invalid contest: %s", contests_strerror(-errno));
-      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-      return;
-    }
-    if (cnts->client_disable_team) {
-      CONN_ERR("team login is disabled");
-      send_reply(p, -ULS_ERR_NO_PERMS);
-      return;
-    }
-  }
   if (!data->cookie) {
     CONN_ERR("cookie value is 0");
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
 
-  // FIXME: this is quite inefficient
-  for (i = 1; i < userlist->user_map_size; i++) {
-    if (!(u = userlist->user_map[i])) continue;
-    if (!u->cookies) continue;
-    for (cookie = (struct userlist_cookie*) u->cookies->first_down;
-         cookie; cookie = (struct userlist_cookie*) cookie->b.right) {
-      if (cookie->ip == data->origin_ip
-          && !cookie->priv_level
-          && cookie->contest_id == data->contest_id
-          && cookie->expire > cur_time
-          && cookie->cookie == data->cookie) break;
+  rdtscll(tsc1);
+  if (userlist->cookie_hash_table) {
+    i = data->cookie % userlist->cookie_hash_size;
+    while ((cookie = userlist->cookie_hash_table[i])
+           && cookie->cookie != data->cookie) {
+      i = (i + userlist->cookie_hash_step) % userlist->cookie_hash_size;
     }
-    if (cookie) break;
+  } else {
+    for (i = 1; i < userlist->user_map_size; i++) {
+      if (!(u = userlist->user_map[i])) continue;
+      if (!u->cookies) continue;
+      for (cookie = (struct userlist_cookie*) u->cookies->first_down;
+           cookie; cookie = (struct userlist_cookie*) cookie->b.right) {
+        if (cookie->cookie == data->cookie) break;
+      }
+      if (cookie) break;
+    }
+    if (i >= userlist->user_map_size) cookie = 0;
   }
-  if (i >= userlist->user_map_size) {
+  rdtscll(tsc2);
+  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+
+  if (!cookie) {
     CONN_ERR("cookie not found");
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
-
-  if (!data->contest_id) {
-    data->contest_id = cookie->contest_id;
+  ASSERT(cookie->cookie == data->cookie);
+  u = cookie->user;
+  ASSERT(u);
+  if (cookie->ip != data->origin_ip) {
+    CONN_INFO("FAILED: IP address mismatch");
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
   }
-  if (data->locale_id == -1) {
-    data->locale_id = cookie->locale_id;
+  if (current_time > cookie->expire) {
+    CONN_INFO("FAILED: cookie expired");
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  if (cookie->priv_level > 0) {
+    CONN_INFO("FAILED: privilege level mismatch");
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  if (!data->contest_id && !cookie->contest_id) {
+    CONN_ERR("contest is not defined");
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (data->contest_id && cookie->contest_id
+      && data->contest_id != cookie->contest_id) {
+    CONN_INFO("FAILED: contest_id mismatch");
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  if (data->contest_id && !cookie->contest_id) {
+    if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+      CONN_ERR("invalid contest: %s", contests_strerror(-errno));
+      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
+    if (!cnts->disable_team_password) {
+      CONN_ERR("FAILED: attempt to set cookie's contest_id");
+      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
+    if (cnts->client_disable_team) {
+      CONN_ERR("FAILED: team login is disabled");
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
+    cookie->contest_id = data->contest_id;
+    dirty = 1;
+    u->last_minor_change_time = cur_time;
+  }
+  if (!data->contest_id) {
+    CONN_ERR("contest is not defined");
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (cookie->contest_id != data->contest_id) {
+    CONN_INFO("FAILED: contest_id mismatch");
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
   }
   if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
     CONN_ERR("invalid contest: %s", contests_strerror(-errno));
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
     return;
+  }
+  if (data->locale_id == -1) {
+    data->locale_id = cookie->locale_id;
   }
   if (!contests_check_team_ip(data->contest_id, data->origin_ip)) {
     CONN_ERR("IP is not allowed");
@@ -1615,7 +1882,12 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
       if (c->id == data->contest_id) break;
     }
   }
-  if (!c || c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
+  if (!c) {
+    CONN_ERR("not registered");
+    send_reply(p, -ULS_ERR_NOT_REGISTERED);
+    return;
+  }
+  if (c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
       || (c->flags & USERLIST_UC_LOCKED)) {
     CONN_ERR("not allowed to participate");
     send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
@@ -1652,7 +1924,7 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   enqueue_reply_to_client(p, out_size, out);
   dirty = 1;
   u->last_login_time = cur_time;
-  CONN_INFO("%d,%s", u->id, u->login);
+  CONN_INFO("%d,%s, time = %llu us", u->id, u->login, tsc2);
 }
 
 static void
@@ -1668,6 +1940,8 @@ cmd_priv_check_cookie(struct client_state *p,
   unsigned char *login_ptr, *name_ptr;
   int priv_level, i, errcode;
   opcap_t caps;
+  time_t current_time = time(0);
+  unsigned long long tsc1, tsc2;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -1705,21 +1979,54 @@ cmd_priv_check_cookie(struct client_state *p,
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
-  for (i = 1; i < userlist->user_map_size; i++) {
-    if (!(u = userlist->user_map[i])) continue;
-    if (!u->cookies) continue;
-    for (cookie = (struct userlist_cookie*) u->cookies->first_down;
-         cookie; cookie = (struct userlist_cookie*) cookie->b.right) {
-      if (cookie->ip == data->origin_ip
-          && cookie->contest_id == data->contest_id
-          && cookie->expire > cur_time
-          && cookie->priv_level > 0
-          && cookie->cookie == data->cookie) break;
+
+  rdtscll(tsc1);
+  if (userlist->cookie_hash_table) {
+    i = data->cookie % userlist->cookie_hash_size;
+    while ((cookie = userlist->cookie_hash_table[i])
+           && cookie->cookie != data->cookie) {
+      i = (i + userlist->cookie_hash_step) % userlist->cookie_hash_size;
     }
-    if (cookie) break;
+  } else {
+    for (i = 1; i < userlist->user_map_size; i++) {
+      if (!(u = userlist->user_map[i])) continue;
+      if (!u->cookies) continue;
+      for (cookie = (struct userlist_cookie*) u->cookies->first_down;
+           cookie; cookie = (struct userlist_cookie*) cookie->b.right) {
+        if (cookie->cookie == data->cookie) break;
+      }
+      if (cookie) break;
+    }
+    if (i >= userlist->user_map_size) cookie = 0;
   }
-  if (i >= userlist->user_map_size) {
+  rdtscll(tsc2);
+  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+
+  if (!cookie) {
     CONN_ERR("cookie not found");
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  ASSERT(cookie->cookie == data->cookie);
+  u = cookie->user;
+  ASSERT(u);
+  if (cookie->ip != data->origin_ip) {
+    CONN_INFO("FAILED: IP address mismatch");
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  if (current_time > cookie->expire) {
+    CONN_INFO("FAILED: cookie expired");
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  if (!cookie->priv_level) {
+    CONN_INFO("FAILED: privilege level mismatch");
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  if (cookie->contest_id != data->contest_id) {
+    CONN_INFO("FAILED: contest_id mismatch");
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
@@ -1787,7 +2094,7 @@ cmd_priv_check_cookie(struct client_state *p,
   enqueue_reply_to_client(p, out_size, out);
   dirty = 1;
   u->last_login_time = cur_time;
-  CONN_INFO("%d, %s", u->id, u->login);
+  CONN_INFO("%d, %s, time = %llu us", u->id, u->login, tsc2);
 }
       
 static void
@@ -1829,13 +2136,17 @@ cmd_do_logout(struct client_state *p,
   if (u->cookies) {
     for (cookie = (struct userlist_cookie*) u->cookies->first_down;
          cookie; cookie = (struct userlist_cookie*) cookie->b.right) {
-      if (cookie->ip == data->origin_ip && cookie->cookie == data->cookie)
-        break;
+      if (cookie->cookie == data->cookie) break;
     }
   }
   if (!cookie) {
     CONN_ERR("cookie not found");
     send_reply(p, ULS_OK);
+    return;
+  }
+  if (cookie->ip != data->origin_ip) {
+    CONN_ERR("IP address does not match");
+    send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
 
@@ -3877,6 +4188,11 @@ do_generate_passwd(int contest_id, FILE *log)
             u->id, u->login, u->name, buf);
   }
   fprintf(log, "</table>\n");
+
+  if (userlist_build_cookie_hash(userlist) < 0) {
+    SWERR(("userlist_build_cookie_hash failed unexpectedly"));
+  }
+
   dirty = 1;
   flush_interval /= 2;
 }
@@ -3989,6 +4305,11 @@ do_generate_team_passwd(int contest_id, FILE *log)
             u->id, u->login, u->name, buf);
   }
   fprintf(log, "</table>\n");
+
+  if (userlist_build_cookie_hash(userlist) < 0) {
+    SWERR(("userlist_build_cookie_hash failed unexpectedly"));
+  }
+
   dirty = 1;
   flush_interval /= 2;
 }
@@ -4086,6 +4407,11 @@ do_clear_team_passwords(int contest_id)
       u->team_passwd = 0;
     }
   }
+
+  if (userlist_build_cookie_hash(userlist) < 0) {
+    SWERR(("userlist_build_cookie_hash failed unexpectedly"));
+  }
+
   dirty = 1;
   flush_interval /= 2;
 }
@@ -4394,6 +4720,9 @@ cmd_delete_field(struct client_state *p, int pkt_len,
           }
         }
       }
+      if (userlist_build_cookie_hash(userlist) < 0) {
+        SWERR(("userlist_build_cookie_hash failed unexpectedly"));
+      }
       goto done;
     } // done with cookies
     
@@ -4549,7 +4878,8 @@ cmd_edit_field(struct client_state *p, int pkt_len,
       send_reply(p, -ULS_ERR_NOT_IMPLEMENTED);
       return;
     }
-    if ((updated=userlist_set_user_field_str(u,data->field,data->data)) < 0) {
+    if ((updated=userlist_set_user_field_str(userlist,
+                                             u,data->field,data->data)) < 0) {
       CONN_ERR("the field cannot be changed");
       send_reply(p, -ULS_ERR_CANNOT_CHANGE);
       return;
@@ -4592,12 +4922,15 @@ static void
 cmd_add_field(struct client_state *p, int pkt_len,
               struct userlist_pk_edit_field *data)
 {
-  struct userlist_user *u;
+  struct userlist_user *u, *tmpu;
   struct userlist_member *m;
   int updated = 0, cap_bit;
   struct userlist_contest *reg = 0;
   struct contest_desc *cnts = 0;
   opcap_t caps;
+  userlist_login_hash_t login_hash;
+  int i, new_login_serial;
+  unsigned char new_login_buf[64];
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -4622,13 +4955,59 @@ cmd_add_field(struct client_state *p, int pkt_len,
 
     u = allocate_new_user();
     ASSERT(u->id > 0);
-    u->login = xstrdup("New login");
-    u->email = xstrdup("New email");
+    // assign a unique user_login
+    new_login_serial = -1;
+    while (1) {
+      new_login_serial++;
+      if (!new_login_serial) {
+        snprintf(new_login_buf, sizeof(new_login_buf), "New login");
+      } else {
+        snprintf(new_login_buf, sizeof(new_login_buf), "New login %d",
+                 new_login_serial);
+      }
+      if (userlist->login_hash_table) {
+        login_hash = userlist_login_hash(new_login_buf);
+        i = login_hash % userlist->login_hash_size;
+        while (1) {
+          if (!(tmpu = userlist->login_hash_table[i])) break;
+          if (tmpu->login_hash == login_hash
+              && !strcmp(tmpu->login, new_login_buf)) break;
+          i = (i + userlist->login_hash_step) % userlist->login_hash_size;
+        }
+        if (!userlist->login_hash_table[i]) break;
+      } else {
+        for (i = 0; i < userlist->user_map_size; i++) {
+          if (!(tmpu = userlist->user_map[i])) continue;
+          if (!strcmp(tmpu->login, new_login_buf)) break;
+        }
+        if (i >= userlist->user_map_size) break;
+      }
+    }
+    u->login = xstrdup(new_login_buf);
+    u->email = xstrdup("New_email");
     u->registration_time = cur_time;
     u->last_login_time = cur_time;
-    dirty = 1;
-    flush_interval /= 2;
-    u->last_change_time = cur_time;
+    u->login_hash = userlist_login_hash(u->login);
+
+    if (userlist->login_hash_table) {
+      if (userlist->login_cur_fill >= userlist->login_thresh) {
+        if (userlist_build_login_hash(userlist) < 0) {
+          // FIXME: handle gracefully?
+          SWERR(("userlist_build_login_hash failed unexpectedly"));
+        }
+      }
+      i = login_hash % userlist->login_hash_size;
+      while ((tmpu = userlist->login_hash_table[i])) {
+        if (tmpu->login_hash == login_hash && !strcmp(tmpu->login, u->login)) {
+          // FIXME: handle gracefully?
+          SWERR(("Adding non-unique login???"));
+        }
+        i = (i + userlist->login_hash_step) % userlist->login_hash_size;
+      }
+      userlist->login_hash_table[i] = u;
+      userlist->login_cur_fill++;
+    }
+
     dirty = 1;
     flush_interval /= 2;
     u->last_change_time = cur_time;
@@ -5350,6 +5729,7 @@ main(int argc, char *argv[])
 
   info("userlist-server %s, compiled %s", compile_version, compile_date);
 
+  if (tsc_init() < 0) return 1;
   program_name = argv[0];
   config = userlist_cfg_parse(argv[1]);
   if (!config) return 1;
@@ -5372,6 +5752,8 @@ main(int argc, char *argv[])
     if(!userlist) return 1;
     flush_interval = DEFAULT_FLUSH_INTERVAL;
   }
+  if (userlist_build_login_hash(userlist) < 0) return 1;
+  if (userlist_build_cookie_hash(userlist) < 0) return 1;
   //userlist_unparse(userlist, stdout);
 
   l10n_prepare(config->l10n, config->l10n_dir);
