@@ -1,4 +1,4 @@
-/* -*- mode: c; coding: koi8-r -*- */
+/* -*- mode: c -*- */
 /* $Id$ */
 
 /* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
@@ -16,8 +16,8 @@
  */
 
 #include "config.h"
-
 #include "settings.h"
+
 #include "runlog.h"
 #include "parsecfg.h"
 #include "teamdb.h"
@@ -57,6 +57,10 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <stdarg.h>
+
+#ifndef EJUDGE_CHARSET
+#define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
+#endif /* EJUDGE_CHARSET */
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -1218,7 +1222,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    fprintf(f, "Content-type: text/plain; charset=koi8-r\n\n");
+    fprintf(f, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
     run_write_xml(f, 0);
     break;
 
@@ -1236,7 +1240,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    fprintf(f, "Content-type: text/plain; charset=koi8-r\n\n");
+    fprintf(f, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
     run_write_xml(f, 1);
     break;
 
