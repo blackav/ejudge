@@ -40,10 +40,18 @@
 #define _(x) x
 #endif
 
+#define ERR_R(t, args...) do { do_err_r(__FUNCTION__ , t , ##args); return -1; } while (0)
+#define ERR_C(t, args...) do { do_err_r(__FUNCTION__ , t , ##args); goto _cleanup; } while (0)
+
 /* these constants are for old text-based runlog */
 #define RUN_MAX_IP_LEN 15
 #define RUN_RECORD_SIZE 105
 #define RUN_HEADER_SIZE 105
+
+#define RUNLOG_MAX_SIZE    (1024 * 1024)
+#define RUNLOG_MAX_TEAM_ID 100000
+#define RUNLOG_MAX_PROB_ID 100000
+#define RUNLOG_MAX_SCORE   100000
 
 static struct run_header  head;
 static struct run_entry  *runs;
@@ -51,8 +59,26 @@ static int                run_u;
 static int                run_a;
 static int                run_fd = -1;
 
-#define ERR_R(t, args...) do { do_err_r(__FUNCTION__ , t , ##args); return -1; } while (0)
-#define ERR_C(t, args...) do { do_err_r(__FUNCTION__ , t , ##args); goto _cleanup; } while (0)
+enum
+  {
+    V_REAL_USER = 1,
+    V_VIRTUAL_USER = 2,
+    V_LAST = 2,
+  };
+
+struct user_entry
+{
+  int status;                   /* virtual or real user */
+  int start_time;
+  int stop_time;
+};
+
+/* index for users */
+static int ut_size;
+static struct user_entry **ut_table;
+
+static void build_indices(void);
+static struct user_entry *get_user_entry(int user_id);
 
 static int
 run_read_record(char *buf, int size)
@@ -172,6 +198,8 @@ read_runlog_version_0(void)
   for (i = 0; i < run_u; i++) {
     if (run_read_entry(i) < 0) goto _cleanup;
   }
+  if (runlog_check(0, &head, run_u, runs) < 0) goto _cleanup;
+  build_indices();
 
   return 0;
 
@@ -267,6 +295,9 @@ write_full_runlog_current_version(const char *path)
 int
 run_set_runlog(int total_entries, struct run_entry *entries)
 {
+  if (runlog_check(0, &head, total_entries, entries) < 0)
+    return -1;
+
   if (total_entries > run_a) {
     if (!run_a) run_a = 128;
     xfree(runs);
@@ -282,6 +313,7 @@ run_set_runlog(int total_entries, struct run_entry *entries)
   sf_lseek(run_fd, sizeof(struct run_header), SEEK_SET, "run");
   do_write(run_fd, runs, sizeof(runs[0]) * run_u);
   ftruncate(run_fd, sizeof(runs[0]) * run_u + sizeof(struct run_header));
+  build_indices();
   return 0;
 }
 
@@ -290,6 +322,7 @@ read_runlog(void)
 {
   int filesize;
   int rem;
+  int r;
 
   info("reading runs log (binary)");
 
@@ -325,6 +358,9 @@ read_runlog(void)
   if (run_u > 0) {
     if (do_read(run_fd, runs, sizeof(runs[0]) * run_u) < 0) return -1;
   }
+  if ((r = runlog_check(0, &head, run_u, runs)) < 0) return -1;
+  if (r > 0) runlog_flush();
+  build_indices();
   return 0;
 
  _cleanup:
@@ -404,17 +440,63 @@ run_flush_entry(int num)
   return 0;
 }
 
-static int
-append_record(void)
+int
+runlog_flush(void)
 {
-  if (run_u >= run_a) {
+  if (run_fd < 0) ERR_R("invalid descriptor %d", run_fd);
+  if (sf_lseek(run_fd, sizeof(head), SEEK_SET, "run") == (off_t) -1) return -1;
+  if (do_write(run_fd, runs, run_u * sizeof(runs[0])) < 0) return -1;
+  return 0;
+}
+
+static int
+append_record(time_t t, int uid)
+{
+  int i, j, k;
+
+  ASSERT(run_u <= run_a);
+  if (run_u == run_a) {
     if (!(run_a *= 2)) run_a = 128;
     runs = xrealloc(runs, run_a * sizeof(runs[0]));
-    info("run_add_record: array extended: %d", run_a);
+    memset(&runs[run_u], 0, (run_a - run_u) * sizeof(runs[0]));
+    info("append_record: array extended: %d", run_a);
   }
-  memset(&runs[run_u], 0, sizeof(runs[0]));
-  runs[run_u].submission = run_u;
-  return run_u++;
+
+  if (!run_u
+      || runs[run_u - 1].timestamp < t
+      || (runs[run_u - 1].timestamp == t && runs[run_u - 1].team <= uid)) {
+    memset(&runs[run_u], 0, sizeof(runs[0]));
+    runs[run_u].submission = run_u;
+    return run_u++;
+  }
+
+  i = 0, j = run_u - 1;
+  while (i < j) {
+    k = (i + j) / 2;
+    if (runs[k].timestamp > t
+        || (runs[k].timestamp == t && runs[k].team > uid)) {
+      j = k;
+    } else {
+      i = k + 1;
+    }
+  }
+  ASSERT(i == j);
+  ASSERT(i < run_u);
+  ASSERT(i >= 0);
+
+  memmove(&runs[i + 1], &runs[i], (run_u - i) * sizeof(runs[0]));
+  run_u++;
+  for (j = i + 1; j < run_u; j++)
+    runs[j].submission = j;
+
+  memset(&runs[i], 0, sizeof(runs[0]));
+  runs[i].status = RUN_EMPTY;
+  runs[i].submission = i;
+  if (sf_lseek(run_fd, sizeof(head) + i * sizeof(runs[0]), SEEK_SET,
+               "run") == (off_t) -1) return -1;
+  if (do_write(run_fd, &runs[i], (run_u - i) * sizeof(runs[0])) < 0)
+    return -1;
+  return i;
 }
 
 int
@@ -428,18 +510,68 @@ run_add_record(time_t  timestamp,
                int            language)
 {
   int i;
+  struct user_entry *ue;
+  time_t stop_time;
 
-  /* FIXME: add parameter checking? */
+  if (timestamp <= 0) {
+    err("run_add_record: invalid timestamp %ld", timestamp);
+    return -1;
+  }
+  if (!head.start_time) {
+    err("run_add_record: contest is not yet started");
+    return -1;
+  }
+  if (timestamp < head.start_time) {
+    err("run_add_record: timestamp < start_time");
+    return -1;
+  }
+
   if (locale_id < -1 || locale_id > 127) {
     err("run_add_record: locale_id is out of range");
     return -1;
   }
-  if (language < 0 || language > 255) {
+  if (team <= 0 || team > RUNLOG_MAX_TEAM_ID) {
+    err("run_add_record: team is out of range");
+    return -1;
+  }
+  if (language <= 0 || language >= 255) {
     err("run_add_record: language is out of range");
     return -1;
   }
+  if (problem <= 0 || problem > RUNLOG_MAX_PROB_ID) {
+    err("run_add_record: problem is out of range");
+    return -1;
+  }
 
-  i = append_record();
+  ue = get_user_entry(team);
+  if (ue->status == V_VIRTUAL_USER) {
+    if (!ue->start_time) {
+      err("run_add_record: virtual contest not started");
+      return -1;
+    }
+    if (timestamp < ue->start_time) {
+      err("run_add_record: timestamp < virtual start time");
+      return -1;
+    }
+    stop_time = ue->stop_time;
+    if (!stop_time && head.duration)
+      stop_time = ue->start_time + head.duration;
+    if (stop_time && timestamp > stop_time) {
+      err("run_add_record: timestamp > virtual stop time");
+      return -1;
+    }
+  } else {
+    stop_time = head.stop_time;
+    if (!stop_time && head.duration)
+      stop_time = head.start_time + head.duration;
+    if (stop_time && timestamp > stop_time) {
+      err("run_add_record: timestamp overrun");
+      return -1;
+    }
+    ue->status = V_REAL_USER;
+  }
+
+  i = append_record(timestamp, team);
   runs[i].timestamp = timestamp;
   runs[i].size = size;
   runs[i].locale_id = locale_id;
@@ -470,7 +602,9 @@ run_change_status(int runid, int newstatus, int newtest, int newscore)
 {
   if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
   if (newstatus < 0 || newstatus > 255) ERR_R("bad newstatus: %d", newstatus);
-  if (newtest < -128 || newtest > 127) ERR_R("bad newtest: %d", newtest);
+  if (newtest < -1 || newtest > 127) ERR_R("bad newtest: %d", newtest);
+  if (newscore < -1 || newscore > RUNLOG_MAX_SCORE)
+    ERR_R("bad newscore: %d", newscore);
 
   if (newstatus == RUN_VIRTUAL_START || newstatus == RUN_VIRTUAL_STOP)
     ERR_R("virtual status cannot be changed that way");
@@ -705,19 +839,30 @@ run_get_fog_period(time_t cur_time, int fog_time, int unfog_time)
   }
 }
 
-void
-run_reset(void)
+int
+run_reset(time_t new_duration)
 {
-  if (ftruncate(run_fd, 0) < 0) {
-    err("ftruncate failed: %s", os_ErrorMsg());
-    return;
-  }
-  
+  int i;
+
   run_u = 0;
   if (run_a > 0) {
     memset(runs, 0, sizeof(runs[0]) * run_a);
   }
+  for (i = 0; i < ut_size; i++)
+    xfree(ut_table[i]);
+  xfree(ut_table);
+  ut_table = 0;
+  ut_size = 0;
   memset(&head, 0, sizeof(head));
+  head.duration = new_duration;
+
+  if (ftruncate(run_fd, 0) < 0) {
+    err("ftruncate failed: %s", os_ErrorMsg());
+    return -1;
+  }
+  if (sf_lseek(run_fd, 0, SEEK_SET, "run_reset") == (off_t) -1) return -1;
+  if (do_write(run_fd, &head, sizeof(head)) < 0) return -1;
+  return 0;
 }
 
 unsigned char *
@@ -755,6 +900,9 @@ run_check_duplicate(int run_id)
   p = &runs[run_id];
   for (i = run_id - 1; i >= 0; i--) {
     q = &runs[i];
+    if (q->status == RUN_EMPTY || q->status == RUN_VIRTUAL_START
+        || q->status == RUN_VIRTUAL_STOP)
+      continue;
     if (p->size == q->size
         && p->ip == q->ip
         && p->sha1[0] == q->sha1[0]
@@ -798,11 +946,23 @@ int
 run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
 {
   struct run_entry *out;
+  struct run_entry te;
   int f = 0;
+  struct user_entry *ue;
+  time_t stop_time;
 
   ASSERT(in);
   if (run_id < 0 || run_id >= run_u) ERR_R("bad runid: %d", run_id);
   out = &runs[run_id];
+  ASSERT(out->submission == run_id);
+
+  ASSERT(head.start_time >= 0);
+  if (!head.start_time) {
+    err("run_set_entry: %d: the contest is not started", run_id);
+    return -1;
+  }
+
+  /* refuse to edit some kind of entries */
   if (out->status == RUN_VIRTUAL_START || out->status == RUN_VIRTUAL_STOP) {
     err("run_set_entry: %d: virtual contest start/stop cannot be edited",
         run_id);
@@ -813,290 +973,177 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
     return -1;
   }
 
-  if ((mask & RUN_ENTRY_STATUS) && out->status != in->status) {
-    if (in->status == RUN_VIRTUAL_START
-        || in->status == RUN_VIRTUAL_STOP
-        || in->status == RUN_EMPTY) {
-      err("run_set_entry: %d: special status cannot be set this way", run_id);
-      return -1;
-    }
-    out->status = in->status;
+  /* blindly update all fields */
+  memcpy(&te, out, sizeof(te));
+  if ((mask & RUN_ENTRY_STATUS) && te.status != in->status) {
+    te.status = in->status;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_TIME) && out->timestamp != in->timestamp) {
-    out->timestamp = in->timestamp;
+  if ((mask & RUN_ENTRY_TIME) && te.timestamp != in->timestamp) {
+    te.timestamp = in->timestamp;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_SIZE) && out->size != in->size) {
-    out->size = in->size;
+  if ((mask & RUN_ENTRY_SIZE) && te.size != in->size) {
+    te.size = in->size;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_IP) && out->ip != in->ip) {
-    out->ip = in->ip;
+  if ((mask & RUN_ENTRY_IP) && te.ip != in->ip) {
+    te.ip = in->ip;
     f = 1;
   }
-  if ((mask&RUN_ENTRY_SHA1) && memcmp(out->sha1,in->sha1,sizeof(out->sha1))) {
-    memcmp(out->sha1, in->sha1, sizeof(out->sha1));
+  if ((mask&RUN_ENTRY_SHA1) && memcmp(te.sha1,in->sha1,sizeof(te.sha1))) {
+    memcmp(te.sha1, in->sha1, sizeof(te.sha1));
     f = 1;
   }
-  if ((mask & RUN_ENTRY_USER) && out->team != in->team) {
-    out->team = in->team;
+  if ((mask & RUN_ENTRY_USER) && te.team != in->team) {
+    te.team = in->team;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_PROB) && out->problem != in->problem) {
-    out->problem = in->problem;
+  if ((mask & RUN_ENTRY_PROB) && te.problem != in->problem) {
+    te.problem = in->problem;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_LANG) && out->language != in->language) {
-    out->language = in->language;
+  if ((mask & RUN_ENTRY_LANG) && te.language != in->language) {
+    te.language = in->language;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_LOCALE) && out->locale_id != in->locale_id) {
-    out->locale_id = in->locale_id;
+  if ((mask & RUN_ENTRY_LOCALE) && te.locale_id != in->locale_id) {
+    te.locale_id = in->locale_id;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_TEST) && out->test != in->test) {
-    out->test = in->test;
+  if ((mask & RUN_ENTRY_TEST) && te.test != in->test) {
+    te.test = in->test;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_SCORE) && out->score != in->score) {
-    out->score = in->score;
+  if ((mask & RUN_ENTRY_SCORE) && te.score != in->score) {
+    te.score = in->score;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_IMPORTED) && out->is_imported != in->is_imported) {
-    out->is_imported = in->is_imported;
+  if ((mask & RUN_ENTRY_IMPORTED) && te.is_imported != in->is_imported) {
+    te.is_imported = in->is_imported;
     f = 1;
   }
 
+  /* check consistency of a new record */
+  if (te.status == RUN_VIRTUAL_START || te.status == RUN_VIRTUAL_STOP
+      || te.status == RUN_EMPTY) {
+      err("run_set_entry: %d: special status cannot be set this way", run_id);
+      return -1;
+  }
+  if (te.status > RUN_TRANSIENT_LAST
+      || (te.status > RUN_PSEUDO_LAST && te.status < RUN_TRANSIENT_FIRST)
+      || (te.status > RUN_MAX_STATUS && te.status < RUN_PSEUDO_FIRST)) {
+    err("run_set_entry: %d: invalid status %d", run_id, te.status);
+    return -1;
+  }
+  if (te.team <= 0 || te.team > RUNLOG_MAX_TEAM_ID) {
+    err("run_set_entry: %d: invalid team %d", run_id, te.team);
+    return -1;
+  }
+
+  ue = get_user_entry(te.team);
+  if (ue->status == V_VIRTUAL_USER) {
+    ASSERT(ue->start_time > 0);
+    stop_time = ue->stop_time;
+    if (!stop_time && head.duration > 0)
+      stop_time = ue->start_time + head.duration;
+    if (te.timestamp < ue->start_time) {
+      err("run_set_entry: %d: timestamp < virtual start_time", run_id);
+      return -1;
+    }
+    if (stop_time && te.timestamp > stop_time) {
+      err("run_set_entry: %d: timestamp > virtual stop_time", run_id);
+      return -1;
+    }
+  } else {
+    stop_time = head.stop_time;
+    if (!stop_time && head.duration > 0)
+      stop_time = head.start_time + head.duration;
+    if (te.timestamp < head.start_time) {
+      err("run_set_entry: %d: timestamp < start_time", run_id);
+      return -1;
+    }
+    if (stop_time && te.timestamp > stop_time) {
+      err("run_set_entry: %d: timestamp > stop_time", run_id);
+      return -1;
+    }
+  }
+
+  if (te.size > RUNLOG_MAX_SIZE) {
+    err("run_set_entry: %d: size %zu is invalid", run_id, te.size);
+    return -1;
+  }
+  if (te.problem <= 0 || te.problem > RUNLOG_MAX_PROB_ID) {
+    err("run_set_entry: %d: problem %d is invalid", run_id, te.problem);
+    return -1;
+  }
+  if (te.score < -1 || te.score > RUNLOG_MAX_SCORE) {
+    err("run_set_entry: %d: score %d is invalid", run_id, te.score);
+    return -1;
+  }
+  if (te.locale_id < -1) {
+    err("run_set_entry: %d: locale_id %d is invalid", run_id, te.locale_id);
+    return -1;
+  }
+  if (te.language <= 0 || te.language >= 255) {
+    err("run_set_entry: %d: language %d is invalid", run_id, te.language);
+    return -1;
+  }
+  if (te.test < -1) {
+    err("run_set_entry: %d: test %d is invalid", run_id, te.test);
+    return -1;
+  }
+  if (te.is_imported != 0 && te.is_imported != 1) {
+    err("run_set_entry: %d: is_imported %d is invalid", run_id,te.is_imported);
+    return -1;
+  }
+
+  memcpy(out, &te, sizeof(*out));
+  if (!ue->status) ue->status = V_REAL_USER;
   if (f && run_flush_entry(run_id) < 0) return -1;
   return 0;
 }
 
-enum
-  {
-    V_REAL_USER = 1,
-    V_VIRTUAL_USER = 2,
-  };
-
-struct vt_entry
-{
-  int status;
-  int start_time;
-  int stop_time;
-};
-
-static int vt_size;
-static struct vt_entry **vt_table;
-
-static struct vt_entry *
-get_entry(int user_id)
+static struct user_entry *
+get_user_entry(int user_id)
 {
   ASSERT(user_id > 0);
 
-  if (user_id >= vt_size) {
-    struct vt_entry **new_vt_table = 0;
-    int new_vt_size = vt_size;
+  if (user_id >= ut_size) {
+    struct user_entry **new_ut_table = 0;
+    int new_ut_size = ut_size;
 
-    if (!new_vt_size) new_vt_size = 16;
-    while (new_vt_size <= user_id)
-      new_vt_size *= 2;
-    new_vt_table = xcalloc(new_vt_size, sizeof(new_vt_table[0]));
-    if (vt_size > 0) {
-      memcpy(new_vt_table, vt_table, vt_size * sizeof(vt_table[0]));
+    if (!new_ut_size) new_ut_size = 16;
+    while (new_ut_size <= user_id)
+      new_ut_size *= 2;
+    new_ut_table = xcalloc(new_ut_size, sizeof(new_ut_table[0]));
+    if (ut_size > 0) {
+      memcpy(new_ut_table, ut_table, ut_size * sizeof(ut_table[0]));
     }
-    vt_size = new_vt_size;
-    xfree(vt_table);
-    vt_table = new_vt_table;
-    info("runlog: vt_table is extended to %d", vt_size);
+    ut_size = new_ut_size;
+    xfree(ut_table);
+    ut_table = new_ut_table;
+    info("runlog: ut_table is extended to %d", ut_size);
   }
 
-  if (!vt_table[user_id]) {
-    vt_table[user_id] = xcalloc(1, sizeof(vt_table[user_id][0]));
+  if (!ut_table[user_id]) {
+    ut_table[user_id] = xcalloc(1, sizeof(ut_table[user_id][0]));
   }
-  return vt_table[user_id];
-}
-
-int
-run_build_virtual_table(void)
-{
-  int i;
-  int max_uid = -1;
-  struct vt_entry *pvt;
-  int err_cnt = 0;
-  time_t current_time;
-
-  if (!head.start_time || !head.duration) {
-    if (run_u > 0) {
-      err("runlog: contest is not started, but runlog is not empty!");
-      return -1;
-    }
-    return 0;
-  }
-
-  current_time = time(0);
-
-  // scan the run log for maximum user_id and find the initial size
-  // get_entry function could extend the array as well, but just
-  // to reduce the number of reallocations
-  for (i = 0; i < run_u; i++)
-    if (runs[i].team > max_uid)
-      max_uid = runs[i].team;
-  vt_size = 16;
-  while (vt_size <= max_uid)
-    vt_size *= 2;
-  vt_table = xcalloc(vt_size, sizeof(vt_table[0]));
-
-  for (i = 0; i < run_u; i++) {
-    if (runs[i].status == RUN_EMPTY) continue;
-    pvt = get_entry(runs[i].team);
-    if (runs[i].timestamp == 0) {
-      err("runlog: run %d has zero timestamp", i);
-      err_cnt++;
-      continue;
-    }
-    if (runs[i].timestamp <= 0) {
-      err("runlog: run %d has timestamp <= 0", i);
-      err_cnt++;
-      continue;
-    }
-    if (runs[i].timestamp < head.start_time) {
-      err("runlog: run %d has timestamp < start_time", i);
-      err_cnt++;
-      continue;
-    }
-    if (runs[i].timestamp > current_time) {
-      err("runlog: run %d has timestamp in the future (difference %ld)",
-          i, runs[i].timestamp - current_time);
-      err_cnt++;
-      continue;
-    }
-    if (runs[i].status == RUN_VIRTUAL_START) {
-      switch (pvt->status) {
-      case 0:
-        pvt->status = V_VIRTUAL_USER;
-        pvt->start_time = runs[i].timestamp;
-        break;
-      case V_REAL_USER:
-        err("runlog: run %d: virtual_start for non virtual user %d",
-            i, runs[i].team);
-        err_cnt++;
-        break;
-      case V_VIRTUAL_USER:
-        err("runlog: run %d: virtual_start for virtual user %d",
-            i, runs[i].team);
-        err_cnt++;
-        break;
-      default:
-        abort();
-      }
-    } else if (runs[i].status == RUN_VIRTUAL_STOP) {
-      // this record is optional
-      switch (pvt->status) {
-      case 0:
-        err("runlog: run %d: virtual_stop without virtual_start for user %d",
-            i, runs[i].team);
-        err_cnt++;
-        break;
-      case V_REAL_USER:
-        err("runlog: run %d: virtual_stop for non-virtual user %d",
-            i, runs[i].team);
-        err_cnt++;
-        break;
-      case V_VIRTUAL_USER:
-        ASSERT(pvt->start_time);
-        if (pvt->stop_time) {
-          err("runlog: run %d: duplicated virtual_stop for user %d",
-              i, runs[i].team);
-          err_cnt++;
-        } else if (runs[i].timestamp < pvt->start_time) {
-          err("runlog: run %d: virtual_stop earlier than virtual_start for %d",
-              i, runs[i].team);
-          err_cnt++;
-        } else {
-          // FIXME: check for duration overrun?
-          pvt->stop_time = runs[i].timestamp;
-        }
-        break;
-      default:
-        abort();
-      }
-    } else {
-      switch (pvt->status) {
-      case 0:
-        ASSERT(!pvt->start_time);
-        pvt->status = V_REAL_USER;
-        pvt->start_time = head.start_time;
-        pvt->stop_time = head.stop_time;
-        /* FALLTHROUGH */
-      case V_REAL_USER:
-      case V_VIRTUAL_USER:
-        if (runs[i].timestamp - pvt->start_time > head.duration + 1) {
-          err("runlog: run %d: duration overrun %ld",
-              i, runs[i].timestamp - pvt->start_time);
-          err("problematic timestamp: %ld, should be fixed to: %ld",
-              runs[i].timestamp, pvt->start_time + head.duration);
-          //runs[i].timestamp = pvt->start_time + head.duration;
-          err_cnt++;
-        }
-        if (pvt->stop_time && runs[i].timestamp > pvt->stop_time) {
-          err("runlog: run %d: stop time overrun %ld",
-              i, runs[i].timestamp - pvt->stop_time);
-          err_cnt++;
-        }
-        break;
-      default:
-        abort();
-      }
-    }
-  }
-
-  if (err_cnt > 0) return -1;
-
-  ASSERT(vt_table[0] == 0);
-  for (i = 1; i < vt_size; i++) {
-    if (!vt_table[i]) continue;
-    if (!vt_table[i]->status) {
-      err("runlog: user %d status is zero", i);
-      err_cnt++;
-      continue;
-    }
-    if (!vt_table[i]->start_time) {
-      err("runlog: user %d start_time is zero", i);
-      err_cnt++;
-      continue;
-    }
-    if (vt_table[i]->start_time < 0) {
-      err("runlog: user %d start_time < 0", i);
-      err_cnt++;
-      continue;
-    }
-    if (vt_table[i]->stop_time == 0
-        && current_time - vt_table[i]->start_time > head.duration) {
-      vt_table[i]->stop_time = vt_table[i]->start_time + head.duration;
-    }
-    if (vt_table[i]->stop_time
-        && vt_table[i]->stop_time < vt_table[i]->start_time) {
-      err("runlog: user %d stop_time < start_time", i);
-      err_cnt++;
-      continue;
-    }
-  }
-
-  if (err_cnt > 0) return -1;
-  return 0;
+  return ut_table[user_id];
 }
 
 time_t
 run_get_virtual_start_time(int user_id)
 {
-  struct vt_entry *pvt = get_entry(user_id);
+  struct user_entry *pvt = get_user_entry(user_id);
+  if (pvt->status != V_VIRTUAL_USER) return head.start_time;
   return pvt->start_time;
 }
 
 time_t
 run_get_virtual_stop_time(int user_id, time_t cur_time)
 {
-  struct vt_entry *pvt = get_entry(user_id);
+  struct user_entry *pvt = get_user_entry(user_id);
   if (!pvt->start_time) return 0;
   if (!cur_time) return pvt->stop_time;
   if (pvt->status == V_REAL_USER) return head.stop_time;
@@ -1111,21 +1158,34 @@ run_get_virtual_stop_time(int user_id, time_t cur_time)
 int
 run_get_virtual_status(int user_id)
 {
-  struct vt_entry *pvt = get_entry(user_id);
+  struct user_entry *pvt = get_user_entry(user_id);
   return pvt->status;
 }
 
 int
 run_virtual_start(int user_id, time_t t, unsigned long ip)
 {
-  struct vt_entry *pvt = get_entry(user_id);
+  struct user_entry *pvt = get_user_entry(user_id);
   int i;
 
-  if (pvt->start_time) {
-    err("runlog: virtual contest for %d already started", user_id);
+  if (!head.start_time) {
+    err("run_virtual_start: the contest is not started");
     return -1;
   }
-  i = append_record();
+  ASSERT(head.start_time > 0);
+  if (t < head.start_time) {
+    err("run_virtual_start: timestamp < start_time");
+    return -1;
+  }
+  if (pvt->status == V_REAL_USER) {
+    err("run_virtual_start: user %d is not virtual", user_id);
+    return -1;
+  }
+  if (pvt->status == V_VIRTUAL_USER) {
+    err("run_virtual_start: virtual contest for %d already started", user_id);
+    return -1;
+  }
+  i = append_record(t, user_id);
   runs[i].team = user_id;
   runs[i].timestamp = t;
   runs[i].ip = ip;
@@ -1139,22 +1199,35 @@ run_virtual_start(int user_id, time_t t, unsigned long ip)
 int
 run_virtual_stop(int user_id, time_t t, unsigned long ip)
 {
-  struct vt_entry *pvt = get_entry(user_id);
+  struct user_entry *pvt = get_user_entry(user_id);
   int i;
+  time_t exp_stop_time = 0;
 
-  if (!pvt->start_time) {
-    err("runlog: virtual contest for %d is not yet started", user_id);
+  if (!head.start_time) {
+    err("run_virtual_stop: the contest is not started");
     return -1;
   }
-  if (pvt->stop_time) {
-    err("runlog: virtual contest for %d already stopped", user_id);
+  ASSERT(head.start_time > 0);
+  if (t < head.start_time) {
+    err("run_virtual_stop: timestamp < start_time");
     return -1;
   }
   if (pvt->status != V_VIRTUAL_USER) {
-    err("runlog: user %d is not virtual", user_id);
+    err("run_virtual_stop: user %d is not virtual", user_id);
     return -1;
   }
-  i = append_record();
+  ASSERT(pvt->start_time > 0);
+  if (pvt->stop_time) {
+    err("run_virtual_stop: virtual contest for %d already stopped", user_id);
+    return -1;
+  }
+  if (head.duration > 0) exp_stop_time = pvt->start_time + head.duration;
+  if (t > exp_stop_time) {
+    err("run_virtual_stop: the virtual time ended");
+    return -1;
+  }
+
+  i = append_record(t, user_id);
   runs[i].team = user_id;
   runs[i].timestamp = t;
   runs[i].ip = ip;
@@ -1167,9 +1240,54 @@ run_virtual_stop(int user_id, time_t t, unsigned long ip)
 int
 run_clear_entry(int run_id)
 {
+  struct user_entry *ue;
+  int i;
+
   if (run_id < 0 || run_id >= run_u) ERR_R("bad runid: %d", run_id);
-  memset(&runs[run_id], 0, sizeof(runs[run_id]));
-  runs[run_id].status = RUN_EMPTY;
+  switch (runs[run_id].status) {
+  case RUN_EMPTY:
+    memset(&runs[run_id], 0, sizeof(runs[run_id]));
+    runs[run_id].status = RUN_EMPTY;
+    runs[run_id].submission = run_id;
+    break;
+  case RUN_VIRTUAL_STOP:
+    /* VSTOP events can safely be cleared */ 
+    ue = get_user_entry(runs[run_id].team);
+    ASSERT(ue->status == V_VIRTUAL_USER);
+    ASSERT(ue->start_time > 0);
+    ue->stop_time = 0;
+    memset(&runs[run_id], 0, sizeof(runs[run_id]));
+    runs[run_id].status = RUN_EMPTY;
+    runs[run_id].submission = run_id;
+    break;
+  case RUN_VIRTUAL_START:
+    /* VSTART event must be the only event of this team */
+    for (i = 0; i < run_u; i++) {
+      if (i == run_id) continue;
+      if (runs[i].status == RUN_EMPTY) continue;
+      if (runs[i].team == runs[run_id].team) break;
+    }
+    if (i < run_u) {
+      err("run_clear_entry: VSTART must be the only record for a team");
+      return -1;
+    }
+    ue = get_user_entry(runs[run_id].team);
+    ASSERT(ue->status == V_VIRTUAL_USER);
+    ASSERT(ue->start_time == runs[run_id].timestamp);
+    ASSERT(!ue->stop_time);
+    ue->status = 0;
+    ue->start_time = 0;
+    memset(&runs[run_id], 0, sizeof(runs[run_id]));
+    runs[run_id].status = RUN_EMPTY;
+    runs[run_id].submission = run_id;
+    break;
+  default:
+    /* maybe update indices */
+    memset(&runs[run_id], 0, sizeof(runs[run_id]));
+    runs[run_id].status = RUN_EMPTY;
+    runs[run_id].submission = run_id;
+    break;
+  }
   return run_flush_entry(run_id);
 }
 
@@ -1185,6 +1303,7 @@ run_squeeze_log(void)
     if (i != j) {
       if (first_moved < 0) first_moved = j;
       memcpy(&runs[j], &runs[i], sizeof(runs[j]));
+      runs[j].submission = j;
     }
     j++;
   }
@@ -1238,14 +1357,14 @@ run_clear_variables(void)
   run_u = run_a = 0;
   if (run_fd >= 0) close(run_fd);
   run_fd = -1;
-  if (vt_table) {
-    for (i = 0; i < vt_size; i++) {
-      if (vt_table[i]) xfree(vt_table[i]);
-      vt_table[i] = 0;
+  if (ut_table) {
+    for (i = 0; i < ut_size; i++) {
+      if (ut_table[i]) xfree(ut_table[i]);
+      ut_table[i] = 0;
     }
-    xfree(vt_table);
+    xfree(ut_table);
   }
-  vt_table = 0;
+  ut_table = 0;
 }
 
 int
@@ -1271,11 +1390,9 @@ run_write_xml(FILE *f)
     case RUN_ACCEPTED:
     case RUN_IGNORED:
     case RUN_EMPTY:
-      break;
     case RUN_VIRTUAL_START:
     case RUN_VIRTUAL_STOP:
-      err("run_write_xml: cannot yet export virtual contests");
-      return -1;
+      break;
     default:
       err("run_write_xml: refuse to export XML: runs[%d].status == \"%s\"",
           i, run_status_str(runs[i].status, 0, 0));
@@ -1286,10 +1403,396 @@ run_write_xml(FILE *f)
   return 0;
 }
 
+static void
+check_msg(int is_err, FILE *flog, const unsigned char *format, ...)
+{
+  va_list args;
+  unsigned char buf[1024];
+
+  va_start(args, format);
+  vsnprintf(buf, sizeof(buf), format, args);
+  va_end(args);
+
+  if (is_err) {
+    err("%s", buf);
+    if (flog) fprintf(flog, "Error: %s\n", buf);
+  } else {
+    info("%s", buf);
+    if (flog) fprintf(flog, "%s\n", buf);
+  }
+}
+
+int
+runlog_check(FILE *ferr,
+             struct run_header *phead,
+             size_t nentries,
+             struct run_entry *pentries)
+{
+  int i, j;
+  int max_team_id;
+  struct user_entry *ventries, *v;
+  struct run_entry *e;
+  int nerr = 0;
+  struct run_entry te;
+  unsigned char *pp;
+  time_t prev_time = 0;
+  time_t stop_time = 0, v_stop_time;
+  int retcode = 0;
+
+  ASSERT(phead);
+
+  if (phead->start_time < 0) {
+    check_msg(1, ferr, "Start time %ld is before the epoch",phead->start_time);
+    return -1;
+  }
+  if (phead->stop_time < 0) {
+    check_msg(1,ferr, "Stop time %ld is before the epoch", phead->stop_time);
+    return -1;
+  }
+  if (phead->duration < 0) {
+    check_msg(1,ferr, "Contest duration %ld is negative", phead->duration);
+    return -1;
+  }
+  if (!phead->start_time && phead->stop_time) {
+    check_msg(1,ferr, "Contest start time is not set, but stop time is set!");
+    return -1;
+  }
+  if (phead->start_time && phead->stop_time
+      && phead->start_time > phead->stop_time) {
+    check_msg(1,ferr, "Contest stop time %ld is less than start time %ld",
+              phead->stop_time, phead->start_time);
+    return -1;
+  }
+  if (!nentries) {
+    check_msg(0,ferr, "The runlog is empty");
+    return 0;
+  }
+  if (!phead->start_time) {
+    check_msg(1,ferr, "Start time is not set, but runs present");
+    return -1;
+  }
+
+  /* check local consistency of fields */
+  for (i = 0; i < nentries; i++) {
+    e = &pentries[i];
+    if (e->status > RUN_TRANSIENT_LAST
+        || (e->status > RUN_PSEUDO_LAST && e->status < RUN_TRANSIENT_FIRST)
+        || (e->status > RUN_MAX_STATUS && e->status < RUN_PSEUDO_FIRST)) {
+      check_msg(1,ferr, "Run %d invalid status %d", i, e->status);
+      nerr++;
+      continue;
+    }
+
+    if (e->status == RUN_EMPTY) {
+      if (i > 0 && !e->submission) {
+        check_msg(0,ferr, "Run %d submission for EMPTY is not set", i);
+        e->submission = i;
+      } else if (e->submission != i) {
+        check_msg(1,ferr, "Run %d submission %d does not match index",
+                  i, e->submission);
+        e->submission = i;
+        retcode = 1;
+        //nerr++;
+        //continue;
+      }
+      /* kinda paranoia */
+      memcpy(&te, e, sizeof(te));
+      te.submission = 0;
+      te.status = 0;
+      pp = (unsigned char *) &te;
+      for (j = 0; j < sizeof(te) && !pp[j]; j++);
+      if (j < sizeof(te)) {
+        check_msg(1,ferr, "Run %d is EMPTY and contain garbage", i);
+        nerr++;
+        continue;
+      }
+      continue;
+    }
+
+    if (e->submission != i) {
+      check_msg(1,ferr, "Run %d submission %d does not match index",
+                i, e->submission);
+      e->submission = i;
+      retcode = 1;
+      //nerr++;
+      //continue;
+    }
+    if (e->team <= 0) {
+      check_msg(1,ferr, "Run %d team %d is invalid", i, e->team);
+      nerr++;
+      continue;
+    }
+    if (e->timestamp < 0) {
+      check_msg(1, ferr, "Run %d timestamp %ld is negative", i, e->timestamp);
+      nerr++;
+      continue;
+    }
+    if (!e->timestamp) {
+      check_msg(1, ferr, "Run %d timestamp is not set", i);
+      nerr++;
+      continue;
+    }
+    if (e->timestamp < prev_time) {
+      check_msg(1, ferr, "Run %d timestamp %ld is less than previous %ld",
+                i, e->timestamp, prev_time);
+      nerr++;
+      continue;
+    }
+    prev_time = e->timestamp;
+
+    if (e->status == RUN_VIRTUAL_START || e->status == RUN_VIRTUAL_STOP) {
+      /* kinda paranoia */
+      memcpy(&te, e, sizeof(te));
+      te.submission = 0;
+      te.status = 0;
+      te.team = 0;
+      te.timestamp = 0;
+      te.ip = 0;
+      pp = (unsigned char *) &te;
+      for (j = 0; j < sizeof(te) && !pp[j]; j++);
+      if (j < sizeof(te)) {
+        check_msg(1,ferr, "Run %d is virtual and contain garbage at byte %d",
+                  i, j);
+        nerr++;
+      }
+      continue;
+    }
+
+    /* a regular or transient run */
+    if (e->size > RUNLOG_MAX_SIZE) {
+      check_msg(1, ferr, "Run %d has huge size %zu", i, e->size);
+      nerr++;
+      continue;
+    }
+    if (!e->ip) {
+      check_msg(0, ferr, "Run %d IP is not set", i);
+    }
+    if (!e->sha1[0]&&!e->sha1[1]&&!e->sha1[2]&&!e->sha1[3]&&!e->sha1[4]) {
+      //check_msg(0, ferr, "Run %d SHA1 is not set", i);
+    }
+    if (e->problem <= 0) {
+      check_msg(1, ferr, "Run %d problem %d is invalid", i, e->problem);
+      nerr++;
+      continue;
+    }
+    if (e->problem > RUNLOG_MAX_PROB_ID) {
+      check_msg(1, ferr, "Run %d problem %d is too large", i, e->problem);
+      nerr++;
+      continue;
+    }
+    if (e->score < -1) {
+      check_msg(1, ferr, "Run %d score %d is invalid", i, e->score);
+      nerr++;
+      continue;
+    }
+    if (e->score > RUNLOG_MAX_SCORE) {
+      check_msg(1, ferr, "Run %d score %d is too large", i, e->score);
+      nerr++;
+      continue;
+    }
+    if (e->locale_id < -1) {
+      check_msg(1, ferr, "Run %d locale_id %d is invalid", i, e->locale_id);
+      nerr++;
+      continue;
+    }
+    if (e->language == 0 || e->language == 255) {
+      check_msg(1, ferr, "Run %d language %d is invalid", i, e->language);
+      nerr++;
+      continue;
+    }
+    if (e->test < -1) {
+      check_msg(1, ferr, "Run %d test %d is invalid", i, e->test);
+      nerr++;
+      continue;
+    }
+    if (e->is_imported != 0 && e->is_imported != 1) {
+      check_msg(1,ferr, "Run %d is_imported %d is invalid", i, e->is_imported);
+      nerr++;
+      continue;
+    }
+  } /* end of local consistency check */
+
+  /* do not continue check in case of errors */
+  if (nerr > 0) return -1;
+
+  max_team_id = -1;
+  for (i = 0; i < nentries; i++) {
+    if (pentries[i].status == RUN_EMPTY) continue;
+    if (pentries[i].team > max_team_id) max_team_id = pentries[i].team;
+  }
+  if (max_team_id == -1) {
+    check_msg(0,ferr, "The runlog contains only EMPTY records");
+    return 0;
+  }
+  ventries = alloca((max_team_id + 1) * sizeof(ventries[0]));
+  memset(ventries, 0, (max_team_id + 1) * sizeof(ventries[0]));
+
+  stop_time = phead->stop_time;
+  if (!stop_time && phead->start_time && phead->duration) {
+    // this may be in future
+    stop_time = phead->start_time + phead->duration;
+  }
+
+  for (i = 0; i < nentries; i++) {
+    e = &pentries[i];
+    switch (e->status) {
+    case RUN_EMPTY: break;
+    case RUN_VIRTUAL_START:
+      ASSERT(e->team <= max_team_id);
+      v = &ventries[e->team];
+      if (v->status == V_VIRTUAL_USER) {
+        ASSERT(v->start_time > 0);
+        check_msg(1, ferr, "Run %d: duplicated VSTART", i);
+        nerr++;
+        continue;
+      } else if (v->status == V_REAL_USER) {
+        ASSERT(!v->start_time);
+        ASSERT(!v->stop_time);
+        check_msg(1, ferr, "Run %d: VSTART for non-virtual user", i);
+        nerr++;
+        continue;
+      } else {
+        ASSERT(!v->start_time);
+        v->status = V_VIRTUAL_USER;
+        v->start_time = e->timestamp;
+      }
+      break;
+    case RUN_VIRTUAL_STOP:
+      ASSERT(e->team <= max_team_id);
+      v = &ventries[e->team];
+      ASSERT(v->status >= 0 && v->status <= V_LAST);
+      if (v->status == V_VIRTUAL_USER) {
+        ASSERT(v->start_time > 0);
+        ASSERT(v->stop_time >= 0);
+        if (v->stop_time) {
+          check_msg(1, ferr, "Run %d: duplicated VSTOP", i);
+          nerr++;
+          continue;
+        }
+        if (phead->duration
+            && e->timestamp > v->start_time + phead->duration) {
+          check_msg(1, ferr, "Run %d: VSTOP after expiration of contest", i);
+          nerr++;
+          continue;
+        }
+        v->stop_time = e->timestamp;
+      } else {
+        ASSERT(!v->start_time);
+        ASSERT(!v->stop_time);
+        ASSERT(v->status == 0 || v->status == V_REAL_USER);
+        check_msg(1, ferr, "Run %d: unexpected VSTOP without VSTART", i);
+        nerr++;
+        continue;
+      }
+      break;
+    default:
+      ASSERT(e->team <= max_team_id);
+      v = &ventries[e->team];
+      ASSERT(v->status >= 0 && v->status <= V_LAST);
+      if (v->status == V_VIRTUAL_USER) {
+        ASSERT(v->start_time > 0);
+        ASSERT(v->stop_time >= 0);
+        v_stop_time = v->stop_time;
+        if (!v_stop_time && phead->duration)
+          v_stop_time = v->start_time + phead->duration;
+        if (e->timestamp < v->start_time) {
+          check_msg(1, ferr,
+                    "Run %d timestamp %ld is less that virtual start %ld",
+                    i, e->timestamp, v->start_time);
+          nerr++;
+          continue;
+        }
+        if (v_stop_time && e->timestamp > v_stop_time) {
+          check_msg(1, ferr,
+                    "Run %d timestamp %ld is greater than virtual stop %ld",
+                    i, e->timestamp, v_stop_time);
+          nerr++;
+          continue;
+        }
+      } else {
+        ASSERT(!v->start_time);
+        ASSERT(!v->stop_time);
+        ASSERT(v->status == 0 || v->status == V_REAL_USER);
+        if (e->timestamp < phead->start_time) {
+          check_msg(1,ferr,
+                    "Run %d timestamp %ld is less than contest start %ld",
+                    i, e->timestamp, phead->start_time);
+          nerr++;
+          continue;
+        }
+        if (stop_time && e->timestamp > stop_time) {
+          check_msg(1, ferr,
+                    "Run %d timestamp %ld is greater than contest stop %ld",
+                    i, e->timestamp, stop_time);
+          nerr++;
+          continue;
+        }
+        v->status = V_REAL_USER;
+      }
+      break;
+    }
+  }
+
+  if (nerr > 0) return -1;
+
+  return retcode;
+}
+
+static void
+build_indices(void)
+{
+  int i;
+  int max_team_id = -1;
+  struct user_entry *ue;
+
+  for (i = 0; i < ut_size; i++)
+    xfree(ut_table[i]);
+  xfree(ut_table);
+  ut_size = 0;
+  ut_table = 0;
+
+  /* assume, that the runlog is consistent
+   * scan the whole runlog and build various indices
+   */
+  for (i = 0; i < run_u; i++) {
+    if (runs[i].status == RUN_EMPTY) continue;
+    ASSERT(runs[i].team > 0);
+    if (runs[i].team > max_team_id) max_team_id = runs[i].team;
+  }
+  if (max_team_id <= 0) return;
+
+  ut_size = 128;
+  while (ut_size <= max_team_id)
+    ut_size *= 2;
+
+  XCALLOC(ut_table, ut_size);
+  for (i = 0; i < run_u; i++) {
+    switch (runs[i].status) {
+    case RUN_EMPTY:
+      break;
+    case RUN_VIRTUAL_START:
+      ue = get_user_entry(runs[i].team);
+      ASSERT(!ue->status);
+      ue->status = V_VIRTUAL_USER;
+      ue->start_time = runs[i].timestamp;
+      break;
+    case RUN_VIRTUAL_STOP:
+      ue = get_user_entry(runs[i].team);
+      ASSERT(ue->status == V_VIRTUAL_USER);
+      ASSERT(ue->start_time > 0);
+      ue->stop_time = runs[i].timestamp;
+      break;
+    default:
+      ue = get_user_entry(runs[i].team);
+      if (!ue->status) ue->status = V_REAL_USER;
+      break;
+    }
+  }
+}
+
 /**
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */
-
