@@ -447,6 +447,7 @@ is_valid_status(int status, int mode)
     case RUN_TIME_LIMIT_ERR:
     case RUN_PRESENTATION_ERR:
     case RUN_WRONG_ANSWER_ERR:
+    case RUN_ACCEPTED:
       return 1;
     case RUN_COMPILE_ERR:
     case RUN_REJUDGE:
@@ -1447,11 +1448,24 @@ cmd_team_submit_run(struct client_state *p, int len,
     err("%d: pkt->user_id != p->user_id", p->id);
     return;
   }
+  if (probs[pkt->prob_id]->variant_num > 0) {
+    if (!find_variant(pkt->user_id, pkt->prob_id)) {
+      new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
+      err("%d: cannot get variant", p->id);
+      return;
+    }
+  }
   start_time = contest_start_time;
   stop_time = contest_stop_time;
   if (global->virtual) {
     start_time = run_get_virtual_start_time(p->user_id);
     stop_time = run_get_virtual_stop_time(p->user_id, current_time);
+  }
+  if (probs[pkt->prob_id]->t_deadline
+      && current_time >= probs[pkt->prob_id]->t_deadline) {
+    err("%d: deadline expired", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
+    return;
   }
   if (!start_time) {
     err("%d: contest is not started", p->id);
@@ -1498,6 +1512,13 @@ cmd_team_submit_run(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_DUPLICATED_RUN);
       return;
     }
+  }
+
+  if (probs[pkt->prob_id]->disable_auto_testing) {
+    info("%d: team_submit_run: auto testing disabled", p->id);
+    run_change_status(run_id, RUN_ACCEPTED, 0, -1);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
   }
 
   if (queue_compile_request(pkt->data, pkt->run_len, run_id,
@@ -2212,7 +2233,7 @@ read_compile_packet(char *pname)
   int  runid;
   int  cn;
 
-  int  lang, prob, stat, loc, final_test;
+  int  team, lang, prob, stat, loc, final_test, variant = 0;
 
   char *pbuf = buf;
 
@@ -2227,7 +2248,7 @@ read_compile_packet(char *pname)
     goto bad_packet_error;
   if (sscanf(buf, "%d %n", &code, &n) != 1 || buf[n])
     goto bad_packet_error;
-  if (run_get_param(runid, &loc, &lang, &prob, &stat) < 0)
+  if (run_get_param(runid, &team, &loc, &lang, &prob, &stat) < 0)
     goto bad_packet_error;
   if (stat != RUN_COMPILING) goto bad_packet_error;
   if (code != RUN_OK && code != RUN_COMPILE_ERR && code != RUN_CHECK_FAILED)
@@ -2260,6 +2281,10 @@ read_compile_packet(char *pname)
   cn = find_tester(prob, langs[lang]->arch);
   ASSERT(cn >= 1 && cn <= max_tester && testers[cn]);
 
+  if (probs[prob]->variant_num > 0) {
+    variant = find_variant(team, prob);
+  }
+
   /* generate a packet name */
   generate_packet_name(runid, pkt_base);
   snprintf(exe_in_name, sizeof(exe_in_name),
@@ -2278,12 +2303,12 @@ read_compile_packet(char *pname)
 
   /* create tester packet */
   wsize = snprintf(buf, sizeof(buf),
-                   "%d %d %d %d %d %d %d %d \"%s\" \"%s\"\n",
+                   "%d %d %d %d %d %d %d %d %d \"%s\" \"%s\"\n",
                    global->contest_id, runid, probs[prob]->tester_id,
                    final_test, loc,
                    global->score_system_val,
                    global->team_enable_rep_view,
-                   global->report_error_code,
+                   global->report_error_code, variant,
                    langs[lang]->exe_sfx, langs[lang]->arch);
   if (generic_write_file(buf, wsize, SAFE, global->run_queue_dir,
                          pkt_base, "") < 0)
@@ -2324,7 +2349,7 @@ read_run_packet(char *pname)
     goto bad_packet_error;
   if (sscanf(buf, "%d%d%d %n", &status, &test, &score, &n) != 3 || buf[n])
     goto bad_packet_error;
-  if (run_get_param(runid, 0, &log_lang, &log_prob, &log_stat) < 0)
+  if (run_get_param(runid, 0, 0, &log_lang, &log_prob, &log_stat) < 0)
     goto bad_packet_error;
   if (log_stat != RUN_RUNNING) goto bad_packet_error;
   if (status<0 || status>RUN_ACCEPTED || test<0) goto bad_packet_error;
