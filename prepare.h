@@ -24,6 +24,7 @@
 #include "pathutl.h"
 #include "contests.h"
 #include "parsecfg.h"
+#include "nls.h"
 
 #include <stdio.h>
 
@@ -65,10 +66,9 @@ struct section_global_data
   int    disable_clars;         /* clarification requests disabled */
   int    disable_team_clars;    /* team cannot compose a clarification */
 
-  path_t charset;               /* html pages charset */
-
   path_t name;                  /* name of the contest */
   path_t root_dir;
+  path_t serve_socket;          /* serve's socket name */
 
   int    enable_l10n;           /* enable string translation? */
   path_t l10n_dir;              /* localization message catalog */
@@ -79,6 +79,12 @@ struct section_global_data
   int    contest_id;
   path_t socket_path;
   path_t contests_path;
+
+  /* charsets */
+  path_t charset;               /* html pages charset */
+  struct nls_table *charset_ptr; /* internal charset */
+  path_t standings_charset;
+  struct nls_table *standings_charset_ptr;
 
   /* ====== CONFIGURATION FILES/DIRECTORIES SETUP ====== */
   path_t conf_dir;              /* configuration dir */
@@ -112,9 +118,6 @@ struct section_global_data
 
   /* --- server <-> clients interaction --- */
   path_t pipe_dir;              /* server->client pipes directory */
-  path_t team_dir;              /* team->server communication subdir */
-  path_t team_cmd_dir;          /* team->server commands directory */
-  path_t team_data_dir;         /* team->server data directory */
   path_t judge_dir;             /* judge->server comm. subdir */
   path_t judge_cmd_dir;         /* judge->server commands directory */
   path_t judge_data_dir;        /* judge->server data directory */
@@ -175,6 +178,12 @@ struct section_global_data
   path_t wrong_sound;
   path_t internal_sound;
   path_t start_sound;
+
+  int team_download_time;       /* how often team may download its solutions */
+
+  int cr_serialization_key;     /* semaphore for compile/run serialization */
+  int show_astr_time;
+  int ignore_duplicated_runs;
 };
 
 struct section_problem_data
@@ -258,6 +267,7 @@ struct section_tester_data
   int max_data_size;            /* max size of the data */
   int max_vm_size;              /* max size of the virtual memory */
   int clear_env;                /* whether the environment is cleared */
+  int time_limit_adjustment;
 
   path_t server_root_dir;
   path_t server_var_dir;
