@@ -38,6 +38,8 @@ enum
     ULS_LOGIN_OK,
     ULS_LOGIN_COOKIE,
     ULS_ERR_NO_COOKIE,
+    ULS_ERR_BAD_UID,
+    ULS_EMAIL,
   };
 
 struct userlist_packet __attribute__((packed));

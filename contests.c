@@ -62,6 +62,7 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   sizeof(struct contest_desc),
   sizeof(struct contest_access),
   sizeof(struct contest_ip),
+  sizeof(struct contest_field),
 };
 static size_t const attn_sizes[CONTEST_LAST_ATTN] =
 {
@@ -99,6 +100,17 @@ static void
 attn_free(struct xml_attn *a)
 {
 }
+
+static char const * const field_map[] =
+{
+  0,
+  0,
+  0,
+  "name",
+  "homepage",
+
+  0
+};
 
 static int
 parse_bool(char const *str)
@@ -274,75 +286,74 @@ parse_contest(struct contest_desc *cnts, char const *path)
       }
       xfree(t->text);
       t->text = 0;
+      {
+        struct contest_field *pf = (struct contest_field*) t;
+        int i, n;
 
-
-
-
-      /*
-      pf = (struct field_node*) p;
-      pf->mandatory = -1;
-      for (a = p->first; a; a = a->next) {
-        switch (a->tag) {
-        case AT_ID:
-          for (i = 1; field_map[i]; i++)
-            if (!strcmp(a->text, field_map[i])) break;
-          if (!field_map[i] || i >= F_ARRAY_SIZE) {
-            err("%s:%d:%d: invalid field id \"%s\"",
-                path, a->line, a->column, a->text);
-            goto failed;
+        pf->mandatory = -1;
+        for (a = t->first; a; a = a->next) {
+          switch (a->tag) {
+          case CONTEST_A_ID:
+            for (i = 1; i < CONTEST_LAST_FIELD; i++) {
+              if (!field_map[i]) continue;
+              if (!strcmp(a->text, field_map[i])) break;
+            }
+            if (i >= CONTEST_LAST_FIELD) {
+              err("%s:%d:%d: invalid field id \"%s\"",
+                  path, a->line, a->column, a->text);
+              return -1;
+            }
+            if (cnts->fields[i]) {
+              err("%s:%d:%d: field \"%s\" already defined",
+                  path, a->line, a->column, a->text);
+              return -1;
+            }
+            cnts->fields[i] = pf;
+            break;
+          case CONTEST_A_MANDATORY:
+          case CONTEST_A_OPTIONAL:
+            if (pf->mandatory != -1) {
+              err("%s:%d:%d: attribute \"mandatory\" already defined",
+                  path, a->line, a->column);
+              return -1;
+            }
+            if ((pf->mandatory = parse_bool(a->text)) < 0) {
+              err("%s:%d:%d: invalid boolean value",
+                  path, a->line, a->column);
+              return -1;
+            }
+            if (a->tag == CONTEST_A_OPTIONAL) pf->mandatory = !pf->mandatory;
+            break;
+          case CONTEST_A_SIZE:
+            i = n = 0;
+            if (sscanf(a->text, "%d %n", &i, &n) != 1 || a->text[n]
+                || i <= 0 || i >= 100000) {
+              err("%s:%d:%d: invalid value", path, a->line, a->column);
+              return -1;
+            }
+            pf->size = i;
+            break;
+          case CONTEST_A_MAXLENGTH:
+            i = n = 0;
+            if (sscanf(a->text, "%d %n", &i, &n) != 1 || a->text[n]
+                || i <= 0 || i >= 100000) {
+              err("%s:%d:%d: invalid value", path, a->line, a->column);
+              return -1;
+            }
+            pf->maxlength = i;
+            break;
+          default:
+            err("%s:%d:%d: attribute \"%s\" is invalid here",
+                path, a->line, a->column, attn_map[a->tag]);
+            return -1;
           }
-          if (cfg->fields[i]) {
-            err("%s:%d:%d: field \"%s\" already defined",
-                path, a->line, a->column, a->text);
-            goto failed;
-          }
-          cfg->fields[i] = pf;
-          break;
-        case AT_MANDATORY:
-        case AT_OPTIONAL:
-          if (pf->mandatory != -1) {
-            err("%s:%d:%d: attribute \"mandatory\" already defined",
-                path, a->line, a->column);
-            goto failed;
-          }
-          if ((pf->mandatory = parse_bool(a->text)) < 0) {
-            err("%s:%d:%d: invalid boolean value",
-                path, a->line, a->column);
-            goto failed;
-          }
-          if (a->tag == AT_OPTIONAL) pf->mandatory = !pf->mandatory;
-          break;
-        case AT_SIZE:
-          i = n = 0;
-          if (sscanf(a->text, "%d %n", &i, &n) != 1 || a->text[n]
-              || i <= 0 || i >= 100000) {
-            err("%s:%d:%d: invalid value", path, a->line, a->column);
-            goto failed;
-          }
-          pf->size = i;
-          break;
-        case AT_MAXLENGTH:
-          i = n = 0;
-          if (sscanf(a->text, "%d %n", &i, &n) != 1 || a->text[n]
-              || i <= 0 || i >= 100000) {
-            err("%s:%d:%d: invalid value", path, a->line, a->column);
-            goto failed;
-          }
-          pf->maxlength = i;
-          break;
-        default:
-          err("%s:%d:%d: attribute \"%s\" is invalid here",
-              path, a->line, a->column, attn_map[a->tag]);
-          goto failed;
         }
+        if (pf->mandatory == -1) pf->mandatory = 0;
+        if (!pf->size) pf->size = 64;
+        if (!pf->maxlength) pf->maxlength = 64;
+        if (pf->size > pf->maxlength) pf->size = pf->maxlength;
       }
-      if (pf->mandatory == -1) pf->mandatory = 0;
-      if (!pf->size) pf->size = 64;
-      if (!pf->maxlength) pf->maxlength = 64;
-      if (pf->size > pf->maxlength) pf->size = pf->maxlength;
       break;
-      */
-
 
     default:
       err("%s:%d:%d: tag <%s> is invalid here",
