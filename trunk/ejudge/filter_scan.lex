@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -136,6 +136,7 @@ decd    [0-9]
 "CG" { TR(RUN_COMPILING); }
 "AV" { TR(RUN_AVAILABLE); }
 "RJ" { TR(RUN_REJUDGE); }
+"EM" { TR(RUN_EMPTY); }
 
 0[xX]{hexd}+ { handle_int(); return TOK_INT_L; }
 0{octd}* { handle_int(); return TOK_INT_L; }
@@ -200,6 +201,5 @@ filter_expr_set_string(unsigned char const *str,
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
