@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001,2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2001-2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,15 +13,12 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "sformat.h"
 #include "prepare.h"
 #include "teamdb.h"
+#include "userlist.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/number_io.h>
@@ -46,8 +43,14 @@
  *   Mi - team id
  *   Mn - team name
  *   Ml - team login
- *   Mp - team password (plain text)
- *   Ms - team password (scrambled)
+ *   Mc - city
+ *   MC - city_en
+ *   Mo - country
+ *   MO - country_en
+ *   Mt - inst_short
+ *   MT - inst_short_en
+ *   Mu - inst
+ *   MU - inst_en
  */
 
 int
@@ -307,10 +310,22 @@ sformat_message(char *buf, size_t maxsize, char const *format,
          *   Mi - team id
          *   Mn - team name
          *   Ml - team login
+         *   Mc - city
+         *   MC - city_en
+         *   Mo - country
+         *   MO - country_en
+         *   Mt - inst_short
+         *   MT - inst_short_en
+         *   Mu - inst
+         *   MU - inst_en
          */
         pf++;
         switch (*pf) {
-        case 'i': case 'n': case 'l': case 'p': case 's':
+        case 'i': case 'n': case 'l':
+        case 'c': case 'C':
+        case 't': case 'T':
+        case 'u': case 'U':
+        case 'o': case 'O':
           break;
         case 0:
           is_invalid = 1;
@@ -332,6 +347,46 @@ sformat_message(char *buf, size_t maxsize, char const *format,
             break;
           case 'l':
             papp = team_data->login;
+            break;
+          case 'c':
+            papp = "";
+            if (team_data->user && team_data->user->city)
+              papp = team_data->user->city;
+            break;
+          case 'C':
+            papp = "";
+            if (team_data->user && team_data->user->city_en)
+              papp = team_data->user->city_en;
+            break;
+          case 'o':
+            papp = "";
+            if (team_data->user && team_data->user->country)
+              papp = team_data->user->country;
+            break;
+          case 'O':
+            papp = "";
+            if (team_data->user && team_data->user->country_en)
+              papp = team_data->user->country_en;
+            break;
+          case 't':
+            papp = "";
+            if (team_data->user && team_data->user->instshort)
+              papp = team_data->user->instshort;
+            break;
+          case 'T':
+            papp = "";
+            if (team_data->user && team_data->user->instshort_en)
+              papp = team_data->user->instshort_en;
+            break;
+          case 'u':
+            papp = "";
+            if (team_data->user && team_data->user->inst)
+              papp = team_data->user->inst;
+            break;
+          case 'U':
+            papp = "";
+            if (team_data->user && team_data->user->inst_en)
+              papp = team_data->user->inst_en;
             break;
           default:
             abort();
@@ -471,6 +526,5 @@ sformat_message(char *buf, size_t maxsize, char const *format,
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
