@@ -85,6 +85,12 @@ int write_priv_source(FILE *f, int user_id, int priv_level,
                       unsigned char const *hidden_vars,
                       unsigned char const *extra_args,
                       int run_id, const opcap_t *);
+int write_new_run_form(FILE *f, int user_id, int priv_level,
+                       int sid_mode, unsigned long long sid,
+                       unsigned char const *self_url,
+                       unsigned char const *hidden_vars,
+                       unsigned char const *extra_args,
+                       int run_id, const opcap_t *);
 int write_priv_report(FILE *f, int user_id, int priv_level,
                       int sid_mode, unsigned long long sid,
                       int team_report_flag,
