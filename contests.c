@@ -21,11 +21,13 @@
 
 #include "contests.h"
 #include "pathutl.h"
+#include "userlist.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
 
 #include <string.h>
+#include <time.h>
 
 #define MAX_CONTEST_ID 1000
 
@@ -48,6 +50,7 @@ static char const * const tag_map[] =
   "register_email",
   "register_url",
   "team_url",
+  "registration_deadline",
 
   0
 };
@@ -83,6 +86,10 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   sizeof(struct contest_member), /* CONTEST_GUESTS */
   0,                            /* CONTEST_HEADER_FILE */
   0,                            /* CONTEST_FOOTER_FILE */
+  0,                            /* CONTEST_REGISTER_EMAIL */
+  0,                            /* CONTEST_REGISTER_URL */
+  0,                            /* CONTEST_TEAM_URL */
+  0,                            /* CONTEST_REGISTRATION_DEADLINE */
 };
 static size_t const attn_sizes[CONTEST_LAST_ATTN] =
 {
@@ -152,6 +159,34 @@ static char const * const member_field_map[] =
 
   0,
 };
+
+static int
+parse_date(unsigned char const *s, unsigned long *pd)
+{
+  int year, month, day, hour, min, sec, n;
+  time_t t;
+  struct tm tt;
+
+  if (!s) goto failed;
+  if (sscanf(s, "%d/%d/%d %d:%d:%d %n", &year, &month, &day, &hour,
+             &min, &sec, &n) != 6) goto failed;
+  if (s[n]) goto failed;
+  if (year < 1900 || year > 2100 || month < 1 || month > 12
+      || day < 1 || day > 31 || hour < 0 || hour >= 24
+      || min < 0 || min >= 60 || sec < 0 || sec >= 60) goto failed;
+  tt.tm_sec = sec;
+  tt.tm_min = min;
+  tt.tm_hour = hour;
+  tt.tm_mday = day;
+  tt.tm_mon = month - 1;
+  tt.tm_year = year - 1900;
+  if ((t = mktime(&tt)) == (time_t) -1) goto failed;
+  *pd = t;
+  return 0;
+
+ failed:
+  return -1;
+}
 
 static int
 parse_bool(char const *str)
@@ -385,6 +420,7 @@ parse_contest(struct contest_desc *cnts, char const *path)
   struct xml_attn *a;
   struct xml_tree *t;
   int x, n, mb_id;
+  unsigned char *reg_deadline_str = 0;
 
   for (a = cnts->b.first; a; a = a->next) {
     switch (a->tag) {
@@ -437,6 +473,17 @@ parse_contest(struct contest_desc *cnts, char const *path)
       break;
     case CONTEST_TEAM_URL:
       if (handle_final_tag(path, t, &cnts->team_url) < 0) return -1;
+      break;
+    case CONTEST_REGISTRATION_DEADLINE:
+      if (handle_final_tag(path, t, &reg_deadline_str) < 0) {
+        xfree(reg_deadline_str);
+        return -1;
+      }
+      t->text = reg_deadline_str;
+      if (parse_date(reg_deadline_str, &cnts->reg_deadline) < 0) {
+        err("%s:%d:%d: invalid date", path, t->line, t->column);
+        return -1;
+      }
       break;
     case CONTEST_CONTESTANTS:
       mb_id = CONTEST_M_CONTESTANT;
