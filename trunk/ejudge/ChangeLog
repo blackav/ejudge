@@ -1,3 +1,102 @@
+2002-09-01  Alexander Chernov  <cher@ispras.ru>
+
+	* sformat.c, prepare.c, parsecfg.c: <string.h> is included.
+
+	* mkpasswd.c, misctext.c, make-teamdb.c: copyright notice is updated;
+	<string.h> is included.
+
+2002-06-16  Alexander Chernov  <cher@ispras.ru>
+
+	* sformat.c, serve.c, run.c: <reuse/format_io.h> is included.
+
+2002-05-20  Alexander Chernov  <cher@ispras.ru>
+
+	* mkChangeLog.c:
+	(read_ChangeLog) internal line length limit is increased to 8192.
+
+2002-03-30  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare.c: added missed `use_corr' problem parameter.
+
+2002-03-22  Alexander Chernov  <cher@ispras.ru>
+
+	* makefile: the files from reuse library are removed;
+	configuration section is remade;
+	reuse library is used to compile the sources.
+
+	* pathutl.h: copyright notice is updated;
+	`pathcpy', `pathcat', `path_add_dir', `path_init' functions are
+	  defined `extern inline', only if compiled with gcc.
+
+	* teamdb.c, team.c: copyright notice is updated;
+	`osdeps.h', `logger.h', `xalloc.h' are included from reuse library.
+
+	* submit.c: copyright notice is updated;
+	`logger.h' is included from reuse library.
+
+	* sformat.c: copyright notice is updated;
+	`xalloc.h', `number_io.h' are included from reuse library.
+
+	* serve.c:
+	`xalloc.h', `logger.h', `osdeps.h', `number_io.h' are included from
+	  reuse library.
+
+	* runlog.c: copyright notice is updated;
+	`xalloc.h', `logger.h' are included from reuse library.
+
+	* run.c: copyright notice is updated;
+	`osdeps.h', `logger.h', `exec.h', `xalloc.h', `number_io.h'
+	  are included from reuse library.
+
+	* revinfo.c: copyright notice is updated;
+	(main) removal of file from the database does not cause a fatal error.
+
+	* register.c, prepare.c: copyright notice is updated;
+	`xalloc.h', `logger.h', `osdeps.h' are included from reuse library.
+
+	* pathutl.c: copyright notice is updated;
+	`osdeps.h', `logger.h' are included from reuse library.
+
+	* parsecfg.c: copyright notice is updated;
+	`xalloc.h' is included from reuse library include directory.
+
+	* misctext.c: copyright notice is updated;
+	`xalloc.h' is included from reuse library.
+
+	* master.c: copyright notice is updated;
+	`osdeps.h', `xalloc.h', `logger.h' are included from reuse library.
+
+	* localdb.c: copyright notice is updated;
+	`xalloc.h' is included from reuse library.
+
+	* inetdb.c: copyright notice is updated;
+	`xalloc.h' is include from reuse library.
+
+	* idmap.c: copyright notice is updated;
+	`xalloc.h' is included from reuse library.
+
+	* html.c: copyright notice is updated;
+	`logger.h', `xalloc.h', `osdeps.h' are include from reuse library.
+
+	* compile.c: copyright notice is updated;
+	`xalloc.h', `logger.h', `exec.h', `osdeps.h' are included from reuse
+	  library.
+
+	* clntutil.c: copyright notice is updated;
+	`logger.h', `xalloc.h' are included from reuse library.
+
+	* clarlog.c: copyright notice is updated;
+	`logger.h', `xalloc.h', `osdeps.h' are included from reuse library.
+
+	* clar.c: copyright notice is updated;
+	`logger.h' is included from reuse library.
+
+	* cgi.c: copyright notice is updated;
+	`xalloc.h' is included from reuse library.
+
+	* base64.c: copyright notice is updated;
+	`logger.h' is included from reuse library.
+
 2002-01-09  Alexander Chernov  <cher@ispras.ru>
 
 	* sformat.c: copyright notice is updated;

@@ -1,3 +1,8 @@
+2002-03-22  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.c: copyright notice is updated;
+	`logger.h', `osdeps.h', `xalloc.h' are included from reuse library.
+
 2002-01-08  Alexander Chernov  <cher@ispras.ru>
 
 	* osdeps.c: copyright notice is updated;
