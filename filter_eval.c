@@ -117,6 +117,11 @@ do_eval(struct filter_env *env,
   case TOK_RESULT:
   case TOK_SCORE:
   case TOK_TEST:
+  case TOK_IMPORTED:
+  case TOK_HIDDEN:
+  case TOK_READONLY:
+  case TOK_VARIANT:
+  case TOK_RAWVARIANT:
     if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
     ASSERT(r1.kind == TOK_INT_L);
     if (r1.v.i < 0) r1.v.i = env->rtotal + r1.v.i;
@@ -197,6 +202,37 @@ do_eval(struct filter_env *env,
       res->kind = TOK_INT_L;
       res->type = FILTER_TYPE_INT;
       res->v.i = env->rentries[r1.v.i].test;
+      break;
+    case TOK_IMPORTED:
+      res->kind = TOK_BOOL_L;
+      res->type = FILTER_TYPE_BOOL;
+      res->v.b = env->rentries[r1.v.i].is_imported;
+      break;
+    case TOK_HIDDEN:
+      res->kind = TOK_BOOL_L;
+      res->type = FILTER_TYPE_BOOL;
+      res->v.b = env->rentries[r1.v.i].is_hidden;
+      break;
+    case TOK_READONLY:
+      res->kind = TOK_BOOL_L;
+      res->type = FILTER_TYPE_BOOL;
+      res->v.b = env->rentries[r1.v.i].is_readonly;
+      break;
+    case TOK_VARIANT:
+      res->kind = TOK_INT_L;
+      res->type = FILTER_TYPE_INT;
+      c = env->rentries[r1.v.i].variant;
+      if (!c) {
+        c = find_variant(env->rentries[r1.v.i].team,
+                         env->rentries[r1.v.i].problem);
+      }
+      res->v.i = c;
+      break;
+    case TOK_RAWVARIANT:
+      res->kind = TOK_INT_L;
+      res->type = FILTER_TYPE_INT;
+      c = env->rentries[r1.v.i].variant;
+      res->v.i = c;
       break;
     default:
       abort();
@@ -292,6 +328,34 @@ do_eval(struct filter_env *env,
     res->kind = TOK_INT_L;
     res->type = FILTER_TYPE_INT;
     res->v.i = env->cur->test;
+    break;
+  case TOK_CURIMPORTED:
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    res->v.b = env->cur->is_imported;
+    break;
+  case TOK_CURHIDDEN:
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    res->v.b = env->cur->is_hidden;
+    break;
+  case TOK_CURREADONLY:
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    res->v.b = env->cur->is_readonly;
+    break;
+  case TOK_CURVARIANT:
+    res->kind = TOK_INT_L;
+    res->type = FILTER_TYPE_INT;
+    c = env->cur->variant;
+    if (!c) c = find_variant(env->cur->team, env->cur->problem);
+    res->v.i = c;
+    break;
+  case TOK_CURRAWVARIANT:
+    res->kind = TOK_INT_L;
+    res->type = FILTER_TYPE_INT;
+    c = env->cur->variant;
+    res->v.i = c;
     break;
 
   case TOK_NOW:
