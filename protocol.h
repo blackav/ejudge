@@ -4,7 +4,7 @@
 #ifndef __PROTOCOL_H__
 #define __PROTOCOL_H__
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,10 +16,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include <time.h>
@@ -98,6 +94,9 @@ enum
     SRV_CMD_RESET_FILTER,
     SRV_CMD_CLEAR_RUN,
     SRV_CMD_SQUEEZE_RUNS,
+    SRV_CMD_DUMP_RUNS,
+    SRV_CMD_DUMP_USERS,
+    SRV_CMD_DUMP_STANDINGS,
 
     SRV_CMD_LAST
   };
