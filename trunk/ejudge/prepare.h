@@ -24,6 +24,8 @@
 #include "pathutl.h"
 #include "parsecfg.h"
 
+#include <stdio.h>
+
 enum { PREPARE_SERVE, PREPARE_COMPILE, PREPARE_RUN };
 enum { PREPARE_QUIET = 1, PREPARE_USE_CPP = 2 };
 
@@ -187,14 +189,16 @@ struct section_tester_data
   path_t arch;                  /* checker architecture */
   path_t key;                   /* configuration key */
 
-  int abstract;                 /* is this tester abstract */
-  path_t super;                 /* name of the supertester */
+  int    abstract;              /* is this tester abstract */
+  char **super;                 /* names of the supertesters */
+  int    is_processed;          /* whether this tester has been processed */
 
   int no_core_dump;             /* disable core dumps */
   path_t kill_signal;           /* the signal to kill processes */
   int max_stack_size;           /* max size of the stack */
   int max_data_size;            /* max size of the data */
   int max_vm_size;              /* max size of the virtual memory */
+  int clear_env;                /* whether the environment is cleared */
 
   path_t server_root_dir;
   path_t server_var_dir;
@@ -214,6 +218,8 @@ struct section_tester_data
   path_t prepare_cmd;           /* helper to prepare the executable */
   path_t start_cmd;             /* helper to start testing */
   path_t check_cmd;             /* checker */
+
+  char **start_env;             /* environment variables for start_cmd */
 };
 
 extern struct generic_section_config *config;
@@ -231,5 +237,16 @@ int prepare(char const *, int flags, int mode, char const *opts);
 int create_dirs(int mode);
 
 int find_tester(int, char const *);
+
+void print_problem(FILE *, struct section_problem_data *);
+void print_language(FILE *, struct section_language_data *);
+void print_tester(FILE *, struct section_tester_data *);
+
+void print_global(FILE *);
+void print_all_problems(FILE *);
+void print_all_languages(FILE *);
+void print_all_testers(FILE *);
+
+void print_configuration(FILE *);
 
 #endif /* __PREPARE_H__ */
