@@ -32,6 +32,7 @@ enum
   RUN_PRESENTATION_ERR = 4,
   RUN_WRONG_ANSWER_ERR = 5,
   RUN_CHECK_FAILED     = 6,
+  RUN_PARTIAL          = 7,
   RUN_RUNNING          = 96,
   RUN_COMPILED         = 97,
   RUN_COMPILING        = 98,
