@@ -104,7 +104,7 @@ decd    [0-9]
 "false" { filter_expr_lval = filter_tree_new_bool(tree_mem, 0); return TOK_BOOL_L; }
 
 0[xX]{hexd}+ { handle_int(); return TOK_INT_L; }
-0{octd}+ { handle_int(); return TOK_INT_L; }
+0{octd}* { handle_int(); return TOK_INT_L; }
 [1-9]{decd}* { handle_int(); return TOK_INT_L; }
 
 {ws}+ {}
