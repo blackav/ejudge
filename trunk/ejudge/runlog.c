@@ -1558,10 +1558,12 @@ runlog_check(FILE *ferr,
     check_msg(0,ferr, "The runlog is empty");
     return 0;
   }
+  /*
   if (!phead->start_time) {
     check_msg(1,ferr, "Start time is not set, but runs present");
     return -1;
   }
+  */
 
   /* check local consistency of fields */
   for (i = 0; i < nentries; i++) {
