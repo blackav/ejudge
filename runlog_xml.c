@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -216,43 +216,14 @@ parse_status(const unsigned char *str)
   if (!str) return -1;
   n = 0;
   if (sscanf(str, "%d %n", &x, &n) == 1 && !str[n]) {
-    if (x < 0 || x > 99) return -1;
-    if (x > 9 && x < 20) return -1;
-    if (x > 22 && x < 96) return -1;
+    if (x < 0 || x > RUN_LAST) return -1;
+    if (x > RUN_MAX_STATUS && x < RUN_PSEUDO_FIRST) return -1;
+    if (x > RUN_PSEUDO_LAST && x < RUN_TRANSIENT_FIRST) return -1;
     return x;
   }
 
-  if (!strcasecmp(str, "ok")) {
-    return RUN_OK;
-  } else if (!strcasecmp(str, "ce")) {
-    return RUN_COMPILE_ERR;
-  } else if (!strcasecmp(str, "rt")) {
-    return RUN_RUN_TIME_ERR;
-  } else if (!strcasecmp(str, "tl")) {
-    return RUN_TIME_LIMIT_ERR;
-  } else if (!strcasecmp(str, "pe")) {
-    return RUN_PRESENTATION_ERR;
-  } else if (!strcasecmp(str, "wa")) {
-    return RUN_WRONG_ANSWER_ERR;
-  } else if (!strcasecmp(str, "cf")) {
-    return RUN_CHECK_FAILED;
-  } else if (!strcasecmp(str, "pt")) {
-    return RUN_PARTIAL;
-  } else if (!strcasecmp(str, "ac")) {
-    return RUN_ACCEPTED;
-  } else if (!strcasecmp(str, "ig")) {
-    return RUN_IGNORED;
-  } else if (!strcasecmp(str, "dq")) {
-    return RUN_DISQUALIFIED;
-  } else if (!strcasecmp(str, "st")) {
-    return RUN_VIRTUAL_START;
-  } else if (!strcasecmp(str, "sp")) {
-    return RUN_VIRTUAL_STOP;
-  } else if (!strcasecmp(str, "em")) {
-    return RUN_EMPTY;
-  } else {
-    return -1;
-  }
+  if (run_str_short_to_status(str, &x) < 0) return -1;
+  return x;
 }
 
 static int
@@ -594,29 +565,6 @@ parse_runlog_xml(const unsigned char *str,
   return 0;
 }
 
-static const unsigned char *
-unparse_status(int status)
-{
-  switch (status) {
-  case RUN_OK:               return "OK";
-  case RUN_COMPILE_ERR:      return "CE";
-  case RUN_RUN_TIME_ERR:     return "RT";
-  case RUN_TIME_LIMIT_ERR:   return "TL";
-  case RUN_PRESENTATION_ERR: return "PE";
-  case RUN_WRONG_ANSWER_ERR: return "WA";
-  case RUN_CHECK_FAILED:     return "CF";
-  case RUN_PARTIAL:          return "PT";
-  case RUN_ACCEPTED:         return "AC";
-  case RUN_IGNORED:          return "IG";
-  case RUN_DISQUALIFIED:     return "DQ";
-  case RUN_VIRTUAL_START:    return "ST";
-  case RUN_VIRTUAL_STOP:     return "SP";
-  case RUN_EMPTY:            return "EM";
-  default:
-    return "!INVALID_STATUS!";
-  }
-}
-
 static int
 is_non_empty_sha1(const unsigned long *psha1)
 {
@@ -653,6 +601,7 @@ unparse_runlog_xml(FILE *f,
   int max_user_id;
   unsigned char *astr1, *astr2, *val1, *val2;
   size_t alen1, alen2, asize1, asize2;
+  unsigned char status_buf[32];
 
   asize2 = asize1 = 64;
   astr1 = alloca(asize1);
@@ -762,8 +711,7 @@ unparse_runlog_xml(FILE *f,
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_SHA1],
               unparse_sha1(pp->sha1));
     }
-    fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_STATUS],
-            unparse_status(pp->status));
+    run_status_to_str_short(status_buf, sizeof(status_buf), pp->status);
     if (pp->team) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_USER_ID], pp->team);
     }
