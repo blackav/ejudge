@@ -35,6 +35,7 @@ serve_clnt_edit_run(int sock_fd, int run_id, int mask,
   size_t out_size, in_size = 0, user_login_len;
   unsigned char *user_login_ptr;
   int r;
+  void *void_in;
 
   if (sock_fd < 0) return -SRV_ERR_NOT_CONNECTED;
   if (!user_login) user_login = "";
@@ -64,9 +65,10 @@ serve_clnt_edit_run(int sock_fd, int run_id, int mask,
   if ((r = serve_clnt_send_packet(sock_fd, out_size, out)) < 0) {
     return r;
   }
-  if ((r = serve_clnt_recv_packet(sock_fd, &in_size, (void**) &in)) < 0) {
+  if ((r = serve_clnt_recv_packet(sock_fd, &in_size, &void_in)) < 0) {
     return r;
   }
+  in = void_in;
   if (in_size != sizeof(*in)) {
     xfree(in);
     err("serve_clnt_edit_run: packet length mismatch: %d", in_size);
