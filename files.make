@@ -87,6 +87,7 @@ COMMON_CFILES=\
  l10n.c\
  master_html.c\
  misctext.c\
+ ncurses_utils.c\
  opcaps.c\
  parsecfg.c\
  pathutl.c\
@@ -102,6 +103,10 @@ COMMON_CFILES=\
  team_extra.c\
  team_extra_xml.c\
  testinfo.c\
+ tex_dom.c\
+ tex_dom_parse.c\
+ tex_dom_doc.c\
+ tex_dom_render.c\
  tsc.c\
  userlist.c\
  userlist_cfg.c\
@@ -113,6 +118,7 @@ CFILES=\
  clean-users.c\
  compile.c\
  edit-userlist.c\
+ ejudge-setup.c\
  master.c\
  register.c\
  run.c\
@@ -161,6 +167,7 @@ HFILES=\
  html.h\
  l10n.h\
  misctext.h\
+ ncurses_utils.h\
  nls.h\
  opcaps.h\
  parsecfg.h\
@@ -176,6 +183,7 @@ HFILES=\
  teamdb.h\
  team_extra.h\
  testinfo.h\
+ tex_dom.h\
  tsc.h\
  userlist.h\
  userlist_cfg.h\
