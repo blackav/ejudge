@@ -631,6 +631,9 @@ run_change_status(int runid, int newstatus, int newtest, int newscore)
       || runs[runid].status == RUN_EMPTY)
     ERR_R("this entry cannot be changed");
 
+  if (runs[runid].is_readonly)
+    ERR_R("this entry is read-only");
+
   runs[runid].status = newstatus;
   runs[runid].test = newtest;
   runs[runid].score = newscore;
@@ -954,6 +957,11 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
     return -1;
   }
 
+  if (out->is_readonly && mask != RUN_ENTRY_READONLY) {
+    err("run_set_entry: %d: this entry is read-only", run_id);
+    return -1;
+  }
+
   /* blindly update all fields */
   memcpy(&te, out, sizeof(te));
   if ((mask & RUN_ENTRY_STATUS) && te.status != in->status) {
@@ -1010,6 +1018,10 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
   }
   if ((mask & RUN_ENTRY_HIDDEN) && te.is_hidden != in->is_hidden) {
     te.is_hidden = in->is_hidden;
+    f = 1;
+  }
+  if ((mask & RUN_ENTRY_READONLY) && te.is_readonly != in->is_readonly) {
+    te.is_readonly = in->is_readonly;
     f = 1;
   }
 
@@ -1095,6 +1107,10 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
   if (te.is_imported && te.is_hidden) {
     err("run_set_entry: %d: is_hidden and is_imported both cannot be set",
         run_id);
+    return -1;
+  }
+  if (te.is_readonly != 0 && te.is_readonly != 1) {
+    err("run_set_entry: %d: is_readonly %d is invalid", run_id,te.is_readonly);
     return -1;
   }
 
@@ -1238,12 +1254,20 @@ run_virtual_stop(int user_id, time_t t, unsigned long ip)
 }
 
 int
+run_is_readonly(int run_id)
+{
+  if (run_id < 0 || run_id >= run_u) return 1;
+  return runs[run_id].is_readonly;
+}
+
+int
 run_clear_entry(int run_id)
 {
   struct user_entry *ue;
   int i;
 
   if (run_id < 0 || run_id >= run_u) ERR_R("bad runid: %d", run_id);
+  if (runs[run_id].is_readonly) ERR_R("run %d is readonly", run_id);
   switch (runs[run_id].status) {
   case RUN_EMPTY:
     memset(&runs[run_id], 0, sizeof(runs[run_id]));
@@ -1607,6 +1631,11 @@ runlog_check(FILE *ferr,
     }
     if (e->is_imported != 0 && e->is_imported != 1) {
       check_msg(1,ferr, "Run %d is_imported %d is invalid", i, e->is_imported);
+      nerr++;
+      continue;
+    }
+    if (e->is_readonly != 0 && e->is_readonly != 1) {
+      check_msg(1,ferr, "Run %d is_readonly %d is invalid",i,e->is_readonly);
       nerr++;
       continue;
     }
