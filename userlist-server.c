@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -47,6 +47,7 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include <string.h>
+#include <zlib.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -5168,43 +5169,68 @@ do_backup(void)
   unsigned char *buf = 0;
   FILE *f = 0;
   int fd = -1;
+  unsigned char *xml_buf = 0;
+  size_t xml_len = 0;
+  gzFile gz_dst = 0;
+  unsigned char const *failed_function = 0;
+
+  if (!(f = open_memstream((char**) &xml_buf, &xml_len))) {
+    failed_function = "open_memstream";
+    goto cleanup;
+  }
+  userlist_unparse(userlist, f);
+  if (ferror(f)) {
+    failed_function = "userlist_unparse";
+    goto cleanup;
+  }
+  if (fclose(f) < 0) {
+    failed_function = "fclose";
+    goto cleanup;
+  }
+  f = 0;
 
   buf = alloca(strlen(config->db_path) + 64);
   if (!buf) {
-    err("backup: alloca failed");
-    return;
+    failed_function = "alloca";
+    goto cleanup;
   }
   ptm = localtime(&cur_time);
-  sprintf(buf, "%s.%d%02d%02d",
+  sprintf(buf, "%s.%d%02d%02d.gz",
           config->db_path, ptm->tm_year + 1900,
           ptm->tm_mon + 1, ptm->tm_mday);
-  info("backup: starting backup to %s", buf);
 
+  info("backup: starting backup to %s", buf);
   if ((fd = open(buf, O_CREAT | O_TRUNC | O_WRONLY, 0600)) < 0) {
-    err("backup: fopen for `%s' failed: %s", buf, os_ErrorMsg());
-    return;
+    failed_function = "open";
+    goto cleanup;
   }
-  if (!(f = fdopen(fd, "w"))) {
-    err("backup: fopen for `%s' failed: %s", buf, os_ErrorMsg());
-    close(fd);
-    return;
+  if (!(gz_dst = gzdopen(fd, "wb9"))) {
+    failed_function = "gzdopen";
+    goto cleanup;
   }
   fd = -1;
-  userlist_unparse(userlist, f);
-  if (ferror(f)) {
-    err("backup: write failed: %s", os_ErrorMsg());
-    fclose(f);
-    return;
+  if (!gzwrite(gz_dst, xml_buf, xml_len)) {
+    failed_function = "gzwrite";
+    goto cleanup;
   }
-  if (fclose(f) < 0) {
-    err("backup: fclose() failed: %s", os_ErrorMsg());
-    fclose(f);
-    return;
+  if (gzclose(gz_dst) != Z_OK) {
+    failed_function = "gzclose";
+    goto cleanup;
   }
 
+  xfree(xml_buf);
   info("backup: complete");
   last_backup = cur_time;
   backup_interval = DEFAULT_BACKUP_INTERVAL;
+  return;
+
+ cleanup:
+  if (failed_function) err("backup: %s failed", failed_function);
+  if (f) fclose(f);
+  if (fd >= 0) close(fd);
+  if (gz_dst) gzclose(gz_dst);
+  if (buf) unlink(buf);
+  if (xml_buf) xfree(xml_buf);
 }
 
 static void
@@ -5748,6 +5774,6 @@ main(int argc, char *argv[])
 /**
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "XML_Parser" "XML_Char" "XML_Encoding" "va_list")
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "XML_Parser" "XML_Char" "XML_Encoding" "va_list" "gzFile")
  * End:
  */
