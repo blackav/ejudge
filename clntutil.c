@@ -161,9 +161,8 @@ client_put_header(char const *coding, char const *format, ...)
 }
 
 void
-client_put_footer(void)
+client_put_copyright(void)
 {
-  puts("<hr>");
   printf(_("<p>This is <b>ejudge</b> contest administration system, version %s, compiled %s.\n"
            "<p>This program is copyright (C) 2000-2002 Alexander Chernov.\n"
            "<p>"
@@ -171,6 +170,13 @@ client_put_footer(void)
            "<p>You can download the latest version from <a href=\"%s\">this site</a>.\n"), 
          compile_version, compile_date,
          "http://contest.cmc.msu.ru/download");
+}
+
+void
+client_put_footer(void)
+{
+  puts("<hr>");
+  client_put_copyright();
   puts("</body></html>");
 }
 
