@@ -1015,3 +1015,12 @@ userlist-server.c 1 34 13147678
 master_html.c 1 17 4915091
 serve_clnt/edit_run.c 1 5 214252
 userlist_clnt/set_info.c 1 3 139787
+client_actions.h 1 15 171317
+protocol.h 1 21 562781
+runlog.h 1 22 391185
+serve_clnt.h 1 11 380210
+protocol.c 1 8 213541
+runlog.c 1 26 3683159
+runlog_import.c 1 6 1515087
+runlog_xml.c 1 5 1593778
+serve_clnt/edit_run.c 1 6 218936
