@@ -147,6 +147,9 @@ enum
     SRV_CMD_SET_TEAM_STATUS,
     SRV_CMD_ISSUE_WARNING,
     SRV_CMD_SOFT_UPDATE_STAND,
+    SRV_CMD_PRIV_DOWNLOAD_REPORT,
+    SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT,
+    SRV_CMD_DUMP_MASTER_RUNS,
 
     SRV_CMD_LAST
   };
@@ -203,6 +206,8 @@ enum
     SRV_ERR_ALREADY_PRINTED,
     SRV_ERR_BAD_SESSION_ID,
     SRV_ERR_LANGUAGE_DISABLED,
+    SRV_ERR_FILE_NOT_EXIST,
+    SRV_ERR_FILTER_EXPR,
 
     SRV_ERR_LAST
   };
@@ -368,6 +373,7 @@ enum
     PROT_SERVE_RUN_READONLY_SET = 1024,
     PROT_SERVE_RUN_PAGES_SET = 2048,
     PROT_SERVE_RUN_SOURCE_SET = 4096,
+    PROT_SERVE_RUN_SCORE_ADJ_SET = 8192,
   };
 
 struct prot_serve_pkt_run_info
@@ -385,6 +391,7 @@ struct prot_serve_pkt_run_info
   int is_hidden;
   int tests;
   int score;
+  int score_adj;
   int is_readonly;
   int pages;
   unsigned long ip;
