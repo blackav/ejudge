@@ -198,7 +198,7 @@ base64_decode(char const *in, int size, char *out, int *pflag)
         return s - out;
       } else {
         /* something is wrong */
-        err(_("base64_decode: invalid padding"));
+        err("base64_decode: invalid padding");
         if (pflag) *pflag = 1;
         return s - out;
       }
@@ -217,7 +217,7 @@ base64_decode(char const *in, int size, char *out, int *pflag)
   }
 
   if (ac != 0) {
-    err(_("base64_decode: invalid alignment"));
+    err("base64_decode: invalid alignment");
     if (pflag) *pflag = 1;
   }
   return s - out;

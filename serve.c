@@ -169,7 +169,7 @@ report_error(char const *pk_name, int rm_mode,
 int
 report_bad_packet(char const *pk_name, int rm_mode)
 {
-  err(_("bad packet"));
+  err("bad packet");
   return report_error(pk_name, rm_mode, 0, _("Misformed request"));
 }
 
@@ -392,7 +392,7 @@ team_submit(char const *pk_name, const packet_t pk_str, void *ptr)
   /* check the limits */
   if (check_team_quota(team, src_len) < 0) {
     reply = _("<p>The submission cannot be accepted. Quota exceeded.");
-    err(_("team %d:run quota exceeded"), team);
+    err("team %d:run quota exceeded", team);
     goto report_to_client;
   }
 
@@ -546,7 +546,7 @@ read_team_packet(char const *pk_name)
   if (r == 0) return 0;
   if (r < 0) return -1;
 
-  info(_("packet: %s"), chop(pk_str));
+  info("packet: %s", chop(pk_str));
   sscanf(pk_str, "%s", cmd);
   for (i = 0; team_commands[i].cmd; i++) {
     if (!strcmp(team_commands[i].cmd, cmd))
@@ -578,7 +578,7 @@ read_compile_packet(char *pname)
   if (r == 0) return 0;
   if (r < 0) return -1;
 
-  info(_("compile packet: %s"), chop(buf));
+  info("compile packet: %s", chop(buf));
   if (sscanf(pname, "%d%n", &runid, &n) != 1 || pname[n])
     goto bad_packet_error;
   if (sscanf(buf, "%d %n", &code, &n) != 1 || buf[n])
@@ -620,7 +620,7 @@ read_compile_packet(char *pname)
   return 1;
 
  bad_packet_error:
-  err(_("bad_packet"));
+  err("bad_packet");
   return 0;
 }
 
@@ -644,7 +644,7 @@ read_run_packet(char *pname)
   if (r < 0) return -1;
   if (r == 0) return 0;
 
-  info(_("run packed: %s"), chop(buf));
+  info("run packed: %s", chop(buf));
   if (sscanf(pname, "%d%n", &runid, &n) != 1 || pname[n])
     goto bad_packet_error;
   if (sscanf(buf, "%d%d%d %n", &status, &test, &score, &n) != 3 || buf[n])
@@ -676,7 +676,7 @@ read_run_packet(char *pname)
   return 1;
 
  bad_packet_error:
-  err(_("bad_packet"));
+  err("bad_packet");
   return 0;
 }
 
@@ -706,7 +706,7 @@ process_judge_reply(int clar_ref, int to_all,
   if (clar_get_record(clar_ref, 0, 0, 0, &from, 0, 0, 0) < 0)
     goto exit_notok;
   if (!from) {
-    err(_("cannot reply to judge's message %d"), clar_ref);
+    err("cannot reply to judge's message %d", clar_ref);
     goto exit_notok;
   }
   sprintf(name1, "%06d", clar_ref);
@@ -731,7 +731,7 @@ process_judge_reply(int clar_ref, int to_all,
   if (!to_all) to = from;
 
   /* create new clarid */
-  info(_("coded (%d): %s"), strlen(codedsubj), codedsubj);
+  info("coded (%d): %s", strlen(codedsubj), codedsubj);
   if ((newclar = clar_add_record(time(0), fullmsglen,
                                  ip, 0, to, 0, codedsubj)) < 0)
     goto exit_notok;
@@ -758,7 +758,7 @@ rejudge_run(int run_id)
 
   if (run_get_record(run_id, 0, 0, 0, 0, &lang, 0, 0, 0, 0) < 0) return;
   if (lang <= 0 || lang > max_lang || !langs[lang]) {
-    err(_("rejudge_run: bad language: %d"), lang);
+    err("rejudge_run: bad language: %d", lang);
     return;
   }
 
@@ -885,7 +885,7 @@ judge_start(char const *pk_name, const packet_t pk_str, void *ptr)
 
   run_start_contest(time(&ts));
   contest_start_time = ts;
-  info(_("contest started: %lu"), ts);
+  info("contest started: %lu", ts);
   update_standings_file(0);
   update_status_file(1);
   report_ok(pk_name);
@@ -905,7 +905,7 @@ judge_stop(char const *pk_name, const packet_t pk_str, void *ptr)
 
   run_stop_contest(time(&ts));
   contest_stop_time = ts;
-  info(_("contest stopped: %lu"), ts);
+  info("contest stopped: %lu", ts);
   update_standings_file(0);
   update_status_file(1);
   report_ok(pk_name);
@@ -926,7 +926,7 @@ judge_sched(char const *pk_name, const packet_t pk_str, void *ptr)
 
   run_sched_contest(newtime);
   contest_sched_time = newtime;
-  info(_("contest scheduled: %lu"), newtime);
+  info("contest scheduled: %lu", newtime);
   update_standings_file(0);
   update_status_file(1);
 
@@ -947,14 +947,14 @@ judge_time(char const *pk_name, const packet_t pk_str, void *ptr)
 
   if (check_period(pk_name, "TIME", 0, 1, 1, 0) < 0) return 0;
   if (newtime * 60 < global->contest_time) {
-    err(_("contest time cannot be decreased"));
+    err("contest time cannot be decreased");
     reply = _("<p>The contest time cannot be decreased.");
     goto _cleanup;
   }
 
   contest_duration = newtime * 60;
   run_set_duration(contest_duration);
-  info(_("contest time reset to %d"), newtime);
+  info("contest time reset to %d", newtime);
   update_standings_file(0);
   update_status_file(1);
 
@@ -1349,7 +1349,7 @@ read_judge_packet(char const *pk_name)
   if (r == 0) return 0;
   if (r < 0) return -1;
 
-  info(_("judge packet: %s"), chop(pk_str));
+  info("judge packet: %s", chop(pk_str));
   sscanf(pk_str, "%s", cmd);
   for (i = 0; judge_cmds[i].cmd; i++)
     if (!strcmp(judge_cmds[i].cmd, cmd))
@@ -1518,10 +1518,10 @@ main(int argc, char *argv[])
   return 0;
 
  print_usage:
-  printf(_("Usage: %s [ OPTS ] config-file\n"), argv[0]);
-  printf(_("  -T     - print configuration and exit\n"));
-  printf(_("  -E     - enable C preprocessor\n"));
-  printf(_("  -DDEF  - define a symbol for preprocessor\n"));
+  printf("Usage: %s [ OPTS ] config-file\n", argv[0]);
+  printf("  -T     - print configuration and exit\n");
+  printf("  -E     - enable C preprocessor\n");
+  printf("  -DDEF  - define a symbol for preprocessor\n");
   return code;
 }
 

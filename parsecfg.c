@@ -62,7 +62,7 @@ read_section_name(FILE *f, char *name, int nlen)
     c = getc(f);
   }
   if (c != '[') {
-    fprintf(stderr, _("%d: [ expected\n"), lineno);
+    fprintf(stderr, "%d: [ expected\n", lineno);
     return -1;
   }
 
@@ -71,18 +71,18 @@ read_section_name(FILE *f, char *name, int nlen)
     name[i] = c;
   name[i] = 0;
   if (i >= nlen - 1 && (isalnum(c) || c == '_')) {
-    fprintf(stderr, _("%d: section name is too long\n"), lineno);
+    fprintf(stderr, "%d: section name is too long\n", lineno);
     return -1;
   }
   if (c != ']') {
-    fprintf(stderr, _("%d: ] expected\n"), lineno);
+    fprintf(stderr, "%d: ] expected\n", lineno);
     return -1;
   }
 
   c = getc(f);
   while (c != EOF && c != '\n') {
     if (c > ' ') {
-      fprintf(stderr, _("%d: garbage after variable value\n"), lineno);
+      fprintf(stderr, "%d: garbage after variable value\n", lineno);
       return -1;
     }
     c = getc(f);
@@ -106,7 +106,7 @@ read_variable(FILE *f, char *name, int nlen, char *val, int vlen)
     name[i] = c;
   name[i] = 0;
   if (i >= nlen - 1 && (isalnum(c) || c == '_')) {
-    fprintf(stderr, _("%d: variable name is too long\n"), lineno);
+    fprintf(stderr, "%d: variable name is too long\n", lineno);
     return -1;
   }
 
@@ -118,7 +118,7 @@ read_variable(FILE *f, char *name, int nlen, char *val, int vlen)
     return 0;
   }
   if (c != '=') {
-    fprintf(stderr, _("%d: '=' expected after variable name\n"), lineno);
+    fprintf(stderr, "%d: '=' expected after variable name\n", lineno);
     return -1;
   }
 
@@ -134,11 +134,11 @@ read_variable(FILE *f, char *name, int nlen, char *val, int vlen)
       val[i] = c;
     val[i] = 0;
     if (i >= vlen - 1 && c != EOF && c != '\"' && c != '\n') {
-      fprintf(stderr, _("%d: variable value is too long\n"), lineno);
+      fprintf(stderr, "%d: variable value is too long\n", lineno);
       return -1;
     }
     if (c != '\"') {
-      fprintf(stderr, _("%d: \" expected\n"), lineno);
+      fprintf(stderr, "%d: \" expected\n", lineno);
       return -1;
     }
     c = getc(f);
@@ -147,14 +147,14 @@ read_variable(FILE *f, char *name, int nlen, char *val, int vlen)
       val[i] = c;
     val[i] = 0;
     if (i >= vlen - 1 && c > ' ') {
-      fprintf(stderr, _("%d: variable value is too long\n"), lineno);
+      fprintf(stderr, "%d: variable value is too long\n", lineno);
       return -1;
     }
   }
 
   while (c != '\n' && c != EOF) {
     if (c > ' ') {
-      fprintf(stderr, _("%d: garbage after variable value\n"), lineno);
+      fprintf(stderr, "%d: garbage after variable value\n", lineno);
       return -1;
     }
     c = getc(f);
@@ -183,7 +183,7 @@ copy_param(void *cfg, struct config_parse_info *params,
   for (i = 0; params[i].name; i++)
     if (!strcmp(params[i].name, varname)) break;
   if (!params[i].name) {
-    fprintf(stderr, _("%d: unknown parameter '%s'\n"),
+    fprintf(stderr, "%d: unknown parameter '%s'\n",
             lineno - 1, varname);
     return -1;
   }
@@ -193,7 +193,7 @@ copy_param(void *cfg, struct config_parse_info *params,
     int *ptr;
 
     if (sscanf(varvalue, "%d%n", &v, &n) != 1 || varvalue[n]) {
-      fprintf(stderr, _("%d: numeric parameter expected for '%s'\n"),
+      fprintf(stderr, "%d: numeric parameter expected for '%s'\n",
               lineno - 1, varname);
       return -1;
     }
@@ -204,7 +204,7 @@ copy_param(void *cfg, struct config_parse_info *params,
 
     if (params[i].size == 0) params[i].size = PATH_MAX;
     if (strlen(varvalue) > params[i].size - 1) {
-      fprintf(stderr, _("%d: parameter '%s' is too long\n"), lineno - 1,
+      fprintf(stderr, "%d: parameter '%s' is too long\n", lineno - 1,
               varname);
       return -1;
     }
@@ -259,13 +259,13 @@ parse_param(char const *path,
     if (!strcmp(params[sindex].name, "global")) break;
   }
   if (!params[sindex].name) {
-    fprintf(stderr, _("Cannot find description of section [global]\n"));
+    fprintf(stderr, "Cannot find description of section [global]\n");
     goto cleanup;
   }
   sinfo = params[sindex].info;
 
   if (!f && !(f = fopen(path, "r"))) {
-    fprintf(stderr, _("Cannot open configuration file %s\n"), path);
+    fprintf(stderr, "Cannot open configuration file %s\n", path);
     goto cleanup;
   }
 
@@ -286,7 +286,7 @@ parse_param(char const *path,
     if (read_variable(f, varname, sizeof(varname),
                       varvalue, sizeof(varvalue)) < 0) goto cleanup;
     if (!quiet_flag) {
-      printf(_("%d: Value: %s = %s\n"), lineno - 1, varname, varvalue);
+      printf("%d: Value: %s = %s\n", lineno - 1, varname, varvalue);
     }
     if (copy_param(cfg, sinfo, varname, varvalue) < 0) goto cleanup;
   }
@@ -294,17 +294,17 @@ parse_param(char const *path,
   while (c != EOF) {
     if (read_section_name(f, sectname, sizeof(sectname)) < 0) goto cleanup;
     if (!quiet_flag) {
-      printf(_("%d: New section %s\n"), lineno - 1, sectname);
+      printf("%d: New section %s\n", lineno - 1, sectname);
     }
     if (!strcmp(sectname, "global")) {
-      fprintf(stderr, _("Section global cannot be specified explicitly\n"));
+      fprintf(stderr, "Section global cannot be specified explicitly\n");
       goto cleanup;
     }
     for (sindex = 0; params[sindex].name; sindex++) {
       if (!strcmp(params[sindex].name, sectname)) break;
     }
     if (!params[sindex].name) {
-      fprintf(stderr, _("Cannot find description of section [%s]\n"),
+      fprintf(stderr, "Cannot find description of section [%s]\n",
               sectname);
       goto cleanup;
     }
@@ -329,7 +329,7 @@ parse_param(char const *path,
       if (read_variable(f, varname, sizeof(varname),
                         varvalue, sizeof(varvalue)) < 0) goto cleanup;
       if (!quiet_flag) {
-        printf(_("%d: Value: %s = %s\n"), lineno - 1, varname, varvalue);
+        printf("%d: Value: %s = %s\n", lineno - 1, varname, varvalue);
       }
       if (copy_param(sect, sinfo, varname, varvalue) < 0) goto cleanup;
     }

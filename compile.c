@@ -104,7 +104,7 @@ do_loop(void)
         if (r < 0) return -1;
         if (r == 0) break;
 
-        info(_("Starting: %s %s %s"), langs[i]->cmd, src_name, exe_name);
+        info("Starting: %s %s %s", langs[i]->cmd, src_name, exe_name);
         tsk = task_New();
         task_AddArg(tsk, langs[i]->cmd);
         task_AddArg(tsk, src_name);
@@ -120,7 +120,7 @@ do_loop(void)
 
         if (task_IsAbnormal(tsk)) {
           // compilation error?
-          info(_("Compilation failed"));
+          info("Compilation failed");
           //copy logfile and create statfile
           if (generic_copy_file(0, 0, log_path, "", 0, 0, log_out, "") < 0)
             return -1;
@@ -131,7 +131,7 @@ do_loop(void)
             return -1;
         } else {
           // ok, we can move the executable to output dir
-          info(_("Compilation sucessful"));
+          info("Compilation sucessful");
           if (generic_copy_file(0, 0, exe_path, "",
                                 0, 0, exe_out, "") < 0)
             return -1;
@@ -168,7 +168,7 @@ filter_languages(char *key)
     total += langs[i] != 0;
   }
   if (!total) {
-    err(_("No languages after filter %s"), key);
+    err("No languages after filter %s", key);
     return -1;
   }
   return 0;
@@ -193,7 +193,7 @@ check_config(void)
   }
 
   if (!total) {
-    err(_("no languages"));
+    err("no languages");
     return -1;
   }
   return 0;
@@ -242,11 +242,11 @@ main(int argc, char *argv[])
   return 0;
 
  print_usage:
-  printf(_("Usage: %s [ OPTS ] config-file\n"), argv[0]);
-  printf(_("  -T     - print configuration and exit\n"));
-  printf(_("  -k key - specify language key\n"));
-  printf(_("  -E     - enable C preprocessor\n"));
-  printf(_("  -DDEF  - define a symbol for preprocessor\n"));
+  printf("Usage: %s [ OPTS ] config-file\n", argv[0]);
+  printf("  -T     - print configuration and exit\n");
+  printf("  -k key - specify language key\n");
+  printf("  -E     - enable C preprocessor\n");
+  printf("  -DDEF  - define a symbol for preprocessor\n");
   return code;
 }
 

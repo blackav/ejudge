@@ -78,13 +78,13 @@ clar_read_record(char *buf, int size)
   int rsz, i;
 
   if ((rsz = sf_read(clar_fd, buf, size, "clar")) < 0) return rsz;
-  if (rsz != size) ERR_R(_("short read: %d"), rsz);
+  if (rsz != size) ERR_R("short read: %d", rsz);
 
   for (i = 0; i < size - 1; i++) {
     if (buf[i] >= 0 && buf[i] < ' ') break;
   }
-  if (i < size - 1) ERR_R(_("bad characters in record"));
-  if (buf[size - 1] != '\n') ERR_R(_("record improperly terminated"));
+  if (i < size - 1) ERR_R("bad characters in record");
+  if (buf[size - 1] != '\n') ERR_R("record improperly terminated");
   return 0;
 }
 
@@ -103,21 +103,21 @@ clar_read_entry(int n)
              &clars.v[n].from,
              &clars.v[n].to, &clars.v[n].flags,
              b2, b3, &k);
-  if (r != 8) ERR_R(_("[%d]: sscanf returned %d"), n, r);
-  if (buf[k] != 0) ERR_R(_("[%d]: excess data"), n);
+  if (r != 8) ERR_R("[%d]: sscanf returned %d", n, r);
+  if (buf[k] != 0) ERR_R("[%d]: excess data", n);
 
   /* do sanity checking */
-  if (clars.v[n].id != n) ERR_R(_("[%d]: bad id: %d"), n, clars.v[n].id);
+  if (clars.v[n].id != n) ERR_R("[%d]: bad id: %d", n, clars.v[n].id);
   if (clars.v[n].size == 0 || clars.v[n].size >= 10000)
-    ERR_R(_("[%d]: bad size: %d"), n, clars.v[n].size);
+    ERR_R("[%d]: bad size: %d", n, clars.v[n].size);
   if (clars.v[n].from && !teamdb_lookup(clars.v[n].from))
-    ERR_R(_("[%d]: bad from: %d"), n, clars.v[n].from);
+    ERR_R("[%d]: bad from: %d", n, clars.v[n].from);
   if (clars.v[n].to && !teamdb_lookup(clars.v[n].to))
-    ERR_R(_("[%d]: bad to: %d"), n, clars.v[n].to);
+    ERR_R("[%d]: bad to: %d", n, clars.v[n].to);
   if (clars.v[n].flags < 0 || clars.v[n].flags > 255)
-    ERR_R(_("[%d]: bad flags: %d"), n, clars.v[n].flags);
-  if (strlen(b2) > IP_STRING_SIZE) ERR_R(_("[%d]: ip is too long"), n);
-  if (strlen(b3) > SUBJ_STRING_SIZE) ERR_R(_("[%d]: subj is too long"), n);
+    ERR_R("[%d]: bad flags: %d", n, clars.v[n].flags);
+  if (strlen(b2) > IP_STRING_SIZE) ERR_R("[%d]: ip is too long", n);
+  if (strlen(b3) > SUBJ_STRING_SIZE) ERR_R("[%d]: subj is too long", n);
 
   strcpy(clars.v[n].ip, b2);
   strcpy(clars.v[n].subj, b3);
@@ -130,7 +130,7 @@ clar_open(char const *path, int flags)
   unsigned long filesize;
   int           i;
 
-  info(_("clar_open: opening database %s"), path);
+  info("clar_open: opening database %s", path);
   if (clars.v) {
     xfree(clars.v); clars.v = 0; clars.u = clars.a = 0;
   }
@@ -143,9 +143,9 @@ clar_open(char const *path, int flags)
     return -1;
   if (sf_lseek(clar_fd, 0, SEEK_SET, "clar") == (off_t) -1) return -1;
 
-  info(_("clar_open: file size %lu"), filesize);
+  info("clar_open: file size %lu", filesize);
   if (filesize % CLAR_RECORD_SIZE != 0)
-    ERR_R(_("bad file size: remainder %d"), filesize % CLAR_RECORD_SIZE);
+    ERR_R("bad file size: remainder %d", filesize % CLAR_RECORD_SIZE);
 
   clars.u = filesize / CLAR_RECORD_SIZE;
   clars.a = 128;
@@ -155,7 +155,7 @@ clar_open(char const *path, int flags)
     if (clar_read_entry(i) < 0) return -1;
   }
 
-  info(_("clar_open: success"));
+  info("clar_open: success");
   return 0;
 }
 
@@ -166,9 +166,9 @@ clar_make_record(char *buf, int ser, unsigned long tim,
                  char const *ip, char const *subj)
 {
   if (strlen(subj) > SUBJ_STRING_SIZE)
-    ERR_R(_("invalid subj len: %d"), strlen(subj));
+    ERR_R("invalid subj len: %d", strlen(subj));
   if (strlen(ip) > IP_STRING_SIZE)
-    ERR_R(_("bad ip len: %d"), strlen(ip));
+    ERR_R("bad ip len: %d", strlen(ip));
 
   memset(buf, ' ', CLAR_RECORD_SIZE);
   buf[CLAR_RECORD_SIZE] = 0;
@@ -177,9 +177,9 @@ clar_make_record(char *buf, int ser, unsigned long tim,
           ser, tim, size, orig, to, flags, ip, subj);
   buf[strlen(buf)] = ' ';
   if (strlen(buf)!=CLAR_RECORD_SIZE)
-    ERR_R(_("record size bad: %d"),strlen(buf));
+    ERR_R("record size bad: %d",strlen(buf));
   if (buf[CLAR_RECORD_SIZE - 1] != '\n')
-    ERR_R(_("record terminator corrupted"));
+    ERR_R("record terminator corrupted");
   return 0;
 }
 
@@ -189,8 +189,8 @@ clar_flush_entry(int num)
   char buf[CLAR_RECORD_SIZE + 16];
   int  wsz;
 
-  if (clar_fd < 0) ERR_R(_("bad descriptor: %d"), clar_fd);
-  if (num < 0 || num >= clars.u) ERR_R(_("bad entry number: %d"), num);
+  if (clar_fd < 0) ERR_R("bad descriptor: %d", clar_fd);
+  if (num < 0 || num >= clars.u) ERR_R("bad entry number: %d", num);
   if (clar_make_record(buf, clars.v[num].id, clars.v[num].time,
                        clars.v[num].size,
                        clars.v[num].from, clars.v[num].to,
@@ -200,7 +200,7 @@ clar_flush_entry(int num)
   if (sf_lseek(clar_fd, CLAR_RECORD_SIZE * num, SEEK_SET, "clar") == (off_t) -1) return -1;
 
   if ((wsz = sf_write(clar_fd, buf, CLAR_RECORD_SIZE, "clar")) < 0) return -1;
-  if (wsz != CLAR_RECORD_SIZE) ERR_R(_("short write: %d"), wsz);
+  if (wsz != CLAR_RECORD_SIZE) ERR_R("short write: %d", wsz);
   return 0;
 }
 
@@ -215,18 +215,18 @@ clar_add_record(unsigned long  time,
 {
   int i;
 
-  if (size == 0 || size > 9999) ERR_R(_("bad size: %lu"), size);
-  if (from && !teamdb_lookup(from)) ERR_R(_("bad from: %d"), from);
-  if (to && !teamdb_lookup(to)) ERR_R(_("bad to: %d"), to);
-  if (flags < 0 || flags > 255) ERR_R(_("bad flags: %d"), flags);
+  if (size == 0 || size > 9999) ERR_R("bad size: %lu", size);
+  if (from && !teamdb_lookup(from)) ERR_R("bad from: %d", from);
+  if (to && !teamdb_lookup(to)) ERR_R("bad to: %d", to);
+  if (flags < 0 || flags > 255) ERR_R("bad flags: %d", flags);
   if (strlen(subj) > SUBJ_STRING_SIZE)
-    ERR_R(_("bad subj size: %d"), strlen(subj));
-  if (strlen(ip) > IP_STRING_SIZE) ERR_R(_("bad ip size: %d"), strlen(ip));
+    ERR_R("bad subj size: %d", strlen(subj));
+  if (strlen(ip) > IP_STRING_SIZE) ERR_R("bad ip size: %d", strlen(ip));
 
   if (clars.u >= clars.a) {
     if (!(clars.a *= 2)) clars.a = 128;
     clars.v = xrealloc(clars.v, clars.a * sizeof(clars.v[0]));
-    info(_("clar_add_record: array extended: %d"), clars.a);
+    info("clar_add_record: array extended: %d", clars.a);
   }
   i = clars.u++;
 
@@ -252,9 +252,9 @@ clar_get_record(int id,
                 int           *pflags,
                 char          *subj)
 {
-  if (id < 0 || id >= clars.u) ERR_R(_("bad id: %d"), id);
+  if (id < 0 || id >= clars.u) ERR_R("bad id: %d", id);
   if (clars.v[id].id != id)
-    ERR_R(_("id mismatch: %d, %d"), id, clars.v[id].id);
+    ERR_R("id mismatch: %d, %d", id, clars.v[id].id);
 
   if (ptime)   *ptime   = clars.v[id].time;
   if (psize)   *psize   = clars.v[id].size;
@@ -269,10 +269,10 @@ clar_get_record(int id,
 int
 clar_update_flags(int id, int flags)
 {
-  if (id < 0 || id >= clars.u) ERR_R(_("bad id: %d"), id);
+  if (id < 0 || id >= clars.u) ERR_R("bad id: %d", id);
   if (clars.v[id].id != id)
-    ERR_R(_("id mismatch: %d, %d"), id, clars.v[id].id);
-  if (flags < 0 || flags > 255) ERR_R(_("bad flags: %d"), flags);
+    ERR_R("id mismatch: %d, %d", id, clars.v[id].id);
+  if (flags < 0 || flags > 255) ERR_R("bad flags: %d", flags);
 
   clars.v[id].flags = flags;
   if (clar_flush_entry(id) < 0) return -1;

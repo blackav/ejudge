@@ -75,7 +75,7 @@ filter_testers(char *key)
   }
 
   if (!total) {
-    err(_("no testers"));
+    err("no testers");
     return -1;
   }
   return 0;
@@ -149,7 +149,7 @@ generate_report(char *report_path, int scores, int max_score)
   char  score_buf2[32];
 
   if (!(f = fopen(report_path, "w"))) {
-    err(_("generate_report: cannot open protocol file %s"), report_path);
+    err("generate_report: cannot open protocol file %s", report_path);
     return -1;
   }
 
@@ -238,7 +238,7 @@ generate_team_report(char const *report_path, int scores, int max_score)
   char  score_buf2[32];
 
   if (!(f = fopen(report_path, "w"))) {
-    err(_("generate_report: cannot open protocol file %s"), report_path);
+    err("generate_report: cannot open protocol file %s", report_path);
     return -1;
   }
 
@@ -352,7 +352,7 @@ run_tests(struct section_tester_data *tst,
 
   /* at this point the executable is copied into the working dir */
   if (tst->prepare_cmd[0]) {
-    info(_("starting: %s %s"), tst->prepare_cmd, new_name);
+    info("starting: %s %s", tst->prepare_cmd, new_name);
     tsk = task_New();
     task_AddArg(tsk, tst->prepare_cmd);
     task_AddArg(tsk, new_name);
@@ -401,10 +401,10 @@ run_tests(struct section_tester_data *tst,
     /* run the tested program */
     tsk = task_New();
     if (tst->start_cmd[0]) {
-      info(_("starting: %s %s"), tst->start_cmd, exe_path);
+      info("starting: %s %s", tst->start_cmd, exe_path);
       task_AddArg(tsk, tst->start_cmd);
     } else {
-      info(_("starting: %s"), exe_path);
+      info("starting: %s", exe_path);
     }
     task_AddArg(tsk, exe_path);
     task_SetPathAsArg0(tsk);
@@ -705,7 +705,7 @@ count_files(char const *dir, char const *sfx)
     s = os_IsFile(path);
     if (s < 0) break;
     if (s != OSPK_REG) {
-      err(_("'%s' is not a regular file"), path);
+      err("'%s' is not a regular file", path);
       return -1;
     }
     n++;
@@ -732,20 +732,20 @@ check_config(void)
     if (check_readable_dir(prb->test_dir) < 0) return -1;
     if ((n1 = count_files(prb->test_dir, prb->test_sfx)) < 0) return -1;
     if (!n1) {
-      err(_("'%s' does not contain any tests"), prb->test_dir);
+      err("'%s' does not contain any tests", prb->test_dir);
       return -1;
     }
-    info(_("found %d tests for problem %s"), n1, prb->short_name);
+    info("found %d tests for problem %s", n1, prb->short_name);
     if (prb->use_corr) {
       if (!prb->corr_dir[0]) {
-        err(_("directory with answers is not defined"));
+        err("directory with answers is not defined");
         return -1;
       }
       if (check_readable_dir(prb->corr_dir) < 0) return -1;
       if ((n2 = count_files(prb->corr_dir, prb->corr_sfx)) < 0) return -1;
-      info(_("found %d answers for problem %s"), n2, prb->short_name);
+      info("found %d answers for problem %s", n2, prb->short_name);
       if (n1 != n2) {
-        err(_("number of test does not match number of answers"));
+        err("number of test does not match number of answers");
         return -1;
       }
     }
@@ -847,7 +847,7 @@ check_config(void)
   }
 
   if (!total) {
-    err(_("no testers"));
+    err("no testers");
     return -1;
   }
   return 0;
@@ -893,11 +893,11 @@ main(int argc, char *argv[])
   return 0;
 
  print_usage:
-  printf(_("Usage: %s [ OPTS ] config-file\n"), argv[0]);
-  printf(_("  -T     - print configuration and exit"));
-  printf(_("  -k key - specify tester key\n"));
-  printf(_("  -E     - enable C preprocessor\n"));
-  printf(_("  -DDEF  - define a symbol for preprocessor\n"));
+  printf("Usage: %s [ OPTS ] config-file\n", argv[0]);
+  printf("  -T     - print configuration and exit");
+  printf("  -k key - specify tester key\n");
+  printf("  -E     - enable C preprocessor\n");
+  printf("  -DDEF  - define a symbol for preprocessor\n");
   return code;
 }
 
