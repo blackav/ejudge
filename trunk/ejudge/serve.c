@@ -4139,6 +4139,65 @@ may_safely_exit(void)
 }
 
 static int
+create_symlinks(void)
+{
+  unsigned char src_path[PATH_MAX];
+  unsigned char dst_path[PATH_MAX];
+
+  if (global->stand_symlink_dir[0] && global->htdocs_dir[0]) {
+    snprintf(src_path, sizeof(src_path), "%s/dir/%s",
+             global->status_dir, global->standings_file_name);
+    snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
+             global->htdocs_dir, global->stand_symlink_dir,
+             global->standings_file_name);
+    os_normalize_path(dst_path);
+    if (unlink(dst_path) < 0 && errno != ENOENT) {
+      err("unlink %s failed: %s", dst_path, os_ErrorMsg());
+      return -1;
+    }
+    if (symlink(src_path, dst_path) < 0) {
+      err("symlink %s->%s failed: %s", dst_path, src_path, os_ErrorMsg());
+      return -1;
+    }
+  }
+  if (global->stand2_symlink_dir[0] && global->htdocs_dir[0]
+      && global->stand2_file_name[0]) {
+    snprintf(src_path, sizeof(src_path), "%s/dir/%s",
+             global->status_dir, global->stand2_file_name);
+    snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
+             global->htdocs_dir, global->stand2_symlink_dir,
+             global->stand2_file_name);
+    os_normalize_path(dst_path);
+    if (unlink(dst_path) < 0 && errno != ENOENT) {
+      err("unlink %s failed: %s", dst_path, os_ErrorMsg());
+      return -1;
+    }
+    if (symlink(src_path, dst_path) < 0) {
+      err("symlink %s->%s failed: %s", dst_path, src_path, os_ErrorMsg());
+      return -1;
+    }
+  }
+  if (global->plog_symlink_dir[0] && global->htdocs_dir[0]
+      && global->plog_file_name[0] && global->plog_update_time > 0) {
+    snprintf(src_path, sizeof(src_path), "%s/dir/%s",
+             global->status_dir, global->plog_file_name);
+    snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
+             global->htdocs_dir, global->plog_symlink_dir,
+             global->plog_file_name);
+    os_normalize_path(dst_path);
+    if (unlink(dst_path) < 0 && errno != ENOENT) {
+      err("unlink %s failed: %s", dst_path, os_ErrorMsg());
+      return -1;
+    }
+    if (symlink(src_path, dst_path) < 0) {
+      err("symlink %s->%s failed: %s", dst_path, src_path, os_ErrorMsg());
+      return -1;
+    }
+  }
+  return 0;
+}
+
+static int
 do_loop(void)
 {
   path_t packetname;
@@ -4149,6 +4208,7 @@ do_loop(void)
   signal(SIGINT, interrupt_signal);
   signal(SIGTERM, interrupt_signal);
   if (create_socket() < 0) return -1;
+  if (create_symlinks() < 0) return -1;
 
   current_time = time(0);
   last_activity_time = current_time;
