@@ -42,8 +42,8 @@ userlist_clnt_map_contest(struct userlist_clnt *clnt,
     xfree(in);
     return r;
   }
-  *p_sem_key = in->sem_key;
-  *p_shm_key = in->shm_key;
+  if (p_sem_key) *p_sem_key = in->sem_key;
+  if (p_shm_key) *p_shm_key = in->shm_key;
   r = in->reply_id;
   xfree(in);
   return r;
