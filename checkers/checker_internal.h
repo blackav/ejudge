@@ -25,6 +25,13 @@
 #include <ctype.h>
 #include <math.h>
 
+#if NEED_TGZ - 0 == 1
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <dirent.h>
+#endif /* NEED_TGZ */
+
 #define XCALLOC(p,s)    ((p) = (typeof(p)) xcalloc((s), sizeof((p)[0])))
 #define XREALLOC(p,s)   ((p) = (typeof(p)) xrealloc((p), (s) * sizeof((p)[0])))
 #define XALLOCA(p,s)    ((p) = (typeof(p)) alloca((s) * sizeof((p)[0])))
@@ -49,7 +56,12 @@ extern FILE *f_corr;
 extern FILE *f_arr[3];
 extern const unsigned char * const f_arr_names[3];
 
-void checker_do_init(int, char **, int, int);
+#if NEED_TGZ - 0 == 1
+extern DIR *dir_in;
+extern DIR *dir_out;
+#endif /* NEED_TGZ */
+
+void checker_do_init(int, char **, int, int, int);
 
 void fatal(int code, char const *format, ...)
      __attribute__ ((noreturn, format(printf, 2, 3)));
@@ -85,3 +97,10 @@ void checker_team_close(void);
 void checker_team_eof(void);
 
 #endif /* __CHECKER_INTERNAL_H__ */
+
+/*
+ * Local variables:
+ *  compile-command: "make"
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "DIR")
+ * End:
+ */
