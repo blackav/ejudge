@@ -560,8 +560,9 @@ cmd_team_get_archive(struct client_state *p, int len,
 {
   time_t last_time;
   path_t dirname, fullpath, linkpath, origpath;
-  int total_runs, r, run_team, run_lang, run_prob, token, path_len, out_size;
+  int total_runs, r, token, path_len, out_size;
   struct prot_serve_pkt_archive_path *out;
+  struct run_entry re;
 
   if (get_peer_local_user(p) < 0) return;
 
@@ -609,12 +610,11 @@ cmd_team_get_archive(struct client_state *p, int len,
   }
   total_runs = run_get_total();
   for (r = 0; r < total_runs; r++) {
-    if (run_get_record(r,0,0,0,0,0,&run_team,&run_lang,&run_prob,0,0,0,0) < 0)
-      continue;
-    if (run_team != pkt->user_id) continue;
+    if (run_get_entry(r, &re) < 0) continue;
+    if (re.team != pkt->user_id) continue;
     snprintf(linkpath, sizeof(linkpath), "%s/%s_%06d%s",
-             fullpath, probs[run_prob]->short_name, r,
-             langs[run_lang]->src_sfx);
+             fullpath, probs[re.problem]->short_name, r,
+             langs[re.language]->src_sfx);
     snprintf(origpath, sizeof(origpath), "%s/%06d", global->run_archive_dir,
              r);
     if (link(origpath, linkpath) < 0) {
@@ -2386,7 +2386,8 @@ read_compile_packet(char *pname)
   int  runid;
   int  cn;
 
-  int  team, lang, prob, stat, loc, final_test, variant = 0;
+  int  final_test, variant = 0;
+  struct run_entry re;
 
   char *pbuf = buf;
 
@@ -2401,9 +2402,8 @@ read_compile_packet(char *pname)
     goto bad_packet_error;
   if (sscanf(buf, "%d %n", &code, &n) != 1 || buf[n])
     goto bad_packet_error;
-  if (run_get_param(runid, &team, &loc, &lang, &prob, &stat) < 0)
-    goto bad_packet_error;
-  if (stat != RUN_COMPILING) goto bad_packet_error;
+  if (run_get_entry(runid, &re) < 0) goto bad_packet_error;
+  if (re.status != RUN_COMPILING) goto bad_packet_error;
   if (code != RUN_OK && code != RUN_COMPILE_ERR && code != RUN_CHECK_FAILED)
     goto bad_packet_error;
   if (code == RUN_CHECK_FAILED) {
@@ -2431,19 +2431,19 @@ read_compile_packet(char *pname)
   if (run_change_status(runid, RUN_COMPILED, 0, -1) < 0) return -1;
 
   /* find appropriate checker */
-  cn = find_tester(prob, langs[lang]->arch);
+  cn = find_tester(re.problem, langs[re.language]->arch);
   ASSERT(cn >= 1 && cn <= max_tester && testers[cn]);
 
-  if (probs[prob]->variant_num > 0) {
-    variant = find_variant(team, prob);
+  if (probs[re.problem]->variant_num > 0) {
+    variant = find_variant(re.team, re.problem);
   }
 
   /* generate a packet name */
   generate_packet_name(runid, pkt_base);
   snprintf(exe_in_name, sizeof(exe_in_name),
-           "%06d%s", runid, langs[lang]->exe_sfx);
+           "%06d%s", runid, langs[re.language]->exe_sfx);
   snprintf(exe_out_name, sizeof(exe_out_name),
-           "%s%s", pkt_base, langs[lang]->exe_sfx);
+           "%s%s", pkt_base, langs[re.language]->exe_sfx);
 
   /* copy the executable into the testers's queue */
   if (generic_copy_file(REMOVE, global->compile_report_dir, exe_in_name, "",
@@ -2457,12 +2457,12 @@ read_compile_packet(char *pname)
   /* create tester packet */
   wsize = snprintf(buf, sizeof(buf),
                    "%d %d %d %d %d %d %d %d %d \"%s\" \"%s\"\n",
-                   global->contest_id, runid, probs[prob]->tester_id,
-                   final_test, loc,
+                   global->contest_id, runid, probs[re.problem]->tester_id,
+                   final_test, re.locale_id,
                    global->score_system_val,
                    global->team_enable_rep_view,
                    global->report_error_code, variant,
-                   langs[lang]->exe_sfx, langs[lang]->arch);
+                   langs[re.language]->exe_sfx, langs[re.language]->arch);
   if (generic_write_file(buf, wsize, SAFE, global->run_queue_dir,
                          pkt_base, "") < 0)
     return -1;
@@ -2488,8 +2488,7 @@ read_run_packet(char *pname)
   int   status;
   int   test;
   int   score;
-
-  int   log_stat, log_prob, log_lang;
+  struct run_entry re;
 
   memset(buf, 0 ,sizeof(buf));
   r = generic_read_file(&pbuf, sizeof(buf), &rsize, SAFE|REMOVE,
@@ -2502,19 +2501,18 @@ read_run_packet(char *pname)
     goto bad_packet_error;
   if (sscanf(buf, "%d%d%d %n", &status, &test, &score, &n) != 3 || buf[n])
     goto bad_packet_error;
-  if (run_get_param(runid, 0, 0, &log_lang, &log_prob, &log_stat) < 0)
-    goto bad_packet_error;
-  if (log_stat != RUN_RUNNING) goto bad_packet_error;
+  if (run_get_entry(runid, &re) < 0) goto bad_packet_error;
+  if (re.status != RUN_RUNNING) goto bad_packet_error;
   if (status<0 || status>RUN_ACCEPTED || test<0) goto bad_packet_error;
   if (global->score_system_val == SCORE_OLYMPIAD) {
-    if (log_prob < 1 || log_prob > max_prob || !probs[log_prob])
+    if (re.problem < 1 || re.problem > max_prob || !probs[re.problem])
       goto bad_packet_error;
   } else if (global->score_system_val == SCORE_KIROV) {
     if (status != RUN_PARTIAL && status != RUN_OK
         && status != RUN_CHECK_FAILED) goto bad_packet_error;
-    if (log_prob < 1 || log_prob > max_prob || !probs[log_prob])
+    if (re.problem < 1 || re.problem > max_prob || !probs[re.problem])
       goto bad_packet_error;
-    if (score < 0 || score > probs[log_prob]->full_score)
+    if (score < 0 || score > probs[re.problem]->full_score)
       goto bad_packet_error;
   } else {
     score = -1;
@@ -2615,21 +2613,21 @@ queue_compile_request(unsigned char const *str, int len,
 static void
 rejudge_run(int run_id)
 {
-  int lang, loc, f = 0;
   path_t src_path;
+  struct run_entry re;
 
-  if (run_get_record(run_id, 0, 0, 0, 0, &loc, 0, &lang, 0, 0, 0, 0, &f) < 0)
-    return;
-  if (f) return;
-  if (lang <= 0 || lang > max_lang || !langs[lang]) {
-    err("rejudge_run: bad language: %d", lang);
+  if (run_get_entry(run_id, &re) < 0) return;
+  if (re.is_imported) return;
+  if (re.language <= 0 || re.language > max_lang || !langs[re.language]) {
+    err("rejudge_run: bad language: %d", re.language);
     return;
   }
 
   snprintf(src_path, sizeof(src_path), "%s/%06d",
            global->run_archive_dir, run_id);
   queue_compile_request(src_path, -1, run_id,
-                        langs[lang]->compile_id, loc, langs[lang]->src_sfx);
+                        langs[re.language]->compile_id, re.locale_id,
+                        langs[re.language]->src_sfx);
 
   run_change_status(run_id, RUN_COMPILING, 0, -1);
 }
@@ -2638,7 +2636,7 @@ static void
 do_rejudge_all(void)
 {
   int total_runs, r;
-  int status, imported_flag;
+  struct run_entry re;
 
   total_runs = run_get_total();
 
@@ -2652,22 +2650,21 @@ do_rejudge_all(void)
     int size = total_ids * total_probs;
     int idx;
     unsigned char *flag;
-    struct run_entry entry;
 
     if (total_ids <= 0 || total_probs <= 0) return;
     flag = (unsigned char *) alloca(size);
     memset(flag, 0, size);
     for (r = total_runs - 1; r >= 0; r--) {
-      if (run_get_entry(r, &entry) < 0) continue;
-      if (entry.status != RUN_OK && entry.status != RUN_PARTIAL
-          && entry.status != RUN_ACCEPTED) continue;
-      if (entry.is_imported) continue;
-      if (entry.team <= 0 || entry.team >= total_ids) continue;
-      if (entry.problem <= 0 || entry.problem >= total_probs) {
-        fprintf(stderr, "Invalid problem %d for run %d", entry.problem, r);
+      if (run_get_entry(r, &re) < 0) continue;
+      if (re.status != RUN_OK && re.status != RUN_PARTIAL
+          && re.status != RUN_ACCEPTED) continue;
+      if (re.is_imported) continue;
+      if (re.team <= 0 || re.team >= total_ids) continue;
+      if (re.problem <= 0 || re.problem >= total_probs) {
+        fprintf(stderr, "Invalid problem %d for run %d", re.problem, r);
         continue;
       }
-      idx = entry.team * total_probs + entry.problem;
+      idx = re.team * total_probs + re.problem;
       if (flag[idx]) continue;
       flag[idx] = 1;
       rejudge_run(r);
@@ -2676,11 +2673,10 @@ do_rejudge_all(void)
   }
 
   for (r = 0; r < total_runs; r++) {
-    if (run_get_record(r, 0, 0, 0, 0, 0, 0, 0, 0, &status, 0, 0,
-                       &imported_flag) >= 0
-        && status >= RUN_OK && status <= RUN_MAX_STATUS
-        && status != RUN_IGNORED
-        && !imported_flag) {
+    if (run_get_entry(r, &re) >= 0
+        && re.status <= RUN_MAX_STATUS
+        && re.status != RUN_IGNORED
+        && !re.is_imported) {
       rejudge_run(r);
     }
   }
@@ -2689,8 +2685,8 @@ do_rejudge_all(void)
 static void
 do_rejudge_problem(int prob_id)
 {
-  int total_runs, r, status, prob;
-  int imported_flag;
+  int total_runs, r;
+  struct run_entry re;
 
   total_runs = run_get_total();
 
@@ -2700,30 +2696,28 @@ do_rejudge_problem(int prob_id)
     // considering only the last run for the given participant
     int total_ids = teamdb_get_max_team_id() + 1;
     unsigned char *flag;
-    struct run_entry entry;
 
     if (total_ids <= 0) return;
     flag = (unsigned char *) alloca(total_ids);
     memset(flag, 0, total_ids);
     for (r = total_runs - 1; r >= 0; r--) {
-      if (run_get_entry(r, &entry) < 0) continue;
-      if (entry.status != RUN_OK && entry.status != RUN_PARTIAL
-          && entry.status != RUN_ACCEPTED) continue;
-      if (entry.problem != prob_id) continue;
-      if (entry.is_imported) continue;
-      if (entry.team <= 0 || entry.team >= total_ids) continue;
-      if (flag[entry.team]) continue;
-      flag[entry.team] = 1;
+      if (run_get_entry(r, &re) < 0) continue;
+      if (re.status != RUN_OK && re.status != RUN_PARTIAL
+          && re.status != RUN_ACCEPTED) continue;
+      if (re.problem != prob_id) continue;
+      if (re.is_imported) continue;
+      if (re.team <= 0 || re.team >= total_ids) continue;
+      if (flag[re.team]) continue;
+      flag[re.team] = 1;
       rejudge_run(r);
     }
     return;
   }
 
   for (r = 0; r < total_runs; r++) {
-    if (run_get_record(r, 0, 0, 0, 0, 0, 0, 0, &prob, &status, 0, 0,
-                       &imported_flag) >= 0
-        && prob == prob_id && status >= RUN_OK && status <= RUN_MAX_STATUS
-        && status != RUN_IGNORED && !imported_flag) {
+    if (run_get_entry(r, &re) >= 0
+        && re.problem == prob_id && re.status <= RUN_MAX_STATUS
+        && re.status != RUN_IGNORED && !re.is_imported) {
       rejudge_run(r);
     }
   }
