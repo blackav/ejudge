@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2724,7 +2724,7 @@ generate_contest_xml(FILE *f)
 
   fprintf(f,
           "<contest id=\"1\" disable_team_password=\"yes\">\n"
-          "  <name>Тестовый турнир</name>\n"
+          "  <name>Test contest</name>\n"
           "  <name_en>Test contest</name_en>\n"
           "\n"
           "  <register_access default=\"deny\">\n"
