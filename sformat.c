@@ -182,11 +182,13 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           break;
         }
         if (!is_invalid && !glob_data) is_invalid = 1;
-        if (!is_invalid)
+        if (!is_invalid) {
           switch (*pf) {
           default:
             abort();
           }
+          pf++;
+        }
         break;
       case 'P':
         /*
@@ -207,7 +209,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           break;
         }
         if (!is_invalid && !prob_data) is_invalid = 1;
-        if (!is_invalid)
+        if (!is_invalid) {
           switch (*pf) {
           case 'i':
             need_int_format = 1;
@@ -222,6 +224,8 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           default:
             abort();
           }
+          pf++;
+        }
         break;
       case 'L':
         pf++;
@@ -235,11 +239,13 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           break;
         }
         if (!is_invalid && !lang_data) is_invalid = 1;
-        if (!is_invalid)
+        if (!is_invalid) {
           switch (*pf) {
           default:
             abort();
           }
+          pf++;
+        }
         break;
       case 'T':
         /*
@@ -264,7 +270,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           break;
         }
         if (!is_invalid && !tester_data) is_invalid = 1;
-        if (!is_invalid)
+        if (!is_invalid) {
           switch (*pf) {
           case 'i':
             need_int_format = 1;
@@ -289,6 +295,8 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           default:
             abort();
           }
+          pf++;
+        }
         break;
       case 'M':
         /*
@@ -311,7 +319,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           break;
         }
         if (!is_invalid && !team_data) is_invalid = 1;
-        if (!is_invalid)
+        if (!is_invalid) {
           switch (*pf) {
           case 'i':
             need_int_format = 1;
@@ -332,6 +340,8 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           default:
             abort();
           }
+          pf++;
+        }
         break;
       case 0:
         is_invalid = 1;
@@ -346,9 +356,10 @@ sformat_message(char *buf, size_t maxsize, char const *format,
     if (is_invalid) {
       // FIXME: need reasonable behavour
       snprintf(tbuf, sizeof(tbuf), "<invalid:%.*s>", pf-specstart, specstart);
+      papp = tbuf;
     }
 
-    if (need_int_format) {
+    if (!is_invalid && need_int_format) {
       // FIXME: ugly hack
       if (width > 100) width = 100;
       if (width >= 0 && put_zeros) {
@@ -356,6 +367,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
       } else {
         snprintf(tbuf, sizeof(tbuf), "%d", int_format_value);
       }
+      papp = tbuf;
     }
 
     if (nbsp_if_empty && (!papp || !*papp))
