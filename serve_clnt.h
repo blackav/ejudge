@@ -166,4 +166,7 @@ int serve_clnt_reset_filter(int sock_fd, int cmd,
                             unsigned long long session_id,
                             int user_id, int contest_id);
 
+int serve_clnt_rejudge_by_mask(int sock_fd, int cmd, int mask_size,
+                               unsigned long *mask);
+
 #endif /* __SERVE_CLNT_H__ */
