@@ -3,7 +3,7 @@
 #ifndef __HTML_H__
 #define __HTML_H__
 
-/* Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,10 +15,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include <stdio.h>
@@ -70,8 +66,8 @@ void write_standings_header(FILE *f,
                             unsigned char const * header_str,
                             unsigned char const * user_name);
 
-void do_write_kirov_standings(FILE *, int, unsigned char const *);
-void do_write_standings(FILE *, int, int, unsigned char const *);
+void do_write_kirov_standings(FILE *, int, unsigned char const *, int);
+void do_write_standings(FILE *, int, int, unsigned char const *, int);
 
 int write_priv_source(FILE *f, int user_id, int priv_level,
                       int sid_mode, unsigned long long sid,
@@ -107,5 +103,8 @@ unsigned char *html_hyperref(unsigned char *buf, int size,
 int write_virtual_standings(FILE *f, int user_id);
 
 void html_reset_filter(int user_id);
+
+void write_runs_dump(FILE *f, unsigned char const *charset);
+void write_raw_standings(FILE *f, unsigned char const *charset);
 
 #endif /* __HTML_H__ */
