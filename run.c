@@ -604,7 +604,7 @@ main(int argc, char *argv[])
 /**
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "tTask")
  * End:
  */
 
