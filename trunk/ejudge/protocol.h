@@ -139,6 +139,7 @@ enum
     SRV_CMD_PRINT_SUSPEND,
     SRV_CMD_PRINT_RESUME,
     SRV_CMD_COMPARE_RUNS,
+    SRV_CMD_UPLOAD_REPORT,
 
     SRV_CMD_LAST
   };
@@ -324,6 +325,7 @@ struct prot_serve_pkt_view
 
   int item;
   int item2;
+  unsigned int flags;
   int sid_mode;
   int self_url_len;
   int hidden_vars_len;
@@ -384,6 +386,18 @@ struct prot_serve_pkt_archive_path
 
   int token;
   int path_len;
+  unsigned char data[1];
+};
+
+struct prot_serve_pkt_upload_report
+{
+  struct prot_serve_packet b;
+
+  int user_id;
+  int contest_id;
+  int run_id;
+  unsigned int flags;
+  int report_size;
   unsigned char data[1];
 };
 
