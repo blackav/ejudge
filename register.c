@@ -94,10 +94,11 @@ static int client_locale_id;
 
 static unsigned char *user_login;
 static unsigned char *user_password;
-static unsigned char *user_usecookies;
+static int user_usecookies;
 static unsigned char *user_email;
 static unsigned char *user_name;
 static unsigned char *user_homepage;
+static int user_show_email;
 static int user_contest_id;
 static struct userlist_clnt *server_conn;
 static unsigned long user_ip;
@@ -626,6 +627,17 @@ read_locale_id(void)
   if (sscanf(s, "%d %n", &x, &n) != 1 || s[n] || x < -1 || x > 127) return;
   client_locale_id = x;
 }
+static void
+read_usecookies(void)
+{
+  int x = 0, n = 0;
+  unsigned char *s;
+
+  user_usecookies = -1;
+  if (!(s = cgi_param("usecookies"))) return;
+  if (sscanf(s, "%d %n", &x, &n) != 1 || s[n] || x < -1 || x > 1) return;
+  user_usecookies = x;
+}
 
 static void
 set_locale_by_id(int id)
@@ -716,7 +728,7 @@ static void put_cookie_header(int force_put, int clear_cookie)
 static int
 check_password(void)
 {
-  unsigned char *cookie_str;
+  unsigned char *cookie_str = 0;
   int err;
   int new_user_id;
   unsigned long long new_cookie;
@@ -725,12 +737,8 @@ check_password(void)
   int new_contest_id;
   unsigned char *new_login;
 
-  user_usecookies = 0;
-  if (cgi_param("usecookies")) {
-    user_usecookies = xstrdup("1");
-  }
-
-  cookie_str = getenv("HTTP_COOKIE");
+  read_usecookies();
+  if (user_usecookies != 0) cookie_str = getenv("HTTP_COOKIE");
   if (cookie_str) {
     //fprintf(stderr, "Got cookie string: <%s>\n", cookie_str);
     if (parse_cookies(cookie_str)) {
@@ -776,7 +784,7 @@ check_password(void)
   }
   err = userlist_clnt_login(server_conn, user_ip, user_contest_id,
                             client_locale_id,
-                            !!user_usecookies, user_login, user_password,
+                            user_usecookies, user_login, user_password,
                             &new_user_id, &new_cookie, &new_name,
                             &new_locale_id);
   if (err != ULS_LOGIN_OK && err != ULS_LOGIN_COOKIE) {
@@ -1033,7 +1041,8 @@ edit_registration_data(void)
     printf("<hr><h2>General user information</h2>");
     printf("<p>%s: <input type=\"text\" disabled=\"1\" name=\"user_login\" value=\"%s\" size=\"16\">\n", _("Login"), user_login);
 
-    userlist_clnt_get_email(server_conn, user_id, &user_email);
+    userlist_clnt_get_email(server_conn, user_id, &user_email,
+                            &user_show_email);
     printf("<p>%s: <input type=\"text\" disabled=\"1\" name=\"user_email\" value=\"%s\" size=\"64\">\n", _("E-mail"), user_email);
     printf("<br><input type=\"checkbox\" name=\"show_email\"%s> %s",
            user_show_email?" checked=\"yes\"":"",
@@ -1066,10 +1075,7 @@ initial_login_page(int login_only)
   }
   fix_string(user_login, name_accept_chars, '?');
   user_password = xstrdup("");
-  user_usecookies = 0;
-  if (cgi_param("usecookies")) {
-    user_usecookies = xstrdup("1");
-  }
+  read_usecookies();
   read_contest_id();  
 
   printf("<form method=\"POST\" action=\"%s\" "
@@ -1081,7 +1087,7 @@ initial_login_page(int login_only)
            user_contest_id);
   }
   if (login_only) {
-    printf("<input type=\"hidden\" name=\"login_dlg\" value=\"1\">\n");
+    //printf("<input type=\"hidden\" name=\"login_dlg\" value=\"1\">\n");
   }
 
   if (!login_only)
@@ -1105,10 +1111,16 @@ initial_login_page(int login_only)
          " size=\"16\" maxlength=\"16\">\n",
          _("Password"), user_password);
 
-  printf("<p><input type=\"checkbox\" name=\"usecookies\" value=\"%s\"%s>%s\n",
-         "1",
-         user_usecookies?" checked=\"yes\"":"",
-         _("Use cookies"));
+  printf("<p>%s: <input type=\"radio\" name=\"usecookies\" value=\"-1\"%s>%s,"
+         " <input type=\"radio\" name=\"usecookies\" value=\"0\"%s>%s,"
+         " <input type=\"radio\" name=\"usecookies\" value=\"1\"%s>%s.</p>",
+         _("Use cookies"),
+         user_usecookies == -1?" checked=\"yes\"":"",
+         _("default"),
+         user_usecookies == 0?" checked=\"yes\"":"",
+         _("no"),
+         user_usecookies == 1?" checked=\"yes\"":"",
+         _("yes"));
 
   printf("<p><input type=\"submit\" name=\"do_login\" value=\"%s\">", _("Submit"));
 
@@ -1139,8 +1151,8 @@ registration_is_complete(void)
     p += sprintf(p, "&locale_id=%d", client_locale_id);
   if (user_contest_id > 0)
     p += sprintf(p, "&contest_id=%d", user_contest_id);
-  if (user_usecookies)
-    p += sprintf(p, "&usecookies=1");
+  if (user_usecookies != -1)
+    p += sprintf(p, "&usecookies=%d", user_usecookies);
 
   client_put_header(config->charset, "%s", _("User registration is complete"));
 
@@ -1179,10 +1191,7 @@ register_new_user(int commit_flag)
   if (commit_flag && !*user_email) {
     submission_log = xstrmerge1(submission_log, _("Mandatory \"E-mail\" is empty\n"));
   }
-  if ((user_usecookies = cgi_param("usecookies"))) {
-    xfree(user_usecookies);
-    user_usecookies = xstrdup("1");
-  }
+  read_usecookies();
   read_contest_id();  
 
   while (!submission_log && commit_flag) {
@@ -1191,7 +1200,7 @@ register_new_user(int commit_flag)
     if (!server_conn) {
       server_conn = userlist_clnt_open(config->socket_path);
     }
-    err = userlist_clnt_register_new(server_conn, user_ip, user_contest_id, client_locale_id, !!user_usecookies, user_login, user_email);
+    err = userlist_clnt_register_new(server_conn, user_ip, user_contest_id, client_locale_id, user_usecookies, user_login, user_email);
     if (!err) {
       registration_is_complete();
       return;
@@ -1253,11 +1262,17 @@ register_new_user(int commit_flag)
   printf("<p>%s (*): <input type=\"text\" name=\"email\" value=\"%s\""
          " size=\"64\" maxlength=\"64\">\n",
          _("E-mail"), user_email);
-  printf("<p>%s</p>", _("Check this box to enable cookies"));
-  printf("<p><input type=\"checkbox\" name=\"usecookies\" value=\"%s\"%s>%s\n",
-         "1",
-         user_usecookies?" checked=\"yes\"":"",
-         _("Use cookies"));
+  printf("<p>%s</p>\n", _("Please, specify, whether you want to use cookies to support session. Generally, it is more convenient to use, than not to use cookies."));
+  printf("<p>%s: <input type=\"radio\" name=\"usecookies\" value=\"-1\"%s>%s,"
+         " <input type=\"radio\" name=\"usecookies\" value=\"0\"%s>%s,"
+         " <input type=\"radio\" name=\"usecookies\" value=\"1\"%s>%s.</p>",
+         _("Use cookies"),
+         user_usecookies == -1?" checked=\"yes\"":"",
+         _("server default"),
+         user_usecookies == 0?" checked=\"yes\"":"",
+         _("no"),
+         user_usecookies == 1?" checked=\"yes\"":"",
+         _("yes"));
   printf("<p><input type=\"reset\" value=\"%s\">",
          _("Reset the form"));
   printf("<p><input type=\"submit\" name=\"do_register\" value=\"%s\">",
