@@ -324,7 +324,8 @@ client_check_server_status(char const *charset, char const *path, int lag)
 }
 
 int
-client_print_server_status(int read_only, char const *form_start,
+client_print_server_status(int priv_level,
+                           char const *form_start,
                            char const *anchor)
 {
   char str_serv_time[32];
@@ -357,27 +358,27 @@ client_print_server_status(int read_only, char const *form_start,
   }
   puts("");
 
-  if (!read_only) puts(form_start);
+  if (priv_level == PRIV_LEVEL_ADMIN) puts(form_start);
   puts("<table border=\"0\">");
 
   printf("<tr><td>%s:</td><td>%s</td>", _("Server time"), str_serv_time);
-  if (!read_only) puts("<td>&nbsp;</td><td>&nbsp;</td>");
+  if (priv_level == PRIV_LEVEL_ADMIN) puts("<td>&nbsp;</td><td>&nbsp;</td>");
   puts("</tr>");
 
   printf("<tr><td>%s:</td><td>%s</td>", _("Client time"), str_clnt_time);
-  if (!read_only) puts("<td>&nbsp;</td><td>&nbsp;</td>");
+  if (priv_level == PRIV_LEVEL_ADMIN) puts("<td>&nbsp;</td><td>&nbsp;</td>");
   puts("</tr>");
 
   if (!server_start_time) {
     printf("<tr><td colspan=\"2\"><b><big>%s</big></b></td>\n",
          _("Contest is not started"));
-    if (!read_only) printf("<td>&nbsp;</td><td><input type=\"submit\" name=\"start\" value=\"%s\"></td>", _("start"));
+    if (priv_level == PRIV_LEVEL_ADMIN) printf("<td>&nbsp;</td><td><input type=\"submit\" name=\"start\" value=\"%s\"></td>", _("start"));
     puts("</tr>");
   } else {
     client_time_to_str(str_strt_time, server_start_time);
     printf("<tr><td>%s:</td><td>%s</td>",
            _("Contest start time"), str_strt_time);
-    if (!read_only) {
+    if (priv_level == PRIV_LEVEL_ADMIN) {
       puts("<td>&nbsp;</td>");
       if (!server_stop_time)
         printf("<td><input type=\"submit\" name=\"stop\" value=\"%s\"></td>",
@@ -397,7 +398,7 @@ client_print_server_status(int read_only, char const *form_start,
     printf("<tr><td>%s:</td><td>%s</td>",
            _("Planned start time"),
            str_schd_time);
-    if (!read_only)
+    if (priv_level == PRIV_LEVEL_ADMIN)
       printf("<td><input type=\"text\" name=\"sched_time\" size=\"16\"></td>"
              "<td><input type=\"submit\" name=\"reschedule\" value=\"%s\"></td>",
              _("Reschedule"));
@@ -410,7 +411,7 @@ client_print_server_status(int read_only, char const *form_start,
     sprintf(str_duration, "%s", _("Unlimited"));
   }
   printf("<tr><td>%s:</td><td>%s</td>", _("Duration"), str_duration);
-  if (!read_only) {
+  if (priv_level == PRIV_LEVEL_ADMIN) {
     if (!server_stop_time)
       printf("<td><input type=\"text\" name=\"dur\" size=\"16\"></td><td><input type=\"submit\" name=\"changedur\" value=\"%s\"></td>",
              _("Change duration"));
@@ -422,13 +423,13 @@ client_print_server_status(int read_only, char const *form_start,
   if (server_start_time && server_duration) {
     client_time_to_str(str_end_time, server_start_time + server_duration);
     printf("<tr><td>%s:</td><td>%s</td>", _("End time"), str_end_time);
-    if (!read_only) puts("<td>&nbsp;</td><td>&nbsp;</td>");
+    if (priv_level == PRIV_LEVEL_ADMIN) puts("<td>&nbsp;</td><td>&nbsp;</td>");
     puts("</tr>");
 
     if (!server_stop_time) {
       duration_str(0, server_cur_time, server_start_time, str_el_dur, 0);
       printf("<tr><td>%s:</td><td>%s</td>", _("Elapsed time"), str_el_dur);
-      if (!read_only) puts("<td>&nbsp;</td><td>&nbsp</td>");
+      if (priv_level == PRIV_LEVEL_ADMIN) puts("<td>&nbsp;</td><td>&nbsp</td>");
       puts("</tr>");
 
       if (server_duration) {
@@ -436,13 +437,13 @@ client_print_server_status(int read_only, char const *form_start,
                      0, str_left_dur, 0);
         printf("<tr><td>%s:</td><td>%s</td>",
                _("Remaining time"), str_left_dur);
-        if (!read_only) puts("<td>&nbsp;</td><td>&nbsp</td>");
+        if (priv_level == PRIV_LEVEL_ADMIN) puts("<td>&nbsp;</td><td>&nbsp</td>");
         puts("</tr>");
       }
     }
   }
   puts("</table>");
-  if (!read_only) puts("</form>");
+  if (priv_level == PRIV_LEVEL_ADMIN) puts("</form>");
   return 0;
 }
 
