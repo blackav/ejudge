@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #define YYSTYPE struct filter_tree *
@@ -617,6 +613,12 @@ filter_tree_result_str(unsigned char *buf, size_t size, int val)
     strcpy(tmp, "AC"); break;
   case RUN_IGNORED:
     strcpy(tmp, "IG"); break;
+  case RUN_VIRTUAL_START:
+    strcpy(tmp, "VS"); break;
+  case RUN_VIRTUAL_STOP:
+    strcpy(tmp, "VT"); break;
+  case RUN_EMPTY:
+    strcpy(tmp, "EM"); break;
   case RUN_RUNNING:
     strcpy(tmp, "RU"); break;
   case RUN_COMPILED:
@@ -1547,6 +1549,12 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
         res->v.r = RUN_ACCEPTED;
       } else if (!strcasecmp(p1->v.s, "IG")) {
         res->v.r = RUN_IGNORED;
+      } else if (!strcasecmp(p1->v.s, "VS")) {
+        res->v.r = RUN_VIRTUAL_START;
+      } else if (!strcasecmp(p1->v.s, "VT")) {
+        res->v.r = RUN_VIRTUAL_STOP;
+      } else if (!strcasecmp(p1->v.s, "EM")) {
+        res->v.r = RUN_EMPTY;
       } else if (!strcasecmp(p1->v.s, "RU")) {
         res->v.r = RUN_RUNNING;
       } else if (!strcasecmp(p1->v.s, "CD")) {
@@ -1662,6 +1670,5 @@ filter_tree_is_value_node(struct filter_tree *p)
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "tPageDesc")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
