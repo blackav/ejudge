@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "html.h"
@@ -1401,7 +1397,7 @@ write_team_page(FILE *f, int user_id,
     fprintf(f, "<tr><td>%s:</td><td>", _("Language"));
     fprintf(f, "<select name=\"language\"><option value=\"\">\n");
     for (i = 1; i <= max_lang; i++)
-      if (langs[i]) {
+      if (langs[i] && !langs[i]->disabled) {
         fprintf(f, "<option value=\"%d\">%s - %s\n",
                 langs[i]->id, langs[i]->short_name, langs[i]->long_name);
       }
