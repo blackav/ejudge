@@ -23,10 +23,12 @@
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
+#include <reuse/osdeps.h>
 
 #include <stdio.h>
 #include <string.h>
 #include <pwd.h>
+#include <limits.h>
 
 enum
   {
@@ -54,6 +56,9 @@ enum
     TG_SERIALIZATION_KEY,
     TG_ADMIN_EMAIL,
     TG_USERLIST_LOG,
+    TG_VAR_DIR,
+    TG_SUPER_SERVE_LOG,
+    TG_COMPILE_LOG,
   };
 enum
   {
@@ -93,6 +98,9 @@ static char const * const tag_map[] =
   "serialization_key",
   "admin_email",
   "userlist_log",
+  "var_dir",
+  "super_serve_log",
+  "compile_log",
   0
 };
 
@@ -137,6 +145,9 @@ tree_alloc_func(int tag)
   case TG_SERIALIZATION_KEY:
   case TG_ADMIN_EMAIL:
   case TG_USERLIST_LOG:
+  case TG_VAR_DIR:
+  case TG_SUPER_SERVE_LOG:
+  case TG_COMPILE_LOG:
     return xcalloc(1, sizeof(struct xml_tree));
   case TG_MAP:
     return xcalloc(1, sizeof(struct userlist_cfg_user_map));
@@ -357,6 +368,7 @@ userlist_cfg_parse(char const *path)
   struct xml_tree *tree = 0, *p;
   struct userlist_cfg *cfg = 0;
   struct xml_attn *a;
+  unsigned char pathbuf[PATH_MAX];
 
   tree = xml_build_tree(path, tag_map, attn_map, tree_alloc_func,
                         attn_alloc_func);
@@ -473,6 +485,15 @@ userlist_cfg_parse(char const *path)
     case TG_USERLIST_LOG:
       if (handle_final_tag(path, p, &cfg->userlist_log) < 0) goto failed;
       break;
+    case TG_VAR_DIR:
+      if (handle_final_tag(path, p, &cfg->var_dir) < 0) goto failed;
+      break;
+    case TG_SUPER_SERVE_LOG:
+      if (handle_final_tag(path, p, &cfg->super_serve_log) < 0) goto failed;
+      break;
+    case TG_COMPILE_LOG:
+      if (handle_final_tag(path, p, &cfg->compile_log) < 0) goto failed;
+      break;
     default:
       err("%s:%d:%d: element <%s> is invalid here",
           path, p->line, p->column, tag_map[p->tag]);
@@ -522,6 +543,28 @@ userlist_cfg_parse(char const *path)
   if (!cfg->register_email) {
     err("%s: element <register_email> is not defined", path);
     goto failed;
+  }
+
+  if (cfg->var_dir && cfg->userlist_log
+      && !os_IsAbsolutePath(cfg->userlist_log)) {
+    snprintf(pathbuf, sizeof(pathbuf), "%s/%s",
+             cfg->var_dir, cfg->userlist_log);
+    xfree(cfg->userlist_log);
+    cfg->userlist_log = xstrdup(pathbuf);
+  }
+  if (cfg->var_dir && cfg->super_serve_log
+      && !os_IsAbsolutePath(cfg->super_serve_log)) {
+    snprintf(pathbuf, sizeof(pathbuf), "%s/%s",
+             cfg->var_dir, cfg->super_serve_log);
+    xfree(cfg->super_serve_log);
+    cfg->super_serve_log = xstrdup(pathbuf);
+  }
+  if (cfg->var_dir && cfg->compile_log
+      && !os_IsAbsolutePath(cfg->compile_log)) {
+    snprintf(pathbuf, sizeof(pathbuf), "%s/%s",
+             cfg->var_dir, cfg->compile_log);
+    xfree(cfg->compile_log);
+    cfg->compile_log = xstrdup(pathbuf);
   }
 
 #if defined EJUDGE_SERVE_PATH
