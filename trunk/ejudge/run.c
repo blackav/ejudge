@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -829,17 +829,25 @@ run_tests(struct section_tester_data *tst,
 
         /* now start checker */
         /* checker <input data> <output result> <corr answer> <info file> */
-        info("starting checker: %s", var_check_cmd);
+        info("starting checker: %s %s %s", var_check_cmd, test_src,
+             prb->output_file);
 
         tsk = task_New();
         task_AddArg(tsk, var_check_cmd);
-        task_AddArg(tsk, prb->input_file);
+        task_AddArg(tsk, test_src);
         task_AddArg(tsk, prb->output_file);
         if (prb->use_corr && prb->corr_dir[0]) {
           pathmake3(corr_path, var_corr_dir, "/", corr_base, NULL);
           task_AddArg(tsk, corr_path);
-          generic_read_file(&tests[cur_test].correct, 0, 0, 0,
-                            0, corr_path, "");
+          file_size = generic_file_size(0, corr_path, 0);
+          if (file_size >= 0) {
+            tests[cur_test].correct_size = file_size;
+            if (global->max_file_length > 0
+                && file_size <= global->max_file_length) {
+              generic_read_file(&tests[cur_test].correct, 0, 0, 0,
+                                0, corr_path, "");
+            }
+          }
         }
         if (prb->use_info) {
           task_AddArg(tsk, info_src);
