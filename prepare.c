@@ -87,6 +87,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(tests_to_accept, "d"),
   GLOBAL_PARAM(ignore_compile_errors, "d"),
   GLOBAL_PARAM(inactivity_timeout, "d"),
+  GLOBAL_PARAM(disable_auto_testing, "d"),
 
   GLOBAL_PARAM(charset, "s"),
   GLOBAL_PARAM(standings_charset, "s"),
@@ -166,10 +167,13 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(enable_continue, "d"),
   GLOBAL_PARAM(checker_real_time_limit, "d"),
   GLOBAL_PARAM(compile_real_time_limit, "d"),
+  GLOBAL_PARAM(show_deadline, "d"),
 
   GLOBAL_PARAM(standings_team_color, "s"),
   GLOBAL_PARAM(standings_virtual_team_color, "s"),
   GLOBAL_PARAM(standings_real_team_color, "s"),
+
+  GLOBAL_PARAM(variant_map_file, "s"),
 
   { 0, 0, 0, 0 }
 };
@@ -192,6 +196,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(use_corr, "d"),
   PROBLEM_PARAM(tests_to_accept, "d"),
   PROBLEM_PARAM(checker_real_time_limit, "d"),
+  PROBLEM_PARAM(disable_auto_testing, "d"),
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
@@ -204,6 +209,8 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(output_file, "s"),
   PROBLEM_PARAM(test_score_list, "s"),
   PROBLEM_PARAM(test_sets, "x"),
+  PROBLEM_PARAM(deadline, "s"),
+  PROBLEM_PARAM(variant_num, "d"),
 
   { 0, 0, 0, 0 }
 };
@@ -417,6 +424,8 @@ problem_init_func(struct generic_section_config *gp)
   p->corr_sfx[0] = 1;
   p->run_penalty = -1;
   p->checker_real_time_limit = -1;
+  p->variant_num = -1;
+  p->disable_auto_testing = -1;
 }
 
 static void
@@ -708,6 +717,220 @@ parse_testsets(char **set_in, int *p_total, struct testset_info **p_info)
 }
 
 static int
+parse_date(const unsigned char *s, time_t *pd)
+{
+  int year, month, day, hour, min, sec, n;
+  time_t t;
+  struct tm tt;
+
+  if (!s) goto failed;
+
+  while (1) {
+    year = month = day = hour = min = sec = 0;
+    if (sscanf(s, "%d/%d/%d %d:%d:%d %n", &year, &month, &day, &hour,
+               &min, &sec, &n) == 6 && !s[n]) break;
+    sec = 0;
+    if (sscanf(s, "%d/%d/%d %d:%d %n", &year, &month, &day, &hour, &min, &n)
+        == 5 && !s[n]) break;
+    min = sec = 0;
+    if (sscanf(s, "%d/%d/%d %d %n", &year, &month, &day, &hour, &n) == 4
+        && !s[n]) break;
+    hour = min = sec = 0;
+    if (sscanf(s, "%d/%d/%d %n", &year, &month, &day, &n) == 3 && !s[n]) break;
+    goto failed;
+  }
+
+  if (year < 1900 || year > 2100 || month < 1 || month > 12
+      || day < 1 || day > 31 || hour < 0 || hour >= 24
+      || min < 0 || min >= 60 || sec < 0 || sec >= 60) goto failed;
+  tt.tm_sec = sec;
+  tt.tm_min = min;
+  tt.tm_hour = hour;
+  tt.tm_mday = day;
+  tt.tm_mon = month - 1;
+  tt.tm_year = year - 1900;
+  if ((t = mktime(&tt)) == (time_t) -1) goto failed;
+  *pd = t;
+  return 0;
+
+ failed:
+  return -1;
+}
+
+struct variant_map_item
+{
+  unsigned char *login;
+  int user_id;
+  int *variants;
+};
+
+struct variant_map
+{
+  int *prob_map;
+  int *prob_rev_map;
+  int var_prob_num;
+  int vintage;
+
+  size_t user_map_size;
+  struct variant_map_item **user_map;
+
+  size_t a, u;
+  struct variant_map_item *v;
+};
+
+static struct variant_map *
+parse_variant_map(const unsigned char *path)
+{
+  unsigned char buf[1200];
+  unsigned char login_buf[sizeof(buf)];
+  unsigned char *p;
+  int vintage, n;
+  int len, i, j, v;
+  FILE *f;
+  struct variant_map *pmap;
+
+  XCALLOC(pmap, 1);
+  XCALLOC(pmap->prob_map, max_prob + 1);
+  XCALLOC(pmap->prob_rev_map, max_prob + 1);
+  pmap->var_prob_num = 0;
+  for (i = 1; i <= max_prob; i++) {
+    if (!probs[i] || probs[i]->variant_num <= 0) continue;
+    pmap->prob_map[i] = ++pmap->var_prob_num;
+    pmap->prob_rev_map[pmap->var_prob_num] = i;
+  }
+  pmap->a = 16;
+  XCALLOC(pmap->v, pmap->a);
+
+  if (!(f = fopen(path, "r"))) {
+    err("Cannot open variant map file '%s'", path);
+    return 0;
+  }
+  if (!fgets(buf, sizeof(buf), f)) {
+    err("Unexpected EOF in variant map file '%s'", path);
+    return 0;
+  }
+  len = strlen(buf);
+  if (len > 1024) {
+    err("Line is too long in '%s'", path);
+    return 0;
+  }
+  while (len > 0 && isspace(buf[len - 1])) buf[--len] = 0;
+  if (sscanf(buf, " < variant_map version = \"%d\" >%n",
+             &vintage, &n) != 1 || buf[n]) {
+    err("Invalid header of the variant map file '%s'", path);
+    return 0;
+  }
+  if (vintage != 1) {
+    err("Cannot handle variant map file '%s' version %d", path, vintage);
+    return 0;
+  }
+
+  while (fgets(buf, sizeof(buf), f)) {
+    if ((p = strchr(buf, '#'))) *p = 0;
+    len = strlen(buf);
+    if (len > 1024) {
+      err("Line is too long in '%s'", path);
+      return 0;
+    }
+    while (len > 0 && isspace(buf[len - 1])) buf[--len] = 0;
+    if (!len) continue;
+    if (!strcmp(buf, "</variant_map>")) break;
+
+    if (pmap->u >= pmap->a) {
+      pmap->a *= 2;
+      pmap->v = (typeof(pmap->v)) xrealloc(pmap->v,
+                                           pmap->a * sizeof(pmap->v[0]));
+    }
+    memset(&pmap->v[pmap->u], 0, sizeof(pmap->v[0]));
+    XCALLOC(pmap->v[pmap->u].variants, pmap->var_prob_num + 1);
+
+    p = buf;
+    if (sscanf(p, "%s%n", login_buf, &n) != 1) {
+      err("Cannot read team login");
+      return 0;
+    }
+    p += n;
+    pmap->v[pmap->u].login = xstrdup(login_buf);
+
+    for (j = 1; j <= pmap->var_prob_num; j++) {
+      i = pmap->prob_rev_map[j];
+      ASSERT(i > 0 && i <= max_prob);
+      ASSERT(probs[i]);
+      ASSERT(probs[i]->variant_num > 0);
+      if (sscanf(p, "%d%n", &v, &n) != 1) {
+        err("Cannot read variant for team %s and problem %s",
+            login_buf, probs[i]->short_name);
+        return 0;
+      }
+      if (v <= 0 || v > probs[i]->variant_num) {
+        err("Invalid variant %d for team %s and problem %s",
+            v, login_buf, probs[i]->short_name);
+        return 0;
+      }
+      pmap->v[pmap->u].variants[j] = v;
+    }
+    pmap->u++;
+  }
+
+  if (ferror(f)) {
+    err("Input error from '%s'", path);
+    return 0;
+  }
+
+  fprintf(stderr, "Parsed variant map version %d\n", vintage);
+  for (i = 0; i < pmap->u; i++) {
+    fprintf(stderr, "%s: ", pmap->v[i].login);
+    for (j = 1; j <= pmap->var_prob_num; j++)
+      fprintf(stderr, "%s(%d) ",
+              probs[pmap->prob_rev_map[j]]->short_name,
+              pmap->v[i].variants[j]);
+    fprintf(stderr, "\n");
+  }
+
+  fclose(f);
+  return pmap;
+}
+
+int
+find_variant(int user_id, int prob_id)
+{
+  int i, new_vint;
+  struct variant_map *pmap = global->variant_map;
+
+  if (!pmap) return 0;
+  if (prob_id <= 0 || prob_id > max_prob || !probs[prob_id]) return 0;
+  if (probs[prob_id]->variant_num <= 0) return 0;
+  if (!pmap->prob_map[prob_id]) return 0;
+
+  teamdb_refresh();
+  new_vint = teamdb_get_vintage();
+  if (new_vint != pmap->vintage || !pmap->user_map_size || !pmap->user_map) {
+    info("find_variant: new vintage: %d, old: %d, updating variant map",
+         new_vint, pmap->vintage);
+    xfree(pmap->user_map);
+    pmap->user_map_size = 0;
+    pmap->user_map = 0;
+
+    pmap->user_map_size = teamdb_get_max_team_id() + 1;
+    XCALLOC(pmap->user_map, pmap->user_map_size);
+
+    for (i = 0; i < pmap->u; i++) {
+      pmap->v[i].user_id = teamdb_lookup_login(pmap->v[i].login);
+      if (pmap->v[i].user_id < 0) pmap->v[i].user_id = 0;
+      if (!pmap->v[i].user_id) continue;
+      if (pmap->v[i].user_id >= pmap->user_map_size) continue;
+      pmap->user_map[pmap->v[i].user_id] = &pmap->v[i];
+    }
+    pmap->vintage = new_vint;
+  }
+
+  if (user_id <= 0 || user_id >= pmap->user_map_size) return 0;
+  if (pmap->user_map[user_id])
+    return pmap->user_map[user_id]->variants[pmap->prob_map[prob_id]];
+  return 0;
+}
+
+static int
 set_defaults(int mode)
 {
   struct generic_section_config *p;
@@ -864,6 +1087,9 @@ set_defaults(int mode)
 
     GLOBAL_INIT_FIELD(status_dir, DFLT_G_STATUS_DIR, var_dir);
     GLOBAL_INIT_FIELD(serve_socket, DFLT_G_SERVE_SOCKET, var_dir);
+    if (global->variant_map_file) {
+      GLOBAL_INIT_FIELD(variant_map_file, "", conf_dir);
+    }
   }
 
   if (mode == PREPARE_COMPILE || mode == PREPARE_SERVE) {
@@ -1190,6 +1416,21 @@ set_defaults(int mode)
       probs[i]->tests_to_accept = 0;
     }
 
+    if (probs[i]->disable_auto_testing == -1 && si != -1
+        && abstr_probs[si]->disable_auto_testing != -1) {
+      probs[i]->disable_auto_testing = abstr_probs[si]->disable_auto_testing;
+      info("problem.%s.disable_auto_testing inherited from problem.%s (%d)",
+           ish, sish, probs[i]->disable_auto_testing);
+    }
+    if (probs[i]->disable_auto_testing == -1) {
+      probs[i]->disable_auto_testing = global->disable_auto_testing;
+      info("problem.%s.disable_auto_testing inherited from global (%d)",
+           ish, global->disable_auto_testing);
+    }
+    if (probs[i]->disable_auto_testing == -1) {
+      probs[i]->disable_auto_testing = 0;
+    }
+
     if (!probs[i]->full_score && si != -1
         && abstr_probs[si]->full_score) {
       probs[i]->full_score = abstr_probs[si]->full_score;
@@ -1293,6 +1534,17 @@ set_defaults(int mode)
       probs[i]->corr_sfx[0] = 0;
     }
 
+    if (mode == PREPARE_SERVE) {
+      if (probs[i]->deadline[0]) {
+        if (parse_date(probs[i]->deadline, &probs[i]->t_deadline) < 0) {
+          err("invalid deadline specified for problem `%s'",
+              probs[i]->short_name);
+          return -1;
+        }
+        info("problem.%s.deadline is %ld", ish, probs[i]->t_deadline);
+      }
+    }
+
     if (mode == PREPARE_RUN) {
       if (!probs[i]->test_dir[0] && si != -1
           && abstr_probs[si]->test_dir[0]) {
@@ -1348,6 +1600,16 @@ set_defaults(int mode)
         pathcpy(probs[i]->output_file, DFLT_P_OUTPUT_FILE);
       }
 
+      if (probs[i]->variant_num == -1 && si != -1
+          && abstr_probs[si]->variant_num != -1) {
+        probs[i]->variant_num = abstr_probs[si]->variant_num;
+        info("problem.%s.variant_num inherited from problem.%s (%d)",
+             ish, sish, probs[i]->variant_num);
+      }
+      if (probs[i]->variant_num == -1) {
+        probs[i]->variant_num = 0;
+      }
+
       if (probs[i]->use_corr == -1 && si != -1
           && abstr_probs[si]->use_corr != -1) {
         probs[i]->use_corr = abstr_probs[si]->use_corr;
@@ -1384,6 +1646,21 @@ set_defaults(int mode)
   if (mode == PREPARE_SERVE || mode == PREPARE_RUN) {
     for (i = 0; i < max_abstr_tester; i++) {
       if (process_abstract_tester(i) < 0) return -1;
+    }
+  }
+
+  if (mode == PREPARE_SERVE) {
+    int var_prob_num = 0;
+
+    for (i = 0; i <= max_prob; i++)
+      if (probs[i] && probs[i]->variant_num > 0) var_prob_num++;
+    if (var_prob_num > 0) {
+      if (!global->variant_map_file[0]) {
+        err("There are variant problems, but no variant file name");
+        return -1;
+      }
+      global->variant_map = parse_variant_map(global->variant_map_file);
+      if (!global->variant_map) return -1;
     }
   }
 
