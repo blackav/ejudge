@@ -1684,7 +1684,8 @@ cmd_priv_submit_run(struct client_state *p, int len,
     return;
   }
 
-  if (probs[pkt->prob_id]->disable_auto_testing) {
+  if (probs[pkt->prob_id]->disable_auto_testing
+      || probs[pkt->prob_id]->disable_testing) {
     info("%d: team_submit_run: auto testing disabled", p->id);
     run_change_status(run_id, RUN_ACCEPTED, 0, -1);
     new_send_reply(p, SRV_RPL_OK);
@@ -1847,7 +1848,8 @@ cmd_team_submit_run(struct client_state *p, int len,
     return;
   }
 
-  if (probs[pkt->prob_id]->disable_auto_testing) {
+  if (probs[pkt->prob_id]->disable_auto_testing
+      || probs[pkt->prob_id]->disable_testing) {
     info("%d: team_submit_run: auto testing disabled", p->id);
     run_change_status(run_id, RUN_ACCEPTED, 0, -1);
     new_send_reply(p, SRV_RPL_OK);
@@ -2409,6 +2411,11 @@ cmd_priv_command_0(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_BAD_RUN_ID);
       return;
     }
+    if (run_is_readonly(pkt->v.i)) {
+      err("%d: run %d is readonly", p->id, pkt->v.i);
+      new_send_reply(p, -SRV_ERR_READONLY_RUN);
+      return;
+    }
     if (run_clear_entry(pkt->v.i) < 0) {
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
@@ -2508,6 +2515,11 @@ cmd_edit_run(struct client_state *p, int len,
   }
   if (run_get_entry(pkt->run_id, &cur_run) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+
+  if (cur_run.is_readonly && pkt->mask != PROT_SERVE_RUN_READONLY_SET) {
+    new_send_reply(p, -SRV_ERR_READONLY_RUN);
     return;
   }
 
@@ -2644,6 +2656,15 @@ cmd_edit_run(struct client_state *p, int len,
     }
     run.score = pkt->score;
     run_flags |= RUN_ENTRY_SCORE;
+  }
+  if ((pkt->mask & PROT_SERVE_RUN_READONLY_SET)) {
+    if (pkt->is_readonly < 0 || pkt->is_readonly > 1) {
+      err("%d: invalid is_readonly value %d", p->id, pkt->is_readonly);
+      new_send_reply(p, -SRV_ERR_PROTOCOL);
+      return;
+    }
+    run.is_readonly = pkt->is_readonly;
+    run_flags |= RUN_ENTRY_READONLY;
   }
 
   // check capabilities
@@ -2960,6 +2981,7 @@ rejudge_run(int run_id)
 
   if (run_get_entry(run_id, &re) < 0) return;
   if (re.is_imported) return;
+  if (re.is_readonly) return;
   if (re.language <= 0 || re.language > max_lang || !langs[re.language]) {
     err("rejudge_run: bad language: %d", re.language);
     return;
@@ -3004,6 +3026,8 @@ do_rejudge_all(void)
         fprintf(stderr, "Invalid problem %d for run %d", re.problem, r);
         continue;
       }
+      if (re.is_readonly) continue;
+      if (!probs[re.problem] || probs[re.problem]->disable_testing) continue;
       idx = re.team * total_probs + re.problem;
       if (flag[idx]) continue;
       flag[idx] = 1;
@@ -3016,6 +3040,10 @@ do_rejudge_all(void)
     if (run_get_entry(r, &re) >= 0
         && re.status <= RUN_MAX_STATUS
         && re.status != RUN_IGNORED
+        && re.problem >= 1 && re.problem <= max_prob
+        && probs[re.problem]
+        && !probs[re.problem]->disable_testing
+        && !re.is_readonly
         && !re.is_imported) {
       rejudge_run(r);
     }
@@ -3040,6 +3068,8 @@ do_judge_suspended(void)
         && re.problem > 0
         && re.problem <= max_prob
         && probs[re.problem]
+        && !re.is_readonly
+        && !probs[re.problem]->disable_testing
         && !probs[re.problem]->disable_auto_testing) {
       rejudge_run(r);
     }
@@ -3052,6 +3082,8 @@ do_rejudge_problem(int prob_id)
   int total_runs, r;
   struct run_entry re;
 
+  if (prob_id <= 0 || prob_id > max_prob || !probs[prob_id]
+      || probs[prob_id]->disable_testing) return;
   total_runs = run_get_total();
 
   if (global->score_system_val == SCORE_OLYMPIAD
@@ -3070,6 +3102,7 @@ do_rejudge_problem(int prob_id)
           && re.status != RUN_ACCEPTED) continue;
       if (re.problem != prob_id) continue;
       if (re.is_imported) continue;
+      if (re.is_readonly) continue;
       if (re.team <= 0 || re.team >= total_ids) continue;
       if (flag[re.team]) continue;
       flag[re.team] = 1;
@@ -3081,6 +3114,7 @@ do_rejudge_problem(int prob_id)
   for (r = 0; r < total_runs; r++) {
     if (run_get_entry(r, &re) >= 0
         && re.problem == prob_id && re.status <= RUN_MAX_STATUS
+        && !re.is_readonly
         && re.status != RUN_IGNORED && !re.is_imported) {
       rejudge_run(r);
     }
