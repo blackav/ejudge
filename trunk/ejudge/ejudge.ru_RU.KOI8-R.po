@@ -6,20 +6,20 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 1.5\n"
-"POT-Creation-Date: 2002-10-16 01:17+0400\n"
-"PO-Revision-Date: 2002-10-15 08:57+0400\n"
+"POT-Creation-Date: 2002-10-19 07:52+0400\n"
+"PO-Revision-Date: 2002-10-19 07:43+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=koi8-r\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: run.c:204 run.c:293
+#: run.c:203 run.c:217 run.c:306 run.c:320
 #, c-format
 msgid "%d total tests runs, %d passed, %d failed\n"
 msgstr "Всего тестов: %d, пройдено: %d, не пройдено: %d\n"
 
-#: run.c:201 run.c:290
+#: run.c:200 run.c:213 run.c:303 run.c:316
 #, c-format
 msgid ""
 "%s, test #%d\n"
@@ -28,27 +28,27 @@ msgstr ""
 "%s, тест #%d\n"
 "\n"
 
-#: master.c:874 misctext.c:257 misctext.c:259 team.c:453
+#: master.c:981 misctext.c:257 misctext.c:259 team.c:453
 msgid "(no subject)"
 msgstr "(без темы)"
 
-#: run.c:247
+#: run.c:261
 msgid "--- Checker output ---\n"
 msgstr "--- Вывод проверяющей программы ---\n"
 
-#: run.c:235
+#: run.c:249
 msgid "--- Correct ---\n"
 msgstr "--- Правильный ответ ---\n"
 
-#: run.c:239
+#: run.c:253
 msgid "--- Input ---\n"
 msgstr "--- Входные данные ---\n"
 
-#: run.c:231
+#: run.c:245
 msgid "--- Output ---\n"
 msgstr "--- Результат работы программы ---\n"
 
-#: run.c:243
+#: run.c:257
 msgid "--- Stderr ---\n"
 msgstr "--- Ошибки ---\n"
 
@@ -56,15 +56,15 @@ msgstr "--- Ошибки ---\n"
 msgid "<p>Messages are disabled."
 msgstr "<p>Возможность посылки сообщений отключена."
 
-#: serve.c:549
+#: serve.c:569
 msgid "<p>New password cannot be saved."
 msgstr "<p>Ошибка сохранения нового пароля."
 
-#: serve.c:545
+#: serve.c:565
 msgid "<p>New password cannot be set."
 msgstr "<p>Ошибка установки нового пароля."
 
-#: serve.c:553
+#: serve.c:573
 msgid "<p>Password is changed successfully."
 msgstr "<p>Пароль изменён успешно."
 
@@ -76,55 +76,55 @@ msgstr "<p>Пароль слишком длинный (>16 символов)."
 msgid "<p>Passwords do not match."
 msgstr "<p>Пароли не совпадают."
 
-#: serve.c:498 serve.c:505
+#: serve.c:518 serve.c:525
 msgid "<p>Server failed to pass the program for compilation"
 msgstr "<p>Ошибка при передаче программы на компиляцию"
 
-#: serve.c:392
+#: serve.c:412
 msgid "<p>Server failed to read the message body."
 msgstr "<p>Ошибка при чтении тела сообщения."
 
-#: serve.c:1400
+#: serve.c:1426
 msgid "<p>Server failed to read the message file."
 msgstr "<p>Ошибка при чтении файла сообщения."
 
-#: serve.c:466
+#: serve.c:486
 msgid "<p>Server failed to read the program source."
 msgstr "<p>Ошибка при чтении текста программы."
 
-#: serve.c:1412
+#: serve.c:1438
 msgid "<p>Server failed to save the message."
 msgstr "<p>Ошибка при сохранении сообщения."
 
-#: serve.c:492
+#: serve.c:512
 msgid "<p>Server failed to save the program in the archive."
 msgstr "<p>Ошибка при сохранении программы в архиве."
 
-#: serve.c:1405
+#: serve.c:1431
 msgid "<p>Server failed to update message log."
 msgstr "<p>Ошибка при обновлении журнала сообщений."
 
-#: serve.c:483 serve.c:510
+#: serve.c:503 serve.c:530
 msgid "<p>Server failed to update submission log."
 msgstr "<p>Ошибка при обновлении журнала посылок."
 
-#: serve.c:513
+#: serve.c:533
 msgid "<p>Submission is sent."
 msgstr "<p>Решение отослано на проверку."
 
-#: serve.c:305
+#: serve.c:325
 msgid "<p>The contest is already over."
 msgstr "<p>Турнир уже закончился."
 
-#: serve.c:298
+#: serve.c:318
 msgid "<p>The contest is already started."
 msgstr "<p>Турнир уже начался."
 
-#: serve.c:291
+#: serve.c:311
 msgid "<p>The contest is not started."
 msgstr "<p>Турнир не запущен."
 
-#: serve.c:1063
+#: serve.c:1089
 msgid "<p>The contest time cannot be decreased."
 msgstr "<p>Время турнира не может быть уменьшено."
 
@@ -138,7 +138,7 @@ msgstr ""
 msgid "<p>The message cannot be sent. Error writing to the spool directory."
 msgstr "<p>Сообщение не может быть послано. Ошибка обмена с сервером."
 
-#: serve.c:397
+#: serve.c:417
 msgid "<p>The message cannot be sent. Message quota exceeded for this team."
 msgstr ""
 "<p>Сообщение не может быть послано. Превышена квота на сообщения для данной "
@@ -156,15 +156,15 @@ msgstr "<p>Сообщение не может быть послано. Турнир не начался."
 msgid "<p>The message cannot be sent. The contest is over."
 msgstr "<p>Сообщение не может быть послано. Турнир закончился."
 
-#: serve.c:404
+#: serve.c:424
 msgid "<p>The message is not sent. Error while updating message log."
 msgstr "<p>Сообщение не послано. Ошибка при обновлении журнала сообщений."
 
-#: serve.c:412
+#: serve.c:432
 msgid "<p>The message is not sent. Failed to write the message to the archive."
 msgstr "<p>Сообщение не послано. Ошибка при записи сообщения в архив."
 
-#: serve.c:416
+#: serve.c:436
 msgid "<p>The message is sent."
 msgstr "<p>Сообщение послано."
 
@@ -172,7 +172,7 @@ msgstr "<p>Сообщение послано."
 msgid "<p>The solution cannot be sent. Error writing to the spool directory."
 msgstr "<p>Решение не может быть послано. Ошибка обмена с сервером."
 
-#: serve.c:475
+#: serve.c:495
 msgid "<p>The submission cannot be accepted. Quota exceeded."
 msgstr ""
 "<p>Решение не может быть послано. Превышена квота на решения для данной "
@@ -193,7 +193,7 @@ msgstr "<p>Решение не может быть послано. Турнир не начался."
 msgid "<p>The submission cannot be sent. The contest is over."
 msgstr "<p>Решение не может быть послано. Турнир окончен."
 
-#: clntutil.c:165
+#: clntutil.c:167
 #, c-format
 msgid ""
 "<p>This is <b>ejudge</b> contest administration system, version %s, compiled "
@@ -214,48 +214,60 @@ msgstr ""
 "либо версии 2 Лицензии, либо (по Вашему желанию) любой последующей версии.\n"
 "<p>WEB-страница системы <b>ejudge</b> доступна <a href=\"%s\">здесь</a>.\n"
 
-#: run.c:228
+#: run.c:242
 #, c-format
 msgid "====== Test #%d =======\n"
 msgstr "====== Тест #%d =======\n"
 
-#: clntutil.c:244 html.c:395
+#: run.c:198 run.c:301
+msgid "ACCEPTED"
+msgstr "ПРИНЯТО"
+
+#: html.c:1107
+msgid "Accepted"
+msgstr "Принято"
+
+#: runlog.c:466
+msgid "Accepted for testing"
+msgstr "Принято на проверку"
+
+#: clntutil.c:246 html.c:402
 msgid "Access denied"
 msgstr "В доступе отказано"
 
-#: master.c:520
+#: master.c:547
 msgid "Add new team"
 msgstr "Добавить новую команду"
 
-#: master.c:536
+#: master.c:563
 msgid "Add!"
 msgstr "Добавить!"
 
-#: master.c:1145 master.c:1150
+#: master.c:1260 master.c:1265
 msgid "Administrator"
 msgstr "Администратор"
 
-#: master.c:844
+#: master.c:951
 msgid "Answer: NO"
 msgstr "Ответ: НЕТ"
 
-#: master.c:844
+#: master.c:951
 msgid "Answer: No comments"
 msgstr "Ответ: Без комментариев"
 
-#: master.c:842
+#: master.c:949
 msgid "Answer: Read the problem"
 msgstr "Ответ: См. условие задачи"
 
-#: master.c:844
+#: master.c:951
 msgid "Answer: YES"
 msgstr "Ответ: ДА"
 
-#: html.c:1456
+#: html.c:1528
 msgid "Availability"
 msgstr "Доступность"
 
-#: runlog.c:468
+#: runlog.c:470
 msgid "Available"
 msgstr "Доступна"
 
@@ -263,27 +275,27 @@ msgstr "Доступна"
 msgid "Back"
 msgstr "Назад"
 
-#: serve.c:1340
+#: serve.c:1366
 msgid "Bad packet (internal error)"
 msgstr "Неверный формат пакета обмена (внутренняя ошибка)"
 
-#: master.c:535
+#: master.c:562
 msgid "Banned?"
 msgstr "Заблокирована?"
 
-#: serve.c:1237
+#: serve.c:1263
 msgid "Cannot change password"
 msgstr "Ошибка смены пароля"
 
-#: serve.c:1175
+#: serve.c:1201
 msgid "Cannot change team login"
 msgstr "Ошибка смены регистрационного имени команды"
 
-#: serve.c:1209
+#: serve.c:1235
 msgid "Cannot change team name"
 msgstr "Ошибка смены имени команды"
 
-#: serve.c:1263 serve.c:1288
+#: serve.c:1289 serve.c:1314
 msgid "Cannot perform operation"
 msgstr "Ошибка выполнения операции"
 
@@ -291,43 +303,43 @@ msgstr "Ошибка выполнения операции"
 msgid "Cannot read message body"
 msgstr "Не удалось прочитать тело сообщения"
 
-#: clntutil.c:122
+#: clntutil.c:124
 msgid "Cannot read server response."
 msgstr "Не удалось прочитать ответ сервера"
 
-#: serve.c:1242 serve.c:1267 serve.c:1292 serve.c:1370
+#: serve.c:1268 serve.c:1293 serve.c:1318 serve.c:1396
 msgid "Cannot write passwd file"
 msgstr "Не удалось обновить базу паролей"
 
-#: serve.c:1180 serve.c:1214 serve.c:1375
+#: serve.c:1206 serve.c:1240 serve.c:1401
 msgid "Cannot write teamdb file"
 msgstr "Не удалось обновить базу команд"
 
-#: master.c:499
+#: master.c:526
 msgid "Change"
 msgstr "Изменить"
 
-#: clntutil.c:419
+#: clntutil.c:426
 msgid "Change duration"
 msgstr "Изменить длительность"
 
-#: team.c:765 team.c:855 team.c:857
+#: team.c:769 team.c:861 team.c:863
 msgid "Change language"
 msgstr "Сменить язык"
 
-#: team.c:762 team.c:841
+#: team.c:765 team.c:846
 msgid "Change password"
 msgstr "Сменить пароль"
 
-#: html.c:976
+#: html.c:1019
 msgid "Change result"
 msgstr "Изменить результат"
 
-#: team.c:842 team.c:860
+#: team.c:847 team.c:866
 msgid "Change!"
 msgstr "Изменить!"
 
-#: runlog.c:463
+#: runlog.c:464
 msgid "Check failed"
 msgstr "Проверка завершилась неудачно"
 
@@ -335,91 +347,91 @@ msgstr "Проверка завершилась неудачно"
 msgid "Choose language"
 msgstr "Выбрать язык"
 
-#: html.c:264 html.c:1110
+#: html.c:271 html.c:1181
 msgid "Clar ID"
 msgstr "Номер сообщения"
 
-#: serve.c:345 serve.c:374
+#: serve.c:365 serve.c:394
 msgid "Clarifications are disabled"
 msgstr "Сообщения отключены"
 
-#: clntutil.c:370
+#: clntutil.c:377
 msgid "Client time"
 msgstr "Время клиента"
 
-#: html.c:1036 html.c:1053 runlog.c:458
+#: html.c:1085 html.c:1104 html.c:1123 runlog.c:459
 msgid "Compilation error"
 msgstr "Ошибка компиляции"
 
-#: runlog.c:466
+#: runlog.c:468
 msgid "Compiled"
 msgstr "Скомпилировано"
 
-#: runlog.c:467
+#: runlog.c:469
 msgid "Compiling..."
 msgstr "Компилируется..."
 
-#: master.c:1227
+#: master.c:1366
 msgid "Compose a message to all the teams"
 msgstr "Написать сообщение всем командам"
 
-#: html.c:437 html.c:593 html.c:707 html.c:835
+#: html.c:444 html.c:621 html.c:735 html.c:863
 msgid "Contest"
 msgstr "Турнир"
 
-#: clntutil.c:376
+#: clntutil.c:383
 msgid "Contest is not started"
 msgstr "Турнир не начался"
 
-#: clntutil.c:382
+#: clntutil.c:389
 msgid "Contest start time"
 msgstr "Время начала турнира"
 
-#: team.c:750
+#: team.c:752
 msgid "Contest status"
 msgstr "Состояние турнира"
 
-#: clntutil.c:415
+#: clntutil.c:422
 msgid "Duration"
 msgstr "Продолжительность"
 
-#: clntutil.c:433
+#: clntutil.c:440
 msgid "Elapsed time"
 msgstr "Прошедшее время"
 
-#: clntutil.c:427
+#: clntutil.c:434
 msgid "End time"
 msgstr "Время окончания турнира"
 
-#: team.c:380 team.c:858
+#: team.c:380 team.c:864
 msgid "English"
 msgstr "Английский"
 
-#: master.c:199 team.c:369
+#: master.c:202 team.c:369
 msgid "Enter password"
 msgstr "Введите пароль"
 
-#: master.c:492
+#: master.c:519
 msgid "Existing teams"
 msgstr "Зарегистрированные команды"
 
-#: html.c:194 html.c:964
+#: html.c:195 html.c:984
 msgid "Failed test"
 msgstr "Ошибка на тесте"
 
-#: team.c:799
+#: team.c:803
 msgid "File"
 msgstr "Файл"
 
-#: html.c:102 html.c:264 html.c:1110 master.c:497
+#: html.c:102 html.c:271 html.c:1181 master.c:524
 msgid "Flags"
 msgstr "Флаги"
 
-#: html.c:264 html.c:1111
+#: html.c:271 html.c:1182
 msgid "From"
 msgstr "От"
 
-#: html.c:960 html.c:1110
+#: html.c:1003 html.c:1181
 msgid "IP"
 msgstr "IP"
 
@@ -427,48 +439,48 @@ msgstr "IP"
 msgid "IP address"
 msgstr "IP-адрес"
 
-#: clntutil.c:320
+#: clntutil.c:324
 msgid "Incompatible server"
 msgstr "Несовместимый сервер"
 
-#: html.c:403
+#: html.c:410
 msgid "Internal server error"
 msgstr "Внутренняя ошибка сервера"
 
-#: master.c:735
+#: master.c:762
 msgid "Invalid banned flag"
 msgstr "Неверное значение флага заблокированности"
 
-#: master.c:699
+#: master.c:726
 msgid "Invalid team id"
 msgstr "Неверный идентификатор команды"
 
-#: serve.c:1169
+#: serve.c:1195
 msgid "Invalid team login"
 msgstr "Неверное регистрационное имя команды"
 
-#: serve.c:1203
+#: serve.c:1229
 msgid "Invalid team name"
 msgstr "Неверное имя команды"
 
-#: master.c:726
+#: master.c:753
 msgid "Invalid visible flag"
 msgstr "Неверное значение флага видимости"
 
-#: master.c:1145 master.c:1150
+#: master.c:1260 master.c:1265
 msgid "Judge"
 msgstr "Судья"
 
-#: run.c:229
+#: run.c:243
 #, c-format
 msgid "Judgement: %s\n"
 msgstr "Вердикт: %s\n"
 
-#: html.c:1035 html.c:1052
+#: html.c:1084 html.c:1103 html.c:1122
 msgid "Judgements"
 msgstr "Вердикты"
 
-#: html.c:188 html.c:962 team.c:798
+#: html.c:188 html.c:1005 team.c:802
 msgid "Language"
 msgstr "Язык программирования"
 
@@ -480,99 +492,100 @@ msgstr "Регистрационное имя"
 msgid "Manual check required"
 msgstr "Требуется дополнительная проверка"
 
-#: html.c:99 html.c:364
+#: html.c:99 html.c:371
 msgid "Message"
 msgstr "Сообщение"
 
-#: master.c:830 team.c:594
+#: master.c:937 team.c:594
 msgid "Message view"
 msgstr "Список сообщений"
 
-#: master.c:1200 team.c:829
+#: master.c:1339 team.c:833
 msgid "Messages"
 msgstr "Сообщения"
 
-#: team.c:761
+#: team.c:763
 msgid "Messages log"
 msgstr "Журнал сообщений"
 
-#: serve.c:235
+#: serve.c:238
 msgid "Misformed request"
 msgstr "Неверно сформированный запрос"
 
-#: master.c:1144 master.c:1149 team.c:737 team.c:741
+#: master.c:1259 master.c:1264 team.c:739 team.c:743
 msgid "Monitor"
 msgstr "Монитор"
 
-#: html.c:231 html.c:233 html.c:237 html.c:1006 html.c:1008 html.c:1013
+#: html.c:232 html.c:235 html.c:240 html.c:1049 html.c:1052 html.c:1058
 msgid "N/A"
 msgstr "Неизв."
 
-#: master.c:926
+#: master.c:1033
 msgid "NO."
 msgstr "НЕТ."
 
-#: html.c:972
+#: html.c:1014
 msgid "New passed"
 msgstr "???Новый прошедший???"
 
-#: html.c:1464 team.c:842
+#: html.c:1536 team.c:847
 msgid "New password"
 msgstr "Новый пароль"
 
-#: html.c:970
+#: html.c:1011
 msgid "New result"
 msgstr "Новый вердикт"
 
-#: html.c:974
+#: html.c:1017
 msgid "New score"
 msgstr "Новые баллы"
 
-#: master.c:619
+#: master.c:646
 msgid "New team login is too long"
 msgstr "Новое регистрационное имя команды слишком длинно"
 
-#: master.c:613
+#: master.c:640
 msgid "New team login not specified"
 msgstr "Новое регистрационное имя команды не задано"
 
-#: master.c:634
+#: master.c:661
 msgid "New team name is too long"
 msgstr "Новое имя команды слишком длинно"
 
-#: master.c:628
+#: master.c:655
 msgid "New team name not specified"
 msgstr "Новое имя команды не задано"
 
-#: html.c:972
+#: html.c:1014
 msgid "New test"
 msgstr "???Новый тест???"
 
-#: master.c:922
+#: master.c:1029
 msgid "No comments.\n"
 msgstr "Без комментариев.\n"
 
-#: serve.c:1163 serve.c:1197 serve.c:1231 serve.c:1259 serve.c:1284
+#: serve.c:1189 serve.c:1223 serve.c:1257 serve.c:1285 serve.c:1310
 msgid "Nonexistent team id"
 msgstr "Несуществующий идентификатор команды"
 
-#: clntutil.c:396
+#: clntutil.c:403
 msgid "Not set"
 msgstr "Не установлено"
 
-#: html.c:101 html.c:366
+#: html.c:101 html.c:373
 msgid "Number"
 msgstr "Номер"
 
-#: html.c:1036 html.c:1053 run.c:121 run.c:196 run.c:285 runlog.c:457
+#: html.c:1085 html.c:1104 html.c:1123 run.c:121 run.c:208 run.c:311
+#: runlog.c:458
 msgid "OK"
 msgstr "OK"
 
-#: master.c:675 master.c:761
+#: master.c:702 master.c:788
 msgid "Operation is not performed"
 msgstr "Операция не выполнена"
 
-#: run.c:199 run.c:288
+#: run.c:211 run.c:314
 msgid ""
 "PARTIAL SOLUTION\n"
 "\n"
@@ -580,59 +593,59 @@ msgstr ""
 "НЕПОЛНОЕ РЕШЕНИЕ\n"
 "\n"
 
-#: team.c:873
+#: team.c:879
 msgid "Page generation time"
 msgstr "Время генерации страницы"
 
-#: html.c:1037 runlog.c:464
+#: html.c:1086 html.c:1106 runlog.c:465
 msgid "Partial solution"
 msgstr "Неполное решение"
 
-#: master.c:529 team.c:374
+#: master.c:556 team.c:374
 msgid "Password"
 msgstr "Пароль"
 
-#: master.c:657
+#: master.c:684
 msgid "Password is too long (>16 characters)"
 msgstr "Пароль слишком длинный (>16 символов)"
 
-#: master.c:714
+#: master.c:741
 msgid "Password not specified"
 msgstr "Пароль не задан"
 
-#: master.c:653 master.c:718
+#: master.c:680 master.c:745
 msgid "Passwords do not match"
 msgstr "Пароли не совпадают"
 
-#: master.c:650
+#: master.c:677
 msgid "Passwords not specified"
 msgstr "Пароли не заданы"
 
-#: html.c:865
+#: html.c:893
 msgid "Penalty"
 msgstr "Штраф"
 
-#: html.c:1230 html.c:1277
+#: html.c:1301 html.c:1348
 msgid "Permission denied"
 msgstr "В доступе отказано"
 
-#: html.c:608 html.c:850
+#: html.c:636 html.c:878
 msgid "Place"
 msgstr "Место"
 
-#: clntutil.c:401
+#: clntutil.c:408
 msgid "Planned start time"
 msgstr "Планируемое время начала турнира"
 
-#: html.c:1054 run.c:132 runlog.c:461
+#: html.c:1105 html.c:1124 run.c:132 runlog.c:462
 msgid "Presentation error"
 msgstr "Неправильный формат вывода"
 
-#: html.c:187 html.c:961 team.c:797 team.c:822
+#: html.c:187 html.c:1004 team.c:801 team.c:826
 msgid "Problem"
 msgstr "Задача"
 
-#: team.c:774
+#: team.c:778
 msgid "Problems"
 msgstr "Задачи"
 
@@ -644,23 +657,35 @@ msgstr "Re"
 msgid "Re: Your question"
 msgstr "Re: Ваш вопрос"
 
-#: master.c:920
+#: master.c:1027
 msgid "Read the problem.\n"
 msgstr "Читайте условие задачи.\n"
 
-#: master.c:229 master.c:795 master.c:803 team.c:393
+#: master.c:232 master.c:822 master.c:830 team.c:393
 msgid "Refresh"
 msgstr "Обновить"
 
-#: html.c:1035 html.c:1052
+#: html.c:1084 html.c:1103 html.c:1122
 msgid "Rejudge"
 msgstr "Пересудить"
 
-#: clntutil.c:441
+#: master.c:1329
+msgid "Rejudge all"
+msgstr "Пересудить всё"
+
+#: master.c:1331
+msgid "Rejudge problem: "
+msgstr "Пересудить задачу: "
+
+#: master.c:1332
+msgid "Rejudge!"
+msgstr "Пересудить!"
+
+#: clntutil.c:448
 msgid "Remaining time"
 msgstr "Остающееся время"
 
-#: html.c:1288 html.c:1325
+#: html.c:1359 html.c:1396
 msgid "Report file is not found"
 msgstr "Файл протокола не найден"
 
@@ -668,31 +693,39 @@ msgstr "Файл протокола не найден"
 msgid "Report view"
 msgstr "Просмотр протокола"
 
-#: clntutil.c:406
+#: clntutil.c:413
 msgid "Reschedule"
 msgstr "Назначить время"
 
-#: html.c:188 html.c:962
+#: master.c:269
+msgid "Reset the contest!"
+msgstr "Сбросить турнир!"
+
+#: html.c:188 html.c:1005
 msgid "Result"
 msgstr "Результат"
 
-#: team.c:842
+#: master.c:285
+msgid "Resume clients"
+msgstr "Приостановить клиентов"
+
+#: team.c:847
 msgid "Retype new password"
 msgstr "Пароль ещё раз"
 
-#: html.c:1466 master.c:531
+#: html.c:1538 master.c:558
 msgid "Retype password"
 msgstr "Введите пароль ещё раз"
 
-#: html.c:187 html.c:960
+#: html.c:187 html.c:1003
 msgid "Run ID"
 msgstr "Номер решения"
 
-#: html.c:1053 runlog.c:459
+#: html.c:1104 html.c:1123 runlog.c:460
 msgid "Run-time error"
 msgstr "Ошибка выполнения"
 
-#: runlog.c:465
+#: runlog.c:467
 msgid "Running..."
 msgstr "Выполняется..."
 
@@ -700,92 +733,92 @@ msgstr "Выполняется..."
 msgid "Runtime error"
 msgstr "Ошибка работы программы"
 
-#: team.c:380 team.c:859
+#: team.c:380 team.c:865
 msgid "Russian"
 msgstr "Русский"
 
-#: html.c:192 html.c:622 html.c:966
+#: html.c:193 html.c:650 html.c:989
 msgid "Score"
 msgstr "Баллы"
 
-#: run.c:212 run.c:301
+#: run.c:226 run.c:329
 msgid "Score   "
 msgstr "Баллы   "
 
-#: run.c:207 run.c:296
+#: run.c:220 run.c:323
 #, c-format
 msgid "Scores gained: %d (out of %d)\n"
 msgstr "Получено баллов: %d (из %d)\n"
 
-#: master.c:1236
+#: master.c:1375
 msgid "Send"
 msgstr "Послать"
 
-#: team.c:759 team.c:814
+#: team.c:761 team.c:818
 msgid "Send a message to judges"
 msgstr "Послать сообщение судьям"
 
-#: team.c:755 team.c:790
+#: team.c:757 team.c:794
 msgid "Send a submission"
 msgstr "Послать решение"
 
-#: master.c:848
+#: master.c:955
 msgid "Send to all"
 msgstr "Послать всем"
 
-#: master.c:848
+#: master.c:955
 msgid "Send to sender"
 msgstr "Послать отправителю"
 
-#: team.c:799 team.c:823
+#: team.c:803 team.c:827
 msgid "Send!"
 msgstr "Послать!"
 
-#: html.c:107 html.c:369
+#: html.c:107 html.c:376
 msgid "Sender"
 msgstr "Отправитель"
 
-#: team.c:806
+#: team.c:810
 msgid "Sent submissions"
 msgstr "Отосланные решения"
 
-#: clntutil.c:321
+#: clntutil.c:325
 msgid "Server configuration error."
 msgstr "Ошибка конфигурации сервера."
 
-#: clntutil.c:326
+#: clntutil.c:330
 msgid "Server is down"
 msgstr "Сервер не работает"
 
-#: clntutil.c:327
+#: clntutil.c:331
 msgid "Server is down. Please, come later."
 msgstr "Сервер не работает. Пожалуйста, приходите позже."
 
-#: html.c:402 html.c:1193 html.c:1239 html.c:1287 html.c:1324 serve.c:221
+#: html.c:409 html.c:1264 html.c:1310 html.c:1358 html.c:1395 serve.c:224
 msgid "Server is unable to perform your request"
 msgstr "Сервер не может выполнить Ваш запрос"
 
-#: clntutil.c:350
+#: clntutil.c:354
 msgid "Server status"
 msgstr "Состояние сервера"
 
-#: clntutil.c:366
+#: clntutil.c:373
 msgid "Server time"
 msgstr "Время на сервере"
 
-#: clntutil.c:254
+#: clntutil.c:256
 msgid "Service is not available"
 msgstr "Сервис недоступен"
 
-#: clntutil.c:255
+#: clntutil.c:257
 msgid "Service is not available. Please, come later."
 msgstr "Сервис недоступен. Пожалуйста, приходите позже."
 
-#: html.c:106 html.c:187 html.c:264 html.c:368 html.c:960 html.c:1110
+#: html.c:106 html.c:187 html.c:271 html.c:375 html.c:1003 html.c:1181
 msgid "Size"
 msgstr "Размер"
 
-#: html.c:1194 html.c:1240
+#: html.c:1265 html.c:1311
 msgid "Source file is not found"
 msgstr "Файл с текстом программы не найден"
 
@@ -793,96 +826,104 @@ msgstr "Файл с текстом программы не найден"
 msgid "Source view"
 msgstr "Просмотр исходного текста"
 
-#: html.c:122 html.c:265 html.c:384 html.c:1111 master.c:1230 team.c:823
+#: html.c:122 html.c:272 html.c:391 html.c:1182 master.c:1369 team.c:827
 msgid "Subject"
 msgstr "Тема"
 
-#: team.c:757
+#: team.c:759
 msgid "Submission log"
 msgstr "Журнал посылок"
 
-#: master.c:1171
+#: master.c:1297
 msgid "Submissions"
 msgstr "Посылки"
 
-#: html.c:608 html.c:850
+#: master.c:277
+msgid "Suspend clients"
+msgstr "Приостановить клиентов"
+
+#: html.c:636 html.c:878
 msgid "Team"
 msgstr "Команда"
 
-#: html.c:1452 master.c:497 master.c:522
+#: html.c:1524 master.c:524 master.c:549
 msgid "Team id"
 msgstr "Номер команды"
 
-#: html.c:961 html.c:1453 master.c:497 master.c:525
+#: html.c:1004 html.c:1525 master.c:524 master.c:552
 msgid "Team login"
 msgstr "Рег. имя команды"
 
-#: master.c:704
+#: master.c:731
 msgid "Team login not specified"
 msgstr "Регистрационное имя команды не задано"
 
-#: html.c:961 html.c:1454 master.c:497 master.c:527
+#: html.c:1004 html.c:1526 master.c:524 master.c:554
 msgid "Team name"
 msgstr "Название команды"
 
-#: master.c:708
+#: master.c:735
 msgid "Team name not specified"
 msgstr "Имя команды не задано"
 
-#: html.c:439 html.c:595 html.c:709 html.c:837 team.c:770
+#: clntutil.c:366
+msgid "Team requests are suspended"
+msgstr "Обработка запросов участников приостановлена"
+
+#: html.c:446 html.c:623 html.c:737 html.c:865 team.c:774
 msgid "Team standings"
 msgstr "Положение участников"
 
-#: run.c:211 run.c:300
+#: run.c:225 run.c:328
 #, c-format
 msgid "Test #  Status  Time (sec)  %sResult\n"
 msgstr "Тест #  Статус  Время (сек) %sРезультат\n"
 
-#: html.c:191 html.c:964
+#: html.c:192 html.c:988
 msgid "Tests passed"
 msgstr "Пройдено тестов"
 
-#: clntutil.c:357
+#: clntutil.c:361
 msgid "The contest is in progress"
 msgstr "Турнир идёт"
 
-#: clntutil.c:355
+#: clntutil.c:359
 msgid "The contest is in progress (standings are frozen)"
 msgstr "Турнир идёт (текущее положение команд не отображается)"
 
-#: clntutil.c:359 html.c:449 html.c:719
+#: clntutil.c:363 html.c:456 html.c:747
 msgid "The contest is not started"
 msgstr "Турнир не начался"
 
-#: clntutil.c:352
+#: clntutil.c:356
 msgid "The contest is over"
 msgstr "Турнир закончился"
 
-#: team.c:753 team.c:784
+#: team.c:755 team.c:788
 msgid "The last command completion status"
 msgstr "Статус выполнения последнего запроса"
 
-#: html.c:104 html.c:187 html.c:264 html.c:367 html.c:960 html.c:1110
+#: html.c:104 html.c:187 html.c:271 html.c:374 html.c:1003 html.c:1181
 msgid "Time"
 msgstr "Время"
 
-#: html.c:1054 run.c:130 runlog.c:460
+#: html.c:1105 html.c:1124 run.c:130 runlog.c:461
 msgid "Time-limit exceeded"
 msgstr "Превышено максимальное время работы"
 
-#: html.c:113 html.c:265 html.c:375 html.c:1111
+#: html.c:113 html.c:272 html.c:382 html.c:1182
 msgid "To"
 msgstr "Кому"
 
-#: html.c:865
+#: html.c:893
 msgid "Total"
 msgstr "Всего"
 
-#: html.c:1104
+#: html.c:1175
 msgid "Total messages"
 msgstr "Всего сообщений"
 
-#: html.c:954
+#: html.c:997
 msgid "Total submissions"
 msgstr "Всего посылок"
 
@@ -891,74 +932,74 @@ msgstr "Всего посылок"
 msgid "Unknown result (%d)"
 msgstr "Неожиданный код результата (%d)"
 
-#: runlog.c:470
+#: runlog.c:472
 #, c-format
 msgid "Unknown: %d"
 msgstr "Unknown: %d"
 
-#: clntutil.c:413
+#: clntutil.c:420
 msgid "Unlimited"
 msgstr "Не ограничена"
 
-#: html.c:265 html.c:1111
+#: html.c:272 html.c:1182
 msgid "View"
 msgstr "Просмотр"
 
-#: master.c:1191 master.c:1219 team.c:809 team.c:831
+#: master.c:1317 master.c:1358 team.c:813 team.c:835
 msgid "View all"
 msgstr "Посмотреть всё"
 
-#: html.c:200 html.c:979
+#: html.c:201 html.c:1022
 msgid "View report"
 msgstr "Просмотреть протокол"
 
-#: master.c:453 master.c:454
+#: master.c:480 master.c:481
 msgid "View report for run"
 msgstr "Просмотреть протокол для решения"
 
-#: html.c:198 html.c:979
+#: html.c:199 html.c:1022
 msgid "View source"
 msgstr "Посмотреть исходный текст"
 
-#: master.c:418 master.c:420
+#: master.c:445 master.c:447
 msgid "View source for run"
 msgstr "Посмотреть исходный текст для решения"
 
-#: html.c:1460
+#: html.c:1532
 msgid "Visibility"
 msgstr "Видимость"
 
-#: master.c:533
+#: master.c:560
 msgid "Visible?"
 msgstr "Видимая?"
 
-#: html.c:1055 run.c:134 runlog.c:462
+#: html.c:1106 html.c:1125 run.c:134 runlog.c:463
 msgid "Wrong answer"
 msgstr "Неправильный ответ"
 
-#: master.c:924
+#: master.c:1031
 msgid "YES."
 msgstr "ДА."
 
-#: clntutil.c:245
+#: clntutil.c:247
 msgid "You do not have permissions to use this service."
 msgstr "У Вас нет прав использовать данный сервис."
 
-#: html.c:396
+#: html.c:403
 msgid "You do not have permissions to view this message."
 msgstr "У Вас нет прав просматривать данное сообщение."
 
-#: html.c:1231 html.c:1278
+#: html.c:1302 html.c:1349
 msgid "You don't have permissions to do that"
 msgstr "У Вас нет прав выполнить данную операцию"
 
-#: html.c:115 html.c:297 html.c:377 html.c:1138 team.c:807 team.c:829
+#: html.c:115 html.c:304 html.c:384 html.c:1209 team.c:811 team.c:833
 msgid "all"
 msgstr "все"
 
-#: master.c:421 master.c:426 master.c:455 master.c:460 master.c:490
-#: master.c:539 master.c:546 master.c:575 master.c:588 master.c:769
-#: master.c:793 master.c:801 master.c:835
+#: master.c:448 master.c:453 master.c:482 master.c:487 master.c:517
+#: master.c:566 master.c:573 master.c:602 master.c:615 master.c:796
+#: master.c:820 master.c:828 master.c:942
 msgid "back"
 msgstr "назад"
 
@@ -966,31 +1007,31 @@ msgstr "назад"
 msgid "bad team database"
 msgstr "ошибка в базе команд"
 
-#: html.c:1458
+#: html.c:1530
 msgid "ban"
 msgstr "заблокировать"
 
-#: html.c:1457
+#: html.c:1529
 msgid "banned"
 msgstr "заблокирована"
 
-#: html.c:1070 html.c:1453 html.c:1454 html.c:1466
+#: html.c:1141 html.c:1525 html.c:1526 html.c:1538
 msgid "change"
 msgstr "изменить"
 
-#: html.c:1458
+#: html.c:1530
 msgid "clear flag"
 msgstr "сбросить флаг"
 
-#: serve.c:297
+#: serve.c:317
 msgid "contest is already started"
 msgstr "турнир уже запущен"
 
-#: serve.c:290
+#: serve.c:310
 msgid "contest is not started"
 msgstr "турнир не запущен"
 
-#: serve.c:304
+#: serve.c:324
 msgid "contest is stopped"
 msgstr "турнир остановлен"
 
@@ -998,20 +1039,20 @@ msgstr "турнир остановлен"
 msgid "file is too long"
 msgstr "файл имеет слишком большой размер"
 
-#: master.c:523
+#: master.c:550
 msgid "if empty, assigned automatically"
 msgstr "если поле оставлено пустым, значение выбирается автоматически"
 
-#: html.c:1461
+#: html.c:1533
 msgid "invisible"
 msgstr "невидима"
 
-#: html.c:109 html.c:117 html.c:292 html.c:299 html.c:371 html.c:379
-#: html.c:1133 html.c:1140
+#: html.c:109 html.c:117 html.c:299 html.c:306 html.c:378 html.c:386
+#: html.c:1204 html.c:1211
 msgid "judges"
 msgstr "судьи"
 
-#: team.c:807 team.c:829
+#: team.c:811 team.c:833
 msgid "last 15"
 msgstr "последние 15"
 
@@ -1019,35 +1060,35 @@ msgstr "последние 15"
 msgid "line is too long"
 msgstr "строка слишком длинна"
 
-#: html.c:1462
+#: html.c:1534
 msgid "make invisible"
 msgstr "зделать невидимой"
 
-#: html.c:1462
+#: html.c:1534
 msgid "make visible"
 msgstr "сделать видимой"
 
-#: team.c:875
+#: team.c:881
 msgid "msec"
 msgstr "мс"
 
-#: master.c:533 master.c:535
+#: master.c:560 master.c:562 master.c:843
 msgid "no"
 msgstr "нет"
 
-#: html.c:1457
+#: html.c:1529
 msgid "not banned"
 msgstr "не заблокирована"
 
-#: master.c:239
+#: master.c:242
 msgid "standings"
 msgstr "положение команд"
 
-#: clntutil.c:377
+#: clntutil.c:384
 msgid "start"
 msgstr "начать"
 
-#: clntutil.c:387
+#: clntutil.c:394
 msgid "stop"
 msgstr "закончить"
 
@@ -1055,30 +1096,34 @@ msgstr "закончить"
 msgid "submit"
 msgstr "послать"
 
-#: html.c:437 html.c:593 html.c:707 html.c:835
+#: html.c:444 html.c:621 html.c:735 html.c:863
 msgid "team standings"
 msgstr "положение команд"
 
-#: master.c:573 master.c:586 master.c:767
+#: master.c:600 master.c:613 master.c:794
 msgid "top"
 msgstr "наверх"
 
-#: master.c:248
+#: master.c:251
 msgid "update public standings"
 msgstr "обновить публичную таблицу положения команд"
 
-#: html.c:247 html.c:250 html.c:304 html.c:1073 html.c:1074 html.c:1147
+#: html.c:254 html.c:257 html.c:311 html.c:1144 html.c:1145 html.c:1218
 msgid "view"
 msgstr "посмотреть"
 
-#: master.c:257
+#: master.c:260
 msgid "view teams"
 msgstr "посмотреть команды"
 
-#: html.c:1461
+#: html.c:1533
 msgid "visible"
 msgstr "видима"
 
-#: master.c:533 master.c:535
+#: master.c:560 master.c:562
 msgid "yes"
 msgstr "да"
+
+#: master.c:846
+msgid "yes, reset the contest!"
+msgstr "да, сбросить турнир!"
