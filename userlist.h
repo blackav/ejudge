@@ -149,7 +149,6 @@ unsigned char **person_data_get_ptr(struct person_data const *, int);
 struct person_list *user_data_get_list_ptr(struct user_data const *, int);
 struct addr_list *addr_get_list(struct addr_info const *, int);
 
-
-
+struct userlist_data *userlist_free(struct userlist_data *);
 
 #endif /* __USERLIST_H__ */
