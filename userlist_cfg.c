@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,11 +25,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <pwd.h>
-
-#if CONF_HAS_LIBINTL - 0 == 1
-#include <libintl.h>
-#include <locale.h>
-#endif
 
 enum
   {
@@ -340,7 +335,6 @@ userlist_cfg_parse(char const *path)
     case AT_ENABLE_L10N:
     case AT_DISABLE_L10N:
     case AT_L10N:
-#if CONF_HAS_LIBINTL - 0 == 1
       if (cfg->l10n != -1) {
         err("%s:%d:%d: attribute \"%s\" already defined",
             path, a->line, a->column, attn_map[a->tag]);
@@ -352,11 +346,6 @@ userlist_cfg_parse(char const *path)
       }
       if (a->tag == AT_DISABLE_L10N) cfg->l10n = !cfg->l10n;
       break;
-#else
-      err("%s:%d:%d: localization support is not compiled",
-          path, a->line, a->column);
-      goto failed;
-#endif /* CONF_HAS_LIBINTL */
     default:
       err("%s:%d:%d: attribute \"%s\" is not allowed here",
           path, a->line, a->column, attn_map[a->tag]);
@@ -391,14 +380,8 @@ userlist_cfg_parse(char const *path)
       if (handle_final_tag(path, p, &cfg->run_path) < 0) goto failed;
       break;
     case TG_L10N_DIR:
-#if CONF_HAS_LIBINTL - 0 == 1
       if (handle_final_tag(path, p, &cfg->l10n_dir) < 0) goto failed;
       break;
-#else
-      err("%s:%d:%d: localization support is not compiled",
-          path, p->line, p->column);
-      goto failed;
-#endif /* CONF_HAS_LIBINTL */
     case TG_USER_MAP:
       if (!(cfg->user_map = parse_user_map(path, p))) goto failed;
       break;
