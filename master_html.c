@@ -323,7 +323,7 @@ write_all_runs(FILE *f, struct user_state_info *u,
   unsigned char *str1 = 0, *str2 = 0;
   unsigned char durstr[64], statstr[64];
   int rid, attempts, score;
-  time_t run_time;
+  time_t run_time, start_time;
   struct run_entry *pe;
   unsigned char *fe_html;
   int fe_html_len;
@@ -474,7 +474,21 @@ write_all_runs(FILE *f, struct user_state_info *u,
   fprintf(f, "%s: <input type=\"text\" name=\"filter_first_run\" size=\"16\" value=\"%s\">", _("First run"), first_run_str);
   fprintf(f, "%s: <input type=\"text\" name=\"filter_last_run\" size=\"16\" value=\"%s\">", _("Last run"), last_run_str);
   fprintf(f, "<input type=\"submit\" name=\"filter_view\" value=\"%s\">", _("View"));
-  fprintf(f, "</p></form>\n");
+  //fprintf(f, "</form>\n");
+  //html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars);
+  fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+          ACTION_RESET_FILTER, _("Reset filter"));
+  fprintf(f, "</form></p>\n");
+
+  if (u->error_msgs) {
+    fprintf(f, "<h2>Filter expression errors</h2>\n");
+    fprintf(f, "<p><pre><font color=\"red\">%s</font></pre></p>\n",
+            u->error_msgs);
+    if (has_filter_errors) {
+      xfree(u->error_msgs);
+      u->error_msgs = 0;
+    }
+  }
 
   if (!has_parse_errors && !has_filter_errors) {
     switch (global->score_system_val) {
@@ -513,11 +527,46 @@ write_all_runs(FILE *f, struct user_state_info *u,
       rid = list_idx[i];
       ASSERT(rid >= 0 && rid < env.rtotal);
       pe = &env.rentries[rid];
+
+      if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP) {
+        run_time = pe->timestamp;
+        if (!env.rhead.start_time) run_time = 0;
+        if (env.rhead.start_time > run_time) run_time = env.rhead.start_time;
+        duration_str(1, run_time, env.rhead.start_time, durstr, 0);
+        run_status_str(pe->status, statstr, 0);
+
+        fprintf(f, "<tr>");
+        fprintf(f, "<td>%d</td>", rid);
+        fprintf(f, "<td>%s</td>", durstr);
+        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td>%s</td>", run_unparse_ip(pe->ip));
+        fprintf(f, "<td>%d</td>", pe->team);
+        fprintf(f, "<td>%s</td>", teamdb_get_name(pe->team));
+        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td><b>%s</b></td>", statstr);
+        fprintf(f, "<td>&nbsp;</td>");
+        if (global->score_system_val == SCORE_KIROV ||
+            global->score_system_val == SCORE_OLYMPIAD) {
+          fprintf(f, "<td>&nbsp;</td>");
+        }
+        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "<td>&nbsp;</td>");
+        fprintf(f, "</tr>\n");
+        continue;
+      }
+
       run_get_attempts(rid, &attempts, global->ignore_compile_errors);
       run_time = pe->timestamp;
-      if (!env.rhead.start_time) run_time = 0;
-      if (env.rhead.start_time > run_time) run_time = env.rhead.start_time;
-      duration_str(global->show_astr_time, run_time, env.rhead.start_time,
+      start_time = env.rhead.start_time;
+      if (global->virtual) {
+        start_time = run_get_virtual_start_time(pe->team);
+      }
+      if (!start_time) run_time = 0;
+      if (start_time > run_time) run_time = start_time;
+      duration_str(global->show_astr_time, run_time, start_time,
                    durstr, 0);
       run_status_str(pe->status, statstr, 0);
 
@@ -711,6 +760,7 @@ write_all_clars(FILE *f, struct user_state_info *u,
   unsigned char hbuf[128];
   unsigned char *asubj;
   int asubj_len = 0, new_len;
+  int show_astr_time;
 
   fprintf(f, "<hr><h2>%s</h2>\n", _("Messages"));
 
@@ -720,6 +770,8 @@ write_all_clars(FILE *f, struct user_state_info *u,
   if (!last_clar) last_clar = u->prev_last_clar;
   u->prev_first_clar = first_clar;
   u->prev_last_clar = last_clar;
+  show_astr_time = global->show_astr_time;
+  if (global->virtual) show_astr_time = 1;
 
   if (!first_clar && !last_clar) {
     first_clar = -1;
@@ -790,7 +842,7 @@ write_all_clars(FILE *f, struct user_state_info *u,
     html_armor_string(psubj, asubj);
     if (!start) time = start;
     if (start > time) time = start;
-    duration_str(global->show_astr_time, time, start, durstr, 0);
+    duration_str(show_astr_time, time, start, durstr, 0);
 
     if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
       html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars);
@@ -881,7 +933,7 @@ write_priv_standings(FILE *f, int sid_mode, unsigned long long sid,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars)
 {
-  write_standings_header(f, 1, 0);
+  write_standings_header(f, 1, 0, 0, 0);
 
   print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars,
                     _("Main page"), _("Refresh"), 0, 0);
@@ -890,7 +942,7 @@ write_priv_standings(FILE *f, int sid_mode, unsigned long long sid,
       || global->score_system_val == SCORE_OLYMPIAD)
     do_write_kirov_standings(f, 1, 0);
   else
-    do_write_standings(f, 1, 0);
+    do_write_standings(f, 1, 0, 0);
 
   print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars,
                     _("Main page"), _("Refresh"), 0, 0);
@@ -922,6 +974,14 @@ write_priv_source(FILE *f, int user_id, int priv_level,
 
   fprintf(f, "<h2>%s %d</h2>\n",
           _("Information about run"), run_id);
+  if (info.status == RUN_VIRTUAL_START ||
+      info.status == RUN_VIRTUAL_STOP) {
+    fprintf(f, "<p>Information is not available.</p>\n");
+    fprintf(f, "<hr>\n");
+    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars,
+                      _("Main page"), 0, 0, 0);
+    return 0;
+  }
   fprintf(f, "<table>\n");
   fprintf(f, "<tr><td>%s:</td><td>%d</td>%s</tr>\n",
           _("Run ID"), info.submission, nbsp);
@@ -1117,8 +1177,10 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
           clar_flags_html(flags, from, to, 0, 0));
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
           _("Time"), duration_str(1, clar_time, 0, 0, 0));
-  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-          _("Duration"), duration_str(0, clar_time, start_time, 0, 0));
+  if (!global->virtual) {
+    fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Duration"), duration_str(0, clar_time, start_time, 0, 0));
+  }
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("IP address"), ip);
   fprintf(f, "<tr><td>%s:</td><td>%zu</td></tr>\n", _("Size"), size);
   fprintf(f, "<tr><td>%s:</td>", _("Sender"));
@@ -1289,6 +1351,24 @@ write_priv_users(FILE *f, int user_id, int priv_level,
   print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars,
                     _("Main page"), 0, _("Refresh"), 0);
   return 0;
+}
+
+void
+html_reset_filter(int user_id)
+{
+  struct user_state_info *u = allocate_user_info(user_id);
+
+  u->prev_first_run = 0;
+  u->prev_last_run = 0;
+  u->prev_first_clar = 0;
+  u->prev_last_clar = 0;
+  xfree(u->prev_filter_expr); u->prev_filter_expr = 0;
+  xfree(u->error_msgs); u->error_msgs = 0;
+  if (u->tree_mem) {
+    filter_tree_delete(u->tree_mem);
+    u->tree_mem = 0;
+  }
+  u->prev_tree = 0;
 }
 
 /**
