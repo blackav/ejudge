@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+# Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -94,6 +94,8 @@ COMMON_CFILES=\
  sformat.c\
  sha.c\
  teamdb.c\
+ team_extra.c\
+ team_extra_xml.c\
  testinfo.c\
  tsc.c\
  userlist.c\
@@ -163,6 +165,7 @@ HFILES=\
  sformat.h\
  sha.h\
  teamdb.h\
+ team_extra.h\
  testinfo.h\
  tsc.h\
  userlist.h\
