@@ -1044,7 +1044,7 @@ do_loop(void)
       if (got_quit_packet && managed_mode_flag) {
         return 0;
       }
-      if (global->inactivity_timeout > 0 &&
+      if (managed_mode_flag && global->inactivity_timeout > 0 &&
           last_activity_time + global->inactivity_timeout < time(0)) {
         info("no activity for %d seconds, exiting",global->inactivity_timeout);
         return 0;
