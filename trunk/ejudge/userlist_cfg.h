@@ -57,7 +57,10 @@ struct userlist_cfg
   unsigned char *compile_home_dir;
   unsigned char *testing_work_dir;
   unsigned char *script_dir;
+  unsigned char *var_dir;
   unsigned char *userlist_log;
+  unsigned char *super_serve_log;
+  unsigned char *compile_log;
   struct xml_tree *user_map;
 
   opcaplist_t capabilities;
