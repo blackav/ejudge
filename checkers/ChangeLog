@@ -1,3 +1,9 @@
+2003-10-20  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile: read_long_long.c is added to the list of C files.
+
+	* read_long_long.c: Initial revision
+
 2003-10-12  Alexander Chernov  <cher@ispras.ru>
 
 	* checker_internal.h:

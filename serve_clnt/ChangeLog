@@ -1,3 +1,14 @@
+2003-10-20  Alexander Chernov  <cher@ispras.ru>
+
+	* edit_run.c: copyright notice is updated;
+	(serve_clnt_edit_run) new: parameter `is_imported' added which is
+	  then passed to the server.
+
+	* view.c:
+	(serve_clnt_view) new: `SRV_CMD_EXPORT_XML_RUNS' command is accepted.
+
+	* import_xml_runs.c: Initial revision
+
 2003-06-25  Alexander Chernov  <cher@ispras.ru>
 
 	* master_page.c: copyright notice is updated;
