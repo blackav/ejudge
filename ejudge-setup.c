@@ -65,6 +65,8 @@ static unsigned char config_compile_home_dir[PATH_MAX];
 static int config_compile_home_dir_modified;
 static unsigned char config_contest1_home_dir[PATH_MAX];
 static int config_contest1_home_dir_modified;
+static unsigned char config_var_dir[PATH_MAX];
+static int config_var_dir_modified;
 static unsigned char config_testing_work_dir[PATH_MAX];
 static int config_testing_work_dir_modified;
 static unsigned char config_cgi_bin_dir[PATH_MAX];
@@ -148,6 +150,7 @@ enum
   PATH_LINE_USERLIST_XML,
   PATH_LINE_COMPILE_DIR,
   PATH_LINE_CONTEST1_DIR,
+  PATH_LINE_VAR_DIR,
   PATH_LINE_TESTING_DIR,
   PATH_LINE_STAND_HTML_DIR,
   PATH_LINE_FULL_STAND_HTML_PATH,
@@ -265,6 +268,12 @@ static const struct path_edit_item path_edit_items[] =
     "Sample contest dir", 0, config_contest1_home_dir,
     sizeof(config_contest1_home_dir),
     &config_contest1_home_dir_modified,
+  },
+  [PATH_LINE_VAR_DIR] =
+  {
+    "Log file dir", 0, config_var_dir,
+    sizeof(config_var_dir),
+    &config_var_dir_modified,
   },
   [PATH_LINE_CGI_BIN_DIR] =
   {
@@ -446,6 +455,15 @@ initialize_config_var(int idx)
     }
     config_contest1_home_dir_modified = 0;
     break;
+  case PATH_LINE_VAR_DIR:
+    if (config_ejudge_contests_home_dir[0]) {
+      snprintf(config_var_dir, sizeof(config_var_dir),
+               "%s/var", config_ejudge_contests_home_dir);
+    } else {
+      config_var_dir[0] = 0;
+    }
+    config_var_dir_modified = 0;
+    break;
   case PATH_LINE_TESTING_DIR:
     config_testing_work_dir[0] = 0;
     config_testing_work_dir_modified = 0;
@@ -518,6 +536,7 @@ is_valid_path(int idx)
   case PATH_LINE_USERLIST_XML:
   case PATH_LINE_COMPILE_DIR:
   case PATH_LINE_CONTEST1_DIR:
+  case PATH_LINE_VAR_DIR:
     if (path_edit_items[idx].buf[0]) return 1;
     return 0;
 
@@ -658,6 +677,7 @@ do_paths_menu(int *p_cur_item)
     case PATH_LINE_USERLIST_XML:
     case PATH_LINE_COMPILE_DIR:
     case PATH_LINE_CONTEST1_DIR:
+    case PATH_LINE_VAR_DIR:
     case PATH_LINE_STAND_HTML_DIR:
     case PATH_LINE_FULL_STAND_HTML_PATH:
       asprintf(&descs[menu_nitem], "%-20.20s %s: %-53.53s",
@@ -2813,6 +2833,14 @@ generate_ejudge_xml(FILE *f)
             config_serialization_key);
   }
 
+  if (config_var_dir[0]) {
+    fprintf(f, "  <var_dir>%s</var_dir>\n", config_var_dir);
+    // FIXME: should make configurable paths?
+    fprintf(f, "  <userlist_log>userlist.log</userlist_log>\n");
+    //fprintf(f, "  <super_serve_log>%s</super_serve_log>\n");
+    //fprintf(f, "  <compile_log>%s</compile_log>\n");
+  }
+
   fprintf(f, "\n");
 
   fprintf(f, "  <email_program>%s</email_program>\n", config_sendmail);
@@ -3184,6 +3212,7 @@ generate_install_script(FILE *f)
   }
   generate_dir_creation(f, &created_dirs, 1, compile_cfg_path);
   generate_dir_creation(f, &created_dirs, 1, serve_cfg_path);
+  generate_dir_creation(f, &created_dirs, 0, config_var_dir);
   fprintf(f, "\n");
 
   if (!strcmp(config_workdisk_flag, "yes")) {
