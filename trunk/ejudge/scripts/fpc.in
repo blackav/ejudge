@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2002-2003 Alexander Chernov
+# Copyright (c) 2002-2004 Alexander Chernov
 
 # Free Pascal is installed at non-standard location
 FPCDIR=/usr/local/pkg/fpc-1.0.10
@@ -12,7 +12,11 @@ then
     FPCRUN=${FPCDIR}/bin/${FPCRUN}
 fi
 
-${FPCRUN} -Ci -Co -Cr -Ct -So -XS $1 -o${2}
+# These compilation options enables various run-time checks
+#${FPCRUN} -Ci -Co -Cr -Ct -So -XS $1 -o${2}
+
+# No run-time checks
+${FPCRUN} -So -XS $1 -o${2}
 
 #if the output file is not created - compile error
 [ -f ${2} ] || exit 1
