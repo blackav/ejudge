@@ -100,6 +100,7 @@ struct client_state
   int peer_gid;
 
   int user_id;
+  int priv_level;
 
   // passed file descriptors
   int client_fds[2];
@@ -591,24 +592,25 @@ static int
 get_peer_local_user(struct client_state *p)
 {
   unsigned long long cookie = 0;
-  int user_id = 0;
+  int user_id = 0, priv_level = 0;
   int r;
 
   if (p->user_id >= 0) return p->user_id;
   r = teamdb_get_uid_by_pid(p->peer_uid, p->peer_gid, p->peer_pid,
-                            &user_id, &cookie);
+                            &user_id, &priv_level, &cookie);
   if (r < 0) {
     // FIXME: what else can we do?
     err("%d: cannot get local user_id", p->id);
     client_disconnect(p, 0);
     return -1;
   }
-  if (r > 0 && !teamdb_lookup(user_id)) {
+  if (r >= 0 && !teamdb_lookup(user_id)) {
     err("%d: no local information about user %d", p->id, user_id);
     client_disconnect(p, 0);
     return -1;
   }
   p->user_id = user_id;
+  p->priv_level = priv_level;
   // FIXME: handle cookie
   info("%d: user_id is %d", p->id, user_id);
   return user_id;
@@ -629,7 +631,7 @@ cmd_pass_descriptors(struct client_state *p, int len,
     return;
   }
 
-  if (get_peer_local_user(p) < 0) return;
+  //if (get_peer_local_user(p) < 0) return;
 
   p->state = STATE_READ_FDS;
 }
@@ -882,6 +884,102 @@ cmd_team_page(struct client_state *p, int len,
   q->write_len = html_len;
 
   info("%d: cmd_team_page: ok", p->id);
+  new_send_reply(p, SRV_RPL_OK);
+}
+
+static void
+cmd_master_page(struct client_state *p, int len,
+                struct prot_serve_pkt_master_page *pkt)
+{
+  unsigned char *self_url_ptr, *filter_expr_ptr, *hidden_vars_ptr;
+  FILE *f;
+  unsigned char *html_ptr = 0;
+  size_t html_len = 0;
+  struct client_state *q;
+
+  if (get_peer_local_user(p) < 0) return;
+
+  if (len < sizeof(*pkt)) {
+    new_bad_packet(p, "cmd_master_page: packet is too small: %d", len);
+    return;
+  }
+  self_url_ptr = pkt->data;
+  if (strlen(self_url_ptr) != pkt->self_url_len) {
+    new_bad_packet(p, "cmd_master_page: self_url_len mismatch");
+    return;
+  }
+  filter_expr_ptr = self_url_ptr + pkt->self_url_len + 1;
+  if (strlen(filter_expr_ptr) != pkt->filter_expr_len) {
+    new_bad_packet(p, "cmd_master_page: filter_expr_len mismatch");
+    return;
+  }
+  hidden_vars_ptr = filter_expr_ptr + pkt->filter_expr_len + 1;
+  if (strlen(hidden_vars_ptr) != pkt->hidden_vars_len) {
+    new_bad_packet(p, "cmd_master_page: hidden_vars_len mismatch");
+    return;
+  }
+  if (len != sizeof(*pkt) + pkt->self_url_len + pkt->filter_expr_len + pkt->hidden_vars_len) {
+    new_bad_packet(p, "cmd_master_page: packet length mismatch");
+    return;
+  }
+
+  info("%d: cmd_master_page: %d, %d, %d",
+       p->id, pkt->user_id, pkt->contest_id, pkt->locale_id);
+
+  if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
+    err("%d: two client file descriptors required", p->id);
+    new_send_reply(p, -SRV_ERR_PROTOCOL);
+    return;
+  }
+  if (!teamdb_lookup(pkt->user_id)) {
+    err("%d: user_id is invalid", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+    return;
+  }
+  if (pkt->contest_id != global->contest_id) {
+    err("%d: contest_id does not match", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (p->user_id && pkt->user_id != p->user_id) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: pkt->user_id != p->user_id", p->id);
+    return;
+  }
+  if (p->priv_level < pkt->priv_level) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: priv_level does not match", p->id);
+    return;
+  }
+
+  if (!(f = open_memstream((char**) &html_ptr, &html_len))) {
+    err("%d: open_memstream failed", p->id);
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  /* setup_locale(pkt->locale_id); */
+  write_master_page(f, p->user_id, pkt->priv_level,
+                    pkt->first_run, pkt->last_run,
+                    pkt->first_clar, pkt->last_clar,
+                    self_url_ptr, filter_expr_ptr, hidden_vars_ptr);
+  /* setup_locale(0); */
+  fclose(f);
+
+  if (!html_ptr) {
+    html_ptr = xstrdup("");
+    html_len = 0;
+  }
+
+  q = client_new_state(p->client_fds[0]);
+  q->client_fds[0] = -1;
+  q->client_fds[1] = p->client_fds[1];
+  p->client_fds[0] = -1;
+  p->client_fds[1] = -1;
+  q->state = STATE_AUTOCLOSE;
+  q->write_buf = html_ptr;
+  q->write_len = html_len;
+
+  info("%d: cmd_master_page: ok %d", p->id, html_len);
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -2203,6 +2301,7 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_SUBMIT_RUN] { cmd_team_submit_run },
   [SRV_CMD_SUBMIT_CLAR] { cmd_team_submit_clar },
   [SRV_CMD_TEAM_PAGE] { cmd_team_page },
+  [SRV_CMD_MASTER_PAGE] { cmd_master_page },
 };
 
 static void
@@ -2266,7 +2365,7 @@ check_sockets(int may_wait_flag)
 {
   fd_set rset, wset;
   int max_fd, val, new_fd, addrlen, l, w, r;
-  struct client_state *p;
+  struct client_state *p, *q;
   struct timeval timeout;
   struct sockaddr_un addr;
 
@@ -2590,11 +2689,16 @@ check_sockets(int may_wait_flag)
       /* as packet read completely, we may run handle function */
       process_packet(p, p->expected_len,
                      (struct prot_serve_packet*) p->read_buf);
-      p->read_len = 0;
-      p->expected_len = 0;
-      p->read_state = 0;
-      xfree(p->read_buf);
-      p->read_buf = 0;
+      /* it is very well possible, that p is no longer valid */
+      for (q = client_first; q && q != p; q = q->next);
+      if (q) {
+        /* p is valid! */
+        p->read_len = 0;
+        p->expected_len = 0;
+        p->read_state = 0;
+        xfree(p->read_buf);
+        p->read_buf = 0;
+      }
     }
   }
 
