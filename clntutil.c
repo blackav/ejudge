@@ -45,24 +45,24 @@
 #define _(x) x
 #endif
 
-unsigned long server_cur_time;
-unsigned long server_start_time;
-unsigned long server_sched_time;
-unsigned long server_duration;
-unsigned long server_stop_time;
-time_t        server_freeze_time;
-int           server_total_runs;
-int           server_total_clars;
-int           server_clars_disabled;
-int           server_team_clars_disabled;
-int           server_standings_frozen;
-int           server_score_system;
-int           server_clients_suspended;
-int           server_testing_suspended;
-int           server_download_interval;
-int           server_is_virtual;
-int           server_olympiad_judging_mode;
-int           server_continuation_enabled;
+time_t server_cur_time;
+time_t server_start_time;
+time_t server_sched_time;
+time_t server_duration;
+time_t server_stop_time;
+time_t server_freeze_time;
+int    server_total_runs;
+int    server_total_clars;
+int    server_clars_disabled;
+int    server_team_clars_disabled;
+int    server_standings_frozen;
+int    server_score_system;
+int    server_clients_suspended;
+int    server_testing_suspended;
+int    server_download_interval;
+int    server_is_virtual;
+int    server_olympiad_judging_mode;
+int    server_continuation_enabled;
 
 unsigned long client_cur_time;
 
