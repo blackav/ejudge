@@ -24,6 +24,7 @@
 #include "interrupt.h"
 
 #include "fileutl.h"
+#include "misctext.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/logger.h>
@@ -157,6 +158,46 @@ result2str(int s, int st, int sig)
 }
 
 static void
+html_print_by_line(FILE *f, unsigned char const *s, size_t size)
+{
+  const unsigned char *p = s;
+  const unsigned char * const * trans_table;
+
+  if (global->max_file_length > 0 && size > global->max_file_length) {
+    fprintf(f, "<i>(%s, %s = %zu)</i>\n",
+            _("file is too long"), _("size"), size);
+    return;
+  }
+
+  if (!s) {
+    fprintf(f, "<i>(%s)</i>\n", _("file is missing"));
+    return;
+  }
+
+  trans_table = html_get_armor_table();
+
+  while (*s) {
+    while (*s && *s != '\r' && *s != '\n') s++;
+    if (global->max_line_length > 0 && s - p > global->max_line_length) {
+      fprintf(f, "<i>(%s, %s = %d)</i>\n",
+              _("line is too long"), _("size"), s - p);
+    } else {
+      while (p != s)
+        if (trans_table[*p]) {
+          fputs(trans_table[*p], f);
+          p++;
+        } else {
+          putc(*p++, f);
+        }
+    }
+    while (*s == '\r' || *s == '\n')
+      putc(*s++, f);
+    p = s;
+  }
+  putc('\n', f);
+}
+
+static void
 print_by_line(FILE *f, char const *s, size_t size)
 {
   char const *p = s;
@@ -188,7 +229,8 @@ print_by_line(FILE *f, char const *s, size_t size)
 static int
 generate_report(int score_system_val,
                 int accept_testing,
-                char *report_path, int scores, int max_score)
+                char *report_path, int scores,
+                int max_score, int html_flag)
 {
   FILE *f;
   int   i;
@@ -199,6 +241,9 @@ generate_report(int score_system_val,
   int   addition = -1;
   char  score_buf[32];
   char  score_buf2[32];
+  unsigned char res_buf[64];
+  unsigned char link_buf[64];
+  unsigned char *msg = 0;
 
   if (!(f = fopen(report_path, "w"))) {
     err("generate_report: cannot open protocol file %s", report_path);
@@ -214,25 +259,37 @@ generate_report(int score_system_val,
     else failed_tests++;
   }
 
+  if (html_flag) {
+    fprintf(f, "Content-type: text/html\n\n");
+    fprintf(f, "<pre>");
+  }
+
   if (score_system_val == SCORE_OLYMPIAD && accept_testing) {
     if (status == 0) {
-      fprintf(f, "%s\n\n", _("ACCEPTED"));
+      msg = "%s\n\n";
+      if (html_flag) msg = "<font color=\"green\">%s</font>\n\n";
+      fprintf(f, msg, _("ACCEPTED"));
     } else {
-      fprintf(f, _("%s, test #%d\n\n"),
-              result2str(status,0,0), first_failed);
+      msg = _("%s, test #%d\n\n");
+      if (html_flag) msg = _("<font color=\"red\">%s, test #%d</font>\n\n");
+      fprintf(f, msg, result2str(status,0,0), first_failed);
     }
-    fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
+    fprintf(f, _("%d total tests runs, %d passed, %d failed\n\n"),
             total_tests - 1, passed_tests, failed_tests);
-    fprintf(f, "\n");
   } else {
     if (status == 0) {
-      fprintf(f, "%s\n\n", _("OK"));
+      msg = "%s\n\n";
+      if (html_flag) msg = "<font color=\"green\">%s</font>\n\n";
+      fprintf(f, msg, _("OK"));
     } else {
       if (score_system_val==SCORE_KIROV || score_system_val==SCORE_OLYMPIAD) {
-        fprintf(f, _("PARTIAL SOLUTION\n\n"));
+        msg = "%s\n\n";
+        if (html_flag) msg = "<font color=\"red\">%s</font>\n\n";
+        fprintf(f, msg, _("PARTIAL SOLUTION"));
       } else {
-        fprintf(f, _("%s, test #%d\n\n"),
-                result2str(status,0,0), first_failed);
+        msg = _("%s, test #%d\n\n");
+        if (html_flag) msg = _("<font color=\"red\">%s, test #%d</font>\n\n");
+        fprintf(f, msg, result2str(status,0,0), first_failed);
       }
     }
     fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
@@ -243,48 +300,89 @@ generate_report(int score_system_val,
     fprintf(f, "\n");
   }
 
-  fprintf(f, _("Test #  Status  Time (sec)  %sResult\n"),
-          (score_system_val == SCORE_KIROV || score_system_val==SCORE_OLYMPIAD)?_("Score   "):"");
+  snprintf(res_buf, sizeof(res_buf), "%s", _("Result"));
+  link_buf[0] = 0;
+  if (html_flag) snprintf(link_buf, sizeof(link_buf), "%s", _("Link"));
+  fprintf(f, _("Test #  Status  Time (sec)  %s%-32s%s\n"),
+          (score_system_val == SCORE_KIROV || score_system_val==SCORE_OLYMPIAD)?_("Score   "):"", res_buf, link_buf);
+
   for (i = 1; i < total_tests; i++) {
     score_buf[0] = 0;
-    if (score_system_val == SCORE_KIROV || score_system_val==SCORE_OLYMPIAD) {
+    if (score_system_val == SCORE_KIROV || score_system_val==SCORE_OLYMPIAD){
       sprintf(score_buf2, "%d (%d)", tests[i].score, tests[i].max_score);
       sprintf(score_buf, "%-8s", score_buf2);
     }
-    fprintf(f, "%-8d%-8d%-12.3f%s%s\n",
-	    i, tests[i].code, (double) tests[i].times / 1000,
-            score_buf,
-	    result2str(tests[i].status, tests[i].code, tests[i].termsig));
+    snprintf(res_buf, sizeof(res_buf), "%s", 
+             result2str(tests[i].status, tests[i].code, tests[i].termsig));
+    link_buf[0] = 0;
+    if (html_flag)
+      snprintf(link_buf, sizeof(link_buf),
+               "<a href=\"#T%d\">View %d</a>", i, i);
+    fprintf(f, "%-8d%-8d%-12.3f%s%-32s%s\n",
+            i, tests[i].code, (double) tests[i].times / 1000,
+            score_buf, res_buf, link_buf);
   }
   fprintf(f, "\n");
 
   i = total_tests - 1;
   for (; i >= 1 && i < total_tests; i += addition) {
-    fprintf(f, _("====== Test #%d =======\n"), i);
-    fprintf(f, _("Judgement: %s\n"), result2str(tests[i].status, 0, 0));
-    if (tests[i].comment) {
-      fprintf(f, "%s: %s\n", _("Comment"), tests[i].comment);
-    }
-    if (tests[i].args) {
-      fprintf(f, _("--- Command line arguments ---\n"));
-      if (strlen(tests[i].args) >= global->max_cmd_length) {
-        fprintf(f, _("Command line is too long\n"));
-      } else {
-        fprintf(f, "%s", tests[i].args);
+    if (html_flag) {
+      fprintf(f, "<a name=\"T%d\"></a>", i);
+      fprintf(f, _("<b>====== Test #%d =======</b>\n"), i);
+      fprintf(f, _("Judgement: %s\n"), result2str(tests[i].status, 0, 0));
+      if (tests[i].comment) {
+        fprintf(f, "%s: %s\n", _("<u>Comment</u>"), tests[i].comment);
       }
+      if (tests[i].args) {
+        fprintf(f, _("<u>--- Command line arguments ---</u>\n"));
+        if (strlen(tests[i].args) >= global->max_cmd_length) {
+          fprintf(f, _("<i>Command line is too long</i>\n"));
+        } else {
+          msg = html_armor_string_dup(tests[i].args);
+          fprintf(f, "%s", tests[i].args);
+          xfree(msg);
+        }
+      }
+      fprintf(f, _("<u>--- Input ---</u>\n"));
+      html_print_by_line(f, tests[i].input, tests[i].input_size);
+      fprintf(f, _("<u>--- Output ---</u>\n"));
+      html_print_by_line(f, tests[i].output, tests[i].output_size);
+      fprintf(f, _("<u>--- Correct ---</u>\n"));
+      html_print_by_line(f, tests[i].correct, tests[i].correct_size);
+      fprintf(f, _("<u>--- Stderr ---</u>\n"));
+      html_print_by_line(f, tests[i].error, tests[i].error_size);
+      fprintf(f, _("<u>--- Checker output ---</u>\n"));
+      html_print_by_line(f, tests[i].chk_out, tests[i].chk_out_size);
+    } else {
+      fprintf(f, _("====== Test #%d =======\n"), i);
+      fprintf(f, _("Judgement: %s\n"), result2str(tests[i].status, 0, 0));
+      if (tests[i].comment) {
+        fprintf(f, "%s: %s\n", _("Comment"), tests[i].comment);
+      }
+      if (tests[i].args) {
+        fprintf(f, _("--- Command line arguments ---\n"));
+        if (strlen(tests[i].args) >= global->max_cmd_length) {
+          fprintf(f, _("Command line is too long\n"));
+        } else {
+          fprintf(f, "%s", tests[i].args);
+        }
+      }
+      fprintf(f, _("--- Input ---\n"));
+      print_by_line(f, tests[i].input, tests[i].input_size);
+      fprintf(f, _("--- Output ---\n"));
+      print_by_line(f, tests[i].output, tests[i].output_size);
+      fprintf(f, _("--- Correct ---\n"));
+      print_by_line(f, tests[i].correct, tests[i].correct_size);
+      fprintf(f, _("--- Stderr ---\n"));
+      print_by_line(f, tests[i].error, tests[i].error_size);
+      fprintf(f, _("--- Checker output ---\n"));
+      print_by_line(f, tests[i].chk_out, tests[i].chk_out_size);
     }
-    fprintf(f, _("--- Input ---\n"));
-    print_by_line(f, tests[i].input, tests[i].input_size);
-    fprintf(f, _("--- Output ---\n"));
-    print_by_line(f, tests[i].output, tests[i].output_size);
-    fprintf(f, _("--- Correct ---\n"));
-    print_by_line(f, tests[i].correct, tests[i].correct_size);
-    fprintf(f, _("--- Stderr ---\n"));
-    print_by_line(f, tests[i].error, tests[i].error_size);
-    fprintf(f, _("--- Checker output ---\n"));
-    print_by_line(f, tests[i].chk_out, tests[i].chk_out_size);
   }
 
+  if (html_flag) {
+    fprintf(f, "</pre>\n");
+  }
 
   fclose(f);
   return 0;
@@ -421,6 +519,7 @@ run_tests(struct section_tester_data *tst,
           int accept_testing,
           int accept_partial,
           int cur_variant,
+          int html_report_flag,
           char const *new_name,
           char const *new_base,
           char *reply_string,               /* buffer where reply is formed */
@@ -1102,7 +1201,7 @@ run_tests(struct section_tester_data *tst,
     setup_locale(0);
   }
   generate_report(score_system_val, accept_testing,
-                  report_path, score, prb->full_score);
+                  report_path, score, prb->full_score, html_report_flag);
 
   goto _cleanup;
 
@@ -1141,6 +1240,7 @@ struct run_packet_bin
   int variant;
   int accept_partial;
   int user_id;
+  int html_report_flag;
   unsigned char exe_sfx[64];
   unsigned char arch[64];
   unsigned char user_spelling[128];
@@ -1165,7 +1265,7 @@ parse_packet(const unsigned char *buf,
       && pkt->contest_id == -1)
     return 0;
   n = 0;
-  if (sscanf(buf, "%d%d%d%d%d%d%d%d%d%d%d%n",
+  if (sscanf(buf, "%d%d%d%d%d%d%d%d%d%d%d%d%n",
              &pkt->contest_id,
              &pkt->run_id,
              &pkt->problem_id,
@@ -1177,7 +1277,8 @@ parse_packet(const unsigned char *buf,
              &pkt->variant,
              &pkt->accept_partial,
              &pkt->user_id,
-             &n) != 11) {
+             &pkt->html_report_flag,
+             &n) != 12) {
     return -1;
   }
 
@@ -1196,6 +1297,7 @@ parse_packet(const unsigned char *buf,
   if (pkt->report_error_code < 0 || pkt->report_error_code > 1) return -1;
   if (pkt->locale_id < 0 || pkt->locale_id > 1024) return -1;
   if (pkt->user_id <= 0) return -1;
+  if (pkt->html_report_flag < 0 || pkt->html_report_flag > 1) return -1;
 
   p += n;
   n = 0;
@@ -1367,7 +1469,7 @@ do_loop(void)
     if (run_tests(tst, pkt.locale_id,
                   pkt.team_enable_rep_view, pkt.report_error_code,
                   pkt.score_system, pkt.accept_testing, pkt.accept_partial,
-                  pkt.variant,
+                  pkt.variant, pkt.html_report_flag,
                   exe_name, run_base,
                   status_string, report_path,
                   team_report_path,
