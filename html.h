@@ -26,12 +26,14 @@ void write_public_log(char const *, char const *, char const *, char const *);
 void new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
                          int sid_mode, unsigned long long sid,
                          unsigned char const *self_url,
-                         unsigned char const *hidden_vars);
+                         unsigned char const *hidden_vars,
+                         unsigned char const *extra_args);
 
 void new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
                           int sid_mode, unsigned long long sid,
                           unsigned char const *self_url,
-                          unsigned char const *hidden_vars);
+                          unsigned char const *hidden_vars,
+                          unsigned char const *extra_args);
 
 int new_write_user_clar(FILE *, int, int);
 int new_write_user_source_view(FILE *, int, int);
@@ -42,6 +44,7 @@ void write_team_page(FILE *f, int user_id,
                      int all_runs, int all_clars,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars,
+                     unsigned char const *extra_args,
                      time_t server_start,
                      time_t server_end);
 
@@ -52,13 +55,15 @@ void write_master_page(FILE *f,
                        int first_clar, int last_clar,
                        unsigned char const *self_url,
                        unsigned char const *filter_expr,
-                       unsigned char const *hidden_vars);
+                       unsigned char const *hidden_vars,
+                       unsigned char const *extra_args);
 
 void write_priv_standings(FILE *f,
                           int sid_mode,
                           unsigned long long sid,
                           unsigned char const *self_url,
-                          unsigned char const *hidden_vars);
+                          unsigned char const *hidden_vars,
+                          unsigned char const *extra_args);
 
 void write_standings_header(FILE *f,
                             int client_flag,
@@ -73,32 +78,38 @@ int write_priv_source(FILE *f, int user_id, int priv_level,
                       int sid_mode, unsigned long long sid,
                       unsigned char const *self_url,
                       unsigned char const *hidden_vars,
+                      unsigned char const *extra_args,
                       int run_id);
 int write_priv_report(FILE *f, int user_id, int priv_level,
                       int sid_mode, unsigned long long sid,
                       unsigned char const *self_url,
                       unsigned char const *hidden_vars,
+                      unsigned char const *extra_args,
                       int run_id);
 
 int write_priv_clar(FILE *f, int user_id, int priv_level,
                     int sid_mode, unsigned long long sid,
                     unsigned char const *self_url,
                     unsigned char const *hidden_vars,
+                    unsigned char const *extra_args,
                     int clar_id);
 
 int write_priv_users(FILE *f, int user_id, int priv_level,
                      int sid_mode, unsigned long long sid,
                      unsigned char const *self_url,
-                     unsigned char const *hidden_vars);
+                     unsigned char const *hidden_vars,
+                     unsigned char const *extra_args);
 
 void html_start_form(FILE *f, int mode,
                      int sid_mode, unsigned long long sid,
                      unsigned char const *self_url,
-                     unsigned char const *hidden_vars);
+                     unsigned char const *hidden_vars,
+                     unsigned char const *extra_args);
 unsigned char *html_hyperref(unsigned char *buf, int size,
                              int sid_mode, unsigned long long sid,
                              unsigned char const *self_url,
-                             unsigned char const *format, ...);
+                             unsigned char const *format,
+                             unsigned char const *extra_args, ...);
 
 int write_virtual_standings(FILE *f, int user_id);
 
