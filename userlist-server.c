@@ -5082,7 +5082,7 @@ cmd_add_field(struct client_state *p, int pkt_len,
 /*
  * This request is sent from serve to userlist-server
  * each time client connects to the contest server.
- * Thus the regular logging is disable just to reduce the number
+ * Thus the regular logging is disabled just to reduce the number
  * of messages in the log.
  */
 
@@ -5098,7 +5098,8 @@ cmd_get_uid_by_pid(struct client_state *p, int pkt_len,
     return;
   }
 
-  if (data->system_uid < 0 || data->system_gid < 0 || data->system_pid <= 1) {
+  /* allow arbitrary uid and gid */
+  if (data->system_pid <= 1) {
     CONN_ERR("invalid parameters");
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
