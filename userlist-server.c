@@ -25,6 +25,9 @@
 #include "base64.h"
 #include "userlist_proto.h"
 #include "contests.h"
+#include "version.h"
+#include "sha.h"
+#include "misctext.h"
 
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
@@ -37,6 +40,9 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/stat.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
+#include <sys/shm.h>
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
@@ -65,6 +71,18 @@ enum
   };
 
 struct userlist_list * userlist;
+
+struct contest_extra
+{
+  int nref;
+  int id;
+  struct contest_desc *desc;
+  key_t sem_key;
+  key_t shm_key;
+  int sem_id;
+  int shm_id;
+  struct userlist_table *tbl;
+};
 
 struct client_state
 {
@@ -96,6 +114,9 @@ struct client_state
 
   // passed file descriptors
   int client_fds[2];
+
+  // attached contest exchange info
+  struct contest_extra *cnts_extra;
 };
 
 static struct userlist_cfg *config;
@@ -106,6 +127,8 @@ static struct client_state *first_client;
 static struct client_state *last_client;
 static int serial_id = 1;
 static struct contest_list *contests;
+static unsigned char *program_name;
+static struct contest_extra **contest_extras;
 
 static time_t cur_time;
 static time_t last_flush;
@@ -117,6 +140,7 @@ static time_t cookie_check_interval;
 static time_t user_check_interval;
 static time_t last_backup;
 static time_t backup_interval;
+static int interrupt_signaled;
 
 /* Various strings subject for localization */
 #define _(x) x
@@ -132,6 +156,197 @@ static unsigned char const * const status_str_map[] =
 #else
 #define _(x) x
 #endif
+
+static struct contest_extra *
+attach_contest_extra(int id)
+{
+  struct contest_extra *ex = 0;
+  key_t ipc_key, shm_key, sem_key;
+  int sem_id = -1, shm_id = -1;
+  void *shm_addr = 0;
+
+  ASSERT(id > 0 && id < contests->id_map_size);
+  ASSERT(contests->id_map[id]);
+  if (!contest_extras) {
+    contest_extras = xcalloc(contests->id_map_size, sizeof(contest_extras[0]));
+  }
+  if (contest_extras[id]) {
+    contest_extras[id]->nref++;
+    return contest_extras[id];
+  }
+
+  info("creating shared contest info for %d", id);
+  ex = xcalloc(1, sizeof(*ex));
+  ex->nref = 1;
+  ex->id = id;
+  ex->desc = contests->id_map[id];
+
+  ipc_key = ftok(program_name, id);
+  sem_key = ipc_key;
+  shm_key = ipc_key;
+  while (1) {
+    sem_id = semget(sem_key, 1, 0666 | IPC_CREAT | IPC_EXCL);
+    if (sem_id >= 0) break;
+    if (errno != EEXIST) {
+      err("semget failed: %s", os_ErrorMsg());
+      goto cleanup;
+    }
+    sem_key++;
+  }
+  if (semctl(sem_id, 0, SETVAL, 1) < 0) {
+    err("semctl failed: %s", os_ErrorMsg());
+    goto cleanup;
+  }
+  while (1) {
+    shm_id = shmget(shm_key, sizeof(struct userlist_table),
+                    0644 | IPC_CREAT | IPC_EXCL);
+    if (shm_id >= 0) break;
+    if (errno != EEXIST) {
+      err("shmget failed: %s", os_ErrorMsg());
+      goto cleanup;
+    }
+    shm_key++;
+  }
+  if ((int) (shm_addr = shmat(shm_id, 0, 0)) == -1) {
+    err("shmat failed: %s", os_ErrorMsg());
+    goto cleanup;
+  }
+  memset(shm_addr, 0, sizeof(struct userlist_table));
+  ex->sem_key = sem_key;
+  ex->shm_key = shm_key;
+  ex->sem_id = sem_id;
+  ex->shm_id = shm_id;
+  ex->tbl = shm_addr;
+  contest_extras[id] = ex;
+  info("done");
+  return ex;
+
+ cleanup:
+  if (shm_addr) shmdt(shm_addr);
+  if (shm_id >= 0) shmctl(shm_id, IPC_RMID, 0);
+  if (sem_id >= 0) semctl(sem_id, 0, IPC_RMID);
+  xfree(ex);
+  return 0;
+}
+
+static struct contest_extra *
+detach_contest_extra(struct contest_extra *ex)
+{
+  if (!ex) return 0;
+
+  ASSERT(ex->id > 0 && ex->id < contests->id_map_size);
+  ASSERT(ex == contest_extras[ex->id]);
+  ASSERT(ex->desc == contests->id_map[ex->id]);
+  if (--ex->nref > 0) return 0;
+  info("destroying shared contest info for %d", ex->id);
+  if (shmdt(ex->tbl) < 0) info("shmdt failed: %s", os_ErrorMsg());
+  if (shmctl(ex->shm_id,IPC_RMID,0)<0) info("shmctl failed: %s",os_ErrorMsg());
+  if (semctl(ex->sem_id,0,IPC_RMID)<0) info("semctl failed: %s",os_ErrorMsg());
+  contest_extras[ex->id] = 0;
+  memset(ex, 0, sizeof(*ex));
+  info("done");
+  return 0;
+}
+
+static void
+lock_userlist_table(struct contest_extra *ex)
+{
+  struct sembuf lock;
+
+  ASSERT(ex);
+  lock.sem_num = 0;
+  lock.sem_op = -1;
+  lock.sem_flg = SEM_UNDO;      /* in case of crash */
+  while (1) {
+    if (!semop(ex->sem_id, &lock, 1)) break;
+    if (errno != EINTR) {
+      err("semop failed: %s", os_ErrorMsg());
+      exit(1);                  /* FIXME: exit gracefully */
+    }
+    info("semop restarted after signal");
+  }
+}
+static void
+unlock_userlist_table(struct contest_extra *ex)
+{
+  struct sembuf unlock;
+
+  ASSERT(ex);
+  unlock.sem_num = 0;
+  unlock.sem_op = 1;
+  unlock.sem_flg = SEM_UNDO;
+  if (semop(ex->sem_id, &unlock, 1) < 0) {
+    err("semop failed: %s", os_ErrorMsg());
+    exit(1);                  /* FIXME: exit gracefully */
+  }
+}
+static void
+update_userlist_table(int cnts_id)
+{
+  struct userlist_table *ntb;
+  int i = 0, si = 4;
+  struct userlist_user *u;
+  struct userlist_contest *c;
+  unsigned char *n;
+  int name_len;
+  int login_len;
+  struct contest_extra *ex;
+
+  ASSERT(cnts_id > 0 && cnts_id < contests->id_map_size);
+  ASSERT(contests->id_map[cnts_id]);
+  if (!contest_extras || !contest_extras[cnts_id]) return;
+
+  ex = contest_extras[cnts_id];
+  ntb = alloca(sizeof(*ntb));
+  memset(ntb, 0, sizeof(*ntb));
+  for (u = (struct userlist_user*) userlist->b.first_down;
+       u; u = (struct userlist_user*) u->b.right) {
+    ASSERT(u->b.tag == USERLIST_T_USER);
+    if (!u->contests) continue;
+    for (c = (struct userlist_contest*) u->contests->first_down;
+         c; c = (struct userlist_contest*) c->b.right) {
+      if (c->id == cnts_id) break;
+    }
+    if (!c) continue;
+    if (c->status != USERLIST_REG_OK) continue;
+    if ((c->flags & USERLIST_UC_BANNED)) continue;
+    // FIXME handle invisibility
+    n = u->name;
+    if (!n || !*n) n = u->login;
+    if (!n) n = "";
+    name_len = strlen(n);
+    login_len = strlen(u->login);
+
+    if (u->id > 65535) {
+      err("userlist_table: user id exceeds 65535");
+      continue;
+    }
+    if (i >= USERLIST_TABLE_SIZE) {
+      err("userlist_table: number of users for %d exceeds %d",
+          cnts_id, USERLIST_TABLE_SIZE);
+      break;
+    }
+    if (si + name_len + login_len + 2 > USERLIST_TABLE_POOL) {
+      err("userlist_table: string pool for %d exceeds %d",
+          cnts_id, USERLIST_TABLE_POOL);
+      break;
+    }
+    ntb->users[i].user_id = u->id;
+    ntb->users[i].flags = c->flags;
+    ntb->users[i].login_idx = si;
+    strcpy(ntb->pool + si, u->login);
+    si += login_len + 1;
+    ntb->users[i].name_idx = si;
+    strcpy(ntb->pool + si, n);
+    si += name_len + 1;
+    i++;
+  }
+  ntb->total = i;
+  ntb->vintage = ex->tbl->vintage + 1;
+  lock_userlist_table(ex);
+  memcpy(ex->tbl, ntb, sizeof(*ntb));
+  unlock_userlist_table(ex);
+}
 
 static void
 link_client_state(struct client_state *p)
@@ -332,6 +547,7 @@ disconnect_client(struct client_state *p)
   if (p->read_buf) xfree(p->read_buf);
   if (p->client_fds[0] >= 0) close(p->client_fds[0]);
   if (p->client_fds[1] >= 0) close(p->client_fds[1]);
+  detach_contest_extra(p->cnts_extra);
 
   if (p->prev) {
     p->prev->next = p->next;
@@ -366,14 +582,29 @@ enqueue_reply_to_client(struct client_state *p,
   p->write_len = msg_length + 4;
 }
 
+static void graceful_exit(void) __attribute__((noreturn));
 static void
-graceful_exit(int s)
+graceful_exit(void)
 {
+  int i;
+
   if (config && config->socket_path) {
     unlink(config->socket_path);
   }
-  signal(s, SIG_DFL);
-  raise(s);
+  // we need to deallocate shared memory and semafores
+  if (contest_extras) {
+    for (i = 1; i < contests->id_map_size; i++) {
+      if (!contest_extras[i]) continue;
+      contest_extras[i]->nref = 1;
+      detach_contest_extra(contest_extras[i]);
+    }
+  }
+  exit(0);
+}
+static void
+interrupt_signal(int s)
+{
+  interrupt_signaled = 1;
 }
 
 static unsigned char *
@@ -413,6 +644,46 @@ bad_packet(struct client_state *p, char const *format, ...)
     err("%d: bad packet", p->id);
   }
   disconnect_client(p);
+}
+
+struct passwd_internal
+{
+  unsigned char pwds[3][64];
+};
+static void
+make_sha1_ascii(void const *data, size_t size, unsigned char *out)
+{
+  unsigned char buf[20], *s = out;
+  int i;
+
+  sha_buffer(data, size, buf);
+  for (i = 0; i < 20; i++) {
+    s += sprintf(s, "%02x", buf[i]);
+  }
+}
+static int
+passwd_convert_to_internal(unsigned char const *pwd_plain,
+                           struct passwd_internal *p)
+{
+  int len;
+
+  if (!pwd_plain) return -1;
+  ASSERT(p);
+  len = strlen(pwd_plain);
+  if (len > 32) return -1;
+  memset(p, 0, sizeof(*p));
+  strcpy(p->pwds[0], pwd_plain);
+  base64_encode(pwd_plain, len, p->pwds[1]);
+  make_sha1_ascii(pwd_plain, len, p->pwds[2]);
+  return 0;
+}
+static int
+passwd_check(struct passwd_internal const *u,
+             struct userlist_passwd const *t)
+{
+  ASSERT(t->method >= USERLIST_PWD_PLAIN && t->method <= USERLIST_PWD_SHA1);
+  if (!strcmp(u->pwds[t->method], t->b.text)) return 0;
+  return -1;
 }
 
 static void
@@ -686,6 +957,7 @@ login_user(struct client_state *p,
   char * password;
   char * name;
   struct userlist_cookie * cookie;
+  struct passwd_internal pwdint;
 
   login = data->data;
   password = data->data + data->login_length + 1;
@@ -703,6 +975,12 @@ login_user(struct client_state *p,
     return;
   }
 
+  if (passwd_convert_to_internal(password, &pwdint) < 0) {
+    err("%d: invalid password", p->id);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+
   user = (struct userlist_user*) userlist->b.first_down;
   while (user) {
     ASSERT(user->b.tag == USERLIST_T_USER);
@@ -714,7 +992,7 @@ login_user(struct client_state *p,
         dirty = 1;
         return;
       }
-      if (!strcmp(user->register_passwd->b.text,password)) {
+      if (passwd_check(&pwdint, user->register_passwd) >= 0) {
         //Login and password correct
         ans_len = sizeof(struct userlist_pk_login_ok)
           + strlen(user->name) + 1 + strlen(user->login) + 1;
@@ -728,6 +1006,7 @@ login_user(struct client_state *p,
         }
         if (data->use_cookies) {        
           cookie = create_cookie(user);
+          cookie->user = user;
           cookie->locale_id = data->locale_id;
           cookie->ip = data->origin_ip;
           cookie->contest_id = data->contest_id;
@@ -770,6 +1049,133 @@ login_user(struct client_state *p,
   //Wrong login
   send_reply(p, -ULS_ERR_INVALID_LOGIN);
   info("%d: login_user: BAD USER", p->id);
+}
+
+static void
+login_team_user(struct client_state *p, int pkt_len,
+                struct userlist_pk_do_login * data)
+{
+  unsigned char *login_ptr, *passwd_ptr, *name_ptr;
+  struct userlist_user *u;
+  struct passwd_internal pwdint;
+  struct contest_desc *cnts = 0;
+  struct userlist_contest *c = 0;
+  struct userlist_pk_login_ok *out = 0;
+  struct userlist_cookie *cookie;
+  int out_size = 0, login_len, name_len;
+  int i;
+
+  if (pkt_len < sizeof(*data)) {
+    bad_packet(p, "login_team_user: packet length is too small: %d", pkt_len);
+    return;
+  }
+  login_ptr = data->data;
+  if (strlen(login_ptr) != data->login_length) {
+    bad_packet(p, "login_team_user: login length mismatch");
+    return;
+  }
+  passwd_ptr = login_ptr + data->login_length + 1;
+  if (strlen(passwd_ptr) != data->password_length) {
+    bad_packet(p, "login_team_user: password length mismatch");
+    return;
+  }
+  if (pkt_len != sizeof(*data)+data->login_length+data->password_length+2) {
+    bad_packet(p, "login_team_user: packet length mismatch");
+    return;
+  }
+  info("%d: login_team_user: %s, %s, %ld, %d, %d", p->id,
+       unparse_ip(data->origin_ip), login_ptr, data->contest_id,
+       data->locale_id, data->use_cookies);
+  if (p->user_id >= 0) {
+    err("%d: this connection already authentificated", p->id);
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+  if (passwd_convert_to_internal(passwd_ptr, &pwdint) < 0) {
+    bad_packet(p, "password parse error");
+    return;
+  }
+  if (data->contest_id <= 0
+      || data->contest_id >= contests->id_map_size
+      || !(cnts = contests->id_map[data->contest_id])) {
+    err("%d: invalid contest identifier", p->id);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (!contests_check_ip(cnts, data->origin_ip)) {
+    err("%d: IP is not allowed", p->id);
+    send_reply(p, -ULS_ERR_IP_NOT_ALLOWED);
+    return;
+  }
+
+  for (i = 1; i < userlist->user_map_size; i++) {
+    if (!(u = userlist->user_map[i])) continue;
+    if (!strcmp(u->login, login_ptr)) break;
+  }
+  if (i >= userlist->user_map_size) {
+    err("%d: BAD LOGIN", p->id);
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+  if(passwd_check(&pwdint,u->team_passwd?u->team_passwd:u->register_passwd)<0){
+    err("%d: BAD PASSWORD", p->id);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  if (u->contests) {
+    for (c = (struct userlist_contest*) u->contests->first_down;
+         c; c = (struct userlist_contest*) c->b.right) {
+      if (c->id == data->contest_id) break;
+    }
+  }
+  if (!c || c->status != USERLIST_REG_OK || (c->status & USERLIST_UC_BANNED)) {
+    err("%d: not allowed to participate", p->id);
+    send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
+    return;
+  }
+
+  login_len = strlen(u->login);
+  name_len = strlen(u->name);
+  out_size = sizeof(*out) + login_len + name_len + 2;
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  login_ptr = out->data;
+  name_ptr = login_ptr + login_len + 1;
+  if (data->use_cookies == -1) {
+    data->use_cookies = u->default_use_cookies;
+  }
+  if (data->use_cookies == -1) {
+    // FIXME: system default
+    data->use_cookies = 0;
+  }
+  if (data->locale_id == -1) {
+    data->locale_id = 0;
+  }
+  if (data->use_cookies) {
+    cookie = create_cookie(u);
+    cookie->user = u;
+    cookie->ip = data->origin_ip;
+    cookie->cookie = generate_random_cookie();
+    cookie->expire = cur_time + 60 * 60 * 24;
+    cookie->contest_id = data->contest_id;
+    cookie->locale_id = data->locale_id;
+    out->cookie = cookie->cookie;
+    out->reply_id = ULS_LOGIN_COOKIE;
+  } else {
+    out->reply_id = ULS_LOGIN_OK;
+  }
+  out->user_id = u->id;
+  out->locale_id = data->locale_id;
+  out->login_len = login_len;
+  out->name_len = name_len;
+  strcpy(login_ptr, u->login);
+  strcpy(name_ptr, u->name);
+  
+  p->user_id = u->id;
+  enqueue_reply_to_client(p, out_size, out);
+  dirty = 1;
+  u->last_login_time = cur_time;
+  info("%d: login_team_user: %d,%s,%llx", p->id, u->id, u->login,out->cookie);
 }
 
 static void
@@ -837,6 +1243,117 @@ login_cookie(struct client_state *p,
   // cookie not found
   info("%d: login_cookie: FAILED", p->id);
   send_reply(p, -ULS_ERR_NO_COOKIE);
+}
+
+static void
+login_team_cookie(struct client_state *p, int pkt_len,
+                  struct userlist_pk_check_cookie * data)
+{
+  struct contest_desc *cnts = 0;
+  struct userlist_user *u;
+  struct userlist_cookie *cookie;
+  struct userlist_contest *c = 0;
+  struct userlist_pk_login_ok *out = 0;
+  int i, out_size = 0, login_len = 0, name_len = 0;
+  unsigned char *login_ptr, *name_ptr;
+
+  if (pkt_len != sizeof(*data)) {
+    bad_packet(p, "login_team_cookie: bad packet length %d", pkt_len);
+    return;
+  }
+  info("%d: login_team_cookie: %s, %ld, %llx, %d",
+       p->id, unparse_ip(data->origin_ip), data->contest_id,
+       data->cookie, data->locale_id);
+  if (p->user_id >= 0) {
+    err("%d: this connection already authentificated", p->id);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  if (data->contest_id) {
+    if (data->contest_id < 0 || data->contest_id >= contests->id_map_size
+        || !(cnts = contests->id_map[data->contest_id])) {
+      err("%d: invalid contest identifier", p->id);
+      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
+  }
+  if (!data->cookie) {
+    err("%d: cookie value is 0", p->id);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+
+  // FIXME: this is quite inefficient
+  for (i = 1; i < userlist->user_map_size; i++) {
+    if (!(u = userlist->user_map[i])) continue;
+    if (!u->cookies) continue;
+    for (cookie = (struct userlist_cookie*) u->cookies->first_down;
+         cookie; cookie = (struct userlist_cookie*) cookie->b.right) {
+      if (cookie->ip == data->origin_ip
+          && cookie->expire > cur_time
+          && cookie->cookie == data->cookie) break;
+    }
+    if (cookie) break;
+  }
+  if (i >= userlist->user_map_size) {
+    err("%d: cookie not found", p->id);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+
+  if (!data->contest_id) {
+    data->contest_id = cookie->contest_id;
+  }
+  if (data->locale_id == -1) {
+    data->locale_id = cookie->locale_id;
+  }
+  if (data->contest_id <= 0
+      || data->contest_id >= contests->id_map_size
+      || !(cnts = contests->id_map[data->contest_id])) {
+    err("%d: invalid contest identifier", p->id);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (!contests_check_ip(cnts, data->origin_ip)) {
+    err("%d: IP is not allowed", p->id);
+    send_reply(p, -ULS_ERR_IP_NOT_ALLOWED);
+    return;
+  }
+  if (u->contests) {
+    for (c = (struct userlist_contest*) u->contests->first_down;
+         c; c = (struct userlist_contest*) c->b.right) {
+      if (c->id == data->contest_id) break;
+    }
+  }
+  if (!c || c->status != USERLIST_REG_OK || (c->status & USERLIST_UC_BANNED)) {
+    err("%d: not allowed to participate", p->id);
+    send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
+    return;
+  }
+
+  login_len = strlen(u->login);
+  name_len = strlen(u->name);
+  out_size = sizeof(*out) + login_len + name_len + 2;
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  login_ptr = out->data;
+  name_ptr = login_ptr + login_len + 1;
+  cookie->contest_id = data->contest_id;
+  cookie->locale_id = data->locale_id;
+  out->cookie = cookie->cookie;
+  out->reply_id = ULS_LOGIN_COOKIE;
+  out->user_id = u->id;
+  out->locale_id = data->locale_id;
+  out->login_len = login_len;
+  out->name_len = name_len;
+  strcpy(login_ptr, u->login);
+  strcpy(name_ptr, u->name);
+  
+  p->user_id = u->id;
+  enqueue_reply_to_client(p, out_size, out);
+  dirty = 1;
+  u->last_login_time = cur_time;
+  info("%d: login_team_cookie: %d,%s", p->id, u->id, u->login);
 }
       
 static void
@@ -1153,6 +1670,19 @@ set_user_info(struct client_state *p,
     old_u->name = xstrdup(new_u->name);
     info("%d: name updated", p->id);
     updated = 1;
+
+    // we have to notify all the contests, where the user participates
+    if (old_u->contests) {
+      struct userlist_contest *cc;
+
+      for (cc = (struct userlist_contest*) old_u->contests->first_down;
+           cc; cc = (struct userlist_contest*) cc->b.right) {
+        if (cc->status == USERLIST_REG_OK
+            && !(cc->flags & USERLIST_UC_BANNED)) {
+          update_userlist_table(cc->id);
+        }
+      }
+    }
   }
   if (needs_update(old_u->homepage, new_u->homepage)) {
     xfree(old_u->homepage);
@@ -1346,75 +1876,193 @@ set_password(struct client_state *p, int len,
   int old_len, new_len;
   unsigned char *old_pwd, *new_pwd;
   struct userlist_user *u;
+  struct passwd_internal oldint, newint;
 
   // check packet
   if (len < sizeof(*pack)) {
-    bad_packet(p, "");
+    bad_packet(p, "set_password: bad packet length %d", len);
     return;
   }
   old_pwd = pack->data;
   old_len = strlen(old_pwd);
   if (old_len != pack->old_len) {
-    bad_packet(p, "");
+    bad_packet(p, "set_password: old password length mismatch");
     return;
   }
   new_pwd = old_pwd + old_len + 1;
   new_len = strlen(new_pwd);
   if (new_len != pack->new_len) {
-    bad_packet(p, "");
+    bad_packet(p, "set_password: new password length mismatch");
     return;
   }
   if (len != sizeof(*pack) + old_len + new_len + 2) {
-    bad_packet(p, "");
+    bad_packet(p, "set_password: packet length mismatch");
     return;
   }
 
   info("%d: set_password: %d", p->id, pack->user_id);
   if (p->user_id <= 0) {
-    info("%d: client not authentificated", p->id);
+    err("%d: client not authentificated", p->id);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
   if (p->user_id != pack->user_id) {
-    info("%d: user_id does not match", p->id);
+    err("%d: user_id does not match", p->id);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
   if (pack->user_id <= 0 || pack->user_id >= userlist->user_map_size) {
-    info("%d: user id is out of range", p->id);
+    err("%d: user id is out of range", p->id);
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
   }
   u = userlist->user_map[pack->user_id];
   if (!u) {
-    info("%d: user id nonexistent", p->id);
+    err("%d: user id nonexistent", p->id);
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
   }
-  if (!u->register_passwd || !u->register_passwd->b.text) {
-    info("%d: password is not set for %d", p->id, p->user_id);
+  if (!new_len) {
+    err("%d: new password cannot be empty", p->id);
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
-  if (u->register_passwd->method != 0) {
-    info("%d: unsupported password method %d", p->id,
-         u->register_passwd->method);
-    send_reply(p, -ULS_ERR_NOT_IMPLEMENTED);
+  if (!u->register_passwd || !u->register_passwd->b.text) {
+    err("%d: password is not set for %d", p->id, p->user_id);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
-  if (strcmp(u->register_passwd->b.text, old_pwd) != 0) {
-    info("%d: provided password does not match", p->id);
+  if (passwd_convert_to_internal(old_pwd, &oldint) < 0) {
+    err("%d: cannot parse old password", p->id);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  if (passwd_convert_to_internal(new_pwd, &newint) < 0) {
+    err("%d: cannot parse new password", p->id);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  if (passwd_check(&oldint, u->register_passwd) < 0) {
+    err("%d: provided password does not match", p->id);
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
   xfree(u->register_passwd->b.text);
-  u->register_passwd->b.text = xstrdup(new_pwd);
+  u->register_passwd->b.text = xstrdup(newint.pwds[USERLIST_PWD_SHA1]);
+  u->register_passwd->method = USERLIST_PWD_SHA1;
 
   u->last_pwdchange_time = cur_time;
   u->last_access_time = cur_time;
   dirty = 1;
   flush_interval /= 2;
   send_reply(p, ULS_OK);
+}
+
+static void
+team_set_password(struct client_state *p, int len,
+                  struct userlist_pk_set_password *pack)
+{
+  int old_len, new_len;
+  unsigned char *old_pwd, *new_pwd;
+  struct userlist_user *u;
+  struct passwd_internal oldint, newint;
+
+  // check packet
+  if (len < sizeof(*pack)) {
+    bad_packet(p, "team_set_password: bad length %d", len);
+    return;
+  }
+  old_pwd = pack->data;
+  old_len = strlen(old_pwd);
+  if (old_len != pack->old_len) {
+    bad_packet(p, "team_set_password: old password length mismatch");
+    return;
+  }
+  new_pwd = old_pwd + old_len + 1;
+  new_len = strlen(new_pwd);
+  if (new_len != pack->new_len) {
+    bad_packet(p, "team_set_password: new password length mismatch");
+    return;
+  }
+  if (len != sizeof(*pack) + old_len + new_len + 2) {
+    bad_packet(p, "team_set_password: packet length mismatch %d, %d",
+               len, sizeof(*pack) + old_len + new_len + 2);
+    return;
+  }
+
+  info("%d: team_set_password: %d", p->id, pack->user_id);
+  if (p->user_id <= 0) {
+    err("%d: client not authentificated", p->id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  if (p->user_id != pack->user_id) {
+    err("%d: user_id does not match", p->id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  if (pack->user_id <= 0 || pack->user_id >= userlist->user_map_size) {
+    err("%d: user id is out of range", p->id);
+    send_reply(p, -ULS_ERR_BAD_UID);
+    return;
+  }
+  u = userlist->user_map[pack->user_id];
+  if (!u) {
+    err("%d: user id nonexistent", p->id);
+    send_reply(p, -ULS_ERR_BAD_UID);
+    return;
+  }
+  if (!new_len) {
+    err("%d: new password cannot be empty", p->id);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  if (passwd_convert_to_internal(old_pwd, &oldint) < 0) {
+    err("%d: cannot parse old password", p->id);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  if (passwd_convert_to_internal(new_pwd, &newint) < 0) {
+    err("%d: cannot parse new password", p->id);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  // verify the existing password
+  if (u->team_passwd) {
+    if (passwd_check(&oldint, u->team_passwd) < 0) {
+      err("%d: OLD team password does not match", p->id);
+      if (passwd_check(&oldint, u->register_passwd) < 0) {
+        err("%d: OLD password does not match", p->id);
+        send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+        return;
+      }
+    }
+  } else {
+    if (passwd_check(&oldint, u->register_passwd) < 0) {
+      err("%d: OLD password does not match", p->id);
+      send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+      return;
+    }
+  }
+
+  // if team passwd entry does not exist, create it
+  if (!u->team_passwd) {
+    struct userlist_passwd *tt;
+    tt=(struct userlist_passwd*)userlist_node_alloc(USERLIST_T_TEAM_PASSWORD);
+    u->team_passwd = tt;
+    xml_link_node_last(&u->b, &tt->b);
+  } else {
+    xfree(u->team_passwd->b.text);
+  }
+  u->team_passwd->b.text = xstrdup(newint.pwds[USERLIST_PWD_SHA1]);
+  u->team_passwd->method = USERLIST_PWD_SHA1;
+
+  u->last_pwdchange_time = cur_time;
+  u->last_access_time = cur_time;
+  dirty = 1;
+  flush_interval /= 2;
+  send_reply(p, ULS_OK);
+  info("%d: ok", p->id);
 }
 
 static void
@@ -1489,6 +2137,7 @@ register_for_contest(struct client_state *p, int len,
   r->id = pack->contest_id;
   if (c->autoregister) {
     r->status = USERLIST_REG_OK;
+    update_userlist_table(pack->contest_id);
   } else {
     r->status = USERLIST_REG_PENDING;
   }
@@ -1591,7 +2240,9 @@ pass_descriptors(struct client_state *p, int len,
 }
 
 static void
-do_list_users(FILE *f, int contest_id, int locale_id)
+do_list_users(FILE *f, int contest_id, int locale_id,
+              int user_id, unsigned long flags,
+              unsigned char *url, unsigned char *srch)
 {
   struct userlist_user *u;
   struct userlist_contest *c;
@@ -1665,9 +2316,24 @@ list_users(struct client_state *p, int len,
   FILE *f = 0;
   unsigned char *html_ptr = 0;
   size_t html_size = 0;
+  unsigned char *url_ptr, *srch_ptr;
 
-  if (len != sizeof (*pack)) {
-    bad_packet(p, "");
+  if (len < sizeof (*pack)) {
+    bad_packet(p, "list_users: packet too short");
+    return;
+  }
+  url_ptr = pack->data;
+  if (strlen(url_ptr) != pack->url_len) {
+    bad_packet(p, "list_users: url length mismatch");
+    return;
+  }
+  srch_ptr = url_ptr + pack->url_len + 1;
+  if (strlen(srch_ptr) != pack->srch_len) {
+    bad_packet(p, "list_users: srch length mismatch");
+    return;
+  }
+  if (len != sizeof(*pack) + pack->url_len + pack->srch_len + 2) {
+    bad_packet(p, "list_users: packet length mismatch");
     return;
   }
   if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
@@ -1680,7 +2346,8 @@ list_users(struct client_state *p, int len,
     err("%d: open_memstream failed!", p->id);
     return;
   }
-  do_list_users(f, pack->contest_id, pack->locale_id);
+  do_list_users(f, pack->contest_id, pack->locale_id,
+                pack->user_id, pack->flags, url_ptr, srch_ptr);
   fclose(f);
 
   q = (struct client_state*) xcalloc(1, sizeof(*q));
@@ -1698,6 +2365,230 @@ list_users(struct client_state *p, int len,
   link_client_state(q);
   info("%d: created new connection %d", p->id, q->id);
   send_reply(p, ULS_OK);
+}
+
+static void
+cmd_map_contest(struct client_state *p, int len,
+                struct userlist_pk_map_contest *pack)
+{
+  struct contest_desc *cnts = 0;
+  struct contest_extra *ex = 0;
+  size_t out_size;
+  struct userlist_pk_contest_mapped *out;
+
+  if (len != sizeof(*pack)) {
+    bad_packet(p, "map_contest: bad packet length: %d", len);
+    return;
+  }
+  info("%d: map_contest: %d", p->id, pack->contest_id);
+  if (p->user_id != 0) {
+    err("%d: map_contest: permission denied: %d", p->id, p->user_id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  if (pack->contest_id <= 0 || pack->contest_id >= contests->id_map_size) {
+    err("%d: map_contest: contest identifier is out of range", p->id);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (!(cnts = contests->id_map[pack->contest_id])) {
+    err("%d: map_contest: nonexistant contest", p->id);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (!(ex = attach_contest_extra(pack->contest_id))) {
+    send_reply(p, -ULS_ERR_IPC_FAILURE);
+    return;
+  }
+  p->cnts_extra = ex;
+  out_size = sizeof(*out);
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  out->reply_id = ULS_CONTEST_MAPPED;
+  out->sem_key = ex->sem_key;
+  out->shm_key = ex->shm_key;
+  enqueue_reply_to_client(p, out_size, out);
+  update_userlist_table(pack->contest_id);
+  info("%d: map_contest: %d, %d", p->id, ex->sem_key, ex->shm_key);
+}
+
+static void
+cmd_admin_process(struct client_state *p, int len,
+                  struct userlist_packet *pack)
+{
+  unsigned char proc_buf[1024];
+  unsigned char exe_buf[1024];
+  struct userlist_cfg_admin_proc *prc;
+
+  if (len != sizeof(*pack)) {
+    bad_packet(p, "admin_process: bad packet length: %d", len);
+    return;
+  }
+  info("%d: admin_process: %d, %d", p->id, p->peer_pid, p->peer_uid);
+  snprintf(proc_buf, sizeof(proc_buf), "/proc/%d/exe", p->peer_pid);
+  memset(exe_buf, 0, sizeof(exe_buf));
+  if (readlink(proc_buf, exe_buf, sizeof(exe_buf) - 1) < 0) {
+    err("%d: admin_process: readlink failed: %s", p->id, os_ErrorMsg());
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;    
+  }
+  info("%d: admin_process: path = %s", p->id, exe_buf);
+  if (!config->admin_processes) {
+    err("%d: admin_process: no admin processes specified", p->id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  for (prc = (struct userlist_cfg_admin_proc *) config->admin_processes->first_down; prc; prc = (struct userlist_cfg_admin_proc*) prc->b.right) {
+    if (!strcmp(prc->path, exe_buf) && prc->uid == p->peer_uid) break;
+  }
+  if (!prc) {
+    err("%d: admin_process: no such admin process", p->id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  send_reply(p, ULS_OK);
+  p->user_id = 0;
+  info("%d: admin_process: ok", p->id);
+}
+
+static void
+do_generate_team_passwd(int contest_id, FILE *log)
+{
+  struct userlist_user *u;
+  struct userlist_contest *c;
+  struct userlist_passwd *p;
+  struct xml_tree *t;
+  unsigned char buf[16];
+
+  fprintf(log, "<table border=\"1\"><tr><th>User ID</th><th>User Login</th><th>User Name</th><th>New User Password</th></tr>\n");
+  for (u = (struct userlist_user*) userlist->b.first_down;
+       u; u = (struct userlist_user*) u->b.right) {
+    if (!u->contests) continue;
+    for (c = (struct userlist_contest*) u->contests->first_down;
+         c; c = (struct userlist_contest*) c->b.right) {
+      if (c->id == contest_id && c->status == USERLIST_REG_OK) break;
+    }
+    if (!c) continue;
+
+    t = u->cookies;
+    if (t) {
+      info("removed all cookies for %d (%s)", u->id, u->login);
+      xml_unlink_node(t);
+      userlist_free(t);
+      u->cookies = 0;
+    }
+    if (!(p = u->team_passwd)) {
+      p=(struct userlist_passwd*)userlist_node_alloc(USERLIST_T_TEAM_PASSWORD);
+      xml_link_node_last(&u->b, &p->b);
+      u->team_passwd = p;
+    }
+    if (p->b.text) {
+      xfree(p->b.text);
+      p->b.text = 0;
+    }
+    memset(buf, 0, sizeof(buf));
+    generate_random_password(8, buf);
+    p->method = USERLIST_PWD_PLAIN;
+    p->b.text = xstrdup(buf);
+
+  // html table header
+    fprintf(log, "<tr><td><b>User ID</b></td><td><b>User Login</b></td><td><b>User Name</b></td><td><b>New User Password</b></td></tr>\n");
+    fprintf(log, "<tr><td>%d</td><td>%s</td><td>%s</td><td><tt>%s</tt></td></tr>\n",
+            u->id, u->login, u->name, buf);
+  }
+  fprintf(log, "</table>\n");
+  dirty = 1;
+  flush_interval /= 2;
+}
+
+static void
+cmd_generate_team_passwd(struct client_state *p, int len,
+                         struct userlist_pk_map_contest *pack)
+{
+  unsigned char *log_ptr = 0;
+  size_t log_size = 0;
+  FILE *f = 0;
+  struct client_state *q = 0;
+
+  if (len != sizeof(*pack)) {
+    bad_packet(p, "generate_team_paswords: bad length %d", len);
+    return;
+  }
+  info("%d: generate_team_paswords: %d", p->id, pack->contest_id);
+  if (p->user_id != 0) {
+    err("%d: only administrator can do that", p->id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  if (pack->contest_id <= 0 || pack->contest_id >= contests->id_map_size
+      || !contests->id_map[pack->contest_id]) {
+    err("%d: invalid contest identifier", p->id);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
+    err("%d: two client file descriptors required", p->id);
+    disconnect_client(p);
+    return;
+  }
+  if (!(f = open_memstream((char**) &log_ptr, &log_size))) {
+    err("%d: open_memstream failed!", p->id);
+    disconnect_client(p);
+    return;
+  }
+  do_generate_team_passwd(pack->contest_id, f);
+  fclose(f);
+
+  q = (struct client_state*) xcalloc(1, sizeof(*q));
+  q->client_fds[0] = -1;
+  q->client_fds[1] = p->client_fds[1];
+  q->last_time = cur_time;
+  q->id = serial_id++;
+  q->user_id = -1;
+  q->fd = p->client_fds[0];
+  p->client_fds[0] = -1;
+  p->client_fds[1] = -1;
+  q->state = STATE_AUTOCLOSE;
+  q->write_buf = log_ptr;
+  q->write_len = log_size;
+  link_client_state(q);
+  info("%d: created new connection %d", p->id, q->id);
+  send_reply(p, ULS_OK);
+}
+
+static void
+cmd_get_contest_name(struct client_state *p, int len,
+                     struct userlist_pk_map_contest *pack)
+{
+  struct userlist_pk_xml_data *out = 0;
+  struct contest_desc *cnts = 0;
+  int out_size = 0, name_len = 0;
+
+  if (len != sizeof(*pack)) {
+    bad_packet(p, "get_contest_name: bad length %d", len);
+    return;
+  }
+  info("%d: get_contest_name: %d", p->id, pack->contest_id);
+  if (pack->contest_id <= 0 || pack->contest_id >= contests->id_map_size
+      || !(cnts = contests->id_map[pack->contest_id])) {
+    err("%d: invalid contest identifier", p->id);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+
+  name_len = strlen(cnts->name);
+  if (name_len > 65535) {
+    err("%d: contest name is too long", p->id);
+    name_len = 65535;
+  }
+  out_size = sizeof(*out) + name_len;
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  out->reply_id = ULS_XML_DATA;
+  out->info_len = out_size;
+  memcpy(out->data, cnts->name, name_len);
+  enqueue_reply_to_client(p, out_size, out);
+  info("%d: get_contest_name: %d", p->id, out->info_len);
 }
 
 static void
@@ -1758,6 +2649,34 @@ process_packet(struct client_state *p, int len, unsigned char *pack)
 
   case ULS_LIST_USERS:
     list_users(p, len, (struct userlist_pk_list_users*) pack);
+    break;
+
+  case ULS_MAP_CONTEST:
+    cmd_map_contest(p, len, (struct userlist_pk_map_contest*) pack);
+    break;
+
+  case ULS_ADMIN_PROCESS:
+    cmd_admin_process(p, len, (struct userlist_packet*) pack);
+    break;
+
+  case ULS_GENERATE_TEAM_PASSWORDS:
+    cmd_generate_team_passwd(p, len, (struct userlist_pk_map_contest*) pack);
+    break;
+
+  case ULS_TEAM_LOGIN:
+    login_team_user(p, len, (struct userlist_pk_do_login*) pack);
+    break;
+
+  case ULS_TEAM_CHECK_COOKIE:
+    login_team_cookie(p, len, (struct userlist_pk_check_cookie*) pack);
+    break;
+
+  case ULS_GET_CONTEST_NAME:
+    cmd_get_contest_name(p, len, (struct userlist_pk_map_contest*) pack);
+    break;
+
+  case ULS_TEAM_SET_PASSWD:
+    team_set_password(p, len, (struct userlist_pk_set_password *) pack);
     break;
 
   default:
@@ -1859,8 +2778,8 @@ do_work(void)
   struct client_state *p;
 
   signal(SIGPIPE, SIG_IGN);
-  signal(SIGINT, graceful_exit);
-  signal(SIGTERM, graceful_exit);
+  signal(SIGINT, interrupt_signal);
+  signal(SIGTERM, interrupt_signal);
   signal(SIGHUP, force_check_dirty);
   signal(SIGUSR1, force_flush);
 
@@ -1923,6 +2842,10 @@ do_work(void)
       check_all_users();
     }
 
+    if (interrupt_signaled) {
+      flush_interval = 0;
+    }
+
     // flush database
     if (cur_time > last_flush + flush_interval) {
       flush_database();
@@ -1932,10 +2855,14 @@ do_work(void)
       do_backup();
     }
 
+    if (interrupt_signaled) {
+      graceful_exit();
+    }
+
     // disconnect idle clients
     while (1) {
       for (p = first_client; p; p = p->next)
-        if (p->last_time + CLIENT_TIMEOUT < cur_time) break;
+        if (p->last_time + CLIENT_TIMEOUT < cur_time && p->user_id != 0) break;
       if (!p) break;
       info("%d: timeout, client disconnected", p->id);
       disconnect_client(p);
@@ -2272,6 +3199,9 @@ main(int argc, char *argv[])
   code = 1;
   if (argc != 2) goto print_usage;
 
+  info("userlist-server %s, compiled %s", compile_version, compile_date);
+
+  program_name = argv[0];
   config = userlist_cfg_parse(argv[1]);
   if (!config) return 1;
   if (!config->contests_path) {
