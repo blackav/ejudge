@@ -1496,17 +1496,17 @@ do_loop(void)
       current_time = time(0);
 
       /* check stop and start times */
-      if (contest_start_time && !contest_stop_time) {
+      if (contest_start_time && !contest_stop_time && contest_duration) {
         if (current_time >= contest_start_time + contest_duration) {
           /* the contest is over! */
-          info(_("CONTEST OVER"));
+          info("CONTEST OVER");
           run_stop_contest(contest_start_time + contest_duration);
           contest_stop_time = contest_start_time + contest_duration;
         }
       } else if (contest_sched_time && !contest_start_time) {
         if (current_time >= contest_sched_time) {
           /* it's time to start! */
-          info(_("CONTEST STARTED"));
+          info("CONTEST STARTED");
           run_start_contest(current_time);
           contest_start_time = current_time;
         }
