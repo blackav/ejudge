@@ -256,7 +256,6 @@ userlist.h 1 2 271983
 userlist_clnt.h 1 1 94185
 userlist.c 1 2 345030
 userlist-server.c 1 2 802887
-userlist_clnt.c 1 1 287514
 userlist_xml.c 1 3 1134990
 base64.c 1 6 544063
 cgi.c 1 10 927832
@@ -332,10 +331,8 @@ register.c 1 7 1553069
 contests.h 1 3 157640
 contests.c 1 3 839493
 register.c 1 8 2148457
-userlist_clnt.c 1 2 354537
 userlist_clnt.h 1 2 174935
 register.c 1 9 2625943
-userlist_clnt.c 1 3 492898
 contests.h 1 4 163771
 contests.c 1 4 871952
 register.c 1 10 2901788
@@ -343,14 +340,12 @@ contests.h 1 5 168273
 cgi.c 1 13 937177
 contests.c 1 5 893029
 register.c 1 11 3268464
-userlist_clnt.c 1 4 541034
 userlist.h 1 3 348530
 userlist_clnt.h 1 3 186747
 register.c 1 12 3329551
 userlist.c 1 3 91169
 userlist-server.c 1 4 1326832
 userlist_cfg.c 1 4 300616
-userlist_clnt.c 1 5 543544
 userlist_xml.c 1 4 2418365
 contests.h 1 6 233922
 expat_iface.h 1 4 216429
@@ -363,14 +358,12 @@ register.c 1 13 5577177
 userlist.c 1 4 169926
 userlist-server.c 1 5 4486997
 userlist_cfg.c 1 5 553713
-userlist_clnt.c 1 6 1301225
 userlist_proto.c 1 1 159689
 userlist_xml.c 1 5 2897340
 contests.h 1 7 242559
 userlist_clnt.h 1 5 257631
 contests.c 1 7 1220078
 userlist-server.c 1 6 4757661
-userlist_clnt.c 1 7 1395032
 users.c 1 1 1118697
 userlist.h 1 5 461086
 register.c 1 14 5577301
@@ -391,7 +384,6 @@ team.c 1 17 2576474
 teamdb.c 1 13 1944169
 userlist-server.c 1 8 7068755
 userlist_cfg.c 1 7 770518
-userlist_clnt.c 1 8 2030608
 userlist_proto.c 1 2 171648
 userlist_xml.c 1 7 2958419
 users.c 1 3 1208315
@@ -401,7 +393,6 @@ contests.c 1 8 1260604
 register.c 1 16 5733290
 team.c 1 18 2584229
 userlist-server.c 1 9 7195275
-userlist_clnt.c 1 9 2039601
 edit-userlist.c 1 1 2325520
 edit-userlist.c 1 2 4497638
 contests.h 1 9 264095
@@ -423,7 +414,6 @@ serve.c 1 27 4044357
 teamdb.c 1 14 1972317
 userlist.c 1 5 1294686
 userlist-server.c 1 10 9074662
-userlist_clnt.c 1 10 2360153
 userlist_proto.c 1 3 185136
 userlist_xml.c 1 8 3210646
 users.c 1 4 1352348
@@ -527,3 +517,4 @@ userlist_proto.c 1 4 187696
 userlist_clnt/do_pass_fd.c 1 2 169169
 userlist_clnt/open.c 1 2 241216
 userlist_clnt/send_packet.c 1 2 120496
+userlist_clnt/get_uid_by_pid.c 1 1 162596
