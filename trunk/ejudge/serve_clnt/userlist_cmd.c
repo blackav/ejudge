@@ -1,7 +1,7 @@
-/* -*- mode: c; coding: koi8-r -*- */
+/* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -95,9 +95,8 @@ serve_clnt_userlist_cmd(int sock_fd, int cmd, int out_fd)
 
 /**
  * Local variables:
- *  compile-command: "make"
+ *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
 
