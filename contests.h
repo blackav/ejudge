@@ -41,8 +41,8 @@ enum
     CONTEST_COACHES,
     CONTEST_ADVISORS,
     CONTEST_GUESTS,
-    CONTEST_HEADER_FILE,
-    CONTEST_FOOTER_FILE,
+    CONTEST_USERS_HEADER_FILE,
+    CONTEST_USERS_FOOTER_FILE,
     CONTEST_REGISTER_EMAIL,
     CONTEST_REGISTER_URL,
     CONTEST_TEAM_URL,
@@ -55,6 +55,10 @@ enum
     CONTEST_CLIENT_FLAGS,
     CONTEST_SERVE_USER,
     CONTEST_SERVE_GROUP,
+    CONTEST_REGISTER_HEADER_FILE,
+    CONTEST_REGISTER_FOOTER_FILE,
+    CONTEST_TEAM_HEADER_FILE,
+    CONTEST_TEAM_FOOTER_FILE,
 
     CONTEST_LAST_TAG
   };
@@ -159,8 +163,12 @@ struct contest_desc
 
   unsigned long  reg_deadline;
   unsigned char *name;
-  unsigned char *header_file;
-  unsigned char *footer_file;
+  unsigned char *users_header_file;
+  unsigned char *users_footer_file;
+  unsigned char *register_header_file;
+  unsigned char *register_footer_file;
+  unsigned char *team_header_file;
+  unsigned char *team_footer_file;
   unsigned char *register_email;
   unsigned char *register_url;
   unsigned char *team_url;
