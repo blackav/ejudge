@@ -3,7 +3,7 @@
 #ifndef __TEAMDB_H__
 #define __TEAMDB_H__
 
-/* Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,10 +15,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include <time.h>
@@ -41,6 +37,7 @@ int   teamdb_get_flags(int);
 int   teamdb_get_total_teams(void);
 
 int teamdb_regenerate_passwords(int fd);
+int teamdb_dump_database(int fd);
 
 int teamdb_toggle_flags(int user_id, int contest_id, unsigned int flags);
 
