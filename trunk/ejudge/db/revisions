@@ -1516,3 +1516,17 @@ runlog_xml.c 1 9 1654754
 team_extra.c 1 2 608800
 team_extra_xml.c 1 3 969211
 filter_scan.lex 1 13 521759
+client_actions.h 1 22 202959
+html.h 1 24 543602
+protocol.h 1 29 745676
+runlog.h 1 26 433731
+serve_clnt.h 1 19 480598
+master.c 1 61 7713087
+serve.c 1 77 11793033
+html.c 1 55 6212938
+master_html.c 1 29 7506958
+protocol.c 1 13 233155
+runlog.c 1 34 4043218
+runlog_xml.c 1 10 1683738
+serve_clnt/edit_run.c 1 11 377130
+serve_clnt/master_page.c 1 9 388771
