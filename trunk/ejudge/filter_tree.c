@@ -613,6 +613,8 @@ filter_tree_result_str(unsigned char *buf, size_t size, int val)
     strcpy(tmp, "AC"); break;
   case RUN_IGNORED:
     strcpy(tmp, "IG"); break;
+  case RUN_DISQUALIFIED:
+    strcpy(tmp, "DQ"); break;
   case RUN_VIRTUAL_START:
     strcpy(tmp, "VS"); break;
   case RUN_VIRTUAL_STOP:
@@ -1518,6 +1520,7 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
       case RUN_PARTIAL:
       case RUN_ACCEPTED:
       case RUN_IGNORED:
+      case RUN_DISQUALIFIED:
       case RUN_RUNNING:
       case RUN_COMPILED:
       case RUN_COMPILING:
@@ -1549,6 +1552,8 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
         res->v.r = RUN_ACCEPTED;
       } else if (!strcasecmp(p1->v.s, "IG")) {
         res->v.r = RUN_IGNORED;
+      } else if (!strcasecmp(p1->v.s, "DQ")) {
+        res->v.r = RUN_DISQUALIFIED;
       } else if (!strcasecmp(p1->v.s, "VS")) {
         res->v.r = RUN_VIRTUAL_START;
       } else if (!strcasecmp(p1->v.s, "VT")) {
