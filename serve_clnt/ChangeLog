@@ -1,3 +1,15 @@
+2003-01-31  Alexander Chernov  <cher@ispras.ru>
+
+	* view.c:
+	(serve_clnt_view) DUMP_RUNS and DUMP_STANDINGS commands are accepted.
+
+	* userlist_cmd.c: this is new name for `gen_passwords.c';
+	copyright notice is updated;
+	(serve_clnt_userlist_cmd) renamed from `serve_clnt_gen_passwords';
+	  now accept parameter `cmd', which may be either GEN_PASSWORDS
+	  or DUMP_USERS;
+	  other minor changes due to renaming.
+
 2003-01-06  Alexander Chernov  <cher@ispras.ru>
 
 	* view.c: copyright notice is updated;

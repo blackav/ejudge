@@ -1,3 +1,124 @@
+2003-01-31  Alexander Chernov  <cher@ispras.ru>
+
+	* userlist_proto.h: copyright notice is updated;
+	DUMP_DATABASE request added;
+	(struct userlist_pk_dump_database) new packet.
+
+	* userlist_clnt.h: copyright notice is updated;
+	(userlist_clnt_dump_database) new function prototype.
+
+	* userlist-server.c: copyright notice is updated;
+	(do_list_users) a code which dumps raw database is moved to
+	  `do_dump_database';
+	(do_dump_database) new function, which dumps raw user database;
+	(action_dump_user_database) new function to handle DUMP_DATABASE
+	  request;
+	(process_packet) DUMP_DATABASE request is handled.
+
+	* teamdb.h: copyright notice is updated;
+	(teamdb_dump_database) new function prototype.
+
+	* teamdb.c: copyright notice is updated;
+	(teamdb_regenerate_passwords) file descriptors are not leaked in case
+	  of temporary server disconnection;
+	(teamdb_dump_database) new function to pass the file descriptor
+	  to the userlist-server to dump the user database.
+
+	* serve_clnt.h: copyright notice is updated;
+	(serve_clnt_userlist_cmd) new name for `serve_clnt_get_passwords'.
+
+	* serve.c:
+	(cmd_view) new commands handled: DUMP_RUNS, DUMP_STANDINGS;
+	(cmd_gen_passwords) renamed to `cmd_userlist_cmd';
+	(cmd_userlist_cmd) handles GEN_PASSWORDS and DUMP_USERS;
+	(packet_handlers) `cmd_userlist_cmd' now handles `GEN_PASSWORDS';
+	  `cmd_view' handles DUMP_RUNS and DUMP_STANDINGS;
+	  `cmd_userlist_cmd' handles `DUMP_USERS'.
+
+	* protocol.h: copyright notice is updated;
+	new server commands: DUMP_RUNS, DUMP_USERS, DUMP_STANDINGS.
+
+	* master_html.c:
+	(write_priv_standings) use of `do_write_kirov_standings' updated;
+	  use of `do_write_standings' updated;
+	(write_runs_dump) new function to write raw run information;
+	(write_raw_standings) new function to write raw standings info.
+
+	* master.c: copyright notice is updated;
+	(print_dump_runs_button) new function to print "Dump runs database"
+	  reference;
+	(print_dump_users_button) new function to print "Dump users database"
+	  reference;
+	(print_dump_standings_button) new function to print
+	  "Dump standings database" reference;
+	(action_dump_runs) new function to perform "Runs dumping";
+	(action_dump_users) new function to perform "Users dumping";
+	(action_dump_standings) new function to perform "Raw standings" dump;
+	(do_generate_passwords_if_asked) `serve_clnt_userlist_cmd' is used
+	  instead of `serve_clnt_gen_passwords';
+	(print_dump_buttons) new function to print all the "dump" references;
+	(main) new actions handled: DUMP_RUNS, DUMP_USERS, DUMP_STANDINGS;
+	  dump reference row is printed.
+
+	* html.h: copyright notice is updated;
+	(do_write_kirov_standings) prototype is updated;
+	(do_write_standings) prototype is updated;
+	(write_runs_dump) new function prototype;
+	(write_raw_standings) new function prototype.
+
+	* html.c:
+	(do_write_kirov_standings) a new parameter `raw_flag' is added,
+	  if this parameter is non-zero, the standings are printed
+	  in semicolon-separated format to process them separately;
+	(do_write_standings) a new parameter `raw_flag' - see above;
+	(write_standings) use of `do_write_kirov_standings',
+	  `do_write_standings' is updated;
+	(write_virtual_standings) `do_write_standings' use is updated.
+
+	* files.make: copyright notice is updated;
+	new file userlist_clnt/dump_database.c;
+	file serve_clnt/gen_passwords.c is renamed to
+	  serve_clnt/userlist_cmd.c.
+
+	* client_actions.h: copyright notice is updated;
+	new client (master) actions: DUMP_USERS, DUMP_RUNS, DUMP_STANDINGS.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2003-01-28  Alexander Chernov  <cher@ispras.ru>
+
+	* serve.c:
+	(cmd_team_submit_run) language is not accepted, if it has `disabled'
+	  flag set.
+
+	* prepare.h, prepare.c:
+	new language parameter `disabled', which is used to disable use
+	  of a language for new submissions.
+
+	* html.c: copyright notice is updated;
+	(write_team_page) a language is not generated to language selection
+	  menu, if `disabled' flag is set.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2003-01-27  Alexander Chernov  <cher@ispras.ru>
+
+	* master_html.c: copyright notice is updated;
+	(write_priv_source) language having invalid language id is printed
+	  as an empty string.
+
+	* filter_eval.c: copyright notice is updated;
+	(do_eval) invalid problem id is converted to empty string;
+	  invalid team id is converted to empty team login string;
+	  invalid language id is converted to empty string.
+
+	* clntutil.c: copyright notice is updated;
+	(client_put_copyright) copyright notice is updated.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* ejudge.ru_RU.KOI8-R.po: Copyright notice is updated.
+
 2003-01-06  Alexander Chernov  <cher@ispras.ru>
 
 	* serve.c: copyright notice is updated;
