@@ -790,3 +790,6 @@ serve.c 1 44 7326015
 team.c 1 30 3920202
 userlist-server.c 1 21 11148511
 html.c 1 34 3779695
+register.c 1 21 6922508
+userlist_cfg.c 1 10 909168
+users.c 1 7 1727422
