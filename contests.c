@@ -425,6 +425,22 @@ parse_contest_xml(char const *path)
   return 0;
 }
 
+int
+contests_check_ip(struct contest_desc *d, unsigned long ip)
+{
+  struct contest_ip *p;
+
+  if (!d->access) return 0;
+  if (!ip && d->access->default_is_allow) return 1;
+  if (!ip) return 0;
+
+  for (p = (struct contest_ip*) d->access->b.first_down;
+       p; p = (struct contest_ip*) p->b.right) {
+    if ((ip & p->mask) == p->addr) return p->allow;
+  }
+  return d->access->default_is_allow;
+}
+
 /**
  * Local variables:
  *  compile-command: "make"

@@ -35,6 +35,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <time.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -675,7 +676,7 @@ verify_form_and_submit(void)
 }
 
 static void
-print_choose_language_button(char const *name, int hr_flag)
+print_choose_language_button(char const *name, int hr_flag, int no_submit_flag)
 {
 #if CONF_HAS_LIBINTL - 0 == 1
   if (!name) name = "refresh";
@@ -687,14 +688,16 @@ print_choose_language_button(char const *name, int hr_flag)
            "<option value=\"-1\">%s</option>"
            "<option value=\"0\"%s>%s</option>"
            "<option value=\"1\"%s>%s</option>"
-           "</select>"
-           "<input type=\"submit\" name=\"%s\" value=\"%s\">\n",
+           "</select>\n",
            _("Change language"), _("Change language"),
            _("Default language"),
            client_locale_id==0?" selected=\"1\"":"", _("English"),
-           client_locale_id==1?" selected=\"1\"":"", _("Russian"),
-           name,
-           _("Change!"));
+           client_locale_id==1?" selected=\"1\"":"", _("Russian"));
+    if (!no_submit_flag) {
+      printf("<input type=\"submit\" name=\"%s\" value=\"%s\">\n",
+             name, _("Change!"));
+
+    }
   }
 #endif /* CONF_HAS_LIBINTL */
 }
@@ -708,6 +711,22 @@ read_contest_id(void)
   if (!(s = cgi_param("contest_id"))) return;
   if (sscanf(s, "%d %n", &x, &n) != 1 || s[n] || x < 0 || x > 1000) return;
   user_contest_id = x;
+}
+
+static int
+check_contest_eligibility(int id)
+{
+  struct contest_desc *d;
+
+  if (id <= 0 || id >= contests->id_map_size) return 0;
+  d = contests->id_map[id];
+  if (!d) return 0;
+  // Check the latest date of registration
+  // Check the IP
+  if (!contests_check_ip(d, user_ip)) return 0;
+
+
+  return 0;
 }
 
 static void
@@ -770,7 +789,7 @@ parse_cookies(unsigned char const *cookie)
     if (sscanf(s, " %[^= ] = %[^; ] %n", c_name, c_value, &n) != 2)
       return 0;
     if (!strcmp(c_name, "ID")) {
-      if (sscanf(c_value, "%llu %n", &val, &n) != 1 || c_value[n])
+      if (sscanf(c_value, "%llx %n", &val, &n) != 1 || c_value[n])
         return 0;
       client_cookie = val;
       return 1;
@@ -778,6 +797,36 @@ parse_cookies(unsigned char const *cookie)
     s += n;
     if (*s == ';') s++;
   }
+}
+
+static void put_cookie_header(int force_put, int clear_cookie)
+{
+  time_t t;
+  struct tm *gt;
+  char buf[128];
+
+  if (clear_cookie || (!user_cookie && client_cookie)) {
+    if (client_cookie == user_cookie) client_cookie = 0;
+    printf("Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
+    /*
+    fprintf(stderr,
+            "Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
+    */
+    client_cookie = user_cookie = 0;
+    return;
+  }
+
+  if (!user_cookie) return;
+  if (!force_put && client_cookie == user_cookie) return;
+  client_cookie = user_cookie;
+  t = time(0);
+  t += 24 * 60 * 60;
+  gt = gmtime(&t);
+  strftime(buf, sizeof(buf), "%A, %d-%b-%g %H:%M:%S GMT", gt);
+  printf("Set-cookie: ID=%llx; expires=%s\n", user_cookie, buf);
+  /*
+  fprintf(stderr, "Set-cookie: ID=%llx; expires=%s\n", user_cookie, buf);
+  */
 }
 
 static int
@@ -799,7 +848,9 @@ check_password(void)
 
   cookie_str = getenv("HTTP_COOKIE");
   if (cookie_str) {
+    /*
     fprintf(stderr, "Got cookie string: <%s>\n", cookie_str);
+    */
     if (parse_cookies(cookie_str)) {
       server_conn = userlist_clnt_open(config->socket_path);
       err = userlist_clnt_lookup_cookie(server_conn, user_ip,
@@ -816,6 +867,7 @@ check_password(void)
         user_contest_id = new_contest_id;
         user_id = new_user_id;
         user_name = new_name;
+        user_cookie = client_cookie;
         if (client_locale_id == -1)
           client_locale_id = new_locale_id;
         if (client_locale_id == -1)
@@ -860,6 +912,76 @@ check_password(void)
 }
 
 static void
+register_for_contest_page(void)
+{
+  struct contest_desc **farr;
+  int fused, i;
+
+  if (!check_password()) {
+    if (client_cookie) {
+      // we probably have to reset the cookie
+      put_cookie_header(0, 1);
+    }
+
+    set_locale_by_id(client_locale_id);
+    client_put_header(config->charset, "%s", _("Login failed"));
+    printf("<p>%s</p>",
+           _("You have provided incorrect login and/or password."));
+    return;
+  }
+
+  put_cookie_header(0, 0);
+
+  if (user_contest_id < 0) user_contest_id = 0;
+  if (user_contest_id >= contests->id_map_size) user_contest_id = 0;
+  if (user_contest_id && !contests->id_map[user_contest_id])
+    user_contest_id = 0;
+
+  farr = (struct contest_desc**) alloca(sizeof(farr[0]) * (contests->id_map_size + 1));
+  memset(farr, 0, sizeof(farr[0]) * (contests->id_map_size + 1));
+  fused = 0;
+
+  if (user_contest_id != 0) {
+    if (check_contest_eligibility(user_contest_id)) {
+      farr[fused++] = contests->id_map[user_contest_id];
+    } else {
+      user_contest_id = 0;
+    }
+  }
+
+  if (user_contest_id == 0) {
+    for (i = 1; i < contests->id_map_size; i++) {
+      if (check_contest_eligibility(i)) {
+        farr[fused++] = contests->id_map[i];
+      }
+    }
+  }
+
+  if (!fused) {
+    set_locale_by_id(client_locale_id);
+    client_put_header(config->charset, "%s",
+                      _("No contests available"));
+    printf("<form method=\"POST\" action=\"%s\" "
+           "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+           program_name);
+    if (!user_cookie) {
+      printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n"
+             "<input type=\"hidden\" name=\"password\" value=\"%s\">\n",
+             user_login, user_password);
+    }
+    printf("<p>%s</p>\n",
+           _("Unfortunately, there are no contests, available for you. "
+             "You may proceed to edit personal information."));
+    printf("<input type=\"submit\" name=\"edit_personal\" value=\"%s\">\n"
+           "<input type=\"submit\" name=\"action_logout\" value=\"%s\">\n",
+           _("Edit personal information"), _("Logout"));
+    print_choose_language_button(0, 0, 1);
+    printf("</form>\n");
+    return;
+  }
+}
+
+static void
 initial_login_page(int login_only)
 {
   if (client_locale_id == -1) client_locale_id = 0;
@@ -891,7 +1013,7 @@ initial_login_page(int login_only)
   }
 
   if (!login_only)
-    print_choose_language_button(0, 0);
+    print_choose_language_button(0, 0, 0);
 
   if (!login_only) {
     printf("<h2>%s</h2><p>%s</p>\n",
@@ -929,7 +1051,7 @@ initial_login_page(int login_only)
   }
 
   if (login_only)
-    print_choose_language_button(0, 0);
+    print_choose_language_button(0, 0, 0);
 
   printf("</form>");
 }
@@ -1034,7 +1156,7 @@ register_new_user(int commit_flag)
            user_contest_id);
   }
 
-  print_choose_language_button("register", 0);
+  print_choose_language_button("register", 0, 0);
 
   printf("<h2>%s</h2><p>%s</p><p>%s</p>\n",
          _("Registration rules"),
@@ -1091,7 +1213,7 @@ main(int argc, char const *argv[])
   if (cgi_param("login_dlg")) {
     initial_login_page(1);
   } else if (cgi_param("do_login")) {
-    //perform_login();
+    register_for_contest_page();
   } else if (cgi_param("register")) {
     register_new_user(0);
   } else if (cgi_param("do_register")) {

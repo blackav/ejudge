@@ -98,5 +98,6 @@ struct contest_list
 };
 
 struct contest_list *parse_contest_xml(char const *path);
+int contests_check_ip(struct contest_desc *d, unsigned long ip);
 
 #endif /* __CONTESTS_H__ */
