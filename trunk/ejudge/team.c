@@ -519,7 +519,7 @@ initialize(int argc, char *argv[])
   if (!check_config_exist(cfgname)) {
     config = param_make_global_section(params);
   } else {
-    config = parse_param(cfgname, 0, params, 1);
+    config = parse_param(cfgname, 0, params, 1, 0, 0);
   }
   if (!config)
     client_not_configured(0, "config file not parsed", 0);
