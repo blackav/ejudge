@@ -52,8 +52,8 @@ static char const * const tag_map[] =
   "coaches",
   "advisors",
   "guests",
-  "header_file",
-  "footer_file",
+  "users_header_file",
+  "users_footer_file",
   "register_email",
   "register_url",
   "team_url",
@@ -66,6 +66,10 @@ static char const * const tag_map[] =
   "client_flags",
   "serve_user",
   "serve_group",
+  "register_header_file",
+  "register_footer_file",
+  "team_header_file",
+  "team_footer_file",
 
   0
 };
@@ -108,8 +112,8 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   sizeof(struct contest_member), /* CONTEST_COACHES */
   sizeof(struct contest_member), /* CONTEST_ADVISORS */
   sizeof(struct contest_member), /* CONTEST_GUESTS */
-  0,                            /* CONTEST_HEADER_FILE */
-  0,                            /* CONTEST_FOOTER_FILE */
+  0,                            /* CONTEST_USERS_HEADER_FILE */
+  0,                            /* CONTEST_USERS_FOOTER_FILE */
   0,                            /* CONTEST_REGISTER_EMAIL */
   0,                            /* CONTEST_REGISTER_URL */
   0,                            /* CONTEST_TEAM_URL */
@@ -122,6 +126,10 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   0,                            /* CONTEST_CLIENT_FLAGS */
   0,                            /* CONTEST_SERVE_USER */
   0,                            /* CONTEST_SERVE_GROUP */
+  0,                            /* REGISTER_HEADER_FILE */
+  0,                            /* REGISTER_FOOTER_FILE */
+  0,                            /* TEAM_HEADER_FILE */
+  0,                            /* TEAM_FOOTER_FILE */
 };
 static size_t const attn_sizes[CONTEST_LAST_ATTN] =
 {
@@ -628,11 +636,23 @@ parse_contest(struct contest_desc *cnts, char const *path)
     case CONTEST_NAME:
       if (handle_final_tag(path, t, &cnts->name) < 0) return -1;
       break;
-    case CONTEST_HEADER_FILE:
-      if (handle_final_tag(path, t, &cnts->header_file) < 0) return -1;
+    case CONTEST_USERS_HEADER_FILE:
+      if (handle_final_tag(path, t, &cnts->users_header_file) < 0) return -1;
       break;
-    case CONTEST_FOOTER_FILE:
-      if (handle_final_tag(path, t, &cnts->footer_file) < 0) return -1;
+    case CONTEST_USERS_FOOTER_FILE:
+      if (handle_final_tag(path, t, &cnts->users_footer_file) < 0) return -1;
+      break;
+    case CONTEST_REGISTER_HEADER_FILE:
+      if (handle_final_tag(path, t, &cnts->register_header_file)<0) return -1;
+      break;
+    case CONTEST_REGISTER_FOOTER_FILE:
+      if (handle_final_tag(path, t, &cnts->register_footer_file)<0) return -1;
+      break;
+    case CONTEST_TEAM_HEADER_FILE:
+      if (handle_final_tag(path, t, &cnts->team_header_file) < 0) return -1;
+      break;
+    case CONTEST_TEAM_FOOTER_FILE:
+      if (handle_final_tag(path, t, &cnts->team_footer_file) < 0) return -1;
       break;
     case CONTEST_REGISTER_EMAIL:
       if (handle_final_tag(path, t, &cnts->register_email) < 0) return -1;
