@@ -1,3 +1,161 @@
+2003-11-21  Alexander Chernov  <cher@ispras.ru>
+
+	* NEWS.RUS, NEWS: Initial revision
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* userlist_xml.c: "misctext.h" is included;
+	(unparse_final_tag) the element value is HTML-armored, if necessary;
+	(unparse_attributed_elem) a new function, which generates XML element
+	  with the given attributes. The element's value is properlt
+	  HTML-armored;
+	(unparse_user_short) `unparse_final_tag' is used;
+	(unparse_user) `unparse_attributed_elem', `unparse_final_tag' are
+	  used.
+
+	* userlist.h:
+	new type `userlist_login_hash_t' is added to hold the user login
+	  hash value;
+	(struct userlist_user) field `login_hash' to store the login hash
+	  value is added;
+	(struct userlist_list) new fields `login_hash_size', `login_hash_step',
+	  `login_thresh', `login_cur_fill', `login_hash_table' to store
+	  the login hash table;
+	  new fields `cookie_hash_size', `cookie_hash_step', `cookie_thresh',
+	  `cookie_cur_fill', `cookie_hash_table' to store the cookie hash
+	  table;
+	(userlist_set_user_field_str) new `lst' parameter added;
+	(userlist_login_hash) new function prototype;
+	(userlist_build_login_hash) new function prototype;
+	(userlist_build_cookie_hash) new functon prototype;
+	(userlist_cookie_hash_add) new functon prototype;
+	(userlist_cookie_hash_del) new functon prototype.
+
+	* userlist.c: "pathutl.h", "tsc.h" are included;
+	(userlist_remove_user) the user hash table is rebuilt after removal;
+	(userlist_set_user_field_str) a new parameter `lst' is added, which
+	  is a pointer to the whole userlist structure. It is used to check
+	  uniqueness of the login, if the latter changes;
+	  user hash table is used to check the uniqueness;
+	(userlist_login_hash) a new function, which calculates hash value
+	  from a string;
+	(userlist_build_login_hash) a new function, which builds the login
+	  hash table;
+	(userlist_build_cookie_hash) a new function, which builds the cookie
+	  hash table;
+	(userlist_cookie_hash_add) a new function, which adds a cookie to
+	  the cookie hash table;
+	(userlist_cookie_hash_del) a new function, which removes a cookie
+	  from the cookie hash table.
+
+	* userlist-server.c: "tsc.h" is included;
+	<string.h> is included;
+	(build_system_uid_map) special mappings for `root' and `guest' users
+	  are removed;
+	  login_hash_table is used to perform user login lookup;
+	(cmd_register_new) `login_hash_table' is used to lookup user login,
+	  if available;
+	  user hash table is updated;
+	(remove_cookie) the cookie is removed from the cookie hash table, if
+	  that is supported;
+	(generate_random_unique_cookie) a new function, which generates a
+	  random unique cookie;
+	(cmd_do_login) the login hash table is used for user login lookup, if
+	  available;
+	  lookup time is counted using the TSC counter;
+	  `generate_random_unique_cookie' is used instead of
+	     `generate_random_cookie';
+	  the newly generated cookie is added to the cookie hash table;
+	(cmd_team_login) the same as above;
+	(cmd_priv_login) the same as above;
+	(cmd_check_cookie) the cookie hash table is used for cookie lookup,
+	  if available;
+	  lookup time is counted using the TSC counter;
+	  only the cookie is used to lookup cookies (as it is unique), but
+	  other fields must match;
+	(cmd_team_check_cookie) the same as above;
+	(cmd_priv_check_cookie) the same as above;
+	(cmd_do_logout) since the cookie is unique, only the cookie is checked,
+	  but other fields must also match;
+	(do_generate_passwd) the cookie hash table is rebuilt because cookies
+	  may be deleted;
+	(do_generate_team_passwd) the same as above;
+	(cmd_delete_field) the same as above;
+	  `userlist_set_user_field_str' usage is updated;
+	(cmd_add_field) new login is checked for uniqueness and a unique
+	  login is generated;
+	  user hash table is updated;
+	(main) TSC routines are initialized with `tsc_init';
+	  the cookie hash table and the login hash table are built.
+
+	* team.c:
+	(permission_denied) error message is changed to be more informative;
+	(error_not_registered) new function to display a message, when a user
+	  is not registered for a particular contest;
+	(error_cannot_participate) new function to display a message, when
+	  a user is banned or his registration is not confirmed;
+	(is_auth_error) function is removed;
+	(authentificate) a proper error messaging function
+	  (`error_cannot_participate', `error_not_registered',
+	  `permission_denied', `fatal_server_error') is called in case
+	  of authentification error.
+
+2003-11-20  Alexander Chernov  <cher@ispras.ru>
+
+	* testinfo.c:
+	(parse_cmdline) comment character ('#') is handled properly, if
+	  appears inside strings of any kinds;
+	(parse_file) support for comment characters ('#') is moved to
+	  `parse_cmdline'.
+
+	* super-serve.c: <string.h> is included.
+
+	* runlog_xml.c: "misctext.h" is included;
+	(unparse_runlog_xml) all the text fields are properly HTML
+	  (and so XML) armored, if necessary.
+
+	* parsecfg.c: copyright notice is slightly changed;
+	(read_variable) parsing of the configuration variable line is redone.
+	  Two kinds of quotes (", ') and escape character (\) are supported,
+	  which allows using arbitrary character in configuration variable
+	  values.
+
+	* misctext.h: copyright notice is updated;
+	(html_armor_needed) a new function prototype is added.
+
+	* misctext.c: copyright notice is updated;
+	(html_armor_needed) new function. This function returns flag whether
+	  html armoring is required for the given string. In the latter
+	  case, the length of armored string is also calculated and stored
+	  via the passed pointer.
+
+	* makefile: rules `extra_progs' and `checker_lib' are added.
+
+	* files.make: tsc.[ch] files added.
+
+	* edit-userlist.c:
+	(display_users) usage of `userlist_set_user_field_str' function
+	  is changed (new first parameter added).
+
+	* cgi.c:
+	(cgi_get_char) plain (unescaped) '&' and '=' characters are immediately
+	  returned to the caller, negated. This is used to distinguish control
+	  characters '&' (separates variables) and '=' (separates variable
+	  name and variable value) from '&' and '=' obtained as the result
+	  of %HH conversion;
+	(do_cgi_read) negated '&' and '=' returned by the cgi_get_char
+	  routine are used as control characters.
+
+	* COPYING.RUS: Initial revision
+
+2003-11-04  Alexander Chernov  <cher@ispras.ru>
+
+	* tsc.h, tsc.c: Initial revision
+
+2003-11-02  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
 2003-11-02  Alexander Chernov  <cher@ispras.ru>
 
 	* filter_expr.y: copyright notice is updated.
