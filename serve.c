@@ -25,6 +25,7 @@
 #include "userlist.h"
 #include "sha.h"
 #include "l10n.h"
+#include "archive_paths.h"
 
 #include "misctext.h"
 #include "base64.h"
@@ -560,7 +561,7 @@ cmd_team_get_archive(struct client_state *p, int len,
 {
   time_t last_time;
   path_t dirname, fullpath, linkpath, origpath;
-  int total_runs, r, token, path_len, out_size;
+  int total_runs, r, token, path_len, out_size, arch_flag;
   struct prot_serve_pkt_archive_path *out;
   struct run_entry re;
 
@@ -612,11 +613,13 @@ cmd_team_get_archive(struct client_state *p, int len,
   for (r = 0; r < total_runs; r++) {
     if (run_get_entry(r, &re) < 0) continue;
     if (re.team != pkt->user_id) continue;
-    snprintf(linkpath, sizeof(linkpath), "%s/%s_%06d%s",
+    arch_flag = archive_make_read_path(origpath, sizeof(origpath),
+                                       global->run_archive_dir, r, 0, 0);
+    if (arch_flag < 0) continue;
+    snprintf(linkpath, sizeof(linkpath), "%s/%s_%06d%s%s",
              fullpath, probs[re.problem]->short_name, r,
-             langs[re.language]->src_sfx);
-    snprintf(origpath, sizeof(origpath), "%s/%06d", global->run_archive_dir,
-             r);
+             langs[re.language]->src_sfx,
+             ((arch_flag & GZIP))?".gz":"");
     if (link(origpath, linkpath) < 0) {
       err("link %s->%s failed: %s", linkpath, origpath, os_ErrorMsg());
     }
@@ -779,7 +782,7 @@ cmd_master_page(struct client_state *p, int len,
     err("%d: pkt->user_id != p->user_id", p->id);
     return;
   }
-  if (p->priv_level < PRIV_LEVEL_OBSERVER) {
+  if (p->priv_level < PRIV_LEVEL_JUDGE) {
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     err("%d: unsifficient privilege level", p->id);
     return;
@@ -887,7 +890,7 @@ cmd_priv_standings(struct client_state *p, int len,
     err("%d: pkt->user_id != p->user_id", p->id);
     return;
   }
-  if (p->priv_level < PRIV_LEVEL_OBSERVER) {
+  if (p->priv_level < PRIV_LEVEL_JUDGE) {
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     err("%d: unsifficient privilege level", p->id);
     return;
@@ -1284,7 +1287,7 @@ cmd_message(struct client_state *p, int len,
        pkt->ref_clar_id, dest_login_ptr);
   switch (pkt->b.id) {
   case SRV_CMD_PRIV_MSG:
-    if (p->priv_level <= PRIV_LEVEL_OBSERVER) {
+    if (p->priv_level < PRIV_LEVEL_JUDGE) {
       err("%d: inappropriate privilege level", p->id);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
       return;
@@ -1344,7 +1347,7 @@ cmd_message(struct client_state *p, int len,
     return;
 
   case SRV_CMD_PRIV_REPLY:
-    if (p->priv_level <= PRIV_LEVEL_OBSERVER) {
+    if (p->priv_level < PRIV_LEVEL_JUDGE) {
       err("%d: inappropriate privilege level", p->id);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
       return;
@@ -1507,8 +1510,8 @@ static void
 cmd_team_submit_run(struct client_state *p, int len, 
                     struct prot_serve_pkt_submit_run *pkt)
 {
-  int run_id, r;
-  path_t run_name, run_full;
+  int run_id, r, arch_flags;
+  path_t run_arch;
   unsigned long shaval[5];
   time_t start_time, stop_time;
 
@@ -1603,10 +1606,19 @@ cmd_team_submit_run(struct client_state *p, int len,
     return;
   }
 
-  sprintf(run_name, "%06d", run_id);
-  sprintf(run_full, "%06d%s", run_id, langs[pkt->lang_id]->src_sfx);
-  if (generic_write_file(pkt->data, pkt->run_len, 0,
-                         global->run_archive_dir, run_name, "") < 0) {
+  arch_flags = archive_make_write_path(run_arch, sizeof(run_arch),
+                                       global->run_archive_dir, run_id,
+                                       pkt->run_len, 0);
+  if (arch_flags < 0) {
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  if (archive_dir_prepare(global->run_archive_dir, run_id) < 0) {
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  if (generic_write_file(pkt->data, pkt->run_len, arch_flags,
+                         0, run_arch, "") < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -1840,7 +1852,7 @@ cmd_judge_command_0(struct client_state *p, int len,
 
   info("%d: judge_command: %d", p->id, pkt->b.id);
 
-  if (p->priv_level < PRIV_LEVEL_OBSERVER) {
+  if (p->priv_level < PRIV_LEVEL_JUDGE) {
     err("%d: not enough privileges", p->id);
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     return;
@@ -1861,37 +1873,6 @@ cmd_judge_command_0(struct client_state *p, int len,
 static void do_rejudge_all(void);
 static void do_rejudge_problem(int);
 
-static int
-do_rename(unsigned char const *base, int from, int to)
-{
-  path_t fromp, top;
-  struct stat s;
-
-  snprintf(fromp, sizeof(fromp), "%s/%06d", base, from);
-  snprintf(top, sizeof(top), "%s/%06d", base, to);
-  if (lstat(top, &s) >= 0) {
-    if (unlink(top) < 0) {
-      err("cannot unlink %s: %s", fromp, os_ErrorMsg());
-      return -1;
-    }
-  }
-  if (rename(fromp, top) < 0) {
-    err("cannot rename %s -> %s: %s", fromp, top, os_ErrorMsg());
-    return -1;
-  }
-  return 0;
-}
-
-static int
-do_remove_archive_entry(unsigned char const *base, int n)
-{
-  path_t s;
-
-  snprintf(s, sizeof(s), "%s/%06d", base, n);
-  unlink(s);
-  return 0;
-}
-
 static void
 do_squeeze_runs(void)
 {
@@ -1901,19 +1882,19 @@ do_squeeze_runs(void)
   for (i = 0, j = 0; i < tot; i++) {
     if (run_get_status(i) == RUN_EMPTY) continue;
     if (i != j) {
-      do_rename(global->run_archive_dir, i, j);
-      do_rename(global->report_archive_dir, i, j);
+      archive_rename(global->run_archive_dir, 0, i, 0, j, 0, 0);
+      archive_rename(global->report_archive_dir, 0, i, 0, j, 0, 1);
       if (global->team_enable_rep_view) {
-        do_rename(global->team_report_archive_dir, i, j);
+        archive_rename(global->team_report_archive_dir, 0, i, 0, j, 0, 0);
       }
     }
     j++;
   }
   for (; j < tot; j++) {
-    do_remove_archive_entry(global->run_archive_dir, j);
-    do_remove_archive_entry(global->report_archive_dir, j);
+    archive_remove(global->run_archive_dir, j, 0, 0);
+    archive_remove(global->report_archive_dir, j, 0, 1);
     if (global->team_enable_rep_view) {
-      do_remove_archive_entry(global->team_report_archive_dir, j);
+      archive_remove(global->team_report_archive_dir, j, 0, 0);
     }
   }
   run_squeeze_log();
@@ -2379,12 +2360,13 @@ read_compile_packet(char *pname)
   unsigned char pkt_base[PACKET_NAME_SIZE];
   unsigned char exe_in_name[128];
   unsigned char exe_out_name[128];
+  unsigned char rep_path[PATH_MAX], team_path[PATH_MAX];
 
   int  r, n;
   int  rsize, wsize;
   int  code;
   int  runid;
-  int  cn;
+  int  cn, rep_flags, team_flags;
 
   int  final_test, variant = 0;
   struct run_entry re;
@@ -2406,10 +2388,22 @@ read_compile_packet(char *pname)
   if (re.status != RUN_COMPILING) goto bad_packet_error;
   if (code != RUN_OK && code != RUN_COMPILE_ERR && code != RUN_CHECK_FAILED)
     goto bad_packet_error;
+  rep_flags = archive_make_write_path(rep_path, sizeof(rep_path),
+                                      global->report_archive_dir, runid,
+                                      rsize, 0);
+  if (global->team_enable_rep_view) {
+    team_flags = archive_make_write_path(team_path, sizeof(team_path),
+                                         global->team_report_archive_dir,
+                                         runid, rsize, 0);
+  }
+
   if (code == RUN_CHECK_FAILED) {
+    if (rep_flags < 0) return -1;
     if (run_change_status(runid, RUN_CHECK_FAILED, 0, -1) < 0) return -1;
+    if (archive_dir_prepare(global->report_archive_dir, runid) < 0)
+      return -1;
     if (generic_copy_file(REMOVE, global->compile_report_dir, pname, "",
-                          0, global->report_archive_dir, pname, "") < 0)
+                          rep_flags, 0, rep_path, "") < 0)
       return -1;
     return 1;
   }
@@ -2418,12 +2412,16 @@ read_compile_packet(char *pname)
     if (run_change_status(runid, RUN_COMPILE_ERR, 0, -1) < 0) return -1;
     /* probably we need a user's copy of compilation log */
     if (global->team_enable_rep_view) {
+      if (archive_dir_prepare(global->team_report_archive_dir, runid) < 0)
+        return -1;
       if (generic_copy_file(0, global->compile_report_dir, pname, "",
-                            0, global->team_report_archive_dir, pname, "") < 0)
+                            team_flags, 0, team_path, "") < 0)
         return -1;
     }
+    if (archive_dir_prepare(global->report_archive_dir, runid) < 0)
+      return -1;
     if (generic_copy_file(REMOVE, global->compile_report_dir, pname, "",
-                          0, global->report_archive_dir, pname, "") < 0)
+                          rep_flags, 0, rep_path, "") < 0)
       return -1;
     update_standings_file(0);
     return 1;
@@ -2483,7 +2481,9 @@ read_run_packet(char *pname)
   char  buf[256];
   char *pbuf = buf;
   int   r, rsize, n;
+  path_t rep_path, team_path;
 
+  int rep_flags, rep_size, team_flags, team_size;
   int   runid;
   int   status;
   int   test;
@@ -2519,12 +2519,25 @@ read_run_packet(char *pname)
   }
   if (run_change_status(runid, status, test, score) < 0) return -1;
   update_standings_file(0);
+  rep_size = generic_file_size(global->run_report_dir, pname, "");
+  if (rep_size < 0) return -1;
+  rep_flags = archive_make_write_path(rep_path, sizeof(rep_path),
+                                      global->report_archive_dir, runid,
+                                      rep_size, 0);
+  if (archive_dir_prepare(global->report_archive_dir, runid) < 0)
+    return -1;
   if (generic_copy_file(REMOVE, global->run_report_dir, pname, "",
-                        0, global->report_archive_dir, pname, "") < 0)
+                        rep_flags, 0, rep_path, "") < 0)
     return -1;
   if (global->team_enable_rep_view) {
+    team_size = generic_file_size(global->run_team_report_dir, pname, "");
+    team_flags = archive_make_write_path(team_path, sizeof(team_path),
+                                         global->team_report_archive_dir,
+                                         runid, team_size, 0);
+    if (archive_dir_prepare(global->team_report_archive_dir, runid) < 0)
+      return -1;
     if (generic_copy_file(REMOVE, global->run_team_report_dir, pname, "",
-                          0, global->team_report_archive_dir, pname, "") < 0)
+                          team_flags, 0, team_path, "") < 0)
       return -1;
   }
   return 1;
@@ -2580,12 +2593,11 @@ queue_compile_request(unsigned char const *str, int len,
 {
   unsigned char pkt_buf[1024];
   unsigned char pkt_name[PACKET_NAME_SIZE];
-  unsigned char run_name[64];
-  int pkt_len;
+  path_t run_arch;
+  int pkt_len, arch_flags;
 
   if (!sfx) sfx = "";
   generate_packet_name(run_id, pkt_name);
-  snprintf(run_name, sizeof(run_name), "%06d", run_id);
   pkt_len = snprintf(pkt_buf, sizeof(pkt_buf),
                      "%d %d %d %d\n",
                      global->contest_id, run_id,
@@ -2593,7 +2605,10 @@ queue_compile_request(unsigned char const *str, int len,
 
   if (len == -1) {
     // copy from archive
-    if (generic_copy_file(0, global->run_archive_dir, run_name, "",
+    arch_flags = archive_make_read_path(run_arch, sizeof(run_arch),
+                                        global->run_archive_dir, run_id, 0,0);
+    if (arch_flags < 0) return -1;
+    if (generic_copy_file(arch_flags, 0, run_arch, "",
                           0, global->compile_src_dir, pkt_name, sfx) < 0)
       return -1;
   } else {
@@ -2613,7 +2628,6 @@ queue_compile_request(unsigned char const *str, int len,
 static void
 rejudge_run(int run_id)
 {
-  path_t src_path;
   struct run_entry re;
 
   if (run_get_entry(run_id, &re) < 0) return;
@@ -2623,9 +2637,7 @@ rejudge_run(int run_id)
     return;
   }
 
-  snprintf(src_path, sizeof(src_path), "%s/%06d",
-           global->run_archive_dir, run_id);
-  queue_compile_request(src_path, -1, run_id,
+  queue_compile_request(0, -1, run_id,
                         langs[re.language]->compile_id, re.locale_id,
                         langs[re.language]->src_sfx);
 
