@@ -420,7 +420,6 @@ users.c 1 4 1352348
 protocol.c 1 1 141451
 serve_clnt/do_pass_fd.c 1 1 200134
 serve_clnt/get_archive.c 1 1 243543
-serve_clnt/list_runs.c 1 1 280390
 serve_clnt/open.c 1 1 290815
 serve_clnt/pass_fd.c 1 1 145912
 serve_clnt/recv_packet.c 1 1 247707
@@ -703,7 +702,6 @@ prepare.h 1 30 1053799
 html.c 1 29 3638286
 prepare.c 1 42 4958276
 serve.c 1 39 6741182
-serve_clnt/userlist_cmd.c 1 1 211411
 userlist_clnt/dump_database.c 1 1 159501
 client_actions.h 1 5 127691
 html.h 1 16 346271
@@ -717,7 +715,6 @@ master_html.c 1 9 4116814
 serve.c 1 40 6820277
 teamdb.c 1 21 1098497
 userlist-server.c 1 19 10523258
-serve_clnt/userlist_cmd.c 1 2 211412
 serve_clnt/view.c 1 4 285917
 client_actions.h 1 6 129662
 clntutil.h 1 14 184886
