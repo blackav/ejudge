@@ -1377,7 +1377,7 @@ remove_directory_recursively(const unsigned char *path)
   return 0;
 }
 
-int
+ssize_t
 generic_file_size(const unsigned char *dir,
                   const unsigned char *name,
                   const unsigned char *sfx)
@@ -1386,9 +1386,11 @@ generic_file_size(const unsigned char *dir,
   struct stat sb;
 
   ASSERT(name);
+  if (!dir) dir = "";
   if (!sfx) sfx = "";
-  if (!dir || !*dir) {
-    snprintf(path, sizeof(path), "%s%s", name, sfx);
+
+  if (!strcmp(dir, "") || !strcmp(dir, "/")) {
+    snprintf(path, sizeof(path), "%s%s%s", name, sfx);
   } else {
     snprintf(path, sizeof(path), "%s/%s%s", dir, name, sfx);
   }
