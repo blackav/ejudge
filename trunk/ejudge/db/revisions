@@ -1253,3 +1253,10 @@ compile.c 1 23 962058
 serve.c 1 68 10060703
 pathutl.c 1 9 341658
 prepare.c 1 72 8285233
+ncurses_utils.h 1 1 176305
+tex_dom.h 1 1 308420
+ncurses_utils.c 1 1 3204483
+tex_dom.c 1 1 226246
+tex_dom_parse.c 1 1 1232825
+tex_dom_doc.c 1 1 458026
+tex_dom_render.c 1 1 885379
