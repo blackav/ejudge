@@ -1,6 +1,20 @@
 /* -*- mode:c; coding: koi8-r -*- */
 /* $Id$ */
 
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+
+/*
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
 #include "contests.h"
@@ -20,6 +34,8 @@
 #include <ncurses/menu.h>
 #include <ncurses/panel.h>
 #include <locale.h>
+#include <errno.h>
+#include <regex.h>
 
 #define _(x) x
 static char const * const member_string[] =
@@ -52,10 +68,35 @@ static char const * const member_status_string[] =
 };
 #undef _
 
+/* various sort criteria for participants */
+enum
+  {
+    PART_SORT_NONE,                  /* no sort */
+    PART_SORT_ID,
+    PART_SORT_ID_REV,
+    PART_SORT_LOGIN,
+    PART_SORT_LOGIN_REV,
+    PART_SORT_NAME,
+    PART_SORT_NAME_REV,
+    PART_SORT_LAST
+  };
+
+/* search flags */
+enum
+  {
+    SRCH_REPEAT,
+    SRCH_REGEX_LOGIN_FORWARD,
+    SRCH_REGEX_LOGIN_BACKWARD,
+    SRCH_REGEX_NAME_FORWARD,
+    SRCH_REGEX_NAME_BACKWARD,
+    SRCH_REGEX_TEXT_FORWARD,
+    SRCH_REGEX_TEXT_BACKWARD,
+    SRCH_LAST
+  };
+
 #define XALLOCAZ(p,s) (XALLOCA((p),(s)),XMEMZERO((p),(s)))
 
 static struct userlist_clnt *server_conn;
-static struct contest_list *contests;
 static struct userlist_cfg *config;
 static WINDOW *root_window;
 
@@ -120,6 +161,221 @@ vis_err(unsigned char const *fmt, ...)
   delwin(in_win);
   update_panels();
   doupdate();
+}
+
+static int
+generic_menu(int min_width, int max_width, /* incl. frame */
+             int min_height, int max_height, /* incl. frame */
+             int first_item, int nitems,
+             int rec_line, int rec_col,
+             unsigned char const * const *items,
+             unsigned char const * const *hotkeys,
+             unsigned char const *help_str,
+             unsigned char const *format, ...)
+{
+  unsigned char buf[1024];
+  int buflen, i, itemlen, c, answer, cmd;
+  va_list args;
+  int act_width, item_width, act_height, head_width;
+  unsigned char **item_strs;
+  unsigned char const *pc;
+  ITEM **curs_items;
+  MENU *curs_menu;
+  WINDOW *in_win, *out_win, *txt_win;
+  PANEL *in_pan, *out_pan, *txt_pan;
+
+  ASSERT(items);
+  ASSERT(nitems >= 1);
+  for (i = 0; i < nitems; i++) {
+    ASSERT(items[i]);
+  }
+
+  /* FIXME: we cannot scroll yet */
+  ASSERT(nitems + 3 <= LINES - 2);
+
+  if (max_width > COLS - 2 || max_width < 4) {
+    max_width = COLS - 2;
+  }
+  if (min_width < 4 || min_width > max_width) {
+    min_width = 4;
+  }
+  if (max_height > LINES - 2 || max_height < 4) {
+    max_height = LINES - 2;
+  }
+  if (min_height < 4 || min_height > max_height) {
+    min_height = 4;
+  }
+
+  va_start(args, format);
+  vsnprintf(buf, sizeof(buf), format, args);
+  va_end(args);
+  buflen = strlen(buf);
+  if (buflen > max_width - 2) {
+    buf[max_width - 2] = 0;
+    buflen = max_width - 2;
+    head_width = max_width - 2;
+  } else if (buflen < min_height - 2) {
+    head_width = min_height - 2;
+  } else {
+    head_width = buflen;
+  }
+  act_width = head_width;
+
+  item_width = -1;
+  for (i = 0; i < nitems; i++) {
+    itemlen = strlen(items[i]);
+    if (itemlen > max_width - 3) {
+      itemlen = max_width - 3;
+    }
+    if (itemlen > item_width) {
+      item_width = itemlen;
+    }
+  }
+  ASSERT(item_width > 0);
+
+  XALLOCAZ(item_strs, nitems);
+  for (i = 0; i < nitems; i++) {
+    item_strs[i] = (unsigned char*) alloca(item_width + 1);
+    memset(item_strs[i], ' ', item_width);
+    item_strs[i][item_width] = 0;
+    itemlen = strlen(items[i]);
+    if (itemlen > item_width) {
+      itemlen = item_width;
+    }
+    memcpy(item_strs[i], items[i], itemlen);
+  }
+
+  /* FIXME: too dumb */
+  act_height = nitems + 1;
+
+  if (item_width + 1 > act_width) {
+    act_width = item_width + 1;
+  }
+  if (rec_col < 0 || rec_col >= COLS) {
+    rec_col = (COLS - 2 - act_width) / 2;
+  }
+  if (rec_col + act_width + 2 >= COLS) {
+    rec_col = COLS - 3 - act_width;
+  }
+  if (rec_col < 0) {
+    rec_col = 0;
+  }
+  if (rec_line < 1 || rec_line >= LINES - 1) {
+    rec_line = (LINES - 4 - act_height) / 2 + 1;
+  }
+  if (rec_line + act_height + 2 >= LINES) {
+    rec_line = LINES - 3 - act_height;
+  }
+  if (rec_line < 1) {
+    rec_line = 1;
+  }
+
+  XALLOCAZ(curs_items, nitems + 1);
+  for (i = 0; i < nitems; i++) {
+    curs_items[i] = new_item(item_strs[i], 0);
+  }
+  curs_menu = new_menu(curs_items);
+  set_menu_back(curs_menu, COLOR_PAIR(1));
+  set_menu_fore(curs_menu, COLOR_PAIR(3));
+
+  out_win = newwin(act_height + 2, act_width + 2, rec_line, rec_col);
+  txt_win = newwin(1, act_width, rec_line + 1, rec_col + 1);
+  in_win = newwin(act_height - 1, item_width + 1,
+                  rec_line + 2, rec_col + 1 + (act_width - item_width-1) / 2);
+  wattrset(out_win, COLOR_PAIR(1));
+  wbkgdset(out_win, COLOR_PAIR(1));
+  wattrset(in_win, COLOR_PAIR(1));
+  wbkgdset(in_win, COLOR_PAIR(1));
+  wattrset(txt_win, COLOR_PAIR(1));
+  wbkgdset(txt_win, COLOR_PAIR(1));
+  wclear(in_win);
+  wclear(out_win);
+  wclear(txt_win);
+  box(out_win, 0, 0);
+  out_pan = new_panel(out_win);
+  txt_pan = new_panel(txt_win);
+  in_pan = new_panel(in_win);
+  set_menu_win(curs_menu, in_win);
+  mvwaddstr(txt_win, 0, (act_width - head_width) / 2, buf);
+
+  if (first_item >= nitems) first_item = nitems - 1;
+  if (first_item < 0) first_item = 0;
+  set_current_item(curs_menu, curs_items[first_item]);
+
+  post_menu(curs_menu);
+  if (!help_str) help_str = "Enter-select ^G-cancel";
+  print_help(help_str);
+  update_panels();
+  doupdate();
+
+  while (1) {
+    c = getch();
+    if (c < 0) c &= 255;
+    cmd = -1;
+    switch (c) {
+    case '\r': case '\n': case ' ':
+      /* OK */
+      cmd = -2;
+      break;
+    case 'G' & 31:
+      /* CANCEL */
+      cmd = -3;
+      break;
+    case KEY_UP:
+    case KEY_LEFT:
+      cmd = REQ_UP_ITEM;
+      break;
+    case KEY_DOWN:
+    case KEY_RIGHT:
+      cmd = REQ_DOWN_ITEM;
+      break;
+    default:
+      if (hotkeys && c <= 255) {
+        for (i = 0; i < nitems; i++) {
+          if (!hotkeys[i]) continue;
+          pc = hotkeys[i];
+          while (*pc && *pc != c) pc++;
+          if (*pc == c) {
+            set_current_item(curs_menu, curs_items[i]);
+            cmd = -2;
+            break;
+          }
+        }
+      }
+    }
+
+    if (cmd < -1) break;
+    if (cmd > -1) {
+      menu_driver(curs_menu, cmd);
+      update_panels();
+      doupdate();
+    }
+  }
+
+  unpost_menu(curs_menu);
+  switch (cmd) {
+  case -2:
+    answer = item_index(current_item(curs_menu));
+    if (answer < 0 || answer > nitems) answer = 0;
+    break;
+  case -3:
+    answer = -1;
+    break;
+  }
+
+  del_panel(in_pan);
+  del_panel(out_pan);
+  del_panel(txt_pan);
+  delwin(out_win);
+  delwin(txt_win);
+  delwin(in_win);
+  free_menu(curs_menu);
+  for (i = 0; i < nitems; i++) {
+    free_item(curs_items[i]);
+  }
+  update_panels();
+  doupdate();
+  return answer;
 }
 
 static int
@@ -831,6 +1087,66 @@ edit_string(int line, int scr_wid,
   return retval;
 }
 
+static unsigned char const * const participant_sort_keys[] =
+{
+  "None",
+  "Id",
+  "Rev. Id",
+  "Login",
+  "Rev. Login",
+  "Name",
+  "Rev. Name"
+};
+static unsigned char const * const sort_hotkeys[] =
+{
+  "NnТт",
+  "IiШш",
+  "DdВв",
+  "LlДд",
+  "GgПп",
+  "AaФф",
+  "EeУу",
+};
+static int
+display_participant_sort_menu(int curval)
+{
+  if (curval < 0 || curval >= PART_SORT_LAST) curval = 0;
+  return generic_menu(10, -1, -1, -1, curval, 7, -1, -1,
+                      participant_sort_keys, sort_hotkeys,
+                      "Enter-select ^G-cancel N,I,D,L,G,A,E-select option",
+                      "Sort by?");
+}
+
+static unsigned char const * const search_menu_items[] =
+{
+  "Repeat last",
+  "Forw. regex login",
+  "Back. regex login",
+  "Forw. regex name",
+  "Back. regex name",
+  "Forw. regex text",
+  "Back. regex text",
+};
+static unsigned char const * const search_menu_hotkeys[] =
+{
+  "RrКк",
+  "FfАа",
+  "BbИи",
+  "NnТт",
+  "EeУу",
+  "TtЕе",
+  "XxЧч",
+};
+static int
+display_search_menu(int curval)
+{
+  if (curval < 0 || curval >= SRCH_LAST) curval = 0;
+  return generic_menu(10, -1, -1, -1, curval, 7, -1, -1,
+                      search_menu_items, search_menu_hotkeys,
+                      "Enter-select ^G-cancel R,F,B,N,E,T,X-select option",
+                      "Choose search type");
+}
+
 #define FIRST_COOKIE(u) ((struct userlist_cookie*) (u)->cookies->first_down)
 #define NEXT_COOKIE(c)  ((struct userlist_cookie*) (c)->b.right)
 #define FIRST_CONTEST(u) ((struct userlist_contest*)(u)->contests->first_down)
@@ -939,12 +1255,13 @@ static int
 get_contest_str(unsigned char *buf, size_t len,
                 const struct userlist_contest *reg)
 {
-  const struct contest_desc *d;
+  struct contest_desc *d = 0;
   const unsigned char *s = 0;
-  if (reg->id >= 1 && reg->id < contests->id_map_size
-      && (d = contests->id_map[reg->id])) {
+
+  if (contests_get(reg->id, &d) >= 0 && d) {
     s = d->name;
   }
+
   if (!s) s = "???";
   return snprintf(buf, len,
                   "%6d  %c%c %-10.10s  %s",
@@ -1013,7 +1330,8 @@ display_user(unsigned char const *upper, int user_id, int start_item,
   int new_status;
   char const *help_str = "";
 
-  r = userlist_clnt_get_info(server_conn, user_id, &xml_text);
+  r = userlist_clnt_get_info(server_conn, ULS_PRIV_GET_USER_INFO,
+                             user_id, &xml_text);
   if (r < 0) {
     vis_err("Cannot get user information: %s", userlist_strerror(-r));
     return -1;
@@ -1427,11 +1745,17 @@ display_user(unsigned char const *upper, int user_id, int start_item,
 
     if (c == 'c') {
       i = display_contests_menu(current_level, 1);
+      // oops, we cannot check validity of contest_id
+      if (i <= 0) goto menu_continue;
+      /*
       if (i <= 0 || i >= contests->id_map_size || !contests->id_map[i])
         goto menu_continue;
+      */
       r = okcancel("Register for contest %d?", i);
       if (r != 1) goto menu_continue;
-      r = userlist_clnt_register_contest(server_conn, u->id, i);
+      r = userlist_clnt_register_contest(server_conn,
+                                         ULS_PRIV_REGISTER_CONTEST,
+                                         u->id, i);
       if (r < 0) {
         vis_err("Registration failed: %s", userlist_strerror(-r));
         goto menu_continue;
@@ -1611,9 +1935,176 @@ display_user(unsigned char const *upper, int user_id, int start_item,
   return retcode;
 }
 
+static unsigned char const * search_regex_kind_full[] =
+{
+  [SRCH_REGEX_LOGIN_FORWARD]  "Enter regexp for forward login search",
+  [SRCH_REGEX_LOGIN_BACKWARD] "Enter regexp for backward login search",
+  [SRCH_REGEX_NAME_FORWARD]   "Enter regexp for forward name search",
+  [SRCH_REGEX_NAME_BACKWARD]  "Enter regexp for backward name search",
+  [SRCH_REGEX_TEXT_FORWARD]   "Enter regexp for forward text search",
+  [SRCH_REGEX_TEXT_BACKWARD]  "Enter regexp for backward text search"
+};
+static regex_t search_regex_comp;
+static unsigned char search_regex_buf[1024];
+static int search_regex_ready;
+
+static int
+user_regmatch(char const *str)
+{
+  if (!str) return 0;
+  return !regexec(&search_regex_comp, str, 0, 0, 0);
+}
+
+static int
+user_match(struct userlist_user *u, int kind)
+{
+  if (!u) return 0;
+
+  switch (kind) {
+  case SRCH_REGEX_LOGIN_FORWARD:
+  case SRCH_REGEX_LOGIN_BACKWARD:
+    return user_regmatch(u->login);
+
+  case SRCH_REGEX_NAME_FORWARD:
+  case SRCH_REGEX_NAME_BACKWARD:
+    return user_regmatch(u->name);
+
+  case SRCH_REGEX_TEXT_FORWARD:
+  case SRCH_REGEX_TEXT_BACKWARD:
+    if (user_regmatch(u->login)) return 1;
+    if (user_regmatch(u->name)) return 1;
+    if (user_regmatch(u->email)) return 1;
+    if (user_regmatch(u->inst)) return 1;
+    if (user_regmatch(u->instshort)) return 1;
+    if (user_regmatch(u->fac)) return 1;
+    if (user_regmatch(u->facshort)) return 1;
+    if (user_regmatch(u->homepage)) return 1;
+    if (user_regmatch(u->city)) return 1;
+    if (user_regmatch(u->country)) return 1;
+
+    {
+      int role, memb;
+      struct userlist_member *pm;
+
+      for (role = 0; role < USERLIST_MB_LAST; role++) {
+        if (!u->members[role]) continue;
+        for (memb = 0; memb < u->members[role]->total; memb++) {
+          pm = u->members[role]->members[memb];
+          if (!pm) continue;
+
+          if (user_regmatch(pm->firstname)) return 1;
+          if (user_regmatch(pm->middlename)) return 1;
+          if (user_regmatch(pm->surname)) return 1;
+          if (user_regmatch(pm->group)) return 1;
+          if (user_regmatch(pm->email)) return 1;
+          if (user_regmatch(pm->homepage)) return 1;
+          if (user_regmatch(pm->occupation)) return 1;
+          if (user_regmatch(pm->inst)) return 1;
+          if (user_regmatch(pm->instshort)) return 1;
+          if (user_regmatch(pm->fac)) return 1;
+          if (user_regmatch(pm->facshort)) return 1;
+        }
+      }
+    }
+    return 0;
+  }
+  // default action
+  return 0;
+}
+
+static int
+user_search(struct userlist_user **uu, int total_users, int cur_user)
+{
+  int search_type;
+  int j, i;
+
+  search_type = display_search_menu(0);
+  if (search_type < 0) return -2;
+  if (search_type >= SRCH_REGEX_LOGIN_FORWARD && search_type < SRCH_LAST) {
+    if (search_regex_ready) {
+      regfree(&search_regex_comp);
+      search_regex_ready = 0;
+    }
+    j = edit_string(LINES / 2, COLS, search_regex_kind_full[search_type],
+                    search_regex_buf, sizeof(search_regex_buf) - 16);
+    if (j <= 0) return -2;
+    j = regcomp(&search_regex_comp, search_regex_buf,
+                REG_EXTENDED | REG_NOSUB);
+    if (j != 0) {
+      unsigned char msgbuf[1024];
+
+      regerror(j, &search_regex_comp, msgbuf, sizeof(msgbuf));
+      vis_err("Invalid regexp: %s", msgbuf);
+      regfree(&search_regex_comp);
+      return -2;
+    }
+    search_regex_ready = search_type;
+  } else if (search_type == SRCH_REPEAT) {
+    if (!search_regex_ready) {
+      vis_err("No search to repeat");
+      return -2;
+    }
+  }
+
+  i = cur_user;
+  switch (search_regex_ready) {
+  case SRCH_REGEX_LOGIN_FORWARD:
+  case SRCH_REGEX_NAME_FORWARD:
+  case SRCH_REGEX_TEXT_FORWARD:
+    for (i++; i < total_users; i++) {
+      if (user_match(uu[i], search_regex_ready)) break;
+    }
+    break;
+
+  case SRCH_REGEX_LOGIN_BACKWARD:
+  case SRCH_REGEX_NAME_BACKWARD:
+  case SRCH_REGEX_TEXT_BACKWARD:
+    for (i--; i >= 0; i--) {
+      if (user_match(uu[i], search_regex_ready)) break;
+    }
+    break;
+    
+  default:
+    vis_err("Invalid regexp search");
+    return -2;
+  }
+
+  if (i < 0 || i >= total_users) {
+    vis_err("No match");
+    return -2;
+  }
+  return i;
+}
+
+static int registered_users_sort_flag = 0;
+static int
+registered_users_sort_func(void const *p1, void const *p2)
+{
+  struct userlist_user const **x1 = (struct userlist_user const **) p1;
+  struct userlist_user const **x2 = (struct userlist_user const **) p2;
+
+  switch (registered_users_sort_flag) {
+  case PART_SORT_ID:
+    return x1[0]->id - x2[0]->id;
+  case PART_SORT_ID_REV:
+    return x2[0]->id - x1[0]->id;
+  case PART_SORT_LOGIN:
+    return strcoll(x1[0]->login, x2[0]->login);
+  case PART_SORT_LOGIN_REV:
+    return strcoll(x2[0]->login, x1[0]->login);
+  case PART_SORT_NAME:
+    return strcoll(x1[0]->name, x2[0]->name);
+  case PART_SORT_NAME_REV:
+    return strcoll(x2[0]->name, x1[0]->name);
+  case 0:
+  default:
+    return x1 - x2;
+  }
+}
+
 static int
 display_registered_users(unsigned char const *upper,
-                         const struct contest_desc *cnts,
+                         int contest_id,
                          int init_val)
 {
   unsigned char current_level[512];
@@ -1631,7 +2122,13 @@ display_registered_users(unsigned char const *upper,
   PANEL *in_pan, *out_pan;
   int c, cmd, cur_line, new_status;
   int first_row;
-  int retcode = -1;
+  int retcode = -1, errcode;
+  struct contest_desc *cnts = 0;
+
+  if ((errcode = contests_get(contest_id, &cnts)) < 0) {
+    vis_err("%s", contests_strerror(-errcode));
+    return -1;
+  }
 
   snprintf(current_level, sizeof(current_level),
            "%s->%s %d", upper, "Registered users for",
@@ -1640,26 +2137,49 @@ display_registered_users(unsigned char const *upper,
   r = userlist_clnt_list_all_users(server_conn, cnts->id, &xml_text);
   if (r < 0) {
     vis_err("Cannot get the list of users: %s", userlist_strerror(-r));
-    return 0;
+    return -1;
   }
   users = userlist_parse_str(xml_text);
   xfree(xml_text);
   if (!users) {
     vis_err("XML parse error");
-    return 0;
+    return -1;
   }
 
   for (i = 1, nuser = 0; i < users->user_map_size; i++) {
     if (users->user_map[i]) nuser++;
   }
   if (!nuser) {
-    vis_err("No users registered for this contest");
+    i = okcancel("No users registered for this contest. Add a new user?");
+    if (i != 1) return -1;
+    i = display_user_menu(current_level, 0, 1);
+    if (i > 0) {
+      r = okcancel("Add user %d?", i);
+      if (r == 1) {
+        r = userlist_clnt_register_contest(server_conn,
+                                           ULS_PRIV_REGISTER_CONTEST,
+                                           i, cnts->id);
+        if (r < 0) {
+          vis_err("Registration failed: %s", userlist_strerror(-r));
+          return -1;
+        } else {
+          return 0;
+        }
+      }
+    }
     return -1;
   }
+
+  /* uu - array of user references */
   XALLOCAZ(uu,nuser);
   for (j = 0, i = 1; i < users->user_map_size; i++) {
     if (users->user_map[i]) uu[j++] = users->user_map[i];
   }
+
+  if (registered_users_sort_flag > 0) {
+    qsort(uu, nuser, sizeof(uu[0]), registered_users_sort_func);
+  }
+
   XALLOCAZ(uc, nuser);
   for (i = 0; i < nuser; i++) {
     ASSERT(uu[i]->contests);
@@ -1714,7 +2234,7 @@ display_registered_users(unsigned char const *upper,
   while (1) {
     mvwprintw(stdscr, 0, 0, "%s", current_level);
     wclrtoeol(stdscr);
-    print_help("A-add R-register D-delete B-(un)ban I-(in)visible Enter-edit Q-quit");
+    print_help("A-add R-register D-delete B-(un)ban I-(in)visible S-sort Enter-edit Q-quit");
     show_panel(out_pan);
     show_panel(in_pan);
     post_menu(menu);
@@ -1723,6 +2243,7 @@ display_registered_users(unsigned char const *upper,
 
     while (1) {
       c = getch();
+      if (c < 0) c &= 255;
       // in the following may be duplicates
       if (c == KEY_BACKSPACE || c == KEY_DC || c == 127 || c == 8) {
         c = 'd';
@@ -1748,8 +2269,17 @@ display_registered_users(unsigned char const *upper,
       case '\n': case '\r': case ' ':
         c = '\n';
         goto menu_done;
-      case 'a': case 'A': case 'ф':case 'Ф':
+      case 'a': case 'A': case 'ф' & 255: case 'Ф' & 255:
         c = 'a';
+        goto menu_done;
+      case 's': case 'S': case 'ы' & 255: case 'Ы' & 255:
+        c = 's';
+        goto menu_done;
+      case 'j': case 'J': case 'о' & 255: case 'О' & 255:
+        c = 'j';
+        goto menu_done;
+      case 'e': case 'E': case 'у' & 255: case 'У' & 255:
+        c = 'e';
         goto menu_done;
       }
       cmd = -1;
@@ -1869,7 +2399,9 @@ display_registered_users(unsigned char const *upper,
       if (i > 0) {
         r = okcancel("Register user %d?", i);
         if (r == 1) {
-          r = userlist_clnt_register_contest(server_conn, i, cnts->id);
+          r = userlist_clnt_register_contest(server_conn,
+                                             ULS_PRIV_REGISTER_CONTEST,
+                                             i, cnts->id);
           if (r < 0) {
             vis_err("Registration failed: %s", userlist_strerror(-r));
           } else {
@@ -1877,6 +2409,44 @@ display_registered_users(unsigned char const *upper,
             retcode = 0;
           }
         }
+      }
+    } else if (c == 's') {
+      /* change sort criteria */
+      i = display_participant_sort_menu(registered_users_sort_flag);
+      if (i >= 0 && i != registered_users_sort_flag) {
+        c = 'q';
+        retcode = 0;
+        registered_users_sort_flag = i;
+      }
+    } else if (c == 'j') {
+      /* find a user by number */
+      unsigned char number_buf[256], *endptr;
+
+      memset(number_buf, 0, sizeof(number_buf));
+      i = edit_string(LINES / 2, COLS, "Jump to user id?", number_buf, 200);
+      if (i >= 0) {
+        errno = 0;
+        i = strtol(number_buf, (char **) &endptr, 10);
+        if (!errno && !*endptr) {
+          if (i <= uu[0]->id) {
+            j = 0;
+          } else if (i >= uu[nuser - 1]->id) {
+            j = nuser - 1;
+          } else {
+            for (j = 0; j < nuser - 1; j++) {
+              if (uu[j]->id <= i && uu[j + 1]->id > i)
+                break;
+            }
+          }
+          retcode = j;
+          c = 'q';
+        }
+      }
+    } else if (c == 'e') {
+      i = user_search(uu, nuser, item_index(current_item(menu)));
+      if (i >= 0) {
+        retcode = i;
+        c = 'q';
       }
     }
 
@@ -1911,7 +2481,7 @@ static int
 display_contests_menu(unsigned char *upper, int only_choose)
 {
   int ncnts = 0, i, j;
-  struct contest_desc **cntss, *cc;
+  struct contest_desc *cc;
   unsigned char **descs;
   unsigned char buf[128];
   int len;
@@ -1923,30 +2493,39 @@ display_contests_menu(unsigned char *upper, int only_choose)
   unsigned char current_level[512];
   int sel_num, r;
   int retval = -1;
+  unsigned char *cnts_set = 0;
+  int cnts_set_card;
+  int *cntsi;
 
   snprintf(current_level, sizeof(current_level),
            "%s->%s", upper, "Contest list");
 
+  // request the set of the existing contests
+  cnts_set_card = contests_get_list(&cnts_set);
+
+  //fprintf(stderr, ">>%d\n", cnts_set_card);
+
   // count the total contests
-  for (i = 1; i < contests->id_map_size; i++) {
-    if (!contests->id_map[i]) continue;
-    ncnts++;
+  for (i = 1; i < cnts_set_card; i++) {
+    if (cnts_set[i]) ncnts++;
   }
   if (!ncnts) return -1;
 
-  cntss = alloca(ncnts * sizeof(cntss[0]));
-  memset(cntss, 0, sizeof(cntss[0]) * ncnts);
-  for (i = 1, j = 0; i < contests->id_map_size; i++) {
-    if (!contests->id_map[i]) continue;
-    cntss[j++] = contests->id_map[i];
+  cntsi = alloca(ncnts * sizeof(cntsi[0]));
+  memset(cntsi, 0, sizeof(cntsi[0]) * ncnts);
+  for (i = 1, j = 0; i < cnts_set_card; i++) {
+    if (cnts_set[i]) cntsi[j++] = i;
   }
   ASSERT(j == ncnts);
 
   descs = alloca(ncnts * sizeof(descs[0]));
   memset(descs, 0, sizeof(descs[0]) * ncnts);
   for (i = 0; i < ncnts; i++) {
-    cc = cntss[i];
-    len = snprintf(buf, sizeof(buf), "%-8d  %-67.67s", cc->id, cc->name);
+    if (contests_get(cntsi[i], &cc) >= 0) {
+      len = snprintf(buf, sizeof(buf), "%-8d  %-67.67s", cc->id, cc->name);
+    } else {
+      len = snprintf(buf, sizeof(buf), "%-8d  (removed)", cntsi[i]);
+    }
     descs[i] = alloca(len + 16);
     strcpy(descs[i], buf);
   }
@@ -2037,14 +2616,14 @@ display_contests_menu(unsigned char *upper, int only_choose)
     if (c == 'q') break;
     if (c == '\n' && only_choose) {
       sel_num = item_index(current_item(menu));
-      retval = cntss[sel_num]->id;
+      retval = cntsi[sel_num];
       break;
     }
     if (c == '\n') {
       sel_num = item_index(current_item(menu));
       r = 0;
       while (r >= 0) {
-        r = display_registered_users(current_level, cntss[sel_num], r);
+        r = display_registered_users(current_level, cntsi[sel_num], r);
       }
     }
   }
@@ -2064,7 +2643,7 @@ display_contests_menu(unsigned char *upper, int only_choose)
 }
 
 static int
-display_user_menu(unsigned char *upper, int start_item, int only_choose)
+do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
 {
   int r;
   unsigned char *xml_text = 0;
@@ -2082,6 +2661,7 @@ display_user_menu(unsigned char *upper, int start_item, int only_choose)
   unsigned char current_level[512];
   int retval = -1;
   int needs_reload = 0, first_row;
+  int loc_start_item;
 
   snprintf(current_level, sizeof(current_level),
            "%s->%s", upper, "User list");
@@ -2105,8 +2685,16 @@ display_user_menu(unsigned char *upper, int start_item, int only_choose)
     nusers++;
   }
   if (!nusers) {
-    vis_err("No users in database");
-    return -1;
+    j = okcancel("No users in database. Add new user?");
+    if (j != 1) return -1;
+    j = userlist_clnt_add_field(server_conn, -1, -1, -1, -1);
+    if (j < 0) {
+      vis_err("Add failed: %s", userlist_strerror(-j));
+      return -1;
+    }
+
+    *p_start_item = 0;
+    return -2;
   }
 
   uu = alloca(nusers * sizeof(uu[0]));
@@ -2116,6 +2704,10 @@ display_user_menu(unsigned char *upper, int start_item, int only_choose)
     uu[j++] = users->user_map[i];
   }
   ASSERT(j == nusers);
+
+  if (registered_users_sort_flag > 0) {
+    qsort(uu, nusers, sizeof(uu[0]), registered_users_sort_func);
+  }
 
   descs = alloca(nusers * sizeof(descs[0]));
   memset(descs, 0, nusers * sizeof(descs[0]));
@@ -2149,17 +2741,17 @@ display_user_menu(unsigned char *upper, int start_item, int only_choose)
   set_menu_format(menu, LINES - 4, 0);
 
   for (i = 0; i < nusers; i++)
-    if (uu[i]->id == start_item) break;
-  if (i < nusers) start_item = i;
-  else start_item = 0;
+    if (uu[i]->id == *p_start_item) break;
+  if (i < nusers) loc_start_item = i;
+  else loc_start_item = 0;
 
-  if (start_item < 0) start_item = 0;
-  if (start_item >= nusers) start_item = nusers - 1;
-  first_row = start_item - (LINES - 4)/2;
+  if (loc_start_item < 0) loc_start_item = 0;
+  if (loc_start_item >= nusers) loc_start_item = nusers - 1;
+  first_row = loc_start_item - (LINES - 4)/2;
   if (first_row + LINES - 4 > nusers) first_row = nusers - (LINES - 4);
   if (first_row < 0) first_row = 0;
   set_top_row(menu, first_row);
-  set_current_item(menu, items[start_item]);
+  set_current_item(menu, items[loc_start_item]);
 
   while (1) {
     mvwprintw(stdscr, 0, 0, "%s", current_level);
@@ -2188,6 +2780,15 @@ display_user_menu(unsigned char *upper, int start_item, int only_choose)
         goto menu_done;
       case 'a': case 'A': case 'ф' & 255: case 'Ф' & 255:
         c = 'a';
+        goto menu_done;
+      case 's': case 'S': case 'ы' & 255: case 'Ы' & 255:
+        c = 's';
+        goto menu_done;
+      case 'j': case 'J': case 'о' & 255: case 'О' & 255:
+        c = 'j';
+        goto menu_done;
+      case 'e': case 'E': case 'у' & 255: case 'У' & 255:
+        c = 'e';
         goto menu_done;
       }
       cmd = -1;
@@ -2228,14 +2829,16 @@ display_user_menu(unsigned char *upper, int start_item, int only_choose)
       i = item_index(current_item(menu));
       j = okcancel("REMOVE USER %d (%s)?", uu[i]->id, uu[i]->login);
       if (j != 1) goto menu_continue;
-      j = userlist_clnt_delete_field(server_conn, uu[i]->id, -1, -1, 0);
+      j = userlist_clnt_delete_field(server_conn, uu[i]->id, -2, 0, 0);
       if (j < 0) {
         vis_err("Remove failed: %s", userlist_strerror(-j));
         goto menu_continue;
       }
 
+      // set to the first position and redraw the screen
+      *p_start_item = 0;
+      retval = -2;
       c = 'q';
-      retval = 0;
     }
     if (c == 'a' && !only_choose) {
       j = okcancel("Add new user?");
@@ -2246,8 +2849,55 @@ display_user_menu(unsigned char *upper, int start_item, int only_choose)
         goto menu_continue;
       }
 
+      // FIXME: the id of new user is not known :-(
+      // set to the first position and redraw the screen
+      *p_start_item = 0;
+      retval = -2;
       c = 'q';
-      retval = 0;
+    }
+    if (c == 's') {
+      /* change sort criteria */
+      i = display_participant_sort_menu(registered_users_sort_flag);
+      if (i >= 0 && i != registered_users_sort_flag) {
+        registered_users_sort_flag = i;
+        *p_start_item = 0;
+        retval = -2;
+        c = 'q';
+      }
+    }
+    if (c == 'j') {
+      /* find a user by number */
+      unsigned char number_buf[256], *endptr;
+
+      memset(number_buf, 0, sizeof(number_buf));
+      i = edit_string(LINES / 2, COLS, "Jump to user id?", number_buf, 200);
+      if (i >= 0) {
+        errno = 0;
+        i = strtol(number_buf, (char **) &endptr, 10);
+        if (!errno && !*endptr) {
+          if (i <= uu[0]->id) {
+            j = 0;
+          } else if (i >= uu[nusers - 1]->id) {
+            j = nusers - 1;
+          } else {
+            for (j = 0; j < nusers - 1; j++) {
+              if (uu[j]->id <= i && uu[j + 1]->id > i)
+                break;
+            }
+          }
+          *p_start_item = uu[j]->id;
+          retval = -2;
+          c = 'q';
+        }
+      }
+    }
+    if (c == 'e') {
+      i = user_search(uu, nusers, item_index(current_item(menu)));
+      if (i >= 0) {
+        *p_start_item = uu[i]->id;
+        retval = -2;
+        c = 'q';
+      }
     }
 
   menu_continue:
@@ -2261,6 +2911,7 @@ display_user_menu(unsigned char *upper, int start_item, int only_choose)
     if (c == '\n' && only_choose) {
       i = item_index(current_item(menu));
       retval = uu[i]->id;
+      *p_start_item = retval;
       break;
     }
     if (c == '\n' && !only_choose) {
@@ -2271,7 +2922,9 @@ display_user_menu(unsigned char *upper, int start_item, int only_choose)
         j = display_user(current_level, uu[i]->id, j, &needs_reload);
       }
       if (needs_reload) {
-        retval = uu[i]->id;
+        // save the current user and redraw the screen
+        *p_start_item = uu[i]->id;
+        retval = -2;
         break;
       }
     }
@@ -2290,6 +2943,17 @@ display_user_menu(unsigned char *upper, int start_item, int only_choose)
   }
   userlist_free(&users->b);
   return retval;
+}
+
+static int
+display_user_menu(unsigned char *upper, int start_item, int only_choose)
+{
+  int val = -2;
+
+  while (val == -2) {
+    val = do_display_user_menu(upper, &start_item, only_choose);
+  }
+  return val;
 }
 
 static void
@@ -2402,10 +3066,7 @@ display_main_menu(void)
     if (c == 'c') {
       display_contests_menu(current_level, 0);
     } else if (c == 'u') {
-      r = 0;
-      while (r >= 0) {
-        r = display_user_menu(current_level, r, 0);
-      }
+      r = display_user_menu(current_level, r, 0);
     }
 
     // perform other actions
@@ -2435,9 +3096,9 @@ main(int argc, char **argv)
     fprintf(stderr, "%s: cannot parse configuration file\n", argv[0]);
     return 1;
   }
-  if (!(contests = parse_contest_xml(config->contests_path))) {
-    fprintf(stderr, "%s: cannot parse contests database",
-            argv[0]);
+  if ((r = contests_set_directory(config->contests_dir)) < 0) {
+    fprintf(stderr, "%s: %s\n",
+            argv[0], contests_strerror(-r));
     return 1;
   }
   if (!(server_conn = userlist_clnt_open(config->socket_path))) {
