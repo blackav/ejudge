@@ -1540,7 +1540,7 @@ view_source_if_asked()
                     "Source for run %d", runid);
   fflush(stdout);
   open_serve();
-  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_SOURCE, runid, 0,
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_SOURCE, runid, 0, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
@@ -1554,18 +1554,20 @@ view_report_if_asked()
 {
   char *s = cgi_nname("report_", 7);
   int   runid, n, r;
+  unsigned int flags = 0;
 
   if (!s) return;
   if (sscanf(s, "report_%d%n", &runid, &n) != 1
       || (s[n] && s[n] != '.')) return;
   if (runid < 0 || runid >= server_total_runs) return;
+  if (cgi_param("t")) flags = 1;
 
   set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Report for run %d", runid);
   fflush(stdout);
   open_serve();
-  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_REPORT, runid, 0,
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_REPORT, runid, 0, flags,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
@@ -1585,7 +1587,7 @@ view_teams_if_asked(int forced_flag)
   client_put_header(stdout, 0, 0, global->charset, 1, 0, "Users list");
   fflush(stdout);
   open_serve();
-  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_USERS, 0, 0,
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_USERS, 0, 0, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
@@ -1600,7 +1602,7 @@ action_dump_runs(void)
   int r;
 
   open_serve();
-  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_DUMP_RUNS, 0, 0,
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_DUMP_RUNS, 0, 0, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     set_cookie_if_needed();
@@ -1617,7 +1619,7 @@ action_write_xml_runs(void)
   int r;
 
   open_serve();
-  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_WRITE_XML_RUNS, 0, 0,
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_WRITE_XML_RUNS, 0, 0, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     set_cookie_if_needed();
@@ -1634,7 +1636,7 @@ action_export_xml_runs(void)
   int r;
 
   open_serve();
-  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_EXPORT_XML_RUNS, 0, 0,
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_EXPORT_XML_RUNS, 0, 0, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     set_cookie_if_needed();
@@ -1669,7 +1671,7 @@ action_dump_standings(void)
   int r;
 
   open_serve();
-  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_DUMP_STANDINGS, 0, 0,
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_DUMP_STANDINGS, 0, 0, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     set_cookie_if_needed();
@@ -1712,6 +1714,33 @@ action_submit_run(void)
                             prog_size, prog_data);
   operation_status_page(n, 0, -1);
   force_recheck_status = 1;
+}
+
+static void
+action_upload_report(void)
+{
+  int run_id, n = 0;
+  const unsigned char *s, *report_data = 0, *jr, *ur;
+  size_t report_size = 0;
+  unsigned int flags = 0;
+
+  if (!(s = cgi_param("run_id")) || sscanf(s, "%d%n", &run_id, &n) != 1
+      || s[n]) {
+    operation_status_page(-1, _("Invalid run_id"), -1);
+    return;
+  }
+  if (cgi_param_bin("file", &report_size, &report_data) < 0) {
+    operation_status_page(-1, _("Submission data is empty"), -1);
+    return;
+  }
+  if ((jr = cgi_param("judge_report"))) flags |= 1;
+  if ((ur = cgi_param("user_report"))) flags |= 2;
+
+  open_serve();
+  n = serve_clnt_upload_report(serve_socket_fd, SRV_CMD_UPLOAD_REPORT,
+                               client_user_id, global->contest_id,
+                               run_id, flags, report_size, report_data);
+  operation_status_page(n, 0, -1);
 }
 
 static void
@@ -2165,7 +2194,7 @@ action_priv_download_run(void)
   }
 
   open_serve();
-  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_PRIV_DOWNLOAD_RUN, r, 0,
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_PRIV_DOWNLOAD_RUN, r, 0, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     set_cookie_if_needed();
@@ -2200,7 +2229,7 @@ action_compare_runs(void)
   }
 
   open_serve();
-  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_COMPARE_RUNS, r, r2,
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_COMPARE_RUNS, r, r2, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     set_cookie_if_needed();
@@ -2316,7 +2345,7 @@ view_clar_if_asked()
                     "Clarification %d", clarid);
   fflush(stdout);
   open_serve();
-  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_CLAR, clarid, 0,
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_CLAR, clarid, 0, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
@@ -3012,6 +3041,9 @@ main(int argc, char *argv[])
     break;
   case ACTION_COMPARE_RUNS:
     action_compare_runs();
+    break;
+  case ACTION_UPLOAD_REPORT:
+    action_upload_report();
     break;
   }
   log_out_if_asked();
