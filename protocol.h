@@ -313,6 +313,8 @@ enum
     PROT_SERVE_RUN_IMPORTED_SET = 32,
     PROT_SERVE_RUN_VARIANT_SET = 64,
     PROT_SERVE_RUN_HIDDEN_SET = 128,
+    PROT_SERVE_RUN_TESTS_SET = 256,
+    PROT_SERVE_RUN_SCORE_SET = 512,
   };
 
 struct prot_serve_pkt_run_info
@@ -328,6 +330,8 @@ struct prot_serve_pkt_run_info
   int is_imported;
   int variant;
   int is_hidden;
+  int tests;
+  int score;
   int user_login_len;
   unsigned char data[1];
 };
