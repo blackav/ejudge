@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "prepare.h"
 #include "settings.h"
 
@@ -30,13 +32,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <ctype.h>
-
-#if CONF_HAS_LIBINTL - 0 == 1
-#include <libintl.h>
-#define _(x) gettext(x)
-#else
-#define _(x) x
-#endif
 
 struct generic_section_config *config;
 struct section_global_data    *global;
@@ -114,6 +109,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(corr_sfx, "s"),
   GLOBAL_PARAM(info_sfx, "s"),
   GLOBAL_PARAM(tgz_sfx, "s"),
+  GLOBAL_PARAM(ejudge_checkers_dir, "s"),
 
   GLOBAL_PARAM(var_dir, "s"),
 
@@ -277,6 +273,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(variant_num, "d"),
   PROBLEM_PARAM(date_penalty, "x"),
   PROBLEM_PARAM(disable_language, "x"),
+  PROBLEM_PARAM(builtin_checker, "s"),
 
   { 0, 0, 0, 0 }
 };
@@ -447,7 +444,13 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_RUN_TEAM_REPORT_DIR "teamreport"
 #define DFLT_G_RUN_WORK_DIR       "runwork"
 #define DFLT_G_RUN_CHECK_DIR      "runcheck"
-#define DFLT_G_CHARSET            "koi8-r"
+
+#if defined EJUDGE_CHARSET
+#define DFLT_G_CHARSET            EJUDGE_CHARSET
+#else
+#define DFLT_G_CHARSET            "iso8859-1"
+#endif /* EJUDGE_CHARSET */
+
 #define DFLT_G_STANDINGS_FILE_NAME "standings.html"
 #define DFLT_G_MAX_FILE_LENGTH    65535
 #define DFLT_G_MAX_LINE_LENGTH    4096
@@ -493,6 +496,7 @@ global_init_func(struct generic_section_config *gp)
   p->use_dir_hierarchy = -1;
   p->min_gzip_size = -1;
   p->team_page_quota = -1;
+  p->enable_l10n = -1;
 }
 
 static void
@@ -1193,10 +1197,22 @@ set_defaults(int mode)
 
   /* userlist-server interaction */
   if (mode == PREPARE_SERVE) {
+#if defined EJUDGE_SOCKET_PATH
+    if (!global->socket_path[0]) {
+      snprintf(global->socket_path, sizeof(global->socket_path),
+               "%s", EJUDGE_SOCKET_PATH);
+    }
+#endif /* EJUDGE_SOCKET_PATH */
     if (!global->socket_path[0]) {
       err("global.socket_path must be set");
       return -1;
     }
+#if defined EJUDGE_CONTESTS_DIR
+    if (!global->contests_dir[0]) {
+      snprintf(global->contests_dir, sizeof(global->contests_dir),
+               "%s", EJUDGE_CONTESTS_DIR);
+    }
+#endif /* EJUDGE_CONTESTS_DIR */
     if (!global->contests_dir[0]) {
       err("global.contests_dir must be set");
       return -1;
@@ -1310,9 +1326,20 @@ set_defaults(int mode)
   /* CONFIGURATION FILES DEFAULTS */
 #define GLOBAL_INIT_FIELD(f,d,c) do { if (!global->f[0]) { info("global." #f " set to %s", d); snprintf(global->f, sizeof(global->f), "%s", d); } pathmake2(global->f,global->c, "/", global->f, NULL); } while (0)
 
-  if (mode == PREPARE_COMPILE || mode == PREPARE_RUN) {
-    GLOBAL_INIT_FIELD(script_dir, DFLT_G_SCRIPT_DIR, conf_dir);
+#if defined EJUDGE_SCRIPT_DIR
+  if (!global->script_dir[0]) {
+    snprintf(global->script_dir, sizeof(global->script_dir), "%s",
+             EJUDGE_SCRIPT_DIR);
+    info("global.script_dir is set to %s", global->script_dir);
   }
+  if (!global->ejudge_checkers_dir[0]) {
+    snprintf(global->ejudge_checkers_dir, sizeof(global->ejudge_checkers_dir),
+             "%s", EJUDGE_SCRIPT_DIR);
+    info("global.ejudge_checkers_dir is set to %s",
+         global->ejudge_checkers_dir);
+  }
+#endif /* EJUDGE_SCRIPT_DIR */
+
   if (mode == PREPARE_RUN) {
     GLOBAL_INIT_FIELD(test_dir, DFLT_G_TEST_DIR, conf_dir);
     GLOBAL_INIT_FIELD(corr_dir, DFLT_G_CORR_DIR, conf_dir);
@@ -1537,6 +1564,20 @@ set_defaults(int mode)
       global->min_gzip_size = DFLT_G_MIN_GZIP_SIZE;
     }
   }
+
+#if CONF_HAS_LIBINTL - 0 == 1
+  if (global->enable_l10n < 0) global->enable_l10n = 1;
+#if defined EJUDGE_LOCALE_DIR
+  if (global->enable_l10n && !global->l10n_dir[0]) {
+    strcpy(global->l10n_dir, EJUDGE_LOCALE_DIR);
+  }
+#endif /* EJUDGE_LOCALE_DIR */
+  if (global->enable_l10n && !global->l10n_dir[0]) {
+    global->enable_l10n = 0;
+  }
+#else
+  global->enable_l10n = 0;
+#endif /* CONF_HAS_LIBINTL */
 
 #if CONF_HAS_LIBINTL - 0 == 1
   if (mode == PREPARE_SERVE && global->enable_l10n) {
@@ -2963,17 +3004,23 @@ prepare_tester_refinement(struct section_tester_data *out,
   }
 
   /* copy check_cmd */
-  strcpy(out->check_cmd, tp->check_cmd);
-  if (!out->check_cmd[0] && atp && atp->check_cmd[0]) {
-    sformat_message(out->check_cmd, sizeof(out->check_cmd),
-                    atp->check_cmd, global, prb, NULL, out, NULL);
+  if (prb->builtin_checker[0]) {
+    strcpy(out->check_cmd, prb->builtin_checker);
+    pathmake4(out->check_cmd,global->ejudge_checkers_dir,"/",out->check_cmd,0);
+    out->builtin_checker_used = 1;
+  } else {
+    strcpy(out->check_cmd, tp->check_cmd);
+    if (!out->check_cmd[0] && atp && atp->check_cmd[0]) {
+      sformat_message(out->check_cmd, sizeof(out->check_cmd),
+                      atp->check_cmd, global, prb, NULL, out, NULL);
+    }
+    if (!out->check_cmd[0]) {
+      err("default tester for architecture '%s': check_cmd must be set",
+          out->arch);
+      return -1;
+    }
+    pathmake4(out->check_cmd, global->checker_dir, "/", out->check_cmd, 0);
   }
-  if (!out->check_cmd[0]) {
-    err("default tester for architecture '%s': check_cmd must be set",
-        out->arch);
-    return -1;
-  }
-  pathmake4(out->check_cmd, global->checker_dir, "/", out->check_cmd, 0);
 
   /* copy start_cmd */
   strcpy(out->start_cmd, tp->start_cmd);
