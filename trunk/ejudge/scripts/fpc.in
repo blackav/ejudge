@@ -1,0 +1,9 @@
+#!/bin/sh
+
+PATH=/usr/local/pkg/fpc-1.0.6/bin:${PATH}
+fpc -Ci -Co -Cr -Ct -So -XS $1 -o${2}
+
+#if the output file is not created - compile error
+[ -f ${2} ] || exit 1
+exit 0
+
