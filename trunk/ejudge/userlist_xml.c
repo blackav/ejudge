@@ -89,6 +89,7 @@ static char const * const tag_map[] =
   "location",
   "spelling",
   "printer_name",
+  "languages",
 
   0
 };
@@ -173,6 +174,7 @@ static size_t const tag_sizes[USERLIST_LAST_TAG] =
   sizeof(struct xml_tree),      /* LOCATION */
   sizeof(struct xml_tree),      /* SPELLING */
   sizeof(struct xml_tree),      /* PRINTER_NAME */
+  sizeof(struct xml_tree),      /* LANGUAGES */
 };
 /*
 static size_t const attn_sizes[USERLIST_LAST_ATTN] =
@@ -241,6 +243,7 @@ node_free(struct xml_tree *t)
       xfree(p->location);
       xfree(p->spelling);
       xfree(p->printer_name);
+      xfree(p->languages);
     }
     break;
   case USERLIST_T_MEMBER:
@@ -319,6 +322,7 @@ parse_date(char const *path, int l, int c, char const *s, unsigned long *pd)
   time_t t;
   struct tm tt;
 
+  memset(&tt, 0, sizeof(tt));
   if (!s) goto failed;
   if (sscanf(s, "%d/%d/%d %d:%d:%d %n", &year, &month, &day, &hour,
              &min, &sec, &n) != 6) goto failed;
@@ -736,7 +740,7 @@ parse_members(char const *path, struct xml_tree *q,
             mb->status = USERLIST_ST_PROF;
             break;
           } else if (!strcasecmp(p->text, "scientist")) {
-            mb->status = USERLIST_ST_SCHOOL;
+            mb->status = USERLIST_ST_SCIENTIST;
             break;
           } else if (!strcasecmp(p->text, "other")) {
             mb->status = USERLIST_ST_OTHER;
@@ -1006,6 +1010,9 @@ do_parse_user(char const *path, struct userlist_user *usr)
       break;
     case USERLIST_T_PRINTER_NAME:
       if (handle_final_tag(path, t, &usr->printer_name) < 0) return -1;
+      break;
+    case USERLIST_T_LANGUAGES:
+      if (handle_final_tag(path, t, &usr->languages) < 0) return -1;
       break;
     case USERLIST_T_PHONES:
       if (!(usr->phones = parse_phones(path, t))) return -1;
@@ -1554,6 +1561,7 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   unparse_final_tag(f, USERLIST_T_LOCATION, p->location, "    ");
   unparse_final_tag(f, USERLIST_T_SPELLING, p->spelling, "    ");
   unparse_final_tag(f, USERLIST_T_PRINTER_NAME, p->printer_name, "    ");
+  unparse_final_tag(f, USERLIST_T_LANGUAGES, p->languages, "    ");
 
   if (mode != USERLIST_MODE_STAND) {
     unparse_phones(p->phones, f, "    ");
