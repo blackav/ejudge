@@ -840,6 +840,15 @@ print_judging_mode_button(unsigned char const *str)
 }
 
 static void
+print_reload_server_button(const unsigned char *str)
+{
+  if (!str) str = _("Reload server");
+  puts(form_start_simple);
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+         ACTION_RELOAD_SERVER, str);
+}
+
+static void
 read_view_params(void)
 {
   unsigned char *s;
@@ -928,6 +937,16 @@ stop_if_asked(void)
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_STOP, 0, 0);
   operation_status_page(r, 0);
   force_recheck_status = 1;
+}
+
+static void
+action_reload_server(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_QUIT, 0, 0);
+  operation_status_page(r, 0);
 }
 
 static void
@@ -2432,6 +2451,9 @@ main(int argc, char *argv[])
     case ACTION_MERGE_RUNS:
       action_merge_runs();
       break;
+    case ACTION_RELOAD_SERVER:
+      action_reload_server();
+      break;
     default:
       change_status_if_asked();
       break;
@@ -2501,6 +2523,9 @@ main(int argc, char *argv[])
     print_regenerate_reg_button(0);
     printf("</td><td>");
     print_clear_team_passwords_button(0);
+    printf("</td></tr></table>\n");
+    printf("<table><tr><td>");
+    print_reload_server_button(0);
     printf("</td></tr></table>\n");
   }
 
