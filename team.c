@@ -112,7 +112,7 @@ static struct contest_desc *cur_contest;
 static struct userlist_clnt *server_conn;
 static unsigned long client_ip;
 static unsigned char *self_url;
-static unsigned char *head_style = "<h2>";
+static unsigned char *head_style = "h2";
 static unsigned char *par_style = "";
 
 static int cgi_contest_id;
@@ -563,7 +563,7 @@ initialize(int argc, char *argv[])
   }
 
   if (!(head_style = cur_contest->team_head_style))
-    head_style = "<h2>";
+    head_style = "h2";
   if (!(par_style = cur_contest->team_par_style))
     par_style = "";
 
