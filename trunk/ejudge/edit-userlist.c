@@ -1190,6 +1190,7 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NN_LOGIN]             { "Login", 1, 1 },
   [USERLIST_NN_EMAIL]             { "E-mail", 1, 1 },
   [USERLIST_NN_NAME]              { "Name", 1, 1 },
+  [USERLIST_NN_IS_PRIVILEGED]     { "Privileged?", 1, 1 },
   [USERLIST_NN_IS_INVISIBLE]      { "Invisible?", 1, 1 },
   [USERLIST_NN_IS_BANNED]         { "Banned?", 1, 1 },
   [USERLIST_NN_IS_LOCKED]         { "Locked?", 1, 1 },
@@ -1524,6 +1525,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
         case USERLIST_NN_LANGUAGES:
           help_str = "Enter-edit D-clear C-contest A-new member Q-quit";
           break;
+        case USERLIST_NN_IS_PRIVILEGED:
         case USERLIST_NN_IS_INVISIBLE:
         case USERLIST_NN_IS_BANNED:
         case USERLIST_NN_IS_LOCKED:
@@ -1829,6 +1831,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
           goto menu_continue;
 
         switch (info[cur_i].field) {
+        case USERLIST_NN_IS_PRIVILEGED:
         case USERLIST_NN_IS_INVISIBLE:
         case USERLIST_NN_IS_BANNED:
         case USERLIST_NN_IS_LOCKED:
