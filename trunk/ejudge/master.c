@@ -1624,6 +1624,26 @@ action_toggle_ban(void)
 }
 
 static void
+action_toggle_lock(void)
+{
+  unsigned char const *p;
+  int user_id, n, r;
+
+  if (!(p = cgi_param("user_id"))
+      || sscanf(p, "%d%n", &user_id, &n) != 1
+      || p[n]
+      || user_id <= 0) {
+    operation_status_page(-1, "Invalid parameter");
+    return;
+  }
+
+  r = userlist_clnt_change_registration(userlist_conn, user_id,
+                                        global->contest_id,
+                                        -1, 3, USERLIST_UC_LOCKED);
+  operation_status_page(r<0?-1:0, userlist_strerror(-r));
+}
+
+static void
 do_rejudge_problem_if_asked(void)
 {
   unsigned char *p;
@@ -2232,6 +2252,9 @@ main(int argc, char *argv[])
       break;
     case ACTION_USER_TOGGLE_BAN:
       action_toggle_ban();
+      break;
+    case ACTION_USER_TOGGLE_LOCK:
+      action_toggle_lock();
       break;
     case ACTION_USER_TOGGLE_VISIBILITY:
       action_toggle_visibility();
