@@ -101,6 +101,8 @@ struct client_state
 
   int user_id;
   int priv_level;
+  unsigned long long cookie;
+  unsigned long ip;
 
   // passed file descriptors
   int client_fds[2];
@@ -398,38 +400,6 @@ check_clar_qouta(int teamid, unsigned int size)
   return 0;
 }
 
-static int
-report_to_client(char const *pk_name, char const *str)
-{
-  if (str) {
-    generic_write_file(str, strlen(str), PIPE,
-                       global->pipe_dir, pk_name, "");
-  }
-  return 0;
-}
-
-static int
-report_error(char const *pk_name, int rm_mode,
-             char const *header, char const *msg)
-{
-  char buf[1024];
-
-  if (!header) header = _("Server is unable to perform your request");
-  os_snprintf(buf, 1020, "<h2>%s</h2><p>%s</p>\n",
-              header, msg);
-  report_to_client(pk_name, buf);
-  if (rm_mode == 2) relaxed_remove(global->judge_data_dir, pk_name);
-
-  return 0;
-}
-
-static int
-report_bad_packet(char const *pk_name, int rm_mode)
-{
-  err("bad packet");
-  return report_error(pk_name, rm_mode, 0, _("Misformed request"));
-}
-
 /* mode == 1 - from master, mode == 2 - from run */
 static int
 is_valid_status(int status, int mode)
@@ -484,66 +454,6 @@ is_valid_status(int status, int mode)
   }
 }
 
-int
-report_ok(char const *pk_name)
-{
-  char *msg = "OK";
-
-  report_to_client(pk_name, msg);
-  return 0;
-}
-
-static int
-check_period(char const *pk_name, char const *func, char const *extra,
-             int before, int during, int after)
-{
-  char *s = 0;
-  char *t = 0;
-  if (!contest_start_time) {
-    /* before the contest */
-    if (!before) {
-      s = _("contest is not started");
-      t = _("<p>The contest is not started.");
-      goto _failed;
-    }
-  } else if (!contest_stop_time) {
-    /* during the contest */
-    if (!during) {
-      s = _("contest is already started");
-      t = _("<p>The contest is already started.");
-      goto _failed;
-    }
-  } else {
-    /* after the contest */
-    if (!after) {
-      s = _("contest is stopped");
-      t = _("<p>The contest is already over.");
-      goto _failed;
-    }
-  }
-  return 0;
-
- _failed:
-  {
-    int len = 0;
-    char *buf, *p;
-
-    if (func) len += strlen(func) + 2;
-    if (extra) len += strlen(extra) + 2;
-    len += strlen(s);
-
-    buf = p = alloca(len + 4);
-    buf[0] = 0;
-    if (func)  p += sprintf(p, "%s: ", func);
-    if (extra) p += sprintf(p, "%s: ", extra);
-    sprintf(p, "%s", s);
-    err(buf);
-
-    report_to_client(pk_name, t);
-  }
-  return -1;
-}
-
 static void
 new_enqueue_reply(struct client_state *p, int msg_length, void const *msg)
 {
@@ -592,12 +502,13 @@ static int
 get_peer_local_user(struct client_state *p)
 {
   unsigned long long cookie = 0;
+  unsigned long ip = 0;
   int user_id = 0, priv_level = 0;
   int r;
 
   if (p->user_id >= 0) return p->user_id;
   r = teamdb_get_uid_by_pid(p->peer_uid, p->peer_gid, p->peer_pid,
-                            &user_id, &priv_level, &cookie);
+                            &user_id, &priv_level, &cookie, &ip);
   if (r < 0) {
     // FIXME: what else can we do?
     err("%d: cannot get local user_id", p->id);
@@ -611,7 +522,8 @@ get_peer_local_user(struct client_state *p)
   }
   p->user_id = user_id;
   p->priv_level = priv_level;
-  // FIXME: handle cookie
+  p->cookie = cookie;
+  p->ip = ip;
   info("%d: user_id is %d", p->id, user_id);
   return user_id;
 }
@@ -683,7 +595,7 @@ cmd_team_get_archive(struct client_state *p, int len,
 
   snprintf(dirname, sizeof(dirname), "runs_%d_%d",
            global->contest_id, pkt->user_id);
-  snprintf(fullpath, sizeof(fullpath), "%s/%s", global->pipe_dir, dirname);
+  snprintf(fullpath, sizeof(fullpath), "%s/%s", global->var_dir, dirname);
   if (mkdir(fullpath, 0755) < 0) {
     new_send_reply(p, -SRV_ERR_TRY_AGAIN);
     err("%d: cannot create new directory %s", p->id, fullpath);
@@ -779,10 +691,10 @@ cmd_team_list_runs(struct client_state *p, int len,
   setup_locale(pkt->locale_id);
   switch (pkt->b.id) {
   case SRV_CMD_LIST_RUNS:
-    new_write_user_runs(f, pkt->user_id, pkt->flags, pkt->data);
+    //new_write_user_runs(f, pkt->user_id, pkt->flags, pkt->data);
     break;
   case SRV_CMD_LIST_CLARS:
-    new_write_user_clars(f, pkt->user_id, pkt->flags, pkt->data);
+    //new_write_user_clars(f, pkt->user_id, pkt->flags, pkt->data);
     break;
   }
   setup_locale(0);
@@ -805,7 +717,7 @@ static void
 cmd_team_page(struct client_state *p, int len,
               struct prot_serve_pkt_team_page *pkt)
 {
-  unsigned char *simple_form_ptr, *multi_form_ptr;
+  unsigned char *self_url_ptr, *hidden_vars_ptr;
   FILE *f = 0;
   struct client_state *q = 0;
   unsigned char *html_ptr = 0;
@@ -817,42 +729,26 @@ cmd_team_page(struct client_state *p, int len,
     new_bad_packet(p, "cmd_team_page: packet is too small: %d", len);
     return;
   }
-  simple_form_ptr = pkt->data;
-  if (strlen(simple_form_ptr) != pkt->simple_form_len) {
-    new_bad_packet(p, "cmd_team_page: simple_form_len mismatch");
+  self_url_ptr = pkt->data;
+  if (strlen(self_url_ptr) != pkt->self_url_len) {
+    new_bad_packet(p, "cmd_team_page: self_url_len mismatch");
     return;
   }
-  multi_form_ptr = simple_form_ptr + pkt->simple_form_len + 1;
-  if (strlen(multi_form_ptr) != pkt->multi_form_len) {
-    new_bad_packet(p, "cmd_team_page: multi_form_len mismatch");
+  hidden_vars_ptr = self_url_ptr + pkt->self_url_len + 1;
+  if (strlen(hidden_vars_ptr) != pkt->hidden_vars_len) {
+    new_bad_packet(p, "cmd_team_page: hidden_vars_len mismatch");
     return;
   }
-  if (len != sizeof(*pkt) + pkt->simple_form_len + pkt->multi_form_len) {
+  if (len != sizeof(*pkt) + pkt->self_url_len + pkt->hidden_vars_len) {
     new_bad_packet(p, "cmd_team_page: packet length mismatch");
     return;
   }
 
-  info("%d: cmd_team_page: %d, %d, %d",
-       p->id, pkt->user_id, pkt->contest_id, pkt->locale_id);
+  info("%d: cmd_team_page: %d, %d", p->id, pkt->sid_mode, pkt->locale_id);
 
   if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
     err("%d: two client file descriptors required", p->id);
     new_send_reply(p, -SRV_ERR_PROTOCOL);
-    return;
-  }
-  if (!teamdb_lookup(pkt->user_id)) {
-    err("%d: user_id is invalid", p->id);
-    new_send_reply(p, -SRV_ERR_BAD_USER_ID);
-    return;
-  }
-  if (pkt->contest_id != global->contest_id) {
-    err("%d: contest_id does not match", p->id);
-    new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
-    return;
-  }
-  if (p->user_id && pkt->user_id != p->user_id) {
-    new_send_reply(p, -SRV_ERR_NO_PERMS);
-    err("%d: pkt->user_id != p->user_id", p->id);
     return;
   }
 
@@ -862,9 +758,10 @@ cmd_team_page(struct client_state *p, int len,
     return;
   }
   setup_locale(pkt->locale_id);
-  write_team_page(f, pkt->user_id, (pkt->flags & 1),
-                  (pkt->flags & 2) >> 1,
-                  simple_form_ptr, multi_form_ptr,
+  write_team_page(f, p->user_id,
+                  pkt->sid_mode, p->cookie,
+                  (pkt->flags & 1), (pkt->flags & 2) >> 1,
+                  self_url_ptr, hidden_vars_ptr,
                   contest_start_time, contest_stop_time);
   setup_locale(0);
   fclose(f);
@@ -956,6 +853,11 @@ cmd_master_page(struct client_state *p, int len,
     err("%d: priv_level does not match", p->id);
     return;
   }
+  if (pkt->sid_mode < 0 || pkt->sid_mode > 3) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: sid_mode %d is invalid", p->id, pkt->sid_mode);
+    return;
+  }
 
   if (!(f = open_memstream((char**) &html_ptr, &html_len))) {
     err("%d: open_memstream failed", p->id);
@@ -964,6 +866,7 @@ cmd_master_page(struct client_state *p, int len,
   }
   /* setup_locale(pkt->locale_id); */
   write_master_page(f, p->user_id, pkt->priv_level,
+                    pkt->sid_mode, p->cookie,
                     pkt->first_run, pkt->last_run,
                     pkt->first_clar, pkt->last_clar,
                     self_url_ptr, filter_expr_ptr, hidden_vars_ptr);
@@ -985,6 +888,419 @@ cmd_master_page(struct client_state *p, int len,
   q->write_len = html_len;
 
   info("%d: cmd_master_page: ok %d", p->id, html_len);
+  new_send_reply(p, SRV_RPL_OK);
+}
+
+static void
+cmd_priv_standings(struct client_state *p, int len,
+                   struct prot_serve_pkt_standings *pkt)
+{
+  unsigned char *self_url_ptr, *hidden_vars_ptr;
+  FILE *f;
+  unsigned char *html_ptr = 0;
+  size_t html_len = 0;
+  struct client_state *q;
+
+  if (get_peer_local_user(p) < 0) return;
+
+  if (len < sizeof(*pkt)) {
+    new_bad_packet(p, "priv_standings: packet is too small: %d", len);
+    return;
+  }
+  self_url_ptr = pkt->data;
+  if (strlen(self_url_ptr) != pkt->self_url_len) {
+    new_bad_packet(p, "priv_standings: self_url_len mismatch");
+    return;
+  }
+  hidden_vars_ptr = self_url_ptr + pkt->self_url_len + 1;
+  if (strlen(hidden_vars_ptr) != pkt->hidden_vars_len) {
+    new_bad_packet(p, "priv_standings: hidden_vars_len mismatch");
+    return;
+  }
+  if (len != sizeof(*pkt) + pkt->self_url_len + pkt->hidden_vars_len) {
+    new_bad_packet(p, "priv_standings: packet length mismatch");
+    return;
+  }
+
+  info("%d: priv_standings: %d, %d",
+       p->id, pkt->user_id, pkt->sid_mode);
+
+  if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
+    err("%d: two client file descriptors required", p->id);
+    new_send_reply(p, -SRV_ERR_PROTOCOL);
+    return;
+  }
+  if (!teamdb_lookup(pkt->user_id)) {
+    err("%d: user_id is invalid", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+    return;
+  }
+  if (pkt->contest_id != global->contest_id) {
+    err("%d: contest_id does not match", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (pkt->user_id != p->user_id) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: pkt->user_id != p->user_id", p->id);
+    return;
+  }
+  if (p->priv_level < PRIV_LEVEL_OBSERVER) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: unsifficient privilege level", p->id);
+    return;
+  }
+  if (p->priv_level < pkt->priv_level) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: priv_level does not match", p->id);
+    return;
+  }
+  if (pkt->sid_mode < 0 || pkt->sid_mode > 3) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: sid_mode %d is invalid", p->id, pkt->sid_mode);
+    return;
+  }
+
+  if (!(f = open_memstream((char**) &html_ptr, &html_len))) {
+    err("%d: open_memstream failed", p->id);
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  /* setup_locale(pkt->locale_id); */
+  write_priv_standings(f, pkt->sid_mode, p->cookie,
+                       self_url_ptr, hidden_vars_ptr);
+  /* setup_locale(0); */
+  fclose(f);
+
+  if (!html_ptr) {
+    html_ptr = xstrdup("");
+    html_len = 0;
+  }
+
+  q = client_new_state(p->client_fds[0]);
+  q->client_fds[0] = -1;
+  q->client_fds[1] = p->client_fds[1];
+  p->client_fds[0] = -1;
+  p->client_fds[1] = -1;
+  q->state = STATE_AUTOCLOSE;
+  q->write_buf = html_ptr;
+  q->write_len = html_len;
+
+  info("%d: priv_standings: ok %d", p->id, html_len);
+  new_send_reply(p, SRV_RPL_OK);
+}
+
+static void
+cmd_view(struct client_state *p, int len,
+         struct prot_serve_pkt_view *pkt)
+{
+  unsigned char *self_url_ptr, *hidden_vars_ptr;
+  unsigned char *html_ptr = 0;
+  size_t html_len = 0;
+  struct client_state *q;
+  int r = 0;
+  FILE *f;
+
+  if (get_peer_local_user(p) < 0) return;
+
+  if (len < sizeof(*pkt)) {
+    new_bad_packet(p, "view: packet is too small: %d", len);
+    return;
+  }
+  self_url_ptr = pkt->data;
+  if (strlen(self_url_ptr) != pkt->self_url_len) {
+    new_bad_packet(p, "view: self_url_len mismatch");
+    return;
+  }
+  hidden_vars_ptr = self_url_ptr + pkt->self_url_len + 1;
+  if (strlen(hidden_vars_ptr) != pkt->hidden_vars_len) {
+    new_bad_packet(p, "view: hidden_vars_len mismatch");
+    return;
+  }
+  if (len != sizeof(*pkt) + pkt->self_url_len + pkt->hidden_vars_len) {
+    new_bad_packet(p, "view: packet length mismatch");
+    return;
+  }
+
+  info("%d: view %d, %d, %d", p->id, pkt->b.id, pkt->item, pkt->sid_mode);
+  if (pkt->sid_mode < 0 || pkt->sid_mode > 3) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: sid_mode %d is invalid", p->id, pkt->sid_mode);
+    return;
+  }
+
+  if (!(f = open_memstream((char**) &html_ptr, &html_len))) {
+    err("%d: open_memstream failed", p->id);
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  switch (pkt->b.id) {
+  case SRV_CMD_VIEW_SOURCE:
+    if (!p->priv_level) {
+      err("%d: source view for unprivileged users not yet supported", p->id);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+    r = write_priv_source(f, p->user_id, p->priv_level,
+                          pkt->sid_mode, p->cookie,
+                          self_url_ptr, hidden_vars_ptr,
+                          pkt->item);
+    break;
+  case SRV_CMD_VIEW_REPORT:
+    if (!p->priv_level) {
+      err("%d: report view for unprivileged users not yet supported", p->id);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+    r = write_priv_report(f, p->user_id, p->priv_level,
+                          pkt->sid_mode, p->cookie,
+                          self_url_ptr, hidden_vars_ptr,
+                          pkt->item);
+    break;
+  case SRV_CMD_VIEW_CLAR:
+    if (!p->priv_level) {
+      err("%d: clar view for unprivileged users not yet supported", p->id);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+    r = write_priv_clar(f, p->user_id, p->priv_level,
+                        pkt->sid_mode, p->cookie,
+                        self_url_ptr, hidden_vars_ptr,
+                        pkt->item);
+    if (p->priv_level == PRIV_LEVEL_JUDGE) {
+      int flags = 1;
+
+      clar_get_record(pkt->item, 0, 0, 0, 0, 0, &flags, 0);
+      if (!flags) {
+        flags = 1;
+        clar_update_flags(pkt->item, flags);
+      }
+    }
+    break;
+  case SRV_CMD_VIEW_USERS:
+    if (!p->priv_level) {
+      err("%d: unprivileged users cannot view teams", p->id);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+    r = write_priv_users(f, p->user_id, p->priv_level,
+                         pkt->sid_mode, p->cookie,
+                         self_url_ptr, hidden_vars_ptr);
+    break;
+  default:
+    err("%d: operation is not yet supported", p->id);
+    fprintf(f, "<h2>Operation is not yet supported.</h2>\n");
+  }
+  fclose(f);
+  if (r < 0) {
+    xfree(html_ptr); html_len = 0;
+    new_send_reply(p, r);
+    return;
+  }
+
+  if (!html_ptr) {
+    html_ptr = xstrdup("");
+    html_len = 0;
+  }
+
+  q = client_new_state(p->client_fds[0]);
+  q->client_fds[0] = -1;
+  q->client_fds[1] = p->client_fds[1];
+  p->client_fds[0] = -1;
+  p->client_fds[1] = -1;
+  q->state = STATE_AUTOCLOSE;
+  q->write_buf = html_ptr;
+  q->write_len = html_len;
+
+  info("%d: view: ok %d", p->id, html_len);
+  new_send_reply(p, SRV_RPL_OK);
+}
+
+static void
+cmd_message(struct client_state *p, int len,
+            struct prot_serve_pkt_submit_clar *pkt)
+{
+  unsigned char const *dest_login_ptr, *subj_ptr, *text_ptr;
+  int dest_uid;
+  unsigned char txt_subj_short[CLAR_MAX_SUBJ_TXT_LEN + 10];
+  unsigned char b64_subj_short[CLAR_MAX_SUBJ_LEN + 10];
+  unsigned char *msg, *orig_txt, *quoted_ptr, *new_subj;
+  size_t msg_len, orig_txt_len, new_subj_len, quoted_len;
+  int clar_id;
+  unsigned char clar_name[64], orig_clar_name[64];
+
+  if (get_peer_local_user(p) < 0) return;
+
+  if (len < sizeof(*pkt)) {
+    new_bad_packet(p, "cmd_message: packet is too small: %d", len);
+    return;
+  }
+  dest_login_ptr = pkt->data;
+  if (strlen(dest_login_ptr) != pkt->dest_login_len) {
+    new_bad_packet(p, "cmd_message: dest_login_len mismatch");
+    return;
+  }
+  subj_ptr = dest_login_ptr + pkt->dest_login_len + 1;
+  if (strlen(subj_ptr) != pkt->subj_len) {
+    new_bad_packet(p, "cmd_message: subj_len mismatch");
+    return;
+  }
+  text_ptr = subj_ptr + pkt->subj_len + 1;
+  if (strlen(text_ptr) != pkt->text_len) {
+    new_bad_packet(p, "cmd_message: text_len mismatch");
+    return;
+  }
+  if (len != sizeof(*pkt)+pkt->dest_login_len+pkt->subj_len+pkt->text_len) {
+    new_bad_packet(p, "cmd_message: packet length mismatch");
+    return;
+  }
+
+  info("%d: cmd_message: %d %d %d", p->id, pkt->b.id, pkt->dest_user_id,
+       pkt->ref_clar_id);
+  switch (pkt->b.id) {
+  case SRV_CMD_PRIV_MSG:
+    if (p->priv_level <= PRIV_LEVEL_OBSERVER) {
+      err("%d: inappropriate privilege level", p->id);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+    dest_uid = pkt->dest_user_id;
+    if (dest_uid == -1) {
+      if (!strcasecmp(dest_login_ptr, "all")) {
+        dest_uid = 0;
+      } else {
+        dest_uid = teamdb_lookup_login(dest_login_ptr);
+        if (dest_uid <= 0) {
+          err("%d: nonexistant login <%s>", p->id, dest_login_ptr);
+          new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+          return;
+        }
+      }
+    } else if (dest_uid != 0 && !teamdb_lookup(dest_uid)) {
+      err("%d: nonexistant user id %d", p->id, dest_uid);
+      new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+      return;
+    }
+    strncpy(txt_subj_short, subj_ptr, CLAR_MAX_SUBJ_TXT_LEN);
+    if (txt_subj_short[CLAR_MAX_SUBJ_TXT_LEN - 1]) {
+      txt_subj_short[CLAR_MAX_SUBJ_TXT_LEN - 1] = 0;
+      txt_subj_short[CLAR_MAX_SUBJ_TXT_LEN - 2] = '.';
+      txt_subj_short[CLAR_MAX_SUBJ_TXT_LEN - 3] = '.';
+      txt_subj_short[CLAR_MAX_SUBJ_TXT_LEN - 4] = '.';
+    }
+    base64_encode_str(txt_subj_short, b64_subj_short);
+    msg = alloca(pkt->subj_len + pkt->text_len + 32);
+    msg_len = sprintf(msg, "Subject: %s\n\n%s", subj_ptr, text_ptr);
+    clar_id = clar_add_record(current_time, msg_len,
+                              run_unparse_ip(p->ip),
+                              0, dest_uid, 0, b64_subj_short);
+    if (clar_id < 0) {
+      err("%d: cannot add new message", p->id);
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    }
+    snprintf(clar_name, sizeof(clar_name), "%06d", clar_id);
+    if (generic_write_file(msg, msg_len, 0, global->clar_archive_dir,
+                           clar_name, "") < 0) {
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    }
+
+    info("%d: cmd_message: ok %d %d", p->id, clar_id, msg_len);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+
+  case SRV_CMD_PRIV_REPLY:
+    if (p->priv_level <= PRIV_LEVEL_OBSERVER) {
+      err("%d: inappropriate privilege level", p->id);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
+    // subj_ptr, dest_login_ptr to be ignored
+    // if dest_user_id == 0, the reply is sent to all
+    // ref_clar_id to be processed
+    if (clar_get_record(pkt->ref_clar_id, 0, 0, 0, &dest_uid, 0, 0, 0) < 0) {
+      err("%d: invalid ref_clar_id %d", p->id, pkt->ref_clar_id);
+      new_send_reply(p, -SRV_ERR_BAD_CLAR_ID);
+      return;
+    }
+    snprintf(orig_clar_name, sizeof(orig_clar_name), "%06d", pkt->ref_clar_id);
+    orig_txt = 0;
+    orig_txt_len = 0;
+    if (generic_read_file((char**) &orig_txt, 0, &orig_txt_len, 0,
+                          global->clar_archive_dir, orig_clar_name, "") < 0) {
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    }
+
+    new_subj = alloca(orig_txt_len + 64);
+    new_subj_len = message_reply_subj(orig_txt, new_subj);
+    message_base64_subj(new_subj, b64_subj_short, CLAR_MAX_SUBJ_TXT_LEN);
+    quoted_len = message_quoted_size(orig_txt);
+    quoted_ptr = alloca(quoted_len + 16);
+    message_quote(orig_txt, quoted_ptr);
+    msg = alloca(pkt->text_len + quoted_len + new_subj_len + 64);
+    msg_len = sprintf(msg, "%s%s\n%s", new_subj, quoted_ptr, text_ptr);
+    if (!pkt->dest_user_id) dest_uid = 0;
+    clar_id = clar_add_record(current_time, msg_len,
+                              run_unparse_ip(p->ip), 0, dest_uid, 0,
+                              b64_subj_short);
+    if (clar_id < 0) {
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    }
+    snprintf(clar_name, sizeof(clar_name), "%06d", clar_id);
+    if (generic_write_file(msg, msg_len, 0, global->clar_archive_dir,
+                           clar_name, "") < 0) {
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    }
+    clar_update_flags(pkt->ref_clar_id, 2);
+    xfree(orig_txt);
+    info("%d: cmd_message: ok %d %d", p->id, clar_id, msg_len);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+
+  default:
+    new_bad_packet(p, "cmd_message: unsupported command %d", pkt->b.id);
+    return;
+  }
+}
+
+static void
+cmd_gen_passwords(struct client_state *p, int len,
+                  struct prot_serve_packet *pkt)
+{
+  if (get_peer_local_user(p) < 0) return;
+
+  if (len != sizeof(*pkt)) {
+    new_bad_packet(p, "gen_passwords: bad packet length: %d", len);
+    return;
+  }
+
+  info("%d: gen_passwords", p->id);
+  if (p->priv_level != PRIV_LEVEL_ADMIN) {
+    err("%d: insufficient privilege level", p->id);
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    return;
+  }
+  if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
+    err("%d: two client file descriptors required", p->id);
+    new_send_reply(p, -SRV_ERR_PROTOCOL);
+    return;
+  }
+
+  /* serve process will block until this operation completes! */
+  if (teamdb_regenerate_passwords(p->client_fds[0]) < 0) {
+    close(p->client_fds[0]); close(p->client_fds[1]);
+    p->client_fds[0] = -1; p->client_fds[1] = -1;
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+
+  close(p->client_fds[0]); close(p->client_fds[1]);
+  p->client_fds[0] = -1; p->client_fds[1] = -1;
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -1308,6 +1624,258 @@ cmd_team_submit_clar(struct client_state *p, int len,
   new_send_reply(p, SRV_RPL_OK);
 }
 
+static void do_rejudge_all(void);
+static void do_rejudge_problem(int);
+
+static void
+cmd_priv_command_0(struct client_state *p, int len,
+                   struct prot_serve_pkt_simple *pkt)
+{
+  if (get_peer_local_user(p) < 0) return;
+
+  if (len != sizeof(*pkt)) {
+    new_bad_packet(p, "priv_command_0: invalid packet length");
+    return;
+  }
+
+  info("%d: priv_command_0: %d", p->id, pkt->b.id);
+
+  if (p->priv_level != PRIV_LEVEL_ADMIN) {
+    err("%d: not enough privileges", p->id);
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    return;
+  }
+  switch (pkt->b.id) {
+  case SRV_CMD_SUSPEND:
+    clients_suspended = 1;
+    update_status_file(1);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  case SRV_CMD_RESUME:
+    clients_suspended = 0;
+    update_status_file(1);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  case SRV_CMD_UPDATE_STAND:
+    update_standings_file(1);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  case SRV_CMD_RESET:
+    /* FIXME: we need to reset all the components (compile, serve) as well */
+    /* reset run log */
+    run_reset();
+    contest_duration = global->contest_time;
+    run_set_duration(contest_duration);
+    clar_reset();
+    /* clear all submissions and clarifications */
+    clear_directory(global->clar_archive_dir);
+    clear_directory(global->report_archive_dir);
+    clear_directory(global->run_archive_dir);
+    clear_directory(global->team_report_archive_dir);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  case SRV_CMD_START:
+    if (contest_stop_time) {
+      err("%d: contest already finished", p->id);
+      new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
+      return;
+    }
+    if (contest_start_time) {
+      err("%d: contest already started", p->id);
+      new_send_reply(p, -SRV_ERR_CONTEST_STARTED);
+      return;
+    }
+    run_start_contest(current_time);
+    contest_start_time = current_time;
+    info("contest started: %lu", current_time);
+    update_status_file(1);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  case SRV_CMD_STOP:
+    if (contest_stop_time) {
+      err("%d: contest already finished", p->id);
+      new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
+      return;
+    }
+    if (!contest_start_time) {
+      err("%d: contest is not started", p->id);
+      new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
+      return;
+    }
+    run_stop_contest(current_time);
+    contest_stop_time = current_time;
+    info("contest stopped: %lu", current_time);
+    update_status_file(1);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  case SRV_CMD_REJUDGE_ALL:
+    do_rejudge_all();
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  case SRV_CMD_REJUDGE_PROBLEM:
+    if (pkt->v.i < 1 || pkt->v.i > max_prob || !probs[pkt->v.i]) {
+      err("%d: invalid problem id %d", p->id, pkt->v.i);
+      new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
+      return;
+    }
+    do_rejudge_problem(pkt->v.i);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  case SRV_CMD_SCHEDULE:
+    if (contest_stop_time) {
+      err("%d: contest already finished", p->id);
+      new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
+      return;
+    }
+    if (contest_start_time) {
+      err("%d: contest already started", p->id);
+      new_send_reply(p, -SRV_ERR_CONTEST_STARTED);
+      return;
+    }
+    run_sched_contest(pkt->v.t);
+    contest_sched_time = pkt->v.t;
+    info("%d: contest scheduled: %lu", p->id, pkt->v.t);
+    update_standings_file(0);
+    update_status_file(1);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  case SRV_CMD_DURATION:
+    if (contest_stop_time) {
+      err("%d: contest already finished", p->id);
+      new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
+      return;
+    }
+    if (contest_start_time) {
+      err("%d: contest already started", p->id);
+      new_send_reply(p, -SRV_ERR_CONTEST_STARTED);
+      return;
+    }
+    if (pkt->v.t < 0 || pkt->v.t > 1000000) {
+      err("%d: invalid duration: %ld", p->id, pkt->v.t);
+      new_send_reply(p, -SRV_ERR_BAD_DURATION);
+      return;
+    }
+    if (pkt->v.t * 60 < global->contest_time) {
+      err("%d: duration cannot be decreased", p->id);
+      new_send_reply(p, -SRV_ERR_BAD_DURATION);
+      return;
+    }
+    contest_duration = pkt->v.t * 60;
+    run_set_duration(contest_duration);
+    info("contest time reset to %ld", pkt->v.t);
+    update_standings_file(0);
+    update_status_file(1);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  default:
+    err("%d: unhandled command", p->id);
+    new_send_reply(p, -SRV_ERR_PROTOCOL);
+  }
+}
+
+static void rejudge_run(int);
+
+static void
+cmd_edit_run(struct client_state *p, int len,
+             struct prot_serve_pkt_run_info *pkt)
+{
+  unsigned char const *user_login_ptr;
+  struct run_entry run;
+  unsigned int run_flags = 0;
+
+  if (get_peer_local_user(p) < 0) return;
+
+  if (len < sizeof(*pkt)) {
+    new_bad_packet(p, "edit_run: packet is too small: %d", len);
+    return;
+  }
+  user_login_ptr = pkt->data;
+  if (strlen(user_login_ptr) != pkt->user_login_len) {
+    new_bad_packet(p, "edit_run: user_login_len mismatch");
+    return;
+  }
+  if (len != sizeof(*pkt) + pkt->user_login_len) {
+    new_bad_packet(p, "edit_run: packet length mismatch");
+    return;
+  }
+
+  info("%d: edit_run: %d, %d", p->id, pkt->run_id, pkt->mask);
+  if (p->priv_level != PRIV_LEVEL_ADMIN) {
+    err("%d: unsifficiend privileges", p->id);
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    return;
+  }
+  if (pkt->run_id < 0 || pkt->run_id >= run_get_total()) {
+    err("%d: invalid run_id", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_RUN_ID);
+    return;
+  }
+  if ((pkt->mask & PROT_SERVE_RUN_UID_SET)
+      && (pkt->mask & PROT_SERVE_RUN_LOGIN_SET)) {
+    err("%d: both uid and login are set", p->id);
+    new_send_reply(p, -SRV_ERR_PROTOCOL);
+    return;
+  }
+
+  memset(&run, 0, sizeof(run));
+  if ((pkt->mask & PROT_SERVE_RUN_UID_SET)) {
+    if (teamdb_lookup(pkt->user_id) != 1) {
+      err("%d: invalid user_id %d", p->id, pkt->user_id);
+      new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+      return;
+    }
+    run.team = pkt->user_id;
+    run_flags |= RUN_ENTRY_USER;
+  }
+  if ((pkt->mask & PROT_SERVE_RUN_LOGIN_SET)) {
+    if ((run.team = teamdb_lookup_login(user_login_ptr)) <= 0) {
+      err("%d: invalid login <%s>", p->id, user_login_ptr);
+      new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+      return;
+    }
+    run_flags |= RUN_ENTRY_USER;
+  }
+  if ((pkt->mask & PROT_SERVE_RUN_PROB_SET)) {
+    if (pkt->prob_id <= 0 || pkt->prob_id > max_prob || !probs[pkt->prob_id]) {
+      err("%d: invalid problem %d", p->id, pkt->prob_id);
+      new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
+      return;
+    }
+    run.problem = pkt->prob_id;
+    run_flags |= RUN_ENTRY_PROB;
+  }
+  if ((pkt->mask & PROT_SERVE_RUN_LANG_SET)) {
+    if (pkt->lang_id <= 0 || pkt->lang_id > max_lang || !langs[pkt->lang_id]) {
+      err("%d: invalid language %d", p->id, pkt->lang_id);
+      new_send_reply(p, -SRV_ERR_BAD_LANG_ID);
+      return;
+    }
+    run.language = pkt->lang_id;
+    run_flags |= RUN_ENTRY_LANG;
+  }
+  if ((pkt->mask & PROT_SERVE_RUN_STATUS_SET)) {
+    if (!is_valid_status(pkt->status, 1)) {
+      err("%d: invalid status %d", p->id, pkt->status);
+      new_send_reply(p, -SRV_ERR_BAD_STATUS);
+      return;
+    }
+    run.status = pkt->status;
+    run_flags |= RUN_ENTRY_STATUS;
+  }
+
+  if (run_set_entry(pkt->run_id, run_flags, &run) < 0) {
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+
+  if ((run_flags & RUN_ENTRY_STATUS) && run.status == RUN_REJUDGE) {
+    rejudge_run(pkt->run_id);
+  }
+  info("%d: edit_run: ok", p->id);
+  new_send_reply(p, SRV_RPL_OK);
+  return;
+}
+
 static int
 read_compile_packet(char *pname)
 {
@@ -1447,76 +2015,6 @@ read_run_packet(char *pname)
 }
 
 static void
-process_judge_reply(int clar_ref, int to_all,
-                    char const *pname, char const *ip)
-{
-  char *txt = 0;
-  int   tsize = 0;
-  int   from;
-  char *stxt = 0;
-  int   ssize = 0;
-  char  name1[64];
-  char  name2[64];
-  char *newsubj = 0;
-  int   newsubjlen;
-  char *fullmsg = 0;
-  int   fullmsglen;
-  char  codedsubj[CLAR_MAX_SUBJ_LEN + 4];
-  int   to, newclar;
-  int   qsize;
-  char *qbuf;
-
-  if (generic_read_file(&txt, 0, &tsize, REMOVE,
-                        global->judge_data_dir, pname, "") < 0)
-    goto exit_notok;
-  if (clar_get_record(clar_ref, 0, 0, 0, &from, 0, 0, 0) < 0)
-    goto exit_notok;
-  if (!from) {
-    err("cannot reply to judge's message %d", clar_ref);
-    goto exit_notok;
-  }
-  sprintf(name1, "%06d", clar_ref);
-  if (generic_read_file(&stxt, 0, &ssize, 0,
-                        global->clar_archive_dir, name1, "") < 0)
-    goto exit_notok;
-  newsubj = alloca(ssize + 64);
-  newsubjlen = message_reply_subj(stxt, newsubj);
-  message_base64_subj(newsubj, codedsubj, CLAR_MAX_SUBJ_TXT_LEN);
-  ASSERT(strlen(codedsubj) <= CLAR_MAX_SUBJ_LEN);
-  qsize = message_quoted_size(stxt);
-  qbuf = alloca(qsize + 16);
-  fullmsg = alloca(tsize + qsize + newsubjlen + 64);
-  message_quote(stxt, qbuf);
-  //fprintf(stderr, ">>%s<<\n>>%s<<\n", newsubj, qbuf);
-  strcpy(fullmsg, newsubj);
-  strcat(fullmsg, qbuf);
-  strcat(fullmsg, "\n");
-  strcat(fullmsg, txt);
-  fullmsglen = strlen(fullmsg);
-  to = 0;
-  if (!to_all) to = from;
-
-  /* create new clarid */
-  info("coded (%d): %s", strlen(codedsubj), codedsubj);
-  if ((newclar = clar_add_record(current_time, fullmsglen,
-                                 ip, 0, to, 0, codedsubj)) < 0)
-    goto exit_notok;
-  sprintf(name2, "%06d", newclar);
-  generic_write_file(fullmsg, fullmsglen, 0,
-                     global->clar_archive_dir, name2, "");
-  clar_update_flags(clar_ref, 2);
-  xfree(txt);
-  generic_write_file("OK\n", 3, PIPE,
-                     global->pipe_dir, pname, "");
-  return;
-
- exit_notok:
-  xfree(txt);
-  generic_write_file("NOT OK\n", 7, PIPE,
-                     global->pipe_dir, pname, "");
-}
-
-static void
 rejudge_run(int run_id)
 {
   int lang, loc;
@@ -1545,551 +2043,11 @@ rejudge_run(int run_id)
   run_change_status(run_id, RUN_COMPILING, 0, -1);
 }
 
-static int
-judge_stat(char const *pk_name, const packet_t pk_str, void *ptr)
+static void
+do_rejudge_all(void)
 {
-  packet_t cmd;
-  int      all_runs_flag = 0;
-  int      all_clars_flag = 0;
-  int      master_mode = (int) ptr;
-  int      n;
-
-  if (sscanf(pk_str, "%s %d %d %n", cmd,
-             &all_runs_flag, &all_clars_flag, &n) != 3
-      || pk_str[n])
-    return report_bad_packet(pk_name, 0);
-
-  write_judge_allstat(master_mode,
-                      all_runs_flag, all_clars_flag,
-                      global->pipe_dir, pk_name);
-  return 1;
-}
-
-static int
-judge_standings(char const *pk_name, const packet_t pk_str, void *ptr)
-{
-  packet_t cmd;
-  int      n;
-
-  if (sscanf(pk_str, "%s %n", cmd, &n) != 1 || pk_str[n])
-    return report_bad_packet(pk_name, 0);
-  write_judge_standings(pk_name);
-  return 0;
-}
-
-static int
-judge_update_public_standings(char const     *pk_name,
-                              const packet_t  pk_str,
-                              void           *ptr)
-{
-  packet_t cmd;
-  int      n;
-
-  if (sscanf(pk_str, "%s %n", cmd, &n) != 1 || pk_str[n])
-    return report_bad_packet(pk_name, 0);
-  update_standings_file(1);
-  report_ok(pk_name);
-  return 0;
-}
-
-static int
-judge_view_clar(char const *pk_name, const packet_t pk_str, void *ptr)
-{
-  int      is_master = (int) ptr;
-  packet_t cmd;
-  int      c_id, n, flags = 0;
-
-  if (sscanf(pk_str, "%s %d %n", cmd, &c_id, &n) != 2 || pk_str[n]
-      || c_id < 0 || c_id >= clar_get_total())
-    return report_bad_packet(pk_name, 0);
-
-  if (is_master) {
-    write_clar_view(c_id, global->clar_archive_dir,
-                    global->pipe_dir, pk_name, 0);
-  } else {
-    write_clar_view(c_id, global->clar_archive_dir,
-                      global->pipe_dir, pk_name, 0);
-    clar_get_record(c_id, 0, 0, 0, 0, 0, &flags, 0);
-    if (!flags) flags = 1;
-    clar_update_flags(c_id, flags);
-  }
-  return 0;
-}
-
-static int
-judge_view_report(char const *pk_name, const packet_t pk_str, void *ptr)
-{
-  int      n, rid;
-  packet_t cmd;
-
-  if (sscanf(pk_str, "%s %d %n", cmd, &rid, &n) != 2
-      || pk_str[n]
-      || rid < 0 || rid >= run_get_total())
-    return report_bad_packet(pk_name, 0);
-
-  write_judge_report_view(pk_name, rid);
-  return 0;
-}
-
-static int
-judge_view_src(char const *pk_name, const packet_t pk_str, void *ptr)
-{
-  packet_t  cmd;
-  int       rid, n;
-
-  if (sscanf(pk_str, "%s %d %n", cmd, &rid, &n) != 2
-      || pk_str[n]
-      || rid < 0 || rid >= run_get_total())
-    return report_bad_packet(pk_name, 0);
-
-  write_judge_source_view(pk_name, rid);
-  return 0;
-}
-
-static int
-judge_start(char const *pk_name, const packet_t pk_str, void *ptr)
-{
-  packet_t cmd;
-  int      n;
-
-  if(sscanf(pk_str, "%s %n", cmd, &n) != 1 || pk_str[n])
-    return report_bad_packet(pk_name, 0);
-  if (check_period(pk_name, "START", 0, 1, 0, 0) < 0) return 0;
-
-  run_start_contest(current_time);
-  contest_start_time = current_time;
-  info("contest started: %lu", current_time);
-  update_status_file(1);
-  report_ok(pk_name);
-  return 0;
-}
-
-static int
-judge_stop(char const *pk_name, const packet_t pk_str, void *ptr)
-{
-  packet_t cmd;
-  int      n;
-
-  if (sscanf(pk_str, "%s %n", cmd, &n) != 1 || pk_str[n])
-    return report_bad_packet(pk_name, 0);
-  if (check_period(pk_name, "STOP", 0, 1, 1, 0) < 0) return 0;
-
-  run_stop_contest(current_time);
-  contest_stop_time = current_time;
-  info("contest stopped: %lu", current_time);
-  update_status_file(1);
-  report_ok(pk_name);
-  return 0;
-}
-
-static int
-judge_sched(char const *pk_name, const packet_t pk_str, void *ptr)
-{
-  packet_t  cmd;
-  int       n;
-  time_t    newtime;
-  char     *reply = "OK";
-
-  if (sscanf(pk_str, "%s %lu %n", cmd, &newtime, &n) != 2 || pk_str[n])
-    return report_bad_packet(pk_name, 0);
-  if (check_period(pk_name, "SCHED", 0, 1, 0, 0) < 0) return 0;
-
-  run_sched_contest(newtime);
-  contest_sched_time = newtime;
-  info("contest scheduled: %lu", newtime);
-  update_standings_file(0);
-  update_status_file(1);
-
-  report_to_client(pk_name, reply);
-  return 0;
-}
-
-static int
-judge_time(char const *pk_name, const packet_t pk_str, void *ptr)
-{
-  packet_t  cmd;
-  int       newtime, n;
-  char     *reply = "OK";
-
-  if (sscanf(pk_str, "%s %d %n", cmd, &newtime, &n) != 2 ||
-      pk_str[n] || newtime <= 0 || newtime > 60 * 10)
-    return report_bad_packet(pk_name, 0);
-
-  if (check_period(pk_name, "TIME", 0, 1, 1, 0) < 0) return 0;
-  if (newtime * 60 < global->contest_time) {
-    err("contest time cannot be decreased");
-    reply = _("<p>The contest time cannot be decreased.");
-    goto _cleanup;
-  }
-
-  contest_duration = newtime * 60;
-  run_set_duration(contest_duration);
-  info("contest time reset to %d", newtime);
-  update_standings_file(0);
-  update_status_file(1);
-
- _cleanup:
-  report_to_client(pk_name, reply);
-  return 0;  
-}
-
-static int
-judge_change_status(char const *pk_name, const packet_t pk_str, void *ptr)
-{
-  packet_t cmd;
-  int      runid, status, test, score, n;
-
-  if (sscanf(pk_str, "%s %d %d %d %d %n", cmd, &runid, &status, &test,
-             &score, &n) != 5
-      || pk_str[n]
-      || runid < 0 || runid >= run_get_total()
-      || !is_valid_status(status, 1)
-      || test < -1 || test > 99
-      || score < -1 || score > 99)
-    return report_bad_packet(pk_name, 0);
-
-  if (global->score_system_val == SCORE_KIROV) {
-    if (status == RUN_COMPILE_ERR || status == RUN_REJUDGE
-        || status == RUN_IGNORED) test = 0;
-    else test++;
-  } else {
-  }
-
-  // FIXME: probably score should not be changed, if -1?
-  run_change_status(runid, status, test, score);
-  if (status == RUN_REJUDGE) {
-    rejudge_run(runid);
-  }
-
-  report_ok(pk_name);
-  return 0;
-}
-
-static int
-judge_reply(char const *pk_name, const packet_t pk_str, void *ptr)
-{
-  packet_t cmd, ip;
-  int      c_id, toall, n;
-
-  if (sscanf(pk_str, "%s %d %d %s %n", cmd, &c_id, &toall, ip, &n) != 4
-      || pk_str[n]
-      || c_id < 0 || c_id >= clar_get_total()
-      || strlen(ip) > RUN_MAX_IP_LEN)
-    return report_bad_packet(pk_name, 2);
-
-  process_judge_reply(c_id, toall, pk_name, ip);
-  return 0;
-}
-
-static int
-judge_view_teams(char const *pk_name, const packet_t pk_str, void *ptr)
-{
-  packet_t cmd;
-  int      n;
-
-  if (sscanf(pk_str, "%s %n", cmd, &n) != 1
-      || pk_str[n])
-    return report_bad_packet(pk_name, 2);
-
-  write_judge_teams_view(pk_name, (int) ptr);
-  return 0;
-}
-
-static int
-judge_view_one_team(char const *pk_name, const packet_t pk_str, void *ptr)
-{
-  packet_t cmd;
-  int      teamid, n;
-
-  if (sscanf(pk_str, "%s %d %n", cmd, &teamid, &n) != 2
-      || pk_str[n] || teamid <= 0 || teamid > 10000)
-    return report_bad_packet(pk_name, 2);
-
-  write_judge_one_team_view(pk_name, teamid);
-  return 0;
-}
-
-static int
-judge_change_team_login(char const *pk_name, const packet_t pk_str, void *ptr)
-{
-  packet_t cmd, l_b64, l_asc;
-  int      tid, n, b64_f = 0;
-
-  if (sscanf(pk_str, "%s %d %s %n", cmd, &tid, l_b64, &n) != 3
-      || pk_str[n] || tid <= 0 || tid > 10000)
-    return report_bad_packet(pk_name, 2);
-  if (!teamdb_lookup(tid)) {
-    report_error(pk_name, 0, 0, _("Nonexistent team id"));
-    return 0;
-  }
-  base64_decode_str(l_b64, l_asc, &b64_f);
-  if (b64_f) report_bad_packet(pk_name, 2);
-  if (!teamdb_is_valid_login(l_asc)) {
-    report_error(pk_name, 0, 0, _("Invalid team login"));
-    return 0;
-  }
-  teamdb_transaction();
-  if (teamdb_change_login(tid, l_asc) < 0) {
-    teamdb_rollback();
-    report_error(pk_name, 0, 0, _("Cannot change team login"));
-    return 0;
-  }
-  if (teamdb_write_teamdb(global->teamdb_file) < 0) {
-    teamdb_rollback();
-    return report_error(pk_name, 0, 0, _("Cannot write teamdb file"));
-  }
-  teamdb_commit();
-  report_ok(pk_name);
-  return 0;
-}
-
-static int
-judge_change_team_name(char const *pk_name, const packet_t pk_str, void *p)
-{
-  packet_t cmd, l_b64, l_asc;
-  int      tid, n, b64_f = 0;
-
-  if (sscanf(pk_str, "%s %d %s %n", cmd, &tid, l_b64, &n) != 3
-      || pk_str[n] || tid <= 0 || tid > 10000)
-    return report_bad_packet(pk_name, 2);
-  if (!teamdb_lookup(tid)) {
-    report_error(pk_name, 0, 0, _("Nonexistent team id"));
-    return 0;
-  }
-  base64_decode_str(l_b64, l_asc, &b64_f);
-  if (b64_f) report_bad_packet(pk_name, 2);
-  if (!teamdb_is_valid_name(l_asc)) {
-    report_error(pk_name, 0, 0, _("Invalid team name"));
-    return 0;
-  }
-  teamdb_transaction();
-  if (teamdb_change_name(tid, l_asc) < 0) {
-    teamdb_rollback();
-    report_error(pk_name, 0, 0, _("Cannot change team name"));
-    return 0;
-  }
-  if (teamdb_write_teamdb(global->teamdb_file) < 0) {
-    teamdb_rollback();
-    return report_error(pk_name, 0, 0, _("Cannot write teamdb file"));
-  }
-  teamdb_commit();
-  report_ok(pk_name);
-  return 0;
-}
-
-static int
-judge_change_team_password(char const *pk_name, const packet_t pk_str, void *p)
-{
-  packet_t cmd, passwd;
-  int      tid, n;
-
-  if (sscanf(pk_str, "%s %d %s %n", cmd, &tid, passwd, &n) != 3
-      || pk_str[n] || tid <= 0 || tid > 10000)
-    return report_bad_packet(pk_name, 2);
-  if (!teamdb_lookup(tid)) {
-    report_error(pk_name, 0, 0, _("Nonexistent team id"));
-    return 0;
-  }
-  teamdb_transaction();
-  if (!teamdb_set_scrambled_passwd(tid, passwd)) {
-    teamdb_rollback();
-    report_error(pk_name, 0, 0, _("Cannot change password"));
-    return 0;
-  }
-  if (teamdb_write_passwd(global->passwd_file) < 0) {
-    teamdb_rollback();
-    return report_error(pk_name, 0, 0, _("Cannot write passwd file"));
-  }
-  teamdb_commit();
-  report_ok(pk_name);
-  return 0;
-}
-
-static int
-judge_change_team_vis(char const *pk_name, const packet_t pk_str, void *p)
-{
-  int tid, n;
-  packet_t cmd;
-
-  if (sscanf(pk_str, "%s %d %n", cmd, &tid, &n) != 2
-      || pk_str[n] || tid <= 0 || tid > 10000)
-    return report_bad_packet(pk_name, 0);
-  if (!teamdb_lookup(tid))
-    return report_error(pk_name, 0, 0, _("Nonexistent team id"));
-  teamdb_transaction();
-  if (teamdb_toggle_vis(tid) < 0) {
-    teamdb_rollback();
-    return report_error(pk_name, 0, 0, _("Cannot perform operation"));
-  }
-  if (teamdb_write_passwd(global->passwd_file) < 0) {
-    teamdb_rollback();
-    return report_error(pk_name, 0, 0, _("Cannot write passwd file"));    
-  }
-  teamdb_commit();
-  report_ok(pk_name);
-  return 0;
-}
-
-static int
-judge_change_team_ban(char const *pk_name, const packet_t pk_str, void *p)
-{
-  int tid, n;
-  packet_t cmd;
-
-  if (sscanf(pk_str, "%s %d %n", cmd, &tid, &n) != 2
-      || pk_str[n] || tid <= 0 || tid > 10000)
-    return report_bad_packet(pk_name, 0);
-  if (!teamdb_lookup(tid))
-    return report_error(pk_name, 0, 0, _("Nonexistent team id"));
-  teamdb_transaction();
-  if (teamdb_toggle_ban(tid) < 0) {
-    teamdb_rollback();
-    return report_error(pk_name, 0, 0, _("Cannot perform operation"));
-  }
-  if (teamdb_write_passwd(global->passwd_file) < 0) {
-    teamdb_rollback();
-    return report_error(pk_name, 0, 0, _("Cannot write passwd file"));    
-  }
-  teamdb_commit();
-  report_ok(pk_name);
-  return 0;
-}
-
-static int
-do_add_team(char const *s, char **msg)
-{
-  int n;
-  int tid;
-  int name_len, login_len, passwd_len, vis, ban;
-  char *name, *login, *passwd;
-
-  if (sscanf(s, "%d%n", &tid, &n) != 1) goto _bad_packet;
-  if (tid < 0 || tid > 10000) goto _bad_packet;
-  s += n;
-  if (sscanf(s, "%d%n", &login_len, &n) != 1) goto _bad_packet;
-  if (login_len <= 0 || login_len > 32767) goto _bad_packet;
-  login = alloca(login_len + 32);
-  s += n;
-  if (*s++ != ' ') goto _bad_packet;
-  memcpy(login, s, login_len);
-  login[login_len] = 0;
-  s += login_len;
-  if (sscanf(s, "%d%n", &name_len, &n) != 1) goto _bad_packet;
-  if (name_len <= 0 || name_len > 32767) goto _bad_packet;
-  name = alloca(name_len + 32);
-  name[name_len] = 0;
-  s += n;
-  if (*s++ != ' ') goto _bad_packet;
-  memcpy(name, s, name_len);
-  s += name_len;
-  if (sscanf(s, "%d%n", &passwd_len, &n) != 1) goto _bad_packet;
-  if (passwd_len <= 0 || passwd_len > 32767) goto _bad_packet;
-  passwd = alloca(passwd_len + 32);
-  passwd[passwd_len] = 0;
-  s += n;
-  if (*s++ != ' ') goto _bad_packet;
-  memcpy(passwd, s, passwd_len);
-  s += passwd_len;
-  if (sscanf(s, "%d%d %n", &vis, &ban, &n) != 2) goto _bad_packet;
-  if (s[n] || vis < 0 || vis > 1 || ban < 0 || ban > 1) goto _bad_packet;
-
-  return teamdb_add_team(tid, login, name, passwd, vis, ban, msg);
-
- _bad_packet:
-  *msg = _("Bad packet (internal error)");
-  return -1;
-}
-
-static int
-judge_add_team(char const *pk_name, const packet_t pk_str, void *p)
-{
-  packet_t cmd;
-  int n;
-  char *msg = 0;
-  int msg_len = 0;
-  char *errmsg;
-
-  if (sscanf(pk_str, "%s %n", cmd, &n) != 1
-      || pk_str[n])
-    return report_bad_packet(pk_name, 2);
-
-  if (generic_read_file(&msg, 0, &msg_len, REMOVE,
-                        global->judge_data_dir, pk_name, "") < 0) {
-    return report_error(pk_name, 2, 0, "Cannot read data file");
-  }
-  teamdb_transaction();
-  if (do_add_team(msg, &errmsg) < 0) {
-    xfree(msg);
-    teamdb_rollback();
-    return report_error(pk_name, 0, 0, errmsg);
-  }
-  if (teamdb_write_passwd(global->passwd_file) < 0) {
-    xfree(msg);
-    teamdb_rollback();
-    return report_error(pk_name, 0, 0, _("Cannot write passwd file"));    
-  }
-  if (teamdb_write_teamdb(global->teamdb_file) < 0) {
-    xfree(msg);
-    teamdb_rollback();
-    return report_error(pk_name, 0, 0, _("Cannot write teamdb file"));
-  }
-  teamdb_commit();
-  xfree(msg);
-  report_ok(pk_name);
-  return 0;
-}
-
-static int
-judge_message(char const *pk_name, const packet_t pk_str, void *ptr)
-{
-  packet_t cmd, subj, ip, c_name;
-  char *msg = 0;
-  int   mlen, n;
-  char *reply = "OK";
-  int   c_id;
-
-  if (sscanf(pk_str, "%s %s %s %n", cmd, subj, ip, &n) != 3
-      || pk_str[n]
-      || strlen(subj) > CLAR_MAX_SUBJ_LEN
-      || strlen(ip) > RUN_MAX_IP_LEN)
-    return report_bad_packet(pk_name, 2);
-
-  if (generic_read_file(&msg, 0, &mlen, REMOVE,
-                        global->judge_data_dir, pk_name, "") < 0) {
-    reply = _("<p>Server failed to read the message file.");
-    goto _cleanup;
-  }
-
-  if ((c_id = clar_add_record(current_time, mlen, ip, 0, 0, 0, subj)) < 0) {
-    reply = _("<p>Server failed to update message log.");
-    goto _cleanup;
-  }
-
-  sprintf(c_name, "%06d", c_id);
-  if (generic_write_file(msg, mlen, 0,
-                         global->clar_archive_dir, c_name, "") < 0) {
-    reply = _("<p>Server failed to save the message.");
-  }
-
- _cleanup:
-  report_to_client(pk_name, reply);
-  xfree(msg);
-  return 0;
-}
-
-/* FORMAT: "REJUDGE <locale_id>" */
-static int
-judge_rejudge_all(char const *pk_name, const packet_t pk_str, void *ptr)
-{
-  packet_t cmd;
-  int locale_id = 0, n = 0;
   int total_runs, r;
   int status;
-
-  if (sscanf(pk_str, "%s %d %n", cmd, &locale_id, &n) != 2 || pk_str[n]) {
-    return report_bad_packet(pk_name, 0);
-  }
-  /* locale_id is currently unused */
 
   total_runs = run_get_total();
   for (r = 0; r < total_runs; r++) {
@@ -2099,24 +2057,12 @@ judge_rejudge_all(char const *pk_name, const packet_t pk_str, void *ptr)
       rejudge_run(r);
     }
   }
-  report_ok(pk_name);
-  return 0;
 }
 
-/* FORMAT: "REJUDGEP <locale_id> <problem_id>" */
-static int
-judge_rejudge_problem(char const *pk_name, const packet_t pk_str, void *str)
+static void
+do_rejudge_problem(int prob_id)
 {
-  packet_t cmd;
-  int locale_id = 0, prob_id = 0, n = 0;
   int total_runs, r, status, prob;
-
-  if (sscanf(pk_str, "%s %d %d %n", cmd, &locale_id, &prob_id, &n) != 3
-      || pk_str[n] || prob_id < 1 || prob_id > max_prob
-      || !probs[prob_id]) {
-    return report_bad_packet(pk_name, 0);
-  }
-  /* locale_id is currently unused */
 
   total_runs = run_get_total();
   for (r = 0; r < total_runs; r++) {
@@ -2126,146 +2072,6 @@ judge_rejudge_problem(char const *pk_name, const packet_t pk_str, void *str)
       rejudge_run(r);
     }
   }
-  report_ok(pk_name);
-  return 0;
-}
-
-/* FORMAT: "RESET <locale_id>" */
-static int
-judge_reset_contest(char const *pk_name, const packet_t pk_str, void *str)
-{
-  packet_t cmd;
-  int locale_id = 0, n = 0;
-
-  if (sscanf(pk_str, "%s %d %n", cmd, &locale_id, &n) != 2 || pk_str[n]) {
-    return report_bad_packet(pk_name, 0);
-  }
-
-  /* FIXME: we need to reset all the components (compile, serve) as well */
-  /* reset run log */
-  run_reset();
-  contest_duration = global->contest_time;
-  run_set_duration(contest_duration);
-  clar_reset();
-  /* clear all submissions and clarifications */
-  clear_directory(global->clar_archive_dir);
-  clear_directory(global->report_archive_dir);
-  clear_directory(global->run_archive_dir);
-  clear_directory(global->team_report_archive_dir);
-
-  update_status_file(1);
-  report_ok(pk_name);
-  return 0;
-}
-
-static int
-judge_suspend_clients(char const *pk_name, const packet_t pk_str, void *str)
-{
-  packet_t cmd;
-  int n = 0;
-
-  if (sscanf(pk_str, "%s %n", cmd, &n) != 1 || pk_str[n]) {
-    return report_bad_packet(pk_name, 0);
-  }
-
-  clients_suspended = 1;
-  update_status_file(1);
-  report_ok(pk_name);
-  return 0;
-}
-
-static int
-judge_resume_clients(char const *pk_name, const packet_t pk_str, void *str)
-{
-  packet_t cmd;
-  int n = 0;
-
-  if (sscanf(pk_str, "%s %n", cmd, &n) != 1 || pk_str[n]) {
-    return report_bad_packet(pk_name, 0);
-  }
-
-  clients_suspended = 0;
-  update_status_file(1);
-  report_ok(pk_name);
-  return 0;
-}
-
-static int
-judge_generate_passwords(char const *pk_name, const packet_t pk_str, void *p)
-{
-  packet_t cmd;
-  int n = 0, locale_id = -1;
-  path_t path;
-
-  if (!global->contest_id) {
-    return report_bad_packet(pk_name, 0);
-  }
-
-  if (sscanf(pk_str, "%s %d %n", cmd, &locale_id, &n) != 2 || pk_str[n]) {
-    return report_bad_packet(pk_name, 0);
-  }
-
-  pathmake(path, global->pipe_dir, "/", pk_name, 0);
-  teamdb_regenerate_passwords(path);
-  return 0;
-}
-
-static struct server_cmd judge_cmds[] =
-{
-  { "START", judge_start, 0 },
-  { "STOP", judge_stop, 0 },
-  { "SCHED", judge_sched, 0 },
-  { "TIME", judge_time, 0 },
-  { "MSTAT", judge_stat, (void*) 1 },
-  { "JSTAT", judge_stat, 0},
-  { "CHGSTAT", judge_change_status, 0 },
-  { "SRC", judge_view_src, 0 },
-  { "REPORT", judge_view_report, 0 },
-  { "MPEEK", judge_view_clar, (void*) 1 },
-  { "JPEEK", judge_view_clar, 0 },
-  { "REPLY", judge_reply, 0 },
-  { "MSG", judge_message, 0 },
-  { "STAND", judge_standings, 0 },
-  { "UPDATE", judge_update_public_standings, 0 },
-  { "MTEAMS", judge_view_teams, (void*) 1 },
-  { "JTEAMS", judge_view_teams, 0 },
-  { "VTEAM", judge_view_one_team, 0 },
-  { "CHGLOGIN", judge_change_team_login, 0 },
-  { "CHGNAME", judge_change_team_name, 0 },
-  { "CHGBAN", judge_change_team_ban, 0 },
-  { "CHGVIS", judge_change_team_vis, 0 },
-  { "CHGPASSWD", judge_change_team_password, 0 },
-  { "NEWTEAM", judge_add_team, 0 },
-  { "REJUDGE", judge_rejudge_all, 0 },
-  { "REJUDGEP", judge_rejudge_problem, 0 },
-  { "RESET", judge_reset_contest, 0 },
-  { "SUSPEND", judge_suspend_clients, 0 },
-  { "RESUME", judge_resume_clients, 0 },
-  { "GENPASSWD", judge_generate_passwords, 0 },
-
-  { 0, 0, 0 },
-};
-
-static int
-read_judge_packet(char const *pk_name)
-{
-  int       rsize, i, r;
-  packet_t  pk_str, cmd;
-  char     *pbuf = pk_str;
-
-  memset(pk_str, 0, sizeof(pk_str));
-  r = generic_read_file(&pbuf, sizeof(pk_str), &rsize, SAFE|REMOVE,
-                        global->judge_cmd_dir, pk_name, "");
-  if (r == 0) return 0;
-  if (r < 0) return -1;
-
-  info("judge packet: %s", chop(pk_str));
-  sscanf(pk_str, "%s", cmd);
-  for (i = 0; judge_cmds[i].cmd; i++)
-    if (!strcmp(judge_cmds[i].cmd, cmd))
-      return judge_cmds[i].func(pk_name, pk_str, judge_cmds[i].ptr);
-  report_bad_packet(pk_name, 2);
-  return 0;
 }
 
 static void
@@ -2307,6 +2113,25 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_SUBMIT_CLAR] { cmd_team_submit_clar },
   [SRV_CMD_TEAM_PAGE] { cmd_team_page },
   [SRV_CMD_MASTER_PAGE] { cmd_master_page },
+  [SRV_CMD_PRIV_STANDINGS] { cmd_priv_standings },
+  [SRV_CMD_VIEW_SOURCE] { cmd_view },
+  [SRV_CMD_VIEW_REPORT] { cmd_view },
+  [SRV_CMD_VIEW_CLAR] { cmd_view },
+  [SRV_CMD_VIEW_USERS] { cmd_view },
+  [SRV_CMD_PRIV_MSG] { cmd_message },
+  [SRV_CMD_PRIV_REPLY] { cmd_message },
+  [SRV_CMD_GEN_PASSWORDS] { cmd_gen_passwords },
+  [SRV_CMD_SUSPEND] { cmd_priv_command_0 },
+  [SRV_CMD_RESUME] { cmd_priv_command_0 },
+  [SRV_CMD_UPDATE_STAND] { cmd_priv_command_0 },
+  [SRV_CMD_START] { cmd_priv_command_0 },
+  [SRV_CMD_STOP] { cmd_priv_command_0 },
+  [SRV_CMD_RESET] { cmd_priv_command_0 },
+  [SRV_CMD_REJUDGE_ALL] { cmd_priv_command_0 },
+  [SRV_CMD_REJUDGE_PROBLEM] { cmd_priv_command_0 },
+  [SRV_CMD_SCHEDULE] { cmd_priv_command_0 },
+  [SRV_CMD_DURATION] { cmd_priv_command_0 },
+  [SRV_CMD_EDIT_RUN] { cmd_edit_run },
 };
 
 static void
@@ -2803,13 +2628,6 @@ do_loop(void)
 
     may_wait_flag = check_sockets(may_wait_flag);
 
-    r = scan_dir(global->judge_cmd_dir, packetname);
-    if (r < 0) return -1;
-    if (r > 0) {
-      if (read_judge_packet(packetname) < 0) return -1;
-      may_wait_flag = 0;
-    }
-
     r = scan_dir(global->compile_status_dir, packetname);
     if (r < 0) return -1;
     if (r > 0) {
@@ -2824,50 +2642,6 @@ do_loop(void)
       may_wait_flag = 0;
     }
   }
-}
-
-static int
-write_submit_templates(char const *status_dir)
-{
-  char  buf[1024];
-  char *s;
-  int   i;
-
-  /* generate problem selection control */
-  s = buf + sprintf(buf, "<select name=\"problem\">"
-                    "<option value=\"\">\n");
-  for (i = 1; i <= max_prob; i++)
-    if (probs[i])
-      s += sprintf(s, "<option value=\"%d\">%s - %s\n",
-                   probs[i]->id, probs[i]->short_name, probs[i]->long_name);
-  sprintf(s, "</select>\n");
-  if (generic_write_file(buf,strlen(buf),SAFE,status_dir,"problems","") < 0)
-    return -1;
-
-  /* generate problem2 selection control */
-  s = buf + sprintf(buf, "<select name=\"problem\">"
-                    "<option value=\"\">\n");
-  for (i = 1; i <= max_prob; i++)
-    if (probs[i])
-      s += sprintf(s, "<option value=\"%s\">%s - %s\n",
-                   probs[i]->short_name,
-                   probs[i]->short_name, probs[i]->long_name);
-  sprintf(s, "</select>\n");
-  if (generic_write_file(buf,strlen(buf),SAFE,status_dir,"problems2","") < 0)
-    return -1;
-
-  /* generate language selection control */
-  s = buf + sprintf(buf, "<select name=\"language\">"
-                    "<option value=\"\">\n");
-  for (i = 1; i <= max_lang; i++)
-    if (langs[i])
-      s += sprintf(s, "<option value=\"%d\">%s - %s\n",
-                   langs[i]->id, langs[i]->short_name, langs[i]->long_name);
-  sprintf(s, "</select>\n");
-  if (generic_write_file(buf,strlen(buf),SAFE,status_dir,"languages","") < 0)
-    return -1;
-
-  return 0;
 }
 
 int
@@ -2918,7 +2692,6 @@ main(int argc, char *argv[])
     return 1;
   if (run_open(global->run_log_file, 0) < 0) return 1;
   if (clar_open(global->clar_log_file, 0) < 0) return 1;
-  if (write_submit_templates(global->status_dir) < 0) return 1;
   i = do_loop();
   if (i < 0) i = 1;
   if (socket_name) {
