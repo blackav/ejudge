@@ -106,7 +106,8 @@ COMMON_CFILES=\
  userlist.c\
  userlist_cfg.c\
  userlist_proto.c\
- userlist_xml.c
+ userlist_xml.c\
+ varsubst.c
 
 CFILES=\
  clean-users.c\
@@ -179,6 +180,7 @@ HFILES=\
  userlist.h\
  userlist_cfg.h\
  userlist_clnt.h\
+ varsubst.h\
  version.h\
  unix/unix_fileutl.h\
  userlist_clnt/private.h
