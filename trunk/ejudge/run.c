@@ -39,6 +39,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <termios.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -284,6 +285,7 @@ generate_team_report(int accept_testing,
   int   first_failed = 0;
   int   passed_tests = 0;
   int   failed_tests = 0;
+  int   retcode;
 
   char  score_buf[32];
   char  score_buf2[32];
@@ -339,12 +341,20 @@ generate_team_report(int accept_testing,
       sprintf(score_buf2, "%d (%d)", tests[i].score, tests[i].max_score);
       sprintf(score_buf, "%-8s", score_buf2);
     }
+    retcode = tests[i].code;
+    if (tests[i].code != 0 && !global->report_error_code) {
+      retcode = 1;
+    }
     fprintf(f, "%-8d%-8d%-12.3f%s%s\n",
-	    i, tests[i].code, (double) tests[i].times / 1000,
+	    i, retcode, (double) tests[i].times / 1000,
             score_buf,
 	    result2str(tests[i].status,0,0));
   }
   fprintf(f, "\n");
+
+  if (!global->report_error_code) {
+    fprintf(f, "\n%s\n", _("Note: non-zero return code is always reported as 1"));
+  }
 
   fclose(f);
   return 0;
@@ -402,6 +412,7 @@ run_tests(struct section_tester_data *tst,
   int    ec = -100;            /* FIXME: magic */
   struct section_problem_data *prb;
   char *sound;
+  struct termios term_attrs;
 
   ASSERT(tst->problem > 0);
   ASSERT(tst->problem <= max_prob);
@@ -523,6 +534,16 @@ run_tests(struct section_tester_data *tst,
     if (tst->max_data_size) task_SetDataSize(tsk, tst->max_data_size);
     if (tst->max_vm_size) task_SetVMSize(tsk, tst->max_vm_size);
 
+    memset(&term_attrs, 0, sizeof(term_attrs));
+    if (tst->no_redirect && isatty(0)) {
+      /* we need to save terminal state since if the program
+       * is killed with SIGKILL, the terminal left in random state
+       */
+      if (tcgetattr(0, &term_attrs) < 0) {
+        err("tcgetattr failed: %s", os_ErrorMsg());
+      }
+    }
+
     if (task_Start(tsk) < 0) {
       /* failed to start task */
       status = RUN_CHECK_FAILED;
@@ -535,6 +556,12 @@ run_tests(struct section_tester_data *tst,
 
       if (error_code[0]) {
         ec = read_error_code(error_code);
+      }
+
+      /* restore the terminal state */
+      if (tst->no_redirect && isatty(0)) {
+        if (tcsetattr(0, TCSADRAIN, &term_attrs) < 0)
+          err("tcsetattr failed: %s", os_ErrorMsg());
       }
 
       /* set normal permissions for the working directory */
