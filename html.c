@@ -81,6 +81,7 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
   unsigned char *lang_str;
   unsigned char href[128];
   struct run_entry re;
+  const unsigned char *run_kind_str = 0;
 
   if (global->virtual) {
     start_time = run_get_virtual_start_time(uid);
@@ -107,7 +108,7 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
 
   if (global->team_enable_src_view)
     fprintf(f, "<th>%s</th>", _("View source"));
-  if (global->team_enable_rep_view)
+  if (global->team_enable_rep_view || global->team_enable_ce_view)
     fprintf(f, "<th>%s</th>", _("View report"));
 
   fprintf(f, "</tr>\n");
@@ -119,10 +120,15 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
     if (re.status == RUN_VIRTUAL_START || re.status == RUN_VIRTUAL_STOP
         || re.status == RUN_EMPTY)
       continue;
-    if (global->score_system_val == SCORE_KIROV)
+    attempts = 0;
+    if (global->score_system_val == SCORE_KIROV && !re.is_hidden)
       run_get_attempts(i, &attempts, global->ignore_compile_errors);
     if (re.team != uid) continue;
     showed++;
+
+    run_kind_str = "";
+    if (re.is_imported) run_kind_str = "*";
+    if (re.is_hidden) run_kind_str = "#";
 
     time = re.timestamp;
     if (!start_time) time = start_time;
@@ -132,7 +138,8 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
     prob_str = "???";
     if (probs[re.problem]) {
       if (probs[re.problem]->variant_num > 0) {
-        int variant = find_variant(re.team, re.problem);
+        int variant = re.variant;
+        if (!variant) variant = find_variant(re.team, re.problem);
         prob_str = alloca(strlen(probs[re.problem]->short_name) + 10);
         if (variant > 0) {
           sprintf(prob_str, "%s-%d", probs[re.problem]->short_name, variant);
@@ -150,7 +157,7 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
       html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args);
     }
     fprintf(f, "<tr>\n");
-    fprintf(f, "<td>%d</td>", i);
+    fprintf(f, "<td>%d%s</td>", i, run_kind_str);
     fprintf(f, "<td>%s</td>", dur_str);
     fprintf(f, "<td>%zu</td>", re.size);
     fprintf(f, "<td>%s</td>", prob_str);
@@ -167,7 +174,7 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
       if (re.score == -1) {
         fprintf(f, "<td>%s</td>", _("N/A"));
       } else {
-        if (global->score_system_val == SCORE_OLYMPIAD) {
+        if (global->score_system_val == SCORE_OLYMPIAD || re.is_hidden) {
           fprintf(f, "<td>%d</td>", re.score);
         } else {
           score1 = re.score - attempts * probs[re.problem]->run_penalty;
@@ -203,7 +210,20 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
         }
       }
       fprintf(f, "</td>");
+    } else if (global->team_enable_ce_view) {
+      fprintf(f, "<td>");
+      if (re.status != RUN_COMPILE_ERR) {
+        fprintf(f, "N/A");
+      } else {
+        if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
+          fprintf(f, "<input type=\"submit\" name=\"report_%d\" value=\"%s\">\n", i, _("View"));
+        } else {
+          fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid_mode, sid, self_url, extra_args, "report_%d=1", i), _("View"));
+        }
+      }
+      fprintf(f, "</td>");
     }
+
     fprintf(f, "\n</tr>\n");
     if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
       fputs("</form>\n", f);
@@ -579,6 +599,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
     for (k = 0; k < r_tot; k++) {
       if (runs[k].status == RUN_EMPTY || runs[k].status == RUN_VIRTUAL_START
           || runs[k].status == RUN_VIRTUAL_STOP) continue;
+      if (runs[k].is_hidden) continue;
       if(runs[k].team <= 0 && runs[k].team >= t_max) continue;
       t_runs[runs[k].team] = 1;
     }
@@ -658,6 +679,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
         || pe->status == RUN_EMPTY) continue;
     if (pe->team <= 0 || pe->team >= t_max) continue;
     if (pe->problem <= 0 || pe->problem > max_prob) continue;
+    if (pe->is_hidden) continue;
     tind = t_rev[pe->team];
     pind = p_rev[pe->problem];
     p = probs[pe->problem];
@@ -939,6 +961,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     for (k = 0; k < r_tot; k++) {
       if (runs[k].status == RUN_EMPTY) continue;
       if (runs[k].team <= 0 || runs[k].team >= t_max) continue;
+      if (runs[k].is_hidden) continue;
       t_runs[runs[k].team] = 1;
     }
   } else {
@@ -1001,6 +1024,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     if (pe->team <= 0 || pe->team >= t_max || t_rev[pe->team] < 0) continue;
     if (pe->problem <= 0 || pe->problem > max_prob || p_rev[pe->problem] < 0)
       continue;
+    if (pe->is_hidden) continue;
     if (global->virtual) {
       // filter "future" virtual runs
       tstart = run_get_virtual_start_time(pe->team);
@@ -1310,6 +1334,8 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
 
   for (i = total - 1; i >= 0; i--) {
     pe = &runs[i];
+    if (pe->is_hidden) continue;
+
     time = pe->timestamp;
     run_get_attempts(i, &attempts, global->ignore_compile_errors);
 
@@ -1324,7 +1350,8 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
     fprintf(f, "<td>%s</td>", teamdb_get_name(pe->team));
     if (probs[pe->problem]) {
       if (probs[pe->problem]->variant_num > 0) {
-        int variant = find_variant(pe->team, pe->problem);
+        int variant = pe->variant;
+        if (!variant) variant = find_variant(pe->team, pe->problem);
         if (variant > 0) {
           fprintf(f, "<td>%s-%d</td>", probs[pe->problem]->short_name,variant);
         } else {
@@ -1435,6 +1462,7 @@ new_write_user_report_view(FILE *f, int uid, int rid)
   int report_len = 0, html_len = 0, report_flags;
   path_t report_path;
   char *report = 0, *html_report;
+  const unsigned char *archive_dir = 0;
   struct run_entry re;
 
   if (rid < 0 || rid >= run_get_total()) {
@@ -1448,18 +1476,26 @@ new_write_user_report_view(FILE *f, int uid, int rid)
     err("get_record returned bad prob_id %d", re.problem);
     return -SRV_ERR_BAD_PROB_ID;
   }
-  if (!probs[re.problem]->team_enable_rep_view) {
-    err("viewing report is disabled for this problem");
-    return -SRV_ERR_REPORT_DISABLED;
-  }
   if (uid != re.team) {
     err("user ids does not match");
     return -SRV_ERR_ACCESS_DENIED;
   }
+  if (!probs[re.problem]->team_enable_rep_view) {
+    if (probs[re.problem]->team_enable_ce_view && re.status == RUN_COMPILE_ERR)
+      archive_dir = global->report_archive_dir;
+    else {
+      err("viewing report is disabled for this problem");
+      return -SRV_ERR_REPORT_DISABLED;
+    }
+  } else {
+    if (probs[re.problem]->team_show_judge_report)
+      archive_dir = global->report_archive_dir;
+    else
+      archive_dir = global->team_report_archive_dir;
+  }
 
   report_flags = archive_make_read_path(report_path, sizeof(report_path),
-                                        global->team_report_archive_dir,
-                                        rid, 0, 0);
+                                        archive_dir, rid, 0, 0);
   if (report_flags < 0) return -SRV_ERR_SYSTEM_ERROR;
   if (generic_read_file(&report, 0, &report_len, report_flags,
                         0, report_path, "") < 0) {
