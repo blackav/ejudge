@@ -23,6 +23,7 @@
  */
 
 #include "expat_iface.h"
+#include "contests.h"
 
 #include <stdio.h>
 
@@ -35,10 +36,12 @@ enum
 
 enum
   {
-    USERLIST_MB_CONTESTANT,
-    USERLIST_MB_RESERVE,
-    USERLIST_MB_COACH,
-    USERLIST_MB_ADVISOR
+    USERLIST_MB_CONTESTANT = CONTEST_M_CONTESTANT,
+    USERLIST_MB_RESERVE = CONTEST_M_RESERVE,
+    USERLIST_MB_COACH = CONTEST_M_COACH,
+    USERLIST_MB_ADVISOR = CONTEST_M_ADVISOR,
+    USERLIST_MB_GUEST = CONTEST_M_GUEST,
+    USERLIST_MB_LAST
   };
 
 enum
@@ -58,6 +61,7 @@ enum
     USERLIST_ST_PROF,           /* university professor */
     USERLIST_ST_SCIENTIST,      /* a scientist */
     USERLIST_ST_OTHER,          /* other */
+    USERLIST_ST_LAST
   };
 
 enum
@@ -75,7 +79,6 @@ enum
     USERLIST_T_HOMEPAGE,
     USERLIST_T_PHONES,
     USERLIST_T_PHONE,
-    USERLIST_T_MEMBERS,
     USERLIST_T_MEMBER,
     USERLIST_T_SURNAME,
     USERLIST_T_MIDDLENAME,
@@ -83,10 +86,16 @@ enum
     USERLIST_T_GROUP,
     USERLIST_T_COOKIES,
     USERLIST_T_COOKIE,
-    USERLIST_T_REGISTRATIONS,
-    USERLIST_T_REGISTRATION,
+    USERLIST_T_CONTESTS,
+    USERLIST_T_CONTEST,
     USERLIST_T_STATUS,
     USERLIST_T_OCCUPATION,
+    USERLIST_T_CONTESTANTS,
+    USERLIST_T_RESERVES,
+    USERLIST_T_COACHES,
+    USERLIST_T_ADVISORS,
+    USERLIST_T_GUESTS,
+    USERLIST_T_FIRSTNAME,
 
     USERLIST_LAST_TAG,
   };
@@ -100,7 +109,6 @@ enum
     USERLIST_A_VALUE,
     USERLIST_A_LOCALE_ID,
     USERLIST_A_EXPIRE,
-    USERLIST_A_ROLE,
     USERLIST_A_CONTEST_ID,
     USERLIST_A_REGISTERED,
     USERLIST_A_LAST_LOGIN,
@@ -110,6 +118,11 @@ enum
     USERLIST_A_BANNED,
     USERLIST_A_STATUS,
     USERLIST_A_LAST_PWDCHANGE,
+    USERLIST_A_PUBLIC,
+    USERLIST_A_USE_COOKIES,
+    USERLIST_A_LAST_MINOR_CHANGE,
+    USERLIST_A_MEMBER_SERIAL,
+    USERLIST_A_SERIAL,
 
     USERLIST_LAST_ATTN,
   };
@@ -118,16 +131,20 @@ struct userlist_member
 {
   struct xml_tree b;
 
-  int role;
+  int serial;
   int status;
   int grade;
-  unsigned char *name;
+  unsigned char *firstname;
   unsigned char *middlename;
   unsigned char *surname;
   unsigned char *group;
   unsigned char *email;
   unsigned char *homepage;
   unsigned char *occupation;
+  unsigned char *inst;
+  unsigned char *instshort;
+  unsigned char *fac;
+  unsigned char *facshort;
   struct xml_tree *phones;
 };
 
@@ -135,10 +152,10 @@ struct userlist_members
 {
   struct xml_tree b;
 
-  int contestants_total;
-  int reserves_total;
-  int coaches_total;
-  int advisors_total;
+  int role;
+  int total;
+  int allocd;
+  struct userlist_member **members;
 };
 
 struct userlist_cookie
@@ -153,11 +170,11 @@ struct userlist_cookie
   int locale_id;
 };
 
-struct userlist_reg
+struct userlist_contest
 {
   struct xml_tree b;
 
-  int contest_id;
+  int id;
   int status;
 };
 
@@ -168,6 +185,9 @@ struct userlist_user
   int id;
   int is_invisible;
   int is_banned;
+  int show_login;
+  int show_email;
+  int default_use_cookies;
 
   unsigned char *login;
   unsigned char *name;
@@ -183,15 +203,16 @@ struct userlist_user
   unsigned char *homepage;
 
   struct xml_tree *cookies;
-  struct userlist_members *members;
+  struct userlist_members *members[USERLIST_MB_LAST];
   struct xml_tree *phones;
-  struct xml_tree *registrations;
+  struct xml_tree *contests;
 
   unsigned long registration_time;
   unsigned long last_login_time;
   unsigned long last_change_time;
   unsigned long last_access_time;
   unsigned long last_pwdchange_time;
+  unsigned long last_minor_change_time;
 };
 
 struct userlist_list
@@ -201,10 +222,30 @@ struct userlist_list
   unsigned char *name;
   int user_map_size;
   struct userlist_user **user_map;
+  int member_serial;
 };
 
+// unparse modes
+enum
+  {
+    USERLIST_MODE_ALL,
+    USERLIST_MODE_USER,
+    USERLIST_MODE_OTHER
+  };
+
+struct userlist_list *userlist_new(void);
 struct userlist_list *userlist_parse(char const *path);
-struct userlist_list *userlist_free(struct userlist_list *p);
+struct userlist_user *userlist_parse_user_str(char const *str);
 void userlist_unparse(struct userlist_list *p, FILE *f);
+void userlist_unparse_user(struct userlist_user *p, FILE *f, int mode);
+
+void *userlist_free(struct xml_tree *p);
+void userlist_remove_user(struct userlist_list *p, struct userlist_user *u);
+
+struct xml_tree *userlist_node_alloc(int tag);
+unsigned char const *userlist_tag_to_str(int t);
+
+void userlist_unparse_contests(struct userlist_user *p, FILE *f);
+struct xml_tree *userlist_parse_contests_str(unsigned char const *str);
 
 #endif /* __USERLIST_H__ */

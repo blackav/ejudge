@@ -38,6 +38,11 @@ static char const * const tag_map[] =
   "ip",
   "field",
   "name",
+  "contestants",
+  "reserves",
+  "coaches",
+  "advisors",
+  "guests",
 
   0
 };
@@ -50,19 +55,26 @@ static char const * const attn_map[] =
   "deny",
   "mandatory",
   "optional",
-  "size",
-  "maxlength",
+  "min",
+  "max",
+  "autoregister",
 
   0
 };
 static size_t const tag_sizes[CONTEST_LAST_TAG] =
 {
   0,
-  sizeof(struct contest_list),
-  sizeof(struct contest_desc),
-  sizeof(struct contest_access),
-  sizeof(struct contest_ip),
-  sizeof(struct contest_field),
+  sizeof(struct contest_list),  /* CONTEST_CONTESTS */
+  sizeof(struct contest_desc),  /* CONTEST_CONTEST */
+  sizeof(struct contest_access), /* CONTEST_ACCESS */
+  sizeof(struct contest_ip),    /* CONTEST_IP */
+  sizeof(struct contest_field), /* CONTEST_FIELD */
+  0,                            /* CONTEST_NAME */
+  sizeof(struct contest_member), /* CONTEST_CONTESTANTS */
+  sizeof(struct contest_member), /* CONTEST_RESERVES */
+  sizeof(struct contest_member), /* CONTEST_COACHES */
+  sizeof(struct contest_member), /* CONTEST_ADVISORS */
+  sizeof(struct contest_member), /* CONTEST_GUESTS */
 };
 static size_t const attn_sizes[CONTEST_LAST_ATTN] =
 {
@@ -104,12 +116,33 @@ attn_free(struct xml_attn *a)
 static char const * const field_map[] =
 {
   0,
-  0,
-  0,
-  "name",
   "homepage",
+  "inst",
+  "instshort",
+  "fac",
+  "facshort",
 
   0
+};
+
+static char const * const member_field_map[] =
+{
+  0,
+  "firstname",
+  "middlename",
+  "surname",
+  "status",
+  "grade",
+  "group",
+  "email",
+  "homepage",
+  "inst",
+  "instshort",
+  "fac",
+  "facshort",
+  "occupation",
+
+  0,
 };
 
 static int
@@ -215,11 +248,107 @@ parse_access(struct contest_access *acc, char const *path)
 }
 
 static int
+parse_member(struct contest_member *mb, char const *path)
+{
+  struct xml_attn *a;
+  struct xml_tree *t;
+  struct contest_field *pf;
+  int i, n;
+
+  mb->min_count = -1;
+  mb->max_count = -1;
+  for (a = mb->b.first; a; a = a->next) {
+    switch (a->tag) {
+    case CONTEST_A_MIN:
+    case CONTEST_A_MAX:
+      if (!a->text || sscanf(a->text, "%d %n", &i, &n) != 1
+          || a->text[n] || i < 0 || i > 100) {
+        err("%s:%d:%d: invalid value", path, a->line, a->column);
+        return -1;
+      }
+      if (a->tag == CONTEST_A_MIN) {
+        mb->min_count = i;
+      } else {
+        mb->max_count = i;
+      }
+      break;
+    default:
+      err("%s:%d:%d: attribute \"%s\" is invalid here",
+          path, a->line, a->column, attn_map[a->tag]);
+      return -1;
+    }
+  }
+
+  xfree(mb->b.text); mb->b.text = 0;
+  for (t = mb->b.first_down; t; t = t->right) {
+    if (t->tag != CONTEST_FIELD) {
+      err("%s:%d:%d: tag <%s> is invalid here",
+          path, t->line, t->column, tag_map[t->tag]);
+      return -1;
+    }
+    if (t->text && *t->text) {
+      err("%s:%d:%d: tag <%s> cannot contain text",
+          path, t->line, t->column, tag_map[t->tag]);
+      return -1;
+    }
+    if (t->first_down) {
+      err("%s:%d:%d: nested tags are not allowed",
+          path, t->line, t->column);
+      return -1;
+    }
+    pf = (struct contest_field*) t;
+
+    pf->mandatory = -1;
+    for (a = t->first; a; a = a->next) {
+      switch (a->tag) {
+      case CONTEST_A_ID:
+        for (i = 1; i < CONTEST_LAST_MEMBER_FIELD; i++) {
+          if (!member_field_map[i]) continue;
+          if (!strcmp(a->text, member_field_map[i])) break;
+        }
+        if (i >= CONTEST_LAST_MEMBER_FIELD) {
+          err("%s:%d:%d: invalid field id \"%s\"",
+              path, a->line, a->column, a->text);
+          return -1;
+        }
+        if (mb->fields[i]) {
+          err("%s:%d:%d: field \"%s\" already defined",
+              path, a->line, a->column, a->text);
+          return -1;
+        }
+        mb->fields[i] = pf;
+        break;
+      case CONTEST_A_MANDATORY:
+      case CONTEST_A_OPTIONAL:
+        if (pf->mandatory != -1) {
+          err("%s:%d:%d: attribute \"mandatory\" already defined",
+              path, a->line, a->column);
+          return -1;
+        }
+        if ((pf->mandatory = parse_bool(a->text)) < 0) {
+          err("%s:%d:%d: invalid boolean value",
+              path, a->line, a->column);
+          return -1;
+        }
+        if (a->tag == CONTEST_A_OPTIONAL) pf->mandatory = !pf->mandatory;
+        break;
+      default:
+        err("%s:%d:%d: attribute \"%s\" is invalid here",
+            path, a->line, a->column, attn_map[a->tag]);
+        return -1;
+      }
+    }
+    if (pf->mandatory == -1) pf->mandatory = 0;
+  }
+  return 0;
+}
+
+static int
 parse_contest(struct contest_desc *cnts, char const *path)
 {
   struct xml_attn *a;
   struct xml_tree *t;
-  int x, n;
+  int x, n, mb_id;
 
   for (a = cnts->b.first; a; a = a->next) {
     switch (a->tag) {
@@ -231,6 +360,14 @@ parse_contest(struct contest_desc *cnts, char const *path)
         return -1;
       }
       cnts->id = x;
+      break;
+    case CONTEST_A_AUTOREGISTER:
+      x = parse_bool(a->text);
+      if (x < 0 || x > 1) {
+        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
+        return -1;
+      }
+      cnts->autoregister = x;
       break;
     default:
       err("%s:%d:%d: attribute \"%s\" is invalid here",
@@ -265,6 +402,32 @@ parse_contest(struct contest_desc *cnts, char const *path)
       }
       cnts->name = t->text;
       break;
+    case CONTEST_CONTESTANTS:
+      mb_id = CONTEST_M_CONTESTANT;
+      goto process_members;
+    case CONTEST_RESERVES:
+      mb_id = CONTEST_M_RESERVE;
+      goto process_members;
+    case CONTEST_COACHES:
+      mb_id = CONTEST_M_COACH;
+      goto process_members;
+    case CONTEST_ADVISORS:
+      mb_id = CONTEST_M_ADVISOR;
+      goto process_members;
+    case CONTEST_GUESTS:
+      mb_id = CONTEST_M_GUEST;
+
+    process_members:
+      if (cnts->members[mb_id]) {
+        err("%s:%d:%d: tag <%s> redefined",
+            path, t->line, t->column, tag_map[t->tag]);
+        return -1;
+      }
+      if (parse_member((struct contest_member*) t, path) < 0)
+        return -1;
+      cnts->members[mb_id] = (struct contest_member*) t;
+      break;
+
     case CONTEST_ACCESS:
       if (cnts->access) {
         err("%s:%d:%d: contest access is already defined",
@@ -288,7 +451,7 @@ parse_contest(struct contest_desc *cnts, char const *path)
       t->text = 0;
       {
         struct contest_field *pf = (struct contest_field*) t;
-        int i, n;
+        int i;
 
         pf->mandatory = -1;
         for (a = t->first; a; a = a->next) {
@@ -324,24 +487,6 @@ parse_contest(struct contest_desc *cnts, char const *path)
             }
             if (a->tag == CONTEST_A_OPTIONAL) pf->mandatory = !pf->mandatory;
             break;
-          case CONTEST_A_SIZE:
-            i = n = 0;
-            if (sscanf(a->text, "%d %n", &i, &n) != 1 || a->text[n]
-                || i <= 0 || i >= 100000) {
-              err("%s:%d:%d: invalid value", path, a->line, a->column);
-              return -1;
-            }
-            pf->size = i;
-            break;
-          case CONTEST_A_MAXLENGTH:
-            i = n = 0;
-            if (sscanf(a->text, "%d %n", &i, &n) != 1 || a->text[n]
-                || i <= 0 || i >= 100000) {
-              err("%s:%d:%d: invalid value", path, a->line, a->column);
-              return -1;
-            }
-            pf->maxlength = i;
-            break;
           default:
             err("%s:%d:%d: attribute \"%s\" is invalid here",
                 path, a->line, a->column, attn_map[a->tag]);
@@ -349,9 +494,6 @@ parse_contest(struct contest_desc *cnts, char const *path)
           }
         }
         if (pf->mandatory == -1) pf->mandatory = 0;
-        if (!pf->size) pf->size = 64;
-        if (!pf->maxlength) pf->maxlength = 64;
-        if (pf->size > pf->maxlength) pf->size = pf->maxlength;
       }
       break;
 

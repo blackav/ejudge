@@ -32,6 +32,11 @@ enum
     CONTEST_IP,
     CONTEST_FIELD,
     CONTEST_NAME,
+    CONTEST_CONTESTANTS,
+    CONTEST_RESERVES,
+    CONTEST_COACHES,
+    CONTEST_ADVISORS,
+    CONTEST_GUESTS,
 
     CONTEST_LAST_TAG
   };
@@ -43,19 +48,49 @@ enum
     CONTEST_A_DENY,
     CONTEST_A_MANDATORY,
     CONTEST_A_OPTIONAL,
-    CONTEST_A_SIZE,
-    CONTEST_A_MAXLENGTH,
+    CONTEST_A_MIN,
+    CONTEST_A_MAX,
+    CONTEST_A_AUTOREGISTER,
 
     CONTEST_LAST_ATTN
   };
 enum
   {
-    CONTEST_F_LOGIN = 1,
-    CONTEST_F_EMAIL,
-    CONTEST_F_NAME,
-    CONTEST_F_HOMEPAGE,
+    CONTEST_FIRST_FIELD = 1,
+    CONTEST_F_HOMEPAGE = CONTEST_FIRST_FIELD,
+    CONTEST_F_INST,
+    CONTEST_F_INSTSHORT,
+    CONTEST_F_FAC,
+    CONTEST_F_FACSHORT,
 
     CONTEST_LAST_FIELD
+  };
+enum
+  {
+    CONTEST_M_CONTESTANT,
+    CONTEST_M_RESERVE,
+    CONTEST_M_COACH,
+    CONTEST_M_ADVISOR,
+    CONTEST_M_GUEST,
+    CONTEST_LAST_MEMBER
+  };
+enum
+  {
+    CONTEST_MF_SERIAL = 0,
+    CONTEST_MF_FIRSTNAME = 1,
+    CONTEST_MF_MIDDLENAME,
+    CONTEST_MF_SURNAME,
+    CONTEST_MF_STATUS,
+    CONTEST_MF_GRADE,
+    CONTEST_MF_GROUP,
+    CONTEST_MF_EMAIL,
+    CONTEST_MF_HOMEPAGE,
+    CONTEST_MF_INST,
+    CONTEST_MF_INSTSHORT,
+    CONTEST_MF_FAC,
+    CONTEST_MF_FACSHORT,
+    CONTEST_MF_OCCUPATION,
+    CONTEST_LAST_MEMBER_FIELD
   };
 
 struct contest_field
@@ -63,8 +98,6 @@ struct contest_field
   struct xml_tree b;
   int mandatory;
   int id;
-  int size;
-  int maxlength;
 };
 
 struct contest_ip
@@ -81,13 +114,23 @@ struct contest_access
   int default_is_allow;
 };
 
+struct contest_member
+{
+  struct xml_tree b;
+  int min_count;
+  int max_count;
+  struct contest_field *fields[CONTEST_LAST_MEMBER_FIELD];
+};
+
 struct contest_desc
 {
   struct xml_tree b;
   int id;
+  int autoregister;
   unsigned char *name;
   struct contest_access *access;
   struct contest_field *fields[CONTEST_LAST_FIELD];
+  struct contest_member *members[CONTEST_LAST_MEMBER];
 };
 
 struct contest_list

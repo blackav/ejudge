@@ -61,8 +61,30 @@ userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
                             int *p_contest_id);
 
 int
-userlist_clnt_get_email(struct userlist_clnt *clnt,
-                        int uid, unsigned char **p_email,
-                        int *p_show_email);
+userlist_clnt_get_info(struct userlist_clnt *clnt,
+                       int uid, unsigned char **p_info);
+int
+userlist_clnt_set_info(struct userlist_clnt *clnt,
+                       int uid, unsigned char *info);
+int
+userlist_clnt_set_passwd(struct userlist_clnt *clnt,
+                         int uid, unsigned char *old_pwd,
+                         unsigned char *new_pwd);
+int
+userlist_clnt_get_contests(struct userlist_clnt *clnt,
+                           int uid, unsigned char **p_info);
+int
+userlist_clnt_register_contest(struct userlist_clnt *clnt,
+                               int user_id,
+                               int contest_id);
+int
+userlist_clnt_remove_member(struct userlist_clnt *clnt,
+		            int user_id, int role_id, int pers_id,
+			    int serial);
+
+int
+userlist_clnt_pass_fd(struct userlist_clnt *clnt,
+                      int fds_num,
+                      int *fds);
 
 #endif /* __USERLIST_CLNT_H__ */
