@@ -628,13 +628,20 @@ run_tests(struct section_tester_data *tst,
         task_SetRedir(tsk, 2, TSR_DUP, 1);
         task_SetWorkingDir(tsk, tst->check_dir);
         task_SetPathAsArg0(tsk);
+        if (prb->checker_real_time_limit > 0) {
+          task_SetMaxRealTime(tsk, prb->checker_real_time_limit);
+        }
+
         task_Start(tsk);
         task_Wait(tsk);
 
         generic_read_file(&tests[cur_test].chk_out, 0, 0, 0,
                           0, check_out_path, "");
         /* analyze error codes */
-        if (task_Status(tsk) == TSK_SIGNALED) {
+        if (task_IsTimeout(tsk)) {
+          status = RUN_CHECK_FAILED;
+          failed_test = cur_test;
+        } else if (task_Status(tsk) == TSK_SIGNALED) {
           /* crashed */
           status = RUN_CHECK_FAILED;
           failed_test = cur_test;
