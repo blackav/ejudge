@@ -1,3 +1,35 @@
+2002-10-03  Alexander Chernov  <cher@ispras.ru>
+
+	* makefile: list of files are moved to a separate file `files.make'.
+
+	* files.make: Initial revision
+
+2002-10-02  Alexander Chernov  <cher@ispras.ru>
+
+	* userlist_xml.c: some functions are moved to separate files.
+
+	* nls.h: (nls_lookup_table) a new function is added.
+
+	* userlist_cfg.h, userlist_cfg.c, utf8_utils.h, utf8_utils.c, nls.c:
+	Initial revision
+
+2002-09-30  Alexander Chernov  <cher@ispras.ru>
+
+	* sha.h, sha.c: copyright notice is added.
+
+	* nls_iso8859-5.c: added exported reference to translation table.
+
+	* nls.h: #endif is fixed.
+
+	* makefile: file list is updated (NLS files and XML parsing).
+
+	* userlist_xml.c, userlist.h, userlist.c, nls_utf8.c:
+	Initial revision
+
+2002-09-24  Alexander Chernov  <cher@ispras.ru>
+
+	* sha.h, sha.c: Initial revision
+
 2002-09-01  Alexander Chernov  <cher@ispras.ru>
 
 	* sformat.c, prepare.c, parsecfg.c: <string.h> is included.
