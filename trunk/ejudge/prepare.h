@@ -76,6 +76,8 @@ struct section_global_data
 
   int    team_enable_src_view;  /* teams are allowed to view sources? */
   int    team_enable_rep_view;  /* teams are allowed to view reports? */
+  int    team_enable_ce_view;   /* teams are allowed to view compile errs? */
+  int    team_show_judge_report;
   int    disable_clars;         /* clarification requests disabled */
   int    disable_team_clars;    /* team cannot compose a clarification */
   int    ignore_compile_errors; /* ignore CE result for score calculation */
@@ -233,6 +235,10 @@ struct section_global_data
   int checker_real_time_limit;
   int show_deadline;       /* show deadlines in problem name? */
 
+  int use_gzip;                 /* allow gzip on large files (uses zlib) */
+  int min_gzip_size;            /* minimal file size to gzip (4096) */
+  int use_dir_hierarchy;        /* create subdirs to increase speed */
+
   // variant support
   path_t variant_map_file;
   struct variant_map *variant_map;
@@ -250,6 +256,8 @@ struct section_problem_data
   int    real_time_limit;       /* maximum astronomical time for a problem */
   int    time_limit;            /* time limit in secs */
   int    team_enable_rep_view;  /* are teams allowed to view reports? */
+  int    team_enable_ce_view;
+  int    team_show_judge_report;
   int    full_score;            /* score for complete solution */
   int    test_score;            /* score for one test */
   int    run_penalty;           /* penalty for one run */
