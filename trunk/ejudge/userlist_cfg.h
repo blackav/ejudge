@@ -34,6 +34,15 @@ struct userlist_cfg_admin_proc
   int uid;
 };
 
+struct userlist_cfg_user_map
+{
+  struct xml_tree b;
+
+  int system_uid;
+  unsigned char *system_user_str;
+  unsigned char *local_user_str;
+};
+
 struct userlist_cfg
 {
   struct xml_tree b;
@@ -49,6 +58,7 @@ struct userlist_cfg
   unsigned char *register_email;
   unsigned char *l10n_dir;
   struct xml_tree *admin_processes;
+  struct xml_tree *user_map;
 };
 
 struct userlist_cfg *userlist_cfg_parse(char const *);
