@@ -46,6 +46,8 @@ enum
     TG_REGISTER_EMAIL,
     TG_ADMIN_PROCESSES,
     TG_ADMIN_PROCESS,
+    TG_USER_MAP,
+    TG_MAP,
   };
 enum
   {
@@ -55,6 +57,8 @@ enum
     AT_L10N_DIR,
     AT_USER,
     AT_PATH,
+    AT_SYSTEM_USER,
+    AT_LOCAL_USER,
   };
 
 static char const * const tag_map[] =
@@ -69,6 +73,8 @@ static char const * const tag_map[] =
   "register_email",
   "admin_processes",
   "admin_process",
+  "user_map",
+  "map",
 
   0
 };
@@ -82,6 +88,8 @@ static char const * const attn_map[] =
   "l10n_dir",
   "user",
   "path",
+  "system_user",
+  "local_user",
 
   0
 };
@@ -99,9 +107,12 @@ tree_alloc_func(int tag)
   case TG_REGISTER_EMAIL:
   case TG_REGISTER_URL:
   case TG_ADMIN_PROCESSES:
+  case TG_USER_MAP:
     return xcalloc(1, sizeof(struct xml_tree));
   case TG_ADMIN_PROCESS:
     return xcalloc(1, sizeof(struct userlist_cfg_admin_proc));
+  case TG_MAP:
+    return xcalloc(1, sizeof(struct userlist_cfg_user_map));
   default:
     SWERR(("unhandled tag: %d", tag));
   }
@@ -241,6 +252,63 @@ parse_processes(char const *path, struct xml_tree *p)
   }
   return p;
 }
+
+static struct xml_tree *
+parse_user_map(char const *path, struct xml_tree *p)
+{
+  struct xml_tree *q;
+  struct xml_attn *a;
+  struct userlist_cfg_user_map *m;
+
+  ASSERT(p);
+  ASSERT(p->tag == TG_USER_MAP);
+  xfree(p->text); p->text = 0;
+  if (p->first) {
+    err_attr_not_allowed(path, p);
+    return 0;
+  }
+  for (q = p->first_down; q; q = q->right) {
+    if (q->tag != TG_MAP) {
+      err_invalid_elem(path, q);
+      return 0;
+    }
+    if (q->text && *q->text) {
+      err_text_not_allowed(path, q);
+      return 0;
+    }
+    if (q->first_down) {
+      err_nested_not_allowed(path, q);
+      return 0;
+    }
+    m = (struct userlist_cfg_user_map*) q;
+    for (a = q->first; a; a = a->next) {
+      switch (a->tag) {
+      case AT_SYSTEM_USER:
+        {
+          struct passwd *pwd;
+
+          if (!(pwd = getpwnam(a->text))) {
+            err("%s:%d:%d: user %s does not exist", path, a->line, a->column,
+                a->text);
+            return 0;
+          }
+          m->system_uid = pwd->pw_uid;
+          info("user %s uid is %d", a->text, pwd->pw_uid);
+        }
+        m->system_user_str = a->text; a->text = 0;
+        break;
+      case AT_LOCAL_USER:
+        m->local_user_str = a->text; a->text = 0;
+        break;
+      default:
+        err_invalid_attn(path, a);
+        return 0;
+      }
+    }
+  }
+  return p;
+}
+
 struct userlist_cfg *
 userlist_cfg_parse(char const *path)
 {
@@ -321,6 +389,9 @@ userlist_cfg_parse(char const *path)
       break;
     case TG_ADMIN_PROCESSES:
       if (!(cfg->admin_processes = parse_processes(path, p))) goto failed;
+      break;
+    case TG_USER_MAP:
+      if (!(cfg->user_map = parse_user_map(path, p))) goto failed;
       break;
     default:
       err("%s:%d:%d: element <%s> is invalid here",
