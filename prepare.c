@@ -25,6 +25,7 @@
 #include "xalloc.h"
 #include "logger.h"
 #include "osdeps.h"
+#include "sformat.h"
 
 #include <stdio.h>
 
@@ -49,6 +50,12 @@ struct section_tester_data   *testers[MAX_TESTER + 1];
 int max_lang;
 int max_prob;
 int max_tester;
+
+static struct section_problem_data  *abstr_probs[MAX_PROBLEM + 1];
+static struct section_tester_data   *abstr_testers[MAX_TESTER + 1];
+
+static int max_abstr_prob;
+static int max_abstr_tester;
 
 #define GLOBAL_OFFSET(x)   XOFFSET(struct section_global_data, x)
 #define GLOBAL_PARAM(x, t) { #x, t, GLOBAL_OFFSET(x) }
@@ -132,6 +139,7 @@ static struct config_parse_info section_global_params[] =
 static struct config_parse_info section_problem_params[] =
 {
   PROBLEM_PARAM(id, "d"),
+  PROBLEM_PARAM(abstract, "d"),
   PROBLEM_PARAM(use_stdin, "d"),
   PROBLEM_PARAM(use_stdout, "d"),
   PROBLEM_PARAM(time_limit, "d"),
@@ -140,6 +148,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(test_score, "d"),
   PROBLEM_PARAM(run_penalty, "d"),
 
+  PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
   PROBLEM_PARAM(long_name, "s"),
   PROBLEM_PARAM(test_dir, "s"),
@@ -191,6 +200,9 @@ static struct config_parse_info section_tester_params[] =
   TESTER_PARAM(arch, "s"),
   TESTER_PARAM(key, "s"),
 
+  TESTER_PARAM(abstract, "d"),
+  TESTER_PARAM(super, "s"),
+
   TESTER_PARAM(server_root_dir, "s"),
   TESTER_PARAM(server_var_dir, "s"),
   TESTER_PARAM(server_run_dir, "s"),
@@ -217,15 +229,18 @@ static int problem_counter;
 static int language_counter;
 static int tester_counter;
 
+static void problem_init_func(struct generic_section_config *);
+static void tester_init_func(struct generic_section_config *);
+
 static struct config_section_info params[] =
 {
   { "global", sizeof(struct section_global_data), section_global_params },
   { "problem", sizeof(struct section_problem_data), section_problem_params,
-    &problem_counter },
+    &problem_counter, problem_init_func },
   { "language",sizeof(struct section_language_data),section_language_params,
     &language_counter },
   { "tester", sizeof(struct section_tester_data), section_tester_params,
-    &tester_counter },
+    &tester_counter, tester_init_func },
   { NULL, 0, NULL }
 };
 
@@ -302,8 +317,25 @@ find_tester(int problem, char const *arch)
 #define DFLT_T_ERROR_FILE         "error"
 
 static void
-set_initial_values(void)
+problem_init_func(struct generic_section_config *gp)
 {
+  struct section_problem_data *p = (struct section_problem_data*) gp;
+
+  p->use_stdin = -1;
+  p->use_stdout = -1;
+  p->team_enable_rep_view = -1;
+  p->use_corr = -1;
+  p->test_sfx[0] = 1;
+  p->corr_sfx[0] = 1;
+}
+
+static void
+tester_init_func(struct generic_section_config *gp)
+{
+  struct section_tester_data *p = (struct section_tester_data*) gp;
+
+  p->is_dos = -1;
+  p->no_redirect = -1;
 }
 
 static int
@@ -311,7 +343,9 @@ set_defaults(int mode)
 {
   struct generic_section_config *p;
 
-  int i, j;
+  int i, j, si;
+  char *ish;
+  char *sish;
 
   /* find global section */
   for (p = config; p; p = p->next)
@@ -542,53 +576,245 @@ set_defaults(int mode)
     }
   }
 
+  for (i = 0; i < max_abstr_prob && mode != PREPARE_COMPILE; i++) {
+    if (!abstr_probs[i]->short_name[0]) {
+      err(_("abstract problem must define problem short name"));
+      return -1;
+    }
+    ish = abstr_probs[i]->short_name;
+    if (abstr_probs[i]->id) {
+      err(_("abstract problem %s must not define problem id"), ish);
+      return -1;
+    }
+    if (abstr_probs[i]->long_name[0]) {
+      err(_("abstract problem %s must not define problem long name"), ish);
+      return -1;
+    }
+    if (abstr_probs[i]->super[0]) {
+      err(_("abstract problem %s cannot have a superproblem"), ish);
+      return -1;
+    }
+  }
+
   for (i = 1; i <= max_prob && mode != PREPARE_COMPILE; i++) {
     if (!probs[i]) continue;
-    if (!probs[i]->short_name[0]) {
-      info(_("problem.%d.short_name set to \"p%d\""), i, i);
-      sprintf(probs[i]->short_name, "p%d", i);
+    si = -1;
+    sish = 0;
+    if (probs[i]->super[0]) {
+      for (si = 0; si < max_abstr_prob; si++)
+        if (!strcmp(abstr_probs[si]->short_name, probs[i]->super))
+          break;
+      if (si >= max_abstr_prob) {
+        err(_("abstract problem `%s' is not defined"), probs[i]->super);
+        return -1;
+      }
+      sish = abstr_probs[si]->short_name;
     }
+    if (!probs[i]->short_name[0]) {
+      err(_("problem %d short name must be set"), i);
+      return -1;
+    }
+    ish = probs[i]->short_name;
     if (!probs[i]->long_name[0]) {
-      info(_("problem.%d.long_name set to \"Problem %d\""), i, i);
-      sprintf(probs[i]->long_name, "Problem %d", i);
+      info(_("problem.%s.long_name set to \"Problem %s\""), ish, ish);
+      sprintf(probs[i]->long_name, "Problem %s", ish);
     }
 
-    if (!probs[i]->team_enable_rep_view) {
-      info(_("problem.%d.team_enable_rep_view inherited from global settings"),
-           i);
+    if (probs[i]->team_enable_rep_view == -1 && si != -1
+        && abstr_probs[si]->team_enable_rep_view != -1) {
+      probs[i]->team_enable_rep_view = abstr_probs[si]->team_enable_rep_view;
+      info(_("problem.%s.team_enable_rep_view inherited from problem.%s (%d)"),
+           ish, sish, probs[i]->team_enable_rep_view);
+    }
+    if (probs[i]->team_enable_rep_view == -1) {
+      info(_("problem.%s.team_enable_rep_view inherited from global (%d)"),
+           ish, global->team_enable_rep_view);
       probs[i]->team_enable_rep_view = global->team_enable_rep_view;
-    } else if (probs[i]->team_enable_rep_view == 2) {
+    } else if (probs[i]->team_enable_rep_view == -1) {
       probs[i]->team_enable_rep_view = 0;
+    }
+
+    if (!probs[i]->full_score && si != -1
+        && abstr_probs[si]->full_score) {
+      probs[i]->full_score = abstr_probs[si]->full_score;
+      info(_("problem.%s.full_score inherited from problem.%s (%d)"),
+           ish, sish, probs[i]->full_score);
     }
     if (!probs[i]->full_score) {
       probs[i]->full_score = DFLT_P_FULL_SCORE;
-      info(_("problem.%d.full_score set to %d"), i, DFLT_P_FULL_SCORE);
+      info(_("problem.%s.full_score set to %d"), ish, DFLT_P_FULL_SCORE);
+    }
+
+    if (!probs[i]->test_score && si != -1
+        && abstr_probs[si]->test_score) {
+      probs[i]->test_score = abstr_probs[si]->test_score;
+      info(_("problem.%s.test_score inherited from problem.%s (%d)"),
+           ish, sish, probs[i]->test_score);
     }
     if (!probs[i]->test_score) {
       probs[i]->test_score = DFLT_P_TEST_SCORE;
-      info(_("problem.%d.test_score set to %d"), i,  DFLT_P_TEST_SCORE);
+      info(_("problem.%s.test_score set to %d"), ish,  DFLT_P_TEST_SCORE);
+    }
+
+    if (!probs[i]->run_penalty && si != -1
+        && abstr_probs[si]->run_penalty) {
+      probs[i]->run_penalty = abstr_probs[si]->run_penalty;
+      info(_("problem.%s.run_penalty inherited from problem.%s (%d)"),
+           ish, sish, probs[i]->run_penalty);
     }
     if (!probs[i]->run_penalty) {
       probs[i]->run_penalty = DFLT_P_RUN_PENALTY;
-      info(_("problem.%d.run_penalty set to %d"), i, DFLT_P_RUN_PENALTY);
+      info(_("problem.%s.run_penalty set to %d"), ish, DFLT_P_RUN_PENALTY);
     }
     
+    if (probs[i]->use_stdin == -1 && si != -1
+        && abstr_probs[si]->use_stdin != -1) {
+      probs[i]->use_stdin = abstr_probs[si]->use_stdin;
+      info(_("problem.%s.use_stdin inherited from problem.%s (%d)"),
+           ish, sish, probs[i]->use_stdin);
+    }
+    if (probs[i]->use_stdin == -1) {
+      probs[i]->use_stdin = 0;
+      info(_("problem.%s.use_stdin set to %d"), ish, 0);
+    }
+
+    if (probs[i]->use_stdout == -1 && si != -1
+        && abstr_probs[si]->use_stdout != -1) {
+      probs[i]->use_stdout = abstr_probs[si]->use_stdout;
+      info(_("problem.%s.use_stdout inherited from problem.%s (%d)"),
+           ish, sish, probs[i]->use_stdout);
+    }
+    if (probs[i]->use_stdout == -1) {
+      probs[i]->use_stdout = 0;
+      info(_("problem.%s.use_stdout set to %d"), ish, 0);
+    }
+
+    if (!probs[i]->time_limit && si != -1 && abstr_probs[si]->time_limit) {
+      probs[i]->time_limit = abstr_probs[si]->time_limit;
+      info(_("problem.%s.time_limit inherited from problem.%s (%d)"),
+           ish, sish, probs[i]->time_limit);
+    }
+    if (!probs[i]->test_score_list[0] && si != -1
+        && abstr_probs[si]->test_score_list[0]) {
+      strcpy(probs[i]->test_score_list, abstr_probs[si]->test_score_list);
+      info(_("problem.%s.test_score_list inherited from problem.%s (`%s')"),
+           ish, sish, probs[i]->test_score_list);
+    }
+    if (probs[i]->test_sfx[0] == 1 && si != -1 &&
+        abstr_probs[si]->test_sfx[0] != 1) {
+      strcpy(probs[i]->test_sfx, abstr_probs[si]->test_sfx);
+      info(_("problem.%s.test_sfx inherited from problem.%s ('%s')"),
+           ish, sish, probs[i]->test_sfx);
+    }
+    if (probs[i]->test_sfx[0] == 1 && global->test_sfx[0] != 1) {
+      strcpy(probs[i]->test_sfx, global->test_sfx);
+      info(_("problem.%s.test_sfx inherited from global ('%s')"),
+           ish, probs[i]->test_sfx);
+    }
+    if (probs[i]->test_sfx[0] == 1) {
+      probs[i]->test_sfx[0] = 0;
+    }
+    if (probs[i]->corr_sfx[0] == 1 && si != -1 &&
+        abstr_probs[si]->corr_sfx[0] != 1) {
+      strcpy(probs[i]->corr_sfx, abstr_probs[si]->corr_sfx);
+      info(_("problem.%s.corr_sfx inherited from problem.%s ('%s')"),
+           ish, sish, probs[i]->corr_sfx);
+    }
+    if (probs[i]->corr_sfx[0] == 1 && global->corr_sfx[0] != 1) {
+      strcpy(probs[i]->corr_sfx, global->corr_sfx);
+      info(_("problem.%s.corr_sfx inherited from global ('%s')"),
+           ish, probs[i]->corr_sfx);
+    }
+    if (probs[i]->corr_sfx[0] == 1) {
+      probs[i]->corr_sfx[0] = 0;
+    }
+
     if (mode == PREPARE_RUN) {
+      if (!probs[i]->test_dir[0] && si != -1
+          && abstr_probs[si]->test_dir[0]) {
+        sformat_message(probs[i]->test_dir, PATH_MAX,
+                        abstr_probs[si]->test_dir,
+                        NULL, probs[i], NULL, NULL, NULL);
+        info(_("problem.%s.test_dir taken from problem.%s ('%s')"),
+             ish, sish, probs[i]->test_dir);
+      }
       if (!probs[i]->test_dir[0]) {
-        info(_("problem.%d.test_dir set to %s"), i, probs[i]->short_name);
+        info(_("problem.%s.test_dir set to %s"), ish, probs[i]->short_name);
         pathcpy(probs[i]->test_dir, probs[i]->short_name);
       }
       path_add_dir(probs[i]->test_dir, global->test_dir);
+      info(_("problem.%s.test_dir is '%s'"), 
+           ish, probs[i]->test_dir);
+
+      if (!probs[i]->corr_dir[0] && si != -1
+          && abstr_probs[si]->corr_dir[0]) {
+        sformat_message(probs[i]->corr_dir, PATH_MAX,
+                        abstr_probs[si]->corr_dir,
+                        NULL, probs[i], NULL, NULL, NULL);
+        info(_("problem.%s.corr_dir taken from problem.%s ('%s')"),
+             ish, sish, probs[i]->corr_dir);
+      }
       if (probs[i]->corr_dir[0]) {
         path_add_dir(probs[i]->corr_dir, global->corr_dir);
+        info(_("problem.%s.corr_dir is '%s'"), ish, probs[i]->corr_dir);
+      }
+
+      if (!probs[i]->input_file[0] && si != -1
+          && abstr_probs[si]->input_file[0]) {
+        strcpy(probs[i]->input_file, abstr_probs[si]->input_file);
+        info(_("problem.%s.input_file inherited from problem.%s ('%s')"),
+             ish, sish, probs[i]->input_file);
       }
       if (!probs[i]->input_file[0]) {
-        info(_("problem.%d.input_file set to %s"), i, DFLT_P_INPUT_FILE);
+        info(_("problem.%s.input_file set to %s"), ish, DFLT_P_INPUT_FILE);
         pathcpy(probs[i]->input_file, DFLT_P_INPUT_FILE);
       }
+      if (!probs[i]->output_file[0] && si != -1
+          && abstr_probs[si]->output_file[0]) {
+        strcpy(probs[i]->output_file, abstr_probs[si]->output_file);
+        info(_("problem.%s.output_file inherited from problem.%s ('%s')"),
+             ish, sish, probs[i]->output_file);
+      }
       if (!probs[i]->output_file[0]) {
-        info(_("problem.%d.output_file set to %s"), i, DFLT_P_OUTPUT_FILE);
+        info(_("problem.%s.output_file set to %s"), ish, DFLT_P_OUTPUT_FILE);
         pathcpy(probs[i]->output_file, DFLT_P_OUTPUT_FILE);
+      }
+
+      if (probs[i]->use_corr == -1 && si != -1
+          && abstr_probs[si]->use_corr != -1) {
+        probs[i]->use_corr = abstr_probs[si]->use_corr;
+        info(_("problem.%s.use_corr inherited from problem.%s (%d)"),
+             ish, sish, probs[i]->use_corr);
+      }
+      if (probs[i]->use_corr == -1 && probs[i]->corr_dir[0]) {
+        probs[i]->use_corr = 1;
+      }
+      if (probs[i]->use_corr == -1) {
+        probs[i]->use_corr = 0;
+      }
+    }
+  }
+
+  if (mode == PREPARE_SERVE || mode == PREPARE_RUN) {
+    for (i = 0; i < max_abstr_tester; i++) {
+      struct section_tester_data *atp = abstr_testers[i];
+
+      if (!atp->name[0]) {
+        err(_("abstract tester must define tester name"));
+        return -1;
+      }
+      ish = atp->name;
+      if (atp->id) {
+        err(_("abstract tester %s must not have id"), ish);
+        return -1;
+      }
+      if (atp->super[0]) {
+        err(_("abstract tester %s must not have a supertester"), ish);
+        return -1;
+      }
+      if (atp->problem || atp->problem_name[0]) {
+        err(_("abstract tester %s cannot reference a problem"), ish);
+        return -1;
       }
     }
   }
@@ -596,7 +822,38 @@ set_defaults(int mode)
 #define TESTER_INIT_FIELD(f,d,c) do { if (!testers[i]->f[0]) { info(_("tester.%d.%s set to %s"), i, #f, d); pathcat(testers[i]->f, d); } path_add_dir(testers[i]->f, testers[i]->c); } while(0)
   if (mode == PREPARE_SERVE || mode == PREPARE_RUN) {
     for (i = 1; i <= max_tester; i++) {
+      struct section_tester_data *tp = 0;
+      struct section_tester_data *atp = 0;
+
       if (!testers[i]) continue;
+      tp = testers[i];
+
+      si = -1;
+      sish = 0;
+      if (tp->super[0]) {
+        for (si = 0; si < max_abstr_tester; si++) {
+          atp = abstr_testers[si];
+          if (!strcmp(atp->name, tp->super))
+            break;
+        }
+        if (si >= max_abstr_tester) {
+          err(_("abstract tester %s not found"), tp->super);
+          return -1;
+        }
+        sish = atp->name;
+      }
+
+      /* copy arch and key */
+      if (!tp->arch[0] && atp && atp->arch[0]) {
+        strcpy(tp->arch, atp->arch);
+        info(_("tester.%d.arch inherited from tester.%s ('%s')"),
+             i, sish, tp->arch);
+      }
+      if (!tp->key[0] && atp && atp->key[0]) {
+        strcpy(tp->key, atp->key);
+        info(_("tester.%d.key inherited from tester.%s ('%s')"),
+             i, sish, tp->key);
+      }
 
       if (!testers[i]->name[0]) {
         sprintf(testers[i]->name, "tst_%s",
@@ -607,16 +864,44 @@ set_defaults(int mode)
         }
         info(_("tester.%d.name set to \"%s\""), i, testers[i]->name);
       }
+
       if (mode == PREPARE_RUN) {
+        if (!tp->tester_dir[0] && atp && atp->tester_dir[0]) {
+          sformat_message(tp->tester_dir, PATH_MAX, atp->tester_dir,
+                          global, probs[tp->problem], NULL,
+                          tp, NULL);
+          info(_("tester.%d.tester_dir inherited from tester.%s ('%s')"),
+               i, sish, tp->tester_dir);
+        }
         if (!testers[i]->tester_dir[0]) {
           info(_("tester.%d.tester_dir set to \"%s\""), i, testers[i]->name);
           pathcpy(testers[i]->tester_dir, testers[i]->name);
         }
         path_add_dir(testers[i]->tester_dir, global->work_dir);
+        if (!tp->tmp_dir[0] && atp && atp->tmp_dir[0]) {
+          sformat_message(tp->tmp_dir, PATH_MAX, atp->tmp_dir,
+                          global, probs[tp->problem], NULL,
+                          tp, NULL);
+          info(_("tester.%d.tmp_dir inherited from tester.%s ('%s')"),
+               i, sish, tp->tmp_dir);
+        }
         TESTER_INIT_FIELD(tmp_dir, DFLT_T_TMP_DIR, tester_dir);
+        if (!tp->work_dir[0] && atp && atp->work_dir[0]) {
+          sformat_message(tp->work_dir, PATH_MAX, atp->work_dir,
+                          global, probs[tp->problem], NULL,
+                          tp, NULL);
+          info(_("tester.%d.work_dir inherited from tester.%s ('%s')"),
+               i, sish, tp->work_dir);
+        }
         TESTER_INIT_FIELD(work_dir, DFLT_T_WORK_DIR, tester_dir);
       }
-      
+
+      if (!tp->server_root_dir[0] && atp && atp->server_root_dir[0]) {
+        strcpy(tp->server_root_dir, atp->server_root_dir);
+        info(_("tester.%d.server_root_dir inherited from tester.%s ('%s')"),
+             i, sish, tp->server_root_dir);
+      }
+
       if (mode != PREPARE_RUN || !testers[i]->server_root_dir[0]) {
         //info("tester.%d.server_root_dir set to %s", i, global->root_dir);
         pathcpy(testers[i]->server_root_dir, global->root_dir);
@@ -635,12 +920,57 @@ set_defaults(int mode)
         TESTER_INIT_FIELD(run_team_report_dir,DFLT_G_RUN_TEAM_REPORT_DIR,server_run_dir);
       }
 
+      if (!tp->exe_dir[0] && atp && atp->exe_dir[0]) {
+          sformat_message(tp->exe_dir, PATH_MAX, atp->exe_dir,
+                          global, probs[tp->problem], NULL,
+                          tp, NULL);
+          info(_("tester.%d.exe_dir inherited from tester.%s ('%s')"),
+               i, sish, tp->exe_dir);        
+      }
       TESTER_INIT_FIELD(exe_dir, testers[i]->name, server_exe_dir);
 
+      if (tp->is_dos == -1 && atp && atp->is_dos != -1) {
+        tp->is_dos = atp->is_dos;
+        info(_("tester.%d.is_dos inherited from tester.%s (%d)"),
+             i, sish, tp->is_dos);        
+      }
+      if (tp->is_dos == -1) {
+        tp->is_dos = 0;
+      }
+      if (tp->no_redirect == -1 && atp && atp->no_redirect != -1) {
+        tp->no_redirect = atp->no_redirect;
+        info(_("tester.%d.no_redirect inherited from tester.%s (%d)"),
+             i, sish, tp->no_redirect);        
+      }
+      if (tp->no_redirect == -1) {
+        tp->no_redirect = 0;
+      }
+      if (!tp->errorcode_file && atp && atp->errorcode_file) {
+        sformat_message(tp->errorcode_file, PATH_MAX, atp->errorcode_file,
+                        global, probs[tp->problem], NULL,
+                        tp, NULL);
+        info(_("tester.%d.errorcode_file inherited from tester.%s ('%s')"),
+             i, sish, tp->errorcode_file);        
+      }
+
       if (mode == PREPARE_RUN) {
+        if (!tp->error_file[0] && atp && atp->error_file[0]) {
+          sformat_message(tp->error_file, PATH_MAX, atp->error_file,
+                          global, probs[tp->problem], NULL,
+                          tp, NULL);
+          info(_("tester.%d.error_file inherited from tester.%s ('%s')"),
+               i, sish, tp->error_file);        
+        }
         if (!testers[i]->error_file[0]) {
           info(_("tester.%d.error_file set to %s"), i, DFLT_T_ERROR_FILE);
           pathcpy(testers[i]->error_file, DFLT_T_ERROR_FILE);
+        }
+        if (!tp->check_cmd[0] && atp && atp->check_cmd[0]) {
+          sformat_message(tp->check_cmd, PATH_MAX, atp->check_cmd,
+                          global, probs[tp->problem], NULL,
+                          tp, NULL);
+          info(_("tester.%d.check_cmd inherited from tester.%s ('%s')"),
+               i, sish, tp->check_cmd);        
         }
         if (!testers[i]->check_cmd[0]) {
           err(_("tester.%d.check_cmd must be set"), i);
@@ -648,9 +978,27 @@ set_defaults(int mode)
         }
         pathmake4(testers[i]->check_cmd, global->checker_dir, "/",
                   testers[i]->check_cmd, 0);
+        if (!tp->start_cmd[0] && atp && atp->start_cmd[0]) {
+          sformat_message(tp->start_cmd, PATH_MAX, atp->start_cmd,
+                          global, probs[tp->problem], NULL,
+                          tp, NULL);
+          info(_("tester.%d.start_cmd inherited from tester.%s ('%s')"),
+               i, sish, tp->start_cmd);        
+        }
         if (testers[i]->start_cmd[0]) {
           pathmake4(testers[i]->start_cmd, global->script_dir, "/",
                     testers[i]->start_cmd, 0);
+        }
+        if (!tp->prepare_cmd[0] && atp && atp->prepare_cmd[0]) {
+          sformat_message(tp->prepare_cmd, PATH_MAX, atp->prepare_cmd,
+                          global, probs[tp->problem], NULL,
+                          tp, NULL);
+          info(_("tester.%d.prepare_cmd inherited from tester.%s ('%s')"),
+               i, sish, tp->prepare_cmd);        
+        }
+        if (tp->prepare_cmd[0]) {
+          pathmake4(tp->prepare_cmd, global->script_dir, "/",
+                    tp->prepare_cmd, 0);
         }
       }
     }
@@ -701,59 +1049,76 @@ collect_sections(int mode)
       last_lang = l->id;
     } else if (!strcmp(p->name, "problem") && mode != PREPARE_COMPILE) {
       q = (struct section_problem_data*) p;
-      if (!q->id) info(_("assigned problem id = %d"), (q->id = last_prob + 1));
-      if (q->id <= 0 || q->id > MAX_PROBLEM) {
-        err(_("problem id %d is out of range"), q->id);
-        return -1;
-      }
-      if (probs[q->id]) {
-        err(_("duplicated problem id %d"), q->id);
-        return -1;
-      }
-      probs[q->id] = q;
-      if (q->id > max_prob) max_prob = q->id;
-      last_prob = q->id;
-    } else if (!strcmp(p->name, "tester") && mode != PREPARE_COMPILE) {
-      t = (struct section_tester_data *) p;
-      if (!t->id) info(_("assigned tester id = %d"), (t->id = last_tester + 1));
-      if (t->id <= 0 || t->id > MAX_TESTER) {
-        err(_("tester id %d is out of range"), t->id);
-        return -1;
-      }
-      if (testers[t->id]) {
-        err(_("duplicated tester id %d"), t->id);
-        return -1;
-      }
-      if (!t->problem && !t->problem_name[0]) {
-        err(_("no problem specified for tester %d"), t->id);
-        return -1;
-      }
-      if (t->problem && t->problem_name[0]) {
-        err(_("only one of problem id and problem name must be specified"));
-        return -1;
-      }
-      if (t->problem && !probs[t->problem]) {
-        err(_("no problem %d for tester %d"), t->problem, t->id);
-        return -1;
-      }
-      if (t->problem_name) {
-        int j;
-
-        for (j = 1; j <= max_prob; j++) {
-          if (probs[j] && !strcmp(probs[j]->short_name, t->problem_name))
-            break;
-        }
-        if (j > max_prob) {
-          err(_("no problem %s for tester %d"), t->problem_name, t->id);
+      if (q->abstract) {
+        if (max_abstr_prob > MAX_PROBLEM) {
+          err(_("too many abstract problems"));
           return -1;
         }
-        info(_("tester %d: problem '%s' has id %d"),
-             t->id, t->problem_name, j);
-        t->problem = j;
+        abstr_probs[max_abstr_prob++] = q;
+      } else {
+        if (!q->id) info(_("assigned problem id = %d"), (q->id=last_prob + 1));
+        if (q->id <= 0 || q->id > MAX_PROBLEM) {
+          err(_("problem id %d is out of range"), q->id);
+          return -1;
+        }
+        if (probs[q->id]) {
+          err(_("duplicated problem id %d"), q->id);
+          return -1;
+        }
+        probs[q->id] = q;
+        if (q->id > max_prob) max_prob = q->id;
+        last_prob = q->id;
       }
-      testers[t->id] = t;
-      if (t->id > max_tester) max_tester = t->id;
-      last_tester = t->id;
+    } else if (!strcmp(p->name, "tester") && mode != PREPARE_COMPILE) {
+      t = (struct section_tester_data *) p;
+      if (t->abstract) {
+        if (max_abstr_tester > MAX_TESTER) {
+          err(_("too many abstract tester"));
+          return -1;
+        }
+        abstr_testers[max_abstr_tester++] = t;
+      } else {
+        if (!t->id)
+          info(_("assigned tester id = %d"),(t->id = last_tester + 1));
+        if (t->id <= 0 || t->id > MAX_TESTER) {
+          err(_("tester id %d is out of range"), t->id);
+          return -1;
+        }
+        if (testers[t->id]) {
+          err(_("duplicated tester id %d"), t->id);
+          return -1;
+        }
+        if (!t->problem && !t->problem_name[0]) {
+          err(_("no problem specified for tester %d"), t->id);
+          return -1;
+        }
+        if (t->problem && t->problem_name[0]) {
+          err(_("only one of problem id and problem name must be specified"));
+          return -1;
+        }
+        if (t->problem && !probs[t->problem]) {
+          err(_("no problem %d for tester %d"), t->problem, t->id);
+          return -1;
+        }
+        if (t->problem_name) {
+          int j;
+          
+          for (j = 1; j <= max_prob; j++) {
+            if (probs[j] && !strcmp(probs[j]->short_name, t->problem_name))
+              break;
+          }
+          if (j > max_prob) {
+            err(_("no problem %s for tester %d"), t->problem_name, t->id);
+            return -1;
+          }
+          info(_("tester %d: problem '%s' has id %d"),
+               t->id, t->problem_name, j);
+          t->problem = j;
+        }
+        testers[t->id] = t;
+        if (t->id > max_tester) max_tester = t->id;
+        last_tester = t->id;
+      }
     }
   }
   return 0;
@@ -839,9 +1204,6 @@ create_dirs(int mode)
 int
 prepare(char const *config_file, int flags, int mode, char const *opts)
 {
-  /* set predefined values for certain variables */
-  set_initial_values();
-
   if ((flags & PREPARE_USE_CPP)) {
     FILE   *f = 0;
     path_t  cmd;
@@ -856,10 +1218,10 @@ prepare(char const *config_file, int flags, int mode, char const *opts)
       err(_("popen(\"%s\") failed: %s"), cmd, os_ErrorMsg());
       return -1;
     }
-    config = parse_param(NULL, f, params, (flags & PREPARE_QUIET));
+    config = parse_param(NULL, f, params, 1);
     f = 0;
   } else {
-    config = parse_param(config_file, 0, params, (flags & PREPARE_QUIET));
+    config = parse_param(config_file, 0, params, 1);
   }
   if (!config) return -1;
   write_log(0, LOG_INFO, _("Configuration file parsed ok"));
