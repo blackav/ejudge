@@ -143,6 +143,7 @@ userlist_clnt_map_contest(struct userlist_clnt *clnt,
 
 int
 userlist_clnt_generate_team_passwd(struct userlist_clnt *clnt,
+                                   int cmd,
                                    int contest_id, int out_fd);
 
 
