@@ -3,7 +3,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -131,6 +131,7 @@ struct section_global_data
   path_t run_archive_dir;       /* run archive directory */
   path_t report_archive_dir;    /* report archive directory */
   path_t team_report_archive_dir; /* team report archive directory */
+  path_t team_extra_dir;        /* team extra information directory */
 
   /* --- server status reporting --- */
   path_t status_dir;            /* server status directory */
