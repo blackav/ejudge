@@ -1,3 +1,88 @@
+2001-05-02  Alexander Chernov  <cher@ispras.ru>
+
+	* VERSION: boosted to 1.3
+
+	* team.c, master.c:
+	fixed charset passing to `client_not_configured': before `global'
+	is initialized we cannot use it, so pass NULL.
+
+	* html.c:
+	1) write_team_statistics: information about scores gained for runs
+	   is now showed in run statistics (only in KIROV scoring system);
+	2) do_write_kirov_standings updated to use `score' field of run
+	   database (scores gained for the run not counting penalties);
+	3) write_judge_allruns: information about scores gained for runs
+	   is now showed in run statistics (only in KIROV scoring system);
+	4) write_team_source_view: run_get_record now has one more parameter.
+
+	* run.c: 1) `struct testinfo' has two more fields: score, max_score;
+	2) generate_report accepts two more parameters:
+	   scores: score gained for this run, max_score: full score for this
+	   problem;
+	3) run report is extended both for judges and teams: it includes
+	   information about scores gained for each test and for the run as
+	   the whole (only in KIROV scoring system);
+	4) generate_team_report accepts two more parameters:
+	   scores, max_score (see above);
+	5) run report packed now has three parameters instead of 2:
+	   gained score included, so it is calculated in run_tests;
+	6) ntests and tscores fields are filled up during initalization
+	   for each problem;
+	7) implemeted parsing of test_score_list and some sanity checking.
+
+	* serve.c:
+	1) updated calls to `run_change_status': new parameter newscore
+	   passed as -1 where it is not relevant;
+	2) run result packet now has 3 parameters instead of 2:
+	   gained score is passed (used only in KIROV scoring system);
+	   function `read_run_packet' updated accordingly;
+	3) updated calls to `run_get_record': new parameter pscore passed
+	   as NULL;
+	4) `CHGSTAT' master judge command now has 4 parameters instead of 3:
+	   new score is passed (used only in KIROV scoring system);
+	   function `judge_change_status' is updated.
+
+	* prepare.h: 1) new [problem] section parameter: test_score_list;
+	2) added private (non-configurable) fields to
+	   `struct section_problem_data':
+	   ntests  - number of tests;
+	   tscores - array of scores for tests.
+
+	* prepare.c: 1) new parameter in [problem] section: test_score_list;
+	2) start_cmd is concatenated with script_dir only if
+	start_cmd is defined for the [tester] section;
+
+	* master.c: 1) change_status_if_asked: support to change run score
+	(if specified), applicable only to KIROV score system;
+	2) command `CHGSTAT' now has 4 parameters (new parameter `score');
+	3) view_report_if_asked: corrected header;
+
+	* runlog.c:
+	1) implemented function run_get_attempts, that return the number
+	of attepts to solve the same problem by the same team before
+	the given runid. The current implementation is dumb: it scans
+	all the previous runs, it should be fixed;
+	2) run_get_record accept one more parameter: pointer to variable
+	to fill with score gained for this run (used only in KIROV
+	score system). The pointer might be NULL, in this case nothing
+	happens;
+	3) run_change_status accept one more parameter: newscore: score
+	for the run;
+	4) record and header length increased to 99 to accomodate new
+	field;
+	5) new field is stored in the table: score for run, this parameter
+	used in KIROV score system only, though; `struct run_entry',
+	function `run_read_entry', function `run_make_record' updated
+	accordingly.
+
+	* runlog.h:
+	1) run_change_status got one more parameter: score for the run;
+	2) run_get_record got one more parameter: pointer to fill with score
+	   for the run;
+	3) new function run_get_attempts(int runid, int *pattempts)
+	   this function returns the number of attempts to solve
+	   the same problem by the same team, as given runid;
+
 2001-04-28  Alexander Chernov  <cher@ispras.ru>
 
 	* serve.c:
