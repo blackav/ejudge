@@ -234,3 +234,10 @@ osdeps.h 6 16 274767
 unix/osdeps.c 6 23 2585817
 win32/logger.c 1 16 678750
 win32/osdeps.c 1 22 1616667
+osdeps.h 6 17 217233
+unix/exec.c 6 18 2691096
+unix/logger.c 6 12 946974
+unix/osdeps.c 6 24 1912647
+win32/exec.c 1 11 1432037
+win32/logger.c 1 17 679019
+win32/osdeps.c 1 23 1652999
