@@ -119,6 +119,7 @@ enum
     USERLIST_T_COUNTRY,
     USERLIST_T_COUNTRY_EN,
     USERLIST_T_LOCATION,
+    USERLIST_T_SPELLING,
 
     USERLIST_LAST_TAG,
   };
@@ -195,7 +196,8 @@ enum
     USERLIST_NN_COUNTRY,        /* 34 */
     USERLIST_NN_COUNTRY_EN,     /* 35 */
     USERLIST_NN_LOCATION,       /* 36 */
-    USERLIST_NN_LAST = USERLIST_NN_LOCATION,
+    USERLIST_NN_SPELLING,       /* 37 */
+    USERLIST_NN_LAST = USERLIST_NN_SPELLING,
 
     USERLIST_NM_SERIAL = 0,              /* 0 */
     USERLIST_NM_FIRSTNAME,               /* 1 */
@@ -343,6 +345,7 @@ struct userlist_user
   unsigned char *country;
   unsigned char *country_en;
   unsigned char *location;
+  unsigned char *spelling;
 
   struct xml_tree *cookies;
   struct userlist_members *members[USERLIST_MB_LAST];
