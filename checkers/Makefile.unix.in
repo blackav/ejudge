@@ -82,6 +82,7 @@ CFILES=\
  skip_eoln.c\
  read_buf.c\
  read_file_by_line.c\
+ read_file_by_line_f.c\
  read_file.c\
  read_line.c\
  read_int.c\
