@@ -31,6 +31,7 @@
 #include "base64.h"
 #include "xalloc.h"
 #include "osdeps.h"
+#include "sformat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -403,81 +404,6 @@ write_team_clar(int team_id, int clar_id,
   return;
 }
 
-static int
-sformat_url(char *buf, size_t maxsize, char const *format,
-            char const *prob_short, int team_id)
-{
-  char *s = buf;
-  char const *q;
-  char const *p = format;
-  int ws = 0;
-  char tmp[64];
-
-  /* actual mode */
-  if (!buf || !maxsize) {
-  } else if (maxsize == 1) {
-    buf[0] = 0;
-  } else {
-    while (ws < maxsize - 1 && *p) {
-      if (*p == '%') {
-        q = 0;
-        switch (p[1]) {
-        case 'P':               // short name of the problem
-          q = prob_short;
-          p += 2;
-          break;
-        case 'i':               // team id
-          sprintf(tmp, "%d", team_id);
-          q = tmp;
-          p += 2;
-          break;
-        default:
-          *s++ = *p++;
-          ws++;
-        }
-        if (q) {
-          while (ws < maxsize - 1 && *q) {
-            *s++ = *q++;
-            ws++;
-          }
-          if (*q) {
-            ws++;
-            q++;
-          }
-        }
-      } else {
-        *s++ = *p++;
-        ws++;
-      }
-    }
-    *s = 0;
-  }
-
-  /* dummy mode */
-  while (*p) {
-    if (*p == '%') {
-      switch (p[1]) {
-      case 'P':
-        p += 2;
-        if (prob_short) ws += strlen(prob_short);
-        break;
-      case 'i':
-        p += 2;
-        ws += sprintf(tmp, "%d", team_id);
-        break;
-      default:
-        p++;
-        ws++;
-      }
-    } else {
-      p++;
-      ws++;
-    }
-  }
-
-  return ws;
-}
-
 #define ALLOCAZERO(a,b) do { if (!XALLOCA(a,b)) goto alloca_failed; XMEMZERO(a,b); } while(0)
 
 static void
@@ -682,8 +608,8 @@ do_write_kirov_standings(FILE *f, int client_flag)
   for (j = 0; j < p_tot; j++) {
     fprintf(f, "<th>");
     if (global->prob_info_url[0]) {
-      sformat_url(dur_str, sizeof(dur_str),
-                  global->prob_info_url, probs[p_ind[j]]->short_name, 0);
+      sformat_message(dur_str, sizeof(dur_str), global->prob_info_url,
+                      NULL, probs[p_ind[j]], NULL, NULL, NULL);
       fprintf(f, "<a href=\"%s\">", dur_str);
     }
     fprintf(f, "%s", probs[p_ind[j]]->short_name);
@@ -703,8 +629,11 @@ do_write_kirov_standings(FILE *f, int client_flag)
     fputs("</td>", f);
     fprintf(f, "<td>");
     if (global->team_info_url[0]) {
-      sformat_url(dur_str, sizeof(dur_str), global->team_info_url,
-                  0, t_ind[t]);
+      struct teamdb_export ttt;
+
+      teamdb_export_team(t_ind[t], &ttt);
+      sformat_message(dur_str, sizeof(dur_str), global->team_info_url,
+                      NULL, NULL, NULL, NULL, &ttt);
       fprintf(f, "<a href=\"%s\">", dur_str);
     }
     fprintf(f, "%s", teamdb_get_name(t_ind[t]));
@@ -921,8 +850,8 @@ do_write_standings(FILE *f, int client_flag)
   for (j = 0; j < p_tot; j++) {
     fprintf(f, "<th>");
     if (global->prob_info_url[0]) {
-      sformat_url(url_str, sizeof(url_str), global->prob_info_url,
-                  probs[p_ind[j]]->short_name, 0);
+      sformat_message(url_str, sizeof(url_str), global->prob_info_url,
+                      NULL, probs[p_ind[j]], NULL, NULL, NULL);
       fprintf(f, "<a href=\"%s\">", url_str);
     }
     fprintf(f, "%s", probs[p_ind[j]]->short_name);
@@ -942,8 +871,11 @@ do_write_standings(FILE *f, int client_flag)
     fputs("</td>", f);
     fprintf(f, "<td>");
     if (global->team_info_url[0]) {
-      sformat_url(url_str, sizeof(url_str), global->team_info_url,
-                  0, t_ind[t]);
+      struct teamdb_export ttt;
+
+      teamdb_export_team(t_ind[t], &ttt);
+      sformat_message(url_str, sizeof(url_str), global->team_info_url,
+                      NULL, NULL, NULL, NULL, &ttt);
       fprintf(f, "<a href=\"%s\">", url_str);      
     }
     fprintf(f, "%s", teamdb_get_name(t_ind[t]));
