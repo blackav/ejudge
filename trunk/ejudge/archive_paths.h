@@ -3,7 +3,7 @@
 #ifndef __ARCHIVE_PATHS_H__
 #define __ARCHIVE_PATHS_H__
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003,2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,7 @@ int archive_make_move_path(unsigned char *, size_t,
 int archive_rename(const unsigned char *, FILE *,
                    int, const unsigned char *,
                    int, const unsigned char *, int);
-int archive_remove(const unsigned char *, int, const unsigned char *, int);
+int archive_remove(const unsigned char *, int, const unsigned char *);
 
 
 #endif /* __ARCHIVE_PATHS_H__ */
