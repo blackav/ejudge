@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -48,7 +48,7 @@ userlist_clnt_list_users(struct userlist_clnt *clnt,
   if (url_len > 255) return -ULS_ERR_PROTOCOL;
   if (srch_len > 255) return -ULS_ERR_PROTOCOL;
   if (user_id < 0) return -ULS_ERR_PROTOCOL;
-  out_size = sizeof(*out) + url_len + srch_len + 2;
+  out_size = sizeof(*out) + url_len + srch_len;
   out = (struct userlist_pk_list_users*) alloca(out_size);
   if (!out) return -ULS_ERR_OUT_OF_MEM;
   memset(out, 0, sizeof(*out));
@@ -88,6 +88,5 @@ userlist_clnt_list_users(struct userlist_clnt *clnt,
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
