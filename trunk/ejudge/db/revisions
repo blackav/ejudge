@@ -189,11 +189,9 @@ make-teamdb.c 1 2 261417
 localdb.c 1 2 853852
 html.c 1 14 3459417
 prepare.c 1 19 2415434
-idmap.c 6 2 537810
 register.c 6 2 402566
 make-teamdb.c 6 2 261422
 localdb.h 6 1 113153
-idmap.h 6 1 104314
 sformat.h 1 1 106703
 sformat.c 1 1 772412
 parsecfg.h 1 7 129830
@@ -216,3 +214,4 @@ prepare.c 1 21 3549667
 run.c 1 17 1853794
 unix/exec.c 6 16 2578661
 inetdb.h 1 1 102240
+idmap.h 1 1 104309
