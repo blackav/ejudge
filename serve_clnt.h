@@ -84,6 +84,7 @@ int serve_clnt_team_page(int sock_fd,
 
 int serve_clnt_master_page(int sock_fd,
                            int out_fd,
+                           int cmd,
                            unsigned long long session_id,
                            int user_id,
                            int contest_id,
@@ -151,7 +152,8 @@ int serve_clnt_edit_run(int sock_fd,
                         int score,
                         int is_readonly,
                         int pages,
-                        unsigned char const *user_login);
+                        unsigned char const *user_login,
+                        int score_adj);
 
 int serve_clnt_new_run(int sock_fd, int mask,
                        int user_id, int prob_id, int lang_id, int status,
