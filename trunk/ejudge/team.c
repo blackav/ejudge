@@ -29,6 +29,7 @@
 #include "serve_clnt.h"
 #include "misctext.h"
 #include "client_actions.h"
+#include "l10n.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/logger.h>
@@ -130,6 +131,9 @@ static int     force_recheck_status = 0;
 
 static char   *error_log;
 
+static char *header_txt, *footer_txt;
+static int header_len, footer_len;
+
 static int serve_socket_fd = -1;
 
 enum
@@ -186,36 +190,6 @@ static void print_logout_button(unsigned char const *);
 static void print_nav_buttons(unsigned char const *,
                               unsigned char const *,
                               unsigned char const *);
-
-static int
-setup_locale(int locale_id)
-{
-#if CONF_HAS_LIBINTL - 0 == 1
-  char *e = 0;
-  char env_buf[128];
-
-  if (!global->enable_l10n) return 0;
-
-  switch (locale_id) {
-  case 1:
-    e = "ru_RU.KOI8-R";
-    break;
-  case 0:
-  default:
-    locale_id = 0;
-    e = "C";
-    break;
-  }
-
-  sprintf(env_buf, "LC_ALL=%s", e);
-  putenv(env_buf);
-  setlocale(LC_ALL, "");
-  return locale_id;
-#else
-  return 0;
-#endif /* CONF_HAS_LIBINTL */
-}
-
 static void
 error(char const *format, ...)
 {
@@ -306,7 +280,7 @@ open_serve(void)
     printf("<h2><font color=\"red\">%s</font></h2>\n",
            "Cannot connect to the contest server");
     printf("<p>Error: %s</p>\n", protocol_strerror(-serve_socket_fd));
-    client_put_footer();
+    client_put_footer(stdout, footer_txt);
     exit(0);
   }
 }
@@ -575,9 +549,18 @@ initialize(int argc, char *argv[])
     pathcpy(global->root_dir, cur_contest->root_dir);
   }
 
+  logger_set_level(-1, LOG_WARNING);
+  if (cur_contest->team_header_file) {
+    generic_read_file(&header_txt, 0, &header_len, 0,
+                      0, cur_contest->team_header_file, "");
+  }
+  if (cur_contest->team_footer_file) {
+    generic_read_file(&footer_txt, 0, &footer_len, 0,
+                      0, cur_contest->team_footer_file, "");
+  }
+
   if (set_defaults() < 0)
     client_not_configured(global->charset, "bad defaults");
-  logger_set_level(-1, LOG_WARNING);
 
   parse_client_ip();
 
@@ -701,10 +684,11 @@ display_enter_password(void)
   }
   set_cookie_if_needed();
   if (a_name) {
-    client_put_header(global->charset, "%s - &quot;%s&quot;",
-                      _("Enter password"), a_name);
+    client_put_header(stdout, header_txt, 0, global->charset, 1,
+                      "%s - &quot;%s&quot;", _("Enter password"), a_name);
   } else {
-    client_put_header(global->charset, "%s", _("Enter password"));
+    client_put_header(stdout, header_txt, 0, global->charset, 1,
+                      "%s", _("Enter password"));
   }
 
   puts(form_header_simple);
@@ -760,7 +744,7 @@ display_enter_password(void)
          "</table></form>",
          _("Submit"));
 
-  client_put_footer();
+  client_put_footer(stdout, footer_txt);
   return 0;
 }
 
@@ -814,10 +798,11 @@ open_userlist_server(void)
   if (!server_conn) {
     if (!(server_conn = userlist_clnt_open(global->socket_path))) {
       set_cookie_if_needed();
-      client_put_header(global->charset, _("Server is down"));
+      client_put_header(stdout, header_txt, 0, global->charset, 1,
+                        _("Server is down"));
       printf("<p>%s</p>",
              _("The server is down. Try again later."));
-      client_put_footer();
+      client_put_footer(stdout, footer_txt);
       exit(0);
     }
   }
@@ -827,11 +812,12 @@ static void
 permission_denied(void)
 {
   set_cookie_if_needed();
-  client_put_header(global->charset, _("Permission denied"));
+  client_put_header(stdout, header_txt, 0, global->charset, 1,
+                    _("Permission denied"));
   printf("<p>%s</p>",
          _("Permission denied. You have typed invalid login, invalid password,"
            " or do not have enough privileges."));
-  client_put_footer();
+  client_put_footer(stdout, footer_txt);
   exit(0);
 }
 
@@ -839,10 +825,11 @@ static void
 fatal_server_error(int r)
 {
   set_cookie_if_needed();
-  client_put_header(global->charset, _("Server error"));
+  client_put_header(stdout, header_txt, 0, global->charset, 1,
+                    _("Server error"));
   printf("<p>%s: %s</p>", _("Server error"),
          gettext(userlist_strerror(-r)));
-  client_put_footer();
+  client_put_footer(stdout, footer_txt);
   exit(0);
 }
 
@@ -925,7 +912,7 @@ authentificate(void)
       client_sid = client_cookie;
       client_password = "";
       if (new_locale_id != client_locale_id) {
-        setup_locale(new_locale_id);
+        l10n_setlocale(new_locale_id);
         client_locale_id = new_locale_id;
       }
       return 1;
@@ -951,7 +938,7 @@ authentificate(void)
       client_sid = session_id;
       client_password = "";
       if (new_locale_id != client_locale_id) {
-        setup_locale(new_locale_id);
+        l10n_setlocale(new_locale_id);
         client_locale_id = new_locale_id;
       }
       return 1;
@@ -987,7 +974,7 @@ authentificate(void)
     need_set_cookie = 1;
   }
   if (new_locale_id != client_locale_id) {
-    setup_locale(new_locale_id);
+    l10n_setlocale(new_locale_id);
     client_locale_id = new_locale_id;
   }
 
@@ -1002,7 +989,7 @@ authentificate(void)
     printf("<p>%s</p>", _("Login successfull. Now entering the main page."));
     printf(_("<p>If automatic updating does not work, click on <a href=\"%s\">this</a> link.</p>"), hbuf);
            
-    //client_put_footer();
+    //client_put_footer(stdout, footer_txt);
     exit(0);
   }
 
@@ -1024,18 +1011,20 @@ operation_status_page(int code, unsigned char const *msg)
   }
   set_cookie_if_needed();
   if (code < 0) {
-    client_put_header(global->charset, _("Operation failed"));
+    client_put_header(stdout, header_txt, 0, global->charset, 1,
+                      _("Operation failed"));
     if (code != -1 || !msg) msg = protocol_strerror(-code);
     printf("<h2><font color=\"red\">%s</font></h2>\n", msg);
+    print_refresh_button(_("Back"));
+    client_put_footer(stdout, footer_txt);
   } else {
     hyperref(href, sizeof(href), client_sid_mode, client_sid, self_url,
              contest_id_str, 0);
     client_put_refresh_header(global->charset, href, 0,
                               _("Operation successfull"));
     printf("<h2>%s</h2>", _("Operation completed successfully"));
+    print_refresh_button(_("Back"));
   }
-  print_refresh_button(_("Back"));
-  client_put_footer();
   exit(0);
 }
 
@@ -1255,7 +1244,8 @@ show_clar_if_asked(void)
   if (clar_id < 0 || clar_id >= server_total_clars) return;
 
   set_cookie_if_needed();
-  client_put_header(global->charset, _("Message view"));
+  client_put_header(stdout, header_txt, 0, global->charset, 1,
+                    _("Message view"));
   print_nav_buttons(_("Main page"), 0, 0);
   printf("<hr>\n");
   fflush(stdout);
@@ -1269,7 +1259,7 @@ show_clar_if_asked(void)
   }
   printf("<hr>\n");
   print_nav_buttons(_("Main page"), 0, 0);
-  client_put_footer();
+  client_put_footer(stdout, footer_txt);
   exit(0);
 }
 
@@ -1286,7 +1276,8 @@ request_source_if_asked(void)
   if (run_id < 0 || run_id >= server_total_runs) return;
 
   set_cookie_if_needed();
-  client_put_header(global->charset, _("Source view"));
+  client_put_header(stdout, header_txt, 0, global->charset, 1,
+                    _("Source view"));
   print_nav_buttons(_("Main page"), 0, 0);
   printf("<hr>");
   fflush(stdout);
@@ -1300,7 +1291,7 @@ request_source_if_asked(void)
   }
   printf("<hr>");
   print_nav_buttons(_("Main page"), 0, 0);
-  client_put_footer();
+  client_put_footer(stdout, footer_txt);
   exit(0);
 }
 
@@ -1310,7 +1301,8 @@ action_standings(void)
   int r;
 
   set_cookie_if_needed();
-  client_put_header(global->charset, _("Current virtual standings"));
+  client_put_header(stdout, header_txt, 0, global->charset, 1,
+                    _("Current virtual standings"));
   print_nav_buttons(_("Main page"), 0, 0);
   printf("<hr>");
   fflush(stdout);
@@ -1325,7 +1317,7 @@ action_standings(void)
   }
   printf("<hr>");
   print_nav_buttons(_("Main page"), 0, 0);
-  client_put_footer();
+  client_put_footer(stdout, footer_txt);
   exit(0);
 }
 
@@ -1342,7 +1334,8 @@ request_report_if_asked(void)
   if (run_id < 0 || run_id >= server_total_runs) return;
 
   set_cookie_if_needed();
-  client_put_header(global->charset, _("Report view"));
+  client_put_header(stdout, header_txt, 0, global->charset, 1,
+                    _("Report view"));
   print_nav_buttons(_("Main page"), 0, 0);
   printf("<hr>");
   fflush(stdout);
@@ -1356,7 +1349,7 @@ request_report_if_asked(void)
   }
   printf("<hr>");
   print_nav_buttons(_("Main page"), 0, 0);
-  client_put_footer();
+  client_put_footer(stdout, footer_txt);
   exit(0);
 }
 
@@ -1425,6 +1418,8 @@ action_change_language(void)
 static void
 action_logout(void)
 {
+  unsigned char s1[32];
+
   if (client_sid) {
     open_userlist_server();
     userlist_clnt_logout(server_conn, client_ip, client_sid);
@@ -1434,12 +1429,19 @@ action_logout(void)
     need_set_cookie = 1;
   }
   set_cookie_if_needed();
-  client_put_header(global->charset, "%s", _("Good-bye"));
+  client_put_header(stdout, header_txt, 0, global->charset, 1,
+                    "%s", _("Good-bye"));
+
+  s1[0] = 0;
+  if (client_locale_id >= 0) {
+    snprintf(s1, sizeof(s1), "&locale_id=%d", client_locale_id);
+  }
+
   printf("<p>%s</p>\n",
          _("Good-bye!"));
-  printf(_("<p>Follow this <a href=\"%s\">link</a> to login again.</p>"),
-         self_url);
-  client_put_footer();
+  printf(_("<p>Follow this <a href=\"%s?contest_id=%d%s\">link</a> to login again.</p>"),
+         self_url, global->contest_id, s1);
+  client_put_footer(stdout, footer_txt);
   exit(0);
 }
 
@@ -1516,16 +1518,8 @@ main(int argc, char *argv[])
 
   read_locale_id();
 
-#if CONF_HAS_LIBINTL - 0 == 1
-  /* load the language used */
-  if (global->enable_l10n) {
-    bindtextdomain("ejudge", global->l10n_dir);
-    textdomain("ejudge");
-  }
-  if (client_locale_id >= 0 && client_locale_id <= 1) {
-    setup_locale(client_locale_id);
-  }
-#endif /* CONF_HAS_LIBINTL */
+  l10n_prepare(global->enable_l10n, global->l10n_dir);
+  l10n_setlocale(client_locale_id);
 
   if (authentificate() != 1) client_access_denied(global->charset);
 
@@ -1585,14 +1579,12 @@ main(int argc, char *argv[])
 
   set_cookie_if_needed();
   if (cur_contest->name) {
-    client_put_header(global->charset,
-                       "%s: &quot;%s&quot - &quot;%s&quot;",
-                      _("Monitor"),
-                      client_team_name, cur_contest->name);
+    client_put_header(stdout, header_txt, 0, global->charset, 1,
+                      "%s: &quot;%s&quot - &quot;%s&quot;",
+                      _("Monitor"), client_team_name, cur_contest->name);
   } else {
-    client_put_header(global->charset, "%s: &quot;%s&quot",
-                      _("Monitor"),
-                      client_team_name);
+    client_put_header(stdout, header_txt, 0, global->charset, 1,
+                      "%s: &quot;%s&quot", _("Monitor"), client_team_name);
   }
 
   need_show_submit = server_start_time && !server_stop_time && !server_clients_suspended;
@@ -1632,7 +1624,7 @@ main(int argc, char *argv[])
   print_nav_buttons(0, 0, 0);
 
   if (error_log) {
-    printf("<hr><a name=\"lastcmd\"><h2>%s</h2>\n",
+    printf("<hr><a name=\"lastcmd\"></a><h2>%s</h2>\n",
            _("The last command completion status"));
     printf("<pre><font color=\"red\">%s</font></pre>\n", error_log);
     print_nav_buttons(0, 0, 0);
@@ -1648,7 +1640,7 @@ main(int argc, char *argv[])
   }
 
   if (!server_clients_suspended && !cur_contest->disable_team_password) {
-    printf("<hr><a name=\"chgpasswd\"><h2>%s</h2>\n"
+    printf("<hr><a name=\"chgpasswd\"></a><h2>%s</h2>\n"
            "%s<table>\n"
            "<tr><td>%s:</td><td><input type=\"password\" name=\"oldpasswd\" size=\"16\"></td></tr>\n"
            "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd1\" size=\"16\"></td></tr>\n"
@@ -1664,7 +1656,7 @@ main(int argc, char *argv[])
 
 #if CONF_HAS_LIBINTL - 0 == 1
   if (global->enable_l10n) {
-    printf("<hr><a name=\"chglanguage\"><h2>%s</h2>\n",
+    printf("<hr><a name=\"chglanguage\"></a><h2>%s</h2>\n",
            _("Change language"));
     if (!client_sid_mode) {
       printf("%s<input type=\"hidden\" name=\"login\" value=\"%s\">"
@@ -1720,7 +1712,7 @@ main(int argc, char *argv[])
   }
 #endif
 
-  client_put_footer();
+  client_put_footer(stdout, footer_txt);
   return 0;
 }
 
