@@ -107,7 +107,7 @@ static int
 set_defaults(void)
 {
   if (!global->root_dir[0]) {
-    err(_("root_dir must be set"));
+    err("root_dir must be set");
     return -1;
   }
   path_init(global->var_dir, global->root_dir, DEFAULT_VAR_DIR);
@@ -138,25 +138,25 @@ initialize(int argc, char const *argv[])
   os_rGetBasename(fullname, basename, PATH_MAX);
   strcpy(program_name, basename);
   if (strncmp(basename, "register", 8)) {
-    client_not_configured(0, _("bad program name"));
+    client_not_configured(0, "bad program name");
   }
 
   pathmake(cfgname, dirname, "/", "..", "/", "cgi-data", "/", basename,
            ".cfg", NULL);
   config = parse_param(cfgname, 0, params, 1);
   if (!config)
-    client_not_configured(0, _("config file not parsed"));
+    client_not_configured(0, "config file not parsed");
 
   for (p = config; p; p = p->next) {
     if (!p->name[0] || !strcmp(p->name, "global"))
       break;
   }
   if (!p)
-    client_not_configured(0, _("no global section"));
+    client_not_configured(0, "no global section");
   global = (struct section_global_data *) p;
 
   if (set_defaults() < 0)
-    client_not_configured(global->charset, _("bad configuration"));
+    client_not_configured(global->charset, "bad configuration");
   logger_set_level(-1, LOG_WARNING);
 
   /* copy this to help client utility functions */
