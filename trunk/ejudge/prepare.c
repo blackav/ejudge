@@ -61,6 +61,7 @@ static int max_abstr_tester;
 #define GLOBAL_PARAM(x, t) { #x, t, GLOBAL_OFFSET(x) }
 static struct config_parse_info section_global_params[] =
 {
+  GLOBAL_PARAM(name, "s"),
   GLOBAL_PARAM(sleep_time, "d"),
   GLOBAL_PARAM(serve_sleep_time, "d"),
   GLOBAL_PARAM(contest_time, "d"),
@@ -74,15 +75,12 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(board_unfog_time, "d"),
   GLOBAL_PARAM(team_enable_src_view, "d"),
   GLOBAL_PARAM(team_enable_rep_view, "d"),
-
   GLOBAL_PARAM(max_file_length, "d"),
   GLOBAL_PARAM(max_line_length, "d"),
 
   GLOBAL_PARAM(charset, "s"),
 
-  GLOBAL_PARAM(name, "s"),
   GLOBAL_PARAM(root_dir, "s"),
-
   GLOBAL_PARAM(conf_dir, "s"),
   GLOBAL_PARAM(teamdb_file, "s"),
   GLOBAL_PARAM(passwd_file, "s"),
@@ -201,13 +199,14 @@ static struct config_parse_info section_tester_params[] =
   TESTER_PARAM(key, "s"),
 
   TESTER_PARAM(abstract, "d"),
-  TESTER_PARAM(super, "s"),
+  TESTER_PARAM(super, "x"),
 
   TESTER_PARAM(no_core_dump, "d"),
   TESTER_PARAM(kill_signal, "s"),
   TESTER_PARAM(max_stack_size, "d"),
   TESTER_PARAM(max_data_size, "d"),
   TESTER_PARAM(max_vm_size, "d"),
+  TESTER_PARAM(clear_env, "d"),
 
   TESTER_PARAM(server_root_dir, "s"),
   TESTER_PARAM(server_var_dir, "s"),
@@ -227,6 +226,8 @@ static struct config_parse_info section_tester_params[] =
   TESTER_PARAM(prepare_cmd, "s"),
   TESTER_PARAM(check_cmd, "s"),
   TESTER_PARAM(start_cmd, "s"),
+
+  TESTER_PARAM(start_env, "x"),
 
   { 0, 0, 0, 0 }
 };
@@ -343,6 +344,198 @@ tester_init_func(struct generic_section_config *gp)
   p->is_dos = -1;
   p->no_redirect = -1;
   p->no_core_dump = -1;
+  p->clear_env = -1;
+}
+
+static char*
+tester_get_name(void const *vpt)
+{
+  struct section_tester_data *pt = (struct section_tester_data *) vpt;
+  return pt->name;
+}
+
+struct inheritance_info
+{
+  unsigned long  offset;        /* offset of this field */
+  char          *name;          /* name of this field */
+
+  int (*isdef_func)(void *);    /* checks, whether field is defined */
+  void (*copy_func)(void *d, void *s); /* copies s to d */
+};
+
+int
+inherit_fields(struct inheritance_info *iinfo,
+               void *obj, char *name, int stot, void **sups,
+               char *(*get_name_func)(void const *))
+{
+  int   ii, j, defnum, defpos;
+  void *objf, *sobjf;
+
+  for (ii = 0; iinfo[ii].name; ii++) {
+    objf = XPDEREF(void, obj, iinfo[ii].offset);
+    /*
+    fprintf(stderr, ">>objf: %#08lx,%lu,%#08lx\n",
+            (unsigned long) obj, (unsigned long) iinfo[ii].offset,
+            (unsigned long) objf);
+    */
+    if (iinfo[ii].isdef_func(objf)) continue;
+    for (j = 0, defpos = -1, defnum = 0; j < stot; j++) {
+      sobjf = XPDEREF(void, sups[j], iinfo[ii].offset);
+      if (iinfo[ii].isdef_func(sobjf)) {
+        defnum++;
+        defpos = j;
+      }
+    }
+    if (defnum > 1) {
+      err(_("several supertesters define %s for %s"),
+          iinfo[ii].name, name);
+      return -1;
+    }
+    if (defnum == 0) continue;
+    sobjf = XPDEREF(void, sups[defpos], iinfo[ii].offset);
+    info(_("%s.%s inherited from %s"),
+         name, iinfo[ii].name, get_name_func(sups[defpos]));
+    iinfo[ii].copy_func(objf, sobjf);
+  }
+
+  return 0;
+}
+
+static int inh_isdef_int(void *vpint)
+{
+  int *pint = (int*) vpint;
+  if (*pint != -1) return 1;
+  return 0;
+}
+static int inh_isdef_int2(void *vpint)
+{
+  int *pint = (int*) vpint;
+  if (*pint != 0) return 1;
+  return 0;
+}
+static void inh_copy_int(void *dst, void *src)
+{
+  memcpy(dst, src, sizeof(int));
+}
+
+static int inh_isdef_path(void *vppath)
+{
+  char *pc = (char *) vppath;
+  if (*pc) return 1;
+  return 0;
+}
+static int inh_isdef_path2(void *vppath)
+{
+  char *pc = (char *) vppath;
+
+  (void) &(inh_isdef_path2);
+  if (*pc == 1) return 0;
+  return 1;
+}
+static void inh_copy_path(void *dst, void *src)
+{
+  memcpy(dst, src, sizeof(path_t));
+}
+
+#define TESTER_INH(f,d,c) {TESTER_OFFSET(f),#f,inh_isdef_##d,inh_copy_##c }
+static struct inheritance_info tester_inheritance_info[] =
+{
+  TESTER_INH(arch, path, path),
+  TESTER_INH(key, path, path),
+  TESTER_INH(tester_dir, path, path),
+  TESTER_INH(tmp_dir, path, path),
+  TESTER_INH(work_dir, path, path),
+  TESTER_INH(server_root_dir, path, path),
+  TESTER_INH(exe_dir, path, path),
+  TESTER_INH(no_core_dump, int, int),
+  TESTER_INH(clear_env, int, int),
+  TESTER_INH(kill_signal, path, path),
+  TESTER_INH(max_stack_size, int2, int),
+  TESTER_INH(max_data_size, int2, int),
+  TESTER_INH(max_vm_size, int2, int),
+  TESTER_INH(is_dos, int, int),
+  TESTER_INH(no_redirect, int, int),
+  TESTER_INH(errorcode_file, path, path),
+  TESTER_INH(error_file, path, path),
+  TESTER_INH(check_cmd, path, path),
+  TESTER_INH(start_cmd, path, path),
+  TESTER_INH(prepare_cmd, path, path),
+
+  { 0, 0, 0, 0 }
+};
+
+static int
+process_abstract_tester(int i)
+{
+  struct section_tester_data *atp = abstr_testers[i], *katp;
+  struct section_tester_data **sups;
+  char ***envs;
+  char *ish;
+  char **nenv;
+  int   stot, j, k;
+
+  if (!atp->name[0]) {
+    err(_("abstract tester must define tester name"));
+    return -1;
+  }
+  ish = atp->name;
+  if (atp->id) {
+    err(_("abstract tester %s must not have id"), ish);
+    return -1;
+  }
+  if (atp->problem || atp->problem_name[0]) {
+    err(_("abstract tester %s cannot reference a problem"), ish);
+    return -1;
+  }
+
+  // no inheritance
+  if (!atp->super || !atp->super[0]) {
+    atp->is_processed = 1;
+    return 0;
+  }
+
+  // count the number of supertesters and create array of references
+  for (stot = 0; atp->super[stot]; stot++);
+  sups = (struct section_tester_data**) alloca(stot * sizeof(sups[0]));
+  envs = (char***) alloca((stot + 1) * sizeof(envs[0]));
+  memset(sups, 0, stot * sizeof(sups[0]));
+  memset(envs, 0, stot * sizeof(envs[0]));
+  envs[stot] = atp->start_env;
+
+  for (j = 0; j < stot; j++) {
+    katp = 0;
+    for (k = 0; k < max_abstr_tester; k++) {
+      katp = abstr_testers[k];
+      if (!katp || !katp->name[0]) continue;
+      if (!strcmp(atp->super[j], katp->name)) break;
+    }
+    if (k >= max_abstr_tester || !katp) {
+      err(_("abstract tester %s not found"), atp->super[j]);
+      return -1;
+    }
+    if (!katp->is_processed) {
+      err(_("abstract tester %s must be defined before use"), atp->super[j]);
+      return -1;
+    }
+    sups[j] = katp;
+    envs[j] = katp->start_env;
+  }
+
+  for (j = 0; j < stot; j++)
+    fprintf(stderr, ">>%s\n", sups[j]->name);
+
+  if (inherit_fields(tester_inheritance_info,
+                     atp, ish, stot, (void**) sups,
+                     tester_get_name) < 0)
+    return -1;
+
+  // merge all the start_env fields
+  nenv = sarray_merge_arr(stot + 1, envs);
+  sarray_free(atp->start_env);
+  atp->start_env = nenv;
+
+  atp->is_processed = 1;
+  return 0;
 }
 
 static int
@@ -804,25 +997,7 @@ set_defaults(int mode)
 
   if (mode == PREPARE_SERVE || mode == PREPARE_RUN) {
     for (i = 0; i < max_abstr_tester; i++) {
-      struct section_tester_data *atp = abstr_testers[i];
-
-      if (!atp->name[0]) {
-        err(_("abstract tester must define tester name"));
-        return -1;
-      }
-      ish = atp->name;
-      if (atp->id) {
-        err(_("abstract tester %s must not have id"), ish);
-        return -1;
-      }
-      if (atp->super[0]) {
-        err(_("abstract tester %s must not have a supertester"), ish);
-        return -1;
-      }
-      if (atp->problem || atp->problem_name[0]) {
-        err(_("abstract tester %s cannot reference a problem"), ish);
-        return -1;
-      }
+      if (process_abstract_tester(i) < 0) return -1;
     }
   }
 
@@ -837,14 +1012,18 @@ set_defaults(int mode)
 
       si = -1;
       sish = 0;
-      if (tp->super[0]) {
+      if (tp->super && tp->super[0]) {
+        if (tp->super[1]) {
+          err(_("concrete tester may inherit only one abstract tester"));
+          return -1;
+        }
         for (si = 0; si < max_abstr_tester; si++) {
           atp = abstr_testers[si];
-          if (!strcmp(atp->name, tp->super))
+          if (!strcmp(atp->name, tp->super[0]))
             break;
         }
         if (si >= max_abstr_tester) {
-          err(_("abstract tester %s not found"), tp->super);
+          err(_("abstract tester %s not found"), tp->super[0]);
           return -1;
         }
         sish = atp->name;
@@ -944,6 +1123,14 @@ set_defaults(int mode)
       if (tp->no_core_dump == -1) {
         tp->no_core_dump = 0;
       }
+      if (tp->clear_env == -1 && atp && atp->clear_env != -1) {
+        tp->clear_env = atp->clear_env;
+        info(_("tester.%d.clear_env inherited from tester.%s (%d)"),
+             i, sish, tp->clear_env);
+      }
+      if (tp->clear_env == -1) {
+        tp->clear_env = 0;
+      }
       if (!tp->kill_signal[0] && atp && atp->kill_signal[0]) {
         strcpy(tp->kill_signal, atp->kill_signal);
         info(_("tester.%d.kill_signal inherited from tester.%s ('%s')"),
@@ -981,12 +1168,16 @@ set_defaults(int mode)
       if (tp->no_redirect == -1) {
         tp->no_redirect = 0;
       }
-      if (!tp->errorcode_file && atp && atp->errorcode_file) {
+      if (!tp->errorcode_file[0] && atp && atp->errorcode_file) {
         sformat_message(tp->errorcode_file, PATH_MAX, atp->errorcode_file,
                         global, probs[tp->problem], NULL,
                         tp, NULL);
         info(_("tester.%d.errorcode_file inherited from tester.%s ('%s')"),
              i, sish, tp->errorcode_file);        
+      }
+
+      if (atp && atp->start_env) {
+        tp->start_env = sarray_merge_pf(atp->start_env, tp->start_env);
       }
 
       if (mode == PREPARE_RUN) {
@@ -1262,6 +1453,7 @@ prepare(char const *config_file, int flags, int mode, char const *opts)
   if (!config) return -1;
   write_log(0, LOG_INFO, _("Configuration file parsed ok"));
   if (collect_sections(mode) < 0) return -1;
+
   if (!max_lang && mode != PREPARE_RUN) {
     err(_("no languages specified"));
     return -1;
@@ -1276,6 +1468,169 @@ prepare(char const *config_file, int flags, int mode, char const *opts)
   }
   if (set_defaults(mode) < 0) return -1;
   return 0;
+}
+
+void print_global(FILE *o)
+{
+  int i;
+  struct config_parse_info *pp;
+
+  for (i = 0; section_global_params[i].name; i++) {
+    pp = &section_global_params[i];
+    if (!strcmp(pp->type, "s")) {
+      char *pc = XPDEREF(char,global, pp->offset);
+      fprintf(o, "%s = \"%s\"\n", pp->name, pc);
+    } else if (!strcmp(pp->type, "d")) {
+      int *pi = XPDEREF(int,global, pp->offset);
+      fprintf(o, "%s = %d\n", pp->name, *pi);
+    }
+  }
+  fprintf(o, "\n");
+}
+
+void print_problem(FILE *o, struct section_problem_data *p)
+{
+  int i;
+  struct config_parse_info *pp;
+
+  fprintf(o, "[problem]\n");
+  for (i = 0;; i++) {
+    pp = &section_problem_params[i];
+    if (!pp->name) break;
+    if (!strcmp(pp->type, "s")) {
+      char *pc = XPDEREF(char,p, pp->offset);
+      if (!strcmp(pp->name, "super")) fprintf(o, "; ");
+      fprintf(o, "%s = \"%s\"\n", pp->name, pc);
+    } else if (!strcmp(pp->type, "d")) {
+      int *pi = XPDEREF(int,p, pp->offset);
+      fprintf(o, "%s = %d\n", pp->name, *pi);
+    }
+  }
+  fprintf(o, "\n");
+}
+void print_all_problems(FILE *o)
+{
+  int i;
+
+  for (i = 0; i < max_abstr_prob; i++)
+    print_problem(o, abstr_probs[i]);
+  for (i = 1; i <= max_prob; i++) {
+    if (!probs[i]) continue;
+    print_problem(o, probs[i]);
+  }
+}
+
+void print_language(FILE *o, struct section_language_data *l)
+{
+  int i;
+  struct config_parse_info *pp;
+
+  fprintf(o, "[language]\n");
+  for (i = 0;; i++) {
+    pp = &section_language_params[i];
+    if (!pp->name) break;
+    if (!strcmp(pp->type, "s")) {
+      char *pc = XPDEREF(char,l, pp->offset);
+      fprintf(o, "%s = \"%s\"\n", pp->name, pc);
+    } else if (!strcmp(pp->type, "d")) {
+      int *pi = XPDEREF(int,l, pp->offset);
+      fprintf(o, "%s = %d\n", pp->name, *pi);
+    }
+  }
+  fprintf(o, "\n");
+}
+void print_all_languages(FILE *o)
+{
+  int i;
+
+  for (i = 1; i <= max_lang; i++) {
+    if (!langs[i]) continue;
+    print_language(o, langs[i]);
+  }
+}
+
+void print_tester(FILE *o, struct section_tester_data *t)
+{
+  int i;
+
+  fprintf(o, "[tester]\n");
+  if (t->abstract) fprintf(o, "abstract\n");
+  fprintf(o, "name = \"%s\"\n", t->name);
+  fprintf(o, "id = %d\n", t->id);
+  if (t->super) {
+    for (i = 0; t->super[i]; i++)
+      fprintf(o, "; super = \"%s\"\n", t->super[i]);
+    /*
+    for (;t->super[i] != (char*) 1; i++)
+      fprintf(o, "super = (null)\n");
+    fprintf(o, "super = (1)\n");
+    */
+  }
+  fprintf(o, "problem = %d\n", t->problem);
+  fprintf(o, "problem_name = \"%s\"\n", t->problem_name);
+  fprintf(o, "is_dos = %d\n", t->is_dos);
+  fprintf(o, "no_redirect = %d\n", t->no_redirect);
+  fprintf(o, "arch = \"%s\"\n", t->arch);
+  fprintf(o, "key = \"%s\"\n", t->key);
+  fprintf(o, "no_core_dump = %d\n", t->no_core_dump);
+  fprintf(o, "kill_signal = \"%s\"\n", t->kill_signal);
+  fprintf(o, "max_stack_size = %d\n", t->max_stack_size);
+  fprintf(o, "max_data_size = %d\n", t->max_data_size);
+  fprintf(o, "max_vm_size = %d\n", t->max_vm_size);
+  fprintf(o, "clear_env = %d\n", t->clear_env);
+  fprintf(o, "server_root_dir = \"%s\"\n", t->server_root_dir);
+  fprintf(o, "server_var_dir = \"%s\"\n", t->server_var_dir);
+  fprintf(o, "server_run_dir = \"%s\"\n", t->server_run_dir);
+  fprintf(o, "server_exe_dir = \"%s\"\n", t->server_exe_dir);
+  fprintf(o, "run_status_dir = \"%s\"\n", t->run_status_dir);
+  fprintf(o, "run_report_dir = \"%s\"\n", t->run_report_dir);
+  fprintf(o, "run_team_report_dir = \"%s\"\n", t->run_team_report_dir);
+  fprintf(o, "exe_dir = \"%s\"\n", t->exe_dir);
+  fprintf(o, "tester_dir = \"%s\"\n", t->tester_dir);
+  fprintf(o, "tmp_dir = \"%s\"\n", t->tmp_dir);
+  fprintf(o, "work_dir = \"%s\"\n", t->work_dir);
+  fprintf(o, "errorcode_file = \"%s\"\n", t->errorcode_file);
+  fprintf(o, "error_file = \"%s\"\n", t->error_file);
+  fprintf(o, "prepare_cmd = \"%s\"\n", t->prepare_cmd);
+  fprintf(o, "start_cmd = \"%s\"\n", t->start_cmd);
+  fprintf(o, "check_cmd = \"%s\"\n", t->check_cmd);
+
+  if (t->start_env) {
+    for (i = 0; t->start_env[i]; i++)
+      fprintf(o, "start_env = \"%s\"\n", t->start_env[i]);
+    /*
+    for (;t->start_env[i] != (char*) 1; i++)
+      fprintf(o, "start_env = (null)\n");
+    fprintf(o, "start_env = (1)\n");
+    */
+  }
+  fprintf(o, "\n");
+}
+void print_all_testers(FILE *o)
+{
+  int i;
+
+  /*
+  fprintf(stderr, "====%d, %d, %u\n", max_abstr_tester, max_tester,
+          sizeof(struct section_tester_data));
+  */
+
+  for (i = 0; i < max_abstr_tester; i++)
+    print_tester(o, abstr_testers[i]);
+  for (i = 1; i <= max_tester; i++) {
+    if (!testers[i]) continue;
+    print_tester(o, testers[i]);
+  }
+
+  fflush(o);
+}
+
+void print_configuration(FILE *o)
+{
+  print_global(o);
+  print_all_problems(o);
+  print_all_languages(o);
+  print_all_testers(o);
 }
 
 /**
