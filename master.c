@@ -1340,7 +1340,7 @@ static void
 send_msg_if_asked(void)
 {
   unsigned char const *subj, *text, *dest_id_str, *dest_login;
-  int dest_id, x, n = 0, r;
+  int dest_id = 0, x, n = 0, r;
 
   if (!cgi_param("msg_send")) return;
 
