@@ -861,8 +861,7 @@ run_tests(struct section_tester_data *tst,
 
   /* TESTING COMPLETED (SOMEHOW) */
 
-  if (score_system_val == SCORE_OLYMPIAD
-      && accept_testing) {
+  if (score_system_val == SCORE_OLYMPIAD && accept_testing) {
     if (!failed_test) { 
       status = RUN_ACCEPTED;
       failed_test = cur_test;
@@ -1460,7 +1459,7 @@ check_config(void)
       }
     }
 
-    if (prb->test_score > 0) {
+    if (prb->test_score >= 0) {
       int score_summ = 0;
 
       prb->ntests = n1;
