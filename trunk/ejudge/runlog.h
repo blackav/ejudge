@@ -39,6 +39,8 @@ enum
   RUN_ACCEPTED         = 8,
   RUN_IGNORED          = 9,
   RUN_MAX_STATUS       = 9,
+  RUN_VIRTUAL_START    = 20,
+  RUN_VIRTUAL_STOP     = 21,
   RUN_RUNNING          = 96,
   RUN_COMPILED         = 97,
   RUN_COMPILING        = 98,
@@ -73,6 +75,8 @@ time_t run_get_stop_time(void);
 int    run_stop_contest(time_t);
 int    run_sched_contest(time_t);
 int    run_get_total(void);
+
+time_t run_get_duration(void);
 
 void run_get_team_usage(int, int *, size_t*);
 int  run_get_attempts(int, int *, int);
@@ -132,5 +136,11 @@ void run_get_header(struct run_header *out);
 void run_get_all_entries(struct run_entry *out);
 int run_get_entry(int run_id, struct run_entry *out);
 int run_set_entry(int run_id, unsigned int mask, struct run_entry const *in);
+
+int run_build_virtual_table(void);
+time_t run_get_virtual_start_time(int user_id);
+time_t run_get_virtual_stop_time(int user_id);
+int run_virtual_start(int user_id, time_t, unsigned long);
+int run_virtual_stop(int user_id, time_t, unsigned long);
 
 #endif /* __RUNLOG_H__ */
