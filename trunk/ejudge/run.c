@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "prepare.h"
@@ -173,7 +169,8 @@ print_by_line(FILE *f, char const *s)
 }
 
 static int
-generate_report(int accept_testing,
+generate_report(int score_system_val,
+                int accept_testing,
                 char *report_path, int scores, int max_score)
 {
   FILE *f;
@@ -200,7 +197,7 @@ generate_report(int accept_testing,
     else failed_tests++;
   }
 
-  if (global->score_system_val == SCORE_OLYMPIAD && accept_testing) {
+  if (score_system_val == SCORE_OLYMPIAD && accept_testing) {
     if (status == 0) {
       fprintf(f, "%s\n\n", _("ACCEPTED"));
     } else {
@@ -214,7 +211,7 @@ generate_report(int accept_testing,
     if (status == 0) {
       fprintf(f, "%s\n\n", _("OK"));
     } else {
-      if (global->score_system_val == SCORE_KIROV) {
+      if (score_system_val == SCORE_KIROV) {
         fprintf(f, _("PARTIAL SOLUTION\n\n"));
       } else {
         fprintf(f, _("%s, test #%d\n\n"),
@@ -223,17 +220,17 @@ generate_report(int accept_testing,
     }
     fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
             total_tests - 1, passed_tests, failed_tests);
-    if (global->score_system_val == SCORE_KIROV) {
+    if (score_system_val == SCORE_KIROV) {
       fprintf(f, _("Scores gained: %d (out of %d)\n"), scores, max_score);
     }
     fprintf(f, "\n");
   }
 
   fprintf(f, _("Test #  Status  Time (sec)  %sResult\n"),
-          (global->score_system_val == SCORE_KIROV)?_("Score   "):"");
+          (score_system_val == SCORE_KIROV)?_("Score   "):"");
   for (i = 1; i < total_tests; i++) {
     score_buf[0] = 0;
-    if (global->score_system_val == SCORE_KIROV) {
+    if (score_system_val == SCORE_KIROV) {
       sprintf(score_buf2, "%d (%d)", tests[i].score, tests[i].max_score);
       sprintf(score_buf, "%-8s", score_buf2);
     }
@@ -276,7 +273,9 @@ generate_report(int accept_testing,
 }
 
 static int
-generate_team_report(int accept_testing,
+generate_team_report(int score_system_val,
+                     int accept_testing,
+                     int report_error_code,
                      char const *report_path, int scores, int max_score)
 {
   FILE *f;
@@ -304,7 +303,7 @@ generate_team_report(int accept_testing,
     else failed_tests++;
   }
 
-  if (global->score_system_val == SCORE_OLYMPIAD && accept_testing) {
+  if (score_system_val == SCORE_OLYMPIAD && accept_testing) {
     if (status == 0) {
       fprintf(f, "%s\n\n", _("ACCEPTED"));
     } else {
@@ -318,7 +317,7 @@ generate_team_report(int accept_testing,
     if (status == 0) {
       fprintf(f, "%s\n\n", _("OK"));
     } else {
-      if (global->score_system_val == SCORE_KIROV) {
+      if (score_system_val == SCORE_KIROV) {
         fprintf(f, _("PARTIAL SOLUTION\n\n"));
       } else {
         fprintf(f, _("%s, test #%d\n\n"),
@@ -327,22 +326,22 @@ generate_team_report(int accept_testing,
     }
     fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
             total_tests - 1, passed_tests, failed_tests);
-    if (global->score_system_val == SCORE_KIROV) {
+    if (score_system_val == SCORE_KIROV) {
       fprintf(f, _("Scores gained: %d (out of %d)\n"), scores, max_score);
     }
     fprintf(f, "\n");
   }
 
   fprintf(f, _("Test #  Status  Time (sec)  %sResult\n"),
-          (global->score_system_val == SCORE_KIROV)?_("Score   "):"");
+          (score_system_val == SCORE_KIROV)?_("Score   "):"");
   for (i = 1; i < total_tests; i++) {
     score_buf[0] = 0;
-    if (global->score_system_val == SCORE_KIROV) {
+    if (score_system_val == SCORE_KIROV) {
       sprintf(score_buf2, "%d (%d)", tests[i].score, tests[i].max_score);
       sprintf(score_buf, "%-8s", score_buf2);
     }
     retcode = tests[i].code;
-    if (tests[i].code != 0 && !global->report_error_code) {
+    if (tests[i].code != 0 && !report_error_code) {
       retcode = 1;
     }
     fprintf(f, "%-8d%-8d%-12.3f%s%s\n",
@@ -352,7 +351,7 @@ generate_team_report(int accept_testing,
   }
   fprintf(f, "\n");
 
-  if (!global->report_error_code) {
+  if (!report_error_code) {
     fprintf(f, "\n%s\n", _("Note: non-zero return code is always reported as 1"));
   }
 
@@ -385,6 +384,9 @@ read_error_code(char const *path)
 static int
 run_tests(struct section_tester_data *tst,
           int locale_id,
+          int team_enable_rep_view,
+          int report_error_code,
+          int score_system_val,
           int accept_testing,
           char const *new_name,
           char const *new_base,
@@ -419,10 +421,10 @@ run_tests(struct section_tester_data *tst,
   ASSERT(probs[tst->problem]);
   prb = probs[tst->problem];
 
-  pathmake(report_path, tst->tmp_dir, "/", "report", NULL);
+  pathmake(report_path, global->run_work_dir, "/", "report", NULL);
   team_report_path[0] = 0;
-  if (global->team_enable_rep_view) {
-    pathmake(team_report_path, tst->tmp_dir, "/", "team_report", NULL);
+  if (team_enable_rep_view) {
+    pathmake(team_report_path, global->run_work_dir, "/", "team_report", NULL);
   }
   memset(tests, 0, sizeof(tests));
   total_tests = 1;
@@ -435,7 +437,7 @@ run_tests(struct section_tester_data *tst,
     task_AddArg(tsk, tst->prepare_cmd);
     task_AddArg(tsk, new_name);
     task_SetPathAsArg0(tsk);
-    task_SetWorkingDir(tsk, tst->tmp_dir);
+    task_SetWorkingDir(tsk, global->run_work_dir);
     task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ, 0);
     task_SetRedir(tsk, 1, TSR_FILE, report_path, TSK_REWRITE, TSK_FULL_RW);
     task_SetRedir(tsk, 2, TSR_DUP, 1);
@@ -445,16 +447,16 @@ run_tests(struct section_tester_data *tst,
     task_Delete(tsk); tsk = 0;
   }
 
-  pathmake3(exe_path, tst->work_dir, "/", new_name, NULL);
+  pathmake3(exe_path, tst->check_dir, "/", new_name, NULL);
   if (tst->is_dos) copy_flag = CONVERT;
 
   error_code[0] = 0;
   if (tst->errorcode_file[0]) {
-    pathmake(error_code, tst->work_dir, "/", tst->errorcode_file, 0);
+    pathmake(error_code, tst->check_dir, "/", tst->errorcode_file, 0);
   }
 
   while (1) {
-    if (global->score_system_val == SCORE_OLYMPIAD
+    if (score_system_val == SCORE_OLYMPIAD
         && accept_testing
         && cur_test > prb->tests_to_accept) break;
 
@@ -463,22 +465,22 @@ run_tests(struct section_tester_data *tst,
     pathmake(test_src, prb->test_dir, "/", test_base, NULL);
     if (os_CheckAccess(test_src, REUSE_R_OK) < 0) break;
 
-    make_writable(tst->work_dir);
-    clear_directory(tst->work_dir);
+    make_writable(tst->check_dir);
+    clear_directory(tst->check_dir);
 
     /* copy the executable */
-    generic_copy_file(0, tst->tmp_dir, new_name, "",
-                      0, tst->work_dir, new_name, "");
+    generic_copy_file(0, global->run_work_dir, new_name, "",
+                      0, tst->check_dir, new_name, "");
     make_executable(exe_path);
 
     /* copy the test */
     generic_copy_file(0, NULL, test_src, "",
-                      copy_flag, tst->work_dir, prb->input_file, "");
+                      copy_flag, tst->check_dir, prb->input_file, "");
 
-    pathmake(input_path, tst->work_dir, "/", prb->input_file, 0);
-    pathmake(output_path, tst->work_dir, "/", prb->output_file, 0);
-    pathmake(error_path, tst->work_dir, "/", tst->error_file, 0);
-    pathmake(check_out_path, tst->tmp_dir, "/", "checkout", 0);
+    pathmake(input_path, tst->check_dir, "/", prb->input_file, 0);
+    pathmake(output_path, tst->check_dir, "/", prb->output_file, 0);
+    pathmake(error_path, tst->check_dir, "/", tst->error_file, 0);
+    pathmake(check_out_path, global->run_work_dir, "/", "checkout", 0);
 
     /* run the tested program */
     tsk = task_New();
@@ -490,7 +492,7 @@ run_tests(struct section_tester_data *tst,
     }
     task_AddArg(tsk, exe_path);
     task_SetPathAsArg0(tsk);
-    task_SetWorkingDir(tsk, tst->work_dir);
+    task_SetWorkingDir(tsk, tst->check_dir);
     if (!tst->no_redirect) {
       if (prb->use_stdin) {
         task_SetRedir(tsk, 0, TSR_FILE, input_path, TSK_READ);
@@ -565,7 +567,7 @@ run_tests(struct section_tester_data *tst,
       }
 
       /* set normal permissions for the working directory */
-      make_writable(tst->work_dir);
+      make_writable(tst->check_dir);
       /* make the output file readable */
       if (chmod(output_path, 0600) < 0) {
         err("chmod failed: %s", os_ErrorMsg());
@@ -623,7 +625,7 @@ run_tests(struct section_tester_data *tst,
         task_SetRedir(tsk, 1, TSR_FILE, check_out_path,
                       TSK_REWRITE, TSK_FULL_RW);
         task_SetRedir(tsk, 2, TSR_DUP, 1);
-        task_SetWorkingDir(tsk, tst->work_dir);
+        task_SetWorkingDir(tsk, tst->check_dir);
         task_SetPathAsArg0(tsk);
         task_Start(tsk);
         task_Wait(tsk);
@@ -666,24 +668,24 @@ run_tests(struct section_tester_data *tst,
     total_tests++;
     if (status > 0) {
       // test failed, how to react on this
-      if (global->score_system_val == SCORE_ACM) break;
-      if (global->score_system_val == SCORE_OLYMPIAD
+      if (score_system_val == SCORE_ACM) break;
+      if (score_system_val == SCORE_OLYMPIAD
           && accept_testing) break;
     }
-    clear_directory(tst->work_dir);
+    clear_directory(tst->check_dir);
   }
 
   /* TESTING COMPLETED (SOMEHOW) */
 
-  if (global->score_system_val == SCORE_OLYMPIAD
+  if (score_system_val == SCORE_OLYMPIAD
       && accept_testing) {
     if (!failed_test) { 
       status = RUN_ACCEPTED;
       failed_test = cur_test;
     }
     sprintf(reply_string, "%d %d -1\n", status, failed_test);
-  } else if (global->score_system_val == SCORE_KIROV
-             || global->score_system_val == SCORE_OLYMPIAD) {
+  } else if (score_system_val == SCORE_KIROV
+             || score_system_val == SCORE_OLYMPIAD) {
     int jj, retcode = RUN_OK;
 
     for (jj = 1; jj <= prb->ntests; jj++) {
@@ -744,13 +746,15 @@ run_tests(struct section_tester_data *tst,
     }
   }
 
-  if (global->team_enable_rep_view) {
+  if (team_enable_rep_view) {
     setup_locale(locale_id);
-    generate_team_report(accept_testing,
+    generate_team_report(score_system_val, accept_testing,
+                         report_error_code,
                          team_report_path, score, prb->full_score);
     setup_locale(0);
   }
-  generate_report(accept_testing, report_path, score, prb->full_score);
+  generate_report(score_system_val, accept_testing,
+                  report_path, score, prb->full_score);
 
   goto _cleanup;
 
@@ -761,7 +765,7 @@ run_tests(struct section_tester_data *tst,
  _cleanup:
   if (tsk) task_Delete(tsk);
   tsk = 0;
-  clear_directory(tst->work_dir);
+  clear_directory(tst->check_dir);
   for (cur_test = 1; cur_test < total_tests; cur_test++) {
     xfree(tests[cur_test].input);
     xfree(tests[cur_test].output);
@@ -776,12 +780,17 @@ run_tests(struct section_tester_data *tst,
 static int
 do_loop(void)
 {
-  int i, r;
+  int r;
 
-  path_t new_name;
-  path_t new_base;
   path_t report_path;
   path_t team_report_path;
+
+  unsigned char pkt_name[64];
+  unsigned char exe_pkt_name[64];
+  unsigned char run_base[64];
+  path_t full_report_dir;
+  path_t full_team_report_dir;
+  path_t full_status_dir;
 
   char   status_string[64];
 
@@ -790,21 +799,26 @@ do_loop(void)
   int    rsize;
 
   char   exe_name[64];
+  int    contest_id;
+  int    run_id;
+  int    tester_id;
+  int    prob_id;
   int    locale_id;
   int    accept_testing;
   int    n;
+  unsigned char exe_sfx[64];
+  unsigned char arch[64];
+  int exe_sfx_len, arch_len;
+  int score_system_val;
+  int team_enable_rep_view;
+  int report_error_code;
 
   if (cr_serialize_init() < 0) return -1;
 
   while (1) {
-    for (i = 1; i <= max_tester; i++) {
-      if (!testers[i]) continue;
-      r = scan_dir(testers[i]->queue_dir, new_name);
-      if (r < 0) return -1;
-      if (r > 0) break;
-    }
-
-    if (i > max_tester) {
+    r = scan_dir(global->run_queue_dir, pkt_name);
+    if (r < 0) return -1;
+    if (!r) {
       os_Sleep(global->sleep_time);
       continue;
     }
@@ -812,53 +826,103 @@ do_loop(void)
     memset(pkt_buf, 0, sizeof(pkt_buf));
     pkt_ptr = pkt_buf;
     r = generic_read_file(&pkt_ptr, sizeof(pkt_buf), &rsize, SAFE | REMOVE,
-                          testers[i]->queue_dir, new_name, "");
+                          global->run_queue_dir, pkt_name, "");
     if (r == 0) continue;
     if (r < 0) return -1;
  
     chop(pkt_buf);
     info("run packet: <%s>", pkt_buf);
     n = 0;
-    memset(exe_name, 0, sizeof(exe_name));
-    if (sscanf(pkt_buf, "%63s %d %d %n", exe_name, &locale_id,
-               &accept_testing, &n) != 3
+    memset(exe_sfx, 0, sizeof(exe_sfx));
+    if ((r = sscanf(pkt_buf, "%d %d %d %d %d %d %d %d %63s %63s %n",
+                    &contest_id, &run_id,
+                    &prob_id, &accept_testing, &locale_id,
+                    &score_system_val, &team_enable_rep_view,
+                    &report_error_code,
+                    exe_sfx, arch,
+               &n)) != 10
         || pkt_buf[n]
+        || contest_id <= 0
+        || run_id < 0
+        || (exe_sfx_len = strlen(exe_sfx)) < 2
+        || exe_sfx[0] != '\"'
+        || exe_sfx[exe_sfx_len - 1] != '\"'
+        || (arch_len = strlen(arch)) < 2
+        || arch[0] != '\"'
+        || arch[arch_len - 1] != '\"'
+        || prob_id <= 0
+        || prob_id > max_prob
+        || !probs[prob_id]
         || accept_testing < 0
         || accept_testing > 1
+        || score_system_val < SCORE_ACM
+        || score_system_val > SCORE_OLYMPIAD
+        || team_enable_rep_view < 0
+        || team_enable_rep_view > 1
+        || report_error_code < 0
+        || report_error_code > 1
         || locale_id < 0
         || locale_id > 1024) {
       err("bad packet");
       continue;
     }
 
-    r = generic_copy_file(REMOVE, testers[i]->server_exe_dir, exe_name, "",
-                          0, testers[i]->tmp_dir, exe_name, "");
+    exe_sfx[0] = 0;
+    exe_sfx[exe_sfx_len - 1] = 0;
+    arch[0] = 0;
+    arch[arch_len - 1] = 0;
+
+    if (!(tester_id = find_tester(prob_id, arch + 1))) {
+      err("no tester for pair %d,%s", prob_id, arch);
+      continue;
+    }
+    info("fount tester %d for pair %d,%s", tester_id, prob_id, arch);
+
+    snprintf(exe_pkt_name, sizeof(exe_pkt_name), "%s%s",
+             pkt_name,  exe_sfx + 1);
+    snprintf(run_base, sizeof(run_base), "%06d", run_id);
+    snprintf(exe_name, sizeof(exe_name), "%s%s",
+             run_base, exe_sfx + 1);
+
+    r = generic_copy_file(REMOVE, global->run_exe_dir, exe_pkt_name, "",
+                          0, global->run_work_dir, exe_name, "");
     if (r <= 0) continue;
 
+    report_path[0] = 0;
     /* team report might be not produced */
     team_report_path[0] = 0;
 
-    os_rGetBasename(exe_name, new_base, PATH_MAX);
     if (cr_serialize_lock() < 0) return -1;
-    if (run_tests(testers[i], locale_id, accept_testing, exe_name, new_base,
+    if (run_tests(testers[tester_id], locale_id,
+                  team_enable_rep_view, report_error_code,
+                  score_system_val, accept_testing,
+                  exe_name, run_base,
                   status_string, report_path,
                   team_report_path) < 0) {
       cr_serialize_unlock();
       return -1;
     }
     if (cr_serialize_unlock() < 0) return -1;
+
+    snprintf(full_report_dir, sizeof(full_report_dir),
+             "%s/%04d/report", global->run_dir, contest_id);
+    snprintf(full_team_report_dir, sizeof(full_team_report_dir),
+             "%s/%04d/teamreport", global->run_dir, contest_id);
+    snprintf(full_status_dir, sizeof(full_status_dir),
+             "%s/%04d/status", global->run_dir, contest_id);
+             
     if (generic_copy_file(0, NULL, report_path, "",
-                          0, testers[i]->run_report_dir, new_base, "") < 0)
+                          0, full_report_dir, run_base, "") < 0)
       return -1;
     if (team_report_path[0]
         && generic_copy_file(0, NULL, team_report_path, "",
-                             0, testers[i]->run_team_report_dir,
-                             new_base, "") < 0)
+                             0, full_team_report_dir,
+                             run_base, "") < 0)
       return -1;
     if (generic_write_file(status_string, strlen(status_string), SAFE,
-                           testers[i]->run_status_dir, new_base, "") < 0)
+                           full_status_dir, run_base, "") < 0)
       return -1;
-    clear_directory(testers[i]->tmp_dir);
+    clear_directory(global->run_work_dir);
   }
 }
 
@@ -923,7 +987,7 @@ check_config(void)
       }
     }
 
-    if (global->score_system_val == SCORE_KIROV) {
+    if (prb->test_score > 0) {
       int score_summ = 0;
 
       prb->ntests = n1;
@@ -999,18 +1063,14 @@ check_config(void)
     }
 
     /* check spooler dirs */
-    if (check_writable_spool(testers[i]->queue_dir, SPOOL_OUT) < 0) return -1;
-    if (check_writable_spool(testers[i]->run_status_dir,SPOOL_IN)<0) return -1;
-    if (check_writable_dir(testers[i]->run_report_dir) < 0) return -1;
-    if (global->team_enable_rep_view) {
-      if (check_writable_dir(testers[i]->run_team_report_dir) < 0) return -1;
-    }
+    if (check_writable_spool(global->run_queue_dir, SPOOL_OUT) < 0) return -1;
+    if (check_writable_dir(global->run_exe_dir) < 0) return -1;
 
     /* check working dirs */
-    if (make_writable(testers[i]->tmp_dir) < 0) return -1;
-    if (make_writable(testers[i]->work_dir) < 0) return -1;
-    if (check_writable_dir(testers[i]->tmp_dir) < 0) return -1;
-    if (check_writable_dir(testers[i]->work_dir) < 0) return -1;
+    if (make_writable(global->run_work_dir) < 0) return -1;
+    if (make_writable(testers[i]->check_dir) < 0) return -1;
+    if (check_writable_dir(global->run_work_dir) < 0) return -1;
+    if (check_writable_dir(testers[i]->check_dir) < 0) return -1;
 
     if (check_executable(testers[i]->check_cmd) < 0) return -1;
     if (testers[i]->prepare_cmd[0]
