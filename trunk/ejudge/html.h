@@ -165,9 +165,10 @@ int calc_kirov_score(unsigned char *outbuf, size_t outsize,
                      struct section_problem_data *pr,
                      int attempts,
                      int disq_attempts,
+                     int prev_successes,
                      int *p_date_penalty);
 void write_html_run_status(FILE *f, struct run_entry *pe,
                            int priv_level, int attempts,
-                           int disq_attempts);
+                           int disq_attempts, int prev_successes);
 
 #endif /* __HTML_H__ */
