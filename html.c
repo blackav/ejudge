@@ -129,7 +129,19 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
     duration_str(global->show_astr_time, time, start_time, dur_str, 0);
     run_status_str(status, stat_str, 0);
     prob_str = "???";
-    if (probs[prob_id]) prob_str = probs[prob_id]->short_name;
+    if (probs[prob_id]) {
+      if (probs[prob_id]->variant_num > 0) {
+        int variant = find_variant(team_id, prob_id);
+        prob_str = alloca(strlen(probs[prob_id]->short_name) + 10);
+        if (variant > 0) {
+          sprintf(prob_str, "%s-%d", probs[prob_id]->short_name, variant);
+        } else {
+          sprintf(prob_str, "%s-?", probs[prob_id]->short_name);
+        }
+      } else {
+        prob_str = probs[prob_id]->short_name;
+      }
+    }
     lang_str = "???";
     if (langs[lang_id]) lang_str = langs[lang_id]->short_name;
 
@@ -1216,7 +1228,18 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
     fprintf(f, "<td>%d</td>", i);
     fprintf(f, "<td>%s</td>", durstr);
     fprintf(f, "<td>%s</td>", teamdb_get_name(teamid));
-    if (probs[probid]) fprintf(f, "<td>%s</td>", probs[probid]->short_name);
+    if (probs[probid]) {
+      if (probs[probid]->variant_num > 0) {
+        int variant = find_variant(teamid, probid);
+        if (variant > 0) {
+          fprintf(f, "<td>%s-%d</td>", probs[probid]->short_name, variant);
+        } else {
+          fprintf(f, "<td>%s-?</td>", probs[probid]->short_name);
+        }
+      } else {
+        fprintf(f, "<td>%s</td>", probs[probid]->short_name);
+      }
+    }
     else fprintf(f, "<td>??? - %d</td>", probid);
     if (langs[langid]) fprintf(f, "<td>%s</td>", langs[langid]->short_name);
     else fprintf(f, "<td>??? - %d</td>", langid);
@@ -1415,10 +1438,13 @@ write_team_page(FILE *f, int user_id,
 {
   int i;
   unsigned char hbuf[128];
+  struct tm *dl_time;
+  unsigned char dl_time_str[128];
+  time_t current_time = time(0);
+  unsigned char *prob_str;
 
   if (global->virtual) {
     time_t dur;
-    time_t cur;
     unsigned char tbuf[64];
     unsigned char *ststr;
     time_t global_server_start;
@@ -1429,9 +1455,8 @@ write_team_page(FILE *f, int user_id,
     server_start = run_get_virtual_start_time(user_id);
     server_end = run_get_virtual_stop_time(user_id, 0);
     dur = run_get_duration();
-    cur = time(0);
     if (server_start && !server_end && dur > 0) {
-      if (server_start + dur < cur) {
+      if (server_start + dur < current_time) {
         server_end = server_start + dur;
       }
     }
@@ -1447,7 +1472,7 @@ write_team_page(FILE *f, int user_id,
     fprintf(f, "<tr><td colspan=\"2\"><b><big>%s</big></b></td></tr>\n",
             ststr);
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("Server time"), time_to_str(tbuf, cur));
+            _("Server time"), time_to_str(tbuf, current_time));
     if (dur) {
       duration_str(0, dur, 0, tbuf, 0);
     } else {
@@ -1464,10 +1489,10 @@ write_team_page(FILE *f, int user_id,
         fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
                 _("Expected stop time"),
                 time_to_str(tbuf, server_start + dur));
-        duration_str(0, cur, server_start, tbuf, 0);
+        duration_str(0, current_time, server_start, tbuf, 0);
         fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
                 _("Elapsed time"), tbuf);
-        duration_str(0, server_start + dur, cur, tbuf, 0);
+        duration_str(0, server_start + dur, current_time, tbuf, 0);
         fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
                 _("Remaining time"), tbuf);
       }
@@ -1498,8 +1523,31 @@ write_team_page(FILE *f, int user_id,
     fprintf(f, "<select name=\"problem\"><option value=\"\">\n");
     for (i = 1; i <= max_prob; i++)
       if (probs[i]) {
-        fprintf(f, "<option value=\"%d\">%s - %s\n",
-                probs[i]->id, probs[i]->short_name, probs[i]->long_name);
+        if (probs[i]->t_deadline && current_time >= probs[i]->t_deadline)
+          continue;
+
+        dl_time_str[0] = 0;
+        if (probs[i]->t_deadline && global->show_deadline) {
+          dl_time = localtime(&probs[i]->t_deadline);
+          snprintf(dl_time_str, sizeof(dl_time_str),
+                   " (%04d/%02d/%02d %02d:%02d:%02d)",
+                   dl_time->tm_year + 1900, dl_time->tm_mon + 1,
+                   dl_time->tm_mday, dl_time->tm_hour,
+                   dl_time->tm_min, dl_time->tm_sec);
+        }
+        if (probs[i]->variant_num > 0) {
+          int variant = find_variant(user_id, i);
+          prob_str = alloca(strlen(probs[i]->short_name) + 10);
+          if (variant > 0) {
+            sprintf(prob_str, "%s-%d", probs[i]->short_name, variant);
+          } else {
+            sprintf(prob_str, "%s-?", probs[i]->short_name);
+          }
+        } else {
+          prob_str = probs[i]->short_name;
+        }
+        fprintf(f, "<option value=\"%d\">%s - %s%s\n",
+                probs[i]->id, prob_str, probs[i]->long_name, dl_time_str);
       }
     fprintf(f, "</select>\n");
     fprintf(f, "</td></tr>\n");
@@ -1567,9 +1615,32 @@ write_team_page(FILE *f, int user_id,
     fprintf(f, "<select name=\"problem\"><option value=\"\">\n");
     for (i = 1; i <= max_prob; i++)
       if (probs[i]) {
-        fprintf(f, "<option value=\"%s\">%s - %s\n",
+        if (probs[i]->t_deadline && current_time >= probs[i]->t_deadline)
+          continue;
+
+        dl_time_str[0] = 0;
+        if (probs[i]->t_deadline && global->show_deadline) {
+          dl_time = localtime(&probs[i]->t_deadline);
+          snprintf(dl_time_str, sizeof(dl_time_str),
+                   " (%04d/%02d/%02d %02d:%02d:%02d)",
+                   dl_time->tm_year + 1900, dl_time->tm_mon + 1,
+                   dl_time->tm_mday, dl_time->tm_hour,
+                   dl_time->tm_min, dl_time->tm_sec);
+        }
+        if (probs[i]->variant_num > 0) {
+          int variant = find_variant(user_id, i);
+          prob_str = alloca(strlen(probs[i]->short_name) + 10);
+          if (variant > 0) {
+            sprintf(prob_str, "%s-%d", probs[i]->short_name, variant);
+          } else {
+            sprintf(prob_str, "%s-?", probs[i]->short_name);
+          }
+        } else {
+          prob_str = probs[i]->short_name;
+        }
+        fprintf(f, "<option value=\"%s\">%s - %s%s\n",
                 probs[i]->short_name,
-                probs[i]->short_name, probs[i]->long_name);
+                prob_str, probs[i]->long_name, dl_time_str);
       }
     fprintf(f, "</select>\n");
     fprintf(f, "<tr><td>%s:</td>"
