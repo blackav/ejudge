@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "contests.h"
@@ -28,15 +24,26 @@
 
 #include <string.h>
 #include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <ctype.h>
 
 #define MAX_CONTEST_ID 1000
+#define CONTEST_CHECK_TIME 5
 
 static char const * const tag_map[] =
 {
   0,
   "contests",
   "contest",
-  "access",
+  "register_access",
+  "users_access",
+  "master_access",
+  "judge_access",
+  "observer_access",
+  "team_access",
   "ip",
   "field",
   "name",
@@ -51,10 +58,14 @@ static char const * const tag_map[] =
   "register_url",
   "team_url",
   "registration_deadline",
-  "privileged_users",
-  "administrator",
-  "judge",
-  "observer",
+  "cap",
+  "caps",
+  "root_dir",
+  "standings_url",
+  "problems_url",
+  "client_flags",
+  "serve_user",
+  "serve_group",
 
   0
 };
@@ -72,6 +83,9 @@ static char const * const attn_map[] =
   "autoregister",
   "initial",
   "disable_team_password",
+  "login",
+  "managed",
+  "clean_users",
 
   0
 };
@@ -80,7 +94,12 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   0,
   sizeof(struct contest_list),  /* CONTEST_CONTESTS */
   sizeof(struct contest_desc),  /* CONTEST_CONTEST */
-  sizeof(struct contest_access), /* CONTEST_ACCESS */
+  sizeof(struct contest_access), /* CONTEST_REGISTER_ACCESS */
+  sizeof(struct contest_access), /* CONTEST_USERS_ACCESS */
+  sizeof(struct contest_access), /* CONTEST_MASTER_ACCESS */
+  sizeof(struct contest_access), /* CONTEST_JUDGE_ACCESS */
+  sizeof(struct contest_access), /* CONTEST_OBSERVER_ACCESS */
+  sizeof(struct contest_access), /* CONTEST_TEAM_ACCESS */
   sizeof(struct contest_ip),    /* CONTEST_IP */
   sizeof(struct contest_field), /* CONTEST_FIELD */
   0,                            /* CONTEST_NAME */
@@ -95,10 +114,14 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   0,                            /* CONTEST_REGISTER_URL */
   0,                            /* CONTEST_TEAM_URL */
   0,                            /* CONTEST_REGISTRATION_DEADLINE */
-  0,                            /* CONTEST_PRIVILEGED_USERS */
-  0,                            /* CONTEST_ADMINISTRATOR */
-  0,                            /* CONTEST_JUDGE */
-  0,                            /* CONTEST_OBSERVER */
+  sizeof(struct opcap_list_item), /* CONTEST_CAP */
+  0,                            /* CONTEST_CAPS */
+  0,                            /* CONTEST_ROOT_DIR */
+  0,                            /* CONTEST_STANDINGS_URL */
+  0,                            /* CONTEST_PROBLEMS_URL */
+  0,                            /* CONTEST_CLIENT_FLAGS */
+  0,                            /* CONTEST_SERVE_USER */
+  0,                            /* CONTEST_SERVE_GROUP */
 };
 static size_t const attn_sizes[CONTEST_LAST_ATTN] =
 {
@@ -426,12 +449,123 @@ handle_final_tag(char const *path, struct xml_tree *t, unsigned char **ps)
 }
 
 static int
+parse_capabilities(unsigned char const *path,
+                   struct contest_desc *cnts,
+                   struct xml_tree *ct)
+{
+  struct xml_tree *p;
+  struct opcap_list_item *pp;
+
+  ASSERT(ct->tag == CONTEST_CAPS);
+
+  if (cnts->capabilities.first) {
+    err("%s:%d:%d: element <caps> already defined",
+        path, ct->line, ct->column);
+    return -1;
+  }
+
+  xfree(ct->text); ct->text = 0;
+  if (ct->first) {
+    err("%s:%d:%d: element <caps> cannot have attributes",
+        path, ct->line, ct->column);
+    return -1;
+  }
+  p = ct->first_down;
+  if (!p) return 0;
+  cnts->capabilities.first = (struct opcap_list_item*) p;
+
+  for (; p; p = p->right) {
+    if (p->tag != CONTEST_CAP) {
+      err("%s:%d:%d: element <cap> expected", path, p->line, p->column);
+      return -1;
+    }
+    pp = (struct opcap_list_item*) p;
+
+    if (!p->first) {
+      err("%s:%d:%d: element <cap> must have attribute",
+          path, p->line, p->column);
+      return -1;
+    }
+    if (p->first->next) {
+      err("%s:%d:%d: element <cap> must have only one attribute",
+          path, p->line, p->column);
+      return -1;
+    }
+    if (p->first->tag != CONTEST_A_LOGIN) {
+      err("%s:%d:%d: \"login\" attribute expected",
+          path, p->line, p->column);
+      return -1;
+    }
+    pp->login = p->first->text;
+    if (!pp->login || !*pp->login) {
+      err("%s:%d:%d: \"login\" cannot be empty",
+          path, p->line, p->column);
+      return -1;
+    }
+    if (opcaps_parse(p->text, &pp->caps) < 0) {
+      err("%s:%d:%d: invalid capabilities",
+          path, p->line, p->column);
+      return -1;
+    }
+  }
+  return 0;
+}
+
+static int
+parse_client_flags(unsigned char const *path, struct contest_desc *cnts,
+                   struct xml_tree *xt)
+{
+  int len;
+  unsigned char *str2, *q, *str3;
+  unsigned char const *p, *s, *str;
+
+  str = xt->text;
+  if (!str) str = "";
+  len = strlen(str);
+  str2 = (unsigned char *) alloca(len + 10);
+  for (p = str, q = str2; *p; p++) {
+    if (isspace(*p)) continue;
+    if (isalpha(*p)) {
+      *q++ = toupper(*p);
+    } else {
+      *q++ = *p;
+    }
+  }
+  *q++ = 0;
+
+  str3 = (unsigned char *) alloca(len + 10);
+  p = str2;
+  while (1) {
+    while (*p == ',') p++;
+    if (!*p) break;
+    for (s = p; *s && *s != ','; s++);
+    memset(str3, 0, len + 10);
+    memcpy(str3, p, s - p);
+    p = s;
+
+    if (!strcmp(str3, "IGNORE_TIME_SKEW")) {
+      cnts->client_ignore_time_skew = 1;
+    } else if (!strcmp(str3, "DISABLE_TEAM")) {
+      cnts->client_disable_team = 1;
+    } else {
+      err("%s:%d:%d: unknown flag '%s'", path, xt->line, xt->column, str3);
+      return -1;
+    }
+  }
+
+  return 0;
+}
+
+static int
 parse_contest(struct contest_desc *cnts, char const *path)
 {
   struct xml_attn *a;
-  struct xml_tree *t, *q;
+  struct xml_tree *t;
   int x, n, mb_id;
   unsigned char *reg_deadline_str = 0;
+  struct contest_access **pacc;
+
+  cnts->clean_users = 1;
 
   for (a = cnts->b.first; a; a = a->next) {
     switch (a->tag) {
@@ -451,6 +585,22 @@ parse_contest(struct contest_desc *cnts, char const *path)
         return -1;
       }
       cnts->autoregister = x;
+      break;
+    case CONTEST_A_MANAGED:
+      x = parse_bool(a->text);
+      if (x < 0 || x > 1) {
+        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
+        return -1;
+      }
+      cnts->managed = x;
+      break;
+    case CONTEST_A_CLEAN_USERS:
+      x = parse_bool(a->text);
+      if (x < 0 || x > 1) {
+        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
+        return -1;
+      }
+      cnts->clean_users = x;
       break;
     case CONTEST_A_DISABLE_TEAM_PASSWORD:
       x = parse_bool(a->text);
@@ -493,6 +643,34 @@ parse_contest(struct contest_desc *cnts, char const *path)
     case CONTEST_TEAM_URL:
       if (handle_final_tag(path, t, &cnts->team_url) < 0) return -1;
       break;
+    case CONTEST_ROOT_DIR:
+      if (handle_final_tag(path, t, &cnts->root_dir) < 0) return -1;
+      break;
+    case CONTEST_STANDINGS_URL:
+      if (handle_final_tag(path, t, &cnts->standings_url) < 0) return -1;
+      break;
+    case CONTEST_PROBLEMS_URL:
+      if (handle_final_tag(path, t, &cnts->problems_url) < 0) return -1;
+      break;
+    case CONTEST_SERVE_USER:
+      if (handle_final_tag(path, t, &cnts->serve_user) < 0) return -1;
+      break;
+    case CONTEST_SERVE_GROUP:
+      if (handle_final_tag(path, t, &cnts->serve_group) < 0) return -1;
+      break;
+    case CONTEST_CLIENT_FLAGS:
+      if (t->first_down) {
+        err("%s:%d:%d: element <%s> cannot contain nested elements",
+            path, t->line, t->column, tag_map[t->tag]);
+        return -1;
+      }
+      if (t->first) {
+        err("%s:%d:%d: element <%s> cannot have attributes",
+            path, t->line, t->column, tag_map[t->tag]);
+        return -1;
+      }
+      if (parse_client_flags(path, cnts, t) < 0) return -1;
+      break;
     case CONTEST_REGISTRATION_DEADLINE:
       if (handle_final_tag(path, t, &reg_deadline_str) < 0) {
         xfree(reg_deadline_str);
@@ -504,34 +682,11 @@ parse_contest(struct contest_desc *cnts, char const *path)
         return -1;
       }
       break;
-    case CONTEST_PRIVILEGED_USERS:
-      if (t->first) {
-        err("%s:%d:%d: element <%s> cannot have attributes",
-            path, t->line, t->column, tag_map[t->tag]);
-        return -1;
-      }
-      xfree(t->text); t->text = 0;
-      for (q = t->first_down; q; q = q->right) {
-        if (q->tag != CONTEST_ADMINISTRATOR
-            && q->tag != CONTEST_JUDGE
-            && q->tag != CONTEST_OBSERVER) {
-          err("%s:%d:%d: element <%s> is not allowed here",
-              path, q->line, q->column, tag_map[q->tag]);
-          return -1;
-        }
-        if (q->first) {
-          err("%s:%d:%d: element <%s> cannot have attributes",
-              path, q->line, q->column, tag_map[q->tag]);
-          return -1;
-        }
-        if (q->first_down) {
-          err("%s:%d:%d: element <%s> cannot have nested elements",
-              path, q->line, q->column, tag_map[q->tag]);
-          return -1;
-        }
-      }
-      cnts->priv_users = t;
+
+    case CONTEST_CAPS:
+      if (parse_capabilities(path, cnts, t) < 0) return -1;
       break;
+
     case CONTEST_CONTESTANTS:
       mb_id = CONTEST_M_CONTESTANT;
       goto process_members;
@@ -558,15 +713,33 @@ parse_contest(struct contest_desc *cnts, char const *path)
       cnts->members[mb_id] = (struct contest_member*) t;
       break;
 
-    case CONTEST_ACCESS:
-      if (cnts->access) {
+    case CONTEST_REGISTER_ACCESS:
+      pacc = &cnts->register_access;
+      goto process_access;
+    case CONTEST_USERS_ACCESS:
+      pacc = &cnts->users_access;
+      goto process_access;
+    case CONTEST_MASTER_ACCESS:
+      pacc = &cnts->master_access;
+      goto process_access;
+    case CONTEST_JUDGE_ACCESS:
+      pacc = &cnts->judge_access;
+      goto process_access;
+    case CONTEST_OBSERVER_ACCESS:
+      pacc = &cnts->observer_access;
+      goto process_access;
+    case CONTEST_TEAM_ACCESS:
+      pacc = &cnts->team_access;
+    process_access:
+      if (*pacc) {
         err("%s:%d:%d: contest access is already defined",
             path, t->line, t->column);
         return -1;
       }
-      cnts->access = (struct contest_access*) t;
-      if (parse_access(cnts->access, path) < 0) return -1;
+      *pacc = (struct contest_access*) t;
+      if (parse_access(*pacc, path) < 0) return -1;
       break;
+
     case CONTEST_FIELD:
       if (t->first_down) {
         err("%s:%d:%d: nested tags are not allowed", path, t->line, t->column);
@@ -644,89 +817,316 @@ parse_contest(struct contest_desc *cnts, char const *path)
   return 0;
 }
 
-struct contest_list *
-parse_contest_xml(char const *path)
+static struct contest_desc *
+parse_one_contest_xml(char const *path, int number)
 {
-  struct xml_tree *tree = 0, *t;
-  struct contest_list *lst = 0;
+  struct xml_tree *tree = 0;
   struct contest_desc *d = 0;
-  int max_id;
 
   tree = xml_build_tree(path, tag_map, attn_map, node_alloc, attn_alloc);
   if (!tree) goto failed;
-  if (tree->tag != CONTEST_CONTESTS) {
-    err("%s:%d:%d: top-level tag must be <contests>",
+  if (tree->tag != CONTEST_CONTEST) {
+    err("%s:%d:%d: top-level tag must be <contest>",
         path, tree->line, tree->column);
     goto failed;
   }
-  lst = (struct contest_list *) tree;
-
-  if (tree->first) {
-    err("%s:%d:%d: attributes are not valid here",
-        path, tree->line, tree->column);
-    goto failed;
-  }
-
-  for (t = tree->first_down; t; t = t->right) {
-    if (t->tag != CONTEST_CONTEST) {
-      err("%s:%d:%d: tag <%s> is invalid here",
-          path, t->line, t->column, tag_map[t->tag]);
-      goto failed;
-    }
-    d = (struct contest_desc *) t;
-    if (parse_contest(d, path) < 0) goto failed;
-  }
-  xfree(tree->text); tree->text = 0;
-
-  max_id = -1;
-  for (t = tree->first_down; t; t = t->right) {
-    ASSERT(t->tag == CONTEST_CONTEST);
-    d = (struct contest_desc *) t;
-    ASSERT(d->id >= 1 && d->id <= MAX_CONTEST_ID);
-    if (d->id > max_id) max_id = d->id;
-  }
-  if (max_id == -1) {
-    err("%s: no contests defined", path);
-    goto failed;
-  }
-  lst->id_map_size = max_id + 1;
-  XCALLOC(lst->id_map, lst->id_map_size);
-  for (t = tree->first_down; t; t = t->right) {
-    d = (struct contest_desc *) t;
-    if (lst->id_map[d->id]) {
-      err("%s:%d:%d: duplicated contest id", path, t->line, t->column);
-      goto failed;
-    }
-    lst->id_map[d->id] = d;
-  }
-
-  return lst;
+  d = (struct contest_desc *) tree;
+  if (parse_contest(d, path) < 0) goto failed;
+  return d;
 
  failed:
   if (tree) xml_tree_free(tree, node_free, attn_free);
   return 0;
 }
 
-int
-contests_check_ip(struct contest_desc *d, unsigned long ip)
+static int
+do_check_ip(struct contest_access *acc, unsigned long ip)
 {
   struct contest_ip *p;
 
-  if (!d->access) return 0;
-  if (!ip && d->access->default_is_allow) return 1;
+  if (!acc) return 0;
+  if (!ip && acc->default_is_allow) return 1;
   if (!ip) return 0;
 
-  for (p = (struct contest_ip*) d->access->b.first_down;
+  for (p = (struct contest_ip*) acc->b.first_down;
        p; p = (struct contest_ip*) p->b.right) {
     if ((ip & p->mask) == p->addr) return p->allow;
   }
-  return d->access->default_is_allow;
+  return acc->default_is_allow;
+}
+
+int
+contests_check_ip(int num, int field, unsigned long ip)
+{
+  struct contest_desc *d = 0;
+  struct contest_access *acc = 0;
+  int e;
+
+  if ((e = contests_get(num, &d)) < 0) {
+    err("contests_check_ip: %d: %s", num, contests_strerror(-e));
+    return 0;
+  }
+  switch (field) {
+  case CONTEST_REGISTER_ACCESS: acc = d->register_access; break;
+  case CONTEST_USERS_ACCESS:    acc = d->users_access; break;
+  case CONTEST_MASTER_ACCESS:   acc = d->master_access; break;
+  case CONTEST_JUDGE_ACCESS:    acc = d->judge_access; break;
+  case CONTEST_OBSERVER_ACCESS: acc = d->observer_access; break;
+  case CONTEST_TEAM_ACCESS:     acc = d->team_access; break;
+  default:
+    err("contests_check_ip: %d: invalid field %d", num, field);
+    return 0;
+  }
+  return do_check_ip(acc, ip);
+}
+
+int
+contests_check_register_ip(int num, unsigned long ip)
+{
+  return contests_check_ip(num, CONTEST_REGISTER_ACCESS, ip);
+}
+int
+contests_check_users_ip(int num, unsigned long ip)
+{
+  return contests_check_ip(num, CONTEST_USERS_ACCESS, ip);
+}
+int
+contests_check_master_ip(int num, unsigned long ip)
+{
+  return contests_check_ip(num, CONTEST_MASTER_ACCESS, ip);
+}
+int
+contests_check_judge_ip(int num, unsigned long ip)
+{
+  return contests_check_ip(num, CONTEST_JUDGE_ACCESS, ip);
+}
+int
+contests_check_observer_ip(int num, unsigned long ip)
+{
+  return contests_check_ip(num, CONTEST_OBSERVER_ACCESS, ip);
+}
+int
+contests_check_team_ip(int num, unsigned long ip)
+{
+  return contests_check_ip(num, CONTEST_TEAM_ACCESS, ip);
+}
+
+struct callback_list_item
+{
+  struct callback_list_item *next;
+  void (*func)(const struct contest_desc *);
+};
+static struct callback_list_item *load_list;
+static struct callback_list_item *unload_list;
+
+static struct callback_list_item *
+contests_set_callback(struct callback_list_item *list,
+                      void (*f)(const struct contest_desc *))
+{
+  struct callback_list_item *p = 0;
+
+  if (!f) return list;
+  for (p = list; p; p = p->next)
+    if (p->func == f)
+      return list;
+
+  p = (struct callback_list_item *) xcalloc(1, sizeof(*p));
+  p->next = list;
+  p->func = f;
+  return p;
+}
+
+void
+contests_set_load_callback(void (*f)(const struct contest_desc *))
+{
+  load_list = contests_set_callback(load_list, f);
+}
+void
+contests_set_unload_callback(void (*f)(const struct contest_desc *))
+{
+  unload_list = contests_set_callback(unload_list, f);
+}
+
+static unsigned char const *contests_dir;
+static unsigned int contests_allocd;
+static struct contest_desc **contests_desc;
+
+static void
+contests_free(struct contest_desc *cnts)
+{
+  xml_tree_free((struct xml_tree *) cnts, node_free, attn_free);
+}
+
+static int
+contests_make_path(unsigned char *buf, size_t sz, int num)
+{
+  return snprintf(buf, sz, "%s/%06d.xml", contests_dir, num);
+}
+
+int
+contests_set_directory(unsigned char const *dir)
+{
+  struct stat bbb;
+
+  if (!dir) return -CONTEST_ERR_BAD_DIR;
+  if (stat(dir, &bbb) < 0) return -CONTEST_ERR_BAD_DIR;
+  if (!S_ISDIR(bbb.st_mode)) return -CONTEST_ERR_BAD_DIR;
+  contests_dir = xstrdup(dir);
+  return 0;
+}
+
+int
+contests_get_list(unsigned char **p_map)
+{
+  DIR *d = 0;
+  struct dirent *dd = 0;
+  int entries_num = -1, i, j;
+  unsigned char *flags = 0;
+  struct stat bbb;
+  unsigned char c_path[1024];
+
+  // we don't check specifically for "." or ".."
+  if (!(d = opendir(contests_dir))) return -CONTEST_ERR_BAD_DIR;
+  while ((dd = readdir(d))) {
+    if (sscanf(dd->d_name, "%d", &j) == 1) {
+      snprintf(c_path, sizeof(c_path), "%06d.xml", j);
+      if (!strcmp(c_path, dd->d_name) && j > entries_num) entries_num = j;
+    }
+  }
+  closedir(d);
+  if (entries_num < 0) {
+    *p_map = 0;
+    return 0;
+  }
+
+  flags = (unsigned char *) alloca(entries_num + 1);
+  memset(flags, 0, entries_num + 1);
+
+  for (i = 1; i <= entries_num; i++) {
+    contests_make_path(c_path, sizeof(c_path), i);
+    if (stat(c_path, &bbb) < 0) continue;
+    if (access(c_path, R_OK) < 0) continue;
+    if (!S_ISREG(bbb.st_mode)) continue;
+    // FIXME: check the owner of the file?
+    flags[i] = 1;
+  }
+
+  while (entries_num >= 0 && !flags[entries_num]) entries_num--;
+  if (!p_map) return entries_num + 1;
+  *p_map = 0;
+  if (entries_num < 0) return 0;
+  *p_map = (unsigned char *) xmalloc(entries_num + 1);
+  memcpy(*p_map, flags, entries_num + 1);
+  return entries_num + 1;
+}
+
+int
+contests_get(int number, struct contest_desc **p_desc)
+{
+  unsigned char c_path[1024];
+  struct stat sb;
+  struct contest_desc *cnts;
+  time_t cur_time;
+
+  ASSERT(p_desc);
+  *p_desc = 0;
+  if (number <= 0) return -CONTEST_ERR_BAD_ID;
+
+  if (number >= contests_allocd || !contests_desc[number]) {
+    // no previous info about the contest
+    contests_make_path(c_path, sizeof(c_path), number);
+    if (stat(c_path, &sb) < 0) return -CONTEST_ERR_NO_CONTEST;
+    // load the info and adjust time marks
+    cnts = parse_one_contest_xml(c_path, number);
+    if (!cnts) return -CONTEST_ERR_BAD_XML;
+    if (cnts->id != number) {
+      contests_free(cnts);
+      return -CONTEST_ERR_ID_NOT_MATCH;
+    }
+    cnts->last_check_time = time(0);
+    cnts->last_file_time = sb.st_mtime;
+    // extend arrays
+    if (number >= contests_allocd) {
+      unsigned int new_allocd = contests_allocd;
+      struct contest_desc **new_contests = 0;
+
+      if (!new_allocd) new_allocd = 32;
+      while (number >= new_allocd) new_allocd *= 2;
+      new_contests = xcalloc(new_allocd, sizeof(new_contests[0]));
+      if (contests_allocd > 0) {
+        memcpy(new_contests, contests_desc,
+               contests_allocd * sizeof(new_contests[0]));
+      }
+      contests_allocd = new_allocd;
+      contests_desc = new_contests;
+    }
+    // put new contest into the array
+    contests_desc[number] = cnts;
+    *p_desc = cnts;
+    return 0;
+  }
+
+  cur_time = time(0);
+  cnts = contests_desc[number];
+  ASSERT(cnts->id == number);
+  // check the time since last check
+  if (cur_time <= cnts->last_check_time + CONTEST_CHECK_TIME) {
+    *p_desc = cnts;
+    return 0;
+  }
+
+  contests_make_path(c_path, sizeof(c_path), number);
+  if (stat(c_path, &sb) < 0) {
+    // FIXME: contest removed. what to do?
+    contests_free(cnts);
+    contests_desc[number] = 0;
+    return -CONTEST_ERR_REMOVED;
+  }
+  // check whether update timestamp is changed
+  if (sb.st_mtime == cnts->last_file_time) {
+    *p_desc = cnts;
+    return 0;
+  }
+
+  // load the info and adjust time marks
+  // FIXME: try to merge data?
+  cnts = parse_one_contest_xml(c_path, number);
+  if (!cnts) return -CONTEST_ERR_BAD_XML;
+  if (cnts->id != number) {
+    contests_free(cnts);
+    return -CONTEST_ERR_ID_NOT_MATCH;
+  }
+  cnts->last_check_time = time(0);
+  cnts->last_file_time = sb.st_mtime;
+  contests_desc[number] = cnts;
+  *p_desc = cnts;
+  return 0;
+}
+
+static unsigned char const * const contests_errors[] =
+{
+  "no error",
+  "invalid contests directory",
+  "invalid contest id",
+  "contest does not exist",
+  "error during XML reading",
+  "contest id in the file and file name do not match",
+  "contest is removed",
+
+  [CONTEST_ERR_LAST] "unknown error"
+};
+
+unsigned char *
+contests_strerror(int e)
+{
+  if (e < 0) e = -e;
+  if (e > CONTEST_ERR_LAST) e = CONTEST_ERR_LAST;
+  return (unsigned char *) contests_errors[e];
 }
 
 /**
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "DIR")
  * End:
  */
