@@ -22,6 +22,7 @@
 #include "protocol.h"
 
 #include <reuse/xalloc.h>
+#include <reuse/logger.h>
 
 #include <stdio.h>
 
@@ -73,6 +74,17 @@ protocol_strerror(int n)
     return xstrdup(buf);
   }
   return error_map[n];
+}
+
+static unsigned char const * const priv_level_map[] =
+{
+  "User", "Observer", "Judge", "Administrator"
+};
+unsigned char const *
+protocol_priv_level_str(int n)
+{
+  ASSERT(n >= 0 && n <= PRIV_LEVEL_ADMIN);
+  return priv_level_map[n];
 }
 
 /**
