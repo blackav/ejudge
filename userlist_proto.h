@@ -4,7 +4,7 @@
 #ifndef __USERLIST_PROTO_H__
 #define __USERLIST_PROTO_H__
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -66,6 +66,7 @@ enum
     ULS_GENERATE_PASSWORDS,
     ULS_CLEAR_TEAM_PASSWORDS,
     ULS_LIST_STANDINGS_USERS,
+    ULS_GET_UID_BY_PID_2,
 
     ULS_LAST_CMD
   };
@@ -79,12 +80,14 @@ enum
     ULS_XML_DATA,
     ULS_CONTEST_MAPPED,
     ULS_UID,
+    ULS_UID_2,
   };
 
 /* various error codes */
 enum
   {
-    ULS_ERR_LOGIN_USED = 1,
+    ULS_ERR_1 = 1,              /* reserved to return -1 */
+    ULS_ERR_LOGIN_USED,
     ULS_ERR_INVALID_LOGIN,
     ULS_ERR_INVALID_PASSWORD,
     ULS_ERR_NO_COOKIE,
@@ -333,6 +336,19 @@ struct userlist_pk_uid
   int   priv_level;
   unsigned long long cookie;
   unsigned long ip;
+};
+
+struct userlist_pk_uid_2 __attribute__((packed, aligned(1)));
+struct userlist_pk_uid_2
+{
+  short reply_id;
+  int uid;
+  int priv_level;
+  unsigned long ip;
+  int login_len;
+  int name_len;
+  unsigned long long cookie;
+  unsigned char data[2];
 };
 
 #endif /* __USERLIST_PROTO_H__ */
