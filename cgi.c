@@ -167,6 +167,10 @@ do_cgi_read(void)
       }
     }
 
+    if (!value_buf) {
+      value_a = 16;
+      value_buf = (char*) xcalloc(value_a, 1);
+    }
     add_to_param_list(name_buf, value_buf, strlen(value_buf));
 
     if (c == '&') {
