@@ -88,6 +88,7 @@ static char const * const tag_map[] =
   "country_en",
   "location",
   "spelling",
+  "printer_name",
 
   0
 };
@@ -171,6 +172,7 @@ static size_t const tag_sizes[USERLIST_LAST_TAG] =
   sizeof(struct xml_tree),      /* COUNTRY_EN */
   sizeof(struct xml_tree),      /* LOCATION */
   sizeof(struct xml_tree),      /* SPELLING */
+  sizeof(struct xml_tree),      /* PRINTER_NAME */
 };
 /*
 static size_t const attn_sizes[USERLIST_LAST_ATTN] =
@@ -238,6 +240,7 @@ node_free(struct xml_tree *t)
       xfree(p->country_en);
       xfree(p->location);
       xfree(p->spelling);
+      xfree(p->printer_name);
     }
     break;
   case USERLIST_T_MEMBER:
@@ -1001,6 +1004,9 @@ do_parse_user(char const *path, struct userlist_user *usr)
     case USERLIST_T_SPELLING:
       if (handle_final_tag(path, t, &usr->spelling) < 0) return -1;
       break;
+    case USERLIST_T_PRINTER_NAME:
+      if (handle_final_tag(path, t, &usr->printer_name) < 0) return -1;
+      break;
     case USERLIST_T_PHONES:
       if (!(usr->phones = parse_phones(path, t))) return -1;
       break;
@@ -1547,6 +1553,7 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   unparse_final_tag(f, USERLIST_T_COUNTRY_EN, p->country_en, "    ");
   unparse_final_tag(f, USERLIST_T_LOCATION, p->location, "    ");
   unparse_final_tag(f, USERLIST_T_SPELLING, p->spelling, "    ");
+  unparse_final_tag(f, USERLIST_T_PRINTER_NAME, p->printer_name, "    ");
 
   if (mode != USERLIST_MODE_STAND) {
     unparse_phones(p->phones, f, "    ");
