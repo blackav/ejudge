@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -100,6 +100,7 @@ static char const * const attn_map[] =
   "managed",
   "clean_users",
   "run_managed",
+  "closed",
 
   0
 };
@@ -659,6 +660,14 @@ parse_contest(struct contest_desc *cnts, char const *path)
         return -1;
       }
       cnts->disable_team_password = x;
+      break;
+    case CONTEST_A_CLOSED:
+      x = parse_bool(a->text);
+      if (x < 0 || x > 1) {
+        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
+        return -1;
+      }
+      cnts->closed = x;
       break;
     default:
       err("%s:%d:%d: attribute \"%s\" is invalid here",
