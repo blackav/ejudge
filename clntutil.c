@@ -538,6 +538,5 @@ client_split(char const *buf, int sep, ...)
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  *  eval: (set-language-environment "Cyrillic-KOI8")
- *  enable-multibute-characters: nil
  * End:
  */

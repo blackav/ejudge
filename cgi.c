@@ -486,7 +486,6 @@ cgi_print_param(void)
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  *  eval: (set-language-environment "Cyrillic-KOI8")
- *  enable-multibute-characters: nil
  * End:
  */
 
