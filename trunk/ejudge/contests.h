@@ -42,6 +42,7 @@ enum
     CONTEST_REGISTER_EMAIL,
     CONTEST_REGISTER_URL,
     CONTEST_TEAM_URL,
+    CONTEST_REGISTRATION_DEADLINE,
 
     CONTEST_LAST_TAG
   };
@@ -134,6 +135,7 @@ struct contest_desc
   struct xml_tree b;
   int id;
   int autoregister;
+  unsigned long  reg_deadline;
   unsigned char *name;
   unsigned char *header_file;
   unsigned char *footer_file;
