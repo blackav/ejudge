@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int archive_dir_prepare(const unsigned char *, int);
+int archive_dir_prepare(const unsigned char *, int, const unsigned char *);
 int archive_make_read_path(unsigned char *, size_t,
                            const unsigned char *, int,
                            const unsigned char *, int);
