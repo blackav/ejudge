@@ -824,8 +824,7 @@ parse_variant_map(const unsigned char *path)
   unsigned char buf[1200];
   unsigned char login_buf[sizeof(buf)];
   unsigned char *p;
-  int vintage, n;
-  int len, i, j, v;
+  int vintage, n, len, i, j, v;
   FILE *f;
   struct variant_map *pmap;
 
