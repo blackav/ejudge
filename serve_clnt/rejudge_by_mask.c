@@ -52,7 +52,7 @@ serve_clnt_rejudge_by_mask(int sock_fd,
   if ((r = serve_clnt_recv_packet(sock_fd, &in_size, &void_in)) < 0) {
     return r;
   }
-  void_in = in;
+  in = (struct prot_serve_packet *) void_in;
   if (in_size != sizeof(*in)) {
     xfree(in);
     err("serve_clnt_upload_report: unexpected reply length %d", in_size);
