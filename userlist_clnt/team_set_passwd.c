@@ -36,7 +36,7 @@ userlist_clnt_team_set_passwd(struct userlist_clnt *clnt,
   new_len = strlen(new_pwd);
   if (old_len > 255) return -ULS_ERR_INVALID_SIZE;
   if (new_len > 255) return -ULS_ERR_INVALID_SIZE;
-  out_size = sizeof(*out) + old_len + new_len + 2;
+  out_size = sizeof(*out) + old_len + new_len;
   out = (struct userlist_pk_set_password *) alloca(out_size);
   memset(out, 0, out_size);
   out->request_id = ULS_TEAM_SET_PASSWD;
