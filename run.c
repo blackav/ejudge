@@ -18,6 +18,7 @@
 #include "prepare.h"
 #include "runlog.h"
 #include "cr_serialize.h"
+#include "testinfo.h"
 
 #include "fileutl.h"
 
@@ -60,6 +61,9 @@ struct testinfo
   char          *error;		/* the error */
   char          *correct;	/* the correct result */
   char          *chk_out;       /* checker's output */
+  unsigned char *args;          /* command-line arguments */
+  unsigned char *comment;       /* judge's comment */
+  unsigned char *team_comment;  /* team's comment */
 };
 
 int total_tests;
@@ -241,6 +245,21 @@ generate_report(int score_system_val,
   for (; i >= 1 && i < total_tests; i += addition) {
     fprintf(f, _("====== Test #%d =======\n"), i);
     fprintf(f, _("Judgement: %s\n"), result2str(tests[i].status, 0, 0));
+    if (tests[i].comment) {
+      fprintf(f, "%s: %s\n", _("Comment"), tests[i].comment);
+    }
+    if (tests[i].args) {
+      fprintf(f, _("--- Command line arguments ---\n"));
+      if (strlen(tests[i].args) >= global->max_cmd_length) {
+        fprintf(f, _("Command line is too long\n"));
+      } else {
+        fprintf(f, "%s", tests[i].args);
+      }
+    }
+    if (tests[i].input != NULL) {
+      fprintf(f, _("--- Input ---\n"));
+      print_by_line(f, tests[i].input);
+    }
     if (tests[i].output != NULL) {
       fprintf(f, _("--- Output ---\n"));
       print_by_line(f, tests[i].output);
@@ -248,10 +267,6 @@ generate_report(int score_system_val,
     if (tests[i].correct != NULL) {
       fprintf(f, _("--- Correct ---\n"));
       print_by_line(f, tests[i].correct);
-    }
-    if (tests[i].input != NULL) {
-      fprintf(f, _("--- Input ---\n"));
-      print_by_line(f, tests[i].input);
     }
     if (tests[i].error != NULL) {
       fprintf(f, _("--- Stderr ---\n"));
@@ -281,6 +296,7 @@ generate_team_report(int score_system_val,
   int   passed_tests = 0;
   int   failed_tests = 0;
   int   retcode;
+  int   need_test_comments = 0;
 
   char  score_buf[32];
   char  score_buf2[32];
@@ -344,11 +360,23 @@ generate_team_report(int score_system_val,
 	    i, retcode, (double) tests[i].times / 1000,
             score_buf,
 	    result2str(tests[i].status,0,0));
+    if (tests[i].team_comment) need_test_comments = 1;
   }
   fprintf(f, "\n");
 
   if (!report_error_code) {
     fprintf(f, "\n%s\n", _("Note: non-zero return code is always reported as 1"));
+  }
+
+  if (need_test_comments) {
+    fprintf(f, "%s\n", _("Comments for failed tests:"));
+    for (i = 1; i < total_tests; i++) {
+      if (tests[i].status == RUN_OK || tests[i].status == RUN_CHECK_FAILED)
+        continue;
+      if (!tests[i].team_comment)
+        continue;
+      fprintf(stderr, "%s %3d: %s\n", _("Test"), i, tests[i].team_comment);
+    }
   }
 
   fclose(f);
@@ -400,11 +428,15 @@ run_tests(struct section_tester_data *tst,
   path_t test_src;
   path_t corr_path;
   path_t corr_base;
+  path_t info_src;
+  path_t tgz_src;
+  path_t tgz_src_dir;
   path_t input_path;
   path_t output_path;
   path_t error_path;
   path_t check_out_path;
   path_t error_code;
+  path_t prog_working_dir;
   int    score = 0;
   int    status = 0;
   int    failed_test = 0;
@@ -415,7 +447,11 @@ run_tests(struct section_tester_data *tst,
   struct termios term_attrs;
   unsigned char *var_test_dir;
   unsigned char *var_corr_dir;
+  unsigned char *var_info_dir = 0;
+  unsigned char *var_tgz_dir = 0;
   unsigned char *var_check_cmd;
+  testinfo_t tstinfo;
+  int errcode;
 
   ASSERT(tst->problem > 0);
   ASSERT(tst->problem <= max_prob);
@@ -427,9 +463,23 @@ run_tests(struct section_tester_data *tst,
     var_corr_dir = (unsigned char*) alloca(sizeof(path_t));
     snprintf(var_test_dir, sizeof(path_t), "%s-%d", prb->test_dir,cur_variant);
     snprintf(var_corr_dir, sizeof(path_t), "%s-%d", prb->corr_dir,cur_variant);
+    if (prb->use_info) {
+      var_info_dir = (unsigned char*) alloca(sizeof(path_t));
+      snprintf(var_info_dir,sizeof(path_t),"%s-%d",prb->info_dir,cur_variant);
+    }
+    if (prb->use_tgz) {
+      var_tgz_dir = (unsigned char*) alloca(sizeof(path_t));
+      snprintf(var_tgz_dir, sizeof(path_t), "%s-%d", prb->tgz_dir,cur_variant);
+    }
   } else {
     var_test_dir = prb->test_dir;
     var_corr_dir = prb->corr_dir;
+    if (prb->use_info) {
+      var_info_dir = prb->info_dir;
+    }
+    if (prb->use_tgz) {
+      var_tgz_dir = prb->tgz_dir;
+    }
   }
 
   pathmake(report_path, global->run_work_dir, "/", "report", NULL);
@@ -459,7 +509,11 @@ run_tests(struct section_tester_data *tst,
   }
 
   pathmake3(exe_path, tst->check_dir, "/", new_name, NULL);
-  snprintf(arg0_path, sizeof(arg0_path), "./%s", new_name);
+  if (prb->use_tgz) {
+    snprintf(arg0_path, sizeof(arg0_path), "../%s", new_name);
+  } else {
+    snprintf(arg0_path, sizeof(arg0_path), "./%s", new_name);
+  }
   
   if (tst->is_dos) copy_flag = CONVERT;
 
@@ -476,7 +530,24 @@ run_tests(struct section_tester_data *tst,
     sprintf(test_base, "%03d%s", cur_test, prb->test_sfx);
     sprintf(corr_base, "%03d%s", cur_test, prb->corr_sfx);
     pathmake(test_src, var_test_dir, "/", test_base, NULL);
-    if (os_CheckAccess(test_src, REUSE_R_OK) < 0) break;
+    if (os_CheckAccess(test_src, REUSE_R_OK) < 0) {
+      // testing is done as no tests left in the testing directory
+      break;
+    }
+
+    /* Load test information file */
+    if (prb->use_info) {
+      snprintf(info_src, sizeof(path_t), "%s/%03d%s",
+               var_info_dir, cur_test, prb->info_sfx);
+      if ((errcode = testinfo_parse(info_src, &tstinfo)) < 0) {
+        err("Cannot parse test info file '%s': %s", info_src,
+            testinfo_strerror(-errcode));
+        failed_test = cur_test;
+        status = RUN_CHECK_FAILED;
+        total_failed_tests++;
+        goto done_this_test;
+      }
+    }
 
     make_writable(tst->check_dir);
     clear_directory(tst->check_dir);
@@ -485,6 +556,37 @@ run_tests(struct section_tester_data *tst,
     generic_copy_file(0, global->run_work_dir, new_name, "",
                       0, tst->check_dir, new_name, "");
     make_executable(exe_path);
+
+    if (!prb->use_tgz) {
+      snprintf(prog_working_dir, sizeof(path_t), "%s", tst->check_dir);
+    }
+    if (prb->use_tgz) {
+      snprintf(tgz_src, sizeof(path_t), "%s/%03d%s",
+               var_tgz_dir, cur_test, prb->tgz_sfx);
+      snprintf(tgz_src_dir, sizeof(path_t), "%s/%03d",
+               var_tgz_dir, cur_test);
+      snprintf(prog_working_dir, sizeof(path_t), "%s/%03d",
+               tst->check_dir, cur_test);
+      info("starting: %s", "/bin/tar");
+      tsk = task_New();
+      task_AddArg(tsk, "/bin/tar");
+      task_AddArg(tsk, "xfz");
+      task_AddArg(tsk, tgz_src);
+      task_SetPathAsArg0(tsk);
+      task_SetWorkingDir(tsk, tst->check_dir);
+      task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ, 0);
+      task_SetRedir(tsk, 1, TSR_FILE, report_path, TSK_REWRITE, TSK_FULL_RW);
+      task_SetRedir(tsk, 2, TSR_DUP, 1);
+      task_Start(tsk);
+      task_Wait(tsk);
+      if (task_IsAbnormal(tsk)) {
+        failed_test = cur_test;
+        status = RUN_CHECK_FAILED;
+        total_failed_tests++;
+        goto done_this_test;
+      }
+      task_Delete(tsk); tsk = 0;
+    }
 
     /* copy the test */
     generic_copy_file(0, NULL, test_src, "",
@@ -505,8 +607,11 @@ run_tests(struct section_tester_data *tst,
     }
     //task_AddArg(tsk, exe_path);
     task_AddArg(tsk, arg0_path);
+    if (prb->use_info && tstinfo.cmd_argc >= 1) {
+      task_pnAddArgs(tsk, tstinfo.cmd_argc, (char**) tstinfo.cmd_argv);
+    }
     task_SetPathAsArg0(tsk);
-    task_SetWorkingDir(tsk, tst->check_dir);
+    task_SetWorkingDir(tsk, prog_working_dir);
     if (!tst->no_redirect) {
       if (prb->use_stdin) {
         task_SetRedir(tsk, 0, TSR_FILE, input_path, TSK_READ);
@@ -595,6 +700,35 @@ run_tests(struct section_tester_data *tst,
                         0, output_path, "");
       generic_read_file(&tests[cur_test].error, 0, 0, 0,
                         0, error_path, "");
+      if (prb->use_info) {
+        size_t cmd_args_len = 0;
+        int i;
+        unsigned char *args = 0, *s;
+
+        for (i = 0; i < tstinfo.cmd_argc; i++) {
+          cmd_args_len += 16;
+          if (tstinfo.cmd_argv[i]) {
+            cmd_args_len += strlen(tstinfo.cmd_argv[i]);
+          }
+        }
+        if (cmd_args_len > 0) {
+          s = args = (unsigned char *) xmalloc(cmd_args_len + 16);
+          for (i = 0; i < tstinfo.cmd_argc; i++) {
+            if (tstinfo.cmd_argv[i]) {
+              s += sprintf(s, "[%3d]: >%s<\n", i + 1, tstinfo.cmd_argv[i]);
+            } else {
+              s += sprintf(s, "[%3d]: NULL\n", i + 1);
+            }
+          }
+        }
+        tests[cur_test].args = args;
+        if (tstinfo.comment) {
+          tests[cur_test].comment = xstrdup(tstinfo.comment);
+        }
+        if (tstinfo.team_comment) {
+          tests[cur_test].team_comment = xstrdup(tstinfo.team_comment);
+        }
+      }
 
       task_Log(tsk, 0, LOG_INFO);
 
@@ -633,7 +767,7 @@ run_tests(struct section_tester_data *tst,
         }
 
         /* now start checker */
-        /* checker <input data> <output result> <corr answer> */
+        /* checker <input data> <output result> <corr answer> <info file> */
         tsk = task_New();
         task_AddArg(tsk, var_check_cmd);
         task_AddArg(tsk, prb->input_file);
@@ -643,6 +777,13 @@ run_tests(struct section_tester_data *tst,
           task_AddArg(tsk, corr_path);
           generic_read_file(&tests[cur_test].correct, 0, 0, 0,
                             0, corr_path, "");
+        }
+        if (prb->use_info) {
+          task_AddArg(tsk, info_src);
+        }
+        if (prb->use_tgz) {
+          task_AddArg(tsk, tgz_src_dir);
+          task_AddArg(tsk, prog_working_dir);
         }
         task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
         task_SetRedir(tsk, 1, TSR_FILE, check_out_path,
@@ -693,6 +834,10 @@ run_tests(struct section_tester_data *tst,
       }
     }
 
+  done_this_test:
+    if (prb->use_info) {
+      testinfo_free(&tstinfo);
+    }
     tests[cur_test].status = status;
     cur_test++;
     total_tests++;
@@ -831,6 +976,9 @@ run_tests(struct section_tester_data *tst,
     xfree(tests[cur_test].error);
     xfree(tests[cur_test].chk_out);
     xfree(tests[cur_test].correct);
+    xfree(tests[cur_test].args);
+    xfree(tests[cur_test].comment);
+    xfree(tests[cur_test].team_comment);
     memset(&tests[cur_test], 0, sizeof(tests[cur_test]));
   }
   return 0;
@@ -1117,6 +1265,8 @@ check_config(void)
   struct section_problem_data *prb = 0;
   unsigned char *var_test_dir;
   unsigned char *var_corr_dir;
+  unsigned char *var_info_dir;
+  unsigned char *var_tgz_dir;
   unsigned char *var_check_cmd = 0;
 
   /* check spooler dirs */
@@ -1169,14 +1319,44 @@ check_config(void)
           return -1;
         }
       }
+      if (prb->use_info) {
+        if (!prb->info_dir[0]) {
+          err("directory with test information is not defined");
+          return -1;
+        }
+        if (check_readable_dir(prb->info_dir) < 0) return -1;
+        if ((n2 = count_files(prb->info_dir, prb->info_sfx)) < 0) return -1;
+        info("found %d info files for problem %s", n2, prb->short_name);
+        if (n1 != n2) {
+          err("number of test does not match number of info files");
+          return -1;
+        }
+      }
+      if (prb->use_tgz) {
+        if (!prb->tgz_dir[0]) {
+          err("directory with tgz information is not defined");
+          return -1;
+        }
+        if (check_readable_dir(prb->tgz_dir) < 0) return -1;
+        if ((n2 = count_files(prb->tgz_dir, prb->tgz_sfx)) < 0) return -1;
+        info("found %d tgz files for problem %s", n2, prb->short_name);
+        if (n1 != n2) {
+          err("number of test does not match number of tgz files");
+          return -1;
+        }
+      }
     } else {
       n1 = n2 = -1;
       var_test_dir = (unsigned char *) alloca(sizeof(path_t));
       var_corr_dir = (unsigned char *) alloca(sizeof(path_t));
+      var_info_dir = (unsigned char *) alloca(sizeof(path_t));
+      var_tgz_dir = (unsigned char *) alloca(sizeof(path_t));
 
       for (k = 1; k <= prb->variant_num; k++) {
         snprintf(var_test_dir, sizeof(path_t), "%s-%d", prb->test_dir, k);
         snprintf(var_corr_dir, sizeof(path_t), "%s-%d", prb->corr_dir, k);
+        snprintf(var_info_dir, sizeof(path_t), "%s-%d", prb->info_dir, k);
+        snprintf(var_tgz_dir, sizeof(path_t), "%s-%d", prb->tgz_dir, k);
         if (check_readable_dir(var_test_dir) < 0) return -1;
         if ((j = count_files(var_test_dir, prb->test_sfx)) < 0) return -1;
         if (!j) {
@@ -1205,6 +1385,36 @@ check_config(void)
                j, prb->short_name, k);
           if (n1 != j) {
             err("number of tests %d does not match number of answers %d",
+                n1, j);
+            return -1;
+          }
+        }
+        if (prb->use_info) {
+          if (!prb->info_dir[0]) {
+            err("directory with test infos is not defined");
+            return -1;
+          }
+          if (check_readable_dir(var_info_dir) < 0) return -1;
+          if ((j = count_files(var_info_dir, prb->info_sfx)) < 0) return -1;
+          info("found %d test infos for problem %s, variant %d",
+               j, prb->short_name, k);
+          if (n1 != j) {
+            err("number of tests %d does not match number of test infos %d",
+                n1, j);
+            return -1;
+          }
+        }
+        if (prb->use_tgz) {
+          if (!prb->tgz_dir[0]) {
+            err("directory with tgz is not defined");
+            return -1;
+          }
+          if (check_readable_dir(var_tgz_dir) < 0) return -1;
+          if ((j = count_files(var_tgz_dir, prb->tgz_sfx)) < 0) return -1;
+          info("found %d tgzs for problem %s, variant %d",
+               j, prb->short_name, k);
+          if (n1 != j) {
+            err("number of tests %d does not match number of tgz %d",
                 n1, j);
             return -1;
           }
