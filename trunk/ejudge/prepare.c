@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,8 @@
 
 #include "fileutl.h"
 #include "sformat.h"
+#include "teamdb.h"
+#include "prepare_serve.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -265,6 +267,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(full_score, "d"),
   PROBLEM_PARAM(test_score, "d"),
   PROBLEM_PARAM(run_penalty, "d"),
+  PROBLEM_PARAM(disqualified_penalty, "d"),
   PROBLEM_PARAM(use_corr, "d"),
   PROBLEM_PARAM(use_info, "d"),
   PROBLEM_PARAM(use_tgz, "d"),
@@ -328,6 +331,9 @@ static struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(src_sfx, "s"),
   LANGUAGE_PARAM(exe_sfx, "s"),
   LANGUAGE_PARAM(cmd, "s"),
+
+  LANGUAGE_PARAM(disable_auto_testing, "d"),
+  LANGUAGE_PARAM(disable_testing, "d"),
 
   LANGUAGE_PARAM(compile_dir, "s"),
   LANGUAGE_PARAM(compile_real_time_limit, "d"),
@@ -562,6 +568,7 @@ problem_init_func(struct generic_section_config *gp)
   p->info_sfx[0] = 1;
   p->tgz_sfx[0] = 1;
   p->run_penalty = -1;
+  p->disqualified_penalty = -1;
   p->checker_real_time_limit = -1;
   p->variant_num = -1;
   p->disable_auto_testing = -1;
@@ -981,13 +988,6 @@ parse_deadline_penalties(char **dpstr, int *p_total,
   return -1;
 }
 
-struct variant_map_item
-{
-  unsigned char *login;
-  int user_id;
-  int *variants;
-};
-
 /* login deadline */
 static int
 parse_personal_deadlines(char **pdstr, int *p_total,
@@ -1040,20 +1040,6 @@ parse_personal_deadlines(char **pdstr, int *p_total,
   *p_total = total;
   return i;
 }
-
-struct variant_map
-{
-  int *prob_map;
-  int *prob_rev_map;
-  int var_prob_num;
-  int vintage;
-
-  size_t user_map_size;
-  struct variant_map_item **user_map;
-
-  size_t a, u;
-  struct variant_map_item *v;
-};
 
 static struct variant_map *
 parse_variant_map(const unsigned char *path)
@@ -1170,45 +1156,6 @@ parse_variant_map(const unsigned char *path)
   return pmap;
 }
 
-int
-find_variant(int user_id, int prob_id)
-{
-  int i, new_vint;
-  struct variant_map *pmap = global->variant_map;
-
-  if (!pmap) return 0;
-  if (prob_id <= 0 || prob_id > max_prob || !probs[prob_id]) return 0;
-  if (probs[prob_id]->variant_num <= 0) return 0;
-  if (!pmap->prob_map[prob_id]) return 0;
-
-  teamdb_refresh();
-  new_vint = teamdb_get_vintage();
-  if (new_vint != pmap->vintage || !pmap->user_map_size || !pmap->user_map) {
-    info("find_variant: new vintage: %d, old: %d, updating variant map",
-         new_vint, pmap->vintage);
-    xfree(pmap->user_map);
-    pmap->user_map_size = 0;
-    pmap->user_map = 0;
-
-    pmap->user_map_size = teamdb_get_max_team_id() + 1;
-    XCALLOC(pmap->user_map, pmap->user_map_size);
-
-    for (i = 0; i < pmap->u; i++) {
-      pmap->v[i].user_id = teamdb_lookup_login(pmap->v[i].login);
-      if (pmap->v[i].user_id < 0) pmap->v[i].user_id = 0;
-      if (!pmap->v[i].user_id) continue;
-      if (pmap->v[i].user_id >= pmap->user_map_size) continue;
-      pmap->user_map[pmap->v[i].user_id] = &pmap->v[i];
-    }
-    pmap->vintage = new_vint;
-  }
-
-  if (user_id <= 0 || user_id >= pmap->user_map_size) return 0;
-  if (pmap->user_map[user_id])
-    return pmap->user_map[user_id]->variants[pmap->prob_map[prob_id]];
-  return 0;
-}
-
 static struct user_adjustment_info *
 parse_user_adjustment(char **strs)
 {
@@ -1232,50 +1179,6 @@ parse_user_adjustment(char **strs)
     pinfo[i].adjustment = x;
   }
   return pinfo;
-}
-
-struct user_adjustment_map
-{
-  int vintage;
-  int user_map_size;
-  struct user_adjustment_info **user_map;
-};
-
-int
-find_user_priority_adjustment(int user_id)
-{
-  struct user_adjustment_map *pmap = global->user_adjustment_map;
-  struct user_adjustment_info *pinfo = global->user_adjustment_info;
-  int new_vint, i;
-
-  if (!pinfo) return 0;
-  new_vint = teamdb_get_vintage();
-  if (!pmap || new_vint != pmap->vintage) {
-    if (!pmap) {
-      XCALLOC(pmap, 1);
-      global->user_adjustment_map = pmap;
-    }
-    xfree(pmap->user_map);
-
-    pmap->user_map_size = teamdb_get_max_team_id() + 1;
-    XCALLOC(pmap->user_map, pmap->user_map_size);
-
-    for (i = 0; pinfo[i].login; i++) {
-      pinfo[i].id = teamdb_lookup_login(pinfo[i].login);
-      if (pinfo[i].id <= 0 || pinfo[i].id >= pmap->user_map_size) {
-        pinfo[i].id = 0;
-        continue;
-      }
-      if (pmap->user_map[pinfo[i].id]) continue;
-      pmap->user_map[pinfo[i].id] = &pinfo[i];
-    }
-
-    pmap->vintage = new_vint;
-  }
-
-  if (user_id <= 0 || user_id >= pmap->user_map_size) return 0;
-  if (!pmap->user_map[user_id]) return 0;
-  return pmap->user_map[user_id]->adjustment;
 }
 
 static int
@@ -1312,27 +1215,6 @@ set_defaults(int mode)
       err("global.socket_path must be set");
       return -1;
     }
-#if defined EJUDGE_CONTESTS_DIR
-    if (!global->contests_dir[0]) {
-      snprintf(global->contests_dir, sizeof(global->contests_dir),
-               "%s", EJUDGE_CONTESTS_DIR);
-    }
-#endif /* EJUDGE_CONTESTS_DIR */
-    if (!global->contests_dir[0]) {
-      err("global.contests_dir must be set");
-      return -1;
-    }
-    if ((i = contests_set_directory(global->contests_dir)) < 0) {
-      err("invalid contests directory '%s': %s", global->contests_dir,
-          contests_strerror(-i));
-      return -1;
-    }
-    if ((i = contests_get(global->contest_id, &cur_contest)) < 0) {
-      err("cannot load contest information: %s",
-          contests_strerror(-i));
-      return -1;
-    }
-    snprintf(global->name, sizeof(global->name), "%s", cur_contest->name);
   }
 
   /* directory poll intervals */
@@ -1402,10 +1284,6 @@ set_defaults(int mode)
     }
   }
 
-  if (cur_contest && !global->root_dir[0] && cur_contest->root_dir) {
-    snprintf(global->root_dir, sizeof(global->root_dir), "%s",
-             cur_contest->root_dir);
-  }
   if (!global->root_dir[0]) {
     err("global.root_dir must be set!");
     return -1;
@@ -2079,6 +1957,18 @@ set_defaults(int mode)
       probs[i]->run_penalty = DFLT_P_RUN_PENALTY;
       info("problem.%s.run_penalty set to %d", ish, DFLT_P_RUN_PENALTY);
     }
+
+    if (probs[i]->disqualified_penalty == -1 && si != -1
+        && abstr_probs[si]->disqualified_penalty >= 0) {
+      probs[i]->disqualified_penalty = abstr_probs[si]->disqualified_penalty;
+      info("problem.%s.disqualified_penalty inherited from problem.%s (%d)",
+           ish, sish, probs[i]->disqualified_penalty);
+    }
+    if (probs[i]->disqualified_penalty == -1) {
+      probs[i]->disqualified_penalty = probs[i]->run_penalty;
+      info("problem.%s.disqualified_penalty set to %d", ish, 
+           probs[i]->run_penalty);
+    }
     
     if (probs[i]->use_stdin == -1 && si != -1
         && abstr_probs[si]->use_stdin != -1) {
@@ -2307,7 +2197,7 @@ set_defaults(int mode)
           && abstr_probs[si]->test_dir[0]) {
         sformat_message(probs[i]->test_dir, PATH_MAX,
                         abstr_probs[si]->test_dir,
-                        NULL, probs[i], NULL, NULL, NULL);
+                        NULL, probs[i], NULL, NULL, NULL, 0, 0, 0);
         info("problem.%s.test_dir taken from problem.%s ('%s')",
              ish, sish, probs[i]->test_dir);
       }
@@ -2323,7 +2213,7 @@ set_defaults(int mode)
           && abstr_probs[si]->corr_dir[0]) {
         sformat_message(probs[i]->corr_dir, PATH_MAX,
                         abstr_probs[si]->corr_dir,
-                        NULL, probs[i], NULL, NULL, NULL);
+                        NULL, probs[i], NULL, NULL, NULL, 0, 0, 0);
         info("problem.%s.corr_dir taken from problem.%s ('%s')",
              ish, sish, probs[i]->corr_dir);
       }
@@ -2346,7 +2236,7 @@ set_defaults(int mode)
           && abstr_probs[si]->info_dir[0]) {
         sformat_message(probs[i]->info_dir, PATH_MAX,
                         abstr_probs[si]->info_dir,
-                        NULL, probs[i], NULL, NULL, NULL);
+                        NULL, probs[i], NULL, NULL, NULL, 0, 0, 0);
         info("problem.%s.info_dir taken from problem.%s ('%s')",
              ish, sish, probs[i]->info_dir);
       }
@@ -2373,7 +2263,7 @@ set_defaults(int mode)
           && abstr_probs[si]->tgz_dir[0]) {
         sformat_message(probs[i]->tgz_dir, PATH_MAX,
                         abstr_probs[si]->tgz_dir,
-                        NULL, probs[i], NULL, NULL, NULL);
+                        NULL, probs[i], NULL, NULL, NULL, 0, 0, 0);
         info("problem.%s.tgz_dir taken from problem.%s ('%s')",
              ish, sish, probs[i]->tgz_dir);
       }
@@ -2390,7 +2280,7 @@ set_defaults(int mode)
           && abstr_probs[si]->input_file[0]) {
         sformat_message(probs[i]->input_file, PATH_MAX,
                         abstr_probs[si]->input_file,
-                        NULL, probs[i], NULL, NULL, NULL);
+                        NULL, probs[i], NULL, NULL, NULL, 0, 0, 0);
         info("problem.%s.input_file inherited from problem.%s ('%s')",
              ish, sish, probs[i]->input_file);
       }
@@ -2403,7 +2293,7 @@ set_defaults(int mode)
           && abstr_probs[si]->output_file[0]) {
         sformat_message(probs[i]->output_file, PATH_MAX,
                         abstr_probs[si]->output_file,
-                        NULL, probs[i], NULL, NULL, NULL);
+                        NULL, probs[i], NULL, NULL, NULL, 0, 0, 0);
         info("problem.%s.output_file inherited from problem.%s ('%s')",
              ish, sish, probs[i]->output_file);
       }
@@ -2535,7 +2425,7 @@ set_defaults(int mode)
         if (!tp->check_dir[0] && atp && atp->check_dir[0]) {
           sformat_message(tp->check_dir, PATH_MAX, atp->check_dir,
                           global, probs[tp->problem], NULL,
-                          tp, NULL);
+                          tp, NULL, 0, 0, 0);
           info("tester.%d.check_dir inherited from tester.%s ('%s')",
                i, sish, tp->check_dir);
         }
@@ -2550,7 +2440,7 @@ set_defaults(int mode)
         if (!tp->run_dir[0] && atp && atp->run_dir[0]) {
           sformat_message(tp->run_dir, PATH_MAX, atp->run_dir,
                           global, probs[tp->problem], NULL,
-                          tp, NULL);
+                          tp, NULL, 0, 0, 0);
           info("tester.%d.run_dir inherited from tester.%s ('%s')",
                i, sish, tp->run_dir);
         }
@@ -2643,7 +2533,7 @@ set_defaults(int mode)
       if (!tp->errorcode_file[0] && atp && atp->errorcode_file) {
         sformat_message(tp->errorcode_file, PATH_MAX, atp->errorcode_file,
                         global, probs[tp->problem], NULL,
-                        tp, NULL);
+                        tp, NULL, 0, 0, 0);
         info("tester.%d.errorcode_file inherited from tester.%s ('%s')",
              i, sish, tp->errorcode_file);        
       }
@@ -2679,7 +2569,7 @@ set_defaults(int mode)
         if (!tp->error_file[0] && atp && atp->error_file[0]) {
           sformat_message(tp->error_file, PATH_MAX, atp->error_file,
                           global, probs[tp->problem], NULL,
-                          tp, NULL);
+                          tp, NULL, 0, 0, 0);
           info("tester.%d.error_file inherited from tester.%s ('%s')",
                i, sish, tp->error_file);        
         }
@@ -2697,7 +2587,7 @@ set_defaults(int mode)
         if (!tp->check_cmd[0] && atp && atp->check_cmd[0]) {
           sformat_message(tp->check_cmd, PATH_MAX, atp->check_cmd,
                           global, probs[tp->problem], NULL,
-                          tp, NULL);
+                          tp, NULL, 0, 0, 0);
           info("tester.%d.check_cmd inherited from tester.%s ('%s')",
                i, sish, tp->check_cmd);        
         }
@@ -2710,7 +2600,7 @@ set_defaults(int mode)
         if (!tp->start_cmd[0] && atp && atp->start_cmd[0]) {
           sformat_message(tp->start_cmd, PATH_MAX, atp->start_cmd,
                           global, probs[tp->problem], NULL,
-                          tp, NULL);
+                          tp, NULL, 0, 0, 0);
           info("tester.%d.start_cmd inherited from tester.%s ('%s')",
                i, sish, tp->start_cmd);        
         }
@@ -2721,7 +2611,7 @@ set_defaults(int mode)
         if (!tp->prepare_cmd[0] && atp && atp->prepare_cmd[0]) {
           sformat_message(tp->prepare_cmd, PATH_MAX, atp->prepare_cmd,
                           global, probs[tp->problem], NULL,
-                          tp, NULL);
+                          tp, NULL, 0, 0, 0);
           info("tester.%d.prepare_cmd inherited from tester.%s ('%s')",
                i, sish, tp->prepare_cmd);        
         }
@@ -2866,151 +2756,6 @@ collect_sections(int mode)
         last_tester = t->id;
       }
     }
-  }
-  return 0;
-}
-
-static size_t
-split_path(const unsigned char *path, strarray_t *parr)
-{
-  unsigned char **s_v = 0;
-  size_t s_u = 0, s_a = 0;
-  const unsigned char *p = path, *q;
-
-  memset(parr, 0, sizeof(*parr));
-  if (*p == '/') {
-    s_a = 8;
-    s_v = xcalloc(s_a, sizeof(s_v[0]));
-    s_v[0] = xstrdup("/");
-    s_u++;
-    while (*p == '/') p++;
-  }
-  while (*p) {
-    q = p;
-    while (*q && *q != '/') q++;
-    if (s_u == s_a) {
-      if (!s_a) s_a = 4;
-      s_a *= 2;
-      s_v = xrealloc(s_v, s_a * sizeof(s_v[0]));
-    }
-    s_v[s_u++] = xmemdup(p, q - p);
-    p = q;
-    while (*p == '/') p++;
-  }
-  parr->v = (char**) s_v;
-  parr->a = s_a;
-  parr->u = s_u;
-  return s_u;
-}
-
-static void
-make_relative_path(const unsigned char *dest, strarray_t *pdest,
-                   const unsigned char *path, strarray_t *ppath,
-                   unsigned char *res, size_t reslen)
-{
-  int i, j, k = 0;
-  size_t bound = reslen - 1;
-  const unsigned char *q;
-
-  ASSERT(res);
-  ASSERT(reslen > 1);
-  memset(res, 0, reslen);
-
-  /*
-  fprintf(stderr, "Dest:\n");
-  for (i = 0; i < pdest->u; i++)
-    fprintf(stderr, "[%d]: >>%s<<\n", i, pdest->v[i]);
-  fprintf(stderr, "Path:\n");
-  for (i = 0; i < ppath->u; i++)
-    fprintf(stderr, "[%d]: >>%s<<\n", i, ppath->v[i]);
-  */
-
-  /* calculate number of common elements */
-  for (i=0;i<pdest->u&&i<ppath->u&&!strcmp(pdest->v[i],ppath->v[i]);i++);
-  if (i == ppath->u) {
-    snprintf(res, reslen, "%s", dest);
-    return;
-  }
-  for (j = i; j < ppath->u - 1; j++) {
-    if (k > 0) res[k++] = '/';
-    if (k >= bound) return;
-    res[k++] = '.';
-    if (k >= bound) return;
-    res[k++] = '.';
-    if (k >= bound) return;
-  }
-  for (j = i; j < pdest->u; j++) {
-    if (k > 0) res[k++] = '/';
-    if (k >= bound) return;
-    q = pdest->v[j];
-    while (*q) {
-      res[k++] = *q++;
-      if (k >= bound) return;
-    }
-  }
-  if (!k) res[k++] = '.';
-}
-
-static int
-make_symlink(unsigned char const *dest, unsigned char const *path)
-{
-  struct stat si;
-  int r;
-  unsigned char *cwd = 0;
-  unsigned char *t = 0;
-  unsigned char *l = 0;
-  path_t lpath;
-  strarray_t adest, apath;
-
-  if (dest[0] != '/' || path[0] != '/') {
-    cwd = alloca(PATH_MAX);
-    if (!getcwd(cwd, PATH_MAX)) {
-      err("make_symlink: getcwd failed: %s", os_ErrorMsg());
-      return -1;
-    }
-    if (dest[0] != '/') {
-      t = alloca(PATH_MAX);
-      snprintf(t, PATH_MAX, "%s/%s", cwd, dest);
-      dest = t;
-    }
-    if (path[0] != '/') {
-      t = alloca(PATH_MAX);
-      snprintf(t, PATH_MAX, "%s/%s", cwd, path);
-      path = t;
-    }
-  }
-  ASSERT(dest[0] == '/');
-  ASSERT(path[0] == '/');
-
-  /* prefer relative path over absolute */
-  split_path(dest, &adest);
-  split_path(path, &apath);
-  make_relative_path(dest, &adest, path, &apath, lpath, sizeof(lpath));
-  xstrarrayfree(&adest);
-  xstrarrayfree(&apath);
-
-  if ((r = lstat(path, &si)) >= 0 && !S_ISLNK(si.st_mode)) {
-    err("make_symlink: %s already exists, but not a symlink", path);
-    return -1;
-  }
-
-  if (r >= 0) {
-    // symlink already exists
-    l = alloca(PATH_MAX);
-    if (readlink(path, l, PATH_MAX) < 0) {
-      err("make_symlink: readlink(%s) failed: %s", path, os_ErrorMsg());
-      return -1;
-    }
-    if (!strcmp(l, lpath)) return 0;
-    if (unlink(path) < 0) {
-      err("make_symlink: unlink(%s) failed: %s", path, os_ErrorMsg());
-      return -1;
-    }
-  }
-
-  if (symlink(lpath, path) < 0) {
-    err("make_symlink: symlink(%s,%s) failed: %s", lpath, path, os_ErrorMsg());
-    return -1;
   }
   return 0;
 }
@@ -3283,7 +3028,7 @@ prepare_tester_refinement(struct section_tester_data *out,
   strcpy(out->check_dir, tp->check_dir);
   if (!out->check_dir[0] && atp && atp->check_dir[0]) {
     sformat_message(out->check_dir, sizeof(out->check_dir),
-                    atp->check_dir, global, prb, NULL, out, NULL);
+                    atp->check_dir, global, prb, NULL, out, NULL, 0, 0, 0);
   }
   if (!out->check_dir[0]) {
     pathcpy(out->check_dir, global->run_check_dir);
@@ -3403,14 +3148,14 @@ prepare_tester_refinement(struct section_tester_data *out,
   strcpy(out->errorcode_file, tp->errorcode_file);
   if (!out->errorcode_file[0] && atp && atp->errorcode_file[0]) {
     sformat_message(out->errorcode_file, sizeof(out->errorcode_file),
-                    atp->errorcode_file, global, prb, NULL, out, NULL);
+                    atp->errorcode_file, global, prb, NULL, out, NULL, 0, 0,0);
   }
 
   /* copy error_file */
   strcpy(out->error_file, tp->error_file);
   if (!out->error_file[0] && atp && atp->error_file[0]) {
     sformat_message(out->error_file, sizeof(out->error_file),
-                    atp->error_file, global, prb, NULL, out, NULL);
+                    atp->error_file, global, prb, NULL, out, NULL, 0, 0, 0);
   }
   if (!out->error_file[0]) {
     snprintf(out->error_file, sizeof(out->error_file),
@@ -3426,7 +3171,7 @@ prepare_tester_refinement(struct section_tester_data *out,
     strcpy(out->check_cmd, tp->check_cmd);
     if (!out->check_cmd[0] && atp && atp->check_cmd[0]) {
       sformat_message(out->check_cmd, sizeof(out->check_cmd),
-                      atp->check_cmd, global, prb, NULL, out, NULL);
+                      atp->check_cmd, global, prb, NULL, out, NULL, 0, 0, 0);
     }
     if (!out->check_cmd[0]) {
       err("default tester for architecture '%s': check_cmd must be set",
@@ -3440,7 +3185,7 @@ prepare_tester_refinement(struct section_tester_data *out,
   strcpy(out->start_cmd, tp->start_cmd);
   if (!out->start_cmd[0] && atp && atp->start_cmd[0]) {
     sformat_message(out->start_cmd, sizeof(out->start_cmd),
-                    atp->start_cmd, global, prb, NULL, out, NULL);
+                    atp->start_cmd, global, prb, NULL, out, NULL, 0, 0, 0);
   }
   if (out->start_cmd[0]) {
     pathmake4(out->start_cmd, global->script_dir, "/", out->start_cmd, 0);
@@ -3450,7 +3195,7 @@ prepare_tester_refinement(struct section_tester_data *out,
   strcpy(out->prepare_cmd, tp->prepare_cmd);
   if (!out->prepare_cmd[0] && atp && atp->prepare_cmd[0]) {
     sformat_message(out->prepare_cmd, sizeof(out->prepare_cmd),
-                    atp->prepare_cmd, global, prb, NULL, out, NULL);
+                    atp->prepare_cmd, global, prb, NULL, out, NULL, 0, 0, 0);
   }
   if (out->prepare_cmd[0]) {
     pathmake4(out->prepare_cmd, global->script_dir, "/", out->prepare_cmd, 0);
