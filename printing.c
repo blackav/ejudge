@@ -98,7 +98,7 @@ do_print_run(int run_id, int is_privileged, int user_id)
   unsigned char *ps_path = 0;
   unsigned char *log_path = 0;
   unsigned char *sfx = "";
-  int arch_flags = 0, pages_num = -1, x;
+  int arch_flags = 0, pages_num = -1, x, i;
   path_t run_arch;
   struct run_entry info;
   tpTask tsk = 0;
@@ -160,10 +160,17 @@ do_print_run(int run_id, int is_privileged, int user_id)
 
   if (!(tsk = task_New())) goto cleanup;
   task_AddArg(tsk, global->a2ps_path);
-  task_AddArg(tsk, "-1");
-  task_AddArg(tsk, "-E");
-  task_AddArg(tsk, "-X");
-  task_AddArg(tsk, "koi8-r");
+  if (global->a2ps_args) {
+    for (i = 0; global->a2ps_args[i]; i++)
+      task_AddArg(tsk, global->a2ps_args[i]);
+  } else {
+    task_AddArg(tsk, "-1");
+    task_AddArg(tsk, "-E");
+    /*
+    task_AddArg(tsk, "-X");
+    task_AddArg(tsk, "koi8-r");
+    */
+  }
   task_AddArg(tsk, "-o");
   task_AddArg(tsk, ps_path);
   task_AddArg(tsk, banner_path);
@@ -201,6 +208,10 @@ do_print_run(int run_id, int is_privileged, int user_id)
 
   if (!(tsk = task_New())) goto cleanup;
   task_AddArg(tsk, global->lpr_path);
+  if (global->lpr_args) {
+    for (i = 0; global->lpr_args[i]; i++)
+      task_AddArg(tsk, global->lpr_args[i]);
+  }
   task_AddArg(tsk, ps_path);
   task_SetPathAsArg0(tsk);
   if (task_Start(tsk) < 0) goto cleanup;
