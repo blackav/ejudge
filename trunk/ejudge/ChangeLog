@@ -1,5 +1,16 @@
 2003-07-11  Alexander Chernov  <cher@ispras.ru>
 
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* l10n.c:
+	(l10n_prepare) bug fixed: parameter name shadowed the name of the
+	  global variable.
+
+	* userlist-server.c: 
+	(cmd_do_login) incoming packet check is improved.
+
+2003-07-11  Alexander Chernov  <cher@ispras.ru>
+
 	* makefile: general cleanup.
 	o `libcommon.a' library is used in all utilities instead of explicit
 	  listing of all used .c files;
