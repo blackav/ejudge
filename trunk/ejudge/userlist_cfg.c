@@ -46,6 +46,7 @@ enum
     TG_CAP,
     TG_SERVE_PATH,
     TG_L10N_DIR,
+    TG_RUN_PATH,
   };
 enum
   {
@@ -73,6 +74,7 @@ static char const * const tag_map[] =
   "cap",
   "serve_path",
   "l10n_dir",
+  "run_path",
 
   0
 };
@@ -106,6 +108,7 @@ tree_alloc_func(int tag)
   case TG_CAPS:
   case TG_SERVE_PATH:
   case TG_L10N_DIR:
+  case TG_RUN_PATH:
     return xcalloc(1, sizeof(struct xml_tree));
   case TG_MAP:
     return xcalloc(1, sizeof(struct userlist_cfg_user_map));
@@ -383,6 +386,9 @@ userlist_cfg_parse(char const *path)
       break;
     case TG_SERVE_PATH:
       if (handle_final_tag(path, p, &cfg->serve_path) < 0) goto failed;
+      break;
+    case TG_RUN_PATH:
+      if (handle_final_tag(path, p, &cfg->run_path) < 0) goto failed;
       break;
     case TG_L10N_DIR:
 #if CONF_HAS_LIBINTL - 0 == 1
