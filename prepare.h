@@ -191,6 +191,8 @@ struct section_global_data
   path_t run_work_dir;          /* private run's temporary directory */
   path_t run_check_dir;         /* working directory for checked programs */
 
+  path_t htdocs_dir;            /* httpd server html document root dir */
+
   /* scoring settings */
   puc_t score_system[32];       /* scoring system */
   int    score_system_val;      /* internal int value */
@@ -207,6 +209,7 @@ struct section_global_data
   puc_t standings_file_name[64]; /* public standings file name */
   path_t stand_header_file;     /* file to use as standings header */
   path_t stand_footer_file;     /* file to use as standings footer */
+  path_t stand_symlink_dir;
 
   puc_t stand_extra_format[32]; /* extra standings info */
   puc_t stand_extra_legend[64]; /* extra standings info legend */
@@ -234,6 +237,7 @@ struct section_global_data
   path_t stand2_footer_file;
   unsigned char *stand2_header_txt;
   unsigned char *stand2_footer_txt;
+  path_t stand2_symlink_dir;
 
   // public log information
   puc_t plog_file_name[64];
@@ -242,6 +246,7 @@ struct section_global_data
   unsigned char *plog_header_txt;
   unsigned char *plog_footer_txt;
   int plog_update_time;
+  path_t plog_symlink_dir;
 
   // fun
   path_t sound_player;
