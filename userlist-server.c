@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "userlist_cfg.h"
@@ -2869,72 +2865,7 @@ do_list_users(FILE *f, int contest_id, int locale_id,
   unsigned char *s;
   unsigned char buf[1024];
   unsigned char *notset = 0;
-  int role, pers, pers_tot;
-
-  if (flags) {
-    d = 0;
-    if (contest_id) {
-      ASSERT(contest_id > 0);
-      ASSERT(contest_id < contests->id_map_size);
-      d = contests->id_map[contest_id];
-      ASSERT(d);
-    }
-
-    setup_locale(locale_id);
-    notset = "";
-    for (i = 1; i < userlist->user_map_size; i++) {
-      if (!(u = userlist->user_map[i])) continue;
-      if (d && !u->contests) continue;
-      if (d) {
-        for (c = FIRST_CONTEST(u); c; c = NEXT_CONTEST(c)) {
-          if (c->id == d->id) break;
-        }
-        if (!c) continue;
-      }
-      pers_tot = 0;
-      for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
-        if (!u->members[role]) continue;
-        for (pers = 0; pers < u->members[role]->total; pers++) {
-          unsigned char nbuf[32] = { 0 };
-          unsigned char *lptr = nbuf;
-
-          if (!(m = u->members[role]->members[pers])) continue;
-          if (role == CONTEST_M_CONTESTANT || role == CONTEST_M_RESERVE) {
-            snprintf(nbuf, sizeof(nbuf), "%d", m->grade);
-            lptr = nbuf;
-          } else {
-            lptr = m->occupation;
-          }
-
-          pers_tot++;
-          fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
-                  u->id, u->login, u->name, u->email,
-                  u->inst?u->inst:notset,
-                  u->instshort?u->instshort:notset,
-                  u->fac?u->fac:notset,
-                  u->facshort?u->facshort:notset,
-                  gettext(member_string[role]),
-                  m->surname?m->surname:notset,
-                  m->firstname?m->firstname:notset,
-                  m->middlename?m->middlename:notset,
-                  gettext(member_status_string[m->status]),
-                  lptr?lptr:notset);
-        }
-      }
-      if (!pers_tot) {
-          fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
-                  u->id, u->login, u->name, u->email,
-                  u->inst?u->inst:notset,
-                  u->instshort?u->instshort:notset,
-                  u->fac?u->fac:notset,
-                  u->facshort?u->facshort:notset,
-                  "", "", "", "", "", "");
-      }
-    }
-    setup_locale(0);
-
-    return;
-  }
+  int role, pers;
 
   if (user_id > 0) {
     ASSERT(user_id > 0);
@@ -3175,6 +3106,95 @@ do_list_users(FILE *f, int contest_id, int locale_id,
 }
 
 static void
+do_dump_database(FILE *f, int contest_id)
+{
+  struct userlist_user *u;
+  struct userlist_contest *c;
+  struct contest_desc *d;
+  struct userlist_member *m;
+  unsigned char *notset = 0, *banstr = 0, *invstr = 0, *statstr = 0;
+  int i, role, pers, pers_tot;
+
+  ASSERT(contest_id > 0);
+  ASSERT(contest_id < contests->id_map_size);
+  d = contests->id_map[contest_id];
+  ASSERT(d);
+
+  fprintf(f, "Content-type: text/plain\n\n");
+
+  notset = "";
+  for (i = 1; i < userlist->user_map_size; i++) {
+    if (!(u = userlist->user_map[i])) continue;
+    if (d && !u->contests) continue;
+    for (c = FIRST_CONTEST(u); c; c = NEXT_CONTEST(c)) {
+      if (c->id == d->id) break;
+    }
+    if (!c) continue;
+
+    switch (c->status) {
+    case USERLIST_REG_OK:       statstr = "OK";       break;
+    case USERLIST_REG_PENDING:  statstr = "PENDING";  break;
+    case USERLIST_REG_REJECTED: statstr = "REJECTED"; break;
+    default:
+      statstr = "UNKNOWN";
+    }
+
+    banstr = "";
+    invstr = "";
+    if ((c->flags & USERLIST_UC_INVISIBLE)) invstr = "I";
+    if ((c->flags & USERLIST_UC_BANNED)) banstr = "B";
+
+    pers_tot = 0;
+    for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
+      if (!u->members[role]) continue;
+      for (pers = 0; pers < u->members[role]->total; pers++) {
+        unsigned char nbuf[32] = { 0 };
+        unsigned char *lptr = nbuf;
+
+        if (!(m = u->members[role]->members[pers])) continue;
+        if (role == CONTEST_M_CONTESTANT || role == CONTEST_M_RESERVE) {
+          snprintf(nbuf, sizeof(nbuf), "%d", m->grade);
+          lptr = nbuf;
+        } else {
+          lptr = m->occupation;
+        }
+
+        pers_tot++;
+        fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%d;%s;%s;%s;%s;%s;%s\n",
+                u->id, u->login, u->name, u->email,
+                u->inst?u->inst:notset,
+                u->instshort?u->instshort:notset,
+                u->fac?u->fac:notset,
+                u->facshort?u->facshort:notset,
+                u->city?u->city:notset,
+                u->country?u->country:notset,
+                statstr, invstr, banstr,
+                m->serial,
+                gettext(member_string[role]),
+                m->surname?m->surname:notset,
+                m->firstname?m->firstname:notset,
+                m->middlename?m->middlename:notset,
+                gettext(member_status_string[m->status]),
+                lptr?lptr:notset);
+      }
+    }
+    if (!pers_tot) {
+      fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
+              u->id, u->login, u->name, u->email,
+              u->inst?u->inst:notset,
+              u->instshort?u->instshort:notset,
+              u->fac?u->fac:notset,
+              u->facshort?u->facshort:notset,
+              u->city?u->city:notset,
+              u->country?u->country:notset,
+              statstr, invstr, banstr,
+              "", "", "", "", "", "", "");
+    }
+  }
+  return;
+}
+
+static void
 list_users(struct client_state *p, int len,
            struct userlist_pk_list_users *pack)
 {
@@ -3228,6 +3248,56 @@ list_users(struct client_state *p, int len,
   }
   do_list_users(f, pack->contest_id, pack->locale_id,
                 pack->user_id, pack->flags, url_ptr, srch_ptr);
+  fclose(f);
+
+  q = (struct client_state*) xcalloc(1, sizeof(*q));
+  q->client_fds[0] = -1;
+  q->client_fds[1] = p->client_fds[1];
+  q->last_time = cur_time;
+  q->id = serial_id++;
+  q->user_id = -1;
+  q->fd = p->client_fds[0];
+  p->client_fds[0] = -1;
+  p->client_fds[1] = -1;
+  q->state = STATE_AUTOCLOSE;
+  q->write_buf = html_ptr;
+  q->write_len = html_size;
+  link_client_state(q);
+  info("%d: created new connection %d", p->id, q->id);
+  send_reply(p, ULS_OK);
+}
+
+static void
+action_dump_user_database(struct client_state *p, int len,
+                          struct userlist_pk_dump_database *pack)
+{
+  struct client_state *q;
+  FILE *f = 0;
+  unsigned char *html_ptr = 0;
+  size_t html_size = 0;
+
+  if (len != sizeof(*pack)) {
+    bad_packet(p, "dump_user_database: packet length mismatch");
+    return;
+  }
+  if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
+    err("%d: dump_user_database: two client file descriptors required", p->id);
+    disconnect_client(p);
+    return;
+  }
+  if (pack->contest_id <= 0 || pack->contest_id >= contests->id_map_size
+      || !contests->id_map[pack->contest_id]) {
+    err("%d: dump_user_database: invalid contest %d",
+        p->id, pack->contest_id);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+
+  if (!(f = open_memstream((char**) &html_ptr, &html_size))) {
+    err("%d: open_memstream failed!", p->id);
+    return;
+  }
+  do_dump_database(f, pack->contest_id);
   fclose(f);
 
   q = (struct client_state*) xcalloc(1, sizeof(*q));
@@ -4043,6 +4113,10 @@ process_packet(struct client_state *p, int len, unsigned char *pack)
 
   case ULS_PRIV_CHECK_COOKIE:
     login_priv_cookie(p, len, (struct userlist_pk_check_cookie*) pack);
+    break;
+
+  case ULS_DUMP_DATABASE:
+    action_dump_user_database(p, len,(struct userlist_pk_dump_database *)pack);
     break;
 
   default:
