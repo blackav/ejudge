@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,13 +33,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
-#if CONF_HAS_LIBINTL - 0 == 1
-#include <libintl.h>
-#define _(x) gettext(x)
-#else
-#define _(x) x
-#endif
 
 #define CLAR_RECORD_SIZE 79
 #define SUBJ_STRING_SIZE 24
