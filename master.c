@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -330,6 +330,42 @@ set_cookie_if_needed(void)
   printf("Set-cookie: MID=%llx; expires=%s\n", client_cookie, buf);
 }
 
+/* this function is called, if the contest_id is not known */
+static int
+display_enter_password_2(void)
+{
+  make_self_url();
+  client_put_header(stdout, 0, 0, "iso8859-1", 1, 0,
+                    "Enter password - %s",
+                    protocol_priv_level_str(priv_level));
+  printf("<form method=\"POST\" action=\"%s\" "
+         "ENCTYPE=\"application/x-www-form-urlencoded\">",
+         self_url);
+  printf("<input type=\"hidden\" name=\"sid_mode\" value=\"2\">\n");
+  printf("<table>"
+         "<tr>"
+         "<td>%s:</td>"
+         "<td><input type=\"text\" size=16 name=\"login\"></td>"
+         "</tr>"
+         "<tr>"
+         "<td>%s:</td>"
+         "<td><input type=\"password\" size=16 name=\"password\"></td>"
+         "</tr>"
+         "<tr>"
+         "<td>%s:</td>"
+         "<td><input type=\"text\" size=\"16\" name=\"contest_id\"></td>"
+         "</tr>"
+         "<tr>"
+         "<td>&nbsp;</td>"
+         "<td><input type=\"submit\" value=\"%s\"></td>"
+         "</tr>"
+         "</table>"
+         "</form>",
+         _("Login"), _("Password"), _("Contest ID"), _("Submit"));
+  client_put_footer(stdout, 0);
+  return 0;
+}
+
 static int
 display_enter_password(void)
 {
@@ -367,41 +403,13 @@ display_enter_password(void)
          "<td>%s:</td>"
          "<td><input type=\"password\" size=16 name=\"password\"></td>"
          "</tr>"
-         "<td><input type=\"submit\" value=\"%s\"></td>"
+         "<tr>"
          "<td>&nbsp;</td>"
+         "<td><input type=\"submit\" value=\"%s\"></td>"
          "</tr>"
          "</table>"
          "</form>",
          _("Login"), _("Password"), _("Submit"));
-  /*
-  printf("<table>"
-         "<tr>"
-         "<td>%s:</td>"
-         "<td><input type=\"text\" size=16 name=\"login\"></td>"
-         "</tr>"
-         "<tr>"
-         "<td>%s:</td>"
-         "<td><input type=\"password\" size=16 name=\"password\"></td>"
-         "</tr>"
-         "<tr valign=\"top\">"
-         "<td>%s:</td>"
-         "<td>"
-         "<input type=\"radio\" name=\"sid_mode\" value=\"0\">%s<br>"
-         "<input type=\"radio\" name=\"sid_mode\" value=\"1\">%s<br>"
-         "<input type=\"radio\" name=\"sid_mode\" value=\"2\" checked=\"yes\">%s<br>"
-         "<input type=\"radio\" name=\"sid_mode\" value=\"3\">%s"
-         "</td>"
-         "<tr>"
-         "<td><input type=\"submit\" value=\"%s\"></td>"
-         "<td>&nbsp;</td>"
-         "</tr>"
-         "</table>"
-         "</form>",
-         _("Login"), _("Password"),
-         _("Session support"), _("No session"),
-         _("In forms"), _("In URL"), _("In cookies"),
-         _("Submit"));
-  */
   client_put_footer(stdout, 0);
   return 0;
 }
@@ -2407,6 +2415,12 @@ initialize(int argc, char *argv[])
     }
   } else if (strlen(basename) == namelen) {
     // second case
+    if (!cgi_param("contest_id") && !cgi_param("sid_mode")
+        && !cgi_param("SID")) {
+      display_enter_password_2();
+      exit(0);
+    }
+
     if (cgi_contest_id <= 0) {
       client_not_configured(0, "Contest ID is unknown", 0);
       /* never get here */
