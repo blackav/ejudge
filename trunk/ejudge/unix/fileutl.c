@@ -185,6 +185,7 @@ scan_dir(char const *partial_path, char *found_item)
     if (items[i]) {
       pathcpy(found_item, items[i]);
       info("scan_dir: found '%s' (priority %d)", found_item, i - 16);
+      return 1;
     }
   }
   err("scan_dir: found == %d, but no items found!!!", found);
