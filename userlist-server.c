@@ -2561,6 +2561,7 @@ team_set_password(struct client_state *p, int len,
   unsigned char *old_pwd, *new_pwd;
   struct userlist_user *u;
   struct passwd_internal oldint, newint;
+  struct contest_desc *cnts = 0;
 
   // check packet
   if (len < sizeof(*pack)) {
@@ -2585,7 +2586,7 @@ team_set_password(struct client_state *p, int len,
     return;
   }
 
-  info("%d: team_set_password: %d", p->id, pack->user_id);
+  info("%d: team_set_password: %d, %d", p->id, pack->user_id,pack->contest_id);
   if (p->user_id <= 0) {
     err("%d: client not authentificated", p->id);
     send_reply(p, -ULS_ERR_NO_PERMS);
@@ -2605,6 +2606,17 @@ team_set_password(struct client_state *p, int len,
   if (!u) {
     err("%d: user id nonexistent", p->id);
     send_reply(p, -ULS_ERR_BAD_UID);
+    return;
+  }
+  if (pack->contest_id <= 0 || pack->contest_id >= contests->id_map_size
+      || !(cnts = contests->id_map[pack->contest_id])) {
+    err("%d: invalid contest_id", p->id);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (cnts->disable_team_password) {
+    err("%d: team password changing is disabled for this contest", p->id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
   if (!new_len) {
