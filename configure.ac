@@ -45,6 +45,7 @@ AC_ARG_ENABLE([rpath], AC_HELP_STRING([--disable-rpath],[do not use -rpath featu
 AC_ARG_ENABLE([nls], AC_HELP_STRING([--disable-nls],[disable localization]),[ac_cv_nls=$enableval],[ac_cv_nls=""])
 AC_ARG_ENABLE([charset],AC_HELP_STRING([--enable-charset],[specify the default charset]),[ac_cv_charset="$enableval"],[ac_cv_charset=""])
 AC_ARG_ENABLE([socket-path],AC_HELP_STRING([--enable-socket-path],[specify the default userlist-server socket path]),[ac_cv_socket_path="$enableval"],[ac_cv_socket_path=""])
+AC_ARG_ENABLE([super-serve-socket],AC_HELP_STRING([--enable-super-serve-socket],[specify the default super-serve socket path]),[ac_cv_super_serve_socket="$enableval"],[ac_cv_super_serve_socket=""])
 AC_ARG_ENABLE([conf-dir], AC_HELP_STRING([--enable-conf-dir=CONF-DIR],[specify the ejudge configuration directory]),[ac_cv_conf_dir="$enableval"],[ac_cv_conf_dir=""])
 AC_ARG_ENABLE([cgi-conf-dir], AC_HELP_STRING([--enable-cgi-conf-dir],[specify path to CGI configuration files]),[ac_cv_cgi_conf_dir="$enableval"],[ac_cv_cgi_conf_dir=""])
 AC_ARG_ENABLE([ejudge-xml],AC_HELP_STRING([--enable-ejudge-xml],[specify the default location of ejudge.xml]),[ac_cv_ejudge_xml="$enableval"],[ac_cv_ejudge_xml=""])
@@ -982,6 +983,7 @@ fi
 
 [[ x"${ac_cv_charset}" = xyes -o x"${ac_cv_charset}" = xno ]] && ac_cv_charset=""
 [[ x"${ac_cv_socket_path}" = xyes -o x"${ac_cv_socket_path}" = xno ]] && ac_cv_socket_path=""
+[[ x"${ac_cv_super_serve_socket}" = xyes -o x"${ac_cv_super_serve_socket}" = xno ]] && ac_cv_super_serve_socket=""
 
 [[ x"${ac_cv_conf_dir}" = xyes -o x"${ac_cv_conf_dir}" = xno ]] && ac_cv_conf_dir=""
 if [[ x"${ac_cv_conf_dir}" != x ]]
@@ -1112,6 +1114,10 @@ fi
 if [[ x"${ac_cv_socket_path}" != x ]]
 then
   AC_DEFINE_UNQUOTED(EJUDGE_SOCKET_PATH,"${ac_cv_socket_path}")
+fi
+if [[ x"${ac_cv_super_serve_socket}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_SUPER_SERVE_SOCKET,"${ac_cv_super_serve_socket}")
 fi
 if [[ x"${ac_cv_httpd_cgi_bin_dir}" != x ]]
 then
