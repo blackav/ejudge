@@ -27,6 +27,17 @@
 
 #include <stdio.h>
 
+#ifndef __MASTER_PAGE_ENUM_DEFINED__
+#define __MASTER_PAGE_ENUM_DEFINED__
+enum
+{
+  PRIV_LEVEL_USER = 0,
+  PRIV_LEVEL_OBSERVER,
+  PRIV_LEVEL_JUDGE,
+  PRIV_LEVEL_ADMIN
+};
+#endif /* __MASTER_PAGE_ENUM_DEFINED__ */
+
 enum
   {
     USERLIST_PWD_PLAIN,
@@ -129,6 +140,7 @@ enum
     USERLIST_A_MEMBER_SERIAL,
     USERLIST_A_SERIAL,
     USERLIST_A_READ_ONLY,
+    USERLIST_A_PRIV_LEVEL,
 
     USERLIST_LAST_ATTN,
   };
@@ -236,6 +248,7 @@ struct userlist_cookie
   unsigned long expire;
   int contest_id;
   int locale_id;
+  int priv_level;
 };
 
 struct userlist_contest
