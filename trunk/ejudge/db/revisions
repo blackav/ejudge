@@ -603,3 +603,5 @@ filter_scan.lex 1 5 464992
 serve.c 1 32 6298480
 userlist_clnt/logout.c 1 1 123817
 userlist_clnt/priv_cookie.c 1 1 237112
+client_actions.h 1 1 89677
+serve_clnt/view.c 1 1 294584
