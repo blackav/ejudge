@@ -1,3 +1,16 @@
+2004-03-26  Alexander Chernov  <cher@ispras.ru>
+
+	* submit_run.c: copyright notice is updated;
+	(serve_clnt_submit_run) added new parameter `run_size' to explicitly
+	  pass the length of the source. This parameter is used to calculate
+	  the overall packet size instead of taking the length of the string.
+	  Thus, arbitrary binary data may be passed to the server.
+
+	* view.c: copyright notice is updated;
+	(serve_clnt_view) parameter `item2' is added. This parameter is then
+	  passed to the server;
+	  `PRIV_DOWNLOAD_RUN', `COMPARE_RUNS' commands are supported.
+
 2004-02-16  Alexander Chernov  <cher@ispras.ru>
 
 	* edit_run.c:
