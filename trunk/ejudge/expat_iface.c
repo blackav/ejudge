@@ -430,6 +430,7 @@ end_hnd(void *data, const XML_Char *name)
   pd->nest--;
   tl->tree->text = convert_utf8_to_local_heap(pd->conv_hnd, tl->str);
   free(tl->str); tl->str = 0;
+  free(tl);
 }
 
 static void
