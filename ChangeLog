@@ -1,0 +1,528 @@
+2000-11-05  Alexander Chernov  <cher@ispras.ru>
+
+	* makefile 1.12: removal of revinfo added to clean rule
+
+	* TODO 6.2: .
+
+	* makefile 1.11: added rule force
+
+	* prepare.h 1.9, revinfo.c 1.2, run.c 1.9, runlog.c 1.3, runlog.h 1.2, serve.c 1.10, submit.c 1.6, team.c 1.6, teamdb.c 1.6, teamdb.h 1.5, version.h 1.2, base64.c 1.3, base64.h 1.2, cgi.c 1.6, cgi.h 1.3, clar.c 1.4, clarlog.c 1.5, clarlog.h 1.4, clntutil.c 1.7, clntutil.h 1.5, compile.c 1.9, html.c 1.7, html.h 1.7, master.c 1.9, misctext.c 1.2, misctext.h 1.2, mkpasswd.c 1.4, parsecfg.c 1.5, parsecfg.h 1.5, prepare.c 1.11:
+	copying conditions changed: LGPL -> GPL
+
+	* clntutil.c 1.6:
+	Copyright notice added at the bottom of the generated html page.
+
+	* makefile 1.10: added version number tracking
+
+	* COPYING.GPL 1.1: New file.
+
+	* .cvsignore 6.2: x
+
+	* TODO 6.1: new todo
+
+	* VERSION 1.1, revinfo.c 1.1, version.h 1.1: New file.
+
+2000-11-04  Alexander Chernov  <cher@ispras.ru>
+
+	* makefile 1.9: dependencies regenerated;
+	some other changes;
+
+	* team.c 1.5: 1) new configuration parameters;
+	2) write_log(...) is replaced with err(...) or info(...);
+	3) other changes.
+
+	* submit.c 1.5: 1) added preprocessor-related options (-D, -E);
+	2) other changes.
+
+	* run.c 1.8: many changes.
+
+	* master.c 1.8, serve.c 1.9: many changes
+
+	* compile.c 1.8: 1) some documentation added;
+	2) write_log(...) is replaced with err(...) or info(...);
+	3) added preprocessor-related (-E, -D) options;
+	4) MAX_LANGUAGE is replaced with max_lang;
+	5) some more changes.
+
+	* clar.c 1.3: 1) preprocessor-related options added (-E -D);
+	2) message-related functions from misctext.h
+	   are used;
+	3) some more changes.
+
+	* clntutil.c 1.5:
+	1) const removed from the first param of client_transaction function;
+	2) sf_* function used to do checked syscalls.
+
+	* clntutil.h 1.4:
+	const removed from the first param of client_transaction function;
+
+	* clarlog.c 1.4:
+	1) write_log(...) is replaced with err(...) or info(...);
+	2) macro ERR_R introduced to further simplify error reporting;
+	3) sf_* read/write functions used to do checked i/o;
+
+	* runlog.c 1.2: 1) sf_* functions from unix/fileutl are used to do
+	   checked i/o;
+	2) write_log(...) is replaced with err(...) or info(...) calls.
+
+	* teamdb.c 1.5: write_log(...) is replaced with err or info calls;
+
+	* html.c 1.6:
+	1) write_log(...) mostly replaced with calls of info and err;
+	2) sf_fopen function implemented to do checked fopen;
+	3) many configuration parameters renamed due to changes
+	   in prepare.[ch];
+	4) old write_standings is split into write_standings and
+	   do_write_standings, the latter is used in write_judge_standings;
+	5) implemented write_judge_source_view;
+	6) implemented write_judge_report_view;
+	7) implemented write_judge_standings.
+
+	* html.h 1.6: added prototypes for write_judge_source_view,
+	write_judge_report_view, write_judge_standings.
+
+	* pathutl.h 1.6: added prototypes for err and info.
+
+	* pathutl.c 1.5:
+	1) pathmake2 does not alter the path, if it starts from "./";
+	2) added functions err and info;
+	3) added outlined implementation of path_add_dir and path_init.
+
+	* parsecfg.c 1.4: implemented reading from the gived file descriptor
+
+	* parsecfg.h 1.4: added new param to function parse_param
+	to read from the given FILE.
+
+	* prepare.c 1.10: 1) many parameter names changed;
+	2) new parameters added;
+	3) added support for preprocessing of configuration file;
+	4) other changes (don't remember which...);
+
+	* prepare.h 1.8:
+	too many changes to list, most notably, the configuration
+	params names changed.
+
+2000-11-03  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.h 1.7:
+	added prototypes for check_executable, check_readable_dir,
+	  check_writable_dir, check_writable_spool, relaxed_remove.
+
+	* osdeps.h 6.13: 1) copyright notice updated;
+	2) added proto for os_ErrorMsg;
+	3) char * -> const char * for many functions.
+
+	* logger.h 6.5: 1) copyright notice updated;
+	2) char * -> const char * for write_log, vwrite_log.
+
+	* exec.h 6.8: 1) copyright notice updated;
+	2) added prototypes for task_ErrorCode, task_GetRunningTime.
+
+	* cgi.c 1.5: 1) MAX_VALUE_SIZE increased to 128K;
+	2) added function documentation.
+
+	* base64.c 1.2: 1) added function descriptions;
+	2) write_log(0, LOG_ERR ...) is replaced with err;
+	3) added include for pathutl to import err();
+	4) removed previously commented out debugging stuff.
+
+2000-10-30  Alexander Chernov  <cher@ispras.ru>
+
+	* .cvsignore 6.1: initial revision
+
+2000-10-25  Alexander Chernov  <cher@ispras.ru>
+
+	* master.c 1.7, team.c 1.4: 1) macro GLOBAL_PARAM is used;
+	2) certain configuration parameters are renamed;
+	3) initialization rewritten using path_init and path_add_dir.
+
+	* prepare.c 1.9:
+	macros GLOBAL_PARAM, PROBLEM_PARAM, LANGUAGE_PARAM, CHECKER_PARAM
+	are used.
+
+	* pathutl.h 1.5: added functions path_add_dir and path_init.
+
+	* run.c 1.7: added support for correct answer files
+
+	* prepare.c 1.8: directory permissions fixed for checker->exe_dir.
+
+	* master.c 1.6: added parameter standings_url;
+
+	* makefile 1.8: added misctext
+
+	* html.h 1.5: prototype of write_standings changed.
+
+	* html.c 1.5: 1) added include for misctext.h;
+	2) contestlog is renamed to runlog;
+	3) dur2str moved to misctext under the name duration_str;
+	4) status2str moved to runlog under run_status_str;
+	5) write_runs_table removed;
+	6) html_armored_*, html_armor_* moved to misctext;
+	7) clar_flags_to_str moved to clar under the name clar_flags_str;
+	8) write_clars_table removed;
+
+	* clntutil.h 1.3: removed prototype of client_duration_to_str.
+
+	* clntutil.c 1.4: 1) added include directive for "misctext.h";
+	2) no-cache option is added to header;
+	3) client_duration_to_str moved to misctext under the name
+	duration_str;
+
+	* serve.c 1.8: 1) removed outdated "theory of operation";
+	2) contestlog.h renamed to runlog.h;
+	3) added include directive for misctext.h;
+	4) two standings are generated: judge's and public;
+	5) log_ prefix systematically replaced with run_ prefix;
+	6) get_quoted_message_size moved to misctext.h under
+	the name message_quoted_size;
+	7) quote_message moved to misctext.h under the name
+	message_quote;
+	8) make_reply_subj moved to misctext.h under the name
+	message_reply_subj;
+	9) process_judge_reply is updated to work with new
+	functions with slightly changed API;
+	10) RUNSTAT, GETSTAT, CLARSTAT, CLARSTAT2 commands are
+	removed.
+
+	* z.cfg 6.7: moved to conf/server.cfg
+
+2000-10-24  Alexander Chernov  <cher@ispras.ru>
+
+	* clarlog.h 1.3: added proto for clar_flags_html.
+
+	* clarlog.c 1.3: 1) CLAR_RECORD_SIZE increased to 79;
+	2) implemented function clar_flags_html.
+
+	* cgi.c 1.4: added include of cgi.h
+
+	* contestlog.c 1.5, contestlog.h 1.5: renamed to runlog
+
+	* TODO 1.4: most items are done.
+
+	* misctext.c 1.1, misctext.h 1.1, runlog.c 1.1, runlog.h 1.1: New file.
+
+2000-10-20  Alexander Chernov  <cher@ispras.ru>
+
+	* z.cfg 6.6: corrections
+
+	* html.h 1.4: added proto for write_judge_allstat.
+
+	* team.c 1.3: added quick navigation with anchors
+
+	* serve.c 1.7: 1) standings are updated more correctly;
+	2) server supports JSTAT and MSTAT commands;
+	3) server now sleeps for global.serve_sleep time.
+
+	* run.c 1.6: 1) checkers are now stored in checks array;
+	2) program return code can be read from a file;
+	3) some new configuration parameters;
+
+	* prepare.h 1.7: new parameters
+
+	* prepare.c 1.7: 1) new parameters;
+	2) all checkers are collected in checks table;
+
+	* mkpasswd.c 1.3: more verbose printing of generated passwords.
+
+	* master.c 1.5: changed navigation
+
+	* html.c 1.4: 1) fixed bugs in standings calculation;
+	2) implemented new scheme of judge status reporting.
+
+	* fileutl.h 1.6: added prototype for make_writable.
+
+	* exec.h 6.7: added prototype for task_Kill.
+
+	* compile.c 1.7: added support for language specific spool directories
+
+	* clntutil.h 1.2, clntutil.c 1.3: 1) added function client_split;
+	2) added support for quick navigation (with anchors).
+
+2000-10-18  Alexander Chernov  <cher@ispras.ru>
+
+	* serve.c 1.6:
+	prepare and create_dirs take extra argument: initialization mode
+
+	* z.cfg 6.5: added language bc
+
+	* submit.c 1.4, run.c 1.5:
+	prepare and create_dirs take extra argument: initialization mode
+
+	* prepare.h 1.6, prepare.c 1.6:
+	added three initialization modes: PREPARE_SERVE,
+	PREPARE_COMPILE, PREPARE_RUN.
+
+	* pathutl.h 1.4: added proto of pathmake4
+
+	* pathutl.c 1.4: added implementation of pathmake4
+
+	* osdeps.h 6.12: fixed prototype of os_rGetBasename
+
+	* makefile 1.7: fixes for win32
+
+	* compile.c 1.6: 1) prepare() takes extra argument: prepare mode;
+	2) create_dirs() is called with mode PREPARE_COMPILE.
+
+	* clar.c 1.2: prepare() takes extra argument: prepare mode
+
+2000-10-17  Alexander Chernov  <cher@ispras.ru>
+
+	* z.cfg 6.4: *** empty log message ***
+
+	* xalloc.h 6.5: added XALLOCA macro
+
+	* teamdb.h 1.4: added definitions of TEAM_INVISIBLE and TEAM_BANNED
+
+	* teamdb.c 1.4:
+	implemented support for team flags (invisible and banned)
+
+	* team.c 1.2: 1) added check that team is banned;
+	2) corrections in client_put_header usage.
+
+	* serve.c 1.5: 1) added update of standings file;
+	2) maximal number of runs and clars for a team
+	is checked;
+	3) original message is quoted when replied by a judge;
+	4) rejudge run option implemented.
+
+	* run.c 1.4: 1) memory leak plugged;
+	2) output files not attached to report if their size > 64K
+
+	* prepare.h 1.5, prepare.c 1.5: new parameters
+
+	* mkpasswd.c 1.2: added ability to change a team's password
+
+	* master.c 1.4: 1) corrections in usage of client_put_header;
+	2) added "YES" and "NO" buttons to judge's reply dialog.
+
+	* html.h 1.3, html.c 1.3: implemented write_standings
+
+	* contestlog.h 1.4: log_get_total_size rewritten as log_get_team_usage.
+
+	* contestlog.c 1.4: 1) problem and language swapped in log_add_record;
+	2) log_get_total_size rewritten as log_get_team_usage;
+	3) log_get_times checks for null pointers before write to them.
+
+	* clntutil.c 1.2: corrections is client_put_header usage
+
+	* clarlog.h 1.2, clarlog.c 1.2:
+	clar_get_from_size rewritten as clar_get_team_usage
+
+	* TODO 1.3: progress...
+
+	* z.cfg 6.3: changes
+
+	* teamdb.h 1.3, teamdb.c 1.3: actually implemented
+
+	* submit.c 1.3: added new IP-address parameter to SUBMIT directive.
+
+	* serve.c 1.4: mostly implemented
+
+	* run.c 1.3: 1) added initial configuration checking;
+	2) bug fixes.
+
+	* prepare.h 1.4, prepare.c 1.4: new configuration parameters
+
+	* osdeps.h 6.11:
+	added os_rDirName, os_GetWorkingDir, os_rGetWorkingDir,
+	os_IsAbsolutePath.
+
+	* master.c 1.3: 1) some stuff moved to clntutil;
+	2) added reading of configuration file;
+	3) added support for sending messages.
+
+	* makefile 1.6: progress...
+
+	* html.h 1.2, html.c 1.2: massive additions
+
+	* fileutl.h 1.5: added permission bits to make_dir, make_all_dir
+
+	* exec.h 6.6: added support for time-limited execution
+
+	* contestlog.h 1.3: added IP-address
+
+	* contestlog.c 1.3: added ip address to the record
+
+	* compile.c 1.5: added initial configuration checking to spot
+	nonexisting scripts, etc
+
+	* cgi.c 1.3: added handling of multipart/form-data
+
+	* TODO 1.2: progress...
+
+	* team.c 1.1, clar.c 1.1, mkpasswd.c 1.1, clarlog.c 1.1, clarlog.h 1.1, base64.c 1.1, base64.h 1.1, clntutil.h 1.1, clntutil.c 1.1:
+	New file.
+
+2000-10-11  Alexander Chernov  <cher@ispras.ru>
+
+	* teamdb.c 1.2, teamdb.h 1.2: added teamdb_get_login, teamdb_get_name
+
+	* serve.c 1.3: in progress... interaction with judge client
+	mostly implemented
+
+	* run.c 1.2: major progress. still not tested though
+
+	* prepare.c 1.3, prepare.h 1.3: new parameters
+
+	* master.c 1.2: mostly implemented
+
+	* makefile 1.5: added rules for master executable
+
+	* fileutl.h 1.4: added PIPE flag
+
+	* contestlog.c 1.2: many new functions;
+	format of header and records changed;
+	record size increased to 64 bytes
+
+	* contestlog.h 1.2:
+	many new functions; format of header and records changed
+
+	* cgi.c 1.2: implemented cgi_nparam and cgi_nname
+
+	* cgi.h 1.2: added prototypes for cgi_nparam and cgi_nname
+
+	* z.cfg 6.2: added mandatory parameter checker.check_cmd.
+
+	* html.h 1.1, html.c 1.1, TODO 1.1: New file.
+
+2000-10-10  Alexander Chernov  <cher@ispras.ru>
+
+	* master.c 1.1, cgi.h 1.1, cgi.c 1.1: New file.
+
+	* submit.c 1.2: changes according to changes in fileutl module.
+
+	* serve.c 1.2: in progress
+
+	* prepare.h 1.2, prepare.c 1.2: lots of new parameters
+
+	* pathutl.h 1.3: added proto for pathmake3 and chop.
+
+	* pathutl.c 1.3: implemented functions pathmake3 and chop.
+
+	* parsecfg.h 1.3: quiet_flag parameter added to function parse_param.
+
+	* parsecfg.c 1.3: lots of new options
+
+	* osdeps.h 6.10: 1) os_GetBasename_r renamed to os_rGetBasename;
+	2) added proto for os_GetWorkingDir;
+	3) added proto for os_rGetWorkingDir;
+	4) added proto for os_IsAbsolutePath.
+
+	* makefile 1.4: new utility "run" added
+
+	* logger.h 6.4: prototype for logger_set_level added;
+
+	* fileutl.h 1.3: major rewritings
+
+	* exec.h 6.5: added platform-independent file open flags and
+	file open modes.
+
+	* compile.c 1.4: changes due to changes in fileutl (generic_*_file)
+	and in osdeps.
+
+	* run.c 1.1: New file.
+
+2000-10-07  Alexander Chernov  <cher@ispras.ru>
+
+	* r.cfg 6.2: Removed
+
+	* t.cfg 1.2: Removed.
+
+	* contestlog.c 1.1, teamdb.h 1.1, teamdb.c 1.1, submit.c 1.1, serve.c 1.1, prepare.h 1.1, prepare.c 1.1, contestlog.h 1.1:
+	New file.
+
+	* pathutl.h 1.2, pathutl.c 1.2: pathmake2 function added
+
+	* parsecfg.h 1.2, parsecfg.c 1.2: enhanced
+
+	* osdeps.h 6.9: os_GetBasename_r function added
+
+	* makefile 1.3: in progress
+
+	* fileutl.h 1.2: lots of functions added
+
+	* compile.c 1.3: massive rewritings
+
+	* z.cfg 6.1: initial revision
+
+2000-10-03  Alexander Chernov  <cher@ispras.ru>
+
+	* compile.c 1.2: Fixed bug in pathmake call.
+
+	* r.cfg 6.1: New file.
+
+	* makefile 1.2: Added dependencies for .o files;
+	fixed compilation flags for win32.
+
+2000-10-01  Alexander Chernov  <cher@ispras.ru>
+
+	* xalloc.c 6.6: REUSE fancy stuff ("lconfig.h", "reuse/..." includes)
+	is used only if __REUSE__ symbol defined.
+
+	* exec.h 6.4: added function task_SetWorkingDir
+
+	* osdeps.h 6.8: added function os_Sleep.
+
+	* logger.h 6.3: 1) added proto of function logger_init_ex;
+	2) removed old prototypes of fd_printf, etc.
+
+	* pathutl.h 1.1, pathutl.c 1.1, t.cfg 1.1, parsecfg.h 1.1, parsecfg.c 1.1, fileutl.h 1.1, compile.c 1.1:
+	initial revision
+
+	* makefile 1.1: New file.
+
+1999-08-30  Alexander Chernov  <cher@ispras.ru>
+
+	* xalloc.c 6.5: "reuse_version.h" is included using CONF_DEPFILE macro.
+
+1999-08-16  Alexander Chernov  <cher@ispras.ru>
+
+	* exec.h 6.3, logger.h 6.2, osdeps.h 6.7, xalloc.c 6.4, xalloc.h 6.4:
+	Copyright notice added (GNU LGPL).
+
+	* COPYING.LGPL 6.1: *** empty log message ***
+
+1999-08-04  Alexander Chernov  <cher@ispras.ru>
+
+	* xalloc.h 6.3: XOFFSET, XDEREF, XPDEREF macros added.
+
+1999-07-30  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.h 6.6:
+	prototypes for os_AttachFILE, os_snprintf, os_vsnprintf added.
+
+1999-07-24  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.h 6.5: REUSE_F_OK constant added
+
+	* osdeps.h 6.4: Добавлен прототип os_CheckAccess.
+
+1999-06-02  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.h 6.3: added functions get_PRJ_HOME_name, get_PRJ_HOME,
+	get_PRJ_CONFIG_name, get_PRJ_CONFIG
+
+1999-05-31  Alexander Chernov  <cher@ispras.ru>
+
+	* logger.h 6.1: copyright notice updated;
+	merged with the UniCad's version of the file.
+
+	* xalloc.h 6.2, xalloc.c 6.3:
+	Добавлены const квалификаторы в прототипы xstrmerge*
+
+	* osdeps.h 6.2, xalloc.c 6.2, xalloc.h 6.1: copyright notice updated;
+	merged with the UniCad's version of the file.
+
+	* exec.h 6.2: copyright notice updated;
+	protection against c++ added
+
+1999-05-30  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.h 6.1, exec.h 6.1: tabulation converted to spaces
+
+	* xalloc.c 6.1: Адаптация к новому окружению компиляции.
+
+	* exec.h 6.0, logger.h 6.0, osdeps.h 6.0, xalloc.h 6.0, xalloc.c 6.0:
+	New file.
+
+	$Id$

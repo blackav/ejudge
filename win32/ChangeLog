@@ -1,0 +1,140 @@
+2000-11-03  Alexander Chernov  <cher@ispras.ru>
+
+	* exec.c 1.7, logger.c 1.12, osdeps.c 1.16: copyright notice updated
+
+2000-10-20  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.c 1.3: empty body for make_writable added.
+
+	* osdeps.c 1.15: 1) fixed bug in os_rGetBasename;
+	2) execution permission is not checked;
+
+2000-10-18  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 1.14: implemented os_rGetBasename, os_rGetWorkingDir,
+	os_IsAbsolutePath.
+
+	* fileutl.c 1.2:
+	reimplemented according to the changes in the interface
+
+	* exec.c 1.6: added stubs for task_SetMaxTime and task_IsTimeout.
+
+2000-10-03  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 1.13: 1) implemented os_Sleep;
+	2) fixes to compile not in REUSE environment.
+
+	* logger.c 1.11: fixes in logger_init_ex and logger_init routines.
+
+2000-10-01  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 1.12:
+	1) REUSE fancy stuff ("lconfig.h", "reuse/..." includes)
+	is used only if __REUSE__ symbol defined;
+	2) minor compilation fixes.
+
+	* logger.c 1.10:
+	1) REUSE fancy stuff ("lconfig.h", "reuse/..." includes)
+	is used only if __REUSE__ symbol defined;
+	2) implemented logger_init_ex;
+	3) implemented support for primary and secondary
+	log streams; secondary log stream is currently written
+	to stderr.
+
+	* exec.c 1.5: 1) REUSE fancy stuff ("lconfig.h", "reuse/..." includes)
+	is used only if __REUSE__ symbol defined;
+	2) added support for changing the working directory
+	of the spawned process;
+	3) fixed TSR_DUP redirection to work properly;
+	4) standard handles of the new process are closed
+	when the process is started (handles leek).
+
+	* fileutl.c 1.1: initial revision
+
+2000-07-28  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 1.11: minor change to compile smoothly with MSVC.
+
+1999-10-26  Alexander Chernov  <cher@ispras.ru>
+
+	* logger.c 1.9: minimal logging priorities changed.
+
+1999-08-30  Alexander Chernov  <cher@ispras.ru>
+
+	* logger.c 1.8, osdeps.c 1.10, exec.c 1.4:
+	1) reuse_version.h is included using CONF_DEPFILE;
+	2) CVSID macro is no longer used, plain constant definition is
+	put instead.
+
+1999-08-16  Alexander Chernov  <cher@ispras.ru>
+
+	* exec.c 1.3, logger.c 1.7, osdeps.c 1.9:
+	Copyright notice added to all files (GNU LGPL).
+
+1999-08-10  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 1.8 (os_GetBasename):
+	fixed bug when the program name was scanner for suffix
+	up to the FIRST '.' character in the name, so it was
+	basename(foo-0.1.2.exe) == foo-0
+	incorrectly.
+
+1999-08-08  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 1.7:
+	1) macro os_strcasecmp introduced: comparison of strings ingnoring case;
+	for Borland C this macro is set to stricmp, for other compilers: _stricmp.
+	2) os_strcasecmp is used instead of _stricmp.
+	3) fixed invalid parameters passed to reuse_snprintf.
+
+1999-08-05  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 1.6:
+	1) reuse_vsnprintf is used if _[v]snprintf implementation is not available
+	on the platform;
+	2) os_CheckAccess checks NOT_IMPLEMENTED error of GetBinaryType;
+	3) os_GuessProjectEnv handles 8.3 aliases of long DOS names correctly.
+
+1999-08-04  Alexander Chernov  <cher@ispras.ru>
+
+	* logger.c 1.6: Unitialized variable bfac is now properly initialized.
+
+1999-07-31  Alexander Chernov  <cher@ispras.ru>
+
+	* logger.c 1.5, osdeps.c 1.5: c-font-lock-extra-types set
+
+1999-07-30  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 1.4:
+	many remaining function implemented: os_GetErrorString, os_ErrorString,
+	os_GetSignalString, os_putenv, os_access, os_GetSuffix, os_GetSuffixPtr,
+	os_rGetSuffix, os_GetBasename, os_GetFilename, os_SubstSuffix,
+	os_DirName, os_NodeName, os_IsFile, os_tempnam, os_readint, os_readdouble,
+	os_GetWorkingDir, get_PRJ_..., os_GuessProjectEnv, os_CheckAccess,
+	os_snprintf, os_vsnprintf, os_AttachFILE.
+
+	* logger.c 1.4: 1) automatic minimal initialization upon the first use;
+	2) os_[v]snprintf used instead of _[v]snprintf;
+	3) explicit returns added to eliminate warnings of non-gcc compilers;
+
+	* exec.c 1.2: implemented.
+
+1999-07-25  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 1.3: minor corrections
+
+	* logger.c 1.3: Implemented.
+
+1999-07-24  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 1.2: Добавлена заглушка для os_CheckAccess.
+
+1999-07-22  Alexander Chernov  <cher@ispras.ru>
+
+	* logger.c 1.2: added stubs for most functions
+
+1999-07-21  Alexander Chernov  <cher@ispras.ru>
+
+	* exec.c 1.1, logger.c 1.1, osdeps.c 1.1: New file.
+
+	$Id$
