@@ -48,6 +48,8 @@
 
 static unsigned char config_socket_path[PATH_MAX];
 static int config_socket_path_modified;
+static unsigned char config_super_serve_socket[PATH_MAX];
+static int config_super_serve_socket_modified;
 static unsigned char config_ejudge_xml_path[PATH_MAX];
 static int config_ejudge_xml_path_modified;
 static unsigned char config_ejudge_conf_dir[PATH_MAX];
@@ -137,6 +139,7 @@ enum
 
   PATH_LINE_BUILTIN,
   PATH_LINE_SOCKET_PATH,
+  PATH_LINE_SUPER_SERVE_SOCKET,
   PATH_LINE_CONFIG_DIR,
   PATH_LINE_EJUDGE_XML,
   PATH_LINE_CONTESTS_DIR,
@@ -204,6 +207,15 @@ static const struct path_edit_item path_edit_items[] =
 #if defined EJUDGE_SOCKET_PATH
     EJUDGE_SOCKET_PATH,
 #endif /* EJUDGE_SOCKET_PATH */
+  },
+  [PATH_LINE_SUPER_SERVE_SOCKET] = 
+  {
+    "Super-serve socket path", 1, config_super_serve_socket,
+    sizeof(config_super_serve_socket),
+    &config_super_serve_socket_modified,
+#if defined EJUDGE_SUPER_SERVE_SOCKET
+    EJUDGE_SUPER_SERVE_SOCKET,
+#endif /* EJUDGE_SUPER_SERVE_SOCKET */
   },
   [PATH_LINE_CONFIG_DIR] =
   {
@@ -381,6 +393,7 @@ initialize_config_var(int idx)
   }
   switch (idx) {
   case PATH_LINE_SOCKET_PATH:
+  case PATH_LINE_SUPER_SERVE_SOCKET:
   case PATH_LINE_CONFIG_DIR:
   case PATH_LINE_EJUDGE_XML:
   case PATH_LINE_CONTESTS_DIR:
@@ -526,6 +539,7 @@ is_valid_path(int idx)
     return 0;
 
   case PATH_LINE_SOCKET_PATH:
+  case PATH_LINE_SUPER_SERVE_SOCKET:
   case PATH_LINE_CONFIG_DIR:
   case PATH_LINE_EJUDGE_XML:
   case PATH_LINE_CONTESTS_DIR:
@@ -543,6 +557,8 @@ is_valid_path(int idx)
   case PATH_LINE_CGI_BIN_DIR:
     if (path_edit_items[PATH_LINE_CGI_DATA_DIR].buf[0] == '/') return 1;
     if ((pi = &path_edit_items[PATH_LINE_SOCKET_PATH])->default_value
+        && !strcmp(pi->buf, pi->default_value)
+        && (pi = &path_edit_items[PATH_LINE_SUPER_SERVE_SOCKET])->default_value
         && !strcmp(pi->buf, pi->default_value)
         && (pi = &path_edit_items[PATH_LINE_CONTESTS_DIR])->default_value
         && !strcmp(pi->buf, pi->default_value)
@@ -655,6 +671,7 @@ do_paths_menu(int *p_cur_item)
       break;
 
     case PATH_LINE_SOCKET_PATH:
+    case PATH_LINE_SUPER_SERVE_SOCKET:
     case PATH_LINE_CONFIG_DIR:
     case PATH_LINE_EJUDGE_XML:
     case PATH_LINE_CONTESTS_DIR:
@@ -1810,6 +1827,11 @@ is_cgi_config_needed(void)
       || strcmp(cur->buf, cur->default_value) != 0)
     return 1;
 
+  cur = &path_edit_items[PATH_LINE_SUPER_SERVE_SOCKET];
+  if (!cur->default_value || !cur->default_value[0]
+      || strcmp(cur->buf, cur->default_value) != 0)
+    return 1;
+
   cur = &path_edit_items[PATH_LINE_CONTESTS_DIR];
   if (!cur->default_value || !cur->default_value[0]
       || strcmp(cur->buf, cur->default_value) != 0)
@@ -2720,6 +2742,9 @@ generate_contest_xml(FILE *f)
           "  <master_access default=\"deny\">\n"
           "    <ip allow=\"yes\">127.</ip>\n"
           "  </master_access>\n"
+          "  <serve_control_access default=\"deny\">\n"
+          "    <ip allow=\"yes\">127.</ip>\n"
+          "  </serve_control_access>\n"
           "\n"
           "  <caps>\n"
           "    <cap login=\"%s\">\n"
@@ -2814,6 +2839,12 @@ generate_ejudge_xml(FILE *f)
   if (cur->default_value && !strcmp(cur->default_value, cur->buf)) {
   } else {
     fprintf(f, "  <socket_path>%s</socket_path>\n", cur->buf);
+  }
+
+  cur = &path_edit_items[PATH_LINE_SUPER_SERVE_SOCKET];
+  if (cur->default_value && !strcmp(cur->default_value, cur->buf)) {
+  } else {
+    fprintf(f, "  <super_serve_socket>%s</super_serve_socket>\n", cur->buf);
   }
 
   cur = &path_edit_items[PATH_LINE_CONTESTS_DIR];
@@ -2934,6 +2965,13 @@ generate_ejudge_xml(FILE *f)
   if (cur->default_value && !strcmp(cur->default_value, cur->buf)) {
     fprintf(f, "  <!-- The default value is built-in -->\n");
     fprintf(f, "  <!--<socket_path>%s</socket_path>-->\n", cur->buf);
+  }
+
+  cur = &path_edit_items[PATH_LINE_SUPER_SERVE_SOCKET];
+  if (cur->default_value && !strcmp(cur->default_value, cur->buf)) {
+    fprintf(f, "  <!-- The default value is built-in -->\n");
+    fprintf(f, "  <!--<super_serve_socket>%s</super_serve_socket>-->\n",
+            cur->buf);
   }
 
   cur = &path_edit_items[PATH_LINE_CONTESTS_DIR];
