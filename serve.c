@@ -1233,7 +1233,7 @@ read_run_packet(char *pname)
   if (r < 0) return -1;
   if (r == 0) return 0;
 
-  info("run packed: %s", chop(buf));
+  info("run packet: %s", chop(buf));
   if (sscanf(pname, "%d%n", &runid, &n) != 1 || pname[n])
     goto bad_packet_error;
   if (sscanf(buf, "%d%d%d %n", &status, &test, &score, &n) != 3 || buf[n])
@@ -1245,9 +1245,9 @@ read_run_packet(char *pname)
   if (global->score_system_val == SCORE_OLYMPIAD) {
     if (log_prob < 1 || log_prob > max_prob || !probs[log_prob])
       goto bad_packet_error;
-  } else if (global->score_system_val == SCORE_KIROV
-             && (status == RUN_PARTIAL || status == RUN_OK)) {
-    // paranoidal?
+  } else if (global->score_system_val == SCORE_KIROV) {
+    if (status != RUN_PARTIAL && status != RUN_OK
+        && status != RUN_CHECK_FAILED) goto bad_packet_error;
     if (log_prob < 1 || log_prob > max_prob || !probs[log_prob])
       goto bad_packet_error;
     if (score < 0 || score > probs[log_prob]->full_score)
