@@ -1162,23 +1162,37 @@ changedur_if_asked(void)
 static void
 sched_if_asked(void)
 {
-  int   h = 0, m = 0, n, r;
+  int   h = 0, m = 0, n, r, year, mon, day, sec;
   time_t     tloc;
   time_t     sloc;
   struct tm *ploc;
+  struct tm  loc2;
   unsigned char *s;
 
   if (!(s = cgi_param("sched_time"))) goto invalid_time;
-  if (sscanf(s, "%d:%d%n", &h, &m, &n) != 2 || s[n]) {
-    if (sscanf(s, "%d%n", &h, &n) != 1 || s[n]) goto invalid_time;
-    m = 0;
+
+  if (sscanf(s, "%d/%d/%d %d:%d:%d%n",
+             &year, &mon, &day, &h, &m, &sec, &n) == 6 && !s[n]) {
+    memset(&loc2, 0, sizeof(loc2));
+    loc2.tm_year = year - 1900;
+    loc2.tm_mon = mon - 1;
+    loc2.tm_mday = day;
+    loc2.tm_hour = h;
+    loc2.tm_min = m;
+    loc2.tm_sec = sec;
+    ploc = &loc2;
+  } else {
+    if (sscanf(s, "%d:%d%n", &h, &m, &n) != 2 || s[n]) {
+      if (sscanf(s, "%d%n", &h, &n) != 1 || s[n]) goto invalid_time;
+      m = 0;
+    }
+    time(&tloc);
+    ploc = localtime(&tloc);
+    ploc->tm_hour = h;
+    ploc->tm_min = m;
+    ploc->tm_sec = 0;
   }
 
-  time(&tloc);
-  ploc = localtime(&tloc);
-  ploc->tm_hour = h;
-  ploc->tm_min = m;
-  ploc->tm_sec = 0;
   sloc = mktime(ploc);
   if (sloc == (time_t) -1) goto invalid_time;
   open_serve();
@@ -1211,7 +1225,7 @@ change_status_if_asked()
     goto invalid_operation;
   /* FIXME: symbolic constants should be used */
   /* We don't have information about scoring mode, so allow any */
-  if (status < 0 || status > 99 || (status > 9 && status < 99) || status == 6)
+  if (status < 0 || status > 99 || (status > 10 && status < 99) || status == 6)
     goto invalid_operation;
 
   open_serve();
@@ -1243,7 +1257,7 @@ change_status()
     goto invalid_operation;
   /* FIXME: symbolic constants should be used */
   /* We don't have information about scoring mode, so allow any */
-  if (status < 0 || status > 99 || (status > 9 && status < 99) || status == 6)
+  if (status < 0 || status > 99 || (status > 10 && status < 99) || status == 6)
     goto invalid_operation;
 
   open_serve();
@@ -1579,6 +1593,70 @@ change_readonly(void)
 }
 
 static void
+action_set_team_status(void)
+{
+  const unsigned char *s;
+  int user_id, status, n, r;
+
+  if (!(s = cgi_param("user_id"))
+      || sscanf(s, "%d%n", &user_id, &n) != 1
+      || s[n]
+      || user_id <= 0 || user_id > 100000) goto invalid_operation;
+  if (!(s = cgi_param("status"))
+      || sscanf(s, "%d%n", &status, &n) != 1
+      || s[n]
+      || status < 0 || status > 100) goto invalid_operation;
+
+  open_serve();
+  r = serve_clnt_edit_user(serve_socket_fd, SRV_CMD_SET_TEAM_STATUS,
+                           user_id, status, 0, 0);
+  operation_status_page(r, 0, -1);
+  return;
+
+ invalid_operation:
+  operation_status_page(-1, "Invalid operation", -1);
+}
+
+static void
+action_issue_warning(void)
+{
+  const unsigned char *s, *cmt, *txt;
+  unsigned char *buf, *p;
+  int n, r, user_id;
+
+  if (!(s = cgi_param("user_id"))
+      || sscanf(s, "%d%n", &user_id, &n) != 1
+      || s[n]
+      || user_id <= 0 || user_id > 100000) goto invalid_operation;
+
+  if (!(txt = cgi_param("warn_text"))) goto invalid_operation;
+  for (s = txt; *s && isspace(*s); *s++);
+  if (!*s) goto invalid_operation;
+  buf = (unsigned char*) alloca(strlen(txt) + 1);
+  for (s = txt, p = buf; *s; s++)
+    if (*s != '\r') *p++ = *s;
+  *p = *s;
+  txt = buf;
+
+  cmt = cgi_param("warn_comment");
+  if (!cmt) cmt = "";
+  buf = (unsigned char*) alloca(strlen(cmt) + 1);
+  for (s = cmt, p = buf; *s; s++)
+    if (*s != '\r') *p++ = *s;
+  *p = *s;
+  cmt = buf;
+
+  open_serve();
+  r = serve_clnt_edit_user(serve_socket_fd, SRV_CMD_ISSUE_WARNING,
+                           user_id, 0, txt, cmt);
+  operation_status_page(r, 0, -1);
+  return;
+
+ invalid_operation:
+  operation_status_page(-1, "Invalid operation", -1);
+}
+
+static void
 action_new_run(void)
 {
   const unsigned char *s, *prog_data = 0, *user_login = 0;
@@ -1685,7 +1763,6 @@ action_new_run(void)
   return;
 
  invalid_operation:
-  fprintf(stderr, ">>%s<<\n", s);
   operation_status_page(-1, "Invalid operation", -1);
 }
 
@@ -1712,6 +1789,32 @@ view_source_if_asked()
   }
   client_put_footer(stdout, 0);
   exit(0);
+}
+
+static void
+action_view_team(void)
+{
+  unsigned char *s = cgi_param("user_id");
+  int user_id, n, r;
+
+  if (!s) goto invalid_operation;
+  if (sscanf(s, "%d%n", &user_id, &n) != 1 || s[n]) goto invalid_operation;
+  if (user_id <= 0 || user_id > 100000) goto invalid_operation;
+
+  set_cookie_if_needed();
+  client_put_header(stdout, 0, 0, global->charset, 1, 0,
+                    "Details about user %d", user_id);
+  fflush(stdout);
+  open_serve();
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_TEAM, user_id, 0, 0,
+                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+  if (r < 0) {
+    printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
+  }
+  client_put_footer(stdout, 0);
+  exit(0);
+ invalid_operation:
+  operation_status_page(-1, "Invalid operation", -1);
 }
 
 static void
@@ -2237,7 +2340,7 @@ action_merge_runs(void)
 
   xml = cgi_param("file");
   if (!xml) xml = "";
-  r = serve_clnt_import_xml_runs(serve_socket_fd, 1, xml);
+  r = serve_clnt_import_xml_runs(serve_socket_fd, 1, 0, xml);
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n",
            protocol_strerror(-r));
@@ -3347,6 +3450,15 @@ main(int argc, char *argv[])
     break;
   case ACTION_UPLOAD_REPORT:
     action_upload_report();
+    break;
+  case ACTION_VIEW_TEAM:
+    action_view_team();
+    break;
+  case ACTION_CHANGE_CONTESTANT_STATUS:
+    action_set_team_status();
+    break;
+  case ACTION_ISSUE_WARNING:
+    action_issue_warning();
     break;
   }
   log_out_if_asked();
