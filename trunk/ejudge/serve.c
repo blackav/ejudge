@@ -145,6 +145,7 @@ client_new_state(int fd)
     client_last = p;
   }
 
+  fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
   p->fd = fd;
   p->user_id = -1;
   p->client_fds[0] = -1;
@@ -161,6 +162,7 @@ client_disconnect(struct client_state *p, int force_flag)
     p->state = STATE_AUTOCLOSE;
   }
 
+  fcntl(p->fd, F_SETFL, fcntl(p->fd, F_GETFL) & ~O_NONBLOCK);
   close(p->fd);
   if (p->write_buf) xfree(p->write_buf);
   if (p->read_buf) xfree(p->read_buf);
@@ -199,6 +201,8 @@ static int printing_suspended;
 static int socket_fd = -1;
 static unsigned char *socket_name = 0;
 static int interrupt_signaled = 0;
+static int forced_mode = 0;
+static int initialize_mode = 0;
 
 struct server_cmd
 {
@@ -502,6 +506,7 @@ is_valid_status(int status, int mode)
     case RUN_COMPILE_ERR:
     case RUN_REJUDGE:
     case RUN_IGNORED:
+    case RUN_DISQUALIFIED:
       if (mode != 1) return 0;
       return 1;
     default:
@@ -515,6 +520,7 @@ is_valid_status(int status, int mode)
     case RUN_COMPILE_ERR:
     case RUN_REJUDGE:
     case RUN_IGNORED:
+    case RUN_DISQUALIFIED:
       if (mode != 1) return 0;
       return 1;
     default:
@@ -532,6 +538,7 @@ is_valid_status(int status, int mode)
     case RUN_COMPILE_ERR:
     case RUN_REJUDGE:
     case RUN_IGNORED:
+    case RUN_DISQUALIFIED:
       if (mode != 1) return 0;
       return 1;
     default:
@@ -1213,6 +1220,26 @@ cmd_view(struct client_state *p, int len,
                          pkt->sid_mode, p->cookie,
                          self_url_ptr, hidden_vars_ptr, extra_args_ptr, &caps);
     break;
+
+  case SRV_CMD_VIEW_TEAM:
+    if (!p->priv_level) {
+      err("%d: unprivileged users cannot view team", p->id);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+
+    if (opcaps_check(caps, OPCAP_GET_USER) < 0) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_LIST_CONTEST_USERS);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+    r = write_priv_user(f, p->user_id, p->priv_level,
+                        pkt->sid_mode, p->cookie,
+                        self_url_ptr, hidden_vars_ptr, extra_args_ptr,
+                        pkt->item, &caps);
+    break;
+
   case SRV_CMD_DUMP_RUNS:
     if (!p->priv_level) {
       err("%d: unprivileged users cannot dump run database", p->id);
@@ -1227,7 +1254,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    write_runs_dump(f, global->charset);
+    write_runs_dump(f, self_url_ptr, global->charset);
     break;
 
   case SRV_CMD_WRITE_XML_RUNS:
@@ -1244,8 +1271,10 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    fprintf(f, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
-    run_write_xml(f, 0);
+    if (self_url_ptr && *self_url_ptr) {
+      fprintf(f, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
+    }
+    if (run_write_xml(f, 0) < 0) r = -SRV_ERR_TRY_AGAIN;
     break;
 
   case SRV_CMD_EXPORT_XML_RUNS:
@@ -1262,8 +1291,10 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    fprintf(f, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
-    run_write_xml(f, 1);
+    if (self_url_ptr && *self_url_ptr) {
+      fprintf(f, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
+    }
+    if (run_write_xml(f, 1) < 0) r = -SRV_ERR_TRY_AGAIN;
     break;
 
   case SRV_CMD_DUMP_STANDINGS:
@@ -1361,7 +1392,7 @@ cmd_import_xml_runs(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  runlog_import_xml(f, pkt->data);
+  runlog_import_xml(f, pkt->token, pkt->data);
   fclose(f);
 
   if (!html_ptr) {
@@ -1793,7 +1824,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  if (archive_dir_prepare(global->run_archive_dir, run_id) < 0) {
+  if (archive_dir_prepare(global->run_archive_dir, run_id, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -1898,7 +1929,7 @@ cmd_upload_report(struct client_state *p, int len,
     wflags = archive_make_write_path(wpath, sizeof(wpath),
                                      global->report_archive_dir,
                                      pkt->run_id, pkt->report_size, 0);
-    if (archive_dir_prepare(global->report_archive_dir, pkt->run_id) < 0) {
+    if (archive_dir_prepare(global->report_archive_dir, pkt->run_id, 0) < 0) {
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
     }
@@ -1913,7 +1944,7 @@ cmd_upload_report(struct client_state *p, int len,
     wflags = archive_make_write_path(wpath, sizeof(wpath),
                                      global->team_report_archive_dir,
                                      pkt->run_id, pkt->report_size, 0);
-    if (archive_dir_prepare(global->team_report_archive_dir, pkt->run_id) < 0){
+    if (archive_dir_prepare(global->team_report_archive_dir,pkt->run_id,0)< 0){
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
     }
@@ -1963,7 +1994,7 @@ cmd_team_submit_run(struct client_state *p, int len,
   int run_id, r, arch_flags;
   path_t run_arch;
   unsigned long shaval[5];
-  time_t start_time, stop_time;
+  time_t start_time, stop_time, user_deadline = 0;
   struct timeval precise_time;
 
   if (get_peer_local_user(p) < 0) return;
@@ -2041,8 +2072,17 @@ cmd_team_submit_run(struct client_state *p, int len,
     start_time = run_get_virtual_start_time(p->user_id);
     stop_time = run_get_virtual_stop_time(p->user_id, current_time);
   }
-  if (probs[pkt->prob_id]->t_deadline
-      && current_time >= probs[pkt->prob_id]->t_deadline) {
+  if (probs[pkt->prob_id]->pd_total > 0) {
+    unsigned char *login = teamdb_get_login(p->user_id);
+    int pdi;
+    for (pdi = 0; pdi < probs[pkt->prob_id]->pd_total; pdi++) {
+      if (!strcmp(login, probs[pkt->prob_id]->pd_infos[pdi].login)) {
+        user_deadline = probs[pkt->prob_id]->pd_infos[pdi].deadline;
+      }
+    }
+  }
+  if (!user_deadline) user_deadline = probs[pkt->prob_id]->t_deadline;
+  if (user_deadline && current_time >= user_deadline) {
     err("%d: deadline expired", p->id);
     new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
     return;
@@ -2091,7 +2131,7 @@ cmd_team_submit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  if (archive_dir_prepare(global->run_archive_dir, run_id) < 0) {
+  if (archive_dir_prepare(global->run_archive_dir, run_id, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -2641,6 +2681,17 @@ cmd_priv_command_0(struct client_state *p, int len,
     }
 
     update_standings_file(1);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  case SRV_CMD_SOFT_UPDATE_STAND:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
+    update_standings_file(0);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_RESET:
@@ -3395,7 +3446,7 @@ cmd_new_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  if (archive_dir_prepare(global->run_archive_dir, run_id) < 0) {
+  if (archive_dir_prepare(global->run_archive_dir, run_id, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -3423,6 +3474,103 @@ cmd_new_run(struct client_state *p, int len,
   new_send_reply(p, -SRV_ERR_NO_PERMS);
   return;
 }
+
+
+static void
+cmd_edit_user(struct client_state *p, int len,
+              struct prot_serve_pkt_user_info *pkt)
+{
+  size_t expected_pkt_size, actual_txt_len, actual_cmt_len;
+  struct team_extra *t_extra;
+  const unsigned char *txt_ptr, *cmt_ptr;
+
+  if (get_peer_local_user(p) < 0) return;
+
+  if (len < sizeof(*pkt)) {
+    err("%d: cmd_edit_user: packet is too small (%d < %zu)",
+        p->id, len, sizeof(*pkt));
+    goto protocol_error;
+  }
+  txt_ptr = pkt->data;
+  actual_txt_len = strlen(txt_ptr);
+  if (actual_txt_len != pkt->txt_len) {
+    err("%d: cmd_edit_user: txt_len mismatch (%d != %zu)",
+        p->id, actual_txt_len, pkt->txt_len);
+    goto protocol_error;
+  }
+  cmt_ptr = txt_ptr + pkt->txt_len + 1;
+  actual_cmt_len = strlen(cmt_ptr);
+  if (actual_cmt_len != pkt->cmt_len) {
+    err("%d: cmd_edit_user: cmt_len mismatch (%d != %zu)",
+        p->id, actual_cmt_len, pkt->cmt_len);
+    goto protocol_error;
+  }
+  expected_pkt_size = sizeof(*pkt) + pkt->txt_len + pkt->cmt_len;
+  if (len != expected_pkt_size) {
+    err("%d: cmd_edit_user: packet length mismatch (%d != %zu)",
+        p->id, len, expected_pkt_size);
+    goto protocol_error;
+  }
+  if (!teamdb_lookup(pkt->user_id)) {
+    err("%d: cmd_edit_user: user_id is invalid", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+    return;
+  }
+
+  switch (pkt->b.id) {
+  case SRV_CMD_SET_TEAM_STATUS:
+    if (pkt->status < 0 || pkt->status >= global->contestant_status_num) {
+      err("%d: cmd_edit_user: bad status %d", p->id, pkt->status);
+      new_send_reply(p, -SRV_ERR_BAD_STATUS);
+      return;
+    }
+    if (!check_cnts_caps(p->user_id, OPCAP_EDIT_REG)) {
+      err("%d: user %d cannot set team status", p->id, p->user_id);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+    if (!(t_extra = team_extra_get_entry(pkt->user_id))) {
+      err("%d: cannot get team extra information for %d", p->id, pkt->user_id);
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    }
+    if (t_extra->status == pkt->status) {
+      info("%d: cmd_edit_user: nothing to do", p->id);
+      new_send_reply(p, SRV_RPL_OK);
+      return;
+    }
+    t_extra->status = pkt->status;
+    t_extra->is_dirty = 1;
+    team_extra_flush();
+    break;
+  case SRV_CMD_ISSUE_WARNING:
+    if (!check_cnts_caps(p->user_id, OPCAP_EDIT_REG)) {
+      err("%d: user %d cannot set team status", p->id, p->user_id);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+    if (team_extra_append_warning(pkt->user_id, p->user_id,
+                                  p->ip, current_time, txt_ptr, cmt_ptr) < 0) {
+      err("%d: warning append failed", p->id);
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    }
+    team_extra_flush();
+    break;
+  default:
+    err("%d: cmd_edit_user: unexpected command %d", p->id, pkt->b.id);
+    goto protocol_error;
+  }
+
+  info("%d: new_run: ok", p->id);
+  new_send_reply(p, SRV_RPL_OK);
+  return;
+
+ protocol_error:
+  new_send_reply(p, -SRV_ERR_PROTOCOL);
+  return;
+}
+
 
 static void generate_packet_name(int run_id, int prio,
                                  unsigned char buf[PACKET_NAME_SIZE]);
@@ -3525,7 +3673,7 @@ read_compile_packet(char *pname)
   if (code == RUN_CHECK_FAILED) {
     if (rep_flags < 0) return -1;
     if (run_change_status(runid, RUN_CHECK_FAILED, 0, -1) < 0) return -1;
-    if (archive_dir_prepare(global->report_archive_dir, runid) < 0)
+    if (archive_dir_prepare(global->report_archive_dir, runid, 0) < 0)
       return -1;
     if (generic_copy_file(REMOVE, global->compile_report_dir, pname, "",
                           rep_flags, 0, rep_path, "") < 0)
@@ -3537,13 +3685,13 @@ read_compile_packet(char *pname)
     if (run_change_status(runid, RUN_COMPILE_ERR, 0, -1) < 0) return -1;
     /* probably we need a user's copy of compilation log */
     if (global->team_enable_rep_view) {
-      if (archive_dir_prepare(global->team_report_archive_dir, runid) < 0)
+      if (archive_dir_prepare(global->team_report_archive_dir, runid, 0) < 0)
         return -1;
       if (generic_copy_file(0, global->compile_report_dir, pname, "",
                             team_flags, 0, team_path, "") < 0)
         return -1;
     }
-    if (archive_dir_prepare(global->report_archive_dir, runid) < 0)
+    if (archive_dir_prepare(global->report_archive_dir, runid, 0) < 0)
       return -1;
     if (generic_copy_file(REMOVE, global->compile_report_dir, pname, "",
                           rep_flags, 0, rep_path, "") < 0)
@@ -3668,6 +3816,7 @@ read_run_packet(char *pname)
       goto bad_packet_error;
     if (score < 0 || score > probs[re.problem]->full_score)
       goto bad_packet_error;
+    /*
     for (n = 0; n < probs[re.problem]->dp_total; n++)
       if (re.timestamp < probs[re.problem]->dp_infos[n].deadline)
         break;
@@ -3677,6 +3826,7 @@ read_run_packet(char *pname)
         score = probs[re.problem]->full_score;
       if (score < 0) score = 0;
     }
+    */
   } else {
     score = -1;
   }
@@ -3687,7 +3837,7 @@ read_run_packet(char *pname)
   rep_flags = archive_make_write_path(rep_path, sizeof(rep_path),
                                       global->report_archive_dir, runid,
                                       rep_size, 0);
-  if (archive_dir_prepare(global->report_archive_dir, runid) < 0)
+  if (archive_dir_prepare(global->report_archive_dir, runid, 0) < 0)
     return -1;
   if (generic_copy_file(REMOVE, global->run_report_dir, pname, "",
                         rep_flags, 0, rep_path, "") < 0)
@@ -3697,7 +3847,7 @@ read_run_packet(char *pname)
     team_flags = archive_make_write_path(team_path, sizeof(team_path),
                                          global->team_report_archive_dir,
                                          runid, team_size, 0);
-    if (archive_dir_prepare(global->team_report_archive_dir, runid) < 0)
+    if (archive_dir_prepare(global->team_report_archive_dir, runid, 0) < 0)
       return -1;
     if (generic_copy_file(REMOVE, global->run_team_report_dir, pname, "",
                           team_flags, 0, team_path, "") < 0)
@@ -3875,6 +4025,7 @@ do_rejudge_all(void)
     if (run_get_entry(r, &re) >= 0
         && re.status <= RUN_MAX_STATUS
         && re.status != RUN_IGNORED
+        && re.status != RUN_DISQUALIFIED
         && re.problem >= 1 && re.problem <= max_prob
         && probs[re.problem]
         && !probs[re.problem]->disable_testing
@@ -3950,7 +4101,9 @@ do_rejudge_problem(int prob_id)
     if (run_get_entry(r, &re) >= 0
         && re.problem == prob_id && re.status <= RUN_MAX_STATUS
         && !re.is_readonly
-        && re.status != RUN_IGNORED && !re.is_imported) {
+        && re.status != RUN_IGNORED
+        && re.status != RUN_DISQUALIFIED
+        && !re.is_imported) {
       rejudge_run(r);
     }
   }
@@ -4010,6 +4163,7 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask)
     if (run_get_entry(r, &re) >= 0
         && re.status <= RUN_MAX_STATUS
         && re.status != RUN_IGNORED
+        && re.status != RUN_DISQUALIFIED
         && re.problem >= 1 && re.problem <= max_prob
         && probs[re.problem]
         && !probs[re.problem]->disable_testing
@@ -4105,6 +4259,10 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_REJUDGE_BY_MASK] { cmd_rejudge_by_mask },
   [SRV_CMD_NEW_RUN_FORM] { cmd_view },
   [SRV_CMD_NEW_RUN] { cmd_new_run },
+  [SRV_CMD_VIEW_TEAM] { cmd_view },
+  [SRV_CMD_SET_TEAM_STATUS] { cmd_edit_user },
+  [SRV_CMD_ISSUE_WARNING] { cmd_edit_user },
+  [SRV_CMD_SOFT_UPDATE_STAND] { cmd_priv_command_0 },
 };
 
 static void
@@ -4146,6 +4304,7 @@ create_socket(void)
     err("socket() failed :%s", os_ErrorMsg());
     return -1;
   }
+  if (forced_mode) unlink(global->serve_socket);
   memset(&addr, 0, sizeof(addr));
   addr.sun_family = AF_UNIX;
   strncpy(addr.sun_path, global->serve_socket, 108);
@@ -4265,6 +4424,10 @@ check_sockets(int may_wait_flag)
     l = p->write_len - p->written;
     w = write(p->fd, &p->write_buf[p->written], l);
 
+    if (w < 0 && (errno == EINTR || errno == EAGAIN)) {
+      info("%d: not ready for write descriptor", p->id);
+      continue;
+    }
     if (w <= 0) {
       err("%d: write() failed: %s (%d, %d, %d)", p->id, os_ErrorMsg(),
           p->fd, l, p->write_len);
@@ -4460,6 +4623,10 @@ check_sockets(int may_wait_flag)
         continue;
       }
       if (r < 0) {
+        if (errno == EINTR || errno == EAGAIN) {
+          info("%d: not ready descriptor", p->id);
+          continue;
+        }
         err("%d: read() failed: %s", p->id, os_ErrorMsg());
         client_disconnect(p, 1);
         continue;
@@ -4489,6 +4656,10 @@ check_sockets(int may_wait_flag)
       continue;
     }
     if (r < 0) {
+      if (errno == EINTR || errno == EAGAIN) {
+        info("%d: not ready descriptor", p->id);
+        continue;
+      }
       err("%d: read() failed: %s", p->id, os_ErrorMsg());
       client_disconnect(p, 1);
       continue;
@@ -4681,6 +4852,11 @@ do_loop(void)
     /* update public log */
     update_public_log_file();
 
+    if (initialize_mode) {
+      interrupt_signaled = 1;
+      continue;
+    }
+
     may_wait_flag = check_sockets(may_wait_flag);
 
     r = scan_dir(global->compile_status_dir, packetname);
@@ -4720,6 +4896,12 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "-E")) {
       i++;
       p_flags |= PREPARE_USE_CPP;
+    } else if (!strcmp(argv[i], "-f")) {
+      i++;
+      forced_mode = 1;
+    } else if (!strcmp(argv[i], "-i")) {
+      i++;
+      initialize_mode = 1;
     } else if (!strncmp(argv[i], "-S", 2)) {
       int x = 0, n = 0;
 
