@@ -176,6 +176,50 @@ generate_report(char *report_path)
 }
 
 static int
+generate_team_report(char const *report_path)
+{
+  FILE *f;
+  int   i;
+  int   status = 0;
+  int   first_failed = 0;
+  int   passed_tests = 0;
+  int   failed_tests = 0;
+
+  if (!(f = fopen(report_path, "w"))) {
+    err(_("generate_report: cannot open protocol file %s"), report_path);
+    return -1;
+  }
+
+  for (i = 1; i < total_tests; i++) {
+    if (status == 0 && tests[i].status != 0) {
+      status = tests[i].status;
+      first_failed = i;
+    }
+    if (tests[i].status == 0) passed_tests++;
+    else failed_tests++;
+  }
+
+  if (status == 0) {
+    fprintf(f, "OK\n\n");
+  } else {
+    fprintf(f, _("%s, test #%d\n\n"), result2str(status), first_failed);
+  }
+  fprintf(f, _("%d total tests runs, %d passed, %d failed\n\n"),
+	  total_tests - 1, passed_tests, failed_tests);
+
+  fprintf(f, _("Test #  Status  Time (sec)  Result\n"));
+  for (i = 1; i < total_tests; i++) {
+    fprintf(f, "%-8d%-8d%-12.3f%s\n",
+	    i, tests[i].code, (double) tests[i].times / 1000,
+	    result2str(tests[i].status));
+  }
+  fprintf(f, "\n");
+
+  fclose(f);
+  return 0;
+}
+
+static int
 read_error_code(char const *path)
 {
   FILE *f;
@@ -202,7 +246,8 @@ run_tests(struct section_tester_data *tst,
           char const *new_name,
           char const *new_base,
           char *reply_string,               /* buffer where reply is formed */
-          char *report_path)                /* path to the report */
+          char *report_path,                /* path to the report */
+          char *team_report_path) /* path to the team report */
 {
   tTask *tsk = 0;
   int    cur_test;
@@ -219,6 +264,7 @@ run_tests(struct section_tester_data *tst,
   path_t error_code;
   int    status = 0;
   int    failed_test = 0;
+  int    total_failed_tests = 0;
   int    ec = -100;            /* FIXME: magic */
   struct section_problem_data *prb;
 
@@ -228,6 +274,10 @@ run_tests(struct section_tester_data *tst,
   prb = probs[tst->problem];
 
   pathmake(report_path, tst->tmp_dir, "/", "report", NULL);
+  team_report_path[0] = 0;
+  if (global->team_enable_rep_view) {
+    pathmake(team_report_path, tst->tmp_dir, "/", "team_report", NULL);
+  }
   memset(tests, 0, sizeof(tests));
   total_tests = 1;
   cur_test = 1;
@@ -336,6 +386,7 @@ run_tests(struct section_tester_data *tst,
       if (task_IsTimeout(tsk)) {
         failed_test = cur_test;
         status = RUN_TIME_LIMIT_ERR;
+        total_failed_tests++;
         task_Delete(tsk); tsk = 0;
       } else if ((error_code[0] && ec != 0) || task_IsAbnormal(tsk)) {
         /* runtime error */
@@ -346,6 +397,7 @@ run_tests(struct section_tester_data *tst,
         }
         failed_test = cur_test;
         status = RUN_RUN_TIME_ERR;
+        total_failed_tests++;
         task_Delete(tsk); tsk = 0;
       } else {
         task_Delete(tsk); tsk = 0;
@@ -391,7 +443,10 @@ run_tests(struct section_tester_data *tst,
             status = RUN_CHECK_FAILED;
             break;
           }
-          if (status > 0) failed_test = cur_test;
+          if (status > 0) { 
+            failed_test = cur_test;
+            total_failed_tests++;
+          }
         } else {
           /* something strange */
           status = RUN_CHECK_FAILED;
@@ -404,14 +459,26 @@ run_tests(struct section_tester_data *tst,
     tests[cur_test].status = status;
     cur_test++;
     total_tests++;
-    if (status > 0) break;
+    if (status > 0 && global->score_system_val != SCORE_KIROV) break;
     clear_directory(tst->work_dir);
   }
 
   /* TESTING COMPLETED (SOMEHOW) */
 
+  if (global->team_enable_rep_view) {
+    generate_team_report(team_report_path);
+  }
   generate_report(report_path);
-  sprintf(reply_string, "%d %d\n", status, failed_test);
+
+  if (global->score_system_val == SCORE_KIROV) {
+    /* ATTENTION: number of passed test returned is greater than actual by 1 */
+    sprintf(reply_string, "%d %d\n",
+            total_failed_tests > 0?RUN_PARTIAL:RUN_OK,
+            total_tests - total_failed_tests);
+  } else {
+    sprintf(reply_string, "%d %d\n", status, failed_test);
+  }
+
   /*
   if (status == 0) { 
     putchar(7);
@@ -448,6 +515,7 @@ do_loop(void)
   path_t new_name;
   path_t new_base;
   path_t report_path;
+  path_t team_report_path;
 
   char   status_string[64];
 
@@ -465,11 +533,20 @@ do_loop(void)
       if (r < 0) return -1;
       if (r == 0) continue;
 
+      /* team report might be not produced */
+      team_report_path[0] = 0;
+
       os_rGetBasename(new_name, new_base, PATH_MAX);
       if (run_tests(testers[i], new_name, new_base,
-                    status_string, report_path) < 0) return -1;
+                    status_string, report_path,
+                    team_report_path) < 0) return -1;
       if (generic_copy_file(0, NULL, report_path, "",
                             0, testers[i]->run_report_dir, new_base, "") < 0)
+        return -1;
+      if (team_report_path[0]
+          && generic_copy_file(0, NULL, team_report_path, "",
+                               0, testers[i]->run_team_report_dir,
+                               new_base, "") < 0)
         return -1;
       if (generic_write_file(status_string, strlen(status_string), SAFE,
                              testers[i]->run_status_dir, new_base, "") < 0)
@@ -539,6 +616,9 @@ check_config(void)
     if (check_writable_spool(testers[i]->exe_dir, SPOOL_OUT) < 0) return -1;
     if (check_writable_spool(testers[i]->run_status_dir,SPOOL_IN)<0) return -1;
     if (check_writable_dir(testers[i]->run_report_dir) < 0) return -1;
+    if (global->team_enable_rep_view) {
+      if (check_writable_dir(testers[i]->run_team_report_dir) < 0) return -1;
+    }
 
     /* check working dirs */
     if (make_writable(testers[i]->tmp_dir) < 0) return -1;
