@@ -324,7 +324,7 @@ struct section_problem_data
   puc_t input_file[64];         /* input file name */
   puc_t output_file[64];        /* output file name */
   puc_t test_score_list[256];   /* scores for individual tests */
-  path_t builtin_checker;       /* the name of the built-in checker */
+  path_t standard_checker;      /* the name of the built-in checker */
 
   int     ntests;               /* number of tests found */
   int    *tscores;              /* internal scores array  */
@@ -412,7 +412,7 @@ struct section_tester_data
 
   char **start_env;             /* environment variables for start_cmd */
 
-  int builtin_checker_used;     /* internal: the builtin checker is used */
+  int standard_checker_used;    /* internal: the standard checker is used */
 };
 
 #undef puc_t
