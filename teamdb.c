@@ -64,6 +64,11 @@ struct teaminfo
   char passwd[PASSWD_FIELD_LEN];
 };
 
+#define MAX_UNDO_STACK 8
+struct teaminfo undo_stack[MAX_UNDO_STACK];
+int undo_sp = -1;
+static void save_undo(int tid);
+
 struct fieldinfo
 {
   char *name;
@@ -366,6 +371,7 @@ teamdb_set_scrambled_passwd(int id, char const *scrambled)
         strlen(scrambled));
     return 0;
   }
+  save_undo(id);
   strcpy(teams[id]->passwd, scrambled);
   return 1;
 }
@@ -424,9 +430,308 @@ teamdb_write_passwd(char const *path)
 }
 
 int
+teamdb_write_teamdb(char const *path)
+{
+  char    tname[32];
+  path_t  tpath; 
+  path_t  dir;
+  FILE   *f = 0;
+  int     id;
+
+  os_rDirName(path, dir, PATH_MAX);
+  sprintf(tname, "%lu%d", time(0), getpid());
+  pathmake(tpath, dir, "/", tname, NULL);
+
+  info(_("write_teamdb: opening %s"), tpath);
+  if (!(f = fopen(tpath, "w"))) {
+    err(_("fopen failed: %s"), os_ErrorMsg());
+    goto cleanup;
+  }
+  for (id = 1; id <= MAX_TEAM_ID; id++) {
+    if (!teams[id]) continue;
+    fprintf(f, "%s:%d::%s\n",
+            teams[id]->login,
+            id,
+            teams[id]->name);
+    if (ferror(f)) {
+      err(_("fprintf failed: %s"), os_ErrorMsg());
+    }
+  }
+  if (fclose(f) < 0) {
+    err(_("fclose failed: %s"), os_ErrorMsg());
+    goto cleanup;
+  }
+  f = 0;
+
+  info(_("renaming: %s -> %s"), tpath, path);
+  if (rename(tpath, path) < 0) {
+    err(_("rename failed: %s"), os_ErrorMsg());
+    goto cleanup;
+  }
+
+  info(_("write_teamdb: success"));
+  return 0;
+
+ cleanup:
+  if (f) fclose(f);
+  return -1;
+}
+
+int
 teamdb_get_max_team_id(void)
 {
   return MAX_TEAM_ID;
+}
+
+int
+teamdb_get_total_teams(void)
+{
+  int tot = 0, i;
+
+  for (i = 1; i <= MAX_TEAM_ID; i++)
+    if (teams[i]) tot++;
+
+  return tot;
+}
+
+static char const valid_login_chars[256] =
+{
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,'-','.',0,
+  '0','1','2','3','4','5','6','7','8','9',0,0,0,'=',0,0,
+  '@','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O',
+  'P','Q','R','S','T','U','V','W','X','Y','Z',0,0,0,0,'_',
+  0,'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o',
+  'p','q','r','s','t','u','v','w','x','y','z',0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+};
+int
+teamdb_is_valid_login(char const *str)
+{
+  unsigned char const *s = (unsigned char const*) str;
+  for (s = str; *s; s++) {
+    if (!valid_login_chars[*s]) return 0;
+  }
+  return 1;
+}
+
+static char const valid_name_chars[256] =
+{
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  ' ','!',0,'#','$','%','&',0,'(',')','*','+',',','-','.','/',
+  '0','1','2','3','4','5','6','7','8','9',0,0,'<','=','>','?',
+  '@','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O',
+  'P','Q','R','S','T','U','V','W','X','Y','Z','[',0,']','^','_',
+  '`','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o',
+  'p','q','r','s','t','u','v','w','x','y','z','{','|','}','~',0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  ' ','¡','¢','£','¤','¥','¦','§','¨','©','ª','«','¬','­','®','¯',
+  '°','±','²','³','´','µ','¶','·','¸','¹','º','»','¼','½','¾','¿',
+  'À','Á','Â','Ã','Ä','Å','Æ','Ç','È','É','Ê','Ë','Ì','Í','Î','Ï',
+  'Ð','Ñ','Ò','Ó','Ô','Õ','Ö','×','Ø','Ù','Ú','Û','Ü','Ý','Þ','ß',
+  'à','á','â','ã','ä','å','æ','ç','è','é','ê','ë','ì','í','î','ï',
+  'ð','ñ','ò','ó','ô','õ','ö','÷','ø','ù','ú','û','ü','ý','þ','ÿ'
+};
+int
+teamdb_is_valid_name(char const *str)
+{
+  unsigned char const *s = (unsigned char const*) str;
+  for (s = str; *s; s++) {
+    if (!valid_name_chars[*s]) return 0;
+  }
+  return 1;
+}
+
+int
+teamdb_change_login(int tid, char const *login)
+{
+  if (!teamdb_lookup(tid)) {
+    err("teamdb_change_login: bad id: %d", tid);
+    return -1;
+  }
+  if (!teamdb_is_valid_login(login)) {
+    err("teamdb_change_login: invalid login");
+    return -1;
+  }
+  if (strlen(login) >= LOGIN_FIELD_LEN) {
+    err("teamdb_change_login: login is too long");
+    return -1;
+  }
+  save_undo(tid);
+  strcpy(teams[tid]->login, login);
+  return 0;
+}
+
+int
+teamdb_change_name(int tid, char const *name)
+{
+  if (!teamdb_lookup(tid)) {
+    err("teamdb_change_name: bad id: %d", tid);
+    return -1;
+  }
+  if (!teamdb_is_valid_name(name)) {
+    err("teamdb_change_name: invalid name");
+    return -1;
+  }
+  if (strlen(name) >= NAME_FIELD_LEN) {
+    err("teamdb_change_name: name is too long");
+    return -1;
+  }
+  save_undo(tid);
+  strcpy(teams[tid]->name, name);
+  return 0;
+}
+
+int
+teamdb_toggle_vis(int tid)
+{
+  if (!teamdb_lookup(tid)) {
+    err("teamdb_toggle_vis: bad id: %d", tid);
+    return -1;
+  }
+  save_undo(tid);
+  teams[tid]->flags ^= TEAM_INVISIBLE;
+  return 0;
+}
+
+int
+teamdb_toggle_ban(int tid)
+{
+  if (!teamdb_lookup(tid)) {
+    err("teamdb_toggle_ban: bad id: %d", tid);
+    return -1;
+  }
+  save_undo(tid);
+  teams[tid]->flags ^= TEAM_BANNED;
+  return 0;
+}
+
+int
+teamdb_add_team(int tid,
+                char const *login,
+                char const *name,
+                char const *passwd,
+                int vis,
+                int ban,
+                char **msg)
+{
+  char *scramble;
+
+  *msg = 0;
+  if (!tid) {
+    for (tid = 1; tid <= MAX_TEAM_ID && teams[tid]; tid++);
+    if (tid > MAX_TEAM_ID) {
+      *msg = _("Team capacity exhausted");
+      return -1;
+    }
+  }
+  if (tid <= 0 || tid > MAX_TEAM_ID) {
+    *msg = _("Invalid team id");
+    return -1;
+  }
+  if (teams[tid]) {
+    *msg = _("Team with the given team id already exists");
+    return -1;
+  }
+  if (!*login) {
+    *msg = _("Team login is empty");
+    return -1;
+  }
+  if (strlen(login) >= LOGIN_FIELD_LEN) {
+    *msg = _("Team login is too long");
+    return -1;
+  }
+  if (!teamdb_is_valid_login(login)) {
+    *msg = _("Team login is invalid");
+    return -1;
+  }
+  if (!*name) {
+    *msg = _("Team name is empty");
+    return -1;
+  }
+  if (strlen(name) >= NAME_FIELD_LEN) {
+    *msg = _("Team name is too long");
+    return -1;
+  }
+  if (!teamdb_is_valid_name(name)) {
+    *msg = _("Team name is invalid");
+    return -1;
+  }
+  if (!*passwd) {
+    *msg = _("Team password is empty");
+    return -1;
+  }
+  if (strlen(passwd) > MAX_PASSWD_LEN) {
+    *msg = _("Password is too long");
+    return -1;
+  }
+  scramble = alloca(strlen(passwd) * 2 + 16);
+  teamdb_scramble_passwd(passwd, scramble);
+  save_undo(tid);
+  XCALLOC(teams[tid], 1);
+  teams[tid]->id = tid;
+  teams[tid]->flags = 0;
+  if (!vis) teams[tid]->flags |= TEAM_INVISIBLE;
+  if (ban)  teams[tid]->flags |= TEAM_BANNED;
+  strcpy(teams[tid]->login, login);
+  strcpy(teams[tid]->name, name);
+  strcpy(teams[tid]->passwd, scramble);
+  return 0;
+}
+
+static void
+save_undo(int tid)
+{
+  if (undo_sp < 0) return;
+  if (!teams[tid]) {
+    undo_stack[undo_sp].id = tid;
+    undo_stack[undo_sp].flags = -1;
+  } else {
+    ASSERT(teams[tid]->id == tid);
+    memcpy(&undo_stack[undo_sp], teams[tid], sizeof(undo_stack[0]));
+  }
+  undo_sp++;
+}
+
+void
+teamdb_transaction(void)
+{
+  undo_sp = 0;
+}
+
+void
+teamdb_commit(void)
+{
+  undo_sp = -1;
+}
+
+void
+teamdb_rollback(void)
+{
+  int id;
+
+  while (undo_sp > 0) {
+    undo_sp--;
+    id = undo_stack[undo_sp].id;
+    if (undo_stack[undo_sp].flags == -1) {
+      xfree(teams[id]); teams[id] = 0;
+    } else {
+      if (!teams[id]) {
+        XCALLOC(teams[id], 1);
+      }
+      memcpy(teams[id], &undo_stack[undo_sp], sizeof(undo_stack[0]));
+    }
+  }
 }
 
 /**
