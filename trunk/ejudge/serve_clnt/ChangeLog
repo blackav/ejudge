@@ -1,3 +1,19 @@
+2005-01-15  Alexander Chernov  <cher@ispras.ru>
+
+	* simple_cmd.c: copyright notice is updated;
+	(serve_clnt_simple_cmd) any positive return value from the server is
+	  accepted and returned from the function since this value may contain
+	  some information for the caller. In the previous version only
+	  SRV_RPL_OK (0) was allowed as a server's reply.
+
+	* master_page.c: copyright notice is updated;
+	(serve_clnt_master_page) added new parameter `mode_clar', which is
+	  then passed to the server.
+
+	* reset_filter.c: copyright notice is updated;
+	(serve_clnt_reset_filter) removed redundant check for valid `cmd'
+	  parameter.
+
 2004-12-20  Alexander Chernov  <cher@ispras.ru>
 
 	* master_page.c:

@@ -1,15 +1,284 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
+Версия 2.1.35 (20050118)
+========================
+This version fixes some minor bugs and adds some new features.
+
+userlist-server
+---------------
+Empty passwords are allowed in the <password> and the
+<team_password> elements of the XML user database. In the
+previous version empty passwords caused the XML validation error,
+and such user database could not be loaded.
+
+However, empty passwords are normally not allowed. An attempt to
+set an empty password (i.e. a password equal to the empty
+string) using the `edit-userlist' program now causes the
+"Invalid password" error. Empty passwords are also not allowed
+when a user logging into the system.
+
+serve
+-----
+New language configuration variables `disable_testing' and
+`disable_auto_testing' of the `serve.cfg' contest configuration
+file are added. These variable has the same semantics, as the
+corresponding variables of the problem configuration section.
+E.g. the `disable_testing' disables any testing of a submit in
+the given language, and the `disable_auto_testing' prevents
+automatic testing of a submit in the given language as soon as
+the submit is accepted. Such submits receive the "Accepted for
+testing" status and can be judged by an explicit judging command
+later by the contest administrator.
+
+serve
+-----
+A new problem configuration variable `disqualified_penalty' is
+added to the `serve.cfg' contest configuration file. This
+variable allows specifying a penalty for a disqualified run.
+Starting from the current version of the ejudge system
+disqualified runs are counted separately from ordinary runs and
+also penalized separately. By default the value of the
+`disqualified_penalty' configuration variable is equal to the
+value of the `run_penalty', i.e. the disqualified runs are
+penalized as ordinary runs.
+
+This, in the current version of the ejudge system the total
+score of a run in the KIROV or OLYMPIAD contest scoring system
+is calculated using the following expression:
+S = I * M - A * P + D + J - B * Q
+The `S', `I', `M', `A', `P', `J' variables are described below.
+The `B' is the total number of disqualified runs of the current
+user for the current problem, `Q' is the penalilty for a
+disqualified run as defined by the `disqualified_penalty'
+problem configuration variable.
+
+In the KIROV or OLYMPIAD contest score system the score
+calculation formula in the "score" column is changed
+accordingly. The full form of the formula is as follows:
+S = I [ * M ] [ - A * P ] [ +/- D ] [ +/- J ] [ - B * Q ]
+if M == 1, then the corresponding part of the formula is not
+shown. The same rule applies for A * P == 0, D == 0, J == 0,
+B * Q == 0.
+
+Two fields are added to the run log in the CSV format as printed
+by the
+serve-cmd dump-master-runs
+command line program:
+          [27] disq_attempts
+          [28] disq_penalty
+
+serve
+-----
+The source code lines are numbered in the "View source" display
+of a run in the `judge' or `master' CGI programs.
+
+serve,master,judge
+------------------
+The "Reset button" of the runlog filter expression now resets
+only the runlog filter expression and the number of the first
+and the last submit number. The messages list view parameters
+are no longer reset.
+
+A new parameter added to the message view controls. This
+parameter may be chosen using a pull-down menu available to the
+left of the number of the first viewed clar. The parameter
+allows choosing the messages view mode: either all the messages
+are shown, or only unanswered messages are shown. The default
+value for the `judge' CGI program is to view only unanswered
+messages, and the default value for the `master' CGI program is
+to view all the messages.
+
+A new button "Reset filter" is added to reset the message list
+view parameters. This button is located right to the "View"
+button of the messages display.
+
+contest.xml
+-----------     
+A new element <register_email_file> is added. This element
+allows specifying a file with a registration e-mail letter
+template. This e-mail letter is sent to a user after successful
+registration. The value of the <register_email_file> element can
+be either absolute path, or relative path. In the latter case
+the absolute path is calculated relative to the contest
+configuration files directory as specified by the values
+<root_dir> or <conf_dir> elements. In the value of the
+<register_email_file> element certain format specifiers are
+allowed. For example, %Vl is substituted with the number of the
+current language environment (0 - English, 1 - Russian). An
+example of the element value is as follows:
+<register_email_file>email_tmpl_%Vl.txt</register_email_file>
+If the Russian is chosen as the interface language, the
+`email_tmpl_1.txt' file in the conf directory (<root_dir>/conf)
+will be used, and if the English is chosen as the interface
+language, the `email_tmpl_0.txt' file is used. If the message
+template file for the current language environment does not
+exist, the template file for the language environment 0 is used,
+and if this file does not exist, the default message template is
+used in the current language environment. If the value of the
+<register_email_file> is not set, the default message template
+is always used.
+
+Certain format specifiers are allowed in the text of the message
+template. Such format specifiers are substituted with the values
+of the new user. The valid format specifiers are listed below:
+%Vu - the URL to complete the registration
+%Vl - the language environment number (0 - English, 1 - Russian)
+%Ul - the user login
+%Ui - the user identifier
+%Un - the user name (not set at this stage of registration)
+%Ue - the e-mail specifyed by user during registration
+%Uz - the automatically generated password for the user
+
+An example of a registration message template is shown below:
+--------
+Hello,
+
+Somebody (probably you) have specified this e-mail address (%Ue)
+when registering an account on the Moscow Programming Contests
+Server.
+
+To confirm registration, you should enter the provided login
+and password on the login page of the server at the
+following url: %Vu.
+
+Note, that if you do not do this in 24 hours from the moment
+of sending this letter, registration will be void.
+
+login:    %Ul
+password: %Uz
+
+Regards
+The ejudge contest administration system
+--------
+
+serve-cmd,serve
+---------------
+A new command is implemented, which checks whether there are
+runs in the stages of compilation or testing in the contest at
+the current time. This command is currently available using the
+`serve-cmd' program:
+serve-cmd CONTEST-ID has-transient-runs SESSION-ID-FILE
+If there are such runs, the program exit code is 2, and if there
+are no such runs, the exit code is 0. Also the exit code of 1 is
+produced in case of other execution error.
+
+serve-cmd
+---------
+A few new commands of contest control from the command line are
+implemented in the `serve-cmd' program.
+serve-cmd CONTEST-ID suspend-testing SESSION-ID-FILE
+	This command suspends testing of all new runs. The runs
+        get "Accepted for testing" (RUN_ACCEPTED) state and are
+        not compiled and tested automatically.
+serve-cmd CONTEST-ID resume-testing SESSION-ID-FILE
+	This command cancels the effect of the previous command,
+        so all new runs will be compiled and tested
+        automatically.
+serve-cmd CONTEST-ID judge-suspended-runs SESSION-ID-FILE
+	This command sends for compilation and testing all runs,
+        that have the "Accepted for testing" (RUN_ACCEPTED)
+        status.
+
+These commands may be used for correct import of an external XML
+run log file into the running contest. As it is mentioned below,
+the `import-xml-runs' command does not work, when there are runs
+in the compilation or testing stage. So, the algorithm of import
+of an XML runlog into the working contest can be specified as
+follows:
+	serve-cmd CONTEST-ID suspend-testing SESSION-ID-FILE
+	serve-cmd CONTEST-ID has-transient-runs SESSION-ID-FILE
+	while [ "$?" = 2 ]
+	do
+                sleep 1
+		serve-cmd CONTEST-ID has-transient-runs SESSION-ID-FILE
+	done
+        serve-cmd CONTEST-ID import-xml-runs SESSION-ID-FILE RUNLOG-FILE
+        serve-cmd CONTEST-ID resume-testing SESSION-ID-FILE
+        serve-cmd CONTEST-ID judge-suspended-runs SESSION-ID-FILE
+Note, that there is no error checking code in this algorithm.
+
+serve-cmd CONTEST-ID full-import-xml-runs SESSION-ID-FILE XML-FILE1 ...
+	This command implements the full algorithm of import of
+	external XML run log into the running contest, as
+	described above. Several file paths may be specified as
+	arguments of the command, and all these files will be
+	imported. The command returns 0 exit code, when all the
+	specified XML files are successfully imported, 1, when
+	no files are imported due to some error, 2, when no
+	files are imported due to user interrupt, 3, when some
+	files are imported, and some files are not due to errors
+	in these files. This command restores the state of the
+	running contest correctly in case of user interrupt.
+
+serve
+-----
+New features added to the filter expressions. The following new
+primary expressions are supported:
+userinvisible [ ( RUN-ID ) ]
+	Evaluates to the boolean value of TRUE, if the run
+        RUN-ID is submitted by a user, who has the "invisible"
+        status in the current contest. Otherwise the expression
+        evaluates to FALSE. If the RUN-ID is omitted, the
+        current run is taken.
+userbanned [ ( RUN-ID ) ]
+	Evaluates to the boolean value of TRUE, if the run
+        RUN-ID is submitted by a user, who has the "banned"
+        status in the current contest. Otherwise the expression
+        evaluates to FALSE. If the RUN-ID is omitted, the
+        current run is taken.
+userlocked [ ( RUN-ID ) ]
+	Evaluates to the boolean value of TRUE, if the run
+        RUN-ID is submitted by a user, who has the "locked"
+        status in the current contest. Otherwise the expression
+        evaluates to FALSE. If the RUN-ID is omitted, the
+        current run is taken.
+curuserinvisible
+        Evaluates to the boolean value of TRUE, if the current
+        run is submitted by a user, who has the "invisible"
+        status in the current contest. Otherwise the expression
+        evaluates to FALSE.
+curuserbanned
+        Evaluates to the boolean value of TRUE, if the current
+        run is submitted by a user, who has the "banned" status
+        in the current contest. Otherwise the expression
+        evaluates to FALSE.
+curuserlocked
+        Evaluates to the boolean value of TRUE, if the current
+        run is submitted by a user, who has the "locked" status
+        in the current contest. Otherwise the expression
+        evaluates to FALSE.
+New primary expressions can be used with each other and with
+other valid primary expressions, for example:
+!userinvisible && !invisible
+This filter expression evaluates to TRUE for all runs, which are
+not "invisible" (hidden) and are not submitted by an "invisible"
+user.
+
+serve
+-----
+The contest participants' e-mail addresses are now shown at the
+"View users" page of the `judge' and `master' CGI programs.
+
+serve,run
+---------
+A new global configuration variable `html_report' is added. If
+this variable is set to a non-zero value, the master testing
+protocol will be generated by the `run' program in the HTML
+format rather than in plain text. A HTML protocol has some
+advantages to a plain text protocol including better formatting,
+color support, and hyperlinks from the summary table to the
+results for each test.
+
+The same contest may have a mix of plain-text and HTML testing
+protocols. In order to change the type of the protocol, it is
+necessary to change the value of the `html_report' configuration
+file in the `serve.cfg' configuration file and restart the
+`serve' program. Restart of the `run' program is not necessary
+in this case.
+
 Version 2.1.34 (20050108)
 =========================
-If no bugs are found in this release, the next release (which
-will be identical or nearly identical to the current release)
-will be numbered 2.2.0, so a new stable branch of the `ejudge'
-system will be started. The 2.1 branch will be terminated. All
-the support work will go to 2.2 branch, and all the new
-development will go to the future development branch 2.3.
-
 This version fixes several severe bugs and adds a few
 improvements to all the programs of the ejudge system. A several
 new programs are implemented, in particular, a program for
