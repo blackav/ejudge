@@ -193,6 +193,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(compile_real_time_limit, "d"),
   GLOBAL_PARAM(show_deadline, "d"),
   GLOBAL_PARAM(enable_runlog_merge, "d"),
+  GLOBAL_PARAM(prune_empty_users, "d"),
 
   GLOBAL_PARAM(variant_map_file, "s"),
 
@@ -906,6 +907,7 @@ parse_variant_map(const unsigned char *path)
             v, login_buf, probs[i]->short_name);
         return 0;
       }
+      p += n;
       pmap->v[pmap->u].variants[j] = v;
     }
     pmap->u++;

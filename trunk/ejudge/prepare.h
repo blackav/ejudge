@@ -166,6 +166,7 @@ struct section_global_data
   int    score_system_val;      /* internal int value */
   int    tests_to_accept;       /* how many tests to accept a submit */
   int    virtual;               /* 1, if virtual contest */
+  int    prune_empty_users;     /* 1, if do not show empty users in stands */
 
   int    max_file_length;       /* maximal length of the file in reports */
   int    max_line_length;       /* maximal length of line in reports */
