@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
  */
 
 #include "pathutl.h"
@@ -170,12 +166,18 @@ pathmake4(char *dst, ...)
 char *
 chop(char *s)
 {
-  char *ss = s;
+  char *ps;
+  size_t len;
 
   if (!s) return s;
-  for (; *s; s++)
-    if (*s >= 1 && *s < ' ') *s = ' ';
-  return ss;
+
+  for (ps = s; *ps; ps++)
+    if (*ps >= 1 && *ps < ' ') *ps = ' ';
+
+  len = strlen(s);
+  while (len > 0 && s[len - 1] == ' ') s[--len] = 0;
+
+  return s;
 }
 
 /* symbol verr exists :( */
