@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "settings.h"
 #include "userlist_cfg.h"
 #include "userlist.h"
@@ -196,6 +198,7 @@ static char const * const member_status_string[] =
 #define _(x) gettext(x)
 #else
 #define _(x) x
+#define gettext(x) x
 #endif
 
 #define FIRST_COOKIE(u) ((struct userlist_cookie*) (u)->cookies->first_down)
@@ -811,7 +814,7 @@ cmd_register_new(struct client_state *p,
   unsigned char passwd_buf[64];
   struct contest_desc *cnts = 0;
   unsigned char * originator_email = 0;
-  userlist_login_hash_t login_hash;
+  userlist_login_hash_t login_hash = 0;
   int i;
 
   // validate packet
@@ -1142,7 +1145,7 @@ cmd_do_login(struct client_state *p,
              int pkt_len,
              struct userlist_pk_do_login * data)
 {
-  struct userlist_user * user;
+  struct userlist_user * user = 0;
   struct userlist_pk_login_ok * answer;
   int ans_len, act_pkt_len, i;
   char * login;
@@ -1603,7 +1606,7 @@ cmd_check_cookie(struct client_state *p,
   struct userlist_user * user;
   struct userlist_pk_login_ok * answer;
   int anslen;
-  struct userlist_cookie * cookie;
+  struct userlist_cookie * cookie = 0;
   unsigned char *name_beg;
   unsigned long long tsc1, tsc2;
   int i;
@@ -2119,7 +2122,7 @@ cmd_get_user_info(struct client_state *p,
                   struct userlist_pk_get_user_info *data)
 {
   FILE *f = 0;
-  unsigned char *xml_ptr = 0;
+  char *xml_ptr = 0;
   size_t xml_size = 0;
   struct userlist_pk_xml_data *out = 0;
   size_t out_size = 0;
@@ -2153,7 +2156,7 @@ cmd_get_user_info(struct client_state *p,
   }
   user = userlist->user_map[data->user_id];
 
-  if (!(f = open_memstream((char**) &xml_ptr, &xml_size))) {
+  if (!(f = open_memstream(&xml_ptr, &xml_size))) {
     CONN_ERR("open_memstream() failed!");
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -2182,7 +2185,7 @@ cmd_priv_get_user_info(struct client_state *p,
                        struct userlist_pk_get_user_info *data)
 {
   FILE *f = 0;
-  unsigned char *xml_ptr = 0;
+  char *xml_ptr = 0;
   size_t xml_size = 0;
   struct userlist_pk_xml_data *out = 0;
   size_t out_size = 0;
@@ -2242,7 +2245,7 @@ cmd_priv_get_user_info(struct client_state *p,
     return;
   }
 
-  if (!(f = open_memstream((char**) &xml_ptr, &xml_size))) {
+  if (!(f = open_memstream(&xml_ptr, &xml_size))) {
     CONN_ERR("open_memstream() failed!");
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -2271,7 +2274,7 @@ cmd_list_all_users(struct client_state *p,
                    struct userlist_pk_map_contest *data)
 {
   FILE *f = 0;
-  unsigned char *xml_ptr = 0;
+  char *xml_ptr = 0;
   size_t xml_size = 0;
   struct userlist_pk_xml_data *out = 0;
   size_t out_size = 0;
@@ -2303,7 +2306,7 @@ cmd_list_all_users(struct client_state *p,
     if (is_db_capable(p, OPCAP_LIST_ALL_USERS) < 0) return;
   }
 
-  f = open_memstream((char**) &xml_ptr, &xml_size);
+  f = open_memstream(&xml_ptr, &xml_size);
   ASSERT(f);
   userlist_unparse_short(userlist, f, data->contest_id);
   fclose(f);
@@ -2326,7 +2329,7 @@ cmd_list_standings_users(struct client_state *p,
                          struct userlist_pk_map_contest *data)
 {
   FILE *f = 0;
-  unsigned char *xml_ptr = 0;
+  char *xml_ptr = 0;
   size_t xml_size = 0;
   struct userlist_pk_xml_data *out = 0;
   size_t out_size = 0;
@@ -2356,7 +2359,7 @@ cmd_list_standings_users(struct client_state *p,
   }
   if (is_cnts_capable(p, cnts, OPCAP_MAP_CONTEST) < 0) return;
 
-  f = open_memstream((char**) &xml_ptr, &xml_size);
+  f = open_memstream(&xml_ptr, &xml_size);
   ASSERT(f);
   userlist_unparse_for_standings(userlist, f, data->contest_id);
   fclose(f);
@@ -2381,7 +2384,7 @@ cmd_get_user_contests(struct client_state *p,
                       struct userlist_pk_get_user_info *data)
 {
   FILE *f = 0;
-  unsigned char *xml_ptr = 0;
+  char *xml_ptr = 0;
   size_t xml_size = 0;
   struct userlist_pk_xml_data *out = 0;
   size_t out_size = 0;
@@ -2415,7 +2418,7 @@ cmd_get_user_contests(struct client_state *p,
 
   user = userlist->user_map[data->user_id];
 
-  if (!(f = open_memstream((char**) &xml_ptr, &xml_size))) {
+  if (!(f = open_memstream(&xml_ptr, &xml_size))) {
     CONN_ERR("open_memstream failed!");
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -3903,7 +3906,7 @@ cmd_list_users(struct client_state *p, int pkt_len,
 {
   struct client_state *q;
   FILE *f = 0;
-  unsigned char *html_ptr = 0;
+  char *html_ptr = 0;
   size_t html_size = 0;
   unsigned char *url_ptr, *srch_ptr;
   struct contest_desc *cnts = 0;
@@ -3949,7 +3952,7 @@ cmd_list_users(struct client_state *p, int pkt_len,
     return;
   }
 
-  if (!(f = open_memstream((char**) &html_ptr, &html_size))) {
+  if (!(f = open_memstream(&html_ptr, &html_size))) {
     CONN_ERR("open_memstream failed!");
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -3981,7 +3984,7 @@ cmd_dump_database(struct client_state *p, int pkt_len,
 {
   struct client_state *q;
   FILE *f = 0;
-  unsigned char *html_ptr = 0;
+  char *html_ptr = 0;
   size_t html_size = 0;
   struct contest_desc *cnts = 0;
   int errcode;
@@ -4022,7 +4025,7 @@ cmd_dump_database(struct client_state *p, int pkt_len,
     return;
   }
 
-  if (!(f = open_memstream((char**) &html_ptr, &html_size))) {
+  if (!(f = open_memstream(&html_ptr, &html_size))) {
     CONN_ERR("open_memstream failed!");
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -4201,7 +4204,7 @@ static void
 cmd_generate_register_passwords(struct client_state *p, int pkt_len,
                                 struct userlist_pk_map_contest *data)
 {
-  unsigned char *log_ptr = 0;
+  char *log_ptr = 0;
   size_t log_size = 0;
   FILE *f = 0;
   struct client_state *q = 0;
@@ -4231,7 +4234,7 @@ cmd_generate_register_passwords(struct client_state *p, int pkt_len,
     CONN_BAD("two client file descriptors required");
     return;
   }
-  if (!(f = open_memstream((char**) &log_ptr, &log_size))) {
+  if (!(f = open_memstream(&log_ptr, &log_size))) {
     CONN_ERR("open_memstream failed");
     send_reply(p, ULS_ERR_OUT_OF_MEM);
     return;
@@ -4318,7 +4321,7 @@ static void
 cmd_generate_team_passwords(struct client_state *p, int pkt_len,
                             struct userlist_pk_map_contest *data)
 {
-  unsigned char *log_ptr = 0;
+  char *log_ptr = 0;
   size_t log_size = 0;
   FILE *f = 0;
   struct client_state *q = 0;
@@ -4348,7 +4351,7 @@ cmd_generate_team_passwords(struct client_state *p, int pkt_len,
     CONN_BAD("two client file descriptors required");
     return;
   }
-  if (!(f = open_memstream((char**) &log_ptr, &log_size))) {
+  if (!(f = open_memstream(&log_ptr, &log_size))) {
     CONN_ERR("open_memstream failed");
     send_reply(p, ULS_ERR_OUT_OF_MEM);
     return;
@@ -4928,7 +4931,7 @@ cmd_add_field(struct client_state *p, int pkt_len,
   struct userlist_contest *reg = 0;
   struct contest_desc *cnts = 0;
   opcap_t caps;
-  userlist_login_hash_t login_hash;
+  userlist_login_hash_t login_hash = 0;
   int i, new_login_serial;
   unsigned char new_login_buf[64];
 
@@ -5197,12 +5200,12 @@ do_backup(void)
   unsigned char *buf = 0;
   FILE *f = 0;
   int fd = -1;
-  unsigned char *xml_buf = 0;
+  char *xml_buf = 0;
   size_t xml_len = 0;
   gzFile gz_dst = 0;
   unsigned char const *failed_function = 0;
 
-  if (!(f = open_memstream((char**) &xml_buf, &xml_len))) {
+  if (!(f = open_memstream(&xml_buf, &xml_len))) {
     failed_function = "open_memstream";
     goto cleanup;
   }
@@ -5753,16 +5756,31 @@ main(int argc, char *argv[])
 {
   int code = 0;
   struct stat finfo;
+  unsigned char *ejudge_xml_path = 0;
 
-  if (argc == 1) goto print_usage;
-  code = 1;
-  if (argc != 2) goto print_usage;
+#if defined EJUDGE_XML_PATH
+  if (argc == 1) {
+    info("using the default %s", EJUDGE_XML_PATH);
+    ejudge_xml_path = EJUDGE_XML_PATH;
+  } else if (argc != 2) {
+    code = 1;
+    goto print_usage;
+  } else {
+    ejudge_xml_path = argv[1];
+  }
+#else
+  if (argc != 2) {
+    code = 1;
+    goto print_usage;
+  }
+  ejudge_xml_path = argv[1];
+#endif
 
   info("userlist-server %s, compiled %s", compile_version, compile_date);
 
   if (tsc_init() < 0) return 1;
   program_name = argv[0];
-  config = userlist_cfg_parse(argv[1]);
+  config = userlist_cfg_parse(ejudge_xml_path);
   if (!config) return 1;
   if (!config->contests_dir) {
     err("<contests_dir> tag is not set!");
