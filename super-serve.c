@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2003,2004 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -14,6 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+
+#include "config.h"
 
 #include "version.h"
 #include "userlist_cfg.h"
@@ -1009,18 +1011,36 @@ print_info(unsigned char const *program_path)
 int
 main(int argc, char **argv)
 {
+  unsigned char *ejudge_xml_path = 0;
+
+#if defined EJUDGE_XML_PATH
+  if (argc == 1) {
+    info("using the default %s", EJUDGE_XML_PATH);
+    ejudge_xml_path = EJUDGE_XML_PATH;
+  } else if (argc != 2) {
+    fprintf(stderr, "%s: invalid number of arguments\n", argv[0]);
+    return 1;
+  } else {
+    ejudge_xml_path = argv[1];
+  }
+#else
+  if (argc != 2) {
+    fprintf(stderr, "%s: invalid number of arguments\n", argv[0]);
+    return 1;
+  }
+  ejudge_xml_path = argv[1];
+#endif
+
+  /*
   if (argc == 1) {
     print_info(argv[0]);
     return 0;
   }
-  if (argc != 2) {
-    fprintf(stderr, "%s: invalid number of parameters\n", argv[0]);
-    return 1;
-  }
+  */
 
   info("super-serve %s, compiled %s", compile_version, compile_date);
 
-  config = userlist_cfg_parse(argv[1]);
+  config = userlist_cfg_parse(ejudge_xml_path);
   if (!config) return 1;
   if (!config->contests_dir) {
     err("<contests_dir> tag is not set!");
