@@ -1,0 +1,15 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2003 Alexander Chernov
+
+# GNU Prolog is installed at non-standard location
+GPROLOGDIR=/usr/local/pkg/gprolog-1.2.16
+
+GPLCRUN=gplc
+if [ "${GPROLOGDIR}" != "" ]
+then
+    PATH=${GPROLOGDIR}/bin:${PATH}
+    GPLCRUN=${GPROLOGDIR}/bin/${GPLCRUN}
+fi
+
+exec ${GPLCRUN} -L -static -s --no-top-level $1 -o $2
