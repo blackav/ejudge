@@ -24,6 +24,7 @@
 #include "userlist_proto.h"
 #include "misctext.h"
 #include "fileutl.h"
+#include "l10n.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -415,36 +416,6 @@ static unsigned char *self_url;
 static int user_id;
 
 static void
-set_locale_by_id(int id)
-{
-#if CONF_HAS_LIBINTL - 0 == 1
-  char *e = 0;
-  char env_buf[512];
-
-  if (!config->l10n) return;
-  if (!config->l10n_dir) return;
-  if (client_locale_id == -1) return;
-
-  switch (client_locale_id) {
-  case 1:
-    e = "ru_RU.KOI8-R";
-    break;
-  case 0:
-  default:
-    client_locale_id = 0;
-    e = "C";
-    break;
-  }
-
-  sprintf(env_buf, "LC_ALL=%s", e);
-  putenv(env_buf);
-  setlocale(LC_ALL, "");
-  bindtextdomain("ejudge", config->l10n_dir);
-  textdomain("ejudge");
-#endif /* CONF_HAS_LIBINTL */
-}
-
-static void
 parse_user_ip(void)
 {
   unsigned int b1, b2, b3, b4;
@@ -672,30 +643,14 @@ initialize(int argc, char const *argv[])
 }
 
 static void
-put_http_header(unsigned char const *coding)
+information_not_available(unsigned char const *header_txt,
+                          unsigned char const *footer_txt)
 {
-  fprintf(stdout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n", coding);
-}
-static void
-put_header(char const *coding, char const *format, ...)
-{
-  va_list args;
-
-  if (!coding) coding = "iso8859-1";
-
-  va_start(args, format);
-  fprintf(stdout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>\n", coding, coding);
-  vfprintf(stdout, format, args);
-  fputs("\n</title></head><body>\n", stdout);
-}
-
-static void
-information_not_available(void)
-{
-  client_put_header(config->charset, _("Information is not available"));
+  client_put_header(stdout, header_txt, 0, config->charset, 1,
+                    _("Information is not available"));
   printf("<p>%s</p>\n",
          _("Information by your request is not available."));
-  client_put_footer();
+  client_put_footer(stdout, footer_txt);
   exit(0);
 }
 
@@ -722,40 +677,42 @@ main(int argc, char const *argv[])
 
   read_locale_id();
   read_user_id();
-  set_locale_by_id(client_locale_id);
+  l10n_prepare(config->l10n, config->l10n_dir);
+  l10n_setlocale(client_locale_id);
 
   if ((errcode = contests_set_directory(config->contests_dir)) < 0) {
     fprintf(stderr, "cannot set contest directory '%s': %s\n",
             config->contests_dir, contests_strerror(-errcode));
-    client_put_header(config->charset, "Invalid configuration");
+    client_put_header(stdout, header_txt, 0, config->charset, 1,
+                      _("Invalid configuration"));
     printf("<h2>%s</h2>\n<p>%s</p>\n",
            _("Configuration error"),
            _("This program is configured incorrectly and cannot perform normal operation. Please contact the site (or contest) administrator."));
-    client_put_footer();
+    client_put_footer(stdout, footer_txt);
     return 0;
   }
 
   if (user_contest_id <= 0) {
     // refuse to run
-    information_not_available();
+    information_not_available(header_txt, footer_txt);
   }
 
   cnts = 0;
   if ((errcode = contests_get(user_contest_id, &cnts)) < 0) {
     fprintf(stderr, "cannot load contest %d: %s\n",
             user_contest_id, contests_strerror(-errcode));
-    information_not_available();
+    information_not_available(header_txt, footer_txt);
   }
   ASSERT(cnts);
 
   logger_set_level(-1, LOG_WARNING);
-  if (cnts->header_file) {
+  if (cnts->users_header_file) {
     generic_read_file(&header_txt, 0, &header_len, 0,
-                      0, cnts->header_file, "");
+                      0, cnts->users_header_file, "");
   }
-  if (cnts->footer_file) {
+  if (cnts->users_footer_file) {
     generic_read_file(&footer_txt, 0, &footer_len, 0,
-                      0, cnts->footer_file, "");
+                      0, cnts->users_footer_file, "");
   }
 
   name_len = html_armored_strlen(cnts->name);
@@ -763,41 +720,20 @@ main(int argc, char const *argv[])
   html_armor_string(cnts->name, name_str);
 
   if (!contests_check_users_ip(user_contest_id, user_ip)) {
-    if (header_txt) {
-      put_http_header(config->charset);
-      printf("%s", header_txt);
-    } else {
-      put_header(config->charset, _("Permission denied"));
-    }
-
+    client_put_header(stdout, header_txt, 0, config->charset, 1,
+                      _("Permission denied"));
     printf("<h2>%s</h2>\n",_("You have no permissions to view this contest."));
-    if (footer_txt) {
-      printf("<hr><font size=\"-1\">");
-      client_put_copyright();
-      printf("</font>");
-      printf("%s", footer_txt);
-    } else {
-      client_put_footer();
-    }
+    client_put_footer(stdout, footer_txt);
+    return 0;
   }
 
-  if (header_txt) {
-    put_http_header(config->charset);
-    printf("%s", header_txt);
-    if (user_id > 0) {
-      //printf("<h2>%s</h2>\n", _("Detailed user (team) information"));
-    } else {
-      printf("<h2>%s</h2>\n", name_str);
-      printf("<h2>%s</h2>\n", _("List of registered users (teams)"));
-    }
+  if (user_id > 0) {
+    client_put_header(stdout, header_txt, 0, config->charset, 1,
+                      _("Detailed information about participant"));
   } else {
-    put_header(config->charset, "%s", _("List of registered users (teams)"));
-    if (user_id > 0) {
-      printf("<h1>%s</h1>\n", _("Detailed user (team) information"));
-    } else {
-      printf("<h1>%s &quot;%s&quot;</h1>\n",
-             _("List of registered users (teams) for contest"), name_str);
-    }
+    client_put_header(stdout, header_txt, 0, config->charset, 1,
+                      _("List of registered participants"));
+    printf("<h2>%s: %s</h2>\n", _("Contest"), name_str);
   }
 
   server_conn = userlist_clnt_open(config->socket_path);
@@ -826,14 +762,8 @@ main(int argc, char const *argv[])
            end_time.tv_usec / 1000 + end_time.tv_sec * 1000,
            _("msec"));
   }
-  if (footer_txt) {
-    printf("<hr><font size=\"-1\">");
-    client_put_copyright();
-    printf("</font>");
-    printf("%s", footer_txt);
-  } else {
-    client_put_footer();
-  }
+
+  client_put_footer(stdout, footer_txt);
 
   if (server_conn) {
     userlist_clnt_close(server_conn);
