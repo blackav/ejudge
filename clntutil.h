@@ -32,6 +32,7 @@ extern int           server_clients_suspended;
 extern int           server_download_interval;
 extern int           server_is_virtual;
 extern int           server_olympiad_judging_mode;
+extern int           server_continuation_enabled;
 
 extern unsigned long client_cur_time;
 
