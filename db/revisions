@@ -1164,3 +1164,15 @@ prepare.c 1 67 7903618
 protocol.c 1 10 223524
 serve_clnt/master_page.c 1 6 387180
 serve_clnt/reset_filter.c 1 1 170525
+client_actions.h 1 19 191959
+prepare.h 1 49 1485304
+protocol.h 1 26 700166
+serve_clnt.h 1 16 432313
+master.c 1 53 6866447
+serve.c 1 66 10015560
+userlist-server.c 1 42 13275294
+unix/fileutl.c 1 17 2576428
+master_html.c 1 24 5785224
+prepare.c 1 68 7922450
+protocol.c 1 11 228027
+serve_clnt/rejudge_by_mask.c 1 1 175861
