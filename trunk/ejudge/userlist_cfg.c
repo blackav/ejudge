@@ -111,7 +111,7 @@ userlist_cfg_parse(char const *path)
   }
 
   userlist_cfg_unparse(cfg, stdout);
-  exit(1);
+  return cfg;
 
  failed:
   if (tree) userlist_cfg_free((struct userlist_cfg *) tree);
