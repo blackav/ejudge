@@ -24,7 +24,8 @@ userlist_clnt_get_uid_by_pid(struct userlist_clnt *clnt,
                              int system_pid,
                              int *p_uid,
                              int *p_priv_level,
-                             unsigned long long *p_cookie)
+                             unsigned long long *p_cookie,
+                             unsigned long *p_ip)
 {
   struct userlist_pk_get_uid_by_pid *out = 0;
   struct userlist_pk_uid *in = 0;
@@ -57,6 +58,7 @@ userlist_clnt_get_uid_by_pid(struct userlist_clnt *clnt,
   if (p_uid) *p_uid = in->uid;
   if (p_cookie) *p_cookie = in->cookie;
   if (p_priv_level) *p_priv_level = in->priv_level;
+  if (p_ip) *p_ip = in->ip;
   xfree(in);
   return ULS_UID;
 }
