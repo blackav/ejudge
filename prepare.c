@@ -212,6 +212,7 @@ static struct config_parse_info section_language_params[] =
 {
   LANGUAGE_PARAM(id, "d"),
   LANGUAGE_PARAM(compile_id, "d"),
+  LANGUAGE_PARAM(disabled, "d"),
   LANGUAGE_PARAM(short_name, "s"),
   LANGUAGE_PARAM(long_name, "s"),
   LANGUAGE_PARAM(key, "s"),
