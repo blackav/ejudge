@@ -47,6 +47,9 @@ REUSE_CONFINCLDIR=${REUSE_INCLDIR}/${REUSE_CONF}
 REUSE_LIBDIR=/home/cher/c-sema/lib/${REUSE_CONF}
 REUSE_LIB=-lreuse
 
+INST_BIN_PATH=/home/cher/ejudge-working
+INST_LOCALE_PATH=/home/cher/ejudge-working/locale
+
 # === End of configuration options ===
 
 include files.make
@@ -119,6 +122,12 @@ US_OBJECTS = ${US_CFILES:.c=.o}
 TARGETS=compile$(EXESFX) serve$(EXESFX) submit$(EXESFX) run$(EXESFX) master$(EXESFX) clar$(EXESFX) mkpasswd$(EXESFX) team$(EXESFX) register${EXESFX} make-teamdb${EXESFX} make-teamdb-inet${EXESFX} send-passwords${EXESFX} userlist-server${EXESFX} users${EXESFX}
 
 all: $(TARGETS)
+
+install: ${TARGETS} po mo
+	install -d ${INST_BIN_PATH}
+	for i in ${TARGETS}; do install -s -m 0755 $$i ${INST_BIN_PATH}; done
+	install -d ${INST_LOCALE_PATH}/ru_RU.KOI8-R/LC_MESSAGES
+	install -m 0644 locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo ${INST_LOCALE_PATH}/ru_RU.KOI8-R/LC_MESSAGES
 
 compile$(EXESFX) : $(C_OBJECTS)
 	$(LD) $(LDFLAGS) $(C_OBJECTS) -o $@ $(LDLIBS)
