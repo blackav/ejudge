@@ -137,11 +137,14 @@ struct section_global_data
   path_t status_dir;            /* server status directory */
   path_t work_dir;              /* subdir for working dirs */
   path_t print_work_dir;        /* subdir for printing */
+  path_t diff_work_dir;         /* subdir for comparing */
 
   path_t a2ps_path;
   char **a2ps_args;
   path_t lpr_path;
   char **lpr_args;
+
+  path_t diff_path;
 
   /* --- server <-> compile interaction --- */
   /* global parameters are used by compile utility, whereas 
@@ -203,6 +206,7 @@ struct section_global_data
   puc_t stand_r_row_attr[32];   /* standings real team row attributes */
   puc_t stand_v_row_attr[32];   /* standings virtual team row attributes */
   puc_t stand_u_row_attr[32];   /* standings unknown team row attributes */
+  puc_t stand_success_attr[32]; /* last success attributes */
 
   unsigned char *stand_header_txt; /* actual header text */
   unsigned char *stand_footer_txt; /* actual footer text */
@@ -318,6 +322,7 @@ struct section_language_data
   int    compile_id;            /* language id for compilation */
   int    disabled;              /* a participant cannot use this language */
   int    compile_real_time_limit;
+  int    binary;                /* whether binary files are accepted */
   puc_t short_name[32];         /* language short name */
   puc_t long_name[128];         /* language long name */
   puc_t key[32];                /* configuration key */
