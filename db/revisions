@@ -962,3 +962,14 @@ runlog.h 1 18 388395
 serve.c 1 51 7694835
 runlog.c 1 22 3631497
 master_html.c 1 14 4420067
+client_actions.h 1 13 153750
+prepare.h 1 37 1300477
+protocol.h 1 16 529545
+runlog.h 1 19 389917
+master.c 1 42 5652981
+serve.c 1 52 7734614
+html.c 1 40 4364288
+prepare.c 1 54 7028129
+runlog.c 1 23 3634375
+runlog_xml.c 1 2 1444971
+serve_clnt/view.c 1 7 315737
