@@ -40,7 +40,7 @@
  */
 
 unsigned _stklen = 1024;
-unsigned _heaplen = 4096;
+unsigned _heaplen = 8096;
 
 unsigned char errorcode_file[64] = ".\\retcode.txt";
 unsigned char errorcode_str[64];
@@ -94,10 +94,10 @@ int main(int argc, char *argv[])
   char *args[10];
   int fd, n;
 
-  fclose(stdin);
-  fclose(stdaux);
-  fclose(stdprn);
   setbuf(stdout, 0);
+  setbuf(stderr, 0);
+  setbuf(stdaux, 0);
+  setbuf(stdprn, 0);
   if (argc == 1) {
     fprintf(stderr, "invalid command line arguments\n");
     do_exit(-1);
@@ -140,6 +140,7 @@ int main(int argc, char *argv[])
     dup2(fd, 0);
     _close(fd);
   }
+
   if (stdout_str[0]) {
     fclose(stdout);
     fd = _open(stdout_str, O_WRONLY | O_TRUNC | O_CREAT);
@@ -149,9 +150,8 @@ int main(int argc, char *argv[])
     }
     dup2(fd, 1);
     _close(fd);
-  } else {
-    fclose(stdout);
   }
+
   if (stderr_str[0]) {
     fclose(stderr);
     fd = _open(stderr_str, O_WRONLY | O_TRUNC | O_CREAT);
@@ -159,8 +159,11 @@ int main(int argc, char *argv[])
       fprintf(stderr, "cannot redirect stderr\n");
       do_exit(-1);
     }
+    dup2(fd, 2);
+    _close(fd);
   }
 
+  fflush(0);
   n = spawnvp(P_WAIT, args[0], args);
   if (n < 0) do_exit(-1);
   do_exit(n);
