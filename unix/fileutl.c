@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
  */
 
 #include "fileutl.h"
@@ -73,7 +69,7 @@ make_dir(char const *path, int access)
 {
   if (mkdir(path, 0755) < 0) {
     if (errno == EEXIST) {
-      info("make_dir: %s exists", path);
+      //info("make_dir: %s exists", path);
     } else {
       err("make_dir: mkdir(\"%s\") failed: %s", path, os_ErrorMsg());
       return -1;
