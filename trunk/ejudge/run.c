@@ -703,6 +703,35 @@ run_tests(struct section_tester_data *tst,
       }
     }
 
+    if (retcode == RUN_PARTIAL && prb->ts_total > 0) {
+      int ts;
+
+      /* FIXME: check testsets */
+      for (ts = 0; ts < prb->ts_total; ts++) {
+        struct testset_info *ti = &prb->ts_infos[ts];
+
+        if (ti->total > prb->ntests) continue;
+        // check, that any RUN_OK test is in set
+        for (jj = 1; jj <= prb->ntests; jj++) {
+          if (tests[jj].status != RUN_OK) continue;
+          if (jj > ti->total) break;
+          if (!ti->nums[jj - 1]) break;
+        }
+        // no
+        if (jj <= prb->ntests) continue;
+        // check, that any test in set is RUN_OK
+        for (jj = 0; jj < ti->total; jj++) {
+          if (!ti->nums[jj]) continue;
+          if (jj >= prb->ntests) break;
+          if (tests[jj + 1].status != RUN_OK) break;
+        }
+        // no
+        if (jj < ti->total) continue;
+        // set the score
+        score = ti->score;
+      }
+    }
+
     if (!total_failed_tests) score = prb->full_score;
 
     /* ATTENTION: number of passed test returned is greater than actual by 1 */
