@@ -48,6 +48,11 @@ struct section_global_data
   int    board_unfog_time;      /* time after the end of the contest
                                  * when the board is again updated */
 
+  int    team_enable_src_view;  /* teams are allowed to view sources? */
+  int    team_enable_rep_view;  /* teams are allowed to view reports? */
+
+  path_t charset;               /* html pages charset */
+
   path_t name;                  /* name of the contest */
   path_t root_dir;
 
@@ -75,6 +80,7 @@ struct section_global_data
   path_t clar_archive_dir;      /* clar archive directory */
   path_t run_archive_dir;       /* run archive directory */
   path_t report_archive_dir;    /* report archive directory */
+  path_t team_report_archive_dir; /* team report archive directory */
 
   /* --- server status reporting --- */
   path_t status_dir;            /* server status directory */
@@ -100,6 +106,7 @@ struct section_global_data
   path_t run_exe_dir;           /* common prefix dir for serve->run */
   path_t run_status_dir;        /* run->serve status dir */
   path_t run_report_dir;        /* run->serve report dir */
+  path_t run_team_report_dir;   /* run->serve team report dir */
 
   /* scoring settings */
   path_t score_system;          /* scoring system */
@@ -114,6 +121,10 @@ struct section_problem_data
   int    use_stdin;             /* 1, if solution uses stdin for input */
   int    use_stdout;            /* 1, if solution uses stdout for output */
   int    time_limit;            /* time limit in secs */
+  int    team_enable_rep_view;  /* are teams allowed to view reports? */
+  int    full_score;            /* score for complete solution */
+  int    test_score;            /* score for one test */
+  int    run_penalty;           /* penalty for one run */
   path_t short_name;            /* short problem name, eg A, B, ... */
   path_t long_name;             /* long problem name */
   path_t test_dir;              /* directory with tests */
@@ -169,6 +180,7 @@ struct section_tester_data
   path_t server_exe_dir;
   path_t run_status_dir;
   path_t run_report_dir;
+  path_t run_team_report_dir;
   path_t exe_dir;               /* incoming executable subdirectory */
 
   path_t tester_dir;            /* tester private subdirectory */
