@@ -233,7 +233,6 @@ struct prot_serve_pkt_team_page
 enum
 {
   PRIV_LEVEL_USER = 0,
-  PRIV_LEVEL_OBSERVER,
   PRIV_LEVEL_JUDGE,
   PRIV_LEVEL_ADMIN
 };
