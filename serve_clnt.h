@@ -4,7 +4,7 @@
 #ifndef __SERVE_CLNT_H__
 #define __SERVE_CLNT_H__
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -146,6 +146,7 @@ int serve_clnt_edit_run(int sock_fd,
                         int tests,
                         int score,
                         int is_readonly,
+                        int pages,
                         unsigned char const *user_login);
 
 int serve_clnt_import_xml_runs(int sock_fd,
