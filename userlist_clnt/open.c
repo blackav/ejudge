@@ -21,6 +21,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/uio.h>
+#include <signal.h>
 
 struct userlist_clnt*
 userlist_clnt_open(char const *socketpath)
@@ -37,6 +38,7 @@ userlist_clnt_open(char const *socketpath)
   struct cmsghdr *pmsg;
   struct iovec send_vec[1];
 
+  signal(SIGPIPE, SIG_IGN);
 
   ASSERT(socketpath);
   max_path_buf = sizeof(struct sockaddr_un) - 
