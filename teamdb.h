@@ -35,6 +35,7 @@ char *teamdb_get_name(int);
 int   teamdb_get_max_team_id(void);
 int   teamdb_get_flags(int);
 int   teamdb_get_total_teams(void);
+int   teamdb_get_vintage(void);
 
 int teamdb_dump_database(int fd);
 
