@@ -55,6 +55,7 @@ CFILES=\
  userlist.c\
  userlist-server.c\
  userlist_cfg.c\
+ userlist_clnt.c\
  userlist_xml.c\
  utf8_utils.c\
  unix/fileutl.c\
@@ -81,6 +82,7 @@ HFILES=\
  teamdb.h\
  userlist.h\
  userlist_cfg.h\
+ userlist_clnt.h\
  utf8_utils.h\
  version.h\
  unix/unix_fileutl.h
