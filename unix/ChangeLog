@@ -1,3 +1,20 @@
+2002-01-08  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c: copyright notice is updated;
+	(os_readint) moved to `reuse/number_io';
+	(os_readdouble) moved to `reuse/number_io';
+	(reuse_strtoll) moved to `reuse/number_io';
+	(reuse_strtoull) moved to `reuse/number_io';
+	(os_readll) moved to `reuse/number_io';
+	(os_readull) moved to `reuse/number_io';
+	(os_writell) moved to `reuse/number_io';
+	(os_writeull) moved to `reuse/number_io';
+	(os_snprintf) moved to `reuse/number_io';
+	(os_vsnprintf) moved to `reuse/number_io'.
+
+	* exec.c, logger.c: copyright notice is updated;
+	new "number_io.h" file is included.
+
 2001-12-26  Alexander Chernov  <cher@ispras.ru>
 
 	* osdeps.c:
