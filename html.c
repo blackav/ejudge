@@ -67,7 +67,8 @@ sf_fopen(char const *path, char const *flags)
 }
 
 void
-new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
+new_write_user_runs(FILE *f, int uid, int printing_suspended,
+                    unsigned int show_flags,
                     int sid_mode, unsigned long long sid,
                     unsigned char const *self_url,
                     unsigned char const *hidden_vars,
@@ -111,7 +112,7 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
     fprintf(f, "<th>%s</th>", _("View source"));
   if (global->team_enable_rep_view || global->team_enable_ce_view)
     fprintf(f, "<th>%s</th>", _("View report"));
-  if (global->enable_printing)
+  if (global->enable_printing && !printing_suspended)
     fprintf(f, "<th>%s</th>", _("Print sources"));
 
   fprintf(f, "</tr>\n");
@@ -227,7 +228,7 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
       fprintf(f, "</td>");
     }
 
-    if (global->enable_printing) {
+    if (global->enable_printing && !printing_suspended) {
       fprintf(f, "<td>");
       if (re.pages > 0 || sid_mode != SID_URL) {
         fprintf(f, "N/A");
@@ -958,6 +959,9 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   struct teamdb_export ttt;      
   struct run_entry *runs, *pe;
   unsigned char *t_runs;
+  int last_success_run = -1;
+  time_t last_success_time = 0;
+  time_t last_success_start = 0;
 
   if (client_flag) head_style = cur_contest->team_head_style;
   else head_style = "h2";
@@ -1086,16 +1090,21 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       /* program accepted */
       if (calc[tt][pp] > 0) continue;
 
+      last_success_run = k;
       t_pen[tt] += 20 * -calc[tt][pp];
       calc[tt][pp] = 1 - calc[tt][pp];
       t_prob[tt]++;
       if (global->virtual) {
         ok_time[tt][pp] = (tdur + 59) / 60;
         t_pen[tt] += ok_time[tt][pp];
+        last_success_time = run_time;
+        last_success_start = tstart;
       } else {
         if (run_time < start_time) run_time = start_time;
         ok_time[tt][pp] = (run_time - start_time + 59) / 60;
         t_pen[tt] += ok_time[tt][pp];
+        last_success_time = run_time;
+        last_success_start = start_time;
       }
     } else if (pe->status==RUN_COMPILE_ERR && !global->ignore_compile_errors) {
       if (calc[tt][pp] <= 0) calc[tt][pp]--;
@@ -1163,6 +1172,42 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       fprintf(f, "\n");
     }
   } else {
+    /* print "last success" string */
+    if (last_success_run >= 0) {
+      unsigned char dur_buf[128];
+
+      if (global->virtual && !user_id) {
+        duration_str(1, last_success_time, last_success_start,
+                     dur_buf, sizeof(dur_buf));
+      } else {
+        duration_str(0, last_success_time, last_success_start,
+                     dur_buf, sizeof(dur_buf));
+      }
+      fprintf(f, "<p%s>%s: %s, ",
+              global->stand_success_attr, _("Last success"), dur_buf);
+      if (global->team_info_url[0]) {
+        teamdb_export_team(runs[last_success_run].team, &ttt);
+        sformat_message(dur_buf, sizeof(dur_buf), global->team_info_url,
+                        NULL, NULL, NULL, NULL, &ttt);
+        fprintf(f, "<a href=\"%s\">", dur_buf);      
+      }
+      fprintf(f, "%s", teamdb_get_name(runs[last_success_run].team));
+      if (global->team_info_url[0]) {
+        fprintf(f, "</a>");
+      }
+      fprintf(f, ", ");
+      if (global->prob_info_url[0]) {
+        sformat_message(dur_buf, sizeof(dur_buf), global->prob_info_url,
+                        NULL, probs[runs[last_success_run].problem],
+                        NULL, NULL, NULL);
+        fprintf(f, "<a href=\"%s\">", dur_buf);
+      }
+      fprintf(f, "%s", probs[runs[last_success_run].problem]->short_name);
+      if (global->prob_info_url[0]) {
+        fprintf(f, "</a>");
+      }
+      fprintf(f, ".</p>\n");
+    }
     /* print table header */
     fprintf(f, "<table border=\"1\"%s><tr><th%s>%s</th><th%s>%s</th>",
             global->stand_table_attr,
@@ -1617,6 +1662,7 @@ time_to_str(unsigned char *buf, time_t time)
 
 void
 write_team_page(FILE *f, int user_id,
+                int printing_suspended,
                 int sid_mode, unsigned long long sid,
                 int all_runs, int all_clars,
                 unsigned char const *self_url,
@@ -1773,7 +1819,7 @@ write_team_page(FILE *f, int user_id,
             _("Sent submissions"),
             all_runs?_("all"):_("last 15"),
             cur_contest->team_head_style);
-    new_write_user_runs(f, user_id, all_runs,
+    new_write_user_runs(f, user_id, printing_suspended, all_runs,
                         sid_mode, sid, self_url, hidden_vars, extra_args);
 
     if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
