@@ -128,6 +128,15 @@ enum
     USERLIST_LAST_ATTN,
   };
 
+#if !defined __USERLIST_UC_ENUM_DEFINED__
+#define __USERLIST_UC_ENUM_DEFINED__
+enum
+  {
+    USERLIST_UC_INVISIBLE = 0x00000001,
+    USERLIST_UC_BANNED    = 0x00000002,
+  };
+#endif /* __USERLIST_UC_ENUM_DEFINED__ */
+
 struct userlist_member
 {
   struct xml_tree b;
@@ -177,6 +186,7 @@ struct userlist_contest
 
   int id;
   int status;
+  unsigned int flags;
 };
 
 struct userlist_passwd
