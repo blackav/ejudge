@@ -44,6 +44,9 @@
 /* maximal number of simultaneously supported testers */
 #define MAX_TESTER  100
 
+/* the internal charset if no default charset is specified */
+#define EJUDGE_INTERNAL_CHARSET "UTF-8"
+
 #endif /* __SETTINGS_H__ */
 
 /**
