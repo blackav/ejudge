@@ -68,6 +68,9 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(team_enable_src_view, "d"),
   GLOBAL_PARAM(team_enable_rep_view, "d"),
 
+  GLOBAL_PARAM(max_file_length, "d"),
+  GLOBAL_PARAM(max_line_length, "d"),
+
   GLOBAL_PARAM(charset, "s"),
 
   GLOBAL_PARAM(name, "s"),
@@ -282,6 +285,8 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_RUN_REPORT_DIR     "report"
 #define DFLT_G_RUN_TEAM_REPORT_DIR "teamreport"
 #define DFLT_G_CHARSET            "iso8859-1"
+#define DFLT_G_MAX_FILE_LENGTH    65535
+#define DFLT_G_MAX_LINE_LENGTH    4096
 
 #define DFLT_P_INPUT_FILE         "input"
 #define DFLT_P_OUTPUT_FILE        "output"
@@ -469,6 +474,18 @@ set_defaults(int mode)
   if (!global->charset[0]) {
     pathcpy(global->charset, DFLT_G_CHARSET);
     info(_("global.charset set to %s"), global->charset);
+  }
+
+  /* only run needs these parameters */
+  if (mode == PREPARE_RUN) {
+    if (!global->max_file_length) {
+      global->max_file_length = DFLT_G_MAX_FILE_LENGTH;
+      info(_("global.max_file_length set to %d"), global->max_file_length);
+    }
+    if (!global->max_line_length) {
+      global->max_line_length = DFLT_G_MAX_LINE_LENGTH;
+      info(_("global.max_line_length set to %d"), global->max_line_length);
+    }
   }
 
   for (i = 1; i <= max_lang && mode != PREPARE_RUN; i++) {
