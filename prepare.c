@@ -142,6 +142,8 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(corr_sfx, "s"),
   PROBLEM_PARAM(input_file, "s"),
   PROBLEM_PARAM(output_file, "s"),
+  PROBLEM_PARAM(test_score_list, "s"),
+
   { 0, 0, 0, 0 }
 };
 
@@ -626,8 +628,10 @@ set_defaults(int mode)
         }
         pathmake4(testers[i]->check_cmd, global->checker_dir, "/",
                   testers[i]->check_cmd, 0);
-        pathmake4(testers[i]->start_cmd, global->script_dir, "/",
-                  testers[i]->start_cmd, 0);
+        if (testers[i]->start_cmd[0]) {
+          pathmake4(testers[i]->start_cmd, global->script_dir, "/",
+                    testers[i]->start_cmd, 0);
+        }
       }
     }
   }
