@@ -187,7 +187,8 @@ write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
           _("Run ID"), _("Time"), _("Size"), _("Problem"),
           _("Language"), _("Result"));
 
-  if (global->score_system_val == SCORE_KIROV) {
+  if (global->score_system_val == SCORE_KIROV
+      || global->score_system_val == SCORE_OLYMPIAD) {
     fprintf(f, "<th>%s</th>", _("Tests passed"));
     fprintf(f, "<th>%s</th>", _("Score"));
   } else {
@@ -229,16 +230,22 @@ write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
     fprintf(f, "<td>%s</td>", stat_str);
     if (test <= 0) {
       fprintf(f, "<td>%s</td>", _("N/A"));
-      if (global->score_system_val == SCORE_KIROV)
+      if (global->score_system_val == SCORE_KIROV
+          || global->score_system_val == SCORE_OLYMPIAD)
         fprintf(f, "<td>%s</td>", _("N/A"));
-    } else if (global->score_system_val == SCORE_KIROV) {
+    } else if (global->score_system_val == SCORE_KIROV
+               || global->score_system_val == SCORE_OLYMPIAD) {
       fprintf(f, "<td>%d</td>", test - 1);
       if (score == -1) {
         fprintf(f, "<td>%s</td>", _("N/A"));
       } else {
-        score1 = score - attempts * probs[prob_id]->run_penalty;
-        if (score1 < 0) score1 = 0;
-        fprintf(f, "<td>%d(%d)=%d</td>", score, attempts, score1);
+        if (global->score_system_val == SCORE_OLYMPIAD) {
+          fprintf(f, "<td>%d</td>", score);
+        } else {
+          score1 = score - attempts * probs[prob_id]->run_penalty;
+          if (score1 < 0) score1 = 0;
+          fprintf(f, "<td>%d(%d)=%d</td>", score, attempts, score1);
+        }
       }
     } else {
       fprintf(f, "<td>%d</td>", test);
@@ -533,21 +540,42 @@ do_write_kirov_standings(FILE *f, int client_flag)
     p = probs[prob_id];
     if (!p || tind < 0 || pind < 0) continue;
 
-    if (run_score == -1) run_score = 0;
-    if (status == RUN_OK) {
-      score = p->full_score - p->run_penalty * att_num[tind][pind];
-      if (score < 0) score = 0;
-      if (score > prob_score[tind][pind]) prob_score[tind][pind] = score;
-      att_num[tind][pind]++;
-    } else if (status == RUN_PARTIAL) {
-      score = run_score - p->run_penalty*att_num[tind][pind];
-      if (score < 0) score = 0;
-      if (score > prob_score[tind][pind]) prob_score[tind][pind] = score;
-      att_num[tind][pind]++;
-    } else if (status == RUN_COMPILE_ERR) {
-      att_num[tind][pind]++;
+    if (global->score_system_val == SCORE_OLYMPIAD) {
+      if (run_score == -1) run_score = 0;
+      switch (status) {
+      case RUN_OK:
+      case RUN_PARTIAL:
+        prob_score[tind][pind] = run_score;
+        att_num[tind][pind]++;
+        break;
+      case RUN_ACCEPTED:
+      case RUN_COMPILE_ERR:
+      case RUN_TIME_LIMIT_ERR:
+      case RUN_RUN_TIME_ERR:
+      case RUN_WRONG_ANSWER_ERR:
+      case RUN_PRESENTATION_ERR:
+        att_num[tind][pind]++;
+        break;
+      default:
+        break;
+      }
     } else {
-      /* something like "compiling..." or "running..." */
+      if (run_score == -1) run_score = 0;
+      if (status == RUN_OK) {
+        score = p->full_score - p->run_penalty * att_num[tind][pind];
+        if (score < 0) score = 0;
+        if (score > prob_score[tind][pind]) prob_score[tind][pind] = score;
+        att_num[tind][pind]++;
+      } else if (status == RUN_PARTIAL) {
+        score = run_score - p->run_penalty*att_num[tind][pind];
+        if (score < 0) score = 0;
+        if (score > prob_score[tind][pind]) prob_score[tind][pind] = score;
+        att_num[tind][pind]++;
+      } else if (status == RUN_COMPILE_ERR) {
+        att_num[tind][pind]++;
+      } else {
+        /* something like "compiling..." or "running..." */
+      }
     }
   }
 
@@ -920,7 +948,8 @@ write_standings(char const *stat_dir, char const *name)
   sprintf(tbuf, "XXX_%lu%d", time(0), getpid());
   pathmake(tpath, stat_dir, "/", tbuf, 0);
   if (!(f = sf_fopen(tpath, "w"))) return;
-  if (global->score_system_val == SCORE_KIROV)
+  if (global->score_system_val == SCORE_KIROV
+      || global->score_system_val == SCORE_OLYMPIAD)
     do_write_kirov_standings(f, 0);
   else
     do_write_standings(f, 0);
@@ -943,11 +972,25 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
 
   char ip[RUN_MAX_IP_LEN + 4];
   char durstr[64], statstr[64];
+  char *str1 = 0, *str2 = 0;
 
   start = run_get_start_time();
   total = run_get_total();
   show_num = 10;
   if (show_all) show_num = total;
+
+  switch (global->score_system_val) {
+  case SCORE_ACM:
+    str1 = _("Failed test");
+    break;
+  case SCORE_KIROV:
+  case SCORE_OLYMPIAD:
+    str1 = _("Tests passed");
+    str2 = _("Score");
+    break;
+  default:
+    abort();
+  }
 
   /* header */
   fprintf(f, "<p><big>%s: %d</big></p>\n",
@@ -959,18 +1002,18 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
           "<th>%s</th><th>%s</th>", 
           _("Run ID"), _("Time"), _("Size"), _("IP"),
           _("Team login"), _("Team name"), _("Problem"),
-          _("Language"), _("Result"),
-          (global->score_system_val == SCORE_KIROV)
-          ?_("Tests passed"):_("Failed test"));
-  if (global->score_system_val == SCORE_KIROV) {
-    fprintf(f, "<th>%s</th>", _("Score"));
+          _("Language"), _("Result"), str1);
+  if (str2) {
+    fprintf(f, "<th>%s</th>", str2);
   }
   if (master_mode) {
     fprintf(f, "<th>%s</th><th>%s</th>",
             _("New result"),
-            (global->score_system_val == SCORE_KIROV)
+            (global->score_system_val == SCORE_KIROV
+             || global->score_system_val == SCORE_OLYMPIAD)
             ?_("New passed"):_("New test"));
-    if (global->score_system_val == SCORE_KIROV) {
+    if (global->score_system_val == SCORE_KIROV
+        || global->score_system_val == SCORE_OLYMPIAD) {
       fprintf(f, "<th>%s</th>", _("New score"));
     }
     fprintf(f, "<th>%s</th>", _("Change result"));
@@ -1004,17 +1047,23 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
     fprintf(f, "<td>%s</td>", statstr);
     if (test <= 0) {
       fprintf(f, "<td>%s</td>\n", _("N/A"));
-      if (global->score_system_val == SCORE_KIROV) {
+      if (global->score_system_val == SCORE_KIROV
+          || global->score_system_val == SCORE_OLYMPIAD) {
         fprintf(f, "<td>%s</td>\n", _("N/A"));
       }
-    } else if (global->score_system_val == SCORE_KIROV) {
+    } else if (global->score_system_val == SCORE_KIROV ||
+               global->score_system_val == SCORE_OLYMPIAD) {
       fprintf(f, "<td>%d</td>\n", test - 1);
       if (score == -1) {
         fprintf(f, "<td>%s</td>", _("N/A"));
       } else {
-        score1 = score - attempts * probs[probid]->run_penalty;
-        if (score1 < 0) score1 = 0;
-        fprintf(f, "<td>%d(%d)=%d</td>", score, attempts, score1);
+        if (global->score_system_val == SCORE_OLYMPIAD) {
+          fprintf(f, "<td>%d</td>", score);
+        } else {
+          score1 = score - attempts * probs[probid]->run_penalty;
+          if (score1 < 0) score1 = 0;
+          fprintf(f, "<td>%d(%d)=%d</td>", score, attempts, score1);
+        }
       }
     } else {
       fprintf(f, "<td>%d</td>\n", test);
@@ -1035,6 +1084,27 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
                 _("Rejudge"), _("Judgements"),
                 _("OK"), _("Compilation error"),
                 _("Partial solution"));
+      } else if (global->score_system_val == SCORE_OLYMPIAD) {
+        fprintf(f,
+                "<td><select name=\"stat_%d\">"
+                "<option value=\"\"> "
+                "<option value=\"99\">%s"
+                "<optgroup label=\"%s:\">"
+                "<option value=\"0\">%s</option>"
+                "<option value=\"1\">%s</option>"
+                "<option value=\"2\">%s</option>"
+                "<option value=\"3\">%s</option>"
+                "<option value=\"4\">%s</option>"
+                "<option value=\"5\">%s</option>"
+                "<option value=\"7\">%s</option>"
+                "<option value=\"8\">%s</option>"
+                "</optgroup>"
+                "</select></td>\n", i,
+                _("Rejudge"), _("Judgements"),
+                _("OK"), _("Compilation error"), _("Run-time error"),
+                _("Time-limit exceeded"), _("Presentation error"),
+                _("Wrong answer"), _("Partial solution"),
+                _("Accepted"));
       } else {
         fprintf(f,
                 "<td><select name=\"stat_%d\">"
@@ -1059,7 +1129,8 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
               "<td><input type=\"text\" name=\"failed_%d\" size=\"2\"></td>",
               i);
 
-      if (global->score_system_val == SCORE_KIROV) {
+      if (global->score_system_val == SCORE_KIROV
+          || global->score_system_val == SCORE_OLYMPIAD) {
         fprintf(f,
                 "<td><input type=\"text\" name=\"score_%d\" size=\"2\"></td>",
                 i);
@@ -1346,7 +1417,8 @@ write_judge_standings(char const *pk_name)
 
   pathmake(path, global->pipe_dir, "/", pk_name, 0);
   if (!(f = sf_fopen(path, "w"))) return;
-  if (global->score_system_val == SCORE_KIROV)
+  if (global->score_system_val == SCORE_KIROV
+      || global->score_system_val == SCORE_OLYMPIAD)
     do_write_kirov_standings(f, 1);
   else
     do_write_standings(f, 1);
