@@ -65,6 +65,17 @@ static int
 display_contests_menu(unsigned char *upper, int only_choose);
 
 static void
+print_help(char const *help)
+{
+  wattrset(stdscr, COLOR_PAIR(3));
+  wbkgdset(stdscr, COLOR_PAIR(3));
+  mvwaddstr(stdscr, LINES - 1, 0, help);
+  wclrtoeol(stdscr);
+  wattrset(stdscr, COLOR_PAIR(1));
+  wbkgdset(stdscr, COLOR_PAIR(1));
+}
+
+static void
 vis_err(unsigned char const *fmt, ...)
 {
   unsigned char buf[1024];
@@ -100,6 +111,7 @@ vis_err(unsigned char const *fmt, ...)
   out_pan = new_panel(out_win);
   in_pan = new_panel(in_win);
   update_panels();
+  print_help("Press any key to continue");
   doupdate();
   (void) getch();
   del_panel(in_pan);
@@ -167,6 +179,7 @@ okcancel(unsigned char const *fmt, ...)
   waddstr(txt_win, buf);
 
   post_menu(menu);
+  print_help("Enter-select Y-Ok N-Cancel Q-Cancel");
   update_panels();
   doupdate();
 
@@ -291,6 +304,7 @@ yesno(int init_val, unsigned char const *fmt, ...)
   waddstr(txt_win, buf);
 
   post_menu(menu);
+  print_help("Enter-select Y-Yes N-No Q-Quit");
   update_panels();
   doupdate();
 
@@ -405,6 +419,7 @@ display_reg_status_menu(int line, int init_val)
     show_panel(in_pan);
   */
   post_menu(menu);
+  print_help("Enter-select Q-quit");
   update_panels();
   doupdate();
 
@@ -509,6 +524,7 @@ display_role_menu(int line, int init_val)
     show_panel(in_pan);
   */
   post_menu(menu);
+  print_help("Enter-select Q-quit");
   update_panels();
   doupdate();
 
@@ -614,6 +630,7 @@ display_member_status_menu(int line, int init_val)
     show_panel(in_pan);
   */
   post_menu(menu);
+  print_help("Enter-select Q-quit");
   update_panels();
   doupdate();
 
@@ -720,6 +737,7 @@ edit_string(int line, int scr_wid,
   head_pan = new_panel(head_win);
   txt_pan = new_panel(txt_win);
   waddstr(head_win, head);
+  print_help("Enter-Ok ^G-Cancel");
   update_panels();
   doupdate();
   curlen = strlen(mybuf);
@@ -874,6 +892,8 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NN_FAC]               { "Faculty", 1, 1 },
   [USERLIST_NN_FACSHORT]          { "Fac. (short)", 1, 1 },
   [USERLIST_NN_HOMEPAGE]          { "Homepage", 1, 1 },
+  [USERLIST_NN_CITY]              { "City", 1, 1 },
+  [USERLIST_NN_COUNTRY]           { "Country", 1, 1 },
 };
 static const struct user_field_desc member_descs[] =
 {
@@ -991,6 +1011,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
   unsigned char edit_buf[512];
   unsigned char edit_header[512];
   int new_status;
+  char const *help_str = "";
 
   r = userlist_clnt_get_info(server_conn, user_id, &xml_text);
   if (r < 0) {
@@ -1123,6 +1144,83 @@ display_user(unsigned char const *upper, int user_id, int start_item,
     doupdate();
 
     while (1) {
+      help_str = "";
+      i = item_index(current_item(menu));
+      if (info[i].role == -1 && info[i].pers == 0) {
+        switch (info[i].field) {
+        case USERLIST_NN_ID:
+        case USERLIST_NN_TIMESTAMPS:
+        case USERLIST_NN_PASSWORDS:
+        case USERLIST_NN_GENERAL_INFO:
+          help_str = "C-contest A-new member Q-quit";
+          break;
+        case USERLIST_NN_LOGIN:
+        case USERLIST_NN_EMAIL:
+        case USERLIST_NN_REG_PASSWORD:
+          help_str = "Enter-edit C-contest A-new member Q-quit";
+          break;
+        case USERLIST_NN_NAME:
+        case USERLIST_NN_TEAM_PASSWORD:
+        case USERLIST_NN_INST:
+        case USERLIST_NN_INSTSHORT:
+        case USERLIST_NN_FAC:
+        case USERLIST_NN_FACSHORT:
+        case USERLIST_NN_HOMEPAGE:
+        case USERLIST_NN_CITY:
+        case USERLIST_NN_COUNTRY:
+          help_str = "Enter-edit D-clear C-contest A-new member Q-quit";
+          break;
+        case USERLIST_NN_IS_INVISIBLE:
+        case USERLIST_NN_IS_BANNED:
+        case USERLIST_NN_SHOW_LOGIN:
+        case USERLIST_NN_SHOW_EMAIL:
+        case USERLIST_NN_USE_COOKIES:
+        case USERLIST_NN_READ_ONLY:
+          help_str = "Enter-toggle D-reset C-contest A-new member Q-quit";
+          break;
+        case USERLIST_NN_REG_TIME:
+        case USERLIST_NN_LOGIN_TIME:
+        case USERLIST_NN_ACCESS_TIME:
+        case USERLIST_NN_CHANGE_TIME:
+        case USERLIST_NN_PWD_CHANGE_TIME:
+        case USERLIST_NN_MINOR_CHANGE_TIME:
+          help_str = "D-clear C-contest A-new member Q-quit";
+          break;
+        default:
+          help_str = "Q-quit";
+          break;
+        }
+      }
+      if (info[i].role == -1 && info[i].pers == 1) {
+        if (info[i].field == -1) {
+          help_str = "C-contest A-new member Q-quit";
+        } else {
+          help_str = "R-register B-(un)ban I-(in)visible C-contest A-new member Q-quit";
+        }
+      }
+      if (info[i].role == -1 && info[i].pers == 2) {
+        if (info[i].field == -1) {
+          help_str = "D-delete all C-contest A-new member Q-quit";
+        } else {
+          help_str = "D-delete C-contest A-new member Q-quit";
+        }
+      }
+      if (info[i].role >= 0 && info[i].pers == -1) {
+        help_str = "C-contest A-new member Q-quit";
+      }
+      if (info[i].role >= 0 && info[i].pers >= 0 && info[i].field == -1) {
+        help_str = "D-delete C-contest A-new member Q-quit";
+      }
+      if (info[i].role >= 0 && info[i].pers >= 0 && info[i].field == 0) {
+        help_str = "C-contest A-new member Q-quit";
+      }
+      if (info[i].role >= 0 && info[i].pers >= 0 && info[i].field > 0) {
+        help_str = "Enter-edit D-clear C-contest A-new member Q-quit";
+      }
+      print_help(help_str);
+      update_panels();
+      doupdate();
+
       c = getch();
       // in the following may be duplicates
       if (c == KEY_BACKSPACE || c == KEY_DC || c == 127 || c == 8) {
@@ -1616,12 +1714,7 @@ display_registered_users(unsigned char const *upper,
   while (1) {
     mvwprintw(stdscr, 0, 0, "%s", current_level);
     wclrtoeol(stdscr);
-    wattrset(stdscr, COLOR_PAIR(3));
-    wbkgdset(stdscr, COLOR_PAIR(3));
-    mvwprintw(stdscr, LINES - 1, 0, "R - change registration, D - delete, B - (un)ban, I - (in)visible, Q - quit");
-    wclrtoeol(stdscr);
-    wattrset(stdscr, COLOR_PAIR(1));
-    wbkgdset(stdscr, COLOR_PAIR(1));
+    print_help("A-add R-register D-delete B-(un)ban I-(in)visible Enter-edit Q-quit");
     show_panel(out_pan);
     show_panel(in_pan);
     post_menu(menu);
@@ -1883,6 +1976,7 @@ display_contests_menu(unsigned char *upper, int only_choose)
   while (1) {
     mvwprintw(stdscr, 0, 0, "%s", current_level);
     wclrtoeol(stdscr);
+    print_help("Enter-view Q-quit");
     show_panel(out_pan);
     show_panel(in_pan);
     post_menu(menu);
@@ -2070,6 +2164,7 @@ display_user_menu(unsigned char *upper, int start_item, int only_choose)
   while (1) {
     mvwprintw(stdscr, 0, 0, "%s", current_level);
     wclrtoeol(stdscr);
+    print_help("Enter-view A-add D-delete Q-quit");
     show_panel(out_pan);
     show_panel(in_pan);
     post_menu(menu);
@@ -2232,6 +2327,7 @@ display_main_menu(void)
   while (1) {
     mvwprintw(stdscr, 0, 0, "%s", current_level);
     wclrtoeol(stdscr);
+    print_help("Enter-view C-contests U-users Q-quit");
     show_panel(panel);
     show_panel(in_pan);
     post_menu(menu);
