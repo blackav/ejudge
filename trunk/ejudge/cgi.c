@@ -16,6 +16,7 @@
  */
 
 #include "cgi.h"
+#include "settings.h"
 #include "pathutl.h"
 
 #include <reuse/xalloc.h>
@@ -33,8 +34,8 @@
 #endif
 
 #define MAX_NAME_SIZE      63
-#define MAX_VALUE_SIZE     (1024 * 1024)
-#define MAX_CONTENT_LENGTH (1024 * 1024)
+#define MAX_VALUE_SIZE     MAX_CGI_VALUE_LEN
+#define MAX_CONTENT_LENGTH MAX_CGI_VALUE_LEN
 
 struct param
 {
