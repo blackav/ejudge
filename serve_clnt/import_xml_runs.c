@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,6 +36,7 @@ serve_clnt_import_xml_runs(int sock_fd, int out_fd,
   size_t out_size, xml_runs_len, in_size = 0;
   int r, pipe_fd[2], pass_fd[2];
   unsigned char c;
+  void *void_in = 0;
 
   if (sock_fd < 0) return -SRV_ERR_NOT_CONNECTED;
   if (!xml_runs) xml_runs = "";
@@ -64,10 +65,11 @@ serve_clnt_import_xml_runs(int sock_fd, int out_fd,
     close(pipe_fd[0]);
     return r;
   }
-  if ((r = serve_clnt_recv_packet(sock_fd, &in_size, (void**) &in)) < 0) {
+  if ((r = serve_clnt_recv_packet(sock_fd, &in_size, &void_in)) < 0) {
     close(pipe_fd[0]);
     return r;
   }
+  in = void_in;
   if (in->id < 0) {
     close(pipe_fd[0]);
     r = in->id;
