@@ -553,7 +553,7 @@ parse_client_ip(void)
   unsigned char *s = getenv("REMOTE_ADDR");
   unsigned long client_ip = 0;
 
-  if (!s) return;
+  if (!s) return client_ip;
 
   // ugly hack
   if (!strcmp(s, "::1")) s = "127.0.0.1";
