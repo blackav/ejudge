@@ -522,3 +522,8 @@ userlist_clnt/set_passwd.c 1 1 175935
 userlist_clnt/team_cookie.c 1 1 216613
 userlist_clnt/team_login.c 1 1 252060
 userlist_clnt/team_set_passwd.c 1 1 169334
+userlist_clnt.h 1 9 477030
+userlist_proto.c 1 4 187696
+userlist_clnt/do_pass_fd.c 1 2 169169
+userlist_clnt/open.c 1 2 241216
+userlist_clnt/send_packet.c 1 2 120496
