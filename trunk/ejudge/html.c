@@ -401,7 +401,81 @@ write_team_clar(int team_id, int clar_id,
           _("Internal server error"));
   fclose(f);
   return;
+}
 
+static int
+sformat_url(char *buf, size_t maxsize, char const *format,
+            char const *prob_short, int team_id)
+{
+  char *s = buf;
+  char const *q;
+  char const *p = format;
+  int ws = 0;
+  char tmp[64];
+
+  /* actual mode */
+  if (!buf || !maxsize) {
+  } else if (maxsize == 1) {
+    buf[0] = 0;
+  } else {
+    while (ws < maxsize - 1 && *p) {
+      if (*p == '%') {
+        q = 0;
+        switch (p[1]) {
+        case 'P':               // short name of the problem
+          q = prob_short;
+          p += 2;
+          break;
+        case 'i':               // team id
+          sprintf(tmp, "%d", team_id);
+          q = tmp;
+          p += 2;
+          break;
+        default:
+          *s++ = *p++;
+          ws++;
+        }
+        if (q) {
+          while (ws < maxsize - 1 && *q) {
+            *s++ = *q++;
+            ws++;
+          }
+          if (*q) {
+            ws++;
+            q++;
+          }
+        }
+      } else {
+        *s++ = *p++;
+        ws++;
+      }
+    }
+    *s = 0;
+  }
+
+  /* dummy mode */
+  while (*p) {
+    if (*p == '%') {
+      switch (p[1]) {
+      case 'P':
+        p += 2;
+        if (prob_short) ws += strlen(prob_short);
+        break;
+      case 'i':
+        p += 2;
+        ws += sprintf(tmp, "%d", team_id);
+        break;
+      default:
+        p++;
+        ws++;
+      }
+    } else {
+      p++;
+      ws++;
+    }
+  }
+
+  return ws;
 }
 
 #define ALLOCAZERO(a,b) do { if (!XALLOCA(a,b)) goto alloca_failed; XMEMZERO(a,b); } while(0)
@@ -606,7 +680,17 @@ do_write_kirov_standings(FILE *f, int client_flag)
   fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th>",
           _("Place"), _("Team"));
   for (j = 0; j < p_tot; j++) {
-    fprintf(f, "<th>%s</th>", probs[p_ind[j]]->short_name);
+    fprintf(f, "<th>");
+    if (global->prob_info_url[0]) {
+      sformat_url(dur_str, sizeof(dur_str),
+                  global->prob_info_url, probs[p_ind[j]]->short_name, 0);
+      fprintf(f, "<a href=\"%s\">", dur_str);
+    }
+    fprintf(f, "%s", probs[p_ind[j]]->short_name);
+    if (global->prob_info_url[0]) {
+      fprintf(f, "</a>");
+    }
+    fprintf(f, "</th>");
   }
   fprintf(f, "<th>%s</th></tr>", _("Score"));
 
@@ -617,7 +701,17 @@ do_write_kirov_standings(FILE *f, int client_flag)
     if (t_n1[i] == t_n2[i]) fprintf(f, "%d", t_n1[i] + 1);
     else fprintf(f, "%d-%d", t_n1[i] + 1, t_n2[i] + 1);
     fputs("</td>", f);
-    fprintf(f, "<td>%s</td>", teamdb_get_name(t_ind[t]));
+    fprintf(f, "<td>");
+    if (global->team_info_url[0]) {
+      sformat_url(dur_str, sizeof(dur_str), global->team_info_url,
+                  0, t_ind[t]);
+      fprintf(f, "< href=\"%s\"a>", dur_str);
+    }
+    fprintf(f, "%s", teamdb_get_name(t_ind[t]));
+    if (global->team_info_url[0]) {
+      fprintf(f, "</a>");
+    }
+    fprintf(f, "</td>");
     for (j = 0; j < p_tot; j++) {
       if (!prob_score[t][j]) {
         fprintf(f, "<td>&nbsp;</td>");
@@ -673,6 +767,7 @@ do_write_standings(FILE *f, int client_flag)
   int           status;
 
   char          header[1024];
+  char          url_str[1024];
 
   start_time = run_get_start_time();
   stop_time = run_get_stop_time();
@@ -824,7 +919,17 @@ do_write_standings(FILE *f, int client_flag)
   fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th>",
           _("Place"), _("Team"));
   for (j = 0; j < p_tot; j++) {
-    fprintf(f, "<th>%s</th>", probs[p_ind[j]]->short_name);
+    fprintf(f, "<th>");
+    if (global->prob_info_url[0]) {
+      sformat_url(url_str, sizeof(url_str), global->prob_info_url,
+                  probs[p_ind[j]]->short_name, 0);
+      fprintf(f, "<a href=\"%s\">", url_str);
+    }
+    fprintf(f, "%s", probs[p_ind[j]]->short_name);
+    if (global->prob_info_url[0]) {
+      fprintf(f, "</a>");
+    }
+    fprintf(f, "</th>");
   }
   fprintf(f, "<th>%s</th><th>%s</th></tr>",
           _("Total"), _("Penalty"));
@@ -835,7 +940,17 @@ do_write_standings(FILE *f, int client_flag)
     if (t_n1[i] == t_n2[i]) fprintf(f, "%d", t_n1[i] + 1);
     else fprintf(f, "%d-%d", t_n1[i] + 1, t_n2[i] + 1);
     fputs("</td>", f);
-    fprintf(f, "<td>%s</td>", teamdb_get_name(t_ind[t]));
+    fprintf(f, "<td>");
+    if (global->team_info_url[0]) {
+      sformat_url(url_str, sizeof(url_str), global->team_info_url,
+                  0, t_ind[t]);
+      fprintf(f, "<a href=\"%s\">", url_str);      
+    }
+    fprintf(f, "%s", teamdb_get_name(t_ind[t]));
+    if (global->team_info_url[0]) {
+      fprintf(f, "</a>");
+    }
+    fprintf(f, "</td>");
     for (j = 0; j < p_tot; j++) {
       if (calc[t][j] < 0) {
         fprintf(f, "<td>%d</td>", calc[t][j]);
