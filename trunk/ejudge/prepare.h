@@ -237,6 +237,7 @@ struct section_global_data
   puc_t stand_v_row_attr[32];   /* standings virtual team row attributes */
   puc_t stand_u_row_attr[32];   /* standings unknown team row attributes */
   puc_t stand_success_attr[32]; /* last success attributes */
+  int stand_show_ok_time;       /* whether show time */
 
   unsigned char *stand_header_txt; /* actual header text */
   unsigned char *stand_footer_txt; /* actual footer text */
@@ -326,6 +327,7 @@ struct section_problem_data
   int    disable_testing;
   int    hidden;                /* hide the problem from standings */
   int    priority_adjustment;   /* priority adjustment for this problem */
+  int    stand_hide_time;       /* do not show ok time */
   puc_t super[32];              /* superproblem's short_name */
   puc_t short_name[32];         /* short problem name, eg A, B, ... */
   puc_t long_name[128];         /* long problem name */
@@ -357,6 +359,8 @@ struct section_problem_data
 
   puc_t deadline[64];           /* deadline for sending this problem */
   time_t t_deadline;            /* in UNIX internal format */
+  puc_t start_date[64];         /* the first date for sending this problem */
+  time_t t_start_date;          /* in UNIX internal format */
   int variant_num;              /* number of variants for this problem */
 
   char **date_penalty;          /* penalty which depends on date */
