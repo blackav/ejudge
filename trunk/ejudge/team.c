@@ -666,11 +666,11 @@ main(int argc, char *argv[])
   if (server_clars_stat)
     printf("<li><a href=\"#clarstat\">%s</a>\n", _("Messages log"));
   printf("<li><a href=\"#chgpasswd\">%s</a>\n", _("Change password"));
-  if (global->standings_url[0]) {
+  if (global->standings_url[0] && need_show_submit) {
     printf("<li><a href=\"%s\">%s</a>\n",
            global->standings_url, _("Team standings"));
   }
-  if (global->problems_url[0]) {
+  if (global->problems_url[0] && need_show_submit) {
     printf("<li><a href=\"%s\">%s</a>\n",
            global->problems_url, _("Problems"));
   }
