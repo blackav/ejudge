@@ -61,8 +61,11 @@ static struct section_tester_data   *abstr_testers[MAX_TESTER + 1];
 static int max_abstr_prob;
 static int max_abstr_tester;
 
+#define XFSIZE(t, x) (sizeof(((t*) 0)->x))
+
 #define GLOBAL_OFFSET(x)   XOFFSET(struct section_global_data, x)
-#define GLOBAL_PARAM(x, t) { #x, t, GLOBAL_OFFSET(x) }
+#define GLOBAL_SIZE(x)     XFSIZE(struct section_global_data, x)
+#define GLOBAL_PARAM(x, t) { #x, t, GLOBAL_OFFSET(x), GLOBAL_SIZE(x) }
 static struct config_parse_info section_global_params[] =
 {
   GLOBAL_PARAM(name, "s"),
@@ -147,6 +150,23 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(plog_footer_file, "s"),
   GLOBAL_PARAM(plog_update_time, "d"),
 
+  // standings table attributes
+  GLOBAL_PARAM(stand_extra_format, "s"),
+  GLOBAL_PARAM(stand_extra_legend, "s"),
+  GLOBAL_PARAM(stand_extra_attr, "s"),
+  GLOBAL_PARAM(stand_table_attr, "s"),
+  GLOBAL_PARAM(stand_place_attr, "s"),
+  GLOBAL_PARAM(stand_team_attr, "s"),
+  GLOBAL_PARAM(stand_prob_attr, "s"),
+  GLOBAL_PARAM(stand_solved_attr, "s"),
+  GLOBAL_PARAM(stand_score_attr, "s"),
+  GLOBAL_PARAM(stand_penalty_attr, "s"),
+  GLOBAL_PARAM(stand_time_attr, "s"),
+  GLOBAL_PARAM(stand_self_row_attr, "s"),
+  GLOBAL_PARAM(stand_v_row_attr, "s"),
+  GLOBAL_PARAM(stand_r_row_attr, "s"),
+  GLOBAL_PARAM(stand_u_row_attr, "s"),
+
   // just for fun
   GLOBAL_PARAM(sound_player, "s"),
   GLOBAL_PARAM(accept_sound, "s"),
@@ -174,17 +194,14 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(show_deadline, "d"),
   GLOBAL_PARAM(enable_runlog_merge, "d"),
 
-  GLOBAL_PARAM(standings_team_color, "s"),
-  GLOBAL_PARAM(standings_virtual_team_color, "s"),
-  GLOBAL_PARAM(standings_real_team_color, "s"),
-
   GLOBAL_PARAM(variant_map_file, "s"),
 
   { 0, 0, 0, 0 }
 };
 
 #define PROBLEM_OFFSET(x)   XOFFSET(struct section_problem_data, x)
-#define PROBLEM_PARAM(x, t) { #x, t, PROBLEM_OFFSET(x) }
+#define PROBLEM_SIZE(x)     XFSIZE(struct section_problem_data, x)
+#define PROBLEM_PARAM(x, t) { #x, t, PROBLEM_OFFSET(x), PROBLEM_SIZE(x) }
 static struct config_parse_info section_problem_params[] =
 {
   PROBLEM_PARAM(id, "d"),
@@ -227,7 +244,8 @@ static struct config_parse_info section_problem_params[] =
 };
 
 #define LANGUAGE_OFFSET(x)   XOFFSET(struct section_language_data, x)
-#define LANGUAGE_PARAM(x, t) { #x, t, LANGUAGE_OFFSET(x) }
+#define LANGUAGE_SIZE(x)     XFSIZE(struct section_language_data, x)
+#define LANGUAGE_PARAM(x, t) { #x, t, LANGUAGE_OFFSET(x), LANGUAGE_SIZE(x) }
 static struct config_parse_info section_language_params[] =
 {
   LANGUAGE_PARAM(id, "d"),
@@ -242,13 +260,14 @@ static struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(cmd, "s"),
 
   LANGUAGE_PARAM(compile_dir, "s"),
-  LANGUAGE_PARAM(compile_real_time_limit, "s"),
+  LANGUAGE_PARAM(compile_real_time_limit, "d"),
 
   { 0, 0, 0, 0 }
 };
 
 #define TESTER_OFFSET(x) XOFFSET(struct section_tester_data, x)
-#define TESTER_PARAM(x, t) { #x, t, TESTER_OFFSET(x) }
+#define TESTER_SIZE(x)   XFSIZE(struct section_tester_data, x)
+#define TESTER_PARAM(x, t) { #x, t, TESTER_OFFSET(x), TESTER_SIZE(x) }
 static struct config_parse_info section_tester_params[] =
 {
   TESTER_PARAM(id, "d"),
@@ -992,7 +1011,7 @@ set_defaults(int mode)
           contests_strerror(-i));
       return -1;
     }
-    pathcpy(global->name, cur_contest->name);
+    snprintf(global->name, sizeof(global->name), "%s", cur_contest->name);
   }
 
   /* directory poll intervals */
@@ -1067,7 +1086,8 @@ set_defaults(int mode)
     info("global.root_dir set to %s", DFLT_G_ROOT_DIR);
     info("global.conf_dir set to %s", DFLT_G_CONF_DIR);
     info("global.var_dir set to %s", DFLT_G_VAR_DIR);
-    pathcpy(global->root_dir, DFLT_G_ROOT_DIR);
+    snprintf(global->root_dir, sizeof(global->root_dir),
+             "%s", DFLT_G_ROOT_DIR);
     path_init(global->conf_dir, global->root_dir, DFLT_G_CONF_DIR);
     path_init(global->var_dir, global->root_dir, DFLT_G_VAR_DIR);
   } else if (global->root_dir[0]) {
@@ -1088,7 +1108,7 @@ set_defaults(int mode)
   }
 
   /* CONFIGURATION FILES DEFAULTS */
-#define GLOBAL_INIT_FIELD(f,d,c) do { if (!global->f[0]) { info("global." #f " set to %s", d); pathcpy(global->f, d); } pathmake2(global->f,global->c, "/", global->f, NULL); } while (0)
+#define GLOBAL_INIT_FIELD(f,d,c) do { if (!global->f[0]) { info("global." #f " set to %s", d); snprintf(global->f, sizeof(global->f), "%s", d); } pathmake2(global->f,global->c, "/", global->f, NULL); } while (0)
 
   if (mode == PREPARE_COMPILE || mode == PREPARE_RUN) {
     GLOBAL_INIT_FIELD(script_dir, DFLT_G_SCRIPT_DIR, conf_dir);
@@ -1101,11 +1121,13 @@ set_defaults(int mode)
     GLOBAL_INIT_FIELD(checker_dir, DFLT_G_CHECKER_DIR, conf_dir);
 
     if (!global->info_sfx[0]) {
-      pathcpy(global->info_sfx, DFLT_G_INFO_SFX);
+      snprintf(global->info_sfx, sizeof(global->info_sfx),
+               "%s", DFLT_G_INFO_SFX);
       info("global.info_sfx set to %s", global->info_sfx);
     }
     if (!global->tgz_sfx[0]) {
-      pathcpy(global->tgz_sfx, DFLT_G_TGZ_SFX);
+      snprintf(global->tgz_sfx, sizeof(global->tgz_sfx),
+               "%s", DFLT_G_TGZ_SFX);
       info("global.tgz_sfx set to %s", global->tgz_sfx);
     }
   }
@@ -1222,7 +1244,8 @@ set_defaults(int mode)
 
   if (mode == PREPARE_SERVE) {
     if (!global->charset[0]) {
-      pathcpy(global->charset, DFLT_G_CHARSET);
+      snprintf(global->charset, sizeof(global->charset),
+               "%s", DFLT_G_CHARSET);
       info("global.charset set to %s", global->charset);
     }
     if (!(global->charset_ptr = nls_lookup_table(global->charset))) {
@@ -1230,7 +1253,8 @@ set_defaults(int mode)
       return -1;
     }
     if (!global->standings_charset[0]) {
-      pathcpy(global->standings_charset, global->charset);
+      snprintf(global->standings_charset, sizeof(global->standings_charset),
+               "%s", global->charset);
       info("global.standings_charset set to %s", global->standings_charset);
     }
     if (!(global->standings_charset_ptr = nls_lookup_table(global->standings_charset))) {
@@ -1238,7 +1262,8 @@ set_defaults(int mode)
       return -1;
     }
     if (!global->standings_file_name[0]) {
-      pathcpy(global->standings_file_name, DFLT_G_STANDINGS_FILE_NAME);
+      snprintf(global->standings_file_name,sizeof(global->standings_file_name),
+               "%s", DFLT_G_STANDINGS_FILE_NAME);
       info("global.standings_file_name set to %s", global->standings_file_name);
     }
 
@@ -1707,7 +1732,8 @@ set_defaults(int mode)
       }
       if (!probs[i]->input_file[0]) {
         info("problem.%s.input_file set to %s", ish, DFLT_P_INPUT_FILE);
-        pathcpy(probs[i]->input_file, DFLT_P_INPUT_FILE);
+        snprintf(probs[i]->input_file, sizeof(probs[i]->input_file),
+                 "%s", DFLT_P_INPUT_FILE);
       }
       if (!probs[i]->output_file[0] && si != -1
           && abstr_probs[si]->output_file[0]) {
@@ -1719,7 +1745,8 @@ set_defaults(int mode)
       }
       if (!probs[i]->output_file[0]) {
         info("problem.%s.output_file set to %s", ish, DFLT_P_OUTPUT_FILE);
-        pathcpy(probs[i]->output_file, DFLT_P_OUTPUT_FILE);
+        snprintf(probs[i]->output_file, sizeof(probs[i]->output_file),
+                 "%s", DFLT_P_OUTPUT_FILE);
       }
 
       if (probs[i]->variant_num == -1 && si != -1
@@ -1963,7 +1990,8 @@ set_defaults(int mode)
         }
         if (!testers[i]->error_file[0]) {
           info("tester.%d.error_file set to %s", i, DFLT_T_ERROR_FILE);
-          pathcpy(testers[i]->error_file, DFLT_T_ERROR_FILE);
+          snprintf(testers[i]->error_file, sizeof(testers[i]->error_file),
+                   "%s", DFLT_T_ERROR_FILE);
         }
         if (!tp->check_cmd[0] && atp && atp->check_cmd[0]) {
           sformat_message(tp->check_cmd, PATH_MAX, atp->check_cmd,
@@ -2587,7 +2615,8 @@ prepare_tester_refinement(struct section_tester_data *out,
                     atp->error_file, global, prb, NULL, out, NULL);
   }
   if (!out->error_file[0]) {
-    pathcpy(out->error_file, DFLT_T_ERROR_FILE);
+    snprintf(out->error_file, sizeof(out->error_file),
+             "%s",  DFLT_T_ERROR_FILE);
   }
 
   /* copy check_cmd */
