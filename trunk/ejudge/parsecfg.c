@@ -109,6 +109,12 @@ read_variable(FILE *f, char *name, int nlen, char *val, int vlen)
   }
 
   while (c >= 0 && c <= ' ' && c != '\n') c = getc(f);
+  if (c == '\n') {
+    // FIXME: may we assumpt, that vlen >= 2?
+    strcpy(val, "1");
+    lineno++;
+    return 0;
+  }
   if (c != '=') {
     fprintf(stderr, _("%d: '=' expected after variable name\n"), lineno);
     return -1;
@@ -238,6 +244,9 @@ parse_param(char const *path,
   }
 
   cfg = (struct generic_section_config*) xcalloc(1, params[sindex].size);
+  if (params[sindex].init_func)
+    params[sindex].init_func(cfg);
+  cfg->next = 0;
   psect = &cfg->next;
   sect = NULL;
 
@@ -278,6 +287,9 @@ parse_param(char const *path,
 
     sect = (struct generic_section_config*) xcalloc(1, params[sindex].size);
     strcpy(sect->name, sectname);
+    if (params[sindex].init_func)
+      params[sindex].init_func(sect);
+    sect->next = 0;
     *psect = sect;
     psect = &sect->next;
 
@@ -296,6 +308,8 @@ parse_param(char const *path,
       if (copy_param(sect, sinfo, varname, varvalue) < 0) goto cleanup;
     }
   }
+
+  fflush(stdout);
 
   if (vf) fclose(f);
   return cfg;
