@@ -50,6 +50,10 @@ static unsigned char const * const error_map[] =
   _("IPC operation failed"),
   _("this IP address is not allowed to use this service"),
   _("this user cannot participate in this contest"),
+  _("this user is not registered for this contest"),
+  _("this field cannot be deleted"),
+  _("this field cannot be changed"),
+  _("contest deadline exceeded"),
 
   0
 };
