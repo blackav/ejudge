@@ -141,6 +141,8 @@ enum
     SRV_CMD_COMPARE_RUNS,
     SRV_CMD_UPLOAD_REPORT,
     SRV_CMD_REJUDGE_BY_MASK,
+    SRV_CMD_NEW_RUN_FORM,
+    SRV_CMD_NEW_RUN,
 
     SRV_CMD_LAST
   };
@@ -361,6 +363,7 @@ enum
     PROT_SERVE_RUN_SCORE_SET = 512,
     PROT_SERVE_RUN_READONLY_SET = 1024,
     PROT_SERVE_RUN_PAGES_SET = 2048,
+    PROT_SERVE_RUN_SOURCE_SET = 4096,
   };
 
 struct prot_serve_pkt_run_info
@@ -380,8 +383,10 @@ struct prot_serve_pkt_run_info
   int score;
   int is_readonly;
   int pages;
+  unsigned long ip;
   int user_login_len;
-  unsigned char data[1];
+  int run_src_len;
+  unsigned char data[2];
 };
 
 struct prot_serve_pkt_archive_path
