@@ -112,6 +112,8 @@ static struct contest_desc *cur_contest;
 static struct userlist_clnt *server_conn;
 static unsigned long client_ip;
 static unsigned char *self_url;
+static unsigned char *head_style = "<h2>";
+static unsigned char *par_style = "";
 
 static int cgi_contest_id;
 static unsigned char contest_id_str[128];
@@ -277,9 +279,10 @@ open_serve(void)
   if (serve_socket_fd >= 0) return;
   serve_socket_fd = serve_clnt_open(global->serve_socket);
   if (serve_socket_fd < 0) {
-    printf("<h2><font color=\"red\">%s</font></h2>\n",
-           "Cannot connect to the contest server");
-    printf("<p>Error: %s</p>\n", protocol_strerror(-serve_socket_fd));
+    printf("<%s><font color=\"red\">%s</font></%s>\n",
+           head_style, "Cannot connect to the contest server", head_style);
+    printf("<p%s>Error: %s</p>\n",
+           par_style, protocol_strerror(-serve_socket_fd));
     client_put_footer(stdout, footer_txt);
     exit(0);
   }
@@ -559,6 +562,11 @@ initialize(int argc, char *argv[])
                       0, cur_contest->team_footer_file, "");
   }
 
+  if (!(head_style = cur_contest->team_head_style))
+    head_style = "<h2>";
+  if (!(par_style = cur_contest->team_par_style))
+    par_style = "";
+
   if (set_defaults() < 0)
     client_not_configured(global->charset, "bad defaults", 0);
 
@@ -802,8 +810,8 @@ open_userlist_server(void)
       set_cookie_if_needed();
       client_put_header(stdout, header_txt, 0, global->charset, 1,
                         client_locale_id, _("Server is down"));
-      printf("<p>%s</p>",
-             _("The server is down. Try again later."));
+      printf("<p%s>%s</p>",
+             par_style, _("The server is down. Try again later."));
       client_put_footer(stdout, footer_txt);
       exit(0);
     }
@@ -816,7 +824,8 @@ permission_denied(void)
   set_cookie_if_needed();
   client_put_header(stdout, header_txt, 0, global->charset, 1,
                     client_locale_id, _("Permission denied"));
-  printf("<p>%s</p>",
+  printf("<p%s>%s</p>",
+         par_style,
          _("Permission denied. You have typed invalid login, invalid password,"
            " or do not have enough privileges."));
   client_put_footer(stdout, footer_txt);
@@ -829,7 +838,7 @@ fatal_server_error(int r)
   set_cookie_if_needed();
   client_put_header(stdout, header_txt, 0, global->charset, 1,
                     client_locale_id, _("Server error"));
-  printf("<p>%s: %s</p>", _("Server error"),
+  printf("<p%s>%s: %s</p>", par_style, _("Server error"),
          gettext(userlist_strerror(-r)));
   client_put_footer(stdout, footer_txt);
   exit(0);
@@ -988,8 +997,9 @@ authentificate(void)
     set_cookie_if_needed();
     client_put_refresh_header(global->charset, hbuf, 0,
                               _("Login successful"));
-    printf("<p>%s</p>", _("Login successfull. Now entering the main page."));
-    printf(_("<p>If automatic updating does not work, click on <a href=\"%s\">this</a> link.</p>"), hbuf);
+    printf("<p%s>%s</p>", par_style,
+           _("Login successfull. Now entering the main page."));
+    printf(_("<p%s>If automatic updating does not work, click on <a href=\"%s\">this</a> link.</p>"), par_style, hbuf);
            
     //client_put_footer(stdout, footer_txt);
     exit(0);
@@ -1016,7 +1026,8 @@ operation_status_page(int code, unsigned char const *msg)
     client_put_header(stdout, header_txt, 0, global->charset, 1,
                       client_locale_id, _("Operation failed"));
     if (code != -1 || !msg) msg = protocol_strerror(-code);
-    printf("<h2><font color=\"red\">%s</font></h2>\n", msg);
+    printf("<%s><font color=\"red\">%s</font></%s>\n", head_style, 
+           msg, head_style);
     print_refresh_button(_("Back"));
     client_put_footer(stdout, footer_txt);
   } else {
@@ -1024,7 +1035,8 @@ operation_status_page(int code, unsigned char const *msg)
              contest_id_str, 0);
     client_put_refresh_header(global->charset, href, 0,
                               _("Operation successfull"));
-    printf("<h2>%s</h2>", _("Operation completed successfully"));
+    printf("<%s>%s</%s>", head_style,
+           _("Operation completed successfully"), head_style);
     print_refresh_button(_("Back"));
   }
   exit(0);
@@ -1256,8 +1268,8 @@ show_clar_if_asked(void)
                            client_team_id, global->contest_id,
                            client_locale_id, clar_id);
   if (r < 0) {
-    printf("<p><pre><font color=\"red\">%s</font></pre></p>\n",
-           gettext(protocol_strerror(-r)));
+    printf("<p%s><pre><font color=\"red\">%s</font></pre></p>\n",
+           par_style, gettext(protocol_strerror(-r)));
   }
   printf("<hr>\n");
   print_nav_buttons(_("Main page"), 0, 0);
@@ -1288,8 +1300,8 @@ request_source_if_asked(void)
                            client_team_id, global->contest_id,
                            client_locale_id, run_id);
   if (r < 0) {
-    printf("<p><pre><font color=\"red\">%s</font></pre></p>\n",
-           gettext(protocol_strerror(-r)));
+    printf("<p%s><pre><font color=\"red\">%s</font></pre></p>\n",
+           par_style, gettext(protocol_strerror(-r)));
   }
   printf("<hr>");
   print_nav_buttons(_("Main page"), 0, 0);
@@ -1314,8 +1326,8 @@ action_standings(void)
                            client_locale_id, 0);
   r = 0;
   if (r < 0) {
-    printf("<p><pre><font color=\"red\">%s</font></pre></p>\n",
-           gettext(protocol_strerror(-r)));
+    printf("<p%s><pre><font color=\"red\">%s</font></pre></p>\n",
+           par_style, gettext(protocol_strerror(-r)));
   }
   printf("<hr>");
   print_nav_buttons(_("Main page"), 0, 0);
@@ -1346,8 +1358,8 @@ request_report_if_asked(void)
                            client_team_id, global->contest_id,
                            client_locale_id, run_id);
   if (r < 0) {
-    printf("<p><pre><font color=\"red\">%s</font></pre></p>\n",
-           gettext(protocol_strerror(-r)));
+    printf("<p%s><pre><font color=\"red\">%s</font></pre></p>\n",
+           par_style, gettext(protocol_strerror(-r)));
   }
   printf("<hr>");
   print_nav_buttons(_("Main page"), 0, 0);
@@ -1439,10 +1451,10 @@ action_logout(void)
     snprintf(s1, sizeof(s1), "&locale_id=%d", client_locale_id);
   }
 
-  printf("<p>%s</p>\n",
+  printf("<p%s>%s</p>\n", par_style,
          _("Good-bye!"));
-  printf(_("<p>Follow this <a href=\"%s?contest_id=%d%s\">link</a> to login again.</p>"),
-         self_url, global->contest_id, s1);
+  printf(_("<p%s>Follow this <a href=\"%s?contest_id=%d%s\">link</a> to login again.</p>"),
+         par_style, self_url, global->contest_id, s1);
   client_put_footer(stdout, footer_txt);
   exit(0);
 }
@@ -1459,7 +1471,7 @@ display_team_page(void)
                            ((client_view_all_clars?1:0)<<1)|(client_view_all_runs?1:0),
                            self_url, hidden_vars, contest_id_str);
   if (r < 0) {
-    printf("<p>%s: %s\n", _("Server error"),
+    printf("<p%s>%s: %s\n", par_style, _("Server error"),
            gettext(protocol_strerror(-r)));
   }
 }
@@ -1631,8 +1643,8 @@ main(int argc, char *argv[])
   print_nav_buttons(0, 0, 0);
 
   if (error_log) {
-    printf("<hr><a name=\"lastcmd\"></a><h2>%s</h2>\n",
-           _("The last command completion status"));
+    printf("<hr><a name=\"lastcmd\"></a><%s>%s</%s>\n",
+           head_style, _("The last command completion status"), head_style);
     printf("<pre><font color=\"red\">%s</font></pre>\n", error_log);
     print_nav_buttons(0, 0, 0);
   }
@@ -1647,14 +1659,14 @@ main(int argc, char *argv[])
   }
 
   if (!server_clients_suspended && !cur_contest->disable_team_password) {
-    printf("<hr><a name=\"chgpasswd\"></a><h2>%s</h2>\n"
+    printf("<hr><a name=\"chgpasswd\"></a><%s>%s</%s>\n"
            "%s<table>\n"
            "<tr><td>%s:</td><td><input type=\"password\" name=\"oldpasswd\" size=\"16\"></td></tr>\n"
            "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd1\" size=\"16\"></td></tr>\n"
            "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd2\" size=\"16\"></td></tr>\n"
            "<tr><td colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n"
            "</table></form>",
-           _("Change password"), form_start_simple,
+           head_style, _("Change password"), head_style, form_start_simple,
            _("Old password"),
            _("New password"), _("Retype new password"),
            ACTION_CHANGE_PASSWORD, _("Change!"));
@@ -1663,8 +1675,8 @@ main(int argc, char *argv[])
 
 #if CONF_HAS_LIBINTL - 0 == 1
   if (global->enable_l10n) {
-    printf("<hr><a name=\"chglanguage\"></a><h2>%s</h2>\n",
-           _("Change language"));
+    printf("<hr><a name=\"chglanguage\"></a><%s>%s</%s>\n",
+           head_style, _("Change language"), head_style);
     if (!client_sid_mode) {
       printf("%s<input type=\"hidden\" name=\"login\" value=\"%s\">"
              "<input type=\"hidden\" name=\"password\" value=\"%s\">",
@@ -1697,7 +1709,7 @@ main(int argc, char *argv[])
       end_time.tv_usec += 1000000;
       end_time.tv_sec--;
     }
-    printf("<hr><p>%s: %ld %s\n",
+    printf("<hr><p%s>%s: %ld %s\n", par_style,
            _("Page generation time"),
            end_time.tv_usec / 1000 + end_time.tv_sec * 1000,
            _("msec"));
