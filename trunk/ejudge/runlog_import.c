@@ -83,10 +83,9 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
   size_t in_entries_num = 0;
   size_t cur_entries_num = 0;
   size_t out_entries_num = 0;
-  int r, i, st, prob, lang, j, k, corr_total, i2, j2, i3, j3, cur_out;
+  int r, i, st, j, k, corr_total, i2, j2, i3, j3, cur_out;
   int min_i, min_j;
-  int empty_count = 0, vstart_count = 0, vstop_count = 0;
-  time_t prev_time, cur_time;
+  time_t prev_time, cur_time = 0;
   int *cur_new_map, *cur_merged_map, *new_cur_map, *new_merged_map;
   int update_flag = 0;
   int min_team_id;
