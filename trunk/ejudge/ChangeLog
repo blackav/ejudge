@@ -1,3 +1,65 @@
+2002-10-15  Alexander Chernov  <cher@ispras.ru>
+
+	* sformat.c, serve.c:
+	the final "Local variables" section is slightly changed.
+
+	* mkpasswd.c:
+	(main) "enable-multibute-characters" directive is removed from
+	  the generated LaTeX file.
+
+	* clntutil.c, cgi.c:
+	the final "Local variables" section is slightly changed.
+
+	* userlist-server.c: (main) help message translation is disabled.
+
+	* team.c: <sys/time.h> is included;
+	new parameter `show_generation_time';
+	(initialize) error messages, which are written during configuration
+	  file parsing are not translatable;
+	(main) client page generation time (real time) is measured and
+	  displayed, if `show_generation_time' parameter is set;
+	  "Submission log" is not displayed until contest is started.
+
+	* serve.c:
+	(do_loop) contest_duration == 0 is considered as infinite contest
+	  duration;
+	  information messages, written to log marked as not translatable.
+
+	* register.c:
+	(set_defaults) error messages are marked as not translatable;
+	(initialize) error messages for client_not_configured function
+	  are also marked as untranslatable.
+
+	* prepare.c:
+	(global_init_func) `contest_time' parameter is initialized to -1;
+	(set_defaults) unset flag for `contest_time' is now -1.
+
+	* mkpasswd.c: (main) team information is marked as not translatable.
+
+	* master.c:
+	(set_defaults) error messages written to the log are not marked
+	  as translatable;
+	(initialize) "client not configured" messages are also not translated.
+
+	* makefile: `clean' rule is changed slightly.
+
+	* html.c:
+	(write_team_statistics) submit buttons for "View report" and
+	  "View source" are generated instead of image buttons.
+	(write_judge_allruns) the same as above.
+
+	* ejudge.ru_RU.KOI8-R.po: all the messages are translated.
+
+	* clntutil.c:
+	(client_print_server_status) server_duration == 0 is considered as
+	  unlimited contest and printed as "Unlimited".
+
+	* cgi.c:
+	(bad_request) message translation calls are removed, since when
+	  this function works, CGI parameters are not yet parsed;
+	  added actual email <cher@unicorn.cmc.msu.ru> to the message.
+	(request_too_large) message translation calls are removed.
+
 2002-10-14  Alexander Chernov  <cher@ispras.ru>
 
 	* makefile: ejudge.ru_RU.KOI8-R.po is made writable before msgmerge.

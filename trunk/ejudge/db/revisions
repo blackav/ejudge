@@ -299,3 +299,14 @@ run.c 1 27 2089750
 runlog.c 1 9 1045009
 serve.c 1 22 3581480
 team.c 1 14 2168044
+cgi.c 1 12 930493
+clntutil.c 1 16 1182607
+html.c 1 19 3392090
+master.c 1 20 2805251
+mkpasswd.c 1 10 322318
+prepare.c 1 31 4507562
+register.c 1 4 403880
+serve.c 1 24 3579693
+sformat.c 1 8 787917
+team.c 1 15 2211523
+userlist-server.c 1 3 802704
