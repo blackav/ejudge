@@ -43,6 +43,7 @@
 #include <reuse/osdeps.h>
 #include <reuse/number_io.h>
 #include <reuse/format_io.h>
+#include <reuse/exec.h>
 
 #include <time.h>
 #include <stdio.h>
@@ -2472,6 +2473,23 @@ cmd_rejudge_by_mask(struct client_state *p, int len,
 }
 
 static void
+do_start_cmd(void)
+{
+  tpTask tsk = 0;
+
+  if (!global->contest_start_cmd[0]) return;
+  if (!(tsk = task_New())) return;
+  task_AddArg(tsk, global->contest_start_cmd);
+  task_SetPathAsArg0(tsk);
+  if (task_Start(tsk) < 0) {
+    task_Delete(tsk);
+    return;
+  }
+  task_Wait(tsk);
+  task_Delete(tsk);
+}
+
+static void
 cmd_priv_command_0(struct client_state *p, int len,
                    struct prot_serve_pkt_simple *pkt)
 {
@@ -2659,6 +2677,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
     run_start_contest(current_time);
+    do_start_cmd();
     contest_start_time = current_time;
     info("contest started: %lu", current_time);
     update_status_file(1);
@@ -4627,6 +4646,7 @@ do_loop(void)
           /* it's time to start! */
           info("CONTEST STARTED");
           run_start_contest(current_time);
+          do_start_cmd();
           contest_start_time = current_time;
         }
       }
@@ -4751,7 +4771,7 @@ main(int argc, char *argv[])
 /**
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "fd_set")
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "fd_set" "tpTask")
  * End:
  */
 
