@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 /**
@@ -158,12 +154,24 @@ do_loop(void)
                   O_WRONLY|O_CREAT|O_TRUNC, 0777);
     task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", O_WRONLY);
     task_SetRedir(tsk, 2, TSR_DUP, 1);
+    if (langs[lang_id]->compile_real_time_limit > 0) {
+      task_SetMaxRealTime(tsk, langs[lang_id]->compile_real_time_limit);
+    }
     if (cr_serialize_lock() < 0) return -1;
     task_Start(tsk);
     task_Wait(tsk);
     if (cr_serialize_unlock() < 0) return -1;
 
-    if (task_IsAbnormal(tsk)) {
+    if (task_IsTimeout(tsk)) {
+      info("Compilation timeout");
+      if (generic_copy_file(0, 0, log_path, "", 0, 0, log_out, "") < 0)
+        return -1;
+      sprintf(statbuf, "%d%s", 6, PATH_EOL);
+      if (generic_write_file(statbuf, strlen(statbuf), SAFE,
+                             status_dir,
+                             run_name, "") < 0)
+        return -1;
+    } else if (task_IsAbnormal(tsk)) {
       // compilation error?
       info("Compilation failed");
       //copy logfile and create statfile
