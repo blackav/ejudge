@@ -36,16 +36,11 @@ extern int           server_clients_suspended;
 extern int           server_download_interval;
 
 extern unsigned long client_cur_time;
-extern char          client_pipe_dir[];
-extern char          client_cmd_dir[];
 
 extern char program_name[];
 extern char form_header_simple[];
 extern char form_header_multipart[];
-extern char form_header_simple_ext[];
-extern char form_header_multipart_ext[];
 
-void  client_puts(char const *, ...);
 void  client_put_header(char const *, char const *, ...);
 void  client_put_footer(void);
 void  client_put_copyright(void);
@@ -57,15 +52,6 @@ void  client_not_configured(char const*,char const*) __attribute__((noreturn));
 int   client_check_server_status(char const *, char const *, int);
 int   client_print_server_status(int, char const *, char const *);
 
-void  client_make_form_headers(void);
-
-int   client_make_pipe(char const *);
-char *client_packet_name(char *);
-int   client_get_reply(char **, int *, char const *);
-int   client_transaction(char *, char const *, char **, int*);
-
-char *client_file_to_str(char const *, int);
-int   client_file_to_stdout(char const *, int);
-void  client_split(char const *, int, ...);
+void  client_make_form_headers(unsigned char const *);
 
 #endif /* __CLNTUTIL_H__ */
