@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "runlog.h"
 
 #include "pathutl.h"
@@ -978,7 +980,7 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
   struct run_entry *out;
   struct run_entry te;
   int f = 0;
-  struct user_entry *ue;
+  struct user_entry *ue = 0;
   time_t stop_time;
 
   ASSERT(in);
