@@ -64,7 +64,6 @@ static int
 do_loop(void)
 {
   path_t src_name;
-  path_t base_name;
   path_t exe_name;
 
   path_t src_path;
@@ -75,78 +74,100 @@ do_loop(void)
   path_t log_out;
   char   statbuf[64];
 
-  int    r, i;
+  path_t  pkt_name;
+  char    pkt_buf[128];
+  char   *pkt_ptr;
+  int     pkt_len;
+  int     locale_id;
+
+  int    r, i, n;
   tpTask tsk;
 
   while (1) {
-    while (1) {
-      for (i = 0; i <= max_lang; i++) {
-        if (!langs[i]) continue;
-        r = scan_dir(langs[i]->src_dir, src_name);
-        if (r < 0) return -1;
-        if (r > 0) break;
-      }
-
-      if (i <= max_lang) {
-        os_rGetBasename(src_name, base_name, sizeof(base_name));
-        pathmake(exe_name, base_name, langs[i]->exe_sfx, NULL);
-        pathmake(src_path, langs[i]->work_dir, "/", src_name, NULL);
-        pathmake(exe_path, langs[i]->work_dir, "/", exe_name, NULL);
-        pathmake(log_path, langs[i]->work_dir, "/", "log", NULL);
-        /* the resulting report file */
-        pathmake(log_out,  langs[i]->compile_report_dir, "/", base_name, NULL);
-        /* the resulting executable file */
-        pathmake(exe_out,  langs[i]->compile_report_dir, "/", exe_name, NULL);
-
-        /* move the source file into the working dir */
-        r = generic_copy_file(SAFE|REMOVE, langs[i]->src_dir, src_name, "",
-                              0, langs[i]->work_dir, src_name, "");
-        if (r < 0) return -1;
-        if (r == 0) break;
-
-        info("Starting: %s %s %s", langs[i]->cmd, src_name, exe_name);
-        tsk = task_New();
-        task_AddArg(tsk, langs[i]->cmd);
-        task_AddArg(tsk, src_name);
-        task_AddArg(tsk, exe_name);
-        task_SetPathAsArg0(tsk);
-        task_SetWorkingDir(tsk, langs[i]->work_dir);
-        task_SetRedir(tsk, 1, TSR_FILE, log_path,
-                      O_WRONLY|O_CREAT|O_TRUNC, 0777);
-        task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", O_WRONLY);
-        task_SetRedir(tsk, 2, TSR_DUP, 1);
-        task_Start(tsk);
-        task_Wait(tsk);
-
-        if (task_IsAbnormal(tsk)) {
-          // compilation error?
-          info("Compilation failed");
-          //copy logfile and create statfile
-          if (generic_copy_file(0, 0, log_path, "", 0, 0, log_out, "") < 0)
-            return -1;
-          sprintf(statbuf, "%d%s", 1, PATH_EOL);
-          if (generic_write_file(statbuf, strlen(statbuf), SAFE,
-                                 langs[i]->compile_status_dir,
-                                 base_name, "") < 0)
-            return -1;
-        } else {
-          // ok, we can move the executable to output dir
-          info("Compilation sucessful");
-          if (generic_copy_file(0, 0, exe_path, "",
-                                0, 0, exe_out, "") < 0)
-            return -1;
-          sprintf(statbuf, "0%s", PATH_EOL);
-          if (generic_write_file(statbuf, strlen(statbuf), SAFE,
-                                 langs[i]->compile_status_dir,
-                                 base_name, "") < 0)
-            return -1;
-        }
-        clear_directory(langs[i]->work_dir);
-        break;
-      }
-
-      os_Sleep(global->sleep_time);
+    for (i = 0; i <= max_lang; i++) {
+      if (!langs[i]) continue;
+      r = scan_dir(langs[i]->queue_dir, pkt_name);
+      if (r < 0) return -1;
+      if (r > 0) break;
     }
+
+    if (i > max_lang) {
+      os_Sleep(global->sleep_time);
+      continue;
+    }
+
+    memset(pkt_buf, 0, sizeof(pkt_buf));
+    pkt_ptr = pkt_buf;
+    pkt_len = 0;
+    r = generic_read_file(&pkt_ptr, sizeof(pkt_buf), &pkt_len,
+                          SAFE | REMOVE, langs[i]->queue_dir, pkt_name, "");
+    if (r == 0) continue;
+    if (r < 0) return -1;
+
+    chop(pkt_buf);
+    info("compile packet: <%s>", pkt_buf);
+    n = 0;
+    memset(src_name, 0, sizeof(src_name));
+    if (sscanf(pkt_buf, "%63s %d %n", src_name, &locale_id, &n) != 2
+        || pkt_buf[n]
+        || locale_id < 0
+        || locale_id > 1024) {
+      err("bad packet");
+      continue;
+    }
+
+    pathmake(exe_name, pkt_name, langs[i]->exe_sfx, NULL);
+    pathmake(src_path, langs[i]->work_dir, "/", src_name, NULL);
+    pathmake(exe_path, langs[i]->work_dir, "/", exe_name, NULL);
+    pathmake(log_path, langs[i]->work_dir, "/", "log", NULL);
+    /* the resulting report file */
+    pathmake(log_out,  langs[i]->compile_report_dir, "/", pkt_name, NULL);
+    /* the resulting executable file */
+    pathmake(exe_out,  langs[i]->compile_report_dir, "/", exe_name, NULL);
+
+    /* move the source file into the working dir */
+    r = generic_copy_file(0, langs[i]->server_src_dir, src_name, "",
+                          0, langs[i]->work_dir, src_name, "");
+    if (r <= 0) continue;
+
+    info("Starting: %s %s %s", langs[i]->cmd, src_name, exe_name);
+    tsk = task_New();
+    task_AddArg(tsk, langs[i]->cmd);
+    task_AddArg(tsk, src_name);
+    task_AddArg(tsk, exe_name);
+    task_SetPathAsArg0(tsk);
+    task_SetWorkingDir(tsk, langs[i]->work_dir);
+    task_SetRedir(tsk, 1, TSR_FILE, log_path,
+                  O_WRONLY|O_CREAT|O_TRUNC, 0777);
+    task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", O_WRONLY);
+    task_SetRedir(tsk, 2, TSR_DUP, 1);
+    task_Start(tsk);
+    task_Wait(tsk);
+
+    if (task_IsAbnormal(tsk)) {
+      // compilation error?
+      info("Compilation failed");
+      //copy logfile and create statfile
+      if (generic_copy_file(0, 0, log_path, "", 0, 0, log_out, "") < 0)
+        return -1;
+      sprintf(statbuf, "%d%s", 1, PATH_EOL);
+      if (generic_write_file(statbuf, strlen(statbuf), SAFE,
+                             langs[i]->compile_status_dir,
+                             pkt_name, "") < 0)
+        return -1;
+    } else {
+      // ok, we can move the executable to output dir
+      info("Compilation sucessful");
+      if (generic_copy_file(0, 0, exe_path, "",
+                            0, 0, exe_out, "") < 0)
+        return -1;
+      sprintf(statbuf, "0%s", PATH_EOL);
+      if (generic_write_file(statbuf, strlen(statbuf), SAFE,
+                             langs[i]->compile_status_dir,
+                             pkt_name, "") < 0)
+        return -1;
+    }
+    clear_directory(langs[i]->work_dir);
   }
 
   return 0;
@@ -186,7 +207,7 @@ check_config(void)
     /* script must exist and be executable */
     total++;
     if (check_executable(langs[i]->cmd) < 0) return -1;
-    if (check_writable_spool(langs[i]->src_dir, SPOOL_OUT) < 0) return -1;
+    if (check_writable_spool(langs[i]->queue_dir, SPOOL_OUT) < 0) return -1;
     if (check_writable_spool(langs[i]->compile_status_dir, SPOOL_IN) < 0)
       return -1;
     if (check_writable_dir(langs[i]->compile_report_dir) < 0) return -1;
