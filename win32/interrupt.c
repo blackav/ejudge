@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,35 +17,43 @@
 
 #include "interrupt.h"
 
-#include <reuse/logger.h>
+#include <windows.h>
+
+static volatile int was_interrupt = 0;
+
+static BOOL WINAPI
+interrupt_handler(DWORD dwCtrlType)
+{
+  was_interrupt = 1;
+  return TRUE;
+}
 
 void
 interrupt_init(void)
 {
-  SWERR(("Not implemented"));
 }
 
 void
 interrupt_enable(void)
 {
-  SWERR(("Not implemented"));
+  SetConsoleCtrlHandler(interrupt_handler, FALSE);
 }
 
 void
 interrupt_disable(void)
 {
-  SWERR(("Not implemented"));
+  SetConsoleCtrlHandler(interrupt_handler, TRUE);
 }
 
 int
 interrupt_get_status(void)
 {
-  SWERR(("Not implemented"));
+  return was_interrupt;
 }
 
 /**
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "BOOL" "WINAPI")
  * End:
  */
