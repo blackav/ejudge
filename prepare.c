@@ -89,6 +89,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(tests_to_accept, "d"),
 
   GLOBAL_PARAM(charset, "s"),
+  GLOBAL_PARAM(standings_charset, "s"),
 
   GLOBAL_PARAM(root_dir, "s"),
   GLOBAL_PARAM(conf_dir, "s"),
@@ -106,6 +107,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(contest_id, "d"),
   GLOBAL_PARAM(socket_path, "s"),
   GLOBAL_PARAM(contests_path, "s"),
+  GLOBAL_PARAM(serve_socket, "s"),
 
   //GLOBAL_PARAM(log_file, "s"),
   GLOBAL_PARAM(run_log_file, "s"),
@@ -120,9 +122,6 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(work_dir, "s"),
 
   GLOBAL_PARAM(pipe_dir, "s"),
-  GLOBAL_PARAM(team_dir, "s"),
-  GLOBAL_PARAM(team_cmd_dir, "s"),
-  GLOBAL_PARAM(team_data_dir, "s"),
   GLOBAL_PARAM(judge_dir, "s"),
   GLOBAL_PARAM(judge_cmd_dir, "s"),
   GLOBAL_PARAM(judge_data_dir, "s"),
@@ -168,6 +167,12 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(enable_l10n, "d"),
   GLOBAL_PARAM(l10n_dir, "s"),
   GLOBAL_PARAM(standings_locale, "s"),
+
+  GLOBAL_PARAM(team_download_time, "d"),
+
+  GLOBAL_PARAM(cr_serialization_key, "d"),
+  GLOBAL_PARAM(show_astr_time, "d"),
+  GLOBAL_PARAM(ignore_duplicated_runs, "d"),
 
   { 0, 0, 0, 0 }
 };
@@ -251,6 +256,7 @@ static struct config_parse_info section_tester_params[] =
   TESTER_PARAM(max_data_size, "d"),
   TESTER_PARAM(max_vm_size, "d"),
   TESTER_PARAM(clear_env, "d"),
+  TESTER_PARAM(time_limit_adjustment, "d"),
 
   TESTER_PARAM(server_root_dir, "s"),
   TESTER_PARAM(server_var_dir, "s"),
@@ -358,10 +364,12 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_RUN_STATUS_DIR     "status"
 #define DFLT_G_RUN_REPORT_DIR     "report"
 #define DFLT_G_RUN_TEAM_REPORT_DIR "teamreport"
-#define DFLT_G_CHARSET            "iso8859-1"
+#define DFLT_G_CHARSET            "koi8-r"
 #define DFLT_G_STANDINGS_FILE_NAME "standings.html"
 #define DFLT_G_MAX_FILE_LENGTH    65535
 #define DFLT_G_MAX_LINE_LENGTH    4096
+#define DFLT_G_TEAM_DOWNLOAD_TIME 30
+#define DFLT_G_SERVE_SOCKET       "serve"
 
 #define DFLT_P_INPUT_FILE         "input"
 #define DFLT_P_OUTPUT_FILE        "output"
@@ -382,6 +390,8 @@ global_init_func(struct generic_section_config *gp)
   p->board_unfog_time = -1;
   p->contest_time = -1;
   p->tests_to_accept = -1;
+  p->team_download_time = -1;
+  p->ignore_duplicated_runs = -1;
 }
 
 static void
@@ -407,6 +417,7 @@ tester_init_func(struct generic_section_config *gp)
   p->no_redirect = -1;
   p->no_core_dump = -1;
   p->clear_env = -1;
+  p->time_limit_adjustment = -1;
 }
 
 static char*
@@ -511,6 +522,7 @@ static struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(queue_dir, path, path),
   TESTER_INH(no_core_dump, int, int),
   TESTER_INH(clear_env, int, int),
+  TESTER_INH(time_limit_adjustment, int, int),
   TESTER_INH(kill_signal, path, path),
   TESTER_INH(max_stack_size, int2, int),
   TESTER_INH(max_data_size, int2, int),
@@ -759,9 +771,7 @@ set_defaults(int mode)
     GLOBAL_INIT_FIELD(status_dir, DFLT_G_STATUS_DIR, var_dir);
 
     GLOBAL_INIT_FIELD(pipe_dir, DFLT_G_PIPE_DIR, var_dir);
-    GLOBAL_INIT_FIELD(team_dir, DFLT_G_TEAM_DIR, var_dir);
-    GLOBAL_INIT_FIELD(team_cmd_dir, DFLT_G_TEAM_CMD_DIR, team_dir);
-    GLOBAL_INIT_FIELD(team_data_dir, DFLT_G_TEAM_DATA_DIR, team_dir);
+    GLOBAL_INIT_FIELD(serve_socket, DFLT_G_SERVE_SOCKET, var_dir);
     GLOBAL_INIT_FIELD(judge_dir, DFLT_G_JUDGE_DIR, var_dir);
     GLOBAL_INIT_FIELD(judge_cmd_dir, DFLT_G_JUDGE_CMD_DIR, judge_dir);
     GLOBAL_INIT_FIELD(judge_data_dir, DFLT_G_JUDGE_DATA_DIR, judge_dir);
@@ -808,6 +818,18 @@ set_defaults(int mode)
   if (!global->charset[0]) {
     pathcpy(global->charset, DFLT_G_CHARSET);
     info("global.charset set to %s", global->charset);
+  }
+  if (!(global->charset_ptr = nls_lookup_table(global->charset))) {
+    err("global.charset `%s' is invalid", global->charset);
+    return -1;
+  }
+  if (!global->standings_charset[0]) {
+    pathcpy(global->standings_charset, global->charset);
+    info("global.standings_charset set to %s", global->standings_charset);
+  }
+  if (!(global->standings_charset_ptr = nls_lookup_table(global->standings_charset))) {
+    err("global.standings_charset `%s' is invalid", global->standings_charset);
+    return -1;
   }
 
   if (!global->standings_file_name[0]) {
@@ -870,6 +892,15 @@ set_defaults(int mode)
     info("standings_locale_id is %d", global->standings_locale_id);
   }
 #endif /* CONF_HAS_LIBINTL */
+
+  if (global->team_download_time == -1) {
+    global->team_download_time = DFLT_G_TEAM_DOWNLOAD_TIME;
+  }
+  global->team_download_time *= 60;
+
+  if (global->ignore_duplicated_runs == -1) {
+    global->ignore_duplicated_runs = 1;
+  }
 
   /* only run needs these parameters */
   if (mode == PREPARE_RUN) {
@@ -1316,6 +1347,15 @@ set_defaults(int mode)
       if (tp->clear_env == -1) {
         tp->clear_env = 0;
       }
+      if (tp->time_limit_adjustment == -1
+          && atp && atp->time_limit_adjustment != -1) {
+        tp->time_limit_adjustment = atp->time_limit_adjustment;
+        info("tester.%d.time_limit_adjustment inherited from tester.%s (%d)",
+             i, sish, tp->time_limit_adjustment);
+      }
+      if (tp->time_limit_adjustment == -1) {
+        tp->time_limit_adjustment = 0;
+      }
       if (!tp->kill_signal[0] && atp && atp->kill_signal[0]) {
         strcpy(tp->kill_signal, atp->kill_signal);
         info("tester.%d.kill_signal inherited from tester.%s ('%s')",
@@ -1547,9 +1587,6 @@ create_dirs(int mode)
 
     /* CGI scripts write to the followins dirs */
     if (make_dir(global->pipe_dir, 0777) < 0) return -1;
-    if (make_dir(global->team_dir, 0) < 0) return -1;
-    if (make_all_dir(global->team_cmd_dir, 0777) < 0) return -1;
-    if (make_dir(global->team_data_dir, 0777) < 0) return -1;
     if (make_dir(global->judge_dir, 0) < 0) return -1;
     if (make_all_dir(global->judge_cmd_dir, 0777) < 0) return -1;
     if (make_dir(global->judge_data_dir, 0777) < 0) return -1;
