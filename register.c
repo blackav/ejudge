@@ -2778,7 +2778,8 @@ action_register_for_contest(void)
   if (error_log) goto failed;
   user_xml_text = make_user_xml();
   if (error_log) goto failed;
-  errcode = userlist_clnt_set_info(server_conn, user_id, user_xml_text);
+  errcode = userlist_clnt_set_info(server_conn, user_id,
+                                   user_contest_id, user_xml_text);
   if (errcode) {
     error("%s", gettext(userlist_strerror(-errcode)));
     goto failed;
