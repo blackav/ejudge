@@ -120,7 +120,7 @@ unsigned char *html_hyperref(unsigned char *buf, int size,
 
 int write_virtual_standings(FILE *f, int user_id);
 
-void html_reset_filter(int user_id);
+void html_reset_filter(int user_id, unsigned long long session_id);
 
 void write_runs_dump(FILE *f, unsigned char const *charset);
 void write_raw_standings(FILE *f, unsigned char const *charset);
