@@ -28,6 +28,7 @@
 #include "protocol.h"
 #include "client_actions.h"
 #include "copyright.h"
+#include "archive_paths.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -1391,8 +1392,8 @@ write_public_log(char const *stat_dir, char const *name,
 int
 new_write_user_source_view(FILE *f, int uid, int rid)
 {
-  path_t  src_base, src_path;
-  int src_len = 0, html_len;
+  path_t  src_path;
+  int src_len = 0, html_len, src_flags;
   char   *src = 0, *html = 0;
   struct run_entry re;
 
@@ -1409,9 +1410,12 @@ new_write_user_source_view(FILE *f, int uid, int rid)
     err("user ids does not match");
     return -SRV_ERR_ACCESS_DENIED;
   }
-  sprintf(src_base, "%06d", rid);
-  pathmake(src_path, global->run_archive_dir, "/", src_base, 0);
-  if (generic_read_file(&src, 0, &src_len, 0, 0, src_path, "") < 0) {
+
+  if ((src_flags=archive_make_read_path(src_path, sizeof(src_path),
+                                        global->run_archive_dir,rid,0,0))<0){
+    return -SRV_ERR_SYSTEM_ERROR;
+  }
+  if (generic_read_file(&src, 0, &src_len, src_flags, 0, src_path, "") < 0) {
     return -SRV_ERR_SYSTEM_ERROR;
   }
 
@@ -1428,8 +1432,8 @@ new_write_user_source_view(FILE *f, int uid, int rid)
 int
 new_write_user_report_view(FILE *f, int uid, int rid)
 {
-  int report_len = 0, html_len = 0;
-  path_t report_base, report_path;
+  int report_len = 0, html_len = 0, report_flags;
+  path_t report_path;
   char *report = 0, *html_report;
   struct run_entry re;
 
@@ -1453,10 +1457,12 @@ new_write_user_report_view(FILE *f, int uid, int rid)
     return -SRV_ERR_ACCESS_DENIED;
   }
 
-  sprintf(report_base, "%06d", rid);
-  pathmake(report_path,
-           global->team_report_archive_dir, "/", report_base, 0);
-  if (generic_read_file(&report, 0, &report_len, 0, 0, report_path, "") < 0) {
+  report_flags = archive_make_read_path(report_path, sizeof(report_path),
+                                        global->team_report_archive_dir,
+                                        rid, 0, 0);
+  if (report_flags < 0) return -SRV_ERR_SYSTEM_ERROR;
+  if (generic_read_file(&report, 0, &report_len, report_flags,
+                        0, report_path, "") < 0) {
     return -SRV_ERR_SYSTEM_ERROR;
   }
   
