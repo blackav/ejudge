@@ -30,10 +30,11 @@
 #include "base64.h"
 #include "pathutl.h"
 #include "fileutl.h"
-#include "xalloc.h"
-#include "logger.h"
-#include "osdeps.h"
-#include "number_io.h"
+
+#include <reuse/xalloc.h>
+#include <reuse/logger.h>
+#include <reuse/osdeps.h>
+#include <reuse/number_io.h>
 
 #include <time.h>
 #include <stdio.h>
