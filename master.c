@@ -892,6 +892,22 @@ print_testing_suspend_button(void)
 }
 
 static void
+print_printing_suspend_button(void)
+{
+  const unsigned char *str;
+  int action;
+
+  str = _("Suspend printing");
+  action = ACTION_PRINT_SUSPEND;
+  if (server_printing_suspended) {
+    str = _("Resume printing");
+    action = ACTION_PRINT_RESUME;
+  }
+  printf("%s<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+         form_start_simple, action, str);
+}
+
+static void
 print_judging_mode_button(int judging_mode)
 {
   int a = 0;
@@ -1524,7 +1540,7 @@ view_source_if_asked()
                     "Source for run %d", runid);
   fflush(stdout);
   open_serve();
-  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_SOURCE, runid,
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_SOURCE, runid, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
@@ -1549,7 +1565,7 @@ view_report_if_asked()
                     "Report for run %d", runid);
   fflush(stdout);
   open_serve();
-  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_REPORT, runid,
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_REPORT, runid, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
@@ -1569,7 +1585,7 @@ view_teams_if_asked(int forced_flag)
   client_put_header(stdout, 0, 0, global->charset, 1, 0, "Users list");
   fflush(stdout);
   open_serve();
-  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_USERS, 0,
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_USERS, 0, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
@@ -1584,7 +1600,7 @@ action_dump_runs(void)
   int r;
 
   open_serve();
-  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_DUMP_RUNS, 0,
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_DUMP_RUNS, 0, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     set_cookie_if_needed();
@@ -1601,7 +1617,7 @@ action_write_xml_runs(void)
   int r;
 
   open_serve();
-  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_WRITE_XML_RUNS, 0,
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_WRITE_XML_RUNS, 0, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     set_cookie_if_needed();
@@ -1618,7 +1634,7 @@ action_export_xml_runs(void)
   int r;
 
   open_serve();
-  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_EXPORT_XML_RUNS, 0,
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_EXPORT_XML_RUNS, 0, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     set_cookie_if_needed();
@@ -1653,7 +1669,7 @@ action_dump_standings(void)
   int r;
 
   open_serve();
-  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_DUMP_STANDINGS, 0,
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_DUMP_STANDINGS, 0, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     set_cookie_if_needed();
@@ -1668,12 +1684,16 @@ action_dump_standings(void)
 static void
 action_submit_run(void)
 {
-  const unsigned char *p, *l, *t;
+  const unsigned char *p, *l, *prog_data;
   int prob_id, lang_id, variant, n;
+  size_t prog_size;
 
   if (!(p = cgi_param("problem"))) p = "";
   if (!(l = cgi_param("language"))) l = "";
-  if (!(t = cgi_param("file"))) t = "";
+  if (cgi_param_bin("file", &prog_size, &prog_data) < 0) {
+    operation_status_page(-1, _("Submission data is empty"), -1);
+    return;
+  }
 
   if (sscanf(p, "%d%n", &prob_id, &n) == 1 && !p[n]) {
     variant = 0;
@@ -1688,7 +1708,8 @@ action_submit_run(void)
   n = serve_clnt_submit_run(serve_socket_fd, SRV_CMD_PRIV_SUBMIT_RUN,
                             client_user_id,
                             global->contest_id, 0,
-                            client_ip, prob_id, lang_id, variant, t);
+                            client_ip, prob_id, lang_id, variant,
+                            prog_size, prog_data);
   operation_status_page(n, 0, -1);
   force_recheck_status = 1;
 }
@@ -1999,6 +2020,28 @@ action_test_resume(void)
 }
 
 static void
+action_print_suspend(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_PRINT_SUSPEND, 0, 0);
+  operation_status_page(r, 0, -1);
+  force_recheck_status = 1;
+}
+
+static void
+action_print_resume(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_PRINT_RESUME, 0, 0);
+  operation_status_page(r, 0, -1);
+  force_recheck_status = 1;
+}
+
+static void
 action_set_judgind_mode(void)
 {
   int r;
@@ -2107,6 +2150,68 @@ action_priv_print_run(void)
 }
 
 static void
+action_priv_download_run(void)
+{
+  unsigned char *s;
+  int r, n;
+
+  if (!(s = cgi_param("run_id"))
+      || sscanf(s, "%d%n", &r, &n) != 1
+      || s[n]
+      || r < 0
+      || r >= server_total_runs) {
+    operation_status_page(-1, "Invalid parameter", -1);
+    return;
+  }
+
+  open_serve();
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_PRIV_DOWNLOAD_RUN, r, 0,
+                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+  if (r < 0) {
+    set_cookie_if_needed();
+    client_put_header(stdout, 0, 0, global->charset, 1, 0, "Download error");
+    printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
+    client_put_footer(stdout, 0);
+  }
+  exit(0);
+}
+
+static void
+action_compare_runs(void)
+{
+  unsigned char *s;
+  int r, n, r2;
+
+  if (!(s = cgi_param("run_id"))
+      || sscanf(s, "%d%n", &r, &n) != 1
+      || s[n]
+      || r < 0
+      || r >= server_total_runs) {
+    operation_status_page(-1, "Invalid parameter", -1);
+    return;
+  }
+  if (!(s = cgi_param("run_id2"))
+      || sscanf(s, "%d%n", &r2, &n) != 1
+      || s[n]
+      || r2 < 0
+      || r2 >= server_total_runs) {
+    operation_status_page(-1, "Invalid parameter", -1);
+    return;
+  }
+
+  open_serve();
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_COMPARE_RUNS, r, r2,
+                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+  if (r < 0) {
+    set_cookie_if_needed();
+    client_put_header(stdout, 0, 0, global->charset, 1, 0, "Compare error");
+    printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
+    client_put_footer(stdout, 0);
+  }
+  exit(0);
+}
+
+static void
 action_reset_filter(void)
 {
   int r;
@@ -2211,7 +2316,7 @@ view_clar_if_asked()
                     "Clarification %d", clarid);
   fflush(stdout);
   open_serve();
-  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_CLAR, clarid,
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_CLAR, clarid, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
@@ -2752,6 +2857,12 @@ main(int argc, char *argv[])
     case ACTION_TEST_RESUME:
       action_test_resume();
       break;
+    case ACTION_PRINT_SUSPEND:
+      action_print_suspend();
+      break;
+    case ACTION_PRINT_RESUME:
+      action_print_resume();
+      break;
     case ACTION_UPDATE_STANDINGS_1:
       confirm_update_standings();
       break;
@@ -2896,6 +3007,12 @@ main(int argc, char *argv[])
   case ACTION_PRINT_PRIV_RUN:
     action_priv_print_run();
     break;
+  case ACTION_PRIV_DOWNLOAD_RUN:
+    action_priv_download_run();
+    break;
+  case ACTION_COMPARE_RUNS:
+    action_compare_runs();
+    break;
   }
   log_out_if_asked();
   view_source_if_asked();
@@ -2946,6 +3063,10 @@ main(int argc, char *argv[])
     }
     printf("</td><td>");
     print_testing_suspend_button();
+    if (server_printing_enabled) {
+      printf("</td><td>");
+      print_printing_suspend_button();
+    }
     if (server_score_system == SCORE_OLYMPIAD) {
       printf("</td><td>");
       print_judging_mode_button(server_olympiad_judging_mode);
