@@ -232,6 +232,8 @@ enum
   };
 #endif /* __USERLIST_UC_ENUM_DEFINED__ */
 
+typedef unsigned long userlist_login_hash_t;
+
 struct userlist_member
 {
   struct xml_tree b;
@@ -318,6 +320,8 @@ struct userlist_user
   unsigned char *name;
   unsigned char *email;
 
+  userlist_login_hash_t login_hash;
+
   struct userlist_passwd *register_passwd;
   struct userlist_passwd *team_passwd;
 
@@ -356,6 +360,20 @@ struct userlist_list
   int user_map_size;
   struct userlist_user **user_map;
   int member_serial;
+
+  /* login hash information */
+  size_t login_hash_size;
+  size_t login_hash_step;
+  size_t login_thresh;
+  size_t login_cur_fill;
+  struct userlist_user **login_hash_table;
+
+  /* login cookie information */
+  size_t cookie_hash_size;
+  size_t cookie_hash_step;
+  size_t cookie_thresh;
+  size_t cookie_cur_fill;
+  struct userlist_cookie **cookie_hash_table;
 };
 
 // unparse modes
@@ -403,8 +421,16 @@ int userlist_delete_member_field(struct userlist_member *m, int field_id);
 int userlist_get_user_field_str(unsigned char *buf, size_t len,
                                 struct userlist_user *u, int field_id,
                                 int convert_null);
-int userlist_set_user_field_str(struct userlist_user *u, int field_id,
+int userlist_set_user_field_str(struct userlist_list *lst,
+                                struct userlist_user *u, int field_id,
                                 unsigned char const *field_val);
 int userlist_delete_user_field(struct userlist_user *u, int field_id);
+
+userlist_login_hash_t userlist_login_hash(const unsigned char *p);
+int userlist_build_login_hash(struct userlist_list *p);
+int userlist_build_cookie_hash(struct userlist_list *p);
+
+int userlist_cookie_hash_add(struct userlist_list *, struct userlist_cookie *);
+int userlist_cookie_hash_del(struct userlist_list *, struct userlist_cookie *);
 
 #endif /* __USERLIST_H__ */
