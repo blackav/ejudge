@@ -7,17 +7,11 @@
 /* a suffix for CGI programs */
 #undef CGI_PROG_SUFFIX
 
-/* path (absolute or relative) to CGI configuration files */
-#undef CGI_DATA_PATH
-
 /* whether internalization is enabled */
 #undef CONF_HAS_LIBINTL
 
 /* the default path to the l10n_dir */
 #undef EJUDGE_LOCALE_DIR
-
-/* the default location of the ejudge.xml configuration file */
-#undef EJUDGE_XML_PATH
 
 /* the path to the `serve' program */
 #undef EJUDGE_SERVE_PATH
@@ -34,8 +28,17 @@
 /* the default path to the userlist-serve socket */
 #undef EJUDGE_SOCKET_PATH
 
+/* the path to the ejudge configuration directory */
+#undef EJUDGE_CONF_DIR
+
+/* the default location of the ejudge.xml configuration file */
+#undef EJUDGE_XML_PATH
+
 /* the default path to the contests configuration directory */
 #undef EJUDGE_CONTESTS_DIR
+
+/* path (absolute or relative) to CGI configuration files */
+#undef CGI_DATA_PATH
 
 #endif /* __CONFIG_H__ */
 
