@@ -122,6 +122,7 @@ static struct contest_list *contests;
 
 static int client_locale_id;
 
+static unsigned char *self_url;
 static unsigned char *user_login;
 static unsigned char *user_password;
 static int user_usecookies;
@@ -166,8 +167,7 @@ static char const homepage_accept_chars[] =
 static char const password_accept_chars[] =
 " !#$%\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_"
 "`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿"
-"ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõö÷øùúûüışÿ"
-;
+"ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõö÷øùúûüışÿ";
 
 struct field_desc
 {
@@ -607,6 +607,20 @@ initialize(int argc, char const *argv[])
     client_not_configured(0, "contests database not parsed");
   }
   parse_user_ip();
+
+  // construct self-reference URL
+  {
+    unsigned char *http_host = getenv("HTTP_HOST");
+    unsigned char *server_port = getenv("SERVER_PORT");
+    unsigned char *script_name = getenv("SCRIPT_NAME");
+
+    if (!http_host) http_host = "localhost";
+    if (!server_port) server_port = "80";
+    if (!script_name) script_name = "/cgi-bin/register";
+    snprintf(fullname, sizeof(fullname),
+             "http://%s:%s%s", http_host, server_port, script_name);
+    self_url = xstrdup(fullname);
+  }
 }
 
 static int
@@ -908,14 +922,13 @@ logout_page(void)
 {
   char *armored_str;
   int armored_len;
-  char *self_url = "contest.cmc.msu.ru/cgi-bin/register";
 
   if (!check_password()) {
     put_cookie_header(0, 1);
     set_locale_by_id(client_locale_id);
     /* FIXME: construct self-reference URL */
-    printf("Refresh=0; url=http://%s?locale_id=%d\nContent-type: text/html\n\n", self_url, client_locale_id);
-    printf("<html><head><META HTTP-EQUIV=\"Refresh\" content=\"0; url=http://%s?locale_id=%d\"></head><body><A href=\"http://%s?locale_id=%d\">Redirecting to http://%s?locale_id=%d</A>\n", self_url, client_locale_id, self_url, client_locale_id, self_url, client_locale_id);
+    printf("Refresh=0; url=%s?locale_id=%d\nContent-type: text/html\n\n", self_url, client_locale_id);
+    printf("<html><head><META HTTP-EQUIV=\"Refresh\" content=\"0; url=%s?locale_id=%d\"></head><body><A href=\"%s?locale_id=%d\">Redirecting to %s?locale_id=%d</A>\n", self_url, client_locale_id, self_url, client_locale_id, self_url, client_locale_id);
     return;
   }
 
@@ -927,7 +940,7 @@ logout_page(void)
   set_locale_by_id(client_locale_id);
   client_put_header(config->charset, "%s, %s!",
                     _("Good-bye"), armored_str);
-  printf(_("<p>Clink <a href=\"http://%s?locale_id=%d\">on this link</a> to login again.</p>\n"),
+  printf(_("<p>Click <a href=\"%s?locale_id=%d\">on this link</a> to login again.</p>\n"),
          self_url,
          client_locale_id);
 }
@@ -2048,7 +2061,7 @@ registration_is_complete(void)
   char buf[512];
   char *p = buf;
 
-  p += sprintf(p, "%s?login=%s&action=%d", program_name, user_login,
+  p += sprintf(p, "%s?login=%s&action=%d", self_url, user_login,
                ACTION_LOGIN_ONLY_PAGE);
   if (client_locale_id >= 0)
     p += sprintf(p, "&locale_id=%d", client_locale_id);
@@ -2267,6 +2280,8 @@ main(int argc, char const *argv[])
     }
     puts("");
     cgi_print_param();
+    fflush(stdout);
+    system("printenv");
   }
 #endif
 
