@@ -260,6 +260,7 @@ struct section_problem_data
   int    team_enable_ce_view;
   int    team_show_judge_report;
   int    full_score;            /* score for complete solution */
+  int    variable_full_score;   /* is the full score is variable */
   int    test_score;            /* score for one test */
   int    run_penalty;           /* penalty for one run */
   int    use_corr;              /* whether the correct answers defined */
