@@ -827,7 +827,31 @@ permission_denied(void)
   printf("<p%s>%s</p>",
          par_style,
          _("Permission denied. You have typed invalid login, invalid password,"
-           " or do not have enough privileges."));
+           " invalid contest, or your host is banned."));
+  client_put_footer(stdout, footer_txt);
+  exit(0);
+}
+
+static void
+error_not_registered(void)
+{
+  set_cookie_if_needed();
+  client_put_header(stdout, header_txt, 0, global->charset, 1,
+                    client_locale_id, _("Not registered"));
+  printf("<p%s>%s</p>", par_style,
+         _("You are not registered for this contest."));
+  client_put_footer(stdout, footer_txt);
+  exit(0);
+}
+
+static void
+error_cannot_participate(void)
+{
+  set_cookie_if_needed();
+  client_put_header(stdout, header_txt, 0, global->charset, 1,
+                    client_locale_id, _("Cannot participate"));
+  printf("<p%s>%s</p>", par_style,
+         _("You cannot participate in this contest. Your registration is not confirmed, or you have been banned."));
   client_put_footer(stdout, footer_txt);
   exit(0);
 }
@@ -842,16 +866,6 @@ fatal_server_error(int r)
          gettext(userlist_strerror(-r)));
   client_put_footer(stdout, footer_txt);
   exit(0);
-}
-
-static int
-is_auth_error(int r)
-{
-  return r == -ULS_ERR_INVALID_LOGIN
-    || r == -ULS_ERR_INVALID_PASSWORD
-    || r == -ULS_ERR_NO_PERMS
-    || r == -ULS_ERR_NO_COOKIE
-    || r == -ULS_ERR_BAD_CONTEST_ID;
 }
 
 static int
@@ -928,7 +942,16 @@ authentificate(void)
       }
       return 1;
     }
-    if (!is_auth_error(r)) fatal_server_error(r);
+    if (r != -ULS_ERR_NO_COOKIE) {
+      switch (-r) {
+      case ULS_ERR_NOT_REGISTERED:
+        error_cannot_participate();
+      case ULS_ERR_CANNOT_PARTICIPATE:
+        error_not_registered();
+      default:
+        fatal_server_error(r);
+      }
+    }
     client_cookie = 0;
     need_set_cookie = 1;
   }
@@ -954,7 +977,16 @@ authentificate(void)
       }
       return 1;
     }
-    if (!is_auth_error(r)) fatal_server_error(r);
+    if (r != -ULS_ERR_NO_COOKIE) {
+      switch (-r) {
+      case ULS_ERR_NOT_REGISTERED:
+        error_cannot_participate();
+      case ULS_ERR_CANNOT_PARTICIPATE:
+        error_not_registered();
+      default:
+        fatal_server_error(r);
+      }
+    }
   }
 
   client_login = cgi_param("login");
@@ -978,8 +1010,22 @@ authentificate(void)
                                &client_sid,
                                &new_locale_id,
                                &client_team_name);
-  if (r < 0 && is_auth_error(r)) permission_denied();
-  if (r < 0) fatal_server_error(r);
+  if (r < 0) {
+    switch (-r) {
+    case ULS_ERR_INVALID_LOGIN:
+    case ULS_ERR_INVALID_PASSWORD:
+    case ULS_ERR_BAD_CONTEST_ID:
+    case ULS_ERR_IP_NOT_ALLOWED:
+    case ULS_ERR_NO_PERMS:
+      permission_denied();
+    case ULS_ERR_NOT_REGISTERED:
+      error_not_registered();
+    case ULS_ERR_CANNOT_PARTICIPATE:
+      error_cannot_participate();
+    default:
+      fatal_server_error(r);
+    }
+  }
   if (client_sid_mode == SID_COOKIE) {
     client_cookie = client_sid;
     need_set_cookie = 1;
