@@ -1,3 +1,393 @@
+2004-10-01  Alexander Chernov  <cher@ispras.ru>
+
+	* revinfo.c: <ctype.h> is included;
+	(struct verdb) new field `time' is added to store the release time;
+	(add_verdb) new parameter `rtime' is added to fill up the new
+	  `time' field;
+	(read_verdb) the new format of the version database (with added release
+	  date) is supported;
+	(write_verdb) the new format of the version database is used to write
+	  the database. The new format of the release database includes the
+	  release date.
+	(main) use of `add_verdb' is updated.
+
+	* TODO: *** empty log message ***
+
+	* prepare.c:
+	(set_defaults) is the value of the <root_dir> element of the
+	  ejudge.xml configuration file is set, this value is used as the
+	  default value for the `root_dir' global configuration variable.
+
+2004-09-30  Alexander Chernov  <cher@ispras.ru>
+
+	* TODO: *** empty log message ***
+
+2004-09-29  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* userlist_cfg.h:
+	(struct userlist_cfg) new fields added: `var_dir', `super_serve_log',
+	  `compile_log'.
+
+	* userlist_cfg.c: include of <reuse/osdeps.h> is added;
+	include of <limits.h> is added;
+	new configuration file elements: <var_dir>, <super_serve_log>,
+	  <compile_log>;
+	(tree_alloc_func) new elements are supported;
+	(userlist_cfg_parse) new elements are supported, their absolute
+	  paths are calculated using the value of <var_dir>, if necessary.
+
+	* ejudge-setup.c:
+	added support for tuning the value of <log_dir> value of the
+	  ejudge.xml configuration file.
+
+	* serve.c: <reuse/exec.h> is included;
+	(do_start_cmd) a new function, which executes the program, as
+	  specified in the `contest_start_cmd' global configuration
+	  variable;
+	(cmd_priv_command_0) `do_start_cmd' is called;
+	(do_loop) `do_start_cmd' is called.
+
+	* prepare.c, prepare.h:
+	new global configuration parameter: `contest_start_cmd';
+	(set_defaults) the `contest_start_cmd' is handled;
+	  the values of stand_header_file, stand_footer_file,
+	  stand2_header_file, stand2_footer_file, plog_header_file,
+	  plog_footer_file are treated as paths relative to
+	  conf_dir, if they are not absolute.
+
+	* contests.h: new element <conf_dir> is added.
+
+	* contests.c: <reuse/osdeps.h> is included;
+	<limits.h> is included;
+	new element <conf_dir> is supported;
+	(process_conf_file_path) new function, which process the given
+	  string, adding the value of the <conf_dir> element in front of
+	  the string, if the string is not an absolute path;
+	(parse_contest) <conf_dir> element is supported;
+	  <conf_dir> is processed, setting its default value to
+	  <root_dir>/conf;
+	  <register_header_file>, <register_footer_file>, <users_header_file>,
+	  <users_footer_file>, <team_header_file>, <team_footer_file>
+	  elemets are processed: if the value is a relative path, the
+	  <conf_dir> is added in front of this path.
+
+	* edit-userlist.c: 
+	(do_display_user_menu) memory leak is fixed.
+
+	* expat_iface.c: 
+	(end_hnd) memory leak is fixed.
+
+2004-09-27  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* prepare.c:
+	(set_defaults) the standard_checker is correctly inherited from the
+	  problem description while initializing the tester.
+
+	* master_html.c: 
+	(write_all_runs) "Add new run" link is generated;
+	(write_new_run_form) new function, which generates the "Add new run"
+	  form.
+
+	* master.c:
+	(client_server_down) a new function to report "Server is down"
+	  error;
+	(action_new_run) a new function to perform the "Add new run"
+	  command;
+	(parse_client_ip) moved to the clntutil module;
+	(initialize) call of `parse_client_ip' is updated;
+	(main) the "server down" condition is checked and the appropriate
+	  error is reported;
+	  new actions ACTION_NEW_RUN_FORM, ACTION_NEW_RUN are supported.
+
+	* prepare.c: "version.h" is included;
+	new global parameter `rounding_mode';
+	(set_defaults) `rounding_mode' global configuration variable is
+	  supported;
+	(parse_version_string) new function to parse the version string
+	  from version.h;
+	(prepare) new parameter `managed_flag' is added, which is set to 1
+	  by the caller, if the program is started from the super-serve
+	  program;
+	  new conditional variables `major', `minor', `patch', `build',
+	  `managed' are added.
+
+	* prepare.h: the constands defining the rounding mode are added;
+	(struct section_global_data) new fields `rounding_mode' and
+	  `rounding_mode_val' are added;
+	(prepare) function prototype is updated: a new parameter `managed_flag'
+	  is added.
+
+	* protocol.h: new commands added: NEW_RUN_FORM, NEW_RUN;
+	new flag PROT_SERVE_RUN_SOURCE_SET is added;
+	(struct prot_serve_pkt_run_info) new fields `ip', `run_src_len'
+	  are added.
+
+	* runlog.c:
+	(run_set_entry) editing of hidden runs before the start of the
+	  contest is supported.
+
+	* serve.c:
+	(cmd_view) the new `SRV_CMD_NEW_RUN_FORM' command is supported;
+	(cmd_edit_run) check for run_src_len == 0 is added;
+	(cmd_new_run) a new function to handle `SRV_CMD_NEW_RUN' command;
+	(packet_handlers) handlers for the new command mentioned above
+	  are added;
+	(main) call of `prepare' is updated, as the function now accepts
+	  an extra parameter, which is 1, if the program is running in
+	  the managed mode.
+
+	* team.c: (parse_client_ip) function is moved to clntutil module;
+	(initialize) call of `parse_client_ip' is updated;
+	(send_clar_if_asked) dead code is removed;
+	(client_server_down) a new function to report the "Server down"
+	  error;
+	(main) check for "Server down" condition is added. An attempt is
+	  made to open a connection to the server immediately. If the
+	  attempt fails, the "Server down" error is displayed.
+
+	* register.c:
+	(parse_user_ip) function is removed because superseded by the
+	  `parse_client_ip' function from the clntutil module;
+	(initialize) `parse_client_ip' is used instead of `parse_user_ip'.
+
+	* run.c: (main) call of `prepare' function is updated as the function
+	  prototype is changed.
+
+	* serve_clnt.h: (serve_clnt_new_run) new function prototype is added.
+
+	* clntutil.c: (parse_client_ip) return without value bug is fixed.
+
+	* printing.c:
+	(do_print_run) the `printer_name' field of the user information
+	  is used to direct the listing to the given printer queue.
+
+	* html.h: (write_new_run_form) new function prototype is added.
+
+	* html.c:
+	(sec_to_min) a new function, which converts seconds to minutes
+	  according to the current rounding mode;
+	(do_write_standings) the new `sec_to_min' function is used.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* compile.c:
+	(main) call of `prepare' function is updated as the function
+	  prototype is changed.
+
+	* clntutil.h: (parse_client_ip) new function prototype is added.
+
+	* clntutil.c:
+	(client_lookup_ip) hack for the IPv6 "::1" address is implemented;
+	(parse_client_ip) a new function, which is moved here from the
+	  main CGI applications source files (master.c, team.c, register.c,
+	  users.c).
+
+	* client_actions.h: two new actions added: NEW_RUN_FORM, NEW_RUN.
+
+	* userlist-server.c:
+	the logging output format is changed in almost all functions;
+	logging output is more terse if the daemon mode is enabled;
+	(main) the `-D' option is implemented, which switches the program
+	  into the daemon mode: the logging output is directed to the
+	  log file as specified by the <userlist_log> element of the
+	  ejudge.xml file, the program goes to background and detaches
+	  itself from the current controlling terminal.
+
+	* edit-userlist.c:
+	new `printer_name' user information field is supported;
+	(display_user) the same as above.
+
+	* userlist.c:
+	(userlist_get_user_field_str) support for `printer_name' field added;
+	(userlist_set_user_field_str) the same as above;
+	(userlist_delete_user_field) the same as above.
+
+	* userlist.h: support for `printer_name' user info field is added.
+
+	* userlist_cfg.c:
+	elements <admin_email> and <userlist_log> are supported.
+
+	* userlist_cfg.h:
+	(struct userlist_cfg) two new fields `admin_email' and `userlist_log'
+	  are added.
+
+	* userlist_xml.c:
+	support for new user element <printer_name> is added;
+	(node_free) the same as above;
+	(do_parse_user) the same as above;
+	(unparse_user) the same as above.
+
+	* users.c:
+	(parse_user_ip) function is removed because superseded by the
+	  `parse_client_ip' function from the clntutil module;
+	(initialize) `parse_client_ip' is used instead of `parse_user_ip'.
+
+2004-09-19  Alexander Chernov  <cher@ispras.ru>
+
+	* parsecfg.c:
+	(copy_param) `M' and `K' suffixes are supported for numbers, where
+	  K means factor of 1024, M - factor of 1024 * 1024.
+
+2004-09-18  Alexander Chernov  <cher@ispras.ru>
+
+	* userlist-server.c:
+	(cmd_priv_login) check, that the user is not registered for the
+	  specified contest is performed and the appropriate error code
+	  is returned;
+	(cmd_priv_check_cookie) the same as above;
+	(do_set_user_info) field `spelling' is supported.
+
+	* edit-userlist.c:
+	new `spelling' user information field is supported;
+	(display_user) the same as above;
+	(user_match) search in `spelling' field is performed in TEXT search.
+
+	* configure.ac: --with-festival option is supported;
+	script/festival is added to script lists.
+
+	* compile.c:
+	(do_loop) the terminating "0" in the compile packet parsed and checked.
+
+	* cher-configure: added --with-festival argument.
+
+	* master.c:
+	better error reporting is implemented, when a user has the neccessary
+	  administrative privileges, but is not registered for the contest;
+	(error_not_registered) new function to report "Not registered for
+	  the contest" error;
+	(error_cannot_participate) new function to report "Cannot participate"
+	  error;
+	(is_auth_error) removed, as no longer used;
+	(authentificate) proper handling of the server error code is
+	  implemented;
+	(initialize) `parse_param' is called with two extra parameters as the
+	  interface of the function is changed.
+
+	* parsecfg.c:
+	initial support for conditional compilation is implemented;
+	lots of new functions for recursive descent parsing of expression;
+	(parse_param) two new parameters are accepted, which contain
+	  values of predefined conditional variables;
+	  conditional compilation lines are handled, a conditional compilation
+	  line starts with `@'.
+
+	* parsecfg.h:
+	new type `cfg_cond_value_t' is defined to pass the values of
+	  conditional variables;
+	(parse_param) prototype changed: information about predefined
+	  conditional variables is accepted.
+
+	* prepare.c:
+	new global parameters: test_pat, corr_pat, info_pat, tgz_pat,
+	  extended_sound;
+	new problem parameters: spelling, test_pat, corr_pat, info_pat,
+	  tgz_pat;
+	(problem_init_func) `test_pat', `corr_pat', `info_pat', `tgz_pat'
+	  are initialized to "undefined" value;
+	(set_defaults) variable substitution is performed for `sound_player';
+	  `test_pat', `corr_pat', `info_pat', `tgz_pat' are handled;
+	(prepare) two variables: "host", "mode" are defined for conditional
+	  compilation during configuration file parsing;
+	  call of `parse_param' is updated since its interface is updated,
+	  the conditional variable information is passed to `parse_param'.
+
+	* prepare.h:
+	(struct section_global_data) new fields: `test_pat', `corr_pat',
+	  `info_pat', `tgz_pat', `extended_sound';
+	(struct section_problem_data) new fields: `spelling', `test_pat',
+	  `corr_pat', `info_pat', `tgz_pat'.
+
+	* run.c:
+	removed hard limit on the number of tests for a problem. The test info
+	  arrays are automatically adjusted to the maximal number of tests
+	  in contest problems.
+	(run_tests) added parameters `user_spelling' and `problem_spelling',
+	  which are passed unchanged to the sound generation program, if
+	  `extended_sound' global configuration variable is set;
+	  new problem configuration variables `test_pat', `corr_pat',
+	  `info_pat' are used to generate the name of input test file, if they
+	  are set;
+	  if `extended_sound' global configuration variables is set, the
+	  sound generator is called with parameters: run status, test number,
+	  problem spelling, user spelling. It may be used by speech generator;
+	(struct run_packet_bin) new structure to hold the run packet;
+	(parse_packet) a new function to parse the run packet in the format,
+	  the results is returned in `struct run_packet_bin';
+	(do_loop) `parse_packet' is used to read the run packet;
+	(count_files) new parameter `pat' is added to specify the files
+	  pattern;
+	(check_config) new problem configuration variables `test_pat',
+	  `corr_pat', `info_pat' are supported;
+	  array for test information is extended automatically, if needed.
+
+	* runlog.c:
+	(runlog_check) check, that non-started contest does not have run
+	  is removed, since administrative runs are possible.
+
+	* serve.c:
+	(write_run_packet) new function to generate a run control packet in
+	  the new format. The new format allows passing arbitrary strings
+	  and includes new user spelling and problem spelling strings for
+	  use in a speech generator;
+	(read_compile_packet) the new `write_run_packet' function is used
+	  to generate a run packet; user spelling and problem spelling
+	  information is passed to that function;
+	(queue_compile_request) the compile packet format is slightly
+	  changed: the terminator "0" is written after all the data.
+
+	* team.c:
+	(initialize) `parse_param' call is updated due to interface change.
+
+	* userlist.h: support for `spelling' user info field is added.
+
+	* userlist_xml.c: support for new user element <spelling> is added;
+	(node_free) the same as above;
+	(do_parse_user) the same as above;
+	(unparse_user) the same as above.
+
+	* userlist.c:
+	(userlist_get_user_field_str) support for 'spelling' field added;
+	(userlist_set_user_field_str) the same as above;
+	(userlist_delete_user_field) the same as above.
+
+2004-09-17  Alexander Chernov  <cher@ispras.ru>
+
+	* unicorn-configure: initial revision
+
+2004-09-09  Alexander Chernov  <cher@ispras.ru>
+
+	* cdeps.c: Fixes for reuse-4 compatibility
+
+2004-09-05  Alexander Chernov  <cher@ispras.ru>
+
+	* super-serve.c:
+	(print_info) the function is commented out since is not used.
+
+	* sha.h, sha.c: reuse v4 is supported.
+
+	* serve.c, ncurses_utils.c, edit-userlist.c:
+	XALLOCAZ macro is checked for previous definition.
+
+	* configure.ac: reuse v4 is supported.
+
+	* clean-users.c:
+	(print_info) the function is commented out since is not used.
+
+	* cher-configure: *** empty log message ***
+
+	* Makefile.in:
+	since the reuse 4.0 does not set REUSE_CONF variable, the variable
+	is not used. The stuff for win32 compilation is commented out.
+
+2004-08-25  Alexander Chernov  <cher@ispras.ru>
+
+	* revinfo.c: calls of internationalization functions are removed;
+	one error message is fixed.
+
 2004-06-20  Alexander Chernov  <cher@ispras.ru>
 
 	* INSTALL, INSTALL.RUS, ejudge.ru_RU.KOI8-R.po:

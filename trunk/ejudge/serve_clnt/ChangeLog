@@ -1,3 +1,18 @@
+2004-09-27  Alexander Chernov  <cher@ispras.ru>
+
+	* edit_run.c:
+	(serve_clnt_edit_run) the old function is renamed to the function
+	  `do_serve_clnt_edit_run' and generalized to accept `cmd',
+	  `run_size', `run_src', `ip' parameters;
+	(serve_clnt_edit_run) the new function is just a wrapper around
+	  `do_serve_clnt_edit_run';
+	(serve_clnt_new_run) a new function to pass to the server
+	  `SRV_CMD_NEW_RUN' command.
+
+	* view.c:
+	(serve_clnt_view) SRV_CMD_NEW_RUN_FORM is added to the list of
+	  the allowed commands.
+
 2004-06-19  Alexander Chernov  <cher@ispras.ru>
 
 	* do_pass_fd.c, list_runs.c, open.c, pass_fd.c, recv_packet.c, send_packet.c, userlist_cmd.c:
