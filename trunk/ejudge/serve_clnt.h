@@ -84,4 +84,20 @@ int serve_clnt_team_page(int sock_fd,
                          unsigned char const *simple_form,
                          unsigned char const *multi_form);
 
+int
+serve_clnt_master_page(int sock_fd,
+                       int out_fd,
+                       int user_id,
+                       int contest_id,
+                       int locale_id,
+                       unsigned long ip,
+                       unsigned int flags,
+                       int first_run,
+                       int last_run,
+                       int first_clar,
+                       int last_clar,
+                       unsigned char const *self_url,
+                       unsigned char const *filter_expr,
+                       unsigned char const *hidden_vars);
+
 #endif /* __SERVE_CLNT_H__ */
