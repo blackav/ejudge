@@ -164,6 +164,8 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(report_error_code, "d"),
   GLOBAL_PARAM(auto_short_problem_name, "d"),
   GLOBAL_PARAM(enable_continue, "d"),
+  GLOBAL_PARAM(checker_real_time_limit, "d"),
+  GLOBAL_PARAM(compile_real_time_limit, "d"),
 
   GLOBAL_PARAM(standings_team_color, "s"),
   GLOBAL_PARAM(standings_virtual_team_color, "s"),
@@ -189,6 +191,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(run_penalty, "d"),
   PROBLEM_PARAM(use_corr, "d"),
   PROBLEM_PARAM(tests_to_accept, "d"),
+  PROBLEM_PARAM(checker_real_time_limit, "d"),
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
@@ -221,6 +224,7 @@ static struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(cmd, "s"),
 
   LANGUAGE_PARAM(compile_dir, "s"),
+  LANGUAGE_PARAM(compile_real_time_limit, "s"),
 
   { 0, 0, 0, 0 }
 };
@@ -271,6 +275,7 @@ static int tester_counter;
 static void problem_init_func(struct generic_section_config *);
 static void tester_init_func(struct generic_section_config *);
 static void global_init_func(struct generic_section_config *);
+static void language_init_func(struct generic_section_config *);
 
 static struct config_section_info params[] =
 {
@@ -279,7 +284,7 @@ static struct config_section_info params[] =
   { "problem", sizeof(struct section_problem_data), section_problem_params,
     &problem_counter, problem_init_func },
   { "language",sizeof(struct section_language_data),section_language_params,
-    &language_counter },
+    &language_counter, language_init_func },
   { "tester", sizeof(struct section_tester_data), section_tester_params,
     &tester_counter, tester_init_func },
   { NULL, 0, NULL }
@@ -361,6 +366,8 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_TEAM_DOWNLOAD_TIME 30
 #define DFLT_G_SERVE_SOCKET       "serve"
 #define DFLT_G_INACTIVITY_TIMEOUT 120
+#define DFLT_G_CHECKER_REAL_TIME_LIMIT 30
+#define DFLT_G_COMPILE_REAL_TIME_LIMIT 30
 
 #define DFLT_P_INPUT_FILE         "input"
 #define DFLT_P_OUTPUT_FILE        "output"
@@ -384,6 +391,16 @@ global_init_func(struct generic_section_config *gp)
   p->team_download_time = -1;
   p->ignore_duplicated_runs = -1;
   p->inactivity_timeout = -1;
+  p->checker_real_time_limit = -1;
+  p->compile_real_time_limit = -1;
+}
+
+static void
+language_init_func(struct generic_section_config *gp)
+{
+  struct section_language_data *p = (struct section_language_data*) gp;
+
+  p->compile_real_time_limit = -1;
 }
 
 static void
@@ -399,6 +416,7 @@ problem_init_func(struct generic_section_config *gp)
   p->test_sfx[0] = 1;
   p->corr_sfx[0] = 1;
   p->run_penalty = -1;
+  p->checker_real_time_limit = -1;
 }
 
 static void
@@ -926,6 +944,22 @@ set_defaults(int mode)
     global->tests_to_accept = 1;
   }
 
+  if (mode == PREPARE_COMPILE) {
+    if (global->compile_real_time_limit == -1) {
+      global->compile_real_time_limit = DFLT_G_COMPILE_REAL_TIME_LIMIT;
+      info("global.compile_real_time_limit set to %d",
+           global->compile_real_time_limit);
+    }
+  }
+
+  if (mode == PREPARE_RUN) {
+    if (global->checker_real_time_limit == -1) {
+      global->checker_real_time_limit = DFLT_G_CHECKER_REAL_TIME_LIMIT;
+      info("global.checker_real_time_limit set to %d",
+           global->checker_real_time_limit);
+    }
+  }
+
   if (mode == PREPARE_SERVE) {
     if (!global->charset[0]) {
       pathcpy(global->charset, DFLT_G_CHARSET);
@@ -1070,6 +1104,11 @@ set_defaults(int mode)
       }
       pathmake4(langs[i]->cmd,global->script_dir, "/", langs[i]->cmd, NULL);
       info("language.%d.cmd is %s", i, langs[i]->cmd);
+      if (langs[i]->compile_real_time_limit == -1) {
+        langs[i]->compile_real_time_limit = global->compile_real_time_limit;
+        info("language.%d.compile_real_time_limit is inherited from global (%d)", i, langs[i]->compile_real_time_limit);
+      }
+      ASSERT(langs[i]->compile_real_time_limit >= 0);
     }
   }
 
@@ -1321,6 +1360,17 @@ set_defaults(int mode)
       if (probs[i]->use_corr == -1) {
         probs[i]->use_corr = 0;
       }
+      if (probs[i]->checker_real_time_limit == -1 && si != -1
+          && abstr_probs[si]->checker_real_time_limit != -1) {
+        probs[i]->checker_real_time_limit = abstr_probs[si]->checker_real_time_limit;
+        info("problem.%s.checker_real_time_limit inherited from problem.%s (%d)", ish, sish, probs[i]->checker_real_time_limit);
+      }
+      if (probs[i]->checker_real_time_limit == -1) {
+        probs[i]->checker_real_time_limit = global->checker_real_time_limit;
+        info("problem.%s.checker_real_time_limit inherited from global (%d)",
+           ish, probs[i]->checker_real_time_limit);
+      }
+      ASSERT(probs[i]->checker_real_time_limit >= 0);
     }
 
     if (probs[i]->test_sets) {
