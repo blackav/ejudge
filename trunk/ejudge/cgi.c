@@ -175,21 +175,12 @@ do_cgi_read(void)
 }
 
 static void
-bad_request(void)
+bad_request(char const *charset)
 {
-  /*
-  puts("Content-Type: text/html; charset: KOI8-R\n");
-  printf("<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=KOI8-R\"><title>Неверные данные</title></head><body>");
-  printf("<h1>Неверные данные</h1>");
-  printf("<p>Ваш браузер послал данные в формате,"
-         " который эта программа не может разобрать."
-         " Пожалуйста, обратитесь по адресу "
-         "<a href=\"mailto:webadmin@contest.cmc.msu.ru\">"
-         "webadmin@contest.cmc.msu.ru</a>.</p>");
-  printf("</body></html>");
-  */
-  printf("Content-Type: %s\n\n", _("text/html"));
-  printf("<html><head><title>%s</title></head><body><h1>%s</h1><p>",
+  if (!charset) charset = "iso8859-1";
+
+  printf("Content-Type: text/html; charset = %s\n\n", charset);
+  printf("<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1><p>", charset,
          _("Bad data"), _("Bad data"));
   printf(_("Your browser has sent the data in the format"
            " that this program cannot parse."
@@ -198,23 +189,19 @@ bad_request(void)
 }
 
 static void
-request_too_large(void)
+request_too_large(char const *charset)
 {
-  /*
-  puts("Content-Type: text/html; charset: KOI8-R\n");
-  printf("<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=KOI8-R\"><title>Запрос не принят</title></head><body>");
-  printf("<h1>Запрос не принят</h1>");
-  printf("<p>Ваш запрос не принят, так как объем данных превышает максимально допустимый.</p></body></html>");
-  */
-  printf("Content-Type: %s\n\n", _("text/html"));
-  printf("<html><head><meta http-equiv=\"Content-Type\" content=\"%s\"><title>%s</title></head><body><h1>%s</h1><p>",
-         _("text/html"), _("Request is rejected"), _("Request is rejected"));
+  if (!charset) charset = "iso8859-1";
+
+  printf("Content-Type: text/html; charset=%s\n\n", charset);
+  printf("<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1><p>",
+         charset, _("Request is rejected"), _("Request is rejected"));
   printf(_("Your request has been rejected for its data size exceeds the allowed maximum."));
   printf("</p></body></html>\n");
 }
 
 static int
-parse_multipart(void)
+parse_multipart(char const *charset)
 {
   static char const mp2[] = "multipart/form-data; boundary=";
   static char const s3[] = "content-disposition:";
@@ -236,7 +223,7 @@ parse_multipart(void)
   if (!ct) return -1;
   if (strncmp(ct, mp2, sizeof(mp2) - 1)) {
     fprintf(stderr, _("parse_multipart: cannot parse CONTENT_TYPE"));
-    bad_request();
+    bad_request(charset);
     exit(0);
   }
   boundary = ct + sizeof(mp2) - 1;
@@ -245,11 +232,11 @@ parse_multipart(void)
   cl = getenv("CONTENT_LENGTH");
   if (!cl || sscanf(cl, "%d%n", &content_length, &n) != 1 || cl[n]) {
     fprintf(stderr, _("parse_multipart: cannot parse CONTENT_LENGTH"));
-    bad_request();
+    bad_request(charset);
     exit(0);
   }
   if (content_length > 100000) {
-    request_too_large();
+    request_too_large(charset);
     exit(0);
   }
 
@@ -260,14 +247,14 @@ parse_multipart(void)
   llen = strlen(lbuf);
   if (llen == sizeof(lbuf) - 1 && lbuf[llen - 1] != '\n') {
     fprintf(stderr, _("parse_multipart: boundary string too long\n"));
-    bad_request();
+    bad_request(charset);
     exit(0);
   }
   lbuf[--llen] = 0;
   if (lbuf[llen - 1] == '\r') lbuf[--llen] = 0;
   if (lbuf[0] != '-' || lbuf[1] != '-' || strcmp(boundary, lbuf + 2)) {
     fprintf(stderr, "got: %s(%d)\n", lbuf, strlen(lbuf));
-    bad_request();
+    bad_request(charset);
     exit(0);
   }
   while (1) {
@@ -278,7 +265,7 @@ parse_multipart(void)
       llen = strlen(lbuf);
       if (llen == sizeof(lbuf) - 1 && lbuf[llen - 1] != '\n') {
         fprintf(stderr, _("parse_multipart: header string too long"));
-        bad_request();
+        bad_request(charset);
         exit(0);
       }
       lbuf[--llen] = 0;
@@ -297,7 +284,7 @@ parse_multipart(void)
             while (*q != '\"' && *q != 0) q++;
             if (!*q) {
               fprintf(stderr, _("unexpected EOLN: %s\n"), lbuf);
-              bad_request();
+              bad_request(charset);
               exit(0);
             }
             /* get parameter name */
@@ -310,19 +297,19 @@ parse_multipart(void)
             name_buf[name_u] = 0;
           } else {
             fprintf(stderr, _("name= expected: %s\n"), lbuf);
-            bad_request();
+            bad_request(charset);
             exit(0);
           }
         } else {
           fprintf(stderr, _("unknown content disposition: %s\n"), lbuf);
-          bad_request();
+          bad_request(charset);
           exit(0);
         }
       } else if (!strncasecmp(s6, lbuf, sizeof(s6) - 1)) {
         fprintf(stderr, _("ignored header: %s\n"), lbuf);
       } else {
         fprintf(stderr, _("unknown header: <%s>\n"), lbuf);
-        bad_request();
+        bad_request(charset);
         exit(0);
       }
     }
@@ -337,7 +324,7 @@ parse_multipart(void)
       c = getchar();
       if (c == EOF) {
         fprintf(stderr, _("unexpected EOF\n"));
-        bad_request();
+        bad_request(charset);
         exit(0);
       }
       if (value_u >= value_a) {
@@ -369,7 +356,7 @@ parse_multipart(void)
       c = getchar();
       if (c == '-') break;
       fprintf(stderr, _("oops: only one '-' after boundary\n"));
-      bad_request();
+      bad_request(charset);
       exit(0);
     } else {
       ungetc(c, stdin);
@@ -396,12 +383,13 @@ static char const multipart[] = "multipart/form-data;";
 /**
  * NAME:    cgi_read
  * PURPOSE: read all the given CGI parameters
+ * ARGS:    charset - character set to report errors
  * RETURN:   0 - OK,
  *          -1 - error
  * NOTE:    parse routines write error messages directly to stderr
  */
 int
-cgi_read(void)
+cgi_read(char const *charset)
 {
   char *ct = 0;
   query = getenv("QUERY_STRING");
@@ -412,7 +400,7 @@ cgi_read(void)
   ct = getenv("CONTENT_TYPE");
   if (ct && !strncmp(ct, multipart, sizeof(multipart) - 1)) {
     /* got a multipart/form-data */
-    return parse_multipart();
+    return parse_multipart(charset);
   }
   source = 1;
   if (do_cgi_read() < 0) return -1;

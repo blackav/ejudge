@@ -137,16 +137,14 @@ client_transaction(char *packet_name, char const *cmd,
 
 
 void
-client_put_header(char const *format, ...)
+client_put_header(char const *coding, char const *format, ...)
 {
   va_list args;
 
+  if (!coding) coding = "iso8859-1";
+
   va_start(args, format);
-  /*
-  fputs("Content-Type: text/html; charset: KOI8-R\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=KOI8-R\"><title>\n", stdout);
-  */
-  fprintf(stdout, "Content-Type: %s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"%s\"><title>\n",
-          _("text/html"), _("text/html"));
+  fprintf(stdout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>\n", coding, coding);
   vfprintf(stdout, format, args);
   fputs("\n</title></head><body><h1>\n", stdout);
   vfprintf(stdout, format, args);
@@ -158,7 +156,7 @@ client_put_footer(void)
 {
   puts("<hr>");
   printf(_("<p>This is <b>ejudge</b> contest administration system, version %s, compiled %s.\n"
-           "<p>This program is copyright (C) 2000 Alexander Chernov.\n"
+           "<p>This program is copyright (C) 2000,2001 Alexander Chernov.\n"
            "<p>"
            "This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.\n"
            "<p>You can download the latest version from <a href=\"%s\">this site</a>.\n"), 
@@ -234,35 +232,26 @@ client_time_to_str(char *buf, unsigned long time)
 }
 
 void
-client_access_denied(void)
+client_access_denied(char const *charset)
 {
-  /*
-  client_put_header("В доступе отказано");
-  puts("<p>Вы не имеете права пользоваться этим сервисом.</p>");
-  */
-  client_put_header(_("Access denied"));
+  client_put_header(charset, _("Access denied"));
   printf("<p>%s</p>", _("You do not have permissions to use this service."));
   client_put_footer();
   exit(0);
 }
 
 void
-client_not_configured(char const *str)
+client_not_configured(char const *charset, char const *str)
 {
   write_log(0, LOG_ERR, (char*) str);
-  /*
-  client_put_header("Программа несконфигурирована");
-  puts("<p>Программа несконфигурирована и непригодна для работы."
-         "<p>Заходите попозже.");
-  */
-  client_put_header(_("Service is not available"));
+  client_put_header(charset, _("Service is not available"));
   printf("<p>%s</p>", _("Service is not available. Please, come later."));
   client_put_footer();
   exit(0);
 }
 
 int
-client_check_server_status(char const *path, int lag)
+client_check_server_status(char const *charset, char const *path, int lag)
 {
   FILE   *f = 0;
 
@@ -288,21 +277,13 @@ client_check_server_status(char const *path, int lag)
   return 1;
 
  bad_server:
-  /*
-  client_put_header("Несовместимый сервер");
-  puts("<p>Ошибка конфигурации сервера.");
-  */
-  client_put_header(_("Incompatible server"));
+  client_put_header(charset, _("Incompatible server"));
   printf("<p>%s</p>", _("Server configuration error."));
   client_put_footer();
   exit(0);
 
  server_down:
-  /*
-  client_put_header("Сервер не работает");
-  puts("<p>Сервер не работает. Заходите попозже.");
-  */
-  client_put_header(_("Server is down"));
+  client_put_header(charset, _("Server is down"));
   printf("<p>%s</p>", _("Server is down. Please, come later."));
   client_put_footer();
   exit(0);
@@ -339,25 +320,21 @@ client_print_server_status(int read_only, char const *form_start,
   if (!read_only) puts(form_start);
   puts("<table border=\"0\">");
 
-  //printf("<tr><td>Время сервера:</td><td>%s</td>",str_serv_time);
   printf("<tr><td>%s:</td><td>%s</td>", _("Server time"), str_serv_time);
   if (!read_only) puts("<td>&nbsp;</td><td>&nbsp;</td>");
   puts("</tr>");
 
-  //printf("<tr><td>Время клиента:</td><td>%s</td>", str_clnt_time);
   printf("<tr><td>%s:</td><td>%s</td>", _("Client time"), str_clnt_time);
   if (!read_only) puts("<td>&nbsp;</td><td>&nbsp;</td>");
   puts("</tr>");
 
   if (!server_start_time) {
-    //puts("<tr><td colspan=\"2\"><b><big>Тур не начался</big></b></td>");
     printf("<tr><td colspan=\"2\"><b><big>%s</big></b></td>\n",
          _("Contest is not started"));
     if (!read_only) printf("<td>&nbsp;</td><td><input type=\"submit\" name=\"start\" value=\"%s\"></td>", _("start"));
     puts("</tr>");
   } else {
     client_time_to_str(str_strt_time, server_start_time);
-    //printf("<tr><td>Время начала турнира:</td><td>%s</td>", str_strt_time);
     printf("<tr><td>%s:</td><td>%s</td>",
            _("Contest start time"), str_strt_time);
     if (!read_only) {
@@ -373,13 +350,10 @@ client_print_server_status(int read_only, char const *form_start,
 
   if (!server_start_time) {
     if (!server_sched_time) {
-      //strcpy(str_schd_time, "Не установлено");
       strcpy(str_schd_time, _("Not set"));
     } else {
       client_time_to_str(str_schd_time, server_sched_time);
     }
-    //printf("<tr><td>Запланированное время начала:</td><td>%s</td>",
-    //       str_schd_time);
     printf("<tr><td>%s:</td><td>%s</td>",
            _("Planned start time"),
            str_schd_time);
@@ -391,7 +365,6 @@ client_print_server_status(int read_only, char const *form_start,
   }
 
   duration_str(server_duration, str_duration, 0);
-  //printf("<tr><td>Продолжительность:</td><td>%s</td>", str_duration);
   printf("<tr><td>%s:</td><td>%s</td>", _("Duration"), str_duration);
   if (!read_only) {
     if (!server_stop_time)
@@ -404,21 +377,18 @@ client_print_server_status(int read_only, char const *form_start,
 
   if (server_start_time && server_duration) {
     client_time_to_str(str_end_time, server_start_time + server_duration);
-    //printf("<tr><td>Время окончания:</td><td>%s</td>", str_end_time);
     printf("<tr><td>%s:</td><td>%s</td>", _("End time"), str_end_time);
     if (!read_only) puts("<td>&nbsp;</td><td>&nbsp;</td>");
     puts("</tr>");
 
     if (!server_stop_time) {
       duration_str(server_cur_time - server_start_time, str_el_dur, 0);
-      //printf("<tr><td>Прошедшее время:</td><td>%s</td>", str_el_dur);
       printf("<tr><td>%s:</td><td>%s</td>", _("Elapsed time"), str_el_dur);
       if (!read_only) puts("<td>&nbsp;</td><td>&nbsp</td>");
       puts("</tr>");
 
       duration_str(server_start_time + server_duration - server_cur_time,
                    str_left_dur, 0);
-      //printf("<tr><td>Оставшееся время:</td><td>%s</td>", str_left_dur);
       printf("<tr><td>%s:</td><td>%s</td>",
              _("Remaining time"), str_left_dur);
       if (!read_only) puts("<td>&nbsp;</td><td>&nbsp</td>");
