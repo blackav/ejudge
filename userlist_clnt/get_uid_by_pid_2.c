@@ -35,6 +35,7 @@ userlist_clnt_get_uid_by_pid_2(struct userlist_clnt *clnt,
   int exp_len, act_login_len, act_name_len;
   unsigned char *login_ptr, *name_ptr;
   int r;
+  void *void_in = 0;
 
   out_size = sizeof(*out);
   out = alloca(out_size);
@@ -44,9 +45,10 @@ userlist_clnt_get_uid_by_pid_2(struct userlist_clnt *clnt,
   out->system_gid = system_gid;
   out->system_pid = system_pid;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
-  if ((r = userlist_clnt_recv_packet(clnt, &in_size, (void*) &in)) < 0)
+  if ((r = userlist_clnt_recv_packet(clnt, &in_size, &void_in)) < 0)
     return r;
-  if (in_size < sizeof(struct userlist_packet)) {
+  in = void_in;
+  if (in_size < sizeof(struct userlist_pk_uid_2)) {
     xfree(in);
     return -ULS_ERR_PROTOCOL;
   }
