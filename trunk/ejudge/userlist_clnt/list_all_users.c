@@ -19,6 +19,7 @@
 
 int
 userlist_clnt_list_all_users(struct userlist_clnt *clnt,
+                             int cmd,
                              int contest_id,
                              unsigned char **p_info)
 {
@@ -29,7 +30,10 @@ userlist_clnt_list_all_users(struct userlist_clnt *clnt,
   out_size = sizeof(*out);
   out = alloca(out_size);
   memset(out, 0, out_size);
-  out->request_id = ULS_LIST_ALL_USERS;
+  if (cmd != ULS_LIST_ALL_USERS && cmd != ULS_LIST_STANDINGS_USERS) {
+    return -ULS_ERR_PROTOCOL;
+  }
+  out->request_id = cmd;
   out->contest_id = contest_id;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
   if ((r = userlist_clnt_recv_packet(clnt, &in_size, (void*) &in)) < 0)
