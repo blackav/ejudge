@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,7 @@
 #include "client_actions.h"
 #include "copyright.h"
 #include "archive_paths.h"
+#include "team_extra.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -232,6 +233,32 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
   fputs("</table>\n", f);
 }
 
+static unsigned char *
+team_clar_flags(int user_id, int clar_id, int flags, int from, int to)
+{
+  if (from != user_id) {
+    if (!team_extra_get_clar_status(user_id, clar_id)) return "N";
+    else return "&nbsp;";
+  }
+  if (!flags) return "U";
+  return clar_flags_html(flags, from, to, 0, 0);
+}
+
+static int
+count_unread_clars(int user_id)
+{
+  int i, total = 0, from, to;
+
+  for (i = clar_get_total() - 1; i >= 0; i--) {
+    if (clar_get_record(i, 0, 0, 0, &from, &to, 0, 0) < 0)
+      continue;
+    if (to > 0 && to != user_id) continue;
+    if (from != user_id && !team_extra_get_clar_status(user_id, i))
+      total++;
+  }
+  return total;
+}
+
 void
 new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
                      int sid_mode, unsigned long long sid,
@@ -291,7 +318,7 @@ new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
     }
     fputs("<tr>", f);
     fprintf(f, "<td>%d</td>", i);
-    fprintf(f, "<td>%s</td>", clar_flags_html(flags, from, to, 0, 0));
+    fprintf(f, "<td>%s</td>", team_clar_flags(uid, i, flags, from, to));
     fprintf(f, "<td>%s</td>", dur_str);
     fprintf(f, "<td>%zu</td>", size);
     if (!from) {
@@ -358,6 +385,10 @@ new_write_user_clar(FILE *f, int uid, int cid)
   }
   if (from > 0 && from != uid) return -SRV_ERR_ACCESS_DENIED;
   if (to > 0 && to != uid) return -SRV_ERR_ACCESS_DENIED;
+
+  if (from != uid) {
+    team_extra_set_clar_status(uid, cid);
+  }
 
   sprintf(cname, "%06d", cid);
   if (generic_read_file(&csrc, 0, &csize, 0,
@@ -1585,6 +1616,7 @@ write_team_page(FILE *f, int user_id,
   unsigned char dl_time_str[128];
   time_t current_time = time(0);
   unsigned char *prob_str;
+  int unread_clars = 0;
 
   if (global->virtual) {
     time_t dur;
@@ -1654,6 +1686,14 @@ write_team_page(FILE *f, int user_id,
     }
     print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
                       0, 0, 0);
+  }
+
+  if (server_start && (!global->disable_clars || !global->disable_team_clars)){
+    unread_clars = count_unread_clars(user_id);
+    if (unread_clars > 0) {
+      fprintf(f, _("<hr><big><b>You have %d unread message(s)!</b></big>\n"),
+              unread_clars);
+    }
   }
 
   if (server_start && !server_end) {
