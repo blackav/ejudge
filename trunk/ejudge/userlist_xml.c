@@ -1548,7 +1548,7 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   if (p->name && *p->name) {
     unparse_final_tag(f, USERLIST_T_NAME, p->name, "    ");
   }
-  if (p->email && mode != USERLIST_MODE_STAND) {
+  if (p->email) { // && mode != USERLIST_MODE_STAND) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
              attn_map[USERLIST_A_PUBLIC], unparse_bool(p->show_email));
     unparse_attributed_elem(f, USERLIST_T_EMAIL, p->email, attr_str, "    ");
