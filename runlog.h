@@ -121,7 +121,8 @@ enum
     RUN_ENTRY_READONLY = 0x00004000,
     RUN_ENTRY_PAGES = 0x00008000,
     RUN_ENTRY_NSEC = 0x00010000,
-    RUN_ENTRY_ALL = 0x0001FFFF,
+    RUN_ENTRY_SCORE_ADJ = 0x00020000,
+    RUN_ENTRY_ALL = 0x0003FFFF,
   };
 
 struct run_entry
@@ -143,7 +144,8 @@ struct run_entry
   unsigned char  is_hidden;
   unsigned char  is_readonly;
   unsigned char  pages;
-  unsigned char  pad[3];
+  signed char    score_adj;     /* manual score adjustment */
+  unsigned char  pad[2];
   long           nsec;          /* nanosecond component of timestamp */
 };
 
