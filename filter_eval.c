@@ -19,6 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define YYSTYPE struct filter_tree *
+
 #include "filter_tree.h"
 #include "filter_expr.h"
 #include "filter_eval.h"
@@ -127,62 +129,62 @@ do_eval(struct filter_env *env,
     case TOK_TIME:
       res->kind = TOK_TIME_L;
       res->type = FILTER_TYPE_TIME;
-      res->v.a = env->renties[r1.v.i].timestamp;
+      res->v.a = env->rentries[r1.v.i].timestamp;
       break;
     case TOK_DUR:
       res->kind = TOK_DUR_L;
       res->type = FILTER_TYPE_DUR;
-      res->v.u = env->renties[r1.v.i].timestamp - env->rhead.start_time;
+      res->v.u = env->rentries[r1.v.i].timestamp - env->rhead.start_time;
       break;
     case TOK_SIZE:
       res->kind = TOK_SIZE_L;
       res->type = FILTER_TYPE_SIZE;
-      res->v.z = env->renties[r1.v.i].size;
+      res->v.z = env->rentries[r1.v.i].size;
       break;
     case TOK_HASH:
       res->kind = TOK_HASH_L;
       res->type = FILTER_TYPE_HASH;
-      memcpy(res->v.h, env->renties[r1.v.i].sha1, sizeof(env->cur->sha1));
+      memcpy(res->v.h, env->rentries[r1.v.i].sha1, sizeof(env->cur->sha1));
       break;
     case TOK_IP:
       res->kind = TOK_IP_L;
       res->type = FILTER_TYPE_IP;
-      res->v.p = env->renties[r1.v.i].ip;
+      res->v.p = env->rentries[r1.v.i].ip;
       break;
     case TOK_PROB:
       res->kind = TOK_STRING_L;
       res->type = FILTER_TYPE_STRING;
-      res->v.s = envdup(env, env->probs[env->renties[r1.v.i].problem]->short_name);
+      res->v.s = envdup(env, env->probs[env->rentries[r1.v.i].problem]->short_name);
       break;
     case TOK_UID:
       res->kind = TOK_INT_L;
       res->type = FILTER_TYPE_INT;
-      res->v.i = env->renties[r1.v.i].team;
+      res->v.i = env->rentries[r1.v.i].team;
       break;
     case TOK_LOGIN:
       res->kind = TOK_STRING_L;
       res->type = FILTER_TYPE_STRING;
-      res->v.s = envdup(env, teamdb_get_login(env->renties[r1.v.i].team));
+      res->v.s = envdup(env, teamdb_get_login(env->rentries[r1.v.i].team));
       break;
     case TOK_LANG:
       res->kind = TOK_STRING_L;
       res->type = FILTER_TYPE_STRING;
-      res->v.s = envdup(env, env->langs[env->renties[r1.v.i].language]->short_name);
+      res->v.s = envdup(env, env->langs[env->rentries[r1.v.i].language]->short_name);
       break;
     case TOK_RESULT:
       res->kind = TOK_RESULT_L;
       res->type = FILTER_TYPE_RESULT;
-      res->v.r = env->renties[r1.v.i].status;
+      res->v.r = env->rentries[r1.v.i].status;
       break;
     case TOK_SCORE:
       res->kind = TOK_INT_L;
       res->type = FILTER_TYPE_INT;
-      res->v.i = env->renties[r1.v.i].score;
+      res->v.i = env->rentries[r1.v.i].score;
       break;
     case TOK_TEST:
       res->kind = TOK_INT_L;
       res->type = FILTER_TYPE_INT;
-      res->v.i = env->renties[r1.v.i].test;
+      res->v.i = env->rentries[r1.v.i].test;
       break;
     default:
       abort();
@@ -318,7 +320,7 @@ filter_tree_bool_eval(struct filter_env *env,
   ASSERT(t);
   ASSERT(t->type == FILTER_TYPE_BOOL);
   res = filter_tree_new_int(env->mem, 0);
-  env->cur = &env->renties[env->rid];
+  env->cur = &env->rentries[env->rid];
   if ((r = do_eval(env, t, res)) < 0) return r;
   ASSERT(res->type == FILTER_TYPE_BOOL);
   ASSERT(res->kind == TOK_BOOL_L);
