@@ -4114,7 +4114,6 @@ do_clear_team_passwords(int contest_id)
   struct userlist_contest *c;
   struct userlist_passwd *p;
   struct xml_tree *t;
-  unsigned char buf[16];
 
   for (u = (struct userlist_user*) userlist->b.first_down;
        u; u = (struct userlist_user*) u->b.right) {
@@ -4150,10 +4149,6 @@ static void
 cmd_clear_team_passwords(struct client_state *p, int pkt_len,
                          struct userlist_pk_map_contest *data)
 {
-  unsigned char *log_ptr = 0;
-  size_t log_size = 0;
-  FILE *f = 0;
-  struct client_state *q = 0;
   struct contest_desc *cnts = 0;
   int errcode;
 
