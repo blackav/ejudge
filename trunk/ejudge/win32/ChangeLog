@@ -1,3 +1,22 @@
+2002-01-07  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c: copyright notice is updated;
+	(os_GetSignalString) signal 256 is "Software abort";
+	(os_FindInPath) implemented.
+
+	* logger.c:
+	(minimal_init) `log_fd' is correctly assigned to the duplicated HANDLE;
+	(logger_init_ex) `swabort' is called instead of `abort';
+	(vwrite_log) `swabort' is called instead of `abort';
+	(swabort) terminates the process using `ExitProcess' with code
+	  0xC0000100.
+
+	* exec.c: copyright notice is updated;
+	(task_DisableCoreDump) implemented as do-nothing function, as Win32
+	  lacks coredumps;
+	(task_Start) `TSK_REWRITE', `TSK_WRITE' constants are used instead
+	  of `O_*' constants.
+
 2002-01-02  Alexander Chernov  <cher@ispras.ru>
 
 	* logger.c: copyright notice is updated
