@@ -234,6 +234,7 @@ struct section_language_data
 
   int    id;                    /* language id */
   int    compile_id;            /* language id for compilation */
+  int    disabled;              /* a participant cannot use this language */
   path_t short_name;            /* language short name */
   path_t long_name;             /* language long name */
   path_t key;                   /* configuration key */
