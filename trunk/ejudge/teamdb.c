@@ -1013,14 +1013,23 @@ teamdb_rollback(void)
 int
 teamdb_export_team(int tid, struct teamdb_export *pdata)
 {
-  if (server_conn) {
-    err("teamdb_export_team: not implemented in client mode");
-    return -1;
-  }
-
   if (!teamdb_lookup(tid)) {
     err("teamdb_export_team: bad id: %d", tid);
     return -1;
+  }
+
+  if (server_conn) {
+    XMEMZERO(pdata, 1);
+    pdata->id = tid;
+    if ((cached_map[tid]->flags & USERLIST_UC_INVISIBLE))
+      pdata->flags |= TEAM_INVISIBLE;
+    if ((cached_map[tid]->flags & USERLIST_UC_BANNED))
+      pdata->flags |= TEAM_BANNED;
+    strncpy(pdata->login, cached_users->pool + cached_map[tid]->login_idx,
+            TEAMDB_LOGIN_LEN - 1);
+    strncpy(pdata->name, cached_users->pool + cached_map[tid]->name_idx,
+            TEAMDB_NAME_LEN - 1);
+    return 0;
   }
 
   XMEMZERO(pdata, 1);
