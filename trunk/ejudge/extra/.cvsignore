@@ -1,1 +1,1 @@
-capexec dosrun2 bpcemu2 dosrun3 *.o
+capexec dosrun2 bpcemu2 dosrun3 *.o bccemu bppemu
