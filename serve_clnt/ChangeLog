@@ -1,3 +1,23 @@
+2003-12-04  Alexander Chernov  <cher@ispras.ru>
+
+	* edit_run.c:
+	(serve_clnt_edit_run) new parameter `is_hidden' is added to edit
+	  the `hidden' flag of the run.
+
+2003-12-03  Alexander Chernov  <cher@ispras.ru>
+
+	* edit_run.c:
+	(serve_clnt_edit_run) new parameter `variant' is added, which is
+	  the new variant number. To set the variant number, also
+	  the corresponding bit in `mask' parameter must be set.
+
+	* submit_run.c: copyright notice is updated;
+	(serve_clnt_submit_run) function accepts two new parameters:
+	  `cmd' - command to send to the server, either SRV_CMD_SUBMIT_RUN,
+	          or SRV_CMD_PRIV_SUBMIT_RUN;
+	  `variant' - the requested variant for the problem. Allowed only for
+	              SRV_CMD_PRIV_SUBMIT_RUN command.
+
 2003-10-31  Alexander Chernov  <cher@ispras.ru>
 
 	* view.c:

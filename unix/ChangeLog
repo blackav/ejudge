@@ -1,3 +1,16 @@
+2003-12-01  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.c: <zlib.h> is included;
+	(gzip_write_file) a new function to write a gzipped file from memory;
+	(generic_write_file) `GZIP' flag (file compression) is handled;
+	(gzip_read_file) a new function to read from a gzipped file to memory;
+	(generic_read_file) `GZIP' flag (file compression) is handled;
+	(gzip_copy_file) a new function to copy files, decompressing/compressing
+	  them if needed. Also unix<->dos text conversion is performed,
+	  if `CONVERT' flag is specified;
+	(do_copy_file) `GZIP' flag is handled and `gzip_copy_file' is called;
+	(generic_file_size) a new function to return the size of the file.
+
 2003-10-12  Alexander Chernov  <cher@ispras.ru>
 
 	* fileutl.c:
