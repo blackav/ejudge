@@ -124,6 +124,15 @@ static struct userlist_user_short **cached_map;
 static key_t sem_key, shm_key;
 static int contest_id;
 
+/* non-saved local extra information about teams */
+struct teamdb_extra
+{
+  time_t last_archive_time;
+};
+static int extra_out_of_sync;
+static int extra_num;
+static struct teamdb_extra **extra_info;
+
 static void
 lock_userlist_table(void)
 {
@@ -186,6 +195,7 @@ teamdb_refresh(void)
   }
 
   info("refresh_userlist_table: updated from server, %d users (size = %d)", cached_users->total, cached_size);
+  extra_out_of_sync = 1;
 }
 
 static int
@@ -418,6 +428,13 @@ teamdb_open_client(unsigned char const *socket_path, int id)
 
   teamdb_refresh();
   return 0;
+}
+
+inline int
+teamdb_lookup_client(int teamno)
+{
+  if (teamno <= 0 || teamno >= cached_size || !cached_map[teamno]) return 0;
+  return 1;
 }
 
 int
@@ -1067,6 +1084,61 @@ teamdb_regenerate_passwords(unsigned char const *path)
     return -1;
   }
   close(fd);
+  return 0;
+}
+
+static void
+syncronize_team_extra(void)
+{
+  struct teamdb_extra **old_extra = 0;
+  int old_extra_num = 0, max_idx = 0, i;
+
+  if (!extra_out_of_sync && extra_info) return;
+  if (!server_conn) return;
+  old_extra = extra_info;
+  old_extra_num = extra_num;
+  if (cached_size > 0) {
+    extra_info = xcalloc(cached_size, sizeof(extra_info[0]));
+    extra_num = cached_size;
+  } else {
+    extra_info = 0;
+    extra_num = 0;
+  }
+  max_idx = extra_num;
+  if (old_extra_num < max_idx) max_idx = old_extra_num;
+  for (i = 0; i < max_idx; i++) {
+    if (cached_map[i]) {
+      extra_info[i] = old_extra[i];
+      old_extra[i] = 0;
+    }
+  }
+  for (i = 0; i < old_extra_num; i++)
+    xfree(old_extra[i]);
+  xfree(old_extra);
+  extra_out_of_sync = 0;
+}
+
+time_t
+teamdb_get_archive_time(int uid)
+{
+  if (!server_conn) return (time_t) -1;
+  if (!teamdb_lookup_client(uid)) return (time_t) -1;
+  syncronize_team_extra();
+  if (!extra_info[uid]) {
+    XCALLOC(extra_info[uid], 1);
+  }
+  return extra_info[uid]->last_archive_time;
+}
+int
+teamdb_set_archive_time(int uid, time_t time)
+{
+  if (!server_conn) return -1;
+  if (!teamdb_lookup_client(uid)) return -1;
+  syncronize_team_extra();
+  if (!extra_info[uid]) {
+    XCALLOC(extra_info[uid], 1);
+  }
+  extra_info[uid]->last_archive_time = time;
   return 0;
 }
 
