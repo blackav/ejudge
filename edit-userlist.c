@@ -1188,6 +1188,7 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NN_NAME]              { "Name", 1, 1 },
   [USERLIST_NN_IS_INVISIBLE]      { "Invisible?", 1, 1 },
   [USERLIST_NN_IS_BANNED]         { "Banned?", 1, 1 },
+  [USERLIST_NN_IS_LOCKED]         { "Locked?", 1, 1 },
   [USERLIST_NN_SHOW_LOGIN]        { "Show login?", 1, 1 },
   [USERLIST_NN_SHOW_EMAIL]        { "Show email?", 1, 1 },
   [USERLIST_NN_USE_COOKIES]       { "Use cookies?", 1, 1 },
@@ -1204,29 +1205,44 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NN_TEAM_PASSWORD]     { "Team password", 1, 1 },
   [USERLIST_NN_GENERAL_INFO]      { "*General info*", 0, 0 },
   [USERLIST_NN_INST]              { "Institution", 1, 1 },
+  [USERLIST_NN_INST_EN]           { "Institution (En)", 1, 1 },
   [USERLIST_NN_INSTSHORT]         { "Inst. (short)", 1, 1 },
+  [USERLIST_NN_INSTSHORT_EN]      { "Inst. (short) (En)", 1, 1 },
   [USERLIST_NN_FAC]               { "Faculty", 1, 1 },
+  [USERLIST_NN_FAC_EN]            { "Faculty (En)", 1, 1 },
   [USERLIST_NN_FACSHORT]          { "Fac. (short)", 1, 1 },
+  [USERLIST_NN_FACSHORT_EN]       { "Fac. (short) (En)", 1, 1 },
   [USERLIST_NN_HOMEPAGE]          { "Homepage", 1, 1 },
   [USERLIST_NN_CITY]              { "City", 1, 1 },
+  [USERLIST_NN_CITY_EN]           { "City (En)", 1, 1 },
   [USERLIST_NN_COUNTRY]           { "Country", 1, 1 },
+  [USERLIST_NN_COUNTRY_EN]        { "Country (En)", 1, 1 },
 };
 static const struct user_field_desc member_descs[] =
 {
   [USERLIST_NM_SERIAL]     { "Serial", 1, 1 },
   [USERLIST_NM_FIRSTNAME]  { "Firstname", 1, 1 },
+  [USERLIST_NM_FIRSTNAME_EN] { "Firstname (En)", 1, 1 },
   [USERLIST_NM_MIDDLENAME] { "Middlename", 1, 1 },
+  [USERLIST_NM_MIDDLENAME_EN] { "Middlename (En)", 1, 1 },
   [USERLIST_NM_SURNAME]    { "Surname", 1, 1 },
+  [USERLIST_NM_SURNAME_EN] { "Surname (En)", 1, 1 },
   [USERLIST_NM_STATUS]     { "Status", 1, 1 },
   [USERLIST_NM_GRADE]      { "Grade", 1, 1 },
   [USERLIST_NM_GROUP]      { "Group", 1, 1 },
+  [USERLIST_NM_GROUP_EN]   { "Group (En)", 1, 1 },
   [USERLIST_NM_OCCUPATION] { "Occupation", 1, 1 },
+  [USERLIST_NM_OCCUPATION_EN] { "Occupation (En)", 1, 1 },
   [USERLIST_NM_EMAIL]      { "E-mail", 1, 1 },
   [USERLIST_NM_HOMEPAGE]   { "Homepage", 1, 1 },
   [USERLIST_NM_INST]       { "Institution", 1, 1 },
+  [USERLIST_NM_INST_EN]    { "Institution (En)", 1, 1 },
   [USERLIST_NM_INSTSHORT]  { "Inst. (short)", 1, 1 },
+  [USERLIST_NM_INSTSHORT_EN] { "Inst. (short) (En)", 1, 1 },
   [USERLIST_NM_FAC]        { "Faculty", 1, 1 },
+  [USERLIST_NM_FAC_EN]     { "Faculty (En)", 1, 1 },
   [USERLIST_NM_FACSHORT]   { "Fac. (short)", 1, 1 },
+  [USERLIST_NM_FACSHORT_EN] { "Fac. (short) (En)", 1, 1 },
 };
 
 static unsigned char *
@@ -1264,10 +1280,11 @@ get_contest_str(unsigned char *buf, size_t len,
 
   if (!s) s = "???";
   return snprintf(buf, len,
-                  "%6d  %c%c %-10.10s  %s",
+                  "%6d %c%c%c %-10.10s  %s",
                   reg->id, 
                   (reg->flags & USERLIST_UC_BANNED)?'B':' ',
                   (reg->flags & USERLIST_UC_INVISIBLE)?'I':' ',
+                  (reg->flags & USERLIST_UC_LOCKED)?'L':' ',
                   userlist_unparse_reg_status(reg->status),
                   s);
 }
@@ -1480,16 +1497,23 @@ display_user(unsigned char const *upper, int user_id, int start_item,
         case USERLIST_NN_NAME:
         case USERLIST_NN_TEAM_PASSWORD:
         case USERLIST_NN_INST:
+        case USERLIST_NN_INST_EN:
         case USERLIST_NN_INSTSHORT:
+        case USERLIST_NN_INSTSHORT_EN:
         case USERLIST_NN_FAC:
+        case USERLIST_NN_FAC_EN:
         case USERLIST_NN_FACSHORT:
+        case USERLIST_NN_FACSHORT_EN:
         case USERLIST_NN_HOMEPAGE:
         case USERLIST_NN_CITY:
+        case USERLIST_NN_CITY_EN:
         case USERLIST_NN_COUNTRY:
+        case USERLIST_NN_COUNTRY_EN:
           help_str = "Enter-edit D-clear C-contest A-new member Q-quit";
           break;
         case USERLIST_NN_IS_INVISIBLE:
         case USERLIST_NN_IS_BANNED:
+        case USERLIST_NN_IS_LOCKED:
         case USERLIST_NN_SHOW_LOGIN:
         case USERLIST_NN_SHOW_EMAIL:
         case USERLIST_NN_USE_COOKIES:
@@ -1565,6 +1589,9 @@ display_user(unsigned char const *upper, int user_id, int start_item,
       case 'i': case 'I': case 'Û' & 255: case 'û' & 255:
         c = 'i';
         goto menu_done;
+      case 'l': case 'L': case 'Ä' & 255: case 'ä' & 255:
+        c = 'l';
+        goto menu_done;
       case 'a': case 'A': case 'Æ' & 255: case 'æ' & 255:
         c = 'a';
         goto menu_done;
@@ -1606,7 +1633,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
       }
     }
   menu_done:
-    if (c == 'r' || c == 'b' || c == 'i') {
+    if (c == 'r' || c == 'b' || c == 'i' || c == 'l') {
       cur_i = item_index(current_item(menu));
       cur_line = i - top_row(menu) + 2;
       if (info[cur_i].role != -1) goto menu_continue;
@@ -1637,6 +1664,13 @@ display_user(unsigned char const *upper, int user_id, int start_item,
                                               reg->id, -1, 3,
                                               USERLIST_UC_INVISIBLE);
         if (r >= 0) reg->flags ^= USERLIST_UC_INVISIBLE;
+        break;
+      case 'l':
+        if (okcancel("Toggle LOCKED status?") != 1) goto menu_continue;
+        r = userlist_clnt_change_registration(server_conn, u->id,
+                                              reg->id, -1, 3,
+                                              USERLIST_UC_LOCKED);
+        if (r >= 0) reg->flags ^= USERLIST_UC_LOCKED;
         break;
       }
       if (r < 0) {
@@ -1783,6 +1817,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
         switch (info[cur_i].field) {
         case USERLIST_NN_IS_INVISIBLE:
         case USERLIST_NN_IS_BANNED:
+        case USERLIST_NN_IS_LOCKED:
         case USERLIST_NN_SHOW_LOGIN:
         case USERLIST_NN_SHOW_EMAIL:
         case USERLIST_NN_USE_COOKIES:
@@ -1975,12 +2010,18 @@ user_match(struct userlist_user *u, int kind)
     if (user_regmatch(u->name)) return 1;
     if (user_regmatch(u->email)) return 1;
     if (user_regmatch(u->inst)) return 1;
+    if (user_regmatch(u->inst_en)) return 1;
     if (user_regmatch(u->instshort)) return 1;
+    if (user_regmatch(u->instshort_en)) return 1;
     if (user_regmatch(u->fac)) return 1;
+    if (user_regmatch(u->fac_en)) return 1;
     if (user_regmatch(u->facshort)) return 1;
+    if (user_regmatch(u->facshort_en)) return 1;
     if (user_regmatch(u->homepage)) return 1;
     if (user_regmatch(u->city)) return 1;
+    if (user_regmatch(u->city_en)) return 1;
     if (user_regmatch(u->country)) return 1;
+    if (user_regmatch(u->country_en)) return 1;
 
     {
       int role, memb;
@@ -1993,16 +2034,25 @@ user_match(struct userlist_user *u, int kind)
           if (!pm) continue;
 
           if (user_regmatch(pm->firstname)) return 1;
+          if (user_regmatch(pm->firstname_en)) return 1;
           if (user_regmatch(pm->middlename)) return 1;
+          if (user_regmatch(pm->middlename_en)) return 1;
           if (user_regmatch(pm->surname)) return 1;
+          if (user_regmatch(pm->surname_en)) return 1;
           if (user_regmatch(pm->group)) return 1;
+          if (user_regmatch(pm->group_en)) return 1;
           if (user_regmatch(pm->email)) return 1;
           if (user_regmatch(pm->homepage)) return 1;
           if (user_regmatch(pm->occupation)) return 1;
+          if (user_regmatch(pm->occupation_en)) return 1;
           if (user_regmatch(pm->inst)) return 1;
+          if (user_regmatch(pm->inst_en)) return 1;
           if (user_regmatch(pm->instshort)) return 1;
+          if (user_regmatch(pm->instshort_en)) return 1;
           if (user_regmatch(pm->fac)) return 1;
+          if (user_regmatch(pm->fac_en)) return 1;
           if (user_regmatch(pm->facshort)) return 1;
+          if (user_regmatch(pm->facshort_en)) return 1;
         }
       }
     }
@@ -2195,10 +2245,11 @@ display_registered_users(unsigned char const *upper,
   for (i = 0; i < nuser; i++) {
     // 77 - 6 - 16 - 10 - 6 = 77 - 38 = 39
     buflen = snprintf(buf, sizeof(buf),
-                      "%6d  %-16.16s  %-36.36s  %c%c %-10.10s",
+                      "%6d  %-16.16s  %-36.36s %c%c%c %-10.10s",
                       uu[i]->id, uu[i]->login, uu[i]->name,
                       (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ',
                       (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ',
+                      (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ',
                       userlist_unparse_reg_status(uc[i]->status));
     ASSERT(buflen < 128);
     descs[i] = alloca(128);
@@ -2265,6 +2316,9 @@ display_registered_users(unsigned char const *upper,
         goto menu_done;
       case 'b': case 'B': case 'É' & 255: case 'é' & 255:
         c = 'b';
+        goto menu_done;
+      case 'l': case 'L': case 'Ä' & 255: case 'ä' & 255:
+        c = 'l';
         goto menu_done;
       case '\n': case '\r': case ' ':
         c = '\n';
@@ -2333,10 +2387,11 @@ display_registered_users(unsigned char const *upper,
       }
       uc[i]->status = new_status;
       snprintf(descs[i], 128,
-               "%6d  %-16.16s  %-36.36s  %c%c %-10.10s",
+               "%6d  %-16.16s  %-36.36s %c%c%c %-10.10s",
                uu[i]->id, uu[i]->login, uu[i]->name,
                (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ',
                (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ',
+               (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ',
                userlist_unparse_reg_status(uc[i]->status));
     } else if (c == 'd') {
       i = item_index(current_item(menu));
@@ -2363,10 +2418,11 @@ display_registered_users(unsigned char const *upper,
       }
       uc[i]->flags ^= USERLIST_UC_BANNED;
       snprintf(descs[i], 128,
-               "%6d  %-16.16s  %-36.36s  %c%c %-10.10s",
+               "%6d  %-16.16s  %-36.36s %c%c%c %-10.10s",
                uu[i]->id, uu[i]->login, uu[i]->name,
                (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ',
                (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ',
+               (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ',
                userlist_unparse_reg_status(uc[i]->status));
     } else if (c == 'i') {
       i = item_index(current_item(menu));
@@ -2381,10 +2437,30 @@ display_registered_users(unsigned char const *upper,
       }
       uc[i]->flags ^= USERLIST_UC_INVISIBLE;
       snprintf(descs[i], 128,
-               "%6d  %-16.16s  %-36.36s  %c%c %-10.10s",
+               "%6d  %-16.16s  %-36.36s %c%c%c %-10.10s",
                uu[i]->id, uu[i]->login, uu[i]->name,
                (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ',
                (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ',
+               (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ',
+               userlist_unparse_reg_status(uc[i]->status));
+    } else if (c == 'l') {
+      i = item_index(current_item(menu));
+      if (okcancel("Toggle LOCKED status for %s?", uu[i]->login) != 1)
+        continue;
+      r = userlist_clnt_change_registration(server_conn, uu[i]->id,
+                                            cnts->id, -1, 3,
+                                            USERLIST_UC_LOCKED);
+      if (r < 0) {
+        vis_err("Toggle flags failed: %s", userlist_strerror(-r));
+        continue;
+      }
+      uc[i]->flags ^= USERLIST_UC_LOCKED;
+      snprintf(descs[i], 128,
+               "%6d  %-16.16s  %-36.36s %c%c%c %-10.10s",
+               uu[i]->id, uu[i]->login, uu[i]->name,
+               (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ',
+               (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ',
+               (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ',
                userlist_unparse_reg_status(uc[i]->status));
     } else if (c == '\n') {
       i = item_index(current_item(menu));
