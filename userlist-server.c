@@ -978,7 +978,7 @@ cmd_register_new(struct client_state *p,
   memset(&sformat_data, 0, sizeof(sformat_data));
   sformat_data.locale_id = data->locale_id;
   sformat_data.url = urlbuf;
-  if (cnts->register_email_file) {
+  if (cnts && cnts->register_email_file) {
     sformat_message(email_tmpl_path, sizeof(email_tmpl_path),
                     cnts->register_email_file,
                     0, 0, 0, 0, 0, user, cnts, &sformat_data);
