@@ -118,7 +118,8 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
        i--) {
     run_get_record(i, &time, &size, 0, 0, 0,
                    &team_id, &lang_id, &prob_id, &status, &test, &score);
-    if (status == RUN_VIRTUAL_START || status == RUN_VIRTUAL_STOP)
+    if (status == RUN_VIRTUAL_START || status == RUN_VIRTUAL_STOP
+        || status == RUN_EMPTY)
       continue;
     if (global->score_system_val == SCORE_KIROV)
       run_get_attempts(i, &attempts, global->ignore_compile_errors);
@@ -574,7 +575,8 @@ do_write_kirov_standings(FILE *f, int client_flag,
 
     run_get_record(k, 0, 0, 0, 0, 0, &team_id, 0, &prob_id, &status, &tests,
                    &run_score);
-    if (status == RUN_VIRTUAL_START || status == RUN_VIRTUAL_STOP) continue;
+    if (status == RUN_VIRTUAL_START || status == RUN_VIRTUAL_STOP
+        || status == RUN_EMPTY) continue;
     if (team_id <= 0 || team_id >= t_max) continue;
     if (prob_id <= 0 || prob_id > max_prob) continue;
     tind = t_rev[team_id];
@@ -849,7 +851,8 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   for (k = 0; k < r_tot; k++) {
     run_get_record(k, &run_time, 0, 0, 0, 0, &team_id, 0, &prob_id, &status, 0,
                    &score);
-    if (status == RUN_VIRTUAL_START || status == RUN_VIRTUAL_STOP) continue;
+    if (status == RUN_VIRTUAL_START || status == RUN_VIRTUAL_STOP
+        || status == RUN_EMPTY) continue;
     if (team_id <= 0 || team_id >= t_max) continue;
     if (t_rev[team_id] < 0) continue;
     if (prob_id <= 0 || prob_id > max_prob) continue;
