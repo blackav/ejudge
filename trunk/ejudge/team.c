@@ -37,6 +37,7 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <errno.h>
 #include <unistd.h>
 
@@ -80,6 +81,7 @@ struct section_global_data
   int    server_lag;
   int    max_run_size;
   int    max_clar_size;
+  int    show_generation_time;
   path_t contest_name;
   path_t root_dir;
   path_t var_dir;
@@ -145,6 +147,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(server_lag, "d"),
   GLOBAL_PARAM(max_run_size, "d"),
   GLOBAL_PARAM(max_clar_size, "d"),
+  GLOBAL_PARAM(show_generation_time, "d"),
   GLOBAL_PARAM(contest_name, "s"),
   GLOBAL_PARAM(root_dir, "s"),
   GLOBAL_PARAM(var_dir, "s"),
@@ -247,7 +250,7 @@ initialize(int argc, char *argv[])
   os_rGetBasename(fullname, basename, PATH_MAX);
   strcpy(program_name, basename);
   if (strncmp(basename, "team", 4))
-    client_not_configured(0, _("bad program_name"));
+    client_not_configured(0, "bad program_name");
 
   /*
    * if CGI_DATA_PATH is absolute, do not append the program start dir
@@ -260,25 +263,25 @@ initialize(int argc, char *argv[])
   }
   config = parse_param(cfgname, 0, params, 1);
   if (!config)
-    client_not_configured(0, _("config file not parsed"));
+    client_not_configured(0, "config file not parsed");
 
   /* find global section */
   for (p = config; p; p = p->next) {
     if (!p->name[0] || !strcmp(p->name, "global"))
       break;
   }
-  if (!p) client_not_configured(0, _("no global section"));
+  if (!p) client_not_configured(0, "no global section");
   global = (struct section_global_data *) p;
 
   if (set_defaults() < 0)
-    client_not_configured(global->charset, _("bad defaults"));
+    client_not_configured(global->charset, "bad defaults");
   logger_set_level(-1, LOG_WARNING);
 
   /* check directory structure */
   if (check_writable_dir(global->pipe_dir) < 0
       || check_writable_dir(global->team_data_dir) < 0
       || check_writable_spool(global->team_cmd_dir, SPOOL_IN))
-    client_not_configured(global->charset, _("bad directory configuration"));
+    client_not_configured(global->charset, "bad directory configuration");
 
   client_make_form_headers();
   pathcpy(client_pipe_dir, global->pipe_dir);
@@ -651,7 +654,9 @@ main(int argc, char *argv[])
 {
   int need_show_submit = 0;
   int need_show_clar = 0;
+  struct timeval begin_time, end_time;
 
+  gettimeofday(&begin_time, 0);
   initialize(argc, argv);
 
   if (!client_check_source_ip(global->allow_deny,
@@ -748,7 +753,7 @@ main(int argc, char *argv[])
            _("The last command completion status"));
   if (need_show_submit)
     printf("<li><a href=\"#submit\">%s</a>\n", _("Send a submission"));
-  if (server_runs_stat)
+  if (server_runs_stat && server_start_time)
     printf("<li><a href=\"#runstat\">%s</a>\n", _("Submission log"));
   if (need_show_clar)
     printf("<li><a href=\"#clar\">%s</a>\n", _("Send a message to judges"));
@@ -796,7 +801,7 @@ main(int argc, char *argv[])
     print_refresh_button("#runstat");
   }
 
-  if (server_runs_stat) {
+  if (server_runs_stat && server_start_time) {
     printf("<hr><a name=\"runstat\"><h2>%s (%s)</h2>\n",
            _("Sent submissions"),
            client_view_all_runs?_("all"):_("last 15"));
@@ -857,6 +862,19 @@ main(int argc, char *argv[])
   }
 #endif /* CONF_HAS_LIBINTL */
 
+  if (global->show_generation_time) {
+    gettimeofday(&end_time, 0);
+    end_time.tv_sec -= begin_time.tv_sec;
+    if ((end_time.tv_usec -= begin_time.tv_usec) < 0) {
+      end_time.tv_usec += 1000000;
+      end_time.tv_sec--;
+    }
+    printf("<hr><p>%s: %ld %s\n",
+           _("Page generation time"),
+           end_time.tv_usec / 1000 + end_time.tv_sec * 1000,
+           _("msec"));
+  }
+
 #if 0
   {
     int i;
@@ -880,6 +898,5 @@ main(int argc, char *argv[])
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  *  eval: (set-language-environment "Cyrillic-KOI8")
- *  enable-multibute-characters: nil
  * End:
  */
