@@ -991,6 +991,9 @@ run_build_virtual_table(void)
         if (runs[i].timestamp - pvt->start_time > head.duration + 1) {
           err("runlog: run %d: duration overrun %ld",
               i, runs[i].timestamp - pvt->start_time);
+          err("problematic timestamp: %ld, should be fixed to: %ld",
+              runs[i].timestamp, pvt->start_time + head.duration);
+          //runs[i].timestamp = pvt->start_time + head.duration;
           err_cnt++;
         }
         if (pvt->stop_time && runs[i].timestamp > pvt->stop_time) {
@@ -1049,9 +1052,17 @@ run_get_virtual_start_time(int user_id)
 }
 
 time_t
-run_get_virtual_stop_time(int user_id)
+run_get_virtual_stop_time(int user_id, time_t cur_time)
 {
   struct vt_entry *pvt = get_entry(user_id);
+  if (!pvt->start_time) return 0;
+  if (!cur_time) return pvt->stop_time;
+  if (pvt->status == V_REAL_USER) return head.stop_time;
+  if (pvt->status != V_VIRTUAL_USER) return 0;
+  if (head.duration || pvt->stop_time) return pvt->stop_time;
+  if (pvt->start_time + head.duration < cur_time) {
+    pvt->stop_time = pvt->start_time + head.duration;
+  }
   return pvt->stop_time;
 }
 
