@@ -485,10 +485,12 @@ display_enter_password(void)
        _("Password"));
   if (global->enable_l10n) {
     printf("<p>%s: <select name=\"locale_id\">"
-           "<option value=\"0\">%s</option>"
-           "<option value=\"1\">%s</option>"
+           "<option value=\"0\"%s>%s</option>"
+           "<option value=\"1\"%s>%s</option>"
            "</select>",
-           _("Choose language"), _("English"), _("Russian"));
+           _("Choose language"),
+           client_locale_id==0?" selected=\"1\"":"", _("English"),
+           client_locale_id==1?" selected=\"1\"":"", _("Russian"));
   }
   printf("<p><input type=\"submit\" value=\"%s\">", _("submit"));
   puts("</form>");
