@@ -1,7 +1,7 @@
 /* -*- mode:c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,9 +30,9 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <time.h>
-#include <ncurses/ncurses.h>
-#include <ncurses/menu.h>
-#include <ncurses/panel.h>
+#include <ncurses.h>
+#include <menu.h>
+#include <panel.h>
 #include <locale.h>
 #include <errno.h>
 #include <regex.h>
@@ -1193,6 +1193,7 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NN_SHOW_EMAIL]        { "Show email?", 1, 1 },
   [USERLIST_NN_USE_COOKIES]       { "Use cookies?", 1, 1 },
   [USERLIST_NN_READ_ONLY]         { "Read-only?", 1, 1 },
+  [USERLIST_NN_NEVER_CLEAN]       { "Never clean?", 1, 1 },
   [USERLIST_NN_TIMESTAMPS]        { "*Timestamps*", 0, 0 },
   [USERLIST_NN_REG_TIME]          { "Reg time", 1, 1 },
   [USERLIST_NN_LOGIN_TIME]        { "Login time", 1, 1 },
@@ -1217,6 +1218,7 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NN_CITY_EN]           { "City (En)", 1, 1 },
   [USERLIST_NN_COUNTRY]           { "Country", 1, 1 },
   [USERLIST_NN_COUNTRY_EN]        { "Country (En)", 1, 1 },
+  [USERLIST_NN_LOCATION]          { "Location", 1, 1 },
 };
 static const struct user_field_desc member_descs[] =
 {
@@ -1509,6 +1511,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
         case USERLIST_NN_CITY_EN:
         case USERLIST_NN_COUNTRY:
         case USERLIST_NN_COUNTRY_EN:
+        case USERLIST_NN_LOCATION:
           help_str = "Enter-edit D-clear C-contest A-new member Q-quit";
           break;
         case USERLIST_NN_IS_INVISIBLE:
@@ -1518,6 +1521,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
         case USERLIST_NN_SHOW_EMAIL:
         case USERLIST_NN_USE_COOKIES:
         case USERLIST_NN_READ_ONLY:
+        case USERLIST_NN_NEVER_CLEAN:
           help_str = "Enter-toggle D-reset C-contest A-new member Q-quit";
           break;
         case USERLIST_NN_REG_TIME:
@@ -1822,6 +1826,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
         case USERLIST_NN_SHOW_EMAIL:
         case USERLIST_NN_USE_COOKIES:
         case USERLIST_NN_READ_ONLY:
+        case USERLIST_NN_NEVER_CLEAN:
           edit_buf[0] = 0;
           userlist_get_user_field_str(edit_buf, sizeof(edit_buf),
                                       u, info[cur_i].field, 0);
@@ -2022,6 +2027,7 @@ user_match(struct userlist_user *u, int kind)
     if (user_regmatch(u->city_en)) return 1;
     if (user_regmatch(u->country)) return 1;
     if (user_regmatch(u->country_en)) return 1;
+    if (user_regmatch(u->location)) return 1;
 
     {
       int role, memb;
