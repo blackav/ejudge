@@ -158,6 +158,7 @@ static time_t last_backup;
 static time_t backup_interval;
 static int interrupt_signaled;
 static int daemon_mode = 0;
+static int forced_mode = 0;
 
 /* the map from system uids into the local uids */
 static int *system_uid_map;
@@ -562,6 +563,9 @@ disconnect_client(struct client_state *p)
 {
   ASSERT(p);
 
+  // return the descriptor to the blocking mode
+  fcntl(p->fd, F_SETFL, fcntl(p->fd, F_GETFL) & ~O_NONBLOCK);
+
   close(p->fd);
   if (p->write_buf) xfree(p->write_buf);
   if (p->read_buf) xfree(p->read_buf);
@@ -742,6 +746,7 @@ is_privileged_user(struct userlist_user *u)
 {
   opcap_t caps;
 
+  if (u->is_privileged) return 1;
   return opcaps_find(&config->capabilities, u->login, &caps);
 }
 
@@ -1530,10 +1535,14 @@ cmd_priv_login(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
-  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
-    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
-    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-    return;
+  // if contest_id == 0, the user must have the correspondent global
+  // capability bit
+  if (data->contest_id > 0) {
+    if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+      err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
+      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
   }
   if (data->priv_level <= 0 || data->priv_level > PRIV_LEVEL_ADMIN) {
     err("%s -> invalid privelege level: %d", logbuf, data->priv_level);
@@ -1572,31 +1581,45 @@ cmd_priv_login(struct client_state *p, int pkt_len,
     return;
   }
 
-  // check that the user is registered for the contest
-  if (u->contests) {
-    for (c = (struct userlist_contest*) u->contests->first_down;
-         c; c = (struct userlist_contest*) c->b.right) {
-      if (c->id == data->contest_id) break;
+  if (data->contest_id > 0) {
+    // check that the user is registered for the contest
+    if (u->contests) {
+      for (c = (struct userlist_contest*) u->contests->first_down;
+           c; c = (struct userlist_contest*) c->b.right) {
+        if (c->id == data->contest_id) break;
+      }
     }
-  }
-  if (!c) {
-    err("%s -> NOT REGISTERED", logbuf);
-    send_reply(p, -ULS_ERR_NOT_REGISTERED);
-    return;
-  }
-  if (c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
-      || (c->flags & USERLIST_UC_LOCKED)) {
-    err("%s -> NOT ALLOWED", logbuf);
-    send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
-    return;
+    if (!c) {
+      err("%s -> NOT REGISTERED", logbuf);
+      send_reply(p, -ULS_ERR_NOT_REGISTERED);
+      return;
+    }
+    if (c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
+        || (c->flags & USERLIST_UC_LOCKED)) {
+      err("%s -> NOT ALLOWED", logbuf);
+      send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
+      return;
+    }
+    if (opcaps_find(&cnts->capabilities, login_ptr, &caps) < 0) {
+      err("%s -> NOT PRIVILEGED", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
+  } else {
+    if (get_uid_caps(&config->capabilities, u->id, &caps) < 0) {
+      err("%s -> NOT PRIVILEGED", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
+    // if ADMIN level access requested, but only JUDGE can
+    // be granted, decrease the privilege level
+    if (data->priv_level == PRIV_LEVEL_ADMIN
+        && opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0
+        && opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0)
+      data->priv_level = PRIV_LEVEL_JUDGE;
   }
 
   // check user capabilities
-  if (opcaps_find(&cnts->capabilities, login_ptr, &caps) < 0) {
-    err("%s -> NOT PRIVILEGED", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
   priv_level = 0;
   switch (data->priv_level) {
   case PRIV_LEVEL_JUDGE:
@@ -1999,15 +2022,12 @@ cmd_priv_check_cookie(struct client_state *p,
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
-  if (!data->contest_id) {
-    err("%s -> contest_id is not specified", logbuf);
-    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-    return;
-  }
-  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
-    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
-    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-    return;
+  if (data->contest_id > 0) {
+    if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+      err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
+      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
   }
   if (!data->cookie) {
     err("%s -> cookie value is 0", logbuf);
@@ -2070,36 +2090,52 @@ cmd_priv_check_cookie(struct client_state *p,
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
+  /*
   if (cookie->contest_id != data->contest_id) {
     err("%s -> contest_id mismatch", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
+  */
 
-  if (u->contests) {
-    for (c = (struct userlist_contest*) u->contests->first_down;
-         c; c = (struct userlist_contest*) c->b.right) {
-      if (c->id == data->contest_id) break;
+  if (data->contest_id > 0) {
+    if (u->contests) {
+      for (c = (struct userlist_contest*) u->contests->first_down;
+           c; c = (struct userlist_contest*) c->b.right) {
+        if (c->id == data->contest_id) break;
+      }
     }
-  }
-  if (!c) {
-    err("%s -> NOT REGISTERED", logbuf);
-    send_reply(p, -ULS_ERR_NOT_REGISTERED);
-    return;
-  }
-  if (c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
-      || (c->flags & USERLIST_UC_LOCKED)) {
-    err("%s -> NOT ALLOWED", logbuf);
-    send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
-    return;
+    if (!c) {
+      err("%s -> NOT REGISTERED", logbuf);
+      send_reply(p, -ULS_ERR_NOT_REGISTERED);
+      return;
+    }
+    if (c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
+        || (c->flags & USERLIST_UC_LOCKED)) {
+      err("%s -> NOT ALLOWED", logbuf);
+      send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
+      return;
+    }
+    if (get_uid_caps(&cnts->capabilities, u->id, &caps) < 0) {
+      err("%s -> NOT PRIVILEGED", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
+  } else {
+    if (get_uid_caps(&config->capabilities, u->id, &caps) < 0) {
+      err("%s -> NOT PRIVILEGED", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
+    // if ADMIN level access requested, but only JUDGE can
+    // be granted, decrease the privilege level
+    if (data->priv_level == PRIV_LEVEL_ADMIN
+        && opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0
+        && opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0)
+      data->priv_level = PRIV_LEVEL_JUDGE;
   }
 
   // check user capabilities
-  if (get_uid_caps(&cnts->capabilities, u->id, &caps) < 0) {
-    err("%s -> NOT PRIVILEGED", logbuf);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
   priv_level = 0;
   switch (data->priv_level) {
   case PRIV_LEVEL_JUDGE:
@@ -2125,6 +2161,11 @@ cmd_priv_check_cookie(struct client_state *p,
   }
   if (data->priv_level != cookie->priv_level) {
     cookie->priv_level = data->priv_level;
+    dirty = 1;
+    u->last_minor_change_time = cur_time;
+  }
+  if (data->contest_id != cookie->contest_id) {
+    cookie->contest_id = data->contest_id;
     dirty = 1;
     u->last_minor_change_time = cur_time;
   }
@@ -4179,6 +4220,7 @@ cmd_list_users(struct client_state *p, int pkt_len,
   q->state = STATE_AUTOCLOSE;
   q->write_buf = html_ptr;
   q->write_len = html_size;
+  fcntl(q->fd, F_SETFL, fcntl(q->fd, F_GETFL) | O_NONBLOCK);
   link_client_state(q);
   if (!daemon_mode) info("%s -> OK, %d", logbuf, q->id);
   send_reply(p, ULS_OK);
@@ -4254,6 +4296,7 @@ cmd_dump_database(struct client_state *p, int pkt_len,
   q->state = STATE_AUTOCLOSE;
   q->write_buf = html_ptr;
   q->write_len = html_size;
+  fcntl(q->fd, F_SETFL, fcntl(q->fd, F_GETFL) | O_NONBLOCK);
   link_client_state(q);
   info("%s -> OK, %d", logbuf, q->id);
   send_reply(p, ULS_OK);
@@ -4386,6 +4429,9 @@ do_generate_passwd(int contest_id, FILE *log)
     // do not change password for privileged users
     if (is_privileged_user(u) >= 0) continue;
 
+    // also do not change password for invisible, banned or locked users
+    if ((c->flags & USERLIST_UC_ALL)) continue;
+
     t = u->cookies;
     if (t) {
       if (!daemon_mode)
@@ -4480,6 +4526,7 @@ cmd_generate_register_passwords(struct client_state *p, int pkt_len,
   q->state = STATE_AUTOCLOSE;
   q->write_buf = log_ptr;
   q->write_len = log_size;
+  fcntl(q->fd, F_SETFL, fcntl(q->fd, F_GETFL) | O_NONBLOCK);
   link_client_state(q);
   info("%s -> OK, %d", logbuf, q->id);
   send_reply(p, ULS_OK);
@@ -4506,6 +4553,9 @@ do_generate_team_passwd(int contest_id, FILE *log)
 
     // do not change password for privileged users
     if (is_privileged_user(u) >= 0) continue;
+
+    // also do not change password for invisible, banned or locked users
+    if ((c->flags & USERLIST_UC_ALL)) continue;
 
     t = u->cookies;
     if (t) {
@@ -4601,6 +4651,7 @@ cmd_generate_team_passwords(struct client_state *p, int pkt_len,
   q->state = STATE_AUTOCLOSE;
   q->write_buf = log_ptr;
   q->write_len = log_size;
+  fcntl(q->fd, F_SETFL, fcntl(q->fd, F_GETFL) | O_NONBLOCK);
   link_client_state(q);
   info("%s -> OK, %d", logbuf, q->id);
   send_reply(p, ULS_OK);
@@ -4993,6 +5044,13 @@ cmd_delete_field(struct client_state *p, int pkt_len,
       send_reply(p, -ULS_ERR_CANNOT_DELETE);
       return;
     }
+    // unprivileged user cannot change is_privileged field
+    if (!userlist->user_map[p->user_id]->is_privileged
+        && data->field == USERLIST_NN_IS_PRIVILEGED) {
+      err("%s -> attempt to set is_privileged field", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
     if ((updated = userlist_delete_user_field(u, data->field)) < 0) {
       err("%s -> the field cannot be deleted", logbuf);
       send_reply(p, -ULS_ERR_CANNOT_DELETE);
@@ -5133,6 +5191,21 @@ cmd_edit_field(struct client_state *p, int pkt_len,
     if (data->field < 0 || data->field > USERLIST_NN_LAST) {
       err("%s -> invalid field", logbuf);
       send_reply(p, -ULS_ERR_NOT_IMPLEMENTED);
+      return;
+    }
+    // unprivileged user cannot change is_privileged field
+    if (!userlist->user_map[p->user_id]->is_privileged
+        && data->field == USERLIST_NN_IS_PRIVILEGED) {
+      err("%s -> attempt to set is_privileged field", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
+    // privileged user cannot reset is_privileged field
+    if (userlist->user_map[p->user_id]->is_privileged
+        && data->field == USERLIST_NN_IS_PRIVILEGED
+        && !data->data) {
+      err("%s -> attempt to reset is_privileged field", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
       return;
     }
     if ((updated=userlist_set_user_field_str(userlist,
@@ -5365,7 +5438,6 @@ cmd_get_uid_by_pid(struct client_state *p, int pkt_len,
     return;
   }
 
-  /* allow arbitrary uid and gid */
   if (data->system_pid <= 1) {
     CONN_ERR("invalid parameters");
     send_reply(p, -ULS_ERR_BAD_UID);
@@ -5391,6 +5463,76 @@ cmd_get_uid_by_pid(struct client_state *p, int pkt_len,
   out.cookie = q->cookie;
   out.ip = q->ip;
   enqueue_reply_to_client(p, sizeof(out), &out);
+}
+
+static void
+cmd_get_uid_by_pid_2(struct client_state *p, int pkt_len,
+                   struct userlist_pk_get_uid_by_pid *data)
+{
+  struct client_state *q = 0;
+  struct userlist_pk_uid_2 *out = 0;
+  const unsigned char *login = 0, *name = 0;
+  unsigned char *login_ptr, *name_ptr;
+  int login_len, name_len, out_len;
+  struct userlist_user *u;
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+
+  if (data->system_pid <= 1) {
+    CONN_ERR("invalid parameters");
+    send_reply(p, -ULS_ERR_BAD_UID);
+    return;
+  }
+
+  for (q = first_client; q; q = q->next) {
+    if (q->peer_uid == data->system_uid
+        && q->peer_gid == data->system_gid
+        && q->peer_pid == data->system_pid)
+      break;
+  }
+  if (!q) {
+    CONN_ERR("not found among clients");
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+  if (q->user_id <= 0) {
+    CONN_ERR("not yet authentificated");
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+  if (q->user_id>=userlist->user_map_size || !userlist->user_map[q->user_id]) {
+    CONN_ERR("invalid login");
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+  u = userlist->user_map[q->user_id];
+
+  login = u->login;
+  if (!login) login = "";
+  name = u->name;
+  if (!name || !*name) name = u->login;
+  login_len = strlen(login);
+  name_len = strlen(name);
+
+  out_len = sizeof(*out) + login_len + name_len;
+  out = (struct userlist_pk_uid_2 *) alloca(out_len);
+  memset(out, 0, out_len);
+  login_ptr = out->data;
+  name_ptr = login_ptr + login_len + 1;
+
+  out->reply_id = ULS_UID_2;
+  out->uid = q->user_id;
+  out->priv_level = q->priv_level;
+  out->cookie = q->cookie;
+  out->ip = q->ip;
+  out->login_len = login_len;
+  out->name_len = name_len;
+  strcpy(login_ptr, login);
+  strcpy(name_ptr, name);
+  enqueue_reply_to_client(p, out_len, out);
 }
 
 static void (*cmd_table[])() =
@@ -5428,6 +5570,7 @@ static void (*cmd_table[])() =
   [ULS_GENERATE_PASSWORDS]      cmd_generate_register_passwords,
   [ULS_CLEAR_TEAM_PASSWORDS]    cmd_clear_team_passwords,
   [ULS_LIST_STANDINGS_USERS]    cmd_list_standings_users,
+  [ULS_GET_UID_BY_PID_2]        cmd_get_uid_by_pid_2,
 
   [ULS_LAST_CMD] 0
 };
@@ -5603,10 +5746,11 @@ do_work(void)
   }
 
   if ((listen_socket = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
-    err("socket() failed :%s", os_ErrorMsg());
+    err("socket() failed: %s", os_ErrorMsg());
     return 1;
   }
 
+  if (forced_mode) unlink(config->socket_path);
   memset(&addr, 0, sizeof(addr));
   addr.sun_family = AF_UNIX;
   strncpy(addr.sun_path, config->socket_path, 108);
@@ -5728,6 +5872,7 @@ do_work(void)
       if (new_fd < 0) {
         err("accept failed: %s", os_ErrorMsg());
       } else {
+        fcntl(new_fd, F_SETFL, fcntl(new_fd, F_GETFL) | O_NONBLOCK);
         q = (struct client_state*) xcalloc(1, sizeof(*q));
         if (last_client) {
           last_client->next = q;
@@ -5765,6 +5910,11 @@ do_work(void)
         l = p->write_len - p->written;
         w = write(p->fd, &p->write_buf[p->written], l);
 
+        if (w < 0 && (errno == EINTR || errno == EAGAIN)) {
+          FD_CLR(p->fd, &wset);
+          info("%d: not ready descriptor", p->id);
+          goto restart_write_scan;
+        }
         if (w <= 0) {
           err("%d: write() failed: %s (%d, %d, %d)", p->id, os_ErrorMsg(),
               p->fd, l, p->write_len);
@@ -5784,6 +5934,7 @@ do_work(void)
             disconnect_client(p);
             goto restart_write_scan;
           }
+          FD_CLR(p->fd, &wset);
         }
       }
     }
@@ -5963,6 +6114,11 @@ do_work(void)
           continue;
         }
         if (r < 0) {
+          if (errno == EINTR || errno == EAGAIN) {
+            FD_CLR(p->fd, &rset);
+            info("%d: not ready descriptor", p->id);
+            continue;
+          }
           err("%d: read() failed: %s", p->id, os_ErrorMsg());
           disconnect_client(p);
           continue;
@@ -5992,6 +6148,11 @@ do_work(void)
         continue;
       }
       if (r < 0) {
+        if (errno == EINTR || errno == EAGAIN) {
+          FD_CLR(p->fd, &rset);
+          info("%d: not ready descriptor", p->id);
+          continue;
+        }
         err("%d: read() failed: %s", p->id, os_ErrorMsg());
         disconnect_client(p);
         continue;
@@ -6028,24 +6189,32 @@ main(int argc, char *argv[])
   int cur_arg = 1;
   int pid, log_fd;
 
-  if (argc > 1 && argv[1] && !strcmp(argv[1], "-D")) {
-    daemon_mode = 1;
-    cur_arg++;
+  while (cur_arg < argc) {
+    if (!strcmp(argv[cur_arg], "-D")) {
+      daemon_mode = 1;
+      cur_arg++;
+    } else if (!strcmp(argv[cur_arg], "-f")) {
+      forced_mode = 1;
+      cur_arg++;
+    } else {
+      break;
+    }
   }
-
-#if defined EJUDGE_XML_PATH
-  if (cur_arg == argc) {
-    info("using the default %s", EJUDGE_XML_PATH);
-    ejudge_xml_path = EJUDGE_XML_PATH;
-  } else {
+  if (cur_arg < argc) {
     ejudge_xml_path = argv[cur_arg++];
   }
-#else
-  ejudge_xml_path = argv[cur_arg++];
-#endif
   if (cur_arg != argc) {
-    code = 1;
-    goto print_usage;
+    fprintf(stderr, "%s: invalid number of arguments\n", argv[0]);
+    return 1;
+  }
+#if defined EJUDGE_XML_PATH
+  if (!ejudge_xml_path) {
+    ejudge_xml_path = EJUDGE_XML_PATH;
+  }
+#endif /* EJUDGE_XML_PATH */
+  if (!ejudge_xml_path) {
+    err("configuration file is not specified");
+    return 1;
   }
 
   info("userlist-server %s, compiled %s", compile_version, compile_date);
@@ -6109,10 +6278,6 @@ main(int argc, char *argv[])
   if (socket_name) unlink(socket_name);
   if (listen_socket >= 0) close(listen_socket);
   userlist_cfg_free(config);
-  return code;
-  
- print_usage:
-  printf("Usage: %s config-file\n", argv[0]);
   return code;
 }
 
