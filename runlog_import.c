@@ -34,6 +34,7 @@ rename_archive_files(FILE *flog, int num, int *map)
 
   for (i = 0; i < num; i++) {
     if (map[i] < 0) continue;
+    if (map[i] == i) continue;
     archive_rename(global->run_archive_dir, flog, i, "", i, "_", 0);
     archive_rename(global->report_archive_dir, flog, i, "", i, "_", 1);
     if (global->team_enable_rep_view) {
@@ -43,6 +44,7 @@ rename_archive_files(FILE *flog, int num, int *map)
 
   for (i = 0; i < num; i++) {
     if (map[i] < 0) continue;
+    if (map[i] == i) continue;
     archive_rename(global->run_archive_dir, flog, i, "_", map[i], "", 0);
     archive_rename(global->report_archive_dir, flog, i, "_", map[i], "", 1);
     if (global->team_enable_rep_view) {
@@ -52,7 +54,7 @@ rename_archive_files(FILE *flog, int num, int *map)
 }
 
 void
-runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
+runlog_import_xml(FILE *hlog, int flags, const unsigned char *in_xml)
 {
   size_t armor_len, flog_len = 0;
   unsigned char *armor_str;
@@ -68,7 +70,7 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
   size_t in_entries_num = 0;
   size_t cur_entries_num = 0;
   size_t out_entries_num = 0;
-  int r, i, st, j, k, corr_total, i2, j2, i3, j3, cur_out;
+  int r, i, st, j, k, corr_total, i2, j2, i3, j3, cur_out, prev_i;
   int min_i, min_j;
   time_t prev_time, cur_time = 0;
   long prev_nsec;
@@ -123,16 +125,32 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
     goto done;
   }
   prev_time = 0;
+  prev_nsec = 0;
+  prev_i = -1;
   for (i = 0; i < cur_entries_num; i++) {
+    if (cur_entries[i].status == RUN_EMPTY) continue;
     if (cur_entries[i].timestamp < 0) {
       fprintf(flog, "Run %d time is negative\n", i);
       goto done;
     }
-    if (cur_entries[i].timestamp < prev_time) {
+    if (cur_entries[i].timestamp < prev_time ||
+        (cur_entries[i].timestamp == prev_time
+         && cur_entries[i].nsec < prev_nsec)) {
       fprintf(flog, "Run %d time is less than previous run time\n", i);
       goto done;
     }
+    if (prev_i >= 0
+        && cur_entries[prev_i].timestamp == cur_entries[i].timestamp
+        && cur_entries[prev_i].nsec == cur_entries[i].nsec
+        && cur_entries[prev_i].team == cur_entries[i].team
+        && cur_entries[prev_i].language == cur_entries[i].language
+        && cur_entries[prev_i].problem == cur_entries[i].problem) {
+      fprintf(flog, "Run %d seems like a duplicate of the previuos run\n", i);
+      goto done;
+    }
     prev_time = cur_entries[i].timestamp;
+    prev_nsec = cur_entries[i].nsec;
+    prev_i = i;
   }
   fprintf(flog, "Scanning the existing entries done successfully\n");
 
@@ -181,6 +199,7 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
   }
   prev_time = 0;
   prev_nsec = 0;
+  prev_i = -1;
   for (i = 0; i < in_entries_num; i++) {
     if (in_entries[i].status == RUN_EMPTY) continue;
     ASSERT(in_entries[i].status <= RUN_MAX_STATUS);
@@ -194,8 +213,18 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
       fprintf(flog, "Run %d time is less than previous run time\n", i);
       goto done;
     }
+    if (prev_i >= 0
+        && in_entries[prev_i].timestamp == in_entries[i].timestamp
+        && in_entries[prev_i].nsec == in_entries[i].nsec
+        && in_entries[prev_i].team == in_entries[i].team
+        && in_entries[prev_i].language == in_entries[i].language
+        && in_entries[prev_i].problem == in_entries[i].problem) {
+      fprintf(flog, "Run %d seems like a duplicate of the previuos run\n", i);
+      goto done;
+    }
     prev_time = in_entries[i].timestamp;
     prev_nsec = in_entries[i].nsec;
+    prev_i = i;
     if (!teamdb_lookup(in_entries[i].team)) {
       fprintf(flog, "Run %d team %d is not known\n", i, in_entries[i].team);
       goto done;
@@ -237,15 +266,15 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
   i = 0, j = 0;
   while (1) {
     if (i >= cur_entries_num) break;
-    if (cur_entries[i].status == RUN_EMPTY) {
-      i++;
-      continue;
-    }
-    if (cur_entries[i].is_hidden) {
-      i++;
-      continue;
-    }
     while (i < cur_entries_num && j < in_entries_num) {
+      if (cur_entries[i].status == RUN_EMPTY) {
+        i++;
+        continue;
+      }
+      if (cur_entries[i].is_hidden) {
+        i++;
+        continue;
+      }
       cur_time = cur_entries[i].timestamp - cur_header.start_time;
       if (cur_time < 0) cur_time = 0;
       if (in_entries[j].status == RUN_EMPTY) {
@@ -262,11 +291,13 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
         j++;
     }
     if (i >= cur_entries_num || j >= in_entries_num) break;
+
+    /* find a correspondence among the incoming runs starting from j'th */
     k = j;
     for (; k < in_entries_num; k++) {
       if (in_entries[k].status == RUN_EMPTY) continue;
       if (in_entries[k].timestamp != cur_time) break;
-      if (in_entries[k].timestamp != cur_entries[i].nsec) break;
+      if (in_entries[k].nsec != cur_entries[i].nsec) break;
       if (new_cur_map[k] >= 0) continue;
       if (cur_entries[i].team != in_entries[k].team) continue;
       if (cur_entries[i].problem != in_entries[k].problem) continue;
@@ -276,6 +307,8 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
     if (k < in_entries_num && in_entries[k].timestamp == cur_time
         && in_entries[k].nsec == cur_entries[i].nsec) {
       /* establish correspondence */
+      ASSERT(cur_new_map[i] == -1);
+      ASSERT(new_cur_map[k] == -1);
       cur_new_map[i] = k;
       new_cur_map[k] = i;
       corr_total++;
@@ -283,6 +316,7 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
     i++;
   }
   fprintf(flog, "%d correspondences established\n", corr_total);
+
   /* check correspondences */
   for (i = 0; i < cur_entries_num; i++) {
     if ((j = cur_new_map[i]) == -1) continue;
@@ -412,11 +446,13 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
     goto done;
   }
   fprintf(flog, "The merged runlog contains %d records\n", out_entries_num);
+
   if (!out_entries_num) {
     fprintf(flog, "Refuse to create runlog of size 0\n");
     goto done;
   }
-  out_entries = alloca(out_entries_num * sizeof(out_entries[0]));
+
+  out_entries = alloca((out_entries_num + 1) * sizeof(out_entries[0]));
   memset(out_entries, 0, out_entries_num * sizeof(out_entries[0]));
   cur_used_flag = alloca(cur_entries_num);
   memset(cur_used_flag, 0, cur_entries_num);
@@ -470,6 +506,8 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
       cur_out++;
       continue;
     }
+
+    /* order the entries with the same timestamp */
     /* detect entries with the same timestamp */
     for (i2 = i; i2 < cur_entries_num; i2++) {
       if (cur_entries[i2].status == RUN_EMPTY) continue;
@@ -479,7 +517,7 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
     for (j2 = j; j2 < in_entries_num; j2++) {
       if (in_entries[j2].status == RUN_EMPTY) continue;
       if (in_entries[j2].timestamp != in_entries[j].timestamp
-          || cur_entries[j2].nsec != cur_entries[j].nsec) break;
+          || in_entries[j2].nsec != in_entries[j].nsec) break;
     }
     while (1) {
       min_team_id = INT_MAX, min_i = -1, min_j = -1;
@@ -546,6 +584,7 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
     i = i2;
     j = j2;
   }
+
   for (;i < cur_entries_num;i++) {
     if (cur_entries[i].status == RUN_EMPTY) continue;
     ASSERT(cur_new_map[i] == -1);
@@ -584,10 +623,15 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
  done:
   fclose(flog);
   if (!flog_text) flog_text = xstrdup("");
-  armor_len = html_armored_strlen(flog_text);
-  armor_str = alloca(armor_len + 1);
-  html_armor_string(flog_text, armor_str);
-  fprintf(hlog, "<pre>%s</pre>\n", armor_str);
+  if (flags) {
+    // no html formatting... dumb however, may avoid flog buf at all...
+    fprintf(hlog, "%s", flog_text);
+  } else {
+    armor_len = html_armored_strlen(flog_text);
+    armor_str = alloca(armor_len + 1);
+    html_armor_string(flog_text, armor_str);
+    fprintf(hlog, "<pre>%s</pre>\n", armor_str);
+  }
   xfree(flog_text);
   xfree(in_entries);
   xfree(cur_entries);
