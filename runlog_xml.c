@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -68,6 +68,7 @@ enum
   RUNLOG_A_LONG_NAME,
   RUNLOG_A_VARIANT,
   RUNLOG_A_READONLY,
+  RUNLOG_A_NSEC,
 
   RUNLOG_LAST_ATTR,
 };
@@ -105,6 +106,7 @@ static const char * const attr_map[] =
   [RUNLOG_A_LONG_NAME] "long_name",
   [RUNLOG_A_VARIANT]   "variant",
   [RUNLOG_A_READONLY]  "readonly",
+  [RUNLOG_A_NSEC]      "nsec",
 };
 static size_t const elem_sizes[RUNLOG_LAST_TAG] =
 {
@@ -262,6 +264,7 @@ process_run_elements(struct xml_tree *xt)
   struct xml_attn *xa;
   int iv, n;
   long long llv;
+  long lv;
   size_t sv;
 
   while (xt) {
@@ -302,7 +305,6 @@ process_run_elements(struct xml_tree *xt)
         if (sscanf(xa->text, "%lld %n", &llv, &n) != 1 || xa->text[n])
           goto invalid_attr_value;
         if (llv < 0) goto invalid_attr_value;
-        llv /= 1000;
         if (llv > INT_MAX) goto invalid_attr_value;
         xr->r.timestamp = (time_t) llv;
         break;
@@ -391,6 +393,14 @@ process_run_elements(struct xml_tree *xt)
         if (!xa->text) goto empty_attr_value;
         if ((iv = parse_bool(xa->text)) < 0) goto invalid_attr_value;
         xr->r.is_readonly = iv;
+        break;
+      case RUNLOG_A_NSEC:
+        if (!xa->text) goto empty_attr_value;
+        n = 0;
+        if (sscanf(xa->text, "%ld %n", &lv, &n) != 1 || xa->text[n])
+          goto invalid_attr_value;
+        if (lv < 0 || lv >= 1000000000) goto invalid_attr_value;
+        xr->r.nsec = lv;
         break;
       default:
         err("%d:%d: invalid attribute \"%s\" in element <%s>",
@@ -482,8 +492,14 @@ process_runlog_element(struct xml_tree *xt, struct xml_tree **ptruns)
         xt->line, xt->column, elem_map[RUNLOG_T_RUNS]);
     return -1;
   }
+  if (check_empty_text(truns) < 0) {
+    err("%d:%d: element <%s> cannot contain text",
+        truns->line, truns->column, elem_map[RUNLOG_T_RUNS]);
+    return -1;
+  }
+  truns = truns->first_down;
 
-  if (process_run_elements(xt->first_down) < 0)
+  if (process_run_elements(truns) < 0)
     return -1;
   if (ptruns) *ptruns = truns;
   return 0;
@@ -498,9 +514,7 @@ collect_runlog(struct xml_tree *xt, size_t *psize,
   int max_run_id = -1, i, j;
   struct run_entry *ee;
   
-  ASSERT(xt);
-  ASSERT(xt->tag == RUNLOG_T_RUNLOG);
-  for (xx = xt->first_down; xx; xx = xx->right) {
+  for (xx = xt; xx; xx = xx->right) {
     ASSERT(xx->tag == RUNLOG_T_RUN);
     xr = (struct run_element*) xx;
     if (xr->r.submission > max_run_id) max_run_id = xr->r.submission;
@@ -511,9 +525,11 @@ collect_runlog(struct xml_tree *xt, size_t *psize,
     return 0;
   }
   ee = (struct run_entry*) xcalloc(max_run_id + 1, sizeof(*ee));
-  for (i = 0; i <= max_run_id; i++)
+  for (i = 0; i <= max_run_id; i++) {
+    ee[i].submission = i;
     ee[i].status = RUN_EMPTY;
-  for (xx = xt->first_down; xx; xx = xx->right) {
+  }
+  for (xx = xt; xx; xx = xx->right) {
     xr = (struct run_element*) xx;
     j = xr->r.submission;
     ASSERT(j >= 0 && j <= max_run_id);
@@ -713,7 +729,6 @@ unparse_runlog_xml(FILE *f,
     ts = pp->timestamp;
     ts -= phead->start_time;
     if (ts < 0) ts = 0;
-    ts *= 1000;
     fprintf(f, " %s=\"%lld\"", attr_map[RUNLOG_A_TIME], ts);
     if (!external_mode && pp->size > 0) {
       fprintf(f, " %s=\"%zu\"", attr_map[RUNLOG_A_SIZE], pp->size);
@@ -750,6 +765,7 @@ unparse_runlog_xml(FILE *f,
     }
     fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_READONLY],
             (pp->is_readonly)?"yes":"no");
+    fprintf(f, " %s=\"%ld\"", attr_map[RUNLOG_A_NSEC], pp->nsec);
     fprintf(f, "/>\n");
   }
   fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_RUNS]);
