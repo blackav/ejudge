@@ -24,6 +24,7 @@
 #include "clarlog.h"
 #include "runlog.h"
 #include "base64.h"
+#include "html.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -40,12 +41,21 @@
 #define _(x) x
 #endif
 
-static int prev_first_run, prev_last_run;
-static int prev_first_clar, prev_last_clar;
-static unsigned char *prev_filter_expr;
-static struct filter_tree *prev_tree;
-static struct filter_tree_mem *tree_mem;
-static unsigned char *error_msgs = 0;
+struct user_state_info
+{
+  int prev_first_run;
+  int prev_last_run;
+  int prev_first_clar;
+  int prev_last_clar;
+  unsigned char *prev_filter_expr;
+  struct filter_tree *prev_tree;
+  struct filter_tree_mem *tree_mem;
+  unsigned char *error_msgs;
+};
+
+static int users_a;
+static struct user_state_info **users;
+static struct user_state_info *cur_user;
 
 static const unsigned char form_header_simple[] =
 "form method=\"POST\" ENCTYPE=\"application/x-www-form-urlencoded\" action=";
@@ -62,12 +72,13 @@ static void parse_error_func(unsigned char const *format, ...)
   l = vsnprintf(buf, sizeof(buf) - 24, format, args);
   va_end(args);
   strcpy(buf + l, "\n");
-  error_msgs = xstrmerge1(error_msgs, (unsigned char*) buf);
+  cur_user->error_msgs = xstrmerge1(cur_user->error_msgs, buf);
   filter_expr_nerrs++;
 }
 
 static void
-write_all_runs(FILE *f, int mode, int first_run, int last_run,
+write_all_runs(FILE *f, struct user_state_info *u,
+               int priv_level, int first_run, int last_run,
                unsigned char const *self_url,
                unsigned char const *filter_expr,
                unsigned char const *hidden_vars)
@@ -88,51 +99,51 @@ write_all_runs(FILE *f, int mode, int first_run, int last_run,
   unsigned char first_run_str[32] = { 0 }, last_run_str[32] = { 0 };
 
   if (!filter_expr || !*filter_expr ||
-      (prev_filter_expr && !strcmp(prev_filter_expr, filter_expr))){
+      (u->prev_filter_expr && !strcmp(u->prev_filter_expr, filter_expr))){
     /* nothing to do, use the previous values */
   } else {
-    if (prev_filter_expr) xfree(prev_filter_expr);
-    if (tree_mem) filter_tree_delete(tree_mem);
-    if (error_msgs) xfree(error_msgs);
-    error_msgs = 0;
-    prev_filter_expr = 0;
-    prev_tree = 0;
-    tree_mem = 0;
+    if (u->prev_filter_expr) xfree(u->prev_filter_expr);
+    if (u->tree_mem) filter_tree_delete(u->tree_mem);
+    if (u->error_msgs) xfree(u->error_msgs);
+    u->error_msgs = 0;
+    u->prev_filter_expr = 0;
+    u->prev_tree = 0;
+    u->tree_mem = 0;
 
-    prev_filter_expr = xstrdup(filter_expr);
-    tree_mem = filter_tree_new();
-    filter_expr_set_string(filter_expr, tree_mem, parse_error_func);
-    filter_expr_init_parser(tree_mem, parse_error_func);
+    u->prev_filter_expr = xstrdup(filter_expr);
+    u->tree_mem = filter_tree_new();
+    filter_expr_set_string(filter_expr, u->tree_mem, parse_error_func);
+    filter_expr_init_parser(u->tree_mem, parse_error_func);
     i = filter_expr_parse();
     if (i + filter_expr_nerrs == 0) {
       if (filter_expr_lval && filter_expr_lval->type != FILTER_TYPE_BOOL) {
         parse_error_func("bool expression expected");
       } else {
-        prev_tree = filter_expr_lval;
+        u->prev_tree = filter_expr_lval;
       }
     } else {
       parse_error_func("filter expression parsing failed");
     }
   }
 
-  if (error_msgs) {
+  if (u->error_msgs) {
     fprintf(f, "<hr><h2>%s</h2>\n", _("Submissions"));
 
-    if (prev_filter_expr) {
-      fe_html_len = html_armored_strlen(prev_filter_expr);
+    if (u->prev_filter_expr) {
+      fe_html_len = html_armored_strlen(u->prev_filter_expr);
       fe_html = alloca(fe_html_len + 16);
-      html_armor_string(prev_filter_expr, fe_html);
+      html_armor_string(u->prev_filter_expr, fe_html);
     } else {
       fe_html = "";
       fe_html_len = 0;
     }
-    if (prev_first_run) {
+    if (u->prev_first_run) {
       snprintf(first_run_str, sizeof(first_run_str), "%d",
-               (prev_first_run > 0)?prev_first_run - 1:prev_first_run);
+               (u->prev_first_run > 0)?u->prev_first_run-1:u->prev_first_run);
     }
-    if (prev_last_run) {
+    if (u->prev_last_run) {
       snprintf(last_run_str, sizeof(last_run_str), "%d",
-               (prev_last_run > 0)?prev_last_run - 1:prev_last_run);
+               (u->prev_last_run > 0)?u->prev_last_run - 1:u->prev_last_run);
     }
     fprintf(f, "<%s\"%s\">%s", form_header_simple, self_url, hidden_vars);
     fprintf(f, "<p>%s: <input type=\"text\" name=\"filter_expr\" size=\"32\" maxlength=\"128\" value=\"%s\">", _("Filter expression"), fe_html);
@@ -143,7 +154,7 @@ write_all_runs(FILE *f, int mode, int first_run, int last_run,
 
     fprintf(f, "<h2>Filter expression parse errors</h2>\n");
     fprintf(f, "<p><pre><font color=\"red\">%s</font></pre></p>\n",
-            error_msgs);
+            u->error_msgs);
     return;
   }
 
@@ -165,8 +176,8 @@ write_all_runs(FILE *f, int mode, int first_run, int last_run,
 
   for (i = 0; i < env.rtotal; i++) {
     env.rid = i;
-    if (prev_tree) {
-      r = filter_tree_bool_eval(&env, prev_tree);
+    if (u->prev_tree) {
+      r = filter_tree_bool_eval(&env, u->prev_tree);
       if (r < 0) {
         parse_error_func("run %d: %s", i, filter_strerror(-r));
         continue;
@@ -176,24 +187,24 @@ write_all_runs(FILE *f, int mode, int first_run, int last_run,
     match_idx[match_tot++] = i;
   }
   filter_tree_delete(env.mem);
-  if (error_msgs) {
+  if (u->error_msgs) {
     fprintf(f, "<hr><h2>%s</h2>\n", _("Submissions"));
 
-    if (prev_filter_expr) {
-      fe_html_len = html_armored_strlen(prev_filter_expr);
+    if (u->prev_filter_expr) {
+      fe_html_len = html_armored_strlen(u->prev_filter_expr);
       fe_html = alloca(fe_html_len + 16);
-      html_armor_string(prev_filter_expr, fe_html);
+      html_armor_string(u->prev_filter_expr, fe_html);
     } else {
       fe_html = "";
       fe_html_len = 0;
     }
-    if (prev_first_run) {
+    if (u->prev_first_run) {
       snprintf(first_run_str, sizeof(first_run_str), "%d",
-               (prev_first_run > 0)?prev_first_run - 1:prev_first_run);
+               (u->prev_first_run > 0)?u->prev_first_run-1:u->prev_first_run);
     }
-    if (prev_last_run) {
+    if (u->prev_last_run) {
       snprintf(last_run_str, sizeof(last_run_str), "%d",
-               (prev_last_run > 0)?prev_last_run - 1:prev_last_run);
+               (u->prev_last_run > 0)?u->prev_last_run - 1:u->prev_last_run);
     }
     fprintf(f, "<%s\"%s\">%s", form_header_simple, self_url, hidden_vars);
     fprintf(f, "<p>%s: <input type=\"text\" name=\"filter_expr\" size=\"32\" maxlength=\"128\" value=\"%s\">", _("Filter expression"), fe_html);
@@ -204,9 +215,9 @@ write_all_runs(FILE *f, int mode, int first_run, int last_run,
 
     fprintf(f, "<h2>Filter expression execution errors</h2>\n");
     fprintf(f, "<p><pre><font color=\"red\">%s</font></pre></p>\n",
-            error_msgs);
-    xfree(error_msgs);
-    error_msgs = 0;
+            u->error_msgs);
+    xfree(u->error_msgs);
+    u->error_msgs = 0;
     return;
   }
 
@@ -214,10 +225,10 @@ write_all_runs(FILE *f, int mode, int first_run, int last_run,
   memset(list_idx, 0, (env.rtotal + 1) * sizeof(list_idx[0]));
   list_tot = 0;
 
-  if (!first_run) first_run = prev_first_run;
-  if (!last_run) last_run = prev_last_run;
-  prev_first_run = first_run;
-  prev_last_run = last_run;
+  if (!first_run) first_run = u->prev_first_run;
+  if (!last_run) last_run = u->prev_last_run;
+  u->prev_first_run = first_run;
+  u->prev_last_run = last_run;
 
   if (!first_run && !last_run) {
     // last 20 in the reverse order
@@ -261,21 +272,21 @@ write_all_runs(FILE *f, int mode, int first_run, int last_run,
           _("Filtered"), match_tot,
           _("Shown"), list_tot);
 
-  if (prev_filter_expr) {
-    fe_html_len = html_armored_strlen(prev_filter_expr);
+  if (u->prev_filter_expr) {
+    fe_html_len = html_armored_strlen(u->prev_filter_expr);
     fe_html = alloca(fe_html_len + 16);
-    html_armor_string(prev_filter_expr, fe_html);
+    html_armor_string(u->prev_filter_expr, fe_html);
   } else {
     fe_html = "";
     fe_html_len = 0;
   }
-  if (prev_first_run) {
+  if (u->prev_first_run) {
     snprintf(first_run_str, sizeof(first_run_str), "%d",
-             (prev_first_run > 0)?prev_first_run - 1:prev_first_run);
+             (u->prev_first_run > 0)?u->prev_first_run - 1:u->prev_first_run);
   }
-  if (prev_last_run) {
+  if (u->prev_last_run) {
     snprintf(last_run_str, sizeof(last_run_str), "%d",
-             (prev_last_run > 0)?prev_last_run - 1:prev_last_run);
+             (u->prev_last_run > 0)?u->prev_last_run - 1:u->prev_last_run);
   }
   fprintf(f, "<%s\"%s\">%s", form_header_simple, self_url, hidden_vars);
   fprintf(f, "<p>%s: <input type=\"text\" name=\"filter_expr\" size=\"32\" maxlength=\"128\" value=\"%s\">", _("Filter expression"), fe_html);
@@ -309,7 +320,7 @@ write_all_runs(FILE *f, int mode, int first_run, int last_run,
   if (str2) {
     fprintf(f, "<th>%s</th>", str2);
   }
-  if (mode == MASTER_PAGE_MASTER) {
+  if (priv_level == PRIV_LEVEL_ADMIN) {
     fprintf(f, "<th>%s</th>", _("New result"));
     fprintf(f, "<th>%s</th>", _("Change result"));
   }
@@ -373,7 +384,7 @@ write_all_runs(FILE *f, int mode, int first_run, int last_run,
       fprintf(f, "<td>%d</td>\n", pe->test);
     }
 
-    if (mode == MASTER_PAGE_MASTER) {
+    if (priv_level == PRIV_LEVEL_ADMIN) {
       if (global->score_system_val == SCORE_KIROV) {
         fprintf(f,
                 "<td><select name=\"stat_%d\">"
@@ -472,7 +483,8 @@ write_all_runs(FILE *f, int mode, int first_run, int last_run,
 }
 
 static void
-write_all_clars(FILE *f, int mode, int first_clar, int last_clar,
+write_all_clars(FILE *f, struct user_state_info *u,
+                int priv_level, int first_clar, int last_clar,
                 unsigned char const *self_url,
                 unsigned char const *hidden_vars)
 {
@@ -497,10 +509,10 @@ write_all_clars(FILE *f, int mode, int first_clar, int last_clar,
 
   start = run_get_start_time();
   total = clar_get_total();
-  if (!first_clar) first_clar = prev_first_clar;
-  if (!last_clar) last_clar = prev_last_clar;
-  prev_first_clar = first_clar;
-  prev_last_clar = last_clar;
+  if (!first_clar) first_clar = u->prev_first_clar;
+  if (!last_clar) last_clar = u->prev_last_clar;
+  u->prev_first_clar = first_clar;
+  u->prev_last_clar = last_clar;
 
   if (!first_clar && !last_clar) {
     first_clar = -1;
@@ -538,13 +550,13 @@ write_all_clars(FILE *f, int mode, int first_clar, int last_clar,
   fprintf(f, "<p><big>%s: %d, %s: %d</big></p>\n", _("Total messages"), total,
           _("Shown"), list_tot);
 
-  if (prev_first_clar) {
+  if (u->prev_first_clar) {
     snprintf(first_clar_str, sizeof(first_clar_str), "%d",
-             (prev_first_clar > 0)?prev_first_clar - 1:prev_first_clar);
+             (u->prev_first_clar > 0)?u->prev_first_clar-1:u->prev_first_clar);
   }
-  if (prev_last_clar) {
+  if (u->prev_last_clar) {
     snprintf(last_clar_str, sizeof(last_clar_str), "%d",
-             (prev_last_clar > 0)?prev_last_clar - 1:prev_last_clar);
+             (u->prev_last_clar > 0)?u->prev_last_clar - 1:u->prev_last_clar);
   }
   fprintf(f, "<%s\"%s\">%s", form_header_simple, self_url, hidden_vars);
   fprintf(f, "%s: <input type=\"text\" name=\"filter_first_clar\" size=\"16\" value=\"%s\">", _("First clar"), first_clar_str);
@@ -564,7 +576,7 @@ write_all_clars(FILE *f, int mode, int first_clar, int last_clar,
 
     clar_get_record(i, &time, (unsigned long*) &size,
                     ip, &from, &to, &flags, subj);
-    if (mode != MASTER_PAGE_MASTER && (from <= 0 || flags >= 2)) continue; 
+    if (priv_level != PRIV_LEVEL_ADMIN && (from <= 0 || flags >= 2)) continue; 
 
     base64_decode_str(subj, psubj, 0);
     new_len = html_armored_strlen(psubj);
@@ -611,17 +623,46 @@ write_all_clars(FILE *f, int mode, int first_clar, int last_clar,
   fprintf(f, "</form>\n");
 }
 
+static struct user_state_info *
+allocate_user_info(int user_id)
+{
+  if (user_id == -1) user_id = 0;
+  ASSERT(user_id >= 0 && user_id < 32768);
+  if (user_id >= users_a) {
+    int new_users_a = users_a;
+    struct user_state_info **new_users;
+
+    if (!new_users_a) new_users_a = 64;
+    while (new_users_a <= user_id) new_users_a *= 2;
+    new_users = xcalloc(new_users_a, sizeof(new_users[0]));
+    if (users_a > 0)
+      memcpy(new_users, users, users_a * sizeof(users[0]));
+    xfree(users);
+    users_a = new_users_a;
+    users = new_users;
+    info("allocate_user_info: new size %d", users_a);
+  }
+  if (!users[user_id]) {
+    users[user_id] = xcalloc(1, sizeof(*users[user_id]));
+  }
+  cur_user = users[user_id];
+  return users[user_id];
+}
+
 void
-write_master_page(FILE *f, int mode,
+write_master_page(FILE *f, int user_id, int priv_level,
                   int first_run, int last_run,
                   int first_clar, int last_clar,
                   unsigned char const *self_url,
                   unsigned char const *filter_expr,
                   unsigned char const *hidden_vars)
 {
-  write_all_runs(f, mode, first_run, last_run, self_url, filter_expr,
+  struct user_state_info *u = allocate_user_info(user_id);
+
+  write_all_runs(f, u, priv_level, first_run, last_run, self_url, filter_expr,
                  hidden_vars);
-  write_all_clars(f, mode, first_clar, last_clar, self_url, hidden_vars);
+  write_all_clars(f, u, priv_level, first_clar, last_clar, self_url,
+                  hidden_vars);
 }
 
 /**
