@@ -1,0 +1,57 @@
+/* -*- c -*- */
+/* $Id$ */
+#ifndef __SUPER_ACTIONS_H__
+#define __SUPER_ACTIONS_H__
+
+/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+
+/*
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+enum
+{
+  SUPER_ACTION_VIEW_CONTEST = 1,
+  SUPER_ACTION_OPEN_CONTEST,
+  SUPER_ACTION_CLOSE_CONTEST,
+  SUPER_ACTION_SERVE_MNG_TEMP,
+  SUPER_ACTION_SERVE_MNG,
+  SUPER_ACTION_SERVE_MNG_RESUME,
+  SUPER_ACTION_SERVE_MNG_STOP,
+  SUPER_ACTION_SERVE_MNG_SUSPEND,
+  SUPER_ACTION_SERVE_MNG_PROBE_RUN,
+  SUPER_ACTION_SERVE_MNG_RESET_ERROR,
+  SUPER_ACTION_SERVE_MNG_TERM,
+  SUPER_ACTION_SERVE_LOG_TRUNC,
+  SUPER_ACTION_SERVE_LOG_DEV_NULL,
+  SUPER_ACTION_SERVE_LOG_FILE,
+  SUPER_ACTION_SERVE_LOG_VIEW,
+  SUPER_ACTION_RUN_MNG_TEMP,
+  SUPER_ACTION_RUN_MNG,
+  SUPER_ACTION_RUN_MNG_RESUME,
+  SUPER_ACTION_RUN_MNG_STOP,
+  SUPER_ACTION_RUN_MNG_SUSPEND,
+  SUPER_ACTION_RUN_MNG_PROBE_RUN,
+  SUPER_ACTION_RUN_MNG_RESET_ERROR,
+  SUPER_ACTION_RUN_MNG_TERM,
+  SUPER_ACTION_RUN_LOG_TRUNC,
+  SUPER_ACTION_RUN_LOG_DEV_NULL,
+  SUPER_ACTION_RUN_LOG_FILE,
+  SUPER_ACTION_RUN_LOG_VIEW,
+  SUPER_ACTION_CONTEST_RESTART,
+  SUPER_ACTION_LOGOUT,
+  SUPER_ACTION_CONTEST_VISIBLE,
+  SUPER_ACTION_CONTEST_INVISIBLE,
+
+  SUPER_ACTION_LAST,
+};
+
+#endif /* __SUPER_ACTIONS_H__ */
