@@ -19,6 +19,7 @@
 
 #include "prepare.h"
 #include "settings.h"
+#include "varsubst.h"
 
 #include "fileutl.h"
 #include "sformat.h"
@@ -274,6 +275,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(date_penalty, "x"),
   PROBLEM_PARAM(disable_language, "x"),
   PROBLEM_PARAM(standard_checker, "s"),
+  PROBLEM_PARAM(checker_env, "x"),
 
   { 0, 0, 0, 0 }
 };
@@ -339,6 +341,7 @@ static struct config_parse_info section_tester_params[] =
   TESTER_PARAM(start_cmd, "s"),
 
   TESTER_PARAM(start_env, "x"),
+  TESTER_PARAM(checker_env, "x"),
 
   { 0, 0, 0, 0 }
 };
@@ -2000,6 +2003,20 @@ set_defaults(int mode)
       if (si != -1 && abstr_probs[si]->disable_language) {
         probs[i]->disable_language = sarray_merge_pf(abstr_probs[si]->disable_language, probs[i]->disable_language);
       }
+      if (si != -1 && abstr_probs[si]->checker_env) {
+        probs[i]->checker_env = sarray_merge_pf(abstr_probs[si]->checker_env,
+                                                probs[i]->checker_env);
+      }
+      if (probs[i]->checker_env) {
+        for (j = 0; probs[i]->checker_env[j]; j++) {
+          probs[i]->checker_env[j] = varsubst_heap(probs[i]->checker_env[j], 1,
+                                                   section_global_params,
+                                                   section_problem_params,
+                                                   section_language_params,
+                                                   section_tester_params);
+          if (!probs[i]->checker_env[j]) return -1;
+        }
+      }
     }
 
     if (mode == PREPARE_RUN) {
@@ -2350,6 +2367,29 @@ set_defaults(int mode)
 
       if (atp && atp->start_env) {
         tp->start_env = sarray_merge_pf(atp->start_env, tp->start_env);
+      }
+      if (tp->start_env) {
+        for (j = 0; tp->start_env[j]; j++) {
+          tp->start_env[j] = varsubst_heap(tp->start_env[j], 1,
+                                           section_global_params,
+                                           section_problem_params,
+                                           section_language_params,
+                                           section_tester_params);
+          if (!tp->start_env[j]) return -1;
+        }
+      }
+      if (atp && atp->checker_env) {
+        tp->checker_env = sarray_merge_pf(atp->checker_env, tp->checker_env);
+      }
+      if (tp->checker_env) {
+        for (j = 0; tp->checker_env[j]; j++) {
+          tp->checker_env[j] = varsubst_heap(tp->checker_env[j], 1,
+                                             section_global_params,
+                                             section_problem_params,
+                                             section_language_params,
+                                             section_tester_params);
+          if (!tp->checker_env[j]) return -1;
+        }
       }
 
       if (mode == PREPARE_RUN) {
@@ -2835,7 +2875,7 @@ prepare_tester_refinement(struct section_tester_data *out,
 {
   struct section_tester_data *tp, *atp = 0;
   struct section_problem_data *prb;
-  int si;
+  int si, j;
   unsigned char *sish = 0;
 
   ASSERT(out);
@@ -2983,6 +3023,32 @@ prepare_tester_refinement(struct section_tester_data *out,
   out->start_env = sarray_merge_pf(tp->start_env, out->start_env);
   if (atp && atp->start_env) {
     out->start_env = sarray_merge_pf(atp->start_env, out->start_env);
+  }
+  if (out->start_env) {
+    for (j = 0; out->start_env[j]; j++) {
+      out->start_env[j] = varsubst_heap(out->start_env[j], 1,
+                                        section_global_params,
+                                        section_problem_params,
+                                        section_language_params,
+                                        section_tester_params);
+      if (!out->start_env[j]) return -1;
+    }
+  }
+
+  /* copy checker_env */
+  out->checker_env = sarray_merge_pf(tp->checker_env, out->checker_env);
+  if (atp && atp->checker_env) {
+    out->checker_env = sarray_merge_pf(atp->checker_env, out->checker_env);
+  }
+  if (out->checker_env) {
+    for (j = 0; out->checker_env[j]; j++) {
+      out->checker_env[j] = varsubst_heap(out->checker_env[j], 1,
+                                          section_global_params,
+                                          section_problem_params,
+                                          section_language_params,
+                                          section_tester_params);
+      if (!out->checker_env[j]) return -1;
+    }
   }
 
   /* copy errorcode_file */
