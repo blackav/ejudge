@@ -187,6 +187,8 @@ filter_expr_set_string(unsigned char const *str,
 {
   (void) &yyunput;
 
+  yyrestart(0);
+  BEGIN(INITIAL);
   scan_buf = (unsigned char*) str;
   scan_len = strlen(str);
   scan_read = 0;
