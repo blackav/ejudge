@@ -1128,3 +1128,14 @@ serve_clnt/view.c 1 8 323985
 NEWS.RUS 1 5 5582027
 NEWS 1 5 3216840
 serve_clnt/upload_report.c 1 1 187406
+client_actions.h 1 18 187650
+html.h 1 20 412205
+prepare.h 1 47 1424961
+protocol.h 1 24 667848
+serve_clnt.h 1 14 406871
+master.c 1 51 6724048
+serve.c 1 63 9600300
+userlist-server.c 1 40 13260442
+master_html.c 1 22 5655061
+prepare.c 1 66 7635808
+serve_clnt/view.c 1 9 328091
