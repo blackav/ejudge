@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003,2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,7 @@ static const unsigned char * const cap_list [] =
 {
   [OPCAP_MASTER_LOGIN]            "MASTER_LOGIN",
   [OPCAP_JUDGE_LOGIN]             "JUDGE_LOGIN",
-  [OPCAP_SUBMIT_RUNS]             "SUBMIT_RUNS",
+  [OPCAP_SUBMIT_RUN]              "SUBMIT_RUN",
   [OPCAP_MAP_CONTEST]             "MAP_CONTEST",
   [OPCAP_LIST_CONTEST_USERS]      "LIST_CONTEST_USERS",
   [OPCAP_LIST_ALL_USERS]          "LIST_ALL_USERS",
@@ -59,6 +59,7 @@ static const unsigned char * const cap_list [] =
   [OPCAP_REPLY_MESSAGE]           "REPLY_MESSAGE",
   [OPCAP_CONTROL_CONTEST]         "CONTROL_CONTEST",
   [OPCAP_IMPORT_XML_RUNS]         "IMPORT_XML_RUNS",
+  [OPCAP_PRINT_RUN]               "PRINT_RUN",
 
   [OPCAP_LAST]                    0
 };
