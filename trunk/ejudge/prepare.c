@@ -136,6 +136,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(run_team_report_dir, "s"),
 
   GLOBAL_PARAM(score_system, "s"),
+  GLOBAL_PARAM(virtual, "d"),
 
   GLOBAL_PARAM(team_info_url, "s"),
   GLOBAL_PARAM(prob_info_url, "s"),
@@ -170,6 +171,8 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(show_astr_time, "d"),
   GLOBAL_PARAM(ignore_duplicated_runs, "d"),
   GLOBAL_PARAM(report_error_code, "d"),
+
+  GLOBAL_PARAM(standings_team_color, "s"),
 
   { 0, 0, 0, 0 }
 };
