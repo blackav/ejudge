@@ -3,7 +3,7 @@
 #ifndef __FILEUTL_H__
 #define __FILEUTL_H__
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -53,5 +53,7 @@ int   check_writable_spool(char const *, int);
 
 int   relaxed_remove(char const *, char const *);
 int   remove_directory_recursively(const unsigned char *path);
+
+int make_symlink(unsigned char const *dest, unsigned char const *path);
 
 #endif /* __FILEUTL_H__ */
