@@ -23,8 +23,8 @@
 #include "nls.h"
 #include "pathutl.h"
 
-#include "reuse/logger.h"
-#include "reuse/xalloc.h"
+#include <reuse/logger.h>
+#include <reuse/xalloc.h>
 
 #include <expat.h>
 
