@@ -19,6 +19,16 @@
  */
 
 #include <stdio.h>
+#include <time.h>
+
+struct team_warning
+{
+  time_t date;                  /* the date of issue */
+  int issuer_id;                /* the issuer id */
+  unsigned long issuer_ip;      /* the ip of the issuer */
+  unsigned char *text;          /* the text of the warning (reported to user)*/
+  unsigned char *comment;       /* the comment for other judges */
+};
 
 struct team_extra
 {
@@ -27,6 +37,13 @@ struct team_extra
   int clar_map_size;
   int clar_map_alloc;
   unsigned long *clar_map;
+
+  // warnings
+  int warn_u, warn_a;
+  struct team_warning **warns;
+
+  // status
+  int status;
 };
 
 int team_extra_parse_xml(const unsigned char *path, struct team_extra **pte);
@@ -36,6 +53,15 @@ void team_extra_flush(void);
 
 int team_extra_get_clar_status(int user_id, int clar_id);
 int team_extra_set_clar_status(int user_id, int clar_id);
+
+struct team_extra* team_extra_get_entry(int user_id);
+
+int team_extra_append_warning(int user_id,
+                              int issuer_id,
+                              unsigned long issuer_ip,
+                              time_t issue_date,
+                              const unsigned char *txt,
+                              const unsigned char *cmt);
 
 #endif /* __TEAM_EXTRA_H__ */
 
