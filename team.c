@@ -352,24 +352,6 @@ set_defaults(void)
   return 0;
 }
 
-static void
-parse_client_ip(void)
-{
-  unsigned int b1, b2, b3, b4;
-  int n;
-  unsigned char *s = getenv("REMOTE_ADDR");
-
-  client_ip = 0;
-  if (!s) return;
-  n = 0;
-  if (sscanf(s, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4
-      || s[n] || b1 > 255 || b2 > 255 || b3 > 255 || b4 > 255) {
-    client_ip = 0xffffffff;
-    return;
-  }
-  client_ip = b1 << 24 | b2 << 16 | b3 << 8 | b4;
-}
-
 static int
 parse_contest_id(void)
 {
@@ -607,7 +589,7 @@ initialize(int argc, char *argv[])
   if (set_defaults() < 0)
     client_not_configured(global->charset, "bad defaults", 0);
 
-  parse_client_ip();
+  client_ip = parse_client_ip();
 
   make_self_url();
   client_make_form_headers(self_url);
@@ -1184,7 +1166,7 @@ print_logout_button(unsigned char const *str)
 static void
 send_clar_if_asked(void)
 {
-  char *s, *p, *t, *r, *full_subj;
+  char *s, *p, *t, *full_subj;
   int   n;
 
   if (!server_is_virtual) {
@@ -1205,7 +1187,6 @@ send_clar_if_asked(void)
   p = cgi_param("problem");  if (!p) p = "";
   s = cgi_param("subject");  if (!s) s = "";
   t = cgi_param("text");     if (!t) t = "";
-  r = getenv("REMOTE_ADDR"); if (!r || !*r) r = "N/A";
 
   /* process subject */
   full_subj = alloca(strlen(p) + strlen(s) + 16);
@@ -1659,6 +1640,33 @@ client_contest_closed(void)
   exit(0);
 }
 
+static void
+client_server_down(void)
+{
+  unsigned char *a_name = 0;
+  int a_len;
+
+  if (cur_contest->name) {
+    a_len = html_armored_strlen(cur_contest->name);
+    a_name = alloca(a_len + 10);
+    html_armor_string(cur_contest->name, a_name);
+  }
+
+  if (a_name) {
+    client_put_header(stdout, header_txt, 0, global->charset, 1,
+                      client_locale_id,
+                      "%s - &quot;%s&quot;", _("Server is down"), a_name);
+  } else {
+    client_put_header(stdout, header_txt, 0, global->charset, 1,
+                      client_locale_id,
+                      "%s", _("Server is down"));
+  }
+
+  printf("<p>%s</p>", _("Server is down."));
+  client_put_footer(stdout, footer_txt);
+  exit(0);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1708,6 +1716,11 @@ main(int argc, char *argv[])
                                   global->status_file, server_lag,
                                   client_locale_id)) {
     return 0;
+  }
+
+  if (!server_clients_suspended && serve_socket_fd < 0) {
+    serve_socket_fd = serve_clnt_open(global->serve_socket);
+    if (serve_socket_fd < 0) client_server_down();
   }
 
   switch (client_action) {
