@@ -150,3 +150,7 @@ HFILES=\
  version.h\
  unix/unix_fileutl.h\
  userlist_clnt/private.h
+
+OTHERFILES=\
+ filter_expr.y\
+ filter_scan.lex
