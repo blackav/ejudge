@@ -1,4 +1,4 @@
-/* -*- mode: c; coding: koi8-r -*- */
+/* -*- mode: c -*- */
 /* $Id$ */
 
 /* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
@@ -15,7 +15,9 @@
  * GNU General Public License for more details.
  */
 
-#include "nls.h"
+#include "config.h"
+#include "settings.h"
+
 #include "userlist.h"
 #include "pathutl.h"
 #include "protocol.h"
@@ -32,6 +34,10 @@
 #include <errno.h>
 #include <limits.h>
 #include <time.h>
+
+#ifndef EJUDGE_CHARSET
+#define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
+#endif /* EJUDGE_CHARSET */
 
 static char const * const tag_map[] =
 {
@@ -1548,7 +1554,8 @@ userlist_unparse_user(struct userlist_user *p, FILE *f, int mode)
 {
   if (!p) return;
 
-  fputs("<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n", f);
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n",
+          EJUDGE_CHARSET);
   unparse_user(p, f, mode, 0);
 }
 
@@ -1556,7 +1563,8 @@ void
 userlist_unparse_contests(struct userlist_user *p, FILE *f)
 {
   if (!p) return;
-  fputs("<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n", f);
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n",
+          EJUDGE_CHARSET);
   if (!p->contests) {
     fprintf(f, "<%s></%s>\n", tag_map[USERLIST_T_CONTESTS],
             tag_map[USERLIST_T_CONTESTS]);
@@ -1572,7 +1580,8 @@ userlist_unparse(struct userlist_list *p, FILE *f)
 
   if (!p) return;
 
-  fputs("<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n", f);
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n", 
+          EJUDGE_CHARSET);
   fprintf(f, "<%s %s=\"%d\"", tag_map[USERLIST_T_USERLIST],
           attn_map[USERLIST_A_MEMBER_SERIAL], p->member_serial);
   
@@ -1590,7 +1599,8 @@ userlist_unparse_short(struct userlist_list *p, FILE *f, int contest_id)
 
   if (!p) return;
 
-  fputs("<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n", f);
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n",
+          EJUDGE_CHARSET);
   fprintf(f, "<%s>", tag_map[USERLIST_T_USERLIST]);
   for (i = 1; i < p->user_map_size; i++)
     unparse_user_short(p->user_map[i], f, contest_id);
@@ -1607,7 +1617,8 @@ userlist_unparse_for_standings(struct userlist_list *p,
   if (!p) return;
   if (contest_id < 0) contest_id = 0;
 
-  fputs("<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n", f);
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n",
+          EJUDGE_CHARSET);
   fprintf(f, "<%s>", tag_map[USERLIST_T_USERLIST]);
 
   for (i = 1; i < p->user_map_size; i++) {
