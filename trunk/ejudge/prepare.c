@@ -1053,6 +1053,9 @@ set_defaults(int mode)
       global->contest_time = DFLT_G_CONTEST_TIME;
     }
     global->contest_time *= 60;
+  }
+
+  if (mode == PREPARE_SERVE || mode == PREPARE_RUN) {
     if (global->inactivity_timeout == -1) {
       info("global.inactivity_timeout set to %d", DFLT_G_INACTIVITY_TIMEOUT);
       global->inactivity_timeout = DFLT_G_INACTIVITY_TIMEOUT;
@@ -2138,6 +2141,87 @@ collect_sections(int mode)
   return 0;
 }
 
+static size_t
+split_path(const unsigned char *path, strarray_t *parr)
+{
+  unsigned char **s_v = 0;
+  size_t s_u = 0, s_a = 0;
+  const unsigned char *p = path, *q;
+
+  memset(parr, 0, sizeof(*parr));
+  if (*p == '/') {
+    s_a = 8;
+    s_v = xcalloc(s_a, sizeof(s_v[0]));
+    s_v[0] = xstrdup("/");
+    s_u++;
+    while (*p == '/') p++;
+  }
+  while (*p) {
+    q = p;
+    while (*q && *q != '/') q++;
+    if (s_u == s_a) {
+      if (!s_a) s_a = 4;
+      s_a *= 2;
+      s_v = xrealloc(s_v, s_a * sizeof(s_v[0]));
+    }
+    s_v[s_u++] = xmemdup(p, q - p);
+    p = q;
+    while (*p == '/') p++;
+  }
+  parr->v = (char**) s_v;
+  parr->a = s_a;
+  parr->u = s_u;
+  return s_u;
+}
+
+static void
+make_relative_path(const unsigned char *dest, strarray_t *pdest,
+                   const unsigned char *path, strarray_t *ppath,
+                   unsigned char *res, size_t reslen)
+{
+  int i, j, k = 0;
+  size_t bound = reslen - 1;
+  const unsigned char *q;
+
+  ASSERT(res);
+  ASSERT(reslen > 1);
+  memset(res, 0, reslen);
+
+  /*
+  fprintf(stderr, "Dest:\n");
+  for (i = 0; i < pdest->u; i++)
+    fprintf(stderr, "[%d]: >>%s<<\n", i, pdest->v[i]);
+  fprintf(stderr, "Path:\n");
+  for (i = 0; i < ppath->u; i++)
+    fprintf(stderr, "[%d]: >>%s<<\n", i, ppath->v[i]);
+  */
+
+  /* calculate number of common elements */
+  for (i=0;i<pdest->u&&i<ppath->u&&!strcmp(pdest->v[i],ppath->v[i]);i++);
+  if (i == ppath->u) {
+    snprintf(res, reslen, "%s", dest);
+    return;
+  }
+  for (j = i; j < ppath->u - 1; j++) {
+    if (k > 0) res[k++] = '/';
+    if (k >= bound) return;
+    res[k++] = '.';
+    if (k >= bound) return;
+    res[k++] = '.';
+    if (k >= bound) return;
+  }
+  for (j = i; j < pdest->u; j++) {
+    if (k > 0) res[k++] = '/';
+    if (k >= bound) return;
+    q = pdest->v[j];
+    while (*q) {
+      res[k++] = *q++;
+      if (k >= bound) return;
+    }
+  }
+  if (!k) res[k++] = '.';
+}
+
 static int
 make_symlink(unsigned char const *dest, unsigned char const *path)
 {
@@ -2146,21 +2230,39 @@ make_symlink(unsigned char const *dest, unsigned char const *path)
   unsigned char *cwd = 0;
   unsigned char *t = 0;
   unsigned char *l = 0;
+  path_t lpath;
+  strarray_t adest, apath;
+
+  if (dest[0] != '/' || path[0] != '/') {
+    cwd = alloca(PATH_MAX);
+    if (!getcwd(cwd, PATH_MAX)) {
+      err("make_symlink: getcwd failed: %s", os_ErrorMsg());
+      return -1;
+    }
+    if (dest[0] != '/') {
+      t = alloca(PATH_MAX);
+      snprintf(t, PATH_MAX, "%s/%s", cwd, dest);
+      dest = t;
+    }
+    if (path[0] != '/') {
+      t = alloca(PATH_MAX);
+      snprintf(t, PATH_MAX, "%s/%s", cwd, path);
+      path = t;
+    }
+  }
+  ASSERT(dest[0] == '/');
+  ASSERT(path[0] == '/');
+
+  /* prefer relative path over absolute */
+  split_path(dest, &adest);
+  split_path(path, &apath);
+  make_relative_path(dest, &adest, path, &apath, lpath, sizeof(lpath));
+  xstrarrayfree(&adest);
+  xstrarrayfree(&apath);
 
   if ((r = lstat(path, &si)) >= 0 && !S_ISLNK(si.st_mode)) {
     err("make_symlink: %s already exists, but not a symlink", path);
     return -1;
-  }
-
-  if (dest[0] != '/') {
-    cwd = alloca(PATH_MAX);
-    t = alloca(PATH_MAX);
-    if (!getcwd(t, PATH_MAX)) {
-      err("make_symlink: getcwd failed: %s", os_ErrorMsg());
-      return -1;
-    }
-    snprintf(t, PATH_MAX, "%s/%s", cwd, dest);
-    dest = t;
   }
 
   if (r >= 0) {
@@ -2170,15 +2272,15 @@ make_symlink(unsigned char const *dest, unsigned char const *path)
       err("make_symlink: readlink(%s) failed: %s", path, os_ErrorMsg());
       return -1;
     }
-    if (!strcmp(l, dest)) return 0;
+    if (!strcmp(l, lpath)) return 0;
     if (unlink(path) < 0) {
       err("make_symlink: unlink(%s) failed: %s", path, os_ErrorMsg());
       return -1;
     }
   }
 
-  if (symlink(dest, path) < 0) {
-    err("make_symlink: symlink(%s,%s) failed: %s", dest, path, os_ErrorMsg());
+  if (symlink(lpath, path) < 0) {
+    err("make_symlink: symlink(%s,%s) failed: %s", lpath, path, os_ErrorMsg());
     return -1;
   }
   return 0;
