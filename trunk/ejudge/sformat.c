@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2001-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -51,6 +51,7 @@
  *   MT - inst_short_en
  *   Mu - inst
  *   MU - inst_en
+ *   ML - location
  */
 
 int
@@ -318,6 +319,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
          *   MT - inst_short_en
          *   Mu - inst
          *   MU - inst_en
+         *   ML - location
          */
         pf++;
         switch (*pf) {
@@ -325,7 +327,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
         case 'c': case 'C':
         case 't': case 'T':
         case 'u': case 'U':
-        case 'o': case 'O':
+        case 'o': case 'O': case 'L':
           break;
         case 0:
           is_invalid = 1;
@@ -387,6 +389,11 @@ sformat_message(char *buf, size_t maxsize, char const *format,
             papp = "";
             if (team_data->user && team_data->user->inst_en)
               papp = team_data->user->inst_en;
+            break;
+          case 'L':
+            papp = "";
+            if (team_data->user && team_data->user->location)
+              papp = team_data->user->location;
             break;
           default:
             abort();
