@@ -39,6 +39,9 @@ enum
     CONTEST_GUESTS,
     CONTEST_HEADER_FILE,
     CONTEST_FOOTER_FILE,
+    CONTEST_REGISTER_EMAIL,
+    CONTEST_REGISTER_URL,
+    CONTEST_TEAM_URL,
 
     CONTEST_LAST_TAG
   };
@@ -53,6 +56,7 @@ enum
     CONTEST_A_MIN,
     CONTEST_A_MAX,
     CONTEST_A_AUTOREGISTER,
+    CONTEST_A_INITIAL,
 
     CONTEST_LAST_ATTN
   };
@@ -121,6 +125,7 @@ struct contest_member
   struct xml_tree b;
   int min_count;
   int max_count;
+  int init_count;
   struct contest_field *fields[CONTEST_LAST_MEMBER_FIELD];
 };
 
@@ -132,6 +137,9 @@ struct contest_desc
   unsigned char *name;
   unsigned char *header_file;
   unsigned char *footer_file;
+  unsigned char *register_email;
+  unsigned char *register_url;
+  unsigned char *team_url;
   struct contest_access *access;
   struct contest_field *fields[CONTEST_LAST_FIELD];
   struct contest_member *members[CONTEST_LAST_MEMBER];
