@@ -345,10 +345,12 @@ display_enter_password(void)
   }
   set_cookie_if_needed();
   if (a_name) {
-    client_put_header(global->charset, "Enter password - %s - &quot;%s&quot;",
+    client_put_header(stdout, 0, 0, global->charset, 1,
+                      "Enter password - %s - &quot;%s&quot;",
                       protocol_priv_level_str(priv_level), a_name);
   } else {
-    client_put_header(global->charset, "Enter password - %s",
+    client_put_header(stdout, 0, 0, global->charset, 1,
+                      "Enter password - %s",
                       protocol_priv_level_str(priv_level));
   }
 
@@ -384,7 +386,7 @@ display_enter_password(void)
          _("Session support"), _("No session"),
          _("In forms"), _("In URL"), _("In cookies"),
          _("Submit"));
-  client_put_footer();
+  client_put_footer(stdout, 0);
   return 0;
 }
 
@@ -438,10 +440,10 @@ open_userlist_server(void)
   if (!userlist_conn) {
     if (!(userlist_conn = userlist_clnt_open(global->socket_path))) {
       set_cookie_if_needed();
-      client_put_header(global->charset, _("Server is down"));
+      client_put_header(stdout, 0, 0, global->charset, 1, _("Server is down"));
       printf("<p>%s</p>",
              _("The server is down. Try again later."));
-      client_put_footer();
+      client_put_footer(stdout, 0);
       exit(0);
     }
   }
@@ -451,20 +453,20 @@ static void
 permission_denied(void)
 {
   set_cookie_if_needed();
-  client_put_header(global->charset, _("Permission denied"));
+  client_put_header(stdout, 0, 0, global->charset, 1, _("Permission denied"));
   printf("<p>%s</p>",
          "Permission denied. You have typed invalid login, invalid password,"
          " or do not have enough privileges.");
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);
 }
 static void
 fatal_server_error(int r)
 {
   set_cookie_if_needed();
-  client_put_header(global->charset, _("Server error"));
+  client_put_header(stdout, 0, 0, global->charset, 1, _("Server error"));
   printf("<p>Server error: %s</p>", userlist_strerror(-r));
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);
 }
 static int
@@ -855,7 +857,7 @@ operation_status_page(int code, unsigned char const *msg)
   if (client_sid_mode != SID_URL && client_sid_mode != SID_COOKIE) return;
   set_cookie_if_needed();
   if (code < 0) {
-    client_put_header(global->charset, "Operation failed");
+    client_put_header(stdout, 0, 0, global->charset, 1, "Operation failed");
     if (code != -1 || !msg) msg = protocol_strerror(-code);
     printf("<h2><font color=\"red\">%s</font></h2>\n", msg);
   } else {
@@ -867,7 +869,7 @@ operation_status_page(int code, unsigned char const *msg)
     printf("<h2>Operation completed successfully</h2>");
   }
   print_refresh_button(_("Back"));
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);
 }
 
@@ -1169,7 +1171,8 @@ view_source_if_asked()
   if (runid < 0 || runid >= server_total_runs) return;
 
   set_cookie_if_needed();
-  client_put_header(global->charset, "Source for run %d", runid);
+  client_put_header(stdout, 0, 0, global->charset, 1,
+                    "Source for run %d", runid);
   fflush(stdout);
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_SOURCE, runid,
@@ -1177,7 +1180,7 @@ view_source_if_asked()
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
   }
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);
 }
 
@@ -1193,7 +1196,8 @@ view_report_if_asked()
   if (runid < 0 || runid >= server_total_runs) return;
 
   set_cookie_if_needed();
-  client_put_header(global->charset, "Report for run %d", runid);
+  client_put_header(stdout, 0, 0, global->charset, 1,
+                    "Report for run %d", runid);
   fflush(stdout);
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_REPORT, runid,
@@ -1201,7 +1205,7 @@ view_report_if_asked()
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
   }
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);
 }
 
@@ -1213,7 +1217,7 @@ view_teams_if_asked(int forced_flag)
   if (!forced_flag && !cgi_param("viewteams")) return;
 
   set_cookie_if_needed();
-  client_put_header(global->charset, "Users list");
+  client_put_header(stdout, 0, 0, global->charset, 1, "Users list");
   fflush(stdout);
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_USERS, 0,
@@ -1221,7 +1225,7 @@ view_teams_if_asked(int forced_flag)
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
   }
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);
 }
 
@@ -1235,9 +1239,9 @@ action_dump_runs(void)
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     set_cookie_if_needed();
-    client_put_header(global->charset, "Runs database error");
+    client_put_header(stdout, 0, 0, global->charset, 1, "Runs database error");
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
-    client_put_footer();
+    client_put_footer(stdout, 0);
   }
   exit(0);
 }
@@ -1252,10 +1256,10 @@ action_dump_users(void)
   r = userlist_clnt_dump_database(userlist_conn, global->contest_id, 1);
   if (r < 0) {
     set_cookie_if_needed();
-    client_put_header(global->charset, "Users database error");
+    client_put_header(stdout, 0, 0, global->charset, 1,"Users database error");
     printf("<h2><font color=\"red\">%s</font></h2>\n",
            userlist_strerror(-r));
-    client_put_footer();
+    client_put_footer(stdout, 0);
   }
   exit(0);
 }
@@ -1270,9 +1274,10 @@ action_dump_standings(void)
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     set_cookie_if_needed();
-    client_put_header(global->charset, "Standings database error");
+    client_put_header(stdout, 0, 0, global->charset, 1,
+                      "Standings database error");
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
-    client_put_footer();
+    client_put_footer(stdout, 0);
   }
   exit(0);
 }
@@ -1281,12 +1286,12 @@ static void
 confirm_reset_if_asked(void)
 {
   set_cookie_if_needed();
-  client_put_header(global->charset, "Confirm contest reset");
+  client_put_header(stdout, 0, 0, global->charset, 1, "Confirm contest reset");
   print_refresh_button(_("No"));
   printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
          "</form>", form_start_simple,
          ACTION_RESET_2, _("Yes, reset the contest!"));
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);
 }
 
@@ -1294,13 +1299,14 @@ static void
 confirm_update_standings(void)
 {
   set_cookie_if_needed();
-  client_put_header(global->charset, "Confirm update public standings");
+  client_put_header(stdout, 0, 0, global->charset, 1,
+                    "Confirm update public standings");
   printf("<p>");
   print_refresh_button(_("No"));
   printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
          "</form></p>", form_start_simple, ACTION_UPDATE_STANDINGS_2,
          _("Yes, update standings!"));
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);  
 }
 
@@ -1308,13 +1314,14 @@ static void
 confirm_regenerate_if_asked(void)
 {
   set_cookie_if_needed();
-  client_put_header(global->charset, "Confirm user password generation");
+  client_put_header(stdout, 0, 0, global->charset, 1,
+                    "Confirm user password generation");
   printf("<p>");
   print_refresh_button(_("No"));
   printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
          "</form></p>", form_start_simple, ACTION_GENERATE_PASSWORDS_2,
          _("Yes, generate passwords!"));
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);  
 }
 
@@ -1322,13 +1329,14 @@ static void
 confirm_rejudge_all(void)
 {
   set_cookie_if_needed();
-  client_put_header(global->charset, "Confirm rejudge all runs");
+  client_put_header(stdout, 0, 0, global->charset, 1,
+                    "Confirm rejudge all runs");
   printf("<p>");
   print_refresh_button(_("No"));
   printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
          "</form></p>", form_start_simple, ACTION_REJUDGE_ALL_2,
          _("Yes, rejudge!"));
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);  
 }
 
@@ -1336,13 +1344,14 @@ static void
 confirm_squeeze(void)
 {
   set_cookie_if_needed();
-  client_put_header(global->charset, "Confirm squeeze run log");
+  client_put_header(stdout, 0, 0, global->charset, 1,
+                    "Confirm squeeze run log");
   printf("<p>");
   print_refresh_button(_("No"));
   printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
          "</form></p>", form_start_simple, ACTION_SQUEEZE_RUNS_2,
          _("Yes, squeeze!"));
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);  
 }
 
@@ -1350,13 +1359,14 @@ static void
 confirm_continue(void)
 {
   set_cookie_if_needed();
-  client_put_header(global->charset, "Confirm continue contest");
+  client_put_header(stdout, 0, 0, global->charset, 1,
+                    "Confirm continue contest");
   printf("<p>");
   print_refresh_button(_("No"));
   printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
          "</form></p>", form_start_simple, ACTION_CONTINUE_2,
          _("Yes, continue!"));
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);  
 }
 
@@ -1376,7 +1386,8 @@ confirm_clear_run(void)
   }
 
   set_cookie_if_needed();
-  client_put_header(global->charset, "Confirm clear run %d", r);
+  client_put_header(stdout, 0, 0, global->charset, 1,
+                    "Confirm clear run %d", r);
   printf("<p>");
   print_refresh_button(_("No"));
   printf("<p>%s"
@@ -1384,7 +1395,7 @@ confirm_clear_run(void)
          "<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
          "</form></p>", form_start_simple, r, ACTION_CLEAR_RUN_2,
          _("Yes, clear!"));
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);  
 }
 
@@ -1405,7 +1416,7 @@ do_generate_passwords_if_asked(void)
   int r;
 
   set_cookie_if_needed();
-  client_put_header(global->charset, "New passwords");
+  client_put_header(stdout, 0, 0, global->charset, 1, "New passwords");
   print_nav_buttons();
   printf("<hr>");
   fflush(stdout);
@@ -1419,7 +1430,7 @@ do_generate_passwords_if_asked(void)
 
   printf("<hr>");
   print_nav_buttons();
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);
 }
 
@@ -1591,7 +1602,8 @@ view_clar_if_asked()
   if (clarid < 0 || clarid >= server_total_clars) return;
 
   set_cookie_if_needed();
-  client_put_header(global->charset, "Clarification %d", clarid);
+  client_put_header(stdout, 0, 0, global->charset, 1,
+                    "Clarification %d", clarid);
   fflush(stdout);
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_CLAR, clarid,
@@ -1600,7 +1612,7 @@ view_clar_if_asked()
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
   }
 
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);
 }
 
@@ -1690,10 +1702,10 @@ log_out_if_asked(void)
     need_set_cookie = 1;
   }
   set_cookie_if_needed();
-  client_put_header(global->charset, "%s", _("Good-bye"));
+  client_put_header(stdout, 0, 0, global->charset, 1, "%s", _("Good-bye"));
   printf("<p>%s</p>\n",
          _("Good-bye!"));
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);
 }
 
@@ -1970,7 +1982,7 @@ open_serve(void)
     printf("<h2><font color=\"red\">%s</font></h2>\n",
            "Cannot connect to the contest server");
     printf("<p>Error: %s</p>\n", protocol_strerror(-serve_socket_fd));
-    client_put_footer();
+    client_put_footer(stdout, 0);
     exit(0);
   }
 }
@@ -1998,7 +2010,7 @@ view_standings_if_asked()
            protocol_strerror(-r));
   }
 
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);
 }
 
@@ -2058,6 +2070,7 @@ int
 main(int argc, char *argv[])
 {
   int server_lag = 3;
+  int access_flag = 0;
 
   initialize(argc, argv);
 
@@ -2066,7 +2079,18 @@ main(int argc, char *argv[])
                               global->deny_from))
     client_access_denied(global->charset);
 
-  if (!contests_check_master_ip(global->contest_id, client_ip)) {
+  switch(priv_level) {
+  case PRIV_LEVEL_ADMIN:
+    access_flag = contests_check_master_ip(global->contest_id, client_ip);
+    break;
+  case PRIV_LEVEL_JUDGE:
+    access_flag = contests_check_judge_ip(global->contest_id, client_ip);
+    break;
+  case PRIV_LEVEL_OBSERVER:
+    access_flag = contests_check_observer_ip(global->contest_id, client_ip);
+    break;
+  }
+  if (!access_flag) {
     client_access_denied(global->charset);
   }
 
@@ -2210,12 +2234,13 @@ main(int argc, char *argv[])
 
   set_cookie_if_needed();
   if (cur_contest->name) {
-    client_put_header(global->charset, "%s: %s - &quot;%s&quot;",
+    client_put_header(stdout, 0, 0, global->charset, 1,
+                      "%s: %s - &quot;%s&quot;",
                       _("Monitor"),
                       protocol_priv_level_str(priv_level),
                       cur_contest->name);
   } else {
-    client_put_header(global->charset, "%s: %s",
+    client_put_header(stdout, 0, 0, global->charset, 1, "%s: %s",
                       _("Monitor"),
                       protocol_priv_level_str(priv_level));
   }
@@ -2291,7 +2316,7 @@ main(int argc, char *argv[])
   puts("");
   cgi_print_param();
 #endif
-  client_put_footer();
+  client_put_footer(stdout, 0);
 
   return 0;
 }
