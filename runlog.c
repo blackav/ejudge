@@ -457,7 +457,7 @@ runlog_flush(void)
 }
 
 static int
-append_record(time_t t, int uid)
+append_record(time_t t, int uid, long nsec)
 {
   int i, j, k;
 
@@ -469,17 +469,23 @@ append_record(time_t t, int uid)
     info("append_record: array extended: %d", run_a);
   }
 
-  /*
-  memset(&runs[run_u], 0, sizeof(runs[0]));
-  runs[run_u].submission = run_u;
-  return run_u++;
-  */
+  while (1) {
+    if (run_u > 0) {
+      if (runs[run_u - 1].timestamp > t) break;
+      if (runs[run_u - 1].timestamp == t) {
+        if (runs[run_u - 1].nsec > nsec) break;
+        if (runs[run_u - 1].nsec == nsec) {
+          if (runs[run_u - 1].team > uid) break;
+        }
+      }
+    }
 
-  if (!run_u
-      || runs[run_u - 1].timestamp < t
-      || (runs[run_u - 1].timestamp == t && runs[run_u - 1].team <= uid)) {
+    /* it is safe to insert a record at the end */
     memset(&runs[run_u], 0, sizeof(runs[0]));
     runs[run_u].submission = run_u;
+    runs[run_u].status = RUN_EMPTY;
+    runs[run_u].timestamp = t;
+    runs[run_u].nsec = nsec;
     return run_u++;
   }
 
@@ -487,7 +493,9 @@ append_record(time_t t, int uid)
   while (i < j) {
     k = (i + j) / 2;
     if (runs[k].timestamp > t
-        || (runs[k].timestamp == t && runs[k].team > uid)) {
+        || (runs[k].timestamp == t && runs[k].nsec > nsec)
+        || (runs[k].timestamp == t && runs[k].nsec == nsec
+            && runs[k].team > uid)) {
       j = k;
     } else {
       i = k + 1;
@@ -497,14 +505,35 @@ append_record(time_t t, int uid)
   ASSERT(i < run_u);
   ASSERT(i >= 0);
 
+  /* So we going to insert a run at position i.
+   * Check, that there is no "transient"-statused runs after this position.
+   * This is very unlikely, because such runs appears when the run
+   * is being compiled or run, and in this case its precise (nanosecond)
+   * timestamp should be less, than the current run. However, if such
+   * sutuation is detected, we fail because we cannot safely change
+   * the run_id's when it is possible to receive compile or run response
+   * packets.
+   */
+  for (j = i; j < run_u; j++)
+    if (runs[j].status >= RUN_TRANSIENT_FIRST
+        && runs[j].status <= RUN_TRANSIENT_LAST)
+      break;
+  if (j < run_u) {
+    err("append_record: cannot safely insert a run at position %d", i);
+    err("append_record: the run %d is transient!", j);
+    return -1;
+  }
+
   memmove(&runs[i + 1], &runs[i], (run_u - i) * sizeof(runs[0]));
   run_u++;
   for (j = i + 1; j < run_u; j++)
     runs[j].submission = j;
 
   memset(&runs[i], 0, sizeof(runs[0]));
-  runs[i].status = RUN_EMPTY;
   runs[i].submission = i;
+  runs[i].status = RUN_EMPTY;
+  runs[i].timestamp = t;
+  runs[i].nsec = nsec;
   if (sf_lseek(run_fd, sizeof(head) + i * sizeof(runs[0]), SEEK_SET,
                "run") == (off_t) -1) return -1;
   if (do_write(run_fd, &runs[i], (run_u - i) * sizeof(runs[0])) < 0)
@@ -513,9 +542,10 @@ append_record(time_t t, int uid)
 }
 
 int
-run_add_record(time_t  timestamp, 
-               size_t  size,
-               unsigned long sha1[5],
+run_add_record(time_t         timestamp,
+               long           nsec,
+               size_t         size,
+               unsigned long  sha1[5],
                unsigned long  ip,
                int            locale_id,
                int            team,
@@ -567,6 +597,10 @@ run_add_record(time_t  timestamp,
     err("run_add_record: is_hidden field value is invalid");
     return -1;
   }
+  if (nsec < 0 || nsec >= 1000000000) {
+    err("run_add_record: nsec field value %ld is invalid", nsec);
+    return -1;
+  }
 
   if (!is_hidden) {
     ue = get_user_entry(team);
@@ -598,8 +632,7 @@ run_add_record(time_t  timestamp,
     }
   }
 
-  i = append_record(timestamp, team);
-  runs[i].timestamp = timestamp;
+  if ((i = append_record(timestamp, team, nsec)) < 0) return -1;
   runs[i].size = size;
   runs[i].locale_id = locale_id;
   runs[i].team = team;
@@ -985,6 +1018,10 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
     te.timestamp = in->timestamp;
     f = 1;
   }
+  if ((mask & RUN_ENTRY_NSEC) && te.nsec != in->nsec) {
+    te.nsec = in->nsec;
+    f = 1;
+  }
   if ((mask & RUN_ENTRY_SIZE) && te.size != in->size) {
     te.size = in->size;
     f = 1;
@@ -1130,6 +1167,10 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
     err("run_set_entry: %d: is_readonly %d is invalid", run_id,te.is_readonly);
     return -1;
   }
+  if (te.nsec < 0 || te.nsec >= 1000000000) {
+    err("run_set_entry: %d: nsed %ld is invalid", run_id, te.nsec);
+    return -1;
+  }
 
   memcpy(out, &te, sizeof(*out));
   if (!te.is_hidden && !ue->status) ue->status = V_REAL_USER;
@@ -1196,7 +1237,7 @@ run_get_virtual_status(int user_id)
 }
 
 int
-run_virtual_start(int user_id, time_t t, unsigned long ip)
+run_virtual_start(int user_id, time_t t, unsigned long ip, long nsec)
 {
   struct user_entry *pvt = get_user_entry(user_id);
   int i;
@@ -1218,9 +1259,12 @@ run_virtual_start(int user_id, time_t t, unsigned long ip)
     err("run_virtual_start: virtual contest for %d already started", user_id);
     return -1;
   }
-  i = append_record(t, user_id);
+  if (nsec < 0 || nsec >= 1000000000) {
+    err("run_virtual_start: nsec field value %ld is invalid", nsec);
+    return -1;
+  }
+  if ((i = append_record(t, user_id, nsec)) < 0) return -1;
   runs[i].team = user_id;
-  runs[i].timestamp = t;
   runs[i].ip = ip;
   runs[i].status = RUN_VIRTUAL_START;
   pvt->start_time = t;
@@ -1230,7 +1274,7 @@ run_virtual_start(int user_id, time_t t, unsigned long ip)
 }
 
 int
-run_virtual_stop(int user_id, time_t t, unsigned long ip)
+run_virtual_stop(int user_id, time_t t, unsigned long ip, long nsec)
 {
   struct user_entry *pvt = get_user_entry(user_id);
   int i;
@@ -1259,10 +1303,13 @@ run_virtual_stop(int user_id, time_t t, unsigned long ip)
     err("run_virtual_stop: the virtual time ended");
     return -1;
   }
+  if (nsec < 0 || nsec >= 1000000000) {
+    err("run_virtual_stop: nsec field value is invalid");
+    return -1;
+  }
 
-  i = append_record(t, user_id);
+  if ((i = append_record(t, user_id, nsec)) < 0) return -1;
   runs[i].team = user_id;
-  runs[i].timestamp = t;
   runs[i].ip = ip;
   runs[i].status = RUN_VIRTUAL_STOP;
   pvt->stop_time = t;
@@ -1479,6 +1526,7 @@ runlog_check(FILE *ferr,
   time_t prev_time = 0;
   time_t stop_time = 0, v_stop_time;
   int retcode = 0;
+  long prev_nsec = 0;
 
   ASSERT(phead);
 
@@ -1579,7 +1627,12 @@ runlog_check(FILE *ferr,
       nerr++;
       continue;
     }
+    if (e->timestamp == prev_time && e->nsec < prev_nsec) {
+      check_msg(1, ferr, "Run %d nsec %ld is less than previous %ld",
+                i, e->nsec, prev_nsec);
+    }
     prev_time = e->timestamp;
+    prev_nsec = e->nsec;
 
     if (e->status == RUN_VIRTUAL_START || e->status == RUN_VIRTUAL_STOP) {
       /* kinda paranoia */
@@ -1588,6 +1641,7 @@ runlog_check(FILE *ferr,
       te.status = 0;
       te.team = 0;
       te.timestamp = 0;
+      te.nsec = 0;
       te.ip = 0;
       pp = (unsigned char *) &te;
       for (j = 0; j < sizeof(te) && !pp[j]; j++);
@@ -1653,6 +1707,11 @@ runlog_check(FILE *ferr,
     }
     if (e->is_readonly != 0 && e->is_readonly != 1) {
       check_msg(1,ferr, "Run %d is_readonly %d is invalid",i,e->is_readonly);
+      nerr++;
+      continue;
+    }
+    if (e->nsec < 0 || e->nsec >= 1000000000) {
+      check_msg(1,ferr, "Run %d nsec %d is invalid", i, e->nsec);
       nerr++;
       continue;
     }
@@ -1792,9 +1851,12 @@ build_indices(void)
   int max_team_id = -1;
   struct user_entry *ue;
 
-  for (i = 0; i < ut_size; i++)
-    xfree(ut_table[i]);
-  xfree(ut_table);
+  if (ut_table) {
+    for (i = 0; i < ut_size; i++)
+      xfree(ut_table[i]);
+    xfree(ut_table);
+    ut_table = 0;
+  }
   ut_size = 0;
   ut_table = 0;
 
@@ -1868,6 +1930,40 @@ run_get_total_pages(int user_id)
     total += runs[i].pages;
   }
   return total;
+}
+
+int
+run_find(int first_run, int last_run,
+         int team_id, int prob_id, int lang_id)
+{
+  int i;
+
+  if (!run_u) return -1;
+
+  if (first_run < 0) first_run = run_u + first_run;
+  if (first_run < 0) first_run = 0;
+  if (first_run >= run_u) first_run = run_u - 1;
+
+  if (last_run < 0) last_run = run_u + last_run;
+  if (last_run < 0) last_run = 0;
+  if (last_run >= run_u) last_run = run_u - 1;
+
+  if (first_run <= last_run) {
+    for (i = first_run; i <= last_run; i++) {
+      if (team_id && team_id != runs[i].team) continue;
+      if (prob_id && prob_id != runs[i].problem) continue;
+      if (lang_id && lang_id != runs[i].language) continue;
+      return i;
+    }
+  } else {
+    for (i = first_run; i >= last_run; i--) {
+      if (team_id && team_id != runs[i].team) continue;
+      if (prob_id && prob_id != runs[i].problem) continue;
+      if (lang_id && lang_id != runs[i].language) continue;
+      return i;
+    }
+  }
+  return -1;
 }
 
 /**
