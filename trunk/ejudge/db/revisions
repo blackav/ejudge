@@ -1418,3 +1418,10 @@ contests.c 1 23 2730651
 userlist.c 1 13 2401308
 userlist_xml.c 1 20 3863910
 serve_clnt/rejudge_by_mask.c 1 4 180167
+ejudge-setup.c 1 5 8756933
+run.c 1 58 4259752
+serve.c 1 75 11202410
+userlist-server.c 1 48 14026573
+html.c 1 53 5404796
+prepare.c 1 80 8919049
+sformat.c 1 13 953399

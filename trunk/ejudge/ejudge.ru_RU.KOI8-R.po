@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-10-11 08:42+0400\n"
+"POT-Creation-Date: 2004-10-26 12:03+0400\n"
 "PO-Revision-Date: 2004-10-11 08:57+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -37,7 +37,7 @@ msgstr ""
 "%s, тест #%d\n"
 "\n"
 
-#: master.c:2648 misctext.c:286 misctext.c:288 serve.c:2229 team.c:1199
+#: master.c:2648 misctext.c:286 misctext.c:288 serve.c:2235 team.c:1199
 msgid "(no subject)"
 msgstr "(без темы)"
 
@@ -126,7 +126,7 @@ msgstr ""
 msgid "<p%s>%d users listed</p>\n"
 msgstr "<p%s>Всего пользователей (команд): %d</p>\n"
 
-#: html.c:2042
+#: html.c:2044
 #, c-format
 msgid ""
 "<p%s><b>Note,</b> if downloads are allowed, you may download your runs once "
@@ -518,7 +518,7 @@ msgstr "Подробная информация об участнике"
 msgid "Detailed information for user (team)"
 msgstr "Подробная информация о пользователе (команде)"
 
-#: html.c:2041
+#: html.c:2043
 msgid "Download your submits"
 msgstr "Загрузить свои посылки"
 
@@ -674,7 +674,7 @@ msgstr ""
 msgid "Field \"User name\" was too long."
 msgstr "Поле \"Имя пользователя\" имело слишком большую длину."
 
-#: html.c:2005 master_html.c:951 master_html.c:1710
+#: html.c:2007 master_html.c:951 master_html.c:1710
 msgid "File"
 msgstr "Файл"
 
@@ -975,7 +975,7 @@ msgstr "Вердикт: %s\n"
 msgid "Judgements"
 msgstr "Вердикты"
 
-#: html.c:108 html.c:1615 html.c:1992 master_html.c:580 master_html.c:938
+#: html.c:108 html.c:1615 html.c:1994 master_html.c:580 master_html.c:938
 #: master_html.c:1395 master_html.c:1658
 msgid "Language"
 msgstr "Язык"
@@ -1103,7 +1103,7 @@ msgstr "Сообщение"
 msgid "Message view"
 msgstr "Список сообщений"
 
-#: html.c:2096 master_html.c:993
+#: html.c:2100 master_html.c:993
 msgid "Messages"
 msgstr "Сообщения"
 
@@ -1412,7 +1412,7 @@ msgstr "Обработка запросов на печать приостановлена"
 msgid "Print sources"
 msgstr "Распечатать исходный текст"
 
-#: html.c:107 html.c:1614 html.c:1960 html.c:2052 master_html.c:579
+#: html.c:107 html.c:1614 html.c:1960 html.c:2054 master_html.c:579
 #: master_html.c:922 master_html.c:1337 master_html.c:1644
 msgid "Problem"
 msgstr "Задача"
@@ -1635,7 +1635,7 @@ msgstr "Получено баллов: %d (из %d)\n"
 msgid "Send"
 msgstr "Отослать"
 
-#: html.c:2049 team.c:1800
+#: html.c:2051 team.c:1800
 msgid "Send a message to judges"
 msgstr "Отослать сообщение судьям"
 
@@ -1651,7 +1651,7 @@ msgstr "Отослать всем"
 msgid "Send to sender"
 msgstr "Отослать отправителю"
 
-#: html.c:2005 html.c:2089 master_html.c:914 master_html.c:951
+#: html.c:2007 html.c:2093 master_html.c:914 master_html.c:951
 msgid "Send!"
 msgstr "Отослать!"
 
@@ -1659,7 +1659,7 @@ msgstr "Отослать!"
 msgid "Sender"
 msgstr "Отправитель"
 
-#: html.c:2014
+#: html.c:2016
 msgid "Sent submissions"
 msgstr "Отосланные решения"
 
@@ -1800,7 +1800,7 @@ msgstr "Закончить виртуальный турнир"
 msgid "Student"
 msgstr "Студент"
 
-#: html.c:316 html.c:456 html.c:2089 master.c:3436 master_html.c:1058
+#: html.c:316 html.c:456 html.c:2093 master.c:3436 master_html.c:1058
 #: master_html.c:1828
 msgid "Subject"
 msgstr "Тема"
@@ -2085,7 +2085,7 @@ msgstr "Вариант"
 msgid "View"
 msgstr "Просмотр"
 
-#: html.c:2025 html.c:2031 html.c:2107 html.c:2113
+#: html.c:2027 html.c:2033 html.c:2111 html.c:2117
 msgid "View all"
 msgstr "Посмотреть всё"
 
@@ -2249,7 +2249,7 @@ msgstr "в доступе отказано"
 msgid "action is temporarily unavailable"
 msgstr "запрос временно не может быть выполнен"
 
-#: html.c:353 html.c:449 html.c:2015 html.c:2097 master_html.c:1090
+#: html.c:353 html.c:449 html.c:2017 html.c:2101 master_html.c:1090
 #: master_html.c:1821
 msgid "all"
 msgstr "все"
@@ -2395,7 +2395,7 @@ msgstr "неверный идентификатор пользователя"
 msgid "judges"
 msgstr "судьи"
 
-#: html.c:2015 html.c:2097
+#: html.c:2017 html.c:2101
 msgid "last 15"
 msgstr "последние 15"
 
