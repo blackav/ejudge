@@ -1428,3 +1428,10 @@ sformat.c 1 13 953399
 prepare.c 1 81 8928890
 NEWS.RUS 1 13 12765018
 NEWS 1 13 7643310
+xml_utils.h 1 1 123291
+xml_utils/parse_date.c 1 1 157717
+xml_utils/parse_int.c 1 1 96252
+xml_utils/parse_ip.c 1 1 104541
+xml_utils/unparse_date.c 1 1 87071
+xml_utils/unparse_ip.c 1 1 79664
+xml_utils/unparse_text.c 1 1 97990
