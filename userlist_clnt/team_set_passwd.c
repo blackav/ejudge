@@ -19,7 +19,8 @@
 
 int
 userlist_clnt_team_set_passwd(struct userlist_clnt *clnt,
-                              int uid, unsigned char *old_pwd,
+                              int uid, int contest_id,
+                              unsigned char *old_pwd,
                               unsigned char *new_pwd)
 {
   struct userlist_pk_set_password *out = 0;
@@ -40,6 +41,7 @@ userlist_clnt_team_set_passwd(struct userlist_clnt *clnt,
   memset(out, 0, out_size);
   out->request_id = ULS_TEAM_SET_PASSWD;
   out->user_id = uid;
+  out->contest_id = contest_id;
   out->old_len = old_len;
   out->new_len = new_len;
   old_ptr = out->data;
