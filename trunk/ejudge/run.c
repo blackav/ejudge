@@ -34,6 +34,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
 #include <locale.h>
@@ -483,6 +488,11 @@ run_tests(struct section_tester_data *tst,
         task_SetRedir(tsk, 1, TSR_FILE, output_path, TSK_REWRITE, TSK_FULL_RW);
       } else {
         task_SetRedir(tsk, 1, TSR_FILE, "/dev/null", TSK_WRITE, TSK_FULL_RW);
+        // create empty output file
+        {
+          int fd = open(output_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+          if (fd >= 0) close(fd);
+        }
       }
       task_SetRedir(tsk, 2, TSR_FILE, error_path, TSK_REWRITE, TSK_FULL_RW);
     }
