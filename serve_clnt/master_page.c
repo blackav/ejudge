@@ -37,6 +37,7 @@
 int
 serve_clnt_master_page(int sock_fd,
                        int out_fd,
+                       int cmd,
                        unsigned long long session_id,
                        int user_id,
                        int contest_id,
@@ -78,7 +79,7 @@ serve_clnt_master_page(int sock_fd,
   filter_expr_ptr = self_url_ptr + self_url_len + 1;
   hidden_vars_ptr = filter_expr_ptr + filter_expr_len + 1;
   extra_args_ptr = hidden_vars_ptr + hidden_vars_len + 1;
-  out->b.id = SRV_CMD_MASTER_PAGE;
+  out->b.id = cmd;
   out->b.magic = PROT_SERVE_PACKET_MAGIC;
   out->session_id = session_id;
   out->user_id = user_id;
