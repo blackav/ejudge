@@ -115,6 +115,7 @@ int serve_clnt_view(int sock_fd,
                     int cmd,
                     int item,
                     int item2,
+                    unsigned int flags,
                     int sid_mode,
                     unsigned char const *self_url,
                     unsigned char const *hidden_vars,
@@ -154,5 +155,10 @@ int serve_clnt_edit_run(int sock_fd,
 int serve_clnt_import_xml_runs(int sock_fd,
                                int out_fd,
                                const unsigned char *xml_runs);
+
+int serve_clnt_upload_report(int sock_fd, int cmd,
+                             int user_id, int contest_id, int run_id,
+                             unsigned int flags, size_t report_size,
+                             const unsigned char *report_data);
 
 #endif /* __SERVE_CLNT_H__ */
