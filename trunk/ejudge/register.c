@@ -24,6 +24,8 @@
 #include "clntutil.h"
 #include "cgi.h"
 #include "contests.h"
+#include "userlist_clnt.h"
+#include "userlist_proto.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -44,6 +46,7 @@ enum
     TG_ACCESS,
     TG_IP,
     TG_FIELD,
+    TG_SOCKET_PATH,
   };
 enum
   {
@@ -99,6 +102,7 @@ struct config_node
   unsigned char *l10n_dir;
   int show_generation_time;
   unsigned char *charset;
+  unsigned char *socket_path;
   struct access_node *access;
   struct field_node *fields[F_ARRAY_SIZE];
 };
@@ -109,9 +113,13 @@ static struct contest_list *contests;
 static int client_locale_id;
 
 static unsigned char *user_login;
+static unsigned char *user_password;
+static unsigned char *user_usecookies;
 static unsigned char *user_email;
 static unsigned char *user_name;
 static unsigned char *user_homepage;
+static int user_contest_id;
+static struct userlist_clnt *server_conn;
 
 static unsigned char *submission_log;
 
@@ -162,6 +170,7 @@ static char const * const tag_map[] =
   "access",
   "ip",
   "field",
+  "socket_path",
 
   0
 };
@@ -205,6 +214,7 @@ node_alloc(int tag)
   case TG_ACCESS: return xcalloc(1, sizeof(struct access_node));
   case TG_IP: return xcalloc(1, sizeof(struct ip_node));
   case TG_FIELD: return xcalloc(1, sizeof(struct field_node));
+  case TG_SOCKET_PATH: return xcalloc(1, sizeof(struct xml_tree));
     //    return xcalloc(1, sizeof(struct xml_tree));
   default:
     SWERR(("unhandled tag: %d", tag));
@@ -306,6 +316,24 @@ parse_config(char const *path)
   /* process subnodes */
   for (p = cfg->b.first_down; p; p = p->right) {
     switch (p->tag) {
+    case TG_SOCKET_PATH:
+      if (cfg->socket_path) {
+        err("%s:%d:%d: <socket_path> tag may be defined only once",
+            path, p->line, p->column);
+        goto failed;
+      }
+      if (p->first_down) {
+        err("%s:%d:%d: nested tags are not allowed",
+            path, p->line, p->column);
+        goto failed;
+      }
+      if (p->first) {
+        err("%s:%d:%d: attributes are not allowed",
+            path, p->line, p->column);
+        goto failed;
+      }
+      cfg->socket_path = p->text;
+      break;
     case TG_ACCESS:
       if (cfg->access) {
         err("%s:%d: <access> tag may be defined only once", path, p->line);
@@ -471,6 +499,11 @@ parse_config(char const *path)
     }
   }
 
+  if (!cfg->socket_path) {
+    err("%s: <socket_path> tag must be specified", path);
+    goto failed;
+  }
+
   return cfg;
 
  failed:
@@ -618,6 +651,238 @@ verify_form_and_submit(void)
   submission_log = xstrdup("not implemented yet!");
 }
 
+static void
+print_choose_language_button(char const *name, int hr_flag)
+{
+#if CONF_HAS_LIBINTL - 0 == 1
+  if (!name) name = "refresh";
+
+  if (config->l10n) {
+    if (hr_flag) printf("<hr>");
+    printf("<h2>%s</h2>\n"
+           "%s: <select name=\"locale_id\">"
+           "<option value=\"-1\">%s</option>"
+           "<option value=\"0\"%s>%s</option>"
+           "<option value=\"1\"%s>%s</option>"
+           "</select>"
+           "<input type=\"submit\" name=\"%s\" value=\"%s\">\n",
+           _("Change language"), _("Change language"),
+           _("Default language"),
+           client_locale_id==0?" selected=\"1\"":"", _("English"),
+           client_locale_id==1?" selected=\"1\"":"", _("Russian"),
+           name,
+           _("Change!"));
+  }
+#endif /* CONF_HAS_LIBINTL */
+}
+static void
+read_contest_id(void)
+{
+  int x = 0, n = 0;
+  unsigned char *s;
+
+  user_contest_id = 0;
+  if (!(s = cgi_param("contest_id"))) return;
+  if (sscanf(s, "%d %n", &x, &n) != 1 || s[n] || x < 0 || x > 1000) return;
+  user_contest_id = x;
+}
+
+static void
+read_locale_id(void)
+{
+  int x = 0, n = 0;
+  unsigned char *s;
+
+  client_locale_id = -1;
+  if (!(s = cgi_param("locale_id"))) return;
+  if (sscanf(s, "%d %n", &x, &n) != 1 || s[n] || x < -1 || x > 127) return;
+  client_locale_id = x;
+}
+
+static void
+set_locale_by_id(int id)
+{
+#if CONF_HAS_LIBINTL - 0 == 1
+  char *e = 0;
+  char env_buf[512];
+
+  if (!config->l10n) return;
+  if (!config->l10n_dir) return;
+  if (client_locale_id == -1) return;
+
+  switch (client_locale_id) {
+  case 1:
+    e = "ru_RU.KOI8-R";
+    break;
+  case 0:
+  default:
+    client_locale_id = 0;
+    e = "C";
+    break;
+  }
+
+  sprintf(env_buf, "LC_ALL=%s", e);
+  putenv(env_buf);
+  setlocale(LC_ALL, "");
+  bindtextdomain("ejudge", config->l10n_dir);
+  textdomain("ejudge");
+#endif /* CONF_HAS_LIBINTL */
+}
+
+static void
+initial_login_page(void)
+{
+  if (client_locale_id == -1) client_locale_id = 0;
+  set_locale_by_id(client_locale_id);
+
+  client_put_header(config->charset, "%s", _("Log into the system"));
+
+  if (!(user_login = cgi_param("login"))) {
+    user_login = xstrdup("");
+  }
+  fix_string(user_login, name_accept_chars, '?');
+  user_password = xstrdup("");
+  user_usecookies = 0;
+  if (cgi_param("usecookies")) {
+    user_usecookies = xstrdup("1");
+  }
+  read_contest_id();  
+
+  printf("<form method=\"POST\" action=\"%s\" "
+         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+         program_name);
+
+  if (user_contest_id > 0) {
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
+           user_contest_id);
+  }
+
+  print_choose_language_button(0, 0);
+
+  printf("<h2>%s</h2><p>%s</p>\n",
+         _("For registered users"),
+         _("If you have registered before, please enter your "
+           "login and password in the corresponding fields. "
+           "Then press the \"Submit\" button."));
+
+  printf("<p>%s: <input type=\"text\" name=\"login\" value=\"%s\""
+           " size=\"16\" maxlength=\"16\">\n",
+         _("Login"), user_login);
+  printf("<p>%s: <input type=\"password\" name=\"password\" value=\"%s\""
+         " size=\"16\" maxlength=\"16\">\n",
+         _("Password"), user_password);
+
+  printf("<p><input type=\"checkbox\" name=\"usecookies\" value=\"%s\"%s>%s\n",
+         "1",
+         user_usecookies?" checked=\"yes\"":"",
+         _("Use cookies"));
+
+  printf("<p><input type=\"submit\" name=\"do_login\" value=\"%s\">", _("Submit"));
+
+  printf("<h2>%s</h2><p>%s</p>\n",
+         _("For new users"),
+         _("If you have not registered before, please press "
+           "the \"Register new\" button."));
+
+  printf("<p><input type=\"submit\" name=\"register\" value=\"%s\">\n",
+         _("Register new"));
+
+  printf("</form>");
+}
+
+static void
+registration_is_complete(void)
+{
+}
+
+static void
+register_new_user(int commit_flag)
+{
+  if (client_locale_id == -1) client_locale_id = 0;
+  set_locale_by_id(client_locale_id);
+
+  if (!(user_login = cgi_param("login"))) {
+    user_login = xstrdup("");
+  }
+  fix_string(user_login, name_accept_chars, '?');
+  if (!(user_email = cgi_param("email"))) {
+    user_email = xstrdup("");
+  }
+  fix_string(user_email, name_accept_chars, '?');
+  if ((user_usecookies = cgi_param("usecookies"))) {
+    xfree(user_usecookies);
+    user_usecookies = xstrdup("1");
+  }
+  read_contest_id();  
+
+  if (commit_flag) {
+    int err;
+    server_conn = userlist_clnt_open(config->socket_path);
+    err = userlist_clnt_register_new(server_conn, 0, user_contest_id, client_locale_id, !!user_usecookies, user_login, user_email);
+    server_conn = userlist_clnt_close(server_conn);
+    if (!err) {
+      registration_is_complete();
+      return;
+    }
+    // FIXME: handle various error codes
+    ASSERT(err == ULS_LOGIN_USED);
+  }
+
+  client_put_header(config->charset, "%s", _("Register a new user"));
+
+  if (commit_flag) {
+    printf("<h2>%s</h2><p>%s</p>\n",
+           _("Registration failed"),
+           _("Unfortunately, this login name is already used "
+             "by someone else. Please, choose a different login name."));
+  }
+
+  printf("<form method=\"POST\" action=\"%s\" "
+         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+         program_name);
+
+  if (user_contest_id > 0) {
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
+           user_contest_id);
+  }
+
+  print_choose_language_button("register", 0);
+
+  printf("<h2>%s</h2><p>%s</p><p>%s</p>\n",
+         _("Registration rules"),
+         _("Please, fill up all the fields in the form below. "
+           "Fields, marked with (*), are mandatory. "
+           "When the form is completed, press \"Register\" button."),
+         _("Shortly after that you should receive an e-mail message "
+           "with a password to the system. Use this password for the first "
+           " login. "
+           "<b>Note</b>, that you must log in "
+           "24 hours after the form is filled and submitted, or "
+           "your registration will be void!"));
+  printf("<p>%s</p>",
+         _("Type in a desirable login identifier. <b>Note</b>, "
+           "that your login still <i>may be</i> (in some cases) assigned "
+           "automatically."));
+  printf("<p>%s: <input type=\"text\" name=\"login\" value=\"%s\""
+           " size=\"16\" maxlength=\"16\">\n",
+         _("Login"), user_login);
+  printf("<p>%s</p>", _("Type your valid e-mail address"));
+  printf("<p>%s: <input type=\"text\" name=\"email\" value=\"%s\""
+         " size=\"64\" maxlength=\"64\">\n",
+         _("E-mail"), user_email);
+  printf("<p>%s</p>", _("Check this box to enable cookies"));
+  printf("<p><input type=\"checkbox\" name=\"usecookies\" value=\"%s\"%s>%s\n",
+         "1",
+         user_usecookies?" checked=\"yes\"":"",
+         _("Use cookies"));
+  printf("<p><input type=\"reset\" value=\"%s\">",
+         _("Reset the form"));
+  printf("<p><input type=\"submit\" name=\"do_register\" value=\"%s\">",
+         _("Register"));
+
+  printf("</form>");
+}
+
 int
 main(int argc, char const *argv[])
 {
@@ -633,40 +898,10 @@ main(int argc, char const *argv[])
   }
 
   cgi_read(config->charset);
+  read_locale_id();
 
-#if CONF_HAS_LIBINTL - 0 == 1
-  /* load the language used */
-  if (config->l10n) {
-    char *e = cgi_param("locale_id");
-    int n = 0;
-    char env_buf[1024];
 
-    if (e) {
-      if (sscanf(e, "%d%n", &client_locale_id, &n) != 1 || e[n])
-        client_locale_id = 0;
-      if (client_locale_id < 0 || client_locale_id > 1)
-        client_locale_id = 0;
-    }
-
-    switch (client_locale_id) {
-    case 1:
-      e = "ru_RU.KOI8-R";
-      break;
-    case 0:
-    default:
-      client_locale_id = 0;
-      e = "C";
-      break;
-    }
-
-    sprintf(env_buf, "LC_ALL=%s", e);
-    putenv(env_buf);
-    setlocale(LC_ALL, "");
-    bindtextdomain("ejudge", config->l10n_dir);
-    textdomain("ejudge");
-  }
-#endif /* CONF_HAS_LIBINTL */
-
+  /*
   prepare_var_table();
 
   for (i = 1; i < F_ARRAY_SIZE; i++) {
@@ -680,6 +915,46 @@ main(int argc, char const *argv[])
   if (cgi_param("submit")) {
     verify_form_and_submit();
   }
+  */
+
+  if (cgi_param("do_login")) {
+  } else if (cgi_param("register")) {
+    register_new_user(0);
+  } else if (cgi_param("do_register")) {
+    register_new_user(1);
+  } else {
+    initial_login_page();
+  }
+
+#if 0
+  {
+    int i;
+
+    puts("<hr><pre>");
+    puts("");
+    for (i = 0; i < argc; i++) {
+      printf("argv[%d] = '%s'\n", i, argv[i]);
+    }
+    puts("");
+    cgi_print_param();
+  }
+#endif
+
+  client_put_footer();
+
+  return 0;
+
+
+
+
+
+
+
+
+
+
+
+
 
   client_put_header(config->charset, "%s", _("Registration form"));
 

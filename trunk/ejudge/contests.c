@@ -147,6 +147,10 @@ parse_access(struct contest_access *acc, char const *path)
           path, t->line, t->column, tag_map[t->tag]);
       return -1;
     }
+    if (t->first_down) {
+      err("%s:%d:%d: nested tags are not allowed", path, t->line, t->column);
+      return -1;
+    }
 
     ip = (struct contest_ip*) t;
     ip->allow = -1;
@@ -232,6 +236,11 @@ parse_contest(struct contest_desc *cnts, char const *path)
   for (t = cnts->b.first_down; t; t = t->right) {
     switch(t->tag) {
     case CONTEST_NAME:
+      if (t->first_down) {
+        err("%s:%d:%d: nested tags are not allowed",
+            path, t->line, t->column);
+        return -1;
+      }
       if (cnts->name) {
         err("%s:%d:%d: contest name is already defined",
             path, t->line, t->column);
@@ -253,6 +262,88 @@ parse_contest(struct contest_desc *cnts, char const *path)
       cnts->access = (struct contest_access*) t;
       if (parse_access(cnts->access, path) < 0) return -1;
       break;
+    case CONTEST_FIELD:
+      if (t->first_down) {
+        err("%s:%d:%d: nested tags are not allowed", path, t->line, t->column);
+        return -1;
+      }
+      if (t->text && t->text[0]) {
+        err("%s:%d:%d: <field> tag cannot contain text",
+            path, t->line, t->column);
+        return -1;
+      }
+      xfree(t->text);
+      t->text = 0;
+
+
+
+
+      /*
+      pf = (struct field_node*) p;
+      pf->mandatory = -1;
+      for (a = p->first; a; a = a->next) {
+        switch (a->tag) {
+        case AT_ID:
+          for (i = 1; field_map[i]; i++)
+            if (!strcmp(a->text, field_map[i])) break;
+          if (!field_map[i] || i >= F_ARRAY_SIZE) {
+            err("%s:%d:%d: invalid field id \"%s\"",
+                path, a->line, a->column, a->text);
+            goto failed;
+          }
+          if (cfg->fields[i]) {
+            err("%s:%d:%d: field \"%s\" already defined",
+                path, a->line, a->column, a->text);
+            goto failed;
+          }
+          cfg->fields[i] = pf;
+          break;
+        case AT_MANDATORY:
+        case AT_OPTIONAL:
+          if (pf->mandatory != -1) {
+            err("%s:%d:%d: attribute \"mandatory\" already defined",
+                path, a->line, a->column);
+            goto failed;
+          }
+          if ((pf->mandatory = parse_bool(a->text)) < 0) {
+            err("%s:%d:%d: invalid boolean value",
+                path, a->line, a->column);
+            goto failed;
+          }
+          if (a->tag == AT_OPTIONAL) pf->mandatory = !pf->mandatory;
+          break;
+        case AT_SIZE:
+          i = n = 0;
+          if (sscanf(a->text, "%d %n", &i, &n) != 1 || a->text[n]
+              || i <= 0 || i >= 100000) {
+            err("%s:%d:%d: invalid value", path, a->line, a->column);
+            goto failed;
+          }
+          pf->size = i;
+          break;
+        case AT_MAXLENGTH:
+          i = n = 0;
+          if (sscanf(a->text, "%d %n", &i, &n) != 1 || a->text[n]
+              || i <= 0 || i >= 100000) {
+            err("%s:%d:%d: invalid value", path, a->line, a->column);
+            goto failed;
+          }
+          pf->maxlength = i;
+          break;
+        default:
+          err("%s:%d:%d: attribute \"%s\" is invalid here",
+              path, a->line, a->column, attn_map[a->tag]);
+          goto failed;
+        }
+      }
+      if (pf->mandatory == -1) pf->mandatory = 0;
+      if (!pf->size) pf->size = 64;
+      if (!pf->maxlength) pf->maxlength = 64;
+      if (pf->size > pf->maxlength) pf->size = pf->maxlength;
+      break;
+      */
+
+
     default:
       err("%s:%d:%d: tag <%s> is invalid here",
           path, t->line, t->column, tag_map[t->tag]);

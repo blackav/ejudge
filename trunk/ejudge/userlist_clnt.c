@@ -21,6 +21,7 @@
 
 #include "userlist_clnt.h"
 #include "pathutl.h"
+#include "userlist_proto.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -56,6 +57,8 @@ userlist_clnt_open(char const *socketpath)
   unsigned char msgbuf[512];
   struct cmsghdr *pmsg;
   struct iovec send_vec[1];
+
+  return 0;
 
   ASSERT(socketpath);
   max_path_buf = sizeof(struct sockaddr_un) - 
@@ -124,9 +127,43 @@ userlist_clnt_open(char const *socketpath)
 struct userlist_clnt*
 userlist_clnt_close(struct userlist_clnt *clnt)
 {
+  return 0;
+
   close(clnt->fd);
   xfree(clnt);
   return 0;
+}
+
+int
+userlist_clnt_register_new(struct userlist_clnt *clnt,
+                           unsigned long origin_ip,
+                           int contest_id,
+                           int locale_id,
+                           int use_cookies,
+                           unsigned char const *login,
+                           unsigned char const *email)
+{
+  if (!strcmp(login, "new")) {
+    return ULS_OK;
+  }
+
+  // simulate an error
+  return ULS_LOGIN_USED;
+}
+
+int
+userlist_clnt_login(struct userlist_clnt *clnt,
+                    unsigned long origin_ip,
+                    int contest_id,
+                    int locale_id,
+                    int use_cookies,
+                    unsigned char const *login,
+                    unsigned char const *passwd,
+                    int *p_user_id,
+                    unsigned long long *p_cookie,
+                    unsigned char *p_name,
+                    int *p_locale_id)
+{
 }
 
 /**
