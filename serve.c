@@ -1998,11 +1998,6 @@ cmd_priv_command_0(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
       return;
     }
-    if (contest_start_time) {
-      err("%d: contest already started", p->id);
-      new_send_reply(p, -SRV_ERR_CONTEST_STARTED);
-      return;
-    }
     if (pkt->v.t < 0 || pkt->v.t > 1000000) {
       err("%d: invalid duration: %ld", p->id, pkt->v.t);
       new_send_reply(p, -SRV_ERR_BAD_DURATION);
