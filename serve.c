@@ -1744,6 +1744,64 @@ cmd_judge_command_0(struct client_state *p, int len,
 static void do_rejudge_all(void);
 static void do_rejudge_problem(int);
 
+static int
+do_rename(unsigned char const *base, int from, int to)
+{
+  path_t fromp, top;
+  struct stat s;
+
+  snprintf(fromp, sizeof(fromp), "%s/%06d", base, from);
+  snprintf(top, sizeof(top), "%s/%06d", base, to);
+  if (lstat(top, &s) >= 0) {
+    if (unlink(top) < 0) {
+      err("cannot unlink %s: %s", fromp, os_ErrorMsg());
+      return -1;
+    }
+  }
+  if (rename(fromp, top) < 0) {
+    err("cannot rename %s -> %s: %s", fromp, top, os_ErrorMsg());
+    return -1;
+  }
+  return 0;
+}
+
+static int
+do_remove_archive_entry(unsigned char const *base, int n)
+{
+  path_t s;
+
+  snprintf(s, sizeof(s), "%s/%06d", base, n);
+  unlink(s);
+  return 0;
+}
+
+static void
+do_squeeze_runs(void)
+{
+  int i, j, tot;
+
+  tot = run_get_total();
+  for (i = 0, j = 0; i < tot; i++) {
+    if (run_get_status(i) == RUN_EMPTY) continue;
+    if (i != j) {
+      do_rename(global->run_archive_dir, i, j);
+      do_rename(global->report_archive_dir, i, j);
+      if (global->team_enable_rep_view) {
+        do_rename(global->team_report_archive_dir, i, j);
+      }
+    }
+    j++;
+  }
+  for (; j < tot; j++) {
+    do_remove_archive_entry(global->run_archive_dir, j);
+    do_remove_archive_entry(global->report_archive_dir, j);
+    if (global->team_enable_rep_view) {
+      do_remove_archive_entry(global->team_report_archive_dir, j);
+    }
+  }
+  run_squeeze_log();
+}
+
 static void
 cmd_priv_command_0(struct client_state *p, int len,
                    struct prot_serve_pkt_simple *pkt)
@@ -1904,6 +1962,24 @@ cmd_priv_command_0(struct client_state *p, int len,
       info("%d: user %d flags %d toggled", p->id, pkt->v.i, flags);
       new_send_reply(p, SRV_RPL_OK);
     }
+    return;
+  case SRV_CMD_SQUEEZE_RUNS:
+    do_squeeze_runs();
+    info("%d: run log is squeezed", p->id);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  case SRV_CMD_CLEAR_RUN:
+    if (pkt->v.i < 0 || pkt->v.i >= run_get_total()) {
+      err("%d: invalid run id %d", p->id, pkt->v.i);
+      new_send_reply(p, -SRV_ERR_BAD_RUN_ID);
+      return;
+    }
+    if (run_clear_entry(pkt->v.i) < 0) {
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    }
+    info("%d: run %d is cleared", p->id, pkt->v.i);
+    new_send_reply(p, SRV_RPL_OK);
     return;
   default:
     err("%d: unhandled command", p->id);
@@ -2276,6 +2352,8 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_VIRTUAL_STOP] { cmd_command_0 },
   [SRV_CMD_VIRTUAL_STANDINGS] { cmd_team_show_item },
   [SRV_CMD_RESET_FILTER] { cmd_judge_command_0 },
+  [SRV_CMD_CLEAR_RUN] { cmd_priv_command_0 },
+  [SRV_CMD_SQUEEZE_RUNS] { cmd_priv_command_0 },
 };
 
 static void
