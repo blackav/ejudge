@@ -20,6 +20,7 @@
  */
 
 #include "nls.h"
+#include "utf8_utils.h"
 #include "userlist.h"
 
 #include <expat.h>
@@ -29,12 +30,6 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <limits.h>
-
-extern struct nls_table *nls_table_koi8_r;
-extern struct nls_table *nls_table_utf8;
-extern struct nls_table *nls_table_cp1251;
-extern struct nls_table *nls_table_cp866;
-extern struct nls_table *nls_table_iso8859_5;
 
 static char const * const tag_map[] =
 {
@@ -91,57 +86,11 @@ struct parser_data
 };
 
 int
-str_utf8_to_koi8(unsigned char *buf, int size, unsigned char const *in)
-{
-  int outlen = 0, size1 = size - 1;
-  unsigned char cb, cul, cuh;
-  int o;
-
-  while (*in) {
-    nls_table_utf8->char2uni(in, &o, &cul, &cuh);
-    in += o;
-    nls_table_koi8_r->uni2char(cuh, cul, &cb, 1, &o);
-    if (outlen < size1) {
-      buf[outlen++] = cb;
-    }
-  }
-
-  if (outlen <= size1) {
-    buf[outlen] = 0;
-  }
-  return outlen;
-}
-
-unsigned char *
-str_utf8_to_koi8_heap(unsigned char const *in)
-{
-  char *buf;
-  int len;
-
-  if (!in) return strdup("");
-  len = strlen(in);
-  buf = alloca(len + 7);
-  str_utf8_to_koi8(buf, len + 7, in);
-  return strdup(buf);
-}
-
-int
 encoding_hnd(void *data, const XML_Char *name, XML_Encoding *info)
 {
   int i, o;
   unsigned char cb, cu1, cu2;
-  struct nls_table *tab = 0;
-
-  if (!strcasecmp(name, "koi8-r") || !strcasecmp(name, "koi8-ru")) {
-    tab = nls_table_koi8_r;
-  } else if(!strcasecmp(name, "microsoft-1251")
-            || !strcasecmp(name, "cp1251")) {
-    tab = nls_table_cp1251;
-  } else if (!strcasecmp(name, "cp866")) {
-    tab = nls_table_cp866;
-  } else if (!strcasecmp(name, "iso8859-5")) {
-    tab = nls_table_iso8859_5;
-  }
+  struct nls_table *tab = nls_lookup_table(name);
 
   if (tab) {
     for (i = 0; i < 256; i++) {
@@ -292,9 +241,10 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
     return;
   }
 
-  for (itag = 1; tag_map[itag]; itag++)
+  for (itag = 1; tag_map[itag]; itag++) {
     if (!strcmp(cur_tag, tag_map[itag]))
       break;
+  }
   if (!tag_map[itag]) {
     fprintf(stderr, "Unknown tag: %s, skipping\n", cur_tag);
     goto start_skipping;
