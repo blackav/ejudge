@@ -76,7 +76,8 @@ int serve_clnt_team_page(int sock_fd,
                          int locale_id,
                          unsigned int flags,
                          unsigned char const *self_url,
-                         unsigned char const *hidden_vars);
+                         unsigned char const *hidden_vars,
+                         unsigned char const *extra_args);
 
 int serve_clnt_master_page(int sock_fd,
                            int out_fd,
@@ -92,7 +93,8 @@ int serve_clnt_master_page(int sock_fd,
                            int last_clar,
                            unsigned char const *self_url,
                            unsigned char const *filter_expr,
-                           unsigned char const *hidden_vars);
+                           unsigned char const *hidden_vars,
+                           unsigned char const *extra_args);
 
 int serve_clnt_standings(int sock_fd,
                          int out_fd,
@@ -102,7 +104,8 @@ int serve_clnt_standings(int sock_fd,
                          int priv_level,
                          int sid_mode,
                          unsigned char const *self_url,
-                         unsigned char const *hidden_vars);
+                         unsigned char const *hidden_vars,
+                         unsigned char const *extra_args);
 
 int serve_clnt_view(int sock_fd,
                     int out_fd,
@@ -110,7 +113,8 @@ int serve_clnt_view(int sock_fd,
                     int item,
                     int sid_mode,
                     unsigned char const *self_url,
-                    unsigned char const *hidden_vars);
+                    unsigned char const *hidden_vars,
+                    unsigned char const *extra_args);
 
 int serve_clnt_message(int sock_fd,
                        int cmd,
