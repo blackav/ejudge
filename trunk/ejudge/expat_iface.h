@@ -22,6 +22,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdio.h>
+
 struct xml_attn
 {
   struct xml_attn *next, *prev;
@@ -51,7 +53,22 @@ xml_build_tree_str(char const *str,
                    void * (*attn_alloc)(int));
 struct xml_tree *
 xml_tree_free(struct xml_tree *tree,
-              void (*tag_free)(void *),
-              void (*attn_free)(void *));
+              void (*tag_free)(struct xml_tree *),
+              void (*attn_free)(struct xml_attn *));
+void
+xml_unparse_tree(FILE *out,
+                 struct xml_tree *tree,
+                 char **tag_map,
+                 char **attn_map,
+                 int (*tag_print)(FILE *, struct xml_tree *),
+                 int (*attn_print)(FILE *, struct xml_attn *));
+void
+xml_unparse_tree_str(char *buf,
+                     int buf_size,
+                     struct xml_tree *tree,
+                     char **tag_map,
+                     char **attn_map,
+                     int (*tag_print)(char *, int, struct xml_tree *),
+                     int (*attn_print)(char *, int, struct xml_attn *));
 
 #endif /* __EXPAT_IFACE_H__ */
