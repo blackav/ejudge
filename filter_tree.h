@@ -120,10 +120,12 @@ void filter_tree_print(struct filter_tree *p, FILE *out,
 
 int filter_expr_lex(void);
 void filter_expr_set_string(unsigned char const *str,
-                            struct filter_tree_mem *mem);
+                            struct filter_tree_mem *mem,
+                            void (*errfunc)(unsigned char const *, ...));
 int filter_expr_parse(void);
 void filter_tree_stats(struct filter_tree_mem *mem, FILE *);
-void filter_expr_init_parser(struct filter_tree_mem *mem);
+void filter_expr_init_parser(struct filter_tree_mem *mem,
+                             void (*errfunc)(unsigned char const *, ...));
 
 unsigned char const *filter_tree_type_to_str(int type);
 unsigned char const *filter_tree_kind_to_str(int kind);
@@ -144,5 +146,8 @@ int filter_tree_eval_node(struct filter_tree_mem *,
                           struct filter_tree *p1, struct filter_tree *p2);
 
 unsigned char const *filter_strerror(int n);
+
+extern int filter_expr_nerrs;
+extern struct filter_tree *filter_expr_lval;
 
 #endif /* __FILTER_TREE_H__ */
