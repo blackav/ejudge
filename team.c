@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "cgi.h"
@@ -849,7 +845,7 @@ authentificate(void)
 
     hyperref(hbuf, sizeof(hbuf), client_sid_mode, client_sid, self_url, 0);
     set_cookie_if_needed();
-    client_put_refresh_header(global->charset, hbuf, 1,
+    client_put_refresh_header(global->charset, hbuf, 0,
                               _("Login successful"));
     printf("<p>%s</p>", _("Login successfull. Now entering the main page."));
     printf(_("<p>If automatic updating does not work, click on <a href=\"%s\">this</a> link.</p>"), hbuf);
@@ -881,7 +877,7 @@ operation_status_page(int code, unsigned char const *msg)
     printf("<h2><font color=\"red\">%s</font></h2>\n", msg);
   } else {
     hyperref(href, sizeof(href), client_sid_mode, client_sid, self_url, 0);
-    client_put_refresh_header(global->charset, href, 1,
+    client_put_refresh_header(global->charset, href, 0,
                               _("Operation successfull"));
     printf("<h2>%s</h2>", _("Operation completed successfully"));
   }
