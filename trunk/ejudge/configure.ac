@@ -66,6 +66,7 @@ AC_ARG_WITH([scheme],AC_HELP_STRING([--with-scheme],[specify the MzScheme interp
 AC_ARG_WITH([python],AC_HELP_STRING([--with-python],[specify the Python interpreter to use in contests]),[ac_cv_contest_python=$withval])
 AC_ARG_WITH([perl],AC_HELP_STRING([--with-perl],[specify the Perl interpreter to use in contests]),[ac_cv_contest_perl=$withval])
 AC_ARG_WITH([prolog],AC_HELP_STRING([--with-prolog],[specify the GNU Prolog compiler to use in contests]),[ac_cv_contest_gprolog=$withval])
+AC_ARG_WITH([festival],AC_HELP_STRING([--with-festival],[specify the home directory of the festival speech generator]),[ac_cv_festival_home="$withval"])
 
 dnl Expat checking stuff
 ac_cv_has_expat=1
@@ -974,6 +975,7 @@ AC_SUBST(ac_cv_contest_yabasic_path)
 AC_SUBST(ac_cv_contest_mzscheme_path)
 AC_SUBST(ac_cv_contest_perl_path)
 AC_SUBST(ac_cv_contest_python_path)
+AC_SUBST(ac_cv_festival_home)
 
 if [[ x"${ac_cv_nls}" = x1 ]]
 then
@@ -1078,6 +1080,6 @@ then
 fi
 
 AC_CONFIG_HEADERS([config.h])
-AC_OUTPUT(Makefile extra/Makefile checkers/Makefile scripts/Makefile scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python ejudge-config.v)
+AC_OUTPUT(Makefile extra/Makefile checkers/Makefile scripts/Makefile scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python ejudge-config.v scripts/festival)
 
-chmod +x scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python ejudge-config.v
+chmod +x scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python ejudge-config.v scripts/festival
