@@ -433,24 +433,6 @@ static int client_locale_id;
 static unsigned char *self_url;
 static int user_id;
 
-static void
-parse_user_ip(void)
-{
-  unsigned int b1, b2, b3, b4;
-  int n;
-  unsigned char *s = getenv("REMOTE_ADDR");
-
-  user_ip = 0;
-  if (!s) return;
-  n = 0;
-  if (sscanf(s, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4
-      || s[n] || b1 > 255 || b2 > 255 || b3 > 255 || b4 > 255) {
-    user_ip = 0xffffffff;
-    return;
-  }
-  user_ip = b1 << 24 | b2 << 16 | b3 << 8 | b4;
-}
-
 static int
 check_source_ip(void)
 {
@@ -656,7 +638,7 @@ initialize(int argc, char const *argv[])
     client_not_configured(0, "contests database not parsed");
   }
   */
-  parse_user_ip();
+  user_ip = parse_client_ip();
 
   // construct self-reference URL
   {
