@@ -16,8 +16,9 @@
  */
 
 /*
- * This program is turbo-pascal compiler helper. Compile packet is
+ * This program is Borland C 3.1 compiler helper. Compile packet is
  * prepared in the dosemu work dir, then the dosemu started.
+ * C compiler is run as the file suffix is .C.
  */
 
 #include <stdio.h>
@@ -190,7 +191,7 @@ main(int argc, char *argv[])
     dup2(fd, 1);
     dup2(fd, 2);
     close(fd);
-    execl(buf, buf, "-I", "video { none }", 0);
+    execl(buf, buf, "-I", "keystroke \"\\r\" video { none } dpmi 4096", 0);
     myerr("execl failed: %s", strerror(errno));
     _exit(1);
   }
