@@ -1,3 +1,8 @@
+2002-12-06  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.c: copyright notice is updated;
+	names of reuse include files are fixed.
+
 2002-01-07  Alexander Chernov  <cher@ispras.ru>
 
 	* osdeps.c: copyright notice is updated;
