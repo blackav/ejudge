@@ -384,6 +384,7 @@ run_tests(struct section_tester_data *tst,
           int report_error_code,
           int score_system_val,
           int accept_testing,
+          int cur_variant,
           char const *new_name,
           char const *new_base,
           char *reply_string,               /* buffer where reply is formed */
@@ -412,11 +413,24 @@ run_tests(struct section_tester_data *tst,
   struct section_problem_data *prb;
   char *sound;
   struct termios term_attrs;
+  unsigned char *var_test_dir;
+  unsigned char *var_corr_dir;
+  unsigned char *var_check_cmd;
 
   ASSERT(tst->problem > 0);
   ASSERT(tst->problem <= max_prob);
   ASSERT(probs[tst->problem]);
   prb = probs[tst->problem];
+
+  if (cur_variant > 0) {
+    var_test_dir = (unsigned char*) alloca(sizeof(path_t));
+    var_corr_dir = (unsigned char*) alloca(sizeof(path_t));
+    snprintf(var_test_dir, sizeof(path_t), "%s-%d", prb->test_dir,cur_variant);
+    snprintf(var_corr_dir, sizeof(path_t), "%s-%d", prb->corr_dir,cur_variant);
+  } else {
+    var_test_dir = prb->test_dir;
+    var_corr_dir = prb->corr_dir;
+  }
 
   pathmake(report_path, global->run_work_dir, "/", "report", NULL);
   team_report_path[0] = 0;
@@ -461,7 +475,7 @@ run_tests(struct section_tester_data *tst,
 
     sprintf(test_base, "%03d%s", cur_test, prb->test_sfx);
     sprintf(corr_base, "%03d%s", cur_test, prb->corr_sfx);
-    pathmake(test_src, prb->test_dir, "/", test_base, NULL);
+    pathmake(test_src, var_test_dir, "/", test_base, NULL);
     if (os_CheckAccess(test_src, REUSE_R_OK) < 0) break;
 
     make_writable(tst->check_dir);
@@ -610,14 +624,22 @@ run_tests(struct section_tester_data *tst,
       } else {
         task_Delete(tsk); tsk = 0;
 
+        if (prb->variant_num > 0) {
+          var_check_cmd = (unsigned char*) alloca(sizeof(path_t));
+          snprintf(var_check_cmd, sizeof(path_t),
+                   "%s-%d", tst->check_cmd, cur_variant);
+        } else {
+          var_check_cmd = tst->check_cmd;
+        }
+
         /* now start checker */
         /* checker <input data> <output result> <corr answer> */
         tsk = task_New();
-        task_AddArg(tsk, tst->check_cmd);
+        task_AddArg(tsk, var_check_cmd);
         task_AddArg(tsk, prb->input_file);
         task_AddArg(tsk, prb->output_file);
         if (prb->use_corr && prb->corr_dir[0]) {
-          pathmake3(corr_path, prb->corr_dir, "/", corr_base, NULL);
+          pathmake3(corr_path, var_corr_dir, "/", corr_base, NULL);
           task_AddArg(tsk, corr_path);
           generic_read_file(&tests[cur_test].correct, 0, 0, 0,
                             0, corr_path, "");
@@ -849,6 +871,7 @@ do_loop(void)
   int score_system_val;
   int team_enable_rep_view;
   int report_error_code;
+  int cur_variant;
   struct section_tester_data tn, *tst;
 
   memset(&tn, 0, sizeof(tn));
@@ -874,13 +897,13 @@ do_loop(void)
     info("run packet: <%s>", pkt_buf);
     n = 0;
     memset(exe_sfx, 0, sizeof(exe_sfx));
-    if ((r = sscanf(pkt_buf, "%d %d %d %d %d %d %d %d %63s %63s %n",
+    if ((r = sscanf(pkt_buf, "%d %d %d %d %d %d %d %d %d %63s %63s %n",
                     &contest_id, &run_id,
                     &prob_id, &accept_testing, &locale_id,
                     &score_system_val, &team_enable_rep_view,
-                    &report_error_code,
+                    &report_error_code, &cur_variant,
                     exe_sfx, arch,
-               &n)) != 10
+               &n)) != 11
         || pkt_buf[n]
         || contest_id <= 0
         || run_id < 0
@@ -903,6 +926,16 @@ do_loop(void)
         || report_error_code > 1
         || locale_id < 0
         || locale_id > 1024) {
+      err("bad packet");
+      continue;
+    }
+
+    if (probs[prob_id]->variant_num <= 0 && cur_variant != 0) {
+      err("bad packet");
+      continue;
+    }
+    if (probs[prob_id]->variant_num > 0
+        && (cur_variant <= 0 || cur_variant > probs[prob_id]->variant_num)) {
       err("bad packet");
       continue;
     }
@@ -942,7 +975,7 @@ do_loop(void)
     if (cr_serialize_lock() < 0) return -1;
     if (run_tests(tst, locale_id,
                   team_enable_rep_view, report_error_code,
-                  score_system_val, accept_testing,
+                  score_system_val, accept_testing, cur_variant,
                   exe_name, run_base,
                   status_string, report_path,
                   team_report_path) < 0) {
@@ -1002,8 +1035,9 @@ static int
 process_default_testers(void)
 {
   int total = 0;
-  int i, j, k;
+  int i, j, k, n;
   unsigned char *prob_flags = 0;
+  unsigned char *var_check_cmd = 0;
   struct section_tester_data *tp, *tq;
   struct section_problem_data *ts;
 
@@ -1051,10 +1085,20 @@ process_default_testers(void)
       if (prepare_tester_refinement(&tn, i, k) < 0) return -1;
       if (create_tester_dirs(&tn) < 0) return -1;
 
+      if (ts->variant_num > 0) {
+        if (!var_check_cmd)
+          var_check_cmd = (unsigned char*) alloca(sizeof(path_t));
+        for (n = 1; n <= ts->variant_num; n++) {
+          snprintf(var_check_cmd, sizeof(path_t), "%s-%d", tn.check_cmd, n);
+          if (check_executable(var_check_cmd) < 0) return -1;
+        }
+      } else {
+        if (check_executable(tn.check_cmd) < 0) return -1;
+      }
+
       /* check working dirs */
       if (make_writable(tn.check_dir) < 0) return -1;
       if (check_writable_dir(tn.check_dir) < 0) return -1;
-      if (check_executable(tn.check_cmd) < 0) return -1;
       if (tn.prepare_cmd[0] && check_executable(tn.prepare_cmd) < 0) return -1;
       if (tn.start_cmd[0] && check_executable(tn.start_cmd) < 0) return -1;
       total++;
@@ -1067,10 +1111,13 @@ process_default_testers(void)
 int
 check_config(void)
 {
-  int     i, n1, n2, j;
+  int     i, n1, n2, j, n, k;
   int     total = 0;
 
   struct section_problem_data *prb = 0;
+  unsigned char *var_test_dir;
+  unsigned char *var_corr_dir;
+  unsigned char *var_check_cmd = 0;
 
   /* check spooler dirs */
   if (check_writable_spool(global->run_queue_dir, SPOOL_OUT) < 0) return -1;
@@ -1097,28 +1144,72 @@ check_config(void)
     }
 
     /* check existence of tests */
-    if (check_readable_dir(prb->test_dir) < 0) return -1;
-    if ((n1 = count_files(prb->test_dir, prb->test_sfx)) < 0) return -1;
-    if (!n1) {
-      err("'%s' does not contain any tests", prb->test_dir);
-      return -1;
-    }
-    info("found %d tests for problem %s", n1, prb->short_name);
-    if (n1 <= prb->tests_to_accept) {
-      err("%d tests required for problem acceptance!", prb->tests_to_accept);
-      return -1;
-    }
-    if (prb->use_corr) {
-      if (!prb->corr_dir[0]) {
-        err("directory with answers is not defined");
+    if (prb->variant_num <= 0) {
+      if (check_readable_dir(prb->test_dir) < 0) return -1;
+      if ((n1 = count_files(prb->test_dir, prb->test_sfx)) < 0) return -1;
+      if (!n1) {
+        err("'%s' does not contain any tests", prb->test_dir);
         return -1;
       }
-      if (check_readable_dir(prb->corr_dir) < 0) return -1;
-      if ((n2 = count_files(prb->corr_dir, prb->corr_sfx)) < 0) return -1;
-      info("found %d answers for problem %s", n2, prb->short_name);
-      if (n1 != n2) {
-        err("number of test does not match number of answers");
+      info("found %d tests for problem %s", n1, prb->short_name);
+      if (n1 <= prb->tests_to_accept) {
+        err("%d tests required for problem acceptance!", prb->tests_to_accept);
         return -1;
+      }
+      if (prb->use_corr) {
+        if (!prb->corr_dir[0]) {
+          err("directory with answers is not defined");
+          return -1;
+        }
+        if (check_readable_dir(prb->corr_dir) < 0) return -1;
+        if ((n2 = count_files(prb->corr_dir, prb->corr_sfx)) < 0) return -1;
+        info("found %d answers for problem %s", n2, prb->short_name);
+        if (n1 != n2) {
+          err("number of test does not match number of answers");
+          return -1;
+        }
+      }
+    } else {
+      n1 = n2 = -1;
+      var_test_dir = (unsigned char *) alloca(sizeof(path_t));
+      var_corr_dir = (unsigned char *) alloca(sizeof(path_t));
+
+      for (k = 1; k <= prb->variant_num; k++) {
+        snprintf(var_test_dir, sizeof(path_t), "%s-%d", prb->test_dir, k);
+        snprintf(var_corr_dir, sizeof(path_t), "%s-%d", prb->corr_dir, k);
+        if (check_readable_dir(var_test_dir) < 0) return -1;
+        if ((j = count_files(var_test_dir, prb->test_sfx)) < 0) return -1;
+        if (!j) {
+          err("'%s' does not contain any tests", var_test_dir);
+          return -1;
+        }
+        if (n1 < 0) n1 = j;
+        if (n1 != j) {
+          err("number of tests %d for variant %d does not equal %d", j, k, n1);
+          return -1;
+        }
+        info("found %d tests for problem %s, variant %d",n1,prb->short_name,k);
+        if (n1 <= prb->tests_to_accept) {
+          err("%d tests required for problem acceptance!",
+              prb->tests_to_accept);
+          return -1;
+        }
+        if (prb->use_corr) {
+          if (!prb->corr_dir[0]) {
+            err("directory with answers is not defined");
+            return -1;
+          }
+          if (check_readable_dir(var_corr_dir) < 0) return -1;
+          if ((j = count_files(var_corr_dir, prb->corr_sfx)) < 0) return -1;
+          info("found %d answers for problem %s, variant %d",
+               j, prb->short_name, k);
+          if (n1 != j) {
+            err("number of tests %d does not match number of answers %d",
+                n1, j);
+            return -1;
+          }
+        }
+        n2 = n1;
       }
     }
 
@@ -1201,14 +1292,24 @@ check_config(void)
   for (i = 1; i <= max_tester; i++) {
     if (!testers[i]) continue;
     if (testers[i]->any) continue;
-
+    prb = probs[testers[i]->problem];
     total++;
+
+    if (prb->variant_num > 0) {
+      if (!var_check_cmd)
+        var_check_cmd = (unsigned char*) alloca(sizeof(path_t));
+      for (n = 1; n <= prb->variant_num; n++) {
+        snprintf(var_check_cmd, sizeof(path_t),
+                 "%s-%d", testers[i]->check_cmd, n);
+        if (check_executable(var_check_cmd) < 0) return -1;
+      }
+    } else {
+      if (check_executable(testers[i]->check_cmd) < 0) return -1;
+    }
 
     /* check working dirs */
     if (make_writable(testers[i]->check_dir) < 0) return -1;
     if (check_writable_dir(testers[i]->check_dir) < 0) return -1;
-
-    if (check_executable(testers[i]->check_cmd) < 0) return -1;
     if (testers[i]->prepare_cmd[0]
         && check_executable(testers[i]->prepare_cmd) < 0) return -1;
     if (testers[i]->start_cmd[0]
