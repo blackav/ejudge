@@ -254,6 +254,79 @@ handle_import_xml(const unsigned char *cmd,
   return 0;
 }
 
+/*
+ * argv[0] - session_id_file
+ * argv[1] - run Id
+ */
+static int
+handle_dump_source(const unsigned char *cmd,
+                   int srv_cmd, int argc, char *argv[])
+{
+  int run_id, r;
+
+  if (argc < 2) return too_few_params(cmd);
+  if (argc > 2) return too_many_params(cmd);
+
+  if (sscanf(argv[1], "%d%n", &run_id, &r) != 1 || argv[1][r]
+      || run_id < 0 || run_id >= 1000000) {
+    err("value of run_id is invalid");
+    return 1;
+  }
+
+  authentificate(argv[0]);
+  open_server();
+
+  r = serve_clnt_view(serve_socket_fd, 1, srv_cmd, run_id,
+                      0, 0, 0, 0, 0, 0);
+  if (r < 0) {
+    err("server error: %s", protocol_strerror(-r));
+    return 1;
+  }
+
+  return 0;
+}
+
+/*
+ * argv[0] - session_id_file
+ * argv[1] - filter_expr
+ * argv[2] - first_run
+ * argv[3] - last_run
+ */
+static int
+handle_dump_master_runs(const unsigned char *cmd,
+                        int srv_cmd, int argc, char *argv[])
+{
+  int n, first_run, last_run, r;
+
+  if (argc < 4) return too_few_params(cmd);
+  if (argc > 4) return too_many_params(cmd);
+
+  if (sscanf(argv[2], "%d%n", &first_run, &n) != 1 || argv[2][n]) {
+    err("value of first_run is invalid");
+    return 1;
+  }
+  if (sscanf(argv[3], "%d%n", &last_run, &n) != 1 || argv[3][n]) {
+    err("value of last_run is invalid");
+    return 1;
+  }
+
+  authentificate(argv[0]);
+  open_server();
+
+  r = serve_clnt_master_page(serve_socket_fd, 1,
+                             SRV_CMD_DUMP_MASTER_RUNS,
+                             session_id, 0,
+                             contest_id, 0, local_ip,
+                             PRIV_LEVEL_ADMIN, SID_URL,
+                             first_run, last_run, 0, 0, "", argv[1], "", "");
+  if (r < 0) {
+    err("server error: %s", protocol_strerror(-r));
+    return 1;
+  }
+
+  return 0;
+}
+
 struct cmdinfo
 {
   const unsigned char *cmdname;
@@ -269,6 +342,10 @@ static struct cmdinfo cmds[] =
   { "dump-runs", handle_dump_runs, SRV_CMD_DUMP_RUNS },
   { "soft-update-stand", handle_priv_command_0, SRV_CMD_SOFT_UPDATE_STAND },
   { "import-xml-runs", handle_import_xml, 0 },
+  { "dump-source", handle_dump_source, SRV_CMD_PRIV_DOWNLOAD_RUN },
+  { "dump-report", handle_dump_source, SRV_CMD_PRIV_DOWNLOAD_REPORT },
+  { "dump-team-report", handle_dump_source, SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT},
+  { "dump-master-runs", handle_dump_master_runs, 0 },
 
   { 0, 0 },
 };
