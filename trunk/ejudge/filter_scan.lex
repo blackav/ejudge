@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -119,6 +119,12 @@ decd    [0-9]
 "curvariant" { TT(TOK_CURVARIANT, FILTER_TYPE_INT); }
 "rawvariant" { TT(TOK_RAWVARIANT, FILTER_TYPE_INT); }
 "currawvariant" { TT(TOK_CURRAWVARIANT, FILTER_TYPE_INT); }
+"userinvisible" { TT(TOK_USERINVISIBLE, FILTER_TYPE_BOOL); }
+"curuserinvisible" { TT(TOK_CURUSERINVISIBLE, FILTER_TYPE_BOOL); }
+"userbanned" { TT(TOK_USERBANNED, FILTER_TYPE_BOOL); }
+"curuserbanned" { TT(TOK_CURUSERBANNED, FILTER_TYPE_BOOL); }
+"userlocked" { TT(TOK_USERLOCKED, FILTER_TYPE_BOOL); }
+"curuserlocked" { TT(TOK_CURUSERLOCKED, FILTER_TYPE_BOOL); }
 
 "int" { TT(TOK_INT, FILTER_TYPE_INT); }
 "string" { TT(TOK_STRING, FILTER_TYPE_STRING); }
