@@ -186,3 +186,6 @@ localdb.c 1 1 853826
 idmap.c 1 2 537805
 register.c 1 2 402561
 make-teamdb.c 1 2 261417
+localdb.c 1 2 853852
+html.c 1 14 3459417
+prepare.c 1 19 2415434
