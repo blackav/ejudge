@@ -87,6 +87,7 @@ COMMON_CFILES=\
  parsecfg.c\
  pathutl.c\
  prepare.c\
+ printing.c\
  protocol.c\
  runlog.c\
  runlog_import.c\
@@ -159,6 +160,7 @@ HFILES=\
  parsecfg.h\
  pathutl.h\
  prepare.h\
+ printing.h\
  protocol.h\
  runlog.h\
  serve_clnt.h\
