@@ -39,6 +39,9 @@
 #include <signal.h>
 #include <sys/select.h>
 #include <dirent.h>
+#include <time.h>
+
+#define SUSPEND_TIMEOUT 60
 
 struct contest_extra
 {
@@ -46,6 +49,8 @@ struct contest_extra
   unsigned char serve_used;
   unsigned char run_used;
   unsigned char dnotify_flag;
+  unsigned char serve_suspended;
+  unsigned char run_suspended;
 
   int serve_pid;
   int run_pid;
@@ -59,6 +64,11 @@ struct contest_extra
   unsigned char *log_file;
   unsigned char *run_queue_dir;
   unsigned char *run_log_file;
+
+  time_t serve_last_start;
+  time_t serve_suspend_end;
+  time_t run_last_start;
+  time_t run_suspend_end;
 };
 
 static struct userlist_cfg *config;
@@ -571,6 +581,7 @@ do_loop(void)
   struct contest_extra *cur;
   int null_fd, log_fd, self_pid;
   unsigned char **args;
+  time_t current_time;
 
   sigfillset(&block_mask);
   sigfillset(&work_mask);
@@ -620,14 +631,33 @@ do_loop(void)
     }
 
     while (1) {
+      current_time = time(0);
       fd_max = -1;
       FD_ZERO(&rset);
       for (i = 0; i < contest_num; i++) {
-        if (contest_extra[i].serve_pid >= 0) continue;
-        socket_fd = contest_extra[i].socket_fd;
-        if (socket_fd < 0) continue;
+        cur = &contest_extra[i];
+        if (!cur->serve_used || cur->serve_pid >= 0) continue;
+        if ((socket_fd = cur->socket_fd) < 0) continue;
         FD_SET(socket_fd, &rset);
         if (socket_fd > fd_max) fd_max = socket_fd;
+        if (cur->serve_suspended && current_time > cur->serve_suspend_end) {
+          info("contest %d serve suspend time is finished", cur->id);
+          cur->serve_suspended = 0;
+          cur->serve_suspend_end = 0;
+        }
+      }
+
+      /* handle run suspend end */
+      for (i = 0; i < contest_num; i++) {
+        cur = &contest_extra[i];
+        if (!cur->run_used || cur->run_pid >= 0 || !cur->run_suspended)
+          continue;
+        if (current_time > cur->run_suspend_end) {
+          info("contest %d run suspend time is finished", cur->id);
+          cur->run_suspended = 0;
+          cur->run_suspend_end = 0;
+          if (cur->dnotify_flag) dnotify_flag = 1;
+        }
       }
 
       // set a reasonable timeout in case of race condition
@@ -717,8 +747,17 @@ do_loop(void)
           cur = &contest_extra[i];
           if (!cur->run_used) continue;
           if (!cur->dnotify_flag) continue;
-          cur->dnotify_flag = 0;
           if (cur->run_pid > 0) continue;
+          if (cur->run_suspended) continue;
+          if (current_time == cur->run_last_start) {
+            err("contest %d run respawns too fast, disabling for %d seconds",
+                cur->id, SUSPEND_TIMEOUT);
+            cur->run_suspended = 1;
+            cur->run_suspend_end = current_time + SUSPEND_TIMEOUT;
+            continue;
+          }
+          cur->dnotify_flag = 0;
+          cur->run_last_start = current_time;
           pid = fork();
           if (pid < 0) {
             err("contest %d run fork() failed: %s", cur->id, os_ErrorMsg());
@@ -826,8 +865,24 @@ do_loop(void)
 
       // scan for ready contests
       for (i = 0; i < contest_num; i++) {
+        cur = &contest_extra[i];
         if (contest_extra[i].serve_pid >= 0) continue;
         if (FD_ISSET(contest_extra[i].socket_fd, &rset)) {
+          if (!cur->serve_suspended && current_time == cur->serve_last_start) {
+            err("contest %d serve respawns too fast, disabling for %d seconds",
+                cur->id, SUSPEND_TIMEOUT);
+            cur->serve_suspended = 1;
+            cur->serve_suspend_end = current_time + SUSPEND_TIMEOUT;
+          }
+          if (cur->serve_suspended) {
+            in_addr_len = sizeof(in_addr);
+            memset(&in_addr, 0, in_addr_len);
+            tmp_fd = accept(contest_extra[i].socket_fd,
+                            (struct sockaddr*) &in_addr, &in_addr_len);
+            if (tmp_fd >= 0) close(tmp_fd);
+            continue;
+          }
+          cur->serve_last_start = current_time;
           pid = fork();
           if (pid < 0) {
             err("contest %d fork() failed: %s", 
