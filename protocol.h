@@ -70,6 +70,25 @@ enum
     SRV_CMD_SUBMIT_CLAR,
     SRV_CMD_TEAM_PAGE,
     SRV_CMD_MASTER_PAGE,
+    SRV_CMD_PRIV_STANDINGS,
+    SRV_CMD_VIEW_CLAR,
+    SRV_CMD_VIEW_SOURCE,
+    SRV_CMD_VIEW_REPORT,
+    SRV_CMD_VIEW_USERS,
+    SRV_CMD_PRIV_MSG,
+    SRV_CMD_PRIV_REPLY,
+    SRV_CMD_GEN_PASSWORDS,
+    SRV_CMD_SUSPEND,
+    SRV_CMD_RESUME,
+    SRV_CMD_UPDATE_STAND,
+    SRV_CMD_RESET,
+    SRV_CMD_START,
+    SRV_CMD_STOP,
+    SRV_CMD_REJUDGE_ALL,
+    SRV_CMD_REJUDGE_PROBLEM,
+    SRV_CMD_SCHEDULE,
+    SRV_CMD_DURATION,
+    SRV_CMD_EDIT_RUN,
 
     SRV_CMD_LAST
   };
@@ -110,12 +129,16 @@ enum
     SRV_ERR_DOWNLOAD_DISABLED,
     SRV_ERR_DOWNLOAD_TOO_OFTEN,
     SRV_ERR_TRY_AGAIN,
+    SRV_ERR_CONTEST_STARTED,
     SRV_ERR_CONTEST_NOT_STARTED,
     SRV_ERR_CONTEST_FINISHED,
+    SRV_ERR_CONTEST_NOT_FINISHED,
     SRV_ERR_QUOTA_EXCEEDED,
     SRV_ERR_SUBJECT_TOO_LONG,
     SRV_ERR_DUPLICATED_RUN,
     SRV_ERR_NO_PERMS,
+    SRV_ERR_BAD_DURATION,
+    SRV_ERR_BAD_STATUS,
 
     SRV_ERR_LAST
   };
@@ -173,22 +196,23 @@ struct prot_serve_pkt_submit_clar
   int contest_id;
   int locale_id;
   unsigned long ip;
+  int dest_user_id;
+  int ref_clar_id;
+  int dest_login_len;
   int subj_len;
   int text_len;
-  unsigned char data[2];
+  unsigned char data[3];
 };
 
 struct prot_serve_pkt_team_page
 {
   struct prot_serve_packet b;
 
-  int user_id;
-  int contest_id;
+  int sid_mode;
   int locale_id;
-  unsigned long ip;
   unsigned int flags;
-  int simple_form_len;
-  int multi_form_len;
+  int self_url_len;
+  int hidden_vars_len;
   unsigned char data[2];
 };
 
@@ -212,6 +236,7 @@ struct prot_serve_pkt_master_page
   int locale_id;
   unsigned long ip;
   int priv_level;
+  int sid_mode;
   int first_run;
   int last_run;
   int first_clar;
@@ -220,6 +245,64 @@ struct prot_serve_pkt_master_page
   int filter_expr_len;
   int hidden_vars_len;
   unsigned char data[3];
+};
+
+struct prot_serve_pkt_standings
+{
+  struct prot_serve_packet b;
+
+  int user_id;
+  int contest_id;
+  int locale_id;
+  int priv_level;
+  int sid_mode;
+  int self_url_len;
+  int hidden_vars_len;
+  unsigned char data[2];
+};
+
+struct prot_serve_pkt_view
+{
+  struct prot_serve_packet b;
+
+  int item;
+  int sid_mode;
+  int self_url_len;
+  int hidden_vars_len;
+  unsigned char data[2];
+};
+
+struct prot_serve_pkt_simple
+{
+  struct prot_serve_packet b;
+
+  union {
+    time_t t;
+    int i;
+  } v;
+};
+
+enum
+  {
+    PROT_SERVE_RUN_UID_SET = 1,
+    PROT_SERVE_RUN_LOGIN_SET = 2,
+    PROT_SERVE_RUN_PROB_SET = 4,
+    PROT_SERVE_RUN_LANG_SET = 8,
+    PROT_SERVE_RUN_STATUS_SET = 16,
+  };
+
+struct prot_serve_pkt_run_info
+{
+  struct prot_serve_packet b;
+
+  int run_id;
+  int mask;
+  int user_id;
+  int prob_id;
+  int lang_id;
+  int status;
+  int user_login_len;
+  unsigned char data[1];
 };
 
 struct prot_serve_pkt_archive_path
