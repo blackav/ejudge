@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "serve_clnt.h"
@@ -49,6 +45,7 @@ serve_clnt_get_archive(int sock_fd, int user_id, int contest_id,
   int r;
   struct prot_serve_pkt_get_archive *out;
   struct prot_serve_pkt_archive_path *in;
+  void *void_in = 0;
 
   if (sock_fd < 0) return -SRV_ERR_NOT_CONNECTED;
   *p_token = 0;
@@ -62,8 +59,9 @@ serve_clnt_get_archive(int sock_fd, int user_id, int contest_id,
   out->locale_id = locale_id;
   if ((r = serve_clnt_send_packet(sock_fd, out_size, out)) < 0)
     return r;
-  if ((r = serve_clnt_recv_packet(sock_fd, &in_size, (void**) &in)) < 0)
+  if ((r = serve_clnt_recv_packet(sock_fd, &in_size, &void_in)) < 0)
     return r;
+  in = void_in;
   if (in->b.id < 0) {
     r = in->b.id;
     xfree(in);
