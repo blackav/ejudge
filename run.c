@@ -166,7 +166,8 @@ print_by_line(FILE *f, char const *s)
 }
 
 static int
-generate_report(char *report_path, int scores, int max_score)
+generate_report(int accept_testing,
+                char *report_path, int scores, int max_score)
 {
   FILE *f;
   int   i;
@@ -192,21 +193,34 @@ generate_report(char *report_path, int scores, int max_score)
     else failed_tests++;
   }
 
-  if (status == 0) {
-    fprintf(f, "%s\n\n", _("OK"));
-  } else {
-    if (global->score_system_val == SCORE_KIROV) {
-      fprintf(f, _("PARTIAL SOLUTION\n\n"));
+  if (global->score_system_val == SCORE_OLYMPIAD && accept_testing) {
+    if (status == 0) {
+      fprintf(f, "%s\n\n", _("ACCEPTED"));
     } else {
-      fprintf(f, _("%s, test #%d\n\n"), result2str(status,0,0), first_failed);
+      fprintf(f, _("%s, test #%d\n\n"),
+              result2str(status,0,0), first_failed);
     }
+    fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
+            total_tests - 1, passed_tests, failed_tests);
+    fprintf(f, "\n");
+  } else {
+    if (status == 0) {
+      fprintf(f, "%s\n\n", _("OK"));
+    } else {
+      if (global->score_system_val == SCORE_KIROV) {
+        fprintf(f, _("PARTIAL SOLUTION\n\n"));
+      } else {
+        fprintf(f, _("%s, test #%d\n\n"),
+                result2str(status,0,0), first_failed);
+      }
+    }
+    fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
+            total_tests - 1, passed_tests, failed_tests);
+    if (global->score_system_val == SCORE_KIROV) {
+      fprintf(f, _("Scores gained: %d (out of %d)\n"), scores, max_score);
+    }
+    fprintf(f, "\n");
   }
-  fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
-	  total_tests - 1, passed_tests, failed_tests);
-  if (global->score_system_val == SCORE_KIROV) {
-    fprintf(f, _("Scores gained: %d (out of %d)\n"), scores, max_score);
-  }
-  fprintf(f, "\n");
 
   fprintf(f, _("Test #  Status  Time (sec)  %sResult\n"),
           (global->score_system_val == SCORE_KIROV)?_("Score   "):"");
@@ -255,7 +269,8 @@ generate_report(char *report_path, int scores, int max_score)
 }
 
 static int
-generate_team_report(char const *report_path, int scores, int max_score)
+generate_team_report(int accept_testing,
+                     char const *report_path, int scores, int max_score)
 {
   FILE *f;
   int   i;
@@ -281,21 +296,34 @@ generate_team_report(char const *report_path, int scores, int max_score)
     else failed_tests++;
   }
 
-  if (status == 0) {
-    fprintf(f, "%s\n\n", _("OK"));
-  } else {
-    if (global->score_system_val == SCORE_KIROV) {
-      fprintf(f, _("PARTIAL SOLUTION\n\n"));
+  if (global->score_system_val == SCORE_OLYMPIAD && accept_testing) {
+    if (status == 0) {
+      fprintf(f, "%s\n\n", _("ACCEPTED"));
     } else {
-      fprintf(f, _("%s, test #%d\n\n"), result2str(status,0,0), first_failed);
+      fprintf(f, _("%s, test #%d\n\n"),
+              result2str(status,0,0), first_failed);
     }
+    fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
+            total_tests - 1, passed_tests, failed_tests);
+    fprintf(f, "\n");
+  } else {
+    if (status == 0) {
+      fprintf(f, "%s\n\n", _("OK"));
+    } else {
+      if (global->score_system_val == SCORE_KIROV) {
+        fprintf(f, _("PARTIAL SOLUTION\n\n"));
+      } else {
+        fprintf(f, _("%s, test #%d\n\n"),
+                result2str(status,0,0), first_failed);
+      }
+    }
+    fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
+            total_tests - 1, passed_tests, failed_tests);
+    if (global->score_system_val == SCORE_KIROV) {
+      fprintf(f, _("Scores gained: %d (out of %d)\n"), scores, max_score);
+    }
+    fprintf(f, "\n");
   }
-  fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
-	  total_tests - 1, passed_tests, failed_tests);
-  if (global->score_system_val == SCORE_KIROV) {
-    fprintf(f, _("Scores gained: %d (out of %d)\n"), scores, max_score);
-  }
-  fprintf(f, "\n");
 
   fprintf(f, _("Test #  Status  Time (sec)  %sResult\n"),
           (global->score_system_val == SCORE_KIROV)?_("Score   "):"");
@@ -340,6 +368,7 @@ read_error_code(char const *path)
 static int
 run_tests(struct section_tester_data *tst,
           int locale_id,
+          int accept_testing,
           char const *new_name,
           char const *new_base,
           char *reply_string,               /* buffer where reply is formed */
@@ -407,6 +436,10 @@ run_tests(struct section_tester_data *tst,
   }
 
   while (1) {
+    if (global->score_system_val == SCORE_OLYMPIAD
+        && accept_testing
+        && cur_test > prb->tests_to_accept) break;
+
     sprintf(test_base, "%03d%s", cur_test, prb->test_sfx);
     sprintf(corr_base, "%03d%s", cur_test, prb->corr_sfx);
     pathmake(test_src, prb->test_dir, "/", test_base, NULL);
@@ -577,13 +610,26 @@ run_tests(struct section_tester_data *tst,
     tests[cur_test].status = status;
     cur_test++;
     total_tests++;
-    if (status > 0 && global->score_system_val != SCORE_KIROV) break;
+    if (status > 0) {
+      // test failed, how to react on this
+      if (global->score_system_val == SCORE_ACM) break;
+      if (global->score_system_val == SCORE_OLYMPIAD
+          && accept_testing) break;
+    }
     clear_directory(tst->work_dir);
   }
 
   /* TESTING COMPLETED (SOMEHOW) */
 
-  if (global->score_system_val == SCORE_KIROV) {
+  if (global->score_system_val == SCORE_OLYMPIAD
+      && accept_testing) {
+    if (!failed_test) { 
+      status = RUN_ACCEPTED;
+      failed_test = cur_test;
+    }
+    sprintf(reply_string, "%d %d -1\n", status, failed_test);
+  } else if (global->score_system_val == SCORE_KIROV
+             || global->score_system_val == SCORE_OLYMPIAD) {
     int jj;
 
     for (jj = 1; jj <= prb->ntests; jj++) {
@@ -641,10 +687,11 @@ run_tests(struct section_tester_data *tst,
 
   if (global->team_enable_rep_view) {
     setup_locale(locale_id);
-    generate_team_report(team_report_path, score, prb->full_score);
+    generate_team_report(accept_testing,
+                         team_report_path, score, prb->full_score);
     setup_locale(0);
   }
-  generate_report(report_path, score, prb->full_score);
+  generate_report(accept_testing, report_path, score, prb->full_score);
 
   goto _cleanup;
 
@@ -685,6 +732,7 @@ do_loop(void)
 
   char   exe_name[64];
   int    locale_id;
+  int    accept_testing;
   int    n;
 
   while (1) {
@@ -711,8 +759,11 @@ do_loop(void)
     info("run packet: <%s>", pkt_buf);
     n = 0;
     memset(exe_name, 0, sizeof(exe_name));
-    if (sscanf(pkt_buf, "%63s %d %n", exe_name, &locale_id, &n) != 2
+    if (sscanf(pkt_buf, "%63s %d %d %n", exe_name, &locale_id,
+               &accept_testing, &n) != 3
         || pkt_buf[n]
+        || accept_testing < 0
+        || accept_testing > 1
         || locale_id < 0
         || locale_id > 1024) {
       err("bad packet");
@@ -727,7 +778,7 @@ do_loop(void)
     team_report_path[0] = 0;
 
     os_rGetBasename(exe_name, new_base, PATH_MAX);
-    if (run_tests(testers[i], locale_id, exe_name, new_base,
+    if (run_tests(testers[i], locale_id, accept_testing, exe_name, new_base,
                   status_string, report_path,
                   team_report_path) < 0) return -1;
     if (generic_copy_file(0, NULL, report_path, "",
@@ -788,6 +839,10 @@ check_config(void)
       return -1;
     }
     info("found %d tests for problem %s", n1, prb->short_name);
+    if (n1 <= prb->tests_to_accept) {
+      err("%d tests required for problem acceptance!", prb->tests_to_accept);
+      return -1;
+    }
     if (prb->use_corr) {
       if (!prb->corr_dir[0]) {
         err("directory with answers is not defined");
