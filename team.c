@@ -42,6 +42,7 @@
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
+#include <locale.h>
 #define _(x) gettext(x)
 #else
 #define _(x) x
@@ -98,6 +99,10 @@ struct section_global_data
   path_t standings_url;
   path_t problems_url;
   path_t charset;
+
+  /* locallization stuff */
+  int    enable_l10n;
+  path_t l10n_dir;
 };
 
 /* configuration information */
@@ -107,6 +112,7 @@ static struct section_global_data *global;
 /* client state variables */
 static char   *client_login;
 static char   *client_password;
+static int     client_locale_id;
 static char   *client_team_name;
 static int     client_team_id;
 
@@ -158,6 +164,9 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(standings_url, "s"),
   GLOBAL_PARAM(problems_url, "s"),
   GLOBAL_PARAM(charset, "s"),
+  GLOBAL_PARAM(enable_l10n, "d"),
+  GLOBAL_PARAM(l10n_dir, "s"),
+
   { 0, 0, 0, 0 }
 };
 static struct config_section_info params[] =
@@ -170,18 +179,18 @@ static int
 set_defaults(void)
 {
   if (!global->root_dir[0]) {
-    err(_("root_dir must be set"));
+    err("root_dir must be set");
     return -1;
   }
   path_init(global->var_dir, global->root_dir, DEFAULT_VAR_DIR);
   path_init(global->conf_dir, global->root_dir, DEFAULT_CONF_DIR);
   if (!global->teamdb_file[0]) {
-    err(_("teamdb_file must be set"));
+    err("teamdb_file must be set");
     return -1;
   }
   path_add_dir(global->teamdb_file, global->conf_dir);
   if (!global->passwd_file[0]) {
-    err(_("passwd_file must be set"));
+    err("passwd_file must be set");
     return -1;
   }
   path_add_dir(global->passwd_file, global->conf_dir);
@@ -196,22 +205,27 @@ set_defaults(void)
   path_init(global->team_cmd_dir, global->team_dir, DEFAULT_TEAM_CMD_DIR);
   path_init(global->team_data_dir, global->team_dir, DEFAULT_TEAM_DATA_DIR);
   if (global->server_lag < 0 || global->server_lag > 30) {
-    err(_("invalid server_lag"));
+    err("invalid server_lag");
     return -1;
   }
   if (!global->server_lag) global->server_lag = DEFAULT_SERVER_LAG;
   if (global->max_run_size < 0 || global->max_run_size > 128 * 1024) {
-    err(_("invalid max_run_size"));
+    err("invalid max_run_size");
     return -1;
   }
   if (!global->max_run_size) global->max_run_size = DEFAULT_MAX_RUN_SIZE;
   if (global->max_clar_size < 0 || global->max_clar_size > 16 * 1024) {
-    err(_("invalid max_clar_size"));
+    err("invalid max_clar_size");
     return -1;
   }
   if (!global->max_clar_size) global->max_clar_size = DEFAULT_MAX_CLAR_SIZE;
   if (!global->charset[0]) {
     pathcpy(global->charset, DEFAULT_CHARSET);
+  }
+
+  if (!global->l10n_dir[0] || !global->enable_l10n) {
+    global->enable_l10n = 0;
+    global->l10n_dir[0] = 0;
   }
   return 0;
 }
@@ -289,20 +303,28 @@ read_state_params(void)
 {
   sprintf(form_start_simple,
           "%s<input type=\"hidden\" name=\"login\" value=\"%s\">"
-          "<input type=\"hidden\" name=\"password\" value=\"%s\">",
-          form_header_simple, client_login, client_password);
+          "<input type=\"hidden\" name=\"password\" value=\"%s\">"
+          "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
+          form_header_simple, client_login, client_password,
+          client_locale_id);
   sprintf(form_start_multipart,
           "%s<input type=\"hidden\" name=\"login\" value=\"%s\">"
-          "<input type=\"hidden\" name=\"password\" value=\"%s\">",
-          form_header_multipart, client_login, client_password);
+          "<input type=\"hidden\" name=\"password\" value=\"%s\">"
+          "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
+          form_header_multipart, client_login, client_password,
+          client_locale_id);
   sprintf(form_start_simple_ext,
           "%s<input type=\"hidden\" name=\"login\" value=\"%s\">"
-          "<input type=\"hidden\" name=\"password\" value=\"%s\">",
-          form_header_simple_ext, client_login, client_password);
+          "<input type=\"hidden\" name=\"password\" value=\"%s\">"
+          "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
+          form_header_simple_ext, client_login, client_password,
+          client_locale_id);
   sprintf(form_start_multipart_ext,
           "%s<input type=\"hidden\" name=\"login\" value=\"%s\">"
-          "<input type=\"hidden\" name=\"password\" value=\"%s\">",
-          form_header_multipart_ext, client_login, client_password);
+          "<input type=\"hidden\" name=\"password\" value=\"%s\">"
+          "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
+          form_header_multipart_ext, client_login, client_password,
+          client_locale_id);
 
   client_view_all_runs = 0;
   client_view_all_clars = 0;
@@ -329,6 +351,7 @@ check_passwd(void)
   if (!l || !p) return 0;
   client_login = l;
   client_password = p;
+
   if (!(id = teamdb_lookup_login(client_login))) return 0;
   if ((teamdb_get_flags(id) & TEAM_BANNED)) return 0;
   client_team_name = teamdb_get_name(id);
@@ -346,6 +369,13 @@ display_enter_password(void)
          _("Login"));
   printf("<p>%s: <input type=\"password\" size=\"16\" name=\"password\">\n",
        _("Password"));
+  if (global->enable_l10n) {
+    printf("<p>%s: <select name=\"locale_id\">"
+           "<option value=\"0\">%s</option>"
+           "<option value=\"1\">%s</option>"
+           "</select>",
+           _("Choose language"), _("English"), _("Russian"));
+  }
   printf("<p><input type=\"submit\" value=\"%s\">", _("submit"));
   puts("</form>");
   client_put_footer();
@@ -357,7 +387,7 @@ print_refresh_button(char const *anchor)
 {
   printf(form_start_simple_ext, anchor);
   printf("<input type=\"submit\" name=\"refresh\" value=\"%s\">\n",
-         _("refresh"));
+         _("Refresh"));
   puts("</form>");
 }
 
@@ -368,7 +398,7 @@ get_team_statistics(void)
   char   cmd[64];
   int    rsize = 0;
 
-  sprintf(cmd, "STAT %d %d %d\n", client_team_id,
+  sprintf(cmd, "STAT %d %d %d %d\n", client_locale_id, client_team_id,
           client_view_all_runs, client_view_all_clars);
   client_transaction(client_packet_name(tname), cmd,
                      &server_reply, &rsize);
@@ -397,6 +427,10 @@ send_clar_if_asked(void)
   }
   if (server_stop_time) {
     server_last_cmd_status = _("<p>The message cannot be sent. The contest is over.");
+    return;
+  }
+  if (server_team_clars_disabled) {
+    server_last_cmd_status = _("<p>The message cannot be sent. Messages are disabled.");
     return;
   }
 
@@ -442,7 +476,8 @@ send_clar_if_asked(void)
     return;
   }
 
-  sprintf(cmd, "CLAR %d %s %s\n", client_team_id, bsubj, r);
+  sprintf(cmd, "CLAR %d %d %s %s\n", client_locale_id,
+          client_team_id, bsubj, r);
   client_transaction(pname, cmd, &server_last_cmd_status, 0);
 
   force_recheck_status = 1;
@@ -493,7 +528,8 @@ submit_if_asked(void)
     return;
   }
 
-  sprintf(cmd, "SUBMIT %d %d %d %s\n", client_team_id, prob, lang, r);
+  sprintf(cmd, "SUBMIT %d %d %d %d %s\n", client_locale_id,
+          client_team_id, prob, lang, r);
   client_transaction(pname, cmd, &server_last_cmd_status, 0);
 
   force_recheck_status = 1;
@@ -522,7 +558,7 @@ change_passwd_if_asked(void)
   }
   base64_encode_str(p1, bbuf);
 
-  sprintf(cmd, "PASSWD %d %s\n", client_team_id, bbuf);
+  sprintf(cmd, "PASSWD %d %d %s\n", client_locale_id, client_team_id, bbuf);
   client_transaction(client_packet_name(pname),
                      cmd, &server_last_cmd_status, 0);
 
@@ -538,13 +574,18 @@ show_clar_if_asked(void)
   char *s, cmd[64], pname[64], *src = 0;
   int   n, clar_id;
 
+  if (server_clars_disabled) {
+    server_last_cmd_status = _("<p>Messages are disabled.");
+    return;
+  }
+
   if (!(s = cgi_nname("clar_", 5))) return;
   if (sscanf(s, "clar_%d%n", &clar_id, &n) != 1
       || (s[n] && s[n] != '.'))
     return;
   if (clar_id < 0 || clar_id >= server_total_clars) return;
 
-  sprintf(cmd, "VIEW %d %d\n", client_team_id, clar_id);
+  sprintf(cmd, "VIEW %d %d %d\n", client_locale_id, client_team_id, clar_id);
   client_transaction(client_packet_name(pname), cmd, &src, 0);
 
   client_put_header(global->charset, _("Message view"));
@@ -567,7 +608,7 @@ request_source_if_asked(void)
     return;
   if (run_id < 0 || run_id >= server_total_runs) return;
 
-  sprintf(cmd, "SOURCE %d %d\n", client_team_id, run_id);
+  sprintf(cmd, "SOURCE %d %d %d\n", client_locale_id, client_team_id, run_id);
   client_transaction(client_packet_name(pname), cmd, &src, 0);
   client_put_header(global->charset, _("Source view"));
   printf("<hr>");
@@ -592,7 +633,7 @@ request_report_if_asked(void)
     return;
   if (run_id < 0 || run_id >= server_total_runs) return;
 
-  sprintf(cmd, "REPORT %d %d\n", client_team_id, run_id);
+  sprintf(cmd, "REPORT %d %d %d\n", client_locale_id, client_team_id, run_id);
   client_transaction(client_packet_name(pname), cmd, &src, 0);
   client_put_header(global->charset, _("Report view"));
   printf("<hr>");
@@ -620,6 +661,39 @@ main(int argc, char *argv[])
 
   cgi_read(global->charset);
 
+#if CONF_HAS_LIBINTL - 0 == 1
+  /* load the language used */
+  if (global->enable_l10n) {
+    char *e = cgi_param("locale_id");
+    int n = 0;
+    char env_buf[1024];
+
+    if (e) {
+      if (sscanf(e, "%d%n", &client_locale_id, &n) != 1 || e[n])
+        client_locale_id = 0;
+      if (client_locale_id < 0 || client_locale_id > 1)
+        client_locale_id = 0;
+    }
+
+    switch (client_locale_id) {
+    case 1:
+      e = "ru_RU.KOI8-R";
+      break;
+    case 0:
+    default:
+      client_locale_id = 0;
+      e = "C";
+      break;
+    }
+
+    sprintf(env_buf, "LC_ALL=%s", e);
+    putenv(env_buf);
+    setlocale(LC_ALL, "");
+    bindtextdomain("ejudge", global->l10n_dir);
+    textdomain("ejudge");
+  }
+#endif /* CONF_HAS_LIBINTL */
+  
   if (ask_passwd()) {
     display_enter_password();
     return 0;
@@ -664,7 +738,7 @@ main(int argc, char *argv[])
   }
 
   need_show_submit = server_problem_template && server_language_template && server_start_time && !server_stop_time;
-  need_show_clar = server_problem2_template && server_start_time && !server_stop_time;
+  need_show_clar = server_problem2_template && server_start_time && !server_stop_time && !server_team_clars_disabled && !server_clars_disabled;
 
   /* print quick navigation */
   puts("<ul>");
@@ -678,9 +752,14 @@ main(int argc, char *argv[])
     printf("<li><a href=\"#runstat\">%s</a>\n", _("Submission log"));
   if (need_show_clar)
     printf("<li><a href=\"#clar\">%s</a>\n", _("Send a message to judges"));
-  if (server_clars_stat)
+  if (server_clars_stat && !server_clars_disabled)
     printf("<li><a href=\"#clarstat\">%s</a>\n", _("Messages log"));
   printf("<li><a href=\"#chgpasswd\">%s</a>\n", _("Change password"));
+#if CONF_HAS_LIBINTL - 0 == 1
+  if (global->enable_l10n) {
+    printf("<li><a href=\"#chglanguage\">%s</a>\n", _("Change language"));
+  }
+#endif /* CONF_HAS_LIBINTL */
   if (global->standings_url[0] && need_show_submit) {
     printf("<li><a href=\"%s\" target=_blank>%s</a>\n",
            global->standings_url, _("Team standings"));
@@ -740,7 +819,7 @@ main(int argc, char *argv[])
     print_refresh_button("#clarstat");
   }
 
-  if (server_clars_stat) {
+  if (server_clars_stat && !server_clars_disabled) {
     printf("<hr><a name=\"clarstat\"><h2>%s (%s)</h2>\n",
            _("Messages"), client_view_all_clars?_("all"):_("last 15"));
     client_puts(server_clars_stat, form_start_simple);
@@ -757,6 +836,26 @@ main(int argc, char *argv[])
          _("Change password"), form_start_simple,
          _("New password"), _("Retype new password"), _("Change!"));
   print_refresh_button("");
+
+#if CONF_HAS_LIBINTL - 0 == 1
+  if (global->enable_l10n) {
+    printf("<hr><a name=\"chglanguage\"><h2>%s</h2>\n"
+           "%s<input type=\"hidden\" name=\"login\" value=\"%s\">"
+           "<input type=\"hidden\" name=\"password\" value=\"%s\">"
+           "%s: <select name=\"locale_id\">"
+           "<option value=\"0\"%s>%s</option>"
+           "<option value=\"1\"%s>%s</option>"
+           "</select>"
+           "<input type=\"submit\" name=\"refresh\" value=\"%s\"></form>\n",
+           _("Change language"),
+           form_header_simple, client_login, client_password,
+           _("Change language"),
+           client_locale_id==0?" selected=\"1\"":"", _("English"),
+           client_locale_id==1?" selected=\"1\"":"", _("Russian"),
+           _("Change!"));
+    print_refresh_button("");
+  }
+#endif /* CONF_HAS_LIBINTL */
 
 #if 0
   {
