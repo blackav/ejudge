@@ -555,7 +555,7 @@ run_get_team_usage(int teamid, int *pn, size_t *ps)
 
 /* FIXME: VERY DUMB */
 int
-run_get_attempts(int runid, int *pattempts)
+run_get_attempts(int runid, int *pattempts, int skip_ce_flag)
 {
   int i, n = 0;
 
@@ -563,9 +563,11 @@ run_get_attempts(int runid, int *pattempts)
   if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
 
   for (i = 0; i < runid; i++) {
-    if (runs[i].team == runs[runid].team
-        && runs[i].problem == runs[runid].problem
-        && runs[i].status != RUN_IGNORED) n++;
+    if (runs[i].team != runs[runid].team) continue;
+    if (runs[i].problem != runs[runid].problem) continue;
+    if (runs[i].status == RUN_COMPILE_ERR && skip_ce_flag) continue;
+    if (runs[i].status == RUN_IGNORED) continue;
+    n++;
   }
   *pattempts = n;
   return 0;
@@ -712,6 +714,73 @@ void
 run_get_all_entries(struct run_entry *out)
 {
   memcpy(out, runs, sizeof(out[0]) * run_u);
+}
+
+int
+run_get_entry(int run_id, struct run_entry *out)
+{
+  if (run_id < 0 || run_id >= run_u) ERR_R("bad runid: %d", run_id);
+  memcpy(out, &runs[run_id], sizeof(*out));
+  return 0;
+}
+
+int
+run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
+{
+  struct run_entry *out;
+  int f = 0;
+
+  ASSERT(in);
+  if (run_id < 0 || run_id >= run_u) ERR_R("bad runid: %d", run_id);
+  out = &runs[run_id];
+
+  if ((mask & RUN_ENTRY_TIME) && out->timestamp != in->timestamp) {
+    out->timestamp = in->timestamp;
+    f = 1;
+  }
+  if ((mask & RUN_ENTRY_SIZE) && out->size != in->size) {
+    out->size = in->size;
+    f = 1;
+  }
+  if ((mask & RUN_ENTRY_IP) && out->ip != in->ip) {
+    out->ip = in->ip;
+    f = 1;
+  }
+  if ((mask&RUN_ENTRY_SHA1) && memcmp(out->sha1,in->sha1,sizeof(out->sha1))) {
+    memcmp(out->sha1, in->sha1, sizeof(out->sha1));
+    f = 1;
+  }
+  if ((mask & RUN_ENTRY_USER) && out->team != in->team) {
+    out->team = in->team;
+    f = 1;
+  }
+  if ((mask & RUN_ENTRY_PROB) && out->problem != in->problem) {
+    out->problem = in->problem;
+    f = 1;
+  }
+  if ((mask & RUN_ENTRY_LANG) && out->language != in->language) {
+    out->language = in->language;
+    f = 1;
+  }
+  if ((mask & RUN_ENTRY_LOCALE) && out->locale_id != in->locale_id) {
+    out->locale_id = in->locale_id;
+    f = 1;
+  }
+  if ((mask & RUN_ENTRY_STATUS) && out->status != in->status) {
+    out->status = in->status;
+    f = 1;
+  }
+  if ((mask & RUN_ENTRY_TEST) && out->test != in->test) {
+    out->test = in->test;
+    f = 1;
+  }
+  if ((mask & RUN_ENTRY_SCORE) && out->score != in->score) {
+    out->score = in->score;
+    f = 1;
+  }
+
+  if (f && run_flush_entry(run_id) < 0) return -1;
+  return 0;
 }
 
 /**
