@@ -25,6 +25,7 @@
 #include "parsecfg.h"
 #include "fileutl.h"
 #include "cr_serialize.h"
+#include "interrupt.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -77,9 +78,13 @@ do_loop(void)
   sigaddset(&work_mask, SIGTSTP);
 
   if (cr_serialize_init() < 0) return -1;
-  sigprocmask(SIG_BLOCK, &work_mask, 0);
+  interrupt_init();
+  interrupt_disable();
 
   while (1) {
+    // terminate if signaled
+    if (interrupt_get_status()) break;
+
     r = scan_dir(global->compile_queue_dir, pkt_name);
 
     if (r < 0) {
@@ -88,9 +93,9 @@ do_loop(void)
       case ENOENT:
       case ENFILE:
         err("trying to recover, sleep for 5 seconds");
-        sigprocmask(SIG_UNBLOCK, &work_mask, 0);
+        interrupt_enable();
         sleep(5);
-        sigprocmask(SIG_BLOCK, &work_mask, 0);
+        interrupt_disable();
         continue;
       default:
         err("unrecoverable error, exiting");
@@ -99,9 +104,9 @@ do_loop(void)
     }
 
     if (!r) {
-      sigprocmask(SIG_UNBLOCK, &work_mask, 0);
+      interrupt_enable();
       os_Sleep(global->sleep_time);
-      sigprocmask(SIG_BLOCK, &work_mask, 0);
+      interrupt_disable();
       continue;
     }
 
