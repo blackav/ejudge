@@ -66,6 +66,7 @@ enum
   RUNLOG_A_NAME,
   RUNLOG_A_SHORT_NAME,
   RUNLOG_A_LONG_NAME,
+  RUNLOG_A_VARIANT,
 
   RUNLOG_LAST_ATTR,
 };
@@ -101,6 +102,7 @@ static const char * const attr_map[] =
   [RUNLOG_A_NAME]      "name",
   [RUNLOG_A_SHORT_NAME] "short_name",
   [RUNLOG_A_LONG_NAME] "long_name",
+  [RUNLOG_A_VARIANT]   "variant",
 };
 static size_t const elem_sizes[RUNLOG_LAST_TAG] =
 {
@@ -339,6 +341,14 @@ process_run_elements(struct xml_tree *xt)
         if (sscanf(xa->text, "%d %n", &iv, &n) != 1 || xa->text[n])
           goto invalid_attr_value;
         if (iv <= 0 || iv >= 255) goto invalid_attr_value;
+        xr->r.language = iv;
+        break;
+      case RUNLOG_A_VARIANT:
+        if (!xa->text) goto empty_attr_value;
+        n = 0;
+        if (sscanf(xa->text, "%d %n", &iv, &n) != 1 || xa->text[n])
+          goto invalid_attr_value;
+        if (iv < 0 || iv > 255) goto invalid_attr_value;
         xr->r.language = iv;
         break;
       case RUNLOG_A_LOCALE_ID:
@@ -679,6 +689,7 @@ unparse_runlog_xml(FILE *f,
   fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_RUNS]);
   for (i = 0; i < nelems; i++) {
     pp = &entries[i];
+    if (pp->is_hidden) continue;
     switch (pp->status) {
     case RUN_EMPTY:
     case RUN_RUNNING:
@@ -717,6 +728,9 @@ unparse_runlog_xml(FILE *f,
     }
     if (pp->language) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_LANG_ID], pp->language);
+    }
+    if (pp->variant) {
+      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_VARIANT], pp->variant);
     }
     if (!external_mode && pp->locale_id >= 0) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_LOCALE_ID], pp->locale_id);
