@@ -851,7 +851,10 @@ run_status_str(int status, char *out, int len)
   case RUN_PARTIAL:          s = _("Partial solution");    break;
   case RUN_ACCEPTED:         s = _("Accepted for testing"); break;
   case RUN_IGNORED:          s = _("Ignored");             break;
-  case RUN_DISQUALIFIED:     s = _("Disqualified");       break;
+  case RUN_DISQUALIFIED:     s = _("Disqualified");        break;
+  case RUN_PENDING:          s = _("Pending check");       break;
+  case RUN_MEM_LIMIT_ERR:    s = _("Memory limit exceeded"); break;
+  case RUN_SECURITY_ERR:     s = _("Security violation");  break;
   case RUN_RUNNING:          s = _("Running...");          break;
   case RUN_COMPILED:         s = _("Compiled");            break;
   case RUN_COMPILING:        s = _("Compiling...");        break;
@@ -2005,6 +2008,105 @@ run_find(int first_run, int last_run,
       return i;
     }
   }
+  return -1;
+}
+
+static const unsigned char is_failed_attempt_table[RUN_LAST + 1] =
+{
+  [RUN_RUN_TIME_ERR]     = 1,
+  [RUN_TIME_LIMIT_ERR]   = 1,
+  [RUN_PRESENTATION_ERR] = 1,
+  [RUN_WRONG_ANSWER_ERR] = 1,
+  [RUN_MEM_LIMIT_ERR]    = 1,
+  [RUN_SECURITY_ERR]     = 1,
+};
+int
+run_is_failed_attempt(int status)
+{
+  if (status < 0 || status > RUN_LAST) return 0;
+  return is_failed_attempt_table[status];
+}
+
+static const unsigned char tree_result_strs[RUN_LAST + 1][4] =
+{
+  [RUN_OK] =               "OK",
+  [RUN_COMPILE_ERR] =      "CE",
+  [RUN_RUN_TIME_ERR] =     "RT",
+  [RUN_TIME_LIMIT_ERR] =   "TL",
+  [RUN_PRESENTATION_ERR] = "PE",
+  [RUN_WRONG_ANSWER_ERR] = "WA",
+  [RUN_CHECK_FAILED] =     "CF",
+  [RUN_PARTIAL] =          "PT",
+  [RUN_ACCEPTED] =         "AC",
+  [RUN_IGNORED] =          "IG",
+  [RUN_DISQUALIFIED] =     "DQ",
+  [RUN_PENDING] =          "PD",
+  [RUN_MEM_LIMIT_ERR] =    "ML",
+  [RUN_SECURITY_ERR] =     "SE",
+  [RUN_VIRTUAL_START] =    "VS",
+  [RUN_VIRTUAL_STOP] =     "VT",
+  [RUN_EMPTY] =            "EM",
+  [RUN_RUNNING] =          "RU",
+  [RUN_COMPILED] =         "CD",
+  [RUN_COMPILING] =        "CG",
+  [RUN_AVAILABLE] =        "AV",
+};
+
+int
+run_status_to_str_short(unsigned char *buf, size_t size, int val)
+{
+  if (val >= 0 && val <= RUN_LAST && tree_result_strs[val]) {
+    return snprintf(buf, size, "%s", tree_result_strs[val]);
+  }
+  return snprintf(buf, sizeof(buf), "result_%d", val);
+}
+
+/*
+ * the set of status strings is as follows:
+    OK CE RT TL PE WA CF PT AC IG DQ PD ML SE RU CD CG AV RJ EM VS VT
+   for now we use a dumb linear search :-(
+ */
+static struct str_to_status_data
+{
+  unsigned char str[4];
+  int value;
+} str_to_status_table[] =
+{
+  { "OK", RUN_OK },
+  { "CE", RUN_COMPILE_ERR },
+  { "RT", RUN_RUN_TIME_ERR },
+  { "TL", RUN_TIME_LIMIT_ERR },
+  { "PE", RUN_PRESENTATION_ERR },
+  { "WA", RUN_WRONG_ANSWER_ERR },
+  { "CF", RUN_CHECK_FAILED },
+  { "PT", RUN_PARTIAL },
+  { "AC", RUN_ACCEPTED },
+  { "IG", RUN_IGNORED },
+  { "DQ", RUN_DISQUALIFIED },
+  { "PD", RUN_PENDING },
+  { "ML", RUN_MEM_LIMIT_ERR },
+  { "SE", RUN_SECURITY_ERR },
+  { "RU", RUN_RUNNING },
+  { "CD", RUN_COMPILED },
+  { "CG", RUN_COMPILING },
+  { "AV", RUN_AVAILABLE },
+  { "RJ", RUN_REJUDGE },
+  { "EM", RUN_EMPTY },
+  { "VS", RUN_VIRTUAL_START },
+  { "VT", RUN_VIRTUAL_STOP },
+  { "", -1 },
+};
+
+int
+run_str_short_to_status(const unsigned char *str, int *pr)
+{
+  int i;
+
+  for (i = 0; str_to_status_table[i].str[0]; i++)
+    if (!strcasecmp(str, str_to_status_table[i].str)) {
+      if (pr) *pr = str_to_status_table[i].value;
+      return str_to_status_table[i].value;
+    }
   return -1;
 }
 
