@@ -453,6 +453,28 @@ parse_param(char const *path,
   return NULL;
 }
 
+struct generic_section_config *
+param_make_global_section(struct config_section_info *params)
+{
+  int sindex;
+  struct config_parse_info *sinfo;
+  struct generic_section_config *cfg;
+
+  for (sindex = 0; params[sindex].name; sindex++) {
+    if (!strcmp(params[sindex].name, "global")) break;
+  }
+  if (!params[sindex].name) {
+    fprintf(stderr, "Cannot find description of section [global]\n");
+    return 0;
+  }
+  sinfo = params[sindex].info;
+
+  cfg = (struct generic_section_config*) xcalloc(1, params[sindex].size);
+  if (params[sindex].init_func) params[sindex].init_func(cfg);
+  return cfg;
+}
+
+
 int sarray_len(char **a)
 {
   int i;
