@@ -26,6 +26,7 @@
 #include "base64.h"
 #include "parsecfg.h"
 #include "clntutil.h"
+#include "misctext.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -269,6 +270,15 @@ print_reset_button(char const *str)
   if (!str) str = _("Reset the contest!");
   puts(form_start_simple);
   printf("<input type=\"submit\" name=\"resetall\" value=\"%s\"></form>", str);
+}
+
+static void
+print_regenerate_button(unsigned char const *str)
+{
+  if (!str) str = _("Regenerate user passwords!");
+  puts(form_start_simple);
+  printf("<input type=\"submit\" name=\"regenerate\" value=\"%s\"></form>",
+         str);
 }
 
 static void
@@ -848,6 +858,21 @@ confirm_reset_if_asked(void)
   exit(0);
 }
 
+static void
+confirm_regenerate_if_asked(void)
+{
+  if (!cgi_param("regenerate")) return;
+
+  client_put_header(global->charset, "Confirm user password generation");
+  printf("<table><tr><td>");
+  print_refresh_button(_("no"));
+  printf("</td><td>%s<input type=\"submit\" name=\"dogenerate\" value=\"%s\">"
+         "</form></td></tr></table>", form_start_simple,
+         _("yes, generate passwords!"));
+  client_put_footer();
+  exit(0);  
+}
+
 void
 do_contest_reset_if_asked(void)
 {
@@ -859,6 +884,27 @@ do_contest_reset_if_asked(void)
   sprintf(cmd, "%s %d\n", "RESET", 0);
   client_transaction(client_packet_name(pkt_name), cmd, 0, 0);
   force_recheck_status = 1;
+}
+
+void
+do_generate_passwords_if_asked(void)
+{
+  char cmd[64];
+  char pkt_name[64];
+  char *reply = 0;
+  int reply_len = 0;
+
+  if (!cgi_param("dogenerate")) return;
+  sprintf(cmd, "%s %d\n", "GENPASSWD", 0);
+  client_transaction(client_packet_name(pkt_name), cmd, &reply, &reply_len);
+  client_put_header(global->charset, "New passwords");
+  print_refresh_button(_("back"));
+  printf("<hr>");
+  if (reply) {
+    printf("%s", reply);
+  }
+  client_put_footer();
+  exit(0);
 }
 
 void
@@ -1230,7 +1276,9 @@ main(int argc, char *argv[])
     do_team_action_if_asked();
     add_team_if_asked();
     confirm_reset_if_asked();
+    confirm_regenerate_if_asked();
     do_contest_reset_if_asked();
+    do_generate_passwords_if_asked();
     do_rejudge_all_if_asked();
     do_rejudge_problem_if_asked();
     do_suspend_if_asked();
@@ -1276,13 +1324,16 @@ main(int argc, char *argv[])
   print_refresh_button(0);
   printf("</td><td>");
   print_standings_button(0);
+  printf("</td></tr></table>");
   if (!judge_mode) {
-    printf("</td><td>");
+    printf("<table><tr><td>");
     print_teamview_button(0);
     printf("</td><td>");
     print_update_button(0);
     printf("</td><td>");
     print_reset_button(0);
+    printf("</td><td>");
+    print_regenerate_button(0);
     if (!server_clients_suspended) {
       printf("</td><td>");
       print_suspend_button(0);
@@ -1290,8 +1341,8 @@ main(int argc, char *argv[])
       printf("</td><td>");
       print_resume_button(0);
     }
+    printf("</td></tr></table>\n");
   }
-  printf("</td></tr></table>\n");
 
   if (runs_statistics) {
     printf("<hr><h2>%s</h2>", _("Submissions"));
