@@ -41,6 +41,7 @@
 int
 serve_clnt_submit_clar(int sock_fd,
                        int user_id, int contest_id, int locale_id,
+                       unsigned long ip,
                        unsigned char const *subj,
                        unsigned char const *text)
 {
@@ -62,6 +63,7 @@ serve_clnt_submit_clar(int sock_fd,
   out->user_id = user_id;
   out->contest_id = contest_id;
   out->locale_id = locale_id;
+  out->ip = ip;
   out->subj_len = subj_len;
   out->text_len = text_len;
   memcpy(subj_ptr, subj, subj_len);
