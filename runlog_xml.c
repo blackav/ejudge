@@ -240,6 +240,8 @@ parse_status(const unsigned char *str)
     return RUN_ACCEPTED;
   } else if (!strcasecmp(str, "ig")) {
     return RUN_IGNORED;
+  } else if (!strcasecmp(str, "dq")) {
+    return RUN_DISQUALIFIED;
   } else if (!strcasecmp(str, "st")) {
     return RUN_VIRTUAL_START;
   } else if (!strcasecmp(str, "sp")) {
@@ -596,6 +598,7 @@ unparse_status(int status)
   case RUN_PARTIAL:          return "PT";
   case RUN_ACCEPTED:         return "AC";
   case RUN_IGNORED:          return "IG";
+  case RUN_DISQUALIFIED:     return "DQ";
   case RUN_VIRTUAL_START:    return "ST";
   case RUN_VIRTUAL_STOP:     return "SP";
   case RUN_EMPTY:            return "EM";
