@@ -161,8 +161,12 @@ int serve_clnt_new_run(int sock_fd, int mask,
                        unsigned char const *user_login,
                        unsigned char const *run_src);
 
+int serve_clnt_edit_user(int sock_fd, int cmd, int user_id, int status,
+                         const unsigned char *, const unsigned char *);
+
 int serve_clnt_import_xml_runs(int sock_fd,
                                int out_fd,
+                               int flags,
                                const unsigned char *xml_runs);
 
 int serve_clnt_upload_report(int sock_fd, int cmd,
