@@ -524,11 +524,11 @@ main(int argc, char const *argv[])
     name_str = alloca(name_len + 16);
     html_armor_string(cnts->name, name_str);
     
-    put_header(config->charset, "%s", _("List of registered teams"));
+    put_header(config->charset, "%s", _("List of registered users (teams)"));
     if (cnts->header_file) {
       /* FIXME: use header and footer */
     } else {
-      printf(_("<h1>List of registered teams for contest &quot;%s&quot;</h1>\n"), name_str);
+      printf(_("<h1>List of registered users (teams) for contest &quot;%s&quot;</h1>\n"), name_str);
     }
 
     server_conn = userlist_clnt_open(config->socket_path);
@@ -544,7 +544,7 @@ main(int argc, char const *argv[])
       }
     }
   } else {
-    client_put_header(config->charset, "%s", _("List of teams"));
+    client_put_header(config->charset, "%s", _("List of users (teams)"));
     printf("<p>%s</p>\n", _("Information is not available"));
   }
 
