@@ -241,3 +241,5 @@ unix/osdeps.c 6 24 1912647
 win32/exec.c 1 11 1432037
 win32/logger.c 1 17 679019
 win32/osdeps.c 1 23 1652999
+number_io.h 1 3 244681
+number_io.c 1 3 2118781
