@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "prepare.h"
@@ -832,8 +828,7 @@ set_defaults(int mode)
     err("Invalid scoring system: %s", global->score_system);
   }
 
-  if (global->score_system_val == SCORE_OLYMPIAD
-      && global->tests_to_accept == -1) {
+  if (global->tests_to_accept == -1) {
     global->tests_to_accept = 1;
   }
 
@@ -1047,18 +1042,16 @@ set_defaults(int mode)
       probs[i]->team_enable_rep_view = 0;
     }
 
-    if (global->score_system_val == SCORE_OLYMPIAD) {
-      if (probs[i]->tests_to_accept == -1 && si != -1
-          && abstr_probs[si]->tests_to_accept != -1) {
-        probs[i]->tests_to_accept = abstr_probs[si]->tests_to_accept;
-        info("problem.%s.tests_to_accept inherited from problem.%s (%d)",
-             ish, sish, probs[i]->tests_to_accept);
-      }
-      if (probs[i]->tests_to_accept == -1) {
-        probs[i]->tests_to_accept = global->tests_to_accept;
-        info("problem.%s.tests_to_accept inherited from global (%d)",
-             ish, global->tests_to_accept);
-      }
+    if (probs[i]->tests_to_accept == -1 && si != -1
+        && abstr_probs[si]->tests_to_accept != -1) {
+      probs[i]->tests_to_accept = abstr_probs[si]->tests_to_accept;
+      info("problem.%s.tests_to_accept inherited from problem.%s (%d)",
+           ish, sish, probs[i]->tests_to_accept);
+    }
+    if (probs[i]->tests_to_accept == -1) {
+      probs[i]->tests_to_accept = global->tests_to_accept;
+      info("problem.%s.tests_to_accept inherited from global (%d)",
+           ish, global->tests_to_accept);
     }
     if (probs[i]->tests_to_accept == -1) {
       probs[i]->tests_to_accept = 0;
