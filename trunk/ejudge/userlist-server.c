@@ -77,9 +77,7 @@ struct contest_extra
 {
   int nref;
   int id;
-  key_t sem_key;
   key_t shm_key;
-  int sem_id;
   int shm_id;
   struct userlist_table *tbl;
 };
@@ -204,8 +202,8 @@ static struct contest_extra *
 attach_contest_extra(int id, struct contest_desc *cnts)
 {
   struct contest_extra *ex = 0;
-  key_t ipc_key, shm_key, sem_key;
-  int sem_id = -1, shm_id = -1;
+  key_t ipc_key, shm_key;
+  int shm_id = -1;
   void *shm_addr = 0;
 
   ASSERT(id > 0);
@@ -236,21 +234,7 @@ attach_contest_extra(int id, struct contest_desc *cnts)
   ex->id = id;
 
   ipc_key = ftok(program_name, id);
-  sem_key = ipc_key;
   shm_key = ipc_key;
-  while (1) {
-    sem_id = semget(sem_key, 1, 0666 | IPC_CREAT | IPC_EXCL);
-    if (sem_id >= 0) break;
-    if (errno != EEXIST) {
-      err("semget failed: %s", os_ErrorMsg());
-      goto cleanup;
-    }
-    sem_key++;
-  }
-  if (semctl(sem_id, 0, SETVAL, 1) < 0) {
-    err("semctl failed: %s", os_ErrorMsg());
-    goto cleanup;
-  }
   while (1) {
     shm_id = shmget(shm_key, sizeof(struct userlist_table),
                     0644 | IPC_CREAT | IPC_EXCL);
@@ -266,9 +250,7 @@ attach_contest_extra(int id, struct contest_desc *cnts)
     goto cleanup;
   }
   memset(shm_addr, 0, sizeof(struct userlist_table));
-  ex->sem_key = sem_key;
   ex->shm_key = shm_key;
-  ex->sem_id = sem_id;
   ex->shm_id = shm_id;
   ex->tbl = shm_addr;
   contest_extras[id] = ex;
@@ -278,7 +260,6 @@ attach_contest_extra(int id, struct contest_desc *cnts)
  cleanup:
   if (shm_addr) shmdt(shm_addr);
   if (shm_id >= 0) shmctl(shm_id, IPC_RMID, 0);
-  if (sem_id >= 0) semctl(sem_id, 0, IPC_RMID);
   xfree(ex);
   return 0;
 }
@@ -292,10 +273,9 @@ detach_contest_extra(struct contest_extra *ex)
   ASSERT(ex == contest_extras[ex->id]);
   if (--ex->nref > 0) return 0;
   info("destroying shared contest info for %d", ex->id);
-  ex->tbl->vintage = 0xffff;    /* the client must note this change */
+  ex->tbl->vintage = 0xffffffff;    /* the client must note this change */
   if (shmdt(ex->tbl) < 0) info("shmdt failed: %s", os_ErrorMsg());
   if (shmctl(ex->shm_id,IPC_RMID,0)<0) info("shmctl failed: %s",os_ErrorMsg());
-  if (semctl(ex->sem_id,0,IPC_RMID)<0) info("semctl failed: %s",os_ErrorMsg());
   contest_extras[ex->id] = 0;
   memset(ex, 0, sizeof(*ex));
   xfree(ex);
@@ -304,108 +284,18 @@ detach_contest_extra(struct contest_extra *ex)
 }
 
 static void
-lock_userlist_table(struct contest_extra *ex)
-{
-  struct sembuf lock;
-
-  ASSERT(ex);
-  lock.sem_num = 0;
-  lock.sem_op = -1;
-  lock.sem_flg = SEM_UNDO;      /* in case of crash */
-  while (1) {
-    if (!semop(ex->sem_id, &lock, 1)) break;
-    if (errno != EINTR) {
-      err("semop failed: %s", os_ErrorMsg());
-      exit(1);                  /* FIXME: exit gracefully */
-    }
-    info("semop restarted after signal");
-  }
-}
-static void
-unlock_userlist_table(struct contest_extra *ex)
-{
-  struct sembuf unlock;
-
-  ASSERT(ex);
-  unlock.sem_num = 0;
-  unlock.sem_op = 1;
-  unlock.sem_flg = SEM_UNDO;
-  if (semop(ex->sem_id, &unlock, 1) < 0) {
-    err("semop failed: %s", os_ErrorMsg());
-    exit(1);                  /* FIXME: exit gracefully */
-  }
-}
-static void
 update_userlist_table(int cnts_id)
 {
   struct userlist_table *ntb;
-  int i = 0, si = 4;
-  struct userlist_user *u;
-  struct userlist_contest *c;
-  unsigned char *n;
-  int name_len;
-  int login_len, errcode;
   struct contest_extra *ex;
-  struct contest_desc *cnts = 0;
 
-  if ((errcode = contests_get(cnts_id, &cnts)) < 0) {
-    // FIXME: what to do if the contest unexpectedly disappeared?
-    err("contests_get failed: %s", contests_strerror(-errcode));
-    abort();
-  }
-  if (cnts_id >= contest_extras_size || !contest_extras[cnts_id]) return;
-
+  ASSERT(cnts_id > 0);
+  if (cnts_id >= contest_extras_size) return;
   ex = contest_extras[cnts_id];
-  ntb = alloca(sizeof(*ntb));
-  memset(ntb, 0, sizeof(*ntb));
-  for (u = (struct userlist_user*) userlist->b.first_down;
-       u; u = (struct userlist_user*) u->b.right) {
-    ASSERT(u->b.tag == USERLIST_T_USER);
-    if (!u->contests) continue;
-    for (c = (struct userlist_contest*) u->contests->first_down;
-         c; c = (struct userlist_contest*) c->b.right) {
-      if (c->id == cnts_id) break;
-    }
-    if (!c) continue;
-    if (c->status != USERLIST_REG_OK) continue;
-    //if ((c->flags & USERLIST_UC_BANNED)) continue;
-    // FIXME handle invisibility
-    n = u->name;
-    if (!n || !*n) n = u->login;
-    if (!n) n = "";
-    name_len = strlen(n);
-    login_len = strlen(u->login);
-
-    if (u->id > 65535) {
-      err("userlist_table: user id exceeds 65535");
-      continue;
-    }
-    if (i >= USERLIST_TABLE_SIZE) {
-      err("userlist_table: number of users for %d exceeds %d",
-          cnts_id, USERLIST_TABLE_SIZE);
-      break;
-    }
-    if (si + name_len + login_len + 2 > USERLIST_TABLE_POOL) {
-      err("userlist_table: string pool for %d exceeds %d",
-          cnts_id, USERLIST_TABLE_POOL);
-      break;
-    }
-    ntb->users[i].user_id = u->id;
-    ntb->users[i].flags = c->flags;
-    ntb->users[i].login_idx = si;
-    strcpy(ntb->pool + si, u->login);
-    si += login_len + 1;
-    ntb->users[i].name_idx = si;
-    strcpy(ntb->pool + si, n);
-    si += name_len + 1;
-    i++;
-  }
-  ntb->total = i;
-  ntb->vintage = ex->tbl->vintage + 1;
-  if (ntb->vintage == 0xffff) ntb->vintage = 1;
-  lock_userlist_table(ex);
-  memcpy(ex->tbl, ntb, sizeof(*ntb));
-  unlock_userlist_table(ex);
+  if (!ex) return;
+  ntb = ex->tbl;
+  if (!ntb) return;
+  ntb->vintage++;
 }
 
 static void
@@ -2168,6 +2058,61 @@ cmd_list_all_users(struct client_state *p,
 }
 
 static void
+cmd_list_standings_users(struct client_state *p,
+                         int pkt_len,
+                         struct userlist_pk_map_contest *data)
+{
+  FILE *f = 0;
+  unsigned char *xml_ptr = 0;
+  size_t xml_size = 0;
+  struct userlist_pk_xml_data *out = 0;
+  size_t out_size = 0;
+  int errcode;
+  struct contest_desc *cnts = 0;
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("packet length mismatch");
+    return;
+  }
+
+  CONN_INFO("%d", data->contest_id);
+  if (p->user_id < 0) {
+    CONN_ERR("not authentificated");
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  if (data->contest_id <= 0) {
+    CONN_ERR("invalid contest %d", data->contest_id);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    CONN_ERR("invalid contest: %s", contests_strerror(-errcode));
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (is_cnts_capable(p, cnts, OPCAP_MAP_CONTEST) < 0) return;
+
+  f = open_memstream((char**) &xml_ptr, &xml_size);
+  ASSERT(f);
+  userlist_unparse_for_standings(userlist, f, data->contest_id);
+  fclose(f);
+  ASSERT(xml_size == strlen(xml_ptr));
+  out_size = sizeof(*out) + xml_size + 1;
+  out = alloca(out_size);
+  ASSERT(out);
+  memset(out, 0, out_size);
+  out->reply_id = ULS_XML_DATA;
+  out->info_len = xml_size;
+  memcpy(out->data, xml_ptr, xml_size + 1);
+  xfree(xml_ptr);
+  enqueue_reply_to_client(p, out_size, out);
+  info("%d: list_all_users: %d", p->id, xml_size); 
+}
+
+
+
+static void
 cmd_get_user_contests(struct client_state *p,
                       int pkt_len,
                       struct userlist_pk_get_user_info *data)
@@ -3829,11 +3774,11 @@ cmd_map_contest(struct client_state *p, int pkt_len,
   out = alloca(out_size);
   memset(out, 0, out_size);
   out->reply_id = ULS_CONTEST_MAPPED;
-  out->sem_key = ex->sem_key;
+  out->sem_key = 0;
   out->shm_key = ex->shm_key;
   enqueue_reply_to_client(p, out_size, out);
   update_userlist_table(data->contest_id);
-  CONN_INFO("%d, %d", ex->sem_key, ex->shm_key);
+  CONN_INFO("%d, %d", 0, ex->shm_key);
 }
 
 // just assigns the connection user_id by the system user_id
@@ -4842,6 +4787,7 @@ static void (*cmd_table[])() =
   [ULS_PRIV_REGISTER_CONTEST]   cmd_priv_register_contest,
   [ULS_GENERATE_PASSWORDS]      cmd_generate_register_passwords,
   [ULS_CLEAR_TEAM_PASSWORDS]    cmd_clear_team_passwords,
+  [ULS_LIST_STANDINGS_USERS]    cmd_list_standings_users,
 
   [ULS_LAST_CMD] 0
 };
@@ -4970,6 +4916,7 @@ do_work(void)
   struct timeval timeout;
   fd_set rset, wset;
   struct client_state *p, *q;
+  int saved_fd;
 
   signal(SIGPIPE, SIG_IGN);
   signal(SIGINT, interrupt_signal);
@@ -5370,6 +5317,7 @@ do_work(void)
       }
 
       p->read_len += r;
+      saved_fd = p->fd;
       if (p->expected_len == p->read_len) {
         process_packet(p, p->expected_len, p->read_buf);
         /* p may be invalid */
@@ -5383,7 +5331,7 @@ do_work(void)
           p->read_buf = 0;
         }
       }
-      FD_CLR(p->fd, &rset);
+      FD_CLR(saved_fd, &rset);
     }
   }
 
