@@ -22,7 +22,7 @@
 #define TEAMDB_MAX_SCRAMBLED_PASSWD_SIZE 48
 
 /* various team flags */
-enum { TEAM_BANNED = 1, TEAM_INVISIBLE = 2 };
+enum { TEAM_BANNED = 1, TEAM_INVISIBLE = 2, TEAM_LOCKED = 4 };
 
 int teamdb_open_client(unsigned char const *socket_path, int contest_id);
 void teamdb_refresh(void);
