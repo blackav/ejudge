@@ -33,13 +33,12 @@ static void
 make_copyright(unsigned char *buf, size_t size)
 {
   snprintf(buf, size,
-           _("<p>This is <b>ejudge</b> contest administration system, version %s, compiled %s.\n"
-           "<p>This program is copyright (C) 2000-2003 Alexander Chernov.\n"
-           "<p>"
-           "This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.\n"
-           "<p>You can download the latest version from <a href=\"%s\">this site</a>.\n"), 
-         compile_version, compile_date,
-         "http://contest.cmc.msu.ru/download");
+           _("<p class=\"ejudge_copyright\">This is <a href=\"%s\"><b>ejudge</b></a> contest administration system, version %s, compiled %s.</p>\n"
+           "<p class=\"ejudge_copyright\">This program is copyright (C) 2000-2003 Alexander Chernov.</p>\n"
+           "<p class=\"ejudge_copyright\">"
+           "This program is free software; you can redistribute it and/or modify it under the terms of the <a href=\"http://www.fsf.org/licenses/licenses.html#GPL\">GNU General Public License</a> as published by the <a href=\"http://www.fsf.org\">Free Software Foundation</a>; either version 2 of the License, or (at your option) any later version.</p>\n"),
+           "http://contest.cmc.msu.ru/download",
+           compile_version, compile_date);
 }
 
 static unsigned char *copyright_str = 0;
