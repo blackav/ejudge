@@ -150,18 +150,23 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(score_system, "s"),
   GLOBAL_PARAM(virtual, "d"),
 
+  GLOBAL_PARAM(htdocs_dir, "s"),
+
   GLOBAL_PARAM(team_info_url, "s"),
   GLOBAL_PARAM(prob_info_url, "s"),
   GLOBAL_PARAM(standings_file_name, "s"),
   GLOBAL_PARAM(stand_header_file, "s"),
   GLOBAL_PARAM(stand_footer_file, "s"),
+  GLOBAL_PARAM(stand_symlink_dir, "s"),
   GLOBAL_PARAM(stand2_file_name, "s"),
   GLOBAL_PARAM(stand2_header_file, "s"),
   GLOBAL_PARAM(stand2_footer_file, "s"),
+  GLOBAL_PARAM(stand2_symlink_dir, "s"),
   GLOBAL_PARAM(plog_file_name, "s"),
   GLOBAL_PARAM(plog_header_file, "s"),
   GLOBAL_PARAM(plog_footer_file, "s"),
   GLOBAL_PARAM(plog_update_time, "d"),
+  GLOBAL_PARAM(plog_symlink_dir, "s"),
 
   // standings table attributes
   GLOBAL_PARAM(stand_extra_format, "s"),
