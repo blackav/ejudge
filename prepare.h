@@ -292,6 +292,7 @@ struct section_global_data
   int use_gzip;                 /* allow gzip on large files (uses zlib) */
   int min_gzip_size;            /* minimal file size to gzip (4096) */
   int use_dir_hierarchy;        /* create subdirs to increase speed */
+  int html_report;              /* whether generate master report in HTML */
 
   // variant support
   path_t variant_map_file;
