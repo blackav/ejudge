@@ -32,10 +32,12 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/list_all_users.c\
  userlist_clnt/list_users.c\
  userlist_clnt/login.c\
+ userlist_clnt/logout.c\
  userlist_clnt/lookup_cookie.c\
  userlist_clnt/map_contest.c\
  userlist_clnt/open.c\
  userlist_clnt/pass_fd.c\
+ userlist_clnt/priv_cookie.c\
  userlist_clnt/priv_login.c\
  userlist_clnt/recv_packet.c\
  userlist_clnt/register_contest.c\
@@ -47,6 +49,26 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/team_cookie.c\
  userlist_clnt/team_login.c\
  userlist_clnt/team_set_passwd.c
+
+SERVE_CLNT_CFILES=\
+ serve_clnt/do_pass_fd.c\
+ serve_clnt/edit_run.c\
+ serve_clnt/gen_passwords.c\
+ serve_clnt/get_archive.c\
+ serve_clnt/list_runs.c\
+ serve_clnt/master_page.c\
+ serve_clnt/message.c\
+ serve_clnt/open.c\
+ serve_clnt/pass_fd.c\
+ serve_clnt/recv_packet.c\
+ serve_clnt/send_packet.c\
+ serve_clnt/show_item.c\
+ serve_clnt/simple_cmd.c\
+ serve_clnt/standings.c\
+ serve_clnt/submit_clar.c\
+ serve_clnt/submit_run.c\
+ serve_clnt/team_page.c\
+ serve_clnt/view.c
 
 CFILES=\
  base64.c\
@@ -109,24 +131,14 @@ CFILES=\
  charsets/utf8_to_koi8.c\
  charsets/utf8_to_koi8_heap.c\
  charsets/utf8_to_koi8_unchecked.c\
- serve_clnt/do_pass_fd.c\
- serve_clnt/get_archive.c\
- serve_clnt/list_runs.c\
- serve_clnt/master_page.c\
- serve_clnt/open.c\
- serve_clnt/pass_fd.c\
- serve_clnt/recv_packet.c\
- serve_clnt/send_packet.c\
- serve_clnt/show_item.c\
- serve_clnt/submit_clar.c\
- serve_clnt/submit_run.c\
- serve_clnt/team_page.c\
+ ${SERVE_CLNT_CFILES}\
  ${USERLIST_CLNT_CFILES}
 
 HFILES=\
  base64.h\
  cgi.h\
  clarlog.h\
+ client_actions.h\
  clntutil.h\
  contests.h\
  cr_serialize.h\
