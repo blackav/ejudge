@@ -24,6 +24,7 @@ CFILES=\
  clarlog.c\
  clntutil.c\
  compile.c\
+ contests.c\
  expat_iface.c\
  html.c\
  idmap.c\
@@ -67,6 +68,7 @@ HFILES=\
  cgi.h\
  clarlog.h\
  clntutil.h\
+ contests.h\
  expat_iface.h\
  fileutl.h\
  html.h\
