@@ -184,13 +184,15 @@ parse_sha1(const unsigned char *str, unsigned long *psha1)
   int i, v;
   unsigned char *eptr;
   unsigned char *optr = (unsigned char*) psha1;
+  char *tmpeptr = 0;
 
   if (!str || strlen(str) != 40) return -1;
   for (i = 0; i < 20; i++) {
     buf[0] = *s++;
     buf[1] = *s++;
     buf[2] = 0;
-    v = strtol(buf, (char**) &eptr, 16);
+    v = strtol(buf, &tmpeptr, 16);
+    eptr = tmpeptr;
     if (v < 0 || v > 255 || *eptr) return -1;
     *optr++ = v;
   }
