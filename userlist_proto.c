@@ -54,6 +54,7 @@ static unsigned char const * const error_map[] =
   _("this field cannot be deleted"),
   _("this field cannot be changed"),
   _("contest deadline exceeded"),
+  _("peer closed connection"),
 
   0
 };
