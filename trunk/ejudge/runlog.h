@@ -116,7 +116,8 @@ enum
     RUN_ENTRY_IMPORTED = 0x00000800,
     RUN_ENTRY_VARIANT = 0x00001000,
     RUN_ENTRY_HIDDEN = 0x00002000,
-    RUN_ENTRY_ALL = 0x00003FFF,
+    RUN_ENTRY_READONLY = 0x00004000,
+    RUN_ENTRY_ALL = 0x00007FFF,
   };
 
 struct run_entry
@@ -136,13 +137,15 @@ struct run_entry
   unsigned char  is_imported;
   unsigned char  variant;
   unsigned char  is_hidden;
-  unsigned char  pad[9];
+  unsigned char  is_readonly;
+  unsigned char  pad[8];
 };
 
 void run_get_header(struct run_header *out);
 void run_get_all_entries(struct run_entry *out);
 int run_get_entry(int run_id, struct run_entry *out);
 int run_set_entry(int run_id, unsigned int mask, struct run_entry const *in);
+int run_is_readonly(int run_id);
 
 time_t run_get_virtual_start_time(int user_id);
 time_t run_get_virtual_stop_time(int user_id, time_t cur_time);
