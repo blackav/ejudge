@@ -266,6 +266,7 @@ update_standings_file(int force_flag)
   run_get_times(&start_time, 0, &duration, &stop_time);
 
   while (1) {
+    if (global->virtual) break;
     if (force_flag) break;
     if (!global->autoupdate_standings) return;
     if (!duration) break;
@@ -281,8 +282,10 @@ update_standings_file(int force_flag)
     break;
   }
 
-  p = run_get_fog_period(current_time, global->board_fog_time,
-                         global->board_unfog_time);
+  if (!global->virtual) {
+    p = run_get_fog_period(current_time, global->board_fog_time,
+                           global->board_unfog_time);
+  }
   setup_locale(global->standings_locale_id);
   write_standings(global->status_dir, global->standings_file_name,
                   global->stand_header_txt, global->stand_footer_txt);
@@ -291,6 +294,7 @@ update_standings_file(int force_flag)
                     global->stand2_header_txt, global->stand2_footer_txt);
   }
   setup_locale(0);
+  if (global->virtual) return;
   switch (p) {
   case 0:
     global->start_standings_updated = 1;
@@ -361,11 +365,14 @@ update_status_file(int force_flag)
   status.score_system = global->score_system_val;
   status.clients_suspended = clients_suspended;
   status.download_interval = global->team_download_time / 60;
+  status.is_virtual = global->virtual;
 
-  p = run_get_fog_period(current_time,
-                         global->board_fog_time, global->board_unfog_time);
-  if (p == 1 && global->autoupdate_standings) {
-    status.standings_frozen = 1;
+  if (!global->virtual) {
+    p = run_get_fog_period(current_time,
+                           global->board_fog_time, global->board_unfog_time);
+    if (p == 1 && global->autoupdate_standings) {
+      status.standings_frozen = 1;
+    }
   }
 
   generic_write_file((char*) &status, sizeof(status), SAFE,
@@ -1322,6 +1329,7 @@ cmd_team_show_item(struct client_state *p, int len,
   }
   if (pkt->b.id != SRV_CMD_SHOW_CLAR
       && pkt->b.id != SRV_CMD_SHOW_REPORT
+      && pkt->b.id != SRV_CMD_VIRTUAL_STANDINGS
       && pkt->b.id != SRV_CMD_SHOW_SOURCE) {
     new_bad_packet(p, "cmd_team_show_item: bad command: %d", pkt->b.id);
     return;
@@ -1365,6 +1373,10 @@ cmd_team_show_item(struct client_state *p, int len,
   case SRV_CMD_SHOW_REPORT:
     r = new_write_user_report_view(f, pkt->user_id, pkt->item_id);
     break;
+  case SRV_CMD_VIRTUAL_STANDINGS:
+    if (!global->virtual) r = -SRV_ERR_ONLY_VIRTUAL;
+    else r = write_virtual_standings(f, pkt->user_id);
+    break;
   default:
     abort();
   }
@@ -1398,6 +1410,7 @@ cmd_team_submit_run(struct client_state *p, int len,
   path_t run_name, run_full;
   unsigned char comp_pkt_buf[256];
   unsigned long shaval[5];
+  time_t start_time, stop_time;
 
   if (get_peer_local_user(p) < 0) return;
 
@@ -1437,17 +1450,23 @@ cmd_team_submit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_BAD_LANG_ID);
     return;
   }
-  if (!contest_start_time) {
-    err("%d: contest is not started", p->id);
-    new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
-    return;
-  }
   if (p->user_id && pkt->user_id != p->user_id) {
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     err("%d: pkt->user_id != p->user_id", p->id);
     return;
   }
-  if (contest_stop_time) {
+  start_time = contest_start_time;
+  stop_time = contest_stop_time;
+  if (global->virtual) {
+    start_time = run_get_virtual_start_time(p->user_id);
+    stop_time = run_get_virtual_stop_time(p->user_id);
+  }
+  if (!start_time) {
+    err("%d: contest is not started", p->id);
+    new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
+    return;
+  }
+  if (stop_time) {
     err("%d: contest already finished", p->id);
     new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
     return;
@@ -1517,6 +1536,7 @@ cmd_team_submit_clar(struct client_state *p, int len,
   int clar_id, subj_len, full_len;
   path_t clar_name;
   unsigned char *full_txt = 0;
+  time_t start_time, stop_time;
 
   unsigned char subj[CLAR_MAX_SUBJ_TXT_LEN + 16];
   unsigned char bsubj[CLAR_MAX_SUBJ_LEN + 16];
@@ -1571,12 +1591,18 @@ cmd_team_submit_clar(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SUBJECT_TOO_LONG);
     return;
   }
-  if (!contest_start_time) {
+  start_time = contest_start_time;
+  stop_time = contest_stop_time;
+  if (global->virtual) {
+    start_time = run_get_virtual_start_time(p->user_id);
+    stop_time = run_get_virtual_stop_time(p->user_id);
+  }
+  if (!start_time) {
     err("%d: contest is not started", p->id);
     new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
     return;
   }
-  if (contest_stop_time) {
+  if (stop_time) {
     err("%d: contest already finished", p->id);
     new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
     return;
@@ -1622,6 +1648,97 @@ cmd_team_submit_clar(struct client_state *p, int len,
 
   info("%d: team_submit_clar: ok", p->id);
   new_send_reply(p, SRV_RPL_OK);
+}
+
+static void
+cmd_command_0(struct client_state *p, int len,
+              struct prot_serve_pkt_simple *pkt)
+{
+  time_t start_time, stop_time;
+
+  if (get_peer_local_user(p) < 0) return;
+
+  if (len != sizeof(*pkt)) {
+    new_bad_packet(p, "command_0: invalid packet length");
+    return;
+  }
+
+  info("%d: command_0: %d", p->id, pkt->b.id);
+  if (!global->virtual) {
+    err("%d: command allowed only in virtual contest mode", p->id);
+    new_send_reply(p, -SRV_ERR_ONLY_VIRTUAL);
+    return;
+  }
+  if (!contest_start_time) {
+    err("%d: contest is not started by administrator", p->id);
+    new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
+    return;
+  }
+
+  switch (pkt->b.id) {
+  case SRV_CMD_VIRTUAL_START:
+    start_time = run_get_virtual_start_time(p->user_id);
+    if (start_time) {
+      err("%d: virtual contest for %d already started", p->id, p->user_id);
+      new_send_reply(p, -SRV_ERR_CONTEST_STARTED);
+      return;
+    }
+    run_virtual_start(p->user_id, current_time, p->ip);
+    info("%d: virtual contest started for %d", p->id, p->user_id);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  case SRV_CMD_VIRTUAL_STOP:
+    start_time = run_get_virtual_start_time(p->user_id);
+    if (!start_time) {
+      err("%d: virtual contest for %d is not started", p->id, p->user_id);
+      new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
+      return;
+    }
+    stop_time = run_get_virtual_stop_time(p->user_id);
+    if (stop_time) {
+      err("%d: virtual contest for %d already stopped", p->id, p->user_id);
+      new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
+      return;
+    }
+    run_virtual_stop(p->user_id, current_time, p->ip);
+    info("%d: virtual contest stopped for %d", p->id, p->user_id);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  default:
+    err("%d: unhandled command", p->id);
+    new_send_reply(p, -SRV_ERR_PROTOCOL);
+  }
+}
+
+static void
+cmd_judge_command_0(struct client_state *p, int len,
+                   struct prot_serve_pkt_simple *pkt)
+{
+  if (get_peer_local_user(p) < 0) return;
+
+  if (len != sizeof(*pkt)) {
+    new_bad_packet(p, "judge_command: invalid packet length");
+    return;
+  }
+
+  info("%d: judge_command: %d", p->id, pkt->b.id);
+
+  if (p->priv_level < PRIV_LEVEL_OBSERVER) {
+    err("%d: not enough privileges", p->id);
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    return;
+  }
+
+  switch (pkt->b.id) {
+  case SRV_CMD_RESET_FILTER:
+    html_reset_filter(p->user_id);
+    info("%d: reset_filter: ok", p->id);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  default:
+    err("%d: unhandled command", p->id);
+    new_send_reply(p, -SRV_ERR_PROTOCOL);
+  }
 }
 
 static void do_rejudge_all(void);
@@ -2155,6 +2272,10 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_EDIT_RUN] { cmd_edit_run },
   [SRV_CMD_TOGGLE_VISIBILITY] { cmd_priv_command_0 },
   [SRV_CMD_TOGGLE_BAN] { cmd_priv_command_0 },
+  [SRV_CMD_VIRTUAL_START] { cmd_command_0 },
+  [SRV_CMD_VIRTUAL_STOP] { cmd_command_0 },
+  [SRV_CMD_VIRTUAL_STANDINGS] { cmd_team_show_item },
+  [SRV_CMD_RESET_FILTER] { cmd_judge_command_0 },
 };
 
 static void
@@ -2583,10 +2704,12 @@ do_loop(void)
   if (create_socket() < 0) return -1;
 
   current_time = time(0);
-  p = run_get_fog_period(time(0), global->board_fog_time,
-                         global->board_unfog_time);
-  if (p == 1) {
-    global->fog_standings_updated = 1;
+  if (!global->virtual) {
+    p = run_get_fog_period(time(0), global->board_fog_time,
+                           global->board_unfog_time);
+    if (p == 1) {
+      global->fog_standings_updated = 1;
+    }
   }
   update_standings_file(0);
 
@@ -2612,19 +2735,21 @@ do_loop(void)
     check_remove_queue();
 
     /* check stop and start times */
-    if (contest_start_time && !contest_stop_time && contest_duration) {
-      if (current_time >= contest_start_time + contest_duration) {
-        /* the contest is over! */
-        info("CONTEST OVER");
-        run_stop_contest(contest_start_time + contest_duration);
-        contest_stop_time = contest_start_time + contest_duration;
-      }
-    } else if (contest_sched_time && !contest_start_time) {
-      if (current_time >= contest_sched_time) {
-        /* it's time to start! */
-        info("CONTEST STARTED");
-        run_start_contest(current_time);
-        contest_start_time = current_time;
+    if (!global->virtual) {
+      if (contest_start_time && !contest_stop_time && contest_duration) {
+        if (current_time >= contest_start_time + contest_duration) {
+          /* the contest is over! */
+          info("CONTEST OVER");
+          run_stop_contest(contest_start_time + contest_duration);
+          contest_stop_time = contest_start_time + contest_duration;
+        }
+      } else if (contest_sched_time && !contest_start_time) {
+        if (current_time >= contest_sched_time) {
+          /* it's time to start! */
+          info("CONTEST STARTED");
+          run_start_contest(current_time);
+          contest_start_time = current_time;
+        }
       }
     }
 
@@ -2634,16 +2759,18 @@ do_loop(void)
     logger_set_level(-1, 0);
 
     /* automatically update standings in certain situations */
-    p = run_get_fog_period(time(0),
-                           global->board_fog_time, global->board_unfog_time);
-    if (p == 0 && !global->start_standings_updated) {
-      update_standings_file(0);
-    } else if (global->autoupdate_standings
-               && p == 1 && !global->fog_standings_updated) {
-      update_standings_file(1);
-    } else if (global->autoupdate_standings
-               && p == 2 && !global->unfog_standings_updated) {
-      update_standings_file(0);
+    if (!global->virtual) {
+      p = run_get_fog_period(time(0),
+                             global->board_fog_time, global->board_unfog_time);
+      if (p == 0 && !global->start_standings_updated) {
+        update_standings_file(0);
+      } else if (global->autoupdate_standings
+                 && p == 1 && !global->fog_standings_updated) {
+        update_standings_file(1);
+      } else if (global->autoupdate_standings
+                 && p == 2 && !global->unfog_standings_updated) {
+        update_standings_file(0);
+      }
     }
 
     /* update public log */
@@ -2714,6 +2841,11 @@ main(int argc, char *argv[])
   if (teamdb_open_client(global->socket_path, global->contest_id) < 0)
     return 1;
   if (run_open(global->run_log_file, 0) < 0) return 1;
+  if (global->virtual && global->score_system_val != SCORE_ACM) {
+    err("invalid score system for virtual contest");
+    return 1;
+  }
+  if (global->virtual && run_build_virtual_table() < 0) return 1;
   if (clar_open(global->clar_log_file, 0) < 0) return 1;
   i = do_loop();
   if (i < 0) i = 1;
