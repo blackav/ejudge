@@ -1071,6 +1071,7 @@ action_change_password(void)
 
   open_userlist_server();
   r = userlist_clnt_team_set_passwd(server_conn, client_team_id,
+                                    global->contest_id,
                                     p0, p1);
   if (r < 0) {
     operation_status_page(-1, gettext(userlist_strerror(-r)));
@@ -1449,7 +1450,7 @@ main(int argc, char *argv[])
     printf("<li><a href=\"#clar\">%s</a>\n", _("Send a message to judges"));
   if (!server_clars_disabled && !server_clients_suspended)
     printf("<li><a href=\"#clarstat\">%s</a>\n", _("Messages from judges"));
-  if (!server_clients_suspended) {
+  if (!server_clients_suspended && !cur_contest->disable_team_password) {
     printf("<li><a href=\"#chgpasswd\">%s</a>\n", _("Change password"));
   }
 #if CONF_HAS_LIBINTL - 0 == 1
@@ -1484,7 +1485,7 @@ main(int argc, char *argv[])
     display_team_page();
   }
 
-  if (!server_clients_suspended) {
+  if (!server_clients_suspended && !cur_contest->disable_team_password) {
     printf("<hr><a name=\"chgpasswd\"><h2>%s</h2>\n"
            "%s<table>\n"
            "<tr><td>%s:</td><td><input type=\"password\" name=\"oldpasswd\" size=\"16\"></td></tr>\n"
