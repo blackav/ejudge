@@ -143,6 +143,8 @@ int serve_clnt_edit_run(int sock_fd,
                         int is_imported,
                         int variant,
                         int is_hidden,
+                        int tests,
+                        int score,
                         unsigned char const *user_login);
 
 int serve_clnt_import_xml_runs(int sock_fd,
