@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,14 +13,12 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+#include "settings.h"
+
 #include "expat_iface.h"
-#include "nls.h"
 #include "pathutl.h"
 
 #include <reuse/logger.h>
@@ -30,6 +28,12 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <iconv.h>
+#include <errno.h>
+
+#ifndef EJUDGE_CHARSET
+#define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
+#endif /* EJUDGE_CHARSET */
 
 struct tag_list
 {
@@ -53,14 +57,229 @@ struct parser_data
   char const * const *attn_map;
   void * (*alloc_tag_func)(int);
   void * (*alloc_attn_func)(int);
+  iconv_t conv_hnd;
 };
+
+/*
+ * returns:
+ *  0 - 6   - ok (the sequence length is returned)
+ *  -1 - -6 - invalid sequence (its negated length is returned)
+ *  -7      - truncated sequence
+ */
+static int
+is_correct_utf8(const unsigned char *buf, size_t size)
+{
+  unsigned int w32 = 0;
+
+  if (!size) return 0;
+  if (buf[0] <= 0x7F) return 1;
+  if ((buf[0] & 0xE0) == 0xC0) {
+    // two-byte sequence
+    if (size < 2) return -7;
+    if ((buf[1] & 0xC0) != 0x80) return -2;
+    // check for minimal length
+    w32 |= buf[1] & 0x3F;
+    w32 |= (buf[0] & 0x1F) << 6;
+    if (w32 <= 0x7F) return -2;
+    return 2;
+  }
+  if ((buf[0] & 0xF0) == 0xE0) {
+    // three-byte sequence
+    if (size < 3) return -7;
+    if ((buf[1] & 0xC0) != 0x80) return -3;
+    if ((buf[2] & 0xC0) != 0x80) return -3;
+    // check for minimal length
+    w32 |= buf[2] & 0x3F;
+    w32 |= (buf[1] & 0x3F) << 6;
+    w32 |= (buf[0] & 0x0F) << 12;
+    if (w32 <= 0x7FF) return -3;
+    return 3;
+  }
+  if ((buf[0] & 0xF8) == 0xF0) {
+    // four-byte sequence
+    if (size < 4) return -7;
+    if ((buf[1] & 0xC0) != 0x80) return -4;
+    if ((buf[2] & 0xC0) != 0x80) return -4;
+    if ((buf[3] & 0xC0) != 0x80) return -4;
+    // check for minimal length
+    w32 |= buf[3] & 0x3F;
+    w32 |= (buf[2] & 0x3F) << 6;
+    w32 |= (buf[1] & 0x3F) << 12;
+    w32 |= (buf[0] & 0x07) << 18;
+    if (w32 <= 0xFFFF) return -4;
+    return 4;
+  }
+  if ((buf[0] & 0xFC) == 0xF8) {
+    // five-byte sequence
+    if (size < 5) return -7;
+    if ((buf[1] & 0xC0) != 0x80) return -5;
+    if ((buf[2] & 0xC0) != 0x80) return -5;
+    if ((buf[3] & 0xC0) != 0x80) return -5;
+    if ((buf[4] & 0xC0) != 0x80) return -5;
+    // check for minimal length
+    w32 |= buf[4] & 0x3F;
+    w32 |= (buf[3] & 0x3F) << 6;
+    w32 |= (buf[2] & 0x3F) << 12;
+    w32 |= (buf[1] & 0x3F) << 18;
+    w32 |= (buf[0] & 0x03) << 24;
+    if (w32 <= 0x1FFFFF) return -5;
+    return 5;
+  }
+  if ((buf[0] & 0xFE) == 0xFC) {
+    // six-byte sequence
+    if (size < 6) return -7;
+    if ((buf[1] & 0xC0) != 0x80) return -6;
+    if ((buf[2] & 0xC0) != 0x80) return -6;
+    if ((buf[3] & 0xC0) != 0x80) return -6;
+    if ((buf[4] & 0xC0) != 0x80) return -6;
+    if ((buf[5] & 0xC0) != 0x80) return -6;
+    // check for minimal length
+    w32 |= buf[5] & 0x3F;
+    w32 |= (buf[4] & 0x3F) << 6;
+    w32 |= (buf[3] & 0x3F) << 12;
+    w32 |= (buf[2] & 0x3F) << 18;
+    w32 |= (buf[1] & 0x3F) << 24;
+    w32 |= (buf[0] & 0x01) << 30;
+    if (w32 <= 0x3FFFFFF) return -6;
+    return 6;
+  }
+  // 0xFE, 0xFF are invalid
+  return -1;
+}
+
+/* returns the number of characters in the given UTF-8 string */
+/*
+static size_t
+utf8_strlen(const unsigned char *buf)
+{
+}
+*/
+
+static size_t
+convert_utf8_to_local(iconv_t hnd,
+                      const unsigned char *inbuf, size_t inlen,
+                      unsigned char *outbuf, size_t outlen)
+{
+  char *p_inbuf = (char*) inbuf;
+  char *p_outbuf = outbuf;
+  size_t loc_inlen = inlen, loc_outlen = outlen, convlen;
+  int stat;
+
+  if (!loc_inlen) return 0;
+  while (1) {
+    errno = 0;
+    convlen = iconv(hnd, &p_inbuf, &loc_inlen, &p_outbuf, &loc_outlen);
+    if (convlen != (size_t) -1) {
+      ASSERT(!loc_inlen);
+      ASSERT(loc_outlen <= outlen);
+      return outlen - loc_outlen;
+    }
+    if (errno == E2BIG) {
+      // not enough room. fail
+      return (size_t) -1;
+    }
+    // we need to know the exact failure reason in order to recover
+    // check, that the input utf-8 sequence is correct
+    ASSERT(loc_inlen > 0);
+    stat = is_correct_utf8(p_inbuf, loc_inlen);
+    if (stat == -7) {
+      // truncated UTF-8 sequence
+      // append `?' and quit
+      convlen = convert_utf8_to_local(hnd, "?", 1, p_outbuf, loc_outlen);
+      if (convlen == (size_t) -1) return convlen;
+      return outlen - loc_outlen + convlen;
+    }
+    if (stat >= -6 && stat <= -1) {
+      // invalid UTF-8 sequence of known length
+      convlen = convert_utf8_to_local(hnd, "?", 1, p_outbuf, loc_outlen);
+      if (convlen == (size_t) -1) return convlen;
+      p_inbuf -= stat;
+      loc_inlen += stat;
+      p_outbuf += convlen;
+      loc_outlen -= convlen;
+      continue;
+    }
+    if (stat >= 1 && stat <= 6) {
+      // a good UTF-8 sequence with no mapping to the target charset
+      convlen = convert_utf8_to_local(hnd, "?", 1, p_outbuf, loc_outlen);
+      if (convlen == (size_t) -1) return convlen;
+      p_inbuf += stat;
+      loc_inlen -= stat;
+      p_outbuf += convlen;
+      loc_outlen -= convlen;
+      continue;
+    }
+    abort();
+  }
+}
+
+static unsigned char *
+convert_utf8_to_local_heap(iconv_t hnd, const unsigned char *str)
+{
+  size_t inlen, buflen, convlen;
+  unsigned char *buf = 0;
+
+  if (!str) str = "";
+  if (!*str) return xstrdup("");
+
+  inlen = strlen(str);
+  // be very pessimistic about the string size :-(
+  buflen = 4 * inlen + 16;
+  buf = alloca(buflen);
+  convlen = convert_utf8_to_local(hnd, str, inlen, buf, buflen);
+  ASSERT(convlen < buflen);
+  buf[convlen] = 0;
+  return xstrdup(buf);
+}
 
 static int
 encoding_hnd(void *data, const XML_Char *name, XML_Encoding *info)
 {
+  int i;
+  iconv_t conv_hnd;
+  unsigned char in_buf[16], out_buf[16];
+  char *p_in_buf, *p_out_buf;
+  size_t in_size, out_size, conv_size;
+
+  if ((conv_hnd = iconv_open("utf-16le", name)) == (iconv_t) -1)
+    return 0;
+
+  info->data = 0;
+  info->convert = 0;
+  info->release = 0;
+
+  /* fill up the translation table */
+  /* FIXME: this supports only one byte encodings */
+  for (i = 0; i < 256; i++) {
+    in_size = 1;
+    p_in_buf = in_buf;
+    in_buf[0] = i;
+    out_size = sizeof(out_buf);
+    p_out_buf = out_buf;
+    conv_size = iconv(conv_hnd, &p_in_buf, &in_size, &p_out_buf, &out_size);
+    if (conv_size == (size_t) -1) {
+      info->map[i] = '?';
+      out_size = sizeof(out_buf);
+      p_out_buf = out_buf;
+      // reset the shift state
+      iconv(conv_hnd, 0, 0, &p_out_buf, &out_size);
+    } else {
+      ASSERT(!in_size);
+      ASSERT(out_size + 2 == sizeof(out_buf));
+      info->map[i] = out_buf[0] | (out_buf[1] << 8);
+    }
+  }
+
+  iconv_close(conv_hnd);
+  return 1;
+
+#if 0
+  XML_Parser p = (XML_Parser) data;
   int i, o;
   unsigned char cb, cu1, cu2;
-  struct nls_table *tab = 0;
+  iconv_t conv_hnd;
+  unsigned char in_buf[16], out_buf[16];
+  unsigned char *p_in_buf, *p_out_buf;
 
   tab = nls_lookup_table(name);
   if (tab) {
@@ -77,36 +296,26 @@ encoding_hnd(void *data, const XML_Char *name, XML_Encoding *info)
 
   // unsupported encoding
   return 0;
+#endif
 }
 
 static void
 start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
 {
   XML_Parser p = (XML_Parser) data;
-  int cur_val_size = 0, cur_attr_size = 0, val_len, attr_len;
-  char *cur_val = 0, *cur_attr = 0;
-  int cur_tag_size = 0, tag_len;
-  char *cur_tag = 0;
+  char *cur_val = 0;
+  const unsigned char *cur_tag = 0;
+  const unsigned char *cur_attr = 0;
   struct parser_data *pd = (struct parser_data*) XML_GetUserData(p);
   struct tag_list *tl = 0;
   int itag = 0, iattn = 0;
   struct xml_tree *new_node, *parent_node;
   struct xml_attn *new_attn;
 
-  /* allocate initial space for attrib and value local buffers */
-  cur_attr_size = 32;
-  cur_attr = (char*) alloca(cur_attr_size);
-  cur_val_size = 32;
-  cur_val = (char*) alloca(cur_val_size);
-
-  /* recode tag to koi8-r */
-  cur_tag_size = 32;
-  tag_len = strlen(name);
-  while (cur_tag_size <= tag_len) {
-    cur_tag_size *= 2;
-  }
-  cur_tag = (char*) alloca(cur_tag_size);
-  str_utf8_to_koi8(cur_tag, cur_tag_size, name);
+  /* it is safe to preserve the tag in the UTF-8 encoding, since
+   * all the correct tags are in Latin-1.
+   */
+  cur_tag = (const unsigned char*) name;
 
   if (pd->skipping) {
     pd->nest++;
@@ -148,28 +357,16 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
   }
 
   while (*atts) {
-    attr_len = strlen(atts[0]);
-    val_len = strlen(atts[1]);
-    if (attr_len >= cur_attr_size) {
-      while (attr_len >= cur_attr_size) {
-        cur_attr_size *= 2;
-      }
-      cur_attr = (char*) alloca(cur_attr_size);
-    }
-    if (val_len >= cur_val_size) {
-      while (val_len >= cur_val_size) {
-        cur_val_size *= 2;
-      }
-      cur_val = (char*) alloca(cur_val_size);
-    }
-    str_utf8_to_koi8(cur_attr, cur_attr_size, atts[0]);
-    str_utf8_to_koi8(cur_val, cur_val_size, atts[1]);
+    /* it is safe to preserve the attribute name in the UTF-8 */
+    cur_attr = (const unsigned char*) atts[0];
+    cur_val = convert_utf8_to_local_heap(pd->conv_hnd, atts[1]);
 
     if (!pd->attn_map) {
       err("unknown attribute <%s> at line %d",
           cur_attr, XML_GetCurrentLineNumber(p));
       pd->err_cntr++;
       atts += 2;
+      xfree(cur_val); cur_val = 0;
       continue;
     }
     for (iattn = 1; pd->attn_map[iattn]; iattn++)
@@ -180,11 +377,12 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
           cur_attr, XML_GetCurrentLineNumber(p));
       pd->err_cntr++;
       atts += 2;
+      xfree(cur_val); cur_val = 0;
       continue;
     }
     new_attn = (struct xml_attn*) pd->alloc_attn_func(iattn);
     new_attn->tag = iattn;
-    new_attn->text = xstrdup(cur_val);
+    new_attn->text = cur_val;
     new_attn->line = XML_GetCurrentLineNumber(p);
     new_attn->column = XML_GetCurrentColumnNumber(p);
     if (!new_node->first) {
@@ -230,8 +428,8 @@ end_hnd(void *data, const XML_Char *name)
   tl = pd->tag_stack;
   pd->tag_stack = tl->next;
   pd->nest--;
-  tl->tree->text = str_utf8_to_koi8_heap(tl->str);
-  free(tl->str);
+  tl->tree->text = convert_utf8_to_local_heap(pd->conv_hnd, tl->str);
+  free(tl->str); tl->str = 0;
 }
 
 static void
@@ -273,12 +471,18 @@ xml_build_tree(char const *path,
   FILE *f = 0;
   char buf[512];
   int len;
+  iconv_t conv_hnd = 0;
   struct parser_data data;
 
   memset(&data, 0, sizeof(data));
   ASSERT(path);
   if (!tag_alloc) tag_alloc = generic_tag_alloc;
   if (!attn_alloc) attn_alloc = generic_attn_alloc;
+
+  if (!(conv_hnd = iconv_open(EJUDGE_CHARSET, "UTF-8"))) {
+    err("no conversion is possible from UTF-8 to %s", EJUDGE_CHARSET);
+    goto cleanup_and_exit;
+  }
 
   if (!(f = fopen(path, "r"))) {
     err("cannot open input file `%s'", path);
@@ -301,6 +505,7 @@ xml_build_tree(char const *path,
   data.attn_map = attn_map;
   data.alloc_tag_func = tag_alloc;
   data.alloc_attn_func = attn_alloc;
+  data.conv_hnd = conv_hnd;
 
   while (fgets(buf, sizeof(buf), f)) {
     len = strlen(buf);
@@ -320,9 +525,11 @@ xml_build_tree(char const *path,
 
   XML_ParserFree(p);
   fclose(f);
+  iconv_close(conv_hnd);
   return data.tree;
 
  cleanup_and_exit:
+  if (conv_hnd) iconv_close(conv_hnd);
   if (p) XML_ParserFree(p);
   if (f) fclose(f);
   if (data.tree) xml_tree_free(data.tree, 0, 0);
@@ -338,6 +545,7 @@ xml_build_tree_str(char const *str,
 {
   XML_Parser p = 0;
   int len;
+  iconv_t conv_hnd = 0;
   struct parser_data data;
 
   memset(&data, 0, sizeof(data));
@@ -347,6 +555,11 @@ xml_build_tree_str(char const *str,
   len = strlen(str);
   if (!tag_alloc) tag_alloc = generic_tag_alloc;
   if (!attn_alloc) attn_alloc = generic_attn_alloc;
+
+  if (!(conv_hnd = iconv_open(EJUDGE_CHARSET, "UTF-8"))) {
+    err("no conversion is possible from UTF-8 to %s", EJUDGE_CHARSET);
+    goto cleanup_and_exit;
+  }
 
   if (!(p = XML_ParserCreate(NULL))) {
     err("cannot create an XML parser");
@@ -364,6 +577,8 @@ xml_build_tree_str(char const *str,
   data.attn_map = attn_map;
   data.alloc_tag_func = tag_alloc;
   data.alloc_attn_func = attn_alloc;
+  data.conv_hnd = conv_hnd;
+
   if (XML_Parse(p, str, len, 0) == XML_STATUS_ERROR) {
     err("%d: parse error: %s",
         XML_GetCurrentLineNumber(p),
@@ -373,9 +588,11 @@ xml_build_tree_str(char const *str,
   if (data.err_cntr) goto cleanup_and_exit;
 
   XML_ParserFree(p);
+  iconv_close(conv_hnd);
   return data.tree;
 
  cleanup_and_exit:
+  if (conv_hnd) iconv_close(conv_hnd);
   if (p) XML_ParserFree(p);
   if (data.tree) xml_tree_free(data.tree, 0, 0);
   return 0;
@@ -409,7 +626,7 @@ xml_tree_free(struct xml_tree *tree,
 static void
 do_xml_unparse_tree(int nest,
                     FILE *out,
-                    struct xml_tree const *tree,
+                    const struct xml_tree *tree,
                     char const * const *tag_map,
                     char const * const *attn_map,
                     int (*tag_print)(FILE *, struct xml_tree const *),
@@ -455,7 +672,8 @@ xml_unparse_tree(FILE *out,
                  int (*attn_print)(FILE *, struct xml_attn const *),
                  void (*fmt_print)(FILE *, struct xml_tree const *, int, int))
 {
-  fprintf(out, "<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n");
+  fprintf(out, "<?xml version=\"1.0\" encoding=\"%s\"?>\n",
+          EJUDGE_CHARSET);
   do_xml_unparse_tree(0, out, tree, tag_map, attn_map, tag_print, attn_print,
                       fmt_print);
 }
@@ -520,6 +738,5 @@ xml_link_node_last(struct xml_tree *p, struct xml_tree *c)
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "XML_Parser" "XML_Char" "XML_Encoding")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
