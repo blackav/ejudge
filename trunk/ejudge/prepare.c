@@ -716,7 +716,6 @@ set_defaults(int mode)
       global->contest_time = DFLT_G_CONTEST_TIME;
     }
     global->contest_time *= 60;
-    fprintf(stderr, "%d\n", global->contest_time);
   }
 
   /* root_dir, conf_dir, var_dir */
