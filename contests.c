@@ -43,6 +43,8 @@ static char const * const tag_map[] =
   "coaches",
   "advisors",
   "guests",
+  "header_file",
+  "footer_file",
 
   0
 };
@@ -75,6 +77,8 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   sizeof(struct contest_member), /* CONTEST_COACHES */
   sizeof(struct contest_member), /* CONTEST_ADVISORS */
   sizeof(struct contest_member), /* CONTEST_GUESTS */
+  0,                            /* CONTEST_HEADER_FILE */
+  0,                            /* CONTEST_FOOTER_FILE */
 };
 static size_t const attn_sizes[CONTEST_LAST_ATTN] =
 {
@@ -344,6 +348,33 @@ parse_member(struct contest_member *mb, char const *path)
 }
 
 static int
+handle_final_tag(char const *path, struct xml_tree *t, unsigned char **ps)
+{
+  if (*ps) {
+    err("%s:%d:%d: duplicated element <%s>",
+        path, t->line, t->column, tag_map[t->tag]);
+    return -1;
+  }
+  if (!t->text || !*t->text) {
+    err("%s:%d:%d: empty element <%s>", path, t->line, t->column,
+        tag_map[t->tag]);
+    return -1;
+  }
+  if (t->first_down) {
+    err("%s:%d:%d: element <%s> cannot contain nested elements",
+        path, t->line, t->column, tag_map[t->tag]);
+    return -1;
+  }
+  if (t->first) {
+    err("%s:%d:%d: element <%s> cannot have attributes",
+        path, t->line, t->column, tag_map[t->tag]);
+    return -1;
+  }
+  *ps = t->text; t->text = 0;
+  return 0;
+}
+
+static int
 parse_contest(struct contest_desc *cnts, char const *path)
 {
   struct xml_attn *a;
@@ -385,22 +416,13 @@ parse_contest(struct contest_desc *cnts, char const *path)
   for (t = cnts->b.first_down; t; t = t->right) {
     switch(t->tag) {
     case CONTEST_NAME:
-      if (t->first_down) {
-        err("%s:%d:%d: nested tags are not allowed",
-            path, t->line, t->column);
-        return -1;
-      }
-      if (cnts->name) {
-        err("%s:%d:%d: contest name is already defined",
-            path, t->line, t->column);
-        return -1;
-      }
-      if (!t->text || !*t->text) {
-        err("%s:%d:%d: contest name is empty",
-            path, t->line, t->column);
-        return -1;
-      }
-      cnts->name = t->text;
+      if (handle_final_tag(path, t, &cnts->name) < 0) return -1;
+      break;
+    case CONTEST_HEADER_FILE:
+      if (handle_final_tag(path, t, &cnts->header_file) < 0) return -1;
+      break;
+    case CONTEST_FOOTER_FILE:
+      if (handle_final_tag(path, t, &cnts->footer_file) < 0) return -1;
       break;
     case CONTEST_CONTESTANTS:
       mb_id = CONTEST_M_CONTESTANT;
