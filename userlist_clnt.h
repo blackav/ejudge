@@ -87,4 +87,9 @@ userlist_clnt_pass_fd(struct userlist_clnt *clnt,
                       int fds_num,
                       int *fds);
 
+int
+userlist_list_users(struct userlist_clnt *clnt,
+                    unsigned long origin_ip, int contest_id,
+                    int locale_id);
+
 #endif /* __USERLIST_CLNT_H__ */
