@@ -120,7 +120,6 @@ do_print_run(int run_id, int is_privileged, int user_id)
   }
   if (!is_privileged) {
     if (info.team != user_id) {
-      fprintf(stderr, "!!! %d, %d, %d\n", info.team, user_id, run_id);
       errcode = -SRV_ERR_NO_PERMS;
       goto cleanup;
     }
