@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2004 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2003-2005 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -205,6 +205,9 @@ main(int argc, char **argv)
         case RUN_ACCEPTED:
         case RUN_IGNORED:
         case RUN_DISQUALIFIED:
+        case RUN_PENDING:
+        case RUN_MEM_LIMIT_ERR:
+        case RUN_SECURITY_ERR:
           reg_events++;
           if (cur_entry->team <= 0 || cur_entry->team > max_user_id
               || !userlist->user_map[cur_entry->team]) {
