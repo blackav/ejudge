@@ -389,7 +389,7 @@ static int
 gzip_read_file(char **pbuf, size_t maxsz, size_t *prsz, int flags,
                const unsigned char *path)
 {
-  int rsz, c, bsz, sz;
+  int rsz = 0, c = 0, bsz, sz;
   gzFile gz_src = 0;
   unsigned char *rbuf;
   size_t rbuf_a, rbuf_u;
