@@ -58,6 +58,7 @@ CFILES=\
  userlist-server.c\
  userlist_cfg.c\
  userlist_clnt.c\
+ userlist_proto.c\
  userlist_xml.c\
  utf8_utils.c\
  unix/fileutl.c\
