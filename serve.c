@@ -814,6 +814,7 @@ cmd_master_page(struct client_state *p, int len,
   size_t html_len = 0;
   struct client_state *q;
   opcap_t caps;
+  int r;
 
   if (get_peer_local_user(p) < 0) return;
 
@@ -847,28 +848,32 @@ cmd_master_page(struct client_state *p, int len,
   }
 
   info("%d: cmd_master_page: %d, %d, %d",
-       p->id, pkt->user_id, pkt->contest_id, pkt->locale_id);
+       p->id, p->user_id, pkt->contest_id, pkt->locale_id);
 
   if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
     err("%d: two client file descriptors required", p->id);
     new_send_reply(p, -SRV_ERR_PROTOCOL);
     return;
   }
+  /*
   if (!teamdb_lookup(pkt->user_id)) {
     err("%d: user_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
   }
+  */
   if (pkt->contest_id != global->contest_id) {
     err("%d: contest_id does not match", p->id);
     new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
     return;
   }
+  /*
   if (p->user_id && pkt->user_id != p->user_id) {
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     err("%d: pkt->user_id != p->user_id", p->id);
     return;
   }
+  */
   if (p->priv_level < PRIV_LEVEL_JUDGE) {
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     err("%d: unsifficient privilege level", p->id);
@@ -895,14 +900,30 @@ cmd_master_page(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  /* l10n_setlocale(pkt->locale_id); */
-  write_master_page(f, p->user_id, pkt->priv_level,
-                    pkt->sid_mode, p->cookie,
-                    pkt->first_run, pkt->last_run,
-                    pkt->first_clar, pkt->last_clar,
-                    self_url_ptr, filter_expr_ptr, hidden_vars_ptr,
-                    extra_args_ptr, &caps);
-  /* l10n_setlocale(0); */
+
+  if (pkt->b.id == SRV_CMD_MASTER_PAGE) {
+    /* l10n_setlocale(pkt->locale_id); */
+    write_master_page(f, p->user_id, pkt->priv_level,
+                      pkt->sid_mode, p->cookie,
+                      pkt->first_run, pkt->last_run,
+                      pkt->first_clar, pkt->last_clar,
+                      self_url_ptr, filter_expr_ptr, hidden_vars_ptr,
+                      extra_args_ptr, &caps);
+    /* l10n_setlocale(0); */
+  } else {
+    /* SRV_CMD_DUMP_MASTER_RUNS */
+    r = write_priv_all_runs(f, p->user_id, 0, pkt->priv_level,
+                            pkt->sid_mode, p->cookie,
+                            pkt->first_run, pkt->last_run,
+                            0, filter_expr_ptr, 0, 0);
+    if (r < 0) {
+      fclose(f);
+      free(html_ptr); html_ptr = 0; html_len = 0;
+      new_send_reply(p, r);
+      return;
+    }
+  }
+
   fclose(f);
 
   if (!html_ptr) {
@@ -910,14 +931,22 @@ cmd_master_page(struct client_state *p, int len,
     html_len = 0;
   }
 
-  q = client_new_state(p->client_fds[0]);
-  q->client_fds[0] = -1;
-  q->client_fds[1] = p->client_fds[1];
-  p->client_fds[0] = -1;
-  p->client_fds[1] = -1;
-  q->state = STATE_AUTOCLOSE;
-  q->write_buf = html_ptr;
-  q->write_len = html_len;
+  if (html_len > 0) {
+    q = client_new_state(p->client_fds[0]);
+    q->client_fds[0] = -1;
+    q->client_fds[1] = p->client_fds[1];
+    p->client_fds[0] = -1;
+    p->client_fds[1] = -1;
+    q->state = STATE_AUTOCLOSE;
+    q->write_buf = html_ptr;
+    q->write_len = html_len;
+  } else {
+    // nothing to reply
+    close(p->client_fds[0]);
+    close(p->client_fds[1]);
+    p->client_fds[0] = -1;
+    p->client_fds[1] = -1;
+  }
 
   info("%d: cmd_master_page: ok %d", p->id, html_len);
   new_send_reply(p, SRV_RPL_OK);
@@ -1139,7 +1168,23 @@ cmd_view(struct client_state *p, int len,
       r = -SRV_ERR_NO_PERMS;
       break;
     }
-    r = write_raw_source(f, pkt->item);
+    r = write_raw_source(f, self_url_ptr, pkt->item);
+    break;
+  case SRV_CMD_PRIV_DOWNLOAD_REPORT:
+  case SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT:
+    if (!p->priv_level) {
+      err("%d: not enough privileges", p->id);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+    if (opcaps_check(caps, OPCAP_VIEW_REPORT) < 0) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_VIEW_REPORT);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+    r = write_raw_report(f, self_url_ptr, pkt->item,
+                         pkt->b.id==SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT?1:0);
     break;
   case SRV_CMD_COMPARE_RUNS:
     if (!p->priv_level) {
@@ -3169,6 +3214,21 @@ cmd_edit_run(struct client_state *p, int len,
     run.score = pkt->score;
     run_flags |= RUN_ENTRY_SCORE;
   }
+  if ((pkt->mask & PROT_SERVE_RUN_SCORE_ADJ_SET)) {
+    if (pkt->score_adj < -128 || pkt->score_adj > 127) {
+      err("%d: new score_adj value %d is out of range", p->id, pkt->score_adj);
+      new_send_reply(p, -SRV_ERR_PROTOCOL);
+      return;
+    }
+    if (global->score_system_val != SCORE_OLYMPIAD
+        && global->score_system_val != SCORE_KIROV) {
+      err("%d: score_adj cannot be set in the current scoring system", p->id);
+      new_send_reply(p, -SRV_ERR_PROTOCOL);
+      return;
+    }
+    run.score_adj = pkt->score_adj;
+    run_flags |= RUN_ENTRY_SCORE_ADJ;
+  }
   if ((pkt->mask & PROT_SERVE_RUN_READONLY_SET)) {
     if (pkt->is_readonly < 0 || pkt->is_readonly > 1) {
       err("%d: invalid is_readonly value %d", p->id, pkt->is_readonly);
@@ -4263,6 +4323,9 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_SET_TEAM_STATUS] { cmd_edit_user },
   [SRV_CMD_ISSUE_WARNING] { cmd_edit_user },
   [SRV_CMD_SOFT_UPDATE_STAND] { cmd_priv_command_0 },
+  [SRV_CMD_PRIV_DOWNLOAD_REPORT] { cmd_view },
+  [SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT] { cmd_view },
+  [SRV_CMD_DUMP_MASTER_RUNS] { cmd_master_page },
 };
 
 static void
