@@ -3051,10 +3051,34 @@ cmd_priv_command_0(struct client_state *p, int len,
     if ((res = count_transient_runs()) > 0) {
       err("%d: there are %d transient runs", p->id, res);
       new_send_reply(p, -SRV_ERR_TRANSIENT_RUNS);
+      return;
     }
     new_send_reply(p, SRV_RPL_OK);
     return;
 
+  default:
+    err("%d: unhandled command", p->id);
+    new_send_reply(p, -SRV_ERR_PROTOCOL);
+  }
+}
+
+static void
+cmd_simple_command(struct client_state *p, int len,
+                   struct prot_serve_pkt_simple *pkt)
+{
+  if (get_peer_local_user(p) < 0) return;
+
+  if (len != sizeof(*pkt)) {
+    new_bad_packet(p, "simple_command: invalid packet length");
+    return;
+  }
+
+  info("%d: simple_command: %d", p->id, pkt->b.id);
+
+  switch (pkt->b.id) {
+  case SRV_CMD_GET_TEST_SUSPEND:
+    new_send_reply(p, !!clients_suspended);
+    return;
   default:
     err("%d: unhandled command", p->id);
     new_send_reply(p, -SRV_ERR_PROTOCOL);
@@ -4375,6 +4399,7 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_DUMP_MASTER_RUNS] { cmd_master_page },
   [SRV_CMD_RESET_CLAR_FILTER] { cmd_reset_filter },
   [SRV_CMD_HAS_TRANSIENT_RUNS] { cmd_priv_command_0 },
+  [SRV_CMD_GET_TEST_SUSPEND] { cmd_simple_command },
 };
 
 static void
