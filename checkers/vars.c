@@ -26,6 +26,9 @@ FILE *f_arr[3];
 DIR *dir_in;
 DIR *dir_out;
 
+unsigned char *dir_in_path;
+unsigned char *dir_out_path;
+
 const unsigned char * const f_arr_names[3] =
 {
   "input",

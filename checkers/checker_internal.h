@@ -59,6 +59,8 @@ extern const unsigned char * const f_arr_names[3];
 #if NEED_TGZ - 0 == 1
 extern DIR *dir_in;
 extern DIR *dir_out;
+extern unsigned char *dir_in_path;
+extern unsigned char *dir_out_path;
 #endif /* NEED_TGZ */
 
 void checker_do_init(int, char **, int, int, int);
@@ -83,19 +85,25 @@ void checker_corr_eof(void);
 void checker_in_close(void);
 void checker_in_eof(void);
 void checker_normalize_file(unsigned char **, size_t *);
-int checker_read_buf(int, const unsigned char *, int, unsigned char *, size_t);
-int checker_read_corr_int(const unsigned char *, int, int *);
-int checker_read_corr_long_double(const unsigned char *, int, long double *);
-int checker_read_double(int, const unsigned char *, int, double *);
+int  checker_read_buf(int, const unsigned char *, int, unsigned char *,size_t);
+int  checker_read_corr_double(const unsigned char *, int, double *);
+int  checker_read_corr_int(const unsigned char *, int, int *);
+int  checker_read_corr_long_double(const unsigned char *, int, long double *);
+int  checker_read_corr_long_long(const unsigned char *, int, long long *);
+int  checker_read_double(int, const unsigned char *, int, double *);
 void checker_read_file(int, unsigned char **, size_t *);
 void checker_read_file_by_line(int, unsigned char ***, size_t *);
-int checker_read_in_double(const unsigned char *, int, double *);
-int checker_read_in_int(const unsigned char *, int, int *);
-int checker_read_in_long_double(const unsigned char *, int, long double *);
-int checker_read_team_double(const unsigned char *, int, double *);
-int checker_read_team_int(const unsigned char *, int, int *);
-int checker_read_team_long_double(const unsigned char *, int, long double *);
-int checker_read_team_long_long(const unsigned char *, int, long long *);
+int  checker_read_int(int, const unsigned char *, int, int *);
+int  checker_read_in_double(const unsigned char *, int, double *);
+int  checker_read_in_int(const unsigned char *, int, int *);
+int  checker_read_in_long_long(const unsigned char *, int, long long *);
+int  checker_read_in_long_double(const unsigned char *, int, long double *);
+int  checker_read_long_double(int, const unsigned char *, int, long double *);
+int  checker_read_long_long(int, const unsigned char *, int, long long *);
+int  checker_read_team_double(const unsigned char *, int, double *);
+int  checker_read_team_int(const unsigned char *, int, int *);
+int  checker_read_team_long_double(const unsigned char *, int, long double *);
+int  checker_read_team_long_long(const unsigned char *, int, long long *);
 void checker_team_close(void);
 void checker_team_eof(void);
 
