@@ -3,7 +3,7 @@
 #ifndef __RUNLOG_H__
 #define __RUNLOG_H__
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -80,7 +80,7 @@ int    run_get_total(void);
 time_t run_get_duration(void);
 
 void run_get_team_usage(int, int *, size_t*);
-int  run_get_attempts(int, int *, int);
+int  run_get_attempts(int, int *, int *, int);
 char *run_status_str(int, char *, int);
 
 int run_get_fog_period(time_t, int, int);
