@@ -77,58 +77,40 @@ CC=gcc
 LD=gcc
 EXPAT=-lexpat
 
-C_CFILES=compile.c version.c prepare.c pathutl.c parsecfg.c sformat.c contests.c opcaps.c expat_iface.c userlist_proto.c cr_serialize.c $(ARCH)/fileutl.c
-C_OBJECTS=$(C_CFILES:.c=.o) libuserlist_clnt.a libcharsets.a
+C_CFILES=compile.c version.c
+C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libcharsets.a
 
-SERVE_CFILES=serve.c version.c html.c copyright.c master_html.c prepare.c runlog.c clarlog.c teamdb.c parsecfg.c pathutl.c misctext.c base64.c sformat.c contests.c opcaps.c expat_iface.c userlist_proto.c protocol.c userlist_xml.c sha.c filter_tree.c filter_expr.c filter_scan.c filter_eval.c l10n.c $(ARCH)/fileutl.c  
-SERVE_OBJECTS=$(SERVE_CFILES:.c=.o) libuserlist_clnt.a libcharsets.a
+SERVE_CFILES=serve.c version.c
+SERVE_OBJECTS=$(SERVE_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libcharsets.a
 
-SUBMIT_CFILES=submit.c version.c prepare.c teamdb.c parsecfg.c pathutl.c sformat.c base64.c contests.c expat_iface.c userlist_proto.c $(ARCH)/fileutl.c  
-SUBMIT_OBJECTS=$(SUBMIT_CFILES:.c=.o)
+RUN_CFILES=run.c version.c
+RUN_OBJECTS=$(RUN_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libcharsets.a
 
-CLAR_CFILES=clar.c version.c prepare.c teamdb.c parsecfg.c pathutl.c sformat.c $(ARCH)/fileutl.c base64.c misctext.c contests.c expat_iface.c userlist_proto.c
-CLAR_OBJECTS=$(CLAR_CFILES:.c=.o)
+M_CFILES=master.c version.c 
+M_OBJECTS=$(M_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libserve_clnt.a libcharsets.a
 
-RUN_CFILES=run.c version.c prepare.c parsecfg.c pathutl.c sformat.c contests.c opcaps.c expat_iface.c userlist_proto.c cr_serialize.c $(ARCH)/fileutl.c
-RUN_OBJECTS=$(RUN_CFILES:.c=.o) libuserlist_clnt.a libcharsets.a
+T_CFILES = team.c version.c
+T_OBJECTS = $(T_CFILES:.c=.o) libcommon.a libserve_clnt.a libuserlist_clnt.a libcharsets.a
 
-M_CFILES=master.c contests.c opcaps.c expat_iface.c version.c parsecfg.c clntutil.c copyright.c cgi.c pathutl.c misctext.c base64.c protocol.c userlist_proto.c $(ARCH)/fileutl.c  
-M_OBJECTS=$(M_CFILES:.c=.o) libuserlist_clnt.a libserve_clnt.a libcharsets.a
+REG_CFILES = register.c version.c
+REG_OBJECTS = ${REG_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libcharsets.a
 
-P_CFILES=mkpasswd.c version.c teamdb.c base64.c pathutl.c userlist_proto.c
-P_OBJECTS=$(P_CFILES:.c=.o)
+UL_CFILES = userlist-server.c version.c
+UL_OBJECTS = ${UL_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libcharsets.a
 
-T_CFILES = team.c version.c cgi.c teamdb.c base64.c clntutil.c copyright.c parsecfg.c misctext.c pathutl.c contests.c opcaps.c expat_iface.c userlist_proto.c protocol.c l10n.c $(ARCH)/fileutl.c  
-T_OBJECTS = $(T_CFILES:.c=.o) libserve_clnt.a libuserlist_clnt.a libcharsets.a
+US_CFILES = users.c version.c
+US_OBJECTS = ${US_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libcharsets.a
 
-REG_CFILES = register.c contests.c opcaps.c userlist_xml.c protocol.c userlist_proto.c version.c expat_iface.c cgi.c base64.c clntutil.c copyright.c pathutl.c misctext.c l10n.c $(ARCH)/fileutl.c
-REG_OBJECTS = ${REG_CFILES:.c=.o} libuserlist_clnt.a libcharsets.a
+ED_CFILES = edit-userlist.c version.c
+ED_OBJECTS = ${ED_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libcharsets.a
 
-MT_CFILES = make-teamdb.c localdb.c idmap.c
-MT_OBJECTS = ${MT_CFILES:.c=.o}
+SS_CFILES = super-serve.c version.c
+SS_OBJECTS = ${SS_CFILES:.c=.o} libcommon.a libcharsets.a
 
-MTI_CFILES = make-teamdb-inet.c inetdb.c
-MTI_OBJECTS = ${MTI_CFILES:.c=.o}
+CU_CFILES = clean-users.c version.c
+CU_OBJECTS = ${CU_CFILES:.c=.o} libcommon.a libcharsets.a
 
-SP_CFILES = send-passwords.c inetdb.c teamdb.c pathutl.c base64.c ${ARCH}/fileutl.c userlist_proto.c
-SP_OBJECTS = ${SP_CFILES:.c=.o}
-
-UL_CFILES = userlist-server.c contests.c userlist_cfg.c pathutl.c userlist_xml.c userlist.c expat_iface.c base64.c sha.c version.c protocol.c opcaps.c l10n.c
-UL_OBJECTS = ${UL_CFILES:.c=.o} libuserlist_clnt.a libcharsets.a
-
-US_CFILES = users.c userlist_proto.c contests.c opcaps.c clntutil.c copyright.c misctext.c base64.c cgi.c expat_iface.o pathutl.c l10n.c ${ARCH}/fileutl.c version.c
-US_OBJECTS = ${US_CFILES:.c=.o} libuserlist_clnt.a libcharsets.a
-
-ED_CFILES = edit-userlist.c userlist_proto.c contests.c opcaps.c userlist_xml.c userlist_cfg.c userlist.c expat_iface.c pathutl.c protocol.c
-ED_OBJECTS = ${ED_CFILES:.c=.o} libuserlist_clnt.a libcharsets.a
-
-SS_CFILES = super-serve.c contests.c userlist_cfg.c opcaps.c expat_iface.c pathutl.c version.c
-SS_OBJECTS = ${SS_CFILES:.c=.o} libcharsets.a
-
-CU_CFILES = clean-users.c contests.c userlist_cfg.c userlist_xml.c runlog.c clarlog.c protocol.c opcaps.c expat_iface.c pathutl.c ${ARCH}/fileutl.c version.c
-CU_OBJECTS = ${CU_CFILES:.c=.o} libcharsets.a
-
-TARGETS=compile$(EXESFX) serve$(EXESFX) run$(EXESFX) master$(EXESFX) team$(EXESFX) register${EXESFX} userlist-server${EXESFX} users${EXESFX} edit-userlist${EXESFX} filter_test super-serve clean-users
+TARGETS=compile$(EXESFX) serve$(EXESFX) run$(EXESFX) master$(EXESFX) team$(EXESFX) register${EXESFX} userlist-server${EXESFX} users${EXESFX} edit-userlist${EXESFX} super-serve clean-users
 
 local_all: $(TARGETS)
 all: local_all subdirs_all
@@ -149,47 +131,18 @@ compile$(EXESFX) : $(C_OBJECTS)
 run${EXESFX} : $(RUN_OBJECTS)
 	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT}
 
-serve.exe:
 serve : $(SERVE_OBJECTS)
 	$(LD) $(LDFLAGS) $(SERVE_OBJECTS) -o $@ $(LDLIBS) ${EXPAT}
 
-submit.exe:
-submit : $(SUBMIT_OBJECTS)
-	$(LD) $(LDFLAGS) $(SUBMIT_OBJECTS) -o $@ $(LDLIBS) ${EXPAT}
-
-clar.exe:
-clar : $(CLAR_OBJECTS)
-	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT}
-
-master.exe:
 master : $(M_OBJECTS)
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT}
 
-mkpasswd.exe:
-mkpasswd : $(P_OBJECTS)
-	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS)
-
-team.exe:
 team: $(T_OBJECTS)
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT}
 
-register.exe:
 register: ${REG_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT}
 
-make-teamdb.exe:
-make-teamdb: ${MT_OBJECTS}
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
-
-make-teamdb-inet.exe:
-make-teamdb-inet: ${MTI_OBJECTS}
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
-
-send-passwords.exe:
-send-passwords: ${SP_OBJECTS}
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
-
-userlist-server.exe:
 userlist-server: ${UL_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT}
 
@@ -199,11 +152,9 @@ super-serve: ${SS_OBJECTS}
 clean-users: ${CU_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT}
 
-users.exe:
 users: ${US_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT}
 
-edit-userlist.exe:
 edit-userlist: $(ED_OBJECTS)
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT} -lmenu -lpanel -lncurses
 
@@ -254,6 +205,9 @@ ru_all:
 mo: locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo
 locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.KOI8-R.po ru_all
 	msgfmt -o $@ -c $<
+
+libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o $(ARCH)/fileutl.o
+	ar rcv $@ $^
 
 libserve_clnt.a: $(SERVE_CLNT_CFILES:.c=.o)
 	ar rcv $@ $^
