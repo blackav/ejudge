@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -231,6 +231,21 @@ read_state_params(void)
              client_sid);
     break;
   case SID_URL:
+    snprintf(form_start_simple, sizeof(form_start_simple),
+             "%s"
+             "<input type=\"hidden\" name=\"sid_mode\" value=\"2\">"
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
+             form_header_simple, client_sid);
+    snprintf(form_start_multipart, sizeof(form_start_multipart),
+             "%s"
+             "<input type=\"hidden\" name=\"sid_mode\" value=\"2\">"
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
+             form_header_multipart, client_sid);
+    snprintf(hidden_vars, sizeof(hidden_vars),
+             "<input type=\"hidden\" name=\"sid_mode\" value=\"2\">"
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
+             client_sid);
+    break;
   case SID_COOKIE:
     strcpy(form_start_simple, form_header_simple);
     strcpy(form_start_multipart, form_header_multipart);
