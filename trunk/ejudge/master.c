@@ -1178,6 +1178,48 @@ confirm_rejudge_all(void)
 }
 
 static void
+confirm_squeeze(void)
+{
+  set_cookie_if_needed();
+  client_put_header(global->charset, "Confirm squeeze run log");
+  printf("<p>");
+  print_refresh_button(_("No"));
+  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+         "</form></p>", form_start_simple, ACTION_SQUEEZE_RUNS_2,
+         _("Yes, squeeze!"));
+  client_put_footer();
+  exit(0);  
+}
+
+static void
+confirm_clear_run(void)
+{
+  unsigned char *s;
+  int r, n;
+
+  if (!(s = cgi_param("run_id"))
+      || sscanf(s, "%d%n", &r, &n) != 1
+      || s[n]
+      || r < 0
+      || r >= server_total_runs) {
+    operation_status_page(-1, "Invalid parameter");
+    return;
+  }
+
+  set_cookie_if_needed();
+  client_put_header(global->charset, "Confirm clear run %d", r);
+  printf("<p>");
+  print_refresh_button(_("No"));
+  printf("<p>%s"
+         "<input type=\"hidden\" name=\"run_id\" value=\"%d\">"
+         "<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+         "</form></p>", form_start_simple, r, ACTION_CLEAR_RUN_2,
+         _("Yes, clear!"));
+  client_put_footer();
+  exit(0);  
+}
+
+static void
 do_contest_reset_if_asked(void)
 {
   int r;
@@ -1240,6 +1282,38 @@ do_rejudge_all_if_asked(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_REJUDGE_ALL, 0, 0);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+}
+
+static void
+action_squeeze_runs(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_SQUEEZE_RUNS, 0, 0);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+}
+
+static void
+action_clear_run(void)
+{
+  unsigned char *s;
+  int r, n;
+
+  if (!(s = cgi_param("run_id"))
+      || sscanf(s, "%d%n", &r, &n) != 1
+      || s[n]
+      || r < 0
+      || r >= server_total_runs) {
+    operation_status_page(-1, "Invalid parameter");
+    return;
+  }
+
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_CLEAR_RUN, &r, sizeof(r));
   operation_status_page(r, 0);
   force_recheck_status = 1;
 }
@@ -1715,6 +1789,18 @@ main(int argc, char *argv[])
       break;
     case ACTION_USER_TOGGLE_VISIBILITY:
       action_toggle_visibility();
+      break;
+    case ACTION_SQUEEZE_RUNS:
+      confirm_squeeze();
+      break;
+    case ACTION_CLEAR_RUN:
+      confirm_clear_run();
+      break;
+    case ACTION_SQUEEZE_RUNS_2:
+      action_squeeze_runs();
+      break;
+    case ACTION_CLEAR_RUN_2:
+      action_clear_run();
       break;
     default:
       change_status_if_asked();
