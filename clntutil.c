@@ -17,13 +17,13 @@
 
 #include "clntutil.h"
 
-#include "version.h"
 #include "pathutl.h"
 #include "fileutl.h"
 #include "unix/unix_fileutl.h"
 #include "misctext.h"
 #include "protocol.h"
 #include "client_actions.h"
+#include "copyright.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -68,39 +68,87 @@ path_t  program_name;
 char    form_header_simple[1024];
 char    form_header_multipart[1024];
 
+static unsigned char default_header_template[] =
+"<html><head>"
+"<meta http-equiv=\"Content-Type\" content=\"%T; charset=%C\">\n"
+"<title>%H</title>\n"
+"</head>\n"
+"<body><h1>%H</h1>\n";
+static unsigned char default_footer_template[] =
+"<hr>%R</body></html>\n";
+
+static void
+process_template(FILE *out,
+                 unsigned char const *template,
+                 unsigned char const *content_type,
+                 unsigned char const *charset,
+                 unsigned char const *title,
+                 unsigned char const *copyright)
+{
+  unsigned char const *s = template;
+
+  while (*s) {
+    if (*s != '%') {
+      putc(*s++, out);
+      continue;
+    }
+    switch (*++s) {
+    case 'C':
+      fputs(charset, out);
+      break;
+    case 'T':
+      fputs(content_type, out);
+      break;
+    case 'H':
+      fputs(title, out);
+      break;
+    case 'R':
+      fputs(copyright, out);
+      break;
+    default:
+      putc('%', out);
+      continue;
+    }
+    s++;
+  }
+}
+
 void
-client_put_header(char const *coding, char const *format, ...)
+client_put_header(FILE *out, unsigned char const *template,
+                  unsigned char const *content_type,
+                  unsigned char const *charset,
+                  int http_flag,
+                  unsigned char const *format, ...)
 {
   va_list args;
+  unsigned char title[1024];
 
-  if (!coding) coding = "iso8859-1";
+  title[0] = 0;
+  if (format) {
+    va_start(args, format);
+    vsnprintf(title, sizeof(title), format, args);
+    va_end(args);
+  }
 
-  va_start(args, format);
-  fprintf(stdout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>\n", coding, coding);
-  vfprintf(stdout, format, args);
-  fputs("\n</title></head><body><h1>\n", stdout);
-  vfprintf(stdout, format, args);
-  fputs("\n</h1>\n", stdout);
+  if (!charset) charset = "iso8859-1";
+  if (!content_type) content_type = "text/html";
+  if (!template) template = default_header_template;
+
+  if (http_flag) {
+    fprintf(out, "Content-Type: %s; charset=%s\n"
+            "Cache-Control: no-cache\n"
+            "Pragma: no-cache\n\n", content_type, charset);
+
+  }
+
+  process_template(out, template, content_type, charset, title, 0);
 }
 
 void
-client_put_copyright(void)
+client_put_footer(FILE *out, unsigned char const *template)
 {
-  printf(_("<p>This is <b>ejudge</b> contest administration system, version %s, compiled %s.\n"
-           "<p>This program is copyright (C) 2000-2003 Alexander Chernov.\n"
-           "<p>"
-           "This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.\n"
-           "<p>You can download the latest version from <a href=\"%s\">this site</a>.\n"), 
-         compile_version, compile_date,
-         "http://contest.cmc.msu.ru/download");
-}
-
-void
-client_put_footer(void)
-{
-  puts("<hr>");
-  client_put_copyright();
-  puts("</body></html>");
+  if (!template) template = default_footer_template;
+  process_template(out, template, 0, 0, 0, get_copyright());
 }
 
 int
@@ -172,9 +220,9 @@ client_time_to_str(char *buf, unsigned long time)
 void
 client_access_denied(char const *charset)
 {
-  client_put_header(charset, _("Access denied"));
+  client_put_header(stdout, 0, 0, charset, 1, _("Access denied"));
   printf("<p>%s</p>", _("You do not have permissions to use this service."));
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);
 }
 
@@ -182,9 +230,9 @@ void
 client_not_configured(char const *charset, char const *str)
 {
   write_log(0, LOG_ERR, (char*) str);
-  client_put_header(charset, _("Service is not available"));
+  client_put_header(stdout, 0, 0, charset, 1, _("Service is not available"));
   printf("<p>%s</p>", _("Service is not available. Please, come later."));
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);
 }
 
@@ -256,15 +304,15 @@ client_check_server_status(char const *charset, char const *path, int lag)
   return 1;
 
  bad_server:
-  client_put_header(charset, _("Incompatible server"));
+  client_put_header(stdout, 0, 0, charset, 1, _("Incompatible server"));
   printf("<p>%s</p>", _("Server configuration error."));
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);
 
  server_down:
-  client_put_header(charset, _("Server is down"));
+  client_put_header(stdout, 0, 0, charset, 1, _("Server is down"));
   printf("<p>%s</p>", _("Server is down. Please, come later."));
-  client_put_footer();
+  client_put_footer(stdout, 0);
   exit(0);
 }
 
@@ -286,7 +334,7 @@ client_print_server_status(int priv_level,
   client_time_to_str(str_clnt_time, client_cur_time);
 
   puts("<hr>");
-  if (anchor) printf("<a name=\"%s\">\n", anchor);
+  if (anchor) printf("<a name=\"%s\"></a>\n", anchor);
   printf("<h2>%s</h2>", _("Server status"));
   if (!server_is_virtual) {
     if (server_stop_time) {
@@ -429,7 +477,6 @@ client_make_form_headers(unsigned char const *self_url)
 /**
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  * End:
  */
