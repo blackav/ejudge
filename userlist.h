@@ -99,6 +99,8 @@ enum
     USERLIST_T_GUESTS,
     USERLIST_T_FIRSTNAME,
     USERLIST_T_TEAM_PASSWORD,
+    USERLIST_T_CITY,
+    USERLIST_T_COUNTRY,
 
     USERLIST_LAST_TAG,
   };
@@ -161,7 +163,9 @@ enum
     USERLIST_NN_FAC,            /* 23 */
     USERLIST_NN_FACSHORT,       /* 24 */
     USERLIST_NN_HOMEPAGE,       /* 25 */
-    USERLIST_NN_LAST = USERLIST_NN_HOMEPAGE,
+    USERLIST_NN_CITY,           /* 26 */
+    USERLIST_NN_COUNTRY,        /* 27 */
+    USERLIST_NN_LAST = USERLIST_NN_COUNTRY,
 
     USERLIST_NM_SERIAL = 0,              /* 0 */
     USERLIST_NM_FIRSTNAME,               /* 1 */
@@ -274,6 +278,8 @@ struct userlist_user
   unsigned char *fac;
   unsigned char *facshort;
   unsigned char *homepage;
+  unsigned char *city;
+  unsigned char *country;
 
   struct xml_tree *cookies;
   struct userlist_members *members[USERLIST_MB_LAST];
