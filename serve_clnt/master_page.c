@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -47,6 +47,7 @@ serve_clnt_master_page(int sock_fd,
                        int sid_mode,
                        int first_run,
                        int last_run,
+                       int mode_clar,
                        int first_clar,
                        int last_clar,
                        unsigned char const *self_url,
@@ -90,6 +91,7 @@ serve_clnt_master_page(int sock_fd,
   out->sid_mode = sid_mode;
   out->first_run = first_run;
   out->last_run = last_run;
+  out->mode_clar = mode_clar;
   out->first_clar = first_clar;
   out->last_clar = last_clar;
   out->self_url_len = self_url_len;
