@@ -1223,6 +1223,7 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NN_COUNTRY]           { "Country", 1, 1 },
   [USERLIST_NN_COUNTRY_EN]        { "Country (En)", 1, 1 },
   [USERLIST_NN_LOCATION]          { "Location", 1, 1 },
+  [USERLIST_NN_SPELLING]          { "Spelling", 1, 1 },
 };
 static const struct user_field_desc member_descs[] =
 {
@@ -1516,6 +1517,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
         case USERLIST_NN_COUNTRY:
         case USERLIST_NN_COUNTRY_EN:
         case USERLIST_NN_LOCATION:
+        case USERLIST_NN_SPELLING:
           help_str = "Enter-edit D-clear C-contest A-new member Q-quit";
           break;
         case USERLIST_NN_IS_INVISIBLE:
@@ -2032,6 +2034,7 @@ user_match(struct userlist_user *u, int kind)
     if (user_regmatch(u->country)) return 1;
     if (user_regmatch(u->country_en)) return 1;
     if (user_regmatch(u->location)) return 1;
+    if (user_regmatch(u->spelling)) return 1;
 
     {
       int role, memb;
