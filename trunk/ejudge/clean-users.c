@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2003-2004 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -31,6 +31,12 @@
 static struct userlist_cfg  *config;
 static struct userlist_list *userlist;
 
+struct vcntslist
+{
+  struct vcntslist *next;
+  int contest_id;
+};
+
 struct user_stat
 {
   int clar_num;
@@ -38,7 +44,9 @@ struct user_stat
   int run_num;
   int run_size;
   int is_privileged;
+  int never_clean;
   int virt_events;
+  struct vcntslist *virt_contests;
 };
 static struct user_stat *user_stat;
 
@@ -64,6 +72,7 @@ main(int argc, char **argv)
   unsigned long clar_size;
   int clar_from, clar_to;
   unsigned char *out_flags;
+  struct vcntslist *cntsp;
 
   if (argc == 1) {
     print_info(argv[0]);
@@ -100,6 +109,10 @@ main(int argc, char **argv)
   info("%d users found, max user_id is %d", user_total, max_user_id);
 
   user_stat = (struct user_stat*) xcalloc(max_user_id+1,sizeof(user_stat[0]));
+  for (i = 1; i < userlist->user_map_size; i++) {
+    if (!userlist->user_map[i]) continue;
+    user_stat[i].never_clean = userlist->user_map[i]->never_clean;
+  }
 
   info("scanning available contests...");
   contest_max_ind = contests_get_list(&contest_map);
@@ -132,9 +145,10 @@ main(int argc, char **argv)
 
     if (run_open(runlog_path, RUN_LOG_READONLY) < 0) {
       err("contest %d cannot open runlog '%s'", i, runlog_path);
+    } else if (!(total_runs = run_get_total())) {
+      info("contest %d runlog is empty", i);
     } else {
       // runlog opened OK
-      total_runs = run_get_total();
       run_entries = xcalloc(total_runs, sizeof(run_entries[0]));
       run_get_all_entries(run_entries);
       info("contest %d found %d runlog entries", i, total_runs);
@@ -174,6 +188,16 @@ main(int argc, char **argv)
                 i, j, cur_entry->team);
           } else {
             user_stat[cur_entry->team].virt_events++;
+          }
+          for (cntsp = user_stat[cur_entry->team].virt_contests;
+               cntsp; cntsp = cntsp->next) {
+            if (cntsp->contest_id == i) break;
+          }
+          if (!cntsp) {
+            cntsp = (struct vcntslist*) xcalloc(1, sizeof(*cntsp));
+            cntsp->contest_id = i;
+            cntsp->next = user_stat[cur_entry->team].virt_contests;
+            user_stat[cur_entry->team].virt_contests = cntsp;
           }
           break;
 
@@ -252,13 +276,14 @@ main(int argc, char **argv)
   for (i = 1; i <= max_user_id; i++) {
     if (!userlist->user_map[i]) continue;
     if (user_stat[i].run_num == 0 && user_stat[i].clar_num == 0
-        && user_stat[i].virt_events == 0 && !user_stat[i].is_privileged) {
+        && user_stat[i].virt_events == 0 && !user_stat[i].is_privileged
+        && !user_stat[i].never_clean) {
       out_flags = "**";
     } else if (user_stat[i].run_num == 0 && user_stat[i].clar_num == 0
                && user_stat[i].virt_events > 0
-               && !user_stat[i].is_privileged) {
+               && !user_stat[i].is_privileged && !user_stat[i].never_clean) {
       out_flags = "*";
-    } else if (user_stat[i].is_privileged) {
+    } else if (user_stat[i].is_privileged || user_stat[i].never_clean) {
       out_flags = "!";
     } else {
       out_flags = "";
@@ -268,6 +293,21 @@ main(int argc, char **argv)
            user_stat[i].virt_events,
            user_stat[i].run_num, user_stat[i].run_size,
            user_stat[i].clar_num, user_stat[i].clar_size);
+  }
+
+  printf("Virtual contests for start/stop only users\n");
+  for (i = 1; i <= max_user_id; i++) {
+    if (!userlist->user_map[i]) continue;
+    if (user_stat[i].run_num == 0 && user_stat[i].clar_num == 0
+        && user_stat[i].virt_events > 0
+        && !user_stat[i].is_privileged && !user_stat[i].never_clean) {
+      printf("%s", userlist->user_map[i]->login);
+      for (cntsp = user_stat[i].virt_contests;
+           cntsp; cntsp = cntsp->next) {
+        printf(" %d", cntsp->contest_id);
+      }
+      printf("\n");
+    }
   }
 
   return 0;
