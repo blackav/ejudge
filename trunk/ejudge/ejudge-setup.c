@@ -1,4 +1,4 @@
-/* -*- mode:c; coding: koi8-r -*- */
+/* -*- mode:c -*- */
 /* $Id$ */
 
 /* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
@@ -2766,7 +2766,7 @@ generate_ejudge_xml(FILE *f)
     fprintf(f, "  <run_path>%s</run_path>\n", cur->buf);
   }
 
-  cur = &path_edit_items[SET_LINE_CHARSET];
+  cur = &set_edit_items[SET_LINE_CHARSET];
   if (cur->default_value && !strcmp(cur->default_value, cur->buf)) {
   } else {
     fprintf(f, "  <charset>%s</charset>\n", cur->buf);
@@ -2878,7 +2878,7 @@ generate_ejudge_xml(FILE *f)
     fprintf(f, "  <!--<run_path>%s</run_path>-->\n", cur->buf);
   }
 
-  cur = &path_edit_items[SET_LINE_CHARSET];
+  cur = &set_edit_items[SET_LINE_CHARSET];
   if (cur->default_value && !strcmp(cur->default_value, cur->buf)) {
     fprintf(f, "  <!-- The default value is built-in -->\n");
     fprintf(f, "  <!--<charset>%s</charset>-->\n", cur->buf);
@@ -3358,7 +3358,7 @@ generate_install_script(FILE *f)
   fprintf(f, "%s_EOF\n", b64_contest1_tgz);
   gen_check_retcode(f, config_contest1_home_dir);
   gen_cmd_run(f, "chown -R %s:%s \"%s\"",
-              config_system_gid, config_system_gid, config_contest1_home_dir);
+              config_system_uid, config_system_gid, config_contest1_home_dir);
 }
 
 static void
