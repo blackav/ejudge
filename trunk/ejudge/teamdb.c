@@ -760,6 +760,28 @@ teamdb_rollback(void)
   }
 }
 
+int
+teamdb_export_team(int tid, struct teamdb_export *pdata)
+{
+  if (!teamdb_lookup(tid)) {
+    err("teamdb_export_team: bad id: %d", tid);
+    return -1;
+  }
+
+  XMEMZERO(pdata, 1);
+  pdata->id = teams[tid]->id;
+  pdata->flags = teams[tid]->flags;
+  strncpy(pdata->login, teams[tid]->login, TEAMDB_LOGIN_LEN);
+  pdata->login[TEAMDB_LOGIN_LEN - 1] = 0;
+  strncpy(pdata->name, teams[tid]->name, TEAMDB_NAME_LEN);
+  pdata->name[TEAMDB_NAME_LEN - 1] = 0;
+  strncpy(pdata->scrambled, teams[tid]->passwd, TEAMDB_SCRAMBLED_LEN);
+  pdata->scrambled[TEAMDB_SCRAMBLED_LEN - 1] = 0;
+  teamdb_get_plain_password(tid, pdata->passwd, TEAMDB_PASSWD_LEN);
+
+  return 0;
+}
+
 /**
  * Local variables:
  *  compile-command: "make"
