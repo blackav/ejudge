@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
+# Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
 
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -33,24 +33,24 @@ CFILES=base64.c cgi.c clar.c clarlog.c clntutil.c compile.c html.c\
   master.c misctext.c mkpasswd.c parsecfg.c pathutl.c prepare.c\
   run.c runlog.c serve.c submit.c team.c teamdb.c xalloc.c\
   register.c make-teamdb.c make-teamdb-inet.c send-passwords.c\
-  inetdb.c localdb.c idmap.c sformat.c\
+  inetdb.c localdb.c idmap.c sformat.c number_io.c\
   unix/exec.c unix/fileutl.c unix/logger.c unix/osdeps.c\
   win32/exec.c win32/fileutl.c win32/logger.c win32/osdeps.c
 
 HFILES=base64.h cgi.h clarlog.h clntutil.h exec.h fileutl.h html.h logger.h\
   misctext.h osdeps.h parsecfg.h pathutl.h prepare.h runlog.h\
   inetdb.h localdb.h idmap.h sformat.h\
-  teamdb.h xalloc.h version.h\
+  teamdb.h xalloc.h version.h number_io.h\
   unix/unix_fileutl.h
 
 ifeq ($(shell uname),Linux)
-CFLAGS=-Wall -I. -DCONF_HAS_SNPRINTF -DCONF_HAS_STRERROR -D_GNU_SOURCE ${CGI_DATA_PATH_FLAG} -DCONF_HAS_LIBINTL -g
+CFLAGS=-Wall -I. -DCONF_HAS_SNPRINTF -DCONF_HAS_STRERROR -D_GNU_SOURCE ${CGI_DATA_PATH_FLAG} -DCONF_HAS_LIBINTL -DR_HAS_LONGLONG -g
 LDFLAGS=-g
 LDLIBS=
 ARCH=unix
 EXESFX=
 else
-CFLAGS=-mno-cygwin -O2 -Wall -I. -DCONF_HAS__SNPRINTF
+CFLAGS=-mno-cygwin -O2 -Wall -I. -DCONF_HAS__SNPRINTF -DR_HAS_LONGLONG
 LDFLAGS=-mno-cygwin -s
 ARCH=win32
 EXESFX=.exe
@@ -60,31 +60,31 @@ endif
 CC=gcc
 LD=gcc
 
-C_CFILES=compile.c version.c prepare.c pathutl.c parsecfg.c sformat.c xalloc.c $(ARCH)/fileutl.c $(ARCH)/osdeps.c $(ARCH)/exec.c $(ARCH)/logger.c 
+C_CFILES=compile.c version.c prepare.c pathutl.c parsecfg.c sformat.c number_io.c xalloc.c $(ARCH)/fileutl.c $(ARCH)/osdeps.c $(ARCH)/exec.c $(ARCH)/logger.c 
 C_OBJECTS=$(C_CFILES:.c=.o)
 
-SERVE_CFILES=serve.c version.c html.c prepare.c runlog.c clarlog.c teamdb.c parsecfg.c pathutl.c misctext.c base64.c sformat.c $(ARCH)/fileutl.c xalloc.c $(ARCH)/logger.c $(ARCH)/osdeps.c
+SERVE_CFILES=serve.c version.c html.c prepare.c runlog.c clarlog.c teamdb.c parsecfg.c pathutl.c misctext.c base64.c sformat.c number_io.c $(ARCH)/fileutl.c xalloc.c $(ARCH)/logger.c $(ARCH)/osdeps.c
 SERVE_OBJECTS=$(SERVE_CFILES:.c=.o)
 
-SUBMIT_CFILES=submit.c version.c prepare.c teamdb.c parsecfg.c pathutl.c sformat.c base64.c $(ARCH)/fileutl.c xalloc.c $(ARCH)/logger.c $(ARCH)/osdeps.c
+SUBMIT_CFILES=submit.c version.c prepare.c teamdb.c parsecfg.c pathutl.c sformat.c base64.c number_io.c $(ARCH)/fileutl.c xalloc.c $(ARCH)/logger.c $(ARCH)/osdeps.c
 SUBMIT_OBJECTS=$(SUBMIT_CFILES:.c=.o)
 
-CLAR_CFILES=clar.c version.c prepare.c teamdb.c parsecfg.c pathutl.c sformat.c $(ARCH)/fileutl.c xalloc.c base64.c misctext.c $(ARCH)/logger.c $(ARCH)/osdeps.c
+CLAR_CFILES=clar.c version.c prepare.c teamdb.c parsecfg.c pathutl.c sformat.c $(ARCH)/fileutl.c xalloc.c base64.c number_io.c misctext.c $(ARCH)/logger.c $(ARCH)/osdeps.c
 CLAR_OBJECTS=$(CLAR_CFILES:.c=.o)
 
-RUN_CFILES=run.c version.c prepare.c parsecfg.c pathutl.c sformat.c $(ARCH)/fileutl.c xalloc.c $(ARCH)/logger.c $(ARCH)/osdeps.c $(ARCH)/exec.c
+RUN_CFILES=run.c version.c prepare.c parsecfg.c pathutl.c sformat.c $(ARCH)/fileutl.c xalloc.c number_io.c $(ARCH)/logger.c $(ARCH)/osdeps.c $(ARCH)/exec.c
 RUN_OBJECTS=$(RUN_CFILES:.c=.o)
 
-M_CFILES=master.c version.c parsecfg.c clntutil.c cgi.c pathutl.c misctext.c xalloc.c base64.c $(ARCH)/fileutl.c $(ARCH)/osdeps.c $(ARCH)/logger.c 
+M_CFILES=master.c version.c parsecfg.c clntutil.c cgi.c pathutl.c misctext.c xalloc.c base64.c number_io.c $(ARCH)/fileutl.c $(ARCH)/osdeps.c $(ARCH)/logger.c 
 M_OBJECTS=$(M_CFILES:.c=.o)
 
-P_CFILES=mkpasswd.c version.c teamdb.c base64.c pathutl.c xalloc.c $(ARCH)/logger.c $(ARCH)/osdeps.c
+P_CFILES=mkpasswd.c version.c teamdb.c base64.c pathutl.c xalloc.c $(ARCH)/logger.c number_io.c $(ARCH)/osdeps.c
 P_OBJECTS=$(P_CFILES:.c=.o)
 
-T_CFILES = team.c version.c cgi.c teamdb.c base64.c clntutil.c parsecfg.c misctext.c pathutl.c xalloc.c $(ARCH)/fileutl.c $(ARCH)/logger.c $(ARCH)/osdeps.c
+T_CFILES = team.c version.c cgi.c teamdb.c base64.c clntutil.c parsecfg.c misctext.c pathutl.c xalloc.c number_io.c $(ARCH)/fileutl.c $(ARCH)/logger.c $(ARCH)/osdeps.c
 T_OBJECTS = $(T_CFILES:.c=.o)
 
-REG_CFILES = register.c version.c cgi.c base64.c clntutil.c parsecfg.c misctext.c pathutl.c xalloc.c ${ARCH}/fileutl.c ${ARCH}/logger.c ${ARCH}/osdeps.c
+REG_CFILES = register.c version.c cgi.c base64.c clntutil.c parsecfg.c misctext.c pathutl.c xalloc.c number_io.c ${ARCH}/fileutl.c ${ARCH}/logger.c ${ARCH}/osdeps.c
 REG_OBJECTS = ${REG_CFILES:.c=.o}
 
 MT_CFILES = make-teamdb.c localdb.c idmap.c xalloc.c
@@ -93,7 +93,7 @@ MT_OBJECTS = ${MT_CFILES:.c=.o}
 MTI_CFILES = make-teamdb-inet.c inetdb.c xalloc.c
 MTI_OBJECTS = ${MTI_CFILES:.c=.o}
 
-SP_CFILES = send-passwords.c inetdb.c teamdb.c pathutl.c ${ARCH}/logger.c base64.c ${ARCH}/osdeps.c ${ARCH}/fileutl.c xalloc.c
+SP_CFILES = send-passwords.c inetdb.c teamdb.c pathutl.c ${ARCH}/logger.c base64.c ${ARCH}/osdeps.c ${ARCH}/fileutl.c xalloc.c number_io.c
 SP_OBJECTS = ${SP_CFILES:.c=.o}
 
 TARGETS=compile$(EXESFX) serve$(EXESFX) submit$(EXESFX) run$(EXESFX) master$(EXESFX) clar$(EXESFX) mkpasswd$(EXESFX) team$(EXESFX) register${EXESFX} make-teamdb${EXESFX} make-teamdb-inet${EXESFX} send-passwords${EXESFX}
