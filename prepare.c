@@ -936,7 +936,10 @@ parse_deadline_penalties(char **dpstr, int *p_total,
       strcat(b1, b3);
     } else if (sscanf(s, "%s%s%n", b1, b2, &n) == 2 && !s[n]) {
       // do nothing
-    } else {
+    } else if (sscanf(s, "%s%n", b2, &n) == 1 && !s[n]) {
+      if (maxlen + 10 < 64) b1 = (unsigned char*) alloca(64);
+      strcpy(b1, "2038/01/19");
+    }  else {
       err("%d: invalid date penalty specification %s", i + 1, s);
       goto failure;
     }
