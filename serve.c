@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "runlog.h"
@@ -63,6 +59,8 @@
 #endif
 
 #define XALLOCAZ(p,s) (XALLOCA((p),(s)),XMEMZERO((p),(s)))
+
+#define PACKET_NAME_SIZE 12
 
 // server connection states
 enum
@@ -1402,13 +1400,16 @@ cmd_team_show_item(struct client_state *p, int len,
   new_send_reply(p, SRV_RPL_OK);
 }
 
+static int queue_compile_request(unsigned char const *str, int len,
+                                 int run_id, int lang_id, int locale_id,
+                                 unsigned char const *sfx);
+
 static void
 cmd_team_submit_run(struct client_state *p, int len, 
                     struct prot_serve_pkt_submit_run *pkt)
 {
-  int run_id, comp_pkt_len, r;
+  int run_id, r;
   path_t run_name, run_full;
-  unsigned char comp_pkt_buf[256];
   unsigned long shaval[5];
   time_t start_time, stop_time;
 
@@ -1508,14 +1509,10 @@ cmd_team_submit_run(struct client_state *p, int len,
     }
   }
 
-  if (generic_write_file(pkt->data, pkt->run_len, 0,
-                         global->compile_src_dir, run_full, "") < 0) {
-    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
-    return;
-  }
-  comp_pkt_len = sprintf(comp_pkt_buf, "%s %d\n", run_full, 0);
-  if (generic_write_file(comp_pkt_buf, comp_pkt_len, SAFE,
-                         langs[pkt->lang_id]->queue_dir, run_name, "") < 0) {
+  if (queue_compile_request(pkt->data, pkt->run_len, run_id,
+                            langs[pkt->lang_id]->compile_id,
+                            pkt->locale_id,
+                            langs[pkt->lang_id]->src_sfx) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -2090,12 +2087,16 @@ cmd_edit_run(struct client_state *p, int len,
   return;
 }
 
+static void generate_packet_name(int run_id,
+                                 unsigned char buf[PACKET_NAME_SIZE]);
+
 static int
 read_compile_packet(char *pname)
 {
-  char   buf[256];
-  char   exe_name[64];
-  char   pkt_name[64];
+  unsigned char buf[256];
+  unsigned char pkt_base[PACKET_NAME_SIZE];
+  unsigned char exe_in_name[128];
+  unsigned char exe_out_name[128];
 
   int  r, n;
   int  rsize, wsize;
@@ -2143,20 +2144,34 @@ read_compile_packet(char *pname)
   cn = find_tester(prob, langs[lang]->arch);
   ASSERT(cn >= 1 && cn <= max_tester && testers[cn]);
 
+  /* generate a packet name */
+  generate_packet_name(runid, pkt_base);
+  snprintf(exe_in_name, sizeof(exe_in_name),
+           "%06d%s", runid, langs[lang]->exe_sfx);
+  snprintf(exe_out_name, sizeof(exe_out_name),
+           "%s%s", pkt_base, langs[lang]->exe_sfx);
+
   /* copy the executable into the testers's queue */
-  sprintf(exe_name, "%06d%s", runid, langs[lang]->exe_sfx);
-  if (generic_copy_file(REMOVE, global->compile_report_dir, exe_name, "",
-                        0, global->run_exe_dir, exe_name, "") < 0)
+  if (generic_copy_file(REMOVE, global->compile_report_dir, exe_in_name, "",
+                        0, global->run_exe_dir, exe_out_name, "") < 0)
     return -1;
 
-  /* create tester packet */
+  /* FIXME: Reconsider rules for final testing */
   final_test = 0;
   if (global->score_system_val == SCORE_OLYMPIAD
       && !contest_stop_time) final_test = 1;
-  sprintf(pkt_name, "%06d", runid);
-  wsize = sprintf(buf, "%s %d %d\n", exe_name, loc, final_test);
-  if (generic_write_file(buf, wsize, SAFE, testers[cn]->queue_dir,
-                         pkt_name, "") < 0)
+
+  /* create tester packet */
+  wsize = snprintf(buf, sizeof(buf),
+                   "%d %d %d %d %d %d %d %d \"%s\" \"%s\"\n",
+                   global->contest_id, runid, probs[prob]->tester_id,
+                   final_test, loc,
+                   global->score_system_val,
+                   global->team_enable_rep_view,
+                   global->report_error_code,
+                   langs[lang]->exe_sfx, langs[lang]->arch);
+  if (generic_write_file(buf, wsize, SAFE, global->run_queue_dir,
+                         pkt_base, "") < 0)
     return -1;
 
   /* update status */
@@ -2228,13 +2243,87 @@ read_run_packet(char *pname)
   return 0;
 }
 
+static const unsigned char b32_digits[]=
+"0123456789ABCDEFGHIJKLMNOPQRSTUV";
+static void
+b32_number(unsigned long long num, unsigned char buf[PACKET_NAME_SIZE])
+{
+  int i;
+
+  memset(buf, '0', PACKET_NAME_SIZE - 1);
+  buf[PACKET_NAME_SIZE - 1] = 0;
+  i = PACKET_NAME_SIZE - 2;
+  while (num > 0 && i >= 0) {
+    buf[i] = b32_digits[num & 0x1f];
+    i--;
+    num >>= 5;
+  }
+  ASSERT(!num);
+}
+
+static void
+generate_packet_name(int run_id, unsigned char buf[PACKET_NAME_SIZE])
+{
+  unsigned long long num = 0;
+  struct timeval ts;
+
+  // generate "random" number, that would include the
+  // pid of "serve", the current time (with microseconds)
+  // and some small random component.
+  // pid is 2 byte (15 bit)
+  // run_id is 2 byte
+  // time_t component - 4 byte
+  // nanosec component - 4 byte
+
+  num = (getpid() & 0x7fffLLU) << 25LLU;
+  num |= (run_id & 0x7fffLLU) << 40LLU;
+  gettimeofday(&ts, 0);
+  num |= (ts.tv_sec ^ ts.tv_usec) & 0x1ffffff;
+  b32_number(num, buf);
+}
+
+static int
+queue_compile_request(unsigned char const *str, int len,
+                      int run_id, int lang_id, int locale_id,
+                      unsigned char const *sfx)
+{
+  unsigned char pkt_buf[1024];
+  unsigned char pkt_name[PACKET_NAME_SIZE];
+  unsigned char run_name[64];
+  int pkt_len;
+
+  if (!sfx) sfx = "";
+  generate_packet_name(run_id, pkt_name);
+  snprintf(run_name, sizeof(run_name), "%06d", run_id);
+  pkt_len = snprintf(pkt_buf, sizeof(pkt_buf),
+                     "%d %d %d %d\n",
+                     global->contest_id, run_id,
+                     lang_id, locale_id);
+
+  if (len == -1) {
+    // copy from archive
+    if (generic_copy_file(0, global->run_archive_dir, run_name, "",
+                          0, global->compile_src_dir, pkt_name, sfx) < 0)
+      return -1;
+  } else {
+    // write from memory
+    if (generic_write_file(str, len, 0,
+                           global->compile_src_dir, pkt_name, sfx) < 0)
+      return -1;
+  }
+
+  if (generic_write_file(pkt_buf, pkt_len, SAFE,
+                         global->compile_queue_dir, pkt_name, "") < 0) {
+    return -1;
+  }
+  return 0;
+}
+
 static void
 rejudge_run(int run_id)
 {
   int lang, loc;
-  char run_name[64];
-  char pkt_buf[128];
-  char pkt_len;
+  path_t src_path;
 
   if (run_get_record(run_id, 0, 0, 0, 0, &loc, 0, &lang, 0, 0, 0, 0) < 0)
     return;
@@ -2243,16 +2332,10 @@ rejudge_run(int run_id)
     return;
   }
 
-  sprintf(run_name, "%06d", run_id);
-  if (generic_copy_file(0, global->run_archive_dir, run_name, "",
-                        0, global->compile_src_dir, run_name,
-                        langs[lang]->src_sfx) < 0)
-    return;
-  pkt_len = sprintf(pkt_buf, "%s%s %d\n", run_name, langs[lang]->src_sfx, loc);
-  if (generic_write_file(pkt_buf, pkt_len, SAFE,
-                         langs[lang]->queue_dir, run_name, "") < 0) {
-    return;
-  }
+  snprintf(src_path, sizeof(src_path), "%s/%06d",
+           global->run_archive_dir, run_id);
+  queue_compile_request(src_path, -1, run_id,
+                        langs[lang]->compile_id, loc, langs[lang]->src_sfx);
 
   run_change_status(run_id, RUN_COMPILING, 0, -1);
 }
