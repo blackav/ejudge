@@ -419,6 +419,12 @@ run_tests(struct section_tester_data *tst,
       task_SetRedir(tsk, 2, TSR_FILE, error_path, TSK_REWRITE, TSK_FULL_RW);
     }
 
+    if (tst->clear_env) task_ClearEnv(tsk);
+    if (tst->start_env) {
+      int jj;
+      for (jj = 0; tst->start_env[jj]; jj++)
+        task_PutEnv(tsk, tst->start_env[jj]);
+    }
     if (prb->time_limit > 0) task_SetMaxTime(tsk, prb->time_limit);
     if (tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
     if (tst->no_core_dump) task_DisableCoreDump(tsk);
@@ -813,14 +819,17 @@ main(int argc, char *argv[])
 {
   int   i = 1;
   char *key = 0;
-  int   p_flags = 0, code = 0;
+  int   p_flags = 0, code = 0, T_flag = 0;
   path_t cpp_opts = { 0 };
 
   if (argc == 1) goto print_usage;
   code = 1;
 
   while (i < argc) {
-    if (!strcmp(argv[i], "-k")) {
+    if (!strcmp(argv[i], "-T")) {
+      T_flag = 1;
+      i++;
+    } else if (!strcmp(argv[i], "-k")) {
       if (++i >= argc) goto print_usage;
       key = argv[i++];
     } else if (!strncmp(argv[i], "-D", 2)) {
@@ -834,6 +843,10 @@ main(int argc, char *argv[])
   if (i >= argc) goto print_usage;
 
   if (prepare(argv[i], p_flags, PREPARE_RUN, cpp_opts) < 0) return 1;
+  if (T_flag) {
+    print_configuration(stdout);
+    return 0;
+  }
   if (filter_testers(key) < 0) return 1;
   if (create_dirs(PREPARE_RUN) < 0) return 1;
   if (check_config() < 0) return 1;
@@ -842,6 +855,7 @@ main(int argc, char *argv[])
 
  print_usage:
   printf(_("Usage: %s [ OPTS ] config-file\n"), argv[0]);
+  printf(_("  -T     - print configuration and exit"));
   printf(_("  -k key - specify tester key\n"));
   printf(_("  -E     - enable C preprocessor\n"));
   printf(_("  -DDEF  - define a symbol for preprocessor\n"));
