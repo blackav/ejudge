@@ -30,7 +30,8 @@ do_serve_clnt_edit_run(int sock_fd, int cmd, int run_id, int mask,
                        int tests, int score, int is_readonly, int pages,
                        unsigned long ip, int run_size,
                        unsigned char const *user_login,
-                       unsigned char const *run_src)
+                       unsigned char const *run_src,
+                       int score_adj)
 {
   struct prot_serve_pkt_run_info *out;
   struct prot_serve_packet *in = 0;
@@ -75,6 +76,7 @@ do_serve_clnt_edit_run(int sock_fd, int cmd, int run_id, int mask,
   out->is_readonly = is_readonly;
   out->pages = pages;
   out->ip = ip;
+  out->score_adj = score_adj;
   out->user_login_len = user_login_len;
   out->run_src_len = run_size;
   strcpy(user_login_ptr, user_login);
@@ -112,13 +114,13 @@ serve_clnt_edit_run(int sock_fd, int run_id, int mask,
                     int user_id, int prob_id, int lang_id, int status,
                     int is_imported, int variant, int is_hidden,
                     int tests, int score, int is_readonly, int pages,
-                    unsigned char const *user_login)
+                    unsigned char const *user_login, int score_adj)
 {
   return do_serve_clnt_edit_run(sock_fd, SRV_CMD_EDIT_RUN, run_id, mask,
                                 user_id, prob_id, lang_id, status,
                                 is_imported, variant, is_hidden,
                                 tests, score, is_readonly, pages, 0, 0,
-                                user_login, 0);
+                                user_login, 0, score_adj);
 }
 
 int
@@ -134,7 +136,7 @@ serve_clnt_new_run(int sock_fd, int mask,
                                 user_id, prob_id, lang_id, status,
                                 is_imported, variant, is_hidden,
                                 tests, score, is_readonly, pages, ip,
-                                run_size, user_login, run_src);
+                                run_size, user_login, run_src, 0);
 }
 
 /**
