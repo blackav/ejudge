@@ -191,7 +191,9 @@ static struct config_section_info params[] =
 
 static void print_refresh_button(unsigned char const *);
 static void print_logout_button(unsigned char const *);
-static void print_nav_buttons(unsigned char const *, unsigned char const *);
+static void print_nav_buttons(unsigned char const *,
+                              unsigned char const *,
+                              unsigned char const *);
 
 static int
 setup_locale(int locale_id)
@@ -261,9 +263,10 @@ static void
 make_self_url(void)
 {
   unsigned char *http_host = getenv("HTTP_HOST");
-  unsigned char *script_name = getenv("SCRIPT_NAME");
+  unsigned char *script_name = getenv("REDIRECT_URL");
   unsigned char fullname[1024];
-
+  
+  if (!script_name) script_name = getenv("SCRIPT_NAME");
   if (!http_host) http_host = "localhost";
   if (!script_name) script_name = "/cgi-bin/team";
   snprintf(fullname, sizeof(fullname), "http://%s%s", http_host, script_name);
@@ -893,6 +896,24 @@ print_refresh_button(unsigned char const *str)
 }
 
 static void
+print_standings_button(unsigned char const *str)
+{
+  if (!str) str = _("Virtual standings");
+
+  if (client_sid_mode == SID_URL) {
+    printf("<a href=\"%s?sid_mode=%d&SID=%016llx&action=%d\">%s</a>",
+           self_url, SID_URL, client_sid, ACTION_STANGINGS, str);
+  } else if (client_sid_mode == SID_COOKIE) {
+    printf("<a href=\"%s?sid_mode=%d&action=%d\">%s</a>",
+           self_url, SID_COOKIE, ACTION_STANGINGS, str);
+  } else {
+    puts(form_start_simple);
+    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+           ACTION_STANGINGS, str);
+  }
+}
+
+static void
 print_logout_button(unsigned char const *str)
 {
   if (!str) str = _("Log out");
@@ -1066,7 +1087,7 @@ show_clar_if_asked(void)
 
   set_cookie_if_needed();
   client_put_header(global->charset, _("Message view"));
-  print_nav_buttons(_("Main page"), 0);
+  print_nav_buttons(_("Main page"), 0, 0);
   printf("<hr>\n");
   fflush(stdout);
   open_serve();
@@ -1078,7 +1099,7 @@ show_clar_if_asked(void)
            gettext(protocol_strerror(-r)));
   }
   printf("<hr>\n");
-  print_nav_buttons(_("Main page"), 0);
+  print_nav_buttons(_("Main page"), 0, 0);
   client_put_footer();
   exit(0);
 }
@@ -1097,7 +1118,7 @@ request_source_if_asked(void)
 
   set_cookie_if_needed();
   client_put_header(global->charset, _("Source view"));
-  print_nav_buttons(_("Main page"), 0);
+  print_nav_buttons(_("Main page"), 0, 0);
   printf("<hr>");
   fflush(stdout);
   open_serve();
@@ -1109,7 +1130,32 @@ request_source_if_asked(void)
            gettext(protocol_strerror(-r)));
   }
   printf("<hr>");
-  print_nav_buttons(_("Main page"), 0);
+  print_nav_buttons(_("Main page"), 0, 0);
+  client_put_footer();
+  exit(0);
+}
+
+static void
+action_standings(void)
+{
+  int r;
+
+  set_cookie_if_needed();
+  client_put_header(global->charset, _("Current virtual standings"));
+  print_nav_buttons(_("Main page"), 0, 0);
+  printf("<hr>");
+  fflush(stdout);
+  open_serve();
+  r = serve_clnt_show_item(serve_socket_fd, 1, SRV_CMD_VIRTUAL_STANDINGS,
+                           client_team_id, global->contest_id,
+                           client_locale_id, 0);
+  r = 0;
+  if (r < 0) {
+    printf("<p><pre><font color=\"red\">%s</font></pre></p>\n",
+           gettext(protocol_strerror(-r)));
+  }
+  printf("<hr>");
+  print_nav_buttons(_("Main page"), 0, 0);
   client_put_footer();
   exit(0);
 }
@@ -1128,7 +1174,7 @@ request_report_if_asked(void)
 
   set_cookie_if_needed();
   client_put_header(global->charset, _("Report view"));
-  print_nav_buttons(_("Main page"), 0);
+  print_nav_buttons(_("Main page"), 0, 0);
   printf("<hr>");
   fflush(stdout);
   open_serve();
@@ -1140,7 +1186,7 @@ request_report_if_asked(void)
            gettext(protocol_strerror(-r)));
   }
   printf("<hr>");
-  print_nav_buttons(_("Main page"), 0);
+  print_nav_buttons(_("Main page"), 0, 0);
   client_put_footer();
   exit(0);
 }
@@ -1178,6 +1224,26 @@ request_archive_if_asked(void)
   execv("/bin/tar", args);
   fprintf(stderr, "execv failed: %s\n", os_ErrorMsg());
   exit(1);
+}
+
+static void
+action_virtual_start(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_VIRTUAL_START, 0, 0);
+  operation_status_page(r, 0);
+}
+
+static void
+action_virtual_stop(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_VIRTUAL_STOP, 0, 0);
+  operation_status_page(r, 0);
 }
 
 static void
@@ -1226,12 +1292,17 @@ display_team_page(void)
 }
 
 static void
-print_nav_buttons(unsigned char const *p1, unsigned char const *p2)
+print_nav_buttons(unsigned char const *p1, unsigned char const *p2,
+                  unsigned char const *p3)
 {
   printf("<table><tr><td>");
   print_refresh_button(p1);
+  if (server_is_virtual) {
+    printf("</td><td>");
+    print_standings_button(p3);
+  }
   printf("</td><td>");
-  print_logout_button(p2);
+  print_logout_button(p3);
   printf("</td></tr></table>\n");
 }
 
@@ -1310,6 +1381,15 @@ main(int argc, char *argv[])
     case ACTION_SUBMIT_RUN:
       submit_if_asked();
       break;
+    case ACTION_START_VIRTUAL:
+      action_virtual_start();
+      break;
+    case ACTION_STOP_VIRTUAL:
+      action_virtual_stop();
+      break;
+    case ACTION_STANGINGS:
+      action_standings();
+      break;
     default:
       show_clar_if_asked();
       request_source_if_asked();
@@ -1370,16 +1450,18 @@ main(int argc, char *argv[])
            global->problems_url, _("Problems"));
   }
   puts("</ul>");
-  print_nav_buttons(0, 0);
-
-  client_print_server_status(1, "", "status");
-  print_nav_buttons(0, 0);
+  print_nav_buttons(0, 0, 0);
 
   if (error_log) {
     printf("<hr><a name=\"lastcmd\"><h2>%s</h2>\n",
            _("The last command completion status"));
     printf("<pre><font color=\"red\">%s</font></pre>\n", error_log);
-    print_nav_buttons(0, 0);
+    print_nav_buttons(0, 0, 0);
+  }
+
+  client_print_server_status(0, "", "status");
+  if (!server_is_virtual || server_clients_suspended) {
+    print_nav_buttons(0, 0, 0);
   }
 
   if (!server_clients_suspended) {
@@ -1398,7 +1480,7 @@ main(int argc, char *argv[])
            _("Old password"),
            _("New password"), _("Retype new password"),
            ACTION_CHANGE_PASSWORD, _("Change!"));
-    print_nav_buttons(0, 0);
+    print_nav_buttons(0, 0, 0);
   }
 
 #if CONF_HAS_LIBINTL - 0 == 1
@@ -1417,7 +1499,7 @@ main(int argc, char *argv[])
            client_locale_id==0?" selected=\"1\"":"", _("English"),
            client_locale_id==1?" selected=\"1\"":"", _("Russian"),
            ACTION_CHANGE_LANGUAGE, _("Change!"));
-    print_nav_buttons(0, 0);
+    print_nav_buttons(0, 0, 0);
   }
 #endif /* CONF_HAS_LIBINTL */
 
@@ -1445,6 +1527,8 @@ main(int argc, char *argv[])
     }
     puts("");
     cgi_print_param();
+    fflush(0);
+    system("printenv");
   }
 #endif
 
