@@ -2173,20 +2173,47 @@ registered_users_sort_func(void const *p1, void const *p2)
   }
 }
 
+/* information about selected users */
+struct selected_users_info
+{
+  int contest_id;
+  int total_selected;
+  int allocated;
+  unsigned char *mask;
+};
+static struct selected_users_info sel_users;
+
+static int
+generate_reg_user_item(unsigned char *buf, size_t size, int i,
+                       struct userlist_user **uu,
+                       struct userlist_contest **uc,
+                       unsigned char *mask)
+{
+  int buflen;
+
+  // 77 - 6 - 16 - 10 - 6 = 77 - 38 = 39
+  buflen = snprintf(buf, size, "%c%6d  %-16.16s  %-36.36s %c%c%c %-9.9s",
+                    mask[i]?'!':' ',
+                    uu[i]->id, uu[i]->login, uu[i]->name,
+                    (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ',
+                    (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ',
+                    (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ',
+                    userlist_unparse_reg_status(uc[i]->status));
+  return buflen;
+}
+
 static int
 display_registered_users(unsigned char const *upper,
                          int contest_id,
                          int init_val)
 {
   unsigned char current_level[512];
-  int r, nuser, i, j;
+  int r, nuser, i, j, k;
   unsigned char *xml_text = 0;
   struct userlist_list *users;
   struct userlist_user **uu = 0;
   struct userlist_contest **uc = 0, *cc;
   unsigned char **descs = 0;
-  unsigned char buf[128];
-  int buflen;
   ITEM **items;
   MENU *menu;
   WINDOW *in_win, *out_win;
@@ -2248,6 +2275,28 @@ display_registered_users(unsigned char const *upper,
     if (users->user_map[i]) uu[j++] = users->user_map[i];
   }
 
+  /* check the selected_users info */
+  if (sel_users.contest_id <= 0 || contest_id != sel_users.contest_id) {
+    /* reset selection if the contest is different */
+    if (sel_users.allocated > 0) memset(sel_users.mask, 0,sel_users.allocated);
+    sel_users.total_selected = 0;
+    sel_users.contest_id = contest_id;
+  }
+  if (nuser > sel_users.allocated) {
+    /* extend memory */
+    int new_size = sel_users.allocated;
+    unsigned char *new_ptr = 0;
+
+    if (!new_size) new_size = 64;
+    while (nuser > new_size) new_size *= 2;
+    new_ptr = (unsigned char*) xcalloc(new_size, 1);
+    if (sel_users.allocated > 0)
+      memcpy(new_ptr, sel_users.mask, sel_users.allocated);
+    sel_users.allocated = new_size;
+    xfree(sel_users.mask);
+    sel_users.mask = new_ptr;
+  }
+
   if (registered_users_sort_flag > 0) {
     qsort(uu, nuser, sizeof(uu[0]), registered_users_sort_func);
   }
@@ -2265,17 +2314,8 @@ display_registered_users(unsigned char const *upper,
   XALLOCAZ(descs, nuser);
   XALLOCAZ(items, nuser + 1);
   for (i = 0; i < nuser; i++) {
-    // 77 - 6 - 16 - 10 - 6 = 77 - 38 = 39
-    buflen = snprintf(buf, sizeof(buf),
-                      "%6d  %-16.16s  %-36.36s %c%c%c %-10.10s",
-                      uu[i]->id, uu[i]->login, uu[i]->name,
-                      (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ',
-                      (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ',
-                      (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ',
-                      userlist_unparse_reg_status(uc[i]->status));
-    ASSERT(buflen < 128);
     descs[i] = alloca(128);
-    strcpy(descs[i], buf);
+    generate_reg_user_item(descs[i], 128, i, uu, uc, sel_users.mask);
     items[i] = new_item(descs[i], 0);
   }
 
@@ -2357,6 +2397,12 @@ display_registered_users(unsigned char const *upper,
       case 'e': case 'E': case 'Õ' & 255: case 'õ' & 255:
         c = 'e';
         goto menu_done;
+      case ':': case ';': case 'Ö' & 255: case 'ö' & 255:
+        c = ':';
+        goto menu_done;
+      case 'c': case 'C': case 'Ó' & 255: case 'ó' & 255:
+        c = 'c';
+        goto menu_done;
       }
       cmd = -1;
       switch (c) {
@@ -2392,98 +2438,228 @@ display_registered_users(unsigned char const *upper,
       }
     }
   menu_done:
-    if (c == 'r') {
+    if (c == ':') {
+      i = item_index(current_item(menu));
+      if (sel_users.mask[i]) {
+        sel_users.mask[i] = 0;
+        sel_users.total_selected--;
+      } else {
+        sel_users.mask[i] = 1;
+        sel_users.total_selected++;
+      }
+      generate_reg_user_item(descs[i], 128, i, uu, uc, sel_users.mask);
+      menu_driver(menu, REQ_DOWN_ITEM);
+    } else if (c == 'c') {
+      if ((k = display_contests_menu(current_level, 1)) <= 0) continue;
+
+      if (!sel_users.total_selected) {
+        // register the current user to the specified contest
+        i = item_index(current_item(menu));
+        if (okcancel("Register user %d for contest %d?", uu[i]->id, k) != 1)
+          continue;
+        r = userlist_clnt_register_contest(server_conn,
+                                           ULS_PRIV_REGISTER_CONTEST,
+                                           uu[i]->id, k);
+        if (r < 0) {
+          vis_err("Registration failed: %s", userlist_strerror(-r));
+          continue;
+        }
+      } else {
+        // register the selected users to the specified contest
+        if (okcancel("Register selected users for contest %d?", k) != 1)
+          continue;
+        for (j = 0; j < nuser; j++) {
+          if (!sel_users.mask[j]) continue;
+          r = userlist_clnt_register_contest(server_conn,
+                                             ULS_PRIV_REGISTER_CONTEST,
+                                             uu[j]->id, k);
+          if (r < 0) {
+            vis_err("Registration failed: %s", userlist_strerror(-r));
+            continue;
+          }
+          sel_users.mask[j] = 0;
+          generate_reg_user_item(descs[j], 128, j, uu, uc, sel_users.mask);
+        }
+        memset(sel_users.mask, 0, sel_users.allocated);
+        sel_users.total_selected = 0;
+      }
+    } else if (c == 'r') {
       i = item_index(current_item(menu));
       cur_line = i - top_row(menu) + 2;
       new_status = display_reg_status_menu(cur_line, uc[i]->status);
       if (new_status < 0 || new_status >= USERLIST_REG_LAST) continue;
-      if (okcancel("Set registration status for %s to %s?",
-                   uu[i]->login,
-                   userlist_unparse_reg_status(new_status)) != 1) 
-        continue;
-      r = userlist_clnt_change_registration(server_conn, uu[i]->id,
-                                            cnts->id, new_status, 0, 0);
-      if (r < 0) {
-        vis_err("Status change failed: %s", userlist_strerror(-r));
-        continue;
+      if (!sel_users.total_selected) {
+        // operation on a signle user
+        if (new_status == uc[i]->status) continue;
+        r = userlist_clnt_change_registration(server_conn, uu[i]->id,
+                                              cnts->id, new_status, 0, 0);
+        if (r < 0) {
+          vis_err("Status change failed: %s", userlist_strerror(-r));
+          continue;
+        }
+        uc[i]->status = new_status;
+        generate_reg_user_item(descs[i], 128, i, uu, uc, sel_users.mask);
+      } else {
+        // operation on a group of users
+        if (okcancel("Set registration status for the selected users to %s?",
+                     userlist_unparse_reg_status(new_status)) != 1) 
+          continue;
+        for (j = 0; j < nuser; j++) {
+          if (!sel_users.mask[j]) continue;
+          if (new_status == uc[j]->status) continue;
+          r = userlist_clnt_change_registration(server_conn, uu[j]->id,
+                                                cnts->id, new_status, 0, 0);
+          if (r < 0) {
+            vis_err("Status change failed on %d: %s", uu[j]->id,
+                    userlist_strerror(-r));
+            continue;
+          }
+          uc[j]->status = new_status;
+          sel_users.mask[j] = 0;
+          generate_reg_user_item(descs[j], 128, j, uu, uc, sel_users.mask);
+        }
+        memset(sel_users.mask, 0, sel_users.allocated);
+        sel_users.total_selected = 0;
       }
-      uc[i]->status = new_status;
-      snprintf(descs[i], 128,
-               "%6d  %-16.16s  %-36.36s %c%c%c %-10.10s",
-               uu[i]->id, uu[i]->login, uu[i]->name,
-               (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ',
-               (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ',
-               (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ',
-               userlist_unparse_reg_status(uc[i]->status));
     } else if (c == 'd') {
-      i = item_index(current_item(menu));
-      if (okcancel("Delete registration for %s?", uu[i]->login) != 1)
-        continue;
-      r = userlist_clnt_change_registration(server_conn, uu[i]->id,
-                                            cnts->id, -2, 0, 0);
-      if (r < 0) {
-        vis_err("Delete failed: %s", userlist_strerror(-r));
-        continue;
+      if (!sel_users.total_selected) {
+        // operation on a single user
+        i = item_index(current_item(menu));
+        if (okcancel("Delete registration for %s?", uu[i]->login) != 1)
+          continue;
+        r = userlist_clnt_change_registration(server_conn, uu[i]->id,
+                                              cnts->id, -2, 0, 0);
+        if (r < 0) {
+          vis_err("Delete failed: %s", userlist_strerror(-r));
+          continue;
+        }
+      } else {
+        // operation on the selected users
+        if (okcancel("Delete registration for the selected users?") != 1)
+          continue;
+        for (j = 0; j < nuser; j++) {
+          if (!sel_users.mask[j]) continue;
+          r = userlist_clnt_change_registration(server_conn, uu[j]->id,
+                                                cnts->id, -2, 0, 0);
+          if (r < 0) {
+            vis_err("Delete of %d failed: %s", uu[j]->id,
+                    userlist_strerror(-r));
+            continue;
+          }
+        }
       }
+      memset(sel_users.mask, 0, sel_users.allocated);
+      sel_users.total_selected = 0;
       c = 'q';
       retcode = 0;
     } else if (c == 'b') {
-      i = item_index(current_item(menu));
-      if (okcancel("Toggle BANNED status for %s?", uu[i]->login) != 1)
-        continue;
-      r = userlist_clnt_change_registration(server_conn, uu[i]->id,
-                                            cnts->id, -1, 3,
-                                            USERLIST_UC_BANNED);
-      if (r < 0) {
-        vis_err("Toggle flags failed: %s", userlist_strerror(-r));
-        continue;
+      if (!sel_users.total_selected) {
+        // operation on a single user
+        i = item_index(current_item(menu));
+        if (okcancel("Toggle BANNED status for %s?", uu[i]->login) != 1)
+          continue;
+        r = userlist_clnt_change_registration(server_conn, uu[i]->id,
+                                              cnts->id, -1, 3,
+                                              USERLIST_UC_BANNED);
+        if (r < 0) {
+          vis_err("Toggle flags failed: %s", userlist_strerror(-r));
+          continue;
+        }
+        uc[i]->flags ^= USERLIST_UC_BANNED;
+        generate_reg_user_item(descs[i], 128, i, uu, uc, sel_users.mask);
+      } else {
+        // operation on the selected users
+        if (okcancel("Toggle BANNED status for selected users?") != 1)
+          continue;
+        for (j = 0; j < nuser; j++) {
+          if (!sel_users.mask[j]) continue;
+          r = userlist_clnt_change_registration(server_conn, uu[j]->id,
+                                                cnts->id, -1, 3,
+                                                USERLIST_UC_BANNED);
+          if (r < 0) {
+            vis_err("Toggle flags failed for %d: %s",
+                    uu[j]->id, userlist_strerror(-r));
+            continue;
+          }
+          uc[j]->flags ^= USERLIST_UC_BANNED;
+          sel_users.mask[j] = 0;
+          generate_reg_user_item(descs[j], 128, j, uu, uc, sel_users.mask);
+        }
+        memset(sel_users.mask, 0, sel_users.allocated);
+        sel_users.total_selected = 0;
       }
-      uc[i]->flags ^= USERLIST_UC_BANNED;
-      snprintf(descs[i], 128,
-               "%6d  %-16.16s  %-36.36s %c%c%c %-10.10s",
-               uu[i]->id, uu[i]->login, uu[i]->name,
-               (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ',
-               (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ',
-               (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ',
-               userlist_unparse_reg_status(uc[i]->status));
     } else if (c == 'i') {
-      i = item_index(current_item(menu));
-      if (okcancel("Toggle INVISIBLE status for %s?", uu[i]->login) != 1)
-        continue;
-      r = userlist_clnt_change_registration(server_conn, uu[i]->id,
-                                            cnts->id, -1, 3,
-                                            USERLIST_UC_INVISIBLE);
-      if (r < 0) {
-        vis_err("Toggle flags failed: %s", userlist_strerror(-r));
-        continue;
+      if (!sel_users.total_selected) {
+        // operation on a single user
+        i = item_index(current_item(menu));
+        if (okcancel("Toggle INVISIBLE status for %s?", uu[i]->login) != 1)
+          continue;
+        r = userlist_clnt_change_registration(server_conn, uu[i]->id,
+                                              cnts->id, -1, 3,
+                                              USERLIST_UC_INVISIBLE);
+        if (r < 0) {
+          vis_err("Toggle flags failed: %s", userlist_strerror(-r));
+          continue;
+        }
+        uc[i]->flags ^= USERLIST_UC_INVISIBLE;
+        generate_reg_user_item(descs[i], 128, i, uu, uc, sel_users.mask);
+      } else {
+        // operation on the selected users
+        if (okcancel("Toggle INVISIBLE status for selected users?") != 1)
+          continue;
+        for (j = 0; j < nuser; j++) {
+          if (!sel_users.mask[j]) continue;
+          r = userlist_clnt_change_registration(server_conn, uu[j]->id,
+                                                cnts->id, -1, 3,
+                                                USERLIST_UC_INVISIBLE);
+          if (r < 0) {
+            vis_err("Toggle flags failed for %d: %s",
+                    uu[j]->id, userlist_strerror(-r));
+            continue;
+          }
+          uc[j]->flags ^= USERLIST_UC_INVISIBLE;
+          sel_users.mask[j] = 0;
+          generate_reg_user_item(descs[j], 128, j, uu, uc, sel_users.mask);
+        }
+        memset(sel_users.mask, 0, sel_users.allocated);
+        sel_users.total_selected = 0;
       }
-      uc[i]->flags ^= USERLIST_UC_INVISIBLE;
-      snprintf(descs[i], 128,
-               "%6d  %-16.16s  %-36.36s %c%c%c %-10.10s",
-               uu[i]->id, uu[i]->login, uu[i]->name,
-               (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ',
-               (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ',
-               (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ',
-               userlist_unparse_reg_status(uc[i]->status));
     } else if (c == 'l') {
-      i = item_index(current_item(menu));
-      if (okcancel("Toggle LOCKED status for %s?", uu[i]->login) != 1)
-        continue;
-      r = userlist_clnt_change_registration(server_conn, uu[i]->id,
-                                            cnts->id, -1, 3,
-                                            USERLIST_UC_LOCKED);
-      if (r < 0) {
-        vis_err("Toggle flags failed: %s", userlist_strerror(-r));
-        continue;
+      if (!sel_users.total_selected) {
+        // operation on a single user
+        i = item_index(current_item(menu));
+        if (okcancel("Toggle LOCKED status for %s?", uu[i]->login) != 1)
+          continue;
+        r = userlist_clnt_change_registration(server_conn, uu[i]->id,
+                                              cnts->id, -1, 3,
+                                              USERLIST_UC_LOCKED);
+        if (r < 0) {
+          vis_err("Toggle flags failed: %s", userlist_strerror(-r));
+          continue;
+        }
+        uc[i]->flags ^= USERLIST_UC_LOCKED;
+        generate_reg_user_item(descs[i], 128, i, uu, uc, sel_users.mask);
+      } else {
+        // operation on the selected users
+        if (okcancel("Toggle LOCKED status for selected users?") != 1)
+          continue;
+        for (j = 0; j < nuser; j++) {
+          if (!sel_users.mask[j]) continue;
+          r = userlist_clnt_change_registration(server_conn, uu[j]->id,
+                                                cnts->id, -1, 3,
+                                                USERLIST_UC_LOCKED);
+          if (r < 0) {
+            vis_err("Toggle flags failed for %d: %s",
+                    uu[j]->id, userlist_strerror(-r));
+            continue;
+          }
+          uc[j]->flags ^= USERLIST_UC_LOCKED;
+          sel_users.mask[j] = 0;
+          generate_reg_user_item(descs[j], 128, j, uu, uc, sel_users.mask);
+        }
+        memset(sel_users.mask, 0, sel_users.allocated);
+        sel_users.total_selected = 0;
       }
-      uc[i]->flags ^= USERLIST_UC_LOCKED;
-      snprintf(descs[i], 128,
-               "%6d  %-16.16s  %-36.36s %c%c%c %-10.10s",
-               uu[i]->id, uu[i]->login, uu[i]->name,
-               (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ',
-               (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ',
-               (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ',
-               userlist_unparse_reg_status(uc[i]->status));
     } else if (c == '\n') {
       i = item_index(current_item(menu));
       r = 0;
@@ -2503,6 +2679,8 @@ display_registered_users(unsigned char const *upper,
           if (r < 0) {
             vis_err("Registration failed: %s", userlist_strerror(-r));
           } else {
+            memset(sel_users.mask, 0, sel_users.allocated);
+            sel_users.total_selected = 0;
             c = 'q';
             retcode = 0;
           }
