@@ -1142,3 +1142,8 @@ serve_clnt/view.c 1 9 328091
 clean-users.c 1 3 965421
 NEWS.RUS 1 6 6274754
 NEWS 1 6 3598662
+settings.h 1 1 96075
+serve.c 1 64 9606528
+team.c 1 40 4210398
+userlist-server.c 1 41 13266915
+cgi.c 1 19 1016538
