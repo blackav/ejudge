@@ -66,6 +66,7 @@ static int max_abstr_tester;
 #define GLOBAL_OFFSET(x)   XOFFSET(struct section_global_data, x)
 #define GLOBAL_SIZE(x)     XFSIZE(struct section_global_data, x)
 #define GLOBAL_PARAM(x, t) { #x, t, GLOBAL_OFFSET(x), GLOBAL_SIZE(x) }
+#define GLOBAL_ALIAS(a, x, t) { #a, t, GLOBAL_OFFSET(x), GLOBAL_SIZE(x) }
 static struct config_parse_info section_global_params[] =
 {
   GLOBAL_PARAM(name, "s"),
@@ -78,11 +79,19 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(max_clar_size, "d"),
   GLOBAL_PARAM(max_clar_total, "d"),
   GLOBAL_PARAM(max_clar_num, "d"),
+
   GLOBAL_PARAM(board_fog_time, "d"),
   GLOBAL_PARAM(board_unfog_time, "d"),
+
+  // aliases for the existing configuration variables
+  GLOBAL_ALIAS(stand_freeze_time, board_fog_time, "d"),
+  GLOBAL_ALIAS(stand_melt_time, board_unfog_time, "d"),
+
   GLOBAL_PARAM(autoupdate_standings, "d"),
   GLOBAL_PARAM(team_enable_src_view, "d"),
   GLOBAL_PARAM(team_enable_rep_view, "d"),
+  GLOBAL_PARAM(team_enable_ce_view, "d"),
+  GLOBAL_PARAM(team_show_judge_report, "d"),
   GLOBAL_PARAM(disable_clars, "d"),
   GLOBAL_PARAM(disable_team_clars, "d"),
   GLOBAL_PARAM(max_file_length, "d"),
@@ -217,6 +226,8 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(time_limit, "d"),
   PROBLEM_PARAM(real_time_limit, "d"),
   PROBLEM_PARAM(team_enable_rep_view, "d"),
+  PROBLEM_PARAM(team_enable_ce_view, "d"),
+  PROBLEM_PARAM(team_show_judge_report, "d"),
   PROBLEM_PARAM(full_score, "d"),
   PROBLEM_PARAM(test_score, "d"),
   PROBLEM_PARAM(run_penalty, "d"),
@@ -435,6 +446,7 @@ global_init_func(struct generic_section_config *gp)
   struct section_global_data *p = (struct section_global_data *) gp;
 
   p->autoupdate_standings = 1;
+  p->board_fog_time = -1;
   p->board_unfog_time = -1;
   p->contest_time = -1;
   p->tests_to_accept = -1;
@@ -464,6 +476,8 @@ problem_init_func(struct generic_section_config *gp)
   p->use_stdin = -1;
   p->use_stdout = -1;
   p->team_enable_rep_view = -1;
+  p->team_enable_ce_view = -1;
+  p->team_show_judge_report = -1;
   p->use_corr = -1;
   p->use_info = -1;
   p->use_tgz = -1;
@@ -476,6 +490,7 @@ problem_init_func(struct generic_section_config *gp)
   p->checker_real_time_limit = -1;
   p->variant_num = -1;
   p->disable_auto_testing = -1;
+  p->test_score = -1;
 }
 
 static void
@@ -927,6 +942,7 @@ parse_variant_map(const unsigned char *path)
     return 0;
   }
 
+#if 0
   fprintf(stderr, "Parsed variant map version %d\n", vintage);
   for (i = 0; i < pmap->u; i++) {
     fprintf(stderr, "%s: ", pmap->v[i].login);
@@ -936,6 +952,7 @@ parse_variant_map(const unsigned char *path)
               pmap->v[i].variants[j]);
     fprintf(stderr, "\n");
   }
+#endif
 
   fclose(f);
   return pmap;
@@ -1064,7 +1081,7 @@ set_defaults(int mode)
 
   /* timings */
   if (mode == PREPARE_SERVE) {
-    if (!global->board_fog_time) {
+    if (global->board_fog_time < 0) {
       info("global.board_fog_time set to %d", DFLT_G_BOARD_FOG_TIME);
       global->board_fog_time = DFLT_G_BOARD_FOG_TIME;
     }
@@ -1485,6 +1502,34 @@ set_defaults(int mode)
       probs[i]->team_enable_rep_view = 0;
     }
 
+    if (probs[i]->team_enable_ce_view == -1 && si != -1
+        && abstr_probs[si]->team_enable_ce_view != -1) {
+      probs[i]->team_enable_ce_view = abstr_probs[si]->team_enable_ce_view;
+      info("problem.%s.team_enable_ce_view inherited from problem.%s (%d)",
+           ish, sish, probs[i]->team_enable_ce_view);
+    }
+    if (probs[i]->team_enable_ce_view == -1) {
+      info("problem.%s.team_enable_ce_view inherited from global (%d)",
+           ish, global->team_enable_ce_view);
+      probs[i]->team_enable_ce_view = global->team_enable_ce_view;
+    } else if (probs[i]->team_enable_ce_view == -1) {
+      probs[i]->team_enable_ce_view = 0;
+    }
+
+    if (probs[i]->team_show_judge_report == -1 && si != -1
+        && abstr_probs[si]->team_show_judge_report != -1) {
+      probs[i]->team_show_judge_report=abstr_probs[si]->team_show_judge_report;
+      info("problem.%s.team_show_judge_report inherited from problem.%s (%d)",
+           ish, sish, probs[i]->team_show_judge_report);
+    }
+    if (probs[i]->team_show_judge_report == -1) {
+      info("problem.%s.team_show_judge_report inherited from global (%d)",
+           ish, global->team_show_judge_report);
+      probs[i]->team_show_judge_report = global->team_show_judge_report;
+    } else if (probs[i]->team_show_judge_report == -1) {
+      probs[i]->team_show_judge_report = 0;
+    }
+
     if (probs[i]->tests_to_accept == -1 && si != -1
         && abstr_probs[si]->tests_to_accept != -1) {
       probs[i]->tests_to_accept = abstr_probs[si]->tests_to_accept;
@@ -1526,13 +1571,13 @@ set_defaults(int mode)
       info("problem.%s.full_score set to %d", ish, DFLT_P_FULL_SCORE);
     }
 
-    if (!probs[i]->test_score && si != -1
-        && abstr_probs[si]->test_score) {
+    if (probs[i]->test_score < 0 && si != -1
+        && abstr_probs[si]->test_score >= 0) {
       probs[i]->test_score = abstr_probs[si]->test_score;
       info("problem.%s.test_score inherited from problem.%s (%d)",
            ish, sish, probs[i]->test_score);
     }
-    if (!probs[i]->test_score) {
+    if (probs[i]->test_score < 0) {
       probs[i]->test_score = DFLT_P_TEST_SCORE;
       info("problem.%s.test_score set to %d", ish,  DFLT_P_TEST_SCORE);
     }
