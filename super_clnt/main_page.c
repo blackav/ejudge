@@ -17,21 +17,29 @@
 
 #include "super_clnt.h"
 #include "super_proto.h"
+#include "pathutl.h"
+
+#include <reuse/osdeps.h>
+
+#include <stdlib.h>
+#include <unistd.h>
 
 int
 super_clnt_main_page(int sock_fd,
                      int out_fd,
+                     int cmd,
+                     int contest_id,
                      int locale_id,
+                     unsigned int flags,
                      const unsigned char *self_url,
                      const unsigned char *hidden_vars,
                      const unsigned char *extra_args)
 {
   struct prot_super_pkt_main_page *out = 0;
   struct prot_super_packet *in = 0;
-  size_t self_url_len, hidden_vars_len, extra_args_len, out_size, in_size;
-  unsigned char *self_url_ptr, hidden_vars_ptr, extra_args_ptr;
+  size_t self_url_len, hidden_vars_len, extra_args_len, out_size;
+  unsigned char *self_url_ptr, *hidden_vars_ptr, *extra_args_ptr;
   int r, pipe_fd[2], pass_fd[2];
-  void *void_in;
   char c;
 
   if (sock_fd < 0) return -SSERV_ERR_NOT_CONNECTED;
@@ -50,9 +58,11 @@ super_clnt_main_page(int sock_fd,
   hidden_vars_ptr = self_url_ptr + self_url_len + 1;
   extra_args_ptr = hidden_vars_ptr + hidden_vars_len + 1;
 
-  out->b.id = SSERV_CMD_MAIN_PAGE;
+  out->b.id = cmd;
   out->b.magic = PROT_SUPER_PACKET_MAGIC;
+  out->contest_id = contest_id;
   out->locale_id = locale_id;
+  out->flags = flags;
   out->self_url_len = self_url_len;
   out->hidden_vars_len = hidden_vars_len;
   out->extra_args_len = extra_args_len;
@@ -79,7 +89,7 @@ super_clnt_main_page(int sock_fd,
 
   in = (struct prot_super_packet*) alloca(sizeof(*in));
   memset(in, 0, sizeof(*in));
-  if ((r = super_clnt_recv_packet(sock_fd, in, sizeof(*in), 0)) < 0) {
+  if ((r = super_clnt_recv_packet(sock_fd, in, 0, 0)) < 0) {
     close(pipe_fd[0]);
     return r;
   }
