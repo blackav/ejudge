@@ -503,7 +503,7 @@ run_tests(struct section_tester_data *tst,
         task_SetRedir(tsk, 1, TSR_FILE, "/dev/null", TSK_WRITE, TSK_FULL_RW);
         // create empty output file
         {
-          int fd = open(output_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+          int fd = open(output_path, O_CREAT | O_TRUNC | O_WRONLY, 0200);
           if (fd >= 0) close(fd);
         }
       }
@@ -511,7 +511,7 @@ run_tests(struct section_tester_data *tst,
     }  else {
       // create empty output file
       {
-        int fd = open(output_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+        int fd = open(output_path, O_CREAT | O_TRUNC | O_WRONLY, 0200);
         if (fd >= 0) close(fd);
       }
     }
@@ -566,6 +566,10 @@ run_tests(struct section_tester_data *tst,
 
       /* set normal permissions for the working directory */
       make_writable(tst->work_dir);
+      /* make the output file readable */
+      if (chmod(output_path, 0600) < 0) {
+        err("chmod failed: %s", os_ErrorMsg());
+      }
 
       /* fill test report structure */
       tests[cur_test].times = task_GetRunningTime(tsk);
