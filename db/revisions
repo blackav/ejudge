@@ -697,3 +697,6 @@ serve.c 1 38 6737889
 unix/fileutl.c 1 12 1306567
 serve_clnt/standings.c 1 3 284044
 serve_clnt/view.c 1 3 281234
+clntutil.c 1 24 1007878
+filter_eval.c 1 3 683144
+master_html.c 1 8 3885266
