@@ -3,7 +3,7 @@
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,5 +39,9 @@ int  message_reply_subj(char const *, char *);
 int  message_base64_subj(char const *, char *, int);
 
 size_t url_armor_string(unsigned char *, size_t, const unsigned char *);
+
+size_t text_numbered_memlen(const unsigned char *intxt, size_t insize);
+void text_number_lines(const unsigned char *intxt, size_t insize,
+                       unsigned char *outtxt);
 
 #endif /* __MISCTEXT_H__ */
