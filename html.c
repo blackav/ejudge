@@ -155,6 +155,9 @@ write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
   int           from;
   int           to;
   int           flags;
+  int           score;
+  int           attempts;
+  int           score1;
 
   char           dur_str[64];
   char           stat_str[64];
@@ -184,6 +187,7 @@ write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
 
   if (global->score_system_val == SCORE_KIROV) {
     fprintf(f, "<th>%s</th>", _("Tests passed"));
+    fprintf(f, "<th>%s</th>", _("Score"));
   } else {
     fprintf(f, "<th>%s</th>", _("Failed test"));
   }
@@ -199,7 +203,9 @@ write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
        i >= 0 && showed < runs_to_show;
        i--) {
     run_get_record(i, &time, &size, 0,
-                   &team_id, &lang_id, &prob_id, &status, &test);
+                   &team_id, &lang_id, &prob_id, &status, &test, &score);
+    if (global->score_system_val == SCORE_KIROV)
+      run_get_attempts(i, &attempts);
     if (team_id != team) continue;
     showed++;
 
@@ -221,8 +227,17 @@ write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
     fprintf(f, "<td>%s</td>", stat_str);
     if (test <= 0) {
       fprintf(f, "<td>%s</td>", _("N/A"));
+      if (global->score_system_val == SCORE_KIROV)
+        fprintf(f, "<td>%s</td>", _("N/A"));
     } else if (global->score_system_val == SCORE_KIROV) {
       fprintf(f, "<td>%d</td>", test - 1);
+      if (score == -1) {
+        fprintf(f, "<td>%s</td>", _("N/A"));
+      } else {
+        score1 = score - attempts * probs[prob_id]->run_penalty;
+        if (score1 < 0) score1 = 0;
+        fprintf(f, "<td>%d(%d)=%d</td>", score, attempts, score1);
+      }
     } else {
       fprintf(f, "<td>%d</td>", test);
     }
@@ -504,10 +519,12 @@ do_write_kirov_standings(FILE *f, int client_flag)
     int tind;
     int pind;
     int score;
+    int run_score;
 
     struct section_problem_data *p;
 
-    run_get_record(k, 0, 0, 0, &team_id, 0, &prob_id, &status, &tests);
+    run_get_record(k, 0, 0, 0, &team_id, 0, &prob_id, &status, &tests,
+                   &run_score);
     if (team_id <= 0 || team_id >= t_max) continue;
     if (prob_id <= 0 || prob_id > max_prob) continue;
     tind = t_rev[team_id];
@@ -515,13 +532,14 @@ do_write_kirov_standings(FILE *f, int client_flag)
     p = probs[prob_id];
     if (!p || tind < 0 || pind < 0) continue;
 
+    if (run_score == -1) run_score = 0;
     if (status == RUN_OK) {
       score = p->full_score - p->run_penalty * att_num[tind][pind];
       if (score < 0) score = 0;
       if (score > prob_score[tind][pind]) prob_score[tind][pind] = score;
       att_num[tind][pind]++;
     } else if (status == RUN_PARTIAL) {
-      score = p->test_score*(tests-1) - p->run_penalty*att_num[tind][pind];
+      score = run_score - p->run_penalty*att_num[tind][pind];
       if (score < 0) score = 0;
       if (score > prob_score[tind][pind]) prob_score[tind][pind] = score;
       att_num[tind][pind]++;
@@ -651,6 +669,7 @@ do_write_standings(FILE *f, int client_flag)
   unsigned long run_time;
   int           team_id;
   int           prob_id;
+  int           score;
   int           status;
 
   char          header[1024];
@@ -729,7 +748,8 @@ do_write_standings(FILE *f, int client_flag)
   /* now scan runs log */
   r_tot = run_get_total();
   for (k = 0; k < r_tot; k++) {
-    run_get_record(k, &run_time, 0, 0, &team_id, 0, &prob_id, &status, 0);
+    run_get_record(k, &run_time, 0, 0, &team_id, 0, &prob_id, &status, 0,
+                   &score);
     if (team_id <= 0 || team_id >= t_max) continue;
     if (t_rev[team_id] < 0) continue;
     if (prob_id <= 0 || prob_id > max_prob) continue;
@@ -870,7 +890,8 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
   int i;
 
   unsigned long time, start, size;
-  int teamid, langid, probid, status, test;
+  int teamid, langid, probid, status, test, score;
+  int attempts, score1;
 
   char ip[RUN_MAX_IP_LEN + 4];
   char durstr[64], statstr[64];
@@ -893,18 +914,26 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
           _("Language"), _("Result"),
           (global->score_system_val == SCORE_KIROV)
           ?_("Tests passed"):_("Failed test"));
+  if (global->score_system_val == SCORE_KIROV) {
+    fprintf(f, "<th>%s</th>", _("Score"));
+  }
   if (master_mode) {
-    fprintf(f, "<th>%s</th><th>%s</th><th>%s</th>",
+    fprintf(f, "<th>%s</th><th>%s</th>",
             _("New result"),
             (global->score_system_val == SCORE_KIROV)
-            ?_("New passed"):_("New test"), _("Change result"));
+            ?_("New passed"):_("New test"));
+    if (global->score_system_val == SCORE_KIROV) {
+      fprintf(f, "<th>%s</th>", _("New score"));
+    }
+    fprintf(f, "<th>%s</th>", _("Change result"));
   }
   fprintf(f, "<th>%s</th><th>%s</th></tr>\n",
           _("View source"), _("View report"));
 
   for (i = total - 1; i >= 0 && show_num; i--, show_num--) {
     run_get_record(i, &time, &size, ip,
-                   &teamid, &langid, &probid, &status, &test);
+                   &teamid, &langid, &probid, &status, &test, &score);
+    run_get_attempts(i, &attempts);
 
     if (!start) time = start;
     if (start > time) time = start;
@@ -927,8 +956,18 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
     fprintf(f, "<td>%s</td>", statstr);
     if (test <= 0) {
       fprintf(f, "<td>%s</td>\n", _("N/A"));
+      if (global->score_system_val == SCORE_KIROV) {
+        fprintf(f, "<td>%s</td>\n", _("N/A"));
+      }
     } else if (global->score_system_val == SCORE_KIROV) {
       fprintf(f, "<td>%d</td>\n", test - 1);
+      if (score == -1) {
+        fprintf(f, "<td>%s</td>", _("N/A"));
+      } else {
+        score1 = score - attempts * probs[probid]->run_penalty;
+        if (score1 < 0) score1 = 0;
+        fprintf(f, "<td>%d(%d)=%d</td>", score, attempts, score1);
+      }
     } else {
       fprintf(f, "<td>%d</td>\n", test);
     }
@@ -964,6 +1003,10 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
 
       fprintf(f,
               "<td><input type=\"text\" name=\"failed_%d\" size=\"2\"></td>",
+              i);
+
+      fprintf(f,
+              "<td><input type=\"text\" name=\"score_%d\" size=\"2\"></td>",
               i);
 
       fprintf(f,
@@ -1125,7 +1168,7 @@ write_team_source_view(char const *pk_name, int team, int rid)
   pathmake(path, global->pipe_dir, "/", pk_name, 0);
   if (!(f = sf_fopen(path, "w"))) return;
 
-  run_get_record(rid, 0, 0, 0, &run_team, 0, 0, 0, 0);
+  run_get_record(rid, 0, 0, 0, &run_team, 0, 0, 0, 0, 0);
   if (team != run_team) {
     fprintf(f, "<h2>%s</h2><p>%s</p>",
             _("Permission denied"),
@@ -1172,7 +1215,7 @@ write_team_report_view(char const *pk_name, int team, int rid)
   pathmake(out_path, global->pipe_dir, "/", pk_name, 0);
   if (!(f = fopen(out_path, "w"))) return;
 
-  run_get_record(rid, 0, 0, 0, &run_team, 0, &prob_id, 0, 0);
+  run_get_record(rid, 0, 0, 0, &run_team, 0, &prob_id, 0, 0, 0);
   if (team != run_team || !probs[prob_id]->team_enable_rep_view) {
     fprintf(f, "<h2>%s</h2><p>%s</p>",
             _("Permission denied"),
