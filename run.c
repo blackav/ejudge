@@ -497,6 +497,12 @@ run_tests(struct section_tester_data *tst,
         }
       }
       task_SetRedir(tsk, 2, TSR_FILE, error_path, TSK_REWRITE, TSK_FULL_RW);
+    }  else {
+      // create empty output file
+      {
+        int fd = open(output_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+        if (fd >= 0) close(fd);
+      }
     }
 
     if (tst->clear_env) task_ClearEnv(tsk);
