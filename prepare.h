@@ -51,6 +51,14 @@ struct penalty_info
 
 struct variant_map;
 
+struct user_adjustment_info
+{
+  unsigned char *login;
+  int id;
+  int adjustment;
+};
+struct user_adjustment_map;
+
 #define puc_t unsigned char
 
 struct section_global_data
@@ -90,6 +98,7 @@ struct section_global_data
   int    ignore_compile_errors; /* ignore CE result for score calculation */
   int    enable_continue;       /* enable contest continuation after stop */
   int    enable_report_upload;  /* enable manual upload of checking reports */
+  int    priority_adjustment;   /* priority adjustment for the contest */
 
   puc_t name[256];              /* name of the contest */
   path_t root_dir;
@@ -265,6 +274,11 @@ struct section_global_data
   // printing support
   int enable_printing;
   int team_page_quota;
+
+  // user priority adjustments
+  char **user_priority_adjustments;
+  struct user_adjustment_info *user_adjustment_info;
+  struct user_adjustment_map *user_adjustment_map;
 };
 
 struct section_problem_data
@@ -294,6 +308,7 @@ struct section_problem_data
   int    disable_auto_testing;
   int    disable_testing;
   int    hidden;                /* hide the problem from standings */
+  int    priority_adjustment;   /* priority adjustment for this problem */
   puc_t super[32];              /* superproblem's short_name */
   puc_t short_name[32];         /* short problem name, eg A, B, ... */
   puc_t long_name[128];         /* long problem name */
@@ -334,6 +349,7 @@ struct section_language_data
   int    disabled;              /* a participant cannot use this language */
   int    compile_real_time_limit;
   int    binary;                /* whether binary files are accepted */
+  int    priority_adjustment;   /* priority adjustment for this language */
   puc_t short_name[32];         /* language short name */
   puc_t long_name[128];         /* language long name */
   puc_t key[32];                /* configuration key */
@@ -360,6 +376,7 @@ struct section_tester_data
 
   int    is_dos;                /* do unix->dos conversion of tests? */
   int    no_redirect;           /* do not redirect standard streams */
+  int    priority_adjustment;   /* priority adjustment for this tester */
 
   puc_t arch[32];               /* checker architecture */
   puc_t key[32];                /* configuration key */
@@ -413,6 +430,7 @@ int create_dirs(int mode);
 
 int find_tester(int, char const *);
 int find_variant(int, int);
+int find_user_priority_adjustment(int user_id);
 
 void print_problem(FILE *, struct section_problem_data *);
 void print_language(FILE *, struct section_language_data *);
