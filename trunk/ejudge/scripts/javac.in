@@ -1,0 +1,49 @@
+#!/bin/bash
+# $Id$
+# Copyright (c) 2004 Alexander Chernov
+
+# Usage: javac in-file out-file
+# The working dir must not contain any .class files.
+
+# using EJUDGE_FLAGS we may pass additional flags
+
+infile="$1"
+outfile="$2"
+
+JAVACRUN="@ac_cv_contest_javac@"
+JAVADIR="@ac_cv_contest_java_dir@"
+JAVAVER="@ac_cv_contest_java_version@"
+
+if [ x"${JAVACRUN}" = x -o x"${JAVACRUN}" = xno ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+JAVA_HOME="${JAVADIR}"
+PATH="${JAVA_HOME}/bin:${PATH}"
+export JAVA_HOME PATH
+
+mv "$infile" Main.java || exit 1
+"${JAVACRUN}" -source "${JAVAVER}" ${EJUDGE_FLAGS} Main.java || exit 1
+
+if [ ! -f Main.class ]
+then
+  echo "No output file Main.class" >& 2
+  exit 1
+fi
+
+# check for multiple files
+count=0
+for i in *.class
+do
+count=$((count+1))
+done 
+if $count -gt 1
+then
+  echo "Multiple output files. Probably nested classes are used" >& 2
+  exit 1
+fi
+
+mv Main.class "$outfile" || exit 1
+exit 0

@@ -1,0 +1,21 @@
+#!/bin/bash
+# $Id$
+# Copyright (c) 2004 Alexander Chernov
+
+# assume that we have signle argument
+# EJUDGE_JAVA_FLAGS may be used to pass additional flags
+
+runfile="$1"
+
+JAVARUN="@ac_cv_contest_java@"
+JAVADIR="@ac_cv_contest_java_dir@"
+JAVAVER="@ac_cv_contest_java_version@"
+
+JAVA_HOME="${JAVADIR}"
+PATH="${JAVA_HOME}/bin:${PATH}"
+export JAVA_HOME PATH
+
+mv "$1" Main.class || exit 1
+rm olimp.policy || exit 1
+touch olimp.policy || exit 1
+exec "${JAVARUN}" ${EJUDGE_JAVA_FLAGS} -Djava.security.manager -Djava.security.policy=olimp.policy Main
