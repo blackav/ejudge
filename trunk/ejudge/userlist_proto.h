@@ -320,7 +320,7 @@ struct userlist_pk_xml_data __attribute__((packed,aligned(1)));
 struct userlist_pk_xml_data
 {
   short          reply_id;
-  unsigned short info_len;
+  unsigned int   info_len;
   unsigned char  data[1];
 };
 
