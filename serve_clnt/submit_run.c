@@ -45,6 +45,7 @@ serve_clnt_submit_run(int sock_fd, int cmd,
   struct prot_serve_pkt_submit_run *out = 0;
   struct prot_serve_packet *in = 0;
   int out_size = 0, in_size = 0, r;
+  void *void_in = 0;
 
   if (cmd != SRV_CMD_SUBMIT_RUN && cmd != SRV_CMD_PRIV_SUBMIT_RUN)
     return -SRV_ERR_PROTOCOL;
@@ -67,9 +68,10 @@ serve_clnt_submit_run(int sock_fd, int cmd,
   if ((r = serve_clnt_send_packet(sock_fd, out_size, out)) < 0) {
     return r;
   }
-  if ((r = serve_clnt_recv_packet(sock_fd, &in_size, (void**) &in)) < 0) {
+  if ((r = serve_clnt_recv_packet(sock_fd, &in_size, &void_in)) < 0) {
     return r;
   }
+  in = void_in;
   if (in->id < 0) {
     r = in->id;
     xfree(in);
