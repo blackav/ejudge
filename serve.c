@@ -109,6 +109,9 @@ static struct client_state *client_first;
 static struct client_state *client_last;
 static int                  client_serial_id = 1;
 
+static int cmdline_socket_fd = -1;
+static time_t last_activity_time = 0;
+
 static struct client_state *
 client_new_state(int fd)
 {
@@ -384,6 +387,27 @@ update_status_file(int force_flag)
 }
 
 static int
+check_cnts_caps(int user_id, int bit)
+{
+  struct contest_desc *cnts = 0;
+  opcap_t caps;
+  int errcode = 0;
+  unsigned char const *login = 0;
+
+  if ((errcode = contests_get(global->contest_id, &cnts)) < 0) {
+    err("contests_get(%d): %s", global->contest_id,
+        contests_strerror(-errcode));
+    return 0;
+  }
+  login = teamdb_get_login(user_id);
+  if (!login || !*login) return 0;
+
+  if (opcaps_find(&cnts->capabilities, login, &caps) < 0) return 0;
+  if (opcaps_check(caps, bit) < 0) return 0;
+  return 1;
+}
+
+static int
 check_team_quota(int teamid, unsigned int size)
 {
   int num;
@@ -642,91 +666,10 @@ cmd_team_get_archive(struct client_state *p, int len,
 }
 
 static void
-cmd_team_list_runs(struct client_state *p, int len,
-                   struct prot_serve_pkt_list_runs *pkt)
-{
-  FILE *f = 0;
-  struct client_state *q = 0;
-  unsigned char *html_ptr = 0;
-  size_t html_len = 0;
-
-  if (get_peer_local_user(p) < 0) return;
-
-  if (len < sizeof(*pkt)) {
-    new_bad_packet(p, "cmd_team_list_runs: packet is too small: %d", len);
-    return;
-  }
-  if (strlen(pkt->data) != pkt->form_start_len) {
-    new_bad_packet(p, "cmd_team_list_runs: form_start_len mismatch");
-    return;
-  }
-  if (len != sizeof(*pkt) + pkt->form_start_len) {
-    new_bad_packet(p, "cmd_team_list_runs: packet length mismatch");
-    return;
-  }
-  if (pkt->b.id != SRV_CMD_LIST_RUNS && pkt->b.id != SRV_CMD_LIST_CLARS) {
-    new_bad_packet(p, "cmd_team_list_runs: bad command: %d", pkt->b.id);
-    return;
-  }
-
-  info("%d: cmd_team_list_runs: %d, %d, %d, %d, %d", p->id, pkt->b.id,
-       pkt->user_id, pkt->contest_id, pkt->locale_id, pkt->flags);
-  if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
-    err("%d: two client file descriptors required", p->id);
-    new_send_reply(p, -SRV_ERR_PROTOCOL);
-    return;
-  }
-  if (!teamdb_lookup(pkt->user_id)) {
-    err("%d: user_id is invalid", p->id);
-    new_send_reply(p, -SRV_ERR_BAD_USER_ID);
-    return;
-  }
-  if (pkt->contest_id != global->contest_id) {
-    err("%d: contest_id does not match", p->id);
-    new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
-    return;
-  }
-  if (p->user_id && pkt->user_id != p->user_id) {
-    new_send_reply(p, -SRV_ERR_NO_PERMS);
-    err("%d: pkt->user_id != p->user_id", p->id);
-    return;
-  }
-
-  if (!(f = open_memstream((char**) &html_ptr, &html_len))) {
-    err("%d: open_memstream failed", p->id);
-    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
-    return;
-  }
-  setup_locale(pkt->locale_id);
-  switch (pkt->b.id) {
-  case SRV_CMD_LIST_RUNS:
-    //new_write_user_runs(f, pkt->user_id, pkt->flags, pkt->data);
-    break;
-  case SRV_CMD_LIST_CLARS:
-    //new_write_user_clars(f, pkt->user_id, pkt->flags, pkt->data);
-    break;
-  }
-  setup_locale(0);
-  fclose(f);
-
-  q = client_new_state(p->client_fds[0]);
-  q->client_fds[0] = -1;
-  q->client_fds[1] = p->client_fds[1];
-  p->client_fds[0] = -1;
-  p->client_fds[1] = -1;
-  q->state = STATE_AUTOCLOSE;
-  q->write_buf = html_ptr;
-  q->write_len = html_len;
-
-  info("%d: cmd_team_list_runs: ok", p->id);
-  new_send_reply(p, SRV_RPL_OK);
-}
-
-static void
 cmd_team_page(struct client_state *p, int len,
               struct prot_serve_pkt_team_page *pkt)
 {
-  unsigned char *self_url_ptr, *hidden_vars_ptr;
+  unsigned char *self_url_ptr, *hidden_vars_ptr, *extra_args_ptr;
   FILE *f = 0;
   struct client_state *q = 0;
   unsigned char *html_ptr = 0;
@@ -748,7 +691,12 @@ cmd_team_page(struct client_state *p, int len,
     new_bad_packet(p, "cmd_team_page: hidden_vars_len mismatch");
     return;
   }
-  if (len != sizeof(*pkt) + pkt->self_url_len + pkt->hidden_vars_len) {
+  extra_args_ptr = hidden_vars_ptr + pkt->hidden_vars_len + 1;
+  if (strlen(extra_args_ptr) != pkt->extra_args_len) {
+    new_bad_packet(p, "cmd_team_page: extra_args_len mismatch");
+    return;
+  }
+  if (len != sizeof(*pkt) + pkt->self_url_len + pkt->hidden_vars_len + pkt->extra_args_len) {
     new_bad_packet(p, "cmd_team_page: packet length mismatch");
     return;
   }
@@ -770,7 +718,7 @@ cmd_team_page(struct client_state *p, int len,
   write_team_page(f, p->user_id,
                   pkt->sid_mode, p->cookie,
                   (pkt->flags & 1), (pkt->flags & 2) >> 1,
-                  self_url_ptr, hidden_vars_ptr,
+                  self_url_ptr, hidden_vars_ptr, extra_args_ptr,
                   contest_start_time, contest_stop_time);
   setup_locale(0);
   fclose(f);
@@ -798,6 +746,7 @@ cmd_master_page(struct client_state *p, int len,
                 struct prot_serve_pkt_master_page *pkt)
 {
   unsigned char *self_url_ptr, *filter_expr_ptr, *hidden_vars_ptr;
+  unsigned char *extra_args_ptr;
   FILE *f;
   unsigned char *html_ptr = 0;
   size_t html_len = 0;
@@ -824,7 +773,12 @@ cmd_master_page(struct client_state *p, int len,
     new_bad_packet(p, "cmd_master_page: hidden_vars_len mismatch");
     return;
   }
-  if (len != sizeof(*pkt) + pkt->self_url_len + pkt->filter_expr_len + pkt->hidden_vars_len) {
+  extra_args_ptr = hidden_vars_ptr + pkt->hidden_vars_len + 1;
+  if (strlen(extra_args_ptr) != pkt->extra_args_len) {
+    new_bad_packet(p, "cmd_master_page: extra_args_len mismatch");
+    return;
+  }
+  if (len != sizeof(*pkt) + pkt->self_url_len + pkt->filter_expr_len + pkt->hidden_vars_len + pkt->extra_args_len) {
     new_bad_packet(p, "cmd_master_page: packet length mismatch");
     return;
   }
@@ -878,7 +832,8 @@ cmd_master_page(struct client_state *p, int len,
                     pkt->sid_mode, p->cookie,
                     pkt->first_run, pkt->last_run,
                     pkt->first_clar, pkt->last_clar,
-                    self_url_ptr, filter_expr_ptr, hidden_vars_ptr);
+                    self_url_ptr, filter_expr_ptr, hidden_vars_ptr,
+                    extra_args_ptr);
   /* setup_locale(0); */
   fclose(f);
 
@@ -904,7 +859,7 @@ static void
 cmd_priv_standings(struct client_state *p, int len,
                    struct prot_serve_pkt_standings *pkt)
 {
-  unsigned char *self_url_ptr, *hidden_vars_ptr;
+  unsigned char *self_url_ptr, *hidden_vars_ptr, *extra_args_ptr;
   FILE *f;
   unsigned char *html_ptr = 0;
   size_t html_len = 0;
@@ -926,7 +881,12 @@ cmd_priv_standings(struct client_state *p, int len,
     new_bad_packet(p, "priv_standings: hidden_vars_len mismatch");
     return;
   }
-  if (len != sizeof(*pkt) + pkt->self_url_len + pkt->hidden_vars_len) {
+  extra_args_ptr = hidden_vars_ptr + pkt->hidden_vars_len + 1;
+  if (strlen(extra_args_ptr) != pkt->extra_args_len) {
+    new_bad_packet(p, "priv_standings: extra_args_len mismatch");
+    return;
+  }
+  if (len != sizeof(*pkt) + pkt->self_url_len + pkt->hidden_vars_len + pkt->extra_args_len) {
     new_bad_packet(p, "priv_standings: packet length mismatch");
     return;
   }
@@ -969,6 +929,12 @@ cmd_priv_standings(struct client_state *p, int len,
     err("%d: sid_mode %d is invalid", p->id, pkt->sid_mode);
     return;
   }
+  if (!check_cnts_caps(p->user_id, OPCAP_VIEW_STANDINGS)) {
+    err("%d: user %d has no capability %d for the contest",
+        p->id, p->user_id, OPCAP_VIEW_STANDINGS);
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    return;
+  }
 
   if (!(f = open_memstream((char**) &html_ptr, &html_len))) {
     err("%d: open_memstream failed", p->id);
@@ -977,7 +943,7 @@ cmd_priv_standings(struct client_state *p, int len,
   }
   /* setup_locale(pkt->locale_id); */
   write_priv_standings(f, pkt->sid_mode, p->cookie,
-                       self_url_ptr, hidden_vars_ptr);
+                       self_url_ptr, hidden_vars_ptr, extra_args_ptr);
   /* setup_locale(0); */
   fclose(f);
 
@@ -1003,7 +969,7 @@ static void
 cmd_view(struct client_state *p, int len,
          struct prot_serve_pkt_view *pkt)
 {
-  unsigned char *self_url_ptr, *hidden_vars_ptr;
+  unsigned char *self_url_ptr, *hidden_vars_ptr, *extra_args_ptr;
   unsigned char *html_ptr = 0;
   size_t html_len = 0;
   struct client_state *q;
@@ -1026,7 +992,12 @@ cmd_view(struct client_state *p, int len,
     new_bad_packet(p, "view: hidden_vars_len mismatch");
     return;
   }
-  if (len != sizeof(*pkt) + pkt->self_url_len + pkt->hidden_vars_len) {
+  extra_args_ptr = hidden_vars_ptr + pkt->hidden_vars_len + 1;
+  if (strlen(extra_args_ptr) != pkt->extra_args_len) {
+    new_bad_packet(p, "view: extra_args_len mismatch");
+    return;
+  }
+  if (len != sizeof(*pkt) + pkt->self_url_len + pkt->hidden_vars_len + pkt->extra_args_len) {
     new_bad_packet(p, "view: packet length mismatch");
     return;
   }
@@ -1050,10 +1021,18 @@ cmd_view(struct client_state *p, int len,
       r = -SRV_ERR_NO_PERMS;
       break;
     }
+
+    if (!check_cnts_caps(p->user_id, OPCAP_VIEW_SOURCE)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_VIEW_SOURCE);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+
     r = write_priv_source(f, p->user_id, p->priv_level,
                           pkt->sid_mode, p->cookie,
                           self_url_ptr, hidden_vars_ptr,
-                          pkt->item);
+                          extra_args_ptr, pkt->item);
     break;
   case SRV_CMD_VIEW_REPORT:
     if (!p->priv_level) {
@@ -1061,9 +1040,17 @@ cmd_view(struct client_state *p, int len,
       r = -SRV_ERR_NO_PERMS;
       break;
     }
+
+    if (!check_cnts_caps(p->user_id, OPCAP_VIEW_REPORT)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_VIEW_REPORT);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+
     r = write_priv_report(f, p->user_id, p->priv_level,
                           pkt->sid_mode, p->cookie,
-                          self_url_ptr, hidden_vars_ptr,
+                          self_url_ptr, hidden_vars_ptr, extra_args_ptr,
                           pkt->item);
     break;
   case SRV_CMD_VIEW_CLAR:
@@ -1072,9 +1059,17 @@ cmd_view(struct client_state *p, int len,
       r = -SRV_ERR_NO_PERMS;
       break;
     }
+
+    if (!check_cnts_caps(p->user_id, OPCAP_VIEW_CLAR)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_VIEW_CLAR);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+
     r = write_priv_clar(f, p->user_id, p->priv_level,
                         pkt->sid_mode, p->cookie,
-                        self_url_ptr, hidden_vars_ptr,
+                        self_url_ptr, hidden_vars_ptr, extra_args_ptr,
                         pkt->item);
     if (p->priv_level == PRIV_LEVEL_JUDGE) {
       int flags = 1;
@@ -1092,9 +1087,17 @@ cmd_view(struct client_state *p, int len,
       r = -SRV_ERR_NO_PERMS;
       break;
     }
+
+    if (!check_cnts_caps(p->user_id, OPCAP_LIST_CONTEST_USERS)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_LIST_CONTEST_USERS);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+
     r = write_priv_users(f, p->user_id, p->priv_level,
                          pkt->sid_mode, p->cookie,
-                         self_url_ptr, hidden_vars_ptr);
+                         self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SRV_CMD_DUMP_RUNS:
     if (!p->priv_level) {
@@ -1102,6 +1105,14 @@ cmd_view(struct client_state *p, int len,
       r = -SRV_ERR_NO_PERMS;
       break;
     }
+
+    if (!check_cnts_caps(p->user_id, OPCAP_DUMP_RUNS)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_DUMP_RUNS);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+
     write_runs_dump(f, global->charset);
     break;
   case SRV_CMD_DUMP_STANDINGS:
@@ -1110,6 +1121,14 @@ cmd_view(struct client_state *p, int len,
       r = -SRV_ERR_NO_PERMS;
       break;
     }
+
+    if (!check_cnts_caps(p->user_id, OPCAP_DUMP_STANDINGS)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_DUMP_STANDINGS);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+
     write_raw_standings(f, global->charset);
     break;
   default:
@@ -1180,8 +1199,8 @@ cmd_message(struct client_state *p, int len,
     return;
   }
 
-  info("%d: cmd_message: %d %d %d", p->id, pkt->b.id, pkt->dest_user_id,
-       pkt->ref_clar_id);
+  info("%d: cmd_message: %d %d %d %s", p->id, pkt->b.id, pkt->dest_user_id,
+       pkt->ref_clar_id, dest_login_ptr);
   switch (pkt->b.id) {
   case SRV_CMD_PRIV_MSG:
     if (p->priv_level <= PRIV_LEVEL_OBSERVER) {
@@ -1189,6 +1208,14 @@ cmd_message(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_NO_PERMS);
       return;
     }
+
+    if (!check_cnts_caps(p->user_id, OPCAP_NEW_MESSAGE)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_NEW_MESSAGE);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
     dest_uid = pkt->dest_user_id;
     if (dest_uid == -1) {
       if (!strcasecmp(dest_login_ptr, "all")) {
@@ -1242,6 +1269,13 @@ cmd_message(struct client_state *p, int len,
       return;
     }
 
+    if (!check_cnts_caps(p->user_id, OPCAP_REPLY_MESSAGE)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_REPLY_MESSAGE);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
     // subj_ptr, dest_login_ptr to be ignored
     // if dest_user_id == 0, the reply is sent to all
     // ref_clar_id to be processed
@@ -1291,58 +1325,6 @@ cmd_message(struct client_state *p, int len,
     new_bad_packet(p, "cmd_message: unsupported command %d", pkt->b.id);
     return;
   }
-}
-
-static void
-cmd_userlist_cmd(struct client_state *p, int len,
-                 struct prot_serve_packet *pkt)
-{
-  if (get_peer_local_user(p) < 0) return;
-
-  if (len != sizeof(*pkt)) {
-    new_bad_packet(p, "userlist_cmd: bad packet length: %d", len);
-    return;
-  }
-
-  info("%d: userlist_cmd: %d", p->id, pkt->id);
-  if (p->priv_level != PRIV_LEVEL_ADMIN) {
-    err("%d: insufficient privilege level", p->id);
-    new_send_reply(p, -SRV_ERR_NO_PERMS);
-    return;
-  }
-  if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
-    err("%d: two client file descriptors required", p->id);
-    new_send_reply(p, -SRV_ERR_PROTOCOL);
-    return;
-  }
-
-  /* serve process will block until this operation completes! */
-  switch (pkt->id) {
-  case SRV_CMD_GEN_PASSWORDS:
-    if (teamdb_regenerate_passwords(p->client_fds[0]) < 0) {
-      close(p->client_fds[0]); close(p->client_fds[1]);
-      p->client_fds[0] = -1; p->client_fds[1] = -1;
-      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
-      return;
-    }
-    break;
-  case SRV_CMD_DUMP_USERS:
-    if (teamdb_dump_database(p->client_fds[0]) < 0) {
-      close(p->client_fds[0]); close(p->client_fds[1]);
-      p->client_fds[0] = -1; p->client_fds[1] = -1;
-      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
-      return;
-    }
-    break;
-  default:
-    err("%d: invalid command %d", p->id, pkt->id);
-    new_send_reply(p, -SRV_ERR_PROTOCOL);
-    return;
-  }
-
-  close(p->client_fds[0]); close(p->client_fds[1]);
-  p->client_fds[0] = -1; p->client_fds[1] = -1;
-  new_send_reply(p, SRV_RPL_OK);
 }
 
 static void
@@ -1856,16 +1838,37 @@ cmd_priv_command_0(struct client_state *p, int len,
   }
   switch (pkt->b.id) {
   case SRV_CMD_SUSPEND:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
     clients_suspended = 1;
     update_status_file(1);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_RESUME:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
     clients_suspended = 0;
     update_status_file(1);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_SET_JUDGING_MODE:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
     if (global->score_system_val != SCORE_OLYMPIAD) {
       new_send_reply(p, -SRV_ERR_NOT_SUPPORTED);
       return;
@@ -1879,10 +1882,24 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_UPDATE_STAND:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
     update_standings_file(1);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_RESET:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
     /* FIXME: we need to reset all the components (compile, serve) as well */
     /* reset run log */
     run_reset();
@@ -1897,6 +1914,13 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_START:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
     if (contest_stop_time) {
       err("%d: contest already finished", p->id);
       new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
@@ -1914,6 +1938,13 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_STOP:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
     if (contest_stop_time) {
       err("%d: contest already finished", p->id);
       new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
@@ -1931,10 +1962,24 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_REJUDGE_ALL:
+    if (!check_cnts_caps(p->user_id, OPCAP_EDIT_RUN)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
     do_rejudge_all();
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_REJUDGE_PROBLEM:
+    if (!check_cnts_caps(p->user_id, OPCAP_EDIT_RUN)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
     if (pkt->v.i < 1 || pkt->v.i > max_prob || !probs[pkt->v.i]) {
       err("%d: invalid problem id %d", p->id, pkt->v.i);
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
@@ -1944,6 +1989,13 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_SCHEDULE:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
     if (contest_stop_time) {
       err("%d: contest already finished", p->id);
       new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
@@ -1962,6 +2014,13 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_DURATION:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
     if (contest_stop_time) {
       err("%d: contest already finished", p->id);
       new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
@@ -1989,33 +2048,26 @@ cmd_priv_command_0(struct client_state *p, int len,
     update_status_file(1);
     new_send_reply(p, SRV_RPL_OK);
     return;
-  case SRV_CMD_TOGGLE_VISIBILITY:
-  case SRV_CMD_TOGGLE_BAN:
-    if (!teamdb_lookup(pkt->v.i)) {
-      err("%d: invalid user id %d", p->id, pkt->v.i);
-      new_send_reply(p, -SRV_ERR_BAD_USER_ID);
-      return;
-    } else {
-      unsigned int flags = USERLIST_UC_INVISIBLE;
-
-      if (pkt->b.id == SRV_CMD_TOGGLE_BAN) {
-        flags = USERLIST_UC_BANNED;
-      }
-      if (teamdb_toggle_flags(pkt->v.i, global->contest_id, flags) < 0) {
-        new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
-        return;
-      }
-
-      info("%d: user %d flags %d toggled", p->id, pkt->v.i, flags);
-      new_send_reply(p, SRV_RPL_OK);
-    }
-    return;
   case SRV_CMD_SQUEEZE_RUNS:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
     do_squeeze_runs();
     info("%d: run log is squeezed", p->id);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_CLEAR_RUN:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
     if (pkt->v.i < 0 || pkt->v.i >= run_get_total()) {
       err("%d: invalid run id %d", p->id, pkt->v.i);
       new_send_reply(p, -SRV_ERR_BAD_RUN_ID);
@@ -2030,6 +2082,13 @@ cmd_priv_command_0(struct client_state *p, int len,
     return;
 
   case SRV_CMD_CONTINUE:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
     if (!contest_start_time) {
       err("%d: contest is not started", p->id);
       new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
@@ -2145,6 +2204,15 @@ cmd_edit_run(struct client_state *p, int len,
     }
     run.status = pkt->status;
     run_flags |= RUN_ENTRY_STATUS;
+  }
+
+  // check capabilities
+  if (!check_cnts_caps(p->user_id, OPCAP_EDIT_RUN)
+      && (run_flags != RUN_ENTRY_STATUS || run.status != RUN_REJUDGE
+          || !check_cnts_caps(p->user_id, OPCAP_REJUDGE_RUN))) {
+    err("%d: user %d has no capability to edit run", p->id, p->user_id);
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    return;
   }
 
   if (run_set_entry(pkt->run_id, run_flags, &run) < 0) {
@@ -2531,8 +2599,6 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
 {
   [SRV_CMD_PASS_FD] { cmd_pass_descriptors },
   [SRV_CMD_GET_ARCHIVE] { cmd_team_get_archive },
-  [SRV_CMD_LIST_RUNS] { cmd_team_list_runs },
-  [SRV_CMD_LIST_CLARS] { cmd_team_list_runs },
   [SRV_CMD_SHOW_CLAR] { cmd_team_show_item },
   [SRV_CMD_SHOW_SOURCE] { cmd_team_show_item },
   [SRV_CMD_SHOW_REPORT] { cmd_team_show_item },
@@ -2547,7 +2613,6 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_VIEW_USERS] { cmd_view },
   [SRV_CMD_PRIV_MSG] { cmd_message },
   [SRV_CMD_PRIV_REPLY] { cmd_message },
-  [SRV_CMD_GEN_PASSWORDS] { cmd_userlist_cmd },
   [SRV_CMD_SUSPEND] { cmd_priv_command_0 },
   [SRV_CMD_RESUME] { cmd_priv_command_0 },
   [SRV_CMD_UPDATE_STAND] { cmd_priv_command_0 },
@@ -2559,8 +2624,6 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_SCHEDULE] { cmd_priv_command_0 },
   [SRV_CMD_DURATION] { cmd_priv_command_0 },
   [SRV_CMD_EDIT_RUN] { cmd_edit_run },
-  [SRV_CMD_TOGGLE_VISIBILITY] { cmd_priv_command_0 },
-  [SRV_CMD_TOGGLE_BAN] { cmd_priv_command_0 },
   [SRV_CMD_VIRTUAL_START] { cmd_command_0 },
   [SRV_CMD_VIRTUAL_STOP] { cmd_command_0 },
   [SRV_CMD_VIRTUAL_STANDINGS] { cmd_team_show_item },
@@ -2568,7 +2631,6 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_CLEAR_RUN] { cmd_priv_command_0 },
   [SRV_CMD_SQUEEZE_RUNS] { cmd_priv_command_0 },
   [SRV_CMD_DUMP_RUNS] { cmd_view },
-  [SRV_CMD_DUMP_USERS] { cmd_userlist_cmd },
   [SRV_CMD_DUMP_STANDINGS] { cmd_view },
   [SRV_CMD_SET_JUDGING_MODE] { cmd_priv_command_0 },
   [SRV_CMD_CONTINUE] { cmd_priv_command_0 },
@@ -2603,6 +2665,11 @@ static int
 create_socket(void)
 {
   struct sockaddr_un addr;
+
+  if (cmdline_socket_fd >= 0) {
+    socket_fd = cmdline_socket_fd;
+    return 0;
+  }
 
   if ((socket_fd = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
     err("socket() failed :%s", os_ErrorMsg());
@@ -2691,6 +2758,8 @@ check_sockets(int may_wait_flag)
   }
   may_wait_flag = 1;
 
+  last_activity_time = current_time;
+  
   while (FD_ISSET(socket_fd, &rset)) {
     memset(&addr, 0, sizeof(addr));
     addrlen = sizeof(addr);
@@ -3000,6 +3069,8 @@ do_loop(void)
   if (create_socket() < 0) return -1;
 
   current_time = time(0);
+  last_activity_time = current_time;
+
   if (!global->virtual) {
     p = run_get_fog_period(time(0), global->board_fog_time,
                            global->board_unfog_time);
@@ -3021,6 +3092,11 @@ do_loop(void)
     current_time = time(0);
 
     if (interrupt_signaled && may_safely_exit()) {
+      return 0;
+    }
+    if (cmdline_socket_fd >= 0 && global->inactivity_timeout > 0
+        && current_time > last_activity_time + global->inactivity_timeout) {
+      info("no activity for %d seconds, exiting", global->inactivity_timeout);
       return 0;
     }
 
@@ -3111,6 +3187,16 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "-E")) {
       i++;
       p_flags |= PREPARE_USE_CPP;
+    } else if (!strncmp(argv[i], "-S", 2)) {
+      int x = 0, n = 0;
+
+      if (sscanf(argv[i] + 2, "%d%n", &x, &n) != 1
+          || argv[i][n+2] || x < 0 || x > 10000) {
+        err("invalid parameter for -S");
+        return 1;
+      }
+      i++;
+      cmdline_socket_fd = x;
     } else break;
   }
   if (i >= argc) goto print_usage;
@@ -3145,7 +3231,7 @@ main(int argc, char *argv[])
   if (clar_open(global->clar_log_file, 0) < 0) return 1;
   i = do_loop();
   if (i < 0) i = 1;
-  if (socket_name) {
+  if (socket_name && cmdline_socket_fd < 0) {
     unlink(socket_name);
   }
   return i;
@@ -3154,6 +3240,7 @@ main(int argc, char *argv[])
   printf("Usage: %s [ OPTS ] config-file\n", argv[0]);
   printf("  -T     - print configuration and exit\n");
   printf("  -E     - enable C preprocessor\n");
+  printf("  -SSOCK - set a socket fd\n");
   printf("  -DDEF  - define a symbol for preprocessor\n");
   return code;
 }
@@ -3162,7 +3249,6 @@ main(int argc, char *argv[])
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "fd_set")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
 
