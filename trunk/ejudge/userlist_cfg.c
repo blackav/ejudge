@@ -44,6 +44,14 @@ enum
     TG_SERVE_PATH,
     TG_L10N_DIR,
     TG_RUN_PATH,
+    TG_CHARSET,
+    TG_CONFIG_DIR,
+    TG_CONTESTS_HOME_DIR,
+    TG_FULL_CGI_DATA_DIR,
+    TG_COMPILE_HOME_DIR,
+    TG_TESTING_WORK_DIR,
+    TG_SCRIPT_DIR,
+    TG_SERIALIZATION_KEY,
   };
 enum
   {
@@ -53,6 +61,7 @@ enum
     AT_SYSTEM_USER,
     AT_LOCAL_USER,
     AT_LOGIN,
+    AT_EJUDGE_USER,
   };
 
 static char const * const tag_map[] =
@@ -72,6 +81,14 @@ static char const * const tag_map[] =
   "serve_path",
   "l10n_dir",
   "run_path",
+  "charset",
+  "config_dir",
+  "contests_home_dir",
+  "full_cgi_data_dir",
+  "compile_home_dir",
+  "testing_work_dir",
+  "script_dir",
+  "serialization_key",
 
   0
 };
@@ -85,6 +102,7 @@ static char const * const attn_map[] =
   "system_user",
   "local_user",
   "login",
+  "ejudge_user",
 
   0
 };
@@ -106,6 +124,14 @@ tree_alloc_func(int tag)
   case TG_SERVE_PATH:
   case TG_L10N_DIR:
   case TG_RUN_PATH:
+  case TG_CHARSET:
+  case TG_CONFIG_DIR:
+  case TG_CONTESTS_HOME_DIR:
+  case TG_FULL_CGI_DATA_DIR:
+  case TG_COMPILE_HOME_DIR:
+  case TG_TESTING_WORK_DIR:
+  case TG_SCRIPT_DIR:
+  case TG_SERIALIZATION_KEY:
     return xcalloc(1, sizeof(struct xml_tree));
   case TG_MAP:
     return xcalloc(1, sizeof(struct userlist_cfg_user_map));
@@ -240,6 +266,12 @@ parse_user_map(char const *path, struct xml_tree *p)
         m->system_user_str = a->text; a->text = 0;
         break;
       case AT_LOCAL_USER:
+      case AT_EJUDGE_USER:
+        if (m->local_user_str) {
+          err("%s:%d:%d: attribute %s already defined", path, a->line,
+              a->column, attn_map[a->tag]);
+          return 0;
+        }
         m->local_user_str = a->text; a->text = 0;
         break;
       default:
@@ -384,11 +416,51 @@ userlist_cfg_parse(char const *path)
     case TG_L10N_DIR:
       if (handle_final_tag(path, p, &cfg->l10n_dir) < 0) goto failed;
       break;
+    case TG_CHARSET:
+      if (handle_final_tag(path, p, &cfg->charset) < 0) goto failed;
+      break;
+    case TG_CONFIG_DIR:
+      if (handle_final_tag(path, p, &cfg->config_dir) < 0) goto failed;
+      break;
+    case TG_CONTESTS_HOME_DIR:
+      if (handle_final_tag(path, p, &cfg->contests_home_dir) < 0) goto failed;
+      break;
+    case TG_FULL_CGI_DATA_DIR:
+      if (handle_final_tag(path, p, &cfg->full_cgi_data_dir) < 0) goto failed;
+      break;
+    case TG_COMPILE_HOME_DIR:
+      if (handle_final_tag(path, p, &cfg->compile_home_dir) < 0) goto failed;
+      break;
+    case TG_TESTING_WORK_DIR:
+      if (handle_final_tag(path, p, &cfg->testing_work_dir) < 0) goto failed;
+      break;
+    case TG_SCRIPT_DIR:
+      if (handle_final_tag(path, p, &cfg->script_dir) < 0) goto failed;
+      break;
     case TG_USER_MAP:
       if (!(cfg->user_map = parse_user_map(path, p))) goto failed;
       break;
     case TG_CAPS:
       if (parse_capabilities(path, cfg, p) < 0) goto failed;
+      break;
+    case TG_SERIALIZATION_KEY:
+      {
+        int k, n;
+
+        if (cfg->serialization_key) {
+          err("%s:%d:%d: element <%s> already defined",
+              path, p->line, p->column, tag_map[p->tag]);
+          goto failed;
+        }
+        if (!p->text || !p->text[0]
+            || sscanf(p->text, "%d%n", &k, &n) != 1 || p->text[n]
+            || k <= 0 || k >= 32768) {
+          err("%s:%d:%d: element <%s> value is invalid",
+              path, p->line, p->column, tag_map[p->tag]);
+          goto failed;
+        }
+        cfg->serialization_key = k;
+      }
       break;
     default:
       err("%s:%d:%d: element <%s> is invalid here",
