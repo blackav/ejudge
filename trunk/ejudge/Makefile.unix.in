@@ -20,12 +20,14 @@
 CFILES=base64.c cgi.c clar.c clarlog.c clntutil.c compile.c html.c\
   master.c misctext.c mkpasswd.c parsecfg.c pathutl.c prepare.c\
   run.c runlog.c serve.c submit.c team.c teamdb.c xalloc.c\
-  register.c\
+  register.c make-teamdb.c make-teamdb-inet.c send-passwords.c\
+  inetdb.c localdb.c idmap.c\
   unix/exec.c unix/fileutl.c unix/logger.c unix/osdeps.c\
   win32/exec.c win32/fileutl.c win32/logger.c win32/osdeps.c
 
 HFILES=base64.h cgi.h clarlog.h clntutil.h exec.h fileutl.h html.h logger.h\
   misctext.h osdeps.h parsecfg.h pathutl.h prepare.h runlog.h\
+  inetdb.c localdb.c idmap.c\
   teamdb.h xalloc.h version.h\
   unix/unix_fileutl.h
 
@@ -73,7 +75,16 @@ T_OBJECTS = $(T_CFILES:.c=.o)
 REG_CFILES = register.c version.c cgi.c base64.c clntutil.c parsecfg.c misctext.c pathutl.c xalloc.c ${ARCH}/fileutl.c ${ARCH}/logger.c ${ARCH}/osdeps.c
 REG_OBJECTS = ${REG_CFILES:.c=.o}
 
-TARGETS=compile$(EXESFX) serve$(EXESFX) submit$(EXESFX) run$(EXESFX) master$(EXESFX) clar$(EXESFX) mkpasswd$(EXESFX) team$(EXESFX) register${EXESFX}
+MT_CFILES = make-teamdb.c localdb.c idmap.c xalloc.c
+MT_OBJECTS = ${MT_CFILES:.c=.o}
+
+MTI_CFILES = make-teamdb-inet.c inetdb.c xalloc.c
+MTI_OBJECTS = ${MTI_CFILES:.c=.o}
+
+SP_CFILES = send-passwords.c inetdb.c teamdb.c pathutl.c ${ARCH}/logger.c base64.c ${ARCH}/osdeps.c ${ARCH}/fileutl.c xalloc.c
+SP_OBJECTS = ${SP_CFILES:.c=.o}
+
+TARGETS=compile$(EXESFX) serve$(EXESFX) submit$(EXESFX) run$(EXESFX) master$(EXESFX) clar$(EXESFX) mkpasswd$(EXESFX) team$(EXESFX) register${EXESFX} make-teamdb${EXESFX} make-teamdb-inet${EXESFX} send-passwords${EXESFX}
 
 all: $(TARGETS)
 
@@ -109,6 +120,18 @@ team: $(T_OBJECTS)
 
 register.exe:
 register: ${REG_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
+
+make-teamdb.exe:
+make-teamdb: ${MT_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
+
+make-teamdb-inet.exe:
+make-teamdb-inet: ${MTI_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
+
+send-passwords.exe:
+send-passwords: ${SP_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
 
 clean:
@@ -173,9 +196,15 @@ team.o: team.c cgi.h teamdb.h parsecfg.h pathutl.h osdeps.h logger.h \
  xalloc.h fileutl.h clntutil.h clarlog.h base64.h
 teamdb.o: teamdb.c teamdb.h pathutl.h osdeps.h logger.h xalloc.h \
  base64.h
+idmap.o: idmap.c idmap.h xalloc.h
+localdb.o: localdb.c localdb.h xalloc.h
+inetdb.o: inetdb.c inetdb.h xalloc.h
 xalloc.o: xalloc.c xalloc.h
 register.o: register.c cgi.h fileutl.h pathutl.h xalloc.h logger.h \
  base64.h osdeps.h parsecfg.h clntutil.h
+send-passwords.o: send-passwords.c inetdb.h teamdb.h fileutl.h
+make-teamdb.o: make-teamdb.c idmap.h localdb.h
+make-teamdb-inet.o: make-teamdb-inet.c inetdb.h
 
 unix/exec.o: unix/exec.c exec.h xalloc.h logger.h osdeps.h
 unix/fileutl.o: unix/fileutl.c fileutl.h unix/unix_fileutl.h logger.h \
