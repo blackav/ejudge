@@ -1,3 +1,72 @@
+2003-02-24  Alexander Chernov  <cher@ispras.ru>
+
+	* serve.c:
+	(update_status_file) `continuation_enabled' field of the status file
+	  is handled;
+	(cmd_priv_command_0) command `SRV_CMD_CONTINUE' is supported;
+	(packet_handlers) `SRV_CMD_CONTINUE' is handled.
+
+	* run.c: 
+	(run_tests) testsets are supported.
+
+	* protocol.h:
+	(struct prot_serve_status) new field `continuation_enabled';
+	new command constant `SRV_CMD_CONTINUE'.
+
+	* prepare.h:
+	(struct testset_info) new structure to hold information about
+	  test sets;
+	new global parameter `enable_continue';
+	testsets support added to problem structure.
+
+	* prepare.c: <ctype.h> is included;
+	new global parameter `enable_continue';
+	new global parameter `test_sets';
+	(parse_testsets) new function to parse testset specification;
+	(set_defaults) if scoring system is invalid, configuration parsing
+	  now fails;
+	  testset specifications are parsed.
+
+	* master.c: (confirm_continue) new function;
+	(action_continue) new function;
+	(main) actions CONTINUE and CONTINUE_2 are supported.
+
+	* clntutil.h: new extern variable `server_continuation_enabled'.
+
+	* clntutil.c: new global variable `server_continuation_enabled';
+	(client_check_server_status) `server_continuation_enabled' is read
+	  from the server status file;
+	(client_print_server_status) in master mode and if
+	  `server_continuation_enabled' flag is set, "Continue" button is
+	  printed.
+
+	* client_actions.h: CONTINUE and CONTINUE_2 actions added.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2003-02-16  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare.c:
+	(problem_init_func) default `run_penalty' is set to -1, as 0 is valid
+	  run_penalty;
+	(set_defaults) `0' is valid run_penalty.
+
+	* run.c:
+	(run_tests) abnormal task termination is checked only if error_code
+	  file is not set.
+
+	* userlist-server.c:
+	(get_user_info) removed check, that xml info length is < 65536;
+	(cmd_list_all_users) removed xml data limitation.
+
+	* userlist_proto.h:
+	(struct userlist_pk_xml_data) field `info_len' changed
+	  to type `unsigned int' instead of `unsigned short'.
+
+2003-02-04  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
 2003-02-04  Alexander Chernov  <cher@ispras.ru>
 
 	* serve.c: new global variable `olympiad_judging_mode';
