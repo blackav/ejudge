@@ -44,6 +44,7 @@ struct testinfo
 {
   int            status;	/* the execution status */
   int            code;		/* the process exit code */
+  int            termsig;       /* the termination signal */
   int            score;         /* score gained for this test */
   int            max_score;     /* maximal score for this test */
   unsigned long  times;		/* execution time */
@@ -78,7 +79,7 @@ filter_testers(char *key)
 }
 
 char *
-result2str(int s)
+result2str(int s, int st, int sig)
 {
   static char result2str_buf[1024];
 
@@ -86,6 +87,11 @@ result2str(int s)
   case 0:
     return _("OK");
   case 2:
+    if (st == 256) {
+      sprintf(result2str_buf, "%s (%s)", _("Runtime error"),
+              strsignal(sig));
+      return result2str_buf;
+    }
     return _("Runtime error");
   case 3:
     return _("Time-limit exceeded");
@@ -159,7 +165,7 @@ generate_report(char *report_path, int scores, int max_score)
     if (global->score_system_val == SCORE_KIROV) {
       fprintf(f, _("PARTIAL SOLUTION\n\n"));
     } else {
-      fprintf(f, _("%s, test #%d\n\n"), result2str(status), first_failed);
+      fprintf(f, _("%s, test #%d\n\n"), result2str(status,0,0), first_failed);
     }
   }
   fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
@@ -180,14 +186,14 @@ generate_report(char *report_path, int scores, int max_score)
     fprintf(f, "%-8d%-8d%-12.3f%s%s\n",
 	    i, tests[i].code, (double) tests[i].times / 1000,
             score_buf,
-	    result2str(tests[i].status));
+	    result2str(tests[i].status, tests[i].code, tests[i].termsig));
   }
   fprintf(f, "\n");
 
   i = total_tests - 1;
   for (; i >= 1 && i < total_tests; i += addition) {
     fprintf(f, _("====== Test #%d =======\n"), i);
-    fprintf(f, _("Judgement: %s\n"), result2str(tests[i].status));
+    fprintf(f, _("Judgement: %s\n"), result2str(tests[i].status, 0, 0));
     if (tests[i].output != NULL) {
       fprintf(f, _("--- Output ---\n"));
       print_by_line(f, tests[i].output);
@@ -248,7 +254,7 @@ generate_team_report(char const *report_path, int scores, int max_score)
     if (global->score_system_val == SCORE_KIROV) {
       fprintf(f, _("PARTIAL SOLUTION\n\n"));
     } else {
-      fprintf(f, _("%s, test #%d\n\n"), result2str(status), first_failed);
+      fprintf(f, _("%s, test #%d\n\n"), result2str(status,0,0), first_failed);
     }
   }
   fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
@@ -268,7 +274,7 @@ generate_team_report(char const *report_path, int scores, int max_score)
     fprintf(f, "%-8d%-8d%-12.3f%s%s\n",
 	    i, tests[i].code, (double) tests[i].times / 1000,
             score_buf,
-	    result2str(tests[i].status));
+	    result2str(tests[i].status,0,0));
   }
   fprintf(f, "\n");
 
@@ -414,6 +420,12 @@ run_tests(struct section_tester_data *tst,
     }
 
     if (prb->time_limit > 0) task_SetMaxTime(tsk, prb->time_limit);
+    if (tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
+    if (tst->no_core_dump) task_DisableCoreDump(tsk);
+    if (tst->max_stack_size) task_SetStackSize(tsk, tst->max_stack_size);
+    if (tst->max_data_size) task_SetDataSize(tsk, tst->max_data_size);
+    if (tst->max_vm_size) task_SetVMSize(tsk, tst->max_vm_size);
+
     if (task_Start(tsk) < 0) {
       /* failed to start task */
       status = RUN_CHECK_FAILED;
@@ -451,7 +463,12 @@ run_tests(struct section_tester_data *tst,
         if (error_code[0]) {
           tests[cur_test].code = ec;
         } else {
-          tests[cur_test].code = task_ExitCode(tsk);
+          if (task_Status(tsk) == TSK_SIGNALED) {
+            tests[cur_test].code = 256; /* FIXME: magic */
+            tests[cur_test].termsig = task_TermSignal(tsk);
+          } else {
+            tests[cur_test].code = task_ExitCode(tsk);
+          }
         }
         failed_test = cur_test;
         status = RUN_RUN_TIME_ERR;
