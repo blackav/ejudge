@@ -1,3 +1,116 @@
+2001-05-14  Alexander Chernov  <cher@ispras.ru>
+
+	* html.c: 1) new `write_judge_teams_view' to write to the client the
+	information about all the registered teams;
+	2) new `write_judge_one_team_view' to write to the client
+	(detailed?) information about a particular team.
+
+	* html.h: prototypes for new functions `write_judge_teams_view'
+	and `write_judge_one_team_view' added.
+
+	* makefile: added new `register' dependencies.
+
+	* master.c: 1) added support for viewing and editing team information;
+	2) new `add_team_if_asked' to generate NEWTEAM command to server,
+	   if correspoding parameter is set;
+	3) new `do_team_action_if_asked' to perform various team editing
+	   actions (CHGNAME, CHGLOGIN, CHGPASSWD, CHGBAN, CHGVIS),
+	   if correspoding parameters are set;
+	4) new `view_one_team_if_asked' to send VTEAM command to server
+	   and display the results;
+	5) new `view_teams_if_asked' to sent MTEAMS or JTEAMS command
+	   and display the received list of all the teams;
+	6) new `print_teamview_button' to print `view teams' button.
+
+	* prepare.c:
+	new integer parameters `max_line_length', `max_file_length'
+	to limit the length of line and the size of file to be inserted
+	into run report generaten in `run' module.
+	Default values are 4096 and 65535 bytes.
+
+	* prepare.h:
+	new integer parameters `max_line_length', `max_file_length'
+	to limit the length of line and the size of file to be inserted
+	into run report generaten in `run' module.
+
+	* register.c:
+	some code added (from master), but still not yet completed.
+
+	* run.c: 1) new `print_by_line' to cut excessively long files and
+	excessively long lines of program output streams;
+	2) in `generate_report' all tested program output is passed
+	through `print_by_line' function.
+
+	* serve.c: 1) new judge's commands added:
+	        MTEAMS          - view all the teams (master's mode);
+	        JTEAMS          - view all the teams (judge's mode);
+	        VTEAM           - view a particular team;
+	        CHGLOGIN        - change the team's login;
+	        CHGNAME         - change the team's name;
+	        CHGBAN          - change the team's banned status;
+	        CHGVIS          - change the team's visibility status;
+	        CHGPASSWD       - change the team's password;
+	        NEWTEAM         - add a new team;
+	2) new function `judge_add_team' implements `NEWTEAM' command;
+	3) new function `do_add_team' parses data passed by the master program
+	   to prepare call of `teamdb_add_team';
+	4) new function `judge_change_team_ban' implements `CHGBAN' command;
+	5) new function `judge_change_team_vis' implements `CHGVIS' command;
+	6) new `judge_change_team_password' implements `CHGPASSWD' command;
+	7) new `judge_change_team_name' implements `CHGNAME' command;
+	8) new `judge_change_team_login' implements `CHGLOGIN' command;
+	9) new `judge_view_one_team' implements `VTEAM' command;
+	10) new `judge_view_teams' implemets `MTEAMS' and `JTEAMS' commands;
+	11) some rearrangements in error reporting code
+	(report_bad_packet, report_error - new function).
+
+	* teamdb.c: 1) transaction mode is supported for functions which update
+	teamdb base. In transaction mode previous state of base
+	is saved, so undo operation is possible. Transaction mode
+	is entered by calling `teamdb_transaction'. Function
+	`teamdb_rollback' rolls back the changes, function
+	`teamdb_commit' leaves transaction mode with all changes
+	performed;
+	2) new function `teamdb_add_team' to add new team to database.
+	The function performs all the necessary range checkings;
+	3) new function `teamdb_toggle_vis' toggles visibility
+	flag from normal to TEAM_INVISIBLE and back;
+	4) new function `teamdb_toggle_ban' toggles availability flag
+	from normal to TEAM_BANNED and back;
+	5) new function `teamdb_change_login' changes login field for
+	the given team;
+	6) new function `teamdb_change_name' changes name field for
+	the given team;
+	7) new function `teamdb_is_valid_login' checks that the given
+	string does not contain characters, invalid for team login;
+	8) new function `teamdb_is_valid_name' checks that the given
+	string may be team's name (does not contain invalid chars);
+	9) new function `teamdb_get_total_teams' returns the total number
+	of registered teams;
+	10) new function `teamdb_write_teamdb' saves teamdb file to disk.
+
+	* teamdb.h: new functions prototypes: teamdb_write_teamdb,
+	teamdb_get_total_teams, teamdb_is_valid_login, teamdb_is_valid_name,
+	teamdb_change_login, teamdb_change_name, teamdb_toggle_ban,
+	teamdb_toggle_vis, teamdb_transaction, teamdb_commit, teamdb_rollback,
+	teamdb_add_team.
+
+2001-05-13  Alexander Chernov  <cher@ispras.ru>
+
+	* TODO: put reference to html/index.html instead of previous content.
+
+2001-05-09  Alexander Chernov  <cher@ispras.ru>
+
+	* parsecfg.c: '%' and ';' made comment characters
+
+2001-05-07  Alexander Chernov  <cher@ispras.ru>
+
+	* makefile: basic compilation rules for `register' added.
+
+2001-05-06  Alexander Chernov  <cher@ispras.ru>
+
+	* register.c: initial revision
+
 2001-05-02  Alexander Chernov  <cher@ispras.ru>
 
 	* VERSION: boosted to 1.3
