@@ -1299,11 +1299,12 @@ write_priv_users(FILE *f, int user_id, int priv_level,
                  unsigned char const *extra_args)
 {
   int tot_teams, i, max_team, flags, runs_num = 0, clars_num = 0;
-  unsigned char const *txt_login, *txt_name, *t;
+  unsigned char const *txt_login, *txt_name;
   unsigned char *html_login, *html_name;
   size_t html_login_len, html_name_len, runs_total = 0, clars_total = 0;
   unsigned char href_buf[128];
   struct teamdb_export info;
+  unsigned char team_modes[128];
 
   tot_teams = teamdb_get_total_teams();
   max_team = teamdb_get_max_team_id();
@@ -1322,6 +1323,7 @@ write_priv_users(FILE *f, int user_id, int priv_level,
           "<th>%s</th>"
           "<th>%s</th>"
           "<th>%s</th>"
+          "<th>&nbsp;</th>"
           "<th>&nbsp;</th>"
           "<th>&nbsp;</th>"
           "</tr>\n",
@@ -1367,16 +1369,22 @@ write_priv_users(FILE *f, int user_id, int priv_level,
     fprintf(f, "<td>%s</td>", html_name);
 
     flags = teamdb_get_flags(i);
-    if ((flags & TEAM_INVISIBLE) && (flags & TEAM_BANNED)) {
-      t = "<b>banned</b>,<i>invisible</i>";
-    } else if ((flags & TEAM_INVISIBLE)) {
-      t = "<i>invisible</i>";
-    } else if ((flags & TEAM_BANNED)) {
-      t = "<b>banned</b>";
-    } else {
-      t = "&nbsp;";
+    team_modes[0] = 0;
+    if ((flags & TEAM_BANNED)) {
+      strcpy(team_modes, "banned");
     }
-    fprintf(f, "<td>%s</td>", t);
+    if ((flags & TEAM_INVISIBLE)) {
+      if (team_modes[0]) strcat(team_modes, ",");
+      strcat(team_modes, "invisible");
+    }
+    if ((flags & TEAM_LOCKED)) {
+      if (team_modes[0]) strcat(team_modes, ",");
+      strcat(team_modes, "locked");
+    }
+    if (!team_modes[0]) {
+      strcpy(team_modes, "&nbsp;");
+    }
+    fprintf(f, "<td>%s</td>", team_modes);
 
     fprintf(f,
             "<td>%d</td>"
@@ -1393,6 +1401,12 @@ write_priv_users(FILE *f, int user_id, int priv_level,
 
     if (priv_level == PRIV_LEVEL_ADMIN) {
       fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_USER_TOGGLE_VISIBILITY, (flags & TEAM_INVISIBLE)?_("Make visible"):_("Make invisible"));
+    } else {
+      fprintf(f, "<td>&nbsp;</td>");
+    }
+
+    if (priv_level == PRIV_LEVEL_ADMIN) {
+      fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_USER_TOGGLE_LOCK, (flags & TEAM_LOCKED)?_("Unlock"):_("Lock"));
     } else {
       fprintf(f, "<td>&nbsp;</td>");
     }
@@ -1507,6 +1521,9 @@ write_runs_dump(FILE *f, unsigned char const *charset)
     fprintf(f, "%s;", s);
     s = "";
     if ((j & TEAM_BANNED)) s = "B";
+    fprintf(f, "%s;", s);
+    s = "";
+    if ((j & TEAM_LOCKED)) s = "L";
     fprintf(f, "%s;", s);
 
     if (re.problem > 0 && re.problem <= max_prob
