@@ -1,3 +1,25 @@
+2002-12-03  Alexander Chernov  <cher@ispras.ru>
+
+	* .cvsignore, .cvsignore: *** empty log message ***
+
+	* serve.c: 
+	(read_run_packet) a minor spelling error is fixed;
+	  in `KIROV' score system only RUN_OK, RUN_PARTIAL and
+	  RUN_CHECK_FAILED testing results are allowed.
+
+	* run.c:
+	(run_tests) in KIROV judging mode when even one test is failed
+	  with RUN_CHECK_FAILED, the whole test run is marked as
+	  RUN_CHECK_FAILED.
+
+	* makefile:
+	added rule `subdirs_all' to recurse to subdirectories and do
+	  `make all';
+	rule `clean' recurses to subdirectories;
+	rules to compile `cdeps' are added;
+	all the dependencies are removed from the makefile. They are generated
+	  on the fly using `cdeps' utility.
+
 2002-12-02  Alexander Chernov  <cher@ispras.ru>
 
 	* VERSION: *** empty log message ***
