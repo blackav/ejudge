@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <pwd.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -43,6 +44,8 @@ enum
     TG_EMAIL_PROGRAM,
     TG_REGISTER_URL,
     TG_REGISTER_EMAIL,
+    TG_ADMIN_PROCESSES,
+    TG_ADMIN_PROCESS,
   };
 enum
   {
@@ -50,6 +53,8 @@ enum
     AT_DISABLE_L10N,
     AT_L10N,
     AT_L10N_DIR,
+    AT_USER,
+    AT_PATH,
   };
 
 static char const * const tag_map[] =
@@ -62,6 +67,8 @@ static char const * const tag_map[] =
   "email_program",
   "register_url",
   "register_email",
+  "admin_processes",
+  "admin_process",
 
   0
 };
@@ -73,6 +80,8 @@ static char const * const attn_map[] =
   "disable_l10n",
   "l10n",
   "l10n_dir",
+  "user",
+  "path",
 
   0
 };
@@ -89,7 +98,10 @@ tree_alloc_func(int tag)
   case TG_EMAIL_PROGRAM:
   case TG_REGISTER_EMAIL:
   case TG_REGISTER_URL:
+  case TG_ADMIN_PROCESSES:
     return xcalloc(1, sizeof(struct xml_tree));
+  case TG_ADMIN_PROCESS:
+    return xcalloc(1, sizeof(struct userlist_cfg_admin_proc));
   default:
     SWERR(("unhandled tag: %d", tag));
   }
@@ -102,28 +114,62 @@ attn_alloc_func(int tag)
 }
 
 static int
+err_dupl_elem(char const *path, struct xml_tree *t)
+{
+  err("%s:%d:%d: element <%s> may appear only once", path, t->line, t->column,
+      tag_map[t->tag]);
+  return -1;
+}
+static int
+err_text_not_allowed(char const *path, struct xml_tree *t)
+{
+  err("%s:%d:%d: text is not allowed for element <%s>",
+      path, t->line, t->column, tag_map[t->tag]);
+  return -1;
+}
+static int
+err_attr_not_allowed(char const *path, struct xml_tree *t)
+{
+  err("%s:%d:%d: attributes are not allowed for element <%s>",
+      path, t->line, t->column, tag_map[t->tag]);
+  return -1;
+}
+static int
+err_empty_elem(char const *path, struct xml_tree *t)
+{
+  err("%s:%d:%d: element <%s> is empty",
+      path, t->line, t->column, tag_map[t->tag]);
+  return -1;
+}
+static int
+err_nested_not_allowed(char const *path, struct xml_tree *t)
+{
+  err("%s:%d:%d: nested elements are not allowed for element <%s>",
+      path, t->line, t->column, tag_map[t->tag]);
+  return -1;
+}
+static int
+err_invalid_elem(char const *path, struct xml_tree *tag)
+{
+  err("%s:%d:%d: element <%s> is invalid here", path, tag->line, tag->column,
+      tag_map[tag->tag]);
+  return -1;
+}
+static int
+err_invalid_attn(char const *path, struct xml_attn *a)
+{
+  err("%s:%d:%d: attribute \"%s\" is invalid here", path, a->line, a->column,
+      attn_map[a->tag]);
+  return -1;
+}
+
+static int
 handle_final_tag(char const *path, struct xml_tree *t, unsigned char **ps)
 {
-  if (*ps) {
-    err("%s:%d:%d: duplicated element <%s>",
-        path, t->line, t->column, tag_map[t->tag]);
-    return -1;
-  }
-  if (!t->text || !*t->text) {
-    err("%s:%d:%d: empty element <%s>", path, t->line, t->column,
-        tag_map[t->tag]);
-    return -1;
-  }
-  if (t->first_down) {
-    err("%s:%d:%d: element <%s> cannot contain nested elements",
-        path, t->line, t->column, tag_map[t->tag]);
-    return -1;
-  }
-  if (t->first) {
-    err("%s:%d:%d: element <%s> cannot have attributes",
-        path, t->line, t->column, tag_map[t->tag]);
-    return -1;
-  }
+  if (*ps) return err_dupl_elem(path, t);
+  if (!t->text || !*t->text) return err_empty_elem(path, t);
+  if (t->first_down) return err_nested_not_allowed(path, t);
+  if (t->first) return err_attr_not_allowed(path, t);
   *ps = t->text; t->text = 0;
   return 0;
 }
@@ -138,6 +184,62 @@ parse_bool(char const *str)
       || !strcasecmp(str, "no")
       || !strcasecmp(str, "0")) return 0;
   return -1;
+}
+static struct xml_tree *
+parse_processes(char const *path, struct xml_tree *p)
+{
+  struct xml_tree *q;
+  struct userlist_cfg_admin_proc *prc;
+  struct xml_attn *a;
+
+  ASSERT(p);
+  ASSERT(p->tag == TG_ADMIN_PROCESSES);
+  xfree(p->text); p->text = 0;
+  if (p->first) {
+    err_attr_not_allowed(path, p);
+    return 0;
+  }
+  for (q = p->first_down; q; q = q->right) {
+    if (q->tag != TG_ADMIN_PROCESS) {
+      err_invalid_elem(path, q);
+      return 0;
+    }
+    prc = (struct userlist_cfg_admin_proc*) q;
+    if (q->text && *q->text) {
+      err_text_not_allowed(path, q);
+      return 0;
+    }
+    if (q->first_down) {
+      err_nested_not_allowed(path, q);
+      return 0;
+    }
+    prc->uid = -1;
+    prc->path = 0;
+    for (a = q->first; a; a = a->next) {
+      switch (a->tag) {
+      case AT_USER:
+        {
+          struct passwd *pwd;
+
+          if (!(pwd = getpwnam(a->text))) {
+            err("%s:%d:%d: user %s does not exist", path, a->line, a->column,
+                a->text);
+            return 0;
+          }
+          prc->uid = pwd->pw_uid;
+          info("user %s uid is %d", a->text, pwd->pw_uid);
+        }
+        break;
+      case AT_PATH:
+        prc->path = a->text;
+        break;
+      default:
+        err_invalid_attn(path, a);
+        return 0;
+      }
+    }
+  }
+  return p;
 }
 struct userlist_cfg *
 userlist_cfg_parse(char const *path)
@@ -216,6 +318,9 @@ userlist_cfg_parse(char const *path)
       break;
     case TG_REGISTER_EMAIL:
       if (handle_final_tag(path, p, &cfg->register_email) < 0) goto failed;
+      break;
+    case TG_ADMIN_PROCESSES:
+      if (!(cfg->admin_processes = parse_processes(path, p))) goto failed;
       break;
     default:
       err("%s:%d:%d: element <%s> is invalid here",
