@@ -107,10 +107,6 @@ filter_testers(char *key)
     if (testers[i]) total++;
   }
 
-  if (!total) {
-    err("no testers");
-    return -1;
-  }
   return 0;
 }
 
@@ -398,6 +394,7 @@ run_tests(struct section_tester_data *tst,
   int    cur_test;
   int    copy_flag = 0;
   path_t exe_path;
+  path_t arg0_path;
   path_t test_base;
   path_t test_src;
   path_t corr_path;
@@ -448,6 +445,8 @@ run_tests(struct section_tester_data *tst,
   }
 
   pathmake3(exe_path, tst->check_dir, "/", new_name, NULL);
+  snprintf(arg0_path, sizeof(arg0_path), "./%s", new_name);
+  
   if (tst->is_dos) copy_flag = CONVERT;
 
   error_code[0] = 0;
@@ -485,12 +484,13 @@ run_tests(struct section_tester_data *tst,
     /* run the tested program */
     tsk = task_New();
     if (tst->start_cmd[0]) {
-      info("starting: %s %s", tst->start_cmd, exe_path);
+      info("starting: %s %s", tst->start_cmd, arg0_path);
       task_AddArg(tsk, tst->start_cmd);
     } else {
-      info("starting: %s", exe_path);
+      info("starting: %s", arg0_path);
     }
-    task_AddArg(tsk, exe_path);
+    //task_AddArg(tsk, exe_path);
+    task_AddArg(tsk, arg0_path);
     task_SetPathAsArg0(tsk);
     task_SetWorkingDir(tsk, tst->check_dir);
     if (!tst->no_redirect) {
@@ -842,6 +842,9 @@ do_loop(void)
   int score_system_val;
   int team_enable_rep_view;
   int report_error_code;
+  struct section_tester_data tn, *tst;
+
+  memset(&tn, 0, sizeof(tn));
 
   if (cr_serialize_init() < 0) return -1;
 
@@ -907,6 +910,13 @@ do_loop(void)
       continue;
     }
     info("fount tester %d for pair %d,%s", tester_id, prob_id, arch);
+    tst = testers[tester_id];
+    if (tst->any) {
+      info("tester %d is a default tester", tester_id);
+      r = prepare_tester_refinement(&tn, tester_id, prob_id);
+      ASSERT(r >= 0);
+      tst = &tn;
+    }
 
     snprintf(exe_pkt_name, sizeof(exe_pkt_name), "%s%s",
              pkt_name,  exe_sfx + 1);
@@ -923,7 +933,7 @@ do_loop(void)
     team_report_path[0] = 0;
 
     if (cr_serialize_lock() < 0) return -1;
-    if (run_tests(testers[tester_id], locale_id,
+    if (run_tests(tst, locale_id,
                   team_enable_rep_view, report_error_code,
                   score_system_val, accept_testing,
                   exe_name, run_base,
@@ -933,6 +943,8 @@ do_loop(void)
       return -1;
     }
     if (cr_serialize_unlock() < 0) return -1;
+
+    sarray_free(tst->start_env);
 
     snprintf(full_report_dir, sizeof(full_report_dir),
              "%s/%04d/report", global->run_dir, contest_id);
@@ -977,6 +989,72 @@ count_files(char const *dir, char const *sfx)
   return n - 1;
 }
 
+static int
+process_default_testers(void)
+{
+  int total = 0;
+  int i, j, k;
+  unsigned char *prob_flags = 0;
+  struct section_tester_data *tp, *tq;
+  struct section_problem_data *ts;
+
+  struct section_tester_data tn; //temporary entry
+
+  prob_flags = (unsigned char *) alloca(max_prob + 1);
+
+  /* scan all the 'any' testers */
+  for (i = 1; i <= max_tester; i++) {
+    tp = testers[i];
+    if (!tp || !tp->any) continue;
+
+    // check architecture uniqueness
+    for (j = 1; j <= max_tester; j++) {
+      tq = testers[j];
+      if (i == j || !tq || !tq->any) continue;
+      if (strcmp(testers[j]->arch, tp->arch) != 0) continue;
+      err("default testers %d and %d has the same architecture '%s'",
+          i, j, tp->arch);
+      return -1;
+    }
+
+    // mark the problems with explicit testers for this architecture
+    memset(prob_flags, 0, max_prob + 1);
+    for (j = 1; j <= max_tester; j++) {
+      tq = testers[j];
+      if (!tq || tq->any) continue;
+      if (strcmp(tp->arch, tq->arch) != 0) continue;
+
+      // tq is specific tester with the same architecture
+      ASSERT(tq->problem > 0 && tq->problem <= max_prob);
+      ASSERT(probs[tq->problem]);
+      prob_flags[tq->problem] = 1;
+    }
+
+    // scan all problems, which have no default tester
+    for (k = 1; k <= max_prob; k++) {
+      ts = probs[k];
+      if (!ts || prob_flags[k]) continue;
+
+      // so at this point: tp - pointer to the default tester,
+      // k is the problem number
+      // ts - pointer to the problem which should be handled by the
+      // default tester
+      if (prepare_tester_refinement(&tn, i, k) < 0) return -1;
+      if (create_tester_dirs(&tn) < 0) return -1;
+
+      /* check working dirs */
+      if (make_writable(tn.check_dir) < 0) return -1;
+      if (check_writable_dir(tn.check_dir) < 0) return -1;
+      if (check_executable(tn.check_cmd) < 0) return -1;
+      if (tn.prepare_cmd[0] && check_executable(tn.prepare_cmd) < 0) return -1;
+      if (tn.start_cmd[0] && check_executable(tn.start_cmd) < 0) return -1;
+      total++;
+    }
+  }
+
+  return total;
+}
+
 int
 check_config(void)
 {
@@ -985,11 +1063,29 @@ check_config(void)
 
   struct section_problem_data *prb = 0;
 
-  for (i = 1; i <= max_tester; i++) {
-    if (!testers[i]) continue;
+  /* check spooler dirs */
+  if (check_writable_spool(global->run_queue_dir, SPOOL_OUT) < 0) return -1;
+  if (check_writable_dir(global->run_exe_dir) < 0) return -1;
 
-    total++;
-    prb = probs[testers[i]->problem];
+  /* check working dirs */
+  if (make_writable(global->run_work_dir) < 0) return -1;
+  if (check_writable_dir(global->run_work_dir) < 0) return -1;
+
+  for (i = 1; i <= max_prob; i++) {
+    prb = probs[i];
+    if (!prb) continue;
+
+    // check if there exists a tester for this problem
+    for (j = 1; j <= max_tester; j++) {
+      if (!testers[j]) continue;
+      if (testers[j]->any) break;
+      if (testers[j]->problem == i) break;
+    }
+    if (j > max_tester) {
+      // no checker for the problem :-(
+      info("no checker found for problem %d", i);
+      continue;
+    }
 
     /* check existence of tests */
     if (check_readable_dir(prb->test_dir) < 0) return -1;
@@ -1091,15 +1187,16 @@ check_config(void)
         return -1;
       }
     }
+  }
 
-    /* check spooler dirs */
-    if (check_writable_spool(global->run_queue_dir, SPOOL_OUT) < 0) return -1;
-    if (check_writable_dir(global->run_exe_dir) < 0) return -1;
+  for (i = 1; i <= max_tester; i++) {
+    if (!testers[i]) continue;
+    if (testers[i]->any) continue;
+
+    total++;
 
     /* check working dirs */
-    if (make_writable(global->run_work_dir) < 0) return -1;
     if (make_writable(testers[i]->check_dir) < 0) return -1;
-    if (check_writable_dir(global->run_work_dir) < 0) return -1;
     if (check_writable_dir(testers[i]->check_dir) < 0) return -1;
 
     if (check_executable(testers[i]->check_cmd) < 0) return -1;
@@ -1108,6 +1205,11 @@ check_config(void)
     if (testers[i]->start_cmd[0]
         && check_executable(testers[i]->start_cmd) < 0) return -1;
   }
+
+  info("checking default testers...");
+  if ((i = process_default_testers()) < 0) return -1;
+  info("checking default testers done");
+  total += i;
 
   if (!total) {
     err("no testers");
