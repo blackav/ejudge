@@ -1,13 +1,15 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2003 Alexander Chernov
+# Copyright (c) 2003,2004 Alexander Chernov
 
 # This is a `compilation' script for the Python language.
-# The idea is to append "#!/usr/bin/python" string
+# The idea is to append "#!${PYTHONPATH}" string
 # to the beginning of the file.
 # Usage: python <input> <output>
 
-echo '#!/usr/bin/python -W ignore' > $2
+PYTHONPATH="@ac_cv_contest_python_path@"
+
+echo "#!${PYTHONPATH} -W ignore" > $2
 echo >> $2
 cat $1 >> $2
 chmod +x $2

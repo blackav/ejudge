@@ -1,13 +1,21 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2003 Alexander Chernov
+# Copyright (c) 2003,2004 Alexander Chernov
 
 # This is a `compilation' script for the Perl language.
-# The idea is to append "#!/usr/bin/perl -W" string
+# The idea is to append "#!${PERLPATH} -W" string
 # to the beginning of the file.
 # Usage: perl <input> <output>
 
-echo '#!/usr/bin/perl -W' > $2
+PERLPATH="@ac_cv_contest_perl_path@"
+
+if [ x"${PERLPATH}" = x -o x"${PERLPATH}" = xno ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+echo "#!${PERLPATH} -W" > $2
 echo >> $2
 cat $1 >> $2
 chmod +x $2

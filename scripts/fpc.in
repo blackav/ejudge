@@ -2,23 +2,26 @@
 # $Id$
 # Copyright (c) 2002-2004 Alexander Chernov
 
-# Free Pascal is installed at non-standard location
-FPCDIR=/usr/local/pkg/fpc-1.0.10
+FPCRUN="@ac_cv_contest_fpc@"
+FPCDIR="@ac_cv_contest_fpc_dir@"
 
-FPCRUN=fpc
-if [ "${FPCDIR}" != "" ]
+if [ x"${FPCRUN}" = x -o x"${FPCRUN}" = xno ]
 then
-    PATH=${FPCDIR}/bin:${PATH}
-    FPCRUN=${FPCDIR}/bin/${FPCRUN}
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"${FPCDIR}" != x ]
+then
+    PATH="${FPCDIR}:${PATH}"
 fi
 
 # These compilation options enables various run-time checks
 #${FPCRUN} -Ci -Co -Cr -Ct -So -XS $1 -o${2}
 
 # No run-time checks
-${FPCRUN} -So -XS $1 -o${2}
+"${FPCRUN}" -So -XS "$1" "-o$2"
 
 #if the output file is not created - compile error
-[ -f ${2} ] || exit 1
+[ -f "$2" ] || exit 1
 exit 0
-

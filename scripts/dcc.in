@@ -1,15 +1,21 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2003 Alexander Chernov
+# Copyright (c) 2003,2004 Alexander Chernov
 
-# Borland Kylix is installed at non-standard location
-KYLIXDIR=/usr/local/pkg/kylix3
+DCCRUN="@ac_cv_contest_dcc@"
+DCCDIR="@ac_cv_contest_dcc_dir@"
 
-DCCRUN=dcc
-if [ "${KYLIXDIR}" != "" ]
+if [ x"${DCCRUN}" = x -o x"${DCCRUN}" = xno ]
 then
-    PATH=${KYLIXDIR}/bin:${PATH}
-    DCCRUN=${KYLIXDIR}/bin/${DCCRUN}
+  echo "This language is not supported." >&2
+  exit 1
 fi
 
-exec ${DCCRUN} -$I+,Q-,R-,X+ -Q $1
+if [ x"${DCCDIR}" != x ]
+then
+    PATH="${DCCDIR}:${PATH}"
+    KYLIXDIR="${DCCDIR}"
+    export KYLIXDIR
+fi
+
+exec "${DCCRUN}" -$I+,Q-,R-,X+ -Q "$1"

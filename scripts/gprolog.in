@@ -1,15 +1,19 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2003 Alexander Chernov
+# Copyright (c) 2003,2004 Alexander Chernov
 
-# GNU Prolog is installed at non-standard location
-GPROLOGDIR=/usr/local/pkg/gprolog-1.2.16
+GPLCRUN="@ac_cv_contest_gprolog@"
+GPROLOGDIR="@ac_cv_contest_gprolog_dir@"
 
-GPLCRUN=gplc
-if [ "${GPROLOGDIR}" != "" ]
+if [ x"${GPLCRUN}" = x -o x"${GPLCRUN}" = xno ]
 then
-    PATH=${GPROLOGDIR}/bin:${PATH}
-    GPLCRUN=${GPROLOGDIR}/bin/${GPLCRUN}
+  echo "This language is not supported." >&2
+  exit 1
 fi
 
-exec ${GPLCRUN} -L -static -s --no-top-level $1 -o $2
+if [ x"${GPROLOGDIR}" != x ]
+then
+    PATH="${GPROLOGDIR}:${PATH}"
+fi
+
+exec "${GPLCRUN}" -L --no-top-level "$1" -o "$2"
