@@ -153,6 +153,14 @@ int serve_clnt_edit_run(int sock_fd,
                         int pages,
                         unsigned char const *user_login);
 
+int serve_clnt_new_run(int sock_fd, int mask,
+                       int user_id, int prob_id, int lang_id, int status,
+                       int is_imported, int variant, int is_hidden,
+                       int tests, int score, int is_readonly, int pages,
+                       unsigned long ip, int run_size,
+                       unsigned char const *user_login,
+                       unsigned char const *run_src);
+
 int serve_clnt_import_xml_runs(int sock_fd,
                                int out_fd,
                                const unsigned char *xml_runs);
