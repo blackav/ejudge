@@ -204,6 +204,7 @@ main(int argc, char **argv)
         case RUN_PARTIAL:
         case RUN_ACCEPTED:
         case RUN_IGNORED:
+        case RUN_DISQUALIFIED:
           reg_events++;
           if (cur_entry->team <= 0 || cur_entry->team > max_user_id
               || !userlist->user_map[cur_entry->team]) {
