@@ -1,5 +1,9 @@
 #!/bin/bash
 # $Id$
+# Copyright (c) 2003 Alexander Chernov
+
+# This script is not actually used.
+# For an actual program to start dosemu see ../extra/dosrun3.c.
 
 # just in case...
 chmod 755 .

@@ -1,7 +1,8 @@
 #!/bin/sh
-
 # $Id$
-# This is a 'compilation' script for the Python language.
+# Copyright (c) 2003 Alexander Chernov
+
+# This is a `compilation' script for the Python language.
 # The idea is to append "#!/usr/bin/python" string
 # to the beginning of the file.
 # Usage: python <input> <output>

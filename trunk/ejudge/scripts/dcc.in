@@ -1,4 +1,15 @@
 #!/bin/sh
+# $Id$
+# Copyright (c) 2003 Alexander Chernov
 
-PATH=/usr/local/pkg/kylix3/bin:${PATH}
-exec dcc -$I+,Q-,R-,X+ -Q $1
+# Borland Kylix is installed at non-standard location
+KYLIXDIR=/usr/local/pkg/kylix3
+
+DCCRUN=dcc
+if [ "${KYLIXDIR}" != "" ]
+then
+    PATH=${KYLIXDIR}/bin:${PATH}
+    DCCRUN=${KYLIXDIR}/bin/${DCCRUN}
+fi
+
+exec ${DCCRUN} -$I+,Q-,R-,X+ -Q $1
