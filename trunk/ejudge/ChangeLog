@@ -1,3 +1,272 @@
+2004-03-27  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* serve.c: "diff.h" is included;
+	new global status variable `printing_suspended';
+	(update_status_file) the current status is written as status
+	  version 2 structure, including new fields enable_printing,
+	  `printing_suspended';
+	(load_status_file) a new function, which attempts to load the
+	  server status structure and sets `clients_suspended',
+	  `testing_suspended', `olympiad_judging_mode', `printing_suspended'
+	  global status variables with values from the status file;
+	(cmd_team_page) the `printing_suspended' variable is passed to
+	  `write_team_page';
+	(cmd_view) `PRIV_DOWNLOAD_RUNS', `COMPARE_RUNS' are supported;
+	(cmd_priv_submit_run) arbitrary binary data is handled properly,
+	  if the language has the `binary' configuration variable set to
+	  TRUE;
+	  precise time is obtained with `gettimeofday' and then passed to
+	  `run_add_record';
+	(cmd_team_print) printing request is rejected, if printing disabled;
+	(cmd_team_submit_run) arbitrary binary data is handled properly,
+	  if the language has the `binary' configuration variable set to
+	  TRUE;
+	  precise time is obtained with `gettimeofday' and then passed to
+	  `run_add_record';
+	(cmd_command_0) precise time is obtained with `gettimeofday' and
+	  then passed to `run_virtual_start' or `run_virtual_stop';
+	(cmd_priv_command_0) PRINT_SUSPEND, PRINT_RESUME commands are
+	  handled;
+	(packet_handlers) new commands: PRIV_DOWNLOAD_RUN, PRINT_SUSPEND,
+	  PRINT_RESUME, COMPARE_RUNS are handled;
+	(main) `load_status_file' is called to load the server status.
+
+	* runlog_xml.c: copyright notice is updated;
+	`nsec' attribute of the `run' element is handled;
+	(process_run_elements) `time' attribute now contains the time in
+	  seconds instead the time in milliseconds;
+	  `nsec' attribute is handled;
+	(process_runlog_element) element nesting <runlog> -> <runs> -> <run>
+	  is properly handled;
+	(collect_runlog) the `xt' parameter now points to the first <run>
+	  element in the list;
+	  submission field of the collected runlog is initialized;
+	(unparse_runlog_xml) the `time' attribute of the <run> element now
+	  contain the time in seconds instead of the time in milliseconds;
+	  the `nsec' attribute is generated.
+
+	* runlog_import.c: copyright notice is updated;
+	(runlog_import_xml) `nsec' field is handled.
+
+	* runlog.h: 
+	(run_add_record) parameter `nsec' is added;
+	RUN_ENTRY_NSEC constant is added for `run_set_entry';
+	(struct run_entry) `nsec' field is added. The padding is reduced to
+	  3 bytes;
+	(run_virtual_start) the `nsec' parameter is added;
+	(run_virtual_stop) the same as above;
+	(run_find) new function prototype is added.
+
+	* runlog.c:
+	(append_record) `nsec' parameter is added to pass the nanosecond
+	  component of the timestamp;
+	  nanosecond component is considered when inserting a new run;
+	  attempt to insert a run in the middle of the runlog is failed,
+	  if there are transient runs following the insertion point;
+	(run_add_record) `nsec' parameter is added to pass the nanosecond
+	  component of the timestamp;
+	  use of `append_record' is updated;
+	  possible failure of `append_record' is handled;
+	(run_set_entry) `nsec' field is handled;
+	(run_virtual_start) parameter `nsec' is added to pass the nanosecond
+	  component of the timestamp;
+	  use of `append_record' is updated;
+	  possible failure of `append_record' is handled;
+	(run_virtual_stop) the same as above;
+	(runlog_check) the `nsec' field is handled;
+	(build_indices) check, that `ut_table' is not NULL is added
+	  before freeing its elements;
+	(run_find) a new function to find a run in the given range of runs
+	  by matching user_id, language_id or problem_id.
+
+	* protocol.h:
+	PROT_SERVE_STATUS_MAGIC is renamed to PROT_SERVE_STATUS_MAGIC_V1;
+	struct prot_serve_status is renamed to struct prot_serve_status_v1;
+	PROT_SERVE_STATUS_MAGIC_V2 is added;
+	(struct prot_serve_status_v2) is added. The size of structure is
+	  128 bytes;
+	new commands: PRIV_DOWNLOAD_RUN, PRINT_SUSPEND, PRINT_RESUME,
+	  COMPARE_RUNS;
+	(struct prot_serve_pkt_view) field `item2' is added - used by
+	  COMPARE_RUNS command.
+
+	* printing.c: "userlist.h" is included;
+	(print_banner_page) `location' field of the participant data is
+	  printed to the banner page.
+
+	* prepare.h:
+	(struct section_global_data) fields `diff_work_dir', `diff_path',
+	  `stand_success_attr' are added;
+	(struct section_language_data) field `binary' is added.
+
+	* prepare.c:
+	new global configuration variables `diff_work_dir', `diff_path',
+	  `stand_success_attr' are added;
+	new language configuration variable `binary' is added;
+	(set_defaults) `diff_work_dir', `diff_path' are handled;
+	(create_dirs) `diff_work_dir' is created.
+
+	* master_html.c:
+	(write_priv_source) the nanosecond component of the submission time
+	  is printed;
+	  "Download run" reference is printed;
+	  "Compare runs" button is printed;
+	  if the language is marked as binary, the source code is not printed;
+	(write_raw_source) new function to print the source of the run in the
+	  raw form (without any control elements with content type
+	  text/plain or application/octet-stream).
+
+	* master.c:
+	(print_printing_suspend_button) a new function to print printing
+	  suspend/printing resume button;
+	(view_source_if_asked) use of `serve_clnt_view' is updated as this
+	  function now accepts one more parameter;
+	(view_report_if_asked) the same as above;
+	(view_teams_if_asked) the same as above;
+	(action_dump_runs) the same as above;
+	(action_write_xml_runs) the same as above;
+	(action_export_xml_runs) the same as above;
+	(action_dump_standings) the same as above;
+	(action_submit_run) `cgi_param_bin' is used instead of `cgi_param',
+	  so arbitrary (may be binary) data may be passed to the server;
+	  use of `serve_clnt_submit_run' is updated;
+	(action_print_suspend) new function to handle the corresponding
+	  action;
+	(action_print_resume) new function;
+	(action_priv_download_run) new function;
+	(action_compare_runs) new function;
+	(view_clar_if_asked) use of `serve_clnt_view' is updated as this
+	  function now accepts one more parameter;
+	(main) new actions PRINT_SUSPEND, PRINT_RESUME, PRIV_DOWNLOAD_RUN,
+	  COMPARE_RUNS are supported;
+	  the printing suspend/resume button is generated.
+
+	* makefile:
+	INST_PATH variable is added to designate the installation path.
+
+	* html.h: copyright notice is updated;
+	(new_write_user_runs) parameter `printing_suspended' is added;
+	(write_team_page) parameter `printing_suspended' is added;
+	(write_raw_source) new function prototype added.
+
+	* html.c:
+	(new_write_user_runs) `printing_suspended' parameter is added;
+	  if `printing_suspended' parameter is TRUE, the "Print sources"
+	  option is disabled;
+	(do_write_standings) the "Last success" information is generated;
+	(write_team_page) `printing_suspended' parameter is added;
+	  the value of the parameter is then passed to `new_write_user_runs'.
+
+	* files.make: diff.[ch] are added.
+
+	* clntutil.c: copyright notice is updated;
+	server status variables `server_printing_enabled',
+	  `server_printing_suspended' are added;
+	(client_check_server_status) server status file of both versions
+	  (v1 and v2) is supported.
+	(client_print_server_status) "Print requests are suspended" message
+	  is printed.
+
+	* clean-users.c: copyright notice is updated;
+	(struct user_stat) fields `never_clean' and `virt_contests' are added;
+	(main) `never_clean' field is copied from the userlist information;
+	  empty runlogs are properly supported;
+	  for each VIRTUAL_START/VIRTUAL_STOP event the number of virtual
+	  contest is stored in the `virt_contests' list of the `user_stat';
+	  `never_clean' flag is honored in the final statistics table;
+	  list of all the virtual contests for all users, which have only
+	  VIRTUAL_START/VIRTUAL_STOP events is printed.
+
+2004-03-26  Alexander Chernov  <cher@ispras.ru>
+
+	* edit-userlist.c: copyright notice is updated;
+	ncurses header files are included without directory ncurses, for
+	  example <ncurses.h> is included instead of <ncurses/ncurses.h>;
+	editing of `never_clean' and `location' fields is supported;
+	(display_user) editing of `never_clean' and `location' fields is
+	  supported;
+	(user_match) `location' field is checked.
+
+	* clntutil.h: copyright notice is updated;
+	new status variables added: `server_printing_enabled' and
+	  `server_printing_suspended'.
+
+	* client_actions.h:
+	new actions added: PRIV_DOWNLOAD_RUN, PRINT_SUSPEND, PRINT_RESUME,
+	  COMPARE_RUNS.
+
+	* cgi.h: copyright notice is updated;
+	<stdlib.h> is included for `size_t' type;
+	(cgi_param_bin) new function prototype added;
+	(cgi_nparam_bin) new function prototype added.
+
+	* cgi.c: copyright notice is updated;
+	maximal size of data read from the client is increased to 1MB;
+	(cgi_param_bin) a new function to return the value of the given
+	  CGI data variable. The data size is returned separately from
+	  the data pointer itself. This function may be used to read
+	  binary data from the client;
+	(cgi_nparam_bin) a new function to return the value of the given
+	  CGI data variable by the variable name prefix.
+
+	* serve_clnt.h:
+	(serve_clnt_submit_run) new parameter `run_size' is added to
+	  allow passing arbitrary binary data to the server;
+	(serve_clnt_view) added parameter `item2', which is used
+	  currently for the run comparison.
+
+	* sformat.c: copyright notice is updated;
+	(sformat_message) new format specifier `%ML' is supported to
+	  print the value of the `location' field of the team
+	  description.
+
+	* team.c:
+	(submit_if_asked) explicit `prog_size' parameter is calculated
+	  and passed to `serve_clnt_submit_clar'. strlen() is no longer
+	  used, thus arbitrary binary data may be passed to the server.
+
+	* userlist-server.c: 
+	(do_set_user_info) `location' field is supported;
+	(do_list_users) `location' field is supported;
+	(cmd_add_field) invalid use of `opcap_check' is fixed.
+
+	* userlist.c: copyright notice is updated;
+	(userlist_get_user_field_str) `never_clean' and `location' fields
+	  are supported;
+	(userlist_set_user_field_str) the same as above;
+	(userlist_delete_user_field) the same as above.
+
+	* userlist.h: copyright notice is updated;
+	new constants for tag `location' and attribute `never_clean' are
+	  added;
+	constants USERLIST_NN_NEVER_CLEAN and USERLIST_NN_LOCATION are added;
+	(struct userlist_user) field `never_clean' is added;
+	  field `location' is added.
+
+	* userlist_xml.c: copyright notice is updated;
+	(node_free) the new `location' field is properly freed;
+	(do_parse_user) `never_clean' attribute is supported;
+	  `location' element is supported;
+	(unparse_user) `never_clean' attribute is supported;
+	  `location' element is also supported.
+
+	* diff.c, diff.h: initial revision
+
+2004-02-29  Alexander Chernov  <cher@ispras.ru>
+
+	* revinfo.c: copyright notice is updated;
+	new global variable `variable_prefix' is added;
+	(write_output) the global variable `variable_prefix' is used to
+	  generate the names of the variables in the generated code.
+	  The default value is "compile";
+	(main) new option "-P" is supported to define the `variable_prefix'
+	  variable (see above).
+
+	* mkChangeLog.c: copyright notice is updated;
+	(main) `.cvsignore', `NEWS', `NEWS.RUS' are also ignored.
+
 2004-02-18  Alexander Chernov  <cher@ispras.ru>
 
 	* ejudge.ru_RU.KOI8-R.po, NEWS, NEWS.RUS: *** empty log message ***

@@ -1,5 +1,202 @@
 $Id$
 
+Version 2.1.27 (20040327)
+========================
+The administrator interface of the contest now provides several
+new possibilities (suspend/resume printing, download a run,
+compare a run with another run). Implemented proper support for
+submitting binary files (via "Submit run" interface). Added the
+"Last success" information for the standings. New configuration
+variables are added: diff_work_dir, diff_path,
+stand_success_attr, binary.
+
+The XML-representation of the run log is changed. The <run>
+element now contains the `nsec' attribute, which contains the
+nanosecond component of the submission time. As a consequence,
+the `time' attribute now contains the time in seconds instead of
+the time in milliseconds as in the previous versions.
+
+If no bugs are found in this release, the next release (which
+will be identical or nearly identical to the current release)
+will be numbered 2.2.0, so a new stable branch of the `ejudge'
+system will be started. The 2.1 branch will be terminated. All
+the support work will go to 2.2 branch, and all the new
+development will go to the future development branch 2.3.
+
+master,judge,team,register,users
+--------------------------------
+The maximal size of data, accepted from the web-client is
+increased to 1 Mbyte.
+
+master,judge,team,serve
+-----------------------
+Binary files are allowed by the run submission command. A binary
+file is a file, which contains \0 byte. The binary files are
+passed to the server unchanged.
+
+If the programming language chosen for a submit allows binary
+submissions (i.e. the language configuration variable `binary'
+in the serve.cfg configuration file is set to true), the
+received file will be stored to the run database without
+changes. If the `binary' variable is set to false (default
+value), the file will be truncated at the first \0 byte and an
+error will be reported.
+
+master,judge,team,serve
+-----------------------
+The contest server status file format is updated. Its new size
+is 128 bytes, and currently 77 bytes are not used. These
+currently unused fields allow easy adding of new fields to the
+server status file, in a manner, similar to the runlog database
+format updates. The new version of the server status file format
+is numbered 2, as opposed to the previuos version numbered 1.
+The magic constant in the beginning of the status file differs
+for the versions 1 and 2. The CGI programs master, judge, team
+supports the contest server status file of both versions for
+backward compatibility.
+
+master,serve
+------------
+The contest administrator may suspend participants' printing
+requests. To do this he must have `CONTROL_CONTEST' capability
+bit set for the current contest. To suspend printing the
+"Suspend printing" button is used. The "Suspend printing" button
+appears on the main page of the administrator interface if
+printing is enabled in the current contest. To resume
+participants' printing requests the administrator should press
+the "Resume printing" button, which appears instead of "Suspend
+printing" button when the printing is suspended. Suspended
+printing affects only regular participants of the contests.
+Privileged users may print as usually.
+
+serve
+-----
+The contest server `serve' reads its previous state upon
+startup. The server status flags (client suspending, judging
+suspending, olympiad judging mode, printing suspending) are
+restored from the status file.
+
+serve
+-----
+A new field `nsec' is added to the run entry in the runlog
+database. This field contain the nanosecond component of the
+submission time. With this field all the submits, received by
+one server will have unique submission time. This solves the
+long standing problem of several submits received in the same
+second.
+
+The ejudge system already supports distributed contests, when
+several independent contest servers run on the different sites
+and from time to time exchange its runlog database in XML
+format. Thus a contest server should be able to merge the runlog
+from another server, and this foreign runlog may contain the
+runlog entries that originally belonged to this contest server.
+To make the runlog stable on all the contest server, the
+submits, which have the same submission time are sorted by a
+secondary criterion, but any reasonable secondary criteria may
+result in reordering of the existing runs on the server. Also
+due to secondary criterion of submission sorting it is possible,
+that a newly received run should be inserted in the middle of
+the runlog. But the problem is that the run_ids of a submission
+cannot be changed, if the submission is in a transient state
+(compiling or running), because this may result in compile or
+serve packet loss and hanging of the run in "Compiling..." or
+"Running..." state.
+
+The problem is solved by adding nanosecond component to the
+submission time. All the runs accepted by one contest server
+will have unique timestamp, and with high probability all the
+runs in the distributed contest will also have unique
+timestamp.
+
+The new runlog format is compatible with the previous runlog
+format. If the contest server of the previous version reads the
+new runlog format, the nsec field will be ignored. If the
+contest server of the current version reads the old runlog
+format, the `nsec' field value is set to 0.
+
+userlist-server
+---------------
+A new `location' field is added to the user database. The
+`location' field cannot be changed by a regular user. It should
+be used by the contest administrator to specify the location
+(room, computer number) of the participant. The team location is
+printed on the banned page of the team listing.
+
+edit-userlist
+-------------
+Editing of `location' field is supported.
+
+serve
+-----
+The current standings table now contains the "Last success"
+information. 
+
+serve,master,judge
+------------------
+A new "Download run" feature is added to the "View source" page
+of the administrator interface. By clicking on the "Download
+run" link the run is loaded into the browser in the raw format
+(text/plain or application/octet-stream). The "View source" page
+already has the run source, but an explicit "Download run"
+command is necessary because of the following reasons:
+  1. The run source code may be directly stored to a file
+     without use of clipboard buffer, thus avoiding possible
+     data corruption in the clipboard.
+  2. The binary submissions (i.e. the language of these
+     submissions has `binary' flag set to true) are not shown in
+     the "View source" page, and the "Download run" is the only
+     possibility to get the source for the run.
+
+serve,master,judge
+------------------
+The "View source" page of the administrator and judge interface
+now contain "Compare runs" dialog, which allows comparing of the
+current run with any specified run. To compare runs one must
+enter the run_id of the second run and press the "Compare"
+button. Runs compared with "diff -u" command. The path to the
+`diff' utility may be specified by `diff_path' global
+configuration variable.
+
+The run_id field of the run compare dialog by default contains
+the maximal number of run with the following properties:
+  - this run_id is less, than the current run_id;
+  - the user_id, language_id and problem_id of the both runs
+    match. 
+
+userlist-server
+---------------
+A new field `never_clean' is added to the user database. If for
+some user this field is set to `true', the behavior of
+`clean-users' utility is changed. The `clean-users' utility
+scans all the runlog and clarlog databases for all the contests
+in the system and marks users, which did not post any
+clarifications or did not post any runs, as candidates for
+removal. If the `never_clean' field is set to true, such user
+will never be marked as candidate for removal.
+
+edit-userlist
+-------------
+Editing of new `never_clean' field is supported.
+
+clean-users
+-----------
+Multiple bugs fixed.
+Contests with empty runlog are handled properly.
+The `never_clean' flag is supported.
+For each user information about virtual contests in which this
+user participated is collected (by accounting VIRTUAL_START and
+VIRTUAL_STOP events). If a user did not send any run or
+clarification request, but have one or more VIRTUAL_START or
+VIRTUAL_STOP events accounted for him, all the virtual contests
+are printed in the "Virtual contests for start/stop only users"
+after the main statistics table.
+
+serve
+-----
+Several bugs in runlog merging code are fixed. Runlog merging
+should now works correctly in all situations.
+
 Version 2.1.26 (20040219)
 =========================
 Saving of certain parameters of the team client state is
@@ -20,13 +217,6 @@ will report an error trying to read unchanged configuration
 files of the previous version. The configuration file change is
 trivial, though. To fix the configuration file the capability
 bit SUBMIT_RUNS should be renamed to SUBMIT_RUN.
-
-If no bugs are found in this release, the next release (which
-will be identical or nearly identical to the current release)
-will be numbered 2.2.0, so a new stable branch of the `ejudge'
-system will be started. The 2.1 branch will be terminated. All
-the support work will go to 2.2 branch, and all the new
-development will go to the future development branch 2.3.
 
 serve
 -----
