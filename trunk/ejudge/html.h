@@ -54,4 +54,12 @@ void write_team_page(FILE *f,
                      time_t server_start,
                      time_t server_end);
 
+void write_master_page(FILE *f,
+                       int user_id, int priv_level,
+                       int first_run, int last_run,
+                       int first_clar, int last_clar,
+                       unsigned char const *self_url,
+                       unsigned char const *filter_expr,
+                       unsigned char const *hidden_vars);
+
 #endif /* __HTML_H__ */
