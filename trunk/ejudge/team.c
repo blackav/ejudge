@@ -80,7 +80,6 @@ struct section_global_data
   struct generic_section_config g;
 
   int    allow_deny;
-  int    server_lag;
   int    max_run_size;
   int    max_clar_size;
   int    show_generation_time;
@@ -90,8 +89,6 @@ struct section_global_data
   path_t allow_from;
   path_t deny_from;
   path_t status_file;
-  path_t standings_url;
-  path_t problems_url;
   path_t charset;
   path_t serve_socket;
 
@@ -102,7 +99,7 @@ struct section_global_data
   /* userlist-server stuff */
   int contest_id;
   path_t socket_path;
-  path_t contests_path;
+  path_t contests_dir;
 };
 
 /* configuration information */
@@ -110,11 +107,13 @@ static struct generic_section_config *config;
 static struct section_global_data *global;
 
 /* new userlist-server related variables */
-static struct contest_list *contests;
 static struct contest_desc *cur_contest;
 static struct userlist_clnt *server_conn;
 static unsigned long client_ip;
 static unsigned char *self_url;
+
+static int cgi_contest_id;
+static unsigned char contest_id_str[128];
 
 /* client state variables */
 static unsigned char *client_login;
@@ -156,7 +155,6 @@ static unsigned char hidden_vars[1024];
 static struct config_parse_info section_global_params[] =
 {
   GLOBAL_PARAM(allow_deny, "d"),
-  GLOBAL_PARAM(server_lag, "d"),
   GLOBAL_PARAM(max_run_size, "d"),
   GLOBAL_PARAM(max_clar_size, "d"),
   GLOBAL_PARAM(show_generation_time, "d"),
@@ -166,15 +164,13 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(allow_from, "s"),
   GLOBAL_PARAM(deny_from, "s"),
   GLOBAL_PARAM(status_file, "s"),
-  GLOBAL_PARAM(standings_url, "s"),
-  GLOBAL_PARAM(problems_url, "s"),
   GLOBAL_PARAM(charset, "s"),
   GLOBAL_PARAM(enable_l10n, "d"),
   GLOBAL_PARAM(l10n_dir, "s"),
 
   GLOBAL_PARAM(contest_id, "d"),
   GLOBAL_PARAM(socket_path, "s"),
-  GLOBAL_PARAM(contests_path, "s"),
+  GLOBAL_PARAM(contests_dir, "s"),
   GLOBAL_PARAM(serve_socket, "s"),
 
   { 0, 0, 0, 0 }
@@ -273,6 +269,7 @@ static unsigned char *
 hyperref(unsigned char *buf, int size,
          int sid_mode, unsigned long long sid,
          unsigned char const *self_url,
+         unsigned char const *extra_args,
          unsigned char const *format, ...)
 {
   va_list args;
@@ -281,11 +278,11 @@ hyperref(unsigned char *buf, int size,
 
   ASSERT(sid_mode == SID_URL || sid_mode == SID_COOKIE);
   if (sid_mode == SID_COOKIE) {
-    n = snprintf(out, left, "%s?sid_mode=%d",
-                 self_url, SID_COOKIE);
+    n = snprintf(out, left, "%s?sid_mode=%d%s",
+                 self_url, SID_COOKIE, extra_args);
   } else {
-    n = snprintf(out, left, "%s?sid_mode=%d&SID=%016llx",
-                 self_url, SID_URL, sid);
+    n = snprintf(out, left, "%s?sid_mode=%d&SID=%016llx%s",
+                 self_url, SID_URL, sid, extra_args);
   }
   if (n >= left) n = left;
   left -= n; out += n;
@@ -348,11 +345,6 @@ set_defaults(void)
   }
   path_init(global->status_file, global->var_dir, DEFAULT_STATUS_FILE);
   path_init(global->serve_socket, global->var_dir, DEFAULT_SERVE_SOCKET);
-  if (global->server_lag < 0 || global->server_lag > 30) {
-    err("invalid server_lag");
-    return -1;
-  }
-  if (!global->server_lag) global->server_lag = DEFAULT_SERVER_LAG;
   if (global->max_run_size < 0 || global->max_run_size > 128 * 1024) {
     err("invalid max_run_size");
     return -1;
@@ -392,6 +384,38 @@ parse_client_ip(void)
   client_ip = b1 << 24 | b2 << 16 | b3 << 8 | b4;
 }
 
+static int
+parse_contest_id(void)
+{
+  unsigned char *s = cgi_param("contest_id");
+  int v = 0, n = 0;
+
+  if (!s) return 0;
+  if (sscanf(s, "%d %n", &v, &n) != 1 || s[n] || v < 0) return 0;
+  return v;
+}
+
+static int
+parse_name_contest_id(unsigned char *basename)
+{
+  int v, n;
+
+  if (!basename) return 0;
+  if (sscanf(basename, "-%d %n", &v, &n)!=1 || basename[n] || v < 0) return 0;
+  return v;
+}
+
+static int
+check_config_exist(unsigned char const *path)
+{
+  struct stat sb;
+
+  if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode) && access(path, R_OK) >= 0) {
+    return 1;
+  }
+  return 0;
+}
+
 static void
 initialize(int argc, char *argv[])
 {
@@ -399,7 +423,13 @@ initialize(int argc, char *argv[])
   path_t  dirname;
   path_t  basename;
   path_t  cfgname;
+  path_t  progname;
+  path_t  cfgdir;
+  path_t  cfgname2;
   char   *s = getenv("SCRIPT_FILENAME");
+  int namelen;
+  int name_contest_id;
+  int name_ok = 0, errcode;
   
   struct generic_section_config *p;
 
@@ -408,17 +438,89 @@ initialize(int argc, char *argv[])
   os_rDirName(fullname, dirname, PATH_MAX);
   os_rGetBasename(fullname, basename, PATH_MAX);
   if (strncmp(basename, "team", 4))
-    client_not_configured(0, "bad program_name");
+    client_not_configured(0, "bad program name");
+  memset(progname, 0, sizeof(progname));
+  strncpy(progname, basename, 4);
+  namelen = 4;
+
+  /* we need CGI parameters relatively early because of contest_id */
+  cgi_read(0);
+  cgi_contest_id = parse_contest_id();
+  name_contest_id = parse_name_contest_id(basename + namelen);
 
   /*
    * if CGI_DATA_PATH is absolute, do not append the program start dir
    */
   /* FIXME: we need to perform "/" translation */
   if (CGI_DATA_PATH[0] == '/') {
-    pathmake(cfgname, CGI_DATA_PATH, "/", basename, ".cfg", NULL);
+    pathmake(cfgdir, CGI_DATA_PATH, "/", NULL);
   } else {
-    pathmake(cfgname, dirname, "/",CGI_DATA_PATH, "/", basename, ".cfg", NULL);
+    pathmake(cfgdir, dirname, "/",CGI_DATA_PATH, "/", NULL);
   }
+
+  /*
+    Try different variants:
+      o If basename has the form <prog>-<number>, then consider
+        <number> as contest_id, ignoring the contest_id from
+        CGI arguments. Try config file <prog>-<number>.cfg
+        first, and then try <prog>.cfg.
+      o If basename has the bare form <prog>, then read contest_id
+        from CGI parameters. Try config file <prog>-<contest_id>.cfg
+        first, and then try <prog>.cfg. If contest_id in CGI is not set,
+        refuse to run.
+      o If basename has any other form, ignore contest_id from
+        CGI parameters. Always use config file <prog>.cfg.
+  */
+  if (name_contest_id > 0) {
+    // first case
+    cgi_contest_id = 0;
+    snprintf(cfgname, sizeof(cfgname), "%s%s.cfg", cfgdir, basename);
+    name_ok = check_config_exist(cfgname);
+    if (!name_ok) {
+      snprintf(cfgname2, sizeof(cfgname2), "%s%s-%d.cfg", cfgdir, progname,
+               name_contest_id);
+      if (strcmp(cfgname2, cfgname) != 0 && check_config_exist(cfgname2)) {
+        name_ok = 1;
+        strcpy(cfgname, cfgname2);
+      }
+    }
+    if (!name_ok) {
+      snprintf(cfgname2, sizeof(cfgname2), "%s%s-%06d.cfg", cfgdir, progname,
+               name_contest_id);
+      if (strcmp(cfgname2, cfgname) != 0 && check_config_exist(cfgname2)) {
+        name_ok = 1;
+        strcpy(cfgname, cfgname2);
+      }
+    }
+    if (!name_ok) {
+      snprintf(cfgname, sizeof(cfgname), "%s%s.cfg", cfgdir, progname);
+      name_ok = check_config_exist(cfgname);
+    }
+  } else if (strlen(basename) == namelen) {
+    // second case
+    if (cgi_contest_id <= 0) {
+      client_not_configured(0, "Contest ID is unknown");
+      /* never get here */
+    }
+    snprintf(cfgname, sizeof(cfgname), "%s%s-%d.cfg", cfgdir, progname,
+             cgi_contest_id);
+    name_ok = check_config_exist(cfgname);
+    if (!name_ok) {
+      snprintf(cfgname, sizeof(cfgname), "%s%s-%06d.cfg", cfgdir, progname,
+               cgi_contest_id);
+      name_ok = check_config_exist(cfgname);
+    }
+    if (!name_ok) {
+      snprintf(cfgname, sizeof(cfgname), "%s%s.cfg", cfgdir, progname);
+      name_ok = check_config_exist(cfgname);
+    }
+  } else {
+    // third case
+    cgi_contest_id = 0;
+    snprintf(cfgname, sizeof(cfgname), "%s%s.cfg", cfgdir, basename);
+    name_ok = check_config_exist(cfgname);
+  }
+
   config = parse_param(cfgname, 0, params, 1);
   if (!config)
     client_not_configured(0, "config file not parsed");
@@ -431,18 +533,52 @@ initialize(int argc, char *argv[])
   if (!p) client_not_configured(0, "no global section");
   global = (struct section_global_data *) p;
 
+  if (!global->contests_dir[0]) {
+    client_not_configured(0, "contests are not defined");
+    /* never get here */
+  }
+  contests_set_directory(global->contests_dir);
+
+  /* verify contest_id from the configuration file */
+  if (name_contest_id > 0) {
+    if (global->contest_id > 0 && name_contest_id != global->contest_id) {
+      client_not_configured(0, "contest_id's do not match");
+      /* never get here */
+    }
+    global->contest_id = name_contest_id;
+  } else if (cgi_contest_id > 0) {
+    if (global->contest_id > 0 && cgi_contest_id != global->contest_id) {
+      client_not_configured(0, "contest_id's do not match");
+      /* never get here */
+    }
+    global->contest_id = cgi_contest_id;
+  } else {
+    if (global->contest_id <= 0) {
+      client_not_configured(0, "contest_id is not set");
+      /* never get here */
+    }
+  }
+
+  if (cgi_contest_id > 0) {
+    snprintf(contest_id_str, sizeof(contest_id_str), "&contest_id=%d",
+             cgi_contest_id);
+  }
+
+  if ((errcode = contests_get(global->contest_id, &cur_contest)) < 0) {
+    err("contests_get failed: %d: %s", global->contest_id,
+        contests_strerror(-errcode));
+    client_not_configured(0, "invalid contest");
+    /* never get here */
+  }
+
+  if (cur_contest->root_dir) {
+    pathcpy(global->root_dir, cur_contest->root_dir);
+  }
+
   if (set_defaults() < 0)
     client_not_configured(global->charset, "bad defaults");
   logger_set_level(-1, LOG_WARNING);
 
-  if (!(contests = parse_contest_xml(global->contests_path))) {
-    client_not_configured(global->charset, "no contests are defined");
-  }
-  if (global->contest_id <= 0
-      || global->contest_id >= contests->id_map_size
-      || !(cur_contest = contests->id_map[global->contest_id])) {
-    client_not_configured(global->charset, "invalid contest");
-  }
   parse_client_ip();
 
   make_self_url();
@@ -454,6 +590,7 @@ read_state_params(void)
 {
   int x, n;
   unsigned char *s;
+  unsigned char form_contest_id[1024];
 
   client_action = 0;
   if ((s = cgi_param("action"))) {
@@ -469,6 +606,13 @@ read_state_params(void)
       client_action = x;
   }
 
+  form_contest_id[0] = 0;
+  if (cgi_contest_id > 0) {
+    snprintf(form_contest_id, sizeof(form_contest_id),
+             "<input type=\"hidden\" name=\"contest_id\" value=\"%d\">",
+             global->contest_id);
+  }
+
   switch (client_sid_mode) {
   case SID_DISABLED:
     snprintf(form_start_simple, sizeof(form_start_simple),
@@ -476,60 +620,63 @@ read_state_params(void)
              "<input type=\"hidden\" name=\"sid_mode\" value=\"0\">"
              "<input type=\"hidden\" name=\"login\" value=\"%s\">"
              "<input type=\"hidden\" name=\"password\" value=\"%s\">"
-             "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
+             "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">%s",
              form_header_simple, client_login, client_password,
-             client_locale_id);
+             client_locale_id, form_contest_id);
     snprintf(form_start_multipart, sizeof(form_start_multipart),
              "%s"
              "<input type=\"hidden\" name=\"sid_mode\" value=\"0\">"
              "<input type=\"hidden\" name=\"login\" value=\"%s\">"
              "<input type=\"hidden\" name=\"password\" value=\"%s\">"
-             "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
+             "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">%s",
              form_header_multipart, client_login, client_password,
-             client_locale_id);
+             client_locale_id, form_contest_id);
     snprintf(hidden_vars, sizeof(hidden_vars),
              "<input type=\"hidden\" name=\"sid_mode\" value=\"0\">"
              "<input type=\"hidden\" name=\"login\" value=\"%s\">"
              "<input type=\"hidden\" name=\"password\" value=\"%s\">"
-             "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
-             client_login, client_password, client_locale_id);
+             "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">%s",
+             client_login, client_password, client_locale_id,
+             form_contest_id);
     break;
   case SID_EMBED:
     snprintf(form_start_simple, sizeof(form_start_simple),
              "%s"
              "<input type=\"hidden\" name=\"sid_mode\" value=\"1\">"
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
-             form_header_simple, client_sid);
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
+             form_header_simple, client_sid, form_contest_id);
     snprintf(form_start_multipart, sizeof(form_start_multipart),
              "%s"
              "<input type=\"hidden\" name=\"sid_mode\" value=\"1\">"
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
-             form_header_multipart, client_sid);
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
+             form_header_multipart, client_sid, form_contest_id);
     snprintf(hidden_vars, sizeof(hidden_vars),
              "<input type=\"hidden\" name=\"sid_mode\" value=\"1\">"
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
-             client_sid);
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
+             client_sid, form_contest_id);
     break;
   case SID_URL:
     snprintf(form_start_simple, sizeof(form_start_simple),
              "%s"
              "<input type=\"hidden\" name=\"sid_mode\" value=\"2\">"
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
-             form_header_simple, client_sid);
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
+             form_header_simple, client_sid, form_contest_id);
     snprintf(form_start_multipart, sizeof(form_start_multipart),
              "%s"
              "<input type=\"hidden\" name=\"sid_mode\" value=\"2\">"
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
-             form_header_multipart, client_sid);
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
+             form_header_multipart, client_sid, form_contest_id);
     snprintf(hidden_vars, sizeof(hidden_vars),
              "<input type=\"hidden\" name=\"sid_mode\" value=\"2\">"
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
-             client_sid);
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
+             client_sid, form_contest_id);
     break;
   case SID_COOKIE:
-    strcpy(form_start_simple, form_header_simple);
-    strcpy(form_start_multipart, form_header_multipart);
-    strcpy(hidden_vars, "");
+    snprintf(form_start_simple, sizeof(form_start_simple),
+             "%s%s", form_header_simple, form_contest_id);
+    snprintf(form_start_multipart, sizeof(form_start_multipart),
+             "%s%s", form_header_multipart, form_contest_id);
+    snprintf(hidden_vars, sizeof(hidden_vars), "%s", form_contest_id);
     break;
   default:
     SWERR(("Unhandled sid mode %d", client_sid_mode));
@@ -561,6 +708,10 @@ display_enter_password(void)
   }
 
   puts(form_header_simple);
+  if (cgi_contest_id > 0) {
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n", 
+           cgi_contest_id);
+  }
   printf("<table>"
          "<tr>"
          "<td>%s:</td>"
@@ -843,7 +994,8 @@ authentificate(void)
   if (client_sid_mode == SID_URL || client_sid_mode == SID_COOKIE) {
     unsigned char hbuf[128];
 
-    hyperref(hbuf, sizeof(hbuf), client_sid_mode, client_sid, self_url, 0);
+    hyperref(hbuf, sizeof(hbuf), client_sid_mode, client_sid, self_url,
+             contest_id_str, 0);
     set_cookie_if_needed();
     client_put_refresh_header(global->charset, hbuf, 0,
                               _("Login successful"));
@@ -876,7 +1028,8 @@ operation_status_page(int code, unsigned char const *msg)
     if (code != -1 || !msg) msg = protocol_strerror(-code);
     printf("<h2><font color=\"red\">%s</font></h2>\n", msg);
   } else {
-    hyperref(href, sizeof(href), client_sid_mode, client_sid, self_url, 0);
+    hyperref(href, sizeof(href), client_sid_mode, client_sid, self_url,
+             contest_id_str, 0);
     client_put_refresh_header(global->charset, href, 0,
                               _("Operation successfull"));
     printf("<h2>%s</h2>", _("Operation completed successfully"));
@@ -892,10 +1045,11 @@ print_refresh_button(unsigned char const *str)
   if (!str) str = _("Refresh");
 
   if (client_sid_mode == SID_URL) {
-    printf("<a href=\"%s?sid_mode=%d&SID=%016llx\">%s</a>",
-           self_url, SID_URL, client_sid, str);
+    printf("<a href=\"%s?sid_mode=%d&SID=%016llx%s\">%s</a>",
+           self_url, SID_URL, client_sid, contest_id_str, str);
   } else if (client_sid_mode == SID_COOKIE) {
-    printf("<a href=\"%s?sid_mode=%d\">%s</a>", self_url, SID_COOKIE, str);
+    printf("<a href=\"%s?sid_mode=%d%s\">%s</a>",
+           self_url, SID_COOKIE, contest_id_str, str);
   } else {
     puts(form_start_simple);
     printf("<input type=\"submit\" name=\"refresh\" value=\"%s\">", str);
@@ -927,11 +1081,12 @@ print_logout_button(unsigned char const *str)
   if (!str) str = _("Log out");
 
   if (client_sid_mode == SID_URL) {
-    printf("<a href=\"%s?sid_mode=%d&SID=%016llx&action=%d\">%s</a>",
-           self_url, SID_URL, client_sid, ACTION_LOGOUT, str);
+    printf("<a href=\"%s?sid_mode=%d&SID=%016llx&action=%d%s\">%s</a>",
+           self_url, SID_URL, client_sid, ACTION_LOGOUT,
+           contest_id_str, str);
   } else if (client_sid_mode == SID_COOKIE) {
-    printf("<a href=\"%s?sid_mode=%d&action=%d\">%s</a>",
-           self_url, SID_COOKIE, ACTION_LOGOUT, str);
+    printf("<a href=\"%s?sid_mode=%d&action=%d%s\">%s</a>",
+           self_url, SID_COOKIE, ACTION_LOGOUT, contest_id_str, str);
   } else {
     puts(form_start_simple);
     printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
@@ -1297,7 +1452,7 @@ display_team_page(void)
   r = serve_clnt_team_page(serve_socket_fd, 1,
                            client_sid_mode, client_locale_id,
                            ((client_view_all_clars?1:0)<<1)|(client_view_all_runs?1:0),
-                           self_url, hidden_vars);
+                           self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     printf("<p>%s: %s\n", _("Server error"),
            gettext(protocol_strerror(-r)));
@@ -1337,6 +1492,7 @@ main(int argc, char *argv[])
   int need_show_submit = 0;
   int need_show_clar = 0;
   struct timeval begin_time, end_time;
+  int server_lag = DEFAULT_SERVER_LAG;
 
   gettimeofday(&begin_time, 0);
   initialize(argc, argv);
@@ -1346,12 +1502,17 @@ main(int argc, char *argv[])
                               global->deny_from))
     client_access_denied(global->charset);
 
+  if (!contests_check_team_ip(global->contest_id, client_ip)) {
+    client_access_denied(global->charset);
+  }
+
+  /*
   if (cur_contest) {
     if (!contests_check_ip(cur_contest, client_ip))
       client_access_denied(global->charset);
   }
+  */
 
-  cgi_read(global->charset);
   read_locale_id();
 
 #if CONF_HAS_LIBINTL - 0 == 1
@@ -1369,8 +1530,12 @@ main(int argc, char *argv[])
 
   read_state_params();
 
+  // FIXME: is server_lag necessary?
+  if (cur_contest->client_ignore_time_skew) {
+    server_lag = 0;
+  }
   if (!client_check_server_status(global->charset,
-                                  global->status_file, global->server_lag)) {
+                                  global->status_file, server_lag)) {
     return 0;
   }
 
@@ -1413,7 +1578,7 @@ main(int argc, char *argv[])
 
   if (force_recheck_status) {
     client_check_server_status(global->charset,
-                               global->status_file, global->server_lag);
+                               global->status_file, server_lag);
     force_recheck_status = 0;
   }
 
@@ -1454,13 +1619,13 @@ main(int argc, char *argv[])
     printf("<li><a href=\"#chglanguage\">%s</a>\n", _("Change language"));
   }
 #endif /* CONF_HAS_LIBINTL */
-  if (global->standings_url[0] && need_show_submit) {
+  if (cur_contest->standings_url && server_start_time) {
     printf("<li><a href=\"%s\" target=_blank>%s</a>\n",
-           global->standings_url, _("Team standings"));
+           cur_contest->standings_url, _("Team standings"));
   }
-  if (global->problems_url[0] && need_show_submit) {
+  if (cur_contest->problems_url && server_start_time) {
     printf("<li><a href=\"%s\" target=_blank>%s</a>\n",
-           global->problems_url, _("Problems"));
+           cur_contest->problems_url, _("Problems"));
   }
   puts("</ul>");
   print_nav_buttons(0, 0, 0);
@@ -1506,6 +1671,10 @@ main(int argc, char *argv[])
              form_header_simple, client_login, client_password);
     } else {
       printf("%s", form_start_simple);
+    }
+    if (cgi_contest_id > 0) {
+      printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">",
+             global->contest_id);
     }
 
     printf("%s: <select name=\"locale_id\">"
@@ -1558,6 +1727,5 @@ main(int argc, char *argv[])
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
