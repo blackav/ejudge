@@ -16,22 +16,24 @@
  */
 
 %{
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-
 #define YYSTYPE struct filter_tree *
 
 #include "filter_expr.h"
 #include "filter_tree.h"
 #include "runlog.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <stdarg.h>
+
 extern int filter_expr_nerrs;
 
 static unsigned char *scan_buf;
 static size_t scan_len;
 static size_t scan_read;
+static void (*scan_err)(unsigned char const *, ...);
 
 static struct filter_tree_mem *tree_mem;
 
@@ -142,7 +144,7 @@ decd    [0-9]
 \"[^\"]*\" |
 \'[^\']*\' { filter_expr_lval = filter_tree_new_buf(tree_mem, yytext + 1, yyleng - 2); return TOK_STRING_L; }
 
-. { fprintf(stderr, "invalid character \\%03o\n", (unsigned char) *yytext); filter_expr_nerrs++; }
+. { (*scan_err)("invalid character \\%03o", (unsigned char) *yytext); }
 %%
 
 static void
@@ -157,28 +159,45 @@ handle_int(void)
   errno = 0;
   val = strtol(buf, (char**) &eptr, 0);
   if (errno) {
-    fprintf(stderr, "value is out of range\n");
+    (*scan_err)("value is out of range");
     val = 0;
   }
   filter_expr_lval = filter_tree_new_int(tree_mem, val);
 }
 
+static void
+local_err_func(unsigned char const *format, ...)
+{
+  va_list args;
+
+  va_start(args, format);
+  vfprintf(stderr, format, args);
+  va_end(args);
+  fprintf(stderr, "\n");
+  filter_expr_nerrs++;
+}
+
 void
 filter_expr_set_string(unsigned char const *str,
-                       struct filter_tree_mem *mem)
+                       struct filter_tree_mem *mem,
+                       void (*errfnc)(unsigned char const *, ...))
 {
   (void) &yyunput;
 
   scan_buf = (unsigned char*) str;
   scan_len = strlen(str);
   scan_read = 0;
+  scan_err = errfnc;
   tree_mem = mem;
+  if (!scan_err) {
+    scan_err = local_err_func;
+  }
 }
 
 /**
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "fd_set")
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
  *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
