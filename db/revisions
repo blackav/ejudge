@@ -161,3 +161,13 @@ master.c 1 15 2019395
 team.c 1 10 1896738
 register.c 6 1 82840
 parsecfg.c 1 7 573329
+html.h 1 10 147360
+prepare.h 1 13 724989
+teamdb.h 1 7 169982
+html.c 1 11 3278846
+master.c 1 16 2771380
+prepare.c 1 17 2407426
+run.c 1 15 1781579
+serve.c 1 16 3269272
+teamdb.c 1 8 1281322
+register.c 6 2 402566
