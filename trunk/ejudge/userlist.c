@@ -415,6 +415,7 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
   case USERLIST_NN_COUNTRY_EN: s = u->country_en; break;
   case USERLIST_NN_LOCATION: s = u->location; break;
   case USERLIST_NN_SPELLING: s = u->spelling; break;
+  case USERLIST_NN_PRINTER_NAME: s = u->printer_name; break;
   }
   if (!s) {
     if (convert_null) s = "<NULL>";
@@ -585,6 +586,8 @@ userlist_set_user_field_str(struct userlist_list *lst,
     sptr = &u->location; goto do_text_fields;
   case USERLIST_NN_SPELLING:
     sptr = &u->spelling; goto do_text_fields;
+  case USERLIST_NN_PRINTER_NAME:
+    sptr = &u->printer_name; goto do_text_fields;
 
   case USERLIST_NN_ID:
   case USERLIST_NN_TIMESTAMPS:
@@ -686,6 +689,8 @@ userlist_delete_user_field(struct userlist_user *u, int field_id)
     sptr = &u->location; goto do_string_delete;
   case USERLIST_NN_SPELLING:
     sptr = &u->spelling; goto do_string_delete;
+  case USERLIST_NN_PRINTER_NAME:
+    sptr = &u->printer_name; goto do_string_delete;
   do_string_delete:
     retval = !(*sptr == 0);
     xfree(*sptr); *sptr = 0;
