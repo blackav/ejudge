@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@ userlist_clnt_edit_field(struct userlist_clnt *clnt,
   if (!value) value = "";
   value_len = strlen(value);
   if (value_len > 255) return -ULS_ERR_INVALID_SIZE;
-  out_size = sizeof(*out) + value_len + 1;
+  out_size = sizeof(*out) + value_len;
   out = alloca(out_size);
   memset(out, 0, out_size);
   out->request_id = ULS_EDIT_FIELD;
@@ -58,6 +58,5 @@ userlist_clnt_edit_field(struct userlist_clnt *clnt,
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
