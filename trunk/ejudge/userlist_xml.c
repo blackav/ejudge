@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "nls.h"
@@ -44,9 +40,13 @@ static char const * const tag_map[] =
   "login",
   "name",
   "inst",
+  "inst_en",
   "instshort",
+  "instshort_en",
   "fac",
+  "fac_en",
   "facshort",
+  "facshort_en",
   "password",
   "email",
   "homepage",
@@ -54,24 +54,31 @@ static char const * const tag_map[] =
   "phone",
   "member",
   "surname",
+  "surname_en",
   "middlename",
+  "middlename_en",
   "grade",
   "group",
+  "group_en",
   "cookies",
   "cookie",
   "contests",
   "contest",
   "status",
   "occupation",
+  "occupation_en",
   "contestants",
   "reserves",
   "coaches",
   "advisors",
   "guests",
   "firstname",
+  "firstname_en",
   "team_password",
   "city",
+  "city_en",
   "country",
+  "country_en",
 
   0
 };
@@ -92,6 +99,7 @@ static char const * const attn_map[] =
   "last_change",
   "invisible",
   "banned",
+  "locked",
   "status",
   "last_pwdchange",
   "public",
@@ -112,9 +120,13 @@ static size_t const tag_sizes[USERLIST_LAST_TAG] =
   sizeof(struct xml_tree),      /* LOGIN */
   sizeof(struct xml_tree),      /* NAME */
   sizeof(struct xml_tree),      /* INST */
+  sizeof(struct xml_tree),      /* INST_EN */
   sizeof(struct xml_tree),      /* INSTSHORT */
+  sizeof(struct xml_tree),      /* INSTSHORT_EN */
   sizeof(struct xml_tree),      /* FAC */
+  sizeof(struct xml_tree),      /* FAC_EN */
   sizeof(struct xml_tree),      /* FACSHORT */
+  sizeof(struct xml_tree),      /* FACSHORT_EN */
   sizeof(struct userlist_passwd), /* PASSWORD */
   sizeof(struct xml_tree),      /* EMAIL */
   sizeof(struct xml_tree),      /* HOMEPAGE */
@@ -122,24 +134,31 @@ static size_t const tag_sizes[USERLIST_LAST_TAG] =
   sizeof(struct xml_tree),      /* PHONE */
   sizeof(struct userlist_member), /* MEMBER */
   sizeof(struct xml_tree),      /* SURNAME */
+  sizeof(struct xml_tree),      /* SURNAME_EN */
   sizeof(struct xml_tree),      /* MIDDLENAME */
+  sizeof(struct xml_tree),      /* MIDDLENAME_EN */
   sizeof(struct xml_tree),      /* GRADE */
   sizeof(struct xml_tree),      /* GROUP */
+  sizeof(struct xml_tree),      /* GROUP_EN */
   sizeof(struct xml_tree),      /* COOKIES */
   sizeof(struct userlist_cookie), /* COOKIE */
   sizeof(struct xml_tree),      /* CONTESTS */
   sizeof(struct userlist_contest), /* CONTEST */
   sizeof(struct xml_tree),      /* STATUS */
   sizeof(struct xml_tree),      /* OCCUPATION */
+  sizeof(struct xml_tree),      /* OCCUPATION_EN */
   sizeof(struct userlist_members), /* CONTESTANTS */
   sizeof(struct userlist_members), /* RESERVES */
   sizeof(struct userlist_members), /* COACHES */
   sizeof(struct userlist_members), /* ADVISORS */
   sizeof(struct userlist_members), /* GUESTS */
   sizeof(struct xml_tree),      /* FIRSTNAME */
+  sizeof(struct xml_tree),      /* FIRSTNAME_EN */
   sizeof(struct userlist_passwd), /* TEAM_PASSWORD */
   sizeof(struct xml_tree),      /* CITY */
+  sizeof(struct xml_tree),      /* CITY_EN */
   sizeof(struct xml_tree),      /* COUNTRY */
+  sizeof(struct xml_tree),      /* COUNTRY_EN */
 };
 /*
 static size_t const attn_sizes[USERLIST_LAST_ATTN] =
@@ -193,28 +212,43 @@ node_free(struct xml_tree *t)
       xfree(p->name);
       xfree(p->email);
       xfree(p->inst);
+      xfree(p->inst_en);
       xfree(p->instshort);
+      xfree(p->instshort_en);
       xfree(p->fac);
+      xfree(p->fac_en);
       xfree(p->facshort);
+      xfree(p->facshort_en);
       xfree(p->homepage);
       xfree(p->city);
+      xfree(p->city_en);
       xfree(p->country);
+      xfree(p->country_en);
     }
     break;
   case USERLIST_T_MEMBER:
     {
       struct userlist_member *p = (struct userlist_member*) t;
       xfree(p->firstname);
+      xfree(p->firstname_en);
       xfree(p->middlename);
+      xfree(p->middlename_en);
       xfree(p->surname);
+      xfree(p->surname_en);
       xfree(p->group);
+      xfree(p->group_en);
       xfree(p->email);
       xfree(p->homepage);
       xfree(p->occupation);
+      xfree(p->occupation_en);
       xfree(p->inst);
+      xfree(p->inst_en);
       xfree(p->instshort);
+      xfree(p->instshort_en);
       xfree(p->fac);
+      xfree(p->fac_en);
       xfree(p->facshort);
+      xfree(p->facshort_en);
     }
     break;
   case USERLIST_T_CONTESTANTS:
@@ -607,11 +641,20 @@ parse_members(char const *path, struct xml_tree *q,
       case USERLIST_T_FIRSTNAME:
         if (handle_final_tag(path, p, &mb->firstname) < 0) return -1;
         break;
+      case USERLIST_T_FIRSTNAME_EN:
+        if (handle_final_tag(path, p, &mb->firstname_en) < 0) return -1;
+        break;
       case USERLIST_T_SURNAME:
         if (handle_final_tag(path, p, &mb->surname) < 0) return -1;
         break;
+      case USERLIST_T_SURNAME_EN:
+        if (handle_final_tag(path, p, &mb->surname_en) < 0) return -1;
+        break;
       case USERLIST_T_MIDDLENAME:
         if (handle_final_tag(path, p, &mb->middlename) < 0) return -1;
+        break;
+      case USERLIST_T_MIDDLENAME_EN:
+        if (handle_final_tag(path, p, &mb->middlename_en) < 0) return -1;
         break;
       case USERLIST_T_EMAIL:
         if (handle_final_tag(path, p, &mb->email) < 0) return -1;
@@ -625,17 +668,32 @@ parse_members(char const *path, struct xml_tree *q,
       case USERLIST_T_OCCUPATION:
         if (handle_final_tag(path, p, &mb->occupation) < 0) return -1;
         break;
+      case USERLIST_T_OCCUPATION_EN:
+        if (handle_final_tag(path, p, &mb->occupation_en) < 0) return -1;
+        break;
       case USERLIST_T_INST:
         if (handle_final_tag(path, p, &mb->inst) < 0) return -1;
+        break;
+      case USERLIST_T_INST_EN:
+        if (handle_final_tag(path, p, &mb->inst_en) < 0) return -1;
         break;
       case USERLIST_T_INSTSHORT:
         if (handle_final_tag(path, p, &mb->instshort) < 0) return -1;
         break;
+      case USERLIST_T_INSTSHORT_EN:
+        if (handle_final_tag(path, p, &mb->instshort_en) < 0) return -1;
+        break;
       case USERLIST_T_FAC:
         if (handle_final_tag(path, p, &mb->fac) < 0) return -1;
         break;
+      case USERLIST_T_FAC_EN:
+        if (handle_final_tag(path, p, &mb->fac_en) < 0) return -1;
+        break;
       case USERLIST_T_FACSHORT:
         if (handle_final_tag(path, p, &mb->facshort) < 0) return -1;
+        break;
+      case USERLIST_T_FACSHORT_EN:
+        if (handle_final_tag(path, p, &mb->facshort_en) < 0) return -1;
         break;
       case USERLIST_T_STATUS:
         if (mb->status) return duplicated_tag(path, p);
@@ -682,6 +740,9 @@ parse_members(char const *path, struct xml_tree *q,
         break;
       case USERLIST_T_GROUP:
         if (handle_final_tag(path, p, &mb->group) < 0) return -1;
+        break;
+      case USERLIST_T_GROUP_EN:
+        if (handle_final_tag(path, p, &mb->group_en) < 0) return -1;
         break;
       default:
         return invalid_tag(path, p);
@@ -754,6 +815,10 @@ parse_contest(char const *path, struct xml_tree *t,
         if (parse_bool(path, a->line, a->column, a->text, &tmp) < 0) return -1;
         if (tmp) reg->flags |= USERLIST_UC_INVISIBLE;
         break;
+      case USERLIST_A_LOCKED:
+        if (parse_bool(path, a->line, a->column, a->text, &tmp) < 0) return -1;
+        if (tmp) reg->flags |= USERLIST_UC_LOCKED;
+        break;
       default:
         return invalid_attn(path, a);
       }
@@ -817,6 +882,10 @@ do_parse_user(char const *path, struct userlist_user *usr)
       if (parse_bool(path, a->line, a->column, a->text,
                      &usr->is_banned) < 0) return -1;
       break;
+    case USERLIST_A_LOCKED:
+      if (parse_bool(path, a->line, a->column, a->text,
+                     &usr->is_locked) < 0) return -1;
+      break;
     case USERLIST_A_USE_COOKIES:
       if (parse_bool(path, a->line, a->column, a->text,
                      &usr->default_use_cookies) < 0) return -1;
@@ -876,20 +945,38 @@ do_parse_user(char const *path, struct userlist_user *usr)
     case USERLIST_T_INST:
       if (handle_final_tag(path, t, &usr->inst) < 0) return -1;
       break;
+    case USERLIST_T_INST_EN:
+      if (handle_final_tag(path, t, &usr->inst_en) < 0) return -1;
+      break;
     case USERLIST_T_INSTSHORT:
       if (handle_final_tag(path, t, &usr->instshort) < 0) return -1;
+      break;
+    case USERLIST_T_INSTSHORT_EN:
+      if (handle_final_tag(path, t, &usr->instshort_en) < 0) return -1;
       break;
     case USERLIST_T_FAC:
       if (handle_final_tag(path, t, &usr->fac) < 0) return -1;
       break;
+    case USERLIST_T_FAC_EN:
+      if (handle_final_tag(path, t, &usr->fac_en) < 0) return -1;
+      break;
     case USERLIST_T_FACSHORT:
       if (handle_final_tag(path, t, &usr->facshort) < 0) return -1;
+      break;
+    case USERLIST_T_FACSHORT_EN:
+      if (handle_final_tag(path, t, &usr->facshort_en) < 0) return -1;
       break;
     case USERLIST_T_CITY:
       if (handle_final_tag(path, t, &usr->city) < 0) return -1;
       break;
+    case USERLIST_T_CITY_EN:
+      if (handle_final_tag(path, t, &usr->city_en) < 0) return -1;
+      break;
     case USERLIST_T_COUNTRY:
       if (handle_final_tag(path, t, &usr->country) < 0) return -1;
+      break;
+    case USERLIST_T_COUNTRY_EN:
+      if (handle_final_tag(path, t, &usr->country_en) < 0) return -1;
       break;
     case USERLIST_T_PHONES:
       if (!(usr->phones = parse_phones(path, t))) return -1;
@@ -1171,8 +1258,11 @@ unparse_member(struct userlist_member *p, FILE *f)
   fprintf(f, "      <%s %s=\"%d\">\n", tag_map[USERLIST_T_MEMBER],
           attn_map[USERLIST_A_SERIAL], p->serial);
   unparse_final_tag(f, USERLIST_T_FIRSTNAME, p->firstname, ind);
+  unparse_final_tag(f, USERLIST_T_FIRSTNAME_EN, p->firstname_en, ind);
   unparse_final_tag(f, USERLIST_T_MIDDLENAME, p->middlename, ind);
+  unparse_final_tag(f, USERLIST_T_MIDDLENAME_EN, p->middlename_en, ind);
   unparse_final_tag(f, USERLIST_T_SURNAME, p->surname, ind);
+  unparse_final_tag(f, USERLIST_T_SURNAME_EN, p->surname_en, ind);
   if (p->status) {
     unparse_final_tag(f, USERLIST_T_STATUS, unparse_member_status(p->status),
                       ind);
@@ -1182,12 +1272,18 @@ unparse_member(struct userlist_member *p, FILE *f)
             tag_map[USERLIST_T_GRADE], p->grade, tag_map[USERLIST_T_GRADE]);
   }
   unparse_final_tag(f, USERLIST_T_GROUP, p->group, ind);
+  unparse_final_tag(f, USERLIST_T_GROUP_EN, p->group_en, ind);
   unparse_final_tag(f, USERLIST_T_OCCUPATION, p->occupation, ind);
+  unparse_final_tag(f, USERLIST_T_OCCUPATION_EN, p->occupation_en, ind);
   unparse_final_tag(f, USERLIST_T_HOMEPAGE, p->homepage, ind);
-  unparse_final_tag(f, USERLIST_T_INST, p->homepage, ind);
-  unparse_final_tag(f, USERLIST_T_INSTSHORT, p->homepage, ind);
-  unparse_final_tag(f, USERLIST_T_FAC, p->homepage, ind);
-  unparse_final_tag(f, USERLIST_T_FACSHORT, p->homepage, ind);  
+  unparse_final_tag(f, USERLIST_T_INST, p->inst, ind);
+  unparse_final_tag(f, USERLIST_T_INST_EN, p->inst_en, ind);
+  unparse_final_tag(f, USERLIST_T_INSTSHORT, p->instshort, ind);
+  unparse_final_tag(f, USERLIST_T_INSTSHORT_EN, p->instshort_en, ind);
+  unparse_final_tag(f, USERLIST_T_FAC, p->fac, ind);
+  unparse_final_tag(f, USERLIST_T_FAC_EN, p->fac_en, ind);
+  unparse_final_tag(f, USERLIST_T_FACSHORT, p->facshort, ind);  
+  unparse_final_tag(f, USERLIST_T_FACSHORT_EN, p->facshort_en, ind);  
   unparse_phones(p->phones, f, "        ");
   fprintf(f, "      </%s>\n", tag_map[USERLIST_T_MEMBER]);
 }
@@ -1248,6 +1344,9 @@ unparse_contest(struct userlist_contest const *cc, FILE *f,
   }
   if ((cc->flags & USERLIST_UC_INVISIBLE)) {
     fprintf(f, " %s=\"yes\"", attn_map[USERLIST_A_INVISIBLE]);
+  }
+  if ((cc->flags & USERLIST_UC_LOCKED)) {
+    fprintf(f, " %s=\"yes\"", attn_map[USERLIST_A_LOCKED]);
   }
   fprintf(f, "/>\n");
 }
@@ -1318,6 +1417,10 @@ unparse_user(struct userlist_user *p, FILE *f, int mode)
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_BANNED],
             unparse_bool(p->is_banned));
   }
+  if (p->is_locked && mode == USERLIST_MODE_ALL) {
+    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LOCKED],
+            unparse_bool(p->is_locked));
+  }
   if (p->read_only) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_READ_ONLY],
             unparse_bool(p->read_only));
@@ -1382,17 +1485,33 @@ unparse_user(struct userlist_user *p, FILE *f, int mode)
     fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_INST],
             p->inst, tag_map[USERLIST_T_INST]);
   }
+  if (p->inst_en) {
+    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_INST_EN],
+            p->inst_en, tag_map[USERLIST_T_INST_EN]);
+  }
   if (p->instshort) {
     fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_INSTSHORT],
             p->instshort, tag_map[USERLIST_T_INSTSHORT]);
+  }
+  if (p->instshort_en) {
+    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_INSTSHORT_EN],
+            p->instshort_en, tag_map[USERLIST_T_INSTSHORT_EN]);
   }
   if (p->fac) {
     fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_FAC],
             p->fac, tag_map[USERLIST_T_FAC]);
   }
+  if (p->fac_en) {
+    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_FAC_EN],
+            p->fac_en, tag_map[USERLIST_T_FAC_EN]);
+  }
   if (p->facshort) {
     fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_FACSHORT],
             p->facshort, tag_map[USERLIST_T_FACSHORT]);
+  }
+  if (p->facshort_en) {
+    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_FACSHORT_EN],
+            p->facshort_en, tag_map[USERLIST_T_FACSHORT_EN]);
   }
   if (p->homepage) {
     fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_HOMEPAGE],
@@ -1402,9 +1521,17 @@ unparse_user(struct userlist_user *p, FILE *f, int mode)
     fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_CITY],
             p->city, tag_map[USERLIST_T_CITY]);
   }
+  if (p->city_en) {
+    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_CITY_EN],
+            p->city_en, tag_map[USERLIST_T_CITY_EN]);
+  }
   if (p->country) {
     fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_COUNTRY],
             p->country, tag_map[USERLIST_T_COUNTRY]);
+  }
+  if (p->country_en) {
+    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_COUNTRY_EN],
+            p->country_en, tag_map[USERLIST_T_COUNTRY_EN]);
   }
 
   unparse_phones(p->phones, f, "    ");
@@ -1478,6 +1605,5 @@ userlist_tag_to_str(int t)
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "XML_Parser" "XML_Char" "XML_Encoding")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
