@@ -1,3 +1,103 @@
+2003-09-29  Alexander Chernov  <cher@ispras.ru>
+
+	* users.c:
+	(initialize) calls of `client_not_configured' are updated, the
+	  `locale_id' parameter is passed as 0;
+	(information_not_available) calls of `client_put_header' are updated;
+	(main) calls of `client_access_denied' are updated;
+	  calls of `client_put_header' are updated.
+
+	* team.c:
+	(initialize) calls of `client_not_configured' are updated, the
+	  `locale_id' parameter is passed as 0;
+	(display_enter_password) calls of `client_put_header' are updated;
+	(open_userlist_server) the same as above;
+	(permission_denied) the same as above;
+	(fatal_server_error) the same as above;
+	(operation_status_page) the same as above;
+	(show_clar_if_asked) the same as above;
+	(request_source_if_asked) the same as above;
+	(action_standings) the same as above;
+	(request_report_if_asked) the same as above;
+	(action_logout) the same as above;
+	(main) calls of `client_access_denied' are updated;
+	  calls of `client_check_server_status' are updated;
+	  calls of `client_put_header' are updated.
+
+	* register.c:
+	(initialize) calls of `client_not_configured' are updated with
+	  `locale_id' parameter as 0;
+	(read_user_info_from_server) calls of `client_put_header' are
+	  updated;
+	(authentificate) call of `client_put_header' is updated;
+	(display_edit_registration_data_page) call of `client_put_header'
+	  is updated;
+	(display_initial_page) call of `client_put_header' is updated;
+	  `locale_id' hidden parameter is passed in the login form;
+	(display_login_page) call of `client_put_header' is updated;
+	(display_register_new_user_page) the same as above;
+	(display_user_registered_page) the same as above;
+	(display_main_page) the same as above;
+	(action_register_new_user) the same as above;
+	(action_login) the same as above;
+	(action_logout) the same as above;
+	(action_change_password) the same as above;
+	(action_remove_member) the same as above;
+	(action_register_for_contest) `user_show_all' parameter is initialized
+	  to 0;
+	  calls of `client_put_header' are updated;
+	(main) calls of `client_access_denied' are updated.
+
+	* master.c:
+	(display_enter_password) call of `client_put_header' is updated -
+	  parameter `locale_id' is passed value 0;
+	(open_userlist_server) the same as above;
+	(permission_denied) the same as above;
+	(fatal_server_error) the same as above;
+	(operation_status_page) the same as above;
+	(view_source_if_asked) the same as above;
+	(view_report_if_asked) the same as above;
+	(view_teams_if_asked) the same as above;
+	(action_dump_runs) the same as above;
+	(action_dump_users) the same as above;
+	(action_dump_standings) the same as above;
+	(confirm_reset_if_asked) the same as above;
+	(confirm_update_standings) the same as above;
+	(confirm_regenerate_register_if_asked) the same as above;
+	(confirm_regenerate_if_asked) the same as above;
+	(confirm_rejudge_all) the same as above;
+	(confirm_squeeze) the same as above;
+	(confirm_continue) the same as above;
+	(confirm_clear_run) the same as above;
+	(do_generate_register_passwords_if_asked) the same as above;
+	(do_generate_passwords_if_asked) the same as above;
+	(view_clar_if_asked) the same as above;
+	(log_out_if_asked) the same as above;
+	(initialize) calls of `client_not_configured' are updated, new
+	  `locale_id' parameter is passed as 0;
+	(main) calls of `client_access_denied' are updated, new `locale_id'
+	  parameter is passed as 0;
+	  calls of `client_check_server_status' are updated, new `locale_id'
+	  parameter is passed as 0;
+	  calls of `client_put_header' are updated in the same manner.
+
+	* clntutil.h:
+	(client_access_denied) new parameter `locale_id' is added as last;
+	(client_not_configured) the same as above;
+	(client_check_server_status) the same as above;
+	(client_put_header) new parameter `locale_id' is added.
+
+	* clntutil.c:
+	(process_template) new parameter `locale_id' is added. This parameter
+	  is used in new `%L' format substitution;
+	(client_put_header) new parameter `locale_id' is added and passed
+	  to `process_template';
+	(client_put_footer) `locale_id' as 0 is passed to `process_template';
+	(client_access_denied) new parameter `locale_id' is added and
+	  passed to `process_template';
+	(client_not_configured) the same as above;
+	(client_check_server_status) the same as above.
+
 2003-09-21  Alexander Chernov  <cher@ispras.ru>
 
 	* serve.c:
