@@ -1767,6 +1767,27 @@ cmd_priv_command_0(struct client_state *p, int len,
     update_status_file(1);
     new_send_reply(p, SRV_RPL_OK);
     return;
+  case SRV_CMD_TOGGLE_VISIBILITY:
+  case SRV_CMD_TOGGLE_BAN:
+    if (!teamdb_lookup(pkt->v.i)) {
+      err("%d: invalid user id %d", p->id, pkt->v.i);
+      new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+      return;
+    } else {
+      unsigned int flags = USERLIST_UC_INVISIBLE;
+
+      if (pkt->b.id == SRV_CMD_TOGGLE_BAN) {
+        flags = USERLIST_UC_BANNED;
+      }
+      if (teamdb_toggle_flags(pkt->v.i, global->contest_id, flags) < 0) {
+        new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+        return;
+      }
+
+      info("%d: user %d flags %d toggled", p->id, pkt->v.i, flags);
+      new_send_reply(p, SRV_RPL_OK);
+    }
+    return;
   default:
     err("%d: unhandled command", p->id);
     new_send_reply(p, -SRV_ERR_PROTOCOL);
@@ -2132,6 +2153,8 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_SCHEDULE] { cmd_priv_command_0 },
   [SRV_CMD_DURATION] { cmd_priv_command_0 },
   [SRV_CMD_EDIT_RUN] { cmd_edit_run },
+  [SRV_CMD_TOGGLE_VISIBILITY] { cmd_priv_command_0 },
+  [SRV_CMD_TOGGLE_BAN] { cmd_priv_command_0 },
 };
 
 static void
