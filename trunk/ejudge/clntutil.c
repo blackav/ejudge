@@ -83,7 +83,8 @@ process_template(FILE *out,
                  unsigned char const *content_type,
                  unsigned char const *charset,
                  unsigned char const *title,
-                 unsigned char const *copyright)
+                 unsigned char const *copyright,
+                 int locale_id)
 {
   unsigned char const *s = template;
 
@@ -93,6 +94,9 @@ process_template(FILE *out,
       continue;
     }
     switch (*++s) {
+    case 'L':
+      fprintf(out, "%d", locale_id);
+      break;
     case 'C':
       fputs(charset, out);
       break;
@@ -118,6 +122,7 @@ client_put_header(FILE *out, unsigned char const *template,
                   unsigned char const *content_type,
                   unsigned char const *charset,
                   int http_flag,
+                  int locale_id,
                   unsigned char const *format, ...)
 {
   va_list args;
@@ -141,14 +146,14 @@ client_put_header(FILE *out, unsigned char const *template,
 
   }
 
-  process_template(out, template, content_type, charset, title, 0);
+  process_template(out, template, content_type, charset, title, 0, locale_id);
 }
 
 void
 client_put_footer(FILE *out, unsigned char const *template)
 {
   if (!template) template = default_footer_template;
-  process_template(out, template, 0, 0, 0, get_copyright());
+  process_template(out, template, 0, 0, 0, get_copyright(), 0);
 }
 
 int
@@ -218,26 +223,27 @@ client_time_to_str(char *buf, unsigned long time)
 }
 
 void
-client_access_denied(char const *charset)
+client_access_denied(char const *charset, int locale_id)
 {
-  client_put_header(stdout, 0, 0, charset, 1, _("Access denied"));
+  client_put_header(stdout, 0, 0, charset, 1, locale_id, _("Access denied"));
   printf("<p>%s</p>", _("You do not have permissions to use this service."));
   client_put_footer(stdout, 0);
   exit(0);
 }
 
 void
-client_not_configured(char const *charset, char const *str)
+client_not_configured(char const *charset, char const *str, int locale_id)
 {
   write_log(0, LOG_ERR, (char*) str);
-  client_put_header(stdout, 0, 0, charset, 1, _("Service is not available"));
+  client_put_header(stdout, 0, 0, charset, 1, locale_id, _("Service is not available"));
   printf("<p>%s</p>", _("Service is not available. Please, come later."));
   client_put_footer(stdout, 0);
   exit(0);
 }
 
 int
-client_check_server_status(char const *charset, char const *path, int lag)
+client_check_server_status(char const *charset, char const *path, int lag,
+                           int locale_id)
 {
   int fd = -1, r, tmp;
   struct prot_serve_status status;
@@ -304,13 +310,13 @@ client_check_server_status(char const *charset, char const *path, int lag)
   return 1;
 
  bad_server:
-  client_put_header(stdout, 0, 0, charset, 1, _("Incompatible server"));
+  client_put_header(stdout, 0, 0, charset, 1, locale_id, _("Incompatible server"));
   printf("<p>%s</p>", _("Server configuration error."));
   client_put_footer(stdout, 0);
   exit(0);
 
  server_down:
-  client_put_header(stdout, 0, 0, charset, 1, _("Server is down"));
+  client_put_header(stdout, 0, 0, charset, 1, locale_id, _("Server is down"));
   printf("<p>%s</p>", _("Server is down. Please, come later."));
   client_put_footer(stdout, 0);
   exit(0);
