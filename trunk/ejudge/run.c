@@ -495,7 +495,7 @@ run_tests(struct section_tester_data *tst,
         task_AddArg(tsk, tst->check_cmd);
         task_AddArg(tsk, prb->input_file);
         task_AddArg(tsk, prb->output_file);
-        if (prb->corr_dir[0]) {
+        if (prb->use_corr && prb->corr_dir[0]) {
           pathmake3(corr_path, prb->corr_dir, "/", corr_base, NULL);
           task_AddArg(tsk, corr_path);
           generic_read_file(&tests[cur_test].correct, 0, 0, 0,
