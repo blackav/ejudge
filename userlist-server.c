@@ -2822,6 +2822,7 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
     if (!daemon_mode) info("%d: country_en updated", p->id);
     updated = 1;
   }
+  /*
   if (needs_update(old_u->location, new_u->location)) {
     xfree(old_u->location);
     old_u->location = xstrdup(new_u->location);
@@ -2832,6 +2833,13 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
     xfree(old_u->spelling);
     old_u->spelling = xstrdup(new_u->spelling);
     if (!daemon_mode) info("%d: spelling updated", p->id);
+    updated = 1;
+  }
+  */
+  if (needs_update(old_u->languages, new_u->languages)) {
+    xfree(old_u->languages);
+    old_u->languages = xstrdup(new_u->languages);
+    if (!daemon_mode) info("%d: languages updated", p->id);
     updated = 1;
   }
 
@@ -3742,6 +3750,11 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
               d->users_verb_style, u->location?u->location:notset);
     }
     */
+    if (!d || d->fields[CONTEST_F_LANGUAGES]) {
+      fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              d->users_verb_style, _("Prog. languages"),
+              d->users_verb_style, u->languages?u->languages:notset);
+    }
 
     fprintf(f, "</table>\n");
 
@@ -4034,7 +4047,7 @@ do_dump_database(FILE *f, int contest_id, struct contest_desc *d)
         }
 
         pers_tot++;
-        fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%d;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
+        fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%d;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
                 u->id, u->login, u->name, u->email,
                 u->inst?u->inst:notset,
                 u->inst_en?u->inst_en:notset,
@@ -4049,6 +4062,8 @@ do_dump_database(FILE *f, int contest_id, struct contest_desc *d)
                 u->country?u->country:notset,
                 u->country_en?u->country_en:notset,
                 u->location?u->location:notset,
+                u->printer_name?u->printer_name:notset,
+                u->languages?u->languages:notset,
                 statstr, invstr, banstr,
                 m->serial,
                 gettext(member_string[role]),
@@ -4063,7 +4078,7 @@ do_dump_database(FILE *f, int contest_id, struct contest_desc *d)
       }
     }
     if (!pers_tot) {
-      fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
+      fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
               u->id, u->login, u->name, u->email,
               u->inst?u->inst:notset,
               u->inst_en?u->inst_en:notset,
@@ -4078,6 +4093,8 @@ do_dump_database(FILE *f, int contest_id, struct contest_desc *d)
               u->country?u->country:notset,
               u->country_en?u->country_en:notset,
               u->location?u->location:notset,
+              u->printer_name?u->printer_name:notset,
+              u->languages?u->languages:notset,
               statstr, invstr, banstr,
               "", "", "", "", "", "", "");
     }
