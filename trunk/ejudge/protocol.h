@@ -194,6 +194,7 @@ enum
     SRV_ERR_READONLY_RUN,
     SRV_ERR_PAGES_QUOTA,
     SRV_ERR_ALREADY_PRINTED,
+    SRV_ERR_BAD_SESSION_ID,
 
     SRV_ERR_LAST
   };
@@ -287,6 +288,7 @@ struct prot_serve_pkt_master_page
 {
   struct prot_serve_packet b;
 
+  unsigned long long session_id;
   int user_id;
   int contest_id;
   int locale_id;
@@ -399,6 +401,15 @@ struct prot_serve_pkt_upload_report
   unsigned int flags;
   int report_size;
   unsigned char data[1];
+};
+
+struct prot_serve_pkt_reset_filter
+{
+  struct prot_serve_packet b;
+
+  unsigned long long session_id;
+  int user_id;
+  int contest_id;
 };
 
 unsigned char const *protocol_strerror(int n);
