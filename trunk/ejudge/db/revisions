@@ -1076,3 +1076,5 @@ printing.c 1 2 552303
 protocol.c 1 9 219871
 runlog.c 1 28 3772751
 serve_clnt/edit_run.c 1 7 221669
+opcaps.h 1 4 165715
+opcaps.c 1 4 342677
