@@ -809,8 +809,10 @@ parse_cookies(unsigned char const *cookie)
     if (!strcmp(c_name, "ID")) {
       if (sscanf(c_value, "%llx %n", &val, &n) != 1 || c_value[n])
         return 0;
-      client_cookie = val;
-      return 1;
+      if (val) {
+        client_cookie = val;
+        return 1;
+      }
     }
     s += n;
     if (*s == ';') s++;
