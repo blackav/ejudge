@@ -75,7 +75,7 @@ int    run_sched_contest(time_t);
 int    run_get_total(void);
 
 void run_get_team_usage(int, int *, size_t*);
-int  run_get_attempts(int, int *);
+int  run_get_attempts(int, int *, int);
 char *run_status_str(int, char *, int);
 
 int run_get_fog_period(time_t, int, int);
@@ -96,6 +96,21 @@ struct run_header
   unsigned char pad[44];
 };
 
+enum
+  {
+    RUN_ENTRY_TIME   = 0x00000001,
+    RUN_ENTRY_SIZE   = 0x00000002,
+    RUN_ENTRY_IP     = 0x00000004,
+    RUN_ENTRY_SHA1   = 0x00000008,
+    RUN_ENTRY_USER   = 0x00000010,
+    RUN_ENTRY_PROB   = 0x00000020,
+    RUN_ENTRY_LANG   = 0x00000040,
+    RUN_ENTRY_LOCALE = 0x00000080,
+    RUN_ENTRY_STATUS = 0x00000100,
+    RUN_ENTRY_TEST   = 0x00000200,
+    RUN_ENTRY_SCORE  = 0x00000400,
+  };
+
 struct run_entry
 {
   int            submission;
@@ -115,5 +130,7 @@ struct run_entry
 
 void run_get_header(struct run_header *out);
 void run_get_all_entries(struct run_entry *out);
+int run_get_entry(int run_id, struct run_entry *out);
+int run_set_entry(int run_id, unsigned int mask, struct run_entry const *in);
 
 #endif /* __RUNLOG_H__ */
