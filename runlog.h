@@ -46,7 +46,7 @@ enum
   RUN_REJUDGE          = 99
 };
 
-enum { RUN_LOG_CREATE = 1 };
+enum { RUN_LOG_CREATE = 1, RUN_LOG_READONLY = 2 };
 
 int run_open(const char *path, int flags);
 int run_add_record(time_t         timestamp, 
@@ -85,5 +85,35 @@ unsigned char *run_unparse_ip(unsigned long ip);
 unsigned long run_parse_ip(unsigned char const *buf);
 
 int run_check_duplicate(int run_id);
+
+struct run_header
+{
+  int    version;
+  time_t start_time;
+  time_t sched_time;
+  time_t duration;
+  time_t stop_time;
+  unsigned char pad[44];
+};
+
+struct run_entry
+{
+  int            submission;
+  time_t         timestamp;
+  size_t         size;
+  unsigned long  ip;
+  unsigned long  sha1[5];
+  int            team;
+  int            problem;
+  int            score;
+  signed char    locale_id;
+  unsigned char  language;
+  unsigned char  status;
+  signed char    test;
+  unsigned char  pad[12];
+};
+
+void run_get_header(struct run_header *out);
+void run_get_all_entries(struct run_entry *out);
 
 #endif /* __RUNLOG_H__ */
