@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "version.h"
 #include "userlist_cfg.h"
 #include "userlist.h"
@@ -83,10 +85,12 @@ main(int argc, char **argv)
   unsigned char reply_buf[128], *reply;
   size_t reply_len;
 
+  /*
   if (argc == 1) {
     print_info(argv[0]);
     return 0;
   }
+  */
   for (i = 1; i < argc; i++) {
     if (!strcmp(argv[i], "-r")) {
       remove_flag = 1;
@@ -94,11 +98,24 @@ main(int argc, char **argv)
       force_flag = 1;
     } else break;
   }
+
+#if defined EJUDGE_XML_PATH
+  if (argc == i) {
+    info("using the default %s", EJUDGE_XML_PATH);
+    cfg_path = EJUDGE_XML_PATH;
+  } else if (argc != i + 1) {
+    fprintf(stderr, "%s: invalid number of arguments\n", argv[0]);
+    return 1;
+  } else {
+    cfg_path = argv[i];
+  }
+#else
   if (i + 1 != argc) {
     fprintf(stderr, "%s: invalid number of parameters\n", argv[0]);
     return 1;
   }
   cfg_path = argv[i];
+#endif
 
   info("clean-users %s, compiled %s", compile_version, compile_date);
 
