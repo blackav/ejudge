@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# $Id$
+# This is a 'compilation' script for yabasic language.
+# The idea is to append "#!/usr/local/bin/mzscheme -qr" string
+# to the beginning of the file.
+# Usage: yabasic <input> <output>
+
+echo '#!/usr/local/bin/mzscheme -qr' > $2
+echo >> $2
+cat $1 >> $2
+chmod +x $2
+exit 0
