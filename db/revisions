@@ -312,3 +312,17 @@ team.c 1 15 2211523
 userlist-server.c 1 3 802704
 expat_iface.h 1 1 133664
 expat_iface.c 1 1 734944
+clarlog.h 1 6 137343
+clntutil.h 1 9 230735
+prepare.h 1 21 951168
+protocol.h 1 2 127034
+runlog.h 1 7 204797
+clarlog.c 1 10 698294
+clntutil.c 1 17 1207867
+html.c 1 20 3565951
+master.c 1 21 3106787
+prepare.c 1 32 4588534
+run.c 1 28 2229646
+runlog.c 1 10 1070613
+serve.c 1 25 3886412
+team.c 1 16 2239973
