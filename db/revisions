@@ -1242,3 +1242,9 @@ clntutil.c 1 34 1326657
 parsecfg.c 1 16 948053
 prepare.c 1 70 8045118
 userlist_cfg.c 1 13 941218
+prepare.h 1 52 1515152
+testinfo.h 1 2 142483
+varsubst.h 1 1 88671
+run.c 1 55 3874665
+prepare.c 1 71 8248149
+varsubst.c 1 1 303310
