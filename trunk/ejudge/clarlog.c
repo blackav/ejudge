@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "clarlog.h"
@@ -110,10 +106,13 @@ clar_read_entry(int n)
   if (clars.v[n].id != n) ERR_R("[%d]: bad id: %d", n, clars.v[n].id);
   if (clars.v[n].size == 0 || clars.v[n].size >= 10000)
     ERR_R("[%d]: bad size: %d", n, clars.v[n].size);
+  // FIXME: how to check consistency?
+  /*
   if (clars.v[n].from && !teamdb_lookup(clars.v[n].from))
     ERR_R("[%d]: bad from: %d", n, clars.v[n].from);
   if (clars.v[n].to && !teamdb_lookup(clars.v[n].to))
     ERR_R("[%d]: bad to: %d", n, clars.v[n].to);
+  */
   if (clars.v[n].flags < 0 || clars.v[n].flags > 255)
     ERR_R("[%d]: bad flags: %d", n, clars.v[n].flags);
   if (strlen(b2) > IP_STRING_SIZE) ERR_R("[%d]: ip is too long", n);
@@ -137,7 +136,11 @@ clar_open(char const *path, int flags)
   if (clar_fd >= 0) {
     close(clar_fd); clar_fd = -1;
   }
-  if ((clar_fd = sf_open(path, O_RDWR | O_CREAT, 0666)) < 0) return -1;
+  if (flags == CLAR_LOG_READONLY) {
+    if ((clar_fd = sf_open(path, O_RDONLY, 0)) < 0) return -1;
+  } else {
+    if ((clar_fd = sf_open(path, O_RDWR | O_CREAT, 0666)) < 0) return -1;
+  }
 
   if ((filesize = sf_lseek(clar_fd, 0, SEEK_END, "clar")) == (off_t) -1)
     return -1;
@@ -216,8 +219,11 @@ clar_add_record(unsigned long  time,
   int i;
 
   if (size == 0 || size > 9999) ERR_R("bad size: %lu", size);
+  // FIXME: how to check consistency?
+  /*
   if (from && !teamdb_lookup(from)) ERR_R("bad from: %d", from);
   if (to && !teamdb_lookup(to)) ERR_R("bad to: %d", to);
+  */
   if (flags < 0 || flags > 255) ERR_R("bad flags: %d", flags);
   if (strlen(subj) > SUBJ_STRING_SIZE)
     ERR_R("bad subj size: %d", strlen(subj));
@@ -331,6 +337,16 @@ clar_reset(void)
   if (clars.a > 0) {
     memset(clars.v, 0, sizeof(clars.v[0]) * clars.a);
   }
+}
+
+void
+clar_clear_variables(void)
+{
+  if (clars.v) xfree(clars.v);
+  clars.v = 0;
+  clars.u = clars.a = 0;
+  if (clar_fd >= 0) close(clar_fd);
+  clar_fd = -1;
 }
 
 /**
