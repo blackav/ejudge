@@ -21,6 +21,7 @@
 #include "expat_iface.h"
 #include "opcaps.h"
 
+#include <stdlib.h>
 #include <time.h>
 
 enum
@@ -32,6 +33,7 @@ enum
     CONTEST_MASTER_ACCESS,
     CONTEST_JUDGE_ACCESS,
     CONTEST_TEAM_ACCESS,
+    CONTEST_SERVE_CONTROL_ACCESS,
     CONTEST_IP,
     CONTEST_FIELD,
     CONTEST_NAME,
@@ -69,6 +71,8 @@ enum
     CONTEST_TEAM_HEAD_STYLE,
     CONTEST_TEAM_PAR_STYLE,
     CONTEST_CONF_DIR,
+    CONTEST_RUN_USER,
+    CONTEST_RUN_GROUP,
 
     CONTEST_LAST_TAG
   };
@@ -90,6 +94,7 @@ enum
     CONTEST_A_CLEAN_USERS,
     CONTEST_A_RUN_MANAGED,
     CONTEST_A_CLOSED,
+    CONTEST_A_INVISIBLE,
 
     CONTEST_LAST_ATTN
   };
@@ -190,6 +195,7 @@ struct contest_desc
   unsigned char run_managed;
   unsigned char clean_users;
   unsigned char closed;
+  unsigned char invisible;
 
   unsigned long  reg_deadline;
   unsigned char *name;
@@ -209,11 +215,14 @@ struct contest_desc
   unsigned char *problems_url;
   unsigned char *serve_user;
   unsigned char *serve_group;
+  unsigned char *run_user;
+  unsigned char *run_group;
   struct contest_access *register_access;
   struct contest_access *users_access;
   struct contest_access *master_access;
   struct contest_access *judge_access;
   struct contest_access *team_access;
+  struct contest_access *serve_control_access;
   struct contest_field *fields[CONTEST_LAST_FIELD];
   struct contest_member *members[CONTEST_LAST_MEMBER];
   opcaplist_t capabilities;
@@ -252,10 +261,13 @@ enum
   CONTEST_ERR_BAD_XML,
   CONTEST_ERR_ID_NOT_MATCH,
   CONTEST_ERR_REMOVED,
+  CONTEST_ERR_FILE_CREATION_ERROR,
+  CONTEST_ERR_IO_ERROR,
   CONTEST_ERR_LAST
 };
 
 int contests_set_directory(unsigned char const *);
+int contests_make_path(unsigned char *buf, size_t sz, int num);
 int contests_get_list(unsigned char **);
 int contests_get(int, struct contest_desc **);
 unsigned char *contests_strerror(int);
@@ -266,12 +278,25 @@ int contests_unlock(int);
 
 int contests_check_ip(int, int, unsigned long);
 int contests_check_register_ip(int, unsigned long);
+int contests_check_register_ip_2(struct contest_desc *, unsigned long);
 int contests_check_users_ip(int, unsigned long);
+int contests_check_users_ip_2(struct contest_desc *, unsigned long);
 int contests_check_master_ip(int, unsigned long);
+int contests_check_master_ip_2(struct contest_desc *, unsigned long);
 int contests_check_judge_ip(int, unsigned long);
+int contests_check_judge_ip_2(struct contest_desc *, unsigned long);
 int contests_check_team_ip(int, unsigned long);
+int contests_check_team_ip_2(struct contest_desc *, unsigned long);
+int contests_check_serve_control_ip(int num, unsigned long ip);
+int contests_check_serve_control_ip_2(struct contest_desc *, unsigned long);
 
 void contests_set_load_callback(void (*f)(const struct contest_desc *));
 void contests_set_unload_callback(void (*f)(const struct contest_desc *));
+
+void contests_write_header(FILE *f, struct contest_desc *cnts);
+int contests_save_xml(struct contest_desc *cnts,
+                      const unsigned char *txt1,
+                      const unsigned char *txt2,
+                      const unsigned char *txt3);
 
 #endif /* __CONTESTS_H__ */
