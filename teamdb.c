@@ -188,6 +188,11 @@ teamdb_refresh(void)
 
   for (i = 1; i < users->user_map_size; i++)
     if (users->user_map[i]) total_participants++;
+  if (!total_participants) {
+    info("teamdb_refresh: no users in updated contest");
+    return 1;
+  }
+
   XCALLOC(participants, total_participants);
   XCALLOC(u_contests, users->user_map_size);
 
