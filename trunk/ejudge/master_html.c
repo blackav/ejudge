@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "filter_tree.h"
 #include "filter_eval.h"
 #include "prepare.h"
@@ -368,7 +370,7 @@ write_all_runs(FILE *f, struct user_filter_info *u,
 {
   struct filter_env env;
   int i, r, j;
-  int *match_idx;
+  int *match_idx = 0;
   int match_tot = 0;
   int *list_idx = 0;
   int list_tot = 0;
@@ -979,6 +981,7 @@ write_all_clars(FILE *f, struct user_filter_info *u,
   unsigned char *asubj = 0;
   int asubj_len = 0, new_len;
   int show_astr_time;
+  unsigned long tmpsizeval;
 
   fprintf(f, "<hr><h2>%s</h2>\n", _("Messages"));
 
@@ -1049,8 +1052,8 @@ write_all_clars(FILE *f, struct user_filter_info *u,
   for (j = 0; j < list_tot; j++) {
     i = list_idx[j];
 
-    clar_get_record(i, &time, (unsigned long*) &size,
-                    ip, &from, &to, &flags, subj);
+    clar_get_record(i, &time, &tmpsizeval, ip, &from, &to, &flags, subj);
+    size = tmpsizeval;
     if (priv_level != PRIV_LEVEL_ADMIN && (from <= 0 || flags >= 2)) continue; 
 
     base64_decode_str(subj, psubj, 0);
@@ -1669,12 +1672,15 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
   unsigned char txt_subj[CLAR_MAX_SUBJ_LEN + 16];
   unsigned char *html_subj, *txt_msg = 0, *html_msg;
   unsigned char name_buf[64];
+  unsigned long tmpsizeval;
+  char *tmp_txt_msg = 0;
 
   if (clar_id < 0 || clar_id >= clar_get_total()) return -SRV_ERR_BAD_CLAR_ID;
 
   start_time = run_get_start_time();
   clar_get_record(clar_id, &clar_time,
-                  (unsigned long*) &size, ip, &from, &to, &flags,b64_subj);
+                  &tmpsizeval, ip, &from, &to, &flags,b64_subj);
+  size = tmpsizeval;
   txt_subj_len = base64_decode_str(b64_subj, txt_subj, 0);
   html_subj_len = html_armored_strlen(txt_subj);
   html_subj = alloca(html_subj_len);
@@ -1715,10 +1721,11 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
   fprintf(f, "<hr>\n");
 
   snprintf(name_buf, sizeof(name_buf), "%06d", clar_id);
-  if (generic_read_file((char**) &txt_msg, 0, &txt_msg_len, 0,
+  if (generic_read_file(&tmp_txt_msg, 0, &txt_msg_len, 0,
                         global->clar_archive_dir, name_buf, "") < 0) {
     fprintf(f, "<big><font color=\"red\">Cannot read message text!</font></big>\n");
   } else {
+    txt_msg = tmp_txt_msg;
     txt_msg[txt_msg_len] = 0;
     html_msg_len = html_armored_strlen(txt_msg);
     html_msg = alloca(html_msg_len + 16);
@@ -1762,6 +1769,7 @@ write_priv_users(FILE *f, int user_id, int priv_level,
   struct teamdb_export info;
   unsigned char team_modes[128];
   unsigned char filtbuf1[512], filtbuf2[512], filtbuf3[512], *ps1, *ps2;
+  unsigned long tmpclarstotal;
 
   tot_teams = teamdb_get_total_teams();
   max_team = teamdb_get_max_team_id();
@@ -1795,7 +1803,8 @@ write_priv_users(FILE *f, int user_id, int priv_level,
     teamdb_export_team(i, &info);
 
     run_get_team_usage(i, &runs_num, &runs_total);
-    clar_get_team_usage(i, &clars_num, (unsigned long *) &clars_total);
+    clar_get_team_usage(i, &clars_num, &tmpclarstotal);
+    clars_total = tmpclarstotal;
     if (priv_level == PRIV_LEVEL_ADMIN) {
       html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
       fprintf(f, "<input type=\"hidden\" name=\"user_id\" value=\"%d\">", i);
