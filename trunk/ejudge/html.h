@@ -3,7 +3,7 @@
 #ifndef __HTML_H__
 #define __HTML_H__
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,8 @@
 void write_standings(char const *, char const *, char const *, char const *);
 void write_public_log(char const *, char const *, char const *, char const *);
 
-void new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
+void new_write_user_runs(FILE *f, int uid, int printing_suspended,
+                         unsigned int show_flags,
                          int sid_mode, unsigned long long sid,
                          unsigned char const *self_url,
                          unsigned char const *hidden_vars,
@@ -42,6 +43,7 @@ int new_write_user_source_view(FILE *, int, int);
 int new_write_user_report_view(FILE *, int, int);
 
 void write_team_page(FILE *f, int user_id,
+                     int printing_suspended,
                      int sid_mode, unsigned long long sid,
                      int all_runs, int all_clars,
                      unsigned char const *self_url,
@@ -121,5 +123,6 @@ void html_reset_filter(int user_id);
 
 void write_runs_dump(FILE *f, unsigned char const *charset);
 void write_raw_standings(FILE *f, unsigned char const *charset);
+int write_raw_source(FILE *f, int run_id);
 
 #endif /* __HTML_H__ */
