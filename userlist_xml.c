@@ -20,7 +20,6 @@
  */
 
 #include "nls.h"
-#include "utf8_utils.h"
 #include "userlist.h"
 #include "pathutl.h"
 
@@ -1097,8 +1096,8 @@ unparse_member_status(int s)
   ASSERT(s >= USERLIST_ST_SCHOOL && s <= USERLIST_ST_OTHER);
   return member_status_map[s];
 }
-static unsigned char *
-unparse_ip(unsigned long ip)
+unsigned char *
+userlist_unparse_ip(unsigned long ip)
 {
   static char buf[64];
 
@@ -1189,7 +1188,7 @@ unparse_cookies(struct xml_tree *p, FILE *f)
     c = (struct userlist_cookie*) p;
     fprintf(f, "      <%s %s=\"%s\" %s=\"%llx\" %s=\"%s\"",
             tag_map[USERLIST_T_COOKIE],
-            attn_map[USERLIST_A_IP], unparse_ip(c->ip),
+            attn_map[USERLIST_A_IP], userlist_unparse_ip(c->ip),
             attn_map[USERLIST_A_VALUE], c->cookie,
             attn_map[USERLIST_A_EXPIRE], unparse_date(c->expire));
     if (c->locale_id >= 0) {
