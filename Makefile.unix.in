@@ -17,22 +17,34 @@
 #  License along with this library; if not, write to the Free Software
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
 
+# === Configuration options ===
+
+# The following is a path to CGI data directory, which is
+# used by CGI scripts `team' and `master'. The path may either be
+# relative or absolute. If the path is relative (ie does not start
+# with /), the start point is the directory, from which CGI scripts
+# are started. The path "../cgi-data" is the default.
+
+CGI_DATA_PATH_FLAG = -DCGI_DATA_PATH=\"../cgi-data\"
+
+# === End of configuration options ===
+
 CFILES=base64.c cgi.c clar.c clarlog.c clntutil.c compile.c html.c\
   master.c misctext.c mkpasswd.c parsecfg.c pathutl.c prepare.c\
   run.c runlog.c serve.c submit.c team.c teamdb.c xalloc.c\
   register.c make-teamdb.c make-teamdb-inet.c send-passwords.c\
-  inetdb.c localdb.c idmap.c\
+  inetdb.c localdb.c idmap.c sformat.c\
   unix/exec.c unix/fileutl.c unix/logger.c unix/osdeps.c\
   win32/exec.c win32/fileutl.c win32/logger.c win32/osdeps.c
 
 HFILES=base64.h cgi.h clarlog.h clntutil.h exec.h fileutl.h html.h logger.h\
   misctext.h osdeps.h parsecfg.h pathutl.h prepare.h runlog.h\
-  inetdb.c localdb.c idmap.c\
+  inetdb.h localdb.h idmap.h sformat.h\
   teamdb.h xalloc.h version.h\
   unix/unix_fileutl.h
 
 ifeq ($(shell uname),Linux)
-CFLAGS=-Wall -I. -DCONF_HAS_SNPRINTF -DCONF_HAS_STRERROR -D_GNU_SOURCE -DCONF_HAS_LIBINTL -g
+CFLAGS=-Wall -I. -DCONF_HAS_SNPRINTF -DCONF_HAS_STRERROR -D_GNU_SOURCE ${CGI_DATA_PATH_FLAG} -DCONF_HAS_LIBINTL -g
 LDFLAGS=-g
 LDLIBS=
 ARCH=unix
@@ -48,19 +60,19 @@ endif
 CC=gcc
 LD=gcc
 
-C_CFILES=compile.c version.c prepare.c pathutl.c parsecfg.c xalloc.c $(ARCH)/fileutl.c $(ARCH)/osdeps.c $(ARCH)/exec.c $(ARCH)/logger.c 
+C_CFILES=compile.c version.c prepare.c pathutl.c parsecfg.c sformat.c xalloc.c $(ARCH)/fileutl.c $(ARCH)/osdeps.c $(ARCH)/exec.c $(ARCH)/logger.c 
 C_OBJECTS=$(C_CFILES:.c=.o)
 
-SERVE_CFILES=serve.c version.c html.c prepare.c runlog.c clarlog.c teamdb.c parsecfg.c pathutl.c misctext.c base64.c $(ARCH)/fileutl.c xalloc.c $(ARCH)/logger.c $(ARCH)/osdeps.c
+SERVE_CFILES=serve.c version.c html.c prepare.c runlog.c clarlog.c teamdb.c parsecfg.c pathutl.c misctext.c base64.c sformat.c $(ARCH)/fileutl.c xalloc.c $(ARCH)/logger.c $(ARCH)/osdeps.c
 SERVE_OBJECTS=$(SERVE_CFILES:.c=.o)
 
-SUBMIT_CFILES=submit.c version.c prepare.c teamdb.c parsecfg.c pathutl.c base64.c $(ARCH)/fileutl.c xalloc.c $(ARCH)/logger.c $(ARCH)/osdeps.c
+SUBMIT_CFILES=submit.c version.c prepare.c teamdb.c parsecfg.c pathutl.c sformat.c base64.c $(ARCH)/fileutl.c xalloc.c $(ARCH)/logger.c $(ARCH)/osdeps.c
 SUBMIT_OBJECTS=$(SUBMIT_CFILES:.c=.o)
 
-CLAR_CFILES=clar.c version.c prepare.c teamdb.c parsecfg.c pathutl.c $(ARCH)/fileutl.c xalloc.c base64.c misctext.c $(ARCH)/logger.c $(ARCH)/osdeps.c
+CLAR_CFILES=clar.c version.c prepare.c teamdb.c parsecfg.c pathutl.c sformat.c $(ARCH)/fileutl.c xalloc.c base64.c misctext.c $(ARCH)/logger.c $(ARCH)/osdeps.c
 CLAR_OBJECTS=$(CLAR_CFILES:.c=.o)
 
-RUN_CFILES=run.c version.c prepare.c parsecfg.c pathutl.c $(ARCH)/fileutl.c xalloc.c $(ARCH)/logger.c $(ARCH)/osdeps.c $(ARCH)/exec.c
+RUN_CFILES=run.c version.c prepare.c parsecfg.c pathutl.c sformat.c $(ARCH)/fileutl.c xalloc.c $(ARCH)/logger.c $(ARCH)/osdeps.c $(ARCH)/exec.c
 RUN_OBJECTS=$(RUN_CFILES:.c=.o)
 
 M_CFILES=master.c version.c parsecfg.c clntutil.c cgi.c pathutl.c misctext.c xalloc.c base64.c $(ARCH)/fileutl.c $(ARCH)/osdeps.c $(ARCH)/logger.c 
@@ -182,7 +194,7 @@ mkpasswd.o: mkpasswd.c teamdb.h
 parsecfg.o: parsecfg.c parsecfg.h xalloc.h pathutl.h
 pathutl.o: pathutl.c pathutl.h osdeps.h logger.h
 prepare.o: prepare.c prepare.h pathutl.h parsecfg.h fileutl.h xalloc.h \
- logger.h osdeps.h
+ logger.h osdeps.h sformat.h teamdb.h
 run.o: run.c prepare.h pathutl.h parsecfg.h runlog.h fileutl.h \
  osdeps.h logger.h exec.h xalloc.h
 runlog.o: runlog.c runlog.h xalloc.h logger.h pathutl.h \
@@ -205,6 +217,7 @@ register.o: register.c cgi.h fileutl.h pathutl.h xalloc.h logger.h \
 send-passwords.o: send-passwords.c inetdb.h teamdb.h fileutl.h
 make-teamdb.o: make-teamdb.c idmap.h localdb.h
 make-teamdb-inet.o: make-teamdb-inet.c inetdb.h
+sformat.o: sformat.c prepare.h pathutl.h parsecfg.h teamdb.h xalloc.h
 
 unix/exec.o: unix/exec.c exec.h xalloc.h logger.h osdeps.h
 unix/fileutl.o: unix/fileutl.c fileutl.h unix/unix_fileutl.h logger.h \
