@@ -531,3 +531,14 @@ runlog.c 1 12 1379156
 team.c 1 20 2137457
 userlist.c 1 6 1325446
 userlist_xml.c 1 10 3257063
+teamdb.h 1 12 237203
+userlist_cfg.h 1 6 154016
+edit-userlist.c 1 4 5133156
+expat_iface.c 1 6 1069204
+html.c 1 23 4357348
+register.c 1 19 6023275
+run.c 1 34 2369842
+serve.c 1 30 6025151
+teamdb.c 1 16 1255129
+userlist-server.c 1 12 9457156
+userlist_cfg.c 1 8 891860
