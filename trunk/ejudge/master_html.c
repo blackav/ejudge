@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -67,6 +67,7 @@ struct user_filter_info
   int prev_last_run;
   int prev_first_clar;
   int prev_last_clar;
+  int prev_mode_clar;           /* 1 - view all, 2 - view unanswered */
   unsigned char *prev_filter_expr;
   struct filter_tree *prev_tree;
   struct filter_tree_mem *tree_mem;
@@ -369,7 +370,7 @@ static struct user_filter_info *allocate_user_info(int user_id, unsigned long lo
 
 static void
 print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
-                 int attempts)
+                 int attempts, int disq_attempts)
 {
   // indices
   enum
@@ -401,6 +402,8 @@ print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
     RAW_RUN_PENALTY,
     RAW_RUN_DATE_PENALTY,
     RAW_RUN_SCORE_ADJ,
+    RAW_RUN_DISQ_ATTEMPT,
+    RAW_RUN_DISQ_PENALTY,
 
     RAW_RUN_LAST
   };
@@ -494,7 +497,8 @@ print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
                    "%d", pe->test - 1);
         }
 
-        score = calc_kirov_score(0, 0, pe, pp, attempts, &date_penalty);
+        score = calc_kirov_score(0, 0, pe, pp, attempts, disq_attempts,
+                                 &date_penalty);
         if (pp->score_multiplier >= 1) mult = pp->score_multiplier;
         snprintf((fields[RAW_RUN_SCORE] = alloca(BSIZE)), BSIZE, "%d", score);
         snprintf((fields[RAW_RUN_BASE_SCORE] = alloca(BSIZE)), BSIZE,
@@ -511,6 +515,12 @@ print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
                  "%d", date_penalty);
         snprintf((fields[RAW_RUN_SCORE_ADJ] = alloca(BSIZE)), BSIZE,
                  "%d", pe->score_adj);
+        snprintf((fields[RAW_RUN_DISQ_ATTEMPT] = alloca(BSIZE)), BSIZE,
+                 "%d", disq_attempts);
+        if (pp) {
+          snprintf((fields[RAW_RUN_DISQ_PENALTY] = alloca(BSIZE)), BSIZE,
+                   "%d", pp->disqualified_penalty);
+        }
       }
     }
   }
@@ -541,7 +551,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
   int list_tot = 0;
   unsigned char *str1 = 0, *str2 = 0;
   unsigned char durstr[64], statstr[64];
-  int rid, attempts;
+  int rid, attempts, disq_attempts;
   time_t run_time, start_time;
   struct run_entry *pe;
   unsigned char *fe_html;
@@ -778,7 +788,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
         run_status_str(pe->status, statstr, 0);
 
         if (raw_format) {
-          print_raw_record(f, rid, pe, 0, 0);
+          print_raw_record(f, rid, pe, 0, 0, 0);
           continue;
         }
 
@@ -814,7 +824,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
         run_status_str(pe->status, statstr, 0);
 
         if (raw_format) {
-          print_raw_record(f, rid, pe, 0, 0);
+          print_raw_record(f, rid, pe, 0, 0, 0);
           continue;
         }
 
@@ -854,9 +864,10 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
         continue;
       }
 
-      attempts = 0;
+      attempts = 0; disq_attempts = 0;
       if (global->score_system_val == SCORE_KIROV && !pe->is_hidden) {
-        run_get_attempts(rid, &attempts, global->ignore_compile_errors);
+        run_get_attempts(rid, &attempts, &disq_attempts,
+                         global->ignore_compile_errors);
       }
       run_time = pe->timestamp;
       imported_str = "";
@@ -879,7 +890,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
       run_status_str(pe->status, statstr, 0);
 
       if (raw_format) {
-        print_raw_record(f, rid, pe, start_time, attempts);
+        print_raw_record(f, rid, pe, start_time, attempts, disq_attempts);
         continue;
       }
 
@@ -922,7 +933,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
       } else {
         fprintf(f, "<td>??? - %d</td>", pe->language);
       }
-      write_html_run_status(f, pe, priv_level, attempts);
+      write_html_run_status(f, pe, priv_level, attempts, disq_attempts);
       if (priv_level == PRIV_LEVEL_ADMIN) {
         if (global->score_system_val == SCORE_KIROV) {
           fprintf(f,
@@ -1140,7 +1151,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
 static void
 write_all_clars(FILE *f, struct user_filter_info *u,
                 int priv_level, int sid_mode, unsigned long long sid,
-                int first_clar, int last_clar,
+                int mode_clar, int first_clar, int last_clar,
                 unsigned char const *self_url,
                 unsigned char const *hidden_vars,
                 unsigned char const *extra_args)
@@ -1169,8 +1180,14 @@ write_all_clars(FILE *f, struct user_filter_info *u,
 
   start = run_get_start_time();
   total = clar_get_total();
+  if (!mode_clar) mode_clar = u->prev_mode_clar;
   if (!first_clar) first_clar = u->prev_first_clar;
   if (!last_clar) last_clar = u->prev_last_clar;
+  if (!mode_clar) {
+    mode_clar = 1;
+    if (priv_level != PRIV_LEVEL_ADMIN) mode_clar = 2;
+  }
+  u->prev_mode_clar = mode_clar;
   u->prev_first_clar = first_clar;
   u->prev_last_clar = last_clar;
   show_astr_time = global->show_astr_time;
@@ -1219,9 +1236,20 @@ write_all_clars(FILE *f, struct user_filter_info *u,
              (u->prev_last_clar > 0)?u->prev_last_clar - 1:u->prev_last_clar);
   }
   html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args);
+
+  fprintf(f,
+          "<select name=\"%s\"><option value=\"1\"%s>%s</option>"
+          "<option value=\"2\"%s>%s</option></select>\n",
+          "filter_mode_clar",
+          (mode_clar == 1) ? " selected=\"1\"" : "",
+          _("All clars"),
+          (mode_clar == 2) ? " selected=\"1\"" : "",
+          _("Unanswered clars"));
   fprintf(f, "%s: <input type=\"text\" name=\"filter_first_clar\" size=\"16\" value=\"%s\">", _("First clar"), first_clar_str);
   fprintf(f, "%s: <input type=\"text\" name=\"filter_last_clar\" size=\"16\" value=\"%s\">", _("Last clar"), last_clar_str);
   fprintf(f, "<input type=\"submit\" name=\"filter_view_clars\" value=\"%s\">", _("View"));
+  fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+          ACTION_RESET_CLAR_FILTER, _("Reset filter"));
   fprintf(f, "</p></form>\n");
 
   fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th><th>%s</th>"
@@ -1236,7 +1264,7 @@ write_all_clars(FILE *f, struct user_filter_info *u,
 
     clar_get_record(i, &time, &tmpsizeval, ip, &from, &to, &flags, subj);
     size = tmpsizeval;
-    if (priv_level != PRIV_LEVEL_ADMIN && (from <= 0 || flags >= 2)) continue; 
+    if (mode_clar != 1 && (from <= 0 || flags >= 2)) continue; 
 
     base64_decode_str(subj, psubj, 0);
     new_len = html_armored_strlen(psubj);
@@ -1335,7 +1363,7 @@ void
 write_master_page(FILE *f, int user_id, int priv_level,
                   int sid_mode, unsigned long long sid,
                   int first_run, int last_run,
-                  int first_clar, int last_clar,
+                  int mode_clar, int first_clar, int last_clar,
                   unsigned char const *self_url,
                   unsigned char const *filter_expr,
                   unsigned char const *hidden_vars,
@@ -1347,7 +1375,8 @@ write_master_page(FILE *f, int user_id, int priv_level,
   write_priv_all_runs(f, user_id, u, priv_level, sid_mode, sid, first_run,
                       last_run, self_url, filter_expr, hidden_vars,
                       extra_args);
-  write_all_clars(f, u, priv_level, sid_mode, sid, first_clar, last_clar,
+  write_all_clars(f, u, priv_level, sid_mode, sid, mode_clar,
+                  first_clar, last_clar,
                   self_url, hidden_vars, extra_args);
 }
 
@@ -1386,7 +1415,8 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   path_t src_path;
   struct run_entry info;
   char *src_text = 0, *html_text;
-  size_t src_len, html_len;
+  unsigned char *numb_txt;
+  size_t src_len, html_len, numb_len;
   time_t start_time;
   int variant, src_flags, run_id2;
   unsigned char const *nbsp = "<td>&nbsp;</td><td>&nbsp;</td>";
@@ -1786,9 +1816,15 @@ write_priv_source(FILE *f, int user_id, int priv_level,
     if (src_flags < 0 || generic_read_file(&src_text, 0, &src_len, src_flags, 0, src_path, "") < 0) {
       fprintf(f, "<big><font color=\"red\">Cannot read source text!</font></big>\n");
     } else {
-      html_len = html_armored_memlen(src_text, src_len);
+      numb_txt = "";
+      if ((numb_len = text_numbered_memlen(src_text, src_len))) {
+        numb_txt = alloca(numb_len + 1);
+        text_number_lines(src_text, src_len, numb_txt);
+      }
+
+      html_len = html_armored_memlen(numb_txt, numb_len);
       html_text = alloca(html_len + 16);
-      html_armor_text(src_text, src_len, html_text);
+      html_armor_text(numb_txt, numb_len, html_text);
       html_text[html_len] = 0;
       fprintf(f, "<pre>%s</pre>", html_text);
       xfree(src_text);
@@ -2133,7 +2169,7 @@ write_priv_users(FILE *f, int user_id, int priv_level,
     fprintf(f, "<td>");
     if (global->team_info_url[0]) {
       sformat_message(href_buf, sizeof(href_buf), global->team_info_url,
-                      NULL, NULL, NULL, NULL, &info);
+                      NULL, NULL, NULL, NULL, &info, 0, 0, 0);
       fprintf(f, "<a href=\"%s\">", href_buf);
     }
     fprintf(f, "%s", html_login);
@@ -2478,8 +2514,6 @@ html_reset_filter(int user_id, unsigned long long session_id)
 
   u->prev_first_run = 0;
   u->prev_last_run = 0;
-  u->prev_first_clar = 0;
-  u->prev_last_clar = 0;
   xfree(u->prev_filter_expr); u->prev_filter_expr = 0;
   xfree(u->error_msgs); u->error_msgs = 0;
   if (u->tree_mem) {
@@ -2487,6 +2521,16 @@ html_reset_filter(int user_id, unsigned long long session_id)
     u->tree_mem = 0;
   }
   u->prev_tree = 0;
+}
+
+void
+html_reset_clar_filter(int user_id, unsigned long long session_id)
+{
+  struct user_filter_info *u = allocate_user_info(user_id, session_id);
+
+  u->prev_mode_clar = 0;
+  u->prev_first_clar = 0;
+  u->prev_last_clar = 0;
 }
 
 void
