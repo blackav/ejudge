@@ -44,6 +44,11 @@ enum
     ULS_TEAM_CHECK_COOKIE,
     ULS_GET_CONTEST_NAME,
     ULS_TEAM_SET_PASSWD,
+    ULS_LIST_ALL_USERS,
+    ULS_EDIT_REGISTRATION,
+    ULS_EDIT_FIELD,
+    ULS_DELETE_FIELD,
+    ULS_ADD_FIELD,
   };
 
 /* server reply codes (each corresponds to a different packet) */
@@ -81,6 +86,10 @@ enum
     ULS_ERR_IPC_FAILURE,
     ULS_ERR_IP_NOT_ALLOWED,
     ULS_ERR_CANNOT_PARTICIPATE,
+    ULS_ERR_NOT_REGISTERED,
+    ULS_ERR_CANNOT_DELETE,
+    ULS_ERR_CANNOT_CHANGE,
+    ULS_ERR_DEADLINE,
 
     ULS_ERR_LAST
   };
@@ -237,6 +246,28 @@ struct userlist_pk_map_contest
 {
   short request_id;
   int   contest_id;
+};
+
+struct userlist_pk_edit_registration __attribute__((packed, aligned(1)));
+struct userlist_pk_edit_registration
+{
+  short          request_id;
+  int            user_id;
+  int            contest_id;
+  int            new_status;    /* -1 - no change, -2 - delete */
+  int            flags_cmd; /* 0 - no change, 1 - set, 2 - clear, 3 - toggle */
+  unsigned int   new_flags;
+};
+struct userlist_pk_edit_field __attribute__((packed, aligned(1)));
+struct userlist_pk_edit_field
+{
+  short request_id;
+  int   user_id;
+  int   role;
+  int   pers;
+  int   field;
+  unsigned char value_len;
+  unsigned char data[0];
 };
 
 /* server->client replies */
