@@ -26,7 +26,7 @@
 int
 serve_clnt_edit_run(int sock_fd, int run_id, int mask,
                     int user_id, int prob_id, int lang_id, int status,
-                    int is_imported,
+                    int is_imported, int variant,
                     unsigned char const *user_login)
 {
   struct prot_serve_pkt_run_info *out;
@@ -51,6 +51,7 @@ serve_clnt_edit_run(int sock_fd, int run_id, int mask,
   out->lang_id = lang_id;
   out->status = status;
   out->is_imported = is_imported;
+  out->variant = variant;
   out->user_login_len = user_login_len;
   strcpy(user_login_ptr, user_login);
 
