@@ -181,12 +181,14 @@ bad_request(char const *charset)
 {
   if (!charset) charset = "iso8859-1";
 
+  // as locale_id is not received, no need for localization
+
   printf("Content-Type: text/html; charset = %s\n\n", charset);
   printf("<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1><p>", charset,
-         _("Bad data"), _("Bad data"));
-  printf(_("Your browser has sent the data in the format"
-           " that this program cannot parse."
-           " Please, report this to address <a href=\"mailto:%s\">%s</a>.</p>"), "<some address>", "<some address>");
+         "Bad data", "Bad data");
+  printf("Your browser has sent the data in the format"
+         " that this program cannot parse."
+         " Please, report this to address <a href=\"mailto:%s\">%s</a>.</p>", "cher@unicorn.cmc.msu.ru", "cher@unicorn.cmc.msu.ru");
   printf("</p></body></html>\n");
 }
 
@@ -197,8 +199,8 @@ request_too_large(char const *charset)
 
   printf("Content-Type: text/html; charset=%s\n\n", charset);
   printf("<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1><p>",
-         charset, _("Request is rejected"), _("Request is rejected"));
-  printf(_("Your request has been rejected for its data size exceeds the allowed maximum."));
+         charset, "Request is rejected", "Request is rejected");
+  printf("Your request has been rejected for its data size exceeds the allowed maximum.");
   printf("</p></body></html>\n");
 }
 
