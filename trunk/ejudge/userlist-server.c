@@ -4373,7 +4373,7 @@ do_generate_passwd(int contest_id, FILE *log)
   struct xml_tree *t;
   unsigned char buf[16];
 
-  fprintf(log, "<table border=\"1\"><tr><th>User ID</th><th>User Login</th><th>User Name</th><th>New User Login Password</th></tr>\n");
+  fprintf(log, "<table border=\"1\"><tr><th>User ID</th><th>User Login</th><th>User Name</th><th>New User Login Password</th><th>Location</th></tr>\n");
   for (u = (struct userlist_user*) userlist->b.first_down;
        u; u = (struct userlist_user*) u->b.right) {
     if (!u->contests) continue;
@@ -4409,9 +4409,9 @@ do_generate_passwd(int contest_id, FILE *log)
     p->b.text = xstrdup(buf);
 
   // html table header
-    fprintf(log, "<tr><td><b>User ID</b></td><td><b>User Login</b></td><td><b>User Name</b></td><td><b>New User Login Password</b></td></tr>\n");
-    fprintf(log, "<tr><td>%d</td><td>%s</td><td>%s</td><td><tt>%s</tt></td></tr>\n",
-            u->id, u->login, u->name, buf);
+    fprintf(log, "<tr><td><b>User ID</b></td><td><b>User Login</b></td><td><b>User Name</b></td><td><b>New User Login Password</b></td><td><b>Location</b></td></tr>\n");
+    fprintf(log, "<tr><td>%d</td><td>%s</td><td>%s</td><td><tt>%s</tt></td><td><tt>%s</tt></td></tr>\n",
+            u->id, u->login, u->name, buf, u->location?(char*)u->location:"N/A");
   }
   fprintf(log, "</table>\n");
 
@@ -4494,7 +4494,7 @@ do_generate_team_passwd(int contest_id, FILE *log)
   struct xml_tree *t;
   unsigned char buf[16];
 
-  fprintf(log, "<table border=\"1\"><tr><th>User ID</th><th>User Login</th><th>User Name</th><th>New User Password</th></tr>\n");
+  fprintf(log, "<table border=\"1\"><tr><th>User ID</th><th>User Login</th><th>User Name</th><th>New User Password</th><th>Location</th></tr>\n");
   for (u = (struct userlist_user*) userlist->b.first_down;
        u; u = (struct userlist_user*) u->b.right) {
     if (!u->contests) continue;
@@ -4530,9 +4530,9 @@ do_generate_team_passwd(int contest_id, FILE *log)
     p->b.text = xstrdup(buf);
 
   // html table header
-    fprintf(log, "<tr><td><b>User ID</b></td><td><b>User Login</b></td><td><b>User Name</b></td><td><b>New User Password</b></td></tr>\n");
-    fprintf(log, "<tr><td>%d</td><td>%s</td><td>%s</td><td><tt>%s</tt></td></tr>\n",
-            u->id, u->login, u->name, buf);
+    fprintf(log, "<tr><td><b>User ID</b></td><td><b>User Login</b></td><td><b>User Name</b></td><td><b>New User Password</b></td><td><b>Location</b></td></tr>\n");
+    fprintf(log, "<tr><td>%d</td><td>%s</td><td>%s</td><td><tt>%s</tt></td><td><tt>%s</tt></td></tr>\n",
+            u->id, u->login, u->name, buf, u->location?(char*)u->location:"N/A");
   }
   fprintf(log, "</table>\n");
 
