@@ -87,4 +87,6 @@ int teamdb_export_team(int id, struct teamdb_export *);
 time_t teamdb_get_archive_time(int uid);
 int    teamdb_set_archive_time(int uid, time_t time);
 
+int teamdb_get_uid_by_pid(int, int, int, int *, unsigned long long *);
+
 #endif /* __TEAMDB_H__ */
