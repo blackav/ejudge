@@ -21,6 +21,7 @@
 #include "base64.h"
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
+#include "userlist.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/logger.h>
@@ -49,14 +50,16 @@
 
 /* userlist-server connection */
 static unsigned char *server_path = 0;
+static time_t server_last_open_time = 0;
 static struct userlist_clnt *server_conn = 0;
-static int sem_id = -1;
+static struct userlist_table *server_users = 0;
+static struct userlist_table local_users;
+static struct userlist_list *users;
+static int total_participants;
+static struct userlist_user **participants;
+static struct userlist_contest **u_contests;
 static int shm_id = -1;
-static struct userlist_table *server_users;
-static struct userlist_table *cached_users;
-static int cached_size;
-static struct userlist_user_short **cached_map;
-static key_t sem_key, shm_key;
+static key_t shm_key;
 static int contest_id;
 
 /* non-saved local extra information about teams */
@@ -83,177 +86,16 @@ static void handler(int signo)
 }
 
 static int
-restore_connection(void)
-{
-  int retcode = 1;
-  int first_time = 1;
-  int r;
-
-  info("userlist-server is disconnected. Trying to restore connection.");
-
-  userlist_clnt_close(server_conn);
-  server_conn = 0;
-  xfree(cached_users); cached_users = 0;
-  xfree(cached_map); cached_map = 0;
-  cached_size = 0;
-  shmdt(server_users);
-  // just in case...
-  semctl(sem_id, 0, IPC_RMID);
-  shmctl(shm_id, IPC_RMID, 0);
-  sem_id = shm_id = -1;
-
-  prev_handler[SIGINT] = signal(SIGINT, handler);
-  prev_handler[SIGTERM] = signal(SIGTERM, handler);
-
-  while (1) {
-    if (!first_time) sleep(1);
-    first_time = 0;
-
-    if (interrupted_flag) {
-      retcode = 0;
-      break;
-    }
-
-    server_conn = userlist_clnt_open(server_path);
-    if (!server_conn) {
-      err("teamdb_open_client: connect to server failed");
-      continue;
-    }
-    if ((r = userlist_clnt_admin_process(server_conn)) < 0) {
-      if (r == -ULS_ERR_NO_CONNECT || r == -ULS_ERR_DISCONNECT) continue;
-      err("teamdb_open_client: cannot became an admin process: %s",
-          userlist_strerror(-r));
-      retcode = -1;
-      break;
-    }
-    if ((r = userlist_clnt_map_contest(server_conn, contest_id,
-                                       &sem_key, &shm_key)) < 0) {
-      if (r == -ULS_ERR_NO_CONNECT || r == -ULS_ERR_DISCONNECT) continue;
-      err("teamdb_open_client: cannot map contest: %s", userlist_strerror(-r));
-      retcode = -1;
-      break;
-    }
-    if ((sem_id = semget(sem_key, 1, 0)) < 0) {
-      err("teamdb_open_client: cannot obtain a semafore: %s", os_ErrorMsg());
-      retcode = -1;
-      break;
-    }
-    if ((shm_id = shmget(shm_key, 0, 0)) < 0) {
-      err("teamdb_open_client: cannot obtain a shared memory: %s",
-          os_ErrorMsg());
-      retcode = -1;
-      break;
-    }
-    if ((int) (server_users = shmat(shm_id, 0, SHM_RDONLY)) == -1) {
-      err("teamdb_open_client: cannot attach shared memory: %s",
-          os_ErrorMsg());
-      retcode = -1;
-      break;
-    }
-    // success!
-    break;
-  }
-
-  signal(SIGINT, prev_handler[SIGINT]);
-  signal(SIGTERM, prev_handler[SIGTERM]);
-  return retcode;
-}
-
-static int
-lock_userlist_table(void)
-{
-  struct sembuf lock;
-  int r;
-
- restart_lock:
-  lock.sem_num = 0;
-  lock.sem_op = -1;
-  lock.sem_flg = SEM_UNDO;      /* in case of crash */
-  while (1) {
-    if (!semop(sem_id, &lock, 1)) break;
-    if (errno == EIDRM || errno == EINVAL) {
-      r = restore_connection();
-      if (r > 0) goto restart_lock;
-      return -1;
-    }
-    if (errno != EINTR) {
-      err("semop failed: %s", os_ErrorMsg());
-      return -1;
-    }
-    info("semop restarted after signal");
-  }
-  return 0;
-}
-static void
-unlock_userlist_table(void)
-{
-  struct sembuf unlock;
-
-  unlock.sem_num = 0;
-  unlock.sem_op = 1;
-  unlock.sem_flg = SEM_UNDO;
-  if (semop(sem_id, &unlock, 1) < 0) {
-    err("semop failed: %s", os_ErrorMsg());
-  }
-}
-void
-teamdb_refresh(void)
-{
-  int m;
-  int i;
-
-  if (!server_conn) return;
-  if (cached_users && cached_users->vintage == server_users->vintage) return;
-  if (!cached_users) {
-    cached_users = xcalloc(1, sizeof(*cached_users));
-  }
-  if (lock_userlist_table() < 0) {
-    xfree(cached_users);
-    cached_users = 0;
-    return;
-  }
-  if (!cached_users) {
-    cached_users = xcalloc(1, sizeof(*cached_users));
-  }
-  memcpy(cached_users, server_users, sizeof(*server_users));
-  unlock_userlist_table();
-
-  xfree(cached_map);
-  cached_map = 0;
-  m = -1;
-  for (i = 0; i < cached_users->total; i++) {
-    if (cached_users->users[i].user_id > m) m = cached_users->users[i].user_id;
-  }
-  if (m <= 0) {
-    cached_size = 0;
-  } else {
-    cached_size = m + 1;
-    cached_map = xcalloc(cached_size, sizeof(cached_map[0]));
-    for (i = 0; i < cached_users->total; i++) {
-      cached_map[cached_users->users[i].user_id] = &cached_users->users[i];
-    }
-  }
-
-  info("refresh_userlist_table: updated from server, %d users (size = %d)", cached_users->total, cached_size);
-  extra_out_of_sync = 1;
-}
-
-int
-teamdb_get_vintage(void)
-{
-  if (!cached_users) return 0;
-  return cached_users->vintage;
-}
-
-int
-teamdb_open_client(unsigned char const *socket_path, int id)
+open_connection(void)
 {
   int r;
+  time_t cur_time;
 
-  contest_id = id;
-  server_path = xstrdup(socket_path);
-  server_conn = userlist_clnt_open(socket_path);
-  if (!server_conn) {
+  if (server_conn) return 0;
+  cur_time = time(0);
+  if (cur_time - server_last_open_time <= 1) return -1;
+  server_last_open_time = cur_time;
+  if (!(server_conn = userlist_clnt_open(server_path))) {
     err("teamdb_open_client: connect to server failed");
     return -1;
   }
@@ -263,12 +105,8 @@ teamdb_open_client(unsigned char const *socket_path, int id)
     return -1;
   }
   if ((r = userlist_clnt_map_contest(server_conn, contest_id,
-                                     &sem_key, &shm_key)) < 0) {
+                                     0, &shm_key)) < 0) {
     err("teamdb_open_client: cannot map contest: %s", userlist_strerror(-r));
-    return -1;
-  }
-  if ((sem_id = semget(sem_key, 1, 0)) < 0) {
-    err("teamdb_open_client: cannot obtain a semafore: %s", os_ErrorMsg());
     return -1;
   }
   if ((shm_id = shmget(shm_key, 0, 0)) < 0) {
@@ -281,26 +119,146 @@ teamdb_open_client(unsigned char const *socket_path, int id)
         os_ErrorMsg());
     return -1;
   }
+  return 0;
+}
 
-  teamdb_refresh();
+static void
+close_connection(void)
+{
+  if (server_conn) {
+    userlist_clnt_close(server_conn);
+    server_conn = 0;
+  }
+  if (server_users) {
+    shmdt(server_users);
+    server_users = 0;
+  }
+  if (shm_id >= 0) {
+    shmctl(shm_id, IPC_RMID, 0);
+    shm_id = -1;
+  }
+  if (shm_key > 0) {
+    shm_key = 0;
+  }
+}
+
+int
+teamdb_refresh(void)
+{
+  int i, r, j;
+  unsigned char *xml_text;
+  struct userlist_list *new_users;
+  unsigned long prev_vintage;
+  struct userlist_user *uu;
+  struct userlist_contest *uc;
+
+  if (open_connection() < 0) return -1;
+
+  if (server_users && server_users->vintage != 0xffffffff
+      && local_users.vintage && local_users.vintage != 0xffffffff
+      && server_users->vintage == local_users.vintage) return 0;
+
+  prev_vintage = local_users.vintage;
+
+  /* this should be an atomic copy */
+  local_users.vintage = server_users->vintage;
+
+  /* There is a possibility, that vintage will be incremented
+   * in this time window. However, this may only cause harmless
+   * userlist reload.
+   */
+
+  r = userlist_clnt_list_all_users(server_conn, ULS_LIST_STANDINGS_USERS,
+                                   contest_id, &xml_text);
+  if (r < 0) {
+    /* Don't try hard. Just proceed with the current copy. */
+    local_users.vintage = prev_vintage;
+    err("teamdb_refresh: cannot load userlist: %s", userlist_strerror(-r));
+    close_connection();
+    return -1;
+  }
+  new_users = userlist_parse_str(xml_text);
+  if (!new_users) {
+    local_users.vintage = prev_vintage;
+    err("teamdb_refresh: XML parse error");
+    close_connection();
+    return -1;
+  }
+
+  //fprintf(stderr, ">>%s\n", xml_text);
+
+  userlist_free((struct xml_tree*) users);
+  users = new_users;
+  xfree(participants);
+  participants = 0;
+  xfree(u_contests);
+  u_contests = 0;
+  total_participants = 0;
+
+  if (users->user_map_size <= 0) {
+    info("teamdb_refresh: no users in updated contest");
+    return 1;
+  }
+
+  for (i = 1; i < users->user_map_size; i++)
+    if (users->user_map[i]) total_participants++;
+  XCALLOC(participants, total_participants);
+  XCALLOC(u_contests, users->user_map_size);
+
+  for (i = 1, j = 0; i < users->user_map_size; i++) {
+    if (!(uu = users->user_map[i])) continue;
+    if (!uu->contests) continue;
+
+    for (uc = (struct userlist_contest*) uu->contests->first_down;
+         uc; uc = (struct userlist_contest*) uc->b.right) {
+      if (uc->id == contest_id) break;
+    }
+    if (!uc) continue;
+
+    participants[j++] = users->user_map[i];
+    u_contests[i] = uc;
+  }
+  ASSERT(j <= total_participants);
+  if (j < total_participants) {
+    err("teamdb_refresh: registered %d, passed %d", j, total_participants);
+  }
+
+  info("teamdb_refresh: updated: %d users, %d max user, XML size = %d",
+       total_participants, users->user_map_size - 1, strlen(xml_text));
+  extra_out_of_sync = 1;
+  return 1;
+}
+
+int
+teamdb_get_vintage(void)
+{
+  if (teamdb_refresh() < 0) return 0;
+  return local_users.vintage;
+}
+
+int
+teamdb_open_client(unsigned char const *socket_path, int id)
+{
+  contest_id = id;
+  server_path = xstrdup(socket_path);
+  if (open_connection() < 0) return -1;
+  if (teamdb_refresh() < 0) return -1;
   return 0;
 }
 
 inline int
 teamdb_lookup_client(int teamno)
 {
-  if (teamno <= 0 || teamno >= cached_size
-      || !cached_map || !cached_map[teamno]) return 0;
+  if (!users || teamno <= 0 || teamno >= users->user_map_size
+      || !users->user_map[teamno]) return 0;
   return 1;
 }
 
 int
 teamdb_lookup(int teamno)
 {
-  ASSERT(server_conn);
-  if (teamno <= 0 || teamno >= cached_size
-      || !cached_map || !cached_map[teamno]) return 0;
-  return 1;
+  if (teamdb_refresh() < 0) return 0;
+  return teamdb_lookup_client(teamno);
 }
 
 int
@@ -308,11 +266,13 @@ teamdb_lookup_login(char const *login)
 {
   int i;
 
-  if (!cached_map) return -1;
-  for (i = 1; i < cached_size; i++) {
-    if (!cached_map[i]) continue;
-    if (!strcmp(cached_users->pool + cached_map[i]->login_idx, login))
-      return i;
+  if (teamdb_refresh() < 0) return -1;
+  if (!participants) return -1;
+  for (i = 0; i < total_participants; i++) {
+    ASSERT(participants[i]);
+    ASSERT(participants[i]->login);
+    if (!strcmp(participants[i]->login, login))
+      return participants[i]->id;
   }
   return -1;
 }
@@ -320,45 +280,51 @@ teamdb_lookup_login(char const *login)
 char *
 teamdb_get_login(int teamid)
 {
-  ASSERT(server_conn);
+  unsigned char *login = 0;
+  if (teamdb_refresh() < 0) return 0;
   if (!teamdb_lookup_client(teamid)) {
     err("teamdb_get_login: bad id: %d", teamid);
     return 0;
   }
-  if (!cached_users || !cached_map) return "";
-  return cached_users->pool + cached_map[teamid]->login_idx;
+  login = users->user_map[teamid]->login;
+  ASSERT(login);
+  return login;
 }
 
 char *
 teamdb_get_name(int teamid)
 {
-  ASSERT(server_conn);
+  unsigned char *name = 0;
+
+  if (teamdb_refresh() < 0) return 0;
   if (!teamdb_lookup_client(teamid)) {
     err("teamdb_get_login: bad id: %d", teamid);
     return 0;
   }
-  if (!cached_users || !cached_map) return "";
-  return cached_users->pool + cached_map[teamid]->name_idx;
+  name = users->user_map[teamid]->name;
+  if (!name) name = "";
+  return name;
 }
 
 int
 teamdb_get_flags(int id)
 {
-  int new_flags = 0;
+  int new_flags = 0, old_flags = 0;
 
-  ASSERT(server_conn);
+  if (teamdb_refresh() < 0) return TEAM_BANNED;
   if (!teamdb_lookup_client(id)) {
     err("teamdb_get_flags: bad team id %d", id);
-    return 0;
+    return TEAM_BANNED;
   }
-  if (!cached_map) return 0;
-  if ((cached_map[id]->flags & USERLIST_UC_INVISIBLE)) {
+  ASSERT(u_contests[id]);
+  old_flags = u_contests[id]->flags;
+  if ((old_flags & USERLIST_UC_INVISIBLE)) {
     new_flags |= TEAM_INVISIBLE;
   }
-  if ((cached_map[id]->flags & USERLIST_UC_BANNED)) {
+  if ((old_flags & USERLIST_UC_BANNED)) {
     new_flags |= TEAM_BANNED;
   }
-  if ((cached_map[id]->flags & USERLIST_UC_LOCKED)) {
+  if ((old_flags & USERLIST_UC_LOCKED)) {
     new_flags |= TEAM_LOCKED;
   }
   return new_flags;
@@ -367,63 +333,64 @@ teamdb_get_flags(int id)
 int
 teamdb_get_max_team_id(void)
 {
-  ASSERT(server_conn);
-  return cached_size - 1;
+  if (teamdb_refresh() < 0) return 0;
+  return users->user_map_size - 1;
 }
 
 int
 teamdb_get_total_teams(void)
 {
-  ASSERT(server_conn);
-  return cached_users->total;
+  if (teamdb_refresh() < 0) return 0;
+  return total_participants;
 }
 
 int
 teamdb_toggle_flags(int user_id, int contest_id, unsigned int flags)
 {
-  ASSERT(server_conn);
+  int r;
 
+  if (open_connection() < 0) return -1;
   if (!teamdb_lookup_client(user_id)) {
     err("teamdb_export_team: bad id: %d", user_id);
     return -1;
   }
-
-  int r;
-
- restart_operation:
   r = userlist_clnt_change_registration(server_conn, user_id, contest_id,
                                         -1, 3, flags);
-  if (r == -ULS_ERR_NO_CONNECT || r == -ULS_ERR_DISCONNECT) {
-    r = restore_connection();
-    if (r <= 0) return -1;
-    goto restart_operation;
-  }
+  if (r < 0) return -1;
   return r;
 }
 
 int
 teamdb_export_team(int tid, struct teamdb_export *pdata)
 {
-  ASSERT(server_conn);
+  struct userlist_user *uu;
+  unsigned char *u_login, *u_name;
+  int u_flags;
 
+  if (teamdb_refresh() < 0) return -1;
   if (!teamdb_lookup_client(tid)) {
     err("teamdb_export_team: bad id: %d", tid);
     return -1;
   }
+  ASSERT(u_contests[tid]);
+  uu = users->user_map[tid];
+  u_login = uu->login;
+  if (!u_login) u_login = "";
+  u_name = uu->name;
+  if (!u_name) u_name = "";
+  u_flags = u_contests[tid]->flags;
 
   XMEMZERO(pdata, 1);
   pdata->id = tid;
-  if (!cached_map || !cached_users) return 0;
-  if ((cached_map[tid]->flags & USERLIST_UC_INVISIBLE))
+  if ((u_flags & USERLIST_UC_INVISIBLE))
     pdata->flags |= TEAM_INVISIBLE;
-  if ((cached_map[tid]->flags & USERLIST_UC_BANNED))
+  if ((u_flags & USERLIST_UC_BANNED))
     pdata->flags |= TEAM_BANNED;
-  if ((cached_map[tid]->flags & USERLIST_UC_LOCKED))
+  if ((u_flags & USERLIST_UC_LOCKED))
     pdata->flags |= TEAM_LOCKED;
-  strncpy(pdata->login, cached_users->pool + cached_map[tid]->login_idx,
-          TEAMDB_LOGIN_LEN - 1);
-  strncpy(pdata->name, cached_users->pool + cached_map[tid]->name_idx,
-          TEAMDB_NAME_LEN - 1);
+  strncpy(pdata->login, u_login, TEAMDB_LOGIN_LEN - 1);
+  strncpy(pdata->name, u_name, TEAMDB_NAME_LEN - 1);
+  pdata->user = uu;
   return 0;
 }
 
@@ -432,26 +399,12 @@ teamdb_dump_database(int fd)
 {
   int r;
 
-  ASSERT(server_conn);
-
- restart_server_request:
-  r = userlist_clnt_dump_database(server_conn, contest_id, fd);
-  if (r == -ULS_ERR_NO_CONNECT || r == -ULS_ERR_DISCONNECT) {
-    r = restore_connection();
-    if (r < 0) {
-      err("teamdb_dump_database: cannot restore connection");
-      close(fd);
-      return -1;
-    }
-    if (!r) {
-      err("teamdb_dump_database: user interrupt");
-      close(fd);
-      return -1;
-    }
-    goto restart_server_request;
+  if (open_connection() < 0) {
+    close(fd);
+    return -1;
   }
+  r = userlist_clnt_dump_database(server_conn, contest_id, fd);
   if (r < 0) {
-    err("teamdb_dump_database: failed: %s", userlist_strerror(-r));
     close(fd);
     return -1;
   }
@@ -468,9 +421,9 @@ syncronize_team_extra(void)
   if (!extra_out_of_sync && extra_info) return;
   old_extra = extra_info;
   old_extra_num = extra_num;
-  if (cached_size > 0) {
-    extra_info = xcalloc(cached_size, sizeof(extra_info[0]));
-    extra_num = cached_size;
+  if (users && users->user_map_size > 0) {
+    extra_num = users->user_map_size;
+    extra_info = xcalloc(extra_num, sizeof(extra_info[0]));
   } else {
     extra_info = 0;
     extra_num = 0;
@@ -478,7 +431,7 @@ syncronize_team_extra(void)
   max_idx = extra_num;
   if (old_extra_num < max_idx) max_idx = old_extra_num;
   for (i = 0; i < max_idx; i++) {
-    if (cached_map[i]) {
+    if (users->user_map[i]) {
       extra_info[i] = old_extra[i];
       old_extra[i] = 0;
     }
@@ -492,9 +445,8 @@ syncronize_team_extra(void)
 time_t
 teamdb_get_archive_time(int uid)
 {
-  ASSERT(server_conn);
+  if (teamdb_refresh() < 0) return (time_t) -1;
   if (!teamdb_lookup_client(uid)) return (time_t) -1;
-  if (!cached_users || !cached_map) return (time_t) -1;
   syncronize_team_extra();
   if (!extra_info[uid]) {
     XCALLOC(extra_info[uid], 1);
@@ -504,9 +456,8 @@ teamdb_get_archive_time(int uid)
 int
 teamdb_set_archive_time(int uid, time_t time)
 {
-  ASSERT(server_conn);
+  if (teamdb_refresh() < 0) return -1;
   if (!teamdb_lookup_client(uid)) return -1;
-  if (!cached_users || !cached_map) return -1;
   syncronize_team_extra();
   if (!extra_info[uid]) {
     XCALLOC(extra_info[uid], 1);
@@ -523,15 +474,11 @@ teamdb_get_uid_by_pid(int system_uid, int system_gid, int system_pid,
 {
   int r;
 
- restart_operation:
+  if (open_connection() < 0) return -1;
   r = userlist_clnt_get_uid_by_pid(server_conn, system_uid, system_gid,
                                    system_pid, p_uid,
                                    p_priv_level, p_cookie, p_ip);
-  if (r == -ULS_ERR_NO_CONNECT || r == -ULS_ERR_DISCONNECT) {
-    r = restore_connection();
-    if (r <= 0) return -1;
-    goto restart_operation;
-  }
+  if (r < 0) return -1;
   return r;
 }
 
