@@ -1974,6 +1974,19 @@ cmd_team_submit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
     return;
   }
+  if (probs[pkt->prob_id]->disable_language) {
+    char **dl = probs[pkt->prob_id]->disable_language;
+    int i;
+
+    for (i = 0; dl[i]; i++) {
+      if (!strcmp(dl[i], langs[pkt->lang_id]->short_name)) {
+        err("%d: the language %s is disabled for problem %s", p->id,
+            langs[pkt->lang_id]->short_name, probs[pkt->prob_id]->short_name);
+        new_send_reply(p, -SRV_ERR_LANGUAGE_DISABLED);
+        return;
+      }
+    }
+  }
   if (p->user_id && pkt->user_id != p->user_id) {
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     err("%d: pkt->user_id != p->user_id", p->id);
@@ -2365,6 +2378,7 @@ cmd_judge_command_0(struct client_state *p, int len,
 static void do_rejudge_all(void);
 static void do_judge_suspended(void);
 static void do_rejudge_problem(int);
+static void do_rejudge_by_mask(int, unsigned long *);
 
 static void
 do_squeeze_runs(void)
@@ -2391,6 +2405,39 @@ do_squeeze_runs(void)
     }
   }
   run_squeeze_log();
+}
+
+static void
+cmd_rejudge_by_mask(struct client_state *p, int len,
+                    struct prot_serve_pkt_rejudge_by_mask *pkt)
+{
+  if (get_peer_local_user(p) < 0) return;
+
+  if (len < sizeof(*pkt)) {
+    new_bad_packet(p, "rejudge_by_mask: packet size %d is too small", len);
+    return;
+  }
+  if (pkt->mask_size <= 0) {
+    new_bad_packet(p, "rejudge_by_mask: mask_size == %d is invalid",
+                   pkt->mask_size);
+    return;
+  }
+  if (len != sizeof(*pkt) + sizeof(pkt->mask[0]) * (pkt->mask_size - 1)) {
+    new_bad_packet(p, "rejudge_by_mask: length %d mismatch", len);
+    return;
+  }
+
+  info("%d: rejudge_by_mask: %d", p->id, pkt->mask_size);
+
+  if (!check_cnts_caps(p->user_id, OPCAP_REJUDGE_RUN)) {
+    err("%d: user %d has no capability %d for the contest",
+        p->id, p->user_id, OPCAP_REJUDGE_RUN);
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    return;
+  }
+
+  do_rejudge_by_mask(pkt->mask_size, pkt->mask);
+  new_send_reply(p, SRV_RPL_OK);
 }
 
 static void
@@ -3499,6 +3546,71 @@ do_rejudge_problem(int prob_id)
   }
 }
 
+#define BITS_PER_LONG (8*sizeof(unsigned long)) 
+
+static void
+do_rejudge_by_mask(int mask_size, unsigned long *mask)
+{
+  int total_runs, r;
+  struct run_entry re;
+
+  ASSERT(mask_size > 0);
+
+  total_runs = run_get_total();
+  if (total_runs > mask_size * BITS_PER_LONG) {
+    total_runs = mask_size * BITS_PER_LONG;
+  }
+
+  if (global->score_system_val == SCORE_OLYMPIAD
+      && olympiad_judging_mode) {
+    // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
+    // considering only the last run for the given problem and
+    // the given participant
+    int total_ids = teamdb_get_max_team_id() + 1;
+    int total_probs = max_prob + 1;
+    int size = total_ids * total_probs;
+    int idx;
+    unsigned char *flag;
+
+    if (total_ids <= 0 || total_probs <= 0) return;
+    flag = (unsigned char *) alloca(size);
+    memset(flag, 0, size);
+    for (r = total_runs - 1; r >= 0; r--) {
+      if (run_get_entry(r, &re) < 0) continue;
+      if (re.status != RUN_OK && re.status != RUN_PARTIAL
+          && re.status != RUN_ACCEPTED) continue;
+      if (re.is_imported) continue;
+      if (re.team <= 0 || re.team >= total_ids) continue;
+      if (re.problem <= 0 || re.problem >= total_probs) {
+        fprintf(stderr, "Invalid problem %d for run %d", re.problem, r);
+        continue;
+      }
+      if (re.is_readonly) continue;
+      if (!probs[re.problem] || probs[re.problem]->disable_testing) continue;
+      if (!(mask[r / BITS_PER_LONG] & (1 << (r % BITS_PER_LONG)))) continue;
+      idx = re.team * total_probs + re.problem;
+      if (flag[idx]) continue;
+      flag[idx] = 1;
+      rejudge_run(r);
+    }
+    return;
+  }
+
+  for (r = 0; r < total_runs; r++) {
+    if (run_get_entry(r, &re) >= 0
+        && re.status <= RUN_MAX_STATUS
+        && re.status != RUN_IGNORED
+        && re.problem >= 1 && re.problem <= max_prob
+        && probs[re.problem]
+        && !probs[re.problem]->disable_testing
+        && !re.is_readonly
+        && !re.is_imported
+        && (mask[r / BITS_PER_LONG] & (1 << (r % BITS_PER_LONG)))) {
+      rejudge_run(r);
+    }
+  }
+}
+
 static void
 check_remove_queue(void)
 {
@@ -3580,6 +3692,7 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_PRINT_RESUME] { cmd_priv_command_0 },
   [SRV_CMD_COMPARE_RUNS] { cmd_view },
   [SRV_CMD_UPLOAD_REPORT] { cmd_upload_report },
+  [SRV_CMD_REJUDGE_BY_MASK] { cmd_rejudge_by_mask },
 };
 
 static void
