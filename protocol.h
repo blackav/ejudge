@@ -24,6 +24,12 @@
 
 #include <time.h>
 
+#if !defined EJUDGE_SCORE_SYSTEM_DEFINED
+#define EJUDGE_SCORE_SYSTEM_DEFINED
+/* scoring systems */
+enum { SCORE_ACM, SCORE_KIROV, SCORE_OLYMPIAD };
+#endif /* EJUDGE_SCORE_SYSTEM_DEFINED */
+
 #define PROT_SERVE_STATUS_MAGIC (0xe739aa02)
 struct prot_serve_status
 {
@@ -38,6 +44,8 @@ struct prot_serve_status
   unsigned char clars_disabled;
   unsigned char team_clars_disabled;
   unsigned char standings_frozen;
+  unsigned char score_system;
+  unsigned char clients_suspended;
 };
 
 #endif /* __PROTOCOL_H__ */
