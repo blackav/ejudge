@@ -1555,6 +1555,26 @@ judge_resume_clients(char const *pk_name, const packet_t pk_str, void *str)
   return 0;
 }
 
+static int
+judge_generate_passwords(char const *pk_name, const packet_t pk_str, void *p)
+{
+  packet_t cmd;
+  int n = 0, locale_id = -1;
+  path_t path;
+
+  if (!global->contest_id) {
+    return report_bad_packet(pk_name, 0);
+  }
+
+  if (sscanf(pk_str, "%s %d %n", cmd, &locale_id, &n) != 2 || pk_str[n]) {
+    return report_bad_packet(pk_name, 0);
+  }
+
+  pathmake(path, global->pipe_dir, "/", pk_name, 0);
+  teamdb_regenerate_passwords(path);
+  return 0;
+}
+
 struct server_cmd judge_cmds[] =
 {
   { "START", judge_start, 0 },
@@ -1586,6 +1606,7 @@ struct server_cmd judge_cmds[] =
   { "RESET", judge_reset_contest, 0 },
   { "SUSPEND", judge_suspend_clients, 0 },
   { "RESUME", judge_resume_clients, 0 },
+  { "GENPASSWD", judge_generate_passwords, 0 },
 
   { 0, 0, 0 },
 };
@@ -1636,6 +1657,9 @@ do_loop(void)
     while (1) {
       /* update current time */
       current_time = time(0);
+
+      /* refresh user database */
+      teamdb_refresh();
 
       /* check stop and start times */
       if (contest_start_time && !contest_stop_time && contest_duration) {
@@ -1791,7 +1815,13 @@ main(int argc, char *argv[])
     return 0;
   }
   if (create_dirs(PREPARE_SERVE) < 0) return 1;
-  if (teamdb_open(global->teamdb_file, global->passwd_file, 0) < 0) return 1;
+  if (global->contest_id) {
+    if (teamdb_open_client(global->socket_path, global->contest_id) < 0)
+      return 1;
+  } else {
+    if (teamdb_open(global->teamdb_file, global->passwd_file, 0) < 0)
+      return 1;
+  }
   if (run_open(global->run_log_file, 0) < 0) return 1;
   if (clar_open(global->clar_log_file, 0) < 0) return 1;
   if (write_submit_templates(global->status_dir) < 0) return 1;
