@@ -71,15 +71,15 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
                     unsigned char const *hidden_vars,
                     unsigned char const *extra_args)
 {
-  int i, showed, runs_to_show, team_id, lang_id, prob_id;
-  int status, test, score, attempts, score1;
-  size_t size;
+  int i, showed, runs_to_show;
+  int attempts, score1;
   time_t start_time, time;
   unsigned char dur_str[64];
   unsigned char stat_str[64];
   unsigned char *prob_str;
   unsigned char *lang_str;
   unsigned char href[128];
+  struct run_entry re;
 
   if (global->virtual) {
     start_time = run_get_virtual_start_time(uid);
@@ -114,36 +114,36 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
   for (showed = 0, i = run_get_total() - 1;
        i >= 0 && showed < runs_to_show;
        i--) {
-    run_get_record(i, &time, &size, 0, 0, 0,
-                   &team_id, &lang_id, &prob_id, &status, &test, &score, 0);
-    if (status == RUN_VIRTUAL_START || status == RUN_VIRTUAL_STOP
-        || status == RUN_EMPTY)
+    if (run_get_entry(i, &re) < 0) continue;
+    if (re.status == RUN_VIRTUAL_START || re.status == RUN_VIRTUAL_STOP
+        || re.status == RUN_EMPTY)
       continue;
     if (global->score_system_val == SCORE_KIROV)
       run_get_attempts(i, &attempts, global->ignore_compile_errors);
-    if (team_id != uid) continue;
+    if (re.team != uid) continue;
     showed++;
 
+    time = re.timestamp;
     if (!start_time) time = start_time;
     if (start_time > time) time = start_time;
     duration_str(global->show_astr_time, time, start_time, dur_str, 0);
-    run_status_str(status, stat_str, 0);
+    run_status_str(re.status, stat_str, 0);
     prob_str = "???";
-    if (probs[prob_id]) {
-      if (probs[prob_id]->variant_num > 0) {
-        int variant = find_variant(team_id, prob_id);
-        prob_str = alloca(strlen(probs[prob_id]->short_name) + 10);
+    if (probs[re.problem]) {
+      if (probs[re.problem]->variant_num > 0) {
+        int variant = find_variant(re.team, re.problem);
+        prob_str = alloca(strlen(probs[re.problem]->short_name) + 10);
         if (variant > 0) {
-          sprintf(prob_str, "%s-%d", probs[prob_id]->short_name, variant);
+          sprintf(prob_str, "%s-%d", probs[re.problem]->short_name, variant);
         } else {
-          sprintf(prob_str, "%s-?", probs[prob_id]->short_name);
+          sprintf(prob_str, "%s-?", probs[re.problem]->short_name);
         }
       } else {
-        prob_str = probs[prob_id]->short_name;
+        prob_str = probs[re.problem]->short_name;
       }
     }
     lang_str = "???";
-    if (langs[lang_id]) lang_str = langs[lang_id]->short_name;
+    if (langs[re.language]) lang_str = langs[re.language]->short_name;
 
     if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
       html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args);
@@ -151,31 +151,31 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
     fprintf(f, "<tr>\n");
     fprintf(f, "<td>%d</td>", i);
     fprintf(f, "<td>%s</td>", dur_str);
-    fprintf(f, "<td>%zu</td>", size);
+    fprintf(f, "<td>%zu</td>", re.size);
     fprintf(f, "<td>%s</td>", prob_str);
     fprintf(f, "<td>%s</td>", lang_str);
     fprintf(f, "<td>%s</td>", stat_str);
-    if (test <= 0) {
+    if (re.test <= 0) {
       fprintf(f, "<td>%s</td>", _("N/A"));
       if (global->score_system_val == SCORE_KIROV
           || global->score_system_val == SCORE_OLYMPIAD)
         fprintf(f, "<td>%s</td>", _("N/A"));
     } else if (global->score_system_val == SCORE_KIROV
                || global->score_system_val == SCORE_OLYMPIAD) {
-      fprintf(f, "<td>%d</td>", test - 1);
-      if (score == -1) {
+      fprintf(f, "<td>%d</td>", re.test - 1);
+      if (re.score == -1) {
         fprintf(f, "<td>%s</td>", _("N/A"));
       } else {
         if (global->score_system_val == SCORE_OLYMPIAD) {
-          fprintf(f, "<td>%d</td>", score);
+          fprintf(f, "<td>%d</td>", re.score);
         } else {
-          score1 = score - attempts * probs[prob_id]->run_penalty;
+          score1 = re.score - attempts * probs[re.problem]->run_penalty;
           if (score1 < 0) score1 = 0;
-          fprintf(f, "<td>%d(%d)=%d</td>", score, attempts, score1);
+          fprintf(f, "<td>%d(%d)=%d</td>", re.score, attempts, score1);
         }
       }
     } else {
-      fprintf(f, "<td>%d</td>", test);
+      fprintf(f, "<td>%d</td>", re.test);
     }
     if (global->team_enable_src_view) {
       fprintf(f, "<td>");
@@ -191,13 +191,15 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
     }
     if (global->team_enable_rep_view) {
       fprintf(f, "<td>");
-      if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
-        fprintf(f, "<input type=\"submit\" name=\"report_%d\" value=\"%s\">\n",
-                i, _("View"));
+      if (re.status == RUN_CHECK_FAILED || re.status == RUN_IGNORED
+          || re.status > RUN_MAX_STATUS) {
+        fprintf(f, "N/A");
       } else {
-        fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid_mode, sid,
-                                             self_url, extra_args,
-                                             "report_%d=1", i), _("View"));
+        if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
+          fprintf(f, "<input type=\"submit\" name=\"report_%d\" value=\"%s\">\n", i, _("View"));
+        } else {
+          fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid_mode, sid, self_url, extra_args, "report_%d=1", i), _("View"));
+        }
       }
       fprintf(f, "</td>");
     }
@@ -526,6 +528,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
 
   int  t_max, t_tot, p_max, p_tot, r_tot;
   int *t_ind, *t_rev, *p_ind, *p_rev;
+  unsigned char *t_runs;
 
   int i, k, j;
 
@@ -537,6 +540,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
   char dur_str[1024];
   unsigned char *head_style;
   struct teamdb_export ttt;
+  struct run_entry *runs;
 
   if (client_flag) head_style = cur_contest->team_head_style;
   else head_style = "h2";
@@ -560,19 +564,40 @@ do_write_kirov_standings(FILE *f, int client_flag,
 
   /* The contest is started, so we can collect scores */
 
+  /* download all runs in the whole */
+  r_tot = run_get_total();
+  runs = alloca(r_tot * sizeof(runs[0]));
+  run_get_all_entries(runs);
+
+  /* prune participants, which did not send any solution */
+  /* t_runs - 1, if the participant should remain */
+  t_max = teamdb_get_max_team_id() + 1;
+  t_runs = alloca(t_max);
+  if (global->prune_empty_users) {
+    memset(t_runs, 0, t_max);
+    for (k = 0; k < r_tot; k++) {
+      if (runs[k].status == RUN_EMPTY || runs[k].status == RUN_VIRTUAL_START
+          || runs[k].status == RUN_VIRTUAL_STOP) continue;
+      if(runs[k].team <= 0 && runs[k].team >= t_max) continue;
+      t_runs[runs[k].team] = 1;
+    }
+  } else {
+    memset(t_runs, 1, t_max);
+  }
+
   /* make team index */
   /* t_tot             - total number of teams in index array
    * t_max             - maximal possible number of teams
    * t_ind[0..t_tot-1] - index array:   team_idx -> team_id
    * t_rev[0..t_max-1] - reverse index: team_id -> team_idx
    */
-  t_max = teamdb_get_max_team_id() + 1;
   ALLOCAZERO(t_ind, t_max);
   ALLOCAZERO(t_rev, t_max);
   for (i = 1, t_tot = 0; i < t_max; i++) {
     t_rev[i] = -1;
     if (!teamdb_lookup(i)) continue;
     if ((teamdb_get_flags(i) & (TEAM_INVISIBLE | TEAM_BANNED))) continue;
+    if (!t_runs[i]) continue;
     t_rev[i] = t_tot;
     t_ind[t_tot++] = i;
   }
@@ -621,33 +646,26 @@ do_write_kirov_standings(FILE *f, int client_flag,
   ALLOCAZERO(t_n2, t_tot);
   for (i = 0; i < t_tot; i++) t_sort[i] = i;
 
-  r_tot = run_get_total();
   for (k = 0; k < r_tot; k++) {
-    int team_id;
-    int prob_id;
-    int status;
-    int tests;
     int tind;
     int pind;
-    int score;
-    int run_score;
-
+    int score, run_score;
     struct section_problem_data *p;
+    struct run_entry *pe = &runs[k];
 
-    run_get_record(k, 0, 0, 0, 0, 0, &team_id, 0, &prob_id, &status, &tests,
-                   &run_score, 0);
-    if (status == RUN_VIRTUAL_START || status == RUN_VIRTUAL_STOP
-        || status == RUN_EMPTY) continue;
-    if (team_id <= 0 || team_id >= t_max) continue;
-    if (prob_id <= 0 || prob_id > max_prob) continue;
-    tind = t_rev[team_id];
-    pind = p_rev[prob_id];
-    p = probs[prob_id];
+    if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP
+        || pe->status == RUN_EMPTY) continue;
+    if (pe->team <= 0 || pe->team >= t_max) continue;
+    if (pe->problem <= 0 || pe->problem > max_prob) continue;
+    tind = t_rev[pe->team];
+    pind = p_rev[pe->problem];
+    p = probs[pe->problem];
     if (!p || tind < 0 || pind < 0) continue;
 
+    run_score = pe->score;
     if (global->score_system_val == SCORE_OLYMPIAD) {
       if (run_score == -1) run_score = 0;
-      switch (status) {
+      switch (pe->status) {
       case RUN_OK:
         full_sol[tind][pind] = 1;
       case RUN_PARTIAL:
@@ -667,18 +685,18 @@ do_write_kirov_standings(FILE *f, int client_flag,
       }
     } else {
       if (run_score == -1) run_score = 0;
-      if (status == RUN_OK) {
+      if (pe->status == RUN_OK) {
         score = p->full_score - p->run_penalty * att_num[tind][pind];
         if (score < 0) score = 0;
         if (score > prob_score[tind][pind]) prob_score[tind][pind] = score;
         att_num[tind][pind]++;
         full_sol[tind][pind] = 1;
-      } else if (status == RUN_PARTIAL) {
+      } else if (pe->status == RUN_PARTIAL) {
         score = run_score - p->run_penalty*att_num[tind][pind];
         if (score < 0) score = 0;
         if (score > prob_score[tind][pind]) prob_score[tind][pind] = score;
         att_num[tind][pind]++;
-      } else if (status == RUN_COMPILE_ERR && !global->ignore_compile_errors) {
+      } else if (pe->status==RUN_COMPILE_ERR&&!global->ignore_compile_errors) {
         att_num[tind][pind]++;
       } else {
         /* something like "compiling..." or "running..." */
@@ -862,19 +880,16 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   unsigned long start_time;
   unsigned long stop_time;
   unsigned long cur_time;
-  unsigned long run_time;
   time_t        contest_dur;
-  time_t        current_dur;
+  time_t        current_dur, run_time;
   time_t        tdur = 0, tstart;
-  int           team_id;
-  int           prob_id;
-  int           score;
-  int           status;
 
   char          url_str[1024];
   unsigned char *bgcolor_ptr;
   unsigned char *head_style;
   struct teamdb_export ttt;      
+  struct run_entry *runs, *pe;
+  unsigned char *t_runs;
 
   if (client_flag) head_style = cur_contest->team_head_style;
   else head_style = "h2";
@@ -912,8 +927,24 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     return;
   }
 
-  /* make team index */
+  r_tot = run_get_total();
+  runs = alloca(r_tot * sizeof(runs[0]));
+  run_get_all_entries(runs);
+
   t_max = teamdb_get_max_team_id() + 1;
+  t_runs = alloca(t_max);
+  if (global->prune_empty_users) {
+    memset(t_runs, 0, t_max);
+    for (k = 0; k < r_tot; k++) {
+      if (runs[k].status == RUN_EMPTY) continue;
+      if (runs[k].team <= 0 || runs[k].team >= t_max) continue;
+      t_runs[runs[k].team] = 1;
+    }
+  } else {
+    memset(t_runs, 1, t_max);
+  }
+
+  /* make team index */
   if (!XALLOCA(t_ind, t_max)) goto alloca_failed;
   XMEMZERO(t_ind, t_max);
   if (!XALLOCA(t_rev, t_max)) goto alloca_failed;
@@ -922,6 +953,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     t_rev[i] = -1;
     if (!teamdb_lookup(i)) continue;
     if ((teamdb_get_flags(i) & (TEAM_INVISIBLE | TEAM_BANNED))) continue;
+    if (!t_runs[i]) continue;
     t_rev[i] = t_tot;
     t_ind[t_tot++] = i;
   }
@@ -960,28 +992,26 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   }
 
   /* now scan runs log */
-  r_tot = run_get_total();
   for (k = 0; k < r_tot; k++) {
-    run_get_record(k, &run_time, 0, 0, 0, 0, &team_id, 0, &prob_id, &status, 0,
-                   &score, 0);
-    if (status == RUN_VIRTUAL_START || status == RUN_VIRTUAL_STOP
-        || status == RUN_EMPTY) continue;
-    if (team_id <= 0 || team_id >= t_max) continue;
-    if (t_rev[team_id] < 0) continue;
-    if (prob_id <= 0 || prob_id > max_prob) continue;
-    if (p_rev[prob_id] < 0) continue;
+    pe = &runs[k];
+    run_time = pe->timestamp;
+    if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP
+        || pe->status == RUN_EMPTY) continue;
+    if (pe->team <= 0 || pe->team >= t_max || t_rev[pe->team] < 0) continue;
+    if (pe->problem <= 0 || pe->problem > max_prob || p_rev[pe->problem] < 0)
+      continue;
     if (global->virtual) {
       // filter "future" virtual runs
-      tstart = run_get_virtual_start_time(team_id);
+      tstart = run_get_virtual_start_time(pe->team);
       ASSERT(run_time >= tstart);
       tdur = run_time - tstart;
       ASSERT(tdur <= contest_dur);
       if (user_id > 0 && tdur > current_dur) continue;
     }
-    tt = t_rev[team_id];
-    pp = p_rev[prob_id];
+    tt = t_rev[pe->team];
+    pp = p_rev[pe->problem];
 
-    if (status == 0) {
+    if (pe->status == RUN_OK) {
       /* program accepted */
       if (calc[tt][pp] > 0) continue;
 
@@ -996,9 +1026,9 @@ do_write_standings(FILE *f, int client_flag, int user_id,
         ok_time[tt][pp] = (run_time - start_time + 59) / 60;
         t_pen[tt] += ok_time[tt][pp];
       }
-    } else if (status == RUN_COMPILE_ERR && !global->ignore_compile_errors) {
+    } else if (pe->status==RUN_COMPILE_ERR && !global->ignore_compile_errors) {
       if (calc[tt][pp] <= 0) calc[tt][pp]--;
-    } else if (status > 0 && status < 6) {
+    } else if (pe->status > RUN_OK && pe->status < RUN_CHECK_FAILED) {
       /* some error */
       if (calc[tt][pp] <= 0) calc[tt][pp]--;
     }
@@ -1231,16 +1261,17 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
   int i;
 
   time_t time, start;
-  size_t size;
-  unsigned long ip;
-  int teamid, langid, probid, status, test, score;
   int attempts, score1;
 
   char durstr[64], statstr[64];
   char *str1 = 0, *str2 = 0;
 
+  struct run_entry *runs, *pe;
+
   start = run_get_start_time();
   total = run_get_total();
+  runs = alloca(total * sizeof(runs[0]));
+  run_get_all_entries(runs);
 
   switch (global->score_system_val) {
   case SCORE_ACM:
@@ -1277,36 +1308,37 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
   fprintf(f, "</tr>\n");
 
   for (i = total - 1; i >= 0; i--) {
-    run_get_record(i, &time, &size, 0, &ip, 0,
-                   &teamid, &langid, &probid, &status, &test, &score, 0);
+    pe = &runs[i];
+    time = pe->timestamp;
     run_get_attempts(i, &attempts, global->ignore_compile_errors);
 
     if (!start) time = start;
     if (start > time) time = start;
     duration_str(global->show_astr_time, time, start, durstr, 0);
-    run_status_str(status, statstr, 0);
+    run_status_str(pe->status, statstr, 0);
 
     fputs("<tr>", f);
     fprintf(f, "<td>%d</td>", i);
     fprintf(f, "<td>%s</td>", durstr);
-    fprintf(f, "<td>%s</td>", teamdb_get_name(teamid));
-    if (probs[probid]) {
-      if (probs[probid]->variant_num > 0) {
-        int variant = find_variant(teamid, probid);
+    fprintf(f, "<td>%s</td>", teamdb_get_name(pe->team));
+    if (probs[pe->problem]) {
+      if (probs[pe->problem]->variant_num > 0) {
+        int variant = find_variant(pe->team, pe->problem);
         if (variant > 0) {
-          fprintf(f, "<td>%s-%d</td>", probs[probid]->short_name, variant);
+          fprintf(f, "<td>%s-%d</td>", probs[pe->problem]->short_name,variant);
         } else {
-          fprintf(f, "<td>%s-?</td>", probs[probid]->short_name);
+          fprintf(f, "<td>%s-?</td>", probs[pe->problem]->short_name);
         }
       } else {
-        fprintf(f, "<td>%s</td>", probs[probid]->short_name);
+        fprintf(f, "<td>%s</td>", probs[pe->problem]->short_name);
       }
     }
-    else fprintf(f, "<td>??? - %d</td>", probid);
-    if (langs[langid]) fprintf(f, "<td>%s</td>", langs[langid]->short_name);
-    else fprintf(f, "<td>??? - %d</td>", langid);
+    else fprintf(f, "<td>??? - %d</td>", pe->problem);
+    if (langs[pe->language])
+      fprintf(f, "<td>%s</td>", langs[pe->language]->short_name);
+    else fprintf(f, "<td>??? - %d</td>", pe->language);
     fprintf(f, "<td>%s</td>", statstr);
-    if (test <= 0) {
+    if (pe->test <= 0) {
       fprintf(f, "<td>%s</td>\n", _("N/A"));
       if (global->score_system_val == SCORE_KIROV
           || global->score_system_val == SCORE_OLYMPIAD) {
@@ -1314,20 +1346,20 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
       }
     } else if (global->score_system_val == SCORE_KIROV ||
                global->score_system_val == SCORE_OLYMPIAD) {
-      fprintf(f, "<td>%d</td>\n", test - 1);
-      if (score == -1) {
+      fprintf(f, "<td>%d</td>\n", pe->test - 1);
+      if (pe->score == -1) {
         fprintf(f, "<td>%s</td>", _("N/A"));
       } else {
         if (global->score_system_val == SCORE_OLYMPIAD) {
-          fprintf(f, "<td>%d</td>", score);
+          fprintf(f, "<td>%d</td>", pe->score);
         } else {
-          score1 = score - attempts * probs[probid]->run_penalty;
+          score1 = pe->score - attempts * probs[pe->problem]->run_penalty;
           if (score1 < 0) score1 = 0;
-          fprintf(f, "<td>%d(%d)=%d</td>", score, attempts, score1);
+          fprintf(f, "<td>%d(%d)=%d</td>", pe->score, attempts, score1);
         }
       }
     } else {
-      fprintf(f, "<td>%d</td>\n", test);
+      fprintf(f, "<td>%d</td>\n", pe->test);
     }
     fputs("</tr>\n", f);
   }
@@ -1360,8 +1392,9 @@ int
 new_write_user_source_view(FILE *f, int uid, int rid)
 {
   path_t  src_base, src_path;
-  int run_uid, src_len = 0, html_len;
+  int src_len = 0, html_len;
   char   *src = 0, *html = 0;
+  struct run_entry re;
 
   if (!global->team_enable_src_view) {
     err("viewing user source is disabled");
@@ -1371,8 +1404,8 @@ new_write_user_source_view(FILE *f, int uid, int rid)
     err("invalid run_id: %d", rid);
     return -SRV_ERR_BAD_RUN_ID;
   }
-  run_get_record(rid, 0, 0, 0, 0, 0, &run_uid, 0, 0, 0, 0, 0, 0);
-  if (uid != run_uid) {
+  run_get_entry(rid, &re);
+  if (uid != re.team) {
     err("user ids does not match");
     return -SRV_ERR_ACCESS_DENIED;
   }
@@ -1395,24 +1428,29 @@ new_write_user_source_view(FILE *f, int uid, int rid)
 int
 new_write_user_report_view(FILE *f, int uid, int rid)
 {
-  int run_uid, report_len = 0, html_len = 0, prob_id;
+  int report_len = 0, html_len = 0;
   path_t report_base, report_path;
   char *report = 0, *html_report;
+  struct run_entry re;
 
   if (rid < 0 || rid >= run_get_total()) {
     err("invalid run_id: %d", rid);
     return -SRV_ERR_BAD_RUN_ID;
   }
-  if (run_get_record(rid, 0, 0, 0, 0, 0, &run_uid, 0, &prob_id, 0,0,0,0) < 0) {
+  if (run_get_entry(rid, &re) < 0) {
     return -SRV_ERR_BAD_RUN_ID;
   }
-  if (prob_id <= 0 || prob_id > max_prob || !probs[prob_id]) {
-    err("get_record returned bad prob_id %d", prob_id);
+  if (re.problem <= 0 || re.problem > max_prob || !probs[re.problem]) {
+    err("get_record returned bad prob_id %d", re.problem);
     return -SRV_ERR_BAD_PROB_ID;
   }
-  if (!probs[prob_id]->team_enable_rep_view) {
+  if (!probs[re.problem]->team_enable_rep_view) {
     err("viewing report is disabled for this problem");
     return -SRV_ERR_REPORT_DISABLED;
+  }
+  if (uid != re.team) {
+    err("user ids does not match");
+    return -SRV_ERR_ACCESS_DENIED;
   }
 
   sprintf(report_base, "%06d", rid);
