@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 
+#define NEED_TGZ 1
 #include "checker_internal.h"
 #include "testinfo.h"
 
@@ -23,7 +24,8 @@ extern const unsigned char *(*testinfo_strerror_func)(int);
 testinfo_t test_info;
 
 void
-checker_do_init(int argc, char **argv, int corr_flag, int info_flag)
+checker_do_init(int argc, char **argv, int corr_flag, int info_flag,
+                int tgz_flag)
 {
   int errcode;
   int need_arg = 3;
@@ -31,6 +33,7 @@ checker_do_init(int argc, char **argv, int corr_flag, int info_flag)
 
   if (corr_flag) need_arg++;
   if (info_flag) need_arg++;
+  if (tgz_flag) need_arg += 2;
   if (argc != need_arg)
     fatal_CF("Invalid number of arguments: %d instead of %d", argc, need_arg);
 
@@ -43,7 +46,7 @@ checker_do_init(int argc, char **argv, int corr_flag, int info_flag)
 
   if (corr_flag) {
     if (!(f_corr = fopen(argv[arg_ind], "r")))
-      fatal_CF("Cannot open correct output file `%s'", argv[3]);
+      fatal_CF("Cannot open correct output file `%s'", argv[arg_ind]);
     f_arr[2] = f_corr;
     arg_ind++;
   }
@@ -51,16 +54,25 @@ checker_do_init(int argc, char **argv, int corr_flag, int info_flag)
   if (info_flag) {
     if (!testinfo_parse_func)
       fatal_CF("Test info is requested, but no code compiled in");
-    errcode = (*testinfo_parse_func)(argv[arg_ind], &test_info);
+    errcode = (*testinfo_parse_func)(argv[arg_ind++], &test_info);
     if (errcode < 0)
       fatal_CF("Test info parsing failed: %s",
                (*testinfo_strerror_func)(errcode));
+  }
+
+  if (tgz_flag) {
+    if (!(dir_in = opendir(argv[arg_ind])))
+      fatal_CF("Cannot open input directory '%s'", argv[arg_ind]);
+    arg_ind++;
+    if (!(dir_out = opendir(argv[arg_ind])))
+      fatal_CF("Cannot open output directory '%s'", argv[arg_ind]);
+    arg_ind++;
   }
 }
 
 /*
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "DIR")
  * End:
  */
