@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "cgi.h"
@@ -469,6 +465,24 @@ cgi_nname(char const *name, int nsymb)
   return NULL;
 }
 
+int
+cgi_get_param_num(void)
+{
+  return param_u;
+}
+
+void
+cgi_get_nth_param(int n, unsigned char **p_name, unsigned char **p_value)
+{
+  if (n < 0 || n >= param_u) {
+    if (p_name) *p_name = 0;
+    if (p_value) *p_value = 0;
+    return;
+  }
+  if (p_name) *p_name = params[n].name;
+  if (p_value) *p_value = params[n].value;
+}
+
 /**
  * NAME:    cgi_print_param
  * PURPOSE: debugging: print all the parameters to the standard output
@@ -489,7 +503,6 @@ cgi_print_param(void)
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
 
