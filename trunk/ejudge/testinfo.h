@@ -3,7 +3,7 @@
 #ifndef __TESTINFO_H__
 #define __TESTINFO_H__
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003,2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+
+#ifdef __cplusplus
+#define TESTINFO_char_t char
+extern "C" {
+#else
+#define TESTINFO_char_t unsigned char
+#endif /* __cplusplus */
 
 /* error codes, actual error values are negative */
 enum
@@ -41,15 +48,20 @@ enum
 struct testinfo_struct
 {
   int cmd_argc;
-  unsigned char **cmd_argv;
-  unsigned char *comment;
-  unsigned char *team_comment;
+  TESTINFO_char_t **cmd_argv;
+  TESTINFO_char_t *comment;
+  TESTINFO_char_t *team_comment;
 };
 typedef struct testinfo_struct testinfo_t;
 
-int testinfo_parse(const unsigned char *path, testinfo_t *pt);
+int testinfo_parse(const TESTINFO_char_t *path, testinfo_t *pt);
 void testinfo_free(testinfo_t *pt);
-const unsigned char *testinfo_strerror(int errcode);
+const TESTINFO_char_t *testinfo_strerror(int errcode);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+#undef TESTINFO_char_t
 
 #endif /* __TESTINFO_H__ */
 
