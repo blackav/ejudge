@@ -1,0 +1,26 @@
+Version 1.3.1 (20010502)
+========================
+
+Implemented support for `test_score_list' problem level parameter.
+It allows to assign different scores to different tests. The syntax
+is as follows (EBNF):
+
+test_score_list_spec = "test_score_list" "=" "\"" score_list "\"" ;
+score_list = score_item { score_item } ;
+score_item = score
+           | "[" index "]" score ;
+score = INTEGER ;
+index = INTEGER ;
+
+- if `index' is used, it must be in range from 1 to number of tests for
+  this problem (determined by the number of files in test directory);
+- if `index' is not used, `score' is assigned to the test with number
+  greater that the number of the previous test by 1, in this case
+  there must be enough tests;
+- if no `index' is used in the whole `score_list' specification and
+  the number of scores defined is less than the number of tests for this
+  problem, warning is issued;
+- `score' must be greater than 0;
+- summ of the scores for all the tests (counting implicit scores
+  defined by `test_score' parameter, or 1 by default) must not
+  exceed `full_score' for the problem.
