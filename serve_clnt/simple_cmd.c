@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "serve_clnt.h"
@@ -36,6 +32,7 @@ serve_clnt_simple_cmd(int sock_fd, int cmd, void const *val, size_t val_len)
   struct prot_serve_packet *in = 0;
   size_t out_size, in_size = 0;
   int r;
+  void *void_in = 0;
 
   if (sock_fd < 0) return -SRV_ERR_NOT_CONNECTED;
   if (val_len > sizeof(out->v)) return -SRV_ERR_PROTOCOL;
@@ -52,9 +49,10 @@ serve_clnt_simple_cmd(int sock_fd, int cmd, void const *val, size_t val_len)
     return r;
   }
 
-  if ((r = serve_clnt_recv_packet(sock_fd, &in_size, (void**) &in)) < 0) {
+  if ((r = serve_clnt_recv_packet(sock_fd, &in_size, &void_in)) < 0) {
     return r;
   }
+  in = void_in;
 
   if (in->id < 0) {
     r = in->id;
