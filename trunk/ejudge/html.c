@@ -203,6 +203,7 @@ write_html_run_status(FILE *f, struct run_entry *pe,
   case RUN_ACCEPTED:
   case RUN_IGNORED:
   case RUN_DISQUALIFIED:
+  case RUN_PENDING:
     fprintf(f, "<td>%s</td>", _("N/A"));
     if (global->score_system_val == SCORE_KIROV
         || global->score_system_val == SCORE_OLYMPIAD) {
@@ -354,7 +355,7 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
     if (global->team_enable_rep_view) {
       fprintf(f, "<td>");
       if (re.status == RUN_CHECK_FAILED || re.status == RUN_IGNORED
-          || re.status > RUN_MAX_STATUS) {
+          || re.status == RUN_PENDING || re.status > RUN_MAX_STATUS) {
         fprintf(f, "N/A");
       } else {
         if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
@@ -738,7 +739,8 @@ write_standings_header(FILE *f, int client_flag,
 void
 do_write_kirov_standings(FILE *f, int client_flag,
                          unsigned char const *footer_str,
-                         int raw_flag)
+                         int raw_flag,
+                         int accepting_mode)
 {
   time_t start_time;
   time_t stop_time;
@@ -890,7 +892,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
   for (k = 0; k < r_tot; k++) {
     int tind;
     int pind;
-    int score, run_score;
+    int score, run_score, run_tests;
     struct section_problem_data *p;
     struct run_entry *pe = &runs[k];
 
@@ -913,21 +915,66 @@ do_write_kirov_standings(FILE *f, int client_flag,
     }
 
     run_score = pe->score;
-    if (global->score_system_val == SCORE_OLYMPIAD) {
-      if (run_score == -1) run_score = 0;
+    run_tests = pe->test - 1;
+    if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+      if (run_score < 0) run_score = 0;
+      if (run_tests < 0) run_tests = 0;
       switch (pe->status) {
       case RUN_OK:
+      case RUN_ACCEPTED:
         full_sol[tind][pind] = 1;
+        prob_score[tind][pind] = p->tests_to_accept;
+        att_num[tind][pind]++;  /* hmm, it is not used... */
+        break;
       case RUN_PARTIAL:
-        prob_score[tind][pind] = run_score;
+        if (run_tests > p->tests_to_accept) run_tests = p->tests_to_accept;
+        if (run_tests > prob_score[tind][pind]) 
+          prob_score[tind][pind] = run_tests;
+        full_sol[tind][pind] = 1;
         att_num[tind][pind]++;
         break;
-      case RUN_ACCEPTED:
       case RUN_COMPILE_ERR:
       case RUN_TIME_LIMIT_ERR:
       case RUN_RUN_TIME_ERR:
       case RUN_WRONG_ANSWER_ERR:
       case RUN_PRESENTATION_ERR:
+      case RUN_MEM_LIMIT_ERR:
+      case RUN_SECURITY_ERR:
+        if (run_tests > p->tests_to_accept) run_tests = p->tests_to_accept;
+        if (run_tests > prob_score[tind][pind]) 
+          prob_score[tind][pind] = run_score;
+        att_num[tind][pind]++;
+        break;
+      case RUN_DISQUALIFIED:
+        disq_num[tind][pind]++;
+        break;
+      case RUN_PENDING:
+        att_num[tind][pind]++;
+        break;
+      default:
+        break;
+      }
+    } else if (global->score_system_val == SCORE_OLYMPIAD) {
+      if (run_score == -1) run_score = 0;
+      switch (pe->status) {
+      case RUN_OK:
+        full_sol[tind][pind] = 1;
+        if (run_score > p->full_score) run_score = p->full_score;
+      case RUN_PARTIAL:
+        prob_score[tind][pind] = run_score;
+        att_num[tind][pind]++;
+        break;
+      case RUN_ACCEPTED:
+      case RUN_PENDING:
+        att_num[tind][pind]++;
+        break;
+      case RUN_COMPILE_ERR:
+      case RUN_TIME_LIMIT_ERR:
+      case RUN_RUN_TIME_ERR:
+      case RUN_WRONG_ANSWER_ERR:
+      case RUN_PRESENTATION_ERR:
+      case RUN_MEM_LIMIT_ERR:
+      case RUN_SECURITY_ERR:
         att_num[tind][pind]++;
         break;
       case RUN_DISQUALIFIED:
@@ -978,28 +1025,57 @@ do_write_kirov_standings(FILE *f, int client_flag,
     }
   }
 
-  /* sort the teams */
-  for (i = 0; i < t_tot - 1; i++) {
-    int maxind = i, temp;
-    for (j = i + 1; j < t_tot; j++) {
-      if (tot_score[t_sort[j]] > tot_score[t_sort[maxind]])
-        maxind = j;
+  if (accepting_mode) {
+    for (i = 0; i < t_tot - 1; i++) {
+      int maxind = i, temp;
+      for (j = i + 1; j < t_tot; j++) {
+        if (tot_full[t_sort[j]] > tot_full[t_sort[maxind]]
+            || (tot_full[t_sort[j]] == tot_full[t_sort[maxind]]
+                && t_sort[j] < t_sort[maxind]))
+          maxind = j;
+      }
+      temp = t_sort[i];
+      t_sort[i] = t_sort[maxind];
+      t_sort[maxind] = temp;
     }
-    temp = t_sort[i];
-    t_sort[i] = t_sort[maxind];
-    t_sort[maxind] = temp;
-  }
 
-  /* now resolve ties */
-  for(i = 0; i < t_tot;) {
-    for (j = i + 1; j < t_tot; j++) {
-      if (tot_score[t_sort[i]] != tot_score[t_sort[j]]) break;
+    /* resolve ties */
+    for(i = 0; i < t_tot;) {
+      for (j = i + 1; j < t_tot; j++) {
+        if (tot_full[t_sort[i]] != tot_full[t_sort[j]]) break;
+      }
+      for (k = i; k < j; k++) {
+        t_n1[k] = i;
+        t_n2[k] = j - 1;
+      }
+      i = j;
     }
-    for (k = i; k < j; k++) {
-      t_n1[k] = i;
-      t_n2[k] = j - 1;
+  } else {
+    /* sort the teams */
+    for (i = 0; i < t_tot - 1; i++) {
+      int maxind = i, temp;
+      for (j = i + 1; j < t_tot; j++) {
+        if (tot_score[t_sort[j]] > tot_score[t_sort[maxind]]
+            || (tot_score[t_sort[j]] == tot_score[t_sort[maxind]]
+                && t_sort[j] < t_sort[maxind]))
+          maxind = j;
+      }
+      temp = t_sort[i];
+      t_sort[i] = t_sort[maxind];
+      t_sort[maxind] = temp;
     }
-    i = j;
+
+    /* resolve ties */
+    for(i = 0; i < t_tot;) {
+      for (j = i + 1; j < t_tot; j++) {
+        if (tot_score[t_sort[i]] != tot_score[t_sort[j]]) break;
+      }
+      for (k = i; k < j; k++) {
+        t_n1[k] = i;
+        t_n2[k] = j - 1;
+      }
+      i = j;
+    }
   }
 
   if (raw_flag) {
@@ -1458,8 +1534,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
         calc[tt][pp]--;
         tot_att[pp]++;
       }
-    } else if (pe->status > RUN_OK && pe->status < RUN_CHECK_FAILED
-               && pe->status != RUN_COMPILE_ERR) {
+    } else if (run_is_failed_attempt(pe->status)) {
       /* some error */
       if (calc[tt][pp] <= 0) {
         calc[tt][pp]--;
@@ -1789,7 +1864,8 @@ do_write_standings(FILE *f, int client_flag, int user_id,
 
 void
 write_standings(char const *stat_dir, char const *name,
-                char const *header_str, char const *footer_str)
+                char const *header_str, char const *footer_str,
+                int accepting_mode)
 {
   char    tbuf[64];
   path_t  tpath;
@@ -1805,7 +1881,7 @@ write_standings(char const *stat_dir, char const *name,
     write_standings_header(f, 0, 0, header_str, 0);
     if (global->score_system_val == SCORE_KIROV
         || global->score_system_val == SCORE_OLYMPIAD)
-      do_write_kirov_standings(f, 0, footer_str, 0);
+      do_write_kirov_standings(f, 0, footer_str, 0, accepting_mode);
     else
       do_write_standings(f, 0, 0, footer_str, 0);
     fclose(f);
@@ -1831,7 +1907,7 @@ write_standings(char const *stat_dir, char const *name,
   write_standings_header(f, 0, 0, header_str, 0);
   if (global->score_system_val == SCORE_KIROV
       || global->score_system_val == SCORE_OLYMPIAD)
-    do_write_kirov_standings(f, 0, footer_str, 0);
+    do_write_kirov_standings(f, 0, footer_str, 0, accepting_mode);
   else
     do_write_standings(f, 0, 0, footer_str, 0);
   fclose(f);
@@ -1997,6 +2073,7 @@ new_write_user_source_view(FILE *f, int uid, int rid)
   return 0;
 }
 
+static const char content_type_str[] = "content-type: text/html\n\n";
 int
 new_write_user_report_view(FILE *f, int uid, int rid)
 {
@@ -2042,14 +2119,18 @@ new_write_user_report_view(FILE *f, int uid, int rid)
                         0, report_path, "") < 0) {
     return -SRV_ERR_SYSTEM_ERROR;
   }
-  
-  html_len = html_armored_memlen(report, report_len);
-  html_report = alloca(html_len + 16);
-  html_armor_text(report, report_len, html_report);
-  html_report[html_len] = 0;
+
+  if (!strncasecmp(report, content_type_str, sizeof(content_type_str)-1)) {
+    fprintf(f, "%s", report + sizeof(content_type_str) - 1);
+  } else {
+    html_len = html_armored_memlen(report, report_len);
+    html_report = alloca(html_len + 16);
+    html_armor_text(report, report_len, html_report);
+    html_report[html_len] = 0;
+    fprintf(f, "<pre>%s</pre>", html_report);
+  }
   xfree(report);
 
-  fprintf(f, "<pre>%s</pre>", html_report);
   return 0;
 }
 
