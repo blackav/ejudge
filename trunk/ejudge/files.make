@@ -17,6 +17,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/add_field.c\
  userlist_clnt/admin_process.c\
  userlist_clnt/change_registration.c\
+ userlist_clnt/clear_team_passwords.c\
  userlist_clnt/close.c\
  userlist_clnt/delete_field.c\
  userlist_clnt/do_pass_fd.c\
@@ -51,6 +52,7 @@ SERVE_CLNT_CFILES=\
  serve_clnt/do_pass_fd.c\
  serve_clnt/edit_run.c\
  serve_clnt/get_archive.c\
+ serve_clnt/import_xml_runs.c\
  serve_clnt/master_page.c\
  serve_clnt/message.c\
  serve_clnt/open.c\
@@ -86,6 +88,8 @@ COMMON_CFILES=\
  prepare.c\
  protocol.c\
  runlog.c\
+ runlog_import.c\
+ runlog_xml.c\
  sformat.c\
  sha.c\
  teamdb.c\
