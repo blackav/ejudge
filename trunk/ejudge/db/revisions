@@ -126,3 +126,17 @@ win32/exec.c 1 9 1386994
 win32/fileutl.c 1 5 1191013
 win32/logger.c 1 14 666939
 win32/osdeps.c 1 18 1080750
+cgi.h 1 5 88329
+clntutil.h 1 7 211413
+html.h 1 9 138128
+prepare.h 1 11 699043
+runlog.h 1 4 185329
+cgi.c 1 8 943238
+clntutil.c 1 10 1059037
+html.c 1 9 2844156
+master.c 1 11 1956958
+prepare.c 1 13 2347602
+run.c 1 12 1459521
+runlog.c 1 5 915790
+serve.c 1 12 2576839
+team.c 1 8 1897284
