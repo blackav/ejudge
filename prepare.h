@@ -129,6 +129,7 @@ struct section_problem_data
   int    abstract;              /* is this abstract problem specification */
   int    use_stdin;             /* 1, if solution uses stdin for input */
   int    use_stdout;            /* 1, if solution uses stdout for output */
+  int    real_time_limit;       /* maximum astronomical time for a problem */
   int    time_limit;            /* time limit in secs */
   int    team_enable_rep_view;  /* are teams allowed to view reports? */
   int    full_score;            /* score for complete solution */
