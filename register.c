@@ -1,7 +1,7 @@
 /* -*- mode: c -*-; coding: koi8-r */
 /* $Id$ */
 
-/* Copyright (C) 2001,2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2001-2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "expat_iface.h"
@@ -35,6 +31,9 @@
 
 #include <string.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <time.h>
@@ -52,27 +51,32 @@
 /* ACTIONS, that may be performed by client*/
 enum
   {
-    ACTION_CHANGE_LANG_ENTRY_PAGE = 1,
-    ACTION_LOGIN,               /* 2 */
-    ACTION_REGISTER_ENTRY_PAGE, /* 3 */
-    ACTION_CHANGE_LANG_REGISTER_PAGE, /* 4 */
-    ACTION_REGISTER_REGISTER_PAGE, /* 5 */
-    ACTION_LOGIN_ONLY_PAGE,     /* 6 */
-    ACTION_CHANGE_LANG_LOGIN_ONLY_PAGE, /* 7 */
-    ACTION_LOGOUT,              /* 8 */
-    ACTION_EDIT_PERSONAL_PAGE,  /* 9 */
-    ACTION_REGISTER_CONTEST_PAGE, /* 10 */
-    ACTION_CHANGE_PASSWORD,     /* 11 */
-    ACTION_ADD_NEW_CONTESTANT,  /* 12 */
-    ACTION_ADD_NEW_RESERVE,     /* 13 */
-    ACTION_ADD_NEW_COACH,       /* 14 */
-    ACTION_ADD_NEW_ADVISOR,     /* 15 */
-    ACTION_ADD_NEW_GUEST,       /* 16 */
-    ACTION_REMOVE_MEMBER,       /* 17 */
-    ACTION_RELOAD_PERSONAL_DATA, /* 18 */
-    ACTION_COMMIT_PERSONAL_DATA, /* 19 */
-    ACTION_REGISTER_FOR_CONTEST, /* 20 */
-    ACTION_MAIN_PAGE,           /* 21 */
+    STATE_INITIAL = 1,
+    STATE_REGISTER_NEW_USER,
+    STATE_LOGIN,
+    STATE_USER_REGISTERED,
+    STATE_MAIN_PAGE,
+    STATE_EDIT_REGISTRATION_DATA,
+
+    ACTION_CHANGE_LANG_AT_INITIAL,
+    ACTION_CHANGE_LANG_AT_LOGIN,
+    ACTION_CHANGE_LANG_AT_REGISTER_NEW_USER,
+    ACTION_CHANGE_LANG_AT_MAIN_PAGE,
+    ACTION_NEW_LOGIN,
+    ACTION_REGISTER_NEW_USER,
+    ACTION_LOGIN,
+    ACTION_LOGOUT,
+    ACTION_CHANGE_PASSWORD,
+    ACTION_SAVE_REGISTRATION_DATA,
+    ACTION_REGISTER_FOR_CONTEST,
+    ACTION_ADD_NEW_CONTESTANT,
+    ACTION_ADD_NEW_RESERVE,
+    ACTION_ADD_NEW_COACH,
+    ACTION_ADD_NEW_ADVISOR,
+    ACTION_ADD_NEW_GUEST,
+    ACTION_REMOVE_MEMBER,
+
+
     ACTION_LAST_ACTION
   };
 
@@ -82,7 +86,7 @@ enum
     TG_ACCESS,
     TG_IP,
     TG_SOCKET_PATH,
-    TG_CONTESTS_PATH,
+    TG_CONTESTS_DIR,
   };
 enum
   {
@@ -118,12 +122,11 @@ struct config_node
   int show_generation_time;
   unsigned char *charset;
   unsigned char *socket_path;
-  unsigned char *contests_path;
+  unsigned char *contests_dir;
   struct access_node *access;
 };
 
 static struct config_node *config;
-static struct contest_list *contests;
 
 static int client_locale_id;
 
@@ -145,8 +148,6 @@ static int user_show_email;
 static int user_contest_id;
 static struct userlist_clnt *server_conn;
 static unsigned long user_ip;
-static unsigned long long client_cookie;
-static int client_cookie_bad;
 static unsigned long long user_cookie;
 static int user_id;
 static unsigned char *user_name;
@@ -156,11 +157,13 @@ static int user_show_login;
 static struct userlist_user *user_xml;
 static time_t cur_time;
 static int user_registering;
+static int user_already_registered;
 
 static unsigned char ***member_info[CONTEST_LAST_MEMBER];
 
 static unsigned char *error_log;
 
+#define ARMOR_STR(out,in) do { int __tmplen = html_armored_strlen((in)); (out) = (unsigned char*) alloca(__tmplen + 16); html_armor_string((in), (out)); } while (0)
 
 static char const login_accept_chars[] =
 "._-0123456789?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -300,7 +303,7 @@ static char const * const tag_map[] =
   "access",
   "ip",
   "socket_path",
-  "contests_path",
+  "contests_dir",
 
   0
 };
@@ -330,7 +333,7 @@ node_alloc(int tag)
   case TG_ACCESS: return xcalloc(1, sizeof(struct access_node));
   case TG_IP: return xcalloc(1, sizeof(struct ip_node));
   case TG_SOCKET_PATH: return xcalloc(1, sizeof(struct xml_tree));
-  case TG_CONTESTS_PATH: return xcalloc(1, sizeof(struct xml_tree));
+  case TG_CONTESTS_DIR: return xcalloc(1, sizeof(struct xml_tree));
     //    return xcalloc(1, sizeof(struct xml_tree));
   default:
     SWERR(("unhandled tag: %d", tag));
@@ -449,9 +452,9 @@ parse_config(char const *path)
       }
       cfg->socket_path = p->text;
       break;
-    case TG_CONTESTS_PATH:
-      if (cfg->contests_path) {
-        err("%s:%d:%d: <contests_path> tag may be defined only once",
+    case TG_CONTESTS_DIR:
+      if (cfg->contests_dir) {
+        err("%s:%d:%d: <contests_dir> tag may be defined only once",
             path, p->line, p->column);
         goto failed;
       }
@@ -465,7 +468,7 @@ parse_config(char const *path)
             path, p->line, p->column);
         goto failed;
       }
-      cfg->contests_path = p->text;
+      cfg->contests_dir = p->text;
       break;
     case TG_ACCESS:
       if (cfg->access) {
@@ -559,8 +562,8 @@ parse_config(char const *path)
     err("%s: <socket_path> tag must be specified", path);
     goto failed;
   }
-  if (!cfg->contests_path) {
-    err("%s: <contests_path> tag must be specified", path);
+  if (!cfg->contests_dir) {
+    err("%s: <contests_dir> tag must be specified", path);
     goto failed;
   }
 
@@ -589,6 +592,38 @@ parse_user_ip(void)
   user_ip = b1 << 24 | b2 << 16 | b3 << 8 | b4;
 }
 
+static int
+parse_contest_id(void)
+{
+  unsigned char *s = cgi_param("contest_id");
+  int v = 0, n = 0;
+
+  if (!s) return 0;
+  if (sscanf(s, "%d %n", &v, &n) != 1 || s[n] || v < 0) return 0;
+  return v;
+}
+
+static int
+parse_name_contest_id(unsigned char *basename)
+{
+  int v, n;
+
+  if (!basename) return 0;
+  if (sscanf(basename, "-%d %n", &v, &n)!=1 || basename[n] || v < 0) return 0;
+  return v;
+}
+
+static int
+check_config_exist(unsigned char const *path)
+{
+  struct stat sb;
+
+  if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode) && access(path, R_OK) >= 0) {
+    return 1;
+  }
+  return 0;
+}
+
 static void
 initialize(int argc, char const *argv[])
 {
@@ -596,6 +631,10 @@ initialize(int argc, char const *argv[])
   path_t dirname;
   path_t basename;
   path_t cfgname;
+  path_t cfgdir;
+  path_t progname;
+  path_t cfgname2;
+  int namelen, cgi_contest_id, name_contest_id, name_ok, errcode = 0;
   char *s = getenv("SCRIPT_FILENAME");
 
   pathcpy(fullname, argv[0]);
@@ -603,23 +642,107 @@ initialize(int argc, char const *argv[])
   os_rDirName(fullname, dirname, PATH_MAX);
   os_rGetBasename(fullname, basename, PATH_MAX);
   strcpy(program_name, basename);
+  if (strncmp(basename, "register", 8) != 0) {
+    client_not_configured(0, "bad program name");
+    // never get here
+  }
+  namelen = 8;                  /* "register" */
+  memset(progname, 0, sizeof(progname));
+  strncpy(progname, basename, namelen);
+
+  /* we need CGI parameters relatively early because of contest_id */
+  cgi_read(0);
+  cgi_contest_id = parse_contest_id();
+  name_contest_id = parse_name_contest_id(basename + namelen);
 
   /*
    * if CGI_DATA_PATH is absolute, do not append the program start dir
    */
   if (CGI_DATA_PATH[0] == '/') {
-    pathmake(cfgname, CGI_DATA_PATH, "/", basename, ".xml", NULL);
+    pathmake(cfgdir, CGI_DATA_PATH, "/", NULL);
   } else {
-    pathmake(cfgname, dirname, "/",CGI_DATA_PATH, "/", basename, ".xml", NULL);
+    pathmake(cfgdir, dirname, "/",CGI_DATA_PATH, "/", NULL);
   }
 
+  /*
+    Try different variants:
+      o If basename has the form <prog>-<number>, then consider
+        <number> as contest_id, ignoring the contest_id from
+        CGI arguments. Try config file <prog>-<number>.xml
+        first, and then try <prog>.xml.
+      o If basename has the bare form <prog>, then read contest_id
+        from CGI parameters. Try config file <prog>-<contest_id>.xml
+        first, and then try <prog>.xml.
+      o If basename has any other form, ignore contest_id from
+        CGI parameters. Always use config file <prog>.xml.
+  */
+  if (name_contest_id > 0) {
+    // first case
+    cgi_contest_id = 0;
+    snprintf(cfgname, sizeof(cfgname), "%s%s.xml", cfgdir, basename);
+    name_ok = check_config_exist(cfgname);
+    if (!name_ok) {
+      snprintf(cfgname2, sizeof(cfgname2), "%s%s-%d.xml", cfgdir, progname,
+               name_contest_id);
+      if (strcmp(cfgname2, cfgname) != 0 && check_config_exist(cfgname2)) {
+        name_ok = 1;
+        strcpy(cfgname, cfgname2);
+      }
+    }
+    if (!name_ok) {
+      snprintf(cfgname2, sizeof(cfgname2), "%s%s-%06d.xml", cfgdir, progname,
+               name_contest_id);
+      if (strcmp(cfgname2, cfgname) != 0 && check_config_exist(cfgname2)) {
+        name_ok = 1;
+        strcpy(cfgname, cfgname2);
+      }
+    }
+    if (!name_ok) {
+      snprintf(cfgname, sizeof(cfgname), "%s%s.xml", cfgdir, progname);
+      name_ok = check_config_exist(cfgname);
+    }
+    user_contest_id = name_contest_id;
+  } else if (strlen(basename) == namelen && cgi_contest_id <= 0) {
+    // contest_id is not set
+    snprintf(cfgname, sizeof(cfgname), "%s%s.xml", cfgdir, progname);
+    name_ok = check_config_exist(cfgname);
+  } else if (strlen(basename) == namelen) {
+    // second case
+    snprintf(cfgname, sizeof(cfgname), "%s%s-%d.xml", cfgdir, progname,
+             cgi_contest_id);
+    name_ok = check_config_exist(cfgname);
+    if (!name_ok) {
+      snprintf(cfgname, sizeof(cfgname), "%s%s-%06d.xml", cfgdir, progname,
+               cgi_contest_id);
+      name_ok = check_config_exist(cfgname);
+    }
+    if (!name_ok) {
+      snprintf(cfgname, sizeof(cfgname), "%s%s.xml", cfgdir, progname);
+      name_ok = check_config_exist(cfgname);
+    }
+    user_contest_id = cgi_contest_id;
+  } else {
+    // third case
+    cgi_contest_id = 0;
+    snprintf(cfgname, sizeof(cfgname), "%s%s.xml", cfgdir, basename);
+    name_ok = check_config_exist(cfgname);
+  }
+
+  if (!name_ok) {
+    client_not_configured(0, "client is not configured");
+    // never get here
+  }
   if (!(config = parse_config(cfgname))) {
     client_not_configured(0, "config file not parsed");
   }
-  if (!config->contests_path ||
-      !(contests = parse_contest_xml(config->contests_path))) {
-    client_not_configured(0, "contests database not parsed");
+
+  if (!config->contests_dir ||
+      (errcode = contests_set_directory(config->contests_dir)) < 0) {
+    fprintf(stderr, "cannot set contests directory '%s': %s\n",
+            config->contests_dir, contests_strerror(-errcode));
+    client_not_configured(0, "invalid contest information");
   }
+
   parse_user_ip();
 
   // construct self-reference URL
@@ -690,6 +813,24 @@ error(char const *format, ...)
 }
 
 static void
+client_put_refresh_header(unsigned char const *coding,
+                          unsigned char const *url,
+                          int interval,
+                          unsigned char const *format, ...)
+{
+  va_list args;
+
+  if (!coding) coding = "iso8859-1";
+
+  va_start(args, format);
+  fprintf(stdout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>\n", coding, coding, interval, url);
+  vfprintf(stdout, format, args);
+  fputs("\n</title></head><body><h1>\n", stdout);
+  vfprintf(stdout, format, args);
+  fputs("\n</h1>\n", stdout);
+}
+
+static void
 print_choose_language_button(int hr_flag, int no_submit_flag,
                              int action, unsigned char const *label)
 {
@@ -716,29 +857,15 @@ print_choose_language_button(int hr_flag, int no_submit_flag,
   }
 #endif /* CONF_HAS_LIBINTL */
 }
-static void
-read_contest_id(void)
-{
-  int x = 0, n = 0;
-  unsigned char *s;
-
-  user_contest_id = 0;
-  if (!(s = cgi_param("contest_id"))) return;
-  if (sscanf(s, "%d %n", &x, &n) != 1 || s[n] || x < 0 || x > 1000) return;
-  user_contest_id = x;
-}
 
 static int
 check_contest_eligibility(int id)
 {
-  struct contest_desc *d;
+  struct contest_desc *d = 0;
 
-  if (id <= 0 || id >= contests->id_map_size) return 0;
-  d = contests->id_map[id];
-  if (!d) return 0;
+  if (contests_get(id, &d) < 0 || !d) return 0;
   if (d->reg_deadline && cur_time > d->reg_deadline) return 0;
-  if (!contests_check_ip(d, user_ip)) return 0;
-  return 1;
+  return contests_check_register_ip(id, user_ip);
 }
 
 static void
@@ -794,187 +921,6 @@ set_locale_by_id(int id)
 #endif /* CONF_HAS_LIBINTL */
 }
 
-static int
-parse_cookies(unsigned char const *cookie)
-{
-  unsigned char *c_name, *c_value;
-  unsigned char const *s;
-  size_t len;
-  int n;
-  unsigned long long val;
-
-  if (!cookie) return -1;
-  len = strlen(cookie);
-  c_name = (unsigned char *) alloca(len + 1);
-  c_value = (unsigned char *) alloca(len + 1);
-  s = cookie;
-  while (1) {
-    if (sscanf(s, " %[^= ] = %[^; ] %n", c_name, c_value, &n) != 2)
-      return 0;
-    if (!strcmp(c_name, "ID")) {
-      if (sscanf(c_value, "%llx %n", &val, &n) != 1 || c_value[n])
-        return 0;
-      if (val) {
-        client_cookie = val;
-        return 1;
-      }
-    }
-    s += n;
-    if (*s == ';') s++;
-  }
-}
-
-static void
-put_cookie_header(int force_put, int clear_cookie)
-{
-  time_t t;
-  struct tm gt;
-  char buf[128];
-
-  if (clear_cookie || (!user_cookie && client_cookie)) {
-    if (client_cookie == user_cookie) client_cookie = 0;
-    printf("Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
-    /*
-    fprintf(stderr,
-            "Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
-    */
-    client_cookie = user_cookie = 0;
-    return;
-  }
-
-  if (!user_cookie) return;
-  if (!force_put && client_cookie == user_cookie) return;
-  client_cookie = user_cookie;
-  t = time(0);
-  t += 24 * 60 * 60;
-  gmtime_r(&t, &gt);
-  strftime(buf, sizeof(buf), "%A, %d-%b-%Y %H:%M:%S GMT", &gt);
-  printf("Set-cookie: ID=%llx; expires=%s\n", user_cookie, buf);
-  //fprintf(stderr, "Set-cookie: ID=%llx; expires=%s\n", user_cookie, buf);
-}
-
-static int
-check_password(void)
-{
-  unsigned char *cookie_str = 0;
-  int err;
-  int new_user_id;
-  unsigned long long new_cookie;
-  unsigned char *new_name;
-  int new_locale_id;
-  int new_contest_id;
-  unsigned char *new_login;
-
-  read_usecookies();
-  if (user_usecookies != 0) cookie_str = getenv("HTTP_COOKIE");
-  if (cookie_str && user_action != ACTION_LOGIN) {
-    //fprintf(stderr, "Got cookie string: <%s>\n", cookie_str);
-    if (parse_cookies(cookie_str)) {
-      if (!server_conn) {
-        server_conn = userlist_clnt_open(config->socket_path);
-      }
-      err = userlist_clnt_lookup_cookie(server_conn, user_ip,
-                                        client_cookie,
-                                        &new_user_id,
-                                        &new_login,
-                                        &new_name,
-                                        &new_locale_id,
-                                        &new_contest_id);
-      if (err == ULS_LOGIN_COOKIE) {
-        // cookie is identified. Good.
-        user_login = new_login;
-        user_contest_id = new_contest_id;
-        user_id = new_user_id;
-        user_name = new_name;
-        user_cookie = client_cookie;
-        if (client_locale_id == -1)
-          client_locale_id = new_locale_id;
-        if (client_locale_id == -1)
-          client_locale_id = 0;
-        return 1;
-      }
-    }
-    client_cookie_bad = 1;
-  }
-
-  if (!(user_login = cgi_param("login"))) {
-    user_login = xstrdup("");
-  }
-  fix_string(user_login, name_accept_chars, '?');
-  if (!(user_password = cgi_param("password"))) {
-    user_password = xstrdup("");
-  }
-  fix_string(user_password, password_accept_chars, '?');
-  read_contest_id();  
-  
-  if (!server_conn) {
-    server_conn = userlist_clnt_open(config->socket_path);
-  }
-  err = userlist_clnt_login(server_conn, user_ip, user_contest_id,
-                            client_locale_id,
-                            user_usecookies, user_login, user_password,
-                            &new_user_id, &new_cookie, &new_name,
-                            &new_locale_id);
-  if (err != ULS_LOGIN_OK && err != ULS_LOGIN_COOKIE) {
-    return 0;
-  }
-  ASSERT(new_user_id > 0);
-  user_id = new_user_id;
-  user_name = new_name;
-  if (client_locale_id == -1)
-    client_locale_id = new_locale_id;
-  if (client_locale_id == -1)
-    client_locale_id = 0;
-  if (err == ULS_LOGIN_COOKIE) {
-    user_cookie = new_cookie;
-  }
-  return 1;
-}
-
-static void
-logout_page(void)
-{
-  char *armored_str;
-  int armored_len;
-
-  if (!check_password()) {
-    put_cookie_header(0, 1);
-    set_locale_by_id(client_locale_id);
-    /* FIXME: construct self-reference URL */
-    printf("Refresh=0; url=%s?locale_id=%d\nContent-type: text/html\n\n", self_url, client_locale_id);
-    printf("<html><head><META HTTP-EQUIV=\"Refresh\" content=\"0; url=%s?locale_id=%d\"></head><body><A href=\"%s?locale_id=%d\">Redirecting to %s?locale_id=%d</A>\n", self_url, client_locale_id, self_url, client_locale_id, self_url, client_locale_id);
-    return;
-  }
-
-  armored_len = html_armored_strlen(user_name);
-  armored_str = alloca(armored_len + 16);
-  html_armor_string(user_name, armored_str);
-
-  put_cookie_header(0, 1);
-  set_locale_by_id(client_locale_id);
-  client_put_header(config->charset, "%s, %s!",
-                    _("Good-bye"), armored_str);
-  printf(_("<p>Click <a href=\"%s?locale_id=%d\">on this link</a> to login again.</p>\n"),
-         self_url,
-         client_locale_id);
-}
-
-static int
-authentificate(void)
-{
-  if (check_password()) return 1;
-
-  if (client_cookie) {
-    put_cookie_header(0, 1);
-  }
-
-  set_locale_by_id(client_locale_id);
-  client_put_header(config->charset, "%s", _("Login failed"));
-  printf("<p>%s</p>",
-         _("You have provided incorrect login and/or password."));
-  return 0;
-}
-
 static unsigned char const *
 regstatus_str(int status)
 {
@@ -984,300 +930,6 @@ regstatus_str(int status)
     return buf;
   }
   return status_str_map[status];
-}
-
-static void
-register_for_contest_page(void)
-{
-  struct contest_desc **farr;
-  int fused, i;
-  char *armored_str;
-  int armored_len;
-  unsigned char *act_name;
-  unsigned char *xml_text;
-  struct xml_tree *regs, *reg;
-  struct userlist_contest *regx;
-  struct contest_desc *cnts;
-  int need_team_btn = 0;
-
-  if (!authentificate()) return;
-
-  act_name = user_name;
-  if (!act_name || !*act_name) {
-    act_name = user_login;
-  }
-  armored_len = html_armored_strlen(act_name);
-  armored_str = alloca(armored_len + 16);
-  html_armor_string(act_name, armored_str);
-
-  put_cookie_header(0, 0);
-
-  if (user_contest_id < 0) user_contest_id = 0;
-  if (user_contest_id >= contests->id_map_size) user_contest_id = 0;
-  if (user_contest_id && !contests->id_map[user_contest_id])
-    user_contest_id = 0;
-
-  if (userlist_clnt_get_contests(server_conn, user_id, &xml_text) < 0) {
-    return;
-  }
-  if (!(regs = userlist_parse_contests_str(xml_text))) {
-    return;
-  }
-  if (regs) {
-    ASSERT(regs->tag == USERLIST_T_CONTESTS);
-    regs = regs->first_down;
-  }
-
-  set_locale_by_id(client_locale_id);
-  client_put_header(config->charset, _("Personal page of %s"), armored_str);
-
-  printf(_("<p>Hello, %s!</p>\n"), armored_str);
-
-  printf("<form method=\"POST\" action=\"%s\" "
-         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
-         program_name);
-  if (!user_cookie) {
-    printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n"
-           "<input type=\"hidden\" name=\"password\" value=\"%s\">\n"
-           "<input type=\"hidden\" name=\"usecookies\" value=\"%d\">\n"
-           "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
-           user_login, user_password, user_usecookies, client_locale_id);
-  }
-  printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
-         user_contest_id);
-  printf("<h2>%s</h2>\n", _("Change the password"));
-  printf("<p>%s: <input type=\"password\" name=\"chg_old_passwd\" maxlength=\"16\" size=\"16\"></p>\n", _("Old password"));
-  printf("<p>%s: <input type=\"password\" name=\"chg_new_passwd_1\" maxlength=\"16\" size=\"16\"></p>\n", _("New password (1)"));
-  printf("<p>%s: <input type=\"password\" name=\"chg_new_passwd_2\" maxlength=\"16\" size=\"16\"></p>\n", _("New password (2)"));
-  printf("<p><input type=\"submit\" name=\"action_%d\" value=\"%s\"></p>\n",
-         ACTION_CHANGE_PASSWORD, _("Change!"));
-  printf("</form>\n");
-
-  if (regs) {
-    printf("<h2>%s</h2>\n", _("Check the registration status"));
-
-    for (reg = regs; reg; reg = reg->right) {
-      ASSERT(reg->tag == USERLIST_T_CONTEST);
-      regx = (struct userlist_contest*) reg;
-      if (regx->id <= 0 || regx->id >= contests->id_map_size) continue;
-      if (!contests->id_map[regx->id]) continue;
-      cnts = contests->id_map[regx->id];
-      if (cnts->team_url && regx->status == USERLIST_REG_OK) {
-        need_team_btn = 1;
-      }
-    }
-
-    printf("<table><tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th></tr>\n",
-           _("Contest ID"), _("Contest name"), _("Status"),
-           _("Edit personal data"),
-           need_team_btn?(_("Submit solution")):"&nbsp;");
-    for (reg = regs; reg; reg = reg->right) {
-      ASSERT(reg->tag == USERLIST_T_CONTEST);
-      regx = (struct userlist_contest*) reg;
-      if (regx->id <= 0 || regx->id >= contests->id_map_size) continue;
-      if (!contests->id_map[regx->id]) continue;
-      cnts = contests->id_map[regx->id];
-      printf("<tr><td>%d</td><td>%s</td><td>%s</td>",
-             regx->id, cnts->name, 
-             gettext(regstatus_str(regx->status)));
-      printf("<td><form method=\"POST\" action=\"%s\" "
-             "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
-             program_name);
-      if (!user_cookie) {
-        printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n"
-               "<input type=\"hidden\" name=\"password\" value=\"%s\">\n"
-               "<input type=\"hidden\" name=\"usecookies\" value=\"%d\">\n"
-               "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
-               user_login, user_password, user_usecookies, client_locale_id);
-      }
-      printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n"
-             "<input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>"
-             "</form></td>",
-             regx->id, ACTION_REGISTER_CONTEST_PAGE, _("Edit"));
-      if (cnts->team_url && regx->status == USERLIST_REG_OK) {
-        printf("<td><form method=\"POST\" action=\"%s?locale_id=%d\" "
-             "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
-               cnts->team_url, client_locale_id);
-        if (!user_cookie) {
-          printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n"
-                 "<input type=\"hidden\" name=\"password\" value=\"%s\">\n"
-                 "<input type=\"hidden\" name=\"usecookies\" value=\"%d\">\n",
-                 user_login, user_password, user_usecookies);
-        }
-        printf("<input type=\"submit\" name=\"XXX\" value=\"%s\"></form></td>\n", _("Submit solution"));
-      } else {
-        printf("<td>&nbsp;</td>");
-      }
-      printf("</tr>\n");
-    }
-    printf("</table>\n");
-  }
-
-  // check available contests
-  farr = (struct contest_desc**) alloca(sizeof(farr[0]) * (contests->id_map_size + 1));
-  memset(farr, 0, sizeof(farr[0]) * (contests->id_map_size + 1));
-  fused = 0;
-  if (user_contest_id > 0) {
-    if (user_contest_id < contests->id_map_size
-        && contests->id_map[user_contest_id]
-        && check_contest_eligibility(user_contest_id)) {
-      for (reg = regs; reg; reg = reg->right) {
-        ASSERT(reg->tag == USERLIST_T_CONTEST);
-        regx = (struct userlist_contest*) reg;
-        if (regx->id == user_contest_id) break;
-      }
-      if (!reg) {
-        farr[fused++] = contests->id_map[user_contest_id];
-      }
-    }
-  } else {
-    for (i = 1; i < contests->id_map_size; i++) {
-      if (check_contest_eligibility(i)) {
-        for (reg = regs; reg; reg = reg->right) {
-          ASSERT(reg->tag == USERLIST_T_CONTEST);
-          regx = (struct userlist_contest*) reg;
-          if (regx->id == i) break;
-        }
-        if (!reg) {
-          farr[fused++] = contests->id_map[i];
-        }
-      }
-    }
-  }
-  printf("<h2>%s</h2>\n", _("Available contests"));
-  if (!fused) {
-    printf("<p>%s</p>\n", _("No contests available."));
-  } else {
-    printf("<table><tr><th>%s</th><th>%s</th><th>%s</th></tr>\n",
-           _("Contest ID"), _("Contest name"), _("Register"));
-    for (i = 0; i < fused; i++) {
-      cnts = farr[i];
-      printf("<form method=\"POST\" action=\"%s\" "
-             "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
-             program_name);
-      if (!user_cookie) {
-        printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n"
-               "<input type=\"hidden\" name=\"password\" value=\"%s\">\n"
-               "<input type=\"hidden\" name=\"usecookies\" value=\"%d\">\n"
-               "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
-               user_login, user_password, user_usecookies, client_locale_id);
-      }
-      printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
-             cnts->id);
-      printf("<tr><td>%d</td><td>%s</td>"
-             "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>"
-             "</tr>\n",
-             cnts->id, cnts->name, 
-             ACTION_REGISTER_CONTEST_PAGE,
-             _("Register"));
-      printf("</form>");
-    }
-    printf("</table>\n");
-  }
-
-  if (user_cookie) {
-    printf("<h2>%s</h2>\n", _("Quit the system"));
-    printf("<form method=\"POST\" action=\"%s\" "
-           "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
-           program_name);
-    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
-           ACTION_LOGOUT, _("Logout"));
-    printf("</form>");
-  }
-
-  printf("<form method=\"POST\" action=\"%s\" "
-         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
-         program_name);
-  if (!user_cookie) {
-    printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n"
-           "<input type=\"hidden\" name=\"password\" value=\"%s\">\n"
-           "<input type=\"hidden\" name=\"usecookies\" value=\"%d\">\n",
-           user_login, user_password, user_usecookies);
-  }
-  printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
-         user_contest_id);
-  print_choose_language_button(0, 0, ACTION_MAIN_PAGE, 0);
-  printf("</form>\n");
-  return;
-}
-
-static void
-change_password(void)
-{
-  unsigned char *old_pwd, *new_pwd1, *new_pwd2;
-  int res;
-
-  if (!authentificate()) return;
-  old_pwd = xstrdup(cgi_param("chg_old_passwd"));
-  new_pwd1 = xstrdup(cgi_param("chg_new_passwd_1"));
-  new_pwd2 = xstrdup(cgi_param("chg_new_passwd_2"));
-
-  if (!old_pwd || !*old_pwd) {
-    error("%s", _("old password not specified"));
-  }
-  if (!new_pwd1 || !*new_pwd1) {
-    error("%s", _("new password (1) not specified"));
-  }
-  if (!new_pwd2 || !*new_pwd2) {
-    error("%s", _("new password (2) not specified"));
-  }
-  if (old_pwd && strlen(old_pwd) > 64) {
-    error("%s", _("old password is too long"));
-  }
-  if (old_pwd && fix_string(old_pwd, password_accept_chars, '?') > 0) {
-    error("%s", _("old password contain invalid characters"));
-  }
-  if (new_pwd1 && new_pwd2 && strcmp(new_pwd1, new_pwd2)) {
-    error("%s", _("new passwords does not match"));
-  }
-  if (new_pwd1 && fix_string(new_pwd1, password_accept_chars, '?') > 0) {
-    error("%s", _("new password contain invalid characters"));
-  }
-  if (new_pwd1 && strlen(new_pwd1) > 64) {
-    error("%s", _("new password is too long"));
-  }
-  if (!server_conn) {
-    error("%s", _("not connected to server"));
-  }
-  if (!error_log) {
-    res = userlist_clnt_set_passwd(server_conn, user_id, old_pwd, new_pwd1);
-    if (res < 0) {
-      error("%s", gettext(userlist_strerror(-res)));
-    }
-  }
-
-  set_locale_by_id(client_locale_id);
-  if (!error_log) {
-    client_put_header(config->charset, _("Password changed successfully"));
-    printf("<p>%s</p>\n", _("Password changed successfully."));
-  } else {
-    client_put_header(config->charset, _("Password changing failed"));
-    printf("<p>%s<br><pre><font color=\"red\">%s</font></pre></p>\n",
-           _("Password changing failed due to the following reasons."),
-           error_log);
-  }
-
-  printf("<form method=\"POST\" action=\"%s\" "
-         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
-         program_name);
-  if (!user_cookie) {
-    printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n"
-           "<input type=\"hidden\" name=\"password\" value=\"%s\">\n"
-           "<input type=\"hidden\" name=\"usecookies\" value=\"%d\">\n",
-           user_login,
-           error_log?user_password:new_pwd1,
-           user_usecookies);
-  }
-  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
-         ACTION_MAIN_PAGE,
-         _("Back"));
-  if (user_cookie) {
-    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
-           ACTION_LOGOUT, _("Logout"));
-  }
-  print_choose_language_button(0, 1, 0 ,0);
-  printf("</form>\n");
-  return;
 }
 
 static void
@@ -1568,22 +1220,29 @@ make_user_xml(void)
   return 0;
 }
 
-static void
+static int
 read_user_info_from_server(void)
 {
   unsigned char *user_info_xml = 0;
   struct userlist_user *u = 0;
   struct userlist_member *m;
   struct userlist_contest *reg;
-  int role, pers;
+  int role, pers, errcode;
   unsigned char buf[512];
 
-  if (userlist_clnt_get_info(server_conn, user_id, &user_info_xml) < 0) {
-    /* FIXME: report a server error */
-    return;
+  error_log = 0;
+  if ((errcode = userlist_clnt_get_info(server_conn, ULS_GET_USER_INFO,
+                                        user_id, &user_info_xml)) < 0) {
+    error("%s", gettext(userlist_strerror(-errcode)));
   }
-  if (!(u = userlist_parse_user_str(user_info_xml))) {
-    return;
+  if (!error_log && !(u = userlist_parse_user_str(user_info_xml))) {
+    error("%s", _("XML parse error"));
+  }
+  if (error_log) {
+    client_put_header(config->charset, _("Fatal error"));
+    printf("<p>%s.</p><font color=\"red\"><pre>%s</pre></font>\n",
+           _("Failed to read information from the server"), error_log);
+    return -1;
   }
 
   ASSERT(u->id == user_id);
@@ -1676,97 +1335,106 @@ read_user_info_from_server(void)
     }
   }
 
+  user_already_registered = 0;
   if (u->contests && user_contest_id > 0) {
     for (reg = FIRST_CONTEST(u); reg; reg = NEXT_CONTEST(reg)) {
       if (reg->id == user_contest_id) break;
     }
-    if (!reg) user_registering = 1;
-  } else if (!u->contests) {
-    user_registering = 1;
+    if (reg) user_already_registered = 1;
   }
+  return 0;
 }
 
-static void
-action_completed_page(void)
+static int
+authentificate(void)
 {
-  set_locale_by_id(client_locale_id);
-  client_put_header(config->charset, "%s", _("Action completed"));
-  printf("<p>%s</p>\n", _("Action completed successfully"));
+  unsigned char *sid_str = 0;
+  unsigned long long sid_value = 0;
+  int n = 0, errcode;
+  int new_user_id = 0, new_locale_id = 0, new_contest_id = 0;
+  unsigned char *new_login = 0, *new_name = 0;
 
-  printf("<form method=\"POST\" action=\"%s\" "
-         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
-         program_name);
-  if (!user_cookie) {
-    printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n"
-           "<input type=\"hidden\" name=\"password\" value=\"%s\">\n"
-           "<input type=\"hidden\" name=\"usecookies\" value=\"%d\">\n",
-           user_login, user_password, user_usecookies);
+  if (!(sid_str = cgi_param("sid"))) goto failed;
+  if (sscanf(sid_str, "%llx%n", &sid_value, &n) != 1) goto failed;
+  if (sid_str[n] || !sid_value) goto failed;
+  if (!server_conn) {
+    server_conn = userlist_clnt_open(config->socket_path);
   }
-  printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
-         user_contest_id);
-  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
-         ACTION_MAIN_PAGE,
-         _("Back"));
-  if (user_cookie) {
-    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
-           ACTION_LOGOUT, _("Logout"));
+  if (!server_conn) {
+    fprintf(stderr, "connection to server failed\n");
+    goto failed;
   }
-  print_choose_language_button(0, 1, ACTION_MAIN_PAGE ,0);
-  printf("</form>");
-}
-
-static void
-edit_registration_data(void)
-{
-  int cnts_arm_len;
-  char *cnts_arm = 0, *name_arm = 0;
-  struct contest_desc *cnts = 0;
-  int i, role, pers;
-  int errcode;
-  unsigned char *user_xml_text;
-  char const *dis_str = " disabled=\"yes\"";
-
-  if (!check_password()) {
-    if (client_cookie) {
-      // we probably have to reset the cookie
-      put_cookie_header(0, 1);
-    }
-
-    set_locale_by_id(client_locale_id);
-    client_put_header(config->charset, "%s", _("Login failed"));
-    printf("<p>%s</p>",
-           _("You have provided incorrect login and/or password."));
-    return;
+  errcode = userlist_clnt_lookup_cookie(server_conn, user_ip,
+                                        sid_value,
+                                        &new_user_id,
+                                        &new_login,
+                                        &new_name,
+                                        &new_locale_id,
+                                        &new_contest_id);
+  if (errcode != ULS_LOGIN_COOKIE) {
+    fprintf(stderr, "login failed: %s", userlist_strerror(-errcode));
+    goto failed;
   }
 
-  put_cookie_header(0, 0);
-  read_contest_id();
-  if (user_contest_id < 0 || user_contest_id >= contests->id_map_size
-      || (user_contest_id > 0 && !contests->id_map[user_contest_id])) {
-    set_locale_by_id(client_locale_id);
-    client_put_header(config->charset, "%s", _("Invalid contest"));
-    printf("<p>%s</p>",
-           _("The contest identifier is invalid"));
-    return;
-  }
+  user_login = new_login;
+  user_id = new_user_id;
+  user_name = new_name;
+  user_cookie = sid_value;
+  if (client_locale_id == -1) client_locale_id = new_locale_id;
+  if (client_locale_id == -1) client_locale_id = 0;
   /*
-  if (user_contest_id > 0 && !check_contest_eligibility(user_contest_id)) {
-    set_locale_by_id(client_locale_id);
-    client_put_header(config->charset, "%s", _("You cannot participate"));
-    printf("<p>%s</p>",
-           _("You cannot participate in this contest"));
-    return;
-  }
+  if (user_contest_id <= 0 && new_contest_id > 0)
+    user_contest_id = new_contest_id;
   */
+  return 1;
 
-  name_arm = user_name;
-  if (!user_name) {
-    name_arm = user_login;
+ failed:
+  client_put_header(config->charset, _("Authentification failed"));
+  printf("<p>%s.</p>\n", _("Authentification failed for some reason"));
+  return 0;
+}
+
+static void
+display_edit_registration_data_page(void)
+{
+  struct contest_desc *cnts = 0;
+  int errcode, role, pers, i, user_show_all = 0;
+  unsigned char *user_name_arm;
+  unsigned char *cnts_name_arm;
+  char const *dis_str = " disabled=\"yes\"";
+  unsigned char s1[128], url[512];
+
+  if (!authentificate()) return;
+
+  /* ??? */
+  if (cgi_param("show_all")) {
+    user_show_all = 1;
+  }
+
+  /* FIXME: not sure, whether this will work with user_contest_id == 0... */
+  if (user_contest_id <= 0) {
+    client_put_header(config->charset, "%s",
+                      _("Invalid contest identifier"));
+    return;
   }
 
   if (user_contest_id > 0) {
-    cnts = contests->id_map[user_contest_id];
+    if ((errcode = contests_get(user_contest_id, &cnts)) < 0) {
+      fprintf(stderr, "invalid contest %d: %s", user_contest_id,
+              contests_strerror(-errcode));
+      client_put_header(config->charset, "%s", _("Invalid contest"));
+      printf("<p>%s</p>.", _("Invalid contest identifier specified"));
+      return;
+    }
   }
+  ASSERT(cnts);
+
+  if (!check_contest_eligibility(cnts->id)) {
+    client_put_header(config->charset, "%s", _("Permission denied"));
+    printf("<p>%s</p>.", _("You cannot participate in this contest"));
+    return;
+  }
+
   prepare_var_table(cnts);
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
     if (member_max[role] <= 0) continue;
@@ -1778,68 +1446,31 @@ edit_registration_data(void)
     }
   }
 
-  while (user_action == ACTION_REMOVE_MEMBER) {
-    unsigned char *s = cgi_nname("remove_", 7);
-    int n = 0, serial = 0;
-    unsigned char name_buf[64];
- 
-    if (!s) break;
-    if (sscanf(s, "remove_%d_%d%n", &role, &pers, &n) != 2) break;
-    if (s[n]) break;
-    if (role < 0 || role >= CONTEST_LAST_MEMBER) break;
-    if (member_max[role] <= 0) break;
-    if (pers < 0) break;
-    snprintf(name_buf, sizeof(name_buf), "member_info_%d_%d_0", role, pers);
-    if (!(s = cgi_param(name_buf))
-        || sscanf(s, "%d%n", &serial, &n) != 1 || s[n]
-        || serial <= 0) {
-      user_action = ACTION_EDIT_PERSONAL_PAGE;
-      break;
-    }
-
-    n = userlist_clnt_remove_member(server_conn, user_id,
-                                    role, pers, serial);
-    if (n < 0) {
-      error("%s", gettext(userlist_strerror(-n)));
-      break;
-    }
-
-    // removal is commited, so we must re-read all
-    user_action = ACTION_EDIT_PERSONAL_PAGE;
-  }
-
-  /*
-  if (user_action == ACTION_REGISTER_CONTEST_PAGE) {
-    user_registering = 1;
-  }
-  */
-
   /* request the necessary information from server */
   /* or read the information from form variables */
   switch (user_action) {
-  case ACTION_EDIT_PERSONAL_PAGE:
-  case ACTION_REGISTER_CONTEST_PAGE:
-  case ACTION_RELOAD_PERSONAL_DATA:
-    read_user_info_from_server();
+  case STATE_EDIT_REGISTRATION_DATA:
+    if (read_user_info_from_server() < 0) return;
     break;
   default:
     read_user_info_from_form();
     break;
   }
 
-  if (user_contest_id > 0 && !check_contest_eligibility(user_contest_id)) {
-    user_registering = 0;
-  }
-
   if (user_action >= ACTION_ADD_NEW_CONTESTANT
       && user_action <= ACTION_ADD_NEW_GUEST) {
     role = user_action - ACTION_ADD_NEW_CONTESTANT;
     if (member_cur[role] >= member_max[role]) {
-      error(_("Cannot add a new %s: maximal number reached."),
-            gettext(member_string[role]));
-    } else {
-      member_cur[role]++;
+      client_put_header(config->charset, "%s",
+                        _("Cannot add a new member"));
+      printf("<p>%s %s: %s.</p>\n",
+             _("Cannot add a new"),
+             gettext(member_string[role]),
+             _("maximal number reached"));
+      return;
     }
+
+    member_cur[role]++;
   }
 
   /* make empty strings for the remaining */
@@ -1863,74 +1494,48 @@ edit_registration_data(void)
     }
   }
 
-  if (!error_log) {
-    switch (user_action) {
-    case ACTION_REGISTER_FOR_CONTEST:
-    case ACTION_COMMIT_PERSONAL_DATA:
-      check_mandatory();
-      if (error_log) break;
-      user_xml_text = make_user_xml();
-      if (error_log) break;
-      errcode = userlist_clnt_set_info(server_conn, user_id, user_xml_text);
-      if (errcode) {
-        error("%s", gettext(userlist_strerror(-errcode)));
-      }
-      if (user_action == ACTION_REGISTER_FOR_CONTEST && !errcode) {
-        errcode = userlist_clnt_register_contest(server_conn, user_id,
-                                                 user_contest_id);
-        if (errcode) {
-          error("%s", gettext(userlist_strerror(-errcode)));
-        }
-      }
-      if (!errcode) {
-        action_completed_page();
-        return;
-      }
-      break;
-    }
+  {
+    unsigned char *disp_name = user_name;
+    if (!disp_name || !*disp_name) disp_name = user_login;
+    ARMOR_STR(user_name_arm, disp_name);
   }
+  ARMOR_STR(cnts_name_arm, cnts->name);
 
   set_locale_by_id(client_locale_id);
-  if (user_contest_id > 0) {
-    cnts_arm_len = html_armored_strlen(cnts->name);
-    cnts_arm = alloca(cnts_arm_len + 16);
-    html_armor_string(cnts->name, cnts_arm);
-    client_put_header(config->charset,
-                      _("Registration form for contest \"%s\""),
-                      cnts_arm);
-    if (user_read_only) {
-      printf("<p>%s</p>\n",
-             _("You may view your registration data. Editing is not allowed because disabled by the administrator."));
-    } else {
-      printf("<p>%s</p>\n",
-             _("Please fill up blank fields in this form. Mandatory fields "
-               "are marked with (*)."));
-    }
-  } else {
-    client_put_header(config->charset,
-                      _("Personal information for \"%s\""), name_arm);
-    printf("<p>%s</p>\n",
-           _("You may edit your personal information"));
-  }
 
-  if (error_log) {
-    printf("<h2>%s</h2>\n", _("Form checking results"));
-    printf("<p>%s<br>", _("Your form has the following problems"));
-    printf("<pre><font color=\"red\">%s</font></pre></p>\n",
-           error_log);
+  client_put_header(config->charset,
+                    _("User %s: registration for %s"),
+                    user_name_arm, cnts_name_arm);
+  {
+    unsigned char *s1, *s2 ,*s3;
+
+    if (user_already_registered) {
+      s1 = _("You have already registered for this contest.");
+    } else {
+      s1 = _("You may register for this contest.");
+    }
+    if (user_read_only) {
+      s2 = _("You may not edit your personal information.");
+    } else {
+      s2 = _("You may edit your personal information.");
+    }
+    if (!user_already_registered && !user_read_only) {
+      s3 = _("Please fill up blank fields in this form. Mandatory fields "
+             "are marked with (*).");
+    } else {
+      s3 = "";
+    }
+
+    printf("<h3>%s</h3>\n<h3>%s</h3>\n<p>%s</p>\n", s1, s2, s3);
   }
 
   printf("<form method=\"POST\" action=\"%s\" "
          "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
-         program_name);
-  if (!user_cookie) {
-    printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n"
-           "<input type=\"hidden\" name=\"password\" value=\"%s\">\n"
-           "<input type=\"hidden\" name=\"usecookies\" value=\"%d\">\n",
-           user_login, user_password, user_usecookies);
-  }
-  printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
-         user_contest_id);
+         self_url);
+  printf("<input type=\"hidden\" name=\"sid\" value=\"%llx\">\n"
+         "<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n"
+         "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
+         user_cookie, user_contest_id, client_locale_id);
 
   printf("<hr><h2>%s</h2>", _("General user information"));
   printf("<p>%s: <input type=\"text\" disabled=\"1\" name=\"user_login\" value=\"%s\" size=\"16\">\n", _("Login"), user_login);
@@ -2050,62 +1655,49 @@ edit_registration_data(void)
 
   printf("<h2>%s</h2>\n", _("Finalize registration"));
 
-  printf("<input type=\"hidden\" name=\"user_registering\" value=\"%d\">\n",
-         user_registering);
+  printf("<input type=\"hidden\" name=\"user_already_registered\" value=\"%d\">\n", user_already_registered);
+  if (user_show_all) {
+    printf("<input type=\"hidden\" name=\"show_all\" value=\"1\">\n");
+  }
 
-  if (!user_read_only && user_registering && user_contest_id > 0) {
+  if (!user_already_registered) {
     printf("<p>%s</p>\n", _("Press on the \"Register\" button to commit the entered values to server and register for participation for the chosen contest."));
     printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
            ACTION_REGISTER_FOR_CONTEST, _("REGISTER!"));
   }
-  if (!user_read_only && !user_registering) {
+  if (!user_read_only && user_already_registered) {
     printf("<p>%s</p>\n", _("Press on the \"Save\" button to save the entered values on the server."));
     printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
-           ACTION_COMMIT_PERSONAL_DATA, _("Save"));
+           ACTION_SAVE_REGISTRATION_DATA, _("Save"));
   }
+  printf("</form>\n");
 
   printf("<p>%s</p>\n", _("Press on the \"Back\" button to return to the previous page without saving all your changes."));
-  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
-         ACTION_MAIN_PAGE, _("Back"));
+  *s1 = 0;
+  if (!user_show_all) {
+    snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
+  }
+  snprintf(url, sizeof(url), "%s?action=%d&sid=%llx&locale_id=%d%s",
+           self_url, STATE_MAIN_PAGE, user_cookie, client_locale_id, s1);
+  printf("<p><a href=\"%s\">%s</a></p>\n", url, _("Back"));
+
+  printf("<h2>%s</h2>\n", _("Quit the system"));
+  snprintf(url, sizeof(url), "%s?action=%d&sid=%llx&locale_id=%d",
+           self_url, ACTION_LOGOUT, user_cookie, client_locale_id);
+  printf("<p><a href=\"%s\">%s</a></p>\n", url, _("Logout"));
 
 #if 0
-  /* end of form */
-  printf("<p><input type=\"reset\" value=\"%s\">\n"
-         "<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n"
-         /*"<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n"*/
-         /*"<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n"*/
-         "<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
-         _("Reset the form"),
-         ACTION_MAIN_PAGE, _("Back"),
-         ACTION_RELOAD_PERSONAL_DATA, _("Reload from server"),
-         ACTION_COMMIT_PERSONAL_DATA, _("Commit changes"),
-         ACTION_REGISTER_FOR_CONTEST, _("Register"));
-#endif
-
-  if (user_cookie) {
-    printf("<h2>%s</h2>\n", _("Quit the system"));
-    printf("<p><input type=\"submit\" name=\"action_%d\" value=\"%s\"></p>\n",
-           ACTION_LOGOUT,
-           _("Logout"));
-  }
   print_choose_language_button(0, 1, 0, 0);
   printf("</form>");
+#endif
 }
 
+/* contains "change language", "login", "register new" buttons */
+/* default page */
 static void
-initial_login_page(void)
+display_initial_page(void)
 {
-  char change_lang_btn[64];
-  int login_only_flag = 0;
-
-  if (user_action == ACTION_LOGIN_ONLY_PAGE ||
-      user_action == ACTION_CHANGE_LANG_LOGIN_ONLY_PAGE) {
-    login_only_flag = 1;
-  }
-  snprintf(change_lang_btn, sizeof(change_lang_btn),
-           "action_%d",
-           login_only_flag?ACTION_CHANGE_LANG_LOGIN_ONLY_PAGE:
-           ACTION_CHANGE_LANG_ENTRY_PAGE);
+  unsigned char s1[128], s2[128], url[1024];
 
   if (client_locale_id == -1) client_locale_id = 0;
   set_locale_by_id(client_locale_id);
@@ -2118,30 +1710,36 @@ initial_login_page(void)
   }
   fix_string(user_login, name_accept_chars, '?');
   user_password = xstrdup("");
-  read_usecookies();
-  read_contest_id();  
 
+  /* change language */
   printf("<form method=\"POST\" action=\"%s\" "
          "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
-         program_name);
-
+         self_url);
   if (user_contest_id > 0) {
     printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
            user_contest_id);
   }
-
-  if (!login_only_flag) {
-    print_choose_language_button(0, 0, ACTION_CHANGE_LANG_ENTRY_PAGE, 0);
-    printf("<h2>%s</h2><p>%s</p>\n",
-           _("For registered users"),
-           _("If you have registered before, please enter your "
-             "login and password in the corresponding fields. "
-             "Then press the \"Submit\" button."));
-  } else {
-    printf("<p>%s</p>\n",
-           _("Type your login and password and then press \"Submit\" button"));
+  if (user_login && *user_login) {
+    printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n",
+           user_login);
   }
+  print_choose_language_button(0, 0, ACTION_CHANGE_LANG_AT_INITIAL, 0);
+  printf("</form>\n");
 
+  /* login */
+  printf("<form method=\"POST\" action=\"%s\" "
+         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+         self_url);
+  if (user_contest_id > 0) {
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
+           user_contest_id);
+  }
+  printf("<input type=\"hidden\" name=\"usecookies\" value=\"1\">\n");
+  printf("<h2>%s</h2><p>%s</p>\n",
+         _("For registered users"),
+         _("If you have registered before, please enter your "
+           "login and password in the corresponding fields. "
+           "Then press the \"Submit\" button."));
   printf("<p>%s: <input type=\"text\" name=\"login\" value=\"%s\""
            " size=\"16\" maxlength=\"16\">\n",
          _("Login"), user_login);
@@ -2149,129 +1747,130 @@ initial_login_page(void)
          " size=\"16\" maxlength=\"16\">\n",
          _("Password"), user_password);
 
-  printf("<p>%s: <input type=\"radio\" name=\"usecookies\" value=\"-1\"%s>%s,"
-         " <input type=\"radio\" name=\"usecookies\" value=\"0\"%s>%s,"
-         " <input type=\"radio\" name=\"usecookies\" value=\"1\"%s>%s.</p>",
-         _("Use cookies"),
-         user_usecookies == -1?" checked=\"yes\"":"",
-         _("default"),
-         user_usecookies == 0?" checked=\"yes\"":"",
-         _("no"),
-         user_usecookies == 1?" checked=\"yes\"":"",
-         _("yes"));
-
-  printf("<p><input type=\"submit\" name=\"action_%d\" value=\"%s\">", ACTION_LOGIN, _("Submit"));
-
-  if (!login_only_flag) {
-    printf("<h2>%s</h2><p>%s</p>\n",
-           _("For new users"),
-           _("If you have not registered before, please press "
-             "the \"Register new\" button."));
-    
-    printf("<p><input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
-           ACTION_REGISTER_ENTRY_PAGE,
-           _("Register new"));
-  }
-
-  if (login_only_flag) {
-    print_choose_language_button(0, 0, ACTION_CHANGE_LANG_ENTRY_PAGE, 0);
-  }
-
+  printf("<p><input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+         ACTION_LOGIN, _("Submit"));
   printf("</form>");
+
+  *s1 = 0;
+  if (user_login && *user_login) {
+    snprintf(s1, sizeof(s1), "&login=%s", user_login);
+  }
+  *s2 = 0;
+  if (user_contest_id > 0) {
+    snprintf(s2, sizeof(s2), "&contest_id=%d", user_contest_id);
+  }
+  snprintf(url, sizeof(url), "%s?action=%d&locale_id=%d%s%s",
+           self_url, STATE_REGISTER_NEW_USER, client_locale_id, s1, s2);
+  printf("<h2>%s</h2>\n",
+         _("For new users"));
+  printf(_("<p>If you have not registered before, please follow <a href=\"%s\">this</a> link.</p>\n"), url);
 }
 
+/* contains "change language", "login" */
+/* page code: STATE_LOGIN */
 static void
-registration_is_complete(void)
-{
-  char buf[512];
-  char *p = buf;
-
-  p += sprintf(p, "%s?login=%s&action=%d", self_url, user_login,
-               ACTION_LOGIN_ONLY_PAGE);
-  if (client_locale_id >= 0)
-    p += sprintf(p, "&locale_id=%d", client_locale_id);
-  if (user_contest_id > 0)
-    p += sprintf(p, "&contest_id=%d", user_contest_id);
-  if (user_usecookies != -1)
-    p += sprintf(p, "&usecookies=%d", user_usecookies);
-
-  printf("Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
-  client_put_header(config->charset, "%s", _("User registration is complete"));
-
-  printf(_("<p>Registration of a new user is completed successfully. "
-           "An e-mail messages is sent to the address <tt>%s</tt>. "
-           "This message contains the login name, assigned to you, "
-           "as well as your password for initial login. "
-           "To proceed with registration, clink <a href=\"%s\">on this link</a>.</p>"
-           "<p><b>Note</b>, that you should login to the system for "
-           "the first time no later, than in 24 hours after the initial "
-           "user registration, or the registration is void."),
-         user_email, buf);
-}
-
-static void
-register_new_user_page(void)
+display_login_page(void)
 {
   if (client_locale_id == -1) client_locale_id = 0;
   set_locale_by_id(client_locale_id);
-  error_log = 0;
+
+  printf("Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
+  client_put_header(config->charset, "%s", _("Log into the system"));
 
   if (!(user_login = cgi_param("login"))) {
     user_login = xstrdup("");
   }
-  if (fix_string(user_login, login_accept_chars, '?') > 0) {
-    error("%s", _("\"Login\" has invalid characters, which were replaced with '?'."));
-  }
-  if (!(user_email = cgi_param("email"))) {
-    user_email = xstrdup("");
-  }
-  if (fix_string(user_email, email_accept_chars, '?') > 0) {
-    error("%s", _("\"E-mail\" has invalid characters, which were replaced with '?'."));
-  }
-  if (user_action == ACTION_REGISTER_REGISTER_PAGE && !*user_email) {
-    error("%s", _("Mandatory \"E-mail\" is empty."));
-  }
-  read_usecookies();
-  read_contest_id();  
+  fix_string(user_login, name_accept_chars, '?');
+  user_password = xstrdup("");
 
-  // initial validation is passed, so may try to register
-  if (!error_log && user_action == ACTION_REGISTER_REGISTER_PAGE) {
-    int err;
-
-    if (!server_conn) {
-      server_conn = userlist_clnt_open(config->socket_path);
-    }
-    err = userlist_clnt_register_new(server_conn, user_ip, user_contest_id, client_locale_id, user_usecookies, user_login, user_email);
-    if (!err) {
-      // registration is successful
-      registration_is_complete();
-      return;
-    }
-    error("%s", gettext(userlist_strerror(-err)));
-  }
-
-  printf("Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
-  client_put_header(config->charset, "%s", _("Register a new user"));
-
-  if (error_log) {
-    printf("<h2>%s</h2><p>%s<br><pre><font color=\"red\">%s</font></pre></p>\n",
-           _("The form contains error(s)"),
-           _("Unfortunately, your form cannot be accepted as is, since "
-             "it contains several errors. The list of errors is given "
-             "below."),
-           error_log);
-  }
-
+  /* change language */
   printf("<form method=\"POST\" action=\"%s\" "
          "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
-         program_name);
-
+         self_url);
   if (user_contest_id > 0) {
     printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
            user_contest_id);
   }
+  if (user_login && *user_login) {
+    printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n",
+           user_login);
+  }
+  print_choose_language_button(0, 0, ACTION_CHANGE_LANG_AT_LOGIN, 0);
+  printf("</form>\n");
 
-  print_choose_language_button(0, 0, ACTION_CHANGE_LANG_REGISTER_PAGE, 0);
+  /* login */
+  printf("<form method=\"POST\" action=\"%s\" "
+         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+         self_url);
+  if (user_contest_id > 0) {
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
+           user_contest_id);
+  }
+  printf("<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
+         client_locale_id);
+  printf("<p>%s</p>\n",
+         _("Type your login and password and then press \"Submit\" button"));
+  printf("<p>%s: <input type=\"text\" name=\"login\" value=\"%s\""
+           " size=\"16\" maxlength=\"16\">\n",
+         _("Login"), user_login);
+  printf("<p>%s: <input type=\"password\" name=\"password\" value=\"%s\""
+         " size=\"16\" maxlength=\"16\">\n",
+         _("Password"), user_password);
+
+  printf("<p><input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+         ACTION_LOGIN, _("Submit"));
+  printf("</form>");
+}
+
+/* contains "change language", "register new" */
+/* page code: STATE_REGISTER_NEW_USER */
+static void
+display_register_new_user_page(void)
+{
+  if (client_locale_id == -1) client_locale_id = 0;
+  set_locale_by_id(client_locale_id);
+
+  if (!(user_login = cgi_param("login"))) {
+    user_login = xstrdup("");
+  }
+  fix_string(user_login, login_accept_chars, '?');
+  if (!(user_email = cgi_param("email"))) {
+    user_email = xstrdup("");
+  }
+  fix_string(user_email, email_accept_chars, '?');
+
+  printf("Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
+  client_put_header(config->charset, "%s", _("Register a new user"));
+
+  /* change language */
+  printf("<form method=\"POST\" action=\"%s\" "
+         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+         self_url);
+  if (user_contest_id > 0) {
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
+           user_contest_id);
+  }
+  if (user_login && *user_login) {
+    printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n",
+           user_login);
+  }
+  if (user_email && *user_email) {
+    printf("<input type=\"hidden\" name=\"email\" value=\"%s\">\n",
+           user_email);
+  }
+  print_choose_language_button(0,0,ACTION_CHANGE_LANG_AT_REGISTER_NEW_USER,0);
+  printf("</form>\n");
+
+  /* register new user */
+  printf("<form method=\"POST\" action=\"%s\" "
+         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+         self_url);
+  if (user_contest_id > 0) {
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
+           user_contest_id);
+  }
+  printf("<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
+         client_locale_id);
 
   printf("<h2>%s</h2><p>%s</p><p>%s</p>\n",
          _("Registration rules"),
@@ -2295,26 +1894,771 @@ register_new_user_page(void)
   printf("<p>%s (*): <input type=\"text\" name=\"email\" value=\"%s\""
          " size=\"64\" maxlength=\"64\">\n",
          _("E-mail"), user_email);
-  printf("<p>%s</p>\n", _("Please, specify, whether you want to use cookies to support session. Generally, it is more convenient to use, than not to use cookies."));
-  printf("<p>%s: <input type=\"radio\" name=\"usecookies\" value=\"-1\"%s>%s,"
-         " <input type=\"radio\" name=\"usecookies\" value=\"0\"%s>%s,"
-         " <input type=\"radio\" name=\"usecookies\" value=\"1\"%s>%s.</p>",
-         _("Use cookies"),
-         user_usecookies == -1?" checked=\"yes\"":"",
-         _("server default"),
-         user_usecookies == 0?" checked=\"yes\"":"",
-         _("no"),
-         user_usecookies == 1?" checked=\"yes\"":"",
-         _("yes"));
-  /*
-  printf("<p><input type=\"reset\" value=\"%s\">",
-         _("Reset the form"));
-  */
   printf("<p><input type=\"submit\" name=\"action_%d\" value=\"%s\">",
-         ACTION_REGISTER_REGISTER_PAGE,
+         ACTION_REGISTER_NEW_USER,
          _("Register"));
 
   printf("</form>");
+}
+
+static void
+display_user_registered_page(void)
+{
+  unsigned char s1[128], url[512];
+
+  if (client_locale_id == -1) client_locale_id = 0;
+  set_locale_by_id(client_locale_id);
+
+  if (!(user_login = cgi_param("login"))) {
+    user_login = xstrdup("");
+  }
+  fix_string(user_login, login_accept_chars, '?');
+  if (!(user_email = cgi_param("email"))) {
+    user_email = xstrdup("");
+  }
+  fix_string(user_email, email_accept_chars, '?');
+
+  *s1 = 0;
+  if (user_contest_id > 0) {
+    snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
+  }
+  snprintf(url, sizeof(url), "%s?login=%s&action=%d%s&locale_id=%d",
+           self_url, user_login, STATE_LOGIN, s1, client_locale_id);
+
+  client_put_header(config->charset, "%s", _("User registration is complete"));
+
+  printf(_("<p>Registration of a new user is completed successfully. "
+           "An e-mail messages is sent to the address <tt>%s</tt>. "
+           "This message contains the login name, assigned to you, "
+           "as well as your password for initial login. "
+           "To proceed with registration, clink <a href=\"%s\">on this link</a>.</p>"
+           "<p><b>Note</b>, that you should login to the system for "
+           "the first time no later, than in 24 hours after the initial "
+           "user registration, or the registration is void."),
+         user_email, url);
+}
+
+static void
+display_main_page(void)
+{
+  int errcode, armored_len = 0, need_team_btn = 0, i;
+  unsigned char *act_name, *armored_str, *xml_text;
+  struct xml_tree *regs, *reg;
+  struct userlist_contest *regx;
+  struct contest_desc *cnts;
+  unsigned char s1[64], url[512];
+  int cnts_total = 0, cnts_used = 0;
+  int *cnts_ids = 0;
+  unsigned char *cnts_map = 0;
+
+  if (!authentificate()) return;
+  ASSERT(server_conn);
+
+  act_name = user_name;
+  if (!act_name || !*act_name) {
+    act_name = user_login;
+  }
+  armored_len = html_armored_strlen(act_name);
+  armored_str = alloca(armored_len + 16);
+  html_armor_string(act_name, armored_str);
+  if (user_contest_id < 0) user_contest_id = 0;
+
+  error_log = 0;
+  errcode = userlist_clnt_get_contests(server_conn, user_id, &xml_text);
+  if (errcode < 0) {
+    error("%s", userlist_strerror(-errcode));
+    goto failed;
+  }
+  if (!(regs = userlist_parse_contests_str(xml_text))) {
+    /* FIXME: maybe this is normal? */
+    error("%s", _("XML parse error"));
+    goto failed;
+  }
+
+  if (regs) {
+    ASSERT(regs->tag == USERLIST_T_CONTESTS);
+    regs = regs->first_down;
+  }
+  set_locale_by_id(client_locale_id);
+  client_put_header(config->charset, _("Personal page of %s"), armored_str);
+
+  printf(_("<p>Hello, %s!</p>\n"), armored_str);
+
+  printf("<form method=\"POST\" action=\"%s\" "
+         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+         self_url);
+  printf("<input type=\"hidden\" name=\"sid\" value=\"%llx\">\n"
+         "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
+         user_cookie, client_locale_id);
+  if (user_contest_id > 0) {
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
+           user_contest_id);
+  }
+  printf("<h2>%s</h2>\n", _("Change the password"));
+  printf("<p>%s: <input type=\"password\" name=\"chg_old_passwd\" maxlength=\"16\" size=\"16\"></p>\n", _("Old password"));
+  printf("<p>%s: <input type=\"password\" name=\"chg_new_passwd_1\" maxlength=\"16\" size=\"16\"></p>\n", _("New password (1)"));
+  printf("<p>%s: <input type=\"password\" name=\"chg_new_passwd_2\" maxlength=\"16\" size=\"16\"></p>\n", _("New password (2)"));
+  printf("<p><input type=\"submit\" name=\"action_%d\" value=\"%s\"></p>\n",
+         ACTION_CHANGE_PASSWORD, _("Change!"));
+  printf("</form>\n");
+
+  if (regs) {
+    printf("<h2>%s</h2>\n", _("Check the registration status"));
+
+    for (reg = regs; reg; reg = reg->right) {
+      ASSERT(reg->tag == USERLIST_T_CONTEST);
+      regx = (struct userlist_contest*) reg;
+      cnts = 0;
+      if (contests_get(regx->id, &cnts) < 0 || !cnts) continue;
+      if (cnts->team_url && regx->status == USERLIST_REG_OK) {
+        need_team_btn = 1;
+      }
+    }
+
+    printf("<table><tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th></tr>\n",
+           _("Contest ID"), _("Contest name"), _("Status"),
+           _("Edit personal data"),
+           need_team_btn?(_("Submit solution")):"&nbsp;");
+    for (reg = regs; reg; reg = reg->right) {
+      ASSERT(reg->tag == USERLIST_T_CONTEST);
+      regx = (struct userlist_contest*) reg;
+      cnts = 0;
+      if (contests_get(regx->id, &cnts) < 0 || !cnts) continue;
+      printf("<tr><td>%d</td><td>%s</td><td>%s</td>",
+             regx->id, cnts->name, 
+             gettext(regstatus_str(regx->status)));
+      *s1 = 0;
+      if (!user_contest_id) {
+        snprintf(s1, sizeof(s1), "&show_all=1");
+      }
+      snprintf(url, sizeof(url),
+               "%s?action=%d&sid=%llx&contest_id=%d&locale_id=%d%s",
+               self_url, STATE_EDIT_REGISTRATION_DATA,
+               user_cookie, regx->id, client_locale_id, s1);
+      printf("<td><a href=\"%s\">%s</a></td>\n", url, _("Edit"));
+      if (cnts->team_url && regx->status == USERLIST_REG_OK) {
+        /* FIXME: need to set client mode correctly */
+        snprintf(url, sizeof(url),
+                 "%s?locale_id=%d&contest_id=%d&sid=%llx",
+                 cnts->team_url, client_locale_id, regx->id, user_cookie);
+        printf("<td><a href=\"%s\">%s</a></td>\n", url, _("Submit solution"));
+      } else {
+        printf("<td>&nbsp;</td>");
+      }
+      printf("</tr>\n");
+    }
+    printf("</table>\n");
+  }
+
+  fflush(stdout);
+
+  // check available contests
+  cnts_total = contests_get_list(&cnts_map);
+  cnts_ids = (int*) alloca(sizeof(cnts_ids[0]) * (cnts_total + 1));
+  memset(cnts_ids, 0, sizeof(cnts_ids[0]) * (cnts_total + 1));
+  cnts_used = 0;
+  if (user_contest_id > 0) {
+    if (check_contest_eligibility(user_contest_id)) {
+      for (reg = regs; reg; reg = reg->right) {
+        ASSERT(reg->tag == USERLIST_T_CONTEST);
+        regx = (struct userlist_contest*) reg;
+        if (regx->id == user_contest_id) break;
+      }
+      if (!reg) {
+        cnts_ids[cnts_used++] = user_contest_id;
+      }
+    }
+  } else {
+    for (i = 1; i < cnts_total; i++) {
+      if (check_contest_eligibility(i)) {
+        for (reg = regs; reg; reg = reg->right) {
+          ASSERT(reg->tag == USERLIST_T_CONTEST);
+          regx = (struct userlist_contest*) reg;
+          if (regx->id == i) break;
+        }
+        if (!reg) {
+          cnts_ids[cnts_used++] = i;
+        }
+      }
+    }
+  }
+  printf("<h2>%s</h2>\n", _("Available contests"));
+  if (!cnts_used) {
+    printf("<p>%s</p>\n", _("No contests available."));
+  } else {
+    printf("<table><tr><th>%s</th><th>%s</th><th>%s</th></tr>\n",
+           _("Contest ID"), _("Contest name"), _("Register"));
+    for (i = 0; i < cnts_used; i++) {
+      if (contests_get(cnts_ids[i], &cnts) < 0 || !cnts) continue;
+      *s1 = 0;
+      if (!user_contest_id) {
+        snprintf(s1, sizeof(s1), "&show_all=1");
+      }
+      snprintf(url, sizeof(url),
+               "%s?action=%d&sid=%llx&locale_id=%d&contest_id=%d%s",
+               self_url, STATE_EDIT_REGISTRATION_DATA, user_cookie,
+               client_locale_id, cnts->id, s1);
+      printf("<tr><td>%d</td><td>%s</td>"
+             "<td><a href=\"%s\">%s</a></td></tr>\n",
+             cnts->id, cnts->name, url, _("Register"));
+    }
+    printf("</table>\n");
+  }
+
+  printf("<h2>%s</h2>\n", _("Quit the system"));
+  snprintf(url, sizeof(url),
+           "%s?action=%d&sid=%llx&locale_id=%d",
+           self_url, ACTION_LOGOUT, user_cookie, client_locale_id);
+  printf("<p><a href=\"%s\">%s</a></p>\n", url, _("Logout"));
+
+  printf("<form method=\"POST\" action=\"%s\" "
+         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+         self_url);
+  printf("<input type=\"hidden\" name=\"sid\" value=\"%llx\">\n", user_cookie);
+  if (user_contest_id > 0) {
+    printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
+           user_contest_id);
+  }
+  print_choose_language_button(0, 0, ACTION_CHANGE_LANG_AT_MAIN_PAGE, 0);
+  printf("</form>\n");
+  return;
+
+ failed:
+  client_put_header(config->charset, "%s", _("Fatal error"));
+  printf("<pre>%s</pre>\n", error_log);
+}
+
+static void
+action_change_lang_at_initial(void)
+{
+  unsigned char url[1024];
+  unsigned char s1[128], s2[128];
+  int newstate = 0;
+
+  if (user_action == ACTION_CHANGE_LANG_AT_LOGIN)
+    newstate = STATE_LOGIN;
+
+  if (client_locale_id == -1) client_locale_id = 0;
+  set_locale_by_id(client_locale_id);
+
+  if (!(user_login = cgi_param("login"))) {
+    user_login = xstrdup("");
+  }
+  fix_string(user_login, name_accept_chars, '?');
+  read_usecookies();
+
+  /* FIXME: need to encode "login" for URL? */
+
+  *s1 = 0;
+  if (user_login && *user_login) {
+    snprintf(s1, sizeof(s1), "&login=%s", user_login);
+  }
+  *s2 = 0;
+  if (user_contest_id > 0) {
+    snprintf(s2, sizeof(s2), "&contest_id=%d", user_contest_id);
+  }
+  snprintf(url, sizeof(url), "%s?action=%d&locale_id=%d%s%s",
+           self_url, newstate, client_locale_id, s1, s2);
+  client_put_refresh_header(config->charset, url, 0,
+                            "%s", _("Log into the system"));
+}
+
+static void
+action_change_lang_at_register_new_user(void)
+{
+  unsigned char url[1024];
+  unsigned char s1[128], s2[128], s3[128];
+
+  if (client_locale_id == -1) client_locale_id = 0;
+  set_locale_by_id(client_locale_id);
+
+  if (!(user_login = cgi_param("login"))) {
+    user_login = xstrdup("");
+  }
+  fix_string(user_login, name_accept_chars, '?');
+  if (!(user_email = cgi_param("email"))) {
+    user_email = xstrdup("");
+  }
+  fix_string(user_email, email_accept_chars, '?');
+
+  /* FIXME: need to encode "login", "email" for URL? */
+
+  *s1 = 0;
+  if (user_login && *user_login) {
+    snprintf(s1, sizeof(s1), "&login=%s", user_login);
+  }
+  *s2 = 0;
+  if (user_email && *user_email) {
+    snprintf(s2, sizeof(s2), "&email=%s", user_email);
+  }
+  *s3 = 0;
+  if (user_contest_id > 0) {
+    snprintf(s3, sizeof(s3), "&contest_id=%d", user_contest_id);
+  }
+  snprintf(url, sizeof(url), "%s?action=%d&locale_id=%d%s%s%s",
+           self_url, STATE_REGISTER_NEW_USER, client_locale_id, s1, s2, s3);
+  client_put_refresh_header(config->charset, url, 0,
+                            "%s", _("Language is changed"));
+}
+
+static void
+action_change_lang_at_main_page(void)
+{
+  unsigned char s1[128], url[512];
+
+  if (!authentificate()) return;
+
+  if (client_locale_id == -1) client_locale_id = 0;
+  set_locale_by_id(client_locale_id);
+
+  *s1 = 0;
+  if (user_contest_id > 0) {
+    snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
+  }
+  snprintf(url, sizeof(url), "%s?action=%d&locale_id=%d&sid=%llx%s",
+           self_url, STATE_MAIN_PAGE, client_locale_id, user_cookie, s1);
+  client_put_refresh_header(config->charset, url, 0,
+                            "%s", _("Language is changed"));
+}
+
+static void
+action_register_new_user(void)
+{
+  int errcode;
+  unsigned char s1[128], url[512];
+
+  if (client_locale_id == -1) client_locale_id = 0;
+  set_locale_by_id(client_locale_id);
+  error_log = 0;
+
+  if (!(user_login = cgi_param("login"))) {
+    user_login = xstrdup("");
+  }
+  if (fix_string(user_login, login_accept_chars, '?') > 0) {
+    error("%s: %s.", _("\"Login\" field contains invalid characters"),
+          user_login);
+  }
+  if (!(user_email = cgi_param("email"))) {
+    user_email = xstrdup("");
+  }
+  if (fix_string(user_email, email_accept_chars, '?') > 0) {
+    error("%s: %s.", _("\"E-mail\" field contains invalid characters"),
+          user_email);
+  }
+  if (!user_login || !*user_login) {
+    error("%s", _("Mandatory \"Login\" field is empty."));
+  }
+  if (!user_email || !*user_email) {
+    error("%s", _("Mandatory \"E-mail\" field is empty."));
+  }
+
+  // initial validation is passed, so may try to register
+  if (!error_log) {
+    if (!server_conn) {
+      server_conn = userlist_clnt_open(config->socket_path);
+    }
+    if (!server_conn) {
+      error("%s", _("Connection to the server is broken."));
+    } else {
+      errcode = userlist_clnt_register_new(server_conn, user_ip,
+                                           user_contest_id,
+                                           client_locale_id,
+                                           1 /* usecookies */,
+                                           user_login, user_email);
+      if (errcode) {
+        error("%s", gettext(userlist_strerror(-errcode)));
+      }
+    }
+  }
+
+  if (!error_log) {
+    /* registration is successful */
+    *s1 = 0;
+    if (user_contest_id > 0) {
+      snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
+    }
+    snprintf(url, sizeof(url), "%s?action=%d&login=%s&email=%s&locale_id=%d%s",
+             self_url, STATE_USER_REGISTERED, user_login, user_email,
+             client_locale_id, s1);
+    client_put_refresh_header(config->charset, url, 0,
+                              "%s", _("New user is registered"));
+    return;
+  }
+
+  client_put_header(config->charset, "%s", _("Registration failed"));
+  printf("<h2>%s</h2><p>%s<br><pre><font color=\"red\">%s</font></pre></p>\n",
+         _("The form contains error(s)"),
+         _("Unfortunately, your form cannot be accepted, since "
+           "it contains several errors. The list of errors is given "
+           "below."),
+         error_log);
+  printf("<p>%s</p>",
+         _("Now please press the \"Back\" button of your browser "
+           "and fix the error(s)."));
+}
+
+/* here we must check login & password */
+static void
+action_login(void)
+{
+  int errcode;
+  unsigned char s1[128], url[512];
+  int new_user_id, new_locale_id;
+  unsigned long long new_cookie;
+  unsigned char *new_name;
+
+  if (client_locale_id == -1) client_locale_id = 0;
+  set_locale_by_id(client_locale_id);
+
+  if (!(user_login = cgi_param("login"))) {
+    user_login = xstrdup("");
+  }
+  fix_string(user_login, name_accept_chars, '?');
+  if (!(user_password = cgi_param("password"))) {
+    user_password = xstrdup("");
+  }
+  fix_string(user_password, password_accept_chars, '?');
+
+  if (!server_conn) {
+    server_conn = userlist_clnt_open(config->socket_path);
+  }
+  if (!server_conn) {
+    client_put_header(config->charset, _("Login failed"));
+    printf("<p>%s</p>\n", _("Connection to the server is broken."));
+    return;
+  }
+
+  errcode = userlist_clnt_login(server_conn, user_ip, user_contest_id,
+                                client_locale_id,
+                                1 /* usecookies */,
+                                user_login, user_password,
+                                &new_user_id, &new_cookie, &new_name,
+                                &new_locale_id);
+  if (errcode != ULS_LOGIN_COOKIE) {
+    client_put_header(config->charset, _("Login failed"));
+    printf("<p>%s</p>\n",
+           _("You have specified incorrect login or password."));
+    return;
+  }
+
+  user_id = new_user_id;
+  user_name = new_name;
+  if (client_locale_id == -1) client_locale_id = new_locale_id;
+  if (client_locale_id == -1) client_locale_id = 0;
+  user_cookie = new_cookie;
+
+  *s1 = 0;
+  if (user_contest_id > 0) {
+    snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
+  }
+  snprintf(url, sizeof(url), "%s?action=%d&sid=%llx%s&locale_id=%d",
+           self_url, STATE_MAIN_PAGE, user_cookie, s1, client_locale_id);
+
+  client_put_refresh_header(config->charset, url, 0,
+                            "%s", _("Login successful"));
+}
+
+static void
+action_logout(void)
+{
+  unsigned char *user_str = user_name;
+  unsigned char *armored_str;
+  int armored_len;
+  unsigned char s1[128], url[512];
+
+  if (!authentificate()) return;
+
+  if (!user_str || !*user_str) user_str = user_login;
+  armored_len = html_armored_strlen(user_str);
+  armored_str = alloca(armored_len + 16);
+  html_armor_string(user_str, armored_str);
+
+  *s1 = 0;
+  if (user_contest_id > 0) {
+    snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
+  }
+  snprintf(url, sizeof(url), "%s?action=%d&locale_id=%d%s",
+           self_url, STATE_LOGIN, client_locale_id, s1);
+
+  set_locale_by_id(client_locale_id);
+  client_put_header(config->charset, "%s, %s!",
+                    _("Good-bye"), armored_str);
+  printf(_("<p>Click <a href=\"%s\">on this link</a> to login again.</p>\n"),
+         url);
+}
+
+static void
+action_change_password(void)
+{
+  unsigned char *old_pwd, *new_pwd1, *new_pwd2;
+  int errcode;
+  unsigned char s1[128], url[512];
+
+  /* contest_id, locale_id, sid already read */
+  if (!authentificate()) return;
+  ASSERT(server_conn);
+
+  error_log = 0;
+  old_pwd = xstrdup(cgi_param("chg_old_passwd"));
+  new_pwd1 = xstrdup(cgi_param("chg_new_passwd_1"));
+  new_pwd2 = xstrdup(cgi_param("chg_new_passwd_2"));
+
+  if (!old_pwd || !*old_pwd) {
+    error("%s", _("old password not specified"));
+  }
+  if (!new_pwd1 || !*new_pwd1) {
+    error("%s", _("new password (1) not specified"));
+  }
+  if (!new_pwd2 || !*new_pwd2) {
+    error("%s", _("new password (2) not specified"));
+  }
+  if (old_pwd && strlen(old_pwd) > 64) {
+    error("%s", _("old password is too long"));
+  }
+  if (old_pwd && fix_string(old_pwd, password_accept_chars, '?') > 0) {
+    error("%s", _("old password contain invalid characters"));
+  }
+  if (new_pwd1 && new_pwd2 && strcmp(new_pwd1, new_pwd2)) {
+    error("%s", _("new passwords does not match"));
+  }
+  if (new_pwd1 && fix_string(new_pwd1, password_accept_chars, '?') > 0) {
+    error("%s", _("new password contain invalid characters"));
+  }
+  if (new_pwd1 && strlen(new_pwd1) > 64) {
+    error("%s", _("new password is too long"));
+  }
+  if (!error_log) {
+    errcode = userlist_clnt_set_passwd(server_conn,
+                                       user_id, old_pwd, new_pwd1);
+    if (errcode < 0) {
+      error("%s", gettext(userlist_strerror(-errcode)));
+    }
+  }
+
+  *s1 = 0;
+  if (user_contest_id > 0) {
+    snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
+  }
+  snprintf(url, sizeof(url), "%s?sid=%llx&locale_id=%d&action=%d%s",
+           self_url, user_cookie, client_locale_id, STATE_MAIN_PAGE, s1);
+
+  if (!error_log) {
+    client_put_refresh_header(config->charset, url, 0,
+                              "%s", _("Password changed successfully"));
+    printf("<p>%s</p>\n", _("Password changed successfully."));
+    return;
+  }
+
+  client_put_header(config->charset, _("Failed to change password"));
+  printf("<p>%s<br><pre><font color=\"red\">%s</font></pre></p>\n",
+         _("Password changing failed due to the following reasons."),
+         error_log);
+}
+
+static void
+action_remove_member(void)
+{
+  unsigned char *cgi_cmd = 0;
+  int role = 0, pers = 0, n = 0, serial = 0, errcode;
+  unsigned char ser_var_name[64];
+  unsigned char *ser_var = 0;
+  unsigned char s1[64], url[512];
+  struct contest_desc *cnts = 0;
+
+  if (!authentificate()) return;
+  ASSERT(server_conn);
+
+  *s1 = 0;
+  if (user_contest_id > 0) {
+    snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
+  }
+  snprintf(url, sizeof(url), "%s?action=%d&sid=%llx&locale_id=%d%s",
+           self_url, STATE_EDIT_REGISTRATION_DATA, user_cookie,
+           client_locale_id, s1);
+
+  if (user_contest_id > 0) {
+    if ((errcode = contests_get(user_contest_id, &cnts)) < 0) {
+      fprintf(stderr, "invalid contest: %s", contests_strerror(-errcode));
+      error("%s", _("Invalid contest identifier."));
+      goto failed;
+    }
+    ASSERT(cnts);
+  }
+
+  prepare_var_table(cnts);
+  for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
+    if (member_max[role] <= 0) continue;
+    member_info[role] = xcalloc(member_max[role],
+                                sizeof(member_info[0][0]));
+    for (pers = 0; pers < member_max[role]; pers++) {
+      member_info[role][pers] = xcalloc(CONTEST_LAST_MEMBER_FIELD,
+                                        sizeof(member_info[0][0][0]));
+    }
+  }
+
+  error_log = 0;
+  if (!(cgi_cmd = cgi_nname("remove_", 7))) {
+    error("%s", _("Role/person parameters are not defined."));
+    goto failed;
+  }
+  role = pers = n = 0;
+  if (sscanf(cgi_cmd, "remove_%d_%d%n", &role, &pers, &n) != 2 || cgi_cmd[n]) {
+    error("%s", _("Cannot parse role/person."));
+    goto failed;
+  }
+  if (role < 0 || role >= CONTEST_LAST_MEMBER) {
+    error("%s", _("Invalid role parameter."));
+    goto failed;
+  }
+  if (member_max[role] <= 0) {
+    error("%s", _("Members of this role are not allowed."));
+    goto failed;
+  }
+  if (pers < 0) {
+    error("%s", _("Invalid person."));
+    goto failed;
+  }
+  snprintf(ser_var_name, sizeof(ser_var_name),
+           "member_info_%d_%d_0", role, pers);
+  ser_var = cgi_param(ser_var_name);
+  if (!ser_var || !*ser_var) goto silently_reload;
+  n = 0;
+  if (sscanf(ser_var, "%d%n", &serial, &n) != 1 || ser_var[n]) {
+    error("%s", _("Cannot parse serial number."));
+    goto failed;
+  }
+  if (!serial) goto silently_reload;
+  if (serial < 0) {
+    error("%s", _("Invalid serial number."));
+    goto failed;
+  }
+
+  errcode = userlist_clnt_remove_member(server_conn, user_id,
+                                        role, pers, serial);
+  if (errcode < 0) {
+    error("%s", gettext(userlist_strerror(-errcode)));
+    goto failed;
+  }
+
+  client_put_refresh_header(config->charset, url, 0,
+                            "%s", _("Team member is removed"));
+  return;
+
+ silently_reload:
+  client_put_refresh_header(config->charset, url, 0,
+                            "%s", _("No server request performed"));
+  return;
+
+ failed:
+  client_put_header(config->charset, "%s",
+                    _("Cannot remove team member"));
+  printf("<p>%s.</p>\n<font color=\"red\"><pre>%s</pre></font>\n",
+         _("Cannot remove a member due a reason given below"), error_log);
+}
+
+static void
+action_register_for_contest(void)
+{
+  int user_show_all = 1, errcode = 0, role, pers, i;
+  unsigned char *user_xml_text = 0;
+  unsigned char s1[64], url[512];
+  struct contest_desc *cnts = 0;
+
+  if (!authentificate()) return;
+  if (cgi_param("show_all")) {
+    user_show_all = 1;
+  }
+
+  if (user_contest_id <= 0) {
+    client_put_header(config->charset, "%s",
+                      _("Invalid contest identifier"));
+    return;
+  }
+  if (user_contest_id > 0) {
+    if ((errcode = contests_get(user_contest_id, &cnts)) < 0) {
+      fprintf(stderr, "invalid contest %d: %s", user_contest_id,
+              contests_strerror(-errcode));
+      client_put_header(config->charset, "%s", _("Invalid contest"));
+      printf("<p>%s</p>.", _("Invalid contest identifier specified"));
+      return;
+    }
+  }
+  ASSERT(cnts);
+
+  if (!check_contest_eligibility(cnts->id)) {
+    client_put_header(config->charset, "%s", _("Permission denied"));
+    printf("<p>%s</p>.", _("You cannot participate in this contest"));
+    return;
+  }
+
+  prepare_var_table(cnts);
+  for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
+    if (member_max[role] <= 0) continue;
+    member_info[role] = xcalloc(member_max[role],
+                                sizeof(member_info[0][0]));
+    for (pers = 0; pers < member_max[role]; pers++) {
+      member_info[role][pers] = xcalloc(CONTEST_LAST_MEMBER_FIELD,
+                                        sizeof(member_info[0][0][0]));
+    }
+  }
+
+  read_user_info_from_form();
+
+  /* make empty strings for the remaining */
+  for (i = 1; i < CONTEST_LAST_FIELD; i++) {
+    if (!field_descs[i].is_editable) continue;
+    if (!*field_descs[i].var) {
+      *field_descs[i].var = xstrdup("");
+    }
+  }
+  for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
+    for (pers = 0; pers < member_cur[role]; pers++) {
+      if (!member_info[role][pers][0]) {
+        member_info[role][pers][0] = xstrdup("");
+      }
+      for (i = 1; i < CONTEST_LAST_MEMBER_FIELD; i++) {
+        if (!member_edit_flags[role][i].is_editable) continue;
+        if (!member_info[role][pers][i]) {
+          member_info[role][pers][i] = xstrdup("");
+        }
+      }
+    }
+  }
+
+  check_mandatory();
+  if (error_log) goto failed;
+  user_xml_text = make_user_xml();
+  if (error_log) goto failed;
+  errcode = userlist_clnt_set_info(server_conn, user_id, user_xml_text);
+  if (errcode) {
+    error("%s", gettext(userlist_strerror(-errcode)));
+    goto failed;
+  }
+  if (user_action == ACTION_REGISTER_FOR_CONTEST) {
+    errcode = userlist_clnt_register_contest(server_conn,
+                                             ULS_REGISTER_CONTEST,
+                                             user_id,
+                                             user_contest_id);
+    if (errcode) {
+      error("%s", gettext(userlist_strerror(-errcode)));
+      goto failed;
+    }
+  }
+
+  *s1 = 0;
+  if (!user_show_all) {
+    snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
+  }
+  snprintf(url, sizeof(url), "%s?action=%d&sid=%llx&locale_id=%d%s",
+           self_url, STATE_MAIN_PAGE, user_cookie, client_locale_id, s1);
+  client_put_refresh_header(config->charset, url, 0,
+                            "%s", _("Registration is successful"));
+  return;
+
+ failed:
+  client_put_header(config->charset, _("Operation failed"));
+  printf("<p>%s</p><font color=\"red\"><pre>%s</pre></font>\n",
+         _("Registration failed by the following reason:"), error_log);
 }
 
 static void
@@ -2356,44 +2700,65 @@ main(int argc, char const *argv[])
     client_access_denied(config->charset);
   }
 
-  cgi_read(config->charset);
   read_locale_id();
   parse_user_action();
 
   switch (user_action) {
-  case ACTION_LOGOUT:
-    logout_page();
+    /* actions */
+  case ACTION_CHANGE_LANG_AT_INITIAL:
+  case ACTION_CHANGE_LANG_AT_LOGIN:
+    action_change_lang_at_initial();
     break;
-  case ACTION_MAIN_PAGE:
+  case ACTION_CHANGE_LANG_AT_REGISTER_NEW_USER:
+    action_change_lang_at_register_new_user();
+    break;
+  case ACTION_REGISTER_NEW_USER:
+    action_register_new_user();
+    break;
   case ACTION_LOGIN:
-    register_for_contest_page();
+    action_login();
     break;
-  case ACTION_REGISTER_ENTRY_PAGE:
-  case ACTION_REGISTER_REGISTER_PAGE:
-  case ACTION_CHANGE_LANG_REGISTER_PAGE:
-    register_new_user_page();
+  case ACTION_CHANGE_LANG_AT_MAIN_PAGE:
+    action_change_lang_at_main_page();
     break;
-  case ACTION_EDIT_PERSONAL_PAGE:
-  case ACTION_REGISTER_CONTEST_PAGE:
+  case ACTION_LOGOUT:
+    action_logout();
+    break;
+  case ACTION_CHANGE_PASSWORD:
+    action_change_password();
+    break;
+  case ACTION_REMOVE_MEMBER:
+    action_remove_member();
+    break;
+  case ACTION_SAVE_REGISTRATION_DATA:
+  case ACTION_REGISTER_FOR_CONTEST:
+    action_register_for_contest();
+    break;
+
+    /* pages */
+  case STATE_LOGIN:
+    display_login_page();
+    break;
+  case STATE_REGISTER_NEW_USER:
+    display_register_new_user_page();
+    break;
+  case STATE_USER_REGISTERED:
+    display_user_registered_page();
+    break;
+  case STATE_MAIN_PAGE:
+    display_main_page();
+    break;
+  case STATE_EDIT_REGISTRATION_DATA:
   case ACTION_ADD_NEW_CONTESTANT:
   case ACTION_ADD_NEW_RESERVE:
   case ACTION_ADD_NEW_COACH:
   case ACTION_ADD_NEW_ADVISOR:
   case ACTION_ADD_NEW_GUEST:
-  case ACTION_REMOVE_MEMBER:
-  case ACTION_RELOAD_PERSONAL_DATA:
-  case ACTION_COMMIT_PERSONAL_DATA:
-  case ACTION_REGISTER_FOR_CONTEST:
-    edit_registration_data();
+    display_edit_registration_data_page();
     break;
-  case ACTION_CHANGE_PASSWORD:
-    change_password();
-    break;
-  case ACTION_CHANGE_LANG_ENTRY_PAGE:
-  case ACTION_LOGIN_ONLY_PAGE:
-  case ACTION_CHANGE_LANG_LOGIN_ONLY_PAGE:
+
   default:
-    initial_login_page();
+    display_initial_page();
     break;
   }
 
