@@ -60,6 +60,7 @@ int           server_team_clars_disabled;
 int           server_standings_frozen;
 int           server_score_system;
 int           server_clients_suspended;
+int           server_download_interval;
 
 unsigned long client_cur_time;
 
@@ -143,7 +144,6 @@ client_transaction(char *packet_name, char const *cmd,
     return -1;
   return client_get_reply(preply, preply_len, packet_name);
 }
-
 
 void
 client_put_header(char const *coding, char const *format, ...)
@@ -313,6 +313,7 @@ client_check_server_status(char const *charset, char const *path, int lag)
   server_standings_frozen = status.standings_frozen;
   server_score_system = status.score_system;
   server_clients_suspended = status.clients_suspended;
+  server_download_interval = status.download_interval;
   client_cur_time = time(0);
 
   if (client_cur_time>=server_cur_time
@@ -421,7 +422,7 @@ client_print_server_status(int read_only, char const *form_start,
   }
 
   if (server_duration) {
-    duration_str(server_duration, str_duration, 0);
+    duration_str(0, server_duration, 0, str_duration, 0);
   } else {
     sprintf(str_duration, "%s", _("Unlimited"));
   }
@@ -442,14 +443,14 @@ client_print_server_status(int read_only, char const *form_start,
     puts("</tr>");
 
     if (!server_stop_time) {
-      duration_str(server_cur_time - server_start_time, str_el_dur, 0);
+      duration_str(0, server_cur_time, server_start_time, str_el_dur, 0);
       printf("<tr><td>%s:</td><td>%s</td>", _("Elapsed time"), str_el_dur);
       if (!read_only) puts("<td>&nbsp;</td><td>&nbsp</td>");
       puts("</tr>");
 
       if (server_duration) {
-        duration_str(server_start_time + server_duration - server_cur_time,
-                     str_left_dur, 0);
+        duration_str(0, server_start_time + server_duration - server_cur_time,
+                     0, str_left_dur, 0);
         printf("<tr><td>%s:</td><td>%s</td>",
                _("Remaining time"), str_left_dur);
         if (!read_only) puts("<td>&nbsp;</td><td>&nbsp</td>");
