@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,6 +27,7 @@
 #include "logger.h"
 #include "exec.h"
 #include "xalloc.h"
+#include "number_io.h"
 
 #include <stdio.h>
 #include <string.h>
