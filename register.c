@@ -47,6 +47,12 @@
 #include <locale.h>
 #endif
 
+#if defined EJUDGE_CHARSET
+#define DEFAULT_CHARSET              EJUDGE_CHARSET
+#else
+#define DEFAULT_CHARSET              "iso8859-1"
+#endif /* EJUDGE_CHARSET */
+
 #define FIRST_COOKIE(u) ((struct userlist_cookie*) (u)->cookies->first_down)
 #define NEXT_COOKIE(c)  ((struct userlist_cookie*) (c)->b.right)
 #define FIRST_CONTEST(u) ((struct userlist_contest*)(u)->contests->first_down)
@@ -456,7 +462,7 @@ parse_bool(char const *str)
 }
 
 static struct config_node *
-parse_config(char const *path)
+parse_config(char const *path, const unsigned char *default_config)
 {
   struct xml_tree *tree = 0, *p, *p2;
   struct config_node *cfg = 0;
@@ -465,7 +471,12 @@ parse_config(char const *path)
   unsigned int b1, b2, b3, b4;
   int n;
 
-  tree = xml_build_tree(path, tag_map, attn_map, node_alloc, attn_alloc);
+  if (default_config) {
+    tree = xml_build_tree_str(default_config,
+                              tag_map, attn_map, node_alloc, attn_alloc);
+  } else {
+    tree = xml_build_tree(path, tag_map, attn_map, node_alloc, attn_alloc);
+  }
   if (!tree) goto failed;
   if (tree->tag != TG_CONFIG) {
     err("%s: %d: top-level tag must be <register_config>", path, tree->line);
@@ -482,7 +493,6 @@ parse_config(char const *path)
     case AT_ENABLE_L10N:
     case AT_L10N:
     case AT_DISABLE_L10N:
-#if CONF_HAS_LIBINTL - 0 == 1
       if (cfg->l10n != -1) {
         err("%s:%d: attribute \"l10n\" already defined", path, a->line);
         goto failed;
@@ -493,10 +503,6 @@ parse_config(char const *path)
       }
       if (a->tag == AT_DISABLE_L10N) cfg->l10n = !cfg->l10n;
       break;
-#else
-      err("%s:%d: localization support is not compiled", path, a->line);
-      goto failed;
-#endif /* CONF_HAS_LIBINTL */
     case AT_SHOW_GENERATION_TIME:
       if ((cfg->show_generation_time = parse_bool(a->text)) < 0) {
         err("%s:%d: invalid boolean value", path, a->line);
@@ -523,14 +529,8 @@ parse_config(char const *path)
       if (handle_final_tag(path, p, &cfg->contests_dir) < 0) goto failed;
       break;
     case TG_L10N_DIR:
-#if CONF_HAS_LIBINTL - 0 == 1
       if (handle_final_tag(path, p, &cfg->l10n_dir) < 0) goto failed;
       break;
-#else
-      err("%s:%d:%d: localization support is not compiled",
-          path, p->line, p->column);
-      goto failed;
-#endif /* CONF_HAS_LIBINTL */
 
     case TG_ACCESS:
       if (cfg->access) {
@@ -618,17 +618,32 @@ parse_config(char const *path)
     }
   }
 
-  if (cfg->l10n == -1) cfg->l10n = 0;
+#if CONF_HAS_LIBINTL - 0 == 1
+  if (cfg->l10n < 0) cfg->l10n = 1;
   if (cfg->l10n && !cfg->l10n_dir) {
-    /* FIXME: the locale dir should be guessed... */
-    err("%s: locale directory (\"l10n_dir\" attribute) is not defined", path);
-    goto failed;
+    cfg->l10n_dir = xstrdup(EJUDGE_LOCALE_DIR);
   }
+#else
+  cfg->l10n = 0;
+#endif
 
+  if (!cfg->charset) {
+    cfg->charset = xstrdup(DEFAULT_CHARSET);
+  }
+#if defined EJUDGE_SOCKET_PATH
+  if (!cfg->socket_path) {
+    cfg->socket_path = xstrdup(EJUDGE_SOCKET_PATH);
+  }
+#endif /* EJUDGE_SOCKET_PATH */
   if (!cfg->socket_path) {
     err("%s: <socket_path> tag must be specified", path);
     goto failed;
   }
+#if defined EJUDGE_CONTESTS_DIR
+  if (!cfg->contests_dir) {
+    cfg->contests_dir = xstrdup(EJUDGE_CONTESTS_DIR);
+  }
+#endif /* EJUDGE_CONTESTS_DIR */
   if (!cfg->contests_dir) {
     err("%s: <contests_dir> tag must be specified", path);
     goto failed;
@@ -691,6 +706,10 @@ check_config_exist(unsigned char const *path)
   return 0;
 }
 
+static const unsigned char default_config[] =
+"<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n"
+"<register_config><access default=\"allow\"/></register_config>\n";
+
 static void
 initialize(int argc, char const *argv[])
 {
@@ -704,6 +723,7 @@ initialize(int argc, char const *argv[])
   int namelen, cgi_contest_id, name_contest_id, name_ok, errcode = 0;
   char *s = getenv("SCRIPT_FILENAME");
   struct contest_desc *cnts = 0;
+  const unsigned char *default_config_str = 0;
 
   pathcpy(fullname, argv[0]);
   if (s) pathcpy(fullname, s);
@@ -797,10 +817,9 @@ initialize(int argc, char const *argv[])
   }
 
   if (!name_ok) {
-    client_not_configured(0, "client is not configured", 0);
-    // never get here
+    default_config_str = default_config;
   }
-  if (!(config = parse_config(cfgname))) {
+  if (!(config = parse_config(cfgname, default_config_str))) {
     client_not_configured(0, "config file not parsed", 0);
   }
 
@@ -907,7 +926,7 @@ client_put_refresh_header(unsigned char const *coding,
 {
   va_list args;
 
-  if (!coding) coding = "iso8859-1";
+  if (!coding) coding = DEFAULT_CHARSET;
 
   va_start(args, format);
   fprintf(stdout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>\n", coding, coding, interval, url);
