@@ -149,6 +149,7 @@ userlist_clnt_generate_team_passwd(struct userlist_clnt *clnt,
 
 int
 userlist_clnt_list_all_users(struct userlist_clnt *clnt,
+                             int cmd,
                              int contest_id,
                              unsigned char **p_info);
 
