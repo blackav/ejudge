@@ -72,6 +72,7 @@ CFLAGS=-I. -I${REUSE_INCLDIR} -I${REUSE_CONFINCLDIR} ${CDEBUGFLAGS} ${CCOMPFLAGS
 LDFLAGS=-L${REUSE_LIBDIR} ${CDEBUGFLAGS} ${LDCOMPFLAGS} ${LDEXTRAFLAGS}
 CC=gcc
 LD=gcc
+EXPAT=-lexpat
 
 C_CFILES=compile.c version.c prepare.c pathutl.c parsecfg.c sformat.c $(ARCH)/fileutl.c   
 C_OBJECTS=$(C_CFILES:.c=.o)
@@ -109,7 +110,10 @@ MTI_OBJECTS = ${MTI_CFILES:.c=.o}
 SP_CFILES = send-passwords.c inetdb.c teamdb.c pathutl.c base64.c ${ARCH}/fileutl.c
 SP_OBJECTS = ${SP_CFILES:.c=.o}
 
-TARGETS=compile$(EXESFX) serve$(EXESFX) submit$(EXESFX) run$(EXESFX) master$(EXESFX) clar$(EXESFX) mkpasswd$(EXESFX) team$(EXESFX) register${EXESFX} make-teamdb${EXESFX} make-teamdb-inet${EXESFX} send-passwords${EXESFX}
+UL_CFILES = userlist-server.c userlist_cfg.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c pathutl.c
+UL_OBJECTS = ${UL_CFILES:.c=.o}
+
+TARGETS=compile$(EXESFX) serve$(EXESFX) submit$(EXESFX) run$(EXESFX) master$(EXESFX) clar$(EXESFX) mkpasswd$(EXESFX) team$(EXESFX) register${EXESFX} make-teamdb${EXESFX} make-teamdb-inet${EXESFX} send-passwords${EXESFX} userlist-server${EXESFX}
 
 all: $(TARGETS)
 
@@ -158,6 +162,10 @@ make-teamdb-inet: ${MTI_OBJECTS}
 send-passwords.exe:
 send-passwords: ${SP_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
+
+userlist-server.exe:
+userlist-server: ${UL_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT}
 
 clean:
 	-rm *.o $(TARGETS) revinfo version.c $(ARCH)/*.o
