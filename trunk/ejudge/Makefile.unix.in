@@ -122,7 +122,7 @@ US_OBJECTS = ${US_CFILES:.c=.o} libuserlist_clnt.a libcharsets.a
 ED_CFILES = edit-userlist.c userlist_proto.c contests.c userlist_xml.c userlist_cfg.c userlist.c expat_iface.c pathutl.c
 ED_OBJECTS = ${ED_CFILES:.c=.o} libuserlist_clnt.a libcharsets.a
 
-TARGETS=compile$(EXESFX) serve$(EXESFX) run$(EXESFX) master$(EXESFX) team$(EXESFX) register${EXESFX} userlist-server${EXESFX} users${EXESFX} edit-userlist${EXESFX}
+TARGETS=compile$(EXESFX) serve$(EXESFX) run$(EXESFX) master$(EXESFX) team$(EXESFX) register${EXESFX} userlist-server${EXESFX} users${EXESFX} edit-userlist${EXESFX} filter_test
 
 local_all: $(TARGETS)
 all: local_all subdirs_all
@@ -261,7 +261,7 @@ filter_expr.c filter_expr.h : filter_expr.y
 filter_scan.c : filter_scan.lex
 	flex -p -s -L -8 -B -o$@ -Pfilter_expr_ $<
 
-filter_test : filter_test.o filter_expr.o filter_scan.o filter_tree.o
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
+filter_test : filter_test.o filter_expr.o filter_scan.o filter_tree.o filter_eval.o prepare.o pathutl.o $(ARCH)/fileutl.o sformat.o runlog.o teamdb.o parsecfg.o contests.o userlist.o userlist_proto.o expat_iface.o userlist_xml.o libuserlist_clnt.a libcharsets.a
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} -lexpat
 
 include deps.make
