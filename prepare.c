@@ -29,6 +29,7 @@
 #include <reuse/osdeps.h>
 
 #include <stdio.h>
+#include <string.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
