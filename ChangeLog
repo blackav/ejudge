@@ -1,3 +1,750 @@
+2002-12-22  Alexander Chernov  <cher@ispras.ru>
+
+	* master.c:
+	GLOBAL CHANGE: new protocol (UNIX socket-based) of master-serve
+	  communication is implemented;
+	GLOBAL CHANGE: new session support is implemented (including
+	  implementation of cookie support, which is now on by default);
+	due to the above changes the code is almost totally rewritten;
+	configuration parameters removed: `conf_dir', `pipe_dir',
+	  `judge_dir', `judge_cmd_dir', `judge_data_dir';
+	"client_actions.h" is included;
+	<ctype.h> is included;
+	session mode enumerated constants SID_* are defined;
+	(read_state_params) `action' or `action_' cgi parameter is parsed;
+	  `form_start_simple', `form_start_multipart', `hidden_vars' are
+	  generated depending on the current session mode;
+	(make_self_url) `SERVER_PORT' environment variable is not used, since
+	  it is already contained in HTTP_HOST environment variable;
+	(hyperref) new function to print self-referencing url depending on
+	  the current session support mode;
+	(set_cookie_if_needed) new function to send a cookie to client,
+	  if it is needed;
+	(display_enter_password) `set_cookie_if_needed' is called;
+	  session support selection dialog is generated;
+	(get_cookie) new function to parse cookie string;
+	(ask_passwd) removed in favor of `authentificate';
+	(check_passwd) removed in favor of `authentificate';
+	(open_userlist_server) new function to open userlist-server
+	  connection;
+	(permission_denied) new function to report the corresponging error;
+	(fatal_server_error) new function to report the corresponging error;
+	(is_auth_error) new function, which returns 1, if the given
+	  error code is authentification error;
+	(get_session_id) new function, which parses session id from CGI
+	  parameters;
+	(client_put_refresh_header) new function, which generates
+	  auto-refreshing http header;
+	(authentificate) new function to authentificate users, supporting
+	  all session modes;
+	(print_refresh_button) all session support modes implemented;
+	(print_standings_button) all session support modes implemented;
+	(print_update_button) all session support modes implemented;
+	(print_teamview_button) all session support modes implemented;
+	(print_logout_button) new function to print "Log out" button;
+	(print_reset_button) all session support modes implemented;
+	(print_regenerate_button) all session support modes implemented;
+	(print_suspend_button) all session support modes implemented;
+	(print_resume_button) all session support modes implemented;
+	(operation_status_page) new function to generate page to
+	  show the result of operation;
+	(start_if_asked) new protocol supported, `operation_status_page'
+	  is called;
+	(stop_if_asked) the same as above;
+	(update_standings_if_asked) the same as above;
+	(changedur_if_asked) the same is above;
+	(sched_if_asked) the same as above;
+	(change_status_if_asked) the same as above;
+	(change_status) new function to support status changing from
+	  source view page;
+	(change_problem) new function, which implements problem changing
+	  from source view page;
+	(change_language) new function, which implements language changing
+	  from source view page;
+	(change_user_id) new function, which implements user_id changing
+	  from source view page;
+	(change_user_login) new function, which implements user login
+	  changing from source view page;
+	(view_one_team_if_asked) removed;
+	(do_team_action_if_asked) removed;
+	(add_team_if_asked) removed;
+	(view_source_if_asked) new protocol, and session modes supported;
+	(view_report_if_asked) the same as above;
+	(view_teams_if_asked) the same as above;
+	(confirm_reset_if_asked) new session support mode implemented;
+	(confirm_regenerate_if_asked) the same as above;
+	(confirm_update_standings) new function;
+	(confirm_rejudge_all) new function;
+	(do_contest_reset_if_asked) new session support mode implemented;
+	  new protocol is supported;
+	(do_generate_passwords_if_asked) the same;
+	(do_suspend_if_asked) the same;
+	(do_resume_if_asked) the same;
+	(do_rejudge_all_if_asked) the same;
+	(do_rejudge_problem_if_asked) the same;
+	(view_clar_if_asked) defined `static';
+	  new session support is implemented;
+	  new protocol is supported;
+	(send_msg_if_asked) the same as above;
+	(send_reply_if_asked) the same as above;
+	(view_standings_if_asked) the same as above;
+	(log_out_if_asked) new function to log out user (remove all cookies);
+	(set_defaults) all removed configuration parameters are no longer
+	  supported;
+	  `client_make_form_headers' is called with `self_url' argument;
+	(open_serve) if connection cannot be established, fatal error is
+	  reported;
+	(display_master_page) server connection is explicitly opened;
+	  the current sid_mode is passed to the server;
+	(print_nav_buttons) new function to print navigation buttons;
+	(main) new `authentificate' function is used instead of old
+	  `ask_passwd', `check_passwd', etc;
+	  the action is chosen depending on the client_actions value;
+	  `print_nav_buttons' is used.
+
+	* master_html.c:
+	"fileutl.h", "client_actions.h", "sformat.h" is included;
+	session mode enumeration constants SID_* are defined;
+	(html_start_form) new function to start a form depending on the
+	  current session mode;
+	(html_hyperref) a new function to print self-reference hyperref
+	  depending on the current session mode;
+	(print_nav_buttons) new function to print navigation buttons;
+	(write_change_status_dialog) new function to generate html for
+	  run status change dialog;
+	(write_all_runs) new parameters `sid_mode', `sid';
+	  new session support is implemented;
+	(write_all_clars) new parameters `sid_mode', `sid';
+	  new session support mode is implemented;
+	(write_master_page) new parameters `sid_mode', `sid',
+	  which are passed to the above function;
+	(write_priv_standings) new function to print the current standings;
+	(write_priv_source) new function;
+	(write_priv_report) new function;
+	(write_priv_clar) new function;
+	(write_priv_users) new function.
+
+	* html.h: (write_runs_table) removed;
+	(write_clars_table) removed;
+	(write_clar_view) removed;
+	(write_team_statistics) removed;
+	(write_judge_allstat) removed;
+	(write_judge_source_view) removed;
+	(write_judge_report_view) removed;
+	(write_judge_standings) removed;
+	(write_judge_teams_view) removed;
+	(write_judge_one_team_view) removed;
+	(new_write_user_runs) prototype changed;
+	(new_write_user_clars) prototype changed;
+	(write_team_page) prototype changed;
+	(write_master_page) parameters `sid_mode', `sid' are added;
+	(write_priv_standings) prototype added;
+	(write_standings_header) prototype added;
+	(do_write_kirov_standings) prototype added;
+	(do_write_standings) prototype added;
+	(write_priv_source) prototype added;
+	(write_priv_report) prototype added;
+	(write_priv_clar) prototype added;
+	(write_priv_users) prototype added;
+	(html_start_form) prototype added;
+	(html_hyperref) prototype added.
+
+	* html.c: "client_actions.h" included;
+	session support mode enumeration SID_* is defined;
+	(write_clar_view) removed;
+	(new_write_user_runs) parameters changed: `form' is removed, but
+	  `sid_mode', `sid', `self_url', `hidden_vars' are added;
+	  function is updated for new session support mode;
+	(new_write_user_clars) parameters changed the same way as above;
+	  new session support is implemented;
+	(write_team_statistics) removed;
+	(write_standings_header) new function;
+	(do_write_kirov_standings) `header_str' is removed, the header is
+	  printed in a separate function (above);
+	  global parameter `ignore_compile_errors' is honored;
+	  function is no longer static (used from master_html.c);
+	(do_write_standings) `header_str' parameter is removed;
+	  global parameter `ignore_compile_errors' is supported;
+	  function is no longer static;
+	(write_standings) `write_standings_header' is called;
+	  parameters for do_write_*_standings are updated;
+	(do_write_public_log) global parameter `ignore_compile_errors'
+	  is supported;
+	(write_judge_allruns) removed; similar function is now
+	  in master_html.c;
+	(write_judge_allclars) removed;
+	(write_judge_allstats) removed, similar function is now in
+	  master_html.c;
+	(write_judge_source_view) removed;
+	(write_judge_report_view) removed;
+	(write_judge_standings) removed;
+	(write_judge_teams_view) removed;
+	(print_nav_buttons) new function;
+	(write_judge_one_team_view) removed;
+	(write_team_page) parameters are changed to support the new
+	  session model;
+
+	* makefile: libserve_clnt.a: rule uses ${SERVE_CLNT_CFILES} variable.
+
+	* files.make: new userlist_clnt files: `logout.c', 'priv_cookie.c'.
+	all serve_clnt files are now defined in a separate variable
+	  `SERVE_CLNT_CFILES';
+	client_actions.h added.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* clntutil.h: variables `client_pipe_dir', `client_cmd_dir',
+	  `form_header_simple_ext', `form_header_multipart_ext' removed;
+	(client_puts) removed;
+	(client_make_form_header) accepts a parameter `self_url';
+	(client_make_pipe) removed;
+	(client_packet_name) removed;
+	(client_get_reply) removed;
+	(client_transaction) removed;
+	(client_file_to_str) removed;
+	(client_file_to_stdout) removed;
+	(client_split) removed.
+
+	* clntutil.c: "client_actions.h" is included;
+	global variables `client_pipe_dir', `client_cmd_dir',
+	  `form_header_simple_ext', `form_header_multipart_ext' are removed;
+	(client_packet_name) removed;
+	(client_make_pipe) removed;
+	(client_get_reply) removed;
+	(client_transaction) removed;
+	(client_print_server_status) action codes are printed for
+	  administrator's control buttons instead of commands;
+	(client_make_form_headers) self_url parameter added;
+	  form_header_simple_ext, form_header_multipart_ext are not
+	  generated;
+	(client_file_to_str) removed;
+	(client_file_to_stdout) removed.
+
+	* team.c:
+	(initialize) `program_name' global variable is no longer used;
+	  `self_url' is passed as an argument to `client_make_form_headers'.
+
+	* prepare.c:
+	new global parameters `ignore_compile_errors'. If set, compile
+	  errors are not counted as failed runs and does not increase
+	  penalty;
+	global parameters `pipe_dir', `judge_dir', `judge_cmd_dir',
+	  `judge_data_dir' are removed.
+	(set_defaults) removed parameters are not handled;
+	(create_dirs) removed parameters are not handled.
+
+	* prepare.h:
+	new global parameters `ignore_compile_errors'. If set, compile
+	  errors are not counted as failed runs and does not increase
+	  penalty;
+	global parameters `pipe_dir', `judge_dir', `judge_cmd_dir',
+	  `judge_data_dir' are removed.
+
+	* protocol.c: new error messages added.
+
+	* protocol.h: many new commands (mostly privileged) are added;
+	several new errors added;
+	(struct prot_serve_pkt_submit_clar) new fields: `dest_user_id',
+	  `ref_clar_id', `dest_login_len', used by privileged message
+	  sending;
+	(struct prot_serve_pkt_team_page) fields `user_id', `contest_id',
+	  `ip', `simple_form_len', `multi_form_len' removed;
+	  fields `sid_mode', `self_url_len', `hidden_vars_len' added;
+	(struct prot_serve_pkt_master_page) field `sid_mode' added;
+	(struct prot_serve_pkt_standings) new packet;
+	(struct prot_serve_pkt_view) new packet;
+	(struct prot_serve_pkt_simple) new packet;
+	(struct prot_serve_pkt_run_info) new packet.
+
+	* runlog.h:
+	(run_get_attempts) a new parameter added. If this parameter is 1,
+	  all compile error runs are not counted;
+	new enumeration for all `run_entry' fields (used in run_set_entry).
+	(run_get_entry) new function;
+	(run_set_entry) new function.
+
+	* serve.c:
+	GLOBAL CHANGE: new UNIX-socket based protocol is implemented
+	  for master and judge;
+	(struct client_state) `cookie', `ip' are saved;
+	(report_to_client) removed;
+	(report_error) removed;
+	(report_bad_packet) removed;
+	(report_ok) removed;
+	(check_period) removed;
+	(get_peer_local_user) IP-address is requested from the server
+	  and saved in the `struct client_state';
+	  cookie is saved in `struct client_state';
+	(cmd_team_get_archive) team archive directory is created in var_dir
+	  for now (since pipe_dir has gone);
+	(cmd_team_list_runs) actual action are commented for now, since
+	  their parameters changed, and the needed parameters are not
+	  directly available. Protocol should be updated.
+	(cmd_team_page) packet is changed, so the function is updated;
+	(cmd_master_page) `sid_mode' is checked and passed to
+	  `write_master_page';
+	(cmd_priv_standings) new function;
+	(cmd_view) new function;
+	(cmd_message) new function;
+	(cmd_gen_passwords) new function;
+	(cmd_team_submit_clar) error of `generic_write_file' is checked;
+	(cmd_priv_command_0) new function - handled many privileged protocol
+	  commands;
+	(process_judge_reply) removed;
+	(judge_stat) removed;
+	(judge_standings) removed;
+	(judge_update_public_standings) removed;
+	(judge_view_clar) removed;
+	(judge_view_report) removed;
+	(cmd_edit_run) new function;
+	(judge_view_src) removed;
+	(judge_start) removed;
+	(judge_stop) removed;
+	(judge_sched) removed;
+	(judge_time) removed;
+	(judge_change_status) removed;
+	(judge_reply) removed;
+	(judge_view_teams) removed;
+	(judge_view_one_team) removed;
+	(judge_change_team_login) removed;
+	(judge_change_team_name) removed;
+	(judge_change_team_password) removed;
+	(judge_change_team_vis) removed;
+	(judge_change_team_ban) removed;
+	(do_add_team) removed;
+	(judge_add_team) removed;
+	(judge_message) removed;
+	(do_rejudge_all) new function to rejudge all the runs;
+	(judge_rejudge_all) removed;
+	(do_rejudge_problem) new function to rejudge only particular problem;
+	(judge_rejudge_problem) removed;
+	(judge_reset_contest) removed;
+	(judge_suspend_clients) removed;
+	(judge_resume_clients) removed;
+	(judge_generate_passwords) removed;
+	(judge_cmds) removed;
+	(read_judge_packet) removed;
+	(packet_handlers) many new packet handlers are added;
+	(do_loop) `judge_cmd_dir' is no longer scanned;
+	(write_submit_templates) removed, as nobody uses that templates;
+	(main) `write_submit_templates' is no longer called.
+
+	* team.c: GLOBAL CHANGE: cookie support is implemented;
+	"misctext.h", "client_actions.h" are included;
+	<ctype.h> is included;
+	new global parameter `enable_session_mode' to enable the dialog
+	  about supported session modes. By default dialog is disabled,
+	  and cookies are used;
+	(setup_locale) new function to set locale;
+	(make_self_url) new function to make a self-referencing URL;
+	(hyperref) new function to make self-hyperreference;
+	(open_serve) new function to open the contest-server connection;
+	(set_cookie_if_needed) new function to send the cookie to client;
+	(set_defaults) contest-server connection is now opened on demand;
+	  self-reference URL is constructed;
+	(read_state_params) `form_start_simple', `form_start_multipart'
+	  are constructed depending on the current session mode;
+	  hidden_vars is also constructed;
+	  `client_action' is read from CGI parameters;
+	(display_enter_password) rewritten;
+	(get_cookie) a new function to parse cookie from the environment;
+	(open_userlist_server) a new function to open userlist-server
+	  connection;
+	(permission_denied) a new function to report error;
+	(fatal_server_error) a new function to report error;
+	(is_auth_error) a new function, which returns 1, if the given
+	  error code is due to failed authentification;
+	(get_session_id) a new function, which parses session_id from
+	  CGI parameters;
+	(client_put_refresh_header) a new function, which generates
+	  auto-refresh header;
+	(authentificate) a new function to perform the operation;
+	(operation_status_page) a new function, which displays (possibly
+	  auto-refreshed) page with the status of the current operation;
+	(print_refresh_button) rewritten;
+	(print_logout_button) new function;
+	(send_clar_if_asked) `operation_status_page' is used instead of
+	  `error';
+	  contest server connection is opened immediately before sending
+	  clarification request;
+	(submit_if_asked) `operation_status_page' is used instead of `error';
+	(action_change_password) renamed from `change_password_if_asked';
+	  the old password is also taked from CGI-parameters;
+	  `operation_status_page' is used instead of `error';
+	  userlist-server connection is opened immediately before operation;
+	(show_clar_if_asked) `set_cookie_if_needed' is called before
+	  client_put_header;
+	  navigation buttons are printed using `print_nav_buttons';
+	  contest-server connection is opened immediately before operation;
+	(request_source_if_asked) the same as above;
+	(request_report_if_asked) the same as above;
+	(request_archive_if_asked) redundant check for the new client-serve
+	  mode is removed;
+	  contest-server connection is opened immediately before operation;
+	  `operation_status_page' is used instead of `error';
+	(action_change_language) a new function to reload the page
+	  (clear POST-submitted vars);
+	(action_logout) a new function;
+	(display_team_page) contest-server connection is opened immediately
+	  before operation;
+	  parameters of `serve_clnt_team_page' changed;
+	(print_nav_buttons) new function;
+	(read_locale_id) new function;
+	(main) locale setting code is separated into two functions:
+	  `read_locale_id', `setup_locale';
+	  `authentificate' is used for authentification;
+	  `client_action' variable's value is used to perform the requested
+	  action;
+	  `set_cookie_if_needed' is called before `client_put_header';
+	  `print_nav_buttons' is used instead of `print_refresh_button';
+	  old password is requested to change password.
+
+	* userlist-server.c:
+	(struct client_state) added fields `cookie', `ip' to save the
+	  corresponding parameters of the client;
+	(remove_cookie) fixed bug, when all the user's cookies are removed
+	  when the last cookie in the list is removed;
+	(login_user) user IP-address and cookie are saved;
+	(login_team_user) the same as above;
+	(cmd_login_priv_user) current privilege level is saved in the cookie;
+	  user IP-address and cookie are saved;
+	(login_cookie) user IP-address and cookie are saved in
+	  `struct client_state';
+	(login_team_cookie) cookie with privilege level == 0 and matching
+	  contest_id is searched;
+	  user IP-address and cookie are saved in `struct client_state';
+	(login_priv_cookie) a new function;
+	(logout_user) completely rewritten;
+	(cmd_get_uid_by_pid) verbosity decreased;
+	  cookie and IP-address is returned in the packet;
+	(process_packet) `ULS_PRIV_CHECK_COOKIE' is supported.
+
+2002-12-21  Alexander Chernov  <cher@ispras.ru>
+
+	* runlog.c:
+	(run_get_attempts) new parameter `skip_ce_flag'. If this parameter
+	  is set to non-zero value, runs that have RUN_COMPILE_ERR status
+	  are ignored instead of counting compile error as a failed submit
+	  and incuring penalties;
+	(run_get_entry) new function, which exports the given entry into
+	  `struct run_entry' structure;
+	(run_set_entry) a new functon, which sets the specified by the mask
+	  fields fields uf `struct run_entry'.
+
+	* serve_clnt.h:
+	(serve_clnt_team_page) removed parameters: `user_id', `contest_id',
+	  `ip', `simple_form', `milti_form';
+	  added parameters: sid_mode, self_url, hidden_vars;
+	(serve_clnt_standings) new function prototype;
+	(serve_clnt_view) new function prototype;
+	(serve_clnt_message) new function prototype;
+	(serve_clnt_gen_passwords) new function prototype;
+	(serve_clnt_simple_cmd) new function prototype;
+	(serve_clnt_edit_run) new function prototype.
+
+	* userlist_clnt.h: 
+	(userlist_clnt_get_uid_by_pid) parameter `p_ip' added;
+	(userlist_clnt_priv_cookie) new function prototype;
+	(userlist_clnt_logout) new function prototype.
+
+	* userlist_proto.h:
+	(struct userlist_pk_check_cookie) field `priv_level' added;
+	(struct userlist_pk_do_logout) fields `origin_ip', `user_id' removed;
+	(struct userlist_pk_uid) `ip' field added.
+
+	* client_actions.h: many new client action codes added.
+
+	* teamdb.h: 
+	(teamdb_lookup_login) implemented for the client mode;
+	(teamdb_scramble_passwd) removed;
+	(teamdb_check_scrambled_passwd) removed;
+	(teamdb_check_passwd) removed;
+	(teamdb_set_scrambled_passwd) removed;
+	(teamdb_get_plain_passwd) removed;
+	(teamdb_get_write_passwd) removed;
+	(teamdb_write_teamdb) removed;
+	(teamdb_is_valid_login) removed;
+	(teamdb_is_valid_name) removed;
+	(teamdb_change_login) removed;
+	(teamdb_change_name) removed;
+	(teamdb_add_team) removed;
+	(teamdb_transaction) removed;
+	(teamdb_commit) removed;
+	(teamdb_rollback) removed;
+	(teamdb_regenerate_passwords) parameter changed: now plain file
+	  descriptor is accepted and passed directly to userlist-server;
+	(teamdb_get_uid_by_pid) new parameter `p_ip' added;
+	(struct teamdb_export) fields `scrambled', `passwd' are removed.
+
+	* teamdb.c: 
+	(teamdb_lookup_login) implemented for the client mode;
+	(teamdb_scramble_passwd) removed;
+	(teamdb_check_scrambled_passwd) removed;
+	(teamdb_check_passwd) removed;
+	(teamdb_set_scrambled_passwd) removed;
+	(teamdb_get_plain_passwd) removed;
+	(teamdb_get_write_passwd) removed;
+	(teamdb_write_teamdb) removed;
+	(teamdb_is_valid_login) removed;
+	(teamdb_is_valid_name) removed;
+	(teamdb_change_login) removed;
+	(teamdb_change_name) removed;
+	(teamdb_add_team) removed;
+	(teamdb_transaction) removed;
+	(teamdb_commit) removed;
+	(teamdb_rollback) removed;
+	(teamdb_regenerate_passwords) parameter changed: now plain file
+	  descriptor is accepted and passed directly to userlist-server;
+	(teamdb_get_uid_by_pid) new parameter `p_ip' added.
+
+	* sformat.c:
+	(sformat_message) 'Mp' and 'Ms' format specifiers are no longer
+	  supported, as this information (plain password and scrambled
+	  password) is no longer available to the server.
+
+2002-12-20  Alexander Chernov  <cher@ispras.ru>
+
+	* client_actions.h: Initial revision
+
+2002-12-15  Alexander Chernov  <cher@ispras.ru>
+
+	* serve.c:
+	(cmd_master_page) the user is checked to have privilege level
+	  at least at PRIV_LEVEL_OBSERVER.
+
+2002-12-14  Alexander Chernov  <cher@ispras.ru>
+
+	* filter_scan.lex: keyword "and" is synonim for "&&";
+	keyword "or" is synonim for "||".
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* run.c:
+	(run_tests) reverted back previous behavour: output files are
+	  created with 0600 (read-write) permissions, as DOS programs
+	  otherwise do not work.
+
+	* master_html.c:
+	(write_all_runs) "Rejudge problem" and "Rejudge all" buttons
+	  only appears in PRIV_LEVEL_ADMIN privileges.
+
+	* master.c:
+	(change_status_if_asked) since the number of failed tests and
+	  the gained score cannot be edited, the corresponding CGI
+	  variables are not parsed, and -1 is always passed to the server.
+
+	* userlist_xml.c: "protocol.h" is included;
+	"priv_level" cookie attribute is generally supported
+	  (parsed and unparsed);
+	(parse_priv_level) a new function to parse the attribute;
+	(parse_cookies) "priv_level" attribute is handled;
+	(unparse_cookies) "priv_level" attribute is handled.
+
+	* userlist_proto.h: privilege level enumeration is defined;
+	new commands `ULS_PRIV_LOGIN', `ULS_PRIV_CHECK_COOKIE' are added;
+	"char[0]" is no longer used in all the packet structures, "char[N]" is
+	  used, where N is the number of text parameters for the packet;
+	(userlist_pk_do_login) new field `priv_level';
+	(userlist_pk_login_ok) new field `priv_level';
+	(userlist_pk_uid) new field `priv_level'.
+
+	* userlist_clnt.h:
+	(userlist_clnt_get_uid_by_pid) new parameter `p_priv_level' added;
+	(userlist_clnt_priv_login) new function prototype added.
+
+	* userlist.h: privilege level enumeration is defined;
+	new attribute `priv_level' is added;
+	(struct userlist_cookie) `priv_level' field is added.
+
+	* userlist-server.c:
+	(struct client_state) field `priv_level' is added;
+	(cmd_login_priv_user) a new function to handle `ULS_PRIV_LOGIN';
+	(cmd_get_uid_by_pid) `priv_level' is returned to the client;
+	(process_packet) `ULS_PRIV_LOGIN' request is handled.
+
+	* teamdb.h: 
+	(teamdb_get_uid_by_pid) new parameter `p_priv_level' added.
+
+	* teamdb.c:
+	(teamdb_get_uid_by_pid) a new parameter `p_priv_level' is accepted
+	  and passed directly to the underlying userlist_clnt function.
+
+	* serve_clnt.h:
+	(serve_clnt_master_page) `flags' parameter is renamed to `priv_level'.
+
+	* serve.c:
+	(struct client_state) new field `priv_level' to store the privilege
+	  level for the connected user;
+	(get_peer_local_user) `priv_level' is requested;
+	  success condition is "r >= 0", not "r > 0";
+	(cmd_pass_descriptors) `get_peer_local_user' is commented out;
+	(cmd_master_page) new function to display the master page;
+	(packet_handlers) reference to `cmd_master_page' is added;
+	(check_sockets) when `process_packet' is done, the client state
+	  descriptor `p' is checked to be valid, since the connection
+	  may be closed during request processing. Only if client state
+	  descriptor is valid, its read buffers are cleaned up.
+
+	* protocol.h: new request `SRV_CMD_MASTER_PAGE';
+	the privilege level enumeration is defined;
+	(struct prot_serve_pkt_master_page) new packet structure;
+	(protocol_priv_level_str) new function prototype is added.
+
+	* protocol.c: <reuse/logger.h> is included;
+	(protocol_priv_level_str) a new function.
+
+	* master_html.c: "html.h" is included;
+	the client state is moved into the structure `struct user_state_info',
+	  which is separate for each admin user, the array of references
+	  to these structures is `users';
+	(parse_error_func) uses `cur_user' user state pointer to append
+	  messages;
+	(write_all_runs) new parameter `u' - user state information;
+	  `mode' parameter is renamed to `priv_level';
+	(write_all_clars) new parameter `u' - user state information;
+	  `mode' parameter is renamed to `priv_level';
+	(allocate_user_info) new function to create a new user state
+	  structure, if needed;
+	(write_master_page) new parameter `user_id';
+	  `mode' parameter is renamed to `priv_level'.
+
+	* master.c:
+	GENERAL CHANGE: the `master' utility now uses `userlist-server'
+	  authentification, uses socket to pass requests to the contest
+	  server (only master_page is currently passed this way);
+	new includes: "serve_clnt.h", "contests.h", "protocol.h",
+	  "userlist_proto.h", "userlist_clnt.h";
+	removed configuration parameters: `contest_name', `password',
+	  `problems_submit_file', `standings_url';
+	added new configuration parameters: `contest_id', `socket_path',
+	  `contests_path', `serve_socket';
+	(read_state_params) "view_all_runs", "view_all_clars" CGI parameters
+	  are now handled in another function;
+	  `login' variable is generated to the hidden variables;
+	  `password' is html-armored;
+	  previously commented stuff is removed;
+	(make_self_url) a new function to make a self-reference URL;
+	(display_enter_password) displays login and password text fields;
+	(ask_passwd) checks both login and password;
+	(check_passwd) uses `userlist-server' for authentification;
+	(read_view_params) new function: reads and parses CGI-parameters for
+	  filtering and displaying runs and clars;
+	(view_teams_if_asked) `priv_level' variable is used instead
+	  `judge_mode';
+	(view_clar_if_asked) the same;
+	(navigate_if_asked) completely removed;
+	(clar_navigate_if_asked) completely removed;
+	(get_contest_statistics) removed;
+	(set_defaults) handling of `password' parameter removed;
+	  handling of `problems_submit_file' is removed;
+	  `contest_id', `serve_socket' are handled;
+	(parse_client_ip) new function to parse the IP to binary form;
+	(initialize) `priv_level' variable is set depending on the program
+	  name;
+	  contest_id is checked to be valid;
+	  the client IP-address is parsed;
+	  the self-reference URL is prepared;
+	(open_serve) a new function, which opens contest server connection;
+	(display_master_page) a new function to request the contest server
+	  to generate the master page;
+	(main) view parameters are parsed with `read_view_params';
+	  `priv_level' variable is used instead `judge_mode';
+	  previously commented stuff is completely removed;
+	  the contest server is requested to generate list of runs and clars,
+	  and the socket file descriptor is passed;
+	  write message dialog is displayed, if privelege level >= JUDGE.
+
+	* makefile:
+	file lists for `master', `serve', `register', `userlist-server',
+	  `edit-userlist', `filter_test' utilities changed;
+	file list for libserve_clnt.a changed;
+	`master' now requires expat.
+
+	* html.h: 
+	(write_master_page) a new function prototype is added.
+
+	* files.make: files added: userlist_clnt/priv_login.c, master_html.c,
+	  serve_clnt/master_page.c.
+
+	* contests.h:
+	new element tags: <privileged_users>, <administrator>, <judge>,
+	  <observer>;
+	(struct contest_desc) new field `priv_users'.
+
+	* contests.c: 
+	(parse_contest) <privileged_users> element is supported.
+
+	* clntutil.c:
+	(client_print_server_status) `read_only' function parameter is renamed
+	  to `priv_level' function parameter. `priv_level' is checked to
+	  be PRIV_LEVEL_ADMIN to display contest parameter change controls.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2002-12-13  Alexander Chernov  <cher@ispras.ru>
+
+	* run.c:
+	(run_tests) the team program output file is created with mode
+	  0200 (write-only);
+	  the team program output file modes are changed to 0600 after the
+	  program is completed.
+
+	* filter_tree.h: 
+	(filter_expr_set_string) parameter `errfunc' added;
+	(filter_expr_init_parser) parameter `errfunc' added;
+	extern variable `filter_expr_nerrs' added;
+	extern variable `filter_expr_lval' added.
+
+	* filter_tree.c: YYSTYPE macro is properly defined.
+
+	* filter_test.c:
+	`renties' field is renamed to `rentries' field in filter_env;
+	(filter_runs) output format is changed;
+	(main) call of `filter_expr_set_string' updated;
+	  call of `filter_expr_init_parser' updated.
+
+	* filter_scan.lex:
+	system includes are moved after the local includes;
+	global static variable `scan_err' added;
+	all errors are reported using `scan_err' function pointer;
+	(local_err_func) new function: default error printing;
+	(filter_expr_set_string) new parameter `errfunc'.
+
+	* filter_expr.y: global static variable `parse_err' is defined;
+	YYERROR_VERBOSE macro is defined;
+	all errors are reported using `parse_err' function pointer;
+	(filter_expr_init_parser) an extra parameter `errfunc' added.
+
+	* filter_eval.h:
+	(struct filter_env) field `renties' is renamed to `rentries'.
+
+	* filter_eval.c: YYSTYPE macro is properly defined;
+	`renties' is renamed to `rentries'.
+
+	* clntutil.c: 
+	(client_puts) function removed as nobody now uses it.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* serve_clnt.h:
+	(serve_clnt_master_page) a new function prototype is added.
+
+	* teamdb.c:
+	(restore_connection) error codes, returned by the userlist_clnt
+	  routines are negative;
+	(teamdb_get_uid_by_pid) error codes from
+	  `userlist_clnt_get_uid_by_pid' are negative;
+	  the actual error code is returned.
+
+	* userlist-server.c:
+	(cmd_get_uid_by_pid) negative error codes are returned on error;
+	(do_work) when `process_packet' finished, the client_state
+	  descriptor may be invalid since freed during processing of the
+	  request, so the pointer must be revalidated and only after that
+	  the structure may be updated.
+
+	* master_html.c: Initial revision
+
 2002-12-11  Alexander Chernov  <cher@ispras.ru>
 
 	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
