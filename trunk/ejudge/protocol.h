@@ -140,6 +140,7 @@ enum
     SRV_CMD_PRINT_RESUME,
     SRV_CMD_COMPARE_RUNS,
     SRV_CMD_UPLOAD_REPORT,
+    SRV_CMD_REJUDGE_BY_MASK,
 
     SRV_CMD_LAST
   };
@@ -195,6 +196,7 @@ enum
     SRV_ERR_PAGES_QUOTA,
     SRV_ERR_ALREADY_PRINTED,
     SRV_ERR_BAD_SESSION_ID,
+    SRV_ERR_LANGUAGE_DISABLED,
 
     SRV_ERR_LAST
   };
@@ -410,6 +412,13 @@ struct prot_serve_pkt_reset_filter
   unsigned long long session_id;
   int user_id;
   int contest_id;
+};
+
+struct prot_serve_pkt_rejudge_by_mask
+{
+  struct prot_serve_packet b;
+  int mask_size;
+  unsigned long mask[1];
 };
 
 unsigned char const *protocol_strerror(int n);
