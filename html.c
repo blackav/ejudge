@@ -1297,6 +1297,121 @@ write_judge_standings(char const *pk_name)
   fclose(f);
 }
 
+void
+write_judge_teams_view(char const *pk_name, int master_mode)
+{
+  path_t  path;
+  FILE   *f;
+  int     tot_teams, i, teamid, flags;
+  char    buf[1024], *s, *t, arms[1024];
+
+  pathmake(path, global->pipe_dir, "/", pk_name, 0);
+  if (!(f = sf_fopen(path, "w"))) return;
+  tot_teams = teamdb_get_total_teams();
+  fprintf(f, "%d\n", tot_teams);
+  for (i = 0, teamid = 1; i < tot_teams; teamid++) {
+    if (!teamdb_lookup(teamid)) continue;
+    i++;
+    s = buf;
+    s += sprintf(s, "<tr><td>");
+
+    t = teamdb_get_login(teamid);
+    if (html_armored_strlen(t) > 256) {
+      html_armor_string("<login is too long>", arms);
+    } else {
+      html_armor_string(t, arms);
+    }
+    s += sprintf(s, "%s", arms);
+    s += sprintf(s, "</td><td>");
+    s += sprintf(s, "%d", teamid);
+    s += sprintf(s, "</td><td>");
+
+    t = teamdb_get_name(teamid);
+    if (html_armored_strlen(t) > 256) {
+      html_armor_string("<team name is too long>", arms);
+    } else {
+      html_armor_string(t, arms);
+    }
+    s += sprintf(s, "%s", arms);
+    s += sprintf(s, "</td><td>");
+    flags = teamdb_get_flags(teamid);
+    if ((flags & TEAM_INVISIBLE) && (flags & TEAM_BANNED)) {
+      t = "<b>banned</b>,<i>invisible</i>";
+    } else if ((flags & TEAM_INVISIBLE)) {
+      t = "<i>invisible</i>";
+    } else if ((flags & TEAM_BANNED)) {
+      t = "<b>banned</b>";
+    } else {
+      t = "&nbsp;";
+    }
+    s += sprintf(s, "%s", t);
+    if (master_mode) {
+      s += sprintf(s, "</td><td>");
+      s += sprintf(s, "<input type=\"submit\" name=\"team_%d\" value=\"change\">", teamid);
+    }
+    s += sprintf(s, "</td></tr>\n");
+    fprintf(f, "%d %s", s - buf, buf);
+  }
+  fprintf(f, "%d\n", tot_teams);
+  fclose(f);
+}
+
+void
+write_judge_one_team_view(char const *pk_name, int teamid)
+{
+  path_t  path;
+  FILE   *f;
+  char   *a_login = 0;
+  char   *a_name = 0;
+  char const *s_login, *s_name;
+  int     l_login, l_name;
+  int     flags;
+
+  pathmake(path, global->pipe_dir, "/", pk_name, 0);
+  if (!(f = sf_fopen(path, "w"))) return;
+  if (!teamdb_lookup(teamid)) {
+    fprintf(f, "<p><b>Invalid team id %d</b>\n", teamid);
+    fclose(f);
+    return;
+  }
+  flags = teamdb_get_flags(teamid);
+  s_login = teamdb_get_login(teamid);
+  l_login = html_armored_strlen(s_login);
+  s_name = teamdb_get_name(teamid);
+  l_name = html_armored_strlen(s_name);
+  XALLOCA(a_login, l_login + 10);
+  XALLOCA(a_name, l_name + 10);
+  html_armor_string(s_login, a_login);
+  html_armor_string(s_name, a_name);
+
+  // delete is a very hard operation, so not supported
+  /*
+  fprintf(f, "<table><tr><td><input type=\"submit\" name=\"tdel_%d\" value=\"%s\"></td></tr></table>\n", teamid, _("delete!"));
+  */
+
+  fprintf(f, "<input type=\"hidden\" name=\"teamid\" value=\"%d\">\n",
+          teamid);
+  fprintf(f, "<table>\n");
+  fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n",
+          _("Team id"), teamid);
+  fprintf(f, "<tr><td>%s:</td><td>%s</td><td><input type=\"text\" name=\"tlogin\" size=\"32\"></td><td><input type=\"submit\" name=\"tchglogin\" value=\"%s\"></td></tr>\n", _("Team login"), a_login, _("change"));
+  fprintf(f, "<tr><td>%s:</td><td>%s</td><td><input type=\"text\" name=\"tname\" size=\"32\"></td><td><input type=\"submit\" name=\"tchgname\" value=\"%s\"></td></tr>\n", _("Team name"), a_name, _("change"));
+  fprintf(f, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td><td><input type=\"submit\" name=\"tbanchg\" value=\"%s\"></td></tr>\n",
+          _("Availability"),
+          ((flags & TEAM_BANNED))?_("banned"):_("not banned"),
+          ((flags & TEAM_BANNED))?_("clear flag"):_("ban"));
+  fprintf(f, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td><td><input type=\"submit\" name=\"tinvchg\" value=\"%s\"></td></tr>\n",
+          _("Visibility"),
+          ((flags & TEAM_INVISIBLE))?_("invisible"):_("visible"),
+          ((flags & TEAM_INVISIBLE))?_("make visible"):_("make invisible"));
+  fprintf(f, "<tr><td>%s:</td><td>&nbsp;</td><td><input type=\"password\" name=\"tpasswd1\" size=\"16\"></td></tr>\n",
+          _("New password"));
+  fprintf(f, "<tr><td>%s:</td><td>&nbsp;</td><td><input type=\"password\" name=\"tpasswd2\" size=\"16\"></td><td><input type=\"submit\" name=\"tchgpwd\" value=\"%s\"></td></tr>\n",
+          _("Retype password"), _("change"));
+  fprintf(f, "</table>\n");
+  fclose(f);
+}
+
 /**
  * Local variables:
  *  compile-command: "make"
