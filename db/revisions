@@ -1453,3 +1453,12 @@ xml_utils/err_variables.c 1 1 75003
 xml_utils/leaf_elem.c 1 1 109548
 xml_utils/xml_err.c 1 1 106860
 xml_utils/xml_err_a.c 1 1 107251
+super_clnt.h 1 1 96088
+super_proto.h 1 1 103707
+super_proto.c 1 1 117676
+serve_clnt/import_xml_runs.c 1 4 231956
+super_clnt/do_pass_fd.c 1 1 173347
+super_clnt/open.c 1 1 241200
+super_clnt/pass_fd.c 1 1 112952
+super_clnt/recv_packet.c 1 1 249162
+super_clnt/send_packet.c 1 1 118133
