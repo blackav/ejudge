@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,17 +39,17 @@ serve_clnt_submit_run(int sock_fd, int cmd,
                       int user_id, int contest_id, int locale_id,
                       unsigned long ip, int prob_id, int lang_id,
                       int variant,
+                      size_t run_size,
                       unsigned char const *run_src)
 {
   struct prot_serve_pkt_submit_run *out = 0;
   struct prot_serve_packet *in = 0;
-  int out_size = 0, in_size = 0, run_len = 0, r;
+  int out_size = 0, in_size = 0, r;
 
   if (cmd != SRV_CMD_SUBMIT_RUN && cmd != SRV_CMD_PRIV_SUBMIT_RUN)
     return -SRV_ERR_PROTOCOL;
   if (sock_fd < 0) return -SRV_ERR_NOT_CONNECTED;
-  run_len = strlen(run_src);
-  out_size = sizeof(*out) + run_len;
+  out_size = sizeof(*out) + run_size;
   out = alloca(out_size);
   memset(out, 0, out_size);
   out->b.id = cmd;
@@ -61,8 +61,8 @@ serve_clnt_submit_run(int sock_fd, int cmd,
   out->prob_id = prob_id;
   out->lang_id = lang_id;
   out->variant = variant;
-  out->run_len = run_len;
-  memcpy(out->data, run_src, run_len);
+  out->run_len = run_size;
+  memcpy(out->data, run_src, run_size);
 
   if ((r = serve_clnt_send_packet(sock_fd, out_size, out)) < 0) {
     return r;
