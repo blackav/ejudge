@@ -28,6 +28,7 @@ enum { TEAM_BANNED = 1, TEAM_INVISIBLE = 2 };
 
 int teamdb_open(char const *, char const *, int);
 int teamdb_write_passwd(char const *);
+int teamdb_write_teamdb(char const *);
 
 int teamdb_lookup(int);
 int teamdb_lookup_login(char const *);
@@ -40,5 +41,20 @@ int   teamdb_set_scrambled_passwd(int, char const *);
 int   teamdb_check_passwd(int, char const *);
 int   teamdb_get_max_team_id(void);
 int   teamdb_get_flags(int);
+int   teamdb_get_total_teams(void);
+
+int   teamdb_is_valid_login(char const *);
+int   teamdb_is_valid_name(char const *);
+int   teamdb_change_login(int, char const *);
+int   teamdb_change_name(int, char const *);
+int   teamdb_toggle_ban(int);
+int   teamdb_toggle_vis(int);
+
+void teamdb_transaction(void);
+void teamdb_commit(void);
+void teamdb_rollback(void);
+
+int teamdb_add_team(int, char const *, char const *, char const *,
+                    int, int, char **);
 
 #endif /* __TEAMDB_H__ */
