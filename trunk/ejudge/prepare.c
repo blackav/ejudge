@@ -121,6 +121,9 @@ static struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(score_system, "s"),
 
+  GLOBAL_PARAM(team_info_url, "s"),
+  GLOBAL_PARAM(prob_info_url, "s"),
+
   { 0, 0, 0, 0 }
 };
 
