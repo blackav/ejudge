@@ -1,3 +1,12 @@
+2004-06-19  Alexander Chernov  <cher@ispras.ru>
+
+	* login.c, logout.c, lookup_cookie.c, priv_cookie.c, priv_login.c, team_cookie.c, team_login.c:
+	The `koi8-r' charset specification is removed from file headers.
+
+	* add_field.c, admin_process.c, change_registration.c, close.c, delete_field.c, do_pass_fd.c, dump_database.c, edit_field.c, generate_team_passwd.c, get_contests.c, get_info.c, get_uid_by_pid.c, list_all_users.c, list_users.c, map_contest.c, open.c, pass_fd.c, recv_packet.c, register_contest.c, register_new.c, remove_member.c, send_packet.c, set_info.c, set_passwd.c, team_set_passwd.c:
+	The copyright notice is updated;
+	The `koi8-r' charset specification is removed from the file header.
+
 2004-05-04  Alexander Chernov  <cher@ispras.ru>
 
 	* team_login.c: copyright notice is updated;

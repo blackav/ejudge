@@ -1,10 +1,145 @@
-2004-06-19  Alexander Chernov  <cher@ispras.ru>
+2004-06-20  Alexander Chernov  <cher@ispras.ru>
 
-	* INSTALL, INSTALL.RUS: *** empty log message ***
+	* INSTALL, INSTALL.RUS, ejudge.ru_RU.KOI8-R.po:
+	*** empty log message ***
 
-2004-06-18  Alexander Chernov  <cher@ispras.ru>
+	* Makefile.in:
+	the references to the libcharset library or to the charset
+	  directory are removed.
 
-	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+2004-06-20  Alexander Chernov  <cher@ispras.ru>
+
+	* expat_iface.c: The copyright notice is updated;
+	"config.h", "settings.h" are included;
+	"nls.h" is removed;
+	<iconv.h>, <errno.h> are included;
+	the EJUDGE_CHARSET macro is defined to the EJUDGE_INTERNAL_CHARSET
+	  macro, if the former is not defined in the "config.h" file;
+	(struct parser_data) `conv_hnd' field is added to store the charset
+	  conversion descriptor to convert from UTF-8 to the local charset;
+	(is_correct_utf8) a new function, which validates an UTF-8 multi-byte
+	  sequence;
+	(convert_utf8_to_local) a new function, which converts the UTF-8
+	  string to the string in the local charset as defined by the
+	  EJUDGE_CHARSET macro;
+	(convert_utf8_to_local_heap) a new conversion function, which returns
+	  the result in dynamic memory;
+	(encoding_hnd) rewritten using the `iconv' facilities;
+	(start_hnd) the tag and attribute names are not converted to the
+	  local charset, the attribute value is converted using the new
+	  `convert_utf8_to_local_heap' function;
+	(end_hnd) the element text is converted to the local charset using the
+	  `convert_utf8_to_local_heap' function;
+	(xml_build_tree) the conversion descriptor to convert from the UTF-8
+	  charset to the local charset is managed and passed to the parsing
+	  routines;
+	(xml_build_tree_str) the same as above;
+	(xml_unparse_tree) the EJUDGE_CHARSET is used as the charset of the
+	  generated XML file instead of "KOI8-R";
+	the emacs' "Cyrillic-KOI8" language environment setting is removed.
+
+	* files.make: nls.h is removed;
+	charsets/*.c files are removed.
+
+	* html.c:
+	The `koi8-r' charset specification is removed from the file header;
+	"settings.h" is included;
+	The EJUDGE_CHARSET macro is defined to the EJUDGE_INTERNAL_CHARSET
+	  macro, if the former is not defined in "config.h";
+	(write_standings_header) the `charset' configuration variable
+	  is used instead of `standings_charset';
+	(write_standings) support for the `standings_charset' configuration
+	  variable is commented out;
+	(do_write_public_log) the EJUDGE_CHARSET is used as the charset for
+	  the generated text/plain file instead of "KOI8-R".
+
+	* prepare.c:
+	`standings_charset' global configuration variable is commented out;
+	(set_defaults) handling of `standings_charset' is commented out.
+
+	* prepare.h: "nls.h" is removed;
+	(struct section_global_data) `charset_ptr', `standings_charset',
+	  `standings_charset_ptr' fields are commented out.
+
+	* runlog_xml.c:
+	The `koi8-r' charset specification is removed from the file header;
+	"config.h", "settings.h" are included;
+	The EJUDGE_CHARSET macro is defined to the EJUDGE_INTERNAL_CHARSET
+	  macro, if the former is not defined in "config.h";
+	(unparse_runlog_xml) the EJUDGE_CHARSET is printed as the XML file
+	  charset instead of "KOI8-R".
+
+	* serve.c:
+	The `koi8-r' charset specification is removed from the file header;
+	The EJUDGE_CHARSET macro is defined to the EJUDGE_INTERNAL_CHARSET
+	  macro, if the former is not defined in "config.h";
+	(cmd_view) the EJUDGE_CHARSET is used as the charset for the
+	  generated text/plain documents instead of "KOI8-R".
+
+	* settings.h:
+	EJUDGE_INTERNAL_CHARSET macro is added and defined to "UTF-8".
+
+	* team_extra_xml.c: "config.h", "settings.h" are included;
+	The EJUDGE_CHARSET macro is defined to the EJUDGE_INTERNAL_CHARSET
+	  macro, if the former is not defined in "config.h";
+	(team_extra_unparse_xml) the EJUDGE_CHARSET is printed as the
+	  XML file charset instead of "KOI8-R".
+
+	* userlist-server.c:
+	The EJUDGE_CHARSET macro is defined to the EJUDGE_INTERNAL_CHARSET
+	  macro, if the former is not defined in "config.h";
+	(send_email_message) the EJUDGE_CHARSET charset is used instead of
+	  "KOI8-R", if the `charset' parameter is NULL.
+
+	* filter_eval.c: The copyright notice is updated;
+	The emacs' "Cyrillic-KOI8" language environment setting is removed.
+
+	* userlist_proto.c:
+	The `koi8-r' charset specification is removed from the file header;
+	The copyright notice is updated;
+	The emacs' "Cyrillic-KOI8" language environment setting is removed.
+
+	* userlist_xml.c: "config.h", "settings.h" are included;
+	"nls.h" is removed;
+	the EJUDGE_CHARSET defined to the EJUDGE_INTERNAL_CHARSET, if the
+	  former is not defined in "config.h";
+	(userlist_unparse_user) the EJUDGE_CHARSET is used as the XML file
+	  encoding instead of "KOI8-R";
+	(userlist_unparse_contests) the same as above;
+	(userlist_unparse) the same as above;
+	(userlist_unparse_short) the same as above;
+	(userlist_unparse_for_standings) the same as above.
+
+	* register.c:
+	The `koi8-r' charset specification is removed from the file header;
+	"settings.h" is included;
+	DEFAULT_CHARSET macro is replaced with EJUDGE_CHARSET.
+	EJUDGE_CHARSET macro is defined to EJUDGE_INTERNAL_CHARSET, if the
+	  former is not defined in config.h;
+	(parse_config) the EJUDGE_CHARSET is ised instead of DEFAULT_CHARSET;
+	(default_config) explicit charset is removed, since "UTF-8" is ok
+	  for this file;
+	(client_put_refresh_header) the EJUDGE_CHARSET is used instead of
+	  DEFAULT_CHARSET;
+	(do_make_user_xml) the EJUDGE_CHARSET is used instead of "KOI8-R".
+
+	* users.c:
+	The `koi8-r' charset specification is removed from the file header;
+	"settings.h" is included;
+	DEFAULT_CHARSET macro is replaced with EJUDGE_CHARSET.
+	EJUDGE_CHARSET macro is defined to EJUDGE_INTERNAL_CHARSET, if the
+	  former is not defined in config.h;
+	(default_config) explicit charset is removed, since "UTF-8" is ok
+	  for this file.
+
+	* ejudge-setup.c:
+	The `koi8-r' charset specification is removed from the file header.
+	(generate_ejudge_xml) code for generation of <charset> element is
+	  fixed;
+	(generate_install_script) the last "chmod" command is fixed.
+
+	* master_html.c, ncurses_utils.c, protocol.c, runlog_import.c, sformat.c, team.c, tex_dom.c, tex_dom_doc.c, tex_dom_parse.c, tex_dom_render.c, userlist.c, cgi.c, clntutil.c, contests.c, cr_serialize.c, edit-userlist.c, filter_scan.lex, master.c:
+	The `koi8-r' charset specification is removed from the file header.
 
 2004-06-17  Alexander Chernov  <cher@ispras.ru>
 
