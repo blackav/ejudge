@@ -1080,3 +1080,11 @@ opcaps.h 1 4 165715
 opcaps.c 1 4 342677
 filter_tree.c 1 5 3263511
 filter_scan.lex 1 10 518238
+prepare.h 1 44 1382832
+master.c 1 49 6409206
+run.c 1 52 3838168
+serve.c 1 61 9045771
+userlist-server.c 1 38 13218103
+html.c 1 48 4721256
+master_html.c 1 20 5355358
+prepare.c 1 63 7489215
