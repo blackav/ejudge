@@ -1390,7 +1390,7 @@ generic_file_size(const unsigned char *dir,
   if (!sfx) sfx = "";
 
   if (!strcmp(dir, "") || !strcmp(dir, "/")) {
-    snprintf(path, sizeof(path), "%s%s%s", name, sfx);
+    snprintf(path, sizeof(path), "%s%s%s", dir, name, sfx);
   } else {
     snprintf(path, sizeof(path), "%s/%s%s", dir, name, sfx);
   }
