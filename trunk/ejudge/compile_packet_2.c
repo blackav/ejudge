@@ -34,7 +34,7 @@ compile_request_packet_write(const struct compile_request_packet *in_data,
 {
   int errcode, i, out_size, env_num;
   rint32_t *str_lens, *str_lens_out;
-  struct compile_request_bin_packet *out_data;
+  struct compile_request_bin_packet *out_data = 0;
   unsigned char *out_ptr;
 
   if (in_data->judge_id < 0 || in_data->judge_id > MAX_JUDGE_ID) {
@@ -49,8 +49,7 @@ compile_request_packet_write(const struct compile_request_packet *in_data,
     errcode = 3;
     goto failed;
   }
-  if (in_data->lang_id <= 0 || in_data->lang_id > max_lang
-      || !langs[in_data->lang_id]) {
+  if (in_data->lang_id <= 0 || in_data->lang_id > MAX_LANG_ID) {
     errcode = 4;
     goto failed;
   }
@@ -68,8 +67,11 @@ compile_request_packet_write(const struct compile_request_packet *in_data,
   }
   env_num = in_data->env_num;
   if (env_num == -1) {
-    for (i = 0; in_data->env_vars[i]; i++);
-    env_num = i;
+    env_num =0;
+    if (in_data->env_vars) {
+      for (i = 0; in_data->env_vars[i]; i++);
+      env_num = i;
+    }
   }
   if (env_num < 0 || env_num > MAX_ENV_NUM) {
     errcode = 8;
@@ -115,12 +117,12 @@ compile_request_packet_write(const struct compile_request_packet *in_data,
   if (in_data->run_block_len) {
     memcpy(out_ptr, in_data->run_block, in_data->run_block_len);
     out_ptr += in_data->run_block_len;
-    pkt_bin_align_addr(out_ptr);
+    pkt_bin_align_addr(out_ptr, out_data);
   }
   if (env_num) {
     memcpy(out_ptr, str_lens_out, env_num * sizeof(rint32_t));
     out_ptr += env_num * sizeof(rint32_t);
-    pkt_bin_align_addr(out_ptr);
+    pkt_bin_align_addr(out_ptr, out_data);
     for (i = 0; i < env_num; i++) {
       memcpy(out_ptr, in_data->env_vars[i], str_lens[i] + 1);
       out_ptr += str_lens[i] + 1;
