@@ -148,21 +148,26 @@ report_to_client(char const *pk_name, char const *str)
 }
 
 int
-report_bad_packet(char const *pk_name, int rm_mode)
+report_error(char const *pk_name, int rm_mode,
+             char const *header, char const *msg)
 {
   char buf[1024];
 
-  err(_("bad packet"));
-  sprintf(buf,
-          "<h2>%s</h2><p>%s</p>",
-          _("Server is unable to perform your request"),
-          _("Misformed request"));
-
+  if (!header) header = _("Server is unable to perform your request");
+  os_snprintf(buf, 1020, "<h2>%s</h2><p>%s</p>\n",
+              header, msg);
   report_to_client(pk_name, buf);
   if (rm_mode == 1) relaxed_remove(global->team_data_dir, pk_name);
   if (rm_mode == 2) relaxed_remove(global->judge_data_dir, pk_name);
 
   return 0;
+}
+
+int
+report_bad_packet(char const *pk_name, int rm_mode)
+{
+  err(_("bad packet"));
+  return report_error(pk_name, rm_mode, 0, _("Misformed request"));
 }
 
 /* mode == 1 - from master, mode == 2 - from run */
@@ -1003,6 +1008,264 @@ judge_reply(char const *pk_name, const packet_t pk_str, void *ptr)
 }
 
 int
+judge_view_teams(char const *pk_name, const packet_t pk_str, void *ptr)
+{
+  packet_t cmd;
+  int      n;
+
+  if (sscanf(pk_str, "%s %n", cmd, &n) != 1
+      || pk_str[n])
+    return report_bad_packet(pk_name, 2);
+
+  write_judge_teams_view(pk_name, (int) ptr);
+  return 0;
+}
+
+int
+judge_view_one_team(char const *pk_name, const packet_t pk_str, void *ptr)
+{
+  packet_t cmd;
+  int      teamid, n;
+
+  if (sscanf(pk_str, "%s %d %n", cmd, &teamid, &n) != 2
+      || pk_str[n] || teamid <= 0 || teamid > 10000)
+    return report_bad_packet(pk_name, 2);
+
+  write_judge_one_team_view(pk_name, teamid);
+  return 0;
+}
+
+int
+judge_change_team_login(char const *pk_name, const packet_t pk_str, void *ptr)
+{
+  packet_t cmd, l_b64, l_asc;
+  int      tid, n, b64_f = 0;
+
+  if (sscanf(pk_str, "%s %d %s %n", cmd, &tid, l_b64, &n) != 3
+      || pk_str[n] || tid <= 0 || tid > 10000)
+    return report_bad_packet(pk_name, 2);
+  if (!teamdb_lookup(tid)) {
+    report_error(pk_name, 0, 0, _("Nonexistent team id"));
+    return 0;
+  }
+  base64_decode_str(l_b64, l_asc, &b64_f);
+  if (b64_f) report_bad_packet(pk_name, 2);
+  if (!teamdb_is_valid_login(l_asc)) {
+    report_error(pk_name, 0, 0, _("Invalid team login"));
+    return 0;
+  }
+  teamdb_transaction();
+  if (teamdb_change_login(tid, l_asc) < 0) {
+    teamdb_rollback();
+    report_error(pk_name, 0, 0, _("Cannot change team login"));
+    return 0;
+  }
+  if (teamdb_write_teamdb(global->teamdb_file) < 0) {
+    teamdb_rollback();
+    return report_error(pk_name, 0, 0, _("Cannot write teamdb file"));
+  }
+  teamdb_commit();
+  report_ok(pk_name);
+  return 0;
+}
+
+int
+judge_change_team_name(char const *pk_name, const packet_t pk_str, void *p)
+{
+  packet_t cmd, l_b64, l_asc;
+  int      tid, n, b64_f = 0;
+
+  if (sscanf(pk_str, "%s %d %s %n", cmd, &tid, l_b64, &n) != 3
+      || pk_str[n] || tid <= 0 || tid > 10000)
+    return report_bad_packet(pk_name, 2);
+  if (!teamdb_lookup(tid)) {
+    report_error(pk_name, 0, 0, _("Nonexistent team id"));
+    return 0;
+  }
+  base64_decode_str(l_b64, l_asc, &b64_f);
+  if (b64_f) report_bad_packet(pk_name, 2);
+  if (!teamdb_is_valid_name(l_asc)) {
+    report_error(pk_name, 0, 0, _("Invalid team name"));
+    return 0;
+  }
+  teamdb_transaction();
+  if (teamdb_change_name(tid, l_asc) < 0) {
+    teamdb_rollback();
+    report_error(pk_name, 0, 0, _("Cannot change team name"));
+    return 0;
+  }
+  if (teamdb_write_teamdb(global->teamdb_file) < 0) {
+    teamdb_rollback();
+    return report_error(pk_name, 0, 0, _("Cannot write teamdb file"));
+  }
+  teamdb_commit();
+  report_ok(pk_name);
+  return 0;
+}
+
+int
+judge_change_team_password(char const *pk_name, const packet_t pk_str, void *p)
+{
+  packet_t cmd, passwd;
+  int      tid, n;
+
+  if (sscanf(pk_str, "%s %d %s %n", cmd, &tid, passwd, &n) != 3
+      || pk_str[n] || tid <= 0 || tid > 10000)
+    return report_bad_packet(pk_name, 2);
+  if (!teamdb_lookup(tid)) {
+    report_error(pk_name, 0, 0, _("Nonexistent team id"));
+    return 0;
+  }
+  teamdb_transaction();
+  if (!teamdb_set_scrambled_passwd(tid, passwd)) {
+    teamdb_rollback();
+    report_error(pk_name, 0, 0, _("Cannot change password"));
+    return 0;
+  }
+  if (teamdb_write_passwd(global->passwd_file) < 0) {
+    teamdb_rollback();
+    return report_error(pk_name, 0, 0, _("Cannot write passwd file"));
+  }
+  teamdb_commit();
+  report_ok(pk_name);
+  return 0;
+}
+
+int
+judge_change_team_vis(char const *pk_name, const packet_t pk_str, void *p)
+{
+  int tid, n;
+  packet_t cmd;
+
+  if (sscanf(pk_str, "%s %d %n", cmd, &tid, &n) != 2
+      || pk_str[n] || tid <= 0 || tid > 10000)
+    return report_bad_packet(pk_name, 0);
+  if (!teamdb_lookup(tid))
+    return report_error(pk_name, 0, 0, _("Nonexistent team id"));
+  teamdb_transaction();
+  if (teamdb_toggle_vis(tid) < 0) {
+    teamdb_rollback();
+    return report_error(pk_name, 0, 0, _("Cannot perform operation"));
+  }
+  if (teamdb_write_passwd(global->passwd_file) < 0) {
+    teamdb_rollback();
+    return report_error(pk_name, 0, 0, _("Cannot write passwd file"));    
+  }
+  teamdb_commit();
+  report_ok(pk_name);
+  return 0;
+}
+
+int
+judge_change_team_ban(char const *pk_name, const packet_t pk_str, void *p)
+{
+  int tid, n;
+  packet_t cmd;
+
+  if (sscanf(pk_str, "%s %d %n", cmd, &tid, &n) != 2
+      || pk_str[n] || tid <= 0 || tid > 10000)
+    return report_bad_packet(pk_name, 0);
+  if (!teamdb_lookup(tid))
+    return report_error(pk_name, 0, 0, _("Nonexistent team id"));
+  teamdb_transaction();
+  if (teamdb_toggle_ban(tid) < 0) {
+    teamdb_rollback();
+    return report_error(pk_name, 0, 0, _("Cannot perform operation"));
+  }
+  if (teamdb_write_passwd(global->passwd_file) < 0) {
+    teamdb_rollback();
+    return report_error(pk_name, 0, 0, _("Cannot write passwd file"));    
+  }
+  teamdb_commit();
+  report_ok(pk_name);
+  return 0;
+}
+
+int
+do_add_team(char const *s, char **msg)
+{
+  int n;
+  int tid;
+  int name_len, login_len, passwd_len, vis, ban;
+  char *name, *login, *passwd;
+
+  if (sscanf(s, "%d%n", &tid, &n) != 1) goto _bad_packet;
+  if (tid < 0 || tid > 10000) goto _bad_packet;
+  s += n;
+  if (sscanf(s, "%d%n", &login_len, &n) != 1) goto _bad_packet;
+  if (login_len <= 0 || login_len > 32767) goto _bad_packet;
+  login = alloca(login_len + 32);
+  s += n;
+  if (*s++ != ' ') goto _bad_packet;
+  memcpy(login, s, login_len);
+  login[login_len] = 0;
+  s += login_len;
+  if (sscanf(s, "%d%n", &name_len, &n) != 1) goto _bad_packet;
+  if (name_len <= 0 || name_len > 32767) goto _bad_packet;
+  name = alloca(name_len + 32);
+  name[name_len] = 0;
+  s += n;
+  if (*s++ != ' ') goto _bad_packet;
+  memcpy(name, s, name_len);
+  s += name_len;
+  if (sscanf(s, "%d%n", &passwd_len, &n) != 1) goto _bad_packet;
+  if (passwd_len <= 0 || passwd_len > 32767) goto _bad_packet;
+  passwd = alloca(passwd_len + 32);
+  passwd[passwd_len] = 0;
+  s += n;
+  if (*s++ != ' ') goto _bad_packet;
+  memcpy(passwd, s, passwd_len);
+  s += passwd_len;
+  if (sscanf(s, "%d%d %n", &vis, &ban, &n) != 2) goto _bad_packet;
+  if (s[n] || vis < 0 || vis > 1 || ban < 0 || ban > 1) goto _bad_packet;
+
+  return teamdb_add_team(tid, login, name, passwd, vis, ban, msg);
+
+ _bad_packet:
+  *msg = _("Bad packet (internal error)");
+  return -1;
+}
+
+int
+judge_add_team(char const *pk_name, const packet_t pk_str, void *p)
+{
+  packet_t cmd;
+  int n;
+  char *msg = 0;
+  int msg_len = 0;
+  char *errmsg;
+
+  if (sscanf(pk_str, "%s %n", cmd, &n) != 1
+      || pk_str[n])
+    return report_bad_packet(pk_name, 2);
+
+  if (generic_read_file(&msg, 0, &msg_len, REMOVE,
+                        global->judge_data_dir, pk_name, "") < 0) {
+    return report_error(pk_name, 2, 0, "Cannot read data file");
+  }
+  teamdb_transaction();
+  if (do_add_team(msg, &errmsg) < 0) {
+    xfree(msg);
+    teamdb_rollback();
+    return report_error(pk_name, 0, 0, errmsg);
+  }
+  if (teamdb_write_passwd(global->passwd_file) < 0) {
+    xfree(msg);
+    teamdb_rollback();
+    return report_error(pk_name, 0, 0, _("Cannot write passwd file"));    
+  }
+  if (teamdb_write_teamdb(global->teamdb_file) < 0) {
+    xfree(msg);
+    teamdb_rollback();
+    return report_error(pk_name, 0, 0, _("Cannot write teamdb file"));
+  }
+  teamdb_commit();
+  xfree(msg);
+  report_ok(pk_name);
+  return 0;
+}
+
+int
 judge_message(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   packet_t cmd, subj, ip, c_name;
@@ -1057,6 +1320,15 @@ struct server_cmd judge_cmds[] =
   { "MSG", judge_message, 0 },
   { "STAND", judge_standings, 0 },
   { "UPDATE", judge_update_public_standings, 0 },
+  { "MTEAMS", judge_view_teams, (void*) 1 },
+  { "JTEAMS", judge_view_teams, 0 },
+  { "VTEAM", judge_view_one_team, 0 },
+  { "CHGLOGIN", judge_change_team_login, 0 },
+  { "CHGNAME", judge_change_team_name, 0 },
+  { "CHGBAN", judge_change_team_ban, 0 },
+  { "CHGVIS", judge_change_team_vis, 0 },
+  { "CHGPASSWD", judge_change_team_password, 0 },
+  { "NEWTEAM", judge_add_team, 0 },
 
   { 0, 0, 0 },
 };
