@@ -3,7 +3,7 @@
 #ifndef __SFORMAT_H__
 #define __SFORMAT_H__
 
-/* Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,22 +15,32 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "prepare.h"
-#include "teamdb.h"
-
 #include <stdlib.h>
+
+struct section_global_data;
+struct section_problem_data;
+struct section_language_data;
+struct section_tester_data;
+struct teamdb_export;
+struct userlist_user;
+struct contest_desc;
+
+struct sformat_extra_data
+{
+  int locale_id;
+  unsigned char *url;
+};
 
 int sformat_message(char *, size_t, char const *,
                     struct section_global_data *glob_data,
                     struct section_problem_data *prob_data,
                     struct section_language_data *lang_data,
                     struct section_tester_data *tester_data,
-                    struct teamdb_export *team_data);
+                    struct teamdb_export *team_data,
+                    struct userlist_user *user_data,
+                    struct contest_desc *cnts_data,
+                    struct sformat_extra_data *extra_data);
 
 #endif /* __SFORMAT_H__ */
