@@ -712,6 +712,7 @@ unparse_runlog_xml(FILE *f,
               unparse_sha1(pp->sha1));
     }
     run_status_to_str_short(status_buf, sizeof(status_buf), pp->status);
+    fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_STATUS], status_buf);
     if (pp->team) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_USER_ID], pp->team);
     }
