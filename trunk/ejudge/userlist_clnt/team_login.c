@@ -78,10 +78,10 @@ userlist_clnt_team_login(struct userlist_clnt *clnt,
     r = -ULS_ERR_PROTOCOL;
     goto cleanup;
   }
-  *p_user_id = in->user_id;
-  *p_cookie = in->cookie;
-  *p_locale_id = in->locale_id;
-  *p_name = xstrdup(name_ptr);
+  if (p_user_id) *p_user_id = in->user_id;
+  if (p_cookie) *p_cookie = in->cookie;
+  if (p_locale_id) *p_locale_id = in->locale_id;
+  if (p_name) *p_name = xstrdup(name_ptr);
 
   r = in->reply_id;
  cleanup:
