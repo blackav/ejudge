@@ -277,6 +277,7 @@ struct edit_flags
 static struct edit_flags member_edit_flags[CONTEST_LAST_MEMBER][CONTEST_LAST_MEMBER_FIELD];
 static int member_min[CONTEST_LAST_MEMBER];
 static int member_max[CONTEST_LAST_MEMBER];
+static int member_init[CONTEST_LAST_MEMBER];
 static int member_cur[CONTEST_LAST_MEMBER];
 
 static char const * const tag_map[] =
@@ -1040,16 +1041,19 @@ register_for_contest_page(void)
 
   if (regs) {
     printf("<h2>%s</h2>\n", _("Check the registration status"));
-    printf("<table><tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th></tr>\n",
+    printf("<table><tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th></tr>\n",
            _("Contest ID"), _("Contest name"), _("Status"),
-           _("Edit personal data"));
+           _("Edit personal data"), _("Submit solution"));
     for (reg = regs; reg; reg = reg->right) {
       ASSERT(reg->tag == USERLIST_T_CONTEST);
       regx = (struct userlist_contest*) reg;
       if (regx->id <= 0 || regx->id >= contests->id_map_size) continue;
       if (!contests->id_map[regx->id]) continue;
       cnts = contests->id_map[regx->id];
-      printf("<form method=\"POST\" action=\"%s\" "
+      printf("<tr><td>%d</td><td>%s</td><td>%s</td>",
+             regx->id, cnts->name, 
+             gettext(regstatus_str(regx->status)));
+      printf("<td><form method=\"POST\" action=\"%s\" "
              "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
              program_name);
       if (!user_cookie) {
@@ -1059,16 +1063,26 @@ register_for_contest_page(void)
                "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
                user_login, user_password, user_usecookies, client_locale_id);
       }
-      printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
-             regx->id);
-      printf("<tr><td>%d</td><td>%s</td><td>%s</td>"
-             "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>"
-             "</tr>\n",
-             regx->id, cnts->name, 
-             gettext(regstatus_str(regx->status)),
-             ACTION_REGISTER_CONTEST_PAGE,
-             _("Edit"));
-      printf("</form>");
+      printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n"
+             "<input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>"
+             "</form></td>",
+             regx->id, ACTION_REGISTER_CONTEST_PAGE, _("Edit"));
+      if (cnts->team_url && regx->status == USERLIST_REG_OK) {
+        printf("<td><form method=\"POST\" action=\"%s\" "
+             "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+               cnts->team_url);
+        if (!user_cookie) {
+          printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n"
+                 "<input type=\"hidden\" name=\"password\" value=\"%s\">\n"
+                 "<input type=\"hidden\" name=\"usecookies\" value=\"%d\">\n"
+                 "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
+                 user_login, user_password, user_usecookies, client_locale_id);
+        }
+        printf("<input type=\"submit\" name=\"XXX\" value=\"%s\"></form></td>\n", _("Submit solution"));
+      } else {
+        printf("<td>&nbsp;</td>");
+      }
+      printf("</tr>\n");
     }
     printf("</table>\n");
   }
@@ -1265,6 +1279,7 @@ prepare_var_table(struct contest_desc *cnts)
     if (!cnts->members[i]) continue;
     member_min[i] = cnts->members[i]->min_count;
     member_max[i] = cnts->members[i]->max_count;
+    member_init[i] = cnts->members[i]->init_count;
     if (member_max[i] <= 0) continue;
     if (!cnts->members[i]->fields) continue;
 
@@ -1359,7 +1374,7 @@ read_user_info_from_form(void)
           }
         } else if (val && i == CONTEST_MF_GRADE) {
           if (sscanf(val, "%d %n", &x, &n) != 1 || val[n]
-              || x <= 0 || x > 20) {
+              || x <= 0 || x >= 20) {
             val = "";
           }
         }
@@ -1553,7 +1568,12 @@ read_user_info_from_server(void)
 
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
     if (member_max[role] <= 0) continue;
-    if (!u->members[role]) continue;
+    if (!u->members[role]) {
+      if (member_cur[role] < member_init[role]) {
+        member_cur[role] = member_init[role];
+      }
+      continue;
+    }
     member_cur[role] = u->members[role]->total;
     if (member_cur[role] < 0) member_cur[role] = 0;
     if (member_cur[role] > member_max[role])
@@ -1614,6 +1634,9 @@ read_user_info_from_server(void)
       if (member_edit_flags[role][CONTEST_MF_OCCUPATION].is_editable) {
         member_info[role][pers][CONTEST_MF_OCCUPATION] = m->occupation;
       }
+    }
+    if (member_cur[role] < member_init[role]) {
+      member_cur[role] = member_init[role];
     }
   }
 }
@@ -1846,7 +1869,7 @@ edit_registration_data(void)
   printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
          user_contest_id);
 
-  printf("<hr><h2>General user information</h2>");
+  printf("<hr><h2>%s</h2>", _("General user information"));
   printf("<p>%s: <input type=\"text\" disabled=\"1\" name=\"user_login\" value=\"%s\" size=\"16\">\n", _("Login"), user_login);
   printf("<br><input type=\"checkbox\" name=\"show_login\"%s>%s",
          user_show_login?" checked=\"yes\"":"",
@@ -1863,6 +1886,7 @@ edit_registration_data(void)
          user_show_email?" checked=\"yes\"":"",
          _("Show your e-mail address to public?"));
 
+  printf("<p>%s</p>\n", _("In the \"User name\" field you type the name of the user, not the participant. For example, if you are registering for participation in a collegiate contest, this field contains the name of your team. The value of this field is used in the list of registered teams, in the standings, etc."));
   printf("<p>%s%s: <input type=\"text\" name=\"name\" value=\"%s\" maxlength=\"64\" size=\"64\">\n", _("User name"), user_contest_id>0?" (*)":"", user_name);
 
   /* display change forms */
@@ -2163,7 +2187,7 @@ register_new_user_page(void)
          _("Type in a desirable login identifier. <b>Note</b>, "
            "that your login still <i>may be</i> (in some cases) assigned "
            "automatically."));
-  printf("<p>%s: <input type=\"text\" name=\"login\" value=\"%s\""
+  printf("<p>%s (*): <input type=\"text\" name=\"login\" value=\"%s\""
            " size=\"16\" maxlength=\"16\">\n",
          _("Login"), user_login);
   printf("<p>%s</p>", _("Type your valid e-mail address"));
@@ -2181,8 +2205,10 @@ register_new_user_page(void)
          _("no"),
          user_usecookies == 1?" checked=\"yes\"":"",
          _("yes"));
+  /*
   printf("<p><input type=\"reset\" value=\"%s\">",
          _("Reset the form"));
+  */
   printf("<p><input type=\"submit\" name=\"action_%d\" value=\"%s\">",
          ACTION_REGISTER_REGISTER_PAGE,
          _("Register"));
