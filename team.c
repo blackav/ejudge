@@ -837,7 +837,7 @@ main(int argc, char *argv[])
   if (need_show_clar)
     printf("<li><a href=\"#clar\">%s</a>\n", _("Send a message to judges"));
   if (!server_clars_disabled && !server_clients_suspended)
-    printf("<li><a href=\"#clarstat\">%s</a>\n", _("Messages log"));
+    printf("<li><a href=\"#clarstat\">%s</a>\n", _("Messages from judges"));
   if (!server_clients_suspended) {
     printf("<li><a href=\"#chgpasswd\">%s</a>\n", _("Change password"));
   }
