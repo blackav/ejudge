@@ -3,7 +3,7 @@
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,11 @@ int html_armored_memlen(char const *text, int size);
 int html_armored_strlen(char const *str);
 int html_armor_text(char const *text, int size, char *out);
 int html_armor_string(char const *str, char *out);
+unsigned char *html_armor_string_dup(const unsigned char *str);
 int html_armor_needed(const unsigned char *str, size_t *psz);
+
+//unsigned char *html_armor_string_dupa(const unsigned char *str);
+#define html_armor_string_dupa(s) ({ unsigned char *_dupa_tmp_s = (s); size_t _dupa_tmp_len = strlen(_dupa_tmp_s), _dupa_tmp_len_2 = html_armored_memlen(_dupa_tmp_s, _dupa_tmp_len); unsigned char *_dupa_tmp_str = (unsigned char*) alloca(_dupa_tmp_len_2 + 1); html_armor_text(_dupa_tmp_s, _dupa_tmp_len, _dupa_tmp_str); _dupa_tmp_str; }) 
 
 char *duration_str(int show_astr, unsigned long cur,
                    unsigned long time, char *buf, int len);
