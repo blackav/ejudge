@@ -1,3 +1,23 @@
+2004-06-19  Alexander Chernov  <cher@ispras.ru>
+
+	* do_pass_fd.c, list_runs.c, open.c, pass_fd.c, recv_packet.c, send_packet.c, userlist_cmd.c:
+	The `koi8-r' charset specification is removed from the file header.
+	The copyright notice is updated.
+	The compilation `compile-command' is updated.
+	The `Cyrillic-KOI8' language environment setting is removed.
+
+	* get_archive.c, message.c, show_item.c, simple_cmd.c, submit_clar.c:
+	The `koi8-r' charset specification is removed from the file headers.
+	The compilation `compile-command' is updated;
+	The `Cyrillic-KOI8' language environment setting is removed.
+
+	* edit_run.c, rejudge_by_mask.c, reset_filter.c, submit_run.c, upload_report.c:
+	The `koi8-r' charset specification is removed from the file headers;
+	The compilation `compile-command' is updated.
+
+	* import_xml_runs.c, master_page.c, standings.c, team_page.c, view.c:
+	The `koi8-r' charset specification is removed from the file headers.
+
 2004-05-04  Alexander Chernov  <cher@ispras.ru>
 
 	* view.c:

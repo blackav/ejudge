@@ -1336,3 +1336,6 @@ serve_clnt/team_page.c 1 5 314771
 serve_clnt/upload_report.c 1 3 189001
 serve_clnt/view.c 1 11 329461
 filter_scan.lex 1 12 519668
+expat_iface.c 1 7 1507397
+NEWS.RUS 1 10 9817634
+NEWS 1 10 5733481
