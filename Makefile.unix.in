@@ -168,7 +168,7 @@ userlist-server: ${UL_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT}
 
 clean:
-	-rm *.o *~ $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po
+	-rm -f *.o *~ $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog
 
 deps:
 	$(CC) $(CFLAGS) -MM $(CFILES)
