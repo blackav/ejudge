@@ -1,4 +1,4 @@
-/* -*- mode: c; coding: koi8-r -*- */
+/* -*- mode: c -*- */
 /* $Id$ */
 
 /* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
@@ -76,7 +76,7 @@ serve_clnt_reset_filter(int sock_fd,
 
 /**
  * Local variables:
- *  compile-command: "make"
+ *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
