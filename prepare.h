@@ -20,7 +20,6 @@
 #include "pathutl.h"
 #include "contests.h"
 #include "parsecfg.h"
-#include "nls.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -116,9 +115,9 @@ struct section_global_data
 
   /* charsets */
   puc_t charset[32];            /* html pages charset */
-  struct nls_table *charset_ptr; /* internal charset */
-  puc_t standings_charset[32];  /* charset for standings */
-  struct nls_table *standings_charset_ptr;
+  //struct nls_table *charset_ptr; /* internal charset */
+  //puc_t standings_charset[32];  /* charset for standings */
+  //struct nls_table *standings_charset_ptr;
 
   /* ====== CONFIGURATION FILES/DIRECTORIES SETUP ====== */
   path_t conf_dir;              /* configuration dir */
