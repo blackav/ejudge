@@ -1029,6 +1029,13 @@ run_get_virtual_stop_time(int user_id)
 }
 
 int
+run_get_virtual_status(int user_id)
+{
+  struct vt_entry *pvt = get_entry(user_id);
+  return pvt->status;
+}
+
+int
 run_virtual_start(int user_id, time_t t, unsigned long ip)
 {
   struct vt_entry *pvt = get_entry(user_id);
@@ -1044,6 +1051,7 @@ run_virtual_start(int user_id, time_t t, unsigned long ip)
   runs[i].ip = ip;
   runs[i].status = RUN_VIRTUAL_START;
   pvt->start_time = t;
+  pvt->status = V_VIRTUAL_USER;
   if (run_flush_entry(i) < 0) return -1;
   return -1;
 }
@@ -1060,6 +1068,10 @@ run_virtual_stop(int user_id, time_t t, unsigned long ip)
   }
   if (pvt->stop_time) {
     err("runlog: virtual contest for %d already stopped", user_id);
+    return -1;
+  }
+  if (pvt->status != V_VIRTUAL_USER) {
+    err("runlog: user %d is not virtual", user_id);
     return -1;
   }
   i = append_record();
