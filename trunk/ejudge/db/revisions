@@ -1673,3 +1673,14 @@ run_packet_3.c 1 2 105319
 run_packet_4.c 1 2 269223
 run_packet_5.c 1 2 276263
 run_packet_6.c 1 2 94374
+run_packet.h 1 2 295369
+run_packet_priv.h 1 3 276797
+run.c 1 65 4918409
+serve.c 1 87 12585696
+compile_packet_1.c 1 3 482152
+compile_packet_2.c 1 3 355714
+run_packet_1.c 1 3 431601
+run_packet_2.c 1 3 463520
+run_packet_4.c 1 3 277328
+run_packet_5.c 1 3 285935
+run_packet_7.c 1 1 106663
