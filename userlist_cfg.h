@@ -22,10 +22,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "expat_iface.h"
+
 #include <stdio.h>
 
 struct userlist_cfg
 {
+  struct xml_tree b;
+
+  // these strings actually point into another strings in XML tree
   unsigned char *socket_path;
   unsigned char *db_path;
 };
