@@ -34,7 +34,10 @@ enum
   RUN_ACCEPTED         = 8,
   RUN_IGNORED          = 9,
   RUN_DISQUALIFIED     = 10,
-  RUN_MAX_STATUS       = 10,
+  RUN_PENDING          = 11,
+  RUN_MEM_LIMIT_ERR    = 12,    /* not used currently, just in case... */
+  RUN_SECURITY_ERR     = 13,    /* not used currently */
+  RUN_MAX_STATUS       = 13,
 
   RUN_PSEUDO_FIRST     = 20,
   RUN_VIRTUAL_START    = 20,
@@ -42,13 +45,15 @@ enum
   RUN_EMPTY            = 22,
   RUN_PSEUDO_LAST      = 22,
 
-  RUN_TRANSIENT_FIRST  = 96,
+  RUN_TRANSIENT_FIRST  = 95,
+  RUN_FULL_REJUDGE     = 95,    /* cannot appear in runlog */
   RUN_RUNNING          = 96,
   RUN_COMPILED         = 97,
   RUN_COMPILING        = 98,
   RUN_AVAILABLE        = 99,
   RUN_REJUDGE          = 99,
   RUN_TRANSIENT_LAST   = 99,
+  RUN_LAST             = 99,
 };
 
 enum { RUN_LOG_CREATE = 1, RUN_LOG_READONLY = 2 };
@@ -184,5 +189,9 @@ int run_get_total_pages(int run_id);
 int run_find(int first_run, int last_run,
              int team_id, int prob_id, int lang_id);
 int run_undo_add_record(int run_id);
+int run_is_failed_attempt(int status);
+
+int run_status_to_str_short(unsigned char *buf, size_t size, int val);
+int run_str_short_to_status(const unsigned char *str, int *pr);
 
 #endif /* __RUNLOG_H__ */
