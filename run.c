@@ -101,6 +101,31 @@ result2str(int s)
   }
 }
 
+static void
+print_by_line(FILE *f, char const *s)
+{
+  char const *p = s;
+
+  if (global->max_file_length >  0 && strlen(s) > global->max_file_length) {
+    fprintf(f, "<file is too long>\n");
+    return;
+  }
+
+  while (*s) {
+    while (*s && *s != '\r' && *s != '\n') s++;
+    if (global->max_line_length > 0 && s - p > global->max_line_length) {
+      fprintf(f, "<line is too long>\n");
+    } else {
+      while (p != s)
+        putc(*p++, f);
+    }
+    while (*s == '\r' || *s == '\n')
+      putc(*s++, f);
+    p = s;
+  }
+  putc('\n', f);
+}
+
 static int
 generate_report(char *report_path, int scores, int max_score)
 {
@@ -165,27 +190,23 @@ generate_report(char *report_path, int scores, int max_score)
     fprintf(f, _("Judgement: %s\n"), result2str(tests[i].status));
     if (tests[i].output != NULL) {
       fprintf(f, _("--- Output ---\n"));
-      if (strlen(tests[i].output) > 65536) {
-        fprintf(f, _("Program output is too long\n"));
-      } else {
-        fprintf(f, "%s\n", tests[i].output);
-      }
+      print_by_line(f, tests[i].output);
     }
     if (tests[i].correct != NULL) {
       fprintf(f, _("--- Correct ---\n"));
-      fprintf(f, "%s\n", tests[i].correct);
+      print_by_line(f, tests[i].correct);
     }
     if (tests[i].input != NULL) {
       fprintf(f, _("--- Input ---\n"));
-      fprintf(f, "%s\n", tests[i].input);
+      print_by_line(f, tests[i].input);
     }
     if (tests[i].error != NULL) {
       fprintf(f, _("--- Stderr ---\n"));
-      fprintf(f, "%s\n", tests[i].error);
+      print_by_line(f, tests[i].error);
     }
     if (tests[i].chk_out != NULL) {
       fprintf(f, _("--- Checker output ---\n"));
-      fprintf(f, "%s\n", tests[i].chk_out);
+      print_by_line(f, tests[i].chk_out);
     }
   }
 
