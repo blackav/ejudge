@@ -373,19 +373,26 @@ teamdb_get_total_teams(void)
 }
 
 int
-teamdb_toggle_vis(int tid)
+teamdb_toggle_flags(int user_id, int contest_id, unsigned int flags)
 {
   ASSERT(server_conn);
-  err("teamdb_toggle_vis: not implemented in client mode");
-  return -1;
-}
 
-int
-teamdb_toggle_ban(int tid)
-{
-  ASSERT(server_conn);
-  err("teamdb_toggle_ban: not implemented in client mode");
-  return -1;
+  if (!teamdb_lookup_client(user_id)) {
+    err("teamdb_export_team: bad id: %d", user_id);
+    return -1;
+  }
+
+  int r;
+
+ restart_operation:
+  r = userlist_clnt_change_registration(server_conn, user_id, contest_id,
+                                        -1, 3, flags);
+  if (r == -ULS_ERR_NO_CONNECT || r == -ULS_ERR_DISCONNECT) {
+    r = restore_connection();
+    if (r <= 0) return -1;
+    goto restart_operation;
+  }
+  return r;
 }
 
 int
