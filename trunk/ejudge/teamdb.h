@@ -36,7 +36,6 @@ int   teamdb_get_max_team_id(void);
 int   teamdb_get_flags(int);
 int   teamdb_get_total_teams(void);
 
-int teamdb_regenerate_passwords(int fd);
 int teamdb_dump_database(int fd);
 
 int teamdb_toggle_flags(int user_id, int contest_id, unsigned int flags);

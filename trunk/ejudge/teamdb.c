@@ -416,37 +416,6 @@ teamdb_export_team(int tid, struct teamdb_export *pdata)
 }
 
 int
-teamdb_regenerate_passwords(int fd)
-{
-  int r;
-
-  ASSERT(server_conn);
- restart_server_request:
-  r = userlist_clnt_generate_team_passwd(server_conn, contest_id, fd);
-  if (r == -ULS_ERR_NO_CONNECT || r == -ULS_ERR_DISCONNECT) {
-    r = restore_connection();
-    if (r < 0) {
-      err("teamdb_regenerate_passwords: cannot restore connection");
-      close(fd);
-      return -1;
-    }
-    if (!r) {
-      err("teamdb_regenerate_passwords: user interrupt");
-      close(fd);
-      return -1;
-    }
-    goto restart_server_request;
-  }
-  if (r < 0) {
-    err("teamdb_regenerate_passwords: failed: %s", userlist_strerror(-r));
-    close(fd);
-    return -1;
-  }
-  close(fd);
-  return 0;
-}
-
-int
 teamdb_dump_database(int fd)
 {
   int r;
