@@ -28,11 +28,12 @@ enum
     FILTER_TYPE_INT = 1,
     FILTER_TYPE_STRING,
     FILTER_TYPE_BOOL,
-    FILTER_TYPE_DATE,
+    FILTER_TYPE_TIME,
     FILTER_TYPE_DUR,
     FILTER_TYPE_SIZE,
     FILTER_TYPE_RESULT,
     FILTER_TYPE_HASH,
+    FILTER_TYPE_IP,
 
     FILTER_TYPE_LAST
   };
@@ -45,7 +46,15 @@ enum
     FILTER_ERR_INT_OVF,         /* integer overflow */
     FILTER_ERR_DIV0,            /* division by zero */
     FILTER_ERR_INT_CVT,         /* string->int conversion failed */
+    FILTER_ERR_BOOL_CVT,        /* string->bool conversion failed */
     FILTER_ERR_DUR_CVT,         /* string->dur_t conversion failed */
+    FILTER_ERR_TIME_CVT,        /* string->time_t conversion failed */
+    FILTER_ERR_RESULT_CVT,      /* string->result_t conversion failed */
+    FILTER_ERR_HASH_CVT,        /* string->hash_t conversion failed */
+    FILTER_ERR_IP_CVT,          /* string->ip_t conversion failed */
+    FILTER_ERR_RANGE,           /* int->result_t conversion failed */
+    FILTER_ERR_INV_ARG,         /* invalid argument for operation */
+    FILTER_ERR_INV_TYPES,       /* invalid argument types */
 
     FILTER_ERR_LAST
   };
@@ -65,12 +74,16 @@ struct filter_tree
     size_t z;
     int r;
     unsigned long h[5];
+    unsigned long p;
   } v;
 };
 struct filter_tree_mem;
 
 struct filter_tree_mem *filter_tree_new(void);
 struct filter_tree_mem *filter_tree_delete(struct filter_tree_mem *);
+void filter_tree_clear(struct filter_tree_mem *);
+
+void *filter_tree_alloc(struct filter_tree_mem *, size_t);
 
 struct filter_tree *filter_tree_new_node(struct filter_tree_mem *,
                                          int, int,
@@ -81,12 +94,26 @@ struct filter_tree *filter_tree_new_buf(struct filter_tree_mem *,
                                         size_t len);
 struct filter_tree *filter_tree_new_string(struct filter_tree_mem *,
                                            unsigned char const *);
+struct filter_tree *filter_tree_new_string2(struct filter_tree_mem *,
+                                            unsigned char *);
 struct filter_tree *filter_tree_new_int(struct filter_tree_mem *,
                                         int);
 struct filter_tree *filter_tree_new_bool(struct filter_tree_mem *,
                                          int);
 struct filter_tree *filter_tree_new_dur(struct filter_tree_mem *,
                                         time_t);
+struct filter_tree *filter_tree_new_time(struct filter_tree_mem *,
+                                         time_t);
+struct filter_tree *filter_tree_new_size(struct filter_tree_mem *,
+                                         size_t);
+struct filter_tree *filter_tree_new_result(struct filter_tree_mem *,
+                                           int);
+struct filter_tree *filter_tree_new_hash(struct filter_tree_mem *,
+                                         unsigned long *);
+struct filter_tree *filter_tree_new_ip(struct filter_tree_mem *,
+                                       unsigned long);
+struct filter_tree *filter_tree_dup(struct filter_tree_mem *,
+                                    struct filter_tree*);
 
 void filter_tree_print(struct filter_tree *p, FILE *out,
                        unsigned char const *ind);
@@ -99,16 +126,21 @@ void filter_tree_stats(struct filter_tree_mem *mem, FILE *);
 void filter_expr_init_parser(struct filter_tree_mem *mem);
 
 unsigned char const *filter_tree_type_to_str(int type);
+unsigned char const *filter_tree_kind_to_str(int kind);
 
 int filter_tree_int_str(unsigned char *, size_t, int);
 int filter_tree_bool_str(unsigned char *, size_t, int);
-int filter_tree_date_str(unsigned char *, size_t, time_t);
+int filter_tree_time_str(unsigned char *, size_t, time_t);
 int filter_tree_dur_str(unsigned char *, size_t, time_t);
 int filter_tree_size_str(unsigned char *, size_t, size_t);
 int filter_tree_result_str(unsigned char *, size_t, int);
 int filter_tree_hash_str(unsigned char *, size_t, unsigned long *);
+int filter_tree_ip_str(unsigned char *, size_t, unsigned long);
 
-int filter_tree_eval_node(int kind, struct filter_tree *res,
+int filter_tree_is_value_node(struct filter_tree *p);
+
+int filter_tree_eval_node(struct filter_tree_mem *,
+                          int kind, struct filter_tree *res,
                           struct filter_tree *p1, struct filter_tree *p2);
 
 unsigned char const *filter_strerror(int n);
