@@ -1,7 +1,7 @@
-/* -*- mode: c; coding: koi8-r -*- */
+/* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
