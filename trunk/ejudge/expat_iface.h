@@ -28,6 +28,7 @@ struct xml_attn
 {
   struct xml_attn *next, *prev;
   int tag;
+  int line, column;
   char *text;
 };
 
@@ -36,19 +37,20 @@ struct xml_tree
   struct xml_tree *up, *first_down, *last_down, *left, *right;
   struct xml_attn *first, *last;
   int tag;
+  int line, column;
   char *text;
 };
 
 struct xml_tree *
 xml_build_tree(char const *path,
-               char **tag_map,
-               char **attn_map,
+               char const * const *tag_map,
+               char const * const *attn_map,
                void * (*tag_alloc)(int),
                void * (*attn_alloc)(int));
 struct xml_tree *
 xml_build_tree_str(char const *str,
-                   char **tag_map,
-                   char **attn_map,
+                   char const * const *tag_map,
+                   char const * const *attn_map,
                    void * (*tag_alloc)(int),
                    void * (*attn_alloc)(int));
 struct xml_tree *
@@ -57,18 +59,19 @@ xml_tree_free(struct xml_tree *tree,
               void (*attn_free)(struct xml_attn *));
 void
 xml_unparse_tree(FILE *out,
-                 struct xml_tree *tree,
-                 char **tag_map,
-                 char **attn_map,
-                 int (*tag_print)(FILE *, struct xml_tree *),
-                 int (*attn_print)(FILE *, struct xml_attn *));
+                 struct xml_tree const *tree,
+                 char const * const *tag_map,
+                 char const * const *attn_map,
+                 int (*tag_print)(FILE *, struct xml_tree const *),
+                 int (*attn_print)(FILE *, struct xml_attn const *),
+                 void (*fmt_print)(FILE *, struct xml_tree const *, int, int));
 void
 xml_unparse_tree_str(char *buf,
                      int buf_size,
-                     struct xml_tree *tree,
-                     char **tag_map,
-                     char **attn_map,
-                     int (*tag_print)(char *, int, struct xml_tree *),
-                     int (*attn_print)(char *, int, struct xml_attn *));
+                     struct xml_tree const *tree,
+                     char const * const *tag_map,
+                     char const * const *attn_map,
+                     int (*tag_print)(char *, int, struct xml_tree const *),
+                     int (*attn_print)(char *, int, struct xml_attn const *));
 
 #endif /* __EXPAT_IFACE_H__ */
