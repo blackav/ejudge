@@ -18,7 +18,7 @@ LD=gcc
 CFLAGS=${CDEBUGFLAGS} ${CCOMPFLAGS} ${CINTLFLAG} ${CEXTRAFLAGS}
 LDFLAGS=${CDEBUGFLAGS} ${LDCOMPFLAGS} ${LDEXTRAFLAGS}
 
-TARGETS=bpcemu2 dosrun3 bppemu bccemu
+TARGETS=bpcemu2 dosrun3 bppemu bccemu qbemu
 TARGETS += capexec libdropcaps.so
 
 all: ${TARGETS}
@@ -28,6 +28,18 @@ clean:
 bpcemu2: bpcemu2.o
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
 bpcemu2.o: bpcemu2.c
+
+bppemu: bppemu.o
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
+bppemu.o: bppemu.c
+
+bccemu: bccemu.o
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
+bccemu.o: bccemu.c
+
+qbemu: qbemu.o
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
+qbemu.o: qbemu.c
 
 capexec: capexec.o
 	${LD} ${LDFLAGS} $^ -o $@ -lcap ${LDLIBS}
