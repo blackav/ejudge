@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,7 @@ userlist_clnt_set_info(struct userlist_clnt *clnt,
   ASSERT(clnt->fd >= 0);
   ASSERT(info);
 
-  out_size = sizeof(*out) + strlen(info) + 1;
+  out_size = sizeof(*out) + strlen(info);
   out = (struct userlist_pk_set_user_info*) alloca(out_size);
   if (!out) return -ULS_ERR_OUT_OF_MEM;
   memset(out, 0, out_size);
@@ -54,6 +54,5 @@ userlist_clnt_set_info(struct userlist_clnt *clnt,
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
