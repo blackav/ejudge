@@ -1316,6 +1316,20 @@ confirm_squeeze(void)
 }
 
 static void
+confirm_continue(void)
+{
+  set_cookie_if_needed();
+  client_put_header(global->charset, "Confirm continue contest");
+  printf("<p>");
+  print_refresh_button(_("No"));
+  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+         "</form></p>", form_start_simple, ACTION_CONTINUE_2,
+         _("Yes, continue!"));
+  client_put_footer();
+  exit(0);  
+}
+
+static void
 confirm_clear_run(void)
 {
   unsigned char *s;
@@ -1428,6 +1442,17 @@ action_squeeze_runs(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_SQUEEZE_RUNS, 0, 0);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+}
+
+static void
+action_continue(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_CONTINUE, 0, 0);
   operation_status_page(r, 0);
   force_recheck_status = 1;
 }
@@ -1960,6 +1985,12 @@ main(int argc, char *argv[])
       break;
     case ACTION_SET_JUDGING_MODE:
       action_set_judgind_mode();
+      break;
+    case ACTION_CONTINUE:
+      confirm_continue();
+      break;
+    case ACTION_CONTINUE_2:
+      action_continue();
       break;
     default:
       change_status_if_asked();
