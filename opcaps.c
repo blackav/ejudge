@@ -115,6 +115,7 @@ opcaps_parse(unsigned char const *str, opcap_t *pcap)
   int len, bit;
   unsigned char const *p;
   unsigned char *str2, *q, *e, *str3;
+  char *tmpe = 0;
 
   if (pcap) *pcap = 0;
   ASSERT(str);
@@ -133,7 +134,8 @@ opcaps_parse(unsigned char const *str, opcap_t *pcap)
   if (str2[0] >= '0' && str2[0] <= '9') {
     // a number
     errno = 0;
-    lcap = strtoull(str2, (char**) &e, 0);
+    lcap = strtoull(str2, &tmpe, 0);
+    e = tmpe;
     if (*e || errno == ERANGE) return -1;
     // FIXME: this works, only if OPCAP_LAST < 64
     if (lcap >= (1ULL << OPCAP_LAST)) return -1;
