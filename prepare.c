@@ -28,6 +28,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -162,6 +163,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(ignore_duplicated_runs, "d"),
   GLOBAL_PARAM(report_error_code, "d"),
   GLOBAL_PARAM(auto_short_problem_name, "d"),
+  GLOBAL_PARAM(enable_continue, "d"),
 
   GLOBAL_PARAM(standings_team_color, "s"),
   GLOBAL_PARAM(standings_virtual_team_color, "s"),
@@ -198,6 +200,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(input_file, "s"),
   PROBLEM_PARAM(output_file, "s"),
   PROBLEM_PARAM(test_score_list, "s"),
+  PROBLEM_PARAM(test_sets, "x"),
 
   { 0, 0, 0, 0 }
 };
@@ -602,6 +605,89 @@ process_abstract_tester(int i)
 }
 
 static int
+parse_testsets(char **set_in, int *p_total, struct testset_info **p_info)
+{
+  int total = 0;
+  struct testset_info *info = 0;
+  int i, n, x, t, score;
+  unsigned char *s;
+
+  if (!set_in || !set_in[0]) return 0;
+
+  *p_total = 0;
+  *p_info = 0;
+
+  for (total = 0; set_in[total]; total++);
+  info = (struct testset_info*) xcalloc(total, sizeof(info[0]));
+
+  for (i = 0; i < total; i++) {
+    s = set_in[i];
+    t = -1;
+    while (1) {
+      n = 0;
+      if (sscanf(s, "%d%n", &x, &n) != 1) break;
+      if (x <= 0 || x >= 1000) {
+        err("invalid test number in testset specification");
+        return -1;
+      }
+      if (x > t) t = x;
+      s += n;
+    }
+
+    if (t == -1) {
+      err("no test defined in testset");
+      return -1;
+    }
+
+    while (isspace(*s)) s++;
+    if (*s != '=') {
+      err("`=' expected in the testset specification");
+      return -1;
+    }
+    s++;
+
+    n = 0;
+    if (sscanf(s, "%d %n", &score, &n) != 1) {
+      err("score expected in the testset specification");
+      return -1;
+    }
+    if (s[n]) {
+      err("garbage after testset specification");
+      return -1;
+    }
+    if (score < 0) {
+      err("invalid score in testset specification");
+      return -1;
+    }
+
+    info[i].total = t;
+    info[i].score = score;
+    info[i].testop = 0;
+    info[i].scoreop = 0;
+    info[i].nums = (unsigned char*) xcalloc(t, sizeof(info[i].nums[0]));
+
+    s = set_in[i];
+    while (1) {
+      n = 0;
+      if (sscanf(s, "%d%n", &x, &n) != 1) break;
+      ASSERT(x > 0 && x < 1000);
+      s += n;
+      info[i].nums[x - 1] = 1;
+    }
+    /*
+    fprintf(stderr, ">>%d\n", t);
+    for (n = 0; n < t; n++)
+      fprintf(stderr, " %d", info[i].nums[n]);
+    fprintf(stderr, "\n");
+    */
+  }
+
+  *p_info = info;
+  *p_total = total;
+  return 0;
+}
+
+static int
 set_defaults(int mode)
 {
   struct generic_section_config *p;
@@ -827,6 +913,7 @@ set_defaults(int mode)
     global->score_system_val = SCORE_OLYMPIAD;
   } else {
     err("Invalid scoring system: %s", global->score_system);
+    return -1;
   }
 
   if (global->tests_to_accept == -1) {
@@ -1222,6 +1309,13 @@ set_defaults(int mode)
       if (probs[i]->use_corr == -1) {
         probs[i]->use_corr = 0;
       }
+    }
+
+    if (probs[i]->test_sets) {
+      if (parse_testsets(probs[i]->test_sets,
+                         &probs[i]->ts_total,
+                         &probs[i]->ts_infos) < 0)
+        return -1;
     }
   }
 
