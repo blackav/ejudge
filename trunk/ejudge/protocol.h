@@ -4,7 +4,7 @@
 #ifndef __PROTOCOL_H__
 #define __PROTOCOL_H__
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -105,6 +105,9 @@ enum
     SRV_CMD_TEST_SUSPEND,
     SRV_CMD_TEST_RESUME,
     SRV_CMD_JUDGE_SUSPENDED,
+    SRV_CMD_SET_ACCEPTING_MODE,
+    SRV_CMD_PRIV_PRINT_RUN,
+    SRV_CMD_PRINT_RUN,
 
     SRV_CMD_LAST
   };
@@ -157,6 +160,8 @@ enum
     SRV_ERR_BAD_STATUS,
     SRV_ERR_ONLY_VIRTUAL,
     SRV_ERR_READONLY_RUN,
+    SRV_ERR_PAGES_QUOTA,
+    SRV_ERR_ALREADY_PRINTED,
 
     SRV_ERR_LAST
   };
@@ -317,6 +322,7 @@ enum
     PROT_SERVE_RUN_TESTS_SET = 256,
     PROT_SERVE_RUN_SCORE_SET = 512,
     PROT_SERVE_RUN_READONLY_SET = 1024,
+    PROT_SERVE_RUN_PAGES_SET = 2048,
   };
 
 struct prot_serve_pkt_run_info
@@ -335,6 +341,7 @@ struct prot_serve_pkt_run_info
   int tests;
   int score;
   int is_readonly;
+  int pages;
   int user_login_len;
   unsigned char data[1];
 };
