@@ -42,8 +42,7 @@ int   teamdb_get_total_teams(void);
 
 int teamdb_regenerate_passwords(int fd);
 
-int   teamdb_toggle_ban(int);
-int   teamdb_toggle_vis(int);
+int teamdb_toggle_flags(int user_id, int contest_id, unsigned int flags);
 
 /* this is export data structure */
 enum {
