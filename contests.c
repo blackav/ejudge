@@ -47,6 +47,7 @@ static char const * const tag_map[] =
   "ip",
   "field",
   "name",
+  "name_en",
   "contestants",
   "reserves",
   "coaches",
@@ -70,6 +71,15 @@ static char const * const tag_map[] =
   "register_footer_file",
   "team_header_file",
   "team_footer_file",
+  "users_head_style",
+  "users_par_style",
+  "users_table_style",
+  "users_verb_style",
+  "register_head_style",
+  "register_par_style",
+  "register_table_style",
+  "team_head_style",
+  "team_par_style",
 
   0
 };
@@ -107,6 +117,7 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   sizeof(struct contest_ip),    /* CONTEST_IP */
   sizeof(struct contest_field), /* CONTEST_FIELD */
   0,                            /* CONTEST_NAME */
+  0,                            /* CONTEST_NAME_EN */
   sizeof(struct contest_member), /* CONTEST_CONTESTANTS */
   sizeof(struct contest_member), /* CONTEST_RESERVES */
   sizeof(struct contest_member), /* CONTEST_COACHES */
@@ -130,6 +141,15 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   0,                            /* REGISTER_FOOTER_FILE */
   0,                            /* TEAM_HEADER_FILE */
   0,                            /* TEAM_FOOTER_FILE */
+  0,                            /* USERS_HEAD_STYLE */
+  0,                            /* USERS_PAR_STYLE */
+  0,                            /* USERS_TABLE_STYLE */
+  0,                            /* USERS_VERB_STYLE */
+  0,                            /* REGISTER_HEAD_STYLE */
+  0,                            /* REGISTER_PAR_STYLE */
+  0,                            /* REGISTER_TABLE_STYLE */
+  0,                            /* TEAM_HEAD_STYLE */
+  0,                            /* TEAM_PAR_STYLE */
 };
 static size_t const attn_sizes[CONTEST_LAST_ATTN] =
 {
@@ -173,11 +193,17 @@ static char const * const field_map[] =
   0,
   "homepage",
   "inst",
+  "inst_en",
   "instshort",
+  "instshort_en",
   "fac",
+  "fac_en",
   "facshort",
+  "facshort_en",
   "city",
+  "city_en",
   "country",
+  "country_en",
 
   0
 };
@@ -186,18 +212,27 @@ static char const * const member_field_map[] =
 {
   0,
   "firstname",
+  "firstname_en",
   "middlename",
+  "middlename_en",
   "surname",
+  "surname_en",
   "status",
   "grade",
   "group",
+  "group_en",
   "email",
   "homepage",
   "inst",
+  "inst_en",
   "instshort",
+  "instshort_en",
   "fac",
+  "fac_en",
   "facshort",
+  "facshort_en",
   "occupation",
+  "occupation_en",
 
   0,
 };
@@ -636,6 +671,9 @@ parse_contest(struct contest_desc *cnts, char const *path)
     case CONTEST_NAME:
       if (handle_final_tag(path, t, &cnts->name) < 0) return -1;
       break;
+    case CONTEST_NAME_EN:
+      if (handle_final_tag(path, t, &cnts->name_en) < 0) return -1;
+      break;
     case CONTEST_USERS_HEADER_FILE:
       if (handle_final_tag(path, t, &cnts->users_header_file) < 0) return -1;
       break;
@@ -653,6 +691,33 @@ parse_contest(struct contest_desc *cnts, char const *path)
       break;
     case CONTEST_TEAM_FOOTER_FILE:
       if (handle_final_tag(path, t, &cnts->team_footer_file) < 0) return -1;
+      break;
+    case CONTEST_USERS_HEAD_STYLE:
+      if (handle_final_tag(path, t, &cnts->users_head_style) < 0) return -1;
+      break;
+    case CONTEST_USERS_PAR_STYLE:
+      if (handle_final_tag(path, t, &cnts->users_par_style) < 0) return -1;
+      break;
+    case CONTEST_USERS_TABLE_STYLE:
+      if (handle_final_tag(path, t, &cnts->users_table_style) < 0) return -1;
+      break;
+    case CONTEST_USERS_VERB_STYLE:
+      if (handle_final_tag(path, t, &cnts->users_verb_style) < 0) return -1;
+      break;
+    case CONTEST_REGISTER_HEAD_STYLE:
+      if (handle_final_tag(path, t, &cnts->register_head_style) < 0) return -1;
+      break;
+    case CONTEST_REGISTER_PAR_STYLE:
+      if (handle_final_tag(path, t, &cnts->register_par_style) < 0) return -1;
+      break;
+    case CONTEST_REGISTER_TABLE_STYLE:
+      if (handle_final_tag(path, t, &cnts->register_table_style)< 0) return -1;
+      break;
+    case CONTEST_TEAM_HEAD_STYLE:
+      if (handle_final_tag(path, t, &cnts->team_head_style) < 0) return -1;
+      break;
+    case CONTEST_TEAM_PAR_STYLE:
+      if (handle_final_tag(path, t, &cnts->team_par_style) < 0) return -1;
       break;
     case CONTEST_REGISTER_EMAIL:
       if (handle_final_tag(path, t, &cnts->register_email) < 0) return -1;
@@ -833,6 +898,28 @@ parse_contest(struct contest_desc *cnts, char const *path)
         path, cnts->b.line, cnts->b.column);
     return -1;
   }
+
+  if (!cnts->users_head_style) {
+    cnts->users_head_style = xstrdup("h2");
+  }
+  if (!cnts->register_head_style) {
+    cnts->register_head_style = xstrdup("h2");
+  }
+  if (!cnts->team_head_style) {
+    cnts->team_head_style = xstrdup("h2");
+  }
+  if (!cnts->users_par_style)
+    cnts->users_par_style = xstrdup("");
+  if (!cnts->register_par_style)
+    cnts->register_par_style = xstrdup("");
+  if (!cnts->team_par_style)
+    cnts->team_par_style = xstrdup("");
+  if (!cnts->users_table_style)
+    cnts->users_par_style = xstrdup("");
+  if (!cnts->register_table_style)
+    cnts->register_par_style = xstrdup("");
+  if (!cnts->users_verb_style)
+    cnts->users_par_style = xstrdup("");
 
   return 0;
 }
