@@ -195,6 +195,10 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(enable_runlog_merge, "d"),
   GLOBAL_PARAM(prune_empty_users, "d"),
 
+  GLOBAL_PARAM(use_gzip, "d"),
+  GLOBAL_PARAM(min_gzip_size, "d"),
+  GLOBAL_PARAM(use_dir_hierarchy, "d"),
+
   GLOBAL_PARAM(variant_map_file, "s"),
 
   { 0, 0, 0, 0 }
@@ -411,6 +415,9 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_INACTIVITY_TIMEOUT 120
 #define DFLT_G_CHECKER_REAL_TIME_LIMIT 30
 #define DFLT_G_COMPILE_REAL_TIME_LIMIT 30
+#define DFLT_G_USE_GZIP          1
+#define DFLT_G_USE_DIR_HIERARCHY 1
+#define DFLT_G_MIN_GZIP_SIZE     4096
 
 #define DFLT_P_INPUT_FILE         "input"
 #define DFLT_P_OUTPUT_FILE        "output"
@@ -436,6 +443,9 @@ global_init_func(struct generic_section_config *gp)
   p->inactivity_timeout = -1;
   p->checker_real_time_limit = -1;
   p->compile_real_time_limit = -1;
+  p->use_gzip = -1;
+  p->use_dir_hierarchy = -1;
+  p->min_gzip_size = -1;
 }
 
 static void
@@ -1309,6 +1319,16 @@ set_defaults(int mode)
       }
     } else {
       global->plog_update_time = 0;
+    }
+
+    if (global->use_gzip < 0 || global->use_gzip > 1) {
+      global->use_gzip = DFLT_G_USE_GZIP;
+    }
+    if (global->use_dir_hierarchy < 0 || global->use_dir_hierarchy > 1) {
+      global->use_dir_hierarchy = DFLT_G_USE_DIR_HIERARCHY;
+    }
+    if (global->min_gzip_size < 0) {
+      global->min_gzip_size = DFLT_G_MIN_GZIP_SIZE;
     }
   }
 
