@@ -1224,6 +1224,7 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NN_COUNTRY_EN]        { "Country (En)", 1, 1 },
   [USERLIST_NN_LOCATION]          { "Location", 1, 1 },
   [USERLIST_NN_SPELLING]          { "Spelling", 1, 1 },
+  [USERLIST_NN_PRINTER_NAME]      { "Printer name", 1, 1 },
 };
 static const struct user_field_desc member_descs[] =
 {
@@ -1518,6 +1519,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
         case USERLIST_NN_COUNTRY_EN:
         case USERLIST_NN_LOCATION:
         case USERLIST_NN_SPELLING:
+        case USERLIST_NN_PRINTER_NAME:
           help_str = "Enter-edit D-clear C-contest A-new member Q-quit";
           break;
         case USERLIST_NN_IS_INVISIBLE:
