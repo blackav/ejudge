@@ -1,3 +1,639 @@
+2003-06-30  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* html.c:
+	(print_nav_buttons) typo is fixed in ACTION_STANDINGS constant.
+
+	* VERSION: *** empty log message ***
+
+	* team.c: typo is fixed in ACTION_STANDINGS constant;
+	(print_standings_button) `contest_id_str' is added to the generated
+	  URL.
+
+	* client_actions.h: typo is fixed in ACTION_STANDINGS constant.
+
+	* team.c:
+	`server_lag', `standings_url', `problems_url' parameters removed;
+	`contests_dir' is a new name for `contests_path' parameter;
+	(hyperref) new parameter `extra_args', which is embedded into the
+	  generated URL;
+	(parse_contest_id) new function to parse `contest_id' CGI variable;
+	(parse_name_contest_id) new function to parse contest_id from
+	  the program name (e.g. team-19);
+	(check_config_exist) new function;
+	(initialize) the contest_id is extracted either from CGI variables,
+	  or from program name, or from configuration file. The exact rules
+	  are described in the source file;
+	  `contests_set_directory', `contests_get' functions are used
+	    instead of `parse_contests_xml';
+	(read_state_params) if contest_id is read from the CGI variables,
+	  it is embedded into form hidden variables;
+	  `contest_id_str' has value "contest_id=XXX", if the contest_id
+	  is read from CGI variables, and "" (empty string) otherwise;
+	(display_enter_password) if contest_id is read from the CGI variables,
+	  it is embedded into form hidden variables;
+	(authentificate) `contest_id_str' is passed as `extra_args' to
+	  `hyperref' function;
+	(operation_status_page) the same as above;
+	(print_refresh_button) `contest_id_str' is embedded into generated URL;
+	(print_logout_button) the same as above;
+	(display_team_page) `contest_id_str' is passed as `extra_args'
+	  to `serve_clnt_team_page';
+	(main) `server_lag' is always set to DEFAULT_SERVER_LAG, unless
+	  `client_ignore_time_skew' contest parameter is not set;
+	  `contests_check_team_ip' function is used to check the IP address;
+	  `problems_url' and `standings_url' are taken from the contest
+	  configuration file rather than from the team utility configuration
+	  file.
+
+	* serve.c:
+	GLOBAL CHANGE: command list '-S' option is supported. This option
+	  allows passing an already opened serve socket file descriptor
+	  to the program. It is employed by super-serve utility.
+	  new parameter `inactivity_timeout' is supported in the `-S' mode;
+	(check_cnts_caps) new function, which checks, whether a given
+	  user has the given capability bit for the contest;
+	(cmd_team_list_runs) removed because it is not used anymore;
+	(cmd_team_page) `extra_args' parameter is extracted from the
+	  protocol packet and passed further to `write_team_page';
+	(cmd_master_page) `extra_args' parameter is extracted from the
+	  protocol packet and passed down to `write_master_page';
+	(cmd_priv_standings) `extra_args' parameter is extracted from the
+	  protocol packet and packet down to `write_priv_standings';
+	  OPCAP_VIEW_STANDINGS capability is checked;
+	(cmd_view) `extra_args' parameter is extracted from the protocol
+	  packet and packet down to the html generation functions;
+	  OPCAP_VIEW_SOURCE capability is required to view the source;
+	  OPCAP_VIEW_REPORT capability is required to view the report;
+	  OPCAP_VIEW_CLAR capability is required to view the clar;
+	  OPCAP_LIST_CONTEST_USERS capability is required to view the users;
+	  OPCAP_DUMP_RUNS capability is required to view the runs dump;
+	  OPCAP_DUMP_STANDINGS capability is required to view the raw
+	    standings;
+	(cmd_message) OPCAP_NEW_MESSAGE capability is required to post
+	  a message;
+	  OPCAP_REPLY_MESSAGE capability is required to answer a message;
+	(cmd_userlist_cmd) removed, since all such commands are now send
+	  to userlist-server directly;
+	(cmd_priv_command_0) OPCAP_CONTROL_CONTEST capability is required
+	    for SRV_CMD_SUSPEND, SRV_CMD_RESUME, SRV_CMD_SET_JUDGING_MODE,
+	    SRV_CMD_UPDATE_STAND, SRV_CMD_RESET, SRV_CMD_START, SRV_CMD_STOP,
+	    SRV_CMD_SCHEDULE, SRV_CMD_DURATION, SRV_CMD_SQUEEZE_RUNS,
+	    SRV_CMD_CLEAR_RUN, SRV_CMD_CONTINUE;
+	  OPCAP_EDIT_RUN capability is required for SRV_CMD_REJUDGE_ALL,
+	    SRV_CMD_REJUDGE_PROBLEM;
+	  SRV_CMD_TOGGLE_VISIBILITY, SRV_CMD_TOGGLE_BAN commands are removed;
+	(packet_handlers) SRV_CMD_LIST_RUNS, SRV_CMD_LIST_CLARS,
+	  SRV_CMD_GEN_PASSWORDS, SRV_CMD_TOGGLE_VISIBILITY, SRV_CMD_TOGGLE_BAN,
+	  SRV_CMD_DUMP_USERS commands are removed;
+	(create_socket) if socket is passed from the command line, the
+	  function returns immediately;
+	(check_sockets) `last_activity_time' is updated on each arrived packet;
+	(do_loop) `last_activity_time' is initialized;
+	  `inactivity_timeout' global parameter is supported;
+	(main) `-S<socket_num>' option is supported.
+
+	* register.c:
+	This file is almost completely rewritten. Too many changes to list them
+	  all verbosely. The short summary is listed below:
+	o copyright notice is updated;
+	o the code is rearranged to follow `State-Transition' model;
+	o `contests_dir' parameter is a new name for `contests_path'
+	  configuration parameter;
+	o the contest_id is extracted either from CGI variables, or from
+	  the program name (e. g. register-16), or from configuration file.
+	  The exact rules are in the source file.
+	o Login and Password are not passed in hidden variables. Instead
+	  the session identifier `sid' is passed.
+	o Hyperrefs are used where possible instead of forms.
+	o Cookies are not used, session id's, embedded into forms and ulrs
+	  are used instead.
+
+	* userlist-server.c:
+	The file is heavily reworked. The global changes:
+	  o CONN_ERR, CONN_INFO, CONN_BAD macros are used to log events;
+	  o user capabilities are supported for all operations;
+	  o new contests operation interface is used (contests_set_directory,
+	    contests_get, contests_get_list instead of direct XML loading and
+	    manipulation);
+	  o all packet structures, which have variable length (i. e. conveys
+	    strings, such as login, password, etc), now has space for
+	    the terminating \0 characters allocated in the structure itself,
+	    i. e. instead of `data[0]' field they have, for example,
+	    `data[2]' field, so the structure size counting in all functions
+	    is updated accordingly;
+	  o some minor parameters renaming: `pack' -> `data',
+	    `len' -> `pkt_len' in order to uniform all the protocol
+	    handling functions;
+	  o all the functions, which handle protocol request are now named
+	    with `cmd_' prefix;
+	(struct contest_extra) `desc' field is removed, since the pointer
+	  to contest structure may change unexpectedly;
+	global `contests' variable is removed;
+	new global variable `contest_extras_size' to store the number of
+	  contest extra information records;
+	(attach_contest_extra) new parameter `cnts' added to eliminate
+	  repetitive loading of contest information;
+	(detach_contest_extra) memory is freed correctly, updated to the
+	  new interface;
+	(update_userlist_table) updated to the new interface;
+	(get_uid_caps) a new function, which looks for an entry in capability
+	  list by the user id. This function MUST be optimized for speed.
+	(is_db_capable) a new function, which checks, whether the given user
+	  has the given capability bit for the user database;
+	(is_cnts_capable) a new function, which checks, whether the given
+	  user has the given capability bit for the given contest;
+	(is_privileged_user) a new function, which checks, whether the given
+	  user is a privileged user;
+	(cmd_register_new) this is the new name for `create_newuser';
+	  updated for the changes described above;
+	(cmd_do_login) this is the new name for `login_user';
+	  updated for the changes described above;
+	(cmd_team_login) this is the new name for `login_team_user';
+	  updated for the changes described above;
+	(cmd_priv_login) this is the new name for `cmd_login_priv_user';
+	  updated for the changes described above;
+	(cmd_check_cookie) this is the new name for `login_cookie';
+	  updated for the changes described above;
+	(cmd_team_check_cookie) this is the new name for `login_team_cookie';
+	  updated for the changes described above;
+	(cmd_priv_check_cookie) this is the new name for `login_priv_cookie';
+	  updated for the changes described above;
+	(cmd_do_logout) this is the new name for `logout_user';
+	  updated for the changes described above;
+	(cmd_get_user_info) this is the new name for `get_user_info';
+	  updated for the changes described above;
+	(cmd_priv_get_user_info) a new function to perform a privileged
+	  request ULS_PRIV_GET_USER_INFO;
+	(cmd_list_all_users) updated for the changes described above;
+	(cmd_get_user_contests) this is the new name for `get_user_contests';
+	  updated for the changes described above;
+	(do_set_user_info) a new function to set all user info fields. This
+	  function is split from cmd_set_user_info in order to use it in both
+	  privileged and unpriveleged versions;
+	  updated for the changes described above;
+	(cmd_set_user_info) this is new name for `set_user_info';
+	  this function checks the input packet and passes it to
+	  `do_set_user_info';
+	(cmd_set_passwd) this is new name for `set_passwd';
+	  updated for the changes described above;
+	(cmd_team_set_passwd) this is new name for `team_set_password';
+	  updated for the changes described above;
+	(cmd_register_contest) this is new name for `register_for_contest';
+	  updated for the changes described above;
+	(cmd_priv_register_contest) a new function to perform a privileged
+	  operation ULS_PRIV_REGISTER_CONTEST;
+	(cmd_remove_member) this is a new name for `remove_member';
+	  updated for the changes described above;
+	(cmd_pass_fd) this is a new name for `pass_descriptors';
+	  updated for the changes described above;
+	(do_list_users) new parameter `d' is added in order not to load
+	  contest description repeatedly;
+	  updated for the changes described above;
+	(do_dump_database) new parameter `d' is added in order not to reload
+	  contest description;
+	  updated for the changes described above;
+	(cmd_list_users) this is a new name for `list_users';
+	  updated for the changes described above;
+	(cmd_dump_database) this is a new name for `action_dump_user_database';
+	  updated for the changes described above;
+	(cmd_map_contest) updated for the changes described above;
+	(cmd_admin_process) this protocol command now only sets the user_id
+	  to the user_id of the process, which originates the connection;
+	  updated for the changes described above;
+	(do_generate_team_passwd) password for privileged users is not changed;
+	(cmd_generate_team_passwords) this is a new name for
+	  `cmd_generate_team_passwd';
+	  updated for the changes described above;
+	(cmd_get_contest_name) updated for the changes described above;
+	(cmd_edit_registration) updated for the changes described above;
+	(cmd_delete_field) updated for the changes described above;
+	(cmd_edit_field) updated for the changes described above;
+	(cmd_add_field) updated for the changes described above;
+	(cmd_get_uid_by_pid) updated for the changes described above;
+	(process_packet) the huge switch is removed with lookup in the
+	  function table `cmd_table';
+	(do_work) timeout for clients is not enforced;
+	(main) `contests_dir' is a new name for previous `contests_path'
+	  configuration parameter;
+	  `contests_set_directory' is used instead of `parse_contests_xml'.
+
+2003-06-29  Alexander Chernov  <cher@ispras.ru>
+
+	* users.c: copyright notice is updated;
+	<sys/types.h>, <sys/stat.h>, <unistd.h>, <fcntl.h> are included;
+	TG_CONTESTS_DIR is a new name for TG_CONTESTS_PATH, XML element
+	  contests_dir is a new name for contests_path;
+	(parse_config) XML elements are renamed (see above);
+	`contests' global variable is removed;
+	(read_contest_id) function removed;
+	(parse_contest_id) new function, which parses `contest_id' CGI
+	  variable;
+	(parse_name_contest_id) new function, which extracts contest_id from
+	  the CGI program name;
+	(check_config_exist) new function;
+	(initialize) contest_id is extracted either from the CGI program name,
+	  or from `contest_id' CGI variable;
+	  configuration file name is constructed according to new rules
+	  (see the comments in the code);
+	  parse_contests_xml is no longer used;
+	  `self_url' default CGI name is now /cgi-bin/users;
+	(information_not_available) a new function to display this error;
+	(main) `contests_set_directory', `contests_get' are used to access
+	  the contest information;
+	  user ip is checked with `contests_check_users_ip';
+	  other code rearrangements.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* userlist_cfg.h: copyright notice is updated;
+	"opcaps.h" is included;
+	(struct userlist_cfg_admin_proc) removed;
+	(struct userlist_cfg) `admin_processes' field removed;
+	  `capabilities', `serve_path' fields added;
+	  `contests_dir' is a new name for `contests_path'.
+
+	* userlist_cfg.c: copyright notice is updated;
+	TG_CONTESTS_DIR is a new name for TG_CONTESTS XML element;
+	removed XML element contants: TG_ADMIN_PROCESSES, TG_ADMIN_PROCESS;
+	new XML element contants: TG_CAPS, TG_CAP, TG_SERVE_PATH;
+	new XML attribute constant: AT_LOGIN;
+	(tree_alloc_func) updated according to change in XML elements;
+	(parse_processes) removed as no longer used;
+	(parse_capabilities) new function to parse <caps> XML element;
+	(userlist_cfg_parse) updated according to changes in XML elements;
+	(fmt_func) updated according to changes in XML elements.
+
+	* userlist.h: copyright notice is updated.
+
+	* serve_clnt.h: 
+	(serve_clnt_team_page) parameter `extra_args' added;
+	(serve_clnt_master_page) parameter `extra_args' added;
+	(serve_clnt_standings) parameter `extra_args' added;
+	(serve_clnt_view) parameter `extra_args' added.
+
+	* runlog.h: copyright notice is updated;
+	(run_clear_variables) prototype added.
+
+	* runlog.c: copyright notice is updated;
+	(run_clear_variables) new function, which is completely releases
+	  the resources.
+
+	* run.c:
+	(filter_testers) check, that the total number of (non-default)
+	  testers is > 0 is removed;
+	(run_tests) new variable `arg0_path', which contains the path
+	  to the program under test, which is passed to execve syscall,
+	  this path contains only the current directory (./), not
+	  the full directory path;
+	(do_loop) in case of default tester, it is specialized using
+	  `prepare_tester_refinement' function, and then passed to
+	  `run_tests';
+	(process_default_testers) new function to check default tester
+	  settings;
+	(check_config) checking of global settings is moved out of the
+	  tester loop;
+	  added a separate loop for testing problem settings;
+	  default tester settings are also checked.
+
+	* super-serve.c: completed.
+
+	* protocol.h:
+	removed commands: SRV_CMD_LIST_RUNS, SRV_CMD_LIST_CLARS,
+	  SRV_CMD_GEN_PASSWORDS, SRV_CMD_TOGGLE_VISIBILITY,
+	  SRV_CMD_TOGGLE_BAN, SRV_CMD_DUMP_USERS;
+	(struct prot_serve_pkt_team_page) new field `extra_args_len';
+	  `data' now has size 3;
+	(struct prot_serve_pkt_master_page) new field `extra_args_len';
+	  `data' now has size 4;
+	(struct prot_serve_pkt_standings) new field `extra_args_len';
+	  `data' now has size 3;
+	(struct prot_serve_pkt_view) new field `extra_args_len';
+	  `data' now has size 3.
+
+	* prepare.h:
+	(struct section_global_data) new field `inactivity_timeout';
+	  `contests_dir' is a new name for `contests_path';
+	  `contests' global variable is removed;
+	(prepare_tester_refinement) new function prototype;
+	(create_tester_dirs) new function prototype.
+
+	* prepare.c: MAX_PROBLEM is increased to 100;
+	`contests' global variable is removed;
+	new global parameter `inactivity_timeout' for `serve' utility with
+	  default value 120 sec;
+	global parameter `contests_path' is renamed to `contests_dir';
+	(set_defaults) `contests_dir' is used instead of `contests_path';
+	  `contests_set_directory' and `contests_get' are used instead of
+	  `parse_contest_xml' and direct access to the contests array;
+	  `inactivity_timeout' is handled;
+	  default testers are not processed in PREPARE_RUN mode, this is
+	  now done in `prepare_tester_refinement' function;
+	(create_dirs) default testers are ignored in PREPARE_RUN mode, this
+	  is now done in `create_tester_dirs' function;
+	(prepare_tester_refinement) a new function, which performs all
+	  inheritance and default setting for a default tester with
+	  the given problem_id;
+	(create_tester_dirs) a new function, which creates necessary
+	  directories for a tester in PREPARE_RUN mode;
+	(print_tester) `check_dir' is printed.
+
+	* master_html.c:
+	(html_start_form) `extra_args' parameter is added (but not used);
+	  `hidden_vars' parameter is used in form header generation;
+	(html_hyperref) `extra_args' parameter is added, the parameter's
+	  value is added to the generated hyperref;
+	(print_nav_buttons) `extra_args' parameter is added and passed
+	  further to `html_start_form' and `html_hyperref' functions;
+	(write_all_runs) `extra_args' parameter is added and passed
+	  further to `html_start_form', `html_hyperref' and
+	  `print_nav_buttons' functions;
+	(write_all_clars) the same as above;
+	(write_master_page) `extra_args' parameter is added and passed
+	  further to `write_all_runs' and `write_all_clars' functions;
+	(write_priv_standings) `extra_args' parameter is added and passed
+	  further to `print_nav_buttons' function;
+	(write_priv_report) the same as above;
+	(write_priv_source) `extra_args' parameter is added and passed
+	  further to `print_nav_buttons' and `html_start_form' functions;
+	(write_priv_clar) the same as above;
+	(write_priv_users) the same as above.
+
+	* master.c: GLOBAL CHANGE: contest_id CGI parameter is honored;
+	<fcntl.h> file is included;
+	`contest_path' configuration parameter is renamed to `contests_dir';
+	(read_state_params) if `contest_id' was set from CGI variables
+	  add setting of `contest_id' CGI parameter to all form headers
+	  and hidden variables;
+	(make_self_url) "SERVER_PORT" environment variable is read and used;
+	(hyperref) new parameter `contest_id_str' is accepted and added
+	  to the generated URL;
+	(display_enter_password) `contest_id' is added to the generated form
+	  header, if this variable was read from CGI parameters;
+	  default sid_mode is URL;
+	(authentificate) use of `hyperref' function is updated;
+	(print_refresh_button) `contest_id_str' variable is used to generate
+	  URLs;
+	(print_standings_button) the same as above;
+	(print_teamview_button) the same as above;
+	(print_logout_button) the same as above;
+	(print_dump_runs_button) the same as above;
+	(print_dump_users_button) the same as above;
+	(print_dump_standings_button) the same as above;
+	(operation_status_page) use of `hyperref' is updated;
+	(view_source_if_asked) `contest_id_str' is passed to `serve_clnt_view'
+	  as `extra_args' parameter;
+	(view_report_if_asked) the same as above;
+	(view_teams_if_asked) the same as above;
+	(action_dump_runs) the same as above;
+	(action_dump_standings) the same as above;
+	(view_clar_if_asked) the same as above;
+	(action_dump_users) the request is sent directly to `userlist-server'
+	  instead of `serve';
+	(do_generate_passwords_if_asked) the same as above;
+	(action_toggle_visibility) the same as above;
+	(action_toggle_ban) the same as above;
+	(send_msg_if_asked) sending a message to specified login or user_id
+	  is supported;
+	(parse_contest_id) new function to parse `contest_id' CGI parameter;
+	(parse_name_contest_id) new function to extract `contest_id'
+	  from the name of CGI script;
+	(check_config_exist) new function;
+	(initialize) `contest_id' parameter is extracted either from script
+	  name, or from CGI parameters. See the comment in the code for
+	  further details;
+	  `contests_set_directory', `contests_get' functions are used to
+	  load information about contest;
+	  `root_dir' is copied from the contest XML description;
+	(view_standings_if_asked) `contest_id_str' is passed to
+	  `serve_clnt_standings' as `extra_args' parameter;
+	(display_master_page) `contest_id_str' is passed to
+	  `serve_clnt_master_page' as `extra_args' parameter;
+	(main) `contests_check_master_ip' is used;
+	  if contest's `client_ignore_time_skew' flag is set, lag is set to
+	  0 (infinity) value;
+	  fields "To user id" and "To user login" added to message composition.
+
+	* makefile:
+	opcaps.c added to the list of the source files for the following
+	  utilities: compile, serve, run, master, team, register,
+	  userlist-server, users, edit-userlist, filter_test;
+	new variable SS_CFILES for the list of super-serve .c files;
+	new variable CU_CFILES for the list of clean-users .c files;
+	`super-serve' and `clean-users' added to the list of targets;
+	new rule to link super-serve utility;
+	new rule to link clean-users utility.
+
+	* html.h: 
+	(new_write_user_runs) new parameter `extra_args' added;
+	(new_write_user_clars) the same as above;
+	(write_team_page) the same as above;
+	(write_master_page) the same as above;
+	(write_priv_standings) the same as above;
+	(write_priv_source) the same as above;
+	(write_priv_report) the same as above;
+	(write_priv_clar) the same as above;
+	(write_priv_users) the same as above;
+	(html_start_form) the same as above;
+	(html_hyperref) the same as above.
+
+	* html.c:
+	(new_write_user_runs) new parameter `extra_args', which is passed
+	  further to hyperref generation and form generation;
+	(new_write_user_clars) new parameter `extra_args', which is passed
+	  further to hyperref generation and form generation;
+	(print_nav_buttons) new parameter `extra_args';
+	(write_team_page) new parameter `extra_args'.
+
+	* filter_scan.lex: copyright notice is updated;
+	"EM" run result is handled.
+
+	* files.make:
+	removed files: serve_clnt/list_runs.c, serve_clnt/userlist_cmd.c;
+	added files: clean-users.c, opcaps.c, opcaps.h, super-serve.c.
+
+	* edit-userlist.c: copyright notice is added;
+	<errno.h>, <regex.h> files included;
+	`contests' global variable is removed, since new contest interface
+	  is implemented;
+	(generic_menu) new static function to implement a generic menu;
+	(display_participant_sort_menu) new function to display a participant
+	  sort options;
+	(display_search_menu) new function to display search options;
+	(get_contest_str) `contests_get' function is used instead of direct
+	  operation;
+	(display_user) use of `userlist_clnt_get_info' is changed (command
+	  parameter is added);
+	  use of `userlist_clnt_register_contest' is changed (see above);
+	(user_regmatch) new function to check a string against a regular
+	  expression;
+	(user_match) new function, which checks a user according to a given
+	  search criteria;
+	(user_search) new function: search in the list of users;
+	(registered_users_sort_func) a new helper function for `qsort';
+	(display_registered_users) `cnts' parameter is replaced with
+	  `contest_id';
+	  new `contests_get' function is used;
+	  if no users are registered for a contest, the administrator is
+	  prompted to add a user;
+	  sorting of registered users is supported;
+	  new hot keys 's', 'j', 'e' are handled:
+	    's' - sort users;
+	    'j' - jump to a user;
+	    'e' - search for a user;
+	  help line is updated;
+	(display_contests_menu) `contests_get_list', `contests_get' functions
+	  are used instead of direct access;
+	(do_display_user_menu) this is a new name for `display_user_menu';
+	  if no users are registered, the administrator is prompted to add
+	    a new user;
+	  sorting of users is implemented;
+	  new hot keys 's', 'j', 'e' are handled:
+	    's' - sort users;
+	    'j' - jump to a user;
+	    'e' - search for a user;
+	(display_user_menu) new function, which calls `do_display_user_menu'
+	  and loops while the return value == -2;
+	(display_main_menu) use of `display_user_menu' is updated;
+	(main) `contests_set_directory' is used, `parse_contests_xml' is not
+	  used.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* contests.h: copyright notice is updated;
+	"opcaps.h" is included;
+	<time.h> is included;
+	removed XML element constants: CONTEST_ACCESS,
+	  CONTEST_PRIVILEGED_USERS, CONTEST_ADMINISTRATOR, CONTEST_JUDGE,
+	  CONTEST_OBSERVER;
+	new XML element constants: CONTEST_REGISTER_ACCESS,
+	  CONTEST_USERS_ACCESS, CONTEST_MASTER_ACCESS, CONTEST_JUDGE_ACCESS,
+	  CONTEST_OBSERVER_ACCESS, CONTEST_TEAM_ACCESS, CONTEST_CAP,
+	  CONTEST_CAPS, CONTEST_ROOT_DIR, CONTEST_STANDINGS_URL,
+	  CONTEST_PROBLEMS_URL, CONTEST_CLIENT_FLAGS, CONTEST_SERVE_USER,
+	  CONTEST_SERVE_GROUP;
+	new XML attribute constants: CONTEST_A_LOGIN, CONTEST_A_MANAGED,
+	  CONTEST_A_CLEAN_USERS;
+	(struct contest_desc) removed fields: `priv_users', `access';
+	(struct contest_desc) new fields: `managed', `clean_users',
+	  `root_dir', `standings_url', `problems_url', `serve_user',
+	  `serve_group', `register_access', `users_access', `master_access',
+	  `judge_access', `observer_access', `team_access', `capabilities',
+	  `client_ignore_time_skew', `client_disable_team', `last_check_time',
+	  `last_file_time';
+	(parse_contest_xml) function prototype removed;
+	(contests_check_ip) function prototype removed;
+	new error codes enumeration added;
+	(contests_set_directory) new function prototype;
+	(contests_get_list) new function prototype;
+	(contests_get) new function prototype;
+	(contests_strerror) new function prototype;
+	(contests_lock) new function prototype, not yet implemented;
+	(contests_unlock) new function prototype, not yet implemented;
+	(contests_check_ip) new function prototype;
+	(contests_check_register_ip) new function prototype;
+	(contests_check_users_ip) new function prototype;
+	(contests_check_master_ip) new function prototype;
+	(contests_check_judge_ip) new function prototype;
+	(contests_check_observer_ip) new function prototype;
+	(contests_check_team_ip) new function prototype;
+	(contests_set_load_callback) new function prototype, function is
+	  implemented but callbacks are not yet called upon event;
+	(contests_set_unload_callback) new function prototype, function is
+	  implemented but callbacks are not yet called upon event.
+
+	* contests.c: copyright notice is updated;
+	the file is heavily reworked:
+	  o each contest description is placed into a separate XML file;
+	  o each time the contest description is requested, the file is
+	    checked for updates;
+	  o capabilities are supported;
+	XML elements removed `access', `privileged_users', `administrator',
+	  `judge', `observer';
+	new XML elements added: `register_access', `users_access',
+	  `master_access', `judge_access', `observer_access', `team_access',
+	  `cap', `caps', `root_dir', `standings_url', `problems_url',
+	  `client_flags', `serve_user', `serve_group';
+	new XML attributes: `login', `managed', `clean_users';
+	(parse_capabilities) new function to parse capabilities, used in
+	  <cap> XML element;
+	(parse_client_flags) new function to parse client flags,
+	  currently IGNORE_TIME_SKEW and DISABLE_TEAM flags are supported,
+	  used in <client_flags> XML element;
+	(parse_contest) `managed' and `clean_users' attributes are supported;
+	  new XML elements supported: `root_dir', `standings_url',
+	  `problems_url', `serve_user', `serve_group', `client_flags',
+	  `caps', `register_access', `users_access', `master_access',
+	  `judge_access', `observer_access', `team_access';
+	  removed support for XML elements: `privileged_users', `access';
+	(parse_contest_xml) function is removed;
+	(parse_one_contest_xml) new function to parse one contest's
+	  description;
+	(do_check_ip) this is new name for `contests_check_ip';
+	(contests_check_ip) new function which checks the given IP against
+	  one of the access lists according to `field' parameter;
+	(contests_check_register_ip) new function;
+	(contests_check_users_ip) new function;
+	(contests_check_master_ip) new function;
+	(contests_check_judge_ip) new function;
+	(contests_check_observer_ip) new function;
+	(contests_check_team_ip) new function;
+	(contests_set_callback) a new static function to add a specified
+	  function to a specified callback list;
+	(contests_set_load_callback) a new function to add a specified
+	  function to the load callback list;
+	(contests_set_unload_callback) a new function to add a specified
+	  function to the unload callback list;
+	(contests_free) a new internal function to free the XML data
+	  structures;
+	(contests_make_path) a new internal function to compose a path
+	  to XML contest description;
+	(contests_set_directory) a new function to set the contest
+	  directory;
+	(contests_get_list) a new function to get the list of all the
+	  XML contest descriptions;
+	(contests_get) a new function to load a contest description;
+	(contests_strerror) a new function, which returns user-readable
+	  description of contest error.
+
+	* clntutil.c:
+	(client_check_server_status) client-server time skew is only checked
+	  if `lag' parameter greater than 0.
+
+	* clarlog.h: copyright notice is updated;
+	`CLAR_LOG_READONLY' flag added;
+	(clar_clear_variables) prototype added.
+
+	* clarlog.c: copyright notice is updated;
+	(clar_read_entry) user_id consistency checks are commented out;
+	(clar_open) `CLAR_LOG_READONLY' flag is supported;
+	(clar_add_record) user_id consistency checks are commented out;
+	(clar_clear_variables) new function, which clears all the variables
+	  and releases resources.
+
+	* .cvsignore: *** empty log message ***
+
+2003-06-28  Alexander Chernov  <cher@ispras.ru>
+
+	* clean-users.c: Initial revision
+
+2003-06-26  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* userlist_clnt.h: 
+	(userlist_clnt_get_info) new parameter 'cmd' added;
+	(userlist_clnt_register_contest) new parameter 'cmd' added.
+
+	* userlist_proto.h:
+	new commands added: PRIV_GET_USER_INFO, PRIV_SET_USER_INFO,
+	  PRIV_REGISTER_CONTEST.
+
+2003-06-22  Alexander Chernov  <cher@ispras.ru>
+
+	* super-serve.c, opcaps.h, opcaps.c: Initial revision
+
 2003-03-08  Alexander Chernov  <cher@ispras.ru>
 
 	* serve.c:
