@@ -54,12 +54,14 @@ int serve_clnt_show_item(int sock_fd,
                          int item_id);
 
 int serve_clnt_submit_run(int sock_fd,
+                          int cmd,
                           int user_id,
                           int contest_id,
                           int locale_id,
                           unsigned long ip,
                           int prob_id,
                           int lang_id,
+                          int variant,
                           unsigned char const *run_src);
 
 int serve_clnt_submit_clar(int sock_fd,
@@ -139,6 +141,8 @@ int serve_clnt_edit_run(int sock_fd,
                         int lang_id,
                         int status,
                         int is_imported,
+                        int variant,
+                        int is_hidden,
                         unsigned char const *user_login);
 
 int serve_clnt_import_xml_runs(int sock_fd,
