@@ -1266,3 +1266,7 @@ ejudge-setup.c 1 1 8562828
 serve.c 1 69 10234457
 prepare.c 1 73 8297139
 userlist_cfg.c 1 14 1099876
+master.c 1 56 6985108
+register.c 1 31 7677448
+team.c 1 44 4390140
+users.c 1 14 1714616
