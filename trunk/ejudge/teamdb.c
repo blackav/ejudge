@@ -131,7 +131,7 @@ restore_connection(void)
       continue;
     }
     if ((r = userlist_clnt_admin_process(server_conn)) < 0) {
-      if (r == ULS_ERR_NO_CONNECT || r == ULS_ERR_DISCONNECT) continue;
+      if (r == -ULS_ERR_NO_CONNECT || r == -ULS_ERR_DISCONNECT) continue;
       err("teamdb_open_client: cannot became an admin process: %s",
           userlist_strerror(-r));
       retcode = -1;
@@ -139,7 +139,7 @@ restore_connection(void)
     }
     if ((r = userlist_clnt_map_contest(server_conn, contest_id,
                                        &sem_key, &shm_key)) < 0) {
-      if (r == ULS_ERR_NO_CONNECT || r == ULS_ERR_DISCONNECT) continue;
+      if (r == -ULS_ERR_NO_CONNECT || r == -ULS_ERR_DISCONNECT) continue;
       err("teamdb_open_client: cannot map contest: %s", userlist_strerror(-r));
       retcode = -1;
       break;
@@ -551,7 +551,7 @@ teamdb_regenerate_passwords(unsigned char const *path)
   }
  restart_server_request:
   r = userlist_clnt_generate_team_passwd(server_conn, contest_id, fd);
-  if (r == ULS_ERR_NO_CONNECT || r == ULS_ERR_DISCONNECT) {
+  if (r == -ULS_ERR_NO_CONNECT || r == -ULS_ERR_DISCONNECT) {
     r = restore_connection();
     if (r < 0) {
       err("teamdb_regenerate_passwords: cannot restore connection");
@@ -639,12 +639,12 @@ teamdb_get_uid_by_pid(int system_uid, int system_gid, int system_pid,
  restart_operation:
   r = userlist_clnt_get_uid_by_pid(server_conn, system_uid, system_gid,
                                    system_pid, p_uid, p_cookie);
-  if (r == ULS_ERR_NO_CONNECT || r == ULS_ERR_DISCONNECT) {
+  if (r == -ULS_ERR_NO_CONNECT || r == -ULS_ERR_DISCONNECT) {
     r = restore_connection();
     if (r <= 0) return -1;
     goto restart_operation;
   }
-  return 0;
+  return r;
 }
 
 /**
