@@ -16,11 +16,16 @@
  */
 
 #include "checker_internal.h"
+#include <dirent.h>
 
 FILE *f_in;
 FILE *f_team;
 FILE *f_corr;
 FILE *f_arr[3];
+
+DIR *dir_in;
+DIR *dir_out;
+
 const unsigned char * const f_arr_names[3] =
 {
   "input",
