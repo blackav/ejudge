@@ -71,20 +71,6 @@ static int extra_out_of_sync;
 static int extra_num;
 static struct teamdb_extra **extra_info;
 
-static int interrupted_flag;
-static sighandler_t prev_handler[32];
-
-static void handler(int signo)
-{
-  interrupted_flag = 1;
-  if (signo != SIGINT && signo != SIGTERM) return;
-  if (prev_handler[signo]
-      && prev_handler[signo] != SIG_DFL
-      && prev_handler[signo] != SIG_IGN) {
-    (*prev_handler[signo])(signo);
-  }
-}
-
 static int
 open_connection(void)
 {
