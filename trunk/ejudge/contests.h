@@ -43,6 +43,10 @@ enum
     CONTEST_REGISTER_URL,
     CONTEST_TEAM_URL,
     CONTEST_REGISTRATION_DEADLINE,
+    CONTEST_PRIVILEGED_USERS,
+    CONTEST_ADMINISTRATOR,
+    CONTEST_JUDGE,
+    CONTEST_OBSERVER,
 
     CONTEST_LAST_TAG
   };
@@ -144,6 +148,7 @@ struct contest_desc
   unsigned char *register_email;
   unsigned char *register_url;
   unsigned char *team_url;
+  struct xml_tree *priv_users;
   struct contest_access *access;
   struct contest_field *fields[CONTEST_LAST_FIELD];
   struct contest_member *members[CONTEST_LAST_MEMBER];
