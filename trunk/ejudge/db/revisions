@@ -793,3 +793,5 @@ html.c 1 34 3779695
 register.c 1 21 6922508
 userlist_cfg.c 1 10 909168
 users.c 1 7 1727422
+l10n.h 1 1 69969
+l10n.c 1 1 125270
