@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "cgi.h"
 #include "fileutl.h"
 #include "pathutl.h"
