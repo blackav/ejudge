@@ -25,6 +25,7 @@ CFILES=\
  clntutil.c\
  compile.c\
  contests.c\
+ cr_serialize.c\
  edit-userlist.c\
  expat_iface.c\
  html.c\
@@ -36,15 +37,10 @@ CFILES=\
  master.c\
  misctext.c\
  mkpasswd.c\
- nls.c\
- nls_cp1251.c\
- nls_cp866.c\
- nls_iso8859-5.c\
- nls_koi8-r.c\
- nls_utf8.c\
  parsecfg.c\
  pathutl.c\
  prepare.c\
+ protocol.c\
  register.c\
  run.c\
  runlog.c\
@@ -62,9 +58,34 @@ CFILES=\
  userlist_proto.c\
  userlist_xml.c\
  users.c\
- utf8_utils.c\
  unix/fileutl.c\
- win32/fileutl.c
+ win32/fileutl.c\
+ charsets/koi8_to_enc.c\
+ charsets/koi8_to_enc_heap.c\
+ charsets/koi8_to_enc_unchecked.c\
+ charsets/nls.c\
+ charsets/nls_cp1251.c\
+ charsets/nls_cp866.c\
+ charsets/nls_iso8859-5.c\
+ charsets/nls_koi8-r.c\
+ charsets/nls_utf8.c\
+ charsets/utf8_to_enc.c\
+ charsets/utf8_to_enc_heap.c\
+ charsets/utf8_to_enc_unchecked.c\
+ charsets/utf8_to_koi8.c\
+ charsets/utf8_to_koi8_heap.c\
+ charsets/utf8_to_koi8_unchecked.c\
+ serve_clnt/do_pass_fd.c\
+ serve_clnt/get_archive.c\
+ serve_clnt/list_runs.c\
+ serve_clnt/open.c\
+ serve_clnt/pass_fd.c\
+ serve_clnt/recv_packet.c\
+ serve_clnt/send_packet.c\
+ serve_clnt/show_item.c\
+ serve_clnt/submit_clar.c\
+ serve_clnt/submit_run.c\
+ serve_clnt/team_page.c
 
 HFILES=\
  base64.h\
@@ -72,6 +93,7 @@ HFILES=\
  clarlog.h\
  clntutil.h\
  contests.h\
+ cr_serialize.h\
  expat_iface.h\
  fileutl.h\
  html.h\
@@ -85,12 +107,12 @@ HFILES=\
  prepare.h\
  protocol.h\
  runlog.h\
+ serve_clnt.h\
  sformat.h\
  sha.h\
  teamdb.h\
  userlist.h\
  userlist_cfg.h\
  userlist_clnt.h\
- utf8_utils.h\
  version.h\
  unix/unix_fileutl.h
