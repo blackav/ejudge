@@ -26,13 +26,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if CONF_HAS_LIBINTL - 0 == 1
-#include <libintl.h>
-#define _(x) gettext(x)
-#else
-#define _(x) x
-#endif
-
 #define MAX_NAME_SIZE      63
 #define MAX_VALUE_SIZE     MAX_CGI_VALUE_LEN
 #define MAX_CONTENT_LENGTH MAX_CGI_VALUE_LEN
