@@ -29,8 +29,11 @@
 enum { PREPARE_SERVE, PREPARE_COMPILE, PREPARE_RUN };
 enum { PREPARE_QUIET = 1, PREPARE_USE_CPP = 2 };
 
+#if !defined EJUDGE_SCORE_SYSTEM_DEFINED
+#define EJUDGE_SCORE_SYSTEM_DEFINED
 /* scoring systems */
-enum { SCORE_ACM, SCORE_KIROV };
+enum { SCORE_ACM, SCORE_KIROV, SCORE_OLYMPIAD };
+#endif /* EJUDGE_SCORE_SYSTEM_DEFINED */
 
 struct section_global_data
 {
@@ -128,6 +131,7 @@ struct section_global_data
   /* scoring settings */
   path_t score_system;          /* scoring system */
   int    score_system_val;      /* internal int value */
+  int    tests_to_accept;       /* how many tests to accept a submit */
 
   int    max_file_length;       /* maximal length of the file in reports */
   int    max_line_length;       /* maximal length of line in reports */
@@ -161,6 +165,7 @@ struct section_problem_data
   int    test_score;            /* score for one test */
   int    run_penalty;           /* penalty for one run */
   int    use_corr;              /* whether the correct answers defined */
+  int    tests_to_accept;       /* how many tests to accept a submit */
   path_t super;                 /* superproblem's short_name */
   path_t short_name;            /* short problem name, eg A, B, ... */
   path_t long_name;             /* long problem name */
