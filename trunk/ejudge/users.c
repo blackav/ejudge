@@ -1,4 +1,4 @@
-/* -*- mode: c -*-; coding: koi8-r */
+/* -*- mode: c -*- */
 /* $Id$ */
 
 /* Copyright (C) 2001-2004 Alexander Chernov <cher@ispras.ru> */
@@ -16,6 +16,7 @@
  */
 
 #include "config.h"
+#include "settings.h"
 
 #include "expat_iface.h"
 #include "cgi.h"
@@ -51,10 +52,8 @@
 #define gettext(x) x
 #endif /* CONF_HAS_LIBINTL */
 
-#if defined EJUDGE_CHARSET
-#define DEFAULT_CHARSET              EJUDGE_CHARSET
-#else
-#define DEFAULT_CHARSET              "iso8859-1"
+#ifndef EJUDGE_CHARSET
+#define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
 #endif /* EJUDGE_CHARSET */
 
 enum
@@ -398,7 +397,7 @@ parse_config(char const *path, const unsigned char *default_config)
 #endif
 
   if (!cfg->charset) {
-    cfg->charset = xstrdup(DEFAULT_CHARSET);
+    cfg->charset = xstrdup(EJUDGE_CHARSET);
   }
 #if defined EJUDGE_SOCKET_PATH
   if (!cfg->socket_path) {
@@ -527,7 +526,7 @@ check_config_exist(unsigned char const *path)
 }
 
 static const unsigned char default_config[] =
-"<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n"
+"<?xml version=\"1.0\" ?>\n"
 "<users_config><access default=\"allow\"/></users_config>\n";
 
 static void
