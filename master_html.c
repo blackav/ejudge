@@ -1140,7 +1140,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   char *src_text = 0, *html_text;
   size_t src_len, html_len;
   time_t start_time;
-  int variant, src_flags;
+  int variant, src_flags, run_id2;
   unsigned char const *nbsp = "<td>&nbsp;</td><td>&nbsp;</td>";
   unsigned char numbuf[64];
   unsigned char filtbuf1[128];
@@ -1170,9 +1170,9 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   fprintf(f, "<table>\n");
   fprintf(f, "<tr><td>%s:</td><td>%d</td>%s</tr>\n",
           _("Run ID"), info.submission, nbsp);
-  fprintf(f, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
+  fprintf(f, "<tr><td>%s:</td><td>%s:%ld</td>%s</tr>\n",
           _("Submission time"),
-          duration_str(1, info.timestamp, start_time, 0, 0), nbsp);
+          duration_str(1, info.timestamp, start_time, 0, 0), info.nsec, nbsp);
   fprintf(f, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
           _("Contest time"),
           duration_str(0, info.timestamp, start_time, 0, 0), nbsp);
@@ -1466,8 +1466,15 @@ write_priv_source(FILE *f, int user_id, int priv_level,
     fprintf(f, "%s", nbsp);
   }
   fprintf(f, "</tr>\n");
-
   fprintf(f, "</table>\n");
+
+  if (sid_mode == SID_URL) {
+    html_hyperref(filtbuf3, sizeof(filtbuf3), sid_mode, sid, self_url,
+                  extra_args, "action=%d&run_id=%d",
+                  ACTION_PRIV_DOWNLOAD_RUN, run_id);
+    fprintf(f, "<p>%sDownload run</a>.</p>\n", filtbuf3);
+  }
+
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
@@ -1478,10 +1485,26 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
   fprintf(f, "<p><input type=\"submit\" name=\"action_%d\" value=\"%s\"></p></form>\n", ACTION_PRINT_PRIV_RUN, _("Print"));
 
+  filtbuf1[0] = 0;
+  if (run_id > 0) {
+    run_id2 = run_find(run_id - 1, 0, info.team, info.problem, info.language);
+    if (run_id2 >= 0) {
+      snprintf(filtbuf1, sizeof(filtbuf1), "%d", run_id2);
+    }
+  }
+  html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
+  fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
+  fprintf(f, "<p>%s: <input type=\"text\" name=\"run_id2\" value=\"%s\" size=\"10\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+          _("Compare this run with run"), filtbuf1,
+          ACTION_COMPARE_RUNS, _("Compare"));
+
   print_nav_buttons(f,run_id,sid_mode,sid,self_url,hidden_vars,extra_args,
                     _("Main page"), 0, 0, 0, _("Refresh"), _("View report"));
   fprintf(f, "<hr>\n");
-  if (!info.is_imported) {
+  if (info.language > 0 && info.language <= max_lang
+      && langs[info.language] && langs[info.language]->binary) {
+    fprintf(f, "<p>The submission is binary and thus is not shown.</p>\n");
+  } else if (!info.is_imported) {
     if (src_flags < 0 || generic_read_file(&src_text, 0, &src_len, src_flags, 0, src_path, "") < 0) {
       fprintf(f, "<big><font color=\"red\">Cannot read source text!</font></big>\n");
     } else {
@@ -1913,6 +1936,36 @@ write_raw_standings(FILE *f, unsigned char const *charset)
     do_write_kirov_standings(f, 1, 0, 1);
   else
     do_write_standings(f, 1, 0, 0, 1);
+}
+
+int
+write_raw_source(FILE *f, int run_id)
+{
+  path_t src_path;
+  int src_flags;
+  char *src_text = 0;
+  size_t src_len = 0;
+  struct run_entry info;
+
+  if (run_id < 0 || run_id >= run_get_total()) return -SRV_ERR_BAD_RUN_ID;
+  run_get_entry(run_id, &info);
+  if (info.language <= 0 || info.language > max_lang
+      || !langs[info.language]) return -SRV_ERR_BAD_LANG_ID;
+
+  src_flags = archive_make_read_path(src_path, sizeof(src_path),
+                                     global->run_archive_dir, run_id, 0, 1);
+  if (src_flags < 0) return -SRV_ERR_SYSTEM_ERROR;
+  if (generic_read_file(&src_text, 0, &src_len, src_flags, 0, src_path, "")<0)
+    return -SRV_ERR_SYSTEM_ERROR;
+
+  if (langs[info.language]->binary) {
+    fprintf(f, "Content-type: application/octet-stream\n\n");
+  } else {
+    fprintf(f, "Content-type: text/plain\n\n");
+  }
+
+  if (fwrite(src_text, 1, src_len, f) != src_len) return -SRV_ERR_SYSTEM_ERROR;
+  return 0;
 }
 
 /**
