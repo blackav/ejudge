@@ -1,3 +1,10 @@
+2005-01-15  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.c: copyright notice is updated;
+	(split_path) function moved here from prepare.c;
+	(make_relative_path) function moved here from prepare.c;
+	(make_symlink) function moved here from prepare.c.
+
 2004-12-31  Alexander Chernov  <cher@ispras.ru>
 
 	* fileutl.c: (generic_file_size) bug in snprintf usage fixed.

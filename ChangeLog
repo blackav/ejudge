@@ -1,3 +1,297 @@
+2005-01-18  Alexander Chernov  <cher@ispras.ru>
+
+	* run.c: "misctext.h" is included;
+	(html_print_by_line) a new function to print a text file line by line
+	  performing its HTML armoring;
+	(generate_report) new parameter `html_flag' is added, and if this
+	  parameter has a non-zero value, the report file is generated in the
+	  HTML format;
+	(run_tests) new parameter `html_report_flag' is added, which is
+	  passed further to `generate_report' (as `html_flag');
+	(struct run_packet_bin) new field `html_report_flag' is added;
+	(parse_packet) the parsing code is updated because the server now
+	  passes the `html_report_flag' value in the packet;
+	(do_loop) the value of `html_report_flag' field is passed to the
+	  `run_tests' function.
+
+	* prepare.h:
+	(struct section_global_data) new field `html_report' is added.
+
+	* prepare.c: new global parameter `html_report' is added.
+
+	* misctext.h: (html_get_armor_table) new function prototype.
+
+	* misctext.c:
+	(html_get_armor_table) a new function to return the HTML armoring
+	  table.
+
+	* master_html.c:
+	(write_priv_report) the first line of the report is checked to be
+	  "content-type: text/html", and if this is so, the protocol is
+	  assumed to be in HTML format and no HTML armoring is performed;
+	(write_priv_users) added printing of the `e-mail' column.
+
+	* serve.c:
+	(write_run_packet) the value of the `html_report' global configuration
+	  variable is also printed to the run control packet.
+
+	* super_proto.h: removed duplicated ERR_SYSTEM_ERROR error code.
+
+	* userlist_xml.c:
+	(unparse_user) `email' field is unparsed in the USERLIST_MODE_STAND
+	  as well (e-mail is now shown on the "View teams" page).
+
+2005-01-16  Alexander Chernov  <cher@ispras.ru>
+
+	* serve-cmd.c: <signal.h>, <sys/time.h> are included;
+	(interrupt_handler) a function to handle an interrupt signal;
+	(alarm_handler) a function to handle an alarm signal;
+	(handle_full_import_xml) a new function to handle full-import-xml-runs
+	  coammand;
+	(cmds) added handler for "full-import-xml-runs" command.
+
+	* serve.c:
+	(cmd_priv_command_0) added necessary return after TRANSIENT_RUNS error
+	  code is returned in HAS_TRANSIENT_RUNS handling;
+	(cmd_simple_command) new function to handle simple non-privileged
+	  commands;
+	(packet_handlers) added handler for GET_TEST_SUSPEND command.
+
+2005-01-15  Alexander Chernov  <cher@ispras.ru>
+
+	* protocol.h: new command added: GET_TEST_SUSPEND.
+
+	* filter_eval.c: copyright notice is updated;
+	(do_eval) new primary expressions are handled:
+	  "userinvisible" expr
+	  "userbanned" expr
+	  "userlocked" expr
+	  "curuserinvisible"
+	  "curuserbanned"
+	  "curuserlocked"
+
+	* filter_expr.y: copyright notice is updated;
+	new primary expressions handled:
+	  "userinvisible" [ '(' expr ')' ]
+	  "userbanned" [ '(' expr ')' ]
+	  "userlocked" [ '(' expr ')' ]
+	  "curuserinvisible"
+	  "curuserbanned"
+	  "curuserlocked"
+
+	* filter_scan.lex: copyright notice is updated;
+	new tokens are handled: "userinvisible", "curuserinvisible",
+	  "userbanned", "curuserbanned", "userlocked", "curuserlocked".
+
+	* protocol.c: copyright notice is updated;
+	error text for TRANSIENT_RUNS error is added.
+
+	* protocol.h: new command added: HAS_TRANSIENT_RUNS;
+	new error code added: TRANSIENT_RUNS.
+
+	* serve-cmd.c:
+	(handle_priv_transient_runs) new function to perform the
+	  `has-transient-runs' command;
+	(cmds) new commands added: `suspend-testing', `resume-testing',
+	  `judge-suspended', `has-transient-runs'.
+
+	* serve.c:
+	(cmd_priv_command_0) `HAS_TRANSIENT_RUNS' command is handled;
+	(count_transient_runs) a new function, which calculates the total
+	  number of transient runs in the contest;
+	(packet_handlers) handler for `HAS_TRANSIENT_RUNS' command is added.
+
+	* master_html.c: copyright notice is updated;
+	(struct user_filter_info) new field `prev_mode_clar' is added;
+	(print_raw_record) new parameter `disq_attempts' is added, which is
+	  the number of disqualified attempts;
+	  call of `calc_kirov_score' is updated: parameter `disq_attempts'
+	  is passed;
+	  two new fields DISQ_ATTEMPT and DISQ_PENALTY are printed;
+	(write_priv_all_runs)
+	  calls of `print_raw_record' are updated;
+	  the number of disqialified attempts is requested using
+	  `run_get_attempts' and then passed to `print_raw_record' and
+	  `write_html_run_status';
+	(write_all_clars) new parameter `mode_clar' is added;
+	  generation of drop down menu "View all clars" and
+	  "View unanswered clars" is added;
+	  generation of "Reset filter" button is added;
+	  viewing mode (all/unanswered) is now depends on the value of
+	  `mode_clar' variable rather than on the user privilege level;
+	(write_master_page) new parameter `mode_clar' is added, which is
+	  passed to `write_all_clars' function;
+	(write_priv_source) the source text is printed in the line-numbered
+	  form;
+	(write_priv_users) call of `sformat_message' is updated;
+	(html_reset_filter) the clar viewing parameters are not longer reset
+	  in this function;
+	(html_reset_clar_filter) new function to reset the clarification
+	  viewing parameters.
+
+	* master.c: copyright notice is updated;
+	new global variable `filter_mode_clar' to store the clarification
+	  request listing mode;
+	(read_view_params) the `filter_mode_clar' variable is read from the
+	  "filter_mode_clar" CGI variable;
+	(action_reset_clar_filter) new function to perform the
+	  `RESET_CLAR_FILTER' action;
+	(display_master_page) parameter `filter_mode_clar' is passed to
+	  the `serve_clnt_master_page' function;
+	(main) `RESET_CLAR_FILTER' action is handled.
+
+	* html.h: copyright notice is updated;
+	(write_master_page) new parameter `mode_clar' is added;
+	(html_reset_clar_filter) new function prototype;
+	(calc_kirov_score) new parameter `disq_attempts' is added;
+	(write_html_run_status) new parameter `disq_attempts' is added.
+
+	* html.c: copyright notice is updated;
+	(calc_kirov_score) new parameter `disq_attempts' is added, which is
+	  the number of disqualified attempts;
+	  score calculation and displaying rules are updated accordingly;
+	(write_html_run_status) new parameter `disq_attempts' is added;
+	(new_write_user_runs) the number of disqualified attempts is requested
+	  from `run_get_attempts' and then passed to `write_html_run_status';
+	(do_write_kirov_standings) the number of disqualified attempts for
+	  each user and each problem is calculated separately from the number
+	  of ordinary attempts;
+	  call sites of `sformat_message' are updated according to change in
+	  the function prototype;
+	(do_write_standings) call sites of `sformat_message' are updated
+	  according to change in the function prototype;
+	(do_write_public_log) the number of disqualified attempts is requested
+	  from `run_get_attempts' and then passed to `write_html_run_status'.
+
+	* contests.h: <register_email_file> element is added;
+	(struct contest_desc) `register_email_file' field is added.
+
+	* contests.c: copyright notice is updated;
+	support for element <register_email_file> is implemented;
+	(parse_contest) <register_email_file> element is handled.
+
+	* client_actions.h: copyright notice is updated;
+	new client action `RESET_CLAR_FILTER' is added.
+
+	* misctext.c: copyright notice is updated;
+	(text_numbered_memlen) a new function, which returns the length
+	  of the text with line numbering inserted;
+	(text_number_lines) a new function, which inserts the line numbering
+	  into a text.
+
+	* misctext.h: copyright notice is updated;
+	(text_numbered_memlen) new function prototype;
+	(text_number_lines) new function prototype.
+
+	* prepare.c: copyright notice is updated;
+	"teamdb.h" is included;
+	"prepare_serve.h" is included;
+	new problem configuration variable `disqualified_penalty';
+	new language configuration variables `disable_testing',
+	  `disable_auto_testing';
+	(problem_init_func) `disqualified_penalty' is initialized to -1;
+	(struct variant_map_item) moved to prepare_serve.h;
+	(struct variant_map) moved to prepare_serve.h;
+	(find_variant) moved to prepare_serve.c;
+	(struct user_adjustment_map) moved to prepare_serve.h;
+	(find_user_priority_adjustment) moved to prepare_serve.c;
+	(set_defaults) a "serve"-specific fragment of code, which loads
+	  the XML contest decription is moved to a separate function
+	  `prepare_serve_defaults', which is moved to prepare_serve.c;
+	  `disqualified_penalty' field is initialized properly;
+	  call sites of `sformat_message' are updated according to the changes
+	  in the function's prototype;
+	(split_path) moved to fileutl.[ch];
+	(make_relative_path) moved to fileutl.[ch];
+	(make_symlink) moved to fileutl.[ch];
+	(prepare_tester_refinement) call sites of `sformat_message' are updated
+	  according to the changes in the function's prototype.
+
+	* prepare.h: copyright notice is updated;
+	(struct section_problem_data) new field `disqualified_penalty' added;
+	(struct section_language_data) new fields `disable_auto_testing',
+	  `disable_testing' are added;
+	(prepare_serve_defaults) new function prototype, the function is
+	  implemented in prepare_serve.c.
+
+	* protocol.h: copyright notice is updated;
+	new command `RESET_CLAR_FILTER' is added;
+	(struct prot_serve_pkt_master_page) new field `mode_clar' is added.
+
+	* runlog.c: copyright notice is updated;
+	(run_get_attempts) new parameter `pdisqattempts' is added, which is
+	  a pointer to a variable to store the number of disqualified runs
+	  for the given user;
+	  the number of disqualified runs is calculated separately from the
+	  number of regular runs.
+
+	* runlog.h: copyright notice is updated;
+	(run_get_attempts) new parameter added, which is the pointer to a
+	  variable to store the number of disqualified runs.
+
+	* serve-cmd.c: copyright notice is updated;
+	(handle_dump_master_runs) call of `serve_clnt_master_page' is updated.
+
+	* serve.c:
+	(do_rejudge_all) the language configuration variable `disable_testing'
+	  is supported;
+	(do_judge_suspended) the same as above;
+	(do_rejudge_by_mask) the same as above.
+
+	* serve.c: copyright notice is updated;
+	(cmd_master_page) `mode_clar' field's value is passed further to the
+	  `write_master_page' function;
+	(cmd_priv_submit_run) language configuration variables
+	  `disable_testing', `disable_auto_testing' are supported;
+	(cmd_team_submit_run) the same as above;
+	(cmd_reset_filter) `RESET_CLAR_FILTER' command is handled;
+	(do_judge_suspended) language configuration variables `disable_testing',
+	  `disable_auto_testing' are supported;
+	(packet_handlers) handler for `RESET_CLAR_FILTER' command is added;
+	(main) call of `prepare_serve_defaults' is added after the call of
+	  `prepare'.
+
+	* serve_clnt.h: copyright notice is updated;
+	(serve_clnt_master_page) added new parameter `mode_clar'.
+
+	* sformat.c: copyright notice is updated;
+	(sformat_message) added new parameters `user_data', `cnts_data',
+	  `extra_data';
+	  new format specifiers %Ui, %Un, %Ul, %Ue, %Uz, %UZ, %Vl, %Vu
+	  are handled.
+
+	* sformat.h: copyright notice is updated;
+	added forward declarations of all the structure types used as the
+	  parameters;
+	added definition of the `struct sformat_extra_data' structure;
+	(sformat_message) added new parameters `user_data', `cnts_data',
+	  `extra_data'.
+
+	* userlist-server.c: copyright notice is updated;
+	"sformat.h", "fileutl.h" are included;
+	(cmd_register_new) <register_email_file> element of the contest.xml
+	  file is supported. This element specifies the file to be used as
+	  a template for the successful registration letter. Certain format
+	  specifiers (like %Vl) may be used in the element's value, the format
+	  specifiers are substituted using the `sformat_message' function,
+	  the format specifiers in the template text are also substituted
+	  using the `sformat_message' function;
+	(cmd_edit_field) added check for empty new password.
+
+	* fileutl.h: copyright notice is updated;
+	(make_symlink) new function prototype is added; the function is
+	  moved here from prepare.c.
+
+	* files.make: prepare_serve.[ch] are added.
+
+	* userlist_xml.c: copyright notice is updated;
+	(parse_passwd) empty passwords are allowed, empty passwords are
+	  always assumed to be in the plain text form.
+
+2005-01-14  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare_serve.c, prepare_serve.h: initial revision
+
 2005-01-08  Alexander Chernov  <cher@ispras.ru>
 
 	* run.c: copyright notice is updated;
