@@ -183,5 +183,6 @@ int run_get_total_pages(int run_id);
 
 int run_find(int first_run, int last_run,
              int team_id, int prob_id, int lang_id);
+int run_undo_add_record(int run_id);
 
 #endif /* __RUNLOG_H__ */
