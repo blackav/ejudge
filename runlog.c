@@ -507,7 +507,9 @@ run_add_record(time_t  timestamp,
                int            locale_id,
                int            team,
                int            problem,
-               int            language)
+               int            language,
+               int            variant,
+               int            is_hidden)
 {
   int i;
   struct user_entry *ue;
@@ -517,13 +519,15 @@ run_add_record(time_t  timestamp,
     err("run_add_record: invalid timestamp %ld", timestamp);
     return -1;
   }
-  if (!head.start_time) {
-    err("run_add_record: contest is not yet started");
-    return -1;
-  }
-  if (timestamp < head.start_time) {
-    err("run_add_record: timestamp < start_time");
-    return -1;
+  if (!is_hidden) {
+    if (!head.start_time) {
+      err("run_add_record: contest is not yet started");
+      return -1;
+    }
+    if (timestamp < head.start_time) {
+      err("run_add_record: timestamp < start_time");
+      return -1;
+    }
   }
 
   if (locale_id < -1 || locale_id > 127) {
@@ -542,33 +546,43 @@ run_add_record(time_t  timestamp,
     err("run_add_record: problem is out of range");
     return -1;
   }
+  if (variant < 0 || variant > 255) {
+    err("run_add_record: variant is out of range");
+    return -1;
+  }
+  if (is_hidden < 0 || is_hidden > 1) {
+    err("run_add_record: is_hidden field value is invalid");
+    return -1;
+  }
 
-  ue = get_user_entry(team);
-  if (ue->status == V_VIRTUAL_USER) {
-    if (!ue->start_time) {
-      err("run_add_record: virtual contest not started");
-      return -1;
+  if (!is_hidden) {
+    ue = get_user_entry(team);
+    if (ue->status == V_VIRTUAL_USER) {
+      if (!ue->start_time) {
+        err("run_add_record: virtual contest not started");
+        return -1;
+      }
+      if (timestamp < ue->start_time) {
+        err("run_add_record: timestamp < virtual start time");
+        return -1;
+      }
+      stop_time = ue->stop_time;
+      if (!stop_time && head.duration)
+        stop_time = ue->start_time + head.duration;
+      if (stop_time && timestamp > stop_time) {
+        err("run_add_record: timestamp > virtual stop time");
+        return -1;
+      }
+    } else {
+      stop_time = head.stop_time;
+      if (!stop_time && head.duration)
+        stop_time = head.start_time + head.duration;
+      if (stop_time && timestamp > stop_time) {
+        err("run_add_record: timestamp overrun");
+        return -1;
+      }
+      ue->status = V_REAL_USER;
     }
-    if (timestamp < ue->start_time) {
-      err("run_add_record: timestamp < virtual start time");
-      return -1;
-    }
-    stop_time = ue->stop_time;
-    if (!stop_time && head.duration)
-      stop_time = ue->start_time + head.duration;
-    if (stop_time && timestamp > stop_time) {
-      err("run_add_record: timestamp > virtual stop time");
-      return -1;
-    }
-  } else {
-    stop_time = head.stop_time;
-    if (!stop_time && head.duration)
-      stop_time = head.start_time + head.duration;
-    if (stop_time && timestamp > stop_time) {
-      err("run_add_record: timestamp overrun");
-      return -1;
-    }
-    ue->status = V_REAL_USER;
   }
 
   i = append_record(timestamp, team);
@@ -582,6 +596,8 @@ run_add_record(time_t  timestamp,
   runs[i].test = 0;
   runs[i].score = -1;
   runs[i].ip = ip;
+  runs[i].variant = variant;
+  runs[i].is_hidden = is_hidden;
   if (sha1) {
     memcpy(runs[i].sha1, sha1, sizeof(runs[i].sha1));
   }
@@ -628,47 +644,6 @@ run_get_status(int runid)
   if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
   return runs[runid].status;
 }
-
-#if 0
-int
-run_get_param(int runid, int *pt,int *ploc, int *plang, int *pprob, int *pstat)
-{
-  if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
-  if (pt)    *pt    = runs[runid].team;
-  if (ploc)  *ploc  = runs[runid].locale_id;
-  if (plang) *plang = runs[runid].language;
-  if (pprob) *pprob = runs[runid].problem;
-  if (pstat) *pstat = runs[runid].status;
-  return 0;
-}
-#endif
-
-#if 0
-int
-run_get_record(int runid, time_t *ptime,
-               size_t *psize,
-               unsigned long *psha1,
-               unsigned long *pip, int *ploc,
-               int *pteamid, int *plangid, int *pprobid,
-               int *pstatus, int *ptest, int *pscore, int *pimported)
-{
-  if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
-
-  if (ptime)   *ptime   = runs[runid].timestamp;
-  if (psize)   *psize   = runs[runid].size;
-  if (ploc)    *ploc    = runs[runid].locale_id;
-  if (pteamid) *pteamid = runs[runid].team;
-  if (plangid) *plangid = runs[runid].language;
-  if (pprobid) *pprobid = runs[runid].problem;
-  if (pstatus) *pstatus = runs[runid].status;
-  if (ptest)   *ptest   = runs[runid].test;
-  if (pscore)  *pscore  = runs[runid].score;
-  if (pip)     *pip     = runs[runid].ip;
-  if (pimported) *pimported = runs[runid].is_imported;
-  if (psha1)   memcpy(psha1, runs[runid].sha1, sizeof(runs[runid].sha1));
-  return 0;
-}
-#endif
 
 int
 run_start_contest(time_t start_time)
@@ -772,6 +747,7 @@ run_get_attempts(int runid, int *pattempts, int skip_ce_flag)
     if (runs[i].problem != runs[runid].problem) continue;
     if (runs[i].status == RUN_COMPILE_ERR && skip_ce_flag) continue;
     if (runs[i].status == RUN_IGNORED) continue;
+    if (runs[i].is_hidden) continue;
     n++;
   }
   *pattempts = n;
@@ -916,7 +892,8 @@ run_check_duplicate(int run_id)
         && p->sha1[4] == q->sha1[4]
         && p->team == q->team
         && p->problem == q->problem
-        && p->language == q->language) {
+        && p->language == q->language
+        && p->variant == q->variant) {
       break;
     }
   }
@@ -1027,6 +1004,14 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
     te.is_imported = in->is_imported;
     f = 1;
   }
+  if ((mask & RUN_ENTRY_VARIANT) && te.variant != in->variant) {
+    te.variant = in->variant;
+    f = 1;
+  }
+  if ((mask & RUN_ENTRY_HIDDEN) && te.is_hidden != in->is_hidden) {
+    te.is_hidden = in->is_hidden;
+    f = 1;
+  }
 
   /* check consistency of a new record */
   if (te.status == RUN_VIRTUAL_START || te.status == RUN_VIRTUAL_STOP
@@ -1045,31 +1030,33 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
     return -1;
   }
 
-  ue = get_user_entry(te.team);
-  if (ue->status == V_VIRTUAL_USER) {
-    ASSERT(ue->start_time > 0);
-    stop_time = ue->stop_time;
-    if (!stop_time && head.duration > 0)
-      stop_time = ue->start_time + head.duration;
-    if (te.timestamp < ue->start_time) {
-      err("run_set_entry: %d: timestamp < virtual start_time", run_id);
-      return -1;
-    }
-    if (stop_time && te.timestamp > stop_time) {
-      err("run_set_entry: %d: timestamp > virtual stop_time", run_id);
-      return -1;
-    }
-  } else {
-    stop_time = head.stop_time;
-    if (!stop_time && head.duration > 0)
-      stop_time = head.start_time + head.duration;
-    if (te.timestamp < head.start_time) {
-      err("run_set_entry: %d: timestamp < start_time", run_id);
-      return -1;
-    }
-    if (stop_time && te.timestamp > stop_time) {
-      err("run_set_entry: %d: timestamp > stop_time", run_id);
-      return -1;
+  if (!te.is_hidden) {
+    ue = get_user_entry(te.team);
+    if (ue->status == V_VIRTUAL_USER) {
+      ASSERT(ue->start_time > 0);
+      stop_time = ue->stop_time;
+      if (!stop_time && head.duration > 0)
+        stop_time = ue->start_time + head.duration;
+      if (te.timestamp < ue->start_time) {
+        err("run_set_entry: %d: timestamp < virtual start_time", run_id);
+        return -1;
+      }
+      if (stop_time && te.timestamp > stop_time) {
+        err("run_set_entry: %d: timestamp > virtual stop_time", run_id);
+        return -1;
+      }
+    } else {
+      stop_time = head.stop_time;
+      if (!stop_time && head.duration > 0)
+        stop_time = head.start_time + head.duration;
+      if (te.timestamp < head.start_time) {
+        err("run_set_entry: %d: timestamp < start_time", run_id);
+        return -1;
+      }
+      if (stop_time && te.timestamp > stop_time) {
+        err("run_set_entry: %d: timestamp > stop_time", run_id);
+        return -1;
+      }
     }
   }
 
@@ -1101,9 +1088,18 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
     err("run_set_entry: %d: is_imported %d is invalid", run_id,te.is_imported);
     return -1;
   }
+  if (te.is_hidden != 0 && te.is_hidden != 1) {
+    err("run_set_entry: %d: is_hidden %d is invalid", run_id, te.is_hidden);
+    return -1;
+  }
+  if (te.is_imported && te.is_hidden) {
+    err("run_set_entry: %d: is_hidden and is_imported both cannot be set",
+        run_id);
+    return -1;
+  }
 
   memcpy(out, &te, sizeof(*out));
-  if (!ue->status) ue->status = V_REAL_USER;
+  if (!te.is_hidden && !ue->status) ue->status = V_REAL_USER;
   if (f && run_flush_entry(run_id) < 0) return -1;
   return 0;
 }
@@ -1639,6 +1635,7 @@ runlog_check(FILE *ferr,
 
   for (i = 0; i < nentries; i++) {
     e = &pentries[i];
+    if (e->is_hidden) continue;
     switch (e->status) {
     case RUN_EMPTY: break;
     case RUN_VIRTUAL_START:
@@ -1771,6 +1768,7 @@ build_indices(void)
 
   XCALLOC(ut_table, ut_size);
   for (i = 0; i < run_u; i++) {
+    if (runs[i].is_hidden) continue;
     switch (runs[i].status) {
     case RUN_EMPTY:
       break;
