@@ -47,13 +47,15 @@ userlist_clnt_dump_database(struct userlist_clnt *clnt,
     r = -ULS_ERR_PROTOCOL;
     goto _cleanup;
   }
+  r = in->id;
+  if (r < 0) goto _cleanup;
+
   close(pp[1]); pp[1] = -1;
   w1 = read(pp[0], &w2, 1);
   if (w1 != 0) {
     r = -ULS_ERR_PROTOCOL;
     goto _cleanup;
   }
-  r = in->id;
 
  _cleanup:
   xfree(in);
@@ -66,6 +68,5 @@ userlist_clnt_dump_database(struct userlist_clnt *clnt,
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
