@@ -16,8 +16,8 @@
  */
 
 #include "config.h"
-
 #include "settings.h"
+
 #include "userlist_cfg.h"
 #include "userlist.h"
 #include "pathutl.h"
@@ -56,6 +56,10 @@
 #include <libintl.h>
 #include <locale.h>
 #endif
+
+#ifndef EJUDGE_CHARSET
+#define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
+#endif /* EJUDGE_CHARSET */
 
 #define DEFAULT_FLUSH_INTERVAL 600
 #define DEFAULT_COOKIE_CHECK_INTERVAL 60
@@ -530,7 +534,7 @@ send_email_message(unsigned char const *to,
   FILE *f = 0;
 
   ASSERT(config->email_program);
-  if (!charset) charset = "koi8-r";
+  if (!charset) charset = EJUDGE_CHARSET;
 
   if (!(f = popen(config->email_program, "w"))) return -1;
 
