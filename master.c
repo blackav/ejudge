@@ -1245,6 +1245,44 @@ do_rejudge_all_if_asked(void)
 }
 
 static void
+action_toggle_visibility(void)
+{
+  unsigned char const *p;
+  int user_id, n, r;
+
+  if (!(p = cgi_param("user_id"))
+      || sscanf(p, "%d%n", &user_id, &n) != 1
+      || p[n]
+      || user_id <= 0) {
+    operation_status_page(-1, "Invalid parameter");
+    return;
+  }
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_TOGGLE_VISIBILITY,
+                            &user_id, sizeof(user_id));
+  operation_status_page(r, 0);
+}
+
+static void
+action_toggle_ban(void)
+{
+  unsigned char const *p;
+  int user_id, n, r;
+
+  if (!(p = cgi_param("user_id"))
+      || sscanf(p, "%d%n", &user_id, &n) != 1
+      || p[n]
+      || user_id <= 0) {
+    operation_status_page(-1, "Invalid parameter");
+    return;
+  }
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_TOGGLE_BAN,
+                            &user_id, sizeof(user_id));
+  operation_status_page(r, 0);
+}
+
+static void
 do_rejudge_problem_if_asked(void)
 {
   unsigned char *p;
@@ -1660,6 +1698,12 @@ main(int argc, char *argv[])
       break;
     case ACTION_RUN_CHANGE_STATUS:
       change_status();
+      break;
+    case ACTION_USER_TOGGLE_BAN:
+      action_toggle_ban();
+      break;
+    case ACTION_USER_TOGGLE_VISIBILITY:
+      action_toggle_visibility();
       break;
     default:
       change_status_if_asked();
