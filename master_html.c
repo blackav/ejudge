@@ -236,22 +236,26 @@ parse_error_func(unsigned char const *format, ...)
 }
 
 static void
-write_change_status_dialog(FILE *f, unsigned char const *var_name)
+write_change_status_dialog(FILE *f, unsigned char const *var_name,
+                           int disable_rejudge_flag)
 {
+  const unsigned char *dis_str = "";
+
   if (!var_name) var_name = "status";
+  if (disable_rejudge_flag) dis_str = " disabled=\"1\"";
 
   if (global->score_system_val == SCORE_KIROV) {
     fprintf(f,
             "<td><select name=\"%s\">"
             "<option value=\"\"></option>"
-            "<option value=\"99\">%s</option>"
+            "<option%s value=\"99\">%s</option>"
             "<option value=\"9\">%s</option>"
             "<optgroup label=\"%s:\">"
             "<option value=\"0\">%s</option>"
             "<option value=\"1\">%s</option>"
             "<option value=\"7\">%s</option>"
             "</optgroup>"
-            "</select></td>\n", var_name,
+            "</select></td>\n", var_name, dis_str,
             _("Rejudge"), _("Ignore"), _("Judgements"),
             _("OK"), _("Compilation error"),
             _("Partial solution"));
@@ -259,7 +263,7 @@ write_change_status_dialog(FILE *f, unsigned char const *var_name)
     fprintf(f,
             "<td><select name=\"%s\">"
             "<option value=\"\"> "
-            "<option value=\"99\">%s"
+            "<option%s value=\"99\">%s"
             "<option value=\"9\">%s</option>"
             "<optgroup label=\"%s:\">"
             "<option value=\"0\">%s</option>"
@@ -271,7 +275,7 @@ write_change_status_dialog(FILE *f, unsigned char const *var_name)
             "<option value=\"7\">%s</option>"
             "<option value=\"8\">%s</option>"
             "</optgroup>"
-            "</select></td>\n", var_name,
+            "</select></td>\n", var_name, dis_str,
             _("Rejudge"), _("Ignore"), _("Judgements"),
             _("OK"), _("Compilation error"), _("Run-time error"),
             _("Time-limit exceeded"), _("Presentation error"),
@@ -281,7 +285,7 @@ write_change_status_dialog(FILE *f, unsigned char const *var_name)
     fprintf(f,
             "<td><select name=\"%s\">"
             "<option value=\"\"> "
-            "<option value=\"99\">%s"
+            "<option%s value=\"99\">%s"
             "<option value=\"9\">%s</option>"
             "<optgroup label=\"%s:\">"
             "<option value=\"0\">%s"
@@ -291,7 +295,7 @@ write_change_status_dialog(FILE *f, unsigned char const *var_name)
             "<option value=\"4\">%s"
             "<option value=\"5\">%s"
             "</optgroup>"
-            "</select></td>\n", var_name,
+            "</select></td>\n", var_name, dis_str,
             _("Rejudge"), _("Ignore"), _("Judgements"),
             _("OK"), _("Compilation error"), _("Run-time error"),
             _("Time-limit exceeded"), _("Presentation error"),
@@ -326,6 +330,8 @@ write_all_runs(FILE *f, struct user_state_info *u,
   int has_parse_errors = 0;
   int has_filter_errors = 0;
   unsigned char *prob_str;
+  const unsigned char *imported_str;
+  const unsigned char *rejudge_dis_str;
 
   if (!filter_expr || !*filter_expr ||
       (u->prev_filter_expr && !strcmp(u->prev_filter_expr, filter_expr))){
@@ -591,6 +597,12 @@ write_all_runs(FILE *f, struct user_state_info *u,
 
       run_get_attempts(rid, &attempts, global->ignore_compile_errors);
       run_time = pe->timestamp;
+      imported_str = "";
+      rejudge_dis_str = "";
+      if (pe->is_imported) {
+        imported_str = "*";
+        rejudge_dis_str = " disabled=\"1\"";
+      }
       start_time = env.rhead.start_time;
       if (global->virtual) {
         start_time = run_get_virtual_start_time(pe->team);
@@ -608,7 +620,7 @@ write_all_runs(FILE *f, struct user_state_info *u,
                         extra_args);
       }
       fprintf(f, "<tr>");
-      fprintf(f, "<td>%d</td>", rid);
+      fprintf(f, "<td>%d%s</td>", rid, imported_str);
       fprintf(f, "<td>%s</td>", durstr);
       fprintf(f, "<td>%zu</td>", pe->size);
       fprintf(f, "<td>%s</td>", run_unparse_ip(pe->ip));
@@ -670,14 +682,14 @@ write_all_runs(FILE *f, struct user_state_info *u,
           fprintf(f,
                   "<td><select name=\"stat_%d\">"
                   "<option value=\"\"></option>"
-                  "<option value=\"99\">%s</option>"
+                  "<option%s value=\"99\">%s</option>"
                   "<option value=\"9\">%s</option>"
                   "<optgroup label=\"%s:\">"
                   "<option value=\"0\">%s</option>"
                   "<option value=\"1\">%s</option>"
                   "<option value=\"7\">%s</option>"
                   "</optgroup>"
-                  "</select></td>\n", rid,
+                  "</select></td>\n", rid, rejudge_dis_str,
                   _("Rejudge"), _("Ignore"), _("Judgements"),
                   _("OK"), _("Compilation error"),
                   _("Partial solution"));
@@ -685,7 +697,7 @@ write_all_runs(FILE *f, struct user_state_info *u,
           fprintf(f,
                   "<td><select name=\"stat_%d\">"
                   "<option value=\"\"> "
-                  "<option value=\"99\">%s"
+                  "<option%s value=\"99\">%s"
                   "<option value=\"9\">%s</option>"
                   "<optgroup label=\"%s:\">"
                   "<option value=\"0\">%s</option>"
@@ -697,7 +709,7 @@ write_all_runs(FILE *f, struct user_state_info *u,
                   "<option value=\"7\">%s</option>"
                   "<option value=\"8\">%s</option>"
                   "</optgroup>"
-                  "</select></td>\n", rid,
+                  "</select></td>\n", rid, rejudge_dis_str,
                   _("Rejudge"), _("Ignore"), _("Judgements"),
                   _("OK"), _("Compilation error"), _("Run-time error"),
                   _("Time-limit exceeded"), _("Presentation error"),
@@ -707,7 +719,7 @@ write_all_runs(FILE *f, struct user_state_info *u,
           fprintf(f,
                   "<td><select name=\"stat_%d\">"
                   "<option value=\"\"> "
-                  "<option value=\"99\">%s"
+                  "<option%s value=\"99\">%s"
                   "<option value=\"9\">%s</option>"
                   "<optgroup label=\"%s:\">"
                   "<option value=\"0\">%s"
@@ -717,7 +729,7 @@ write_all_runs(FILE *f, struct user_state_info *u,
                   "<option value=\"4\">%s"
                   "<option value=\"5\">%s"
                   "</optgroup>"
-                  "</select></td>\n", rid,
+                  "</select></td>\n", rid, rejudge_dis_str,
                   _("Rejudge"), _("Ignore"), _("Judgements"),
                   _("OK"), _("Compilation error"), _("Run-time error"),
                   _("Time-limit exceeded"), _("Presentation error"),
@@ -731,7 +743,11 @@ write_all_runs(FILE *f, struct user_state_info *u,
       switch (sid_mode) {
       case SID_DISABLED: case SID_EMBED:
         fprintf(f, "<td><input type=\"submit\" name=\"source_%d\" value=\"%s\"></td>\n", rid, _("View"));
-        fprintf(f, "<td><input type=\"submit\" name=\"report_%d\" value=\"%s\"></td>\n", rid, _("View"));
+        if (pe->is_imported) {
+          fprintf(f, "<td>N/A</td>");
+        } else {
+          fprintf(f, "<td><input type=\"submit\" name=\"report_%d\" value=\"%s\"></td>\n", rid, _("View"));
+        }
         fprintf(f, "</tr></form>\n");
         break;
       case SID_COOKIE: case SID_URL:
@@ -741,12 +757,16 @@ write_all_runs(FILE *f, struct user_state_info *u,
                               sid_mode, sid, self_url,
                               extra_args, "source_%d=1", rid));
         fprintf(f, "%s</a></td>", _("View"));
-        fprintf(f, "<td>");
-        fprintf(f, "%s",
-                html_hyperref(hbuf, sizeof(hbuf),
-                              sid_mode, sid, self_url,
-                              extra_args, "report_%d=1", rid));
-        fprintf(f, "%s</a></td>", _("View"));
+        if (pe->is_imported) {
+          fprintf(f, "<td>N/A</td>");
+        } else {
+          fprintf(f, "<td>");
+          fprintf(f, "%s",
+                  html_hyperref(hbuf, sizeof(hbuf),
+                                sid_mode, sid, self_url,
+                                extra_args, "report_%d=1", rid));
+          fprintf(f, "%s</a></td>", _("View"));
+        }
         fprintf(f, "</tr>\n");
         if (priv_level == PRIV_LEVEL_ADMIN) {
           fprintf(f, "</form>\n");
@@ -788,6 +808,15 @@ write_all_runs(FILE *f, struct user_state_info *u,
     fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
             ACTION_REJUDGE_PROBLEM, _("Rejudge!"));
     fprintf(f, "</form></p>\n");
+  }
+
+  if (priv_level == PRIV_LEVEL_ADMIN && global->enable_runlog_merge) {
+    html_start_form(f, 2, sid_mode, sid, self_url, hidden_vars, extra_args);
+    fprintf(f, "<table border=\"0\"><tr><td>%s: </td>\n",
+            _("Import and merge XML runs log"));
+    fprintf(f, "<td><input type=\"file\" name=\"file\"></td>\n");
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_MERGE_RUNS, _("Send!"));
+    fprintf(f, "</tr></table></form>\n");
   }
 }
 
@@ -1124,6 +1153,23 @@ write_priv_source(FILE *f, int user_id, int priv_level,
     fprintf(f, "%s", nbsp);
   }
   fprintf(f, "</tr>\n");
+  fprintf(f, "<tr><td>%s:</td><td>%s</td>",
+          _("Imported?"), info.is_imported?_("Yes"):_("No"));
+  if (priv_level == PRIV_LEVEL_ADMIN) {
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
+    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
+    fprintf(f, "<td><select name=\"is_imported\">\n");
+    fprintf(f, "<option value=\"0\"%s>%s\n",
+            info.is_imported?"":" selected=\"1\"", _("No"));
+    fprintf(f, "<option value=\"1\"%s>%s\n",
+            info.is_imported?" selected=\"1\"":"", _("Yes"));
+    fprintf(f, "</select></td>\n");
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>\n", ACTION_RUN_CHANGE_IMPORTED, _("Change"));
+  } else {
+    fprintf(f, "%s", nbsp);
+  }
+  fprintf(f, "</tr>\n");
+
   fprintf(f, "<tr><td>%s:</td><td>%d</td>%s</tr>\n",
           _("Locale ID"), info.locale_id, nbsp);
   fprintf(f, "<tr><td>%s:</td><td>%s</td>",
@@ -1131,7 +1177,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   if (priv_level == PRIV_LEVEL_ADMIN) {
     html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
-    write_change_status_dialog(f, 0);
+    write_change_status_dialog(f, 0, info.is_imported);
     fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>\n", ACTION_RUN_CHANGE_STATUS, _("Change"));
   } else {
     fprintf(f, "%s", nbsp);
@@ -1168,19 +1214,21 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), 0, 0, 0);
   fprintf(f, "<hr>\n");
-  if (generic_read_file(&src_text, 0, &src_len, 0, 0, src_path, "") < 0) {
-    fprintf(f, "<big><font color=\"red\">Cannot read source text!</font></big>\n");
-  } else {
-    html_len = html_armored_memlen(src_text, src_len);
-    html_text = alloca(html_len + 16);
-    html_armor_text(src_text, src_len, html_text);
-    html_text[html_len] = 0;
-    fprintf(f, "<pre>%s</pre>", html_text);
-    xfree(src_text);
+  if (!info.is_imported) {
+    if (generic_read_file(&src_text, 0, &src_len, 0, 0, src_path, "") < 0) {
+      fprintf(f, "<big><font color=\"red\">Cannot read source text!</font></big>\n");
+    } else {
+      html_len = html_armored_memlen(src_text, src_len);
+      html_text = alloca(html_len + 16);
+      html_armor_text(src_text, src_len, html_text);
+      html_text[html_len] = 0;
+      fprintf(f, "<pre>%s</pre>", html_text);
+      xfree(src_text);
+    }
+    fprintf(f, "<hr>\n");
+    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
+                      _("Main page"), 0, 0, 0);
   }
-  fprintf(f, "<hr>\n");
-  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
-                    _("Main page"), 0, 0, 0);
   return 0;
 }
 
