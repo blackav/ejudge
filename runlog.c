@@ -629,6 +629,7 @@ run_get_status(int runid)
   return runs[runid].status;
 }
 
+#if 0
 int
 run_get_param(int runid, int *pt,int *ploc, int *plang, int *pprob, int *pstat)
 {
@@ -640,7 +641,9 @@ run_get_param(int runid, int *pt,int *ploc, int *plang, int *pprob, int *pstat)
   if (pstat) *pstat = runs[runid].status;
   return 0;
 }
+#endif
 
+#if 0
 int
 run_get_record(int runid, time_t *ptime,
                size_t *psize,
@@ -665,6 +668,7 @@ run_get_record(int runid, time_t *ptime,
   if (psha1)   memcpy(psha1, runs[runid].sha1, sizeof(runs[runid].sha1));
   return 0;
 }
+#endif
 
 int
 run_start_contest(time_t start_time)
@@ -1136,7 +1140,7 @@ time_t
 run_get_virtual_start_time(int user_id)
 {
   struct user_entry *pvt = get_user_entry(user_id);
-  if (pvt->status != V_VIRTUAL_USER) return head.start_time;
+  if (pvt->status == V_REAL_USER) return head.start_time;
   return pvt->start_time;
 }
 
