@@ -63,6 +63,7 @@ void  client_put_header(FILE *out, unsigned char const *template,
                         int http_flag, int locale_id, 
                         unsigned char const *format, ...);
 void  client_put_footer(FILE *out, unsigned char const *template);
+unsigned long parse_client_ip(void);
 
 #endif /* __CLNTUTIL_H__ */
 /**
