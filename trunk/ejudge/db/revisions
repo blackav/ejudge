@@ -405,3 +405,10 @@ userlist_clnt.c 1 8 2030608
 userlist_proto.c 1 2 171648
 userlist_xml.c 1 7 2958419
 users.c 1 3 1208315
+contests.h 1 8 258932
+userlist_clnt.h 1 7 373706
+contests.c 1 8 1260604
+register.c 1 16 5733290
+team.c 1 18 2584229
+userlist-server.c 1 9 7195275
+userlist_clnt.c 1 9 2039601
