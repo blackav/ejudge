@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,13 +25,14 @@
 #include "fileutl.h"
 #include "runlog.h"
 #include "clarlog.h"
-#include "logger.h"
 #include "teamdb.h"
 #include "prepare.h"
 #include "base64.h"
-#include "xalloc.h"
-#include "osdeps.h"
 #include "sformat.h"
+
+#include <reuse/logger.h>
+#include <reuse/xalloc.h>
+#include <reuse/osdeps.h>
 
 #include <stdio.h>
 #include <string.h>
