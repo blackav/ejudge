@@ -183,7 +183,7 @@ cdeps.o: cdeps.c
 
 log: mkChangeLog
 	cvs log -l | ./mkChangeLog AUTHORS ChangeLog ChangeLog
-	for i in win32 unix serve_clnt userlist_clnt charsets; do cd $$i; cvs log -l | ../mkChangeLog ../AUTHORS ChangeLog ChangeLog; cd ..; done
+	for i in win32 unix serve_clnt userlist_clnt charsets checkers; do cd $$i; cvs log -l | ../mkChangeLog ../AUTHORS ChangeLog ChangeLog; cd ..; done
 
 rev:
 	./revinfo -d db/versions -r db/revisions $(HFILES) $(CFILES)
