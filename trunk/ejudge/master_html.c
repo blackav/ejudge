@@ -1977,11 +1977,17 @@ write_priv_report(FILE *f, int user_id, int priv_level,
   if (rep_flag < 0 || generic_read_file(&rep_text, 0, &rep_len, rep_flag,0,rep_path, "") < 0) {
     fprintf(f, "<big><font color=\"red\">Cannot read report text!</font></big>\n");
   } else {
-    html_len = html_armored_memlen(rep_text, rep_len);
-    html_text = alloca(html_len + 16);
-    html_armor_text(rep_text, rep_len, html_text);
-    html_text[html_len] = 0;
-    fprintf(f, "<pre>%s</pre>", html_text);
+    static const char content_type_str[] = "content-type: text/html\n\n";
+
+    if (!strncasecmp(rep_text, content_type_str, sizeof(content_type_str)-1)) {
+      fprintf(f, "%s", rep_text + sizeof(content_type_str) - 1);
+    } else {
+      html_len = html_armored_memlen(rep_text, rep_len);
+      html_text = alloca(html_len + 16);
+      html_armor_text(rep_text, rep_len, html_text);
+      html_text[html_len] = 0;
+      fprintf(f, "<pre>%s</pre>", html_text);
+    }
     xfree(rep_text);
   }
   fprintf(f, "<hr>\n");
@@ -2122,9 +2128,11 @@ write_priv_users(FILE *f, int user_id, int priv_level,
           "<th>%s</th>"
           "<th>%s</th>"
           "<th>%s</th>"
+          "<th>%s</th>"
           "<th>%s</th>",
           _("User ID"),
           _("User login"),
+          _("E-mail"),
           _("User name"),
           _("Flags"),
           _("No. of runs"), _("Size of runs"),
@@ -2182,6 +2190,15 @@ write_priv_users(FILE *f, int user_id, int priv_level,
     html_name_len = html_armored_strlen(txt_name);
     html_name = alloca(html_name_len + 16);
     html_armor_string(txt_name, html_name);
+
+    // e-mail
+    if (info.user && info.user->email) {
+      fprintf(f, "<td><a href=\"mailto:%s &lt;%s&gt;\">%s<a></td>",
+              html_name, info.user->email, info.user->email);
+    } else {
+      fprintf(f, "<td>&nbsp;</td>");
+    }
+
     fprintf(f, "<td>%s</td>", html_name);
 
     flags = teamdb_get_flags(i);
