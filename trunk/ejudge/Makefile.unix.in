@@ -117,6 +117,7 @@ all: local_all subdirs_all
 
 subdirs_all:
 	$(MAKE) -C extra all
+	$(MAKE) -C checkers all
 
 install: ${TARGETS} po mo
 	install -d ${INST_BIN_PATH}
@@ -162,6 +163,7 @@ clean:
 	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog serve_clnt/*.o charsets/*.o userlist_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c
 	-rm -rf locale
 	$(MAKE) -C extra clean
+	$(MAKE) -C checkers clean
 
 version.c: revinfo $(HFILES) $(CFILES) $(OTHERFILES)
 	./revinfo -C -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
