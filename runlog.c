@@ -236,7 +236,7 @@ static int
 do_write(int fd, void const *buf, size_t size)
 {
   const unsigned char *p = (const unsigned char *) buf;
-  int w;
+  int w, se;
 
   ASSERT(buf);
   ASSERT(size);
@@ -244,8 +244,11 @@ do_write(int fd, void const *buf, size_t size)
   while (size) {
     w = write(fd, p, size);
     if (w <= 0) {
+      se = errno;
+      if (se == EINTR) continue;
       err("do_write: write error: %s", os_ErrorMsg());
-      return -1;
+      errno = se;
+      return -se;
     }
     p += w;
     size -= w;
@@ -257,17 +260,21 @@ static int
 do_read(int fd, void *buf, size_t size)
 {
   unsigned char *p = (unsigned char*) buf;
-  int r;
+  int r, se;
 
   while (size) {
     r = read(fd, p, size);
     if (r < 0) {
+      se = errno;
+      if (se == EINTR) continue;
       err("do_read: read failed: %s", os_ErrorMsg());
-      return -1;
+      errno = se;
+      return -se;
     }
     if (!r) {
       err("do_read: unexpected EOF");
-      return -1;
+      errno = EPIPE;
+      return -EPIPE;
     }
     p += r;
     size -= r;
@@ -461,6 +468,12 @@ append_record(time_t t, int uid)
     memset(&runs[run_u], 0, (run_a - run_u) * sizeof(runs[0]));
     info("append_record: array extended: %d", run_a);
   }
+
+  /*
+  memset(&runs[run_u], 0, sizeof(runs[0]));
+  runs[run_u].submission = run_u;
+  return run_u++;
+  */
 
   if (!run_u
       || runs[run_u - 1].timestamp < t
@@ -1024,6 +1037,10 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
     te.is_readonly = in->is_readonly;
     f = 1;
   }
+  if ((mask & RUN_ENTRY_PAGES) && te.pages != in->pages) {
+    te.pages = in->pages;
+    f = 1;
+  }
 
   /* check consistency of a new record */
   if (te.status == RUN_VIRTUAL_START || te.status == RUN_VIRTUAL_STOP
@@ -1209,7 +1226,7 @@ run_virtual_start(int user_id, time_t t, unsigned long ip)
   pvt->start_time = t;
   pvt->status = V_VIRTUAL_USER;
   if (run_flush_entry(i) < 0) return -1;
-  return -1;
+  return i;
 }
 
 int
@@ -1250,7 +1267,7 @@ run_virtual_stop(int user_id, time_t t, unsigned long ip)
   runs[i].status = RUN_VIRTUAL_STOP;
   pvt->stop_time = t;
   if (run_flush_entry(i) < 0) return -1;
-  return -1;
+  return i;
 }
 
 int
@@ -1819,6 +1836,38 @@ build_indices(void)
       break;
     }
   }
+}
+
+int
+run_get_pages(int run_id)
+{
+  if (run_id < 0 || run_id >= run_u) ERR_R("bad runid: %d", run_id);
+  return runs[run_id].pages;
+}
+
+int
+run_set_pages(int run_id, int pages)
+{
+  if (run_id < 0 || run_id >= run_u) ERR_R("bad runid: %d", run_id);
+  if (pages < 0 || pages > 255) ERR_R("bad pages: %d", pages);
+  runs[run_id].pages = pages;
+  run_flush_entry(run_id);
+  return 0;
+}
+
+int
+run_get_total_pages(int user_id)
+{
+  int i, total = 0;
+
+  if (user_id <= 0 || user_id > 100000) ERR_R("bad user_id: %d", user_id);
+  for (i = 0; i < run_u; i++) {
+    if (runs[i].status == RUN_VIRTUAL_START || runs[i].status == RUN_VIRTUAL_STOP
+        || runs[i].status == RUN_EMPTY) continue;
+    if (runs[i].team != user_id) continue;
+    total += runs[i].pages;
+  }
+  return total;
 }
 
 /**
