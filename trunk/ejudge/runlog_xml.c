@@ -1,4 +1,4 @@
-/* -*- mode: c; coding: koi8-r -*- */
+/* -*- mode: c -*- */
 /* $Id$ */
 
 /* Copyright (C) 2003-2004 Alexander Chernov <cher@ispras.ru> */
@@ -15,6 +15,9 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+#include "settings.h"
+
 #include "runlog.h"
 #include "expat_iface.h"
 #include "pathutl.h"
@@ -26,6 +29,10 @@
 #include <reuse/xalloc.h>
 
 #include <ctype.h>
+
+#ifndef EJUDGE_CHARSET
+#define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
+#endif /* EJUDGE_CHARSET */
 
 struct run_element
 {
@@ -638,7 +645,7 @@ unparse_runlog_xml(FILE *f,
   astr1 = alloca(asize1);
   astr2 = alloca(asize2);
 
-  fputs("<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n", f);
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n", EJUDGE_CHARSET);
   fprintf(f, "<%s>\n", elem_map[RUNLOG_T_RUNLOG]);
   if (external_mode) {
     fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_USERS]);
