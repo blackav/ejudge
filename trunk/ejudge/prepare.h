@@ -22,6 +22,7 @@
  */
 
 #include "pathutl.h"
+#include "contests.h"
 #include "parsecfg.h"
 
 #include <stdio.h>
@@ -73,6 +74,11 @@ struct section_global_data
   path_t l10n_dir;              /* localization message catalog */
   path_t standings_locale;
   int    standings_locale_id;
+
+  /* userlist-server support */
+  int    contest_id;
+  path_t socket_path;
+  path_t contests_path;
 
   /* ====== CONFIGURATION FILES/DIRECTORIES SETUP ====== */
   path_t conf_dir;              /* configuration dir */
@@ -265,6 +271,10 @@ extern struct section_tester_data   *testers[];
 extern int max_tester;
 extern int max_lang;
 extern int max_prob;
+
+/* userlist-server interaction */
+extern struct contest_list *contests;
+extern struct contest_desc *cur_contest;
 
 int prepare(char const *, int flags, int mode, char const *opts);
 int create_dirs(int mode);
