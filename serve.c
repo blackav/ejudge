@@ -3120,16 +3120,67 @@ static void generate_packet_name(int run_id, int prio,
                                  unsigned char buf[PACKET_NAME_SIZE]);
 
 static int
+write_run_packet(const unsigned char *pkt_base,
+                 int run_id,
+                 int problem_id,
+                 int final_test,
+                 int locale_id,
+                 int variant,
+                 int accept_partial,
+                 int user_id,
+                 const unsigned char *exe_sfx,
+                 const unsigned char *arch,
+                 const unsigned char *user_spelling,
+                 const unsigned char *problem_spelling)
+{
+  unsigned char *buf, *p;
+  size_t wsize, exe_sfx_len, arch_len, buf_size, us_len, ps_len;
+
+  if (!exe_sfx) exe_sfx = "";
+  if (!arch) arch = "";
+  if (!user_spelling) user_spelling = "";
+  if (!problem_spelling) problem_spelling = "";
+
+  exe_sfx_len = strlen(exe_sfx);
+  arch_len = strlen(arch);
+  us_len = strlen(user_spelling);
+  ps_len = strlen(problem_spelling);
+  buf_size = 128 + exe_sfx_len + arch_len + us_len + ps_len;
+  p = buf = (unsigned char*) alloca(buf_size);
+
+  p += sprintf(p, "%d %d %d %d %d %d %d %d %d %d %d\n",
+               global->contest_id, run_id, problem_id,
+               final_test, locale_id,
+               global->score_system_val,
+               global->team_enable_rep_view,
+               global->report_error_code, variant,
+               accept_partial, user_id);
+  p += sprintf(p, "%d %s\n", exe_sfx_len, exe_sfx);
+  p += sprintf(p, "%d %s\n", arch_len, arch);
+  p += sprintf(p, "%d %s\n", us_len, user_spelling);
+  p += sprintf(p, "%d %s\n", ps_len, problem_spelling);
+  p += sprintf(p, "0\n");
+
+  wsize = p - buf;
+  ASSERT(wsize < buf_size);
+
+  return generic_write_file(buf,wsize,SAFE,global->run_queue_dir,pkt_base,"");
+}
+
+static int
 read_compile_packet(char *pname)
 {
-  unsigned char buf[256];
+  unsigned char buf[1024];
   unsigned char pkt_base[PACKET_NAME_SIZE];
   unsigned char exe_in_name[128];
   unsigned char exe_out_name[128];
   unsigned char rep_path[PATH_MAX], team_path[PATH_MAX];
+  struct teamdb_export te;
+  unsigned char user_spelling[128];
+  unsigned char prob_spelling[128];
 
-  int  r, n;
-  int  rsize, wsize;
+  int  r, n, len, i;
+  int  rsize;
   int  code;
   int  runid;
   int  cn, rep_flags, team_flags = 0, prio;
@@ -3225,18 +3276,39 @@ read_compile_packet(char *pname)
   if (global->score_system_val == SCORE_OLYMPIAD
       && !olympiad_judging_mode) final_test = 1;
 
-  /* create tester packet */
-  wsize = snprintf(buf, sizeof(buf),
-                   "%d %d %d %d %d %d %d %d %d %d \"%s\" \"%s\"\n",
-                   global->contest_id, runid, probs[re.problem]->tester_id,
-                   final_test, re.locale_id,
-                   global->score_system_val,
-                   global->team_enable_rep_view,
-                   global->report_error_code, variant,
-                   probs[re.problem]->accept_partial,
-                   langs[re.language]->exe_sfx, langs[re.language]->arch);
-  if (generic_write_file(buf, wsize, SAFE, global->run_queue_dir,
-                         pkt_base, "") < 0)
+  XMEMZERO(&te, 1);
+  user_spelling[0] = 0;
+  teamdb_export_team(re.team, &te);
+  if (te.user && te.user->spelling && te.user->spelling[0]) {
+    snprintf(user_spelling, sizeof(user_spelling), "%s", te.user->spelling);
+  }
+  if (!user_spelling[0] && te.user && te.user->name && te.user->name[0]) {
+    snprintf(user_spelling, sizeof(user_spelling), "%s", te.user->name);
+  }
+  if (!user_spelling[0] && te.login && te.user->login && te.user->login[0]) {
+    snprintf(user_spelling, sizeof(user_spelling), "%s", te.user->login);
+  }
+  for (i = 0, len = strlen(user_spelling); i < len; i++)
+    if (user_spelling[i] == '\"') user_spelling[i] = ' ';
+
+  prob_spelling[0] = 0;
+  if (probs[re.problem]->spelling[0]) {
+    snprintf(prob_spelling, sizeof(prob_spelling), "%s",
+             probs[re.problem]->spelling);
+  }
+  if (!prob_spelling[0]) {
+    snprintf(prob_spelling, sizeof(prob_spelling), "%s",
+             probs[re.problem]->short_name);
+  }
+  for (i = 0, len = strlen(prob_spelling); i < len; i++)
+    if (prob_spelling[i] == '\"') prob_spelling[i] = ' ';
+
+  if (write_run_packet(pkt_base, runid, probs[re.problem]->tester_id,
+                       final_test, re.locale_id,
+                       probs[re.problem]->accept_partial, variant, re.team,
+                       langs[re.language]->exe_sfx,
+                       langs[re.language]->arch,
+                       user_spelling, prob_spelling) < 0)
     return -1;
 
   /* update status */
@@ -3397,12 +3469,13 @@ queue_compile_request(unsigned char const *str, int len,
   ptr = pkt_buf + sprintf(pkt_buf, "%d %d %d %d\n",
                           global->contest_id, run_id,
                           lang_id, locale_id);
+  ptr += sprintf(ptr, "%d ", env_count);
   if (env_count > 0) {
-    ptr += sprintf(ptr, "%d ", env_count);
     for (i = 0; i < env_count; i++) {
       ptr += sprintf(ptr, "%zu %s ", strlen(compiler_env[i]), compiler_env[i]);
     }
   }
+  ptr += sprintf(ptr, "%d\n", 0);
   pkt_len = ptr - pkt_buf;
 
   if (len == -1) {
