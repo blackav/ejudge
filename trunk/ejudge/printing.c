@@ -113,6 +113,8 @@ do_print_run(int run_id, int is_privileged, int user_id)
   size_t in_buf_len;
   FILE *f = 0;
   int errcode = -SRV_ERR_SYSTEM_ERROR;
+  struct teamdb_export teaminfo;
+  unsigned char *printer_name = 0;
 
   if (run_id < 0 || run_id >= run_get_total()) {
     errcode = -SRV_ERR_BAD_RUN_ID;
@@ -138,6 +140,13 @@ do_print_run(int run_id, int is_privileged, int user_id)
       errcode = -SRV_ERR_ALREADY_PRINTED;
       goto cleanup;
     }
+  }
+
+  if (!is_privileged) {
+    if (teamdb_export_team(info.team, &teaminfo) < 0)
+      return -1;
+    if (teaminfo.user && teaminfo.user->printer_name)
+      printer_name = teaminfo.user->printer_name;
   }
 
   banner_path = (unsigned char*) alloca(strlen(global->print_work_dir) + 64);
@@ -218,6 +227,10 @@ do_print_run(int run_id, int is_privileged, int user_id)
   if (global->lpr_args) {
     for (i = 0; global->lpr_args[i]; i++)
       task_AddArg(tsk, global->lpr_args[i]);
+  }
+  if (printer_name) {
+    task_AddArg(tsk, "-P");
+    task_AddArg(tsk, printer_name);
   }
   task_AddArg(tsk, ps_path);
   task_SetPathAsArg0(tsk);
