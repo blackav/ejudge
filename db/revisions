@@ -1530,3 +1530,7 @@ runlog.c 1 34 4043218
 runlog_xml.c 1 10 1683738
 serve_clnt/edit_run.c 1 11 377130
 serve_clnt/master_page.c 1 9 388771
+collect-emails.c 1 1 219815
+serve-cmd.c 1 3 934196
+serve-control.c 1 1 1817675
+slice-userlist.c 1 1 243749
