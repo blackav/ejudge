@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+# Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -102,6 +102,7 @@ COMMON_CFILES=\
  parsecfg.c\
  pathutl.c\
  prepare.c\
+ prepare_serve.c\
  printing.c\
  protocol.c\
  runlog.c\
@@ -201,6 +202,7 @@ HFILES=\
  parsecfg.h\
  pathutl.h\
  prepare.h\
+ prepare_serve.h\
  printing.h\
  protocol.h\
  runlog.h\
