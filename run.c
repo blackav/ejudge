@@ -780,7 +780,7 @@ do_loop(void)
       continue;
     }
 
-    r = generic_copy_file(0, testers[i]->server_exe_dir, exe_name, "",
+    r = generic_copy_file(REMOVE, testers[i]->server_exe_dir, exe_name, "",
                           0, testers[i]->tmp_dir, exe_name, "");
     if (r <= 0) continue;
 
