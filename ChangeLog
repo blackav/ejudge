@@ -1,3 +1,26 @@
+2003-07-11  Alexander Chernov  <cher@ispras.ru>
+
+	* makefile: general cleanup.
+	o `libcommon.a' library is used in all utilities instead of explicit
+	  listing of all used .c files;
+	o `filter_test' is removed from the list of targets;
+	o all dummy rules with `.exe' suffix are removed;
+	o rules for unused utilities `submit', `clar', `mkpasswd',
+	  `make-teamdb', `make-teamdb-inet', `send-passwords' are removed;
+	o rule for `libcommon.a' is added.
+
+	* files.make:
+	new variable `COMMON_CFILES' is added and many C files which are
+	  used in several utilities, are moved to this variable from CFILES.
+
+	* edit-userlist.c:
+	(generic_menu) `possibly uninitialized variable' warning (false) fixed;
+	(display_user_menu) the same warning is fixed.
+
+	* run.c:
+	(do_loop) `start_env' array is freed only if the tester is a temporary
+	  tester.
+
 2003-07-10  Alexander Chernov  <cher@ispras.ru>
 
 	* ejudge.ru_RU.KOI8-R.po, ejudge.ru_RU.KOI8-R.po:
