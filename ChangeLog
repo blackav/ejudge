@@ -1,3 +1,42 @@
+2002-10-11  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare.c:
+	(set_defaults) maximal contest_time is increased to 100 hours.
+
+	* run.c:
+	(run_tests) correct answer files are only used if `use_corr' flag is
+	  set for a problem.
+
+	* team.c:
+	(main) generated html modified, so "Team standings" and "Problems"
+	  open in a new window.
+
+2002-10-09  Alexander Chernov  <cher@ispras.ru>
+
+	* base64.c, cgi.c, clar.c, clarlog.c, clntutil.c, compile.c, html.c, mkpasswd.c, parsecfg.c, prepare.c, revinfo.c, run.c, runlog.c, serve.c, submit.c, teamdb.c:
+	redundant message translations (_(...)) are removed
+
+2002-10-08  Alexander Chernov  <cher@ispras.ru>
+
+	* files.make: userlist_clnt.[ch] files added.
+
+	* userlist-server.c: in progress...
+
+	* userlist_xml.c: adapted to use in userlist-server.
+
+	* userlist.c:
+	(userlist_validate) a new name of previous `user_data_validate';
+	(userlist_free) a new name of previous `user_data_free'.
+
+	* userlist.h: 
+	(userlist_free) a prototype added.
+
+	* nls.c: <string.h> is included.
+
+	* makefile: userlist-server file list is changed.
+
+	* userlist_clnt.c, userlist_clnt.h: Initial revision
+
 2002-10-07  Alexander Chernov  <cher@ispras.ru>
 
 	* files.make: userlist-server.c added.
