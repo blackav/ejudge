@@ -795,3 +795,5 @@ userlist_cfg.c 1 10 909168
 users.c 1 7 1727422
 l10n.h 1 1 69969
 l10n.c 1 1 125270
+copyright.h 1 1 66359
+copyright.c 1 1 158023
