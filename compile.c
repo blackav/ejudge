@@ -422,7 +422,8 @@ main(int argc, char *argv[])
   }
   if (i >= argc) goto print_usage;
 
-  if (prepare(argv[i], prepare_flags, PREPARE_COMPILE, cpp_opts) < 0) return 1;
+  if (prepare(argv[i], prepare_flags, PREPARE_COMPILE, cpp_opts, 0) < 0)
+    return 1;
   if (T_flag) {
     print_configuration(stdout);
     return 0;
