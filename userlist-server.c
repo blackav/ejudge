@@ -1361,7 +1361,8 @@ cmd_team_login(struct client_state *p, int pkt_len,
       if (c->id == data->contest_id) break;
     }
   }
-  if (!c || c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)) {
+  if (!c || c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
+      || (c->flags & USERLIST_UC_LOCKED)) {
     CONN_ERR("not allowed to participate");
     send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
     return;
@@ -1725,7 +1726,8 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
       if (c->id == data->contest_id) break;
     }
   }
-  if (!c || c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)) {
+  if (!c || c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
+      || (c->flags & USERLIST_UC_LOCKED)) {
     CONN_ERR("not allowed to participate");
     send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
     return;
@@ -2393,8 +2395,8 @@ do_set_user_info(struct client_state *p,
 
       for (cc = (struct userlist_contest*) old_u->contests->first_down;
            cc; cc = (struct userlist_contest*) cc->b.right) {
-        if (cc->status == USERLIST_REG_OK
-            && !(cc->flags & USERLIST_UC_BANNED)) {
+        if (cc->status == USERLIST_REG_OK) {
+          //&& !(cc->flags & USERLIST_UC_BANNED)) { why???
           update_userlist_table(cc->id);
         }
       }
@@ -2412,10 +2414,22 @@ do_set_user_info(struct client_state *p,
     info("%d: inst updated", p->id);
     updated = 1;
   }
+  if (needs_update(old_u->inst_en, new_u->inst_en)) {
+    xfree(old_u->inst_en);
+    old_u->inst_en = xstrdup(new_u->inst_en);
+    info("%d: inst_en updated", p->id);
+    updated = 1;
+  }
   if (needs_update(old_u->instshort, new_u->instshort)) {
     xfree(old_u->instshort);
     old_u->instshort = xstrdup(new_u->instshort);
     info("%d: instshort updated", p->id);
+    updated = 1;
+  }
+  if (needs_update(old_u->instshort_en, new_u->instshort_en)) {
+    xfree(old_u->instshort_en);
+    old_u->instshort_en = xstrdup(new_u->instshort_en);
+    info("%d: instshort_en updated", p->id);
     updated = 1;
   }
   if (needs_update(old_u->fac, new_u->fac)) {
@@ -2424,10 +2438,22 @@ do_set_user_info(struct client_state *p,
     info("%d: fac updated", p->id);
     updated = 1;
   }
+  if (needs_update(old_u->fac_en, new_u->fac_en)) {
+    xfree(old_u->fac_en);
+    old_u->fac_en = xstrdup(new_u->fac_en);
+    info("%d: fac_en updated", p->id);
+    updated = 1;
+  }
   if (needs_update(old_u->facshort, new_u->facshort)) {
     xfree(old_u->facshort);
     old_u->facshort = xstrdup(new_u->facshort);
     info("%d: facshort updated", p->id);
+    updated = 1;
+  }
+  if (needs_update(old_u->facshort_en, new_u->facshort_en)) {
+    xfree(old_u->facshort_en);
+    old_u->facshort_en = xstrdup(new_u->facshort_en);
+    info("%d: facshort_en updated", p->id);
     updated = 1;
   }
   if (needs_update(old_u->city, new_u->city)) {
@@ -2436,10 +2462,22 @@ do_set_user_info(struct client_state *p,
     info("%d: city updated", p->id);
     updated = 1;
   }
+  if (needs_update(old_u->city_en, new_u->city_en)) {
+    xfree(old_u->city_en);
+    old_u->city_en = xstrdup(new_u->city_en);
+    info("%d: city_en updated", p->id);
+    updated = 1;
+  }
   if (needs_update(old_u->country, new_u->country)) {
     xfree(old_u->country);
     old_u->country = xstrdup(new_u->country);
     info("%d: country updated", p->id);
+    updated = 1;
+  }
+  if (needs_update(old_u->country_en, new_u->country_en)) {
+    xfree(old_u->country_en);
+    old_u->country_en = xstrdup(new_u->country_en);
+    info("%d: country_en updated", p->id);
     updated = 1;
   }
 
@@ -2500,10 +2538,22 @@ do_set_user_info(struct client_state *p,
         info("%d: updated %s.%d.firstname", p->id, role_str, old_pers);
         updated = 1;
       }
+      if (needs_update(old_m->firstname_en, new_m->firstname_en)) {
+        xfree(old_m->firstname_en);
+        old_m->firstname_en = xstrdup(new_m->firstname_en);
+        info("%d: updated %s.%d.firstname_en", p->id, role_str, old_pers);
+        updated = 1;
+      }
       if (needs_update(old_m->middlename, new_m->middlename)) {
         xfree(old_m->middlename);
         old_m->middlename = xstrdup(new_m->middlename);
         info("%d: updated %s.%d.middlename", p->id, role_str, old_pers);
+        updated = 1;
+      }
+      if (needs_update(old_m->middlename_en, new_m->middlename_en)) {
+        xfree(old_m->middlename_en);
+        old_m->middlename_en = xstrdup(new_m->middlename_en);
+        info("%d: updated %s.%d.middlename_en", p->id, role_str, old_pers);
         updated = 1;
       }
       if (needs_update(old_m->surname, new_m->surname)) {
@@ -2512,10 +2562,22 @@ do_set_user_info(struct client_state *p,
         info("%d: updated %s.%d.surname", p->id, role_str, old_pers);
         updated = 1;
       }
+      if (needs_update(old_m->surname_en, new_m->surname_en)) {
+        xfree(old_m->surname_en);
+        old_m->surname_en = xstrdup(new_m->surname_en);
+        info("%d: updated %s.%d.surname_en", p->id, role_str, old_pers);
+        updated = 1;
+      }
       if (needs_update(old_m->group, new_m->group)) {
         xfree(old_m->group);
         old_m->group = xstrdup(new_m->group);
         info("%d: updated %s.%d.group", p->id, role_str, old_pers);
+        updated = 1;
+      }
+      if (needs_update(old_m->group_en, new_m->group_en)) {
+        xfree(old_m->group_en);
+        old_m->group_en = xstrdup(new_m->group_en);
+        info("%d: updated %s.%d.group_en", p->id, role_str, old_pers);
         updated = 1;
       }
       if (needs_update(old_m->email, new_m->email)) {
@@ -2536,10 +2598,22 @@ do_set_user_info(struct client_state *p,
         info("%d: updated %s.%d.inst", p->id, role_str, old_pers);
         updated = 1;
       }
+      if (needs_update(old_m->inst_en, new_m->inst_en)) {
+        xfree(old_m->inst_en);
+        old_m->inst_en = xstrdup(new_m->inst_en);
+        info("%d: updated %s.%d.inst_en", p->id, role_str, old_pers);
+        updated = 1;
+      }
       if (needs_update(old_m->instshort, new_m->instshort)) {
         xfree(old_m->instshort);
         old_m->instshort = xstrdup(new_m->instshort);
         info("%d: updated %s.%d.instshort", p->id, role_str, old_pers);
+        updated = 1;
+      }
+      if (needs_update(old_m->instshort_en, new_m->instshort_en)) {
+        xfree(old_m->instshort_en);
+        old_m->instshort_en = xstrdup(new_m->instshort_en);
+        info("%d: updated %s.%d.instshort_en", p->id, role_str, old_pers);
         updated = 1;
       }
       if (needs_update(old_m->fac, new_m->fac)) {
@@ -2548,16 +2622,34 @@ do_set_user_info(struct client_state *p,
         info("%d: updated %s.%d.fac", p->id, role_str, old_pers);
         updated = 1;
       }
+      if (needs_update(old_m->fac_en, new_m->fac_en)) {
+        xfree(old_m->fac_en);
+        old_m->fac_en = xstrdup(new_m->fac_en);
+        info("%d: updated %s.%d.fac_en", p->id, role_str, old_pers);
+        updated = 1;
+      }
       if (needs_update(old_m->facshort, new_m->facshort)) {
         xfree(old_m->facshort);
         old_m->facshort = xstrdup(new_m->facshort);
         info("%d: updated %s.%d.facshort", p->id, role_str, old_pers);
         updated = 1;
       }
+      if (needs_update(old_m->facshort_en, new_m->facshort_en)) {
+        xfree(old_m->facshort_en);
+        old_m->facshort_en = xstrdup(new_m->facshort_en);
+        info("%d: updated %s.%d.facshort_en", p->id, role_str, old_pers);
+        updated = 1;
+      }
       if (needs_update(old_m->occupation, new_m->occupation)) {
         xfree(old_m->occupation);
         old_m->occupation = xstrdup(new_m->occupation);
         info("%d: updated %s.%d.occupation", p->id, role_str, old_pers);
+        updated = 1;
+      }
+      if (needs_update(old_m->occupation_en, new_m->occupation_en)) {
+        xfree(old_m->occupation_en);
+        old_m->occupation_en = xstrdup(new_m->occupation_en);
+        info("%d: updated %s.%d.occupation_en", p->id, role_str, old_pers);
         updated = 1;
       }
 
@@ -3112,21 +3204,26 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
     ASSERT(u);
 
     l10n_setlocale(locale_id);
-    fprintf(f, "<h2>%s: %s</h2>\n",
-            _("Detailed information for user (team)"), u->name);
+    fprintf(f, "<%s>%s: %s</%s>\n",
+            d->users_head_style,
+            _("Detailed information for user (team)"), u->name,
+            d->users_head_style);
     fprintf(f, "<h3>%s</h3>\n", _("General information"));
     fprintf(f, "<table>\n");
-    fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n",
-            _("User ID"), u->id);
+    fprintf(f, "<tr><td%s>%s:</td><td%s>%d</td></tr>\n",
+            d->users_verb_style, _("User ID"), d->users_verb_style, u->id);
     if (u->show_login) {
-      fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Login"), u->login);
+      fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              d->users_verb_style, _("Login"),
+              d->users_verb_style, u->login);
     }
     if (u->show_email) {
-      fprintf(f, "<tr><td>%s:</td><td><a href=\"mailto:%s\">%s</a></td></tr>\n",
-              _("E-mail"), u->email, u->email);
+      fprintf(f, "<tr><td%s>%s:</td><td%s><a href=\"mailto:%s\">%s</a></td></tr>\n",
+              d->users_verb_style,
+              _("E-mail"), d->users_verb_style, u->email, u->email);
     }
-    fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Name"), u->name);
+    fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+            d->users_verb_style, _("Name"), d->users_verb_style, u->name);
     notset = _("<i>Not set</i>");
     if (!d || d->fields[CONTEST_F_HOMEPAGE]) {
       if (!u->homepage) {
@@ -3140,31 +3237,69 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
                    u->homepage, u->homepage);
         }
       }
-      fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Homepage"), buf);
+      fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              d->users_verb_style, _("Homepage"),
+              d->users_verb_style, buf);
     }
     if (!d || d->fields[CONTEST_F_INST]) {
-      fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Institution"), u->inst?u->inst:notset);
+      fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              d->users_verb_style, _("Institution"),
+              d->users_verb_style, u->inst?u->inst:notset);
+    }
+    if (!d || d->fields[CONTEST_F_INST_EN]) {
+      fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              d->users_verb_style, _("Institution (En)"),
+              d->users_verb_style, u->inst_en?u->inst_en:notset);
     }
     if (!d || d->fields[CONTEST_F_INSTSHORT]) {
-      fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Institution (short)"), u->instshort?u->instshort:notset);
+      fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              d->users_verb_style, _("Institution (short)"),
+              d->users_verb_style, u->instshort?u->instshort:notset);
+    }
+    if (!d || d->fields[CONTEST_F_INSTSHORT_EN]) {
+      fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              d->users_verb_style, _("Institution (short) (En)"),
+              d->users_verb_style, u->instshort_en?u->instshort_en:notset);
     }
     if (!d || d->fields[CONTEST_F_FAC]) {
-      fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Faculty"), u->fac?u->fac:notset);
+      fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              d->users_verb_style, _("Faculty"),
+              d->users_verb_style, u->fac?u->fac:notset);
+    }
+    if (!d || d->fields[CONTEST_F_FAC_EN]) {
+      fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              d->users_verb_style, _("Faculty (En)"),
+              d->users_verb_style, u->fac_en?u->fac_en:notset);
     }
     if (!d || d->fields[CONTEST_F_FACSHORT]) {
-      fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Faculty (short)"), u->facshort?u->facshort:notset);
+      fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              d->users_verb_style, _("Faculty (short)"),
+              d->users_verb_style, u->facshort?u->facshort:notset);
+    }
+    if (!d || d->fields[CONTEST_F_FACSHORT_EN]) {
+      fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              d->users_verb_style, _("Faculty (short) (En)"),
+              d->users_verb_style, u->facshort_en?u->facshort_en:notset);
     }
     if (!d || d->fields[CONTEST_F_CITY]) {
-      fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("City"), u->city?u->city:notset);
+      fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              d->users_verb_style, _("City"),
+              d->users_verb_style, u->city?u->city:notset);
+    }
+    if (!d || d->fields[CONTEST_F_CITY_EN]) {
+      fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              d->users_verb_style, _("City (En)"),
+              d->users_verb_style, u->city_en?u->city_en:notset);
     }
     if (!d || d->fields[CONTEST_F_COUNTRY]) {
-      fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-              _("Country"), u->country?u->country:notset);
+      fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              d->users_verb_style, _("Country"),
+              d->users_verb_style, u->country?u->country:notset);
+    }
+    if (!d || d->fields[CONTEST_F_COUNTRY_EN]) {
+      fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+              d->users_verb_style, _("Country (En)"),
+              d->users_verb_style, u->country_en?u->country_en:notset);
     }
 
     fprintf(f, "</table>\n");
@@ -3182,54 +3317,110 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
         fprintf(f, "<h3>%s %d</h3>\n", gettext(member_string[role]),
                 pers + 1);
         fprintf(f, "<table>\n");
-        fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n",
-                _("Serial No"), m->serial);
+        fprintf(f, "<tr><td%s>%s:</td><td%s>%d</td></tr>\n",
+                d->users_verb_style, _("Serial No"),
+                d->users_verb_style, m->serial);
         cm = 0;
         if (d) cm = d->members[role];
         if (!d || (cm && cm->fields[CONTEST_MF_FIRSTNAME])) {
-          fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                  _("First name"), m->firstname?m->firstname:notset);
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("First name"),
+                  d->users_verb_style, m->firstname?m->firstname:notset);
+        }
+        if (!d || (cm && cm->fields[CONTEST_MF_FIRSTNAME_EN])) {
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("First name (En)"),
+                  d->users_verb_style, m->firstname_en?m->firstname_en:notset);
         }
         if (!d || (cm && cm->fields[CONTEST_MF_MIDDLENAME])) {
-          fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                  _("Middle name"), m->middlename?m->middlename:notset);
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("Middle name"),
+                  d->users_verb_style, m->middlename?m->middlename:notset);
+        }
+        if (!d || (cm && cm->fields[CONTEST_MF_MIDDLENAME_EN])) {
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("Middle name (En)"),
+                  d->users_verb_style, m->middlename_en?m->middlename_en:notset);
         }
         if (!d || (cm && cm->fields[CONTEST_MF_SURNAME])) {
-          fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                  _("Family name"), m->surname?m->surname:notset);
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("Family name"),
+                  d->users_verb_style, m->surname?m->surname:notset);
+        }
+        if (!d || (cm && cm->fields[CONTEST_MF_SURNAME_EN])) {
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("Family name (En)"),
+                  d->users_verb_style, m->surname_en?m->surname_en:notset);
         }
         if (!d || (cm && cm->fields[CONTEST_MF_STATUS])) {
-          fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                  _("Status"),
-                  gettext(member_status_string[m->status]));
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("Status"),
+                  d->users_verb_style, gettext(member_status_string[m->status]));
         }
         if (!d || (cm && cm->fields[CONTEST_MF_GRADE])) {
-          fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n",
-                  _("Grade"), m->grade);
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%d</td></tr>\n",
+                  d->users_verb_style, _("Grade"),
+                  d->users_verb_style, m->grade);
         }
         if (!d || (cm && cm->fields[CONTEST_MF_GROUP])) {
-          fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                  _("Group"), m->group?m->group:notset);
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("Group"),
+                  d->users_verb_style, m->group?m->group:notset);
+        }
+        if (!d || (cm && cm->fields[CONTEST_MF_GROUP_EN])) {
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("Group (En)"),
+                  d->users_verb_style, m->group_en?m->group_en:notset);
         }
         if (!d || (cm && cm->fields[CONTEST_MF_INST])) {
-          fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                  _("Institution"), m->inst?m->inst:notset);
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("Institution"),
+                  d->users_verb_style, m->inst?m->inst:notset);
+        }
+        if (!d || (cm && cm->fields[CONTEST_MF_INST_EN])) {
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("Institution (En)"),
+                  d->users_verb_style, m->inst_en?m->inst_en:notset);
         }
         if (!d || (cm && cm->fields[CONTEST_MF_INSTSHORT])) {
-          fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                  _("Institution (short)"), m->instshort?m->instshort:notset);
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("Institution (short)"),
+                  d->users_verb_style, m->instshort?m->instshort:notset);
+        }
+        if (!d || (cm && cm->fields[CONTEST_MF_INSTSHORT_EN])) {
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("Institution (short) (En)"),
+                  d->users_verb_style, m->instshort_en?m->instshort_en:notset);
         }
         if (!d || (cm && cm->fields[CONTEST_MF_FAC])) {
-          fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                  _("Faculty"), m->fac?m->fac:notset);
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("Faculty"),
+                  d->users_verb_style, m->fac?m->fac:notset);
+        }
+        if (!d || (cm && cm->fields[CONTEST_MF_FAC_EN])) {
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("Faculty (En)"),
+                  d->users_verb_style, m->fac_en?m->fac_en:notset);
         }
         if (!d || (cm && cm->fields[CONTEST_MF_FACSHORT])) {
-          fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                  _("Faculty (short)"), m->facshort?m->facshort:notset);
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("Faculty (short)"),
+                  d->users_verb_style, m->facshort?m->facshort:notset);
+        }
+        if (!d || (cm && cm->fields[CONTEST_MF_FACSHORT_EN])) {
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("Faculty (short) (En)"),
+                  d->users_verb_style, m->facshort_en?m->facshort_en:notset);
         }
         if (!d || (cm && cm->fields[CONTEST_MF_OCCUPATION])) {
-          fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
-                  _("Occupation"), m->occupation?m->occupation:notset);
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("Occupation"),
+                  d->users_verb_style, m->occupation?m->occupation:notset);
+        }
+        if (!d || (cm && cm->fields[CONTEST_MF_OCCUPATION_EN])) {
+          fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
+                  d->users_verb_style, _("Occupation (En)"),
+                  d->users_verb_style, m->occupation_en?m->occupation_en:notset);
         }
         /*
     CONTEST_MF_EMAIL,
@@ -3296,37 +3487,56 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
 
   l10n_setlocale(locale_id);
   if (!u_num) {
-    fprintf(f, "<p>%s</p>\n", _("No users registered for this contest"));
+    fprintf(f, "<p%s>%s</p>\n",
+            d->users_par_style, _("No users registered for this contest"));
     l10n_setlocale(0);
     return;
   }
 
-  fprintf(f, _("<p>%d users listed</p>\n"), u_num);
-  fprintf(f, "<table>\n<hr><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th></hr>\n",
-          _("Serial No"), _("User ID"), _("User name"), _("Institution"), _("Faculty"),
-          _("Status"));
+  fprintf(f, _("<p%s>%d users listed</p>\n"), d->users_par_style, u_num);
+  fprintf(f, "<table width=\"100%%\">\n<tr><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th></hr>\n",
+          d->users_table_style, _("Serial No"),
+          d->users_table_style, _("User ID"),
+          d->users_table_style, _("User name"),
+          d->users_table_style, _("Institution"),
+          d->users_table_style, _("Faculty"),
+          d->users_table_style, _("Status"));
   for (i = 0; i < u_num; i++) {
-    fprintf(f, "<tr><td>%d</td>", i + 1);
+    fprintf(f, "<tr><td%s>%d</td>", d->users_table_style, i + 1);
     // FIXME: do html armoring?
-    fprintf(f, "<td>%d</td>", us[i]->id);
+    fprintf(f, "<td%s>%d</td>", d->users_table_style, us[i]->id);
     s = us[i]->name;
     if (!s) {
-      fprintf(f, "<td>&nbsp;</td>");
+      fprintf(f, "<td%s>&nbsp;</td>", d->users_table_style);
     } else if (!url) {
-      fprintf(f, "<td>%s</td>", s);
+      fprintf(f, "<td%s>%s</td>", d->users_table_style, s);
     } else {
-      fprintf(f, "<td><a href=\"%s?user_id=%d", url, us[i]->id);
+      fprintf(f, "<td%s><a href=\"%s?user_id=%d", d->users_table_style,
+              url, us[i]->id);
       if (contest_id > 0) fprintf(f, "&contest_id=%d", contest_id);
       if (locale_id > 0) fprintf(f, "&locale_id=%d", locale_id);
       fprintf(f, "\">%s</a></td>", s);
     }
-    s = us[i]->instshort;
+    if (!locale_id) {
+      s = us[i]->instshort_en;
+      if (!s) s = us[i]->instshort;
+    } else {
+      s = us[i]->instshort;
+      if (!s) s = us[i]->instshort_en;
+    }
     if (!s) s = "&nbsp;";
-    fprintf(f, "<td>%s</td>", s);
-    s = us[i]->facshort;
+    fprintf(f, "<td%s>%s</td>", d->users_table_style, s);
+    if (!locale_id) {
+      s = us[i]->facshort_en;
+      if (!s) s = us[i]->facshort;
+    } else {
+      s = us[i]->facshort;
+      if (!s) s = us[i]->facshort_en;
+    }
     if (!s) s = "&nbsp;";
-    fprintf(f, "<td>%s</td>", s);
-    fprintf(f, "<td>%s</td>", gettext(status_str_map[cs[i]->status]));
+    fprintf(f, "<td%s>%s</td>", d->users_table_style, s);
+    fprintf(f, "<td%s>%s</td>", d->users_table_style,
+            gettext(status_str_map[cs[i]->status]));
     fprintf(f, "</tr>\n");
   }
   fprintf(f, "</table>\n");
@@ -3365,6 +3575,7 @@ do_dump_database(FILE *f, int contest_id, struct contest_desc *d)
     invstr = "";
     if ((c->flags & USERLIST_UC_INVISIBLE)) invstr = "I";
     if ((c->flags & USERLIST_UC_BANNED)) banstr = "B";
+    if ((c->flags & USERLIST_UC_LOCKED)) banstr = "L";
 
     pers_tot = 0;
     for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
@@ -3382,33 +3593,48 @@ do_dump_database(FILE *f, int contest_id, struct contest_desc *d)
         }
 
         pers_tot++;
-        fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%d;%s;%s;%s;%s;%s;%s\n",
+        fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%d;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
                 u->id, u->login, u->name, u->email,
                 u->inst?u->inst:notset,
+                u->inst_en?u->inst_en:notset,
                 u->instshort?u->instshort:notset,
+                u->instshort_en?u->instshort_en:notset,
                 u->fac?u->fac:notset,
+                u->fac_en?u->fac_en:notset,
                 u->facshort?u->facshort:notset,
+                u->facshort_en?u->facshort_en:notset,
                 u->city?u->city:notset,
+                u->city_en?u->city_en:notset,
                 u->country?u->country:notset,
+                u->country_en?u->country_en:notset,
                 statstr, invstr, banstr,
                 m->serial,
                 gettext(member_string[role]),
                 m->surname?m->surname:notset,
+                m->surname_en?m->surname_en:notset,
                 m->firstname?m->firstname:notset,
+                m->firstname_en?m->firstname_en:notset,
                 m->middlename?m->middlename:notset,
+                m->middlename_en?m->middlename_en:notset,
                 gettext(member_status_string[m->status]),
                 lptr?lptr:notset);
       }
     }
     if (!pers_tot) {
-      fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
+      fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
               u->id, u->login, u->name, u->email,
               u->inst?u->inst:notset,
+              u->inst_en?u->inst_en:notset,
               u->instshort?u->instshort:notset,
+              u->instshort_en?u->instshort_en:notset,
               u->fac?u->fac:notset,
+              u->fac_en?u->fac_en:notset,
               u->facshort?u->facshort:notset,
+              u->facshort_en?u->facshort_en:notset,
               u->city?u->city:notset,
+              u->city_en?u->city_en:notset,
               u->country?u->country:notset,
+              u->country_en?u->country_en:notset,
               statstr, invstr, banstr,
               "", "", "", "", "", "", "");
     }
