@@ -174,6 +174,7 @@ lett    [A-Za-z_]
 
 {lett}+ { (*scan_err)("invalid keyword `%.*s'", yyleng, yytext); }
 [\040-\377] { (*scan_err)("invalid character `%c'", *yytext); }
+
 %%
 
 static void
