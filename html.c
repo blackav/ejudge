@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "html.h"
 #include "misctext.h"
 #include "pathutl.h"
@@ -292,6 +294,7 @@ new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
   char *asubj = 0; /* html armored subj */
   int   asubj_len = 0; /* html armored subj len */
   unsigned char href[128];
+  unsigned long tmpsizeval;
 
   start_time = run_get_start_time();
   clars_to_show = 15;
@@ -309,9 +312,10 @@ new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
   for (showed = 0, i = clar_get_total() - 1;
        showed < clars_to_show && i >= 0;
        i--) {
-    if (clar_get_record(i, &time, (unsigned long*) &size,
+    if (clar_get_record(i, &time, &tmpsizeval,
                         0, &from, &to, &flags, subj) < 0)
       continue;
+    size = tmpsizeval;
     if (from > 0 && from != uid) continue;
     if (to > 0 && to != uid) continue;
     showed++;
@@ -951,7 +955,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   unsigned long cur_time;
   time_t        contest_dur;
   time_t        current_dur, run_time;
-  time_t        tdur = 0, tstart;
+  time_t        tdur = 0, tstart = 0;
 
   char          url_str[1024];
   unsigned char *bgcolor_ptr;
@@ -1333,10 +1337,10 @@ write_standings(char const *stat_dir, char const *name,
 
   if (global->charset_ptr && global->standings_charset_ptr
       && global->charset_ptr != global->standings_charset_ptr) {
-    unsigned char *html_ptr = 0;
+    char *html_ptr = 0;
     size_t html_len = 0;
 
-    f = open_memstream((char**) &html_ptr, &html_len);
+    f = open_memstream(&html_ptr, &html_len);
     write_standings_header(f, 0, 0, header_str, 0);
     if (global->score_system_val == SCORE_KIROV
         || global->score_system_val == SCORE_OLYMPIAD)
