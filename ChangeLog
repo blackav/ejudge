@@ -1,3 +1,333 @@
+2003-11-01  Alexander Chernov  <cher@ispras.ru>
+
+	* html.c:
+	(do_write_kirov_standings) new global configuration variables are used
+	  for standings table decorations: `stand_table_attr',
+	  `stand_place_attr', `stand_team_attr', `stand_prob_attr',
+	  `stand_solved_attr', `stand_score_attr';
+	  new configuration variables `stand_extra_format',
+	  `stand_extra_legend', `stand_extra_attr' are used to add an extra
+	  user-defined column into the standings table;
+	(do_write_standings) new global configuration variables are used
+	  for standings table decorations: `stand_table_attr',
+	  `stand_place_attr', `stand_team_attr', `stand_prob_attr',
+	  `stand_solved_attr', `stand_penalty_attr', `stand_time_attr';
+	  new configuration variables `stand_extra_format',
+	  `stand_extra_legend', `stand_extra_attr' are used to add an extra
+	  user-defined column into the standings table;
+	  `standings_team_color', `standings_real_team_color',
+	  `standings_virtual_team_color' are no longer used;
+	  `stand_self_row_attr', `stand_r_row_attr', `stand_v_row_attr',
+	  `stand_u_row_attr' are used instead of them;
+
+	* makefile: 
+	(CU_OBJECTS) `clean-users' now needs `libuserlist_clnt.a'.
+
+	* master.c: 
+	(print_write_xml_runs_button) a new function, which prints "Write
+	  XML Runs" button;
+	(print_export_xml_runs_button) the button label is changed;
+	(action_write_xml_runs) a new function, which generates the runlog
+	  in XML format;
+	(print_dump_buttons) call of `print_write_xml_runs_button' added;
+	(main) `ACTION_WRITE_XML_RUNS' action is handled.
+
+2003-10-31  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare.c:
+	(XFSIZE) a new macro to evaluate to the size of a structure field;
+	(GLOBAL_SIZE) new macro to evaluate a size of a field in
+	  `struct section_global_data';
+	(GLOBAL_PARAM) the size of the current field is automatically
+	  calculated;
+	new global parameters: `stand_extra_format', `stand_extra_legend',
+	  `stand_extra_attr', `stand_table_attr', `stand_place_attr',
+	  `stand_team_attr', `stand_prob_attr', `stand_solved_attr',
+	  `stand_score_attr', `stand_penalty_attr', `stand_time_attr',
+	  `stand_self_row_attr', `stand_v_row_attr', `stand_r_row_attr',
+	  `stand_u_row_attr';
+	removed global parameters: `standings_team_color',
+	  `standings_virtual_team_color', `standings_real_team_color';
+	(PROBLEM_SIZE) new macro to evaluate a size of a field in
+	  `struct section_problem_data';
+	(PROBLEM_PARAM) the size of the field is calculated automatically;
+	(LANGUAGE_SIZE) new macro to evaluate a size of a field in
+	  `struct section_language_data';
+	(LANGUAGE_PARAM) the size of the field is calculated automatically;
+	(section_language_params) bug: the type of `compile_real_time_limit'
+	  is set correctly to "d";
+	(TESTER_SIZE) new macro to evaluate a size of a field in
+	  `struct section_tester_data';
+	(TESTER_PARAM) the size of the field is calculated automatically;
+	(set_defaults) handling of the fields with reduced size is updated
+	  in order not to overflow the fields;
+	(prepare_tester_refinement) the same as above.
+
+	* prepare.h:
+	(struct section_global_data) the following fields' sizes are reduced:
+	    `name', `standings_locale', `charset', `standings_charset',
+	    `test_sfx', `corr_sfx', `info_sfx', `tgz_sfx', `score_system',
+	    `standings_file_name', `stand2_file_name', `plog_file_name';
+	  the following fields are removed: `standings_team_color',
+	    `standings_virtual_team_color', `standings_real_team_color';
+	  the following fields are added: `stand_extra_format',
+	    `stand_extra_legend', `stand_extra_attr', `stand_table_attr',
+	    `stand_place_attr', `stand_team_attr', `stand_prob_attr',
+	    `stand_solved_attr', `stand_score_attr', `stand_penalty_attr',
+	    `stand_time_attr', `stand_self_row_attr', `stand_r_row_attr',
+	    `stand_v_row_attr', `stand_u_row_attr';
+	(struct section_problem_data) the following fields' sizes are
+	  reduced: `super', `short_name', `long_name', `test_sfx',
+	  `corr_sfx', `info_sfx', `tgz_sfx', `input_file', `output_file',
+	  `test_score_list', `deadline';
+	(struct section_language_data) the following fields' sizes are
+	  reduced: `short_name', `long_name', `key', `arch', `src_sfx',
+	  `exe_sfx';
+	(struct section_tester_data) the following fields' sizes are
+	  reduced: `name', `problem_name', `arch', `key', `kill_signal',
+	  `errorcode_file', `error_file'.
+
+	* protocol.h:
+	`SRV_CMD_EXPORT_XML_RUNS' is renamed to `SRV_CMD_WRITE_XML_RUNS';
+	new request `SRV_CMD_EXPORT_XML_RUNS' is added.
+
+	* runlog.c:
+	(run_write_xml) a new `export_mode' parameter is added and passed
+	  to `unparse_runlog_xml';
+	  use of `unparse_runlog_xml' is updated.
+
+	* runlog.h:
+	(run_write_xml) a new parameter `external_mode' is added, if this
+	  parameter is 1, the runlog is generated in the external format;
+	(unparse_runlog_xml) the same as above.
+
+	* runlog_xml.c: "teamdb.h" is included;
+	"prepare.h" is included;
+	new elements: <runs>, <users>, <user>, <problems>, <problem>,
+	  <languages>, <language>;
+	`team_id' attribute is renamed to `user_id';
+	new attributes: `id', `name', `short_name', `long_name';
+	(process_run_elements) `team_id' attribute is renamed to `user_id';
+	(process_runlog_element) one parameter `ptruns' is added;
+	  checks, that <runs> element is present in <runlog> and is not
+	  duplicated;
+	  stores the pointer to <runs> element to the address, passed in
+	  parameter `ptruns';
+	(parse_runlog_xml) use of `process_runlog_element' is updated;
+	(unparse_runlog_xml) new parameter `external_mode' is added, if this
+	  parameter is set to 1, the runlog is generated in the external
+	  format;
+	  list of users, problems, and languages are generated if the
+	  `external_mode' is on;
+	  banned and invisible teams and their runs are not generated if the
+	  `external_mode' is on;
+	  VSTART and VSTOP events are allowed;
+	  `size', `ip', `sha1', `locale_id', and `is_imported' attributes
+	  are not generated, if `external_mode' is on.
+
+	* serve.c: 
+	(cmd_view) new request `SRV_CMD_WRITE_XML_RUNS' is handled;
+	  use of `run_write_xml' is updated, as this function now accepts
+	  an extra parameter;
+	(packet_handlers) handler for `SRV_CMD_WRITE_XML_RUNS' added.
+
+	* client_actions.h:
+	ACTION_EXPORT_XML_RUNS is renamed to ACTION_WRITE_XML_RUNS;
+	new action ACTION_EXPORT_XML_RUNS added.
+
+	* master_html.c:
+	(write_priv_source) a minor type mismatch in conditional expression
+	  (unsigned char * and char *) is fixed.
+
+	* runlog.c:
+	Limits for all field values are added. For example, `RUNLOG_MAX_SIZE'
+	  is the maximal allowed run size;
+	(struct user_entry) new structure instead of previous `struct vt_entry'
+	  the new structure will store all indexing information for user.
+	  Currently it stores only virtual contest information;
+	(read_runlog_version_0) the runlog is checked for consistency
+	  by calling `runlog_check', and then indices are built by
+	  `build_indices';
+	(run_set_runlog) the same as above;
+	(read_runlog) the same as above;
+	(runlog_flush) a new function to completely flush the run records;
+	(append_record) now accept two parameters: timestamp and user_id and
+	  may insert new entries into the middle of the runlog;
+	(run_add_record) parameters are strictly checked for consistency;
+	(run_change_status) the same as above;
+	(run_reset) now accepts the duration of the contest and returns the
+	  completion status;
+	(run_check_duplicate) EMPTY, VSTART, VSTOP entries are skipped;
+	(run_set_entry) parameters are strictly checked for consistency;
+	(run_build_virtual_table) removed;
+	(get_entry) removed;
+	(get_user_entry) a new function instead of `get_entry';
+	(run_get_virtual_start_time) if the user is not a virtual user,
+	  return the real start time for it;
+	  `get_user_entry' is used instead of `get_entry';
+	(run_get_virtual_stop_time) `get_user_entry' is used instead of
+	  `get_entry';
+	(run_get_virtual_status) the same as above;
+	(run_virtual_start) `get_user_entry' is used instead of `get_entry';
+	  use of `append_record' is updated;
+	  the runlog is checked for consistency;
+	(run_virtual_stop) the same as above;
+	(run_clear_entry) the function now clears correctly all record types;
+	  the runlog is checked for consistency;
+	(run_squeeze_log) `submission' is updated for all moved entries;
+	(run_clear_variables) updated for new global variables;
+	(run_write_xml) export of virtual entries is now possible;
+	(check_msg) new helper function to report the message during
+	  runlog consistency check;
+	(runlog_check) new function to check the consistency of the runlog;
+	(build_indices) new function to build the internal indexes.
+
+	* runlog.h: `RUN_PSEUDO_LAST' constant is added;
+	(run_reset) now accepts duration parameter and return the completion
+	  status;
+	(runlog_flush) a new function, which is flushed the whole runlog;
+	(run_build_virtual_table) removed;
+	(runlog_check) a new function to check the consistency of the runlog.
+
+	* serve.c:
+	(cmd_priv_command_0) `run_reset' now accepts one parameter: the
+	  contest duration;
+	(main) `run_build_virtual_table' call is removed, since all the
+	  indexes are build during opening of the runlog file.
+
+	* sformat.c: copyright notice is updated;
+	"userlist.h" is included;
+	new format specifiers for `user' structure:
+	  Mc - city
+	  MC - city_en
+	  Mo - country
+	  MO - country_en
+	  Mt - inst_short
+	  MT - inst_short_en
+	  Mu - inst
+	  MU - inst_en
+	(sformat_message) the new format specifiers are supported.
+
+	* teamdb.c: signal handling stuff is removed;
+	(handler) function is removed.
+
+	* teamdb.c:
+	The file is almost rewritten. The userlist-server <-> serve exchange
+	  protocol is changed in order not to put the whole table into
+	  the shared memory segment. Only the `vintage' counter is stored
+	  in the shared memory. If the `serve' determines, that the `vintage'
+	  counter is changed, it requests the standings-oriented list of
+	  the participating users in XML format via the standard communication
+	  socket.
+	If the connection to userlist-server is broken, the functions do
+	  not try to repeatedly re-establish the connection. Instead, they
+	  try once and then fail with appropriate return codes.
+	Check of the connection and `vintage' counter actuality is added
+	  to almost any function.
+	The information about participating users is stored in the same
+	  structure (struct userlist_list), as the information about all
+	  users in userlist-server. XML parse routines from userlist_xml.c
+	  are used.
+	global variables are reorganized;
+	(restore_connection) the function is removed.
+	(open_connection) a new function which opens the connection to the
+	  userlist-server;
+	(lock_userlist_table) the function is removed;
+	(unlock_userlist_table) the function is removed;
+	(close_connection) a new function;
+	(teamdb_refresh) the return type now `int';
+	  the function is rewritten according to the principles mentioned
+	  above;
+	(teamdb_get_vintage) changes as described above;
+	(teamdb_open_client) the function is rewritten. It just calls
+	  `open_connection' and then `teamdb_refresh';
+	(teamdb_lookup_client) changed as the global data structures changed;
+	(teamdb_lookup) changes as described above;
+	(teamdb_lookup_login) changes as described above;
+	(teamdb_get_login) changes as described above;
+	(teamdb_get_name) changes as described above;
+	(teamdb_get_flags) changes as described above;
+	(teamdb_get_max_team_id) changes as described above;
+	(teamdb_get_total_teams) changes as described above;
+	(teamdb_toggle_flags) changes as described above;
+	(teamdb_export_team) changes as described above;
+	  the pointer to the `struct userlist_user' is also exported;
+	(teamdb_dump_database) changes as described above;
+	(syncronize_team_extra) changes as described above;
+	(teamdb_get_archive_time) changes as described above;
+	(teamdb_set_archive_time) changes as described above;
+	(teamdb_get_uid_by_pid) changes as described above;
+
+	* teamdb.h: 
+	(teamdb_refresh) the return type changed to `int';
+	(struct teamdb_export) field `user' added: pointer to the full user
+	  structure.
+
+	* userlist-server.c:
+	(struct contest_extra) `sem_key' and `sem_id' fields are removed;
+	(attach_contest_extra) creation of semaphore is removed, as the
+	  semaphore is no longer used;
+	(detach_contest_extra) removal of semaphore set is removed from the
+	  code as the semaphores are no longer used;
+	(lock_userlist_table) the function is removed;
+	(unlock_userlist_table) the function is removed;
+	(update_userlist_table) the function is rewritten. The only action
+	  is to increment the `vintage' counter in shared memory segment;
+	(cmd_list_standings_users) new function to handle
+	  `LIST_STANDINGS_USERS' request;
+	(cmd_map_contest) the semaphore set is no longer created;
+	(cmd_table) handler for `CMD_LIST_STANDINGS_USERS' is added;
+	(do_work) bug: removal of the handled filedescriptor from the set
+	  of active descriptors is fixed.
+
+2003-10-30  Alexander Chernov  <cher@ispras.ru>
+
+	* runlog_import.c:
+	(runlog_import_xml) virtual contest events are supported;
+	  sanity checks for the two incoming runlogs and the resulted
+	  runlog are added.
+
+	* userlist.h:
+	new userlist XML generation mode: `USERLIST_MODE_STAND';
+	(userlist_unparse_for_standings) a new function prototype added.
+
+	* userlist_xml.c:
+	(unparse_contests) two new parameters: `mode' and `contest_id';
+	(unparse_user) new parameter `contest_id';
+	  if mode == USERLIST_MODE_STAND, some attributes and elements,
+	  which are irrelevant for the contest server, are not printed;
+	  use of `unparse_contests' is fixed;
+	(userlist_unparse_contests) use of `unparse_contests' is updated;
+	(userlist_unparse) use of `unparse_user' is updated;
+	(userlist_unparse_for_standings) a new function, which generates
+	  XML for users, which are allowed to participate in the given
+	  contest. Only general user desription is generated.
+
+	* userlist_proto.h: `LIST_STANDINGS_USERS' command is added;
+	removed old shared memory info stuff;
+	(struct userlist_table) the only remaining field is currently
+	  `vintage'.
+
+	* run.c: <signal.h> is included;
+	(do_loop) the process signal mask is manipulated in order to
+	  prevent unexpected termination of the process.
+
+	* edit-userlist.c:
+	(display_registered_users) use of `userlist_clnt_list_all_users'
+	  is updated (the explicit command is added);
+	(do_display_user_menu) the same as above.
+
+	* compile.c: <signal.h> is included;
+	(do_loop) the process signal mask is manipulated in order to
+	  prevent unexpected termination of the process.
+
+	* cgi.c:
+	(parse_multipart) "ignored header..." error message is no longer
+	  reported, since this message is harmless, but clobbers log output.
+
+	* userlist_clnt.h:
+	(userlist_clnt_list_all_users) `cmd' parameter is added.
+
 2003-10-27  Alexander Chernov  <cher@ispras.ru>
 
 	* run.c:

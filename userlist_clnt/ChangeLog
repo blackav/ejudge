@@ -1,3 +1,13 @@
+2003-10-30  Alexander Chernov  <cher@ispras.ru>
+
+	* list_all_users.c:
+	(userlist_clnt_list_all_users) `cmd' parameter added, which may
+	  be either `ULS_LIST_ALL_USERS', or `ULS_LIST_STANDINGS_USERS'.
+
+	* map_contest.c:
+	(userlist_clnt_map_contest) `p_sem_key' and `p_shm_key' parameters
+	  are allowed to be NULL pointers.
+
 2003-10-20  Alexander Chernov  <cher@ispras.ru>
 
 	* team_set_passwd.c:
