@@ -1941,7 +1941,6 @@ get_user_info(struct client_state *p,
   fclose(f);
 
   ASSERT(xml_size == strlen(xml_ptr));
-  ASSERT(xml_size <= 65535);
   out_size = sizeof(*out) + xml_size + 1;
   out = alloca(out_size);
   ASSERT(out);
@@ -1990,11 +1989,13 @@ cmd_list_all_users(struct client_state *p,
   userlist_unparse_short(userlist, f, pack->contest_id);
   fclose(f);
   ASSERT(xml_size == strlen(xml_ptr));
+  /*
   if (xml_size > 65535) {
     err("%d: XML data is too large", p->id);
     send_reply(p, -ULS_ERR_INVALID_SIZE);
     return;
   }
+  */
   out_size = sizeof(*out) + xml_size + 1;
   out = alloca(out_size);
   ASSERT(out);
