@@ -325,6 +325,7 @@ write_all_runs(FILE *f, struct user_state_info *u,
   unsigned char hbuf[128];
   int has_parse_errors = 0;
   int has_filter_errors = 0;
+  unsigned char *prob_str;
 
   if (!filter_expr || !*filter_expr ||
       (u->prev_filter_expr && !strcmp(u->prev_filter_expr, filter_expr))){
@@ -614,10 +615,24 @@ write_all_runs(FILE *f, struct user_state_info *u,
       fprintf(f, "<td>%d</td>", pe->team);
       fprintf(f, "<td>%s</td>", teamdb_get_name(pe->team));
       if (pe->problem > 0 && pe->problem <= max_prob && probs[pe->problem]) {
-        fprintf(f, "<td>%s</td>", probs[pe->problem]->short_name);
+        struct section_problem_data *cur_prob = probs[pe->problem];
+        int variant = 0;
+        if (cur_prob->variant_num > 0) {
+          variant = find_variant(pe->team, pe->problem);
+          prob_str = alloca(strlen(cur_prob->short_name) + 10);
+          if (variant > 0) {
+            sprintf(prob_str, "%s-%d", cur_prob->short_name, variant);
+          } else {
+            sprintf(prob_str, "%s-?", cur_prob->short_name);
+          }
+        } else {
+          prob_str = cur_prob->short_name;
+        }
       } else {
-        fprintf(f, "<td>??? - %d</td>", pe->problem);
+        prob_str = alloca(32);
+        sprintf(prob_str, "??? - %d", pe->problem);
       }
+      fprintf(f, "<td>%s</td>", prob_str);
       if (pe->language > 0 && pe->language <= max_lang
           && langs[pe->language]) {
         fprintf(f, "<td>%s</td>", langs[pe->language]->short_name);
@@ -1009,6 +1024,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   char *src_text = 0, *html_text;
   size_t src_len, html_len;
   time_t start_time;
+  int variant;
   unsigned char const *nbsp = "<td>&nbsp;</td><td>&nbsp;</td>";
 
   if (run_id < 0 || run_id >= run_get_total()) return -SRV_ERR_BAD_RUN_ID;
@@ -1085,6 +1101,11 @@ write_priv_source(FILE *f, int user_id, int priv_level,
     fprintf(f, "%s", nbsp);
   }
   fprintf(f, "</tr>\n");
+  if (probs[info.problem]->variant_num > 0) {
+    variant = find_variant(info.team, info.problem);
+    fprintf(f, "<tr><td>%s:</td><td>%d</td><td>%s</td></tr>\n",
+            _("Variant"), variant, nbsp);
+  }
   fprintf(f, "<tr><td>%s:</td><td>%s</td>",
           _("Language"),
           (langs[info.language])?(langs[info.language]->short_name):"");
