@@ -720,9 +720,28 @@ print_dump_runs_button(unsigned char const *str)
 }
 
 static void
+print_write_xml_runs_button(unsigned char const *str)
+{
+  if (!str) str = _("Write XML runs (internal format)");
+
+  if (client_sid_mode == SID_URL) {
+    printf("<a href=\"%s?sid_mode=%d&SID=%016llx%s&action=%d\">%s</a>",
+           self_url, SID_URL, client_sid,
+           contest_id_str, ACTION_WRITE_XML_RUNS, str);
+  } else if (client_sid_mode == SID_COOKIE) {
+    printf("<a href=\"%s?sid_mode=%d%s&action=%d\">%s</a>", self_url,
+           SID_COOKIE, contest_id_str, ACTION_WRITE_XML_RUNS, str);
+  } else {
+    puts(form_start_simple);
+    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+           ACTION_WRITE_XML_RUNS, str);
+  }
+}
+
+static void
 print_export_xml_runs_button(unsigned char const *str)
 {
-  if (!str) str = _("Export XML runs");
+  if (!str) str = _("Export XML runs (external format)");
 
   if (client_sid_mode == SID_URL) {
     printf("<a href=\"%s?sid_mode=%d&SID=%016llx%s&action=%d\">%s</a>",
@@ -1321,6 +1340,23 @@ action_dump_runs(void)
 
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_DUMP_RUNS, 0,
+                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+  if (r < 0) {
+    set_cookie_if_needed();
+    client_put_header(stdout, 0, 0, global->charset, 1, 0, "Runs database error");
+    printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
+    client_put_footer(stdout, 0);
+  }
+  exit(0);
+}
+
+static void
+action_write_xml_runs(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_WRITE_XML_RUNS, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     set_cookie_if_needed();
@@ -2281,6 +2317,8 @@ print_dump_buttons(void)
   print_dump_standings_button(0);
   printf("</td></tr><tr><td>");
   print_export_xml_runs_button(0);
+  printf("</td><td>");
+  print_write_xml_runs_button(0);
   printf("</td></tr></table>\n");
 }
 
@@ -2432,6 +2470,9 @@ main(int argc, char *argv[])
       break;
     case ACTION_EXPORT_XML_RUNS:
       action_export_xml_runs();
+      break;
+    case ACTION_WRITE_XML_RUNS:
+      action_write_xml_runs();
       break;
     case ACTION_DUMP_USERS:
       action_dump_users();
