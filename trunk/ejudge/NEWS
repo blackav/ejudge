@@ -1,7 +1,7 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
-Version 2.1.32 (20041001)
+Version 2.1.33 (20041029)
 =========================
 If no bugs are found in this release, the next release (which
 will be identical or nearly identical to the current release)
@@ -10,6 +10,199 @@ system will be started. The 2.1 branch will be terminated. All
 the support work will go to 2.2 branch, and all the new
 development will go to the future development branch 2.3.
 
+Support for the Java JDK (JSE) compiler and runtime environment
+is implemented (tested with Sun J2SE 1.4.2 and Sun JSE 1.5.0,
+should work with other compatible implementations). The
+configuration utility `configure' supports a new option
+--with-javac, which may be used to specify the full path to the
+`javac' compiler in the JDK. Note, that this must be the full
+path to the program, for example, /usr/local/java/bin/javac.
+If this option is not specified, the PATH environment variable
+is used.
+
+The `javac' ejudge compilation script is used for compilation of
+Java programs, and `runjava' script is used for starting of the
+compiled (bytecode) Java programs. The scripts may be found in
+the ${prefix}/libexec/ejudge directory.
+
+The `runjava' script name should be specified in the `start_cmd'
+configuration variable of the Java tester in the serve.cfg, for
+example: 
+start_cmd = "runjava"
+The `runjava' script requires setting of the EJUDGE_PREFIX_DIR
+environment variable, unless the full path to the Java secirity
+policy file is specified. So, the nessessary configuration
+variables of the tester for Java programs look like the
+following:
+kill_signal = TERM
+arch = java
+start_env = "EJUDGE_PREFIX_DIR"
+start_cmd = runjava
+
+Also, the EJUDGE_JAVA_FLAGS environment variable may be used to
+pass additional parameters for the Java machine. For example,
+the following parameters set the maximum size of the heap and
+stack:
+start_env = "EJUDGE_JAVA_FLAGS=-Xmx64M -Xss8M"
+
+By default the Java-programs are started with a strict security
+policy, which allows nothing to the program, except reading from
+the standard input and writing to the standard output. A less
+strict security policy, which allows reading and writing files
+in the current (testing) directory is also supported. This
+security policy is activated by setting the EJUDGE_JAVA_POLICY
+environment variable as follows: 
+start_env = "EJUDGE_JAVA_POLICY=fileio.policy"
+
+It is possible to specify arbitrary security policy using the
+EJUDGE_JAVA_POLICY environment variable. Either the full path to
+the policy file, or the file name of the policy file may be
+specified. In the latter case the policy file must be located in
+the ${prefix}/share/ejudge directory.
+
+Complete disabling of any security policy is possible. To do so
+the EJUDGE_JAVA_POLICY environment variable must be set to the
+`none' value as follows:
+start_env = "EJUDGE_JAVA_POLICY=none"
+
+The Java programs must satisfy the following restrictions:
+  1) they must contain the only class named `Main';
+  2) nested classes are allowed;
+  3) the `Main' class must contain the `main' method.
+
+Fixed several bugs of invalid handling of astronomical time. Due
+to incorrectly initialized timezone field the time may differ
+one hour from the real time. For example, the bug manifests
+itself when `start_time' or `deadline' were specified for a
+problem.
+
+A new field `languages' is added to the user database. This
+field is for specifying programming languages and IDEs, which
+are used by a team. The `languages' field may be made mandatory
+or optional for filling during the registration for the contest
+using the following elements of the contest.xml configuration
+file:
+<field="languages" mandatory="yes">
+or
+<field="languages" mandatory="no">
+
+configure
+---------
+The `--with-javac' command line option is added (see above).
+
+edit-userlist
+-------------
+Editing of the `languages' field is supported (see above).
+
+ejudge-setup
+------------
+The Java JDK compiler and runtime environment are supported (see
+above).
+
+serve
+-----
+The statistics on submits for each problem is printed at the
+bottom of the current standings table (both in the ACM and
+KIROV/OLYMPIAD mode). The total number of submits, the number of
+successful submits and the percentage of the successful submits
+are displayed.
+
+A new global configuration variable `stand_show_ok_time' and a
+new problem configuration variable `stand_hide_time' are added
+to the `serve.cfg' contest configuration file. The both
+configuration variables are used only in the KIROV standings
+mode. If the variable `stand_show_ok_time' is set to non-zero
+value, the time of the first successful submit for each problem
+and each user is printed in the standings table. This time may
+be either relative from the contest start time or absolute
+(astronomical) depending on the value of the `show_astr_time'
+global configuration variable. The problem configuration
+variable `stand_hide_time' disables printing of the success
+time.
+
+The date penalty is calculated correctly in the standings
+table.
+
+A new problem configuration variable `start_date' is added to
+the `serve.cfg' contest configuration file. This variable allows
+specifying of the astronomical time, when this problem become
+available for submitting.
+
+The date penalty specification may have one of the following
+forms:
+DATE TIME PENALTY               e.g.    2004/10/10 12:00 -10
+or
+DATE PENALTY                    e.g.    2004/10/12 -20
+or
+PENALTY                         e.g.    -30
+In the latter case the date is assumed to be in the "distant"
+future (2038/01/19 - the maximum allowed by the current width of
+the `time_t' type).
+
+A bug in handling of variant problems (introduced in the
+previous ejudge release) is fixed. The variant problems are now
+properly supported.
+
+New format conversions are supported. For example, format
+conversions are used in the `stand_extra_format' global
+configuration variable. The following new format conversions are
+supported:
+%Mf       - the short name of the faculty of the participant
+%MF       - the short name of the faculty in English
+%Md       - the full name of the faculty of the participant
+%MD       - the full name of the faculty in English
+%Mp       - the printer name assigned for this participant
+
+run
+---
+Special support for the environment variable specification
+"EJUDGE_PREFIX_DIR" passing to the tested program is
+implemented. In this case the `EJUDGE_PREFIX_DIR' variable is
+added to the environment variables, and its value is set to the
+value of the ejudge installation prefix (i.e. the value of the
+--prefix option of the configure script during configuration of
+the ejudge). An example of use:
+[tester]
+start_env = "EJUDGE_PREFIX_DIR"
+
+The advanced sound generator (i. e. by default the speech
+generator `festival') is supported in the KIROV standings mode.
+To activate the speech generator the path to the `festival'
+speech generator must be specified correctly during
+configuration of the ejudge system (i.e. using the
+--with-festival option of the `configure' script). Then the
+following global configuration variables must be specified in
+the serve.cfg configuration variables:
+sound_player = "${script_dir}/festival"
+extended_sound
+
+A bug in parsing of the test information files (.inf) is fixed.
+This bug manifested itself when quotes were used in the quoted
+strings.
+
+master
+------
+A bug in handling of "Rejudge displayed" command is fixed. This
+bug caused abnormal termination of the master program after the
+command was sent to the server.
+
+userlist-server,master
+----------------------
+The table of randomly generated passwords now contains the
+`location' column, where the value of the `location' field for
+all the participants is printed.
+
+register
+--------
+The `languages' field is supported (see above).
+
+collect-emails
+--------------
+A new utility, which extracts the email addresses of all the
+users registered for the specified contests.
+
+Version 2.1.32 (20041001)
+=========================
 Implemented support for the version 4 of the reuse library. The
 ejudge system may be compiled using both version 3 and version 4
 of the reuse library. The new reuse version 4 is a major upgrade
@@ -364,7 +557,7 @@ However the current version of the ejudge system does not
 support converting strings in the internal charset into the
 charset of the HTML document, if they are different. The strings
 are inserted into the HTML without conversion, which may result
-in incorrent HTML documents. Thus, in the current version of the
+in incorrect HTML documents. Thus, in the current version of the
 ejudge system for correctness and safety the internal charset
 and the output HTML document charset must be the same. So it is
 not recommended to explicitly specify the charset encoding for

@@ -1,3 +1,8 @@
+2004-10-25  Alexander Chernov  <cher@ispras.ru>
+
+	* rejudge_by_mask.c:
+	(serve_clnt_rejudge_by_mask) a stupid bug is fixed.
+
 2004-09-27  Alexander Chernov  <cher@ispras.ru>
 
 	* edit_run.c:

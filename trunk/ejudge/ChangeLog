@@ -1,3 +1,122 @@
+2004-10-27  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare.c:
+	(parse_deadline_penalties) specification of penalty in the form
+	  "ADD-VALUE" is supported. In this case the deadline date is set
+	  to the maximal value of the time_t type ("2038/01/19").
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* html.c:
+	(do_write_kirov_standings) the problem acception time is calculated
+	  for each problem and each user, the acception time is printed if
+	  the `stand_show_ok_time' is set and `stand_hide_time' is not set;
+	  statistics for submissions and successes is printed at the bottom
+	  of the standings table;
+	(do_write_standings) statistics for submissions and successes is
+	  printed at the bottom of the standings table.
+
+	* prepare.c:
+	new global parameter `stand_show_ok_time': if the parameter is set,
+	  the problem acception time is printed into the KIROV standings
+	  file;
+	new problem parameter `stand_hide_time', which disables printing
+	  of the problem acception time for a specified problem;
+	new problem parameter `start_time', which sets the initial time, when
+	  this problem become available for submitting;
+	(parse_deadline_penalties) parsing of the penalty specification
+	  is improved;
+	(set_defaults) `start_date' configuration variable is handled.
+
+	* run.c:
+	(run_tests) special handling of `EJUDGE_PREFIX_DIR' environment
+	  variable is implemented: if only the variable name is specified
+	  in `start_env', it is replaced with the value of the prefix
+	  directory;
+	  `sound_player' is invoked in the KIROV judging mode when
+	  `extended_sound' flag is set.
+
+	* serve.c: (cmd_team_submit_run) new problem configuration parameter
+	  `start_time' is supported;
+	(read_compile_packet) fixed order of parameters in the call of
+	  `write_run_packet'.
+
+	* sformat.c: 
+	(sformat_message) new format conversions are implemented:
+	  Mf - short name of the faculty;
+	  MF - short name of the faculty (english);
+	  Md - long name of the faculty;
+	  MD - long name of the faculty (english);
+	  Mp - printer name.
+
+	* userlist-server.c:
+	(do_generate_passwd) the `location' field is printed to the output
+	  HTML table;
+	(do_generate_team_passwd) the same as above.
+
+	* ejudge-setup.c:
+	(generate_serve_cfg) support for the Java JDK is implemented;
+	(generate_compile_cfg) the same as above.
+
+2004-10-25  Alexander Chernov  <cher@ispras.ru>
+
+	* unicorn-configure: added --with-javac option.
+
+	* cher-configure: added --with-javac and --with-scheme options.
+
+	* configure.ac: added support for Java SDK.
+
+	* config.h.in:
+	EJUDGE_PREFIX_DIR and COMPILE_JAVA_VERSION variables are added.
+
+2004-10-18  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare.h:
+	(struct section_global_data) field `stand_show_ok_time' is added;
+	(struct section_problem_data) field `stand_hide_time' is added;
+	  fields `start_date' and `t_start_date' are added.
+
+	* userlist_xml.c: support for the <languages> element is added;
+	(parse_date) the `tt' variable is properly initialized;
+	(parse_members) bug in invalid handling of "scientist" value is fixed;
+	(do_parse_user) <languages> element is support;
+	(unparse_user) <languages> element is support.
+
+	* userlist.h: support for new tag <languages> is added;
+	(struct userlist_user) field `languages' is added.
+
+	* userlist.c:
+	(userlist_parse_date) the `tt' variable is properly initialized;
+	(userlist_get_user_field_str) `languages' field is supported;
+	(userlist_set_user_field_str) the same as above;
+	(userlist_delete_member_field) the same as above.
+
+	* userlist-server.c:
+	(do_set_user_info) `location' field cannot be updated using this
+	  function;
+	  added support for 'languages' field;
+	(do_list_users) added support for `languages' field;
+
+	* testinfo.c: copyright notice is updated;
+	(parse_cmdline) bug in parsing \" fixed.
+
+	* register.c: support for the new "languages" field is implememted.
+
+	* edit-userlist.c: support for editing "languages" field is added.
+
+	* contests.c: support for "languages" field identifier is added;
+	(parse_date) the `tt' structure is properly initialized with zeros.
+
+	* contests.h: new field identifier CONTEST_F_LANGUAGES added.
+
+2004-10-11  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in: new utility "collect-emails" is added.
+
+	* collect-emails.c: initial revision
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
 2004-10-01  Alexander Chernov  <cher@ispras.ru>
 
 	* revinfo.c: <ctype.h> is included;
