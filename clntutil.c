@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -63,6 +63,8 @@ int    server_download_interval;
 int    server_is_virtual;
 int    server_olympiad_judging_mode;
 int    server_continuation_enabled;
+int    server_printing_enabled;
+int    server_printing_suspended;
 
 unsigned long client_cur_time;
 
@@ -248,19 +250,48 @@ client_check_server_status(char const *charset, char const *path, int lag,
                            int locale_id)
 {
   int fd = -1, r, tmp;
-  struct prot_serve_status status;
+  unsigned int struct_magic;
+  struct prot_serve_status_v1 status_v1;
+  struct prot_serve_status_v2 status_v2;
+  void *read_ptr = 0;
+  size_t read_size = 0;
 
-  memset(&status, 0, sizeof(status));
+  memset(&status_v2, 0, sizeof(status_v2));
   if ((fd = open(path, O_RDONLY)) < 0) {
     err("cannot open status file %s: %s", path, os_ErrorMsg());
     goto server_down;
   }
-  r = read(fd, &status, sizeof(status));
+  r = read(fd, &struct_magic, sizeof(struct_magic));
   if (r < 0) {
     err("read error from %s: %s", path, os_ErrorMsg());
     goto server_down;
   }
-  if (r != sizeof(status)) {
+  if (r != sizeof(struct_magic)) {
+    err("short read from %s: %d", path, r);
+    goto server_down;
+  }
+  if (lseek(fd, 0, SEEK_SET) < 0) {
+    err("seek failed on %s: %s", path, os_ErrorMsg());
+    goto server_down;
+  }
+
+  if (struct_magic == PROT_SERVE_STATUS_MAGIC_V1) {
+    read_ptr = &status_v1;
+    read_size = sizeof(status_v1);
+  } else if (struct_magic == PROT_SERVE_STATUS_MAGIC_V2) {
+    read_ptr = &status_v2;
+    read_size = sizeof(status_v2);
+  } else {
+    err("magic number does not match in %s", path);
+    goto bad_server;
+  }
+
+  r = read(fd, read_ptr, read_size);
+  if (r < 0) {
+    err("read error from %s: %s", path, os_ErrorMsg());
+    goto server_down;
+  }
+  if (r != read_size) {
     err("short read from %s: %d", path, r);
     goto server_down;
   }
@@ -275,30 +306,31 @@ client_check_server_status(char const *charset, char const *path, int lag,
   }
   close(fd);
 
-  if (status.magic != PROT_SERVE_STATUS_MAGIC) {
-    err("invalid magic header in %s", path);
-    goto bad_server;
+  if (struct_magic == PROT_SERVE_STATUS_MAGIC_V1) {
+    memcpy(&status_v2, &status_v1, sizeof(status_v1));
   }
 
-  server_cur_time = status.cur_time;
-  server_start_time = status.start_time;
-  server_sched_time = status.sched_time;
-  server_duration = status.duration;
-  server_stop_time = status.stop_time;
-  server_total_runs = status.total_runs;
-  server_total_clars = status.total_clars;
-  server_clars_disabled = status.clars_disabled;
-  server_team_clars_disabled = status.team_clars_disabled;
-  server_standings_frozen = status.standings_frozen;
-  server_score_system = status.score_system;
-  server_clients_suspended = status.clients_suspended;
-  server_testing_suspended = status.testing_suspended;
-  server_download_interval = status.download_interval;
-  server_is_virtual = status.is_virtual;
-  server_olympiad_judging_mode = status.olympiad_judging_mode;
-  server_continuation_enabled = status.continuation_enabled;
+  server_cur_time = status_v2.cur_time;
+  server_start_time = status_v2.start_time;
+  server_sched_time = status_v2.sched_time;
+  server_duration = status_v2.duration;
+  server_stop_time = status_v2.stop_time;
+  server_total_runs = status_v2.total_runs;
+  server_total_clars = status_v2.total_clars;
+  server_clars_disabled = status_v2.clars_disabled;
+  server_team_clars_disabled = status_v2.team_clars_disabled;
+  server_standings_frozen = status_v2.standings_frozen;
+  server_score_system = status_v2.score_system;
+  server_clients_suspended = status_v2.clients_suspended;
+  server_testing_suspended = status_v2.testing_suspended;
+  server_download_interval = status_v2.download_interval;
+  server_is_virtual = status_v2.is_virtual;
+  server_olympiad_judging_mode = status_v2.olympiad_judging_mode;
+  server_continuation_enabled = status_v2.continuation_enabled;
   client_cur_time = time(0);
-  server_freeze_time = status.freeze_time;
+  server_freeze_time = status_v2.freeze_time;
+  server_printing_enabled = status_v2.printing_enabled;
+  server_printing_suspended = status_v2.printing_suspended;
 
   if (lag > 0) {
     if (client_cur_time>=server_cur_time
@@ -369,6 +401,9 @@ client_print_server_status(int priv_level,
   if (server_testing_suspended) {
     printf("<p><big><b>%s</b></big></p>",
            _("Testing of team's submits is suspended"));
+  }
+  if (server_printing_suspended) {
+    printf("<p><big><b>%s</b></big></p>", _("Print requests are suspended"));
   }
   puts("");
 
