@@ -201,6 +201,7 @@ struct userlist_pk_set_user_info
 {
   short          request_id;
   unsigned long  user_id;
+  int            contest_id;
   unsigned short info_len;
   unsigned char  data[1];
 };
