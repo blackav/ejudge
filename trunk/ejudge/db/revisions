@@ -1379,3 +1379,15 @@ userlist_cfg.c 1 15 1125789
 userlist_xml.c 1 19 3840952
 serve_clnt/edit_run.c 1 10 369959
 serve_clnt/view.c 1 12 331878
+prepare.h 1 57 1572528
+protocol.h 1 27 709335
+serve_clnt.h 1 17 463301
+master.c 1 59 7415225
+register.c 1 33 7648437
+run.c 1 57 4172571
+serve.c 1 73 11153425
+team.c 1 47 4429457
+clntutil.c 1 37 1363617
+master_html.c 1 27 6108951
+prepare.c 1 76 8731831
+runlog.c 1 32 4020824
