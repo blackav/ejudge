@@ -311,7 +311,7 @@ parse_multipart(char const *charset)
           exit(0);
         }
       } else if (!strncasecmp(s6, lbuf, sizeof(s6) - 1)) {
-        err("ignored header: %s", lbuf);
+        //err("ignored header: %s", lbuf);
       } else {
         err("unknown header: <%s>", lbuf);
         bad_request(charset);
