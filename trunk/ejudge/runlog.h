@@ -58,7 +58,7 @@ int run_start_contest(time_t);
 time_t run_get_start_time(void);
 int run_change_status(int runid, int newstatus, int newtest, int newscore);
 int run_get_status(int runid);
-int run_get_param(int runid, int *ploc_id, int *plang, int *pprob, int *pstat);
+int run_get_param(int runid, int *pteam_id, int *ploc_id, int *plang, int *pprob, int *pstat);
 int run_get_record(int, time_t *, size_t *, unsigned long *,
                    unsigned long *,
                    int *, int *, int *, int *, int *, int *, int *);
