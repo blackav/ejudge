@@ -1,6 +1,256 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
+Версия 2.1.36 (20050402)
+========================
+This version fixes several severe bugs in the `userlist-server'
+and `serve' programs. Upgrade to this version is recommented.
+
+The `compile' and `run' programs can again be built on the Win32
+platform. The Cygwin suite is necessary for compiling on Win32,
+however Cygwin DLLs are not required for further running of the
+programs. Only Windows 2000 or above is supported. Windows 95,
+98, ME are not supported.
+
+For compilation on the Win32 platform the latest version of the
+reuse library (4.0.1) is required. However, use of the latest
+version is also recommented for the Linux version of the ejudge
+system.
+
+Many changes are introduced in handling of contests in the
+OLYMPIAD scoring system mode.
+
+serve
+-----
+Two new submit statuses are added to the run database: 
+"Memory Limit" (RUN_MEM_LIMIT_ERR) and "Security Error"
+(RUN_SECURITY_ERR). They are handled everywhere in the ejudge
+system as like "Run-time error" (RUN_RUN_TIME_ERR) status. The
+new statuses may be used for more precise specification of a
+run-time error.
+
+Although the new two statuses were added to the run database,
+the `run' program currently does not support detection of these
+erors. This due to impossibility of reliable detection of these
+errors on Linux. The new statuses may be set only manually
+during editing of the run database.
+
+A new submit status "Pending" (RUN_PENDING) is added. This
+status is set on a submit, if the submit has been received by
+the serve program, but immediate testing of the submit is not
+available due to some reasons. For example, immediate may be
+disabled because of the problem or language configuration
+variables `disable_testing' or `disable_auto_testing' are set,
+or if testing was suspended in the contest by the "Suspend
+testing" administrator command (available via `master' CGI
+program). In the previous versions of the ejudge system, such a
+submit got "Accepted for Testing" (RUN_ACCEPTED) status.
+Unfortunately, the same RUN_ACCEPTED status is used for contests
+in the OLYMPIAD scoring system during the preliminary testing
+stage. So these two uses of the RUN_ACCEPTED status are
+separated and the new RUN_PENDING status is introduced.
+
+In the run filter expressions the new statuses are expressed as
+follows:
+PD	RUN_PENDING
+ML	RUN_MEM_LIMIT_ERR
+SE	RUN_SECURITY_ERR
+
+compile
+-------
+The program may be built on the Win32 plaform (see above).
+However, this version of the program did not yet get intensive
+testing on Win32 platform, so the Win32 support should be
+considered as being in alpha stage.
+
+compile, serve
+--------------
+The format of the control packets, which are used to pass the
+compile requests from the `serve' to the `compile' programs and
+compile results from the `compile' to the `serve' is reworked.
+Now the compile request and reply packets use binary formats.
+Also the packets include timestamps, which are used for
+reporting of verbose statistics of the testing of each submit.
+
+configure
+---------
+The Win32 platform is supported (currently only Cygwin, but with
+-mno-cygwin option, so the resulting binaries are Cygwin
+independent).
+
+edit-userlist
+-------------
+Added partial support for operations on a group of users. When
+the list of users registered for some contest is viewed, it is
+possible to select or deselect any user using the `:' command.
+If several users are selected, the `r' command (change the
+registration status), the 'd' command (delete the registration),
+the 'i' command (change the invisibility status), the 'b'
+command (change the ban status), the 'l' command (change the
+lock status) are performed on all the selected users. If no one
+user is selected, these command are performed on the current
+user, as in the previous version.
+
+A new command 'c' is supported during viewing users regisered
+for some contest. This command allows registering one user or
+several users for a different contest. The 'c' and the ':'
+commands allows quick registration of all the participants of
+some contest for another contest. This may be used, for example,
+when a training session is prepared for all the participants of
+some contest, or when a virtual contest based on some real
+contest is prepared, etc.
+
+serve
+-----
+Diagnostics of invalid filter expressions is improved. Now, if a
+user uses invalid keyword, the whole keyword is reported as
+invalid. For example, if a user uses `problem' instead of
+`prob', a error about invalid keyword `problem' is reported
+instead of reporting three errors about invalid characters 'l',
+'e', and 'm'.
+
+A serious bug is fixed, which manifested itself when invalid
+filter expression was entered. In this case a block of heap
+memory was allocated, which size was specified by an unitialized
+variable, and this block was never freed. This bug may cause
+abnormal termination of the serve program due to out of memory
+condition and other subsequences.
+
+serve
+-----
+Removed a limitation, that the total score gained for a submit
+(i.e. testing score with all the additional factors like timing
+penalties etc) could not exceed the full score of the problem as
+specified by the `full_score' problem configuration variable.
+
+The view of the current standings table is changed for contests
+in the OLYMPIAD scoring system in the preliminary testing mode.
+In this mode each of the preliminary tests is scored as 1 point
+regardless of its score in the configuration file (usually, 0
+points). The problem is marked as accepted (i.e. in bold font),
+if it passes all the preliminary tests. The participants are
+arranged according to the number of accepted problems, and then
+according to the total score.
+
+In the final testing mode of the OLYMPIAD contest the view of
+the current standings table is not changed and is the same, as
+the view of the table of the current standings in the KIROV
+contest mode.
+
+serve, team
+-----------
+The `team' CGI program also supports displaying the testing
+protocol in HTML format (see the `html_report' global
+configuration variable introduced in the previous version of the
+ejudge system). Although only judge protocols can be generated
+in the HTML format, a user views judge protocols, if the
+`team_show_judge_report' configuration variable is set in the
+contest configuration file.
+
+run
+---
+The program can be built on the Win32 platform (see above),
+however, the Win32 version did not get much testing, so the
+Win32 support should be considered as being in alpha stage.
+
+serve,run
+---------
+The control packet format, which is used to pass testing
+requests from the `serve' to the `run' programs and testing
+results from the `run' to the `serve' is reimplemented. Now the
+packets use binary format. Moreover, the packets now include
+several timestamp fields, which are used to report statistics
+about testing of a submit.
+
+run
+---
+The judge's testing protocol now includes timing statistics
+about all stages of passing of the submit through all the
+compilation and running stages. The astronomic time of starting
+and finishing testing is reporting as well as duration of being
+in the compile queue, compilation, being in the compile result
+queue, being in the run queue, running. The statistics is
+printed by the run program, so the duration of being in the run
+result queue is not available.
+
+serve, master, judge
+--------------------
+A new "Full rejudge" command is supported for the contests in
+the OLYMPIAD scoring system in the preliminary testing mode.
+This command performs full testing of the specified submit as if
+the contest was in the final testing mode. The command may be
+used, when the full judging of some submit (for example, some
+judge's solution) is required in the accepting mode.
+
+serve
+-----
+Error handling is improved for errors, which may appear during
+receiving of a new submit from an ordinary or privileged user. 
+If writing of the submit source code to the archive is failed
+the submit is removed from the run database. This fixes a
+long-standing bug, which manifested itself when there was no
+space on the disk for writing a submit source code. In this case
+the source code was lost, but an entry in the run database
+remained and had the "Available" status.
+
+A new field `judge_id' is added to the run database. This field
+may take values from 0 to 65535. When a submit is sent to
+judging or rejudging, the judging request is assigned an unique
+judge_id, which is stored in the run database. When the `serve'
+program receives a packet with compilation or testing results,
+it checks the judge_id as specified in the packet agains the
+judge_id as stored in the run database for this run. If the
+judge_id do not match, the received packet is ignored.
+
+This solves a problem when a submit being judged is rejudged.
+In this case the older judge_id in the run database is replaced
+with new judge_id, so the results of the older judging are
+ignored. This could not be guaranteed in the previous versions
+of the ejudge, because the older judging request could be
+completed first and change the submit status to the one
+specified in the run reply packet. The newer judging results
+then were ignored.
+
+The judge_id field occupies 2 bytes in the runlog entry
+structure, so the total size of all the used fields is now 64
+bytes, and there is no reserved space remaining in the runlog
+entry. The size of the runlog entry is 64 bytes for a long time
+from the ancient text format of the runlog. Thus any extension
+of the runlog format will require major and incompatible change
+of the runlog format (for example, using 128-bytes runlog
+entries).
+
+A new format conversion specifier `%M1' is added, which outputs
+(as string) the value of the `extra1' field of the user
+information entry. The `extra1' field is not available for
+editing neither by ordinary user nor by the ejudge
+administrator. The current version of the `userlist-server'
+program uses this field when passes the information about the
+users registered for a contest to the `serve' contest server of
+this contest. The `userlist-server' program stores the value of
+the `grade' field of the first participant of the team to the
+`extra1' field. In the individual contests this field contains
+the grade (year of study) of the contest participant. So, the
+`%M1' format specifier may be used to report the grade of the
+contest participant of the individual contest.
+
+userlist-server
+---------------
+A bug of dereferencing the NULL pointer was fixed. The bug
+manifested itself, when a new user was registered and no contest
+was specified, i.e. URL without contest_id parameter was used.
+For example, using the URL http://acm.msu.ru/cgi-bin/register
+triggered this bug, but using the URL
+http://acm.msu.ru/cgi-bin/register?contest_id=83 did not.
+The bug was introduced in the previous version, when the
+registration e-mail templates became supported.
+
+super-serve
+-----------
+All the UNIX sockets, which are used to control the serve
+programs of all the managed contests, that are created upon
+start of the `super-serve' program, are deleted upon exit.
+
 Версия 2.1.35 (20050118)
 ========================
 This version fixes some minor bugs and adds some new features.

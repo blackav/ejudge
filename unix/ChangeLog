@@ -1,3 +1,7 @@
+2005-03-03  Alexander Chernov  <cher@ispras.ru>
+
+	* curtime.c: initial revision
+
 2005-01-15  Alexander Chernov  <cher@ispras.ru>
 
 	* fileutl.c: copyright notice is updated;

@@ -1,3 +1,455 @@
+2005-04-02  Alexander Chernov  <cher@ispras.ru>
+
+	* super-serve.c: 
+	(start_serve) a stupid typo is fixed.
+
+	* super-serve.c: copyright notice is updated;
+	(delete_contest_extra) the contest serve socket is removed;
+	(start_serve) information about the started serve process is printed.
+
+2005-03-31  Alexander Chernov  <cher@ispras.ru>
+
+	* html.c:
+	(calc_kirov_score) removed the limitation, that the gained score
+	  cannot exceed the full score for a problem;
+	(do_write_kirov_standings) the same as above.
+
+	* edit-userlist.c: copyright notice is updated.
+
+	* edit-userlist.c:
+	some support for operation on a group of users is added;
+	(generate_reg_user_item) a new function, which generates a menu
+	  string corresponding to a given user;
+	(display_registered_users) call of `generate_reg_user_item' is used
+	  instead of generating the menu string using the snprintf function;
+	  new command ':' is supported: this command toggles selection for
+	  the current user and advances to the next user;
+	  new command 'c' is supported: this command registers one user or
+	  all the selected users to a specified contest;
+	  commands 'r', 'd', 'b', 'i', 'l' supports changing the corresponding
+	  attribute for all the selected files.
+
+2005-03-30  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* serve.c:
+	"compile_packet.h", "run_packet.h", "curtime.h" are included;
+	(cmd_priv_submit_run) call of `run_change_status' is updated, because
+	  the function now requires new parameter `judge_id';
+	  call of `queue_compile_request' is updated;
+	(cmd_team_submit_run) the same changes, as above;
+	(send_run_quit_command) a new function, which generates the QUIT
+	  command for the run program and writes the packet to the run
+	  spool directory;
+	(cmd_priv_command_0) `send_run_quit_command' is called instead of
+	  directly writing the QUIT packet;
+	(cmd_edit_run) use of `rejudge_run' is changed, since `rejudge_run'
+	  now requires `force_full_rejudge' parameter;
+	(write_run_packet) is removed because superseded by
+	  `run_request_packet_write';
+	(read_compile_packet) almost completely rewritten, because the
+	  compile and run programs now use binary packet formats. Special
+	  functions are provided for parsing and generating packets
+	  in the new format;
+	  also a special structure is threaded through compile to make
+	  it possible to pass to the run special parameters without stroring
+	  them in the database. `struct compile_run_extra' is used to pass
+	  information through the compile program. Currently this structure
+	  contains `accepting_mode' flag, which allows full testing of
+	  a submit in the accepting_mode of the contest in the OLYMPIAD
+	  scoring system;
+	(read_run_packet) new binary format of the run reply packet
+	  is handled;
+	(queue_compile_request) completely rewritten to support the new
+	  binary format of the compile request packet;
+	  also the function now updates the run database itself;
+	(rejudge_run) new parameter `force_full_rejudge' is added. This
+	  parameter only works in the OLYMPIAD contests when the contest
+	  is in the accepting mode. If this parameter is 1, the run is forced
+	  to be tested in the judging mode, i.e. on all tests; this might be
+	  useful to test judge solutions during the contest;
+	  use of `queue_compile_request' is updated;
+	(do_rejudge_all) use of `rejudge_run' is updated;
+	(do_judge_suspended) the same as above;
+	(do_rejudge_problem) the same as above.
+
+	* run_packet_priv.h: new flag FLAGS_DISABLE_SOUND is added;
+	(struct run_reply_bin_packet) fields `ts7', `ts7_us' are added.
+
+	* run_packet_5.c: 
+	(run_reply_packet_write) `score' == -1 is allowed;
+	  `ts7', `ts7_us' fields are written.
+
+	* run_packet_4.c: 
+	(run_reply_packet_read) score == -1 is allowed;
+	  `ts7', `ts7_us' fields are read.
+
+	* run_packet_2.c:
+	(run_request_packet_write) `disable_sound' field is supported.
+
+	* run_packet_1.c:
+	(run_request_packet_read) if the contest_id == -1, the further parsing
+	  of the packet is stopped, and the function returns immediately;
+	  contest_id == -1 designates the special QUIT packet;
+	  `disable_sound' field is parsed in the packet;
+	  order of reading of the text fields is corrected.
+
+	* run_packet.h:
+	(struct run_request_packet) new field `disable_sound' is added;
+	(struct run_reply_packet) new fields `ts7', `ts7_us' are added;
+	(run_request_packet_quit) new function prototype is added.
+
+	* run.c: "run_packet.h", "curtime.h" are included;
+	(time_to_str) a new function to convert a time into the string format,
+	  the function is used to report start end finish time of request
+	  processing;
+	(dur_to_str) a new function to convert a duration into the string
+	  format. The function is used to report duration of various
+	  stages of request processing;
+	(generate_report) new parameter `reply_pkt' is added, which is the
+	  pointer to the run reply packet filled during the testing;
+	  added printing of time profiling information;
+	(run_tests) new parameter `req_pkt' is added --- the pointer to the
+	  run request packet;
+	  new parameter `reply_pkt' is added --- the pointer to the run
+	  reply packet;
+	  `reply_string' parameter is removed, since the testing result is
+	  written to the structure using the `reply_pkt' pointer;
+	  the function now fills the `status', `failed_test', `score'
+	  fields of the reply_pkt structure;
+	  `disable_sound' parameter of the request packet is supported.
+	  If this parameter is set, no sound is played.
+	  `ts7', `ts7_us' fields of the reply_pkt structure are filled;
+	  call of `generate_report' is updated;
+	(parse_packet) function is removed, because is replaced with
+	  `run_request_packet_read';
+	(do_loop) the run request packet is now in the binary format, and
+	  `run_request_packet_read' is used to convert the packet into
+	  the run request structure;
+	  the run reply packet is also in the binary format,
+	  `run_request_packet_write' is used to convert the reply structure
+	  into the packet.
+
+	* files.make: run_packet_7.c is added.
+
+	* compile_packet_2.c:
+	(compile_request_packet_write) the terminated \0 in strings is not written
+	  to the packet.
+
+	* compile_packet_1.c:
+	(compile_request_packet_read) the terminated \0 in strings is not written
+	  to the packet.
+
+	* run_packet_7.c: initial revision
+
+2005-03-27  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* runlog_xml.c:
+	(unparse_runlog_xml) added generation of `status' field (forgotten
+	  after some changes).
+
+	* run_packet_priv.h, run_packet_6.c, run_packet_5.c, run_packet_4.c, run_packet_3.c, run_packet_2.c, run_packet_1.c:
+	basically implemented, not yet tested.
+
+	* compile.c:
+	"runlog.h", "compile_packet.h", "curtime.h" are included;
+	the `compile' now uses a new binary protocol for communication with
+	  the `serve' program. The data packet format is described in
+	  compile_packet.h and compile_packet_priv.h header files;
+	to generate and parse compile request and reply packets new
+	  functions from compile_packet?.c are used;
+	the new compile request and reply packets include various timestamps,
+	  which are filled by all participating parties, the `compile'
+	  program fills the required timestamp fields;
+	(do_loop) changes as described above.
+
+2005-03-13  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* master_html.c:
+	(write_priv_all_runs) a serious bug related to insufficient checking
+	  of error condition is fixed. If the filter expression parsing
+	  failed, the function attempted to allocate memory with undefined size.
+
+	* filter_tree.c:
+	(filter_tree_delete) NULL pointer is now a valid argument (do nothing);
+	(filter_tree_clear) `abort' called.
+
+	* filter_expr.y: major emacs mode is changed
+
+	* filter_scan.lex:
+	to the previous revision: error reporting is slightly improved.
+
+	* filter_scan.lex: major emacs mode is changed
+
+2005-03-05  Alexander Chernov  <cher@ispras.ru>
+
+	* run_packet.h, run_packet_1.c, run_packet_2.c, run_packet_3.c, run_packet_4.c, run_packet_5.c, run_packet_6.c, run_packet_priv.h:
+	initial revision
+
+	* files.make:
+	new files added: run_packet_[1-6].c, run_packet.h, run_packet_priv.h.
+
+	* compile_packet_priv.h: bugs fixed.
+
+	* compile_packet_4.c: 
+	(compile_reply_packet_read) bugs fixed.
+
+	* compile_packet_3.c: 
+	(compile_request_packet_free) bugs fixed.
+
+	* compile_packet_2.c: 
+	(compile_request_packet_write) bugs fixed.
+
+	* compile_packet_1.c: 
+	(compile_request_packet_read) bugs fixed.
+
+	* runlog.h: (run_change_status) new parameter `judge_id' is added.
+
+	* runlog.c:
+	(run_change_status) new parameter `judge_id' is added to store the
+	  compile and testing request identifier.
+
+2005-03-03  Alexander Chernov  <cher@ispras.ru>
+
+	* files.make: compile_packet_?.c, compile_packet_priv.h are added.
+
+	* compile_packet_priv.h, compile_packet.h, compile_packet_1.c, compile_packet_2.c, compile_packet_3.c, compile_packet_4.c, compile_packet_5.c, compile_packet_6.c:
+	initial revision
+
+	* files.make:
+	new files added: compile_packet.[ch], curtime.h, unix/curtime.c,
+	  win32/curtime.c.
+
+	* Makefile.win32.in:
+	$(ARCH)/curtime.o is added to libcommon.a, compile, and run dependency
+	  list.
+
+	* Makefile.unix.in:
+	$(ARCH)/curtime.o is added to libcommon.a dependency list.
+
+	* curtime.h: initial revision
+
+2005-03-02  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* serve.c: `olympiad_judging_mode' variable is made static back;
+	(cmd_master_page) calls of `write_master_page', `write_priv_all_runs'
+	  are updated;
+	(cmd_view) call of `write_priv_source' is updated.
+
+	* html.h: 
+	(write_master_page) `accepting_mode' parameter is added;
+	(write_priv_all_runs) `accepting_mode' parameter is added;
+	(write_priv_source) `accepting_mode' parameter is added.
+
+	* master_html.c:
+	(write_change_status_dialog) new parameter `accepting_mode' is
+	  added, which is used instead of the value of the
+	  `olympiad_judging_mode' global variable;
+	(write_priv_all_runs) new parameter `accepting_mode' is added;
+	  call of `write_change_status_dialog' is updated;
+	(write_master_page) new parameter `accepting_mode' is added;
+	  call of `write_priv_all_runs' is updated;
+	(write_priv_source) new parameter `accepting_mode' is added;
+	  call of `write_change_status_dialog' is updated;
+	(write_new_run_form) call of `write_change_status_dialog' is updated.
+
+	* runlog.h: new run statuses added: RUN_PENDING, RUN_MEM_LIMIT_ERR,
+	  RUN_SECURITY_ERR, RUN_FULL_REJUDGE, RUN_LAST;
+	(run_is_failed_attempt) new function prototype;
+	(run_status_to_str_short) new function prototype;
+	(run_str_short_to_status) new function prototype.
+
+	* runlog.c:
+	(run_status_str) new run statuses RUN_PENDING, RUN_MEM_LIMIT_ERR,
+	  RUN_SECURITY_ERR are supported;
+	(run_is_failed_attempt) new function, which returns 1, if the
+	  run status corresponds to a failed run (for any reason except
+	  compilation error or check failed);
+	(run_status_to_str_short) a new function to convert the run status
+	  value to short string (as in the filter expression);
+	(run_str_short_to_status) a new function to perform reverse
+	  conversion.
+
+	* master_html.c:
+	(write_change_status_dialog) completely rewritten unsing table-driven
+	  approach instead of hard-coded printfs;
+	(print_raw_record) new run statuses RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR
+	  are supported;
+	(write_priv_all_runs) `write_change_status_dialog' function is
+	  used instead of hard-coded printfs;
+	(write_priv_standings) new parameter `accepting_mode' is added;
+	  use of `do_write_kirov_standings' is updated;
+	(write_raw_standings) use of `do_write_kirov_standings' is updated.
+
+2005-03-01  Alexander Chernov  <cher@ispras.ru>
+
+	* serve.c:
+	`olympiad_judging_mode' variable is made non-static (currently it is
+	  used in the "master_html.c");
+	(update_standings_file) a new parameter `accepting_mode' is passed to
+	  the `write_standings' function;
+	(is_valid_status) new run statuses are supported: RUN_MEM_LIMIT_ERR,
+	  RUN_SECURITY_ERR, RUN_PENDING, RUN_FULL_REJUDGE, RUN_CHECK_FAILED
+	  (not a new status code, but it was not previously handled);
+	(cmd_priv_standings) the `accepting_mode' parameter is passed down
+	  to the `write_priv_standings' function;
+	(cmd_priv_submit_run) if the automatic testing is currently suspended,
+	  a new run gets RUN_PENDING status code instead of RUN_ACCEPTED;
+	  use of `queue_compile_request' is updated to its new prototype;
+	(cmd_team_submit_run) the same as above;
+	(cmd_edit_run) RUN_FULL_REJUDGE is handled in the same manner, as
+	  RUN_REJUDGE;
+	(read_run_packet) `is_valid_status' is used for the status validity
+	  check;
+	(queue_compile_request) new parameter `run_block' is added, this is
+	  a string which is passed to the compile server, returned from
+	  there without changes, if the compilation is successful;
+	(rejudge_run) new parameter to call `queue_compile_request', this
+	  parameter is currenty 0.
+	(do_judge_suspended) RUN_PENDING is handled instead of RUN_ACCEPTED.
+
+	* master.c: "runlog.h" is included for the run status codes;
+	(change_status_if_asked) the run status code validity check is redone
+	  using a table;
+	(change_status) the same as above;
+	(action_new_run) the same as above.
+
+	* html.h: (write_standings) new parameter `accepting_mode' is added;
+	(write_priv_standings) new parameter `accepting_mode' is added;
+	(do_write_kirov_standings) new parameter `accepting_mode' is added.
+
+	* html.c:
+	(write_html_run_status) new entry code RUN_PENDING is supported;
+	(do_write_kirov_standings) new parameter `accepting_mode' is added,
+	  if this parameter is set to 1, the contest is in the OLYMPIAD
+	  accepting mode (as opposed to the OLYMPIAD judging mode);
+	  the standing table is printed completely differently in the accepting
+	  mode: the primary sort key is the number of accepted problems, and
+	  each accepted test is counted as 1 point;
+	  `run_is_failed_attempt' is ised instead of complex condition check;
+	(write_standings) the new `accepting_mode' parameter is added. This
+	  parameter is further passed to `do_write_kirov_standings';
+	(new_write_user_report_view) reports in the HTML format are supported.
+
+	* filter_tree.c: copyright notice is updated;
+	(filter_tree_print) `run_status_to_str_short' is used instead of
+	  `filter_tree_result_str';
+	(filter_tree_result_str) function is removed;
+	(filter_tree_eval_node) `run_status_to_str_short' is used instead of
+	  `filter_tree_result_str';
+	  new runlog entry codes RUN_PENDING, RUN_MEM_LIMIT_ERR,
+	  RUN_SECURITY_ERR, RUN_FULL_REJUDGE are supported;
+	  `run_str_short_to_status' is used instead of a long line of `if's.
+
+	* runlog_xml.c: copyright notice is updated;
+	(parse_status) runlog entry codes (like RUN_MAX_STATUS, etc) are used
+	  instead of hard-coded numbers;
+	  `run_str_short_to_status' function is used to convert the status
+	  string to the status number;
+	(unparse_status) function is removed, `run_status_to_str_short' is
+	  used instead.
+
+2005-02-28  Alexander Chernov  <cher@ispras.ru>
+
+	* filter_scan.lex:
+	new run status codes "PD" (RUN_PENDING), "ML" (RUN_MEM_LIMIT_ERR),
+	  "SE" (RUN_SECURITY_ERR) are supported.
+
+	* clean-users.c: copyright notice is updated;
+	(main) new run status codes RUN_PENDING, RUN_MEM_LIMIT_ERR,
+	  RUN_SECURITY_ERR are supported.
+
+	* userlist-server.c:
+	(cmd_register_new) check for empty register e-mail template file name
+	  (<register_email_file> element) is added.
+
+	* slice-userlist.c: copyright notice is updated;
+	(main) the program name in the banner string is fixed.
+
+2005-01-24  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* Makefile.unix.in: the file is renamed from Makefile.in;
+	the Win32 specific stuff is removed since there is a special
+	  Makefile.win32.in file now;
+	`xml_utils' and `super_clnt' directories are cleared;
+	Makefile.in is now removed on distclean.
+
+	* compile.c: copyright notice is updated;
+	(do_loop) the Unix-specific signal manipulation stuff is replaced
+	  with generic functions from "interrupt.h";
+	  `os_Sleep' is used instead of `sleep';
+	  redirection modes are updated in `task_SetRedir' for the Win32
+	  support.
+
+	* configure.ac: changes for Win32 (MinGW) platform.
+
+	* run.c: <reuse/integral.h> is included;
+	<malloc.h> is included when compiling for MinGW32;
+	(run_tests) the full path to the executable being started is specified
+	  on Win32.
+
+	* runlog.c:
+	(run_undo_add_record) a new function, which undoes addition of a new
+	  run record into the database. The function is used to implement
+	  addition of a new run as one transaction.
+
+	* runlog.h: (run_undo_add_record) new function prototype is added.
+
+	* serve.c: (cmd_priv_submit_run) minor logging text update;
+	(cmd_team_submit_run) addition of a new run into the run database is
+	  undone (using `run_undo_add_record') if some further operation (for
+	  example, writing the source code to the archive directory) is failed.
+
+	* misctext.c, prepare.c:
+	<malloc.h> is included when compiling for MinGW32.
+
+	* sformat.c: <malloc.h> is included when compiling for MinGW32.
+	(sformat_message) new format specifier "M1" is supported to
+	  output the "extra1" field of the user information.
+
+	* parsecfg.c, pathutl.c, testinfo.c: copyright notice is updated;
+	<malloc.h> is included when compiling for MinGW32.
+
+	* userlist.h: copyright notice is updated;
+	new element "extra1" is added;
+	(struct userlist_user) field "extra1" is added.
+
+	* userlist_xml.c:
+	support for a new tag "extra1" is added. This tag is currently
+	used for passing the participant's grade to the `serve' program;
+	(do_parse_user) "extra1" element is supported;
+	(unparse_user) the participant's grade is unparsed to the "extra1"
+	  element in the standings (USERLIST_MODE_STAND) mode.
+
+	* Makefile.win32.in: initial revision
+
+2005-01-19  Alexander Chernov  <cher@ispras.ru>
+
+	* run.c: <termios.h> is included only if HAVE_TERMIOS_H macro is set;
+	(run_tests) terminal state manipulations are only performed
+	  if HAVE_TERMIOS_H is set.
+
+	* fileutl.h: <sys/types.h> included.
+
+	* configure.ac: checking for mingw platform is added.
+
+	* config.h.in: added definition of HAVE_TERMIOS_H.
+
+	* Makefile.unix.in: fixes to allow compilation on win32.
+
+2005-01-18  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
 2005-01-18  Alexander Chernov  <cher@ispras.ru>
 
 	* run.c: "misctext.h" is included;
