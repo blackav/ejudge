@@ -142,7 +142,7 @@ clar_open(char const *path, int flags)
     return -1;
   if (sf_lseek(clar_fd, 0, SEEK_SET, "clar") == (off_t) -1) return -1;
 
-  info(_("clar_open: file size %d"), filesize);
+  info(_("clar_open: file size %lu"), filesize);
   if (filesize % CLAR_RECORD_SIZE != 0)
     ERR_R(_("bad file size: remainder %d"), filesize % CLAR_RECORD_SIZE);
 
