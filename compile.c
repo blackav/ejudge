@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,21 +36,22 @@
  * Then compilation status message is put into compile_status_dir.
  */
 
+#include "prepare.h"
+#include "pathutl.h"
+#include "parsecfg.h"
+#include "fileutl.h"
+
+#include <reuse/xalloc.h>
+#include <reuse/logger.h>
+#include <reuse/exec.h>
+#include <reuse/osdeps.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdarg.h>
 #include <fcntl.h>
-
-#include "prepare.h"
-#include "pathutl.h"
-#include "parsecfg.h"
-#include "xalloc.h"
-#include "logger.h"
-#include "fileutl.h"
-#include "exec.h"
-#include "osdeps.h"
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
