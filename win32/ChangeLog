@@ -1,3 +1,17 @@
+2001-06-16  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c:
+	1) added own definition of constants LONG_LONG_MAX, LONG_LONG_MIN,
+	   ULONG_LONG_MAX, this constants are not exported out of the
+	   module, though;
+	2) added implementation of reuse_strtoll, reuse_strtoull, which
+	   are own implementations of strtoll, strtoull for the platforms
+	   that lack those functions.
+	3) implemeneted os_readll, os_readull, which are more
+	   platform-independent versions of strtoll, strtoull
+	   (they report error in their return value, accept pointer to
+	   the result as void* for the best portability).
+
 2001-03-25  Alexander Chernov  <cher@ispras.ru>
 
 	* osdeps.c, logger.c, fileutl.c, exec.c: copyright notice updated
