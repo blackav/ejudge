@@ -3,7 +3,7 @@
 
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2003,2004 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@ enum
 {
   OPCAP_MASTER_LOGIN = 0,
   OPCAP_JUDGE_LOGIN = 1,
-  OPCAP_SUBMIT_RUNS = 2,
+  OPCAP_SUBMIT_RUN = 2,
   OPCAP_MAP_CONTEST = 3,
   OPCAP_LIST_CONTEST_USERS = 4,
   OPCAP_LIST_ALL_USERS = 5,
@@ -53,6 +53,7 @@ enum
   OPCAP_REPLY_MESSAGE = 28,
   OPCAP_CONTROL_CONTEST = 29,
   OPCAP_IMPORT_XML_RUNS = 30,
+  OPCAP_PRINT_RUN = 31,
 
   OPCAP_LAST
 };
