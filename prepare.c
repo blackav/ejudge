@@ -140,7 +140,9 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(print_work_dir, "s"),
 
   GLOBAL_PARAM(a2ps_path, "s"),
+  GLOBAL_PARAM(a2ps_args, "x"),
   GLOBAL_PARAM(lpr_path, "s"),
+  GLOBAL_PARAM(lpr_args, "x"),
 
   GLOBAL_PARAM(compile_dir, "s"),
   GLOBAL_PARAM(compile_work_dir, "s"),
