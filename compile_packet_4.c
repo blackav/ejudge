@@ -119,11 +119,31 @@ compile_reply_packet_read(size_t in_size, const void *in_data,
     in_ptr += pout->run_block_len;
   }
 
-  pkt_bin_align_addr(in_ptr);
+  pkt_bin_align_addr(in_ptr, pin);
   if (in_ptr != end_ptr) {
     errcode = 14;
     goto failed;
   }
+
+#if 0
+  /* debug */
+  fprintf(stderr, 
+          "compile reply packet:\n"
+          "  judge_id:      %d\n"
+          "  contest_id:    %d\n"
+          "  run_id:        %d\n"
+          "  status:        %d\n"
+          "  ts1:           %d\n"
+          "  ts1_us:        %d\n"
+          "  ts2:           %d\n"
+          "  ts2_us:        %d\n"
+          "  ts3:           %d\n"
+          "  ts3_us:        %d\n"
+          "  run_block_len: %d\n",
+          pout->judge_id, pout->contest_id, pout->run_id, pout->status,
+          pout->ts1, pout->ts1_us, pout->ts2, pout->ts2_us, pout->ts3, pout->ts3_us,
+          pout->run_block_len);
+#endif
 
   *p_out_data = pout;
   return 0;
