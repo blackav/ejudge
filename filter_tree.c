@@ -26,6 +26,9 @@
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
 
+#include <errno.h>
+#include <limits.h>
+
 struct filter_tree_mem
 {
   tPageDesc *pages;
@@ -144,6 +147,19 @@ filter_tree_new_bool(struct filter_tree_mem *mem, int val)
   p->kind = TOK_BOOL_L;
   p->type = FILTER_TYPE_BOOL;
   p->v.i = !!val;
+  return p;
+}
+
+struct filter_tree *
+filter_tree_new_dur(struct filter_tree_mem *mem, time_t val)
+{
+  struct filter_tree *p;
+
+  ASSERT(mem);
+  p = getnode(mem);
+  p->kind = TOK_DUR_L;
+  p->type = FILTER_TYPE_DUR;
+  p->v.u = val;
   return p;
 }
 
@@ -453,6 +469,107 @@ filter_tree_hash_str(unsigned char *buf, size_t size, unsigned long *val)
     out += sprintf(out, "%02x", *in++);
   *out = 0;
   return snprintf(buf, size, "%s", tmp);
+}
+
+static int
+str_to_int(const unsigned char *str, int *p_int)
+{
+  char *eptr;
+  int val;
+
+  *p_int = 0;
+  errno = 0;
+  val = strtol(str, &eptr, 0);
+  if (*eptr) return -FILTER_ERR_INT_CVT;
+  if (errno) return -FILTER_ERR_INT_OVF;
+  *p_int = val;
+  return 0;
+}
+
+int
+filter_tree_eval_node(int kind, struct filter_tree *res,
+                      struct filter_tree *p1, struct filter_tree *p2)
+{
+  memset(res, 0, sizeof(*res));
+
+  switch (kind) {
+
+    /* cast to dur_t */
+  case TOK_DUR_T:
+    res->kind = TOK_DUR_L;
+    res->type = FILTER_TYPE_DUR;
+    switch (p1->kind) {
+    case TOK_INT_L:
+      res->v.u = p1->v.i;
+      break;
+    case TOK_STRING_L:
+      {
+        int n, h = 0, m = 0, s = 0, l;
+        unsigned char *th, *tm, *ts;
+        long long tmp;
+
+        l = strlen(p1->v.s);
+        th = alloca(l + 10);
+        tm = alloca(l + 10);
+        ts = alloca(l + 10);
+        if (sscanf(p1->v.s, "%[^:] : %[^:] : %[^:] %n", th, tm, ts, &n) == 3
+            && !p1->v.s[n]) {
+        } else if (sscanf(p1->v.s, "%[^:] : %[^:] %n", tm, ts, &n) == 2
+                   && !p1->v.s[n]) {
+          *th = 0;
+        } else if (sscanf(p1->v.s, "%s %n", ts, &n) == 1 && !p1->v.s[n]) {
+          *th = 0;
+          *tm = 0;
+        } else {
+          return FILTER_ERR_DUR_CVT;
+        }
+        if (*th && (n = str_to_int(th, &h)) < 0) return n;
+        if (*tm && (n = str_to_int(tm, &m)) < 0) return n;
+        if (*ts && (n = str_to_int(ts, &s)) < 0) return n;
+        if ((h || m) && (s < 0)) return FILTER_ERR_DUR_CVT;
+        if (h && m < 0) return FILTER_ERR_DUR_CVT;
+        tmp = (long long) h * 3600 + (long long) m * 60 + s;
+        if (tmp < INT_MIN || tmp > INT_MAX) return FILTER_ERR_INT_OVF;
+        res->v.u = tmp;
+        break;
+      }
+    case TOK_DUR_L:
+      res->v.u = p1->v.u;
+      break;
+    default:
+      SWERR(("unhandled node %d", kind));
+    }
+    break;
+
+  default:
+    SWERR(("unhandled node %d", kind));
+  }
+  return 0;
+}
+
+#define _(x) x
+static unsigned char const * const errmsg[] =
+{
+  _("no error"),
+  _("unknown error"),
+  _("integer overflow"),
+  _("division by zero"),
+  _("conversion from string to int failed"),
+  _("conversion from string to dur_t failed"),
+};
+#undef _
+unsigned char const *
+filter_strerror(int n)
+{
+  if (n < 0) n = -n;
+
+  if (n >= FILTER_ERR_LAST) {
+    /* FIXME: this is bug anyway */
+    char buf[128];
+    snprintf(buf, sizeof(buf), "unknown error %d", n);
+    return xstrdup(buf);
+  }
+  return errmsg[n];
 }
 
 /**
