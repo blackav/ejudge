@@ -17,6 +17,8 @@
 
 #include "userlist.h"
 #include "contests.h"
+#include "pathutl.h"
+#include "tsc.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -62,6 +64,14 @@ userlist_remove_user(struct userlist_list *lst, struct userlist_user *usr)
   usr->b.left = 0;
   usr->b.right = 0;
   userlist_free((struct xml_tree*) usr);
+
+  // FIXME: dumb!!!
+  if (lst->login_hash_table) {
+    if (userlist_build_login_hash(lst) < 0) {
+      // FIXME: handle gracefully?
+      SWERR(("userlist_build_login_hash failed unexpectedly"));
+    }
+  }
 }
 
 static char const * const member_status_string[] =
@@ -410,20 +420,71 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
 }
 
 int
-userlist_set_user_field_str(struct userlist_user *u, int field_id,
+userlist_set_user_field_str(struct userlist_list *lst,
+                            struct userlist_user *u, int field_id,
                             unsigned char const *field_val)
 {
   int updated = 0;
   int *iptr;
-  int new_ival;
-  unsigned char **sptr;
+  int new_ival, i;
+  unsigned char **sptr, *old_login;
+  userlist_login_hash_t login_hash;
+  struct userlist_user *tmpu;
 
   if (!field_val) field_val = "";
 
   switch (field_id) {
   case USERLIST_NN_LOGIN:
     if (!*field_val) return -1;
-    sptr = &u->login; goto do_text_fields;
+    if (!lst) {
+      sptr = &u->login;
+      goto do_text_fields;
+    }
+
+    ASSERT(u->login);
+    if (!strcmp(u->login, field_val)) break;
+
+    /*
+      We cannot simply change `login' field, as it is
+      a primary key. We have to ensure its uniqueness.
+     */
+    if (lst->login_hash_table) {
+      login_hash = userlist_login_hash(field_val);
+      i = login_hash % lst->login_hash_size;
+      while (1) {
+        if (!(tmpu = lst->login_hash_table[i])) break;
+        if (tmpu != u && tmpu->login_hash == login_hash
+            && !strcmp(tmpu->login, field_val)) break;
+        i = (i + lst->login_hash_step) % lst->login_hash_size;
+      }
+      if (lst->login_hash_table[i]) {
+        /* new login is not unique */
+        return -1;
+      }
+    } else {
+      for (i = 1; i < lst->user_map_size; i++) {
+        if (!lst->user_map[i]) continue;
+        if (lst->user_map[i] == u) continue;
+        if (!strcmp(field_val, lst->user_map[i]->login)) break;
+      }
+      if (i < lst->user_map_size) {
+        /* new login is not unique */
+        return -1;
+      }
+    }
+
+    /* new login is unique */
+    old_login = u->login;
+    u->login = xstrdup(field_val);
+
+    /* This is dump, however it will work */
+    if (userlist_build_login_hash(lst) < 0) {
+      SWERR(("userlist_build_login_hash failed unexpectedly"));
+    }
+
+    xfree(old_login);
+    updated = 1;
+    break;
   case USERLIST_NN_EMAIL:
     if (!*field_val) return -1;
     sptr = &u->email; goto do_text_fields;
@@ -643,6 +704,293 @@ userlist_delete_user_field(struct userlist_user *u, int field_id)
   return retval;
 }
 
+static const unsigned char id_hash_map[256] =
+{
+  65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,
+  65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,
+  65,65,65,65,65,65,65,65,65,65,65,65,65,64,62,65,
+   0, 1, 2, 3, 4, 5, 6, 7, 8, 9,65,65,65,65,65,65,
+  65,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,
+  25,26,27,28,29,30,31,32,33,34,35,65,65,65,65,63,
+  65,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,
+  51,52,53,54,55,56,57,58,59,60,61,65,65,65,65,65,
+  65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,
+  65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,
+  65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,
+  65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,
+  65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,
+  65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,
+  65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,
+  65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,65,
+};
+
+unsigned long
+userlist_login_hash(const unsigned char *p)
+{
+  unsigned long hash = 0;
+
+  if (!p) return 0;
+  for (; *p; p++)
+    hash = hash * 66 + id_hash_map[*p];
+  return hash;
+}
+
+static int primes[] =
+{
+  4099,
+  8209,
+  16411,
+  32771,
+  65537,
+  131101,
+  262147,
+  524309,
+  1048583,
+  0,
+};
+
+int
+userlist_build_login_hash(struct userlist_list *p)
+{
+  int i, count, coll_count = 0, j, coll1_count = 0;
+  struct userlist_user *u;
+  unsigned long long tsc1, tsc2;
+
+  if (p->login_hash_table) xfree(p->login_hash_table);
+  p->login_hash_table = 0;
+  p->login_hash_size = 0;
+  p->login_hash_step = 23;
+
+  for (i = 1, count = 0; i < p->user_map_size; i++)
+    if (p->user_map[i])
+      count++;
+
+  for (i = 0; primes[i] && primes[i] < count * 3; i++);
+  if (!primes[i]) {
+    err("size of hash table %d is too large", count * 3);
+    goto cleanup;
+  }
+  p->login_hash_size = primes[i];
+  p->login_thresh = p->login_hash_size * 2 / 3;
+  p->login_cur_fill = count;
+  XCALLOC(p->login_hash_table, p->login_hash_size);
+
+  rdtscll(tsc1);
+  for (i = 1; i < p->user_map_size; i++) {
+    u = p->user_map[i];
+    if (!u) continue;
+    ASSERT(u->login);
+    u->login_hash = userlist_login_hash(u->login);
+    j = u->login_hash % p->login_hash_size;
+    while (p->login_hash_table[j]) {
+      if (!strcmp(u->login, p->login_hash_table[j]->login)) {
+        err("duplicated login %s", u->login);
+        goto cleanup;
+      }
+      if (p->login_hash_table[j]->login_hash == u->login_hash) coll1_count++;
+      coll_count++;
+      j = (j + p->login_hash_step) % p->login_hash_size;
+    }
+    p->login_hash_table[j] = u;
+  }
+  rdtscll(tsc2);
+  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+
+  info("login hashtable: size = %zu, shift = %zu, thresh = %zu, current = %zu",
+       p->login_hash_size, p->login_hash_step, p->login_thresh,
+       p->login_cur_fill);
+  info("login hashtable: collisions = %d, hash collisions = %d",
+       coll_count, coll1_count);
+  info("login hashtable: time = %llu (us)", tsc2);
+  return 0;
+
+ cleanup:
+  p->login_hash_size = 0;
+  p->login_hash_step = 0;
+  p->login_thresh = 0;
+  p->login_cur_fill = 0;
+  xfree(p->login_hash_table); p->login_hash_table = 0;
+  return -1;
+}
+
+int
+userlist_build_cookie_hash(struct userlist_list *p)
+{
+  struct userlist_user *u;
+  int i, j;
+  size_t cookie_count = 0, collision_count = 0;
+  struct userlist_cookie *ck;
+  unsigned long long tsc1, tsc2;
+
+  rdtscll(tsc1);
+
+  p->cookie_hash_size = 0;
+  p->cookie_hash_step = 0;
+  p->cookie_thresh = 0;
+  p->cookie_cur_fill = 0;
+  xfree(p->cookie_hash_table);
+  p->cookie_hash_table = 0;
+
+  /* count the number of cookies */
+  for (i = 1; i < p->user_map_size; i++) {
+    if (!(u = p->user_map[i])) continue;
+    if (!u->cookies) continue;
+    ASSERT(u->cookies->tag == USERLIST_T_COOKIES);
+    ck = (struct userlist_cookie*) u->cookies->first_down;
+    while (ck) {
+      ASSERT(ck->b.tag == USERLIST_T_COOKIE);
+      ASSERT(ck->user);
+      ASSERT(ck->user == u);
+      ASSERT(ck->cookie);
+      cookie_count++;
+      ck = (struct userlist_cookie*) ck->b.right;
+    }
+  }
+
+  /* choose hashtable size */
+  for (i = 0; primes[i] && primes[i] < cookie_count * 3; i++);
+  if (!primes[i]) {
+    err("size of hash table %d is too large", cookie_count * 3);
+    goto cleanup;
+  }
+  p->cookie_hash_size = primes[i];
+  p->cookie_hash_step = 37;
+  p->cookie_thresh = p->cookie_hash_size * 2 / 3;
+  p->cookie_cur_fill = cookie_count;
+  XCALLOC(p->cookie_hash_table, p->cookie_hash_size);
+
+  /* insert cookies to hashtable */
+  for (i = 1; i < p->user_map_size; i++) {
+    if (!(u = p->user_map[i])) continue;
+    if (!u->cookies) continue;
+    ck = (struct userlist_cookie*) u->cookies->first_down;
+    while (ck) {
+      j = ck->cookie % p->cookie_hash_size;
+      while (p->cookie_hash_table[j]) {
+        if (ck->cookie == p->cookie_hash_table[j]->cookie) {
+          err("duplicated cookie value %016llx (uids=%d,%d)",
+              ck->cookie, u->id, p->cookie_hash_table[j]->user->id);
+          goto cleanup;
+        }
+        collision_count++;
+        j = (j + p->cookie_hash_step) % p->cookie_hash_size;
+      }
+      p->cookie_hash_table[j] = ck;
+      ck = (struct userlist_cookie*) ck->b.right;
+    }
+  }
+
+  rdtscll(tsc2);
+  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+
+  info("cookie hashtable: size = %zu, step = %zu, thresh = %zu, current = %zu",
+       p->cookie_hash_size, p->cookie_hash_step, p->cookie_thresh,
+       p->cookie_cur_fill);
+  info("cookie hashtable: collisions = %d", collision_count);
+  info("cookie hashtable: time = %llu (us)", tsc2);
+
+  return 0;
+
+ cleanup:
+  p->cookie_hash_size = 0;
+  p->cookie_hash_step = 0;
+  p->cookie_thresh = 0;
+  p->cookie_cur_fill = 0;
+  xfree(p->cookie_hash_table);
+  p->cookie_hash_table = 0;
+  return -1;
+}
+
+int
+userlist_cookie_hash_add(struct userlist_list *p, struct userlist_cookie *ck)
+{
+  int i;
+
+  ASSERT(p);
+  if (!p->cookie_hash_table) return 0;
+  ASSERT(ck);
+  ASSERT(ck->b.tag == USERLIST_T_COOKIE);
+  ASSERT(ck->cookie);
+  ASSERT(ck->user);
+
+  if (p->cookie_cur_fill >= p->cookie_thresh) {
+    if (userlist_build_cookie_hash(p) < 0) {
+      SWERR(("userlist_build_cookie_hash failed unexpectedly"));
+    }
+  }
+
+  i = ck->cookie % p->cookie_hash_size;
+  while (p->cookie_hash_table[i]) {
+    if (p->cookie_hash_table[i] == ck) return 0;
+    if (p->cookie_hash_table[i]->cookie == ck->cookie) {
+      err("duplicated cookie value %016llx (uids=%d,%d)",
+          ck->cookie, ck->user->id, p->cookie_hash_table[i]->user->id);
+      return -1;
+    }
+    i = (i + p->cookie_hash_step) % p->cookie_hash_size;
+  }
+  p->cookie_hash_table[i] = ck;
+  p->cookie_cur_fill++;
+  return 0;
+}
+
+int
+userlist_cookie_hash_del(struct userlist_list *p, struct userlist_cookie *ck)
+{
+  int i;
+  int rehash_count = 0;
+  int j;
+  struct userlist_cookie **saves;
+
+  ASSERT(p);
+  if (!p->cookie_hash_table) return 0;
+  ASSERT(ck);
+  ASSERT(ck->b.tag == USERLIST_T_COOKIE);
+  ASSERT(ck->cookie);
+  ASSERT(ck->user);
+
+  i = ck->cookie % p->cookie_hash_size;
+  j = -1;
+  while (p->cookie_hash_table[i]) {
+    if (p->cookie_hash_table[i] == ck) {
+      ASSERT(j == -1);
+      j = i;
+    } else {
+      rehash_count++;
+    }
+    i = (i + p->cookie_hash_step) % p->cookie_hash_size;
+  }
+  if (j == -1) return 0;
+  if (!rehash_count) {
+    i = ck->cookie % p->cookie_hash_size;
+    ASSERT(p->cookie_hash_table[i] == ck);
+    p->cookie_hash_table[i] = 0;
+    p->cookie_cur_fill--;
+    return 0;
+  }
+
+  saves = alloca(rehash_count * sizeof(saves[0]));
+  memset(saves, 0, rehash_count * sizeof(saves[0]));
+  i = ck->cookie % p->cookie_hash_size;
+  j = 0;
+  while (p->cookie_hash_table[i]) {
+    if (p->cookie_hash_table[i] != ck)
+      saves[j++] = p->cookie_hash_table[i];
+    p->cookie_hash_table[i] = 0;
+    i = (i + p->cookie_hash_step) % p->cookie_hash_size;
+  }
+  ASSERT(j == rehash_count);
+
+  for (j = 0; j < rehash_count; j++) {
+    i = saves[j]->cookie % p->cookie_hash_size;
+    while (p->cookie_hash_table[i])
+      i = (i + p->cookie_hash_step) % p->cookie_hash_size;
+    p->cookie_hash_table[i] = saves[j];
+  }
+
+  p->cookie_cur_fill--;
+  return 0;
+}
 
 /**
  * Local variables:
