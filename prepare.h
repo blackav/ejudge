@@ -139,7 +139,9 @@ struct section_global_data
   path_t print_work_dir;        /* subdir for printing */
 
   path_t a2ps_path;
+  char **a2ps_args;
   path_t lpr_path;
+  char **lpr_args;
 
   /* --- server <-> compile interaction --- */
   /* global parameters are used by compile utility, whereas 
