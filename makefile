@@ -26,8 +26,9 @@ CGI_DATA_PATH_FLAG = -DCGI_DATA_PATH=\"../cgi-data\"
 REUSE_DIR=/home/cher/reuse
 
 # Install destination
-INST_BIN_PATH=/home/cher/working-ejudge
-INST_LOCALE_PATH=/home/cher/working-ejudge/locale
+INST_PATH = /home/cher/working-ejudge
+INST_BIN_PATH = ${INST_PATH}
+INST_LOCALE_PATH = ${INST_PATH}/locale
 
 ifeq ($(shell uname), Linux)
 REUSE_CONF=ix86-linux
