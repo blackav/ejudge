@@ -3,7 +3,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -334,6 +334,7 @@ struct section_problem_data
   int    variable_full_score;   /* is the full score is variable */
   int    test_score;            /* score for one test */
   int    run_penalty;           /* penalty for one run */
+  int    disqualified_penalty;  /* penalty for one disqualified run */
   int    use_corr;              /* whether the correct answers defined */
   int    use_info;              /* whether use the info files */
   int    use_tgz;               /* whether use tar test files */
@@ -411,6 +412,9 @@ struct section_language_data
   puc_t exe_sfx[32];            /* executable file suffix */
   path_t cmd;                   /* compile command */
 
+  int disable_auto_testing;     /* do not test this language automatically */
+  int disable_testing;          /* do not test this language at all */
+
   path_t compile_dir;           /* common subdirectory */
   path_t compile_queue_dir;     /* directory for serve->compile packets */
   path_t compile_src_dir;       /* directory for source files */
@@ -485,6 +489,7 @@ extern struct contest_desc *cur_contest;
 int prepare(char const *, int flags, int mode, char const *opts,
             int managed_flag);
 int create_dirs(int mode);
+int prepare_serve_defaults(void);
 
 int find_tester(int, char const *);
 int find_variant(int, int);
