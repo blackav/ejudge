@@ -67,6 +67,7 @@ AC_ARG_WITH([python],AC_HELP_STRING([--with-python],[specify the Python interpre
 AC_ARG_WITH([perl],AC_HELP_STRING([--with-perl],[specify the Perl interpreter to use in contests]),[ac_cv_contest_perl=$withval])
 AC_ARG_WITH([prolog],AC_HELP_STRING([--with-prolog],[specify the GNU Prolog compiler to use in contests]),[ac_cv_contest_gprolog=$withval])
 AC_ARG_WITH([festival],AC_HELP_STRING([--with-festival],[specify the home directory of the festival speech generator]),[ac_cv_festival_home="$withval"])
+AC_ARG_WITH([javac],AC_HELP_STRING([--with-javac],[specify the Java2 SDK javac path to use in contests]),[ac_cv_contest_javac="$withval"])
 
 dnl Expat checking stuff
 ac_cv_has_expat=1
@@ -874,6 +875,91 @@ else
   AC_MSG_RESULT([disabled by user])
 fi
 
+AC_MSG_CHECKING([whether Java SDK is available])
+if [[ x"${ac_cv_contest_javac}" != xno ]]
+then
+  [[ x"${ac_cv_contest_javac}" = xyes ]] && ac_cv_contest_javac=""
+  [[ x"${ac_cv_contest_javac}" = x ]] && ac_cv_contest_javac="javac"
+
+  dnl javac -version is not supported until java 1.5 :-(
+  ac_cv_contest_java=`dirname "${ac_cv_contest_javac}"`
+  if [[ x"${ac_cv_contest_java}" = x. ]]
+  then
+    dnl probably javac is specified without full path
+    ac_cv_contest_java=java
+  else
+    ac_cv_contest_java="${ac_cv_contest_java}/java"
+  fi
+
+  "${ac_cv_contest_java}" -version >/dev/null 2>/dev/null
+  [[ $? != 0 ]] && ac_cv_contest_java=no
+
+  if [[ x"${ac_cv_contest_java}" != xno ]]
+  then
+    tmp_java_dir=`which "${ac_cv_contest_java}"`
+    [[ x"${tmp_java_dir}" = x ]] && ac_cv_contest_java=no
+  fi
+  if [[ x"${ac_cv_contest_java}" != xno ]]
+  then
+    tmp_java_dir=`dirname "${tmp_java_dir}"`
+    [[ x"${tmp_java_dir}" = x -o x"${tmp_java_dir}" = x. ]] && ac_cv_contest_java=no
+  fi  
+  if [[ x"${ac_cv_contest_java}" != xno ]]
+  then
+    tmp_b=`basename "${tmp_java_dir}"`
+    [[ x"${tmp_b}" != xbin ]] && ac_cv_contest_java=no
+  fi
+  if [[ x"${ac_cv_contest_java}" != xno ]]
+  then
+    ac_cv_contest_java_dir=`dirname "${tmp_java_dir}"`
+    [[ x"${ac_cv_contest_java_dir}" = x. ]] && ac_cv_contest_java=no
+  fi
+
+  if [[ x"${ac_cv_contest_java}" != xno ]]
+  then
+    ac_cv_contest_java_version_string=`${ac_cv_contest_java} -version 2>&1 | grep "java version" | sed 's/^.*"\(.*\)"$/\1/g'`
+    [[ x"${ac_cv_contest_java_version_string}" = x ]] && ac_cv_contest_java=no
+  fi
+
+  if [[ x"${ac_cv_contest_java}" != xno ]]
+  then
+    case x"${ac_cv_contest_java_version_string}" in
+      x1.5.*) ac_cv_contest_java_version=1.5;;
+      x1.4.*) ac_cv_contest_java_version=1.4;;
+      x1.3.*) ac_cv_contest_java_version=1.3;;
+      x1.2.*) ac_cv_contest_java_version=1.2;;
+      x1.*) ac_cv_contest_java=no;; dnl FIXME: report error
+      *) ac_cv_contest_java=no;; dnl FIXME: report error
+    esac
+  fi
+
+  if [[ x"${ac_cv_contest_java}" != xno ]]
+  then
+    echo 'public class conftest { public static void main(String args[[]]) { System.out.println("OK"); } }' > conftest.java
+    ${ac_cv_contest_javac} -source ${ac_cv_contest_java_version} conftest.java >/dev/null 2>/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_java=no
+  fi
+
+  if [[ x"${ac_cv_contest_java}" != xno ]]
+  then
+    touch conftest.policy
+    ${ac_cv_contest_java} -Djava.security.manager -Djava.security.policy=olimp.policy conftest >/dev/null 2>/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_java=no
+  fi
+  rm -f ./conftest*
+
+  if [[ x"${ac_cv_contest_java}" != xno ]]
+  then
+    AC_MSG_RESULT([yes, ${ac_cv_contest_java}, ${ac_cv_contest_java_version_string}])
+  else
+    AC_MSG_RESULT([no])
+    ac_cv_contest_javac=no
+  fi
+else
+  AC_MSG_RESULT([disabled by user])
+  ac_cv_contest_java=no
+fi
+
 dnl Create the expanded locale_dir path
 if [[ x"${prefix}" = xNONE ]]
 then
@@ -882,6 +968,7 @@ else
   actual_prefix="${prefix}"
 fi
 
+ac_cv_expanded_prefix="${actual_prefix}"
 ac_cv_expanded_locale_dir="${actual_prefix}/share/locale"
 ac_cv_ejudge_serve_path="${actual_prefix}/bin/serve"
 ac_cv_ejudge_run_path="${actual_prefix}/bin/run"
@@ -976,6 +1063,10 @@ AC_SUBST(ac_cv_contest_mzscheme_path)
 AC_SUBST(ac_cv_contest_perl_path)
 AC_SUBST(ac_cv_contest_python_path)
 AC_SUBST(ac_cv_festival_home)
+AC_SUBST(ac_cv_contest_javac)
+AC_SUBST(ac_cv_contest_java)
+AC_SUBST(ac_cv_contest_java_dir)
+AC_SUBST(ac_cv_contest_java_version)
 
 if [[ x"${ac_cv_nls}" = x1 ]]
 then
@@ -1008,6 +1099,7 @@ if [[ x"${ac_cv_contests_home_dir}" != x ]]
 then
   AC_DEFINE_UNQUOTED(EJUDGE_CONTESTS_HOME_DIR,"${ac_cv_contests_home_dir}")
 fi
+AC_DEFINE_UNQUOTED(EJUDGE_PREFIX_DIR,"${ac_cv_expanded_prefix}")
 AC_DEFINE_UNQUOTED(EJUDGE_LOCALE_DIR,"$ac_cv_expanded_locale_dir")
 AC_DEFINE_UNQUOTED(EJUDGE_SERVE_PATH,"${ac_cv_ejudge_serve_path}")
 AC_DEFINE_UNQUOTED(EJUDGE_RUN_PATH,"${ac_cv_ejudge_run_path}")
@@ -1078,8 +1170,12 @@ if [[ x"${ac_cv_python_version}" != x ]]
 then
   AC_DEFINE_UNQUOTED(COMPILE_PYTHON_VERSION,"${ac_cv_python_version}")
 fi
+if [[ x"${ac_cv_contest_java_version_string}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(COMPILE_JAVA_VERSION,"${ac_cv_contest_java_version_string}")
+fi
 
 AC_CONFIG_HEADERS([config.h])
-AC_OUTPUT(Makefile extra/Makefile checkers/Makefile scripts/Makefile scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python ejudge-config.v scripts/festival)
+AC_OUTPUT(Makefile extra/Makefile checkers/Makefile scripts/Makefile scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python ejudge-config.v scripts/festival scripts/javac scripts/runjava)
 
-chmod +x scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python ejudge-config.v scripts/festival
+chmod +x scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python ejudge-config.v scripts/festival scripts/javac scripts/runjava
