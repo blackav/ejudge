@@ -70,10 +70,10 @@ EXPAT_LIB=-lexpat
 REUSE_LIB=-lreuse
 
 C_CFILES=compile.c version.c
-C_OBJECTS=$(C_CFILES:.c=.o) prepare.o $(ARCH)/fileutl.o $(ARCH)/interrupt.o $(ARCH)/cr_serialize.o pathutl.o parsecfg.o varsubst.o sformat.o
+C_OBJECTS=$(C_CFILES:.c=.o) prepare.o $(ARCH)/fileutl.o $(ARCH)/interrupt.o $(ARCH)/cr_serialize.o pathutl.o parsecfg.o varsubst.o sformat.o $(ARCH)/curtime.o
 
 RUN_CFILES=run.c version.c
-RUN_OBJECTS=$(RUN_CFILES:.c=.o) prepare.o pathutl.o $(ARCH)/fileutl.o $(ARCH)/interrupt.o $(ARCH)/cr_serialize.o sformat.o varsubst.o parsecfg.o testinfo.o misctext.o base64.o
+RUN_OBJECTS=$(RUN_CFILES:.c=.o) prepare.o pathutl.o $(ARCH)/fileutl.o $(ARCH)/interrupt.o $(ARCH)/cr_serialize.o sformat.o varsubst.o parsecfg.o testinfo.o misctext.o base64.o $(ARCH)/curtime.o
 
 BINTARGETS = compile.exe run.exe
 CGITARGETS = 
@@ -226,7 +226,7 @@ endif
 locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.KOI8-R.po ru_all
 	${MSGFMT} -o $@ -c $<
 
-libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o $(ARCH)/fileutl.o $(ARCH)/cr_serialize.o $(ARCH)/interrupt.o
+libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o $(ARCH)/fileutl.o $(ARCH)/cr_serialize.o $(ARCH)/interrupt.o $(ARCH)/curtime.o
 	ar rcv $@ $^
 
 libserve_clnt.a: $(SERVE_CLNT_CFILES:.c=.o)
