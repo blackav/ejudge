@@ -58,6 +58,7 @@ static const unsigned char * const cap_list [] =
   [OPCAP_NEW_MESSAGE]             "NEW_MESSAGE",
   [OPCAP_REPLY_MESSAGE]           "REPLY_MESSAGE",
   [OPCAP_CONTROL_CONTEST]         "CONTROL_CONTEST",
+  [OPCAP_IMPORT_XML_RUNS]         "IMPORT_XML_RUNS",
 
   [OPCAP_LAST]                    0
 };
@@ -164,6 +165,5 @@ opcaps_parse(unsigned char const *str, opcap_t *pcap)
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
