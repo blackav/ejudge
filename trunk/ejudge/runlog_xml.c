@@ -18,6 +18,8 @@
 #include "runlog.h"
 #include "expat_iface.h"
 #include "pathutl.h"
+#include "teamdb.h"
+#include "prepare.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -33,7 +35,14 @@ struct run_element
 enum
 {
   RUNLOG_T_RUNLOG = 1,
+  RUNLOG_T_RUNS,
   RUNLOG_T_RUN,
+  RUNLOG_T_USERS,
+  RUNLOG_T_USER,
+  RUNLOG_T_PROBLEMS,
+  RUNLOG_T_PROBLEM,
+  RUNLOG_T_LANGUAGES,
+  RUNLOG_T_LANGUAGE,
 
   RUNLOG_LAST_TAG,
 };
@@ -44,7 +53,7 @@ enum
   RUNLOG_A_SIZE,
   RUNLOG_A_IP,
   RUNLOG_A_SHA1,
-  RUNLOG_A_TEAM_ID,
+  RUNLOG_A_USER_ID,
   RUNLOG_A_PROB_ID,
   RUNLOG_A_LANG_ID,
   RUNLOG_A_LOCALE_ID,
@@ -52,6 +61,10 @@ enum
   RUNLOG_A_SCORE,
   RUNLOG_A_TEST,
   RUNLOG_A_AUTHORITATIVE,
+  RUNLOG_A_ID,
+  RUNLOG_A_NAME,
+  RUNLOG_A_SHORT_NAME,
+  RUNLOG_A_LONG_NAME,
 
   RUNLOG_LAST_ATTR,
 };
@@ -59,7 +72,14 @@ enum
 static const char * const elem_map[] =
 {
   [RUNLOG_T_RUNLOG] "runlog",
+  [RUNLOG_T_RUNS]   "runs",
   [RUNLOG_T_RUN]    "run",
+  [RUNLOG_T_USERS]  "users",
+  [RUNLOG_T_USER]   "user",
+  [RUNLOG_T_PROBLEMS] "problems",
+  [RUNLOG_T_PROBLEM] "problem",
+  [RUNLOG_T_LANGUAGES] "languages",
+  [RUNLOG_T_LANGUAGE] "language",
 };
 static const char * const attr_map[] =
 {
@@ -68,7 +88,7 @@ static const char * const attr_map[] =
   [RUNLOG_A_SIZE]      "size",
   [RUNLOG_A_IP]        "ip",
   [RUNLOG_A_SHA1]      "sha1",
-  [RUNLOG_A_TEAM_ID]   "team_id",
+  [RUNLOG_A_USER_ID]   "user_id",
   [RUNLOG_A_PROB_ID]   "prob_id",
   [RUNLOG_A_LANG_ID]   "lang_id",
   [RUNLOG_A_LOCALE_ID] "locale_id",
@@ -76,6 +96,10 @@ static const char * const attr_map[] =
   [RUNLOG_A_SCORE]     "score",
   [RUNLOG_A_TEST]      "test",
   [RUNLOG_A_AUTHORITATIVE] "authoritative",
+  [RUNLOG_A_ID]        "id",
+  [RUNLOG_A_NAME]      "name",
+  [RUNLOG_A_SHORT_NAME] "short_name",
+  [RUNLOG_A_LONG_NAME] "long_name",
 };
 static size_t const elem_sizes[RUNLOG_LAST_TAG] =
 {
@@ -292,7 +316,7 @@ process_run_elements(struct xml_tree *xt)
         if (!xa->text) goto empty_attr_value;
         if (parse_sha1(xa->text, xr->r.sha1) < 0) goto invalid_attr_value;
         break;
-      case RUNLOG_A_TEAM_ID:
+      case RUNLOG_A_USER_ID:
         if (!xa->text) goto empty_attr_value;
         n = 0;
         if (sscanf(xa->text, "%d %n", &iv, &n) != 1 || xa->text[n])
@@ -370,7 +394,7 @@ process_run_elements(struct xml_tree *xt)
     }
     if (!xr->r.team) {
       err("%d:%d: attribute \"%s\" must be defined",
-          xt->line, xt->column, attr_map[RUNLOG_A_TEAM_ID]);
+          xt->line, xt->column, attr_map[RUNLOG_A_USER_ID]);
       return -1;
     }
     if (!xr->r.problem) {
@@ -404,8 +428,12 @@ process_run_elements(struct xml_tree *xt)
 }
 
 static int
-process_runlog_element(struct xml_tree *xt)
+process_runlog_element(struct xml_tree *xt, struct xml_tree **ptruns)
 {
+  struct xml_tree *tt;
+  struct xml_tree *truns = 0;
+
+  if (ptruns) *ptruns = 0;
   if (xt->tag != RUNLOG_T_RUNLOG) {
     err("%d:%d: top-level element must be <%s>",
         xt->line, xt->column, elem_map[RUNLOG_T_RUNLOG]);
@@ -416,8 +444,30 @@ process_runlog_element(struct xml_tree *xt)
         xt->line, xt->column, elem_map[RUNLOG_T_RUNLOG]);
     return -1;
   }
+  if (xt->first) {
+    err("%d:%d: element <%s> cannot have attributes",
+        xt->line, xt->column, elem_map[RUNLOG_T_RUNLOG]);
+    return -1;
+  }
+
+  for (tt = xt->first_down; tt; tt = tt->right) {
+    if (tt->tag != RUNLOG_T_RUNS) continue;
+    if (truns) {
+      err("%d:%d: duplicated element <%s>",
+          xt->line, xt->column, elem_map[RUNLOG_T_RUNS]);
+      return -1;
+    }
+    truns = tt;
+  }
+  if (!truns) {
+    err("%d:%d: element <%s> is missing",
+        xt->line, xt->column, elem_map[RUNLOG_T_RUNS]);
+    return -1;
+  }
+
   if (process_run_elements(xt->first_down) < 0)
     return -1;
+  if (ptruns) *ptruns = truns;
   return 0;
 }
 
@@ -472,15 +522,16 @@ parse_runlog_xml(const unsigned char *str,
                  struct run_entry **pentries)
 {
   struct xml_tree *xt = 0;
+  struct xml_tree *truns = 0;
 
   xt = xml_build_tree_str(str, elem_map, attr_map, node_alloc, attr_alloc);
   memset(phead, 0, sizeof(*phead));
   if (!xt) return -1;
-  if (process_runlog_element(xt) < 0) {
+  if (process_runlog_element(xt, &truns) < 0) {
     xml_tree_free(xt, node_free, attr_free);
     return -1;
   }
-  if (collect_runlog(xt, psize, pentries) < 0) {
+  if (collect_runlog(truns, psize, pentries) < 0) {
     xml_tree_free(xt, node_free, attr_free);
     return -1;
   }
@@ -537,19 +588,56 @@ int
 unparse_runlog_xml(FILE *f,
                    struct run_header *phead,
                    size_t nelems,
-                   struct run_entry *entries)
+                   struct run_entry *entries,
+                   int external_mode)
 {
-  int i;
+  int i, flags;
   struct run_entry *pp;
   long long ts;
+  int max_user_id;
 
   fputs("<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n", f);
   fprintf(f, "<%s>\n", elem_map[RUNLOG_T_RUNLOG]);
+  if (external_mode) {
+    fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_USERS]);
+    max_user_id = teamdb_get_max_team_id();
+    for (i = 1; i <= max_user_id; i++) {
+      if (teamdb_lookup(i) <= 0) continue;
+      if ((flags = teamdb_get_flags(i)) < 0) continue;
+      if ((flags & (TEAM_BANNED | TEAM_INVISIBLE))) continue;
+      fprintf(f, "    <%s %s=\"%d\" %s=\"%s\"/>\n",
+              elem_map[RUNLOG_T_USER], attr_map[RUNLOG_A_ID], i,
+              attr_map[RUNLOG_A_NAME], teamdb_get_name(i));
+    }
+    fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_USERS]);
+
+    fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_PROBLEMS]);
+    for (i = 1; i <= max_prob; i++) {
+      if (!probs[i]) continue;
+      fprintf(f, "    <%s %s=\"%d\" %s=\"%s\" %s=\"%s\"/>\n",
+              elem_map[RUNLOG_T_PROBLEM],
+              attr_map[RUNLOG_A_ID], i,
+              attr_map[RUNLOG_A_SHORT_NAME], probs[i]->short_name,
+              attr_map[RUNLOG_A_LONG_NAME], probs[i]->long_name);
+                       
+    }
+    fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_PROBLEMS]);
+
+    fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_LANGUAGES]);
+    for (i = 1; i <= max_lang; i++) {
+      if (!langs[i]) continue;
+      fprintf(f, "    <%s %s=\"%d\" %s=\"%s\" %s=\"%s\"/>\n",
+              elem_map[RUNLOG_T_LANGUAGE],
+              attr_map[RUNLOG_A_ID], i,
+              attr_map[RUNLOG_A_SHORT_NAME], langs[i]->short_name,
+              attr_map[RUNLOG_A_LONG_NAME], langs[i]->long_name);
+    }
+    fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_LANGUAGES]);
+  }
+  fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_RUNS]);
   for (i = 0; i < nelems; i++) {
     pp = &entries[i];
     switch (pp->status) {
-    case RUN_VIRTUAL_START:
-    case RUN_VIRTUAL_STOP:
     case RUN_EMPTY:
     case RUN_RUNNING:
     case RUN_COMPILED:
@@ -557,27 +645,30 @@ unparse_runlog_xml(FILE *f,
     case RUN_REJUDGE:
       continue;
     }
-    fprintf(f, "  <%s", elem_map[RUNLOG_T_RUN]);
+    flags = teamdb_get_flags(pp->team);
+    if (external_mode && (flags & (TEAM_BANNED | TEAM_INVISIBLE)))
+      continue;
+    fprintf(f, "    <%s", elem_map[RUNLOG_T_RUN]);
     fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_RUN_ID], pp->submission);
     ts = pp->timestamp;
     ts -= phead->start_time;
     if (ts < 0) ts = 0;
     ts *= 1000;
     fprintf(f, " %s=\"%lld\"", attr_map[RUNLOG_A_TIME], ts);
-    if (pp->size > 0) {
+    if (!external_mode && pp->size > 0) {
       fprintf(f, " %s=\"%zu\"", attr_map[RUNLOG_A_SIZE], pp->size);
     }
-    if (pp->ip) {
+    if (!external_mode && pp->ip) {
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_IP], run_unparse_ip(pp->ip));
     }
-    if (is_non_empty_sha1(pp->sha1)) {
+    if (!external_mode && is_non_empty_sha1(pp->sha1)) {
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_SHA1],
               unparse_sha1(pp->sha1));
     }
     fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_STATUS],
             unparse_status(pp->status));
     if (pp->team) {
-      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_TEAM_ID], pp->team);
+      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_USER_ID], pp->team);
     }
     if (pp->problem) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_PROB_ID], pp->problem);
@@ -585,15 +676,18 @@ unparse_runlog_xml(FILE *f,
     if (pp->language) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_LANG_ID], pp->language);
     }
-    if (pp->locale_id >= 0) {
+    if (!external_mode && pp->locale_id >= 0) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_LOCALE_ID], pp->locale_id);
     }
     fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_SCORE], pp->score);
     fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_TEST], pp->test);
-    fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_AUTHORITATIVE],
-            (!pp->is_imported)?"yes":"no");
+    if (!external_mode) {
+      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_AUTHORITATIVE],
+              (!pp->is_imported)?"yes":"no");
+    }
     fprintf(f, "/>\n");
   }
+  fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_RUNS]);
   fprintf(f, "</%s>\n", elem_map[RUNLOG_T_RUNLOG]);
   return 0;
 }
