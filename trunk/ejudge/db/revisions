@@ -414,3 +414,6 @@ userlist-server.c 1 9 7195275
 userlist_clnt.c 1 9 2039601
 edit-userlist.c 1 1 2325520
 edit-userlist.c 1 2 4497638
+contests.h 1 9 264095
+contests.c 1 9 1362672
+run.c 1 29 2247881
