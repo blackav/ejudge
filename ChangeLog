@@ -1,3 +1,95 @@
+2001-03-31  Alexander Chernov  <cher@ispras.ru>
+
+	* makefile: tweaks...
+
+	* master.c: new configuration parameter conf_dir added
+	partially.
+
+	* prepare.c: bugs fixed
+
+	* run.c: uninitialized local variable bug fixed
+
+	* team.c: references to problems and standings are shown when
+	the contest is started
+
+	* prepare.c: Preprocessor is invoked with cpp command
+
+	* team.c: 1) removed previously commented stuff;
+	2) implemented "View Source" and "View Report";
+	3) added 'charset' configuration parameter;
+	4) all html headers now use this parameter.
+
+	* serve.c: added two team commands: SOURCE, REPORT.
+	added support for "KIROV" score system.
+
+	* runlog.c, runlog.h: added RUN_PARTIAL run result.
+
+	* run.c: 1) added support for "KIROV" score system;
+	2) added support for generation of team_log;
+
+	* prepare.h, prepare.c: new parameters:
+	global:
+	  team_enable_src_view
+	  team_enable_rep_view
+	  charset
+	  team_report_archive_dir
+	  run_team_report_dir
+	problem:
+	  team_enable_rep_view
+	  full_score
+	  test_score
+	  run_penalty
+	tester:
+	  run_team_report_dir
+
+	* master.c: 1) added 'charset' configuration parameter;
+	2) all generated html headers use this parameter;
+	3) removed old commented out stuff;
+
+	* html.h: added write_team_source_view, write_team_report_view
+
+	* html.c: 1) added "View source" and "View report" options to
+	team's page, this depends on config parameters;
+	2) added support for "KIROV" score system;
+	3) implemeted write_team_source_view;
+	4) implemeted write_team_report_view;
+
+	* clntutil.h: charset argument added to cgi_read.
+
+	* clntutil.c: 1) removed previously commented stuff;
+	2) added charset parameter where html headers are printed;
+	3) charset parameter is added to some functions.
+
+	* cgi.h: charset argument added to cgi_read.
+
+	* cgi.c: 1) removed previously commented stuff;
+	2) added charset parameter where html headers are printed;
+	3) charset parameter is added to some functions.
+
+2001-03-25  Alexander Chernov  <cher@ispras.ru>
+
+	* unix/unix_fileutl.h, unix/osdeps.c, unix/logger.c, unix/fileutl.c, unix/exec.c, win32/osdeps.c, win32/logger.c, win32/fileutl.c, win32/exec.c, xalloc.h, xalloc.c, version.h, teamdb.h, runlog.h, parsecfg.h, osdeps.h, misctext.h, logger.h, html.h, fileutl.h, exec.h, clntutil.h, clarlog.h, cgi.h, base64.h:
+	copyright notice updated
+
+	* makefile: 1) -D_GNU_SOURCE added for Linux;
+	2) copyright notice updated.
+
+	* clntutil.c: asprintf usage fixed
+
+	* run.c: tTask added to c-types
+
+	* team.c, submit.c, serve.c, runlog.c, run.c, pathutl.c, parsecfg.c, mkpasswd.c, misctext.c, master.c, html.c, compile.c, clntutil.c, clarlog.c:
+	copyright notice updated
+
+	* revinfo.c: copyright notice updated
+
+	* prepare.h, prepare.c: 1) added global score_system parameter;
+	2) copyright notice updated.
+
+	* clar.c, cgi.c, base64.c, pathutl.h: copyright notice updated
+
+	* teamdb.c: copyright notice updated
+
 2000-11-05  Alexander Chernov  <cher@ispras.ru>
 
 	* makefile 1.12: removal of revinfo added to clean rule
