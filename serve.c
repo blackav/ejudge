@@ -32,6 +32,9 @@
 #include "team_extra.h"
 #include "printing.h"
 #include "diff.h"
+#include "compile_packet.h"
+#include "run_packet.h"
+#include "curtime.h"
 
 #include "misctext.h"
 #include "base64.h"
@@ -1744,10 +1747,16 @@ cmd_team_show_item(struct client_state *p, int len,
   new_send_reply(p, SRV_RPL_OK);
 }
 
+/* extra data, which is passed through compilation phase */
+struct compile_run_extra
+{
+  int accepting_mode;
+};
+
 static int queue_compile_request(unsigned char const *str, int len,
                                  int run_id, int lang_id, int locale_id,
                                  unsigned char const *sfx,
-                                 char **, const unsigned char *);
+                                 char **, int accepting_mode);
 
 static void
 move_files_to_insert_run(int run_id)
@@ -1908,7 +1917,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
 
   if (testing_suspended) {
     info("%d: testing is suspended", p->id);
-    run_change_status(run_id, RUN_PENDING, 0, -1);
+    run_change_status(run_id, RUN_PENDING, 0, -1, 0);
     new_send_reply(p, SRV_RPL_OK);
     return;
   }
@@ -1918,7 +1927,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
       || langs[pkt->lang_id]->disable_auto_testing
       || langs[pkt->lang_id]->disable_testing) {
     info("%d: priv_submit_run: auto testing disabled", p->id);
-    run_change_status(run_id, RUN_PENDING, 0, -1);
+    run_change_status(run_id, RUN_PENDING, 0, -1, 0);
     new_send_reply(p, SRV_RPL_OK);
     return;
   }
@@ -1927,11 +1936,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
                             langs[pkt->lang_id]->compile_id,
                             pkt->locale_id,
                             langs[pkt->lang_id]->src_sfx,
-                            langs[pkt->lang_id]->compiler_env, 0) < 0) {
-    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
-    return;
-  }
-  if (run_change_status(run_id, RUN_COMPILING, 0, -1) < 0) {
+                            langs[pkt->lang_id]->compiler_env, -1) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -2232,7 +2237,7 @@ cmd_team_submit_run(struct client_state *p, int len,
 
   if (testing_suspended) {
     info("%d: testing is suspended", p->id);
-    run_change_status(run_id, RUN_PENDING, 0, -1);
+    run_change_status(run_id, RUN_PENDING, 0, -1, 0);
     new_send_reply(p, SRV_RPL_OK);
     return;
   }
@@ -2242,7 +2247,7 @@ cmd_team_submit_run(struct client_state *p, int len,
       || langs[pkt->lang_id]->disable_auto_testing
       || langs[pkt->lang_id]->disable_testing) {
     info("%d: team_submit_run: auto testing disabled", p->id);
-    run_change_status(run_id, RUN_PENDING, 0, -1);
+    run_change_status(run_id, RUN_PENDING, 0, -1, 0);
     new_send_reply(p, SRV_RPL_OK);
     return;
   }
@@ -2251,11 +2256,7 @@ cmd_team_submit_run(struct client_state *p, int len,
                             langs[pkt->lang_id]->compile_id,
                             pkt->locale_id,
                             langs[pkt->lang_id]->src_sfx,
-                            langs[pkt->lang_id]->compiler_env, 0) < 0) {
-    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
-    return;
-  }
-  if (run_change_status(run_id, RUN_COMPILING, 0, -1) < 0) {
+                            langs[pkt->lang_id]->compiler_env, -1) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -2621,6 +2622,17 @@ do_start_cmd(void)
   }
   task_Wait(tsk);
   task_Delete(tsk);
+}
+
+static void
+send_run_quit_command(void)
+{
+  void *pkt_buf = 0;
+  size_t pkt_size = 0;
+
+  run_request_packet_quit(&pkt_size, &pkt_buf);
+  generic_write_file(pkt_buf, pkt_size, SAFE, global->run_queue_dir, "QUIT", "");
+  xfree(pkt_buf);
 }
 
 static void
@@ -3062,13 +3074,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_NOT_SUPPORTED);
       return;
     }
-    {
-      unsigned char buf[128];
-      size_t wsize;
-
-      wsize = snprintf(buf, sizeof(buf), "-1");
-      generic_write_file(buf, wsize, SAFE, global->run_queue_dir, "QUIT", "");
-    }
+    send_run_quit_command();
     interrupt_signaled = 1;
     new_send_reply(p, SRV_RPL_OK);
     return;
@@ -3116,7 +3122,7 @@ cmd_simple_command(struct client_state *p, int len,
   }
 }
 
-static void rejudge_run(int);
+static void rejudge_run(int run_id, int force_full_rejudge);
 
 static void
 cmd_edit_run(struct client_state *p, int len,
@@ -3355,7 +3361,7 @@ cmd_edit_run(struct client_state *p, int len,
 
   if ((run_flags & RUN_ENTRY_STATUS)
       && (run.status == RUN_REJUDGE || run.status == RUN_FULL_REJUDGE)) {
-    rejudge_run(pkt->run_id);
+    rejudge_run(pkt->run_id, (run.status == RUN_FULL_REJUDGE));
   }
   info("%d: edit_run: ok", p->id);
   new_send_reply(p, SRV_RPL_OK);
@@ -3719,238 +3725,332 @@ static void generate_packet_name(int run_id, int prio,
                                  unsigned char buf[PACKET_NAME_SIZE]);
 
 static int
-write_run_packet(const unsigned char *pkt_base,
-                 int run_id,
-                 int problem_id,
-                 int final_test,
-                 int locale_id,
-                 int variant,
-                 int accept_partial,
-                 int user_id,
-                 const unsigned char *exe_sfx,
-                 const unsigned char *arch,
-                 const unsigned char *user_spelling,
-                 const unsigned char *problem_spelling)
-{
-  unsigned char *buf, *p;
-  size_t wsize, exe_sfx_len, arch_len, buf_size, us_len, ps_len;
-
-  if (!exe_sfx) exe_sfx = "";
-  if (!arch) arch = "";
-  if (!user_spelling) user_spelling = "";
-  if (!problem_spelling) problem_spelling = "";
-
-  exe_sfx_len = strlen(exe_sfx);
-  arch_len = strlen(arch);
-  us_len = strlen(user_spelling);
-  ps_len = strlen(problem_spelling);
-  buf_size = 128 + exe_sfx_len + arch_len + us_len + ps_len;
-  p = buf = (unsigned char*) alloca(buf_size);
-
-  p += sprintf(p, "%d %d %d %d %d %d %d %d %d %d %d %d\n",
-               global->contest_id, run_id, problem_id,
-               final_test, locale_id,
-               global->score_system_val,
-               global->team_enable_rep_view,
-               global->report_error_code, variant,
-               accept_partial, user_id, global->html_report);
-  p += sprintf(p, "%d %s\n", exe_sfx_len, exe_sfx);
-  p += sprintf(p, "%d %s\n", arch_len, arch);
-  p += sprintf(p, "%d %s\n", us_len, user_spelling);
-  p += sprintf(p, "%d %s\n", ps_len, problem_spelling);
-  p += sprintf(p, "0\n");
-
-  wsize = p - buf;
-  ASSERT(wsize < buf_size);
-
-  return generic_write_file(buf,wsize,SAFE,global->run_queue_dir,pkt_base,"");
-}
-
-static int
 read_compile_packet(char *pname)
 {
-  unsigned char buf[1024];
   unsigned char pkt_base[PACKET_NAME_SIZE];
   unsigned char exe_in_name[128];
   unsigned char exe_out_name[128];
   unsigned char rep_path[PATH_MAX], team_path[PATH_MAX];
   struct teamdb_export te;
-  unsigned char user_spelling[128];
-  unsigned char prob_spelling[128];
 
-  int  r, n, len, i;
-  int  rsize;
-  int  code;
-  int  runid;
-  int  cn, rep_flags, team_flags = 0, prio;
+  int  r, cn, rep_flags, team_flags = 0, prio;
 
-  int  final_test, variant = 0;
+  int  variant = 0;
   struct run_entry re;
 
-  char *pbuf = buf;
+  void *comp_pkt_buf = 0;
+  size_t comp_pkt_size = 0;
+  struct compile_reply_packet *comp_pkt = 0;
+  long report_size = 0;
+  unsigned char errmsg[1024] = { 0 };
+  unsigned char *team_name = 0;
+  struct compile_run_extra *comp_extra = 0;
+  struct run_request_packet *run_pkt = 0;
+  size_t run_pkt_out_size = 0;
+  void *run_pkt_out = 0;
 
-  memset(buf, 0, sizeof(buf));
-  r = generic_read_file(&pbuf, sizeof(buf), &rsize, SAFE|REMOVE,
+  r = generic_read_file((char**) &comp_pkt_buf, 0, &comp_pkt_size, SAFE | REMOVE,
                         global->compile_status_dir, pname, "");
   if (r == 0) return 0;
   if (r < 0) return -1;
 
-  info("compile packet: %s", chop(buf));
-  if (sscanf(pname, "%d%n", &runid, &n) != 1 || pname[n])
-    goto bad_packet_error;
-  if (sscanf(buf, "%d %n", &code, &n) != 1 || buf[n])
-    goto bad_packet_error;
-  if (run_get_entry(runid, &re) < 0) goto bad_packet_error;
-  if (re.status != RUN_COMPILING) goto bad_packet_error;
-  if (code != RUN_OK && code != RUN_COMPILE_ERR && code != RUN_CHECK_FAILED)
-    goto bad_packet_error;
-  rep_flags = archive_make_write_path(rep_path, sizeof(rep_path),
-                                      global->report_archive_dir, runid,
-                                      rsize, 0);
-  if (global->team_enable_rep_view) {
+  if (compile_reply_packet_read(comp_pkt_size, comp_pkt_buf, &comp_pkt) < 0) {
+    /* failed to parse a compile packet */
+    /* we can't do any reasonable recovery, just drop the packet */
+    goto non_fatal_error;
+  }
+  if (comp_pkt->contest_id != global->contest_id) {
+    err("read_compile_packet: mismatched contest_id %d", comp_pkt->contest_id);
+    goto non_fatal_error;
+  }
+  if (run_get_entry(comp_pkt->run_id, &re) < 0) {
+    err("read_compile_packet: invalid run_id %d", comp_pkt->run_id);
+    goto non_fatal_error;
+  }
+  if (comp_pkt->judge_id != re.judge_id) {
+    err("read_compile_packet: judge_id mismatch: %d, %d", comp_pkt->judge_id,
+        re.judge_id);
+    goto non_fatal_error;
+  }
+  if (re.status != RUN_COMPILING) {
+    err("read_compile_packet: run %d is not compiling", comp_pkt->run_id);
+    goto non_fatal_error;
+  }
+
+  if (comp_pkt->status == RUN_CHECK_FAILED || comp_pkt->status == RUN_COMPILE_ERR) {
+    if ((report_size = generic_file_size(global->compile_report_dir, pname, "")) < 0) {
+      err("read_compile_packet: cannot get report file size");
+      snprintf(errmsg, sizeof(errmsg), "cannot get size of %s/%s\n",
+               global->compile_report_dir, pname);
+      goto report_check_failed;
+    }
+
+    rep_flags = archive_make_write_path(rep_path, sizeof(rep_path),
+                                        global->report_archive_dir, comp_pkt->run_id,
+                                        report_size, 0);
+    if (rep_flags < 0) {
+      snprintf(errmsg, sizeof(errmsg), "archive_make_write_path: %s, %d, %ld failed\n",
+               global->report_archive_dir, comp_pkt->run_id, report_size);
+      goto report_check_failed;
+    }
+  }
+  if (comp_pkt->status == RUN_COMPILE_ERR && global->team_enable_rep_view) {
     team_flags = archive_make_write_path(team_path, sizeof(team_path),
                                          global->team_report_archive_dir,
-                                         runid, rsize, 0);
+                                         comp_pkt->run_id, report_size, 0);
+    if (team_flags < 0) {
+      snprintf(errmsg, sizeof(errmsg),"archive_make_write_path: %s, %d, %ld failed\n",
+               global->team_report_archive_dir, comp_pkt->run_id, report_size);
+      goto report_check_failed;
+    }
   }
 
-  if (code == RUN_CHECK_FAILED) {
-    if (rep_flags < 0) return -1;
-    if (run_change_status(runid, RUN_CHECK_FAILED, 0, -1) < 0) return -1;
-    if (archive_dir_prepare(global->report_archive_dir, runid, 0) < 0)
-      return -1;
+  if (comp_pkt->status == RUN_CHECK_FAILED) {
+    /* if status change fails, we cannot do reasonable recovery */
+    if (run_change_status(comp_pkt->run_id, RUN_CHECK_FAILED, 0, -1, 0) < 0)
+      goto non_fatal_error;
+    if (archive_dir_prepare(global->report_archive_dir, comp_pkt->run_id, 0) < 0)
+      goto non_fatal_error;
     if (generic_copy_file(REMOVE, global->compile_report_dir, pname, "",
-                          rep_flags, 0, rep_path, "") < 0)
-      return -1;
-    return 1;
-  }
-  if (code == RUN_COMPILE_ERR) {
-    /* compilation error */
-    if (run_change_status(runid, RUN_COMPILE_ERR, 0, -1) < 0) return -1;
-    /* probably we need a user's copy of compilation log */
-    if (global->team_enable_rep_view) {
-      if (archive_dir_prepare(global->team_report_archive_dir, runid, 0) < 0)
-        return -1;
-      if (generic_copy_file(0, global->compile_report_dir, pname, "",
-                            team_flags, 0, team_path, "") < 0)
-        return -1;
+                          rep_flags, 0, rep_path, "") < 0) {
+      snprintf(errmsg, sizeof(errmsg), "generic_copy_file: %s, %s, %d, %s failed\n",
+               global->compile_report_dir, pname, rep_flags, rep_path);
+      goto report_check_failed;
     }
-    if (archive_dir_prepare(global->report_archive_dir, runid, 0) < 0)
-      return -1;
-    if (generic_copy_file(REMOVE, global->compile_report_dir, pname, "",
-                          rep_flags, 0, rep_path, "") < 0)
-      return -1;
-    update_standings_file(0);
-    return 1;
+    goto success;
   }
-  if (run_change_status(runid, RUN_COMPILED, 0, -1) < 0) return -1;
+
+  if (comp_pkt->status == RUN_COMPILE_ERR) {
+    /* if status change fails, we cannot do reasonable recovery */
+    if (run_change_status(comp_pkt->run_id, RUN_COMPILE_ERR, 0, -1, 0) < 0)
+      goto non_fatal_error;
+
+    if (global->team_enable_rep_view) {
+      if (archive_dir_prepare(global->team_report_archive_dir, comp_pkt->run_id,0)<0) {
+        snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
+                 global->team_report_archive_dir, comp_pkt->run_id);
+        goto report_check_failed;
+      }
+      if (generic_copy_file(0, global->compile_report_dir, pname, "",
+                            team_flags, 0, team_path, "") < 0) {
+        snprintf(errmsg, sizeof(errmsg), "generic_copy_file: %s, %s, %d, %s failed\n",
+                 global->compile_report_dir, pname, team_flags, team_path);
+        goto report_check_failed;
+      }
+    }
+    if (archive_dir_prepare(global->report_archive_dir, comp_pkt->run_id, 0) < 0) {
+      snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
+               global->report_archive_dir, comp_pkt->run_id);
+      goto report_check_failed;
+    }
+    if (generic_copy_file(REMOVE, global->compile_report_dir, pname, "",
+                          rep_flags, 0, rep_path, "") < 0) {
+      snprintf(errmsg, sizeof(errmsg), "generic_copy_file: %s, %s, %d, %s failed\n",
+               global->compile_report_dir, pname, rep_flags, rep_path);
+      goto report_check_failed;
+    }
+    update_standings_file(0);
+    goto success;
+  }
+
+  comp_extra = (typeof(comp_extra)) comp_pkt->run_block;
+  if (!comp_extra || comp_pkt->run_block_len != sizeof(*comp_extra)
+      || comp_extra->accepting_mode < 0 || comp_extra->accepting_mode > 1) {
+    snprintf(errmsg, sizeof(errmsg), "invalid run block\n");
+    goto report_check_failed;
+  }
+
+  if (run_change_status(comp_pkt->run_id, RUN_COMPILED, 0, -1, comp_pkt->judge_id) < 0)
+    goto non_fatal_error;
+
+  /*
+   * so far compilation is successful, and now we prepare a run packet
+   */
 
   /* find appropriate checker */
+  if (re.problem < 1 || re.problem > max_prob || !probs[re.problem]) {
+    snprintf(errmsg, sizeof(errmsg), "invalid problem %d\n", re.problem);
+    goto report_check_failed;
+  }
+  if (re.language < 1 || re.language > max_lang || !langs[re.language]) {
+    snprintf(errmsg, sizeof(errmsg), "invalid language %d\n", re.language);
+    goto report_check_failed;
+  }
+  if (!(team_name = teamdb_get_name(re.team))) {
+    snprintf(errmsg, sizeof(errmsg), "invalid team %d\n", re.team);
+    goto report_check_failed;
+  }
   cn = find_tester(re.problem, langs[re.language]->arch);
-  ASSERT(cn >= 1 && cn <= max_tester && testers[cn]);
+  if (cn < 1 || cn > max_tester || !testers[cn]) {
+    snprintf(errmsg, sizeof(errmsg), "no appropriate checker for <%s>, <%s>\n",
+             probs[re.problem]->short_name, langs[re.language]->arch);
+    goto report_check_failed;
+  }
 
   if (probs[re.problem]->variant_num > 0) {
     variant = re.variant;
     if (!variant) variant = find_variant(re.team, re.problem);
+    if (!variant) {
+      snprintf(errmsg, sizeof(errmsg), "no appropriate variant for <%s>, <%s>\n",
+               team_name, probs[re.problem]->short_name);
+      goto report_check_failed;
+    }
   }
 
-  /* generate a packet name */
+  /* calculate a priority */
   prio = 0;
   prio += langs[re.language]->priority_adjustment;
   prio += probs[re.problem]->priority_adjustment;
   prio += find_user_priority_adjustment(re.team);
   prio += testers[cn]->priority_adjustment;
 
-  generate_packet_name(runid, prio, pkt_base);
+  /* generate a packet name */
+  generate_packet_name(comp_pkt->run_id, prio, pkt_base);
   snprintf(exe_in_name, sizeof(exe_in_name),
-           "%06d%s", runid, langs[re.language]->exe_sfx);
+           "%06d%s", comp_pkt->run_id, langs[re.language]->exe_sfx);
   snprintf(exe_out_name, sizeof(exe_out_name),
            "%s%s", pkt_base, langs[re.language]->exe_sfx);
 
   /* copy the executable into the testers's queue */
   if (generic_copy_file(REMOVE, global->compile_report_dir, exe_in_name, "",
-                        0, global->run_exe_dir, exe_out_name, "") < 0)
-    return -1;
+                        0, global->run_exe_dir, exe_out_name, "") < 0) {
+    snprintf(errmsg, sizeof(errmsg), "generic_copy_file: %s, %s, %s, %s failed\n",
+             global->compile_report_dir, exe_in_name, global->run_exe_dir,
+             exe_out_name);
+    goto report_check_failed;
+  }
 
-  final_test = 0;
-  if (global->score_system_val == SCORE_OLYMPIAD
-      && !olympiad_judging_mode) final_test = 1;
+  /* create an internal representation of run packet */
+  XALLOCAZ(run_pkt, 1);
 
-  XMEMZERO(&te, 1);
-  user_spelling[0] = 0;
+  run_pkt->judge_id = comp_pkt->judge_id;
+  run_pkt->contest_id = global->contest_id;
+  run_pkt->run_id = comp_pkt->run_id;
+  run_pkt->problem_id = probs[re.problem]->tester_id;
+  run_pkt->accepting_mode = comp_extra->accepting_mode;
+  run_pkt->locale_id = re.locale_id;
+  run_pkt->scoring_system = global->score_system_val;
+  run_pkt->team_enable_rep_view = global->team_enable_rep_view;
+  run_pkt->report_error_code = global->report_error_code;
+  run_pkt->variant = variant;
+  run_pkt->accept_partial = probs[re.problem]->accept_partial;
+  run_pkt->user_id = re.team;
+  run_pkt->html_report = global->html_report;
+  run_pkt->ts1 = comp_pkt->ts1;
+  run_pkt->ts1_us = comp_pkt->ts1_us;
+  run_pkt->ts2 = comp_pkt->ts2;
+  run_pkt->ts2_us = comp_pkt->ts2_us;
+  run_pkt->ts3 = comp_pkt->ts3;
+  run_pkt->ts3_us = comp_pkt->ts3_us;
+  get_current_time(&run_pkt->ts4, &run_pkt->ts4_us);
+  run_pkt->exe_sfx = langs[re.language]->exe_sfx;
+  run_pkt->arch = langs[re.language]->arch;
+
+  /* in new binary packet format we don't care about neither "special"
+   * characters in spellings nor about spelling length
+   */
   teamdb_export_team(re.team, &te);
   if (te.user && te.user->spelling && te.user->spelling[0]) {
-    snprintf(user_spelling, sizeof(user_spelling), "%s", te.user->spelling);
+    run_pkt->user_spelling = te.user->spelling;
   }
-  if (!user_spelling[0] && te.user && te.user->name && te.user->name[0]) {
-    snprintf(user_spelling, sizeof(user_spelling), "%s", te.user->name);
+  if (!run_pkt->user_spelling && te.user && te.user->name && te.user->name[0]) {
+    run_pkt->user_spelling = te.user->name;
   }
-  if (!user_spelling[0] && te.login && te.user->login && te.user->login[0]) {
-    snprintf(user_spelling, sizeof(user_spelling), "%s", te.user->login);
+  if (!run_pkt->user_spelling && te.login && te.user->login && te.user->login[0]) {
+    run_pkt->user_spelling = te.user->login;
   }
-  for (i = 0, len = strlen(user_spelling); i < len; i++)
-    if (user_spelling[i] == '\"') user_spelling[i] = ' ';
+  /* run_pkt->user_spelling is allowed to be NULL */
 
-  prob_spelling[0] = 0;
   if (probs[re.problem]->spelling[0]) {
-    snprintf(prob_spelling, sizeof(prob_spelling), "%s",
-             probs[re.problem]->spelling);
+    run_pkt->prob_spelling = probs[re.problem]->spelling;
   }
-  if (!prob_spelling[0]) {
-    snprintf(prob_spelling, sizeof(prob_spelling), "%s",
-             probs[re.problem]->short_name);
+  if (!run_pkt->prob_spelling) {
+    run_pkt->prob_spelling = probs[re.problem]->short_name;
   }
-  for (i = 0, len = strlen(prob_spelling); i < len; i++)
-    if (prob_spelling[i] == '\"') prob_spelling[i] = ' ';
+  /* run_pkt->prob_spelling is allowed to be NULL */
 
-  if (write_run_packet(pkt_base, runid, probs[re.problem]->tester_id,
-                       final_test, re.locale_id, variant,
-                       probs[re.problem]->accept_partial, re.team,
-                       langs[re.language]->exe_sfx,
-                       langs[re.language]->arch,
-                       user_spelling, prob_spelling) < 0)
-    return -1;
+  /* generate external representation of the packet */
+  if (run_request_packet_write(run_pkt, &run_pkt_out_size, &run_pkt_out) < 0) {
+    snprintf(errmsg, sizeof(errmsg), "run_request_packet_write failed\n");
+    goto report_check_failed;
+  }
+
+  if (generic_write_file(run_pkt_out, run_pkt_out_size, SAFE,
+                         global->run_queue_dir, pkt_base, "") < 0) {
+    snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
+    goto report_check_failed;
+  }
 
   /* update status */
-  if (run_change_status(runid, RUN_RUNNING, 0, -1) < 0) return -1;
+  if (run_change_status(comp_pkt->run_id, RUN_RUNNING, 0, -1, comp_pkt->judge_id) < 0)
+    goto non_fatal_error;
 
+ success:
+  xfree(comp_pkt_buf);
+  xfree(run_pkt_out);
+  compile_reply_packet_free(comp_pkt);
   return 1;
 
- bad_packet_error:
-  err("bad_packet");
+ report_check_failed:
+  /* this is error recover, so if error happens again, we cannot do anything */
+  if (run_change_status(comp_pkt->run_id, RUN_CHECK_FAILED, 0, -1, 0) < 0)
+    goto non_fatal_error;
+  report_size = strlen(errmsg);
+  rep_flags = archive_make_write_path(rep_path, sizeof(rep_path),
+                                      global->report_archive_dir, comp_pkt->run_id,
+                                      report_size, 0);
+  if (archive_dir_prepare(global->report_archive_dir, comp_pkt->run_id, 0) < 0)
+    goto non_fatal_error;
+  /* error code is ignored */
+  generic_write_file(errmsg, report_size, rep_flags, 0, rep_path, 0);
+  /* goto non_fatal_error; */
+
+ non_fatal_error:
+  xfree(comp_pkt_buf);
+  xfree(run_pkt_out);
+  compile_reply_packet_free(comp_pkt);
   return 0;
 }
 
 static int
 read_run_packet(char *pname)
 {
-  char  buf[256];
-  char *pbuf = buf;
-  int   r, rsize, n;
   path_t rep_path, team_path;
-
-  int rep_flags, rep_size, team_flags, team_size;
-  int   runid;
-  int   status;
-  int   test;
-  int   score;
+  int r, rep_flags, rep_size, team_flags, team_size;
   struct run_entry re;
+  void *reply_buf = 0;
+  size_t reply_buf_size = 0;
+  struct run_reply_packet *reply_pkt = 0;
 
-  memset(buf, 0 ,sizeof(buf));
-  r = generic_read_file(&pbuf, sizeof(buf), &rsize, SAFE|REMOVE,
+  r = generic_read_file((char**) &reply_buf, 0, &reply_buf_size, SAFE | REMOVE,
                         global->run_status_dir, pname, "");
   if (r < 0) return -1;
   if (r == 0) return 0;
 
-  info("run packet: %s", chop(buf));
-  if (sscanf(pname, "%d%n", &runid, &n) != 1 || pname[n])
-    goto bad_packet_error;
-  if (sscanf(buf, "%d%d%d %n", &status, &test, &score, &n) != 3 || buf[n])
-    goto bad_packet_error;
-  if (run_get_entry(runid, &re) < 0) goto bad_packet_error;
-  if (re.status != RUN_RUNNING) goto bad_packet_error;
+  if (run_reply_packet_read(reply_buf_size, reply_buf, &reply_pkt) < 0)
+    goto failed;
+  xfree(reply_buf), reply_buf = 0;
 
-  if (!is_valid_status(status, 2)) goto bad_packet_error;
-  //if (status<0 || status>RUN_ACCEPTED || test<0) goto bad_packet_error;
+  if (reply_pkt->contest_id != global->contest_id) {
+    err("read_run_packet: contest_id mismatch: %d in packet",
+        reply_pkt->contest_id);
+    goto failed;
+  }
+  if (run_get_entry(reply_pkt->run_id, &re) < 0) {
+    err("read_run_packet: invalid run_id: %d", reply_pkt->run_id);
+    goto failed;
+  }
+  if (re.status != RUN_RUNNING) {
+    err("read_run_packet: run %d status is not RUNNING", reply_pkt->run_id);
+    goto failed;
+  }
+  if (re.judge_id != reply_pkt->judge_id) {
+    err("read_run_packet: judge_id mismatch: packet: %d, db: %d",
+        reply_pkt->judge_id, re.judge_id);
+    goto failed;
+  }
+
+  if (!is_valid_status(reply_pkt->status, 2)) goto bad_packet_error;
 
   if (global->score_system_val == SCORE_OLYMPIAD) {
     if (re.problem < 1 || re.problem > max_prob || !probs[re.problem])
@@ -3962,7 +4062,7 @@ read_run_packet(char *pname)
     */
     if (re.problem < 1 || re.problem > max_prob || !probs[re.problem])
       goto bad_packet_error;
-    if (score < 0 || score > probs[re.problem]->full_score)
+    if (reply_pkt->score < 0 || reply_pkt->score>probs[re.problem]->full_score)
       goto bad_packet_error;
     /*
     for (n = 0; n < probs[re.problem]->dp_total; n++)
@@ -3976,16 +4076,19 @@ read_run_packet(char *pname)
     }
     */
   } else {
-    score = -1;
+    reply_pkt->score = -1;
   }
-  if (run_change_status(runid, status, test, score) < 0) return -1;
+  if (run_change_status(reply_pkt->run_id, reply_pkt->status,
+                        reply_pkt->failed_test,
+                        reply_pkt->score, 0) < 0) return -1;
   update_standings_file(0);
   rep_size = generic_file_size(global->run_report_dir, pname, "");
   if (rep_size < 0) return -1;
   rep_flags = archive_make_write_path(rep_path, sizeof(rep_path),
-                                      global->report_archive_dir, runid,
+                                      global->report_archive_dir,
+                                      reply_pkt->run_id,
                                       rep_size, 0);
-  if (archive_dir_prepare(global->report_archive_dir, runid, 0) < 0)
+  if (archive_dir_prepare(global->report_archive_dir, reply_pkt->run_id, 0) < 0)
     return -1;
   if (generic_copy_file(REMOVE, global->run_report_dir, pname, "",
                         rep_flags, 0, rep_path, "") < 0)
@@ -3994,8 +4097,9 @@ read_run_packet(char *pname)
     team_size = generic_file_size(global->run_team_report_dir, pname, "");
     team_flags = archive_make_write_path(team_path, sizeof(team_path),
                                          global->team_report_archive_dir,
-                                         runid, team_size, 0);
-    if (archive_dir_prepare(global->team_report_archive_dir, runid, 0) < 0)
+                                         reply_pkt->run_id, team_size, 0);
+    if (archive_dir_prepare(global->team_report_archive_dir,
+                            reply_pkt->run_id, 0) < 0)
       return -1;
     if (generic_copy_file(REMOVE, global->run_team_report_dir, pname, "",
                           team_flags, 0, team_path, "") < 0)
@@ -4005,6 +4109,10 @@ read_run_packet(char *pname)
 
  bad_packet_error:
   err("bad_packet");
+
+ failed:
+  xfree(reply_buf);
+  run_reply_packet_free(reply_pkt);
   return 0;
 }
 
@@ -4050,42 +4158,51 @@ generate_packet_name(int run_id, int prio, unsigned char buf[PACKET_NAME_SIZE])
   buf[0] = b32_digits[prio + 16];
 }
 
+static unsigned short compile_request_id;
 static int
 queue_compile_request(unsigned char const *str, int len,
                       int run_id, int lang_id, int locale_id,
                       unsigned char const *sfx,
                       char **compiler_env,
-                      unsigned char const *run_block)
+                      int accepting_mode)
 {
-  unsigned char *pkt_buf, *ptr;
+  struct compile_run_extra rx;
+  struct compile_request_packet cp;
+  void *pkt_buf = 0;
+  size_t pkt_len = 0;
   unsigned char pkt_name[PACKET_NAME_SIZE];
+  int arch_flags;
   path_t run_arch;
-  size_t env_size = 0, run_block_size = 0;
-  int pkt_len, arch_flags, i, env_count = 0;
 
-  if (!run_block) run_block = "";
-  run_block_size = strlen(run_block);
-  if (compiler_env) {
-    for (env_count = 0; compiler_env[env_count]; env_count++) {
-      env_size += strlen(compiler_env[env_count]) + 32;
+  if (accepting_mode == -1) {
+    accepting_mode = 0;
+    if (global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode) {
+      accepting_mode = 1;
     }
   }
-  pkt_buf = (unsigned char*) alloca(env_size + 256 + run_block_size);
+
+  memset(&cp, 0, sizeof(cp));
+  cp.judge_id = compile_request_id++;
+  cp.contest_id = global->contest_id;
+  cp.run_id = run_id;
+  cp.lang_id = lang_id;
+  cp.locale_id = locale_id;
+  get_current_time(&cp.ts1, &cp.ts1_us);
+  cp.run_block_len = sizeof(rx);
+  cp.run_block = &rx;
+  cp.env_num = -1;
+  cp.env_vars = (unsigned char**) compiler_env;
+
+  memset(&rx, 0, sizeof(rx));
+  rx.accepting_mode = accepting_mode;
+
+  if (compile_request_packet_write(&cp, &pkt_len, &pkt_buf) < 0) {
+    // FIXME: need reasonable recovery?
+    goto failed;
+  }
 
   if (!sfx) sfx = "";
   generate_packet_name(run_id, 0, pkt_name);
-
-  ptr = pkt_buf + sprintf(pkt_buf, "%d %d %d %d\n",
-                          global->contest_id, run_id,
-                          lang_id, locale_id);
-  ptr += sprintf(ptr, "%d ", env_count);
-  if (env_count > 0) {
-    for (i = 0; i < env_count; i++) {
-      ptr += sprintf(ptr, "%zu %s ", strlen(compiler_env[i]), compiler_env[i]);
-    }
-  }
-  ptr += sprintf(ptr, "%d %s %d\n", run_block_size, run_block, 0);
-  pkt_len = ptr - pkt_buf;
 
   if (len == -1) {
     // copy from archive
@@ -4094,25 +4211,36 @@ queue_compile_request(unsigned char const *str, int len,
     if (arch_flags < 0) return -1;
     if (generic_copy_file(arch_flags, 0, run_arch, "",
                           0, global->compile_src_dir, pkt_name, sfx) < 0)
-      return -1;
+      goto failed;
   } else {
     // write from memory
     if (generic_write_file(str, len, 0,
                            global->compile_src_dir, pkt_name, sfx) < 0)
-      return -1;
+      goto failed;
   }
 
   if (generic_write_file(pkt_buf, pkt_len, SAFE,
                          global->compile_queue_dir, pkt_name, "") < 0) {
-    return -1;
+    goto failed;
   }
+
+  if (run_change_status(run_id, RUN_COMPILING, 0, -1, cp.judge_id) < 0) {
+    goto failed;
+  }
+
+  xfree(pkt_buf);
   return 0;
+
+ failed:
+  xfree(pkt_buf);
+  return -1;
 }
 
 static void
-rejudge_run(int run_id)
+rejudge_run(int run_id, int force_full_rejudge)
 {
   struct run_entry re;
+  int accepting_mode = -1;
 
   if (run_get_entry(run_id, &re) < 0) return;
   if (re.is_imported) return;
@@ -4122,12 +4250,16 @@ rejudge_run(int run_id)
     return;
   }
 
+  if (force_full_rejudge && global->score_system_val == SCORE_OLYMPIAD
+      && !olympiad_judging_mode) {
+    accepting_mode = 0;
+  }
+
   queue_compile_request(0, -1, run_id,
                         langs[re.language]->compile_id, re.locale_id,
                         langs[re.language]->src_sfx,
-                        langs[re.language]->compiler_env, 0);
-
-  run_change_status(run_id, RUN_COMPILING, 0, -1);
+                        langs[re.language]->compiler_env,
+                        accepting_mode);
 }
 
 static int
@@ -4183,7 +4315,7 @@ do_rejudge_all(void)
       idx = re.team * total_probs + re.problem;
       if (flag[idx]) continue;
       flag[idx] = 1;
-      rejudge_run(r);
+      rejudge_run(r, 0);
     }
     return;
   }
@@ -4199,7 +4331,7 @@ do_rejudge_all(void)
         && !langs[re.language]->disable_testing
         && !re.is_readonly
         && !re.is_imported) {
-      rejudge_run(r);
+      rejudge_run(r, 0);
     }
   }
 }
@@ -4227,7 +4359,7 @@ do_judge_suspended(void)
         && !probs[re.problem]->disable_auto_testing
         && !langs[re.language]->disable_testing
         && !langs[re.language]->disable_auto_testing) {
-      rejudge_run(r);
+      rejudge_run(r, 0);
     }
   }
 }
@@ -4263,7 +4395,7 @@ do_rejudge_problem(int prob_id)
       if (flag[re.team]) continue;
       if (!langs[re.language] || langs[re.language]->disable_testing) continue;
       flag[re.team] = 1;
-      rejudge_run(r);
+      rejudge_run(r, 0);
     }
     return;
   }
@@ -4275,7 +4407,7 @@ do_rejudge_problem(int prob_id)
         && re.status != RUN_IGNORED
         && re.status != RUN_DISQUALIFIED
         && !re.is_imported) {
-      rejudge_run(r);
+      rejudge_run(r, 0);
     }
   }
 }
@@ -4326,7 +4458,7 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask)
       idx = re.team * total_probs + re.problem;
       if (flag[idx]) continue;
       flag[idx] = 1;
-      rejudge_run(r);
+      rejudge_run(r, 0);
     }
     return;
   }
@@ -4343,7 +4475,7 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask)
         && !re.is_readonly
         && !re.is_imported
         && (mask[r / BITS_PER_LONG] & (1 << (r % BITS_PER_LONG)))) {
-      rejudge_run(r);
+      rejudge_run(r, 0);
     }
   }
 }
