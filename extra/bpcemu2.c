@@ -190,7 +190,7 @@ main(int argc, char *argv[])
     dup2(fd, 1);
     dup2(fd, 2);
     close(fd);
-    execl(buf, buf, "-I", "video { none }", 0);
+    execl(buf, buf, "-I", "keystroke \"\\r\" video { none } dpmi 4096", 0);
     myerr("execl failed: %s", strerror(errno));
     _exit(1);
   }
