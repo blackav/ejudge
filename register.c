@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "expat_iface.h"
 #include "pathutl.h"
 #include "clntutil.h"
@@ -321,6 +323,7 @@ static unsigned char const * member_role_map[] =
 #define _(x) gettext(x)
 #else
 #define _(x) x
+#define gettext(x) x
 #endif
 
 struct edit_flags
@@ -1259,10 +1262,10 @@ static unsigned char *
 make_user_xml(void)
 {
   FILE *f = 0;
-  unsigned char *xml_ptr = 0;
+  char *xml_ptr = 0;
   size_t xml_size = 0;
 
-  if (!(f = open_memstream((char**) &xml_ptr, &xml_size)))
+  if (!(f = open_memstream(&xml_ptr, &xml_size)))
     goto out_of_mem;
   do_make_user_xml(f);
   if (ferror(f)) goto out_of_mem;
