@@ -242,11 +242,13 @@ client_check_server_status(char const *charset, char const *path, int lag)
   server_continuation_enabled = status.continuation_enabled;
   client_cur_time = time(0);
 
-  if (client_cur_time>=server_cur_time
-      && client_cur_time - server_cur_time > lag) {
-    err("client current time > timestamp by %lu",
-        client_cur_time - server_cur_time);
-    goto server_down;
+  if (lag > 0) {
+    if (client_cur_time>=server_cur_time
+        && client_cur_time - server_cur_time > lag) {
+      err("client current time > timestamp by %lu",
+          client_cur_time - server_cur_time);
+      goto server_down;
+    }
   }
   if (client_cur_time < server_cur_time)
     goto server_down;
