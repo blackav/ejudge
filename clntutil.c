@@ -73,23 +73,6 @@ char    form_header_multipart[1024];
 char    form_header_simple_ext[1024];
 char    form_header_multipart_ext[1024];
 
-void
-client_puts(char const *s, ...)
-{
-  char const **ps = &s;
-  /* hack!!! */
-  for (; *s; s++) {
-    if (*s == '$') {
-      s++;
-      if (*s >= '1' && *s <= '9') {
-        fputs(ps[(unsigned char)(*s - '0')], stdout);
-        continue;
-      }
-    }
-    putchar(*s);
-  }
-}
-
 char *
 client_packet_name(char *buf)
 {
