@@ -140,6 +140,7 @@ int run_set_entry(int run_id, unsigned int mask, struct run_entry const *in);
 int run_build_virtual_table(void);
 time_t run_get_virtual_start_time(int user_id);
 time_t run_get_virtual_stop_time(int user_id);
+int run_get_virtual_status(int user_id);
 int run_virtual_start(int user_id, time_t, unsigned long);
 int run_virtual_stop(int user_id, time_t, unsigned long);
 
