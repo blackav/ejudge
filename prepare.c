@@ -1217,12 +1217,14 @@ set_defaults(int mode)
       info("problem.%s.real_time_limit inherited from problem.%s (%d)",
            ish, sish, probs[i]->real_time_limit);
     }
+    /*
     if (!probs[i]->test_score_list[0] && si != -1
         && abstr_probs[si]->test_score_list[0]) {
       strcpy(probs[i]->test_score_list, abstr_probs[si]->test_score_list);
       info("problem.%s.test_score_list inherited from problem.%s (`%s')",
            ish, sish, probs[i]->test_score_list);
     }
+    */
     if (probs[i]->test_sfx[0] == 1 && si != -1 &&
         abstr_probs[si]->test_sfx[0] != 1) {
       strcpy(probs[i]->test_sfx, abstr_probs[si]->test_sfx);
