@@ -115,7 +115,7 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
        i >= 0 && showed < runs_to_show;
        i--) {
     run_get_record(i, &time, &size, 0, 0, 0,
-                   &team_id, &lang_id, &prob_id, &status, &test, &score);
+                   &team_id, &lang_id, &prob_id, &status, &test, &score, 0);
     if (status == RUN_VIRTUAL_START || status == RUN_VIRTUAL_STOP
         || status == RUN_EMPTY)
       continue;
@@ -538,7 +538,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
   unsigned char *head_style;
 
   if (client_flag) head_style = cur_contest->team_head_style;
-  else head_style = "<h2>";
+  else head_style = "h2";
 
   /* Check that the contest is started */
   start_time = run_get_start_time();
@@ -634,7 +634,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
     struct section_problem_data *p;
 
     run_get_record(k, 0, 0, 0, 0, 0, &team_id, 0, &prob_id, &status, &tests,
-                   &run_score);
+                   &run_score, 0);
     if (status == RUN_VIRTUAL_START || status == RUN_VIRTUAL_STOP
         || status == RUN_EMPTY) continue;
     if (team_id <= 0 || team_id >= t_max) continue;
@@ -853,7 +853,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   unsigned char *head_style;
 
   if (client_flag) head_style = cur_contest->team_head_style;
-  else head_style = "<h2>";
+  else head_style = "h2";
 
   cur_time = time(0);
   start_time = run_get_start_time();
@@ -939,7 +939,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   r_tot = run_get_total();
   for (k = 0; k < r_tot; k++) {
     run_get_record(k, &run_time, 0, 0, 0, 0, &team_id, 0, &prob_id, &status, 0,
-                   &score);
+                   &score, 0);
     if (status == RUN_VIRTUAL_START || status == RUN_VIRTUAL_STOP
         || status == RUN_EMPTY) continue;
     if (team_id <= 0 || team_id >= t_max) continue;
@@ -1216,7 +1216,7 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
 
   for (i = total - 1; i >= 0; i--) {
     run_get_record(i, &time, &size, 0, &ip, 0,
-                   &teamid, &langid, &probid, &status, &test, &score);
+                   &teamid, &langid, &probid, &status, &test, &score, 0);
     run_get_attempts(i, &attempts, global->ignore_compile_errors);
 
     if (!start) time = start;
@@ -1309,7 +1309,7 @@ new_write_user_source_view(FILE *f, int uid, int rid)
     err("invalid run_id: %d", rid);
     return -SRV_ERR_BAD_RUN_ID;
   }
-  run_get_record(rid, 0, 0, 0, 0, 0, &run_uid, 0, 0, 0, 0, 0);
+  run_get_record(rid, 0, 0, 0, 0, 0, &run_uid, 0, 0, 0, 0, 0, 0);
   if (uid != run_uid) {
     err("user ids does not match");
     return -SRV_ERR_ACCESS_DENIED;
@@ -1341,7 +1341,7 @@ new_write_user_report_view(FILE *f, int uid, int rid)
     err("invalid run_id: %d", rid);
     return -SRV_ERR_BAD_RUN_ID;
   }
-  if (run_get_record(rid, 0, 0, 0, 0, 0, &run_uid, 0, &prob_id, 0, 0, 0) < 0) {
+  if (run_get_record(rid, 0, 0, 0, 0, 0, &run_uid, 0, &prob_id, 0,0,0,0) < 0) {
     return -SRV_ERR_BAD_RUN_ID;
   }
   if (prob_id <= 0 || prob_id > max_prob || !probs[prob_id]) {
