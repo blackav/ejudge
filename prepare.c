@@ -273,7 +273,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(variant_num, "d"),
   PROBLEM_PARAM(date_penalty, "x"),
   PROBLEM_PARAM(disable_language, "x"),
-  PROBLEM_PARAM(builtin_checker, "s"),
+  PROBLEM_PARAM(standard_checker, "s"),
 
   { 0, 0, 0, 0 }
 };
@@ -3004,10 +3004,10 @@ prepare_tester_refinement(struct section_tester_data *out,
   }
 
   /* copy check_cmd */
-  if (prb->builtin_checker[0]) {
-    strcpy(out->check_cmd, prb->builtin_checker);
+  if (prb->standard_checker[0]) {
+    strcpy(out->check_cmd, prb->standard_checker);
     pathmake4(out->check_cmd,global->ejudge_checkers_dir,"/",out->check_cmd,0);
-    out->builtin_checker_used = 1;
+    out->standard_checker_used = 1;
   } else {
     strcpy(out->check_cmd, tp->check_cmd);
     if (!out->check_cmd[0] && atp && atp->check_cmd[0]) {
