@@ -362,3 +362,17 @@ userlist-server.c 1 4 1326832
 userlist_cfg.c 1 4 300616
 userlist_clnt.c 1 5 543544
 userlist_xml.c 1 4 2418365
+contests.h 1 6 233922
+expat_iface.h 1 4 216429
+userlist.h 1 4 449434
+userlist_cfg.h 1 4 126956
+userlist_clnt.h 1 4 245918
+contests.c 1 6 1167244
+expat_iface.c 1 4 1071181
+register.c 1 13 5577177
+userlist.c 1 4 169926
+userlist-server.c 1 5 4486997
+userlist_cfg.c 1 5 553713
+userlist_clnt.c 1 6 1301225
+userlist_proto.c 1 1 159689
+userlist_xml.c 1 5 2897340

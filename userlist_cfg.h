@@ -30,9 +30,16 @@ struct userlist_cfg
 {
   struct xml_tree b;
 
+  int l10n;
+
   // these strings actually point into another strings in XML tree
   unsigned char *socket_path;
   unsigned char *db_path;
+  unsigned char *contests_path;
+  unsigned char *email_program;
+  unsigned char *register_url;
+  unsigned char *register_email;
+  unsigned char *l10n_dir;
 };
 
 struct userlist_cfg *userlist_cfg_parse(char const *);
