@@ -18,6 +18,7 @@
  */
 
 #include <stdlib.h>
+#include <sys/types.h>
 
 int   scan_dir(char const *dir, char *result);
 
