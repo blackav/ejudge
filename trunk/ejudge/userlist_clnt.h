@@ -92,7 +92,7 @@ userlist_clnt_team_cookie(struct userlist_clnt *clnt,
                           unsigned char **p_name);
 
 int
-userlist_clnt_get_info(struct userlist_clnt *clnt,
+userlist_clnt_get_info(struct userlist_clnt *clnt, int cmd,
                        int uid, unsigned char **p_info);
 int
 userlist_clnt_set_info(struct userlist_clnt *clnt,
@@ -111,6 +111,7 @@ userlist_clnt_get_contests(struct userlist_clnt *clnt,
                            int uid, unsigned char **p_info);
 int
 userlist_clnt_register_contest(struct userlist_clnt *clnt,
+                               int cmd,
                                int user_id,
                                int contest_id);
 int
