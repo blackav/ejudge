@@ -101,23 +101,13 @@ COMMON_CFILES=\
  userlist_xml.c
 
 CFILES=\
- clar.c\
  clean-users.c\
  compile.c\
  edit-userlist.c\
- filter_test.c\
- idmap.c\
- inetdb.c\
- localdb.c\
- make-teamdb-inet.c\
- make-teamdb.c\
  master.c\
- mkpasswd.c\
  register.c\
  run.c\
- send-passwords.c\
  serve.c\
- submit.c\
  super-serve.c\
  team.c\
  testinfo.c\
@@ -158,10 +148,7 @@ HFILES=\
  filter_eval.h\
  filter_tree.h\
  html.h\
- idmap.h\
- inetdb.h\
  l10n.h\
- localdb.h\
  misctext.h\
  nls.h\
  opcaps.h\
