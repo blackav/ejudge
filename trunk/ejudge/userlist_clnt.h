@@ -192,6 +192,17 @@ int userlist_clnt_get_uid_by_pid(struct userlist_clnt *clnt,
                                  unsigned long long *p_cookie,
                                  unsigned long *p_ip);
 
+int userlist_clnt_get_uid_by_pid_2(struct userlist_clnt *clnt,
+                                   int system_uid,
+                                   int system_gid,
+                                   int system_pid,
+                                   int *p_uid,
+                                   int *p_priv_level,
+                                   unsigned long long *p_cookie,
+                                   unsigned long *p_ip,
+                                   unsigned char **p_login,
+                                   unsigned char **p_name);
+
 int userlist_clnt_priv_login(struct userlist_clnt *clnt,
                              unsigned long origin_ip,
                              int contest_id,
