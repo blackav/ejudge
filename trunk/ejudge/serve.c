@@ -2047,6 +2047,12 @@ cmd_team_submit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
     return;
   }
+  if (probs[pkt->prob_id]->t_start_date
+      && current_time < probs[pkt->prob_id]->t_start_date) {
+    err("%d: problem is not started", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
+    return;
+  }
   if (!start_time) {
     err("%d: contest is not started", p->id);
     new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
@@ -3606,8 +3612,8 @@ read_compile_packet(char *pname)
     if (prob_spelling[i] == '\"') prob_spelling[i] = ' ';
 
   if (write_run_packet(pkt_base, runid, probs[re.problem]->tester_id,
-                       final_test, re.locale_id,
-                       probs[re.problem]->accept_partial, variant, re.team,
+                       final_test, re.locale_id, variant,
+                       probs[re.problem]->accept_partial, re.team,
                        langs[re.language]->exe_sfx,
                        langs[re.language]->arch,
                        user_spelling, prob_spelling) < 0)
