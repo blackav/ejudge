@@ -287,3 +287,15 @@ prepare.c 1 29 4356200
 run.c 1 26 1989879
 team.c 1 13 1927874
 protocol.h 1 1 106632
+clntutil.h 1 8 223186
+prepare.h 1 20 929565
+runlog.h 1 6 199660
+clntutil.c 1 14 1175730
+compile.c 1 14 599061
+html.c 1 18 3416412
+master.c 1 19 2809630
+prepare.c 1 30 4508386
+run.c 1 27 2089750
+runlog.c 1 9 1045009
+serve.c 1 22 3581480
+team.c 1 14 2168044

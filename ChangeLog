@@ -1,3 +1,217 @@
+2002-10-14  Alexander Chernov  <cher@ispras.ru>
+
+	* makefile: ejudge.ru_RU.KOI8-R.po is made writable before msgmerge.
+
+	* ejudge.ru_RU.KOI8-R.po: Initial revision
+
+	* .cvsignore: *** empty log message ***
+
+	* clntutil.c: "protocol.h" is included;
+	<reuse/osdeps.h> is included;
+	new global variables server_clars_disabled, server_team_clars_disabled,
+	  server_standings_frozen;
+	(client_check_server_status) the server keepalive messages are now
+	  in binary format;
+	(client_print_server_status) whether the standings are frozen is
+	  printed.
+
+	* clntutil.h: copyright notice is updated;
+	`server_clars_disabled', `server_team_clars_disabled',
+	  `server_standings_frozen' variables are declared as external.
+
+	* compile.c: (do_loop) serve->compile protocol is changed;
+	  the loop is rearranged;
+	(check_config) `queue_dir' is checked to be writable.
+
+	* files.make: protocol.h is added.
+
+	* html.c:
+	(write_team_statistics) a message is marked as not translatable;
+	  `run_get_record' now accepts more parameters;
+	(do_write_kirov_standings) `run_get_record' signature changed;
+	(do_write_standings) `run_get_record' signature changed;
+	(write_judge_allruns) `run_get_record' signature changed;
+	  run change status menu is rearranged;
+	(write_team_source_view) `run_get_record' signature changed;
+	(write_team_report_view) `run_get_record' signature changed.
+
+	* makefile: *~ files are removed on `clean' rule;
+	ejudge.po is also removed;
+	ejudge.ru_RU.KOI8-R.po is processed by merging the previous version
+	  and `ejudge.po';
+	ejudge.po rule is updated;
+	mo rule is added to compile the message translation catalogs.
+
+	* master.c:
+	`enable_l10n', `l10n_dir' parameters are added and parsed;
+	"refresh" button is renamed to "Refresh".
+
+	* prepare.c:
+	(section_global_params) all the new global configuration parameters
+	  are added;
+	(section_language_params) all the new language configuration parameters
+	  are added;
+	(section_tester_params) all the new tester parameters are added;
+	(global_init_func) a new function, which initializes global section
+	  variables;
+	(tester_inheritance_info) `queue_dir' is added to the inheritance list;
+	(set_defaults) all the new configuration parameters are processed;
+	  value `0' of `board_unfog_time' is accepted as unfog right after the
+	  contest stops;
+	  the upper limit on the contest duration is removed;
+	(create_dirs) `queue_dir' parameters are handled;
+	(print_tester) new tester parameters are printed.
+
+	* prepare.h:
+	new global parameter `autoupdate_standings'. If enabled (the default)
+	  the server updates the standing when the contest status or standings
+	  change;
+	new global flags fog_standings_updated, start_standings_updated,
+	  unfog_standings_updated which are not user-settable;
+	new global parameter `disable_clars'. If set, the clarification
+	  requests are completely disabled;
+	new global parameter `disable_team_clars'. If set, teams cannot
+	  compose clarification requests, but the judges can.
+	new global parameter `enable_l10n'. If set, message translation is
+	  enabled;
+	new global parameter `l10n_dir', which points to the message catalog
+	  directory;
+	new global parameter `standings_locale' which contains the locale
+	  name for standings displaying. The only supported locale is yet
+	  `ru_RU.KOI8-R';
+	new global parameter `compile_queue_dir' for the queue of compile
+	  commands issued by the serve;
+	new global parameter `run_queue_dir' for the queue of run commands
+	  issued by the serve;
+	new language parameter `server_queue_dir' for the queue of server
+	  compile commands;
+	language parameter `src_dir' is replaced with language parameter
+	  `queue_dir';
+	new tester parameter `server_queue_dir' for the queue of server
+	  run commands;
+	tester parameter `exe_dir' is replaced with tester parameter
+	  `queue_dir'.
+
+	* run.c: <locale.h> is included, if localization is enabled;
+	(setup_locale) a new function, which sets up the locale by the
+	  locale_id;
+	(print_by_line) `file is too long' is marked as a translatable message;
+	  `line is too long' is marked as a translatable message;
+	(generate_report) `OK' is marked as a translatable message;
+	  `Score' is marked as a translatable message;
+	(generate_team_report) `OK' and `Score' are now translatable messages;
+	(run_tests) `locale_id' parameter is accepted;
+	  the given locale_id is activated before `generate_team_report' is
+	  called, the default locale is activated after the call;
+	  removed some previously commented stuff;
+	(do_loop) serve->run protocol is changed;
+	  loop is generally reorganized;
+	(main) message translation catalogs are set up, if the localization is
+	  enabled.
+
+	* runlog.c: RUN_RECORD_SIZE increased to 105;
+	(struct run_entry) field `locale_id' is added;
+	(run_read_entry) `locale_id' field is read;
+	(run_make_record) `locale_id' parameter is accepted;
+	(run_flush_entry) `locale_id' field is written;
+	(run_add_record) `locale_id' parameter is accepted;
+	(run_get_param) `plocale_id' parameter is accepted;
+	(run_get_record) `plocale_id' parameter is accepted;
+	(run_get_fog_period) a new function, which returns:
+	  -1, if the contest is not started;
+	  0, if the fog perion is not started;
+	  1, if the fog perion is effective;
+	  2, if the fog perion ended.
+
+	* runlog.h: copyright notice is updated;
+	(run_add_record) a new parameter `locale_id' is accepted;
+	(run_get_param) a new parameter `plocale_id' is accepted;
+	(run_get_record) a new parameter `plocale_id' is accepted;
+	(run_get_fog_period) a new function.
+
+	* serve.c: "protocol.h" is included;
+	<locale.h> is included if compile-time localization is enabled;
+	(setup_locale) a new function, which sets up the current locale by
+	  `locale_id' parameter;
+	(update_standings_file) function is totally rewritten. It also updates
+	  `start_standings_updated', `fog_standings_updated',
+	  `unfog_standings_updated' depending on the time period;
+	(update_status_file) function is totally rewritten. Status file now
+	  has binary format (as defined in protocol.h).
+	(team_view_clar) `locale_id' parameter of the command is accepted;
+	  error generated, if clarifications are disabled;
+	(team_send_clar) `locale_id' parameter of the command is accepted;
+	  error generated, if clarifications are disabled;
+	(team_submit) `locale_id' parameter of the command is accepted;
+	  `locale_id' is saved in the run log;
+	  serve->compile protocol is changed by using the explicit command
+	  safe directories and the separate source directory;
+	(team_change_passwd) `locale_id' parameter of the command is accepted;
+	(team_stat) `locale_id' parameter of the command is accepted;
+	(team_view_report) `locale_id' parameter of the command is accepted;
+	(team_view_source) `locale_id' parameter of the command is accepted;
+	(read_team_packet) locale is reset to the default (0), after the
+	  function, which executes the command, is completed;
+	(read_compile_packet) `locale_id' parameter is requested from the
+	  run log with `run_get_param' function;
+	  serve->run protocol is changed by using an expilicit command safe
+	  directory queue and the separate exe directory;
+	(read_run_packet) `run_get_param' now accepts pointer to `locale_id'
+	  parameter, so the call is updated;
+	(rejudge_run) `locale_id' is requested from run log by using changed
+	  `run_get_record' function;
+	  serve->compile protocol is changed (see above);
+	(judge_start) standings are no longer updated from here;
+	(judge_stop) standings are no longer updated from here;
+	(do_loop) if the current time is in fog period, let the
+	  `fog_standings_updated' variable be set;
+	  standings are automatically updated right after the start, right
+	  after the fog period started, right after the fog period ended;
+	  if compile-time and run-time localization is enabled, program
+	  message catalogs are initialized.
+
+	* team.c: <locale.h> is included, if internalization is enabled;
+	(struct section_global_data) new parameters `enable_l10n' and
+	  `l10n_dir' are added;
+	new global variable `client_locale_id';
+	(section_global_params) `enable_l10n', `l10n_dir' parameters are
+	  parsed;
+	(set_defaults) error messages written to log are not localized;
+	  new configuration parameters are checked;
+	(read_state_params) `locale_id' parameter, which contains the
+	  language identifier is passed in forms along with `login' and
+	  `password' parameters;
+	(display_enter_password) locale selection dialog is added;
+	(print_refresh_button) the default label for the button is `Refresh';
+	(get_team_statistics) added `locale_id' parameter to `STAT' request;
+	(send_clar_if_asked) check that the messages are disabled is added;
+	  parameter `locale_id' added to `CLAR' command;
+	(submit_if_asked) parameter `locale_id' added to `SUBMIT' command;
+	(change_passwd_if_asked) parameter `locale_id' added to `PASSWD'
+	  command;
+	(show_clar_if_asked) check that the messages are disabled is added;
+	  parameter `locale_id' is added to `VIEW' command;
+	(request_source_if_asked) parameter `locale_id' added to `SOURCE'
+	  command;
+	(request_report_if_asked) parameter `locale_id' added to `REPORT'
+	  command;
+	(main) message translation is set up, if CONF_HAS_LIBINTL compile-time
+	  macro is set and `enable_l10n' run-time parameter is set;
+	  clarification send dialog is not shown, if team clarifications are
+	  disabled;
+	  clarification list is now shown, if clarifications are disabled;
+	  reference to "Change language" dialog is added to the fast
+	  navigation menu;
+	  "Change Language" dialog is activated, if localization is enabled.
+
+2002-10-13  Alexander Chernov  <cher@ispras.ru>
+
+	* protocol.h: Initial revision
+
+2002-10-12  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru-KOI8_R.po: no longer used
+
 2002-10-11  Alexander Chernov  <cher@ispras.ru>
 
 	* prepare.c:
