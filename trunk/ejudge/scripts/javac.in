@@ -25,6 +25,7 @@ PATH="${JAVA_HOME}/bin:${PATH}"
 export JAVA_HOME PATH
 
 mv "$infile" Main.java || exit 1
+rm -f *.class
 "${JAVACRUN}" -source "${JAVAVER}" ${EJUDGE_FLAGS} Main.java || exit 1
 
 if [ ! -f Main.class ]
@@ -33,17 +34,7 @@ then
   exit 1
 fi
 
-# check for multiple files
-count=0
-for i in *.class
-do
-count=$((count+1))
-done 
-if $count -gt 1
-then
-  echo "Multiple output files. Probably nested classes are used" >& 2
-  exit 1
-fi
+"${JAVA_HOME}/bin/jar" cvf Main.jar *.class || exit 1
 
-mv Main.class "$outfile" || exit 1
+mv Main.jar "$outfile" || exit 1
 exit 0
