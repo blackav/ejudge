@@ -146,6 +146,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(full_score, "d"),
   PROBLEM_PARAM(test_score, "d"),
   PROBLEM_PARAM(run_penalty, "d"),
+  PROBLEM_PARAM(use_corr, "d"),
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
