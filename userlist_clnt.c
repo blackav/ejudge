@@ -247,7 +247,8 @@ userlist_clnt_get_name(struct userlist_clnt *clnt,
 
 int
 userlist_clnt_get_email(struct userlist_clnt *clnt,
-                        int uid, unsigned char **p_email)
+                        int uid, unsigned char **p_email,
+                        int *p_show_email)
 {
   switch (uid) {
   case 1: *p_email = xstrdup("team1@xxx"); return ULS_EMAIL;
