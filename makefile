@@ -119,6 +119,11 @@ subdirs_all:
 	$(MAKE) -C extra all
 	$(MAKE) -C checkers all
 
+extra_progs:
+	$(MAKE) -C extra all
+checker_lib:
+	$(MAKE) -C checkers all
+
 install: ${TARGETS} po mo
 	install -d ${INST_BIN_PATH}
 	for i in ${TARGETS}; do install -m 0755 $$i ${INST_BIN_PATH}; done
