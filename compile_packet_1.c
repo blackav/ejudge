@@ -126,7 +126,7 @@ compile_request_packet_read(size_t in_size, const void *in_data,
     errcode = 15;
     goto failed_badly;
   }
-  if (pout->env_vars > 0) {
+  if (pout->env_num > 0) {
     XCALLOC(pout->env_vars, pout->env_num + 1);
     str_lens = (rint32_t*) alloca(pout->env_num * sizeof(rint32_t));
     memcpy(str_lens, pin_ptr, pout->env_num * sizeof(rint32_t));
@@ -151,11 +151,31 @@ compile_request_packet_read(size_t in_size, const void *in_data,
   }
 
   // align the address at the 16-byte boundary
-  pkt_bin_align_addr(pin_ptr);
+  pkt_bin_align_addr(pin_ptr, in_data);
   if (pin_ptr != end_ptr) {
     errcode = 18;
     goto failed_badly;
   }
+
+#if 0
+  /* debugging */
+  fprintf(stderr,
+          "the compile request packet\n"
+          "  judge_id:      %d\n"
+          "  contest_id:    %d\n"
+          "  run_id:        %d\n"
+          "  lang_id:       %d\n"
+          "  locale_id:     %d\n"
+          "  ts1:           %d\n"
+          "  ts1_us:        %d\n"
+          "  run_block_len: %d\n"
+          "  env_num:       %d\n",
+          pout->judge_id, pout->contest_id, pout->run_id, pout->lang_id,
+          pout->locale_id, pout->ts1, pout->ts1_us, pout->run_block_len,pout->env_num);
+  for (i = 0; i < pout->env_num; i++) {
+    fprintf(stderr, "    env[%d]: <%s>\n", i, pout->env_vars[i]);
+  }
+#endif
 
   *p_out_data = pout;
   return 1;
