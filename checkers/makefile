@@ -32,7 +32,7 @@ endif
 CC=gcc
 LD=gcc
 
-TARGETS = maxs${EXESFX} summ${EXESFX}
+TARGETS = maxs${EXESFX} summ${EXESFX} check_a${EXESFX} check_b${EXESFX}
 
 all : ${TARGETS}
 clean:
@@ -40,3 +40,13 @@ clean:
 
 maxs${EXESFX} : maxs.c
 summ${EXESFX} : summ.c
+
+check_a.exe: summ.exe
+	cp $< $@
+check_b.exe: maxs.exe
+	cp $< $@
+
+check_a: summ
+	ln -f $< $@
+check_b: maxs
+	ln -f $< $@
