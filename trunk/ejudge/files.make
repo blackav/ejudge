@@ -36,6 +36,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/map_contest.c\
  userlist_clnt/open.c\
  userlist_clnt/pass_fd.c\
+ userlist_clnt/priv_login.c\
  userlist_clnt/recv_packet.c\
  userlist_clnt/register_contest.c\
  userlist_clnt/register_new.c\
@@ -68,6 +69,7 @@ CFILES=\
  make-teamdb-inet.c\
  make-teamdb.c\
  master.c\
+ master_html.c\
  misctext.c\
  mkpasswd.c\
  parsecfg.c\
@@ -110,6 +112,7 @@ CFILES=\
  serve_clnt/do_pass_fd.c\
  serve_clnt/get_archive.c\
  serve_clnt/list_runs.c\
+ serve_clnt/master_page.c\
  serve_clnt/open.c\
  serve_clnt/pass_fd.c\
  serve_clnt/recv_packet.c\
