@@ -3,7 +3,7 @@
 #ifndef __PARSECFG_H__
 #define __PARSECFG_H__
 
-/* Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,10 +15,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 struct generic_section_config
@@ -49,6 +45,7 @@ struct generic_section_config *parse_param(char const *path,
                                            void *f, /* actually, FILE * */
                                            struct config_section_info *,
                                            int quiet_flag);
+struct generic_section_config *param_make_global_section(struct config_section_info *params);
 
 int    sarray_len(char **);
 char **sarray_merge_pf(char **, char **);
