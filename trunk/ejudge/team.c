@@ -935,7 +935,7 @@ static void
 send_clar_if_asked(void)
 {
   char *s, *p, *t, *r, *full_subj;
-  int n;
+  int   n;
 
   if (!server_is_virtual) {
     if (!server_start_time) {
