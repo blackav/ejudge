@@ -345,11 +345,11 @@ display_enter_password(void)
   }
   set_cookie_if_needed();
   if (a_name) {
-    client_put_header(stdout, 0, 0, global->charset, 1,
+    client_put_header(stdout, 0, 0, global->charset, 1, 0,
                       "Enter password - %s - &quot;%s&quot;",
                       protocol_priv_level_str(priv_level), a_name);
   } else {
-    client_put_header(stdout, 0, 0, global->charset, 1,
+    client_put_header(stdout, 0, 0, global->charset, 1, 0,
                       "Enter password - %s",
                       protocol_priv_level_str(priv_level));
   }
@@ -440,7 +440,7 @@ open_userlist_server(void)
   if (!userlist_conn) {
     if (!(userlist_conn = userlist_clnt_open(global->socket_path))) {
       set_cookie_if_needed();
-      client_put_header(stdout, 0, 0, global->charset, 1, _("Server is down"));
+      client_put_header(stdout, 0, 0, global->charset, 1, 0, _("Server is down"));
       printf("<p>%s</p>",
              _("The server is down. Try again later."));
       client_put_footer(stdout, 0);
@@ -453,7 +453,7 @@ static void
 permission_denied(void)
 {
   set_cookie_if_needed();
-  client_put_header(stdout, 0, 0, global->charset, 1, _("Permission denied"));
+  client_put_header(stdout, 0, 0, global->charset, 1, 0, _("Permission denied"));
   printf("<p>%s</p>",
          "Permission denied. You have typed invalid login, invalid password,"
          " or do not have enough privileges.");
@@ -464,7 +464,7 @@ static void
 fatal_server_error(int r)
 {
   set_cookie_if_needed();
-  client_put_header(stdout, 0, 0, global->charset, 1, _("Server error"));
+  client_put_header(stdout, 0, 0, global->charset, 1, 0, _("Server error"));
   printf("<p>Server error: %s</p>", userlist_strerror(-r));
   client_put_footer(stdout, 0);
   exit(0);
@@ -866,7 +866,7 @@ operation_status_page(int code, unsigned char const *msg)
   if (client_sid_mode != SID_URL && client_sid_mode != SID_COOKIE) return;
   set_cookie_if_needed();
   if (code < 0) {
-    client_put_header(stdout, 0, 0, global->charset, 1, "Operation failed");
+    client_put_header(stdout, 0, 0, global->charset, 1, 0, "Operation failed");
     if (code != -1 || !msg) msg = protocol_strerror(-code);
     printf("<h2><font color=\"red\">%s</font></h2>\n", msg);
   } else {
@@ -1180,7 +1180,7 @@ view_source_if_asked()
   if (runid < 0 || runid >= server_total_runs) return;
 
   set_cookie_if_needed();
-  client_put_header(stdout, 0, 0, global->charset, 1,
+  client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Source for run %d", runid);
   fflush(stdout);
   open_serve();
@@ -1205,7 +1205,7 @@ view_report_if_asked()
   if (runid < 0 || runid >= server_total_runs) return;
 
   set_cookie_if_needed();
-  client_put_header(stdout, 0, 0, global->charset, 1,
+  client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Report for run %d", runid);
   fflush(stdout);
   open_serve();
@@ -1226,7 +1226,7 @@ view_teams_if_asked(int forced_flag)
   if (!forced_flag && !cgi_param("viewteams")) return;
 
   set_cookie_if_needed();
-  client_put_header(stdout, 0, 0, global->charset, 1, "Users list");
+  client_put_header(stdout, 0, 0, global->charset, 1, 0, "Users list");
   fflush(stdout);
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_USERS, 0,
@@ -1248,7 +1248,7 @@ action_dump_runs(void)
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     set_cookie_if_needed();
-    client_put_header(stdout, 0, 0, global->charset, 1, "Runs database error");
+    client_put_header(stdout, 0, 0, global->charset, 1, 0, "Runs database error");
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
     client_put_footer(stdout, 0);
   }
@@ -1265,7 +1265,7 @@ action_dump_users(void)
   r = userlist_clnt_dump_database(userlist_conn, global->contest_id, 1);
   if (r < 0) {
     set_cookie_if_needed();
-    client_put_header(stdout, 0, 0, global->charset, 1,"Users database error");
+    client_put_header(stdout, 0, 0, global->charset, 1, 0, "Users database error");
     printf("<h2><font color=\"red\">%s</font></h2>\n",
            userlist_strerror(-r));
     client_put_footer(stdout, 0);
@@ -1283,7 +1283,7 @@ action_dump_standings(void)
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     set_cookie_if_needed();
-    client_put_header(stdout, 0, 0, global->charset, 1,
+    client_put_header(stdout, 0, 0, global->charset, 1, 0,
                       "Standings database error");
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
     client_put_footer(stdout, 0);
@@ -1295,7 +1295,7 @@ static void
 confirm_reset_if_asked(void)
 {
   set_cookie_if_needed();
-  client_put_header(stdout, 0, 0, global->charset, 1, "Confirm contest reset");
+  client_put_header(stdout, 0, 0, global->charset, 1, 0, "Confirm contest reset");
   print_refresh_button(_("No"));
   printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
          "</form>", form_start_simple,
@@ -1308,7 +1308,7 @@ static void
 confirm_update_standings(void)
 {
   set_cookie_if_needed();
-  client_put_header(stdout, 0, 0, global->charset, 1,
+  client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Confirm update public standings");
   printf("<p>");
   print_refresh_button(_("No"));
@@ -1323,7 +1323,7 @@ static void
 confirm_regenerate_register_if_asked(void)
 {
   set_cookie_if_needed();
-  client_put_header(stdout, 0, 0, global->charset, 1,
+  client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Confirm register user password generation");
   printf("<p>");
   print_refresh_button(_("No"));
@@ -1338,7 +1338,7 @@ static void
 confirm_regenerate_if_asked(void)
 {
   set_cookie_if_needed();
-  client_put_header(stdout, 0, 0, global->charset, 1,
+  client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Confirm user password generation");
   printf("<p>");
   print_refresh_button(_("No"));
@@ -1353,7 +1353,7 @@ static void
 confirm_rejudge_all(void)
 {
   set_cookie_if_needed();
-  client_put_header(stdout, 0, 0, global->charset, 1,
+  client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Confirm rejudge all runs");
   printf("<p>");
   print_refresh_button(_("No"));
@@ -1368,7 +1368,7 @@ static void
 confirm_squeeze(void)
 {
   set_cookie_if_needed();
-  client_put_header(stdout, 0, 0, global->charset, 1,
+  client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Confirm squeeze run log");
   printf("<p>");
   print_refresh_button(_("No"));
@@ -1383,7 +1383,7 @@ static void
 confirm_continue(void)
 {
   set_cookie_if_needed();
-  client_put_header(stdout, 0, 0, global->charset, 1,
+  client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Confirm continue contest");
   printf("<p>");
   print_refresh_button(_("No"));
@@ -1410,7 +1410,7 @@ confirm_clear_run(void)
   }
 
   set_cookie_if_needed();
-  client_put_header(stdout, 0, 0, global->charset, 1,
+  client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Confirm clear run %d", r);
   printf("<p>");
   print_refresh_button(_("No"));
@@ -1440,7 +1440,7 @@ do_generate_register_passwords_if_asked(void)
   int r;
 
   set_cookie_if_needed();
-  client_put_header(stdout, 0, 0, global->charset, 1,
+  client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "New register passwords");
   print_nav_buttons();
   printf("<hr>");
@@ -1466,7 +1466,7 @@ do_generate_passwords_if_asked(void)
   int r;
 
   set_cookie_if_needed();
-  client_put_header(stdout, 0, 0, global->charset, 1, "New passwords");
+  client_put_header(stdout, 0, 0, global->charset, 1, 0, "New passwords");
   print_nav_buttons();
   printf("<hr>");
   fflush(stdout);
@@ -1653,7 +1653,7 @@ view_clar_if_asked()
   if (clarid < 0 || clarid >= server_total_clars) return;
 
   set_cookie_if_needed();
-  client_put_header(stdout, 0, 0, global->charset, 1,
+  client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Clarification %d", clarid);
   fflush(stdout);
   open_serve();
@@ -1753,7 +1753,7 @@ log_out_if_asked(void)
     need_set_cookie = 1;
   }
   set_cookie_if_needed();
-  client_put_header(stdout, 0, 0, global->charset, 1, "%s", _("Good-bye"));
+  client_put_header(stdout, 0, 0, global->charset, 1, 0, "%s", _("Good-bye"));
   printf("<p>%s</p>\n",
          _("Good-bye!"));
   client_put_footer(stdout, 0);
@@ -1876,7 +1876,7 @@ initialize(int argc, char *argv[])
     priv_level = PRIV_LEVEL_OBSERVER;
     namelen = 8;
   } else {
-    client_not_configured(0, "bad program name");
+    client_not_configured(0, "bad program name", 0);
     /* never get here */
   }
   memset(progname, 0, sizeof(progname));
@@ -1938,7 +1938,7 @@ initialize(int argc, char *argv[])
   } else if (strlen(basename) == namelen) {
     // second case
     if (cgi_contest_id <= 0) {
-      client_not_configured(0, "Contest ID is unknown");
+      client_not_configured(0, "Contest ID is unknown", 0);
       /* never get here */
     }
     snprintf(cfgname, sizeof(cfgname), "%s%s-%d.cfg", cfgdir, progname,
@@ -1962,18 +1962,18 @@ initialize(int argc, char *argv[])
 
   config = parse_param(cfgname, 0, params, 1);
   if (!config)
-    client_not_configured(0, "config file not parsed");
+    client_not_configured(0, "config file not parsed", 0);
 
   for (p = config; p; p = p->next) {
     if (!p->name[0] || !strcmp(p->name, "global"))
       break;
   }
   if (!p)
-    client_not_configured(0, "no global section");
+    client_not_configured(0, "no global section", 0);
   global = (struct section_global_data *) p;
 
   if (!global->contests_dir[0]) {
-    client_not_configured(0, "contests are not defined");
+    client_not_configured(0, "contests are not defined", 0);
     /* never get here */
   }
   contests_set_directory(global->contests_dir);
@@ -1981,19 +1981,19 @@ initialize(int argc, char *argv[])
   /* verify contest_id from the configuration file */
   if (name_contest_id > 0) {
     if (global->contest_id > 0 && name_contest_id != global->contest_id) {
-      client_not_configured(0, "contest_id's do not match");
+      client_not_configured(0, "contest_id's do not match", 0);
       /* never get here */
     }
     global->contest_id = name_contest_id;
   } else if (cgi_contest_id > 0) {
     if (global->contest_id > 0 && cgi_contest_id != global->contest_id) {
-      client_not_configured(0, "contest_id's do not match");
+      client_not_configured(0, "contest_id's do not match", 0);
       /* never get here */
     }
     global->contest_id = cgi_contest_id;
   } else {
     if (global->contest_id <= 0) {
-      client_not_configured(0, "contest_id is not set");
+      client_not_configured(0, "contest_id is not set", 0);
       /* never get here */
     }
   }
@@ -2006,7 +2006,7 @@ initialize(int argc, char *argv[])
   if ((errcode = contests_get(global->contest_id, &cur_contest)) < 0) {
     err("contests_get failed: %d: %s", global->contest_id,
         contests_strerror(-errcode));
-    client_not_configured(0, "invalid contest");
+    client_not_configured(0, "invalid contest", 0);
     /* never get here */
   }
 
@@ -2016,7 +2016,7 @@ initialize(int argc, char *argv[])
   }
 
   if (set_defaults() < 0)
-    client_not_configured(global->charset, "bad configuration");
+    client_not_configured(global->charset, "bad configuration", 0);
   logger_set_level(-1, LOG_WARNING);
   parse_client_ip();
 
@@ -2128,7 +2128,7 @@ main(int argc, char *argv[])
   if (!client_check_source_ip(global->allow_deny,
                               global->allow_from,
                               global->deny_from))
-    client_access_denied(global->charset);
+    client_access_denied(global->charset, 0);
 
   switch(priv_level) {
   case PRIV_LEVEL_ADMIN:
@@ -2142,13 +2142,13 @@ main(int argc, char *argv[])
     break;
   }
   if (!access_flag) {
-    client_access_denied(global->charset);
+    client_access_denied(global->charset, 0);
   }
 
   // done in initialize
   //cgi_read(global->charset);
 
-  if (authentificate() != 1) client_access_denied(global->charset);
+  if (authentificate() != 1) client_access_denied(global->charset, 0);
   read_state_params();
   read_view_params();
 
@@ -2156,7 +2156,7 @@ main(int argc, char *argv[])
     server_lag = 0;
   }
   if (!client_check_server_status(global->charset, global->status_file,
-                                  server_lag)) {
+                                  server_lag, 0)) {
     return 0;
   }
 
@@ -2285,19 +2285,19 @@ main(int argc, char *argv[])
   send_msg_if_asked();
 
   if (force_recheck_status) {
-    client_check_server_status(global->charset, global->status_file, 3);
+    client_check_server_status(global->charset, global->status_file, 3, 0);
     force_recheck_status = 0;
   }
 
   set_cookie_if_needed();
   if (cur_contest->name) {
-    client_put_header(stdout, 0, 0, global->charset, 1,
+    client_put_header(stdout, 0, 0, global->charset, 1, 0,
                       "%s: %s - &quot;%s&quot;",
                       _("Monitor"),
                       protocol_priv_level_str(priv_level),
                       cur_contest->name);
   } else {
-    client_put_header(stdout, 0, 0, global->charset, 1, "%s: %s",
+    client_put_header(stdout, 0, 0, global->charset, 1, 0, "%s: %s",
                       _("Monitor"),
                       protocol_priv_level_str(priv_level));
   }
