@@ -76,6 +76,7 @@ COMMON_CFILES=\
  contests.c\
  copyright.c\
  cr_serialize.c\
+ diff.c\
  expat_iface.c\
  filter_eval.c\
  filter_tree.c\
@@ -148,6 +149,7 @@ HFILES=\
  contests.h\
  copyright.h\
  cr_serialize.h\
+ diff.h\
  expat_iface.h\
  fileutl.h\
  filter_eval.h\
