@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "POT-Creation-Date: 2003-01-28 01:38+0300\n"
-"PO-Revision-Date: 2003-01-28 01:39+0300\n"
+"PO-Revision-Date: 2003-01-28 01:44+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -161,7 +161,7 @@ msgid "<p>The minimal number of %s is %d.</p>\n"
 msgstr "<p>Минимальное количество %s - %d.</p>\n"
 
 #: clntutil.c:87
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "<p>This is <b>ejudge</b> contest administration system, version %s, compiled "
 "%s.\n"
