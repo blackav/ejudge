@@ -51,25 +51,29 @@ serve_clnt_master_page(int sock_fd,
                        int first_clar,
                        int last_clar,
                        unsigned char const *self_url,
-                       unsigned char const *filter_expr)
+                       unsigned char const *filter_expr,
+                       unsigned char const *hidden_vars)
 {
   struct prot_serve_pkt_master_page *out = 0;
   struct prot_serve_packet *in = 0;
-  size_t self_url_len, filter_expr_len;
+  size_t self_url_len, filter_expr_len, hidden_vars_len;
   size_t out_size, in_size = 0;
-  unsigned char *self_url_ptr, *filter_expr_ptr, c;
+  unsigned char *self_url_ptr, *filter_expr_ptr, *hidden_vars_ptr, c;
   int r, pipe_fd[2], pass_fd[2];
 
   if (sock_fd < 0) return -SRV_ERR_NOT_CONNECTED;
   if (!self_url) self_url = "";
   if (!filter_expr) filter_expr = "";
+  if (!hidden_vars) hidden_vars = "";
   self_url_len = strlen(self_url);
   filter_expr_len = strlen(filter_expr);
-  out_size = sizeof(*out) + self_url_len + filter_expr_len;
+  hidden_vars_len = strlen(hidden_vars);
+  out_size = sizeof(*out) + self_url_len + filter_expr_len + hidden_vars_len;
   out = alloca(out_size);
   memset(out, 0, out_size);
   self_url_ptr = out->data;
   filter_expr_ptr = self_url_ptr + self_url_len + 1;
+  hidden_vars_ptr = filter_expr_ptr + filter_expr_len + 1;
   out->b.id = SRV_CMD_MASTER_PAGE;
   out->b.magic = PROT_SERVE_PACKET_MAGIC;
   out->user_id = user_id;
@@ -83,8 +87,10 @@ serve_clnt_master_page(int sock_fd,
   out->last_clar = last_clar;
   out->self_url_len = self_url_len;
   out->filter_expr_len = filter_expr_len;
+  out->hidden_vars_len = hidden_vars_len;
   memcpy(self_url_ptr, self_url, self_url_len);
   memcpy(filter_expr_ptr, filter_expr, filter_expr_len);
+  memcpy(hidden_vars_ptr, hidden_vars, hidden_vars_len);
 
   if (pipe(pipe_fd) < 0) {
     err("serve_clnt_team_page: pipe() failed: %s", os_ErrorMsg());
