@@ -947,9 +947,15 @@ read_view_params(void)
 }
 
 static void
-operation_status_page(int code, unsigned char const *msg)
+operation_status_page(int code, unsigned char const *msg, int run_id)
 {
-  unsigned char href[128];
+  unsigned char href[256];
+  unsigned char src_view_str[128];
+
+  src_view_str[0] = 0;
+  if (run_id >= 0) {
+    snprintf(src_view_str, sizeof(src_view_str), "&source_%d=1", run_id);
+  }
 
   if (client_sid_mode != SID_URL && client_sid_mode != SID_COOKIE) return;
   set_cookie_if_needed();
@@ -960,7 +966,7 @@ operation_status_page(int code, unsigned char const *msg)
   } else {
     hyperref(href, sizeof(href), client_sid_mode, client_sid,
              contest_id_str,
-             self_url, 0);
+             self_url, "%s", src_view_str);
     client_put_refresh_header(global->charset, href, 0,
                               "Operation successfull");
     printf("<h2>Operation completed successfully</h2>");
@@ -977,7 +983,7 @@ start_if_asked(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_START, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
 }
 
@@ -988,7 +994,7 @@ stop_if_asked(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_STOP, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
 }
 
@@ -999,7 +1005,7 @@ action_reload_server(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_QUIT, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
 }
 
 static void
@@ -1009,7 +1015,7 @@ update_standings_if_asked(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_UPDATE_STAND, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
 }
 
@@ -1029,12 +1035,12 @@ changedur_if_asked(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_DURATION,
                             &d, sizeof(d));
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
   return;
 
  invalid_dur:
-  operation_status_page(-1, "Invalid duration specification");
+  operation_status_page(-1, "Invalid duration specification", -1);
   force_recheck_status = 1;
 }
 
@@ -1063,12 +1069,12 @@ sched_if_asked(void)
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_SCHEDULE,
                             &sloc, sizeof(sloc));
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
   return;
 
  invalid_time:
-  operation_status_page(-1, "Invalid time specification");
+  operation_status_page(-1, "Invalid time specification", -1);
   force_recheck_status = 1;
 }
 
@@ -1099,12 +1105,12 @@ change_status_if_asked()
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_STATUS_SET,
                           0, 0, 0, status, 0, 0, 0, 0, 0, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
   return;
 
  invalid_operation:
-  operation_status_page(-1, "Invalid operation");
+  operation_status_page(-1, "Invalid operation", -1);
   force_recheck_status = 1;
 }
 
@@ -1133,12 +1139,12 @@ change_status()
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_STATUS_SET,
                           0, 0, 0, status, 0, 0, 0, 0, 0, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
 
  invalid_operation:
-  operation_status_page(-1, "Invalid operation");
+  operation_status_page(-1, "Invalid operation", -1);
   force_recheck_status = 1;
 }
 
@@ -1165,12 +1171,12 @@ change_problem()
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_PROB_SET,
                           0, prob_id, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
 
  invalid_operation:
-  operation_status_page(-1, "Invalid operation");
+  operation_status_page(-1, "Invalid operation", -1);
   force_recheck_status = 1;
 }
 
@@ -1197,12 +1203,12 @@ change_language()
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_LANG_SET,
                           0, 0, lang_id, 0, 0, 0, 0, 0, 0, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
 
  invalid_operation:
-  operation_status_page(-1, "Invalid operation");
+  operation_status_page(-1, "Invalid operation", -1);
   force_recheck_status = 1;
 }
 
@@ -1229,12 +1235,12 @@ change_variant()
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_VARIANT_SET,
                           0, 0, 0, 0, 0, variant, 0, 0, 0, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
 
  invalid_operation:
-  operation_status_page(-1, "Invalid operation");
+  operation_status_page(-1, "Invalid operation", -1);
   force_recheck_status = 1;
 }
 
@@ -1261,12 +1267,12 @@ change_user_id()
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_UID_SET,
                           user_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
 
  invalid_operation:
-  operation_status_page(-1, "Invalid operation");
+  operation_status_page(-1, "Invalid operation", -1);
   force_recheck_status = 1;
 }
 
@@ -1289,12 +1295,12 @@ change_user_login()
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_LOGIN_SET,
                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, user_login);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
 
  invalid_operation:
-  operation_status_page(-1, "Invalid operation");
+  operation_status_page(-1, "Invalid operation", -1);
   force_recheck_status = 1;
 }
 
@@ -1320,12 +1326,12 @@ change_imported(void)
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_IMPORTED_SET,
                           0, 0, 0, 0, v, 0, 0, 0, 0, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
 
  invalid_operation:
-  operation_status_page(-1, "Invalid operation");
+  operation_status_page(-1, "Invalid operation", -1);
   force_recheck_status = 1;
 }
 
@@ -1351,12 +1357,12 @@ change_hidden(void)
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_HIDDEN_SET,
                           0, 0, 0, 0, 0, 0, v, 0, 0, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
 
  invalid_operation:
-  operation_status_page(-1, "Invalid operation");
+  operation_status_page(-1, "Invalid operation", -1);
   force_recheck_status = 1;
 }
 
@@ -1382,12 +1388,12 @@ change_tests(void)
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_TESTS_SET,
                           0, 0, 0, 0, 0, 0, 0, v, 0, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
 
  invalid_operation:
-  operation_status_page(-1, "Invalid operation");
+  operation_status_page(-1, "Invalid operation", -1);
   force_recheck_status = 1;
 }
 
@@ -1413,12 +1419,12 @@ change_score(void)
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_SCORE_SET,
                           0, 0, 0, 0, 0, 0, 0, 0, v, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
 
  invalid_operation:
-  operation_status_page(-1, "Invalid operation");
+  operation_status_page(-1, "Invalid operation", -1);
   force_recheck_status = 1;
 }
 
@@ -1444,12 +1450,12 @@ change_readonly(void)
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_READONLY_SET,
                           0, 0, 0, 0, 0, 0, 0, 0, 0, v, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
 
  invalid_operation:
-  operation_status_page(-1, "Invalid operation");
+  operation_status_page(-1, "Invalid operation", -1);
   force_recheck_status = 1;
 }
 
@@ -1623,10 +1629,10 @@ action_submit_run(void)
   if (sscanf(p, "%d%n", &prob_id, &n) == 1 && !p[n]) {
     variant = 0;
   } else if (sscanf(p, "%d,%d%n", &prob_id, &variant, &n) != 2 || p[n]) {
-    operation_status_page(-1, _("Invalid problem specification"));
+    operation_status_page(-1, _("Invalid problem specification"), -1);
   }
   if (sscanf(l, "%d%n", &lang_id, &n) != 1 || l[n]) {
-    operation_status_page(-1, _("Invalid language specification"));
+    operation_status_page(-1, _("Invalid language specification"), -1);
   }
 
   open_serve();
@@ -1634,7 +1640,7 @@ action_submit_run(void)
                             client_user_id,
                             global->contest_id, 0,
                             client_ip, prob_id, lang_id, variant, t);
-  operation_status_page(n, 0);
+  operation_status_page(n, 0, -1);
   force_recheck_status = 1;
 }
 
@@ -1782,7 +1788,7 @@ confirm_clear_run(void)
       || s[n]
       || r < 0
       || r >= server_total_runs) {
-    operation_status_page(-1, "Invalid parameter");
+    operation_status_page(-1, "Invalid parameter", -1);
     return;
   }
 
@@ -1807,7 +1813,7 @@ do_contest_reset_if_asked(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_RESET, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
 }
 
@@ -1817,7 +1823,7 @@ do_clear_team_passwords(void)
   int r;
 
   r = userlist_clnt_clear_team_passwords(userlist_conn, global->contest_id);
-  operation_status_page(r<0?-1:0, userlist_strerror(-r));
+  operation_status_page(r<0?-1:0, userlist_strerror(-r), -1);
 
 }
 
@@ -1906,7 +1912,7 @@ do_suspend_if_asked(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_SUSPEND, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
 }
 
@@ -1917,7 +1923,7 @@ do_resume_if_asked(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_RESUME, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
 }
 
@@ -1928,7 +1934,7 @@ action_test_suspend(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_TEST_SUSPEND, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
 }
 
@@ -1939,7 +1945,7 @@ action_test_resume(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_TEST_RESUME, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
 }
 
@@ -1950,7 +1956,7 @@ action_set_judgind_mode(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_SET_JUDGING_MODE, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
 }
 
@@ -1961,7 +1967,7 @@ do_rejudge_all_if_asked(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_REJUDGE_ALL, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
 }
 
@@ -1972,7 +1978,7 @@ action_judge_suspended(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_JUDGE_SUSPENDED, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
 }
 
@@ -1983,7 +1989,7 @@ action_squeeze_runs(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_SQUEEZE_RUNS, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
 }
 
@@ -1994,7 +2000,7 @@ action_continue(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_CONTINUE, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
 }
 
@@ -2009,13 +2015,13 @@ action_clear_run(void)
       || s[n]
       || r < 0
       || r >= server_total_runs) {
-    operation_status_page(-1, "Invalid parameter");
+    operation_status_page(-1, "Invalid parameter", -1);
     return;
   }
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_CLEAR_RUN, &r, sizeof(r));
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
 }
 
@@ -2026,7 +2032,7 @@ action_reset_filter(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_RESET_FILTER, 0, 0);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
 }
 
@@ -2040,14 +2046,14 @@ action_toggle_visibility(void)
       || sscanf(p, "%d%n", &user_id, &n) != 1
       || p[n]
       || user_id <= 0) {
-    operation_status_page(-1, "Invalid parameter");
+    operation_status_page(-1, "Invalid parameter", -1);
     return;
   }
 
   r = userlist_clnt_change_registration(userlist_conn, user_id,
                                         global->contest_id,
                                         -1, 3, USERLIST_UC_INVISIBLE);
-  operation_status_page(r<0?-1:0, userlist_strerror(-r));
+  operation_status_page(r<0?-1:0, userlist_strerror(-r), -1);
 }
 
 static void
@@ -2060,14 +2066,14 @@ action_toggle_ban(void)
       || sscanf(p, "%d%n", &user_id, &n) != 1
       || p[n]
       || user_id <= 0) {
-    operation_status_page(-1, "Invalid parameter");
+    operation_status_page(-1, "Invalid parameter", -1);
     return;
   }
 
   r = userlist_clnt_change_registration(userlist_conn, user_id,
                                         global->contest_id,
                                         -1, 3, USERLIST_UC_BANNED);
-  operation_status_page(r<0?-1:0, userlist_strerror(-r));
+  operation_status_page(r<0?-1:0, userlist_strerror(-r), -1);
 }
 
 static void
@@ -2080,14 +2086,14 @@ action_toggle_lock(void)
       || sscanf(p, "%d%n", &user_id, &n) != 1
       || p[n]
       || user_id <= 0) {
-    operation_status_page(-1, "Invalid parameter");
+    operation_status_page(-1, "Invalid parameter", -1);
     return;
   }
 
   r = userlist_clnt_change_registration(userlist_conn, user_id,
                                         global->contest_id,
                                         -1, 3, USERLIST_UC_LOCKED);
-  operation_status_page(r<0?-1:0, userlist_strerror(-r));
+  operation_status_page(r<0?-1:0, userlist_strerror(-r), -1);
 }
 
 static void
@@ -2098,13 +2104,13 @@ do_rejudge_problem_if_asked(void)
 
   if (!(p = cgi_param("problem")) ||
       sscanf(p, "%d %n", &prob, &n) != 1 || p[n] || prob <= 0) {
-    operation_status_page(-1, "Problem to rejudge is not set");
+    operation_status_page(-1, "Problem to rejudge is not set", -1);
     return;
   }
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_REJUDGE_PROBLEM,
                             &prob, sizeof(prob));
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
   force_recheck_status = 1;
 }
 
@@ -2153,7 +2159,7 @@ send_msg_if_asked(void)
   if (!dest_login || !*dest_login) dest_login = "all";
   if (!*text) {
     if (client_sid_mode != SID_URL && client_sid_mode != SID_COOKIE) return;
-    operation_status_page(-1, "Empty message body");
+    operation_status_page(-1, "Empty message body", -1);
   }
   if (!*subj) subj = _("(no subject)");
 
@@ -2162,7 +2168,7 @@ send_msg_if_asked(void)
                          dest_id, -1, dest_login,
                          subj, text);
   if (client_sid_mode != SID_URL && client_sid_mode != SID_COOKIE) return;
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
 }
 
 static void
@@ -2190,21 +2196,21 @@ send_reply_if_asked(void)
     return;
   }
   if (!txt) {
-    operation_status_page(-1, "Message body is empty");
+    operation_status_page(-1, "Message body is empty", -1);
     return;
   }
 
   s = cgi_param("in_reply_to");
   if (!s || sscanf(s, "%d%n", &ref, &n) != 1 || s[n]
       || ref < 0 || ref >= server_total_clars) {
-    operation_status_page(-1, "Invalid reference id");
+    operation_status_page(-1, "Invalid reference id", -1);
     return;
   }
 
   open_serve();
   r = serve_clnt_message(serve_socket_fd, SRV_CMD_PRIV_REPLY,
                          dest_uid, ref, 0, 0, txt);
-  operation_status_page(r, 0);
+  operation_status_page(r, 0, -1);
 }
 
 static void
