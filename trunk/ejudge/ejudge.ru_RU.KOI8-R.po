@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 1.5\n"
-"POT-Creation-Date: 2002-11-04 08:25+0300\n"
-"PO-Revision-Date: 2002-11-02 19:50+0300\n"
+"POT-Creation-Date: 2002-11-05 23:30+0300\n"
+"PO-Revision-Date: 2002-11-05 11:03+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -68,17 +68,29 @@ msgstr "--- Ошибки ---\n"
 msgid "<b>Note!</b> All uncommited changes will be lost!"
 msgstr "<b>Внимание!</b> Все несохранённые изменения будут потеряны!"
 
-#: register.c:251
+#: register.c:251 userlist-server.c:125
 msgid "<font color=\"green\">OK</font>"
 msgstr "<font color=\"green\">OK</font>"
+
+#: register.c:252 userlist-server.c:126
+msgid "<font color=\"magenta\">Pending</font>"
+msgstr "<font color=\"magenta\">Ожидает подтверждения</font>"
 
 #: register.c:253
 msgid "<font color=\"red\">Rejected</font>"
 msgstr "<font color=\"red\">Отказано</font>"
 
-#: register.c:252
-msgid "<font color=\"yellow\">Pending</font>"
-msgstr "<font color=\"yellow\">Ожидает регистрации</font>"
+#: users.c:531
+#, c-format
+msgid "<h1>List of registered users (teams) for contest &quot;%s&quot;</h1>\n"
+msgstr ""
+"<h1>Список зарегистрированных пользователей (команд) на турнир &quot;%s&quot;"
+"</h1>\n"
+
+#: userlist-server.c:1618
+#, c-format
+msgid "<p>%d users listed</p>\n"
+msgstr "<p>Всего пользователей (команд): %d</p>\n"
 
 #: register.c:930
 #, c-format
@@ -572,7 +584,7 @@ msgstr "Введите пароль"
 msgid "Existing teams"
 msgstr "Зарегистрированные команды"
 
-#: register.c:198 register.c:217
+#: register.c:198 register.c:217 userlist-server.c:1620
 msgid "Faculty"
 msgstr "Факультет"
 
@@ -682,7 +694,7 @@ msgstr "Гость"
 msgid "Guests"
 msgstr "Гости"
 
-#: userlist-server.c:466
+#: userlist-server.c:511
 #, c-format
 msgid ""
 "Hello,\n"
@@ -752,7 +764,11 @@ msgstr ""
 msgid "Incompatible server"
 msgstr "Несовместимый сервер"
 
-#: register.c:194 register.c:215
+#: users.c:536 users.c:542 users.c:548
+msgid "Information is not available"
+msgstr "Информация отсутствует"
+
+#: register.c:194 register.c:215 userlist-server.c:1620
 msgid "Institution"
 msgstr "Учебное заведение"
 
@@ -808,6 +824,14 @@ msgstr "Вердикты"
 #: html.c:188 html.c:1005 team.c:802
 msgid "Language"
 msgstr "Язык программирования"
+
+#: users.c:527
+msgid "List of registered users (teams)"
+msgstr "Список зарегистрировавшихся пользователей (команд)"
+
+#: users.c:547
+msgid "List of users (teams)"
+msgstr "Список пользователей (команд)"
 
 #: register.c:1976
 msgid "Log into the system"
@@ -947,6 +971,10 @@ msgstr "Без комментариев.\n"
 msgid "No contests available."
 msgstr "Нет доступных турниров."
 
+#: userlist-server.c:1613
+msgid "No users registered for this contest"
+msgstr "На этот турнир никто не зарегистрировался"
+
 #: serve.c:1189 serve.c:1223 serve.c:1257 serve.c:1285 serve.c:1310
 msgid "Nonexistent team id"
 msgstr "Несуществующий идентификатор команды"
@@ -993,7 +1021,7 @@ msgstr ""
 "НЕПОЛНОЕ РЕШЕНИЕ\n"
 "\n"
 
-#: register.c:2281 team.c:879
+#: register.c:2281 team.c:879 users.c:559
 msgid "Page generation time"
 msgstr "Время генерации страницы"
 
@@ -1297,6 +1325,10 @@ msgstr "Отправитель"
 msgid "Sent submissions"
 msgstr "Отосланные решения"
 
+#: userlist-server.c:1620
+msgid "Serial No"
+msgstr "Порядковый номер"
+
 #: clntutil.c:325
 msgid "Server configuration error."
 msgstr "Ошибка конфигурации сервера."
@@ -1363,7 +1395,7 @@ msgstr "Файл с текстом программы не найден"
 msgid "Source view"
 msgstr "Просмотр исходного текста"
 
-#: register.c:210 register.c:1031
+#: register.c:210 register.c:1031 userlist-server.c:1621
 msgid "Status"
 msgstr "Статус"
 
@@ -1532,7 +1564,7 @@ msgstr "Использовать cookie"
 msgid "Use cookies by default?"
 msgstr "Использовать cookie по умолчанию?"
 
-#: register.c:1853
+#: register.c:1853 userlist-server.c:1620
 msgid "User name"
 msgstr "Имя пользователя"
 
@@ -1603,6 +1635,10 @@ msgstr "У Вас нет прав просматривать данное сообщение."
 #: html.c:1302 html.c:1349
 msgid "You don't have permissions to do that"
 msgstr "У Вас нет прав выполнить данную операцию"
+
+#: userlist-server.c:535
+msgid "You have been registered"
+msgstr "Вы успешно зарегистрированы"
 
 #: register.c:947 register.c:1656
 msgid "You have provided incorrect login and/or password."
@@ -1719,7 +1755,7 @@ msgstr "зделать невидимой"
 msgid "make visible"
 msgstr "сделать видимой"
 
-#: register.c:2283 team.c:881
+#: register.c:2283 team.c:881 users.c:561
 msgid "msec"
 msgstr "мс"
 
