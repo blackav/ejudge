@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,7 @@ do_eval(struct filter_env *env,
 {
   int c;
   struct filter_tree r1, r2;
-  int lang_id, prob_id, user_id;
+  int lang_id, prob_id, user_id, flags;
 
   memset(res, 0, sizeof(res));
   switch (t->kind) {
@@ -234,6 +234,48 @@ do_eval(struct filter_env *env,
       c = env->rentries[r1.v.i].variant;
       res->v.i = c;
       break;
+    case TOK_USERINVISIBLE:
+      res->kind = TOK_BOOL_L;
+      res->type = FILTER_TYPE_BOOL;
+      user_id = env->rentries[r1.v.i].team;
+      if (!user_id) {
+        res->v.b = 0;
+      } else if ((flags = teamdb_get_flags(user_id)) < 0) {
+        res->v.b = 0;
+      } else if ((flags & TEAM_INVISIBLE)) {
+        res->v.b = 1;
+      } else {
+        res->v.b = 0;
+      }
+      break;
+    case TOK_USERBANNED:
+      res->kind = TOK_BOOL_L;
+      res->type = FILTER_TYPE_BOOL;
+      user_id = env->rentries[r1.v.i].team;
+      if (!user_id) {
+        res->v.b = 0;
+      } else if ((flags = teamdb_get_flags(user_id)) < 0) {
+        res->v.b = 0;
+      } else if ((flags & TEAM_BANNED)) {
+        res->v.b = 1;
+      } else {
+        res->v.b = 0;
+      }
+      break;
+    case TOK_USERLOCKED:
+      res->kind = TOK_BOOL_L;
+      res->type = FILTER_TYPE_BOOL;
+      user_id = env->rentries[r1.v.i].team;
+      if (!user_id) {
+        res->v.b = 0;
+      } else if ((flags = teamdb_get_flags(user_id)) < 0) {
+        res->v.b = 0;
+      } else if ((flags & TEAM_LOCKED)) {
+        res->v.b = 1;
+      } else {
+        res->v.b = 0;
+      }
+      break;
     default:
       abort();
     }
@@ -356,6 +398,48 @@ do_eval(struct filter_env *env,
     res->type = FILTER_TYPE_INT;
     c = env->cur->variant;
     res->v.i = c;
+    break;
+  case TOK_CURUSERINVISIBLE:
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    user_id = env->cur->team;
+    if (!user_id) {
+      res->v.b = 0;
+    } else if ((flags = teamdb_get_flags(user_id)) < 0) {
+      res->v.b = 0;
+    } else if ((flags & TEAM_INVISIBLE)) {
+      res->v.b = 1;
+    } else {
+      res->v.b = 0;
+    }
+    break;
+  case TOK_CURUSERBANNED:
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    user_id = env->cur->team;
+    if (!user_id) {
+      res->v.b = 0;
+    } else if ((flags = teamdb_get_flags(user_id)) < 0) {
+      res->v.b = 0;
+    } else if ((flags & TEAM_BANNED)) {
+      res->v.b = 1;
+    } else {
+      res->v.b = 0;
+    }
+    break;
+  case TOK_CURUSERLOCKED:
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    user_id = env->cur->team;
+    if (!user_id) {
+      res->v.b = 0;
+    } else if ((flags = teamdb_get_flags(user_id)) < 0) {
+      res->v.b = 0;
+    } else if ((flags & TEAM_LOCKED)) {
+      res->v.b = 1;
+    } else {
+      res->v.b = 0;
+    }
     break;
 
   case TOK_NOW:
