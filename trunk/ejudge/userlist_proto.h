@@ -61,6 +61,11 @@ enum
     ULS_PRIV_LOGIN,
     ULS_PRIV_CHECK_COOKIE,
     ULS_DUMP_DATABASE,
+    ULS_PRIV_GET_USER_INFO,
+    ULS_PRIV_SET_USER_INFO,
+    ULS_PRIV_REGISTER_CONTEST,
+
+    ULS_LAST_CMD
   };
 
 /* server reply codes (each corresponds to a different packet) */
