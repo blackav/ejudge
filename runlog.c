@@ -431,6 +431,7 @@ run_status_str(int status, char *out, int len)
   case RUN_PRESENTATION_ERR: s = _("Presentation error");  break;
   case RUN_WRONG_ANSWER_ERR: s = _("Wrong answer");        break;
   case RUN_CHECK_FAILED:     s = _("Check failed");        break;
+  case RUN_PARTIAL:          s = _("Partial solution");    break;
   case RUN_RUNNING:          s = _("Running...");          break;
   case RUN_COMPILED:         s = _("Compiled");            break;
   case RUN_COMPILING:        s = _("Compiling...");        break;
