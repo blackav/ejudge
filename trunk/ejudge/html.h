@@ -113,6 +113,14 @@ int write_priv_users(FILE *f, int user_id, int priv_level,
                      unsigned char const *extra_args,
                      const opcap_t *);
 
+int write_priv_user(FILE *f, int user_id, int priv_level,
+                    int sid_mode, unsigned long long sid,
+                    unsigned char const *self_url,
+                    unsigned char const *hidden_vars,
+                    unsigned char const *extra_args,
+                    int view_user_id,
+                    const opcap_t *);
+
 void html_start_form(FILE *f, int mode,
                      int sid_mode, unsigned long long sid,
                      unsigned char const *self_url,
@@ -128,8 +136,19 @@ int write_virtual_standings(FILE *f, int user_id);
 
 void html_reset_filter(int user_id, unsigned long long session_id);
 
-void write_runs_dump(FILE *f, unsigned char const *charset);
+void write_runs_dump(FILE *f, const unsigned char *,
+                     unsigned char const *charset);
 void write_raw_standings(FILE *f, unsigned char const *charset);
 int write_raw_source(FILE *f, int run_id);
+
+struct run_entry;
+struct section_problem_data;
+
+int calc_kirov_score(unsigned char *outbuf, size_t outsize,
+                     struct run_entry *pe,
+                     struct section_problem_data *pr,
+                     int attempts);
+void write_html_run_status(FILE *f, struct run_entry *pe,
+                           int priv_level, int attempts);
 
 #endif /* __HTML_H__ */
