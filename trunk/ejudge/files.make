@@ -74,6 +74,7 @@ CFILES=\
  clntutil.c\
  compile.c\
  contests.c\
+ copyright.c\
  cr_serialize.c\
  edit-userlist.c\
  expat_iface.c\
@@ -83,6 +84,7 @@ CFILES=\
  html.c\
  idmap.c\
  inetdb.c\
+ l10n.c\
  localdb.c\
  make-teamdb-inet.c\
  make-teamdb.c\
@@ -139,6 +141,7 @@ HFILES=\
  client_actions.h\
  clntutil.h\
  contests.h\
+ copyright.h\
  cr_serialize.h\
  expat_iface.h\
  fileutl.h\
@@ -147,6 +150,7 @@ HFILES=\
  html.h\
  idmap.h\
  inetdb.h\
+ l10n.h\
  localdb.h\
  misctext.h\
  nls.h\
