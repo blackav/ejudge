@@ -112,6 +112,8 @@ struct client_state
   // 0 - root, -1 - unknown (anonymous)
   int user_id;
   int priv_level;
+  unsigned long long cookie;
+  unsigned long ip;
 
   // passed file descriptors
   int client_fds[2];
@@ -1011,7 +1013,7 @@ remove_cookie(struct userlist_cookie * cookie)
   if (cookie->b.right) {
     cookie->b.right->left = cookie->b.left;
   } else {
-    cookies->first_down = cookie->b.left;
+    cookies->last_down = cookie->b.left;
   }
 
   free(cookie);
@@ -1195,6 +1197,8 @@ login_user(struct client_state *p,
         dirty = 1;
         info("%d: login_user: OK, cookie = %llx", p->id, answer->cookie);
         p->user_id = user->id;
+        p->ip = data->origin_ip;
+        p->cookie = answer->cookie;
         return;
       } else {
         //Incorrect password
@@ -1335,6 +1339,8 @@ login_team_user(struct client_state *p, int pkt_len,
   strcpy(name_ptr, u->name);
   
   p->user_id = u->id;
+  p->ip = data->origin_ip;
+  p->cookie = out->cookie;
   enqueue_reply_to_client(p, out_size, out);
   dirty = 1;
   u->last_login_time = cur_time;
@@ -1473,6 +1479,7 @@ cmd_login_priv_user(struct client_state *p, int len,
     cookie->expire = cur_time + 60 * 60 * 24;
     cookie->contest_id = data->contest_id;
     cookie->locale_id = data->locale_id;
+    cookie->priv_level = data->priv_level;
     out->cookie = cookie->cookie;
     out->reply_id = ULS_LOGIN_COOKIE;
   } else {
@@ -1489,6 +1496,8 @@ cmd_login_priv_user(struct client_state *p, int len,
   
   p->user_id = u->id;
   p->priv_level = data->priv_level;
+  p->cookie = out->cookie;
+  p->ip = data->origin_ip;
   enqueue_reply_to_client(p, out_size, out);
   dirty = 1;
   u->last_login_time = cur_time;
@@ -1554,6 +1563,8 @@ login_cookie(struct client_state *p,
             dirty = 1;
             info("%d: login_cookie: OK: %d, %s", p->id, user->id, user->login);
             p->user_id = user->id;
+            p->ip = data->origin_ip;
+            p->cookie = data->cookie;
             return;
           }
           cookie = (struct userlist_cookie*) cookie->b.right;
@@ -1613,6 +1624,8 @@ login_team_cookie(struct client_state *p, int pkt_len,
     for (cookie = (struct userlist_cookie*) u->cookies->first_down;
          cookie; cookie = (struct userlist_cookie*) cookie->b.right) {
       if (cookie->ip == data->origin_ip
+          && !cookie->priv_level
+          && cookie->contest_id == data->contest_id
           && cookie->expire > cur_time
           && cookie->cookie == data->cookie) break;
     }
@@ -1679,10 +1692,155 @@ login_team_cookie(struct client_state *p, int pkt_len,
   strcpy(name_ptr, u->name);
   
   p->user_id = u->id;
+  p->ip = data->origin_ip;
+  p->cookie = data->cookie;
   enqueue_reply_to_client(p, out_size, out);
   dirty = 1;
   u->last_login_time = cur_time;
   info("%d: login_team_cookie: %d,%s", p->id, u->id, u->login);
+}
+
+static void
+login_priv_cookie(struct client_state *p,
+                  int len,
+                  struct userlist_pk_check_cookie *pkt)
+{
+  struct contest_desc *cnts = 0;
+  struct userlist_user *u;
+  struct userlist_cookie *cookie;
+  struct xml_tree *pu;
+  struct userlist_pk_login_ok *out;
+  size_t login_len, name_len, out_size;
+  unsigned char *login_ptr, *name_ptr;
+  int priv_level, i;
+
+  if (len != sizeof(*pkt)) {
+    bad_packet(p, "login_priv_cookie: bad packet length: %d", len);
+    return;
+  }
+  info("%d: login_priv_cookie: %s, %ld, %llx",
+       p->id, unparse_ip(pkt->origin_ip), pkt->contest_id, pkt->cookie);
+  if (p->user_id >= 0) {
+    err("%d: this connection already authentificated", p->id);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  if (!pkt->contest_id) {
+    err("%d: contest_id is not specified", p->id);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (pkt->contest_id < 0 || pkt->contest_id >= contests->id_map_size
+      || !(cnts = contests->id_map[pkt->contest_id])) {
+    err("%d: invalid contest identifier", p->id);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (!pkt->cookie) {
+    err("%d: cookie value is 0", p->id);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  if (!pkt->origin_ip) {
+    err("%d: origin_ip is not set", p->id);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  if (pkt->priv_level <= 0 || pkt->priv_level > PRIV_LEVEL_ADMIN) {
+    err("%d: invalid privilege level", p->id);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  for (i = 1; i < userlist->user_map_size; i++) {
+    if (!(u = userlist->user_map[i])) continue;
+    if (!u->cookies) continue;
+    for (cookie = (struct userlist_cookie*) u->cookies->first_down;
+         cookie; cookie = (struct userlist_cookie*) cookie->b.right) {
+      if (cookie->ip == pkt->origin_ip
+          && cookie->contest_id == pkt->contest_id
+          && cookie->expire > cur_time
+          && cookie->priv_level > 0
+          && cookie->cookie == pkt->cookie) break;
+    }
+    if (cookie) break;
+  }
+  if (i >= userlist->user_map_size) {
+    err("%d: cookie not found", p->id);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+
+  pu = 0;
+  if (cnts->priv_users) {
+    for (pu = cnts->priv_users->first_down; pu; pu = pu->right) {
+      if (!pu->text) continue;
+      if (!strcmp(pu->text, u->login)) break;
+    }
+  }
+  if (!pu) {
+    err("%d: user has no privileges", p->id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  priv_level = 0;
+  switch (pu->tag) {
+  case CONTEST_OBSERVER:
+    priv_level = PRIV_LEVEL_OBSERVER;
+    break;
+  case CONTEST_JUDGE:
+    priv_level = PRIV_LEVEL_JUDGE;
+    break;
+  case CONTEST_ADMINISTRATOR:
+    priv_level = PRIV_LEVEL_ADMIN;
+    break;
+  default:
+    SWERR(("Unhandled privilege tag %d", pu->tag));
+  }
+  if (pkt->priv_level > priv_level) {
+    err("%d: requested privileges %d > user privileges %d",
+        p->id, pkt->priv_level, priv_level);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  /* everything is ok, update cookie */
+  if (pkt->locale_id >= 0) {
+    cookie->locale_id = pkt->locale_id;
+    dirty = 1;
+    u->last_minor_change_time = cur_time;
+  }
+  if (pkt->priv_level != cookie->priv_level) {
+    cookie->priv_level = pkt->priv_level;
+    dirty = 1;
+    u->last_minor_change_time = cur_time;
+  }
+
+  login_len = strlen(u->login);
+  name_len = strlen(u->name);
+  out_size = sizeof(*out) + login_len + name_len;
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  login_ptr = out->data;
+  name_ptr = login_ptr + login_len + 1;
+  out->cookie = cookie->cookie;
+  out->reply_id = ULS_LOGIN_COOKIE;
+  out->user_id = u->id;
+  out->contest_id = cookie->contest_id;
+  out->locale_id = pkt->locale_id;
+  out->login_len = login_len;
+  out->name_len = name_len;
+  out->priv_level = pkt->priv_level;
+  strcpy(login_ptr, u->login);
+  strcpy(name_ptr, u->name);
+  
+  p->user_id = u->id;
+  p->priv_level = out->priv_level;
+  p->cookie = cookie->cookie;
+  p->ip = pkt->origin_ip;
+  enqueue_reply_to_client(p, out_size, out);
+  dirty = 1;
+  u->last_login_time = cur_time;
+  info("%d: login_priv_cookie: %d, %s", p->id, u->id, u->login);
 }
       
 static void
@@ -1690,34 +1848,59 @@ logout_user(struct client_state *p,
             int pkt_len,
             struct userlist_pk_do_logout * data)
 {
-  struct userlist_user * user;
-  struct userlist_cookie * cookie;
+  struct userlist_user *u;
+  struct userlist_cookie *cookie;
 
-  // anonymous cannot logout!
-  if (p->user_id <= 0) return;
-  ASSERT(p->user_id < userlist->user_map_size);
-  user = userlist->user_map[p->user_id];
-  ASSERT(user);
-  user->last_access_time = cur_time;
-  dirty = 1;
+  if (pkt_len != sizeof(*data)) {
+    bad_packet(p, "logout_user: packet length mismatch: %d", pkt_len);
+    return;
+  }
+  info("%d: logout_user: %s, %016llx", p->id,
+       unparse_ip(data->origin_ip), data->cookie);
+  if (p->user_id < 0) {
+    err("%d: connection is not authentificated", p->id);
+    send_reply(p, ULS_OK);
+    return;
+  }
+  if (!p->user_id) {
+    err("%d: cannot logout administrator user", p->id);
+    send_reply(p, ULS_OK);
+    return;
+  }
+  if (!data->cookie) {
+    err("%d: cookie is empty", p->id);
+    send_reply(p, ULS_OK);
+    return;
+  }
+  if (!data->origin_ip) {
+    err("%d: origin_ip is empty", p->id);
+    send_reply(p, ULS_OK);
+    return;
+  }
+  ASSERT(p->user_id > 0 && p->user_id < userlist->user_map_size);
+  u = userlist->user_map[p->user_id];
+  ASSERT(u);
 
-  if (user->cookies) {
-    if (user->cookies->first_down) {
-      cookie = (struct userlist_cookie*) user->cookies->first_down;
-      while (cookie) {
-        if ((cookie->ip == data->origin_ip) &&
-            (cookie->cookie == data->cookie)) {
-          remove_cookie(cookie);
-          user->last_minor_change_time = cur_time;
-          dirty = 1;
-          send_reply(p,ULS_OK);
-          return;
-        }
-        cookie = (struct userlist_cookie*) cookie->b.right;
-      }
+  u->last_access_time = cur_time;
+  cookie = 0;
+  if (u->cookies) {
+    for (cookie = (struct userlist_cookie*) u->cookies->first_down;
+         cookie; cookie = (struct userlist_cookie*) cookie->b.right) {
+      if (cookie->ip == data->origin_ip && cookie->cookie == data->cookie)
+        break;
     }
   }
-  send_reply(p,ULS_OK);          
+  if (!cookie) {
+    err("%d: cookie not found", p->id);
+    send_reply(p, ULS_OK);
+    return;
+  }
+
+  remove_cookie(cookie);
+  u->last_minor_change_time = cur_time;
+  dirty = 1;
+  send_reply(p, ULS_OK);
+  info("%d: cookie removed", p->id);
 }
 
 static void
@@ -3682,8 +3865,10 @@ cmd_get_uid_by_pid(struct client_state *p, int len,
     bad_packet(p, "get_uid_by_pid: packet lendth mismatch: %d", len);
     return;
   }
+  /*
   info("%d: get_uid_by_pid: %d, %d, %d", p->id, pack->system_uid,
        pack->system_gid, pack->system_pid);
+  */
   if (pack->system_uid < 0 || pack->system_gid < 0 || pack->system_pid <= 1) {
     err("%d: invalid parameters", p->id);
     send_reply(p, -ULS_ERR_BAD_UID);
@@ -3706,10 +3891,12 @@ cmd_get_uid_by_pid(struct client_state *p, int len,
   out.reply_id = ULS_UID;
   out.uid = q->user_id;
   out.priv_level = q->priv_level;
-  // FIXME: fetch the actual cookie
-  out.cookie = 0;
-  info("%d: get_uid_by_pid: %d, %d, %016llx", p->id, out.uid,
-       out.priv_level, out.cookie);
+  out.cookie = q->cookie;
+  out.ip = q->ip;
+  /*
+  info("%d: get_uid_by_pid: %d, %d, %016llx, %s", p->id, out.uid,
+       out.priv_level, out.cookie, unparse_ip(out.ip));
+  */
   enqueue_reply_to_client(p, sizeof(out), &out);
 }
 
@@ -3828,6 +4015,10 @@ process_packet(struct client_state *p, int len, unsigned char *pack)
 
   case ULS_PRIV_LOGIN:
     cmd_login_priv_user(p, len, (struct userlist_pk_do_login*) pack);
+    break;
+
+  case ULS_PRIV_CHECK_COOKIE:
+    login_priv_cookie(p, len, (struct userlist_pk_check_cookie*) pack);
     break;
 
   default:
