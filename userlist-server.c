@@ -3659,6 +3659,118 @@ cmd_admin_process(struct client_state *p, int pkt_len,
 }
 
 static void
+do_generate_passwd(int contest_id, FILE *log)
+{
+  struct userlist_user *u;
+  struct userlist_contest *c;
+  struct userlist_passwd *p;
+  struct xml_tree *t;
+  unsigned char buf[16];
+
+  fprintf(log, "<table border=\"1\"><tr><th>User ID</th><th>User Login</th><th>User Name</th><th>New User Login Password</th></tr>\n");
+  for (u = (struct userlist_user*) userlist->b.first_down;
+       u; u = (struct userlist_user*) u->b.right) {
+    if (!u->contests) continue;
+    for (c = (struct userlist_contest*) u->contests->first_down;
+         c; c = (struct userlist_contest*) c->b.right) {
+      if (c->id == contest_id && c->status == USERLIST_REG_OK) break;
+    }
+    if (!c) continue;
+
+    // do not change password for privileged users
+    if (is_privileged_user(u) >= 0) continue;
+
+    t = u->cookies;
+    if (t) {
+      info("removed all cookies for %d (%s)", u->id, u->login);
+      xml_unlink_node(t);
+      userlist_free(t);
+      u->cookies = 0;
+    }
+    if (!(p = u->register_passwd)) {
+      p=(struct userlist_passwd*)userlist_node_alloc(USERLIST_T_PASSWORD);
+      xml_link_node_last(&u->b, &p->b);
+      u->register_passwd = p;
+    }
+    if (p->b.text) {
+      xfree(p->b.text);
+      p->b.text = 0;
+    }
+    memset(buf, 0, sizeof(buf));
+    generate_random_password(8, buf);
+    p->method = USERLIST_PWD_PLAIN;
+    p->b.text = xstrdup(buf);
+
+  // html table header
+    fprintf(log, "<tr><td><b>User ID</b></td><td><b>User Login</b></td><td><b>User Name</b></td><td><b>New User Login Password</b></td></tr>\n");
+    fprintf(log, "<tr><td>%d</td><td>%s</td><td>%s</td><td><tt>%s</tt></td></tr>\n",
+            u->id, u->login, u->name, buf);
+  }
+  fprintf(log, "</table>\n");
+  dirty = 1;
+  flush_interval /= 2;
+}
+
+static void
+cmd_generate_register_passwords(struct client_state *p, int pkt_len,
+                                struct userlist_pk_map_contest *data)
+{
+  unsigned char *log_ptr = 0;
+  size_t log_size = 0;
+  FILE *f = 0;
+  struct client_state *q = 0;
+  struct contest_desc *cnts = 0;
+  int errcode;
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+  CONN_INFO("%d", data->contest_id);
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    CONN_ERR("invalid contest: %d: %s", data->contest_id,
+             contests_strerror(-errcode));
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (p->user_id < 0) {
+    CONN_ERR("not authentificated");
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+  if (is_cnts_capable(p, cnts, OPCAP_GENERATE_TEAM_PASSWORDS) < 0)
+    return;
+  if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
+    CONN_BAD("two client file descriptors required");
+    return;
+  }
+  if (!(f = open_memstream((char**) &log_ptr, &log_size))) {
+    CONN_ERR("open_memstream failed");
+    send_reply(p, ULS_ERR_OUT_OF_MEM);
+    return;
+  }
+  do_generate_passwd(data->contest_id, f);
+  fclose(f);
+
+  q = (struct client_state*) xcalloc(1, sizeof(*q));
+  q->client_fds[0] = -1;
+  q->client_fds[1] = p->client_fds[1];
+  q->last_time = cur_time;
+  q->id = serial_id++;
+  q->user_id = -1;
+  q->fd = p->client_fds[0];
+  p->client_fds[0] = -1;
+  p->client_fds[1] = -1;
+  q->state = STATE_AUTOCLOSE;
+  q->write_buf = log_ptr;
+  q->write_len = log_size;
+  link_client_state(q);
+  CONN_INFO("created new connection %d", q->id);
+  send_reply(p, ULS_OK);
+}
+
+static void
 do_generate_team_passwd(int contest_id, FILE *log)
 {
   struct userlist_user *u;
@@ -3678,7 +3790,7 @@ do_generate_team_passwd(int contest_id, FILE *log)
     if (!c) continue;
 
     // do not change password for privileged users
-    if (is_privileged_user(u)) continue;
+    if (is_privileged_user(u) >= 0) continue;
 
     t = u->cookies;
     if (t) {
@@ -4434,6 +4546,7 @@ static void (*cmd_table[])() =
   [ULS_DUMP_DATABASE]           cmd_dump_database,
   [ULS_PRIV_GET_USER_INFO]      cmd_priv_get_user_info,
   [ULS_PRIV_REGISTER_CONTEST]   cmd_priv_register_contest,
+  [ULS_GENERATE_PASSWORDS]      cmd_generate_register_passwords,
 
   [ULS_LAST_CMD] 0
 };
