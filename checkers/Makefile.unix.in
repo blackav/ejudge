@@ -124,7 +124,7 @@ CHKCFILES =\
  cmp_file_nospace.c
 
 OFILES=$(CFILES:.c=.o) testinfo.o
-PICOFILES = $(CFILES:%.c=pic/%.o)
+PICOFILES = $(CFILES:%.c=pic/%.o) pic/testinfo.o
 CHKXFILES = $(CHKCFILES:.c=)
 
 ifndef STATIC
@@ -148,7 +148,7 @@ distclean : clean
 
 install : all
 	mkdir -p "${DESTDIR}${includedir}"
-	for i in checker.h checker_internal.h; do install -m 644 $$i "${DESTDIR}${includedir}"; done
+	for i in checker.h checker_internal.h testinfo.h; do install -m 644 $$i "${DESTDIR}${includedir}"; done
 	mkdir -p "${DESTDIR}${libdir}"
 	install -m 644 libchecker.a "${DESTDIR}${libdir}"
 	if [ x"${STATIC}" = x ]; then install -m 755 libchecker.so "${DESTDIR}${libdir}"; fi
@@ -224,7 +224,7 @@ testinfo.o: testinfo.c testinfo.h
 pic/testinfo.o: testinfo.c testinfo.h
 
 testinfo.h: ../testinfo.h
-	ln -sf ../testinfo.h
+	ln -f ../testinfo.h .
 testinfo.c: ../testinfo.c
 	ln -sf ../testinfo.c
 
