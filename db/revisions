@@ -215,5 +215,4 @@ prepare.h 1 16 784276
 prepare.c 1 21 3549667
 run.c 1 17 1853794
 unix/exec.c 6 16 2578661
-inetdb.h 6 1 102245
-inetdb.c 6 1 642740
+inetdb.h 1 1 102240
