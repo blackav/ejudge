@@ -640,7 +640,6 @@ parse_contest_xml(char const *path)
 {
   struct xml_tree *tree = 0, *t;
   struct contest_list *lst = 0;
-  struct xml_attn *a;
   struct contest_desc *d = 0;
   int max_id;
 
@@ -654,8 +653,8 @@ parse_contest_xml(char const *path)
   lst = (struct contest_list *) tree;
 
   if (tree->first) {
-    err("%s:%d:%d: attribute \"%s\" is invalid here",
-        path, a->line, a->column, attn_map[a->tag]);
+    err("%s:%d:%d: attributes are not valid here",
+        path, tree->line, tree->column);
     goto failed;
   }
 
