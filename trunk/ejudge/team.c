@@ -502,22 +502,34 @@ read_state_params(void)
     snprintf(form_start_simple, sizeof(form_start_simple),
              "%s"
              "<input type=\"hidden\" name=\"sid_mode\" value=\"1\">"
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">"
-             "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
-             form_header_simple, client_sid, client_locale_id);
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
+             form_header_simple, client_sid);
     snprintf(form_start_multipart, sizeof(form_start_multipart),
              "%s"
              "<input type=\"hidden\" name=\"sid_mode\" value=\"1\">"
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">"
-             "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
-             form_header_multipart, client_sid, client_locale_id);
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
+             form_header_multipart, client_sid);
     snprintf(hidden_vars, sizeof(hidden_vars),
              "<input type=\"hidden\" name=\"sid_mode\" value=\"1\">"
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">"
-             "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
-             client_sid, client_locale_id);
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
+             client_sid);
     break;
   case SID_URL:
+    snprintf(form_start_simple, sizeof(form_start_simple),
+             "%s"
+             "<input type=\"hidden\" name=\"sid_mode\" value=\"2\">"
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
+             form_header_simple, client_sid);
+    snprintf(form_start_multipart, sizeof(form_start_multipart),
+             "%s"
+             "<input type=\"hidden\" name=\"sid_mode\" value=\"2\">"
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
+             form_header_multipart, client_sid);
+    snprintf(hidden_vars, sizeof(hidden_vars),
+             "<input type=\"hidden\" name=\"sid_mode\" value=\"2\">"
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
+             client_sid);
+    break;
   case SID_COOKIE:
     strcpy(form_start_simple, form_header_simple);
     strcpy(form_start_multipart, form_header_multipart);
@@ -1489,16 +1501,21 @@ main(int argc, char *argv[])
 
 #if CONF_HAS_LIBINTL - 0 == 1
   if (global->enable_l10n) {
-    printf("<hr><a name=\"chglanguage\"><h2>%s</h2>\n"
-           "%s<input type=\"hidden\" name=\"login\" value=\"%s\">"
-           "<input type=\"hidden\" name=\"password\" value=\"%s\">"
-           "%s: <select name=\"locale_id\">"
+    printf("<hr><a name=\"chglanguage\"><h2>%s</h2>\n",
+           _("Change language"));
+    if (!client_sid_mode) {
+      printf("%s<input type=\"hidden\" name=\"login\" value=\"%s\">"
+             "<input type=\"hidden\" name=\"password\" value=\"%s\">",
+             form_header_simple, client_login, client_password);
+    } else {
+      printf("%s", form_start_simple);
+    }
+
+    printf("%s: <select name=\"locale_id\">"
            "<option value=\"0\"%s>%s</option>"
            "<option value=\"1\"%s>%s</option>"
            "</select>"
            "<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>\n",
-           _("Change language"),
-           form_header_simple, client_login, client_password,
            _("Change language"),
            client_locale_id==0?" selected=\"1\"":"", _("English"),
            client_locale_id==1?" selected=\"1\"":"", _("Russian"),
