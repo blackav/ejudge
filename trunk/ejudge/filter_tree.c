@@ -46,8 +46,11 @@ filter_tree_new(void)
 struct filter_tree_mem *
 filter_tree_delete(struct filter_tree_mem *mem)
 {
-  ASSERT(mem);
+  if (!mem) return 0;
 
+  /*
+  filter_tree_stats(mem, stderr);
+  */
   pgDestroy(mem->pages);
   mem->pages = 0;
   xfree(mem);
@@ -60,6 +63,7 @@ filter_tree_clear(struct filter_tree_mem *mem)
   ASSERT(mem);
 
   // FIXME: implement!!!
+  abort();
 }
 
 void
