@@ -198,3 +198,17 @@ localdb.h 6 1 113153
 idmap.h 6 1 104314
 sformat.h 1 1 106703
 sformat.c 1 1 772412
+parsecfg.h 1 7 129830
+pathutl.h 1 8 184243
+prepare.h 1 15 760646
+teamdb.h 1 9 205210
+clarlog.c 1 7 685683
+html.c 1 15 3394715
+master.c 1 17 2797861
+parsecfg.c 1 8 597592
+prepare.c 1 20 3439250
+run.c 1 16 1789649
+team.c 1 11 1923215
+teamdb.c 1 10 1387369
+sformat.c 1 2 782320
+unix/exec.c 6 15 2367529
