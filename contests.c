@@ -100,6 +100,7 @@ static char const * const attn_map[] =
   "login",
   "managed",
   "clean_users",
+  "run_managed",
 
   0
 };
@@ -636,6 +637,14 @@ parse_contest(struct contest_desc *cnts, char const *path)
         return -1;
       }
       cnts->managed = x;
+      break;
+    case CONTEST_A_RUN_MANAGED:
+      x = parse_bool(a->text);
+      if (x < 0 || x > 1) {
+        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
+        return -1;
+      }
+      cnts->run_managed = x;
       break;
     case CONTEST_A_CLEAN_USERS:
       x = parse_bool(a->text);
