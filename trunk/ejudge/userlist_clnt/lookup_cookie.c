@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,8 @@ userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
                             int *p_contest_id)
 {
   struct userlist_pk_check_cookie * data;
-  struct userlist_pk_login_ok * answer;
+  struct userlist_pk_login_ok * answer = 0;
+  void *void_answer = 0;
   int len;
   int anslen;
   int res;
@@ -43,8 +44,9 @@ userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
   data->cookie = cookie;
   data->locale_id = -1;
   if ((r = userlist_clnt_send_packet(clnt,len,data)) < 0) return r;
-  if ((r = userlist_clnt_recv_packet(clnt,&anslen,(void**) &answer)) < 0)
+  if ((r = userlist_clnt_recv_packet(clnt,&anslen,&void_answer)) < 0)
     return r;
+  answer = void_answer;
   if (answer->reply_id == ULS_LOGIN_COOKIE) {
     *p_user_id = answer->user_id;
     *p_locale_id = answer->locale_id;
