@@ -47,6 +47,9 @@ static unsigned char const * const error_map[] =
   _("some component of request is too large"),
   _("bad contest identifier"),
   _("invalid member"),
+  _("IPC operation failed"),
+  _("this IP address is not allowed to use this service"),
+  _("this user cannot participate in this contest"),
 
   0
 };
