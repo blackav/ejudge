@@ -429,6 +429,7 @@ run_tests(struct section_tester_data *tst,
         task_PutEnv(tsk, tst->start_env[jj]);
     }
     if (prb->time_limit > 0) task_SetMaxTime(tsk, prb->time_limit);
+    if (prb->real_time_limit>0) task_SetMaxRealTime(tsk,prb->real_time_limit);
     if (tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
     if (tst->no_core_dump) task_DisableCoreDump(tsk);
     if (tst->max_stack_size) task_SetStackSize(tsk, tst->max_stack_size);
