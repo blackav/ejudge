@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 1.5\n"
-"POT-Creation-Date: 2002-10-19 07:52+0400\n"
-"PO-Revision-Date: 2002-10-19 07:43+0400\n"
+"POT-Creation-Date: 2002-10-21 08:57+0400\n"
+"PO-Revision-Date: 2002-10-21 01:57+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -323,7 +323,7 @@ msgstr "Изменить"
 msgid "Change duration"
 msgstr "Изменить длительность"
 
-#: team.c:769 team.c:861 team.c:863
+#: register.c:723 team.c:769 team.c:861 team.c:863
 msgid "Change language"
 msgstr "Сменить язык"
 
@@ -335,7 +335,7 @@ msgstr "Сменить пароль"
 msgid "Change result"
 msgstr "Изменить результат"
 
-#: team.c:847 team.c:866
+#: register.c:726 team.c:847 team.c:866
 msgid "Change!"
 msgstr "Изменить!"
 
@@ -395,6 +395,10 @@ msgstr "Состояние турнира"
 msgid "Duration"
 msgstr "Продолжительность"
 
+#: register.c:140
+msgid "E-mail"
+msgstr "Адрес электронной почты"
+
 #: clntutil.c:440
 msgid "Elapsed time"
 msgstr "Прошедшее время"
@@ -403,7 +407,7 @@ msgstr "Прошедшее время"
 msgid "End time"
 msgstr "Время окончания турнира"
 
-#: team.c:380 team.c:864
+#: register.c:724 team.c:380 team.c:864
 msgid "English"
 msgstr "Английский"
 
@@ -419,6 +423,19 @@ msgstr "Зарегистрированные команды"
 msgid "Failed test"
 msgstr "Ошибка на тесте"
 
+#: register.c:586
+#, c-format
+msgid ""
+"Field \"%s\" contains invalid characters, which were converted to '%c'\n"
+msgstr ""
+"Поле \"%s\" содержит недопустимые символы, которые были преобразованы в '%"
+"c'\n"
+
+#: register.c:592
+#, c-format
+msgid "Field \"%s\" is too long and truncated\n"
+msgstr "Поле \"%s\" слишком длинное и было обрезано\n"
+
 #: team.c:803
 msgid "File"
 msgstr "Файл"
@@ -426,6 +443,10 @@ msgstr "Файл"
 #: html.c:102 html.c:271 html.c:1181 master.c:524
 msgid "Flags"
 msgstr "Флаги"
+
+#: register.c:673
+msgid "Form is filled incorrectly"
+msgstr "Регистрационная анкета заполнена неправильно"
 
 #: html.c:271 html.c:1182
 msgid "From"
@@ -484,9 +505,14 @@ msgstr "Вердикты"
 msgid "Language"
 msgstr "Язык программирования"
 
-#: team.c:372
+#: register.c:139 team.c:372
 msgid "Login"
 msgstr "Регистрационное имя"
+
+#: register.c:578
+#, c-format
+msgid "Mandatory field \"%s\" not specified\n"
+msgstr "Обязательное поле \"%s\" не заполнено\n"
 
 #: run.c:136
 msgid "Manual check required"
@@ -523,6 +549,10 @@ msgstr "Неизв."
 #: master.c:1033
 msgid "NO."
 msgstr "НЕТ."
+
+#: register.c:141
+msgid "Name"
+msgstr "Имя"
 
 #: html.c:1014
 msgid "New passed"
@@ -593,7 +623,7 @@ msgstr ""
 "НЕПОЛНОЕ РЕШЕНИЕ\n"
 "\n"
 
-#: team.c:879
+#: register.c:741 team.c:879
 msgid "Page generation time"
 msgstr "Время генерации страницы"
 
@@ -637,6 +667,15 @@ msgstr "Место"
 msgid "Planned start time"
 msgstr "Планируемое время начала турнира"
 
+#: register.c:681
+msgid ""
+"Please, fill up all the fields in the form below. Fields, marked with (*), "
+"are mandatory. When the form is completed, press \"Submit\" button."
+msgstr ""
+"Пожалуйста, заполните все поля в нижеприведённой анкете. Поля, отмеченные "
+"(*), обязательны к заполнению. Когда анкета готова, нажмите кнопку "
+"\"Зарегистрироваться\"."
+
 #: html.c:1105 html.c:1124 run.c:132 runlog.c:462
 msgid "Presentation error"
 msgstr "Неправильный формат вывода"
@@ -664,6 +703,18 @@ msgstr "Читайте условие задачи.\n"
 #: master.c:232 master.c:822 master.c:830 team.c:393
 msgid "Refresh"
 msgstr "Обновить"
+
+#: register.c:711
+msgid "Register"
+msgstr "Зарегистрироваться"
+
+#: register.c:669
+msgid "Registration form"
+msgstr "Регистрационная анкета"
+
+#: register.c:680
+msgid "Registration rules"
+msgstr "Правила регистрации"
 
 #: html.c:1084 html.c:1103 html.c:1122
 msgid "Rejudge"
@@ -701,6 +752,10 @@ msgstr "Назначить время"
 msgid "Reset the contest!"
 msgstr "Сбросить турнир!"
 
+#: register.c:713
+msgid "Reset the form"
+msgstr "Очистить"
+
 #: html.c:188 html.c:1005
 msgid "Result"
 msgstr "Результат"
@@ -733,7 +788,7 @@ msgstr "Выполняется..."
 msgid "Runtime error"
 msgstr "Ошибка работы программы"
 
-#: team.c:380 team.c:865
+#: register.c:725 team.c:380 team.c:865
 msgid "Russian"
 msgstr "Русский"
 
@@ -813,6 +868,20 @@ msgstr "Сервис недоступен"
 #: clntutil.c:257
 msgid "Service is not available. Please, come later."
 msgstr "Сервис недоступен. Пожалуйста, приходите позже."
+
+#: register.c:684
+msgid ""
+"Shortly after that you should receive an e-mail message with a password to "
+"the system. Use this password for the first  login. <b>Note</b>, that you "
+"must log in 24 hours after the form is filled and submitted, or your "
+"registration will be void!"
+msgstr ""
+"После этого на Ваш электронный адрес будет направлено письмо, которое будет "
+"содержать пароль для входа в систему. Этот пароль необходимо использовать "
+"для первого входа в систему, после чего его можно будет поменять. "
+"<b>Обратите внимание</b>, что Вы должны зайти в систему в течении 24 часов "
+"после заполнения и посылки анкеты, или в противном случае Ваша регистрация "
+"будет отменена!"
 
 #: html.c:106 html.c:187 html.c:271 html.c:375 html.c:1003 html.c:1181
 msgid "Size"
@@ -926,6 +995,14 @@ msgstr "Всего сообщений"
 #: html.c:997
 msgid "Total submissions"
 msgstr "Всего посылок"
+
+#: register.c:674
+msgid ""
+"Unfortunately, your form cannot be accepted as is. Here is the list of "
+"problems found in it. Please, correct the form and submit it again."
+msgstr ""
+"К сожалению, заполненная Вами анкета не может быть принята. Ниже приведён "
+"список замечаний к ней. Пожалуйста, исправьте анкету и пошлите её снова."
 
 #: run.c:138
 #, c-format
@@ -1068,7 +1145,7 @@ msgstr "зделать невидимой"
 msgid "make visible"
 msgstr "сделать видимой"
 
-#: team.c:881
+#: register.c:743 team.c:881
 msgid "msec"
 msgstr "мс"
 
