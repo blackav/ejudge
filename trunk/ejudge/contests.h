@@ -36,6 +36,7 @@ enum
     CONTEST_IP,
     CONTEST_FIELD,
     CONTEST_NAME,
+    CONTEST_NAME_EN,
     CONTEST_CONTESTANTS,
     CONTEST_RESERVES,
     CONTEST_COACHES,
@@ -59,6 +60,15 @@ enum
     CONTEST_REGISTER_FOOTER_FILE,
     CONTEST_TEAM_HEADER_FILE,
     CONTEST_TEAM_FOOTER_FILE,
+    CONTEST_USERS_HEAD_STYLE,
+    CONTEST_USERS_PAR_STYLE,
+    CONTEST_USERS_TABLE_STYLE,
+    CONTEST_USERS_VERB_STYLE,
+    CONTEST_REGISTER_HEAD_STYLE,
+    CONTEST_REGISTER_PAR_STYLE,
+    CONTEST_REGISTER_TABLE_STYLE,
+    CONTEST_TEAM_HEAD_STYLE,
+    CONTEST_TEAM_PAR_STYLE,
 
     CONTEST_LAST_TAG
   };
@@ -86,11 +96,17 @@ enum
     CONTEST_FIRST_FIELD = 1,
     CONTEST_F_HOMEPAGE = CONTEST_FIRST_FIELD,
     CONTEST_F_INST,
+    CONTEST_F_INST_EN,
     CONTEST_F_INSTSHORT,
+    CONTEST_F_INSTSHORT_EN,
     CONTEST_F_FAC,
+    CONTEST_F_FAC_EN,
     CONTEST_F_FACSHORT,
+    CONTEST_F_FACSHORT_EN,
     CONTEST_F_CITY,
+    CONTEST_F_CITY_EN,
     CONTEST_F_COUNTRY,
+    CONTEST_F_COUNTRY_EN,
 
     CONTEST_LAST_FIELD
   };
@@ -107,18 +123,27 @@ enum
   {
     CONTEST_MF_SERIAL = 0,
     CONTEST_MF_FIRSTNAME = 1,
+    CONTEST_MF_FIRSTNAME_EN,
     CONTEST_MF_MIDDLENAME,
+    CONTEST_MF_MIDDLENAME_EN,
     CONTEST_MF_SURNAME,
+    CONTEST_MF_SURNAME_EN,
     CONTEST_MF_STATUS,
     CONTEST_MF_GRADE,
     CONTEST_MF_GROUP,
+    CONTEST_MF_GROUP_EN,
     CONTEST_MF_EMAIL,
     CONTEST_MF_HOMEPAGE,
     CONTEST_MF_INST,
+    CONTEST_MF_INST_EN,
     CONTEST_MF_INSTSHORT,
+    CONTEST_MF_INSTSHORT_EN,
     CONTEST_MF_FAC,
+    CONTEST_MF_FAC_EN,
     CONTEST_MF_FACSHORT,
+    CONTEST_MF_FACSHORT_EN,
     CONTEST_MF_OCCUPATION,
+    CONTEST_MF_OCCUPATION_EN,
     CONTEST_LAST_MEMBER_FIELD
   };
 
@@ -163,6 +188,7 @@ struct contest_desc
 
   unsigned long  reg_deadline;
   unsigned char *name;
+  unsigned char *name_en;
   unsigned char *users_header_file;
   unsigned char *users_footer_file;
   unsigned char *register_header_file;
@@ -186,6 +212,15 @@ struct contest_desc
   struct contest_field *fields[CONTEST_LAST_FIELD];
   struct contest_member *members[CONTEST_LAST_MEMBER];
   opcaplist_t capabilities;
+  unsigned char *users_head_style;
+  unsigned char *users_par_style;
+  unsigned char *users_table_style;
+  unsigned char *users_verb_style;
+  unsigned char *register_head_style;
+  unsigned char *register_par_style;
+  unsigned char *register_table_style;
+  unsigned char *team_head_style;
+  unsigned char *team_par_style;
 
   unsigned char client_ignore_time_skew;
   unsigned char client_disable_team;
