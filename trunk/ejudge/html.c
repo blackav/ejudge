@@ -460,7 +460,8 @@ write_standings_header(FILE *f, int client_flag,
 
 void
 do_write_kirov_standings(FILE *f, int client_flag,
-                         unsigned char const *footer_str)
+                         unsigned char const *footer_str,
+                         int raw_flag)
 {
   unsigned long start_time;
   unsigned long stop_time;
@@ -482,6 +483,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
   start_time = run_get_start_time();
   stop_time = run_get_stop_time();
   if (!start_time) {
+    if (raw_flag) return;
     fprintf(f, "<h2>%s</h2>", _("The contest is not started"));
     if (!client_flag) {
       if (footer_str) {
@@ -657,65 +659,86 @@ do_write_kirov_standings(FILE *f, int client_flag,
   if (start_time > cur_time) cur_time = start_time;
   if (stop_time && cur_time > stop_time) cur_time = stop_time;
 
-  /* print table header */
-  fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th>",
-          _("Place"), _("Team"));
-  for (j = 0; j < p_tot; j++) {
-    fprintf(f, "<th>");
-    if (global->prob_info_url[0]) {
-      sformat_message(dur_str, sizeof(dur_str), global->prob_info_url,
-                      NULL, probs[p_ind[j]], NULL, NULL, NULL);
-      fprintf(f, "<a href=\"%s\">", dur_str);
-    }
-    fprintf(f, "%s", probs[p_ind[j]]->short_name);
-    if (global->prob_info_url[0]) {
-      fprintf(f, "</a>");
-    }
-    fprintf(f, "</th>");
-  }
-  fprintf(f, "<th>%s</th><th>%s</th></tr>",
-          _("Solved<br>problems"), _("Score"));
+  if (raw_flag) {
+    /* print table contents */
+    for (i = 0; i < t_tot; i++) {
+      int t = t_sort[i];
 
-  /* print table contents */
-  for (i = 0; i < t_tot; i++) {
-    int t = t_sort[i];
-    fputs("<tr><td>", f);
-    if (t_n1[i] == t_n2[i]) fprintf(f, "%d", t_n1[i] + 1);
-    else fprintf(f, "%d-%d", t_n1[i] + 1, t_n2[i] + 1);
-    fputs("</td>", f);
-    fprintf(f, "<td>");
-    if (global->team_info_url[0]) {
-      struct teamdb_export ttt;
-
-      teamdb_export_team(t_ind[t], &ttt);
-      sformat_message(dur_str, sizeof(dur_str), global->team_info_url,
-                      NULL, NULL, NULL, NULL, &ttt);
-      fprintf(f, "<a href=\"%s\">", dur_str);
-    }
-    fprintf(f, "%s", teamdb_get_name(t_ind[t]));
-    if (global->team_info_url[0]) {
-      fprintf(f, "</a>");
-    }
-    fprintf(f, "</td>");
-    for (j = 0; j < p_tot; j++) {
-      if (!att_num[t][j]) {
-        fprintf(f, "<td>&nbsp;</td>");
-      } else if (full_sol[t][j]) {
-        fprintf(f, "<td><b>%d</b></td>", prob_score[t][j]);
-      } else {
-        fprintf(f, "<td>%d</td>", prob_score[t][j]);
+      fprintf(f, "%d;%d;", t_n1[i] + 1, t_n2[i] + 1);
+      fprintf(f, "%d;", t_ind[t]);
+      for (j = 0; j < p_tot; j++) {
+        if (!att_num[t][j]) {
+          fprintf(f, "0;0;;");
+        } else if (full_sol[t][j]) {
+          fprintf(f, "%d;1;%d;", att_num[t][j], prob_score[t][j]);
+        } else {
+          fprintf(f, "%d;0;%d;", att_num[t][j], prob_score[t][j]);
+        }
       }
+      fprintf(f, "%d;%d;", tot_full[t], tot_score[t]);
+      fprintf(f, "\n");
     }
-    fprintf(f, "<td>%d</td><td>%d</td></tr>",
-            tot_full[t], tot_score[t]);
-  }
+  } else {
+    /* print table header */
+    fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th>",
+            _("Place"), _("Team"));
+    for (j = 0; j < p_tot; j++) {
+      fprintf(f, "<th>");
+      if (global->prob_info_url[0]) {
+        sformat_message(dur_str, sizeof(dur_str), global->prob_info_url,
+                        NULL, probs[p_ind[j]], NULL, NULL, NULL);
+        fprintf(f, "<a href=\"%s\">", dur_str);
+      }
+      fprintf(f, "%s", probs[p_ind[j]]->short_name);
+      if (global->prob_info_url[0]) {
+        fprintf(f, "</a>");
+      }
+      fprintf(f, "</th>");
+    }
+    fprintf(f, "<th>%s</th><th>%s</th></tr>",
+            _("Solved<br>problems"), _("Score"));
+    
+    /* print table contents */
+    for (i = 0; i < t_tot; i++) {
+      int t = t_sort[i];
+      fputs("<tr><td>", f);
+      if (t_n1[i] == t_n2[i]) fprintf(f, "%d", t_n1[i] + 1);
+      else fprintf(f, "%d-%d", t_n1[i] + 1, t_n2[i] + 1);
+      fputs("</td>", f);
+      fprintf(f, "<td>");
+      if (global->team_info_url[0]) {
+        struct teamdb_export ttt;
+        
+        teamdb_export_team(t_ind[t], &ttt);
+        sformat_message(dur_str, sizeof(dur_str), global->team_info_url,
+                        NULL, NULL, NULL, NULL, &ttt);
+        fprintf(f, "<a href=\"%s\">", dur_str);
+      }
+      fprintf(f, "%s", teamdb_get_name(t_ind[t]));
+      if (global->team_info_url[0]) {
+        fprintf(f, "</a>");
+      }
+      fprintf(f, "</td>");
+      for (j = 0; j < p_tot; j++) {
+        if (!att_num[t][j]) {
+          fprintf(f, "<td>&nbsp;</td>");
+        } else if (full_sol[t][j]) {
+          fprintf(f, "<td><b>%d</b></td>", prob_score[t][j]);
+        } else {
+          fprintf(f, "<td>%d</td>", prob_score[t][j]);
+        }
+      }
+      fprintf(f, "<td>%d</td><td>%d</td></tr>",
+              tot_full[t], tot_score[t]);
+    }
 
-  fputs("</table>\n", f);
-  if (!client_flag) {
-    if (footer_str) {
-      fprintf(f, "%s", footer_str);
-    } else {
-      fputs("</body></html>", f);
+    fputs("</table>\n", f);
+    if (!client_flag) {
+      if (footer_str) {
+        fprintf(f, "%s", footer_str);
+      } else {
+        fputs("</body></html>", f);
+      }
     }
   }
 
@@ -727,7 +750,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
 
 void
 do_write_standings(FILE *f, int client_flag, int user_id,
-                   unsigned char const *footer_str)
+                   unsigned char const *footer_str, int raw_flag)
 {
   int      i, j;
 
@@ -784,6 +807,8 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   }
   current_dur = cur_time - start_time;
   if (!start_time) {
+    if (raw_flag) return;
+
     fprintf(f, "<h2>%s</h2>", _("The contest is not started"));
     if (!client_flag) {
       if (footer_str) {
@@ -913,88 +938,108 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     i = j;
   }
 
-  /* print table header */
-  fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th>",
-          _("Place"), _("Team"));
-  for (j = 0; j < p_tot; j++) {
-    fprintf(f, "<th>");
-    if (global->prob_info_url[0]) {
-      sformat_message(url_str, sizeof(url_str), global->prob_info_url,
-                      NULL, probs[p_ind[j]], NULL, NULL, NULL);
-      fprintf(f, "<a href=\"%s\">", url_str);
-    }
-    fprintf(f, "%s", probs[p_ind[j]]->short_name);
-    if (global->prob_info_url[0]) {
-      fprintf(f, "</a>");
-    }
-    fprintf(f, "</th>");
-  }
-  fprintf(f, "<th>%s</th><th>%s</th></tr>",
-          _("Total"), _("Penalty"));
-
-  for (i = 0; i < t_tot; i++) {
-    int t = t_sort[i];
-    bgcolor_ptr = 0;
-    if (user_id > 0 && user_id == t_ind[t] &&
-        global->standings_team_color[0]) {
-      bgcolor_ptr = global->standings_team_color;
-    } else if (global->virtual) {
-      int vstat = run_get_virtual_status(t_ind[t]);
-      if (vstat == 1 && global->standings_real_team_color) {
-        bgcolor_ptr = global->standings_real_team_color;
-      } else if (vstat == 2 && global->standings_virtual_team_color) {
-        bgcolor_ptr = global->standings_virtual_team_color;
+  if (raw_flag) {
+    for (i = 0; i < t_tot; i++) {
+      int t = t_sort[i];
+      fprintf(f, "%d;%d;", t_n1[i] + 1, t_n2[i] + 1);
+      fprintf(f, "%d;", t_ind[t]);
+      for (j = 0; j < p_tot; j++) {
+        if (calc[t][j] < 0) {
+          fprintf(f, "%d;0;;", -calc[t][j]);
+        } else if (calc[t][j] > 0) {
+          fprintf(f, "%d;1;%ld;", calc[t][j] - 1, ok_time[t][j]);
+        } else {
+          fprintf(f, "0;0;;");
+        }
       }
+      fprintf(f, "%d;%d;", t_prob[t], t_pen[t]);
+      fprintf(f, "\n");
     }
-    if (bgcolor_ptr) {
-      fprintf(f, "<tr bgcolor=\"%s\"><td>", bgcolor_ptr);
-    } else {
-      fputs("<tr><td>", f);
-    }
-    if (t_n1[i] == t_n2[i]) fprintf(f, "%d", t_n1[i] + 1);
-    else fprintf(f, "%d-%d", t_n1[i] + 1, t_n2[i] + 1);
-    fputs("</td>", f);
-    fprintf(f, "<td>");
-    if (global->team_info_url[0]) {
-      struct teamdb_export ttt;
-
-      teamdb_export_team(t_ind[t], &ttt);
-      sformat_message(url_str, sizeof(url_str), global->team_info_url,
-                      NULL, NULL, NULL, NULL, &ttt);
-      fprintf(f, "<a href=\"%s\">", url_str);      
-    }
-    fprintf(f, "%s", teamdb_get_name(t_ind[t]));
-    if (global->team_info_url[0]) {
-      fprintf(f, "</a>");
-    }
-    fprintf(f, "</td>");
+  } else {
+    /* print table header */
+    fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th>",
+            _("Place"), _("Team"));
     for (j = 0; j < p_tot; j++) {
-      if (calc[t][j] < 0) {
-        fprintf(f, "<td>%d</td>", calc[t][j]);
-      } else if (calc[t][j] == 1) {
-        fprintf(f, "<td>+ (%ld:%02ld)</td>",
-                ok_time[t][j] / 60, ok_time[t][j] % 60);
-      } else if (calc[t][j] > 0) {
-        fprintf(f, "<td>+%d (%ld:%02ld)</td>",
-                calc[t][j] - 1, ok_time[t][j] / 60, ok_time[t][j] % 60);
-      } else {
-        fprintf(f, "<td>&nbsp;</td>");
+      fprintf(f, "<th>");
+      if (global->prob_info_url[0]) {
+        sformat_message(url_str, sizeof(url_str), global->prob_info_url,
+                        NULL, probs[p_ind[j]], NULL, NULL, NULL);
+        fprintf(f, "<a href=\"%s\">", url_str);
       }
+      fprintf(f, "%s", probs[p_ind[j]]->short_name);
+      if (global->prob_info_url[0]) {
+        fprintf(f, "</a>");
+      }
+      fprintf(f, "</th>");
     }
-    fprintf(f, "<td>%d</td><td>%d</td></tr>",
-            t_prob[t], t_pen[t]);
-  }
+    fprintf(f, "<th>%s</th><th>%s</th></tr>",
+            _("Total"), _("Penalty"));
 
-  fputs("</table>\n", f);
-  if (!client_flag) {
-    if (footer_str) {
-      fprintf(f, "%s", footer_str);
-    } else {
-      fputs("</body></html>", f);
-    } 
+    for (i = 0; i < t_tot; i++) {
+      int t = t_sort[i];
+      bgcolor_ptr = 0;
+      if (user_id > 0 && user_id == t_ind[t] &&
+          global->standings_team_color[0]) {
+        bgcolor_ptr = global->standings_team_color;
+      } else if (global->virtual) {
+        int vstat = run_get_virtual_status(t_ind[t]);
+        if (vstat == 1 && global->standings_real_team_color) {
+          bgcolor_ptr = global->standings_real_team_color;
+        } else if (vstat == 2 && global->standings_virtual_team_color) {
+          bgcolor_ptr = global->standings_virtual_team_color;
+        }
+      }
+      if (bgcolor_ptr) {
+        fprintf(f, "<tr bgcolor=\"%s\"><td>", bgcolor_ptr);
+      } else {
+        fputs("<tr><td>", f);
+      }
+      if (t_n1[i] == t_n2[i]) fprintf(f, "%d", t_n1[i] + 1);
+      else fprintf(f, "%d-%d", t_n1[i] + 1, t_n2[i] + 1);
+      fputs("</td>", f);
+      fprintf(f, "<td>");
+      if (global->team_info_url[0]) {
+        struct teamdb_export ttt;
+        
+        teamdb_export_team(t_ind[t], &ttt);
+        sformat_message(url_str, sizeof(url_str), global->team_info_url,
+                        NULL, NULL, NULL, NULL, &ttt);
+        fprintf(f, "<a href=\"%s\">", url_str);      
+      }
+      fprintf(f, "%s", teamdb_get_name(t_ind[t]));
+      if (global->team_info_url[0]) {
+        fprintf(f, "</a>");
+      }
+      fprintf(f, "</td>");
+      for (j = 0; j < p_tot; j++) {
+        if (calc[t][j] < 0) {
+          fprintf(f, "<td>%d</td>", calc[t][j]);
+        } else if (calc[t][j] == 1) {
+          fprintf(f, "<td>+ (%ld:%02ld)</td>",
+                  ok_time[t][j] / 60, ok_time[t][j] % 60);
+        } else if (calc[t][j] > 0) {
+          fprintf(f, "<td>+%d (%ld:%02ld)</td>",
+                  calc[t][j] - 1, ok_time[t][j] / 60, ok_time[t][j] % 60);
+        } else {
+          fprintf(f, "<td>&nbsp;</td>");
+        }
+      }
+      fprintf(f, "<td>%d</td><td>%d</td></tr>",
+              t_prob[t], t_pen[t]);
+    }
+    
+    fputs("</table>\n", f);
+    if (!client_flag) {
+      if (footer_str) {
+        fprintf(f, "%s", footer_str);
+      } else {
+        fputs("</body></html>", f);
+      } 
+    }
   }
-
+    
   return;
+
  alloca_failed: 
   err("alloca failed");
   return;
@@ -1017,9 +1062,9 @@ write_standings(char const *stat_dir, char const *name,
     write_standings_header(f, 0, 0, header_str, 0);
     if (global->score_system_val == SCORE_KIROV
         || global->score_system_val == SCORE_OLYMPIAD)
-      do_write_kirov_standings(f, 0, footer_str);
+      do_write_kirov_standings(f, 0, footer_str, 0);
     else
-      do_write_standings(f, 0, 0, footer_str);
+      do_write_standings(f, 0, 0, footer_str, 0);
     fclose(f);
     if (!html_ptr) {
       html_ptr = xstrdup("");
@@ -1038,9 +1083,9 @@ write_standings(char const *stat_dir, char const *name,
   write_standings_header(f, 0, 0, header_str, 0);
   if (global->score_system_val == SCORE_KIROV
       || global->score_system_val == SCORE_OLYMPIAD)
-    do_write_kirov_standings(f, 0, footer_str);
+    do_write_kirov_standings(f, 0, footer_str, 0);
   else
-    do_write_standings(f, 0, 0, footer_str);
+    do_write_standings(f, 0, 0, footer_str, 0);
   fclose(f);
   generic_copy_file(REMOVE, stat_dir, tbuf, "",
                     SAFE, stat_dir, name, "");
@@ -1503,7 +1548,7 @@ write_virtual_standings(FILE *f, int user_id)
   astr = alloca(alen + 16);
   html_armor_string(user_name, astr);
   write_standings_header(f, 1, user_id, 0, astr);
-  do_write_standings(f, 1, user_id, 0);
+  do_write_standings(f, 1, user_id, 0, 0);
   return 0;
 }
 
