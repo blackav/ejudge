@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,7 @@
 
 int
 userlist_clnt_get_info(struct userlist_clnt *clnt,
+                       int cmd,
                        int uid, unsigned char **p_info)
 {
   struct userlist_pk_get_user_info out_pkt;
@@ -30,8 +31,11 @@ userlist_clnt_get_info(struct userlist_clnt *clnt,
   ASSERT(clnt);
   ASSERT(clnt->fd >= 0);
 
+  if (cmd != ULS_GET_USER_INFO && cmd != ULS_PRIV_GET_USER_INFO)
+    return -ULS_ERR_PROTOCOL;
+
   memset(&out_pkt, 0, sizeof(out_pkt));
-  out_pkt.request_id = ULS_GET_USER_INFO;
+  out_pkt.request_id = cmd;
   out_pkt.user_id = uid;
   if ((r = userlist_clnt_send_packet(clnt, sizeof(out_pkt), &out_pkt)) < 0)
     return r;
@@ -58,6 +62,5 @@ userlist_clnt_get_info(struct userlist_clnt *clnt,
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
