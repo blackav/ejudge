@@ -59,6 +59,11 @@ enum
     TG_VAR_DIR,
     TG_SUPER_SERVE_LOG,
     TG_COMPILE_LOG,
+    TG_SUPER_SERVE_SOCKET,
+    TG_SUPER_SERVE_USER,
+    TG_SUPER_SERVE_GROUP,
+    TG_USERLIST_USER,
+    TG_USERLIST_GROUP,
   };
 enum
   {
@@ -101,6 +106,11 @@ static char const * const tag_map[] =
   "var_dir",
   "super_serve_log",
   "compile_log",
+  "super_serve_socket",
+  "super_serve_user",
+  "super_serve_group",
+  "userlist_user",
+  "userlist_group",
   0
 };
 
@@ -148,6 +158,11 @@ tree_alloc_func(int tag)
   case TG_VAR_DIR:
   case TG_SUPER_SERVE_LOG:
   case TG_COMPILE_LOG:
+  case TG_SUPER_SERVE_SOCKET:
+  case TG_SUPER_SERVE_USER:
+  case TG_SUPER_SERVE_GROUP:
+  case TG_USERLIST_USER:
+  case TG_USERLIST_GROUP:
     return xcalloc(1, sizeof(struct xml_tree));
   case TG_MAP:
     return xcalloc(1, sizeof(struct userlist_cfg_user_map));
@@ -494,6 +509,21 @@ userlist_cfg_parse(char const *path)
     case TG_COMPILE_LOG:
       if (handle_final_tag(path, p, &cfg->compile_log) < 0) goto failed;
       break;
+    case TG_SUPER_SERVE_SOCKET:
+      if (handle_final_tag(path, p, &cfg->super_serve_socket) < 0) goto failed;
+      break;
+    case TG_SUPER_SERVE_USER:
+      if (handle_final_tag(path, p, &cfg->super_serve_user) < 0) goto failed;
+      break;
+    case TG_SUPER_SERVE_GROUP:
+      if (handle_final_tag(path, p, &cfg->super_serve_group) < 0) goto failed;
+      break;
+    case TG_USERLIST_USER:
+      if (handle_final_tag(path, p, &cfg->userlist_user) < 0) goto failed;
+      break;
+    case TG_USERLIST_GROUP:
+      if (handle_final_tag(path, p, &cfg->userlist_group) < 0) goto failed;
+      break;
     default:
       err("%s:%d:%d: element <%s> is invalid here",
           path, p->line, p->column, tag_map[p->tag]);
@@ -523,6 +553,11 @@ userlist_cfg_parse(char const *path)
     err("%s: element <socket> is not defined", path);
     goto failed;
   }
+#if defined EJUDGE_SUPER_SERVE_SOCKET
+  if (!cfg->super_serve_socket) {
+    cfg->super_serve_socket = xstrdup(EJUDGE_SUPER_SERVE_SOCKET);
+  }
+#endif /* EJUDGE_SUPER_SERVE_SOCKET */
 #if defined EJUDGE_CONTESTS_DIR
   if (!cfg->contests_dir) {
     cfg->contests_dir = xstrdup(EJUDGE_CONTESTS_DIR);
