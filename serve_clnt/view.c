@@ -56,7 +56,8 @@ serve_clnt_view(int sock_fd,
   self_url_ptr = out->data;
   hidden_vars_ptr = self_url_ptr + hidden_vars_len + 1;
   if (cmd != SRV_CMD_VIEW_REPORT && cmd != SRV_CMD_VIEW_CLAR
-      && cmd != SRV_CMD_VIEW_SOURCE) {
+      && cmd != SRV_CMD_VIEW_SOURCE
+      && cmd != SRV_CMD_VIEW_USERS) {
     err("serve_clnt_view: invalid command %d", cmd);
     return -SRV_ERR_PROTOCOL;
   }
