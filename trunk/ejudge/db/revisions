@@ -1476,3 +1476,10 @@ userlist_clnt.h 1 21 635430
 super_html.c 1 1 2732466
 userlist_clnt/get_uid_by_pid_2.c 1 2 228007
 super_clnt/simple_cmd.c 1 1 135006
+userlist.h 1 20 959064
+xml_utils.h 1 2 242307
+userlist.c 1 14 2422951
+userlist_cfg.c 1 17 1325430
+userlist_proto.c 1 6 166419
+userlist_xml.c 1 21 3886791
+super_clnt/main_page.c 1 2 298262
