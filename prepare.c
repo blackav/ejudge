@@ -540,15 +540,15 @@ set_defaults(int mode)
     }
     if (!probs[i]->full_score) {
       probs[i]->full_score = DFLT_P_FULL_SCORE;
-      info(_("problem.%d.full_score set to %d"), DFLT_P_FULL_SCORE);
+      info(_("problem.%d.full_score set to %d"), i, DFLT_P_FULL_SCORE);
     }
     if (!probs[i]->test_score) {
       probs[i]->test_score = DFLT_P_TEST_SCORE;
-      info(_("problem.%d.test_score set to %d"), DFLT_P_TEST_SCORE);
+      info(_("problem.%d.test_score set to %d"), i,  DFLT_P_TEST_SCORE);
     }
     if (!probs[i]->run_penalty) {
       probs[i]->run_penalty = DFLT_P_RUN_PENALTY;
-      info(_("problem.%d.run_penalty set to %d"), DFLT_P_RUN_PENALTY);
+      info(_("problem.%d.run_penalty set to %d"), i, DFLT_P_RUN_PENALTY);
     }
     
     if (mode == PREPARE_RUN) {
@@ -626,6 +626,8 @@ set_defaults(int mode)
         }
         pathmake4(testers[i]->check_cmd, global->checker_dir, "/",
                   testers[i]->check_cmd, 0);
+        pathmake4(testers[i]->start_cmd, global->script_dir, "/",
+                  testers[i]->start_cmd, 0);
       }
     }
   }
@@ -830,7 +832,7 @@ prepare(char const *config_file, int flags, int mode, char const *opts)
       return -1;
     }
     config = parse_param(NULL, f, params, (flags & PREPARE_QUIET));
-    pclose(f); f = 0;
+    f = 0;
   } else {
     config = parse_param(config_file, 0, params, (flags & PREPARE_QUIET));
   }
