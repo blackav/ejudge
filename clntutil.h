@@ -34,6 +34,7 @@ extern int           server_standings_frozen;
 extern int           server_score_system;
 extern int           server_clients_suspended;
 extern int           server_download_interval;
+extern int           server_is_virtual;
 
 extern unsigned long client_cur_time;
 
