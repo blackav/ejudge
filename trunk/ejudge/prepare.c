@@ -1284,7 +1284,9 @@ set_defaults(int mode)
 
       if (!probs[i]->input_file[0] && si != -1
           && abstr_probs[si]->input_file[0]) {
-        strcpy(probs[i]->input_file, abstr_probs[si]->input_file);
+        sformat_message(probs[i]->input_file, PATH_MAX,
+                        abstr_probs[si]->input_file,
+                        NULL, probs[i], NULL, NULL, NULL);
         info("problem.%s.input_file inherited from problem.%s ('%s')",
              ish, sish, probs[i]->input_file);
       }
@@ -1294,7 +1296,9 @@ set_defaults(int mode)
       }
       if (!probs[i]->output_file[0] && si != -1
           && abstr_probs[si]->output_file[0]) {
-        strcpy(probs[i]->output_file, abstr_probs[si]->output_file);
+        sformat_message(probs[i]->output_file, PATH_MAX,
+                        abstr_probs[si]->output_file,
+                        NULL, probs[i], NULL, NULL, NULL);
         info("problem.%s.output_file inherited from problem.%s ('%s')",
              ish, sish, probs[i]->output_file);
       }
