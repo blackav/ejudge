@@ -38,7 +38,7 @@
 #endif
 
 #define MAX_LANGUAGE 31
-#define MAX_PROBLEM  31
+#define MAX_PROBLEM  100
 #define MAX_TESTER  100
 
 struct generic_section_config *config;
@@ -53,7 +53,6 @@ int max_prob;
 int max_tester;
 
 /* new userlist-server interaction */
-struct contest_list *contests;
 struct contest_desc *cur_contest;
 
 static struct section_problem_data  *abstr_probs[MAX_PROBLEM + 1];
@@ -87,6 +86,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(max_line_length, "d"),
   GLOBAL_PARAM(tests_to_accept, "d"),
   GLOBAL_PARAM(ignore_compile_errors, "d"),
+  GLOBAL_PARAM(inactivity_timeout, "d"),
 
   GLOBAL_PARAM(charset, "s"),
   GLOBAL_PARAM(standings_charset, "s"),
@@ -104,7 +104,7 @@ static struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(contest_id, "d"),
   GLOBAL_PARAM(socket_path, "s"),
-  GLOBAL_PARAM(contests_path, "s"),
+  GLOBAL_PARAM(contests_dir, "s"),
   GLOBAL_PARAM(serve_socket, "s"),
 
   //GLOBAL_PARAM(log_file, "s"),
@@ -360,6 +360,7 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_MAX_LINE_LENGTH    4096
 #define DFLT_G_TEAM_DOWNLOAD_TIME 30
 #define DFLT_G_SERVE_SOCKET       "serve"
+#define DFLT_G_INACTIVITY_TIMEOUT 120
 
 #define DFLT_P_INPUT_FILE         "input"
 #define DFLT_P_OUTPUT_FILE        "output"
@@ -382,6 +383,7 @@ global_init_func(struct generic_section_config *gp)
   p->tests_to_accept = -1;
   p->team_download_time = -1;
   p->ignore_duplicated_runs = -1;
+  p->inactivity_timeout = -1;
 }
 
 static void
@@ -715,18 +717,18 @@ set_defaults(int mode)
       err("global.socket_path must be set");
       return -1;
     }
-    if (!global->contests_path[0]) {
-      err("global.contests_path must be set");
+    if (!global->contests_dir[0]) {
+      err("global.contests_dir must be set");
       return -1;
     }
-    if (!(contests = parse_contest_xml(global->contests_path))) {
-      err("cannot parse contests definitions");
+    if ((i = contests_set_directory(global->contests_dir)) < 0) {
+      err("invalid contests directory '%s': %s", global->contests_dir,
+          contests_strerror(-i));
       return -1;
     }
-    if (global->contest_id <= 0
-        || global->contest_id >= contests->id_map_size
-        || !(cur_contest = contests->id_map[global->contest_id])) {
-      err("invalid contest identifier");
+    if ((i = contests_get(global->contest_id, &cur_contest)) < 0) {
+      err("cannot load contest information: %s",
+          contests_strerror(-i));
       return -1;
     }
     pathcpy(global->name, cur_contest->name);
@@ -790,6 +792,10 @@ set_defaults(int mode)
       global->contest_time = DFLT_G_CONTEST_TIME;
     }
     global->contest_time *= 60;
+    if (global->inactivity_timeout == -1) {
+      info("global.inactivity_timeout set to %d", DFLT_G_INACTIVITY_TIMEOUT);
+      global->inactivity_timeout = DFLT_G_INACTIVITY_TIMEOUT;
+    }
   }
 
   /* root_dir, conf_dir, var_dir */
@@ -1334,6 +1340,11 @@ set_defaults(int mode)
       if (!testers[i]) continue;
       tp = testers[i];
 
+      /* we hardly can do any reasonable in this case */
+      if (tp->any && mode == PREPARE_RUN) {
+        continue;
+      }
+
       si = -1;
       sish = 0;
       if (tp->super && tp->super[0]) {
@@ -1810,6 +1821,7 @@ create_dirs(int mode)
         return -1;
     }
     if (mode == PREPARE_RUN) {
+      if (testers[i]->any) continue;
       if (make_dir(testers[i]->check_dir, 0) < 0) return -1;
     }
   }
@@ -1857,6 +1869,218 @@ prepare(char const *config_file, int flags, int mode, char const *opts)
     return -1;
   }
   if (set_defaults(mode) < 0) return -1;
+  return 0;
+}
+
+int
+prepare_tester_refinement(struct section_tester_data *out,
+                          int def_tst_id, int prob_id)
+{
+  struct section_tester_data *tp, *atp = 0;
+  struct section_problem_data *prb;
+  int si;
+  unsigned char *sish = 0;
+
+  ASSERT(out);
+  ASSERT(def_tst_id > 0 && def_tst_id <= max_tester);
+  ASSERT(prob_id > 0 && prob_id <= max_prob);
+  tp = testers[def_tst_id];
+  prb = probs[prob_id];
+  ASSERT(tp);
+  ASSERT(tp->any);
+  ASSERT(prb);
+
+  // find abstract tester
+  if (tp->super && tp->super[0]) {
+    if (tp->super[1]) {
+      err("concrete tester may inherit only one abstract tester");
+      return -1;
+    }
+
+    for (si = 0; si < max_abstr_tester; si++) {
+      atp = abstr_testers[si];
+      if (!strcmp(atp->name, tp->super[0])) break;
+    }
+    if (si >= max_abstr_tester) {
+      err("abstract tester '%s' not found", tp->super[0]);
+      return -1;
+    }
+    sish = atp->name;
+  }
+
+  memset(out, 0, sizeof(*out));
+  out->id = tp->id;
+  out->problem = prob_id;
+
+  /* copy architecture */
+  strcpy(out->arch, tp->arch);
+  if (!out->arch[0] && atp && atp->arch[0]) {
+    strcpy(out->arch, atp->arch);
+  }
+
+  /* copy key */
+  /* FIXME: key currently is not handled properly :-( */
+  strcpy(out->key, tp->key);
+  if (!out->key[0] && atp && atp->key[0]) {
+    strcpy(out->key, atp->key);
+  }
+
+  /* generate tester name */
+  /* FIXME: does the name matter? */
+  /* FIXME: should we use the default tester's name? */
+  if (out->arch[0]) {
+    sprintf(out->name, "tst_dflt_%d_%d_%s", out->id, prob_id, out->arch);
+  } else {
+    sprintf(out->name, "tst_dflt_%d_%d", out->id, prob_id);
+  }
+
+  /* copy check_dir */
+  strcpy(out->check_dir, tp->check_dir);
+  if (!out->check_dir[0] && atp && atp->check_dir[0]) {
+    sformat_message(out->check_dir, sizeof(out->check_dir),
+                    atp->check_dir, global, prb, NULL, out, NULL);
+  }
+  if (!out->check_dir[0]) {
+    pathcpy(out->check_dir, global->run_check_dir);
+  }
+
+  /* copy no_core_dump */
+  out->no_core_dump = tp->no_core_dump;
+  if (out->no_core_dump == -1 && atp) {
+    out->no_core_dump = atp->no_core_dump;
+  }
+  if (out->no_core_dump == -1) {
+    out->no_core_dump = 0;
+  }
+
+  /* copy clear_env */
+  out->clear_env = tp->clear_env;
+  if (out->clear_env == -1 && atp) {
+    out->clear_env = atp->clear_env;
+  }
+  if (out->clear_env == -1) {
+    out->clear_env = 0;
+  }
+
+  /* copy time_limit_adjustment */
+  out->time_limit_adjustment = tp->time_limit_adjustment;
+  if (out->time_limit_adjustment == -1 && atp) {
+    out->time_limit_adjustment = atp->time_limit_adjustment;
+  }
+  if (out->time_limit_adjustment == -1) {
+    out->time_limit_adjustment = 0;
+  }
+
+  /* copy max_stack_size */
+  out->max_stack_size = tp->max_stack_size;
+  if (!out->max_stack_size && atp) {
+    out->max_stack_size = atp->max_stack_size;
+  }
+
+  /* copy max_data_size */
+  out->max_data_size = tp->max_data_size;
+  if (!out->max_data_size && atp) {
+    out->max_data_size = atp->max_data_size;
+  }
+
+  /* copy max_vm_size */
+  out->max_vm_size = tp->max_vm_size;
+  if (!out->max_vm_size && atp) {
+    out->max_vm_size = atp->max_vm_size;
+  }
+
+  /* copy is_dos */
+  out->is_dos = tp->is_dos;
+  if (out->is_dos == -1 && atp) {
+    out->is_dos = atp->is_dos;
+  }
+  if (out->is_dos == -1) {
+    out->is_dos = 0;
+  }
+
+  /* copy no_redirect */
+  out->no_redirect = tp->no_redirect;
+  if (out->no_redirect == -1 && atp) {
+    out->no_redirect = atp->no_redirect;
+  }
+  if (out->no_redirect == -1) {
+    out->no_redirect = 0;
+  }
+
+  /* copy kill_signal */
+  strcpy(out->kill_signal, tp->kill_signal);
+  if (!out->kill_signal[0] && atp) {
+    strcpy(out->kill_signal, atp->kill_signal);
+  }
+
+  /* copy start_env */
+  out->start_env = sarray_merge_pf(tp->start_env, out->start_env);
+  if (atp && atp->start_env) {
+    out->start_env = sarray_merge_pf(atp->start_env, out->start_env);
+  }
+
+  /* copy errorcode_file */
+  strcpy(out->errorcode_file, tp->errorcode_file);
+  if (!out->errorcode_file[0] && atp && atp->errorcode_file[0]) {
+    sformat_message(out->errorcode_file, sizeof(out->errorcode_file),
+                    atp->errorcode_file, global, prb, NULL, out, NULL);
+  }
+
+  /* copy error_file */
+  strcpy(out->error_file, tp->error_file);
+  if (!out->error_file[0] && atp && atp->error_file[0]) {
+    sformat_message(out->error_file, sizeof(out->error_file),
+                    atp->error_file, global, prb, NULL, out, NULL);
+  }
+  if (!out->error_file[0]) {
+    pathcpy(out->error_file, DFLT_T_ERROR_FILE);
+  }
+
+  /* copy check_cmd */
+  strcpy(out->check_cmd, tp->check_cmd);
+  if (!out->check_cmd[0] && atp && atp->check_cmd[0]) {
+    sformat_message(out->check_cmd, sizeof(out->check_cmd),
+                    atp->check_cmd, global, prb, NULL, out, NULL);
+  }
+  if (!out->check_cmd[0]) {
+    err("default tester for architecture '%s': check_cmd must be set",
+        out->arch);
+    return -1;
+  }
+  pathmake4(out->check_cmd, global->checker_dir, "/", out->check_cmd, 0);
+
+  /* copy start_cmd */
+  strcpy(out->start_cmd, tp->start_cmd);
+  if (!out->start_cmd[0] && atp && atp->start_cmd[0]) {
+    sformat_message(out->start_cmd, sizeof(out->start_cmd),
+                    atp->start_cmd, global, prb, NULL, out, NULL);
+  }
+  if (out->start_cmd[0]) {
+    pathmake4(out->start_cmd, global->script_dir, "/", out->start_cmd, 0);
+  }
+
+  /* copy prepare_cmd */
+  strcpy(out->prepare_cmd, tp->prepare_cmd);
+  if (!out->prepare_cmd[0] && atp && atp->prepare_cmd[0]) {
+    sformat_message(out->prepare_cmd, sizeof(out->prepare_cmd),
+                    atp->prepare_cmd, global, prb, NULL, out, NULL);
+  }
+  if (out->prepare_cmd[0]) {
+    pathmake4(out->prepare_cmd, global->script_dir, "/", out->prepare_cmd, 0);
+  }
+
+  // for debug
+  //print_tester(stdout, out);
+
+  return 0;
+}
+
+int
+create_tester_dirs(struct section_tester_data *tst)
+{
+  ASSERT(tst);
+
+  if (make_dir(tst->check_dir, 0) < 0) return -1;
   return 0;
 }
 
@@ -1962,6 +2186,7 @@ void print_tester(FILE *o, struct section_tester_data *t)
   fprintf(o, "no_redirect = %d\n", t->no_redirect);
   fprintf(o, "arch = \"%s\"\n", t->arch);
   fprintf(o, "key = \"%s\"\n", t->key);
+  fprintf(o, "check_dir = \"%s\"\n", t->check_dir);
   fprintf(o, "no_core_dump = %d\n", t->no_core_dump);
   fprintf(o, "kill_signal = \"%s\"\n", t->kill_signal);
   fprintf(o, "max_stack_size = %d\n", t->max_stack_size);
