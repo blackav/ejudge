@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -363,6 +363,40 @@ url_armor_string(unsigned char *buf, size_t size, const unsigned char *str)
     str++;
   }
   return outsz;
+}
+
+size_t
+text_numbered_memlen(const unsigned char *intxt, size_t insize)
+{
+  size_t i, nlines = 0;
+
+  if (!intxt || !insize) return 0;
+
+  for (i = 0; i < insize; i++) {
+    if (intxt[i] == '\n') nlines++;
+  }
+  if (intxt[insize - 1] != '\n') nlines++;
+  return insize + 8 * nlines;
+}
+
+void
+text_number_lines(const unsigned char *intxt, size_t insize,
+                  unsigned char *outtxt)
+{
+  unsigned char lbuf1[16];
+  size_t i, j = 1;
+  unsigned char *s = outtxt;
+
+  snprintf(lbuf1, sizeof(lbuf1), "[%d]", j++);
+  s += sprintf(s, "%-8s", lbuf1);
+  for (i = 0; i < insize; i++) {
+    *s++ = intxt[i];
+    if (intxt[i] == '\n' && i + 1 != insize) {
+      snprintf(lbuf1, sizeof(lbuf1), "[%d]", j++);
+      s += sprintf(s, "%-8s", lbuf1);
+    }
+  }
+  *s = 0;
 }
 
 /**
