@@ -212,3 +212,8 @@ team.c 1 11 1923215
 teamdb.c 1 10 1387369
 sformat.c 1 2 782320
 unix/exec.c 6 15 2367529
+exec.h 6 10 281388
+prepare.h 1 16 784276
+prepare.c 1 21 3549667
+run.c 1 17 1853794
+unix/exec.c 6 16 2578661
