@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2001,2002 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
 #include "prepare.h"
 #include "teamdb.h"
 #include "xalloc.h"
-#include "osdeps.h"
+#include "number_io.h"
 
 #include <stdio.h>
 #include <stdlib.h>
