@@ -239,6 +239,13 @@ teamdb_refresh(void)
 }
 
 int
+teamdb_get_vintage(void)
+{
+  if (!cached_users) return 0;
+  return cached_users->vintage;
+}
+
+int
 teamdb_open_client(unsigned char const *socket_path, int id)
 {
   int r;
