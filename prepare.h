@@ -271,6 +271,7 @@ struct section_problem_data
   int    checker_real_time_limit;
   int    disable_auto_testing;
   int    disable_testing;
+  int    hidden;                /* hide the problem from standings */
   puc_t super[32];              /* superproblem's short_name */
   puc_t short_name[32];         /* short problem name, eg A, B, ... */
   puc_t long_name[128];         /* long problem name */
