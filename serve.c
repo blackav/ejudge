@@ -60,6 +60,7 @@ static unsigned long contest_start_time;
 static unsigned long contest_sched_time;
 static unsigned long contest_duration;
 static unsigned long contest_stop_time;
+static int clients_suspended;
 
 struct server_cmd
 {
@@ -163,6 +164,8 @@ update_status_file(int force_flag)
   status.total_clars = clar_get_total();
   status.clars_disabled = global->disable_clars;
   status.team_clars_disabled = global->disable_team_clars;
+  status.score_system = global->score_system_val;
+  status.clients_suspended = clients_suspended;
 
   p = run_get_fog_period(cur_time,
                          global->board_fog_time, global->board_unfog_time);
@@ -239,7 +242,24 @@ report_bad_packet(char const *pk_name, int rm_mode)
 int
 is_valid_status(int status, int mode)
 {
-  if (global->score_system_val == SCORE_KIROV) {
+  if (global->score_system_val == SCORE_OLYMPIAD) {
+    switch (status) {
+    case RUN_OK:
+    case RUN_PARTIAL:
+    case RUN_RUN_TIME_ERR:
+    case RUN_TIME_LIMIT_ERR:
+    case RUN_PRESENTATION_ERR:
+    case RUN_WRONG_ANSWER_ERR:
+    case RUN_ACCEPTED:
+      return 1;
+    case RUN_COMPILE_ERR:
+    case RUN_REJUDGE:
+      if (mode != 1) return 0;
+      return 1;
+    default:
+      return 0;
+    }
+  } else if (global->score_system_val == SCORE_KIROV) {
     switch (status) {
     case RUN_OK:
     case RUN_PARTIAL:
@@ -668,7 +688,7 @@ read_compile_packet(char *pname)
   int  runid;
   int  cn;
 
-  int  lang, prob, stat, loc;
+  int  lang, prob, stat, loc, final_test;
 
   char *pbuf = buf;
 
@@ -715,8 +735,11 @@ read_compile_packet(char *pname)
     return -1;
 
   /* create tester packet */
+  final_test = 0;
+  if (global->score_system_val == SCORE_OLYMPIAD
+      && !contest_stop_time) final_test = 1;
   sprintf(pkt_name, "%06d", runid);
-  wsize = sprintf(buf, "%s %d\n", exe_name, loc);
+  wsize = sprintf(buf, "%s %d %d\n", exe_name, loc, final_test);
   if (generic_write_file(buf, wsize, SAFE, testers[cn]->queue_dir,
                          pkt_name, "") < 0)
     return -1;
@@ -759,9 +782,12 @@ read_run_packet(char *pname)
   if (run_get_param(runid, 0, &log_lang, &log_prob, &log_stat) < 0)
     goto bad_packet_error;
   if (log_stat != RUN_RUNNING) goto bad_packet_error;
-  if (status<0 || status>RUN_PARTIAL || test<0) goto bad_packet_error;
-  if (global->score_system_val == SCORE_KIROV
-      && (status == RUN_PARTIAL || status == RUN_OK)) {
+  if (status<0 || status>RUN_ACCEPTED || test<0) goto bad_packet_error;
+  if (global->score_system_val == SCORE_OLYMPIAD) {
+    if (log_prob < 1 || log_prob > max_prob || !probs[log_prob])
+      goto bad_packet_error;
+  } else if (global->score_system_val == SCORE_KIROV
+             && (status == RUN_PARTIAL || status == RUN_OK)) {
     // paranoidal?
     if (log_prob < 1 || log_prob > max_prob || !probs[log_prob])
       goto bad_packet_error;
@@ -1418,6 +1444,117 @@ judge_message(char const *pk_name, const packet_t pk_str, void *ptr)
   return 0;
 }
 
+/* FORMAT: "REJUDGE <locale_id>" */
+int
+judge_rejudge_all(char const *pk_name, const packet_t pk_str, void *ptr)
+{
+  packet_t cmd;
+  int locale_id = 0, n = 0;
+  int total_runs, r;
+  int status;
+
+  if (sscanf(pk_str, "%s %d %n", cmd, &locale_id, &n) != 2 || pk_str[n]) {
+    return report_bad_packet(pk_name, 0);
+  }
+  /* locale_id is currently unused */
+
+  total_runs = run_get_total();
+  for (r = 0; r < total_runs; r++) {
+    if (run_get_record(r, 0, 0, 0, 0, 0, 0, 0, &status, 0, 0) >= 0
+        && status >= RUN_OK && status <= RUN_MAX_STATUS) {
+      rejudge_run(r);
+    }
+  }
+  report_ok(pk_name);
+  return 0;
+}
+
+/* FORMAT: "REJUDGEP <locale_id> <problem_id>" */
+int
+judge_rejudge_problem(char const *pk_name, const packet_t pk_str, void *str)
+{
+  packet_t cmd;
+  int locale_id = 0, prob_id = 0, n = 0;
+  int total_runs, r, status, prob;
+
+  if (sscanf(pk_str, "%s %d %d %n", cmd, &locale_id, &prob_id, &n) != 3
+      || pk_str[n] || prob_id < 1 || prob_id > max_prob
+      || !probs[prob_id]) {
+    return report_bad_packet(pk_name, 0);
+  }
+  /* locale_id is currently unused */
+
+  total_runs = run_get_total();
+  for (r = 0; r < total_runs; r++) {
+    if (run_get_record(r, 0, 0, 0, 0, 0, 0, &prob, &status, 0, 0) >= 0
+        && prob == prob_id && status >= RUN_OK && status <= RUN_MAX_STATUS) {
+      rejudge_run(r);
+    }
+  }
+  report_ok(pk_name);
+  return 0;
+}
+
+/* FORMAT: "RESET <locale_id>" */
+int
+judge_reset_contest(char const *pk_name, const packet_t pk_str, void *str)
+{
+  packet_t cmd;
+  int locale_id = 0, n = 0;
+
+  if (sscanf(pk_str, "%s %d %n", cmd, &locale_id, &n) != 2 || pk_str[n]) {
+    return report_bad_packet(pk_name, 0);
+  }
+
+  /* FIXME: we need to reset all the components (compile, serve) as well */
+  /* reset run log */
+  run_reset();
+  contest_duration = global->contest_time;
+  run_set_duration(contest_duration);
+  clar_reset();
+  /* clear all submissions and clarifications */
+  clear_directory(global->clar_archive_dir);
+  clear_directory(global->report_archive_dir);
+  clear_directory(global->run_archive_dir);
+  clear_directory(global->team_report_archive_dir);
+
+  update_status_file(1);
+  report_ok(pk_name);
+  return 0;
+}
+
+int
+judge_suspend_clients(char const *pk_name, const packet_t pk_str, void *str)
+{
+  packet_t cmd;
+  int n = 0;
+
+  if (sscanf(pk_str, "%s %n", cmd, &n) != 1 || pk_str[n]) {
+    return report_bad_packet(pk_name, 0);
+  }
+
+  clients_suspended = 1;
+  update_status_file(1);
+  report_ok(pk_name);
+  return 0;
+}
+
+int
+judge_resume_clients(char const *pk_name, const packet_t pk_str, void *str)
+{
+  packet_t cmd;
+  int n = 0;
+
+  if (sscanf(pk_str, "%s %n", cmd, &n) != 1 || pk_str[n]) {
+    return report_bad_packet(pk_name, 0);
+  }
+
+  clients_suspended = 0;
+  update_status_file(1);
+  report_ok(pk_name);
+  return 0;
+}
+
 struct server_cmd judge_cmds[] =
 {
   { "START", judge_start, 0 },
@@ -1444,6 +1581,11 @@ struct server_cmd judge_cmds[] =
   { "CHGVIS", judge_change_team_vis, 0 },
   { "CHGPASSWD", judge_change_team_password, 0 },
   { "NEWTEAM", judge_add_team, 0 },
+  { "REJUDGE", judge_rejudge_all, 0 },
+  { "REJUDGEP", judge_rejudge_problem, 0 },
+  { "RESET", judge_reset_contest, 0 },
+  { "SUSPEND", judge_suspend_clients, 0 },
+  { "RESUME", judge_resume_clients, 0 },
 
   { 0, 0, 0 },
 };
@@ -1530,11 +1672,13 @@ do_loop(void)
         update_standings_file(0);
       }
 
-      r = scan_dir(global->team_cmd_dir, packetname);
-      if (r < 0) return -1;
-      if (r > 0) {
-        if (read_team_packet(packetname) < 0) return -1;
-        break;
+      if (!clients_suspended) {
+        r = scan_dir(global->team_cmd_dir, packetname);
+        if (r < 0) return -1;
+        if (r > 0) {
+          if (read_team_packet(packetname) < 0) return -1;
+          break;
+        }
       }
 
       r = scan_dir(global->judge_cmd_dir, packetname);
@@ -1558,7 +1702,6 @@ do_loop(void)
         break;
       }
     
-      //write_log(0, LOG_INFO, "no new packets");
       os_Sleep(global->serve_sleep_time);
     }
   }
