@@ -151,7 +151,7 @@ install : all
 	for i in checker.h checker_internal.h; do install -m 644 $$i "${DESTDIR}${includedir}/ejudge"; done
 	mkdir -p "${DESTDIR}${libdir}"
 	install -m 644 libchecker.a "${DESTDIR}${libdir}"
-	[ x"${STATIC}" = x ] && install -m 755 libchecker.so "${DESTDIR}${libdir}"
+	if [ x"${STATIC}" = x ]; then install -m 755 libchecker.so "${DESTDIR}${libdir}"; fi
 	mkdir -p "${DESTDIR}${datadir}/ejudge/testlib"
 	for i in symbols.pas testlib.pas; do install -m 644 $$i "${DESTDIR}${datadir}/ejudge/testlib"; done
 	mkdir -p "${DESTDIR}${libexecdir}/ejudge"
