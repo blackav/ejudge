@@ -69,6 +69,7 @@ enum
     SRV_CMD_SUBMIT_RUN,
     SRV_CMD_SUBMIT_CLAR,
     SRV_CMD_TEAM_PAGE,
+    SRV_CMD_MASTER_PAGE,
 
     SRV_CMD_LAST
   };
@@ -191,6 +192,36 @@ struct prot_serve_pkt_team_page
   unsigned char data[2];
 };
 
+#ifndef __MASTER_PAGE_ENUM_DEFINED__
+#define __MASTER_PAGE_ENUM_DEFINED__
+enum
+{
+  PRIV_LEVEL_USER = 0,
+  PRIV_LEVEL_OBSERVER,
+  PRIV_LEVEL_JUDGE,
+  PRIV_LEVEL_ADMIN
+};
+#endif /* __MASTER_PAGE_ENUM_DEFINED__ */
+
+struct prot_serve_pkt_master_page
+{
+  struct prot_serve_packet b;
+
+  int user_id;
+  int contest_id;
+  int locale_id;
+  unsigned long ip;
+  int priv_level;
+  int first_run;
+  int last_run;
+  int first_clar;
+  int last_clar;
+  int self_url_len;
+  int filter_expr_len;
+  int hidden_vars_len;
+  unsigned char data[3];
+};
+
 struct prot_serve_pkt_archive_path
 {
   struct prot_serve_packet b;
@@ -201,5 +232,6 @@ struct prot_serve_pkt_archive_path
 };
 
 unsigned char const *protocol_strerror(int n);
+unsigned char const *protocol_priv_level_str(int n);
 
 #endif /* __PROTOCOL_H__ */
