@@ -21,6 +21,7 @@
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
+#include <reuse/osdeps.h>
 
 #include <string.h>
 #include <time.h>
@@ -29,6 +30,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <ctype.h>
+#include <limits.h>
 
 #define MAX_CONTEST_ID 1000
 #define CONTEST_CHECK_TIME 5
@@ -79,6 +81,7 @@ static char const * const tag_map[] =
   "register_table_style",
   "team_head_style",
   "team_par_style",
+  "conf_dir",
 
   0
 };
@@ -150,6 +153,7 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   0,                            /* REGISTER_TABLE_STYLE */
   0,                            /* TEAM_HEAD_STYLE */
   0,                            /* TEAM_PAR_STYLE */
+  0,                            /* CONTEST_CONF_DIR */
 };
 static size_t const attn_sizes[CONTEST_LAST_ATTN] =
 {
@@ -599,6 +603,19 @@ parse_client_flags(unsigned char const *path, struct contest_desc *cnts,
   return 0;
 }
 
+static void
+process_conf_file_path(struct contest_desc *cnts, unsigned char **pstr)
+{
+  unsigned char *str = *pstr;
+  unsigned char pathbuf[PATH_MAX];
+
+  if (!str || os_IsAbsolutePath(str) || !cnts->conf_dir) return;
+  snprintf(pathbuf, sizeof(pathbuf), "%s/%s", cnts->conf_dir, str);
+  xfree(str);
+  str = xstrdup(pathbuf);
+  *pstr = str;
+}
+
 static int
 parse_contest(struct contest_desc *cnts, char const *path)
 {
@@ -607,6 +624,7 @@ parse_contest(struct contest_desc *cnts, char const *path)
   int x, n, mb_id;
   unsigned char *reg_deadline_str = 0;
   struct contest_access **pacc;
+  unsigned char pathbuf[PATH_MAX];
 
   cnts->clean_users = 1;
 
@@ -746,6 +764,9 @@ parse_contest(struct contest_desc *cnts, char const *path)
       break;
     case CONTEST_ROOT_DIR:
       if (handle_final_tag(path, t, &cnts->root_dir) < 0) return -1;
+      break;
+    case CONTEST_CONF_DIR:
+      if (handle_final_tag(path, t, &cnts->conf_dir) < 0) return -1;
       break;
     case CONTEST_STANDINGS_URL:
       if (handle_final_tag(path, t, &cnts->standings_url) < 0) return -1;
@@ -911,6 +932,32 @@ parse_contest(struct contest_desc *cnts, char const *path)
         path, cnts->b.line, cnts->b.column);
     return -1;
   }
+
+  if (cnts->root_dir && !os_IsAbsolutePath(cnts->root_dir)) {
+    err("%s:%d:%d: <root_dir> must be absolute path",
+        path, cnts->b.line, cnts->b.column);
+    return -1;
+  }
+  if (cnts->root_dir && !cnts->conf_dir) {
+    snprintf(pathbuf, sizeof(pathbuf), "%s/conf", cnts->root_dir);
+    cnts->conf_dir = xstrdup(pathbuf);
+  } else if (cnts->root_dir && !os_IsAbsolutePath(cnts->conf_dir)) {
+    snprintf(pathbuf, sizeof(pathbuf), "%s/%s", cnts->root_dir,cnts->conf_dir);
+    xfree(cnts->conf_dir);
+    cnts->conf_dir = xstrdup(pathbuf);
+  } else if (!cnts->root_dir && cnts->conf_dir
+             && !os_IsAbsolutePath(cnts->conf_dir)) {
+    err("%s:%d:%d: <conf_dir> must be absolute path",
+        path, cnts->b.line, cnts->b.column);
+    return -1;
+  }
+
+  process_conf_file_path(cnts, &cnts->register_header_file);
+  process_conf_file_path(cnts, &cnts->register_footer_file);
+  process_conf_file_path(cnts, &cnts->users_header_file);
+  process_conf_file_path(cnts, &cnts->users_footer_file);
+  process_conf_file_path(cnts, &cnts->team_header_file);
+  process_conf_file_path(cnts, &cnts->team_footer_file);
 
   if (!cnts->users_head_style) {
     cnts->users_head_style = xstrdup("h2");
