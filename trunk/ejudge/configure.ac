@@ -1,5 +1,5 @@
 dnl $Id$
-dnl Copyright (C) 2004 Alexander Chernov
+dnl Copyright (C) 2004-2005 Alexander Chernov
 
 AC_INIT(ejudge,2.2)
 AC_PREREQ(2.59)
@@ -69,6 +69,25 @@ AC_ARG_WITH([perl],AC_HELP_STRING([--with-perl],[specify the Perl interpreter to
 AC_ARG_WITH([prolog],AC_HELP_STRING([--with-prolog],[specify the GNU Prolog compiler to use in contests]),[ac_cv_contest_gprolog=$withval])
 AC_ARG_WITH([festival],AC_HELP_STRING([--with-festival],[specify the home directory of the festival speech generator]),[ac_cv_festival_home="$withval"])
 AC_ARG_WITH([javac],AC_HELP_STRING([--with-javac],[specify the Java2 SDK javac path to use in contests]),[ac_cv_contest_javac="$withval"])
+
+dnl choose an arch type
+AC_MSG_CHECKING([for arch type])
+case "${target}" in
+  *-*-mingw*)
+    ac_cv_ejudge_arch=win32
+    ac_cv_exe_suffix=.exe
+#    CFLAGS="${CFLAGS} -mno-cygwin"
+#    LDFLAGS="${LDFLAGS} -mno-cygwin"
+    AC_MSG_RESULT([win32])
+    ;;
+  *)
+    ac_cv_ejudge_arch=unix
+    ac_cv_exe_suffix=
+    AC_MSG_RESULT([unix])
+    ;;
+esac
+
+AC_CHECK_HEADERS([termios.h])
 
 dnl Expat checking stuff
 ac_cv_has_expat=1
@@ -1023,6 +1042,8 @@ else
 fi
 dnl Output generation
 
+AC_SUBST(ac_cv_ejudge_arch)
+AC_SUBST(ac_cv_exe_suffix)
 AC_SUBST(ac_cv_expat_root)
 AC_SUBST(ac_cv_expat_include_opt)
 AC_SUBST(ac_cv_expat_lib_opt)
