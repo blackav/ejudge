@@ -293,75 +293,117 @@ parse_error_func(unsigned char const *format, ...)
   filter_expr_nerrs++;
 }
 
+// FIXME: currently no localization for these strings
+static const unsigned char * const change_status_strings[RUN_LAST + 1] =
+{
+  [RUN_OK]               = "OK",
+  [RUN_COMPILE_ERR]      = "Compilation error",
+  [RUN_RUN_TIME_ERR]     = "Run-time error",
+  [RUN_TIME_LIMIT_ERR]   = "Time-limit exceeded",
+  [RUN_PRESENTATION_ERR] = "Presentation error",
+  [RUN_WRONG_ANSWER_ERR] = "Wrong answer",
+  // [RUN_CHECK_FAILED]     = 6, // not allowed
+  [RUN_PARTIAL]          = "Partial solution",
+  [RUN_ACCEPTED]         = "Accepted",
+  [RUN_IGNORED]          = "Ignore",
+  [RUN_DISQUALIFIED]     = "Disqualify",
+  [RUN_MEM_LIMIT_ERR]    = "Mem. limit exceeded",
+  [RUN_SECURITY_ERR]     = "Security violation",
+  [RUN_PENDING]          = "Mark as PENDING",
+  [RUN_FULL_REJUDGE]     = "FULL Rejudge",
+  [RUN_REJUDGE]          = "Rejudge",
+};
+static const int kirov_no_rejudge_status_list[] =
+{
+  RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
+  RUN_OK, RUN_COMPILE_ERR, RUN_PARTIAL,
+  -1,
+};
+static const int kirov_status_list[] =
+{
+  RUN_REJUDGE, RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
+  RUN_OK, RUN_COMPILE_ERR, RUN_PARTIAL,
+  -1,
+};
+static const int olymp_accepting_no_rejudge_status_list[] =
+{
+  RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING, RUN_ACCEPTED,
+  RUN_OK, RUN_PARTIAL, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR, RUN_TIME_LIMIT_ERR,
+  RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR, RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR,
+  -1,
+};
+static const int olymp_accepting_status_list[] =
+{
+  RUN_REJUDGE, RUN_FULL_REJUDGE, RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
+  RUN_ACCEPTED, RUN_OK, RUN_PARTIAL, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR,
+  RUN_TIME_LIMIT_ERR, RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR,
+  RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR,
+  -1,
+};
+static const int olymp_judging_no_rejudge_status_list[] =
+{
+  RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
+  RUN_OK, RUN_PARTIAL,  RUN_ACCEPTED, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR,
+  RUN_TIME_LIMIT_ERR, RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR,
+  RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR,
+  -1,
+};
+static const int olymp_judging_status_list[] =
+{
+  RUN_REJUDGE, RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
+  RUN_OK,  RUN_PARTIAL, RUN_ACCEPTED, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR,
+  RUN_TIME_LIMIT_ERR, RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR,
+  RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR,
+  -1,
+};
+static const int acm_no_rejudge_status_list[] =
+{
+  RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
+  RUN_OK, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR, RUN_TIME_LIMIT_ERR,
+  RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR, RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR,
+  -1,
+};
+static const int acm_status_list[] =
+{
+  RUN_REJUDGE, RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
+  RUN_OK, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR, RUN_TIME_LIMIT_ERR,
+  RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR, RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR,
+  -1,
+};
+
+extern int olympiad_judging_mode;
 static void
 write_change_status_dialog(FILE *f, unsigned char const *var_name,
                            int disable_rejudge_flag)
 {
-  const unsigned char *dis_str = "";
+  const int * cur_status_list = 0;
+  int i;
 
   if (!var_name) var_name = "status";
-  if (disable_rejudge_flag) dis_str = " disabled=\"1\"";
 
+  // various sets of valid run statuses
   if (global->score_system_val == SCORE_KIROV) {
-    fprintf(f,
-            "<td><select name=\"%s\">"
-            "<option value=\"\"></option>"
-            "<option%s value=\"99\">%s</option>"
-            "<option value=\"9\">%s</option>"
-            "<option value=\"10\">%s</option>"
-            "<optgroup label=\"%s:\">"
-            "<option value=\"0\">%s</option>"
-            "<option value=\"1\">%s</option>"
-            "<option value=\"7\">%s</option>"
-            "</optgroup>"
-            "</select></td>\n", var_name, dis_str,
-            _("Rejudge"), _("Ignore"), _("Disqualify"), _("Judgements"),
-            _("OK"), _("Compilation error"),
-            _("Partial solution"));
+    if (disable_rejudge_flag) cur_status_list = kirov_no_rejudge_status_list;
+    else cur_status_list = kirov_status_list;
+  } else if (global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode) {
+    // OLYMPIAD in accepting mode
+    if (disable_rejudge_flag) cur_status_list = olymp_accepting_no_rejudge_status_list;
+    else cur_status_list = olymp_accepting_status_list;
   } else if (global->score_system_val == SCORE_OLYMPIAD) {
-    fprintf(f,
-            "<td><select name=\"%s\">"
-            "<option value=\"\"> "
-            "<option%s value=\"99\">%s"
-            "<option value=\"9\">%s</option>"
-            "<option value=\"10\">%s</option>"
-            "<optgroup label=\"%s:\">"
-            "<option value=\"0\">%s</option>"
-            "<option value=\"1\">%s</option>"
-            "<option value=\"2\">%s</option>"
-            "<option value=\"3\">%s</option>"
-            "<option value=\"4\">%s</option>"
-            "<option value=\"5\">%s</option>"
-            "<option value=\"7\">%s</option>"
-            "<option value=\"8\">%s</option>"
-            "</optgroup>"
-            "</select></td>\n", var_name, dis_str,
-            _("Rejudge"), _("Ignore"), _("Disqualify"), _("Judgements"),
-            _("OK"), _("Compilation error"), _("Run-time error"),
-            _("Time-limit exceeded"), _("Presentation error"),
-            _("Wrong answer"), _("Partial solution"),
-            _("Accepted"));
+    // OLYMPIAD in judging mode
+    if (disable_rejudge_flag) cur_status_list = olymp_judging_no_rejudge_status_list;
+    cur_status_list = olymp_judging_status_list;
   } else {
-    fprintf(f,
-            "<td><select name=\"%s\">"
-            "<option value=\"\"> "
-            "<option%s value=\"99\">%s"
-            "<option value=\"9\">%s</option>"
-            "<option value=\"10\">%s</option>"
-            "<optgroup label=\"%s:\">"
-            "<option value=\"0\">%s"
-            "<option value=\"1\">%s"
-            "<option value=\"2\">%s"
-            "<option value=\"3\">%s"
-            "<option value=\"4\">%s"
-            "<option value=\"5\">%s"
-            "</optgroup>"
-            "</select></td>\n", var_name, dis_str,
-            _("Rejudge"), _("Ignore"), _("Disqualify"), _("Judgements"),
-            _("OK"), _("Compilation error"), _("Run-time error"),
-            _("Time-limit exceeded"), _("Presentation error"),
-            _("Wrong answer"));
+    if (disable_rejudge_flag) cur_status_list = acm_no_rejudge_status_list;
+    else cur_status_list = acm_status_list;
   }
+
+  fprintf(f, "<td><select name=\"%s\"><option value=\"\"></option>", var_name);
+  for (i = 0; cur_status_list[i] != -1; i++) {
+    fprintf(f, "<option value=\"%d\">%s</option>",
+            cur_status_list[i], change_status_strings[cur_status_list[i]]);
+  }
+  fprintf(f, "</select></td>\n");
 }
 
 #define BITS_PER_LONG (8*sizeof(unsigned long)) 
@@ -485,6 +527,8 @@ print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
       case RUN_WRONG_ANSWER_ERR:
       case RUN_CHECK_FAILED:
       case RUN_PARTIAL:
+      case RUN_MEM_LIMIT_ERR:
+      case RUN_SECURITY_ERR:
         if (global->score_system_val == SCORE_ACM) {
           if (pe->test > 0) {
             snprintf((fields[RAW_RUN_PASSED] = alloca(BSIZE)), BSIZE,
@@ -565,6 +609,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
   const unsigned char *rejudge_dis_str;
   unsigned long *displayed_mask;
   int displayed_size, raw_format = 0;
+  unsigned char stat_select_name[32];
 
   if (!u) u = allocate_user_info(user_id, sid);
 
@@ -935,66 +980,8 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
       }
       write_html_run_status(f, pe, priv_level, attempts, disq_attempts);
       if (priv_level == PRIV_LEVEL_ADMIN) {
-        if (global->score_system_val == SCORE_KIROV) {
-          fprintf(f,
-                  "<td><select name=\"stat_%d\">"
-                  "<option value=\"\"></option>"
-                  "<option%s value=\"99\">%s</option>"
-                  "<option value=\"9\">%s</option>"
-                  "<option value=\"10\">%s</option>"
-                  "<optgroup label=\"%s:\">"
-                  "<option value=\"0\">%s</option>"
-                  "<option value=\"1\">%s</option>"
-                  "<option value=\"7\">%s</option>"
-                  "</optgroup>"
-                  "</select></td>\n", rid, rejudge_dis_str,
-                  _("Rejudge"), _("Ignore"), _("Disqualify"), _("Judgements"),
-                  _("OK"), _("Compilation error"),
-                  _("Partial solution"));
-        } else if (global->score_system_val == SCORE_OLYMPIAD) {
-          fprintf(f,
-                  "<td><select name=\"stat_%d\">"
-                  "<option value=\"\"> "
-                  "<option%s value=\"99\">%s"
-                  "<option value=\"9\">%s</option>"
-                  "<option value=\"10\">%s</option>"
-                  "<optgroup label=\"%s:\">"
-                  "<option value=\"0\">%s</option>"
-                  "<option value=\"1\">%s</option>"
-                  "<option value=\"2\">%s</option>"
-                  "<option value=\"3\">%s</option>"
-                  "<option value=\"4\">%s</option>"
-                  "<option value=\"5\">%s</option>"
-                  "<option value=\"7\">%s</option>"
-                  "<option value=\"8\">%s</option>"
-                  "</optgroup>"
-                  "</select></td>\n", rid, rejudge_dis_str,
-                  _("Rejudge"), _("Ignore"), _("Disqualify"), _("Judgements"),
-                  _("OK"), _("Compilation error"), _("Run-time error"),
-                  _("Time-limit exceeded"), _("Presentation error"),
-                  _("Wrong answer"), _("Partial solution"),
-                  _("Accepted"));
-        } else {
-          fprintf(f,
-                  "<td><select name=\"stat_%d\">"
-                  "<option value=\"\"> "
-                  "<option%s value=\"99\">%s"
-                  "<option value=\"9\">%s</option>"
-                  "<option value=\"10\">%s</option>"
-                  "<optgroup label=\"%s:\">"
-                  "<option value=\"0\">%s"
-                  "<option value=\"1\">%s"
-                  "<option value=\"2\">%s"
-                  "<option value=\"3\">%s"
-                  "<option value=\"4\">%s"
-                  "<option value=\"5\">%s"
-                  "</optgroup>"
-                  "</select></td>\n", rid, rejudge_dis_str,
-                  _("Rejudge"), _("Ignore"), _("Disqualify"), _("Judgements"),
-                  _("OK"), _("Compilation error"), _("Run-time error"),
-                  _("Time-limit exceeded"), _("Presentation error"),
-                  _("Wrong answer"));
-        }
+        snprintf(stat_select_name, sizeof(stat_select_name), "stat_%d", rid);
+        write_change_status_dialog(f, stat_select_name, pe->is_imported);
         fprintf(f,
                 "<td><input type=\"submit\" name=\"change_%d\""
                 " value=\"%s\"></td>\n", rid, _("change"));
@@ -1384,7 +1371,7 @@ void
 write_priv_standings(FILE *f, int sid_mode, unsigned long long sid,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars,
-                     unsigned char const *extra_args)
+                     unsigned char const *extra_args, int accepting_mode)
 {
   write_standings_header(f, 1, 0, 0, 0);
 
@@ -1393,7 +1380,7 @@ write_priv_standings(FILE *f, int sid_mode, unsigned long long sid,
 
   if (global->score_system_val == SCORE_KIROV
       || global->score_system_val == SCORE_OLYMPIAD)
-    do_write_kirov_standings(f, 1, 0, 0);
+    do_write_kirov_standings(f, 1, 0, 0, accepting_mode);
   else
     do_write_standings(f, 1, 0, 0, 0);
 
@@ -2672,7 +2659,7 @@ write_raw_standings(FILE *f, unsigned char const *charset)
 
   if (global->score_system_val == SCORE_KIROV
       || global->score_system_val == SCORE_OLYMPIAD)
-    do_write_kirov_standings(f, 1, 0, 1);
+    do_write_kirov_standings(f, 1, 0, 1, 0);
   else
     do_write_standings(f, 1, 0, 0, 1);
 }
