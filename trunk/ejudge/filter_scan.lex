@@ -25,6 +25,9 @@
 
 #include "filter_expr.h"
 #include "filter_tree.h"
+#include "runlog.h"
+
+extern int filter_expr_nerrs;
 
 static unsigned char *scan_buf;
 static size_t scan_len;
@@ -32,8 +35,9 @@ static size_t scan_read;
 
 static struct filter_tree_mem *tree_mem;
 
-#define TT(t,y) do { filter_expr_lval = filter_tree_new_node(tree_mem, t, y, 0, 0); return t; } while (0)
-#define T(t) do { filter_expr_lval = filter_tree_new_node(tree_mem, t, 0, 0, 0); return t; } while (0)
+#define TT(t,y) filter_expr_lval = filter_tree_new_node(tree_mem, t, y, 0, 0); return t
+#define T(t) filter_expr_lval = filter_tree_new_node(tree_mem, t, 0, 0, 0); return t
+#define TR(r) filter_expr_lval = filter_tree_new_result(tree_mem, r); return TOK_RESULT_L
 
 #define YY_INPUT(buf,result,max_size) do { if (scan_read >= scan_len) result = YY_NULL; else if (scan_len - scan_read > max_size) { memcpy(buf, scan_buf + scan_read, max_size); scan_read += max_size; result = max_size; } else { memcpy(buf, scan_buf + scan_read, scan_len - scan_read); result = scan_len - scan_read; scan_read = scan_len; } } while (0)
 
@@ -55,6 +59,9 @@ decd    [0-9]
 "<<" { T(TOK_ASL); }
 ">>" { T(TOK_ASR); }
 
+"^" |
+"|" |
+"&" |
 "*" |
 "/" |
 "%" |
@@ -68,14 +75,16 @@ decd    [0-9]
 "<" { T(*yytext); }
 
 "id" { TT(TOK_ID, FILTER_TYPE_INT); }
-"time" { TT(TOK_TIME, FILTER_TYPE_DATE); }
-"curtime" { TT(TOK_CURTIME, FILTER_TYPE_DATE); }
+"time" { TT(TOK_TIME, FILTER_TYPE_TIME); }
+"curtime" { TT(TOK_CURTIME, FILTER_TYPE_TIME); }
 "dur" { TT(TOK_DUR, FILTER_TYPE_DUR); }
 "curdur" { TT(TOK_CURDUR, FILTER_TYPE_DUR); }
 "size" { TT(TOK_SIZE, FILTER_TYPE_SIZE); }
 "cursize" { TT(TOK_CURSIZE, FILTER_TYPE_SIZE); }
 "hash" { TT(TOK_HASH, FILTER_TYPE_HASH); }
 "curhash" { TT(TOK_CURHASH, FILTER_TYPE_HASH); }
+"ip" { TT(TOK_IP, FILTER_TYPE_IP); }
+"curip" { TT(TOK_CURIP, FILTER_TYPE_IP); }
 "uid" { TT(TOK_UID, FILTER_TYPE_INT); }
 "curuid" { TT(TOK_CURUID, FILTER_TYPE_INT); }
 "login" { TT(TOK_LOGIN, FILTER_TYPE_STRING); }
@@ -90,18 +99,39 @@ decd    [0-9]
 "curscore" { TT(TOK_CURSCORE, FILTER_TYPE_INT); }
 "test" { TT(TOK_TEST, FILTER_TYPE_INT); }
 "curtest" { TT(TOK_CURTEST, FILTER_TYPE_INT); }
+"now" { TT(TOK_NOW, FILTER_TYPE_TIME); }
+"start" { TT(TOK_START, FILTER_TYPE_TIME); }
+"finish" { TT(TOK_FINISH, FILTER_TYPE_TIME); }
+"total" { TT(TOK_TOTAL, FILTER_TYPE_INT); }
 
 "int" { TT(TOK_INT, FILTER_TYPE_INT); }
 "string" { TT(TOK_STRING, FILTER_TYPE_STRING); }
 "bool" { TT(TOK_BOOL, FILTER_TYPE_BOOL); }
-"date_t" { TT(TOK_DATE_T, FILTER_TYPE_DATE); }
+"time_t" { TT(TOK_TIME_T, FILTER_TYPE_TIME); }
 "dur_t" { TT(TOK_DUR_T, FILTER_TYPE_DUR); }
 "size_t" { TT(TOK_SIZE_T, FILTER_TYPE_SIZE); }
 "result_t" { TT(TOK_RESULT_T, FILTER_TYPE_RESULT); }
 "hash_t" { TT(TOK_HASH_T, FILTER_TYPE_HASH); }
+"ip_t" { TT(TOK_IP_T, FILTER_TYPE_IP); }
 
 "true" { filter_expr_lval = filter_tree_new_bool(tree_mem, 1); return TOK_BOOL_L; }
 "false" { filter_expr_lval = filter_tree_new_bool(tree_mem, 0); return TOK_BOOL_L; }
+
+"OK" { TR(RUN_OK); }
+"CE" { TR(RUN_COMPILE_ERR); }
+"RT" { TR(RUN_RUN_TIME_ERR); }
+"TL" { TR(RUN_TIME_LIMIT_ERR); }
+"PE" { TR(RUN_PRESENTATION_ERR); }
+"WA" { TR(RUN_WRONG_ANSWER_ERR); }
+"CF" { TR(RUN_CHECK_FAILED); }
+"PT" { TR(RUN_PARTIAL); }
+"AC" { TR(RUN_ACCEPTED); }
+"IG" { TR(RUN_IGNORED); }
+"RU" { TR(RUN_RUNNING); }
+"CD" { TR(RUN_COMPILED); }
+"CG" { TR(RUN_COMPILING); }
+"AV" { TR(RUN_AVAILABLE); }
+"RJ" { TR(RUN_REJUDGE); }
 
 0[xX]{hexd}+ { handle_int(); return TOK_INT_L; }
 0{octd}* { handle_int(); return TOK_INT_L; }
@@ -112,7 +142,7 @@ decd    [0-9]
 \"[^\"]*\" |
 \'[^\']*\' { filter_expr_lval = filter_tree_new_buf(tree_mem, yytext + 1, yyleng - 2); return TOK_STRING_L; }
 
-. { fprintf(stderr, "invalid character \\%03o\n", (unsigned char) *yytext); }
+. { fprintf(stderr, "invalid character \\%03o\n", (unsigned char) *yytext); filter_expr_nerrs++; }
 %%
 
 static void
@@ -137,6 +167,8 @@ void
 filter_expr_set_string(unsigned char const *str,
                        struct filter_tree_mem *mem)
 {
+  (void) &yyunput;
+
   scan_buf = (unsigned char*) str;
   scan_len = strlen(str);
   scan_read = 0;
