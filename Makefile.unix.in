@@ -201,7 +201,7 @@ clean: local_clean
 	$(MAKE) -C checkers clean
 
 local_distclean :
-	rm -rf autom4te.cache config.log config.status Makefile config.h ejudge-config.v
+	rm -rf autom4te.cache config.log config.status Makefile config.h ejudge-config.v TAGS
 distclean : clean local_distclean
 	$(MAKE) -C extra distclean
 	$(MAKE) -C checkers distclean
@@ -275,6 +275,9 @@ libuserlist_clnt.a: $(USERLIST_CLNT_CFILES:.c=.o)
 
 deps.make: cdeps ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c 
 	./cdeps ${CFILES} filter_expr.c filter_scan.c > deps.make
+
+tags : ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c 
+	ctags -e $^
 
 filter_expr.c filter_expr.h : filter_expr.y
 	bison -l -o filter_expr.c -d -p filter_expr_ $<
