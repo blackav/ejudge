@@ -19,8 +19,8 @@ CFLAGS=${CDEBUGFLAGS} ${CCOMPFLAGS} ${CINTLFLAG} ${CEXTRAFLAGS}
 LDFLAGS=${CDEBUGFLAGS} ${LDCOMPFLAGS} ${LDEXTRAFLAGS}
 
 TARGETS=bpcemu2 dosrun3
-ifeq ($(shell uname), 2.2.23-cher1) 
-TARGETS += capexec
+ifeq ($(shell uname -r), 2.2.23-cher1) 
+TARGETS += capexec libdropcaps.so
 endif
 
 all: ${TARGETS}
@@ -32,8 +32,12 @@ bpcemu2: bpcemu2.o
 bpcemu2.o: bpcemu2.c
 
 capexec: capexec.o
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
+	${LD} ${LDFLAGS} $^ -o $@ -lcap ${LDLIBS}
 capexec.o: capexec.c
+
+libdropcaps.so : libdropcaps.o
+	${LD} -shared ${LDFLAGS} $^ -o $@ -lcap ${LDLIBS}
+libdropcaps.o : libdropcaps.c
 
 dosrun3: dosrun3.o
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
