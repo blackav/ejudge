@@ -60,6 +60,7 @@ int           server_clients_suspended;
 int           server_download_interval;
 int           server_is_virtual;
 int           server_olympiad_judging_mode;
+int           server_continuation_enabled;
 
 unsigned long client_cur_time;
 
@@ -238,6 +239,7 @@ client_check_server_status(char const *charset, char const *path, int lag)
   server_download_interval = status.download_interval;
   server_is_virtual = status.is_virtual;
   server_olympiad_judging_mode = status.olympiad_judging_mode;
+  server_continuation_enabled = status.continuation_enabled;
   client_cur_time = time(0);
 
   if (client_cur_time>=server_cur_time
@@ -339,6 +341,8 @@ client_print_server_status(int priv_level,
       puts("<td>&nbsp;</td>");
       if (!server_stop_time)
         printf("<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_STOP, _("Stop"));
+      else if (server_continuation_enabled && !server_duration)
+        printf("<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_CONTINUE, _("Continue"));
       else
         puts("<td>&nbsp;</td>");
 
