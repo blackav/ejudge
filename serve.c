@@ -27,6 +27,7 @@
 #include "l10n.h"
 #include "archive_paths.h"
 #include "team_extra.h"
+#include "printing.h"
 
 #include "misctext.h"
 #include "base64.h"
@@ -1550,6 +1551,29 @@ static int queue_compile_request(unsigned char const *str, int len,
                                  unsigned char const *sfx);
 
 static void
+move_files_to_insert_run(int run_id)
+{
+  int total = run_get_total();
+  int i, s;
+
+  if (run_id >= total - 1) return;
+  for (i = total - 1; i >= run_id; i--) {
+    archive_remove(global->run_archive_dir, i + 1, 0);
+    archive_remove(global->report_archive_dir, i + 1, 0);
+    if (global->team_enable_rep_view) {
+      archive_remove(global->team_report_archive_dir, i + 1, 0);
+    }
+    s = run_get_status(i);
+    if (s >= RUN_PSEUDO_FIRST && s <= RUN_PSEUDO_LAST) continue;
+    archive_rename(global->run_archive_dir, 0, i, 0, i + 1, 0, 0);
+    archive_rename(global->report_archive_dir, 0, i, 0, i + 1, 0, 0);
+    if (global->team_enable_rep_view) {
+      archive_rename(global->team_report_archive_dir, 0, i, 0, i + 1, 0, 0);
+    }
+  }
+}
+
+static void
 cmd_priv_submit_run(struct client_state *p, int len, 
                     struct prot_serve_pkt_submit_run *pkt)
 {
@@ -1637,6 +1661,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
     start_time = run_get_virtual_start_time(p->user_id);
     stop_time = run_get_virtual_stop_time(p->user_id, current_time);
   }
+  /*
   if (!start_time) {
     err("%d: contest is not started", p->id);
     new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
@@ -1647,6 +1672,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
     return;
   }
+  */
   sha_buffer(pkt->data, pkt->run_len, shaval);
   if ((run_id = run_add_record(current_time,
                                pkt->run_len,
@@ -1660,6 +1686,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
+  move_files_to_insert_run(run_id);
 
   arch_flags = archive_make_write_path(run_arch, sizeof(run_arch),
                                        global->run_archive_dir, run_id,
@@ -1706,6 +1733,29 @@ cmd_priv_submit_run(struct client_state *p, int len,
   }
 
   info("%d: team_submit_run: ok", p->id);
+  new_send_reply(p, SRV_RPL_OK);
+}
+
+static void
+cmd_team_print(struct client_state *p, int len,
+               struct prot_serve_pkt_simple *pkt)
+{
+  int res;
+
+  if (get_peer_local_user(p) < 0) return;
+
+  if (len != sizeof(*pkt)) {
+    new_bad_packet(p, "team_print: invalid packet size %d", len);
+    return;
+  }
+
+  res = team_print_run(pkt->v.i, p->user_id);
+  if (res < 0) {
+    new_send_reply(p, res);
+    return;
+  }
+
+  info("%d: team_print: ok, %d pages printed", p->id, res);
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -1813,6 +1863,7 @@ cmd_team_submit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
+  move_files_to_insert_run(run_id);
 
   arch_flags = archive_make_write_path(run_arch, sizeof(run_arch),
                                        global->run_archive_dir, run_id,
@@ -2000,6 +2051,7 @@ cmd_command_0(struct client_state *p, int len,
               struct prot_serve_pkt_simple *pkt)
 {
   time_t start_time, stop_time;
+  int run_id;
 
   if (get_peer_local_user(p) < 0) return;
 
@@ -2028,7 +2080,9 @@ cmd_command_0(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_CONTEST_STARTED);
       return;
     }
-    run_virtual_start(p->user_id, current_time, p->ip);
+    run_id = run_virtual_start(p->user_id, current_time, p->ip);
+    if (run_id < 0) return;
+    move_files_to_insert_run(run_id);
     info("%d: virtual contest started for %d", p->id, p->user_id);
     new_send_reply(p, SRV_RPL_OK);
     return;
@@ -2045,7 +2099,9 @@ cmd_command_0(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
       return;
     }
-    run_virtual_stop(p->user_id, current_time, p->ip);
+    run_id = run_virtual_stop(p->user_id, current_time, p->ip);
+    if (run_id < 0) return;
+    move_files_to_insert_run(run_id);
     info("%d: virtual contest stopped for %d", p->id, p->user_id);
     new_send_reply(p, SRV_RPL_OK);
     return;
@@ -2108,10 +2164,10 @@ do_squeeze_runs(void)
     j++;
   }
   for (; j < tot; j++) {
-    archive_remove(global->run_archive_dir, j, 0, 0);
-    archive_remove(global->report_archive_dir, j, 0, 1);
+    archive_remove(global->run_archive_dir, j, 0);
+    archive_remove(global->report_archive_dir, j, 0);
     if (global->team_enable_rep_view) {
-      archive_remove(global->team_report_archive_dir, j, 0, 0);
+      archive_remove(global->team_report_archive_dir, j, 0);
     }
   }
   run_squeeze_log();
@@ -2121,6 +2177,8 @@ static void
 cmd_priv_command_0(struct client_state *p, int len,
                    struct prot_serve_pkt_simple *pkt)
 {
+  int res;
+
   if (get_peer_local_user(p) < 0) return;
 
   if (len != sizeof(*pkt)) {
@@ -2196,11 +2254,35 @@ cmd_priv_command_0(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_NOT_SUPPORTED);
       return;
     }
+    /*
     if (!contest_stop_time) {
       new_send_reply(p, -SRV_ERR_CONTEST_NOT_FINISHED);
       return;
     }
+    */
     olympiad_judging_mode = 1;
+    update_status_file(1);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  case SRV_CMD_SET_ACCEPTING_MODE:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
+    if (global->score_system_val != SCORE_OLYMPIAD) {
+      new_send_reply(p, -SRV_ERR_NOT_SUPPORTED);
+      return;
+    }
+    /*
+    if (!contest_stop_time) {
+      new_send_reply(p, -SRV_ERR_CONTEST_NOT_FINISHED);
+      return;
+    }
+    */
+    olympiad_judging_mode = 0;
     update_status_file(1);
     new_send_reply(p, SRV_RPL_OK);
     return;
@@ -2422,6 +2504,29 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
     info("%d: run %d is cleared", p->id, pkt->v.i);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+
+  case SRV_CMD_PRIV_PRINT_RUN:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
+    if (pkt->v.i < 0 || pkt->v.i >= run_get_total()) {
+      err("%d: invalid run id %d", p->id, pkt->v.i);
+      new_send_reply(p, -SRV_ERR_BAD_RUN_ID);
+      return;
+    }
+
+    res = priv_print_run(pkt->v.i, p->user_id);
+    if (res < 0) {
+      new_send_reply(p, res);
+      return;
+    }
+    info("%d: run %d is printed, %d pages", p->id, pkt->v.i, res);
     new_send_reply(p, SRV_RPL_OK);
     return;
 
@@ -2667,6 +2772,15 @@ cmd_edit_run(struct client_state *p, int len,
     run.is_readonly = pkt->is_readonly;
     run_flags |= RUN_ENTRY_READONLY;
   }
+  if ((pkt->mask & PROT_SERVE_RUN_PAGES_SET)) {
+    if (pkt->pages < 0 || pkt->pages > 255) {
+      err("%d: invalid pages value %d", p->id, pkt->pages);
+      new_send_reply(p, -SRV_ERR_PROTOCOL);
+      return;
+    }
+    run.pages = pkt->pages;
+    run_flags |= RUN_ENTRY_PAGES;
+  }
 
   // check capabilities
   if (!check_cnts_caps(p->user_id, OPCAP_EDIT_RUN)
@@ -2804,12 +2918,13 @@ read_compile_packet(char *pname)
 
   /* create tester packet */
   wsize = snprintf(buf, sizeof(buf),
-                   "%d %d %d %d %d %d %d %d %d \"%s\" \"%s\"\n",
+                   "%d %d %d %d %d %d %d %d %d %d \"%s\" \"%s\"\n",
                    global->contest_id, runid, probs[re.problem]->tester_id,
                    final_test, re.locale_id,
                    global->score_system_val,
                    global->team_enable_rep_view,
                    global->report_error_code, variant,
+                   probs[re.problem]->accept_partial,
                    langs[re.language]->exe_sfx, langs[re.language]->arch);
   if (generic_write_file(buf, wsize, SAFE, global->run_queue_dir,
                          pkt_base, "") < 0)
@@ -3195,6 +3310,9 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_QUIT] { cmd_priv_command_0 },
   [SRV_CMD_EXPORT_XML_RUNS] { cmd_view },
   [SRV_CMD_PRIV_SUBMIT_RUN] { cmd_priv_submit_run },
+  [SRV_CMD_SET_ACCEPTING_MODE] { cmd_priv_command_0 },
+  [SRV_CMD_PRIV_PRINT_RUN] { cmd_priv_command_0 },
+  [SRV_CMD_PRINT_RUN] { cmd_team_print },
 };
 
 static void
