@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "serve_clnt.h"
@@ -30,6 +26,7 @@
 int
 serve_clnt_edit_run(int sock_fd, int run_id, int mask,
                     int user_id, int prob_id, int lang_id, int status,
+                    int is_imported,
                     unsigned char const *user_login)
 {
   struct prot_serve_pkt_run_info *out;
@@ -53,6 +50,7 @@ serve_clnt_edit_run(int sock_fd, int run_id, int mask,
   out->prob_id = prob_id;
   out->lang_id = lang_id;
   out->status = status;
+  out->is_imported = is_imported;
   out->user_login_len = user_login_len;
   strcpy(user_login_ptr, user_login);
 
@@ -86,6 +84,5 @@ serve_clnt_edit_run(int sock_fd, int run_id, int mask,
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
