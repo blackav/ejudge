@@ -138,11 +138,13 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(status_dir, "s"),
   GLOBAL_PARAM(work_dir, "s"),
   GLOBAL_PARAM(print_work_dir, "s"),
+  GLOBAL_PARAM(diff_work_dir, "s"),
 
   GLOBAL_PARAM(a2ps_path, "s"),
   GLOBAL_PARAM(a2ps_args, "x"),
   GLOBAL_PARAM(lpr_path, "s"),
   GLOBAL_PARAM(lpr_args, "x"),
+  GLOBAL_PARAM(diff_path, "s"),
 
   GLOBAL_PARAM(compile_dir, "s"),
   GLOBAL_PARAM(compile_work_dir, "s"),
@@ -183,6 +185,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(stand_v_row_attr, "s"),
   GLOBAL_PARAM(stand_r_row_attr, "s"),
   GLOBAL_PARAM(stand_u_row_attr, "s"),
+  GLOBAL_PARAM(stand_success_attr, "s"),
 
   // just for fun
   GLOBAL_PARAM(sound_player, "s"),
@@ -282,6 +285,7 @@ static struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(id, "d"),
   LANGUAGE_PARAM(compile_id, "d"),
   LANGUAGE_PARAM(disabled, "d"),
+  LANGUAGE_PARAM(binary, "d"),
   LANGUAGE_PARAM(short_name, "s"),
   LANGUAGE_PARAM(long_name, "s"),
   LANGUAGE_PARAM(key, "s"),
@@ -419,8 +423,10 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_STATUS_DIR         "status"
 #define DFLT_G_WORK_DIR           "work"
 #define DFLT_G_PRINT_WORK_DIR     "print"
+#define DFLT_G_DIFF_WORK_DIR      "diff"
 #define DFLT_G_A2PS_PATH          "/usr/bin/a2ps"
 #define DFLT_G_LPR_PATH           "/usr/bin/lpr"
+#define DFLT_G_DIFF_PATH          "/usr/bin/diff"
 #define DFLT_G_COMPILE_DIR        "compile"
 #define DFLT_G_COMPILE_QUEUE_DIR  "queue"
 #define DFLT_G_COMPILE_SRC_DIR    "src"
@@ -1228,12 +1234,16 @@ set_defaults(int mode)
 
   GLOBAL_INIT_FIELD(work_dir, DFLT_G_WORK_DIR, var_dir);
   GLOBAL_INIT_FIELD(print_work_dir, DFLT_G_PRINT_WORK_DIR, work_dir);
+  GLOBAL_INIT_FIELD(diff_work_dir, DFLT_G_DIFF_WORK_DIR, work_dir);
 
   if (!global->a2ps_path[0]) {
     strcpy(global->a2ps_path, DFLT_G_A2PS_PATH);
   }
   if (!global->lpr_path[0]) {
     strcpy(global->lpr_path, DFLT_G_LPR_PATH);
+  }
+  if (!global->diff_path[0]) {
+    strcpy(global->diff_path, DFLT_G_DIFF_PATH);
   }
 
   if (global->team_page_quota < 0) {
@@ -2501,6 +2511,7 @@ create_dirs(int mode)
     /* working directory (if somebody needs it) */
     if (make_dir(global->work_dir, 0) < 0) return -1;
     if (make_dir(global->print_work_dir, 0) < 0) return -1;
+    if (make_dir(global->diff_work_dir, 0) < 0) return -1;
 
     /* SERVE's archive directories */
     if (make_dir(global->archive_dir, 0) < 0) return -1;
