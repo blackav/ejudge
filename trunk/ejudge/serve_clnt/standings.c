@@ -34,25 +34,29 @@ serve_clnt_standings(int sock_fd,
                      int priv_level,
                      int sid_mode,
                      unsigned char const *self_url,
-                     unsigned char const *hidden_vars)
+                     unsigned char const *hidden_vars,
+                     unsigned char const *extra_args)
 {
   struct prot_serve_pkt_standings *out = 0;
   struct prot_serve_packet *in;
-  size_t self_url_len, hidden_vars_len;
+  size_t self_url_len, hidden_vars_len, extra_args_len;
   size_t out_size, in_size = 0;
-  unsigned char *self_url_ptr, *hidden_vars_ptr, c;
+  unsigned char *self_url_ptr, *hidden_vars_ptr, *extra_args_ptr, c;
   int r, pipe_fd[2], pass_fd[2];
 
   if (sock_fd < 0) return -SRV_ERR_NOT_CONNECTED;
   if (!self_url) self_url = "";
   if (!hidden_vars) hidden_vars = "";
+  if (!extra_args) extra_args = "";
   self_url_len = strlen(self_url);
   hidden_vars_len = strlen(hidden_vars);
-  out_size = sizeof(*out) + self_url_len + hidden_vars_len;
+  extra_args_len = strlen(extra_args);
+  out_size = sizeof(*out) + self_url_len + hidden_vars_len + extra_args_len;
   out = alloca(out_size);
   memset(out, 0, out_size);
   self_url_ptr = out->data;
   hidden_vars_ptr = self_url_ptr + self_url_len + 1;
+  extra_args_ptr = hidden_vars_ptr + hidden_vars_len + 1;
   out->b.id = SRV_CMD_PRIV_STANDINGS;
   out->b.magic = PROT_SERVE_PACKET_MAGIC;
   out->user_id = user_id;
@@ -62,8 +66,10 @@ serve_clnt_standings(int sock_fd,
   out->sid_mode = sid_mode;
   out->self_url_len = self_url_len;
   out->hidden_vars_len = hidden_vars_len;
+  out->extra_args_len = extra_args_len;
   memcpy(self_url_ptr, self_url, self_url_len);
   memcpy(hidden_vars_ptr, hidden_vars, hidden_vars_len);
+  memcpy(extra_args_ptr, extra_args, extra_args_len);
 
   if (pipe(pipe_fd) < 0) {
     err("serve_clnt_team_page: pipe() failed: %s", os_ErrorMsg());
@@ -116,8 +122,7 @@ serve_clnt_standings(int sock_fd,
 
 /**
  * Local variables:
- *  compile-command: "make"
+ *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
