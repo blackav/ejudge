@@ -51,7 +51,6 @@ SERVE_CLNT_CFILES=\
  serve_clnt/do_pass_fd.c\
  serve_clnt/edit_run.c\
  serve_clnt/get_archive.c\
- serve_clnt/list_runs.c\
  serve_clnt/master_page.c\
  serve_clnt/message.c\
  serve_clnt/open.c\
@@ -64,7 +63,6 @@ SERVE_CLNT_CFILES=\
  serve_clnt/submit_clar.c\
  serve_clnt/submit_run.c\
  serve_clnt/team_page.c\
- serve_clnt/userlist_cmd.c\
  serve_clnt/view.c
 
 CFILES=\
@@ -72,6 +70,7 @@ CFILES=\
  cgi.c\
  clar.c\
  clarlog.c\
+ clean-users.c\
  clntutil.c\
  compile.c\
  contests.c\
@@ -91,6 +90,7 @@ CFILES=\
  master_html.c\
  misctext.c\
  mkpasswd.c\
+ opcaps.c\
  parsecfg.c\
  pathutl.c\
  prepare.c\
@@ -103,6 +103,7 @@ CFILES=\
  sformat.c\
  sha.c\
  submit.c\
+ super-serve.c\
  team.c\
  teamdb.c\
  userlist.c\
@@ -149,6 +150,7 @@ HFILES=\
  localdb.h\
  misctext.h\
  nls.h\
+ opcaps.h\
  parsecfg.h\
  pathutl.h\
  prepare.h\
