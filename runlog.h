@@ -51,12 +51,12 @@ int run_add_record(unsigned long  timestamp,
                    int            problem);
 int run_start_contest(unsigned long);
 unsigned long run_get_start_time(void);
-int run_change_status(int runid, int newstatus, int newtest);
+int run_change_status(int runid, int newstatus, int newtest, int newscore);
 int run_get_status(int runid);
 int run_get_param(int runid, int *plang, int *pprob, int *pstat);
 int run_get_record(int, unsigned long *, unsigned long *,
                    char *,
-                   int *, int *, int *, int *, int *);
+                   int *, int *, int *, int *, int *, int *);
 
 void run_get_times(unsigned long *, unsigned long *, unsigned long *,
                    unsigned long *);
@@ -68,6 +68,7 @@ int           run_sched_contest(unsigned long);
 int           run_get_total(void);
 
 void run_get_team_usage(int, int *, unsigned long*);
+int  run_get_attempts(int, int *);
 char *run_status_str(int, char *, int);
 
 #endif /* __RUNLOG_H__ */
