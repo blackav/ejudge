@@ -61,6 +61,7 @@ serve_clnt_view(int sock_fd,
       && cmd != SRV_CMD_VIEW_USERS
       && cmd != SRV_CMD_DUMP_RUNS
       && cmd != SRV_CMD_EXPORT_XML_RUNS
+      && cmd != SRV_CMD_WRITE_XML_RUNS
       && cmd != SRV_CMD_DUMP_STANDINGS) {
     err("serve_clnt_view: invalid command %d", cmd);
     return -SRV_ERR_PROTOCOL;
