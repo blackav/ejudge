@@ -29,8 +29,9 @@ HFILES=base64.h cgi.h clarlog.h clntutil.h exec.h fileutl.h html.h logger.h\
   unix/unix_fileutl.h
 
 ifeq ($(shell uname),Linux)
-CFLAGS=-Wall -I. -DCONF_HAS_LIBINTL -DCONF_HAS_SNPRINTF -DCONF_HAS_STRERROR -O3 -D_GNU_SOURCE
-LDFLAGS=-s
+CFLAGS=-Wall -I. -DCONF_HAS_SNPRINTF -DCONF_HAS_STRERROR -g -D_GNU_SOURCE -DCONF_HAS_LIBINTL 
+LDFLAGS=-g
+LDLIBS=
 ARCH=unix
 EXESFX=
 else
@@ -38,6 +39,7 @@ CFLAGS=-mno-cygwin -O3 -Wall -I. -DCONF_HAS__SNPRINTF
 LDFLAGS=-mno-cygwin
 ARCH=win32
 EXESFX=.exe
+LDLIBS=
 endif
 
 CC=gcc
@@ -72,35 +74,35 @@ TARGETS=compile$(EXESFX) serve$(EXESFX) submit$(EXESFX) run$(EXESFX) master$(EXE
 all: $(TARGETS)
 
 compile$(EXESFX) : $(C_OBJECTS)
-	$(LD) $(LDFLAGS) $(C_OBJECTS) -o $@
+	$(LD) $(LDFLAGS) $(C_OBJECTS) -o $@ $(LDLIBS)
 
 serve.exe:
 serve : $(SERVE_OBJECTS)
-	$(LD) $(LDFLAGS) $(SERVE_OBJECTS) -o $@
+	$(LD) $(LDFLAGS) $(SERVE_OBJECTS) -o $@ $(LDLIBS)
 
 submit.exe:
 submit$ : $(SUBMIT_OBJECTS)
-	$(LD) $(LDFLAGS) $(SUBMIT_OBJECTS) -o $@
+	$(LD) $(LDFLAGS) $(SUBMIT_OBJECTS) -o $@ $(LDLIBS)
 
 clar.exe:
 clar : $(CLAR_OBJECTS)
-	$(LD) $(LDFLAGS) $^ -o $@
+	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 run$(EXESFX) : $(RUN_OBJECTS)
-	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@
+	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS)
 
 master.exe:
 master : $(M_OBJECTS)
-	$(LD) $(LDFLAGS) $^ -o $@
+	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 mkpasswd.exe:
 mkpasswd : $(P_OBJECTS)
-	$(LD) $(LDFLAGS) $^ -o $@
+	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 # we do not compile team on win32
 team.exe:
 team: $(T_OBJECTS)
-	$(LD) $(LDFLAGS) $^ -o $@
+	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 clean:
 	-rm *.o $(TARGETS) revinfo version.c $(ARCH)/*.o
