@@ -110,7 +110,7 @@ MTI_OBJECTS = ${MTI_CFILES:.c=.o}
 SP_CFILES = send-passwords.c inetdb.c teamdb.c pathutl.c base64.c ${ARCH}/fileutl.c
 SP_OBJECTS = ${SP_CFILES:.c=.o}
 
-UL_CFILES = userlist-server.c userlist_cfg.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c pathutl.c
+UL_CFILES = userlist-server.c userlist_cfg.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c pathutl.c userlist_xml.c userlist.c userlist_clnt.c
 UL_OBJECTS = ${UL_CFILES:.c=.o}
 
 TARGETS=compile$(EXESFX) serve$(EXESFX) submit$(EXESFX) run$(EXESFX) master$(EXESFX) clar$(EXESFX) mkpasswd$(EXESFX) team$(EXESFX) register${EXESFX} make-teamdb${EXESFX} make-teamdb-inet${EXESFX} send-passwords${EXESFX} userlist-server${EXESFX}
