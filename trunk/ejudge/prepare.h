@@ -184,6 +184,7 @@ struct section_global_data
   int cr_serialization_key;     /* semaphore for compile/run serialization */
   int show_astr_time;
   int ignore_duplicated_runs;
+  int report_error_code;
 };
 
 struct section_problem_data
