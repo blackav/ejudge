@@ -31,6 +31,10 @@
 #include <limits.h>
 #include <string.h>
 
+#if defined __GNUC__ && defined __MINGW32__
+#include <malloc.h>
+#endif
+
 /**
  * Valid format conversions as follows:
  *  G - global data
@@ -344,6 +348,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
          *   MD - fac_en
          *   ML - location
          *   Mp - printer_name
+         *   M1 - extra1
          */
         pf++;
         switch (*pf) {
@@ -353,6 +358,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
         case 'u': case 'U':
         case 'o': case 'O': case 'L': case 'p':
         case 'f': case 'F': case 'd': case 'D':
+        case '1':
           break;
         case 0:
           is_invalid = 1;
@@ -444,6 +450,11 @@ sformat_message(char *buf, size_t maxsize, char const *format,
             papp = "";
             if (team_data->user && team_data->user->printer_name)
               papp = team_data->user->printer_name;
+            break;
+          case '1':
+            papp = "";
+            if (team_data->user && team_data->user->extra1)
+              papp = team_data->user->extra1;
             break;
           default:
             abort();
