@@ -80,6 +80,7 @@ userlist_clnt_team_cookie(struct userlist_clnt *clnt,
                           unsigned long long cookie,
                           int locale_id,
                           int *p_user_id,
+                          int *p_contest_id,
                           int *p_locale_id,
                           unsigned char **p_login,
                           unsigned char **p_name);
