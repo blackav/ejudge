@@ -1,0 +1,45 @@
+2003-10-12  Alexander Chernov  <cher@ispras.ru>
+
+	* checker_internal.h:
+	number of system include files (<dirent.h>, etc) are included, if
+	  NEED_TGZ option is set;
+	global variables `dir_in', `dir_out' are available in NEED_TGZ mode;
+	(checker_do_init) the function now accepts one more parameter.
+
+	* checker.h: new configuration macro NEED_TGZ;
+	(main) `checker_do_init' accepts now one more parameter.
+
+	* init.c:
+	(checker_do_init) the function now accepts new parameter `tgz_flag',
+	  if the flag is set, the two last command line parameters must
+	  be directories with the test directory content and the team output
+	  directory content.
+
+	* vars.c: new variables `dir_in' and `dir_out'.
+
+	* checker.h: all prototypes are moved to "checker_internal.h";
+	all function implementations are moved to the .c files.
+
+	* Makefile: minor changes.
+
+	* .cvsignore: *** empty log message ***
+
+	* Makefile, checker_internal.h, corr_close.c, corr_eof.c, fatal.c, fatal_cf.c, fatal_pe.c, fatal_wa.c, in_close.c, in_eof.c, init.c, normalize_file.c, ok.c, team_close.c, team_eof.c, vars.c, read_buf.c, read_corr_int.c, read_double.c, read_file.c, read_file_by_line.c, read_in_double.c, read_in_int.c, read_team_double.c, read_team_int.c, read_team_long_double.c, xcalloc.c, xmalloc.c, xrealloc.c, xstrdup.c:
+	initial revision
+
+	* makefile: *** empty log message ***
+
+2003-10-08  Alexander Chernov  <cher@ispras.ru>
+
+	* checker.h, symbols.pas, testlib.pas: initial revision
+
+2001-11-07  Alexander Chernov  <cher@ispras.ru>
+
+	* makefile: the checker names changed: check_<problem>.
+
+	* .cvsignore: *** empty log message ***
+
+2001-01-26  Alexander Chernov  <cher@ispras.ru>
+
+	* .cvsignore, makefile, maxs.c, summ.c: initial revision
+
