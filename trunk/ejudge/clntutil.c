@@ -59,6 +59,7 @@ int           server_score_system;
 int           server_clients_suspended;
 int           server_download_interval;
 int           server_is_virtual;
+int           server_olympiad_judging_mode;
 
 unsigned long client_cur_time;
 
@@ -236,6 +237,7 @@ client_check_server_status(char const *charset, char const *path, int lag)
   server_clients_suspended = status.clients_suspended;
   server_download_interval = status.download_interval;
   server_is_virtual = status.is_virtual;
+  server_olympiad_judging_mode = status.olympiad_judging_mode;
   client_cur_time = time(0);
 
   if (client_cur_time>=server_cur_time
@@ -290,6 +292,11 @@ client_print_server_status(int priv_level,
              _("The contest is in progress (standings are frozen)"));    
     } else if (server_start_time) {
       printf("<p><big><b>%s</b></big></p>", _("The contest is in progress"));
+      if (server_score_system == SCORE_OLYMPIAD
+          && !server_olympiad_judging_mode) {
+        printf("<p><big><b>%s</b></big></p>\n",
+               _("Participants' solutions are being accepted"));
+      }
     } else {
       printf("<p><big><b>%s</b></big></p>", _("The contest is not started"));
     }
@@ -300,6 +307,13 @@ client_print_server_status(int priv_level,
   puts("");
 
   if (server_is_virtual && priv_level == 0) return 0;
+
+
+  if (server_score_system == SCORE_OLYMPIAD
+      && server_olympiad_judging_mode) {
+    printf("<p><big><b>%s</b></big></p>\n",
+           _("Participants' solutions are being judged"));
+  }
 
   if (priv_level == PRIV_LEVEL_ADMIN) puts(form_start);
   puts("<table border=\"0\">");
@@ -362,26 +376,29 @@ client_print_server_status(int priv_level,
   }
   puts("</tr>");
 
-  if (server_start_time && server_duration && !server_is_virtual) {
+  if (server_stop_time) {
+    client_time_to_str(str_end_time, server_stop_time);
+    printf("<tr><td>%s:</td><td>%s</td>", _("End time"), str_end_time);
+    if (priv_level == PRIV_LEVEL_ADMIN) puts("<td>&nbsp;</td><td>&nbsp;</td>");
+    puts("</tr>");
+  } else if (server_start_time && server_duration && !server_is_virtual) {
     client_time_to_str(str_end_time, server_start_time + server_duration);
     printf("<tr><td>%s:</td><td>%s</td>", _("End time"), str_end_time);
     if (priv_level == PRIV_LEVEL_ADMIN) puts("<td>&nbsp;</td><td>&nbsp;</td>");
     puts("</tr>");
 
-    if (!server_stop_time) {
-      duration_str(0, server_cur_time, server_start_time, str_el_dur, 0);
-      printf("<tr><td>%s:</td><td>%s</td>", _("Elapsed time"), str_el_dur);
+    duration_str(0, server_cur_time, server_start_time, str_el_dur, 0);
+    printf("<tr><td>%s:</td><td>%s</td>", _("Elapsed time"), str_el_dur);
+    if (priv_level == PRIV_LEVEL_ADMIN) puts("<td>&nbsp;</td><td>&nbsp</td>");
+    puts("</tr>");
+    
+    if (server_duration) {
+      duration_str(0, server_start_time + server_duration - server_cur_time,
+                   0, str_left_dur, 0);
+      printf("<tr><td>%s:</td><td>%s</td>",
+             _("Remaining time"), str_left_dur);
       if (priv_level == PRIV_LEVEL_ADMIN) puts("<td>&nbsp;</td><td>&nbsp</td>");
       puts("</tr>");
-
-      if (server_duration) {
-        duration_str(0, server_start_time + server_duration - server_cur_time,
-                     0, str_left_dur, 0);
-        printf("<tr><td>%s:</td><td>%s</td>",
-               _("Remaining time"), str_left_dur);
-        if (priv_level == PRIV_LEVEL_ADMIN) puts("<td>&nbsp;</td><td>&nbsp</td>");
-        puts("</tr>");
-      }
     }
   }
   puts("</table>");
