@@ -72,7 +72,8 @@ int run_add_record(time_t         timestamp,
                    int            is_hidden);
 int run_start_contest(time_t);
 time_t run_get_start_time(void);
-int run_change_status(int runid, int newstatus, int newtest, int newscore);
+int run_change_status(int runid, int newstatus, int newtest, int newscore,
+                      int judge_id);
 int run_get_status(int runid);
 void run_get_times(time_t *, time_t *, time_t *, time_t *);
 int  run_set_duration(time_t);
@@ -150,7 +151,7 @@ struct run_entry
   unsigned char  is_readonly;
   unsigned char  pages;
   signed char    score_adj;     /* manual score adjustment */
-  unsigned char  pad[2];
+  unsigned short judge_id;      /* judge required identifier */
   long           nsec;          /* nanosecond component of timestamp */
 };
 
