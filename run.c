@@ -674,7 +674,11 @@ check_config(void)
       return -1;
     }
     info(_("found %d tests for problem %s"), n1, prb->short_name);
-    if (prb->corr_dir[0]) {
+    if (prb->use_corr) {
+      if (!prb->corr_dir[0]) {
+        err(_("directory with answers is not defined"));
+        return -1;
+      }
       if (check_readable_dir(prb->corr_dir) < 0) return -1;
       if ((n2 = count_files(prb->corr_dir, prb->corr_sfx)) < 0) return -1;
       info(_("found %d answers for problem %s"), n2, prb->short_name);
