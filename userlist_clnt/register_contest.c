@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,7 @@
 
 int
 userlist_clnt_register_contest(struct userlist_clnt *clnt,
+                               int cmd,
                                int user_id,
                                int contest_id)
 {
@@ -26,10 +27,13 @@ userlist_clnt_register_contest(struct userlist_clnt *clnt,
   struct userlist_packet *in = 0;
   int out_size, in_size = 0, r;
 
+  if (cmd != ULS_REGISTER_CONTEST && cmd != ULS_PRIV_REGISTER_CONTEST)
+    return -ULS_ERR_PROTOCOL;
+
   out_size = sizeof(*out);
   out = alloca(out_size);
   if (!out) return -ULS_ERR_OUT_OF_MEM;
-  out->request_id = ULS_REGISTER_CONTEST;
+  out->request_id = cmd;
   out->user_id = user_id;
   out->contest_id = contest_id;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
@@ -48,6 +52,5 @@ userlist_clnt_register_contest(struct userlist_clnt *clnt,
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
