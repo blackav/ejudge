@@ -16,5 +16,5 @@ then
     PATH="${GCJDIR}:${PATH}"
 fi
 
-#mv "$1" Main.java
-exec "${GCJRUN}" --main=Main -static -s -O2 "$1" -o "$2"
+mv "$1" Main.java
+exec "${GCJRUN}" --main=Main -s -O2 Main.java -o "$2"
