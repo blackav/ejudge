@@ -134,6 +134,7 @@ struct section_global_data
   puc_t corr_sfx[32];           /* default correct files suffix */
   puc_t info_sfx[32];           /* default info files suffix */
   puc_t tgz_sfx[32];            /* default tar files suffix */
+  path_t ejudge_checkers_dir;   /* path to the built-in checkers */
 
   /* ====== VARIABLE FILES/DIRECTORIES SETUP ====== */
   path_t var_dir;               /* variable files dir */
@@ -323,6 +324,7 @@ struct section_problem_data
   puc_t input_file[64];         /* input file name */
   puc_t output_file[64];        /* output file name */
   puc_t test_score_list[256];   /* scores for individual tests */
+  path_t builtin_checker;       /* the name of the built-in checker */
 
   int     ntests;               /* number of tests found */
   int    *tscores;              /* internal scores array  */
@@ -409,6 +411,8 @@ struct section_tester_data
   path_t check_cmd;             /* checker */
 
   char **start_env;             /* environment variables for start_cmd */
+
+  int builtin_checker_used;     /* internal: the builtin checker is used */
 };
 
 #undef puc_t
