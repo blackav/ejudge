@@ -29,6 +29,10 @@
 #include <time.h>
 #include <ctype.h>
 
+#if defined __GNUC__ && defined __MINGW32__
+#include <malloc.h>
+#endif
+
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
 #define _(x) gettext(x)
