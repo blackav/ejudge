@@ -587,6 +587,33 @@ new_bad_packet(struct client_state *p, char const *format, ...)
   client_disconnect(p, 0);
 }
 
+static int
+get_peer_local_user(struct client_state *p)
+{
+  unsigned long long cookie = 0;
+  int user_id = 0;
+  int r;
+
+  if (p->user_id >= 0) return p->user_id;
+  r = teamdb_get_uid_by_pid(p->peer_uid, p->peer_gid, p->peer_pid,
+                            &user_id, &cookie);
+  if (r < 0) {
+    // FIXME: what else can we do?
+    err("%d: cannot get local user_id", p->id);
+    client_disconnect(p, 0);
+    return -1;
+  }
+  if (r > 0 && !teamdb_lookup(user_id)) {
+    err("%d: no local information about user %d", p->id, user_id);
+    client_disconnect(p, 0);
+    return -1;
+  }
+  p->user_id = user_id;
+  // FIXME: handle cookie
+  info("%d: user_id is %d", p->id, user_id);
+  return user_id;
+}
+
 static void
 cmd_pass_descriptors(struct client_state *p, int len,
                      struct prot_serve_packet *pkt)
@@ -602,6 +629,8 @@ cmd_pass_descriptors(struct client_state *p, int len,
     return;
   }
 
+  if (get_peer_local_user(p) < 0) return;
+
   p->state = STATE_READ_FDS;
 }
 
@@ -613,6 +642,8 @@ cmd_team_get_archive(struct client_state *p, int len,
   path_t dirname, fullpath, linkpath, origpath;
   int total_runs, r, run_team, run_lang, run_prob, token, path_len, out_size;
   struct prot_serve_pkt_archive_path *out;
+
+  if (get_peer_local_user(p) < 0) return;
 
   if (len != sizeof(*pkt)) {
     new_bad_packet(p, "team_get_archive: bad packet length: %d", len);
@@ -633,6 +664,11 @@ cmd_team_get_archive(struct client_state *p, int len,
   if (pkt->contest_id != global->contest_id) {
     new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
     err("%d: contest_id does not match", p->id);
+    return;
+  }
+  if (p->user_id && pkt->user_id != p->user_id) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: pkt->user_id != p->user_id", p->id);
     return;
   }
 
@@ -691,6 +727,8 @@ cmd_team_list_runs(struct client_state *p, int len,
   unsigned char *html_ptr = 0;
   size_t html_len = 0;
 
+  if (get_peer_local_user(p) < 0) return;
+
   if (len < sizeof(*pkt)) {
     new_bad_packet(p, "cmd_team_list_runs: packet is too small: %d", len);
     return;
@@ -723,6 +761,11 @@ cmd_team_list_runs(struct client_state *p, int len,
   if (pkt->contest_id != global->contest_id) {
     err("%d: contest_id does not match", p->id);
     new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (p->user_id && pkt->user_id != p->user_id) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: pkt->user_id != p->user_id", p->id);
     return;
   }
 
@@ -766,6 +809,8 @@ cmd_team_page(struct client_state *p, int len,
   unsigned char *html_ptr = 0;
   size_t html_len = 0;
 
+  if (get_peer_local_user(p) < 0) return;
+
   if (len < sizeof(*pkt)) {
     new_bad_packet(p, "cmd_team_page: packet is too small: %d", len);
     return;
@@ -801,6 +846,11 @@ cmd_team_page(struct client_state *p, int len,
   if (pkt->contest_id != global->contest_id) {
     err("%d: contest_id does not match", p->id);
     new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (p->user_id && pkt->user_id != p->user_id) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: pkt->user_id != p->user_id", p->id);
     return;
   }
 
@@ -845,6 +895,8 @@ cmd_team_show_item(struct client_state *p, int len,
   struct client_state *q;
   int r;
 
+  if (get_peer_local_user(p) < 0) return;
+
   if (len != sizeof(*pkt)) {
     new_bad_packet(p, "cmd_team_show_item: bad packet length: %d", len);
     return;
@@ -870,6 +922,11 @@ cmd_team_show_item(struct client_state *p, int len,
   if (pkt->contest_id != global->contest_id) {
     err("%d: contest_id does not match", p->id);
     new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (p->user_id && pkt->user_id != p->user_id) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: pkt->user_id != p->user_id", p->id);
     return;
   }
 
@@ -923,6 +980,8 @@ cmd_team_submit_run(struct client_state *p, int len,
   unsigned char comp_pkt_buf[256];
   unsigned long shaval[5];
 
+  if (get_peer_local_user(p) < 0) return;
+
   if (len < sizeof(*pkt)) {
     new_bad_packet(p, "team_submit_run: packet is too small: %d", len);
     return;
@@ -962,6 +1021,11 @@ cmd_team_submit_run(struct client_state *p, int len,
   if (!contest_start_time) {
     err("%d: contest is not started", p->id);
     new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
+    return;
+  }
+  if (p->user_id && pkt->user_id != p->user_id) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: pkt->user_id != p->user_id", p->id);
     return;
   }
   if (contest_stop_time) {
@@ -1038,6 +1102,8 @@ cmd_team_submit_clar(struct client_state *p, int len,
   unsigned char subj[CLAR_MAX_SUBJ_TXT_LEN + 16];
   unsigned char bsubj[CLAR_MAX_SUBJ_LEN + 16];
 
+  if (get_peer_local_user(p) < 0) return;
+
   if (len < sizeof(*pkt)) {
     new_bad_packet(p, "team_submit_clar: packet is too small: %d", len);
     return;
@@ -1068,6 +1134,11 @@ cmd_team_submit_clar(struct client_state *p, int len,
   if (!teamdb_lookup(pkt->user_id)) {
     err("%d: user_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+    return;
+  }
+  if (p->user_id && pkt->user_id != p->user_id) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: pkt->user_id != p->user_id", p->id);
     return;
   }
   if (global->disable_clars || global->disable_team_clars) {
@@ -2223,6 +2294,11 @@ check_sockets(int may_wait_flag)
     }
   }
 
+  if (max_fd == -1) {
+    info("no file descriptors to wait on");
+    return 0;
+  }
+
   if (may_wait_flag) {
     timeout.tv_sec = global->serve_sleep_time / 1000;
     timeout.tv_usec = (global->serve_sleep_time % 1000) * 1000;
@@ -2568,6 +2644,10 @@ do_loop(void)
     /* update current time */
     current_time = time(0);
 
+    if (interrupt_signaled && may_safely_exit()) {
+      return 0;
+    }
+
     /* refresh user database */
     teamdb_refresh();
 
@@ -2611,10 +2691,6 @@ do_loop(void)
 
     /* update public log */
     update_public_log_file();
-
-    if (interrupt_signaled && may_safely_exit()) {
-      return 0;
-    }
 
     may_wait_flag = check_sockets(may_wait_flag);
 
@@ -2725,13 +2801,12 @@ main(int argc, char *argv[])
     return 0;
   }
   if (create_dirs(PREPARE_SERVE) < 0) return 1;
-  if (global->contest_id) {
-    if (teamdb_open_client(global->socket_path, global->contest_id) < 0)
-      return 1;
-  } else {
-    if (teamdb_open(global->teamdb_file, global->passwd_file, 0) < 0)
-      return 1;
+  if (global->contest_id <= 0) {
+    err("contest_id is not defined");
+    return 1;
   }
+  if (teamdb_open_client(global->socket_path, global->contest_id) < 0)
+    return 1;
   if (run_open(global->run_log_file, 0) < 0) return 1;
   if (clar_open(global->clar_log_file, 0) < 0) return 1;
   if (write_submit_templates(global->status_dir) < 0) return 1;
