@@ -87,6 +87,7 @@ COMMON_CFILES=\
  cgi.c\
  clarlog.c\
  clntutil.c\
+ compile_packet.c\
  contests.c\
  copyright.c\
  diff.c\
@@ -173,6 +174,8 @@ CFILES=\
  win32/cr_serialize.c\
  unix/interrupt.c\
  win32/interrupt.c\
+ unix/curtime.c\
+ win32/curtime.c\
  ${COMMON_CFILES}\
  ${SERVE_CLNT_CFILES}\
  ${SUPER_CLNT_CFILES}\
@@ -185,9 +188,11 @@ HFILES=\
  clarlog.h\
  client_actions.h\
  clntutil.h\
+ compile_packet.h\
  contests.h\
  copyright.h\
  cr_serialize.h\
+ curtime.h\
  diff.h\
  expat_iface.h\
  fileutl.h\
