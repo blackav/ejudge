@@ -61,6 +61,7 @@ struct section_global_data
   int    board_unfog_time;      /* time after the end of the contest
                                  * when the board is again updated */
   int    autoupdate_standings;  /* update standings automatically? */
+  int    inactivity_timeout;    /* timeout for slave case */
 
   int    fog_standings_updated; /* INTERNAL: updated at the moment of fog? */
   int    start_standings_updated; /* INTERNAL: updated at the start */
@@ -85,7 +86,7 @@ struct section_global_data
   /* userlist-server support */
   int    contest_id;
   path_t socket_path;
-  path_t contests_path;
+  path_t contests_dir;
 
   /* charsets */
   path_t charset;               /* html pages charset */
@@ -319,7 +320,6 @@ extern int max_lang;
 extern int max_prob;
 
 /* userlist-server interaction */
-extern struct contest_list *contests;
 extern struct contest_desc *cur_contest;
 
 int prepare(char const *, int flags, int mode, char const *opts);
@@ -337,5 +337,8 @@ void print_all_languages(FILE *);
 void print_all_testers(FILE *);
 
 void print_configuration(FILE *);
+
+int prepare_tester_refinement(struct section_tester_data *, int, int);
+int create_tester_dirs(struct section_tester_data *);
 
 #endif /* __PREPARE_H__ */
