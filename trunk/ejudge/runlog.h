@@ -39,6 +39,7 @@ enum
   RUN_VIRTUAL_START    = 20,
   RUN_VIRTUAL_STOP     = 21,
   RUN_EMPTY            = 22,
+  RUN_PSEUDO_LAST      = 22,
 
   RUN_TRANSIENT_FIRST  = 96,
   RUN_RUNNING          = 96,
@@ -84,7 +85,8 @@ int  run_get_attempts(int, int *, int);
 char *run_status_str(int, char *, int);
 
 int run_get_fog_period(time_t, int, int);
-void run_reset(void);
+int run_reset(time_t);
+int runlog_flush(void);
 
 unsigned char *run_unparse_ip(unsigned long ip);
 unsigned long run_parse_ip(unsigned char const *buf);
@@ -141,7 +143,6 @@ void run_get_all_entries(struct run_entry *out);
 int run_get_entry(int run_id, struct run_entry *out);
 int run_set_entry(int run_id, unsigned int mask, struct run_entry const *in);
 
-int run_build_virtual_table(void);
 time_t run_get_virtual_start_time(int user_id);
 time_t run_get_virtual_stop_time(int user_id, time_t cur_time);
 int run_get_virtual_status(int user_id);
@@ -160,5 +161,7 @@ void runlog_import_xml(FILE *flog, const unsigned char *in_xml);
 
 int run_backup(const unsigned char *path);
 int run_set_runlog(int total_entries, struct run_entry *entries);
+
+int runlog_check(FILE *, struct run_header *, size_t, struct run_entry *);
 
 #endif /* __RUNLOG_H__ */
