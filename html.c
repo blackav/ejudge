@@ -666,7 +666,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
   ALLOCAZERO(p_rev, p_max);
   for (i = 1, p_tot = 0; i < p_max; i++) {
     p_rev[i] = -1;
-    if (!probs[i]) continue;
+    if (!probs[i] || probs[i]->hidden) continue;
     p_rev[i] = p_tot;
     p_ind[p_tot++] = i;
   }
@@ -714,7 +714,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
     tind = t_rev[pe->team];
     pind = p_rev[pe->problem];
     p = probs[pe->problem];
-    if (!p || tind < 0 || pind < 0) continue;
+    if (!p || tind < 0 || pind < 0 || p->hidden) continue;
 
     run_score = pe->score;
     if (global->score_system_val == SCORE_OLYMPIAD) {
@@ -1031,7 +1031,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   XMEMZERO(p_rev, p_max);
   for (i = 1, p_tot = 0; i < p_max; i++) {
     p_rev[i] = -1;
-    if (!probs[i]) continue;
+    if (!probs[i] || probs[i]->hidden) continue;
     p_rev[i] = p_tot;
     p_ind[p_tot++] = i;
   }
@@ -1056,6 +1056,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     if (pe->team <= 0 || pe->team >= t_max || t_rev[pe->team] < 0) continue;
     if (pe->problem <= 0 || pe->problem > max_prob || p_rev[pe->problem] < 0)
       continue;
+    if (!probs[pe->problem] || probs[pe->problem]->hidden) continue;
     if (pe->is_hidden) continue;
     if (global->virtual) {
       // filter "future" virtual runs
