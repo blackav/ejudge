@@ -87,6 +87,10 @@ struct section_global_data
   path_t deny_from;
   path_t standings_url;
   path_t charset;
+
+  /* locallization stuff */
+  int    enable_l10n;
+  path_t l10n_dir;
 };
 
 static struct generic_section_config *config;
@@ -112,6 +116,9 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(deny_from, "s"),
   GLOBAL_PARAM(standings_url, "s"),
   GLOBAL_PARAM(charset, "s"),
+  GLOBAL_PARAM(enable_l10n, "d"),
+  GLOBAL_PARAM(l10n_dir, "s"),
+
   { 0, 0, 0, 0 }
 };
 
@@ -219,7 +226,7 @@ check_passwd(void)
 static void
 print_refresh_button(char const *str)
 {
-  if (!str) str = _("refresh");
+  if (!str) str = _("Refresh");
 
   puts(form_start_simple);
   printf("<input type=\"submit\" name=\"refresh\" value=\"%s\">", str);
@@ -785,7 +792,7 @@ view_standings_if_asked()
   printf("<table><tr><td>");
   print_refresh_button(_("back"));
   printf("</td><td>");
-  print_standings_button(_("refresh"));
+  print_standings_button(_("Refresh"));
   printf("</td></tr></table>");
 
   printf("%s", body);
@@ -793,7 +800,7 @@ view_standings_if_asked()
   printf("<table><tr><td>");
   print_refresh_button(_("back"));
   printf("</td><td>");
-  print_standings_button(_("refresh"));
+  print_standings_button(_("Refresh"));
   printf("</td></tr></table>");
   client_put_footer();
   exit(0);
