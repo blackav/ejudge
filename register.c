@@ -139,6 +139,8 @@ static unsigned char *user_inst;
 static unsigned char *user_instshort;
 static unsigned char *user_fac;
 static unsigned char *user_facshort;
+static unsigned char *user_city;
+static unsigned char *user_country;
 static int user_show_email;
 static int user_contest_id;
 static struct userlist_clnt *server_conn;
@@ -207,6 +209,9 @@ static struct field_desc field_descs[CONTEST_LAST_FIELD] =
     name_accept_chars, '?', 128, 64 },
   { "facshort", _("Faculty (short)"), "facshort", &user_facshort,
     name_accept_chars, '?', 32, 32 },
+  { "city", _("City"), "city", &user_city, name_accept_chars, '?', 64, 64 },
+  { "country", _("Country"), "country", &user_country,
+    name_accept_chars, '?', 64, 64 },
 };
 static struct field_desc member_field_descs[CONTEST_LAST_MEMBER_FIELD] =
 {
@@ -1594,6 +1599,8 @@ read_user_info_from_server(void)
   user_instshort = u->instshort;
   user_fac = u->fac;
   user_facshort = u->facshort;
+  user_city = u->city;
+  user_country = u->country;
 
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
     if (member_max[role] <= 0) continue;
@@ -1945,7 +1952,10 @@ edit_registration_data(void)
          user_read_only?dis_str:"",
          _("Show your e-mail address to public?"));
 
+  /*
   printf("<p>%s</p>\n", _("In the \"User name\" field you type the name of the user, not the participant. For example, if you are registering for participation in a collegiate contest, this field contains the name of your team. The value of this field is used in the list of registered teams, in the standings, etc."));
+  */
+  printf("<p>%s</p>\n", _("In the next field type the name, which will be used in standings, personal information display, etc."));
   printf("<p>%s%s: <input type=\"text\" name=\"name\" value=\"%s\" maxlength=\"64\" size=\"64\"%s>\n", _("User name"), user_contest_id>0?" (*)":"", user_name, user_read_only?dis_str:"");
 
   /* display change forms */
@@ -1959,6 +1969,11 @@ edit_registration_data(void)
            field_descs[i].maxlength,
            field_descs[i].size,
            user_read_only?dis_str:"");
+
+    if (i == CONTEST_F_INST) {
+      printf("<p>%s</p>",
+             _("For schools, liceums, etc, please, specify its number."));
+    }
   }
 
   /* */
