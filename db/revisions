@@ -705,3 +705,17 @@ prepare.c 1 42 4958276
 serve.c 1 39 6741182
 serve_clnt/userlist_cmd.c 1 1 211411
 userlist_clnt/dump_database.c 1 1 159501
+client_actions.h 1 5 127691
+html.h 1 16 346271
+protocol.h 1 10 509678
+serve_clnt.h 1 6 338494
+teamdb.h 1 16 150368
+userlist_clnt.h 1 14 585870
+html.c 1 30 3733366
+master.c 1 32 4273068
+master_html.c 1 9 4116814
+serve.c 1 40 6820277
+teamdb.c 1 21 1098497
+userlist-server.c 1 19 10523258
+serve_clnt/userlist_cmd.c 1 2 211412
+serve_clnt/view.c 1 4 285917
