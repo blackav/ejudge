@@ -30,6 +30,20 @@
 /* maximal length of a `userlist-server' command packet */
 #define MAX_USERLIST_PACKET_LEN 1048576
 
+/* the length of the serve's packet name
+ * includes one character for priority
+ */
+#define SERVE_PACKET_NAME_SIZE 13
+
+/* maximal number of simultaneously supported languages */
+#define MAX_LANGUAGE 31
+
+/* maximal number of simultaneously supported problems */
+#define MAX_PROBLEM  100
+
+/* maximal number of simultaneously supported testers */
+#define MAX_TESTER  100
+
 #endif /* __SETTINGS_H__ */
 
 /**
