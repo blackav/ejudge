@@ -382,3 +382,9 @@ contests.c 1 7 1220078
 userlist-server.c 1 6 4757661
 userlist_clnt.c 1 7 1395032
 users.c 1 1 1118697
+userlist.h 1 5 461086
+register.c 1 14 5577301
+userlist-server.c 1 7 4839953
+userlist_cfg.c 1 6 559912
+userlist_xml.c 1 6 2957957
+users.c 1 2 1118702
