@@ -438,3 +438,10 @@ userlist_proto.c 1 3 185136
 userlist_xml.c 1 8 3210646
 users.c 1 4 1352348
 protocol.c 1 1 141451
+serve_clnt/do_pass_fd.c 1 1 200134
+serve_clnt/get_archive.c 1 1 243543
+serve_clnt/list_runs.c 1 1 280390
+serve_clnt/open.c 1 1 290815
+serve_clnt/pass_fd.c 1 1 145912
+serve_clnt/recv_packet.c 1 1 247707
+serve_clnt/send_packet.c 1 1 151208
