@@ -4,7 +4,7 @@
 #ifndef __CONTESTS_H__
 #define __CONTESTS_H__
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -73,6 +73,7 @@ enum
     CONTEST_CONF_DIR,
     CONTEST_RUN_USER,
     CONTEST_RUN_GROUP,
+    CONTEST_REGISTER_EMAIL_FILE,
 
     CONTEST_LAST_TAG
   };
@@ -217,6 +218,7 @@ struct contest_desc
   unsigned char *serve_group;
   unsigned char *run_user;
   unsigned char *run_group;
+  unsigned char *register_email_file;
   struct contest_access *register_access;
   struct contest_access *users_access;
   struct contest_access *master_access;
