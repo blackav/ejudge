@@ -1,3 +1,58 @@
+2003-06-25  Alexander Chernov  <cher@ispras.ru>
+
+	* add_field.c: copyright notice is updated;
+	(userlist_clnt_add_field) the size of outcoming packet is
+	  counted differently: the string-terminating NUL characters are
+	  counted in the size of the packet structure.
+
+	* delete_field.c: copyright notice is updated;
+	(userlist_clnt_delete_field) the size of outcoming packet is
+	  counted differently: the string-terminating NUL characters are
+	  counted in the size of the packet structure.
+
+	* dump_database.c:
+	(userlist_clnt_dump_database) better behavior in case of error
+	  implemented.
+
+	* edit_field.c: copyright notice is updated;
+	(userlist_clnt_edit_field) the size of outcoming packet is
+	  counted differently: the string-terminating NUL characters are
+	  counted in the size of the packet structure.
+
+	* get_info.c: copyright notice is updated;
+	(userlist_clnt_get_info) a new parameter 'cmd' added which cound
+	  be either ULS_GET_USER_INFO or ULS_PRIV_GET_USER_INFO.
+
+	* list_users.c: copyright notice is updated;
+	(userlist_clnt_list_users) the size of outcoming packet is
+	  counted differently: the string-terminating NUL characters are
+	  counted in the size of the packet structure.
+
+	* register_contest.c: copyright notice is updated;
+	(userlist_clnt_register_contest) a new parameter is added: 'cmd',
+	  which could be either ULS_REGISTER_CONTEST or
+	  ULS_PRIV_REGISTER_CONTEST.
+
+	* register_new.c: copyright notice is updated;
+	(userlist_clnt_register_new) the size of outcoming packet is
+	  counted differently: the string-terminating NUL characters are
+	  counted in the size of the packet structure.
+
+	* set_info.c: copyright notice is updated;
+	(userlist_clnt_set_info) the size of outcoming packet is
+	  counted differently: the string-terminating NUL characters are
+	  counted in the size of the packet structure.
+
+	* set_passwd.c: copyright notice is updated;
+	(userlist_clnt_set_passwd) the size of outcoming packet is
+	  counted differently: the string-terminating NUL characters are
+	  counted in the size of the packet structure.
+
+	* team_login.c: copyright notice is updated;
+	(userlist_clnt_team_login) the size of outcoming packet is
+	  counted differently: the string-terminating NUL characters are
+	  counted in the size of the packet structure.
+
 2003-01-31  Alexander Chernov  <cher@ispras.ru>
 
 	* dump_database.c: initial revision

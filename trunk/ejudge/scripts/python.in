@@ -6,7 +6,7 @@
 # to the beginning of the file.
 # Usage: python <input> <output>
 
-echo '#!/usr/bin/python' > $2
+echo '#!/usr/bin/python -W ignore' > $2
 echo >> $2
 cat $1 >> $2
 chmod +x $2

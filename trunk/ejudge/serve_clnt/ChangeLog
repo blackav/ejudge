@@ -1,3 +1,29 @@
+2003-06-25  Alexander Chernov  <cher@ispras.ru>
+
+	* master_page.c: copyright notice is updated;
+	(serve_clnt_master_page) a new parameter 'extra_args' is added and
+	  passed to the server. This parameter contains extra arguments, which
+	  should be added to the self-referencing URL. Currently the
+	  contest identifier is passed this way.
+
+	* standings.c:
+	(serve_clnt_standings) a new parameter 'extra_args' is added and passed
+	  to the server. This parameter contains extra arguments, which
+	  should be added to the self-referencing URL. Currently the
+	  contest identifier is passed this way.
+
+	* team_page.c: copyright notice is updated;
+	(serve_clnt_team_page) a new parameter 'extra_args' is added and passed
+	  to the server. This parameter contains extra arguments, which
+	  should be added to the self-referencing URL. Currently the
+	  contest identifier is passed this way.
+
+	* view.c:
+	(serve_clnt_view) a new parameter 'extra_args' is added and passed
+	  to the server. This parameter contains extra arguments, which
+	  should be added to the self-referencing URL. Currently the
+	  contest identifier is passed this way.
+
 2003-01-31  Alexander Chernov  <cher@ispras.ru>
 
 	* view.c:
