@@ -33,7 +33,8 @@ enum
   RUN_PARTIAL          = 7,
   RUN_ACCEPTED         = 8,
   RUN_IGNORED          = 9,
-  RUN_MAX_STATUS       = 9,
+  RUN_DISQUALIFIED     = 10,
+  RUN_MAX_STATUS       = 10,
 
   RUN_PSEUDO_FIRST     = 20,
   RUN_VIRTUAL_START    = 20,
@@ -167,7 +168,7 @@ int unparse_runlog_xml(FILE *, struct run_header*, size_t, struct run_entry*,
                        int);
 int parse_runlog_xml(const unsigned char *, struct run_header *,
                      size_t *, struct run_entry **);
-void runlog_import_xml(FILE *flog, const unsigned char *in_xml);
+void runlog_import_xml(FILE *flog, int flags, const unsigned char *in_xml);
 
 int run_backup(const unsigned char *path);
 int run_set_runlog(int total_entries, struct run_entry *entries);
