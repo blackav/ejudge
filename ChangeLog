@@ -1,3 +1,61 @@
+2002-12-11  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* userlist-server.c: 
+	(login_team_user) the ban check is fixed;
+	(login_team_cookie) the ban check is fixed.
+
+	* runlog.h: `RUN_LOG_READONLY' new constant added;
+	(struct run_header) moved here from runlog.c;
+	(struct run_entry) moved here from runlog.c;
+	(run_get_header) new function prototype;
+	(run_get_all_entries) new function prototype.
+
+	* runlog.c:
+	structs `run_header' and `run_entry' are moved to runlog.h;
+	(run_open) new `RUN_LOG_READONLY' flag is supported;
+	(run_get_header) new function to copy the log header to the user's
+	  location;
+	(run_get_all_entries) new function to copy the whole log to the
+	  user's location.
+
+	* prepare.c: 
+	(set_defaults) one debugging print is removed.
+
+	* makefile: filter_test added to targets;
+	rule for compiling filter_test changed to include all the necessary
+	  stuff to lookup the real run database.
+
+	* filter_tree.h, filter_tree.c, filter_test.c: completed.
+
+	* filter_scan.lex: completed
+
+	* filter_expr.y: completed.
+
+	* files.make: filter_eval.[ch] module added.
+
+	* filter_eval.h, filter_eval.c: Initial revision
+
+2002-12-09  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* filter_expr.y: in progress...
+
+	* filter_tree.h: FILTER_ERR_* constants are added;
+	(filter_tree_new_dur) function prototype added;
+	(filter_tree_eval_node) function prototype added;
+	(filter_strerror) function prototype added.
+
+	* filter_tree.c: <errno.h> and <limits.h> included;
+	(filter_tree_new_dur) new function;
+	(str_to_int) new function;
+	(filter_tree_eval_node) new function;
+	(filter_strerror) new function.
+
+	* filter_scan.lex: rule for octal literals is fixed.
+
 2002-12-08  Alexander Chernov  <cher@ispras.ru>
 
 	* filter_test.c, filter_tree.h, filter_tree.c, filter_scan.lex, filter_expr.y:
