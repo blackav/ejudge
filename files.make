@@ -130,21 +130,6 @@ CFILES=\
  users.c\
  unix/fileutl.c\
  win32/fileutl.c\
- charsets/koi8_to_enc.c\
- charsets/koi8_to_enc_heap.c\
- charsets/koi8_to_enc_unchecked.c\
- charsets/nls.c\
- charsets/nls_cp1251.c\
- charsets/nls_cp866.c\
- charsets/nls_iso8859-5.c\
- charsets/nls_koi8-r.c\
- charsets/nls_utf8.c\
- charsets/utf8_to_enc.c\
- charsets/utf8_to_enc_heap.c\
- charsets/utf8_to_enc_unchecked.c\
- charsets/utf8_to_koi8.c\
- charsets/utf8_to_koi8_heap.c\
- charsets/utf8_to_koi8_unchecked.c\
  ${COMMON_CFILES}\
  ${SERVE_CLNT_CFILES}\
  ${USERLIST_CLNT_CFILES}
@@ -168,7 +153,6 @@ HFILES=\
  l10n.h\
  misctext.h\
  ncurses_utils.h\
- nls.h\
  opcaps.h\
  parsecfg.h\
  pathutl.h\
