@@ -1,6 +1,6 @@
 $Id$
 
-Version 2.1.29 (20040420)
+Version 2.1.30 (200405??)
 =========================
 If no bugs are found in this release, the next release (which
 will be identical or nearly identical to the current release)
@@ -9,6 +9,270 @@ system will be started. The 2.1 branch will be terminated. All
 the support work will go to 2.2 branch, and all the new
 development will go to the future development branch 2.3.
 
+The compilation and installation procedure for the ejudge system
+is completely reworked. The new installation procedure is closer
+to the GNU standards. The configuration, compilation,
+installation and setup procedure is described in detail in the
+INSTALL file. To adjust settings of the ejudge according to the
+current system the `configure' script is used, which is
+generated using the `autoconf' utility. The `configure' utility
+accepts large number of options, all of them are described in
+the `INSTALL' file.
+
+The compiled programs and the necessary files are installed to
+their location using the `make install' command. The
+installation directory is specified using the --prefix=PREFIX
+option of the configure script. If this option is not given in
+the configure's command line, the default directory
+HOME/inst-ejudge is used, where HOME is the home directory of
+the user executing the configure script. The structure of the
+PREFIX directory is as follows:
+        bin/            primary executable programs and scripts
+        cgi-bin/        CGI programs
+        include/        header files of the libchecker library
+        lib/            object files of the libchecker library
+        libexec/ejudge  various additional scripts and programs
+        share/ejudge    source code of the testlib library (pascal)
+        share/locale    message localization directory
+Therefore, with exception of the cgi-bin directory, the
+directory structure corresponds to the GNU standards.
+
+configure
+---------
+During the configuration of the ejudge system using the
+configure script it is possible to specify the default values
+for the most important configuration parameters of the system,
+for example, the path to the XML contest configuration
+directory or the path to the user server socket, etc. If the
+corresponding configuration variable is not set in the
+configuration file, the ejudge programs will use `built-in'
+(i.e. given during configuration stage) value. In case of CGI
+programs `master', `judge', `team', `register', `users' this
+makes configuration files not necessary, if all the necessary
+configuration variables are defined during the configuration of
+the system. Also, if the path to the main configuration file
+(ejudge.xml) is specified correctly during the configuration
+stage, it is possible to omit it in the arguments for programs
+edit-userlist, userlist-server etc.
+
+Use of configure script allows automatic adaptation to some
+details of the Linux installation. For example, if the process
+privilege lowering kernel patch is not installed, corresponding
+ejudge utilities (capexec, libdropcaps.so) will not be
+compiled. Also presence of localization tools (xgettext) is
+detected automatically, and if the tools are absent, the
+localization support will not be compiled. See the `INSTALL'
+file for further documentation. Note, that no attempts were made
+yet to make the ejudge system portable to other operating
+systems.
+
+The configure script tries to detect automatically a number of
+compilers and interpreters for C, C++, Java, Pascal and other
+languages. The compilation scripts are automaticaly adjusted for
+the detected compilers, and they will be supported by the ejudge
+compilation server. If a compiler or an interpreter is located
+in a non-standard directory and the path to it is not included
+into the PATH variable, its location may be specified explicitly
+using the command-line options for the configure script.
+
+ejudge-setup
+------------
+A new `ejudge-setup' utility is developed. The utility may be
+used for initial setup of the ejudge system after its
+complation. The utility provides console-based menu interface
+for refinement of initial configuration settings of the ejudge
+system. The utility is generates a "setup script", which should
+be executed by the user. The setup script will create all the
+necessary directories, copy all the necessary files to them,
+etc. The `ejudge-setup' utility may be run under ordinary
+(non-privileged) user, whereas for the setup script the
+administrator (root) privileges may be required.
+
+The generated ejudge setup script will create all the necessary
+configuration files, create the user database with a single
+administrator user with all the privileges for the ejudge
+system. The parameters of the administrator user are defined
+using the `ejudge-setup' utility. Also the ejudge setup script
+creates the compilation server configuration files with support
+for all the detected compilers and interpreters. The ejudge
+script creates configuration files for the test contest (number
+1) and copies the test files to the contest home directory. Also
+the ejudge setup script creates the work disk for testing of the
+programs and installs the symlinks to the CGI programs of the
+ejudge system to the cgi-bin directory of the http server.
+
+ejudge-config
+-------------
+This script may be used to obtain the information about the
+parameters of the ejudge system (currently, about the libchecker
+library). This information is necessary for compilation of
+checking programs. The ejudge-config script accepts the
+following command-line options:
+        --cflags
+                prints the standard output stream the C compiler
+                flags, necessary for compilation of checking
+                programs (for example, the path to the header
+                directories)
+        --ldflags
+                prints the linker flags
+        --libs
+                prints the required libraries
+
+Thus, in order to compile a checking program the following
+command may be used:
+gcc `ejudge-config --clags --ldflags` prog.c -o prog `ejudge-config --libs`
+Assumed, that the ejudge-config script is located in a directory
+from the PATH variable.
+
+ejudge.xml
+----------
+In order to store the new configuration variable the new tags
+are supported in the ejudge.xml file. The following new tags are
+supported: charset, config_dir, contests_home_dir,
+full_cgi_data_dir, compile_home_dir, testing_work_dir,
+script_dir, serialization_key. In future, these tags may be used
+in a ejudge configuration editor. A new attribute ejudge_user,
+which is an alias fot the local_user attribute is also
+introduced. The new name reflects the meaning of the attrobute
+better.
+
+run
+---
+The ejudge system now supports a number of "standard cheking
+programs". The set of the standard checking programs includes,
+for example, the program, which compares two files textually
+(the first file is the participant's solution output and the
+second file is the correct answer file), or the program, which
+compares two integers (the first from the participant's solution
+output and the second from the correct output file) being the
+sole data in the two files. The set of checking programs is
+compiled along with the main ejudge system programs and is
+installed to the script directory (PREFIX/libexec/ejudge). In
+order to specify, that solutions for the given problem to be
+checked using a standard checker the `standard_checker'
+configuration variable of the problem section of the serve.cfg
+configuration file is used. This variable should be set to the
+name of the standard checker required, for example
+standard_checker = cmp_int
+The set of the standard checkers allows in many cases avoiding
+writing new checking programs. For the complete documentation
+please refer to the Reference Manual.
+
+The location of the standard checking programs may be specified
+explicitly using the `ejudge_checkers_dir' global configuration
+variable of the serve.cfg configuration file. Its default value
+is exactly PREFIX/libexec/ejudge. The default value may be
+changed from the configure's command line using the
+--libexecdir=DIR option.
+
+libchecker
+----------
+The libchecker library for writing checking programs is
+significanly extended. The following new functions are added: 
+normalize_spaces_in_file, read_corr_unsigned_int,
+read_corr_unsigned_long_long, read_in_long_long, read_int,
+read_in_unsigned_int, read_in_unsigned_long_long,
+read_team_unsigned_int, read_team_unsigned_long_long,
+read_unsigned_int, read_unsigned_long_long.
+
+The libchecker header files may be used with a C++ program
+(compiled using the GNU C++ compiler g++).
+
+serve, compile
+--------------
+A new feature added allowing passing arbitrary environment
+variables to the compilation server compile. The environment
+variables are passed in the compile request packed, thus the
+variables may be defined in the contest configuration file
+rather than the compile server configuration file. These
+environment variables are then passed to the compilation
+script. In order to use this feature, the `compiler_env'
+configuration variable from the [language] section of the
+serve.cfg file is to be used. Each use of the `compiler_env'
+variable (in the left-hand side) defines one environment
+variable, but the `compiler_env' variable may appear in the same
+language descrition section several times, each time adding a
+new environment variable.
+
+run
+---
+Arbitrary environment variables may be passed to the checking
+program. To define the environment variables the `checker_env'
+configuration variable of the serve.cfg file is used. This
+variable may appear in the problem description section as well
+as in the tester description section. Inheritance of the value
+of this variable from abstract problems and abstract checkers is
+supported. The environment variables obtained from all the
+sources (problem description section, tester description
+section, etc.) are merged together and passed to the testing
+program. Each use of the `checker_env' configuration variable
+allows setting of a single environment variable, but the
+`checker_env' configuration variable may appear several times.
+
+serve, compile, run
+-------------------
+Explicit user-defined substitutions of configuration variables
+are supported. These substitutions are similar to variable
+substitutions in languages like bash. For example, in order to
+use the global configuration variable `script_dir' in the
+definition of the global configuration variable `start_env', the
+following definition of `start_env' may be used:
+start_env = "LD_PRELOAD=${script_dir}/libdropcaps.so"
+
+Currently, configuration variable substitutions are handled for
+`compiler_env', `checker_env', `start_env' configuration
+variables only. Currently, only names of the global
+configuration variables may be used in substitutions.
+
+The variable substitution mechanism duplicates in somewhat the
+already existing format substitution mechanism. Is is probable,
+that in future versions a new unified substitution mechanism,
+which integrate the both cases, will be introduced.
+
+serve
+-----
+Upon start the `serve' contest server may create the symbolic
+links to the current standing files from the html documents
+directory of the http server. In the prevous versions this step
+had to be done manually.
+
+In order to enable automatic creation of symbolic links, in the
+contest server configuration file `serve.cfg' the `htdocs_dir'
+global configuration variable must be set. This variable must
+contain the path to the root of the html document directories of
+the http server (often on the Linux systems this path equals to
+/home/httpd/html). If the `htdocs_dir' variable is undefined,
+the default value is used. The default value may be specified in
+the configure's command line using the
+--with-httpd-htdocs-dir=DIR option.
+
+To specify the path, where the symlinks are to be created, the
+global configuration variables `stand_symlink_dir',
+`stand2_symlink_dir', `plog_symlink_dir' are used for the
+primary standings file, secondary standings file, and the
+submission log file. All the paths are interpreted as relative
+to the value of `htdocs_dir' configuration variable. The names
+of symlinks created in these directories are defined using
+`standings_file_name', `stand2_file_name', `plog_file_name'
+global configuration variables.
+
+For example, if the `standings_file_name' variable equals to
+"standings.shtml", the `htdocs_dir' variable equals to
+"/home/httpd/html", and the `stand_symlink_dir' variable equals
+to "/contests/1", then on the serve's startup in the
+/home/httpd/html/contests/1 a symlink named standings.shtml will
+be created pointing to the current standings file located in the
+contest home directory. If the http server setup has no virtual
+hosts, the current standings will be available using the URL
+http://HOST/contests/1/standings.shtml.
+
+In order to `serve' to install the necessary symlinks to the
+html documents directory of the http server, it should have
+enough privileges, i. e. a user running the serve program must
+have write access to the corresponding directory.
+
+Version 2.1.29 (20040420)
+=========================
 All the compile-time settings, which cannot be changed from
 configuration files are moved into a separate file `settings.h'
 in the ejudge source directory. This file contains the following

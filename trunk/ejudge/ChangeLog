@@ -1,3 +1,462 @@
+2004-06-19  Alexander Chernov  <cher@ispras.ru>
+
+	* INSTALL, INSTALL.RUS: *** empty log message ***
+
+2004-06-18  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2004-06-17  Alexander Chernov  <cher@ispras.ru>
+
+	* INSTALL.RUS: initial revision
+
+	* Makefile.in: `tags' rule is added;
+	removal of `TAGS' file is added to `distclean' rule.
+
+	* ejudge-setup.c: "Installation script" is renamed to "Setup script".
+
+2004-05-27  Alexander Chernov  <cher@ispras.ru>
+
+	* cher-configure:
+	the command-line arguments are further passed to configure.
+
+	* Makefile.in: rules for ejudge-config script generation are added.
+
+	* configure.ac: --disable-rpath option is supported;
+	ejudge-config.v script is added to the list of substituted scripts.
+
+	* ejudge-config.v.in: initial revision
+
+2004-05-26  Alexander Chernov  <cher@ispras.ru>
+
+	* team.c, register.c, users.c, master.c:
+	(initialize) support for cgi program suffix (defined by CGI_PROG_SUFFIX
+	  from the config.h) is implemented.
+
+	* userlist_cfg.h: copyright notice is added;
+	(struct userlist_cfg) the following new fields are added:
+	  serialization_key, charset, config_dir, contests_home_dir,
+	  full_cgi_data_dir, compile_home_dir, testing_work_dir,
+	  script_dir.
+
+	* userlist_cfg.c:
+	support for the following new elements is added: <charset>,
+	  <config_dir>, <contests_home_dir>, <full_cgi_data_dir>,
+	  <compile_home_dir>, <testing_work_dir>, <script_dir>,
+	  <serialization_key>;
+	support for the new attribute "ejudge_user" is added.
+
+	* serve.c:
+	(create_symlinks) a new function, which creates symlink to the
+	  standings html files in the var/status/dir contest directory;
+	(do_loop) `create_symlinks' is called.
+
+	* prepare.h:
+	(struct section_global_data) new fields added: `htdocs_dir',
+	  `stand_symlink_dir', `stand2_symlink_dir', `plog_symlink_dir'.
+
+	* prepare.c: new global configuration variables added: `htdocs_dir',
+	  `stand_symlink_dir', `stand2_symlink_dir', `plog_symlink_dir'.
+
+	* ejudge-setup.c: initial revision
+
+	* Makefile.in:
+	rules for compilation of `ejudge-setup' utility are added.
+
+	* files.make:
+	new files added: ncurses_utils.c, tex_dom.c, tex_dom_parse.c,
+	  tex_dom_doc.c, tex_dom_render.c, ejudge-setup.c, ncurses_utils.h,
+	  tex_dom.h.
+
+	* configure.ac: many new options added.
+
+	* config.h.in, cher-configure:
+	modified for the new configure options.
+
+	* ncurses_utils.c, ncurses_utils.h, tex_dom_parse.c, tex_dom_render.c, tex_dom.c, tex_dom.h, tex_dom_doc.c:
+	initial revision
+
+2004-05-10  Alexander Chernov  <cher@ispras.ru>
+
+	* pathutl.c: copyright notice is updated;
+	(chop) all trailing spaces from the end of the string are removed.
+
+	* prepare.c: new language configuration variable `compiler_env';
+	(set_defaults) `compiler_env' configuration variable is handled.
+
+	* prepare.h:
+	(struct section_language_data) `compiler_env' field is added.
+
+	* serve.c:
+	(cmd_priv_submit_run) compiler_env parameter is added to call of
+	  `queue_compile_request';
+	(cmd_team_submit_run) the same as above;
+	(queue_compile_request) new parameter `compiler_env' is added;
+	  the compile packet format is updated to allow passing environment
+	  variables to the compile program;
+	(rejudge_run)
+	  `compiler_env' is passed to `queue_compile_request'.
+
+	* configure.ac: new option --enable-conf-dir is added.
+
+	* compile.c:
+	(do_loop) compile packet format is extended to pass the environment
+	  variables for the compiler;
+	  these environment variables are extracted and passed to the
+	  compiler process.
+
+	* cher-configure: *** empty log message ***
+
+2004-05-07  Alexander Chernov  <cher@ispras.ru>
+
+	* config.h.in: added EJUDGE_CONF_DIR.
+
+2004-05-06  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in: the makefile is renamed to Makefile.in;
+	the Makefile.in is integrated in autoconf framework;
+	the directory structure is reorganized.
+
+	* prepare.h:
+	(struct section_problem_data) new field `checker_env' is added;
+	(struct section_tester_data) new field `checker_env' is added.
+
+	* prepare.c: "varsubst.h" is included;
+	new problem configuration variable `checker_env' is added;
+	new tester configuration variable `checker_env' is added;
+	(set_defaults) `checker_env' problem configuration variable is
+	  supported. Variable substitution is performed on it;
+	  variable substitution is performed on `start_env' tester
+	  configuration variable;
+	  `checker_env' tester configuration variable is supported,
+	  variable substitution is performed on it.
+	(prepare_tester_refinement)
+	  variable substitution is performed on `start_env';
+	  new tester configuration variable `checker_env' is supported;
+	  variable substitution is performed on `checker_env'.
+
+	* files.make: varsubst.c is added to COMMON_CFILES;
+	varsubst.h is added to HFILES.
+
+	* run.c: 
+	(run_tests) the checker is started with some logging;
+	  checker_env configuration variable is supported.
+
+	* testinfo.h: copyright notice is updated;
+	protection against C++ is added;
+	in C++ mode char * is used instead of unsigned char * for strings.
+
+	* varsubst.c, varsubst.h, configure.ac: initial revision
+
+	* prepare.c:
+	the `builtin_checker' global configuration variable is renamed to
+	  `standard_checker';
+	(prepare_tester_refinement) `builtin_checker' field is renamed to
+	  `standard_checker';
+	  `builtin_checker_used' is renamed to `standard_checker_used'.
+
+	* prepare.h:
+	(struct section_problem_data) `builtin_checker' field is renamed to
+	  `standard_checker';
+	  `builtin_checker_used' is renamed to `standard_checker_used'.
+
+	* run.c:
+	(run_tests) builtin_checker_used is renamed to standard_checker_used;
+	(process_default_testers) the same as above.
+
+	* master.c:
+	DEFAULT_CHARSET is set to EJUDGE_CHARSET from "config.h" if the macro
+	  is defined there, or to "iso8859-1" as the fallback value;
+	(params) the global section initialization function is added;
+	(global_init_func) a new function for initialization of the global
+	  section;
+	(display_enter_password_2) DEFAULT_CHARSET is used;
+	(client_put_refresh_header) DEFAULT_CHARSET is used;
+	(set_defaults) EJUDGE_LOCALE_DIR from "config.h" is used as the
+	  default value for `l10n_dir' variable if the locallization is
+	  enabled;
+	(initialize) if no config file exists, `param_make_global_section'
+	  is used to create a global configuration variables section with
+	  the default values;
+	  EJUDGE_SOCKET_PATH from "config.h" is used as the default value
+	  for `socket_path' configuration variable;
+	  EJUDGE_CONTESTS_DIR from "config.h" is used as the default value
+	  for `contests_dir' configuration variable;
+	  `allow_deny' is by default set to 1.
+
+	* prepare.c: "config.h" is included;
+	unnecessary use of <libintl.h> is removed;
+	new global configuration parameter `ejudge_checkers_dir';
+	new global configuration parameter `builtin_checker';
+	DFLT_G_CHARSET macro is defined to EJUDGE_CHARSET from "config.h",
+	  if the macro is defined, or to "iso8859-1" as the fallback value;
+	(global_init_func) `enable_l10n' is set to -1;
+	(set_defaults) EJUDGE_SOCKET_PATH from "config.h" is used as the
+	  default value for `socket_path';
+	  EJUDGE_CONTESTS_DIR from "config.h" is used as the default value
+	  for `contests_dir';
+	  EJUDGE_SCRIPT_DIR from "config.h" is used as the default value for
+	  `script_dir';
+	  EJUDGE_SCRIPT_DIR from "config.h" is used as the default value for
+	  the new variable `ejudge_checkers_dir';
+	  EJUDGE_LOCALE_DIR from "config.h" is used as the default value for
+	  `l10n_dir', if the localization is enabled;
+	(prepare_tester_refinement) the `builtin_checker' variable is used.
+
+	* register.c:
+	DEFAULT_CHARSET macro is defined to EJUDGE_CHARSET from "config.h", or
+	  to "iso8859-1", if the latter is not defined;
+	(parse_config) new parameter `default_config' is added, which is
+	  the configuration file embedded in string;
+	  the default configuration file is preferred, if the corresponding
+	  function parameter != 0;
+	  `l10n', <l10n_dir> are supported regardless of localization support;
+	  EJUDGE_LOCALE_DIR from "config.h" is used as the default value for
+	  <l10n_dir> element, if the localization is enabled;
+	  DEFAULT_CHARSET from "config.h" is used as the default value for
+	  `charset' attribute;
+	  EJUDGE_SOCKET_PATH from "config.h" is used as the default value for
+	  <socket_path> element;
+	  EJUDGE_CONTESTS_DIR from "config.h" is used as the default value for
+	  <contests_dir> element;
+	(initialize) the default config string is provided to `parse_config',
+	  if no configuration file is found;
+	(client_put_refresh_header) DEFAULT_CHARSET is used.
+
+2004-05-05  Alexander Chernov  <cher@ispras.ru>
+
+	* cher-configure, config.h.in: initial revision
+
+	* parsecfg.c:
+	(param_make_global_section) a new function, which creates the global
+	  section in memory with the default values, as if this global
+	  section was read from file.
+
+	* parsecfg.h: copyright notice is updated;
+	(param_make_global_section) new function prototype is added.
+
+	* prepare.h:
+	(struct section_global_data) new field `ejudge_checkers_dir' is
+	  added;
+	(struct section_tester_data) new fields `builtin_checker' and
+	  `builtin_checker_used' are added.
+
+	* run.c: "config.h" is included;
+	(run_tests) `builtin_checker_used' tester variable is honored;
+	(process_default_testers) the same as above.
+
+	* serve.c: "config.h" is included;
+	(cmd_team_page) "dereferencing type-punned pointer will break
+	  strict-aliasing rules" warning is fixed;
+	(cmd_master_page) the same as above;
+	(cmd_priv_standings) the same as above;
+	(cmd_view) the same as above;
+	(cmd_import_xml_runs) the same as above;
+	(cmd_message) the same as above;
+	(cmd_team_show_item) the same as above;
+	(read_compile_packet) possible uninitialized variable use of
+	  `team_flags' warning is fixed.
+
+	* super-serve.c: copyright notice is updated;
+	"config.h" is included;
+	(main) if the configuration file name is not provided in the command
+	  line arguments, the default path EJUDGE_XML_PATH is used, if the
+	  macro is defined in "config.h".
+
+	* team.c:
+	DEFAULT_CHARSET is defined to EJUDGE_CHARSET from "config.h", and
+	  to "iso8859-1", if the latter macro is not defined;
+	(params) global section initialization function `global_init_func'
+	  is added;
+	(global_init_func) the function sets `enable_l10n' and `allow_deny'
+	  configuration variables to "undefined" (-1) value;
+	(set_defaults) EJUDGE_LOCALE_DIR from "config.h" is used as the
+	  default value for `l10n_dir', if localization is enabled;
+	(initialize) a default configuration variables are created, if no
+	  configuration file is found;
+	  EJUDGE_SOCKET_PATH is used as the default value for `socket_path'
+	  configuration variable;
+	  EJUDGE_CONTESTS_DIR is used as the default value for `contests_dir'
+	  configuration variable;
+	  the default value for `allow_deny' is set to 1;
+	(client_put_refresh_header) DEFAULT_CHARSET is used as the default
+	  charset.
+
+	* userlist-server.c: "config.h" is included;
+	gettext() macro is defined, if localization is disabled;
+	(cmd_register_new) possible uninitialized variable read for
+	  `login_hash' variable warning is fixed;
+	(cmd_do_login) possible uninitialized variable read for `user'
+	  variable warning is fixed;
+	(cmd_check_cookie) possible uninitialized variable read for `cookie'
+	  variable warning is fixed;
+	(cmd_get_user_info) "dereferencing type-punned pointer will break
+	  strict-aliasing rules" warning is fixed;
+	(cmd_priv_get_user_info) the same as above;
+	(cmd_list_standings_users) the same as above;
+	(cmd_get_user_contests) the same as above;
+	(cmd_list_users) the same as above;
+	(cmd_dump_database) the same as above;
+	(cmd_generate_register_passwords) the same as above;
+	(cmd_generate_team_passwords) the same as above;
+	(cmd_add_field) possible uninitialized variable read for
+	  `login_hash' variable warning is fixed;
+	(do_backup)  "dereferencing type-punned pointer..." warning is fixed;
+	(main) if no command-line arguments is given, and the macro
+	  `EJUDGE_XML_PATH' is defined in "config.h", value of this
+	  macro is used as the default path to the configuration file.
+
+	* userlist_cfg.c: "config.h" is included;
+	(userlist_cfg_parse) `EJUDGE_LOCALE_DIR' from "config.h" is used as
+	  the default value for <l10n_dir> element;
+	  `EJUDGE_SOCKET_PATH' from "config.h" is used as the default value
+	  for <socket_path> element;
+	  `EJUDGE_CONTESTS_DIR' from "config.h" is used as the default value
+	  for <contests_dir> element;
+	  `EJUDGE_SERVE_PATH' from "config.h" is used as the default value
+	  for <serve_path> element;
+	  `EJUDGE_RUN_PATH' from "config.h" is used as the default value
+	  for <run_path> element.
+
+	* users.c:
+	EJUDGE_CHARSET macro is set to EJUDGE_CHARSET from "config.h", or
+	  to "iso8859-1", if the EJUDGE_CHARSET macro is not defined;
+	(parse_config) new parameter `default_config' is added, which is
+	  a configuration string, if the parameter has non-null value,
+	  it is preferred over the first parameter - path to the configuration
+	  file;
+	  `l10n', `l10n_dir' are parsed regardless of internalization support;
+	  EJUDGE_LOCALE_DIR from "config.h" is used as the default value
+	  for `l10n_dir' element;
+	  EJUDGE_SOCKET_PATH from "config.h" is used as the default value
+	  for `socket_path' element;
+	  EJUDGE_CONTESTS_DIR from "config.h" is used as the default value
+	  for `contests_dir' element;
+	(initialize) the default configuration string is provided to
+	  `parse_config', if no configuration file is found.
+
+	* edit-userlist.c: "config.h" is included;
+	(main) if no command-line arguments are given, the default path
+	  to the configuration file EJUDGE_XML_PATH is used.
+
+	* clntutil.c:
+	DEFAULT_CHARSET macro is set either to EJUDGE_CHARSET from config.h,
+	  if it is defined, or to iso8859-1;
+	(client_put_header) DEFAULT_CHARSET macro is used.
+
+	* clean-users.c: "config.h" is included;
+	(main) if no command line parameters are given, the default path to
+	  the configuration file EJUDGE_XML_PATH is used.
+
+	* cgi.c: "config.h" is included;
+	DEFAULT_CHARSET macro is defined to EJUDGE_CHARSET if this is set,
+	  iso8859-1 else;
+	(bad_request) DEFAULT_CHARSET is used;
+	(request_too_large) the same as above.
+
+2004-05-04  Alexander Chernov  <cher@ispras.ru>
+
+	* runlog_import.c:
+	(runlog_import_xml) a GNU C 3.3 warning about breaking strict aliasing
+	  rules in -Wall -O2 mode is fixed.
+
+	* runlog.c: "config.h" is included;
+	(run_set_entry) possible unitialized use of variable `ue' warning
+	  is fixed.
+
+	* master_html.c: "config.h" is included;
+	(write_all_runs) a GNU C 3.3 warning about breaking strict aliasing
+	  rules in -Wall -O2 mode is fixed;
+	  possible uninitialized varible `match_idx' usage warning is fixed;
+	(write_priv_clar) a GNU C 3.3 warning about breaking strict aliasing
+	  rules in -Wall -O2 mode is fixed;
+	(write_priv_users) the same as above.
+
+	* html.c: "config.h" is included;
+	(new_write_user_clars) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed;
+	(do_write_standings) the same as above.
+
+	* opcaps.c:
+	(opcaps_parse) a GNU C 3.3 warning about breaking strict aliasing
+	  rules in -Wall -O2 mode is fixed.
+
+	* runlog_xml.c:
+	(parse_sha1) a GNU C 3.3 warning about breaking strict aliasing
+	  rules in -Wall -O2 mode is fixed.
+
+	* l10n.c: copyright notice is updated;
+	"config.h" is included;
+	`l10n_flag' compiled out, if CONF_HAS_LIBINTL is not set.
+
+	* filter_scan.lex:
+	(handle_int) a GNU C 3.3 warning about breaking strict aliasing
+	  rules in -Wall -O2 mode is fixed.
+
+	* master.c: "config.h" is included.
+
+	* misctext.c: copyright notice is updated;
+	"config.h" is included.
+
+	* register.c: "config.h" is included;
+	`gettext' is defined to empty macro if CONF_HAS_LIBINTL is not defined.
+	(make_user_xml) a GNU C 3.3 warning about breaking strict aliasing
+	  rules in -Wall -O2 mode is fixed.
+
+	* team.c, users.c: copyright notice is updated;
+	"config.h" is included;
+	`gettext' is defined to empty macro if CONF_HAS_LIBINTL is not defined.
+
+	* edit-userlist.c:
+	(display_registered_users) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed;
+	(do_display_user_menu) the same as above.
+
+	* copyright.c, clntutil.c: "config.h" is included.
+
+	* clean-users.c:
+	(main) possible using of uninitialized variable `j' warning is fixed.
+
+	* userlist_cfg.c, teamdb.c: copyright notice is updated;
+	unnecessary include of <libintl.h> and check for CONF_HAS_LIBINTL is
+	  removed.
+
+	* revinfo.c:
+	unnecessary include of <libintl.h> and check for CONF_HAS_LIBINTL is
+	  removed.
+
+	* parsecfg.c: copyright notice is updated;
+	unnecessary include of <libintl.h> and check for CONF_HAS_LIBINTL is
+	  removed.
+
+	* compile.c:
+	unnecessary include of <libintl.h> and check for CONF_HAS_LIBINTL is
+	  removed.
+
+	* clarlog.c: copyright notice is updated;
+	unnecessary include of <libintl.h> and check for CONF_HAS_LIBINTL is
+	  removed.
+
+	* cgi.c:
+	unnecessary include of <libintl.h> and check for CONF_HAS_LIBINTL is
+	  removed.
+
+	* base64.c: copyright notice is updated;
+	unnecessary include of <libintl.h> and check for CONF_HAS_LIBINTL is
+	  removed.
+
+2004-05-03  Alexander Chernov  <cher@ispras.ru>
+
+	* TODO: *** empty log message ***
+
+	* install-sh: initial revision
+
+	* makefile: Converted to Makefile.in.
+
+2004-04-20  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
 2004-04-19  Alexander Chernov  <cher@ispras.ru>
 
 	* files.make: serve_clnt/rejudge_by_mask.c is added.
