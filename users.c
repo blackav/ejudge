@@ -667,6 +667,7 @@ main(int argc, char const *argv[])
   int errcode = 0;
   int name_len = 0;
   unsigned char *name_str = 0;
+  unsigned char *in_name_str = 0;
 
   gettimeofday(&begin_time, 0);
   initialize(argc, argv);
@@ -715,9 +716,19 @@ main(int argc, char const *argv[])
                       0, cnts->users_footer_file, "");
   }
 
-  name_len = html_armored_strlen(cnts->name);
+  in_name_str = 0;
+  if (!client_locale_id) {
+    in_name_str = cnts->name_en;
+    if (!in_name_str) in_name_str = cnts->name;
+  } else {
+    in_name_str = cnts->name;
+    if (!in_name_str) in_name_str = cnts->name_en;
+  }
+  if (!in_name_str) in_name_str = "";
+
+  name_len = html_armored_strlen(in_name_str);
   name_str = alloca(name_len + 16);
-  html_armor_string(cnts->name, name_str);
+  html_armor_string(in_name_str, name_str);
 
   if (!contests_check_users_ip(user_contest_id, user_ip)) {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
@@ -735,7 +746,9 @@ main(int argc, char const *argv[])
     client_put_header(stdout, header_txt, 0, config->charset, 1,
                       client_locale_id,
                       _("List of registered participants"));
-    printf("<h2>%s: %s</h2>\n", _("Contest"), name_str);
+    printf("<%s>%s: %s</%s>\n",
+           cnts->users_head_style,
+           _("Contest"), name_str, cnts->users_head_style);
   }
 
   server_conn = userlist_clnt_open(config->socket_path);
