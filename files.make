@@ -76,6 +76,7 @@ HFILES=\
  parsecfg.h\
  pathutl.h\
  prepare.h\
+ protocol.h\
  runlog.h\
  sformat.h\
  sha.h\
