@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -66,16 +66,10 @@ do_loop(void)
   int     lang_id;
   int    r, n, i, v;
   tpTask tsk;
-  sigset_t work_mask;
   unsigned char msgbuf[512];
   int ce_flag;
   char **compiler_env = 0;
   int env_count = 0, env_size = 0;
-
-  sigemptyset(&work_mask);
-  sigaddset(&work_mask, SIGINT);
-  sigaddset(&work_mask, SIGTERM);
-  sigaddset(&work_mask, SIGTSTP);
 
   if (cr_serialize_init() < 0) return -1;
   interrupt_init();
@@ -94,7 +88,7 @@ do_loop(void)
       case ENFILE:
         err("trying to recover, sleep for 5 seconds");
         interrupt_enable();
-        sleep(5);
+        os_Sleep(5000);
         interrupt_disable();
         continue;
       default:
@@ -268,9 +262,9 @@ do_loop(void)
     if (r < 0) {
       // wait some time, then try again
       info("waiting 5 seconds hoping for things to change");
-      sigprocmask(SIG_UNBLOCK, &work_mask, 0);
-      sleep(5);
-      sigprocmask(SIG_BLOCK, &work_mask, 0);
+      interrupt_enable();
+      os_Sleep(5000);
+      interrupt_disable();
       if (compiler_env) {
         for (i = 0; i < env_count; i++) xfree(compiler_env[i]);
         xfree(compiler_env);
@@ -289,9 +283,8 @@ do_loop(void)
         task_PutEnv(tsk, compiler_env[i]);
     }
     task_SetWorkingDir(tsk, global->compile_work_dir);
-    task_SetRedir(tsk, 1, TSR_FILE, log_path,
-                  O_WRONLY|O_CREAT|O_TRUNC, 0777);
-    task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", O_WRONLY);
+    task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_REWRITE, 0777);
+    task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
     task_SetRedir(tsk, 2, TSR_DUP, 1);
     if (langs[lang_id]->compile_real_time_limit > 0) {
       task_SetMaxRealTime(tsk, langs[lang_id]->compile_real_time_limit);
@@ -336,9 +329,9 @@ do_loop(void)
         break;
 
       info("waiting 5 seconds hoping for things to change");
-      sigprocmask(SIG_UNBLOCK, &work_mask, 0);
-      sleep(5);
-      sigprocmask(SIG_BLOCK, &work_mask, 0);
+      interrupt_enable();
+      os_Sleep(5000);
+      interrupt_disable();
     }
 
     task_Delete(tsk);
