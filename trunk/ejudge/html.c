@@ -415,7 +415,8 @@ write_team_clar(int team_id, int clar_id,
 #define ALLOCAZERO(a,b) do { if (!XALLOCA(a,b)) goto alloca_failed; XMEMZERO(a,b); } while(0)
 
 static void
-do_write_kirov_standings(FILE *f, int client_flag)
+do_write_kirov_standings(FILE *f, int client_flag,
+                         char const *header_str, char const *footer_str)
 {
   unsigned long start_time;
   unsigned long stop_time;
@@ -447,15 +448,23 @@ do_write_kirov_standings(FILE *f, int client_flag)
     }
 
     if (!client_flag) {
-      fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>\n",
-              global->charset,
-              header, header);
+      if (header_str) {
+        fprintf(f, header_str, global->charset, header, header);
+      } else {
+        fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>\n",
+                global->charset,
+                header, header);
+      }
     } else {
       fprintf(f, "%s%c", header, 1);
     }
     fprintf(f, "<h2>%s</h2>", _("The contest is not started"));
     if (!client_flag) {
-      fprintf(f, "</body></html>");
+      if (footer_str) {
+        fprintf(f, "%s", footer_str);
+      } else {
+        fprintf(f, "</body></html>");
+      }
     }
     return;
   }
@@ -624,9 +633,13 @@ do_write_kirov_standings(FILE *f, int client_flag)
   }
 
   if (!client_flag) {
-    fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>",
-            global->charset,
-            header, header);
+    if (header_str) {
+      fprintf(f, header_str, global->charset, header, header);
+    } else {
+      fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>",
+              global->charset,
+              header, header);
+    }
   } else {
     fprintf(f, "%s%c", header, 1);
   }
@@ -681,7 +694,13 @@ do_write_kirov_standings(FILE *f, int client_flag)
   }
 
   fputs("</table>\n", f);
-  if (!client_flag) fputs("</body></html>", f);
+  if (!client_flag) {
+    if (footer_str) {
+      fprintf(f, "%s", footer_str);
+    } else {
+      fputs("</body></html>", f);
+    }
+  }
 
   return;
  alloca_failed: 
@@ -690,7 +709,8 @@ do_write_kirov_standings(FILE *f, int client_flag)
 }
 
 static void
-do_write_standings(FILE *f, int client_flag)
+do_write_standings(FILE *f, int client_flag,
+                   char const *header_str, char const *footer_str)
 {
   int      i, j;
 
@@ -738,15 +758,23 @@ do_write_standings(FILE *f, int client_flag)
     }
 
     if (!client_flag) {
-      fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>\n",
-              global->charset,
-              header, header);
+      if (header_str) {
+        fprintf(f, header_str, global->charset, header, header);
+      } else {
+        fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>\n",
+                global->charset,
+                header, header);
+      }
     } else {
       fprintf(f, "%s%c", header, 1);
     }
     fprintf(f, "<h2>%s</h2>", _("The contest is not started"));
     if (!client_flag) {
-      fprintf(f, "</body></html>");
+      if (footer_str) {
+        fprintf(f, "%s", footer_str);
+      } else {
+        fprintf(f, "</body></html>");
+      }
     }
     return;
   }
@@ -866,9 +894,13 @@ do_write_standings(FILE *f, int client_flag)
   }
 
   if (!client_flag) {
-    fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>",
-            global->charset,
-            header, header);
+    if (header_str) {
+      fprintf(f, header_str, global->charset, header, header);
+    } else {
+      fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>",
+              global->charset,
+              header, header);
+    }
   } else {
     fprintf(f, "%s%c", header, 1);
   }
@@ -930,7 +962,13 @@ do_write_standings(FILE *f, int client_flag)
   }
 
   fputs("</table>\n", f);
-  if (!client_flag) fputs("</body></html>", f);
+  if (!client_flag) {
+    if (footer_str) {
+      fprintf(f, "%s", footer_str);
+    } else {
+      fputs("</body></html>", f);
+    } 
+  }
 
   return;
  alloca_failed: 
@@ -939,7 +977,8 @@ do_write_standings(FILE *f, int client_flag)
 }
 
 void
-write_standings(char const *stat_dir, char const *name)
+write_standings(char const *stat_dir, char const *name,
+                char const *header_str, char const *footer_str)
 {
   char    tbuf[64];
   path_t  tpath;
@@ -950,9 +989,129 @@ write_standings(char const *stat_dir, char const *name)
   if (!(f = sf_fopen(tpath, "w"))) return;
   if (global->score_system_val == SCORE_KIROV
       || global->score_system_val == SCORE_OLYMPIAD)
-    do_write_kirov_standings(f, 0);
+    do_write_kirov_standings(f, 0, header_str, footer_str);
   else
-    do_write_standings(f, 0);
+    do_write_standings(f, 0, header_str, footer_str);
+  fclose(f);
+  generic_copy_file(REMOVE, stat_dir, tbuf, "",
+                    SAFE, stat_dir, name, "");
+  return;
+}
+
+static void
+do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
+{
+  int total;
+  int i;
+
+  unsigned long time, start, size;
+  int teamid, langid, probid, status, test, score;
+  int attempts, score1;
+
+  char ip[RUN_MAX_IP_LEN + 4];
+  char durstr[64], statstr[64];
+  char *str1 = 0, *str2 = 0;
+
+  start = run_get_start_time();
+  total = run_get_total();
+
+  switch (global->score_system_val) {
+  case SCORE_ACM:
+    str1 = _("Failed test");
+    break;
+  case SCORE_KIROV:
+  case SCORE_OLYMPIAD:
+    str1 = _("Tests passed");
+    str2 = _("Score");
+    break;
+  default:
+    abort();
+  }
+
+  if (header_str) {
+    fprintf(f, "%s", header_str);
+  } else {
+    fprintf(f, "Content-type: text/plain; charset=koi8-r\n\n");
+  }
+
+  /* header */
+  fprintf(f, "<p><big>%s: %d</big></p>\n",
+          _("Total submissions"), total);
+  fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th>"
+          "<th>%s</th>"
+          "<th>%s</th><th>%s</th>"
+          "<th>%s</th><th>%s</th>", 
+          _("Run ID"), _("Time"),
+          _("Team name"), _("Problem"),
+          _("Language"), _("Result"), str1);
+  if (str2) {
+    fprintf(f, "<th>%s</th>", str2);
+  }
+  fprintf(f, "</tr>\n");
+
+  for (i = total - 1; i >= 0; i--) {
+    run_get_record(i, &time, &size, ip, 0,
+                   &teamid, &langid, &probid, &status, &test, &score);
+    run_get_attempts(i, &attempts);
+
+    if (!start) time = start;
+    if (start > time) time = start;
+    duration_str(time - start, durstr, 0);
+    run_status_str(status, statstr, 0);
+
+    fputs("<tr>", f);
+    fprintf(f, "<td>%d</td>", i);
+    fprintf(f, "<td>%s</td>", durstr);
+    fprintf(f, "<td>%s</td>", teamdb_get_name(teamid));
+    if (probs[probid]) fprintf(f, "<td>%s</td>", probs[probid]->short_name);
+    else fprintf(f, "<td>??? - %d</td>", probid);
+    if (langs[langid]) fprintf(f, "<td>%s</td>", langs[langid]->short_name);
+    else fprintf(f, "<td>??? - %d</td>", langid);
+    fprintf(f, "<td>%s</td>", statstr);
+    if (test <= 0) {
+      fprintf(f, "<td>%s</td>\n", _("N/A"));
+      if (global->score_system_val == SCORE_KIROV
+          || global->score_system_val == SCORE_OLYMPIAD) {
+        fprintf(f, "<td>%s</td>\n", _("N/A"));
+      }
+    } else if (global->score_system_val == SCORE_KIROV ||
+               global->score_system_val == SCORE_OLYMPIAD) {
+      fprintf(f, "<td>%d</td>\n", test - 1);
+      if (score == -1) {
+        fprintf(f, "<td>%s</td>", _("N/A"));
+      } else {
+        if (global->score_system_val == SCORE_OLYMPIAD) {
+          fprintf(f, "<td>%d</td>", score);
+        } else {
+          score1 = score - attempts * probs[probid]->run_penalty;
+          if (score1 < 0) score1 = 0;
+          fprintf(f, "<td>%d(%d)=%d</td>", score, attempts, score1);
+        }
+      }
+    } else {
+      fprintf(f, "<td>%d</td>\n", test);
+    }
+    fputs("</tr>\n", f);
+  }
+
+  fputs("</table>\n", f);
+  if (footer_str) {
+    fprintf(f, "%s", footer_str);
+  }
+}
+
+void
+write_public_log(char const *stat_dir, char const *name,
+                 char const *header_str, char const *footer_str)
+{
+  char    tbuf[64];
+  path_t  tpath;
+  FILE   *f;
+
+  sprintf(tbuf, "XXX_%lu%d", time(0), getpid());
+  pathmake(tpath, stat_dir, "/", tbuf, 0);
+  if (!(f = sf_fopen(tpath, "w"))) return;
+  do_write_public_log(f, header_str, footer_str);
   fclose(f);
   generic_copy_file(REMOVE, stat_dir, tbuf, "",
                     SAFE, stat_dir, name, "");
@@ -1419,9 +1578,9 @@ write_judge_standings(char const *pk_name)
   if (!(f = sf_fopen(path, "w"))) return;
   if (global->score_system_val == SCORE_KIROV
       || global->score_system_val == SCORE_OLYMPIAD)
-    do_write_kirov_standings(f, 1);
+    do_write_kirov_standings(f, 1, 0, 0);
   else
-    do_write_standings(f, 1);
+    do_write_standings(f, 1, 0, 0);
   fclose(f);
 }
 
