@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,7 @@ int
 serve_clnt_edit_run(int sock_fd, int run_id, int mask,
                     int user_id, int prob_id, int lang_id, int status,
                     int is_imported, int variant, int is_hidden,
-                    int tests, int score, int is_readonly,
+                    int tests, int score, int is_readonly, int pages,
                     unsigned char const *user_login)
 {
   struct prot_serve_pkt_run_info *out;
@@ -57,6 +57,7 @@ serve_clnt_edit_run(int sock_fd, int run_id, int mask,
   out->tests = tests;
   out->score = score;
   out->is_readonly = is_readonly;
+  out->pages = pages;
   out->user_login_len = user_login_len;
   strcpy(user_login_ptr, user_login);
 
