@@ -26,7 +26,9 @@ void write_clars_table(int, int, char const *, char const *, int);
 void write_clar_view(int, char const *, char const *, char const *, int);
 void write_team_statistics(int, int, int, char const *, char const *);
 void write_team_clar(int, int, char const *, char const *, char const *);
-void write_standings(char const *, char const *);
+void write_standings(char const *, char const *, char const *, char const *);
+void write_public_log(char const *, char const *, char const *, char const *);
+
 void write_judge_allstat(int, int, int, char const *, char const *);
 
 void write_judge_source_view(char const *, int);
