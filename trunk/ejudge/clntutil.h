@@ -40,14 +40,14 @@ extern char form_header_simple_ext[];
 extern char form_header_multipart_ext[];
 
 void  client_puts(char const *, ...);
-void  client_put_header(char const *, ...);
+void  client_put_header(char const *, char const *, ...);
 void  client_put_footer(void);
 int   client_lookup_ip(char const *, char const *);
 int   client_check_source_ip(int, char const *, char const *);
 char *client_time_to_str(char *, unsigned long);
-void  client_access_denied(void) __attribute__((noreturn));
-void  client_not_configured(char const *) __attribute__((noreturn));
-int   client_check_server_status(char const *, int);
+void  client_access_denied(char const *) __attribute__((noreturn));
+void  client_not_configured(char const*,char const*) __attribute__((noreturn));
+int   client_check_server_status(char const *, char const *, int);
 int   client_print_server_status(int, char const *, char const *);
 
 void  client_make_form_headers(void);

@@ -21,7 +21,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-int   cgi_read(void);
+int   cgi_read(char const *charset);
 char *cgi_param(char const *);
 char *cgi_nparam(char const *, int);
 char *cgi_nname(char const *, int);
