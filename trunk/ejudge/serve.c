@@ -196,9 +196,7 @@ static unsigned long contest_stop_time;
 static int clients_suspended;
 static int testing_suspended;
 static int printing_suspended;
-
-// FIXME: this is not good, but olympiad_judging_mode flag is used in master_html.c
-/* static */ int olympiad_judging_mode;
+static int olympiad_judging_mode;
 
 static int socket_fd = -1;
 static unsigned char *socket_name = 0;
@@ -831,9 +829,12 @@ cmd_master_page(struct client_state *p, int len,
   size_t html_len = 0;
   struct client_state *q;
   opcap_t caps;
-  int r;
+  int r, accepting_mode = 0;
 
   if (get_peer_local_user(p) < 0) return;
+
+  if (global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
+    accepting_mode = 1;
 
   if (len < sizeof(*pkt)) {
     new_bad_packet(p, "cmd_master_page: packet is too small: %d", len);
@@ -924,6 +925,7 @@ cmd_master_page(struct client_state *p, int len,
                       pkt->sid_mode, p->cookie,
                       pkt->first_run, pkt->last_run,
                       pkt->mode_clar, pkt->first_clar, pkt->last_clar,
+                      accepting_mode,
                       self_url_ptr, filter_expr_ptr, hidden_vars_ptr,
                       extra_args_ptr, &caps);
     /* l10n_setlocale(0); */
@@ -932,6 +934,7 @@ cmd_master_page(struct client_state *p, int len,
     r = write_priv_all_runs(f, p->user_id, 0, pkt->priv_level,
                             pkt->sid_mode, p->cookie,
                             pkt->first_run, pkt->last_run,
+                            accepting_mode,
                             0, filter_expr_ptr, 0, 0);
     if (r < 0) {
       fclose(f);
@@ -1091,11 +1094,14 @@ cmd_view(struct client_state *p, int len,
   char *html_ptr = 0;
   size_t html_len = 0;
   struct client_state *q;
-  int r = 0;
+  int r = 0, accepting_mode = 0;
   FILE *f;
   opcap_t caps;
 
   if (get_peer_local_user(p) < 0) return;
+
+  if (global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
+    accepting_mode = 1;
 
   if (len < sizeof(*pkt)) {
     new_bad_packet(p, "view: packet is too small: %d", len);
@@ -1155,7 +1161,7 @@ cmd_view(struct client_state *p, int len,
 
     r = write_priv_source(f, p->user_id, p->priv_level,
                           pkt->sid_mode, p->cookie,
-                          self_url_ptr, hidden_vars_ptr,
+                          accepting_mode, self_url_ptr, hidden_vars_ptr,
                           extra_args_ptr, pkt->item, &caps);
     break;
   case SRV_CMD_NEW_RUN_FORM:
