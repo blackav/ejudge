@@ -4,7 +4,7 @@
 #ifndef __CONTESTS_H__
 #define __CONTESTS_H__
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,19 +16,23 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "expat_iface.h"
+#include "opcaps.h"
+
+#include <time.h>
 
 enum
   {
     CONTEST_CONTESTS = 1,
     CONTEST_CONTEST,
-    CONTEST_ACCESS,
+    CONTEST_REGISTER_ACCESS,
+    CONTEST_USERS_ACCESS,
+    CONTEST_MASTER_ACCESS,
+    CONTEST_JUDGE_ACCESS,
+    CONTEST_OBSERVER_ACCESS,
+    CONTEST_TEAM_ACCESS,
     CONTEST_IP,
     CONTEST_FIELD,
     CONTEST_NAME,
@@ -43,10 +47,14 @@ enum
     CONTEST_REGISTER_URL,
     CONTEST_TEAM_URL,
     CONTEST_REGISTRATION_DEADLINE,
-    CONTEST_PRIVILEGED_USERS,
-    CONTEST_ADMINISTRATOR,
-    CONTEST_JUDGE,
-    CONTEST_OBSERVER,
+    CONTEST_CAP,
+    CONTEST_CAPS,
+    CONTEST_ROOT_DIR,
+    CONTEST_STANDINGS_URL,
+    CONTEST_PROBLEMS_URL,
+    CONTEST_CLIENT_FLAGS,
+    CONTEST_SERVE_USER,
+    CONTEST_SERVE_GROUP,
 
     CONTEST_LAST_TAG
   };
@@ -63,6 +71,9 @@ enum
     CONTEST_A_AUTOREGISTER,
     CONTEST_A_INITIAL,
     CONTEST_A_DISABLE_TEAM_PASSWORD,
+    CONTEST_A_LOGIN,
+    CONTEST_A_MANAGED,
+    CONTEST_A_CLEAN_USERS,
 
     CONTEST_LAST_ATTN
   };
@@ -143,6 +154,9 @@ struct contest_desc
   int id;
   int autoregister;
   int disable_team_password;
+  unsigned char managed;
+  unsigned char clean_users;
+
   unsigned long  reg_deadline;
   unsigned char *name;
   unsigned char *header_file;
@@ -150,10 +164,26 @@ struct contest_desc
   unsigned char *register_email;
   unsigned char *register_url;
   unsigned char *team_url;
-  struct xml_tree *priv_users;
-  struct contest_access *access;
+  unsigned char *root_dir;
+  unsigned char *standings_url;
+  unsigned char *problems_url;
+  unsigned char *serve_user;
+  unsigned char *serve_group;
+  struct contest_access *register_access;
+  struct contest_access *users_access;
+  struct contest_access *master_access;
+  struct contest_access *judge_access;
+  struct contest_access *observer_access;
+  struct contest_access *team_access;
   struct contest_field *fields[CONTEST_LAST_FIELD];
   struct contest_member *members[CONTEST_LAST_MEMBER];
+  opcaplist_t capabilities;
+
+  unsigned char client_ignore_time_skew;
+  unsigned char client_disable_team;
+
+  time_t last_check_time;
+  time_t last_file_time;
 };
 
 struct contest_list
@@ -164,7 +194,37 @@ struct contest_list
   struct contest_desc **id_map;
 };
 
-struct contest_list *parse_contest_xml(char const *path);
-int contests_check_ip(struct contest_desc *d, unsigned long ip);
+/* error codes */
+enum
+{
+  CONTEST_ERR_OK = 0,
+  CONTEST_ERR_BAD_DIR,
+  CONTEST_ERR_BAD_ID,
+  CONTEST_ERR_NO_CONTEST,
+  CONTEST_ERR_BAD_XML,
+  CONTEST_ERR_ID_NOT_MATCH,
+  CONTEST_ERR_REMOVED,
+  CONTEST_ERR_LAST
+};
+
+int contests_set_directory(unsigned char const *);
+int contests_get_list(unsigned char **);
+int contests_get(int, struct contest_desc **);
+unsigned char *contests_strerror(int);
+
+/* if the contest has disappeared, use old copy */
+int contests_lock(int);
+int contests_unlock(int);
+
+int contests_check_ip(int, int, unsigned long);
+int contests_check_register_ip(int, unsigned long);
+int contests_check_users_ip(int, unsigned long);
+int contests_check_master_ip(int, unsigned long);
+int contests_check_judge_ip(int, unsigned long);
+int contests_check_observer_ip(int, unsigned long);
+int contests_check_team_ip(int, unsigned long);
+
+void contests_set_load_callback(void (*f)(const struct contest_desc *));
+void contests_set_unload_callback(void (*f)(const struct contest_desc *));
 
 #endif /* __CONTESTS_H__ */
