@@ -69,6 +69,8 @@ static char const * const tag_map[] =
   "guests",
   "firstname",
   "team_password",
+  "city",
+  "country",
 
   0
 };
@@ -134,6 +136,8 @@ static size_t const tag_sizes[USERLIST_LAST_TAG] =
   sizeof(struct userlist_members), /* GUESTS */
   sizeof(struct xml_tree),      /* FIRSTNAME */
   sizeof(struct userlist_passwd), /* TEAM_PASSWORD */
+  sizeof(struct xml_tree),      /* CITY */
+  sizeof(struct xml_tree),      /* COUNTRY */
 };
 /*
 static size_t const attn_sizes[USERLIST_LAST_ATTN] =
@@ -191,6 +195,8 @@ node_free(struct xml_tree *t)
       xfree(p->fac);
       xfree(p->facshort);
       xfree(p->homepage);
+      xfree(p->city);
+      xfree(p->country);
     }
     break;
   case USERLIST_T_MEMBER:
@@ -860,6 +866,12 @@ do_parse_user(char const *path, struct userlist_user *usr)
     case USERLIST_T_FACSHORT:
       if (handle_final_tag(path, t, &usr->facshort) < 0) return -1;
       break;
+    case USERLIST_T_CITY:
+      if (handle_final_tag(path, t, &usr->city) < 0) return -1;
+      break;
+    case USERLIST_T_COUNTRY:
+      if (handle_final_tag(path, t, &usr->country) < 0) return -1;
+      break;
     case USERLIST_T_PHONES:
       if (!(usr->phones = parse_phones(path, t))) return -1;
       break;
@@ -1364,6 +1376,14 @@ unparse_user(struct userlist_user *p, FILE *f, int mode)
   if (p->homepage) {
     fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_HOMEPAGE],
             p->homepage, tag_map[USERLIST_T_HOMEPAGE]);
+  }
+  if (p->city) {
+    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_CITY],
+            p->city, tag_map[USERLIST_T_CITY]);
+  }
+  if (p->country) {
+    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_COUNTRY],
+            p->country, tag_map[USERLIST_T_COUNTRY]);
   }
 
   unparse_phones(p->phones, f, "    ");
