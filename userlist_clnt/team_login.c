@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -34,6 +34,7 @@ userlist_clnt_team_login(struct userlist_clnt *clnt,
   struct userlist_pk_login_ok *in = 0;
   unsigned char *login_ptr, *passwd_ptr, *name_ptr;
   int out_size = 0, in_size = 0, r, login_len, passwd_len;
+  void *void_in = 0;
 
   if (!login || !*login) return -ULS_ERR_INVALID_LOGIN;
   if (!passwd || !*passwd) return -ULS_ERR_INVALID_PASSWORD;
@@ -54,8 +55,9 @@ userlist_clnt_team_login(struct userlist_clnt *clnt,
   strcpy(login_ptr, login);
   strcpy(passwd_ptr, passwd);
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
-  if ((r = userlist_clnt_recv_packet(clnt, &in_size, (void**) &in)) < 0)
+  if ((r = userlist_clnt_recv_packet(clnt, &in_size, &void_in)) < 0)
     return r;
+  in = void_in;
   if (in->reply_id != ULS_LOGIN_OK && in->reply_id != ULS_LOGIN_COOKIE) {
     r = in->reply_id;
     goto cleanup;
