@@ -51,6 +51,19 @@ userlist_clnt_login(struct userlist_clnt *clnt,
                     int *p_locale_id);
 
 int
+userlist_clnt_team_login(struct userlist_clnt *clnt,
+                         unsigned long origin_ip,
+                         int contest_id,
+                         int locale_id,
+                         int use_cookies,
+                         unsigned char const *login,
+                         unsigned char const *passwd,
+                         int *p_user_id,
+                         unsigned long long *p_cookie,
+                         int *p_locale_id,
+                         unsigned char **p_name);
+
+int
 userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
                             unsigned long origin_ip,
                             unsigned long long cookie,
@@ -59,6 +72,17 @@ userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
                             unsigned char **p_name,
                             int *p_locale_id,
                             int *p_contest_id);
+
+int
+userlist_clnt_team_cookie(struct userlist_clnt *clnt,
+                          unsigned long origin_ip,
+                          int contest_id,
+                          unsigned long long cookie,
+                          int locale_id,
+                          int *p_user_id,
+                          int *p_locale_id,
+                          unsigned char **p_login,
+                          unsigned char **p_name);
 
 int
 userlist_clnt_get_info(struct userlist_clnt *clnt,
@@ -70,6 +94,10 @@ int
 userlist_clnt_set_passwd(struct userlist_clnt *clnt,
                          int uid, unsigned char *old_pwd,
                          unsigned char *new_pwd);
+int
+userlist_clnt_team_set_passwd(struct userlist_clnt *clnt,
+                              int uid, unsigned char *old_pwd,
+                              unsigned char *new_pwd);
 int
 userlist_clnt_get_contests(struct userlist_clnt *clnt,
                            int uid, unsigned char **p_info);
@@ -88,8 +116,24 @@ userlist_clnt_pass_fd(struct userlist_clnt *clnt,
                       int *fds);
 
 int
-userlist_list_users(struct userlist_clnt *clnt,
-                    unsigned long origin_ip, int contest_id,
-                    int locale_id);
+userlist_clnt_list_users(struct userlist_clnt *clnt,
+                         unsigned long origin_ip, int contest_id,
+                         int locale_id,
+                         int user_id,
+                         unsigned long flags,
+                         unsigned char *url, unsigned char *srch);
+
+int
+userlist_clnt_admin_process(struct userlist_clnt *clnt);
+
+int
+userlist_clnt_map_contest(struct userlist_clnt *clnt,
+                          int contest_id,
+                          int *p_sem_key,
+                          int *p_shm_key);
+
+int
+userlist_clnt_generate_team_passwd(struct userlist_clnt *clnt,
+                                   int contest_id, int out_fd);
 
 #endif /* __USERLIST_CLNT_H__ */
