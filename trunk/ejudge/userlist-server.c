@@ -46,9 +46,6 @@
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
 #include <locale.h>
-#define _(x) gettext(x)
-#else
-#define _(x) x
 #endif
 
 #define DEFAULT_FLUSH_INTERVAL 600
@@ -120,6 +117,21 @@ static time_t cookie_check_interval;
 static time_t user_check_interval;
 static time_t last_backup;
 static time_t backup_interval;
+
+/* Various strings subject for localization */
+#define _(x) x
+static unsigned char const * const status_str_map[] =
+{
+  _("<font color=\"green\">OK</font>"),
+  _("<font color=\"magenta\">Pending</font>"),
+};
+#undef _
+
+#if CONF_HAS_LIBINTL - 0 == 1
+#define _(x) gettext(x)
+#else
+#define _(x) x
+#endif
 
 static void
 link_client_state(struct client_state *p)
@@ -415,6 +427,8 @@ create_newuser(struct client_state *p,
   int usernum;
   unsigned char urlbuf[1024];
   int login_len, email_len;
+  struct userlist_passwd *pwd;
+  unsigned char passwd_buf[64];
 
   // validate packet
   login = data->data;
@@ -485,14 +499,19 @@ create_newuser(struct client_state *p,
   strcpy(user->login,login);
   user->email = calloc(1,data->email_length+1);
   strcpy(user->email,email);
-  user->passwd_method = 0;
-  user->passwd = calloc(1,9);
-  generate_random_password(8, user->passwd);
   user->name = xstrdup("");
   user->default_use_cookies = -1;
 
+  generate_random_password(8, passwd_buf);
+  pwd = (struct userlist_passwd*) userlist_node_alloc(USERLIST_T_PASSWORD);
+  user->register_passwd = pwd;
+  xml_link_node_last(&user->b, &pwd->b);
+  pwd->method = USERLIST_PWD_PLAIN;
+  pwd->b.text = xstrdup(passwd_buf);
+
   snprintf(urlbuf, sizeof(urlbuf), "%s", config->register_url);
 
+  setup_locale(data->locale_id);
   buf = (char *) xcalloc(1,1024);
   snprintf(buf, 1024,
            _("Hello,\n"
@@ -515,13 +534,14 @@ create_newuser(struct client_state *p,
              "The ejudge contest administration system\n"),
            user->email,
            urlbuf,
-           user->login, user->passwd);
+           user->login, pwd->b.text);
   send_email_message(user->email,
                      config->register_email,
                      NULL,
-                     "You have been registered",
+                     _("You have been registered"),
                      buf);
   free(buf);
+  setup_locale(0);
   send_reply(p,ULS_OK);
   info("%d: new_user: ok, user_id = %d", p->id, usernum);
 
@@ -687,7 +707,14 @@ login_user(struct client_state *p,
   while (user) {
     ASSERT(user->b.tag == USERLIST_T_USER);
     if (!strcmp(user->login,login)) {
-      if (!strcmp(user->passwd,password)) {
+      if (!user->register_passwd || !user->register_passwd->b.text) {
+        info("%d: login_user: EMPTY PASSWORD", p->id);
+        send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+        user->last_access_time = cur_time;
+        dirty = 1;
+        return;
+      }
+      if (!strcmp(user->register_passwd->b.text,password)) {
         //Login and password correct
         ans_len = sizeof(struct userlist_pk_login_ok)
           + strlen(user->name) + 1 + strlen(user->login) + 1;
@@ -1364,18 +1391,24 @@ set_password(struct client_state *p, int len,
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
   }
-  if (u->passwd_method != 0) {
-    info("%d: unsupported password method %d", p->id, u->passwd_method);
+  if (!u->register_passwd || !u->register_passwd->b.text) {
+    info("%d: password is not set for %d", p->id, p->user_id);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  if (u->register_passwd->method != 0) {
+    info("%d: unsupported password method %d", p->id,
+         u->register_passwd->method);
     send_reply(p, -ULS_ERR_NOT_IMPLEMENTED);
     return;
   }
-  if (strcmp(u->passwd, old_pwd) != 0) {
+  if (strcmp(u->register_passwd->b.text, old_pwd) != 0) {
     info("%d: provided password does not match", p->id);
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
-  xfree(u->passwd);
-  u->passwd = xstrdup(new_pwd);
+  xfree(u->register_passwd->b.text);
+  u->register_passwd->b.text = xstrdup(new_pwd);
 
   u->last_pwdchange_time = cur_time;
   u->last_access_time = cur_time;
@@ -1557,11 +1590,6 @@ pass_descriptors(struct client_state *p, int len,
   p->state = STATE_READ_FDS;
 }
 
-static unsigned char const * const status_str_map[] =
-{
-  "<font color=\"green\">OK</font>",
-  "<font color=\"yellow\">Pending</font>",
-};
 static void
 do_list_users(FILE *f, int contest_id, int locale_id)
 {
@@ -1599,8 +1627,10 @@ do_list_users(FILE *f, int contest_id, int locale_id)
   /* add additional filters */
   /* add additional sorts */
 
+  setup_locale(locale_id);
   if (!u_num) {
     fprintf(f, "<p>%s</p>\n", _("No users registered for this contest"));
+    setup_locale(0);
     return;
   }
 
@@ -1624,6 +1654,7 @@ do_list_users(FILE *f, int contest_id, int locale_id)
     fprintf(f, "</tr>\n");
   }
   fprintf(f, "</table>\n");
+  setup_locale(0);
 }
 
 static void
