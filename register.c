@@ -1,7 +1,7 @@
 /* -*- mode: c -*-; coding: koi8-r */
 /* $Id$ */
 
-/* Copyright (C) 2001-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2001-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -949,6 +949,7 @@ check_contest_eligibility(int id)
   struct contest_desc *d = 0;
 
   if (contests_get(id, &d) < 0 || !d) return 0;
+  if (d->closed) return 0;
   if (d->reg_deadline && cur_time > d->reg_deadline) return 0;
   return contests_check_register_ip(id, user_ip);
 }
@@ -2158,7 +2159,7 @@ display_main_page(void)
                user_cookie, regx->id, client_locale_id, s1);
       printf("<td%s><a href=\"%s\">%s</a></td>\n", table_style,
              url, _("Edit"));
-      if (cnts->team_url && regx->status == USERLIST_REG_OK) {
+      if (cnts->team_url && regx->status == USERLIST_REG_OK && !cnts->closed) {
         /* FIXME: need to set client mode correctly */
         snprintf(url, sizeof(url),
                  "%s?locale_id=%d&contest_id=%d&sid=%llx",
