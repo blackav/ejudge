@@ -359,6 +359,7 @@ global_init_func(struct generic_section_config *gp)
 
   p->autoupdate_standings = 1;
   p->board_unfog_time = -1;
+  p->contest_time = -1;
 }
 
 static void
@@ -644,11 +645,11 @@ set_defaults(int mode)
       global->board_unfog_time = DFLT_G_BOARD_UNFOG_TIME;
     }
     global->board_unfog_time *= 60;
-    if (global->contest_time < 0 /*|| global->contest_time > 60 * 100*/) {
+    if (global->contest_time < -1) {
       err("bad value of global.contest_time: %d", global->contest_time);
       return -1;
     }
-    if (!global->contest_time) {
+    if (global->contest_time == -1) {
       info("global.contest_time set to %d", DFLT_G_CONTEST_TIME);
       global->contest_time = DFLT_G_CONTEST_TIME;
     }
