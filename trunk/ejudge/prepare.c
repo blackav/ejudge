@@ -820,6 +820,7 @@ create_dirs(int mode)
   }
 
   for (i = 1; i <= max_tester; i++) {
+    if (!testers[i]) continue;
     if (mode == PREPARE_SERVE) {
       /* RUN reads from here */
       if (make_all_dir(testers[i]->exe_dir, 0777) < 0) return -1;
