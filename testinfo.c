@@ -52,6 +52,7 @@ read_line(FILE *fin, struct line_buf *pbuf)
     if (c == EOF) break;
     if (pbuf->u + 1 >= pbuf->a) {
       pbuf->a *= 2;
+      old_v = pbuf->v;
       if (!(pbuf->v = (unsigned char*) realloc(pbuf->v, pbuf->a))) {
         pbuf->v = old_v;
         goto failure;
