@@ -96,11 +96,6 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
   memset(&in_header, 0, sizeof(in_header));
   memset(&cur_header, 0, sizeof(cur_header));
 
-  if (global->virtual) {
-    fprintf(flog, "XML import is not yet implemented for virtual contests\n");
-    goto done;
-  }
-
   cur_entries_num = run_get_total();
   if (cur_entries_num > 0) {
     XCALLOC(cur_entries, cur_entries_num);
@@ -114,16 +109,22 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
   }
 
   fprintf(flog, "Current run log has %d entries\n", cur_entries_num);
-  fprintf(flog, "Scanning the existing entries\n");
+  fprintf(flog, "Doing sanity check on the current log\n");
+  if (runlog_check(flog, &cur_header, cur_entries_num, cur_entries) < 0) {
+    fprintf(flog, "Sanity check failed!\n");
+    goto done;
+  }
+  fprintf(flog, "Sanity check is ok\n");
 
+  fprintf(flog, "Scanning the existing entries\n");
   for (i = 0; i < cur_entries_num; i++) {
     st = cur_entries[i].status;
     ASSERT(st >= RUN_OK && st <= RUN_TRANSIENT_LAST);
     if (st <= RUN_MAX_STATUS) continue;
     ASSERT(st >= RUN_PSEUDO_FIRST);
     if (st == RUN_VIRTUAL_START || st == RUN_VIRTUAL_STOP) {
-      fprintf(flog, "Run %d is a virtual contest control record!\n", i);
-      goto done;
+      fprintf(flog, "Run %d is a virtual contest control record\n", i);
+      continue;
     }
     if (st == RUN_EMPTY) {
       fprintf(flog, "Run %d is empty\n", i);
@@ -174,7 +175,7 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
     }
     if (st == RUN_VIRTUAL_START || st == RUN_VIRTUAL_STOP) {
       fprintf(flog, "Run %d is a virtual contest control record\n", i);
-      goto done;
+      continue;
     }
     if (st == RUN_EMPTY) {
       fprintf(flog, "Run %d is empty\n", i);
@@ -404,6 +405,12 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
     in_entries[j].timestamp += cur_header.start_time;
   }
 
+  fprintf(flog, "Doing sanity check of the new runlog\n");
+  if (runlog_check(flog, &cur_header, in_entries_num, in_entries) < 0) {
+    fprintf(flog, "Sanity check failed\n");
+  }
+  fprintf(flog, "Sanity check is ok\n");
+
   /* the runs with the same submit time are sorted by team_id,
    * then by current run_id */
   cur_out = 0;
@@ -528,6 +535,11 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
   }
   ASSERT(cur_out == out_entries_num);
   fprintf(flog, "Runlog successfully merged\n");
+
+  fprintf(flog, "Performing sanity check on the resulting log\n");
+  if (runlog_check(flog, &cur_header, out_entries_num, out_entries) < 0)
+    goto done;
+  fprintf(flog, "Sanity check done\n");
 
   fprintf(flog, "Saving the new runlog\n");
   run_backup(global->run_log_file);
