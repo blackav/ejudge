@@ -715,20 +715,22 @@ main(int argc, char *argv[])
     return 0;
   }
 
-  read_server_templates();
+  if (!server_clients_suspended) {
+    read_server_templates();
 
-  send_clar_if_asked();
-  show_clar_if_asked();
-  request_source_if_asked();
-  request_report_if_asked();
-  submit_if_asked();
-  change_passwd_if_asked();
-  get_team_statistics();
+    send_clar_if_asked();
+    show_clar_if_asked();
+    request_source_if_asked();
+    request_report_if_asked();
+    submit_if_asked();
+    change_passwd_if_asked();
+    get_team_statistics();
 
-  if (force_recheck_status) {
-    client_check_server_status(global->charset,
-                               global->status_file, global->server_lag);
-    force_recheck_status = 0;
+    if (force_recheck_status) {
+      client_check_server_status(global->charset,
+                                 global->status_file, global->server_lag);
+      force_recheck_status = 0;
+    }
   }
 
   if (global->contest_name[0]) {
@@ -742,24 +744,26 @@ main(int argc, char *argv[])
                       client_team_name);
   }
 
-  need_show_submit = server_problem_template && server_language_template && server_start_time && !server_stop_time;
-  need_show_clar = server_problem2_template && server_start_time && !server_stop_time && !server_team_clars_disabled && !server_clars_disabled;
+  need_show_submit = server_problem_template && server_language_template && server_start_time && !server_stop_time && !server_clients_suspended;
+  need_show_clar = server_problem2_template && server_start_time && !server_stop_time && !server_team_clars_disabled && !server_clars_disabled && !server_clients_suspended;
 
   /* print quick navigation */
   puts("<ul>");
-  printf("<li><a href=\"#status\">%s</a>\n", _("Contest status"));
+  printf("<li><a href=\"#status\">%s</a></li>\n", _("Contest status"));
   if (server_last_cmd_status)
     printf("<li><a href=\"#lastcmd\">%s</a>\n",
            _("The last command completion status"));
   if (need_show_submit)
     printf("<li><a href=\"#submit\">%s</a>\n", _("Send a submission"));
-  if (server_runs_stat && server_start_time)
+  if (server_runs_stat && server_start_time && !server_clients_suspended)
     printf("<li><a href=\"#runstat\">%s</a>\n", _("Submission log"));
   if (need_show_clar)
     printf("<li><a href=\"#clar\">%s</a>\n", _("Send a message to judges"));
-  if (server_clars_stat && !server_clars_disabled)
+  if (server_clars_stat && !server_clars_disabled && !server_clients_suspended)
     printf("<li><a href=\"#clarstat\">%s</a>\n", _("Messages log"));
-  printf("<li><a href=\"#chgpasswd\">%s</a>\n", _("Change password"));
+  if (!server_clients_suspended) {
+    printf("<li><a href=\"#chgpasswd\">%s</a>\n", _("Change password"));
+  }
 #if CONF_HAS_LIBINTL - 0 == 1
   if (global->enable_l10n) {
     printf("<li><a href=\"#chglanguage\">%s</a>\n", _("Change language"));
@@ -801,7 +805,7 @@ main(int argc, char *argv[])
     print_refresh_button("#runstat");
   }
 
-  if (server_runs_stat && server_start_time) {
+  if (server_runs_stat && server_start_time && !server_clients_suspended) {
     printf("<hr><a name=\"runstat\"><h2>%s (%s)</h2>\n",
            _("Sent submissions"),
            client_view_all_runs?_("all"):_("last 15"));
@@ -824,7 +828,7 @@ main(int argc, char *argv[])
     print_refresh_button("#clarstat");
   }
 
-  if (server_clars_stat && !server_clars_disabled) {
+  if (server_clars_stat && !server_clars_disabled && !server_clients_suspended) {
     printf("<hr><a name=\"clarstat\"><h2>%s (%s)</h2>\n",
            _("Messages"), client_view_all_clars?_("all"):_("last 15"));
     client_puts(server_clars_stat, form_start_simple);
@@ -832,15 +836,17 @@ main(int argc, char *argv[])
     print_refresh_button("#clarstat");
   }
 
-  printf("<hr><a name=\"chgpasswd\"><h2>%s</h2>\n"
-         "%s<table>\n"
-         "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd1\" size=\"16\"></td></tr>\n"
-         "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd2\" size=\"16\"></td></tr>\n"
-         "<tr><td colspan=\"2\"><input type=\"submit\" name=\"change_passwd\" value=\"%s\"></td></tr>\n"
-         "</table></form>",
-         _("Change password"), form_start_simple,
-         _("New password"), _("Retype new password"), _("Change!"));
-  print_refresh_button("");
+  if (!server_clients_suspended) {
+    printf("<hr><a name=\"chgpasswd\"><h2>%s</h2>\n"
+           "%s<table>\n"
+           "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd1\" size=\"16\"></td></tr>\n"
+           "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd2\" size=\"16\"></td></tr>\n"
+           "<tr><td colspan=\"2\"><input type=\"submit\" name=\"change_passwd\" value=\"%s\"></td></tr>\n"
+           "</table></form>",
+           _("Change password"), form_start_simple,
+           _("New password"), _("Retype new password"), _("Change!"));
+    print_refresh_button("");
+  }
 
 #if CONF_HAS_LIBINTL - 0 == 1
   if (global->enable_l10n) {
