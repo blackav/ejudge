@@ -1092,6 +1092,22 @@ cmd_view(struct client_state *p, int len,
                          pkt->sid_mode, p->cookie,
                          self_url_ptr, hidden_vars_ptr);
     break;
+  case SRV_CMD_DUMP_RUNS:
+    if (!p->priv_level) {
+      err("%d: unprivileged users cannot dump run database", p->id);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+    write_runs_dump(f, global->charset);
+    break;
+  case SRV_CMD_DUMP_STANDINGS:
+    if (!p->priv_level) {
+      err("%d: unprivileged users cannot dump standings", p->id);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+    write_raw_standings(f, global->charset);
+    break;
   default:
     err("%d: operation is not yet supported", p->id);
     fprintf(f, "<h2>Operation is not yet supported.</h2>\n");
@@ -1274,17 +1290,17 @@ cmd_message(struct client_state *p, int len,
 }
 
 static void
-cmd_gen_passwords(struct client_state *p, int len,
-                  struct prot_serve_packet *pkt)
+cmd_userlist_cmd(struct client_state *p, int len,
+                 struct prot_serve_packet *pkt)
 {
   if (get_peer_local_user(p) < 0) return;
 
   if (len != sizeof(*pkt)) {
-    new_bad_packet(p, "gen_passwords: bad packet length: %d", len);
+    new_bad_packet(p, "userlist_cmd: bad packet length: %d", len);
     return;
   }
 
-  info("%d: gen_passwords", p->id);
+  info("%d: userlist_cmd: %d", p->id, pkt->id);
   if (p->priv_level != PRIV_LEVEL_ADMIN) {
     err("%d: insufficient privilege level", p->id);
     new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -1297,10 +1313,26 @@ cmd_gen_passwords(struct client_state *p, int len,
   }
 
   /* serve process will block until this operation completes! */
-  if (teamdb_regenerate_passwords(p->client_fds[0]) < 0) {
-    close(p->client_fds[0]); close(p->client_fds[1]);
-    p->client_fds[0] = -1; p->client_fds[1] = -1;
-    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+  switch (pkt->id) {
+  case SRV_CMD_GEN_PASSWORDS:
+    if (teamdb_regenerate_passwords(p->client_fds[0]) < 0) {
+      close(p->client_fds[0]); close(p->client_fds[1]);
+      p->client_fds[0] = -1; p->client_fds[1] = -1;
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    }
+    break;
+  case SRV_CMD_DUMP_USERS:
+    if (teamdb_dump_database(p->client_fds[0]) < 0) {
+      close(p->client_fds[0]); close(p->client_fds[1]);
+      p->client_fds[0] = -1; p->client_fds[1] = -1;
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    }
+    break;
+  default:
+    err("%d: invalid command %d", p->id, pkt->id);
+    new_send_reply(p, -SRV_ERR_PROTOCOL);
     return;
   }
 
@@ -2418,7 +2450,7 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_VIEW_USERS] { cmd_view },
   [SRV_CMD_PRIV_MSG] { cmd_message },
   [SRV_CMD_PRIV_REPLY] { cmd_message },
-  [SRV_CMD_GEN_PASSWORDS] { cmd_gen_passwords },
+  [SRV_CMD_GEN_PASSWORDS] { cmd_userlist_cmd },
   [SRV_CMD_SUSPEND] { cmd_priv_command_0 },
   [SRV_CMD_RESUME] { cmd_priv_command_0 },
   [SRV_CMD_UPDATE_STAND] { cmd_priv_command_0 },
@@ -2438,6 +2470,9 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_RESET_FILTER] { cmd_judge_command_0 },
   [SRV_CMD_CLEAR_RUN] { cmd_priv_command_0 },
   [SRV_CMD_SQUEEZE_RUNS] { cmd_priv_command_0 },
+  [SRV_CMD_DUMP_RUNS] { cmd_view },
+  [SRV_CMD_DUMP_USERS] { cmd_userlist_cmd },
+  [SRV_CMD_DUMP_STANDINGS] { cmd_view },
 };
 
 static void
