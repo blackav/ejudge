@@ -135,6 +135,11 @@ struct section_global_data
   puc_t tgz_sfx[32];            /* default tar files suffix */
   path_t ejudge_checkers_dir;   /* path to the built-in checkers */
 
+  puc_t test_pat[32];
+  puc_t corr_pat[32];
+  puc_t info_pat[32];
+  puc_t tgz_pat[32];
+
   /* ====== VARIABLE FILES/DIRECTORIES SETUP ====== */
   path_t var_dir;               /* variable files dir */
 
@@ -248,6 +253,7 @@ struct section_global_data
   path_t plog_symlink_dir;
 
   // fun
+  int extended_sound;
   path_t sound_player;
   path_t accept_sound;
   path_t runtime_sound;
@@ -329,6 +335,12 @@ struct section_problem_data
   puc_t output_file[64];        /* output file name */
   puc_t test_score_list[256];   /* scores for individual tests */
   path_t standard_checker;      /* the name of the built-in checker */
+  puc_t spelling[128];          /* spelling for speach generator */
+
+  puc_t test_pat[32];
+  puc_t corr_pat[32];
+  puc_t info_pat[32];
+  puc_t tgz_pat[32];
 
   int     ntests;               /* number of tests found */
   int    *tscores;              /* internal scores array  */
