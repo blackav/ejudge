@@ -106,7 +106,7 @@ calc_kirov_score(unsigned char *outbuf,
   // score_mult is applied to the initial score
   // run_penalty is subtracted, but date_penalty is added
   score = init_score * score_mult - attempts * pr->run_penalty + date_penalty + pe->score_adj - disq_attempts * pr->disqualified_penalty;
-  if (score > pr->full_score) score = pr->full_score;
+  //if (score > pr->full_score) score = pr->full_score;
   if (score < 0) score = 0;
   if (!outbuf) return score;
 
@@ -959,7 +959,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
       switch (pe->status) {
       case RUN_OK:
         full_sol[tind][pind] = 1;
-        if (run_score > p->full_score) run_score = p->full_score;
+        //if (run_score > p->full_score) run_score = p->full_score;
       case RUN_PARTIAL:
         prob_score[tind][pind] = run_score;
         att_num[tind][pind]++;
