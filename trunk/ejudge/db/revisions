@@ -1176,3 +1176,5 @@ master_html.c 1 24 5785224
 prepare.c 1 68 7922450
 protocol.c 1 11 228027
 serve_clnt/rejudge_by_mask.c 1 1 175861
+NEWS.RUS 1 7 7602820
+NEWS 1 7 4352563

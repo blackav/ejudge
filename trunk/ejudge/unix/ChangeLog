@@ -1,3 +1,15 @@
+2004-04-19  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.c: 
+	(scan_dir) a bug introduced in the previous revision is fixed.
+
+2004-04-17  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.c: "settings.h" is included;
+	(scan_dir) all the entries in the given directory are sorted in
+	  the priority order, and an entry with the maximal priority
+	  is returned.
+
 2004-01-09  Alexander Chernov  <cher@ispras.ru>
 
 	* fileutl.c: copyright notice is updated;

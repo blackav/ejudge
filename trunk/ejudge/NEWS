@@ -1,7 +1,7 @@
 $Id$
 
-Version 2.1.28 (20040402)
-========================
+Version 2.1.29 (20040420)
+=========================
 If no bugs are found in this release, the next release (which
 will be identical or nearly identical to the current release)
 will be numbered 2.2.0, so a new stable branch of the `ejudge'
@@ -9,6 +9,187 @@ system will be started. The 2.1 branch will be terminated. All
 the support work will go to 2.2 branch, and all the new
 development will go to the future development branch 2.3.
 
+All the compile-time settings, which cannot be changed from
+configuration files are moved into a separate file `settings.h'
+in the ejudge source directory. This file contains the following
+definition of constants:
+MAX_CGI_VALUE_LEN
+  The maximal size of data received in a single CGI-variable by
+  a CGI-program from the client web-browsers. This constant
+  defines the maximal size of file, which can be received from
+  clients by the CGI-programs. This constant affects:
+    o the maximal size of a user submit or a privileged user
+      submit;
+    o the maximal size of a message;
+    o the maximal size of a judging protocol to upload to the
+      server;
+    o the maximal size of a runlog being imported to the server;
+  Note, that certain global configuration variables of the
+  `serve.cfg' contest configuration file, for example
+  `max_run_size', may define additional limitations on the
+  maximal data size.
+  By default this constant equals to 1 Mbyte.
+MAX_SERVE_PACKET_LEN
+  The maximal size of a data packet, which can be received by
+  the contest server `serve' program from the CGI programs.
+  If a data packet size exceeds this maximal size, the protocol
+  error is diagnosed. This constant affects all data transfer
+  from the `master', `judge', and `team' CGI programs to the
+  contest server `serve'. See also the list of size limitations
+  imposed by this variable above.
+  Note, that certain global configuration variables of the
+  `serve.cfg' contest configuration file, for example
+  `max_run_size', may define additional limitations on the
+  maximal data size.
+  By default this constant equals to 1 Mbyte.
+MAX_USERLIST_PACKET_LEN
+  The maximal size of a data packet, which can be received by
+  the user database server `userlist-serve' from its clients.
+  This variable has lesser impact, than the previous two, since
+  the clients of `userlist-serve' never send to it large amount
+  of data.
+SERVE_PACKET_NAME_SIZE
+  The size of a buffer, which is required to hold the file name,
+  which contains the command from the `serve' program to the
+  `compile' or `run' programs. The current value of the constant
+  equals to 13, this the packet file name length is 12. The
+  first character of the packet file name defines the priority
+  of this packet (see below), and the remaining 11 are an unique
+  packet name, constructed using the current time, the process
+  identifier of the `serve' program, the run identifier, etc.
+MAX_LANGUAGE
+  The maximal number of programming languages supported in a
+  single contest. Each programming language is assigned an
+  unique language identifier: an integer number in the range
+  from 1 to MAX_LANGUAGE. If there are more that MAX_LANGUAGE
+  programming language definitions (i. e. [language] sections)
+  in the contest configuration file `serve.cfg', the `serve'
+  program fails to start.
+  The current value of this constant is 31.
+MAX_PROBLEM
+  The maximal number of non-abstract problems supported in a
+  single contest. Each non-abstract problem is assigned an
+  unique problem identifier: an integer number in the range from
+  1 to MAX_PROBLEM. Abstract problems do not have unique problem
+  identifier, thus this constant does not affect the number of
+  abstract problems, which could be arbitrary. If there are more
+  that MAX_PROBLEM non-abstract problem definitions
+  (i. e. [problem] sections) in the contest configuration file
+  `serve.cfg', the `serve' program fails to start.
+  The current value of this constant is 100.
+MAX_TESTER
+  The maximal number of non-abstract testers supported in a
+  single contest. Each non-abstract tester is assigned an unique
+  problem identifier: an integer number in the range from 1 to
+  MAX_TESTER. Abstract testers do not have a unique numeric
+  identifier. A default tester (i. e. a tester, which has the
+  `any' configuration variable set to true) is assigned only one
+  tester identifier regardless of the number of problems served.
+  If there are more that MAX_TESTER non-abstract tester
+  definitions (i. e. [tester] sections) in the contest
+  configuration file `serve.cfg', the `serve' program fails to
+  start.
+  The current value of this constant is 100.
+
+A new attribute "closed" of the <contest> element is added to a
+contest description file `contest.xml'. The attribute "closed"
+is a boolean attribute, i. e. it may be set either to "no", or
+to "yes". If the attribute equals to "yes", then the current
+contest is considered closed. No (unprivileged) user can
+register to an already closed contest using the CGI-program
+`register'. If the CGI program `team' is started for a closed
+contest, the "Contest closed" diagnostic page is displayed, and
+the `team' program terminates. The "closed" attribute may be set
+for contest, if it is desirable to prevent various random
+contest registration and participation.
+
+New configuration variables `priority_adjustment',
+`user_priority_adjustment' are added to the contest
+configuration file `serve.cfg'. These variables allow setting of
+the run checking priority. The run checking priority is an
+integer number from -16 (the highest priority) to 15 (the
+lowest priority). The run checking priority may be defined for
+the contest globally, depending on the user identifier, problem,
+language, or tester. The default priority is 0. The
+configuration variables define priority changes (adjustments).
+For example, priority_adjustment equal to -2 in the problem
+description section means, that testing packet for this problem
+gains -2 to its current value of priority. The overall priority
+of testing is the sum of global contest priority, problem
+priority, language priority and tester priority.
+
+The `run' program selects testing requests according to the
+priority of the request. A testing request (testing packet) with
+higher priority is processed first. If a new testing request
+comes during testing of the request with lesser priority,
+testing of the current request is completed before processing
+other requests. Note, that testing priority has no relation to
+the Unix process priority (nice value) for the `run' program.
+
+A new problem configuration variable `disable_language' is added
+to the contest configuration file `serve.cfg'. This
+configuration variable allows defining of languages, which are
+disabled for this problem, i. e. which cannot be used in
+submissions for this problem. Each time only one short name of
+the language may be specified, but the `disable_language'
+variable may be specified in the problem definition section
+several times. For example,
+disable_language = "gcc"
+disable_language = "g++"
+This disables use of languages with short name "gcc" and "g++"
+for some problem.
+
+register
+--------
+The `closed' attribute of the <contest> element of the
+contest.xml configuration file is supported. If this attribute
+is set to "yes", such a contest is not shown in the list of
+contests, available for registration, or the link to the submit
+page is not shown.
+
+serve
+-----
+The run filter settings for the privileged CGI programs `master'
+and `judge' are now stored with user id and session id (cookie)
+as the keys. Thus, each browser window (with different session
+id) showing the privileged pages using the same user id now have
+independent filter settings.
+
+serve,run
+---------
+The testing priority is supported, as described above.
+
+team
+----
+The configuration variables `max_run_size' and `max_clar_size'
+are removed. Checking of the corresponding limitation is
+performed in the contest server `serve'.
+
+The `closed' attribute of the <contest> element of the contest
+configuration file `contest.xml' is supported. If this attribute
+is set to "yes", the "Contest is closed" page is generated
+instead of the normal operation (login prompt).
+
+userlist-server
+---------------
+The `closed' attribute of the <contest> element of the contest
+configuration file `contest.xml' is supported.
+
+master,serve
+------------
+Support for rejudging of all the submissions currently displayed
+according to the filter settings is implemented. To perform
+rejudges one has to press "Rejudge displayed runs" button. Then
+the confirmation page is displayed, which lists the run ids of
+all the submissions to rejudge.
+
+serve
+-----
+The `disable_language' problem configuration variable of the
+contest description file `serve.cfg' is supported.
+
+Version 2.1.28 (20040402)
+========================
 New global configuration variable `enable_report_upload' is
 added. New problem configuration variable `date_penalty' is
 added.
@@ -18,7 +199,7 @@ clean-users
 Support for removal of inactive user logins is implemented.
 A user login is considered as inactive, if this user did not
 make any submit or did not submitted any clarification request.
-A user login is never consideren an inactive if this login is
+A user login is never considered an inactive if this login is
 privileged (i. e. mentioned in the <cap> element of the global
 configuration file ejudge.xml) or has the `never_clean' flag set
 to true.
@@ -54,7 +235,7 @@ database and are shown by "View report" and "View team reports"
 commands. To enable uploading feature the `enable_report_upload'
 global configuration variable has to be set to true. The
 uploading user must have the EDIT_RUN capability bit set for the
-current contest. If the participant's judgins protocols are
+current contest. If the participant's judging protocols are
 enabled by the global configuration variable
 `team_enable_rep_view' the uploading user may choose between
 uploading only the participant's protocol, the judge's protocol
@@ -92,7 +273,7 @@ resulting score cannot be less, that 0 (in this case it is set
 to 0) or it cannot be greater that the full score for this
 problem (in this case it is set to the full score).
 
-The date-dependant problem penalizing only works in constest
+The date-dependent problem penalizing only works in contest
 conducted in the KIROV mode.
 
 userlist-server
@@ -142,7 +323,7 @@ is 128 bytes, and currently 77 bytes are not used. These
 currently unused fields allow easy adding of new fields to the
 server status file, in a manner, similar to the runlog database
 format updates. The new version of the server status file format
-is numbered 2, as opposed to the previuos version numbered 1.
+is numbered 2, as opposed to the previous version numbered 1.
 The magic constant in the beginning of the status file differs
 for the versions 1 and 2. The CGI programs master, judge, team
 supports the contest server status file of both versions for
@@ -415,7 +596,7 @@ as KIROV contest mode.
 
 The run program responds better to user interrupt (Ctrl-C).
 
-The tests with zero summ of scores are supported in all the
+The tests with zero sum of scores are supported in all the
 cases.
 
 serve
@@ -432,7 +613,7 @@ file. The state file has an XML-based syntax. Currently the only
 state parameter which is saved is the status of viewing of the
 messages. For each messages, which is addressed to all the
 participant or to the particular participant, flag of whether
-this participant has vieved the message, or not is saved to the
+this participant has viewed the message, or not is saved to the
 state file. The state is loaded from the file on demand, and is
 created also on demand (first access). If the saveable state of
 the client is changed during operation of the serve program, the
@@ -488,7 +669,7 @@ compile
 -------
 Handling of error conditions is significantly improved. The
 compile program now does not terminate because of error (for
-example, the file system is full), but insteal sleeps for 5
+example, the file system is full), but instead sleeps for 5
 seconds, and then tries to repeat the operation.
 
 Version 2.1.25 (20031229)
@@ -535,8 +716,8 @@ problem this configuration variable is set to true, any testing
 submit for such problem is received, it is immediately marked as
 "Accepted for testing", which may be changed only manually
 (rejudging for this problem is completely disabled). The run
-program for such problems does not check existance of the tests,
-their validness and existance of the checker. This configuration
+program for such problems does not check existence of the tests,
+their validness and existence of the checker. This configuration
 variable is good, when a problem is checked manually, but it is
 desirable to put the problem to the list of problems.
 
@@ -544,9 +725,9 @@ serve,master,judge
 ------------------
 New primary expressions added to the filter expression language:
 imported[(run_id)], curimported, hidden[(run_id)], curhidden,
-readonly[(run_id)], curreadonly, varant[(run_id)], curvariant,
+readonly[(run_id)], curreadonly, variant[(run_id)], curvariant,
 rawvariant[(run_id)], currawvariant. The difference between
-rawvariant and varant is as follows: rawvariant always takes the
+rawvariant and variant is as follows: rawvariant always takes the
 value of the `variant' field from the runlog entry, when variant
 additionally checks, that the variant field is 0 (i.e. the
 variant number from the variant map is used). In this case the
@@ -778,13 +959,13 @@ Almost any contest may be continued after stop if the
 `enable_continue' global configuration variable is set to
 non-zero value. It is possible to continue stopped contest of
 limited duration, if the current time is before the time when
-the contest whould stop due to contest time expiration. The
+the contest would stop due to contest time expiration. The
 contest, which is stopped due to contest time expiration may be
 extended in two turns: first the contest duration is extended
 with "Change duration" command, and then the contest is
 continued using "Continue" command. Note again, that the
 `enable_continue' configuration variable must be set to allow
-continuation of allready stopped contest.
+continuation of already stopped contest.
 
 serve
 -----

@@ -1,3 +1,194 @@
+2004-04-19  Alexander Chernov  <cher@ispras.ru>
+
+	* files.make: serve_clnt/rejudge_by_mask.c is added.
+
+	* master.c:
+	`force_recheck_status' variable is removed, since in the current mode
+	  of operation this variable and the associated action in `main' are
+	  redundant;
+	(confirm_rejudge_displayed) a new function, which generates the
+	  confirmation dialog for the "Rejudge displayed runs" button;
+	(action_rejudge_displayed) a new function to perform the abovementioned
+	  operation;
+	(main) new actions `REJUDGE_DISPLAYED_1', `REJUDGE_DISPLAYED_2' are
+	  supported.
+
+	* master_html.c:
+	(write_all_runs) the run bitmask of all the displayed runs is
+	  collected;
+	  a new button "Rejudge displayed runs" is generated, and the
+	  calculated bitmask is used.
+
+	* prepare.c:
+	new problem configuration variable `disable_language' is added;
+	(set_defaults) the new configuration variable is handled.
+
+	* prepare.h:
+	(struct section_problem_data) a new field `disable_language' is
+	  added.
+
+	* protocol.c: (error_map) a new error is added.
+
+	* protocol.h: new command SRV_CMD_REJUDGE_BY_MASK is added;
+	new error code SRV_ERR_LANGUAGE_DISABLED is added;
+	(struct prot_serve_pkt_rejudge_by_mask) a new structure is added.
+
+	* serve.c:
+	(cmd_team_submit_run) the `disable_language' problem configuration
+	  variable is honored;
+	(cmd_rejudge_by_mask) a new function to handle the corresponding
+	  command;
+	(do_rejudge_by_mask) a new function to rejudge the runs according
+	  to the passed bitmask;
+	(packet_handlers) the handler `cmd_rejudge_by_mask' for
+	  `REJUDGE_BY_MASK' command is added.
+
+	* serve_clnt.h:
+	(serve_clnt_rejudge_by_mask) new function prototype is added.
+
+	* userlist-server.c:
+	(cmd_register_contest) the `closed' flag of the contest description
+	  is honored.
+
+	* client_actions.h:
+	new actions REJUDGE_DISPLAYED_1 and REJUDGE_DISPLAYED_2 are added.
+
+2004-04-18  Alexander Chernov  <cher@ispras.ru>
+
+	* master_html.c:
+	(struct user_state_info) the user specific filter information is
+	  handled differently: for each (privileged) user a linked list
+	  of `struct user_filter_info' is kept. The items of the list contain
+	  the session_id (cookie) as the key and all the information
+	  prevouosly stored in `struct user_state_info'. This allows having
+	  several browsers with different filter settings for the same
+	  user;
+	(write_all_runs) the type of the second parameter is changed:
+	  `struct user_filter_info' instead of `struct user_state_info';
+	(write_all_clars) the same as above;
+	(allocate_user_info) now accept two parameters: the second parameter
+	  is the session identifier; also the return type is changed from
+	  `struct user_state_info' to `struct user_filter_info';
+	(write_master_page) call of `allocate_user_info' is updated;
+	(html_reset_filter) the second parameter `session_id' is added;
+	  call of `allocate_user_info' is updated.
+
+	* prepare.h: (struct user_adjustment_info) a new structure;
+	(struct section_global_data) new fields: `priority_adjustment',
+	  `user_priority_adjustments', `user_adjustment_info',
+	  `user_adjustment_map';
+	(struct section_problem_data) new field `priority_adjustment';
+	(struct section_language_data) new field `priority_adjustment';
+	(struct section_tester_data) new field `priority_adjustment';
+	(find_user_priority_adjustment) new function prototype.
+
+	* prepare.c: "settings.h" is included;
+	MAX_LANGUAGE, MAX_PROBLEM, MAX_TESTER are moved to "settings.h";
+	new global parameters: priority_adjustment, user_priority_adjustments;
+	new problem parameter: priority_adjustment;
+	new language parameter: priority_adjustment;
+	new tester parameter: priority_adjustment;
+	(problem_init_func) `priority_adjustment' is handled;
+	(tester_init_func) `priority_adjustment' is handled;
+	(inh_isdef_int3) a new function to check, whether the
+	  `priority_adjustment' variable is undefined (equals to -1000);
+	(tester_inheritance_info) `priority_adjustment' info is added;
+	(parse_user_adjustment) a new function to parse the
+	  `user_priority_adjustments' variable;
+	(find_user_priority_adjustment) a new function to find priority
+	  adjustment corresponding to the given user_id;
+	(set_defaults) all the new fields are handled;
+	(prepare_tester_refinement) `priority_adjustment' field is handled.
+
+	* master.c:
+	(action_reset_filter) `serve_clnt_reset_filter' is called instead of
+	  `serve_clnt_simple_cmd';
+	(display_master_page) `client_sid' is passed to the
+	  `serve_clnt_master_page'.
+
+	* contests.h: copyright notice is updated;
+	`CLOSED' attribute is added;
+	(struct contest_desc) `closed' field is added.
+
+2004-04-17  Alexander Chernov  <cher@ispras.ru>
+
+	* contests.c: copyright notice is updated;
+	attribute `closed' is supported;
+	(parse_contest) the `closed' attribute has not gave the proper result.
+
+	* html.h:
+	(html_reset_filter) new parameter `session_id' is added to pass
+	  the session identifier.
+
+	* files.make: `reset_filter.c' is added to the SERVE_CLNT_CFILES.
+
+	* protocol.c:
+	(error_map) BAD_SESSION_ID error text is translated to Russian.
+
+	* protocol.h: new error code SRV_ERR_BAD_SESSION_ID is added;
+	(struct prot_serve_pkt_master_page) `session_id' field is added;
+	(struct prot_serve_pkt_reset_filter) new packet.
+
+	* register.c: copyright notice is updated;
+	(check_contest_eligibility) the contest is not eligible, if the
+	  `closed' flag is set to true;
+	(display_main_page) the contest is not diplayed, if its closed
+	  flag is set to `true'.
+
+	* serve.c:
+	(cmd_reset_filter) a new function to execute RESET_FILTER command,
+	  previously this command was handled in `cmd_judge_command_0';
+	  `cmd_judge_command_0' is commented out;
+	(generate_packet_name) now accepts `prio' parameter for the priority
+	  value in range [-32;31);
+	  priority is the first character of the generated packet file name;
+	(read_compile_packet) the run packet priority is calculated using
+	  the new configuration variable;
+	  the calculated priority is passed to `generate_packet_name';
+	(queue_compile_request) `generate_packet_name' is always called
+	  with 0 as the priority value;
+	(packet_handler) `cmd_reset_filter' replaced `cmd_judge_command_0'
+	  in the handler for the RESET_FILTER command.
+
+	* serve_clnt.h:
+	(serve_clnt_master_page) a new parameter `session_id' to pass the
+	  session identifier (cookie) is added;
+	(serve_clnt_reset_filter) a new function prototype.
+
+	* settings.h:
+	SERVE_PACKET_NAME_SIZE constant is added to hold the size of
+	  serve->run and serve->compile packet name;
+	MAX_LANGUAGE is moved here;
+	MAX_PROBLEM is moved here;
+	MAX_TESTER is moved here.
+
+	* team.c: (client_contest_closed) a new function, which generates the
+	  "Contest is closed" html page, if the `closed' flag of the given
+	  contest is set to `true';
+	(main) `client_contest_closed' is called when necessary.
+
+2004-04-16  Alexander Chernov  <cher@ispras.ru>
+
+	* team.c:
+	`max_clar_size', `max_run_size' configuration parameters are removed,
+	  since the size checks are also performed at the server's side.
+
+	* userlist-server.c: "settings.h" is included;
+	MAX_EXPECTED_LEN constant is defined for the maximal packet length,
+	  this constant's value is set to MAX_USERLIST_PACKET_LEN from
+	  "settings.h".
+
+	* serve.c: "settings.h" is included;
+	MAX_EXPECTED_LEN constant is defined for the maximal packet length,
+	  this constant's value is set to MAX_SERVE_PACKET_LEN from settings.h.
+
+	* files.make: settings.h is added.
+
+	* cgi.c: "settings.h" is included;
+	MAX_CGI_VALUE_LEN from settings.h is used as maximal content-length.
+
+	* settings.h: initial revision
+
 2004-04-01  Alexander Chernov  <cher@ispras.ru>
 
 	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
