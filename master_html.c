@@ -53,8 +53,11 @@ enum
     SID_COOKIE
   };
 
-struct user_state_info
+struct user_filter_info
 {
+  struct user_filter_info *next;
+
+  unsigned long long session_id;
   int prev_first_run;
   int prev_last_run;
   int prev_first_clar;
@@ -65,9 +68,14 @@ struct user_state_info
   unsigned char *error_msgs;
 };
 
+struct user_state_info
+{
+  struct user_filter_info *first_filter;
+};
+
 static int users_a;
 static struct user_state_info **users;
-static struct user_state_info *cur_user;
+static struct user_filter_info *cur_user;
 
 static const unsigned char form_header_get[] =
 "form method=\"GET\" action=";
@@ -348,7 +356,7 @@ write_change_status_dialog(FILE *f, unsigned char const *var_name,
 }
 
 static void
-write_all_runs(FILE *f, struct user_state_info *u,
+write_all_runs(FILE *f, struct user_filter_info *u,
                int priv_level, int sid_mode, unsigned long long sid,
                int first_run, int last_run,
                unsigned char const *self_url,
@@ -921,7 +929,7 @@ write_all_runs(FILE *f, struct user_state_info *u,
 }
 
 static void
-write_all_clars(FILE *f, struct user_state_info *u,
+write_all_clars(FILE *f, struct user_filter_info *u,
                 int priv_level, int sid_mode, unsigned long long sid,
                 int first_clar, int last_clar,
                 unsigned char const *self_url,
@@ -1072,11 +1080,15 @@ write_all_clars(FILE *f, struct user_state_info *u,
                     0, 0, 0, 0, 0, 0, 0);
 }
 
-static struct user_state_info *
-allocate_user_info(int user_id)
+static struct user_filter_info *
+allocate_user_info(int user_id, unsigned long long session_id)
 {
+  struct user_filter_info *p;
+
   if (user_id == -1) user_id = 0;
   ASSERT(user_id >= 0 && user_id < 32768);
+  ASSERT(session_id);
+
   if (user_id >= users_a) {
     int new_users_a = users_a;
     struct user_state_info **new_users;
@@ -1094,8 +1106,19 @@ allocate_user_info(int user_id)
   if (!users[user_id]) {
     users[user_id] = xcalloc(1, sizeof(*users[user_id]));
   }
-  cur_user = users[user_id];
-  return users[user_id];
+
+  for (p = users[user_id]->first_filter; p; p = p->next) {
+    if (p->session_id == session_id) break;
+  }
+  if (!p) {
+    XCALLOC(p, 1);
+    p->next = users[user_id]->first_filter;
+    p->session_id = session_id;
+    users[user_id]->first_filter = p;
+  }
+
+  cur_user = p;
+  return p;
 }
 
 void
@@ -1109,7 +1132,7 @@ write_master_page(FILE *f, int user_id, int priv_level,
                   unsigned char const *extra_args,
                   const opcap_t *pcaps)
 {
-  struct user_state_info *u = allocate_user_info(user_id);
+  struct user_filter_info *u = allocate_user_info(user_id, sid);
 
   write_all_runs(f, u, priv_level, sid_mode, sid, first_run, last_run,
                  self_url, filter_expr, hidden_vars, extra_args);
@@ -1844,9 +1867,9 @@ write_priv_users(FILE *f, int user_id, int priv_level,
 }
 
 void
-html_reset_filter(int user_id)
+html_reset_filter(int user_id, unsigned long long session_id)
 {
-  struct user_state_info *u = allocate_user_info(user_id);
+  struct user_filter_info *u = allocate_user_info(user_id, session_id);
 
   u->prev_first_run = 0;
   u->prev_last_run = 0;
