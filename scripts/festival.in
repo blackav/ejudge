@@ -1,0 +1,54 @@
+#!/bin/sh
+# $Id$
+# Copyright (C) 2004 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+
+festival_home_dir="@ac_cv_festival_home@"
+
+FESTIVAL_HOME="${festival_home_dir}"
+export FESTIVAL_HOME
+
+# arguments: error_code test user_spelling problem_spelling
+errcode="$1"
+testnum="$2"
+uspell="$3"
+pspell="$4"
+
+# error codes:
+#  0 - ok
+#  1 - compilation error
+#  2 - run-time error
+#  3 - time-limit
+#  4 - presentation error
+#  5 - wrong answer
+#  6 - internal error
+
+if [ x"${uspell}" = x ]
+then
+  umsg="Unspecified user. "
+else
+  umsg="User ${uspell}. "
+fi
+if [ x"${pspell}" = x ]
+then
+  pmsg="Unspecified problem. "
+else
+  pmsg="Problem ${pspell}. "
+fi
+
+if [ "${errcode}" = 0 ]
+then
+  msg="Success.${umsg}${pmsg}"
+else
+  case x"${errcode}" in
+    x2) cmsg="Run-time error. ";;
+    x3) cmsg="Time-limit exceeded. ";;
+    x4) cmsg="Presentation error. ";;
+    x5) cmsg="Wrong answer. ";;
+    x6) cmsg="Attention! Internal error! ";;
+    *) cmsg="Unknown code ${errcode}. ";;
+  esac
+  msg="${cmsg}${umsg}${pmsg}Test ${testnum}."
+fi
+
+echo "$msg" | "${FESTIVAL_HOME}/bin/festival" --tts
+exit 0
