@@ -314,7 +314,7 @@ write_all_runs(FILE *f, struct user_state_info *u,
                unsigned char const *extra_args)
 {
   struct filter_env env;
-  int i, r;
+  int i, r, j;
   int *match_idx;
   int match_tot = 0;
   int *list_idx = 0;
@@ -600,13 +600,19 @@ write_all_runs(FILE *f, struct user_state_info *u,
         continue;
       }
 
-      run_get_attempts(rid, &attempts, global->ignore_compile_errors);
+      attempts = 0;
+      if (global->score_system_val == SCORE_KIROV && !pe->is_hidden) {
+        run_get_attempts(rid, &attempts, global->ignore_compile_errors);
+      }
       run_time = pe->timestamp;
       imported_str = "";
       rejudge_dis_str = "";
       if (pe->is_imported) {
         imported_str = "*";
         rejudge_dis_str = " disabled=\"1\"";
+      }
+      if (pe->is_hidden) {
+        imported_str = "#";
       }
       start_time = env.rhead.start_time;
       if (global->virtual) {
@@ -635,7 +641,8 @@ write_all_runs(FILE *f, struct user_state_info *u,
         struct section_problem_data *cur_prob = probs[pe->problem];
         int variant = 0;
         if (cur_prob->variant_num > 0) {
-          variant = find_variant(pe->team, pe->problem);
+          variant = pe->variant;
+          if (!variant) variant = find_variant(pe->team, pe->problem);
           prob_str = alloca(strlen(cur_prob->short_name) + 10);
           if (variant > 0) {
             sprintf(prob_str, "%s-%d", cur_prob->short_name, variant);
@@ -670,7 +677,7 @@ write_all_runs(FILE *f, struct user_state_info *u,
         if (pe->score == -1) {
           fprintf(f, "<td>%s</td>", _("N/A"));
         } else {
-          if (global->score_system_val == SCORE_OLYMPIAD) {
+          if (global->score_system_val == SCORE_OLYMPIAD || pe->is_hidden) {
             fprintf(f, "<td>%d</td>", pe->score);
           } else {
             score = pe->score - attempts * probs[pe->problem]->run_penalty;
@@ -789,11 +796,17 @@ write_all_runs(FILE *f, struct user_state_info *u,
   print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
                     0, 0, 0, 0);
 
+
   if (priv_level == PRIV_LEVEL_ADMIN &&!has_parse_errors&&!has_filter_errors) {
     fprintf(f, "<table border=\"0\"><tr><td>");
     html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
             ACTION_REJUDGE_ALL_1, _("Rejudge all"));
+    fprintf(f, "</form></td><td>\n");
+
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
+    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+            ACTION_JUDGE_SUSPENDED_1, _("Judge suspended runs"));
     fprintf(f, "</form></td><td>\n");
 
     html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
@@ -823,6 +836,45 @@ write_all_runs(FILE *f, struct user_state_info *u,
     fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_MERGE_RUNS, _("Send!"));
     fprintf(f, "</tr></table></form>\n");
   }
+
+  // submit solution dialog
+  fprintf(f, "<hr><h2>%s</h2>\n", _("Send a submission"));
+  html_start_form(f, 2, sid_mode, sid, self_url, hidden_vars, extra_args);
+  fprintf(f, "<table>\n");
+  fprintf(f, "<tr><td>%s:</td><td>", _("Problem"));
+  fprintf(f, "<select name=\"problem\"><option value=\"\">\n");
+  for (i = 1; i <= max_prob; i++) {
+    if (!probs[i]) continue;
+    if (probs[i]->variant_num > 0) {
+      for (j = 1; j <= probs[i]->variant_num; j++) {
+        fprintf(f, "<option value=\"%d,%d\">%s-%d - %s\n",
+                i, j, probs[i]->short_name, j, probs[i]->long_name);
+      }
+    } else {
+      fprintf(f, "<option value=\"%d\">%s - %s\n",
+              i, probs[i]->short_name, probs[i]->long_name);
+    }
+  }
+  fprintf(f, "</select>\n");
+  fprintf(f, "</td></tr>\n");
+  fprintf(f, "<tr><td>%s:</td><td>", _("Language"));
+  fprintf(f, "<select name=\"language\"><option value=\"\">\n");
+  for (i = 1; i <= max_lang; i++) {
+    if (!langs[i]) continue;
+    fprintf(f, "<option value=\"%d\">%s - %s\n",
+            i, langs[i]->short_name, langs[i]->long_name);
+  }
+  fprintf(f, "</select>\n");
+  fprintf(f, "</td></tr>\n");
+  fprintf(f, "<tr><td>%s:</td>"
+          "<td><input type=\"file\" name=\"file\"></td></tr>\n"
+          "<tr><td>%s</td>"
+          "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>",
+          _("File"), _("Send!"), ACTION_SUBMIT_RUN, _("Send!"));
+  fprintf(f, "</table></form>\n");
+
+  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
+                    0, 0, 0, 0);
 }
 
 static void
@@ -1011,7 +1063,8 @@ write_master_page(FILE *f, int user_id, int priv_level,
                   unsigned char const *self_url,
                   unsigned char const *filter_expr,
                   unsigned char const *hidden_vars,
-                  unsigned char const *extra_args)
+                  unsigned char const *extra_args,
+                  const opcap_t *pcaps)
 {
   struct user_state_info *u = allocate_user_info(user_id);
 
@@ -1048,7 +1101,8 @@ write_priv_source(FILE *f, int user_id, int priv_level,
                   unsigned char const *self_url,
                   unsigned char const *hidden_vars,
                   unsigned char const *extra_args,
-                  int run_id)
+                  int run_id,
+                  const opcap_t *pcaps)
 {
   unsigned char *s;
   int i;
@@ -1136,9 +1190,21 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   }
   fprintf(f, "</tr>\n");
   if (probs[info.problem]->variant_num > 0) {
-    variant = find_variant(info.team, info.problem);
-    fprintf(f, "<tr><td>%s:</td><td>%d</td><td>%s</td></tr>\n",
-            _("Variant"), variant, nbsp);
+    fprintf(f, "<tr><td>%s:</td>", _("Variant"));
+    if (info.variant > 0) {
+      fprintf(f, "<td>%d</td>", info.variant);
+    } else {
+      variant = find_variant(info.team, info.problem);
+      fprintf(f, "<td>%d (implicit)</td>", variant);
+    }
+    if (priv_level == PRIV_LEVEL_ADMIN) {
+      html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
+      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\">",run_id);
+      fprintf(f, "<td><input type=\"text\" name=\"variant\" value=\"%d\" size=\"10\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", info.variant, ACTION_RUN_CHANGE_VARIANT, _("Change"));
+    } else {
+      fprintf(f, "%s", nbsp);
+    }
+    fprintf(f, "</tr>\n");
   }
   fprintf(f, "<tr><td>%s:</td><td>%s</td>",
           _("Language"),
@@ -1158,6 +1224,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
     fprintf(f, "%s", nbsp);
   }
   fprintf(f, "</tr>\n");
+
   fprintf(f, "<tr><td>%s:</td><td>%s</td>",
           _("Imported?"), info.is_imported?_("Yes"):_("No"));
   if (priv_level == PRIV_LEVEL_ADMIN) {
@@ -1170,6 +1237,23 @@ write_priv_source(FILE *f, int user_id, int priv_level,
             info.is_imported?" selected=\"1\"":"", _("Yes"));
     fprintf(f, "</select></td>\n");
     fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>\n", ACTION_RUN_CHANGE_IMPORTED, _("Change"));
+  } else {
+    fprintf(f, "%s", nbsp);
+  }
+  fprintf(f, "</tr>\n");
+
+  fprintf(f, "<tr><td>%s:</td><td>%s</td>",
+          _("Hidden?"), info.is_hidden?_("Yes"):_("No"));
+  if (priv_level == PRIV_LEVEL_ADMIN) {
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
+    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
+    fprintf(f, "<td><select name=\"is_hidden\">\n");
+    fprintf(f, "<option value=\"0\"%s>%s\n",
+            info.is_hidden?"":" selected=\"1\"", _("No"));
+    fprintf(f, "<option value=\"1\"%s>%s\n",
+            info.is_hidden?" selected=\"1\"":"", _("Yes"));
+    fprintf(f, "</select></td>\n");
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>\n", ACTION_RUN_CHANGE_HIDDEN, _("Change"));
   } else {
     fprintf(f, "%s", nbsp);
   }
@@ -1243,7 +1327,7 @@ write_priv_report(FILE *f, int user_id, int priv_level,
                   unsigned char const *self_url,
                   unsigned char const *hidden_vars,
                   unsigned char const *extra_args,
-                  int run_id)
+                  int run_id, const opcap_t *pcaps)
 {
   path_t rep_path;
   char *rep_text = 0, *html_text;
@@ -1279,7 +1363,7 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
                 unsigned char const *self_url,
                 unsigned char const *hidden_vars,
                 unsigned char const *extra_args,
-                int clar_id)
+                int clar_id, const opcap_t *pcaps)
 {
   time_t clar_time, start_time;
   size_t size, txt_subj_len, html_subj_len, txt_msg_len = 0, html_msg_len;
@@ -1371,7 +1455,8 @@ write_priv_users(FILE *f, int user_id, int priv_level,
                  int sid_mode, unsigned long long sid,
                  unsigned char const *self_url,
                  unsigned char const *hidden_vars,
-                 unsigned char const *extra_args)
+                 unsigned char const *extra_args,
+                 const opcap_t *pcaps)
 {
   int tot_teams, i, max_team, flags, runs_num = 0, clars_num = 0;
   unsigned char const *txt_login, *txt_name;
@@ -1619,6 +1704,9 @@ write_runs_dump(FILE *f, unsigned char const *charset)
     fprintf(f, "%s;", statstr);
     fprintf(f, "%d;", re.score);
     fprintf(f, "%d;", re.test);
+    fprintf(f, "%d;", re.is_imported);
+    fprintf(f, "%d;", re.variant);
+    fprintf(f, "%d;", re.is_hidden);
 
     fprintf(f, "\n");
   }
