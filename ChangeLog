@@ -1,3 +1,199 @@
+2003-10-02  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* users.c:
+	(main) depending on the current setting of `locale_id' variable,
+	  the contest name is printed either in english or in local language.
+
+	* userlist_xml.c: copyright notice is updated;
+	all the new fields are supported.
+
+	* userlist_proto.h: definition of `USERLIST_UC_LOCKED' is added.
+
+	* userlist.h:
+	new XML elements: inst_en, instshort_en, fac_en, facshort_en,
+	  surname_en, middlename_en, group_en, occupation_en, firstname_en,
+	  country_en, city_en are added;
+	new XML attribute locked is added;
+	(struct userlist_member) new fields firstname_en, middlename_en,
+	  surname_en, group_en, occupation_en, inst_en, instshort_en,
+	  fac_en, facshort_en are added;
+	(struct userlist_user) new fields is_locked, inst_en, instshort_en,
+	  fac_en, facshort_en, city_en, country_en are added.
+
+	* userlist.c: copyright notice is updated;
+	new fields are handled in all the functions.
+
+	* userlist-server.c:
+	(cmd_team_login) new `locked' contest registration flag is handled;
+	(cmd_team_check_cookie) new `locked' contest registration flag
+	  is handled;
+	(do_set_user_info) new userlist fields are handled;
+	(do_list_users) variable header, paragraph and table style for
+	  CGI-program `users' are handled;
+	  either the local or english variants of institution and faculty
+	  are chosen depending on `locale_id';
+	(do_dump_database) new fields are handled;
+
+	* teamdb.h: new `TEAM_LOCKED' flag is added.
+
+	* teamdb.c: 
+	(teamdb_get_flags) new `TEAM_LOCKED' flag is handled.
+
+	* team.c:
+	new static variables `head_style', `par_style' for variable header
+	  and paragraph styles;
+	(open_serve) variable header and paragraph styles are supported;
+	(initialize) style variables are initialized from the contest
+	  description;
+	(open_userlist_server) variable header and paragraph styles are
+	  supported;
+	(permission_denied) the same as above;
+	(fatal_server_error) the same as above;
+	(authentificate) the same as above;
+	(operation_status_page) the same as above;
+	(show_clar_if_asked) the same as above;
+	(request_source_if_asked) the same as above;
+	(action_standings) the same as above;
+	(request_report_if_asked) the same as above;
+	(action_logout) the same as above;
+	(display_team_page) the same as above;
+	(main) the same as above.
+
+	* register.c:
+	new action `ACTION_REDISPLAY_EDIT_REGISTRATION_DATA' added;
+	new static variables for the new userlist team fields are added;
+	(field_desc) new descriptions of the userlist team fields are added;
+	(member_field_descs) new descriptions of the userlist team member
+	  fields are added;
+	(initialize) style variables `head_style', `par_style', `table_style'
+	  are initialized from the current contest description;
+	(print_choose_language_button) variable header and paragraph styles
+	  are supported;
+	(read_user_info_from_server) the same as above;
+	  new fields are read from the server;
+	(authentificate) variable header and paragraph styles are supported;
+	(display_edit_registration_data_page) variable header and paragraph
+	  styles are supported;
+	  the contest name is printed either in local language, or in english,
+	  depending on the locale_id;
+	(display_initial_page) variable header and paragraph styles are
+	  supported;
+	  `setlocale' is moved to the `main' function;
+	  the text of registration notice for new users is changed;
+	(display_login_page) variable header and paragraph styles are
+	  supported;
+	  `setlocale' is moved to the `main' function;
+	(display_register_new_user_page) the same as above;
+	(display_user_registered_page) the same as above;
+	(display_main_page) variable header and paragraph styles are supported;
+	  the contest name is printed either in local language, or in english,
+	  depending on the locale_id;
+	  `setlocale' is moved to the `main' function;
+	(action_change_lang_at_initial) `setlocale' is moved to the `main'
+	  function;
+	(action_change_lang_at_register_new_user) the same as above;
+	(action_change_lang_at_main_page) the same as above;
+	(action_register_new_user) `setlocale' is moved to the `main'
+	  function;
+	  variable header and paragraph styles are supported;
+	(action_login) the same as above;
+	(action_logout) the same as above;
+	(action_change_password) the same as above;
+	(action_remove_member) variable header and paragraph styles are
+	  supported;
+	(action_register_for_contest) variable header and paragraph styles
+	  are supported;
+	  in case of registration error all the form variables are generated
+	  to hidden html variables, and the "Back" button is generated;
+	(main) `setlocale' call is added;
+	  `ACTION_REDISPLAY_EDIT_REGISTRATION_DATA' is handled;
+	  variable paragraph styles are supported.
+
+	* master_html.c:
+	(write_priv_users) new `Locked' flag of team registration is supported;
+	  generation of the new `lock/unlock' button is added;
+	(write_runs_dump) `L' is printed for locked teams.
+
+	* master.c:
+	(action_toggle_lock) a new function to lock/unlock team from the
+	  current contest;
+	(main) `ACTION_USER_TOGGLE_LOCK' is handled.
+
+	* html.c:
+	(new_write_user_clar) variable style of headers and paragraph
+	  attributes is supported;
+	(write_standings_header) variable style of headers and paragraph
+	  attributes is supported;
+	(do_write_kirov_standings) variable style of headers and paragraph
+	  attributes is supported, when in client mode;
+	(do_write_standings) the same as above;
+	(write_team_page) variable style of headers and paragraph
+	  attributes is supported.
+
+	* edit-userlist.c:
+	(user_descs) descriptions of new userlist team fields `is_locked',
+	  `inst_en', `instshort_en', `fac_en', `facshort_en', `city_en',
+	  `country_en' are added;
+	(member_descs) descriptions of new userlist team member fields
+	  `firstname_en', `middlename_en', `surname_en', `group_en',
+	  `occupation_en', `inst_en', `instshort_en', `fac_en', `facshort_en';
+	(get_contest_str) new `locked' attribute of the team registration
+	  is supported;
+	(display_user) new userlist fields are supported;
+	  new 'L' (lock) command is supported for a contest registration;
+	(user_match) new userlist team field are scanned for regexp search;
+	(display_registered_users) new 'L' (lock) command is supported for
+	  a contest registration.
+
+	* copyright.c:
+	Copyright notice is changed. Class "ejudge_copyright" is used for
+	  text paragraphs, hyperlinks to FSF added.
+
+	* contests.h:
+	new XML elements added: name_en, users_head_style, users_par_style,
+	  users_table_style, users_verb_style, register_head_style,
+	  register_par_style, register_table_style, team_head_style,
+	  team_par_style;
+	new userlist.xml field names added: inst_en, instshort_en,
+	  fac_en, facshort_en, city_en, country_en;
+	new userlist.xml team member field names added: firstname_en,
+	  middlename_en, surname_en, group_en, inst_en, instshort_en,
+	  fac_en, facshort_en, occupation_en;
+	(struct contest_desc) fields to store the new XML element values
+	  are added.
+
+	* contests.c:
+	new XML elements added: name_en, users_head_style, users_par_style,
+	  users_table_style, users_verb_style, register_head_style,
+	  register_par_style, register_table_style, team_head_style,
+	  team_par_style;
+	new userlist.xml field names added: inst_en, instshort_en,
+	  fac_en, facshort_en, city_en, country_en;
+	new userlist.xml team member field names added: firstname_en,
+	  middlename_en, surname_en, group_en, inst_en, instshort_en,
+	  fac_en, facshort_en, occupation_en;
+	(parse_contest) all the new XML elements are parsed;
+	  default values for style elements are assigned.
+
+	* client_actions.h:
+	new action `USER_TOGGLE_LOCK' for the master CGI program.
+
+	* cgi.h: copyright notice is updated;
+	(cgi_get_param_num) new function prototype is added;
+	(cgi_get_nth_param) new function prototype is added.
+
+	* cgi.c: copyright notice is updated;
+	(cgi_get_param_num) new function to get the total number of CGI
+	  parameters;
+	(cgi_get_nth_param) new function get the variable name and its
+	  value by its number in the CGI variables array.
+
+2003-09-29  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
 2003-09-29  Alexander Chernov  <cher@ispras.ru>
 
 	* users.c:
