@@ -75,8 +75,11 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(max_clar_num, "d"),
   GLOBAL_PARAM(board_fog_time, "d"),
   GLOBAL_PARAM(board_unfog_time, "d"),
+  GLOBAL_PARAM(autoupdate_standings, "d"),
   GLOBAL_PARAM(team_enable_src_view, "d"),
   GLOBAL_PARAM(team_enable_rep_view, "d"),
+  GLOBAL_PARAM(disable_clars, "d"),
+  GLOBAL_PARAM(disable_team_clars, "d"),
   GLOBAL_PARAM(max_file_length, "d"),
   GLOBAL_PARAM(max_line_length, "d"),
 
@@ -116,11 +119,13 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(judge_data_dir, "s"),
 
   GLOBAL_PARAM(compile_dir, "s"),
+  GLOBAL_PARAM(compile_queue_dir, "s"),
   GLOBAL_PARAM(compile_src_dir, "s"),
   GLOBAL_PARAM(compile_status_dir, "s"),
   GLOBAL_PARAM(compile_report_dir, "s"),
 
   GLOBAL_PARAM(run_dir, "s"),
+  GLOBAL_PARAM(run_queue_dir, "s"),
   GLOBAL_PARAM(run_exe_dir, "s"),
   GLOBAL_PARAM(run_status_dir, "s"),
   GLOBAL_PARAM(run_report_dir, "s"),
@@ -140,6 +145,10 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(presentation_sound, "s"),
   GLOBAL_PARAM(internal_sound, "s"),
   GLOBAL_PARAM(start_sound, "s"),
+
+  GLOBAL_PARAM(enable_l10n, "d"),
+  GLOBAL_PARAM(l10n_dir, "s"),
+  GLOBAL_PARAM(standings_locale, "s"),
 
   { 0, 0, 0, 0 }
 };
@@ -190,11 +199,12 @@ static struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(server_root_dir, "s"),
   LANGUAGE_PARAM(server_var_dir, "s"),
   LANGUAGE_PARAM(server_compile_dir, "s"),
+  LANGUAGE_PARAM(server_queue_dir, "s"),
   LANGUAGE_PARAM(server_src_dir, "s"),
   LANGUAGE_PARAM(compile_status_dir, "s"),
   LANGUAGE_PARAM(compile_report_dir, "s"),
 
-  LANGUAGE_PARAM(src_dir, "s"),
+  LANGUAGE_PARAM(queue_dir, "s"),
   LANGUAGE_PARAM(work_dir, "s"),
   { 0, 0, 0, 0 }
 };
@@ -226,10 +236,11 @@ static struct config_parse_info section_tester_params[] =
   TESTER_PARAM(server_var_dir, "s"),
   TESTER_PARAM(server_run_dir, "s"),
   TESTER_PARAM(server_exe_dir, "s"),
+  TESTER_PARAM(server_queue_dir, "s"),
   TESTER_PARAM(run_status_dir, "s"),
   TESTER_PARAM(run_report_dir, "s"),
   TESTER_PARAM(run_team_report_dir, "s"),
-  TESTER_PARAM(exe_dir, "s"),
+  TESTER_PARAM(queue_dir, "s"),
 
   TESTER_PARAM(tester_dir, "s"),
   TESTER_PARAM(tmp_dir, "s"),
@@ -252,10 +263,12 @@ static int tester_counter;
 
 static void problem_init_func(struct generic_section_config *);
 static void tester_init_func(struct generic_section_config *);
+static void global_init_func(struct generic_section_config *);
 
 static struct config_section_info params[] =
 {
-  { "global", sizeof(struct section_global_data), section_global_params },
+  { "global", sizeof(struct section_global_data), section_global_params,
+    0, global_init_func },
   { "problem", sizeof(struct section_problem_data), section_problem_params,
     &problem_counter, problem_init_func },
   { "language",sizeof(struct section_language_data),section_language_params,
@@ -315,10 +328,12 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_STATUS_DIR         "status"
 #define DFLT_G_WORK_DIR           "work"
 #define DFLT_G_COMPILE_DIR        "compile"
+#define DFLT_G_COMPILE_QUEUE_DIR  "queue"
 #define DFLT_G_COMPILE_SRC_DIR    "src"
 #define DFLT_G_COMPILE_STATUS_DIR "status"
 #define DFLT_G_COMPILE_REPORT_DIR "report"
 #define DFLT_G_RUN_DIR            "run"
+#define DFLT_G_RUN_QUEUE_DIR      "queue"
 #define DFLT_G_RUN_EXE_DIR        "exe"
 #define DFLT_G_RUN_STATUS_DIR     "status"
 #define DFLT_G_RUN_REPORT_DIR     "report"
@@ -336,6 +351,15 @@ find_tester(int problem, char const *arch)
 #define DFLT_T_WORK_DIR           "work"
 #define DFLT_T_TMP_DIR            "tmp"
 #define DFLT_T_ERROR_FILE         "error"
+
+static void
+global_init_func(struct generic_section_config *gp)
+{
+  struct section_global_data *p = (struct section_global_data *) gp;
+
+  p->autoupdate_standings = 1;
+  p->board_unfog_time = -1;
+}
 
 static void
 problem_init_func(struct generic_section_config *gp)
@@ -460,7 +484,7 @@ static struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(tmp_dir, path, path),
   TESTER_INH(work_dir, path, path),
   TESTER_INH(server_root_dir, path, path),
-  TESTER_INH(exe_dir, path, path),
+  TESTER_INH(queue_dir, path, path),
   TESTER_INH(no_core_dump, int, int),
   TESTER_INH(clear_env, int, int),
   TESTER_INH(kill_signal, path, path),
@@ -615,12 +639,12 @@ set_defaults(int mode)
       global->board_fog_time = DFLT_G_BOARD_FOG_TIME;
     }
     global->board_fog_time *= 60;
-    if (!global->board_unfog_time) {
+    if (global->board_unfog_time == -1) {
       info("global.board_unfog_time set to %d", DFLT_G_BOARD_UNFOG_TIME);
       global->board_unfog_time = DFLT_G_BOARD_UNFOG_TIME;
     }
     global->board_unfog_time *= 60;
-    if (global->contest_time < 0 || global->contest_time > 60 * 100) {
+    if (global->contest_time < 0 /*|| global->contest_time > 60 * 100*/) {
       err("bad value of global.contest_time: %d", global->contest_time);
       return -1;
     }
@@ -694,6 +718,7 @@ set_defaults(int mode)
 
   if (mode == PREPARE_SERVE || mode == PREPARE_COMPILE) {
     GLOBAL_INIT_FIELD(compile_dir, DFLT_G_COMPILE_DIR, var_dir);
+    GLOBAL_INIT_FIELD(compile_queue_dir,DFLT_G_COMPILE_QUEUE_DIR,compile_dir);
     GLOBAL_INIT_FIELD(compile_src_dir, DFLT_G_COMPILE_SRC_DIR, compile_dir);
     GLOBAL_INIT_FIELD(compile_status_dir,DFLT_G_COMPILE_STATUS_DIR,compile_dir);
     GLOBAL_INIT_FIELD(compile_report_dir,DFLT_G_COMPILE_REPORT_DIR,compile_dir);
@@ -701,6 +726,7 @@ set_defaults(int mode)
 
   if (mode == PREPARE_SERVE || mode == PREPARE_RUN) {
     GLOBAL_INIT_FIELD(run_dir, DFLT_G_RUN_DIR, var_dir);
+    GLOBAL_INIT_FIELD(run_queue_dir, DFLT_G_RUN_QUEUE_DIR, run_dir);
     GLOBAL_INIT_FIELD(run_exe_dir, DFLT_G_RUN_EXE_DIR, run_dir);
     GLOBAL_INIT_FIELD(run_status_dir, DFLT_G_RUN_STATUS_DIR, run_dir);
     GLOBAL_INIT_FIELD(run_report_dir, DFLT_G_RUN_REPORT_DIR, run_dir);
@@ -726,6 +752,19 @@ set_defaults(int mode)
     pathcpy(global->charset, DFLT_G_CHARSET);
     info("global.charset set to %s", global->charset);
   }
+
+#if CONF_HAS_LIBINTL - 0 == 1
+  if (global->enable_l10n) {
+    /* convert locale string into locale id */
+    if (!strcmp(global->standings_locale, "ru_RU.KOI8-R")
+        || !strcmp(global->standings_locale, "ru")) {
+      global->standings_locale_id = 1;
+    } else {
+      global->standings_locale_id = 0;
+    }
+    info("standings_locale_id is %d", global->standings_locale_id);
+  }
+#endif /* CONF_HAS_LIBINTL */
 
   /* only run needs these parameters */
   if (mode == PREPARE_RUN) {
@@ -755,6 +794,7 @@ set_defaults(int mode)
       pathcpy(langs[i]->server_root_dir, global->root_dir);
       pathcpy(langs[i]->server_var_dir, global->var_dir);
       pathcpy(langs[i]->server_compile_dir, global->compile_dir);
+      pathcpy(langs[i]->server_queue_dir, global->compile_queue_dir);
       pathcpy(langs[i]->server_src_dir, global->compile_src_dir);
       pathcpy(langs[i]->compile_status_dir, global->compile_status_dir);
       pathcpy(langs[i]->compile_report_dir, global->compile_report_dir);
@@ -762,11 +802,12 @@ set_defaults(int mode)
 #define LANG_INIT_FIELD(f,d,c) do { if (!langs[i]->f[0]) { info("language.%d.%s set to %s", i, #f, d); pathcpy(langs[i]->f, d); } path_add_dir(langs[i]->f, langs[i]->c); info("language.%d.%s is %s", i, #f, langs[i]->f); } while(0)
       LANG_INIT_FIELD(server_var_dir, DFLT_G_VAR_DIR, server_root_dir);
       LANG_INIT_FIELD(server_compile_dir,DFLT_G_COMPILE_DIR,server_var_dir);
+      LANG_INIT_FIELD(server_queue_dir,DFLT_G_COMPILE_QUEUE_DIR,server_compile_dir);
       LANG_INIT_FIELD(server_src_dir,DFLT_G_COMPILE_SRC_DIR,server_compile_dir);
       LANG_INIT_FIELD(compile_status_dir,DFLT_G_COMPILE_STATUS_DIR,server_compile_dir);
       LANG_INIT_FIELD(compile_report_dir,DFLT_G_COMPILE_REPORT_DIR,server_compile_dir);
     }
-    LANG_INIT_FIELD(src_dir, langs[i]->short_name, server_src_dir);
+    LANG_INIT_FIELD(queue_dir, langs[i]->short_name, server_queue_dir);
     
     if (!langs[i]->src_sfx[0]) {
       err("language.%d.src_sfx must be set", i);
@@ -1113,6 +1154,7 @@ set_defaults(int mode)
         pathcpy(testers[i]->server_root_dir, global->root_dir);
         pathcpy(testers[i]->server_var_dir, global->var_dir);
         pathcpy(testers[i]->server_run_dir, global->run_dir);
+        pathcpy(testers[i]->server_queue_dir, global->run_queue_dir);
         pathcpy(testers[i]->server_exe_dir, global->run_exe_dir);
         pathcpy(testers[i]->run_status_dir, global->run_status_dir);
         pathcpy(testers[i]->run_report_dir, global->run_report_dir);
@@ -1121,19 +1163,20 @@ set_defaults(int mode)
         TESTER_INIT_FIELD(server_var_dir, DFLT_G_VAR_DIR, server_root_dir);
         TESTER_INIT_FIELD(server_run_dir, DFLT_G_RUN_DIR, server_var_dir);
         TESTER_INIT_FIELD(server_exe_dir, DFLT_G_RUN_EXE_DIR, server_run_dir);
+        TESTER_INIT_FIELD(server_queue_dir, DFLT_G_RUN_QUEUE_DIR, server_run_dir);
         TESTER_INIT_FIELD(run_status_dir,DFLT_G_RUN_STATUS_DIR,server_run_dir);
         TESTER_INIT_FIELD(run_report_dir,DFLT_G_RUN_REPORT_DIR,server_run_dir);
         TESTER_INIT_FIELD(run_team_report_dir,DFLT_G_RUN_TEAM_REPORT_DIR,server_run_dir);
       }
 
-      if (!tp->exe_dir[0] && atp && atp->exe_dir[0]) {
-          sformat_message(tp->exe_dir, PATH_MAX, atp->exe_dir,
+      if (!tp->queue_dir[0] && atp && atp->queue_dir[0]) {
+          sformat_message(tp->queue_dir, PATH_MAX, atp->queue_dir,
                           global, probs[tp->problem], NULL,
                           tp, NULL);
-          info("tester.%d.exe_dir inherited from tester.%s ('%s')",
-               i, sish, tp->exe_dir);        
+          info("tester.%d.queue_dir inherited from tester.%s ('%s')",
+               i, sish, tp->queue_dir);        
       }
-      TESTER_INIT_FIELD(exe_dir, testers[i]->name, server_exe_dir);
+      TESTER_INIT_FIELD(queue_dir, testers[i]->name, server_queue_dir);
 
       if (tp->no_core_dump == -1 && atp && atp->no_core_dump != -1) {
         tp->no_core_dump = atp->no_core_dump;
@@ -1391,12 +1434,14 @@ create_dirs(int mode)
 
     /* COMPILE writes its response here */
     if (make_dir(global->compile_dir, 0) < 0) return -1;
+    if (make_dir(global->compile_queue_dir, 0) < 0) return -1;
     if (make_dir(global->compile_src_dir, 0) < 0) return -1;
     if (make_all_dir(global->compile_status_dir, 0777) < 0) return -1;
     if (make_dir(global->compile_report_dir, 0777) < 0) return -1;
 
     /* RUN writes its response here */
     if (make_dir(global->run_dir, 0) < 0) return -1;
+    if (make_dir(global->run_queue_dir, 0) < 0) return -1;
     if (make_dir(global->run_exe_dir, 0) < 0) return -1;
     if (make_all_dir(global->run_status_dir, 0777) < 0) return -1;
     if (make_dir(global->run_report_dir, 0777) < 0) return -1;
@@ -1424,7 +1469,7 @@ create_dirs(int mode)
     if (!langs[i]) continue;
     if (mode == PREPARE_SERVE) {
       /* COMPILE reads from here */
-      if (make_all_dir(langs[i]->src_dir, 0777) < 0) return -1;
+      if (make_all_dir(langs[i]->queue_dir, 0777) < 0) return -1;
     }
     if (mode == PREPARE_COMPILE) {
       if (make_dir(langs[i]->work_dir, 0) < 0) return -1;
@@ -1435,7 +1480,7 @@ create_dirs(int mode)
     if (!testers[i]) continue;
     if (mode == PREPARE_SERVE) {
       /* RUN reads from here */
-      if (make_all_dir(testers[i]->exe_dir, 0777) < 0) return -1;
+      if (make_all_dir(testers[i]->queue_dir, 0777) < 0) return -1;
     }
     if (mode == PREPARE_RUN) {
       if (make_dir(testers[i]->tester_dir, 0) < 0) return -1;
@@ -1601,11 +1646,12 @@ void print_tester(FILE *o, struct section_tester_data *t)
   fprintf(o, "server_root_dir = \"%s\"\n", t->server_root_dir);
   fprintf(o, "server_var_dir = \"%s\"\n", t->server_var_dir);
   fprintf(o, "server_run_dir = \"%s\"\n", t->server_run_dir);
+  fprintf(o, "server_queue_dir = \"%s\"\n", t->server_queue_dir);
   fprintf(o, "server_exe_dir = \"%s\"\n", t->server_exe_dir);
   fprintf(o, "run_status_dir = \"%s\"\n", t->run_status_dir);
   fprintf(o, "run_report_dir = \"%s\"\n", t->run_report_dir);
   fprintf(o, "run_team_report_dir = \"%s\"\n", t->run_team_report_dir);
-  fprintf(o, "exe_dir = \"%s\"\n", t->exe_dir);
+  fprintf(o, "queue_dir = \"%s\"\n", t->queue_dir);
   fprintf(o, "tester_dir = \"%s\"\n", t->tester_dir);
   fprintf(o, "tmp_dir = \"%s\"\n", t->tmp_dir);
   fprintf(o, "work_dir = \"%s\"\n", t->work_dir);
