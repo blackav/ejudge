@@ -153,6 +153,7 @@ enum
     USERLIST_A_READ_ONLY,
     USERLIST_A_PRIV_LEVEL,
     USERLIST_A_NEVER_CLEAN,
+    USERLIST_A_PRIVILEGED,
 
     USERLIST_LAST_ATTN,
   };
@@ -164,43 +165,44 @@ enum
     USERLIST_NN_LOGIN,          /* 1 */
     USERLIST_NN_EMAIL,          /* 2 */
     USERLIST_NN_NAME,           /* 3 */
-    USERLIST_NN_IS_INVISIBLE,   /* 4 */
-    USERLIST_NN_IS_BANNED,      /* 5 */
-    USERLIST_NN_IS_LOCKED,      /* 6 */
-    USERLIST_NN_SHOW_LOGIN,     /* 7 */
-    USERLIST_NN_SHOW_EMAIL,     /* 8 */
-    USERLIST_NN_USE_COOKIES,    /* 9 */
-    USERLIST_NN_READ_ONLY,      /* 10 */
-    USERLIST_NN_NEVER_CLEAN,    /* 11 */
-    USERLIST_NN_TIMESTAMPS,     /* 12 */
-    USERLIST_NN_REG_TIME,       /* 13 */
-    USERLIST_NN_LOGIN_TIME,     /* 14 */
-    USERLIST_NN_ACCESS_TIME,    /* 15 */
-    USERLIST_NN_CHANGE_TIME,    /* 16 */
-    USERLIST_NN_PWD_CHANGE_TIME, /* 17 */
-    USERLIST_NN_MINOR_CHANGE_TIME, /* 18 */
+    USERLIST_NN_IS_PRIVILEGED,  /* 4 */
+    USERLIST_NN_IS_INVISIBLE,   /* 5 */
+    USERLIST_NN_IS_BANNED,      /* 6 */
+    USERLIST_NN_IS_LOCKED,      /* 7 */
+    USERLIST_NN_SHOW_LOGIN,     /* 8 */
+    USERLIST_NN_SHOW_EMAIL,     /* 9 */
+    USERLIST_NN_USE_COOKIES,    /* 10 */
+    USERLIST_NN_READ_ONLY,      /* 11 */
+    USERLIST_NN_NEVER_CLEAN,    /* 12 */
+    USERLIST_NN_TIMESTAMPS,     /* 13 */
+    USERLIST_NN_REG_TIME,       /* 14 */
+    USERLIST_NN_LOGIN_TIME,     /* 15 */
+    USERLIST_NN_ACCESS_TIME,    /* 16 */
+    USERLIST_NN_CHANGE_TIME,    /* 17 */
+    USERLIST_NN_PWD_CHANGE_TIME, /* 18 */
+    USERLIST_NN_MINOR_CHANGE_TIME, /* 19 */
     USERLIST_NN_TIMESTAMP_LAST = USERLIST_NN_MINOR_CHANGE_TIME,
-    USERLIST_NN_PASSWORDS,      /* 19 */
-    USERLIST_NN_REG_PASSWORD,   /* 20 */
-    USERLIST_NN_TEAM_PASSWORD,  /* 21 */
-    USERLIST_NN_GENERAL_INFO,   /* 22 */
-    USERLIST_NN_INST,           /* 23 */
-    USERLIST_NN_INST_EN,        /* 24 */
-    USERLIST_NN_INSTSHORT,      /* 25 */
-    USERLIST_NN_INSTSHORT_EN,   /* 26 */
-    USERLIST_NN_FAC,            /* 27 */
-    USERLIST_NN_FAC_EN,         /* 28 */
-    USERLIST_NN_FACSHORT,       /* 29 */
-    USERLIST_NN_FACSHORT_EN,    /* 30 */
-    USERLIST_NN_HOMEPAGE,       /* 31 */
-    USERLIST_NN_CITY,           /* 32 */
-    USERLIST_NN_CITY_EN,        /* 33 */
-    USERLIST_NN_COUNTRY,        /* 34 */
-    USERLIST_NN_COUNTRY_EN,     /* 35 */
-    USERLIST_NN_LOCATION,       /* 36 */
-    USERLIST_NN_SPELLING,       /* 37 */
-    USERLIST_NN_PRINTER_NAME,   /* 38 */
-    USERLIST_NN_LANGUAGES,      /* 39 */
+    USERLIST_NN_PASSWORDS,      /* 20 */
+    USERLIST_NN_REG_PASSWORD,   /* 21 */
+    USERLIST_NN_TEAM_PASSWORD,  /* 22 */
+    USERLIST_NN_GENERAL_INFO,   /* 23 */
+    USERLIST_NN_INST,           /* 24 */
+    USERLIST_NN_INST_EN,        /* 25 */
+    USERLIST_NN_INSTSHORT,      /* 26 */
+    USERLIST_NN_INSTSHORT_EN,   /* 27 */
+    USERLIST_NN_FAC,            /* 28 */
+    USERLIST_NN_FAC_EN,         /* 29 */
+    USERLIST_NN_FACSHORT,       /* 30 */
+    USERLIST_NN_FACSHORT_EN,    /* 31 */
+    USERLIST_NN_HOMEPAGE,       /* 32 */
+    USERLIST_NN_CITY,           /* 33 */
+    USERLIST_NN_CITY_EN,        /* 34 */
+    USERLIST_NN_COUNTRY,        /* 35 */
+    USERLIST_NN_COUNTRY_EN,     /* 36 */
+    USERLIST_NN_LOCATION,       /* 37 */
+    USERLIST_NN_SPELLING,       /* 38 */
+    USERLIST_NN_PRINTER_NAME,   /* 39 */
+    USERLIST_NN_LANGUAGES,      /* 40 */
     USERLIST_NN_LAST = USERLIST_NN_LANGUAGES,
 
     USERLIST_NM_SERIAL = 0,              /* 0 */
@@ -317,6 +319,7 @@ struct userlist_user
   struct xml_tree b;
 
   int id;
+  int is_privileged;
   int is_invisible;
   int is_banned;
   int is_locked;
