@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -149,6 +149,8 @@ decd    [0-9]
 "AV" { TR(RUN_AVAILABLE); }
 "RJ" { TR(RUN_REJUDGE); }
 "EM" { TR(RUN_EMPTY); }
+"VS" { TR(RUN_VIRTUAL_START); }
+"VT" { TR(RUN_VIRTUAL_STOP); }
 
 0[xX]{hexd}+ { handle_int(); return TOK_INT_L; }
 0{octd}* { handle_int(); return TOK_INT_L; }
