@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "cgi.h"
 #include "settings.h"
 #include "pathutl.h"
@@ -29,6 +31,12 @@
 #define MAX_NAME_SIZE      63
 #define MAX_VALUE_SIZE     MAX_CGI_VALUE_LEN
 #define MAX_CONTENT_LENGTH MAX_CGI_VALUE_LEN
+
+#if defined EJUDGE_CHARSET
+#define DEFAULT_CHARSET              EJUDGE_CHARSET
+#else
+#define DEFAULT_CHARSET              "iso8859-1"
+#endif /* EJUDGE_CHARSET */
 
 struct param
 {
@@ -176,7 +184,7 @@ do_cgi_read(void)
 static void
 bad_request(char const *charset)
 {
-  if (!charset) charset = "iso8859-1";
+  if (!charset) charset = DEFAULT_CHARSET;
 
   // as locale_id is not received, no need for localization
 
@@ -192,7 +200,7 @@ bad_request(char const *charset)
 static void
 request_too_large(char const *charset)
 {
-  if (!charset) charset = "iso8859-1";
+  if (!charset) charset = DEFAULT_CHARSET;
 
   printf("Content-Type: text/html; charset=%s\n\n", charset);
   printf("<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1><p>",
