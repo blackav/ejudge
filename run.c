@@ -452,6 +452,7 @@ run_tests(struct section_tester_data *tst,
   unsigned char *var_check_cmd;
   testinfo_t tstinfo;
   int errcode;
+  int time_limit_value;
 
   ASSERT(tst->problem > 0);
   ASSERT(tst->problem <= max_prob);
@@ -643,10 +644,15 @@ run_tests(struct section_tester_data *tst,
       for (jj = 0; tst->start_env[jj]; jj++)
         task_PutEnv(tsk, tst->start_env[jj]);
     }
-    if (prb->time_limit > 0 && tst->time_limit_adjustment > 0) {
-      task_SetMaxTime(tsk, prb->time_limit + tst->time_limit_adjustment);
-    } else if (prb->time_limit > 0) {
-      task_SetMaxTime(tsk, prb->time_limit);
+    time_limit_value = 0;
+    if (prb->time_limit > 0)
+      time_limit_value += prb->time_limit;
+    if (tst->time_limit_adjustment > 0)
+      time_limit_value += tst->time_limit_adjustment;
+    if (time_limit_value > 0) {
+      /* FIXME: this is temporary hack */
+      if (--time_limit_value <= 0) time_limit_value = 1;
+      task_SetMaxTime(tsk, time_limit_value);
     }
     if (prb->real_time_limit>0) task_SetMaxRealTime(tsk,prb->real_time_limit);
     if (tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
@@ -1021,6 +1027,7 @@ do_loop(void)
   int report_error_code;
   int cur_variant;
   struct section_tester_data tn, *tst;
+  int got_quit_packet = 0;
 
   memset(&tn, 0, sizeof(tn));
 
@@ -1030,6 +1037,9 @@ do_loop(void)
     r = scan_dir(global->run_queue_dir, pkt_name);
     if (r < 0) return -1;
     if (!r) {
+      if (got_quit_packet /* && !global->run_ignore_quit */) {
+        return 0;
+      }
       os_Sleep(global->sleep_time);
       continue;
     }
@@ -1043,6 +1053,14 @@ do_loop(void)
  
     chop(pkt_buf);
     info("run packet: <%s>", pkt_buf);
+
+    n = 0;
+    if (/* !global->run_ignore_quit */ 0) {
+      if (sscanf(pkt_buf, "%d %n", &r, &n) == 1 && !pkt_buf[n] && r == -1) {
+        got_quit_packet = 1;
+      }
+    }
+
     n = 0;
     memset(exe_sfx, 0, sizeof(exe_sfx));
     if ((r = sscanf(pkt_buf, "%d %d %d %d %d %d %d %d %d %63s %63s %n",
