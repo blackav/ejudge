@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,6 +30,8 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -94,8 +96,6 @@ static struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(root_dir, "s"),
   GLOBAL_PARAM(conf_dir, "s"),
-  GLOBAL_PARAM(teamdb_file, "s"),
-  GLOBAL_PARAM(passwd_file, "s"),
   GLOBAL_PARAM(script_dir, "s"),
   GLOBAL_PARAM(test_dir, "s"),
   GLOBAL_PARAM(corr_dir, "s"),
@@ -123,17 +123,11 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(work_dir, "s"),
 
   GLOBAL_PARAM(compile_dir, "s"),
-  GLOBAL_PARAM(compile_queue_dir, "s"),
-  GLOBAL_PARAM(compile_src_dir, "s"),
-  GLOBAL_PARAM(compile_status_dir, "s"),
-  GLOBAL_PARAM(compile_report_dir, "s"),
+  GLOBAL_PARAM(compile_work_dir, "s"),
 
   GLOBAL_PARAM(run_dir, "s"),
-  GLOBAL_PARAM(run_queue_dir, "s"),
-  GLOBAL_PARAM(run_exe_dir, "s"),
-  GLOBAL_PARAM(run_status_dir, "s"),
-  GLOBAL_PARAM(run_report_dir, "s"),
-  GLOBAL_PARAM(run_team_report_dir, "s"),
+  GLOBAL_PARAM(run_work_dir, "s"),
+  GLOBAL_PARAM(run_check_dir, "s"),
 
   GLOBAL_PARAM(score_system, "s"),
   GLOBAL_PARAM(virtual, "d"),
@@ -171,6 +165,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(show_astr_time, "d"),
   GLOBAL_PARAM(ignore_duplicated_runs, "d"),
   GLOBAL_PARAM(report_error_code, "d"),
+  GLOBAL_PARAM(auto_short_problem_name, "d"),
 
   GLOBAL_PARAM(standings_team_color, "s"),
   GLOBAL_PARAM(standings_virtual_team_color, "s"),
@@ -184,6 +179,7 @@ static struct config_parse_info section_global_params[] =
 static struct config_parse_info section_problem_params[] =
 {
   PROBLEM_PARAM(id, "d"),
+  PROBLEM_PARAM(tester_id, "d"),
   PROBLEM_PARAM(abstract, "d"),
   PROBLEM_PARAM(use_stdin, "d"),
   PROBLEM_PARAM(use_stdout, "d"),
@@ -215,6 +211,7 @@ static struct config_parse_info section_problem_params[] =
 static struct config_parse_info section_language_params[] =
 {
   LANGUAGE_PARAM(id, "d"),
+  LANGUAGE_PARAM(compile_id, "d"),
   LANGUAGE_PARAM(short_name, "s"),
   LANGUAGE_PARAM(long_name, "s"),
   LANGUAGE_PARAM(key, "s"),
@@ -223,16 +220,8 @@ static struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(exe_sfx, "s"),
   LANGUAGE_PARAM(cmd, "s"),
 
-  LANGUAGE_PARAM(server_root_dir, "s"),
-  LANGUAGE_PARAM(server_var_dir, "s"),
-  LANGUAGE_PARAM(server_compile_dir, "s"),
-  LANGUAGE_PARAM(server_queue_dir, "s"),
-  LANGUAGE_PARAM(server_src_dir, "s"),
-  LANGUAGE_PARAM(compile_status_dir, "s"),
-  LANGUAGE_PARAM(compile_report_dir, "s"),
+  LANGUAGE_PARAM(compile_dir, "s"),
 
-  LANGUAGE_PARAM(queue_dir, "s"),
-  LANGUAGE_PARAM(work_dir, "s"),
   { 0, 0, 0, 0 }
 };
 
@@ -248,6 +237,7 @@ static struct config_parse_info section_tester_params[] =
   TESTER_PARAM(is_dos, "d"),
   TESTER_PARAM(arch, "s"),
   TESTER_PARAM(key, "s"),
+  TESTER_PARAM(any, "d"),
 
   TESTER_PARAM(abstract, "d"),
   TESTER_PARAM(super, "x"),
@@ -260,19 +250,8 @@ static struct config_parse_info section_tester_params[] =
   TESTER_PARAM(clear_env, "d"),
   TESTER_PARAM(time_limit_adjustment, "d"),
 
-  TESTER_PARAM(server_root_dir, "s"),
-  TESTER_PARAM(server_var_dir, "s"),
-  TESTER_PARAM(server_run_dir, "s"),
-  TESTER_PARAM(server_exe_dir, "s"),
-  TESTER_PARAM(server_queue_dir, "s"),
-  TESTER_PARAM(run_status_dir, "s"),
-  TESTER_PARAM(run_report_dir, "s"),
-  TESTER_PARAM(run_team_report_dir, "s"),
-  TESTER_PARAM(queue_dir, "s"),
-
-  TESTER_PARAM(tester_dir, "s"),
-  TESTER_PARAM(tmp_dir, "s"),
-  TESTER_PARAM(work_dir, "s"),
+  TESTER_PARAM(run_dir, "s"),
+  TESTER_PARAM(check_dir, "s"),
   TESTER_PARAM(errorcode_file, "s"),
   TESTER_PARAM(error_file, "s"),
 
@@ -312,10 +291,18 @@ find_tester(int problem, char const *arch)
   int i;
 
   for (i = 1; i <= max_tester; i++) {
+    if (!testers[i]) continue;
+    if (testers[i]->any) continue;
     if (problem == testers[i]->problem
         && !strcmp(arch, testers[i]->arch))
       return i;
   }
+  for (i = 1; i <= max_tester; i++) {
+    if (!testers[i]) continue;
+    if (testers[i]->any && !strcmp(arch, testers[i]->arch))
+      return i;
+  }
+  
   return 0;
 }
 
@@ -333,8 +320,6 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_ROOT_DIR           "contest"
 #define DFLT_G_CONF_DIR           "conf"
 #define DFLT_G_VAR_DIR            "var"
-#define DFLT_G_TEAMDB_FILE        "teamdb"
-#define DFLT_G_PASSWD_FILE        "passwd"
 #define DFLT_G_SCRIPT_DIR         "scripts"
 #define DFLT_G_TEST_DIR           "tests"
 #define DFLT_G_CORR_DIR           "correct"
@@ -360,12 +345,15 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_COMPILE_SRC_DIR    "src"
 #define DFLT_G_COMPILE_STATUS_DIR "status"
 #define DFLT_G_COMPILE_REPORT_DIR "report"
+#define DFLT_G_COMPILE_WORK_DIR   "compile"
 #define DFLT_G_RUN_DIR            "run"
 #define DFLT_G_RUN_QUEUE_DIR      "queue"
 #define DFLT_G_RUN_EXE_DIR        "exe"
 #define DFLT_G_RUN_STATUS_DIR     "status"
 #define DFLT_G_RUN_REPORT_DIR     "report"
 #define DFLT_G_RUN_TEAM_REPORT_DIR "teamreport"
+#define DFLT_G_RUN_WORK_DIR       "runwork"
+#define DFLT_G_RUN_CHECK_DIR      "runcheck"
 #define DFLT_G_CHARSET            "koi8-r"
 #define DFLT_G_STANDINGS_FILE_NAME "standings.html"
 #define DFLT_G_MAX_FILE_LENGTH    65535
@@ -517,11 +505,7 @@ static struct inheritance_info tester_inheritance_info[] =
 {
   TESTER_INH(arch, path, path),
   TESTER_INH(key, path, path),
-  TESTER_INH(tester_dir, path, path),
-  TESTER_INH(tmp_dir, path, path),
-  TESTER_INH(work_dir, path, path),
-  TESTER_INH(server_root_dir, path, path),
-  TESTER_INH(queue_dir, path, path),
+  TESTER_INH(run_dir, path, path),
   TESTER_INH(no_core_dump, int, int),
   TESTER_INH(clear_env, int, int),
   TESTER_INH(time_limit_adjustment, int, int),
@@ -531,6 +515,7 @@ static struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(max_vm_size, int2, int),
   TESTER_INH(is_dos, int, int),
   TESTER_INH(no_redirect, int, int),
+  TESTER_INH(check_dir, path, path),
   TESTER_INH(errorcode_file, path, path),
   TESTER_INH(error_file, path, path),
   TESTER_INH(check_cmd, path, path),
@@ -552,6 +537,10 @@ process_abstract_tester(int i)
 
   if (!atp->name[0]) {
     err("abstract tester must define tester name");
+    return -1;
+  }
+  if (atp->any) {
+    err("abstract tester cannot be default");
     return -1;
   }
   ish = atp->name;
@@ -637,7 +626,7 @@ set_defaults(int mode)
   global = (struct section_global_data*) p;
 
   /* userlist-server interaction */
-  if (mode == PREPARE_SERVE && global->contest_id > 0) {
+  if (mode == PREPARE_SERVE) {
     if (!global->socket_path[0]) {
       err("global.socket_path must be set");
       return -1;
@@ -747,10 +736,6 @@ set_defaults(int mode)
   /* CONFIGURATION FILES DEFAULTS */
 #define GLOBAL_INIT_FIELD(f,d,c) do { if (!global->f[0]) { info("global." #f " set to %s", d); pathcpy(global->f, d); } pathmake2(global->f,global->c, "/", global->f, NULL); } while (0)
 
-  if (mode == PREPARE_SERVE && !global->contest_id) {
-    GLOBAL_INIT_FIELD(teamdb_file, DFLT_G_TEAMDB_FILE, conf_dir);
-    GLOBAL_INIT_FIELD(passwd_file, DFLT_G_PASSWD_FILE, conf_dir);
-  }
   if (mode == PREPARE_COMPILE || mode == PREPARE_RUN) {
     GLOBAL_INIT_FIELD(script_dir, DFLT_G_SCRIPT_DIR, conf_dir);
   }
@@ -773,23 +758,63 @@ set_defaults(int mode)
     GLOBAL_INIT_FIELD(serve_socket, DFLT_G_SERVE_SOCKET, var_dir);
   }
 
-  if (mode == PREPARE_SERVE || mode == PREPARE_COMPILE) {
+  if (mode == PREPARE_COMPILE || mode == PREPARE_SERVE) {
     GLOBAL_INIT_FIELD(compile_dir, DFLT_G_COMPILE_DIR, var_dir);
-    GLOBAL_INIT_FIELD(compile_queue_dir,DFLT_G_COMPILE_QUEUE_DIR,compile_dir);
-    GLOBAL_INIT_FIELD(compile_src_dir, DFLT_G_COMPILE_SRC_DIR, compile_dir);
-    GLOBAL_INIT_FIELD(compile_status_dir,DFLT_G_COMPILE_STATUS_DIR,compile_dir);
-    GLOBAL_INIT_FIELD(compile_report_dir,DFLT_G_COMPILE_REPORT_DIR,compile_dir);
+    pathmake(global->compile_queue_dir, global->compile_dir, "/",
+             DFLT_G_COMPILE_QUEUE_DIR, 0);
+    info("global.compile_queue_dir is %s", global->compile_queue_dir);
+    pathmake(global->compile_src_dir, global->compile_dir, "/",
+             DFLT_G_COMPILE_SRC_DIR, 0);
+    info("global.compile_src_dir is %s", global->compile_src_dir);
   }
 
-  if (mode == PREPARE_SERVE || mode == PREPARE_RUN) {
-    GLOBAL_INIT_FIELD(run_dir, DFLT_G_RUN_DIR, var_dir);
-    GLOBAL_INIT_FIELD(run_queue_dir, DFLT_G_RUN_QUEUE_DIR, run_dir);
-    GLOBAL_INIT_FIELD(run_exe_dir, DFLT_G_RUN_EXE_DIR, run_dir);
-    GLOBAL_INIT_FIELD(run_status_dir, DFLT_G_RUN_STATUS_DIR, run_dir);
-    GLOBAL_INIT_FIELD(run_report_dir, DFLT_G_RUN_REPORT_DIR, run_dir);
-    GLOBAL_INIT_FIELD(run_team_report_dir, DFLT_G_RUN_TEAM_REPORT_DIR,run_dir);
+  if (mode == PREPARE_SERVE) {
+    pathmake(global->compile_out_dir, global->var_dir, "/",
+             DFLT_G_COMPILE_DIR, 0);
+    info("global.compile_out_dir is %s", global->compile_out_dir);
+    pathmake(global->compile_status_dir, global->compile_out_dir, "/",
+             DFLT_G_COMPILE_STATUS_DIR, 0);
+    info("global.compile_status_dir is %s", global->compile_status_dir);
+    pathmake(global->compile_report_dir, global->compile_out_dir, "/",
+             DFLT_G_COMPILE_REPORT_DIR, 0);
+    info("global.compile_report_dir is %s", global->compile_report_dir);
   }
+
   GLOBAL_INIT_FIELD(work_dir, DFLT_G_WORK_DIR, var_dir);
+
+  if (mode == PREPARE_COMPILE) {
+    GLOBAL_INIT_FIELD(compile_work_dir, DFLT_G_COMPILE_WORK_DIR, work_dir);
+  }
+
+  if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
+    GLOBAL_INIT_FIELD(run_dir, DFLT_G_RUN_DIR, var_dir);
+    pathmake(global->run_queue_dir, global->run_dir, "/",
+             DFLT_G_RUN_QUEUE_DIR, 0);
+    info("global.run_queue_dir is %s", global->run_queue_dir);
+    pathmake(global->run_exe_dir, global->run_dir, "/",
+             DFLT_G_RUN_EXE_DIR, 0);
+    info("global.run_exe_dir is %s", global->run_exe_dir);
+  }
+  if (mode == PREPARE_SERVE) {
+    pathmake(global->run_out_dir, global->var_dir, "/", DFLT_G_RUN_DIR, 0);
+    info("global.run_out_dir is %s", global->run_out_dir);
+    pathmake(global->run_status_dir, global->run_out_dir, "/",
+             DFLT_G_RUN_STATUS_DIR, 0);
+    info("global.run_status_dir is %s", global->run_status_dir);
+    pathmake(global->run_report_dir, global->run_out_dir, "/",
+             DFLT_G_RUN_REPORT_DIR, 0);
+    info("global.run_report_dir is %s", global->run_report_dir);
+    if (global->team_enable_rep_view) {
+      pathmake(global->run_team_report_dir, global->run_out_dir, "/",
+               DFLT_G_RUN_TEAM_REPORT_DIR, 0);
+      info("global.run_team_report_dir is %s", global->run_team_report_dir);
+    }
+  }
+
+  if (mode == PREPARE_RUN) {
+    GLOBAL_INIT_FIELD(run_work_dir, DFLT_G_RUN_WORK_DIR, work_dir);
+    GLOBAL_INIT_FIELD(run_check_dir, DFLT_G_RUN_CHECK_DIR, work_dir);
+  }
 
   /* score_system must be either "acm", either "kirov"
    * "acm" is the default
@@ -811,73 +836,74 @@ set_defaults(int mode)
     global->tests_to_accept = 1;
   }
 
-  if (!global->charset[0]) {
-    pathcpy(global->charset, DFLT_G_CHARSET);
-    info("global.charset set to %s", global->charset);
-  }
-  if (!(global->charset_ptr = nls_lookup_table(global->charset))) {
-    err("global.charset `%s' is invalid", global->charset);
-    return -1;
-  }
-  if (!global->standings_charset[0]) {
-    pathcpy(global->standings_charset, global->charset);
-    info("global.standings_charset set to %s", global->standings_charset);
-  }
-  if (!(global->standings_charset_ptr = nls_lookup_table(global->standings_charset))) {
-    err("global.standings_charset `%s' is invalid", global->standings_charset);
-    return -1;
-  }
+  if (mode == PREPARE_SERVE) {
+    if (!global->charset[0]) {
+      pathcpy(global->charset, DFLT_G_CHARSET);
+      info("global.charset set to %s", global->charset);
+    }
+    if (!(global->charset_ptr = nls_lookup_table(global->charset))) {
+      err("global.charset `%s' is invalid", global->charset);
+      return -1;
+    }
+    if (!global->standings_charset[0]) {
+      pathcpy(global->standings_charset, global->charset);
+      info("global.standings_charset set to %s", global->standings_charset);
+    }
+    if (!(global->standings_charset_ptr = nls_lookup_table(global->standings_charset))) {
+      err("global.standings_charset `%s' is invalid", global->standings_charset);
+      return -1;
+    }
+    if (!global->standings_file_name[0]) {
+      pathcpy(global->standings_file_name, DFLT_G_STANDINGS_FILE_NAME);
+      info("global.standings_file_name set to %s", global->standings_file_name);
+    }
 
-  if (!global->standings_file_name[0]) {
-    pathcpy(global->standings_file_name, DFLT_G_STANDINGS_FILE_NAME);
-    info("global.standings_file_name set to %s", global->standings_file_name);
-  }
-
-  if (global->stand_header_file[0]) {
-    r = generic_read_file((char**) &global->stand_header_txt, 0, &tmp_len, 0,
-                          0, global->stand_header_file, "");
-    if (r < 0) return -1;
-  }
-
-  if (global->stand_footer_file[0]) {
-    r = generic_read_file((char**) &global->stand_footer_txt, 0, &tmp_len, 0,
-                          0, global->stand_footer_file, "");
-    if (r < 0) return -1;
-  }
-
-  if (global->stand2_file_name[0]) {
-    if (global->stand2_header_file[0]) {
-      r = generic_read_file((char**) &global->stand2_header_txt, 0, &tmp_len,
-                            0, 0, global->stand2_header_file, "");
+    if (global->stand_header_file[0]) {
+      r = generic_read_file((char**) &global->stand_header_txt, 0, &tmp_len, 0,
+                            0, global->stand_header_file, "");
       if (r < 0) return -1;
     }
-    if (global->stand2_footer_file[0]) {
-      r = generic_read_file((char**) &global->stand2_footer_txt, 0, &tmp_len,
-                            0, 0, global->stand2_footer_file, "");
-      if (r < 0) return -1;
-    } 
- }
 
-  if (global->plog_file_name[0]) {
-    if (global->plog_header_file[0]) {
-      r = generic_read_file((char**) &global->plog_header_txt, 0, &tmp_len,
-                            0, 0, global->plog_header_file, "");
+    if (global->stand_footer_file[0]) {
+      r = generic_read_file((char**) &global->stand_footer_txt, 0, &tmp_len, 0,
+                            0, global->stand_footer_file, "");
       if (r < 0) return -1;
     }
-    if (global->plog_footer_file[0]) {
-      r = generic_read_file((char**) &global->plog_footer_txt, 0, &tmp_len,
-                            0, 0, global->plog_footer_file, "");
-      if (r < 0) return -1;
+
+    if (global->stand2_file_name[0]) {
+      if (global->stand2_header_file[0]) {
+        r = generic_read_file((char**) &global->stand2_header_txt, 0, &tmp_len,
+                              0, 0, global->stand2_header_file, "");
+        if (r < 0) return -1;
+      }
+      if (global->stand2_footer_file[0]) {
+        r = generic_read_file((char**) &global->stand2_footer_txt, 0, &tmp_len,
+                              0, 0, global->stand2_footer_file, "");
+        if (r < 0) return -1;
+      } 
     }
-    if (!global->plog_update_time) {
-      global->plog_update_time = 30;
+
+    if (global->plog_file_name[0]) {
+      if (global->plog_header_file[0]) {
+        r = generic_read_file((char**) &global->plog_header_txt, 0, &tmp_len,
+                              0, 0, global->plog_header_file, "");
+        if (r < 0) return -1;
+      }
+      if (global->plog_footer_file[0]) {
+        r = generic_read_file((char**) &global->plog_footer_txt, 0, &tmp_len,
+                              0, 0, global->plog_footer_file, "");
+        if (r < 0) return -1;
+      }
+      if (!global->plog_update_time) {
+        global->plog_update_time = 30;
+      }
+    } else {
+      global->plog_update_time = 0;
     }
-  } else {
-    global->plog_update_time = 0;
   }
 
 #if CONF_HAS_LIBINTL - 0 == 1
-  if (global->enable_l10n) {
+  if (mode == PREPARE_SERVE && global->enable_l10n) {
     /* convert locale string into locale id */
     if (!strcmp(global->standings_locale, "ru_RU.KOI8-R")
         || !strcmp(global->standings_locale, "ru")) {
@@ -921,39 +947,33 @@ set_defaults(int mode)
       sprintf(langs[i]->long_name, "Language %d", i);
     }
     
-    if (mode != PREPARE_COMPILE || !langs[i]->server_root_dir[0]) {
-      //info("language.%d.server_root_dir set to %s", i, global->root_dir);
-      pathcpy(langs[i]->server_root_dir, global->root_dir);
-      pathcpy(langs[i]->server_var_dir, global->var_dir);
-      pathcpy(langs[i]->server_compile_dir, global->compile_dir);
-      pathcpy(langs[i]->server_queue_dir, global->compile_queue_dir);
-      pathcpy(langs[i]->server_src_dir, global->compile_src_dir);
-      pathcpy(langs[i]->compile_status_dir, global->compile_status_dir);
-      pathcpy(langs[i]->compile_report_dir, global->compile_report_dir);
-    } else {
-#define LANG_INIT_FIELD(f,d,c) do { if (!langs[i]->f[0]) { info("language.%d.%s set to %s", i, #f, d); pathcpy(langs[i]->f, d); } path_add_dir(langs[i]->f, langs[i]->c); info("language.%d.%s is %s", i, #f, langs[i]->f); } while(0)
-      LANG_INIT_FIELD(server_var_dir, DFLT_G_VAR_DIR, server_root_dir);
-      LANG_INIT_FIELD(server_compile_dir,DFLT_G_COMPILE_DIR,server_var_dir);
-      LANG_INIT_FIELD(server_queue_dir,DFLT_G_COMPILE_QUEUE_DIR,server_compile_dir);
-      LANG_INIT_FIELD(server_src_dir,DFLT_G_COMPILE_SRC_DIR,server_compile_dir);
-      LANG_INIT_FIELD(compile_status_dir,DFLT_G_COMPILE_STATUS_DIR,server_compile_dir);
-      LANG_INIT_FIELD(compile_report_dir,DFLT_G_COMPILE_REPORT_DIR,server_compile_dir);
+    if (mode == PREPARE_SERVE) {
+      if (!langs[i]->compile_dir[0]) {
+        pathcpy(langs[i]->compile_dir, global->compile_dir);
+        info("language.%d.compile_dir is inherited from global ('%s')",
+             i, langs[i]->compile_dir);
+      }
+      ASSERT(langs[i]->compile_dir);
+      pathmake(langs[i]->compile_queue_dir, langs[i]->compile_dir, "/",
+               DFLT_G_COMPILE_QUEUE_DIR, 0);
+      info("language.%d.compile_queue_dir is %s",
+           i, langs[i]->compile_queue_dir);
+      pathmake(langs[i]->compile_src_dir, langs[i]->compile_dir, "/",
+               DFLT_G_COMPILE_SRC_DIR, 0);
+      info("language.%d.compile_src_dir is %s",
+           i, langs[i]->compile_src_dir);
+      snprintf(langs[i]->compile_out_dir, sizeof(langs[i]->compile_out_dir),
+               "%s/%04d", langs[i]->compile_dir, global->contest_id);
+      info("language.%d.compile_out_dir is %s",
+           i, langs[i]->compile_out_dir);
     }
-    LANG_INIT_FIELD(queue_dir, langs[i]->short_name, server_queue_dir);
-    
+
     if (!langs[i]->src_sfx[0]) {
       err("language.%d.src_sfx must be set", i);
       return -1;
     }
 
     if (mode == PREPARE_COMPILE) {
-      if (!langs[i]->work_dir[0]) {
-        info("language.%d.work_dir set to %s", i, langs[i]->short_name);
-        pathcpy(langs[i]->work_dir, langs[i]->short_name);
-      }
-      path_add_dir(langs[i]->work_dir, global->work_dir);
-      info("language.%d.work_dir is %s", i, langs[i]->work_dir);
-      
       if (!langs[i]->cmd[0]) {
         err("language.%d.cmd must be set", i);
         return -1;
@@ -996,6 +1016,11 @@ set_defaults(int mode)
         return -1;
       }
       sish = abstr_probs[si]->short_name;
+    }
+    if (!probs[i]->short_name[0] && global->auto_short_problem_name) {
+      snprintf(probs[i]->short_name, sizeof(probs[i]->short_name),
+               "%05d", probs[i]->id);
+      info("problem %d short name is set to %s", i, probs[i]->short_name);
     }
     if (!probs[i]->short_name[0]) {
       err("problem %d short name must be set", i);
@@ -1252,8 +1277,7 @@ set_defaults(int mode)
       }
 
       if (!testers[i]->name[0]) {
-        sprintf(testers[i]->name, "tst_%s",
-                probs[testers[i]->problem]->short_name);
+        sprintf(testers[i]->name, "tst_%d", testers[i]->id);
         if (testers[i]->arch[0]) {
           sprintf(testers[i]->name + strlen(testers[i]->name),
                   "_%s", testers[i]->arch);
@@ -1262,70 +1286,43 @@ set_defaults(int mode)
       }
 
       if (mode == PREPARE_RUN) {
-        if (!tp->tester_dir[0] && atp && atp->tester_dir[0]) {
-          sformat_message(tp->tester_dir, PATH_MAX, atp->tester_dir,
+        if (!tp->check_dir[0] && atp && atp->check_dir[0]) {
+          sformat_message(tp->check_dir, PATH_MAX, atp->check_dir,
                           global, probs[tp->problem], NULL,
                           tp, NULL);
-          info("tester.%d.tester_dir inherited from tester.%s ('%s')",
-               i, sish, tp->tester_dir);
+          info("tester.%d.check_dir inherited from tester.%s ('%s')",
+               i, sish, tp->check_dir);
         }
-        if (!testers[i]->tester_dir[0]) {
-          info("tester.%d.tester_dir set to \"%s\"", i, testers[i]->name);
-          pathcpy(testers[i]->tester_dir, testers[i]->name);
+        if (!tp->check_dir[0]) {
+          info("tester.%d.check_dir inherited from global ('%s')",
+               i, global->run_check_dir);
+          pathcpy(tp->check_dir, global->run_check_dir);
         }
-        path_add_dir(testers[i]->tester_dir, global->work_dir);
-        if (!tp->tmp_dir[0] && atp && atp->tmp_dir[0]) {
-          sformat_message(tp->tmp_dir, PATH_MAX, atp->tmp_dir,
-                          global, probs[tp->problem], NULL,
-                          tp, NULL);
-          info("tester.%d.tmp_dir inherited from tester.%s ('%s')",
-               i, sish, tp->tmp_dir);
-        }
-        TESTER_INIT_FIELD(tmp_dir, DFLT_T_TMP_DIR, tester_dir);
-        if (!tp->work_dir[0] && atp && atp->work_dir[0]) {
-          sformat_message(tp->work_dir, PATH_MAX, atp->work_dir,
-                          global, probs[tp->problem], NULL,
-                          tp, NULL);
-          info("tester.%d.work_dir inherited from tester.%s ('%s')",
-               i, sish, tp->work_dir);
-        }
-        TESTER_INIT_FIELD(work_dir, DFLT_T_WORK_DIR, tester_dir);
       }
 
-      if (!tp->server_root_dir[0] && atp && atp->server_root_dir[0]) {
-        strcpy(tp->server_root_dir, atp->server_root_dir);
-        info("tester.%d.server_root_dir inherited from tester.%s ('%s')",
-             i, sish, tp->server_root_dir);
-      }
-
-      if (mode != PREPARE_RUN || !testers[i]->server_root_dir[0]) {
-        //info("tester.%d.server_root_dir set to %s", i, global->root_dir);
-        pathcpy(testers[i]->server_root_dir, global->root_dir);
-        pathcpy(testers[i]->server_var_dir, global->var_dir);
-        pathcpy(testers[i]->server_run_dir, global->run_dir);
-        pathcpy(testers[i]->server_queue_dir, global->run_queue_dir);
-        pathcpy(testers[i]->server_exe_dir, global->run_exe_dir);
-        pathcpy(testers[i]->run_status_dir, global->run_status_dir);
-        pathcpy(testers[i]->run_report_dir, global->run_report_dir);
-        pathcpy(testers[i]->run_team_report_dir, global->run_team_report_dir);
-      } else {
-        TESTER_INIT_FIELD(server_var_dir, DFLT_G_VAR_DIR, server_root_dir);
-        TESTER_INIT_FIELD(server_run_dir, DFLT_G_RUN_DIR, server_var_dir);
-        TESTER_INIT_FIELD(server_exe_dir, DFLT_G_RUN_EXE_DIR, server_run_dir);
-        TESTER_INIT_FIELD(server_queue_dir, DFLT_G_RUN_QUEUE_DIR, server_run_dir);
-        TESTER_INIT_FIELD(run_status_dir,DFLT_G_RUN_STATUS_DIR,server_run_dir);
-        TESTER_INIT_FIELD(run_report_dir,DFLT_G_RUN_REPORT_DIR,server_run_dir);
-        TESTER_INIT_FIELD(run_team_report_dir,DFLT_G_RUN_TEAM_REPORT_DIR,server_run_dir);
-      }
-
-      if (!tp->queue_dir[0] && atp && atp->queue_dir[0]) {
-          sformat_message(tp->queue_dir, PATH_MAX, atp->queue_dir,
+      if (mode == PREPARE_SERVE) {
+        if (!tp->run_dir[0] && atp && atp->run_dir[0]) {
+          sformat_message(tp->run_dir, PATH_MAX, atp->run_dir,
                           global, probs[tp->problem], NULL,
                           tp, NULL);
-          info("tester.%d.queue_dir inherited from tester.%s ('%s')",
-               i, sish, tp->queue_dir);        
+          info("tester.%d.run_dir inherited from tester.%s ('%s')",
+               i, sish, tp->run_dir);
+        }
+        if (!tp->run_dir[0]) {
+          info("tester.%d.run_dir inherited from global ('%s')",
+               i, global->run_dir);
+          pathcpy(tp->run_dir, global->run_dir);
+        }
+        pathmake(tp->run_queue_dir, tp->run_dir, "/",
+                 DFLT_G_RUN_QUEUE_DIR, 0);
+        info("tester.%d.run_queue_dir is %s", i, tp->run_queue_dir);
+        pathmake(tp->run_exe_dir, tp->run_dir, "/",
+                 DFLT_G_RUN_EXE_DIR, 0);
+        info("tester.%d.run_exe_dir is %s", i, tp->run_exe_dir);
+        snprintf(tp->run_out_dir, sizeof(tp->run_out_dir), "%s/%04d",
+                 tp->run_dir, global->contest_id);
+        info("tester.%d.run_out_dir is %s", i, tp->run_out_dir);
       }
-      TESTER_INIT_FIELD(queue_dir, testers[i]->name, server_queue_dir);
 
       if (tp->no_core_dump == -1 && atp && atp->no_core_dump != -1) {
         tp->no_core_dump = atp->no_core_dump;
@@ -1495,6 +1492,7 @@ collect_sections(int mode)
       langs[l->id] = l;
       if (l->id > max_lang) max_lang = l->id;
       last_lang = l->id;
+      if (!l->compile_id) l->compile_id = l->id;
     } else if (!strcmp(p->name, "problem") && mode != PREPARE_COMPILE) {
       q = (struct section_problem_data*) p;
       if (q->abstract) {
@@ -1516,6 +1514,7 @@ collect_sections(int mode)
         probs[q->id] = q;
         if (q->id > max_prob) max_prob = q->id;
         last_prob = q->id;
+        if (!q->tester_id) q->tester_id = q->id;
       }
     } else if (!strcmp(p->name, "tester") && mode != PREPARE_COMPILE) {
       t = (struct section_tester_data *) p;
@@ -1536,38 +1535,99 @@ collect_sections(int mode)
           err("duplicated tester id %d", t->id);
           return -1;
         }
-        if (!t->problem && !t->problem_name[0]) {
-          err("no problem specified for tester %d", t->id);
-          return -1;
-        }
-        if (t->problem && t->problem_name[0]) {
-          err("only one of problem id and problem name must be specified");
-          return -1;
-        }
-        if (t->problem && !probs[t->problem]) {
-          err("no problem %d for tester %d", t->problem, t->id);
-          return -1;
-        }
-        if (t->problem_name) {
+        if (t->any) {
           int j;
-          
-          for (j = 1; j <= max_prob; j++) {
-            if (probs[j] && !strcmp(probs[j]->short_name, t->problem_name))
+          // default tester
+          // its allowed to have only one for a given architecture
+          for (j = 1; j <= max_tester; j++) {
+            if (!testers[j] || j == t->id) continue;
+            if (testers[j]->any == 1 && !strcmp(testers[j]->arch, t->arch))
               break;
           }
-          if (j > max_prob) {
-            err("no problem %s for tester %d", t->problem_name, t->id);
+          if (j <= max_tester) {
+            err("duplicated default tester for architecture '%s'", t->arch);
             return -1;
           }
-          info("tester %d: problem '%s' has id %d",
-               t->id, t->problem_name, j);
-          t->problem = j;
+        } else {
+          if (!t->problem && !t->problem_name[0]) {
+            err("no problem specified for tester %d", t->id);
+            return -1;
+          }
+          if (t->problem && t->problem_name[0]) {
+            err("only one of problem id and problem name must be specified");
+            return -1;
+          }
+          if (t->problem && !probs[t->problem]) {
+            err("no problem %d for tester %d", t->problem, t->id);
+            return -1;
+          }
+          if (t->problem_name[0]) {
+            int j;
+            
+            for (j = 1; j <= max_prob; j++) {
+              if (probs[j] && !strcmp(probs[j]->short_name, t->problem_name))
+                break;
+            }
+            if (j > max_prob) {
+              err("no problem %s for tester %d", t->problem_name, t->id);
+              return -1;
+            }
+            info("tester %d: problem '%s' has id %d",
+                 t->id, t->problem_name, j);
+            t->problem = j;
+          }
         }
         testers[t->id] = t;
         if (t->id > max_tester) max_tester = t->id;
         last_tester = t->id;
       }
     }
+  }
+  return 0;
+}
+
+static int
+make_symlink(unsigned char const *dest, unsigned char const *path)
+{
+  struct stat si;
+  int r;
+  unsigned char *cwd = 0;
+  unsigned char *t = 0;
+  unsigned char *l = 0;
+
+  if ((r = lstat(path, &si)) >= 0 && !S_ISLNK(si.st_mode)) {
+    err("make_symlink: %s already exists, but not a symlink", path);
+    return -1;
+  }
+
+  if (dest[0] != '/') {
+    cwd = alloca(PATH_MAX);
+    t = alloca(PATH_MAX);
+    if (!getcwd(t, PATH_MAX)) {
+      err("make_symlink: getcwd failed: %s", os_ErrorMsg());
+      return -1;
+    }
+    snprintf(t, PATH_MAX, "%s/%s", cwd, dest);
+    dest = t;
+  }
+
+  if (r >= 0) {
+    // symlink already exists
+    l = alloca(PATH_MAX);
+    if (readlink(path, l, PATH_MAX) < 0) {
+      err("make_symlink: readlink(%s) failed: %s", path, os_ErrorMsg());
+      return -1;
+    }
+    if (!strcmp(l, dest)) return 0;
+    if (unlink(path) < 0) {
+      err("make_symlink: unlink(%s) failed: %s", path, os_ErrorMsg());
+      return -1;
+    }
+  }
+
+  if (symlink(dest, path) < 0) {
+    err("make_symlink: symlink(%s,%s) failed: %s", dest, path, os_ErrorMsg());
+    return -1;
   }
   return 0;
 }
@@ -1583,15 +1643,17 @@ create_dirs(int mode)
 
     /* COMPILE writes its response here */
     if (make_dir(global->compile_dir, 0) < 0) return -1;
-    if (make_dir(global->compile_queue_dir, 0) < 0) return -1;
+    if (make_all_dir(global->compile_queue_dir, 0777) < 0) return -1;
     if (make_dir(global->compile_src_dir, 0) < 0) return -1;
-    if (make_all_dir(global->compile_status_dir, 0777) < 0) return -1;
-    if (make_dir(global->compile_report_dir, 0777) < 0) return -1;
+    if (make_dir(global->compile_out_dir, 0) < 0) return -1;
+    if (make_all_dir(global->compile_status_dir, 0) < 0) return -1;
+    if (make_dir(global->compile_report_dir, 0) < 0) return -1;
 
     /* RUN writes its response here */
     if (make_dir(global->run_dir, 0) < 0) return -1;
-    if (make_dir(global->run_queue_dir, 0) < 0) return -1;
+    if (make_all_dir(global->run_queue_dir, 0) < 0) return -1;
     if (make_dir(global->run_exe_dir, 0) < 0) return -1;
+    if (make_dir(global->run_out_dir, 0) < 0) return -1;
     if (make_all_dir(global->run_status_dir, 0777) < 0) return -1;
     if (make_dir(global->run_report_dir, 0777) < 0) return -1;
     if (global->team_enable_rep_view) {
@@ -1612,29 +1674,54 @@ create_dirs(int mode)
     if (global->team_enable_rep_view) {
       if (make_dir(global->team_report_archive_dir, 0) < 0) return -1;
     }
+  } else if (mode == PREPARE_COMPILE) {
+    if (global->root_dir[0] && make_dir(global->root_dir, 0) < 0) return -1;
+    if (make_dir(global->var_dir, 0) < 0) return -1;
+
+    /* COMPILE reads its commands from here */
+    if (make_dir(global->compile_dir, 0) < 0) return -1;
+    if (make_all_dir(global->compile_queue_dir, 0777) < 0) return -1;
+    if (make_dir(global->compile_src_dir, 0) < 0) return -1;
+
+    /* working directory (if somebody needs it) */
+    if (make_dir(global->work_dir, 0) < 0) return -1;
+    if (make_dir(global->compile_work_dir, 0) < 0) return -1;
+  } else if (mode == PREPARE_RUN) {
+    if (global->root_dir[0] && make_dir(global->root_dir, 0) < 0) return -1;
+    if (make_dir(global->var_dir, 0) < 0) return -1;
+
+    /* RUN reads its commands from here */
+    if (make_dir(global->run_dir, 0) < 0) return -1;
+    if (make_all_dir(global->run_queue_dir, 0777) < 0) return -1;
+    if (make_dir(global->run_exe_dir, 0) < 0) return -1;
+
+    if (make_dir(global->work_dir, 0) < 0) return -1;
+    if (make_dir(global->run_work_dir, 0) < 0) return -1;
+    if (make_dir(global->run_check_dir, 0) < 0) return -1;
   }
 
   for (i = 1; i <= max_lang; i++) {
     if (!langs[i]) continue;
     if (mode == PREPARE_SERVE) {
-      /* COMPILE reads from here */
-      if (make_all_dir(langs[i]->queue_dir, 0777) < 0) return -1;
-    }
-    if (mode == PREPARE_COMPILE) {
-      if (make_dir(langs[i]->work_dir, 0) < 0) return -1;
+      if (make_dir(langs[i]->compile_dir, 0) < 0) return -1;
+      if (make_all_dir(langs[i]->compile_queue_dir, 0777) < 0) return -1;
+      if (make_dir(langs[i]->compile_src_dir, 0) < 0) return -1;
+      if (make_symlink(global->compile_out_dir, langs[i]->compile_out_dir) < 0)
+        return -1;
     }
   }
 
   for (i = 1; i <= max_tester; i++) {
     if (!testers[i]) continue;
     if (mode == PREPARE_SERVE) {
-      /* RUN reads from here */
-      if (make_all_dir(testers[i]->queue_dir, 0777) < 0) return -1;
+      if (make_dir(testers[i]->run_dir, 0) < 0) return -1;
+      if (make_all_dir(testers[i]->run_queue_dir, 0777) < 0) return -1;
+      if (make_dir(testers[i]->run_exe_dir, 0) < 0) return -1;
+      if (make_symlink(global->run_out_dir, testers[i]->run_out_dir) < 0)
+        return -1;
     }
     if (mode == PREPARE_RUN) {
-      if (make_dir(testers[i]->tester_dir, 0) < 0) return -1;
-      if (make_dir(testers[i]->tmp_dir, 0) < 0) return -1;
-      if (make_dir(testers[i]->work_dir, 0) < 0) return -1;
+      if (make_dir(testers[i]->check_dir, 0) < 0) return -1;
     }
   }
 
@@ -1792,18 +1879,6 @@ void print_tester(FILE *o, struct section_tester_data *t)
   fprintf(o, "max_data_size = %d\n", t->max_data_size);
   fprintf(o, "max_vm_size = %d\n", t->max_vm_size);
   fprintf(o, "clear_env = %d\n", t->clear_env);
-  fprintf(o, "server_root_dir = \"%s\"\n", t->server_root_dir);
-  fprintf(o, "server_var_dir = \"%s\"\n", t->server_var_dir);
-  fprintf(o, "server_run_dir = \"%s\"\n", t->server_run_dir);
-  fprintf(o, "server_queue_dir = \"%s\"\n", t->server_queue_dir);
-  fprintf(o, "server_exe_dir = \"%s\"\n", t->server_exe_dir);
-  fprintf(o, "run_status_dir = \"%s\"\n", t->run_status_dir);
-  fprintf(o, "run_report_dir = \"%s\"\n", t->run_report_dir);
-  fprintf(o, "run_team_report_dir = \"%s\"\n", t->run_team_report_dir);
-  fprintf(o, "queue_dir = \"%s\"\n", t->queue_dir);
-  fprintf(o, "tester_dir = \"%s\"\n", t->tester_dir);
-  fprintf(o, "tmp_dir = \"%s\"\n", t->tmp_dir);
-  fprintf(o, "work_dir = \"%s\"\n", t->work_dir);
   fprintf(o, "errorcode_file = \"%s\"\n", t->errorcode_file);
   fprintf(o, "error_file = \"%s\"\n", t->error_file);
   fprintf(o, "prepare_cmd = \"%s\"\n", t->prepare_cmd);
