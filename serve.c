@@ -126,7 +126,12 @@ update_standings_file(int force_flag)
   p = run_get_fog_period(cur_time, global->board_fog_time,
                          global->board_unfog_time);
   setup_locale(global->standings_locale_id);
-  write_standings(global->status_dir, "standings.html");
+  write_standings(global->status_dir, global->standings_file_name,
+                  global->stand_header_txt, global->stand_footer_txt);
+  if (global->stand2_file_name[0]) {
+    write_standings(global->status_dir, global->stand2_file_name,
+                    global->stand2_header_txt, global->stand2_footer_txt);
+  }
   setup_locale(0);
   switch (p) {
   case 0:
@@ -139,6 +144,40 @@ update_standings_file(int force_flag)
     global->unfog_standings_updated = 1;
     break;
   }
+}
+
+void
+update_public_log_file(void)
+{
+  static time_t last_update = 0;
+  time_t cur_time = time(0);
+  time_t start_time, stop_time, duration;
+  int p;
+
+  if (!global->plog_update_time) return;
+  if (cur_time < last_update + global->plog_update_time) return;
+
+  run_get_times(&start_time, 0, &duration, &stop_time);
+
+  while (1) {
+    if (!duration) break;
+    if (!global->board_fog_time) break;
+
+    ASSERT(cur_time >= start_time);
+    ASSERT(global->board_fog_time >= 0);
+    ASSERT(global->board_unfog_time >= 0);
+    
+    p = run_get_fog_period(cur_time, global->board_fog_time,
+                           global->board_unfog_time);
+    if (p == 1) return;
+    break;
+  }
+
+  setup_locale(global->standings_locale_id);
+  write_public_log(global->status_dir, global->plog_file_name,
+                   global->plog_header_txt, global->plog_footer_txt);
+  last_update = cur_time;
+  setup_locale(0);
 }
 
 int
@@ -1695,6 +1734,9 @@ do_loop(void)
                  && p == 2 && !global->unfog_standings_updated) {
         update_standings_file(0);
       }
+
+      /* update public log */
+      update_public_log_file();
 
       if (!clients_suspended) {
         r = scan_dir(global->team_cmd_dir, packetname);
