@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "serve_clnt.h"
@@ -53,28 +49,33 @@ serve_clnt_master_page(int sock_fd,
                        int last_clar,
                        unsigned char const *self_url,
                        unsigned char const *filter_expr,
-                       unsigned char const *hidden_vars)
+                       unsigned char const *hidden_vars,
+                       unsigned char const *extra_args)
 {
   struct prot_serve_pkt_master_page *out = 0;
   struct prot_serve_packet *in = 0;
-  size_t self_url_len, filter_expr_len, hidden_vars_len;
+  size_t self_url_len, filter_expr_len, hidden_vars_len, extra_args_len;
   size_t out_size, in_size = 0;
   unsigned char *self_url_ptr, *filter_expr_ptr, *hidden_vars_ptr, c;
+  unsigned char *extra_args_ptr;
   int r, pipe_fd[2], pass_fd[2];
 
   if (sock_fd < 0) return -SRV_ERR_NOT_CONNECTED;
   if (!self_url) self_url = "";
   if (!filter_expr) filter_expr = "";
   if (!hidden_vars) hidden_vars = "";
+  if (!extra_args) extra_args = "";
   self_url_len = strlen(self_url);
   filter_expr_len = strlen(filter_expr);
   hidden_vars_len = strlen(hidden_vars);
-  out_size = sizeof(*out) + self_url_len + filter_expr_len + hidden_vars_len;
+  extra_args_len = strlen(extra_args);
+  out_size = sizeof(*out) + self_url_len + filter_expr_len + hidden_vars_len + extra_args_len;
   out = alloca(out_size);
   memset(out, 0, out_size);
   self_url_ptr = out->data;
   filter_expr_ptr = self_url_ptr + self_url_len + 1;
   hidden_vars_ptr = filter_expr_ptr + filter_expr_len + 1;
+  extra_args_ptr = hidden_vars_ptr + hidden_vars_len + 1;
   out->b.id = SRV_CMD_MASTER_PAGE;
   out->b.magic = PROT_SERVE_PACKET_MAGIC;
   out->user_id = user_id;
@@ -90,9 +91,11 @@ serve_clnt_master_page(int sock_fd,
   out->self_url_len = self_url_len;
   out->filter_expr_len = filter_expr_len;
   out->hidden_vars_len = hidden_vars_len;
+  out->extra_args_len = extra_args_len;
   memcpy(self_url_ptr, self_url, self_url_len);
   memcpy(filter_expr_ptr, filter_expr, filter_expr_len);
   memcpy(hidden_vars_ptr, hidden_vars, hidden_vars_len);
+  memcpy(extra_args_ptr, extra_args, extra_args_len);
 
   if (pipe(pipe_fd) < 0) {
     err("serve_clnt_team_page: pipe() failed: %s", os_ErrorMsg());
@@ -144,8 +147,7 @@ serve_clnt_master_page(int sock_fd,
 
 /**
  * Local variables:
- *  compile-command: "make"
+ *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
