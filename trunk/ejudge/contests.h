@@ -88,6 +88,7 @@ enum
     CONTEST_A_LOGIN,
     CONTEST_A_MANAGED,
     CONTEST_A_CLEAN_USERS,
+    CONTEST_A_RUN_MANAGED,
 
     CONTEST_LAST_ATTN
   };
@@ -184,6 +185,7 @@ struct contest_desc
   int autoregister;
   int disable_team_password;
   unsigned char managed;
+  unsigned char run_managed;
   unsigned char clean_users;
 
   unsigned long  reg_deadline;
