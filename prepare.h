@@ -367,6 +367,7 @@ struct section_language_data
   path_t compile_queue_dir;     /* directory for serve->compile packets */
   path_t compile_src_dir;       /* directory for source files */
   path_t compile_out_dir;       /* base directory for compile results */
+  char **compiler_env;          /* environment to pass to the compiler */
 };
 
 struct section_tester_data
