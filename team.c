@@ -1063,15 +1063,16 @@ print_standings_button(unsigned char const *str)
   if (!str) str = _("Virtual standings");
 
   if (client_sid_mode == SID_URL) {
-    printf("<a href=\"%s?sid_mode=%d&SID=%016llx&action=%d\">%s</a>",
-           self_url, SID_URL, client_sid, ACTION_STANGINGS, str);
+    printf("<a href=\"%s?sid_mode=%d&SID=%016llx&action=%d%s\">%s</a>",
+           self_url, SID_URL, client_sid, ACTION_STANDINGS,
+           contest_id_str, str);
   } else if (client_sid_mode == SID_COOKIE) {
-    printf("<a href=\"%s?sid_mode=%d&action=%d\">%s</a>",
-           self_url, SID_COOKIE, ACTION_STANGINGS, str);
+    printf("<a href=\"%s?sid_mode=%d&action=%d%s\">%s</a>",
+           self_url, SID_COOKIE, ACTION_STANDINGS, contest_id_str, str);
   } else {
     puts(form_start_simple);
     printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
-           ACTION_STANGINGS, str);
+           ACTION_STANDINGS, str);
   }
 }
 
@@ -1565,7 +1566,7 @@ main(int argc, char *argv[])
     case ACTION_STOP_VIRTUAL:
       action_virtual_stop();
       break;
-    case ACTION_STANGINGS:
+    case ACTION_STANDINGS:
       action_standings();
       break;
     default:
