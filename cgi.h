@@ -3,7 +3,7 @@
 #ifndef __CGI_H__
 #define __CGI_H__
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,8 @@
  * GNU General Public License for more details.
  */
 
+#include <stdlib.h>
+
 int   cgi_read(char const *charset);
 char *cgi_param(char const *);
 char *cgi_nparam(char const *, int);
@@ -25,5 +27,9 @@ void  cgi_print_param(void);
 
 int cgi_get_param_num(void);
 void cgi_get_nth_param(int, unsigned char **, unsigned char **);
+
+int cgi_param_bin(const unsigned char *, size_t *, const unsigned char **);
+int cgi_nparam_bin(const unsigned char *, size_t,
+                   const unsigned char **, size_t *, const unsigned char **);
 
 #endif /* __CGI_H__ */
