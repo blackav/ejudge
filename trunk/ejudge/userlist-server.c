@@ -142,6 +142,10 @@ static time_t last_backup;
 static time_t backup_interval;
 static int interrupt_signaled;
 
+/* the map from system uids into the local uids */
+static int *system_uid_map;
+static size_t system_uid_map_size;
+
 /* Various strings subject for localization */
 #define _(x) x
 static unsigned char const * const status_str_map[] =
@@ -273,6 +277,7 @@ detach_contest_extra(struct contest_extra *ex)
   ASSERT(ex->desc == contests->id_map[ex->id]);
   if (--ex->nref > 0) return 0;
   info("destroying shared contest info for %d", ex->id);
+  ex->tbl->vintage = 0xffff;    /* the client must note this change */
   if (shmdt(ex->tbl) < 0) info("shmdt failed: %s", os_ErrorMsg());
   if (shmctl(ex->shm_id,IPC_RMID,0)<0) info("shmctl failed: %s",os_ErrorMsg());
   if (semctl(ex->sem_id,0,IPC_RMID)<0) info("semctl failed: %s",os_ErrorMsg());
@@ -343,7 +348,7 @@ update_userlist_table(int cnts_id)
     }
     if (!c) continue;
     if (c->status != USERLIST_REG_OK) continue;
-    if ((c->flags & USERLIST_UC_BANNED)) continue;
+    //if ((c->flags & USERLIST_UC_BANNED)) continue;
     // FIXME handle invisibility
     n = u->name;
     if (!n || !*n) n = u->login;
@@ -377,6 +382,7 @@ update_userlist_table(int cnts_id)
   }
   ntb->total = i;
   ntb->vintage = ex->tbl->vintage + 1;
+  if (ntb->vintage == 0xffff) ntb->vintage = 1;
   lock_userlist_table(ex);
   memcpy(ex->tbl, ntb, sizeof(*ntb));
   unlock_userlist_table(ex);
@@ -515,6 +521,67 @@ generate_random_password(int size, unsigned char *buf)
   b64_buf[size] = 0;
   strcpy(buf, b64_buf);
 }
+
+/* build the map from the system uids to the local uids */
+static void
+build_system_uid_map(struct xml_tree *xml_user_map)
+{
+  struct xml_tree *um;
+  struct userlist_cfg_user_map *m;
+  int max_system_uid = -1, i;
+
+  if (!xml_user_map || !xml_user_map->first_down) return;
+  for (um = xml_user_map->first_down; um; um = um->right) {
+    m = (struct userlist_cfg_user_map*) um;
+    if (m->system_uid < 0) continue;
+    if (m->system_uid > max_system_uid)
+      max_system_uid = m->system_uid;
+  }
+
+  if (max_system_uid < 0) return;
+  system_uid_map_size = max_system_uid + 1;
+  XCALLOC(system_uid_map, system_uid_map_size);
+  for (i = 0; i < system_uid_map_size; i++)
+    system_uid_map[i] = -1;
+  // system root is always mapped to the local root
+  system_uid_map[0] = 0;
+  for (um = xml_user_map->first_down; um; um = um->right) {
+    m = (struct userlist_cfg_user_map*) um;
+    if (m->system_uid < 0) continue;
+    if (!strcmp(m->local_user_str, "root")) {
+      i = 0;
+    } else if (!strcmp(m->local_user_str, "guest")) {
+      i = -1;
+    } else {
+      for (i = 1; i < userlist->user_map_size; i++) {
+        if (!userlist->user_map[i]) continue;
+        if (!userlist->user_map[i]->login) continue;
+        if (!strcmp(userlist->user_map[i]->login, m->local_user_str)) break;
+      }
+      if (i >= userlist->user_map_size) {
+        err("build_system_uid_map: no local user %s", m->local_user_str);
+        i = -1;
+      }
+    }
+    info("system user %s(%d) is mapped to local user %s(%d)",
+         m->system_user_str, m->system_uid, m->local_user_str, i);
+    system_uid_map[m->system_uid] = i;
+  }
+}
+
+static void
+remove_from_system_uid_map(int uid)
+{
+  int i;
+
+  if (uid <= 0) return;
+  for (i = 0; i < system_uid_map_size; i++) {
+    if (system_uid_map[i] == uid)
+      system_uid_map[i] = -1;
+  }
+}
+
+/* remove the entry from the system uid->local uid map upon removal */
 
 static int
 setup_locale(int locale_id)
@@ -1001,6 +1068,7 @@ do_remove_user(struct userlist_user *u)
     }
   }
 
+  remove_from_system_uid_map(u->id);
   userlist_remove_user(userlist, u);
   dirty = 1;
   flush_interval /= 2;
@@ -1884,6 +1952,18 @@ set_user_info(struct client_state *p,
     info("%d: facshort updated", p->id);
     updated = 1;
   }
+  if (needs_update(old_u->city, new_u->city)) {
+    xfree(old_u->city);
+    old_u->city = xstrdup(new_u->city);
+    info("%d: city updated", p->id);
+    updated = 1;
+  }
+  if (needs_update(old_u->country, new_u->country)) {
+    xfree(old_u->country);
+    old_u->country = xstrdup(new_u->country);
+    info("%d: country updated", p->id);
+    updated = 1;
+  }
 
   // move members
  restart_movement:
@@ -1994,6 +2074,12 @@ set_user_info(struct client_state *p,
         xfree(old_m->facshort);
         old_m->facshort = xstrdup(new_m->facshort);
         info("%d: updated %s.%d.facshort", p->id, role_str, old_pers);
+        updated = 1;
+      }
+      if (needs_update(old_m->occupation, new_m->occupation)) {
+        xfree(old_m->occupation);
+        old_m->occupation = xstrdup(new_m->occupation);
+        info("%d: updated %s.%d.occupation", p->id, role_str, old_pers);
         updated = 1;
       }
 
@@ -2549,6 +2635,14 @@ do_list_users(FILE *f, int contest_id, int locale_id,
     if (!d || d->fields[CONTEST_F_FACSHORT]) {
       fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
               _("Faculty (short)"), u->facshort?u->facshort:notset);
+    }
+    if (!d || d->fields[CONTEST_F_CITY]) {
+      fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("City"), u->city?u->city:notset);
+    }
+    if (!d || d->fields[CONTEST_F_COUNTRY]) {
+      fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
+              _("Country"), u->country?u->country:notset);
     }
 
     fprintf(f, "</table>\n");
@@ -3423,6 +3517,46 @@ cmd_add_field(struct client_state *p, int len,
 }
 
 static void
+cmd_get_uid_by_pid(struct client_state *p, int len,
+                   struct userlist_pk_get_uid_by_pid *pack)
+{
+  struct client_state *q = 0;
+  struct userlist_pk_uid out;
+
+  if (len != sizeof(*pack)) {
+    bad_packet(p, "get_uid_by_pid: packet lendth mismatch: %d", len);
+    return;
+  }
+  info("%d: get_uid_by_pid: %d, %d, %d", p->id, pack->system_uid,
+       pack->system_gid, pack->system_pid);
+  if (pack->system_uid < 0 || pack->system_gid < 0 || pack->system_pid <= 1) {
+    err("%d: invalid parameters", p->id);
+    send_reply(p, ULS_ERR_BAD_UID);
+    return;
+  }
+
+  for (q = first_client; q; q = q->next) {
+    if (q->peer_uid == pack->system_uid
+        && q->peer_gid == pack->system_gid
+        && q->peer_pid == pack->system_pid)
+      break;
+  }
+  if (!q) {
+    err("%d: not found among clients", p->id);
+    send_reply(p, ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+
+  memset(&out, 0, sizeof(out));
+  out.reply_id = ULS_UID;
+  out.uid = q->user_id;
+  // FIXME: fetch the actual cookie
+  out.cookie = 0;
+  info("%d: get_uid_by_pid: %d, %016llx", p->id, out.uid, out.cookie);
+  enqueue_reply_to_client(p, sizeof(out), &out);
+}
+
+static void
 process_packet(struct client_state *p, int len, unsigned char *pack)
 {
   struct userlist_packet * packet;
@@ -3529,6 +3663,10 @@ process_packet(struct client_state *p, int len, unsigned char *pack)
 
   case ULS_ADD_FIELD:
     cmd_add_field(p, len, (struct userlist_pk_edit_field*) pack);
+    break;
+
+  case ULS_GET_UID_BY_PID:
+    cmd_get_uid_by_pid(p, len, (struct userlist_pk_get_uid_by_pid*) pack);
     break;
 
   default:
@@ -4099,6 +4237,9 @@ main(int argc, char *argv[])
     textdomain("ejudge");
   }
 #endif /* CONF_HAS_LIBINTL */
+
+  // initialize system uid->local uid map
+  build_system_uid_map(config->user_map);
 
   code = do_work();
 
