@@ -23,11 +23,12 @@
 #include "runlog.h"
 
 #include "fileutl.h"
-#include "osdeps.h"
-#include "logger.h"
-#include "exec.h"
-#include "xalloc.h"
-#include "number_io.h"
+
+#include <reuse/osdeps.h>
+#include <reuse/logger.h>
+#include <reuse/exec.h>
+#include <reuse/xalloc.h>
+#include <reuse/number_io.h>
 
 #include <stdio.h>
 #include <string.h>
