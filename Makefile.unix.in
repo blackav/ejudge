@@ -127,7 +127,7 @@ CGITARGETS = master${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX} register${CGI_PROG_
 TARGETS = ${BINTARGETS} ${CGITARGETS}
 
 all: local_all subdirs_all mo
-local_all: $(TARGETS)
+local_all: $(TARGETS) ejudge-config
 
 release:
 	rm -fr CVS charsets db serve_clnt unix userlist_clnt win32 checkers/CVS checkers/.cvsignore checkers/Makefile checkers/ChangeLog checkers/*.c checkers/*.o checkers/testinfo.h extra/CVS extra/.cvsignore extra/Makefile extra/*.c extra/*.o scripts/CVS .build .cvsignore ChangeLog OLDNEWS TODO *.c *.h *.o *.a *.make *.po makefile *.lex *.y
@@ -142,9 +142,10 @@ extra_progs:
 checker_lib:
 	$(MAKE) -C checkers DESTDIR="${DESTDIR}" all
 
-local_install: ${TARGETS} po mo
+local_install: ${TARGETS} ejudge-config po mo
 	install -d "${DESTDIR}${bindir}"
 	for i in ${BINTARGETS}; do install -m 0755 $$i "${DESTDIR}${bindir}"; done
+	install -m 0755 ejudge-config "${DESTDIR}${bindir}"
 	install -d "${DESTDIR}${cgibindir}"
 	for i in ${CGITARGETS}; do install -m 0755 $$i "${DESTDIR}${cgibindir}"; done
 	cd "${DESTDIR}${cgibindir}"; rm -f judge${CGI_PROG_SUFFIX}; ln master${CGI_PROG_SUFFIX} judge${CGI_PROG_SUFFIX}
@@ -193,14 +194,14 @@ ejudge-setup: ${ST_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu -lpanel -lncurses
 
 local_clean:
-	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog serve_clnt/*.o charsets/*.o userlist_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c master master${CGI_PROG_SUFFIX} team team${CGI_PROG_SUFFIX} register register${CGI_PROG_SUFFIX} users users${CGI_PROG_SUFFIX}
+	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog serve_clnt/*.o charsets/*.o userlist_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c master master${CGI_PROG_SUFFIX} team team${CGI_PROG_SUFFIX} register register${CGI_PROG_SUFFIX} users users${CGI_PROG_SUFFIX} ejudge-config
 	-rm -rf locale
 clean: local_clean
 	$(MAKE) -C extra clean
 	$(MAKE) -C checkers clean
 
 local_distclean :
-	rm -rf autom4te.cache config.log config.status Makefile config.h
+	rm -rf autom4te.cache config.log config.status Makefile config.h ejudge-config.v
 distclean : clean local_distclean
 	$(MAKE) -C extra distclean
 	$(MAKE) -C checkers distclean
@@ -247,6 +248,9 @@ ejudge.po: $(CFILES)
 
 ru_all:
 	-mkdir -p locale/ru_RU.KOI8-R/LC_MESSAGES
+
+ejudge-config : ejudge-config.v version.c
+	vvv=`grep compile_version version.c | sed 's/^[^"]*["]\([^"]*\)["].*$$/\1/'` && sed "s/@BUILD_VERSION@/$$vvv/" < ejudge-config.v > ejudge-config && chmod +x ejudge-config
 
 ifdef ENABLE_NLS
 mo : locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo
