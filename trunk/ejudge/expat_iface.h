@@ -74,4 +74,8 @@ xml_unparse_tree_str(char *buf,
                      int (*tag_print)(char *, int, struct xml_tree const *),
                      int (*attn_print)(char *, int, struct xml_attn const *));
 
+void xml_unlink_node(struct xml_tree *p);
+void xml_link_node_first(struct xml_tree *p, struct xml_tree *c);
+void xml_link_node_last(struct xml_tree *p, struct xml_tree *c);
+
 #endif /* __EXPAT_IFACE_H__ */
