@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "userlist.h"
@@ -171,16 +167,25 @@ userlist_get_member_field_str(unsigned char *buf, size_t len,
   case USERLIST_NM_STATUS:
     return snprintf(buf, len, "%s", userlist_member_status_str(m->status));
   case USERLIST_NM_FIRSTNAME:  s = m->firstname;  break;
+  case USERLIST_NM_FIRSTNAME_EN: s = m->firstname_en; break;
   case USERLIST_NM_MIDDLENAME: s = m->middlename; break;
+  case USERLIST_NM_MIDDLENAME_EN: s = m->middlename_en; break;
   case USERLIST_NM_SURNAME:    s = m->surname;    break;
+  case USERLIST_NM_SURNAME_EN: s = m->surname_en; break;
   case USERLIST_NM_GROUP:      s = m->group;      break;
+  case USERLIST_NM_GROUP_EN:   s = m->group_en;   break;
   case USERLIST_NM_OCCUPATION: s = m->occupation; break;
+  case USERLIST_NM_OCCUPATION_EN: s = m->occupation_en; break;
   case USERLIST_NM_EMAIL:      s = m->email;      break;
   case USERLIST_NM_HOMEPAGE:   s = m->homepage;   break;
   case USERLIST_NM_INST:       s = m->inst;       break;
+  case USERLIST_NM_INST_EN:    s = m->inst_en;    break;
   case USERLIST_NM_INSTSHORT:  s = m->instshort;  break;
+  case USERLIST_NM_INSTSHORT_EN: s = m->instshort_en; break;
   case USERLIST_NM_FAC:        s = m->fac;        break;
+  case USERLIST_NM_FAC_EN:     s = m->fac_en;     break;
   case USERLIST_NM_FACSHORT:   s = m->facshort;   break;
+  case USERLIST_NM_FACSHORT_EN: s = m->facshort_en; break;
   default:
     SWERR(("unhandled field_id: %d", field_id));
   }
@@ -207,26 +212,44 @@ userlist_delete_member_field(struct userlist_member *m, int field_id)
     return 1;
   case USERLIST_NM_FIRSTNAME:
     ps = &m->firstname; goto do_text_field;
+  case USERLIST_NM_FIRSTNAME_EN:
+    ps = &m->firstname_en; goto do_text_field;
   case USERLIST_NM_MIDDLENAME:
     ps = &m->middlename; goto do_text_field;
+  case USERLIST_NM_MIDDLENAME_EN:
+    ps = &m->middlename_en; goto do_text_field;
   case USERLIST_NM_SURNAME:
     ps = &m->surname; goto do_text_field;
+  case USERLIST_NM_SURNAME_EN:
+    ps = &m->surname_en; goto do_text_field;
   case USERLIST_NM_GROUP:
     ps = &m->group; goto do_text_field;
+  case USERLIST_NM_GROUP_EN:
+    ps = &m->group_en; goto do_text_field;
   case USERLIST_NM_OCCUPATION:
     ps = &m->occupation; goto do_text_field;
+  case USERLIST_NM_OCCUPATION_EN:
+    ps = &m->occupation_en; goto do_text_field;
   case USERLIST_NM_EMAIL:
     ps = &m->email; goto do_text_field;
   case USERLIST_NM_HOMEPAGE:
     ps = &m->homepage; goto do_text_field;
   case USERLIST_NM_INST:
     ps = &m->inst; goto do_text_field;
+  case USERLIST_NM_INST_EN:
+    ps = &m->inst_en; goto do_text_field;
   case USERLIST_NM_INSTSHORT:
     ps = &m->instshort; goto do_text_field;
+  case USERLIST_NM_INSTSHORT_EN:
+    ps = &m->instshort_en; goto do_text_field;
   case USERLIST_NM_FAC:
     ps = &m->fac; goto do_text_field;
+  case USERLIST_NM_FAC_EN:
+    ps = &m->fac_en; goto do_text_field;
   case USERLIST_NM_FACSHORT:
-    ps = &m->facshort;
+    ps = &m->facshort; goto do_text_field;
+  case USERLIST_NM_FACSHORT_EN:
+    ps = &m->facshort_en; goto do_text_field;
   do_text_field:
     if (!*ps) return 0;
     xfree(*ps);
@@ -280,16 +303,25 @@ userlist_set_member_field_str(struct userlist_member *m, int field_id,
     }
     return updated;
   case USERLIST_NM_FIRSTNAME:  ps = &m->firstname;  break;
+  case USERLIST_NM_FIRSTNAME_EN: ps = &m->firstname_en; break;
   case USERLIST_NM_MIDDLENAME: ps = &m->middlename; break;
+  case USERLIST_NM_MIDDLENAME_EN: ps = &m->middlename_en; break;
   case USERLIST_NM_SURNAME:    ps = &m->surname;    break;
+  case USERLIST_NM_SURNAME_EN: ps = &m->surname_en; break;
   case USERLIST_NM_GROUP:      ps = &m->group;      break;
+  case USERLIST_NM_GROUP_EN:   ps = &m->group_en;   break;
   case USERLIST_NM_OCCUPATION: ps = &m->occupation; break;
+  case USERLIST_NM_OCCUPATION_EN: ps = &m->occupation_en; break;
   case USERLIST_NM_EMAIL:      ps = &m->email;      break;
   case USERLIST_NM_HOMEPAGE:   ps = &m->homepage;   break;
   case USERLIST_NM_INST:       ps = &m->inst;       break;
+  case USERLIST_NM_INST_EN:    ps = &m->inst_en;    break;
   case USERLIST_NM_INSTSHORT:  ps = &m->instshort;  break;
+  case USERLIST_NM_INSTSHORT_EN: ps = &m->instshort_en; break;
   case USERLIST_NM_FAC:        ps = &m->fac;        break;
+  case USERLIST_NM_FAC_EN:     ps = &m->fac_en;     break;
   case USERLIST_NM_FACSHORT:   ps = &m->facshort;   break;
+  case USERLIST_NM_FACSHORT_EN: ps = &m->facshort_en; break;
   default:
     SWERR(("unhandled field_id: %d", field_id));
   }
@@ -325,6 +357,8 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
     s = userlist_unparse_bool(u->is_invisible); break;
   case USERLIST_NN_IS_BANNED:
     s = userlist_unparse_bool(u->is_banned); break;
+  case USERLIST_NN_IS_LOCKED:
+    s = userlist_unparse_bool(u->is_locked); break;
   case USERLIST_NN_SHOW_LOGIN:
     s = userlist_unparse_bool(u->show_login); break;
   case USERLIST_NN_SHOW_EMAIL:
@@ -355,12 +389,18 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
     break;
   case USERLIST_NN_GENERAL_INFO: break;  /* !!! */
   case USERLIST_NN_INST: s = u->inst; break;
+  case USERLIST_NN_INST_EN: s = u->inst_en; break;
   case USERLIST_NN_INSTSHORT: s = u->instshort; break;
+  case USERLIST_NN_INSTSHORT_EN: s = u->instshort_en; break;
   case USERLIST_NN_FAC: s = u->fac; break;
+  case USERLIST_NN_FAC_EN: s = u->fac_en; break;
   case USERLIST_NN_FACSHORT: s = u->facshort; break;
+  case USERLIST_NN_FACSHORT_EN: s = u->facshort_en; break;
   case USERLIST_NN_HOMEPAGE: s = u->homepage; break;
   case USERLIST_NN_CITY: s = u->city; break;
+  case USERLIST_NN_CITY_EN: s = u->city_en; break;
   case USERLIST_NN_COUNTRY: s = u->country; break;
+  case USERLIST_NN_COUNTRY_EN: s = u->country_en; break;
   }
   if (!s) {
     if (convert_null) s = "<NULL>";
@@ -400,6 +440,8 @@ userlist_set_user_field_str(struct userlist_user *u, int field_id,
     iptr = &u->is_invisible; goto do_bool_fields;
   case USERLIST_NN_IS_BANNED:
     iptr = &u->is_banned; goto do_bool_fields;
+  case USERLIST_NN_IS_LOCKED:
+    iptr = &u->is_locked; goto do_bool_fields;
   case USERLIST_NN_SHOW_LOGIN:
     iptr = &u->show_login; goto do_bool_fields;
   case USERLIST_NN_SHOW_EMAIL:
@@ -448,18 +490,30 @@ userlist_set_user_field_str(struct userlist_user *u, int field_id,
 
   case USERLIST_NN_INST:
     sptr = &u->inst; goto do_text_fields;
+  case USERLIST_NN_INST_EN:
+    sptr = &u->inst_en; goto do_text_fields;
   case USERLIST_NN_INSTSHORT:
     sptr = &u->instshort; goto do_text_fields;
+  case USERLIST_NN_INSTSHORT_EN:
+    sptr = &u->instshort_en; goto do_text_fields;
   case USERLIST_NN_FAC:
     sptr = &u->fac; goto do_text_fields;
+  case USERLIST_NN_FAC_EN:
+    sptr = &u->fac_en; goto do_text_fields;
   case USERLIST_NN_FACSHORT:
     sptr = &u->facshort; goto do_text_fields;
+  case USERLIST_NN_FACSHORT_EN:
+    sptr = &u->facshort_en; goto do_text_fields;
   case USERLIST_NN_HOMEPAGE:
     sptr = &u->homepage; goto do_text_fields;
   case USERLIST_NN_CITY:
     sptr = &u->city; goto do_text_fields;
+  case USERLIST_NN_CITY_EN:
+    sptr = &u->city_en; goto do_text_fields;
   case USERLIST_NN_COUNTRY:
     sptr = &u->country; goto do_text_fields;
+  case USERLIST_NN_COUNTRY_EN:
+    sptr = &u->country_en; goto do_text_fields;
 
   case USERLIST_NN_ID:
   case USERLIST_NN_TIMESTAMPS:
@@ -496,6 +550,8 @@ userlist_delete_user_field(struct userlist_user *u, int field_id)
     iptr = &u->is_invisible; goto do_flags_delete;
   case USERLIST_NN_IS_BANNED:
     iptr = &u->is_banned; goto do_flags_delete;
+  case USERLIST_NN_IS_LOCKED:
+    iptr = &u->is_locked; goto do_flags_delete;
   case USERLIST_NN_SHOW_LOGIN:
     iptr = &u->show_login; goto do_flags_delete;
   case USERLIST_NN_SHOW_EMAIL:
@@ -529,18 +585,30 @@ userlist_delete_user_field(struct userlist_user *u, int field_id)
 
   case USERLIST_NN_INST:
     sptr = &u->inst; goto do_string_delete;
+  case USERLIST_NN_INST_EN:
+    sptr = &u->inst_en; goto do_string_delete;
   case USERLIST_NN_INSTSHORT:
     sptr = &u->instshort; goto do_string_delete;
+  case USERLIST_NN_INSTSHORT_EN:
+    sptr = &u->instshort_en; goto do_string_delete;
   case USERLIST_NN_FAC:
     sptr = &u->fac; goto do_string_delete;
+  case USERLIST_NN_FAC_EN:
+    sptr = &u->fac_en; goto do_string_delete;
   case USERLIST_NN_FACSHORT:
     sptr = &u->facshort; goto do_string_delete;
+  case USERLIST_NN_FACSHORT_EN:
+    sptr = &u->facshort_en; goto do_string_delete;
   case USERLIST_NN_HOMEPAGE:
     sptr = &u->homepage; goto do_string_delete;
   case USERLIST_NN_CITY:
     sptr = &u->city; goto do_string_delete;
+  case USERLIST_NN_CITY_EN:
+    sptr = &u->city_en; goto do_string_delete;
   case USERLIST_NN_COUNTRY:
     sptr = &u->country; goto do_string_delete;
+  case USERLIST_NN_COUNTRY_EN:
+    sptr = &u->country_en; goto do_string_delete;
   do_string_delete:
     retval = !(*sptr == 0);
     xfree(*sptr); *sptr = 0;
@@ -580,7 +648,6 @@ userlist_delete_user_field(struct userlist_user *u, int field_id)
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
 
