@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -377,6 +377,8 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
     s = userlist_unparse_bool(u->default_use_cookies); break;
   case USERLIST_NN_READ_ONLY:
     s = userlist_unparse_bool(u->read_only); break;
+  case USERLIST_NN_NEVER_CLEAN:
+    s = userlist_unparse_bool(u->never_clean); break;
   case USERLIST_NN_TIMESTAMPS: break;    /* !!! */
   case USERLIST_NN_REG_TIME:
     s = userlist_unparse_date(u->registration_time, convert_null); break;
@@ -411,6 +413,7 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
   case USERLIST_NN_CITY_EN: s = u->city_en; break;
   case USERLIST_NN_COUNTRY: s = u->country; break;
   case USERLIST_NN_COUNTRY_EN: s = u->country_en; break;
+  case USERLIST_NN_LOCATION: s = u->location; break;
   }
   if (!s) {
     if (convert_null) s = "<NULL>";
@@ -510,7 +513,9 @@ userlist_set_user_field_str(struct userlist_list *lst,
   case USERLIST_NN_USE_COOKIES:
     iptr = &u->default_use_cookies; goto do_bool_fields;
   case USERLIST_NN_READ_ONLY:
-    iptr = &u->read_only;
+    iptr = &u->read_only; goto do_bool_fields;
+  case USERLIST_NN_NEVER_CLEAN:
+    iptr = &u->never_clean; goto do_bool_fields;
   do_bool_fields:
     new_ival = userlist_parse_bool(field_val);
     if (new_ival < 0 || new_ival > 1) return -1;
@@ -575,6 +580,8 @@ userlist_set_user_field_str(struct userlist_list *lst,
     sptr = &u->country; goto do_text_fields;
   case USERLIST_NN_COUNTRY_EN:
     sptr = &u->country_en; goto do_text_fields;
+  case USERLIST_NN_LOCATION:
+    sptr = &u->location; goto do_text_fields;
 
   case USERLIST_NN_ID:
   case USERLIST_NN_TIMESTAMPS:
@@ -620,7 +627,9 @@ userlist_delete_user_field(struct userlist_user *u, int field_id)
   case USERLIST_NN_USE_COOKIES:
     iptr = &u->default_use_cookies; goto do_flags_delete;
   case USERLIST_NN_READ_ONLY:
-    iptr = &u->read_only;
+    iptr = &u->read_only; goto do_flags_delete;
+  case USERLIST_NN_NEVER_CLEAN:
+    iptr = &u->never_clean; goto do_flags_delete;
   do_flags_delete:
     retval = !(*iptr == 0);
     *iptr = 0;
@@ -670,6 +679,8 @@ userlist_delete_user_field(struct userlist_user *u, int field_id)
     sptr = &u->country; goto do_string_delete;
   case USERLIST_NN_COUNTRY_EN:
     sptr = &u->country_en; goto do_string_delete;
+  case USERLIST_NN_LOCATION:
+    sptr = &u->location; goto do_string_delete;
   do_string_delete:
     retval = !(*sptr == 0);
     xfree(*sptr); *sptr = 0;
