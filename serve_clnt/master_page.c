@@ -45,7 +45,7 @@ serve_clnt_master_page(int sock_fd,
                        int contest_id,
                        int locale_id,
                        unsigned long ip,
-                       unsigned int flags,
+                       int priv_level,
                        int first_run,
                        int last_run,
                        int first_clar,
@@ -80,7 +80,7 @@ serve_clnt_master_page(int sock_fd,
   out->contest_id = contest_id;
   out->locale_id = locale_id;
   out->ip = ip;
-  out->flags = flags;
+  out->priv_level = priv_level;
   out->first_run = first_run;
   out->last_run = last_run;
   out->first_clar = first_clar;
