@@ -195,8 +195,10 @@ static unsigned long contest_duration;
 static unsigned long contest_stop_time;
 static int clients_suspended;
 static int testing_suspended;
-static int olympiad_judging_mode;
 static int printing_suspended;
+
+// FIXME: this is not good, but olympiad_judging_mode flag is used in master_html.c
+/* static */ int olympiad_judging_mode;
 
 static int socket_fd = -1;
 static unsigned char *socket_name = 0;
@@ -257,6 +259,7 @@ update_standings_file(int force_flag)
 {
   time_t start_time, stop_time, duration;
   int p = 0;
+  int accepting_mode = 0;
 
   run_get_times(&start_time, 0, &duration, &stop_time);
 
@@ -282,11 +285,15 @@ update_standings_file(int force_flag)
                            global->board_unfog_time);
   }
   l10n_setlocale(global->standings_locale_id);
+  if (global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
+    accepting_mode = 1;
   write_standings(global->status_dir, global->standings_file_name,
-                  global->stand_header_txt, global->stand_footer_txt);
+                  global->stand_header_txt, global->stand_footer_txt,
+                  accepting_mode);
   if (global->stand2_file_name[0]) {
     write_standings(global->status_dir, global->stand2_file_name,
-                    global->stand2_header_txt, global->stand2_footer_txt);
+                    global->stand2_header_txt, global->stand2_footer_txt,
+                    accepting_mode);
   }
   l10n_setlocale(0);
   if (global->virtual) return;
@@ -502,11 +509,16 @@ is_valid_status(int status, int mode)
     case RUN_PRESENTATION_ERR:
     case RUN_WRONG_ANSWER_ERR:
     case RUN_ACCEPTED:
+    case RUN_CHECK_FAILED:
+    case RUN_MEM_LIMIT_ERR:
+    case RUN_SECURITY_ERR:
       return 1;
     case RUN_COMPILE_ERR:
+    case RUN_FULL_REJUDGE:
     case RUN_REJUDGE:
     case RUN_IGNORED:
     case RUN_DISQUALIFIED:
+    case RUN_PENDING:
       if (mode != 1) return 0;
       return 1;
     default:
@@ -516,11 +528,13 @@ is_valid_status(int status, int mode)
     switch (status) {
     case RUN_OK:
     case RUN_PARTIAL:
+    case RUN_CHECK_FAILED:
       return 1;
     case RUN_COMPILE_ERR:
     case RUN_REJUDGE:
     case RUN_IGNORED:
     case RUN_DISQUALIFIED:
+    case RUN_PENDING:
       if (mode != 1) return 0;
       return 1;
     default:
@@ -533,12 +547,15 @@ is_valid_status(int status, int mode)
     case RUN_TIME_LIMIT_ERR:
     case RUN_PRESENTATION_ERR:
     case RUN_WRONG_ANSWER_ERR:
-    case RUN_ACCEPTED:
+    case RUN_CHECK_FAILED:
+    case RUN_MEM_LIMIT_ERR:
+    case RUN_SECURITY_ERR:
       return 1;
     case RUN_COMPILE_ERR:
     case RUN_REJUDGE:
     case RUN_IGNORED:
     case RUN_DISQUALIFIED:
+    case RUN_PENDING:
       if (mode != 1) return 0;
       return 1;
     default:
@@ -961,6 +978,7 @@ cmd_priv_standings(struct client_state *p, int len,
   char *html_ptr = 0;
   size_t html_len = 0;
   struct client_state *q;
+  int accepting_mode = 0;
 
   if (get_peer_local_user(p) < 0) return;
 
@@ -1039,8 +1057,11 @@ cmd_priv_standings(struct client_state *p, int len,
     return;
   }
   /* l10n_setlocale(pkt->locale_id); */
+  if (global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
+    accepting_mode = 1;
   write_priv_standings(f, pkt->sid_mode, p->cookie,
-                       self_url_ptr, hidden_vars_ptr, extra_args_ptr);
+                       self_url_ptr, hidden_vars_ptr, extra_args_ptr,
+                       accepting_mode);
   /* l10n_setlocale(0); */
   fclose(f);
 
@@ -1720,7 +1741,7 @@ cmd_team_show_item(struct client_state *p, int len,
 static int queue_compile_request(unsigned char const *str, int len,
                                  int run_id, int lang_id, int locale_id,
                                  unsigned char const *sfx,
-                                 char **);
+                                 char **, const unsigned char *);
 
 static void
 move_files_to_insert_run(int run_id)
@@ -1881,7 +1902,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
 
   if (testing_suspended) {
     info("%d: testing is suspended", p->id);
-    run_change_status(run_id, RUN_ACCEPTED, 0, -1);
+    run_change_status(run_id, RUN_PENDING, 0, -1);
     new_send_reply(p, SRV_RPL_OK);
     return;
   }
@@ -1891,7 +1912,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
       || langs[pkt->lang_id]->disable_auto_testing
       || langs[pkt->lang_id]->disable_testing) {
     info("%d: priv_submit_run: auto testing disabled", p->id);
-    run_change_status(run_id, RUN_ACCEPTED, 0, -1);
+    run_change_status(run_id, RUN_PENDING, 0, -1);
     new_send_reply(p, SRV_RPL_OK);
     return;
   }
@@ -1900,7 +1921,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
                             langs[pkt->lang_id]->compile_id,
                             pkt->locale_id,
                             langs[pkt->lang_id]->src_sfx,
-                            langs[pkt->lang_id]->compiler_env) < 0) {
+                            langs[pkt->lang_id]->compiler_env, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -2205,7 +2226,7 @@ cmd_team_submit_run(struct client_state *p, int len,
 
   if (testing_suspended) {
     info("%d: testing is suspended", p->id);
-    run_change_status(run_id, RUN_ACCEPTED, 0, -1);
+    run_change_status(run_id, RUN_PENDING, 0, -1);
     new_send_reply(p, SRV_RPL_OK);
     return;
   }
@@ -2215,7 +2236,7 @@ cmd_team_submit_run(struct client_state *p, int len,
       || langs[pkt->lang_id]->disable_auto_testing
       || langs[pkt->lang_id]->disable_testing) {
     info("%d: team_submit_run: auto testing disabled", p->id);
-    run_change_status(run_id, RUN_ACCEPTED, 0, -1);
+    run_change_status(run_id, RUN_PENDING, 0, -1);
     new_send_reply(p, SRV_RPL_OK);
     return;
   }
@@ -2224,7 +2245,7 @@ cmd_team_submit_run(struct client_state *p, int len,
                             langs[pkt->lang_id]->compile_id,
                             pkt->locale_id,
                             langs[pkt->lang_id]->src_sfx,
-                            langs[pkt->lang_id]->compiler_env) < 0) {
+                            langs[pkt->lang_id]->compiler_env, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -3303,7 +3324,8 @@ cmd_edit_run(struct client_state *p, int len,
 
   // check capabilities
   if (!check_cnts_caps(p->user_id, OPCAP_EDIT_RUN)
-      && (run_flags != RUN_ENTRY_STATUS || run.status != RUN_REJUDGE
+      && (run_flags != RUN_ENTRY_STATUS
+          || (run.status != RUN_REJUDGE && run.status != RUN_FULL_REJUDGE)
           || !check_cnts_caps(p->user_id, OPCAP_REJUDGE_RUN))) {
     err("%d: user %d has no capability to edit run", p->id, p->user_id);
     new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -3311,7 +3333,8 @@ cmd_edit_run(struct client_state *p, int len,
   }
 
   /* refuse to rejudge imported run */
-  if ((run_flags & RUN_ENTRY_STATUS) && run.status == RUN_REJUDGE) {
+  if ((run_flags & RUN_ENTRY_STATUS)
+      && (run.status == RUN_REJUDGE || run.status == RUN_FULL_REJUDGE)) {
     if (cur_run.is_imported) {
       err("%d: refuse to rejudge imported run %d", p->id, pkt->run_id);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -3324,7 +3347,8 @@ cmd_edit_run(struct client_state *p, int len,
     return;
   }
 
-  if ((run_flags & RUN_ENTRY_STATUS) && run.status == RUN_REJUDGE) {
+  if ((run_flags & RUN_ENTRY_STATUS)
+      && (run.status == RUN_REJUDGE || run.status == RUN_FULL_REJUDGE)) {
     rejudge_run(pkt->run_id);
   }
   info("%d: edit_run: ok", p->id);
@@ -3918,13 +3942,18 @@ read_run_packet(char *pname)
     goto bad_packet_error;
   if (run_get_entry(runid, &re) < 0) goto bad_packet_error;
   if (re.status != RUN_RUNNING) goto bad_packet_error;
-  if (status<0 || status>RUN_ACCEPTED || test<0) goto bad_packet_error;
+
+  if (!is_valid_status(status, 2)) goto bad_packet_error;
+  //if (status<0 || status>RUN_ACCEPTED || test<0) goto bad_packet_error;
+
   if (global->score_system_val == SCORE_OLYMPIAD) {
     if (re.problem < 1 || re.problem > max_prob || !probs[re.problem])
       goto bad_packet_error;
   } else if (global->score_system_val == SCORE_KIROV) {
+    /*
     if (status != RUN_PARTIAL && status != RUN_OK
         && status != RUN_CHECK_FAILED) goto bad_packet_error;
+    */
     if (re.problem < 1 || re.problem > max_prob || !probs[re.problem])
       goto bad_packet_error;
     if (score < 0 || score > probs[re.problem]->full_score)
@@ -4019,20 +4048,23 @@ static int
 queue_compile_request(unsigned char const *str, int len,
                       int run_id, int lang_id, int locale_id,
                       unsigned char const *sfx,
-                      char **compiler_env)
+                      char **compiler_env,
+                      unsigned char const *run_block)
 {
   unsigned char *pkt_buf, *ptr;
   unsigned char pkt_name[PACKET_NAME_SIZE];
   path_t run_arch;
-  size_t env_size = 0;
+  size_t env_size = 0, run_block_size = 0;
   int pkt_len, arch_flags, i, env_count = 0;
 
+  if (!run_block) run_block = "";
+  run_block_size = strlen(run_block);
   if (compiler_env) {
     for (env_count = 0; compiler_env[env_count]; env_count++) {
       env_size += strlen(compiler_env[env_count]) + 32;
     }
   }
-  pkt_buf = (unsigned char*) alloca(env_size + 256);
+  pkt_buf = (unsigned char*) alloca(env_size + 256 + run_block_size);
 
   if (!sfx) sfx = "";
   generate_packet_name(run_id, 0, pkt_name);
@@ -4046,7 +4078,7 @@ queue_compile_request(unsigned char const *str, int len,
       ptr += sprintf(ptr, "%zu %s ", strlen(compiler_env[i]), compiler_env[i]);
     }
   }
-  ptr += sprintf(ptr, "%d\n", 0);
+  ptr += sprintf(ptr, "%d %s %d\n", run_block_size, run_block, 0);
   pkt_len = ptr - pkt_buf;
 
   if (len == -1) {
@@ -4087,7 +4119,7 @@ rejudge_run(int run_id)
   queue_compile_request(0, -1, run_id,
                         langs[re.language]->compile_id, re.locale_id,
                         langs[re.language]->src_sfx,
-                        langs[re.language]->compiler_env);
+                        langs[re.language]->compiler_env, 0);
 
   run_change_status(run_id, RUN_COMPILING, 0, -1);
 }
@@ -4179,7 +4211,7 @@ do_judge_suspended(void)
 
   for (r = 0; r < total_runs; r++) {
     if (run_get_entry(r, &re) >= 0
-        && re.status == RUN_ACCEPTED
+        && re.status == RUN_PENDING
         && !re.is_imported
         && re.problem > 0
         && re.problem <= max_prob
