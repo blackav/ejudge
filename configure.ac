@@ -41,11 +41,12 @@ AC_ARG_WITH([reuse-config],AC_HELP_STRING([--with-reuse-config],[specify the con
 AC_ARG_ENABLE([cgi-suffix], AC_HELP_STRING([--enable-cgi-suffix],[append the given suffix to the CGI programs]),[ac_cv_cgi_suffix=$enableval],[ac_cv_cgi_suffix=""])
 AC_ARG_ENABLE([cgi-bin-dir], AC_HELP_STRING([--enable-cgi-bin-dir],[specify the destination CGI script directory [[\${prefix}/cgi-bin]]]),[cgibindir=$enableval], [cgibindir='${prefix}/cgi-bin'])
 AC_ARG_ENABLE([static], AC_HELP_STRING([--enable-static],[link programs statically]),[ac_cv_static=1],[ac_cv_static=""])
-AC_ARG_ENABLE([cgi-conf-path], AC_HELP_STRING([--enable-cgi-conf-path],[specify path to CGI configuration files]),[ac_cv_cgi_conf_path=$enableval],[ac_cv_cgi_conf_path=../cgi-data])
 AC_ARG_ENABLE([nls], AC_HELP_STRING([--disable-nls],[disable localization]),[ac_cv_nls=$enableval],[ac_cv_nls=""])
-AC_ARG_ENABLE([ejudge-xml],AC_HELP_STRING([--enable-ejudge-xml],[specify the default location of ejudge.xml]),[ac_cv_default_ejudge_xml="$enableval"],[ac_cv_default_ejudge_xml=""])
-AC_ARG_ENABLE([charset],AC_HELP_STRING([--enable-charset],[specify the default charset]),[ac_cv_default_charset="$enableval"],[ac_cv_default_charset=""])
+AC_ARG_ENABLE([charset],AC_HELP_STRING([--enable-charset],[specify the default charset]),[ac_cv_charset="$enableval"],[ac_cv_charset=""])
 AC_ARG_ENABLE([socket-path],AC_HELP_STRING([--enable-socket-path],[specify the default userlist-server socket path]),[ac_cv_socket_path="$enableval"],[ac_cv_socket_path=""])
+AC_ARG_ENABLE([conf-dir], AC_HELP_STRING([--enable-conf-dir=CONF-DIR],[specify the ejudge configuration directory]),[ac_cv_conf_dir="$enableval"],[ac_cv_conf_dir=""])
+AC_ARG_ENABLE([cgi-conf-dir], AC_HELP_STRING([--enable-cgi-conf-dir],[specify path to CGI configuration files]),[ac_cv_cgi_conf_dir="$enableval"],[ac_cv_cgi_conf_dir=""])
+AC_ARG_ENABLE([ejudge-xml],AC_HELP_STRING([--enable-ejudge-xml],[specify the default location of ejudge.xml]),[ac_cv_ejudge_xml="$enableval"],[ac_cv_ejudge_xml=""])
 AC_ARG_ENABLE([contests-dir],AC_HELP_STRING([--enable-contests-dir],[specify the default path to the contest configuration directory]),[ac_cv_contests_dir="$enableval"],[ac_cv_contests_dir=""])
 
 dnl Expat checking stuff
@@ -379,10 +380,31 @@ ac_cv_ejudge_serve_path="${actual_prefix}/bin/serve"
 ac_cv_ejudge_run_path="${actual_prefix}/bin/run"
 ac_cv_ejudge_script_dir="${actual_prefix}/libexec/ejudge"
 
-[[ x"${ac_cv_default_ejudge_xml}" = xyes -o x"${ac_cv_default_ejudge_xml}" = xno ]] && ac_cv_default_ejudge_xml=""
-[[ x"${ac_cv_default_charset}" = xyes -o x"${ac_cv_default_charset}" = xno ]] && ac_cv_default_charset=""
+[[ x"${ac_cv_charset}" = xyes -o x"${ac_cv_charset}" = xno ]] && ac_cv_charset=""
 [[ x"${ac_cv_socket_path}" = xyes -o x"${ac_cv_socket_path}" = xno ]] && ac_cv_socket_path=""
+
+[[ x"${ac_cv_conf_dir}" = xyes -o x"${ac_cv_conf_dir}" = xno ]] && ac_cv_conf_dir=""
+if [[ x"${ac_cv_conf_dir}" != x ]]
+then
+# ac_cv_cgi_conf_dir
+[[ x"${ac_cv_cgi_conf_dir}" = x -o x"${ac_cv_cgi_conf_dir}" = xyes ]] && ac_cv_cgi_conf_dir="${ac_cv_conf_dir}"
+[[ x"${ac_cv_cgi_conf_dir}" = xno ]] && ac_cv_cgi_conf_dir=""
+# ac_cv_ejudge_xml
+[[ x"${ac_cv_ejudge_xml}" = x -o x"${ac_cv_ejudge_xml}" = xyes ]] && ac_cv_ejudge_xml="${ac_cv_conf_dir}/ejudge.xml"
+[[ x"${ac_cv_ejudge_xml}" = xno ]] && ac_cv_ejudge_xml=""
+# ac_cv_contests_dir
+[[ x"${ac_cv_contests_dir}" = x -o x"${ac_cv_contests_dir}" = xyes ]] && ac_cv_contests_dir="${ac_cv_conf_dir}/contests"
+[[ x"${ac_cv_contests_dir}" = xno ]] && ac_cv_contests_dir=""
+else
+# ac_cv_cgi_conf_dir
+[[ x"${ac_cv_cgi_conf_dir}" = x -o x"${ac_cv_cgi_conf_dir}" = xyes ]] && ac_cv_cgi_conf_dir="../cgi-data"
+[[ x"${ac_cv_cgi_conf_dir}" = xno ]] && ac_cv_cgi_conf_dir=""
+# ac_cv_ejudge_xml
+[[ x"${ac_cv_ejudge_xml}" = xyes -o x"${ac_cv_ejudge_xml}" = xno ]] && ac_cv_ejudge_xml=""
+# ac_cv_contests_dir
 [[ x"${ac_cv_contests_dir}" = xyes -o x"${ac_cv_contests_dir}" = xno ]] && ac_cv_contests_dir=""
+fi
+
 
 dnl Output generation
 
@@ -398,7 +420,7 @@ AC_SUBST(ac_cv_libcap_include_opt)
 AC_SUBST(ac_cv_libcap_lib_opt)
 AC_SUBST(ac_cv_cgi_suffix)
 AC_SUBST(ac_cv_static)
-AC_SUBST(ac_cv_cgi_conf_path)
+AC_SUBST(ac_cv_cgi_conf_dir)
 AC_SUBST(ac_cv_no_kernel)
 AC_SUBST(ac_cv_nls)
 AC_SUBST(cgibindir)
@@ -410,26 +432,33 @@ then
   AC_DEFINE(CONF_HAS_LIBINTL,1)
 fi
 AC_DEFINE_UNQUOTED(CGI_PROG_SUFFIX,"$ac_cv_cgi_suffix")
-AC_DEFINE_UNQUOTED(CGI_DATA_PATH,"$ac_cv_cgi_conf_path")
-AC_DEFINE_UNQUOTED(EJUDGE_LOCALE_DIR,"$ac_cv_expanded_locale_dir")
-if [[ x"${ac_cv_default_ejudge_xml}" != x ]]
+if [[ x"${ac_cv_conf_dir}" != x ]]
 then
-  AC_DEFINE_UNQUOTED(EJUDGE_XML_PATH,"${ac_cv_default_ejudge_xml}")
+  AC_DEFINE_UNQUOTED(EJUDGE_CONF_DIR,"${ac_cv_conf_dir}")
 fi
-AC_DEFINE_UNQUOTED(EJUDGE_SERVE_PATH,"${ac_cv_ejudge_serve_path}")
-AC_DEFINE_UNQUOTED(EJUDGE_RUN_PATH,"${ac_cv_ejudge_run_path}")
-AC_DEFINE_UNQUOTED(EJUDGE_SCRIPT_DIR,"${ac_cv_ejudge_script_dir}")
-if [[ x"${ac_cv_default_charset}" != x ]]
+if [[ x"${ac_cv_cgi_conf_dir}" != x ]]
 then
-  AC_DEFINE_UNQUOTED(EJUDGE_CHARSET,"${ac_cv_default_charset}")
+  AC_DEFINE_UNQUOTED(CGI_DATA_PATH,"$ac_cv_cgi_conf_dir")
 fi
-if [[ x"${ac_cv_socket_path}" != x ]]
+if [[ x"${ac_cv_ejudge_xml}" != x ]]
 then
-  AC_DEFINE_UNQUOTED(EJUDGE_SOCKET_PATH,"${ac_cv_socket_path}")
+  AC_DEFINE_UNQUOTED(EJUDGE_XML_PATH,"${ac_cv_ejudge_xml}")
 fi
 if [[ x"${ac_cv_contests_dir}" != x ]]
 then
   AC_DEFINE_UNQUOTED(EJUDGE_CONTESTS_DIR,"${ac_cv_contests_dir}")
+fi
+AC_DEFINE_UNQUOTED(EJUDGE_LOCALE_DIR,"$ac_cv_expanded_locale_dir")
+AC_DEFINE_UNQUOTED(EJUDGE_SERVE_PATH,"${ac_cv_ejudge_serve_path}")
+AC_DEFINE_UNQUOTED(EJUDGE_RUN_PATH,"${ac_cv_ejudge_run_path}")
+AC_DEFINE_UNQUOTED(EJUDGE_SCRIPT_DIR,"${ac_cv_ejudge_script_dir}")
+if [[ x"${ac_cv_charset}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_CHARSET,"${ac_cv_charset}")
+fi
+if [[ x"${ac_cv_socket_path}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_SOCKET_PATH,"${ac_cv_socket_path}")
 fi
 AC_CONFIG_HEADERS([config.h])
 AC_OUTPUT(Makefile extra/Makefile checkers/Makefile scripts/Makefile)
