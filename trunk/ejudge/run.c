@@ -22,6 +22,8 @@
 #include "cr_serialize.h"
 #include "testinfo.h"
 #include "interrupt.h"
+#include "run_packet.h"
+#include "curtime.h"
 
 #include "fileutl.h"
 #include "misctext.h"
@@ -234,8 +236,44 @@ print_by_line(FILE *f, char const *s, size_t size)
   putc('\n', f);
 }
 
+static unsigned char *
+time_to_str(unsigned char *buf, size_t size, int secs, int usecs)
+{
+  struct tm *ltm;
+  time_t tt = secs;
+
+  if (secs <= 0) {
+    snprintf(buf, size, "N/A");
+    return buf;
+  }
+  ltm = localtime(&tt);
+  snprintf(buf, size, "%04d/%02d/%02d %02d:%02d:%02d.%06d",
+           ltm->tm_year + 1900, ltm->tm_mon + 1, ltm->tm_mday,
+           ltm->tm_hour, ltm->tm_min, ltm->tm_sec, usecs);
+  return buf;
+}
+static unsigned char *
+dur_to_str(unsigned char *buf, size_t size, int sec1, int usec1,
+           int sec2, int usec2)
+{
+  long long d;
+
+  if (sec1 <= 0 || sec2 <= 0) {
+    snprintf(buf, size, "N/A");
+    return buf;
+  }
+  if ((d = sec2 * 1000000 + usec2 - (sec1 * 1000000 + usec1)) < 0) {
+    snprintf(buf, size, "t1 > t2");
+    return buf;
+  }
+  d = (d + 500) / 1000;
+  snprintf(buf, size, "%lld.%03lld", d / 1000, d % 1000);
+  return buf;
+}
+
 static int
-generate_report(int score_system_val,
+generate_report(struct run_reply_packet *reply_pkt,
+                int score_system_val,
                 int accept_testing,
                 char *report_path, int scores,
                 int max_score, int html_flag)
@@ -252,6 +290,7 @@ generate_report(int score_system_val,
   unsigned char res_buf[64];
   unsigned char link_buf[64];
   unsigned char *msg = 0;
+  unsigned char time_buf[64];
 
   if (!(f = fopen(report_path, "w"))) {
     err("generate_report: cannot open protocol file %s", report_path);
@@ -330,6 +369,44 @@ generate_report(int score_system_val,
             i, tests[i].code, (double) tests[i].times / 1000,
             score_buf, res_buf, link_buf);
   }
+  fprintf(f, "\n");
+
+  /* print timing information */
+  fprintf(f, "Profiling information:\n");
+  fprintf(f, "  Request start time:                %s\n",
+          time_to_str(time_buf, sizeof(time_buf),
+                      reply_pkt->ts1, reply_pkt->ts1_us));
+  fprintf(f, "  Report generation time:            %s\n",
+          time_to_str(time_buf, sizeof(time_buf),
+                      reply_pkt->ts7, reply_pkt->ts7_us));
+  fprintf(f, "  Total testing duration:            %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts1, reply_pkt->ts1_us,
+                     reply_pkt->ts7, reply_pkt->ts7_us));
+  fprintf(f, "  Waiting in compile queue duration: %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts1, reply_pkt->ts1_us,
+                     reply_pkt->ts2, reply_pkt->ts2_us));
+  fprintf(f, "  Compilation duration:              %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts2, reply_pkt->ts2_us,
+                     reply_pkt->ts3, reply_pkt->ts3_us));
+  fprintf(f, "  Waiting in serve queue duration:   %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts3, reply_pkt->ts3_us,
+                     reply_pkt->ts4, reply_pkt->ts4_us));
+  fprintf(f, "  Waiting in run queue duration:     %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts4, reply_pkt->ts4_us,
+                     reply_pkt->ts5, reply_pkt->ts5_us));
+  fprintf(f, "  Testing duration:                  %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts5, reply_pkt->ts5_us,
+                     reply_pkt->ts6, reply_pkt->ts6_us));
+  fprintf(f, "  Post-processing duration:          %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts6, reply_pkt->ts6_us,
+                     reply_pkt->ts7, reply_pkt->ts7_us));
   fprintf(f, "\n");
 
   i = total_tests - 1;
@@ -520,6 +597,8 @@ read_error_code(char const *path)
 
 static int
 run_tests(struct section_tester_data *tst,
+          struct run_request_packet *req_pkt,
+          struct run_reply_packet *reply_pkt,
           int locale_id,
           int team_enable_rep_view,
           int report_error_code,
@@ -530,7 +609,6 @@ run_tests(struct section_tester_data *tst,
           int html_report_flag,
           char const *new_name,
           char const *new_base,
-          char *reply_string,               /* buffer where reply is formed */
           char *report_path,                /* path to the report */
           char *team_report_path,           /* path to the team report */
           const unsigned char *user_spelling,
@@ -1075,7 +1153,10 @@ run_tests(struct section_tester_data *tst,
         failed_test = cur_test;
       }
     }
-    sprintf(reply_string, "%d %d -1\n", status, failed_test);
+    reply_pkt->status = status;
+    reply_pkt->failed_test = failed_test;
+    reply_pkt->score = -1;
+    get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
   } else if (score_system_val == SCORE_KIROV
              || score_system_val == SCORE_OLYMPIAD) {
     int jj, retcode = RUN_OK;
@@ -1125,23 +1206,20 @@ run_tests(struct section_tester_data *tst,
 
     if (!total_failed_tests) score = prb->full_score;
 
-    /* ATTENTION: number of passed test returned is greater than actual by 1 */
-    sprintf(reply_string, "%d %d %d\n",
-            retcode,
-            total_tests - total_failed_tests,
-            score);
+    /* ATTENTION: number of passed test returned is greater than actual by 1,
+     * and it is returned in the `failed_test' field
+     */
+    reply_pkt->status = retcode;
+    reply_pkt->failed_test = total_tests - total_failed_tests;
+    reply_pkt->score = score;
+    get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
 
-    if (global->sound_player[0] && global->extended_sound) {
+    if (global->sound_player[0] && global->extended_sound && !req_pkt->disable_sound) {
       unsigned char b1[64], b2[64], b3[64];
 
       snprintf(b1, sizeof(b1), "%d", retcode);
       snprintf(b2, sizeof(b2), "%d", total_tests - total_failed_tests - 1);
       snprintf(b3, sizeof(b3), "%d", score);
-
-      /*
-      fprintf(stderr, ">>%s %s %s %s %s\n", global->sound_player,
-              b1, b2, user_spelling, problem_spelling);
-      */
 
       tsk = task_New();
       task_AddArg(tsk, global->sound_player);
@@ -1157,18 +1235,16 @@ run_tests(struct section_tester_data *tst,
       tsk = 0;
     }
   } else {
-    sprintf(reply_string, "%d %d -1\n", status, failed_test);
+    reply_pkt->status = status;
+    reply_pkt->failed_test = failed_test;
+    reply_pkt->score = -1;
+    get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
 
-    if (global->sound_player[0] && global->extended_sound) {
+    if (global->sound_player[0] && global->extended_sound && !req_pkt->disable_sound) {
       unsigned char b1[64], b2[64];
 
       snprintf(b1, sizeof(b1), "%d", status);
       snprintf(b2, sizeof(b2), "%d", failed_test);
-
-      /*
-      fprintf(stderr, ">>%s %s %s %s %s\n", global->sound_player,
-              b1, b2, user_spelling, problem_spelling);
-      */
 
       tsk = task_New();
       task_AddArg(tsk, global->sound_player);
@@ -1181,28 +1257,18 @@ run_tests(struct section_tester_data *tst,
       task_Wait(tsk);
       task_Delete(tsk);
       tsk = 0;
-    } else {
+    } else if (global->sound_player[0] && !req_pkt->disable_sound) {
       // play funny sound
       sound = 0;
-      if (status == RUN_TIME_LIMIT_ERR
-          && global->sound_player[0] && global->timelimit_sound[0]) {
-        sound = global->timelimit_sound;
-      } else if (status == RUN_RUN_TIME_ERR
-                 && global->sound_player[0] && global->runtime_sound[0]) {
-        sound = global->runtime_sound;
-      } else if (status == RUN_CHECK_FAILED && global->sound_player[0]
-                 && global->internal_sound[0]) {
-        sound = global->internal_sound;
-      } else if (status == RUN_PRESENTATION_ERR
-                 && global->sound_player[0] && global->presentation_sound[0]) {
-        sound = global->presentation_sound;
-      } else if (status == RUN_WRONG_ANSWER_ERR
-                 && global->sound_player[0] && global->wrong_sound[0]) {
-        sound = global->wrong_sound;
-      } else if (status == RUN_OK
-                 && global->sound_player[0] && global->accept_sound[0]) {
-        sound = global->accept_sound;
+      switch (status) {
+      case RUN_TIME_LIMIT_ERR:   sound = global->timelimit_sound;    break;
+      case RUN_RUN_TIME_ERR:     sound = global->runtime_sound;      break;
+      case RUN_CHECK_FAILED:     sound = global->internal_sound;     break;
+      case RUN_PRESENTATION_ERR: sound = global->presentation_sound; break;
+      case RUN_WRONG_ANSWER_ERR: sound = global->wrong_sound;        break;
+      case RUN_OK:               sound = global->accept_sound;       break;
       }
+      if (sound && !*sound) sound = 0;
 
       if (sound) {
         tsk = task_New();
@@ -1217,6 +1283,8 @@ run_tests(struct section_tester_data *tst,
     }
   }
 
+  get_current_time(&reply_pkt->ts7, &reply_pkt->ts7_us);
+
   if (team_enable_rep_view) {
     setup_locale(locale_id);
     generate_team_report(score_system_val, accept_testing,
@@ -1224,13 +1292,16 @@ run_tests(struct section_tester_data *tst,
                          team_report_path, score, prb->full_score);
     setup_locale(0);
   }
-  generate_report(score_system_val, accept_testing,
+  generate_report(reply_pkt, score_system_val, accept_testing,
                   report_path, score, prb->full_score, html_report_flag);
 
   goto _cleanup;
 
  _internal_execution_error:
-  sprintf(reply_string, "%d 0 -1\n", RUN_CHECK_FAILED);
+  reply_pkt->status = RUN_CHECK_FAILED;
+  reply_pkt->failed_test = 0;
+  reply_pkt->score = -1;
+  get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
   goto _cleanup;
 
  _cleanup:
@@ -1251,124 +1322,6 @@ run_tests(struct section_tester_data *tst,
   return 0;
 }
 
-struct run_packet_bin
-{
-  int contest_id;
-  int run_id;
-  int problem_id;
-  int accept_testing;
-  int locale_id;
-  int score_system;
-  int team_enable_rep_view;
-  int report_error_code;
-  int variant;
-  int accept_partial;
-  int user_id;
-  int html_report_flag;
-  unsigned char exe_sfx[64];
-  unsigned char arch[64];
-  unsigned char user_spelling[128];
-  unsigned char problem_spelling[128];
-};
-
-static int
-parse_packet(const unsigned char *buf,
-             struct run_packet_bin *pkt)
-{
-  int n = 0, v;
-  const unsigned char *p = buf, *ep;
-  int exe_sfx_len, arch_len, buf_len, us_len, ps_len;
-
-  buf_len = strlen(buf);
-  ep = buf + buf_len;
-
-  ASSERT(pkt);
-  XMEMZERO(pkt, 1);
-
-  if (sscanf(buf, "%d%n", &pkt->contest_id, &n) == 1 && !buf[n]
-      && pkt->contest_id == -1)
-    return 0;
-  n = 0;
-  if (sscanf(buf, "%d%d%d%d%d%d%d%d%d%d%d%d%n",
-             &pkt->contest_id,
-             &pkt->run_id,
-             &pkt->problem_id,
-             &pkt->accept_testing,
-             &pkt->locale_id,
-             &pkt->score_system,
-             &pkt->team_enable_rep_view,
-             &pkt->report_error_code,
-             &pkt->variant,
-             &pkt->accept_partial,
-             &pkt->user_id,
-             &pkt->html_report_flag,
-             &n) != 12) {
-    return -1;
-  }
-
-  if (pkt->contest_id <= 0) return -1;
-  if (pkt->run_id < 0) return -1;
-  if (pkt->problem_id <= 0 || pkt->problem_id > max_prob) return -1;
-  if (!probs[pkt->problem_id] || probs[pkt->problem_id]->disable_testing)
-    return -1;
-  if (pkt->accept_testing < 0 || pkt->accept_testing > 1) return -1;
-  if (pkt->accept_testing < 0 || pkt->accept_testing > 1) return -1;
-  if (pkt->accept_partial < 0 || pkt->accept_partial > 1) return -1;
-  if (pkt->score_system < SCORE_ACM || pkt->score_system > SCORE_OLYMPIAD)
-    return -1;
-  if (pkt->team_enable_rep_view < 0 || pkt->team_enable_rep_view > 1)
-    return -1;
-  if (pkt->report_error_code < 0 || pkt->report_error_code > 1) return -1;
-  if (pkt->locale_id < 0 || pkt->locale_id > 1024) return -1;
-  if (pkt->user_id <= 0) return -1;
-  if (pkt->html_report_flag < 0 || pkt->html_report_flag > 1) return -1;
-
-  p += n;
-  n = 0;
-  if (sscanf(p, "%d%n", &exe_sfx_len, &n) != 1)
-    return -1;
-  p += n;
-  if (*p++ != ' ') return -1;
-  if (exe_sfx_len < 0 || p + exe_sfx_len > ep 
-      || exe_sfx_len >= sizeof(pkt->exe_sfx))
-    return -1;
-  memcpy(pkt->exe_sfx, p, exe_sfx_len);
-  p += exe_sfx_len;
-
-  n = 0;
-  if (sscanf(p, "%d%n", &arch_len, &n) != 1)
-    return -1;
-  p += n;
-  if (*p++ != ' ') return -1;
-  if (arch_len < 0 || p + arch_len > ep 
-      || arch_len >= sizeof(pkt->arch))
-    return -1;
-  memcpy(pkt->arch, p, arch_len);
-  p += arch_len;
-
-  n = 0;
-  if (sscanf(p, "%d%n", &us_len, &n) != 1) return -1;
-  p += n;
-  if (*p++ != ' ') return -1;
-  if (us_len < 0 || p + us_len > ep || us_len >= sizeof(pkt->user_spelling))
-    return -1;
-  memcpy(pkt->user_spelling, p, us_len);
-  p += us_len;
-
-  n = 0;
-  if (sscanf(p, "%d%n", &ps_len, &n) != 1) return -1;
-  p += n;
-  if (*p++ != ' ') return -1;
-  if (ps_len < 0 || p + ps_len > ep || ps_len >= sizeof(pkt->problem_spelling))
-    return -1;
-  memcpy(pkt->problem_spelling, p, ps_len);
-  p += ps_len;
-
-  n = 0;
-  if (sscanf(p, "%d%n", &v, &n) != 1 || v || p[n]) return -1;
-  return 1;
-}
-
 static int
 do_loop(void)
 {
@@ -1384,18 +1337,19 @@ do_loop(void)
   path_t full_team_report_dir;
   path_t full_status_dir;
 
-  char   status_string[64];
-
-  char   pkt_buf[512];
-  char  *pkt_ptr;
-  int    rsize;
-  struct run_packet_bin pkt;
-
   char   exe_name[64];
   int    tester_id;
-  int    n;
   struct section_tester_data tn, *tst;
   int got_quit_packet = 0;
+
+  void *req_buf = 0;
+  size_t req_buf_size = 0;
+  struct run_request_packet *req_pkt = 0;
+  struct section_problem_data *cur_prob = 0;
+  struct run_reply_packet reply_pkt;
+  void *reply_pkt_buf = 0;
+  size_t reply_pkt_buf_size = 0;
+  unsigned char errmsg[512];
 
   memset(&tn, 0, sizeof(tn));
 
@@ -1429,75 +1383,103 @@ do_loop(void)
     }
 
     last_activity_time = time(0);
-    memset(pkt_buf, 0, sizeof(pkt_buf));
-    pkt_ptr = pkt_buf;
-    r = generic_read_file(&pkt_ptr, sizeof(pkt_buf), &rsize, SAFE | REMOVE,
+
+    req_pkt = run_request_packet_free(req_pkt);
+    xfree(req_buf), req_buf = 0;
+    req_buf_size = 0;
+
+    r = generic_read_file((char**) &req_buf, 0, &req_buf_size, SAFE | REMOVE,
                           global->run_queue_dir, pkt_name, "");
     if (r == 0) continue;
     if (r < 0) return -1;
- 
-    chop(pkt_buf);
-    info("run packet: <%s>", pkt_buf);
 
-    n = parse_packet(pkt_buf, &pkt);
-    if (managed_mode_flag && !n) {
+    if (run_request_packet_read(req_buf_size, req_buf, &req_pkt) < 0) {
+      /* the request packet is broken. ignore it */
+      continue;
+    }
+    if (managed_mode_flag && req_pkt->contest_id == -1) {
       got_quit_packet = 1;
       info("got force quit run packet");
       continue;
     }
 
-    if (n != 1) {
-      err("bad packet");
-      continue;
+    if (req_pkt->problem_id > max_prob || !probs[req_pkt->problem_id]) {
+      snprintf(errmsg, sizeof(errmsg),
+               "problem %d is unknown to the run program\n",
+               req_pkt->problem_id);
+      goto report_check_failed_and_continue;
+    }
+    cur_prob = probs[req_pkt->problem_id];
+    if (cur_prob->variant_num <= 0 && req_pkt->variant != 0) {
+      snprintf(errmsg, sizeof(errmsg),
+               "problem %d has no variants, but one was specified\n",
+               req_pkt->problem_id);
+      goto report_check_failed_and_continue;
+    }
+    if (cur_prob->variant_num > 0
+        &&(req_pkt->variant <= 0 || req_pkt->variant > cur_prob->variant_num)) {
+      snprintf(errmsg, sizeof(errmsg),
+               "problem %d has variants, but no variant was specified\n",
+               req_pkt->problem_id);
+      goto report_check_failed_and_continue;
+    }
+    if (!(tester_id = find_tester(req_pkt->problem_id, req_pkt->arch))) {
+      snprintf(errmsg, sizeof(errmsg),
+               "no tester found for %d, %s\n",
+               req_pkt->problem_id, req_pkt->arch);
+      goto report_check_failed_and_continue;
     }
 
-    if (probs[pkt.problem_id]->variant_num <= 0 && pkt.variant != 0) {
-      err("bad packet");
-      continue;
-    }
-    if (probs[pkt.problem_id]->variant_num > 0
-        && (pkt.variant <= 0
-            || pkt.variant > probs[pkt.problem_id]->variant_num)) {
-      err("bad packet");
-      continue;
-    }
-
-    if (!(tester_id = find_tester(pkt.problem_id, pkt.arch))) {
-      err("no tester for pair %d,%s", pkt.problem_id, pkt.arch);
-      continue;
-    }
-    info("fount tester %d for pair %d,%s", tester_id, pkt.problem_id,pkt.arch);
+    info("fount tester %d for pair %d,%s", tester_id,req_pkt->problem_id,req_pkt->arch);
     tst = testers[tester_id];
     if (tst->any) {
       info("tester %d is a default tester", tester_id);
-      r = prepare_tester_refinement(&tn, tester_id, pkt.problem_id);
+      r = prepare_tester_refinement(&tn, tester_id, req_pkt->problem_id);
       ASSERT(r >= 0);
       tst = &tn;
     }
 
-    snprintf(exe_pkt_name, sizeof(exe_pkt_name), "%s%s",
-             pkt_name,  pkt.exe_sfx);
-    snprintf(run_base, sizeof(run_base), "%06d", pkt.run_id);
-    snprintf(exe_name, sizeof(exe_name), "%s%s",
-             run_base, pkt.exe_sfx);
+    snprintf(exe_pkt_name, sizeof(exe_pkt_name), "%s%s", pkt_name, req_pkt->exe_sfx);
+    snprintf(run_base, sizeof(run_base), "%06d", req_pkt->run_id);
+    snprintf(exe_name, sizeof(exe_name), "%s%s", run_base, req_pkt->exe_sfx);
 
     r = generic_copy_file(REMOVE, global->run_exe_dir, exe_pkt_name, "",
                           0, global->run_work_dir, exe_name, "");
-    if (r <= 0) continue;
+    if (r <= 0) {
+      snprintf(errmsg, sizeof(errmsg),
+               "failed to copy executable file %s/%s\n",
+               global->run_exe_dir, exe_pkt_name);
+      goto report_check_failed_and_continue;
+    }
 
     report_path[0] = 0;
     /* team report might be not produced */
     team_report_path[0] = 0;
 
+    /* start filling run_reply_packet */
+    memset(&reply_pkt, 0, sizeof(reply_pkt));
+    reply_pkt.judge_id = req_pkt->judge_id;
+    reply_pkt.contest_id = req_pkt->contest_id;
+    reply_pkt.run_id = req_pkt->run_id;
+    reply_pkt.ts1 = req_pkt->ts1;
+    reply_pkt.ts1_us = req_pkt->ts1_us;
+    reply_pkt.ts2 = req_pkt->ts2;
+    reply_pkt.ts2_us = req_pkt->ts2_us;
+    reply_pkt.ts3 = req_pkt->ts3;
+    reply_pkt.ts3_us = req_pkt->ts3_us;
+    reply_pkt.ts4 = req_pkt->ts4;
+    reply_pkt.ts4_us = req_pkt->ts4_us;
+    get_current_time(&reply_pkt.ts5, &reply_pkt.ts5_us);
+
     if (cr_serialize_lock() < 0) return -1;
-    if (run_tests(tst, pkt.locale_id,
-                  pkt.team_enable_rep_view, pkt.report_error_code,
-                  pkt.score_system, pkt.accept_testing, pkt.accept_partial,
-                  pkt.variant, pkt.html_report_flag,
+    if (run_tests(tst, req_pkt, &reply_pkt, req_pkt->locale_id,
+                  req_pkt->team_enable_rep_view, req_pkt->report_error_code,
+                  req_pkt->scoring_system, req_pkt->accepting_mode,
+                  req_pkt->accept_partial,
+                  req_pkt->variant, req_pkt->html_report,
                   exe_name, run_base,
-                  status_string, report_path,
-                  team_report_path,
-                  pkt.user_spelling, pkt.problem_spelling) < 0) {
+                  report_path, team_report_path,
+                  req_pkt->user_spelling, req_pkt->prob_spelling) < 0) {
       cr_serialize_unlock();
       return -1;
     }
@@ -1508,11 +1490,11 @@ do_loop(void)
     }
 
     snprintf(full_report_dir, sizeof(full_report_dir),
-             "%s/%04d/report", global->run_dir, pkt.contest_id);
+             "%s/%04d/report", global->run_dir, req_pkt->contest_id);
     snprintf(full_team_report_dir, sizeof(full_team_report_dir),
-             "%s/%04d/teamreport", global->run_dir, pkt.contest_id);
+             "%s/%04d/teamreport", global->run_dir, req_pkt->contest_id);
     snprintf(full_status_dir, sizeof(full_status_dir),
-             "%s/%04d/status", global->run_dir, pkt.contest_id);
+             "%s/%04d/status", global->run_dir, req_pkt->contest_id);
              
     if (generic_copy_file(0, NULL, report_path, "",
                           0, full_report_dir, run_base, "") < 0)
@@ -1522,9 +1504,62 @@ do_loop(void)
                              0, full_team_report_dir,
                              run_base, "") < 0)
       return -1;
-    if (generic_write_file(status_string, strlen(status_string), SAFE,
-                           full_status_dir, run_base, "") < 0)
+    
+    if (run_reply_packet_write(&reply_pkt, &reply_pkt_buf_size,
+                               &reply_pkt_buf) < 0) {
+      /* FIXME: do something, if this is possible.
+       * However, unability to generate a reply packet only
+       * means that invalid data passed, which should be reported
+       * immediately as internal error!
+       */
+      abort();
+    }
+    if (generic_write_file(reply_pkt_buf, reply_pkt_buf_size, SAFE,
+                           full_status_dir, run_base, "") < 0) {
+      xfree(reply_pkt_buf);
+      reply_pkt_buf = 0;
       return -1;
+    }
+    xfree(reply_pkt_buf);
+    reply_pkt_buf = 0;
+    clear_directory(global->run_work_dir);
+    continue;
+
+  report_check_failed_and_continue:;
+    memset(&reply_pkt, 0, sizeof(reply_pkt));
+    reply_pkt.judge_id = req_pkt->judge_id;
+    reply_pkt.contest_id = req_pkt->contest_id;
+    reply_pkt.run_id = req_pkt->run_id;
+    reply_pkt.ts1 = req_pkt->ts1;
+    reply_pkt.ts1_us = req_pkt->ts1_us;
+    reply_pkt.ts2 = req_pkt->ts2;
+    reply_pkt.ts2_us = req_pkt->ts2_us;
+    reply_pkt.ts3 = req_pkt->ts3;
+    reply_pkt.ts3_us = req_pkt->ts3_us;
+    reply_pkt.ts4 = req_pkt->ts4;
+    reply_pkt.ts4_us = req_pkt->ts4_us;
+    get_current_time(&reply_pkt.ts5, &reply_pkt.ts5_us);
+    reply_pkt.ts6 = reply_pkt.ts5;
+    reply_pkt.ts6_us = reply_pkt.ts5_us;
+    reply_pkt.ts7 = reply_pkt.ts5;
+    reply_pkt.ts7_us = reply_pkt.ts5_us;
+    reply_pkt.status = RUN_CHECK_FAILED;
+    reply_pkt.failed_test = 0;
+    reply_pkt.score = -1;
+
+    if (run_reply_packet_write(&reply_pkt, &reply_pkt_buf_size,
+                               &reply_pkt_buf) < 0) {
+      // oops :(
+      abort();
+    }
+
+    if (generic_write_file(errmsg, strlen(errmsg), 0,
+                           full_report_dir, run_base, "") < 0
+        || generic_write_file(reply_pkt_buf, reply_pkt_buf_size, SAFE,
+                              full_status_dir, run_base, "") < 0) {
+      err("error writing check failed packet");
+    }
+
     clear_directory(global->run_work_dir);
   }
 
