@@ -1,5 +1,12 @@
 #!/bin/bash
+# $Id$
+# Copyright (c) 2003 Alexander Chernov
+
 # Arguments: $1 - input file, $2 - output file
+
+# This script is not used.
+# For the actual program to compile Borland Pascal programs
+# refer to ../extra/bcpemu2.c.
 
 emuwork=/home/judges/dosemu/run
 rm -f $emuwork/*

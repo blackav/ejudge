@@ -1,7 +1,8 @@
 #!/bin/sh
-
 # $Id$
-# This is a 'compilation' script for the Perl language.
+# Copyright (c) 2003 Alexander Chernov
+
+# This is a `compilation' script for the Perl language.
 # The idea is to append "#!/usr/bin/perl -W" string
 # to the beginning of the file.
 # Usage: perl <input> <output>

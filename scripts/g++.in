@@ -1,4 +1,15 @@
 #!/bin/sh
+# $Id$
+# Copyright (c) 2001-2003 Alexander Chernov
 
-PATH=/usr/upd/gcc-3.2/bin:${PATH}
-exec g++ -Wall -static -s -O2 $1 -o $2 -lm
+# If GNU Compiler Collection is installed at non-standard place
+# GCCDIR=/usr/upd/gcc-3.3.2
+
+GCCRUN=g++
+if [ "${GCCDIR}" != "" ]
+then
+    PATH=${GCCDIR}/bin:${PATH}
+    GCCRUN=${GCCDIR}/bin/${GCCRUN}
+fi
+
+exec ${GCCRUN} -Wall -static -s -O2 $1 -o $2 -lm

@@ -1,4 +1,15 @@
 #!/bin/sh
+# $Id$
+# Copyright (c) 2001-2003 Alexander Chernov
 
-PATH=/usr/local/pkg/gpc-2.1/bin:$PATH
-exec gpc -static -s -O2 $1 -o $2
+# If GNU Pascal Compiler is installed at non-standard place
+GPCDIR=/usr/local/pkg/gpc-2.1
+
+GPCRUN=gpc
+if [ "${GPCDIR}" != "" ]
+then
+    PATH=${GPCDIR}/bin:${PATH}
+    GPCRUN=${GPCDIR}/bin/${GPCRUN}
+fi
+
+exec ${GPCRUN} -static -s -O2 $1 -o $2
