@@ -646,7 +646,7 @@ main(int argc, char *argv[])
   int   i = 1;
   char *key = 0;
   int   p_flags = 0, code = 0;
-  path_t cpp_opts;
+  path_t cpp_opts = { 0 };
 
   if (argc == 1) goto print_usage;
   code = 1;
