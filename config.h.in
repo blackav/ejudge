@@ -55,6 +55,9 @@
 /* whether kernel patch is ok */
 #undef CONF_HAS_LIBCAP
 
+/* terminal controlling facilities */
+#undef HAVE_TERMIOS_H
+
 /* path to the web server cgi-bin dir */
 #undef EJUDGE_HTTPD_CGI_BIN_DIR
 
