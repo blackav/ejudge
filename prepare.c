@@ -821,7 +821,7 @@ prepare(char const *config_file, int flags, int mode, char const *opts)
     /* invoke a preprocessor. */
     /* FIXME: check for preprocessor invokation variants? */
     /* FIXME: use task_New, etc...? */
-    pathcpy(cmd, "gcc -E ");
+    pathcpy(cmd, "cpp ");
     pathcat(cmd, opts);
     pathcat(cmd, " ");
     pathcat(cmd, config_file);
