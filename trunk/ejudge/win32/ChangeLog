@@ -1,3 +1,18 @@
+2005-03-03  Alexander Chernov  <cher@ispras.ru>
+
+	* curtime.c: initial revision
+
+2005-01-24  Alexander Chernov  <cher@ispras.ru>
+
+	* cr_serialize.c, interrupt.c: copyright notice is updated;
+	an implementation for win32 is ready (thanks to K. Khlebnikov).
+
+2005-01-19  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.c: copyright notice is updated;
+	(make_symlink) added stub;
+	(generic_file_size) implementation added.
+
 2004-11-13  Alexander Chernov  <cher@ispras.ru>
 
 	* interrupt.c: stubs, which generate fatal errors are added.
