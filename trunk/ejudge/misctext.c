@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -124,17 +125,29 @@ html_armor_string(char const *str, char *out)
 }
 
 char *
-duration_str(unsigned long time, char *buf, int len)
+duration_str(int show_astr,
+             unsigned long cur, unsigned long start,
+             char *buf, int len)
 {
   int         hh, mm, ss;
   static char b[64];
 
-  ss = time % 60;
-  time /= 60;
-  mm = time % 60;
-  time /= 60;
-  hh = time;
-  sprintf(b, "%d:%02d:%02d", hh, mm, ss);
+  if (show_astr) {
+    struct tm *tt = localtime(&cur);
+
+    sprintf(b, "%04d/%02d/%02d %02d:%02d:%02d ",
+            tt->tm_year + 1900, tt->tm_mon + 1, tt->tm_mday,
+            tt->tm_hour, tt->tm_min, tt->tm_sec);
+  } else {
+    unsigned long time = cur - start;
+
+    ss = time % 60;
+    time /= 60;
+    mm = time % 60;
+    time /= 60;
+    hh = time;
+    sprintf(b, "%d:%02d:%02d", hh, mm, ss);
+  }
   if (!buf) return b;
   if (len <= 0) return strcpy(buf, b);
   strncpy(buf, b, len);
