@@ -58,6 +58,7 @@ CFILES=\
  cr_serialize.c\
  edit-userlist.c\
  expat_iface.c\
+ filter_eval.c\
  filter_test.c\
  filter_tree.c\
  html.c\
@@ -128,6 +129,7 @@ HFILES=\
  cr_serialize.h\
  expat_iface.h\
  fileutl.h\
+ filter_eval.h\
  filter_tree.h\
  html.h\
  idmap.h\
