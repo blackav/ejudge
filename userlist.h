@@ -49,6 +49,8 @@ enum
     USERLIST_REG_OK,
     USERLIST_REG_PENDING,
     USERLIST_REG_REJECTED,
+
+    USERLIST_REG_LAST
   };
 
 enum
@@ -124,8 +126,58 @@ enum
     USERLIST_A_LAST_MINOR_CHANGE,
     USERLIST_A_MEMBER_SERIAL,
     USERLIST_A_SERIAL,
+    USERLIST_A_READ_ONLY,
 
     USERLIST_LAST_ATTN,
+  };
+
+// this is for field editing
+enum
+  {
+    USERLIST_NN_ID,             /* 0 */
+    USERLIST_NN_LOGIN,          /* 1 */
+    USERLIST_NN_EMAIL,          /* 2 */
+    USERLIST_NN_NAME,           /* 3 */
+    USERLIST_NN_IS_INVISIBLE,   /* 4 */
+    USERLIST_NN_IS_BANNED,      /* 5 */
+    USERLIST_NN_SHOW_LOGIN,     /* 6 */
+    USERLIST_NN_SHOW_EMAIL,     /* 7 */
+    USERLIST_NN_USE_COOKIES,    /* 8 */
+    USERLIST_NN_READ_ONLY,      /* 9 */
+    USERLIST_NN_TIMESTAMPS,     /* 10 */
+    USERLIST_NN_REG_TIME,       /* 11 */
+    USERLIST_NN_LOGIN_TIME,     /* 12 */
+    USERLIST_NN_ACCESS_TIME,    /* 13 */
+    USERLIST_NN_CHANGE_TIME,    /* 14 */
+    USERLIST_NN_PWD_CHANGE_TIME, /* 15 */
+    USERLIST_NN_MINOR_CHANGE_TIME, /* 16 */
+    USERLIST_NN_TIMESTAMP_LAST = USERLIST_NN_MINOR_CHANGE_TIME,
+    USERLIST_NN_PASSWORDS,      /* 17 */
+    USERLIST_NN_REG_PASSWORD,   /* 18 */
+    USERLIST_NN_TEAM_PASSWORD,  /* 19 */
+    USERLIST_NN_GENERAL_INFO,   /* 20 */
+    USERLIST_NN_INST,           /* 21 */
+    USERLIST_NN_INSTSHORT,      /* 22 */
+    USERLIST_NN_FAC,            /* 23 */
+    USERLIST_NN_FACSHORT,       /* 24 */
+    USERLIST_NN_HOMEPAGE,       /* 25 */
+    USERLIST_NN_LAST = USERLIST_NN_HOMEPAGE,
+
+    USERLIST_NM_SERIAL = 0,              /* 0 */
+    USERLIST_NM_FIRSTNAME,               /* 1 */
+    USERLIST_NM_MIDDLENAME,              /* 2 */
+    USERLIST_NM_SURNAME,                 /* 3 */
+    USERLIST_NM_STATUS,                  /* 4 */
+    USERLIST_NM_GRADE,                   /* 5 */
+    USERLIST_NM_GROUP,                   /* 6 */
+    USERLIST_NM_OCCUPATION,              /* 7 */
+    USERLIST_NM_EMAIL,                   /* 8 */
+    USERLIST_NM_HOMEPAGE,                /* 9 */
+    USERLIST_NM_INST,                    /* 10 */
+    USERLIST_NM_INSTSHORT,               /* 11 */
+    USERLIST_NM_FAC,                     /* 12 */
+    USERLIST_NM_FACSHORT,                /* 13 */
+    USERLIST_NM_LAST = USERLIST_NM_FACSHORT,
   };
 
 #if !defined __USERLIST_UC_ENUM_DEFINED__
@@ -134,6 +186,8 @@ enum
   {
     USERLIST_UC_INVISIBLE = 0x00000001,
     USERLIST_UC_BANNED    = 0x00000002,
+
+    USERLIST_UC_ALL       = 0x00000003
   };
 #endif /* __USERLIST_UC_ENUM_DEFINED__ */
 
@@ -206,6 +260,7 @@ struct userlist_user
   int show_login;
   int show_email;
   int default_use_cookies;
+  int read_only;
 
   unsigned char *login;
   unsigned char *name;
@@ -248,14 +303,20 @@ enum
   {
     USERLIST_MODE_ALL,
     USERLIST_MODE_USER,
-    USERLIST_MODE_OTHER
+    USERLIST_MODE_OTHER,
+    USERLIST_MODE_SHORT
   };
 
 struct userlist_list *userlist_new(void);
 struct userlist_list *userlist_parse(char const *path);
+struct userlist_list *userlist_parse_str(unsigned char const *str);
 struct userlist_user *userlist_parse_user_str(char const *str);
 void userlist_unparse(struct userlist_list *p, FILE *f);
 void userlist_unparse_user(struct userlist_user *p, FILE *f, int mode);
+void userlist_unparse_short(struct userlist_list *p, FILE *f, int contest_id);
+
+unsigned char const *userlist_unparse_reg_status(int s);
+unsigned char const *userlist_member_status_str(int status);
 
 void *userlist_free(struct xml_tree *p);
 void userlist_remove_user(struct userlist_list *p, struct userlist_user *u);
@@ -265,5 +326,26 @@ unsigned char const *userlist_tag_to_str(int t);
 
 void userlist_unparse_contests(struct userlist_user *p, FILE *f);
 struct xml_tree *userlist_parse_contests_str(unsigned char const *str);
+int userlist_parse_date(unsigned char const *s, unsigned long *pd);
+int userlist_parse_bool(unsigned char const *str);
+
+
+unsigned char const *userlist_unparse_bool(int b);
+unsigned char *userlist_unparse_date(unsigned long d, int show_null);
+int userlist_get_member_field_str(unsigned char *buf, size_t len,
+                                  struct userlist_member *m, int field_id,
+                                  int convert_null);
+int userlist_set_member_field_str(struct userlist_member *m, int field_id,
+                                  unsigned char const *field_val);
+int userlist_delete_member_field(struct userlist_member *m, int field_id);
+int userlist_get_user_field_str(unsigned char *buf, size_t len,
+                                struct userlist_user *u, int field_id,
+                                int convert_null);
+int userlist_set_user_field_str(struct userlist_user *u, int field_id,
+                                unsigned char const *field_val);
+int userlist_delete_user_field(struct userlist_user *u, int field_id);
+
+
+
 
 #endif /* __USERLIST_H__ */
