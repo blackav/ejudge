@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
   }
 
   execve(argv[1], argv + 1, environ);
-  perror("execve");
+  perror("capexec: execve");
 
   /* 6 exit code means that check is failed */
   return 6;
@@ -72,6 +72,6 @@ int main(int argc, char *argv[])
 
 /**
  * Local variables:
- *  compile-command: "gcc -D_GNU_SOURCE -g -Wall -I/usr/local/pkg/libcap-1.10/include -L/usr/local/pkg/libcap-1.10/lib capexec.c -o capexec -lcap"
+ *  compile-command: "gcc -D_GNU_SOURCE -s -O2 -Wall -I/usr/local/pkg/libcap-1.10/include -L/usr/local/pkg/libcap-1.10/lib capexec.c -o capexec -lcap"
  * End:
  */
