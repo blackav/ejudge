@@ -65,6 +65,8 @@ static unsigned char const * const error_map[] =
   _("the program is already printed"),
   _("the session identifier is invalid"),
   _("this language is disabled for this problem"),
+  _("the requested file does not exist"),
+  _("invalid filter expression"),
 };
 #undef _
 
