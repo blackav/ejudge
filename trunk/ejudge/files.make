@@ -17,6 +17,36 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
 
+USERLIST_CLNT_CFILES=\
+ userlist_clnt/add_field.c\
+ userlist_clnt/admin_process.c\
+ userlist_clnt/change_registration.c\
+ userlist_clnt/close.c\
+ userlist_clnt/delete_field.c\
+ userlist_clnt/do_pass_fd.c\
+ userlist_clnt/edit_field.c\
+ userlist_clnt/generate_team_passwd.c\
+ userlist_clnt/get_contests.c\
+ userlist_clnt/get_info.c\
+ userlist_clnt/get_uid_by_pid.c\
+ userlist_clnt/list_all_users.c\
+ userlist_clnt/list_users.c\
+ userlist_clnt/login.c\
+ userlist_clnt/lookup_cookie.c\
+ userlist_clnt/map_contest.c\
+ userlist_clnt/open.c\
+ userlist_clnt/pass_fd.c\
+ userlist_clnt/recv_packet.c\
+ userlist_clnt/register_contest.c\
+ userlist_clnt/register_new.c\
+ userlist_clnt/remove_member.c\
+ userlist_clnt/send_packet.c\
+ userlist_clnt/set_info.c\
+ userlist_clnt/set_passwd.c\
+ userlist_clnt/team_cookie.c\
+ userlist_clnt/team_login.c\
+ userlist_clnt/team_set_passwd.c
+
 CFILES=\
  base64.c\
  cgi.c\
@@ -28,6 +58,8 @@ CFILES=\
  cr_serialize.c\
  edit-userlist.c\
  expat_iface.c\
+ filter_test.c\
+ filter_tree.c\
  html.c\
  idmap.c\
  inetdb.c\
@@ -54,7 +86,6 @@ CFILES=\
  userlist.c\
  userlist-server.c\
  userlist_cfg.c\
- userlist_clnt.c\
  userlist_proto.c\
  userlist_xml.c\
  users.c\
@@ -85,7 +116,8 @@ CFILES=\
  serve_clnt/show_item.c\
  serve_clnt/submit_clar.c\
  serve_clnt/submit_run.c\
- serve_clnt/team_page.c
+ serve_clnt/team_page.c\
+ ${USERLIST_CLNT_CFILES}
 
 HFILES=\
  base64.h\
@@ -96,6 +128,7 @@ HFILES=\
  cr_serialize.h\
  expat_iface.h\
  fileutl.h\
+ filter_tree.h\
  html.h\
  idmap.h\
  inetdb.h\
@@ -115,4 +148,5 @@ HFILES=\
  userlist_cfg.h\
  userlist_clnt.h\
  version.h\
- unix/unix_fileutl.h
+ unix/unix_fileutl.h\
+ userlist_clnt/private.h
