@@ -4,7 +4,7 @@
 #ifndef __SUPER_PROTO_H__
 #define __SUPER_PROTO_H__
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -67,7 +67,6 @@ enum
   SSERV_ERR_PROTOCOL_ERROR,
   SSERV_ERR_USERLIST_DOWN,
   SSERV_ERR_PERMISSION_DENIED,
-  SSERV_ERR_SYSTEM_ERROR,
   SSERV_ERR_INVALID_CONTEST,
   SSERV_ERR_BANNED_IP,
   SSERV_ERR_ROOT_DIR_NOT_SET,
