@@ -25,7 +25,7 @@
 enum { TEAM_BANNED = 1, TEAM_INVISIBLE = 2, TEAM_LOCKED = 4 };
 
 int teamdb_open_client(unsigned char const *socket_path, int contest_id);
-void teamdb_refresh(void);
+int teamdb_refresh(void);
 
 int teamdb_lookup(int);
 int teamdb_lookup_login(char const *);
@@ -47,12 +47,14 @@ enum {
   TEAMDB_NAME_LEN = 64,
 };
 
+struct userlist_user;
 struct teamdb_export
 {
   int id;
   int flags;
-  char login[TEAMDB_LOGIN_LEN];
-  char name[TEAMDB_NAME_LEN];
+  unsigned char login[TEAMDB_LOGIN_LEN];
+  unsigned char name[TEAMDB_NAME_LEN];
+  struct userlist_user *user;
 };
 
 int teamdb_export_team(int id, struct teamdb_export *);
