@@ -60,6 +60,7 @@ static unsigned char const * const error_map[] =
   _("invalid contest duration"),
   _("invalid run status"),
   _("allowed only in virtual contest"),
+  _("the run is read-only"),
 };
 #undef _
 
