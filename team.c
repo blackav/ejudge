@@ -1418,7 +1418,7 @@ static void
 request_printing_if_asked(void)
 {
   char *s;
-  int   n, run_id, r;
+  int   n, run_id;
 
   if (!(s = cgi_nname("print_", 6))) return;
   if (sscanf(s, "print_%d%n", &run_id, &n) != 1 || (s[n] && s[n] != '.'))
