@@ -3,7 +3,7 @@
 #ifndef __CGI_H__
 #define __CGI_H__
 
-/* Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,10 +15,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 int   cgi_read(char const *charset);
@@ -26,5 +22,8 @@ char *cgi_param(char const *);
 char *cgi_nparam(char const *, int);
 char *cgi_nname(char const *, int);
 void  cgi_print_param(void);
+
+int cgi_get_param_num(void);
+void cgi_get_nth_param(int, unsigned char **, unsigned char **);
 
 #endif /* __CGI_H__ */
