@@ -3,7 +3,7 @@
 #ifndef __RUNLOG_H__
 #define __RUNLOG_H__
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -117,6 +117,7 @@ enum
     RUN_ENTRY_VARIANT = 0x00001000,
     RUN_ENTRY_HIDDEN = 0x00002000,
     RUN_ENTRY_READONLY = 0x00004000,
+    RUN_ENTRY_PAGES = 0x00008000,
     RUN_ENTRY_ALL = 0x00007FFF,
   };
 
@@ -138,7 +139,8 @@ struct run_entry
   unsigned char  variant;
   unsigned char  is_hidden;
   unsigned char  is_readonly;
-  unsigned char  pad[8];
+  unsigned char  pages;
+  unsigned char  pad[7];
 };
 
 void run_get_header(struct run_header *out);
@@ -168,5 +170,9 @@ int run_backup(const unsigned char *path);
 int run_set_runlog(int total_entries, struct run_entry *entries);
 
 int runlog_check(FILE *, struct run_header *, size_t, struct run_entry *);
+
+int run_get_pages(int run_id);
+int run_set_pages(int run_id, int pages);
+int run_get_total_pages(int run_id);
 
 #endif /* __RUNLOG_H__ */
