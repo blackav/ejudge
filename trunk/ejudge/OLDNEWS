@@ -4,6 +4,10 @@ Version 1.4.0 (????????)
 End user interface changes
 --------------------------
 
+serve, compile and run utilities accept -T command-line switch.
+If it is given, they print current configuration (after all the
+processing, including inheritance, etc) and exit.
+
 Master judge now may change team information on fly. For example, he may
 add teams, ban teams, etc. `master' script has a special button to
 enter into team dialog screen.
@@ -164,7 +168,7 @@ abstract
 it is the same, as line
 abstract = 1
 
-Possibility to "inherit" problem, tester languages.
+Possibility to "inherit" problem specification.
 Problem specification may be declared "abstract".
 Such problem must specify short_name,
 but must not specify long_name, id or super parameters.
@@ -186,6 +190,47 @@ itself. The list of parameters, which may be copied is as follows:
   corr_dir (*)
   input_file
   output_file
+    *  - format specifiers are accepted
+
+Possibility to "inherit" tester specification.
+A tester specification may be declared "abstract" by specifying
+"abstract" parameter.
+An abstract tester specification must specify `name', which is
+used to reference this abstract specification. It must not define
+`id' and `problem_name' parameter.
+It may define one or several `super' parameters, which means
+that multiple inheritance is supported.
+A tester specification may reference to an abstract tester specification
+using `super=NAME' parameter, where NAME must be name of some
+abstract tester parameter. Multiple inheritance is not supported
+for concrete tester specifications.
+In this case certain parameters are copied
+from the abstract tester specification, but only if they are not
+defined in the concrete tester specification. The inheritable
+parameters are listed below:
+  arch
+  key
+  tester_dir (*)
+  tmp_dir (*)
+  work_dir (*)
+  server_root_dir
+  exe_dir (*)
+  no_core_dump
+  clear_env
+  kill_signal
+  max_stack_size
+  max_data_size
+  max_vm_size
+  is_dos
+  no_redirect
+  errorcode_file (*)
+  start_env (**)
+  error_file
+  check_cmd (*)
+  start_cmd (*)
+  prepare_cmd (*)
+    *  - format specifiers are accepted
+    ** - the sets of environment variables are merged
 
 New global: max_line_length. The parameter affects how `run' program
 generates protocol file. Each line, read from file to be inserted
@@ -262,6 +307,20 @@ is only meaningful for checking programs compiled for the native system
 (Linux or similar). Default value is not set, i. e. process defaults are
 used.
 
+New tester: clear_env
+If this parameter is set to 1, all the process environment is cleared
+prior to the program invocation. New variables may be added using
+start_env variable (see below).
+
+New tester: start_env
+Adds an environment variable for the program being tested.
+Parameter has the form "NAME=VALUE" (as putenv requires).
+If only "NAME" is specified, the corresponding variable will be
+removed from environment. This parameter may appear several times.
+Each new variable is appended to all the variables, defined before.
+The order is preserved, for example, if some variable was set
+to VALUE1, then to VALUE2, the VALUE2 is the actual value for the program.
+
 Protocol additions and changes
 ------------------------------
 
@@ -270,6 +329,25 @@ in order to support editing of teams. The commands are:
 MTEAMS, JTEAMS, VTEAM, CHGLOGIN, CHGNAME, CHGBAN, CHGVIS, CHGPASSWD,
 NEWTEAM. These new protocol commands support team administration
 from `judge' and `master' CGI programs.
+
+Documentation changes
+---------------------
+
+New document 'kernel.html', which describes how to configure Linux
+kernel to run processes without permissions to do any file
+operations.
+
+New document 'dosemu.html', which describes how to configure
+Linux DOS emulator to use for testing purposes.
+
+New document 'use.html', which describes how to use the system.
+
+New document 'install.html', which describes how to install
+the system.
+
+New document 'todo.html', which describes what needs to be done.
+
+New document 'download.html'.
 
 Other changes
 -------------
@@ -280,6 +358,14 @@ for their configuration files. By default its value is "../cgi-data".
 If CGI_DATA_PATH is relative (ie does not start with '/'),
 the path to the CGI program itself is added. If CGI_DATA_PATH
 is absolute, it is not changed.
+
+parsecfg module accepts new parameter type "x". This parameter
+type requires char** pointer, which is used for extendable array of
+string. The array of strings is terminated with NULL, and the
+last element in the array is always (char*) 1. For example, if
+there are 4 elements allocated for array, and it contains string "foo",
+the array contains the following values:
+{ "foo", NULL, NULL, (char*) 1 }
 
 Version 1.3.1 (20010502)
 ========================
