@@ -589,7 +589,8 @@ run_tests(struct section_tester_data *tst,
         status = RUN_TIME_LIMIT_ERR;
         total_failed_tests++;
         task_Delete(tsk); tsk = 0;
-      } else if ((error_code[0] && ec != 0) || task_IsAbnormal(tsk)) {
+      } else if ((error_code[0] && ec != 0)
+                 || (!error_code[0] && task_IsAbnormal(tsk))) {
         /* runtime error */
         if (error_code[0]) {
           tests[cur_test].code = ec;
