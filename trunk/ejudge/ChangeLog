@@ -1,3 +1,19 @@
+2002-10-05  Alexander Chernov  <cher@ispras.ru>
+
+	* run.c:
+	(run_tests) `task_SetMaxRealTime' is called, if `max_real_time'
+	  parameter is set.
+
+	* prepare.h:
+	(struct section_problem_data) `real_time_limit' field is added.
+
+	* prepare.c:
+	(section_problem_params) `real_time_limit' parameter is added;
+	(set_defaults) `real_time_limit' problem parameter is processed.
+
+	* clntutil.c: 
+	(client_put_footer) copyright information is updated.
+
 2002-10-03  Alexander Chernov  <cher@ispras.ru>
 
 	* makefile: list of files are moved to a separate file `files.make'.
