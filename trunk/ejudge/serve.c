@@ -946,6 +946,11 @@ cmd_master_page(struct client_state *p, int len,
     err("%d: pkt->user_id != p->user_id", p->id);
     return;
   }
+  if (p->priv_level < PRIV_LEVEL_OBSERVER) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: unsifficient privilege level", p->id);
+    return;
+  }
   if (p->priv_level < pkt->priv_level) {
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     err("%d: priv_level does not match", p->id);
