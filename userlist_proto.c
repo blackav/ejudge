@@ -24,6 +24,7 @@
 static unsigned char const * const error_map[] =
 {
   _("no error"),
+  _("error code 1"),
   _("login already used"),
   _("invalid login"),
   _("invalid password"),
