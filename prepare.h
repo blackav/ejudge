@@ -144,6 +144,27 @@ struct section_global_data
 
   path_t team_info_url;         /* the team info URL template */
   path_t prob_info_url;         /* the problem info URL template */
+  path_t standings_file_name;   /* public standings file name */
+  path_t stand_header_file;     /* file to use as standings header */
+  path_t stand_footer_file;     /* file to use as standings footer */
+
+  unsigned char *stand_header_txt; /* actual header text */
+  unsigned char *stand_footer_txt; /* actual footer text */
+
+  // standings2 information
+  path_t stand2_file_name;      /* must be set to standings 2 be activated */
+  path_t stand2_header_file;
+  path_t stand2_footer_file;
+  unsigned char *stand2_header_txt;
+  unsigned char *stand2_footer_txt;
+
+  // public log information
+  path_t plog_file_name;
+  path_t plog_header_file;
+  path_t plog_footer_file;
+  unsigned char *plog_header_txt;
+  unsigned char *plog_footer_txt;
+  int plog_update_time;
 
   // fun
   path_t sound_player;
