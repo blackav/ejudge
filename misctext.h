@@ -26,7 +26,8 @@ int html_armored_strlen(char const *str);
 int html_armor_text(char const *text, int size, char *out);
 int html_armor_string(char const *str, char *out);
 
-char *duration_str(unsigned long time, char *buf, int len);
+char *duration_str(int show_astr, unsigned long cur,
+                   unsigned long time, char *buf, int len);
 char *duration_min_str(unsigned long time, char *buf, int len);
 
 int  message_quoted_size(char const *);
