@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@ userlist_clnt_set_passwd(struct userlist_clnt *clnt,
   new_len = strlen(new_pwd);
   if (old_len > 255) return -ULS_ERR_INVALID_SIZE;
   if (new_len > 255) return -ULS_ERR_INVALID_SIZE;
-  out_size = sizeof(*out) + old_len + new_len + 2;
+  out_size = sizeof(*out) + old_len + new_len;
   out = (struct userlist_pk_set_password *) alloca(out_size);
   if (!out) return -ULS_ERR_OUT_OF_MEM;
   memset(out, 0, out_size);
@@ -64,6 +64,5 @@ userlist_clnt_set_passwd(struct userlist_clnt *clnt,
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
