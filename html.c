@@ -27,6 +27,7 @@
 #include "sformat.h"
 #include "protocol.h"
 #include "client_actions.h"
+#include "copyright.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -371,6 +372,42 @@ new_write_user_clar(FILE *f, int uid, int cid)
   return 0;
 }
 
+static void
+process_template(FILE *out,
+                 unsigned char const *template,
+                 unsigned char const *content_type,
+                 unsigned char const *charset,
+                 unsigned char const *title,
+                 unsigned char const *copyright)
+{
+  unsigned char const *s = template;
+
+  while (*s) {
+    if (*s != '%') {
+      putc(*s++, out);
+      continue;
+    }
+    switch (*++s) {
+    case 'C':
+      fputs(charset, out);
+      break;
+    case 'T':
+      fputs(content_type, out);
+      break;
+    case 'H':
+      fputs(title, out);
+      break;
+    case 'R':
+      fputs(copyright, out);
+      break;
+    default:
+      putc('%', out);
+      continue;
+    }
+    s++;
+  }
+}
+
 void
 write_standings_header(FILE *f, int client_flag,
                        int user_id,
@@ -408,7 +445,7 @@ write_standings_header(FILE *f, int client_flag,
 
     if (!client_flag) {
       if (header_str) {
-        fprintf(f, header_str, global->charset, header, header);
+        process_template(f, header_str, 0, global->charset, header, 0);
       } else {
         fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>\n",
                 global->standings_charset,
@@ -424,7 +461,10 @@ write_standings_header(FILE *f, int client_flag,
   if (start_time > cur_time) cur_time = start_time;
   if (stop_time && cur_time > stop_time) cur_time = stop_time;
   show_astr_time = global->show_astr_time;
-  if (global->virtual && !user_id) show_astr_time = 1;
+  if (global->virtual && !user_id) {
+    show_astr_time = 1;
+    cur_time = time(0);
+  }
   duration_str(show_astr_time, cur_time, start_time, dur_str, 0);
 
   if (user_name) {
@@ -446,7 +486,7 @@ write_standings_header(FILE *f, int client_flag,
 
   if (!client_flag) {
     if (header_str) {
-      fprintf(f, header_str, global->standings_charset, header, header);
+      process_template(f, header_str, 0, global->charset, header, 0);
     } else {
       fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>",
               global->standings_charset,
@@ -489,7 +529,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
     fprintf(f, "<h2>%s</h2>", _("The contest is not started"));
     if (!client_flag) {
       if (footer_str) {
-        fprintf(f, "%s", footer_str);
+        process_template(f, footer_str, 0, 0, 0, get_copyright());
       } else {
         fprintf(f, "</body></html>");
       }
@@ -738,7 +778,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
     fputs("</table>\n", f);
     if (!client_flag) {
       if (footer_str) {
-        fprintf(f, "%s", footer_str);
+        process_template(f, footer_str, 0, 0, 0, get_copyright());
       } else {
         fputs("</body></html>", f);
       }
@@ -815,7 +855,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     fprintf(f, "<h2>%s</h2>", _("The contest is not started"));
     if (!client_flag) {
       if (footer_str) {
-        fprintf(f, "%s", footer_str);
+        process_template(f, footer_str, 0, 0, 0, get_copyright());
       } else {
         fprintf(f, "</body></html>");
       }
@@ -960,10 +1000,10 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     }
   } else {
     /* print table header */
-    fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th>",
+    fprintf(f, "<table border=\"1\"><tr><th class=\"st_place\">%s</th><th class=\"st_team\">%s</th>",
             _("Place"), _("Team"));
     for (j = 0; j < p_tot; j++) {
-      fprintf(f, "<th>");
+      fprintf(f, "<th class=\"st_prob\">");
       if (global->prob_info_url[0]) {
         sformat_message(url_str, sizeof(url_str), global->prob_info_url,
                         NULL, probs[p_ind[j]], NULL, NULL, NULL);
@@ -975,8 +1015,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       }
       fprintf(f, "</th>");
     }
-    fprintf(f, "<th>%s</th><th>%s</th></tr>",
-            _("Total"), _("Penalty"));
+    fprintf(f, "<th class=\"st_total\">%s</th><th class=\"st_pen\">%s</th></tr>", _("Total"), _("Penalty"));
 
     for (i = 0; i < t_tot; i++) {
       int t = t_sort[i];
@@ -993,14 +1032,15 @@ do_write_standings(FILE *f, int client_flag, int user_id,
         }
       }
       if (bgcolor_ptr) {
-        fprintf(f, "<tr bgcolor=\"%s\"><td>", bgcolor_ptr);
+        fprintf(f, "<tr bgcolor=\"%s\">", bgcolor_ptr);
       } else {
-        fputs("<tr><td>", f);
+        fputs("<tr>", f);
       }
+      fprintf(f, "<td class=\"st_place\">");
       if (t_n1[i] == t_n2[i]) fprintf(f, "%d", t_n1[i] + 1);
       else fprintf(f, "%d-%d", t_n1[i] + 1, t_n2[i] + 1);
       fputs("</td>", f);
-      fprintf(f, "<td>");
+      fprintf(f, "<td class=\"st_team\">");
       if (global->team_info_url[0]) {
         struct teamdb_export ttt;
         
@@ -1015,26 +1055,28 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       }
       fprintf(f, "</td>");
       for (j = 0; j < p_tot; j++) {
+        fputs("<td class=\"st_prob\">", f);
         if (calc[t][j] < 0) {
-          fprintf(f, "<td>%d</td>", calc[t][j]);
+          fprintf(f, "%d", calc[t][j]);
         } else if (calc[t][j] == 1) {
-          fprintf(f, "<td>+ (%ld:%02ld)</td>",
+          fprintf(f, "+ <div class=\"st_time\">(%ld:%02ld)</div>",
                   ok_time[t][j] / 60, ok_time[t][j] % 60);
         } else if (calc[t][j] > 0) {
-          fprintf(f, "<td>+%d (%ld:%02ld)</td>",
+          fprintf(f, "+%d <div class=\"st_time\">(%ld:%02ld)</div>",
                   calc[t][j] - 1, ok_time[t][j] / 60, ok_time[t][j] % 60);
         } else {
-          fprintf(f, "<td>&nbsp;</td>");
+          fprintf(f, "&nbsp;");
         }
+        fputs("</td>", f);
       }
-      fprintf(f, "<td>%d</td><td>%d</td></tr>",
+      fprintf(f, "<td class=\"st_total\">%d</td><td class=\"st_pen\">%d</td></tr>",
               t_prob[t], t_pen[t]);
     }
     
     fputs("</table>\n", f);
     if (!client_flag) {
       if (footer_str) {
-        fprintf(f, "%s", footer_str);
+        process_template(f, footer_str, 0, 0, 0, get_copyright());
       } else {
         fputs("</body></html>", f);
       } 
@@ -1434,7 +1476,7 @@ write_team_page(FILE *f, int user_id,
   }
 
   if (server_start && !server_end) {
-    fprintf(f, "<hr><a name=\"submit\"><h2>%s</h2>\n", _("Send a submission"));
+    fprintf(f, "<hr><a name=\"submit\"></a><h2>%s</h2>\n", _("Send a submission"));
     html_start_form(f, 2, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<table>\n");
     fprintf(f, "<tr><td>%s:</td><td>", _("Problem"));
@@ -1466,7 +1508,7 @@ write_team_page(FILE *f, int user_id,
   }
 
   if (server_start) {
-    fprintf(f, "<hr><a name=\"runstat\"><h2>%s (%s)</h2>\n",
+    fprintf(f, "<hr><a name=\"runstat\"></a><h2>%s (%s)</h2>\n",
             _("Sent submissions"),
             all_runs?_("all"):_("last 15"));
     new_write_user_runs(f, user_id, all_runs,
@@ -1499,7 +1541,7 @@ write_team_page(FILE *f, int user_id,
 
   if (!global->disable_clars && !global->disable_team_clars
       && server_start && !server_end) {
-    fprintf(f, "<hr><a name=\"clar\"><h2>%s</h2>\n",
+    fprintf(f, "<hr><a name=\"clar\"></a><h2>%s</h2>\n",
             _("Send a message to judges"));
     html_start_form(f, 2, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<table><tr><td>%s:</td><td>", _("Problem"));
@@ -1522,7 +1564,7 @@ write_team_page(FILE *f, int user_id,
   }
 
   if (!global->disable_clars) {
-    fprintf(f, "<hr><a name=\"clarstat\"><h2>%s (%s)</h2>\n",
+    fprintf(f, "<hr><a name=\"clarstat\"></a><h2>%s (%s)</h2>\n",
             _("Messages"), all_clars?_("all"):_("last 15"));
 
     new_write_user_clars(f, user_id, all_clars, sid_mode, sid,
