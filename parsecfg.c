@@ -958,11 +958,21 @@ copy_param(void *cfg, struct config_parse_info *params,
     int  n, v;
     int *ptr;
 
-    if (sscanf(varvalue, "%d%n", &v, &n) != 1 || varvalue[n]) {
+    if (sscanf(varvalue, "%d%n", &v, &n) != 1) {
       fprintf(stderr, "%d: numeric parameter expected for '%s'\n",
               lineno - 1, varname);
       return -1;
     }
+    if ((varvalue[n] == 'k' || varvalue[n] == 'K') && !varvalue[n + 1]) {
+      v *= 1024;
+    } else if ((varvalue[n] == 'm' || varvalue[n] == 'M') && !varvalue[n + 1]){
+      v *= 1024 * 1024;
+    } else if (varvalue[n]) {
+      fprintf(stderr, "%d: numeric parameter expected for '%s'\n",
+              lineno - 1, varname);
+      return -1;
+    }
+
     ptr = (int *) ((char*) cfg + params[i].offset);
     *ptr = v;
   } else if (!strcmp(params[i].type, "s")) {
