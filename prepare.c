@@ -173,6 +173,8 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(report_error_code, "d"),
 
   GLOBAL_PARAM(standings_team_color, "s"),
+  GLOBAL_PARAM(standings_virtual_team_color, "s"),
+  GLOBAL_PARAM(standings_real_team_color, "s"),
 
   { 0, 0, 0, 0 }
 };
