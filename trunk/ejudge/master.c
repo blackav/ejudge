@@ -2246,7 +2246,8 @@ action_reset_filter(void)
   int r;
 
   open_serve();
-  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_RESET_FILTER, 0, 0);
+  r = serve_clnt_reset_filter(serve_socket_fd, SRV_CMD_RESET_FILTER,
+                              client_sid, client_user_id, global->contest_id);
   operation_status_page(r, 0, -1);
   force_recheck_status = 1;
 }
@@ -2763,6 +2764,7 @@ display_master_page(void)
 
   open_serve();
   r = serve_clnt_master_page(serve_socket_fd, 1,
+                             client_sid,
                              client_user_id,
                              global->contest_id, 0,
                              client_ip,
