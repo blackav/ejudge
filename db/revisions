@@ -719,3 +719,12 @@ teamdb.c 1 21 1098497
 userlist-server.c 1 19 10523258
 serve_clnt/userlist_cmd.c 1 2 211412
 serve_clnt/view.c 1 4 285917
+client_actions.h 1 6 129662
+clntutil.h 1 14 184886
+protocol.h 1 11 515454
+clntutil.c 1 25 1066918
+html.c 1 31 3735955
+master.c 1 33 4330338
+prepare.c 1 43 4931758
+serve.c 1 41 7014218
+team.c 1 28 3496883
