@@ -44,7 +44,7 @@ static unsigned char const * const error_map[] =
   _("viewing run source is disabled"),
   _("invalid run_id"),
   _("invalid prob_id"),
-  _("invalid lang_id"),
+  _("invalid language"),
   _("viewing report is disabled"),
   _("user's runs downloading disabled"),
   _("user tries to download runs too often"),
@@ -64,6 +64,7 @@ static unsigned char const * const error_map[] =
   _("team pages quota is exceeded"),
   _("the program is already printed"),
   _("the session identifier is invalid"),
+  _("this language is disabled for this problem"),
 };
 #undef _
 
