@@ -37,9 +37,11 @@ CFILES=\
  in_eof.c\
  init.c\
  normalize_file.c\
+ normalize_line.c\
  ok.c\
  read_buf.c\
  read_corr_int.c\
+ read_corr_double.c\
  read_corr_long_double.c\
  read_corr_long_long.c\
  read_double.c\
@@ -48,12 +50,14 @@ CFILES=\
  read_in_double.c\
  read_in_int.c\
  read_in_long_double.c\
+ read_line.c\
  read_long_double.c\
  read_long_long.c\
  read_team_double.c\
  read_team_int.c\
  read_team_long_double.c\
  read_team_long_long.c\
+ skip_eoln.c\
  team_close.c\
  team_eof.c\
  vars.c\
