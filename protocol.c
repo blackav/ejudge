@@ -57,6 +57,7 @@ static unsigned char const * const error_map[] =
   _("the user quota is exceeded"),
   _("message subject is too long"),
   _("duplicated submission"),
+  _("permission denied"),
 };
 #undef _
 
