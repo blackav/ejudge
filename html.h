@@ -87,6 +87,7 @@ int write_priv_source(FILE *f, int user_id, int priv_level,
                       int run_id, const opcap_t *);
 int write_priv_report(FILE *f, int user_id, int priv_level,
                       int sid_mode, unsigned long long sid,
+                      int team_report_flag,
                       unsigned char const *self_url,
                       unsigned char const *hidden_vars,
                       unsigned char const *extra_args,
