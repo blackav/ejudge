@@ -1,0 +1,4 @@
+#!/bin/sh
+
+PATH=/usr/local/pkg/kylix3/bin:${PATH}
+exec dcc -$I+,Q-,R-,X+ $1
