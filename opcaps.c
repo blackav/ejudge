@@ -30,7 +30,7 @@ static const unsigned char * const cap_list [] =
 {
   [OPCAP_MASTER_LOGIN]            "MASTER_LOGIN",
   [OPCAP_JUDGE_LOGIN]             "JUDGE_LOGIN",
-  [OPCAP_OBSERVER_LOGIN]          "OBSERVER_LOGIN",
+  [OPCAP_SUBMIT_RUNS]             "SUBMIT_RUNS",
   [OPCAP_MAP_CONTEST]             "MAP_CONTEST",
   [OPCAP_LIST_CONTEST_USERS]      "LIST_CONTEST_USERS",
   [OPCAP_LIST_ALL_USERS]          "LIST_ALL_USERS",
