@@ -92,7 +92,7 @@ compile_request_packet_write(const struct compile_request_packet *in_data,
   out_size += pkt_bin_align(in_data->run_block_len);
   out_size += pkt_bin_align(env_num * sizeof(rint32_t));
   for (i = 0; i < env_num; i++) {
-    out_size += str_lens[i] + 1;
+    out_size += str_lens[i];
   }
   out_size = pkt_bin_align(out_size);
   if (out_size < sizeof(*out_data) || out_size > MAX_PACKET_SIZE) {
@@ -124,8 +124,8 @@ compile_request_packet_write(const struct compile_request_packet *in_data,
     out_ptr += env_num * sizeof(rint32_t);
     pkt_bin_align_addr(out_ptr, out_data);
     for (i = 0; i < env_num; i++) {
-      memcpy(out_ptr, in_data->env_vars[i], str_lens[i] + 1);
-      out_ptr += str_lens[i] + 1;
+      memcpy(out_ptr, in_data->env_vars[i], str_lens[i]);
+      out_ptr += str_lens[i];
     }
   }
 
