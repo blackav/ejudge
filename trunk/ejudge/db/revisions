@@ -1462,3 +1462,4 @@ super_clnt/open.c 1 1 241200
 super_clnt/pass_fd.c 1 1 112952
 super_clnt/recv_packet.c 1 1 249162
 super_clnt/send_packet.c 1 1 118133
+userlist_clnt/get_uid_by_pid_2.c 1 1 225145
