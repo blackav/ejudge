@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "userlist_cfg.h"
 #include "expat_iface.h"
 #include "pathutl.h"
@@ -395,17 +397,33 @@ userlist_cfg_parse(char const *path)
     }
   }
 
-  if (!cfg->l10n_dir || !*cfg->l10n_dir) cfg->l10n = 0;
-  if (cfg->l10n == -1) cfg->l10n = 0;
+#if CONF_HAS_LIBINTL - 0 == 1
+  if (cfg->l10n < 0) cfg->l10n = 1;
+  if (cfg->l10n && (!cfg->l10n_dir || !*cfg->l10n_dir)) {
+    cfg->l10n_dir = xstrdup(EJUDGE_LOCALE_DIR);
+  }
+#else
+  cfg->l10n = 0;
+#endif
 
   if (!cfg->db_path) {
     err("%s: element <file> is not defined", path);
     goto failed;
   }
+#if defined EJUDGE_SOCKET_PATH
+  if (!cfg->socket_path) {
+    cfg->socket_path = xstrdup(EJUDGE_SOCKET_PATH);
+  }
+#endif /* EJUDGE_SOCKET_PATH */
   if (!cfg->socket_path) {
     err("%s: element <socket> is not defined", path);
     goto failed;
   }
+#if defined EJUDGE_CONTESTS_DIR
+  if (!cfg->contests_dir) {
+    cfg->contests_dir = xstrdup(EJUDGE_CONTESTS_DIR);
+  }
+#endif /* EJUDGE_CONTESTS_DIR */
   if (!cfg->contests_dir) {
     err("%s: element <contests_dir> is not defined", path);
     goto failed;
@@ -422,6 +440,18 @@ userlist_cfg_parse(char const *path)
     err("%s: element <register_email> is not defined", path);
     goto failed;
   }
+
+#if defined EJUDGE_SERVE_PATH
+  if (!cfg->serve_path) {
+    cfg->serve_path = xstrdup(EJUDGE_SERVE_PATH);
+  }
+#endif /* EJUDGE_SERVE_PATH */
+
+#if defined EJUDGE_RUN_PATH
+  if (!cfg->run_path) {
+    cfg->run_path = xstrdup(EJUDGE_RUN_PATH);
+  }
+#endif /* EJUDGE_RUN_PATH */
 
   //userlist_cfg_unparse(cfg, stdout);
   return cfg;
