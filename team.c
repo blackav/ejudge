@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1415,6 +1415,33 @@ request_report_if_asked(void)
 }
 
 static void
+request_printing_if_asked(void)
+{
+  char *s;
+  int   n, run_id, r;
+
+  if (!(s = cgi_nname("print_", 6))) return;
+  if (sscanf(s, "print_%d%n", &run_id, &n) != 1 || (s[n] && s[n] != '.'))
+    return;
+  if (run_id < 0 || run_id >= server_total_runs) return;
+
+  set_cookie_if_needed();
+
+  client_put_header(stdout, header_txt, 0, global->charset, 1,
+                    client_locale_id, "%s %d", _("Confirm printing run"), run_id);
+
+  printf("<p>");
+  print_refresh_button(_("No"));
+  printf("<p>%s"
+         "<input type=\"hidden\" name=\"run_id\" value=\"%d\">"
+         "<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+         "</form></p>", form_start_simple, run_id, ACTION_PRINT_RUN,
+         _("Yes, print!"));
+  client_put_footer(stdout, 0);
+  exit(0);  
+}
+
+static void
 request_archive_if_asked(void)
 {
   char *s;
@@ -1466,6 +1493,28 @@ action_virtual_stop(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_VIRTUAL_STOP, 0, 0);
+  operation_status_page(r, 0);
+}
+
+static void
+action_print_run(void)
+{
+  int r;
+  int run_id, n;
+  unsigned char *s;
+
+  if (!(s = cgi_param("run_id"))
+      || sscanf(s, "%d%n", &run_id, &n) != 1
+      || s[n]
+      || run_id < 0
+      || run_id >= server_total_runs) {
+    operation_status_page(-SRV_ERR_PROTOCOL, 0);
+    return;
+  }
+
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_PRINT_RUN,
+                            &run_id, sizeof(run_id));
   operation_status_page(r, 0);
 }
 
@@ -1626,10 +1675,14 @@ main(int argc, char *argv[])
     case ACTION_STANDINGS:
       action_standings();
       break;
+    case ACTION_PRINT_RUN:
+      action_print_run();
+      break;
     default:
       show_clar_if_asked();
       request_source_if_asked();
       request_report_if_asked();
+      request_printing_if_asked();
       request_archive_if_asked();
     }
   }
