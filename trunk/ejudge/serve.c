@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 
+#include "settings.h"
 #include "runlog.h"
 #include "parsecfg.h"
 #include "teamdb.h"
@@ -66,6 +67,7 @@
 #define XALLOCAZ(p,s) (XALLOCA((p),(s)),XMEMZERO((p),(s)))
 
 #define PACKET_NAME_SIZE 12
+#define MAX_EXPECTED_LEN MAX_SERVE_PACKET_LEN
 
 // server connection states
 enum
@@ -3886,7 +3888,7 @@ check_sockets(int may_wait_flag)
       p->read_state += l;
       memcpy(&p->expected_len, rbuf, 4);
       if (p->read_state == 4) {
-        if (p->expected_len <= 0 || p->expected_len > 256 * 1024) {
+        if (p->expected_len <= 0 || p->expected_len > MAX_EXPECTED_LEN) {
           err("%d: protocol error: bad packet length: %d",
               p->id, p->expected_len);
           client_disconnect(p, 0);
