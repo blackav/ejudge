@@ -97,6 +97,7 @@ static char const * const attn_map[] =
   "last_minor_change",
   "member_serial",
   "serial",
+  "read_only",
 
   0
 };
@@ -682,6 +683,7 @@ parse_contest(char const *path, struct xml_tree *t,
   struct xml_tree *p;
   struct userlist_contest *reg;
   struct xml_attn *a;
+  int tmp;
 
   ASSERT(t->tag == USERLIST_T_CONTESTS);
   if (usr) {
@@ -720,6 +722,14 @@ parse_contest(char const *path, struct xml_tree *t,
           }
         }
         return invalid_attn_value(path, a);
+      case USERLIST_A_BANNED:
+        if (parse_bool(path, a->line, a->column, a->text, &tmp) < 0) return -1;
+        if (tmp) reg->flags |= USERLIST_UC_BANNED;
+        break;
+      case USERLIST_A_INVISIBLE:
+        if (parse_bool(path, a->line, a->column, a->text, &tmp) < 0) return -1;
+        if (tmp) reg->flags |= USERLIST_UC_INVISIBLE;
+        break;
       default:
         return invalid_attn(path, a);
       }
@@ -786,6 +796,10 @@ do_parse_user(char const *path, struct userlist_user *usr)
     case USERLIST_A_USE_COOKIES:
       if (parse_bool(path, a->line, a->column, a->text,
                      &usr->default_use_cookies) < 0) return -1;
+      break;
+    case USERLIST_A_READ_ONLY:
+      if (parse_bool(path, a->line, a->column, a->text,
+                     &usr->read_only) < 0) return -1;
       break;
     default:
       return invalid_attn(path, a);
@@ -1000,6 +1014,28 @@ userlist_parse(char const *path)
   return 0;
 }
 
+struct userlist_list *
+userlist_parse_str(unsigned char const *str)
+{
+  struct xml_tree *tree = 0;
+  struct userlist_list *lst = 0;
+
+  tree = xml_build_tree_str(str, tag_map, attn_map, node_alloc, attn_alloc);
+  if (!tree) goto failed;
+  if (tree->tag != USERLIST_T_USERLIST) {
+    err("%s:%d:%d: top-level tag must be <userlist>",
+        "", tree->line, tree->column);
+    goto failed;
+  }
+  lst = (struct userlist_list *) tree;
+  if (do_parse_userlist("", lst) < 0) goto failed;
+  return lst;
+
+ failed:
+  if (tree) xml_tree_free(tree, node_free, attn_free);
+  return 0;
+}
+
 void *
 userlist_free(struct xml_tree *p)
 {
@@ -1044,6 +1080,11 @@ unparse_reg_status(int s)
   };
   ASSERT(s >= USERLIST_REG_OK && s <= USERLIST_REG_REJECTED);
   return reg_status_map[s];
+}
+unsigned char const *
+userlist_unparse_reg_status(int s)
+{
+  return unparse_reg_status(s);
 }
 static unsigned char const *
 unparse_member_status(int s)
@@ -1162,22 +1203,69 @@ unparse_cookies(struct xml_tree *p, FILE *f)
   fprintf(f, "    </%s>\n", tag_map[USERLIST_T_COOKIES]);
 }
 static void
+unparse_contest(struct userlist_contest const *cc, FILE *f,
+                unsigned char const *indent)
+{
+  if (!cc) return;
+  fprintf(f, "%s<%s %s=\"%d\" %s=\"%s\"",
+          indent, tag_map[USERLIST_T_CONTEST],
+          attn_map[USERLIST_A_ID], cc->id,
+          attn_map[USERLIST_A_STATUS], unparse_reg_status(cc->status));
+  if ((cc->flags & USERLIST_UC_BANNED)) {
+    fprintf(f, " %s=\"yes\"", attn_map[USERLIST_A_BANNED]);
+  }
+  if ((cc->flags & USERLIST_UC_INVISIBLE)) {
+    fprintf(f, " %s=\"yes\"", attn_map[USERLIST_A_INVISIBLE]);
+  }
+  fprintf(f, "/>\n");
+}
+static void
 unparse_contests(struct xml_tree *p, FILE *f)
 {
-  struct userlist_contest *r;
-
   if (!p) return;
   ASSERT(p->tag == USERLIST_T_CONTESTS);
   fprintf(f, "    <%s>\n", tag_map[USERLIST_T_CONTESTS]);
   for (p = p->first_down; p; p = p->right) {
     ASSERT(p->tag == USERLIST_T_CONTEST);
-    r = (struct userlist_contest*) p;
-    fprintf(f, "      <%s %s=\"%d\" %s=\"%s\"/>\n",
-            tag_map[USERLIST_T_CONTEST],
-            attn_map[USERLIST_A_ID], r->id,
-            attn_map[USERLIST_A_STATUS], unparse_reg_status(r->status));
+    unparse_contest((struct userlist_contest*) p, f, "      ");
   }
   fprintf(f, "    </%s>\n", tag_map[USERLIST_T_CONTESTS]);
+}
+
+static void
+unparse_user_short(struct userlist_user *p, FILE *f, int contest_id)
+{
+  struct userlist_contest *uc = 0;
+
+  if (!p) return;
+  if (contest_id) {
+    if (!p->contests) return;
+    for (uc = (struct userlist_contest*) p->contests->first_down;
+         uc; uc = (struct userlist_contest*) uc->b.right) {
+      if (uc->id == contest_id) break;
+    }
+    if (!uc) return;
+  }
+  fprintf(f, "  <%s %s=\"%d\">", tag_map[USERLIST_T_USER],
+          attn_map[USERLIST_A_ID], p->id);
+  if (p->login) {
+    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_LOGIN],
+            p->login, tag_map[USERLIST_T_LOGIN]);
+  }
+  if (p->name && *p->name) {
+    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_NAME],
+            p->name, tag_map[USERLIST_T_NAME]);
+  }
+  if (p->email) {
+    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_EMAIL],
+            p->email, tag_map[USERLIST_T_EMAIL]);
+  }
+  if (uc) {
+    fprintf(f, "    <%s>\n", tag_map[USERLIST_T_CONTESTS]);
+    unparse_contest(uc, f, "      ");
+    fprintf(f, "    </%s>\n", tag_map[USERLIST_T_CONTESTS]);
+  }
+  fprintf(f, "  </%s>\n", tag_map[USERLIST_T_USER]);
 }
 
 static void
@@ -1190,13 +1278,17 @@ unparse_user(struct userlist_user *p, FILE *f, int mode)
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_USE_COOKIES],
             unparse_bool(p->default_use_cookies));
   }
-  if (p->is_invisible) {
+  if (p->is_invisible && mode == USERLIST_MODE_ALL) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_INVISIBLE],
             unparse_bool(p->is_invisible));
   }
-  if (p->is_banned) {
+  if (p->is_banned && mode == USERLIST_MODE_ALL) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_BANNED],
             unparse_bool(p->is_banned));
+  }
+  if (p->read_only) {
+    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_READ_ONLY],
+            unparse_bool(p->read_only));
   }
   if (p->registration_time && mode == USERLIST_MODE_ALL) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_REGISTERED],
@@ -1319,6 +1411,19 @@ userlist_unparse(struct userlist_list *p, FILE *f)
   fputs(">\n", f);
   for (i = 1; i < p->user_map_size; i++)
     unparse_user(p->user_map[i], f, 0);
+  fprintf(f, "</%s>\n", tag_map[USERLIST_T_USERLIST]);
+}
+void
+userlist_unparse_short(struct userlist_list *p, FILE *f, int contest_id)
+{
+  int i;
+
+  if (!p) return;
+
+  fputs("<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n", f);
+  fprintf(f, "<%s>", tag_map[USERLIST_T_USERLIST]);
+  for (i = 1; i < p->user_map_size; i++)
+    unparse_user_short(p->user_map[i], f, contest_id);
   fprintf(f, "</%s>\n", tag_map[USERLIST_T_USERLIST]);
 }
 
