@@ -36,6 +36,7 @@
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
+#include <locale.h>
 #define _(x) gettext(x)
 #else
 #define _(x) x
@@ -60,6 +61,35 @@ struct testinfo
 
 int total_tests;
 struct testinfo tests[MAX_TEST + 1];
+
+static int
+setup_locale(int locale_id)
+{
+#if CONF_HAS_LIBINTL - 0 == 1
+  char *e = 0;
+  char env_buf[128];
+
+  if (!global->enable_l10n) return 0;
+
+  switch (locale_id) {
+  case 1:
+    e = "ru_RU.KOI8-R";
+    break;
+  case 0:
+  default:
+    locale_id = 0;
+    e = "C";
+    break;
+  }
+
+  sprintf(env_buf, "LC_ALL=%s", e);
+  putenv(env_buf);
+  setlocale(LC_ALL, "");
+  return locale_id;
+#else
+  return 0;
+#endif /* CONF_HAS_LIBINTL */
+}
 
 static int
 filter_testers(char *key)
@@ -116,14 +146,14 @@ print_by_line(FILE *f, char const *s)
   char const *p = s;
 
   if (global->max_file_length >  0 && strlen(s) > global->max_file_length) {
-    fprintf(f, "<file is too long>\n");
+    fprintf(f, "<%s>\n", _("file is too long"));
     return;
   }
 
   while (*s) {
     while (*s && *s != '\r' && *s != '\n') s++;
     if (global->max_line_length > 0 && s - p > global->max_line_length) {
-      fprintf(f, "<line is too long>\n");
+      fprintf(f, "<%s>\n", _("line is too long"));
     } else {
       while (p != s)
         putc(*p++, f);
@@ -163,7 +193,7 @@ generate_report(char *report_path, int scores, int max_score)
   }
 
   if (status == 0) {
-    fprintf(f, "OK\n\n");
+    fprintf(f, "%s\n\n", _("OK"));
   } else {
     if (global->score_system_val == SCORE_KIROV) {
       fprintf(f, _("PARTIAL SOLUTION\n\n"));
@@ -179,7 +209,7 @@ generate_report(char *report_path, int scores, int max_score)
   fprintf(f, "\n");
 
   fprintf(f, _("Test #  Status  Time (sec)  %sResult\n"),
-          (global->score_system_val == SCORE_KIROV)?"Score   ":"");
+          (global->score_system_val == SCORE_KIROV)?_("Score   "):"");
   for (i = 1; i < total_tests; i++) {
     score_buf[0] = 0;
     if (global->score_system_val == SCORE_KIROV) {
@@ -252,7 +282,7 @@ generate_team_report(char const *report_path, int scores, int max_score)
   }
 
   if (status == 0) {
-    fprintf(f, "OK\n\n");
+    fprintf(f, "%s\n\n", _("OK"));
   } else {
     if (global->score_system_val == SCORE_KIROV) {
       fprintf(f, _("PARTIAL SOLUTION\n\n"));
@@ -268,7 +298,7 @@ generate_team_report(char const *report_path, int scores, int max_score)
   fprintf(f, "\n");
 
   fprintf(f, _("Test #  Status  Time (sec)  %sResult\n"),
-          (global->score_system_val == SCORE_KIROV)?"Score   ":"");
+          (global->score_system_val == SCORE_KIROV)?_("Score   "):"");
   for (i = 1; i < total_tests; i++) {
     if (global->score_system_val == SCORE_KIROV) {
       sprintf(score_buf2, "%d (%d)", tests[i].score, tests[i].max_score);
@@ -309,6 +339,7 @@ read_error_code(char const *path)
 
 static int
 run_tests(struct section_tester_data *tst,
+          int locale_id,
           char const *new_name,
           char const *new_base,
           char *reply_string,               /* buffer where reply is formed */
@@ -609,17 +640,12 @@ run_tests(struct section_tester_data *tst,
   }
 
   if (global->team_enable_rep_view) {
+    setup_locale(locale_id);
     generate_team_report(team_report_path, score, prb->full_score);
+    setup_locale(0);
   }
   generate_report(report_path, score, prb->full_score);
 
-  /*
-  if (status == 0) { 
-    putchar(7);
-    usleep(500000);
-    putchar(7);
-  }
-  */
   goto _cleanup;
 
  _internal_execution_error:
@@ -653,43 +679,69 @@ do_loop(void)
 
   char   status_string[64];
 
+  char   pkt_buf[128];
+  char  *pkt_ptr;
+  int    rsize;
+
+  char   exe_name[64];
+  int    locale_id;
+  int    n;
+
   while (1) {
     for (i = 1; i <= max_tester; i++) {
       if (!testers[i]) continue;
-      r = scan_dir(testers[i]->exe_dir, new_name);
+      r = scan_dir(testers[i]->queue_dir, new_name);
       if (r < 0) return -1;
       if (r > 0) break;
     }
 
-    if (i <= max_tester) {
-      r = generic_copy_file(REMOVE|SAFE, testers[i]->exe_dir, new_name, "",
-                            0, testers[i]->tmp_dir, new_name, "");
-      if (r < 0) return -1;
-      if (r == 0) continue;
-
-      /* team report might be not produced */
-      team_report_path[0] = 0;
-
-      os_rGetBasename(new_name, new_base, PATH_MAX);
-      if (run_tests(testers[i], new_name, new_base,
-                    status_string, report_path,
-                    team_report_path) < 0) return -1;
-      if (generic_copy_file(0, NULL, report_path, "",
-                            0, testers[i]->run_report_dir, new_base, "") < 0)
-        return -1;
-      if (team_report_path[0]
-          && generic_copy_file(0, NULL, team_report_path, "",
-                               0, testers[i]->run_team_report_dir,
-                               new_base, "") < 0)
-        return -1;
-      if (generic_write_file(status_string, strlen(status_string), SAFE,
-                             testers[i]->run_status_dir, new_base, "") < 0)
-        return -1;
-      clear_directory(testers[i]->tmp_dir);
+    if (i > max_tester) {
+      os_Sleep(global->sleep_time);
       continue;
     }
 
-    os_Sleep(global->sleep_time);
+    memset(pkt_buf, 0, sizeof(pkt_buf));
+    pkt_ptr = pkt_buf;
+    r = generic_read_file(&pkt_ptr, sizeof(pkt_buf), &rsize, SAFE | REMOVE,
+                          testers[i]->queue_dir, new_name, "");
+    if (r == 0) continue;
+    if (r < 0) return -1;
+ 
+    chop(pkt_buf);
+    info("run packet: <%s>", pkt_buf);
+    n = 0;
+    memset(exe_name, 0, sizeof(exe_name));
+    if (sscanf(pkt_buf, "%63s %d %n", exe_name, &locale_id, &n) != 2
+        || pkt_buf[n]
+        || locale_id < 0
+        || locale_id > 1024) {
+      err("bad packet");
+      continue;
+    }
+
+    r = generic_copy_file(0, testers[i]->server_exe_dir, exe_name, "",
+                          0, testers[i]->tmp_dir, exe_name, "");
+    if (r <= 0) continue;
+
+    /* team report might be not produced */
+    team_report_path[0] = 0;
+
+    os_rGetBasename(exe_name, new_base, PATH_MAX);
+    if (run_tests(testers[i], locale_id, exe_name, new_base,
+                  status_string, report_path,
+                  team_report_path) < 0) return -1;
+    if (generic_copy_file(0, NULL, report_path, "",
+                          0, testers[i]->run_report_dir, new_base, "") < 0)
+      return -1;
+    if (team_report_path[0]
+        && generic_copy_file(0, NULL, team_report_path, "",
+                             0, testers[i]->run_team_report_dir,
+                             new_base, "") < 0)
+      return -1;
+    if (generic_write_file(status_string, strlen(status_string), SAFE,
+                           testers[i]->run_status_dir, new_base, "") < 0)
+      return -1;
+    clear_directory(testers[i]->tmp_dir);
   }
 }
 
@@ -826,7 +878,7 @@ check_config(void)
     }
 
     /* check spooler dirs */
-    if (check_writable_spool(testers[i]->exe_dir, SPOOL_OUT) < 0) return -1;
+    if (check_writable_spool(testers[i]->queue_dir, SPOOL_OUT) < 0) return -1;
     if (check_writable_spool(testers[i]->run_status_dir,SPOOL_IN)<0) return -1;
     if (check_writable_dir(testers[i]->run_report_dir) < 0) return -1;
     if (global->team_enable_rep_view) {
@@ -850,6 +902,15 @@ check_config(void)
     err("no testers");
     return -1;
   }
+
+#if CONF_HAS_LIBINTL - 0 == 1
+  // bind message catalogs, if specified
+  if (global->enable_l10n && global->l10n_dir[0]) {
+    bindtextdomain("ejudge", global->l10n_dir);
+    textdomain("ejudge");
+  }
+#endif
+
   return 0;
 }
 
