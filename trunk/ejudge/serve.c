@@ -2230,7 +2230,15 @@ read_compile_packet(char *pname)
   if (run_get_param(runid, &loc, &lang, &prob, &stat) < 0)
     goto bad_packet_error;
   if (stat != RUN_COMPILING) goto bad_packet_error;
-  if (code != RUN_OK && code != RUN_COMPILE_ERR) goto bad_packet_error;
+  if (code != RUN_OK && code != RUN_COMPILE_ERR && code != RUN_CHECK_FAILED)
+    goto bad_packet_error;
+  if (code == RUN_CHECK_FAILED) {
+    if (run_change_status(runid, RUN_CHECK_FAILED, 0, -1) < 0) return -1;
+    if (generic_copy_file(REMOVE, global->compile_report_dir, pname, "",
+                          0, global->report_archive_dir, pname, "") < 0)
+      return -1;
+    return 1;
+  }
   if (code == RUN_COMPILE_ERR) {
     /* compilation error */
     if (run_change_status(runid, RUN_COMPILE_ERR, 0, -1) < 0) return -1;
