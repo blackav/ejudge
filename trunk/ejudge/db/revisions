@@ -797,3 +797,15 @@ l10n.h 1 1 69969
 l10n.c 1 1 125270
 copyright.h 1 1 66359
 copyright.c 1 1 158023
+clntutil.h 1 16 210013
+contests.h 1 14 438637
+clntutil.c 1 28 1142984
+contests.c 1 15 2363594
+html.c 1 35 3867952
+l10n.c 1 2 126898
+master.c 1 36 5007711
+register.c 1 22 7002149
+serve.c 1 45 7286373
+team.c 1 31 3981649
+userlist-server.c 1 22 11109149
+users.c 1 8 1614593
