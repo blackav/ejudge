@@ -50,6 +50,7 @@ unsigned long server_start_time;
 unsigned long server_sched_time;
 unsigned long server_duration;
 unsigned long server_stop_time;
+time_t        server_freeze_time;
 int           server_total_runs;
 int           server_total_clars;
 int           server_clars_disabled;
@@ -57,6 +58,7 @@ int           server_team_clars_disabled;
 int           server_standings_frozen;
 int           server_score_system;
 int           server_clients_suspended;
+int           server_testing_suspended;
 int           server_download_interval;
 int           server_is_virtual;
 int           server_olympiad_judging_mode;
@@ -290,11 +292,13 @@ client_check_server_status(char const *charset, char const *path, int lag,
   server_standings_frozen = status.standings_frozen;
   server_score_system = status.score_system;
   server_clients_suspended = status.clients_suspended;
+  server_testing_suspended = status.testing_suspended;
   server_download_interval = status.download_interval;
   server_is_virtual = status.is_virtual;
   server_olympiad_judging_mode = status.olympiad_judging_mode;
   server_continuation_enabled = status.continuation_enabled;
   client_cur_time = time(0);
+  server_freeze_time = status.freeze_time;
 
   if (lag > 0) {
     if (client_cur_time>=server_cur_time
@@ -362,6 +366,10 @@ client_print_server_status(int priv_level,
   if (server_clients_suspended) {
     printf("<p><big><b>%s</b></big></p>", _("Team requests are suspended"));
   }
+  if (server_testing_suspended) {
+    printf("<p><big><b>%s</b></big></p>",
+           _("Testing of team's submits is suspended"));
+  }
   puts("");
 
   if (server_is_virtual && priv_level == 0) return 0;
@@ -380,9 +388,11 @@ client_print_server_status(int priv_level,
   if (priv_level == PRIV_LEVEL_ADMIN) puts("<td>&nbsp;</td><td>&nbsp;</td>");
   puts("</tr>");
 
-  printf("<tr><td>%s:</td><td>%s</td>", _("Client time"), str_clnt_time);
-  if (priv_level == PRIV_LEVEL_ADMIN) puts("<td>&nbsp;</td><td>&nbsp;</td>");
-  puts("</tr>");
+  if (priv_level >= PRIV_LEVEL_JUDGE) {
+    printf("<tr><td>%s:</td><td>%s</td>", _("Client time"), str_clnt_time);
+    if (priv_level == PRIV_LEVEL_ADMIN) puts("<td>&nbsp;</td><td>&nbsp;</td>");
+    puts("</tr>");
+  }
 
   if (!server_start_time) {
     printf("<tr><td colspan=\"2\"><b><big>%s</big></b></td>\n",
@@ -397,7 +407,8 @@ client_print_server_status(int priv_level,
       puts("<td>&nbsp;</td>");
       if (!server_stop_time)
         printf("<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_STOP, _("Stop"));
-      else if (server_continuation_enabled && !server_duration)
+      else if (server_continuation_enabled
+               && (!server_duration || server_stop_time < server_start_time + server_duration))
         printf("<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_CONTINUE, _("Continue"));
       else
         puts("<td>&nbsp;</td>");
@@ -428,7 +439,7 @@ client_print_server_status(int priv_level,
   }
   printf("<tr><td>%s:</td><td>%s</td>", _("Duration"), str_duration);
   if (priv_level == PRIV_LEVEL_ADMIN) {
-    if (!server_stop_time)
+    if (!server_stop_time || server_continuation_enabled)
       printf("<td><input type=\"text\" name=\"dur\" size=\"16\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>",
              ACTION_DURATION, _("Change duration"));
     else
@@ -446,6 +457,15 @@ client_print_server_status(int priv_level,
     printf("<tr><td>%s:</td><td>%s</td>", _("End time"), str_end_time);
     if (priv_level == PRIV_LEVEL_ADMIN) puts("<td>&nbsp;</td><td>&nbsp;</td>");
     puts("</tr>");
+
+    if (server_freeze_time) {
+      client_time_to_str(str_el_dur, server_freeze_time);
+      printf("<tr><td>%s:</td><td>%s</td>",
+             _("Standings freeze time"), str_el_dur);
+      if (priv_level == PRIV_LEVEL_ADMIN)
+        puts("<td>&nbsp;</td><td>&nbsp</td>");
+      puts("</tr>");
+    }
 
     duration_str(0, server_cur_time, server_start_time, str_el_dur, 0);
     printf("<tr><td>%s:</td><td>%s</td>", _("Elapsed time"), str_el_dur);
