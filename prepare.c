@@ -620,7 +620,7 @@ set_defaults(int mode)
       global->board_unfog_time = DFLT_G_BOARD_UNFOG_TIME;
     }
     global->board_unfog_time *= 60;
-    if (global->contest_time < 0 || global->contest_time > 60 * 10) {
+    if (global->contest_time < 0 || global->contest_time > 60 * 100) {
       err("bad value of global.contest_time: %d", global->contest_time);
       return -1;
     }
