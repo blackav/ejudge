@@ -237,6 +237,15 @@ print_update_button(char const *str)
 }
 
 static void
+print_teamview_button(char const *str)
+{
+  if (!str) str = _("view teams");
+  puts(form_start_simple);
+  printf("<input type=\"submit\" name=\"viewteams\" value=\"%s\">", str);
+  puts("</form>");
+}
+
+static void
 start_if_asked(void)
 {
   char *sstr = cgi_param("start");
@@ -437,6 +446,314 @@ view_report_if_asked()
   printf("</body></html>");
 
   xfree(src);
+  exit(0);
+}
+
+/*
+ * this is experimental: html generated on client side.
+ * file format for teams view:
+ *   <number of teams: int>
+ * for each team the following information is passed
+ *   <table line length> <space> <table line>
+ */
+void
+view_teams_if_asked(int forced_flag)
+{
+  char cmd[64], pk_name[64] = { 0 };
+  char *teams = 0;
+  int teams_len = 0;
+  int nteams;
+  char *p;
+  int i, n;
+
+  if (!forced_flag && !cgi_param("viewteams")) return;
+
+  sprintf(cmd, "%cTEAMS\n", judge_mode?'J':'M');
+  client_transaction(pk_name, cmd, &teams, &teams_len);
+  client_put_header(global->charset, "Teams information");
+  printf("<table><tr><td>");
+  print_refresh_button(_("back"));
+  printf("</td></tr></table><hr>");
+  printf("<h2>%s</h2>\n", _("Existing teams"));
+  if (sscanf(teams, "%d%n", &nteams, &n) != 1) goto _format_error;
+  p = teams + n;
+  if (nteams <= 0 || nteams > 10000) goto _format_error;
+  printf("<table border=\"1\"><tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th>",
+         _("Team login"), _("Team id"), _("Team name"), _("Flags"));
+  if (!judge_mode) {
+    printf("<th>%s</th>", _("Change"));
+  }
+  printf("</tr>\n");
+  for (i = 0; i < nteams; i++) {
+    int tll;
+    char *tl = 0;
+
+    if (sscanf(p, "%d%n", &tll, &n) != 1) goto _format_error;
+    if (tll <= 0 || tll > 2048) goto _format_error;
+    p += n;
+    if (*p++ != ' ') goto _format_error;
+    XCALLOC(tl, tll + 1);
+    memcpy(tl, p, tll);
+    tl[tll] = 0;
+    p += tll;
+
+    printf("%s%s</form>\n", form_start_simple, tl);
+    xfree(tl);
+  }
+  printf("</table>\n");
+  printf("<hr><h2>%s</h2>%s<table>",
+         _("Add new team"), form_start_simple);
+  printf("<tr><td>%s:</td><td><input type=\"text\" name=\"tnewid\" size=\"3\"></td><td>(%s)</td></tr>\n",
+         _("Team id"),
+         _("if empty, assigned automatically"));
+  printf("<tr><td>%s:</td><td><input type=\"text\" name=\"tnewlogin\" size=\"32\"></td></tr>\n",
+         _("Team login"));
+  printf("<tr><td>%s:</td><td><input type=\"text\" name=\"tnewname\" size=\"32\"></td></tr>\n",
+         _("Team name"));
+  printf("<tr><td>%s:</td><td><input type=\"password\" name=\"tnewpass1\" size=\"16\"></td></tr>\n",
+         _("Password"));
+  printf("<tr><td>%s:</td><td><input type=\"password\" name=\"tnewpass2\" size=\"16\"></td></tr>\n",
+         _("Retype password"));
+  printf("<tr><td>%s:</td><td><select name=\"tnewvis\"><option>%s<option>%s</select></td></tr>\n",
+         _("Visible?"), _("yes"), _("no"));
+  printf("<tr><td>%s:</td><td><select name=\"tnewban\"><option>%s<option>%s</select></td></tr>\n",
+         _("Banned?"), _("no"), _("yes"));
+  printf("<tr><td>&nbsp;</td><td><input type=\"submit\" name=\"tnewteam\" value=\"%s\"></td><tr>\n", _("Add!"));
+  printf("</table></form>\n");
+  printf("<hr><table><tr><td>");
+  print_refresh_button(_("back"));
+  printf("</td></tr></table>");
+  client_put_footer();
+  exit(0);
+ _format_error:
+  printf("</td></tr></table></form><hr><b>Format error!</b>");
+  printf("<hr><table><tr><td>");
+  print_refresh_button(_("back"));
+  printf("</td></tr></table>");
+  client_put_footer();
+  exit(0);
+}
+
+void
+view_one_team_if_asked(int forced_teamid, char const *reply)
+{
+  char *s;
+  char  cmd[64], pk_name[64] = { 0 };
+  int   teamid, n;
+  char *team_data = 0;
+  int   team_len = 0;
+
+  if (forced_teamid <= 0) {
+    if (!(s = cgi_nname("team_", 5))) return;
+    if (sscanf(s, "team_%d%n", &teamid, &n) != 1 || s[n]) return;
+    if (teamid <= 0 || teamid > 10000) return;
+  } else {
+    teamid = forced_teamid;
+  }
+  // FIXME: magic
+  sprintf(cmd, "%s %d", "VTEAM", teamid);
+  client_transaction(pk_name, cmd, &team_data, &team_len);
+  client_put_header(global->charset, "Team %d information", teamid);
+  printf("<table><tr><td>");
+  print_refresh_button(_("top"));
+  printf("</td><td>");
+  print_teamview_button(_("back"));
+  printf("</td></tr></table><hr>\n");
+  if (reply) {
+    /*
+    printf("<h2>%s</h2>\n%s\n",
+           _("Last command completion status"), reply);
+    */
+    printf("%s<hr>\n", reply);
+  }
+  printf("%s%s</form>\n", form_start_simple, team_data);
+  printf("<hr><table><tr><td>");
+  print_refresh_button(_("top"));
+  printf("</td><td>");
+  print_teamview_button(_("back"));
+  printf("</td></tr></table>\n");
+  client_put_footer();
+  exit(0);
+}
+
+void
+do_team_action_if_asked(void)
+{
+  char cmd[64], pk_name[64] = { 0 };
+  char *reply = 0;
+  int   reply_len = 0;
+  char *stid;
+  int   n, teamid;
+  char *reply1 = 0;
+
+  if (!(stid = cgi_param("teamid"))) return;
+  if (sscanf(stid, "%d %n", &teamid, &n) != 1
+      || stid[n] || teamid <= 0 || teamid > 10000) return;
+
+  if (cgi_param("tchglogin")) {
+    // change team's login
+    char *new_login = cgi_param("tlogin");
+    char *b64_login;
+    if (!new_login) {
+      reply1 = _("New team login not specified");
+      goto _failed;
+    }
+    b64_login = alloca(strlen(new_login) * 2 + 16);
+    base64_encode_str(new_login, b64_login);
+    if (strlen(b64_login) > 48) {
+      reply1 = _("New team login is too long");
+      goto _failed;
+    }
+    sprintf(cmd, "CHGLOGIN %d %s", teamid, b64_login);
+  } else if (cgi_param("tchgname")) {
+    // change team's name
+    char *new_name = cgi_param("tname");
+    char *b64_name;
+    if (!new_name) {
+      reply1 = _("New team name not specified");
+      goto _failed;
+    }
+    b64_name = alloca(strlen(new_name) * 2 + 16);
+    base64_encode_str(new_name, b64_name);
+    if (strlen(b64_name) > 48) {
+      reply1 = _("New team name is too long");
+      goto _failed;
+    }
+    sprintf(cmd, "CHGNAME %d %s", teamid, b64_name);
+  } else if (cgi_param("tbanchg")) {
+    // change team's ban status
+    sprintf(cmd, "CHGBAN %d", teamid);
+  } else if (cgi_param("tinvchg")) {
+    // change team's visibility status
+    sprintf(cmd, "CHGVIS %d", teamid);
+  } else if (cgi_param("tchgpwd")) {
+    // change team's password
+    char *p1 = cgi_param("tpasswd1");
+    char *p2 = cgi_param("tpasswd2");
+    char b64_p[64];
+    if (!p1 || !p2 || !*p1 || !*p2) {
+      reply1 = _("Passwords not specified");
+    }
+    if (strcmp(p1, p2)) {
+      reply1 = _("Passwords do not match");
+      goto _failed;
+    }
+    if (strlen(p1) > 16) {
+      reply1 = _("Password is too long (>16 characters)");
+      goto _failed;
+    }
+    base64_encode_str(p1, b64_p);
+    sprintf(cmd, "CHGPASSWD %d %s", teamid, b64_p);
+  } else {
+    return;
+  }
+
+  client_transaction(pk_name, cmd, &reply, &reply_len);
+  if (!strcmp(reply, "OK")) {
+    reply = "<h2>Operation complete</h2><p>The last operation completed successfully</p>";
+  }
+  view_one_team_if_asked(teamid, reply);
+
+ _failed:
+  XALLOCA(reply, strlen(reply1) + 64);
+  sprintf(reply, "<h2>%s</h2>%s<p>",
+          _("Operation is not performed"), reply1);
+  view_one_team_if_asked(teamid, reply);
+}
+
+void
+add_team_if_asked(void)
+{
+  char *reply = 0;
+  int   reply_len = 0;
+  char *reply1 = 0;
+  char *snewid, *snewlogin, *snewname, *snewpass1, *snewpass2, *svis, *sban;
+  int   vis, ban;
+  int   newid, n;
+  char  cmd[64], pk_name[64] = { 0 };
+  int   approx_len;
+  char *msg;
+  int   msg_len;
+
+  if (!(cgi_param("tnewteam"))) return;
+  if (!(snewid = cgi_param("tnewid")) || !*snewid) {
+    newid = 0;
+  } else {
+    if (sscanf(snewid, "%d %n", &newid, &n) != 1
+        || snewid[n] || newid <= 0 || newid > 10000) {
+      reply1 = _("Invalid team id");
+      goto _failed;
+    }
+  }
+  if (!(snewlogin = cgi_param("tnewlogin"))) {
+    reply1 = _("Team login not specified");
+    goto _failed;
+  }
+  if (!(snewname = cgi_param("tnewname"))) {
+    reply1 = _("Team name not specified");
+    goto _failed;
+  }
+  snewpass1 = cgi_param("tnewpass1");
+  snewpass2 = cgi_param("tnewpass2");
+  if (!snewpass1 || !snewpass2 || !*snewpass1 || !*snewpass2) {
+    reply1 = _("Password not specified");
+    goto _failed;
+  }
+  if (strcmp(snewpass1, snewpass2)) {
+    reply1 = _("Passwords do not match");
+    goto _failed;
+  }
+  vis = 1;
+  if ((svis = cgi_param("tnewvis"))) {
+    if (!strcmp(svis, "yes")) vis = 1;
+    else if (!strcmp(svis, "no")) vis = 0;
+    else {
+      reply = _("Invalid visible flag");
+      goto _failed;
+    }
+  }
+  ban = 0;
+  if ((sban = cgi_param("tnewban"))) {
+    if (!strcmp(sban, "yes")) ban = 1;
+    else if (!strcmp(sban, "no")) ban = 0;
+    else {
+      reply = _("Invalid banned flag");
+      goto _failed;
+    }
+  }
+
+  approx_len = strlen(snewlogin) + strlen(snewname) + strlen(snewpass1) + 128;
+  msg = alloca(approx_len);
+  msg_len = sprintf(msg, "%d %d %s %d %s %d %s %d %d\n",
+                   newid, strlen(snewlogin), snewlogin,
+                   strlen(snewname), snewname,
+                   strlen(snewpass1), snewpass1,
+                   vis, ban);
+
+  client_packet_name(pk_name);
+  generic_write_file(msg, msg_len, 0,
+                     global->judge_data_dir, pk_name, "");
+
+  sprintf(cmd, "NEWTEAM");
+  client_transaction(pk_name, cmd, &reply, &reply_len);
+  if (strcmp(reply, "OK")) goto _failed2;
+  view_teams_if_asked(1);
+  exit(0);
+
+ _failed:  
+  XALLOCA(reply, strlen(reply1) + 64);
+  sprintf(reply, "<h2>%s</h2>%s<p>",
+          _("Operation is not performed"), reply1);
+
+ _failed2:
+  client_put_header(global->charset, "Team add failed");
+  printf("%s<hr>\n", reply);
+  printf("<table><tr><td>");
+  print_refresh_button(_("top"));
+  printf("</td><td>");
+  print_teamview_button(_("back"));
+  printf("</td></tr></table>\n");
+  client_put_footer();
   exit(0);
 }
 
@@ -778,6 +1095,9 @@ main(int argc, char *argv[])
     sched_if_asked();
     update_standings_if_asked();
     change_status_if_asked();
+    view_one_team_if_asked(-1, 0);
+    do_team_action_if_asked();
+    add_team_if_asked();
   }
   /*
   navigate_if_asked();
@@ -786,6 +1106,7 @@ main(int argc, char *argv[])
   view_source_if_asked();
   view_report_if_asked();
   view_clar_if_asked();
+  view_teams_if_asked(0);
   view_standings_if_asked();
   send_reply_if_asked();
   send_msg_if_asked();
@@ -810,8 +1131,9 @@ main(int argc, char *argv[])
   print_refresh_button(0);
   printf("</td><td>");
   print_standings_button(0);
+  printf("</td><td>");
+  print_teamview_button(0);
   printf("</td></tr></table>\n");
-
   client_print_server_status(judge_mode, form_start_simple, 0);
   printf("<table><tr><td>");
   print_refresh_button(0);
