@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,7 @@
  * This program compiles incoming source files and puts the resulting
  * executables into the spool directory.
  *
+ * NOTE: this is obsoleted!
  * THEORY OF OPERATION: for each language which has 'key' matching
  * to the command line parameter of the utility, src_dir is watched
  * for the new files. Each new file must have name NUM.SFX, where
@@ -74,27 +75,26 @@ do_loop(void)
   path_t exe_out;
   path_t log_out;
   char   statbuf[64];
+  path_t report_dir, status_dir;
 
-  path_t  pkt_name;
+  path_t  pkt_name, run_name;
   char    pkt_buf[128];
   char   *pkt_ptr;
   int     pkt_len;
   int     locale_id;
+  int     contest_id;
+  int     run_id;
+  int     lang_id;
 
-  int    r, i, n;
+  int    r, n;
   tpTask tsk;
 
   if (cr_serialize_init() < 0) return -1;
 
   while (1) {
-    for (i = 0; i <= max_lang; i++) {
-      if (!langs[i]) continue;
-      r = scan_dir(langs[i]->queue_dir, pkt_name);
-      if (r < 0) return -1;
-      if (r > 0) break;
-    }
-
-    if (i > max_lang) {
+    r = scan_dir(global->compile_queue_dir, pkt_name);
+    if (r < 0) return -1;
+    if (!r) {
       os_Sleep(global->sleep_time);
       continue;
     }
@@ -103,43 +103,57 @@ do_loop(void)
     pkt_ptr = pkt_buf;
     pkt_len = 0;
     r = generic_read_file(&pkt_ptr, sizeof(pkt_buf), &pkt_len,
-                          SAFE | REMOVE, langs[i]->queue_dir, pkt_name, "");
+                          SAFE | REMOVE, global->compile_queue_dir,
+                          pkt_name, "");
     if (r == 0) continue;
     if (r < 0) return -1;
 
     chop(pkt_buf);
     info("compile packet: <%s>", pkt_buf);
+
     n = 0;
-    memset(src_name, 0, sizeof(src_name));
-    if (sscanf(pkt_buf, "%63s %d %n", src_name, &locale_id, &n) != 2
+    if (sscanf(pkt_buf, "%d %d %d %d %n", &contest_id, &run_id,
+               &lang_id, &locale_id, &n) != 4
         || pkt_buf[n]
+        || contest_id <= 0
+        || run_id < 0
+        || lang_id <= 0 || lang_id > max_lang
+        || !langs[lang_id]
         || locale_id < 0
         || locale_id > 1024) {
       err("bad packet");
       continue;
     }
 
-    pathmake(exe_name, pkt_name, langs[i]->exe_sfx, NULL);
-    pathmake(src_path, langs[i]->work_dir, "/", src_name, NULL);
-    pathmake(exe_path, langs[i]->work_dir, "/", exe_name, NULL);
-    pathmake(log_path, langs[i]->work_dir, "/", "log", NULL);
+    snprintf(report_dir, sizeof(report_dir),
+             "%s/%04d/report", global->compile_dir, contest_id);
+    snprintf(status_dir, sizeof(status_dir),
+             "%s/%04d/status", global->compile_dir, contest_id);
+    snprintf(run_name, sizeof(run_name), "%06d", run_id);
+    pathmake(src_name, run_name, langs[lang_id]->src_sfx, NULL);
+    pathmake(exe_name, run_name, langs[lang_id]->exe_sfx, NULL);
+
+    pathmake(src_path, global->compile_work_dir, "/", src_name, NULL);
+    pathmake(exe_path, global->compile_work_dir, "/", exe_name, NULL);
+    pathmake(log_path, global->compile_work_dir, "/", "log", NULL);
     /* the resulting report file */
-    pathmake(log_out,  langs[i]->compile_report_dir, "/", pkt_name, NULL);
+    pathmake(log_out, report_dir, "/", run_name, NULL);
     /* the resulting executable file */
-    pathmake(exe_out,  langs[i]->compile_report_dir, "/", exe_name, NULL);
+    pathmake(exe_out, report_dir, "/", exe_name, NULL);
 
     /* move the source file into the working dir */
-    r = generic_copy_file(REMOVE, langs[i]->server_src_dir, src_name, "",
-                          0, langs[i]->work_dir, src_name, "");
+    r = generic_copy_file(REMOVE, global->compile_src_dir, pkt_name,
+                          langs[lang_id]->src_sfx,
+                          0, global->compile_work_dir, src_name, "");
     if (r <= 0) continue;
 
-    info("Starting: %s %s %s", langs[i]->cmd, src_name, exe_name);
+    info("Starting: %s %s %s", langs[lang_id]->cmd, src_name, exe_name);
     tsk = task_New();
-    task_AddArg(tsk, langs[i]->cmd);
+    task_AddArg(tsk, langs[lang_id]->cmd);
     task_AddArg(tsk, src_name);
     task_AddArg(tsk, exe_name);
     task_SetPathAsArg0(tsk);
-    task_SetWorkingDir(tsk, langs[i]->work_dir);
+    task_SetWorkingDir(tsk, global->compile_work_dir);
     task_SetRedir(tsk, 1, TSR_FILE, log_path,
                   O_WRONLY|O_CREAT|O_TRUNC, 0777);
     task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", O_WRONLY);
@@ -157,8 +171,8 @@ do_loop(void)
         return -1;
       sprintf(statbuf, "%d%s", 1, PATH_EOL);
       if (generic_write_file(statbuf, strlen(statbuf), SAFE,
-                             langs[i]->compile_status_dir,
-                             pkt_name, "") < 0)
+                             status_dir,
+                             run_name, "") < 0)
         return -1;
     } else {
       // ok, we can move the executable to output dir
@@ -168,11 +182,11 @@ do_loop(void)
         return -1;
       sprintf(statbuf, "0%s", PATH_EOL);
       if (generic_write_file(statbuf, strlen(statbuf), SAFE,
-                             langs[i]->compile_status_dir,
-                             pkt_name, "") < 0)
+                             status_dir,
+                             run_name, "") < 0)
         return -1;
     }
-    clear_directory(langs[i]->work_dir);
+    clear_directory(global->compile_work_dir);
   }
 
   return 0;
@@ -206,16 +220,14 @@ check_config(void)
   int i;
   int total = 0;
 
+  if (check_writable_spool(global->compile_queue_dir, SPOOL_OUT) < 0)
+    return -1;
   for (i = 1; i <= max_lang; i++) {
     if (!langs[i]) continue;
 
     /* script must exist and be executable */
     total++;
     if (check_executable(langs[i]->cmd) < 0) return -1;
-    if (check_writable_spool(langs[i]->queue_dir, SPOOL_OUT) < 0) return -1;
-    if (check_writable_spool(langs[i]->compile_status_dir, SPOOL_IN) < 0)
-      return -1;
-    if (check_writable_dir(langs[i]->compile_report_dir) < 0) return -1;
   }
 
   if (!total) {
