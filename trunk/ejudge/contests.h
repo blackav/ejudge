@@ -62,6 +62,7 @@ enum
     CONTEST_A_MAX,
     CONTEST_A_AUTOREGISTER,
     CONTEST_A_INITIAL,
+    CONTEST_A_DISABLE_TEAM_PASSWORD,
 
     CONTEST_LAST_ATTN
   };
@@ -141,6 +142,7 @@ struct contest_desc
   struct xml_tree b;
   int id;
   int autoregister;
+  int disable_team_password;
   unsigned long  reg_deadline;
   unsigned char *name;
   unsigned char *header_file;
