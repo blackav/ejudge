@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -31,6 +31,7 @@ serve_clnt_view(int sock_fd,
                 int out_fd,
                 int cmd,
                 int item,
+                int item2,
                 int sid_mode,
                 unsigned char const *self_url,
                 unsigned char const *hidden_vars,
@@ -62,6 +63,8 @@ serve_clnt_view(int sock_fd,
       && cmd != SRV_CMD_DUMP_RUNS
       && cmd != SRV_CMD_EXPORT_XML_RUNS
       && cmd != SRV_CMD_WRITE_XML_RUNS
+      && cmd != SRV_CMD_PRIV_DOWNLOAD_RUN
+      && cmd != SRV_CMD_COMPARE_RUNS
       && cmd != SRV_CMD_DUMP_STANDINGS) {
     err("serve_clnt_view: invalid command %d", cmd);
     return -SRV_ERR_PROTOCOL;
@@ -70,6 +73,7 @@ serve_clnt_view(int sock_fd,
   out->b.id = cmd;
   out->b.magic = PROT_SERVE_PACKET_MAGIC;
   out->item = item;
+  out->item2 = item2;
   out->sid_mode = sid_mode;
   out->self_url_len = self_url_len;
   out->hidden_vars_len = hidden_vars_len;
