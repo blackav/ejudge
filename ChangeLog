@@ -1,3 +1,11 @@
+2001-04-28  Alexander Chernov  <cher@ispras.ru>
+
+	* serve.c:
+	fixed: judge_update_public_standings did not respond to the client,
+	so it hung
+
+	* mkpasswd.c: added option to generate tex password report
+
 2001-04-20  Alexander Chernov  <cher@ispras.ru>
 
         * master.c, serve.c:

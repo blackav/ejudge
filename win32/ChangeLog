@@ -1,3 +1,7 @@
+2001-03-25  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c, logger.c, fileutl.c, exec.c: copyright notice updated
+
 2000-11-03  Alexander Chernov  <cher@ispras.ru>
 
 	* exec.c 1.7, logger.c 1.12, osdeps.c 1.16: copyright notice updated
