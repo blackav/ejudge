@@ -62,6 +62,7 @@
 #define DEFAULT_JUDGE_CMD_DIR  "cmd"
 #define DEFAULT_JUDGE_DATA_DIR "data"
 #define DEFAULT_STATUS_FILE    "status/dir/status"
+#define DEFAULT_PROBLEMS_SUBMIT_FILE "status/dir/problems"
 #define DEFAULT_RUN_PAGE_SIZE  10
 #define DEFAULT_CLAR_PAGE_SIZE 10
 #define DEFAULT_CHARSET        "iso8859-1"
@@ -83,6 +84,7 @@ struct section_global_data
   path_t judge_cmd_dir;
   path_t judge_data_dir;
   path_t status_file;
+  path_t problems_submit_file;
   path_t allow_from;
   path_t deny_from;
   path_t standings_url;
@@ -112,6 +114,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(judge_cmd_dir, "s"),
   GLOBAL_PARAM(judge_data_dir, "s"),
   GLOBAL_PARAM(status_file, "s"),
+  GLOBAL_PARAM(problems_submit_file, "s"),
   GLOBAL_PARAM(allow_from, "s"),
   GLOBAL_PARAM(deny_from, "s"),
   GLOBAL_PARAM(standings_url, "s"),
@@ -258,6 +261,30 @@ print_teamview_button(char const *str)
   puts(form_start_simple);
   printf("<input type=\"submit\" name=\"viewteams\" value=\"%s\">", str);
   puts("</form>");
+}
+
+static void
+print_reset_button(char const *str)
+{
+  if (!str) str = _("Reset the contest!");
+  puts(form_start_simple);
+  printf("<input type=\"submit\" name=\"resetall\" value=\"%s\"></form>", str);
+}
+
+static void
+print_suspend_button(char const *str)
+{
+  if (!str) str = _("Suspend clients");
+  puts(form_start_simple);
+  printf("<input type=\"submit\" name=\"suspend\" value=\"%s\"></form>", str);
+}
+
+static void
+print_resume_button(char const *str)
+{
+  if (!str) str = _("Resume clients");
+  puts(form_start_simple);
+  printf("<input type=\"submit\" name=\"resume\" value=\"%s\"></form>", str);
 }
 
 static void
@@ -807,6 +834,86 @@ view_standings_if_asked()
 }
 
 void
+confirm_reset_if_asked(void)
+{
+  if (!cgi_param("resetall")) return;
+
+  client_put_header(global->charset, "Confirm contest reset");
+  printf("<table><tr><td>");
+  print_refresh_button(_("no"));
+  printf("</td><td>%s<input type=\"submit\" name=\"doresetall\" value=\"%s\">"
+         "</form></td></tr></table>", form_start_simple,
+         _("yes, reset the contest!"));
+  client_put_footer();
+  exit(0);
+}
+
+void
+do_contest_reset_if_asked(void)
+{
+  char cmd[64];
+  char pkt_name[64];
+
+  if (!cgi_param("doresetall")) return;
+  // locale_id is not set currently
+  sprintf(cmd, "%s %d\n", "RESET", 0);
+  client_transaction(client_packet_name(pkt_name), cmd, 0, 0);
+  force_recheck_status = 1;
+}
+
+void
+do_suspend_if_asked(void)
+{
+  char cmd[64];
+  char pkt_name[64];
+
+  if (!cgi_param("suspend")) return;
+  sprintf(cmd, "%s\n", "SUSPEND");
+  client_transaction(client_packet_name(pkt_name), cmd, 0, 0);
+  force_recheck_status = 1;
+}
+
+void
+do_resume_if_asked(void)
+{
+  char cmd[64];
+  char pkt_name[64];
+
+  if (!cgi_param("resume")) return;
+  sprintf(cmd, "%s\n", "RESUME");
+  client_transaction(client_packet_name(pkt_name), cmd, 0, 0);
+  force_recheck_status = 1;
+}
+
+void
+do_rejudge_all_if_asked(void)
+{
+  char cmd[64];
+  char pkt_name[64];
+
+  if (!cgi_param("rejudge_all")) return;
+  sprintf(cmd, "%s %d\n", "REJUDGE", 0);
+  client_transaction(client_packet_name(pkt_name), cmd, 0, 0);
+  force_recheck_status = 1;
+}
+
+void
+do_rejudge_problem_if_asked(void)
+{
+  char cmd[64];
+  char pkt_name[64];
+  int prob = 0, n = 0;
+  char *p;
+
+  if (!cgi_param("rejudge_problem")) return;
+  if (!(p = cgi_param("problem"))) return;
+  if (sscanf(p, "%d %n", &prob, &n) != 1 || p[n] || prob < 0) return;
+  sprintf(cmd, "%s %d %d\n", "REJUDGEP", 0, prob);
+  client_transaction(client_packet_name(pkt_name), cmd, 0, 0);
+  force_recheck_status = 1;
+}
+
+void
 view_clar_if_asked()
 {
   char *s = cgi_nname("clar_", 5);
@@ -1028,6 +1135,8 @@ set_defaults(void)
   path_init(global->judge_cmd_dir, global->judge_dir, DEFAULT_JUDGE_CMD_DIR);
   path_init(global->judge_data_dir, global->judge_dir, DEFAULT_JUDGE_DATA_DIR);
   path_init(global->status_file, global->var_dir, DEFAULT_STATUS_FILE);
+  path_init(global->problems_submit_file, global->var_dir,
+            DEFAULT_PROBLEMS_SUBMIT_FILE);
   if (!global->charset[0]) {
     pathcpy(global->charset, DEFAULT_CHARSET);
   }
@@ -1120,6 +1229,12 @@ main(int argc, char *argv[])
     view_one_team_if_asked(-1, 0);
     do_team_action_if_asked();
     add_team_if_asked();
+    confirm_reset_if_asked();
+    do_contest_reset_if_asked();
+    do_rejudge_all_if_asked();
+    do_rejudge_problem_if_asked();
+    do_suspend_if_asked();
+    do_resume_if_asked();
   }
   /*
   navigate_if_asked();
@@ -1163,7 +1278,18 @@ main(int argc, char *argv[])
   print_standings_button(0);
   if (!judge_mode) {
     printf("</td><td>");
+    print_teamview_button(0);
+    printf("</td><td>");
     print_update_button(0);
+    printf("</td><td>");
+    print_reset_button(0);
+    if (!server_clients_suspended) {
+      printf("</td><td>");
+      print_suspend_button(0);
+    } else {
+      printf("</td><td>");
+      print_resume_button(0);
+    }
   }
   printf("</td></tr></table>\n");
 
@@ -1193,6 +1319,19 @@ main(int argc, char *argv[])
     print_refresh_button(0);
     printf("</td><td>");
     print_standings_button(0);
+    if (!judge_mode && server_start_time) {
+      char *tmpl = 0;
+      int sz;
+
+      generic_read_file(&tmpl, 0, &sz, 0,
+                        0, global->problems_submit_file, "");
+
+      printf("</td><td>%s<input type=\"submit\" name=\"rejudge_all\" value=\"%s\"></form>", form_start_simple, _("Rejudge all"));
+      if (tmpl) {
+        printf("</td></tr></table><br><table><tr><td>%s%s%s<input type=\"submit\" name=\"rejudge_problem\" value=\"%s\"></form>", form_start_simple, _("Rejudge problem: "),
+               tmpl, _("Rejudge!"));
+      }
+    }
     printf("</td></tr></table>\n");
   }
 
