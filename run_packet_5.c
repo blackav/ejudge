@@ -70,7 +70,7 @@ run_reply_packet_write(const struct run_reply_packet *in_data,
     goto failed;
   }
   out_data->failed_test = cvt_host_to_bin_32(in_data->failed_test);
-  if (in_data->score < 0 || in_data->score > MAX_SCORE) {
+  if (in_data->score < -1 || in_data->score > MAX_SCORE) {
     errcode = 7;
     goto failed;
   }
@@ -88,6 +88,8 @@ run_reply_packet_write(const struct run_reply_packet *in_data,
   out_data->ts5_us = cvt_host_to_bin_32(in_data->ts5_us);
   out_data->ts6 = cvt_host_to_bin_32(in_data->ts6);
   out_data->ts6_us = cvt_host_to_bin_32(in_data->ts6_us);
+  out_data->ts7 = cvt_host_to_bin_32(in_data->ts7);
+  out_data->ts7_us = cvt_host_to_bin_32(in_data->ts7_us);
 
   *p_out_size = out_size;
   *p_out_data = out_data;
