@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,10 +29,11 @@
 #include "teamdb.h"
 
 #include "pathutl.h"
-#include "osdeps.h"
-#include "logger.h"
-#include "xalloc.h"
 #include "base64.h"
+
+#include <reuse/osdeps.h>
+#include <reuse/logger.h>
+#include <reuse/xalloc.h>
 
 #include <stdio.h>
 #include <string.h>
