@@ -1,3 +1,16 @@
+2001-12-03  Alexander Chernov  <cher@ispras.ru>
+
+	* exec.c: 
+	(struct tTask) new fields clear_env, env;
+	(task_Delete) memory, allocated for the new fields are correctly
+	  removed;
+	(task_PutEnv) new function: adds an environment variable for the
+	  process to start;
+	(task_ClearEnv) new function: sets `clear_env' flag, which indicates
+	  that all the environment must be cleared;
+	(task_Start) the environment is cleared, if `clear_env' flag is set,
+	  environment variables are set.
+
 2001-11-08  Alexander Chernov  <cher@ispras.ru>
 
 	* exec.c:
