@@ -1,3 +1,16 @@
+2003-10-27  Alexander Chernov  <cher@ispras.ru>
+
+	* run.c:
+	(run_tests) removed the temporary hack when maximal testing time
+	  was set as 1 second less, than requested, because the corresponding
+	  behavior of reuse library is fixed;
+	  terminal state is restored properly, when managed_mode_flag variable
+	  is not set.
+
+2003-10-26  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
 2003-10-26  Alexander Chernov  <cher@ispras.ru>
 
 	* html.c:
