@@ -67,6 +67,7 @@ enum
   RUNLOG_A_SHORT_NAME,
   RUNLOG_A_LONG_NAME,
   RUNLOG_A_VARIANT,
+  RUNLOG_A_READONLY,
 
   RUNLOG_LAST_ATTR,
 };
@@ -103,6 +104,7 @@ static const char * const attr_map[] =
   [RUNLOG_A_SHORT_NAME] "short_name",
   [RUNLOG_A_LONG_NAME] "long_name",
   [RUNLOG_A_VARIANT]   "variant",
+  [RUNLOG_A_READONLY]  "readonly",
 };
 static size_t const elem_sizes[RUNLOG_LAST_TAG] =
 {
@@ -384,6 +386,11 @@ process_run_elements(struct xml_tree *xt)
         if (!xa->text) goto empty_attr_value;
         if ((iv = parse_bool(xa->text)) < 0) goto invalid_attr_value;
         xr->r.is_imported = !iv;
+        break;
+      case RUNLOG_A_READONLY:
+        if (!xa->text) goto empty_attr_value;
+        if ((iv = parse_bool(xa->text)) < 0) goto invalid_attr_value;
+        xr->r.is_readonly = iv;
         break;
       default:
         err("%d:%d: invalid attribute \"%s\" in element <%s>",
@@ -741,6 +748,8 @@ unparse_runlog_xml(FILE *f,
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_AUTHORITATIVE],
               (!pp->is_imported)?"yes":"no");
     }
+    fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_READONLY],
+            (pp->is_readonly)?"yes":"no");
     fprintf(f, "/>\n");
   }
   fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_RUNS]);
