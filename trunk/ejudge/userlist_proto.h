@@ -32,7 +32,12 @@ enum
 enum
   {
     ULS_OK = 0,
-    ULS_LOGIN_USED,
+    ULS_ERR_LOGIN_USED,
+    ULS_ERR_INVALID_LOGIN,
+    ULS_ERR_INVALID_PASSWORD,
+    ULS_LOGIN_OK,
+    ULS_LOGIN_COOKIE,
+    ULS_ERR_NO_COOKIE,
   };
 
 struct userlist_packet __attribute__((packed));

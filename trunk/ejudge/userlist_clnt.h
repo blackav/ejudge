@@ -28,4 +28,36 @@ typedef struct userlist_clnt *userlist_clnt_t;
 userlist_clnt_t userlist_clnt_open(char const *);
 userlist_clnt_t userlist_clnt_close(userlist_clnt_t);
 
+int
+userlist_clnt_register_new(struct userlist_clnt *clnt,
+                           unsigned long origin_ip,
+                           int contest_id,
+                           int locale_id,
+                           int use_cookies,
+                           unsigned char const *login,
+                           unsigned char const *email);
+
+int
+userlist_clnt_login(struct userlist_clnt *clnt,
+                    unsigned long origin_ip,
+                    int contest_id,
+                    int locale_id,
+                    int use_cookies,
+                    unsigned char const *login,
+                    unsigned char const *passwd,
+                    int *p_user_id,
+                    unsigned long long *p_cookie,
+                    unsigned char **p_name,
+                    int *p_locale_id);
+
+int
+userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
+                            unsigned long origin_ip,
+                            unsigned long long cookie,
+                            int *p_user_id,
+                            unsigned char **p_login,
+                            unsigned char **p_name,
+                            int *p_locale_id,
+                            int *p_contest_id);
+
 #endif /* __USERLIST_CLNT_H__ */
