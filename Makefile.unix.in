@@ -47,7 +47,7 @@ LIBCAP_LIB_OPT=@ac_cv_libcap_lib_opt@
 
 include files.make
 
-ifeq (${REUSE_CONF}, ix86-linux)
+#ifeq (${REUSE_CONF}, ix86-linux)
 ifdef RELEASE
 CDEBUGFLAGS=-O2 -s -Wall -DNDEBUG -DRELEASE
 else
@@ -63,20 +63,20 @@ CCOMPFLAGS=-D_GNU_SOURCE
 LDCOMPFLAGS=
 EXESFX=
 ARCH=unix
-else
-ifeq (${REUSE_CONF}, ix86-win32-mingw)
-CDEBUGFLAGS=-O2 -s -Wall
-CEXTRAFLAGS=
-LDEXTRAFLAGS=
-EXTRALIBS=
-CCOMPFLAGS=-mno-cygwin
-LDCOMPFLAGS=-mno-cygwin
-EXESFX=.exe
-ARCH=win32
-else
-$(error "unsupported configuration")
-endif
-endif
+#else
+#ifeq (${REUSE_CONF}, ix86-win32-mingw)
+#CDEBUGFLAGS=-O2 -s -Wall
+#CEXTRAFLAGS=
+#LDEXTRAFLAGS=
+#EXTRALIBS=
+#CCOMPFLAGS=-mno-cygwin
+#LDCOMPFLAGS=-mno-cygwin
+#EXESFX=.exe
+#ARCH=win32
+#else
+#$(error "unsupported configuration")
+#endif
+#endif
 
 LDLIBS=${EXTRALIBS} -lreuse -lz
 CFLAGS=-I. ${REUSE_INCL_OPT} ${EXPAT_INCL_OPT} ${CDEBUGFLAGS} ${CCOMPFLAGS} ${CEXTRAFLAGS}
