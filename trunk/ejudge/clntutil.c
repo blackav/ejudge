@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,12 +22,13 @@
 #include "clntutil.h"
 
 #include "version.h"
-#include "logger.h"
 #include "pathutl.h"
-#include "xalloc.h"
 #include "fileutl.h"
 #include "unix/unix_fileutl.h"
 #include "misctext.h"
+
+#include <reuse/logger.h>
+#include <reuse/xalloc.h>
 
 #include <stdio.h>
 #include <time.h>
