@@ -432,6 +432,16 @@ generate_random_password(int size, unsigned char *buf)
   // convert to base64
   base64_encode(rnd_buf, rand_bytes, b64_buf);
   b64_buf[size] = 0;
+  for (p = b64_buf; *p; p++) {
+    /* rename: l, I, 1, O, 0*/
+    switch (*p) {
+    case 'l': *p = '!'; break;
+    case 'I': *p = '@'; break;
+    case '1': *p = '^'; break;
+    case 'O': *p = '*'; break;
+    case '0': *p = '-'; break;
+    }
+  }
   strcpy(buf, b64_buf);
 }
 
