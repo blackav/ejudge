@@ -113,7 +113,10 @@ SP_OBJECTS = ${SP_CFILES:.c=.o}
 UL_CFILES = userlist-server.c contests.c userlist_cfg.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c pathutl.c userlist_xml.c userlist.c userlist_clnt.c expat_iface.c base64.c
 UL_OBJECTS = ${UL_CFILES:.c=.o}
 
-TARGETS=compile$(EXESFX) serve$(EXESFX) submit$(EXESFX) run$(EXESFX) master$(EXESFX) clar$(EXESFX) mkpasswd$(EXESFX) team$(EXESFX) register${EXESFX} make-teamdb${EXESFX} make-teamdb-inet${EXESFX} send-passwords${EXESFX} userlist-server${EXESFX}
+US_CFILES = users.c userlist_clnt.c userlist_proto.c contests.c clntutil.c misctext.c base64.c cgi.c expat_iface.o utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c pathutl.c ${ARCH}/fileutl.c version.c
+US_OBJECTS = ${US_CFILES:.c=.o}
+
+TARGETS=compile$(EXESFX) serve$(EXESFX) submit$(EXESFX) run$(EXESFX) master$(EXESFX) clar$(EXESFX) mkpasswd$(EXESFX) team$(EXESFX) register${EXESFX} make-teamdb${EXESFX} make-teamdb-inet${EXESFX} send-passwords${EXESFX} userlist-server${EXESFX} users${EXESFX}
 
 all: $(TARGETS)
 
@@ -128,7 +131,7 @@ serve : $(SERVE_OBJECTS)
 	$(LD) $(LDFLAGS) $(SERVE_OBJECTS) -o $@ $(LDLIBS)
 
 submit.exe:
-submit$ : $(SUBMIT_OBJECTS)
+submit : $(SUBMIT_OBJECTS)
 	$(LD) $(LDFLAGS) $(SUBMIT_OBJECTS) -o $@ $(LDLIBS)
 
 clar.exe:
@@ -165,6 +168,10 @@ send-passwords: ${SP_OBJECTS}
 
 userlist-server.exe:
 userlist-server: ${UL_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT}
+
+users.exe:
+users: ${US_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT}
 
 clean:
