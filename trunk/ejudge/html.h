@@ -21,11 +21,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdio.h>
+#include <time.h>
+
 void write_runs_table(int, int, char const *, char const *, int);
 void write_clars_table(int, int, char const *, char const *, int);
 void write_clar_view(int, char const *, char const *, char const *, int);
 void write_team_statistics(int, int, int, char const *, char const *);
-void write_team_clar(int, int, char const *, char const *, char const *);
 void write_standings(char const *, char const *, char const *, char const *);
 void write_public_log(char const *, char const *, char const *, char const *);
 
@@ -33,10 +35,23 @@ void write_judge_allstat(int, int, int, char const *, char const *);
 
 void write_judge_source_view(char const *, int);
 void write_judge_report_view(char const *, int);
-void write_team_report_view(char const *, int, int);
-void write_team_source_view(char const *, int, int);
 void write_judge_standings(char const *);
 void write_judge_teams_view(char const *, int);
 void write_judge_one_team_view(char const *, int);
+
+void new_write_user_runs(FILE *, int, unsigned int, unsigned char const *);
+void new_write_user_clars(FILE *, int, unsigned int, unsigned char const *);
+int new_write_user_clar(FILE *, int, int);
+int new_write_user_source_view(FILE *, int, int);
+int new_write_user_report_view(FILE *, int, int);
+
+void write_team_page(FILE *f,
+                     int user_id,
+                     int all_runs,
+                     int all_clars,
+                     unsigned char const *simple_form,
+                     unsigned char const *multi_form,
+                     time_t server_start,
+                     time_t server_end);
 
 #endif /* __HTML_H__ */
