@@ -1,2 +1,3 @@
 Makefile
 dcc fpc g++ g77 gcc gcj gpc gprolog mzscheme perl python yabasic festival
+javac runjava
