@@ -59,8 +59,10 @@ int run_add_record(time_t         timestamp,
                    unsigned long  ip,
                    int            locale_id,
                    int            team,
+                   int            problem,
                    int            language,
-                   int            problem);
+                   int            variant,
+                   int            is_hidden);
 int run_start_contest(time_t);
 time_t run_get_start_time(void);
 int run_change_status(int runid, int newstatus, int newtest, int newscore);
@@ -112,7 +114,9 @@ enum
     RUN_ENTRY_TEST   = 0x00000200,
     RUN_ENTRY_SCORE  = 0x00000400,
     RUN_ENTRY_IMPORTED = 0x00000800,
-    RUN_ENTRY_ALL = 0x00000FFF,
+    RUN_ENTRY_VARIANT = 0x00001000,
+    RUN_ENTRY_HIDDEN = 0x00002000,
+    RUN_ENTRY_ALL = 0x00003FFF,
   };
 
 struct run_entry
@@ -130,7 +134,9 @@ struct run_entry
   unsigned char  status;
   signed char    test;
   unsigned char  is_imported;
-  unsigned char  pad[11];
+  unsigned char  variant;
+  unsigned char  is_hidden;
+  unsigned char  pad[9];
 };
 
 void run_get_header(struct run_header *out);
