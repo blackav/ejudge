@@ -7,6 +7,9 @@
 #ifndef NEED_INFO
 #error You must define NEED_INFO macro
 #endif /* NEED_INFO */
+#ifndef NEED_TGZ
+#define NEED_TGZ 0
+#endif /* NEED_TGZ */
 
 #include "checker_internal.h"
 
@@ -25,7 +28,7 @@ extern int checker_main(int, char **);
 int
 main(int argc, char **argv)
 {
-  checker_do_init(argc, argv, NEED_CORR, NEED_INFO);
+  checker_do_init(argc, argv, NEED_CORR, NEED_INFO, NEED_TGZ);
   return checker_main(argc, argv);
 }
 
