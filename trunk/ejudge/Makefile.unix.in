@@ -101,6 +101,12 @@ M_OBJECTS=$(M_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libserve_clnt.a
 T_CFILES = team.c version.c
 T_OBJECTS = $(T_CFILES:.c=.o) libcommon.a libserve_clnt.a libuserlist_clnt.a
 
+SC_CFILES = serve-control.c version.c
+SC_OBJECTS = $(SC_CFILES:.c=.o) libcommon.a libserve_clnt.a libuserlist_clnt.a libsuper_clnt.a
+
+SM_CFILES = serve-cmd.c version.c
+SM_OBJECTS = $(SM_CFILES:.c=.o) libcommon.a libserve_clnt.a libuserlist_clnt.a
+
 REG_CFILES = register.c version.c
 REG_OBJECTS = ${REG_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 
@@ -114,10 +120,13 @@ ED_CFILES = edit-userlist.c version.c
 ED_OBJECTS = ${ED_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 
 SS_CFILES = super-serve.c version.c
-SS_OBJECTS = ${SS_CFILES:.c=.o} libcommon.a
+SS_OBJECTS = ${SS_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 
 CU_CFILES = clean-users.c version.c
 CU_OBJECTS = ${CU_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
+
+SU_CFILES = slice-userlist.c version.c
+SU_OBJECTS = ${SU_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 
 CE_CFILES = collect-emails.c version.c
 CE_OBJECTS = ${CE_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
@@ -125,8 +134,8 @@ CE_OBJECTS = ${CE_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 ST_CFILES = ejudge-setup.c version.c
 ST_OBJECTS = ${ST_CFILES:.c=.o} libcommon.a
 
-BINTARGETS = compile serve run userlist-server edit-userlist super-serve clean-users ejudge-setup collect-emails
-CGITARGETS = master${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX} users${CGI_PROG_SUFFIX}
+BINTARGETS = compile serve run userlist-server edit-userlist super-serve clean-users ejudge-setup collect-emails serve-cmd slice-userlist
+CGITARGETS = master${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX} users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX}
 TARGETS = ${BINTARGETS} ${CGITARGETS}
 
 all: local_all subdirs_all mo
@@ -169,11 +178,17 @@ run${EXESFX} : $(RUN_OBJECTS)
 serve : $(SERVE_OBJECTS)
 	$(LD) $(LDFLAGS) $(SERVE_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
+serve-cmd : ${SM_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
+
 master${CGI_PROG_SUFFIX} : $(M_OBJECTS)
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 team${CGI_PROG_SUFFIX}: $(T_OBJECTS)
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT_LIB}
+
+serve-control${CGI_PROG_SUFFIX}: ${SC_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 register${CGI_PROG_SUFFIX}: ${REG_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
@@ -190,6 +205,9 @@ clean-users: ${CU_OBJECTS}
 collect-emails: ${CE_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
+slice-userlist: ${SU_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
+
 users${CGI_PROG_SUFFIX}: ${US_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
@@ -200,7 +218,7 @@ ejudge-setup: ${ST_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu -lpanel -lncurses
 
 local_clean:
-	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog serve_clnt/*.o userlist_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c master master${CGI_PROG_SUFFIX} team team${CGI_PROG_SUFFIX} register register${CGI_PROG_SUFFIX} users users${CGI_PROG_SUFFIX} ejudge-config
+	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog serve_clnt/*.o userlist_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c master master${CGI_PROG_SUFFIX} team team${CGI_PROG_SUFFIX} register register${CGI_PROG_SUFFIX} users users${CGI_PROG_SUFFIX} ejudge-config serve-control serve-control${CGI_PROG_SUFFIX} serve-cmd
 	-rm -rf locale
 clean: local_clean
 	$(MAKE) -C extra clean
@@ -267,10 +285,13 @@ endif
 locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.KOI8-R.po ru_all
 	${MSGFMT} -o $@ -c $<
 
-libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o $(ARCH)/fileutl.o
+libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o $(ARCH)/fileutl.o $(ARCH)/cr_serialize.o $(ARCH)/interrupt.o
 	ar rcv $@ $^
 
 libserve_clnt.a: $(SERVE_CLNT_CFILES:.c=.o)
+	ar rcv $@ $^
+
+libsuper_clnt.a : $(SUPER_CLNT_CFILES:.c=.o)
 	ar rcv $@ $^
 
 libuserlist_clnt.a: $(USERLIST_CLNT_CFILES:.c=.o)
@@ -287,8 +308,5 @@ filter_expr.c filter_expr.h : filter_expr.y
 
 filter_scan.c : filter_scan.lex
 	flex -p -s -L -8 -B -o$@ -Pfilter_expr_ $<
-
-filter_test : filter_test.o filter_expr.o filter_scan.o filter_tree.o filter_eval.o prepare.o pathutl.o $(ARCH)/fileutl.o sformat.o runlog.o teamdb.o parsecfg.o contests.o opcaps.o userlist.o userlist_proto.o protocol.o expat_iface.o userlist_xml.o libuserlist_clnt.a
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} -lexpat
 
 include deps.make
