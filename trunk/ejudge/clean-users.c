@@ -64,7 +64,7 @@ print_info(unsigned char const *program_path)
 int
 main(int argc, char **argv)
 {
-  int user_total, i, max_user_id, j, r;
+  int user_total, i, max_user_id, j = 0, r;
   int contest_max_ind, errcode;
   unsigned char *contest_map;
   struct contest_desc *cnts;
