@@ -53,7 +53,8 @@ enum
 enum { RUN_LOG_CREATE = 1, RUN_LOG_READONLY = 2 };
 
 int run_open(const char *path, int flags);
-int run_add_record(time_t         timestamp, 
+int run_add_record(time_t         timestamp,
+                   long           nsec,
                    size_t         size,
                    unsigned long  sha1[5],
                    unsigned long  ip,
@@ -118,7 +119,8 @@ enum
     RUN_ENTRY_HIDDEN = 0x00002000,
     RUN_ENTRY_READONLY = 0x00004000,
     RUN_ENTRY_PAGES = 0x00008000,
-    RUN_ENTRY_ALL = 0x00007FFF,
+    RUN_ENTRY_NSEC = 0x00010000,
+    RUN_ENTRY_ALL = 0x0001FFFF,
   };
 
 struct run_entry
@@ -140,7 +142,8 @@ struct run_entry
   unsigned char  is_hidden;
   unsigned char  is_readonly;
   unsigned char  pages;
-  unsigned char  pad[7];
+  unsigned char  pad[3];
+  long           nsec;          /* nanosecond component of timestamp */
 };
 
 void run_get_header(struct run_header *out);
@@ -152,8 +155,8 @@ int run_is_readonly(int run_id);
 time_t run_get_virtual_start_time(int user_id);
 time_t run_get_virtual_stop_time(int user_id, time_t cur_time);
 int run_get_virtual_status(int user_id);
-int run_virtual_start(int user_id, time_t, unsigned long);
-int run_virtual_stop(int user_id, time_t, unsigned long);
+int run_virtual_start(int user_id, time_t, unsigned long, long);
+int run_virtual_stop(int user_id, time_t, unsigned long, long);
 
 int run_clear_entry(int run_id);
 int run_squeeze_log(void);
@@ -174,5 +177,8 @@ int runlog_check(FILE *, struct run_header *, size_t, struct run_entry *);
 int run_get_pages(int run_id);
 int run_set_pages(int run_id, int pages);
 int run_get_total_pages(int run_id);
+
+int run_find(int first_run, int last_run,
+             int team_id, int prob_id, int lang_id);
 
 #endif /* __RUNLOG_H__ */
