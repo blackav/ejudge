@@ -1248,3 +1248,8 @@ varsubst.h 1 1 88671
 run.c 1 55 3874665
 prepare.c 1 71 8248149
 varsubst.c 1 1 303310
+prepare.h 1 53 1521102
+compile.c 1 23 962058
+serve.c 1 68 10060703
+pathutl.c 1 9 341658
+prepare.c 1 72 8285233
