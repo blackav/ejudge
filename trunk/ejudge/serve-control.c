@@ -27,6 +27,9 @@
 #include "cgi.h"
 #include "userlist.h"
 #include "userlist_proto.h"
+#include "super_clnt.h"
+#include "super_proto.h"
+#include "super_actions.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -301,6 +304,10 @@ static unsigned char *user_login;
 static unsigned char *user_name;
 static unsigned char *user_password;
 static unsigned char *self_url;
+static int super_serve_fd = -1;
+static int priv_level;
+static int client_action;
+static unsigned char hidden_vars[1024];
 
 static void
 make_self_url(void)
@@ -420,6 +427,19 @@ open_userlist_server(void)
     exit(0);
   }
 }
+static void
+open_super_server(void)
+{
+  if (super_serve_fd >= 0) return;
+  if ((super_serve_fd = super_clnt_open(config->super_serve_socket)) < 0) {
+    client_put_header(stdout, 0, 0, config->charset, 1, 0,
+                      _("Server is down"));
+    printf("<p>%s</p>",
+           _("The server is down. Try again later."));
+    client_put_footer(stdout, 0);
+    exit(0);
+  }
+}
 
 static void fatal_server_error(int r) __attribute__((noreturn));
 static void
@@ -508,6 +528,50 @@ hyperref(unsigned char *buf, size_t size,
   }
   return buf;
 }
+static unsigned char *
+vhyperref(unsigned char *buf, size_t size,
+          unsigned long long sid,
+          unsigned char const *self_url,
+          const unsigned char *format,
+          va_list args)
+{
+  unsigned char buf1[512];
+  unsigned char buf2[1024];
+
+  if (format && *format) {
+    snprintf(buf1, sizeof(buf1), "%s?SID=%016llx", self_url, sid);
+    vsnprintf(buf2, sizeof(buf2), format, args);
+    snprintf(buf, size, "%s&%s", buf1, buf2);
+  } else {
+    snprintf(buf, size, "%s?SID=%016llx", self_url, sid);
+  }
+  return buf;
+}
+
+static void
+read_state_params(void)
+{
+  unsigned char *s;
+  int x, n;
+
+  client_action = 0;
+  if ((s = cgi_param("action"))) {
+    n = 0; x = 0;
+    if (sscanf(s, "%d%n", &x, &n) == 1 && !s[n]
+        && x > 0 && x < SUPER_ACTION_LAST)
+      client_action = x;
+  }
+  if (!client_action && (s = cgi_nname("action_", 7))) {
+    n = 0; x = 0;
+    if (sscanf(s, "action_%d%n", &x, &n) == 1 && !s[n]
+        && x > 0 && x < SUPER_ACTION_LAST)
+      client_action = x;
+  }
+
+  snprintf(hidden_vars, sizeof(hidden_vars),
+           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
+           session_id);
+}
 
 static void
 client_put_refresh_header(unsigned char const *coding,
@@ -527,6 +591,71 @@ client_put_refresh_header(unsigned char const *coding,
   fputs("\n</h1>\n", stdout);
 }
 
+static int
+parse_contest_id(void)
+{
+  unsigned char *s = cgi_param("contest_id");
+  int v = 0, n = 0;
+
+  if (!s) return 0;
+  if (sscanf(s, "%d %n", &v, &n) != 1 || s[n] || v < 0) return 0;
+  return v;
+}
+
+static void operation_status_page(int userlist_code,
+                                  int super_code,
+                                  const unsigned char *format,
+                                  ...) __attribute__((noreturn));
+static void
+operation_status_page(int userlist_code,
+                      int super_code,
+                      const unsigned char *format,
+                      ...)
+{
+  unsigned char msg[1024];
+  unsigned char href[1024];
+  va_list args;
+
+  if (userlist_code == -1 && super_code == -1) {
+    client_put_header(stdout, 0, 0, config->charset, 1, 0, "Operation failed");
+    va_start(args, format);
+    vsnprintf(msg, sizeof(msg), format, args);
+    va_end(args);
+    printf("<h2><font color=\"red\">%s</font></h2>\n", msg);
+    client_put_footer(stdout, 0);
+    exit(0);
+  }
+  if (userlist_code == -1 && super_code < -1) {
+    client_put_header(stdout, 0, 0, config->charset, 1, 0, "Operation failed");
+    printf("<h2><font color=\"red\">super-serve error: %s</font></h2>\n",
+           super_proto_strerror(-super_code));
+    client_put_footer(stdout, 0);
+    exit(0);
+  }
+  if (userlist_code < -1 && super_code == -1) {
+    client_put_header(stdout, 0, 0, config->charset, 1, 0, "Operation failed");
+    printf("<h2><font color=\"red\">userlist-server error: %s</font></h2>\n",
+           userlist_strerror(-userlist_code));
+    client_put_footer(stdout, 0);
+    exit(0);
+  }
+  if (userlist_code < -1 && super_code < -1) {
+    client_put_header(stdout, 0, 0, config->charset, 1, 0, "Operation failed");
+    printf("<h2><font color=\"red\">Unknown error: %d, %d</font></h2>\n",
+           userlist_code, super_code);
+    client_put_footer(stdout, 0);
+    exit(0);
+  }
+
+  va_start(args, format);
+  vhyperref(href, sizeof(href), session_id, self_url, format, args);
+  va_end(args);
+  client_put_refresh_header(config->charset, href, 0,
+                            "Operation successfull");
+  printf("<h2>Operation completed successfully</h2>");
+  exit(0);
+}
+
 static void
 authentificate(void)
 {
@@ -543,7 +672,7 @@ authentificate(void)
                                   &user_id,
                                   0, /* p_contest_id */
                                   0, /* p_locale_id */
-                                  0, /* p_priv_level */
+                                  &priv_level,
                                   &user_login,
                                   &user_name);
     if (r >= 0) {
@@ -574,7 +703,7 @@ authentificate(void)
                                &user_id,
                                &session_id,
                                0, /* p_locale_id */
-                               0, /* p_priv_level */
+                               &priv_level,
                                &user_name);
   if (r < 0) {
     switch (-r) {
@@ -596,9 +725,69 @@ authentificate(void)
   exit(0);
 }
 
+static void action_view_contest(int cmd) __attribute__((noreturn));
+static void
+action_view_contest(int cmd)
+{
+  int contest_id, r;
+  unsigned char *extra_str = "";
+
+  if ((contest_id = parse_contest_id()) <= 0) goto invalid_parameter;
+
+  switch (cmd) {
+  case SSERV_CMD_VIEW_SERVE_LOG:
+    extra_str = ", serve log";
+    break;
+  case SSERV_CMD_VIEW_RUN_LOG:
+    extra_str = ", run log";
+    break;
+  case SSERV_CMD_VIEW_CONTEST_XML:
+    extra_str = ", contest.xml";
+    break;
+  case SSERV_CMD_VIEW_SERVE_CFG:
+    extra_str = ", serve.cfg";
+    break;
+  }
+
+  open_super_server();
+  client_put_header(stdout, 0, 0, config->charset, 1, 0,
+                    "%s: %s, %d%s", "serve-control", user_name, contest_id,
+                    extra_str);
+  fflush(stdout);
+  r = super_clnt_main_page(super_serve_fd, 1, cmd,
+                           contest_id, 0, 0, self_url, hidden_vars, "");
+  if (r < 0) {
+    printf("<h2><font color=\"red\">%s</font></h2>\n",
+           super_proto_strerror(-r));
+  }
+  client_put_footer(stdout, 0);
+  exit(0);
+
+ invalid_parameter:
+  operation_status_page(-1, -1, "Contest view parameters are invalid");
+}
+
+static void action_simple_command(int cmd) __attribute__((noreturn));
+static void
+action_simple_command(int cmd)
+{
+  int contest_id, r;
+
+  if ((contest_id = parse_contest_id()) <= 0) goto invalid_parameter;
+
+  open_super_server();
+  r = super_clnt_simple_cmd(super_serve_fd, cmd, contest_id);
+  operation_status_page(-1, r, "contest_id=%d&action=%d", contest_id, 1);
+
+ invalid_parameter:
+  operation_status_page(-1, -1, "Contest control parameters are invalid");
+}
+
 int
 main(int argc, char *argv[])
 {
+  int r;
+
   initialize(argc, argv);
 
   // check ip limitations from the configuration file
@@ -607,10 +796,49 @@ main(int argc, char *argv[])
   }
 
   authentificate();
+  read_state_params();
+
+  switch (client_action) {
+  case SUPER_ACTION_VIEW_CONTEST:
+    action_view_contest(SSERV_CMD_CONTEST_PAGE);
+    break;
+  case SUPER_ACTION_SERVE_LOG_VIEW:
+    action_view_contest(SSERV_CMD_VIEW_SERVE_LOG);
+    break;
+  case SUPER_ACTION_RUN_LOG_VIEW:
+    action_view_contest(SSERV_CMD_VIEW_RUN_LOG);
+    break;
+  case SUPER_ACTION_VIEW_CONTEST_XML:
+    action_view_contest(SSERV_CMD_VIEW_CONTEST_XML);
+    break;
+  case SUPER_ACTION_VIEW_SERVE_CFG:
+    action_view_contest(SSERV_CMD_VIEW_SERVE_CFG);
+    break;
+  case SUPER_ACTION_OPEN_CONTEST:
+    action_simple_command(SSERV_CMD_OPEN_CONTEST);
+    break;
+  case SUPER_ACTION_CLOSE_CONTEST:
+    action_simple_command(SSERV_CMD_CLOSE_CONTEST);
+    break;
+  case SUPER_ACTION_CONTEST_VISIBLE:
+    action_simple_command(SSERV_CMD_VISIBLE_CONTEST);
+    break;
+  case SUPER_ACTION_CONTEST_INVISIBLE:
+    action_simple_command(SSERV_CMD_INVISIBLE_CONTEST);
+    break;
+  }
 
   /* default (main) screen */
+  open_super_server();
   client_put_header(stdout, 0, 0, config->charset, 1, 0,
                     "%s: %s", "serve-control", user_name);
+  fflush(stdout);
+  r = super_clnt_main_page(super_serve_fd, 1, SSERV_CMD_MAIN_PAGE, 0,
+                           0, 0, self_url, hidden_vars, "");
+  if (r < 0) {
+    printf("<h2><font color=\"red\">%s</font></h2>\n",
+           super_proto_strerror(-r));
+  }
   client_put_footer(stdout, 0);
   return 0;
 }

@@ -32,14 +32,20 @@ struct contest_extra
   int run_pid;
   int socket_fd;
   int run_dir_fd;
-  int uid;
-  int gid;
-  unsigned char *socket_path;
+  int serve_uid;
+  int serve_gid;
+  int run_uid;
+  int run_gid;
+
   unsigned char *root_dir;
   unsigned char *conf_file;
+  unsigned char *var_dir;
+
+  unsigned char *socket_path;
   unsigned char *log_file;
   unsigned char *run_queue_dir;
   unsigned char *run_log_file;
+  unsigned char *messages;
 
   time_t serve_last_start;
   time_t serve_suspend_end;
@@ -47,8 +53,7 @@ struct contest_extra
   time_t run_suspend_end;
 };
 
-extern int contest_num;
-extern struct contest_extra *contest_extra;
 struct contest_extra *get_contest_extra(int num);
+struct contest_extra *get_existing_contest_extra(int num);
 
 #endif /* __SUPER_SERVE_H__ */

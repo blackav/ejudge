@@ -24,6 +24,7 @@
 static unsigned char const * const error_map[] =
 {
   "no error",
+  "error code 1",
   "not connected",
   "invalid file descriptors",
   "write to server failed",
@@ -33,6 +34,15 @@ static unsigned char const * const error_map[] =
   "read from server failed",
   "unexpected EOF from server",
   "protocol error",
+  "system call failed",
+  "invalid contest",
+  "IP-address is banned",
+  "contest root_dir is not set",
+  "file does not exist",
+  "log file is redirected to /dev/null",
+  "read error",
+  "file format is invalid",
+  "unexpected userlist-server error",
 
   "unknown error",
 };

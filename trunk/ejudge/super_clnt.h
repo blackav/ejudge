@@ -32,4 +32,18 @@ int super_clnt_recv_packet(int sock_fd,
 
 int super_clnt_pass_fd(int sock_fd, int nfd, int *fds);
 
+int super_clnt_main_page(int sock_fd,
+                         int out_fd,
+                         int cmd,
+                         int contest_id,
+                         int locale_id,
+                         unsigned int flags,
+                         const unsigned char *self_url,
+                         const unsigned char *hidden_vars,
+                         const unsigned char *extra_args);
+
+int super_clnt_simple_cmd(int sock_fd,
+                          int cmd,
+                          int contest_id);
+
 #endif /* __SUPER_CLNT_H__ */
