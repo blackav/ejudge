@@ -1579,6 +1579,33 @@ read_locale_id(void)
   }
 }
 
+static void
+client_contest_closed(void)
+{
+  unsigned char *a_name = 0;
+  int a_len;
+
+  if (cur_contest->name) {
+    a_len = html_armored_strlen(cur_contest->name);
+    a_name = alloca(a_len + 10);
+    html_armor_string(cur_contest->name, a_name);
+  }
+
+  if (a_name) {
+    client_put_header(stdout, header_txt, 0, global->charset, 1,
+                      client_locale_id,
+                      "%s - &quot;%s&quot;", _("Contest is closed"), a_name);
+  } else {
+    client_put_header(stdout, header_txt, 0, global->charset, 1,
+                      client_locale_id,
+                      "%s", _("Contest is closed"));
+  }
+
+  printf("<p>%s</p>", _("The contest is closed."));
+  client_put_footer(stdout, footer_txt);
+  exit(0);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1610,6 +1637,10 @@ main(int argc, char *argv[])
 
   l10n_prepare(global->enable_l10n, global->l10n_dir);
   l10n_setlocale(client_locale_id);
+
+  if (cur_contest->closed) {
+    client_contest_closed();
+  }
 
   if (authentificate() != 1)
     client_access_denied(global->charset, client_locale_id);
