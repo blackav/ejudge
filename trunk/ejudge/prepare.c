@@ -236,6 +236,14 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(priority_adjustment, "d"),
   GLOBAL_PARAM(user_priority_adjustments, "x"),
 
+  GLOBAL_PARAM(contestant_status_num, "d"),
+  GLOBAL_PARAM(contestant_status_legend, "x"),
+  GLOBAL_PARAM(contestant_status_row_attr, "x"),
+  GLOBAL_PARAM(stand_show_contestant_status, "d"),
+  GLOBAL_PARAM(stand_show_warn_number, "d"),
+  GLOBAL_PARAM(stand_contestant_status_attr, "s"),
+  GLOBAL_PARAM(stand_warn_number_attr, "s"),
+
   { 0, 0, 0, 0 }
 };
 
@@ -270,6 +278,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(priority_adjustment, "d"),
   PROBLEM_PARAM(spelling, "s"),
   PROBLEM_PARAM(stand_hide_time, "d"),
+  PROBLEM_PARAM(score_multiplier, "d"),
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
@@ -297,6 +306,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(corr_pat, "s"),
   PROBLEM_PARAM(info_pat, "s"),
   PROBLEM_PARAM(tgz_pat, "s"),
+  PROBLEM_PARAM(personal_deadline, "x"),
 
   { 0, 0, 0, 0 }
 };
@@ -977,6 +987,59 @@ struct variant_map_item
   int user_id;
   int *variants;
 };
+
+/* login deadline */
+static int
+parse_personal_deadlines(char **pdstr, int *p_total,
+                         struct pers_dead_info **p_dl)
+{
+  int total, i, maxlen = 0, n;
+  struct pers_dead_info *dinfo;
+  unsigned char *s1, *s2, *s3;
+
+  for (total = 0; pdstr[total]; total++) {
+    if ((i = strlen(pdstr[total])) > maxlen) maxlen = i;
+  }
+
+  if (!total) {
+    *p_dl = 0;
+    *p_total = 0;
+    return 0;
+  }
+
+  XCALLOC(dinfo, total);
+  s1 = alloca(maxlen + 16);
+  s2 = alloca(maxlen + 16);
+  s3 = alloca(maxlen + 16);
+
+  for (i = 0; i < total; i++) {
+    if (sscanf(pdstr[i], "%s%s%s%n", s1, s2, s3, &n) == 3 && !pdstr[i][n]) {
+      strcat(s2, " ");
+      strcat(s2, s3);
+    } else if (!sscanf(pdstr[i], "%s%s%n", s1, s2, &n) == 2 && !pdstr[i][n]) {
+    } else if (!sscanf(pdstr[i], "%s%n", s1, &n) == 1 && !pdstr[i][n]) {
+      strcpy(s2, "2038/01/19");
+    }
+
+    if (parse_date(s2, &dinfo[i].deadline) < 0) {
+      err("%d: invalid date specification %s", i + 1, s2);
+      return -1;
+    }
+    dinfo[i].login = xstrdup(s1);
+  }
+
+  // debug
+  /*
+  fprintf(stderr, "personal deadlines:\n");
+  for (i = 0; i < total; i++) {
+    fprintf(stderr, "[%d] %s %ld\n", i, dinfo[i].login, dinfo[i].deadline);
+  }
+  */
+
+  *p_dl = dinfo;
+  *p_total = total;
+  return i;
+}
 
 struct variant_map
 {
@@ -1727,6 +1790,32 @@ set_defaults(int mode)
     if (!global->user_adjustment_info) return -1;
   }
 
+  if (mode == PREPARE_SERVE) {
+    if (global->contestant_status_num<0 || global->contestant_status_num>100) {
+      err("global.contestant_status_num is invalid");
+      return -1;
+    }
+  }
+  if (mode == PREPARE_SERVE && global->contestant_status_num > 0) {
+    // there must be exact number of legend entries
+    if (!global->contestant_status_legend) {
+      err("global.contestant_status_legend is not set");
+      return -1;
+    }
+    for (i = 0; global->contestant_status_legend[i]; i++);
+    if (i != global->contestant_status_num) {
+      err("global.contestant_status_legend has different number of entries, than global.contestant_status_num");
+      return -1;
+    }
+    if (global->contestant_status_row_attr) {
+      for (i = 0; global->contestant_status_row_attr[i]; i++);
+      if (i != global->contestant_status_num) {
+        err("global.contestant_status_row_attr has different number of entries, than global.contestant_status_num");
+        return -1;
+      }
+    }
+  }
+
   for (i = 1; i <= max_lang && mode != PREPARE_RUN; i++) {
     if (!langs[i]) continue;
     if (!langs[i]->short_name[0]) {
@@ -2160,6 +2249,11 @@ set_defaults(int mode)
       probs[i]->priority_adjustment = 0;
     }
 
+    if (!probs[i]->score_multiplier && si != -1 &&
+        abstr_probs[si]->score_multiplier >= 1) {
+      probs[i]->score_multiplier = abstr_probs[si]->score_multiplier;
+    }
+
     if (mode == PREPARE_SERVE) {
       if (probs[i]->deadline[0]) {
         if (parse_date(probs[i]->deadline, &probs[i]->t_deadline) < 0) {
@@ -2168,6 +2262,13 @@ set_defaults(int mode)
           return -1;
         }
         info("problem.%s.deadline is %ld", ish, probs[i]->t_deadline);
+      }
+      if (probs[i]->personal_deadline) {
+        if (parse_personal_deadlines(probs[i]->personal_deadline,
+                                     &probs[i]->pd_total,
+                                     &probs[i]->pd_infos) < 0) {
+          return -1;
+        }
       }
       if (probs[i]->start_date[0]) {
         if (parse_date(probs[i]->start_date, &probs[i]->t_start_date) < 0) {
