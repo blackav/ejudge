@@ -41,6 +41,7 @@ AC_ARG_WITH([reuse-config],AC_HELP_STRING([--with-reuse-config],[specify the con
 AC_ARG_ENABLE([cgi-suffix], AC_HELP_STRING([--enable-cgi-suffix],[append the given suffix to the CGI programs]),[ac_cv_cgi_suffix=$enableval],[ac_cv_cgi_suffix=""])
 AC_ARG_ENABLE([cgi-bin-dir], AC_HELP_STRING([--enable-cgi-bin-dir],[specify the destination CGI script directory [[\${prefix}/cgi-bin]]]),[cgibindir=$enableval], [cgibindir='${prefix}/cgi-bin'])
 AC_ARG_ENABLE([static], AC_HELP_STRING([--enable-static],[link programs statically]),[ac_cv_static=1],[ac_cv_static=""])
+AC_ARG_ENABLE([rpath], AC_HELP_STRING([--disable-rpath],[do not use -rpath feature]),[ac_cv_rpath="$enableval"])
 AC_ARG_ENABLE([nls], AC_HELP_STRING([--disable-nls],[disable localization]),[ac_cv_nls=$enableval],[ac_cv_nls=""])
 AC_ARG_ENABLE([charset],AC_HELP_STRING([--enable-charset],[specify the default charset]),[ac_cv_charset="$enableval"],[ac_cv_charset=""])
 AC_ARG_ENABLE([socket-path],AC_HELP_STRING([--enable-socket-path],[specify the default userlist-server socket path]),[ac_cv_socket_path="$enableval"],[ac_cv_socket_path=""])
@@ -871,6 +872,12 @@ fi
 # ac_cv_contests_home_dir
 [[ x"${ac_cv_contests_home_dir}" = xyes -o x"${ac_cv_contests_home_dir}" = xno ]] && ac_cv_contests_home_dir=""
 
+if [[ x"${ac_cv_rpath}" = xno ]]
+then
+  ac_cv_no_rpath=1
+else
+  ac_cv_no_rpath=""
+fi
 dnl Output generation
 
 AC_SUBST(ac_cv_expat_root)
@@ -887,6 +894,7 @@ AC_SUBST(ac_cv_cgi_suffix)
 AC_SUBST(ac_cv_static)
 AC_SUBST(ac_cv_cgi_conf_dir)
 AC_SUBST(ac_cv_no_kernel)
+AC_SUBST(ac_cv_no_rpath)
 AC_SUBST(ac_cv_nls)
 AC_SUBST(cgibindir)
 AC_SUBST(XGETTEXT)
@@ -1017,6 +1025,6 @@ then
 fi
 
 AC_CONFIG_HEADERS([config.h])
-AC_OUTPUT(Makefile extra/Makefile checkers/Makefile scripts/Makefile scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python)
+AC_OUTPUT(Makefile extra/Makefile checkers/Makefile scripts/Makefile scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python ejudge-config.v)
 
-chmod +x scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python
+chmod +x scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python ejudge-config.v
