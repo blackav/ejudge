@@ -60,4 +60,9 @@ userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
                             int *p_locale_id,
                             int *p_contest_id);
 
+int
+userlist_clnt_get_email(struct userlist_clnt *clnt,
+                        int uid, unsigned char **p_email,
+                        int *p_show_email);
+
 #endif /* __USERLIST_CLNT_H__ */
