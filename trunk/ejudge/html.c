@@ -384,7 +384,7 @@ write_standings_header(FILE *f, int client_flag,
   stop_time = run_get_stop_time();
   if (global->virtual && user_id > 0) {
     start_time = run_get_virtual_start_time(user_id);
-    stop_time = run_get_virtual_stop_time(user_id);
+    stop_time = run_get_virtual_stop_time(user_id, 0);
   }
 
   if (!start_time) {
@@ -795,7 +795,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   contest_dur = run_get_duration();
   if (start_time && global->virtual && user_id > 0) {
     start_time = run_get_virtual_start_time(user_id);
-    stop_time = run_get_virtual_stop_time(user_id);
+    stop_time = run_get_virtual_stop_time(user_id, 0);
   }
   if (start_time && !stop_time && cur_time >= start_time + contest_dur) {
     stop_time = start_time + contest_dur;
@@ -1367,7 +1367,7 @@ write_team_page(FILE *f, int user_id,
     global_server_start = server_start;
     global_server_end = server_end;
     server_start = run_get_virtual_start_time(user_id);
-    server_end = run_get_virtual_stop_time(user_id);
+    server_end = run_get_virtual_stop_time(user_id, 0);
     dur = run_get_duration();
     cur = time(0);
     if (server_start && !server_end && dur > 0) {
