@@ -37,6 +37,13 @@ enum
     ULS_REMOVE_MEMBER,
     ULS_PASS_FD,
     ULS_LIST_USERS,
+    ULS_MAP_CONTEST,
+    ULS_ADMIN_PROCESS,
+    ULS_GENERATE_TEAM_PASSWORDS,
+    ULS_TEAM_LOGIN,
+    ULS_TEAM_CHECK_COOKIE,
+    ULS_GET_CONTEST_NAME,
+    ULS_TEAM_SET_PASSWD,
   };
 
 /* server reply codes (each corresponds to a different packet) */
@@ -46,6 +53,7 @@ enum
     ULS_LOGIN_OK,
     ULS_LOGIN_COOKIE,
     ULS_XML_DATA,
+    ULS_CONTEST_MAPPED,
   };
 
 /* various error codes */
@@ -70,11 +78,46 @@ enum
     ULS_ERR_INVALID_SIZE,
     ULS_ERR_BAD_CONTEST_ID,
     ULS_ERR_BAD_MEMBER,
+    ULS_ERR_IPC_FAILURE,
+    ULS_ERR_IP_NOT_ALLOWED,
+    ULS_ERR_CANNOT_PARTICIPATE,
 
     ULS_ERR_LAST
   };
 
 unsigned char const *userlist_strerror(int code);
+
+#if !defined __USERLIST_UC_ENUM_DEFINED__
+#define __USERLIST_UC_ENUM_DEFINED__
+enum
+  {
+    USERLIST_UC_INVISIBLE = 0x00000001,
+    USERLIST_UC_BANNED    = 0x00000002,
+  };
+#endif /* __USERLIST_UC_ENUM_DEFINED__ */
+
+/* These structures are for userlist->serve exchange */
+/* FIXME: user_id is deliberately a 16-bit quantity */
+struct userlist_user_short
+{
+  unsigned short user_id;
+  unsigned short login_idx;
+  unsigned short name_idx;
+  unsigned short flags;
+};
+/* FIXME: Maximal number of participating user is too small? */
+enum 
+  {
+    USERLIST_TABLE_SIZE = 1024,
+    USERLIST_TABLE_POOL = 32768,
+  };
+struct userlist_table
+{
+  unsigned short vintage;
+  unsigned short total;
+  struct userlist_user_short users[USERLIST_TABLE_SIZE];
+  unsigned char pool[USERLIST_TABLE_POOL];
+};
 
 /* a generic packet structure */
 struct userlist_packet __attribute__((packed,aligned(1)));
@@ -182,6 +225,18 @@ struct userlist_pk_list_users
   unsigned long origin_ip;
   long          contest_id;
   signed char   locale_id;
+  int           user_id;
+  unsigned long flags;
+  unsigned char url_len;
+  unsigned char srch_len;
+  unsigned char data[0];
+};
+
+struct userlist_pk_map_contest __attribute__((packed,aligned(1)));
+struct userlist_pk_map_contest
+{
+  short request_id;
+  int   contest_id;
 };
 
 /* server->client replies */
@@ -203,6 +258,14 @@ struct userlist_pk_xml_data
   short          reply_id;
   unsigned short info_len;
   unsigned char  data[0];
+};
+
+struct userlist_pk_contest_mapped __attribute__((packed, aligned(1)));
+struct userlist_pk_contest_mapped
+{
+  short reply_id;
+  int   sem_key;
+  int   shm_key;
 };
 
 #endif /* __USERLIST_PROTO_H__ */
