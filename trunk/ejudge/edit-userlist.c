@@ -1830,7 +1830,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
                     user_descs[info[cur_i].field].name);
           if (r < 0 || r > 1) goto menu_continue;
           snprintf(edit_buf, sizeof(edit_buf), "%s", userlist_unparse_bool(r));
-          r = userlist_set_user_field_str(u, info[cur_i].field, edit_buf);
+          r = userlist_set_user_field_str(0, u, info[cur_i].field, edit_buf);
           if (!r) goto menu_continue;
           if (r < 0) {
             vis_err("Invalid field value");
@@ -1862,7 +1862,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
         r = edit_string(cur_line, COLS, edit_header,
                         edit_buf, sizeof(edit_buf) - 1);
         if (r < 0) goto menu_continue;
-        r = userlist_set_user_field_str(u, info[cur_i].field, edit_buf);
+        r = userlist_set_user_field_str(0, u, info[cur_i].field, edit_buf);
         if (!r) goto menu_continue;
         if (r < 0) {
           vis_err("Invalid field value");
