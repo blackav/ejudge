@@ -31,7 +31,6 @@ enum
     CONTEST_USERS_ACCESS,
     CONTEST_MASTER_ACCESS,
     CONTEST_JUDGE_ACCESS,
-    CONTEST_OBSERVER_ACCESS,
     CONTEST_TEAM_ACCESS,
     CONTEST_IP,
     CONTEST_FIELD,
@@ -209,7 +208,6 @@ struct contest_desc
   struct contest_access *users_access;
   struct contest_access *master_access;
   struct contest_access *judge_access;
-  struct contest_access *observer_access;
   struct contest_access *team_access;
   struct contest_field *fields[CONTEST_LAST_FIELD];
   struct contest_member *members[CONTEST_LAST_MEMBER];
@@ -266,7 +264,6 @@ int contests_check_register_ip(int, unsigned long);
 int contests_check_users_ip(int, unsigned long);
 int contests_check_master_ip(int, unsigned long);
 int contests_check_judge_ip(int, unsigned long);
-int contests_check_observer_ip(int, unsigned long);
 int contests_check_team_ip(int, unsigned long);
 
 void contests_set_load_callback(void (*f)(const struct contest_desc *));
