@@ -85,6 +85,7 @@ void checker_corr_eof(void);
 void checker_in_close(void);
 void checker_in_eof(void);
 void checker_normalize_file(unsigned char **, size_t *);
+void checker_normalize_spaces_in_file(unsigned char **, size_t *);
 void checker_normalize_line(unsigned char *);
 int  checker_read_buf(int, const unsigned char *, int, unsigned char *,size_t);
 void checker_read_file(int, unsigned char **, size_t *);
