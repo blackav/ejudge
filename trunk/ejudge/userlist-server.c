@@ -2849,21 +2849,27 @@ cmd_admin_process(struct client_state *p, int len,
     return;
   }
   info("%d: admin_process: %d, %d", p->id, p->peer_pid, p->peer_uid);
-  snprintf(proc_buf, sizeof(proc_buf), "/proc/%d/exe", p->peer_pid);
-  memset(exe_buf, 0, sizeof(exe_buf));
-  if (readlink(proc_buf, exe_buf, sizeof(exe_buf) - 1) < 0) {
-    err("%d: admin_process: readlink failed: %s", p->id, os_ErrorMsg());
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;    
+  // try just an user
+  for (prc = (struct userlist_cfg_admin_proc*) config->admin_processes->first_down; prc; prc = (struct userlist_cfg_admin_proc*) prc->b.right) {
+    if (prc->uid == p->peer_uid && !strcmp(prc->path, "ANY")) break;
   }
-  info("%d: admin_process: path = %s", p->id, exe_buf);
-  if (!config->admin_processes) {
-    err("%d: admin_process: no admin processes specified", p->id);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
-  for (prc = (struct userlist_cfg_admin_proc *) config->admin_processes->first_down; prc; prc = (struct userlist_cfg_admin_proc*) prc->b.right) {
-    if (!strcmp(prc->path, exe_buf) && prc->uid == p->peer_uid) break;
+  if (!prc) {
+    snprintf(proc_buf, sizeof(proc_buf), "/proc/%d/exe", p->peer_pid);
+    memset(exe_buf, 0, sizeof(exe_buf));
+    if (readlink(proc_buf, exe_buf, sizeof(exe_buf) - 1) < 0) {
+      err("%d: admin_process: readlink failed: %s", p->id, os_ErrorMsg());
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;    
+    }
+    info("%d: admin_process: path = %s", p->id, exe_buf);
+    if (!config->admin_processes) {
+      err("%d: admin_process: no admin processes specified", p->id);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
+    for (prc = (struct userlist_cfg_admin_proc *) config->admin_processes->first_down; prc; prc = (struct userlist_cfg_admin_proc*) prc->b.right) {
+      if (!strcmp(prc->path, exe_buf) && prc->uid == p->peer_uid) break;
+    }
   }
   if (!prc) {
     err("%d: admin_process: no such admin process", p->id);
