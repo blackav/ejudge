@@ -89,7 +89,7 @@ result2str(int s, int st, int sig)
   case 2:
     if (st == 256) {
       sprintf(result2str_buf, "%s (%s)", _("Runtime error"),
-              strsignal(sig));
+              os_GetSignalString(sig));
       return result2str_buf;
     }
     return _("Runtime error");
