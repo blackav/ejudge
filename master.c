@@ -2073,9 +2073,6 @@ initialize(int argc, char *argv[])
   } else if (!strncmp(basename, "judge", 5)) {
     priv_level = PRIV_LEVEL_JUDGE;
     namelen = 5;
-  } else if (!strncmp(basename, "observer", 8)) {
-    priv_level = PRIV_LEVEL_OBSERVER;
-    namelen = 8;
   } else {
     client_not_configured(0, "bad program name", 0);
     /* never get here */
@@ -2341,9 +2338,6 @@ main(int argc, char *argv[])
     break;
   case PRIV_LEVEL_JUDGE:
     access_flag = contests_check_judge_ip(global->contest_id, client_ip);
-    break;
-  case PRIV_LEVEL_OBSERVER:
-    access_flag = contests_check_observer_ip(global->contest_id, client_ip);
     break;
   }
   if (!access_flag) {
