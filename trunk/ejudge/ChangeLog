@@ -1,3 +1,28 @@
+2002-10-07  Alexander Chernov  <cher@ispras.ru>
+
+	* files.make: userlist-server.c added.
+
+	* userlist_cfg.h, userlist_cfg.c: completed.
+
+	* nls.c: windows-1251 encoding added as alias to cp1251.
+
+	* makefile: userlist-server added to TARGETS;
+	UL_CFILES, UL_OBJECTS variables declared;
+	rule to compile userlist-server added.
+
+	* userlist-server.c: Initial revision
+
+	* .cvsignore: *** empty log message ***
+
+2002-10-06  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare.c, prepare.h:
+	added global properties `sound_player', `*_sound'.
+
+	* run.c:
+	(run_tests) playing sound, which depends on outcome of test run
+	  is added.
+
 2002-10-05  Alexander Chernov  <cher@ispras.ru>
 
 	* run.c:
