@@ -28,6 +28,7 @@
 #include "archive_paths.h"
 #include "team_extra.h"
 #include "printing.h"
+#include "diff.h"
 
 #include "misctext.h"
 #include "base64.h"
@@ -182,6 +183,7 @@ static unsigned long contest_stop_time;
 static int clients_suspended;
 static int testing_suspended;
 static int olympiad_judging_mode;
+static int printing_suspended;
 
 static int socket_fd = -1;
 static unsigned char *socket_name = 0;
@@ -323,13 +325,13 @@ static int
 update_status_file(int force_flag)
 {
   static time_t prev_status_update = 0;
-  struct prot_serve_status status;
+  struct prot_serve_status_v2 status;
   int p;
 
   if (!force_flag && current_time <= prev_status_update) return 0;
 
   memset(&status, 0, sizeof(status));
-  status.magic = PROT_SERVE_STATUS_MAGIC;
+  status.magic = PROT_SERVE_STATUS_MAGIC_V2;
 
   status.cur_time = current_time;
   run_get_times(&status.start_time,
@@ -347,6 +349,8 @@ update_status_file(int force_flag)
   status.is_virtual = global->virtual;
   status.olympiad_judging_mode = olympiad_judging_mode;
   status.continuation_enabled = global->enable_continue;
+  status.printing_enabled = global->enable_printing;
+  status.printing_suspended = printing_suspended;
   if (status.start_time && status.duration && global->board_fog_time > 0
       && !status.is_virtual) {
     status.freeze_time = status.start_time + status.duration - global->board_fog_time;
@@ -368,6 +372,38 @@ update_status_file(int force_flag)
                      global->status_dir, "status", "");
   prev_status_update = current_time;
   return 1;
+}
+
+static void
+load_status_file(void)
+{
+  struct prot_serve_status_v2 status;
+  size_t stat_len = 0;
+  char *ptr = 0;
+
+  if (generic_read_file(&ptr, 0, &stat_len, 0, global->status_dir,
+                        "dir/status", "") < 0) return;
+  if (stat_len != sizeof(status)) {
+    info("load_status_file: length %d does not match %d",
+         stat_len, sizeof(status));
+    xfree(ptr);
+    return;
+  }
+  memcpy(&status, ptr, sizeof(status));
+  xfree(ptr);
+  if (status.magic != PROT_SERVE_STATUS_MAGIC_V2) {
+    info("load_status_file: bad magic value");
+    return;
+  }
+
+  clients_suspended = status.clients_suspended;
+  info("load_status_file: clients_suspended = %d", clients_suspended);
+  testing_suspended = status.testing_suspended;
+  info("load_status_file: testing_suspended = %d", testing_suspended);
+  olympiad_judging_mode = status.olympiad_judging_mode;
+  info("load_status_file: olympiad_judging_mode = %d", olympiad_judging_mode);
+  printing_suspended = status.printing_suspended;
+  info("load_status_file: printing_suspended = %d", printing_suspended);
 }
 
 static int
@@ -723,7 +759,7 @@ cmd_team_page(struct client_state *p, int len,
     return;
   }
   l10n_setlocale(pkt->locale_id);
-  write_team_page(f, p->user_id,
+  write_team_page(f, p->user_id, printing_suspended,
                   pkt->sid_mode, p->cookie,
                   (pkt->flags & 1), (pkt->flags & 2) >> 1,
                   self_url_ptr, hidden_vars_ptr, extra_args_ptr,
@@ -1053,6 +1089,34 @@ cmd_view(struct client_state *p, int len,
                           pkt->sid_mode, p->cookie,
                           self_url_ptr, hidden_vars_ptr,
                           extra_args_ptr, pkt->item, &caps);
+    break;
+  case SRV_CMD_PRIV_DOWNLOAD_RUN:
+    if (!p->priv_level) {
+      err("%d: not enough privileges", p->id);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+    if (opcaps_check(caps, OPCAP_VIEW_SOURCE) < 0) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_VIEW_SOURCE);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+    r = write_raw_source(f, pkt->item);
+    break;
+  case SRV_CMD_COMPARE_RUNS:
+    if (!p->priv_level) {
+      err("%d: not enough privileges", p->id);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+    if (opcaps_check(caps, OPCAP_VIEW_SOURCE) < 0) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_VIEW_SOURCE);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+    r = compare_runs(f, pkt->item, pkt->item2);
     break;
   case SRV_CMD_VIEW_REPORT:
     if (!p->priv_level) {
@@ -1581,13 +1645,19 @@ cmd_priv_submit_run(struct client_state *p, int len,
   path_t run_arch;
   unsigned long shaval[5];
   time_t start_time, stop_time;
+  struct timeval precise_time;
 
   if (get_peer_local_user(p) < 0) return;
   if (len < sizeof(*pkt)) {
     new_bad_packet(p, "priv_submit_run: packet is too small: %d", len);
     return;
   }
-  if (pkt->run_len != strlen(pkt->data)) {
+  if (pkt->lang_id < 1 || pkt->lang_id > max_lang || !langs[pkt->lang_id]) {
+    err("%d: lang_id is invalid", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_LANG_ID);
+    return;
+  }
+  if (!langs[pkt->lang_id]->binary && pkt->run_len != strlen(pkt->data)) {
     new_bad_packet(p, "priv_submit_run: run_len does not match");
     return;
   }
@@ -1629,11 +1699,6 @@ cmd_priv_submit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
     return;
   }
-  if (pkt->lang_id < 1 || pkt->lang_id > max_lang || !langs[pkt->lang_id]) {
-    err("%d: lang_id is invalid", p->id);
-    new_send_reply(p, -SRV_ERR_BAD_LANG_ID);
-    return;
-  }
   if (probs[pkt->prob_id]->variant_num > 0) {
     if (pkt->variant < 0 || pkt->variant > probs[pkt->prob_id]->variant_num) {
       err("%d: invalid variant", p->id);
@@ -1654,7 +1719,6 @@ cmd_priv_submit_run(struct client_state *p, int len,
     }
   }
 
-  /* FIXME: enable sending before start and after end? */
   start_time = contest_start_time;
   stop_time = contest_stop_time;
   if (global->virtual) {
@@ -1674,7 +1738,9 @@ cmd_priv_submit_run(struct client_state *p, int len,
   }
   */
   sha_buffer(pkt->data, pkt->run_len, shaval);
-  if ((run_id = run_add_record(current_time,
+  gettimeofday(&precise_time, 0);
+  if ((run_id = run_add_record(precise_time.tv_sec,
+                               precise_time.tv_usec * 1000,
                                pkt->run_len,
                                shaval,
                                pkt->ip,
@@ -1749,6 +1815,12 @@ cmd_team_print(struct client_state *p, int len,
     return;
   }
 
+  if (!global->enable_printing || printing_suspended) {
+    err("%d: printing request is denied", p->id);
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    return;
+  }
+
   res = team_print_run(pkt->v.i, p->user_id);
   if (res < 0) {
     new_send_reply(p, res);
@@ -1767,6 +1839,7 @@ cmd_team_submit_run(struct client_state *p, int len,
   path_t run_arch;
   unsigned long shaval[5];
   time_t start_time, stop_time;
+  struct timeval precise_time;
 
   if (get_peer_local_user(p) < 0) return;
 
@@ -1774,7 +1847,13 @@ cmd_team_submit_run(struct client_state *p, int len,
     new_bad_packet(p, "team_submit_run: packet is too small: %d", len);
     return;
   }
-  if (pkt->run_len != strlen(pkt->data)) {
+  if (pkt->lang_id < 1 || pkt->lang_id > max_lang || !langs[pkt->lang_id]
+      || langs[pkt->lang_id]->disabled) {
+    err("%d: lang_id is invalid", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_LANG_ID);
+    return;
+  }
+  if (!langs[pkt->lang_id]->binary && pkt->run_len != strlen(pkt->data)) {
     new_bad_packet(p, "team_submit_run: run_len does not match");
     return;
   }
@@ -1799,12 +1878,6 @@ cmd_team_submit_run(struct client_state *p, int len,
   if (pkt->prob_id < 1 || pkt->prob_id > max_prob || !probs[pkt->prob_id]) {
     err("%d: prob_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
-    return;
-  }
-  if (pkt->lang_id < 1 || pkt->lang_id > max_lang || !langs[pkt->lang_id]
-      || langs[pkt->lang_id]->disabled) {
-    err("%d: lang_id is invalid", p->id);
-    new_send_reply(p, -SRV_ERR_BAD_LANG_ID);
     return;
   }
   if (p->user_id && pkt->user_id != p->user_id) {
@@ -1852,7 +1925,9 @@ cmd_team_submit_run(struct client_state *p, int len,
     return;
   }
   sha_buffer(pkt->data, pkt->run_len, shaval);
-  if ((run_id = run_add_record(current_time,
+  gettimeofday(&precise_time, 0);
+  if ((run_id = run_add_record(precise_time.tv_sec,
+                               precise_time.tv_usec * 1000,
                                pkt->run_len,
                                shaval,
                                pkt->ip,
@@ -2052,6 +2127,7 @@ cmd_command_0(struct client_state *p, int len,
 {
   time_t start_time, stop_time;
   int run_id;
+  struct timeval precise_time;
 
   if (get_peer_local_user(p) < 0) return;
 
@@ -2080,7 +2156,9 @@ cmd_command_0(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_CONTEST_STARTED);
       return;
     }
-    run_id = run_virtual_start(p->user_id, current_time, p->ip);
+    gettimeofday(&precise_time, 0);
+    run_id = run_virtual_start(p->user_id, precise_time.tv_sec, p->ip,
+                               precise_time.tv_usec * 1000);
     if (run_id < 0) return;
     move_files_to_insert_run(run_id);
     info("%d: virtual contest started for %d", p->id, p->user_id);
@@ -2099,7 +2177,9 @@ cmd_command_0(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
       return;
     }
-    run_id = run_virtual_stop(p->user_id, current_time, p->ip);
+    gettimeofday(&precise_time, 0);
+    run_id = run_virtual_stop(p->user_id, precise_time.tv_sec, p->ip,
+                              precise_time.tv_usec * 1000);
     if (run_id < 0) return;
     move_files_to_insert_run(run_id);
     info("%d: virtual contest stopped for %d", p->id, p->user_id);
@@ -2239,6 +2319,30 @@ cmd_priv_command_0(struct client_state *p, int len,
     }
 
     testing_suspended = 0;
+    update_status_file(1);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  case SRV_CMD_PRINT_SUSPEND:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
+    printing_suspended = 1;
+    update_status_file(1);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  case SRV_CMD_PRINT_RESUME:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+
+    printing_suspended = 0;
     update_status_file(1);
     new_send_reply(p, SRV_RPL_OK);
     return;
@@ -3313,6 +3417,10 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_SET_ACCEPTING_MODE] { cmd_priv_command_0 },
   [SRV_CMD_PRIV_PRINT_RUN] { cmd_priv_command_0 },
   [SRV_CMD_PRINT_RUN] { cmd_team_print },
+  [SRV_CMD_PRIV_DOWNLOAD_RUN] { cmd_view },
+  [SRV_CMD_PRINT_SUSPEND] { cmd_priv_command_0 },
+  [SRV_CMD_PRINT_RESUME] { cmd_priv_command_0 },
+  [SRV_CMD_COMPARE_RUNS] { cmd_view },
 };
 
 static void
@@ -3902,6 +4010,7 @@ main(int argc, char *argv[])
     return 1;
   }
   if (clar_open(global->clar_log_file, 0) < 0) return 1;
+  load_status_file();
   i = do_loop();
   team_extra_flush();
   if (i < 0) i = 1;
