@@ -65,6 +65,10 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(max_clar_num, "d"),
   GLOBAL_PARAM(board_fog_time, "d"),
   GLOBAL_PARAM(board_unfog_time, "d"),
+  GLOBAL_PARAM(team_enable_src_view, "d"),
+  GLOBAL_PARAM(team_enable_rep_view, "d"),
+
+  GLOBAL_PARAM(charset, "s"),
 
   GLOBAL_PARAM(name, "s"),
   GLOBAL_PARAM(root_dir, "s"),
@@ -88,6 +92,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(clar_archive_dir, "s"),
   GLOBAL_PARAM(run_archive_dir, "s"),
   GLOBAL_PARAM(report_archive_dir, "s"),
+  GLOBAL_PARAM(team_report_archive_dir, "s"),
 
   GLOBAL_PARAM(status_dir, "s"),
   GLOBAL_PARAM(work_dir, "s"),
@@ -109,6 +114,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(run_exe_dir, "s"),
   GLOBAL_PARAM(run_status_dir, "s"),
   GLOBAL_PARAM(run_report_dir, "s"),
+  GLOBAL_PARAM(run_team_report_dir, "s"),
 
   GLOBAL_PARAM(score_system, "s"),
 
@@ -123,6 +129,10 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(use_stdin, "d"),
   PROBLEM_PARAM(use_stdout, "d"),
   PROBLEM_PARAM(time_limit, "d"),
+  PROBLEM_PARAM(team_enable_rep_view, "d"),
+  PROBLEM_PARAM(full_score, "d"),
+  PROBLEM_PARAM(test_score, "d"),
+  PROBLEM_PARAM(run_penalty, "d"),
 
   PROBLEM_PARAM(short_name, "s"),
   PROBLEM_PARAM(long_name, "s"),
@@ -179,6 +189,7 @@ static struct config_parse_info section_tester_params[] =
   TESTER_PARAM(server_exe_dir, "s"),
   TESTER_PARAM(run_status_dir, "s"),
   TESTER_PARAM(run_report_dir, "s"),
+  TESTER_PARAM(run_team_report_dir, "s"),
   TESTER_PARAM(exe_dir, "s"),
 
   TESTER_PARAM(tester_dir, "s"),
@@ -249,6 +260,7 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_CLAR_ARCHIVE_DIR   "clars"
 #define DFLT_G_RUN_ARCHIVE_DIR    "runs"
 #define DFLT_G_REPORT_ARCHIVE_DIR "reports"
+#define DFLT_G_TEAM_REPORT_ARCHIVE_DIR "teamreports"
 #define DFLT_G_PIPE_DIR           "pipe"
 #define DFLT_G_TEAM_DIR           "team"
 #define DFLT_G_TEAM_CMD_DIR       "cmd"
@@ -266,13 +278,23 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_RUN_EXE_DIR        "exe"
 #define DFLT_G_RUN_STATUS_DIR     "status"
 #define DFLT_G_RUN_REPORT_DIR     "report"
+#define DFLT_G_RUN_TEAM_REPORT_DIR "teamreport"
+#define DFLT_G_CHARSET            "iso8859-1"
 
 #define DFLT_P_INPUT_FILE         "input"
 #define DFLT_P_OUTPUT_FILE        "output"
+#define DFLT_P_FULL_SCORE         25
+#define DFLT_P_TEST_SCORE         1
+#define DFLT_P_RUN_PENALTY        1
 
 #define DFLT_T_WORK_DIR           "work"
 #define DFLT_T_TMP_DIR            "tmp"
 #define DFLT_T_ERROR_FILE         "error"
+
+static void
+set_initial_values(void)
+{
+}
 
 static int
 set_defaults(int mode)
@@ -399,6 +421,7 @@ set_defaults(int mode)
     GLOBAL_INIT_FIELD(clar_archive_dir, DFLT_G_CLAR_ARCHIVE_DIR, archive_dir);
     GLOBAL_INIT_FIELD(run_archive_dir, DFLT_G_RUN_ARCHIVE_DIR, archive_dir);
     GLOBAL_INIT_FIELD(report_archive_dir,DFLT_G_REPORT_ARCHIVE_DIR,archive_dir);
+    GLOBAL_INIT_FIELD(team_report_archive_dir,DFLT_G_TEAM_REPORT_ARCHIVE_DIR,archive_dir);
 
     GLOBAL_INIT_FIELD(status_dir, DFLT_G_STATUS_DIR, var_dir);
 
@@ -423,6 +446,7 @@ set_defaults(int mode)
     GLOBAL_INIT_FIELD(run_exe_dir, DFLT_G_RUN_EXE_DIR, run_dir);
     GLOBAL_INIT_FIELD(run_status_dir, DFLT_G_RUN_STATUS_DIR, run_dir);
     GLOBAL_INIT_FIELD(run_report_dir, DFLT_G_RUN_REPORT_DIR, run_dir);
+    GLOBAL_INIT_FIELD(run_team_report_dir, DFLT_G_RUN_TEAM_REPORT_DIR,run_dir);
   }
   GLOBAL_INIT_FIELD(work_dir, DFLT_G_WORK_DIR, var_dir);
 
@@ -438,6 +462,11 @@ set_defaults(int mode)
   } else {
     /* FIXME: localize the string */
     err("Invalid scoring system: %s", global->score_system);
+  }
+
+  if (!global->charset[0]) {
+    pathcpy(global->charset, DFLT_G_CHARSET);
+    info(_("global.charset set to %s"), global->charset);
   }
 
   for (i = 1; i <= max_lang && mode != PREPARE_RUN; i++) {
@@ -501,6 +530,27 @@ set_defaults(int mode)
       info(_("problem.%d.long_name set to \"Problem %d\""), i, i);
       sprintf(probs[i]->long_name, "Problem %d", i);
     }
+
+    if (!probs[i]->team_enable_rep_view) {
+      info(_("problem.%d.team_enable_rep_view inherited from global settings"),
+           i);
+      probs[i]->team_enable_rep_view = global->team_enable_rep_view;
+    } else if (probs[i]->team_enable_rep_view == 2) {
+      probs[i]->team_enable_rep_view = 0;
+    }
+    if (!probs[i]->full_score) {
+      probs[i]->full_score = DFLT_P_FULL_SCORE;
+      info(_("problem.%d.full_score set to %d"), DFLT_P_FULL_SCORE);
+    }
+    if (!probs[i]->test_score) {
+      probs[i]->test_score = DFLT_P_TEST_SCORE;
+      info(_("problem.%d.test_score set to %d"), DFLT_P_TEST_SCORE);
+    }
+    if (!probs[i]->run_penalty) {
+      probs[i]->run_penalty = DFLT_P_RUN_PENALTY;
+      info(_("problem.%d.run_penalty set to %d"), DFLT_P_RUN_PENALTY);
+    }
+    
     if (mode == PREPARE_RUN) {
       if (!probs[i]->test_dir[0]) {
         info(_("problem.%d.test_dir set to %s"), i, probs[i]->short_name);
@@ -553,12 +603,14 @@ set_defaults(int mode)
         pathcpy(testers[i]->server_exe_dir, global->run_exe_dir);
         pathcpy(testers[i]->run_status_dir, global->run_status_dir);
         pathcpy(testers[i]->run_report_dir, global->run_report_dir);
+        pathcpy(testers[i]->run_team_report_dir, global->run_team_report_dir);
       } else {
         TESTER_INIT_FIELD(server_var_dir, DFLT_G_VAR_DIR, server_root_dir);
         TESTER_INIT_FIELD(server_run_dir, DFLT_G_RUN_DIR, server_var_dir);
         TESTER_INIT_FIELD(server_exe_dir, DFLT_G_RUN_EXE_DIR, server_run_dir);
         TESTER_INIT_FIELD(run_status_dir,DFLT_G_RUN_STATUS_DIR,server_run_dir);
         TESTER_INIT_FIELD(run_report_dir,DFLT_G_RUN_REPORT_DIR,server_run_dir);
+        TESTER_INIT_FIELD(run_team_report_dir,DFLT_G_RUN_TEAM_REPORT_DIR,server_run_dir);
       }
 
       TESTER_INIT_FIELD(exe_dir, testers[i]->name, server_exe_dir);
@@ -710,6 +762,9 @@ create_dirs(int mode)
     if (make_dir(global->run_exe_dir, 0) < 0) return -1;
     if (make_all_dir(global->run_status_dir, 0777) < 0) return -1;
     if (make_dir(global->run_report_dir, 0777) < 0) return -1;
+    if (global->team_enable_rep_view) {
+      if (make_dir(global->run_team_report_dir, 0777) < 0) return -1;
+    }
 
     /* SERVE's status directory */
     if (make_all_dir(global->status_dir, 0) < 0) return -1;
@@ -722,6 +777,9 @@ create_dirs(int mode)
     if (make_dir(global->clar_archive_dir, 0) < 0) return -1;
     if (make_dir(global->run_archive_dir, 0) < 0) return -1;
     if (make_dir(global->report_archive_dir, 0) < 0) return -1;
+    if (global->team_enable_rep_view) {
+      if (make_dir(global->team_report_archive_dir, 0) < 0) return -1;
+    }
   }
 
   for (i = 1; i <= max_lang; i++) {
@@ -754,6 +812,9 @@ create_dirs(int mode)
 int
 prepare(char const *config_file, int flags, int mode, char const *opts)
 {
+  /* set predefined values for certain variables */
+  set_initial_values();
+
   if ((flags & PREPARE_USE_CPP)) {
     FILE   *f = 0;
     path_t  cmd;
