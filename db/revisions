@@ -214,3 +214,5 @@ inetdb.h 1 1 102240
 idmap.h 1 1 104309
 localdb.h 1 1 113148
 unix/exec.c 6 17 2686504
+compile.c 1 11 564288
+serve.c 1 17 3284416
