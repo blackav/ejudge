@@ -114,6 +114,12 @@ COMMON_CFILES=\
  runlog.c\
  runlog_import.c\
  runlog_xml.c\
+ run_packet_1.c\
+ run_packet_2.c\
+ run_packet_3.c\
+ run_packet_4.c\
+ run_packet_5.c\
+ run_packet_6.c\
  sformat.c\
  super_html.c\
  super_proto.c\
@@ -217,6 +223,8 @@ HFILES=\
  printing.h\
  protocol.h\
  runlog.h\
+ run_packet.h\
+ run_packet_priv.h\
  serve_clnt.h\
  settings.h\
  sformat.h\
