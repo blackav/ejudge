@@ -239,6 +239,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(checker_real_time_limit, "d"),
   PROBLEM_PARAM(disable_auto_testing, "d"),
   PROBLEM_PARAM(disable_testing, "d"),
+  PROBLEM_PARAM(variable_full_score, "d"),
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
@@ -494,6 +495,7 @@ problem_init_func(struct generic_section_config *gp)
   p->disable_auto_testing = -1;
   p->disable_testing = -1;
   p->test_score = -1;
+  p->variable_full_score = -1;
 }
 
 static void
@@ -1587,6 +1589,17 @@ set_defaults(int mode)
     if (!probs[i]->full_score) {
       probs[i]->full_score = DFLT_P_FULL_SCORE;
       info("problem.%s.full_score set to %d", ish, DFLT_P_FULL_SCORE);
+    }
+
+    if (probs[i]->variable_full_score == -1 && si != -1
+        && abstr_probs[si]->variable_full_score >= 0) {
+      probs[i]->variable_full_score = abstr_probs[si]->variable_full_score;
+      info("problem.%s.variable_full_score inherited from problem.%s (%d)",
+           ish, sish, probs[i]->variable_full_score);
+    }
+    if (probs[i]->variable_full_score == -1) {
+      probs[i]->variable_full_score = 0;
+      info("problem.%s.variable_full_score set to %d", ish, DFLT_P_FULL_SCORE);
     }
 
     if (probs[i]->test_score < 0 && si != -1
