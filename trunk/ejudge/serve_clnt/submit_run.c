@@ -1,4 +1,4 @@
-/* -*- mode: c; coding: koi8-r -*- */
+/* -*- mode: c -*- */
 /* $Id$ */
 
 /* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
@@ -88,7 +88,7 @@ serve_clnt_submit_run(int sock_fd, int cmd,
 
 /**
  * Local variables:
- *  compile-command: "make"
+ *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
