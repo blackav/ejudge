@@ -1,3 +1,37 @@
+2004-01-09  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.c: copyright notice is updated;
+	(clear_directory) better error handling is implemented;
+	  all the filenames in the directory being cleared first are
+	  saved in the list, and then the names from the list are unlinked;
+	(make_dir) better error handling is implemented;
+	  umask manipulations is now used to set up permissions on the new
+	  directory without race conditions;
+	(make_all_dir) the error code returned from `make_dir' is returned
+	  further from this function;
+	(scan_dir) better error handling and recovery is implemented;
+	(do_write_file) the same as above;
+	(gzip_write_file) the same as above;
+	(generic_write_file) the same as above;
+	(do_read_file) rewritten from scratch to handle reading of the file's
+	  contents into the fixed-size and the extendable buffers;
+	(do_fixed_pipe_read_file) removed;
+	(do_alloc_pipe_read_file) removed;
+	(gzip_read_file) better error handling and recovery is implemented;
+	(generic_read_file) better error handling and recovery is implemented;
+	  `do_fixed_pipe_read_file' and `do_alloc_pipe_read_file' are
+	  no longer used, the `do_read_file' is used instead;
+	(dumb_copy_file_to_dos) better error handling and recovery is
+	  implemented;
+	(dumb_copy_file_from_dos) the same as above;
+	(dumb_copy_file) the same as above;
+	(gzip_copy_file) the same as above;
+	(do_copy_file) the same as above;
+	(generic_copy_file) the same as above;
+	(sf_read) the `errno' variable's value is restored correctly to the
+	  error code before exit from the function;
+	(sf_open) the same as above.
+
 2003-12-01  Alexander Chernov  <cher@ispras.ru>
 
 	* fileutl.c: <zlib.h> is included;

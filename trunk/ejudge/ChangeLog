@@ -1,3 +1,323 @@
+2004-02-18  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po, NEWS, NEWS.RUS: *** empty log message ***
+
+	* prepare.c:
+	new global configuration variables `a2ps_args' and `lpr_args' are
+	  added.
+
+	* prepare.h:
+	(struct section_global_data) new fields `a2ps_args' and `lpr_args'
+	  are added.
+
+	* printing.c:
+	(do_print_run) the global configuration variables `a2ps_args' and
+	  `lpr_args' are supported.
+
+	* team.c: (request_printing_if_asked) unused variable `r' is removed.
+
+	* html.c:
+	(new_write_user_runs) "Print" column is generated, if the global
+	  configuration variable `enable_printing' is set to true;
+	(new_write_user_source_view) the compressed archive entry is
+	  preferred;
+	(new_write_user_report_view) the compressed archive entry is
+	  preferred.
+
+	* master.c:
+	(print_judging_mode_button) now accepts a flag, whether "Set judging
+	  mode" or "Set accepting mode" button should be displayed;
+	(change_status_if_asked) parameters to `serve_clnt_edit_run' are
+	  updated;
+	(change_status) the same as above;
+	(change_problem) the same as above;
+	(change_language) the same as above;
+	(change_variant) the same as above;
+	(action_run_change_pages) a new functon to edit the `pages' field
+	  value;
+	(change_user_id) parameters to `serve_clnt_edit_run' are updated;
+	(change_user_login) the same as above;
+	(change_imported) the same as above;
+	(change_hidden) the same as above;
+	(change_tests) the same as above;
+	(change_score) the same as above;
+	(action_set_accepting_mode) a new function to set "Accepting mode"
+	  for the OLYMPIAD contests;
+	(action_priv_print_run) a new function to print a source for a run;
+	(main) new actions `SET_ACCEPTING_MODE' and `RUN_CHANGE_PAGES'
+	  are handled.
+
+	* master_html.c: copyright notice is updated;
+	(write_priv_source) compressed archive entry is preferred;
+	  `pages' field and change control is generated;
+	  `Print' button is generated to print the run.
+
+	* prepare.c:
+	global configuration variables `print_work_dir', `a2ps_path',
+	  `lpr_path', `enable_printing', `team_page_quota' are added;
+	problem configuration variable `accept_partial' is added;
+	(global_init_func) `team_page_quota' is initialized to -1 (undefined);
+	(problem_init_func) `accept_partial' is initialized to -1 (undefined);
+	(set_defaults) new configuration variables are initialized;
+	(create_dirs) `print_work_dir' is created.
+
+	* prepare.h:
+	(struct section_global_data) new fields `print_work_dir', `a2ps_path',
+	  `lpr_path', `enable_printing', `team_page_quota';
+	(struct section_problem_data) new field `accept_partial'.
+
+	* run.c: copyright notice is updated;
+	(generate_report) the `OLYMPIAD' score system is handled in the same
+	  way, as the `KIROV' score system;
+	(generate_team_report) the same as above;
+	(run_tests) `accept_partial' parameter is added;
+	  if `accept_partial' is set to TRUE, in the accepting mode of the
+	  `OLYMPIAD' contest the submit is marked as accepted, if the submit
+	  is not even passed all acceptance tests;
+	(do_loop) added signal mask manipulation to allow terminating of the
+	  program between testing of solutions;
+	  `accept_partial' parameter is read from the compile packet and
+	  passed to `do_loop';
+	(check_config) the summ of all the test scores is allowed to be 0.
+
+	* serve.c:
+	(priv_submit_run) the capability name is now `SUBMIT_RUN' instead of
+	  `SUBMIT_RUNS';
+	(priv_command_0) the capability `PRINT_RUN' is checked for printing.
+
+	* userlist-server.c:
+	(flush_database) the stream descriptor `f' is closed, if the XML
+	  unparsing failed. Previously there was a resource leak.
+
+2004-02-17  Alexander Chernov  <cher@ispras.ru>
+
+	* filter_tree.c: copyright notice is updated;
+	(filter_tree_result_str) VIRTUAL_START, VIRTUAL_STOP, and EMPTY
+	  run statuses are supported;
+	(filter_tree_eval_node) conversion from string to status_t for
+	  `VS' (virtual start), `VT' (virtual stop), and `EM' (empty)
+	  run statuses is supported.
+
+	* filter_scan.lex: copyright notice is updated;
+	new run status constants `VS' (virtual stop) and `VT' (virtual start)
+	  are scanned.
+
+	* opcaps.h: copyright notice is updated;
+	SUBMIT_RUNS capability renamed to SUBMIT_RUN;
+	PRINT_RUN capability added.
+
+	* opcaps.c: copyright notice is updated;
+	SUBMIT_RUNS renamed to SUBMIT_RUN;
+	PRINT_RUN capability is added.
+
+2004-02-16  Alexander Chernov  <cher@ispras.ru>
+
+	* files.make: printing.[ch] files are added.
+
+	* makefile: copyright notice is updated.
+
+	* protocol.c: copyright notice is added;
+	(error_map) texts for `PAGES_QUOTA' and `ALREADY_PRINTED' errors added.
+
+	* protocol.h: copyright notice is updated;
+	new commands added: `SET_ACCEPTING_MODE', `PRIV_PRINT_RUN',
+	  `PRINT_RUN';
+	new error codes added: `PAGES_QUOTA', `ALREADY_PRINTED';
+	new runlog editing flag: `RUN_PAGES_SET';
+	(struct prot_serve_pkt_run_info) new field `pages' added.
+
+	* runlog.c: 
+	(do_write) EINTR error is ignored (operation restarted);
+	  the error code is returned in case of error;
+	(do_read) EINTR error is ignored;
+	  the error code (negated) is returned in case of error;
+	  EPIPE is returned in case of unexpected EOF;
+	(run_set_entry) `pages' field editing is supported;
+	(run_virtual_start) the runlog entry number is returned (instead of -1)
+	  in case of successful completion;
+	(run_virtual_stop) the same as above;
+	(run_get_pages) a new function to return the value of the `pages'
+	  field for the given run;
+	(run_set_pages) a new function to set the value of the `pages' field
+	  for the given run;
+	(run_get_total_pages) a new function to return the total amount of
+	  pages printed for the given user.
+
+	* client_actions.h: copyright notice is updated;
+	new client actions added: `SET_ACCEPTING_MODE', `PRINT_RUN',
+	  `PRINT_PRIV_RUN', `RUN_CHANGE_PAGES'.
+
+	* archive_paths.h: copyright notice is updated;
+	(archive_remove) the third parameter (gzip_preferred) is removed.
+
+	* archive_paths.c: copyright notice is updated;
+	(archive_dir_prepare) added removal of all the possible files for the
+	  given archive entry;
+	(archive_remove) completely rewritten to remove all possible files
+	  corresponding for the given archive entry.
+
+	* runlog.h: copyright notice is updated;
+	new flag `RUN_ENTRY_PAGES' added;
+	(struct run_entry) new field `pages' is added;
+	(run_get_pages) new function - returns the number of pages printed
+	  for the given run;
+	(run_set_pages) new function - sets the number of pages printed for
+	  the given run;
+	(run_get_total_pages) returns the total amount of pages printed for
+	  the given user.
+
+	* serve.c: "printing.h" is included;
+	(move_files_to_insert_run) a new function to rename archive entries in
+	  case, when a new submit is inserted into the middle of the runlog
+	  database;
+	(cmd_priv_submit_run) submits are actually allowed before the start
+	  of the contest and after the end of the contest;
+	  `move_files_to_insert_run' is called;
+	(cmd_team_print) new function to support participant's run printing;
+	(cmd_team_submit_run) `move_files_to_insert_run' is called;
+	(cmd_command_0) `move_files_to_insert_run' is called after virtual
+	  start and virtual stop events;
+	(do_squeeze_runs) use of `archive_remove' is changed;
+	(cmd_priv_command_0) switching to judging mode is enabled before the
+	  end of the contest;
+	  `SET_ACCEPTING_MODE' command is supported;
+	  `PRIV_PRINT_RUN' command is supported;
+	(cmd_edit_run) editing of `pages' field is supported;
+	(read_compile_packet) the value of `accept_partial' global
+	  configuration variable is passed to the `run' program;
+	(packet_handlers) handlers for the new commands are added.
+
+	* printing.c: 
+	(do_print_run) a debugging print is commented out.
+
+	* team.c: copyright notice is updated;
+	(request_printing_if_asked) a new function to display a confirmation
+	  dialog to print a run;
+	(action_print_run) new function to issue a print request;
+	(main) `request_printing_if_asked' and `action_print_run' functions
+	  are used to support printing.
+
+	* serve_clnt.h: copyright notice is updated;
+	(serve_clnt_edit_run) the `pages' parameter is added.
+
+	* userlist-server.c:
+	(generate_random_password) easily misunderstood characters are never
+	  generated. Such characters are `l', `I', '1', '0', 'O'.
+
+2004-02-15  Alexander Chernov  <cher@ispras.ru>
+
+	* printing.c, printing.h: initial revision
+
+2004-01-09  Alexander Chernov  <cher@ispras.ru>
+
+	* compile.c: copyright notice is updated;
+	removed obsoleted descriptive comment;
+	<errno.h>, <unistd.h> are included;
+	(do_loop) error handling and recovery is improved. Instead of immediate
+	  termination, the program sleeps for 5 seconds, and then tries to
+	  repeat failed operation. In some cases the "Internal error"
+	  is reported back to the contest server.
+
+	* runlog.c: copyright notice is updated;
+	(run_get_fog_period) a problematic assertion is commented out.
+
+	* userlist-server.c:
+	(cmd_priv_register_contest) some unreachable code is removed;
+	(flush_database) the temporary file is removed, if the write
+	  failed.
+
+	* cr_serialize.c: copyright notice is updated;
+	(cr_serialize_init) the negated error code (taken from errno) is
+	  reported in case of error;
+	(cr_serialize_lock) the negated error code (taken from errno) is
+	  reported in case of error;
+	  a non blocking lock attempt is performed, if the attempt fails,
+	  a regular blocking locking is requested, and a corresponding
+	  message is written to the log;
+	(cr_serialize_unlock) the negated error code (taken from errno) is
+	  reported in case of error.
+
+2004-01-05  Alexander Chernov  <cher@ispras.ru>
+
+	* html.c:
+	(count_unread_clars) added a check for clars from a particular
+	  parcicipant (from > 0) to judges (to == 0). Such clars are not
+	  counted;
+	(write_team_page) the "unread message(s)" message is displayed even
+	  if the contest is not started.
+
+2004-01-03  Alexander Chernov  <cher@ispras.ru>
+
+	* userlist-server.c: copyright notice is updated;
+	(do_backup) the backup copies of the userlist database are written in
+	  gzip compressed format.
+
+	* html.c:
+	(do_write_kirov_standings) the new `hidden' problem configuration
+	  variable is supported;
+	(do_write_standings) the same as above.
+
+	* master.c: copyright notice is updated;
+	(display_enter_password_2) a new functon to display
+	  "login-password-contest_id" prompt;
+	(display_enter_password) previously commented code is removed;
+	  inserted missing "<tr>";
+	  the "Submit" button is moved to second column;
+	(initialize) `display_enter_password_2' is called, if the contest_id
+	  variable is not set.
+
+	* prepare.c: new problem configuration variable `hidden' is added;
+	(problem_init_func) the `hidden' variable is initialized;
+	(set_defaults) the `hidden' variable is processed;
+	  the default initialization for the `variable_full_score' is fixed.
+
+	* prepare.h: 
+	(struct section_problem_data) new field `hidden' is added.
+
+2004-01-02  Alexander Chernov  <cher@ispras.ru>
+
+	* copyright.c: copyright notice is updated;
+	(make_copyright) the copyright message is updated to year 2004.
+
+	* serve.c: the copyright notice is updated;
+	"team_extra.h" is included;
+	(main) the team client state files are flushed using the
+	  `team_extra_flush' function.
+
+	* prepare.h: the copyright notice is updated;
+	(struct section_global_data) new field `team_extra_dir' is added.
+
+	* prepare.c: copyright notice is updated;
+	new global configuration variable `team_extra_dir' is added;
+	(set_defaults) the new `team_extra_dir' configuration variable
+	  is processed;
+	(create_dirs) the `team_extra_dir' directory is created.
+
+	* html.c: copyright notice is updated;
+	"team_extra.h" is included;
+	(team_clar_flags) a new function, which generates the status string
+	  for each clarification report. This string is shown in the "Status"
+	  column of the clarification table. The function returns "N", if the
+	  message was not yet seen by the participant, etc.
+	(count_unread_clars) a new function, which counts the number of
+	  messages, which are not yet seed by the participant;
+	(new_write_user_clars) `team_clar_flags' is used instead of
+	  `clar_flags_html';
+	(new_write_user_clar) the requested message is marked as seen by the
+	  participant;
+	(write_team_page) the number of unread messages is reported in the
+	  contest status section.
+
+	* files.make: copyright notice is updated;
+	team_extra.c, team_extra_xml.c are added to the list of C files;
+	team_extra.h is added to the list of H files.
+
+	* team_extra_xml.c, team_extra.h, team_extra.c: Initial revision
+
+2003-12-29  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
 2003-12-29  Alexander Chernov  <cher@ispras.ru>
 
 	* NEWS, NEWS.RUS: *** empty log message ***

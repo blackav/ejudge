@@ -1,10 +1,25 @@
 $Id$
 
-Version 2.1.25 (20031229)
+Version 2.1.26 (20040219)
 =========================
-The usability of the master and the judge interface is improved
-in this version. A new field is added to the run database. A new
-configuration variable added to the serve configuration file.
+Saving of certain parameters of the team client state is
+implemented. A new configuration variable for explicit
+specifying of the team client state saving directory is added.
+
+Printing support is added. A privileged user may print a source
+for a run using the contest server `serve' program. A regular
+user may print a run on the server, if the global configuration
+variable `enable_printing' is set to true.
+
+A large number of bugs, which manifest themselves in the
+OLYMPIAD contest mode is fixed.
+
+An incompatible change is introduced to the `contest.xml'
+configuration file format. This version of the ejudge system
+will report an error trying to read unchanged configuration
+files of the previous version. The configuration file change is
+trivial, though. To fix the configuration file the capability
+bit SUBMIT_RUNS should be renamed to SUBMIT_RUN.
 
 If no bugs are found in this release, the next release (which
 will be identical or nearly identical to the current release)
@@ -12,6 +27,192 @@ will be numbered 2.2.0, so a new stable branch of the `ejudge'
 system will be started. The 2.1 branch will be terminated. All
 the support work will go to 2.2 branch, and all the new
 development will go to the future development branch 2.3.
+
+serve
+-----
+A new field `pages' is added to the runlog database. This field
+contains the number of pages used to print the source for the
+run. The default value of the field is zero (the run source is
+not printed). The field is set to positive value, when a regular
+user request printing of the run source using the `team'
+CGI-program. The `pages' field is used to eliminate multiple
+printing of the same run and to count the total amount of
+printed pages to check the participant's page quota.
+
+serve,master
+------------
+Support for editing of `pages' field is added.
+
+serve,master,judge,team
+-----------------------
+Support for printing of the run source is implemented.
+Privileged users may use printing option from the "View source"
+page of the `master' or `judge' CGI-program. In order to be
+allowed to print a run a privileged user must have the
+`PRINT_RUN' capability bit set for the current contest. A
+privileged user may print the same source several times, and he
+has no limits on the number of printed pages.
+
+A regular contestant is allowed to print a run source, if the
+global configuration variable `enable_printing' of the contest
+server configuration file `serve.cfg' is set to true. The
+maximal number of pages for a contestant (page quota) may be set
+using the `team_page_quota' global configuration variable. The
+default value is 50 (pages). A mandatory banned page is counted
+in the quota.
+
+The `a2ps' program is used to convert the source to PostScript
+file. The path to this utility may be set using the `a2ps_path'
+global configuration variable (the default value is
+/usr/bin/a2ps). Additional arguments to the `a2ps' program may
+be set using the `a2ps_args' global configuration variable (the
+default value is "-1 -E").
+
+To queue a generated PostScript file to a printer the `lpr'
+program is used. The path to this utility may be set using the
+`lpr_path' global configuration variable (the default value is
+/usr/bin/lpr). Additional arguments to the `lpr' program may be
+set using the `lpr_args' global configuration variable (the
+default value is empty).
+
+contest.xml
+-----------
+A new capability bit `PRINT_RUN' is added. The `SUBMIT_RUNS'
+capability bit is renamed to `SUBMIT_RUN'. This is incompatible
+change (as compared to the previous version of the system).
+
+userlist-server
+---------------
+Random passwords do not use easily misunderstood characters:
+'l', 'I', '1', 'O', '0'.
+
+serve,run
+---------
+A new problem configuration variable `accept_partial' is added.
+The variable is effective only for OLYMPIAD contest system. If
+this variable is set to true, the participant's submits are
+accepted even if the submit does not pass all the tests from the
+problem statement. The `serve<->run' interaction protocol is
+updated correspondingly.
+
+serve
+-----
+A privileged user may actually submit runs before the start of
+the contest and after the end of the contest. This feature has
+been announced in the previous version but actually was
+commented out. Privileged submits are performed using `master'
+or `judge' CGI-program.
+
+serve
+-----
+Since a new submit may be added to the middle of the runlog
+database, the run archive must be updated (i.e. some files
+should be renamed) accordingly. In the previous version
+appending of a run into the middle of the runlog database might
+cause loss of the submit. Note, this bug manifested only when
+runlog entries were added to the database due to contest events
+(virtual start/stop, submits), not due to runlog merging.
+
+serve
+-----
+In the OLYMPIAD contest mode, the contest "Judging mode" may be
+enabled before the end of the contest.
+
+serve,master
+------------
+Support for `Set accepting mode' command is added. This command
+switches the contest from the "Judging mode" to the "Accepting
+mode". The command only works in OLYMPIAD contest mode.
+
+run
+---
+Support for OLYMPIAD contest mode is significantly improved.
+This contest mode is now almost always handled in the same way
+as KIROV contest mode.
+
+The run program responds better to user interrupt (Ctrl-C).
+
+The tests with zero summ of scores are supported in all the
+cases.
+
+serve
+-----
+When an archive entry is rewritten (for example, after retesting
+of a run), the previous file is removed. This fixes an error,
+when the archive contains both compressed (.gz) and uncompressed
+file corresponding to the same run.
+
+serve
+-----
+Added support for saving the state of the team client to the
+file. The state file has an XML-based syntax. Currently the only
+state parameter which is saved is the status of viewing of the
+messages. For each messages, which is addressed to all the
+participant or to the particular participant, flag of whether
+this participant has vieved the message, or not is saved to the
+state file. The state is loaded from the file on demand, and is
+created also on demand (first access). If the saveable state of
+the client is changed during operation of the serve program, the
+new state is saved to the file upon termination of the serve
+program.
+
+A new global configuration variable `team_extra_dir' is added.
+The variable contains the path to the directory, where the saved
+state files are stored. The default value of the configuration
+variable is ${var_dir}/team_extra, where ${var_dir} is the value
+of the `var_dir' global configuration variable. The saved state
+files are stored in subdirectories of the team_extra_dir
+directory. Each directory can contain no more, than 32
+subdirectories or state files. The organization of the team
+client state directory hierarchy is similar to the organization
+of the run archive.
+
+serve,team
+----------
+If a participant has unread messages, the message "You have X
+unread message(s)" is displayed in the contest state section. In
+the team client the messages, which are sent by this participant
+to the judges, have status "U" until the messages are viewed by
+some judge (note, that such messages in the judge or master
+clients are shown with "N" status). Messages from the judges to
+all the participant or to that particular participant has the
+"N" status until are viewed by the participant. Already viewed
+messages have no special status.
+
+serve
+-----
+A new problem configuration variable `hidden' is added. If this
+variable is set to true, the corresponding problem is not shown
+in the current standings table, but the problem is available for
+the teams to submit solutions.
+
+master,judge
+------------
+If the URL does not contain the contest_id, and the CGI program
+name is plain `master' or `judge', a login page is generated,
+which contains login, password and contest_id fields.
+
+userlist-server
+---------------
+Backup copies of the userlist-server database are now written in
+the compressed GZIP format.
+
+If saving of the current user database state is failed due to
+write error (for example, if the file system is full), the
+temporary file, which is created during save, is removed.
+
+compile
+-------
+Handling of error conditions is significantly improved. The
+compile program now does not terminate because of error (for
+example, the file system is full), but insteal sleeps for 5
+seconds, and then tries to repeat the operation.
+
+Version 2.1.25 (20031229)
+=========================
+The usability of the master and the judge interface is improved
+in this version. A new field is added to the run database. A new
+configuration variable added to the serve configuration file.
 
 serve,master
 ------------
@@ -109,6 +310,20 @@ page and the user identifier filter will be enabled.
 The current page is not switched to the main page, but instead
 remains the source view page, when a runlog entry field is
 changed in the source view page.
+
+master,judge
+------------
+The session support dialog is removed from the login page.
+Currently the master and judge CGI-programs support three
+variants of session handling: 1) always pass the login and the
+password in the hidden variables of forms, 2) generate a session
+identifier and pass it in the hidden variables of forms,
+3) generate a session identifier and pass it in URLs,
+4) generate a session identifier and store it in cookie. The
+variant 3) was the default. Now the session handling menu is
+removed and the variant 3) is always chosen. It is planned to
+remove support for other session handling methods from the
+master, judge, and team programs.
 
 Version 2.1.24 (20031208)
 =========================
