@@ -1,9 +1,12 @@
+2001-12-26  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.h:
+	Prototypes for new functions `os_writell', `os_writeull' added.
+
 2001-12-09  Alexander Chernov  <cher@ispras.ru>
 
 	* makefile: added rule `log' to generate ChangeLog;
 	added compilation of mkChangeLog utility.
-
-	* .cvsignore: *** empty log message ***
 
 	* AUTHORS: initial revision
 

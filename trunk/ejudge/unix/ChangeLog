@@ -1,3 +1,19 @@
+2001-12-26  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c:
+	(os_writell) a new function, which converts a long long number into
+	  a string in various formats;
+	(os_writeull) a new function, similar to the previous one, but for
+	  unsigned long long values.
+
+2001-12-24  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c:
+	(os_readll) if endptr parameter equals to (void*) 1, the string
+	  ending is not checked;
+	(os_readull) if endptr parameter equals to (void*) 1, the string
+	  ending is not checked.
+
 2001-12-03  Alexander Chernov  <cher@ispras.ru>
 
 	* exec.c: 
