@@ -427,7 +427,8 @@ do_write_kirov_standings(FILE *f, int client_flag,
 
   int **prob_score;
   int **att_num;
-  int  *tot_score;
+  int **full_sol;
+  int  *tot_score, *tot_full;
   int  *t_sort, *t_n1, *t_n2;
 
   /* http header */
@@ -506,13 +507,18 @@ do_write_kirov_standings(FILE *f, int client_flag,
   /* prob_score[0..t_tot-1][0..p_tot-1] - maximum score for the problem
    * att_num[0..t_tot-1][0..p_tot-1]    - number of attempts made
    * tot_score[0..t_tot-1]              - total scores for teams
+   * full_sol[0..t_tot-1][0..p_tot-1]   - 1, if full solution
+   * tot_full[0..t_tot-1]               - total number of fully solved
    */
   ALLOCAZERO(prob_score, t_tot);
   ALLOCAZERO(att_num, t_tot);
+  ALLOCAZERO(full_sol, t_tot);
   ALLOCAZERO(tot_score, t_tot);
+  ALLOCAZERO(tot_full, t_tot);
   for (i = 0; i < t_tot; i++) {
     ALLOCAZERO(prob_score[i], p_tot);
     ALLOCAZERO(att_num[i], p_tot);
+    ALLOCAZERO(full_sol[i], p_tot);
   }
 
   /* auxiluary sorting stuff */
@@ -573,6 +579,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
         if (score < 0) score = 0;
         if (score > prob_score[tind][pind]) prob_score[tind][pind] = score;
         att_num[tind][pind]++;
+        full_sol[tind][pind] = 1;
       } else if (status == RUN_PARTIAL) {
         score = run_score - p->run_penalty*att_num[tind][pind];
         if (score < 0) score = 0;
@@ -590,6 +597,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
   for (i = 0; i < t_tot; i++) {
     for (j = 0; j < p_tot; j++) {
       tot_score[i] += prob_score[i][j];
+      tot_full[i] += full_sol[i][j];
     }
   }
 
@@ -658,7 +666,8 @@ do_write_kirov_standings(FILE *f, int client_flag,
     }
     fprintf(f, "</th>");
   }
-  fprintf(f, "<th>%s</th></tr>", _("Score"));
+  fprintf(f, "<th>%s</th><th>%s</th></tr>",
+          _("Solved<br>problems"), _("Score"));
 
   /* print table contents */
   for (i = 0; i < t_tot; i++) {
@@ -682,13 +691,16 @@ do_write_kirov_standings(FILE *f, int client_flag,
     }
     fprintf(f, "</td>");
     for (j = 0; j < p_tot; j++) {
-      if (!prob_score[t][j]) {
+      if (!att_num[t][j]) {
         fprintf(f, "<td>&nbsp;</td>");
+      } else if (full_sol[t][j]) {
+        fprintf(f, "<td><b>%d</b></td>", prob_score[t][j]);
       } else {
         fprintf(f, "<td>%d</td>", prob_score[t][j]);
       }
     }
-    fprintf(f, "<td>%d</td></tr>", tot_score[t]);
+    fprintf(f, "<td>%d</td><td>%d</td></tr>",
+            tot_full[t], tot_score[t]);
   }
 
   fputs("</table>\n", f);
