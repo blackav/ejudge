@@ -837,3 +837,11 @@ userlist_clnt/send_packet.c 1 3 116287
 userlist_clnt/team_cookie.c 1 3 218897
 userlist_clnt/team_set_passwd.c 1 3 170416
 serve.c 1 46 7274881
+client_actions.h 1 9 137629
+teamdb.h 1 17 146422
+userlist_clnt.h 1 16 590176
+master.c 1 37 5148997
+userlist-server.c 1 24 11409965
+prepare.c 1 48 5603027
+teamdb.c 1 22 1043081
+userlist_clnt/generate_team_passwd.c 1 3 142087
