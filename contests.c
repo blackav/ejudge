@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -87,6 +87,7 @@ static char const * const tag_map[] =
   "conf_dir",
   "run_user",
   "run_group",
+  "register_email_file",
 
   0
 };
@@ -160,9 +161,10 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   0,                            /* REGISTER_TABLE_STYLE */
   0,                            /* TEAM_HEAD_STYLE */
   0,                            /* TEAM_PAR_STYLE */
-  0,                            /* CONTEST_CONF_DIR */
-  0,                            /* CONTEST_RUN_USER */
-  0,                            /* CONTEST_RUN_GROUP */
+  0,                            /* CONF_DIR */
+  0,                            /* RUN_USER */
+  0,                            /* RUN_GROUP */
+  0,                            /* REGISTER_EMAIL_FILE */
 };
 static size_t const attn_sizes[CONTEST_LAST_ATTN] =
 {
@@ -805,6 +807,9 @@ parse_contest(struct contest_desc *cnts, char const *path)
     case CONTEST_RUN_GROUP:
       if (handle_final_tag(path, t, &cnts->run_group) < 0) return -1;
       break;
+    case CONTEST_REGISTER_EMAIL_FILE:
+      if (handle_final_tag(path, t, &cnts->register_email_file) < 0) return -1;
+      break;
     case CONTEST_CLIENT_FLAGS:
       if (t->first_down) {
         err("%s:%d:%d: element <%s> cannot contain nested elements",
@@ -986,6 +991,7 @@ parse_contest(struct contest_desc *cnts, char const *path)
   process_conf_file_path(cnts, &cnts->users_footer_file);
   process_conf_file_path(cnts, &cnts->team_header_file);
   process_conf_file_path(cnts, &cnts->team_footer_file);
+  process_conf_file_path(cnts, &cnts->register_email_file);
 
   if (!cnts->users_head_style) {
     cnts->users_head_style = xstrdup("h2");
