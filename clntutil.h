@@ -47,6 +47,7 @@ extern char form_header_multipart_ext[];
 void  client_puts(char const *, ...);
 void  client_put_header(char const *, char const *, ...);
 void  client_put_footer(void);
+void  client_put_copyright(void);
 int   client_lookup_ip(char const *, char const *);
 int   client_check_source_ip(int, char const *, char const *);
 char *client_time_to_str(char *, unsigned long);
