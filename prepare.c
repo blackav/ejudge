@@ -116,6 +116,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(corr_pat, "s"),
   GLOBAL_PARAM(info_pat, "s"),
   GLOBAL_PARAM(tgz_pat, "s"),
+  GLOBAL_PARAM(contest_start_cmd, "s"),
 
   GLOBAL_PARAM(var_dir, "s"),
 
@@ -1556,13 +1557,27 @@ set_defaults(int mode)
       info("global.standings_file_name set to %s", global->standings_file_name);
     }
 
+    if (global->contest_start_cmd[0]) {
+      pathmake2(global->contest_start_cmd, global->conf_dir, "/",
+                global->contest_start_cmd, 0);
+      if (check_executable(global->contest_start_cmd) < 0) {
+        err("contest start command %s is not executable or does not exist",
+            global->contest_start_cmd);
+        return -1;
+      }
+    }
+
     if (global->stand_header_file[0]) {
+      pathmake2(global->stand_header_file, global->conf_dir, "/",
+                global->stand_header_file, 0);
       r = generic_read_file((char**) &global->stand_header_txt, 0, &tmp_len, 0,
                             0, global->stand_header_file, "");
       if (r < 0) return -1;
     }
 
     if (global->stand_footer_file[0]) {
+      pathmake2(global->stand_footer_file, global->conf_dir, "/",
+                global->stand_footer_file, 0);
       r = generic_read_file((char**) &global->stand_footer_txt, 0, &tmp_len, 0,
                             0, global->stand_footer_file, "");
       if (r < 0) return -1;
@@ -1570,11 +1585,15 @@ set_defaults(int mode)
 
     if (global->stand2_file_name[0]) {
       if (global->stand2_header_file[0]) {
+        pathmake2(global->stand2_header_file, global->conf_dir, "/",
+                  global->stand2_header_file, 0);
         r = generic_read_file((char**) &global->stand2_header_txt, 0, &tmp_len,
                               0, 0, global->stand2_header_file, "");
         if (r < 0) return -1;
       }
       if (global->stand2_footer_file[0]) {
+        pathmake2(global->stand2_footer_file, global->conf_dir, "/",
+                  global->stand2_footer_file, 0);
         r = generic_read_file((char**) &global->stand2_footer_txt, 0, &tmp_len,
                               0, 0, global->stand2_footer_file, "");
         if (r < 0) return -1;
@@ -1583,11 +1602,15 @@ set_defaults(int mode)
 
     if (global->plog_file_name[0]) {
       if (global->plog_header_file[0]) {
+        pathmake2(global->plog_header_file, global->conf_dir, "/",
+                  global->plog_header_file, 0);
         r = generic_read_file((char**) &global->plog_header_txt, 0, &tmp_len,
                               0, 0, global->plog_header_file, "");
         if (r < 0) return -1;
       }
       if (global->plog_footer_file[0]) {
+        pathmake2(global->plog_footer_file, global->conf_dir, "/",
+                  global->plog_footer_file, 0);
         r = generic_read_file((char**) &global->plog_footer_txt, 0, &tmp_len,
                               0, 0, global->plog_footer_file, "");
         if (r < 0) return -1;
