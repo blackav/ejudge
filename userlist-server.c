@@ -696,10 +696,12 @@ create_newuser(struct client_state *p,
   unsigned char * login;
   unsigned char * email;
   int usernum;
-  unsigned char urlbuf[1024];
+  unsigned char urlbuf[1024], *urlptr = urlbuf;
   int login_len, email_len;
   struct userlist_passwd *pwd;
   unsigned char passwd_buf[64];
+  struct contest_desc *cnts = 0;
+  unsigned char * originator_email = 0;
 
   // validate packet
   login = data->data;
@@ -719,8 +721,40 @@ create_newuser(struct client_state *p,
     return;
   }
 
-  info("%d: new_user: %s, %s, %s", p->id,
-       unparse_ip(data->origin_ip), login, email);
+  info("%d: new_user: %s, %s, %s, %ld", p->id,
+       unparse_ip(data->origin_ip), login, email, data->contest_id);
+
+  if (data->contest_id != 0) {
+    if (data->contest_id <= 0 || data->contest_id >= contests->id_map_size
+        || !(cnts = contests->id_map[data->contest_id])) {
+      err("%d: invalid contest id", p->id);
+      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
+  }
+  if (cnts && cnts->register_email) {
+    originator_email = cnts->register_email;
+  } else if (config->register_email) {
+    originator_email = config->register_email;
+  } else {
+    originator_email = "team@contest.cmc.msu.ru";
+  }
+
+  if (cnts && cnts->register_url) {
+    urlptr += sprintf(urlptr, "%s", cnts->register_url);
+  } else if (config->register_url) {
+    urlptr += sprintf(urlptr, "%s", config->register_url);
+  } else {
+    urlptr += sprintf(urlptr, "%s",
+                      "http://contest.cmc.msu.ru/cgi-bin/register");
+  }
+  urlptr += sprintf(urlptr, "?action=%d&login=%s", 6, login);
+  if (data->locale_id >= 0) {
+    urlptr += sprintf(urlptr, "&locale_id=%d", data->locale_id);
+  }
+  if (data->contest_id > 0) {
+    urlptr += sprintf(urlptr, "&contest_id=%ld", data->contest_id);
+  }
 
   user = (struct userlist_user*) userlist->b.first_down;
   while (user) {
@@ -780,8 +814,6 @@ create_newuser(struct client_state *p,
   pwd->method = USERLIST_PWD_PLAIN;
   pwd->b.text = xstrdup(passwd_buf);
 
-  snprintf(urlbuf, sizeof(urlbuf), "%s", config->register_url);
-
   setup_locale(data->locale_id);
   buf = (char *) xcalloc(1,1024);
   snprintf(buf, 1024,
@@ -807,7 +839,7 @@ create_newuser(struct client_state *p,
            urlbuf,
            user->login, pwd->b.text);
   send_email_message(user->email,
-                     config->register_email,
+                     originator_email,
                      NULL,
                      _("You have been registered"),
                      buf);
@@ -1021,6 +1053,7 @@ login_user(struct client_state *p,
         }
 
         answer->user_id = user->id;
+        answer->contest_id = data->contest_id;
         answer->login_len = strlen(user->login);
         name = answer->data + answer->login_len + 1;
         answer->name_len = strlen(user->name);
@@ -1165,6 +1198,7 @@ login_team_user(struct client_state *p, int pkt_len,
     out->reply_id = ULS_LOGIN_OK;
   }
   out->user_id = u->id;
+  out->contest_id = data->contest_id;
   out->locale_id = data->locale_id;
   out->login_len = login_len;
   out->name_len = name_len;
@@ -1217,9 +1251,15 @@ login_cookie(struct client_state *p,
               dirty = 1;
               user->last_minor_change_time = cur_time;
             }
+            if (data->contest_id != 0) {
+              cookie->contest_id = data->contest_id;
+              dirty = 1;
+              user->last_minor_change_time = cur_time;
+            }
             answer->locale_id = cookie->locale_id;
             answer->reply_id = ULS_LOGIN_COOKIE;
             answer->user_id = user->id;
+            answer->contest_id = cookie->contest_id;
             answer->login_len = strlen(user->login);
             name_beg = answer->data + answer->login_len + 1;
             answer->name_len = strlen(user->name);
@@ -1331,6 +1371,12 @@ login_team_cookie(struct client_state *p, int pkt_len,
     return;
   }
 
+  if (data->contest_id > 0) {
+    cookie->contest_id = data->contest_id;
+    dirty = 1;
+    u->last_minor_change_time = cur_time;
+  }
+
   login_len = strlen(u->login);
   name_len = strlen(u->name);
   out_size = sizeof(*out) + login_len + name_len + 2;
@@ -1338,11 +1384,11 @@ login_team_cookie(struct client_state *p, int pkt_len,
   memset(out, 0, out_size);
   login_ptr = out->data;
   name_ptr = login_ptr + login_len + 1;
-  cookie->contest_id = data->contest_id;
   cookie->locale_id = data->locale_id;
   out->cookie = cookie->cookie;
   out->reply_id = ULS_LOGIN_COOKIE;
   out->user_id = u->id;
+  out->contest_id = cookie->contest_id;
   out->locale_id = data->locale_id;
   out->login_len = login_len;
   out->name_len = name_len;
