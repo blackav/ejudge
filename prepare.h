@@ -119,6 +119,16 @@ struct section_global_data
 
   path_t team_info_url;         /* the team info URL template */
   path_t prob_info_url;         /* the problem info URL template */
+
+  // fun
+  path_t sound_player;
+  path_t accept_sound;
+  path_t runtime_sound;
+  path_t timelimit_sound;
+  path_t presentation_sound;
+  path_t wrong_sound;
+  path_t internal_sound;
+  path_t start_sound;
 };
 
 struct section_problem_data

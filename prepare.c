@@ -131,6 +131,16 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(team_info_url, "s"),
   GLOBAL_PARAM(prob_info_url, "s"),
 
+  // just for fun
+  GLOBAL_PARAM(sound_player, "s"),
+  GLOBAL_PARAM(accept_sound, "s"),
+  GLOBAL_PARAM(runtime_sound, "s"),
+  GLOBAL_PARAM(timelimit_sound, "s"),
+  GLOBAL_PARAM(wrong_sound, "s"),
+  GLOBAL_PARAM(presentation_sound, "s"),
+  GLOBAL_PARAM(internal_sound, "s"),
+  GLOBAL_PARAM(start_sound, "s"),
+
   { 0, 0, 0, 0 }
 };
 
