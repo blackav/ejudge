@@ -1,3 +1,28 @@
+2002-01-02  Alexander Chernov  <cher@ispras.ru>
+
+	* logger.c: copyright notice is updated
+
+	* logger.c:
+	(minimal_init) the logger's handle is now a duplicate of the standard
+	  error handle instead of the standard error handle itself, so the
+	  `logger_close' function now can safely close this handle.
+
+2001-12-26  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c:
+	(os_writell) a new function, which converts a long long number into
+	  a string in various formats;
+	(os_writeull) a new function, similar to the previous one, but for
+	  unsigned long long values.
+
+2001-12-24  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c:
+	(os_readll) if endptr parameter equals to (void*) 1, the string
+	  ending is not checked;
+	(os_readull) if endptr parameter equals to (void*) 1, the string
+	  ending is not checked.
+
 2001-12-08  Alexander Chernov  <cher@ispras.ru>
 
 	* osdeps.c:

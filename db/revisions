@@ -230,3 +230,7 @@ win32/exec.c 1 10 1430672
 win32/osdeps.c 1 20 1470698
 unix/osdeps.c 6 22 2451102
 win32/osdeps.c 1 21 1481932
+osdeps.h 6 16 274767
+unix/osdeps.c 6 23 2585817
+win32/logger.c 1 16 678750
+win32/osdeps.c 1 22 1616667
