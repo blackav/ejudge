@@ -117,14 +117,16 @@ addr_get_list(struct addr_info const *ai, int tag)
 }
 
 int
-user_data_validate(struct userlist_data *ul)
+userlist_validate(struct userlist_data *ul)
 {
   return 0;
 }
 
-void
-user_data_free(struct userlist_data *ul)
+struct userlist_data *
+userlist_free(struct userlist_data *ul)
 {
+  /* FIXME: complete! */
+  return 0;
 }
 
 /**
