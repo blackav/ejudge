@@ -58,7 +58,6 @@ userlist_clnt_open(char const *socketpath)
   struct cmsghdr *pmsg;
   struct iovec send_vec[1];
 
-  return 0;
 
   ASSERT(socketpath);
   max_path_buf = sizeof(struct sockaddr_un) - 
@@ -134,21 +133,146 @@ userlist_clnt_close(struct userlist_clnt *clnt)
   return 0;
 }
 
-int
-userlist_clnt_register_new(struct userlist_clnt *clnt,
-                           unsigned long origin_ip,
-                           int contest_id,
-                           int locale_id,
-                           int use_cookies,
-                           unsigned char const *login,
-                           unsigned char const *email)
+static int
+do_userlist_clnt_pass_fd(struct userlist_clnt *clnt,
+                         int fds_num,
+                         int *fds)
 {
-  if (!strcmp(login, "new")) {
-    return ULS_OK;
+  struct msghdr msg;
+  unsigned char msgbuf[512];
+  struct cmsghdr *pmsg;
+  struct iovec send_vec[1];
+  int *fd2;
+  int arrsize, val, ret;
+
+  ASSERT(clnt);
+  ASSERT(fds_num > 0 && fds_num <= 32);
+  ASSERT(fds);
+
+  memset(&msg, 0, sizeof(msg));
+  msg.msg_control = msgbuf;
+  msg.msg_controllen = sizeof(msgbuf);
+  arrsize = sizeof(int) * fds_num;
+  pmsg = CMSG_FIRSTHDR(&msg);
+  fd2 = (int*) CMSG_DATA(pmsg);
+  memcpy(fd2, fds, arrsize);
+  pmsg->cmsg_level = SOL_SOCKET;
+  pmsg->cmsg_type = SCM_RIGHTS;
+  pmsg->cmsg_len = CMSG_LEN(arrsize);
+  msg.msg_controllen = CMSG_SPACE(arrsize);
+  send_vec[0].iov_base = &val;
+  send_vec[0].iov_len = 4;
+  msg.msg_iov = send_vec;
+  msg.msg_iovlen = 1;
+  val = 0;
+  ret = sendmsg(clnt->fd, &msg, 0);
+  if (ret < 0) {
+    err("sendmsg() failed: %s", os_ErrorMsg());
+    return -ULS_ERR_WRITE_ERROR;
+  }
+  if (ret != 4) {
+    err("sendmsg() short write: %d bytes", ret);
+    return -ULS_ERR_WRITE_ERROR;
+  }
+  return 0;
+}
+
+static int
+send_packet(struct userlist_clnt *clnt, int size, void const *buf)
+{
+  unsigned char *b;
+  int w, n;
+
+  ASSERT(clnt);
+  ASSERT(size > 0);
+  ASSERT(clnt->fd >= 0);
+
+  b = (unsigned char*) alloca(size + 4);
+  memcpy(b, &size, 4);          /* FIXME: non-portable */
+  memcpy(b + 4, buf, size);
+  w = size + 4;
+
+  while (w > 0) {
+    n = write(clnt->fd, b, w);
+    if (n <= 0) {
+      err("write() to userlist-server failed: %s", os_ErrorMsg());
+      close(clnt->fd);
+      clnt->fd = -1;
+      exit(1);                  /* FIXME: do graceful exit! */
+      return -ULS_ERR_WRITE_ERROR;
+    }
+    w -= n; b += n;
+  }
+  return 0;
+}
+
+static int
+receive_packet(struct userlist_clnt *clnt, int *p_size, void **p_data)
+{
+  unsigned char len_buf[4], *b, *bb = 0;
+  int r, n;
+  int sz;
+  int code = 0;
+
+  ASSERT(clnt);
+  ASSERT(p_size);
+  ASSERT(p_data);
+  ASSERT(clnt->fd >= 0);
+
+  *p_size = 0;
+  *p_data = 0;
+
+  // read length
+  b = len_buf;
+  r = 4;
+  while (r > 0) {
+    n = read(clnt->fd, b, r);
+    if (n < 0) {
+      err("read() from userlist-server failed: %s", os_ErrorMsg());
+      code = -ULS_ERR_READ_ERROR;
+      goto io_error;
+    }
+    if (!n) {
+      err("unexpected EOF from userlist-server");
+      code = -ULS_ERR_UNEXPECTED_EOF;
+      goto io_error;
+    }
+    r -= n; b += n;
+  }
+  memcpy(&sz, len_buf, 4);
+  if (sz <= 0) {
+    err("invalid packet length %d from userlist-server", sz);
+    code = -ULS_ERR_PROTOCOL;
+    goto io_error;
+  }
+  bb = b = (unsigned char*) xcalloc(1, sz);
+  r = sz;
+
+  // read the packet
+  while (r > 0) {
+    n = read(clnt->fd, b, r);
+    if (n < 0) {
+      err("read() from userlist-server failed: %s", os_ErrorMsg());
+      code = -ULS_ERR_READ_ERROR;
+      goto io_error;
+    }
+    if (!n) {
+      err("unexpected EOF from userlist-server");
+      code = -ULS_ERR_UNEXPECTED_EOF;
+      goto io_error;
+    }
+    r -= n; b += n;
   }
 
-  // simulate an error
-  return ULS_ERR_LOGIN_USED;
+  *p_size = sz;
+  *p_data = bb;
+
+  return 0;
+ io_error:
+  if (bb) xfree(bb);
+  close(clnt->fd);
+  clnt->fd = -1;
+  return code;
 }
 
 int
@@ -164,36 +288,40 @@ userlist_clnt_login(struct userlist_clnt *clnt,
                     unsigned char **p_name,
                     int *p_locale_id)
 {
-  if (!strcmp(login, "t1")) {
-    if (strcmp(passwd, "team1")) return ULS_ERR_INVALID_PASSWORD;
-    *p_user_id = 1;
-    *p_name = xstrdup("Team 1");
-    *p_locale_id = -1;
-    if (use_cookies) {
-      *p_cookie = 0x0101010101010101;
-      return ULS_LOGIN_COOKIE;
-    }
-    return ULS_LOGIN_OK;
-  } else if (!strcmp(login, "t2")) {
-    if (strcmp(passwd, "team2")) return ULS_ERR_INVALID_PASSWORD;
-    *p_user_id = 2;
-    *p_name = xstrdup("Team 2");
-    *p_locale_id = -1;
-    *p_cookie = 0x0202020202020202;
-    return ULS_LOGIN_COOKIE;
-  } else if (!strcmp(login, "t3")) {
-    if (strcmp(passwd, "team3")) return ULS_ERR_INVALID_PASSWORD;
-    *p_user_id = 3;
-    *p_name = xstrdup("Team 3");
-    *p_locale_id = 1;
-    if (use_cookies) {
-      *p_cookie = 0x0303030303030303;
-      return ULS_LOGIN_COOKIE;
-    }
-    return ULS_LOGIN_OK;
-  } else {
-    return ULS_ERR_INVALID_LOGIN;
+  struct userlist_pk_do_login * data;
+  struct userlist_pk_login_ok * answer;
+  int len;
+  int anslen;
+  int res;
+
+
+  len = sizeof(struct userlist_pk_do_login)+strlen(login)+strlen(passwd)+2;
+
+  data = xcalloc(1,len);
+  data->request_id = ULS_DO_LOGIN;
+  data->origin_ip = origin_ip;
+  data->contest_id = contest_id;
+  data->locale_id = locale_id;
+  data->use_cookies = use_cookies;
+  data->login_length = strlen(login);
+  data->password_length = strlen(passwd);
+  strcpy(data->data,login);
+  strcpy(data->data + data->login_length + 1,passwd);
+  send_packet(clnt,len,data);
+  free(data);
+  receive_packet(clnt,&anslen,(void**) &answer);
+  if ((answer->reply_id == ULS_LOGIN_OK)||
+      (answer->reply_id == ULS_LOGIN_COOKIE)) {
+
+    *p_user_id = answer->user_id;
+    *p_cookie = answer->cookie;
+    *p_locale_id = answer->locale_id;
+    *p_name = xcalloc(1,answer->name_len + 1);
+    strcpy(*p_name,answer->data + answer->login_len);
   }
+  res = answer->reply_id;
+  free(answer);
+  return res;
 }
 
 int
@@ -206,58 +334,297 @@ userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
                             int *p_locale_id,
                             int *p_contest_id)
 {
-  //if (origin_ip != 0x7f000001) return ULS_ERR_NO_COOKIE;
-  if (cookie == 0x0101010101010101) {
-    *p_user_id = 1;
-    *p_locale_id = 0;
-    *p_contest_id = 0;
-    *p_login = xstrdup("t1");
-    *p_name = xstrdup("Team 1");
-    return ULS_OK;
-  } else if (cookie == 0x0202020202020202) {
-    *p_user_id = 2;
-    *p_locale_id = 0;
-    *p_contest_id = 0;
-    *p_login = xstrdup("t2");
-    *p_name = xstrdup("Team 2");
-    return ULS_OK;
-  } else if (cookie == 0x0303030303030303) {
-    *p_user_id = 3;
-    *p_locale_id = 1;
-    *p_contest_id = 0;
-    *p_login = xstrdup("t3");
-    *p_name = xstrdup("Team 3");
-    return ULS_OK;
-  } else {
-    return ULS_ERR_NO_COOKIE;
+  struct userlist_pk_check_cookie * data;
+  struct userlist_pk_login_ok * answer;
+  int len;
+  int anslen;
+  int res;
+
+  len = sizeof (struct userlist_pk_check_cookie);
+  data = xcalloc(1,len);
+
+  data->request_id = ULS_CHECK_COOKIE;
+  data->origin_ip = origin_ip;
+  //  data->contest_id = contest_id;
+  data->cookie = cookie;
+  data->locale_id = -1;
+  send_packet(clnt,len,data);
+  free(data);
+  receive_packet(clnt,&anslen,(void**) &answer);
+  if (answer->reply_id == ULS_LOGIN_COOKIE) {
+    *p_user_id = answer->user_id;
+    *p_locale_id = answer->locale_id;
+    *p_login = xstrdup(answer->data);
+    *p_name = xcalloc(1,answer->name_len + 1);
+    strcpy(*p_name,answer->data + answer->login_len + 1);
   }
+  res = answer->reply_id;
+  free(answer);
+  return res;
 }
 
 int
-userlist_clnt_get_login(struct userlist_clnt *clnt,
-                        int req_user_id, int my_user_id)
+userlist_clnt_register_new(struct userlist_clnt *clnt,
+                           unsigned long origin_ip,
+                           int contest_id,
+                           int locale_id,
+                           int use_cookies,
+                           unsigned char const *login,
+                           unsigned char const *email)
 {
+  struct userlist_pk_register_new * data;
+  int len;
+  short * answer;
+  int anslen;
+  int res;
+
+  len = sizeof(struct userlist_pk_register_new)+strlen(login)+strlen(email)+2;
+  data = xcalloc(1,len);
+  data->request_id = ULS_REGISTER_NEW;
+  data->origin_ip = origin_ip;
+  data->contest_id = contest_id;
+  data->locale_id = locale_id;
+  data->use_cookies = use_cookies;
+  data->login_length = strlen(login);
+  data->email_length = strlen(email);
+  strcpy(data->data,login);
+  strcpy(data->data+data->login_length+1,email);
+  send_packet(clnt,len,data);
+  free(data);
+  receive_packet(clnt,&anslen,(void*) &answer);
+  res = *answer;
+  free(answer);
+  return res;
+  
 }
 
 int
-userlist_clnt_get_name(struct userlist_clnt *clnt,
-                       int req_user_id, int my_user_id)
+userlist_clnt_get_info(struct userlist_clnt *clnt,
+                       int uid, unsigned char **p_info)
 {
-}
+  struct userlist_pk_get_user_info out_pkt;
+  struct userlist_pk_xml_data *in_pkt = 0;
+  int in_size;
+  int info_len;
 
-int
-userlist_clnt_get_email(struct userlist_clnt *clnt,
-                        int uid, unsigned char **p_email,
-                        int *p_show_email)
-{
-  switch (uid) {
-  case 1: *p_email = xstrdup("team1@xxx"); return ULS_EMAIL;
-  case 2: *p_email = xstrdup("team2@xxx"); return ULS_EMAIL;
-  case 3: *p_email = xstrdup("team3@xxx"); return ULS_EMAIL;
-  default:
-    return ULS_ERR_BAD_UID;
+  ASSERT(clnt);
+  ASSERT(clnt->fd >= 0);
+
+  memset(&out_pkt, 0, sizeof(out_pkt));
+  out_pkt.request_id = ULS_GET_USER_INFO;
+  out_pkt.user_id = uid;
+  if (send_packet(clnt, sizeof(out_pkt), &out_pkt) < 0) return -1;
+  if (receive_packet(clnt, &in_size, (void*) &in_pkt) < 0) return -1;
+  if (!in_size || !in_pkt) return -1;
+  if (in_pkt->reply_id != ULS_XML_DATA) {
+    xfree(in_pkt);
+    return -1;
   }
+  if (in_size <= sizeof(struct userlist_pk_xml_data)) return -1;
+  info_len = strlen(in_pkt->data);
+  if (info_len != in_pkt->info_len) {
+    xfree(in_pkt);
+    return -1;
+  }
+  *p_info = xstrdup(in_pkt->data);
+  xfree(in_pkt);
+  return ULS_XML_DATA;
 }
+
+int
+userlist_clnt_get_contests(struct userlist_clnt *clnt,
+                           int uid, unsigned char **p_info)
+{
+  struct userlist_pk_get_user_info out_pkt;
+  struct userlist_pk_xml_data *in_pkt = 0;
+  int in_size;
+  int info_len;
+
+  ASSERT(clnt);
+  ASSERT(clnt->fd >= 0);
+
+  memset(&out_pkt, 0, sizeof(out_pkt));
+  out_pkt.request_id = ULS_GET_USER_CONTESTS;
+  out_pkt.user_id = uid;
+  if (send_packet(clnt, sizeof(out_pkt), &out_pkt) < 0) return -1;
+  if (receive_packet(clnt, &in_size, (void*) &in_pkt) < 0) return -1;
+  if (!in_size || !in_pkt) return -1;
+  if (in_pkt->reply_id != ULS_XML_DATA) {
+    xfree(in_pkt);
+    return -1;
+  }
+  if (in_size <= sizeof(struct userlist_pk_xml_data)) return -1;
+  info_len = strlen(in_pkt->data);
+  if (info_len != in_pkt->info_len) {
+    xfree(in_pkt);
+    return -1;
+  }
+  *p_info = xstrdup(in_pkt->data);
+  xfree(in_pkt);
+  return ULS_XML_DATA;
+}
+
+int
+userlist_clnt_set_info(struct userlist_clnt *clnt,
+                       int uid, unsigned char *info)
+{
+  struct userlist_pk_set_user_info *out;
+  struct userlist_packet *in = 0;
+  int out_size, in_size;
+  int r;
+
+  ASSERT(clnt);
+  ASSERT(clnt->fd >= 0);
+  ASSERT(info);
+
+  out_size = sizeof(*out) + strlen(info) + 1;
+  out = (struct userlist_pk_set_user_info*) alloca(out_size);
+  if (!out) return -ULS_ERR_OUT_OF_MEM;
+  memset(out, 0, out_size);
+  out->request_id = ULS_SET_USER_INFO;
+  out->user_id = uid;
+  strcpy(out->data, info);
+  out->info_len = strlen(info);
+  if ((r = send_packet(clnt, out_size, out)) < 0) return r;
+  if ((r = receive_packet(clnt, &in_size, (void*) &in)) < 0) return r;
+  if (in_size != sizeof(*in)) {
+    xfree(in);
+    return -ULS_ERR_PROTOCOL;
+  }
+  r = in->id;
+  xfree(in);
+  return r;
+}
+
+int
+userlist_clnt_set_passwd(struct userlist_clnt *clnt,
+                         int uid, unsigned char *old_pwd,
+                         unsigned char *new_pwd)
+{
+  struct userlist_pk_set_password *out;
+  struct userlist_packet *in;
+  int out_size, in_size, old_len, new_len, r;
+  unsigned char *pkt_old_ptr;
+  unsigned char *pkt_new_ptr;
+
+  ASSERT(clnt);
+  ASSERT(old_pwd);
+  ASSERT(new_pwd);
+
+  old_len = strlen(old_pwd);
+  new_len = strlen(new_pwd);
+  if (old_len > 255) return -ULS_ERR_INVALID_SIZE;
+  if (new_len > 255) return -ULS_ERR_INVALID_SIZE;
+  out_size = sizeof(*out) + old_len + new_len + 2;
+  out = (struct userlist_pk_set_password *) alloca(out_size);
+  if (!out) return -ULS_ERR_OUT_OF_MEM;
+  memset(out, 0, out_size);
+  out->request_id = ULS_SET_PASSWD;
+  out->user_id = uid;
+  out->old_len = old_len;
+  out->new_len = new_len;
+  pkt_old_ptr = out->data;
+  pkt_new_ptr = pkt_old_ptr + old_len + 1;
+  memcpy(pkt_old_ptr, old_pwd, old_len + 1);
+  memcpy(pkt_new_ptr, new_pwd, new_len + 1);
+  if ((r = send_packet(clnt, out_size, out)) < 0) return r;
+  if ((r = receive_packet(clnt, &in_size, (void*) &in)) < 0) return r;
+  if (in_size != sizeof(*in)) {
+    xfree(in);
+    return -ULS_ERR_PROTOCOL;
+  }
+  r = in->id;
+  xfree(in);
+  return r;
+}
+
+int
+userlist_clnt_register_contest(struct userlist_clnt *clnt,
+                               int user_id,
+                               int contest_id)
+{
+  struct userlist_pk_register_contest *out;
+  struct userlist_packet *in = 0;
+  int out_size, in_size = 0, r;
+
+  out_size = sizeof(*out);
+  out = alloca(out_size);
+  if (!out) return -ULS_ERR_OUT_OF_MEM;
+  out->request_id = ULS_REGISTER_CONTEST;
+  out->user_id = user_id;
+  out->contest_id = contest_id;
+  if ((r = send_packet(clnt, out_size, out)) < 0) return r;
+  if ((r = receive_packet(clnt, &in_size, (void*) &in)) < 0) return r;
+  if (in_size != sizeof(*in)) {
+    xfree(in);
+    return -ULS_ERR_PROTOCOL;
+  }
+  r = in->id;
+  xfree(in);
+  return r;
+}
+
+int
+userlist_clnt_remove_member(struct userlist_clnt *clnt,
+		            int user_id, int role_id, int pers_id,
+			    int serial)
+{
+  struct userlist_pk_remove_member *out = 0;
+  struct userlist_packet *in = 0;
+  int out_size = 0, in_size = 0, r;
+
+  out_size = sizeof(*out);
+  out = alloca(out_size);
+  if (!out) return -ULS_ERR_OUT_OF_MEM;
+  out->request_id = ULS_REMOVE_MEMBER;
+  out->user_id = user_id;
+  out->role_id = role_id;
+  out->pers_id = pers_id;
+  out->serial = serial;
+  if ((r = send_packet(clnt, out_size, out)) < 0) return r;
+  if ((r = receive_packet(clnt, &in_size, (void*) &in)) < 0) return r;
+  if (in_size != sizeof(*in)) {
+    xfree(in);
+    return -ULS_ERR_PROTOCOL;
+  }
+  r = in->id;
+  xfree(in);
+  return r;
+}
+
+int
+userlist_clnt_pass_fd(struct userlist_clnt *clnt, int nfd, int *fds)
+{
+  struct userlist_packet *out = 0;
+  int out_size = 0;
+  int r;
+
+  out_size = sizeof(*out);
+  out = alloca(out_size);
+  out->id = ULS_PASS_FD;
+  if ((r = send_packet(clnt, out_size, out)) < 0) return r;
+  // FIXME: obtain the confirmation?
+  return do_userlist_clnt_pass_fd(clnt, nfd, fds);
+}
+
+/*
+int
+userlist_clnt_test(struct userlist_clnt *clnt)
+{
+  struct userlist_packet *out = 0, *in = 0;
+  int out_size = 0, in_size = 0;
+  int r;
+
+  out_size = sizeof(*out);
+  out = alloca(out_size);
+  out->id = ULS_TEST;
+  if ((r = send_packet(clnt, out_size, out)) < 0) return r;
+  if ((r = receive_packet(clnt, &in_size, (void*) &in)) < 0) return r;
+  r = in->id;
+  xfree(in);
+  return r;
+}
+*/
 
 /**
  * Local variables:

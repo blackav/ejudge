@@ -52,7 +52,6 @@ static char const * const tag_map[] =
   "homepage",
   "phones",
   "phone",
-  "members",
   "member",
   "surname",
   "middlename",
@@ -60,10 +59,16 @@ static char const * const tag_map[] =
   "group",
   "cookies",
   "cookie",
-  "registrations",
-  "registration",
+  "contests",
+  "contest",
   "status",
   "occupation",
+  "contestants",
+  "reserves",
+  "coaches",
+  "advisors",
+  "guests",
+  "firstname",
 
   0
 };
@@ -77,7 +82,6 @@ static char const * const attn_map[] =
   "value",
   "locale_id",
   "expire",
-  "role",
   "contest_id",
   "registered",
   "last_login",
@@ -87,6 +91,11 @@ static char const * const attn_map[] =
   "banned",
   "status",
   "last_pwdchange",
+  "public",
+  "use_cookies",
+  "last_minor_change",
+  "member_serial",
+  "serial",
 
   0
 };
@@ -106,7 +115,6 @@ static size_t const tag_sizes[USERLIST_LAST_TAG] =
   sizeof(struct xml_tree),      /* HOMEPAGE */
   sizeof(struct xml_tree),      /* PHONES */
   sizeof(struct xml_tree),      /* PHONE */
-  sizeof(struct userlist_members), /* MEMBERS */
   sizeof(struct userlist_member), /* MEMBER */
   sizeof(struct xml_tree),      /* SURNAME */
   sizeof(struct xml_tree),      /* MIDDLENAME */
@@ -114,10 +122,16 @@ static size_t const tag_sizes[USERLIST_LAST_TAG] =
   sizeof(struct xml_tree),      /* GROUP */
   sizeof(struct xml_tree),      /* COOKIES */
   sizeof(struct userlist_cookie), /* COOKIE */
-  sizeof(struct xml_tree),      /* REGISTRATIONS */
-  sizeof(struct userlist_reg),  /* REGISTRATION */
+  sizeof(struct xml_tree),      /* CONTESTS */
+  sizeof(struct userlist_contest), /* CONTEST */
   sizeof(struct xml_tree),      /* STATUS */
   sizeof(struct xml_tree),      /* OCCUPATION */
+  sizeof(struct userlist_members), /* CONTESTANTS */
+  sizeof(struct userlist_members), /* RESERVES */
+  sizeof(struct userlist_members), /* COACHES */
+  sizeof(struct userlist_members), /* ADVISORS */
+  sizeof(struct userlist_members), /* GUESTS */
+  sizeof(struct xml_tree),      /* FIRSTNAME */
 };
 /*
 static size_t const attn_sizes[USERLIST_LAST_ATTN] =
@@ -140,6 +154,11 @@ node_alloc(int tag)
   //if (!sz) sz = sizeof(struct xml_tree);
   return xcalloc(1, sz);
 }
+struct xml_tree *
+userlist_node_alloc(int tag)
+{
+  return node_alloc(tag);
+}
 static void *
 attn_alloc(int tag)
 {
@@ -153,6 +172,47 @@ node_free(struct xml_tree *t)
     {
       struct userlist_list *p = (struct userlist_list*) t;
       xfree(p->user_map);
+      xfree(p->name);
+    }
+    break;
+  case USERLIST_T_USER:
+    {
+      struct userlist_user *p = (struct userlist_user*) t;
+      xfree(p->login);
+      xfree(p->name);
+      xfree(p->email);
+      xfree(p->passwd);
+      xfree(p->inst);
+      xfree(p->instshort);
+      xfree(p->fac);
+      xfree(p->facshort);
+      xfree(p->homepage);
+    }
+    break;
+  case USERLIST_T_MEMBER:
+    {
+      struct userlist_member *p = (struct userlist_member*) t;
+      xfree(p->firstname);
+      xfree(p->middlename);
+      xfree(p->surname);
+      xfree(p->group);
+      xfree(p->email);
+      xfree(p->homepage);
+      xfree(p->occupation);
+      xfree(p->inst);
+      xfree(p->instshort);
+      xfree(p->fac);
+      xfree(p->facshort);
+    }
+    break;
+  case USERLIST_T_CONTESTANTS:
+  case USERLIST_T_RESERVES:
+  case USERLIST_T_COACHES:
+  case USERLIST_T_ADVISORS:
+  case USERLIST_T_GUESTS:
+    {
+      struct userlist_members *p = (struct userlist_members*) t;
+      xfree(p->members);
     }
     break;
   }
@@ -327,10 +387,10 @@ static int
 handle_final_tag(char const *path, struct xml_tree *t, unsigned char **ps)
 {
   if (*ps) return duplicated_tag(path, t);
-  if (!t->text || !*t->text) return empty_tag(path, t);
+  //if (!t->text || !*t->text) return empty_tag(path, t);
   if (t->first_down) return nested_tag(path, t);
   if (t->first) return no_attr(path, t);
-  *ps = t->text;
+  *ps = t->text; t->text = 0;
   return 0;
 }
 
@@ -465,39 +525,42 @@ parse_members(char const *path, struct xml_tree *q,
   struct xml_tree *t;
   struct userlist_members *mbs = (struct userlist_members*) q;
   struct userlist_member *mb;
-  struct xml_attn *a;
   struct xml_tree *p;
+  struct xml_attn *a;
+  int role, i;
+
+  if (q->tag < USERLIST_T_CONTESTANTS || q->tag > USERLIST_T_GUESTS)
+    return invalid_tag(path, q);
+  role = q->tag - USERLIST_T_CONTESTANTS;
+  if (usr->members[role]) return duplicated_tag(path, q);
+  usr->members[role] = mbs;
+  mbs->role = role;
 
   if (mbs->b.first) return no_attr(path, q);
   xfree(mbs->b.text); mbs->b.text = 0;
+
   for (t = mbs->b.first_down; t; t = t->right) {
     if (t->tag != USERLIST_T_MEMBER) return invalid_tag(path, t);
+    mbs->total++;
     mb = (struct userlist_member*) t;
     xfree(t->text); t->text = 0;
-    
+
     for (a = t->first; a; a = a->next) {
-      if (a->tag != USERLIST_A_ROLE) return invalid_attn(path, a);
-      if (!strcasecmp(a->text, "contestant")) {
-        mb->role = USERLIST_MB_CONTESTANT;
-        mbs->contestants_total++;
-      } else if (!strcasecmp(a->text, "reserve")) {
-        mb->role = USERLIST_MB_RESERVE;
-        mbs->reserves_total++;
-      } else if (!strcasecmp(a->text, "advisor")) {
-        mb->role = USERLIST_MB_ADVISOR;
-        mbs->advisors_total++;
-      } else if (!strcasecmp(a->text, "coach")) {
-        mb->role = USERLIST_MB_COACH;
-        mbs->coaches_total++;
-      } else {
-        return invalid_attn_value(path, a);
+      switch (a->tag) {
+      case USERLIST_A_SERIAL:
+        if (parse_int(path, a->line, a->column, a->text, &mb->serial) < 0)
+          return invalid_attn_value(path, a);
+        if (mb->serial <= 0) return invalid_attn_value(path, a);
+        break;
+      default:
+        return invalid_attn(path, a);
       }
     }
 
     for (p = t->first_down; p; p = p->right) {
       switch (p->tag) {
-      case USERLIST_T_NAME:
-        if (handle_final_tag(path, p, &mb->name) < 0) return -1;
+      case USERLIST_T_FIRSTNAME:
+        if (handle_final_tag(path, p, &mb->firstname) < 0) return -1;
         break;
       case USERLIST_T_SURNAME:
         if (handle_final_tag(path, p, &mb->surname) < 0) return -1;
@@ -517,10 +580,23 @@ parse_members(char const *path, struct xml_tree *q,
       case USERLIST_T_OCCUPATION:
         if (handle_final_tag(path, p, &mb->occupation) < 0) return -1;
         break;
+      case USERLIST_T_INST:
+        if (handle_final_tag(path, p, &mb->inst) < 0) return -1;
+        break;
+      case USERLIST_T_INSTSHORT:
+        if (handle_final_tag(path, p, &mb->instshort) < 0) return -1;
+        break;
+      case USERLIST_T_FAC:
+        if (handle_final_tag(path, p, &mb->fac) < 0) return -1;
+        break;
+      case USERLIST_T_FACSHORT:
+        if (handle_final_tag(path, p, &mb->facshort) < 0) return -1;
+        break;
       case USERLIST_T_STATUS:
         if (mb->status) return duplicated_tag(path, p);
         if (p->first) return no_attr(path, p);
         if (p->first_down) return nested_tag(path, p);
+        if (!p->text || !*p->text) break;
         if (p->text) {
           if (!strcasecmp(p->text, "schoolchild")) {
             mb->status = USERLIST_ST_SCHOOL;
@@ -553,7 +629,10 @@ parse_members(char const *path, struct xml_tree *q,
         if (mb->grade) return duplicated_tag(path, p);
         if (p->first) return no_attr(path, p);
         if (p->first_down) return nested_tag(path, p);
+        if (!p->text || !*p->text) break;
         if (parse_int(path, p->line, p->column, p->text, &mb->grade) < 0)
+          return invalid_tag_value(path, p);
+        if (mb->grade < 0 || mb->grade >= 20)
           return invalid_tag_value(path, p);
         break;
       case USERLIST_T_GROUP:
@@ -563,39 +642,49 @@ parse_members(char const *path, struct xml_tree *q,
         return invalid_tag(path, p);
       }
     }
+  }
 
-    if (!mb->name) return undefined_tag(path, t, USERLIST_T_NAME);
+  mbs->allocd = 8;
+  while (mbs->allocd < mbs->total) {
+    mbs->allocd *= 2;
+  }
+  mbs->members = (struct userlist_member**) xcalloc(mbs->allocd,
+                                                    sizeof(mbs->members[0]));
+  for (t = mbs->b.first_down, i = 0; t; t = t->right, i++) {
+    mbs->members[i] = (struct userlist_member*) t;
   }
   return 0;
 }
 static int
-parse_registration(char const *path, struct xml_tree *t,
-                   struct userlist_user *usr)
+parse_contest(char const *path, struct xml_tree *t,
+              struct userlist_user *usr)
 {
   struct xml_tree *p;
-  struct userlist_reg *reg;
+  struct userlist_contest *reg;
   struct xml_attn *a;
 
-  ASSERT(t->tag == USERLIST_T_REGISTRATIONS);
-  if (usr->registrations) return duplicated_tag(path, t);
-  usr->registrations = t;
+  ASSERT(t->tag == USERLIST_T_CONTESTS);
+  if (usr) {
+    if (usr->contests) return duplicated_tag(path, t);
+    usr->contests = t;
+  }
   xfree(t->text); t->text = 0;
   if (t->first) no_attr(path, t);
 
   for (p = t->first_down; p; p = p->right) {
-    if (p->tag != USERLIST_T_REGISTRATION) return invalid_tag(path, p);
+    if (p->tag != USERLIST_T_CONTEST) return invalid_tag(path, p);
     if (p->first_down) return nested_tag(path, p);
     if (p->text && *p->text) return no_text(path, p);
-    reg = (struct userlist_reg*) p;
+    reg = (struct userlist_contest*) p;
     
-    reg->contest_id = -1;
+    reg->id = -1;
     reg->status = -1;
     for (a = p->first; a; a = a->next) {
       switch (a->tag) {
-      case USERLIST_A_CONTEST_ID:
-        if (parse_int(path, a->line, a->column, a->text, &reg->contest_id) < 0)
+      case USERLIST_A_ID:
+        if (parse_int(path, a->line, a->column, a->text, &reg->id) < 0)
           return -1;
-        if (reg->contest_id <= 0) return invalid_attn_value(path, a);
+        if (reg->id <= 0) return invalid_attn_value(path, a);
         break;
       case USERLIST_A_STATUS:
         if (a->text) {
@@ -615,8 +704,8 @@ parse_registration(char const *path, struct xml_tree *t,
         return invalid_attn(path, a);
       }
     }
-    if (reg->contest_id == -1)
-      return undefined_attn(path, p, USERLIST_A_CONTEST_ID);
+    if (reg->id == -1)
+      return undefined_attn(path, p, USERLIST_A_ID);
     if (reg->status == -1)
       return undefined_attn(path, p, USERLIST_A_STATUS);
   }
@@ -632,6 +721,7 @@ do_parse_user(char const *path, struct userlist_user *usr)
 
   xfree(usr->b.text); usr->b.text = 0;
 
+  usr->default_use_cookies = -1;
   usr->id = -1;
   for (a = usr->b.first; a; a = a->next) {
     switch (a->tag) {
@@ -661,6 +751,10 @@ do_parse_user(char const *path, struct userlist_user *usr)
       if (parse_date(path, a->line, a->column, a->text,
                      &usr->last_pwdchange_time) < 0) return -1;
       break;
+    case USERLIST_A_LAST_MINOR_CHANGE:
+      if (parse_date(path, a->line, a->column, a->text,
+                     &usr->last_minor_change_time) < 0) return -1;
+      break;
     case USERLIST_A_INVISIBLE:
       if (parse_bool(path, a->line, a->column, a->text,
                      &usr->is_invisible) < 0) return -1;
@@ -668,6 +762,10 @@ do_parse_user(char const *path, struct userlist_user *usr)
     case USERLIST_A_BANNED:
       if (parse_bool(path, a->line, a->column, a->text,
                      &usr->is_banned) < 0) return -1;
+      break;
+    case USERLIST_A_USE_COOKIES:
+      if (parse_bool(path, a->line, a->column, a->text,
+                     &usr->default_use_cookies) < 0) return -1;
       break;
     default:
       return invalid_attn(path, a);
@@ -679,17 +777,35 @@ do_parse_user(char const *path, struct userlist_user *usr)
   for (t = usr->b.first_down; t; t = t->right) {
     switch (t->tag) {
     case USERLIST_T_LOGIN:
-      if (handle_final_tag(path, t, &usr->login) < 0) return -1;
+      if (usr->login) return duplicated_tag(path, t);
+      if (!t->text || !*t->text) return empty_tag(path, t);
+      if (t->first_down) return nested_tag(path, t);
+      for (a = t->first; a; a = a->next) {
+        if (a->tag != USERLIST_A_PUBLIC) return invalid_attn(path, a);
+        if (parse_bool(path, a->line, a->column, a->text,
+                       &usr->show_login) < 0) return -1;
+      }
+      usr->login = t->text; t->text = 0;
       break;
     case USERLIST_T_NAME:
       if (handle_final_tag(path, t, &usr->name) < 0) return -1;
+      if (!usr->name) usr->name = xstrdup("");
       break;
     case USERLIST_T_PASSWORD:
       if (usr->passwd) return duplicated_tag(path, t);
       if (parse_passwd(path, t, usr) < 0) return -1;
+      t->text = 0;
       break;
     case USERLIST_T_EMAIL:
-      if (handle_final_tag(path, t, &usr->email) < 0) return -1;
+      if (usr->email) return duplicated_tag(path, t);
+      if (!t->text || !*t->text) return empty_tag(path, t);
+      if (t->first_down) return nested_tag(path, t);
+      for (a = t->first; a; a = a->next) {
+        if (a->tag != USERLIST_A_PUBLIC) return invalid_attn(path, a);
+        if (parse_bool(path, a->line, a->column, a->text,
+                       &usr->show_email) < 0) return -1;
+      }
+      usr->email = t->text; t->text = 0;
       break;
     case USERLIST_T_COOKIES:
       if (usr->cookies) return duplicated_tag(path, t);
@@ -708,19 +824,21 @@ do_parse_user(char const *path, struct userlist_user *usr)
     case USERLIST_T_FACSHORT:
       if (handle_final_tag(path, t, &usr->facshort) < 0) return -1;
       break;
-    case USERLIST_T_MEMBERS:
-      if (usr->members) return duplicated_tag(path, t);
-      if (parse_members(path, t, usr) < 0) return -1;
-      usr->members = (struct userlist_members*) t;
-      break;
     case USERLIST_T_PHONES:
       if (!(usr->phones = parse_phones(path, t))) return -1;
       break;
     case USERLIST_T_HOMEPAGE:
       if (handle_final_tag(path, t, &usr->homepage) < 0) return -1;
       break;
-    case USERLIST_T_REGISTRATIONS:
-      if (parse_registration(path, t, usr) < 0) return -1;
+    case USERLIST_T_CONTESTS:
+      if (parse_contest(path, t, usr) < 0) return -1;
+      break;
+    case USERLIST_T_CONTESTANTS:
+    case USERLIST_T_RESERVES:
+    case USERLIST_T_COACHES:
+    case USERLIST_T_ADVISORS:
+    case USERLIST_T_GUESTS:
+      if (parse_members(path, t, usr) < 0) return -1;
       break;
     default:
       return invalid_tag(path, t);
@@ -728,8 +846,12 @@ do_parse_user(char const *path, struct userlist_user *usr)
   }
   if (!usr->login)
     return undefined_tag(path, (struct xml_tree*) usr, USERLIST_T_LOGIN);
+  /*
   if (!usr->passwd)
     return undefined_tag(path, (struct xml_tree*) usr, USERLIST_T_PASSWORD);
+  */
+  if (!usr->name)
+    usr->name = xstrdup("");
   return 0;
 }
 
@@ -742,13 +864,27 @@ do_parse_userlist(char const *path, struct userlist_list *lst)
   int map_size;
 
   for (a = lst->b.first; a; a = a->next) {
-    if (a->tag != USERLIST_A_NAME) 
+    switch (a->tag) {
+    case USERLIST_A_NAME:
+      if (lst->name) return duplicated_attn(path, a);
+      lst->name = a->text; a->text = 0;
+      break;
+    case USERLIST_A_MEMBER_SERIAL:
+      {
+        int x = 0, n = 0;
+
+        if (!a->text || sscanf(a->text, "%d %n", &x, &n) != 1 || a->text[n]
+            || x < 0)
+          return invalid_attn_value(path, a);
+        lst->member_serial = x;
+      }
+      break;
+    default:
       return invalid_attn(path, a);
-    if (lst->name)
-      return duplicated_attn(path, a);
-    lst->name = a->text;
+    }
   }
   xfree(lst->b.text); lst->b.text = 0;
+  if (!lst->member_serial) lst->member_serial = 1;
 
   for (t = lst->b.first_down; t; t = t->right) {
     if (t->tag != USERLIST_T_USER)
@@ -779,6 +915,46 @@ do_parse_userlist(char const *path, struct userlist_list *lst)
   return 0;
 }
 
+struct userlist_user *
+userlist_parse_user_str(char const *str)
+{
+  struct xml_tree *tree = 0;
+  struct userlist_user *user = 0;
+
+  tree = xml_build_tree_str(str, tag_map, attn_map, node_alloc, attn_alloc);
+  if (!tree) goto failed;
+  if (tree->tag != USERLIST_T_USER) {
+    err("top-level tag must be <user>");
+    goto failed;
+  }
+  user = (struct userlist_user*) tree;
+  if (do_parse_user("", user) < 0) goto failed;
+  return user;
+
+ failed:
+  if (tree) xml_tree_free(tree, node_free, attn_free);
+  return 0;
+}
+
+struct xml_tree *
+userlist_parse_contests_str(unsigned char const *str)
+{
+  struct xml_tree *tree = 0;
+
+  tree = xml_build_tree_str(str, tag_map, attn_map, node_alloc, attn_alloc);
+  if (!tree) return 0;
+  if (tree->tag != USERLIST_T_CONTESTS) {
+    err("top-level tag must be <contests>");
+    xml_tree_free(tree, node_free, attn_free);
+    return 0;
+  }
+  if (parse_contest("", tree, 0) < 0) {
+    xml_tree_free(tree, node_free, attn_free);
+    return 0;
+  }
+  return tree;
+}
+
 struct userlist_list *
 userlist_parse(char const *path)
 {
@@ -801,10 +977,10 @@ userlist_parse(char const *path)
   return 0;
 }
 
-struct userlist_list *
-userlist_free(struct userlist_list *p)
+void *
+userlist_free(struct xml_tree *p)
 {
-  if (p) xml_tree_free(&p->b, node_free, attn_free);
+  if (p) xml_tree_free(p, node_free, attn_free);
   return 0;
 }
 
@@ -815,7 +991,7 @@ unparse_date(unsigned long d)
   struct tm *ptm;
 
   ptm = localtime(&d);
-  snprintf(buf, sizeof(buf), "%d/%d/%d %d:%d:%d",
+  snprintf(buf, sizeof(buf), "%d/%02d/%02d %02d:%02d:%02d",
            ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
            ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
   return buf;
@@ -845,16 +1021,6 @@ unparse_reg_status(int s)
   };
   ASSERT(s >= USERLIST_REG_OK && s <= USERLIST_REG_REJECTED);
   return reg_status_map[s];
-}
-static unsigned char const *
-unparse_member_role(int r)
-{
-  static char const * const member_role_map[] =
-  {
-    "contestant", "reserve", "advisor", "coach"
-  };
-  ASSERT(r >= USERLIST_MB_CONTESTANT && r <= USERLIST_MB_COACH);
-  return member_role_map[r];
 }
 static unsigned char const *
 unparse_member_status(int s)
@@ -908,10 +1074,9 @@ unparse_member(struct userlist_member *p, FILE *f)
 
   if (!p) return;
   ASSERT(p->b.tag == USERLIST_T_MEMBER);
-  fprintf(f, "      <%s %s=\"%s\">\n",
-          tag_map[USERLIST_T_MEMBER],
-          attn_map[USERLIST_A_ROLE], unparse_member_role(p->role));
-  unparse_final_tag(f, USERLIST_T_NAME, p->name, ind);
+  fprintf(f, "      <%s %s=\"%d\">\n", tag_map[USERLIST_T_MEMBER],
+          attn_map[USERLIST_A_SERIAL], p->serial);
+  unparse_final_tag(f, USERLIST_T_FIRSTNAME, p->firstname, ind);
   unparse_final_tag(f, USERLIST_T_MIDDLENAME, p->middlename, ind);
   unparse_final_tag(f, USERLIST_T_SURNAME, p->surname, ind);
   if (p->status) {
@@ -925,21 +1090,27 @@ unparse_member(struct userlist_member *p, FILE *f)
   unparse_final_tag(f, USERLIST_T_GROUP, p->group, ind);
   unparse_final_tag(f, USERLIST_T_OCCUPATION, p->occupation, ind);
   unparse_final_tag(f, USERLIST_T_HOMEPAGE, p->homepage, ind);
+  unparse_final_tag(f, USERLIST_T_INST, p->homepage, ind);
+  unparse_final_tag(f, USERLIST_T_INSTSHORT, p->homepage, ind);
+  unparse_final_tag(f, USERLIST_T_FAC, p->homepage, ind);
+  unparse_final_tag(f, USERLIST_T_FACSHORT, p->homepage, ind);  
   unparse_phones(p->phones, f, "        ");
   fprintf(f, "      </%s>\n", tag_map[USERLIST_T_MEMBER]);
 }
 static void
-unparse_members(struct userlist_members *p, FILE *f)
+unparse_members(struct userlist_members **p, FILE *f)
 {
-  struct xml_tree *q;
+  int i, j;
 
   if (!p) return;
-  fprintf(f, "    <%s>\n", tag_map[USERLIST_T_MEMBERS]);
-  for (q = p->b.first_down; q; q = q->right) {
-    ASSERT(q->tag == USERLIST_T_MEMBER);
-    unparse_member((struct userlist_member*) q, f);
+  for (i = 0; i < USERLIST_MB_LAST; i++) {
+    if (!p[i]) continue;
+    fprintf(f, "    <%s>\n", tag_map[USERLIST_T_CONTESTANTS + i]);
+    for (j = 0; j < p[i]->total; j++) {
+      unparse_member((struct userlist_member*) p[i]->members[j], f);
+    }
+    fprintf(f, "    </%s>\n", tag_map[USERLIST_T_CONTESTANTS + i]);
   }
-  fprintf(f, "    </%s>\n", tag_map[USERLIST_T_MEMBERS]);
 }
 static void
 unparse_cookies(struct xml_tree *p, FILE *f)
@@ -968,30 +1139,34 @@ unparse_cookies(struct xml_tree *p, FILE *f)
   fprintf(f, "    </%s>\n", tag_map[USERLIST_T_COOKIES]);
 }
 static void
-unparse_registrations(struct xml_tree *p, FILE *f)
+unparse_contests(struct xml_tree *p, FILE *f)
 {
-  struct userlist_reg *r;
+  struct userlist_contest *r;
 
   if (!p) return;
-  ASSERT(p->tag == USERLIST_T_REGISTRATIONS);
-  fprintf(f, "    <%s>\n", tag_map[USERLIST_T_REGISTRATIONS]);
+  ASSERT(p->tag == USERLIST_T_CONTESTS);
+  fprintf(f, "    <%s>\n", tag_map[USERLIST_T_CONTESTS]);
   for (p = p->first_down; p; p = p->right) {
-    ASSERT(p->tag == USERLIST_T_REGISTRATION);
-    r = (struct userlist_reg*) p;
+    ASSERT(p->tag == USERLIST_T_CONTEST);
+    r = (struct userlist_contest*) p;
     fprintf(f, "      <%s %s=\"%d\" %s=\"%s\"/>\n",
-            tag_map[USERLIST_T_REGISTRATION],
-            attn_map[USERLIST_A_CONTEST_ID], r->contest_id,
+            tag_map[USERLIST_T_CONTEST],
+            attn_map[USERLIST_A_ID], r->id,
             attn_map[USERLIST_A_STATUS], unparse_reg_status(r->status));
   }
-  fprintf(f, "    </%s>\n", tag_map[USERLIST_T_REGISTRATIONS]);
+  fprintf(f, "    </%s>\n", tag_map[USERLIST_T_CONTESTS]);
 }
 
 static void
-unparse_user(struct userlist_user *p, FILE *f)
+unparse_user(struct userlist_user *p, FILE *f, int mode)
 {
   if (!p) return;
   fprintf(f, "  <%s %s=\"%d\"", tag_map[USERLIST_T_USER],
           attn_map[USERLIST_A_ID], p->id);
+  if (p->default_use_cookies >= 0) {
+    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_USE_COOKIES],
+            unparse_bool(p->default_use_cookies));
+  }
   if (p->is_invisible) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_INVISIBLE],
             unparse_bool(p->is_invisible));
@@ -1000,47 +1175,55 @@ unparse_user(struct userlist_user *p, FILE *f)
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_BANNED],
             unparse_bool(p->is_banned));
   }
-  if (p->registration_time) {
+  if (p->registration_time && mode == USERLIST_MODE_ALL) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_REGISTERED],
             unparse_date(p->registration_time));
   }
-  if (p->last_login_time) {
+  if (p->last_login_time && mode == USERLIST_MODE_ALL) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_LOGIN],
             unparse_date(p->last_login_time));
   }
-  if (p->last_access_time) {
+  if (p->last_access_time && mode == USERLIST_MODE_ALL) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_ACCESS],
             unparse_date(p->last_access_time));
   }
-  if (p->last_change_time) {
+  if (p->last_change_time && mode == USERLIST_MODE_ALL) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_CHANGE],
             unparse_date(p->last_change_time));
   }
-  if (p->last_pwdchange_time) {
+  if (p->last_pwdchange_time && mode == USERLIST_MODE_ALL) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_PWDCHANGE],
             unparse_date(p->last_pwdchange_time));
   }
+  if (p->last_minor_change_time && mode == USERLIST_MODE_ALL) {
+    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_MINOR_CHANGE],
+            unparse_date(p->last_minor_change_time));
+  }
   fputs(">\n", f);
   if (p->login) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_LOGIN],
+    fprintf(f, "    <%s %s=\"%s\">%s</%s>\n", tag_map[USERLIST_T_LOGIN],
+            attn_map[USERLIST_A_PUBLIC], unparse_bool(p->show_login),
             p->login, tag_map[USERLIST_T_LOGIN]);
   }
-  if (p->passwd) {
+  if (p->passwd && mode == USERLIST_MODE_ALL) {
     fprintf(f, "    <%s %s=\"%s\">%s</%s>\n",
             tag_map[USERLIST_T_PASSWORD], attn_map[USERLIST_A_METHOD],
             unparse_passwd_method(p->passwd_method),
             p->passwd, tag_map[USERLIST_T_PASSWORD]);
   }
-  if (p->name) {
+  if (p->name && *p->name) {
     fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_NAME],
             p->name, tag_map[USERLIST_T_NAME]);
   }
   if (p->email) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_EMAIL],
+    fprintf(f, "    <%s %s=\"%s\">%s</%s>\n", tag_map[USERLIST_T_EMAIL],
+            attn_map[USERLIST_A_PUBLIC], unparse_bool(p->show_email),
             p->email, tag_map[USERLIST_T_EMAIL]);
   }
-  unparse_cookies(p->cookies, f);
-  unparse_registrations(p->registrations, f);
+  if (mode == USERLIST_MODE_ALL) {
+    unparse_cookies(p->cookies, f);
+  }
+  unparse_contests(p->contests, f);
 
   if (p->inst) {
     fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_INST],
@@ -1070,6 +1253,28 @@ unparse_user(struct userlist_user *p, FILE *f)
 }
 
 void
+userlist_unparse_user(struct userlist_user *p, FILE *f, int mode)
+{
+  if (!p) return;
+
+  fputs("<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n", f);
+  unparse_user(p, f, mode);
+}
+
+void
+userlist_unparse_contests(struct userlist_user *p, FILE *f)
+{
+  if (!p) return;
+  fputs("<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n", f);
+  if (!p->contests) {
+    fprintf(f, "<%s></%s>\n", tag_map[USERLIST_T_CONTESTS],
+            tag_map[USERLIST_T_CONTESTS]);
+  } else {
+    unparse_contests(p->contests, f);
+  }
+}
+
+void
 userlist_unparse(struct userlist_list *p, FILE *f)
 {
   int i;
@@ -1077,13 +1282,22 @@ userlist_unparse(struct userlist_list *p, FILE *f)
   if (!p) return;
 
   fputs("<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n", f);
-  fprintf(f, "<%s", tag_map[USERLIST_T_USERLIST]);
+  fprintf(f, "<%s %s=\"%d\"", tag_map[USERLIST_T_USERLIST],
+          attn_map[USERLIST_A_MEMBER_SERIAL], p->member_serial);
+  
   if (p->name && *p->name)
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_NAME], p->name);
   fputs(">\n", f);
   for (i = 1; i < p->user_map_size; i++)
-    unparse_user(p->user_map[i], f);
+    unparse_user(p->user_map[i], f, 0);
   fprintf(f, "</%s>\n", tag_map[USERLIST_T_USERLIST]);
+}
+
+unsigned char const *
+userlist_tag_to_str(int t)
+{
+  ASSERT(t > 0 && t < USERLIST_LAST_TAG);
+  return tag_map[t];
 }
 
 /**
