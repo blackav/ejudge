@@ -577,7 +577,7 @@ display_enter_password(void)
            _("Session support"), _("No session"),
            _("In forms"), _("In URL"), _("In cookies"));
   } else {
-    printf("<input type=\"hidden\" name=\"sid_mode\" value=\"3\">");
+    printf("<input type=\"hidden\" name=\"sid_mode\" value=\"2\">");
   }
 
   if (global->enable_l10n) {
@@ -937,13 +937,15 @@ send_clar_if_asked(void)
   char *s, *p, *t, *r, *full_subj;
   int n;
 
-  if (!server_start_time) {
-    operation_status_page(-1, _("The message cannot be sent. The contest is not started."));
-    return;
-  }
-  if (server_stop_time) {
-    operation_status_page(-1, _("The message cannot be sent. The contest is over."));
-    return;
+  if (!server_is_virtual) {
+    if (!server_start_time) {
+      operation_status_page(-1, _("The message cannot be sent. The contest is not started."));
+      return;
+    }
+    if (server_stop_time) {
+      operation_status_page(-1, _("The message cannot be sent. The contest is over."));
+      return;
+    }
   }
   if (server_team_clars_disabled) {
     operation_status_page(-1, _("The message cannot be sent. Messages are disabled."));
@@ -984,13 +986,15 @@ submit_if_asked(void)
   char *p, *l, *t;
   int prob, lang, n;
 
-  if (!server_start_time) {
-    operation_status_page(-1, _("The submission cannot be sent. The contest is not started."));
-    return;
-  }
-  if (server_stop_time) {
-    operation_status_page(-1, _("The submission cannot be sent. The contest is over."));
-    return;
+  if (!server_is_virtual) {
+    if (!server_start_time) {
+      operation_status_page(-1, _("The submission cannot be sent. The contest is not started."));
+      return;
+    }
+    if (server_stop_time) {
+      operation_status_page(-1, _("The submission cannot be sent. The contest is over."));
+      return;
+    }
   }
 
   p = cgi_param("problem");  if (!p) p = "";
