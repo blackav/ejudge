@@ -546,6 +546,7 @@ userlist_clnt_get_info(struct userlist_clnt *clnt,
   struct userlist_pk_xml_data *in_pkt = 0;
   int in_size;
   int info_len;
+  int r;
 
   ASSERT(clnt);
   ASSERT(clnt->fd >= 0);
@@ -553,21 +554,60 @@ userlist_clnt_get_info(struct userlist_clnt *clnt,
   memset(&out_pkt, 0, sizeof(out_pkt));
   out_pkt.request_id = ULS_GET_USER_INFO;
   out_pkt.user_id = uid;
-  if (send_packet(clnt, sizeof(out_pkt), &out_pkt) < 0) return -1;
-  if (receive_packet(clnt, &in_size, (void*) &in_pkt) < 0) return -1;
+  if ((r = send_packet(clnt, sizeof(out_pkt), &out_pkt)) < 0) return r;
+  if ((r = receive_packet(clnt, &in_size, (void*) &in_pkt)) < 0) return -r;
   if (!in_size || !in_pkt) return -1;
   if (in_pkt->reply_id != ULS_XML_DATA) {
+    r = in_pkt->reply_id;
     xfree(in_pkt);
-    return -1;
+    return r;
   }
   if (in_size <= sizeof(struct userlist_pk_xml_data)) return -1;
   info_len = strlen(in_pkt->data);
   if (info_len != in_pkt->info_len) {
     xfree(in_pkt);
-    return -1;
+    return -ULS_ERR_PROTOCOL;
   }
   *p_info = xstrdup(in_pkt->data);
   xfree(in_pkt);
+  return ULS_XML_DATA;
+}
+
+int
+userlist_clnt_list_all_users(struct userlist_clnt *clnt,
+                             int contest_id,
+                             unsigned char **p_info)
+{
+  struct userlist_pk_map_contest *out = 0;
+  struct userlist_pk_xml_data *in = 0;
+  int out_size = 0, in_size = 0, r;
+
+  out_size = sizeof(*out);
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  out->request_id = ULS_LIST_ALL_USERS;
+  out->contest_id = contest_id;
+  if ((r = send_packet(clnt, out_size, out)) < 0) return r;
+  if ((r = receive_packet(clnt, &in_size, (void*) &in)) < 0) return r;
+  if (in_size < sizeof(struct userlist_packet)) {
+    xfree(in);
+    return -ULS_ERR_PROTOCOL;
+  }
+  if (in->reply_id != ULS_XML_DATA) {
+    r = in->reply_id;
+    xfree(in);
+    return r;
+  }
+  if (in_size < sizeof(struct userlist_pk_xml_data)) {
+    xfree(in);
+    return -ULS_ERR_PROTOCOL;
+  }
+  if (strlen(in->data) != in->info_len) {
+    xfree(in);
+    return -ULS_ERR_PROTOCOL;
+  }
+  *p_info = xstrdup(in->data);
+  xfree(in);
   return ULS_XML_DATA;
 }
 
@@ -934,24 +974,133 @@ userlist_clnt_generate_team_passwd(struct userlist_clnt *clnt,
   return r;
 }
 
-/*
 int
-userlist_clnt_test(struct userlist_clnt *clnt)
+userlist_clnt_change_registration(struct userlist_clnt *clnt,
+                                  int user_id,
+                                  int contest_id,
+                                  int new_status,
+                                  int flags_cmd,
+                                  unsigned int new_flags)
 {
-  struct userlist_packet *out = 0, *in = 0;
-  int out_size = 0, in_size = 0;
-  int r;
+  struct userlist_pk_edit_registration *out = 0;
+  struct userlist_packet *in = 0;
+  int out_size = 0, in_size = 0, r;
 
   out_size = sizeof(*out);
   out = alloca(out_size);
-  out->id = ULS_TEST;
+  memset(out, 0, out_size);
+  out->request_id = ULS_EDIT_REGISTRATION;
+  out->user_id = user_id;
+  out->contest_id = contest_id;
+  out->new_status = new_status;
+  out->flags_cmd = flags_cmd;
+  out->new_flags = new_flags;
   if ((r = send_packet(clnt, out_size, out)) < 0) return r;
   if ((r = receive_packet(clnt, &in_size, (void*) &in)) < 0) return r;
+  if (in_size != sizeof(*in)) {
+    xfree(in);
+    return -ULS_ERR_PROTOCOL;
+  }
   r = in->id;
   xfree(in);
   return r;
 }
-*/
+
+int
+userlist_clnt_edit_field(struct userlist_clnt *clnt,
+                         int user_id,
+                         int role,
+                         int pers,
+                         int field,
+                         unsigned char const *value)
+{
+  struct userlist_pk_edit_field *out = 0;
+  struct userlist_packet *in = 0;
+  int out_size = 0, in_size = 0, r, value_len;
+
+  if (!value) value = "";
+  value_len = strlen(value);
+  if (value_len > 255) return -ULS_ERR_INVALID_SIZE;
+  out_size = sizeof(*out) + value_len + 1;
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  out->request_id = ULS_EDIT_FIELD;
+  out->user_id = user_id;
+  out->role = role;
+  out->pers = pers;
+  out->field = field;
+  out->value_len = value_len;
+  strcpy(out->data, value);
+  if ((r = send_packet(clnt, out_size, out)) < 0) return r;
+  if ((r = receive_packet(clnt, &in_size, (void*) &in)) < 0) return r;
+  if (in_size != sizeof(*in)) {
+    xfree(in);
+    return -ULS_ERR_PROTOCOL;
+  }
+  r = in->id;
+  xfree(in);
+  return r;
+}
+
+int
+userlist_clnt_delete_field(struct userlist_clnt *clnt,
+                           int user_id,
+                           int role,
+                           int pers,
+                           int field)
+{
+  struct userlist_pk_edit_field *out = 0;
+  struct userlist_packet *in = 0;
+  int out_size = 0, in_size = 0, r;
+
+  out_size = sizeof(*out) + 1;
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  out->request_id = ULS_DELETE_FIELD;
+  out->user_id = user_id;
+  out->role = role;
+  out->pers = pers;
+  out->field = field;
+  if ((r = send_packet(clnt, out_size, out)) < 0) return r;
+  if ((r = receive_packet(clnt, &in_size, (void*) &in)) < 0) return r;
+  if (in_size != sizeof(*in)) {
+    xfree(in);
+    return -ULS_ERR_PROTOCOL;
+  }
+  r = in->id;
+  xfree(in);
+  return r;
+}
+
+int
+userlist_clnt_add_field(struct userlist_clnt *clnt,
+                        int user_id,
+                        int role,
+                        int pers,
+                        int field)
+{
+  struct userlist_pk_edit_field *out = 0;
+  struct userlist_packet *in = 0;
+  int out_size = 0, in_size = 0, r;
+
+  out_size = sizeof(*out) + 1;
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  out->request_id = ULS_ADD_FIELD;
+  out->user_id = user_id;
+  out->role = role;
+  out->pers = pers;
+  out->field = field;
+  if ((r = send_packet(clnt, out_size, out)) < 0) return r;
+  if ((r = receive_packet(clnt, &in_size, (void*) &in)) < 0) return r;
+  if (in_size != sizeof(*in)) {
+    xfree(in);
+    return -ULS_ERR_PROTOCOL;
+  }
+  r = in->id;
+  xfree(in);
+  return r;
+}
 
 /**
  * Local variables:
