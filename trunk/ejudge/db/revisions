@@ -673,3 +673,17 @@ master.c 1 29 3794829
 master_html.c 1 6 3738238
 serve.c 1 36 6403507
 team.c 1 26 3503666
+client_actions.h 1 4 139808
+contests.h 1 12 281686
+protocol.h 1 9 521425
+runlog.h 1 13 342080
+userlist_clnt.h 1 13 593173
+contests.c 1 13 1465364
+html.c 1 28 3653519
+master.c 1 30 3951023
+master_html.c 1 7 3882333
+runlog.c 1 17 2286940
+serve.c 1 37 6559237
+team.c 1 27 3514040
+userlist-server.c 1 18 10352213
+userlist_clnt/team_set_passwd.c 1 2 174625
