@@ -1,3 +1,10 @@
+2003-11-14  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile, checker_internal.h, init.c, vars.c:
+	*** empty log message ***
+
+	* read_corr_long_long.c, read_long_double.c: initial revision
+
 2003-11-01  Alexander Chernov  <cher@ispras.ru>
 
 	* Makefile: 
