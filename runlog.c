@@ -44,6 +44,7 @@
 #define _(x) x
 #endif
 
+#define RUN_MAX_IP_LEN 15
 #define RUN_RECORD_SIZE 105
 #define RUN_HEADER_SIZE 105
 
@@ -437,6 +438,12 @@ run_change_status(int runid, int newstatus, int newtest, int newscore)
 
   if (newstatus == RUN_VIRTUAL_START || newstatus == RUN_VIRTUAL_STOP)
     ERR_R("virtual status cannot be changed that way");
+  if (newstatus == RUN_EMPTY)
+    ERR_R("EMPTY status cannot be set this way");
+  if (runs[runid].status == RUN_VIRTUAL_START
+      || runs[runid].status == RUN_VIRTUAL_STOP
+      || runs[runid].status == RUN_EMPTY)
+    ERR_R("this entry cannot be changed");
 
   runs[runid].status = newstatus;
   runs[runid].test = newtest;
@@ -558,6 +565,10 @@ run_get_team_usage(int teamid, int *pn, size_t *ps)
   size_t sz = 0;
 
   for (i = 0; i < run_u; i++) {
+    if (runs[i].status == RUN_VIRTUAL_START
+        || runs[i].status == RUN_VIRTUAL_STOP
+        || runs[i].status == RUN_EMPTY)
+      continue;
     if (runs[i].team == teamid) {
       sz += runs[i].size;
       n++;
@@ -577,6 +588,10 @@ run_get_attempts(int runid, int *pattempts, int skip_ce_flag)
   if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
 
   for (i = 0; i < runid; i++) {
+    if (runs[i].status == RUN_VIRTUAL_START
+        || runs[i].status == RUN_VIRTUAL_STOP
+        || runs[i].status == RUN_EMPTY)
+      continue;
     if (runs[i].team != runs[runid].team) continue;
     if (runs[i].problem != runs[runid].problem) continue;
     if (runs[i].status == RUN_COMPILE_ERR && skip_ce_flag) continue;
@@ -610,6 +625,7 @@ run_status_str(int status, char *out, int len)
   case RUN_AVAILABLE:        s = _("Available");           break;
   case RUN_VIRTUAL_START:    s = _("Virtual start");       break;
   case RUN_VIRTUAL_STOP:     s = _("Virtual stop");        break;
+  case RUN_EMPTY:            s = _("EMPTY");               break;
   default:
     sprintf(buf, _("Unknown: %d"), status);
     s = buf;
@@ -754,7 +770,21 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
         run_id);
     return -1;
   }
+  if (out->status == RUN_EMPTY) {
+    err("run_set_entry: %d: empty entry cannot be edited", run_id);
+    return -1;
+  }
 
+  if ((mask & RUN_ENTRY_STATUS) && out->status != in->status) {
+    if (in->status == RUN_VIRTUAL_START
+        || in->status == RUN_VIRTUAL_STOP
+        || in->status == RUN_EMPTY) {
+      err("run_set_entry: %d: special status cannot be set this way", run_id);
+      return -1;
+    }
+    out->status = in->status;
+    f = 1;
+  }
   if ((mask & RUN_ENTRY_TIME) && out->timestamp != in->timestamp) {
     out->timestamp = in->timestamp;
     f = 1;
@@ -785,10 +815,6 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
   }
   if ((mask & RUN_ENTRY_LOCALE) && out->locale_id != in->locale_id) {
     out->locale_id = in->locale_id;
-    f = 1;
-  }
-  if ((mask & RUN_ENTRY_STATUS) && out->status != in->status) {
-    out->status = in->status;
     f = 1;
   }
   if ((mask & RUN_ENTRY_TEST) && out->test != in->test) {
@@ -879,6 +905,7 @@ run_build_virtual_table(void)
   vt_table = xcalloc(vt_size, sizeof(vt_table[0]));
 
   for (i = 0; i < run_u; i++) {
+    if (runs[i].status == RUN_EMPTY) continue;
     pvt = get_entry(runs[i].team);
     if (runs[i].timestamp == 0) {
       err("runlog: run %d has zero timestamp", i);
@@ -1082,6 +1109,69 @@ run_virtual_stop(int user_id, time_t t, unsigned long ip)
   pvt->stop_time = t;
   if (run_flush_entry(i) < 0) return -1;
   return -1;
+}
+
+int
+run_clear_entry(int run_id)
+{
+  if (run_id < 0 || run_id >= run_u) ERR_R("bad runid: %d", run_id);
+  memset(&runs[run_id], 0, sizeof(runs[run_id]));
+  runs[run_id].status = RUN_EMPTY;
+  return run_flush_entry(run_id);
+}
+
+int
+run_squeeze_log(void)
+{
+  int i, j, retval, first_moved = -1, w;
+  unsigned char *ptr;
+  size_t tot;
+
+  for (i = 0, j = 0; i < run_u; i++) {
+    if (runs[i].status == RUN_EMPTY) continue;
+    if (i != j) {
+      if (first_moved < 0) first_moved = j;
+      memcpy(&runs[j], &runs[i], sizeof(runs[j]));
+    }
+    j++;
+  }
+  if  (run_u == j) {
+    // no runs were removed
+    ASSERT(first_moved == -1);
+    return 0;
+  }
+
+  retval = run_u - j;
+  run_u = j;
+  if (run_u < run_a) {
+    memset(&runs[run_u], 0, (run_a - run_u) * sizeof(runs[0]));
+  }
+
+  // update log on disk
+  if (ftruncate(run_fd, sizeof(head) + run_u * sizeof(runs[0])) < 0) {
+    err("run_squeeze_log: ftruncate failed: %s", os_ErrorMsg());
+    return -1;
+  }
+  if (first_moved == -1) {
+    // no entries were moved because the only entries empty were the last
+    return retval;
+  }
+  ASSERT(first_moved >= 0 && first_moved < run_u);
+  if (sf_lseek(run_fd, sizeof(head) + first_moved * sizeof(runs[0]),
+               SEEK_SET, "run") == (off_t) -1)
+    return -1;
+  tot = (run_u - first_moved) * sizeof(runs[0]);
+  ptr = (unsigned char *) &runs[first_moved];
+  while (tot > 0) {
+    w = write(run_fd, ptr, tot);
+    if (w <= 0) {
+      err("run_squeeze_log: write error: %s", os_ErrorMsg());
+      return -1;
+    }
+    tot -= w;
+    ptr += w;
+  }
+  return retval;
 }
 
 /**
