@@ -80,7 +80,7 @@ run_reply_packet_read(size_t in_size, const void *in_data,
     goto failed;
   }
   pout->score = cvt_bin_to_host_32(pin->score);
-  if (pout->score < 0 || pout->score > MAX_SCORE) {
+  if (pout->score < -1 || pout->score > MAX_SCORE) {
     errcode = 9;
     goto failed;
   }
@@ -97,6 +97,8 @@ run_reply_packet_read(size_t in_size, const void *in_data,
   pout->ts5_us = cvt_bin_to_host_32(pin->ts5_us);
   pout->ts6 = cvt_bin_to_host_32(pin->ts6);
   pout->ts6_us = cvt_bin_to_host_32(pin->ts6_us);
+  pout->ts7 = cvt_bin_to_host_32(pin->ts7);
+  pout->ts7_us = cvt_bin_to_host_32(pin->ts7_us);
 
   *p_out_data = pout;
   return 0;
