@@ -334,6 +334,7 @@ run_tests(struct section_tester_data *tst,
   int    total_failed_tests = 0;
   int    ec = -100;            /* FIXME: magic */
   struct section_problem_data *prb;
+  char *sound;
 
   ASSERT(tst->problem > 0);
   ASSERT(tst->problem <= max_prob);
@@ -484,6 +485,7 @@ run_tests(struct section_tester_data *tst,
         status = RUN_RUN_TIME_ERR;
         total_failed_tests++;
         task_Delete(tsk); tsk = 0;
+
       } else {
         task_Delete(tsk); tsk = 0;
 
@@ -571,6 +573,39 @@ run_tests(struct section_tester_data *tst,
             score);
   } else {
     sprintf(reply_string, "%d %d -1\n", status, failed_test);
+
+    // play funny sound
+    sound = 0;
+    if (status == RUN_TIME_LIMIT_ERR
+        && global->sound_player[0] && global->timelimit_sound[0]) {
+      sound = global->timelimit_sound;
+    } else if (status == RUN_RUN_TIME_ERR
+               && global->sound_player[0] && global->runtime_sound[0]) {
+      sound = global->runtime_sound;
+    } else if (status == RUN_CHECK_FAILED && global->sound_player[0]
+               && global->internal_sound[0]) {
+      sound = global->internal_sound;
+    } else if (status == RUN_PRESENTATION_ERR
+               && global->sound_player[0] && global->presentation_sound[0]) {
+      sound = global->presentation_sound;
+    } else if (status == RUN_WRONG_ANSWER_ERR
+               && global->sound_player[0] && global->wrong_sound[0]) {
+      sound = global->wrong_sound;
+    } else if (status == RUN_OK
+               && global->sound_player[0] && global->accept_sound[0]) {
+      sound = global->accept_sound;
+    }
+
+    if (sound) {
+      tsk = task_New();
+      task_AddArg(tsk, global->sound_player);
+      task_AddArg(tsk, sound);
+      task_SetPathAsArg0(tsk);
+      task_Start(tsk);
+      task_Wait(tsk);
+      task_Delete(tsk);
+      tsk = 0;
+    }
   }
 
   if (global->team_enable_rep_view) {
