@@ -126,7 +126,7 @@ do_loop(void)
     pathmake(exe_out,  langs[i]->compile_report_dir, "/", exe_name, NULL);
 
     /* move the source file into the working dir */
-    r = generic_copy_file(0, langs[i]->server_src_dir, src_name, "",
+    r = generic_copy_file(REMOVE, langs[i]->server_src_dir, src_name, "",
                           0, langs[i]->work_dir, src_name, "");
     if (r <= 0) continue;
 
