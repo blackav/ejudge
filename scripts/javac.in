@@ -26,7 +26,7 @@ export JAVA_HOME PATH
 
 mv "$infile" Main.java || exit 1
 rm -f *.class
-"${JAVACRUN}" -source "${JAVAVER}" ${EJUDGE_FLAGS} Main.java || exit 1
+"${JAVACRUN}" -source "${JAVAVER}" -Xlint:unchecked ${EJUDGE_FLAGS} Main.java || exit 1
 
 if [ ! -f Main.class ]
 then
