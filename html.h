@@ -3,7 +3,7 @@
 #ifndef __HTML_H__
 #define __HTML_H__
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -56,7 +56,7 @@ void write_master_page(FILE *f,
                        int user_id, int priv_level,
                        int sid_mode, unsigned long long sid,
                        int first_run, int last_run,
-                       int first_clar, int last_clar,
+                       int mode_clar, int first_clar, int last_clar,
                        unsigned char const *self_url,
                        unsigned char const *filter_expr,
                        unsigned char const *hidden_vars,
@@ -144,6 +144,7 @@ unsigned char *html_hyperref(unsigned char *buf, int size,
 int write_virtual_standings(FILE *f, int user_id);
 
 void html_reset_filter(int user_id, unsigned long long session_id);
+void html_reset_clar_filter(int user_id, unsigned long long session_id);
 
 void write_runs_dump(FILE *f, const unsigned char *,
                      unsigned char const *charset);
@@ -159,8 +160,10 @@ int calc_kirov_score(unsigned char *outbuf, size_t outsize,
                      struct run_entry *pe,
                      struct section_problem_data *pr,
                      int attempts,
+                     int disq_attempts,
                      int *p_date_penalty);
 void write_html_run_status(FILE *f, struct run_entry *pe,
-                           int priv_level, int attempts);
+                           int priv_level, int attempts,
+                           int disq_attempts);
 
 #endif /* __HTML_H__ */
