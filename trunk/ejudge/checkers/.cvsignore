@@ -1,3 +1,4 @@
 maxs summ *.o core check_? *.a testinfo.[ch] pic
 cmp_int cmp_unsigned_int cmp_long_long cmp_unsigned_long_long
 cmp_file cmp_file_nospace
+Makefile
