@@ -64,10 +64,15 @@ struct testinfo
   int            max_score;     /* maximal score for this test */
   unsigned long  times;		/* execution time */
   char          *input;		/* the input */
+  size_t         input_size;
   char          *output;	/* the output */
+  size_t         output_size;
   char          *error;		/* the error */
+  size_t         error_size;
   char          *correct;	/* the correct result */
+  size_t         correct_size;
   char          *chk_out;       /* checker's output */
+  size_t         chk_out_size;
   unsigned char *args;          /* command-line arguments */
   unsigned char *comment;       /* judge's comment */
   unsigned char *team_comment;  /* team's comment */
@@ -152,19 +157,23 @@ result2str(int s, int st, int sig)
 }
 
 static void
-print_by_line(FILE *f, char const *s)
+print_by_line(FILE *f, char const *s, size_t size)
 {
   char const *p = s;
 
-  if (global->max_file_length >  0 && strlen(s) > global->max_file_length) {
-    fprintf(f, "<%s>\n", _("file is too long"));
+  if (global->max_file_length > 0 && size > global->max_file_length) {
+    fprintf(f, "<%s, %s = %zu>\n", _("file is too long"), _("size"), size);
+    return;
+  }
+  if (!s) {
+    fprintf(f, "<%s>\n", _("file is missing"));
     return;
   }
 
   while (*s) {
     while (*s && *s != '\r' && *s != '\n') s++;
     if (global->max_line_length > 0 && s - p > global->max_line_length) {
-      fprintf(f, "<%s>\n", _("line is too long"));
+      fprintf(f, "<%s, %s = %d>\n", _("line is too long"), _("size"), s - p);
     } else {
       while (p != s)
         putc(*p++, f);
@@ -264,26 +273,16 @@ generate_report(int score_system_val,
         fprintf(f, "%s", tests[i].args);
       }
     }
-    if (tests[i].input != NULL) {
-      fprintf(f, _("--- Input ---\n"));
-      print_by_line(f, tests[i].input);
-    }
-    if (tests[i].output != NULL) {
-      fprintf(f, _("--- Output ---\n"));
-      print_by_line(f, tests[i].output);
-    }
-    if (tests[i].correct != NULL) {
-      fprintf(f, _("--- Correct ---\n"));
-      print_by_line(f, tests[i].correct);
-    }
-    if (tests[i].error != NULL) {
-      fprintf(f, _("--- Stderr ---\n"));
-      print_by_line(f, tests[i].error);
-    }
-    if (tests[i].chk_out != NULL) {
-      fprintf(f, _("--- Checker output ---\n"));
-      print_by_line(f, tests[i].chk_out);
-    }
+    fprintf(f, _("--- Input ---\n"));
+    print_by_line(f, tests[i].input, tests[i].input_size);
+    fprintf(f, _("--- Output ---\n"));
+    print_by_line(f, tests[i].output, tests[i].output_size);
+    fprintf(f, _("--- Correct ---\n"));
+    print_by_line(f, tests[i].correct, tests[i].correct_size);
+    fprintf(f, _("--- Stderr ---\n"));
+    print_by_line(f, tests[i].error, tests[i].error_size);
+    fprintf(f, _("--- Checker output ---\n"));
+    print_by_line(f, tests[i].chk_out, tests[i].chk_out_size);
   }
 
 
@@ -465,6 +464,7 @@ run_tests(struct section_tester_data *tst,
   int errcode;
   int time_limit_value;
   unsigned char ejudge_prefix_dir_env[1024] = { 0 };
+  ssize_t file_size;
 
   ASSERT(tst->problem > 0);
   ASSERT(tst->problem <= max_prob);
@@ -505,7 +505,7 @@ run_tests(struct section_tester_data *tst,
   if (team_enable_rep_view) {
     pathmake(team_report_path, global->run_work_dir, "/", "team_report", NULL);
   }
-  memset(tests, 0, sizeof(tests));
+  memset(tests, 0, sizeof(tests[0]) * tests_a);
   total_tests = 1;
   cur_test = 1;
 
@@ -734,12 +734,33 @@ run_tests(struct section_tester_data *tst,
 
       /* fill test report structure */
       tests[cur_test].times = task_GetRunningTime(tsk);
-      generic_read_file(&tests[cur_test].input, 0, 0, 0,
-                        0, input_path, "");
-      generic_read_file(&tests[cur_test].output, 0, 0, 0,
-                        0, output_path, "");
-      generic_read_file(&tests[cur_test].error, 0, 0, 0,
-                        0, error_path, "");
+      file_size = generic_file_size(0, input_path, 0);
+      if (file_size >= 0) {
+        tests[cur_test].input_size = file_size;
+        if (global->max_file_length > 0
+            && file_size <= global->max_file_length) {
+          generic_read_file(&tests[cur_test].input, 0, 0, 0,
+                            0, input_path, "");
+        }
+      }
+      file_size = generic_file_size(0, output_path, 0);
+      if (file_size >= 0) {
+        tests[cur_test].output_size = file_size;
+        if (global->max_file_length > 0
+            && file_size <= global->max_file_length) {
+          generic_read_file(&tests[cur_test].output, 0, 0, 0,
+                            0, output_path, "");
+        }
+      }
+      file_size = generic_file_size(0, error_path, 0);
+      if (file_size >= 0) {
+        tests[cur_test].error_size = file_size;
+        if (global->max_file_length > 0
+            && file_size <= global->max_file_length) {
+          generic_read_file(&tests[cur_test].error, 0, 0, 0,
+                            0, error_path, "");
+        }
+      }
       if (prb->use_info) {
         size_t cmd_args_len = 0;
         int i;
