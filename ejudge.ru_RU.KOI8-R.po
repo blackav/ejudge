@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 1.5\n"
-"POT-Creation-Date: 2002-12-08 19:47+0300\n"
-"PO-Revision-Date: 2002-12-08 14:30+0300\n"
+"POT-Creation-Date: 2002-12-09 09:26+0300\n"
+"PO-Revision-Date: 2002-12-09 09:28+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1784,9 +1784,21 @@ msgstr "турнир не запущен"
 msgid "contest is stopped"
 msgstr "турнир остановлен"
 
+#: filter_tree.c:558
+msgid "conversion from string to dur_t failed"
+msgstr "преобразование из типа string в тип dur_t завершилось с ошибкой"
+
+#: filter_tree.c:557
+msgid "conversion from string to int failed"
+msgstr "преобразование из типа string в тип int завершилось с ошибкой"
+
 #: register.c:2157
 msgid "default"
 msgstr "по умолчанию"
+
+#: filter_tree.c:556
+msgid "division by zero"
+msgstr "деление на ноль"
 
 #: protocol.c:59
 msgid "duplicated submission"
@@ -1803,6 +1815,10 @@ msgstr "неопределённая ошибка сервера"
 #: master.c:560
 msgid "if empty, assigned automatically"
 msgstr "если поле оставлено пустым, значение выбирается автоматически"
+
+#: filter_tree.c:555
+msgid "integer overflow"
+msgstr "целочисленное переполнение"
 
 #: protocol.c:46
 msgid "invalid clar_id"
@@ -1910,7 +1926,7 @@ msgstr "нет"
 msgid "no connection to server"
 msgstr "нет связи с сервером"
 
-#: protocol.c:31 userlist_proto.c:30
+#: filter_tree.c:553 protocol.c:31 userlist_proto.c:30
 msgid "no error"
 msgstr "нет ошибки"
 
@@ -2057,6 +2073,10 @@ msgstr "неожиданный конец файла"
 #: protocol.c:38
 msgid "unexpected EOF from server"
 msgstr "неожиданный конец файла от сервера"
+
+#: filter_tree.c:554
+msgid "unknown error"
+msgstr "неизвестная ошибка"
 
 #: master.c:252
 msgid "update public standings"
