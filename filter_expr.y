@@ -116,6 +116,16 @@ static void (*parse_err)(unsigned char const *, ...);
 %token TOK_START     "begin"
 %token TOK_FINISH    "finish"
 %token TOK_TOTAL     "total"
+%token TOK_IMPORTED  "imported"
+%token TOK_CURIMPORTED "curimported"
+%token TOK_HIDDEN    "hidden"
+%token TOK_CURHIDDEN "curhidden"
+%token TOK_READONLY  "readonly"
+%token TOK_CURREADONLY "curreadonly"
+%token TOK_VARIANT   "variant"
+%token TOK_CURVARIANT "curvariant"
+%token TOK_RAWVARIANT "rawvariant"
+%token TOK_CURRAWVARIANT "currawvariant"
 %token TOK_INT       "int"
 %token TOK_STRING    "string"
 %token TOK_BOOL      "bool"
@@ -251,6 +261,21 @@ exprA :
 | "test" { $1->kind = TOK_CURTEST; $$ = $1; }
 | "test" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "curtest" { $$ = $1; }
+| "imported" { $1->kind = TOK_CURIMPORTED; $$ = $1; }
+| "imported" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "curimported" { $$ = $1; }
+| "hidden" { $1->kind = TOK_CURHIDDEN; $$ = $1; }
+| "hidden" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "curhidden" { $$ = $1; }
+| "readonly" { $1->kind = TOK_CURREADONLY; $$ = $1; }
+| "readonly" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "curreadonly" { $$ = $1; }
+| "variant" { $1->kind = TOK_CURVARIANT; $$ = $1; }
+| "variant" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "curvariant" { $$ = $1; }
+| "rawvariant" { $1->kind = TOK_CURRAWVARIANT; $$ = $1; }
+| "rawvariant" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "currawvariant" { $$ = $1; }
 | "int" '(' expr0 ')' { $$ = do_int_cast($1, $3); }
 | "string" '(' expr0 ')' { $$ = do_string_cast($1, $3); }
 | "bool" '(' expr0 ')' { $$ = do_bool_cast($1, $3); }
