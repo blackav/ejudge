@@ -66,7 +66,7 @@
 
 #define XALLOCAZ(p,s) (XALLOCA((p),(s)),XMEMZERO((p),(s)))
 
-#define PACKET_NAME_SIZE 12
+#define PACKET_NAME_SIZE SERVE_PACKET_NAME_SIZE
 #define MAX_EXPECTED_LEN MAX_SERVE_PACKET_LEN
 
 // server connection states
@@ -2286,8 +2286,53 @@ cmd_command_0(struct client_state *p, int len,
 }
 
 static void
+cmd_reset_filter(struct client_state *p, int len,
+                 struct prot_serve_pkt_reset_filter *pkt)
+{
+  if (get_peer_local_user(p) < 0) return;
+
+  if (len != sizeof(*pkt)) {
+    new_bad_packet(p, "reset_filter: bad packet length");
+    return;
+  }
+
+  info("%d: reset_filter: %016llx,%d,%d", p->id, pkt->session_id,
+       pkt->user_id, pkt->contest_id);
+
+  if (p->user_id != pkt->user_id) {
+    err("%d: user_ids do not match: %d, %d", p->id, p->user_id, pkt->user_id);
+    new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+    return;
+  }
+  if (pkt->contest_id != global->contest_id) {
+    err("%d: contest_ids do not match: %d, %d", p->id,
+        global->contest_id, pkt->contest_id);
+    new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (!pkt->session_id) {
+    err("%d: session_id is not set", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_SESSION_ID);
+    return;
+  }
+  if (p->priv_level < PRIV_LEVEL_JUDGE) {
+    err("%d: not enough privileges", p->id);
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    return;
+  }
+
+  html_reset_filter(p->user_id, pkt->session_id);
+
+  info("%d: reset_filter: ok", p->id);
+  new_send_reply(p, SRV_RPL_OK);
+  return;
+}
+
+#if 0
+/* not yet used */
+static void
 cmd_judge_command_0(struct client_state *p, int len,
-                   struct prot_serve_pkt_simple *pkt)
+                    struct prot_serve_pkt_simple *pkt)
 {
   if (get_peer_local_user(p) < 0) return;
 
@@ -2315,6 +2360,7 @@ cmd_judge_command_0(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_PROTOCOL);
   }
 }
+#endif /* cmd_judge_command_0 is not compiled */
 
 static void do_rejudge_all(void);
 static void do_judge_suspended(void);
@@ -3011,7 +3057,7 @@ cmd_edit_run(struct client_state *p, int len,
   return;
 }
 
-static void generate_packet_name(int run_id,
+static void generate_packet_name(int run_id, int prio,
                                  unsigned char buf[PACKET_NAME_SIZE]);
 
 static int
@@ -3027,7 +3073,7 @@ read_compile_packet(char *pname)
   int  rsize, wsize;
   int  code;
   int  runid;
-  int  cn, rep_flags, team_flags;
+  int  cn, rep_flags, team_flags, prio;
 
   int  final_test, variant = 0;
   struct run_entry re;
@@ -3099,7 +3145,13 @@ read_compile_packet(char *pname)
   }
 
   /* generate a packet name */
-  generate_packet_name(runid, pkt_base);
+  prio = 0;
+  prio += langs[re.language]->priority_adjustment;
+  prio += probs[re.problem]->priority_adjustment;
+  prio += find_user_priority_adjustment(re.team);
+  prio += testers[cn]->priority_adjustment;
+
+  generate_packet_name(runid, prio, pkt_base);
   snprintf(exe_in_name, sizeof(exe_in_name),
            "%06d%s", runid, langs[re.language]->exe_sfx);
   snprintf(exe_out_name, sizeof(exe_out_name),
@@ -3238,7 +3290,7 @@ b32_number(unsigned long long num, unsigned char buf[PACKET_NAME_SIZE])
 }
 
 static void
-generate_packet_name(int run_id, unsigned char buf[PACKET_NAME_SIZE])
+generate_packet_name(int run_id, int prio, unsigned char buf[PACKET_NAME_SIZE])
 {
   unsigned long long num = 0;
   struct timeval ts;
@@ -3256,6 +3308,9 @@ generate_packet_name(int run_id, unsigned char buf[PACKET_NAME_SIZE])
   gettimeofday(&ts, 0);
   num |= (ts.tv_sec ^ ts.tv_usec) & 0x1ffffff;
   b32_number(num, buf);
+  if (prio < -16) prio = -16;
+  if (prio > 15) prio = 15;
+  buf[0] = b32_digits[prio + 16];
 }
 
 static int
@@ -3269,7 +3324,7 @@ queue_compile_request(unsigned char const *str, int len,
   int pkt_len, arch_flags;
 
   if (!sfx) sfx = "";
-  generate_packet_name(run_id, pkt_name);
+  generate_packet_name(run_id, 0, pkt_name);
   pkt_len = snprintf(pkt_buf, sizeof(pkt_buf),
                      "%d %d %d %d\n",
                      global->contest_id, run_id,
@@ -3505,7 +3560,7 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_VIRTUAL_START] { cmd_command_0 },
   [SRV_CMD_VIRTUAL_STOP] { cmd_command_0 },
   [SRV_CMD_VIRTUAL_STANDINGS] { cmd_team_show_item },
-  [SRV_CMD_RESET_FILTER] { cmd_judge_command_0 },
+  [SRV_CMD_RESET_FILTER] { cmd_reset_filter },
   [SRV_CMD_CLEAR_RUN] { cmd_priv_command_0 },
   [SRV_CMD_SQUEEZE_RUNS] { cmd_priv_command_0 },
   [SRV_CMD_DUMP_RUNS] { cmd_view },
