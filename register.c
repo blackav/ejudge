@@ -655,24 +655,6 @@ parse_config(char const *path, const unsigned char *default_config)
   return 0;
 }
 
-static void
-parse_user_ip(void)
-{
-  unsigned int b1, b2, b3, b4;
-  int n;
-  unsigned char *s = getenv("REMOTE_ADDR");
-
-  user_ip = 0;
-  if (!s) return;
-  n = 0;
-  if (sscanf(s, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4
-      || s[n] || b1 > 255 || b2 > 255 || b3 > 255 || b4 > 255) {
-    user_ip = 0xffffffff;
-    return;
-  }
-  user_ip = b1 << 24 | b2 << 16 | b3 << 8 | b4;
-}
-
 static int
 parse_contest_id(void)
 {
@@ -859,7 +841,7 @@ initialize(int argc, char const *argv[])
   if (!par_style) par_style = "";
   if (!table_style) table_style = "";
   
-  parse_user_ip();
+  user_ip = parse_client_ip();
 
   // construct self-reference URL
   {
