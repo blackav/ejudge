@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+# Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -13,17 +13,71 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
 
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+bindir=@bindir@
+datadir=@datadir@
+includedir=@includedir@
+libdir=@libdir@
+libexecdir=@libexecdir@
+cgibindir=@cgibindir@
+
+CGI_PROG_SUFFIX=@ac_cv_cgi_suffix@
+STATIC=@ac_cv_static@
+NO_KERNEL=@ac_cv_no_kernel@
+ENABLE_NLS=@ac_cv_nls@
+
+XGETTEXT=@XGETTEXT@
+MSGMERGE=@MSGMERGE@
+MSGFMT=@MSGFMT@
+
+REUSE_DIR=@ac_cv_reuse_root@
+REUSE_CONF=@ac_cv_reuse_config@
+REUSE_INCL_OPT=@ac_cv_reuse_include_opt@
+REUSE_LIB_OPT=@ac_cv_reuse_lib_opt@
+
+EXPAT_DIR=@ac_cv_expat_root@
+EXPAT_INCL_OPT=@ac_cv_expat_include_opt@
+EXPAT_LIB_OPT=@ac_cv_expat_lib_opt@
+
+LIBCAP_DIR=@ac_cv_libcap_root@
+LIBCAP_INCL_OPT=@ac_cv_libcap_include_opt@
+LIBCAP_LIB_OPT=@ac_cv_libcap_lib_opt@
+
+ifdef RELEASE
+CDEBUGFLAGS=-O2 -s -Wall -DNDEBUG -DRELEASE
+else
+CDEBUGFLAGS=-g -Wall
+endif
+
+ifdef STATIC
+CDEBUGFLAGS += -static
+endif
+
 CC=gcc
 LD=gcc
-CFLAGS=${CDEBUGFLAGS} ${CCOMPFLAGS} ${CINTLFLAG} ${CEXTRAFLAGS}
-LDFLAGS=${CDEBUGFLAGS} ${LDCOMPFLAGS} ${LDEXTRAFLAGS}
+CFLAGS=${LIBCAP_INCL_OPT} ${CDEBUGFLAGS} ${CCOMPFLAGS} ${CINTLFLAG} ${CEXTRAFLAGS}
+LDFLAGS=${LIBCAP_LIB_OPT} ${CDEBUGFLAGS} ${LDCOMPFLAGS} ${LDEXTRAFLAGS}
 
 TARGETS=bpcemu2 dosrun3 bppemu bccemu qbemu
-TARGETS += capexec libdropcaps.so
+TARGETALLWAYS=${TARGETS}
+ifndef NO_KERNEL
+TARGETS += capexec
+ifndef STATIC
+TARGETS += libdropcaps.so
+endif
+endif
 
 all: ${TARGETS}
 clean:
 	-rm -f ${TARGETS} *.o
+distclean: clean
+	rm -f Makefile
+install:
+	mkdir -p "${DESTDIR}${libexecdir}/ejudge"
+	for i in ${TARGETALLWAYS}; do install -m 755 $$i "${DESTDIR}${libexecdir}/ejudge"; done
+	[ x"${NO_KERNEL}" = x ] && install -m 755 capexec "${DESTDIR}${libexecdir}/ejudge"
+	[ x"${NO_KERNEL}" = x -a x"${STATIC}" = x ] && install -m 755 libdropcaps.so "${DESTDIR}${libexecdir}/ejudge"
 
 bpcemu2: bpcemu2.o
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
