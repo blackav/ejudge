@@ -1,5 +1,9 @@
 2002-12-30  Alexander Chernov  <cher@ispras.ru>
 
+	* version 2.0 is released! 
+
+2002-12-30  Alexander Chernov  <cher@ispras.ru>
+
 	* userlist_proto.h:
 	(struct userlist_pk_set_password) field `contest_id' is added.
 
