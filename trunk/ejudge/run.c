@@ -40,8 +40,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <termios.h>
 #include <time.h>
+
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
+#endif
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -553,7 +556,6 @@ run_tests(struct section_tester_data *tst,
   int    ec = -100;            /* FIXME: magic */
   struct section_problem_data *prb;
   char *sound;
-  struct termios term_attrs;
   unsigned char *var_test_dir;
   unsigned char *var_corr_dir;
   unsigned char *var_info_dir = 0;
@@ -564,6 +566,10 @@ run_tests(struct section_tester_data *tst,
   int time_limit_value;
   unsigned char ejudge_prefix_dir_env[1024] = { 0 };
   ssize_t file_size;
+
+#ifdef HAVE_TERMIOS_H
+  struct termios term_attrs;
+#endif
 
   ASSERT(tst->problem > 0);
   ASSERT(tst->problem <= max_prob);
@@ -794,6 +800,7 @@ run_tests(struct section_tester_data *tst,
     if (tst->max_data_size) task_SetDataSize(tsk, tst->max_data_size);
     if (tst->max_vm_size) task_SetVMSize(tsk, tst->max_vm_size);
 
+#ifdef HAVE_TERMIOS_H
     memset(&term_attrs, 0, sizeof(term_attrs));
     if (tst->no_redirect && isatty(0) && !managed_mode_flag) {
       /* we need to save terminal state since if the program
@@ -803,6 +810,7 @@ run_tests(struct section_tester_data *tst,
         err("tcgetattr failed: %s", os_ErrorMsg());
       }
     }
+#endif
 
     if (task_Start(tsk) < 0) {
       /* failed to start task */
@@ -819,10 +827,12 @@ run_tests(struct section_tester_data *tst,
       }
 
       /* restore the terminal state */
+#ifdef HAVE_TERMIOS_H
       if (tst->no_redirect && isatty(0) && !managed_mode_flag) {
         if (tcsetattr(0, TCSADRAIN, &term_attrs) < 0)
           err("tcsetattr failed: %s", os_ErrorMsg());
       }
+#endif
 
       /* set normal permissions for the working directory */
       make_writable(tst->check_dir);
