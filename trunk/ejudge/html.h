@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <time.h>
 
-void write_standings(char const *, char const *, char const *, char const *);
+void write_standings(char const *, char const *,char const *,char const *,int);
 void write_public_log(char const *, char const *, char const *, char const *);
 
 void new_write_user_runs(FILE *f, int uid, int printing_suspended,
@@ -68,7 +68,8 @@ void write_priv_standings(FILE *f,
                           unsigned long long sid,
                           unsigned char const *self_url,
                           unsigned char const *hidden_vars,
-                          unsigned char const *extra_args);
+                          unsigned char const *extra_args,
+                          int accepting_mode);
 
 struct user_filter_info;
 int write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
@@ -85,7 +86,7 @@ void write_standings_header(FILE *f,
                             unsigned char const * header_str,
                             unsigned char const * user_name);
 
-void do_write_kirov_standings(FILE *, int, unsigned char const *, int);
+void do_write_kirov_standings(FILE *, int, unsigned char const *, int, int);
 void do_write_standings(FILE *, int, int, unsigned char const *, int);
 
 int write_priv_source(FILE *f, int user_id, int priv_level,
