@@ -119,7 +119,10 @@ SS_OBJECTS = ${SS_CFILES:.c=.o} libcommon.a libcharsets.a
 CU_CFILES = clean-users.c version.c
 CU_OBJECTS = ${CU_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libcharsets.a
 
-BINTARGETS = compile serve run userlist-server edit-userlist super-serve clean-users
+ST_CFILES = ejudge-setup.c version.c
+ST_OBJECTS = ${ST_CFILES:.c=.o} libcommon.a
+
+BINTARGETS = compile serve run userlist-server edit-userlist super-serve clean-users ejudge-setup
 CGITARGETS = master${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX} users${CGI_PROG_SUFFIX}
 TARGETS = ${BINTARGETS} ${CGITARGETS}
 
@@ -184,6 +187,9 @@ users${CGI_PROG_SUFFIX}: ${US_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 edit-userlist: $(ED_OBJECTS)
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu -lpanel -lncurses
+
+ejudge-setup: ${ST_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu -lpanel -lncurses
 
 local_clean:
