@@ -136,6 +136,8 @@ static char const * const field_map[] =
   "instshort",
   "fac",
   "facshort",
+  "city",
+  "country",
 
   0
 };
