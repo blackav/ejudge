@@ -67,7 +67,8 @@ void
 new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
                     int sid_mode, unsigned long long sid,
                     unsigned char const *self_url,
-                    unsigned char const *hidden_vars)
+                    unsigned char const *hidden_vars,
+                    unsigned char const *extra_args)
 {
   int i, showed, runs_to_show, team_id, lang_id, prob_id;
   int status, test, score, attempts, score1;
@@ -132,7 +133,7 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
     if (langs[lang_id]) lang_str = langs[lang_id]->short_name;
 
     if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
-      html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars);
+      html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args);
     }
     fprintf(f, "<tr>\n");
     fprintf(f, "<td>%d</td>", i);
@@ -170,7 +171,7 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
                 i, _("View"));
       } else {
         fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid_mode, sid,
-                                             self_url,
+                                             self_url, extra_args,
                                              "source_%d=1", i), _("View"));
       }
       fprintf(f, "</td>");
@@ -182,7 +183,7 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
                 i, _("View"));
       } else {
         fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid_mode, sid,
-                                             self_url,
+                                             self_url, extra_args,
                                              "report_%d=1", i), _("View"));
       }
       fprintf(f, "</td>");
@@ -199,7 +200,8 @@ void
 new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
                      int sid_mode, unsigned long long sid,
                      unsigned char const *self_url,
-                     unsigned char const *hidden_vars)
+                     unsigned char const *hidden_vars,
+                     unsigned char const *extra_args)
 {
   int showed, i, clars_to_show;
   int from, to, flags, n;
@@ -249,7 +251,7 @@ new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
     duration_str(show_astr_time, time, start_time, dur_str, 0);
 
     if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
-      html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars);
+      html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args);
     }
     fputs("<tr>", f);
     fprintf(f, "<td>%d</td>", i);
@@ -275,7 +277,7 @@ new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
               i, _("View"));
     } else {
       fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid_mode, sid,
-                                           self_url,
+                                           self_url, extra_args,
                                            "clar_%d=1", i), _("View"));
     }
     fprintf(f, "</td>");
@@ -1295,6 +1297,7 @@ print_nav_buttons(FILE *f,
                   int sid_mode, unsigned long long sid,
                   unsigned char const *self_url,
                   unsigned char const *hidden_vars,
+                  unsigned char const *extra_args,
                   unsigned char const *t1,
                   unsigned char const *t2,
                   unsigned char const *t3)
@@ -1306,7 +1309,7 @@ print_nav_buttons(FILE *f,
   if (!t3) t3 = _("Log out");
 
   if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
-    html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars);
+    html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<table><tr>"
             "<td><input type=\"submit\" name=\"refresh\" value=\"%s\"></td>",
             t1);
@@ -1320,17 +1323,18 @@ print_nav_buttons(FILE *f,
   } else {
     fprintf(f, "<table><tr><td>");
     fprintf(f, "%s",
-            html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url, 0));
+            html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url,
+                          extra_args, 0));
     fprintf(f, "%s</a></td><td>", t1);
     if (global->virtual) {
       fprintf(f, "%s",
               html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url,
-                            "action=%d", ACTION_STANGINGS));
+                            extra_args, "action=%d", ACTION_STANGINGS));
       fprintf(f, "%s</a></td><td>", t2);
     }
     fprintf(f, "%s",
             html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url,
-                     "action=%d", ACTION_LOGOUT));
+                          extra_args, "action=%d", ACTION_LOGOUT));
     fprintf(f, "%s</a></td></tr></table>", t3);
   }
 }
@@ -1351,6 +1355,7 @@ write_team_page(FILE *f, int user_id,
                 int all_runs, int all_clars,
                 unsigned char const *self_url,
                 unsigned char const *hidden_vars,
+                unsigned char const *extra_args,
                 time_t server_start, time_t server_end)
 {
   int i;
@@ -1414,22 +1419,23 @@ write_team_page(FILE *f, int user_id,
     }
     fprintf(f, "</table>\n");
     if (!server_start && global_server_start) {
-      html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+      html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
       fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
               ACTION_START_VIRTUAL, _("Start virtual contest"));
       fprintf(f, "</form>\n");
     } else if (server_start && !server_end) {
-      html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+      html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
       fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
               ACTION_STOP_VIRTUAL, _("Stop virtual contest"));
       fprintf(f, "</form>\n");
     }
-    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, 0, 0, 0);
+    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
+                      0, 0, 0);
   }
 
   if (server_start && !server_end) {
     fprintf(f, "<hr><a name=\"submit\"><h2>%s</h2>\n", _("Send a submission"));
-    html_start_form(f, 2, sid_mode, sid, self_url, hidden_vars);
+    html_start_form(f, 2, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<table>\n");
     fprintf(f, "<tr><td>%s:</td><td>", _("Problem"));
     fprintf(f, "<select name=\"problem\"><option value=\"\">\n");
@@ -1455,7 +1461,8 @@ write_team_page(FILE *f, int user_id,
             "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>",
             _("File"), _("Send!"), ACTION_SUBMIT_RUN, _("Send!"));
     fprintf(f, "</table></form>\n");
-    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, 0, 0, 0);
+    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
+                      0, 0, 0);
   }
 
   if (server_start) {
@@ -1463,10 +1470,10 @@ write_team_page(FILE *f, int user_id,
             _("Sent submissions"),
             all_runs?_("all"):_("last 15"));
     new_write_user_runs(f, user_id, all_runs,
-                        sid_mode, sid, self_url, hidden_vars);
+                        sid_mode, sid, self_url, hidden_vars, extra_args);
 
     if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
-      html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars);
+      html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args);
       fprintf(f, "<p>"
               "<input type=\"submit\" name=\"all_runs\" value=\"%s\">"
               "</p>",
@@ -1474,14 +1481,15 @@ write_team_page(FILE *f, int user_id,
     } else {
       fprintf(f, "<p>%s%s</a></p>",
               html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url,
-                            "all_runs=1"),
+                            extra_args, "all_runs=1"),
               _("View all"));
     }
 
-    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, 0, 0, 0);
+    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
+                      0, 0, 0);
     if (global->team_download_time > 0) {
       fprintf(f, "<p>");
-      html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+      html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
       fprintf(f,
               "<input type=\"submit\" name=\"archive\" value=\"%s\"></form>\n",
               _("Download your submits"));
@@ -1493,7 +1501,7 @@ write_team_page(FILE *f, int user_id,
       && server_start && !server_end) {
     fprintf(f, "<hr><a name=\"clar\"><h2>%s</h2>\n",
             _("Send a message to judges"));
-    html_start_form(f, 2, sid_mode, sid, self_url, hidden_vars);
+    html_start_form(f, 2, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<table><tr><td>%s:</td><td>", _("Problem"));
     fprintf(f, "<select name=\"problem\"><option value=\"\">\n");
     for (i = 1; i <= max_prob; i++)
@@ -1509,7 +1517,8 @@ write_team_page(FILE *f, int user_id,
             "<tr><td colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n"
             "</table></form>\n",
             _("Subject"), ACTION_SUBMIT_CLAR, _("Send!"));
-    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, 0, 0, 0);
+    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
+                      0, 0, 0);
   }
 
   if (!global->disable_clars) {
@@ -1517,10 +1526,10 @@ write_team_page(FILE *f, int user_id,
             _("Messages"), all_clars?_("all"):_("last 15"));
 
     new_write_user_clars(f, user_id, all_clars, sid_mode, sid,
-                         self_url, hidden_vars);
+                         self_url, hidden_vars, extra_args);
 
     if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
-      html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars);
+      html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args);
       fprintf(f, "<p>"
               "<input type=\"submit\" name=\"all_clars\" value=\"%s\">"
               "</p>",
@@ -1528,11 +1537,12 @@ write_team_page(FILE *f, int user_id,
     } else {
       fprintf(f, "<p>%s%s</a></p>",
               html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url,
-                            "all_clars=1"),
+                            extra_args, "all_clars=1"),
               _("View all"));
     }
 
-    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, 0, 0, 0);
+    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
+                      0, 0, 0);
   }
 }
 
@@ -1557,7 +1567,6 @@ write_virtual_standings(FILE *f, int user_id)
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
 
