@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "cgi.h"
 #include "parsecfg.h"
 #include "pathutl.h"
@@ -52,6 +54,7 @@
 #define _(x) gettext(x)
 #else
 #define _(x) x
+#define gettext(x) x
 #endif
 
 /*

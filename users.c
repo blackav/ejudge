@@ -1,7 +1,7 @@
 /* -*- mode: c -*-; coding: koi8-r */
 /* $Id$ */
 
-/* Copyright (C) 2001-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2001-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -14,6 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+
+#include "config.h"
 
 #include "expat_iface.h"
 #include "cgi.h"
@@ -46,6 +48,7 @@
 #define _(x) gettext(x)
 #else
 #define _(x) x
+#define gettext(x) x
 #endif /* CONF_HAS_LIBINTL */
 
 enum
