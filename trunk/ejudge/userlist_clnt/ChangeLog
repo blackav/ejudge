@@ -1,3 +1,33 @@
+2004-05-04  Alexander Chernov  <cher@ispras.ru>
+
+	* team_login.c: copyright notice is updated;
+	(userlist_clnt_team_login) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* team_cookie.c: copyright notice is updated;
+	(userlist_clnt_team_cookie) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* priv_login.c: copyright notice is updated;
+	(userlist_clnt_priv_login) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* priv_cookie.c: copyright notice is updated;
+	(userlist_clnt_priv_cookie) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* lookup_cookie.c: copyright notice is updated;
+	(userlist_clnt_lookup_cookie) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* logout.c: copyright notice is updated;
+	(userlist_clnt_logout) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* login.c: copyright notice is updated;
+	(userlist_clnt_login) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
 2003-12-14  Alexander Chernov  <cher@ispras.ru>
 
 	* set_info.c:

@@ -1,3 +1,61 @@
+2004-05-27  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in: --disable-rpath option from configure is supported;
+	the shared library is removed when new library is installed and
+	  --enable-static option is active.
+
+2004-05-06  Alexander Chernov  <cher@ispras.ru>
+
+	* checker_internal.h, checker.h: protection against C++ is added;
+	in C++ mode char * is used instead of unsigned char * for strings.
+
+	* Makefile.in: pic/testinfo.o added to PICOFILES;
+	testinfo.h is added to the list of installed header files;
+	testinfo.h is hardlinked to the upper directory instead of softlinking.
+
+2004-05-05  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in:
+	header files are installed into include directory directly.
+
+2004-05-04  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in: `install' rule is corrected
+
+	* Makefile.in: added installation of the standard checkers.
+
+	* Makefile.in: copyright notice is updated;
+	added variable substitutions from configure script;
+	added option to compile a shared library;
+	added compilation of a number of standard checkers.
+
+	* checker_internal.h: copyright notice is updated.
+
+	* checker.h: copyright notice is added.
+
+	* Makefile: Renamed to Makefile.in
+
+2004-05-02  Alexander Chernov  <cher@ispras.ru>
+
+	* checker_internal.h: (checker_normalize_spaces_in_file) added.
+
+	* cmp_file_nospace.c, normalize_spaces_in_file.c: initial revision
+
+2004-05-01  Alexander Chernov  <cher@ispras.ru>
+
+	* read_corr_unsigned_int.c, read_corr_unsigned_long_long.c, read_in_long_long.c, read_in_unsigned_int.c, read_in_unsigned_long_long.c, read_int.c, read_team_unsigned_int.c, read_team_unsigned_long_long.c, read_unsigned_int.c, read_unsigned_long_long.c, cmp_file.c, cmp_int.c, cmp_long_long.c, cmp_unsigned_int.c, cmp_unsigned_long_long.c:
+	initial revision
+
+	* checker_internal.h:
+	functions for reading `unsigned int' and `unsigned long long' are
+	  added.
+
+2003-11-24  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in:
+	new files added: normalize_line.c, read_corr_double.c, read_line.c,
+	  skip_eoln.c.
+
 2003-11-24  Alexander Chernov  <cher@ispras.ru>
 
 	* checker_internal.h:

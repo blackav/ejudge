@@ -1,3 +1,65 @@
+2004-05-04  Alexander Chernov  <cher@ispras.ru>
+
+	* view.c:
+	(serve_clnt_view) a GNU C 3.3 warning about breaking strict aliasing
+	  rules in -Wall -O2 mode is fixed.
+
+	* upload_report.c:
+	(serve_clnt_upload_report) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* submit_run.c:
+	(serve_clnt_submit_run) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* reset_filter.c:
+	(serve_clnt_reset_filter) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* rejudge_by_mask.c:
+	(serve_clnt_rejudge_by_mask) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* master_page.c:
+	(serve_clnt_master_page) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* edit_run.c:
+	(serve_clnt_edit_run) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* team_page.c: copyright notice is updated;
+	(serve_clnt_team_page) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* submit_clar.c: copyright notice is updated;
+	(serve_clnt_submit_clar) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* standings.c: copyright notice is updated;
+	(serve_clnt_standings) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* simple_cmd.c: copyright notice is updated;
+	(serve_clnt_simple_cmd) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* show_item.c: copyright notice is updated;
+	(serve_clnt_show_item) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* message.c: copyright notice is updated;
+	(serve_clnt_message) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* import_xml_runs.c: copyright notice is updated;
+	(serve_clnt_import_xml_runs) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
+	* get_archive.c: copyright notice is updated;
+	(serve_clnt_get_archive) a GNU C 3.3 warning about breaking strict
+	  aliasing rules in -Wall -O2 mode is fixed.
+
 2004-04-19  Alexander Chernov  <cher@ispras.ru>
 
 	* rejudge_by_mask.c: initial revision
