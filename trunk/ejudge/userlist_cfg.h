@@ -61,6 +61,11 @@ struct userlist_cfg
   unsigned char *userlist_log;
   unsigned char *super_serve_log;
   unsigned char *compile_log;
+  unsigned char *super_serve_socket;
+  unsigned char *super_serve_user;
+  unsigned char *super_serve_group;
+  unsigned char *userlist_user;
+  unsigned char *userlist_group;
   struct xml_tree *user_map;
 
   opcaplist_t capabilities;
