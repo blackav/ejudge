@@ -232,3 +232,14 @@ make-teamdb.c 1 3 263415
 sformat.c 1 7 791234
 sha.h 1 1 279821
 sha.c 1 1 864692
+sha.h 1 2 279821
+nls.h 1 2 98871
+userlist.h 1 1 266103
+sha.c 1 2 864694
+nls_cp1251.c 1 1 951433
+nls_cp866.c 1 1 1075272
+nls_iso8859-5.c 1 2 835362
+nls_koi8-r.c 1 1 1076142
+nls_utf8.c 1 1 195846
+userlist.c 1 1 340852
+userlist_xml.c 1 1 1175354
