@@ -1,3 +1,55 @@
+2003-10-24  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* client_actions.h: `ACTION_RELOAD_SERVER' is added.
+
+	* contests.c: `run_managed' attribute is supported.
+
+	* contests.h: `run_managed' attribute is added;
+	(struct contest_desc) `run_managed' field is added.
+
+	* master.c: (print_reload_server_button) a new function to print the
+	  "Reload server" button;
+	(action_reload_server) a new function to send `QUIT' request to
+	  the contest server;
+	(main) `ACTION_RELOAD_SERVER' is handled;
+	  "Reload server" button is printed.
+
+	* protocol.h: `SRV_CMD_QUIT' command is added.
+
+	* run.c: Managed mode is implemented. The detailed changes are below.
+	<time.h> is included;
+	(run_tests) `no_redirect' flag has no effect in managed mode;
+	(do_loop) quit packets from serve are honored in managed mode;
+	  global configuration variable `inactivity_timeout' is honored
+	  in managed mode;
+	(main) option `-S' is added, which turns on managed mode.
+
+	* serve.c: (cmd_priv_command_0) `SRV_CMD_QUIT' request is handled;
+	(packet_handlers) `SRV_CMD_QUIT' request is handled.
+
+	* super-serve.c: <reuse/logger.h> is included;
+	<dirent.h> is included;
+	(struct contest_extra) new fields to handle `run' super-serving using
+	  Linux directory notifications: `serve_used', `run_used',
+	  `dnotify_flag', `run_pid', `run_dir_fd', `run_queue_dir',
+	  `run_log_file';
+	(dnotify_handler) new function: directory notification signal handler;
+	(acquire_resources) run super-serving is implemented;
+	(release_resources) the same as above;
+	(get_number_of_files) a new function to return the number of files
+	  in the given directory;
+	(do_loop) run super-serving is implemented.
+
+	* userlist-server.c:
+	(do_clear_team_passwords) minor compilation warnings are fixed.
+
+	* userlist_cfg.c: new element `run_path' is handled.
+
+	* userlist_cfg.h: 
+	(struct userlist_cfg) field `run_path' is added.
+
 2003-10-20  Alexander Chernov  <cher@ispras.ru>
 
 	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
