@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,7 @@ userlist_clnt_add_field(struct userlist_clnt *clnt,
   struct userlist_packet *in = 0;
   int out_size = 0, in_size = 0, r;
 
-  out_size = sizeof(*out) + 1;
+  out_size = sizeof(*out);
   out = alloca(out_size);
   memset(out, 0, out_size);
   out->request_id = ULS_ADD_FIELD;
@@ -52,6 +52,5 @@ userlist_clnt_add_field(struct userlist_clnt *clnt,
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
