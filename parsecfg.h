@@ -42,6 +42,7 @@ struct config_section_info
   unsigned long             size;
   struct config_parse_info *info;
   int                      *pcounter;
+  void (*init_func)(struct generic_section_config *);
 };
 
 struct generic_section_config *parse_param(char const *path,
