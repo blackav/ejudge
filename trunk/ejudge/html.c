@@ -111,6 +111,8 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
     fprintf(f, "<th>%s</th>", _("View source"));
   if (global->team_enable_rep_view || global->team_enable_ce_view)
     fprintf(f, "<th>%s</th>", _("View report"));
+  if (global->enable_printing)
+    fprintf(f, "<th>%s</th>", _("Print sources"));
 
   fprintf(f, "</tr>\n");
 
@@ -223,6 +225,16 @@ new_write_user_runs(FILE *f, int uid, unsigned int show_flags,
         }
       }
       fprintf(f, "</td>");
+    }
+
+    if (global->enable_printing) {
+      fprintf(f, "<td>");
+      if (re.pages > 0 || sid_mode != SID_URL) {
+        fprintf(f, "N/A");
+      } else {
+        fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid_mode, sid, self_url, extra_args, "print_%d=1", i), _("Print"));
+      }
+      fprintf(f, "</td>\n");
     }
 
     fprintf(f, "\n</tr>\n");
@@ -1473,7 +1485,7 @@ new_write_user_source_view(FILE *f, int uid, int rid)
   }
 
   if ((src_flags=archive_make_read_path(src_path, sizeof(src_path),
-                                        global->run_archive_dir,rid,0,0))<0){
+                                        global->run_archive_dir,rid,0,1))<0){
     return -SRV_ERR_SYSTEM_ERROR;
   }
   if (generic_read_file(&src, 0, &src_len, src_flags, 0, src_path, "") < 0) {
@@ -1529,7 +1541,7 @@ new_write_user_report_view(FILE *f, int uid, int rid)
   }
 
   report_flags = archive_make_read_path(report_path, sizeof(report_path),
-                                        archive_dir, rid, 0, 0);
+                                        archive_dir, rid, 0, 1);
   if (report_flags < 0) return -SRV_ERR_SYSTEM_ERROR;
   if (generic_read_file(&report, 0, &report_len, report_flags,
                         0, report_path, "") < 0) {
