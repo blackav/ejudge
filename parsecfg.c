@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "parsecfg.h"
@@ -96,6 +92,11 @@ read_variable(FILE *f, char *name, int nlen, char *val, int vlen)
 {
   int   c;
   int  i;
+  unsigned char *lbuf = 0, *tmp, *p, *q;
+  size_t lbuf_size = 0;
+  size_t lbuf_used = 0, tmp_len;
+  int quot_char = 0;
+  unsigned char nb[4];
 
   c = getc(f);
   while (c >= 0 && c <= ' ') {
@@ -122,6 +123,118 @@ read_variable(FILE *f, char *name, int nlen, char *val, int vlen)
     return -1;
   }
 
+  lbuf_size = 128;
+  lbuf = alloca(128);
+  lbuf_used = 0;
+  while (1) {
+    c = getc(f);
+    if (c == EOF) break;
+    if (lbuf_used + 1 == lbuf_size) {
+      tmp = alloca(lbuf_size *= 2);
+      memcpy(tmp, lbuf, lbuf_used);
+      lbuf = tmp;
+    }
+    lbuf[lbuf_used++] = c;
+    if (c == '\n') break;
+  }
+  while (lbuf_used > 0 && isspace(lbuf[lbuf_used - 1])) lbuf_used--;
+  lbuf[lbuf_used] = 0;
+
+  q = tmp = alloca(lbuf_size);
+  p = lbuf;
+  while (*p && isspace(*p)) p++;
+  while (1) {
+    if (!*p) break;
+    if (!quot_char && (*p == '#' || *p == ';')) break;
+    if (!quot_char && isspace(*p)) break;
+    if (*p < ' ') {
+      fprintf(stderr, "%d: invalid control code %d\n", lineno, *p);
+      return -1;
+    }
+    if (*p == '\"' || *p == '\'') {
+      if (!quot_char) {
+        quot_char = *p++;
+      } else if (quot_char == *p) {
+        quot_char = 0;
+        p++;
+      } else {
+        *q++ = *p++;
+      }
+      continue;
+    }
+    if (quot_char) {
+      *q++ = *p++;
+      continue;
+    }
+    if (*p == '\\') {
+      switch (p[1]) {
+      case 0:
+        *q++ = '\\';
+        p++;
+        break;
+      case 'x': case 'X':
+        if (!isxdigit(p[2])) {
+          fprintf(stderr, "%d: invalid escape sequence\n", lineno);
+          return -1;
+        }
+        p += 2;
+        memset(nb, 0, sizeof(nb));
+        nb[0] = *p++;
+        if (isxdigit(*p)) nb[1] = *p++;
+        *q++ = strtol(nb, 0, 16);
+        break;
+      case '0': case '1': case '2': case '3':
+        p++;
+        memset(nb, 0, sizeof(nb));
+        nb[0] = *p++;
+        if (*p >= '0' && *p <= '7') nb[1] = *p++;
+        if (*p >= '0' && *p <= '7') nb[2] = *p++;
+        *q++ = strtol(nb, 0, 8);
+        break;
+      case '4': case '5': case '6': case '7':
+        p++;
+        memset(nb, 0, sizeof(nb));
+        nb[0] = *p++;
+        if (*p >= '0' && *p <= '7') nb[1] = *p++;
+        *q++ = strtol(nb, 0, 8);
+        break;
+      case 'a': *q++ = '\a'; p += 2; break;
+      case 'b': *q++ = '\b'; p += 2; break;
+      case 'f': *q++ = '\f'; p += 2; break;
+      case 'n': *q++ = '\n'; p += 2; break;
+      case 'r': *q++ = '\r'; p += 2; break;
+      case 't': *q++ = '\t'; p += 2; break;
+      case 'v': *q++ = '\v'; p += 2; break;
+      default:
+        p++;
+        *q++ = *p++;
+        break;
+      }
+      continue;
+    }
+    *q++ = *p++;
+  }
+
+  while (*p && isspace(*p)) p++;
+  if (quot_char) {
+    fprintf(stderr, "%d: unclosed quote character <%c>\n", lineno, quot_char);
+    return -1;
+  }
+  if (*p && *p != '#' && *p != ';') {
+    fprintf(stderr, "%d: garbage after variable value\n", lineno);
+    return -1;
+  }
+  *q = 0;
+  tmp_len = strlen(tmp);
+  if (tmp_len >= vlen) {
+    fprintf(stderr, "%d: variable value is too long\n", lineno);
+    return -1;
+  }
+  strcpy(val, tmp);
+  lineno++;
+  return 0;
+
+  /*
   c = getc(f);
   while (c >= 0 && c <= ' ' && c != '\n') c = getc(f);
 
@@ -161,6 +274,7 @@ read_variable(FILE *f, char *name, int nlen, char *val, int vlen)
   }
   lineno++;
   return 0;
+  */
 }
 
 static int
