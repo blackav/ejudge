@@ -26,6 +26,7 @@ userlist_clnt_generate_team_passwd(struct userlist_clnt *clnt,
   struct userlist_packet *in = 0;
   int out_size = 0, in_size = 0, r;
   int pfd[2], pp[2];
+  char b;
 
   if (cmd != ULS_GENERATE_TEAM_PASSWORDS && cmd != ULS_GENERATE_PASSWORDS) {
     return -ULS_ERR_PROTOCOL;
@@ -49,7 +50,13 @@ userlist_clnt_generate_team_passwd(struct userlist_clnt *clnt,
     return r;
   r = in->id;
   xfree(in);
-  return r;
+  if (r < 0) return r;
+
+  close(pfd[1]);
+  r = read(pp[0], &b, 1);
+  if (r > 0) return -ULS_ERR_PROTOCOL;
+  if (r < 0) return -ULS_ERR_READ_ERROR;
+  return 0;
 }
 
 /**
