@@ -43,6 +43,12 @@ struct testset_info
   int score;
 };
 
+struct penalty_info
+{
+  time_t deadline;
+  int penalty;
+};
+
 struct variant_map;
 
 #define puc_t unsigned char
@@ -83,6 +89,7 @@ struct section_global_data
   int    disable_team_clars;    /* team cannot compose a clarification */
   int    ignore_compile_errors; /* ignore CE result for score calculation */
   int    enable_continue;       /* enable contest continuation after stop */
+  int    enable_report_upload;  /* enable manual upload of checking reports */
 
   puc_t name[256];              /* name of the contest */
   path_t root_dir;
@@ -312,6 +319,10 @@ struct section_problem_data
   puc_t deadline[64];           /* deadline for sending this problem */
   time_t t_deadline;            /* in UNIX internal format */
   int variant_num;              /* number of variants for this problem */
+
+  char **date_penalty;          /* penalty which depends on date */
+  int dp_total;
+  struct penalty_info *dp_infos;
 };
 
 struct section_language_data
