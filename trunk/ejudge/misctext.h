@@ -43,5 +43,6 @@ size_t url_armor_string(unsigned char *, size_t, const unsigned char *);
 size_t text_numbered_memlen(const unsigned char *intxt, size_t insize);
 void text_number_lines(const unsigned char *intxt, size_t insize,
                        unsigned char *outtxt);
+const unsigned char * const * html_get_armor_table(void);
 
 #endif /* __MISCTEXT_H__ */
