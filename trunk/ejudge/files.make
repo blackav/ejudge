@@ -87,7 +87,12 @@ COMMON_CFILES=\
  cgi.c\
  clarlog.c\
  clntutil.c\
- compile_packet.c\
+ compile_packet_1.c\
+ compile_packet_2.c\
+ compile_packet_3.c\
+ compile_packet_4.c\
+ compile_packet_5.c\
+ compile_packet_6.c\
  contests.c\
  copyright.c\
  diff.c\
@@ -189,6 +194,7 @@ HFILES=\
  client_actions.h\
  clntutil.h\
  compile_packet.h\
+ compile_packet_priv.h\
  contests.h\
  copyright.h\
  cr_serialize.h\
