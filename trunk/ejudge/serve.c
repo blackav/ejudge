@@ -4885,9 +4885,9 @@ do_loop(void)
         if (current_time >= contest_sched_time) {
           /* it's time to start! */
           info("CONTEST STARTED");
-          run_start_contest(current_time);
+          run_start_contest(contest_sched_time);
           do_start_cmd();
-          contest_start_time = current_time;
+          contest_start_time = contest_sched_time;
         }
       }
     }
