@@ -18,23 +18,26 @@
  */
 
 #include <stdio.h>
+#include <time.h>
 
-extern unsigned long server_cur_time;
-extern unsigned long server_start_time;
-extern unsigned long server_sched_time;
-extern unsigned long server_duration;
-extern unsigned long server_stop_time;
-extern int           server_total_runs;
-extern int           server_total_clars;
-extern int           server_clars_disabled;
-extern int           server_team_clars_disabled;
-extern int           server_standings_frozen;
-extern int           server_score_system;
-extern int           server_clients_suspended;
-extern int           server_download_interval;
-extern int           server_is_virtual;
-extern int           server_olympiad_judging_mode;
-extern int           server_continuation_enabled;
+extern time_t server_cur_time;
+extern time_t server_start_time;
+extern time_t server_sched_time;
+extern time_t server_duration;
+extern time_t server_stop_time;
+extern time_t server_freeze_time;
+extern int    server_total_runs;
+extern int    server_total_clars;
+extern int    server_clars_disabled;
+extern int    server_team_clars_disabled;
+extern int    server_standings_frozen;
+extern int    server_score_system;
+extern int    server_clients_suspended;
+extern int    server_testing_suspended;
+extern int    server_download_interval;
+extern int    server_is_virtual;
+extern int    server_olympiad_judging_mode;
+extern int    server_continuation_enabled;
 
 extern unsigned long client_cur_time;
 
