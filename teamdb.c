@@ -30,6 +30,8 @@
 
 #include "pathutl.h"
 #include "base64.h"
+#include "userlist_clnt.h"
+#include "userlist_proto.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/logger.h>
@@ -41,6 +43,12 @@
 #include <ctype.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
+#include <sys/shm.h>
+#include <fcntl.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -104,6 +112,81 @@ static struct fieldinfo passwd_fieldinfo [] =
   { "passwd_passwd", PASSWD_FIELD_LEN, passwd_b },
   { 0, 0 }
 };
+
+/* userlist-server connection */
+static struct userlist_clnt *server_conn = 0;
+static int sem_id = -1;
+static int shm_id = -1;
+static struct userlist_table *server_users;
+static struct userlist_table *cached_users;
+static int cached_size;
+static struct userlist_user_short **cached_map;
+static key_t sem_key, shm_key;
+static int contest_id;
+
+static void
+lock_userlist_table(void)
+{
+  struct sembuf lock;
+
+  lock.sem_num = 0;
+  lock.sem_op = -1;
+  lock.sem_flg = SEM_UNDO;      /* in case of crash */
+  while (1) {
+    if (!semop(sem_id, &lock, 1)) break;
+    if (errno != EINTR) {
+      err("semop failed: %s", os_ErrorMsg());
+      exit(1);                  /* FIXME: exit gracefully */
+    }
+    info("semop restarted after signal");
+  }
+}
+static void
+unlock_userlist_table(void)
+{
+  struct sembuf unlock;
+
+  unlock.sem_num = 0;
+  unlock.sem_op = 1;
+  unlock.sem_flg = SEM_UNDO;
+  if (semop(sem_id, &unlock, 1) < 0) {
+    err("semop failed: %s", os_ErrorMsg());
+    exit(1);                  /* FIXME: exit gracefully */
+  }
+}
+void
+teamdb_refresh(void)
+{
+  int m;
+  int i;
+
+  if (!server_conn) return;
+  if (cached_users && cached_users->vintage == server_users->vintage) return;
+  if (!cached_users) {
+    cached_users = xcalloc(1, sizeof(*cached_users));
+  }
+  lock_userlist_table();
+  memcpy(cached_users, server_users, sizeof(*server_users));
+  unlock_userlist_table();
+
+  xfree(cached_map);
+  cached_map = 0;
+  m = -1;
+  for (i = 0; i < cached_users->total; i++) {
+    if (cached_users->users[i].user_id > m) m = cached_users->users[i].user_id;
+  }
+  if (m <= 0) {
+    cached_size = 0;
+  } else {
+    cached_size = m + 1;
+    cached_map = xcalloc(cached_size, sizeof(cached_map[0]));
+    for (i = 0; i < cached_users->total; i++) {
+      cached_map[cached_users->users[i].user_id] = &cached_users->users[i];
+    }
+  }
+
+  info("refresh_userlist_table: updated from server, %d users (size = %d)", cached_users->total, cached_size);
+}
 
 static int
 verify_passwd(char const *passwd)
@@ -172,6 +255,11 @@ teamdb_open(char const *team, char const *passwd, int rel_flag)
 {
   FILE *f = 0;
   int   id, n;
+
+  if (server_conn) {
+    err("teamdb_open: already opened in client mode");
+    return -1;
+  }
 
   memset(teams, 0, sizeof(teams));
   teams_total = 0;
@@ -289,8 +377,57 @@ teamdb_open(char const *team, char const *passwd, int rel_flag)
 }
 
 int
+teamdb_open_client(unsigned char const *socket_path, int id)
+{
+  int r;
+
+  if (teams_total > 0) {
+    err("teamdb_open_client: already opened in files mode");
+    return -1;
+  }
+  contest_id = id;
+  server_conn = userlist_clnt_open(socket_path);
+  if (!server_conn) {
+    err("teamdb_open_client: connect to server failed");
+    return -1;
+  }
+  if ((r = userlist_clnt_admin_process(server_conn)) < 0) {
+    err("teamdb_open_client: cannot became an admin process: %s",
+        userlist_strerror(-r));
+    return -1;
+  }
+  if ((r = userlist_clnt_map_contest(server_conn, contest_id,
+                                     &sem_key, &shm_key)) < 0) {
+    err("teamdb_open_client: cannot map contest: %s", userlist_strerror(-r));
+    return -1;
+  }
+  if ((sem_id = semget(sem_key, 1, 0)) < 0) {
+    err("teamdb_open_client: cannot obtain a semafore: %s", os_ErrorMsg());
+    return -1;
+  }
+  if ((shm_id = shmget(shm_key, 0, 0)) < 0) {
+    err("teamdb_open_client: cannot obtain a shared memory: %s",
+        os_ErrorMsg());
+    return -1;
+  }
+  if ((int) (server_users = shmat(shm_id, 0, SHM_RDONLY)) == -1) {
+    err("teamdb_open_client: cannot attach shared memory: %s",
+        os_ErrorMsg());
+    return -1;
+  }
+
+  teamdb_refresh();
+  return 0;
+}
+
+int
 teamdb_lookup(int teamno)
 {
+  if (server_conn) {
+    if (teamno <= 0 || teamno >= cached_size || !cached_map[teamno]) return 0;
+    return 1;
+  }
+
   if (teamno <= 0) return 0;
   if (teamno > MAX_TEAM_ID) return 0;
   if (!teams[teamno]) return 0;
@@ -301,6 +438,11 @@ int
 teamdb_lookup_login(char const *login)
 {
   int id;
+
+  if (server_conn) {
+    err("teamdb_lookup_login: operation not implemented in client mode");
+    return 0;
+  }
 
   for (id = 1; id <= MAX_TEAM_ID; id++) {
     if (!teams[id]) continue;
@@ -317,6 +459,9 @@ teamdb_get_login(int teamid)
     err("teamdb_get_login: bad id: %d", teamid);
     return 0;
   }
+  if (server_conn) {
+    return cached_users->pool + cached_map[teamid]->login_idx;
+  }
   return teams[teamid]->login;
 }
 
@@ -327,6 +472,9 @@ teamdb_get_name(int teamid)
     err("teamdb_get_login: bad id: %d", teamid);
     return 0;
   }
+  if (server_conn) {
+    return cached_users->pool + cached_map[teamid]->name_idx;
+  }
   return teams[teamid]->name;
 }
 
@@ -334,6 +482,11 @@ int
 teamdb_scramble_passwd(char const *passwd, char *scramble)
 {
   int ssz;
+
+  if (server_conn) {
+    err("teamdb_scramble_passwd: operation not implemented in client mode");
+    return 0;
+  }
 
   ssz = base64_encode(passwd, strlen(passwd), scramble);
   scramble[ssz] = 0;
@@ -343,6 +496,11 @@ teamdb_scramble_passwd(char const *passwd, char *scramble)
 int
 teamdb_check_scrambled_passwd(int id, char const *scrambled)
 {
+  if (server_conn) {
+    err("teamdb_check_scrambled_passwd: operation not implemented in client mode");
+    return 0;
+  }
+
   if (!teamdb_lookup(id)) {
     err("teamdb_get_login: bad id: %d", id);
     return 0;
@@ -356,6 +514,11 @@ teamdb_check_passwd(int id, char const *passwd)
 {
   char buf[TEAMDB_MAX_SCRAMBLED_PASSWD_SIZE];
 
+  if (server_conn) {
+    err("teamdb_check_passwd: operation not implemented in client mode");
+    return 0;
+  }
+
   if (teamdb_scramble_passwd(passwd, buf) <= 0) return 0;
   return teamdb_check_scrambled_passwd(id, buf);
 }
@@ -363,6 +526,11 @@ teamdb_check_passwd(int id, char const *passwd)
 int
 teamdb_set_scrambled_passwd(int id, char const *scrambled)
 {
+  if (server_conn) {
+    err("teamdb_set_scrambled_passwd: operation not implemented in client mode");
+    return 0;
+  }
+
   if (!teamdb_lookup(id)) {
     err("teamdb_get_login: bad id: %d", id);
     return 0;
@@ -382,6 +550,11 @@ teamdb_get_plain_password(int id, char *buf, int size)
 {
   int errcode = 0, outlen, inlen;
   char *outbuf;
+
+  if (server_conn) {
+    err("teamdb_get_plain_password: operation not implemented in client mode");
+    return -1;
+  }
 
   if (!teamdb_lookup(id)) {
     err("teamdb_get_plain_password: bad id: %d", id);
@@ -406,6 +579,18 @@ teamdb_get_plain_password(int id, char *buf, int size)
 int
 teamdb_get_flags(int id)
 {
+  if (server_conn) {
+    int new_flags = 0;
+    if (!teamdb_lookup(id)) {
+      err("teamdb_get_flags: bad team id %d", id);
+      return 0;
+    }
+    if ((cached_map[id]->flags & USERLIST_UC_INVISIBLE)) {
+      new_flags |= TEAM_INVISIBLE;
+    }
+    return new_flags;
+  }
+
   return teams[id]->flags;
 }
 
@@ -417,6 +602,11 @@ teamdb_write_passwd(char const *path)
   path_t  dir;
   FILE   *f = 0;
   int     id;
+
+  if (server_conn) {
+    err("teamdb_write_passwd: operation not implemented in client mode");
+    return 0;
+  }
 
   os_rDirName(path, dir, PATH_MAX);
   sprintf(tname, "%lu%d", time(0), getpid());
@@ -465,6 +655,11 @@ teamdb_write_teamdb(char const *path)
   FILE   *f = 0;
   int     id;
 
+  if (server_conn) {
+    err("teamdb_write_teamdb: operation not implemented in client mode");
+    return 0;
+  }
+
   os_rDirName(path, dir, PATH_MAX);
   sprintf(tname, "%lu%d", time(0), getpid());
   pathmake(tpath, dir, "/", tname, NULL);
@@ -507,6 +702,9 @@ teamdb_write_teamdb(char const *path)
 int
 teamdb_get_max_team_id(void)
 {
+  if (server_conn) {
+    return cached_size - 1;
+  }
   return MAX_TEAM_ID;
 }
 
@@ -514,6 +712,10 @@ int
 teamdb_get_total_teams(void)
 {
   int tot = 0, i;
+
+  if (server_conn) {
+    return cached_users->total;
+  }
 
   for (i = 1; i <= MAX_TEAM_ID; i++)
     if (teams[i]) tot++;
@@ -544,6 +746,11 @@ int
 teamdb_is_valid_login(char const *str)
 {
   unsigned char const *s = (unsigned char const*) str;
+
+  if (server_conn) {
+    err("teamdb_is_valid_login: not implemented in client mode");
+    return 0;
+  }
   for (s = str; *s; s++) {
     if (!valid_login_chars[*s]) return 0;
   }
@@ -573,6 +780,11 @@ int
 teamdb_is_valid_name(char const *str)
 {
   unsigned char const *s = (unsigned char const*) str;
+
+  if (server_conn) {
+    err("teamdb_is_valid_name: not implemented in client mode");
+    return 0;
+  }
   for (s = str; *s; s++) {
     if (!valid_name_chars[*s]) return 0;
   }
@@ -582,6 +794,10 @@ teamdb_is_valid_name(char const *str)
 int
 teamdb_change_login(int tid, char const *login)
 {
+  if (server_conn) {
+    err("teamdb_change_login: not implemented in client mode");
+    return -1;
+  }
   if (!teamdb_lookup(tid)) {
     err("teamdb_change_login: bad id: %d", tid);
     return -1;
@@ -602,6 +818,10 @@ teamdb_change_login(int tid, char const *login)
 int
 teamdb_change_name(int tid, char const *name)
 {
+  if (server_conn) {
+    err("teamdb_change_name: not implemented in client mode");
+    return -1;
+  }
   if (!teamdb_lookup(tid)) {
     err("teamdb_change_name: bad id: %d", tid);
     return -1;
@@ -622,6 +842,11 @@ teamdb_change_name(int tid, char const *name)
 int
 teamdb_toggle_vis(int tid)
 {
+  if (server_conn) {
+    // FIXME: this operation has sense!
+    err("teamdb_toggle_vis: not implemented in client mode");
+    return -1;
+  }
   if (!teamdb_lookup(tid)) {
     err("teamdb_toggle_vis: bad id: %d", tid);
     return -1;
@@ -634,6 +859,11 @@ teamdb_toggle_vis(int tid)
 int
 teamdb_toggle_ban(int tid)
 {
+  if (server_conn) {
+    // FIXME: this operation has sense!
+    err("teamdb_toggle_ban: not implemented in client mode");
+    return -1;
+  }
   if (!teamdb_lookup(tid)) {
     err("teamdb_toggle_ban: bad id: %d", tid);
     return -1;
@@ -653,6 +883,12 @@ teamdb_add_team(int tid,
                 char **msg)
 {
   char *scramble;
+
+  if (server_conn) {
+    err("teamdb_add_team: not implemented in client mode");
+    *msg = "Not implemented in client mode";
+    return -1;
+  }
 
   *msg = 0;
   if (!tid) {
@@ -733,12 +969,20 @@ save_undo(int tid)
 void
 teamdb_transaction(void)
 {
+  if (server_conn) {
+    err("teamdb_transaction: not implemented in client mode");
+    return;
+  }
   undo_sp = 0;
 }
 
 void
 teamdb_commit(void)
 {
+  if (server_conn) {
+    err("teamdb_commit: not implemented in client mode");
+    return;
+  }
   undo_sp = -1;
 }
 
@@ -746,6 +990,11 @@ void
 teamdb_rollback(void)
 {
   int id;
+
+  if (server_conn) {
+    err("teamdb_rollback: not implemented in client mode");
+    return;
+  }
 
   while (undo_sp > 0) {
     undo_sp--;
@@ -764,6 +1013,11 @@ teamdb_rollback(void)
 int
 teamdb_export_team(int tid, struct teamdb_export *pdata)
 {
+  if (server_conn) {
+    err("teamdb_export_team: not implemented in client mode");
+    return -1;
+  }
+
   if (!teamdb_lookup(tid)) {
     err("teamdb_export_team: bad id: %d", tid);
     return -1;
@@ -780,6 +1034,30 @@ teamdb_export_team(int tid, struct teamdb_export *pdata)
   pdata->scrambled[TEAMDB_SCRAMBLED_LEN - 1] = 0;
   teamdb_get_plain_password(tid, pdata->passwd, TEAMDB_PASSWD_LEN);
 
+  return 0;
+}
+
+int
+teamdb_regenerate_passwords(unsigned char const *path)
+{
+  int fd, r;
+
+  if (!server_conn) {
+    err("teamdb_regenerate_passwords: not supported in files mode");
+    return -1;
+  }
+  if ((fd = open(path, O_WRONLY)) < 0) {
+    err("teamdb_regenerate_passwords: cannot open %s: %s",
+        path, os_ErrorMsg());
+    return -1;
+  }
+  r = userlist_clnt_generate_team_passwd(server_conn, contest_id, fd);
+  if (r < 0) {
+    err("teamdb_regenerate_passwords: failed: %s", userlist_strerror(-r));
+    close(fd);
+    return -1;
+  }
+  close(fd);
   return 0;
 }
 
