@@ -1578,3 +1578,10 @@ sformat.c 1 14 1147224
 userlist_xml.c 1 22 3893922
 serve_clnt/master_page.c 1 10 393469
 serve_clnt/reset_filter.c 1 4 167767
+protocol.h 1 31 753499
+serve.c 1 81 11943681
+serve-cmd.c 1 5 1008285
+filter_eval.c 1 6 956224
+protocol.c 1 14 235897
+filter_expr.y 1 7 2001126
+filter_scan.lex 1 14 549971
