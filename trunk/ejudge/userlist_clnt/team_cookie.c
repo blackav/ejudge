@@ -71,11 +71,11 @@ userlist_clnt_team_cookie(struct userlist_clnt *clnt,
     r = -ULS_ERR_PROTOCOL;
     goto cleanup;
   }
-  *p_user_id = in->user_id;
-  *p_locale_id = in->locale_id;
-  *p_contest_id = in->contest_id;
-  *p_login = xstrdup(login_ptr);
-  *p_name = xstrdup(name_ptr);
+  if (p_user_id) *p_user_id = in->user_id;
+  if (p_locale_id) *p_locale_id = in->locale_id;
+  if (p_contest_id) *p_contest_id = in->contest_id;
+  if (p_login) *p_login = xstrdup(login_ptr);
+  if (p_name) *p_name = xstrdup(name_ptr);
 
   r = in->reply_id;
  cleanup:
