@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -80,6 +80,7 @@ static char const * const tag_map[] =
   "city_en",
   "country",
   "country_en",
+  "location",
 
   0
 };
@@ -110,6 +111,7 @@ static char const * const attn_map[] =
   "serial",
   "read_only",
   "priv_level",
+  "never_clean",
 
   0
 };
@@ -160,6 +162,7 @@ static size_t const tag_sizes[USERLIST_LAST_TAG] =
   sizeof(struct xml_tree),      /* CITY_EN */
   sizeof(struct xml_tree),      /* COUNTRY */
   sizeof(struct xml_tree),      /* COUNTRY_EN */
+  sizeof(struct xml_tree),      /* LOCATION */
 };
 /*
 static size_t const attn_sizes[USERLIST_LAST_ATTN] =
@@ -225,6 +228,7 @@ node_free(struct xml_tree *t)
       xfree(p->city_en);
       xfree(p->country);
       xfree(p->country_en);
+      xfree(p->location);
     }
     break;
   case USERLIST_T_MEMBER:
@@ -894,6 +898,10 @@ do_parse_user(char const *path, struct userlist_user *usr)
       if (parse_bool(path, a->line, a->column, a->text,
                      &usr->read_only) < 0) return -1;
       break;
+    case USERLIST_A_NEVER_CLEAN:
+      if (parse_bool(path, a->line, a->column, a->text,
+                     &usr->never_clean) < 0) return -1;
+      break;
     default:
       return invalid_attn(path, a);
     }
@@ -977,6 +985,9 @@ do_parse_user(char const *path, struct userlist_user *usr)
       break;
     case USERLIST_T_COUNTRY_EN:
       if (handle_final_tag(path, t, &usr->country_en) < 0) return -1;
+      break;
+    case USERLIST_T_LOCATION:
+      if (handle_final_tag(path, t, &usr->location) < 0) return -1;
       break;
     case USERLIST_T_PHONES:
       if (!(usr->phones = parse_phones(path, t))) return -1;
@@ -1448,6 +1459,10 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_READ_ONLY],
             unparse_bool(p->read_only));
   }
+  if (p->never_clean && mode != USERLIST_MODE_STAND) {
+    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_NEVER_CLEAN],
+            unparse_bool(p->never_clean));
+  }
   if (p->registration_time && mode == USERLIST_MODE_ALL) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_REGISTERED],
             unparse_date(p->registration_time));
@@ -1518,6 +1533,7 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   unparse_final_tag(f, USERLIST_T_CITY_EN, p->city_en, "    ");
   unparse_final_tag(f, USERLIST_T_COUNTRY, p->country, "    ");
   unparse_final_tag(f, USERLIST_T_COUNTRY_EN, p->country_en, "    ");
+  unparse_final_tag(f, USERLIST_T_LOCATION, p->location, "    ");
 
   if (mode != USERLIST_MODE_STAND) {
     unparse_phones(p->phones, f, "    ");
