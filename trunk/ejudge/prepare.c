@@ -16,6 +16,7 @@
  */
 
 #include "prepare.h"
+#include "settings.h"
 
 #include "fileutl.h"
 #include "sformat.h"
@@ -36,10 +37,6 @@
 #else
 #define _(x) x
 #endif
-
-#define MAX_LANGUAGE 31
-#define MAX_PROBLEM  100
-#define MAX_TESTER  100
 
 struct generic_section_config *config;
 struct section_global_data    *global;
@@ -225,6 +222,9 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(enable_printing, "d"),
   GLOBAL_PARAM(team_page_quota, "d"),
 
+  GLOBAL_PARAM(priority_adjustment, "d"),
+  GLOBAL_PARAM(user_priority_adjustments, "x"),
+
   { 0, 0, 0, 0 }
 };
 
@@ -256,6 +256,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(disable_testing, "d"),
   PROBLEM_PARAM(variable_full_score, "d"),
   PROBLEM_PARAM(hidden, "d"),
+  PROBLEM_PARAM(priority_adjustment, "d"),
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
@@ -288,6 +289,7 @@ static struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(compile_id, "d"),
   LANGUAGE_PARAM(disabled, "d"),
   LANGUAGE_PARAM(binary, "d"),
+  LANGUAGE_PARAM(priority_adjustment, "d"),
   LANGUAGE_PARAM(short_name, "s"),
   LANGUAGE_PARAM(long_name, "s"),
   LANGUAGE_PARAM(key, "s"),
@@ -316,6 +318,7 @@ static struct config_parse_info section_tester_params[] =
   TESTER_PARAM(arch, "s"),
   TESTER_PARAM(key, "s"),
   TESTER_PARAM(any, "d"),
+  TESTER_PARAM(priority_adjustment, "d"),
 
   TESTER_PARAM(abstract, "d"),
   TESTER_PARAM(super, "x"),
@@ -526,6 +529,7 @@ problem_init_func(struct generic_section_config *gp)
   p->test_score = -1;
   p->variable_full_score = -1;
   p->hidden = -1;
+  p->priority_adjustment = -1000;
 }
 
 static void
@@ -538,6 +542,7 @@ tester_init_func(struct generic_section_config *gp)
   p->no_core_dump = -1;
   p->clear_env = -1;
   p->time_limit_adjustment = -1;
+  p->priority_adjustment = -1000;
 }
 
 static char*
@@ -606,6 +611,12 @@ static int inh_isdef_int2(void *vpint)
   if (*pint != 0) return 1;
   return 0;
 }
+static int inh_isdef_int3(void *vpint)
+{
+  int *pint = (int*) vpint;
+  if (*pint != -1000) return 1;
+  return 0;
+}
 static void inh_copy_int(void *dst, void *src)
 {
   memcpy(dst, src, sizeof(int));
@@ -645,6 +656,7 @@ static struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(max_vm_size, int2, int),
   TESTER_INH(is_dos, int, int),
   TESTER_INH(no_redirect, int, int),
+  TESTER_INH(priority_adjustment, int3, int),
   TESTER_INH(check_dir, path, path),
   TESTER_INH(errorcode_file, path, path),
   TESTER_INH(error_file, path, path),
@@ -1087,6 +1099,75 @@ find_variant(int user_id, int prob_id)
   return 0;
 }
 
+static struct user_adjustment_info *
+parse_user_adjustment(char **strs)
+{
+  int count = 0, i, x, n;
+  struct user_adjustment_info *pinfo = 0;
+
+  if (!strs) return 0;
+  for (; strs[count]; count++);
+  XCALLOC(pinfo, count + 1);
+  for (i = 0; i < count; i++) {
+    pinfo[i].login = xmalloc(strlen(strs[i]) + 1);
+    n = 0;
+    if (sscanf("%s %d %n", pinfo[i].login, &x, &n) != 2 || strs[i][n]) {
+      err("invalid user adjustment line %d", i + 1);
+      return 0;
+    }
+    if (x <= -1000 || x >= 1000) {
+      err("user priority adjustment %d at line %d is invalid", x, i + 1);
+      return 0;
+    }
+    pinfo[i].adjustment = x;
+  }
+  return pinfo;
+}
+
+struct user_adjustment_map
+{
+  int vintage;
+  int user_map_size;
+  struct user_adjustment_info **user_map;
+};
+
+int
+find_user_priority_adjustment(int user_id)
+{
+  struct user_adjustment_map *pmap = global->user_adjustment_map;
+  struct user_adjustment_info *pinfo = global->user_adjustment_info;
+  int new_vint, i;
+
+  if (!pinfo) return 0;
+  new_vint = teamdb_get_vintage();
+  if (!pmap || new_vint != pmap->vintage) {
+    if (!pmap) {
+      XCALLOC(pmap, 1);
+      global->user_adjustment_map = pmap;
+    }
+    xfree(pmap->user_map);
+
+    pmap->user_map_size = teamdb_get_max_team_id() + 1;
+    XCALLOC(pmap->user_map, pmap->user_map_size);
+
+    for (i = 0; pinfo[i].login; i++) {
+      pinfo[i].id = teamdb_lookup_login(pinfo[i].login);
+      if (pinfo[i].id <= 0 || pinfo[i].id >= pmap->user_map_size) {
+        pinfo[i].id = 0;
+        continue;
+      }
+      if (pmap->user_map[pinfo[i].id]) continue;
+      pmap->user_map[pinfo[i].id] = &pinfo[i];
+    }
+
+    pmap->vintage = new_vint;
+  }
+
+  if (user_id <= 0 || user_id >= pmap->user_map_size) return 0;
+  if (!pmap->user_map[user_id]) return 0;
+  return pmap->user_map[user_id]->adjustment;
+}
+
 static int
 set_defaults(int mode)
 {
@@ -1494,6 +1575,11 @@ set_defaults(int mode)
     }
   }
 
+  if (mode == PREPARE_SERVE && global->user_priority_adjustments) {
+    global->user_adjustment_info = parse_user_adjustment(global->user_priority_adjustments);
+    if (!global->user_adjustment_info) return -1;
+  }
+
   for (i = 1; i <= max_lang && mode != PREPARE_RUN; i++) {
     if (!langs[i]) continue;
     if (!langs[i]->short_name[0]) {
@@ -1847,6 +1933,14 @@ set_defaults(int mode)
       probs[i]->tgz_sfx[0] = 0;
     }
 
+    if (probs[i]->priority_adjustment == -1000 && si != -1 &&
+        abstr_probs[si]->priority_adjustment != -1000) {
+      probs[i]->priority_adjustment = abstr_probs[si]->priority_adjustment;
+    }
+    if (probs[i]->priority_adjustment == -1000) {
+      probs[i]->priority_adjustment = 0;
+    }
+
     if (mode == PREPARE_SERVE) {
       if (probs[i]->deadline[0]) {
         if (parse_date(probs[i]->deadline, &probs[i]->t_deadline) < 0) {
@@ -2128,6 +2222,14 @@ set_defaults(int mode)
         snprintf(tp->run_out_dir, sizeof(tp->run_out_dir), "%s/%04d",
                  tp->run_dir, global->contest_id);
         info("tester.%d.run_out_dir is %s", i, tp->run_out_dir);
+
+        if (tp->priority_adjustment == -1000 && atp
+            && atp->priority_adjustment != -1000) {
+          tp->priority_adjustment = atp->priority_adjustment;
+        }
+        if (tp->priority_adjustment == -1000) {
+          tp->priority_adjustment = 0;
+        }
       }
 
       if (tp->no_core_dump == -1 && atp && atp->no_core_dump != -1) {
@@ -2805,6 +2907,15 @@ prepare_tester_refinement(struct section_tester_data *out,
   }
   if (out->is_dos == -1) {
     out->is_dos = 0;
+  }
+
+  /* copy priority_adjustment */
+  out->priority_adjustment = tp->priority_adjustment;
+  if (out->priority_adjustment == -1000 && atp) {
+    out->priority_adjustment = atp->priority_adjustment;
+  }
+  if (out->priority_adjustment == -1000) {
+    out->priority_adjustment = 0;
   }
 
   /* copy no_redirect */
