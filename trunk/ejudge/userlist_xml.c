@@ -121,6 +121,7 @@ static char const * const attn_map[] =
   "read_only",
   "priv_level",
   "never_clean",
+  "privileged",
 
   0
 };
@@ -894,6 +895,10 @@ do_parse_user(char const *path, struct userlist_user *usr)
       if (parse_date(path, a->line, a->column, a->text,
                      &usr->last_minor_change_time) < 0) return -1;
       break;
+    case USERLIST_A_PRIVILEGED:
+      if (parse_bool(path, a->line, a->column, a->text,
+                     &usr->is_privileged) < 0) return -1;
+      break;
     case USERLIST_A_INVISIBLE:
       if (parse_bool(path, a->line, a->column, a->text,
                      &usr->is_invisible) < 0) return -1;
@@ -1467,6 +1472,10 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   if (p->default_use_cookies >= 0 && mode != USERLIST_MODE_STAND) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_USE_COOKIES],
             unparse_bool(p->default_use_cookies));
+  }
+  if (p->is_privileged) {
+    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_PRIVILEGED],
+            unparse_bool(p->is_privileged));
   }
   if (p->is_invisible && mode == USERLIST_MODE_ALL) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_INVISIBLE],
