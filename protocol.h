@@ -44,6 +44,7 @@ struct prot_serve_status
   unsigned char score_system;
   unsigned char clients_suspended;
   unsigned char is_virtual;
+  unsigned char olympiad_judging_mode;
 };
 
 #define PROT_SERVE_PACKET_MAGIC (0xe342)
@@ -97,6 +98,7 @@ enum
     SRV_CMD_DUMP_RUNS,
     SRV_CMD_DUMP_USERS,
     SRV_CMD_DUMP_STANDINGS,
+    SRV_CMD_SET_JUDGING_MODE,
 
     SRV_CMD_LAST
   };
