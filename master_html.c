@@ -602,8 +602,6 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
   int fe_html_len;
   unsigned char first_run_str[32] = { 0 }, last_run_str[32] = { 0 };
   unsigned char hbuf[128];
-  int has_parse_errors = 0;
-  int has_filter_errors = 0;
   unsigned char *prob_str;
   const unsigned char *imported_str;
   const unsigned char *rejudge_dis_str;
@@ -632,22 +630,34 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
     filter_expr_set_string(filter_expr, u->tree_mem, parse_error_func);
     filter_expr_init_parser(u->tree_mem, parse_error_func);
     i = filter_expr_parse();
-    if (i + filter_expr_nerrs == 0) {
-      if (filter_expr_lval && filter_expr_lval->type != FILTER_TYPE_BOOL) {
+    if (i + filter_expr_nerrs == 0 && filter_expr_lval &&
+        filter_expr_lval->type == FILTER_TYPE_BOOL) {
+      // parsing successful
+      u->prev_tree = filter_expr_lval;
+    } else {
+      // parsing failed
+      if (i + filter_expr_nerrs == 0 && filter_expr_lval &&
+          filter_expr_lval->type != FILTER_TYPE_BOOL) {
         parse_error_func("bool expression expected");
       } else {
-        u->prev_tree = filter_expr_lval;
+        parse_error_func("filter expression parsing failed");
       }
-    } else {
-      parse_error_func("filter expression parsing failed");
+      /* In the error case we print the diagnostics, new filter expression
+       * form (incl. "Reset filter") button.
+       * We'll need u->error_msgs string, but the tree should be freed.
+       */
+      u->tree_mem = filter_tree_delete(u->tree_mem);
+      u->prev_tree = 0;
+      u->tree_mem = 0;
     }
   }
 
-  if (u->error_msgs) {
-    has_parse_errors = 1;
+  /* in the raw output format we cannot produce reasonable output in case of error */
+  if (raw_format && u->error_msgs) {
+    return -SRV_ERR_FILTER_EXPR;
   }
 
-  if (!has_parse_errors) {
+  if (!u->error_msgs) {
     memset(&env, 0, sizeof(env));
     env.mem = filter_tree_new();
     env.maxlang = max_lang;
@@ -676,19 +686,20 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
       }
       match_idx[match_tot++] = i;
     }
-    filter_tree_delete(env.mem);
-    if (u->error_msgs) {
-      has_filter_errors = 1;
-    }
+    env.mem = filter_tree_delete(env.mem);
   }
 
-  /* create the displayed runs mask */
-  displayed_size = (env.rtotal + BITS_PER_LONG - 1) / BITS_PER_LONG;
-  if (!displayed_size) displayed_size = 1;
-  displayed_mask = (unsigned long*) alloca(displayed_size * sizeof(displayed_mask[0]));
-  memset(displayed_mask, 0, displayed_size * sizeof(displayed_mask[0]));
+  if (raw_format && u->error_msgs) {
+    return -SRV_ERR_FILTER_EXPR;
+  }
 
-  if (!has_parse_errors && !has_filter_errors) {
+  if (!u->error_msgs) {
+    /* create the displayed runs mask */
+    displayed_size = (env.rtotal + BITS_PER_LONG - 1) / BITS_PER_LONG;
+    if (!displayed_size) displayed_size = 1;
+    displayed_mask = (unsigned long*) alloca(displayed_size*sizeof(displayed_mask[0]));
+    memset(displayed_mask, 0, displayed_size * sizeof(displayed_mask[0]));
+
     list_idx = alloca((env.rtotal + 1) * sizeof(list_idx[0]));
     memset(list_idx, 0, (env.rtotal + 1) * sizeof(list_idx[0]));
     list_tot = 0;
@@ -737,7 +748,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
     fprintf(f, "<hr><h2>%s</h2>\n", _("Submissions"));
   }
 
-  if (!raw_format && !has_parse_errors && !has_filter_errors) {
+  if (!raw_format && !u->error_msgs) {
     fprintf(f, "<p><big>%s: %d, %s: %d, %s: %d</big></p>\n",
             _("Total submissions"), env.rtotal,
             _("Filtered"), match_tot,
@@ -773,21 +784,13 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
     fprintf(f, "</form></p>\n");
   }
 
-  if (raw_format && u->error_msgs) {
-    return -SRV_ERR_FILTER_EXPR;
-  }
-
   if (u->error_msgs) {
     fprintf(f, "<h2>Filter expression errors</h2>\n");
     fprintf(f, "<p><pre><font color=\"red\">%s</font></pre></p>\n",
             u->error_msgs);
-    if (has_filter_errors) {
-      xfree(u->error_msgs);
-      u->error_msgs = 0;
-    }
   }
 
-  if (!has_parse_errors && !has_filter_errors) {
+  if (!u->error_msgs) {
     switch (global->score_system_val) {
     case SCORE_ACM:
       str1 = _("Failed test");
@@ -1035,7 +1038,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
                     0, 0, 0, 0, 0, 0, 0);
 
 
-  if (priv_level == PRIV_LEVEL_ADMIN &&!has_parse_errors&&!has_filter_errors) {
+  if (priv_level == PRIV_LEVEL_ADMIN &&!u->error_msgs) {
     fprintf(f, "<table border=\"0\"><tr><td>");
     html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
