@@ -27,6 +27,7 @@
 #include "unix/unix_fileutl.h"
 #include "misctext.h"
 #include "protocol.h"
+#include "client_actions.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -64,69 +65,9 @@ int           server_download_interval;
 
 unsigned long client_cur_time;
 
-path_t  client_pipe_dir;
-path_t  client_cmd_dir;
-
 path_t  program_name;
 char    form_header_simple[1024];
 char    form_header_multipart[1024];
-char    form_header_simple_ext[1024];
-char    form_header_multipart_ext[1024];
-
-char *
-client_packet_name(char *buf)
-{
-  sprintf(buf, "%lu%d", time(0), getpid());
-  return buf;
-}
-
-int
-client_make_pipe(char const *name)
-{
-  path_t fifo_path;
-
-  pathmake(fifo_path, client_pipe_dir, "/", name, NULL);
-  if (sf_mkfifo(fifo_path, 0666) < 0) return -1;
-  if (sf_chmod(fifo_path, 0777) < 0) return -1;
-
-  return 0;
-}
-
-int
-client_get_reply(char **pstr, int *psize, char const *name)
-{
-  char   *myptr = 0;
-  size_t  rlen;
-  int     code = -1, n;
-
-  if (pstr) myptr = *pstr;
-
-  xfree(myptr); myptr = 0;
-  if (generic_read_file(&myptr, 0, &rlen, REMOVE|PIPE,
-                        client_pipe_dir, name, "") < 0) {
-    asprintf(&myptr, "<p><big><b>%s</b></big></p>",
-             _("Cannot read server response."));
-  } else {
-    if (myptr && sscanf(myptr, "%d%n", &code, &n) != 1) code = -1;
-  }
-
-  if (psize) *psize = rlen;
-  if (pstr) *pstr = myptr;
-  else xfree(myptr);
-  return code;
-}
-
-int
-client_transaction(char *packet_name, char const *cmd,
-                   char **preply, int *preply_len)
-{
-  if (!packet_name[0]) client_packet_name(packet_name);
-  if (client_make_pipe(packet_name) < 0) return -1;
-  if (generic_write_file(cmd, strlen(cmd), SAFE,
-                         client_cmd_dir, packet_name, "") < 0)
-    return -1;
-  return client_get_reply(preply, preply_len, packet_name);
-}
 
 void
 client_put_header(char const *coding, char const *format, ...)
@@ -372,7 +313,7 @@ client_print_server_status(int priv_level,
   if (!server_start_time) {
     printf("<tr><td colspan=\"2\"><b><big>%s</big></b></td>\n",
          _("Contest is not started"));
-    if (priv_level == PRIV_LEVEL_ADMIN) printf("<td>&nbsp;</td><td><input type=\"submit\" name=\"start\" value=\"%s\"></td>", _("start"));
+    if (priv_level == PRIV_LEVEL_ADMIN) printf("<td>&nbsp;</td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_START, _("Start"));
     puts("</tr>");
   } else {
     client_time_to_str(str_strt_time, server_start_time);
@@ -381,8 +322,7 @@ client_print_server_status(int priv_level,
     if (priv_level == PRIV_LEVEL_ADMIN) {
       puts("<td>&nbsp;</td>");
       if (!server_stop_time)
-        printf("<td><input type=\"submit\" name=\"stop\" value=\"%s\"></td>",
-               _("stop"));
+        printf("<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_STOP, _("Stop"));
       else
         puts("<td>&nbsp;</td>");
 
@@ -400,8 +340,8 @@ client_print_server_status(int priv_level,
            str_schd_time);
     if (priv_level == PRIV_LEVEL_ADMIN)
       printf("<td><input type=\"text\" name=\"sched_time\" size=\"16\"></td>"
-             "<td><input type=\"submit\" name=\"reschedule\" value=\"%s\"></td>",
-             _("Reschedule"));
+             "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>",
+             ACTION_SCHEDULE, _("Reschedule"));
     puts("</tr>");
   }
 
@@ -413,8 +353,8 @@ client_print_server_status(int priv_level,
   printf("<tr><td>%s:</td><td>%s</td>", _("Duration"), str_duration);
   if (priv_level == PRIV_LEVEL_ADMIN) {
     if (!server_stop_time)
-      printf("<td><input type=\"text\" name=\"dur\" size=\"16\"></td><td><input type=\"submit\" name=\"changedur\" value=\"%s\"></td>",
-             _("Change duration"));
+      printf("<td><input type=\"text\" name=\"dur\" size=\"16\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>",
+             ACTION_DURATION, _("Change duration"));
     else
       puts("<td>&nbsp;</td><td>&nbsp;</td>");
   }
@@ -448,87 +388,17 @@ client_print_server_status(int priv_level,
 }
 
 void
-client_make_form_headers(void)
+client_make_form_headers(unsigned char const *self_url)
 {
 
   sprintf(form_header_simple,
           "<form method=\"POST\" action=\"%s\" "
           "ENCTYPE=\"application/x-www-form-urlencoded\">",
-          program_name);
-
-  /*
-  sprintf(form_header_simple,
-          "<form method=\"POST\" action=\"%s\" "
-          "ENCTYPE=\"multipart/form-data\">",
-          program_name);  
-  */
+          self_url);
   sprintf(form_header_multipart,
           "<form method=\"POST\" action=\"%s\" "
           "ENCTYPE=\"multipart/form-data\">",
-          program_name);  
-
-  /* to put anchor for quick navigation */
-
-  sprintf(form_header_simple_ext,
-          "<form method=\"POST\" action=\"%s%%s\" "
-          "ENCTYPE=\"application/x-www-form-urlencoded\">",
-          program_name);
-  sprintf(form_header_multipart_ext,
-          "<form method=\"POST\" action=\"%s%%s\" "
-          "ENCTYPE=\"multipart/form-data\">",
-          program_name);  
-
-}
-
-char *
-client_file_to_str(char const *txt, int len)
-{
-  char *s = xmalloc(len + 1);
-  memcpy(s, txt, len);
-  s[len] = 0;
-  return s;
-}
-
-int
-client_file_to_stdout(char const *txt, int len)
-{
-  char const *s;
-
-  for (s = txt; len > 0; s++, len--) putchar(*s);
-  return len;
-}
-
-void
-client_split(char const *buf, int sep, ...)
-{
-  va_list args;
-  char **curp, **nextp;
-  char *p;
-  char const *s;
-
-  va_start(args, sep);
-  curp = va_arg(args, char **);
-  if (!curp) return;
-  nextp = va_arg(args, char **);
-  while (nextp) {
-    for (s = buf; *s != 0 && *s != sep; s++);
-    if (!*s) {
-      *curp = xstrdup(buf);
-      while (nextp) {
-        *nextp = 0;
-        nextp = va_arg(args, char **);
-      }
-      return;
-    }
-    *curp = p = malloc(s - buf + 1);
-    memcpy(p, buf, s - buf);
-    p[s - buf] = 0;
-    buf = s + 1;
-    curp = nextp;
-    nextp = va_arg(args, char **);
-  }
-  *curp = xstrdup(buf);
-  va_end(args);
+          self_url);  
 }
 
 /**
