@@ -1516,9 +1516,6 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   }
   priv_level = 0;
   switch (data->priv_level) {
-  case PRIV_LEVEL_OBSERVER:
-    priv_level = OPCAP_OBSERVER_LOGIN;
-    break;
   case PRIV_LEVEL_JUDGE:
     priv_level = OPCAP_JUDGE_LOGIN;
     break;
@@ -2039,9 +2036,6 @@ cmd_priv_check_cookie(struct client_state *p,
   }
   priv_level = 0;
   switch (data->priv_level) {
-  case PRIV_LEVEL_OBSERVER:
-    priv_level = OPCAP_OBSERVER_LOGIN;
-    break;
   case PRIV_LEVEL_JUDGE:
     priv_level = OPCAP_JUDGE_LOGIN;
     break;
