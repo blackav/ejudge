@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -782,9 +782,10 @@ run_get_team_usage(int teamid, int *pn, size_t *ps)
 
 /* FIXME: VERY DUMB */
 int
-run_get_attempts(int runid, int *pattempts, int skip_ce_flag)
+run_get_attempts(int runid, int *pattempts,
+                 int *pdisqattempts, int skip_ce_flag)
 {
-  int i, n = 0;
+  int i, n = 0, m = 0;
 
   *pattempts = 0;
   if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
@@ -798,11 +799,15 @@ run_get_attempts(int runid, int *pattempts, int skip_ce_flag)
     if (runs[i].problem != runs[runid].problem) continue;
     if (runs[i].status == RUN_COMPILE_ERR && skip_ce_flag) continue;
     if (runs[i].status == RUN_IGNORED) continue;
-    /* FIXME: what to do with RUN_DISQUALIFIED */
     if (runs[i].is_hidden) continue;
-    n++;
+    if (runs[i].status == RUN_DISQUALIFIED) {
+      m++;
+    } else {
+      n++;
+    }
   }
-  *pattempts = n;
+  if (pattempts) *pattempts = n;
+  if (pdisqattempts) *pdisqattempts = m;
   return 0;
 }
 
