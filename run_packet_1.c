@@ -51,6 +51,11 @@ run_request_packet_read(size_t in_size, const void *in_data,
   XCALLOC(pout, 1);
 
   pout->contest_id = cvt_bin_to_host_32(pin->contest_id);
+  if (pout->contest_id == -1) {
+    /* this is "Forced Quit" packet */
+    *p_out_data = pout;
+    return 0;
+  }
   if (pout->contest_id <= 0 || pout->contest_id > MAX_CONTEST_ID) ERR(5);
   pout->run_id = cvt_bin_to_host_32(pin->run_id);
   if (pout->run_id < 0 || pout->run_id > MAX_RUN_ID) ERR(6);
@@ -68,6 +73,7 @@ run_request_packet_read(size_t in_size, const void *in_data,
   if ((flags & FLAGS_REPORT_ERROR_CODE)) pout->report_error_code = 1;
   if ((flags & FLAGS_ACCEPT_PARTIAL)) pout->accept_partial = 1;
   if ((flags & FLAGS_HTML_REPORT)) pout->html_report = 1;
+  if ((flags & FLAGS_DISABLE_SOUND)) pout->disable_sound = 1;
 
   pout->ts1 = cvt_bin_to_host_32(pin->ts1);
   pout->ts1_us = cvt_bin_to_host_32(pin->ts1_us);
@@ -98,16 +104,6 @@ run_request_packet_read(size_t in_size, const void *in_data,
   if (packet_len != pin->packet_len) ERR(18);
   inptr = (const unsigned char*) pin + sizeof(*pin);
 
-  pout->user_spelling = xmalloc(user_spelling_len + 1);
-  if (user_spelling_len > 0) memcpy(pout->user_spelling, inptr, user_spelling_len);
-  pout->user_spelling[user_spelling_len] = 0;
-  inptr += user_spelling_len;
-
-  pout->prob_spelling = xmalloc(prob_spelling_len + 1);
-  if (prob_spelling_len > 0) memcpy(pout->prob_spelling, inptr, prob_spelling_len);
-  pout->prob_spelling[prob_spelling_len] = 0;
-  inptr += prob_spelling_len;
-
   pout->exe_sfx = xmalloc(exe_sfx_len + 1);
   if (exe_sfx_len > 0) memcpy(pout->exe_sfx, inptr, exe_sfx_len);
   pout->exe_sfx[exe_sfx_len] = 0;
@@ -117,6 +113,16 @@ run_request_packet_read(size_t in_size, const void *in_data,
   if (arch_len > 0) memcpy(pout->arch, inptr, arch_len);
   pout->arch[arch_len] = 0;
   inptr += arch_len;
+
+  pout->user_spelling = xmalloc(user_spelling_len + 1);
+  if (user_spelling_len > 0) memcpy(pout->user_spelling, inptr, user_spelling_len);
+  pout->user_spelling[user_spelling_len] = 0;
+  inptr += user_spelling_len;
+
+  pout->prob_spelling = xmalloc(prob_spelling_len + 1);
+  if (prob_spelling_len > 0) memcpy(pout->prob_spelling, inptr, prob_spelling_len);
+  pout->prob_spelling[prob_spelling_len] = 0;
+  inptr += prob_spelling_len;
 
   *p_out_data = pout;
   return 0;
