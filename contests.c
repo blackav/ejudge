@@ -42,7 +42,6 @@ static char const * const tag_map[] =
   "users_access",
   "master_access",
   "judge_access",
-  "observer_access",
   "team_access",
   "ip",
   "field",
@@ -113,7 +112,6 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   sizeof(struct contest_access), /* CONTEST_USERS_ACCESS */
   sizeof(struct contest_access), /* CONTEST_MASTER_ACCESS */
   sizeof(struct contest_access), /* CONTEST_JUDGE_ACCESS */
-  sizeof(struct contest_access), /* CONTEST_OBSERVER_ACCESS */
   sizeof(struct contest_access), /* CONTEST_TEAM_ACCESS */
   sizeof(struct contest_ip),    /* CONTEST_IP */
   sizeof(struct contest_field), /* CONTEST_FIELD */
@@ -819,9 +817,6 @@ parse_contest(struct contest_desc *cnts, char const *path)
     case CONTEST_JUDGE_ACCESS:
       pacc = &cnts->judge_access;
       goto process_access;
-    case CONTEST_OBSERVER_ACCESS:
-      pacc = &cnts->observer_access;
-      goto process_access;
     case CONTEST_TEAM_ACCESS:
       pacc = &cnts->team_access;
     process_access:
@@ -987,7 +982,6 @@ contests_check_ip(int num, int field, unsigned long ip)
   case CONTEST_USERS_ACCESS:    acc = d->users_access; break;
   case CONTEST_MASTER_ACCESS:   acc = d->master_access; break;
   case CONTEST_JUDGE_ACCESS:    acc = d->judge_access; break;
-  case CONTEST_OBSERVER_ACCESS: acc = d->observer_access; break;
   case CONTEST_TEAM_ACCESS:     acc = d->team_access; break;
   default:
     err("contests_check_ip: %d: invalid field %d", num, field);
@@ -1015,11 +1009,6 @@ int
 contests_check_judge_ip(int num, unsigned long ip)
 {
   return contests_check_ip(num, CONTEST_JUDGE_ACCESS, ip);
-}
-int
-contests_check_observer_ip(int num, unsigned long ip)
-{
-  return contests_check_ip(num, CONTEST_OBSERVER_ACCESS, ip);
 }
 int
 contests_check_team_ip(int num, unsigned long ip)
