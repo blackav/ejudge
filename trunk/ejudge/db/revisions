@@ -758,3 +758,5 @@ userlist_clnt/set_info.c 1 2 135439
 userlist_clnt/set_passwd.c 1 2 171576
 userlist_clnt/team_login.c 1 3 252646
 userlist_clnt.h 1 15 588333
+clean-users.c 1 1 680093
+super-serve.c 1 1 1308606
