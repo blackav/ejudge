@@ -100,6 +100,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(ignore_compile_errors, "d"),
   GLOBAL_PARAM(inactivity_timeout, "d"),
   GLOBAL_PARAM(disable_auto_testing, "d"),
+  GLOBAL_PARAM(disable_testing, "d"),
 
   GLOBAL_PARAM(charset, "s"),
   GLOBAL_PARAM(standings_charset, "s"),
@@ -237,6 +238,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(tests_to_accept, "d"),
   PROBLEM_PARAM(checker_real_time_limit, "d"),
   PROBLEM_PARAM(disable_auto_testing, "d"),
+  PROBLEM_PARAM(disable_testing, "d"),
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
@@ -490,6 +492,7 @@ problem_init_func(struct generic_section_config *gp)
   p->checker_real_time_limit = -1;
   p->variant_num = -1;
   p->disable_auto_testing = -1;
+  p->disable_testing = -1;
   p->test_score = -1;
 }
 
@@ -1558,6 +1561,21 @@ set_defaults(int mode)
     }
     if (probs[i]->disable_auto_testing == -1) {
       probs[i]->disable_auto_testing = 0;
+    }
+
+    if (probs[i]->disable_testing == -1 && si != -1
+        && abstr_probs[si]->disable_testing != -1) {
+      probs[i]->disable_testing = abstr_probs[si]->disable_testing;
+      info("problem.%s.disable_testing inherited from problem.%s (%d)",
+           ish, sish, probs[i]->disable_testing);
+    }
+    if (probs[i]->disable_testing == -1) {
+      probs[i]->disable_testing = global->disable_testing;
+      info("problem.%s.disable_testing inherited from global (%d)",
+           ish, global->disable_testing);
+    }
+    if (probs[i]->disable_testing == -1) {
+      probs[i]->disable_testing = 0;
     }
 
     if (!probs[i]->full_score && si != -1
