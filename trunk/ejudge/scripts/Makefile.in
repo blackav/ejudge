@@ -57,14 +57,15 @@ SCRIPTS = \
  mzscheme\
  perl\
  python\
- yabasic
+ yabasic\
+ festival
 
 
 # do nothing on all
 all :
 
 install :
-	mkdir -p ${DESTDIR}${libexecdir}/ejudge
+	mkdir -p "${DESTDIR}${libexecdir}/ejudge"
 	for i in ${SCRIPTS}; do j="${DESTDIR}${libexecdir}/ejudge/$$i"; if [ -f "$$j" ]; then if ! diff -q "$$i" "$$j" >/dev/null 2>&1; then rm -f "$$j.old"; mv "$$j" "$$j.old"; fi; fi; install -m 0755 "$$i" "$$j"; done
 
 clean:
