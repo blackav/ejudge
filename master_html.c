@@ -365,14 +365,173 @@ write_change_status_dialog(FILE *f, unsigned char const *var_name,
 
 #define BITS_PER_LONG (8*sizeof(unsigned long)) 
 
+static struct user_filter_info *allocate_user_info(int user_id, unsigned long long session_id);
+
 static void
-write_all_runs(FILE *f, struct user_filter_info *u,
-               int priv_level, int sid_mode, unsigned long long sid,
-               int first_run, int last_run,
-               unsigned char const *self_url,
-               unsigned char const *filter_expr,
-               unsigned char const *hidden_vars,
-               unsigned char const *extra_args)
+print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
+                 int attempts)
+{
+  // indices
+  enum
+  {
+    RAW_RUN_ID,
+    RAW_RUN_IS_IMPORTED,
+    RAW_RUN_IS_HIDDEN,
+    RAW_RUN_IS_READONLY,
+    RAW_RUN_TIMESTAMP,
+    RAW_RUN_NSEC,
+    RAW_RUN_TIME,
+    RAW_RUN_IP,
+    RAW_RUN_SIZE,
+    RAW_RUN_HASH,
+    RAW_RUN_USER_ID,
+    RAW_RUN_USER_LOGIN,
+    RAW_RUN_USER_NAME,
+    RAW_RUN_PROBLEM,
+    RAW_RUN_VARIANT,
+    RAW_RUN_LANGUAGE,
+    RAW_RUN_LANG_SFX,
+    RAW_RUN_STATUS,
+    RAW_RUN_STATUS_STR,
+    RAW_RUN_PASSED,
+    RAW_RUN_SCORE,
+    RAW_RUN_BASE_SCORE,
+    RAW_RUN_SCORE_MULTIPLIER,
+    RAW_RUN_ATTEMPT,
+    RAW_RUN_PENALTY,
+    RAW_RUN_DATE_PENALTY,
+    RAW_RUN_SCORE_ADJ,
+
+    RAW_RUN_LAST
+  };
+  enum { BSIZE = 64 };
+  unsigned char *fields[RAW_RUN_LAST];
+  int i, variant = 0, score, mult = 1, date_penalty = 0;
+  time_t run_time;
+  unsigned char *sha_in, *sha_out;
+  struct section_problem_data *pp = 0;
+  struct section_language_data *pl = 0;
+
+  memset(fields, 0, sizeof(fields));
+
+  snprintf((fields[RAW_RUN_ID] = alloca(BSIZE)), BSIZE, "%d", run_id);
+  snprintf((fields[RAW_RUN_STATUS] = alloca(BSIZE)), BSIZE, "%d", pe->status);
+  fields[RAW_RUN_STATUS_STR] = run_status_str(pe->status, 0, 0);
+
+  if (pe->status != RUN_EMPTY) {
+    snprintf((fields[RAW_RUN_TIMESTAMP] = alloca(BSIZE)), BSIZE,
+             "%ld", pe->timestamp);
+    snprintf((fields[RAW_RUN_NSEC] = alloca(BSIZE)), BSIZE, "%ld", pe->nsec);
+    fields[RAW_RUN_IP] = run_unparse_ip(pe->ip);
+    snprintf((fields[RAW_RUN_USER_ID] = alloca(BSIZE)), BSIZE, "%d", pe->team);
+    fields[RAW_RUN_USER_LOGIN] = teamdb_get_login(pe->team);
+    fields[RAW_RUN_USER_NAME] = teamdb_get_name(pe->team);
+
+    if (pe->status != RUN_VIRTUAL_START && pe->status != RUN_VIRTUAL_STOP) {
+      run_time = pe->timestamp;
+      if (run_time < start_time) run_time = start_time;
+      run_time -= start_time;
+      snprintf((fields[RAW_RUN_IS_IMPORTED] = alloca(BSIZE)), BSIZE,
+                "%d", pe->is_imported);
+      snprintf((fields[RAW_RUN_IS_HIDDEN] = alloca(BSIZE)), BSIZE,
+                "%d", pe->is_hidden);
+      snprintf((fields[RAW_RUN_IS_READONLY] = alloca(BSIZE)), BSIZE,
+                "%d", pe->is_readonly);
+      snprintf((fields[RAW_RUN_TIME] = alloca(BSIZE)), BSIZE, "%ld", run_time);
+      snprintf((fields[RAW_RUN_SIZE] = alloca(BSIZE)), BSIZE, "%zu", pe->size);
+      sha_in = (unsigned char*) pe->sha1;
+      sha_out = fields[RAW_RUN_HASH] = alloca(BSIZE);
+      for (i = 0; i < 20; i++, sha_out += 2, sha_in++)
+        sprintf(sha_out, "%02x", *sha_in);
+
+      if (pe->problem > 0 && pe->problem <= max_prob) pp = probs[pe->problem];
+      if (pe->language> 0 && pe->language<= max_lang) pl = langs[pe->language];
+
+      if (pp) {
+        fields[RAW_RUN_PROBLEM] = pp->short_name;
+      } else {
+        snprintf((fields[RAW_RUN_PROBLEM] = alloca(BSIZE)), BSIZE,
+                 "??? - %d", pe->problem);
+      }
+
+      variant = pe->variant;
+      if (pp && pp->variant_num > 0) {
+        if (!variant) variant = find_variant(pe->team, pe->problem);
+      }
+      if (variant > 0) {
+        snprintf((fields[RAW_RUN_VARIANT] = alloca(BSIZE)), BSIZE,
+                 "%d", variant);
+      }
+
+      if (pl) {
+        fields[RAW_RUN_LANGUAGE] = pl->short_name;
+      } else {
+        snprintf((fields[RAW_RUN_LANGUAGE] = alloca(BSIZE)), BSIZE,
+                 "??? - %d", pe->language);
+      }
+      if (pl) fields[RAW_RUN_LANG_SFX] = pl->src_sfx;
+
+      switch (pe->status) {
+      case RUN_OK:
+        if (global->score_system_val == SCORE_ACM) break;
+        // FALLTHROUGH
+      case RUN_COMPILE_ERR:
+      case RUN_RUN_TIME_ERR:
+      case RUN_TIME_LIMIT_ERR:
+      case RUN_PRESENTATION_ERR:
+      case RUN_WRONG_ANSWER_ERR:
+      case RUN_CHECK_FAILED:
+      case RUN_PARTIAL:
+        if (global->score_system_val == SCORE_ACM) {
+          if (pe->test > 0) {
+            snprintf((fields[RAW_RUN_PASSED] = alloca(BSIZE)), BSIZE,
+                     "%d", pe->test);
+          }
+          break;
+        }
+        if (pe->test > 0) {
+          snprintf((fields[RAW_RUN_PASSED] = alloca(BSIZE)), BSIZE,
+                   "%d", pe->test - 1);
+        }
+
+        score = calc_kirov_score(0, 0, pe, pp, attempts, &date_penalty);
+        if (pp->score_multiplier >= 1) mult = pp->score_multiplier;
+        snprintf((fields[RAW_RUN_SCORE] = alloca(BSIZE)), BSIZE, "%d", score);
+        snprintf((fields[RAW_RUN_BASE_SCORE] = alloca(BSIZE)), BSIZE,
+                 "%d", pe->score);
+        snprintf((fields[RAW_RUN_SCORE_MULTIPLIER] = alloca(BSIZE)), BSIZE,
+                 "%d", mult);
+        snprintf((fields[RAW_RUN_ATTEMPT] = alloca(BSIZE)), BSIZE,
+                 "%d", attempts);
+        if (pp) {
+          snprintf((fields[RAW_RUN_PENALTY] = alloca(BSIZE)), BSIZE,
+                   "%d", pp->run_penalty);
+        }
+        snprintf((fields[RAW_RUN_DATE_PENALTY] = alloca(BSIZE)), BSIZE,
+                 "%d", date_penalty);
+        snprintf((fields[RAW_RUN_SCORE_ADJ] = alloca(BSIZE)), BSIZE,
+                 "%d", pe->score_adj);
+      }
+    }
+  }
+
+  for (i = 0; i < RAW_RUN_LAST; i++) {
+    if (!fields[i]) fields[i] = "";
+    if (i > 0) putc('&', f);
+    fputs(fields[i], f);
+  }
+  putc('\n', f);
+}
+
+/* note: if self_url is an empty string, raw format is used */
+int
+write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
+                    int priv_level, int sid_mode, unsigned long long sid,
+                    int first_run, int last_run,
+                    unsigned char const *self_url,
+                    unsigned char const *filter_expr,
+                    unsigned char const *hidden_vars,
+                    unsigned char const *extra_args)
 {
   struct filter_env env;
   int i, r, j;
@@ -395,7 +554,11 @@ write_all_runs(FILE *f, struct user_filter_info *u,
   const unsigned char *imported_str;
   const unsigned char *rejudge_dis_str;
   unsigned long *displayed_mask;
-  int displayed_size;
+  int displayed_size, raw_format = 0;
+
+  if (!u) u = allocate_user_info(user_id, sid);
+
+  if (!self_url || !*self_url) raw_format = 1;
 
   if (!filter_expr || !*filter_expr ||
       (u->prev_filter_expr && !strcmp(u->prev_filter_expr, filter_expr))){
@@ -515,41 +678,49 @@ write_all_runs(FILE *f, struct user_filter_info *u,
     }
   }
 
-  fprintf(f, "<hr><h2>%s</h2>\n", _("Submissions"));
+  if (!raw_format) {
+    fprintf(f, "<hr><h2>%s</h2>\n", _("Submissions"));
+  }
 
-  if (!has_parse_errors && !has_filter_errors) {
+  if (!raw_format && !has_parse_errors && !has_filter_errors) {
     fprintf(f, "<p><big>%s: %d, %s: %d, %s: %d</big></p>\n",
             _("Total submissions"), env.rtotal,
             _("Filtered"), match_tot,
             _("Shown"), list_tot);
   }
 
-  if (u->prev_filter_expr) {
-    fe_html_len = html_armored_strlen(u->prev_filter_expr);
-    fe_html = alloca(fe_html_len + 16);
-    html_armor_string(u->prev_filter_expr, fe_html);
-  } else {
-    fe_html = "";
-    fe_html_len = 0;
+  if (!raw_format) {
+    if (u->prev_filter_expr) {
+      fe_html_len = html_armored_strlen(u->prev_filter_expr);
+      fe_html = alloca(fe_html_len + 16);
+      html_armor_string(u->prev_filter_expr, fe_html);
+    } else {
+      fe_html = "";
+      fe_html_len = 0;
+    }
+    if (u->prev_first_run) {
+      snprintf(first_run_str, sizeof(first_run_str), "%d",
+               (u->prev_first_run>0)?u->prev_first_run - 1:u->prev_first_run);
+    }
+    if (u->prev_last_run) {
+      snprintf(last_run_str, sizeof(last_run_str), "%d",
+               (u->prev_last_run > 0)?u->prev_last_run - 1:u->prev_last_run);
+    }
+    html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args);
+    fprintf(f, "<p>%s: <input type=\"text\" name=\"filter_expr\" size=\"32\" maxlength=\"128\" value=\"%s\">", _("Filter expression"), fe_html);
+    fprintf(f, "%s: <input type=\"text\" name=\"filter_first_run\" size=\"16\" value=\"%s\">", _("First run"), first_run_str);
+    fprintf(f, "%s: <input type=\"text\" name=\"filter_last_run\" size=\"16\" value=\"%s\">", _("Last run"), last_run_str);
+    fprintf(f, "<input type=\"submit\" name=\"filter_view\" value=\"%s\">", _("View"));
+    //fprintf(f, "</form>\n");
+    //html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars);
+    fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+            ACTION_RESET_FILTER, _("Reset filter"));
+    fprintf(f, "</form></p>\n");
   }
-  if (u->prev_first_run) {
-    snprintf(first_run_str, sizeof(first_run_str), "%d",
-             (u->prev_first_run > 0)?u->prev_first_run - 1:u->prev_first_run);
+
+  if (raw_format && u->error_msgs) {
+    return -SRV_ERR_FILTER_EXPR;
   }
-  if (u->prev_last_run) {
-    snprintf(last_run_str, sizeof(last_run_str), "%d",
-             (u->prev_last_run > 0)?u->prev_last_run - 1:u->prev_last_run);
-  }
-  html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args);
-  fprintf(f, "<p>%s: <input type=\"text\" name=\"filter_expr\" size=\"32\" maxlength=\"128\" value=\"%s\">", _("Filter expression"), fe_html);
-  fprintf(f, "%s: <input type=\"text\" name=\"filter_first_run\" size=\"16\" value=\"%s\">", _("First run"), first_run_str);
-  fprintf(f, "%s: <input type=\"text\" name=\"filter_last_run\" size=\"16\" value=\"%s\">", _("Last run"), last_run_str);
-  fprintf(f, "<input type=\"submit\" name=\"filter_view\" value=\"%s\">", _("View"));
-  //fprintf(f, "</form>\n");
-  //html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars);
-  fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
-          ACTION_RESET_FILTER, _("Reset filter"));
-  fprintf(f, "</form></p>\n");
 
   if (u->error_msgs) {
     fprintf(f, "<h2>Filter expression errors</h2>\n");
@@ -576,23 +747,25 @@ write_all_runs(FILE *f, struct user_filter_info *u,
     }
 
     //fprintf(f, "<font size=\"-1\">\n");
-    fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th>"
-            "<th>%s</th><th>%s</th>"
-            "<th>%s</th><th>%s</th>"
-            "<th>%s</th><th>%s</th>"
-            "<th>%s</th><th>%s</th>", 
-            _("Run ID"), _("Time"), _("Size"), _("IP"),
-            _("Team ID"), _("Team name"), _("Problem"),
-            _("Language"), _("Result"), str1);
-    if (str2) {
-      fprintf(f, "<th>%s</th>", str2);
+    if (!raw_format) {
+      fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th>"
+              "<th>%s</th><th>%s</th>"
+              "<th>%s</th><th>%s</th>"
+              "<th>%s</th><th>%s</th>"
+              "<th>%s</th><th>%s</th>", 
+              _("Run ID"), _("Time"), _("Size"), _("IP"),
+              _("Team ID"), _("Team name"), _("Problem"),
+              _("Language"), _("Result"), str1);
+      if (str2) {
+        fprintf(f, "<th>%s</th>", str2);
+      }
+      if (priv_level == PRIV_LEVEL_ADMIN) {
+        fprintf(f, "<th>%s</th>", _("New result"));
+        fprintf(f, "<th>%s</th>", _("Change result"));
+      }
+      fprintf(f, "<th>%s</th><th>%s</th></tr>\n",
+              _("View source"), _("View report"));
     }
-    if (priv_level == PRIV_LEVEL_ADMIN) {
-      fprintf(f, "<th>%s</th>", _("New result"));
-      fprintf(f, "<th>%s</th>", _("Change result"));
-    }
-    fprintf(f, "<th>%s</th><th>%s</th></tr>\n",
-            _("View source"), _("View report"));
 
     for (i = 0; i < list_tot; i++) {
       rid = list_idx[i];
@@ -603,6 +776,11 @@ write_all_runs(FILE *f, struct user_filter_info *u,
 
       if (pe->status == RUN_EMPTY) {
         run_status_str(pe->status, statstr, 0);
+
+        if (raw_format) {
+          print_raw_record(f, rid, pe, 0, 0);
+          continue;
+        }
 
         fprintf(f, "<tr>");
         fprintf(f, "<td>%d</td>", rid);
@@ -634,6 +812,11 @@ write_all_runs(FILE *f, struct user_filter_info *u,
         if (env.rhead.start_time > run_time) run_time = env.rhead.start_time;
         duration_str(1, run_time, env.rhead.start_time, durstr, 0);
         run_status_str(pe->status, statstr, 0);
+
+        if (raw_format) {
+          print_raw_record(f, rid, pe, 0, 0);
+          continue;
+        }
 
         fprintf(f, "<tr>");
         fprintf(f, "<td>%d</td>", rid);
@@ -694,6 +877,11 @@ write_all_runs(FILE *f, struct user_filter_info *u,
       duration_str(global->show_astr_time, run_time, start_time,
                    durstr, 0);
       run_status_str(pe->status, statstr, 0);
+
+      if (raw_format) {
+        print_raw_record(f, rid, pe, start_time, attempts);
+        continue;
+      }
 
       if (priv_level == PRIV_LEVEL_ADMIN
           || sid_mode == SID_DISABLED
@@ -838,8 +1026,10 @@ write_all_runs(FILE *f, struct user_filter_info *u,
       }
     }
 
-  fprintf(f, "</table>\n");
-  //fprintf(f, "</font>\n");
+    if (raw_format) return 0;
+
+    fprintf(f, "</table>\n");
+    //fprintf(f, "</font>\n");
   }
 
   print_nav_buttons(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args,
@@ -944,6 +1134,7 @@ write_all_runs(FILE *f, struct user_filter_info *u,
 
   print_nav_buttons(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args,
                     0, 0, 0, 0, 0, 0, 0);
+  return 0;
 }
 
 static void
@@ -1153,8 +1344,9 @@ write_master_page(FILE *f, int user_id, int priv_level,
 {
   struct user_filter_info *u = allocate_user_info(user_id, sid);
 
-  write_all_runs(f, u, priv_level, sid_mode, sid, first_run, last_run,
-                 self_url, filter_expr, hidden_vars, extra_args);
+  write_priv_all_runs(f, user_id, u, priv_level, sid_mode, sid, first_run,
+                      last_run, self_url, filter_expr, hidden_vars,
+                      extra_args);
   write_all_clars(f, u, priv_level, sid_mode, sid, first_clar, last_clar,
                   self_url, hidden_vars, extra_args);
 }
@@ -1488,6 +1680,17 @@ write_priv_source(FILE *f, int user_id, int priv_level,
       html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
       fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\">",run_id);
       fprintf(f, "<td><input type=\"text\" name=\"score\" value=\"%d\" size=\"10\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", info.score, ACTION_RUN_CHANGE_SCORE, _("Change"));
+    } else {
+      fprintf(f, "%s", nbsp);
+    }
+    fprintf(f, "</tr>\n");
+
+    snprintf(numbuf, sizeof(numbuf), "%d", info.score_adj);
+    fprintf(f, "<tr><td>%s:</td><td>%s</td>", _("Score adjustment"), numbuf);
+    if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
+      html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
+      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\">",run_id);
+      fprintf(f, "<td><input type=\"text\" name=\"score_adj\" value=\"%d\" size=\"10\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", info.score_adj, ACTION_RUN_CHANGE_SCORE_ADJ, _("Change"));
     } else {
       fprintf(f, "%s", nbsp);
     }
@@ -2414,7 +2617,7 @@ write_raw_standings(FILE *f, unsigned char const *charset)
 }
 
 int
-write_raw_source(FILE *f, int run_id)
+write_raw_source(FILE *f, const unsigned char *self_url, int run_id)
 {
   path_t src_path;
   int src_flags;
@@ -2429,14 +2632,57 @@ write_raw_source(FILE *f, int run_id)
 
   src_flags = archive_make_read_path(src_path, sizeof(src_path),
                                      global->run_archive_dir, run_id, 0, 1);
-  if (src_flags < 0) return -SRV_ERR_SYSTEM_ERROR;
+  if (src_flags < 0) return -SRV_ERR_FILE_NOT_EXIST;
   if (generic_read_file(&src_text, 0, &src_len, src_flags, 0, src_path, "")<0)
     return -SRV_ERR_SYSTEM_ERROR;
 
-  if (langs[info.language]->binary) {
-    fprintf(f, "Content-type: application/octet-stream\n\n");
-  } else {
-    fprintf(f, "Content-type: text/plain\n\n");
+  if (self_url && *self_url) {
+    if (langs[info.language]->binary) {
+      fprintf(f, "Content-type: application/octet-stream\n\n");
+    } else {
+      fprintf(f, "Content-type: text/plain\n");
+      fprintf(f, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
+              run_id, langs[info.language]->src_sfx);
+    }
+  }
+
+  if (fwrite(src_text, 1, src_len, f) != src_len) return -SRV_ERR_SYSTEM_ERROR;
+  return 0;
+}
+
+int
+write_raw_report(FILE *f, const unsigned char *self_url, int run_id,
+                 int team_report_flag)
+{
+  path_t src_path;
+  int src_flags;
+  char *src_text = 0;
+  size_t src_len = 0;
+  struct run_entry info;
+  const unsigned char *report_dir = global->report_archive_dir;
+
+  if (team_report_flag && global->team_enable_rep_view) {
+    report_dir = global->team_report_archive_dir;
+    if (global->team_show_judge_report) {
+      report_dir = global->report_archive_dir;
+    }
+  }
+
+  if (run_id < 0 || run_id >= run_get_total()) return -SRV_ERR_BAD_RUN_ID;
+  run_get_entry(run_id, &info);
+  if (info.language <= 0 || info.language > max_lang
+      || !langs[info.language]) return -SRV_ERR_BAD_LANG_ID;
+
+  src_flags = archive_make_read_path(src_path, sizeof(src_path),
+                                     report_dir, run_id, 0, 1);
+  if (src_flags < 0) return -SRV_ERR_FILE_NOT_EXIST;
+  if (generic_read_file(&src_text, 0, &src_len, src_flags, 0, src_path, "")<0)
+    return -SRV_ERR_SYSTEM_ERROR;
+
+  if (self_url && *self_url) {
+    fprintf(f, "Content-type: text/plain\n");
+    fprintf(f, "Content-Disposition: attachment; filename=\"%06d.txt\"\n\n",
+            run_id);
   }
 
   if (fwrite(src_text, 1, src_len, f) != src_len) return -SRV_ERR_SYSTEM_ERROR;
