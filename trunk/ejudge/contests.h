@@ -68,6 +68,7 @@ enum
     CONTEST_REGISTER_TABLE_STYLE,
     CONTEST_TEAM_HEAD_STYLE,
     CONTEST_TEAM_PAR_STYLE,
+    CONTEST_CONF_DIR,
 
     CONTEST_LAST_TAG
   };
@@ -202,6 +203,7 @@ struct contest_desc
   unsigned char *register_url;
   unsigned char *team_url;
   unsigned char *root_dir;
+  unsigned char *conf_dir;
   unsigned char *standings_url;
   unsigned char *problems_url;
   unsigned char *serve_user;
