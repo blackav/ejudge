@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,7 @@ userlist_clnt_team_login(struct userlist_clnt *clnt,
   if (!passwd || !*passwd) return -ULS_ERR_INVALID_PASSWORD;
   if ((login_len = strlen(login)) > 255) return -ULS_ERR_INVALID_SIZE;
   if ((passwd_len = strlen(passwd)) > 255) return -ULS_ERR_INVALID_SIZE;
-  out_size = sizeof(*out) + login_len + passwd_len + 2;
+  out_size = sizeof(*out) + login_len + passwd_len;
   out = alloca(out_size);
   memset(out, 0, out_size);
   login_ptr = out->data;
@@ -93,6 +93,5 @@ userlist_clnt_team_login(struct userlist_clnt *clnt,
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
