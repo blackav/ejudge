@@ -4,7 +4,7 @@
 #ifndef __USERLIST_CLNT_H__
 #define __USERLIST_CLNT_H__
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,10 +16,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include <string.h>
@@ -223,5 +219,8 @@ int userlist_clnt_priv_cookie(struct userlist_clnt *clnt,
 int userlist_clnt_logout(struct userlist_clnt *clnt,
                          unsigned long origin_ip,
                          unsigned long long cookie);
+
+int userlist_clnt_dump_database(struct userlist_clnt *clnt,
+                                int contest_id, int out_fd);
 
 #endif /* __USERLIST_CLNT_H__ */
