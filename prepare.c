@@ -172,6 +172,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(checker_real_time_limit, "d"),
   GLOBAL_PARAM(compile_real_time_limit, "d"),
   GLOBAL_PARAM(show_deadline, "d"),
+  GLOBAL_PARAM(enable_runlog_merge, "d"),
 
   GLOBAL_PARAM(standings_team_color, "s"),
   GLOBAL_PARAM(standings_virtual_team_color, "s"),

@@ -66,6 +66,7 @@ struct section_global_data
   int    autoupdate_standings;  /* update standings automatically? */
   int    inactivity_timeout;    /* timeout for slave case */
   int    disable_auto_testing;  /* do not test automatically */
+  int    enable_runlog_merge;   /* enable runlog merging */
 
   int    fog_standings_updated; /* INTERNAL: updated at the moment of fog? */
   int    start_standings_updated; /* INTERNAL: updated at the start */
