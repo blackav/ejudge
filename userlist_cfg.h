@@ -26,6 +26,14 @@
 
 #include <stdio.h>
 
+struct userlist_cfg_admin_proc
+{
+  struct xml_tree b;
+
+  unsigned char *path;
+  int uid;
+};
+
 struct userlist_cfg
 {
   struct xml_tree b;
@@ -40,6 +48,7 @@ struct userlist_cfg
   unsigned char *register_url;
   unsigned char *register_email;
   unsigned char *l10n_dir;
+  struct xml_tree *admin_processes;
 };
 
 struct userlist_cfg *userlist_cfg_parse(char const *);
