@@ -338,6 +338,8 @@ struct section_problem_data
   char **date_penalty;          /* penalty which depends on date */
   int dp_total;
   struct penalty_info *dp_infos;
+
+  char **disable_language;
 };
 
 struct section_language_data
