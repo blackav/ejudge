@@ -944,7 +944,9 @@ do_loop(void)
     }
     if (cr_serialize_unlock() < 0) return -1;
 
-    sarray_free(tst->start_env);
+    if (tst == &tn) {
+      sarray_free(tst->start_env);
+    }
 
     snprintf(full_report_dir, sizeof(full_report_dir),
              "%s/%04d/report", global->run_dir, contest_id);
