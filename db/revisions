@@ -659,3 +659,11 @@ runlog.c 1 15 2064901
 serve.c 1 35 6403330
 team.c 1 23 3452983
 serve_clnt/show_item.c 1 2 266541
+prepare.h 1 28 1062599
+runlog.h 1 12 336914
+html.c 1 26 3646912
+prepare.c 1 40 4898258
+runlog.c 1 16 2086186
+team.c 1 25 3459318
+userlist-server.c 1 17 10315149
+users.c 1 5 1347597
