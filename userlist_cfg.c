@@ -34,8 +34,8 @@
 enum
   {
     TG_CONFIG = 1,
-    TG_FILE,
-    TG_SOCKET,
+    TG_USERDB_FILE,
+    TG_SOCKET_PATH,
     TG_CONTESTS_DIR,
     TG_EMAIL_PROGRAM,
     TG_REGISTER_URL,
@@ -45,15 +45,13 @@ enum
     TG_CAPS,
     TG_CAP,
     TG_SERVE_PATH,
+    TG_L10N_DIR,
   };
 enum
   {
     AT_ENABLE_L10N = 1,
     AT_DISABLE_L10N,
     AT_L10N,
-    AT_L10N_DIR,
-    AT_USER,
-    AT_PATH,
     AT_SYSTEM_USER,
     AT_LOCAL_USER,
     AT_LOGIN,
@@ -63,8 +61,8 @@ static char const * const tag_map[] =
 {
   0,
   "config",
-  "file",
-  "socket",
+  "userdb_file",
+  "socket_path",
   "contests_dir",
   "email_program",
   "register_url",
@@ -74,6 +72,7 @@ static char const * const tag_map[] =
   "caps",
   "cap",
   "serve_path",
+  "l10n_dir",
 
   0
 };
@@ -84,9 +83,6 @@ static char const * const attn_map[] =
   "enable_l10n",
   "disable_l10n",
   "l10n",
-  "l10n_dir",
-  "user",
-  "path",
   "system_user",
   "local_user",
   "login",
@@ -100,8 +96,8 @@ tree_alloc_func(int tag)
   switch (tag) {
   case TG_CONFIG:
     return xcalloc(1, sizeof(struct userlist_cfg));
-  case TG_SOCKET:
-  case TG_FILE:
+  case TG_SOCKET_PATH:
+  case TG_USERDB_FILE:
   case TG_CONTESTS_DIR:
   case TG_EMAIL_PROGRAM:
   case TG_REGISTER_EMAIL:
@@ -109,6 +105,7 @@ tree_alloc_func(int tag)
   case TG_USER_MAP:
   case TG_CAPS:
   case TG_SERVE_PATH:
+  case TG_L10N_DIR:
     return xcalloc(1, sizeof(struct xml_tree));
   case TG_MAP:
     return xcalloc(1, sizeof(struct userlist_cfg_user_map));
@@ -357,30 +354,19 @@ userlist_cfg_parse(char const *path)
           path, a->line, a->column);
       goto failed;
 #endif /* CONF_HAS_LIBINTL */
-    case AT_L10N_DIR:
-#if CONF_HAS_LIBINTL - 0 == 1
-      cfg->l10n_dir = a->text;
-      break;
-#else
-      err("%s:%d:%d: localization support is not compiled",
-          path, a->line, a->column);
-      goto failed;
-#endif /* CONF_HAS_LIBINTL */
     default:
       err("%s:%d:%d: attribute \"%s\" is not allowed here",
           path, a->line, a->column, attn_map[a->tag]);
       goto failed;
     }
   }
-  if (!cfg->l10n_dir || !*cfg->l10n_dir) cfg->l10n = 0;
-  if (cfg->l10n == -1) cfg->l10n = 0;
 
   for (p = cfg->b.first_down; p; p = p->right) {
     switch (p->tag) {
-    case TG_FILE:
+    case TG_USERDB_FILE:
       if (handle_final_tag(path, p, &cfg->db_path) < 0) goto failed;
       break;
-    case TG_SOCKET:
+    case TG_SOCKET_PATH:
       if (handle_final_tag(path, p, &cfg->socket_path) < 0) goto failed;
       break;
     case TG_CONTESTS_DIR:
@@ -398,6 +384,15 @@ userlist_cfg_parse(char const *path)
     case TG_SERVE_PATH:
       if (handle_final_tag(path, p, &cfg->serve_path) < 0) goto failed;
       break;
+    case TG_L10N_DIR:
+#if CONF_HAS_LIBINTL - 0 == 1
+      if (handle_final_tag(path, p, &cfg->l10n_dir) < 0) goto failed;
+      break;
+#else
+      err("%s:%d:%d: localization support is not compiled",
+          path, p->line, p->column);
+      goto failed;
+#endif /* CONF_HAS_LIBINTL */
     case TG_USER_MAP:
       if (!(cfg->user_map = parse_user_map(path, p))) goto failed;
       break;
@@ -410,6 +405,9 @@ userlist_cfg_parse(char const *path)
       break;
     }
   }
+
+  if (!cfg->l10n_dir || !*cfg->l10n_dir) cfg->l10n = 0;
+  if (cfg->l10n == -1) cfg->l10n = 0;
 
   if (!cfg->db_path) {
     err("%s: element <file> is not defined", path);
@@ -458,8 +456,8 @@ fmt_func(FILE *o, struct xml_tree const *p, int s, int n)
   case TG_CONFIG:
     if (s == 1 || s == 3) fprintf(o, "\n");
     break;
-  case TG_FILE:
-  case TG_SOCKET:
+  case TG_USERDB_FILE:
+  case TG_SOCKET_PATH:
   case TG_CONTESTS_DIR:
     if (s == 3) fprintf(o, "\n");
     if (s == 0) fprintf(o, "  ");
