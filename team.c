@@ -70,8 +70,6 @@ static char const password_accept_chars[] =
 #define DEFAULT_VAR_DIR              "var"
 #define DEFAULT_STATUS_FILE          "status/dir/status"
 #define DEFAULT_SERVER_LAG           10
-#define DEFAULT_MAX_RUN_SIZE         65536
-#define DEFAULT_MAX_CLAR_SIZE        1024
 #define DEFAULT_CHARSET              "iso8859-1"
 #define DEFAULT_SERVE_SOCKET         "serve"
 
@@ -81,8 +79,6 @@ struct section_global_data
   struct generic_section_config g;
 
   int    allow_deny;
-  int    max_run_size;
-  int    max_clar_size;
   int    show_generation_time;
   int    enable_session_mode;
   path_t root_dir;
@@ -161,8 +157,6 @@ static unsigned char hidden_vars[1024];
 static struct config_parse_info section_global_params[] =
 {
   GLOBAL_PARAM(allow_deny, "d"),
-  GLOBAL_PARAM(max_run_size, "d"),
-  GLOBAL_PARAM(max_clar_size, "d"),
   GLOBAL_PARAM(show_generation_time, "d"),
   GLOBAL_PARAM(enable_session_mode, "d"),
   GLOBAL_PARAM(root_dir, "s"),
@@ -322,16 +316,6 @@ set_defaults(void)
   }
   path_init(global->status_file, global->var_dir, DEFAULT_STATUS_FILE);
   path_init(global->serve_socket, global->var_dir, DEFAULT_SERVE_SOCKET);
-  if (global->max_run_size < 0 || global->max_run_size > 128 * 1024) {
-    err("invalid max_run_size");
-    return -1;
-  }
-  if (!global->max_run_size) global->max_run_size = DEFAULT_MAX_RUN_SIZE;
-  if (global->max_clar_size < 0 || global->max_clar_size > 16 * 1024) {
-    err("invalid max_clar_size");
-    return -1;
-  }
-  if (!global->max_clar_size) global->max_clar_size = DEFAULT_MAX_CLAR_SIZE;
   if (!global->charset[0]) {
     pathcpy(global->charset, DEFAULT_CHARSET);
   }
@@ -1180,11 +1164,6 @@ send_clar_if_asked(void)
   if (s[0]) strcat(full_subj, s);
   if (!full_subj[0]) strcpy(full_subj, _("(no subject)"));
 
-  if (strlen(t) + strlen(full_subj) > global->max_clar_size) {
-    operation_status_page(-1, _("The message cannot be sent because its size exceeds maximal allowed."));
-    return;
-  }
-
   open_serve();
   n = serve_clnt_submit_clar(serve_socket_fd, client_team_id,
                              global->contest_id, client_locale_id,
@@ -1224,11 +1203,6 @@ submit_if_asked(void)
       || sscanf(l, "%d%n", &lang, &n) != 1
       || l[n]) {
     operation_status_page(-1, _("Invalid parameters"));
-    return;
-  }
-
-  if (prog_size > global->max_run_size) {
-    operation_status_page(-1, _("The submission cannot be sent because its size exceeds maximal allowed."));
     return;
   }
 
