@@ -51,6 +51,10 @@ static char const * const tag_map[] =
   "register_url",
   "team_url",
   "registration_deadline",
+  "privileged_users",
+  "administrator",
+  "judge",
+  "observer",
 
   0
 };
@@ -90,6 +94,10 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   0,                            /* CONTEST_REGISTER_URL */
   0,                            /* CONTEST_TEAM_URL */
   0,                            /* CONTEST_REGISTRATION_DEADLINE */
+  0,                            /* CONTEST_PRIVILEGED_USERS */
+  0,                            /* CONTEST_ADMINISTRATOR */
+  0,                            /* CONTEST_JUDGE */
+  0,                            /* CONTEST_OBSERVER */
 };
 static size_t const attn_sizes[CONTEST_LAST_ATTN] =
 {
@@ -420,7 +428,7 @@ static int
 parse_contest(struct contest_desc *cnts, char const *path)
 {
   struct xml_attn *a;
-  struct xml_tree *t;
+  struct xml_tree *t, *q;
   int x, n, mb_id;
   unsigned char *reg_deadline_str = 0;
 
@@ -486,6 +494,34 @@ parse_contest(struct contest_desc *cnts, char const *path)
         err("%s:%d:%d: invalid date", path, t->line, t->column);
         return -1;
       }
+      break;
+    case CONTEST_PRIVILEGED_USERS:
+      if (t->first) {
+        err("%s:%d:%d: element <%s> cannot have attributes",
+            path, t->line, t->column, tag_map[t->tag]);
+        return -1;
+      }
+      xfree(t->text); t->text = 0;
+      for (q = t->first_down; q; q = q->right) {
+        if (q->tag != CONTEST_ADMINISTRATOR
+            && q->tag != CONTEST_JUDGE
+            && q->tag != CONTEST_OBSERVER) {
+          err("%s:%d:%d: element <%s> is not allowed here",
+              path, q->line, q->column, tag_map[q->tag]);
+          return -1;
+        }
+        if (q->first) {
+          err("%s:%d:%d: element <%s> cannot have attributes",
+              path, q->line, q->column, tag_map[q->tag]);
+          return -1;
+        }
+        if (q->first_down) {
+          err("%s:%d:%d: element <%s> cannot have nested elements",
+              path, q->line, q->column, tag_map[q->tag]);
+          return -1;
+        }
+      }
+      cnts->priv_users = t;
       break;
     case CONTEST_CONTESTANTS:
       mb_id = CONTEST_M_CONTESTANT;
