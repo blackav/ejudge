@@ -47,33 +47,6 @@
 #define RUN_RECORD_SIZE 105
 #define RUN_HEADER_SIZE 105
 
-struct run_header
-{
-  int    version;
-  time_t start_time;
-  time_t sched_time;
-  time_t duration;
-  time_t stop_time;
-  unsigned char pad[44];
-};
-
-struct run_entry
-{
-  int            submission;
-  time_t         timestamp;
-  size_t         size;
-  unsigned long  ip;
-  unsigned long  sha1[5];
-  int            team;
-  int            problem;
-  int            score;
-  signed char    locale_id;
-  unsigned char  language;
-  unsigned char  status;
-  signed char    test;
-  unsigned char  pad[12];
-};
-
 static struct run_header  head;
 static struct run_entry  *runs;
 static int                run_u;
@@ -360,7 +333,9 @@ run_open(const char *path, int flags)
     close(run_fd);
     run_fd = -1;
   }
-  if (flags == RUN_LOG_CREATE) {
+  if (flags == RUN_LOG_READONLY) {
+    oflags = O_RDONLY;
+  } else if (flags == RUN_LOG_CREATE) {
     oflags = O_RDWR | O_CREAT | O_TRUNC;
   } else {
     oflags = O_RDWR | O_CREAT;
@@ -370,9 +345,11 @@ run_open(const char *path, int flags)
   if ((i = is_runlog_version_0()) < 0) return -1;
   else if (i) {
     if (read_runlog_version_0() < 0) return -1;
-    if (save_runlog_backup(path) < 0) return -1;
-    close(run_fd);
-    if ((run_fd = write_full_runlog_current_version(path)) < 0) return -1;
+    if (flags != RUN_LOG_READONLY) {
+      if (save_runlog_backup(path) < 0) return -1;
+      close(run_fd);
+      if ((run_fd = write_full_runlog_current_version(path)) < 0) return -1;
+    }
   } else {
     if (read_runlog() < 0) return -1;
   }
@@ -723,6 +700,18 @@ run_check_duplicate(int run_id)
   p->status = RUN_IGNORED;
   if (run_flush_entry(run_id) < 0) return -1;
   return i + 1;
+}
+
+void
+run_get_header(struct run_header *out)
+{
+  memcpy(out, &head, sizeof(head));
+}
+
+void
+run_get_all_entries(struct run_entry *out)
+{
+  memcpy(out, runs, sizeof(out[0]) * run_u);
 }
 
 /**
