@@ -249,7 +249,7 @@ static char const * const member_status_string[] =
 static unsigned char const * const status_str_map[] =
 {
   _("<font color=\"green\">OK</font>"),
-  _("<font color=\"yellow\">Pending</font>"),
+  _("<font color=\"magenta\">Pending</font>"),
   _("<font color=\"red\">Rejected</font>"),
 };
 #undef _
@@ -1199,7 +1199,7 @@ change_password(void)
     printf("<p>%s</p>\n", _("Password changed successfully."));
   } else {
     client_put_header(config->charset, _("Password changing failed"));
-    printf("<p>%s<br><pre><font color=\"red\">%s<font></pre></p>\n",
+    printf("<p>%s<br><pre><font color=\"red\">%s</font></pre></p>\n",
            _("Password changing failed due to the following reasons."),
            error_log);
   }
