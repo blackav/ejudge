@@ -1435,3 +1435,5 @@ xml_utils/parse_ip.c 1 1 104541
 xml_utils/unparse_date.c 1 1 87071
 xml_utils/unparse_ip.c 1 1 79664
 xml_utils/unparse_text.c 1 1 97990
+serve_clnt/edit_user.c 1 1 187958
+serve_clnt/view.c 1 13 333994
