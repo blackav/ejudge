@@ -463,23 +463,25 @@ write_all_runs(FILE *f, struct user_state_info *u,
           _("View all"), _("Refresh"), _("Standings"));
   fprintf(f, "</form>\n");
 
-  fprintf(f, "<p><%s\"%s\">%s", form_header_simple, self_url, hidden_vars);
-  fprintf(f, "<input type=\"submit\" name=\"rejudge_all\" value=\"%s\">",
-          _("Rejudge all"));
-  fprintf(f, "</form></p>\n");
+  if (priv_level == PRIV_LEVEL_ADMIN) {
+    fprintf(f, "<p><%s\"%s\">%s", form_header_simple, self_url, hidden_vars);
+    fprintf(f, "<input type=\"submit\" name=\"rejudge_all\" value=\"%s\">",
+            _("Rejudge all"));
+    fprintf(f, "</form></p>\n");
 
-  fprintf(f, "<p><%s\"%s\">%s", form_header_simple, self_url, hidden_vars);
-  fprintf(f, "%s: <select name=\"problem\"><option value=\"\">\n",
-          _("Rejudge problem"));
-  for (i = 1; i <= max_prob; i++)
-    if (probs[i]) {
-      fprintf(f, "<option value=\"%d\">%s - %s\n",
-              probs[i]->id, probs[i]->short_name, probs[i]->long_name);
-    }
-  fprintf(f, "</select>\n");
-  fprintf(f, "<input type=\"submit\" name=\"rejudge_problem\" value=\"%s\">",
-          _("Rejudge!"));
-  fprintf(f, "</form></p>\n");
+    fprintf(f, "<p><%s\"%s\">%s", form_header_simple, self_url, hidden_vars);
+    fprintf(f, "%s: <select name=\"problem\"><option value=\"\">\n",
+            _("Rejudge problem"));
+    for (i = 1; i <= max_prob; i++)
+      if (probs[i]) {
+        fprintf(f, "<option value=\"%d\">%s - %s\n",
+                probs[i]->id, probs[i]->short_name, probs[i]->long_name);
+      }
+    fprintf(f, "</select>\n");
+    fprintf(f, "<input type=\"submit\" name=\"rejudge_problem\" value=\"%s\">",
+            _("Rejudge!"));
+    fprintf(f, "</form></p>\n");
+  }
 }
 
 static void
