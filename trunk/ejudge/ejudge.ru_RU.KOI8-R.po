@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2003-10-20 08:31+0400\n"
-"PO-Revision-Date: 2003-10-17 00:52+0400\n"
+"POT-Creation-Date: 2003-10-24 07:24+0400\n"
+"PO-Revision-Date: 2003-10-24 07:49+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -23,12 +23,12 @@ msgstr "Поле \"Электронный адрес\" содержит недопустимые символы"
 msgid "\"Login\" field contains invalid characters"
 msgstr "Поле \"Регистрационное имя\" содержит недопустимые символы"
 
-#: run.c:207 run.c:221 run.c:325 run.c:339
+#: run.c:211 run.c:225 run.c:329 run.c:343
 #, c-format
 msgid "%d total tests runs, %d passed, %d failed\n"
 msgstr "Всего тестов: %d, пройдено: %d, не пройдено: %d\n"
 
-#: run.c:204 run.c:217 run.c:322 run.c:335
+#: run.c:208 run.c:221 run.c:326 run.c:339
 #, c-format
 msgid ""
 "%s, test #%d\n"
@@ -37,31 +37,31 @@ msgstr ""
 "%s, тест #%d\n"
 "\n"
 
-#: master.c:1837 misctext.c:270 misctext.c:272 serve.c:1718 team.c:1135
+#: master.c:1856 misctext.c:270 misctext.c:272 serve.c:1718 team.c:1135
 msgid "(no subject)"
 msgstr "(без темы)"
 
-#: run.c:276
+#: run.c:280
 msgid "--- Checker output ---\n"
 msgstr "--- Вывод проверяющей программы ---\n"
 
-#: run.c:252
+#: run.c:256
 msgid "--- Command line arguments ---\n"
 msgstr "--- Аргументы командной строки ---\n"
 
-#: run.c:268
+#: run.c:272
 msgid "--- Correct ---\n"
 msgstr "--- Правильный ответ ---\n"
 
-#: run.c:260
+#: run.c:264
 msgid "--- Input ---\n"
 msgstr "--- Входные данные ---\n"
 
-#: run.c:264
+#: run.c:268
 msgid "--- Output ---\n"
 msgstr "--- Результат работы программы ---\n"
 
-#: run.c:272
+#: run.c:276
 msgid "--- Stderr ---\n"
 msgstr "--- Ошибки ---\n"
 
@@ -197,12 +197,12 @@ msgstr "<p%s>Максимальное количество %s - %d.</p>\n"
 msgid "<p%s>The minimal number of %s is %d.</p>\n"
 msgstr "<p%s>Минимальное количество %s - %d.</p>\n"
 
-#: run.c:246
+#: run.c:250
 #, c-format
 msgid "====== Test #%d =======\n"
 msgstr "====== Тест #%d =======\n"
 
-#: run.c:202 run.c:320
+#: run.c:206 run.c:324
 msgid "ACCEPTED"
 msgstr "ПРИНЯТО"
 
@@ -262,7 +262,7 @@ msgstr "Доступна"
 msgid "Available contests"
 msgstr "Доступные турниры"
 
-#: master.c:906 register.c:1787 register.c:2833 team.c:1031 team.c:1040
+#: master.c:915 register.c:1787 register.c:2833 team.c:1031 team.c:1040
 msgid "Back"
 msgstr "Назад"
 
@@ -348,9 +348,8 @@ msgid "Clar ID"
 msgstr "Номер сообщения"
 
 #: master.c:809
-#, fuzzy
 msgid "Clear team passwords!"
-msgstr "Сменить пароль"
+msgstr "Сбросить пароли участников!"
 
 #: master_html.c:1212
 msgid "Clear this entry"
@@ -368,15 +367,15 @@ msgstr "Тренер"
 msgid "Coaches"
 msgstr "Тренеры"
 
-#: run.c:254
+#: run.c:258
 msgid "Command line is too long\n"
 msgstr "Командная строка слишком длинна\n"
 
-#: run.c:249
+#: run.c:253
 msgid "Comment"
 msgstr "Комментарий"
 
-#: run.c:372
+#: run.c:376
 msgid "Comments for failed tests:"
 msgstr "Комментарии к тестам, на которых решение не прошло:"
 
@@ -393,7 +392,7 @@ msgstr "Скомпилировано"
 msgid "Compiling..."
 msgstr "Компилируется..."
 
-#: master.c:2511
+#: master.c:2536
 msgid "Compose a message to all the teams"
 msgstr "Написать сообщение всем командам"
 
@@ -690,11 +689,11 @@ msgstr "Общая информация"
 msgid "General user information"
 msgstr "Общая информация об участнике"
 
-#: master.c:1902 register.c:2527 team.c:1447
+#: master.c:1921 register.c:2527 team.c:1447
 msgid "Good-bye"
 msgstr "До свидания"
 
-#: master.c:1904 team.c:1455
+#: master.c:1923 team.c:1455
 msgid "Good-bye!"
 msgstr "До свидания!"
 
@@ -896,7 +895,7 @@ msgstr "Неверная роль."
 msgid "Invalid serial number."
 msgstr "Неверный уникальный номер."
 
-#: run.c:247
+#: run.c:251
 #, c-format
 msgid "Judgement: %s\n"
 msgstr "Вердикт: %s\n"
@@ -1005,7 +1004,7 @@ msgstr "Обязательное поле \"%s\" не заполнено."
 msgid "Mandatory field \"%s.%d.%s\" is empty."
 msgstr "Обязательное поле \"%s.%d.%s\" не заполнено."
 
-#: run.c:139
+#: run.c:143
 msgid "Manual check required"
 msgstr "Требуется дополнительная проверка"
 
@@ -1049,7 +1048,7 @@ msgstr "Отчество"
 msgid "Middle name (En)"
 msgstr "Отчество (Англ.)"
 
-#: master.c:2462 master.c:2467 team.c:1602 team.c:1606
+#: master.c:2484 master.c:2489 team.c:1602 team.c:1606
 msgid "Monitor"
 msgstr "Монитор"
 
@@ -1058,7 +1057,7 @@ msgstr "Монитор"
 msgid "N/A"
 msgstr "Неизв."
 
-#: master.c:1867
+#: master.c:1886
 msgid "NO."
 msgstr "НЕТ."
 
@@ -1098,13 +1097,13 @@ msgstr "Новый вердикт"
 msgid "New user is registered"
 msgstr "Новый пользователь зарегистрирован"
 
-#: master.c:1373 master.c:1388 master.c:1403 master.c:1418 master.c:1433
-#: master.c:1448 master.c:1463 master.c:1478 master.c:1505 master_html.c:1157
+#: master.c:1392 master.c:1407 master.c:1422 master.c:1437 master.c:1452
+#: master.c:1467 master.c:1482 master.c:1497 master.c:1524 master_html.c:1157
 #: master_html.c:1163
 msgid "No"
 msgstr "Нет"
 
-#: master.c:1863
+#: master.c:1882
 msgid "No comments.\n"
 msgstr "Без комментариев.\n"
 
@@ -1128,7 +1127,7 @@ msgstr "На этот турнир никто не зарегистрировался"
 msgid "Not set"
 msgstr "Не установлено"
 
-#: run.c:368
+#: run.c:372
 msgid "Note: non-zero return code is always reported as 1"
 msgstr "Обратите внимание: ненулевые коды возврата всегда показываются как 1."
 
@@ -1150,7 +1149,7 @@ msgid "Number of runs"
 msgstr "Число попыток"
 
 #: master_html.c:260 master_html.c:280 master_html.c:300 master_html.c:694
-#: master_html.c:714 master_html.c:734 run.c:124 run.c:212 run.c:330
+#: master_html.c:714 master_html.c:734 run.c:128 run.c:216 run.c:334
 #: runlog.c:650
 msgid "OK"
 msgstr "OK"
@@ -1200,7 +1199,7 @@ msgstr "IP-адрес отправителя"
 msgid "Other"
 msgstr "Прочее"
 
-#: run.c:215 run.c:333
+#: run.c:219 run.c:337
 msgid ""
 "PARTIAL SOLUTION\n"
 "\n"
@@ -1291,7 +1290,7 @@ msgstr ""
 "\"Зарегистрироваться\"."
 
 #: master_html.c:281 master_html.c:301 master_html.c:715 master_html.c:735
-#: run.c:135 runlog.c:654
+#: run.c:139 runlog.c:654
 msgid "Presentation error"
 msgstr "Неправильный формат вывода"
 
@@ -1344,7 +1343,7 @@ msgstr "Re"
 msgid "Re: Your question"
 msgstr "Re: Ваш вопрос"
 
-#: master.c:1861
+#: master.c:1880
 msgid "Read the problem.\n"
 msgstr "Читайте условие задачи.\n"
 
@@ -1401,6 +1400,10 @@ msgstr "Пересудить задачу"
 #: master_html.c:809
 msgid "Rejudge!"
 msgstr "Пересудить!"
+
+#: master.c:845
+msgid "Reload server"
+msgstr "Перезапустить сервер"
 
 #: clntutil.c:459 html.c:1497
 msgid "Remaining time"
@@ -1463,7 +1466,7 @@ msgstr "Ошибка выполнения"
 msgid "Running..."
 msgstr "Выполняется..."
 
-#: run.c:127 run.c:131
+#: run.c:131 run.c:135
 msgid "Runtime error"
 msgstr "Ошибка работы программы"
 
@@ -1491,7 +1494,7 @@ msgstr "Научный сотрудник"
 msgid "Score"
 msgstr "Баллы"
 
-#: run.c:230 run.c:348
+#: run.c:234 run.c:352
 msgid "Score   "
 msgstr "Баллы   "
 
@@ -1499,12 +1502,12 @@ msgstr "Баллы   "
 msgid "Score gained"
 msgstr "Получено баллов"
 
-#: run.c:224 run.c:342
+#: run.c:228 run.c:346
 #, c-format
 msgid "Scores gained: %d (out of %d)\n"
 msgstr "Получено баллов: %d (из %d)\n"
 
-#: master.c:2531
+#: master.c:2556
 msgid "Send"
 msgstr "Отослать"
 
@@ -1660,7 +1663,7 @@ msgstr "Закончить виртуальный турнир"
 msgid "Student"
 msgstr "Студент"
 
-#: html.c:244 html.c:379 html.c:1651 master.c:2526 master_html.c:915
+#: html.c:244 html.c:379 html.c:1651 master.c:2551 master_html.c:915
 #: master_html.c:1325
 msgid "Subject"
 msgstr "Тема"
@@ -1713,11 +1716,11 @@ msgstr "Обработка запросов участников приостановлена"
 msgid "Team standings"
 msgstr "Положение участников"
 
-#: run.c:378
+#: run.c:382
 msgid "Test"
 msgstr "Тест"
 
-#: run.c:229 run.c:347
+#: run.c:233 run.c:351
 #, c-format
 msgid "Test #  Status  Time (sec)  %sResult\n"
 msgstr "Тест #  Статус  Время (сек) %sРезультат\n"
@@ -1801,7 +1804,7 @@ msgid "Time"
 msgstr "Время"
 
 #: master_html.c:281 master_html.c:301 master_html.c:715 master_html.c:735
-#: run.c:133 runlog.c:653
+#: run.c:137 runlog.c:653
 msgid "Time-limit exceeded"
 msgstr "Превышено максимальное время работы"
 
@@ -1809,11 +1812,11 @@ msgstr "Превышено максимальное время работы"
 msgid "To"
 msgstr "Кому"
 
-#: master.c:2517
+#: master.c:2542
 msgid "To user id"
 msgstr "Кому (рег. номер)"
 
-#: master.c:2521
+#: master.c:2546
 msgid "To user login"
 msgstr "Кому (рег. имя)"
 
@@ -1859,7 +1862,7 @@ msgstr ""
 "К сожалению, заполненная Вами анкета не может быть принята. Ниже приведён "
 "список замечаний к ней. Пожалуйста, исправьте анкету и пошлите её снова."
 
-#: run.c:141
+#: run.c:145
 #, c-format
 msgid "Unknown result (%d)"
 msgstr "Неожиданный код результата (%d)"
@@ -1960,7 +1963,7 @@ msgid "Virtual stop"
 msgstr "Окончание виртуального турнира"
 
 #: master_html.c:282 master_html.c:302 master_html.c:716 master_html.c:736
-#: run.c:137 runlog.c:655
+#: run.c:141 runlog.c:655
 msgid "Wrong answer"
 msgstr "Неправильный ответ"
 
@@ -1968,7 +1971,7 @@ msgstr "Неправильный ответ"
 msgid "XML parse error"
 msgstr "ошибка разбора XML"
 
-#: master.c:1865
+#: master.c:1884
 msgid "YES."
 msgstr "ДА."
 
@@ -1976,36 +1979,35 @@ msgstr "ДА."
 msgid "Yes"
 msgstr "Да"
 
-#: master.c:1406
-#, fuzzy
+#: master.c:1425
 msgid "Yes, clear passwords!"
-msgstr "Да, перегенерировать пароли!"
+msgstr "Да, сбросить пароли!"
 
-#: master.c:1510
+#: master.c:1529
 msgid "Yes, clear!"
 msgstr "Да, очистить!"
 
-#: master.c:1481
+#: master.c:1500
 msgid "Yes, continue!"
 msgstr "Да, продолжить!"
 
-#: master.c:1421 master.c:1436
+#: master.c:1440 master.c:1455
 msgid "Yes, generate passwords!"
 msgstr "Да, перегенерировать пароли!"
 
-#: master.c:1451
+#: master.c:1470
 msgid "Yes, rejudge!"
 msgstr "Да, пересудить!"
 
-#: master.c:1376
+#: master.c:1395
 msgid "Yes, reset the contest!"
 msgstr "Да, сбросить турнир!"
 
-#: master.c:1466
+#: master.c:1485
 msgid "Yes, squeeze!"
 msgstr "Да, сжать!"
 
-#: master.c:1391
+#: master.c:1410
 msgid "Yes, update standings!"
 msgstr "Да, обновить таблицу"
 
@@ -2126,7 +2128,7 @@ msgstr "деление на ноль"
 msgid "duplicated submission"
 msgstr "Повторная посылка"
 
-#: run.c:152
+#: run.c:156
 msgid "file is too long"
 msgstr "файл имеет слишком большой размер"
 
@@ -2203,7 +2205,7 @@ msgstr "судьи"
 msgid "last 15"
 msgstr "последние 15"
 
-#: run.c:159
+#: run.c:163
 msgid "line is too long"
 msgstr "строка слишком длинна"
 

@@ -924,3 +924,14 @@ serve_clnt/import_xml_runs.c 1 1 226791
 serve_clnt/view.c 1 6 313151
 userlist_clnt/clear_team_passwords.c 1 1 121043
 userlist_clnt/team_set_passwd.c 1 4 170250
+client_actions.h 1 12 151877
+contests.h 1 16 522410
+protocol.h 1 15 527558
+userlist_cfg.h 1 8 134763
+master.c 1 41 5548834
+run.c 1 46 3736554
+serve.c 1 50 7698384
+super-serve.c 1 3 2362729
+userlist-server.c 1 29 12389659
+contests.c 1 18 2599216
+userlist_cfg.c 1 11 920671
