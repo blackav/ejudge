@@ -108,7 +108,7 @@ SS_CFILES = super-serve.c version.c
 SS_OBJECTS = ${SS_CFILES:.c=.o} libcommon.a libcharsets.a
 
 CU_CFILES = clean-users.c version.c
-CU_OBJECTS = ${CU_CFILES:.c=.o} libcommon.a libcharsets.a
+CU_OBJECTS = ${CU_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libcharsets.a
 
 TARGETS=compile$(EXESFX) serve$(EXESFX) run$(EXESFX) master$(EXESFX) team$(EXESFX) register${EXESFX} userlist-server${EXESFX} users${EXESFX} edit-userlist${EXESFX} super-serve clean-users
 
