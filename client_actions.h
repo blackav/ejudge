@@ -4,7 +4,7 @@
 #ifndef __CLIENT_ACTIONS_H__
 #define __CLIENT_ACTIONS_H__
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,10 +16,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 enum
@@ -60,6 +56,9 @@ enum
     ACTION_CLEAR_RUN_2,
     ACTION_SQUEEZE_RUNS,
     ACTION_SQUEEZE_RUNS_2,
+    ACTION_DUMP_RUNS,
+    ACTION_DUMP_USERS,
+    ACTION_DUMP_STANDINGS,
     ACTION_LAST
   };
 
