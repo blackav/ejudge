@@ -174,7 +174,7 @@ generic_menu(int min_width, int max_width, /* incl. frame */
              unsigned char const *format, ...)
 {
   unsigned char buf[1024];
-  int buflen, i, itemlen, c, answer, cmd;
+  int buflen, i, itemlen, c, answer = -3, cmd;
   va_list args;
   int act_width, item_width, act_height, head_width;
   unsigned char **item_strs;
@@ -2964,7 +2964,7 @@ display_main_menu(void)
   WINDOW *window, *in_win;
   PANEL *panel, *in_pan;
   int req_rows, req_cols;
-  int c, cmd, start_col, r;
+  int c, cmd, start_col, r = 0;
   unsigned char current_level[512];
 
   snprintf(current_level, sizeof(current_level), "%s", "Main menu");
