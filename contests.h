@@ -4,7 +4,7 @@
 #ifndef __CONTESTS_H__
 #define __CONTESTS_H__
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -88,6 +88,7 @@ enum
     CONTEST_A_MANAGED,
     CONTEST_A_CLEAN_USERS,
     CONTEST_A_RUN_MANAGED,
+    CONTEST_A_CLOSED,
 
     CONTEST_LAST_ATTN
   };
@@ -186,6 +187,7 @@ struct contest_desc
   unsigned char managed;
   unsigned char run_managed;
   unsigned char clean_users;
+  unsigned char closed;
 
   unsigned long  reg_deadline;
   unsigned char *name;
