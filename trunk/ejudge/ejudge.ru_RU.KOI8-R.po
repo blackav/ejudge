@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-09-27 23:16+0400\n"
+"POT-Creation-Date: 2004-09-28 00:10+0400\n"
 "PO-Revision-Date: 2004-04-19 23:51+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -37,7 +37,7 @@ msgstr ""
 "%s, тест #%d\n"
 "\n"
 
-#: master.c:2653 misctext.c:286 misctext.c:288 serve.c:2228 team.c:1199
+#: master.c:2648 misctext.c:286 misctext.c:288 serve.c:2228 team.c:1199
 msgid "(no subject)"
 msgstr "(без темы)"
 
@@ -428,7 +428,7 @@ msgstr "Скомпилировано"
 msgid "Compiling..."
 msgstr "Компилируется..."
 
-#: master.c:3426
+#: master.c:3421
 msgid "Compose a message to all the teams"
 msgstr "Написать сообщение всем командам"
 
@@ -737,11 +737,11 @@ msgstr "Общая информация"
 msgid "General user information"
 msgstr "Общая информация об участнике"
 
-#: master.c:2718 register.c:2540 team.c:1557
+#: master.c:2713 register.c:2540 team.c:1557
 msgid "Good-bye"
 msgstr "До свидания"
 
-#: master.c:2720 team.c:1565
+#: master.c:2715 team.c:1565
 msgid "Good-bye!"
 msgstr "До свидания!"
 
@@ -931,7 +931,7 @@ msgstr "Задан неверный идентификатор турнира."
 msgid "Invalid contest identifier."
 msgstr "Неверный идентификатор турнира."
 
-#: master.c:1894
+#: master.c:1889
 msgid "Invalid language specification"
 msgstr "Неверная спецификация языка программирования"
 
@@ -943,7 +943,7 @@ msgstr "Неверные параметры"
 msgid "Invalid person."
 msgstr "Неверный участник."
 
-#: master.c:1891
+#: master.c:1886
 msgid "Invalid problem specification"
 msgstr "Неверная спецификация задачи"
 
@@ -951,7 +951,7 @@ msgstr "Неверная спецификация задачи"
 msgid "Invalid role parameter."
 msgstr "Неверная роль."
 
-#: master.c:1916
+#: master.c:1911
 msgid "Invalid run_id"
 msgstr "Неверный номер посылки"
 
@@ -1125,7 +1125,7 @@ msgstr "Отчество"
 msgid "Middle name (En)"
 msgstr "Отчество (Англ.)"
 
-#: master.c:3369 master.c:3374 team.c:1779 team.c:1783
+#: master.c:3364 master.c:3369 team.c:1779 team.c:1783
 msgid "Monitor"
 msgstr "Монитор"
 
@@ -1134,7 +1134,7 @@ msgstr "Монитор"
 msgid "N/A"
 msgstr "Неизв."
 
-#: master.c:2683
+#: master.c:2678
 msgid "NO."
 msgstr "НЕТ."
 
@@ -1174,15 +1174,15 @@ msgstr "Новый вердикт"
 msgid "New user is registered"
 msgstr "Новый пользователь зарегистрирован"
 
-#: master.c:1938 master.c:1953 master.c:1968 master.c:1983 master.c:1998
-#: master.c:2013 master.c:2028 master.c:2078 master.c:2107 master.c:2122
-#: master.c:2149 master_html.c:1415 master_html.c:1421 master_html.c:1432
+#: master.c:1933 master.c:1948 master.c:1963 master.c:1978 master.c:1993
+#: master.c:2008 master.c:2023 master.c:2073 master.c:2102 master.c:2117
+#: master.c:2144 master_html.c:1415 master_html.c:1421 master_html.c:1432
 #: master_html.c:1438 master_html.c:1449 master_html.c:1455 master_html.c:1670
 #: master_html.c:1677 master_html.c:1684 team.c:1448
 msgid "No"
 msgstr "Нет"
 
-#: master.c:2679
+#: master.c:2674
 msgid "No comments.\n"
 msgstr "Без комментариев.\n"
 
@@ -1443,7 +1443,7 @@ msgstr "Re"
 msgid "Re: Your question"
 msgstr "Re: Ваш вопрос"
 
-#: master.c:2677
+#: master.c:2672
 msgid "Read the problem.\n"
 msgstr "Читайте условие задачи.\n"
 
@@ -1625,7 +1625,7 @@ msgstr "Получено баллов"
 msgid "Scores gained: %d (out of %d)\n"
 msgstr "Получено баллов: %d (из %d)\n"
 
-#: master.c:3446
+#: master.c:3441
 msgid "Send"
 msgstr "Отослать"
 
@@ -1795,12 +1795,12 @@ msgstr "Закончить виртуальный турнир"
 msgid "Student"
 msgstr "Студент"
 
-#: html.c:316 html.c:456 html.c:1923 master.c:3441 master_html.c:1058
+#: html.c:316 html.c:456 html.c:1923 master.c:3436 master_html.c:1058
 #: master_html.c:1828
 msgid "Subject"
 msgstr "Тема"
 
-#: master.c:1597 master.c:1884 master.c:1920 team.c:1231
+#: master.c:1592 master.c:1879 master.c:1915 team.c:1231
 msgid "Submission data is empty"
 msgstr "Посылка пуста"
 
@@ -1899,7 +1899,7 @@ msgstr "Турнир не начался"
 msgid "The contest is over"
 msgstr "Турнир закончился"
 
-#: master.c:2069
+#: master.c:2064
 msgid "The following runs will be rejudged"
 msgstr "Следующие посылки будут пересужены"
 
@@ -1957,11 +1957,11 @@ msgstr "Превышено максимальное время работы"
 msgid "To"
 msgstr "Кому"
 
-#: master.c:3432
+#: master.c:3427
 msgid "To user id"
 msgstr "Кому (рег. номер)"
 
-#: master.c:3436
+#: master.c:3431
 msgid "To user login"
 msgstr "Кому (рег. имя)"
 
@@ -2138,7 +2138,7 @@ msgstr "Неправильный ответ"
 msgid "XML parse error"
 msgstr "ошибка разбора XML"
 
-#: master.c:2681
+#: master.c:2676
 msgid "YES."
 msgstr "ДА."
 
@@ -2148,23 +2148,23 @@ msgstr "ДА."
 msgid "Yes"
 msgstr "Да"
 
-#: master.c:1971
+#: master.c:1966
 msgid "Yes, clear passwords!"
 msgstr "Да, сбросить пароли!"
 
-#: master.c:2154
+#: master.c:2149
 msgid "Yes, clear!"
 msgstr "Да, очистить!"
 
-#: master.c:2125
+#: master.c:2120
 msgid "Yes, continue!"
 msgstr "Да, продолжить!"
 
-#: master.c:1986 master.c:2001
+#: master.c:1981 master.c:1996
 msgid "Yes, generate passwords!"
 msgstr "Да, перегенерировать пароли!"
 
-#: master.c:2031
+#: master.c:2026
 msgid "Yes, judge!"
 msgstr "Да, проверить!"
 
@@ -2172,19 +2172,19 @@ msgstr "Да, проверить!"
 msgid "Yes, print!"
 msgstr "Да, напечатать!"
 
-#: master.c:2016 master.c:2092
+#: master.c:2011 master.c:2087
 msgid "Yes, rejudge!"
 msgstr "Да, пересудить!"
 
-#: master.c:1941
+#: master.c:1936
 msgid "Yes, reset the contest!"
 msgstr "Да, сбросить турнир!"
 
-#: master.c:2110
+#: master.c:2105
 msgid "Yes, squeeze!"
 msgstr "Да, сжать!"
 
-#: master.c:1956
+#: master.c:1951
 msgid "Yes, update standings!"
 msgstr "Да, обновить таблицу"
 
