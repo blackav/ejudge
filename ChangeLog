@@ -1,3 +1,319 @@
+2002-11-18  Alexander Chernov  <cher@ispras.ru>
+
+	* run.c:
+	(do_loop) the executable file to be tested is removed from the
+	  server_exe_dir directory.
+
+	* compile.c:
+	(do_loop) source file is removed from server_src_dir when the
+	  incomping compile packet is being processed.
+
+	* users.c: "fileutl.h" is included;
+	(read_user_id) a new function to parse "user_id" CGI param;
+	(put_http_header) a new function to print HTTP header only;
+	(main) if CGI parameter "secret_mode" is set, ";"-separated
+	  table is to be requested from server;
+	  header and footer files are supported;
+	  user_id and request_flags are passed to the server;
+
+	* userlist_xml.c: "read_only" attribute is supported;
+	(parse_contest) "banned", "invisible", "read_only" attributes are
+	  parsed;
+	(userlist_parse_str) a new function, which parses the userlist XML
+	  from string;
+	(userlist_unparse_reg_status) a new function;
+	(unparse_contest) a new function to generate XML for a registration
+	  entry;
+	(unparse_contests) now uses `unparse_contest';
+	(unparse_user_short) generates XML with a short user description;
+	(unparse_user) "invisible", "banned" attributes are generated only
+	  when in USERLIST_MODE_ALL mode;
+	  "read_only" attribute is unparsed;
+	(userlist_unparse_short) a new function to generate a short XML
+	  with user list.
+
+	* userlist_proto.h:
+	new request codes: ULS_LIST_ALL_USERS, ULS_EDIT_REGISTRATION,
+	  ULS_EDIT_FIELD, ULS_DELETE_FIELD, ULS_ADD_FIELD;
+	new error codes: ULS_ERR_NOT_REGISTERED, ULS_ERR_CANNOT_DELETE,
+	  ULS_ERR_CANNOT_CHANGE, ULS_ERR_DEADLINE;
+	(struct userlist_pk_edit_registration) new packet structure;
+	(struct userlist_pk_edit_field) new packet structure.
+
+	* userlist_proto.c: new explanation for new error codes added.
+
+	* userlist_clnt.h: (userlist_clnt_list_all_users) new prototype;
+	(userlist_clnt_change_registration) new prototype;
+	(userlist_clnt_edit_field) new prototype;
+	(userlist_clnt_delete_field) new prototype;
+	(userlist_clnt_add_field) new prototype.
+
+	* userlist_clnt.c:
+	(userlist_clnt_get_info) error codes from `send_packet' and
+	  `receive_packet' are preserved and returned to sender;
+	(userlist_clnt_list_all_users) a new function to list all users in
+	  the database, or to list all users registered for a particular
+	  contest. The result is returned in XML;
+	(userlist_clnt_change_registration)  a new function to change
+	  registration status of a particular user to a particular contest;
+	(userlist_clnt_edit_field) a new function to change the value
+	  of the given field;
+	(userlist_clnt_delete_field) a new function to reset the value
+	  of the given field;
+	(userlist_clnt_add_field) a new function to add a new user or
+	  a new member into user.
+
+	* userlist.h: new registration status constant USERLIST_REG_LAST;
+	new attribute code USERLIST_A_READ_ONLY;
+	new USERLIST_NN_* constants for userlist_user field codes;
+	new USERLIST_NM_* constants for userlist_member field codes;
+	new registration flag constant USERLIST_UC_ALL;
+	(struct userlist_user) `read_only' field added;
+	new userlist unparse flag USERLIST_MODE_SHORT;
+	(userlist_parse_str) new function prototype;
+	(userlist_unparse_short) new function prototype;
+	(userlist_unparse_reg_status) new function prototype;
+	(userlist_member_status_str) new function prototype;
+	(userlist_parse_date) new function prototype;
+	(userlist_parse_bool) new function prototype;
+	(userlist_unparse_bool) new prototype;
+	(userlist_unparse_date) new prototype;
+	(userlist_get_member_field_str) new prototype;
+	(userlist_set_member_field_str) new prototype;
+	(userlist_delete_member_field) new prototype;
+	(userlist_get_user_field_str) new prototype;
+	(userlist_set_member_field_str) new prototype;
+	(userlist_delete_user_field) new prototype.
+
+	* userlist.c:
+	(userlist_member_status_str) a new function to return string
+	  representation of member status;
+	(userlist_parse_date) a new function to parse the date in the
+	  format 'YYYY/MM/DD HH:MM:SS' to the internal time_t format;
+	(userlist_unparse_bool) a new function;
+	(userlist_unparse_date) a new function to convert the date
+	  in the internal time_t format into the external format;
+	(userlist_parse_bool) a new function;
+	(userlist_get_member_field_str) a new function, which returns
+	  the field's value of userlist_member structure by field code;
+	(userlist_delete_member_field) a new function, which resets
+	  the field value of userlist_member structure by field code;
+	(userlist_set_member_field_str) a new function, which sets the
+	  userlist_member field value by field code;
+	(userlist_get_user_field_str) a new function, which returns
+	  the userlist_user field value by its field code;
+	(userlist_set_user_field_str) a new function, which sets
+	  the userlist_user field value by its field code;
+	(userlist_delete_user_field) a new function, which clears
+	  the userlist_user field value by its field code.
+
+	* userlist-server.c:
+	constant->string tables for members (singular and plural) and
+	member status are added;
+	FIRST_COOKIE, NEXT_COOKIE, FIRST_CONTEST, NEXT_CONTEST macros added;
+	(passwd_check) if the first password check failed, try it the second
+	  time, now ignoring all spaces in the provided password;
+	(allocate_new_user) a new function to allocate a new user structure,
+	  link it into the tree and add it into the reference table;
+	(create_newuser) locale_id is generated after the contest_id in
+	  the URL in the e-mail message (because some mail clients add
+	  the trailing dot from the message to the URL);
+	  `allocate_new_user' function is used;
+	(do_remove_user) a function to remove a user from the database,
+	  notifying all the contests, in which the user has active
+	  registrations;
+	(check_all_users) `do_remove_user' is used;
+	(get_user_info) contest administrator may get all the information
+	  about the user, including the information, which is not send to
+	  the user himself;
+	(cmd_list_all_users) a new function to generate XML with brief
+	  information about the users either all, or registered for a
+	  particular contest. This function handles ULS_LIST_ALL_USERS
+	  request;
+	(set_user_info) some `info' messages replaced to `err';
+	  new user XML tree is always freed - memory leak is fixed;
+	(register_for_contest) some `info' messages replaced with `err';
+	  administrator may register any user to any contest;
+	(do_list_users) if passed flag is set to 1, all the user table
+	  is exported in ';'-separated plain format (for import to Excel);
+	  detailed information for a given user is generated, if
+	  requested;
+	  references to detailed user information is generated in the
+	  general user list information;
+	(list_users) user_id and contest_id fields of the incoming packet
+	  are verified;
+	(cmd_edit_registration) a new function to change registration status.
+	  Handles ULS_EDIT_REGISTRATION request;
+	(cmd_delete_field) a new function, which resets or removes the
+	  given field. Handles ULS_DELETE_FIELD request;
+	(cmd_edit_field) a new function, which changes the value of the
+	  given field. Handles ULS_EDIT_FIELD request;
+	(cmd_add_field) a new function, which adds a new user or new
+	  member. Handles ULS_ADD_FIELD request;
+	(process_packet) ULS_LIST_ALL_USERS, ULS_EDIT_REGISTRATION,
+	  ULS_EDIT_FIELD, ULS_DELETE_FIELD, ULS_ADD_FIELD requests are
+	  handled;
+	(do_backup) backup file is created with mode 0600;
+	(flush_database) the database file is created with mode 0600;
+
+2002-11-17  Alexander Chernov  <cher@ispras.ru>
+
+	* teamdb.c:
+	(teamdb_export_team) all information, except passwords, is exported
+	  correctly even in client mode.
+
+	* serve.c:
+	(update_standings_file) standings header and footer are passed
+	  to `write_standings';
+	  the second standings are generated, if requested;
+	(update_public_log_file) a new function, which periodically updates
+	  public log file, if such file is requested by the serve's
+	  configuration;
+	(do_loop) `update_public_log_file' is called on each iteration.
+
+	* register.c:
+	FIRST_COOKIE, NEXT_COOKIE, FIRST_CONTEST, NEXT_CONTEST macros are
+	  added;
+	(check_contest_eligibility) registration deadline is checked;
+	(register_for_contest_page) "Submit solution" column header is
+	  generated only if there is atleast one such button in all
+	  registered contests;
+	  the current locale is preserved when following "Submit solution"
+	  button;
+	  locale_id is not put into invisible variables since it is passed
+	  directly with URL;
+	(read_user_info_from_form) `user_registering' variable is also
+	  read;
+	(read_user_info_from_server) `user_read_only' flag is handled;
+	  user_registering flag is set to 1, if the user is not yet
+	  registered to the given contest;
+	(edit_registration_data) if the given user is not eligible to this
+	  contest, `user_registering' flag is reset to 0;
+	  the form comment is changed, if in read_only mode;
+	  all input forms are generated disabled, if in read_only mode;
+	  the main buttons (register for the contest, save the data,
+	  back) are reimplemented to be simplier to understand;
+	(main) the current time is read.
+
+	* prepare.c, prepare.h:
+	new global parameters: `standings_file_name', `stand_header_file',
+	  `stand_footer_file', `stand2_file_name', `stand2_header_file',
+	  `stand2_footer_file', `plog_file_name', `plog_header_file',
+	  `plog_footer_file', `plog_update_time'.
+
+	* html.h: (write_standings) two new parameters are added;
+	(write_public_log) a new prototype added.
+
+	* html.c:
+	(do_write_kirov_standings) two parameters are added. These parameters
+	  are for text to be printed before and after the actual standings;
+	(do_write_standings) the same as above;
+	(write_standings) the same as above;
+	(do_write_public_log) a new function to generate a public contest
+	  log;
+	(write_public_log) an exported function to the above function.
+
+	* edit-userlist.c:
+	russian letters are handled correctly when pressed in various menus;
+	(display_role_menu) a new function to display a menu to choose
+	  between `Student', `School student', etc;
+	(display_user) adding a new team member now works;
+	  adding a contest registration now works;
+	(display_registered_users) adding a contest registration works;
+	(display_user_menu) adding a new user works.
+
+	* clntutil.h: 
+	(client_put_copyright) a new function prototype.
+
+	* clntutil.c:
+	(client_put_copyright) a new function to print only the copyright
+	  notice;
+	(client_put_footer) now uses `client_put_copyright'.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2002-11-14  Alexander Chernov  <cher@ispras.ru>
+
+	* run.c: several standard system include files are added;
+	(run_tests) the program output file is created explicitly,
+	  because in no-privs mode program is not allowed to create
+	  new files.
+
+	* contests.h: new tag CONTEST_REGISTRATION_DEADLINE;
+	(struct contest_desc) new field `reg_deadline'.
+
+	* contests.c: "registration_deadline" element is parsed;
+	(parse_date) new function to parse dates;
+	(parse_contest) "registration_deadline" element is parsed.
+
+	* files.make: `edit_userlist.c' is added.
+
+	* makefile: rule for compilation of `edit-userlist' added;
+	several file lists are fixed (.o files were used instead of .c).
+
+	* ejudge.ru_RU.KOI8-R.po: some new translations added
+
+	* edit-userlist.c: completed
+
+2002-11-10  Alexander Chernov  <cher@ispras.ru>
+
+	* userlist_proto.h:
+	(struct userlist_pk_login_ok) new `contest_id' field.
+
+	* userlist_clnt.h:
+	(userlist_clnt_team_cookie) new parameter `p_contest_id'.
+
+	* userlist_clnt.c:
+	(userlist_clnt_lookup_cookie) contest_id is copied from the reply
+	  packet to the user's location;
+	(userlist_clnt_team_cookie) new parameter `p_contest_id';
+	  contest_id is copied from the reply packet to the user's location.
+
+	* userlist-server.c:
+	(create_newuser) login url and ejudge email are taken from the contest
+	  settings, if the contest is specified;
+	(login_user) contest_id of the reply packed is copied from contest_id
+	  of the request packet;
+	(login_team_user) the same as above;
+	(login_cookie) if the contest_id of the request packet is set, it is
+	  copied to the cookie structure;
+	  contest_id of the reply packet is taken from the cookie structure;
+	(login_team_cookie) the same as above.
+
+	* team.c:
+	(display_enter_password) the current language is set correctly
+	  depending on the value of `locale_id' parameter.
+
+	* register.c: initial number of members for user is handled;
+	(register_for_contest_page) a button to proceed to team submit
+	  solution page is added, if the registration status is OK;
+	(prepare_var_table) initial number of members is initialized;
+	(read_user_info_from_form) maximal grade is checked carefully;
+	(read_user_info_from_server) initial number of members is handled;
+	(edit_registration_data) "General user information" message is
+	  translated;
+	  a comment is printed for "User Name" field;
+	(register_new_user_page) User Login field is marked mandatory;
+	  Reset button is removed.
+
+	* makefile: installed binaries are not stripped.
+
+	* contests.h:
+	new elements are supported: `register_email', `register_url',
+	  `team_url';
+	new attributes are supported: `initial'.
+
+	* contests.c:
+	new elements are parsed: `register_email', `register_url',
+	  `team_url';
+	new attributes are parsed: `initial';
+	(parse_member) `initial' attribute is parsed;
+	(parse_contest) new elements parsed.
+
+	* ejudge.ru_RU.KOI8-R.po: new messages translated
+
+	* edit-userlist.c: Initial revision
+
 2002-11-09  Alexander Chernov  <cher@ispras.ru>
 
 	* users.c: new static variable `self_url';
