@@ -1,3 +1,17 @@
+2003-11-24  Alexander Chernov  <cher@ispras.ru>
+
+	* checker_internal.h:
+	(checker_normalize_line) new function prototype is added;
+	(checker_read_line) new function prototype is added;
+	(checker_skip_eoln) new function prototype is added.
+
+	* Makefile:
+	new files added: normalize_line.c, read_corr_double.c, read_line.c,
+	  skip_eoln.c.
+
+	* normalize_line.c, read_corr_double.c, read_line.c, skip_eoln.c:
+	initial revision
+
 2003-11-14  Alexander Chernov  <cher@ispras.ru>
 
 	* Makefile, checker_internal.h, init.c, vars.c:

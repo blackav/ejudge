@@ -1,3 +1,367 @@
+2003-12-09  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare.h:
+	(struct section_global_data) new fields: `team_enable_ce_view',
+	  `team_show_judge_report', `use_gzip', `min_gzip_size',
+	  `use_dir_hierarchy';
+	(struct section_problem_data) new fields: `team_enable_ce_view',
+	  `team_show_judge_report'.
+
+2003-12-04  Alexander Chernov  <cher@ispras.ru>
+
+	* html.c: (new_write_user_runs) `team_enable_ce_view' is handled;
+	  attempts are not counted for hidden runs;
+	  imported runs are marked with "*" in the run_id column;
+	  hidden runs are marked with "#";
+	  variant is looked in the variant map, only if the variant is
+	  not specified in the runlog entry;
+	  if `team_enable_ce_view' is set, "Report view" link is enabled
+	  for runs failed due to compilation error;
+	(do_write_kirov_standings) hidden runs are ignored;
+	(do_write_standings) hidden runs are ignored;
+	(do_write_public_log) hidden runs are ignored;
+	  variant is looked up in the variant map, only if the variant is
+	  not specified in the runlog entry;
+	(new_write_user_report_view) `team_enable_ce_view' and
+	  `team_show_judge_report' configuration variables are handled.
+
+	* html.h: "opcaps.h" is included;
+	(write_master_page) `pcaps' parameter is added;
+	(write_priv_source) the same as above;
+	(write_priv_report) the same as above;
+	(write_priv_clar) the same as above;
+	(write_priv_users) the same as above.
+
+	* master.c:
+	(print_testing_suspend_button) a new function to print the
+	  "Suspend testing" and "Resume testing" buttons;
+	(change_status_if_asked) use of `serve_clnt_edit_run' is updated -
+	  two new parameters added;
+	(change_status) the same as above;
+	(change_problem) the same as above;
+	(change_language) the same as above;
+	(change_user_id) the same as above;
+	(change_user_login) the same as above;
+	(change_variant) a new function to send "Change variant" request;
+	(change_hidden) a new functio to send "Change is_hidden flag" request;
+	(action_submit_run) a new function to send a privileged submit;
+	(confirm_judge_suspended) a new function to display judge suspended
+	  runs confirmation dialog;
+	(action_test_suspend) a new function to suspend testing;
+	(action_test_resume) a new function to resume testing;
+	(action_judge_suspended) a new function to judge suspended runs;
+	(main) new actions handled: `ACTION_TEST_SUSPEND',`ACTION_TEST_RESUME',
+	  `ACTION_JUDGE_SUSPENDED_1', `ACTION_JUDGE_SUSPENDED_2',
+	  `ACTION_RUN_CHANGE_VARIANT', `ACTION_RUN_CHANGE_HIDDEN',
+	  `ACTION_SUBMIT_RUN';
+	  "Suspend/Resume testing" button is displayed.
+
+	* master_html.c:
+	(write_all_runs) attempts are not counted for "hidden" runs;
+	  "hidden" runs are marked with "#" character;
+	  variant is looked up in variant map only if `variant' field
+	  in run description is not set;
+	  "Judge suspended runs" button is added;
+	  "Submit a solution" dialog is added;
+	(write_master_page) a new `pcaps' parameter is added, but is not
+	  yet used;
+	(write_priv_source) the same as above;
+	  variant change button is added;
+	  hidden status change button is added;
+	(write_priv_report) a new parameter `pcaps' is added, but not yet used;
+	(write_priv_clar) the same as above;
+	(write_priv_users) the same as above;
+	(write_runs_dump) `is_imported', `variant', `is_hidden' fields are
+	  printed.
+
+	* prepare.c:
+	(GLOBAL_ALIAS) a new macro to define a global configuration variable
+	  as an alias to another global configuration variable;
+	new global configuration variable `stand_freeze_time' - alias to
+	  `board_fog_time';
+	new global configuration variable `stand_melt_time' - alias to
+	  `board_unfog_time';
+	new global configuration variables `team_enable_ce_view' and
+	  `team_show_judge_report';
+	new problem configuration variables `team_enable_ce_view' and
+	  `team_show_judge_report';
+	(global_init_func) `board_fog_time' is explicitly initialized;
+	(problem_init_func) `team_enable_ce_view', `team_show_judge_report',
+	  `test_score' are explicitly initialized;
+	(parse_variant_map) debugging output is commented out;
+	(set_defaults) "undefined" value of `board_fog_time' is now -1,
+	  so function updated;
+	  problem configuration variables `team_enable_ce_view' and
+	  `team_show_judge_report' are handled;
+	  `test_score' problem configuration variable is allowed to be 0.
+
+	* runlog.c:
+	(run_add_record) two new parameters are added: `variant' is the
+	  problem variant, `is_hidden' is "hidden" flag for the run;
+	  contest start and stop time is checked only for non-hidden runs;
+	  virtual participation status is set only for non-hidden runs;
+	(run_get_param) function is completely removed;
+	(run_get_record) function is completely removed;
+	(run_get_attempts) a "hidden" run is not counted as an attempt;
+	(run_check_duplicate) variant match is required;
+	(run_set_entry) `variant' and `is_hidden' fields are handled;
+	  contest start and stop time is checked only for non-hidden runs;
+	  a run cannot have `is_hidden' and `is_imported' flags both set;
+	(runlog_check) check for "hidden" runs is relaxed;
+	(build_indices) "hidden" runs are ignored.
+
+	* runlog_import.c:
+	(runlog_import_xml) "hidden" runs are handled in merging: hidden
+	  runs are disallowed in external (input) runlog; "hidden"
+	  local runs are never checked for correspondence in input runs;
+	  `variant' field is handled in the same manner, as `test' field,
+	  i. e. authoritative run may update `variant' field.
+
+	* serve.c:
+	(cmd_view) fixed bug introduced in the previous CVS revision:
+	  `opcaps_check' accepts capability set as the first parameter,
+	  not the user_id.
+
+	* runlog.h:
+	(run_add_record) two new parameters are added: `variant', `is_hidden';
+	new constants: `RUN_ENTRY_VARIANT', `RUN_ENTRY_HIDDEN';
+	(struct run_entry) new fields `variant' and `is_hidden' are added.
+
+	* runlog_xml.c: new attribute `variant' is added;
+	(process_run_elements) `variant' attribute is handled;
+	(unparse_runlog_xml) hidden runs are ignored;
+	  `variant' attribute is generated.
+
+	* serve.c:
+	(update_status_file) new fields `testing_suspended', `freeze_time'
+	  are written to the status file;
+	  `continuation_enabled' is written even if the duration is finite;
+	(get_cnts_caps) new function, which returns the full capability
+	  set of the given user for the current contest;
+	(cmd_master_page) `get_cnts_caps' is used to obtain the full
+	  capability set, which is further passed to `write_master_page';
+	(cmd_view) `get_cnts_caps' is used to obtain the full capability
+	  set, which is further passed to `write_priv_source',
+	  `write_priv_report', `write_priv_clar', `write_priv_users';
+	  `opcaps_check' function is used instead of `check_cnts_caps',
+	  because the full capability set is already loaded;
+	(cmd_priv_submit_run) a new function, which submits a run from a
+	  privileged user (master or judge), the run is stored in the
+	  run database with `hidden' flag;
+	(cmd_team_submit_run) `variant' is not allowed to be explicitly
+	  specified by a user;
+	  `run_add_record' usage is updated due to two new parameters
+	  (variant, is_hidden);
+	  `testing_suspended' flag is handled: the run is marked as `ACCEPTED'
+	  and is not scheduled for compilation;
+	(cmd_priv_command_0) `SRV_CMD_TEST_SUSPEND' command is handled;
+	  `SRV_CMD_TEST_RESUME' command is handled;
+	  `SRV_CMD_JUDGE_SUSPENDED' command is handled;
+	  `SRV_CMD_DURATION' is allowed after the end of the contest, if
+	  `enable_continue' global configuration variable is set;
+	  refuse to change infinite contest duration, or set infinite contest
+	  duration;
+	  allow to reduce the contest duration, but if the new duration is
+	  larger, that the duration of the running contest (i.e. decrease
+	  is disallowed, if it cause immediate stop of the contest);
+	  `SRV_CMD_CONTINUE' contest continuation is allowed, if the contest
+	  duration permits;
+	(cmd_edit_run) new fields `is_hidden' and `variant' are handled;
+	  `variant' is checked for consistency against the total number
+	  of variants for the given problem;
+	(read_compile_packet) the problem variant is looked up in the
+	  variant table, only if the variant is not specified explicitly
+	  in the runlog;
+	(do_judge_suspended) a new function to judge all the runs with
+	  `ACCEPTED' status;
+	(packet_handlers) handlers for `SRV_CMD_TEST_SUSPEND',
+	  `SRV_CMD_TEST_RESUME', `SRV_CMD_JUDGE_SUSPENDED',
+	  `SRV_CMD_PRIV_SUBMIT_RUN' are added.
+
+	* filter_scan.lex:
+	two new tokens: `status', `curstatus', which are aliases for
+	  `result' and `curresult'.
+
+	* protocol.h:
+	(struct prot_serve_status) new field `testing_suspended';
+	new serve commands: TEST_SUSPEND, TEST_RESUME, JUDGE_SUSPENDED;
+	new constant `PROT_SERVE_RUN_HIDDEN_SET' to mark `is_hidden'
+	  field;
+	(struct prot_serve_pkt_run_info) new field `is_hidden'.
+
+	* run.c: 
+	(check_config) problem test_score == 0 is allowed.
+
+	* serve_clnt.h:
+	(serve_clnt_submit_run) two new parameters added: `cmd', `variant';
+	(serve_clnt_edit_run) two new parameters added: `variand',
+	  `is_hidden'.
+
+	* team.c:
+	(submit_if_asked) use of `serve_clnt_submit_run' is changed, because
+	  of two new parameters.
+
+	* clntutil.c:
+	type of `server_cur_time', `server_start_time', `server_sched_time',
+	  `server_duration', `server_stop_time' is changed to time_t.
+
+	* clntutil.h: new global variables added:
+	  `server_freeze_time', `server_testing_suspended';
+	type of `server_cur_time', `server_start_time', `server_sched_time',
+	  `server_duration', `server_stop_time' is changed to time_t.
+
+	* clntutil.c:
+	new global variable `server_freeze_time' to store the standings
+	  freeze time;
+	new global variable `server_testing_suspended' to store this flag;
+	(client_check_server_status) `server_testing_suspended',
+	  `server_freeze_time' are read from the server;
+	(client_print_server_status) if testing is suspended on the server,
+	  the corresponding message is printed;
+	  "Client time" information is printed only for privileged users;
+	  "Continue" button is printed for contests with limited duration, if
+	  duration permits;
+	  "Change duration" is printed always, if `server_continuation_enabled'
+	  flag is set, even after the end of the contest;
+	  `server_freeze_time' is printed, if set.
+
+	* client_actions.h:
+	new actions added: `RUN_CHANGE_VARIANT', `RUN_CHANGE_HIDDEN',
+	  `TEST_SUSPEND', `TEST_RESUME', `JUDGE_SUSPENDED_1',
+	  `JUDGE_SUSPENDED_2'.
+
+2003-12-03  Alexander Chernov  <cher@ispras.ru>
+
+	* teamdb.c:
+	(teamdb_refresh) if no participants are yet registered for the contest,
+	  return gracefully instead of aborting on attempt to allocate 0 bytes.
+
+	* contests.c:
+	<observer_access> element is removed, because observer functionality
+	  was not implemented;
+	(parse_contest) `observer_access' tag is removed;
+	(contests_check_ip) `observer_access' support is removed;
+	(contests_check_observer_ip) function is removed.
+
+	* contests.h:
+	<observer_access> element is removed, because observer functionality
+	  was not implemented;
+	(struct contest_desc) `observer_access' field is removed;
+	(contests_check_observer_ip) function prototype is removed.
+
+	* protocol.c: copyright notice is updated;
+	(priv_level_map) `observer' constant is removed.
+
+	* protocol.h:
+	(struct prot_serve_status) new field `freeze_time' is added to
+	  pass the standings freeze time to clients;
+	new command `SRV_CMD_PRIV_SUBMIT_RUN' is added;
+	(struct prot_serve_pkt_submit_run) new field `variant' is added;
+	new bit `PROT_SERVE_RUN_VARIANT_SET' is added;
+	(struct prot_serve_pkt_run_info) new field `variant' is added.
+
+2003-12-02  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* html.c: "archive_paths.h" is included;
+	(new_write_user_source_view) `archive_make_read_path' is used to
+	  compose the path to the archive entry;
+	(new_write_user_report_view) the same as above.
+
+	* master.c:
+	(main) support for `PRIV_LEVEL_OBSERVER' privilege level is removed,
+	  because the `observer' privilege level was never actually
+	  implemented in ejudge.
+
+	* master_html.c: "archive_paths.h" is included;
+	(write_all_runs) two extra columns for virtual events and empty
+	  record are not generated in judge mode;
+	(write_priv_source) `archive_make_read_path' function is used to
+	  compose the path to the archive entry;
+	(write_priv_report) the same as above.
+
+	* prepare.c:
+	new global configuration variables: `use_gzip', `min_gzip_size',
+	  `use_dir_hierarchy';
+	(global_init_func) the new configuration variables are initialized
+	  to "undefined" (-1) value;
+	(set_defaults) the new configuration variables are handled.
+
+	* runlog_import.c: "archive_paths.h" is included;
+	(do_rename) function is removed because similar function
+	  `archive_rename' is now in the "archive_paths.c";
+	(rename_archive_files) `archive_rename' is used instead of
+	  `do_rename'.
+
+	* serve.c: "archive_paths.h" is included;
+	(cmd_team_get_archive) `archive_make_read_path' is used to compose
+	  an archive entry path to insert into the team's archive;
+	(cmd_master_page) `PRIV_LEVEL_OBSERVER' is removed as `observer'
+	  mode was never implemented;
+	(cmd_priv_standings) the same as above;
+	(cmd_message) the same as above;
+	(cmd_team_submit_run) `archive_make_write_path', `archive_dir_prepare'
+	  are used to save the submit into the proper place in the archive;
+	(cmd_judge_command_0) `PRIV_LEVEL_OBSERVER' is removed as `observer'
+	  mode was never implemented;
+	(do_rename) function removed, since `archive_rename' function is
+	  created in "archive_paths.c";
+	(do_remove_archive_entry) function removed, since `archive_remove'
+	  function is created in "archive_paths.c";
+	(do_squeeze_runs) `archive_rename', `archive_remove' functions are
+	  used;
+	(read_compile_packet) `archive_make_write_path', `archive_dir_prepare'
+	  functions are used to save the compilation log to proper place;
+	(read_run_packet) `archive_make_write_path', `archive_dir_prepare'
+	  are used to save the execution log to proper places;
+	(queue_compile_request) `archive_make_read_path' is used to compose
+	  the name of the archive entry;
+	(rejudge_run) since `queue_compile_request' do not need run text
+	  if the run is taken from the archive, NULL is passed in this
+	  parameter.
+
+2003-12-01  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.h:
+	new `GZIP' bit is added to flag bits. This bit indicates, that
+	  gzip compression/decompression should be performed;
+	(generic_file_size) new function prototype.
+
+	* makefile: `-lz' added to LDLIBS: many utilities now use zlib.
+
+	* opcaps.c, opcaps.h:
+	`SUBMIT_RUNS' capability is added instead of `OBSERVER_LOGIN'
+	  (capability bit is 2).
+
+	* protocol.h, userlist_proto.h:
+	`PRIV_LEVEL_OBSERVER' privilege level constant is removed, since
+	  the `observer' privilege level was never implemented.
+
+	* files.make: archive_paths.[ch] are added.
+
+	* userlist-server.c:
+	(cmd_priv_login) support for `observer' privilege level is removed,
+	  since this privilege level was never implemented;
+	(cmd_priv_check_cookie) the same as above.
+
+	* userlist.h:
+	`PRIV_LEVEL_OBSERVER' constant is removed, since the `observer'
+	  privilege level (never implemented) is removed.
+
+	* userlist_xml.c:
+	(parse_priv_level) `observer' privilege level is removed.
+
+	* archive_paths.c, archive_paths.h: initial revision
+
+2003-11-28  Alexander Chernov  <cher@ispras.ru>
+
+	* files.make:
+	Obsoleted files are removed from the lists of .c and .h files:
+	  clar.c filter_test.c idmap.c inetdb.c localdb.c make-teamdb-inet.c
+	  make-teamdb.c mkpasswd.c send-passwords.c submit.c
+	  idmap.h inetdb.h localdb.h
+
 2003-11-21  Alexander Chernov  <cher@ispras.ru>
 
 	* NEWS.RUS, NEWS: Initial revision
