@@ -675,7 +675,7 @@ initialize(int argc, char const *argv[])
   os_rGetBasename(fullname, basename, PATH_MAX);
   strcpy(program_name, basename);
   if (strncmp(basename, "register", 8) != 0) {
-    client_not_configured(0, "bad program name");
+    client_not_configured(0, "bad program name", 0);
     // never get here
   }
   namelen = 8;                  /* "register" */
@@ -761,18 +761,18 @@ initialize(int argc, char const *argv[])
   }
 
   if (!name_ok) {
-    client_not_configured(0, "client is not configured");
+    client_not_configured(0, "client is not configured", 0);
     // never get here
   }
   if (!(config = parse_config(cfgname))) {
-    client_not_configured(0, "config file not parsed");
+    client_not_configured(0, "config file not parsed", 0);
   }
 
   if (!config->contests_dir ||
       (errcode = contests_set_directory(config->contests_dir)) < 0) {
     fprintf(stderr, "cannot set contests directory '%s': %s\n",
             config->contests_dir, contests_strerror(-errcode));
-    client_not_configured(0, "invalid contest information");
+    client_not_configured(0, "invalid contest information", 0);
   }
 
   l10n_prepare(config->l10n, config->l10n_dir);
@@ -1256,7 +1256,7 @@ read_user_info_from_server(void)
   }
   if (error_log) {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
-                      _("Fatal error"));
+                      client_locale_id, _("Fatal error"));
     printf("<p>%s.</p><font color=\"red\"><pre>%s</pre></font>\n",
            _("Failed to read information from the server"), error_log);
     return -1;
@@ -1407,7 +1407,7 @@ authentificate(void)
 
  failed:
   client_put_header(stdout, header_txt, 0, config->charset, 1,
-                    _("Authentification failed"));
+                    client_locale_id, _("Authentification failed"));
   printf("<p>%s.</p>\n", _("Authentification failed for some reason"));
   return 0;
 }
@@ -1432,7 +1432,7 @@ display_edit_registration_data_page(void)
   /* FIXME: not sure, whether this will work with user_contest_id == 0... */
   if (user_contest_id <= 0) {
     client_put_header(stdout, header_txt, config->charset, 0, 1,
-                      "%s", _("Invalid contest identifier"));
+                      client_locale_id, "%s", _("Invalid contest identifier"));
     return;
   }
 
@@ -1441,7 +1441,7 @@ display_edit_registration_data_page(void)
       fprintf(stderr, "invalid contest %d: %s", user_contest_id,
               contests_strerror(-errcode));
       client_put_header(stdout, header_txt, 0, config->charset, 1,
-                        "%s", _("Invalid contest"));
+                        client_locale_id, "%s", _("Invalid contest"));
       printf("<p>%s</p>.", _("Invalid contest identifier specified"));
       return;
     }
@@ -1450,7 +1450,7 @@ display_edit_registration_data_page(void)
 
   if (!check_contest_eligibility(cnts->id)) {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
-                      "%s", _("Permission denied"));
+                      client_locale_id, "%s", _("Permission denied"));
     printf("<p>%s</p>.", _("You cannot participate in this contest"));
     return;
   }
@@ -1482,7 +1482,7 @@ display_edit_registration_data_page(void)
     role = user_action - ACTION_ADD_NEW_CONTESTANT;
     if (member_cur[role] >= member_max[role]) {
       client_put_header(stdout, header_txt, 0, config->charset, 1,
-                        "%s", _("Cannot add a new member"));
+                        client_locale_id, "%s", _("Cannot add a new member"));
       printf("<p>%s %s: %s.</p>\n",
              _("Cannot add a new"),
              gettext(member_string[role]),
@@ -1524,7 +1524,7 @@ display_edit_registration_data_page(void)
   l10n_setlocale(client_locale_id);
 
   client_put_header(stdout, header_txt, 0, config->charset, 1,
-                    _("User %s: registration for %s"),
+                    client_locale_id, _("User %s: registration for %s"),
                     user_name_arm, cnts_name_arm);
   {
     unsigned char *s1, *s2 ,*s3;
@@ -1724,7 +1724,7 @@ display_initial_page(void)
 
   printf("Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
   client_put_header(stdout, header_txt, 0, config->charset, 1,
-                    "%s", _("Log into the system"));
+                    client_locale_id, "%s", _("Log into the system"));
 
   if (!(user_login = cgi_param("login"))) {
     user_login = xstrdup("");
@@ -1754,6 +1754,10 @@ display_initial_page(void)
   if (user_contest_id > 0) {
     printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
            user_contest_id);
+  }
+  if (client_locale_id >= 0) {
+    printf("<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
+           client_locale_id);
   }
   printf("<input type=\"hidden\" name=\"usecookies\" value=\"1\">\n");
   printf("<h2>%s</h2><p>%s</p>\n",
@@ -1797,6 +1801,7 @@ display_login_page(void)
 
   printf("Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
   client_put_header(stdout, header_txt, 0, config->charset, 1,
+                    client_locale_id,
                     "%s", _("Log into the system"));
 
   if (!(user_login = cgi_param("login"))) {
@@ -1863,7 +1868,7 @@ display_register_new_user_page(void)
 
   printf("Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
   client_put_header(stdout, header_txt, 0, config->charset, 1,
-                    "%s", _("Register a new user"));
+                    client_locale_id, "%s", _("Register a new user"));
 
   /* change language */
   printf("<form method=\"POST\" action=\"%s\" "
@@ -1949,7 +1954,7 @@ display_user_registered_page(void)
            self_url, user_login, STATE_LOGIN, s1, client_locale_id);
 
   client_put_header(stdout, header_txt, 0, config->charset, 1,
-                    "%s", _("User registration is complete"));
+                    client_locale_id,"%s", _("User registration is complete"));
 
   printf(_("<p>Registration of a new user is completed successfully. "
            "An e-mail messages is sent to the address <tt>%s</tt>. "
@@ -2005,7 +2010,7 @@ display_main_page(void)
   }
   l10n_setlocale(client_locale_id);
   client_put_header(stdout, header_txt, 0, config->charset, 1,
-                    _("Personal page of %s"), armored_str);
+                    client_locale_id, _("Personal page of %s"), armored_str);
 
   printf(_("<p>Hello, %s!</p>\n"), armored_str);
 
@@ -2154,7 +2159,7 @@ display_main_page(void)
 
  failed:
   client_put_header(stdout, header_txt, 0, config->charset, 1,
-                    "%s", _("Fatal error"));
+                    client_locale_id, "%s", _("Fatal error"));
   printf("<pre>%s</pre>\n", error_log);
 }
 
@@ -2319,7 +2324,7 @@ action_register_new_user(void)
   }
 
   client_put_header(stdout, header_txt, 0, config->charset, 1,
-                    "%s", _("Registration failed"));
+                    client_locale_id, "%s", _("Registration failed"));
   printf("<h2>%s</h2><p>%s<br><pre><font color=\"red\">%s</font></pre></p>\n",
          _("The form contains error(s)"),
          _("Unfortunately, your form cannot be accepted, since "
@@ -2358,7 +2363,7 @@ action_login(void)
   }
   if (!server_conn) {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
-                      _("Login failed"));
+                      client_locale_id, _("Login failed"));
     printf("<p>%s</p>\n", _("Connection to the server is broken."));
     return;
   }
@@ -2371,7 +2376,7 @@ action_login(void)
                                 &new_locale_id);
   if (errcode != ULS_LOGIN_COOKIE) {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
-                      _("Login failed"));
+                      client_locale_id, _("Login failed"));
     printf("<p>%s</p>\n",
            _("You have specified incorrect login or password."));
     return;
@@ -2419,7 +2424,7 @@ action_logout(void)
 
   l10n_setlocale(client_locale_id);
   client_put_header(stdout, header_txt, 0, config->charset, 1,
-                    "%s, %s!", _("Good-bye"), armored_str);
+                    client_locale_id, "%s, %s!", _("Good-bye"), armored_str);
   printf(_("<p>Click <a href=\"%s\">on this link</a> to login again.</p>\n"),
          url);
 }
@@ -2487,7 +2492,7 @@ action_change_password(void)
   }
 
   client_put_header(stdout, header_txt, 0, config->charset, 1,
-                    _("Failed to change password"));
+                    client_locale_id, _("Failed to change password"));
   printf("<p>%s<br><pre><font color=\"red\">%s</font></pre></p>\n",
          _("Password changing failed due to the following reasons."),
          error_log);
@@ -2589,7 +2594,7 @@ action_remove_member(void)
 
  failed:
   client_put_header(stdout, header_txt, 0, config->charset, 1,
-                    "%s", _("Cannot remove team member"));
+                    client_locale_id, "%s", _("Cannot remove team member"));
   printf("<p>%s.</p>\n<font color=\"red\"><pre>%s</pre></font>\n",
          _("Cannot remove a member due a reason given below"), error_log);
 }
@@ -2597,7 +2602,7 @@ action_remove_member(void)
 static void
 action_register_for_contest(void)
 {
-  int user_show_all = 1, errcode = 0, role, pers, i;
+  int user_show_all = 0, errcode = 0, role, pers, i;
   unsigned char *user_xml_text = 0;
   unsigned char s1[64], url[512];
   struct contest_desc *cnts = 0;
@@ -2609,7 +2614,7 @@ action_register_for_contest(void)
 
   if (user_contest_id <= 0) {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
-                      "%s", _("Invalid contest identifier"));
+                      client_locale_id, "%s", _("Invalid contest identifier"));
     return;
   }
   if (user_contest_id > 0) {
@@ -2617,7 +2622,7 @@ action_register_for_contest(void)
       fprintf(stderr, "invalid contest %d: %s", user_contest_id,
               contests_strerror(-errcode));
       client_put_header(stdout, header_txt, 0, config->charset, 1,
-                        "%s", _("Invalid contest"));
+                        client_locale_id, "%s", _("Invalid contest"));
       printf("<p>%s</p>.", _("Invalid contest identifier specified"));
       return;
     }
@@ -2626,7 +2631,7 @@ action_register_for_contest(void)
 
   if (!check_contest_eligibility(cnts->id)) {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
-                      "%s", _("Permission denied"));
+                      client_locale_id, "%s", _("Permission denied"));
     printf("<p>%s</p>.", _("You cannot participate in this contest"));
     return;
   }
@@ -2697,7 +2702,7 @@ action_register_for_contest(void)
 
  failed:
   client_put_header(stdout, header_txt, 0, config->charset, 1,
-                    _("Operation failed"));
+                    client_locale_id, _("Operation failed"));
   printf("<p>%s</p><font color=\"red\"><pre>%s</pre></font>\n",
          _("Registration failed by the following reason:"), error_log);
 }
@@ -2738,7 +2743,7 @@ main(int argc, char const *argv[])
   initialize(argc, argv);
 
   if (!check_source_ip()) {
-    client_access_denied(config->charset);
+    client_access_denied(config->charset, client_locale_id);
   }
 
   read_locale_id();
