@@ -1,3 +1,27 @@
+2004-12-20  Alexander Chernov  <cher@ispras.ru>
+
+	* master_page.c:
+	(serve_clnt_master_page) `cmd' parameter is added, which is a
+	  command instead of the fixed `SRV_CMD_MASTER_PAGE'.
+
+	* edit_run.c:
+	(do_serve_clnt_edit_run) `score_adj' parameter is added, which is
+	  further passed to the server;
+	(serve_clnt_edit_run) `score_adj' parameter is added, which is passed
+	  to the function above.
+
+2004-11-09  Alexander Chernov  <cher@ispras.ru>
+
+	* import_xml_runs.c:
+	(serve_clnt_import_xml_runs) parameter `flags' is added, which is
+	  passed to the server.
+
+2004-10-31  Alexander Chernov  <cher@ispras.ru>
+
+	* view.c: (serve_clnt_view) SRV_CMD_VIEW_TEAM command is supported.
+
+	* edit_user.c: initial revision
+
 2004-10-25  Alexander Chernov  <cher@ispras.ru>
 
 	* rejudge_by_mask.c:

@@ -1,3 +1,9 @@
+2004-11-13  Alexander Chernov  <cher@ispras.ru>
+
+	* interrupt.c: stubs, which generate fatal errors are added.
+
+	* cr_serialize.c, interrupt.c: initial revision
+
 2002-12-06  Alexander Chernov  <cher@ispras.ru>
 
 	* fileutl.c: copyright notice is updated;
