@@ -244,10 +244,10 @@ write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
       fprintf(f, "<td>%d</td>", test);
     }
     if (global->team_enable_src_view) {
-      fprintf(f, "<td><input type=\"image\" name=\"source_%d\" value=\"%s\" alt=\"view\" src=\"/icons/view_btn.gif\"></td>", i, _("view"));
+      fprintf(f, "<td><input type=\"submit\" name=\"source_%d\" value=\"%s\"></td>", i, _("view"));
     }
     if (global->team_enable_rep_view) {
-      fprintf(f, "<td><input type=\"image\" name=\"report_%d\" value=\"%s\" alt=\"view\" src=\"/icons/view_btn.gif\"></td>", i, _("view"));
+      fprintf(f, "<td><input type=\"submit\" name=\"report_%d\" value=\"%s\"</td>", i, _("view"));
     }
     fputs("\n</tr></form>\n", f);
   }
@@ -301,7 +301,7 @@ write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
       fprintf(f, "<td>%s</td>", teamdb_get_login(to));
     }
     fprintf(f, "<td>%s</td>", asubj);
-    fprintf(f, "<td><input type=\"image\" name=\"clar_%d\" value=\"%s\" alt=\"view\" src=\"/icons/view_btn.gif\"></td>\n", i, _("view"));
+    fprintf(f, "<td><input type=\"submit\" name=\"clar_%d\" value=\"%s\"></td>\n", i, _("view"));
 
     fputs("</tr></form>\n", f);
   }
@@ -1070,8 +1070,8 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
               " value=\"%s\"></td>\n", i, _("change"));
     }
 
-    fprintf(f, "<td><input type=\"image\" name=\"source_%d\" value=\"%s\" alt=\"view\" src=\"/icons/view_btn.gif\"></td>\n", i, _("view"));
-    fprintf(f, "<td><input type=\"image\" name=\"report_%d\" value=\"%s\" alt=\"view\" src=\"/icons/view_btn.gif\"></td>\n", i, _("view"));
+    fprintf(f, "<td><input type=\"submit\" name=\"source_%d\" value=\"%s\"></td>\n", i, _("view"));
+    fprintf(f, "<td><input type=\"submit\" name=\"report_%d\" value=\"%s\"></td>\n", i, _("view"));
 
     fputs("</tr></form>\n", f);
   }
@@ -1144,7 +1144,7 @@ write_judge_allclars(int master_mode, int show_all, FILE *f)
     fprintf(f, "<td>%s</td>", asubj);
     fprintf(f, "<input type=\"hidden\" name=\"enable_reply\" value=\"%d\">",
             !!from);
-    fprintf(f, "<td><input type=\"image\" name=\"clar_%d\" value=\"%s\" alt=\"view\" src=\"/icons/view_btn.gif\"></td>\n", i, _("view"));
+    fprintf(f, "<td><input type=\"submit\" name=\"clar_%d\" value=\"%s\"></td>\n", i, _("view"));
 
     fputs("</tr></form>\n", f);
   }
@@ -1473,7 +1473,6 @@ write_judge_one_team_view(char const *pk_name, int teamid)
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  *  eval: (set-language-environment "Cyrillic-KOI8")
- *  enable-multibute-characters: nil
  * End:
  */
 
