@@ -76,8 +76,8 @@ case "${target}" in
   *-*-mingw*)
     ac_cv_ejudge_arch=win32
     ac_cv_exe_suffix=.exe
-#    CFLAGS="${CFLAGS} -mno-cygwin"
-#    LDFLAGS="${LDFLAGS} -mno-cygwin"
+    CFLAGS="${CFLAGS} -mno-cygwin"
+    LDFLAGS="${LDFLAGS} -mno-cygwin"
     AC_MSG_RESULT([win32])
     ;;
   *)
@@ -87,7 +87,10 @@ case "${target}" in
     ;;
 esac
 
+if [[ x"${ac_cv_ejudge_arch}" != xwin32 ]]
+then
 AC_CHECK_HEADERS([termios.h])
+fi
 
 dnl Expat checking stuff
 ac_cv_has_expat=1
@@ -155,7 +158,7 @@ CPPFLAGS="${saved_CPPFLAGS}"
 LDFLAGS="${saved_LDFLAGS}"
 LIBS="${saved_LIBS}"
 
-if [[ x"${ac_cv_has_expat}" = x ]]
+if [[ x"${ac_cv_has_expat}" = x -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
 AC_MSG_FAILURE([expat XML parsing library missing])
 fi
@@ -451,11 +454,11 @@ then
   AC_CHECK_PROG([MSGFMT],[msgfmt],[msgfmt],[false])
   [[ x"${MSGFMT}" = xfalse ]] && ac_cv_nls=""
 fi
-if [[ x"${ac_cv_nls}" = x1 ]]
+if [[ x"${ac_cv_nls}" = x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   AC_CHECK_HEADER([locale.h],[],[ac_cv_nls=""])
 fi
-if [[ x"${ac_cv_nls}" = x1 ]]
+if [[ x"${ac_cv_nls}" = x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   AC_CHECK_HEADER([libintl.h],[],[ac_cv_nls=""])
 fi
@@ -466,7 +469,7 @@ AC_MSG_NOTICE([checking available languages])
 dnl It looks like we cannot use the autoconf's macros :(
 
 AC_MSG_CHECKING([whether GNU C is available])
-if [[ x"${ac_cv_contest_gcc}" != xno ]]
+if [[ x"${ac_cv_contest_gcc}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   [[ x"${ac_cv_contest_gcc}" = xyes ]] && ac_cv_contest_gcc=""
   [[ x"${ac_cv_contest_gcc}" = x ]] && ac_cv_contest_gcc="gcc"
@@ -502,7 +505,7 @@ else
 fi
 
 AC_MSG_CHECKING([whether GNU C++ is available])
-if [[ x"${ac_cv_contest_gpp}" != xno ]]
+if [[ x"${ac_cv_contest_gpp}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   [[ x"${ac_cv_contest_gpp}" = xyes ]] && ac_cv_contest_gpp=""
   [[ x"${ac_cv_contest_gpp}" = x ]] && ac_cv_contest_gpp="g++"
@@ -538,7 +541,7 @@ else
 fi
 
 AC_MSG_CHECKING([whether Free Pascal is available])
-if [[ x"${ac_cv_contest_fpc}" != xno ]]
+if [[ x"${ac_cv_contest_fpc}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   [[ x"${ac_cv_contest_fpc}" = xyes ]] && ac_cv_contest_fpc=""
   [[ x"${ac_cv_contest_fpc}" = x ]] && ac_cv_contest_fpc="fpc"
@@ -574,7 +577,7 @@ else
 fi
 
 AC_MSG_CHECKING([whether GNU Pascal is available])
-if [[ x"${ac_cv_contest_gpc}" != xno ]]
+if [[ x"${ac_cv_contest_gpc}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   [[ x"${ac_cv_contest_gpc}" = xyes ]] && ac_cv_contest_gpc=""
   [[ x"${ac_cv_contest_gpc}" = x ]] && ac_cv_contest_gpc="gpc"
@@ -610,7 +613,7 @@ else
 fi
 
 AC_MSG_CHECKING([whether Borland Delphi is available])
-if [[ x"${ac_cv_contest_dcc}" != xno ]]
+if [[ x"${ac_cv_contest_dcc}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   [[ x"${ac_cv_contest_dcc}" = xyes ]] && ac_cv_contest_dcc=""
   [[ x"${ac_cv_contest_dcc}" = x ]] && ac_cv_contest_dcc="dcc"
@@ -646,7 +649,7 @@ else
 fi
 
 AC_MSG_CHECKING([whether GNU Java (GCJ) is available])
-if [[ x"${ac_cv_contest_gcj}" != xno ]]
+if [[ x"${ac_cv_contest_gcj}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   [[ x"${ac_cv_contest_gcj}" = xyes ]] && ac_cv_contest_gcj=""
   [[ x"${ac_cv_contest_gcj}" = x ]] && ac_cv_contest_gcj="gcj"
@@ -682,7 +685,7 @@ else
 fi
 
 AC_MSG_CHECKING([whether GNU Fortran 77 is available])
-if [[ x"${ac_cv_contest_g77}" != xno ]]
+if [[ x"${ac_cv_contest_g77}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   [[ x"${ac_cv_contest_g77}" = xyes ]] && ac_cv_contest_g77=""
   [[ x"${ac_cv_contest_g77}" = x ]] && ac_cv_contest_g77="g77"
@@ -718,7 +721,7 @@ else
 fi
 
 AC_MSG_CHECKING([whether Yabasic interpreter is available])
-if [[ x"${ac_cv_contest_yabasic}" != xno ]]
+if [[ x"${ac_cv_contest_yabasic}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   [[ x"${ac_cv_contest_yabasic}" = xyes ]] && ac_cv_contest_yabasic=""
   [[ x"${ac_cv_contest_yabasic}" = x ]] && ac_cv_contest_yabasic="yabasic"
@@ -754,7 +757,7 @@ else
 fi
 
 AC_MSG_CHECKING([whether MzScheme interpreter is available])
-if [[ x"${ac_cv_contest_mzscheme}" != xno ]]
+if [[ x"${ac_cv_contest_mzscheme}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   [[ x"${ac_cv_contest_mzscheme}" = xyes ]] && ac_cv_contest_mzscheme=""
   [[ x"${ac_cv_contest_mzscheme}" = x ]] && ac_cv_contest_mzscheme="mzscheme"
@@ -789,7 +792,7 @@ else
 fi
 
 AC_MSG_CHECKING([whether Perl interpreter is available])
-if [[ x"${ac_cv_contest_perl}" != xno ]]
+if [[ x"${ac_cv_contest_perl}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   [[ x"${ac_cv_contest_perl}" = xyes ]] && ac_cv_contest_perl=""
   [[ x"${ac_cv_contest_perl}" = x ]] && ac_cv_contest_perl="perl"
@@ -824,7 +827,7 @@ else
 fi
 
 AC_MSG_CHECKING([whether Python interpreter is available])
-if [[ x"${ac_cv_contest_python}" != xno ]]
+if [[ x"${ac_cv_contest_python}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   [[ x"${ac_cv_contest_python}" = xyes ]] && ac_cv_contest_python=""
   [[ x"${ac_cv_contest_python}" = x ]] && ac_cv_contest_python="python"
@@ -859,7 +862,7 @@ else
 fi
 
 AC_MSG_CHECKING([whether GNU Prolog is available])
-if [[ x"${ac_cv_contest_gprolog}" != xno ]]
+if [[ x"${ac_cv_contest_gprolog}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   [[ x"${ac_cv_contest_gprolog}" = xyes ]] && ac_cv_contest_gprolog=""
   [[ x"${ac_cv_contest_gprolog}" = x ]] && ac_cv_contest_gprolog="gplc"
@@ -896,7 +899,7 @@ else
 fi
 
 AC_MSG_CHECKING([whether Java SDK is available])
-if [[ x"${ac_cv_contest_javac}" != xno ]]
+if [[ x"${ac_cv_contest_javac}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   [[ x"${ac_cv_contest_javac}" = xyes ]] && ac_cv_contest_javac=""
   [[ x"${ac_cv_contest_javac}" = x ]] && ac_cv_contest_javac="javac"
@@ -1042,6 +1045,15 @@ else
 fi
 dnl Output generation
 
+if [[ x"${ac_cv_ejudge_arch}" = xwin32 ]]
+then
+  rm -f Makefile.in
+  cp -p Makefile.win32.in Makefile.in
+else
+  rm -f Makefile.in
+  cp -p Makefile.unix.in Makefile.in
+fi
+
 AC_SUBST(ac_cv_ejudge_arch)
 AC_SUBST(ac_cv_exe_suffix)
 AC_SUBST(ac_cv_expat_root)
@@ -1091,12 +1103,12 @@ AC_SUBST(ac_cv_contest_java)
 AC_SUBST(ac_cv_contest_java_dir)
 AC_SUBST(ac_cv_contest_java_version)
 
-if [[ x"${ac_cv_nls}" = x1 ]]
+if [[ x"${ac_cv_nls}" = x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   AC_DEFINE(CONF_HAS_LIBINTL,1)
 fi
 
-if [[ x"${ac_cv_no_kernel}" = x1 ]]
+if [[ x"${ac_cv_no_kernel}" = x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   AC_DEFINE(CONF_HAS_LIBCAP,1)
 fi
