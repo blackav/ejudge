@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <termios.h>
 #include <time.h>
+#include <signal.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -1030,10 +1031,16 @@ do_loop(void)
   int cur_variant;
   struct section_tester_data tn, *tst;
   int got_quit_packet = 0;
+  sigset_t work_mask, orig_mask;
 
   memset(&tn, 0, sizeof(tn));
+  sigemptyset(&work_mask);
+  sigaddset(&work_mask, SIGINT);
+  sigaddset(&work_mask, SIGTERM);
+  sigaddset(&work_mask, SIGTSTP);
 
   if (cr_serialize_init() < 0) return -1;
+  sigprocmask(SIG_BLOCK, &work_mask, &orig_mask);
 
   while (1) {
     r = scan_dir(global->run_queue_dir, pkt_name);
@@ -1047,7 +1054,9 @@ do_loop(void)
         info("no activity for %d seconds, exiting",global->inactivity_timeout);
         return 0;
       }
+      sigprocmask(SIG_UNBLOCK, &work_mask, 0);
       os_Sleep(global->sleep_time);
+      sigprocmask(SIG_BLOCK, &work_mask, 0);
       continue;
     }
 

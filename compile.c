@@ -50,6 +50,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -81,17 +82,25 @@ do_loop(void)
   int     contest_id;
   int     run_id;
   int     lang_id;
-
   int    r, n;
   tpTask tsk;
+  sigset_t work_mask;
+
+  sigemptyset(&work_mask);
+  sigaddset(&work_mask, SIGINT);
+  sigaddset(&work_mask, SIGTERM);
+  sigaddset(&work_mask, SIGTSTP);
 
   if (cr_serialize_init() < 0) return -1;
+  sigprocmask(SIG_BLOCK, &work_mask, 0);
 
   while (1) {
     r = scan_dir(global->compile_queue_dir, pkt_name);
     if (r < 0) return -1;
     if (!r) {
+      sigprocmask(SIG_UNBLOCK, &work_mask, 0);
       os_Sleep(global->sleep_time);
+      sigprocmask(SIG_BLOCK, &work_mask, 0);
       continue;
     }
 
@@ -300,8 +309,6 @@ main(int argc, char *argv[])
 /**
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "tpTask")
  * End:
  */
-
-
