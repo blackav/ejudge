@@ -63,9 +63,11 @@ checker_do_init(int argc, char **argv, int corr_flag, int info_flag,
   if (tgz_flag) {
     if (!(dir_in = opendir(argv[arg_ind])))
       fatal_CF("Cannot open input directory '%s'", argv[arg_ind]);
+    dir_in_path = xstrdup(argv[arg_ind]);
     arg_ind++;
     if (!(dir_out = opendir(argv[arg_ind])))
       fatal_CF("Cannot open output directory '%s'", argv[arg_ind]);
+    dir_out_path = xstrdup(argv[arg_ind]);
     arg_ind++;
   }
 }
