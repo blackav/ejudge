@@ -33,6 +33,15 @@ enum { PREPARE_QUIET = 1, PREPARE_USE_CPP = 2 };
 enum { SCORE_ACM, SCORE_KIROV, SCORE_OLYMPIAD };
 #endif /* EJUDGE_SCORE_SYSTEM_DEFINED */
 
+struct testset_info
+{
+  int total;                  /* total number of tests in set */
+  unsigned char *nums;
+  int testop;
+  int scoreop;
+  int score;
+};
+
 struct section_global_data
 {
   struct generic_section_config g;
@@ -62,6 +71,7 @@ struct section_global_data
   int    disable_clars;         /* clarification requests disabled */
   int    disable_team_clars;    /* team cannot compose a clarification */
   int    ignore_compile_errors; /* ignore CE result for score calculation */
+  int    enable_continue;       /* enable contest continuation after stop */
 
   path_t name;                  /* name of the contest */
   path_t root_dir;
@@ -226,6 +236,10 @@ struct section_problem_data
 
   int     ntests;               /* number of tests found */
   int    *tscores;              /* internal scores array  */
+
+  char  **test_sets;            /* defined test sets */
+  int ts_total;
+  struct testset_info *ts_infos;
 };
 
 struct section_language_data
