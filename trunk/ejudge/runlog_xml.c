@@ -20,6 +20,7 @@
 #include "pathutl.h"
 #include "teamdb.h"
 #include "prepare.h"
+#include "misctext.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -595,6 +596,12 @@ unparse_runlog_xml(FILE *f,
   struct run_entry *pp;
   long long ts;
   int max_user_id;
+  unsigned char *astr1, *astr2, *val1, *val2;
+  size_t alen1, alen2, asize1, asize2;
+
+  asize2 = asize1 = 64;
+  astr1 = alloca(asize1);
+  astr2 = alloca(asize2);
 
   fputs("<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n", f);
   fprintf(f, "<%s>\n", elem_map[RUNLOG_T_RUNLOG]);
@@ -605,20 +612,41 @@ unparse_runlog_xml(FILE *f,
       if (teamdb_lookup(i) <= 0) continue;
       if ((flags = teamdb_get_flags(i)) < 0) continue;
       if ((flags & (TEAM_BANNED | TEAM_INVISIBLE))) continue;
+      val1 = teamdb_get_name(i);
+      if (html_armor_needed(val1, &alen1)) {
+        while (alen1 >= asize1) asize1 *= 2;
+        astr1 = alloca(asize1);
+        html_armor_string(val1, astr1);
+        val1 = astr1;
+      }
       fprintf(f, "    <%s %s=\"%d\" %s=\"%s\"/>\n",
               elem_map[RUNLOG_T_USER], attr_map[RUNLOG_A_ID], i,
-              attr_map[RUNLOG_A_NAME], teamdb_get_name(i));
+              attr_map[RUNLOG_A_NAME], val1);
     }
     fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_USERS]);
 
     fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_PROBLEMS]);
     for (i = 1; i <= max_prob; i++) {
       if (!probs[i]) continue;
+      val1 = probs[i]->short_name;
+      val2 = probs[i]->long_name;
+      if (html_armor_needed(val1, &alen1)) {
+        while (alen1 >= asize1) asize1 *= 2;
+        astr1 = alloca(asize1);
+        html_armor_string(val1, astr1);
+        val1 = astr1;
+      }
+      if (html_armor_needed(val2, &alen2)) {
+        while (alen2 >= asize2) asize2 *= 2;
+        astr2 = alloca(asize2);
+        html_armor_string(val2, astr2);
+        val2 = astr2;
+      }
       fprintf(f, "    <%s %s=\"%d\" %s=\"%s\" %s=\"%s\"/>\n",
               elem_map[RUNLOG_T_PROBLEM],
               attr_map[RUNLOG_A_ID], i,
-              attr_map[RUNLOG_A_SHORT_NAME], probs[i]->short_name,
-              attr_map[RUNLOG_A_LONG_NAME], probs[i]->long_name);
+              attr_map[RUNLOG_A_SHORT_NAME], val1,
+              attr_map[RUNLOG_A_LONG_NAME], val2);
                        
     }
     fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_PROBLEMS]);
@@ -626,11 +654,25 @@ unparse_runlog_xml(FILE *f,
     fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_LANGUAGES]);
     for (i = 1; i <= max_lang; i++) {
       if (!langs[i]) continue;
+      val1 = langs[i]->short_name;
+      val2 = langs[i]->long_name;
+      if (html_armor_needed(val1, &alen1)) {
+        while (alen1 >= asize1) asize1 *= 2;
+        astr1 = alloca(asize1);
+        html_armor_string(val1, astr1);
+        val1 = astr1;
+      }
+      if (html_armor_needed(val2, &alen2)) {
+        while (alen2 >= asize2) asize2 *= 2;
+        astr2 = alloca(asize2);
+        html_armor_string(val2, astr2);
+        val2 = astr2;
+      }
       fprintf(f, "    <%s %s=\"%d\" %s=\"%s\" %s=\"%s\"/>\n",
               elem_map[RUNLOG_T_LANGUAGE],
               attr_map[RUNLOG_A_ID], i,
-              attr_map[RUNLOG_A_SHORT_NAME], langs[i]->short_name,
-              attr_map[RUNLOG_A_LONG_NAME], langs[i]->long_name);
+              attr_map[RUNLOG_A_SHORT_NAME], val1,
+              attr_map[RUNLOG_A_LONG_NAME], val2);
     }
     fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_LANGUAGES]);
   }
