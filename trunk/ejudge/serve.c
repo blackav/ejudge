@@ -173,6 +173,7 @@ static unsigned long contest_sched_time;
 static unsigned long contest_duration;
 static unsigned long contest_stop_time;
 static int clients_suspended;
+static int olympiad_judging_mode;
 
 static int socket_fd = -1;
 static unsigned char *socket_name = 0;
@@ -364,6 +365,7 @@ update_status_file(int force_flag)
   status.clients_suspended = clients_suspended;
   status.download_interval = global->team_download_time / 60;
   status.is_virtual = global->virtual;
+  status.olympiad_judging_mode = olympiad_judging_mode;
 
   if (!global->virtual) {
     p = run_get_fog_period(current_time,
@@ -1861,6 +1863,19 @@ cmd_priv_command_0(struct client_state *p, int len,
     update_status_file(1);
     new_send_reply(p, SRV_RPL_OK);
     return;
+  case SRV_CMD_SET_JUDGING_MODE:
+    if (global->score_system_val != SCORE_OLYMPIAD) {
+      new_send_reply(p, -SRV_ERR_NOT_SUPPORTED);
+      return;
+    }
+    if (!contest_stop_time) {
+      new_send_reply(p, -SRV_ERR_CONTEST_NOT_FINISHED);
+      return;
+    }
+    olympiad_judging_mode = 1;
+    update_status_file(1);
+    new_send_reply(p, SRV_RPL_OK);
+    return;
   case SRV_CMD_UPDATE_STAND:
     update_standings_file(1);
     new_send_reply(p, SRV_RPL_OK);
@@ -2189,10 +2204,9 @@ read_compile_packet(char *pname)
                         0, global->run_exe_dir, exe_out_name, "") < 0)
     return -1;
 
-  /* FIXME: Reconsider rules for final testing */
   final_test = 0;
   if (global->score_system_val == SCORE_OLYMPIAD
-      && !contest_stop_time) final_test = 1;
+      && !olympiad_judging_mode) final_test = 1;
 
   /* create tester packet */
   wsize = snprintf(buf, sizeof(buf),
@@ -2380,6 +2394,39 @@ do_rejudge_all(void)
   int status;
 
   total_runs = run_get_total();
+
+  if (global->score_system_val == SCORE_OLYMPIAD
+      && olympiad_judging_mode) {
+    // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
+    // considering only the last run for the given problem and
+    // the given participant
+    int total_ids = teamdb_get_max_team_id() + 1;
+    int total_probs = max_prob + 1;
+    int size = total_ids * total_probs;
+    int idx;
+    unsigned char *flag;
+    struct run_entry entry;
+
+    if (total_ids <= 0 || total_probs <= 0) return;
+    flag = (unsigned char *) alloca(size);
+    memset(flag, 0, size);
+    for (r = total_runs - 1; r >= 0; r--) {
+      if (run_get_entry(r, &entry) < 0) continue;
+      if (entry.status != RUN_OK && entry.status != RUN_PARTIAL
+          && entry.status != RUN_ACCEPTED) continue;
+      if (entry.team <= 0 || entry.team >= total_ids) continue;
+      if (entry.problem <= 0 || entry.problem >= total_probs) {
+        fprintf(stderr, "Invalid problem %d for run %d", entry.problem, r);
+        continue;
+      }
+      idx = entry.team * total_probs + entry.problem;
+      if (flag[idx]) continue;
+      flag[idx] = 1;
+      rejudge_run(r);
+    }
+    return;
+  }
+
   for (r = 0; r < total_runs; r++) {
     if (run_get_record(r, 0, 0, 0, 0, 0, 0, 0, 0, &status, 0, 0) >= 0
         && status >= RUN_OK && status <= RUN_MAX_STATUS
@@ -2395,6 +2442,31 @@ do_rejudge_problem(int prob_id)
   int total_runs, r, status, prob;
 
   total_runs = run_get_total();
+
+  if (global->score_system_val == SCORE_OLYMPIAD
+      && olympiad_judging_mode) {
+    // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
+    // considering only the last run for the given participant
+    int total_ids = teamdb_get_max_team_id() + 1;
+    unsigned char *flag;
+    struct run_entry entry;
+
+    if (total_ids <= 0) return;
+    flag = (unsigned char *) alloca(total_ids);
+    memset(flag, 0, total_ids);
+    for (r = total_runs - 1; r >= 0; r--) {
+      if (run_get_entry(r, &entry) < 0) continue;
+      if (entry.status != RUN_OK && entry.status != RUN_PARTIAL
+          && entry.status != RUN_ACCEPTED) continue;
+      if (entry.problem != prob_id) continue;
+      if (entry.team <= 0 || entry.team >= total_ids) continue;
+      if (flag[entry.team]) continue;
+      flag[entry.team] = 1;
+      rejudge_run(r);
+    }
+    return;
+  }
+
   for (r = 0; r < total_runs; r++) {
     if (run_get_record(r, 0, 0, 0, 0, 0, 0, 0, &prob, &status, 0, 0) >= 0
         && prob == prob_id && status >= RUN_OK && status <= RUN_MAX_STATUS
@@ -2473,6 +2545,7 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_DUMP_RUNS] { cmd_view },
   [SRV_CMD_DUMP_USERS] { cmd_userlist_cmd },
   [SRV_CMD_DUMP_STANDINGS] { cmd_view },
+  [SRV_CMD_SET_JUDGING_MODE] { cmd_priv_command_0 },
 };
 
 static void
