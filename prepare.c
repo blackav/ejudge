@@ -203,6 +203,12 @@ static struct config_parse_info section_tester_params[] =
   TESTER_PARAM(abstract, "d"),
   TESTER_PARAM(super, "s"),
 
+  TESTER_PARAM(no_core_dump, "d"),
+  TESTER_PARAM(kill_signal, "s"),
+  TESTER_PARAM(max_stack_size, "d"),
+  TESTER_PARAM(max_data_size, "d"),
+  TESTER_PARAM(max_vm_size, "d"),
+
   TESTER_PARAM(server_root_dir, "s"),
   TESTER_PARAM(server_var_dir, "s"),
   TESTER_PARAM(server_run_dir, "s"),
@@ -336,6 +342,7 @@ tester_init_func(struct generic_section_config *gp)
 
   p->is_dos = -1;
   p->no_redirect = -1;
+  p->no_core_dump = -1;
 }
 
 static int
@@ -928,6 +935,35 @@ set_defaults(int mode)
                i, sish, tp->exe_dir);        
       }
       TESTER_INIT_FIELD(exe_dir, testers[i]->name, server_exe_dir);
+
+      if (tp->no_core_dump == -1 && atp && atp->no_core_dump != -1) {
+        tp->no_core_dump = atp->no_core_dump;
+        info(_("tester.%d.no_core_dump inherited from tester.%s (%d)"),
+             i, sish, tp->no_core_dump);        
+      }
+      if (tp->no_core_dump == -1) {
+        tp->no_core_dump = 0;
+      }
+      if (!tp->kill_signal[0] && atp && atp->kill_signal[0]) {
+        strcpy(tp->kill_signal, atp->kill_signal);
+        info(_("tester.%d.kill_signal inherited from tester.%s ('%s')"),
+             i, sish, tp->kill_signal);
+      }
+      if (!tp->max_stack_size && atp && atp->max_stack_size) {
+        tp->max_stack_size = atp->max_stack_size;
+        info(_("tester.%d.max_stack_size inherited from tester.%s (%d)"),
+             i, sish, tp->max_stack_size);        
+      }
+      if (!tp->max_data_size && atp && atp->max_data_size) {
+        tp->max_data_size = atp->max_data_size;
+        info(_("tester.%d.max_data_size inherited from tester.%s (%d)"),
+             i, sish, tp->max_data_size);        
+      }
+      if (!tp->max_vm_size && atp && atp->max_vm_size) {
+        tp->max_vm_size = atp->max_vm_size;
+        info(_("tester.%d.max_vm_size inherited from tester.%s (%d)"),
+             i, sish, tp->max_vm_size);        
+      }
 
       if (tp->is_dos == -1 && atp && atp->is_dos != -1) {
         tp->is_dos = atp->is_dos;
