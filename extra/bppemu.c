@@ -16,8 +16,9 @@
  */
 
 /*
- * This program is Borland C/C++ compiler helper. Compile packet is
+ * This program is Borland C++ 3.1 compiler helper. Compile packet is
  * prepared in the dosemu work dir, then the dosemu started.
+ * C++ compiler is run as the file suffix is .CPP.
  */
 
 #include <stdio.h>
