@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1152,7 +1152,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   run_get_entry(run_id, &info);
 
   src_flags = archive_make_read_path(src_path, sizeof(src_path),
-                                     global->run_archive_dir, run_id, 0, 0);
+                                     global->run_archive_dir, run_id, 0, 1);
   start_time = run_get_start_time();
   if (info.timestamp < start_time) info.timestamp = start_time;
 
@@ -1455,12 +1455,29 @@ write_priv_source(FILE *f, int user_id, int priv_level,
     fprintf(f, "</tr>\n");
   }
 
+  fprintf(f, "<tr><td>%s:</td><td>%d</td>",
+          _("Pages printed"), info.pages);
+  if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
+    fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
+    fprintf(f, "<td><input type=\"text\" name=\"pages\" value=\"%d\" size=\"10\"></td>", info.pages);
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>\n", ACTION_RUN_CHANGE_PAGES, _("Change"));
+  } else {
+    fprintf(f, "%s", nbsp);
+  }
+  fprintf(f, "</tr>\n");
+
   fprintf(f, "</table>\n");
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
     fprintf(f, "<p><input type=\"submit\" name=\"action_%d\" value=\"%s\"></p></form>\n", ACTION_CLEAR_RUN, _("Clear this entry"));
   }
+
+  html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
+  fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
+  fprintf(f, "<p><input type=\"submit\" name=\"action_%d\" value=\"%s\"></p></form>\n", ACTION_PRINT_PRIV_RUN, _("Print"));
+
   print_nav_buttons(f,run_id,sid_mode,sid,self_url,hidden_vars,extra_args,
                     _("Main page"), 0, 0, 0, _("Refresh"), _("View report"));
   fprintf(f, "<hr>\n");
