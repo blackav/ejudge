@@ -37,7 +37,7 @@ fi
 
 if [ "${errcode}" = 0 ]
 then
-  msg="Success.${umsg}${pmsg}"
+  msg="Success. ${umsg}${pmsg}"
 else
   case x"${errcode}" in
     x2) cmsg="Run-time error. ";;
