@@ -144,6 +144,16 @@ static struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(team_info_url, "s"),
   GLOBAL_PARAM(prob_info_url, "s"),
+  GLOBAL_PARAM(standings_file_name, "s"),
+  GLOBAL_PARAM(stand_header_file, "s"),
+  GLOBAL_PARAM(stand_footer_file, "s"),
+  GLOBAL_PARAM(stand2_file_name, "s"),
+  GLOBAL_PARAM(stand2_header_file, "s"),
+  GLOBAL_PARAM(stand2_footer_file, "s"),
+  GLOBAL_PARAM(plog_file_name, "s"),
+  GLOBAL_PARAM(plog_header_file, "s"),
+  GLOBAL_PARAM(plog_footer_file, "s"),
+  GLOBAL_PARAM(plog_update_time, "d"),
 
   // just for fun
   GLOBAL_PARAM(sound_player, "s"),
@@ -349,6 +359,7 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_RUN_REPORT_DIR     "report"
 #define DFLT_G_RUN_TEAM_REPORT_DIR "teamreport"
 #define DFLT_G_CHARSET            "iso8859-1"
+#define DFLT_G_STANDINGS_FILE_NAME "standings.html"
 #define DFLT_G_MAX_FILE_LENGTH    65535
 #define DFLT_G_MAX_LINE_LENGTH    4096
 
@@ -598,6 +609,9 @@ set_defaults(int mode)
   char *ish;
   char *sish;
 
+  size_t tmp_len = 0;
+  int r;
+
   /* find global section */
   for (p = config; p; p = p->next)
     if (!p->name[0] || !strcmp(p->name, "global"))
@@ -689,6 +703,7 @@ set_defaults(int mode)
       global->contest_time = DFLT_G_CONTEST_TIME;
     }
     global->contest_time *= 60;
+    fprintf(stderr, "%d\n", global->contest_time);
   }
 
   /* root_dir, conf_dir, var_dir */
@@ -793,6 +808,54 @@ set_defaults(int mode)
   if (!global->charset[0]) {
     pathcpy(global->charset, DFLT_G_CHARSET);
     info("global.charset set to %s", global->charset);
+  }
+
+  if (!global->standings_file_name[0]) {
+    pathcpy(global->standings_file_name, DFLT_G_STANDINGS_FILE_NAME);
+    info("global.standings_file_name set to %s", global->standings_file_name);
+  }
+
+  if (global->stand_header_file[0]) {
+    r = generic_read_file((char**) &global->stand_header_txt, 0, &tmp_len, 0,
+                          0, global->stand_header_file, "");
+    if (r < 0) return -1;
+  }
+
+  if (global->stand_footer_file[0]) {
+    r = generic_read_file((char**) &global->stand_footer_txt, 0, &tmp_len, 0,
+                          0, global->stand_footer_file, "");
+    if (r < 0) return -1;
+  }
+
+  if (global->stand2_file_name[0]) {
+    if (global->stand2_header_file[0]) {
+      r = generic_read_file((char**) &global->stand2_header_txt, 0, &tmp_len,
+                            0, 0, global->stand2_header_file, "");
+      if (r < 0) return -1;
+    }
+    if (global->stand2_footer_file[0]) {
+      r = generic_read_file((char**) &global->stand2_footer_txt, 0, &tmp_len,
+                            0, 0, global->stand2_footer_file, "");
+      if (r < 0) return -1;
+    } 
+ }
+
+  if (global->plog_file_name[0]) {
+    if (global->plog_header_file[0]) {
+      r = generic_read_file((char**) &global->plog_header_txt, 0, &tmp_len,
+                            0, 0, global->plog_header_file, "");
+      if (r < 0) return -1;
+    }
+    if (global->plog_footer_file[0]) {
+      r = generic_read_file((char**) &global->plog_footer_txt, 0, &tmp_len,
+                            0, 0, global->plog_footer_file, "");
+      if (r < 0) return -1;
+    }
+    if (!global->plog_update_time) {
+      global->plog_update_time = 30;
+    }
+  } else {
+    global->plog_update_time = 0;
   }
 
 #if CONF_HAS_LIBINTL - 0 == 1
