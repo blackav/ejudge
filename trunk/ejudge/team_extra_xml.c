@@ -21,6 +21,7 @@
 #include "team_extra.h"
 #include "expat_iface.h"
 #include "pathutl.h"
+#include "xml_utils.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -40,6 +41,11 @@ enum
 {
   TE_T_TEAM_EXTRA = 1,
   TE_T_VIEWED_CLARS,
+  TE_T_WARNINGS,
+  TE_T_WARNING,
+  TE_T_TEXT,
+  TE_T_COMMENT,
+  TE_T_STATUS,
 
   TE_T_LAST_TAG,
 };
@@ -47,6 +53,9 @@ enum
 enum
 {
   TE_A_USER_ID = 1,
+  TE_A_ISSUER_ID,
+  TE_A_ISSUER_IP,
+  TE_A_DATE,
 
   TE_A_LAST_ATTR,
 };
@@ -54,10 +63,18 @@ static const char * const elem_map[] =
 {
   [TE_T_TEAM_EXTRA]   "team_extra",
   [TE_T_VIEWED_CLARS] "viewed_clars",
+  [TE_T_WARNINGS]     "warnings",
+  [TE_T_WARNING]      "warning",
+  [TE_T_TEXT]         "text",
+  [TE_T_COMMENT]      "comment",
+  [TE_T_STATUS]       "status",
 };
 static const char * const attr_map[] =
 {
-  [TE_A_USER_ID] "user_id",
+  [TE_A_USER_ID]   "user_id",
+  [TE_A_ISSUER_ID] "issuer_id",
+  [TE_A_ISSUER_IP] "issuer_ip",
+  [TE_A_DATE]      "date",
 };
 static const size_t elem_sizes[TE_T_LAST_TAG];
 static const size_t attr_sizes[TE_A_LAST_ATTR];
@@ -162,13 +179,185 @@ parse_viewed_clars(struct xml_tree *t, struct team_extra *te, int *pv_flag)
   return 0;
 }
 
+/*
+<warnings>
+  <warning issuer_id="ID" issuer_ip="IP" date="DATE">
+    <text>TEXT</text>
+    <comment>COMMENT</comment>
+  </warnings>
+</warnings>
+ */
+static int
+parse_warnings(struct xml_tree *t, struct team_extra *te, int *pw_flag)
+{
+  struct xml_tree *wt, *tt;
+  struct xml_attn *a;
+  struct team_warning *cur_warn;
+  unsigned char **ptxt;
+  int x;
+
+  if (*pw_flag) {
+    err("%d:%d: duplicated element <%s>", t->line, t->column,elem_map[t->tag]);
+    return -1;
+  }
+  *pw_flag = 1;
+
+  if (!te->warn_a) {
+    te->warn_a = 8;
+    XCALLOC(te->warns, te->warn_a);
+  }
+
+  if (t->first) {
+    err("%d:%d: element <%s> do not have attributes",
+        t->line, t->column, elem_map[t->tag]);
+    return -1;
+  }
+  if (check_empty_text(t) < 0) {
+    err("%d:%d: element <%s> must not have text",
+        t->line, t->column, elem_map[t->tag]);
+    return -1;
+  }
+
+  for (wt = t->first_down; wt; wt = wt->right) {
+    if (wt->tag != TE_T_WARNING) {
+      err("%d:%d: element <%s> is invalid in element <%s>",
+          wt->line, wt->column, elem_map[wt->tag], elem_map[t->tag]);
+      return -1;
+    }
+    if (check_empty_text(wt) < 0) {
+      err("%d:%d: element <%s> must not have text",
+          wt->line, wt->column, elem_map[wt->tag]);
+      return -1;
+    }
+
+    if (te->warn_u == te->warn_a) {
+      te->warn_a *= 2;
+      if (!te->warn_a) te->warn_a = 8;
+      XREALLOC(te->warns, te->warn_a);
+    }
+    XCALLOC(cur_warn, 1);
+    te->warns[te->warn_u++] = cur_warn;
+
+    for (a = wt->first; a; a = a->next) {
+      switch (a->tag) {
+      case TE_A_ISSUER_ID:
+        if (xml_parse_int(0, a->line, a->column, a->text, &x) < 0) return -1;
+        if (x <= 0 || x > RUNLOG_MAX_TEAM_ID) {
+          err("%d:%d: value of attribute \"%s\" is invalid",
+              a->line, a->column, attr_map[a->tag]);
+          return -1;
+        }
+        cur_warn->issuer_id = x;
+        break;
+      case TE_A_ISSUER_IP:
+        if (xml_parse_ip(0, a->line, a->column, a->text,
+                         &cur_warn->issuer_ip) < 0) return -1;
+        break;
+      case TE_A_DATE:
+        if (xml_parse_date(0, a->line, a->column, a->text,
+                           &cur_warn->date) < 0) return -1;
+        break;
+      default:
+        err("%d:%d: attribute \"%s\" is invalid in element <%s>",
+            a->line, a->column, attr_map[a->tag], elem_map[wt->tag]);
+        return -1;
+      }
+    }
+
+    if (!cur_warn->issuer_id) {
+      err("%d:%d: attribute \"%s\" is not specified",
+          wt->line, wt->column, attr_map[TE_A_ISSUER_ID]);
+      return -1;
+    }
+    if (!cur_warn->issuer_ip) {
+      err("%d:%d: attribute \"%s\" is not specified",
+          wt->line, wt->column, attr_map[TE_A_ISSUER_IP]);
+      return -1;
+    }
+    if (!cur_warn->date) {
+      err("%d:%d: attribute \"%s\" is not specified",
+          wt->line, wt->column, attr_map[TE_A_DATE]);
+      return -1;
+    }
+
+    for (tt = wt->first_down; tt; tt = tt->right) {
+      switch (tt->tag) {
+      case TE_T_TEXT:
+      case TE_T_COMMENT:
+        ptxt = 0;
+        switch (tt->tag) {
+        case TE_T_TEXT:    ptxt = &cur_warn->text;    break;
+        case TE_T_COMMENT: ptxt = &cur_warn->comment; break;
+        }
+        if (tt->first) {
+          err("%d:%d: element <%s> cannot have attributes",
+              tt->line, tt->column, elem_map[tt->tag]);
+          return -1;
+        }
+        if (tt->first_down) {
+          err("%d:%d: element <%s> cannot have nested elements",
+              tt->line, tt->column, elem_map[tt->tag]);
+          return -1;
+        }
+        if (*ptxt) {
+          err("%d:%d: element <%s> cannot be used several times",
+              tt->line, tt->column, elem_map[tt->tag]);
+          return -1;
+        }
+        *ptxt = tt->text;
+        tt->text = 0;
+        break;
+      default:
+        err("%d:%d: element <%s> is invalid in element <%s>",
+            tt->line, tt->column, elem_map[tt->tag], elem_map[wt->tag]);
+        return -1;
+      }
+    }
+
+    if (!cur_warn->text) cur_warn->text = xstrdup("");
+    if (!cur_warn->comment) cur_warn->comment = xstrdup("");
+  }
+
+  return 0;
+}
+
+int
+parse_status(struct xml_tree *t, struct team_extra *te, int *ps_flag)
+{
+  if (*ps_flag) {
+    err("%d:%d: duplicated element <%s>", t->line, t->column,elem_map[t->tag]);
+    return -1;
+  }
+  *ps_flag = 1;
+
+  if (t->first) {
+    err("%d:%d: element <%s> do not have attributes",
+        t->line, t->column, elem_map[t->tag]);
+    return -1;
+  }
+  if (t->first_down) {
+    err("%d:%d: element <%s> cannot have nested elements",
+        t->line, t->column, elem_map[t->tag]);
+    return -1;
+  }
+  if (!t->text) t->text = xstrdup("");
+  if (xml_parse_int(0, t->line, t->column, t->text, &te->status) < 0)
+    return -1;
+  if (te->status < 0) {
+    err("%d:%d: invalid value of element <%s>",
+        t->line, t->column, elem_map[t->tag]);
+    return -1;
+  }
+  return 0;
+}
+
 int
 team_extra_parse_xml(const unsigned char *path, struct team_extra **pte)
 {
   struct xml_tree *t = 0, *t2 = 0;
   struct team_extra *te = 0;
   struct xml_attn *a = 0;
-  int user_id = -1, x, n, v_flag = 0;
+  int user_id = -1, x, n, v_flag = 0, w_flag = 0, s_flag = 0;
 
   t = xml_build_tree(path, elem_map, attr_map, elem_alloc, attr_alloc);
   if (!t) return -1;
@@ -219,6 +408,12 @@ team_extra_parse_xml(const unsigned char *path, struct team_extra **pte)
     case TE_T_VIEWED_CLARS:
       if (parse_viewed_clars(t2, te, &v_flag) < 0) goto cleanup;
       break;
+    case TE_T_WARNINGS:
+      if (parse_warnings(t2, te, &w_flag) < 0) goto cleanup;
+      break;
+    case TE_T_STATUS:
+      if (parse_status(t2, te, &s_flag) < 0) goto cleanup;
+      break;
     default:
       err("%d:%d: element <%s> is invalid in element <%s>",
           t2->line, t2->column, elem_map[t2->tag], elem_map[t->tag]);
@@ -257,7 +452,26 @@ team_extra_unparse_xml(FILE *f, struct team_extra *te)
       j++;
     }
   }
-  fprintf(f, "</%s>\n", elem_map[TE_T_VIEWED_CLARS]);
+  fprintf(f, "  </%s>\n", elem_map[TE_T_VIEWED_CLARS]);
+  if (te->status > 0) {
+    fprintf(f, "  <%s>%d</%s>\n", elem_map[TE_T_STATUS],
+            te->status, elem_map[TE_T_STATUS]);
+  }
+  if (te->warn_u > 0) {
+    fprintf(f, "  <%s>\n", elem_map[TE_T_WARNINGS]);
+    for (i = 0; i < te->warn_u; i++) {
+      fprintf(f, "    <%s %s=\"%d\" %s=\"%s\" %s=\"%s\">\n",
+              elem_map[TE_T_WARNING],
+              attr_map[TE_A_ISSUER_ID], te->warns[i]->issuer_id,
+              attr_map[TE_A_ISSUER_IP],xml_unparse_ip(te->warns[i]->issuer_ip),
+              attr_map[TE_A_DATE], xml_unparse_date(te->warns[i]->date));
+      xml_unparse_text(f, elem_map[TE_T_TEXT], te->warns[i]->text, "      ");
+      xml_unparse_text(f, elem_map[TE_T_COMMENT],
+                       te->warns[i]->comment, "      ");
+      fprintf(f, "    </%s>\n", elem_map[TE_T_WARNING]);
+    }
+    fprintf(f, "  </%s>\n", elem_map[TE_T_WARNINGS]);
+  }
   fprintf(f, "</%s>\n", elem_map[TE_T_TEAM_EXTRA]);
   return 0;
 }
