@@ -310,6 +310,7 @@ read_runlog(void)
   if (filesize == 0) {
     /* runs file is empty */
     XMEMZERO(&head, 1);
+    head.version = 1;
     run_u = 0;
     return 0;
   }
