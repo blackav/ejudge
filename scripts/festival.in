@@ -12,6 +12,7 @@ errcode="$1"
 testnum="$2"
 uspell="$3"
 pspell="$4"
+score="$5"
 
 # error codes:
 #  0 - ok
@@ -21,6 +22,7 @@ pspell="$4"
 #  4 - presentation error
 #  5 - wrong answer
 #  6 - internal error
+#  7 - partial solution
 
 if [ x"${uspell}" = x ]
 then
@@ -38,6 +40,9 @@ fi
 if [ "${errcode}" = 0 ]
 then
   msg="Success. ${umsg}${pmsg}"
+elif [ "${errcode}" = 7 ]
+then
+  msg="Partial solution. ${umsg}${pmsg}Tests passed: ${testnum}."
 else
   case x"${errcode}" in
     x2) cmsg="Run-time error. ";;
