@@ -241,6 +241,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(disable_auto_testing, "d"),
   PROBLEM_PARAM(disable_testing, "d"),
   PROBLEM_PARAM(variable_full_score, "d"),
+  PROBLEM_PARAM(hidden, "d"),
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
@@ -440,6 +441,8 @@ find_tester(int problem, char const *arch)
 #define DFLT_P_FULL_SCORE         25
 #define DFLT_P_TEST_SCORE         1
 #define DFLT_P_RUN_PENALTY        1
+#define DFLT_P_VARIABLE_FULL_SCORE 0
+#define DFLT_P_HIDDEN             0
 
 #define DFLT_T_WORK_DIR           "work"
 #define DFLT_T_TMP_DIR            "tmp"
@@ -498,6 +501,7 @@ problem_init_func(struct generic_section_config *gp)
   p->disable_testing = -1;
   p->test_score = -1;
   p->variable_full_score = -1;
+  p->hidden = -1;
 }
 
 static void
@@ -1602,7 +1606,18 @@ set_defaults(int mode)
     }
     if (probs[i]->variable_full_score == -1) {
       probs[i]->variable_full_score = 0;
-      info("problem.%s.variable_full_score set to %d", ish, DFLT_P_FULL_SCORE);
+      info("problem.%s.variable_full_score set to %d", ish,
+           DFLT_P_VARIABLE_FULL_SCORE);
+    }
+
+    if (probs[i]->hidden == -1 && si != -1 && abstr_probs[si]->hidden >= 0) {
+      probs[i]->hidden = abstr_probs[si]->hidden;
+      info("problem.%s.hidden inherited from problem.%s (%d)",
+           ish, sish, probs[i]->hidden);
+    }
+    if (probs[i]->hidden == -1) {
+      probs[i]->hidden = 0;
+      info("problem.%s.hidden set to %d", ish, DFLT_P_HIDDEN);
     }
 
     if (probs[i]->test_score < 0 && si != -1
