@@ -19,6 +19,7 @@
 
 #include <time.h>
 #include <string.h>
+#include <stdio.h>
 
 enum
 {
@@ -33,14 +34,19 @@ enum
   RUN_ACCEPTED         = 8,
   RUN_IGNORED          = 9,
   RUN_MAX_STATUS       = 9,
+
+  RUN_PSEUDO_FIRST     = 20,
   RUN_VIRTUAL_START    = 20,
   RUN_VIRTUAL_STOP     = 21,
   RUN_EMPTY            = 22,
+
+  RUN_TRANSIENT_FIRST  = 96,
   RUN_RUNNING          = 96,
   RUN_COMPILED         = 97,
   RUN_COMPILING        = 98,
   RUN_AVAILABLE        = 99,
-  RUN_REJUDGE          = 99
+  RUN_REJUDGE          = 99,
+  RUN_TRANSIENT_LAST   = 99,
 };
 
 enum { RUN_LOG_CREATE = 1, RUN_LOG_READONLY = 2 };
@@ -61,7 +67,7 @@ int run_get_status(int runid);
 int run_get_param(int runid, int *pteam_id, int *ploc_id, int *plang, int *pprob, int *pstat);
 int run_get_record(int, time_t *, size_t *, unsigned long *,
                    unsigned long *,
-                   int *, int *, int *, int *, int *, int *, int *);
+                   int *, int *, int *, int *, int *, int *, int *, int *);
 
 void run_get_times(time_t *, time_t *, time_t *, time_t *);
 int  run_set_duration(time_t);
@@ -108,6 +114,8 @@ enum
     RUN_ENTRY_STATUS = 0x00000100,
     RUN_ENTRY_TEST   = 0x00000200,
     RUN_ENTRY_SCORE  = 0x00000400,
+    RUN_ENTRY_IMPORTED = 0x00000800,
+    RUN_ENTRY_ALL = 0x00000FFF,
   };
 
 struct run_entry
@@ -124,7 +132,8 @@ struct run_entry
   unsigned char  language;
   unsigned char  status;
   signed char    test;
-  unsigned char  pad[12];
+  unsigned char  is_imported;
+  unsigned char  pad[11];
 };
 
 void run_get_header(struct run_header *out);
@@ -142,5 +151,14 @@ int run_virtual_stop(int user_id, time_t, unsigned long);
 int run_clear_entry(int run_id);
 int run_squeeze_log(void);
 void run_clear_variables(void);
+
+int run_write_xml(FILE *f);
+int unparse_runlog_xml(FILE *, struct run_header*, size_t, struct run_entry*);
+int parse_runlog_xml(const unsigned char *, struct run_header *,
+                     size_t *, struct run_entry **);
+void runlog_import_xml(FILE *flog, const unsigned char *in_xml);
+
+int run_backup(const unsigned char *path);
+int run_set_runlog(int total_entries, struct run_entry *entries);
 
 #endif /* __RUNLOG_H__ */
