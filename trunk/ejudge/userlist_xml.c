@@ -69,6 +69,7 @@ static char const * const tag_map[] =
   "advisors",
   "guests",
   "firstname",
+  "team_password",
 
   0
 };
@@ -110,7 +111,7 @@ static size_t const tag_sizes[USERLIST_LAST_TAG] =
   sizeof(struct xml_tree),      /* INSTSHORT */
   sizeof(struct xml_tree),      /* FAC */
   sizeof(struct xml_tree),      /* FACSHORT */
-  sizeof(struct xml_tree),      /* PASSWORD */
+  sizeof(struct userlist_passwd), /* PASSWORD */
   sizeof(struct xml_tree),      /* EMAIL */
   sizeof(struct xml_tree),      /* HOMEPAGE */
   sizeof(struct xml_tree),      /* PHONES */
@@ -132,6 +133,7 @@ static size_t const tag_sizes[USERLIST_LAST_TAG] =
   sizeof(struct userlist_members), /* ADVISORS */
   sizeof(struct userlist_members), /* GUESTS */
   sizeof(struct xml_tree),      /* FIRSTNAME */
+  sizeof(struct userlist_passwd), /* TEAM_PASSWORD */
 };
 /*
 static size_t const attn_sizes[USERLIST_LAST_ATTN] =
@@ -157,7 +159,10 @@ node_alloc(int tag)
 struct xml_tree *
 userlist_node_alloc(int tag)
 {
-  return node_alloc(tag);
+  struct xml_tree *t;
+  t = node_alloc(tag);
+  t->tag = tag;
+  return t;
 }
 static void *
 attn_alloc(int tag)
@@ -181,7 +186,6 @@ node_free(struct xml_tree *t)
       xfree(p->login);
       xfree(p->name);
       xfree(p->email);
-      xfree(p->passwd);
       xfree(p->inst);
       xfree(p->instshort);
       xfree(p->fac);
@@ -394,32 +398,46 @@ handle_final_tag(char const *path, struct xml_tree *t, unsigned char **ps)
   return 0;
 }
 
-static int
-parse_passwd(char const *path, struct xml_tree *t, struct userlist_user *usr)
+static struct userlist_passwd *
+parse_passwd(char const *path, struct xml_tree *t)
 {
+  struct userlist_passwd *pwd;
   struct xml_attn *a;
 
-  if (t->first_down) return nested_tag(path, t);
-  if (!t->text || !*t->text) return empty_tag(path, t);
-  usr->passwd = t->text;
+  ASSERT(t->tag == USERLIST_T_PASSWORD || t->tag == USERLIST_T_TEAM_PASSWORD);
+  pwd = (struct userlist_passwd*) t;
+
+  if (t->first_down) {
+    nested_tag(path, t);
+    return 0;
+  }
+  if (!t->text || !*t->text) {
+    empty_tag(path, t);
+    return 0;
+  }
+
   for (a = t->first; a; a = a->next) {
-    if (a->tag != USERLIST_A_METHOD) return invalid_attn(path, a);
+    if (a->tag != USERLIST_A_METHOD) {
+      invalid_attn(path, a);
+      return 0;
+    }
     if (!strcasecmp(a->text, "plain")) {
-      usr->passwd_method = USERLIST_PWD_PLAIN;
+      pwd->method = USERLIST_PWD_PLAIN;
     } else if (!strcasecmp(a->text, "base64")) {
-      usr->passwd_method = USERLIST_PWD_BASE64;
+      pwd->method = USERLIST_PWD_BASE64;
     } else if (!strcasecmp(a->text, "sha1")) {
-      usr->passwd_method = USERLIST_PWD_SHA1;
+      pwd->method = USERLIST_PWD_SHA1;
     } else {
       err("%s:%d:%d: invalid password method", path, a->line, a->column);
-      return -1;
+      return 0;
     }
-    if (usr->passwd_method != USERLIST_PWD_PLAIN) {
+    if (pwd->method != USERLIST_PWD_PLAIN) {
       err("%s:%d:%d: this password method not yet supported",
           path, a->line, a->column);
+      return 0;
     }
   }
-  return 0;
+  return pwd;
 }
 
 static struct xml_tree*
@@ -792,9 +810,12 @@ do_parse_user(char const *path, struct userlist_user *usr)
       if (!usr->name) usr->name = xstrdup("");
       break;
     case USERLIST_T_PASSWORD:
-      if (usr->passwd) return duplicated_tag(path, t);
-      if (parse_passwd(path, t, usr) < 0) return -1;
-      t->text = 0;
+      if (usr->register_passwd) return duplicated_tag(path, t);
+      if (!(usr->register_passwd = parse_passwd(path, t))) return -1;
+      break;
+    case USERLIST_T_TEAM_PASSWORD:
+      if (usr->team_passwd) return duplicated_tag(path, t);
+      if (!(usr->team_passwd = parse_passwd(path, t))) return -1;
       break;
     case USERLIST_T_EMAIL:
       if (usr->email) return duplicated_tag(path, t);
@@ -1205,11 +1226,17 @@ unparse_user(struct userlist_user *p, FILE *f, int mode)
             attn_map[USERLIST_A_PUBLIC], unparse_bool(p->show_login),
             p->login, tag_map[USERLIST_T_LOGIN]);
   }
-  if (p->passwd && mode == USERLIST_MODE_ALL) {
+  if (p->register_passwd && mode == USERLIST_MODE_ALL) {
     fprintf(f, "    <%s %s=\"%s\">%s</%s>\n",
             tag_map[USERLIST_T_PASSWORD], attn_map[USERLIST_A_METHOD],
-            unparse_passwd_method(p->passwd_method),
-            p->passwd, tag_map[USERLIST_T_PASSWORD]);
+            unparse_passwd_method(p->register_passwd->method),
+            p->register_passwd->b.text, tag_map[USERLIST_T_PASSWORD]);
+  }
+  if (p->team_passwd && mode == USERLIST_MODE_ALL) {
+    fprintf(f, "    <%s %s=\"%s\">%s</%s>\n",
+            tag_map[USERLIST_T_TEAM_PASSWORD], attn_map[USERLIST_A_METHOD],
+            unparse_passwd_method(p->team_passwd->method),
+            p->team_passwd->b.text, tag_map[USERLIST_T_TEAM_PASSWORD]);
   }
   if (p->name && *p->name) {
     fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_NAME],
