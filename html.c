@@ -106,7 +106,7 @@ write_clar_view(int id, char const *clar_dir,
   if (!from) {
     fprintf(f, "<td><b>%s</b></td>", _("judges"));
   } else {
-    fprintf(f, "<td>%s</td>", teamdb_get_login(from));
+    fprintf(f, "<td>%s</td>", teamdb_get_name(from));
   }
   fprintf(f, "</tr>\n<tr><td>%s:</td>", _("To"));
   if (!to && !from) {
@@ -114,7 +114,7 @@ write_clar_view(int id, char const *clar_dir,
   } else if (!to) {
     fprintf(f, "<td><b>%s</b></td>", _("judges"));
   } else {
-    fprintf(f, "<td>%s</td>", teamdb_get_login(to));
+    fprintf(f, "<td>%s</td>", teamdb_get_name(to));
   }
   fprintf(f, "</tr>\n");
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"), hsubj);
@@ -705,7 +705,7 @@ do_write_kirov_standings(FILE *f, int client_flag)
     if (global->team_info_url[0]) {
       sformat_url(dur_str, sizeof(dur_str), global->team_info_url,
                   0, t_ind[t]);
-      fprintf(f, "< href=\"%s\"a>", dur_str);
+      fprintf(f, "<a href=\"%s\">", dur_str);
     }
     fprintf(f, "%s", teamdb_get_name(t_ind[t]));
     if (global->team_info_url[0]) {
@@ -1193,14 +1193,14 @@ write_judge_allclars(int master_mode, int show_all, FILE *f)
     if (!from) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_login(from));
+      fprintf(f, "<td>%s</td>", teamdb_get_name(from));
     }
     if (!to && !from) {
       fprintf(f, "<td><b>%s</b></td>", _("all"));
     } else if (!to) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_login(to));
+      fprintf(f, "<td>%s</td>", teamdb_get_name(to));
     }
     fprintf(f, "<td>%s</td>", asubj);
     fprintf(f, "<input type=\"hidden\" name=\"enable_reply\" value=\"%d\">",
