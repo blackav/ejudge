@@ -709,7 +709,8 @@ do_write_kirov_standings(FILE *f, int client_flag,
     } else {
       if (run_score == -1) run_score = 0;
       if (pe->status == RUN_OK) {
-        score = p->full_score - p->run_penalty * att_num[tind][pind];
+        if (!p->variable_full_score) run_score = p->full_score;
+        score = run_score - p->run_penalty * att_num[tind][pind];
         if (score < 0) score = 0;
         if (score > prob_score[tind][pind]) prob_score[tind][pind] = score;
         att_num[tind][pind]++;
