@@ -77,7 +77,7 @@ enum
     ACTION_ADD_NEW_ADVISOR,
     ACTION_ADD_NEW_GUEST,
     ACTION_REMOVE_MEMBER,
-
+    ACTION_REDISPLAY_EDIT_REGISTRATION_DATA,
 
     ACTION_LAST_ACTION
   };
@@ -141,11 +141,17 @@ static unsigned char *user_email;
 static unsigned char *user_name;
 static unsigned char *user_homepage;
 static unsigned char *user_inst;
+static unsigned char *user_inst_en;
 static unsigned char *user_instshort;
+static unsigned char *user_instshort_en;
 static unsigned char *user_fac;
+static unsigned char *user_fac_en;
 static unsigned char *user_facshort;
+static unsigned char *user_facshort_en;
 static unsigned char *user_city;
+static unsigned char *user_city_en;
 static unsigned char *user_country;
+static unsigned char *user_country_en;
 static int user_show_email;
 static int user_contest_id;
 static struct userlist_clnt *server_conn;
@@ -164,6 +170,10 @@ static int user_already_registered;
 static char *header_txt, *footer_txt;
 static int header_len, footer_len;
 
+static unsigned char *head_style = "<h2>";
+static unsigned char *par_style = "";
+static unsigned char *table_style = "";
+
 static unsigned char ***member_info[CONTEST_LAST_MEMBER];
 
 static unsigned char *error_log;
@@ -179,6 +189,9 @@ static char const name_accept_chars[] =
 "abcdefghijklmnopqrstuvwxyz{|}~"
 " ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞß"
 "àáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
+static char const name_en_accept_chars[] =
+" !#$%()*+,-./0123456789=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_"
+"abcdefghijklmnopqrstuvwxyz{|}~";
 static char const homepage_accept_chars[] =
 " :!#$%*+,-./0123456789=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_"
 "abcdefghijklmnopqrstuvwxyz{|}~";
@@ -211,33 +224,53 @@ static struct field_desc field_descs[CONTEST_LAST_FIELD] =
     homepage_accept_chars, '?', 128, 64 },
   { "inst", _("Institution"), "inst", &user_inst,
     name_accept_chars, '?', 128, 64 },
+  { "inst_en", _("Institution (En)"), "inst_en", &user_inst_en,
+    name_en_accept_chars, '?', 128, 64 },
   { "instshort", _("Institution (short)"), "instshort", &user_instshort,
     name_accept_chars, '?', 32, 32 },
+  { "instshort_en", _("Institution (short) (En)"), "instshort_en", &user_instshort_en,
+    name_en_accept_chars, '?', 32, 32 },
   { "fac", _("Faculty"), "fac", &user_fac,
     name_accept_chars, '?', 128, 64 },
+  { "fac_en", _("Faculty (En)"), "fac_en", &user_fac_en,
+    name_en_accept_chars, '?', 128, 64 },
   { "facshort", _("Faculty (short)"), "facshort", &user_facshort,
     name_accept_chars, '?', 32, 32 },
+  { "facshort_en", _("Faculty (short) (En)"), "facshort_en", &user_facshort_en,
+    name_en_accept_chars, '?', 32, 32 },
   { "city", _("City"), "city", &user_city, name_accept_chars, '?', 64, 64 },
+  { "city_en", _("City (En)"), "city_en", &user_city_en, name_en_accept_chars, '?', 64, 64 },
   { "country", _("Country"), "country", &user_country,
     name_accept_chars, '?', 64, 64 },
+  { "country_en", _("Country (En)"), "country_en", &user_country_en,
+    name_en_accept_chars, '?', 64, 64 },
 };
 static struct field_desc member_field_descs[CONTEST_LAST_MEMBER_FIELD] =
 {
   { 0 },
 
   { "firstname",_("First name"),0,0, name_accept_chars, '?', 64, 64 },
+  { "firstname_en",_("First name (En)"),0,0, name_en_accept_chars, '?', 64, 64 },
   { "middlename",_("Middle name"), 0, 0, name_accept_chars, '?', 64, 64 },
+  { "middlename_en",_("Middle name (En)"), 0, 0, name_accept_chars, '?', 64, 64 },
   { "surname",_("Family name"), 0, 0, name_accept_chars, '?', 64, 64 },
+  { "surname_en",_("Family name (En)"), 0, 0, name_en_accept_chars, '?', 64, 64 },
   { "status", _("Status"), 0, 0, name_accept_chars, '?', 64, 64 },
   { "grade", _("Grade"), 0, 0, name_accept_chars, '?', 16, 16 },
   { "group", _("Group"), 0, 0, name_accept_chars, '?', 16, 16 },
+  { "group_en", _("Group (En)"), 0, 0, name_en_accept_chars, '?', 16, 16 },
   { "email",_("E-mail"), 0, 0, name_accept_chars, '?', 64, 64 },
   { "homepage",_("Homepage"), 0, 0, homepage_accept_chars, '?', 128, 64 },
   { "inst", _("Institution"), 0, 0, name_accept_chars, '?', 128, 64 },
+  { "inst_en", _("Institution (En)"), 0, 0, name_en_accept_chars, '?', 128, 64 },
   { "instshort", _("Institution (short)"),0,0,name_accept_chars, '?', 32, 32 },
+  { "instshort_en", _("Institution (short) (En)"),0,0,name_en_accept_chars, '?', 32, 32 },
   { "fac", _("Faculty"), 0, 0, name_accept_chars, '?', 128, 64 },
+  { "fac_en", _("Faculty (En)"), 0, 0, name_en_accept_chars, '?', 128, 64 },
   { "facshort", _("Faculty (short)"), 0, 0, name_accept_chars, '?', 32, 32 },
+  { "facshort_en", _("Faculty (short) (En)"), 0, 0, name_en_accept_chars, '?', 32, 32 },
   { "occupation", _("Occupation"), 0, 0, name_accept_chars, '?', 128, 64 },
+  { "occupation_en", _("Occupation (En)"), 0, 0, name_en_accept_chars, '?', 128, 64 },
 };
 static char const * const member_string[] =
 {
@@ -778,6 +811,9 @@ initialize(int argc, char const *argv[])
   l10n_prepare(config->l10n, config->l10n_dir);
 
   if (user_contest_id > 0 && contests_get(user_contest_id, &cnts) >= 0) {
+    head_style = cnts->register_head_style;
+    par_style = cnts->register_par_style;
+    table_style = cnts->register_table_style;
     logger_set_level(-1, LOG_WARNING);
     if (cnts->register_header_file) {
       generic_read_file(&header_txt, 0, &header_len, 0,
@@ -788,6 +824,10 @@ initialize(int argc, char const *argv[])
                         0, cnts->register_footer_file, "");
     }
   }
+
+  if (!head_style) head_style = "h2";
+  if (!par_style) par_style = "";
+  if (!table_style) table_style = "";
   
   parse_user_ip();
 
@@ -885,13 +925,14 @@ print_choose_language_button(int hr_flag, int no_submit_flag,
 
   if (config->l10n) {
     if (hr_flag) printf("<hr>");
-    printf("<h2>%s</h2>\n"
+    printf("<%s>%s</%s>\n"
            "%s: <select name=\"locale_id\">"
            "<option value=\"-1\">%s</option>"
            "<option value=\"0\"%s>%s</option>"
            "<option value=\"1\"%s>%s</option>"
            "</select>\n",
-           _("Change language"), _("Change language"),
+           head_style, _("Change language"), head_style,
+           _("Change language"),
            _("Default language"),
            client_locale_id==0?" selected=\"1\"":"", _("English"),
            client_locale_id==1?" selected=\"1\"":"", _("Russian"));
@@ -1257,7 +1298,8 @@ read_user_info_from_server(void)
   if (error_log) {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
                       client_locale_id, _("Fatal error"));
-    printf("<p>%s.</p><font color=\"red\"><pre>%s</pre></font>\n",
+    printf("<p%s>%s.</p><font color=\"red\"><pre>%s</pre></font>\n",
+           par_style,
            _("Failed to read information from the server"), error_log);
     return -1;
   }
@@ -1272,11 +1314,17 @@ read_user_info_from_server(void)
   user_name = u->name;
   user_homepage = u->homepage;
   user_inst = u->inst;
+  user_inst_en = u->inst_en;
   user_instshort = u->instshort;
+  user_instshort_en = u->instshort_en;
   user_fac = u->fac;
+  user_fac_en = u->fac_en;
   user_facshort = u->facshort;
+  user_facshort_en = u->facshort_en;
   user_city = u->city;
+  user_city_en = u->city_en;
   user_country = u->country;
+  user_country_en = u->country_en;
 
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
     if (member_max[role] <= 0) continue;
@@ -1302,11 +1350,20 @@ read_user_info_from_server(void)
       if (member_edit_flags[role][CONTEST_MF_FIRSTNAME].is_editable) {
         member_info[role][pers][CONTEST_MF_FIRSTNAME] = m->firstname;
       }
+      if (member_edit_flags[role][CONTEST_MF_FIRSTNAME_EN].is_editable) {
+        member_info[role][pers][CONTEST_MF_FIRSTNAME_EN] = m->firstname_en;
+      }
       if (member_edit_flags[role][CONTEST_MF_MIDDLENAME].is_editable) {
         member_info[role][pers][CONTEST_MF_MIDDLENAME] = m->middlename;
       }
+      if (member_edit_flags[role][CONTEST_MF_MIDDLENAME_EN].is_editable) {
+        member_info[role][pers][CONTEST_MF_MIDDLENAME_EN] = m->middlename_en;
+      }
       if (member_edit_flags[role][CONTEST_MF_SURNAME].is_editable) {
         member_info[role][pers][CONTEST_MF_SURNAME] = m->surname;
+      }
+      if (member_edit_flags[role][CONTEST_MF_SURNAME_EN].is_editable) {
+        member_info[role][pers][CONTEST_MF_SURNAME_EN] = m->surname_en;
       }
       if (member_edit_flags[role][CONTEST_MF_STATUS].is_editable) {
         buf[0] = 0;
@@ -1325,6 +1382,9 @@ read_user_info_from_server(void)
       if (member_edit_flags[role][CONTEST_MF_GROUP].is_editable) {
         member_info[role][pers][CONTEST_MF_GROUP] = m->group;
       }
+      if (member_edit_flags[role][CONTEST_MF_GROUP_EN].is_editable) {
+        member_info[role][pers][CONTEST_MF_GROUP_EN] = m->group_en;
+      }
       if (member_edit_flags[role][CONTEST_MF_EMAIL].is_editable) {
         member_info[role][pers][CONTEST_MF_EMAIL] = m->email;
       }
@@ -1334,17 +1394,32 @@ read_user_info_from_server(void)
       if (member_edit_flags[role][CONTEST_MF_INST].is_editable) {
         member_info[role][pers][CONTEST_MF_INST] = m->inst;
       }
+      if (member_edit_flags[role][CONTEST_MF_INST_EN].is_editable) {
+        member_info[role][pers][CONTEST_MF_INST_EN] = m->inst_en;
+      }
       if (member_edit_flags[role][CONTEST_MF_INSTSHORT].is_editable) {
         member_info[role][pers][CONTEST_MF_INSTSHORT] = m->instshort;
+      }
+      if (member_edit_flags[role][CONTEST_MF_INSTSHORT_EN].is_editable) {
+        member_info[role][pers][CONTEST_MF_INSTSHORT_EN] = m->instshort_en;
       }
       if (member_edit_flags[role][CONTEST_MF_FAC].is_editable) {
         member_info[role][pers][CONTEST_MF_FAC] = m->fac;
       }
+      if (member_edit_flags[role][CONTEST_MF_FAC_EN].is_editable) {
+        member_info[role][pers][CONTEST_MF_FAC_EN] = m->fac_en;
+      }
       if (member_edit_flags[role][CONTEST_MF_FACSHORT].is_editable) {
         member_info[role][pers][CONTEST_MF_FACSHORT] = m->facshort;
       }
+      if (member_edit_flags[role][CONTEST_MF_FACSHORT_EN].is_editable) {
+        member_info[role][pers][CONTEST_MF_FACSHORT_EN] = m->facshort_en;
+      }
       if (member_edit_flags[role][CONTEST_MF_OCCUPATION].is_editable) {
         member_info[role][pers][CONTEST_MF_OCCUPATION] = m->occupation;
+      }
+      if (member_edit_flags[role][CONTEST_MF_OCCUPATION_EN].is_editable) {
+        member_info[role][pers][CONTEST_MF_OCCUPATION_EN] = m->occupation_en;
       }
     }
     if (member_cur[role] < member_init[role]) {
@@ -1408,7 +1483,8 @@ authentificate(void)
  failed:
   client_put_header(stdout, header_txt, 0, config->charset, 1,
                     client_locale_id, _("Authentification failed"));
-  printf("<p>%s.</p>\n", _("Authentification failed for some reason"));
+  printf("<p%s>%s.</p>\n", par_style,
+         _("Authentification failed for some reason"));
   return 0;
 }
 
@@ -1418,7 +1494,7 @@ display_edit_registration_data_page(void)
   struct contest_desc *cnts = 0;
   int errcode, role, pers, i, user_show_all = 0;
   unsigned char *user_name_arm;
-  unsigned char *cnts_name_arm;
+  unsigned char *cnts_name_arm, *cnts_name_loc;
   char const *dis_str = " disabled=\"yes\"";
   unsigned char s1[128], url[512];
 
@@ -1483,8 +1559,8 @@ display_edit_registration_data_page(void)
     if (member_cur[role] >= member_max[role]) {
       client_put_header(stdout, header_txt, 0, config->charset, 1,
                         client_locale_id, "%s", _("Cannot add a new member"));
-      printf("<p>%s %s: %s.</p>\n",
-             _("Cannot add a new"),
+      printf("<p%s>%s %s: %s.</p>\n",
+             par_style, _("Cannot add a new"),
              gettext(member_string[role]),
              _("maximal number reached"));
       return;
@@ -1519,9 +1595,17 @@ display_edit_registration_data_page(void)
     if (!disp_name || !*disp_name) disp_name = user_login;
     ARMOR_STR(user_name_arm, disp_name);
   }
+  cnts_name_loc = 0;
+  if (!client_locale_id) {
+    cnts_name_loc = cnts->name_en;
+    if (!cnts_name_loc) cnts_name_loc = cnts->name;
+  } else {
+    cnts_name_loc = cnts->name;
+    if (!cnts_name_loc) cnts_name_loc = cnts->name_en;
+  }
   ARMOR_STR(cnts_name_arm, cnts->name);
 
-  l10n_setlocale(client_locale_id);
+  //l10n_setlocale(client_locale_id);
 
   client_put_header(stdout, header_txt, 0, config->charset, 1,
                     client_locale_id, _("User %s: registration for %s"),
@@ -1546,7 +1630,7 @@ display_edit_registration_data_page(void)
       s3 = "";
     }
 
-    printf("<h3>%s</h3>\n<h3>%s</h3>\n<p>%s</p>\n", s1, s2, s3);
+    printf("<h3>%s</h3>\n<h3>%s</h3>\n<p%s>%s</p>\n", s1, s2, par_style, s3);
   }
 
   printf("<form method=\"POST\" action=\"%s\" "
@@ -1557,8 +1641,9 @@ display_edit_registration_data_page(void)
          "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
          user_cookie, user_contest_id, client_locale_id);
 
-  printf("<hr><h2>%s</h2>", _("General user information"));
-  printf("<p>%s: <input type=\"text\" disabled=\"1\" name=\"user_login\" value=\"%s\" size=\"16\">\n", _("Login"), user_login);
+  printf("<hr><%s>%s</%s>", head_style, _("General user information"),
+         head_style);
+  printf("<p%s>%s: <input type=\"text\" disabled=\"1\" name=\"user_login\" value=\"%s\" size=\"16\">\n", par_style, _("Login"), user_login);
   printf("<br><input type=\"checkbox\" name=\"show_login\"%s%s>%s",
          user_show_login?" checked=\"yes\"":"",
          user_read_only?dis_str:"",
@@ -1570,8 +1655,8 @@ display_edit_registration_data_page(void)
 
   printf("<input type=\"hidden\" name=\"user_email\" value=\"%s\">\n",
          user_email);
-  printf("<p>%s: <a href=\"mailto:%s\">%s</a>\n", _("E-mail"), user_email,
-         user_email);
+  printf("<p%s>%s: <a href=\"mailto:%s\">%s</a>\n", par_style, _("E-mail"),
+         user_email, user_email);
   printf("<br><input type=\"checkbox\" name=\"show_email\"%s%s> %s",
          user_show_email?" checked=\"yes\"":"",
          user_read_only?dis_str:"",
@@ -1580,13 +1665,14 @@ display_edit_registration_data_page(void)
   /*
   printf("<p>%s</p>\n", _("In the \"User name\" field you type the name of the user, not the participant. For example, if you are registering for participation in a collegiate contest, this field contains the name of your team. The value of this field is used in the list of registered teams, in the standings, etc."));
   */
-  printf("<p>%s</p>\n", _("In the next field type the name, which will be used in standings, personal information display, etc."));
-  printf("<p>%s%s: <input type=\"text\" name=\"name\" value=\"%s\" maxlength=\"64\" size=\"64\"%s>\n", _("User name"), user_contest_id>0?" (*)":"", user_name, user_read_only?dis_str:"");
+  printf("<p%s>%s</p>\n", par_style, _("In the next field type the name, which will be used in standings, personal information display, etc."));
+  printf("<p%s>%s%s: <input type=\"text\" name=\"name\" value=\"%s\" maxlength=\"64\" size=\"64\"%s>\n", par_style, _("User name"), user_contest_id>0?" (*)":"", user_name, user_read_only?dis_str:"");
 
   /* display change forms */
   for (i = 1; i < CONTEST_LAST_FIELD; i++) {
     if (!field_descs[i].is_editable) continue;
-    printf("<p>%s%s: <input type=\"text\" name=\"%s\" value=\"%s\" maxlength=\"%d\" size=\"%d\"%s>\n",
+    printf("<p%s>%s%s: <input type=\"text\" name=\"%s\" value=\"%s\" maxlength=\"%d\" size=\"%d\"%s>\n",
+           par_style,
            gettext(field_descs[i].orig_name),
            field_descs[i].is_mandatory?" (*)":"",
            field_descs[i].var_name,
@@ -1596,7 +1682,7 @@ display_edit_registration_data_page(void)
            user_read_only?dis_str:"");
 
     if (i == CONTEST_F_INST) {
-      printf("<p>%s</p>",
+      printf("<p%s>%s</p>", par_style, 
              _("For schools, liceums, etc, please, specify its number."));
     }
   }
@@ -1605,27 +1691,27 @@ display_edit_registration_data_page(void)
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
     if (member_max[role] <= 0) continue;
 
-    printf("<h2>%s: %s</h2>\n", _("Member information"),
-           gettext(member_string_pl[role]));
-    printf(_("<p>The current number of %s is %d.</p>\n"),
+    printf("<%s>%s: %s</%s>\n", head_style, _("Member information"),
+           gettext(member_string_pl[role]), head_style);
+    printf(_("<p%s>The current number of %s is %d.</p>\n"), par_style,
            gettext(member_string_pl[role]), member_cur[role]);
-    printf(_("<p>The minimal number of %s is %d.</p>\n"),
+    printf(_("<p%s>The minimal number of %s is %d.</p>\n"), par_style,
            gettext(member_string_pl[role]), member_min[role]);
-    printf(_("<p>The maximal number of %s is %d.</p>\n"),
+    printf(_("<p%s>The maximal number of %s is %d.</p>\n"), par_style,
            gettext(member_string_pl[role]), member_max[role]);
     printf("<input type=\"hidden\" name=\"member_cur_%d\" value=\"%d\">\n",
            role, member_cur[role]);
 
     for (pers = 0; pers < member_cur[role]; pers++) {
       if (!user_read_only) {
-        printf("<h3>%s %d</h3><p><input type=\"submit\" name=\"remove_%d_%d\" value=\"%s\">%s</p>\n",
-               gettext(member_string[role]), pers + 1,
+        printf("<h3>%s %d</h3><p%s><input type=\"submit\" name=\"remove_%d_%d\" value=\"%s\">%s</p>\n",
+               gettext(member_string[role]), pers + 1, par_style,
                role, pers,
                _("Remove member"),
                _("<b>Note!</b> All uncommited changes will be lost!"));
       }
       if (*member_info[role][pers][0]) {
-        printf("<p>%s %s.</p>",
+        printf("<p%s>%s %s.</p>", par_style,
                _("Member serial number is"), member_info[role][pers][0]);
         printf("<input type=\"hidden\" name=\"member_info_%d_%d_0\" value=\"%s\">\n", role, pers, member_info[role][pers][0]);
       }
@@ -1636,9 +1722,9 @@ display_edit_registration_data_page(void)
           int x, n;
           unsigned char const *val;
 
-          printf("<p>%s%s: <select name=\"member_info_%d_%d_%d\"%s>\n"
+          printf("<p%s>%s%s: <select name=\"member_info_%d_%d_%d\"%s>\n"
                  "<option value=\"\"></option>\n",
-                 gettext(member_field_descs[i].orig_name),
+                 par_style, gettext(member_field_descs[i].orig_name),
                  member_edit_flags[role][i].is_mandatory?" (*)":"",
                  role, pers, i,
                  user_read_only?dis_str:"");
@@ -1656,8 +1742,8 @@ display_edit_registration_data_page(void)
           printf("</select>");
           continue;
         }
-        printf("<p>%s%s: <input type=\"text\" name=\"member_info_%d_%d_%d\" value=\"%s\" maxlength=\"%d\" size=\"%d\"%s>\n",
-               gettext(member_field_descs[i].orig_name),
+        printf("<p%s>%s%s: <input type=\"text\" name=\"member_info_%d_%d_%d\" value=\"%s\" maxlength=\"%d\" size=\"%d\"%s>\n",
+               par_style, gettext(member_field_descs[i].orig_name),
                member_edit_flags[role][i].is_mandatory?" (*)":"",
                role, pers, i,
                member_info[role][pers][i],
@@ -1668,12 +1754,12 @@ display_edit_registration_data_page(void)
     }
 
     if (member_cur[role] < member_max[role]) {
-      printf("<p><input type=\"submit\" name=\"action_%d\" value=\"%s\"></p>\n",
-             ACTION_ADD_NEW_CONTESTANT + role, _("Add new member"));
+      printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\"></p>\n",
+             par_style, ACTION_ADD_NEW_CONTESTANT + role, _("Add new member"));
     }
   }
 
-  printf("<h2>%s</h2>\n", _("Finalize registration"));
+  printf("<%s>%s</%s>\n", head_style, _("Finalize registration"), head_style);
 
   printf("<input type=\"hidden\" name=\"user_already_registered\" value=\"%d\">\n", user_already_registered);
   if (user_show_all) {
@@ -1681,30 +1767,31 @@ display_edit_registration_data_page(void)
   }
 
   if (!user_already_registered) {
-    printf("<p>%s</p>\n", _("Press on the \"Register\" button to commit the entered values to server and register for participation for the chosen contest."));
+    printf("<p%s>%s</p>\n", par_style,
+           _("Press on the \"Register\" button to commit the entered values to server and register for participation for the chosen contest."));
     printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
            ACTION_REGISTER_FOR_CONTEST, _("REGISTER!"));
   }
   if (!user_read_only && user_already_registered) {
-    printf("<p>%s</p>\n", _("Press on the \"Save\" button to save the entered values on the server."));
+    printf("<p%s>%s</p>\n", par_style, _("Press on the \"Save\" button to save the entered values on the server."));
     printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
            ACTION_SAVE_REGISTRATION_DATA, _("Save"));
   }
   printf("</form>\n");
 
-  printf("<p>%s</p>\n", _("Press on the \"Back\" button to return to the previous page without saving all your changes."));
+  printf("<p%s>%s</p>\n", par_style, _("Press on the \"Back\" button to return to the previous page without saving all your changes."));
   *s1 = 0;
   if (!user_show_all) {
     snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
   }
   snprintf(url, sizeof(url), "%s?action=%d&sid=%llx&locale_id=%d%s",
            self_url, STATE_MAIN_PAGE, user_cookie, client_locale_id, s1);
-  printf("<p><a href=\"%s\">%s</a></p>\n", url, _("Back"));
+  printf("<p%s><a href=\"%s\">%s</a></p>\n", par_style, url, _("Back"));
 
-  printf("<h2>%s</h2>\n", _("Quit the system"));
+  printf("<%s>%s</%s>\n", head_style, _("Quit the system"), head_style);
   snprintf(url, sizeof(url), "%s?action=%d&sid=%llx&locale_id=%d%s",
            self_url, ACTION_LOGOUT, user_cookie, client_locale_id, s1);
-  printf("<p><a href=\"%s\">%s</a></p>\n", url, _("Logout"));
+  printf("<p%s><a href=\"%s\">%s</a></p>\n", par_style, url, _("Logout"));
 
 #if 0
   print_choose_language_button(0, 1, 0, 0);
@@ -1720,7 +1807,7 @@ display_initial_page(void)
   unsigned char s1[128], s2[128], url[1024];
 
   if (client_locale_id == -1) client_locale_id = 0;
-  l10n_setlocale(client_locale_id);
+  //l10n_setlocale(client_locale_id);
 
   printf("Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
   client_put_header(stdout, header_txt, 0, config->charset, 1,
@@ -1760,20 +1847,20 @@ display_initial_page(void)
            client_locale_id);
   }
   printf("<input type=\"hidden\" name=\"usecookies\" value=\"1\">\n");
-  printf("<h2>%s</h2><p>%s</p>\n",
-         _("For registered users"),
+  printf("<%s>%s</%s><p%s>%s</p>\n",
+         head_style, _("For registered users"), head_style, par_style,
          _("If you have registered before, please enter your "
            "login and password in the corresponding fields. "
            "Then press the \"Submit\" button."));
-  printf("<p>%s: <input type=\"text\" name=\"login\" value=\"%s\""
-           " size=\"16\" maxlength=\"16\">\n",
-         _("Login"), user_login);
-  printf("<p>%s: <input type=\"password\" name=\"password\" value=\"%s\""
+  printf("<p%s>%s: <input type=\"text\" name=\"login\" value=\"%s\""
          " size=\"16\" maxlength=\"16\">\n",
-         _("Password"), user_password);
+         par_style, _("Login"), user_login);
+  printf("<p%s>%s: <input type=\"password\" name=\"password\" value=\"%s\""
+         " size=\"16\" maxlength=\"16\">\n",
+         par_style, _("Password"), user_password);
 
-  printf("<p><input type=\"submit\" name=\"action_%d\" value=\"%s\">",
-         ACTION_LOGIN, _("Submit"));
+  printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+         par_style, ACTION_LOGIN, _("Submit"));
   printf("</form>");
 
   *s1 = 0;
@@ -1786,9 +1873,8 @@ display_initial_page(void)
   }
   snprintf(url, sizeof(url), "%s?action=%d&locale_id=%d%s%s",
            self_url, STATE_REGISTER_NEW_USER, client_locale_id, s1, s2);
-  printf("<h2>%s</h2>\n",
-         _("For new users"));
-  printf(_("<p>If you have not registered before, please follow <a href=\"%s\">this</a> link.</p>\n"), url);
+  printf("<%s>%s</%s>\n", head_style, _("For new users"), head_style);
+  printf(_("<p%s>If you have not registered before, please <a href=\"%s\">register</a>.</p>\n"), par_style, url);
 }
 
 /* contains "change language", "login" */
@@ -1797,7 +1883,7 @@ static void
 display_login_page(void)
 {
   if (client_locale_id == -1) client_locale_id = 0;
-  l10n_setlocale(client_locale_id);
+  //l10n_setlocale(client_locale_id);
 
   printf("Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
   client_put_header(stdout, header_txt, 0, config->charset, 1,
@@ -1835,17 +1921,17 @@ display_login_page(void)
   }
   printf("<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
          client_locale_id);
-  printf("<p>%s</p>\n",
+  printf("<p%s>%s</p>\n", par_style,
          _("Type your login and password and then press \"Submit\" button"));
-  printf("<p>%s: <input type=\"text\" name=\"login\" value=\"%s\""
+  printf("<p%s>%s: <input type=\"text\" name=\"login\" value=\"%s\""
            " size=\"16\" maxlength=\"16\">\n",
-         _("Login"), user_login);
-  printf("<p>%s: <input type=\"password\" name=\"password\" value=\"%s\""
+         par_style, _("Login"), user_login);
+  printf("<p%s>%s: <input type=\"password\" name=\"password\" value=\"%s\""
          " size=\"16\" maxlength=\"16\">\n",
-         _("Password"), user_password);
+         par_style, _("Password"), user_password);
 
-  printf("<p><input type=\"submit\" name=\"action_%d\" value=\"%s\">",
-         ACTION_LOGIN, _("Submit"));
+  printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+         par_style, ACTION_LOGIN, _("Submit"));
   printf("</form>");
 }
 
@@ -1855,7 +1941,7 @@ static void
 display_register_new_user_page(void)
 {
   if (client_locale_id == -1) client_locale_id = 0;
-  l10n_setlocale(client_locale_id);
+  //l10n_setlocale(client_locale_id);
 
   if (!(user_login = cgi_param("login"))) {
     user_login = xstrdup("");
@@ -1900,8 +1986,8 @@ display_register_new_user_page(void)
   printf("<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
          client_locale_id);
 
-  printf("<h2>%s</h2><p>%s</p><p>%s</p>\n",
-         _("Registration rules"),
+  printf("<%s>%s</%s><p%s>%s</p><p>%s</p>\n",
+         head_style, _("Registration rules"), head_style, par_style,
          _("Please, fill up all the fields in the form below. "
            "Fields, marked with (*), are mandatory. "
            "When the form is completed, press \"Register\" button."),
@@ -1911,20 +1997,19 @@ display_register_new_user_page(void)
            "<b>Note</b>, that you must log in "
            "24 hours after the form is filled and submitted, or "
            "your registration will be void!"));
-  printf("<p>%s</p>",
+  printf("<p%s>%s</p>", par_style,
          _("Type in a desirable login identifier. <b>Note</b>, "
            "that your login still <i>may be</i> (in some cases) assigned "
            "automatically."));
-  printf("<p>%s (*): <input type=\"text\" name=\"login\" value=\"%s\""
+  printf("<p%s>%s (*): <input type=\"text\" name=\"login\" value=\"%s\""
            " size=\"16\" maxlength=\"16\">\n",
-         _("Login"), user_login);
-  printf("<p>%s</p>", _("Type your valid e-mail address"));
-  printf("<p>%s (*): <input type=\"text\" name=\"email\" value=\"%s\""
+         par_style, _("Login"), user_login);
+  printf("<p%s>%s</p>", par_style, _("Type your valid e-mail address"));
+  printf("<p%s>%s (*): <input type=\"text\" name=\"email\" value=\"%s\""
          " size=\"64\" maxlength=\"64\">\n",
-         _("E-mail"), user_email);
-  printf("<p><input type=\"submit\" name=\"action_%d\" value=\"%s\">",
-         ACTION_REGISTER_NEW_USER,
-         _("Register"));
+         par_style, _("E-mail"), user_email);
+  printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+         par_style, ACTION_REGISTER_NEW_USER, _("Register"));
 
   printf("</form>");
 }
@@ -1935,7 +2020,7 @@ display_user_registered_page(void)
   unsigned char s1[128], url[512];
 
   if (client_locale_id == -1) client_locale_id = 0;
-  l10n_setlocale(client_locale_id);
+  //l10n_setlocale(client_locale_id);
 
   if (!(user_login = cgi_param("login"))) {
     user_login = xstrdup("");
@@ -1956,15 +2041,15 @@ display_user_registered_page(void)
   client_put_header(stdout, header_txt, 0, config->charset, 1,
                     client_locale_id,"%s", _("User registration is complete"));
 
-  printf(_("<p>Registration of a new user is completed successfully. "
+  printf(_("<p%s>Registration of a new user is completed successfully. "
            "An e-mail messages is sent to the address <tt>%s</tt>. "
            "This message contains the login name, assigned to you, "
            "as well as your password for initial login. "
            "To proceed with registration, clink <a href=\"%s\">on this link</a>.</p>"
-           "<p><b>Note</b>, that you should login to the system for "
+           "<p%s><b>Note</b>, that you should login to the system for "
            "the first time no later, than in 24 hours after the initial "
            "user registration, or the registration is void."),
-         user_email, url);
+         par_style, user_email, url, par_style);
 }
 
 static void
@@ -1979,6 +2064,7 @@ display_main_page(void)
   int cnts_total = 0, cnts_used = 0;
   int *cnts_ids = 0;
   unsigned char *cnts_map = 0;
+  unsigned char *cnts_name_loc;
 
   if (!authentificate()) return;
   ASSERT(server_conn);
@@ -2008,11 +2094,11 @@ display_main_page(void)
     ASSERT(regs->tag == USERLIST_T_CONTESTS);
     regs = regs->first_down;
   }
-  l10n_setlocale(client_locale_id);
+  //l10n_setlocale(client_locale_id);
   client_put_header(stdout, header_txt, 0, config->charset, 1,
                     client_locale_id, _("Personal page of %s"), armored_str);
 
-  printf(_("<p>Hello, %s!</p>\n"), armored_str);
+  printf(_("<p%s>Hello, %s!</p>\n"), par_style, armored_str);
 
   printf("<form method=\"POST\" action=\"%s\" "
          "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
@@ -2024,16 +2110,17 @@ display_main_page(void)
     printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
            user_contest_id);
   }
-  printf("<h2>%s</h2>\n", _("Change the password"));
-  printf("<p>%s: <input type=\"password\" name=\"chg_old_passwd\" maxlength=\"16\" size=\"16\"></p>\n", _("Old password"));
-  printf("<p>%s: <input type=\"password\" name=\"chg_new_passwd_1\" maxlength=\"16\" size=\"16\"></p>\n", _("New password (1)"));
-  printf("<p>%s: <input type=\"password\" name=\"chg_new_passwd_2\" maxlength=\"16\" size=\"16\"></p>\n", _("New password (2)"));
-  printf("<p><input type=\"submit\" name=\"action_%d\" value=\"%s\"></p>\n",
-         ACTION_CHANGE_PASSWORD, _("Change!"));
+  printf("<%s>%s</%s>\n", head_style, _("Change the password"), head_style);
+  printf("<p%s>%s: <input type=\"password\" name=\"chg_old_passwd\" maxlength=\"16\" size=\"16\"></p>\n", par_style, _("Old password"));
+  printf("<p%s>%s: <input type=\"password\" name=\"chg_new_passwd_1\" maxlength=\"16\" size=\"16\"></p>\n", par_style, _("New password (1)"));
+  printf("<p%s>%s: <input type=\"password\" name=\"chg_new_passwd_2\" maxlength=\"16\" size=\"16\"></p>\n", par_style, _("New password (2)"));
+  printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\"></p>\n",
+         par_style, ACTION_CHANGE_PASSWORD, _("Change!"));
   printf("</form>\n");
 
   if (regs) {
-    printf("<h2>%s</h2>\n", _("Check the registration status"));
+    printf("<%s>%s</%s>\n", head_style,
+           _("Check the registration status"), head_style);
 
     for (reg = regs; reg; reg = reg->right) {
       ASSERT(reg->tag == USERLIST_T_CONTEST);
@@ -2045,18 +2132,23 @@ display_main_page(void)
       }
     }
 
-    printf("<table><tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th></tr>\n",
-           _("Contest ID"), _("Contest name"), _("Status"),
-           _("Edit personal data"),
-           need_team_btn?(_("Submit solution")):"&nbsp;");
+    printf("<table width=\"100%%\"><tr><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th></tr>\n",
+           table_style, _("Contest ID"),
+           table_style, _("Contest name"),
+           table_style, _("Status"),
+           table_style, _("Edit personal data"),
+           table_style, need_team_btn?(_("Submit solution")):"&nbsp;");
     for (reg = regs; reg; reg = reg->right) {
       ASSERT(reg->tag == USERLIST_T_CONTEST);
       regx = (struct userlist_contest*) reg;
       cnts = 0;
       if (contests_get(regx->id, &cnts) < 0 || !cnts) continue;
-      printf("<tr><td>%d</td><td>%s</td><td>%s</td>",
-             regx->id, cnts->name, 
-             gettext(regstatus_str(regx->status)));
+      cnts_name_loc = cnts->name;
+      if (!client_locale_id && cnts->name_en)
+        cnts_name_loc = cnts->name_en;
+      printf("<tr><td%s>%d</td><td%s>%s</td><td%s>%s</td>",
+             table_style, regx->id, table_style, cnts_name_loc, 
+             table_style, gettext(regstatus_str(regx->status)));
       *s1 = 0;
       if (!user_contest_id) {
         snprintf(s1, sizeof(s1), "&show_all=1");
@@ -2065,15 +2157,17 @@ display_main_page(void)
                "%s?action=%d&sid=%llx&contest_id=%d&locale_id=%d%s",
                self_url, STATE_EDIT_REGISTRATION_DATA,
                user_cookie, regx->id, client_locale_id, s1);
-      printf("<td><a href=\"%s\">%s</a></td>\n", url, _("Edit"));
+      printf("<td%s><a href=\"%s\">%s</a></td>\n", table_style,
+             url, _("Edit"));
       if (cnts->team_url && regx->status == USERLIST_REG_OK) {
         /* FIXME: need to set client mode correctly */
         snprintf(url, sizeof(url),
                  "%s?locale_id=%d&contest_id=%d&sid=%llx",
                  cnts->team_url, client_locale_id, regx->id, user_cookie);
-        printf("<td><a href=\"%s\">%s</a></td>\n", url, _("Submit solution"));
+        printf("<td%s><a href=\"%s\">%s</a></td>\n", table_style,
+               url, _("Submit solution"));
       } else {
-        printf("<td>&nbsp;</td>");
+        printf("<td%s>&nbsp;</td>", table_style);
       }
       printf("</tr>\n");
     }
@@ -2112,14 +2206,19 @@ display_main_page(void)
       }
     }
   }
-  printf("<h2>%s</h2>\n", _("Available contests"));
+  printf("<%s>%s</%s>\n", head_style, _("Available contests"), head_style);
   if (!cnts_used) {
-    printf("<p>%s</p>\n", _("No contests available."));
+    printf("<p%s>%s</p>\n", par_style, _("No contests available."));
   } else {
-    printf("<table><tr><th>%s</th><th>%s</th><th>%s</th></tr>\n",
-           _("Contest ID"), _("Contest name"), _("Register"));
+    printf("<table width=\"100%%\"><tr><th%s>%s</th><th%s>%s</th><th%s>%s</th></tr>\n",
+           table_style, _("Contest ID"),
+           table_style, _("Contest name"),
+           table_style, _("Register"));
     for (i = 0; i < cnts_used; i++) {
       if (contests_get(cnts_ids[i], &cnts) < 0 || !cnts) continue;
+      cnts_name_loc = cnts->name;
+      if (!client_locale_id && cnts->name_en)
+        cnts_name_loc = cnts->name_en;
       *s1 = 0;
       if (!user_contest_id) {
         snprintf(s1, sizeof(s1), "&show_all=1");
@@ -2128,9 +2227,10 @@ display_main_page(void)
                "%s?action=%d&sid=%llx&locale_id=%d&contest_id=%d%s",
                self_url, STATE_EDIT_REGISTRATION_DATA, user_cookie,
                client_locale_id, cnts->id, s1);
-      printf("<tr><td>%d</td><td>%s</td>"
-             "<td><a href=\"%s\">%s</a></td></tr>\n",
-             cnts->id, cnts->name, url, _("Register"));
+      printf("<tr><td%s>%d</td><td%s>%s</td>"
+             "<td%s><a href=\"%s\">%s</a></td></tr>\n",
+             table_style, cnts->id, table_style,
+             cnts_name_loc, table_style, url, _("Register"));
     }
     printf("</table>\n");
   }
@@ -2139,11 +2239,11 @@ display_main_page(void)
   if (user_contest_id > 0) {
     snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
   }
-  printf("<h2>%s</h2>\n", _("Quit the system"));
+  printf("<%s>%s</%s>\n", head_style, _("Quit the system"), head_style);
   snprintf(url, sizeof(url),
            "%s?action=%d&sid=%llx&locale_id=%d%s",
            self_url, ACTION_LOGOUT, user_cookie, client_locale_id, s1);
-  printf("<p><a href=\"%s\">%s</a></p>\n", url, _("Logout"));
+  printf("<p%s><a href=\"%s\">%s</a></p>\n", par_style, url, _("Logout"));
 
   printf("<form method=\"POST\" action=\"%s\" "
          "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
@@ -2174,7 +2274,7 @@ action_change_lang_at_initial(void)
     newstate = STATE_LOGIN;
 
   if (client_locale_id == -1) client_locale_id = 0;
-  l10n_setlocale(client_locale_id);
+  //l10n_setlocale(client_locale_id);
 
   if (!(user_login = cgi_param("login"))) {
     user_login = xstrdup("");
@@ -2206,7 +2306,7 @@ action_change_lang_at_register_new_user(void)
   unsigned char s1[128], s2[128], s3[128];
 
   if (client_locale_id == -1) client_locale_id = 0;
-  l10n_setlocale(client_locale_id);
+  //l10n_setlocale(client_locale_id);
 
   if (!(user_login = cgi_param("login"))) {
     user_login = xstrdup("");
@@ -2246,7 +2346,7 @@ action_change_lang_at_main_page(void)
   if (!authentificate()) return;
 
   if (client_locale_id == -1) client_locale_id = 0;
-  l10n_setlocale(client_locale_id);
+  //l10n_setlocale(client_locale_id);
 
   *s1 = 0;
   if (user_contest_id > 0) {
@@ -2266,7 +2366,7 @@ action_register_new_user(void)
   unsigned char s1[128], url[512];
 
   if (client_locale_id == -1) client_locale_id = 0;
-  l10n_setlocale(client_locale_id);
+  //l10n_setlocale(client_locale_id);
   error_log = 0;
 
   if (!(user_login = cgi_param("login"))) {
@@ -2325,13 +2425,13 @@ action_register_new_user(void)
 
   client_put_header(stdout, header_txt, 0, config->charset, 1,
                     client_locale_id, "%s", _("Registration failed"));
-  printf("<h2>%s</h2><p>%s<br><pre><font color=\"red\">%s</font></pre></p>\n",
-         _("The form contains error(s)"),
+  printf("<%s>%s</%s><p%s>%s<br><pre><font color=\"red\">%s</font></pre></p>\n",
+         head_style, _("The form contains error(s)"), head_style, par_style,
          _("Unfortunately, your form cannot be accepted, since "
            "it contains several errors. The list of errors is given "
            "below."),
          error_log);
-  printf("<p>%s</p>",
+  printf("<p%s>%s</p>", par_style, 
          _("Now please press the \"Back\" button of your browser "
            "and fix the error(s)."));
 }
@@ -2347,7 +2447,7 @@ action_login(void)
   unsigned char *new_name;
 
   if (client_locale_id == -1) client_locale_id = 0;
-  l10n_setlocale(client_locale_id);
+  //l10n_setlocale(client_locale_id);
 
   if (!(user_login = cgi_param("login"))) {
     user_login = xstrdup("");
@@ -2364,7 +2464,8 @@ action_login(void)
   if (!server_conn) {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
                       client_locale_id, _("Login failed"));
-    printf("<p>%s</p>\n", _("Connection to the server is broken."));
+    printf("<p%s>%s</p>\n", par_style,
+           _("Connection to the server is broken."));
     return;
   }
 
@@ -2377,7 +2478,7 @@ action_login(void)
   if (errcode != ULS_LOGIN_COOKIE) {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
                       client_locale_id, _("Login failed"));
-    printf("<p>%s</p>\n",
+    printf("<p%s>%s</p>\n", par_style,
            _("You have specified incorrect login or password."));
     return;
   }
@@ -2422,11 +2523,11 @@ action_logout(void)
   snprintf(url, sizeof(url), "%s?action=%d&locale_id=%d%s",
            self_url, STATE_LOGIN, client_locale_id, s1);
 
-  l10n_setlocale(client_locale_id);
+  //l10n_setlocale(client_locale_id);
   client_put_header(stdout, header_txt, 0, config->charset, 1,
                     client_locale_id, "%s, %s!", _("Good-bye"), armored_str);
-  printf(_("<p>Click <a href=\"%s\">on this link</a> to login again.</p>\n"),
-         url);
+  printf(_("<p%s>Click <a href=\"%s\">on this link</a> to login again.</p>\n"),
+         par_style, url);
 }
 
 static void
@@ -2487,13 +2588,14 @@ action_change_password(void)
   if (!error_log) {
     client_put_refresh_header(config->charset, url, 0,
                               "%s", _("Password changed successfully"));
-    printf("<p>%s</p>\n", _("Password changed successfully."));
+    printf("<p%s>%s</p>\n", par_style, _("Password changed successfully."));
     exit(0);
   }
 
   client_put_header(stdout, header_txt, 0, config->charset, 1,
                     client_locale_id, _("Failed to change password"));
-  printf("<p>%s<br><pre><font color=\"red\">%s</font></pre></p>\n",
+  printf("<p%s>%s<br><pre><font color=\"red\">%s</font></pre></p>\n",
+         par_style,
          _("Password changing failed due to the following reasons."),
          error_log);
 }
@@ -2595,17 +2697,20 @@ action_remove_member(void)
  failed:
   client_put_header(stdout, header_txt, 0, config->charset, 1,
                     client_locale_id, "%s", _("Cannot remove team member"));
-  printf("<p>%s.</p>\n<font color=\"red\"><pre>%s</pre></font>\n",
+  printf("<p%s>%s.</p>\n<font color=\"red\"><pre>%s</pre></font>\n",
+         par_style,
          _("Cannot remove a member due a reason given below"), error_log);
 }
 
 static void
 action_register_for_contest(void)
 {
-  int user_show_all = 0, errcode = 0, role, pers, i;
+  int user_show_all = 0, errcode = 0, role, pers, i, n;
   unsigned char *user_xml_text = 0;
   unsigned char s1[64], url[512];
   struct contest_desc *cnts = 0;
+  unsigned char *par_name, *par_value, *arm_value;
+  int arm_len;
 
   if (!authentificate()) return;
   if (cgi_param("show_all")) {
@@ -2623,7 +2728,7 @@ action_register_for_contest(void)
               contests_strerror(-errcode));
       client_put_header(stdout, header_txt, 0, config->charset, 1,
                         client_locale_id, "%s", _("Invalid contest"));
-      printf("<p>%s</p>.", _("Invalid contest identifier specified"));
+      printf("<p%s>%s</p>.", par_style, _("Invalid contest identifier specified"));
       return;
     }
   }
@@ -2632,7 +2737,7 @@ action_register_for_contest(void)
   if (!check_contest_eligibility(cnts->id)) {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
                       client_locale_id, "%s", _("Permission denied"));
-    printf("<p>%s</p>.", _("You cannot participate in this contest"));
+    printf("<p%s>%s</p>.", par_style, _("You cannot participate in this contest"));
     return;
   }
 
@@ -2703,8 +2808,31 @@ action_register_for_contest(void)
  failed:
   client_put_header(stdout, header_txt, 0, config->charset, 1,
                     client_locale_id, _("Operation failed"));
-  printf("<p>%s</p><font color=\"red\"><pre>%s</pre></font>\n",
+  printf("<p%s>%s</p><font color=\"red\"><pre>%s</pre></font>\n",
+         par_style,
          _("Registration failed by the following reason:"), error_log);
+
+  /* display "Back" button */
+  printf("<form method=\"POST\" action=\"%s\" "
+         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+         self_url);
+  n = cgi_get_param_num();
+  for (i = 0; i < n; i++) {
+    cgi_get_nth_param(i, &par_name, &par_value);
+    if (!strcmp(par_name, "action")) continue;
+    if (!strncmp(par_name, "action_", 7)) continue;
+    arm_len = html_armored_strlen(par_value);
+    arm_value = (unsigned char*) xmalloc(arm_len + 1);
+    html_armor_string(par_value, arm_value);
+    printf("<input type=\"hidden\" name=\"%s\" value=\"%s\">\n",
+           par_name, arm_value);
+    xfree(arm_value);
+  }
+  printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+         par_style,
+         ACTION_REDISPLAY_EDIT_REGISTRATION_DATA,
+         _("Back"));
+  printf("</form>");
 }
 
 static void
@@ -2748,6 +2876,7 @@ main(int argc, char const *argv[])
 
   read_locale_id();
   parse_user_action();
+  l10n_setlocale(client_locale_id);
 
   switch (user_action) {
     /* actions */
@@ -2800,6 +2929,7 @@ main(int argc, char const *argv[])
   case ACTION_ADD_NEW_COACH:
   case ACTION_ADD_NEW_ADVISOR:
   case ACTION_ADD_NEW_GUEST:
+  case ACTION_REDISPLAY_EDIT_REGISTRATION_DATA:
     display_edit_registration_data_page();
     break;
 
@@ -2831,7 +2961,7 @@ main(int argc, char const *argv[])
       end_time.tv_usec += 1000000;
       end_time.tv_sec--;
     }
-    printf("<hr><p>%s: %ld %s\n",
+    printf("<hr><p%s>%s: %ld %s\n", par_style,
            _("Page generation time"),
            end_time.tv_usec / 1000 + end_time.tv_sec * 1000,
            _("msec"));
