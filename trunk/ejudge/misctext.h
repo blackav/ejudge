@@ -34,4 +34,6 @@ int  message_quote(char const *, char *);
 int  message_reply_subj(char const *, char *);
 int  message_base64_subj(char const *, char *, int);
 
+size_t url_armor_string(unsigned char *, size_t, const unsigned char *);
+
 #endif /* __MISCTEXT_H__ */
