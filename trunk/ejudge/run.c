@@ -1788,7 +1788,8 @@ main(int argc, char *argv[])
   }
   if (i >= argc) goto print_usage;
 
-  if (prepare(argv[i], p_flags, PREPARE_RUN, cpp_opts) < 0) return 1;
+  if (prepare(argv[i], p_flags, PREPARE_RUN, cpp_opts, managed_mode_flag) < 0)
+    return 1;
   if (T_flag) {
     print_configuration(stdout);
     return 0;
