@@ -32,8 +32,9 @@
 #define _(x) x
 #endif
 
-#define MAX_NAME_SIZE  63
-#define MAX_VALUE_SIZE (128 * 1024)
+#define MAX_NAME_SIZE      63
+#define MAX_VALUE_SIZE     (256 * 1024)
+#define MAX_CONTENT_LENGTH (256 * 1024)
 
 struct param
 {
@@ -239,7 +240,7 @@ parse_multipart(char const *charset)
     bad_request(charset);
     exit(0);
   }
-  if (content_length > 100000) {
+  if (content_length > MAX_CONTENT_LENGTH) {
     request_too_large(charset);
     exit(0);
   }
