@@ -1231,7 +1231,7 @@ change_status_if_asked()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_STATUS_SET,
-                          0, 0, 0, status, 0, 0, 0, 0, 0, 0, 0, 0);
+                          0, 0, 0, status, 0, 0, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, -1);
   return;
 
@@ -1263,7 +1263,7 @@ change_status()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_STATUS_SET,
-                          0, 0, 0, status, 0, 0, 0, 0, 0, 0, 0, 0);
+                          0, 0, 0, status, 0, 0, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
   return;
 
@@ -1293,7 +1293,7 @@ change_problem()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_PROB_SET,
-                          0, prob_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+                          0, prob_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
   return;
 
@@ -1323,7 +1323,7 @@ change_language()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_LANG_SET,
-                          0, 0, lang_id, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+                          0, 0, lang_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
   return;
 
@@ -1353,7 +1353,7 @@ change_variant()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_VARIANT_SET,
-                          0, 0, 0, 0, 0, variant, 0, 0, 0, 0, 0, 0);
+                          0, 0, 0, 0, 0, variant, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
   return;
 
@@ -1383,7 +1383,7 @@ action_run_change_pages()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_PAGES_SET,
-                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, pages, 0);
+                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, pages, 0, 0);
   operation_status_page(r, 0, run_id);
   return;
 
@@ -1413,7 +1413,7 @@ change_user_id()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_UID_SET,
-                          user_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+                          user_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
   return;
 
@@ -1439,7 +1439,7 @@ change_user_login()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_LOGIN_SET,
-                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, user_login);
+                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, user_login, 0);
   operation_status_page(r, 0, run_id);
   return;
 
@@ -1468,7 +1468,7 @@ change_imported(void)
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_IMPORTED_SET,
-                          0, 0, 0, 0, v, 0, 0, 0, 0, 0, 0, 0);
+                          0, 0, 0, 0, v, 0, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
   return;
 
@@ -1497,7 +1497,7 @@ change_hidden(void)
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_HIDDEN_SET,
-                          0, 0, 0, 0, 0, 0, v, 0, 0, 0, 0, 0);
+                          0, 0, 0, 0, 0, 0, v, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
   return;
 
@@ -1526,7 +1526,7 @@ change_tests(void)
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_TESTS_SET,
-                          0, 0, 0, 0, 0, 0, 0, v, 0, 0, 0, 0);
+                          0, 0, 0, 0, 0, 0, 0, v, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
   return;
 
@@ -1555,7 +1555,36 @@ change_score(void)
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_SCORE_SET,
-                          0, 0, 0, 0, 0, 0, 0, 0, v, 0, 0, 0);
+                          0, 0, 0, 0, 0, 0, 0, 0, v, 0, 0, 0, 0);
+  operation_status_page(r, 0, run_id);
+  return;
+
+ invalid_operation:
+  operation_status_page(-1, "Invalid operation", -1);
+}
+
+static void
+change_score_adj(void)
+{
+  unsigned char *s;
+  int n = 0, v, run_id, r;
+
+  if (!(s = cgi_param("run_id"))
+      || sscanf(s, "%d%n", &run_id, &n) != 1
+      || s[n]
+      || run_id < 0
+      || run_id >= server_total_runs)
+    goto invalid_operation;
+  if (!(s = cgi_param("score_adj"))
+      || sscanf(s, "%d%n", &v, &n) != 1
+      || s[n]
+      || v < -128 || v > 127)
+    goto invalid_operation;
+
+  open_serve();
+  r = serve_clnt_edit_run(serve_socket_fd, run_id,
+                          PROT_SERVE_RUN_SCORE_ADJ_SET,
+                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, v);
   operation_status_page(r, 0, run_id);
   return;
 
@@ -1584,7 +1613,7 @@ change_readonly(void)
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_READONLY_SET,
-                          0, 0, 0, 0, 0, 0, 0, 0, 0, v, 0, 0);
+                          0, 0, 0, 0, 0, 0, 0, 0, 0, v, 0, 0, 0);
   operation_status_page(r, 0, run_id);
   return;
 
@@ -3150,6 +3179,7 @@ display_master_page(void)
 
   open_serve();
   r = serve_clnt_master_page(serve_socket_fd, 1,
+                             SRV_CMD_MASTER_PAGE,
                              client_sid,
                              client_user_id,
                              global->contest_id, 0,
@@ -3360,6 +3390,9 @@ main(int argc, char *argv[])
       break;
     case ACTION_RUN_CHANGE_SCORE:
       change_score();
+      break;
+    case ACTION_RUN_CHANGE_SCORE_ADJ:
+      change_score_adj();
       break;
     case ACTION_USER_TOGGLE_BAN:
       action_toggle_ban();
