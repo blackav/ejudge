@@ -1447,6 +1447,7 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   struct contest_desc *cnts = 0;
   struct passwd_internal pwdint;
   struct userlist_user *u = 0;
+  struct userlist_contest *c = 0;
   struct userlist_pk_login_ok *out = 0;
   int i, priv_level, login_len, name_len;
   size_t out_size = 0, errcode;
@@ -1525,6 +1526,25 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   if (passwd_check(&pwdint, u->register_passwd) < 0) {
     CONN_ERR("BAD PASSWORD");
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+
+  // check that the user is registered for the contest
+  if (u->contests) {
+    for (c = (struct userlist_contest*) u->contests->first_down;
+         c; c = (struct userlist_contest*) c->b.right) {
+      if (c->id == data->contest_id) break;
+    }
+  }
+  if (!c) {
+    CONN_ERR("not registered");
+    send_reply(p, -ULS_ERR_NOT_REGISTERED);
+    return;
+  }
+  if (c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
+      || (c->flags & USERLIST_UC_LOCKED)) {
+    CONN_ERR("not allowed to participate");
+    send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
     return;
   }
 
@@ -1898,6 +1918,7 @@ cmd_priv_check_cookie(struct client_state *p,
   struct userlist_user *u = 0;
   struct userlist_cookie *cookie = 0;
   struct userlist_pk_login_ok *out;
+  struct userlist_contest *c = 0;
   size_t login_len, name_len, out_size;
   unsigned char *login_ptr, *name_ptr;
   int priv_level, i, errcode;
@@ -1990,6 +2011,24 @@ cmd_priv_check_cookie(struct client_state *p,
   if (cookie->contest_id != data->contest_id) {
     CONN_INFO("FAILED: contest_id mismatch");
     send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+
+  if (u->contests) {
+    for (c = (struct userlist_contest*) u->contests->first_down;
+         c; c = (struct userlist_contest*) c->b.right) {
+      if (c->id == data->contest_id) break;
+    }
+  }
+  if (!c) {
+    CONN_ERR("not registered");
+    send_reply(p, -ULS_ERR_NOT_REGISTERED);
+    return;
+  }
+  if (c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
+      || (c->flags & USERLIST_UC_LOCKED)) {
+    CONN_ERR("not allowed to participate");
+    send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
     return;
   }
 
@@ -2699,6 +2738,12 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
     xfree(old_u->location);
     old_u->location = xstrdup(new_u->location);
     info("%d: location updated", p->id);
+    updated = 1;
+  }
+  if (needs_update(old_u->spelling, new_u->spelling)) {
+    xfree(old_u->spelling);
+    old_u->spelling = xstrdup(new_u->spelling);
+    info("%d: spelling updated", p->id);
     updated = 1;
   }
 
