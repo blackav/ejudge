@@ -24,6 +24,7 @@
 #include "protocol.h"
 #include "userlist.h"
 #include "sha.h"
+#include "l10n.h"
 
 #include "misctext.h"
 #include "base64.h"
@@ -224,35 +225,6 @@ remove_queue_add(time_t rmtime, int is_dir, path_t path)
   return p->token;
 }
 
-static int
-setup_locale(int locale_id)
-{
-#if CONF_HAS_LIBINTL - 0 == 1
-  char *e = 0;
-  char env_buf[128];
-
-  if (!global->enable_l10n) return 0;
-
-  switch (locale_id) {
-  case 1:
-    e = "ru_RU.KOI8-R";
-    break;
-  case 0:
-  default:
-    locale_id = 0;
-    e = "C";
-    break;
-  }
-
-  sprintf(env_buf, "LC_ALL=%s", e);
-  putenv(env_buf);
-  setlocale(LC_ALL, "");
-  return locale_id;
-#else
-  return 0;
-#endif /* CONF_HAS_LIBINTL */
-}
-
 static void
 interrupt_signal(int s)
 {
@@ -288,14 +260,14 @@ update_standings_file(int force_flag)
     p = run_get_fog_period(current_time, global->board_fog_time,
                            global->board_unfog_time);
   }
-  setup_locale(global->standings_locale_id);
+  l10n_setlocale(global->standings_locale_id);
   write_standings(global->status_dir, global->standings_file_name,
                   global->stand_header_txt, global->stand_footer_txt);
   if (global->stand2_file_name[0]) {
     write_standings(global->status_dir, global->stand2_file_name,
                     global->stand2_header_txt, global->stand2_footer_txt);
   }
-  setup_locale(0);
+  l10n_setlocale(0);
   if (global->virtual) return;
   switch (p) {
   case 0:
@@ -336,11 +308,11 @@ update_public_log_file(void)
     break;
   }
 
-  setup_locale(global->standings_locale_id);
+  l10n_setlocale(global->standings_locale_id);
   write_public_log(global->status_dir, global->plog_file_name,
                    global->plog_header_txt, global->plog_footer_txt);
   last_update = current_time;
-  setup_locale(0);
+  l10n_setlocale(0);
 }
 
 static int
@@ -714,13 +686,13 @@ cmd_team_page(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  setup_locale(pkt->locale_id);
+  l10n_setlocale(pkt->locale_id);
   write_team_page(f, p->user_id,
                   pkt->sid_mode, p->cookie,
                   (pkt->flags & 1), (pkt->flags & 2) >> 1,
                   self_url_ptr, hidden_vars_ptr, extra_args_ptr,
                   contest_start_time, contest_stop_time);
-  setup_locale(0);
+  l10n_setlocale(0);
   fclose(f);
 
   if (!html_ptr) {
@@ -827,14 +799,14 @@ cmd_master_page(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  /* setup_locale(pkt->locale_id); */
+  /* l10n_setlocale(pkt->locale_id); */
   write_master_page(f, p->user_id, pkt->priv_level,
                     pkt->sid_mode, p->cookie,
                     pkt->first_run, pkt->last_run,
                     pkt->first_clar, pkt->last_clar,
                     self_url_ptr, filter_expr_ptr, hidden_vars_ptr,
                     extra_args_ptr);
-  /* setup_locale(0); */
+  /* l10n_setlocale(0); */
   fclose(f);
 
   if (!html_ptr) {
@@ -941,10 +913,10 @@ cmd_priv_standings(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  /* setup_locale(pkt->locale_id); */
+  /* l10n_setlocale(pkt->locale_id); */
   write_priv_standings(f, pkt->sid_mode, p->cookie,
                        self_url_ptr, hidden_vars_ptr, extra_args_ptr);
-  /* setup_locale(0); */
+  /* l10n_setlocale(0); */
   fclose(f);
 
   if (!html_ptr) {
@@ -1378,7 +1350,7 @@ cmd_team_show_item(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  setup_locale(pkt->locale_id);
+  l10n_setlocale(pkt->locale_id);
   switch (pkt->b.id) {
   case SRV_CMD_SHOW_CLAR:
     r = new_write_user_clar(f, pkt->user_id, pkt->item_id);
@@ -1396,7 +1368,7 @@ cmd_team_show_item(struct client_state *p, int len,
   default:
     abort();
   }
-  setup_locale(0);
+  l10n_setlocale(0);
   fclose(f);
 
   if (r < 0) {
@@ -3203,13 +3175,7 @@ main(int argc, char *argv[])
 
   if (prepare(argv[i], p_flags, PREPARE_SERVE, cpp_opts) < 0) return 1;
 
-#if CONF_HAS_LIBINTL - 0 == 1
-  /* load the language used */
-  if (global->enable_l10n) {
-    bindtextdomain("ejudge", global->l10n_dir);
-    textdomain("ejudge");
-  }
-#endif /* CONF_HAS_LIBINTL */
+  l10n_prepare(global->enable_l10n, global->l10n_dir);
 
   if (T_flag) {
     print_configuration(stdout);
