@@ -98,15 +98,15 @@ compare_runs(FILE *fout, int run_id1, int run_id2)
   sprintf(tmpfile3, "%s/diff", global->diff_work_dir);
 
   // copy files to temporary location
-  if ((flags1 = archive_make_read_path(arch_path1, sizeof(arch_path1),
-                                       global->run_archive_dir,run_id1,0,0))) {
+  if ((flags1=archive_make_read_path(arch_path1, sizeof(arch_path1),
+                                     global->run_archive_dir,run_id1,0,0))<0) {
     goto cleanup;
   }
   if (generic_copy_file(flags1, 0, arch_path1, "", 0, 0, tmpfile1, 0) < 0) {
     goto cleanup;
   }
-  if ((flags2 = archive_make_read_path(arch_path2, sizeof(arch_path2),
-                                       global->run_archive_dir,run_id2,0,0))) {
+  if ((flags2=archive_make_read_path(arch_path2, sizeof(arch_path2),
+                                     global->run_archive_dir,run_id2,0,0))<0) {
     goto cleanup;
   }
   if (generic_copy_file(flags2, 0, arch_path2, "", 0, 0, tmpfile2, 0) < 0) {
