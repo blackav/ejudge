@@ -43,8 +43,8 @@
 #define _(x) x
 #endif
 
-#define RUN_RECORD_SIZE 99
-#define RUN_HEADER_SIZE 99
+#define RUN_RECORD_SIZE 105
+#define RUN_HEADER_SIZE 105
 
 struct run_header
 {
@@ -59,6 +59,7 @@ struct run_entry
   unsigned long  timestamp;
   int            submission;
   unsigned long  size;
+  int            locale_id;
   int            team;
   int            language;
   int            problem;
@@ -120,11 +121,12 @@ run_read_entry(int n)
 
   memset(buf, 0, sizeof(buf));
   if (run_read_record(buf, RUN_RECORD_SIZE) < 0) return -1;
-  r = sscanf(buf, " %lu %d %lu %d %d %d %d %d %d %s %n",
+  r = sscanf(buf, " %lu %d %lu %d %d %d %d %d %d %d %s %n",
              &runs[n].timestamp, &runs[n].submission, &runs[n].size,
+             &runs[n].locale_id,
              &runs[n].team, &runs[n].language, &runs[n].problem,
              &runs[n].status, &runs[n].test, &runs[n].score, tip, &k);
-  if (r != 10) ERR_R("[%d]: sscanf returned %d", n, r);
+  if (r != 11) ERR_R("[%d]: sscanf returned %d", n, r);
   if (buf[k] != 0) ERR_R("[%d]: excess data", n);
   if (strlen(tip) > RUN_MAX_IP_LEN) ERR_R("[%d]: ip is to long", n);
 
@@ -195,15 +197,15 @@ run_open(char *path, int flags)
 
 static int
 run_make_record(char *buf, unsigned long int ts,
-                int sb, unsigned long sz,
+                int sb, unsigned long sz, int le,
                 int tm, int lg, int pr, int st, int tt,
                 int sc, char const *ip)
 {
   memset(buf, ' ', RUN_RECORD_SIZE);
   buf[RUN_RECORD_SIZE] = 0;
   buf[RUN_RECORD_SIZE - 1] = '\n';
-  sprintf(buf, "%12lu %6d %8lu %8d %4d %4d %3d %4d %3d %15s",
-          ts, sb, sz, tm, lg, pr, st, tt, sc, ip);
+  sprintf(buf, "%12lu %6d %8lu %4d %8d %4d %4d %3d %4d %3d %15s",
+          ts, sb, sz, le, tm, lg, pr, st, tt, sc, ip);
   buf[strlen(buf)] = ' ';
   if (strlen(buf) != RUN_RECORD_SIZE)
     ERR_R("record size is bad: %d", strlen(buf));
@@ -239,7 +241,8 @@ run_flush_entry(int num)
   if (num < 0 || num >= run_u) ERR_R("invalid entry number %d", num);
   if (run_make_record(buf, 
                       runs[num].timestamp, runs[num].submission,
-                      runs[num].size, runs[num].team, runs[num].language,
+                      runs[num].size, runs[num].locale_id,
+                      runs[num].team, runs[num].language,
                       runs[num].problem, runs[num].status,
                       runs[num].test, runs[num].score, runs[num].ip) < 0)
     return -1;
@@ -254,6 +257,7 @@ int
 run_add_record(unsigned long  timestamp, 
                unsigned long  size,
                char const    *ip,
+               int            locale_id,
                int            team,
                int            problem,
                int            language)
@@ -272,6 +276,7 @@ run_add_record(unsigned long  timestamp,
   runs[run_u].timestamp = timestamp;
   runs[run_u].submission = run_u;
   runs[run_u].size = size;
+  runs[run_u].locale_id = locale_id;
   runs[run_u].team = team;
   runs[run_u].language = language;
   runs[run_u].problem = problem;
@@ -318,9 +323,10 @@ run_get_status(int runid)
 }
 
 int
-run_get_param(int runid, int *plang, int *pprob, int *pstat)
+run_get_param(int runid, int *ploc, int *plang, int *pprob, int *pstat)
 {
   if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
+  if (ploc)  *ploc  = runs[runid].locale_id;
   if (plang) *plang = runs[runid].language;
   if (pprob) *pprob = runs[runid].problem;
   if (pstat) *pstat = runs[runid].status;
@@ -330,7 +336,7 @@ run_get_param(int runid, int *plang, int *pprob, int *pstat)
 int
 run_get_record(int runid, unsigned long *ptime,
                unsigned long *psize,
-               char *pip,
+               char *pip, int *ploc,
                int *pteamid, int *plangid, int *pprobid,
                int *pstatus, int *ptest, int *pscore)
 {
@@ -338,6 +344,7 @@ run_get_record(int runid, unsigned long *ptime,
 
   if (ptime)   *ptime   = runs[runid].timestamp;
   if (psize)   *psize   = runs[runid].size;
+  if (ploc)    *ploc    = runs[runid].locale_id;
   if (pteamid) *pteamid = runs[runid].team;
   if (plangid) *plangid = runs[runid].language;
   if (pprobid) *pprobid = runs[runid].problem;
@@ -469,6 +476,35 @@ run_status_str(int status, char *out, int len)
   strncpy(out, s, len);
   out[len - 1] = 0;
   return out;
+}
+
+int
+run_get_fog_period(unsigned long cur_time, int fog_time, int unfog_time)
+{
+  unsigned long estimated_stop;
+  unsigned long fog_start;
+
+  ASSERT(cur_time);
+  ASSERT(fog_time >= 0);
+  ASSERT(unfog_time >= 0);
+
+  if (!head.start_time) return -1;
+  if (!fog_time || !head.duration) return 0;
+
+  ASSERT(cur_time >= head.start_time);
+  if (head.stop_time) {
+    ASSERT(head.stop_time >= head.start_time);
+    ASSERT(cur_time >= head.stop_time);
+    if (cur_time > head.stop_time + unfog_time) return 2;
+    return 1;
+  } else {
+    estimated_stop = head.start_time + head.duration;
+    ASSERT(cur_time <= estimated_stop);
+    if (fog_time > head.duration) fog_time = head.duration;
+    fog_start = estimated_stop - fog_time;
+    if (cur_time >= fog_start) return 1;
+    return 0;
+  }
 }
 
 /**
