@@ -1,5 +1,105 @@
 $Id$
 
+Version 2.1.28 (20040402)
+========================
+If no bugs are found in this release, the next release (which
+will be identical or nearly identical to the current release)
+will be numbered 2.2.0, so a new stable branch of the `ejudge'
+system will be started. The 2.1 branch will be terminated. All
+the support work will go to 2.2 branch, and all the new
+development will go to the future development branch 2.3.
+
+New global configuration variable `enable_report_upload' is
+added. New problem configuration variable `date_penalty' is
+added.
+
+clean-users
+-----------
+Support for removal of inactive user logins is implemented.
+A user login is considered as inactive, if this user did not
+make any submit or did not submitted any clarification request.
+A user login is never consideren an inactive if this login is
+privileged (i. e. mentioned in the <cap> element of the global
+configuration file ejudge.xml) or has the `never_clean' flag set
+to true.
+
+To activate the removal mode the -r option is to be specified in
+the clean-users command line. When the program finds an inactive
+user login it prints a confirmation question on the standard
+output. To confirm removal of the user login one has to answer
+'y' or 'yes', and to deny removal one has to answer 'n' or 'no'
+(answers are case insensitive). If an additional option -f is
+specified in the command line, the confirmation questions are
+not displayed and inactive users are removed automatically.
+
+serve,master,judge
+------------------
+Privileged users may view both the judge's testing protocol and
+the participant's testing protocol. On the "View source" page
+and on the "View report" page a new link "View team report" is
+added to the navigation links. Upon clicking on this link the
+participant's protocol is displayed. As usually, in order for
+the contest server to generate and store the participant's
+judging protocols the `team_enable_rep_view' global
+configuration variable must be set to true. In order to be
+allowed to view reports the user must have the VIEW_REPORT
+capability bit set for this contest.
+
+serve,master,judge
+------------------
+A privileged user may upload to the server the testing protocols
+(both the participant's and the judge's ones). The uploaded
+protocols replace the protocols stored in the serve's submit
+database and are shown by "View report" and "View team reports"
+commands. To enable uploading feature the `enable_report_upload'
+global configuration variable has to be set to true. The
+uploading user must have the EDIT_RUN capability bit set for the
+current contest. If the participant's judgins protocols are
+enabled by the global configuration variable
+`team_enable_rep_view' the uploading user may choose between
+uploading only the participant's protocol, the judge's protocol
+and both.
+
+serve
+-----
+Added support for penalizing a solution based on the submission
+date of the solution for any problem. For example, if the
+solution is submitted before April 5, 2004 no penalty is
+applied. If the solution is submitted between April, 5 and April,
+11, it gets 1 penalty point. If the solution is submitted after
+April, 12 (including that day) is gets 2 penalty points. A new
+problem configuration variable `date_penalty' is added to
+specify submission date penalties. To implement the policy
+described above the problem description section must contain the
+following fragment:
+date_penalty = "2004/04/05 0"
+date_penalty = "2004/04/12 -1"
+date_penalty = "2005/01/01 -2"
+Each definition of the `date_penalty' configuration variable
+works only in the current problem definition. The `date_penalty'
+configuration variable is cumulative, i. e. it adds a new
+penalty specification to already defined penalty
+specifications. The `date_penalty' configuration variable is not
+inherited from abstract problem specifications. The order of
+specifications for each particular problem is significant: the
+specifications are checked in exactly that order. Each penalty
+specification has the form as follows:
+DATE ADD-VALUE
+where DATE is an astronomical date, given in the standard
+ejudge's date format YYYY/MM/DD [hh[:mm[:ss]]]. ADD-VALUE is the
+value added to score received by this submit during testing. The
+resulting score cannot be less, that 0 (in this case it is set
+to 0) or it cannot be greater that the full score for this
+problem (in this case it is set to the full score).
+
+The date-dependant problem penalizing only works in constest
+conducted in the KIROV mode.
+
+userlist-server
+---------------
+Arbitrary system (Unix) user and group identifiers are
+supported, include negative ones.
+
 Version 2.1.27 (20040327)
 ========================
 The administrator interface of the contest now provides several
@@ -15,13 +115,6 @@ element now contains the `nsec' attribute, which contains the
 nanosecond component of the submission time. As a consequence,
 the `time' attribute now contains the time in seconds instead of
 the time in milliseconds as in the previous versions.
-
-If no bugs are found in this release, the next release (which
-will be identical or nearly identical to the current release)
-will be numbered 2.2.0, so a new stable branch of the `ejudge'
-system will be started. The 2.1 branch will be terminated. All
-the support work will go to 2.2 branch, and all the new
-development will go to the future development branch 2.3.
 
 master,judge,team,register,users
 --------------------------------
