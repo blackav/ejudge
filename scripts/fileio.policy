@@ -1,0 +1,6 @@
+# $Id$
+# This Java policy file allows reading/writing any file in
+# the testing directory.
+grant {
+  permission java.io.FilePermission "./*", "read,write";
+};
