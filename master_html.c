@@ -31,6 +31,9 @@
 #include "client_actions.h"
 #include "sformat.h"
 #include "archive_paths.h"
+#include "team_extra.h"
+#include "xml_utils.h"
+#include "userlist.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -304,13 +307,14 @@ write_change_status_dialog(FILE *f, unsigned char const *var_name,
             "<option value=\"\"></option>"
             "<option%s value=\"99\">%s</option>"
             "<option value=\"9\">%s</option>"
+            "<option value=\"10\">%s</option>"
             "<optgroup label=\"%s:\">"
             "<option value=\"0\">%s</option>"
             "<option value=\"1\">%s</option>"
             "<option value=\"7\">%s</option>"
             "</optgroup>"
             "</select></td>\n", var_name, dis_str,
-            _("Rejudge"), _("Ignore"), _("Judgements"),
+            _("Rejudge"), _("Ignore"), _("Disqualify"), _("Judgements"),
             _("OK"), _("Compilation error"),
             _("Partial solution"));
   } else if (global->score_system_val == SCORE_OLYMPIAD) {
@@ -319,6 +323,7 @@ write_change_status_dialog(FILE *f, unsigned char const *var_name,
             "<option value=\"\"> "
             "<option%s value=\"99\">%s"
             "<option value=\"9\">%s</option>"
+            "<option value=\"10\">%s</option>"
             "<optgroup label=\"%s:\">"
             "<option value=\"0\">%s</option>"
             "<option value=\"1\">%s</option>"
@@ -330,7 +335,7 @@ write_change_status_dialog(FILE *f, unsigned char const *var_name,
             "<option value=\"8\">%s</option>"
             "</optgroup>"
             "</select></td>\n", var_name, dis_str,
-            _("Rejudge"), _("Ignore"), _("Judgements"),
+            _("Rejudge"), _("Ignore"), _("Disqualify"), _("Judgements"),
             _("OK"), _("Compilation error"), _("Run-time error"),
             _("Time-limit exceeded"), _("Presentation error"),
             _("Wrong answer"), _("Partial solution"),
@@ -341,6 +346,7 @@ write_change_status_dialog(FILE *f, unsigned char const *var_name,
             "<option value=\"\"> "
             "<option%s value=\"99\">%s"
             "<option value=\"9\">%s</option>"
+            "<option value=\"10\">%s</option>"
             "<optgroup label=\"%s:\">"
             "<option value=\"0\">%s"
             "<option value=\"1\">%s"
@@ -350,7 +356,7 @@ write_change_status_dialog(FILE *f, unsigned char const *var_name,
             "<option value=\"5\">%s"
             "</optgroup>"
             "</select></td>\n", var_name, dis_str,
-            _("Rejudge"), _("Ignore"), _("Judgements"),
+            _("Rejudge"), _("Ignore"), _("Disqualify"), _("Judgements"),
             _("OK"), _("Compilation error"), _("Run-time error"),
             _("Time-limit exceeded"), _("Presentation error"),
             _("Wrong answer"));
@@ -376,7 +382,7 @@ write_all_runs(FILE *f, struct user_filter_info *u,
   int list_tot = 0;
   unsigned char *str1 = 0, *str2 = 0;
   unsigned char durstr[64], statstr[64];
-  int rid, attempts, score;
+  int rid, attempts;
   time_t run_time, start_time;
   struct run_entry *pe;
   unsigned char *fe_html;
@@ -728,32 +734,7 @@ write_all_runs(FILE *f, struct user_filter_info *u,
       } else {
         fprintf(f, "<td>??? - %d</td>", pe->language);
       }
-      fprintf(f, "<td>%s</td>", statstr);
-
-      if (pe->test <= 0) {
-        fprintf(f, "<td>%s</td>\n", _("N/A"));
-        if (global->score_system_val == SCORE_KIROV
-            || global->score_system_val == SCORE_OLYMPIAD) {
-          fprintf(f, "<td>%s</td>\n", _("N/A"));
-        }
-      } else if (global->score_system_val == SCORE_KIROV ||
-                 global->score_system_val == SCORE_OLYMPIAD) {
-        fprintf(f, "<td>%d</td>\n", pe->test - 1);
-        if (pe->score == -1) {
-          fprintf(f, "<td>%s</td>", _("N/A"));
-        } else {
-          if (global->score_system_val == SCORE_OLYMPIAD || pe->is_hidden) {
-            fprintf(f, "<td>%d</td>", pe->score);
-          } else {
-            score = pe->score - attempts * probs[pe->problem]->run_penalty;
-            if (score < 0) score = 0;
-            fprintf(f, "<td>%d(%d)=%d</td>", pe->score, attempts, score);
-          }
-        }
-      } else {
-        fprintf(f, "<td>%d</td>\n", pe->test);
-      }
-
+      write_html_run_status(f, pe, priv_level, attempts);
       if (priv_level == PRIV_LEVEL_ADMIN) {
         if (global->score_system_val == SCORE_KIROV) {
           fprintf(f,
@@ -761,13 +742,14 @@ write_all_runs(FILE *f, struct user_filter_info *u,
                   "<option value=\"\"></option>"
                   "<option%s value=\"99\">%s</option>"
                   "<option value=\"9\">%s</option>"
+                  "<option value=\"10\">%s</option>"
                   "<optgroup label=\"%s:\">"
                   "<option value=\"0\">%s</option>"
                   "<option value=\"1\">%s</option>"
                   "<option value=\"7\">%s</option>"
                   "</optgroup>"
                   "</select></td>\n", rid, rejudge_dis_str,
-                  _("Rejudge"), _("Ignore"), _("Judgements"),
+                  _("Rejudge"), _("Ignore"), _("Disqualify"), _("Judgements"),
                   _("OK"), _("Compilation error"),
                   _("Partial solution"));
         } else if (global->score_system_val == SCORE_OLYMPIAD) {
@@ -776,6 +758,7 @@ write_all_runs(FILE *f, struct user_filter_info *u,
                   "<option value=\"\"> "
                   "<option%s value=\"99\">%s"
                   "<option value=\"9\">%s</option>"
+                  "<option value=\"10\">%s</option>"
                   "<optgroup label=\"%s:\">"
                   "<option value=\"0\">%s</option>"
                   "<option value=\"1\">%s</option>"
@@ -787,7 +770,7 @@ write_all_runs(FILE *f, struct user_filter_info *u,
                   "<option value=\"8\">%s</option>"
                   "</optgroup>"
                   "</select></td>\n", rid, rejudge_dis_str,
-                  _("Rejudge"), _("Ignore"), _("Judgements"),
+                  _("Rejudge"), _("Ignore"), _("Disqualify"), _("Judgements"),
                   _("OK"), _("Compilation error"), _("Run-time error"),
                   _("Time-limit exceeded"), _("Presentation error"),
                   _("Wrong answer"), _("Partial solution"),
@@ -798,6 +781,7 @@ write_all_runs(FILE *f, struct user_filter_info *u,
                   "<option value=\"\"> "
                   "<option%s value=\"99\">%s"
                   "<option value=\"9\">%s</option>"
+                  "<option value=\"10\">%s</option>"
                   "<optgroup label=\"%s:\">"
                   "<option value=\"0\">%s"
                   "<option value=\"1\">%s"
@@ -807,7 +791,7 @@ write_all_runs(FILE *f, struct user_filter_info *u,
                   "<option value=\"5\">%s"
                   "</optgroup>"
                   "</select></td>\n", rid, rejudge_dis_str,
-                  _("Rejudge"), _("Ignore"), _("Judgements"),
+                  _("Rejudge"), _("Ignore"), _("Disqualify"), _("Judgements"),
                   _("OK"), _("Compilation error"), _("Run-time error"),
                   _("Time-limit exceeded"), _("Presentation error"),
                   _("Wrong answer"));
@@ -1881,6 +1865,7 @@ write_priv_users(FILE *f, int user_id, int priv_level,
   unsigned char team_modes[128];
   unsigned char filtbuf1[512], filtbuf2[512], filtbuf3[512], *ps1, *ps2;
   unsigned long tmpclarstotal;
+  struct team_extra *t_extra;
 
   tot_teams = teamdb_get_total_teams();
   max_team = teamdb_get_max_team_id();
@@ -1898,28 +1883,32 @@ write_priv_users(FILE *f, int user_id, int priv_level,
           "<th>%s</th>"
           "<th>%s</th>"
           "<th>%s</th>"
-          "<th>%s</th>"
-          "<th>&nbsp;</th>"
-          "<th>&nbsp;</th>"
-          "<th>&nbsp;</th>"
-          "</tr>\n",
+          "<th>%s</th>",
           _("User ID"),
           _("User login"),
           _("User name"),
           _("Flags"),
-          _("Number of runs"), _("Size of runs"),
-          _("Number of clars"), _("Size of clars"));
+          _("No. of runs"), _("Size of runs"),
+          _("No. of clars"), _("Size of clars"));
+  if (global->contestant_status_num > 0) {
+    fprintf(f, "<th>%s</th>", _("Status"));
+  }
+  fprintf(f, "<th>%s</th><th>&nbsp;</th></tr>\n", _("No. of warns"));
+
   for (i = 1; i <= max_team; i++) {
     if (!teamdb_lookup(i)) continue;
     teamdb_export_team(i, &info);
+    t_extra = team_extra_get_entry(i);
 
     run_get_team_usage(i, &runs_num, &runs_total);
     clar_get_team_usage(i, &clars_num, &tmpclarstotal);
     clars_total = tmpclarstotal;
+    /*
     if (priv_level == PRIV_LEVEL_ADMIN) {
       html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
       fprintf(f, "<input type=\"hidden\" name=\"user_id\" value=\"%d\">", i);
     }
+    */
     fprintf(f, "<tr>");
 
 
@@ -1981,6 +1970,32 @@ write_priv_users(FILE *f, int user_id, int priv_level,
             "<td>%d</td>",
             runs_num, runs_total, clars_num, clars_total);
 
+    if (t_extra) {
+      if (global->contestant_status_num > 0) {
+        if (t_extra->status < 0 || t_extra->status >= global->contestant_status_num) {
+          fprintf(f, "<td>%d - ??? </td>", t_extra->status);
+        } else {
+          fprintf(f, "<td>%d - %s</td>", t_extra->status, global->contestant_status_legend[t_extra->status]);
+        }
+      }
+      fprintf(f, "<td>%d</td>", t_extra->warn_u);
+    } else {
+      if (global->contestant_status_num > 0) {
+        fprintf(f, "<td>&nbsp;</td>");
+      }
+      fprintf(f, "<td>&nbsp;</td>");
+    }
+
+    ps1 = ""; ps2 = "";
+    if (sid_mode == SID_URL) {
+      html_hyperref(filtbuf3, sizeof(filtbuf3), sid_mode, sid, self_url,
+                    extra_args, "user_id=%d&action=%d",
+                    i, ACTION_VIEW_TEAM);
+      ps1 = filtbuf3; ps2 = "</a>";
+    }
+    fprintf(f, "<td>%s%s%s</td>", ps1, _("View"), ps2);
+
+    /*
     if (priv_level == PRIV_LEVEL_ADMIN) {
       fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_USER_TOGGLE_BAN, (flags & TEAM_BANNED)?_("Unban"):_("Ban"));
     } else {
@@ -1998,16 +2013,258 @@ write_priv_users(FILE *f, int user_id, int priv_level,
     } else {
       fprintf(f, "<td>&nbsp;</td>");
     }
+    */
 
     fprintf(f, "</tr>\n");
+    /*
     if (priv_level == PRIV_LEVEL_ADMIN) {
       fprintf(f, "</form>");
     }
+    */
   }
   fprintf(f, "</table>\n");
 
   print_nav_buttons(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), 0, _("Refresh"), 0, 0, 0, 0);
+  return 0;
+}
+
+int
+write_priv_user(FILE *f, int user_id, int priv_level,
+                int sid_mode, unsigned long long sid,
+                unsigned char const *self_url,
+                unsigned char const *hidden_vars,
+                unsigned char const *extra_args,
+                int view_user_id,
+                const opcap_t *pcaps)
+{
+  struct teamdb_export info;
+  struct team_extra *t_extra;
+  size_t runs_total = 0, clars_total = 0, pages_total = 0;
+  int runs_num = 0, clars_num = 0;
+  unsigned long tmpclarstotal = 0;
+  int allowed_edit = 0;
+  int flags, needed_cap, init_value, i;
+  struct team_warning *cur_warn;
+
+  print_nav_buttons(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args,
+                    _("Main page"), 0, _("View teams"), 0, 0, 0, 0);
+  fprintf(f, "<hr/>\n");
+
+  if (!teamdb_lookup(view_user_id)) {
+    fprintf(f, "<big>Invalid user id</big>\n");
+    return 0;
+  }
+
+  teamdb_export_team(view_user_id, &info);
+  t_extra = team_extra_get_entry(view_user_id);
+  run_get_team_usage(view_user_id, &runs_num, &runs_total);
+  clar_get_team_usage(view_user_id, &clars_num, &tmpclarstotal);
+  pages_total = run_get_total_pages(view_user_id);
+  clars_total = tmpclarstotal;
+  flags = teamdb_get_flags(view_user_id);
+
+  // table has 4 columns
+  fprintf(f, "<table>\n");
+
+  // user id
+  fprintf(f, "<tr><td>%s:</td><td>%d</td><td>&nbsp;</td><td>&nbsp</td></tr>\n",
+          _("User Id"), view_user_id);
+
+  // user login
+  fprintf(f, "<tr><td>%s:</td>", _("User Login"));
+  xml_unparse_text(f, "td", teamdb_get_login(view_user_id), "");
+  fprintf(f, "<td>&nbsp;</td><td>&nbsp</td></tr>\n");
+
+  // user name
+  fprintf(f, "<tr><td>%s:</td>", _("User Name"));
+  xml_unparse_text(f, "td", teamdb_get_name(view_user_id), "");
+  fprintf(f, "<td>&nbsp;</td><td>&nbsp</td></tr>\n");
+
+  fprintf(f,"<tr><td>%s:</td><td>%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
+          _("Privileged?"),
+          (info.user && info.user->is_privileged)? _("Yes") : _("No"));
+
+  // last login name
+  /*
+  s = "Never";
+  if (info.user && info.user->last_login_time) {
+    s = xml_unparse_date(info.user->last_login_time);
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td><td>&nbsp</td></tr>\n",
+          _("Last login time"), s);
+  */
+
+  // invisible, locked, banned status and change buttons
+  // to make invisible EDIT_REG is enough for all users
+  // to ban or lock DELETE_PRIV_REG required for privileged users
+  allowed_edit = 0;
+  if (info.user && opcaps_check(*pcaps, OPCAP_EDIT_REG) >= 0) {
+    allowed_edit = 1;
+  }
+  if (allowed_edit) {
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
+    fprintf(f, "<input type=\"hidden\" name=\"user_id\" value=\"%d\">",
+            view_user_id);
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
+          _("Invisible?"), (flags & TEAM_INVISIBLE)?_("Yes"):_("No"));
+  if(allowed_edit) {
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_USER_TOGGLE_VISIBILITY, (flags & TEAM_INVISIBLE)?_("Make visible"):_("Make invisible"));
+  } else {
+    fprintf(f, "<td>&nbsp;</td>");
+  }
+  fprintf(f, "</tr>\n");
+  if (allowed_edit) {
+    fprintf(f, "</form>");
+  }
+
+  allowed_edit = 0;
+  if (info.user) {
+    if (info.user->is_privileged) {
+      if ((flags & TEAM_BANNED)) needed_cap = OPCAP_PRIV_CREATE_REG;
+      else needed_cap = OPCAP_PRIV_DELETE_REG;
+    } else {
+      if ((flags & TEAM_BANNED)) needed_cap = OPCAP_CREATE_REG;
+      else needed_cap = OPCAP_DELETE_REG;
+    }
+    if (opcaps_check(*pcaps, needed_cap) >= 0) allowed_edit = 1;
+  }
+  if (allowed_edit) {
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
+    fprintf(f, "<input type=\"hidden\" name=\"user_id\" value=\"%d\">",
+            view_user_id);
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
+          _("Banned?"), (flags & TEAM_BANNED)?_("Yes"):_("No"));
+  if(allowed_edit) {
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_USER_TOGGLE_BAN, (flags & TEAM_BANNED)?_("Remove ban"):_("Ban"));
+  } else {
+    fprintf(f, "<td>&nbsp;</td>");
+  }
+  fprintf(f, "</tr>\n");
+  if (allowed_edit) {
+    fprintf(f, "</form>");
+  }
+
+  allowed_edit = 0;
+  if (info.user) {
+    if (info.user->is_privileged) {
+      if ((flags & TEAM_LOCKED)) needed_cap = OPCAP_PRIV_CREATE_REG;
+      else needed_cap = OPCAP_PRIV_DELETE_REG;
+    } else {
+      if ((flags & TEAM_LOCKED)) needed_cap = OPCAP_CREATE_REG;
+      else needed_cap = OPCAP_DELETE_REG;
+    }
+    if (opcaps_check(*pcaps, needed_cap) >= 0) allowed_edit = 1;
+  }
+  if (allowed_edit) {
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
+    fprintf(f, "<input type=\"hidden\" name=\"user_id\" value=\"%d\">",
+            view_user_id);
+  }
+  fprintf(f, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
+          _("Locked?"), (flags & TEAM_LOCKED)?_("Yes"):_("No"));
+  if(allowed_edit) {
+    fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_USER_TOGGLE_LOCK, (flags & TEAM_LOCKED)?_("Unlock"):_("Lock"));
+  } else {
+    fprintf(f, "<td>&nbsp;</td>");
+  }
+  fprintf(f, "</tr>\n");
+  if (allowed_edit) {
+    fprintf(f, "</form>");
+  }
+
+  fprintf(f,"<tr><td>%s:</td><td>%d</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
+          _("Number of Runs"), runs_num);
+  fprintf(f,"<tr><td>%s:</td><td>%d</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
+          _("Total size of Runs"), runs_total);
+  fprintf(f,"<tr><td>%s:</td><td>%d</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
+          _("Number of Clars"), clars_num);
+  fprintf(f,"<tr><td>%s:</td><td>%d</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
+          _("Total size of Clars"), clars_total);
+  fprintf(f,"<tr><td>%s:</td><td>%d</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
+          _("Number of printed pages"), pages_total);
+
+  if (global->contestant_status_num > 0) {
+    // contestant status is editable when OPCAP_EDIT_REG is set
+    allowed_edit = 0;
+    if (opcaps_check(*pcaps, OPCAP_EDIT_REG) >= 0) allowed_edit = 1;
+    if (allowed_edit) {
+      html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
+      fprintf(f, "<input type=\"hidden\" name=\"user_id\" value=\"%d\">",
+              view_user_id);
+    }
+    fprintf(f, "<tr><td>%s:</td><td>", _("Status"));
+    init_value = 0;
+    if (!t_extra) {
+      fprintf(f, "N/A");
+    } else if (t_extra->status < 0 || t_extra->status >= global->contestant_status_num) {
+      fprintf(f, "%d - ???", t_extra->status);
+    } else {
+      fprintf(f, "%d - %s", t_extra->status, global->contestant_status_legend[t_extra->status]);
+      init_value = t_extra->status;
+    }
+    fprintf(f, "</td>");
+    if (allowed_edit) {
+      fprintf(f, "<td><select name=\"status\">\n");
+      for (i = 0; i < global->contestant_status_num; i++) {
+        fprintf(f, "<option value=\"%d\"", i);
+        if (i == init_value) fprintf(f, " selected=\"1\"");
+        fprintf(f, ">%d - %s\n", i, global->contestant_status_legend[i]);
+      }
+      fprintf(f, "</select></td>\n");
+      fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>\n", ACTION_CHANGE_CONTESTANT_STATUS, _("Set status"));
+    } else {
+      fprintf(f, "<td>&nbsp;</td><td>&nbsp;</td>");
+    }
+    fprintf(f, "</tr>\n");
+    if (allowed_edit) {
+      fprintf(f, "</form>");
+    }
+  }
+  i = 0;
+  if (t_extra) i = t_extra->warn_u;
+  fprintf(f,"<tr><td>%s:</td><td>%d</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
+          _("Number of warnings"), i);
+
+  fprintf(f, "</table>\n");
+
+  print_nav_buttons(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args,
+                    _("Main page"), 0, _("View teams"), 0, 0, 0, 0);
+  fprintf(f, "<hr/>\n");
+
+  if (!t_extra || !t_extra->warn_u) {
+    fprintf(f, "<h2>No warnings</h2>\n");
+  } else {
+    fprintf(f, "<h2>Warnings</h2>\n");
+    for (i = 0; i < t_extra->warn_u; i++) {
+      if (!(cur_warn = t_extra->warns[i])) continue;
+      fprintf(f, "<h3>Warning %d: issued: %s, issued by: %s (%d), issued from: %s</h3>", i + 1, xml_unparse_date(cur_warn->date), teamdb_get_login(cur_warn->issuer_id), cur_warn->issuer_id, xml_unparse_ip(cur_warn->issuer_ip));
+      fprintf(f, "<p>User explanation:\n");
+      xml_unparse_text(f, "pre", cur_warn->text, "");
+      fprintf(f, "<p>Judge's comment:\n");
+      xml_unparse_text(f, "pre", cur_warn->comment, "");
+    }
+  }
+
+  if (opcaps_check(*pcaps, OPCAP_EDIT_REG) >= 0) {
+    fprintf(f, "<h2>Issue a warning</h3>\n");
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
+    fprintf(f, "<input type=\"hidden\" name=\"user_id\" value=\"%d\">",
+            view_user_id);
+    fprintf(f, "<p>Warning explanation for the user (mandatory):<br>\n");
+    fprintf(f, "<p><textarea name=\"warn_text\" rows=\"5\" cols=\"60\"></textarea></p>\n");
+    fprintf(f, "<p>Comment for other judges (optional):<br>\n");
+    fprintf(f, "<p><textarea name=\"warn_comment\" rows=\"5\" cols=\"60\"></textarea></p>\n");
+    fprintf(f, "<p><input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
+            ACTION_ISSUE_WARNING, _("Issue warning"));
+    fprintf(f, "</form>\n");
+    
+    print_nav_buttons(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args,
+                      _("Main page"), 0, _("View teams"), 0, 0, 0, 0);
+  }
+
   return 0;
 }
 
@@ -2030,7 +2287,8 @@ html_reset_filter(int user_id, unsigned long long session_id)
 }
 
 void
-write_runs_dump(FILE *f, unsigned char const *charset)
+write_runs_dump(FILE *f, const unsigned char *url,
+                unsigned char const *charset)
 {
   int total_runs, i, j;
   struct run_entry re;
@@ -2039,7 +2297,9 @@ write_runs_dump(FILE *f, unsigned char const *charset)
   unsigned char *s;
   unsigned char statstr[64];
 
-  fprintf(f, "Content-type: text/plain; charset=%s\n\n", charset);
+  if (url && *url) {
+    fprintf(f, "Content-type: text/plain; charset=%s\n\n", charset);
+  }
 
   total_runs = run_get_total();
   start_time = run_get_start_time();
