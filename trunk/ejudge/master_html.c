@@ -981,9 +981,9 @@ write_priv_standings(FILE *f, int sid_mode, unsigned long long sid,
 
   if (global->score_system_val == SCORE_KIROV
       || global->score_system_val == SCORE_OLYMPIAD)
-    do_write_kirov_standings(f, 1, 0);
+    do_write_kirov_standings(f, 1, 0, 0);
   else
-    do_write_standings(f, 1, 0, 0);
+    do_write_standings(f, 1, 0, 0, 0);
 
   print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars,
                     _("Main page"), _("Refresh"), 0, 0);
@@ -1417,6 +1417,123 @@ html_reset_filter(int user_id)
     u->tree_mem = 0;
   }
   u->prev_tree = 0;
+}
+
+void
+write_runs_dump(FILE *f, unsigned char const *charset)
+{
+  int total_runs, i, j;
+  struct run_entry re;
+  struct tm *pts;
+  time_t start_time, dur;
+  unsigned char *s;
+  unsigned char statstr[64];
+
+  fprintf(f, "Content-type: text/plain; charset=%s\n\n", charset);
+
+  total_runs = run_get_total();
+  start_time = run_get_start_time();
+  for (i = 0; i < total_runs; i++) {
+    if (run_get_entry(i, &re) < 0) {
+      fprintf(f, "%d;Cannot read entry!\n", i);
+      continue;
+    }
+    fprintf(f, "%d;", i);
+    fprintf(f, "%ld;", re.timestamp);
+    pts = localtime(&re.timestamp);
+    fprintf(f, "%04d%02d%02d%02d%02d%02d;",
+            pts->tm_year + 1900,
+            pts->tm_mon + 1,
+            pts->tm_mday,
+            pts->tm_hour,
+            pts->tm_min,
+            pts->tm_sec);
+    fprintf(f, "%04d%02d%02d;",
+            pts->tm_year + 1900,
+            pts->tm_mon + 1,
+            pts->tm_mday);
+    fprintf(f, "%04d;%02d;%02d;%02d;%02d;%02d;",
+            pts->tm_year + 1900,
+            pts->tm_mon + 1,
+            pts->tm_mday,
+            pts->tm_hour,
+            pts->tm_min,
+            pts->tm_sec);
+    if (global->virtual) {
+      start_time = run_get_virtual_start_time(re.team);
+    }
+
+    dur = re.timestamp - start_time;
+    if (dur < 0) dur = 0;
+    fprintf(f, "%ld;", dur);
+    pts->tm_sec = dur % 60;
+    dur /= 60;
+    pts->tm_min = dur % 60;
+    dur /= 60;
+    pts->tm_hour = dur % 24;
+    dur /= 24;
+    fprintf(f, "%ld;%02d;%02d;%02d;",
+            dur, pts->tm_hour, pts->tm_min, pts->tm_sec);
+
+    fprintf(f, "%zu;", re.size);
+    fprintf(f, "%s;", run_unparse_ip(re.ip));
+
+    s = (unsigned char*) re.sha1;
+    for (j = 0; j < 20; j++) fprintf(f, "%02x", *s++);
+    fprintf(f, ";");
+
+    fprintf(f, "%d;", re.team);
+    if (!(s = teamdb_get_login(re.team))) {
+      fprintf(f, "!INVALID TEAM!;");
+    } else {
+      fprintf(f, "%s;", s);
+    }
+    if (!(s = teamdb_get_name(re.team))) {
+      fprintf(f, "!INVALID TEAM!;");
+    } else {
+      fprintf(f, "%s;", s);
+    }
+    j = teamdb_get_flags(re.team);
+    s = "";
+    if ((j & TEAM_INVISIBLE)) s = "I";
+    fprintf(f, "%s;", s);
+    s = "";
+    if ((j & TEAM_BANNED)) s = "B";
+    fprintf(f, "%s;", s);
+
+    if (re.problem > 0 && re.problem <= max_prob
+        && probs[re.problem] && probs[re.problem]->short_name) {
+      fprintf(f, "%s;", probs[re.problem]->short_name);
+    } else {
+      fprintf(f, "!INVALID PROBLEM %d!;", re.problem);
+    }
+
+    if (re.language > 0 && re.language <= max_lang
+        && langs[re.language] && langs[re.language]->short_name) {
+      fprintf(f, "%s;", langs[re.language]->short_name);
+    } else {
+      fprintf(f, "!INVALID LANGUAGE %d!;", re.language);
+    }
+
+    run_status_str(re.status, statstr, 0);
+    fprintf(f, "%s;", statstr);
+    fprintf(f, "%d;", re.score);
+    fprintf(f, "%d;", re.test);
+
+    fprintf(f, "\n");
+  }
+}
+
+void
+write_raw_standings(FILE *f, unsigned char const *charset)
+{
+  fprintf(f, "Content-type: text/plain; charset=%s\n\n", charset);
+
+  if (global->score_system_val == SCORE_KIROV
+      || global->score_system_val == SCORE_OLYMPIAD)
+    do_write_kirov_standings(f, 1, 0, 1);
+  else
+    do_write_standings(f, 1, 0, 0, 1);
 }
 
 /**
