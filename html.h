@@ -31,6 +31,8 @@ void write_judge_allstat(int, int, int, char const *, char const *);
 
 void write_judge_source_view(char const *, int);
 void write_judge_report_view(char const *, int);
+void write_team_report_view(char const *, int, int);
+void write_team_source_view(char const *, int, int);
 void write_judge_standings(char const *);
 
 #endif /* __HTML_H__ */
