@@ -22,10 +22,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdio.h>
+
 struct userlist_cfg
 {
   unsigned char *socket_path;
   unsigned char *db_path;
 };
+
+struct userlist_cfg *userlist_cfg_parse(char const *);
+struct userlist_cfg *userlist_cfg_free(struct userlist_cfg *);
+void userlist_cfg_unparse(struct userlist_cfg *, FILE *);
 
 #endif /* __USERLIST_CFG_H__ */

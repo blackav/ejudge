@@ -19,18 +19,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "userlist_cfg.h"
 #include "nls.h"
 #include "userlist.h"
+#include "utf8_utils.h"
+#include "pathutl.h"
+
+#include <reuse/xalloc.h>
+#include <reuse/logger.h>
 
 #include <expat.h>
 
 #include <stdio.h>
-
-extern struct nls_table *nls_table_koi8_r;
-extern struct nls_table *nls_table_utf8;
-extern struct nls_table *nls_table_cp1251;
-extern struct nls_table *nls_table_cp866;
-extern struct nls_table *nls_table_iso8859_5;
+#include <string.h>
 
 struct tag_list
 {
@@ -48,36 +49,37 @@ struct parser_data
   int skipping;
   int skip_stop;
   struct tag_list *tag_stack;
+  int err_cntr;
 
   /* actual data to be parsed */
   struct userlist_cfg *cfg;
 };
 
+enum
+  {
+    TG_CONFIG = 1,
+    TG_FILE,
+    TG_SOCKET,
+  };
+
 static char const * const tag_map[] =
 {
   0,
+  "config",
+  "file",
+  "socket",
 
   0
 };
 
-int
+static int
 encoding_hnd(void *data, const XML_Char *name, XML_Encoding *info)
 {
   int i, o;
   unsigned char cb, cu1, cu2;
   struct nls_table *tab = 0;
 
-  if (!strcasecmp(name, "koi8-r") || !strcasecmp(name, "koi8-ru")) {
-    tab = nls_table_koi8_r;
-  } else if(!strcasecmp(name, "microsoft-1251")
-            || !strcasecmp(name, "cp1251")) {
-    tab = nls_table_cp1251;
-  } else if (!strcasecmp(name, "cp866")) {
-    tab = nls_table_cp866;
-  } else if (!strcasecmp(name, "iso8859-5")) {
-    tab = nls_table_iso8859_5;
-  }
-
+  tab = nls_lookup_table(name);
   if (tab) {
     for (i = 0; i < 256; i++) {
       cb = i;
@@ -94,34 +96,43 @@ encoding_hnd(void *data, const XML_Char *name, XML_Encoding *info)
   return 0;
 }
 
-void
-handle_attrib(struct parser_data *pd, void *tree,
+static void
+handle_attrib(XML_Parser p,
+              struct parser_data *pd, void *tree,
               unsigned char const *name, int itag,
               unsigned char const *attrib, unsigned char const *value)
 {
   switch (itag) {
+  case TG_CONFIG:
+  case TG_FILE:
+  case TG_SOCKET:
+    goto invalid_attribute;
   default:
-    fprintf(stderr, "Unknown tag: %s\n", name);
+    err("Unknown tag: %s", name);
+    pd->err_cntr++;
     return;
   }
   return;
-
+ 
+ /*
  invalid_value:
   fprintf(stderr, "Invalid value of attribute `%s'\n", attrib);
   return;
+ */
 
  invalid_attribute:
-  fprintf(stderr, "Invalid attribute `%s' for tag `%s'\n", attrib, name);
+  err("invalid attribute `%s' for tag `%s'", attrib, name);
 }
 
-void
+static void
 start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
 {
+  XML_Parser p = (XML_Parser) data;
   int cur_val_size = 0, cur_attr_size = 0, val_len, attr_len;
   char *cur_val = 0, *cur_attr = 0;
   int cur_tag_size = 0, tag_len;
   char *cur_tag = 0;
-  struct parser_data *pd = (struct parser_data*) data;
+  struct parser_data *pd = (struct parser_data*) XML_GetUserData(p);
   struct tag_list *tl = 0;
   void *tree = 0;
   int itag = 0;
@@ -150,14 +161,48 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
     if (!strcmp(cur_tag, tag_map[itag]))
       break;
   if (!tag_map[itag]) {
-    fprintf(stderr, "Unknown tag: %s, skipping\n", cur_tag);
+    err("unknown tag <%s> at line %d, skipping",
+        cur_tag, XML_GetCurrentLineNumber(p));
+    pd->err_cntr++;
     goto start_skipping;
   }
 
   switch (itag) {
+  case TG_CONFIG:
+    if (pd->tag_stack) goto invalid_usage;
+    pd->cfg = xcalloc(1, sizeof(*pd->cfg));
+    tree = pd->cfg;
+    break;
+  case TG_FILE:
+    if (!pd->tag_stack || pd->tag_stack->itag != TG_CONFIG)
+      goto invalid_usage;
+    {
+      struct userlist_cfg *uc = (struct userlist_cfg*) pd->tag_stack->tree;
+      if (uc->db_path) {
+        err("%s can be specified only once", cur_tag);
+        pd->err_cntr++;
+        goto start_skipping;
+      }
+      tree = pd->tag_stack->tree;
+    }
+    break;
+  case TG_SOCKET:
+    if (!pd->tag_stack || pd->tag_stack->itag != TG_CONFIG)
+      goto invalid_usage;
+    {
+      struct userlist_cfg *uc = (struct userlist_cfg*) pd->tag_stack->tree;
+      if (uc->socket_path) {
+        err("%s can be specified only once", cur_tag);
+        pd->err_cntr++;
+        goto start_skipping;
+      }
+      tree = pd->tag_stack->tree;      
+    }
+    break;
   default:
   invalid_usage:
-    fprintf(stderr, "Invalid tag `%s' usage\n", cur_tag);
+    err("Invalid tag `%s' usage", cur_tag);
+    pd->err_cntr++;
     goto start_skipping;
   }
 
@@ -178,11 +223,11 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
     }
     str_utf8_to_koi8(cur_attr, cur_attr_size, atts[0]);
     str_utf8_to_koi8(cur_val, cur_val_size, atts[1]);
-    handle_attrib(pd, tree, cur_tag, itag, cur_attr, cur_val);
+    handle_attrib(p, pd, tree, cur_tag, itag, cur_attr, cur_val);
     atts += 2;
   }
 
-  tl = (struct tag_list*) calloc(1, sizeof(*tl));
+  tl = (struct tag_list*) xcalloc(1, sizeof(*tl));
   tl->itag = itag;
   tl->next = pd->tag_stack;
   tl->tree = tree;
@@ -196,11 +241,13 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
   pd->skip_stop = pd->nest;
 }
 
-void
+static void
 end_hnd(void *data, const XML_Char *name)
 {
-  struct parser_data *pd = (struct parser_data*) data;
+  XML_Parser p = (XML_Parser) data;
+  struct parser_data *pd = (struct parser_data*) XML_GetUserData(p);
   struct tag_list *tl;
+  struct userlist_cfg *uc = 0;
 
   if (pd->skipping) {
     pd->nest--;
@@ -216,31 +263,43 @@ end_hnd(void *data, const XML_Char *name)
   pd->nest--;
 
   switch (tl->itag) {
+  case TG_CONFIG:
+    break;
+  case TG_FILE:
+    uc = (struct userlist_cfg*) tl->tree;
+    uc->db_path = str_utf8_to_koi8_heap(tl->str);
+    break;
+  case TG_SOCKET:
+    uc = (struct userlist_cfg*) tl->tree;
+    uc->socket_path = str_utf8_to_koi8_heap(tl->str);
+    break;
   default:
-    fprintf(stderr, "unexpected closing tag: %s\n", name);
+    err("unexpected closing tag: %s", name);
+    pd->err_cntr++;
   }
 
   free(tl->str);
 }
 
-void
+static void
 chardata_hnd(void *data, const XML_Char *s, int len)
 {
-  struct parser_data *pd = (struct parser_data*) data;
+  XML_Parser p = (XML_Parser) data;
+  struct parser_data *pd = (struct parser_data*) XML_GetUserData(p);
 
   if (!pd->tag_stack) return;
   if (pd->skipping) return;
   if (!pd->tag_stack->a) pd->tag_stack->a = 32;
   while (pd->tag_stack->u + len >= pd->tag_stack->a)
     pd->tag_stack->a *= 2;
-  pd->tag_stack->str = (char*) realloc(pd->tag_stack->str, pd->tag_stack->a);
+  pd->tag_stack->str = (char*) xrealloc(pd->tag_stack->str, pd->tag_stack->a);
   memmove(pd->tag_stack->str + pd->tag_stack->u, s, len);
   pd->tag_stack->u += len;
   pd->tag_stack->str[pd->tag_stack->u] = 0;
 }
 
-int
-main(int argc, char **argv)
+struct userlist_cfg *
+userlist_cfg_parse(char const *path)
 {
   XML_Parser p = 0;
   FILE *f = 0;
@@ -248,51 +307,73 @@ main(int argc, char **argv)
   int len;
   struct parser_data data;
 
-  if (argc != 2) {
-    fprintf(stderr, "invalid number of parameters\n");
-    goto cleanup_and_exit;
-  }
+  memset(&data, 0, sizeof(data));
 
-  if (!(f = fopen(argv[1], "r"))) {
-    fprintf(stderr, "cannot open input file `%s'\n", argv[1]);
+  ASSERT(path);
+  if (!(f = fopen(path, "r"))) {
+    err("cannot open input file `%s'", path);
     goto cleanup_and_exit;
   }
 
   if (!(p = XML_ParserCreate(NULL))) {
-    fprintf(stderr, "cannot create an XML parser\n");
+    err("cannot create an XML parser");
     goto cleanup_and_exit;
   }
-
-  memset(&data, 0, sizeof(data));
 
   XML_SetUnknownEncodingHandler(p, encoding_hnd, NULL);
   XML_SetStartElementHandler(p, start_hnd);
   XML_SetEndElementHandler(p, end_hnd);
   XML_SetCharacterDataHandler(p, chardata_hnd);
   XML_SetUserData(p, &data);
+  XML_UseParserAsHandlerArg(p);
 
   while (fgets(buf, sizeof(buf), f)) {
     len = strlen(buf);
     if (XML_Parse(p, buf, len, 0) == XML_STATUS_ERROR) {
-      fprintf(stderr, "parse error at line %d:%s\n",
-              XML_GetCurrentLineNumber(p),
-              XML_ErrorString(XML_GetErrorCode(p)));
+      err("%s: %d: parse error: %s",
+          path, XML_GetCurrentLineNumber(p),
+          XML_ErrorString(XML_GetErrorCode(p)));
       goto cleanup_and_exit;
     }
   }
+
   if (ferror(f)) {
-    fprintf(stderr, "input error\n");
+    err("input error");
     goto cleanup_and_exit;
   }
+  if (data.err_cntr) goto cleanup_and_exit;
 
   XML_ParserFree(p);
   fclose(f);
-  return 0;
+  return data.cfg;
 
  cleanup_and_exit:
   if (p) XML_ParserFree(p);
   if (f) fclose(f);
-  return 1;
+  if (data.cfg) userlist_cfg_free(data.cfg);
+  return 0;
+}
+
+struct userlist_cfg *
+userlist_cfg_free(struct userlist_cfg *cfg)
+{
+  xfree(cfg->db_path);
+  xfree(cfg->socket_path);
+  xfree(cfg);
+  return 0;
+}
+
+void
+userlist_cfg_unparse(struct userlist_cfg *cfg, FILE *f)
+{
+  if (!cfg) return;
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n");
+  fprintf(f, "<config>\n");
+  if (cfg->db_path)
+    fprintf(f, "  <file>%s</file>\n", cfg->db_path);
+  if (cfg->socket_path)
+    fprintf(f, "  <socket>%s</socket>\n", cfg->socket_path);
+  fprintf(f, "</config>\n");
 }
 
 /**
