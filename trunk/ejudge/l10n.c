@@ -18,6 +18,7 @@
 #include "l10n.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
