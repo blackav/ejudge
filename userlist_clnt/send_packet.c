@@ -17,6 +17,8 @@
 
 #include "userlist_clnt/private.h"
 
+#include <errno.h>
+
 int
 userlist_clnt_send_packet(struct userlist_clnt *clnt,
                           size_t size, void const *buf)
