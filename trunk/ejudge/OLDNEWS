@@ -1,3 +1,286 @@
+Version 1.4.0 (????????)
+========================
+
+End user interface changes
+--------------------------
+
+Master judge now may change team information on fly. For example, he may
+add teams, ban teams, etc. `master' script has a special button to
+enter into team dialog screen.
+
+New configuration file <idmap> (its name is arbitrary). This file contains
+mapping from team logins as registered to team logins for the first tour
+and team logins for the second tour. The format of the file is as
+follows:
+<primary login>:<id>:<team name>:<login 1>:<room 1>:<login 2>:<room 2>
+<Primary login> is the login given when team was registered. Primary login
+is used in other database files (teamdb, passwd, etc).
+<Id> is the team id (an integer number).
+<Team name> is the name of the team (arbitrary string).
+<Login 1> is the login name for the first tour.
+<Room 1> is the room (auditorium) for the command for the first tour.
+<Login 2> is the login name for the second tour.
+<Room 2> is the room (auditorium) for the second tour.
+This file is used by make-teamdb and make-teamdb-inet programs when they
+convert teamdb-local and teamdb-inet into the ejudge's internal teamdb file.
+
+New program `make-teamdb'.
+This program converts team table from the format, used by our internet
+registration programs into ejudge's teamdb. The format of the source
+file is as follows:
+<field1>;<field2>;...;<field 22>
+The meaning of each field is as follows:
+ [0]  Team login
+ [1]  Team id
+ [2]  Flags - combination of one of the following letters
+   t - team participates in the training tour
+   f - team participates in the final tour
+   y - team registration is complete
+   g - team is non-local
+   s - team participates in the selection tour
+ [3]  Team name
+ [4]  Institution name (full)
+ [5]  Institution name (short)
+ [6]  Faculty (full)
+ [7]  Faculty (short)
+ [8]  Participant name 1
+ [9]  Participant year 1
+ [10] Participant name 2
+ [11] Participant year 2
+ [12] Participant name 3
+ [13] Participant year 3
+ [14] Reserve name
+ [15] Reserve year
+ [16] Advisor name
+ [17] Advisor position
+ [18] Coach name
+ [19] Coach position
+ [20] Email
+ [21] Phone
+ [22] Home page
+
+New program `make-teamdb-inet'.
+This program converts database of teams, registered for the
+internet tour into the table in teamdb format for ejudge utility.
+The format of the source file (teamdb-inet) is as follows:
+<field1>;<field2>;...;<field 13>
+ [0]  Team login
+ [1]  Team id
+ [2]  Flags (none used currently)
+ [3]  Team name
+ [4]  Participant 1
+ [5]  Participant 2
+ [6]  Participant 3
+ [7]  E-mail
+ [8]  Country
+ [9]  Zip
+ [10] City
+ [11] Address
+ [12] Recipient
+ [13] Home page
+
+New program `send-passwords'.
+This program sends a notification letter, which contains team login
+and password to all the teams, registered for Internet-tour.
+The program must be started with 5 parameters, described below:
+  <inetdb> - the file name of the internet tour participants
+    database. This is also the source file for make-teamdb-inet utility.
+  <teamdb> - the file name of the team database for ejudge system.
+  <passwd> - the password database of the ejudge system.
+  <template> - the file name with informational letter template.
+    Inside the template the percent sign ('%') starts conversions
+    specifier. The valid conversion specifiers are as follows:
+      %m - email address
+      %l - team login
+      %p - team password (in plain form)
+      %n - team name
+  <sendprog> - the name of program, which sends mail. This program
+    is called without parameters, and the text of the message
+    is passed on the standard input.
+
+New configuration parameters
+----------------------------
+
+'%' and ';' are recognized as comment characters. A comment starts
+from any of the following: '#', '%', ';' and lasts till the
+end of line. Note, that use of '#' for comments is dangerous, if
+configuration files are processed by a C preprocessor.
+
+Some configuration variables accept format specifiers (in printf-like
+style).The syntax of format specifier is as follows:
+%[<flags>][<width>][.<prec>]<specifier>
+The flags are as follows:
+  e - if format specification generates empty output, substitute it
+      with '&nbsp;'
+  u - do uppercase conversion on generated output;
+  l - do lowercase conversion on generated output;
+  r - right-align output;
+  c - center output;
+  0 - pad output with leading zeroes;
+Width is a non-empty sequence of decimal digit, starting not from 0.
+Its semantics is exacly the same, as for 'printf' format specifications.
+Prec is a non-empty sequence of decimal digit, starting not from 0.
+Its semantics corresponds to the precision semantics in printf
+format specifications.
+Valid specifiers are listed below.
+  G - global parameters
+    none defined yet
+  P - problem parameters
+    Pi - problem identifier (integer)
+    Ps - problem short name (string)
+    Pl - problem long name (string)
+  L - language parameters
+    none defined yet
+  T - tester parameters
+    Ti - tester identifier (integer)
+    Tn - tester name (string)
+    Tj - reference problem identifier (integer)
+    Tp - reference problem short name (string)
+    Ta - architecture (string)
+    Tk - key (string)
+  M - team parameters
+    Mi - team id (integer)
+    Mn - team name (string)
+    Ml - team login (string)
+    Mp - team password (plain text) (string)
+    Ms - team password (scrambled) (string)
+
+Configuration parameters, which accept format string are listed below.
+  problem.test_dir (if inherited from abstract problem)
+  problem.corr_dir (if inherited from abstract problem)
+  tester.tester_dir (if inherited from abstract tester)
+  tester.tmp_dir (if inherited from abstract tester)
+  tester.work_dir (if inherited from abstract tester)
+  tester.exe_dir (if inherited from abstract tester)
+  tester.errorcode_file (if inherited from abstract tester)
+  tester.error_file (if inherited from abstract tester)
+  tester.check_cmd (if inherited from abstract tester)
+  tester.prepare_cmd (if inherited from abstract tester)
+  tester.start_cmd (if inherited from abstract tester)
+
+Value might be missed. In this case "1" assumed.
+For example, if the configuration file has just the line
+abstract
+it is the same, as line
+abstract = 1
+
+Possibility to "inherit" problem, tester languages.
+Problem specification may be declared "abstract".
+Such problem must specify short_name,
+but must not specify long_name, id or super parameters.
+Any problem may inherit such specification by referring to its short_name
+in super parameter. Certain parameters of abstract problem are copied to
+this problem, if it does not define them
+itself. The list of parameters, which may be copied is as follows:
+  enable_rep_view
+  full_score
+  test_score
+  run_penalty
+  use_stdin
+  use_stdout
+  time_limit
+  test_score_list
+  test_sfx
+  corr_sfx
+  test_dir (*)
+  corr_dir (*)
+  input_file
+  output_file
+
+New global: max_line_length. The parameter affects how `run' program
+generates protocol file. Each line, read from file to be inserted
+into the protocol file (an input file could be either program output, program
+error stream, checker output), checked against this value. If the length
+exceeds maximum, it is not printed, a short message is printed instead.
+
+New global: max_file_length. The parameter affects how `run' program
+generates protocol file. If the file to be insterted into the protocol file
+is longer, than this limit, the file is not inserted, but a diagnostic
+message is printed instead.
+
+New global: team_info_url
+If this parameter is defined, references to team information pages
+are included into the generated contest standings. Team name, printed
+in each row of the standings table will be a reference to
+URL containing some extra information about team (for example, its
+home page). This parameter may include format specifications, which are
+processed.
+
+New global: prob_info_url
+If this parameter is defined, references to the problems are included
+into the generated contest standings. Problem short name printed
+in the standings table header will be a reference to (for example)
+its text. This parameter may include format specifications, which
+are processed.
+
+New tester: use_corr
+If this parameter is set to "1", `run' checks for files with extra
+information for checker (so called "correct" files, since those files
+may contain correct answers for tests). Previous behavour, where
+correct files were only used if corr_sfx was specified, is no
+longer supported.
+
+New tester: no_core_dump
+If this parameter is set to "1", core dump is explicitly disabled for
+processes being tested. This is done by setting maximum size of core file to
+0. The default value is not set, i. e. system process settings are used.
+This parameter is only meaningful on systems, where core dumps are
+possible.
+
+New tester: kill_signal
+The parameter sets the method, which is used to terminate a process being
+tested in case of time-limit exceeding. For Unix systems, the method is
+name of signal, which is sent to child process. For Unix systems, the
+parameter may be either SIGTERM or SIGKILL. The default value is
+SIGTERM. Use SIGKILL for testing programs, compiled for the native
+system (Linux), since such processes may install their own signal
+handlers and ignore SIGTERM.
+
+New tester: max_stack_size
+The parameter sets the maximum stack size for a process being tested.
+This parameter
+is only meaningful for checking programs compiled for the native system
+(Linux or similar). If this parameter is set for programs executed under
+emulators (for example, dosemu), this may only result in incorrect
+operation. By some (unknown) reason, this option does not work on Linux.
+Default value is not set, i. e. process default are used.
+
+New tester: max_data_size
+The parameter sets the maximum data size for a process being tested.
+This parameter
+is only meaningful for checking programs compiled for the native system
+(Linux or similar). If this parameter is set for programs executed under
+emulators (for example, dosemu), this may only result in incorrect
+operation. By some (unknown) reason, this option does not work on Linux.
+Default value is not set, i. e. process default are used.
+
+New tester: max_vm_size
+The parameter sets the maximum size of virtual memory available for
+a process being tested. The size of virtual memory is the summ of
+the program size, data (bss and heap) size, stack size. This parameter
+is only meaningful for checking programs compiled for the native system
+(Linux or similar). Default value is not set, i. e. process defaults are
+used.
+
+Protocol additions and changes
+------------------------------
+
+A number of commands has been added to the Server-Judge protocol
+in order to support editing of teams. The commands are:
+MTEAMS, JTEAMS, VTEAM, CHGLOGIN, CHGNAME, CHGBAN, CHGVIS, CHGPASSWD,
+NEWTEAM. These new protocol commands support team administration
+from `judge' and `master' CGI programs.
+
+Other changes
+-------------
+
+CGI_DATA_PATH compilation parameter appeared in makefile. It allows
+changing of the directory where the CGI programs (team, master) looks
+for their configuration files. By default its value is "../cgi-data".
+If CGI_DATA_PATH is relative (ie does not start with '/'),
+the path to the CGI program itself is added. If CGI_DATA_PATH
+is absolute, it is not changed.
+
 Version 1.3.1 (20010502)
 ========================
 
