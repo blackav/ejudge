@@ -3373,7 +3373,7 @@ preview_install_script(void)
   f = open_memstream(&txt_ptr, &txt_len);
   generate_install_script(f);
   fclose(f); f = 0;
-  ncurses_view_text("Installation script preview", txt_ptr);
+  ncurses_view_text("Setup script preview", txt_ptr);
   free(txt_ptr); txt_ptr = 0; txt_len = 0;
 }
 
@@ -3393,7 +3393,7 @@ save_install_script(void)
   fclose(f); f = 0;
 
   snprintf(filepath, sizeof(filepath), "ejudge-install.sh");
-  j = ncurses_edit_string(LINES/2, COLS, "Installation script name",
+  j = ncurses_edit_string(LINES/2, COLS, "Setup script name",
                           filepath, sizeof(filepath));
   if (j < 0) {
     goto cleanup;
@@ -3428,8 +3428,8 @@ static const unsigned char * const main_menu_items[] =
   "Edit global settings",
   "Edit administrator identity",
   "Preview files",
-  "Preview install script",
-  "Save install script",
+  "Preview setup script",
+  "Save setup script",
   "Quit",
 };
 static const unsigned char * const main_menu_hotkeys[] =
