@@ -26,8 +26,8 @@
 enum { SCORE_ACM, SCORE_KIROV, SCORE_OLYMPIAD };
 #endif /* EJUDGE_SCORE_SYSTEM_DEFINED */
 
-#define PROT_SERVE_STATUS_MAGIC (0xe739aa02)
-struct prot_serve_status
+#define PROT_SERVE_STATUS_MAGIC_V1 (0xe739aa02)
+struct prot_serve_status_v1
 {
   unsigned int magic;
   time_t cur_time;
@@ -48,6 +48,33 @@ struct prot_serve_status
   unsigned char is_virtual;
   unsigned char olympiad_judging_mode;
   unsigned char continuation_enabled;
+};
+
+#define PROT_SERVE_STATUS_MAGIC_V2 (0xe739aa03)
+struct prot_serve_status_v2
+{
+  unsigned int magic;
+  time_t cur_time;
+  time_t start_time;
+  time_t sched_time;
+  time_t duration;
+  time_t stop_time;
+  time_t freeze_time;
+  int total_runs;
+  int total_clars;
+  int download_interval;
+  unsigned char clars_disabled;
+  unsigned char team_clars_disabled;
+  unsigned char standings_frozen;
+  unsigned char score_system;
+  unsigned char clients_suspended;
+  unsigned char testing_suspended;
+  unsigned char is_virtual;
+  unsigned char olympiad_judging_mode;
+  unsigned char continuation_enabled;
+  unsigned char printing_enabled;
+  unsigned char printing_suspended;
+  unsigned char _pad[77];
 };
 
 #define PROT_SERVE_PACKET_MAGIC (0xe342)
@@ -108,6 +135,10 @@ enum
     SRV_CMD_SET_ACCEPTING_MODE,
     SRV_CMD_PRIV_PRINT_RUN,
     SRV_CMD_PRINT_RUN,
+    SRV_CMD_PRIV_DOWNLOAD_RUN,
+    SRV_CMD_PRINT_SUSPEND,
+    SRV_CMD_PRINT_RESUME,
+    SRV_CMD_COMPARE_RUNS,
 
     SRV_CMD_LAST
   };
@@ -292,6 +323,7 @@ struct prot_serve_pkt_view
   struct prot_serve_packet b;
 
   int item;
+  int item2;
   int sid_mode;
   int self_url_len;
   int hidden_vars_len;
