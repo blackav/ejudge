@@ -1,3 +1,28 @@
+2003-03-08  Alexander Chernov  <cher@ispras.ru>
+
+	* serve.c:
+	(cmd_team_submit_run) `run_get_virtual_stop_time' now has two
+	  parameters and stops the contest in case of expiration;
+	(cmd_team_submit_clar) `run_get_virtual_stop_time' now has two
+	  parameters;
+	(cmd_command_0) the same.
+
+	* runlog.h:
+	(run_get_virtual_stop_time) now accepts two parameters instead of one.
+
+	* runlog.c:
+	(run_build_virtual_table) a bit more verbose message in case of
+	  virtual time overrun;
+	(run_get_virtual_stop_time) now accepts two parameters, the second is
+	  is `cur_time'. The function stops the virtual contest, if the time
+	  is over.
+
+	* html.c:
+	(write_standings_header) `run_get_virtual_stop_time' now has 2
+	  parameters;
+	(do_write_standings) the same;
+	(write_team_page) the same.
+
 2003-02-24  Alexander Chernov  <cher@ispras.ru>
 
 	* serve.c:
