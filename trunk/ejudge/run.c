@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -216,7 +216,7 @@ generate_report(int score_system_val,
     if (status == 0) {
       fprintf(f, "%s\n\n", _("OK"));
     } else {
-      if (score_system_val == SCORE_KIROV) {
+      if (score_system_val==SCORE_KIROV || score_system_val==SCORE_OLYMPIAD) {
         fprintf(f, _("PARTIAL SOLUTION\n\n"));
       } else {
         fprintf(f, _("%s, test #%d\n\n"),
@@ -225,17 +225,17 @@ generate_report(int score_system_val,
     }
     fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
             total_tests - 1, passed_tests, failed_tests);
-    if (score_system_val == SCORE_KIROV) {
+    if (score_system_val==SCORE_KIROV || score_system_val==SCORE_OLYMPIAD) {
       fprintf(f, _("Scores gained: %d (out of %d)\n"), scores, max_score);
     }
     fprintf(f, "\n");
   }
 
   fprintf(f, _("Test #  Status  Time (sec)  %sResult\n"),
-          (score_system_val == SCORE_KIROV)?_("Score   "):"");
+          (score_system_val == SCORE_KIROV || score_system_val==SCORE_OLYMPIAD)?_("Score   "):"");
   for (i = 1; i < total_tests; i++) {
     score_buf[0] = 0;
-    if (score_system_val == SCORE_KIROV) {
+    if (score_system_val == SCORE_KIROV || score_system_val==SCORE_OLYMPIAD) {
       sprintf(score_buf2, "%d (%d)", tests[i].score, tests[i].max_score);
       sprintf(score_buf, "%-8s", score_buf2);
     }
@@ -334,7 +334,7 @@ generate_team_report(int score_system_val,
     if (status == 0) {
       fprintf(f, "%s\n\n", _("OK"));
     } else {
-      if (score_system_val == SCORE_KIROV) {
+      if (score_system_val == SCORE_KIROV || score_system_val==SCORE_OLYMPIAD){
         fprintf(f, _("PARTIAL SOLUTION\n\n"));
       } else {
         fprintf(f, _("%s, test #%d\n\n"),
@@ -343,17 +343,17 @@ generate_team_report(int score_system_val,
     }
     fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
             total_tests - 1, passed_tests, failed_tests);
-    if (score_system_val == SCORE_KIROV) {
+    if (score_system_val == SCORE_KIROV || score_system_val==SCORE_OLYMPIAD) {
       fprintf(f, _("Scores gained: %d (out of %d)\n"), scores, max_score);
     }
     fprintf(f, "\n");
   }
 
   fprintf(f, _("Test #  Status  Time (sec)  %sResult\n"),
-          (score_system_val == SCORE_KIROV)?_("Score   "):"");
+          (score_system_val == SCORE_KIROV || score_system_val==SCORE_OLYMPIAD)?_("Score   "):"");
   for (i = 1; i < total_tests; i++) {
     score_buf[0] = 0;
-    if (score_system_val == SCORE_KIROV) {
+    if (score_system_val == SCORE_KIROV || score_system_val==SCORE_OLYMPIAD) {
       sprintf(score_buf2, "%d (%d)", tests[i].score, tests[i].max_score);
       sprintf(score_buf, "%-8s", score_buf2);
     }
@@ -417,6 +417,7 @@ run_tests(struct section_tester_data *tst,
           int report_error_code,
           int score_system_val,
           int accept_testing,
+          int accept_partial,
           int cur_variant,
           char const *new_name,
           char const *new_base,
@@ -854,7 +855,7 @@ run_tests(struct section_tester_data *tst,
       // test failed, how to react on this
       if (score_system_val == SCORE_ACM) break;
       if (score_system_val == SCORE_OLYMPIAD
-          && accept_testing) break;
+          && accept_testing && !accept_partial) break;
     }
     clear_directory(tst->check_dir);
   }
@@ -862,9 +863,22 @@ run_tests(struct section_tester_data *tst,
   /* TESTING COMPLETED (SOMEHOW) */
 
   if (score_system_val == SCORE_OLYMPIAD && accept_testing) {
-    if (!failed_test) { 
+    if (accept_partial) {
+      int jj;
+
       status = RUN_ACCEPTED;
-      failed_test = cur_test;
+      failed_test = 1;
+      for (jj = 1; jj <= prb->tests_to_accept; jj++) {
+        if (tests[jj].status == RUN_OK)
+          failed_test++;
+        else if (tests[jj].status == RUN_CHECK_FAILED)
+          status = RUN_CHECK_FAILED;
+      }
+    } else {
+      if (!failed_test) { 
+        status = RUN_ACCEPTED;
+        failed_test = cur_test;
+      }
     }
     sprintf(reply_string, "%d %d -1\n", status, failed_test);
   } else if (score_system_val == SCORE_KIROV
@@ -1019,7 +1033,7 @@ do_loop(void)
   int    tester_id;
   int    prob_id;
   int    locale_id;
-  int    accept_testing;
+  int    accept_testing, accept_partial;
   int    n;
   unsigned char exe_sfx[64];
   unsigned char arch[64];
@@ -1042,6 +1056,9 @@ do_loop(void)
   sigprocmask(SIG_BLOCK, &work_mask, &orig_mask);
 
   while (1) {
+    sigprocmask(SIG_UNBLOCK, &work_mask, 0);
+    sigprocmask(SIG_BLOCK, &work_mask, 0);
+
     r = scan_dir(global->run_queue_dir, pkt_name);
     if (r < 0) return -1;
     if (!r) {
@@ -1081,13 +1098,14 @@ do_loop(void)
 
     n = 0;
     memset(exe_sfx, 0, sizeof(exe_sfx));
-    if ((r = sscanf(pkt_buf, "%d %d %d %d %d %d %d %d %d %63s %63s %n",
+    if ((r = sscanf(pkt_buf, "%d %d %d %d %d %d %d %d %d %d %63s %63s %n",
                     &contest_id, &run_id,
                     &prob_id, &accept_testing, &locale_id,
                     &score_system_val, &team_enable_rep_view,
                     &report_error_code, &cur_variant,
+                    &accept_partial,
                     exe_sfx, arch,
-               &n)) != 11
+               &n)) != 12
         || pkt_buf[n]
         || contest_id <= 0
         || run_id < 0
@@ -1103,6 +1121,8 @@ do_loop(void)
         || probs[prob_id]->disable_testing
         || accept_testing < 0
         || accept_testing > 1
+        || accept_partial < 0
+        || accept_partial > 1
         || score_system_val < SCORE_ACM
         || score_system_val > SCORE_OLYMPIAD
         || team_enable_rep_view < 0
@@ -1160,7 +1180,8 @@ do_loop(void)
     if (cr_serialize_lock() < 0) return -1;
     if (run_tests(tst, locale_id,
                   team_enable_rep_view, report_error_code,
-                  score_system_val, accept_testing, cur_variant,
+                  score_system_val, accept_testing, accept_partial,
+                  cur_variant,
                   exe_name, run_base,
                   status_string, report_path,
                   team_report_path) < 0) {
@@ -1341,7 +1362,7 @@ check_config(void)
         return -1;
       }
       info("found %d tests for problem %s", n1, prb->short_name);
-      if (n1 <= prb->tests_to_accept) {
+      if (n1 < prb->tests_to_accept) {
         err("%d tests required for problem acceptance!", prb->tests_to_accept);
         return -1;
       }
@@ -1408,7 +1429,7 @@ check_config(void)
           return -1;
         }
         info("found %d tests for problem %s, variant %d",n1,prb->short_name,k);
-        if (n1 <= prb->tests_to_accept) {
+        if (n1 < prb->tests_to_accept) {
           err("%d tests required for problem acceptance!",
               prb->tests_to_accept);
           return -1;
@@ -1494,7 +1515,7 @@ check_config(void)
                   prb->short_name);
               return -1;
             }
-            if (score <= 0) {
+            if (score < 0) {
               err("problem %s: test_score_list: invalid score",
                   prb->short_name);
               return -1;
@@ -1509,7 +1530,7 @@ check_config(void)
                   prb->short_name);
               return -1;
             }
-            if (score <= 0) {
+            if (score < 0) {
               err("problem %s: test_score_list: invalid score",
                   prb->short_name);
               return -1;
