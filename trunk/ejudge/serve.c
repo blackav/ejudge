@@ -2188,6 +2188,29 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
 
+  case SRV_CMD_QUIT:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+    if (cmdline_socket_fd < 0) {
+      err("%d: quit: not in daemonized mode", p->id);
+      new_send_reply(p, -SRV_ERR_NOT_SUPPORTED);
+      return;
+    }
+    {
+      unsigned char buf[128];
+      size_t wsize;
+
+      wsize = snprintf(buf, sizeof(buf), "-1");
+      generic_write_file(buf, wsize, SAFE, global->run_queue_dir, "QUIT", "");
+    }
+    interrupt_signaled = 1;
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+
   default:
     err("%d: unhandled command", p->id);
     new_send_reply(p, -SRV_ERR_PROTOCOL);
@@ -2755,6 +2778,7 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_CONTINUE] { cmd_priv_command_0 },
   [SRV_CMD_EXPORT_XML_RUNS] { cmd_view },
   [SRV_CMD_IMPORT_XML_RUNS] { cmd_import_xml_runs },
+  [SRV_CMD_QUIT] { cmd_priv_command_0 },
 };
 
 static void
@@ -3213,6 +3237,7 @@ do_loop(void)
     current_time = time(0);
 
     if (interrupt_signaled && may_safely_exit()) {
+      info("Interrupt signaled");
       return 0;
     }
     if (cmdline_socket_fd >= 0 && global->inactivity_timeout > 0
