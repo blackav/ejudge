@@ -125,7 +125,7 @@ all: $(TARGETS)
 
 install: ${TARGETS} po mo
 	install -d ${INST_BIN_PATH}
-	for i in ${TARGETS}; do install -s -m 0755 $$i ${INST_BIN_PATH}; done
+	for i in ${TARGETS}; do install -m 0755 $$i ${INST_BIN_PATH}; done
 	install -d ${INST_LOCALE_PATH}/ru_RU.KOI8-R/LC_MESSAGES
 	install -m 0644 locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo ${INST_LOCALE_PATH}/ru_RU.KOI8-R/LC_MESSAGES
 
