@@ -60,7 +60,7 @@ OFILES=$(CFILES:.c=.o) testinfo.o
 
 all : libchecker.a
 clean :
-	-rm -f *.o *.a *~ *.bak
+	-rm -f *.o *.a *~ *.bak testinfo.h testinfo.c
 
 libchecker.a : ${OFILES}
 	${AR} rcv $@ $^
@@ -73,7 +73,7 @@ fatal_pe.o: fatal_pe.c checker_internal.h
 fatal_wa.o: fatal_wa.c checker_internal.h
 in_close.o: in_close.c checker_internal.h
 in_eof.o: in_eof.c checker_internal.h
-init.o: init.c checker_internal.h
+init.o: init.c checker_internal.h testinfo.h
 normalize_file.o: normalize_file.c checker_internal.h
 ok.o: ok.c checker_internal.h
 read_buf.o: read_buf.c checker_internal.h
@@ -93,6 +93,9 @@ xcalloc.o: xcalloc.c checker_internal.h
 xmalloc.o: xmalloc.c checker_internal.h
 xrealloc.o: xrealloc.c checker_internal.h
 xstrdup.o: xstrdup.c checker_internal.h
+testinfo.o: testinfo.c testinfo.h
 
-testinfo.o: ../testinfo.c testinfo.h
-	${CC} ${CFLAGS} -c -o $@ $<
+testinfo.h: ../testinfo.h
+	ln -sf ../testinfo.h
+testinfo.c: ../testinfo.c
+	ln -sf ../testinfo.c
