@@ -194,6 +194,7 @@ do_loop(void)
                              run_name, "") < 0)
         return -1;
     }
+    task_Delete(tsk);
     clear_directory(global->compile_work_dir);
   }
 
