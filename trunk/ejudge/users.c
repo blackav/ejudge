@@ -27,6 +27,7 @@
 #include "contests.h"
 #include "userlist_proto.h"
 #include "misctext.h"
+#include "fileutl.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -388,6 +389,7 @@ static unsigned long user_ip;
 static int user_contest_id;
 static int client_locale_id;
 static unsigned char *self_url;
+static int user_id;
 
 static void
 set_locale_by_id(int id)
@@ -468,6 +470,18 @@ read_locale_id(void)
 }
 
 static void
+read_user_id(void)
+{
+  int x = 0, n = 0;
+  unsigned char *s;
+
+  user_id = 0;
+  if (!(s = cgi_param("user_id"))) return;
+  if (sscanf(s, "%d %n", &x, &n) != 1 || s[n] || x <= 0) return;
+  user_id = x;
+}
+
+static void
 read_contest_id(void)
 {
   int x = 0, n = 0;
@@ -528,6 +542,11 @@ initialize(int argc, char const *argv[])
 }
 
 static void
+put_http_header(unsigned char const *coding)
+{
+  fprintf(stdout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n", coding);
+}
+static void
 put_header(char const *coding, char const *format, ...)
 {
   va_list args;
@@ -546,6 +565,11 @@ main(int argc, char const *argv[])
   struct timeval begin_time, end_time;
   struct contest_desc *cnts = 0;
   int r;
+  char *header_txt = 0;
+  size_t header_len = 0;
+  char *footer_txt = 0;
+  size_t footer_len = 0;
+  int request_flags = 0;
 
   gettimeofday(&begin_time, 0);
   initialize(argc, argv);
@@ -557,24 +581,55 @@ main(int argc, char const *argv[])
   cgi_read(config->charset);
   read_locale_id();
   read_contest_id();
+  read_user_id();
   set_locale_by_id(client_locale_id);
+
+  if (cgi_param("secret_mode")) {
+    request_flags = 1;
+  }
 
   if (user_contest_id > 0 && user_contest_id < contests->id_map_size) {
     cnts = contests->id_map[user_contest_id];
   }
   if (cnts) {
-    int name_len;
-    unsigned char *name_str;
+    int name_len = 0;
+    unsigned char *name_str = 0;
+
+    logger_set_level(-1, LOG_WARNING);
+    if (cnts->header_file) {
+      generic_read_file(&header_txt, 0, &header_len, 0,
+                        0, cnts->header_file, "");
+    }
+    if (cnts->footer_file) {
+      generic_read_file(&footer_txt, 0, &footer_len, 0,
+                        0, cnts->footer_file, "");
+    }
 
     name_len = html_armored_strlen(cnts->name);
     name_str = alloca(name_len + 16);
     html_armor_string(cnts->name, name_str);
-    
-    put_header(config->charset, "%s", _("List of registered users (teams)"));
-    if (cnts->header_file) {
-      /* FIXME: use header and footer */
+
+    if (request_flags) {
+      printf("Content-type: text/plain; charset=koi8-r\n\n");
     } else {
-      printf(_("<h1>List of registered users (teams) for contest &quot;%s&quot;</h1>\n"), name_str);
+      if (header_txt) {
+        put_http_header(config->charset);
+        printf("%s", header_txt);
+        if (user_id > 0) {
+          //printf("<h2>%s</h2>\n", _("Detailed user (team) information"));
+        } else {
+          printf("<h2>%s</h2>\n", name_str);
+          printf("<h2>%s</h2>\n", _("List of registered users (teams)"));
+        }
+      } else {
+        put_header(config->charset, "%s", _("List of registered users (teams)"));
+        if (user_id > 0) {
+          printf("<h1>%s</h1>\n", _("Detailed user (team) information"));
+        } else {
+          printf("<h1>%s &quot;%s&quot;</h1>\n",
+                 _("List of registered users (teams) for contest"), name_str);
+        }
+      }
     }
 
     server_conn = userlist_clnt_open(config->socket_path);
@@ -583,30 +638,46 @@ main(int argc, char const *argv[])
     } else {
       fflush(stdout);
       r = userlist_clnt_list_users(server_conn, user_ip, user_contest_id,
-                                   client_locale_id, 0, 0, self_url, "");
+                                   client_locale_id, user_id, 
+                                   request_flags, self_url, "");
       if (r < 0) {
         printf("<p>%s</p>\n", _("Information is not available"));
         printf("<pre>%s</pre>\n", gettext(userlist_strerror(-r)));
       }
     }
   } else {
-    client_put_header(config->charset, "%s", _("List of users (teams)"));
+    if (header_txt) {
+      put_http_header(config->charset);
+      printf("%s", header_txt);
+      printf("<h2>%s</h2>\n", _("List of users (teams)"));
+    } else {
+      client_put_header(config->charset, "%s", _("List of users (teams)"));
+    }
     printf("<p>%s</p>\n", _("Information is not available"));
   }
 
-  if (config->show_generation_time) {
-    gettimeofday(&end_time, 0);
-    end_time.tv_sec -= begin_time.tv_sec;
-    if ((end_time.tv_usec -= begin_time.tv_usec) < 0) {
-      end_time.tv_usec += 1000000;
-      end_time.tv_sec--;
+  if (!request_flags) {
+    if (config->show_generation_time) {
+      gettimeofday(&end_time, 0);
+      end_time.tv_sec -= begin_time.tv_sec;
+      if ((end_time.tv_usec -= begin_time.tv_usec) < 0) {
+        end_time.tv_usec += 1000000;
+        end_time.tv_sec--;
+      }
+      printf("<hr><p>%s: %ld %s\n",
+             _("Page generation time"),
+             end_time.tv_usec / 1000 + end_time.tv_sec * 1000,
+             _("msec"));
     }
-    printf("<hr><p>%s: %ld %s\n",
-           _("Page generation time"),
-           end_time.tv_usec / 1000 + end_time.tv_sec * 1000,
-           _("msec"));
+    if (footer_txt) {
+      printf("<hr><font size=\"-1\">");
+      client_put_copyright();
+      printf("</font>");
+      printf("%s", footer_txt);
+    } else {
+      client_put_footer();
+    }
   }
-  client_put_footer();
   if (server_conn) {
     userlist_clnt_close(server_conn);
   }
