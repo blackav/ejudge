@@ -27,6 +27,9 @@
 #include "clntutil.h"
 #include "clarlog.h"
 #include "base64.h"
+#include "contests.h"
+#include "userlist_proto.h"
+#include "userlist_clnt.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/logger.h>
@@ -55,6 +58,11 @@
 #if !defined CGI_DATA_PATH
 #define CGI_DATA_PATH "../cgi-data"
 #endif
+
+static char const password_accept_chars[] =
+" !#$%\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_"
+"`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿"
+"ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
 
 /* configuration defaults */
 #define DEFAULT_VAR_DIR              "var"
@@ -105,11 +113,22 @@ struct section_global_data
   /* locallization stuff */
   int    enable_l10n;
   path_t l10n_dir;
+
+  /* userlist-server stuff */
+  int contest_id;
+  path_t socket_path;
+  path_t contests_path;
 };
 
 /* configuration information */
 static struct generic_section_config *config;
 static struct section_global_data *global;
+
+/* new userlist-server related variables */
+static struct contest_list *contests;
+static struct contest_desc *cur_contest;
+static struct userlist_clnt *server_conn;
+static unsigned long client_ip;
 
 /* client state variables */
 static char   *client_login;
@@ -170,6 +189,10 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(enable_l10n, "d"),
   GLOBAL_PARAM(l10n_dir, "s"),
 
+  GLOBAL_PARAM(contest_id, "d"),
+  GLOBAL_PARAM(socket_path, "s"),
+  GLOBAL_PARAM(contests_path, "s"),
+
   { 0, 0, 0, 0 }
 };
 static struct config_section_info params[] =
@@ -177,6 +200,26 @@ static struct config_section_info params[] =
   { "global" ,sizeof(struct section_global_data), section_global_params },
   { NULL, 0, NULL }
 };
+
+static int
+fix_string(unsigned char *buf, unsigned char const *accept_str, int c)
+{
+  unsigned char *s;
+  unsigned char const *q;
+  unsigned char flags[256];
+  int cnt = 0;
+
+  memset(flags, 0, sizeof(flags));
+  for (q = accept_str; *q; q++)
+    flags[*q] = 1;
+
+  for (s = buf; *s; s++)
+    if (!flags[*s]) {
+      cnt++;
+      *s = c;
+    }
+  return cnt;
+}
 
 static int
 set_defaults(void)
@@ -187,16 +230,29 @@ set_defaults(void)
   }
   path_init(global->var_dir, global->root_dir, DEFAULT_VAR_DIR);
   path_init(global->conf_dir, global->root_dir, DEFAULT_CONF_DIR);
-  if (!global->teamdb_file[0]) {
-    err("teamdb_file must be set");
-    return -1;
+  if (global->contest_id) {
+    // new userlist-server mode
+    if (!global->socket_path[0]) {
+      err("socket_path must be set");
+      return -1;
+    }
+    if (!global->contests_path[0]) {
+      err("contests_path must be set");
+      return -1;
+    }
+  } else {
+    // old compatibility mode
+    if (!global->teamdb_file[0]) {
+      err("teamdb_file must be set");
+      return -1;
+    }
+    path_add_dir(global->teamdb_file, global->conf_dir);
+    if (!global->passwd_file[0]) {
+      err("passwd_file must be set");
+      return -1;
+    }
+    path_add_dir(global->passwd_file, global->conf_dir);
   }
-  path_add_dir(global->teamdb_file, global->conf_dir);
-  if (!global->passwd_file[0]) {
-    err("passwd_file must be set");
-    return -1;
-  }
-  path_add_dir(global->passwd_file, global->conf_dir);
   path_init(global->status_file, global->var_dir, DEFAULT_STATUS_FILE);
   path_init(global->languages_file, global->var_dir, DEFAULT_LANGUAGES_FILE);
   path_init(global->problems_submit_file, global->var_dir,
@@ -231,6 +287,24 @@ set_defaults(void)
     global->l10n_dir[0] = 0;
   }
   return 0;
+}
+
+static void
+parse_client_ip(void)
+{
+  unsigned int b1, b2, b3, b4;
+  int n;
+  unsigned char *s = getenv("REMOTE_ADDR");
+
+  client_ip = 0;
+  if (!s) return;
+  n = 0;
+  if (sscanf(s, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4
+      || s[n] || b1 > 255 || b2 > 255 || b3 > 255 || b4 > 255) {
+    client_ip = 0xffffffff;
+    return;
+  }
+  client_ip = b1 << 24 | b2 << 16 | b3 << 8 | b4;
 }
 
 static void
@@ -276,6 +350,19 @@ initialize(int argc, char *argv[])
   if (set_defaults() < 0)
     client_not_configured(global->charset, "bad defaults");
   logger_set_level(-1, LOG_WARNING);
+
+  if (global->contest_id) {
+    if (!(contests = parse_contest_xml(global->contests_path))) {
+      client_not_configured(global->charset, "no contests are defined");
+    }
+    if (global->contest_id <= 0
+        || global->contest_id >= contests->id_map_size
+        || !(cur_contest = contests->id_map[global->contest_id])) {
+      client_not_configured(global->charset, "invalid contest");
+    }
+    pathcpy(global->contest_name, cur_contest->name);
+  }
+  parse_client_ip();
 
   /* check directory structure */
   if (check_writable_dir(global->pipe_dir) < 0
@@ -354,6 +441,30 @@ check_passwd(void)
   if (!l || !p) return 0;
   client_login = l;
   client_password = p;
+
+  if (cur_contest) {
+    int r, new_uid, new_locale_id;
+    unsigned char *new_name;
+    unsigned long long new_cookie;
+
+    // new userlist-server support
+    if (!server_conn) {
+      server_conn = userlist_clnt_open(global->socket_path);
+      if (!server_conn) {
+        client_not_configured(global->charset, "server is not available");
+      }
+    }
+    r = userlist_clnt_team_login(server_conn, client_ip, cur_contest->id,
+                                 client_locale_id, 0,
+                                 client_login, client_password,
+                                 &new_uid, &new_cookie, &new_locale_id,
+                                 &new_name);
+    if (r != ULS_LOGIN_OK) return 0;
+    client_team_id = new_uid;
+    client_team_name = new_name;
+    client_locale_id = new_locale_id;
+    return 1;
+  }
 
   if (!(id = teamdb_lookup_login(client_login))) return 0;
   if ((teamdb_get_flags(id) & TEAM_BANNED)) return 0;
@@ -559,11 +670,33 @@ change_passwd_if_asked(void)
     server_last_cmd_status = _("<p>Password is too long (>16 characters).");
     return;
   }
-  base64_encode_str(p1, bbuf);
+  if (fix_string(p1, password_accept_chars, '?') > 0) {
+    server_last_cmd_status = _("<p>Password contain invalid characters.");
+    return;
+  }
+  if (cur_contest) {
+    int r;
 
-  sprintf(cmd, "PASSWD %d %d %s\n", client_locale_id, client_team_id, bbuf);
-  client_transaction(client_packet_name(pname),
-                     cmd, &server_last_cmd_status, 0);
+    // new userlist_server mode
+    // FIXME: whether this even occur?
+    if (!server_conn) {
+      server_last_cmd_status = _("<p>No connection to server.");
+      return;
+    }
+    // FIXME: if we are in cookie mode, we need to know the old password!
+    r = userlist_clnt_team_set_passwd(server_conn, client_team_id,
+                                      client_password, p1);
+    if (r < 0) {
+      server_last_cmd_status = gettext(userlist_strerror(-r));
+      return;
+    }
+  } else {
+    base64_encode_str(p1, bbuf);
+
+    sprintf(cmd, "PASSWD %d %d %s\n", client_locale_id, client_team_id, bbuf);
+    client_transaction(client_packet_name(pname),
+                       cmd, &server_last_cmd_status, 0);
+  }
 
   /* FIXME: we would know the completion status on server... */
   client_password = p1;
@@ -664,6 +797,11 @@ main(int argc, char *argv[])
                               global->deny_from))
     client_access_denied(global->charset);
 
+  if (cur_contest) {
+    if (!contests_check_ip(cur_contest, client_ip))
+      client_access_denied(global->charset);
+  }
+
   cgi_read(global->charset);
 
 #if CONF_HAS_LIBINTL - 0 == 1
@@ -704,8 +842,15 @@ main(int argc, char *argv[])
     return 0;
   }
 
-  if (teamdb_open(global->teamdb_file, global->passwd_file, 0) < 0)
-    client_not_configured(global->charset, _("bad team database"));
+  if (cur_contest) {
+    ASSERT(!server_conn);
+    if (!(server_conn = userlist_clnt_open(global->socket_path))) {
+      client_not_configured(global->charset, _("no connection to server"));
+    }
+  } else {
+    if (teamdb_open(global->teamdb_file, global->passwd_file, 0) < 0)
+      client_not_configured(global->charset, _("bad team database"));
+  }
   if (!check_passwd()) client_access_denied(global->charset);
 
   read_state_params();
