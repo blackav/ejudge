@@ -269,14 +269,12 @@ make_self_url(void)
 {
   unsigned char *http_host = getenv("HTTP_HOST");
   unsigned char *script_name = getenv("SCRIPT_NAME");
-  unsigned char *server_port = getenv("SERVER_PORT");
   unsigned char fullname[1024];
 
   if (!http_host) http_host = "localhost";
-  if (!server_port) server_port = "80";
   if (!script_name) script_name = "/cgi-bin/master";
-  snprintf(fullname, sizeof(fullname), "http://%s:%s%s",
-           http_host, server_port, script_name);
+  snprintf(fullname, sizeof(fullname), "http://%s%s",
+           http_host, script_name);
   self_url = xstrdup(fullname);
 }
 
@@ -722,6 +720,25 @@ print_dump_runs_button(unsigned char const *str)
 }
 
 static void
+print_export_xml_runs_button(unsigned char const *str)
+{
+  if (!str) str = _("Export XML runs");
+
+  if (client_sid_mode == SID_URL) {
+    printf("<a href=\"%s?sid_mode=%d&SID=%016llx%s&action=%d\">%s</a>",
+           self_url, SID_URL, client_sid,
+           contest_id_str, ACTION_EXPORT_XML_RUNS, str);
+  } else if (client_sid_mode == SID_COOKIE) {
+    printf("<a href=\"%s?sid_mode=%d%s&action=%d\">%s</a>", self_url,
+           SID_COOKIE, contest_id_str, ACTION_EXPORT_XML_RUNS, str);
+  } else {
+    puts(form_start_simple);
+    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+           ACTION_EXPORT_XML_RUNS, str);
+  }
+}
+
+static void
 print_dump_users_button(unsigned char const *str)
 {
   if (!str) str = _("Dump users database");
@@ -784,6 +801,15 @@ print_regenerate_reg_button(unsigned char const *str)
   puts(form_start_simple);
   printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
          ACTION_GENERATE_REG_PASSWORDS_1, str);
+}
+
+static void
+print_clear_team_passwords_button(unsigned char const *str)
+{
+  if (!str) str = _("Clear team passwords!");
+  puts(form_start_simple);
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+         ACTION_CLEAR_TEAM_PASSWORDS_1, str);
 }
 
 static void
@@ -950,8 +976,8 @@ sched_if_asked(void)
   unsigned char *s;
 
   if (!(s = cgi_param("sched_time"))) goto invalid_time;
-  if (scanf(s, "%d:%d%n", &h, &m, &n) != 2 || s[n]) {
-    if (scanf(s, "%d%n", &h, &n) != 1 || s[n]) goto invalid_time;
+  if (sscanf(s, "%d:%d%n", &h, &m, &n) != 2 || s[n]) {
+    if (sscanf(s, "%d%n", &h, &n) != 1 || s[n]) goto invalid_time;
     m = 0;
   }
 
@@ -1000,7 +1026,7 @@ change_status_if_asked()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_STATUS_SET,
-                          0, 0, 0, status, 0);
+                          0, 0, 0, status, 0, 0);
   operation_status_page(r, 0);
   force_recheck_status = 1;
   return;
@@ -1034,7 +1060,7 @@ change_status()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_STATUS_SET,
-                          0, 0, 0, status, 0);
+                          0, 0, 0, status, 0, 0);
   operation_status_page(r, 0);
   force_recheck_status = 1;
   return;
@@ -1066,7 +1092,7 @@ change_problem()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_PROB_SET,
-                          0, prob_id, 0, 0, 0);
+                          0, prob_id, 0, 0, 0, 0);
   operation_status_page(r, 0);
   force_recheck_status = 1;
   return;
@@ -1098,7 +1124,7 @@ change_language()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_LANG_SET,
-                          0, 0, lang_id, 0, 0);
+                          0, 0, lang_id, 0, 0, 0);
   operation_status_page(r, 0);
   force_recheck_status = 1;
   return;
@@ -1130,7 +1156,7 @@ change_user_id()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_UID_SET,
-                          user_id, 0, 0, 0, 0);
+                          user_id, 0, 0, 0, 0, 0);
   operation_status_page(r, 0);
   force_recheck_status = 1;
   return;
@@ -1158,7 +1184,38 @@ change_user_login()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_LOGIN_SET,
-                          0, 0, 0, 0, user_login);
+                          0, 0, 0, 0, 0, user_login);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+  return;
+
+ invalid_operation:
+  operation_status_page(-1, "Invalid operation");
+  force_recheck_status = 1;
+}
+
+static void
+change_imported(void)
+{
+  unsigned char *s;
+  int n = 0, v, run_id, r;
+
+  if (!(s = cgi_param("run_id"))
+      || sscanf(s, "%d%n", &run_id, &n) != 1
+      || s[n]
+      || run_id < 0
+      || run_id >= server_total_runs)
+    goto invalid_operation;
+  if (!(s = cgi_param("is_imported"))
+      || sscanf(s, "%d%n", &v, &n) != 1
+      || s[n]
+      || v < 0 || v > 1)
+    goto invalid_operation;
+
+  open_serve();
+  r = serve_clnt_edit_run(serve_socket_fd, run_id,
+                          PROT_SERVE_RUN_IMPORTED_SET,
+                          0, 0, 0, 0, v, 0);
   operation_status_page(r, 0);
   force_recheck_status = 1;
   return;
@@ -1256,6 +1313,23 @@ action_dump_runs(void)
 }
 
 static void
+action_export_xml_runs(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_EXPORT_XML_RUNS, 0,
+                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+  if (r < 0) {
+    set_cookie_if_needed();
+    client_put_header(stdout, 0, 0, global->charset, 1, 0, "Runs database error");
+    printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
+    client_put_footer(stdout, 0);
+  }
+  exit(0);
+}
+
+static void
 action_dump_users(void)
 {
   int r;
@@ -1315,6 +1389,21 @@ confirm_update_standings(void)
   printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
          "</form></p>", form_start_simple, ACTION_UPDATE_STANDINGS_2,
          _("Yes, update standings!"));
+  client_put_footer(stdout, 0);
+  exit(0);  
+}
+
+static void
+confirm_clear_team_passwords(void)
+{
+  set_cookie_if_needed();
+  client_put_header(stdout, 0, 0, global->charset, 1, 0,
+                    "Confirm clear team passwords");
+  printf("<p>");
+  print_refresh_button(_("No"));
+  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+         "</form></p>", form_start_simple, ACTION_CLEAR_TEAM_PASSWORDS_2,
+         _("Yes, clear passwords!"));
   client_put_footer(stdout, 0);
   exit(0);  
 }
@@ -1435,6 +1524,16 @@ do_contest_reset_if_asked(void)
 }
 
 static void
+do_clear_team_passwords(void)
+{
+  int r;
+
+  r = userlist_clnt_clear_team_passwords(userlist_conn, global->contest_id);
+  operation_status_page(r<0?-1:0, userlist_strerror(-r));
+
+}
+
+static void
 do_generate_register_passwords_if_asked(void)
 {
   int r;
@@ -1477,6 +1576,33 @@ do_generate_passwords_if_asked(void)
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n",
            userlist_strerror(-r));
+  }
+
+  printf("<hr>");
+  print_nav_buttons();
+  client_put_footer(stdout, 0);
+  exit(0);
+}
+
+static void
+action_merge_runs(void)
+{
+  int r;
+  unsigned char *xml;
+
+  open_serve();
+  set_cookie_if_needed();
+  client_put_header(stdout, 0, 0, global->charset, 1, 0, "Run merge results");
+  print_nav_buttons();
+  printf("<hr>");
+  fflush(stdout);
+
+  xml = cgi_param("file");
+  if (!xml) xml = "";
+  r = serve_clnt_import_xml_runs(serve_socket_fd, 1, xml);
+  if (r < 0) {
+    printf("<h2><font color=\"red\">%s</font></h2>\n",
+           protocol_strerror(-r));
   }
 
   printf("<hr>");
@@ -2134,6 +2260,8 @@ print_dump_buttons(void)
   print_dump_users_button(0);
   printf("</td><td>");
   print_dump_standings_button(0);
+  printf("</td></tr><tr><td>");
+  print_export_xml_runs_button(0);
   printf("</td></tr></table>\n");
 }
 
@@ -2196,6 +2324,12 @@ main(int argc, char *argv[])
     case ACTION_GENERATE_REG_PASSWORDS_2:
       do_generate_register_passwords_if_asked();
       break;
+    case ACTION_CLEAR_TEAM_PASSWORDS_1:
+      confirm_clear_team_passwords();
+      break;
+    case ACTION_CLEAR_TEAM_PASSWORDS_2:
+      do_clear_team_passwords();
+      break;
     case ACTION_SUSPEND:
       do_suspend_if_asked();
       break;
@@ -2250,6 +2384,9 @@ main(int argc, char *argv[])
     case ACTION_RUN_CHANGE_STATUS:
       change_status();
       break;
+    case ACTION_RUN_CHANGE_IMPORTED:
+      change_imported();
+      break;
     case ACTION_USER_TOGGLE_BAN:
       action_toggle_ban();
       break;
@@ -2274,6 +2411,9 @@ main(int argc, char *argv[])
     case ACTION_DUMP_RUNS:
       action_dump_runs();
       break;
+    case ACTION_EXPORT_XML_RUNS:
+      action_export_xml_runs();
+      break;
     case ACTION_DUMP_USERS:
       action_dump_users();
       break;
@@ -2288,6 +2428,9 @@ main(int argc, char *argv[])
       break;
     case ACTION_CONTINUE_2:
       action_continue();
+      break;
+    case ACTION_MERGE_RUNS:
+      action_merge_runs();
       break;
     default:
       change_status_if_asked();
@@ -2356,6 +2499,8 @@ main(int argc, char *argv[])
     print_regenerate_button(0);
     printf("</td><td>");
     print_regenerate_reg_button(0);
+    printf("</td><td>");
+    print_clear_team_passwords_button(0);
     printf("</td></tr></table>\n");
   }
 
