@@ -187,7 +187,7 @@ main(int argc, char *argv[])
   snprintf(buf, sizeof(buf), "%s/../bin/dos", EMUPATH);
   if (chmod(EMUPATH, 0500) < 0) myerr("chmod failed: %s", strerror(errno));
 
-  execl(buf, buf, "-I", "video { none }", 0);
+  execl(buf, buf, "-I", "keystroke \"\\r\" video { none } dpmi off", 0);
   myerr("execl failed: %s", strerror(errno));
   return 100;
 }
