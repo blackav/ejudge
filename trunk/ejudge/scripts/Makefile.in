@@ -58,8 +58,9 @@ SCRIPTS = \
  perl\
  python\
  yabasic\
- festival
-
+ festival\
+ javac\
+ runjava
 
 # do nothing on all
 all :
