@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 1.5\n"
-"POT-Creation-Date: 2002-12-02 08:21+0300\n"
+"POT-Creation-Date: 2002-12-02 11:08+0300\n"
 "PO-Revision-Date: 2002-12-01 11:10+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -208,7 +208,7 @@ msgstr "ПРИНЯТО"
 msgid "Accepted"
 msgstr "Принято"
 
-#: runlog.c:610
+#: runlog.c:611
 msgid "Accepted for testing"
 msgstr "Принято на проверку"
 
@@ -268,7 +268,7 @@ msgstr "Ответ: ДА"
 msgid "Availability"
 msgstr "Доступность"
 
-#: runlog.c:615
+#: runlog.c:616
 msgid "Available"
 msgstr "Доступна"
 
@@ -354,7 +354,7 @@ msgstr "Сменить пароль"
 msgid "Change!"
 msgstr "Изменить!"
 
-#: runlog.c:608
+#: runlog.c:609
 msgid "Check failed"
 msgstr "Проверка завершилась неудачно"
 
@@ -386,15 +386,15 @@ msgstr "Тренеры"
 msgid "Commit changes"
 msgstr "Сохранить изменения"
 
-#: html.c:1268 html.c:1288 html.c:1308 runlog.c:603
+#: html.c:1268 html.c:1288 html.c:1308 runlog.c:604
 msgid "Compilation error"
 msgstr "Ошибка компиляции"
 
-#: runlog.c:613
+#: runlog.c:614
 msgid "Compiled"
 msgstr "Скомпилировано"
 
-#: runlog.c:614
+#: runlog.c:615
 msgid "Compiling..."
 msgstr "Компилируется..."
 
@@ -691,7 +691,7 @@ msgstr ""
 msgid "Ignore"
 msgstr "Игнорировать"
 
-#: runlog.c:611
+#: runlog.c:612
 msgid "Ignored"
 msgstr "Проигнорирована"
 
@@ -951,7 +951,7 @@ msgid "Number"
 msgstr "Номер"
 
 #: html.c:1268 html.c:1288 html.c:1308 run.c:127 run.c:214 run.c:317
-#: runlog.c:602
+#: runlog.c:603
 msgid "OK"
 msgstr "OK"
 
@@ -992,7 +992,7 @@ msgstr ""
 msgid "Page generation time"
 msgstr "Время генерации страницы"
 
-#: html.c:1269 html.c:1290 runlog.c:609
+#: html.c:1269 html.c:1290 runlog.c:610
 msgid "Partial solution"
 msgstr "Неполное решение"
 
@@ -1094,7 +1094,7 @@ msgstr ""
 "Пожалуйста, укажите, желаете ли Вы использовать cookie для поддержки HTTP-"
 "сессии. Обычно использовать cookie предпочтительнее, чем не использовать."
 
-#: html.c:1289 html.c:1309 run.c:138 runlog.c:606
+#: html.c:1289 html.c:1309 run.c:138 runlog.c:607
 msgid "Presentation error"
 msgstr "Неправильный формат вывода"
 
@@ -1256,11 +1256,11 @@ msgstr "Введите пароль ещё раз"
 msgid "Run ID"
 msgstr "Номер решения"
 
-#: html.c:1288 html.c:1308 runlog.c:604
+#: html.c:1288 html.c:1308 runlog.c:605
 msgid "Run-time error"
 msgstr "Ошибка выполнения"
 
-#: runlog.c:612
+#: runlog.c:613
 msgid "Running..."
 msgstr "Выполняется..."
 
@@ -1546,7 +1546,7 @@ msgstr "Решение не может быть послано. Турнир окончен."
 msgid "Time"
 msgstr "Время"
 
-#: html.c:1289 html.c:1309 run.c:136 runlog.c:605
+#: html.c:1289 html.c:1309 run.c:136 runlog.c:606
 msgid "Time-limit exceeded"
 msgstr "Превышено максимальное время работы"
 
@@ -1597,7 +1597,7 @@ msgstr ""
 msgid "Unknown result (%d)"
 msgstr "Неожиданный код результата (%d)"
 
-#: runlog.c:617
+#: runlog.c:618
 #, c-format
 msgid "Unknown: %d"
 msgstr "Unknown: %d"
@@ -1658,7 +1658,7 @@ msgstr "Видимость"
 msgid "Visible?"
 msgstr "Видимая?"
 
-#: html.c:1290 html.c:1310 run.c:140 runlog.c:607
+#: html.c:1290 html.c:1310 run.c:140 runlog.c:608
 msgid "Wrong answer"
 msgstr "Неправильный ответ"
 
