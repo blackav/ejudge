@@ -52,6 +52,8 @@ enum
     TG_TESTING_WORK_DIR,
     TG_SCRIPT_DIR,
     TG_SERIALIZATION_KEY,
+    TG_ADMIN_EMAIL,
+    TG_USERLIST_LOG,
   };
 enum
   {
@@ -89,7 +91,8 @@ static char const * const tag_map[] =
   "testing_work_dir",
   "script_dir",
   "serialization_key",
-
+  "admin_email",
+  "userlist_log",
   0
 };
 
@@ -132,6 +135,8 @@ tree_alloc_func(int tag)
   case TG_TESTING_WORK_DIR:
   case TG_SCRIPT_DIR:
   case TG_SERIALIZATION_KEY:
+  case TG_ADMIN_EMAIL:
+  case TG_USERLIST_LOG:
     return xcalloc(1, sizeof(struct xml_tree));
   case TG_MAP:
     return xcalloc(1, sizeof(struct userlist_cfg_user_map));
@@ -461,6 +466,12 @@ userlist_cfg_parse(char const *path)
         }
         cfg->serialization_key = k;
       }
+      break;
+    case TG_ADMIN_EMAIL:
+      if (handle_final_tag(path, p, &cfg->admin_email) < 0) goto failed;
+      break;
+    case TG_USERLIST_LOG:
+      if (handle_final_tag(path, p, &cfg->userlist_log) < 0) goto failed;
       break;
     default:
       err("%s:%d:%d: element <%s> is invalid here",
