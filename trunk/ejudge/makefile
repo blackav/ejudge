@@ -243,7 +243,7 @@ mo: locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo
 locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.KOI8-R.po ru_all
 	msgfmt -o $@ -c $<
 
-libserve_clnt.a: serve_clnt/open.o serve_clnt/do_pass_fd.o serve_clnt/pass_fd.o serve_clnt/send_packet.o serve_clnt/recv_packet.o serve_clnt/get_archive.o serve_clnt/list_runs.o serve_clnt/master_page.o serve_clnt/show_item.o serve_clnt/submit_run.o serve_clnt/submit_clar.o serve_clnt/team_page.o
+libserve_clnt.a: $(SERVE_CLNT_CFILES:.c=.o)
 	ar rcv $@ $^
 
 libcharsets.a: charsets/nls.o charsets/nls_cp1251.o charsets/nls_cp866.o charsets/nls_iso8859-5.o charsets/nls_koi8-r.o charsets/nls_utf8.o charsets/utf8_to_enc.o charsets/utf8_to_enc_unchecked.o charsets/utf8_to_enc_heap.o charsets/utf8_to_koi8.o charsets/utf8_to_koi8_heap.o charsets/utf8_to_koi8_unchecked.o charsets/koi8_to_enc.o charsets/koi8_to_enc_unchecked.o charsets/koi8_to_enc_heap.o 
