@@ -33,6 +33,7 @@ extern int           server_team_clars_disabled;
 extern int           server_standings_frozen;
 extern int           server_score_system;
 extern int           server_clients_suspended;
+extern int           server_download_interval;
 
 extern unsigned long client_cur_time;
 extern char          client_pipe_dir[];
