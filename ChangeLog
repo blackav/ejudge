@@ -1,3 +1,99 @@
+2002-12-30  Alexander Chernov  <cher@ispras.ru>
+
+	* userlist_proto.h:
+	(struct userlist_pk_set_password) field `contest_id' is added.
+
+	* userlist_clnt.h:
+	(userlist_clnt_team_set_passwd) argument `contest_id' is added.
+
+	* userlist-server.c:
+	(team_set_password) the packet now has `contest_id' field, and this
+	  contest is checked to allow team password change.
+
+	* team.c:
+	(action_change_password) `userlist_clnt_team_set_passwd' now
+	  requires contest_id parameter;
+	(main) password change dialog is not shown, if contest's flag
+	  `disable_team_password' is set.
+
+	* serve.c:
+	new master commands "Clear run" and "Squeeze run log" are supported;
+	(do_rename) new function, which renames archive entries by their
+	  numbers;
+	(do_remove_archive_entry) new function, which removes an archive
+	  entry by its number;
+	(do_squeeze_runs) a new function, which squeezes runs by
+	  renaming archive entries and squeezing the runlog;
+	(cmd_priv_command_0) `SRV_CMD_SQUEEZE_RUNS', `SRV_CMD_CLEAR_RUN'
+	  are handled;
+	(packet_handlers) `SRV_CMD_SQUEEZE_RUNS', `SRV_CMD_CLEAR_RUN'
+	  are handled.
+
+	* runlog.h: RUN_MAX_IP_LEN is moved to runlog.c;
+	new run entry status RUN_EMPTY;
+	(run_clear_entry) new function;
+	(run_squeeze_log) new function.
+
+	* runlog.c:
+	(run_change_status) added check, that new status is not RUN_EMPTY;
+	  added check, that the old status is not RUN_VIRTUAL_START,
+	  RUN_VIRTUAL_STOP, RUN_EMPTY;
+	(run_get_team_usage) RUN_VIRTUAL_START, RUN_VIRTUAL_STOP,
+	  RUN_EMPTY entries are ignored;
+	(run_get_attempts) RUN_VIRTUAL_START, RUN_VIRTUAL_STOP,
+	  RUN_EMPTY entries are ignored;
+	(run_status_str) RUN_EMPTY is supported;
+	(run_set_entry) RUN_EMPTY entry cannot be changed;
+	  RUN_VIRTUAL_START, RUN_VIRTUAL_STOP, RUN_EMPTY cannot be set by
+	  this function;
+	(run_build_virtual_table) RUN_EMPTY is ignored;
+	(run_clear_entry) new function to clear runlog entry;
+	(run_squeeze_log) new function to remove all cleared entries.
+
+	* protocol.h:
+	new commands: `SRV_CMD_CLEAR_RUN', `SRV_CMD_SQUEEZE_RUNS'.
+
+	* master_html.c:
+	(write_all_runs) `RUN_EMPTY' runlog entries are printed in special
+	  way;
+	  for `RUN_VIRTUAL_START', `RUN_VIRTUAL_STOP' "clear" button is
+	  displayed instead of "change" button;
+	  "Squeeze runs" button is added;
+	(write_priv_source) `RUN_EMPTY' runlog entries are handled;
+	  "Clear entry" button is displayed.
+
+	* master.c:
+	new master actions are supported: clear run and squeeze run log;
+	(confirm_squeeze) new function;
+	(confirm_clear_run) new function;
+	(action_squeeze_runs) new function;
+	(action_clear_run) new function;
+	(main) new actions `CLEAR_RUN', `CLEAR_RUN_2', `SQUEEZE_RUNS',
+	  `SQUEEZE_RUNS_2' are supported.
+
+	* html.c:
+	(new_write_user_runs) `RUN_EMPTY' runlog entries are ignored;
+	(do_write_kirov_standings) the same;
+	(do_write_standings) the same.
+
+	* contests.h: new attribute `disable_team_password' is supported;
+	(struct contest_desc) new field `disable_team_password'.
+
+	* contests.c: new attribute `disable_team_password' is supported;
+	(parse_contest) ditto.
+
+	* client_actions.h:
+	new actions added (CLEAR_RUN, CLEAR_RUN_2, SQUEEZE_RUNS,
+	  SQUEEZE_RUNS_2).
+
+2002-12-28  Alexander Chernov  <cher@ispras.ru>
+
+	* team.c:
+	(read_state_params) SID_URL handling is implemented properly.
+	  In this case sid_mode and SID is generated into the form.
+	(main) "Change language" dialog is implemented correctly for
+	  all the session support modes.
+
 2002-12-28  Alexander Chernov  <cher@ispras.ru>
 
 	* serve.c:
