@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,19 +18,6 @@
 /**
  * This program compiles incoming source files and puts the resulting
  * executables into the spool directory.
- *
- * NOTE: this is obsoleted!
- * THEORY OF OPERATION: for each language which has 'key' matching
- * to the command line parameter of the utility, src_dir is watched
- * for the new files. Each new file must have name NUM.SFX, where
- * NUM is the run number, SFX is the language suffix.
- * The program moves new source files out of spool directory,
- * and invokes a compile script on them.
- * If compilation failed, compiler error reports are put into
- * compile_report_dir. If compilation is successful, the executable binary
- * is put into compile_report_dir. The executable binary has the suffix
- * as specified in exe_sfx.
- * Then compilation status message is put into compile_status_dir.
  */
 
 #include "prepare.h"
@@ -51,6 +38,8 @@
 #include <stdarg.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <errno.h>
+#include <unistd.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -85,6 +74,8 @@ do_loop(void)
   int    r, n;
   tpTask tsk;
   sigset_t work_mask;
+  unsigned char msgbuf[512];
+  int ce_flag;
 
   sigemptyset(&work_mask);
   sigaddset(&work_mask, SIGINT);
@@ -96,7 +87,23 @@ do_loop(void)
 
   while (1) {
     r = scan_dir(global->compile_queue_dir, pkt_name);
-    if (r < 0) return -1;
+
+    if (r < 0) {
+      switch (-r) {
+      case ENOMEM:
+      case ENOENT:
+      case ENFILE:
+        err("trying to recover, sleep for 5 seconds");
+        sigprocmask(SIG_UNBLOCK, &work_mask, 0);
+        sleep(5);
+        sigprocmask(SIG_BLOCK, &work_mask, 0);
+        continue;
+      default:
+        err("unrecoverable error, exiting");
+        return -1;
+      }
+    }
+
     if (!r) {
       sigprocmask(SIG_UNBLOCK, &work_mask, 0);
       os_Sleep(global->sleep_time);
@@ -111,7 +118,11 @@ do_loop(void)
                           SAFE | REMOVE, global->compile_queue_dir,
                           pkt_name, "");
     if (r == 0) continue;
-    if (r < 0) return -1;
+    if (r < 0) {
+      // it looks like there's no reasonable recovery strategy
+      // so, just ignore the error
+      continue;
+    }
 
     chop(pkt_buf);
     info("compile packet: <%s>", pkt_buf);
@@ -119,30 +130,65 @@ do_loop(void)
     n = 0;
     if (sscanf(pkt_buf, "%d %d %d %d %n", &contest_id, &run_id,
                &lang_id, &locale_id, &n) != 4
-        || pkt_buf[n]
-        || contest_id <= 0
-        || run_id < 0
-        || lang_id <= 0 || lang_id > max_lang
-        || !langs[lang_id]
-        || locale_id < 0
-        || locale_id > 1024) {
-      err("bad packet");
+        || pkt_buf[n]) {
+      // packet parse error, we cannot report such error back to
+      // the contest's serve since the contest id is unknown
+      // just ignore the error
+      err("packet parse error");
       continue;
     }
 
+    if (contest_id <= 0 || contest_id > 9999) {
+      // cannot report to the server, just ignore
+      err("contest_id is invalid: %d", contest_id);
+      continue;
+    }
+    if (run_id < 0 || run_id > 999999) {
+      err("run_id is invalid: %d", run_id);
+      continue;
+    }
+
+    // at this point we may try to report messages to the contest server
     snprintf(report_dir, sizeof(report_dir),
              "%s/%04d/report", global->compile_dir, contest_id);
     snprintf(status_dir, sizeof(status_dir),
              "%s/%04d/status", global->compile_dir, contest_id);
     snprintf(run_name, sizeof(run_name), "%06d", run_id);
+    pathmake(log_out, report_dir, "/", run_name, NULL);
+
+    if (lang_id <= 0 || lang_id > max_lang || !langs[lang_id]) {
+      snprintf(msgbuf, sizeof(msgbuf),
+               "compile packet error: invalid language id %d\n", lang_id);
+      err("invalid language id %d", lang_id);
+
+    report_internal_error:
+      if (generic_write_file(msgbuf, strlen(msgbuf), 0, 0, log_out, 0) < 0){
+        // we tried, but it didn't work out :-(
+        continue;
+      }
+      snprintf(statbuf, sizeof(statbuf), "6\n");
+      if (generic_write_file(statbuf, sizeof(statbuf), SAFE,
+                             status_dir, run_name, 0) < 0) {
+        // remove the report file
+        unlink(log_out);
+      }
+      clear_directory(global->compile_work_dir);
+      continue;
+    }
+
+    if (locale_id < 0 || locale_id > 1024) {
+      snprintf(msgbuf, sizeof(msgbuf),
+               "compile packet error: invalid locale id %d\n", locale_id);
+      err("invalid locale id %d", locale_id);
+      goto report_internal_error;
+    }
+
     pathmake(src_name, run_name, langs[lang_id]->src_sfx, NULL);
     pathmake(exe_name, run_name, langs[lang_id]->exe_sfx, NULL);
 
     pathmake(src_path, global->compile_work_dir, "/", src_name, NULL);
     pathmake(exe_path, global->compile_work_dir, "/", exe_name, NULL);
     pathmake(log_path, global->compile_work_dir, "/", "log", NULL);
-    /* the resulting report file */
-    pathmake(log_out, report_dir, "/", run_name, NULL);
     /* the resulting executable file */
     pathmake(exe_out, report_dir, "/", exe_name, NULL);
 
@@ -150,7 +196,20 @@ do_loop(void)
     r = generic_copy_file(REMOVE, global->compile_src_dir, pkt_name,
                           langs[lang_id]->src_sfx,
                           0, global->compile_work_dir, src_name, "");
-    if (r <= 0) continue;
+    if (!r) {
+      snprintf(msgbuf, sizeof(msgbuf),
+               "the source file is missing\n");
+      err("the source file is missing");
+      goto report_internal_error;
+    }
+    if (r < 0) {
+      // wait some time, then try again
+      info("waiting 5 seconds hoping for things to change");
+      sigprocmask(SIG_UNBLOCK, &work_mask, 0);
+      sleep(5);
+      sigprocmask(SIG_BLOCK, &work_mask, 0);
+      continue;
+    }
 
     info("Starting: %s %s %s", langs[lang_id]->cmd, src_name, exe_name);
     tsk = task_New();
@@ -166,43 +225,51 @@ do_loop(void)
     if (langs[lang_id]->compile_real_time_limit > 0) {
       task_SetMaxRealTime(tsk, langs[lang_id]->compile_real_time_limit);
     }
-    if (cr_serialize_lock() < 0) return -1;
+    if (cr_serialize_lock() < 0) {
+      // FIXME: propose reasonable recovery?
+      return -1;
+    }
     task_Start(tsk);
     task_Wait(tsk);
-    if (cr_serialize_unlock() < 0) return -1;
+    if (cr_serialize_unlock() < 0) {
+      // FIXME: propose reasonable recovery?
+      return -1;
+    }
 
     if (task_IsTimeout(tsk)) {
-      info("Compilation timeout");
-      if (generic_copy_file(0, 0, log_path, "", 0, 0, log_out, "") < 0)
-        return -1;
-      sprintf(statbuf, "%d%s", 6, PATH_EOL);
-      if (generic_write_file(statbuf, strlen(statbuf), SAFE,
-                             status_dir,
-                             run_name, "") < 0)
-        return -1;
-    } else if (task_IsAbnormal(tsk)) {
-      // compilation error?
-      info("Compilation failed");
-      //copy logfile and create statfile
-      if (generic_copy_file(0, 0, log_path, "", 0, 0, log_out, "") < 0)
-        return -1;
-      sprintf(statbuf, "%d%s", 1, PATH_EOL);
-      if (generic_write_file(statbuf, strlen(statbuf), SAFE,
-                             status_dir,
-                             run_name, "") < 0)
-        return -1;
-    } else {
-      // ok, we can move the executable to output dir
-      info("Compilation sucessful");
-      if (generic_copy_file(0, 0, exe_path, "",
-                            0, 0, exe_out, "") < 0)
-        return -1;
-      sprintf(statbuf, "0%s", PATH_EOL);
-      if (generic_write_file(statbuf, strlen(statbuf), SAFE,
-                             status_dir,
-                             run_name, "") < 0)
-        return -1;
+      task_Delete(tsk);
+      err("Compilation process timed out");
+      snprintf(msgbuf, sizeof(msgbuf),
+               "compilation process timed out\n");
+      goto report_internal_error;
     }
+
+    if (task_IsAbnormal(tsk)) {
+      info("Compilation failed");
+      ce_flag = 1;
+      sprintf(statbuf, "%d%s", 1, PATH_EOL);
+    } else {
+      info("Compilation sucessful");
+      ce_flag = 0;
+      sprintf(statbuf, "0%s", PATH_EOL);
+    }
+
+    while (1) {
+      if (ce_flag) {
+        r = generic_copy_file(0, 0, log_path, "", 0, 0, log_out, "");
+      } else {
+        r = generic_copy_file(0, 0, exe_path, "", 0, 0, exe_out, "");
+      }
+      if (r >= 0 && generic_write_file(statbuf, strlen(statbuf), SAFE,
+                                       status_dir, run_name, "") >= 0)
+        break;
+
+      info("waiting 5 seconds hoping for things to change");
+      sigprocmask(SIG_UNBLOCK, &work_mask, 0);
+      sleep(5);
+      sigprocmask(SIG_BLOCK, &work_mask, 0);
+    }
+
     task_Delete(tsk);
     clear_directory(global->compile_work_dir);
   }
