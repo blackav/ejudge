@@ -53,7 +53,9 @@ decd    [0-9]
 %option noyywrap
 %%
 "||" { T(TOK_LOGOR); }
+"or" { T(TOK_LOGOR); }
 "&&" { T(TOK_LOGAND); }
+"and" { T(TOK_LOGAND); }
 "==" { T(TOK_EQ); }
 "!=" { T(TOK_NE); }
 "<=" { T(TOK_LE); }
