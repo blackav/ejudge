@@ -31,6 +31,7 @@
 #include "userlist_proto.h"
 #include "userlist_clnt.h"
 #include "client_actions.h"
+#include "runlog.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -1211,6 +1212,27 @@ sched_if_asked(void)
   operation_status_page(-1, "Invalid time specification", -1);
 }
 
+/* We don't have information about scoring mode, so allow any */
+static unsigned char valid_statuses[RUN_LAST + 1] =
+{
+  [RUN_OK] = 1,
+  [RUN_COMPILE_ERR] = 1,
+  [RUN_RUN_TIME_ERR] = 1,
+  [RUN_TIME_LIMIT_ERR] = 1,
+  [RUN_PRESENTATION_ERR] = 1,
+  [RUN_WRONG_ANSWER_ERR] = 1,
+  [RUN_CHECK_FAILED] = 1,
+  [RUN_PARTIAL] = 1,
+  [RUN_ACCEPTED] = 1,
+  [RUN_IGNORED] = 1,
+  [RUN_DISQUALIFIED] = 1,
+  [RUN_PENDING] = 1,
+  [RUN_MEM_LIMIT_ERR] = 1,
+  [RUN_SECURITY_ERR] = 1,
+  [RUN_FULL_REJUDGE] = 1,
+  [RUN_REJUDGE] = 1,
+};
+
 static void
 change_status_if_asked()
 {
@@ -1229,9 +1251,7 @@ change_status_if_asked()
     goto invalid_operation;
   if (sscanf(s, "%d%n", &status, &n) != 1 || s[n])
     goto invalid_operation;
-  /* FIXME: symbolic constants should be used */
-  /* We don't have information about scoring mode, so allow any */
-  if (status < 0 || status > 99 || (status > 10 && status < 99) || status == 6)
+  if (status < 0 || status >= sizeof(valid_statuses) || !valid_statuses[status])
     goto invalid_operation;
 
   open_serve();
@@ -1261,9 +1281,7 @@ change_status()
     goto invalid_operation;
   if (sscanf(s, "%d%n", &status, &n) != 1 || s[n])
     goto invalid_operation;
-  /* FIXME: symbolic constants should be used */
-  /* We don't have information about scoring mode, so allow any */
-  if (status < 0 || status > 99 || (status > 10 && status < 99) || status == 6)
+  if (status < 0 || status >= sizeof(valid_statuses) || !valid_statuses[status])
     goto invalid_operation;
 
   open_serve();
@@ -1745,7 +1763,9 @@ action_new_run(void)
     operation_status_page(-1, "Status must be specified", -1);
     return;
   }
-  if (sscanf(s, "%d%n", &status, &n) != 1 || s[n] || status < 0)
+  if (sscanf(s, "%d%n", &status, &n) != 1 || s[n])
+    goto invalid_operation;
+  if (status < 0 || status >= sizeof(valid_statuses) || !valid_statuses[status])
     goto invalid_operation;
   flags |= PROT_SERVE_RUN_STATUS_SET;
 
