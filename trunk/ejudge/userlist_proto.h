@@ -4,7 +4,7 @@
 #ifndef __USERLIST_PROTO_H__
 #define __USERLIST_PROTO_H__
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,10 +16,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 /* privelege level */
@@ -64,6 +60,7 @@ enum
     ULS_GET_UID_BY_PID,
     ULS_PRIV_LOGIN,
     ULS_PRIV_CHECK_COOKIE,
+    ULS_DUMP_DATABASE,
   };
 
 /* server reply codes (each corresponds to a different packet) */
@@ -295,6 +292,13 @@ struct userlist_pk_get_uid_by_pid
   int   system_uid;
   int   system_gid;
   int   system_pid;
+};
+
+struct userlist_pk_dump_database __attribute__((packed, aligned(1)));
+struct userlist_pk_dump_database
+{
+  short request_id;
+  int   contest_id;
 };
 
 /* server->client replies */
