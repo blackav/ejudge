@@ -24,6 +24,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <ctype.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -300,6 +301,50 @@ message_base64_subj(char const *msg, char *out, int maxlen)
   }
   base64_encode_str(buf, out);
   return strlen(out);
+}
+
+size_t
+url_armor_string(unsigned char *buf, size_t size, const unsigned char *str)
+{
+  size_t lsz, outsz = 0;
+  unsigned char b4[4];
+
+  if (!str) str = "";
+
+  if (!buf || !size) {
+    while (*str) {
+      if (isalnum(*str)) size++;
+      else size += 3;
+      str++;
+    }
+    return size;
+  }
+
+  lsz = size - 1;
+  while (*str && lsz) {
+    if (isalnum(*str)) {
+      *buf++ = *str;
+      lsz--; outsz++;
+    } else {
+      sprintf(b4, "%02x", *str);
+      *buf++ = '%', lsz--;
+      if (lsz) {
+        *buf++ = b4[0], lsz--;
+        if (lsz) {
+          *buf++ = b4[1], lsz--;
+        }
+      }
+      outsz += 3;
+    }
+    str++;
+  }
+  *buf = 0;
+  while (*str) {
+    if (isalnum(*str)) outsz++;
+    else outsz += 3;
+    str++;
+  }
+  return outsz;
 }
 
 /**
