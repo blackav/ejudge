@@ -4084,6 +4084,7 @@ do_rejudge_all(void)
       }
       if (re.is_readonly) continue;
       if (!probs[re.problem] || probs[re.problem]->disable_testing) continue;
+      if (!langs[re.language] || langs[re.language]->disable_testing) continue;
       idx = re.team * total_probs + re.problem;
       if (flag[idx]) continue;
       flag[idx] = 1;
@@ -4100,6 +4101,7 @@ do_rejudge_all(void)
         && re.problem >= 1 && re.problem <= max_prob
         && probs[re.problem]
         && !probs[re.problem]->disable_testing
+        && !langs[re.language]->disable_testing
         && !re.is_readonly
         && !re.is_imported) {
       rejudge_run(r);
@@ -4164,6 +4166,7 @@ do_rejudge_problem(int prob_id)
       if (re.is_readonly) continue;
       if (re.team <= 0 || re.team >= total_ids) continue;
       if (flag[re.team]) continue;
+      if (!langs[re.language] || langs[re.language]->disable_testing) continue;
       flag[re.team] = 1;
       rejudge_run(r);
     }
@@ -4223,6 +4226,7 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask)
       }
       if (re.is_readonly) continue;
       if (!probs[re.problem] || probs[re.problem]->disable_testing) continue;
+      if (!langs[re.language]|| langs[re.language]->disable_testing) continue;
       if (!(mask[r / BITS_PER_LONG] & (1 << (r % BITS_PER_LONG)))) continue;
       idx = re.team * total_probs + re.problem;
       if (flag[idx]) continue;
@@ -4240,6 +4244,7 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask)
         && re.problem >= 1 && re.problem <= max_prob
         && probs[re.problem]
         && !probs[re.problem]->disable_testing
+        && !langs[re.language]->disable_testing
         && !re.is_readonly
         && !re.is_imported
         && (mask[r / BITS_PER_LONG] & (1 << (r % BITS_PER_LONG)))) {
