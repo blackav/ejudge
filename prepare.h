@@ -111,6 +111,9 @@ struct section_global_data
   /* scoring settings */
   path_t score_system;          /* scoring system */
   int    score_system_val;      /* internal int value */
+
+  int    max_file_length;       /* maximal length of the file in reports */
+  int    max_line_length;       /* maximal length of line in reports */
 };
 
 struct section_problem_data
