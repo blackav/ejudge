@@ -33,6 +33,9 @@ enum { PREPARE_QUIET = 1, PREPARE_USE_CPP = 2 };
 enum { SCORE_ACM, SCORE_KIROV, SCORE_OLYMPIAD };
 #endif /* EJUDGE_SCORE_SYSTEM_DEFINED */
 
+/* second rounding mode */
+enum { SEC_CEIL, SEC_FLOOR, SEC_ROUND };
+
 struct testset_info
 {
   int total;                  /* total number of tests in set */
@@ -203,6 +206,8 @@ struct section_global_data
   int    tests_to_accept;       /* how many tests to accept a submit */
   int    virtual;               /* 1, if virtual contest */
   int    prune_empty_users;     /* 1, if do not show empty users in stands */
+  puc_t  rounding_mode[32];     /* seconds rounding mode */
+  int    rounding_mode_val;     /* internal int value */
 
   int    max_file_length;       /* maximal length of the file in reports */
   int    max_line_length;       /* maximal length of line in reports */
@@ -450,7 +455,8 @@ extern int max_prob;
 /* userlist-server interaction */
 extern struct contest_desc *cur_contest;
 
-int prepare(char const *, int flags, int mode, char const *opts);
+int prepare(char const *, int flags, int mode, char const *opts,
+            int managed_flag);
 int create_dirs(int mode);
 
 int find_tester(int, char const *);
