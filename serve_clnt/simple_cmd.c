@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -59,13 +59,8 @@ serve_clnt_simple_cmd(int sock_fd, int cmd, void const *val, size_t val_len)
     xfree(in);
     return r;
   }
-  if (in->id != SRV_RPL_OK) {
-    xfree(in);
-    err("serve_clnt_view: unexpected reply: %d", in->id);
-    return -SRV_ERR_PROTOCOL;
-  }
   xfree(in);
-  return SRV_RPL_OK;
+  return r;
 }
 
 /**
