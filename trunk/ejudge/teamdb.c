@@ -351,6 +351,9 @@ teamdb_get_flags(int id)
   if ((cached_map[id]->flags & USERLIST_UC_BANNED)) {
     new_flags |= TEAM_BANNED;
   }
+  if ((cached_map[id]->flags & USERLIST_UC_LOCKED)) {
+    new_flags |= TEAM_LOCKED;
+  }
   return new_flags;
 }
 
@@ -408,6 +411,8 @@ teamdb_export_team(int tid, struct teamdb_export *pdata)
     pdata->flags |= TEAM_INVISIBLE;
   if ((cached_map[tid]->flags & USERLIST_UC_BANNED))
     pdata->flags |= TEAM_BANNED;
+  if ((cached_map[tid]->flags & USERLIST_UC_LOCKED))
+    pdata->flags |= TEAM_LOCKED;
   strncpy(pdata->login, cached_users->pool + cached_map[tid]->login_idx,
           TEAMDB_LOGIN_LEN - 1);
   strncpy(pdata->name, cached_users->pool + cached_map[tid]->name_idx,
