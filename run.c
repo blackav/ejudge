@@ -44,6 +44,8 @@ struct testinfo
 {
   int            status;	/* the execution status */
   int            code;		/* the process exit code */
+  int            score;         /* score gained for this test */
+  int            max_score;     /* maximal score for this test */
   unsigned long  times;		/* execution time */
   char          *input;		/* the input */
   char          *output;	/* the output */
@@ -100,7 +102,7 @@ result2str(int s)
 }
 
 static int
-generate_report(char *report_path)
+generate_report(char *report_path, int scores, int max_score)
 {
   FILE *f;
   int   i;
@@ -109,6 +111,8 @@ generate_report(char *report_path)
   int   passed_tests = 0;
   int   failed_tests = 0;
   int   addition = -1;
+  char  score_buf[32];
+  char  score_buf2[32];
 
   if (!(f = fopen(report_path, "w"))) {
     err(_("generate_report: cannot open protocol file %s"), report_path);
@@ -127,15 +131,30 @@ generate_report(char *report_path)
   if (status == 0) {
     fprintf(f, "OK\n\n");
   } else {
-    fprintf(f, _("%s, test #%d\n\n"), result2str(status), first_failed);
+    if (global->score_system_val == SCORE_KIROV) {
+      fprintf(f, _("PARTIAL SOLUTION\n\n"));
+    } else {
+      fprintf(f, _("%s, test #%d\n\n"), result2str(status), first_failed);
+    }
   }
-  fprintf(f, _("%d total tests runs, %d passed, %d failed\n\n"),
+  fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
 	  total_tests - 1, passed_tests, failed_tests);
+  if (global->score_system_val == SCORE_KIROV) {
+    fprintf(f, _("Scores gained: %d (out of %d)\n"), scores, max_score);
+  }
+  fprintf(f, "\n");
 
-  fprintf(f, _("Test #  Status  Time (sec)  Result\n"));
+  fprintf(f, _("Test #  Status  Time (sec)  %sResult\n"),
+          (global->score_system_val == SCORE_KIROV)?"Score   ":"");
   for (i = 1; i < total_tests; i++) {
-    fprintf(f, "%-8d%-8d%-12.3f%s\n",
+    score_buf[0] = 0;
+    if (global->score_system_val == SCORE_KIROV) {
+      sprintf(score_buf2, "%d (%d)", tests[i].score, tests[i].max_score);
+      sprintf(score_buf, "%-8s", score_buf2);
+    }
+    fprintf(f, "%-8d%-8d%-12.3f%s%s\n",
 	    i, tests[i].code, (double) tests[i].times / 1000,
+            score_buf,
 	    result2str(tests[i].status));
   }
   fprintf(f, "\n");
@@ -176,7 +195,7 @@ generate_report(char *report_path)
 }
 
 static int
-generate_team_report(char const *report_path)
+generate_team_report(char const *report_path, int scores, int max_score)
 {
   FILE *f;
   int   i;
@@ -184,6 +203,9 @@ generate_team_report(char const *report_path)
   int   first_failed = 0;
   int   passed_tests = 0;
   int   failed_tests = 0;
+
+  char  score_buf[32];
+  char  score_buf2[32];
 
   if (!(f = fopen(report_path, "w"))) {
     err(_("generate_report: cannot open protocol file %s"), report_path);
@@ -202,15 +224,29 @@ generate_team_report(char const *report_path)
   if (status == 0) {
     fprintf(f, "OK\n\n");
   } else {
-    fprintf(f, _("%s, test #%d\n\n"), result2str(status), first_failed);
+    if (global->score_system_val == SCORE_KIROV) {
+      fprintf(f, _("PARTIAL SOLUTION\n\n"));
+    } else {
+      fprintf(f, _("%s, test #%d\n\n"), result2str(status), first_failed);
+    }
   }
-  fprintf(f, _("%d total tests runs, %d passed, %d failed\n\n"),
+  fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
 	  total_tests - 1, passed_tests, failed_tests);
+  if (global->score_system_val == SCORE_KIROV) {
+    fprintf(f, _("Scores gained: %d (out of %d)\n"), scores, max_score);
+  }
+  fprintf(f, "\n");
 
-  fprintf(f, _("Test #  Status  Time (sec)  Result\n"));
+  fprintf(f, _("Test #  Status  Time (sec)  %sResult\n"),
+          (global->score_system_val == SCORE_KIROV)?"Score   ":"");
   for (i = 1; i < total_tests; i++) {
-    fprintf(f, "%-8d%-8d%-12.3f%s\n",
+    if (global->score_system_val == SCORE_KIROV) {
+      sprintf(score_buf2, "%d (%d)", tests[i].score, tests[i].max_score);
+      sprintf(score_buf, "%-8s", score_buf2);
+    }
+    fprintf(f, "%-8d%-8d%-12.3f%s%s\n",
 	    i, tests[i].code, (double) tests[i].times / 1000,
+            score_buf,
 	    result2str(tests[i].status));
   }
   fprintf(f, "\n");
@@ -262,6 +298,7 @@ run_tests(struct section_tester_data *tst,
   path_t error_path;
   path_t check_out_path;
   path_t error_code;
+  int    score = 0;
   int    status = 0;
   int    failed_test = 0;
   int    total_failed_tests = 0;
@@ -465,19 +502,33 @@ run_tests(struct section_tester_data *tst,
 
   /* TESTING COMPLETED (SOMEHOW) */
 
-  if (global->team_enable_rep_view) {
-    generate_team_report(team_report_path);
-  }
-  generate_report(report_path);
-
   if (global->score_system_val == SCORE_KIROV) {
+    int jj;
+
+    for (jj = 1; jj <= prb->ntests; jj++) {
+      tests[jj].score = 0;
+      tests[jj].max_score = prb->tscores[jj];
+      if (tests[jj].status == RUN_OK) {
+        score += prb->tscores[jj];
+        tests[jj].score = prb->tscores[jj];
+      }
+    }
+
+    if (!total_failed_tests) score = prb->full_score;
+
     /* ATTENTION: number of passed test returned is greater than actual by 1 */
-    sprintf(reply_string, "%d %d\n",
+    sprintf(reply_string, "%d %d %d\n",
             total_failed_tests > 0?RUN_PARTIAL:RUN_OK,
-            total_tests - total_failed_tests);
+            total_tests - total_failed_tests,
+            score);
   } else {
-    sprintf(reply_string, "%d %d\n", status, failed_test);
+    sprintf(reply_string, "%d %d -1\n", status, failed_test);
   }
+
+  if (global->team_enable_rep_view) {
+    generate_team_report(team_report_path, score, prb->full_score);
+  }
+  generate_report(report_path, score, prb->full_score);
 
   /*
   if (status == 0) { 
@@ -489,7 +540,7 @@ run_tests(struct section_tester_data *tst,
   goto _cleanup;
 
  _internal_execution_error:
-  sprintf(reply_string, "%d 0\n", RUN_CHECK_FAILED);
+  sprintf(reply_string, "%d 0 -1\n", RUN_CHECK_FAILED);
   goto _cleanup;
 
  _cleanup:
@@ -583,7 +634,7 @@ count_files(char const *dir, char const *sfx)
 int
 check_config(void)
 {
-  int     i, n1, n2;
+  int     i, n1, n2, j;
   int     total = 0;
 
   struct section_problem_data *prb = 0;
@@ -608,6 +659,81 @@ check_config(void)
       info(_("found %d answers for problem %s"), n2, prb->short_name);
       if (n1 != n2) {
         err(_("number of test does not match number of answers"));
+        return -1;
+      }
+    }
+
+    if (global->score_system_val == SCORE_KIROV) {
+      int score_summ = 0;
+
+      prb->ntests = n1;
+      XCALLOC(prb->tscores, prb->ntests + 1);
+
+      for (j = 1; j <= prb->ntests; j++)
+        prb->tscores[j] = prb->test_score;
+
+      // test_score_list overrides test_score
+      if (prb->test_score_list[0]) {
+        char const *s = prb->test_score_list;
+        int tn = 1;
+        int was_indices = 0;
+        int n;
+        int index, score;
+
+        while (1) {
+          while (*s > 0 && *s <= ' ') s++;
+          if (!*s) break;
+
+          if (*s == '[') {
+            if (sscanf(s, "[ %d ] %d%n", &index, &score, &n) != 2) {
+              err("cannot parse test_score_list for problem %s",
+                  prb->short_name);
+              return -1;
+            }
+            if (index < 1 || index > prb->ntests) {
+              err("problem %s: test_score_list: index out of range",
+                  prb->short_name);
+              return -1;
+            }
+            if (score <= 0) {
+              err("problem %s: test_score_list: invalid score",
+                  prb->short_name);
+              return -1;
+            }
+            tn = index;
+            was_indices = 1;
+            prb->tscores[tn++] = score;
+            s += n;
+          } else {
+            if (sscanf(s, "%d%n", &score, &n) != 1) {
+              err("cannot parse test_score_list for problem %s",
+                  prb->short_name);
+              return -1;
+            }
+            if (score <= 0) {
+              err("problem %s: test_score_list: invalid score",
+                  prb->short_name);
+              return -1;
+            }
+            if (tn > prb->ntests) {
+              err("problem %s: too many scores specified", prb->short_name);
+              return -1;
+            }
+            prb->tscores[tn++] = score;
+            s += n;
+          }
+        }
+
+        if (!was_indices && tn <= prb->ntests) {
+          info("test_score_list for problem %s defines only %d tests",
+               prb->short_name, tn - 1);
+        }
+      }
+
+      for (j = 1; j <= prb->ntests; j++) score_summ += prb->tscores[j];
+      if (score_summ > prb->full_score) {
+        err("total score (%d) > full score (%d) for problem %s",
+            score_summ, prb->full_score, prb->short_name);
         return -1;
       }
     }
