@@ -23,6 +23,7 @@
 #include "pathutl.h"
 #include "clntutil.h"
 #include "cgi.h"
+#include "contests.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -103,6 +104,7 @@ struct config_node
 };
 
 static struct config_node *config;
+static struct contest_list *contests;
 
 static int client_locale_id;
 
@@ -483,6 +485,7 @@ initialize(int argc, char const *argv[])
   path_t dirname;
   path_t basename;
   path_t cfgname;
+  path_t cntsname;
   char *s = getenv("SCRIPT_FILENAME");
 
   pathcpy(fullname, argv[0]);
@@ -496,11 +499,16 @@ initialize(int argc, char const *argv[])
    */
   if (CGI_DATA_PATH[0] == '/') {
     pathmake(cfgname, CGI_DATA_PATH, "/", basename, ".xml", NULL);
+    pathmake(cntsname, CGI_DATA_PATH, "/", "contests.xml", NULL);
   } else {
     pathmake(cfgname, dirname, "/",CGI_DATA_PATH, "/", basename, ".xml", NULL);
+    pathmake(cntsname, dirname, "/",CGI_DATA_PATH,"/", "contests.xml", NULL);
   }
 
   if (!(config = parse_config(cfgname))) {
+    client_not_configured(0, "config file not parsed");
+  }
+  if (!(contests = parse_contest_xml(cntsname))) {
     client_not_configured(0, "config file not parsed");
   }
 }
