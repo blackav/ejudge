@@ -977,3 +977,10 @@ opcaps.c 1 3 339768
 prepare.c 1 57 7079690
 runlog_import.c 1 4 1464705
 userlist_xml.c 1 15 3739491
+contests.h 1 17 511447
+protocol.h 1 18 536986
+contests.c 1 19 2568413
+protocol.c 1 7 211294
+teamdb.c 1 27 956031
+serve_clnt/edit_run.c 1 3 204091
+serve_clnt/submit_run.c 1 2 202871
