@@ -187,20 +187,9 @@ main(int argc, char *argv[])
   snprintf(buf, sizeof(buf), "%s/../bin/dos", EMUPATH);
   if (chmod(EMUPATH, 0500) < 0) myerr("chmod failed: %s", strerror(errno));
 
-  /*
-  if ((pid = fork()) > 0) {
-    wait(0);
-    return 0;
-  } else {
-  */
-  //close(0); close(1); close(2);
-  //if (setsid() < 0) fprintf(stderr, "Setsid failed!\n");
-    execl(buf, buf, "-I", "video { none }", 0);
-    myerr("execl failed: %s", strerror(errno));
-    return 100;
-    /*
-  }
-    */
+  execl(buf, buf, "-I", "video { none }", 0);
+  myerr("execl failed: %s", strerror(errno));
+  return 100;
 }
 
 /*
