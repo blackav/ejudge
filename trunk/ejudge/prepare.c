@@ -276,6 +276,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(deadline, "s"),
   PROBLEM_PARAM(variant_num, "d"),
   PROBLEM_PARAM(date_penalty, "x"),
+  PROBLEM_PARAM(disable_language, "x"),
 
   { 0, 0, 0, 0 }
 };
@@ -1954,6 +1955,10 @@ set_defaults(int mode)
       if (parse_deadline_penalties(probs[i]->date_penalty,
                                    &probs[i]->dp_total,
                                    &probs[i]->dp_infos) < 0) return -1;
+
+      if (si != -1 && abstr_probs[si]->disable_language) {
+        probs[i]->disable_language = sarray_merge_pf(abstr_probs[si]->disable_language, probs[i]->disable_language);
+      }
     }
 
     if (mode == PREPARE_RUN) {
