@@ -44,6 +44,11 @@
 #include <locale.h>
 #endif
 
+#define FIRST_COOKIE(u) ((struct userlist_cookie*) (u)->cookies->first_down)
+#define NEXT_COOKIE(c)  ((struct userlist_cookie*) (c)->b.right)
+#define FIRST_CONTEST(u) ((struct userlist_contest*)(u)->contests->first_down)
+#define NEXT_CONTEST(c)  ((struct userlist_contest*)(c)->b.right)
+
 /* ACTIONS, that may be performed by client*/
 enum
   {
@@ -126,6 +131,7 @@ static unsigned char *self_url;
 static unsigned char *user_login;
 static unsigned char *user_password;
 static int user_usecookies;
+static int user_read_only;
 static unsigned char *user_email;
 static unsigned char *user_name;
 static unsigned char *user_homepage;
@@ -146,6 +152,8 @@ static int user_action;
 static int user_use_cookies_default;
 static int user_show_login;
 static struct userlist_user *user_xml;
+static time_t cur_time;
+static int user_registering;
 
 static unsigned char ***member_info[CONTEST_LAST_MEMBER];
 
@@ -723,11 +731,8 @@ check_contest_eligibility(int id)
   if (id <= 0 || id >= contests->id_map_size) return 0;
   d = contests->id_map[id];
   if (!d) return 0;
-  // Check the latest date of registration
-  // Check the IP
+  if (d->reg_deadline && cur_time > d->reg_deadline) return 0;
   if (!contests_check_ip(d, user_ip)) return 0;
-
-
   return 1;
 }
 
@@ -812,7 +817,8 @@ parse_cookies(unsigned char const *cookie)
   }
 }
 
-static void put_cookie_header(int force_put, int clear_cookie)
+static void
+put_cookie_header(int force_put, int clear_cookie)
 {
   time_t t;
   struct tm gt;
@@ -985,6 +991,7 @@ register_for_contest_page(void)
   struct xml_tree *regs, *reg;
   struct userlist_contest *regx;
   struct contest_desc *cnts;
+  int need_team_btn = 0;
 
   if (!authentificate()) return;
 
@@ -1041,9 +1048,22 @@ register_for_contest_page(void)
 
   if (regs) {
     printf("<h2>%s</h2>\n", _("Check the registration status"));
+
+    for (reg = regs; reg; reg = reg->right) {
+      ASSERT(reg->tag == USERLIST_T_CONTEST);
+      regx = (struct userlist_contest*) reg;
+      if (regx->id <= 0 || regx->id >= contests->id_map_size) continue;
+      if (!contests->id_map[regx->id]) continue;
+      cnts = contests->id_map[regx->id];
+      if (cnts->team_url && regx->status == USERLIST_REG_OK) {
+        need_team_btn = 1;
+      }
+    }
+
     printf("<table><tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th></tr>\n",
            _("Contest ID"), _("Contest name"), _("Status"),
-           _("Edit personal data"), _("Submit solution"));
+           _("Edit personal data"),
+           need_team_btn?(_("Submit solution")):"&nbsp;");
     for (reg = regs; reg; reg = reg->right) {
       ASSERT(reg->tag == USERLIST_T_CONTEST);
       regx = (struct userlist_contest*) reg;
@@ -1068,15 +1088,14 @@ register_for_contest_page(void)
              "</form></td>",
              regx->id, ACTION_REGISTER_CONTEST_PAGE, _("Edit"));
       if (cnts->team_url && regx->status == USERLIST_REG_OK) {
-        printf("<td><form method=\"POST\" action=\"%s\" "
+        printf("<td><form method=\"POST\" action=\"%s?locale_id=%d\" "
              "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
-               cnts->team_url);
+               cnts->team_url, client_locale_id);
         if (!user_cookie) {
           printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n"
                  "<input type=\"hidden\" name=\"password\" value=\"%s\">\n"
-                 "<input type=\"hidden\" name=\"usecookies\" value=\"%d\">\n"
-                 "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
-                 user_login, user_password, user_usecookies, client_locale_id);
+                 "<input type=\"hidden\" name=\"usecookies\" value=\"%d\">\n",
+                 user_login, user_password, user_usecookies);
         }
         printf("<input type=\"submit\" name=\"XXX\" value=\"%s\"></form></td>\n", _("Submit solution"));
       } else {
@@ -1311,6 +1330,13 @@ read_user_info_from_form(void)
     user_use_cookies_default = 1;
   }
 
+  if ((val = cgi_param("user_registering"))) {
+    x = n = 0;
+    if (sscanf(val, "%d %n", &x, &n) == 1 && !val[n] && x == 1) {
+      user_registering = x;
+    }
+  }
+
   user_name = xstrdup(cgi_param("name"));
   if (fix_string(user_name, name_accept_chars, '?')) {
     error("%s", _("Field \"User name\" contained invalid characters, which were replaced with '?'."));
@@ -1526,7 +1552,6 @@ make_user_xml(void)
   do_make_user_xml(f);
   if (ferror(f)) goto out_of_mem;
   fclose(f);
-  //fprintf(stderr, ">>%s\n", xml_ptr);
   return xml_ptr;
 
  out_of_mem:
@@ -1542,6 +1567,7 @@ read_user_info_from_server(void)
   unsigned char *user_info_xml = 0;
   struct userlist_user *u = 0;
   struct userlist_member *m;
+  struct userlist_contest *reg;
   int role, pers;
   unsigned char buf[512];
 
@@ -1558,6 +1584,7 @@ read_user_info_from_server(void)
   user_show_email = u->show_email;
   user_use_cookies_default = u->default_use_cookies;
   user_show_login = u->show_login;
+  user_read_only = u->read_only;
   user_email = u->email;
   user_name = u->name;
   user_homepage = u->homepage;
@@ -1639,6 +1666,15 @@ read_user_info_from_server(void)
       member_cur[role] = member_init[role];
     }
   }
+
+  if (u->contests && user_contest_id > 0) {
+    for (reg = FIRST_CONTEST(u); reg; reg = NEXT_CONTEST(reg)) {
+      if (reg->id == user_contest_id) break;
+    }
+    if (!reg) user_registering = 1;
+  } else if (!u->contests) {
+    user_registering = 1;
+  }
 }
 
 static void
@@ -1679,6 +1715,7 @@ edit_registration_data(void)
   int i, role, pers;
   int errcode;
   unsigned char *user_xml_text;
+  char const *dis_str = " disabled=\"yes\"";
 
   if (!check_password()) {
     if (client_cookie) {
@@ -1703,6 +1740,7 @@ edit_registration_data(void)
            _("The contest identifier is invalid"));
     return;
   }
+  /*
   if (user_contest_id > 0 && !check_contest_eligibility(user_contest_id)) {
     set_locale_by_id(client_locale_id);
     client_put_header(config->charset, "%s", _("You cannot participate"));
@@ -1710,6 +1748,7 @@ edit_registration_data(void)
            _("You cannot participate in this contest"));
     return;
   }
+  */
 
   name_arm = user_name;
   if (!user_name) {
@@ -1760,6 +1799,12 @@ edit_registration_data(void)
     user_action = ACTION_EDIT_PERSONAL_PAGE;
   }
 
+  /*
+  if (user_action == ACTION_REGISTER_CONTEST_PAGE) {
+    user_registering = 1;
+  }
+  */
+
   /* request the necessary information from server */
   /* or read the information from form variables */
   switch (user_action) {
@@ -1771,6 +1816,10 @@ edit_registration_data(void)
   default:
     read_user_info_from_form();
     break;
+  }
+
+  if (user_contest_id > 0 && !check_contest_eligibility(user_contest_id)) {
+    user_registering = 0;
   }
 
   if (user_action >= ACTION_ADD_NEW_CONTESTANT
@@ -1840,9 +1889,14 @@ edit_registration_data(void)
     client_put_header(config->charset,
                       _("Registration form for contest \"%s\""),
                       cnts_arm);
-    printf("<p>%s</p>\n",
-           _("Please fill up blank fields in this form. Mandatory fields "
-             "are marked with (*)."));
+    if (user_read_only) {
+      printf("<p>%s</p>\n",
+             _("You may view your registration data. Editing is not allowed because disabled by the administrator."));
+    } else {
+      printf("<p>%s</p>\n",
+             _("Please fill up blank fields in this form. Mandatory fields "
+               "are marked with (*)."));
+    }
   } else {
     client_put_header(config->charset,
                       _("Personal information for \"%s\""), name_arm);
@@ -1871,34 +1925,38 @@ edit_registration_data(void)
 
   printf("<hr><h2>%s</h2>", _("General user information"));
   printf("<p>%s: <input type=\"text\" disabled=\"1\" name=\"user_login\" value=\"%s\" size=\"16\">\n", _("Login"), user_login);
-  printf("<br><input type=\"checkbox\" name=\"show_login\"%s>%s",
+  printf("<br><input type=\"checkbox\" name=\"show_login\"%s%s>%s",
          user_show_login?" checked=\"yes\"":"",
+         user_read_only?dis_str:"",
          _("Show your login to the public?"));
-  printf("<br><input type=\"checkbox\" name=\"use_cookies_default\"%s>%s",
+  printf("<br><input type=\"checkbox\" name=\"use_cookies_default\"%s%s>%s",
          user_use_cookies_default?" checked=\"yes\"":"",
+         user_read_only?dis_str:"",
          _("Use cookies by default?"));
 
   printf("<input type=\"hidden\" name=\"user_email\" value=\"%s\">\n",
          user_email);
   printf("<p>%s: <a href=\"mailto:%s\">%s</a>\n", _("E-mail"), user_email,
          user_email);
-  printf("<br><input type=\"checkbox\" name=\"show_email\"%s> %s",
+  printf("<br><input type=\"checkbox\" name=\"show_email\"%s%s> %s",
          user_show_email?" checked=\"yes\"":"",
+         user_read_only?dis_str:"",
          _("Show your e-mail address to public?"));
 
   printf("<p>%s</p>\n", _("In the \"User name\" field you type the name of the user, not the participant. For example, if you are registering for participation in a collegiate contest, this field contains the name of your team. The value of this field is used in the list of registered teams, in the standings, etc."));
-  printf("<p>%s%s: <input type=\"text\" name=\"name\" value=\"%s\" maxlength=\"64\" size=\"64\">\n", _("User name"), user_contest_id>0?" (*)":"", user_name);
+  printf("<p>%s%s: <input type=\"text\" name=\"name\" value=\"%s\" maxlength=\"64\" size=\"64\"%s>\n", _("User name"), user_contest_id>0?" (*)":"", user_name, user_read_only?dis_str:"");
 
   /* display change forms */
   for (i = 1; i < CONTEST_LAST_FIELD; i++) {
     if (!field_descs[i].is_editable) continue;
-    printf("<p>%s%s: <input type=\"text\" name=\"%s\" value=\"%s\" maxlength=\"%d\" size=\"%d\">\n",
+    printf("<p>%s%s: <input type=\"text\" name=\"%s\" value=\"%s\" maxlength=\"%d\" size=\"%d\"%s>\n",
            gettext(field_descs[i].orig_name),
            field_descs[i].is_mandatory?" (*)":"",
            field_descs[i].var_name,
            *field_descs[i].var,
            field_descs[i].maxlength,
-           field_descs[i].size);
+           field_descs[i].size,
+           user_read_only?dis_str:"");
   }
 
   /* */
@@ -1917,11 +1975,13 @@ edit_registration_data(void)
            role, member_cur[role]);
 
     for (pers = 0; pers < member_cur[role]; pers++) {
-      printf("<h3>%s %d</h3><p><input type=\"submit\" name=\"remove_%d_%d\" value=\"%s\">%s</p>\n",
-             gettext(member_string[role]), pers + 1,
-             role, pers,
-             _("Remove member"),
-             _("<b>Note!</b> All uncommited changes will be lost!"));
+      if (!user_read_only) {
+        printf("<h3>%s %d</h3><p><input type=\"submit\" name=\"remove_%d_%d\" value=\"%s\">%s</p>\n",
+               gettext(member_string[role]), pers + 1,
+               role, pers,
+               _("Remove member"),
+               _("<b>Note!</b> All uncommited changes will be lost!"));
+      }
       if (*member_info[role][pers][0]) {
         printf("<p>%s %s.</p>",
                _("Member serial number is"), member_info[role][pers][0]);
@@ -1934,11 +1994,12 @@ edit_registration_data(void)
           int x, n;
           unsigned char const *val;
 
-          printf("<p>%s%s: <select name=\"member_info_%d_%d_%d\">\n"
+          printf("<p>%s%s: <select name=\"member_info_%d_%d_%d\"%s>\n"
                  "<option value=\"\"></option>\n",
                  gettext(member_field_descs[i].orig_name),
                  member_edit_flags[role][i].is_mandatory?" (*)":"",
-                 role, pers, i);
+                 role, pers, i,
+                 user_read_only?dis_str:"");
           x = 0; n = 0;
           val = member_info[role][pers][i];
           if (!val || sscanf(val, "%d %n", &x, &n) != 1 || val[n]
@@ -1953,13 +2014,14 @@ edit_registration_data(void)
           printf("</select>");
           continue;
         }
-        printf("<p>%s%s: <input type=\"text\" name=\"member_info_%d_%d_%d\" value=\"%s\" maxlength=\"%d\" size=\"%d\">\n",
+        printf("<p>%s%s: <input type=\"text\" name=\"member_info_%d_%d_%d\" value=\"%s\" maxlength=\"%d\" size=\"%d\"%s>\n",
                gettext(member_field_descs[i].orig_name),
                member_edit_flags[role][i].is_mandatory?" (*)":"",
                role, pers, i,
                member_info[role][pers][i],
                member_field_descs[i].maxlength,
-               member_field_descs[i].size);
+               member_field_descs[i].size,
+               user_read_only?dis_str:"");
       }
     }
 
@@ -1969,17 +2031,39 @@ edit_registration_data(void)
     }
   }
 
+  printf("<h2>%s</h2>\n", _("Finalize registration"));
+
+  printf("<input type=\"hidden\" name=\"user_registering\" value=\"%d\">\n",
+         user_registering);
+
+  if (!user_read_only && user_registering && user_contest_id > 0) {
+    printf("<p>%s</p>\n", _("Press on the \"Register\" button to commit the entered values to server and register for participation for the chosen contest."));
+    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
+           ACTION_REGISTER_FOR_CONTEST, _("REGISTER!"));
+  }
+  if (!user_read_only && !user_registering) {
+    printf("<p>%s</p>\n", _("Press on the \"Save\" button to save the entered values on the server."));
+    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
+           ACTION_COMMIT_PERSONAL_DATA, _("Save"));
+  }
+
+  printf("<p>%s</p>\n", _("Press on the \"Back\" button to return to the previous page without saving all your changes."));
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
+         ACTION_MAIN_PAGE, _("Back"));
+
+#if 0
   /* end of form */
   printf("<p><input type=\"reset\" value=\"%s\">\n"
          "<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n"
-         "<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n"
-         "<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n"
+         /*"<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n"*/
+         /*"<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n"*/
          "<input type=\"submit\" name=\"action_%d\" value=\"%s\">\n",
          _("Reset the form"),
          ACTION_MAIN_PAGE, _("Back"),
          ACTION_RELOAD_PERSONAL_DATA, _("Reload from server"),
          ACTION_COMMIT_PERSONAL_DATA, _("Commit changes"),
          ACTION_REGISTER_FOR_CONTEST, _("Register"));
+#endif
 
   if (user_cookie) {
     printf("<h2>%s</h2>\n", _("Quit the system"));
@@ -2247,6 +2331,7 @@ main(int argc, char const *argv[])
 {
   struct timeval begin_time, end_time;
 
+  cur_time = time(0);
   gettimeofday(&begin_time, 0);
   initialize(argc, argv);
 
