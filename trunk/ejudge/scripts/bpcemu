@@ -1,0 +1,33 @@
+#!/bin/bash
+# Arguments: $1 - input file, $2 - output file
+
+emuwork=/home/judges/dosemu/run
+rm -f $emuwork/*
+cat > $emuwork/command.txt <<EOF
+
+
+output.txt
+errors.txt
+tpc
+program.pas
+
+EOF
+touch $emuwork/output.txt
+touch $emuwork/errors.txt
+cp $1 $emuwork/program.pas
+$emuwork/../bin/dos -I 'video { none }' 2>/dev/null >/dev/null
+cat $emuwork/output.txt >&2
+cat $emuwork/errors.txt >&2
+if [ -f $emuwork/program.exe ]
+then
+  mv $emuwork/program.exe $2
+  exit 0
+else
+  exit 1
+fi
+
+
+#rm -f $emuwork/*
+#f=$((0+`cat $emuwork/retcode.txt`))
+exit 0
+exit $f
