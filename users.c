@@ -1,7 +1,7 @@
 /* -*- mode: c -*-; coding: koi8-r */
 /* $Id$ */
 
-/* Copyright (C) 2001,2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2001-2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "expat_iface.h"
@@ -36,8 +32,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <stdarg.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -53,7 +53,7 @@ enum
     TG_ACCESS,
     TG_IP,
     TG_SOCKET_PATH,
-    TG_CONTESTS_PATH,
+    TG_CONTESTS_DIR,
 
     TG_LAST_ELEM
   };
@@ -93,7 +93,7 @@ struct config_node
   int show_generation_time;
   unsigned char *charset;
   unsigned char *socket_path;
-  unsigned char *contests_path;
+  unsigned char *contests_dir;
   struct access_node *access;
 };
 
@@ -104,7 +104,7 @@ static char const * const elem_map[] =
   "access",
   "ip",
   "socket_path",
-  "contests_path",
+  "contests_dir",
 
   0
 };
@@ -260,8 +260,8 @@ parse_config(char const *path)
       }
       cfg->socket_path = p->text;
       break;
-    case TG_CONTESTS_PATH:
-      if (cfg->contests_path) {
+    case TG_CONTESTS_DIR:
+      if (cfg->contests_dir) {
         err("%s:%d:%d: <contests_path> tag may be defined only once",
             path, p->line, p->column);
         goto failed;
@@ -276,7 +276,7 @@ parse_config(char const *path)
             path, p->line, p->column);
         goto failed;
       }
-      cfg->contests_path = p->text;
+      cfg->contests_dir = p->text;
       break;
     case TG_ACCESS:
       if (cfg->access) {
@@ -370,7 +370,7 @@ parse_config(char const *path)
     err("%s: <socket_path> tag must be specified", path);
     goto failed;
   }
-  if (!cfg->contests_path) {
+  if (!cfg->contests_dir) {
     err("%s: <contests_path> tag must be specified", path);
     goto failed;
   }
@@ -383,10 +383,9 @@ parse_config(char const *path)
 }
 
 static struct config_node *config;
-static struct contest_list *contests;
 static struct userlist_clnt *server_conn;
 static unsigned long user_ip;
-static int user_contest_id;
+static int user_contest_id = 0;
 static int client_locale_id;
 static unsigned char *self_url;
 static int user_id;
@@ -481,16 +480,36 @@ read_user_id(void)
   user_id = x;
 }
 
-static void
-read_contest_id(void)
+static int
+parse_contest_id(void)
 {
-  int x = 0, n = 0;
-  unsigned char *s;
+  unsigned char *s = cgi_param("contest_id");
+  int v = 0, n = 0;
 
-  user_contest_id = 0;
-  if (!(s = cgi_param("contest_id"))) return;
-  if (sscanf(s, "%d %n", &x, &n) != 1 || s[n] || x < 0 || x > 1000) return;
-  user_contest_id = x;
+  if (!s) return 0;
+  if (sscanf(s, "%d %n", &v, &n) != 1 || s[n] || v < 0) return 0;
+  return v;
+}
+
+static int
+parse_name_contest_id(unsigned char *basename)
+{
+  int v, n;
+
+  if (!basename) return 0;
+  if (sscanf(basename, "-%d %n", &v, &n)!=1 || basename[n] || v < 0) return 0;
+  return v;
+}
+
+static int
+check_config_exist(unsigned char const *path)
+{
+  struct stat sb;
+
+  if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode) && access(path, R_OK) >= 0) {
+    return 1;
+  }
+  return 0;
 }
 
 static void
@@ -500,30 +519,117 @@ initialize(int argc, char const *argv[])
   path_t dirname;
   path_t basename;
   path_t cfgname;
+  path_t progname;
+  path_t cfgdir;
+  path_t cfgname2;
   char *s = getenv("SCRIPT_FILENAME");
+  int namelen, cgi_contest_id, name_contest_id, name_ok;
 
   pathcpy(fullname, argv[0]);
   if (s) pathcpy(fullname, s);
   os_rDirName(fullname, dirname, PATH_MAX);
   os_rGetBasename(fullname, basename, PATH_MAX);
   strcpy(program_name, basename);
+  if (strncmp(basename, "users", 5) != 0) {
+    client_not_configured(0, "bad program name");
+    // never get here
+  }
+  namelen = 5;                  /* "users" */
+  memset(progname, 0, sizeof(progname));
+  strncpy(progname, basename, namelen);
+
+  /* we need CGI parameters relatively early because of contest_id */
+  cgi_read(0);
+  cgi_contest_id = parse_contest_id();
+  name_contest_id = parse_name_contest_id(basename + namelen);
 
   /*
    * if CGI_DATA_PATH is absolute, do not append the program start dir
    */
   if (CGI_DATA_PATH[0] == '/') {
-    pathmake(cfgname, CGI_DATA_PATH, "/", basename, ".xml", NULL);
+    pathmake(cfgdir, CGI_DATA_PATH, "/", NULL);
   } else {
-    pathmake(cfgname, dirname, "/",CGI_DATA_PATH, "/", basename, ".xml", NULL);
+    pathmake(cfgdir, dirname, "/",CGI_DATA_PATH, "/", NULL);
   }
 
+  /*
+    Try different variants:
+      o If basename has the form <prog>-<number>, then consider
+        <number> as contest_id, ignoring the contest_id from
+        CGI arguments. Try config file <prog>-<number>.xml
+        first, and then try <prog>.xml.
+      o If basename has the bare form <prog>, then read contest_id
+        from CGI parameters. Try config file <prog>-<contest_id>.xml
+        first, and then try <prog>.xml.
+      o If basename has any other form, ignore contest_id from
+        CGI parameters. Always use config file <prog>.xml.
+  */
+  if (name_contest_id > 0) {
+    // first case
+    cgi_contest_id = 0;
+    snprintf(cfgname, sizeof(cfgname), "%s%s.xml", cfgdir, basename);
+    name_ok = check_config_exist(cfgname);
+    if (!name_ok) {
+      snprintf(cfgname2, sizeof(cfgname2), "%s%s-%d.xml", cfgdir, progname,
+               name_contest_id);
+      if (strcmp(cfgname2, cfgname) != 0 && check_config_exist(cfgname2)) {
+        name_ok = 1;
+        strcpy(cfgname, cfgname2);
+      }
+    }
+    if (!name_ok) {
+      snprintf(cfgname2, sizeof(cfgname2), "%s%s-%06d.xml", cfgdir, progname,
+               name_contest_id);
+      if (strcmp(cfgname2, cfgname) != 0 && check_config_exist(cfgname2)) {
+        name_ok = 1;
+        strcpy(cfgname, cfgname2);
+      }
+    }
+    if (!name_ok) {
+      snprintf(cfgname, sizeof(cfgname), "%s%s.xml", cfgdir, progname);
+      name_ok = check_config_exist(cfgname);
+    }
+    user_contest_id = name_contest_id;
+  } else if (strlen(basename) == namelen && cgi_contest_id <= 0) {
+    // contest_id is not set
+    snprintf(cfgname, sizeof(cfgname), "%s%s.xml", cfgdir, progname);
+    name_ok = check_config_exist(cfgname);
+  } else if (strlen(basename) == namelen) {
+    // second case
+    snprintf(cfgname, sizeof(cfgname), "%s%s-%d.xml", cfgdir, progname,
+             cgi_contest_id);
+    name_ok = check_config_exist(cfgname);
+    if (!name_ok) {
+      snprintf(cfgname, sizeof(cfgname), "%s%s-%06d.xml", cfgdir, progname,
+               cgi_contest_id);
+      name_ok = check_config_exist(cfgname);
+    }
+    if (!name_ok) {
+      snprintf(cfgname, sizeof(cfgname), "%s%s.xml", cfgdir, progname);
+      name_ok = check_config_exist(cfgname);
+    }
+    user_contest_id = cgi_contest_id;
+  } else {
+    // third case
+    cgi_contest_id = 0;
+    snprintf(cfgname, sizeof(cfgname), "%s%s.xml", cfgdir, basename);
+    name_ok = check_config_exist(cfgname);
+  }
+
+  if (!name_ok) {
+    client_not_configured(0, "client is not configured");
+    // never get here
+  }
   if (!(config = parse_config(cfgname))) {
     client_not_configured(0, "config file not parsed");
   }
+
+  /*
   if (!config->contests_path ||
       !(contests = parse_contest_xml(config->contests_path))) {
     client_not_configured(0, "contests database not parsed");
   }
+  */
   parse_user_ip();
 
   // construct self-reference URL
@@ -534,7 +640,7 @@ initialize(int argc, char const *argv[])
 
     if (!http_host) http_host = "localhost";
     if (!server_port) server_port = "80";
-    if (!script_name) script_name = "/cgi-bin/register";
+    if (!script_name) script_name = "/cgi-bin/users";
     snprintf(fullname, sizeof(fullname),
              "http://%s:%s%s", http_host, server_port, script_name);
     self_url = xstrdup(fullname);
@@ -559,6 +665,16 @@ put_header(char const *coding, char const *format, ...)
   fputs("\n</title></head><body>\n", stdout);
 }
 
+static void
+information_not_available(void)
+{
+  client_put_header(config->charset, _("Information is not available"));
+  printf("<p>%s</p>\n",
+         _("Information by your request is not available."));
+  client_put_footer();
+  exit(0);
+}
+
 int
 main(int argc, char const *argv[])
 {
@@ -569,7 +685,9 @@ main(int argc, char const *argv[])
   size_t header_len = 0;
   char *footer_txt = 0;
   size_t footer_len = 0;
-  int request_flags = 0;
+  int errcode = 0;
+  int name_len = 0;
+  unsigned char *name_str = 0;
 
   gettimeofday(&begin_time, 0);
   initialize(argc, argv);
@@ -578,93 +696,57 @@ main(int argc, char const *argv[])
     client_access_denied(config->charset);
   }
 
-  cgi_read(config->charset);
   read_locale_id();
-  read_contest_id();
   read_user_id();
   set_locale_by_id(client_locale_id);
 
-  if (user_contest_id > 0 && user_contest_id < contests->id_map_size) {
-    cnts = contests->id_map[user_contest_id];
+  if ((errcode = contests_set_directory(config->contests_dir)) < 0) {
+    fprintf(stderr, "cannot set contest directory '%s': %s\n",
+            config->contests_dir, contests_strerror(-errcode));
+    client_put_header(config->charset, "Invalid configuration");
+    printf("<h2>%s</h2>\n<p>%s</p>\n",
+           _("Configuration error"),
+           _("This program is configured incorrectly and cannot perform normal operation. Please contact the site (or contest) administrator."));
+    client_put_footer();
+    return 0;
   }
-  if (cnts) {
-    int name_len = 0;
-    unsigned char *name_str = 0;
 
-    logger_set_level(-1, LOG_WARNING);
-    if (cnts->header_file) {
-      generic_read_file(&header_txt, 0, &header_len, 0,
-                        0, cnts->header_file, "");
-    }
-    if (cnts->footer_file) {
-      generic_read_file(&footer_txt, 0, &footer_len, 0,
-                        0, cnts->footer_file, "");
-    }
+  if (user_contest_id <= 0) {
+    // refuse to run
+    information_not_available();
+  }
 
-    name_len = html_armored_strlen(cnts->name);
-    name_str = alloca(name_len + 16);
-    html_armor_string(cnts->name, name_str);
+  cnts = 0;
+  if ((errcode = contests_get(user_contest_id, &cnts)) < 0) {
+    fprintf(stderr, "cannot load contest %d: %s\n",
+            user_contest_id, contests_strerror(-errcode));
+    information_not_available();
+  }
+  ASSERT(cnts);
 
-    if (request_flags) {
-      printf("Content-type: text/plain; charset=koi8-r\n\n");
-    } else {
-      if (header_txt) {
-        put_http_header(config->charset);
-        printf("%s", header_txt);
-        if (user_id > 0) {
-          //printf("<h2>%s</h2>\n", _("Detailed user (team) information"));
-        } else {
-          printf("<h2>%s</h2>\n", name_str);
-          printf("<h2>%s</h2>\n", _("List of registered users (teams)"));
-        }
-      } else {
-        put_header(config->charset, "%s", _("List of registered users (teams)"));
-        if (user_id > 0) {
-          printf("<h1>%s</h1>\n", _("Detailed user (team) information"));
-        } else {
-          printf("<h1>%s &quot;%s&quot;</h1>\n",
-                 _("List of registered users (teams) for contest"), name_str);
-        }
-      }
-    }
+  logger_set_level(-1, LOG_WARNING);
+  if (cnts->header_file) {
+    generic_read_file(&header_txt, 0, &header_len, 0,
+                      0, cnts->header_file, "");
+  }
+  if (cnts->footer_file) {
+    generic_read_file(&footer_txt, 0, &footer_len, 0,
+                      0, cnts->footer_file, "");
+  }
 
-    server_conn = userlist_clnt_open(config->socket_path);
-    if (!server_conn) {
-      printf("<p>%s</p>\n", _("Information is not available"));
-    } else {
-      fflush(stdout);
-      r = userlist_clnt_list_users(server_conn, user_ip, user_contest_id,
-                                   client_locale_id, user_id, 
-                                   request_flags, self_url, "");
-      if (r < 0) {
-        printf("<p>%s</p>\n", _("Information is not available"));
-        printf("<pre>%s</pre>\n", gettext(userlist_strerror(-r)));
-      }
-    }
-  } else {
+  name_len = html_armored_strlen(cnts->name);
+  name_str = alloca(name_len + 16);
+  html_armor_string(cnts->name, name_str);
+
+  if (!contests_check_users_ip(user_contest_id, user_ip)) {
     if (header_txt) {
       put_http_header(config->charset);
       printf("%s", header_txt);
-      printf("<h2>%s</h2>\n", _("List of users (teams)"));
     } else {
-      client_put_header(config->charset, "%s", _("List of users (teams)"));
+      put_header(config->charset, _("Permission denied"));
     }
-    printf("<p>%s</p>\n", _("Information is not available"));
-  }
 
-  if (!request_flags) {
-    if (config->show_generation_time) {
-      gettimeofday(&end_time, 0);
-      end_time.tv_sec -= begin_time.tv_sec;
-      if ((end_time.tv_usec -= begin_time.tv_usec) < 0) {
-        end_time.tv_usec += 1000000;
-        end_time.tv_sec--;
-      }
-      printf("<hr><p>%s: %ld %s\n",
-             _("Page generation time"),
-             end_time.tv_usec / 1000 + end_time.tv_sec * 1000,
-             _("msec"));
-    }
+    printf("<h2>%s</h2>\n",_("You have no permissions to view this contest."));
     if (footer_txt) {
       printf("<hr><font size=\"-1\">");
       client_put_copyright();
@@ -674,6 +756,61 @@ main(int argc, char const *argv[])
       client_put_footer();
     }
   }
+
+  if (header_txt) {
+    put_http_header(config->charset);
+    printf("%s", header_txt);
+    if (user_id > 0) {
+      //printf("<h2>%s</h2>\n", _("Detailed user (team) information"));
+    } else {
+      printf("<h2>%s</h2>\n", name_str);
+      printf("<h2>%s</h2>\n", _("List of registered users (teams)"));
+    }
+  } else {
+    put_header(config->charset, "%s", _("List of registered users (teams)"));
+    if (user_id > 0) {
+      printf("<h1>%s</h1>\n", _("Detailed user (team) information"));
+    } else {
+      printf("<h1>%s &quot;%s&quot;</h1>\n",
+             _("List of registered users (teams) for contest"), name_str);
+    }
+  }
+
+  server_conn = userlist_clnt_open(config->socket_path);
+  if (!server_conn) {
+    printf("<p>%s</p>\n", _("Information is not available"));
+  } else {
+    fflush(stdout);
+    r = userlist_clnt_list_users(server_conn, user_ip, user_contest_id,
+                                 client_locale_id, user_id, 
+                                 0, self_url, "");
+    if (r < 0) {
+      printf("<p>%s</p>\n", _("Information is not available"));
+      printf("<pre>%s</pre>\n", gettext(userlist_strerror(-r)));
+    }
+  }
+
+  if (config->show_generation_time) {
+    gettimeofday(&end_time, 0);
+    end_time.tv_sec -= begin_time.tv_sec;
+    if ((end_time.tv_usec -= begin_time.tv_usec) < 0) {
+      end_time.tv_usec += 1000000;
+      end_time.tv_sec--;
+    }
+    printf("<hr><p>%s: %ld %s\n",
+           _("Page generation time"),
+           end_time.tv_usec / 1000 + end_time.tv_sec * 1000,
+           _("msec"));
+  }
+  if (footer_txt) {
+    printf("<hr><font size=\"-1\">");
+    client_put_copyright();
+    printf("</font>");
+    printf("%s", footer_txt);
+  } else {
+    client_put_footer();
+  }
+
   if (server_conn) {
     userlist_clnt_close(server_conn);
   }
