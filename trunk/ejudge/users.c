@@ -630,14 +630,12 @@ initialize(int argc, char const *argv[])
   // construct self-reference URL
   {
     unsigned char *http_host = getenv("HTTP_HOST");
-    unsigned char *server_port = getenv("SERVER_PORT");
     unsigned char *script_name = getenv("SCRIPT_NAME");
 
     if (!http_host) http_host = "localhost";
-    if (!server_port) server_port = "80";
     if (!script_name) script_name = "/cgi-bin/users";
     snprintf(fullname, sizeof(fullname),
-             "http://%s:%s%s", http_host, server_port, script_name);
+             "http://%s%s", http_host, script_name);
     self_url = xstrdup(fullname);
   }
 }
