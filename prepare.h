@@ -124,6 +124,7 @@ struct section_problem_data
   struct generic_section_config g;
 
   int    id;                    /* problem identifier */
+  int    abstract;              /* is this abstract problem specification */
   int    use_stdin;             /* 1, if solution uses stdin for input */
   int    use_stdout;            /* 1, if solution uses stdout for output */
   int    time_limit;            /* time limit in secs */
@@ -131,6 +132,8 @@ struct section_problem_data
   int    full_score;            /* score for complete solution */
   int    test_score;            /* score for one test */
   int    run_penalty;           /* penalty for one run */
+  int    use_corr;              /* whether the correct answers defined */
+  path_t super;                 /* superproblem's short_name */
   path_t short_name;            /* short problem name, eg A, B, ... */
   path_t long_name;             /* long problem name */
   path_t test_dir;              /* directory with tests */
@@ -183,6 +186,9 @@ struct section_tester_data
 
   path_t arch;                  /* checker architecture */
   path_t key;                   /* configuration key */
+
+  int abstract;                 /* is this tester abstract */
+  path_t super;                 /* name of the supertester */
 
   path_t server_root_dir;
   path_t server_var_dir;
