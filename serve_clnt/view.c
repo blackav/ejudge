@@ -44,6 +44,7 @@ serve_clnt_view(int sock_fd,
   size_t out_size, in_size = 0;
   unsigned char *self_url_ptr, *hidden_vars_ptr, *extra_args_ptr, c;
   int r, pipe_fd[2], pass_fd[2];
+  void *void_in = 0;
 
   if (sock_fd < 0) return -SRV_ERR_NOT_CONNECTED;
   if (!self_url) self_url = "";
@@ -101,10 +102,11 @@ serve_clnt_view(int sock_fd,
     return r;
   }
 
-  if ((r = serve_clnt_recv_packet(sock_fd, &in_size, (void**) &in)) < 0) {
+  if ((r = serve_clnt_recv_packet(sock_fd, &in_size, &void_in)) < 0) {
     close(pipe_fd[0]);
     return r;
   }
+  in = void_in;
   if (in->id < 0) {
     close(pipe_fd[0]);
     r = in->id;
