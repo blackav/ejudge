@@ -1685,61 +1685,6 @@ cmd_check_cookie(struct client_state *p,
   p->ip = data->origin_ip;
   p->cookie = data->cookie;
   return;
-
-  /*
-  user = (struct userlist_user*) userlist->b.first_down;
-  while (user) {
-    if (user->cookies) {
-      if (user->cookies->first_down) {
-        cookie = (struct userlist_cookie*) user->cookies->first_down;
-        while (cookie) {
-          if ((cookie->ip == data->origin_ip) &&
-              (cookie->cookie == data->cookie) &&
-              (time(0)<cookie->expire)) {
-            anslen = sizeof(struct userlist_pk_login_ok)
-              + strlen(user->name) + 1 + strlen(user->login) + 1;
-            answer = alloca(anslen);
-            memset(answer, 0, anslen);
-            if (data->locale_id != -1) {
-              cookie->locale_id = data->locale_id;
-              dirty = 1;
-              user->last_minor_change_time = cur_time;
-            }
-            if (data->contest_id != 0) {
-              cookie->contest_id = data->contest_id;
-              dirty = 1;
-              user->last_minor_change_time = cur_time;
-            }
-            answer->locale_id = cookie->locale_id;
-            answer->reply_id = ULS_LOGIN_COOKIE;
-            answer->user_id = user->id;
-            answer->contest_id = cookie->contest_id;
-            answer->login_len = strlen(user->login);
-            name_beg = answer->data + answer->login_len + 1;
-            answer->name_len = strlen(user->name);
-            answer->cookie = cookie->cookie;
-            strcpy(answer->data, user->login);
-            strcpy(name_beg, user->name);
-            enqueue_reply_to_client(p,anslen,answer);
-            user->last_login_time = cur_time;
-            dirty = 1;
-            CONN_INFO("OK: %d, %s", user->id, user->login);
-            p->user_id = user->id;
-            p->ip = data->origin_ip;
-            p->cookie = data->cookie;
-            return;
-          }
-          cookie = (struct userlist_cookie*) cookie->b.right;
-        }
-      }
-    }
-    user = (struct userlist_user*) user->b.right;
-  }
-
-  // cookie not found
-  CONN_INFO("FAILED");
-  send_reply(p, -ULS_ERR_NO_COOKIE);
-  */
 }
 
 static void
@@ -2579,7 +2524,7 @@ needs_name_update(unsigned char const *old, unsigned char const *new)
 }
 
 static void
-do_set_user_info(struct client_state *p,
+do_set_user_info(struct client_state *p, struct contest_desc *cnts,
                  struct userlist_pk_set_user_info *data)
 {
   struct userlist_user *new_u = 0, *old_u = 0;
@@ -2588,6 +2533,7 @@ do_set_user_info(struct client_state *p,
   struct userlist_member *new_m, *old_m;
   unsigned char const *role_str = 0;
   int updated = 0;
+  int max_count = 0;
 
   if (!(new_u = userlist_parse_user_str(data->data))) {
     err("%d: XML parse error", p->id);
@@ -2925,6 +2871,29 @@ do_set_user_info(struct client_state *p,
         userlist_free(&new_m->b);
         goto restart_inserting;
       }
+      if (!cnts) {
+        max_count = 10;
+      } if (!cnts->members[new_role]) {
+        max_count = 0;
+      } else {
+        max_count = cnts->members[new_role]->max_count;
+      }
+      if (!max_count) {
+        err("%d: members of role %s are not allowed in current contest",
+            p->id, role_str);
+        old_m = unlink_member(new_u, new_role, new_pers);
+        ASSERT(old_m == new_m);
+        userlist_free(&new_m->b);
+        goto restart_inserting;
+      }
+      if (old_u->members[new_role]
+          && old_u->members[new_role]->total >= max_count) {
+        err("%d: too many members for role %s", p->id, role_str);
+        old_m = unlink_member(new_u, new_role, new_pers);
+        ASSERT(old_m == new_m);
+        userlist_free(&new_m->b);
+        goto restart_inserting;
+      }
       info("%d: new member to role %s inserted", p->id, role_str);
       updated = 1;
       old_m = unlink_member(new_u, new_role, new_pers);
@@ -2951,11 +2920,20 @@ cmd_set_user_info(struct client_state *p,
                   struct userlist_pk_set_user_info *data)
 {
   size_t xml_len;
+  struct contest_desc *cnts = 0;
+  int errcode = 0;
 
   xml_len = strlen(data->data);
   if (xml_len != data->info_len) {
     CONN_BAD("XML length does not match");
     return;
+  }
+  if (data->contest_id) {
+    if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+      CONN_ERR("invalid contest: %s", contests_strerror(-errcode));
+      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
   }
   if (pkt_len != sizeof(*data) + xml_len) {
     CONN_BAD("packet length mismatch");
@@ -2974,7 +2952,7 @@ cmd_set_user_info(struct client_state *p,
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  do_set_user_info(p, data);
+  do_set_user_info(p, cnts, data);
 }
 
 static void
