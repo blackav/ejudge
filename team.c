@@ -408,7 +408,6 @@ initialize(int argc, char *argv[])
   if (s) pathcpy(fullname, s);
   os_rDirName(fullname, dirname, PATH_MAX);
   os_rGetBasename(fullname, basename, PATH_MAX);
-  strcpy(program_name, basename);
   if (strncmp(basename, "team", 4))
     client_not_configured(0, "bad program_name");
 
@@ -447,8 +446,8 @@ initialize(int argc, char *argv[])
   }
   parse_client_ip();
 
-  client_make_form_headers();
   make_self_url();
+  client_make_form_headers(self_url);
 }
 
 static void
