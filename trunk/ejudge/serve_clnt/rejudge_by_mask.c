@@ -33,6 +33,7 @@ serve_clnt_rejudge_by_mask(int sock_fd,
   struct prot_serve_packet *in = 0;
   size_t out_size = 0;
   int in_size = 0, r;
+  void *void_in = 0;
 
   if (cmd != SRV_CMD_REJUDGE_BY_MASK) return -SRV_ERR_PROTOCOL;
   if (sock_fd < 0) return -SRV_ERR_NOT_CONNECTED;
@@ -48,9 +49,10 @@ serve_clnt_rejudge_by_mask(int sock_fd,
   if ((r = serve_clnt_send_packet(sock_fd, out_size, out)) < 0) {
     return r;
   }
-  if ((r = serve_clnt_recv_packet(sock_fd, &in_size, (void**) &in)) < 0) {
+  if ((r = serve_clnt_recv_packet(sock_fd, &in_size, &void_in)) < 0) {
     return r;
   }
+  void_in = in;
   if (in_size != sizeof(*in)) {
     xfree(in);
     err("serve_clnt_upload_report: unexpected reply length %d", in_size);
