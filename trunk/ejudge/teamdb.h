@@ -21,6 +21,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <time.h>
+
 #define TEAMDB_MAX_SCRAMBLED_PASSWD_SIZE 48
 
 /* various team flags */
@@ -81,5 +83,8 @@ struct teamdb_export
 };
 
 int teamdb_export_team(int id, struct teamdb_export *);
+
+time_t teamdb_get_archive_time(int uid);
+int    teamdb_set_archive_time(int uid, time_t time);
 
 #endif /* __TEAMDB_H__ */
