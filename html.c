@@ -343,7 +343,8 @@ new_write_user_clar(FILE *f, int uid, int cid)
   if (time < start_time) time = start_time;
   duration_str(show_astr_time, time, start_time, dur_str, 0);
 
-  fprintf(f, "<h2>%s #%d</h2>\n", _("Message"), cid);
+  fprintf(f, "<%s>%s #%d</%s>\n", cur_contest->team_head_style,
+          _("Message"), cid, cur_contest->team_head_style);
   fprintf(f, "<table border=\"0\">\n");
   fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Number"), cid);
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Time"), dur_str);
@@ -452,7 +453,8 @@ write_standings_header(FILE *f, int client_flag,
                 header, header);
       }
     } else {
-      fprintf(f, "<h2>%s</h2>\n", header);
+      fprintf(f, "<%s>%s</%s>\n", cur_contest->team_head_style,
+              header, cur_contest->team_head_style);
     }
     return;
   }
@@ -493,7 +495,8 @@ write_standings_header(FILE *f, int client_flag,
               header, header);
     }
   } else {
-    fprintf(f, "<h2>%s</h2>\n", header);
+    fprintf(f, "<%s>%s</%s>\n", cur_contest->team_head_style,
+            header, cur_contest->team_head_style);
   }
 }
 
@@ -520,13 +523,18 @@ do_write_kirov_standings(FILE *f, int client_flag,
   int  *tot_score, *tot_full;
   int  *t_sort, *t_n1, *t_n2;
   char dur_str[1024];
+  unsigned char *head_style;
+
+  if (client_flag) head_style = cur_contest->team_head_style;
+  else head_style = "<h2>";
 
   /* Check that the contest is started */
   start_time = run_get_start_time();
   stop_time = run_get_stop_time();
   if (!start_time) {
     if (raw_flag) return;
-    fprintf(f, "<h2>%s</h2>", _("The contest is not started"));
+    fprintf(f, "<%s>%s</%s>", head_style, _("The contest is not started"),
+            head_style);
     if (!client_flag) {
       if (footer_str) {
         process_template(f, footer_str, 0, 0, 0, get_copyright());
@@ -830,6 +838,10 @@ do_write_standings(FILE *f, int client_flag, int user_id,
 
   char          url_str[1024];
   unsigned char *bgcolor_ptr;
+  unsigned char *head_style;
+
+  if (client_flag) head_style = cur_contest->team_head_style;
+  else head_style = "<h2>";
 
   cur_time = time(0);
   start_time = run_get_start_time();
@@ -852,7 +864,8 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   if (!start_time) {
     if (raw_flag) return;
 
-    fprintf(f, "<h2>%s</h2>", _("The contest is not started"));
+    fprintf(f, "<%s>%s</%s>", head_style, _("The contest is not started"),
+            head_style);
     if (!client_flag) {
       if (footer_str) {
         process_template(f, footer_str, 0, 0, 0, get_copyright());
@@ -1175,7 +1188,7 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
   }
 
   /* header */
-  fprintf(f, "<p><big>%s: %d</big></p>\n",
+  fprintf(f, "<p%s>%s: %d</p>\n", cur_contest->team_par_style,
           _("Total submissions"), total);
   fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th>"
           "<th>%s</th>"
@@ -1476,7 +1489,9 @@ write_team_page(FILE *f, int user_id,
   }
 
   if (server_start && !server_end) {
-    fprintf(f, "<hr><a name=\"submit\"></a><h2>%s</h2>\n", _("Send a submission"));
+    fprintf(f, "<hr><a name=\"submit\"></a><%s>%s</%s>\n",
+            cur_contest->team_head_style, _("Send a submission"),
+            cur_contest->team_head_style);
     html_start_form(f, 2, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<table>\n");
     fprintf(f, "<tr><td>%s:</td><td>", _("Problem"));
@@ -1508,20 +1523,23 @@ write_team_page(FILE *f, int user_id,
   }
 
   if (server_start) {
-    fprintf(f, "<hr><a name=\"runstat\"></a><h2>%s (%s)</h2>\n",
+    fprintf(f, "<hr><a name=\"runstat\"></a><%s>%s (%s)</%s>\n",
+            cur_contest->team_head_style,
             _("Sent submissions"),
-            all_runs?_("all"):_("last 15"));
+            all_runs?_("all"):_("last 15"),
+            cur_contest->team_head_style);
     new_write_user_runs(f, user_id, all_runs,
                         sid_mode, sid, self_url, hidden_vars, extra_args);
 
     if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
       html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args);
-      fprintf(f, "<p>"
+      fprintf(f, "<p%s>"
               "<input type=\"submit\" name=\"all_runs\" value=\"%s\">"
               "</p>",
-              _("View all"));
+              cur_contest->team_par_style, _("View all"));
     } else {
-      fprintf(f, "<p>%s%s</a></p>",
+      fprintf(f, "<p%s>%s%s</a></p>",
+              cur_contest->team_par_style,
               html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url,
                             extra_args, "all_runs=1"),
               _("View all"));
@@ -1530,19 +1548,20 @@ write_team_page(FILE *f, int user_id,
     print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
                       0, 0, 0);
     if (global->team_download_time > 0) {
-      fprintf(f, "<p>");
+      fprintf(f, "<p%s>", cur_contest->team_par_style);
       html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
       fprintf(f,
               "<input type=\"submit\" name=\"archive\" value=\"%s\"></form>\n",
               _("Download your submits"));
-      fprintf(f, _("<p><b>Note,</b> if downloads are allowed, you may download your runs once per %d minutes. The archive is in <tt>.tar.gz</tt> (<tt>.tgz</tt>) format.</p>\n"), global->team_download_time / 60);
+      fprintf(f, _("<p%s><b>Note,</b> if downloads are allowed, you may download your runs once per %d minutes. The archive is in <tt>.tar.gz</tt> (<tt>.tgz</tt>) format.</p>\n"), cur_contest->team_par_style, global->team_download_time / 60);
     }
   }
 
   if (!global->disable_clars && !global->disable_team_clars
       && server_start && !server_end) {
-    fprintf(f, "<hr><a name=\"clar\"></a><h2>%s</h2>\n",
-            _("Send a message to judges"));
+    fprintf(f, "<hr><a name=\"clar\"></a><%s>%s</%s>\n",
+            cur_contest->team_head_style, _("Send a message to judges"),
+            cur_contest->team_head_style);
     html_start_form(f, 2, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<table><tr><td>%s:</td><td>", _("Problem"));
     fprintf(f, "<select name=\"problem\"><option value=\"\">\n");
@@ -1564,20 +1583,22 @@ write_team_page(FILE *f, int user_id,
   }
 
   if (!global->disable_clars) {
-    fprintf(f, "<hr><a name=\"clarstat\"></a><h2>%s (%s)</h2>\n",
-            _("Messages"), all_clars?_("all"):_("last 15"));
+    fprintf(f, "<hr><a name=\"clarstat\"></a><%s>%s (%s)</%s>\n",
+            cur_contest->team_head_style, _("Messages"),
+            all_clars?_("all"):_("last 15"), cur_contest->team_head_style);
 
     new_write_user_clars(f, user_id, all_clars, sid_mode, sid,
                          self_url, hidden_vars, extra_args);
 
     if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
       html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args);
-      fprintf(f, "<p>"
+      fprintf(f, "<p%s>"
               "<input type=\"submit\" name=\"all_clars\" value=\"%s\">"
               "</p>",
-              _("View all"));
+              cur_contest->team_par_style, _("View all"));
     } else {
-      fprintf(f, "<p>%s%s</a></p>",
+      fprintf(f, "<p%s>%s%s</a></p>",
+              cur_contest->team_par_style,
               html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url,
                             extra_args, "all_clars=1"),
               _("View all"));
