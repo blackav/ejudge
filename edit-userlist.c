@@ -2184,7 +2184,8 @@ display_registered_users(unsigned char const *upper,
            "%s->%s %d", upper, "Registered users for",
            cnts->id);
 
-  r = userlist_clnt_list_all_users(server_conn, cnts->id, &xml_text);
+  r = userlist_clnt_list_all_users(server_conn, ULS_LIST_ALL_USERS,
+                                   cnts->id, &xml_text);
   if (r < 0) {
     vis_err("Cannot get the list of users: %s", userlist_strerror(-r));
     return -1;
@@ -2742,7 +2743,8 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
   snprintf(current_level, sizeof(current_level),
            "%s->%s", upper, "User list");
 
-  r = userlist_clnt_list_all_users(server_conn, 0, &xml_text);
+  r = userlist_clnt_list_all_users(server_conn, ULS_LIST_ALL_USERS,
+                                   0, &xml_text);
   if (r < 0) {
     vis_err("Cannot get user list: %s", userlist_strerror(-r));
     return -1;
