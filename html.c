@@ -765,6 +765,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   int           status;
 
   char          url_str[1024];
+  unsigned char *bgcolor_ptr;
 
   cur_time = time(0);
   start_time = run_get_start_time();
@@ -934,9 +935,20 @@ do_write_standings(FILE *f, int client_flag, int user_id,
 
   for (i = 0; i < t_tot; i++) {
     int t = t_sort[i];
+    bgcolor_ptr = 0;
     if (user_id > 0 && user_id == t_ind[t] &&
         global->standings_team_color[0]) {
-      fprintf(f, "<tr bgcolor=\"%s\"><td>", global->standings_team_color);
+      bgcolor_ptr = global->standings_team_color;
+    } else if (global->virtual) {
+      int vstat = run_get_virtual_status(t_ind[t]);
+      if (vstat == 1 && global->standings_real_team_color) {
+        bgcolor_ptr = global->standings_real_team_color;
+      } else if (vstat == 2 && global->standings_virtual_team_color) {
+        bgcolor_ptr = global->standings_virtual_team_color;
+      }
+    }
+    if (bgcolor_ptr) {
+      fprintf(f, "<tr bgcolor=\"%s\"><td>", bgcolor_ptr);
     } else {
       fputs("<tr><td>", f);
     }
