@@ -57,18 +57,19 @@ do_loop(void)
   path_t report_dir, status_dir;
 
   path_t  pkt_name, run_name;
-  char    pkt_buf[128];
-  char   *pkt_ptr;
+  char   *pkt_ptr, *ptr, *end_ptr;
   int     pkt_len;
   int     locale_id;
   int     contest_id;
   int     run_id;
   int     lang_id;
-  int    r, n;
+  int    r, n, i;
   tpTask tsk;
   sigset_t work_mask;
   unsigned char msgbuf[512];
   int ce_flag;
+  char **compiler_env = 0;
+  int env_count = 0, env_size = 0;
 
   sigemptyset(&work_mask);
   sigaddset(&work_mask, SIGINT);
@@ -104,42 +105,98 @@ do_loop(void)
       continue;
     }
 
-    memset(pkt_buf, 0, sizeof(pkt_buf));
-    pkt_ptr = pkt_buf;
+    pkt_ptr = 0;
     pkt_len = 0;
-    r = generic_read_file(&pkt_ptr, sizeof(pkt_buf), &pkt_len,
+    compiler_env = 0;
+    env_count = 0;
+    r = generic_read_file(&pkt_ptr, 0, &pkt_len,
                           SAFE | REMOVE, global->compile_queue_dir,
                           pkt_name, "");
     if (r == 0) continue;
-    if (r < 0) {
+    if (r < 0 || !pkt_ptr) {
       // it looks like there's no reasonable recovery strategy
       // so, just ignore the error
       continue;
     }
 
-    chop(pkt_buf);
-    info("compile packet: <%s>", pkt_buf);
+    chop(pkt_ptr);
+    end_ptr = pkt_ptr + strlen(pkt_ptr);
+    info("compile packet: <%s>", pkt_ptr);
 
     n = 0;
-    if (sscanf(pkt_buf, "%d %d %d %d %n", &contest_id, &run_id,
-               &lang_id, &locale_id, &n) != 4
-        || pkt_buf[n]) {
+    if (sscanf(pkt_ptr, "%d %d %d %d %n", &contest_id, &run_id,
+               &lang_id, &locale_id, &n) != 4) {
       // packet parse error, we cannot report such error back to
       // the contest's serve since the contest id is unknown
       // just ignore the error
       err("packet parse error");
+    silent_packet_error:
+      xfree(pkt_ptr);
+      if (compiler_env) {
+        for (i = 0; i < env_count; i++) xfree(compiler_env[i]);
+        xfree(compiler_env);
+      }
       continue;
     }
 
     if (contest_id <= 0 || contest_id > 9999) {
       // cannot report to the server, just ignore
       err("contest_id is invalid: %d", contest_id);
-      continue;
+      goto silent_packet_error;
     }
     if (run_id < 0 || run_id > 999999) {
       err("run_id is invalid: %d", run_id);
-      continue;
+      goto silent_packet_error;
     }
+
+    ptr = pkt_ptr + n;
+    n = 0;
+    if (sscanf(ptr, "%d%n", &env_count, &n) == 1) {
+      ptr += n;
+      if (env_count < 0 || env_count > 9999) {
+        err("env_count is invalid: %d", env_count);
+        env_count = 0;
+        goto silent_packet_error;
+      }
+      if (env_count > 0) {
+        XCALLOC(compiler_env, env_count + 1);
+        for (i = 0; i < env_count; i++) {
+          n = 0;
+          env_size = 0;
+          if (sscanf(ptr, "%d%n", &env_size, &n) != 1) {
+            err("cannot read compiler_env[%d] length", i);
+            goto silent_packet_error;
+          }
+          ptr += n;
+          if (env_size <= 0 || env_size > 999999) {
+            err("invalid compiler_env[%d] length %d", i, env_size);
+            goto silent_packet_error;
+          }
+          if (*ptr != ' ') {
+            err("space expected after compiler_env[%d] length", i);
+            goto silent_packet_error;
+          }
+          ptr++;
+          if (end_ptr - ptr < env_size) {
+            err("not enough space for compiler_env[%d]", i);
+            goto silent_packet_error;
+          }
+          compiler_env[i] = (char*) xmalloc(env_size + 1);
+          memcpy(compiler_env[i], ptr, env_size);
+          compiler_env[i][env_size] = 0;
+          ptr += env_size;
+        }
+      }
+    } else {
+      while (*ptr && isspace(*ptr)) ptr++;
+      if (*ptr) {
+        err("garbage at the end of packet");
+        goto silent_packet_error;
+      }
+    }
+
+    // don't need packet source any more
+    xfree(pkt_ptr); pkt_ptr = 0;
 
     // at this point we may try to report messages to the contest server
     snprintf(report_dir, sizeof(report_dir),
@@ -157,6 +214,10 @@ do_loop(void)
     report_internal_error:
       if (generic_write_file(msgbuf, strlen(msgbuf), 0, 0, log_out, 0) < 0){
         // we tried, but it didn't work out :-(
+        if (compiler_env) {
+          for (i = 0; i < env_count; i++) xfree(compiler_env[i]);
+          xfree(compiler_env);
+        }
         continue;
       }
       snprintf(statbuf, sizeof(statbuf), "6\n");
@@ -166,6 +227,10 @@ do_loop(void)
         unlink(log_out);
       }
       clear_directory(global->compile_work_dir);
+      if (compiler_env) {
+        for (i = 0; i < env_count; i++) xfree(compiler_env[i]);
+        xfree(compiler_env);
+      }
       continue;
     }
 
@@ -201,6 +266,10 @@ do_loop(void)
       sigprocmask(SIG_UNBLOCK, &work_mask, 0);
       sleep(5);
       sigprocmask(SIG_BLOCK, &work_mask, 0);
+      if (compiler_env) {
+        for (i = 0; i < env_count; i++) xfree(compiler_env[i]);
+        xfree(compiler_env);
+      }
       continue;
     }
 
@@ -210,6 +279,10 @@ do_loop(void)
     task_AddArg(tsk, src_name);
     task_AddArg(tsk, exe_name);
     task_SetPathAsArg0(tsk);
+    if (compiler_env) {
+      for (i = 0; compiler_env[i]; i++)
+        task_PutEnv(tsk, compiler_env[i]);
+    }
     task_SetWorkingDir(tsk, global->compile_work_dir);
     task_SetRedir(tsk, 1, TSR_FILE, log_path,
                   O_WRONLY|O_CREAT|O_TRUNC, 0777);
@@ -265,6 +338,10 @@ do_loop(void)
 
     task_Delete(tsk);
     clear_directory(global->compile_work_dir);
+    if (compiler_env) {
+      for (i = 0; i < env_count; i++) xfree(compiler_env[i]);
+      xfree(compiler_env);
+    }
   }
 
   return 0;
