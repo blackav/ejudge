@@ -4137,8 +4137,8 @@ do_clear_team_passwords(int contest_id)
     }
     if ((p = u->team_passwd)) {
       info("removed team password for %d (%s)", u->id, u->login);
-      xml_unlink_node(p);
-      userlist_free(p);
+      xml_unlink_node((struct xml_tree*) p);
+      userlist_free((struct xml_tree*) p);
       u->team_passwd = 0;
     }
   }
