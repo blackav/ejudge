@@ -114,6 +114,9 @@ struct section_global_data
 
   int    max_file_length;       /* maximal length of the file in reports */
   int    max_line_length;       /* maximal length of line in reports */
+
+  path_t team_info_url;         /* the team info URL template */
+  path_t prob_info_url;         /* the problem info URL template */
 };
 
 struct section_problem_data
