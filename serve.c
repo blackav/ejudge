@@ -1480,14 +1480,17 @@ main(int argc, char *argv[])
 {
   path_t  cpp_opts = { 0 };
   int     code = 0;
-  int     p_flags = 0;
+  int     p_flags = 0, T_flag = 0;
   int     i = 1;
 
   if (argc == 1) goto print_usage;
   code = 1;
 
   while (i < argc) {
-    if (!strncmp(argv[i], "-D", 2)) {
+    if (!strcmp(argv[i], "-T")) {
+      i++;
+      T_flag = 1;
+    } else if (!strncmp(argv[i], "-D", 2)) {
       if (cpp_opts[0]) pathcat(cpp_opts, " ");
       pathcat(cpp_opts, argv[i++]);
     } else if (!strcmp(argv[i], "-E")) {
@@ -1498,6 +1501,10 @@ main(int argc, char *argv[])
   if (i >= argc) goto print_usage;
 
   if (prepare(argv[i], p_flags, PREPARE_SERVE, cpp_opts) < 0) return 1;
+  if (T_flag) {
+    print_configuration(stdout);
+    return 0;
+  }
   if (create_dirs(PREPARE_SERVE) < 0) return 1;
   if (teamdb_open(global->teamdb_file, global->passwd_file, 0) < 0) return 1;
   if (run_open(global->run_log_file, 0) < 0) return 1;
@@ -1509,6 +1516,7 @@ main(int argc, char *argv[])
 
  print_usage:
   printf(_("Usage: %s [ OPTS ] config-file\n"), argv[0]);
+  printf(_("  -T     - print configuration and exit\n"));
   printf(_("  -E     - enable C preprocessor\n"));
   printf(_("  -DDEF  - define a symbol for preprocessor\n"));
   return code;
