@@ -307,8 +307,6 @@ sformat_message(char *buf, size_t maxsize, char const *format,
          *   Mi - team id
          *   Mn - team name
          *   Ml - team login
-         *   Mp - team password (plain text)
-         *   Ms - team password (scrambled)
          */
         pf++;
         switch (*pf) {
@@ -334,12 +332,6 @@ sformat_message(char *buf, size_t maxsize, char const *format,
             break;
           case 'l':
             papp = team_data->login;
-            break;
-          case 'p':
-            papp = team_data->passwd;
-            break;
-          case 's':
-            papp = team_data->scrambled;
             break;
           default:
             abort();
