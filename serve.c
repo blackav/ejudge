@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,7 @@
 #include "sha.h"
 #include "l10n.h"
 #include "archive_paths.h"
+#include "team_extra.h"
 
 #include "misctext.h"
 #include "base64.h"
@@ -3784,6 +3785,7 @@ main(int argc, char *argv[])
   }
   if (clar_open(global->clar_log_file, 0) < 0) return 1;
   i = do_loop();
+  team_extra_flush();
   if (i < 0) i = 1;
   if (socket_name && cmdline_socket_fd < 0) {
     unlink(socket_name);
