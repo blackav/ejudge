@@ -94,6 +94,7 @@ COMMON_CFILES=\
  sha.c\
  teamdb.c\
  testinfo.c\
+ tsc.c\
  userlist.c\
  userlist_cfg.c\
  userlist_proto.c\
@@ -174,6 +175,7 @@ HFILES=\
  sha.h\
  teamdb.h\
  testinfo.h\
+ tsc.h\
  userlist.h\
  userlist_cfg.h\
  userlist_clnt.h\
