@@ -1005,9 +1005,11 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
               "<td><input type=\"text\" name=\"failed_%d\" size=\"2\"></td>",
               i);
 
-      fprintf(f,
-              "<td><input type=\"text\" name=\"score_%d\" size=\"2\"></td>",
-              i);
+      if (global->score_system_val == SCORE_KIROV) {
+        fprintf(f,
+                "<td><input type=\"text\" name=\"score_%d\" size=\"2\"></td>",
+                i);
+      }
 
       fprintf(f,
               "<td><input type=\"submit\" name=\"change_%d\""
