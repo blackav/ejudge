@@ -1,0 +1,62 @@
+2002-12-21  Alexander Chernov  <cher@ispras.ru>
+
+	* view.c:
+	(serve_clnt_view) `SRV_CMD_VIEW_USERS' added as a valid request.
+
+	* team_page.c:
+	(serve_clnt_team_page) parameters are changed: `user_id',
+	  `contest_id', `ip' are removed, since this information is taken
+	  from userlist-server;
+	  `simple_form', `multi_form' are removed, since session support
+	  is done in different way;
+	  `sid_mode', `self_url', `hidden_vars' are added to support
+	  sessions.
+
+	* master_page.c:
+	(serve_clnt_master_page) new parameter `sid_mode' to pass session
+	  support mode to the server.
+
+	* standings.c: CVS identification fixed.
+
+	* edit_run.c: Initial revision
+
+2002-12-20  Alexander Chernov  <cher@ispras.ru>
+
+	* simple_cmd.c, message.c, gen_passwords.c, standings.c, view.c:
+	Initial revision
+
+2002-12-14  Alexander Chernov  <cher@ispras.ru>
+
+	* master_page.c:
+	(serve_clnt_master_page) `flags' parameter is renamed to `priv_level'.
+
+2002-12-13  Alexander Chernov  <cher@ispras.ru>
+
+	* master_page.c:
+	(serve_clnt_master_page) a new parameter `hidden_vars' added, which
+	  is used to pass the hidden variables to be inserted into the
+	  forms.
+
+2002-12-12  Alexander Chernov  <cher@ispras.ru>
+
+	* master_page.c: Initial revision
+
+2002-12-01  Alexander Chernov  <cher@ispras.ru>
+
+	* submit_clar.c:
+	(serve_clnt_submit_clar) the client IP address is added to the
+	  packet.
+
+2002-11-29  Alexander Chernov  <cher@ispras.ru>
+
+	* team_page.c: Initial revision
+
+2002-11-25  Alexander Chernov  <cher@ispras.ru>
+
+	* submit_run.c, submit_clar.c: Initial revision
+
+2002-11-24  Alexander Chernov  <cher@ispras.ru>
+
+	* show_item.c, send_packet.c, recv_packet.c, pass_fd.c, open.c, list_runs.c, get_archive.c, do_pass_fd.c:
+	Initial revision
+

@@ -1,0 +1,44 @@
+2002-12-21  Alexander Chernov  <cher@ispras.ru>
+
+	* team_login.c:
+	(userlist_clnt_team_login) any of parameters `p_user_id',
+	  `p_cookie', `p_locale_id', `p_name' may be NULL.
+
+	* team_cookie.c:
+	(userlist_clnt_team_cookie) any of `p_user_id', `p_locale_id',
+	  `p_contest_id', `p_login', `p_name' may be NULL.
+
+	* get_uid_by_pid.c:
+	(userlist_clnt_get_uid_by_pid) new parameter `p_ip' to return the
+	  IP-address, used for authentification.
+
+2002-12-17  Alexander Chernov  <cher@ispras.ru>
+
+	* priv_cookie.c, logout.c: Initial revision
+
+2002-12-14  Alexander Chernov  <cher@ispras.ru>
+
+	* priv_login.c: Initial revision
+
+	* get_uid_by_pid.c:
+	(userlist_clnt_get_uid_by_pid) parameter `p_priv_level' added
+	  and read from the incoming packet.
+
+2002-12-07  Alexander Chernov  <cher@ispras.ru>
+
+	* get_uid_by_pid.c: Initial revision
+
+2002-12-06  Alexander Chernov  <cher@ispras.ru>
+
+	* send_packet.c: <errno.h> is included.
+
+	* open.c: <signal.h> is included;
+	(userlist_clnt_open) SIGPIPE is ignored.
+
+	* do_pass_fd.c:
+	(userlist_clnt_do_pass_fd) `errno' is saved for before `err' call
+	   as it is used later.
+
+	* send_packet.c, do_pass_fd.c, team_set_passwd.c, team_login.c, team_cookie.c, set_passwd.c, set_info.c, remove_member.c, list_users.c, register_new.c, register_contest.c, recv_packet.c, private.h, pass_fd.c, open.c, map_contest.c, lookup_cookie.c, login.c, list_all_users.c, get_info.c, get_contests.c, generate_team_passwd.c, edit_field.c, delete_field.c, close.c, change_registration.c, admin_process.c, add_field.c:
+	Initial revision
+
