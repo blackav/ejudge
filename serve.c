@@ -609,7 +609,7 @@ cmd_team_get_archive(struct client_state *p, int len,
   }
   total_runs = run_get_total();
   for (r = 0; r < total_runs; r++) {
-    if (run_get_record(r,0,0,0,0,0,&run_team,&run_lang,&run_prob,0,0,0) < 0)
+    if (run_get_record(r,0,0,0,0,0,&run_team,&run_lang,&run_prob,0,0,0,0) < 0)
       continue;
     if (run_team != pkt->user_id) continue;
     snprintf(linkpath, sizeof(linkpath), "%s/%s_%06d%s",
@@ -1088,6 +1088,25 @@ cmd_view(struct client_state *p, int len,
 
     write_runs_dump(f, global->charset);
     break;
+
+  case SRV_CMD_EXPORT_XML_RUNS:
+    if (!p->priv_level) {
+      err("%d: unprivileged users cannot export XML runs", p->id);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+
+    if (!check_cnts_caps(p->user_id, OPCAP_DUMP_RUNS)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_DUMP_RUNS);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+
+    fprintf(f, "Content-type: text/plain; charset=koi8-r\n\n");
+    run_write_xml(f);
+    break;
+
   case SRV_CMD_DUMP_STANDINGS:
     if (!p->priv_level) {
       err("%d: unprivileged users cannot dump standings", p->id);
@@ -1130,6 +1149,77 @@ cmd_view(struct client_state *p, int len,
   q->write_len = html_len;
 
   info("%d: view: ok %d", p->id, html_len);
+  new_send_reply(p, SRV_RPL_OK);
+}
+
+static void
+cmd_import_xml_runs(struct client_state *p, int len,
+                    struct prot_serve_pkt_archive_path *pkt)
+{
+  size_t xml_data_len, html_len = 0;
+  FILE *f;
+  unsigned char *html_ptr = 0;
+  struct client_state *q;
+
+  if (get_peer_local_user(p) < 0) return;
+
+  if (len < sizeof(*pkt)) {
+    new_bad_packet(p, "import_xml_runs: packet is too small: %d", len);
+    return;
+  }
+  xml_data_len = strlen(pkt->data);
+  if (pkt->path_len != xml_data_len) {
+    new_bad_packet(p, "import_xml_runs: data length mismatch: %d, %d",
+                   (int) xml_data_len, pkt->path_len);
+    return;
+  }
+  if (len != sizeof(*pkt) + xml_data_len) {
+    new_bad_packet(p, "import_xml_runs: packet length mismatch: %d, %d",
+                   len, sizeof(*pkt) + xml_data_len);
+    return;
+  }
+
+  if (!p->priv_level) {
+    err("%d: unprivileged users cannot import XML runs", p->id);
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    return;
+  }
+  if (!check_cnts_caps(p->user_id, OPCAP_IMPORT_XML_RUNS)) {
+    err("%d: user %d has no capability %d for the contest",
+        p->id, p->user_id, OPCAP_IMPORT_XML_RUNS);
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    return;
+  }
+  if (!global->enable_runlog_merge) {
+    err("%d: runlog merging is disabled", p->id);
+    new_send_reply(p, -SRV_ERR_NOT_SUPPORTED);
+    return;
+  }
+
+  info("%d: import_xml_runs: %d", p->id, (int) xml_data_len);
+  if (!(f = open_memstream((char**) &html_ptr, &html_len))) {
+    err("%d: open_memstream failed", p->id);
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  runlog_import_xml(f, pkt->data);
+  fclose(f);
+
+  if (!html_ptr) {
+    html_ptr = xstrdup("");
+    html_len = 0;
+  }
+
+  q = client_new_state(p->client_fds[0]);
+  q->client_fds[0] = -1;
+  q->client_fds[1] = p->client_fds[1];
+  p->client_fds[0] = -1;
+  p->client_fds[1] = -1;
+  q->state = STATE_AUTOCLOSE;
+  q->write_buf = html_ptr;
+  q->write_len = html_len;
+
+  info("%d: import_xml_runs: ok %d", p->id, html_len);
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -2111,7 +2201,7 @@ cmd_edit_run(struct client_state *p, int len,
              struct prot_serve_pkt_run_info *pkt)
 {
   unsigned char const *user_login_ptr;
-  struct run_entry run;
+  struct run_entry run, cur_run;
   unsigned int run_flags = 0;
 
   if (get_peer_local_user(p) < 0) return;
@@ -2193,6 +2283,15 @@ cmd_edit_run(struct client_state *p, int len,
     run.status = pkt->status;
     run_flags |= RUN_ENTRY_STATUS;
   }
+  if ((pkt->mask & PROT_SERVE_RUN_IMPORTED_SET)) {
+    if (pkt->is_imported < 0 || pkt->is_imported > 1) {
+      err("%d: invalid is_imported value %d", p->id, pkt->is_imported);
+      new_send_reply(p, -SRV_ERR_PROTOCOL);
+      return;
+    }
+    run.is_imported = pkt->is_imported;
+    run_flags |= RUN_ENTRY_IMPORTED;
+  }
 
   // check capabilities
   if (!check_cnts_caps(p->user_id, OPCAP_EDIT_RUN)
@@ -2201,6 +2300,19 @@ cmd_edit_run(struct client_state *p, int len,
     err("%d: user %d has no capability to edit run", p->id, p->user_id);
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     return;
+  }
+
+  /* refuse to rejudge imported run */
+  if ((run_flags & RUN_ENTRY_STATUS) && run.status == RUN_REJUDGE) {
+    if (run_get_entry(pkt->run_id, &cur_run) < 0) {
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    }
+    if (cur_run.is_imported) {
+      err("%d: refuse to rejudge imported run %d", p->id, pkt->run_id);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
   }
 
   if (run_set_entry(pkt->run_id, run_flags, &run) < 0) {
@@ -2462,11 +2574,12 @@ queue_compile_request(unsigned char const *str, int len,
 static void
 rejudge_run(int run_id)
 {
-  int lang, loc;
+  int lang, loc, f = 0;
   path_t src_path;
 
-  if (run_get_record(run_id, 0, 0, 0, 0, &loc, 0, &lang, 0, 0, 0, 0) < 0)
+  if (run_get_record(run_id, 0, 0, 0, 0, &loc, 0, &lang, 0, 0, 0, 0, &f) < 0)
     return;
+  if (f) return;
   if (lang <= 0 || lang > max_lang || !langs[lang]) {
     err("rejudge_run: bad language: %d", lang);
     return;
@@ -2484,7 +2597,7 @@ static void
 do_rejudge_all(void)
 {
   int total_runs, r;
-  int status;
+  int status, imported_flag;
 
   total_runs = run_get_total();
 
@@ -2507,6 +2620,7 @@ do_rejudge_all(void)
       if (run_get_entry(r, &entry) < 0) continue;
       if (entry.status != RUN_OK && entry.status != RUN_PARTIAL
           && entry.status != RUN_ACCEPTED) continue;
+      if (entry.is_imported) continue;
       if (entry.team <= 0 || entry.team >= total_ids) continue;
       if (entry.problem <= 0 || entry.problem >= total_probs) {
         fprintf(stderr, "Invalid problem %d for run %d", entry.problem, r);
@@ -2521,9 +2635,11 @@ do_rejudge_all(void)
   }
 
   for (r = 0; r < total_runs; r++) {
-    if (run_get_record(r, 0, 0, 0, 0, 0, 0, 0, 0, &status, 0, 0) >= 0
+    if (run_get_record(r, 0, 0, 0, 0, 0, 0, 0, 0, &status, 0, 0,
+                       &imported_flag) >= 0
         && status >= RUN_OK && status <= RUN_MAX_STATUS
-        && status != RUN_IGNORED) {
+        && status != RUN_IGNORED
+        && !imported_flag) {
       rejudge_run(r);
     }
   }
@@ -2533,6 +2649,7 @@ static void
 do_rejudge_problem(int prob_id)
 {
   int total_runs, r, status, prob;
+  int imported_flag;
 
   total_runs = run_get_total();
 
@@ -2552,6 +2669,7 @@ do_rejudge_problem(int prob_id)
       if (entry.status != RUN_OK && entry.status != RUN_PARTIAL
           && entry.status != RUN_ACCEPTED) continue;
       if (entry.problem != prob_id) continue;
+      if (entry.is_imported) continue;
       if (entry.team <= 0 || entry.team >= total_ids) continue;
       if (flag[entry.team]) continue;
       flag[entry.team] = 1;
@@ -2561,9 +2679,10 @@ do_rejudge_problem(int prob_id)
   }
 
   for (r = 0; r < total_runs; r++) {
-    if (run_get_record(r, 0, 0, 0, 0, 0, 0, 0, &prob, &status, 0, 0) >= 0
+    if (run_get_record(r, 0, 0, 0, 0, 0, 0, 0, &prob, &status, 0, 0,
+                       &imported_flag) >= 0
         && prob == prob_id && status >= RUN_OK && status <= RUN_MAX_STATUS
-        && status != RUN_IGNORED) {
+        && status != RUN_IGNORED && !imported_flag) {
       rejudge_run(r);
     }
   }
@@ -2634,6 +2753,8 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_DUMP_STANDINGS] { cmd_view },
   [SRV_CMD_SET_JUDGING_MODE] { cmd_priv_command_0 },
   [SRV_CMD_CONTINUE] { cmd_priv_command_0 },
+  [SRV_CMD_EXPORT_XML_RUNS] { cmd_view },
+  [SRV_CMD_IMPORT_XML_RUNS] { cmd_import_xml_runs },
 };
 
 static void
@@ -2997,7 +3118,7 @@ check_sockets(int may_wait_flag)
       p->read_state += l;
       memcpy(&p->expected_len, rbuf, 4);
       if (p->read_state == 4) {
-        if (p->expected_len <= 0 || p->expected_len > 128 * 1024) {
+        if (p->expected_len <= 0 || p->expected_len > 256 * 1024) {
           err("%d: protocol error: bad packet length: %d",
               p->id, p->expected_len);
           client_disconnect(p, 0);
