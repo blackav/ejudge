@@ -951,6 +951,13 @@ write_all_runs(FILE *f, struct user_filter_info *u,
           _("File"), _("Send!"), ACTION_SUBMIT_RUN, _("Send!"));
   fprintf(f, "</table></form>\n");
 
+  fprintf(f, "<table><tr><td>");
+  fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf),
+                                 sid_mode, sid, self_url,
+                                 extra_args, "action=%d",
+                                 ACTION_NEW_RUN_FORM));
+  fprintf(f, "%s</a><td></tr></table>", _("Add new run"));
+
   print_nav_buttons(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args,
                     0, 0, 0, 0, 0, 0, 0);
 }
@@ -1604,6 +1611,110 @@ write_priv_source(FILE *f, int user_id, int priv_level,
                       _("Main page"), 0, 0, 0, _("Refresh"), _("View report"),
                       _("View team report"));
   }
+  return 0;
+}
+
+int
+write_new_run_form(FILE *f, int user_id, int priv_level,
+                   int sid_mode, unsigned long long sid,
+                   unsigned char const *self_url,
+                   unsigned char const *hidden_vars,
+                   unsigned char const *extra_args,
+                   int run_id,
+                   const opcap_t *pcaps)
+{
+  int i;
+
+  fprintf(f, "<h2>%s</h2>\n", _("Add new run form"));
+
+  print_nav_buttons(f,run_id,sid_mode,sid,self_url,hidden_vars,extra_args,
+                    _("Main page"), 0, 0, 0, _("Refresh"), 0, 0);
+
+  html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
+  fprintf(f, "<table>\n");
+
+  fprintf(f, "<tr><td>%s:</td>", _("User ID"));
+  fprintf(f, "<td><input type=\"text\" name=\"run_user_id\" size=\"10\"></td>");
+  fprintf(f, "</tr>\n");
+
+  fprintf(f, "<tr><td>%s:</td>", _("User login"));
+  fprintf(f, "<td><input type=\"text\" name=\"run_user_login\" size=\"20\"></td>");
+  fprintf(f, "</tr>\n");
+
+  fprintf(f, "<tr><td>%s:</td>", _("Problem"));
+  fprintf(f, "<td><select name=\"problem\"><option value=\"\">\n");
+  for (i = 1; i <= max_prob; i++)
+    if (probs[i]) {
+      fprintf(f, "<option value=\"%d\">%s - %s\n",
+              probs[i]->id, probs[i]->short_name, probs[i]->long_name);
+    }
+  fprintf(f, "</select></td>\n");
+  fprintf(f, "</tr>\n");
+
+  fprintf(f, "<tr><td>%s:</td>", _("Variant"));
+  fprintf(f, "<td><input type=\"text\" name=\"variant\" size=\"10\"></td>");
+  fprintf(f, "</tr>\n");
+
+  fprintf(f, "<tr><td>%s:</td>", _("Language"));
+  fprintf(f, "<td><select name=\"language\"><option value=\"\">\n");
+  for (i = 1; i <= max_lang; i++)
+    if (langs[i]) {
+      fprintf(f, "<option value=\"%d\">%s - %s\n",
+              langs[i]->id, langs[i]->short_name, langs[i]->long_name);
+    }
+  fprintf(f, "</select></td>\n");
+  fprintf(f, "</tr>\n");
+
+  fprintf(f, "<tr><td>%s:</td>", _("Imported?"));
+  fprintf(f, "<td><select name=\"is_imported\">\n");
+  fprintf(f, "<option value=\"0\">%s\n", _("No"));
+  fprintf(f, "<option value=\"1\">%s\n", _("Yes"));
+  fprintf(f, "</select></td>\n");
+  fprintf(f, "</tr>\n");
+
+  fprintf(f, "<tr><td>%s:</td>", _("Hidden?"));
+  fprintf(f, "<td><select name=\"is_hidden\">\n");
+  fprintf(f, "<option value=\"0\">%s\n", _("No"));
+  fprintf(f, "<option value=\"1\">%s\n", _("Yes"));
+  fprintf(f, "</select></td>\n");
+  fprintf(f, "</tr>\n");
+
+  fprintf(f, "<tr><td>%s:</td>", _("Read-only?"));
+  fprintf(f, "<td><select name=\"is_readonly\">\n");
+  fprintf(f, "<option value=\"0\">%s\n", _("No"));
+  fprintf(f, "<option value=\"1\">%s\n", _("Yes"));
+  fprintf(f, "</select></td>\n");
+  fprintf(f, "</tr>\n");
+
+  fprintf(f, "<tr><td>%s:</td>", _("Status"));
+  write_change_status_dialog(f, 0, 0);
+  fprintf(f, "</tr>\n");
+
+  if (global->score_system_val == SCORE_KIROV
+      || global->score_system_val == SCORE_OLYMPIAD) {
+    fprintf(f, "<tr><td>%s:</td>", _("Tests passed"));
+    fprintf(f, "<td><input type=\"text\" name=\"tests\" size=\"10\"></td>");
+    fprintf(f, "</tr>\n");
+
+    fprintf(f, "<tr><td>%s:</td>", _("Score gained"));
+    fprintf(f, "<td><input type=\"text\" name=\"score\" size=\"10\"></td>");
+    fprintf(f, "</tr>\n");
+  } else {
+    fprintf(f, "<tr><td>%s:</td>", _("Failed test"));
+    fprintf(f, "<td><input type=\"text\" name=\"tests\" size=\"10\"></td>");
+    fprintf(f, "</tr>\n");
+  }
+
+  fprintf(f, "<tr><td>%s:</td>"
+          "<td><input type=\"file\" name=\"file\"></td></tr>\n",
+          _("File"));
+
+  fprintf(f, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n", ACTION_NEW_RUN, _("Submit"));
+  fprintf(f, "</table></form>\n");
+
+  print_nav_buttons(f,run_id,sid_mode,sid,self_url,hidden_vars,extra_args,
+                    _("Main page"), 0, 0, 0, _("Refresh"), 0, 0);
+
   return 0;
 }
 
