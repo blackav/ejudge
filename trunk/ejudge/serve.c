@@ -3713,13 +3713,13 @@ write_run_packet(const unsigned char *pkt_base,
   buf_size = 128 + exe_sfx_len + arch_len + us_len + ps_len;
   p = buf = (unsigned char*) alloca(buf_size);
 
-  p += sprintf(p, "%d %d %d %d %d %d %d %d %d %d %d\n",
+  p += sprintf(p, "%d %d %d %d %d %d %d %d %d %d %d %d\n",
                global->contest_id, run_id, problem_id,
                final_test, locale_id,
                global->score_system_val,
                global->team_enable_rep_view,
                global->report_error_code, variant,
-               accept_partial, user_id);
+               accept_partial, user_id, global->html_report);
   p += sprintf(p, "%d %s\n", exe_sfx_len, exe_sfx);
   p += sprintf(p, "%d %s\n", arch_len, arch);
   p += sprintf(p, "%d %s\n", us_len, user_spelling);
