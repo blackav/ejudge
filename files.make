@@ -120,6 +120,7 @@ COMMON_CFILES=\
  run_packet_4.c\
  run_packet_5.c\
  run_packet_6.c\
+ run_packet_7.c\
  sformat.c\
  super_html.c\
  super_proto.c\
