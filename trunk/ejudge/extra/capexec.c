@@ -72,6 +72,6 @@ int main(int argc, char *argv[])
 
 /**
  * Local variables:
- *  compile-command: "gcc -D_GNU_SOURCE -s -O2 -Wall -I/usr/local/pkg/libcap-1.10/include -L/usr/local/pkg/libcap-1.10/lib capexec.c -o capexec -static -lcap"
+ *  compile-command: "gcc -Wl,--rpath,/usr/local/pkg/libcap-1.10/lib -D_GNU_SOURCE -s -O2 -Wall -I/usr/local/pkg/libcap-1.10/include -L/usr/local/pkg/libcap-1.10/lib capexec.c -o capexec -lcap"
  * End:
  */
