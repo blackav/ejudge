@@ -26,6 +26,7 @@ CGI_PROG_SUFFIX=@ac_cv_cgi_suffix@
 STATIC=@ac_cv_static@
 NO_KERNEL=@ac_cv_no_kernel@
 ENABLE_NLS=@ac_cv_nls@
+NO_RPATH=@ac_cv_no_rpath@
 
 XGETTEXT=@XGETTEXT@
 MSGMERGE=@MSGMERGE@
@@ -52,6 +53,10 @@ endif
 
 ifdef STATIC
 CDEBUGFLAGS += -static
+endif
+
+ifndef NO_RPATH
+RPATHOPT=-Wl,-rpath,${libdir}
 endif
 
 CCOMPFLAGS=-D_GNU_SOURCE
@@ -151,7 +156,7 @@ install : all
 	for i in checker.h checker_internal.h testinfo.h; do install -m 644 $$i "${DESTDIR}${includedir}"; done
 	mkdir -p "${DESTDIR}${libdir}"
 	install -m 644 libchecker.a "${DESTDIR}${libdir}"
-	if [ x"${STATIC}" = x ]; then install -m 755 libchecker.so "${DESTDIR}${libdir}"; fi
+	if [ x"${STATIC}" = x ]; then install -m 755 libchecker.so "${DESTDIR}${libdir}"; else rm -f "${DESTDIR}${libdir}/libchecker.so"; fi
 	mkdir -p "${DESTDIR}${datadir}/ejudge/testlib"
 	for i in symbols.pas testlib.pas; do install -m 644 $$i "${DESTDIR}${datadir}/ejudge/testlib"; done
 	mkdir -p "${DESTDIR}${libexecdir}/ejudge"
@@ -233,7 +238,7 @@ cmp_% : cmp_%.c checker.h checker_internal.h libchecker.a
 	${CC} ${CFLAGS} ${LDFLAGS} -L. $< -o $@ -lchecker -lm
 else
 cmp_% : cmp_%.c checker.h checker_internal.h libchecker.so
-	${CC} ${CFLAGS} ${LDFLAGS} -Wl,-rpath,${libdir} -L. $< -o $@ -lchecker -lm
+	${CC} ${CFLAGS} ${LDFLAGS} ${RPATHOPT} -L. $< -o $@ -lchecker -lm
 endif
 
 pic/%.o : %.c
