@@ -80,9 +80,13 @@ enum
     USERLIST_T_LOGIN,
     USERLIST_T_NAME,
     USERLIST_T_INST,
+    USERLIST_T_INST_EN,
     USERLIST_T_INSTSHORT,
+    USERLIST_T_INSTSHORT_EN,
     USERLIST_T_FAC,
+    USERLIST_T_FAC_EN,
     USERLIST_T_FACSHORT,
+    USERLIST_T_FACSHORT_EN,
     USERLIST_T_PASSWORD,
     USERLIST_T_EMAIL,
     USERLIST_T_HOMEPAGE,
@@ -90,24 +94,31 @@ enum
     USERLIST_T_PHONE,
     USERLIST_T_MEMBER,
     USERLIST_T_SURNAME,
+    USERLIST_T_SURNAME_EN,
     USERLIST_T_MIDDLENAME,
+    USERLIST_T_MIDDLENAME_EN,
     USERLIST_T_GRADE,
     USERLIST_T_GROUP,
+    USERLIST_T_GROUP_EN,
     USERLIST_T_COOKIES,
     USERLIST_T_COOKIE,
     USERLIST_T_CONTESTS,
     USERLIST_T_CONTEST,
     USERLIST_T_STATUS,
     USERLIST_T_OCCUPATION,
+    USERLIST_T_OCCUPATION_EN,
     USERLIST_T_CONTESTANTS,
     USERLIST_T_RESERVES,
     USERLIST_T_COACHES,
     USERLIST_T_ADVISORS,
     USERLIST_T_GUESTS,
     USERLIST_T_FIRSTNAME,
+    USERLIST_T_FIRSTNAME_EN,
     USERLIST_T_TEAM_PASSWORD,
     USERLIST_T_CITY,
+    USERLIST_T_CITY_EN,
     USERLIST_T_COUNTRY,
+    USERLIST_T_COUNTRY_EN,
 
     USERLIST_LAST_TAG,
   };
@@ -128,6 +139,7 @@ enum
     USERLIST_A_LAST_CHANGE,
     USERLIST_A_INVISIBLE,
     USERLIST_A_BANNED,
+    USERLIST_A_LOCKED,
     USERLIST_A_STATUS,
     USERLIST_A_LAST_PWDCHANGE,
     USERLIST_A_PUBLIC,
@@ -150,46 +162,62 @@ enum
     USERLIST_NN_NAME,           /* 3 */
     USERLIST_NN_IS_INVISIBLE,   /* 4 */
     USERLIST_NN_IS_BANNED,      /* 5 */
-    USERLIST_NN_SHOW_LOGIN,     /* 6 */
-    USERLIST_NN_SHOW_EMAIL,     /* 7 */
-    USERLIST_NN_USE_COOKIES,    /* 8 */
-    USERLIST_NN_READ_ONLY,      /* 9 */
-    USERLIST_NN_TIMESTAMPS,     /* 10 */
-    USERLIST_NN_REG_TIME,       /* 11 */
-    USERLIST_NN_LOGIN_TIME,     /* 12 */
-    USERLIST_NN_ACCESS_TIME,    /* 13 */
-    USERLIST_NN_CHANGE_TIME,    /* 14 */
-    USERLIST_NN_PWD_CHANGE_TIME, /* 15 */
-    USERLIST_NN_MINOR_CHANGE_TIME, /* 16 */
+    USERLIST_NN_IS_LOCKED,      /* 6 */
+    USERLIST_NN_SHOW_LOGIN,     /* 7 */
+    USERLIST_NN_SHOW_EMAIL,     /* 8 */
+    USERLIST_NN_USE_COOKIES,    /* 9 */
+    USERLIST_NN_READ_ONLY,      /* 10 */
+    USERLIST_NN_TIMESTAMPS,     /* 11 */
+    USERLIST_NN_REG_TIME,       /* 12 */
+    USERLIST_NN_LOGIN_TIME,     /* 13 */
+    USERLIST_NN_ACCESS_TIME,    /* 14 */
+    USERLIST_NN_CHANGE_TIME,    /* 15 */
+    USERLIST_NN_PWD_CHANGE_TIME, /* 16 */
+    USERLIST_NN_MINOR_CHANGE_TIME, /* 17 */
     USERLIST_NN_TIMESTAMP_LAST = USERLIST_NN_MINOR_CHANGE_TIME,
-    USERLIST_NN_PASSWORDS,      /* 17 */
-    USERLIST_NN_REG_PASSWORD,   /* 18 */
-    USERLIST_NN_TEAM_PASSWORD,  /* 19 */
-    USERLIST_NN_GENERAL_INFO,   /* 20 */
-    USERLIST_NN_INST,           /* 21 */
-    USERLIST_NN_INSTSHORT,      /* 22 */
-    USERLIST_NN_FAC,            /* 23 */
-    USERLIST_NN_FACSHORT,       /* 24 */
-    USERLIST_NN_HOMEPAGE,       /* 25 */
-    USERLIST_NN_CITY,           /* 26 */
-    USERLIST_NN_COUNTRY,        /* 27 */
-    USERLIST_NN_LAST = USERLIST_NN_COUNTRY,
+    USERLIST_NN_PASSWORDS,      /* 18 */
+    USERLIST_NN_REG_PASSWORD,   /* 19 */
+    USERLIST_NN_TEAM_PASSWORD,  /* 20 */
+    USERLIST_NN_GENERAL_INFO,   /* 21 */
+    USERLIST_NN_INST,           /* 22 */
+    USERLIST_NN_INST_EN,        /* 23 */
+    USERLIST_NN_INSTSHORT,      /* 24 */
+    USERLIST_NN_INSTSHORT_EN,   /* 25 */
+    USERLIST_NN_FAC,            /* 26 */
+    USERLIST_NN_FAC_EN,         /* 27 */
+    USERLIST_NN_FACSHORT,       /* 28 */
+    USERLIST_NN_FACSHORT_EN,    /* 29 */
+    USERLIST_NN_HOMEPAGE,       /* 30 */
+    USERLIST_NN_CITY,           /* 31 */
+    USERLIST_NN_CITY_EN,        /* 32 */
+    USERLIST_NN_COUNTRY,        /* 33 */
+    USERLIST_NN_COUNTRY_EN,     /* 34 */
+    USERLIST_NN_LAST = USERLIST_NN_COUNTRY_EN,
 
     USERLIST_NM_SERIAL = 0,              /* 0 */
     USERLIST_NM_FIRSTNAME,               /* 1 */
-    USERLIST_NM_MIDDLENAME,              /* 2 */
-    USERLIST_NM_SURNAME,                 /* 3 */
-    USERLIST_NM_STATUS,                  /* 4 */
-    USERLIST_NM_GRADE,                   /* 5 */
-    USERLIST_NM_GROUP,                   /* 6 */
-    USERLIST_NM_OCCUPATION,              /* 7 */
-    USERLIST_NM_EMAIL,                   /* 8 */
-    USERLIST_NM_HOMEPAGE,                /* 9 */
-    USERLIST_NM_INST,                    /* 10 */
-    USERLIST_NM_INSTSHORT,               /* 11 */
-    USERLIST_NM_FAC,                     /* 12 */
-    USERLIST_NM_FACSHORT,                /* 13 */
-    USERLIST_NM_LAST = USERLIST_NM_FACSHORT,
+    USERLIST_NM_FIRSTNAME_EN,            /* 2 */
+    USERLIST_NM_MIDDLENAME,              /* 3 */
+    USERLIST_NM_MIDDLENAME_EN,           /* 4 */
+    USERLIST_NM_SURNAME,                 /* 5 */
+    USERLIST_NM_SURNAME_EN,              /* 6 */
+    USERLIST_NM_STATUS,                  /* 7 */
+    USERLIST_NM_GRADE,                   /* 8 */
+    USERLIST_NM_GROUP,                   /* 9 */
+    USERLIST_NM_GROUP_EN,                /* 10 */
+    USERLIST_NM_OCCUPATION,              /* 11 */
+    USERLIST_NM_OCCUPATION_EN,           /* 12 */
+    USERLIST_NM_EMAIL,                   /* 13 */
+    USERLIST_NM_HOMEPAGE,                /* 14 */
+    USERLIST_NM_INST,                    /* 15 */
+    USERLIST_NM_INST_EN,                 /* 16 */
+    USERLIST_NM_INSTSHORT,               /* 17 */
+    USERLIST_NM_INSTSHORT_EN,            /* 18 */
+    USERLIST_NM_FAC,                     /* 19 */
+    USERLIST_NM_FAC_EN,                  /* 20 */
+    USERLIST_NM_FACSHORT,                /* 21 */
+    USERLIST_NM_FACSHORT_EN,             /* 22 */
+    USERLIST_NM_LAST = USERLIST_NM_FACSHORT_EN,
   };
 
 #if !defined __USERLIST_UC_ENUM_DEFINED__
@@ -198,8 +226,9 @@ enum
   {
     USERLIST_UC_INVISIBLE = 0x00000001,
     USERLIST_UC_BANNED    = 0x00000002,
+    USERLIST_UC_LOCKED    = 0x00000004,
 
-    USERLIST_UC_ALL       = 0x00000003
+    USERLIST_UC_ALL       = 0x00000007
   };
 #endif /* __USERLIST_UC_ENUM_DEFINED__ */
 
@@ -211,16 +240,25 @@ struct userlist_member
   int status;
   int grade;
   unsigned char *firstname;
+  unsigned char *firstname_en;
   unsigned char *middlename;
+  unsigned char *middlename_en;
   unsigned char *surname;
+  unsigned char *surname_en;
   unsigned char *group;
+  unsigned char *group_en;
   unsigned char *email;
   unsigned char *homepage;
   unsigned char *occupation;
+  unsigned char *occupation_en;
   unsigned char *inst;
+  unsigned char *inst_en;
   unsigned char *instshort;
+  unsigned char *instshort_en;
   unsigned char *fac;
+  unsigned char *fac_en;
   unsigned char *facshort;
+  unsigned char *facshort_en;
   struct xml_tree *phones;
 };
 
@@ -270,6 +308,7 @@ struct userlist_user
   int id;
   int is_invisible;
   int is_banned;
+  int is_locked;
   int show_login;
   int show_email;
   int default_use_cookies;
@@ -283,12 +322,18 @@ struct userlist_user
   struct userlist_passwd *team_passwd;
 
   unsigned char *inst;
+  unsigned char *inst_en;
   unsigned char *instshort;
+  unsigned char *instshort_en;
   unsigned char *fac;
+  unsigned char *fac_en;
   unsigned char *facshort;
+  unsigned char *facshort_en;
   unsigned char *homepage;
   unsigned char *city;
+  unsigned char *city_en;
   unsigned char *country;
+  unsigned char *country_en;
 
   struct xml_tree *cookies;
   struct userlist_members *members[USERLIST_MB_LAST];
