@@ -68,6 +68,7 @@ SERVE_CLNT_CFILES=\
  serve_clnt/view.c
 
 COMMON_CFILES=\
+ archive_paths.c\
  base64.c\
  cgi.c\
  clarlog.c\
@@ -135,6 +136,7 @@ CFILES=\
  ${USERLIST_CLNT_CFILES}
 
 HFILES=\
+ archive_paths.h\
  base64.h\
  cgi.h\
  clarlog.h\
