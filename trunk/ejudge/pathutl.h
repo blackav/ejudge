@@ -3,7 +3,7 @@
 #ifndef __PATHUTL_H__
 #define __PATHUTL_H__
 
-/* Copyright (C) 2000 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
 
 /*
  *  This program is free software; you can redistribute it and/or
