@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <limits.h>
 
 static struct filter_tree_mem *tree_mem;
 
@@ -33,17 +34,23 @@ typedef struct filter_tree *tree_t;
 #define MKINT(i) filter_tree_new_int(tree_mem, i)
 #define MKSTRING(s) filter_tree_new_string(tree_mem, s)
 #define MKBOOL(b) filter_tree_new_bool(tree_mem, b)
+#define MKDUR(u) filter_tree_new_dur(tree_mem, u)
 
 static tree_t check_int(tree_t p);
 static tree_t check_bool(tree_t p);
 
 static tree_t do_int_cast(tree_t q, tree_t p);
 static tree_t do_string_cast(tree_t, tree_t);
+static tree_t do_bool_cast(tree_t, tree_t);
+static tree_t do_dur_cast(tree_t, tree_t);
 
 static tree_t do_un_bitnot(tree_t, tree_t);
 static tree_t do_un_lognot(tree_t, tree_t);
 static tree_t do_un_minus(tree_t, tree_t);
 static tree_t do_un_plus(tree_t, tree_t);
+
+static tree_t do_multiply(tree_t, tree_t, tree_t);
+static tree_t do_divmod(tree_t, tree_t, tree_t);
 
 static void yyerror(unsigned char const *);
 static void do_error(unsigned char const *format, ...);
@@ -154,9 +161,9 @@ expr7 :
 
 expr8 :
   expr9 { $$ = $1; }
-| expr8 '*' expr9 { abort(); }
-| expr8 '/' expr9 { abort(); }
-| expr8 '%' expr9 { abort(); }
+| expr8 '*' expr9 { $$ = do_multiply($2, $1, $3); }
+| expr8 '/' expr9 { $$ = do_divmod($2, $1, $3); }
+| expr8 '%' expr9 { $$ = do_divmod($2, $1, $3); }
 ;
 
 expr9 :
@@ -208,9 +215,9 @@ exprA :
 | "curtest" { $$ = $1; }
 | "int" '(' expr0 ')' { $$ = do_int_cast($1, $3); }
 | "string" '(' expr0 ')' { $$ = do_string_cast($1, $3); }
-| "bool" '(' expr0 ')' { abort(); }
+| "bool" '(' expr0 ')' { $$ = do_bool_cast($1, $3); }
 | "date_t" '(' expr0 ')' { abort(); }
-| "dur_t" '(' expr0 ')' { abort(); }
+| "dur_t" '(' expr0 ')' { $$ = do_dur_cast($1, $3); }
 | "size_t" '(' expr0 ')' { abort(); }
 | "result_t" '(' expr0 ')' { abort(); }
 | "hash_t" '(' expr0 ')' { abort(); }
@@ -341,6 +348,126 @@ do_un_lognot(tree_t op, tree_t p)
   op->v.t[0] = p;
   return op;
 }
+static tree_t
+do_divmod(tree_t op, tree_t p1, tree_t p2)
+{
+  ASSERT(op);
+  ASSERT(p1);
+  ASSERT(p2);
+
+  if (p1->type == FILTER_TYPE_STRING || p1->type == FILTER_TYPE_BOOL
+      || p1->type == FILTER_TYPE_RESULT || p1->type == FILTER_TYPE_HASH
+      || p1->type == FILTER_TYPE_DATE) {
+    do_error("%c is undefined for type %s", op->kind,
+             filter_tree_type_to_str(p1->type));
+    return MKINT(0);
+  }
+  if (p2->type == FILTER_TYPE_STRING || p2->type == FILTER_TYPE_BOOL
+      || p2->type == FILTER_TYPE_RESULT || p2->type == FILTER_TYPE_HASH
+      || p2->type == FILTER_TYPE_DATE) {
+    do_error("%c is undefined for type %s", op->kind,
+             filter_tree_type_to_str(p2->type));
+    return MKINT(0);
+  }
+  if (p1->type == FILTER_TYPE_INT && p2->type == FILTER_TYPE_INT) {
+    if (p1->kind == TOK_INT_L && p2->kind == TOK_INT_L) {
+      long long res = 0;
+      if (!p2->v.i) {
+        do_error("division by zero");
+        return MKINT(0);
+      }
+      if (op->kind == '%') {
+        res = (long long) p1->v.i % (long long) p2->v.i;
+      } else if (op->kind == '/') {
+        res = (long long) p1->v.i / (long long) p2->v.i;
+      } else {
+        SWERR(("unhandled operation: %d", op->kind));
+      }
+      if (res < INT_MIN || res > INT_MAX) {
+        do_error("integer overflow on *");
+        return MKINT(0);
+      }
+      return MKINT((int) res);
+    }
+    op->type = FILTER_TYPE_INT;
+    op->v.t[0] = p1;
+    op->v.t[1] = p2;
+    return op;
+  }
+  if (p1->type == FILTER_TYPE_INT) {
+    do_error("cannot divide int by %s",
+             filter_tree_type_to_str(p1->type));
+    return MKINT(0);
+  }
+  if (p1->type == p2->type) {
+    op->type = FILTER_TYPE_INT;
+    op->v.t[0] = p1;
+    op->v.t[1] = p2;
+    return op;
+  }
+  if (p2->type != FILTER_TYPE_INT) {
+    do_error("invalid types for %c", op->kind);
+    return MKINT(0);
+  }
+  op->type = p1->type;
+  op->v.t[0] = p1;
+  op->v.t[1] = p2;
+  return op;
+}
+static tree_t
+do_multiply(tree_t op, tree_t p1, tree_t p2)
+{
+  ASSERT(op);
+  ASSERT(p1);
+  ASSERT(p2);
+
+  if (p1->type == FILTER_TYPE_STRING || p1->type == FILTER_TYPE_BOOL
+      || p1->type == FILTER_TYPE_RESULT || p1->type == FILTER_TYPE_HASH
+      || p1->type == FILTER_TYPE_DATE) {
+    do_error("* is undefined for type %s",
+             filter_tree_type_to_str(p1->type));
+    return MKINT(0);
+  }
+  if (p2->type == FILTER_TYPE_STRING || p2->type == FILTER_TYPE_BOOL
+      || p2->type == FILTER_TYPE_RESULT || p2->type == FILTER_TYPE_HASH
+      || p2->type == FILTER_TYPE_DATE) {
+    do_error("* is undefined for type %s",
+             filter_tree_type_to_str(p2->type));
+    return MKINT(0);
+  }
+  if (p1->type == FILTER_TYPE_INT && p2->type == FILTER_TYPE_INT) {
+    if (p1->kind == TOK_INT_L && p2->kind == TOK_INT_L) {
+      long long res = (long long) p1->v.i * (long long) p2->v.i;
+      if (res < INT_MIN || res > INT_MAX) {
+        do_error("integer overflow on *");
+        return MKINT(0);
+      }
+      return MKINT((int) res);
+    }
+    op->kind = '*';
+    op->type = FILTER_TYPE_INT;
+    op->v.t[0] = p1;
+    op->v.t[1] = p2;
+    return op;
+  } else if (p1->type == FILTER_TYPE_INT) {
+    tree_t tmp = p1;
+    p1 = p2;
+    p2 = tmp;
+  } else if (p2->type == FILTER_TYPE_INT) {
+  } else {
+    do_error("one argument of * must be of type int");
+    return MKINT(0);
+  }
+
+  ASSERT(p1->type == TOK_DUR_L || p1->type == TOK_SIZE_L);
+  if (p2->kind == TOK_INT_L) {
+  }
+  op->kind = '*';
+  op->type = p1->type;
+  op->v.t[0] = p1;
+  op->v.t[1] = p2;
+  return op;
+}
 
 static tree_t
 do_int_cast(tree_t q, tree_t p)
@@ -370,6 +497,42 @@ do_int_cast(tree_t q, tree_t p)
   q->v.t[0] = p;
   q->kind = TOK_INT;
   q->type = FILTER_TYPE_INT;
+  return q;
+}
+
+static tree_t
+do_bool_cast(tree_t q, tree_t p)
+{
+  ASSERT(p);
+
+  switch (p->kind) {
+  case TOK_INT_L:
+    return MKBOOL(!!p->v.i);
+  case TOK_STRING_L:
+    if (!strcasecmp(p->v.s, "true")) {
+      return MKBOOL(1);
+    } else if (!strcasecmp(p->v.s, "false")) {
+      return MKBOOL(0);
+    }
+    do_error("cannot convert string to bool");
+    return MKBOOL(0);
+  case TOK_BOOL_L:
+    return p;
+  case TOK_DATE_L:
+    return MKBOOL(!!p->v.a);
+  case TOK_DUR_L:
+    return MKBOOL(!!p->v.u);
+  case TOK_SIZE_L:
+    return MKBOOL(!!p->v.z);
+  case TOK_RESULT_L:
+    return MKBOOL(!p->v.r);
+  case TOK_HASH_L:
+    return MKBOOL(p->v.h[0]||p->v.h[1]||p->v.h[2]||p->v.h[3]||p->v.h[4]);
+  }
+
+  q->v.t[0] = p;
+  q->kind = TOK_BOOL;
+  q->type = FILTER_TYPE_BOOL;
   return q;
 }
 
@@ -411,6 +574,35 @@ do_string_cast(tree_t q, tree_t p)
   q->v.t[0] = p;
   q->kind = TOK_STRING;
   q->type = FILTER_TYPE_STRING;
+  return q;
+}
+
+static tree_t
+do_dur_cast(tree_t q, tree_t p)
+{
+  int r;
+
+  if (p->type == FILTER_TYPE_DUR) {
+    return p;
+  }
+  if (p->kind == TOK_INT_L || p->kind == TOK_STRING_L) {
+    struct filter_tree res;
+
+    if ((r = filter_tree_eval_node(TOK_DUR_T, &res, p, 0)) < 0) {
+      do_error("%s", filter_strerror(-r));
+      return MKDUR(0);
+    }
+    return MKDUR(res.v.u);
+  }
+  if (p->type != FILTER_TYPE_INT
+      && p->type != FILTER_TYPE_STRING) {
+    do_error("expression of type %s cannot be converted to dur_t",
+             filter_tree_type_to_str(p->type));
+    return MKDUR(0);
+  }
+  q->v.t[0] = p;
+  q->kind = TOK_DUR;
+  q->type = FILTER_TYPE_DUR;
   return q;
 }
 
