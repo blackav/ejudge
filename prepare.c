@@ -82,6 +82,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(disable_team_clars, "d"),
   GLOBAL_PARAM(max_file_length, "d"),
   GLOBAL_PARAM(max_line_length, "d"),
+  GLOBAL_PARAM(tests_to_accept, "d"),
 
   GLOBAL_PARAM(charset, "s"),
 
@@ -168,6 +169,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(test_score, "d"),
   PROBLEM_PARAM(run_penalty, "d"),
   PROBLEM_PARAM(use_corr, "d"),
+  PROBLEM_PARAM(tests_to_accept, "d"),
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
@@ -360,6 +362,7 @@ global_init_func(struct generic_section_config *gp)
   p->autoupdate_standings = 1;
   p->board_unfog_time = -1;
   p->contest_time = -1;
+  p->tests_to_accept = -1;
 }
 
 static void
@@ -371,6 +374,7 @@ problem_init_func(struct generic_section_config *gp)
   p->use_stdout = -1;
   p->team_enable_rep_view = -1;
   p->use_corr = -1;
+  p->tests_to_accept = -1;
   p->test_sfx[0] = 1;
   p->corr_sfx[0] = 1;
 }
@@ -744,9 +748,15 @@ set_defaults(int mode)
     global->score_system_val = SCORE_ACM;
   } else if (!strcmp(global->score_system, "kirov")) {
     global->score_system_val = SCORE_KIROV;
+  } else if (!strcmp(global->score_system, "olympiad")) {
+    global->score_system_val = SCORE_OLYMPIAD;
   } else {
-    /* FIXME: localize the string */
     err("Invalid scoring system: %s", global->score_system);
+  }
+
+  if (global->score_system_val == SCORE_OLYMPIAD
+      && global->tests_to_accept == -1) {
+    global->tests_to_accept = 1;
   }
 
   if (!global->charset[0]) {
@@ -888,6 +898,23 @@ set_defaults(int mode)
       probs[i]->team_enable_rep_view = global->team_enable_rep_view;
     } else if (probs[i]->team_enable_rep_view == -1) {
       probs[i]->team_enable_rep_view = 0;
+    }
+
+    if (global->score_system_val == SCORE_OLYMPIAD) {
+      if (probs[i]->tests_to_accept == -1 && si != -1
+          && abstr_probs[si]->tests_to_accept != -1) {
+        probs[i]->tests_to_accept = abstr_probs[si]->tests_to_accept;
+        info("problem.%s.tests_to_accept inherited from problem.%s (%d)",
+             ish, sish, probs[i]->tests_to_accept);
+      }
+      if (probs[i]->tests_to_accept == -1) {
+        probs[i]->tests_to_accept = global->tests_to_accept;
+        info("problem.%s.tests_to_accept inherited from global (%d)",
+             ish, global->tests_to_accept);
+      }
+    }
+    if (probs[i]->tests_to_accept == -1) {
+      probs[i]->tests_to_accept = 0;
     }
 
     if (!probs[i]->full_score && si != -1
