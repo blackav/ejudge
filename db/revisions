@@ -349,3 +349,8 @@ userlist_clnt.c 1 3 492898
 contests.h 1 4 163771
 contests.c 1 4 871952
 register.c 1 10 2901788
+contests.h 1 5 168273
+cgi.c 1 13 937177
+contests.c 1 5 893029
+register.c 1 11 3268464
+userlist_clnt.c 1 4 541034
