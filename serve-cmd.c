@@ -35,6 +35,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
+#include <signal.h>
+#include <sys/time.h>
 
 static const unsigned char *program_path;
 static const unsigned char *program_name;
@@ -361,6 +363,128 @@ handle_dump_master_runs(const unsigned char *cmd,
   return 0;
 }
 
+static volatile int was_interrupt = 0;
+static volatile int was_alarm = 0;
+
+static void
+interrupt_handler(int signo)
+{
+  was_interrupt = 1;
+}
+static void
+alarm_handler(int signo)
+{
+  was_alarm = 1;
+}
+
+/*
+ * argv[0] - session_id_file
+ * argv[1] - XML runlog file
+ * argv[2] - XML runlog file
+ * argv[3] - ...
+ * note, that arbitrary number of XML run logs may be imported at a time
+ */
+static int
+handle_full_import_xml(const unsigned char *cmd,
+                       int srv_cmd, int argc, char *argv[])
+{
+  char **xml_txts;
+  size_t *xml_txt_sizes;
+  int r, i, retcode = 1, prev_state = 0;
+  sigset_t blkmask, origmask;
+  struct itimerval tmval;
+
+  if (argc < 2) return too_few_params(cmd);
+
+  XALLOCAZ(xml_txts, argc);
+  XALLOCAZ(xml_txt_sizes, argc);
+  for (i = 1; i < argc; i++) {
+    if (generic_read_file(xml_txts+i, 0, xml_txt_sizes+i, 0, 0, argv[i], 0)<0){
+      err("reading %s failed", argv[i]);
+      return 1;
+    }
+  }
+
+  authentificate(argv[0]);
+  open_server();
+
+  sigemptyset(&blkmask);
+  sigaddset(&blkmask, SIGHUP);
+  sigaddset(&blkmask, SIGALRM);
+  sigaddset(&blkmask, SIGINT);
+  sigaddset(&blkmask, SIGTERM);
+  sigprocmask(SIG_BLOCK, &blkmask, &origmask);
+  signal(SIGHUP, interrupt_handler);
+  signal(SIGINT, interrupt_handler);
+  signal(SIGTERM, interrupt_handler);
+  signal(SIGALRM, alarm_handler);
+
+  // get previous testing status
+  prev_state = serve_clnt_simple_cmd(serve_socket_fd,
+                                     SRV_CMD_GET_TEST_SUSPEND, 0, 0);
+  if (prev_state < 0) {
+    err("server error: %s", protocol_strerror(-r));
+    return 1;
+  }
+
+  // disable testing
+  if (!prev_state) {
+    r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_TEST_SUSPEND, 0, 0);
+    if (r < 0) {
+      err("server error: %s", protocol_strerror(-r));
+      return 1;
+    }
+  }
+
+  sigprocmask(SIG_UNBLOCK, &blkmask, 0);
+  sigprocmask(SIG_BLOCK, &blkmask, 0);
+  if (was_interrupt) {
+    retcode = 2;
+    goto recover_and_exit;
+  }
+
+  while (1) {
+    // try to get transient run status
+    r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_HAS_TRANSIENT_RUNS,0,0);
+    if (!r) break;
+    if (r != -SRV_ERR_TRANSIENT_RUNS) {
+      err("server error: %s", protocol_strerror(-r));
+      goto recover_and_exit;
+    }
+    // sleep for 1 second
+    was_alarm = 0;
+    memset(&tmval, 0, sizeof(tmval));
+    tmval.it_value.tv_sec = 1;
+    tmval.it_value.tv_usec = 0;
+    setitimer(ITIMER_REAL, &tmval, 0);
+    fprintf(stderr, "Waiting 1 second...\n");
+    while (!was_interrupt && !was_alarm) sigsuspend(&origmask);
+    if (was_interrupt) {
+      retcode = 2;
+      fprintf(stderr, "Interrupted\n");
+      goto recover_and_exit;
+    }
+  }
+
+  // import all logs one by one
+  retcode = 0;
+  for (i = 1; i < argc; i++) {
+    fprintf(stderr, "Importing %s...\n", argv[i]);
+    r = serve_clnt_import_xml_runs(serve_socket_fd, 2, 1, xml_txts[i]);
+    if (r < 0) {
+      err("server error: %s", protocol_strerror(-r));
+      retcode = 3;
+    }
+  }
+
+ recover_and_exit:
+  if (!prev_state) {
+    serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_TEST_RESUME, 0, 0);
+    serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_JUDGE_SUSPENDED, 0, 0);
+  }
+  return retcode;
+}
+
 struct cmdinfo
 {
   const unsigned char *cmdname;
@@ -384,6 +508,7 @@ static struct cmdinfo cmds[] =
   { "resume-testing", handle_priv_command_0, SRV_CMD_TEST_RESUME },
   { "judge-suspended-runs", handle_priv_command_0, SRV_CMD_JUDGE_SUSPENDED },
   { "has-transient-runs", handle_priv_transient_runs, 0 },
+  { "full-import-xml-runs", handle_full_import_xml, 0 },
 
   { 0, 0 },
 };
