@@ -1100,6 +1100,7 @@ do_loop(void)
         || prob_id <= 0
         || prob_id > max_prob
         || !probs[prob_id]
+        || probs[prob_id]->disable_testing
         || accept_testing < 0
         || accept_testing > 1
         || score_system_val < SCORE_ACM
@@ -1261,6 +1262,7 @@ process_default_testers(void)
     for (k = 1; k <= max_prob; k++) {
       ts = probs[k];
       if (!ts || prob_flags[k]) continue;
+      if (ts->disable_testing) continue;
 
       // so at this point: tp - pointer to the default tester,
       // k is the problem number
@@ -1316,6 +1318,7 @@ check_config(void)
   for (i = 1; i <= max_prob; i++) {
     prb = probs[i];
     if (!prb) continue;
+    if (prb->disable_testing) continue;
 
     // check if there exists a tester for this problem
     for (j = 1; j <= max_tester; j++) {
@@ -1634,11 +1637,9 @@ main(int argc, char *argv[])
   return code;
 }
 
-
 /**
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "tTask")
  * End:
  */
-
