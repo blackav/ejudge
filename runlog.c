@@ -1082,6 +1082,10 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
     te.pages = in->pages;
     f = 1;
   }
+  if ((mask & RUN_ENTRY_SCORE_ADJ) && te.score_adj != in->score_adj) {
+    te.score_adj = in->score_adj;
+    f = 1;
+  }
 
   /* check consistency of a new record */
   if (te.status == RUN_VIRTUAL_START || te.status == RUN_VIRTUAL_STOP
