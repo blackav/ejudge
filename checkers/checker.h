@@ -25,17 +25,23 @@
 #define NEED_TGZ 0
 #endif /* NEED_TGZ */
 
+#ifdef __cplusplus
+#define CHECK_char_t char
+#else
+#define CHECK_char_t unsigned char
+#endif
+
 #include "checker_internal.h"
 
 #if NEED_INFO == 1
 #include "testinfo.h"
-int (*testinfo_parse_func)(const unsigned char*,testinfo_t*) = testinfo_parse;
-const unsigned char *(*testinfo_strerror_func)(int) = testinfo_strerror;
+int (*testinfo_parse_func)(const CHECK_char_t*,testinfo_t*) = testinfo_parse;
+const CHECK_char_t *(*testinfo_strerror_func)(int) = testinfo_strerror;
 extern testinfo_t test_info;
 #else
 struct testinfo_struct;
-int (*testinfo_parse_func)(const unsigned char*,struct testinfo_struct*) = 0;
-const unsigned char *(*testinfo_strerror_func)(int) = 0;
+int (*testinfo_parse_func)(const CHECK_char_t*,struct testinfo_struct*) = 0;
+const CHECK_char_t *(*testinfo_strerror_func)(int) = 0;
 #endif /* NEED_INFO */
 
 extern int checker_main(int, char **);
