@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -80,6 +80,7 @@ calc_kirov_score(unsigned char *outbuf,
                  struct run_entry *pe,
                  struct section_problem_data *pr,
                  int attempts,
+                 int disq_attempts,
                  int *p_date_penalty)
 {
   int score, init_score, dpi, date_penalty = 0, score_mult = 1;
@@ -104,7 +105,7 @@ calc_kirov_score(unsigned char *outbuf,
 
   // score_mult is applied to the initial score
   // run_penalty is subtracted, but date_penalty is added
-  score = init_score * score_mult - attempts * pr->run_penalty + date_penalty + pe->score_adj;
+  score = init_score * score_mult - attempts * pr->run_penalty + date_penalty + pe->score_adj - disq_attempts * pr->disqualified_penalty;
   if (score > pr->full_score) score = pr->full_score;
   if (score < 0) score = 0;
   if (!outbuf) return score;
@@ -115,6 +116,7 @@ calc_kirov_score(unsigned char *outbuf,
     unsigned char date_penalty_str[64];
     unsigned char final_score_str[64];
     unsigned char score_adj_str[64];
+    unsigned char disq_penalty_str[64];
 
     if (score_mult > 1) {
       snprintf(init_score_str, sizeof(init_score_str),
@@ -143,8 +145,15 @@ calc_kirov_score(unsigned char *outbuf,
       score_adj_str[0] = 0;
     }
 
+    if (disq_attempts > 0 && pr->disqualified_penalty > 0) {
+      snprintf(disq_penalty_str, sizeof(disq_penalty_str),
+               "-%d*%d", disq_attempts, pr->disqualified_penalty);
+    } else {
+      disq_penalty_str[0] = 0;
+    }
+
     if (score_mult > 1 || run_penalty_str[0] || date_penalty_str[0]
-        || score_adj_str[0]) {
+        || score_adj_str[0] || disq_penalty_str[0]) {
       snprintf(final_score_str, sizeof(final_score_str),
                "<b>%d</b>=", score);
     } else {
@@ -153,16 +162,17 @@ calc_kirov_score(unsigned char *outbuf,
                "<b>%d</b>", score);
     }
 
-    snprintf(outbuf, outsize, "%s%s%s%s%s",
+    snprintf(outbuf, outsize, "%s%s%s%s%s%s",
              final_score_str,
-             init_score_str, run_penalty_str, date_penalty_str, score_adj_str);
+             init_score_str, run_penalty_str, date_penalty_str, score_adj_str,
+             disq_penalty_str);
     return score;
   }
 }
 
 void
 write_html_run_status(FILE *f, struct run_entry *pe,
-                      int priv_level, int attempts)
+                      int priv_level, int attempts, int disq_attempts)
 {
   unsigned char status_str[64], score_str[64];
   struct section_problem_data *pr = 0;
@@ -219,7 +229,8 @@ write_html_run_status(FILE *f, struct run_entry *pe,
   if (pe->score < 0 || !pr) {
     fprintf(f, "<td>%s</td>", _("N/A"));
   } else {
-    calc_kirov_score(score_str, sizeof(score_str), pe, pr, attempts, 0);
+    calc_kirov_score(score_str, sizeof(score_str), pe, pr, attempts,
+                     disq_attempts, 0);
     fprintf(f, "<td>%s</td>", score_str);
   }
 }
@@ -233,7 +244,7 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
                     unsigned char const *extra_args)
 {
   int i, showed, runs_to_show;
-  int attempts;
+  int attempts, disq_attempts;
   time_t start_time, time;
   unsigned char dur_str[64];
   unsigned char stat_str[64];
@@ -282,9 +293,10 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
     if (re.status == RUN_VIRTUAL_START || re.status == RUN_VIRTUAL_STOP
         || re.status == RUN_EMPTY)
       continue;
-    attempts = 0;
+    attempts = 0; disq_attempts = 0;
     if (global->score_system_val == SCORE_KIROV && !re.is_hidden)
-      run_get_attempts(i, &attempts, global->ignore_compile_errors);
+      run_get_attempts(i, &attempts, &disq_attempts,
+                       global->ignore_compile_errors);
     if (re.team != uid) continue;
     showed++;
 
@@ -325,7 +337,7 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
     fprintf(f, "<td>%s</td>", prob_str);
     fprintf(f, "<td>%s</td>", lang_str);
 
-    write_html_run_status(f, &re, 0, attempts);
+    write_html_run_status(f, &re, 0, attempts, disq_attempts);
 
     if (global->team_enable_src_view) {
       fprintf(f, "<td>");
@@ -741,7 +753,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
   int i, k, j;
 
   int **prob_score;
-  int **att_num;
+  int **att_num, **disq_num;
   int **full_sol;
   time_t **sol_time;
   int  *tot_score, *tot_full, *succ_att, *tot_att;
@@ -846,9 +858,11 @@ do_write_kirov_standings(FILE *f, int client_flag,
    * sol_time[0..t_tot-1][0..p_tot-1]   - solution time
    * succ_att[0..p_tot-1]               - successfull attempts
    * tot_att[0..p_tot-1]                - total attempt
+   * disq_num[0..t_tot-1][0..p_tot-1]   - number of disqualified attempts
    */
   ALLOCAZERO(prob_score, t_tot);
   ALLOCAZERO(att_num, t_tot);
+  ALLOCAZERO(disq_num, t_tot);
   ALLOCAZERO(full_sol, t_tot);
   ALLOCAZERO(tot_score, t_tot);
   ALLOCAZERO(tot_full, t_tot);
@@ -858,6 +872,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
   for (i = 0; i < t_tot; i++) {
     ALLOCAZERO(prob_score[i], p_tot);
     ALLOCAZERO(att_num[i], p_tot);
+    ALLOCAZERO(disq_num[i], p_tot);
     ALLOCAZERO(full_sol[i], p_tot);
     ALLOCAZERO(sol_time[i], p_tot);
   }
@@ -915,13 +930,17 @@ do_write_kirov_standings(FILE *f, int client_flag,
       case RUN_PRESENTATION_ERR:
         att_num[tind][pind]++;
         break;
+      case RUN_DISQUALIFIED:
+        disq_num[tind][pind]++;
+        break;
       default:
         break;
       }
     } else {
       if (run_score == -1) run_score = 0;
       if (pe->status == RUN_OK) {
-        score = calc_kirov_score(0, 0, pe, p, att_num[tind][pind], 0);
+        score = calc_kirov_score(0, 0, pe, p, att_num[tind][pind],
+                                 disq_num[tind][pind], 0);
         if (score > prob_score[tind][pind]) {
           prob_score[tind][pind] = score;
           if (!p->stand_hide_time) sol_time[tind][pind] = pe->timestamp;
@@ -935,13 +954,16 @@ do_write_kirov_standings(FILE *f, int client_flag,
         att_num[tind][pind]++;
         full_sol[tind][pind] = 1;
       } else if (pe->status == RUN_PARTIAL) {
-        score = calc_kirov_score(0, 0, pe, p, att_num[tind][pind], 0);
+        score = calc_kirov_score(0, 0, pe, p, att_num[tind][pind],
+                                 disq_num[tind][pind], 0);
         if (score > prob_score[tind][pind]) prob_score[tind][pind] = score;
         att_num[tind][pind]++;
         if (!full_sol[tind][pind]) tot_att[pind]++;
       } else if (pe->status==RUN_COMPILE_ERR&&!global->ignore_compile_errors) {
         att_num[tind][pind]++;
         if (!full_sol[tind][pind]) tot_att[pind]++;
+      } else if (pe->status == RUN_DISQUALIFIED) {
+        disq_num[tind][pind]++;
       } else {
         /* something like "compiling..." or "running..." */
       }
@@ -1026,7 +1048,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
       fprintf(f, "<th%s>", global->stand_prob_attr);
       if (global->prob_info_url[0]) {
         sformat_message(dur_str, sizeof(dur_str), global->prob_info_url,
-                        NULL, probs[p_ind[j]], NULL, NULL, NULL);
+                        NULL, probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_str);
       }
       fprintf(f, "%s", probs[p_ind[j]]->short_name);
@@ -1069,7 +1091,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
       fprintf(f, "<td%s>", global->stand_team_attr);
       if (global->team_info_url[0]) {
         sformat_message(dur_str, sizeof(dur_str), global->team_info_url,
-                        NULL, NULL, NULL, NULL, &ttt);
+                        NULL, NULL, NULL, NULL, &ttt, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_str);
       }
       fprintf(f, "%s", teamdb_get_name(t_ind[t]));
@@ -1079,7 +1101,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
       fprintf(f, "</td>");
       if (global->stand_extra_format[0]) {
         sformat_message(dur_str, sizeof(dur_str), global->stand_extra_format,
-                        NULL, NULL, NULL, NULL, &ttt);
+                        NULL, NULL, NULL, NULL, &ttt, 0, 0, 0);
         fprintf(f, "<td%s>%s</td>", global->stand_extra_attr, dur_str);
       }
       if (global->stand_show_contestant_status
@@ -1520,7 +1542,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       if (global->team_info_url[0]) {
         teamdb_export_team(runs[last_success_run].team, &ttt);
         sformat_message(dur_buf, sizeof(dur_buf), global->team_info_url,
-                        NULL, NULL, NULL, NULL, &ttt);
+                        NULL, NULL, NULL, NULL, &ttt, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_buf);      
       }
       fprintf(f, "%s", teamdb_get_name(runs[last_success_run].team));
@@ -1531,7 +1553,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       if (global->prob_info_url[0]) {
         sformat_message(dur_buf, sizeof(dur_buf), global->prob_info_url,
                         NULL, probs[runs[last_success_run].problem],
-                        NULL, NULL, NULL);
+                        NULL, NULL, NULL, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_buf);
       }
       fprintf(f, "%s", probs[runs[last_success_run].problem]->short_name);
@@ -1566,7 +1588,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       fprintf(f, "<th%s>", global->stand_prob_attr);
       if (global->prob_info_url[0]) {
         sformat_message(url_str, sizeof(url_str), global->prob_info_url,
-                        NULL, probs[p_ind[j]], NULL, NULL, NULL);
+                        NULL, probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", url_str);
       }
       fprintf(f, "%s", probs[p_ind[j]]->short_name);
@@ -1627,7 +1649,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       }
       if (global->team_info_url[0]) {
         sformat_message(url_str, sizeof(url_str), global->team_info_url,
-                        NULL, NULL, NULL, NULL, &ttt);
+                        NULL, NULL, NULL, NULL, &ttt, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", url_str);      
       }
       fprintf(f, "%s", teamdb_get_name(t_ind[t]));
@@ -1637,7 +1659,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       fprintf(f, "</td>");
       if (global->stand_extra_format[0]) {
         sformat_message(url_str, sizeof(url_str), global->stand_extra_format,
-                        NULL, NULL, NULL, NULL, &ttt);
+                        NULL, NULL, NULL, NULL, &ttt, 0, 0, 0);
         fprintf(f, "<td%s>%s</td>", global->stand_extra_attr, url_str);
       }
       if (global->stand_show_contestant_status
@@ -1825,7 +1847,7 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
   int i;
 
   time_t time, start;
-  int attempts;
+  int attempts, disq_attempts;
 
   char durstr[64], statstr[64];
   char *str1 = 0, *str2 = 0;
@@ -1876,7 +1898,8 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
     if (pe->is_hidden) continue;
 
     time = pe->timestamp;
-    run_get_attempts(i, &attempts, global->ignore_compile_errors);
+    run_get_attempts(i, &attempts, &disq_attempts,
+                     global->ignore_compile_errors);
 
     if (!start) time = start;
     if (start > time) time = start;
@@ -1905,7 +1928,7 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
       fprintf(f, "<td>%s</td>", langs[pe->language]->short_name);
     else fprintf(f, "<td>??? - %d</td>", pe->language);
 
-    write_html_run_status(f, pe, 0, attempts);
+    write_html_run_status(f, pe, 0, attempts, disq_attempts);
 
     fputs("</tr>\n", f);
   }
