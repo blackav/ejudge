@@ -42,8 +42,8 @@
 #define _(x) x
 #endif
 
-#define RUN_RECORD_SIZE 78
-#define RUN_HEADER_SIZE 78
+#define RUN_RECORD_SIZE 99
+#define RUN_HEADER_SIZE 99
 
 struct run_header
 {
@@ -63,6 +63,7 @@ struct run_entry
   int            problem;
   int            status;
   int            test;
+  int            score;
   char           ip[RUN_MAX_IP_LEN + 1];
 };
 
@@ -118,11 +119,11 @@ run_read_entry(int n)
 
   memset(buf, 0, sizeof(buf));
   if (run_read_record(buf, RUN_RECORD_SIZE) < 0) return -1;
-  r = sscanf(buf, " %lu %d %lu %d %d %d %d %d %s %n",
+  r = sscanf(buf, " %lu %d %lu %d %d %d %d %d %d %s %n",
              &runs[n].timestamp, &runs[n].submission, &runs[n].size,
              &runs[n].team, &runs[n].language, &runs[n].problem,
-             &runs[n].status, &runs[n].test, tip, &k);
-  if (r != 9) ERR_R(_("[%d]: sscanf returned %d"), n, r);
+             &runs[n].status, &runs[n].test, &runs[n].score, tip, &k);
+  if (r != 10) ERR_R(_("[%d]: sscanf returned %d"), n, r);
   if (buf[k] != 0) ERR_R(_("[%d]: excess data"), n);
   if (strlen(tip) > RUN_MAX_IP_LEN) ERR_R("[%d]: ip is to long", n);
 
@@ -194,13 +195,14 @@ run_open(char *path, int flags)
 static int
 run_make_record(char *buf, unsigned long int ts,
                 int sb, unsigned long sz,
-                int tm, int lg, int pr, int st, int tt, char const *ip)
+                int tm, int lg, int pr, int st, int tt,
+                int sc, char const *ip)
 {
   memset(buf, ' ', RUN_RECORD_SIZE);
   buf[RUN_RECORD_SIZE] = 0;
   buf[RUN_RECORD_SIZE - 1] = '\n';
-  sprintf(buf, "%12lu %6d %8lu %8d %4d %4d %3d %4d %15s",
-          ts, sb, sz, tm, lg, pr, st, tt, ip);
+  sprintf(buf, "%12lu %6d %8lu %8d %4d %4d %3d %4d %3d %15s",
+          ts, sb, sz, tm, lg, pr, st, tt, sc, ip);
   buf[strlen(buf)] = ' ';
   if (strlen(buf) != RUN_RECORD_SIZE)
     ERR_R(_("record size is bad: %d"), strlen(buf));
@@ -238,7 +240,7 @@ run_flush_entry(int num)
                       runs[num].timestamp, runs[num].submission,
                       runs[num].size, runs[num].team, runs[num].language,
                       runs[num].problem, runs[num].status,
-                      runs[num].test, runs[num].ip) < 0)
+                      runs[num].test, runs[num].score, runs[num].ip) < 0)
     return -1;
   if (sf_lseek(run_fd, RUN_HEADER_SIZE + RUN_RECORD_SIZE * num, SEEK_SET, "run") == (off_t) -1) return -1;
 
@@ -274,6 +276,7 @@ run_add_record(unsigned long  timestamp,
   runs[run_u].problem = problem;
   runs[run_u].status = 99;
   runs[run_u].test = 0;
+  runs[run_u].score = -1;
   strncpy(runs[run_u].ip, ip, RUN_MAX_IP_LEN);
   runs[run_u].ip[RUN_MAX_IP_LEN - 1] = 0;
   i = run_u++;
@@ -296,11 +299,12 @@ run_flush_header(void)
 }
 
 int
-run_change_status(int runid, int newstatus, int newtest)
+run_change_status(int runid, int newstatus, int newtest, int newscore)
 {
   if (runid < 0 || runid >= run_u) ERR_R(_("bad runid: %d"), runid);
   runs[runid].status = newstatus;
   runs[runid].test = newtest;
+  runs[runid].score = newscore;
   run_flush_entry(runid);
   return 0;
 }
@@ -327,7 +331,7 @@ run_get_record(int runid, unsigned long *ptime,
                unsigned long *psize,
                char *pip,
                int *pteamid, int *plangid, int *pprobid,
-               int *pstatus, int *ptest)
+               int *pstatus, int *ptest, int *pscore)
 {
   if (runid < 0 || runid >= run_u) ERR_R(_("bad runid: %d"), runid);
 
@@ -338,6 +342,7 @@ run_get_record(int runid, unsigned long *ptime,
   if (pprobid) *pprobid = runs[runid].problem;
   if (pstatus) *pstatus = runs[runid].status;
   if (ptest)   *ptest   = runs[runid].test;
+  if (pscore)  *pscore  = runs[runid].score;
   if (pip)     strcpy(pip, runs[runid].ip);
   return 0;
 }
@@ -415,6 +420,23 @@ run_get_team_usage(int teamid, int *pn, unsigned long *ps)
   }
   if (pn) *pn = n;
   if (ps) *ps = sz;
+}
+
+/* FIXME: VERY DUMP */
+int
+run_get_attempts(int runid, int *pattempts)
+{
+  int i, n = 0;
+
+  *pattempts = 0;
+  if (runid < 0 || runid >= run_u) ERR_R(_("bad runid: %d"), runid);
+
+  for (i = 0; i < runid; i++) {
+    if (runs[i].team == runs[runid].team
+        && runs[i].problem == runs[runid].problem) n++;
+  }
+  *pattempts = n;
+  return 0;
 }
 
 char *
