@@ -143,6 +143,10 @@ enum
     SRV_CMD_REJUDGE_BY_MASK,
     SRV_CMD_NEW_RUN_FORM,
     SRV_CMD_NEW_RUN,
+    SRV_CMD_VIEW_TEAM,
+    SRV_CMD_SET_TEAM_STATUS,
+    SRV_CMD_ISSUE_WARNING,
+    SRV_CMD_SOFT_UPDATE_STAND,
 
     SRV_CMD_LAST
   };
@@ -424,6 +428,17 @@ struct prot_serve_pkt_rejudge_by_mask
   struct prot_serve_packet b;
   int mask_size;
   unsigned long mask[1];
+};
+
+struct prot_serve_pkt_user_info
+{
+  struct prot_serve_packet b;
+
+  int user_id;
+  int status;
+  int txt_len;
+  int cmt_len;
+  unsigned char data[2];
 };
 
 unsigned char const *protocol_strerror(int n);
