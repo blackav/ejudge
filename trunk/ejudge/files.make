@@ -65,6 +65,7 @@ SERVE_CLNT_CFILES=\
  serve_clnt/submit_clar.c\
  serve_clnt/submit_run.c\
  serve_clnt/team_page.c\
+ serve_clnt/upload_report.c\
  serve_clnt/view.c
 
 COMMON_CFILES=\
