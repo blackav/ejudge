@@ -60,8 +60,6 @@ enum
   {
     SRV_CMD_PASS_FD = 1,
     SRV_CMD_GET_ARCHIVE,
-    SRV_CMD_LIST_RUNS,
-    SRV_CMD_LIST_CLARS,
     SRV_CMD_SHOW_CLAR,
     SRV_CMD_SHOW_SOURCE,
     SRV_CMD_SHOW_REPORT,
@@ -76,7 +74,6 @@ enum
     SRV_CMD_VIEW_USERS,
     SRV_CMD_PRIV_MSG,
     SRV_CMD_PRIV_REPLY,
-    SRV_CMD_GEN_PASSWORDS,
     SRV_CMD_SUSPEND,
     SRV_CMD_RESUME,
     SRV_CMD_UPDATE_STAND,
@@ -88,8 +85,6 @@ enum
     SRV_CMD_SCHEDULE,
     SRV_CMD_DURATION,
     SRV_CMD_EDIT_RUN,
-    SRV_CMD_TOGGLE_VISIBILITY,
-    SRV_CMD_TOGGLE_BAN,
     SRV_CMD_VIRTUAL_START,
     SRV_CMD_VIRTUAL_STOP,
     SRV_CMD_VIRTUAL_STANDINGS,
@@ -97,7 +92,6 @@ enum
     SRV_CMD_CLEAR_RUN,
     SRV_CMD_SQUEEZE_RUNS,
     SRV_CMD_DUMP_RUNS,
-    SRV_CMD_DUMP_USERS,
     SRV_CMD_DUMP_STANDINGS,
     SRV_CMD_SET_JUDGING_MODE,
     SRV_CMD_CONTINUE,
@@ -226,7 +220,8 @@ struct prot_serve_pkt_team_page
   unsigned int flags;
   int self_url_len;
   int hidden_vars_len;
-  unsigned char data[2];
+  int extra_args_len;
+  unsigned char data[3];
 };
 
 #ifndef __MASTER_PAGE_ENUM_DEFINED__
@@ -257,7 +252,8 @@ struct prot_serve_pkt_master_page
   int self_url_len;
   int filter_expr_len;
   int hidden_vars_len;
-  unsigned char data[3];
+  int extra_args_len;
+  unsigned char data[4];
 };
 
 struct prot_serve_pkt_standings
@@ -271,7 +267,8 @@ struct prot_serve_pkt_standings
   int sid_mode;
   int self_url_len;
   int hidden_vars_len;
-  unsigned char data[2];
+  int extra_args_len;
+  unsigned char data[3];
 };
 
 struct prot_serve_pkt_view
@@ -282,7 +279,8 @@ struct prot_serve_pkt_view
   int sid_mode;
   int self_url_len;
   int hidden_vars_len;
-  unsigned char data[2];
+  int extra_args_len;
+  unsigned char data[3];
 };
 
 struct prot_serve_pkt_simple
