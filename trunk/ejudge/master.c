@@ -892,12 +892,21 @@ print_testing_suspend_button(void)
 }
 
 static void
-print_judging_mode_button(unsigned char const *str)
+print_judging_mode_button(int judging_mode)
 {
-  if (!str) str = _("Set judging mode");
+  int a = 0;
+  unsigned char *str = 0;
+
+  if (!judging_mode) {
+    str = _("Set judging mode");
+    a = ACTION_SET_JUDGING_MODE;
+  } else {
+    str = _("Set accepting mode");
+    a = ACTION_SET_ACCEPTING_MODE;
+  }
   puts(form_start_simple);
   printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
-         ACTION_SET_JUDGING_MODE, str);
+         a, str);
 }
 
 static void
@@ -1112,7 +1121,7 @@ change_status_if_asked()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_STATUS_SET,
-                          0, 0, 0, status, 0, 0, 0, 0, 0, 0, 0);
+                          0, 0, 0, status, 0, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, -1);
   force_recheck_status = 1;
   return;
@@ -1146,7 +1155,7 @@ change_status()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_STATUS_SET,
-                          0, 0, 0, status, 0, 0, 0, 0, 0, 0, 0);
+                          0, 0, 0, status, 0, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
@@ -1178,7 +1187,7 @@ change_problem()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_PROB_SET,
-                          0, prob_id, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+                          0, prob_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
@@ -1210,7 +1219,7 @@ change_language()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_LANG_SET,
-                          0, 0, lang_id, 0, 0, 0, 0, 0, 0, 0, 0);
+                          0, 0, lang_id, 0, 0, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
@@ -1242,7 +1251,39 @@ change_variant()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_VARIANT_SET,
-                          0, 0, 0, 0, 0, variant, 0, 0, 0, 0, 0);
+                          0, 0, 0, 0, 0, variant, 0, 0, 0, 0, 0, 0);
+  operation_status_page(r, 0, run_id);
+  force_recheck_status = 1;
+  return;
+
+ invalid_operation:
+  operation_status_page(-1, "Invalid operation", -1);
+  force_recheck_status = 1;
+}
+
+static void
+action_run_change_pages()
+{
+  unsigned char *s;
+  int run_id, n, pages, r;
+
+  if (!(s = cgi_param("run_id"))
+      || sscanf(s, "%d%n", &run_id, &n) != 1
+      || s[n]
+      || run_id < 0
+      || run_id >= server_total_runs)
+    goto invalid_operation;
+  if (!(s = cgi_param("pages")))
+    goto invalid_operation;
+  if (sscanf(s, "%d%n", &pages, &n) != 1 || s[n])
+    goto invalid_operation;
+  if (pages < 0 || pages > 255)
+    goto invalid_operation;
+
+  open_serve();
+  r = serve_clnt_edit_run(serve_socket_fd, run_id,
+                          PROT_SERVE_RUN_PAGES_SET,
+                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, pages, 0);
   operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
@@ -1274,7 +1315,7 @@ change_user_id()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_UID_SET,
-                          user_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+                          user_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
@@ -1302,7 +1343,7 @@ change_user_login()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_LOGIN_SET,
-                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, user_login);
+                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, user_login);
   operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
@@ -1333,7 +1374,7 @@ change_imported(void)
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_IMPORTED_SET,
-                          0, 0, 0, 0, v, 0, 0, 0, 0, 0, 0);
+                          0, 0, 0, 0, v, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
@@ -1364,7 +1405,7 @@ change_hidden(void)
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_HIDDEN_SET,
-                          0, 0, 0, 0, 0, 0, v, 0, 0, 0, 0);
+                          0, 0, 0, 0, 0, 0, v, 0, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
@@ -1395,7 +1436,7 @@ change_tests(void)
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_TESTS_SET,
-                          0, 0, 0, 0, 0, 0, 0, v, 0, 0, 0);
+                          0, 0, 0, 0, 0, 0, 0, v, 0, 0, 0, 0);
   operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
@@ -1426,7 +1467,7 @@ change_score(void)
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_SCORE_SET,
-                          0, 0, 0, 0, 0, 0, 0, 0, v, 0, 0);
+                          0, 0, 0, 0, 0, 0, 0, 0, v, 0, 0, 0);
   operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
@@ -1457,7 +1498,7 @@ change_readonly(void)
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_READONLY_SET,
-                          0, 0, 0, 0, 0, 0, 0, 0, 0, v, 0);
+                          0, 0, 0, 0, 0, 0, 0, 0, 0, v, 0, 0);
   operation_status_page(r, 0, run_id);
   force_recheck_status = 1;
   return;
@@ -1969,6 +2010,17 @@ action_set_judgind_mode(void)
 }
 
 static void
+action_set_accepting_mode(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_SET_ACCEPTING_MODE, 0, 0);
+  operation_status_page(r, 0, -1);
+  force_recheck_status = 1;
+}
+
+static void
 do_rejudge_all_if_asked(void)
 {
   int r;
@@ -2031,6 +2083,27 @@ action_clear_run(void)
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_CLEAR_RUN, &r, sizeof(r));
   operation_status_page(r, 0, -1);
   force_recheck_status = 1;
+}
+
+static void
+action_priv_print_run(void)
+{
+  unsigned char *s;
+  int r, n;
+
+  if (!(s = cgi_param("run_id"))
+      || sscanf(s, "%d%n", &r, &n) != 1
+      || s[n]
+      || r < 0
+      || r >= server_total_runs) {
+    operation_status_page(-1, "Invalid parameter", -1);
+    return;
+  }
+
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_PRIV_PRINT_RUN,
+                            &r, sizeof(r));
+  operation_status_page(r, 0, -1);
 }
 
 static void
@@ -2787,6 +2860,9 @@ main(int argc, char *argv[])
     case ACTION_SET_JUDGING_MODE:
       action_set_judgind_mode();
       break;
+    case ACTION_SET_ACCEPTING_MODE:
+      action_set_accepting_mode();
+      break;
     case ACTION_CONTINUE:
       confirm_continue();
       break;
@@ -2802,6 +2878,9 @@ main(int argc, char *argv[])
     case ACTION_RUN_CHANGE_VARIANT:
       change_variant();
       break;
+    case ACTION_RUN_CHANGE_PAGES:
+      action_run_change_pages();
+      break;
     default:
       change_status_if_asked();
       break;
@@ -2813,6 +2892,9 @@ main(int argc, char *argv[])
     break;
   case ACTION_RESET_FILTER:
     action_reset_filter();
+    break;
+  case ACTION_PRINT_PRIV_RUN:
+    action_priv_print_run();
     break;
   }
   log_out_if_asked();
@@ -2864,10 +2946,9 @@ main(int argc, char *argv[])
     }
     printf("</td><td>");
     print_testing_suspend_button();
-    if (server_score_system == SCORE_OLYMPIAD
-        && !server_olympiad_judging_mode) {
+    if (server_score_system == SCORE_OLYMPIAD) {
       printf("</td><td>");
-      print_judging_mode_button(0);
+      print_judging_mode_button(server_olympiad_judging_mode);
     }
     printf("</td></tr></table>\n");
     printf("<table><tr><td>");
