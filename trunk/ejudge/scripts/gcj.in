@@ -1,4 +1,5 @@
 #!/bin/sh
 
 PATH=/usr/upd/gcc-3.2/bin:${PATH}
-exec gcj --main=Main -static -s -O2 $1 -o $2
+mv $1 Main.java
+exec gcj --main=Main -static -s -O2 Main.java -o $2
