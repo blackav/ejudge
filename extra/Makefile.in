@@ -19,9 +19,7 @@ CFLAGS=${CDEBUGFLAGS} ${CCOMPFLAGS} ${CINTLFLAG} ${CEXTRAFLAGS}
 LDFLAGS=${CDEBUGFLAGS} ${LDCOMPFLAGS} ${LDEXTRAFLAGS}
 
 TARGETS=bpcemu2 dosrun3 bppemu bccemu
-ifeq ($(shell uname -r), 2.2.23-cher1) 
 TARGETS += capexec libdropcaps.so
-endif
 
 all: ${TARGETS}
 clean:
