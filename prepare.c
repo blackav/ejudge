@@ -192,6 +192,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(stand_r_row_attr, "s"),
   GLOBAL_PARAM(stand_u_row_attr, "s"),
   GLOBAL_PARAM(stand_success_attr, "s"),
+  GLOBAL_PARAM(stand_show_ok_time, "s"),
 
   // just for fun
   GLOBAL_PARAM(extended_sound, "d"),
@@ -268,6 +269,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(hidden, "d"),
   PROBLEM_PARAM(priority_adjustment, "d"),
   PROBLEM_PARAM(spelling, "s"),
+  PROBLEM_PARAM(stand_hide_time, "d"),
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
@@ -285,6 +287,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(test_score_list, "s"),
   PROBLEM_PARAM(test_sets, "x"),
   PROBLEM_PARAM(deadline, "s"),
+  PROBLEM_PARAM(start_date, "s"),
   PROBLEM_PARAM(variant_num, "d"),
   PROBLEM_PARAM(date_penalty, "x"),
   PROBLEM_PARAM(disable_language, "x"),
@@ -868,6 +871,7 @@ parse_date(const unsigned char *s, time_t *pd)
 
   if (!s) goto failed;
 
+  memset(&tt, 0, sizeof(tt));
   while (1) {
     year = month = day = hour = min = sec = 0;
     if (sscanf(s, "%d/%d/%d %d:%d:%d %n", &year, &month, &day, &hour,
@@ -908,7 +912,7 @@ parse_deadline_penalties(char **dpstr, int *p_total,
   struct penalty_info *v = 0;
   const char *s;
   size_t maxlen = 0, curlen;
-  unsigned char *b1, *b2;
+  unsigned char *b1, *b2, *b3;
   time_t tt;
 
   *p_total = 0;
@@ -924,9 +928,18 @@ parse_deadline_penalties(char **dpstr, int *p_total,
   XCALLOC(v, total);
   b1 = (unsigned char*) alloca(maxlen + 10);
   b2 = (unsigned char*) alloca(maxlen + 10);
+  b3 = (unsigned char*) alloca(maxlen + 10);
 
   for (i = 0; (s = dpstr[i]); i++) {
-    sscanf(s, "%s %s", b1, b2);
+    if (sscanf(s, "%s%s%s%n", b1, b3, b2, &n) == 3 && !s[n]) {
+      strcat(b1, " ");
+      strcat(b1, b3);
+    } else if (sscanf(s, "%s%s%n", b1, b2, &n) == 2 && !s[n]) {
+      // do nothing
+    } else {
+      err("%d: invalid date penalty specification %s", i + 1, s);
+      goto failure;
+    }
     n = x = 0;
     if (sscanf(b2, "%d%n", &x, &n) != 1 || b2[n]) {
       err("%d: invalid penalty specification %s", i + 1, b2);
@@ -2152,6 +2165,14 @@ set_defaults(int mode)
           return -1;
         }
         info("problem.%s.deadline is %ld", ish, probs[i]->t_deadline);
+      }
+      if (probs[i]->start_date[0]) {
+        if (parse_date(probs[i]->start_date, &probs[i]->t_start_date) < 0) {
+          err("invalid start_date specified for problem `%s'",
+              probs[i]->short_name);
+          return -1;
+        }
+        info("problem.%s.start_date is %ld", ish, probs[i]->t_start_date);
       }
 
       if (parse_deadline_penalties(probs[i]->date_penalty,
