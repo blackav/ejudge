@@ -170,7 +170,7 @@ static int user_already_registered;
 static char *header_txt, *footer_txt;
 static int header_len, footer_len;
 
-static unsigned char *head_style = "<h2>";
+static unsigned char *head_style = "h2";
 static unsigned char *par_style = "";
 static unsigned char *table_style = "";
 
@@ -1986,11 +1986,12 @@ display_register_new_user_page(void)
   printf("<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
          client_locale_id);
 
-  printf("<%s>%s</%s><p%s>%s</p><p>%s</p>\n",
+  printf("<%s>%s</%s><p%s>%s</p><p%s>%s</p>\n",
          head_style, _("Registration rules"), head_style, par_style,
          _("Please, fill up all the fields in the form below. "
            "Fields, marked with (*), are mandatory. "
            "When the form is completed, press \"Register\" button."),
+         par_style,
          _("Shortly after that you should receive an e-mail message "
            "with a password to the system. Use this password for the first "
            " login. "
