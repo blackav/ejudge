@@ -407,7 +407,11 @@ client_print_server_status(int read_only, char const *form_start,
     puts("</tr>");
   }
 
-  duration_str(server_duration, str_duration, 0);
+  if (server_duration) {
+    duration_str(server_duration, str_duration, 0);
+  } else {
+    sprintf(str_duration, "%s", _("Unlimited"));
+  }
   printf("<tr><td>%s:</td><td>%s</td>", _("Duration"), str_duration);
   if (!read_only) {
     if (!server_stop_time)
@@ -430,12 +434,14 @@ client_print_server_status(int read_only, char const *form_start,
       if (!read_only) puts("<td>&nbsp;</td><td>&nbsp</td>");
       puts("</tr>");
 
-      duration_str(server_start_time + server_duration - server_cur_time,
-                   str_left_dur, 0);
-      printf("<tr><td>%s:</td><td>%s</td>",
-             _("Remaining time"), str_left_dur);
-      if (!read_only) puts("<td>&nbsp;</td><td>&nbsp</td>");
-      puts("</tr>");
+      if (server_duration) {
+        duration_str(server_start_time + server_duration - server_cur_time,
+                     str_left_dur, 0);
+        printf("<tr><td>%s:</td><td>%s</td>",
+               _("Remaining time"), str_left_dur);
+        if (!read_only) puts("<td>&nbsp;</td><td>&nbsp</td>");
+        puts("</tr>");
+      }
     }
   }
   puts("</table>");
