@@ -23,6 +23,7 @@
 #include "nls.h"
 
 #include <stdio.h>
+#include <time.h>
 
 enum { PREPARE_SERVE, PREPARE_COMPILE, PREPARE_RUN };
 enum { PREPARE_QUIET = 1, PREPARE_USE_CPP = 2 };
@@ -41,6 +42,8 @@ struct testset_info
   int scoreop;
   int score;
 };
+
+struct variant_map;
 
 struct section_global_data
 {
@@ -62,6 +65,7 @@ struct section_global_data
                                  * when the board is again updated */
   int    autoupdate_standings;  /* update standings automatically? */
   int    inactivity_timeout;    /* timeout for slave case */
+  int    disable_auto_testing;  /* do not test automatically */
 
   int    fog_standings_updated; /* INTERNAL: updated at the moment of fog? */
   int    start_standings_updated; /* INTERNAL: updated at the start */
@@ -202,11 +206,16 @@ struct section_global_data
   int auto_short_problem_name;  /* automatically construct short name */
   int compile_real_time_limit;
   int checker_real_time_limit;
+  int show_deadline;       /* show deadlines in problem name? */
 
   // decorations
   path_t standings_team_color;
   path_t standings_virtual_team_color;
   path_t standings_real_team_color;
+
+  // variant support
+  path_t variant_map_file;
+  struct variant_map *variant_map;
 };
 
 struct section_problem_data
@@ -227,6 +236,7 @@ struct section_problem_data
   int    use_corr;              /* whether the correct answers defined */
   int    tests_to_accept;       /* how many tests to accept a submit */
   int    checker_real_time_limit;
+  int    disable_auto_testing;
   path_t super;                 /* superproblem's short_name */
   path_t short_name;            /* short problem name, eg A, B, ... */
   path_t long_name;             /* long problem name */
@@ -244,6 +254,10 @@ struct section_problem_data
   char  **test_sets;            /* defined test sets */
   int ts_total;
   struct testset_info *ts_infos;
+
+  path_t deadline;              /* deadline for sending this problem */
+  time_t t_deadline;            /* in UNIX internal format */
+  int variant_num;              /* number of variants for this problem */
 };
 
 struct section_language_data
@@ -330,6 +344,7 @@ int prepare(char const *, int flags, int mode, char const *opts);
 int create_dirs(int mode);
 
 int find_tester(int, char const *);
+int find_variant(int, int);
 
 void print_problem(FILE *, struct section_problem_data *);
 void print_language(FILE *, struct section_language_data *);
