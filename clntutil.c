@@ -111,8 +111,8 @@ client_get_reply(char **pstr, int *psize, char const *name)
   xfree(myptr); myptr = 0;
   if (generic_read_file(&myptr, 0, &rlen, REMOVE|PIPE,
                         client_pipe_dir, name, "") < 0) {
-    myptr = asprintf("<p><big><b>%s</b></big></p>",
-                     _("Cannot read server responce."));
+    asprintf(&myptr, "<p><big><b>%s</b></big></p>",
+             _("Cannot read server responce."));
   } else {
     if (myptr && sscanf(myptr, "%d%n", &code, &n) != 1) code = -1;
   }
