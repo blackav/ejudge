@@ -56,12 +56,14 @@ struct user_stat
 };
 static struct user_stat *user_stat;
 
+#if 0
 static void
 print_info(unsigned char const *program_path)
 {
   printf("clean-users %s, compiled %s\n", compile_version, compile_date);
   printf("Usage: %s [-r [-f]] config-file\n", program_path);
 }
+#endif
 
 int
 main(int argc, char **argv)
