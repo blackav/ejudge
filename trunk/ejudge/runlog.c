@@ -84,12 +84,12 @@ run_read_record(char *buf, int size)
   int  i;
 
   if ((rsz = sf_read(run_fd, buf, size, "run")) < 0) return -1;
-  if (rsz != size) ERR_R(_("short read: %d"), rsz);
+  if (rsz != size) ERR_R("short read: %d", rsz);
   for (i = 0; i < size - 1; i++) {
     if (buf[i] >= 0 && buf[i] < ' ') break;
   }
-  if (i < size - 1) ERR_R(_("bad characters in record"));
-  if (buf[size - 1] != '\n') ERR_R(_("record improperly terminated"));
+  if (i < size - 1) ERR_R("bad characters in record");
+  if (buf[size - 1] != '\n') ERR_R("record improperly terminated");
   return 0;
 }
 
@@ -106,8 +106,8 @@ run_read_header(void)
              &head.sched_time,
              &head.duration,
              &head.stop_time, &n);
-  if (r != 4) ERR_R(_("sscanf returned %d"), r);
-  if (buf[n] != 0) ERR_R(_("excess data: %d"), n);
+  if (r != 4) ERR_R("sscanf returned %d", r);
+  if (buf[n] != 0) ERR_R("excess data: %d", n);
   return 0;
 }
 
@@ -124,8 +124,8 @@ run_read_entry(int n)
              &runs[n].timestamp, &runs[n].submission, &runs[n].size,
              &runs[n].team, &runs[n].language, &runs[n].problem,
              &runs[n].status, &runs[n].test, &runs[n].score, tip, &k);
-  if (r != 10) ERR_R(_("[%d]: sscanf returned %d"), n, r);
-  if (buf[k] != 0) ERR_R(_("[%d]: excess data"), n);
+  if (r != 10) ERR_R("[%d]: sscanf returned %d", n, r);
+  if (buf[k] != 0) ERR_R("[%d]: excess data", n);
   if (strlen(tip) > RUN_MAX_IP_LEN) ERR_R("[%d]: ip is to long", n);
 
   strcpy(runs[n].ip, tip);
@@ -158,7 +158,7 @@ run_open(char *path, int flags)
     return -1;
   if (sf_lseek(run_fd, 0, SEEK_SET, "run") == (off_t) -1) return -1;
 
-  info(_("runs file size: %lu"), filesize);
+  info("runs file size: %lu", filesize);
   if (filesize == 0) {
     /* runs file is empty */
     XMEMZERO(&head, 1);
@@ -167,7 +167,7 @@ run_open(char *path, int flags)
   }
 
   if ((filesize - RUN_HEADER_SIZE) % RUN_RECORD_SIZE != 0)
-    ERR_C(_("bad runs file size: remainder %d"), (filesize - RUN_HEADER_SIZE) % RUN_RECORD_SIZE);
+    ERR_C("bad runs file size: remainder %d", (filesize - RUN_HEADER_SIZE) % RUN_RECORD_SIZE);
 
   run_u = (filesize - RUN_HEADER_SIZE) / RUN_RECORD_SIZE;
   run_a = 128;
@@ -206,9 +206,9 @@ run_make_record(char *buf, unsigned long int ts,
           ts, sb, sz, tm, lg, pr, st, tt, sc, ip);
   buf[strlen(buf)] = ' ';
   if (strlen(buf) != RUN_RECORD_SIZE)
-    ERR_R(_("record size is bad: %d"), strlen(buf));
+    ERR_R("record size is bad: %d", strlen(buf));
   if (buf[RUN_RECORD_SIZE - 1] != '\n')
-    ERR_R(_("last \\n is overwritten"));
+    ERR_R("last \\n is overwritten");
   return 0;
 }
 
@@ -223,9 +223,9 @@ run_make_header(char *buf)
           head.stop_time);
   buf[strlen(buf)] = ' ';
   if (strlen(buf) != RUN_HEADER_SIZE)
-    ERR_R(_("header size is bad: %d"), strlen(buf));
+    ERR_R("header size is bad: %d", strlen(buf));
   if (buf[RUN_HEADER_SIZE - 1] != '\n')
-    ERR_R(_("last \\n is overwritten"));
+    ERR_R("last \\n is overwritten");
   return 0;
 }
 
@@ -235,8 +235,8 @@ run_flush_entry(int num)
   char buf[RUN_RECORD_SIZE + 16];
   int  wsz;
 
-  if (run_fd < 0) ERR_R(_("invalid descriptor %d"), run_fd);
-  if (num < 0 || num >= run_u) ERR_R(_("invalid entry number %d"), num);
+  if (run_fd < 0) ERR_R("invalid descriptor %d", run_fd);
+  if (num < 0 || num >= run_u) ERR_R("invalid entry number %d", num);
   if (run_make_record(buf, 
                       runs[num].timestamp, runs[num].submission,
                       runs[num].size, runs[num].team, runs[num].language,
@@ -246,7 +246,7 @@ run_flush_entry(int num)
   if (sf_lseek(run_fd, RUN_HEADER_SIZE + RUN_RECORD_SIZE * num, SEEK_SET, "run") == (off_t) -1) return -1;
 
   if ((wsz = sf_write(run_fd, buf, RUN_RECORD_SIZE, "run")) < 0) return -1;
-  if (wsz != RUN_RECORD_SIZE) ERR_R(_("%d - short write"), wsz);
+  if (wsz != RUN_RECORD_SIZE) ERR_R("%d - short write", wsz);
   return 0;
 }
 
@@ -261,13 +261,13 @@ run_add_record(unsigned long  timestamp,
   int i;
 
   /* FIXME: add parameter checking? */
-  if (strlen(ip) > RUN_MAX_IP_LEN) ERR_R(_("ip address '%s' too long"), ip);
+  if (strlen(ip) > RUN_MAX_IP_LEN) ERR_R("ip address '%s' too long", ip);
 
   /* now add a new record */
   if (run_u >= run_a) {
     if (!(run_a *= 2)) run_a = 128;
     runs = xrealloc(runs, run_a * sizeof(runs[0]));
-    info(_("run_add_record: array extended: %d"), run_a);
+    info("run_add_record: array extended: %d", run_a);
   }
   runs[run_u].timestamp = timestamp;
   runs[run_u].submission = run_u;
@@ -295,14 +295,14 @@ run_flush_header(void)
   if (sf_lseek(run_fd, 0, SEEK_SET, "run") == (off_t) -1) return -1;
 
   if ((wsz = sf_write(run_fd, buf, RUN_HEADER_SIZE, "run")) < 0) return -1;
-  if (wsz != RUN_HEADER_SIZE) ERR_R(_("%d - short write"), wsz);
+  if (wsz != RUN_HEADER_SIZE) ERR_R("%d - short write", wsz);
   return 0;
 }
 
 int
 run_change_status(int runid, int newstatus, int newtest, int newscore)
 {
-  if (runid < 0 || runid >= run_u) ERR_R(_("bad runid: %d"), runid);
+  if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
   runs[runid].status = newstatus;
   runs[runid].test = newtest;
   runs[runid].score = newscore;
@@ -313,14 +313,14 @@ run_change_status(int runid, int newstatus, int newtest, int newscore)
 int
 run_get_status(int runid)
 {
-  if (runid < 0 || runid >= run_u) ERR_R(_("bad runid: %d"), runid);
+  if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
   return runs[runid].status;
 }
 
 int
 run_get_param(int runid, int *plang, int *pprob, int *pstat)
 {
-  if (runid < 0 || runid >= run_u) ERR_R(_("bad runid: %d"), runid);
+  if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
   if (plang) *plang = runs[runid].language;
   if (pprob) *pprob = runs[runid].problem;
   if (pstat) *pstat = runs[runid].status;
@@ -334,7 +334,7 @@ run_get_record(int runid, unsigned long *ptime,
                int *pteamid, int *plangid, int *pprobid,
                int *pstatus, int *ptest, int *pscore)
 {
-  if (runid < 0 || runid >= run_u) ERR_R(_("bad runid: %d"), runid);
+  if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
 
   if (ptime)   *ptime   = runs[runid].timestamp;
   if (psize)   *psize   = runs[runid].size;
@@ -351,7 +351,7 @@ run_get_record(int runid, unsigned long *ptime,
 int
 run_start_contest(unsigned long start_time)
 {
-  if (head.start_time) ERR_R(_("Contest already started"));
+  if (head.start_time) ERR_R("Contest already started");
   head.start_time = start_time;
   head.sched_time = 0;
   return run_flush_header();
@@ -430,7 +430,7 @@ run_get_attempts(int runid, int *pattempts)
   int i, n = 0;
 
   *pattempts = 0;
-  if (runid < 0 || runid >= run_u) ERR_R(_("bad runid: %d"), runid);
+  if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
 
   for (i = 0; i < runid; i++) {
     if (runs[i].team == runs[runid].team

@@ -127,7 +127,7 @@ read_fields(char const *s, const struct fieldinfo *fi)
     memset(fi[i].ptr, 0, fi[i].maxlen);
     while (*p != 0 && *p != ':' && *p != '\n') {
       if (j >= fi[i].maxlen - 1) {
-        err(_("read_fields: field %s is too long"), fi[i].name);
+        err("read_fields: field %s is too long", fi[i].name);
         return -1;
       }
       fi[i].ptr[j++] = *p++;
@@ -135,7 +135,7 @@ read_fields(char const *s, const struct fieldinfo *fi)
     if (*p == ':' || *p == '\n') p++;
   }
   if (fi[i].maxlen != 0) {
-    err(_("read_fields: too few fields read: %d"), i);
+    err("read_fields: too few fields read: %d", i);
     return -1;
   }
   return i;
@@ -176,15 +176,15 @@ teamdb_open(char const *team, char const *passwd, int rel_flag)
   memset(teams, 0, sizeof(teams));
   teams_total = 0;
   /* read team information file */
-  info(_("teamdb_open: opening %s"), team);
+  info("teamdb_open: opening %s", team);
   if (!(f = fopen(team, "r"))) {
-    err(_("teamdb_open: cannot open %s: %s"), team, os_ErrorMsg());
+    err("teamdb_open: cannot open %s: %s", team, os_ErrorMsg());
     goto cleanup;
   }
   while (fgets(linebuf, sizeof(linebuf), f)) {
     if (strlen(linebuf) == sizeof(linebuf) - 1
         && linebuf[sizeof(linebuf) - 2] != '\n') {
-      err(_("teamdb_open: line is too long: %d"), strlen(linebuf));
+      err("teamdb_open: line is too long: %d", strlen(linebuf));
       goto cleanup;
     }
     if (linebuf[0] == '#') continue;
@@ -192,15 +192,15 @@ teamdb_open(char const *team, char const *passwd, int rel_flag)
 
     if (sscanf(id_b, "%d%n", &id, &n) != 1 || id_b[n] || id <= 0
         || id > MAX_TEAM_ID) {
-      err(_("teamdb_open: invalid team id: %s"), id_b);
+      err("teamdb_open: invalid team id: %s", id_b);
       goto cleanup;
     }
     if (teams[id]) {
-      err(_("teamid %d already used"), id);
+      err("teamid %d already used", id);
       goto cleanup;
     }
     if (!login_b[0]) {
-      err(_("login is empty for team %d"), id);
+      err("login is empty for team %d", id);
       goto cleanup;
     }
     if (!name_b[0]) {
@@ -215,51 +215,51 @@ teamdb_open(char const *team, char const *passwd, int rel_flag)
     teams_total++;
   }
   if (ferror(f)) {
-    err(_("teamdb_open: read error: %s"), os_ErrorMsg());
+    err("teamdb_open: read error: %s", os_ErrorMsg());
     goto cleanup;
   }
   fclose(f);
 
   /* read team passwd file */
-  info(_("teamdb_open: opening %s"), passwd);
+  info("teamdb_open: opening %s", passwd);
   if (!(f = fopen(passwd, "r"))) {
-    err(_("teamdb_open: cannot open %s: %s"), team, os_ErrorMsg());
+    err("teamdb_open: cannot open %s: %s", team, os_ErrorMsg());
     goto relaxed_cleanup;
   }
   while (fgets(linebuf, sizeof(linebuf), f)) {
     if (strlen(linebuf) == sizeof(linebuf) - 1
         && linebuf[sizeof(linebuf) - 2] != '\n') {
-      err(_("teamdb_open: line is too long: %d"), strlen(linebuf));
+      err("teamdb_open: line is too long: %d", strlen(linebuf));
       goto cleanup;
     }
     if (linebuf[0] == '#') continue;
     if (read_fields(linebuf, passwd_fieldinfo) < 0) goto cleanup;
     if (sscanf(id_b, "%d%n", &id, &n) != 1 || id_b[n] || id <= 0
         || id > MAX_TEAM_ID) {
-      err(_("teamdb_open: invalid team id: %s"), id_b);
+      err("teamdb_open: invalid team id: %s", id_b);
       if (rel_flag) continue;
       goto cleanup;
     }
     if (!teams[id]) {
-      err(_("teamid %d not defined"), id);
+      err("teamid %d not defined", id);
       if (rel_flag) continue;
       goto cleanup;
     }
     teams[id]->flags |= parse_passwd_flags(flags_b);
     if (verify_passwd(passwd_b) < 0) {
-      err(_("team %d: invalid password: %s"), id, passwd_b);
+      err("team %d: invalid password: %s", id, passwd_b);
       if (rel_flag) continue;
       goto cleanup;
     }
     if (!passwd_b[0]) {
       if (rel_flag) continue;
-      err(_("team %d: empty password"), id);
+      err("team %d: empty password", id);
       goto cleanup;
     }
     strcpy(teams[id]->passwd, passwd_b);
   }
   if (ferror(f)) {
-    err(_("teamdb_open: read error: %d, %s"),
+    err("teamdb_open: read error: %d, %s",
               errno, strerror(errno));
     goto cleanup;
   }
@@ -272,7 +272,7 @@ teamdb_open(char const *team, char const *passwd, int rel_flag)
     //        teams[n]->name, teams[n]->passwd);
     if (!teams[n]->passwd[0]) {
       if (rel_flag) continue;
-      err(_("team %d: passwd not set"), n);
+      err("team %d: passwd not set", n);
       goto cleanup;
     }
   }
@@ -314,7 +314,7 @@ char *
 teamdb_get_login(int teamid)
 {
   if (!teamdb_lookup(teamid)) {
-    err(_("teamdb_get_login: bad id: %d"), teamid);
+    err("teamdb_get_login: bad id: %d", teamid);
     return 0;
   }
   return teams[teamid]->login;
@@ -324,7 +324,7 @@ char *
 teamdb_get_name(int teamid)
 {
   if (!teamdb_lookup(teamid)) {
-    err(_("teamdb_get_login: bad id: %d"), teamid);
+    err("teamdb_get_login: bad id: %d", teamid);
     return 0;
   }
   return teams[teamid]->name;
@@ -344,7 +344,7 @@ int
 teamdb_check_scrambled_passwd(int id, char const *scrambled)
 {
   if (!teamdb_lookup(id)) {
-    err(_("teamdb_get_login: bad id: %d"), id);
+    err("teamdb_get_login: bad id: %d", id);
     return 0;
   }
   if (!strcmp(scrambled, teams[id]->passwd)) return 1;
@@ -364,11 +364,11 @@ int
 teamdb_set_scrambled_passwd(int id, char const *scrambled)
 {
   if (!teamdb_lookup(id)) {
-    err(_("teamdb_get_login: bad id: %d"), id);
+    err("teamdb_get_login: bad id: %d", id);
     return 0;
   }
   if (strlen(scrambled) >= PASSWD_FIELD_LEN) {
-    err(_("teamdb_set_scrambled_passwd: passwd too long: %d"),
+    err("teamdb_set_scrambled_passwd: passwd too long: %d",
         strlen(scrambled));
     return 0;
   }
@@ -384,18 +384,18 @@ teamdb_get_plain_password(int id, char *buf, int size)
   char *outbuf;
 
   if (!teamdb_lookup(id)) {
-    err(_("teamdb_get_plain_password: bad id: %d"), id);
+    err("teamdb_get_plain_password: bad id: %d", id);
     return -1;
   }
   inlen = strlen(teams[id]->passwd);
   outbuf = (char*) alloca(inlen * 2 + 10);
   outlen = base64_decode(teams[id]->passwd, inlen, outbuf, &errcode);
   if (errcode) {
-    err(_("teamdb_get_plain_password: invalid password for %d"), id);
+    err("teamdb_get_plain_password: invalid password for %d", id);
     return -1;
   }
   if (outlen + 1 > size) {
-    err(_("teamdb_get_plain_password: output buffer too short"));
+    err("teamdb_get_plain_password: output buffer too short");
     return -1;
   }
   memset(buf, 0, size);
@@ -422,9 +422,9 @@ teamdb_write_passwd(char const *path)
   sprintf(tname, "%lu%d", time(0), getpid());
   pathmake(tpath, dir, "/", tname, NULL);
 
-  info(_("write_passwd: opening %s"), tpath);
+  info("write_passwd: opening %s", tpath);
   if (!(f = fopen(tpath, "w"))) {
-    err(_("fopen failed: %s"), os_ErrorMsg());
+    err("fopen failed: %s", os_ErrorMsg());
     goto cleanup;
   }
   for (id = 1; id <= MAX_TEAM_ID; id++) {
@@ -433,22 +433,22 @@ teamdb_write_passwd(char const *path)
             unparse_passwd_flags(teams[id]->flags),
             teams[id]->passwd);
     if (ferror(f)) {
-      err(_("fprintf failed: %s"), os_ErrorMsg());
+      err("fprintf failed: %s", os_ErrorMsg());
     }
   }
   if (fclose(f) < 0) {
-    err(_("fclose failed: %s"), os_ErrorMsg());
+    err("fclose failed: %s", os_ErrorMsg());
     goto cleanup;
   }
   f = 0;
 
-  info(_("renaming: %s -> %s"), tpath, path);
+  info("renaming: %s -> %s", tpath, path);
   if (rename(tpath, path) < 0) {
-    err(_("rename failed: %s"), os_ErrorMsg());
+    err("rename failed: %s", os_ErrorMsg());
     goto cleanup;
   }
 
-  info(_("write_passwd: success"));
+  info("write_passwd: success");
   return 0;
 
  cleanup:
@@ -469,9 +469,9 @@ teamdb_write_teamdb(char const *path)
   sprintf(tname, "%lu%d", time(0), getpid());
   pathmake(tpath, dir, "/", tname, NULL);
 
-  info(_("write_teamdb: opening %s"), tpath);
+  info("write_teamdb: opening %s", tpath);
   if (!(f = fopen(tpath, "w"))) {
-    err(_("fopen failed: %s"), os_ErrorMsg());
+    err("fopen failed: %s", os_ErrorMsg());
     goto cleanup;
   }
   for (id = 1; id <= MAX_TEAM_ID; id++) {
@@ -481,22 +481,22 @@ teamdb_write_teamdb(char const *path)
             id,
             teams[id]->name);
     if (ferror(f)) {
-      err(_("fprintf failed: %s"), os_ErrorMsg());
+      err("fprintf failed: %s", os_ErrorMsg());
     }
   }
   if (fclose(f) < 0) {
-    err(_("fclose failed: %s"), os_ErrorMsg());
+    err("fclose failed: %s", os_ErrorMsg());
     goto cleanup;
   }
   f = 0;
 
-  info(_("renaming: %s -> %s"), tpath, path);
+  info("renaming: %s -> %s", tpath, path);
   if (rename(tpath, path) < 0) {
-    err(_("rename failed: %s"), os_ErrorMsg());
+    err("rename failed: %s", os_ErrorMsg());
     goto cleanup;
   }
 
-  info(_("write_teamdb: success"));
+  info("write_teamdb: success");
   return 0;
 
  cleanup:
@@ -658,48 +658,48 @@ teamdb_add_team(int tid,
   if (!tid) {
     for (tid = 1; tid <= MAX_TEAM_ID && teams[tid]; tid++);
     if (tid > MAX_TEAM_ID) {
-      *msg = _("Team capacity exhausted");
+      *msg = "Team capacity exhausted";
       return -1;
     }
   }
   if (tid <= 0 || tid > MAX_TEAM_ID) {
-    *msg = _("Invalid team id");
+    *msg = "Invalid team id";
     return -1;
   }
   if (teams[tid]) {
-    *msg = _("Team with the given team id already exists");
+    *msg = "Team with the given team id already exists";
     return -1;
   }
   if (!*login) {
-    *msg = _("Team login is empty");
+    *msg = "Team login is empty";
     return -1;
   }
   if (strlen(login) >= LOGIN_FIELD_LEN) {
-    *msg = _("Team login is too long");
+    *msg = "Team login is too long";
     return -1;
   }
   if (!teamdb_is_valid_login(login)) {
-    *msg = _("Team login is invalid");
+    *msg = "Team login is invalid";
     return -1;
   }
   if (!*name) {
-    *msg = _("Team name is empty");
+    *msg = "Team name is empty";
     return -1;
   }
   if (strlen(name) >= NAME_FIELD_LEN) {
-    *msg = _("Team name is too long");
+    *msg = "Team name is too long";
     return -1;
   }
   if (!teamdb_is_valid_name(name)) {
-    *msg = _("Team name is invalid");
+    *msg = "Team name is invalid";
     return -1;
   }
   if (!*passwd) {
-    *msg = _("Team password is empty");
+    *msg = "Team password is empty";
     return -1;
   }
   if (strlen(passwd) > MAX_PASSWD_LEN) {
-    *msg = _("Password is too long");
+    *msg = "Password is too long";
     return -1;
   }
   scramble = alloca(strlen(passwd) * 2 + 16);

@@ -20,6 +20,7 @@
  */
 
 #include "cgi.h"
+#include "pathutl.h"
 
 #include <reuse/xalloc.h>
 
@@ -223,7 +224,7 @@ parse_multipart(char const *charset)
   ct = getenv("CONTENT_TYPE");
   if (!ct) return -1;
   if (strncmp(ct, mp2, sizeof(mp2) - 1)) {
-    fprintf(stderr, _("parse_multipart: cannot parse CONTENT_TYPE"));
+    err("parse_multipart: cannot parse CONTENT_TYPE");
     bad_request(charset);
     exit(0);
   }
@@ -232,7 +233,7 @@ parse_multipart(char const *charset)
 
   cl = getenv("CONTENT_LENGTH");
   if (!cl || sscanf(cl, "%d%n", &content_length, &n) != 1 || cl[n]) {
-    fprintf(stderr, _("parse_multipart: cannot parse CONTENT_LENGTH"));
+    err("parse_multipart: cannot parse CONTENT_LENGTH");
     bad_request(charset);
     exit(0);
   }
@@ -247,14 +248,14 @@ parse_multipart(char const *charset)
 
   llen = strlen(lbuf);
   if (llen == sizeof(lbuf) - 1 && lbuf[llen - 1] != '\n') {
-    fprintf(stderr, _("parse_multipart: boundary string too long\n"));
+    err("parse_multipart: boundary string too long");
     bad_request(charset);
     exit(0);
   }
   lbuf[--llen] = 0;
   if (lbuf[llen - 1] == '\r') lbuf[--llen] = 0;
   if (lbuf[0] != '-' || lbuf[1] != '-' || strcmp(boundary, lbuf + 2)) {
-    fprintf(stderr, "got: %s(%d)\n", lbuf, strlen(lbuf));
+    err("got: %s(%d)", lbuf, strlen(lbuf));
     bad_request(charset);
     exit(0);
   }
@@ -265,7 +266,7 @@ parse_multipart(char const *charset)
       //fprintf(stderr, ">>%s<\n", lbuf);
       llen = strlen(lbuf);
       if (llen == sizeof(lbuf) - 1 && lbuf[llen - 1] != '\n') {
-        fprintf(stderr, _("parse_multipart: header string too long"));
+        err("parse_multipart: header string too long");
         bad_request(charset);
         exit(0);
       }
@@ -284,7 +285,7 @@ parse_multipart(char const *charset)
             q = p;
             while (*q != '\"' && *q != 0) q++;
             if (!*q) {
-              fprintf(stderr, _("unexpected EOLN: %s\n"), lbuf);
+              err("unexpected EOLN: %s", lbuf);
               bad_request(charset);
               exit(0);
             }
@@ -297,19 +298,19 @@ parse_multipart(char const *charset)
             memcpy(name_buf, p, name_u);
             name_buf[name_u] = 0;
           } else {
-            fprintf(stderr, _("name= expected: %s\n"), lbuf);
+            err("name= expected: %s\n", lbuf);
             bad_request(charset);
             exit(0);
           }
         } else {
-          fprintf(stderr, _("unknown content disposition: %s\n"), lbuf);
+          err("unknown content disposition: %s", lbuf);
           bad_request(charset);
           exit(0);
         }
       } else if (!strncasecmp(s6, lbuf, sizeof(s6) - 1)) {
-        fprintf(stderr, _("ignored header: %s\n"), lbuf);
+        err("ignored header: %s", lbuf);
       } else {
-        fprintf(stderr, _("unknown header: <%s>\n"), lbuf);
+        err("unknown header: <%s>", lbuf);
         bad_request(charset);
         exit(0);
       }
@@ -324,7 +325,7 @@ parse_multipart(char const *charset)
     while (1) {
       c = getchar();
       if (c == EOF) {
-        fprintf(stderr, _("unexpected EOF\n"));
+        err("unexpected EOF");
         bad_request(charset);
         exit(0);
       }
@@ -356,7 +357,7 @@ parse_multipart(char const *charset)
     if (c == '-') {
       c = getchar();
       if (c == '-') break;
-      fprintf(stderr, _("oops: only one '-' after boundary\n"));
+      err("oops: only one '-' after boundary");
       bad_request(charset);
       exit(0);
     } else {
@@ -370,7 +371,7 @@ parse_multipart(char const *charset)
   {
     int i;
 
-    fprintf(stderr, _("total: %d\n"), param_u);
+    fprintf(stderr, "total: %d\n", param_u);
     for (i = 0; i < param_u; i++) {
       fprintf(stderr, "%s = '%s'\n", params[i].name, params[i].value);
     }
@@ -471,7 +472,7 @@ cgi_print_param(void)
 {
   int i;
 
-  printf(_("total: %d\n"), param_u);
+  printf("total: %d\n", param_u);
   for (i = 0; i < param_u; i++) {
     printf("%s = '%s'\n", params[i].name, params[i].value);
   }

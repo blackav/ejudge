@@ -113,7 +113,7 @@ client_get_reply(char **pstr, int *psize, char const *name)
   if (generic_read_file(&myptr, 0, &rlen, REMOVE|PIPE,
                         client_pipe_dir, name, "") < 0) {
     asprintf(&myptr, "<p><big><b>%s</b></big></p>",
-             _("Cannot read server responce."));
+             _("Cannot read server response."));
   } else {
     if (myptr && sscanf(myptr, "%d%n", &code, &n) != 1) code = -1;
   }
@@ -178,7 +178,7 @@ client_lookup_ip(char const *ip, char const *iplist)
   if (!iplist) return 0;
   if (sscanf(ip, "%d.%d.%d.%d%n", &i1, &i2, &i3, &i4, &n) != 4
       || ip[n]) {
-    err(_("bad ip: %s"), ip);
+    err("bad ip: %s", ip);
     return 0;
   }
 
@@ -198,7 +198,7 @@ client_lookup_ip(char const *ip, char const *iplist)
     } else if (sscanf(cip,"%d.%n",&l1,&n)==1&&!cip[n]) {
       if (l1 == i1) return 1;
     } else {
-      err(_("bad ip: %s"), cip);
+      err("bad ip: %s", cip);
     }
   }
   return 0;

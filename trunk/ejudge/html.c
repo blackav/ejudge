@@ -53,7 +53,7 @@ sf_fopen(char const *path, char const *flags)
 {
   FILE *f = fopen(path, flags);
   if (f) return f;
-  err(_("fopen(\"%s\",\"%s\") failed: %s"), path, flags, os_ErrorMsg());
+  err("fopen(\"%s\",\"%s\") failed: %s", path, flags, os_ErrorMsg());
   return NULL;
 }
 
@@ -83,7 +83,7 @@ write_clar_view(int id, char const *clar_dir,
   char  full_name_buf[64];
 
   pathmake(path, dir, "/", name, NULL);
-  info(_("writing clar view %d to %s"), id, path);
+  info("writing clar view %d to %s", id, path);
   if (!(f = sf_fopen(path, "w"))) return;
 
   start = run_get_start_time();
@@ -391,13 +391,13 @@ write_team_clar(int team_id, int clar_id,
   return;
 
  access_denied:
-  err(_("write_team_clar: access denied"));
+  err("write_team_clar: access denied");
   fprintf(f, "<h2>%s</h2><p>%s</p>", _("Access denied"),
           _("You do not have permissions to view this message."));
   fclose(f);
 
  server_failed:
-  err(_("write_team_clar: server_failed"));
+  err("write_team_clar: server_failed");
   fprintf(f, "<h2>%s</h2><p>%s</p>",
           _("Server is unable to perform your request"),
           _("Internal server error"));
@@ -657,7 +657,7 @@ do_write_kirov_standings(FILE *f, int client_flag)
 
   return;
  alloca_failed: 
-  err(_("alloca failed"));
+  err("alloca failed");
   return;
 }
 
@@ -906,7 +906,7 @@ do_write_standings(FILE *f, int client_flag)
 
   return;
  alloca_failed: 
-  err(_("alloca failed"));
+  err("alloca failed");
   return;
 }
 
@@ -1154,7 +1154,7 @@ write_judge_allstat(int master_mode, int all_runs, int all_clars,
   FILE   *f;
 
   pathmake(path, dir, "/", name, 0);
-  info(_("judge statistics to %s"), path);
+  info("judge statistics to %s", path);
   if (!(f = sf_fopen(path, "w"))) return;
 
   write_judge_allruns(master_mode, all_runs, f);
