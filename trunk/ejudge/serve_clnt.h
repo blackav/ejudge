@@ -4,7 +4,7 @@
 #ifndef __SERVE_CLNT_H__
 #define __SERVE_CLNT_H__
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -94,6 +94,7 @@ int serve_clnt_master_page(int sock_fd,
                            int sid_mode,
                            int first_run,
                            int last_run,
+                           int mode_clar,
                            int first_clar,
                            int last_clar,
                            unsigned char const *self_url,
