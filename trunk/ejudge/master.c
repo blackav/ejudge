@@ -334,10 +334,11 @@ void
 change_status_if_asked()
 {
   char *s = cgi_nname("change_", 6);
-  char *s1, *s2;
-  int   runid, n, status, test;
+  char *s1, *s2, *s3;
+  int   runid, n, status, test, score = -1;
   char  p1[32];
   char  p2[32];
+  char  p3[32];
   char  cmd[32];
   char  pname[32];
 
@@ -346,8 +347,10 @@ change_status_if_asked()
   if (runid < 0 || runid >= server_total_runs) return;
   sprintf(p1, "stat_%d", runid);
   sprintf(p2, "failed_%d", runid);
+  sprintf(p3, "score_%d", runid);
   s1 = cgi_param(p1);
   s2 = cgi_param(p2);
+  s3 = cgi_param(p3);
   if (!s1 || !s2) return;
   if (sscanf(s1, "%d%n", &status, &n) != 1 || s1[n]) return;
   /* FIXME: symbolic constants should be used */
@@ -357,8 +360,12 @@ change_status_if_asked()
   if (sscanf(s2, "%d%n", &test, &n) != 1 || s2[n]) test = -1;
   //if (status == 7 && test >= 0) test++;
   if (test < -1 || test > 99) test = -1;
+  if (s3) {
+    if (sscanf(s3, "%d%n", &score, &n) != 1 || s3[n]) score = -1;
+  }
+  if (score < -1 || score > 99) score = -1;
 
-  sprintf(cmd, "CHGSTAT %d %d %d\n", runid, status, test);
+  sprintf(cmd, "CHGSTAT %d %d %d %d\n", runid, status, test, score);
   /* FIXME: be less ignorant about completion state */
   client_transaction(client_packet_name(pname), cmd, 0, 0);
   force_recheck_status = 1;
@@ -420,7 +427,7 @@ view_report_if_asked()
   printf("Content-Type: text/html; charset=%s\n\n", global->charset);
   printf("<html><head><title>%s %d</title></head><body>\n",
          _("View report for run"), runid);
-  printf("<h1>%s %d</h1>\n", _("View source for run"), runid);
+  printf("<h1>%s %d</h1>\n", _("View report for run"), runid);
   print_refresh_button(_("back"));
   printf("<hr>");
 
