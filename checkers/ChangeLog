@@ -1,3 +1,17 @@
+2003-11-01  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile: 
+	(CFILES) new files added: `read_corr_long_double.c',
+	  `read_in_long_double.c', `read_team_long_long.c'.
+
+	* checker_internal.h:
+	(checker_read_corr_long_double) a new function prototype added;
+	(checker_read_in_long_double) a new function prototype added;
+	(checker_read_team_long_long) a new function prototype added.
+
+	* read_corr_long_double.c, read_in_long_double.c, read_team_long_long.c:
+	initial revision
+
 2003-10-20  Alexander Chernov  <cher@ispras.ru>
 
 	* Makefile: read_long_long.c is added to the list of C files.
