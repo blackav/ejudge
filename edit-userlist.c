@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
 #include "contests.h"
@@ -3175,12 +3177,27 @@ int
 main(int argc, char **argv)
 {
   int r;
+  unsigned char *ejudge_xml_path = 0;
 
+#if defined EJUDGE_XML_PATH
+  if (argc == 1) {
+    fprintf(stderr, "%s: using the default %s\n", argv[0], EJUDGE_XML_PATH);
+    ejudge_xml_path = EJUDGE_XML_PATH;
+  } else if (argc != 2) {
+    fprintf(stderr, "%s: invalid number of arguments\n", argv[0]);
+    return 1;
+  } else {
+    ejudge_xml_path = argv[1];
+  }
+#else
   if (argc != 2) {
     fprintf(stderr, "%s: invalid number of arguments\n", argv[0]);
     return 1;
   }
-  if (!(config = userlist_cfg_parse(argv[1]))) {
+  ejudge_xml_path = argv[1];
+#endif
+
+  if (!(config = userlist_cfg_parse(ejudge_xml_path))) {
     fprintf(stderr, "%s: cannot parse configuration file\n", argv[0]);
     return 1;
   }
