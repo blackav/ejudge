@@ -79,6 +79,8 @@ cgi_get_char(void)
   int  c = do_get_char();
   char bb[4];
 
+  /* we need to distinguish unescaped '&', '=' from escaped ones */
+  if (c == '&' || c == '=') return -c;
   if (c != '%' && c != '+') return c;
   if (c == '+') return ' ';
 
@@ -138,26 +140,26 @@ do_cgi_read(void)
   while (c != EOF) {
     /* read parameter name */
     name_u = 0;
-    while (c != EOF && c != '&' && c != '=' && name_u < MAX_NAME_SIZE) {
+    while (c != EOF && c != -'&' && c != -'=' && name_u < MAX_NAME_SIZE) {
       cgi_put_char(&name_buf, &name_a, &name_u, c);
       c = cgi_get_char();
     }
     cgi_put_char(&name_buf, &name_a, &name_u, 0);
-    if (name_u >= MAX_NAME_SIZE && c != EOF && c != '&' && c != '=') {
+    if (name_u >= MAX_NAME_SIZE && c != EOF && c != -'&' && c != -'=') {
       /* name is too long */
       //printf("NAME TOO LONG\n"); fflush(0);
       return -1;
     }
 
-    if (c == '=') {
+    if (c == -'=') {
       c = cgi_get_char();
       value_u = 0;
-      while (c != EOF && c != '&' && value_u < MAX_VALUE_SIZE) {
+      while (c != EOF && c != -'&' && value_u < MAX_VALUE_SIZE) {
         cgi_put_char(&value_buf, &value_a, &value_u, c);
         c = cgi_get_char();
       }
       cgi_put_char(&value_buf, &value_a, &value_u, 0);
-      if (value_u >= MAX_VALUE_SIZE && c != EOF && c != '&') {
+      if (value_u >= MAX_VALUE_SIZE && c != EOF && c != -'&') {
         /* value is too long */
         //printf("VALUE TOO LONG\n"); fflush(0);
         return -1;
@@ -170,7 +172,7 @@ do_cgi_read(void)
     }
     add_to_param_list(name_buf, value_buf, strlen(value_buf));
 
-    if (c == '&') {
+    if (c == -'&') {
       c = cgi_get_char();
     }
   }
