@@ -161,6 +161,14 @@ revinfo: revinfo.o
 	$(LD) $(LDFLAGS) $^ -o $@
 revinfo.o: revinfo.c
 
+mkChangeLog: mkChangeLog.o
+	${LD} ${LDFLAGS} $^ -o $@
+mkChangeLog.o: mkChangeLog.c
+
+log: mkChangeLog
+	cvs log -l | ./mkChangeLog AUTHORS ChangeLog ChangeLog
+	for i in win32 unix; do cd $$i; cvs log -l | ../mkChangeLog ../AUTHORS ChangeLog ChangeLog; cd ..; done
+
 rev:
 	./revinfo -d db/versions -r db/revisions $(HFILES) $(CFILES)
 
