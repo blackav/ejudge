@@ -200,6 +200,7 @@ force:
 # localization stuff
 po: ejudge.ru_RU.KOI8-R.po
 ejudge.ru_RU.KOI8-R.po: $(CFILES) ejudge.po
+	chmod +w $@
 	msgmerge -U $@ ejudge.po
 
 ejudge.po: $(CFILES)
