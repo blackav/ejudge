@@ -584,10 +584,6 @@ main(int argc, char const *argv[])
   read_user_id();
   set_locale_by_id(client_locale_id);
 
-  if (cgi_param("secret_mode")) {
-    request_flags = 1;
-  }
-
   if (user_contest_id > 0 && user_contest_id < contests->id_map_size) {
     cnts = contests->id_map[user_contest_id];
   }
