@@ -1059,7 +1059,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    if (opcaps_check(p->user_id, OPCAP_VIEW_REPORT) < 0) {
+    if (opcaps_check(caps, OPCAP_VIEW_REPORT) < 0) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_VIEW_REPORT);
       r = -SRV_ERR_NO_PERMS;
@@ -1078,7 +1078,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    if (opcaps_check(p->user_id, OPCAP_VIEW_CLAR) < 0) {
+    if (opcaps_check(caps, OPCAP_VIEW_CLAR) < 0) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_VIEW_CLAR);
       r = -SRV_ERR_NO_PERMS;
@@ -1106,7 +1106,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    if (opcaps_check(p->user_id, OPCAP_LIST_CONTEST_USERS) < 0) {
+    if (opcaps_check(caps, OPCAP_LIST_CONTEST_USERS) < 0) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_LIST_CONTEST_USERS);
       r = -SRV_ERR_NO_PERMS;
