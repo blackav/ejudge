@@ -37,6 +37,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <termios.h>
+#include <time.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -47,6 +48,9 @@
 #endif
 
 #define MAX_TEST    255
+
+static int managed_mode_flag = 0;
+static time_t last_activity_time;
 
 struct testinfo
 {
@@ -613,7 +617,7 @@ run_tests(struct section_tester_data *tst,
     }
     task_SetPathAsArg0(tsk);
     task_SetWorkingDir(tsk, prog_working_dir);
-    if (!tst->no_redirect) {
+    if (!tst->no_redirect || managed_mode_flag) {
       if (prb->use_stdin) {
         task_SetRedir(tsk, 0, TSR_FILE, input_path, TSK_READ);
       } else {
@@ -662,7 +666,7 @@ run_tests(struct section_tester_data *tst,
     if (tst->max_vm_size) task_SetVMSize(tsk, tst->max_vm_size);
 
     memset(&term_attrs, 0, sizeof(term_attrs));
-    if (tst->no_redirect && isatty(0)) {
+    if (tst->no_redirect && isatty(0) && !managed_mode_flag) {
       /* we need to save terminal state since if the program
        * is killed with SIGKILL, the terminal left in random state
        */
@@ -686,7 +690,7 @@ run_tests(struct section_tester_data *tst,
       }
 
       /* restore the terminal state */
-      if (tst->no_redirect && isatty(0)) {
+      if (tst->no_redirect && isatty(0) && managed_mode_flag) {
         if (tcsetattr(0, TCSADRAIN, &term_attrs) < 0)
           err("tcsetattr failed: %s", os_ErrorMsg());
       }
@@ -1037,13 +1041,19 @@ do_loop(void)
     r = scan_dir(global->run_queue_dir, pkt_name);
     if (r < 0) return -1;
     if (!r) {
-      if (got_quit_packet /* && !global->run_ignore_quit */) {
+      if (got_quit_packet && managed_mode_flag) {
+        return 0;
+      }
+      if (global->inactivity_timeout > 0 &&
+          last_activity_time + global->inactivity_timeout < time(0)) {
+        info("no activity for %d seconds, exiting",global->inactivity_timeout);
         return 0;
       }
       os_Sleep(global->sleep_time);
       continue;
     }
 
+    last_activity_time = time(0);
     memset(pkt_buf, 0, sizeof(pkt_buf));
     pkt_ptr = pkt_buf;
     r = generic_read_file(&pkt_ptr, sizeof(pkt_buf), &rsize, SAFE | REMOVE,
@@ -1055,9 +1065,11 @@ do_loop(void)
     info("run packet: <%s>", pkt_buf);
 
     n = 0;
-    if (/* !global->run_ignore_quit */ 0) {
+    if (managed_mode_flag) {
       if (sscanf(pkt_buf, "%d %n", &r, &n) == 1 && !pkt_buf[n] && r == -1) {
         got_quit_packet = 1;
+        info("got force quit run packet");
+        continue;
       }
     }
 
@@ -1583,6 +1595,9 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[i], "-k")) {
       if (++i >= argc) goto print_usage;
       key = argv[i++];
+    } else if (!strcmp(argv[i], "-S")) {
+      managed_mode_flag = 1;
+      i++;
     } else if (!strncmp(argv[i], "-D", 2)) {
       if (cpp_opts[0]) pathcat(cpp_opts, " ");
       pathcat(cpp_opts, argv[i++]);
