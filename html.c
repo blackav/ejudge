@@ -1314,7 +1314,7 @@ print_nav_buttons(FILE *f,
             "<td><input type=\"submit\" name=\"refresh\" value=\"%s\"></td>",
             t1);
     if (global->virtual) {
-      fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_STANGINGS, t2);
+      fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>", ACTION_STANDINGS, t2);
     }
     fprintf(f, 
             "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>"
@@ -1329,7 +1329,7 @@ print_nav_buttons(FILE *f,
     if (global->virtual) {
       fprintf(f, "%s",
               html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url,
-                            extra_args, "action=%d", ACTION_STANGINGS));
+                            extra_args, "action=%d", ACTION_STANDINGS));
       fprintf(f, "%s</a></td><td>", t2);
     }
     fprintf(f, "%s",
