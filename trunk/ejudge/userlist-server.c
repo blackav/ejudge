@@ -99,7 +99,6 @@ struct client_state
   int read_len;
   unsigned char *read_buf;
   int processed;
-
   time_t last_time;
   int state;
 
