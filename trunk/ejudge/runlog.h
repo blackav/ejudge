@@ -24,8 +24,6 @@
 #include <time.h>
 #include <string.h>
 
-#define RUN_MAX_IP_LEN 15
-
 enum
 {
   RUN_OK               = 0,
@@ -41,6 +39,7 @@ enum
   RUN_MAX_STATUS       = 9,
   RUN_VIRTUAL_START    = 20,
   RUN_VIRTUAL_STOP     = 21,
+  RUN_EMPTY            = 22,
   RUN_RUNNING          = 96,
   RUN_COMPILED         = 97,
   RUN_COMPILING        = 98,
@@ -143,5 +142,9 @@ time_t run_get_virtual_stop_time(int user_id);
 int run_get_virtual_status(int user_id);
 int run_virtual_start(int user_id, time_t, unsigned long);
 int run_virtual_stop(int user_id, time_t, unsigned long);
+
+int run_clear_entry(int run_id);
+int run_squeeze_log(void);
+
 
 #endif /* __RUNLOG_H__ */
