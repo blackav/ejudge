@@ -1,3 +1,11 @@
+2003-01-06  Alexander Chernov  <cher@ispras.ru>
+
+	* view.c: copyright notice is updated;
+	(serve_clnt_view) severe indexing bug is fixed.
+
+	* standings.c: copyright notice is updated;
+	(serve_clnt_standings) severe indexing bug is fixed.
+
 2002-12-27  Alexander Chernov  <cher@ispras.ru>
 
 	* show_item.c:
