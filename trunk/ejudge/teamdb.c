@@ -21,7 +21,7 @@
 
 /*
  * team file
- *   teamlogin:teamid:flags:name:...
+ *   teamlogin:teamid:flags:name
  * passwd file
  *   teamid:flags:passwd
  */
@@ -374,6 +374,32 @@ teamdb_set_scrambled_passwd(int id, char const *scrambled)
   save_undo(id);
   strcpy(teams[id]->passwd, scrambled);
   return 1;
+}
+
+int
+teamdb_get_plain_password(int id, char *buf, int size)
+{
+  int errcode = 0, outlen, inlen;
+  char *outbuf;
+
+  if (!teamdb_lookup(id)) {
+    err(_("teamdb_get_plain_password: bad id: %d"), id);
+    return -1;
+  }
+  inlen = strlen(teams[id]->passwd);
+  outbuf = (char*) alloca(inlen * 2 + 10);
+  outlen = base64_decode(teams[id]->passwd, inlen, outbuf, &errcode);
+  if (errcode) {
+    err(_("teamdb_get_plain_password: invalid password for %d"), id);
+    return -1;
+  }
+  if (outlen + 1 > size) {
+    err(_("teamdb_get_plain_password: output buffer too short"));
+    return -1;
+  }
+  memset(buf, 0, size);
+  memcpy(buf, outbuf, outlen);
+  return 0;
 }
 
 int
