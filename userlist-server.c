@@ -1222,7 +1222,7 @@ login_team_user(struct client_state *p, int pkt_len,
                 struct userlist_pk_do_login * data)
 {
   unsigned char *login_ptr, *passwd_ptr, *name_ptr;
-  struct userlist_user *u;
+  struct userlist_user *u = 0;
   struct passwd_internal pwdint;
   struct contest_desc *cnts = 0;
   struct userlist_contest *c = 0;
@@ -1354,7 +1354,7 @@ cmd_login_priv_user(struct client_state *p, int len,
   unsigned char *login_ptr, *passwd_ptr, *name_ptr;
   struct contest_desc *cnts;
   struct passwd_internal pwdint;
-  struct userlist_user *u;
+  struct userlist_user *u = 0;
   struct xml_tree *t;
   struct userlist_pk_login_ok *out = 0;
   int i, priv_level, login_len, name_len;
@@ -1584,8 +1584,8 @@ login_team_cookie(struct client_state *p, int pkt_len,
                   struct userlist_pk_check_cookie * data)
 {
   struct contest_desc *cnts = 0;
-  struct userlist_user *u;
-  struct userlist_cookie *cookie;
+  struct userlist_user *u = 0;
+  struct userlist_cookie *cookie = 0;
   struct userlist_contest *c = 0;
   struct userlist_pk_login_ok *out = 0;
   int i, out_size = 0, login_len = 0, name_len = 0;
@@ -1706,8 +1706,8 @@ login_priv_cookie(struct client_state *p,
                   struct userlist_pk_check_cookie *pkt)
 {
   struct contest_desc *cnts = 0;
-  struct userlist_user *u;
-  struct userlist_cookie *cookie;
+  struct userlist_user *u = 0;
+  struct userlist_cookie *cookie = 0;
   struct xml_tree *pu;
   struct userlist_pk_login_ok *out;
   size_t login_len, name_len, out_size;
@@ -2857,7 +2857,7 @@ do_list_users(FILE *f, int contest_id, int locale_id,
   unsigned char *s;
   unsigned char buf[1024];
   unsigned char *notset = 0;
-  int role, pers;
+  int role, pers, pers_tot;
 
   if (flags) {
     d = 0;
@@ -2879,6 +2879,7 @@ do_list_users(FILE *f, int contest_id, int locale_id,
         }
         if (!c) continue;
       }
+      pers_tot = 0;
       for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
         if (!u->members[role]) continue;
         for (pers = 0; pers < u->members[role]->total; pers++) {
@@ -2893,6 +2894,7 @@ do_list_users(FILE *f, int contest_id, int locale_id,
             lptr = m->occupation;
           }
 
+          pers_tot++;
           fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
                   u->id, u->login, u->name, u->email,
                   u->inst?u->inst:notset,
@@ -2906,6 +2908,15 @@ do_list_users(FILE *f, int contest_id, int locale_id,
                   gettext(member_status_string[m->status]),
                   lptr?lptr:notset);
         }
+      }
+      if (!pers_tot) {
+          fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
+                  u->id, u->login, u->name, u->email,
+                  u->inst?u->inst:notset,
+                  u->instshort?u->instshort:notset,
+                  u->fac?u->fac:notset,
+                  u->facshort?u->facshort:notset,
+                  "", "", "", "", "", "");
       }
     }
     setup_locale(0);
@@ -3102,6 +3113,7 @@ do_list_users(FILE *f, int contest_id, int locale_id,
     if (!c) continue;
     if (c->status < USERLIST_REG_OK || c->status > USERLIST_REG_PENDING)
       continue;
+    if ((c->flags & USERLIST_UC_INVISIBLE)) continue;
 
     us[u_num] = u;
     cs[u_num] = c;
