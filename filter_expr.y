@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -126,6 +126,12 @@ static void (*parse_err)(unsigned char const *, ...);
 %token TOK_CURVARIANT "curvariant"
 %token TOK_RAWVARIANT "rawvariant"
 %token TOK_CURRAWVARIANT "currawvariant"
+%token TOK_USERINVISIBLE "userinvisible"
+%token TOK_CURUSERINVISIBLE "curuserinvisible"
+%token TOK_USERBANNED "userbanned"
+%token TOK_CURUSERBANNED "curuserbanned"
+%token TOK_USERLOCKED "userlocked"
+%token TOK_CURUSERLOCKED "curuserlocked"
 %token TOK_INT       "int"
 %token TOK_STRING    "string"
 %token TOK_BOOL      "bool"
@@ -276,6 +282,15 @@ exprA :
 | "rawvariant" { $1->kind = TOK_CURRAWVARIANT; $$ = $1; }
 | "rawvariant" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "currawvariant" { $$ = $1; }
+| "userinvisible" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "userinvisible" { $1->kind = TOK_CURUSERINVISIBLE; $$ = $1; }
+| "curuserinvisible" { $$ = $1; }
+| "userbanned" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "userbanned" { $1->kind = TOK_CURUSERBANNED; $$ = $1; }
+| "curuserbanned" { $$ = $1; }
+| "userlocked" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "userlocked" { $1->kind = TOK_CURUSERLOCKED; $$ = $1; }
+| "curuserlocked" { $$ = $1; }
 | "int" '(' expr0 ')' { $$ = do_int_cast($1, $3); }
 | "string" '(' expr0 ')' { $$ = do_string_cast($1, $3); }
 | "bool" '(' expr0 ')' { $$ = do_bool_cast($1, $3); }
