@@ -367,6 +367,19 @@ run_flush_entry(int num)
   return 0;
 }
 
+static int
+append_record(void)
+{
+  if (run_u >= run_a) {
+    if (!(run_a *= 2)) run_a = 128;
+    runs = xrealloc(runs, run_a * sizeof(runs[0]));
+    info("run_add_record: array extended: %d", run_a);
+  }
+  memset(&runs[run_u], 0, sizeof(runs[0]));
+  runs[run_u].submission = run_u;
+  return run_u++;
+}
+
 int
 run_add_record(time_t  timestamp, 
                size_t  size,
@@ -389,28 +402,20 @@ run_add_record(time_t  timestamp,
     return -1;
   }
 
-  /* now add a new record */
-  if (run_u >= run_a) {
-    if (!(run_a *= 2)) run_a = 128;
-    runs = xrealloc(runs, run_a * sizeof(runs[0]));
-    info("run_add_record: array extended: %d", run_a);
-  }
-  memset(&runs[run_u], 0, sizeof(runs[0]));
-  runs[run_u].timestamp = timestamp;
-  runs[run_u].submission = run_u;
-  runs[run_u].size = size;
-  runs[run_u].locale_id = locale_id;
-  runs[run_u].team = team;
-  runs[run_u].language = language;
-  runs[run_u].problem = problem;
-  runs[run_u].status = 99;
-  runs[run_u].test = 0;
-  runs[run_u].score = -1;
-  runs[run_u].ip = ip;
+  i = append_record();
+  runs[i].timestamp = timestamp;
+  runs[i].size = size;
+  runs[i].locale_id = locale_id;
+  runs[i].team = team;
+  runs[i].language = language;
+  runs[i].problem = problem;
+  runs[i].status = 99;
+  runs[i].test = 0;
+  runs[i].score = -1;
+  runs[i].ip = ip;
   if (sha1) {
-    memcpy(runs[run_u].sha1, sha1, sizeof(runs[run_u].sha1));
+    memcpy(runs[i].sha1, sha1, sizeof(runs[i].sha1));
   }
-  i = run_u++;
   if (run_flush_entry(i) < 0) return -1;
   return i;
 }
@@ -429,6 +434,9 @@ run_change_status(int runid, int newstatus, int newtest, int newscore)
   if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
   if (newstatus < 0 || newstatus > 255) ERR_R("bad newstatus: %d", newstatus);
   if (newtest < -128 || newtest > 127) ERR_R("bad newtest: %d", newtest);
+
+  if (newstatus == RUN_VIRTUAL_START || newstatus == RUN_VIRTUAL_STOP)
+    ERR_R("virtual status cannot be changed that way");
 
   runs[runid].status = newstatus;
   runs[runid].test = newtest;
@@ -521,6 +529,12 @@ run_get_stop_time(void)
   return head.stop_time;
 }
 
+time_t
+run_get_duration(void)
+{
+  return head.duration;
+}
+
 void
 run_get_times(time_t *start, time_t *sched, time_t *dur, time_t *stop)
 {
@@ -594,6 +608,8 @@ run_status_str(int status, char *out, int len)
   case RUN_COMPILED:         s = _("Compiled");            break;
   case RUN_COMPILING:        s = _("Compiling...");        break;
   case RUN_AVAILABLE:        s = _("Available");           break;
+  case RUN_VIRTUAL_START:    s = _("Virtual start");       break;
+  case RUN_VIRTUAL_STOP:     s = _("Virtual stop");        break;
   default:
     sprintf(buf, _("Unknown: %d"), status);
     s = buf;
@@ -733,6 +749,11 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
   ASSERT(in);
   if (run_id < 0 || run_id >= run_u) ERR_R("bad runid: %d", run_id);
   out = &runs[run_id];
+  if (out->status == RUN_VIRTUAL_START || out->status == RUN_VIRTUAL_STOP) {
+    err("run_set_entry: %d: virtual contest start/stop cannot be edited",
+        run_id);
+    return -1;
+  }
 
   if ((mask & RUN_ENTRY_TIME) && out->timestamp != in->timestamp) {
     out->timestamp = in->timestamp;
@@ -781,6 +802,274 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
 
   if (f && run_flush_entry(run_id) < 0) return -1;
   return 0;
+}
+
+enum
+  {
+    V_REAL_USER = 1,
+    V_VIRTUAL_USER = 2,
+  };
+
+struct vt_entry
+{
+  int status;
+  int start_time;
+  int stop_time;
+};
+
+static int vt_size;
+static struct vt_entry **vt_table;
+
+static struct vt_entry *
+get_entry(int user_id)
+{
+  ASSERT(user_id > 0);
+
+  if (user_id >= vt_size) {
+    struct vt_entry **new_vt_table = 0;
+    int new_vt_size = vt_size;
+
+    if (!new_vt_size) new_vt_size = 16;
+    while (new_vt_size <= user_id)
+      new_vt_size *= 2;
+    new_vt_table = xcalloc(new_vt_size, sizeof(new_vt_table[0]));
+    if (vt_size > 0) {
+      memcpy(new_vt_table, vt_table, vt_size * sizeof(vt_table[0]));
+    }
+    vt_size = new_vt_size;
+    xfree(vt_table);
+    vt_table = new_vt_table;
+    info("runlog: vt_table is extended to %d", vt_size);
+  }
+
+  if (!vt_table[user_id]) {
+    vt_table[user_id] = xcalloc(1, sizeof(vt_table[user_id][0]));
+  }
+  return vt_table[user_id];
+}
+
+int
+run_build_virtual_table(void)
+{
+  int i;
+  int max_uid = -1;
+  struct vt_entry *pvt;
+  int err_cnt = 0;
+  time_t current_time;
+
+  if (!head.start_time || !head.duration) {
+    if (run_u > 0) {
+      err("runlog: contest is not started, but runlog is not empty!");
+      return -1;
+    }
+    return 0;
+  }
+
+  current_time = time(0);
+
+  // scan the run log for maximum user_id and find the initial size
+  // get_entry function could extend the array as well, but just
+  // to reduce the number of reallocations
+  for (i = 0; i < run_u; i++)
+    if (runs[i].team > max_uid)
+      max_uid = runs[i].team;
+  vt_size = 16;
+  while (vt_size <= max_uid)
+    vt_size *= 2;
+  vt_table = xcalloc(vt_size, sizeof(vt_table[0]));
+
+  for (i = 0; i < run_u; i++) {
+    pvt = get_entry(runs[i].team);
+    if (runs[i].timestamp == 0) {
+      err("runlog: run %d has zero timestamp", i);
+      err_cnt++;
+      continue;
+    }
+    if (runs[i].timestamp <= 0) {
+      err("runlog: run %d has timestamp <= 0", i);
+      err_cnt++;
+      continue;
+    }
+    if (runs[i].timestamp < head.start_time) {
+      err("runlog: run %d has timestamp < start_time", i);
+      err_cnt++;
+      continue;
+    }
+    if (runs[i].timestamp > current_time) {
+      err("runlog: run %d has timestamp in the future (difference %ld)",
+          i, runs[i].timestamp - current_time);
+      err_cnt++;
+      continue;
+    }
+    if (runs[i].status == RUN_VIRTUAL_START) {
+      switch (pvt->status) {
+      case 0:
+        pvt->status = V_VIRTUAL_USER;
+        pvt->start_time = runs[i].timestamp;
+        break;
+      case V_REAL_USER:
+        err("runlog: run %d: virtual_start for non virtual user %d",
+            i, runs[i].team);
+        err_cnt++;
+        break;
+      case V_VIRTUAL_USER:
+        err("runlog: run %d: virtual_start for virtual user %d",
+            i, runs[i].team);
+        err_cnt++;
+        break;
+      default:
+        abort();
+      }
+    } else if (runs[i].status == RUN_VIRTUAL_STOP) {
+      // this record is optional
+      switch (pvt->status) {
+      case 0:
+        err("runlog: run %d: virtual_stop without virtual_start for user %d",
+            i, runs[i].team);
+        err_cnt++;
+        break;
+      case V_REAL_USER:
+        err("runlog: run %d: virtual_stop for non-virtual user %d",
+            i, runs[i].team);
+        err_cnt++;
+        break;
+      case V_VIRTUAL_USER:
+        ASSERT(pvt->start_time);
+        if (pvt->stop_time) {
+          err("runlog: run %d: duplicated virtual_stop for user %d",
+              i, runs[i].team);
+          err_cnt++;
+        } else if (runs[i].timestamp < pvt->start_time) {
+          err("runlog: run %d: virtual_stop earlier than virtual_start for %d",
+              i, runs[i].team);
+          err_cnt++;
+        } else {
+          // FIXME: check for duration overrun?
+          pvt->stop_time = runs[i].timestamp;
+        }
+        break;
+      default:
+        abort();
+      }
+    } else {
+      switch (pvt->status) {
+      case 0:
+        ASSERT(!pvt->start_time);
+        pvt->status = V_REAL_USER;
+        pvt->start_time = head.start_time;
+        pvt->stop_time = head.stop_time;
+        /* FALLTHROUGH */
+      case V_REAL_USER:
+      case V_VIRTUAL_USER:
+        if (runs[i].timestamp - pvt->start_time > head.duration + 1) {
+          err("runlog: run %d: duration overrun %ld",
+              i, runs[i].timestamp - pvt->start_time);
+          err_cnt++;
+        }
+        if (pvt->stop_time && runs[i].timestamp > pvt->stop_time) {
+          err("runlog: run %d: stop time overrun %ld",
+              i, runs[i].timestamp - pvt->stop_time);
+          err_cnt++;
+        }
+        break;
+      default:
+        abort();
+      }
+    }
+  }
+
+  if (err_cnt > 0) return -1;
+
+  ASSERT(vt_table[0] == 0);
+  for (i = 1; i < vt_size; i++) {
+    if (!vt_table[i]) continue;
+    if (!vt_table[i]->status) {
+      err("runlog: user %d status is zero", i);
+      err_cnt++;
+      continue;
+    }
+    if (!vt_table[i]->start_time) {
+      err("runlog: user %d start_time is zero", i);
+      err_cnt++;
+      continue;
+    }
+    if (vt_table[i]->start_time < 0) {
+      err("runlog: user %d start_time < 0", i);
+      err_cnt++;
+      continue;
+    }
+    if (vt_table[i]->stop_time == 0
+        && current_time - vt_table[i]->start_time > head.duration) {
+      vt_table[i]->stop_time = vt_table[i]->start_time + head.duration;
+    }
+    if (vt_table[i]->stop_time
+        && vt_table[i]->stop_time < vt_table[i]->start_time) {
+      err("runlog: user %d stop_time < start_time", i);
+      err_cnt++;
+      continue;
+    }
+  }
+
+  if (err_cnt > 0) return -1;
+  return 0;
+}
+
+time_t
+run_get_virtual_start_time(int user_id)
+{
+  struct vt_entry *pvt = get_entry(user_id);
+  return pvt->start_time;
+}
+
+time_t
+run_get_virtual_stop_time(int user_id)
+{
+  struct vt_entry *pvt = get_entry(user_id);
+  return pvt->stop_time;
+}
+
+int
+run_virtual_start(int user_id, time_t t, unsigned long ip)
+{
+  struct vt_entry *pvt = get_entry(user_id);
+  int i;
+
+  if (pvt->start_time) {
+    err("runlog: virtual contest for %d already started", user_id);
+    return -1;
+  }
+  i = append_record();
+  runs[i].team = user_id;
+  runs[i].timestamp = t;
+  runs[i].ip = ip;
+  runs[i].status = RUN_VIRTUAL_START;
+  pvt->start_time = t;
+  if (run_flush_entry(i) < 0) return -1;
+  return -1;
+}
+
+int
+run_virtual_stop(int user_id, time_t t, unsigned long ip)
+{
+  struct vt_entry *pvt = get_entry(user_id);
+  int i;
+
+  if (!pvt->start_time) {
+    err("runlog: virtual contest for %d is not yet started", user_id);
+    return -1;
+  }
+  if (pvt->stop_time) {
+    err("runlog: virtual contest for %d already stopped", user_id);
+    return -1;
+  }
+  i = append_record();
+  runs[i].team = user_id;
+  runs[i].timestamp = t;
+  runs[i].ip = ip;
+  runs[i].status = RUN_VIRTUAL_STOP;
+  pvt->stop_time = t;
+  if (run_flush_entry(i) < 0) return -1;
+  return -1;
 }
 
 /**
