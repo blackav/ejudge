@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -648,6 +648,54 @@ check_writable_spool(char const *path, int mode)
   if (mode == SPOOL_OUT && check_writable_dir(out_dir) < 0) return -1;
   if (check_writable_dir(dir_dir) < 0) return -1;
   return 0;
+}
+
+int
+make_symlink(unsigned char const *dest, unsigned char const *path)
+{
+  SWERR(("Not implemented"));
+}
+
+ssize_t
+generic_file_size(const unsigned char *dir, const unsigned char *name,
+                  const unsigned char *sfx)
+{
+  path_t path;
+  HANDLE h;
+  DWORD lo;
+  ssize_t retval;
+
+  ASSERT(name);
+  if (!dir) dir = "";
+  if (!sfx) sfx = "";
+
+  if (!strcmp(dir, "") || !strcmp(dir, "/")) {
+    snprintf(path, sizeof(path), "%s%s%s", dir, name, sfx);
+  } else {
+    snprintf(path, sizeof(path), "%s/%s%s", dir, name, sfx);
+  }
+
+  h = CreateFile(path, GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,0,0);
+  if (h == INVALID_HANDLE_VALUE) {
+    err("generic_file_size: CreateFile failed on `%s'", path);
+    return -1;
+  }
+
+  lo = GetFileSize(h, NULL);
+  CloseHandle(h);
+
+  if (lo == INVALID_FILE_SIZE) {
+    err("generic_file_size: GetFileSize failed on `%s'", path);
+    return -1;
+  }    
+
+  // avoid unsigned overflow
+  if ((retval = (ssize_t) lo) < 0) {
+    err("generic_file_size: GetFileSize returned negative value on %s", path);
+    return -1;
+  }
+
+  return retval;
 }
 
 /**
