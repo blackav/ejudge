@@ -31,6 +31,8 @@
 #include "userlist_clnt.h"
 #include "protocol.h"
 #include "serve_clnt.h"
+#include "misctext.h"
+#include "client_actions.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/logger.h>
@@ -45,6 +47,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -85,6 +88,7 @@ struct section_global_data
   int    max_run_size;
   int    max_clar_size;
   int    show_generation_time;
+  int    enable_session_mode;
   path_t root_dir;
   path_t var_dir;
   path_t allow_from;
@@ -114,13 +118,15 @@ static struct contest_list *contests;
 static struct contest_desc *cur_contest;
 static struct userlist_clnt *server_conn;
 static unsigned long client_ip;
+static unsigned char *self_url;
 
 /* client state variables */
-static char   *client_login;
-static char   *client_password;
-static int     client_locale_id;
-static char   *client_team_name;
+static unsigned char *client_login;
+static unsigned char *client_password;
+static unsigned char *client_team_name;
+static int     client_locale_id = -1;
 static int     client_team_id;
+static int     client_action;
 
 static int     client_view_all_runs;
 static int     client_view_all_clars;
@@ -131,11 +137,22 @@ static char   *error_log;
 
 static int serve_socket_fd = -1;
 
-/* for general use */
-static char    form_start_simple[1024];
-static char    form_start_multipart[1024];
-static char    form_start_simple_ext[1024];
-static char    form_start_multipart_ext[1024];
+enum
+  {
+    SID_DISABLED = 0,
+    SID_EMBED,
+    SID_URL,
+    SID_COOKIE
+  };
+
+static int client_sid_mode;
+static int need_set_cookie;
+static unsigned long long client_sid;
+static unsigned long long client_cookie;
+
+static unsigned char form_start_simple[1024];
+static unsigned char form_start_multipart[1024];
+static unsigned char hidden_vars[1024];
 
 /* description of configuration parameters */
 #define GLOBAL_OFFSET(x) XOFFSET(struct section_global_data, x)
@@ -147,6 +164,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(max_run_size, "d"),
   GLOBAL_PARAM(max_clar_size, "d"),
   GLOBAL_PARAM(show_generation_time, "d"),
+  GLOBAL_PARAM(enable_session_mode, "d"),
   GLOBAL_PARAM(root_dir, "s"),
   GLOBAL_PARAM(var_dir, "s"),
   GLOBAL_PARAM(allow_from, "s"),
@@ -170,6 +188,39 @@ static struct config_section_info params[] =
   { "global" ,sizeof(struct section_global_data), section_global_params },
   { NULL, 0, NULL }
 };
+
+static void print_refresh_button(unsigned char const *);
+static void print_logout_button(unsigned char const *);
+static void print_nav_buttons(unsigned char const *, unsigned char const *);
+
+static int
+setup_locale(int locale_id)
+{
+#if CONF_HAS_LIBINTL - 0 == 1
+  char *e = 0;
+  char env_buf[128];
+
+  if (!global->enable_l10n) return 0;
+
+  switch (locale_id) {
+  case 1:
+    e = "ru_RU.KOI8-R";
+    break;
+  case 0:
+  default:
+    locale_id = 0;
+    e = "C";
+    break;
+  }
+
+  sprintf(env_buf, "LC_ALL=%s", e);
+  putenv(env_buf);
+  setlocale(LC_ALL, "");
+  return locale_id;
+#else
+  return 0;
+#endif /* CONF_HAS_LIBINTL */
+}
 
 static void
 error(char const *format, ...)
@@ -204,6 +255,84 @@ fix_string(unsigned char *buf, unsigned char const *accept_str, int c)
       *s = c;
     }
   return cnt;
+}
+
+static void
+make_self_url(void)
+{
+  unsigned char *http_host = getenv("HTTP_HOST");
+  unsigned char *script_name = getenv("SCRIPT_NAME");
+  unsigned char fullname[1024];
+
+  if (!http_host) http_host = "localhost";
+  if (!script_name) script_name = "/cgi-bin/team";
+  snprintf(fullname, sizeof(fullname), "http://%s%s", http_host, script_name);
+  self_url = xstrdup(fullname);
+}
+
+static unsigned char *
+hyperref(unsigned char *buf, int size,
+         int sid_mode, unsigned long long sid,
+         unsigned char const *self_url,
+         unsigned char const *format, ...)
+{
+  va_list args;
+  unsigned char *out = buf;
+  int left = size, n;
+
+  ASSERT(sid_mode == SID_URL || sid_mode == SID_COOKIE);
+  if (sid_mode == SID_COOKIE) {
+    n = snprintf(out, left, "%s?sid_mode=%d",
+                 self_url, SID_COOKIE);
+  } else {
+    n = snprintf(out, left, "%s?sid_mode=%d&SID=%016llx",
+                 self_url, SID_URL, sid);
+  }
+  if (n >= left) n = left;
+  left -= n; out += n;
+  if (format && *format) {
+    n = snprintf(out, left, "&");
+    if (n >= left) n = left;
+    left -= n; out += n;
+    va_start(args, format);
+    n = vsnprintf(out, left, format, args);
+    va_end(args);
+  }
+  return buf;
+}
+
+static void
+open_serve(void)
+{
+  if (serve_socket_fd >= 0) return;
+  serve_socket_fd = serve_clnt_open(global->serve_socket);
+  if (serve_socket_fd < 0) {
+    printf("<h2><font color=\"red\">%s</font></h2>\n",
+           "Cannot connect to the contest server");
+    printf("<p>Error: %s</p>\n", protocol_strerror(-serve_socket_fd));
+    client_put_footer();
+    exit(0);
+  }
+}
+
+static void
+set_cookie_if_needed(void)
+{
+  time_t t;
+  struct tm gt;
+  char buf[128];
+
+  if (!need_set_cookie) return;
+  need_set_cookie = 0;
+  if (!client_cookie) {
+    printf("Set-cookie: UID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
+    return;
+  }
+  t = time(0);
+  t += 24 * 60 * 60;
+  gmtime_r(&t, &gt);
+  strftime(buf, sizeof(buf), "%A, %d-%b-%Y %H:%M:%S GMT", &gt);
+  printf("Set-cookie: UID=%llx; expires=%s\n", client_cookie, buf);
 }
 
 static int
@@ -318,121 +447,468 @@ initialize(int argc, char *argv[])
   }
   parse_client_ip();
 
-  serve_socket_fd = serve_clnt_open(global->serve_socket);
-  if (serve_socket_fd < 0) {
-    client_not_configured(global->charset, "server is down");
-  }
-
-  /* check directory structure */
   client_make_form_headers();
+  make_self_url();
 }
 
 static void
 read_state_params(void)
 {
-  sprintf(form_start_simple,
-          "%s<input type=\"hidden\" name=\"login\" value=\"%s\">"
-          "<input type=\"hidden\" name=\"password\" value=\"%s\">"
-          "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
-          form_header_simple, client_login, client_password,
-          client_locale_id);
-  sprintf(form_start_multipart,
-          "%s<input type=\"hidden\" name=\"login\" value=\"%s\">"
-          "<input type=\"hidden\" name=\"password\" value=\"%s\">"
-          "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
-          form_header_multipart, client_login, client_password,
-          client_locale_id);
-  sprintf(form_start_simple_ext,
-          "%s<input type=\"hidden\" name=\"login\" value=\"%s\">"
-          "<input type=\"hidden\" name=\"password\" value=\"%s\">"
-          "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
-          form_header_simple_ext, client_login, client_password,
-          client_locale_id);
-  sprintf(form_start_multipart_ext,
-          "%s<input type=\"hidden\" name=\"login\" value=\"%s\">"
-          "<input type=\"hidden\" name=\"password\" value=\"%s\">"
-          "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
-          form_header_multipart_ext, client_login, client_password,
-          client_locale_id);
+  int x, n;
+  unsigned char *s;
+
+  client_action = 0;
+  if ((s = cgi_param("action"))) {
+    n = 0; x = 0;
+    if (sscanf(s, "%d%n", &x, &n) == 1 && !s[n]
+        && x > 0 && x < ACTION_LAST)
+      client_action = x;
+  }
+  if (!client_action && (s = cgi_nname("action_", 7))) {
+    n = 0; x = 0;
+    if (sscanf(s, "action_%d%n", &x, &n) == 1 && !s[n]
+        && x > 0 && x < ACTION_LAST)
+      client_action = x;
+  }
+
+  switch (client_sid_mode) {
+  case SID_DISABLED:
+    snprintf(form_start_simple, sizeof(form_start_simple),
+             "%s"
+             "<input type=\"hidden\" name=\"sid_mode\" value=\"0\">"
+             "<input type=\"hidden\" name=\"login\" value=\"%s\">"
+             "<input type=\"hidden\" name=\"password\" value=\"%s\">"
+             "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
+             form_header_simple, client_login, client_password,
+             client_locale_id);
+    snprintf(form_start_multipart, sizeof(form_start_multipart),
+             "%s"
+             "<input type=\"hidden\" name=\"sid_mode\" value=\"0\">"
+             "<input type=\"hidden\" name=\"login\" value=\"%s\">"
+             "<input type=\"hidden\" name=\"password\" value=\"%s\">"
+             "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
+             form_header_multipart, client_login, client_password,
+             client_locale_id);
+    snprintf(hidden_vars, sizeof(hidden_vars),
+             "<input type=\"hidden\" name=\"sid_mode\" value=\"0\">"
+             "<input type=\"hidden\" name=\"login\" value=\"%s\">"
+             "<input type=\"hidden\" name=\"password\" value=\"%s\">"
+             "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
+             client_login, client_password, client_locale_id);
+    break;
+  case SID_EMBED:
+    snprintf(form_start_simple, sizeof(form_start_simple),
+             "%s"
+             "<input type=\"hidden\" name=\"sid_mode\" value=\"1\">"
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">"
+             "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
+             form_header_simple, client_sid, client_locale_id);
+    snprintf(form_start_multipart, sizeof(form_start_multipart),
+             "%s"
+             "<input type=\"hidden\" name=\"sid_mode\" value=\"1\">"
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">"
+             "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
+             form_header_multipart, client_sid, client_locale_id);
+    snprintf(hidden_vars, sizeof(hidden_vars),
+             "<input type=\"hidden\" name=\"sid_mode\" value=\"1\">"
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">"
+             "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">",
+             client_sid, client_locale_id);
+    break;
+  case SID_URL:
+  case SID_COOKIE:
+    strcpy(form_start_simple, form_header_simple);
+    strcpy(form_start_multipart, form_header_multipart);
+    strcpy(hidden_vars, "");
+    break;
+  default:
+    SWERR(("Unhandled sid mode %d", client_sid_mode));
+  }
 
   client_view_all_runs = 0;
   client_view_all_clars = 0;
-  if (cgi_param("view_all_runs"))  client_view_all_runs = 1;
-  if (cgi_param("view_all_clars")) client_view_all_clars = 1;
-}
-
-static int
-ask_passwd(void)
-{
-  char *l = cgi_param("login");
-  char *p = cgi_param("password");
-  if (!l || !p) return 1;
-  return 0;
-}
-
-static int
-check_passwd(void)
-{
-  int r, new_uid, new_locale_id;
-  unsigned char *new_name;
-  unsigned long long new_cookie;
-  char *l, *p;
-
-  l = cgi_param("login");
-  p = cgi_param("password");
-  if (!l || !p) return 0;
-  client_login = l;
-  client_password = p;
-
-  if (!server_conn) {
-    server_conn = userlist_clnt_open(global->socket_path);
-    if (!server_conn) {
-      client_not_configured(global->charset, "server is not available");
-    }
-  }
-  r = userlist_clnt_team_login(server_conn, client_ip, cur_contest->id,
-                               client_locale_id, 0,
-                               client_login, client_password,
-                               &new_uid, &new_cookie, &new_locale_id,
-                               &new_name);
-  if (r != ULS_LOGIN_OK) return 0;
-  client_team_id = new_uid;
-  client_team_name = new_name;
-  client_locale_id = new_locale_id;
-  return 1;
+  if (cgi_param("all_runs"))  client_view_all_runs = 1;
+  if (cgi_param("all_clars")) client_view_all_clars = 1;
 }
 
 static int
 display_enter_password(void)
 {
-  client_put_header(global->charset, _("Enter password"));
+  unsigned char *a_name = 0;
+  int a_len;
+
+  if (cur_contest->name) {
+    a_len = html_armored_strlen(cur_contest->name);
+    a_name = alloca(a_len + 10);
+    html_armor_string(cur_contest->name, a_name);
+  }
+  set_cookie_if_needed();
+  if (a_name) {
+    client_put_header(global->charset, "%s - &quot;%s&quot;",
+                      _("Enter password"), a_name);
+  } else {
+    client_put_header(global->charset, "%s", _("Enter password"));
+  }
+
   puts(form_header_simple);
-  printf("<p>%s: <input type=\"text\" size=\"16\" name=\"login\">\n",
-         _("Login"));
-  printf("<p>%s: <input type=\"password\" size=\"16\" name=\"password\">\n",
-       _("Password"));
+  printf("<table>"
+         "<tr>"
+         "<td>%s:</td>"
+         "<td><input type=\"text\" size=16 name=\"login\"></td>"
+         "</tr>"
+         "<tr>"
+         "<td>%s:</td>"
+         "<td><input type=\"password\" size=16 name=\"password\"></td>"
+         "</tr>",
+         _("Login"), _("Password"));
+
+  if (global->enable_session_mode) {
+    printf("<tr valign=\"top\">"
+           "<td>%s:</td>"
+           "<td>"
+           "<input type=\"radio\" name=\"sid_mode\" value=\"0\">%s<br>"
+           "<input type=\"radio\" name=\"sid_mode\" value=\"1\">%s<br>"
+           "<input type=\"radio\" name=\"sid_mode\" value=\"2\">%s<br>"
+           "<input type=\"radio\" name=\"sid_mode\" value=\"3\" checked=\"yes\">%s"
+           "</td>"
+           "</tr>",
+           _("Session support"), _("No session"),
+           _("In forms"), _("In URL"), _("In cookies"));
+  } else {
+    printf("<input type=\"hidden\" name=\"sid_mode\" value=\"3\">");
+  }
+
   if (global->enable_l10n) {
-    printf("<p>%s: <select name=\"locale_id\">"
+    printf("<tr valign=\"top\">"
+           "<td>%s:</td>"
+           "<td>"
+           "<select name=\"locale_id\">"
            "<option value=\"0\"%s>%s</option>"
            "<option value=\"1\"%s>%s</option>"
-           "</select>",
+           "</select>"
+           "</td>",
            _("Choose language"),
            client_locale_id==0?" selected=\"1\"":"", _("English"),
            client_locale_id==1?" selected=\"1\"":"", _("Russian"));
   }
-  printf("<p><input type=\"submit\" value=\"%s\">", _("submit"));
-  puts("</form>");
+
+  printf("<tr>"
+         "<td>&nbsp;</td>"
+         "<td><input type=\"submit\" value=\"%s\"></td>"
+         "</tr>"
+         "</table></form>",
+         _("Submit"));
+
   client_put_footer();
   return 0;
 }
 
-static void
-print_refresh_button(char const *anchor)
+static int
+get_cookie(unsigned char const *var, unsigned long long *p_val)
 {
-  printf(form_start_simple_ext, anchor);
-  printf("<input type=\"submit\" name=\"refresh\" value=\"%s\">\n",
-         _("Refresh"));
-  puts("</form>");
+  unsigned char const *cookie_str, *s, *p;
+  unsigned char *nstr, *vstr;
+  size_t cookie_len;
+  int n;
+  unsigned long long val;
+
+  if (!(cookie_str = getenv("HTTP_COOKIE"))) return 0;
+  cookie_len = strlen(cookie_str);
+  nstr = alloca(cookie_len + 10);
+  vstr = alloca(cookie_len + 10);
+  s = cookie_str;
+  while (1) {
+    while (isspace(*s)) s++;
+    if (!*s || *s == '=') return 0;
+    memset(nstr, 0, cookie_len + 10);
+    memset(vstr, 0, cookie_len + 10);
+    p = s;
+    while (*s && !isspace(*s) && *s != ';' && *s != '=') s++;
+    if (!*s || *s == ';') return 0;
+    memcpy(nstr, p, s - p);
+    while (*s && isspace(*s)) s++;
+    if (!*s || *s != '=') return 0;
+    s++;
+    while (*s && isspace(*s)) s++;
+    p = s;
+    while (*s && !isspace(*s) && *s != ';' && *s != '=') s++;
+    if (*s == '=') return 0;
+    memcpy(vstr, p, s - p);
+    while (*s && isspace(*s)) s++;
+    if (*s == ';') s++;
+
+    // nstr - name of the cookie, vstr - value
+    if (strcmp(nstr, var) != 0) continue;
+    if (sscanf(vstr, "%llx%n", &val, &n) != 1 || vstr[n]) continue;
+    if (!val) continue;
+
+    if (p_val) *p_val = val;
+    return 1;
+  }
+}
+
+static void
+open_userlist_server(void)
+{
+  if (!server_conn) {
+    if (!(server_conn = userlist_clnt_open(global->socket_path))) {
+      set_cookie_if_needed();
+      client_put_header(global->charset, _("Server is down"));
+      printf("<p>%s</p>",
+             _("The server is down. Try again later."));
+      client_put_footer();
+      exit(0);
+    }
+  }
+}
+
+static void
+permission_denied(void)
+{
+  set_cookie_if_needed();
+  client_put_header(global->charset, _("Permission denied"));
+  printf("<p>%s</p>",
+         _("Permission denied. You have typed invalid login, invalid password,"
+           " or do not have enough privileges."));
+  client_put_footer();
+  exit(0);
+}
+
+static void
+fatal_server_error(int r)
+{
+  set_cookie_if_needed();
+  client_put_header(global->charset, _("Server error"));
+  printf("<p>%s: %s</p>", _("Server error"),
+         gettext(userlist_strerror(-r)));
+  client_put_footer();
+  exit(0);
+}
+
+static int
+is_auth_error(int r)
+{
+  return r == -ULS_ERR_INVALID_LOGIN
+    || r == -ULS_ERR_INVALID_PASSWORD
+    || r == -ULS_ERR_NO_PERMS
+    || r == -ULS_ERR_NO_COOKIE
+    || r == -ULS_ERR_BAD_CONTEST_ID;
+}
+
+static int
+get_session_id(unsigned char const *var, unsigned long long *p_val)
+{
+  unsigned char const *str;
+  unsigned long long val;
+  int n;
+
+  if (!var) return 0;
+  if (!(str = cgi_param(var))) return 0;
+  if (sscanf(str, "%llx%n", &val, &n) != 1 || str[n]) return 0;
+  if (!val) return 0;
+
+  if (p_val) *p_val = val;
+  return 1;
+}
+
+static void
+client_put_refresh_header(unsigned char const *coding,
+                          unsigned char const *url,
+                          int interval,
+                          unsigned char const *format, ...)
+{
+  va_list args;
+
+  if (!coding) coding = "iso8859-1";
+
+  va_start(args, format);
+  fprintf(stdout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>\n", coding, coding, interval, url);
+  vfprintf(stdout, format, args);
+  fputs("\n</title></head><body><h1>\n", stdout);
+  vfprintf(stdout, format, args);
+  fputs("\n</h1>\n", stdout);
+}
+
+static int
+authentificate(void)
+{
+  unsigned long long session_id;
+  unsigned char const *sid_mode_str;
+  int new_locale_id = client_locale_id;
+  int r;
+
+  /* read and parse session mode */
+  sid_mode_str = cgi_param("sid_mode");
+  client_sid_mode = -1;
+  if (sid_mode_str) {
+    int x, n = 0;
+    if (sscanf(sid_mode_str, "%d%n", &x, &n) == 1 && !sid_mode_str[n]
+        && x >= SID_DISABLED && x <= SID_COOKIE) {
+      client_sid_mode = x;
+    }
+  }
+
+  if ((client_sid_mode == -1 || client_sid_mode == SID_COOKIE)
+      && get_cookie("UID", &session_id)) {
+    client_cookie = session_id;
+    open_userlist_server();
+    r = userlist_clnt_team_cookie(server_conn, client_ip, global->contest_id,
+                                  session_id,
+                                  client_locale_id,
+                                  &client_team_id,
+                                  0, /* p_contest_id */
+                                  &new_locale_id,
+                                  &client_login, &client_team_name);
+    if (r >= 0) {
+      client_sid_mode = SID_COOKIE;
+      client_sid = client_cookie;
+      client_password = "";
+      if (new_locale_id != client_locale_id) {
+        setup_locale(new_locale_id);
+        client_locale_id = new_locale_id;
+      }
+      return 1;
+    }
+    if (!is_auth_error(r)) fatal_server_error(r);
+    client_cookie = 0;
+    need_set_cookie = 1;
+  }
+
+  if ((client_sid_mode == -1 || client_sid_mode == SID_EMBED
+      || client_sid_mode == SID_URL)
+      && get_session_id("SID", &session_id)) {
+    open_userlist_server();
+    r = userlist_clnt_team_cookie(server_conn, client_ip, global->contest_id,
+                                  session_id,
+                                  client_locale_id,
+                                  &client_team_id,
+                                  0 /* p_contest_id */,
+                                  &new_locale_id,
+                                  &client_login, &client_team_name);
+    if (r >= 0) {
+      if (client_sid_mode == -1) client_sid_mode = SID_URL;
+      client_sid = session_id;
+      client_password = "";
+      if (new_locale_id != client_locale_id) {
+        setup_locale(new_locale_id);
+        client_locale_id = new_locale_id;
+      }
+      return 1;
+    }
+    if (!is_auth_error(r)) fatal_server_error(r);
+  }
+
+  client_login = cgi_param("login");
+  client_password = cgi_param("password");
+  if (!client_login || !client_password) {
+    display_enter_password();
+    exit(0);
+  }
+
+  // set default behavior
+  if (client_sid_mode == -1) {
+    client_sid_mode = SID_COOKIE;
+  }
+
+  open_userlist_server();
+  r = userlist_clnt_team_login(server_conn, client_ip, global->contest_id,
+                               client_locale_id,
+                               client_sid_mode != SID_DISABLED,
+                               client_login, client_password,
+                               &client_team_id,
+                               &client_sid,
+                               &new_locale_id,
+                               &client_team_name);
+  if (r < 0 && is_auth_error(r)) permission_denied();
+  if (r < 0) fatal_server_error(r);
+  if (client_sid_mode == SID_COOKIE) {
+    client_cookie = client_sid;
+    need_set_cookie = 1;
+  }
+  if (new_locale_id != client_locale_id) {
+    setup_locale(new_locale_id);
+    client_locale_id = new_locale_id;
+  }
+
+  if (client_sid_mode == SID_URL || client_sid_mode == SID_COOKIE) {
+    unsigned char hbuf[128];
+
+    hyperref(hbuf, sizeof(hbuf), client_sid_mode, client_sid, self_url, 0);
+    set_cookie_if_needed();
+    client_put_refresh_header(global->charset, hbuf, 1,
+                              _("Login successful"));
+    printf("<p>%s</p>", _("Login successfull. Now entering the main page."));
+    printf(_("<p>If automatic updating does not work, click on <a href=\"%s\">this</a> link.</p>"), hbuf);
+           
+    //client_put_footer();
+    exit(0);
+  }
+
+  return 1;
+}
+
+static void
+operation_status_page(int code, unsigned char const *msg)
+{
+  unsigned char href[128];
+
+  if (client_sid_mode != SID_URL && client_sid_mode != SID_COOKIE) {
+    if (code == -1 && msg) {
+      error("%s", msg);
+    } else if (code < 0) {
+      error("%s", gettext(protocol_strerror(-code)));
+    }
+    return;
+  }
+  set_cookie_if_needed();
+  if (code < 0) {
+    client_put_header(global->charset, _("Operation failed"));
+    if (code != -1 || !msg) msg = protocol_strerror(-code);
+    printf("<h2><font color=\"red\">%s</font></h2>\n", msg);
+  } else {
+    hyperref(href, sizeof(href), client_sid_mode, client_sid, self_url, 0);
+    client_put_refresh_header(global->charset, href, 1,
+                              _("Operation successfull"));
+    printf("<h2>%s</h2>", _("Operation completed successfully"));
+  }
+  print_refresh_button(_("Back"));
+  client_put_footer();
+  exit(0);
+}
+
+static void
+print_refresh_button(unsigned char const *str)
+{
+  if (!str) str = _("Refresh");
+
+  if (client_sid_mode == SID_URL) {
+    printf("<a href=\"%s?sid_mode=%d&SID=%016llx\">%s</a>",
+           self_url, SID_URL, client_sid, str);
+  } else if (client_sid_mode == SID_COOKIE) {
+    printf("<a href=\"%s?sid_mode=%d\">%s</a>", self_url, SID_COOKIE, str);
+  } else {
+    puts(form_start_simple);
+    printf("<input type=\"submit\" name=\"refresh\" value=\"%s\">", str);
+    puts("</form>");
+  }
+}
+
+static void
+print_logout_button(unsigned char const *str)
+{
+  if (!str) str = _("Log out");
+
+  if (client_sid_mode == SID_URL) {
+    printf("<a href=\"%s?sid_mode=%d&SID=%016llx&action=%d\">%s</a>",
+           self_url, SID_URL, client_sid, ACTION_LOGOUT, str);
+  } else if (client_sid_mode == SID_COOKIE) {
+    printf("<a href=\"%s?sid_mode=%d&action=%d\">%s</a>",
+           self_url, SID_COOKIE, ACTION_LOGOUT, str);
+  } else {
+    puts(form_start_simple);
+    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+           ACTION_LOGOUT, str);
+  }
 }
 
 static void
@@ -441,18 +917,16 @@ send_clar_if_asked(void)
   char *s, *p, *t, *r, *full_subj;
   int n;
 
-  if (!cgi_param("msg")) return;
-
   if (!server_start_time) {
-    error("%s", _("The message cannot be sent. The contest is not started."));
+    operation_status_page(-1, _("The message cannot be sent. The contest is not started."));
     return;
   }
   if (server_stop_time) {
-    error("%s", _("The message cannot be sent. The contest is over."));
+    operation_status_page(-1, _("The message cannot be sent. The contest is over."));
     return;
   }
   if (server_team_clars_disabled) {
-    error("%s", _("The message cannot be sent. Messages are disabled."));
+    operation_status_page(-1, _("The message cannot be sent. Messages are disabled."));
     return;
   }
 
@@ -472,19 +946,15 @@ send_clar_if_asked(void)
   if (!full_subj[0]) strcpy(full_subj, _("(no subject)"));
 
   if (strlen(t) + strlen(full_subj) > global->max_clar_size) {
-    error("%s", _("The message cannot be sent because its size exceeds maximal allowed."));
+    operation_status_page(-1, _("The message cannot be sent because its size exceeds maximal allowed."));
     return;
   }
 
+  open_serve();
   n = serve_clnt_submit_clar(serve_socket_fd, client_team_id,
                              global->contest_id, client_locale_id,
                              client_ip, full_subj, t);
-  if (n < 0) {
-    error("%s", gettext(protocol_strerror(-n)));
-  } else {
-    error("%s", _("clarification is sent successfully"));
-  }
-
+  operation_status_page(n, 0);
   force_recheck_status = 1;
 }
 
@@ -494,14 +964,12 @@ submit_if_asked(void)
   char *p, *l, *t;
   int prob, lang, n;
 
-  if (!cgi_param("send")) return;
-
   if (!server_start_time) {
-    error("%s", _("The submission cannot be sent. The contest is not started."));
+    operation_status_page(-1, _("The submission cannot be sent. The contest is not started."));
     return;
   }
   if (server_stop_time) {
-    error("%s", _("The submission cannot be sent. The contest is over."));
+    operation_status_page(-1, _("The submission cannot be sent. The contest is over."));
     return;
   }
 
@@ -513,61 +981,67 @@ submit_if_asked(void)
       || p[n]
       || sscanf(l, "%d%n", &lang, &n) != 1
       || l[n]) {
+    operation_status_page(-1, _("Invalid parameters"));
     return;
   }
 
   if (strlen(t) > global->max_run_size) {
-    error("%s", _("The submission cannot be sent because its size exceeds maximal allowed."));
+    operation_status_page(-1, _("The submission cannot be sent because its size exceeds maximal allowed."));
     return;
   }
 
+  open_serve();
   n = serve_clnt_submit_run(serve_socket_fd, client_team_id,
                             global->contest_id, client_locale_id,
                             client_ip, prob, lang, t);
-  if (n < 0) {
-    error("%s", gettext(protocol_strerror(-n)));
-  } else {
-    error("%s", _("submission is sent successfully"));
-  }
-
+  operation_status_page(n, 0);
   force_recheck_status = 1;
 }
 
 static void
-change_passwd_if_asked(void)
+action_change_password(void)
 {
-  char *p1, *p2;
+  char *p0, *p1, *p2;
   int r;
 
-  if (!cgi_param("change_passwd")) return;
+  p0 = cgi_param("oldpasswd");
   p1 = cgi_param("newpasswd1");
   p2 = cgi_param("newpasswd2");
-  if (!p1 || !p2 || !*p1 || !*p2) return;
+  if (!p0 || !p1 || !p2 || !*p0 || !*p1 || !*p2) {
+    operation_status_page(-1, _("Invalid parameters"));
+    return;
+  }
 
+  if (strlen(p0) > 16) {
+    operation_status_page(-1, _("Old password is too long"));
+    return;
+  }
+  if (fix_string(p0, password_accept_chars, '?') > 0) {
+    operation_status_page(-1, _("Old password contain invalid characters"));
+    return;
+  }
   if (strcmp(p1, p2)) {
-    error("%s", _("Passwords do not match."));
+    operation_status_page(-1, _("New passwords do not match"));
     return;
   }
   if (strlen(p1) > 16) {
-    error("%s", _("Password is too long (>16 characters)."));
+    operation_status_page(-1, _("New password is too long"));
     return;
   }
   if (fix_string(p1, password_accept_chars, '?') > 0) {
-    error("%s", _("Password contain invalid characters."));
+    operation_status_page(-1, _("New password contain invalid characters."));
     return;
   }
 
-  if (!server_conn) {
-    error("%s", _("No connection to server."));
-    return;
-  }
-  // FIXME: if we are in cookie mode, we need to know the old password!
+  open_userlist_server();
   r = userlist_clnt_team_set_passwd(server_conn, client_team_id,
-                                    client_password, p1);
+                                    p0, p1);
   if (r < 0) {
-    error("%s", gettext(userlist_strerror(-r)));
+    operation_status_page(-1, gettext(userlist_strerror(-r)));
     return;
   }
+
+  operation_status_page(0, 0);
 
   client_password = p1;
   read_state_params();
@@ -591,8 +1065,12 @@ show_clar_if_asked(void)
     return;
   if (clar_id < 0 || clar_id >= server_total_clars) return;
 
+  set_cookie_if_needed();
   client_put_header(global->charset, _("Message view"));
+  print_nav_buttons(_("Main page"), 0);
+  printf("<hr>\n");
   fflush(stdout);
+  open_serve();
   r = serve_clnt_show_item(serve_socket_fd, 1, SRV_CMD_SHOW_CLAR,
                            client_team_id, global->contest_id,
                            client_locale_id, clar_id);
@@ -600,8 +1078,8 @@ show_clar_if_asked(void)
     printf("<p><pre><font color=\"red\">%s</font></pre></p>\n",
            gettext(protocol_strerror(-r)));
   }
-  printf("<hr>%s<input type=\"submit\" name=\"refresh\" value=\"%s\"></form>",
-         form_start_simple, _("Back"));
+  printf("<hr>\n");
+  print_nav_buttons(_("Main page"), 0);
   client_put_footer();
   exit(0);
 }
@@ -618,9 +1096,12 @@ request_source_if_asked(void)
     return;
   if (run_id < 0 || run_id >= server_total_runs) return;
 
+  set_cookie_if_needed();
   client_put_header(global->charset, _("Source view"));
+  print_nav_buttons(_("Main page"), 0);
   printf("<hr>");
   fflush(stdout);
+  open_serve();
   r = serve_clnt_show_item(serve_socket_fd, 1, SRV_CMD_SHOW_SOURCE,
                            client_team_id, global->contest_id,
                            client_locale_id, run_id);
@@ -628,9 +1109,8 @@ request_source_if_asked(void)
     printf("<p><pre><font color=\"red\">%s</font></pre></p>\n",
            gettext(protocol_strerror(-r)));
   }
-  printf("<hr>%s<input type=\"submit\" name=\"refresh\" value=\"%s\"></form>",
-         form_start_simple, _("Back"));
-
+  printf("<hr>");
+  print_nav_buttons(_("Main page"), 0);
   client_put_footer();
   exit(0);
 }
@@ -647,9 +1127,12 @@ request_report_if_asked(void)
     return;
   if (run_id < 0 || run_id >= server_total_runs) return;
 
+  set_cookie_if_needed();
   client_put_header(global->charset, _("Report view"));
+  print_nav_buttons(_("Main page"), 0);
   printf("<hr>");
   fflush(stdout);
+  open_serve();
   r = serve_clnt_show_item(serve_socket_fd, 1, SRV_CMD_SHOW_REPORT,
                            client_team_id, global->contest_id,
                            client_locale_id, run_id);
@@ -657,9 +1140,8 @@ request_report_if_asked(void)
     printf("<p><pre><font color=\"red\">%s</font></pre></p>\n",
            gettext(protocol_strerror(-r)));
   }
-  printf("<hr>%s<input type=\"submit\" name=\"refresh\" value=\"%s\"></form>",
-         form_start_simple, _("Back"));
-
+  printf("<hr>");
+  print_nav_buttons(_("Main page"), 0);
   client_put_footer();
   exit(0);
 }
@@ -674,15 +1156,11 @@ request_archive_if_asked(void)
 
   if (!(s = cgi_param("archive"))) return;
 
-  if (!global->serve_socket[0] || global->contest_id <= 0) {
-    error("%s", _("Operation is not supported"));
-    return;
-  }
-
+  open_serve();
   if ((r = serve_clnt_get_archive(serve_socket_fd, client_team_id,
                                   global->contest_id, client_locale_id,
                                   &token, &dirpath)) < 0) {
-    error("%s", gettext(protocol_strerror(-r)));
+    operation_status_page(r, 0);
     return;
   }
   basename = os_GetBasename(dirpath);
@@ -704,20 +1182,69 @@ request_archive_if_asked(void)
 }
 
 static void
+action_change_language(void)
+{
+  // if we are here, no further operations are required
+  operation_status_page(0, 0);
+}
+
+static void
+action_logout(void)
+{
+  if (client_sid) {
+    open_userlist_server();
+    userlist_clnt_logout(server_conn, client_ip, client_sid);
+  }
+  if (client_sid_mode == SID_COOKIE) {
+    client_cookie = 0;
+    need_set_cookie = 1;
+  }
+  set_cookie_if_needed();
+  client_put_header(global->charset, "%s", _("Good-bye"));
+  printf("<p>%s</p>\n",
+         _("Good-bye!"));
+  printf(_("<p>Follow this <a href=\"%s\">link</a> to login again.</p>"),
+         self_url);
+  client_put_footer();
+  exit(0);
+}
+
+static void
 display_team_page(void)
 {
   int r;
 
   fflush(stdout);
+  open_serve();
   r = serve_clnt_team_page(serve_socket_fd, 1,
-                           client_team_id, global->contest_id,
-                           client_locale_id, client_ip,
+                           client_sid_mode, client_locale_id,
                            ((client_view_all_clars?1:0)<<1)|(client_view_all_runs?1:0),
-                           form_start_simple,
-                           form_start_multipart);
+                           self_url, hidden_vars);
   if (r < 0) {
     printf("<p>%s: %s\n", _("Server error"),
            gettext(protocol_strerror(-r)));
+  }
+}
+
+static void
+print_nav_buttons(unsigned char const *p1, unsigned char const *p2)
+{
+  printf("<table><tr><td>");
+  print_refresh_button(p1);
+  printf("</td><td>");
+  print_logout_button(p2);
+  printf("</td></tr></table>\n");
+}
+
+static void
+read_locale_id(void)
+{
+  unsigned char *e;
+  int x = 0, n = 0;
+
+  if (!(e = cgi_param("locale_id"))) return;
+  if (sscanf(e, "%d%n", &x, &n) == 1 && !e[n] && x >= 0 && x <= 1) {
+    client_locale_id = x;
   }
 }
 
@@ -742,50 +1269,20 @@ main(int argc, char *argv[])
   }
 
   cgi_read(global->charset);
+  read_locale_id();
 
 #if CONF_HAS_LIBINTL - 0 == 1
   /* load the language used */
   if (global->enable_l10n) {
-    char *e = cgi_param("locale_id");
-    int n = 0;
-    char env_buf[1024];
-
-    if (e) {
-      if (sscanf(e, "%d%n", &client_locale_id, &n) != 1 || e[n])
-        client_locale_id = 0;
-      if (client_locale_id < 0 || client_locale_id > 1)
-        client_locale_id = 0;
-    }
-
-    switch (client_locale_id) {
-    case 1:
-      e = "ru_RU.KOI8-R";
-      break;
-    case 0:
-    default:
-      client_locale_id = 0;
-      e = "C";
-      break;
-    }
-
-    sprintf(env_buf, "LC_ALL=%s", e);
-    putenv(env_buf);
-    setlocale(LC_ALL, "");
     bindtextdomain("ejudge", global->l10n_dir);
     textdomain("ejudge");
   }
+  if (client_locale_id >= 0 && client_locale_id <= 1) {
+    setup_locale(client_locale_id);
+  }
 #endif /* CONF_HAS_LIBINTL */
-  
-  if (ask_passwd()) {
-    display_enter_password();
-    return 0;
-  }
 
-  ASSERT(!server_conn);
-  if (!(server_conn = userlist_clnt_open(global->socket_path))) {
-    client_not_configured(global->charset, _("no connection to server"));
-  }
-  if (!check_passwd()) client_access_denied(global->charset);
+  if (authentificate() != 1) client_access_denied(global->charset);
 
   read_state_params();
 
@@ -794,22 +1291,41 @@ main(int argc, char *argv[])
     return 0;
   }
 
-  if (!server_clients_suspended) {
-    send_clar_if_asked();
-    show_clar_if_asked();
-    request_source_if_asked();
-    request_report_if_asked();
-    request_archive_if_asked();
-    submit_if_asked();
-    change_passwd_if_asked();
+  switch (client_action) {
+  case ACTION_LOGOUT:
+    action_logout();
+    break;
+  case ACTION_CHANGE_LANGUAGE:
+    action_change_language();
+    break;
+  case ACTION_CHANGE_PASSWORD:
+    action_change_password();
+    break;
+  }
 
-    if (force_recheck_status) {
-      client_check_server_status(global->charset,
-                                 global->status_file, global->server_lag);
-      force_recheck_status = 0;
+  if (!server_clients_suspended) {
+    switch (client_action) {
+    case ACTION_SUBMIT_CLAR:
+      send_clar_if_asked();
+      break;
+    case ACTION_SUBMIT_RUN:
+      submit_if_asked();
+      break;
+    default:
+      show_clar_if_asked();
+      request_source_if_asked();
+      request_report_if_asked();
+      request_archive_if_asked();
     }
   }
 
+  if (force_recheck_status) {
+    client_check_server_status(global->charset,
+                               global->status_file, global->server_lag);
+    force_recheck_status = 0;
+  }
+
+  set_cookie_if_needed();
   if (cur_contest->name) {
     client_put_header(global->charset,
                        "%s: &quot;%s&quot - &quot;%s&quot;",
@@ -855,16 +1371,16 @@ main(int argc, char *argv[])
            global->problems_url, _("Problems"));
   }
   puts("</ul>");
-  print_refresh_button("");
+  print_nav_buttons(0, 0);
 
   client_print_server_status(1, "", "status");
-  print_refresh_button("#status");
+  print_nav_buttons(0, 0);
 
   if (error_log) {
     printf("<hr><a name=\"lastcmd\"><h2>%s</h2>\n",
            _("The last command completion status"));
     printf("<pre><font color=\"red\">%s</font></pre>\n", error_log);
-    print_refresh_button("");
+    print_nav_buttons(0, 0);
   }
 
   if (!server_clients_suspended) {
@@ -874,13 +1390,16 @@ main(int argc, char *argv[])
   if (!server_clients_suspended) {
     printf("<hr><a name=\"chgpasswd\"><h2>%s</h2>\n"
            "%s<table>\n"
+           "<tr><td>%s:</td><td><input type=\"password\" name=\"oldpasswd\" size=\"16\"></td></tr>\n"
            "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd1\" size=\"16\"></td></tr>\n"
            "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd2\" size=\"16\"></td></tr>\n"
-           "<tr><td colspan=\"2\"><input type=\"submit\" name=\"change_passwd\" value=\"%s\"></td></tr>\n"
+           "<tr><td colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n"
            "</table></form>",
            _("Change password"), form_start_simple,
-           _("New password"), _("Retype new password"), _("Change!"));
-    print_refresh_button("");
+           _("Old password"),
+           _("New password"), _("Retype new password"),
+           ACTION_CHANGE_PASSWORD, _("Change!"));
+    print_nav_buttons(0, 0);
   }
 
 #if CONF_HAS_LIBINTL - 0 == 1
@@ -892,14 +1411,14 @@ main(int argc, char *argv[])
            "<option value=\"0\"%s>%s</option>"
            "<option value=\"1\"%s>%s</option>"
            "</select>"
-           "<input type=\"submit\" name=\"refresh\" value=\"%s\"></form>\n",
+           "<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>\n",
            _("Change language"),
            form_header_simple, client_login, client_password,
            _("Change language"),
            client_locale_id==0?" selected=\"1\"":"", _("English"),
            client_locale_id==1?" selected=\"1\"":"", _("Russian"),
-           _("Change!"));
-    print_refresh_button("");
+           ACTION_CHANGE_LANGUAGE, _("Change!"));
+    print_nav_buttons(0, 0);
   }
 #endif /* CONF_HAS_LIBINTL */
 
