@@ -53,7 +53,8 @@ b32_number(unsigned long num, size_t size, unsigned char buf[])
 }
 
 int
-archive_dir_prepare(const unsigned char *base_dir, int serial)
+archive_dir_prepare(const unsigned char *base_dir, int serial,
+                    const unsigned char *prefix)
 {
   unsigned char sbuf[16];
   path_t path;
@@ -101,7 +102,8 @@ archive_dir_prepare(const unsigned char *base_dir, int serial)
     }
   }
 
-  sprintf(pp, "/%06d", serial);
+  if (!prefix) prefix = "";
+  sprintf(pp, "/%s%06d", prefix, serial);
   unlink(path);
   strcat(pp, ".gz");
   unlink(path);
@@ -148,7 +150,7 @@ archive_make_read_path(unsigned char *path, size_t size,
 
   if (global->use_dir_hierarchy) {
     if (strlen(base_dir) + 32 >= size) {
-      err("archive_dir_prepare: `%s' is too long", base_dir);
+      err("archive_make_read_path: `%s' is too long", base_dir);
       return -1;
     }
     pp = path + make_hier_path(path, size, base_dir, serial);
@@ -200,7 +202,7 @@ archive_make_write_path(unsigned char *path, size_t size,
   if (!name_prefix) name_prefix = "";
 
   if (strlen(base_dir) + 32 >= size) {
-    err("archive_dir_prepare: `%s' is too long", base_dir);
+    err("archive_make_write_path: `%s' is too long", base_dir);
     return -1;
   }
 
@@ -233,7 +235,7 @@ archive_make_move_path(unsigned char *path, size_t size,
   if (!name_prefix) name_prefix = "";
 
   if (strlen(base_dir) + 32 >= size) {
-    err("archive_dir_prepare: `%s' is too long", base_dir);
+    err("archive_make_move_path: `%s' is too long", base_dir);
     return -1;
   }
 
@@ -272,7 +274,7 @@ archive_rename(const unsigned char *dir, FILE *flog,
     return -1;
   }
   archive_make_move_path(name2, sizeof(name2), dir, n2, f, pfx2);
-  if (archive_dir_prepare(dir, n2) < 0) {
+  if (archive_dir_prepare(dir, n2, pfx2) < 0) {
     if (flog) {
       fprintf(flog, "cannot create directory for entry %d in `%s'\n", n2, dir);
     }
