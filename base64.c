@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,10 @@
 #include "base64.h"
 
 #include "pathutl.h"
-#include "logger.h"
+
+#include <reuse/logger.h>
+
+#include <string.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
