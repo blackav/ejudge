@@ -244,29 +244,43 @@ dnl reuse checking stuff
 ac_cv_has_reuse=1
 if [[ x"${ac_cv_reuse_root}" = x -o x"${ac_cv_reuse_root}" = xyes -o x"${ac_cv_reuse_root}" = xno ]]
 then
-  AC_MSG_ERROR([You must specify the reuse directory using --with-reuse])
-fi
-
-[[ x"${ac_cv_reuse_include_dir}" = x -o x"${ac_cv_reuse_include_dir}" = xyes -o x"${ac_cv_reuse_include_dir}" = xno ]] && ac_cv_reuse_include_dir="${ac_cv_reuse_root}/include"
-[[ x"${ac_cv_reuse_lib_dir}" = x -o x"${ac_cv_reuse_lib_dir}" = xyes -o x"${ac_cv_reuse_lib_dir}" = xno ]] && ac_cv_reuse_lib_dir="${ac_cv_reuse_root}/lib"
-
-if [[ x"${ac_cv_reuse_config}" = x -o x"${ac_cv_reuse_config}" = xyes -o x"${ac_cv_reuse_config}" = xno ]]
-then
-  [[ x"${ac_cv_reuse_conf_dir}" = x -o x"${ac_cv_reuse_conf_dir}" = xyes -o x"${ac_cv_reuse_conf_dir}" = xno ]] && ac_cv_reuse_conf_dir="${ac_cv_reuse_root}/etc"
-  if [[ ! -x "${ac_cv_reuse_conf_dir}/config.guess" ]]
+  dnl try reuse-config script
+  AC_PATH_PROG([REUSE_CONF_SCRIPT],[reuse-config],[no])
+  if [[ x"${REUSE_CONF_SCRIPT}" = xno ]]
   then
-    AC_MSG_ERROR([The reuse configuration script config.guess is missing or non-executable at ${ac_cv_reuse_conf_dir}])
+    AC_MSG_ERROR([You must specify the reuse directory using --with-reuse])
   fi
-  ac_cv_reuse_config=`"${ac_cv_reuse_conf_dir}/config.guess" 2>/dev/null`
-  if [[ $? != 0 -o x"${ac_cv_reuse_config}" = x ]]
+  ac_cv_reuse_include_opt=`"${REUSE_CONF_SCRIPT}" --cflags`
+  ac_cv_reuse_lib_opt=`"${REUSE_CONF_SCRIPT}" --ldflags`
+else
+  if [[ -x "${ac_cv_reuse_root}/bin/reuse-config" ]]
   then
-    AC_MSG_ERROR([The reuse configuration script returned no result])
+    REUSE_CONF_SCRIPT="${ac_cv_reuse_root}/bin/reuse-config"
+    [[ x"${ac_cv_reuse_include_dir}" = x -o x"${ac_cv_reuse_include_dir}" = xyes -o x"${ac_cv_reuse_include_dir}" = xno ]] && ac_cv_reuse_include_opt=`"${REUSE_CONF_SCRIPT}" --cflags`
+    [[ x"${ac_cv_reuse_lib_dir}" = x -o x"${ac_cv_reuse_lib_dir}" = xyes -o x"${ac_cv_reuse_lib_dir}" = xno ]] && ac_cv_reuse_lib_opt=`"${REUSE_CONF_SCRIPT}" --ldflags`
+  else
+    [[ x"${ac_cv_reuse_include_dir}" = x -o x"${ac_cv_reuse_include_dir}" = xyes -o x"${ac_cv_reuse_include_dir}" = xno ]] && ac_cv_reuse_include_dir="${ac_cv_reuse_root}/include"
+    [[ x"${ac_cv_reuse_lib_dir}" = x -o x"${ac_cv_reuse_lib_dir}" = xyes -o x"${ac_cv_reuse_lib_dir}" = xno ]] && ac_cv_reuse_lib_dir="${ac_cv_reuse_root}/lib"
+
+    if [[ x"${ac_cv_reuse_config}" = x -o x"${ac_cv_reuse_config}" = xyes -o x"${ac_cv_reuse_config}" = xno ]]
+    then
+      [[ x"${ac_cv_reuse_conf_dir}" = x -o x"${ac_cv_reuse_conf_dir}" = xyes -o x"${ac_cv_reuse_conf_dir}" = xno ]] && ac_cv_reuse_conf_dir="${ac_cv_reuse_root}/etc"
+      if [[ ! -x "${ac_cv_reuse_conf_dir}/config.guess" ]]
+      then
+        AC_MSG_ERROR([The reuse configuration script config.guess is missing or non-executable at ${ac_cv_reuse_conf_dir}])
+      fi
+      ac_cv_reuse_config=`"${ac_cv_reuse_conf_dir}/config.guess" 2>/dev/null`
+      if [[ $? != 0 -o x"${ac_cv_reuse_config}" = x ]]
+      then
+        AC_MSG_ERROR([The reuse configuration script returned no result])
+      fi
+    fi
+    AC_MSG_NOTICE([using the reuse configuration ${ac_cv_reuse_config}])
+  
+    ac_cv_reuse_include_opt="-I${ac_cv_reuse_include_dir} -I${ac_cv_reuse_include_dir}/${ac_cv_reuse_config}"
+    ac_cv_reuse_lib_opt="-L${ac_cv_reuse_lib_dir}/${ac_cv_reuse_config}"
   fi
 fi
-AC_MSG_NOTICE([using the reuse configuration ${ac_cv_reuse_config}])
-
-ac_cv_reuse_include_opt="-I${ac_cv_reuse_include_dir} -I${ac_cv_reuse_include_dir}/${ac_cv_reuse_config}"
-ac_cv_reuse_lib_opt="-L${ac_cv_reuse_lib_dir}/${ac_cv_reuse_config}"
 
 saved_CFLAGS="${CFLAGS}"
 saved_CPPFLAGS="${CPPFLAGS}"
@@ -310,9 +324,48 @@ then
   AC_CHECK_LIB([reuse], [os_GetWorkingDir], [], [ac_cv_has_reuse=""])
 fi
 
+ac_cv_version_detected=
 if [[ x"${ac_cv_has_reuse}" = x1 ]]
 then
-  AC_MSG_CHECKING([that reuse version >= 3.0.17])
+  AC_MSG_CHECKING([for reuse version >= 4])
+  AC_RUN_IFELSE([[
+#include <reuse/version.h>
+#include <stdio.h>
+#include <string.h>
+int main()
+{
+  const char *p = reuse_compile_version;
+  int major, minor, patch, build = 0, n;
+  if (sscanf(p, "%d.%dpre%d #%d%n", &major, &minor, &patch, &build, &n) == 4
+      && !p[n]) {
+    patch = 0;
+  } else if (sscanf(p, "%d.%dpre%d%n", &major, &minor, &patch, &n) == 3
+             && !p[n]) {
+    patch = 0;
+  } else if (sscanf(p, "%d.%d.%d #%d%n", &major, &minor, &patch, &build, &n)==4
+             && !p[n]) {
+  } else if (sscanf(p, "%d.%d.%d%n", &major, &minor, &patch, &n) == 3
+             && !p[n]) {
+  } else {
+    return 1;
+  }
+  if (major < 3 || major >= 1000) return 1;
+  if (minor < 0 || minor >= 1000) return 1;
+  if (patch < 0 || patch >= 1000) return 1;
+  if (major >= 4) return 0;
+  return 1;
+}
+]],[
+AC_MSG_RESULT([yes])
+ac_cv_version_detected=1
+],[
+AC_MSG_RESULT([no])
+])
+fi
+
+if [[ x"${ac_cv_has_reuse}" = x1 -a x"${ac_cv_version_detected}" = x ]]
+then
+  AC_MSG_CHECKING([for reuse version >= 3.0.17])
   AC_RUN_IFELSE(
 [[
 #include <stdio.h>

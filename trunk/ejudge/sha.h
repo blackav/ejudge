@@ -28,7 +28,12 @@
    Copyright (C) 1999, Scott G. Miller
 */
 
+#include <reuse/ReuseDefs.h>
+#if defined REUSE_VERSION && REUSE_VERSION >= 4
+#include <reuse/integral.h>
+#else
 #include <p_integral.h>
+#endif /* reuse version >= 4 */
 
 #include <stdio.h>
 

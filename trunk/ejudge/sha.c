@@ -28,8 +28,13 @@
       Robert Klep <robert@ilse.nl>  -- Expansion function fix
 */
 
-#include <p_integral.h>
+#include <reuse/ReuseDefs.h>
+#if defined REUSE_VERSION && REUSE_VERSION >= 4
+#include <reuse/integral.h>
+#else
 #include <p_config.h>
+#include <p_integral.h>
+#endif /* reuse version >= 4 */
 
 #include "sha.h"
 
