@@ -5271,6 +5271,7 @@ flush_database(void)
     err("bdflush: write failed: %s", os_ErrorMsg());
     unlink(tempname);
     xfree(tempname);
+    fclose(f); f = 0;
     return;
   }
   if (fclose(f) < 0) {
