@@ -1,3 +1,9 @@
+2004-02-16  Alexander Chernov  <cher@ispras.ru>
+
+	* edit_run.c:
+	(serve_clnt_edit_run) new parameter `pages' is added to pass to the
+	  server.
+
 2003-12-21  Alexander Chernov  <cher@ispras.ru>
 
 	* edit_run.c:
