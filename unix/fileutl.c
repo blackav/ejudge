@@ -18,6 +18,7 @@
 #include "fileutl.h"
 #include "unix/unix_fileutl.h"
 #include "pathutl.h"
+#include "settings.h"
 
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
@@ -144,7 +145,10 @@ scan_dir(char const *partial_path, char *found_item)
   DIR           *d;
   struct dirent *de;
   int saved_errno;
+  int prio, found = 0, i;
+  unsigned char *items[32];
 
+  memset(items, 0, sizeof(items));
   pathmake(dir_path, partial_path, "/", "dir", NULL);
   if (!(d = opendir(dir_path))) {
     saved_errno = errno;
@@ -154,18 +158,37 @@ scan_dir(char const *partial_path, char *found_item)
   }
 
   while ((de = readdir(d))) {
-    if (strcmp(de->d_name, ".") && strcmp(de->d_name, ".."))
-      break;
-  }
-  if (!de) {
-    closedir(d);
-    return 0;
-  }
+    if (!strcmp(de->d_name, ".") || !strcmp(de->d_name, "..")) continue;
 
-  pathcpy(found_item, de->d_name);
-  info("scan_dir: found '%s'", found_item);
+    if (strlen(de->d_name) != SERVE_PACKET_NAME_SIZE - 1) {
+      prio = 0;
+    } else if (de->d_name[0] >= '0' && de->d_name[0] <= '9') {
+      prio = -16 + (de->d_name[0] - '0');
+    } else if (de->d_name[0] >= 'A' && de->d_name[0] <= 'V') {
+      prio = -6 + (de->d_name[0] - 'A');
+    } else {
+      prio = 0;
+    }
+    if (prio < -16) prio = -16;
+    if (prio > 15) prio = 15;
+    prio += 16;
+    if (items[prio]) continue;
+
+    items[prio] = (unsigned char*) alloca(strlen(de->d_name) + 1);
+    strcpy(items[prio], de->d_name);
+    found++;
+  }
   closedir(d);
-  return 1;
+  if (!found) return 0;
+
+  for (i = 0; i < 32; i++) {
+    if (items[i]) {
+      pathcpy(found_item, items[i]);
+      info("scan_dir: found '%s' (priority %d)", found_item, i - 16);
+    }
+  }
+  err("scan_dir: found == %d, but no items found!!!", found);
+  return 0;
 }
 
 static int
