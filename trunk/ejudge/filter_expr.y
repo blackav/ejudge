@@ -1,4 +1,4 @@
-/* -*- mode: c; coding: koi8-r -*- */
+/* -*- mode: fundamental; coding: koi8-r -*- */
 /* $Id$ */
 
 /* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
