@@ -359,6 +359,8 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
   case USERLIST_NN_FAC: s = u->fac; break;
   case USERLIST_NN_FACSHORT: s = u->facshort; break;
   case USERLIST_NN_HOMEPAGE: s = u->homepage; break;
+  case USERLIST_NN_CITY: s = u->city; break;
+  case USERLIST_NN_COUNTRY: s = u->country; break;
   }
   if (!s) {
     if (convert_null) s = "<NULL>";
@@ -454,6 +456,10 @@ userlist_set_user_field_str(struct userlist_user *u, int field_id,
     sptr = &u->facshort; goto do_text_fields;
   case USERLIST_NN_HOMEPAGE:
     sptr = &u->homepage; goto do_text_fields;
+  case USERLIST_NN_CITY:
+    sptr = &u->city; goto do_text_fields;
+  case USERLIST_NN_COUNTRY:
+    sptr = &u->country; goto do_text_fields;
 
   case USERLIST_NN_ID:
   case USERLIST_NN_TIMESTAMPS:
@@ -531,6 +537,10 @@ userlist_delete_user_field(struct userlist_user *u, int field_id)
     sptr = &u->facshort; goto do_string_delete;
   case USERLIST_NN_HOMEPAGE:
     sptr = &u->homepage; goto do_string_delete;
+  case USERLIST_NN_CITY:
+    sptr = &u->city; goto do_string_delete;
+  case USERLIST_NN_COUNTRY:
+    sptr = &u->country; goto do_string_delete;
   do_string_delete:
     retval = !(*sptr == 0);
     xfree(*sptr); *sptr = 0;
