@@ -49,6 +49,7 @@ enum
     ULS_EDIT_FIELD,
     ULS_DELETE_FIELD,
     ULS_ADD_FIELD,
+    ULS_GET_UID_BY_PID,
   };
 
 /* server reply codes (each corresponds to a different packet) */
@@ -59,6 +60,7 @@ enum
     ULS_LOGIN_COOKIE,
     ULS_XML_DATA,
     ULS_CONTEST_MAPPED,
+    ULS_UID,
   };
 
 /* various error codes */
@@ -90,6 +92,7 @@ enum
     ULS_ERR_CANNOT_DELETE,
     ULS_ERR_CANNOT_CHANGE,
     ULS_ERR_DEADLINE,
+    ULS_ERR_DISCONNECT,
 
     ULS_ERR_LAST
   };
@@ -270,6 +273,15 @@ struct userlist_pk_edit_field
   unsigned char data[0];
 };
 
+struct userlist_pk_get_uid_by_pid __attribute__((packed, aligned(1)));
+struct userlist_pk_get_uid_by_pid
+{
+  short request_id;
+  int   system_uid;
+  int   system_gid;
+  int   system_pid;
+};
+
 /* server->client replies */
 struct userlist_pk_login_ok __attribute__((packed,aligned(1)));
 struct userlist_pk_login_ok
@@ -298,6 +310,14 @@ struct userlist_pk_contest_mapped
   short reply_id;
   int   sem_key;
   int   shm_key;
+};
+
+struct userlist_pk_uid __attribute__((packed, aligned(1)));
+struct userlist_pk_uid
+{
+  short reply_id;
+  int   uid;
+  unsigned long long cookie;
 };
 
 #endif /* __USERLIST_PROTO_H__ */
