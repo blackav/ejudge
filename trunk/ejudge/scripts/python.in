@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# $Id$
+# This is a 'compilation' script for the Python language.
+# The idea is to append "#!/usr/bin/python" string
+# to the beginning of the file.
+# Usage: python <input> <output>
+
+echo '#!/usr/bin/python' > $2
+echo >> $2
+cat $1 >> $2
+chmod +x $2
+exit 0

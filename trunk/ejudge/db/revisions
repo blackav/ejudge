@@ -784,3 +784,8 @@ super-serve.c 1 2 1308613
 userlist_cfg.c 1 9 902075
 filter_scan.lex 1 6 462403
 users.c 1 6 1676558
+client_actions.h 1 8 132466
+register.c 1 20 6860374
+serve.c 1 44 7326015
+team.c 1 30 3920202
+userlist-server.c 1 21 11148511
