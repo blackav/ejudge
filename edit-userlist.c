@@ -59,6 +59,11 @@ static struct contest_list *contests;
 static struct userlist_cfg *config;
 static WINDOW *root_window;
 
+static int
+display_user_menu(unsigned char *upper, int start_item, int only_choose);
+static int
+display_contests_menu(unsigned char *upper, int only_choose);
+
 static void
 vis_err(unsigned char const *fmt, ...)
 {
@@ -168,14 +173,14 @@ okcancel(unsigned char const *fmt, ...)
   while (1) {
     c = getch();
     switch (c) {
-    case 'q': case 'Q': case 'Ê': case 'ê':
+    case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
     case 'G' & 31:
       c = 'q';
       goto menu_done;
-    case 'y': case 'Y': case 'Î': case 'î':
+    case 'y': case 'Y': case 'Î' & 255: case 'î' & 255:
       c = 'y';
       goto menu_done;
-    case 'n': case 'N': case 'Ô': case 'ô':
+    case 'n': case 'N': case 'Ô' & 255: case 'ô' & 255:
       c = 'n';
       goto menu_done;
     case '\n': case '\r': case ' ':
@@ -292,14 +297,14 @@ yesno(int init_val, unsigned char const *fmt, ...)
   while (1) {
     c = getch();
     switch (c) {
-    case 'q': case 'Q': case 'Ê': case 'ê':
+    case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
     case 'G' & 31:
       c = 'q';
       goto menu_done;
-    case 'y': case 'Y': case 'Î': case 'î':
+    case 'y': case 'Y': case 'Î' & 255: case 'î' & 255:
       c = 'y';
       goto menu_done;
-    case 'n': case 'N': case 'Ô': case 'ô':
+    case 'n': case 'N': case 'Ô' & 255: case 'ô' & 255:
       c = 'n';
       goto menu_done;
     case '\n': case '\r': case ' ':
@@ -406,7 +411,7 @@ display_reg_status_menu(int line, int init_val)
   while (1) {
     c = getch();
     switch (c) {
-    case 'q': case 'Q': case 'Ê': case 'ê':
+    case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
     case 'G' & 31:
       c = 'q';
       goto menu_done;
@@ -451,6 +456,110 @@ display_reg_status_menu(int line, int init_val)
   update_panels();
   doupdate();
   for (i = 0; i < USERLIST_REG_LAST; i++) {
+    free_item(items[i]);
+  }
+  return selected_value;
+}
+
+static int
+display_role_menu(int line, int init_val)
+{
+  int i;
+  ITEM *items[CONTEST_LAST_MEMBER + 1];
+  int req_lines, req_cols, line0, col0;
+  MENU *menu;
+  WINDOW *out_win, *in_win;
+  PANEL *out_pan, *in_pan;
+  int selected_value = -1;
+  int c, cmd;
+
+  XMEMZERO(items, CONTEST_LAST_MEMBER + 1);
+  for (i = 0; i < CONTEST_LAST_MEMBER; i++) {
+    items[i] = new_item(member_string[i], 0);
+  }
+  menu = new_menu(items);
+  scale_menu(menu, &req_lines, &req_cols);
+  set_menu_back(menu, COLOR_PAIR(1));
+  set_menu_fore(menu, COLOR_PAIR(3));
+  line0 = line - req_lines/2 - 1;
+  if (line0 + req_lines + 2 >= LINES)
+    line0 = LINES - 1 - req_lines - 2;
+  if (line0 < 1) line0 = 1;
+  col0 = COLS - 1 - req_cols - 2;
+  if (col0 < 0) col0 = 0;
+  out_win = newwin(req_lines + 2, req_cols + 2, line0, col0);
+  in_win = newwin(req_lines, req_cols, line0 + 1, col0 + 1);
+  wattrset(out_win, COLOR_PAIR(1));
+  wbkgdset(out_win, COLOR_PAIR(1));
+  wattrset(in_win, COLOR_PAIR(1));
+  wbkgdset(in_win, COLOR_PAIR(1));
+  wclear(in_win);
+  wclear(out_win);
+  box(out_win, 0, 0);
+  out_pan = new_panel(out_win);
+  in_pan = new_panel(in_win);
+  set_menu_win(menu, in_win);
+
+  if (init_val < 0) init_val = 0;
+  if (init_val >= USERLIST_REG_LAST) init_val = CONTEST_LAST_MEMBER - 1;
+  set_current_item(menu, items[init_val]);
+
+  /*
+    show_panel(out_pan);
+    show_panel(in_pan);
+  */
+  post_menu(menu);
+  update_panels();
+  doupdate();
+
+  while (1) {
+    c = getch();
+    switch (c) {
+    case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
+    case 'G' & 31:
+      c = 'q';
+      goto menu_done;
+    case '\n': case '\r': case ' ':
+      c = '\n';
+      goto menu_done;
+    }
+    cmd = -1;
+    switch (c) {
+    case KEY_UP:
+    case KEY_LEFT:
+      cmd = REQ_UP_ITEM;
+      break;
+    case KEY_DOWN:
+    case KEY_RIGHT:
+      cmd = REQ_DOWN_ITEM;
+      break;
+    }
+    if (cmd != -1) {
+      menu_driver(menu, cmd);
+      update_panels();
+      doupdate();
+    }
+  }
+ menu_done:
+  unpost_menu(menu);
+  /*
+    hide_panel(out_pan);
+    hide_panel(in_pan);
+    update_panels();
+    doupdate();
+  */
+  if (c == '\n') {
+    selected_value = item_index(current_item(menu));
+  }
+
+  del_panel(in_pan);
+  del_panel(out_pan);
+  free_menu(menu);
+  delwin(out_win);
+  delwin(in_win);
+  update_panels();
+  doupdate();
+  for (i = 0; i < CONTEST_LAST_MEMBER; i++) {
     free_item(items[i]);
   }
   return selected_value;
@@ -511,7 +620,7 @@ display_member_status_menu(int line, int init_val)
   while (1) {
     c = getch();
     switch (c) {
-    case 'q': case 'Q': case 'Ê': case 'ê':
+    case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
     case 'G' & 031:
       c = 'q';
       goto menu_done;
@@ -622,9 +731,9 @@ edit_string(int line, int scr_wid,
     if (curpos < 0) curpos = 0;
     if (curpos > curlen) curpos = curlen;
     if (curpos - pos0 > w && curpos == curlen) {
-      pos0 = curpos - w - 1;
-    } else if (curpos - pos0 >= w && curpos < curlen) {
       pos0 = curpos - w;
+    } else if (curpos - pos0 >= w && curpos < curlen) {
+      pos0 = curpos - w + 1;
     } else if (curpos < pos0) {
       pos0 = curpos;
     }
@@ -1024,20 +1133,27 @@ display_user(unsigned char const *upper, int user_id, int start_item,
       case '\n': case '\r': case ' ':
         c = '\n';
         goto menu_done;
-      case 'd': case 'D': case '÷': case '×':
+      case 'd': case 'D': case '÷' & 255: case '×' & 255:
         c = 'd';
         goto menu_done;
-      case 'q': case 'Q': case 'ê': case 'Ê': case 'G' & 31:
+      case 'q': case 'Q': case 'ê' & 255: case 'Ê' & 255:
+      case 'G' & 31:
         c = 'q';
         goto menu_done;
-      case 'r': case 'R': case 'Ë': case 'ë':
+      case 'r': case 'R': case 'Ë' & 255: case 'ë' & 255:
         c = 'r';
         goto menu_done;
-      case 'b': case 'B': case 'É': case 'é':
+      case 'b': case 'B': case 'É' & 255: case 'é' & 255:
         c = 'b';
         goto menu_done;
-      case 'i': case 'I': case 'Û': case 'û':
+      case 'i': case 'I': case 'Û' & 255: case 'û' & 255:
         c = 'i';
+        goto menu_done;
+      case 'a': case 'A': case 'Æ' & 255: case 'æ' & 255:
+        c = 'a';
+        goto menu_done;
+      case 'c': case 'C': case 'Ó' & 255: case 'ó' & 255:
+        c = 'c';
         goto menu_done;
       }
       cmd = -1;
@@ -1196,10 +1312,41 @@ display_user(unsigned char const *upper, int user_id, int start_item,
       goto menu_continue;
     }
 
+    if (c == 'a') {
+      r = display_role_menu(LINES / 2, 0);
+      if (r < 0 || r >= CONTEST_LAST_MEMBER) goto menu_continue;
+
+      r = userlist_clnt_add_field(server_conn, u->id, r, -1, -1);
+      if (r < 0) {
+        vis_err("Add failed: %s", userlist_strerror(-r));
+        goto menu_continue;
+      }
+
+      retcode = 0;
+      c = 'q';
+      goto menu_continue;
+    }
+
+    if (c == 'c') {
+      i = display_contests_menu(current_level, 1);
+      if (i <= 0 || i >= contests->id_map_size || !contests->id_map[i])
+        goto menu_continue;
+      r = okcancel("Register for contest %d?", i);
+      if (r != 1) goto menu_continue;
+      r = userlist_clnt_register_contest(server_conn, u->id, i);
+      if (r < 0) {
+        vis_err("Registration failed: %s", userlist_strerror(-r));
+        goto menu_continue;
+      }
+      retcode = 0;
+      c = 'q';
+      goto menu_continue;
+    }
+
     if (c == '\n') {
       cur_i = item_index(current_item(menu));
       if (cur_i < 0 || cur_i >= tot_items) continue;
-      cur_line = i - top_row(menu) + 2;
+      cur_line = cur_i - top_row(menu) + 2;
 
       if (info[cur_i].role < -1) goto menu_continue;
       if (info[cur_i].role == -1) {
@@ -1322,7 +1469,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
           snprintf(edit_header, sizeof(edit_header),
                    "%s_%d::%s",
                    member_string[info[cur_i].role],
-                   pers + 1,
+                   info[cur_i].pers + 1,
                    member_descs[info[cur_i].field].name);
           r = edit_string(cur_line, COLS, edit_header,
                           edit_buf, sizeof(edit_buf) - 1);
@@ -1409,7 +1556,7 @@ display_registered_users(unsigned char const *upper,
   }
   if (!nuser) {
     vis_err("No users registered for this contest");
-    return 0;
+    return -1;
   }
   XALLOCAZ(uu,nuser);
   for (j = 0, i = 1; i < users->user_map_size; i++) {
@@ -1489,23 +1636,27 @@ display_registered_users(unsigned char const *upper,
         break;
       }
       switch (c) {
-      case 'q': case 'Q': case 'Ê': case 'ê': case 'G' & 31:
+      case 'q': case 'Q':
+      case 'Ê' & 255: case 'ê' & 255: case 'G' & 31:
         c = 'q';
         goto menu_done;
-      case 'r': case 'R': case 'Ë': case 'ë':
+      case 'r': case 'R': case 'Ë' & 255: case 'ë' & 255:
         c = 'r';
         goto menu_done;
-      case 'd': case 'D': case '×': case '÷':
+      case 'd': case 'D': case '×' & 255: case '÷' & 255:
         c = 'd';
         goto menu_done;
-      case 'i': case 'I': case 'Û': case 'û':
+      case 'i': case 'I': case 'Û' & 255: case 'û' & 255:
         c = 'i';
         goto menu_done;
-      case 'b': case 'B': case 'É': case 'é':
+      case 'b': case 'B': case 'É' & 255: case 'é' & 255:
         c = 'b';
         goto menu_done;
       case '\n': case '\r': case ' ':
         c = '\n';
+        goto menu_done;
+      case 'a': case 'A': case 'Æ':case 'æ':
+        c = 'a';
         goto menu_done;
       }
       cmd = -1;
@@ -1620,6 +1771,20 @@ display_registered_users(unsigned char const *upper,
       }
       c = 'q';
       retcode = i;
+    } else if (c == 'a') {
+      i = display_user_menu(current_level, 0, 1);
+      if (i > 0) {
+        r = okcancel("Register user %d?", i);
+        if (r == 1) {
+          r = userlist_clnt_register_contest(server_conn, i, cnts->id);
+          if (r < 0) {
+            vis_err("Registration failed: %s", userlist_strerror(-r));
+          } else {
+            c = 'q';
+            retcode = 0;
+          }
+        }
+      }
     }
 
     unpost_menu(menu);
@@ -1649,8 +1814,8 @@ display_registered_users(unsigned char const *upper,
   return retcode;
 }
 
-static void
-display_contests_menu(unsigned char *upper)
+static int
+display_contests_menu(unsigned char *upper, int only_choose)
 {
   int ncnts = 0, i, j;
   struct contest_desc **cntss, *cc;
@@ -1664,6 +1829,7 @@ display_contests_menu(unsigned char *upper)
   int c, cmd;
   unsigned char current_level[512];
   int sel_num, r;
+  int retval = -1;
 
   snprintf(current_level, sizeof(current_level),
            "%s->%s", upper, "Contest list");
@@ -1673,7 +1839,7 @@ display_contests_menu(unsigned char *upper)
     if (!contests->id_map[i]) continue;
     ncnts++;
   }
-  if (!ncnts) return;
+  if (!ncnts) return -1;
 
   cntss = alloca(ncnts * sizeof(cntss[0]));
   memset(cntss, 0, sizeof(cntss[0]) * ncnts);
@@ -1726,7 +1892,8 @@ display_contests_menu(unsigned char *upper)
     while (1) {
       c = getch();
       switch (c) {
-      case 'q': case 'Q': case 'Ê': case 'ê': case 'G' & 31:
+      case 'q': case 'Q':
+      case 'Ê' & 255: case 'ê' & 255: case 'G' & 31:
         c = 'q';
         goto menu_done;
       case '\n': case '\r': case ' ':
@@ -1774,6 +1941,11 @@ display_contests_menu(unsigned char *upper)
     doupdate();
 
     if (c == 'q') break;
+    if (c == '\n' && only_choose) {
+      sel_num = item_index(current_item(menu));
+      retval = cntss[sel_num]->id;
+      break;
+    }
     if (c == '\n') {
       sel_num = item_index(current_item(menu));
       r = 0;
@@ -1794,10 +1966,11 @@ display_contests_menu(unsigned char *upper)
   for (i = 0; i < ncnts; i++) {
     free_item(items[i]);
   }
+  return retval;
 }
 
 static int
-display_user_menu(unsigned char *upper, int start_item)
+display_user_menu(unsigned char *upper, int start_item, int only_choose)
 {
   int r;
   unsigned char *xml_text = 0;
@@ -1881,6 +2054,11 @@ display_user_menu(unsigned char *upper, int start_item)
   set_menu_win(menu, in_win);
   set_menu_format(menu, LINES - 4, 0);
 
+  for (i = 0; i < nusers; i++)
+    if (uu[i]->id == start_item) break;
+  if (i < nusers) start_item = i;
+  else start_item = 0;
+
   if (start_item < 0) start_item = 0;
   if (start_item >= nusers) start_item = nusers - 1;
   first_row = start_item - (LINES - 4)/2;
@@ -1906,11 +2084,15 @@ display_user_menu(unsigned char *upper, int start_item)
         goto menu_done;
       }
       switch (c) {
-      case 'q': case 'Q': case 'Ê': case 'ê': case 'G' & 31:
+      case 'q': case 'Q':
+      case 'Ê' & 255: case 'ê' & 255: case 'G' & 31:
         c = 'q';
         goto menu_done;
       case '\n': case '\r':
         c = '\n';
+        goto menu_done;
+      case 'a': case 'A': case 'Æ' & 255: case 'æ' & 255:
+        c = 'a';
         goto menu_done;
       }
       cmd = -1;
@@ -1947,13 +2129,25 @@ display_user_menu(unsigned char *upper, int start_item)
       }
     }
   menu_done:
-    if (c == 'd') {
+    if (c == 'd' && !only_choose) {
       i = item_index(current_item(menu));
       j = okcancel("REMOVE USER %d (%s)?", uu[i]->id, uu[i]->login);
       if (j != 1) goto menu_continue;
       j = userlist_clnt_delete_field(server_conn, uu[i]->id, -1, -1, 0);
       if (j < 0) {
         vis_err("Remove failed: %s", userlist_strerror(-j));
+        goto menu_continue;
+      }
+
+      c = 'q';
+      retval = 0;
+    }
+    if (c == 'a' && !only_choose) {
+      j = okcancel("Add new user?");
+      if (j != 1) goto menu_continue;
+      j = userlist_clnt_add_field(server_conn, -1, -1, -1, -1);
+      if (j < 0) {
+        vis_err("Add failed: %s", userlist_strerror(-j));
         goto menu_continue;
       }
 
@@ -1969,7 +2163,12 @@ display_user_menu(unsigned char *upper, int start_item)
     doupdate();
 
     if (c == 'q') break;
-    if (c == '\n') {
+    if (c == '\n' && only_choose) {
+      i = item_index(current_item(menu));
+      retval = uu[i]->id;
+      break;
+    }
+    if (c == '\n' && !only_choose) {
       i = item_index(current_item(menu));
       j = 0;
       needs_reload = 0;
@@ -1977,7 +2176,7 @@ display_user_menu(unsigned char *upper, int start_item)
         j = display_user(current_level, uu[i]->id, j, &needs_reload);
       }
       if (needs_reload) {
-        retval = i;
+        retval = uu[i]->id;
         break;
       }
     }
@@ -2042,13 +2241,14 @@ display_main_menu(void)
     while (1) {
       c = getch();
       switch (c) {
-      case 'q': case 'Q': case 'Ê': case 'ê': case 'G' & 31:
+      case 'q': case 'Q':
+      case 'Ê' & 255: case 'ê' & 255: case 'G' & 31:
         c = 'q';
         goto menu_done;
-      case 'c': case 'C': case 'Ó': case 'ó':
+      case 'c': case 'C': case 'Ó' & 255: case 'ó' & 255:
         c = 'c';
         goto menu_done;
-      case 'u': case 'U': case 'Ç': case 'ç':
+      case 'u': case 'U': case 'Ç' & 255: case 'ç' & 255:
         c = 'u';
         goto menu_done;
       case '\n': case '\r': case ' ':
@@ -2104,11 +2304,11 @@ display_main_menu(void)
     }
     if (c == 'q') break;
     if (c == 'c') {
-      display_contests_menu(current_level);
+      display_contests_menu(current_level, 0);
     } else if (c == 'u') {
       r = 0;
       while (r >= 0) {
-        r = display_user_menu(current_level, r);
+        r = display_user_menu(current_level, r, 0);
       }
     }
 
