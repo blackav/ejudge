@@ -416,7 +416,7 @@ change_status_if_asked()
   if (sscanf(s1, "%d%n", &status, &n) != 1 || s1[n]) return;
   /* FIXME: symbolic constants should be used */
   /* We don't have information about scoring mode, so allow any */
-  if (status < 0 || status > 99 || (status > 7 && status < 99)
+  if (status < 0 || status > 99 || (status > 9 && status < 99)
       || status == 6) return;
   if (sscanf(s2, "%d%n", &test, &n) != 1 || s2[n]) test = -1;
   //if (status == 7 && test >= 0) test++;
