@@ -228,6 +228,15 @@ print_standings_button(char const *str)
 }
 
 static void
+print_update_button(char const *str)
+{
+  if (!str) str = _("update public standings");
+  puts(form_start_simple);
+  printf("<input type=\"submit\" name=\"update\" value=\"%s\">", str);
+  puts("</form>");
+}
+
+static void
 start_if_asked(void)
 {
   char *sstr = cgi_param("start");
@@ -251,6 +260,18 @@ stop_if_asked(void)
   if (!cgi_param("stop")) return;
   sprintf(buf, "STOP\n");
   /* FIXME: be less ignorant about completion state */
+  client_transaction(client_packet_name(tname), buf, 0, 0);
+  force_recheck_status = 1;
+}
+
+void
+update_standings_if_asked(void)
+{
+  char buf[64];
+  char tname[64];
+
+  if (!cgi_param("update")) return;
+  sprintf(buf, "UPDATE\n");
   client_transaction(client_packet_name(tname), buf, 0, 0);
   force_recheck_status = 1;
 }
@@ -748,6 +769,7 @@ main(int argc, char *argv[])
     start_if_asked();
     changedur_if_asked();
     sched_if_asked();
+    update_standings_if_asked();
     change_status_if_asked();
   }
   /*
@@ -788,6 +810,10 @@ main(int argc, char *argv[])
   print_refresh_button(0);
   printf("</td><td>");
   print_standings_button(0);
+  if (!judge_mode) {
+    printf("</td><td>");
+    print_update_button(0);
+  }
   printf("</td></tr></table>\n");
 
   if (runs_statistics) {
