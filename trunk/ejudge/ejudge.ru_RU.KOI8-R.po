@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2003-10-03 15:52+0400\n"
-"PO-Revision-Date: 2003-10-03 07:27+0400\n"
+"POT-Creation-Date: 2003-10-11 07:56+0400\n"
+"PO-Revision-Date: 2003-10-11 07:57+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -23,12 +23,12 @@ msgstr "Поле \"Электронный адрес\" содержит недопустимые символы"
 msgid "\"Login\" field contains invalid characters"
 msgstr "Поле \"Регистрационное имя\" содержит недопустимые символы"
 
-#: run.c:203 run.c:217 run.c:309 run.c:323
+#: run.c:207 run.c:221 run.c:325 run.c:339
 #, c-format
 msgid "%d total tests runs, %d passed, %d failed\n"
 msgstr "Всего тестов: %d, пройдено: %d, не пройдено: %d\n"
 
-#: run.c:200 run.c:213 run.c:306 run.c:319
+#: run.c:204 run.c:217 run.c:322 run.c:335
 #, c-format
 msgid ""
 "%s, test #%d\n"
@@ -41,23 +41,27 @@ msgstr ""
 msgid "(no subject)"
 msgstr "(без темы)"
 
-#: run.c:261
+#: run.c:276
 msgid "--- Checker output ---\n"
 msgstr "--- Вывод проверяющей программы ---\n"
 
-#: run.c:249
+#: run.c:252
+msgid "--- Command line arguments ---\n"
+msgstr "--- Аргументы командной строки ---\n"
+
+#: run.c:268
 msgid "--- Correct ---\n"
 msgstr "--- Правильный ответ ---\n"
 
-#: run.c:253
+#: run.c:260
 msgid "--- Input ---\n"
 msgstr "--- Входные данные ---\n"
 
-#: run.c:245
+#: run.c:264
 msgid "--- Output ---\n"
 msgstr "--- Результат работы программы ---\n"
 
-#: run.c:257
+#: run.c:272
 msgid "--- Stderr ---\n"
 msgstr "--- Ошибки ---\n"
 
@@ -193,12 +197,12 @@ msgstr "<p%s>Максимальное количество %s - %d.</p>\n"
 msgid "<p%s>The minimal number of %s is %d.</p>\n"
 msgstr "<p%s>Минимальное количество %s - %d.</p>\n"
 
-#: run.c:242
+#: run.c:246
 #, c-format
 msgid "====== Test #%d =======\n"
 msgstr "====== Тест #%d =======\n"
 
-#: run.c:198 run.c:304
+#: run.c:202 run.c:320
 msgid "ACCEPTED"
 msgstr "ПРИНЯТО"
 
@@ -358,6 +362,18 @@ msgstr "Тренер"
 #: edit-userlist.c:53 register.c:287 userlist-server.c:175
 msgid "Coaches"
 msgstr "Тренеры"
+
+#: run.c:254
+msgid "Command line is too long\n"
+msgstr "Командная строка слишком длинна\n"
+
+#: run.c:249
+msgid "Comment"
+msgstr "Комментарий"
+
+#: run.c:372
+msgid "Comments for failed tests:"
+msgstr "Комментарии к тестам, на которых решение не прошло:"
 
 #: master_html.c:256 master_html.c:276 master_html.c:296 master_html.c:682
 #: master_html.c:702 master_html.c:722 runlog.c:610
@@ -863,7 +879,7 @@ msgstr "Неверная роль."
 msgid "Invalid serial number."
 msgstr "Неверный уникальный номер."
 
-#: run.c:243
+#: run.c:247
 #, c-format
 msgid "Judgement: %s\n"
 msgstr "Вердикт: %s\n"
@@ -972,7 +988,7 @@ msgstr "Обязательное поле \"%s\" не заполнено."
 msgid "Mandatory field \"%s.%d.%s\" is empty."
 msgstr "Обязательное поле \"%s.%d.%s\" не заполнено."
 
-#: run.c:135
+#: run.c:139
 msgid "Manual check required"
 msgstr "Требуется дополнительная проверка"
 
@@ -1094,7 +1110,7 @@ msgstr "На этот турнир никто не зарегистрировался"
 msgid "Not set"
 msgstr "Не установлено"
 
-#: run.c:351
+#: run.c:368
 msgid "Note: non-zero return code is always reported as 1"
 msgstr "Обратите внимание: ненулевые коды возврата всегда показываются как 1."
 
@@ -1116,7 +1132,7 @@ msgid "Number of runs"
 msgstr "Число попыток"
 
 #: master_html.c:256 master_html.c:276 master_html.c:296 master_html.c:682
-#: master_html.c:702 master_html.c:722 run.c:120 run.c:208 run.c:314
+#: master_html.c:702 master_html.c:722 run.c:124 run.c:212 run.c:330
 #: runlog.c:609
 msgid "OK"
 msgstr "OK"
@@ -1166,7 +1182,7 @@ msgstr "IP-адрес отправителя"
 msgid "Other"
 msgstr "Прочее"
 
-#: run.c:211 run.c:317
+#: run.c:215 run.c:333
 msgid ""
 "PARTIAL SOLUTION\n"
 "\n"
@@ -1257,7 +1273,7 @@ msgstr ""
 "\"Зарегистрироваться\"."
 
 #: master_html.c:277 master_html.c:297 master_html.c:703 master_html.c:723
-#: run.c:131 runlog.c:613
+#: run.c:135 runlog.c:613
 msgid "Presentation error"
 msgstr "Неправильный формат вывода"
 
@@ -1429,7 +1445,7 @@ msgstr "Ошибка выполнения"
 msgid "Running..."
 msgstr "Выполняется..."
 
-#: run.c:123 run.c:127
+#: run.c:127 run.c:131
 msgid "Runtime error"
 msgstr "Ошибка работы программы"
 
@@ -1457,7 +1473,7 @@ msgstr "Научный сотрудник"
 msgid "Score"
 msgstr "Баллы"
 
-#: run.c:226 run.c:332
+#: run.c:230 run.c:348
 msgid "Score   "
 msgstr "Баллы   "
 
@@ -1465,7 +1481,7 @@ msgstr "Баллы   "
 msgid "Score gained"
 msgstr "Получено баллов"
 
-#: run.c:220 run.c:326
+#: run.c:224 run.c:342
 #, c-format
 msgid "Scores gained: %d (out of %d)\n"
 msgstr "Получено баллов: %d (из %d)\n"
@@ -1679,7 +1695,11 @@ msgstr "Обработка запросов участников приостановлена"
 msgid "Team standings"
 msgstr "Положение участников"
 
-#: run.c:225 run.c:331
+#: run.c:378
+msgid "Test"
+msgstr "Тест"
+
+#: run.c:229 run.c:347
 #, c-format
 msgid "Test #  Status  Time (sec)  %sResult\n"
 msgstr "Тест #  Статус  Время (сек) %sРезультат\n"
@@ -1763,7 +1783,7 @@ msgid "Time"
 msgstr "Время"
 
 #: master_html.c:277 master_html.c:297 master_html.c:703 master_html.c:723
-#: run.c:129 runlog.c:612
+#: run.c:133 runlog.c:612
 msgid "Time-limit exceeded"
 msgstr "Превышено максимальное время работы"
 
@@ -1821,7 +1841,7 @@ msgstr ""
 "К сожалению, заполненная Вами анкета не может быть принята. Ниже приведён "
 "список замечаний к ней. Пожалуйста, исправьте анкету и пошлите её снова."
 
-#: run.c:137
+#: run.c:141
 #, c-format
 msgid "Unknown result (%d)"
 msgstr "Неожиданный код результата (%d)"
@@ -1922,7 +1942,7 @@ msgid "Virtual stop"
 msgstr "Окончание виртуального турнира"
 
 #: master_html.c:278 master_html.c:298 master_html.c:704 master_html.c:724
-#: run.c:133 runlog.c:614
+#: run.c:137 runlog.c:614
 msgid "Wrong answer"
 msgstr "Неправильный ответ"
 
@@ -2079,7 +2099,7 @@ msgstr "деление на ноль"
 msgid "duplicated submission"
 msgstr "Повторная посылка"
 
-#: run.c:148
+#: run.c:152
 msgid "file is too long"
 msgstr "файл имеет слишком большой размер"
 
@@ -2156,7 +2176,7 @@ msgstr "судьи"
 msgid "last 15"
 msgstr "последние 15"
 
-#: run.c:155
+#: run.c:159
 msgid "line is too long"
 msgstr "строка слишком длинна"
 

@@ -1,3 +1,18 @@
+2003-10-12  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.c:
+	(clear_directory) the new `remove_directory_recursively' function is
+	  called for directories. So the `clear_directory' function now
+	  correctly removes all the directory's content;
+	(dumb_copy_file_to_dos) bug: need to read the next character in loop;
+	(dumb_copy_file) bug: `|' was used instead of '&';
+	(do_remove_recursively) a new helper function to traverse the
+	  filesystem tree and remove all the files;
+	(free_file_hierarchy) a new helper function to deallocate filesystem
+	  tree;
+	(remove_directory_recursively) new function to remove the given
+	  directory with all its content.
+
 2003-01-06  Alexander Chernov  <cher@ispras.ru>
 
 	* fileutl.c: copyright notice is updated;
