@@ -4,7 +4,7 @@
 #ifndef __USERLIST_H__
 #define __USERLIST_H__
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,10 +16,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "expat_iface.h"
@@ -363,8 +359,5 @@ int userlist_get_user_field_str(unsigned char *buf, size_t len,
 int userlist_set_user_field_str(struct userlist_user *u, int field_id,
                                 unsigned char const *field_val);
 int userlist_delete_user_field(struct userlist_user *u, int field_id);
-
-
-
 
 #endif /* __USERLIST_H__ */
