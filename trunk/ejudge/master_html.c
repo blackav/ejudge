@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1081,7 +1081,8 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   }
   fprintf(f, "</tr>\n");
   fprintf(f, "<tr><td>%s:</td><td>%s</td>",
-          _("Language"), langs[info.language]->short_name);
+          _("Language"),
+          (langs[info.language])?(langs[info.language]->short_name):"");
   if (priv_level == PRIV_LEVEL_ADMIN) {
     html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
