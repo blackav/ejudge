@@ -90,6 +90,7 @@ static char const * const tag_map[] =
   "spelling",
   "printer_name",
   "languages",
+  "extra1",
 
   0
 };
@@ -176,6 +177,7 @@ static size_t const tag_sizes[USERLIST_LAST_TAG] =
   sizeof(struct xml_tree),      /* SPELLING */
   sizeof(struct xml_tree),      /* PRINTER_NAME */
   sizeof(struct xml_tree),      /* LANGUAGES */
+  sizeof(struct xml_tree),      /* EXTRA1 */
 };
 /*
 static size_t const attn_sizes[USERLIST_LAST_ATTN] =
@@ -245,6 +247,7 @@ node_free(struct xml_tree *t)
       xfree(p->spelling);
       xfree(p->printer_name);
       xfree(p->languages);
+      xfree(p->extra1);
     }
     break;
   case USERLIST_T_MEMBER:
@@ -1023,6 +1026,9 @@ do_parse_user(char const *path, struct userlist_user *usr)
     case USERLIST_T_LANGUAGES:
       if (handle_final_tag(path, t, &usr->languages) < 0) return -1;
       break;
+    case USERLIST_T_EXTRA1:
+      if (handle_final_tag(path, t, &usr->extra1) < 0) return -1;
+      break;
     case USERLIST_T_PHONES:
       if (!(usr->phones = parse_phones(path, t))) return -1;
       break;
@@ -1575,6 +1581,22 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   unparse_final_tag(f, USERLIST_T_SPELLING, p->spelling, "    ");
   unparse_final_tag(f, USERLIST_T_PRINTER_NAME, p->printer_name, "    ");
   unparse_final_tag(f, USERLIST_T_LANGUAGES, p->languages, "    ");
+
+  if (mode == USERLIST_MODE_STAND) {
+    // generate some information about the first participant
+    struct userlist_members **pmemb = p->members;
+
+    if (pmemb && pmemb[USERLIST_MB_CONTESTANT]
+        && pmemb[USERLIST_MB_CONTESTANT]->total > 0
+        && pmemb[USERLIST_MB_CONTESTANT]->members
+        && pmemb[USERLIST_MB_CONTESTANT]->members[0]
+        && pmemb[USERLIST_MB_CONTESTANT]->members[0]->grade > 0) {
+      fprintf(f, "    <%s>%d</%s>\n",
+              tag_map[USERLIST_T_EXTRA1],
+              pmemb[USERLIST_MB_CONTESTANT]->members[0]->grade,
+              tag_map[USERLIST_T_EXTRA1]);
+    }
+  }
 
   if (mode != USERLIST_MODE_STAND) {
     unparse_phones(p->phones, f, "    ");
