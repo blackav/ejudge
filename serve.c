@@ -1089,6 +1089,24 @@ cmd_view(struct client_state *p, int len,
     write_runs_dump(f, global->charset);
     break;
 
+  case SRV_CMD_WRITE_XML_RUNS:
+    if (!p->priv_level) {
+      err("%d: unprivileged users cannot export XML runs", p->id);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+
+    if (!check_cnts_caps(p->user_id, OPCAP_DUMP_RUNS)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_DUMP_RUNS);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+
+    fprintf(f, "Content-type: text/plain; charset=koi8-r\n\n");
+    run_write_xml(f, 0);
+    break;
+
   case SRV_CMD_EXPORT_XML_RUNS:
     if (!p->priv_level) {
       err("%d: unprivileged users cannot export XML runs", p->id);
@@ -1104,7 +1122,7 @@ cmd_view(struct client_state *p, int len,
     }
 
     fprintf(f, "Content-type: text/plain; charset=koi8-r\n\n");
-    run_write_xml(f);
+    run_write_xml(f, 1);
     break;
 
   case SRV_CMD_DUMP_STANDINGS:
@@ -2776,9 +2794,10 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_DUMP_STANDINGS] { cmd_view },
   [SRV_CMD_SET_JUDGING_MODE] { cmd_priv_command_0 },
   [SRV_CMD_CONTINUE] { cmd_priv_command_0 },
-  [SRV_CMD_EXPORT_XML_RUNS] { cmd_view },
+  [SRV_CMD_WRITE_XML_RUNS] { cmd_view },
   [SRV_CMD_IMPORT_XML_RUNS] { cmd_import_xml_runs },
   [SRV_CMD_QUIT] { cmd_priv_command_0 },
+  [SRV_CMD_EXPORT_XML_RUNS] { cmd_view },
 };
 
 static void
