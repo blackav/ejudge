@@ -87,6 +87,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(max_file_length, "d"),
   GLOBAL_PARAM(max_line_length, "d"),
   GLOBAL_PARAM(tests_to_accept, "d"),
+  GLOBAL_PARAM(ignore_compile_errors, "d"),
 
   GLOBAL_PARAM(charset, "s"),
   GLOBAL_PARAM(standings_charset, "s"),
@@ -120,11 +121,6 @@ static struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(status_dir, "s"),
   GLOBAL_PARAM(work_dir, "s"),
-
-  GLOBAL_PARAM(pipe_dir, "s"),
-  GLOBAL_PARAM(judge_dir, "s"),
-  GLOBAL_PARAM(judge_cmd_dir, "s"),
-  GLOBAL_PARAM(judge_data_dir, "s"),
 
   GLOBAL_PARAM(compile_dir, "s"),
   GLOBAL_PARAM(compile_queue_dir, "s"),
@@ -769,12 +765,7 @@ set_defaults(int mode)
     GLOBAL_INIT_FIELD(team_report_archive_dir,DFLT_G_TEAM_REPORT_ARCHIVE_DIR,archive_dir);
 
     GLOBAL_INIT_FIELD(status_dir, DFLT_G_STATUS_DIR, var_dir);
-
-    GLOBAL_INIT_FIELD(pipe_dir, DFLT_G_PIPE_DIR, var_dir);
     GLOBAL_INIT_FIELD(serve_socket, DFLT_G_SERVE_SOCKET, var_dir);
-    GLOBAL_INIT_FIELD(judge_dir, DFLT_G_JUDGE_DIR, var_dir);
-    GLOBAL_INIT_FIELD(judge_cmd_dir, DFLT_G_JUDGE_CMD_DIR, judge_dir);
-    GLOBAL_INIT_FIELD(judge_data_dir, DFLT_G_JUDGE_DATA_DIR, judge_dir);
   }
 
   if (mode == PREPARE_SERVE || mode == PREPARE_COMPILE) {
@@ -1584,12 +1575,6 @@ create_dirs(int mode)
   if (mode == PREPARE_SERVE) {
     if (global->root_dir[0] && make_dir(global->root_dir, 0) < 0) return -1;
     if (make_dir(global->var_dir, 0) < 0) return -1;
-
-    /* CGI scripts write to the followins dirs */
-    if (make_dir(global->pipe_dir, 0777) < 0) return -1;
-    if (make_dir(global->judge_dir, 0) < 0) return -1;
-    if (make_all_dir(global->judge_cmd_dir, 0777) < 0) return -1;
-    if (make_dir(global->judge_data_dir, 0777) < 0) return -1;
 
     /* COMPILE writes its response here */
     if (make_dir(global->compile_dir, 0) < 0) return -1;
