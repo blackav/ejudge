@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -61,6 +61,8 @@ static unsigned char const * const error_map[] =
   _("invalid run status"),
   _("allowed only in virtual contest"),
   _("the run is read-only"),
+  _("team pages quota is exceeded"),
+  _("the program is already printed"),
 };
 #undef _
 
