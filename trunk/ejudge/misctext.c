@@ -78,6 +78,12 @@ static char const * const armored_html_translate_table[256] =
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 };
 
+const unsigned char * const *
+html_get_armor_table(void)
+{
+  return (const unsigned char * const *) armored_html_translate_table;
+}
+
 int
 html_armored_memlen(char const *str, int size)
 {
