@@ -116,7 +116,7 @@ cr_serialize_unlock(void)
 
 /**
  * Local variables:
- *  compile-command: "make"
+ *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
