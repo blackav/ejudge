@@ -1,0 +1,207 @@
+2000-11-03  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.c 1.8: 1) error reporting is changed:
+	   write_log(0, LOG_ERR... -> err(...;
+	2) implemented check_readable_dir;
+	3) implemented check_writable_dir;
+	4) implemented check_writable_spool;
+	5) implemented check_executable;
+	6) implemented relaxed_remove;
+	7) implemented syscall wrappers:
+	   sf_read, sf_write, sf_open, sf_close, sf_lseek, sf_chmod,
+	   sf_mkfifo.
+
+	* osdeps.c 6.19: 1) copyright notice updated;
+	2) os_ErrorMsg implemeted;
+	3) char * -> const char * for many functions;
+	4) some function documentation added.
+
+	* logger.c 6.9: 1) copyright header updated;
+	2) char* -> const char* in arguments of write_log, vwrite_log.
+
+	* exec.c 6.13: 1) copyright header updated;
+	2) resource utilization field added to Task struct;
+	3) wait4 syscall is used instead of waitpid;
+	4) resource utilization is stored upon termination;
+	5) added some documenting comments to the new functions;
+	6) reworked process startup error reporting using aux. pipe;
+	7) _exit is used instead of exit in child;
+	8) implemented task_GetRunningTime;
+	9) implemented task_ErrorCode.
+
+	* unix_fileutl.h 1.1: New file.
+
+2000-10-25  Alexander Chernov  <cher@ispras.ru>
+
+	* exec.c 6.12: added explicit flag 'is_timeout' which is set upon
+	timeout.
+
+2000-10-20  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.c 1.7: make_writable function added
+
+	* exec.c 6.11: 1) task is killed with SIGTERM in case of timeout;
+	2) if task is interrupted with SIGTERM, SIGKILL, or
+	returned code 15, timeout is reported;
+	3) stub for task_Kill added.
+
+2000-10-18  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 6.18: fixed parameter types of os_rGetBasename.
+
+2000-10-17  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.c 1.6: fixed bug in generic_copy_file
+
+	* exec.c 6.10: run-time limit implemented with nanosleep instead of
+	setting limit of CPU time
+
+	* osdeps.c 6.17: added implementation of os_rDirName
+
+	* fileutl.c 1.5: added permission bits to make_dir, make_all_dirs
+
+	* exec.c 6.9: 1) added support for time-limited program execution:
+	task_SetMaxTime, task_IsTimeout.
+	2) added support for platform-independent open flags
+	added to exec.h earlier.
+
+2000-10-11  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.c 1.4: added flag PIPE for generic_read_file
+	to read files correctly from pipes;
+	implemented mostly, but pipe read with fixed buffer
+	throws "not implemented" error yet
+
+2000-10-10  Alexander Chernov  <cher@ispras.ru>
+
+	* logger.c 6.8: added global logging level and function
+	logger_set_level.
+
+	* fileutl.c 1.3: rewrited: instead of lots functions only
+	3 is introduced: generic_read_file, generic_write_file,
+	generic_copy_file.
+
+	* osdeps.c 6.16: 1) os_GetBasename_r renamed to os_rGetBasename;
+	2) implemented os_rGetWorkingDir and os_IsAbsolutePath.
+
+2000-10-07  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 6.15: os_GetBasename_r implemented
+
+	* fileutl.c 1.2: additions
+
+2000-10-01  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 6.14: minor fix
+
+	* logger.c 6.7:
+	1) REUSE fancy stuff ("lconfig.h", "reuse/..." includes)
+	is used only if __REUSE__ symbol defined;
+	2) implemented logger_init_ex;
+	3) implemented support for primary and secondary
+	log streams; secondary log stream is currently written
+	to stderr.
+
+	* osdeps.c 6.13:
+	1) REUSE fancy stuff ("lconfig.h", "reuse/..." includes)
+	is used only if __REUSE__ symbol defined;
+	2) added function os_Sleep.
+
+	* exec.c 6.8: 1) REUSE fancy stuff ("lconfig.h", "reuse/..." includes)
+	is used only if __REUSE__ symbol defined;
+	2) added support for changind the working directory
+	in the spawned program;
+	3) fixed bug in DUP redirection.
+
+	* fileutl.c 1.1: initial revision
+
+2000-07-01  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 6.12: correction to work on the latest cygwin release
+
+1999-08-30  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 6.11:
+	1) reuse_version.h is included using CONF_DEPFILE instead of CONF_GENFILE;
+	2) CVSID macro is no longer used, plain constant definition is
+	put instead.
+
+	* logger.c 6.6:
+	1) reuse_version.h is included using CONF_DEPFILE instead of CONF_GENFILE;
+	2) all module variables are properly initialized upon the first
+	invocation of the functions from this module, so call to
+	logger_init is no longer necessary, unless the list of modules
+	is defined;
+	3) removed some unused and uncompiled code (in write_log);
+	4) commented out fd_vprintf etc. stuff --- candidate for removal;
+	5) added emacs-specific fontification options.
+
+	* exec.c 6.7:
+	1) reuse_version.h is included using CONF_DEPFILE instead of CONF_GENFILE;
+	2) CVSID macro is no longer used, plain constant definition is
+	put instead;
+	3) added emacs-specific fontification options.
+
+1999-08-16  Alexander Chernov  <cher@ispras.ru>
+
+	* exec.c 6.6, logger.c 6.5, osdeps.c 6.10:
+	Copyright notice added (GNU LGPL).
+
+1999-08-04  Alexander Chernov  <cher@ispras.ru>
+
+	* logger.c 6.4: os_vsnprintf is used instead of snprintf.
+
+	* osdeps.c 6.9:
+	New implementation of [v]snprintf (taken from DJGPP) is used
+	when neither vsnprintf, nor _[v]snprintf present.
+
+1999-07-30  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 6.8:
+	1) os_GuessProjectEnv enhanced to support win32 feature:
+	if the program is found in PATH list, argv[0] does not contain
+	the path to the executable, only its basename;
+	2) os_AttachFILE implemented;
+
+1999-07-24  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 6.7: 1) os_CheckAccess: implemented;
+	2) os_GuessProjectEnv: feature test CONF_HAS_FCHDIR is used instead
+	of __CYGWIN32__.
+
+	* exec.c 6.5, logger.c 6.3, osdeps.c 6.6:
+	Moved from reuse to reuse/unix directory.
+
+1999-06-12  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 6.5: Fixes to compile on cygwin (B20.1).
+
+1999-06-02  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 6.4: added functions get_PRJ_HOME_name, get_PRJ_HOME,
+	get_PRJ_CONFIG_name, get_PRJ_CONFIG
+
+1999-06-01  Alexander Chernov  <cher@ispras.ru>
+
+	* exec.c 6.4: 1) compilation warnings fixed.
+
+1999-05-31  Alexander Chernov  <cher@ispras.ru>
+
+	* exec.c 6.3: changes in logging usage
+
+	* logger.c 6.2, osdeps.c 6.3: copyright notice updated;
+	merged with the UniCad's version of the file.
+
+	* exec.c 6.2: Copyright notice updated
+
+1999-05-30  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c 6.2: tabulation converted to spaces
+
+	* exec.c 6.1, logger.c 6.1, osdeps.c 6.1:
+	Адаптация к новому окружению компиляции.
+
+	* exec.c 6.0, logger.c 6.0, osdeps.c 6.0: New file.
+
+	$Id$
+

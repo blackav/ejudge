@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# DOSEMU environment expects file to be named program.exe
+mv $1 program.exe
+
+# DOSEMU runs as nobody and has no perms to write to the working dir
+> output
+> error
+> e
+
+# remove write permissions
+chmod 555 .
+
+# Run dosemu
+exec /usr/local/pkg/dosemu-1.0.1/usr/bin/dos
+
+# Actually, the number in .e file should be error code, but,
+# let the run program parses it...
