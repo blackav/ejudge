@@ -189,6 +189,7 @@ struct userlist_pk_check_cookie
   long               contest_id;
   unsigned long long cookie;
   signed char        locale_id;
+  unsigned char      priv_level;
 };
 
 struct userlist_pk_do_logout __attribute__((packed,aligned(1)));
@@ -196,9 +197,7 @@ struct userlist_pk_do_logout
 {
   short              request_id;
   unsigned long      origin_ip;
-  long               contest_id;
   unsigned long long cookie;
-  long               user_id;
 };
 
 struct userlist_pk_get_user_info __attribute__((packed,aligned(1)));
@@ -335,6 +334,7 @@ struct userlist_pk_uid
   int   uid;
   int   priv_level;
   unsigned long long cookie;
+  unsigned long ip;
 };
 
 #endif /* __USERLIST_PROTO_H__ */
