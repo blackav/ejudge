@@ -58,4 +58,24 @@ void teamdb_rollback(void);
 int teamdb_add_team(int, char const *, char const *, char const *,
                     int, int, char **);
 
+/* this is export data structure */
+enum {
+  TEAMDB_LOGIN_LEN = 64,
+  TEAMDB_NAME_LEN = 64,
+  TEAMDB_SCRAMBLED_LEN = 128,
+  TEAMDB_PASSWD_LEN = 128
+};
+
+struct teamdb_export
+{
+  int id;
+  int flags;
+  char login[TEAMDB_LOGIN_LEN];
+  char name[TEAMDB_NAME_LEN];
+  char scrambled[TEAMDB_SCRAMBLED_LEN];
+  char passwd[TEAMDB_PASSWD_LEN];
+};
+
+int teamdb_export_team(int id, struct teamdb_export *);
+
 #endif /* __TEAMDB_H__ */
