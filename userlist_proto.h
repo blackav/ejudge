@@ -221,6 +221,7 @@ struct userlist_pk_set_password
 {
   short         request_id;
   int           user_id;
+  int           contest_id;
   unsigned char old_len;
   unsigned char new_len;
   unsigned char data[2];
