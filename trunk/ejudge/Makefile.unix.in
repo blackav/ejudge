@@ -1,5 +1,6 @@
 # -*- Makefile -*-
 # $Id$
+# @configure_input@
 
 # Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
@@ -13,55 +14,61 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
 
-# === Configuration options ===
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+bindir=@bindir@
+datadir=@datadir@
+includedir=@includedir@
+libdir=@libdir@
+libexecdir=@libexecdir@
+cgibindir=@cgibindir@
 
-# The following is a path to CGI data directory, which is
-# used by CGI scripts. The path may either be
-# relative or absolute. If the path is relative (ie does not start
-# with /), the start point is the directory, from which CGI scripts
-# are started. The path "../cgi-data" is the default.
-CGI_DATA_PATH_FLAG = -DCGI_DATA_PATH=\"../cgi-data\"
+CGI_PROG_SUFFIX=@ac_cv_cgi_suffix@
+STATIC=@ac_cv_static@
+NO_KERNEL=@ac_cv_no_kernel@
+ENABLE_NLS=@ac_cv_nls@
 
-# Change this to point to the actual reuse library installation
-REUSE_DIR=/home/cher/reuse
+XGETTEXT=@XGETTEXT@
+MSGMERGE=@MSGMERGE@
+MSGFMT=@MSGFMT@
 
-# Install destination
-INST_PATH = /home/cher/working-ejudge
-INST_BIN_PATH = ${INST_PATH}
-INST_LOCALE_PATH = ${INST_PATH}/locale
+REUSE_DIR=@ac_cv_reuse_root@
+REUSE_CONF=@ac_cv_reuse_config@
+REUSE_INCL_OPT=@ac_cv_reuse_include_opt@
+REUSE_LIB_OPT=@ac_cv_reuse_lib_opt@
 
-ifeq ($(shell uname), Linux)
-REUSE_CONF=ix86-linux
-CDEBUGFLAGS=-g -Wall
-CINTLFLAG=-DCONF_HAS_LIBINTL
-CEXTRAFLAGS=
-LDEXTRAFLAGS=
-EXTRALIBS=
-else
-REUSE_CONF=ix86-win32-mingw
-CDEBUGFLAGS=-O2 -s -Wall
-CINTLFLAG=
-CEXTRAFLAGS=
-LDEXTRAFLAGS=
-EXTRALIBS=
-endif
+EXPAT_DIR=@ac_cv_expat_root@
+EXPAT_INCL_OPT=@ac_cv_expat_include_opt@
+EXPAT_LIB_OPT=@ac_cv_expat_lib_opt@
 
-REUSE_INCLDIR=${REUSE_DIR}/include
-REUSE_CONFINCLDIR=${REUSE_INCLDIR}/${REUSE_CONF}
-REUSE_LIBDIR=${REUSE_DIR}/lib/${REUSE_CONF}
-REUSE_LIB=-lreuse
-
-# === End of configuration options ===
+LIBCAP_DIR=@ac_cv_libcap_root@
+LIBCAP_INCL_OPT=@ac_cv_libcap_include_opt@
+LIBCAP_LIB_OPT=@ac_cv_libcap_lib_opt@
 
 include files.make
 
 ifeq (${REUSE_CONF}, ix86-linux)
+ifdef RELEASE
+CDEBUGFLAGS=-O2 -s -Wall -DNDEBUG -DRELEASE
+else
+CDEBUGFLAGS=-g -Wall
+endif
+ifdef STATIC
+CDEBUGFLAGS += -static
+endif
+CEXTRAFLAGS=
+LDEXTRAFLAGS=
+EXTRALIBS=
 CCOMPFLAGS=-D_GNU_SOURCE
 LDCOMPFLAGS=
 EXESFX=
 ARCH=unix
 else
 ifeq (${REUSE_CONF}, ix86-win32-mingw)
+CDEBUGFLAGS=-O2 -s -Wall
+CEXTRAFLAGS=
+LDEXTRAFLAGS=
+EXTRALIBS=
 CCOMPFLAGS=-mno-cygwin
 LDCOMPFLAGS=-mno-cygwin
 EXESFX=.exe
@@ -72,11 +79,12 @@ endif
 endif
 
 LDLIBS=${EXTRALIBS} -lreuse -lz
-CFLAGS=-I. -I${REUSE_INCLDIR} -I${REUSE_CONFINCLDIR} ${CDEBUGFLAGS} ${CCOMPFLAGS} ${CINTLFLAG} ${CGI_DATA_PATH_FLAG} ${CEXTRAFLAGS}
-LDFLAGS=-L${REUSE_LIBDIR} ${CDEBUGFLAGS} ${LDCOMPFLAGS} ${LDEXTRAFLAGS}
+CFLAGS=-I. ${REUSE_INCL_OPT} ${EXPAT_INCL_OPT} ${CDEBUGFLAGS} ${CCOMPFLAGS} ${CEXTRAFLAGS}
+LDFLAGS=${REUSE_LIB_OPT} ${EXPAT_LIB_OPT} ${CDEBUGFLAGS} ${LDCOMPFLAGS} ${LDEXTRAFLAGS}
 CC=gcc
 LD=gcc
-EXPAT=-lexpat
+EXPAT_LIB=-lexpat
+REUSE_LIB=-lreuse
 
 C_CFILES=compile.c version.c
 C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libcharsets.a
@@ -111,65 +119,89 @@ SS_OBJECTS = ${SS_CFILES:.c=.o} libcommon.a libcharsets.a
 CU_CFILES = clean-users.c version.c
 CU_OBJECTS = ${CU_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libcharsets.a
 
-TARGETS=compile$(EXESFX) serve$(EXESFX) run$(EXESFX) master$(EXESFX) team$(EXESFX) register${EXESFX} userlist-server${EXESFX} users${EXESFX} edit-userlist${EXESFX} super-serve clean-users
+BINTARGETS = compile serve run userlist-server edit-userlist super-serve clean-users
+CGITARGETS = master${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX} users${CGI_PROG_SUFFIX}
+TARGETS = ${BINTARGETS} ${CGITARGETS}
 
+all: local_all subdirs_all mo
 local_all: $(TARGETS)
-all: local_all subdirs_all
+
+release:
+	rm -fr CVS charsets db serve_clnt unix userlist_clnt win32 checkers/CVS checkers/.cvsignore checkers/Makefile checkers/ChangeLog checkers/*.c checkers/*.o checkers/testinfo.h extra/CVS extra/.cvsignore extra/Makefile extra/*.c extra/*.o scripts/CVS .build .cvsignore ChangeLog OLDNEWS TODO *.c *.h *.o *.a *.make *.po makefile *.lex *.y
 
 subdirs_all:
-	$(MAKE) -C extra all
-	$(MAKE) -C checkers all
+	$(MAKE) -C extra DESTDIR="${DESTDIR}" all
+	$(MAKE) -C checkers DESTDIR="${DESTDIR}" all
+	$(MAKE) -C scripts DESTDIR="${DESTDIR}" all
 
 extra_progs:
-	$(MAKE) -C extra all
+	$(MAKE) -C extra DESTDIR="${DESTDIR}" all
 checker_lib:
-	$(MAKE) -C checkers all
+	$(MAKE) -C checkers DESTDIR="${DESTDIR}" all
 
-install: ${TARGETS} po mo
-	install -d ${INST_BIN_PATH}
-	for i in ${TARGETS}; do install -m 0755 $$i ${INST_BIN_PATH}; done
-	cd ${INST_BIN_PATH}; rm -f judge; ln master judge
-	install -d ${INST_LOCALE_PATH}/ru_RU.KOI8-R/LC_MESSAGES
-	install -m 0644 locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo ${INST_LOCALE_PATH}/ru_RU.KOI8-R/LC_MESSAGES
+local_install: ${TARGETS} po mo
+	install -d "${DESTDIR}${bindir}"
+	for i in ${BINTARGETS}; do install -m 0755 $$i "${DESTDIR}${bindir}"; done
+	install -d "${DESTDIR}${cgibindir}"
+	for i in ${CGITARGETS}; do install -m 0755 $$i "${DESTDIR}${cgibindir}"; done
+	cd "${DESTDIR}${cgibindir}"; rm -f judge${CGI_PROG_SUFFIX}; ln master${CGI_PROG_SUFFIX} judge${CGI_PROG_SUFFIX}
+	if [ x"${ENABLE_NLS}" = x1 ]; then install -d "${DESTDIR}${datadir}/locale/ru_RU.KOI8-R/LC_MESSAGES"; fi
+	if [ x"${ENABLE_NLS}" = x1 ]; then install -m 0644 locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo "${DESTDIR}${datadir}/locale/ru_RU.KOI8-R/LC_MESSAGES"; fi
+
+install: local_install
+	$(MAKE) -C extra DESTDIR="${DESTDIR}" install
+	$(MAKE) -C checkers DESTDIR="${DESTDIR}" install
+	$(MAKE) -C scripts DESTDIR="${DESTDIR}" install
 
 compile$(EXESFX) : $(C_OBJECTS)
-	$(LD) $(LDFLAGS) $(C_OBJECTS) -o $@ $(LDLIBS) ${EXPAT}
+	$(LD) $(LDFLAGS) $(C_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 run${EXESFX} : $(RUN_OBJECTS)
-	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT}
+	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 serve : $(SERVE_OBJECTS)
-	$(LD) $(LDFLAGS) $(SERVE_OBJECTS) -o $@ $(LDLIBS) ${EXPAT}
+	$(LD) $(LDFLAGS) $(SERVE_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
 
-master : $(M_OBJECTS)
-	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT}
+master${CGI_PROG_SUFFIX} : $(M_OBJECTS)
+	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT_LIB}
 
-team: $(T_OBJECTS)
-	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT}
+team${CGI_PROG_SUFFIX}: $(T_OBJECTS)
+	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT_LIB}
 
-register: ${REG_OBJECTS}
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT}
+register${CGI_PROG_SUFFIX}: ${REG_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 userlist-server: ${UL_OBJECTS}
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 super-serve: ${SS_OBJECTS}
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 clean-users: ${CU_OBJECTS}
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
-users: ${US_OBJECTS}
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT}
+users${CGI_PROG_SUFFIX}: ${US_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 edit-userlist: $(ED_OBJECTS)
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT} -lmenu -lpanel -lncurses
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu -lpanel -lncurses
 
-clean:
-	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog serve_clnt/*.o charsets/*.o userlist_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c
+local_clean:
+	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog serve_clnt/*.o charsets/*.o userlist_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c master master${CGI_PROG_SUFFIX} team team${CGI_PROG_SUFFIX} register register${CGI_PROG_SUFFIX} users users${CGI_PROG_SUFFIX}
 	-rm -rf locale
+clean: local_clean
 	$(MAKE) -C extra clean
 	$(MAKE) -C checkers clean
+
+local_distclean :
+	rm -rf autom4te.cache config.log config.status Makefile config.h
+distclean : clean local_distclean
+	$(MAKE) -C extra distclean
+	$(MAKE) -C checkers distclean
+	$(MAKE) -C scripts distclean
+
+pristine : distclean
+	rm -f configure
 
 version.c: revinfo $(HFILES) $(CFILES) $(OTHERFILES)
 	./revinfo -C -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
@@ -202,17 +234,22 @@ force:
 po: ejudge.ru_RU.KOI8-R.po
 ejudge.ru_RU.KOI8-R.po: $(CFILES) ejudge.po
 	chmod +w $@
-	msgmerge -U $@ ejudge.po
+	${MSGMERGE} -U $@ ejudge.po
 
 ejudge.po: $(CFILES)
-	xgettext -d ejudge --foreign-user  -k_ -s -o $@ *.c
+	${XGETTEXT} -d ejudge --foreign-user  -k_ -s -o $@ *.c
 
 ru_all:
 	-mkdir -p locale/ru_RU.KOI8-R/LC_MESSAGES
 
-mo: locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo
+ifdef ENABLE_NLS
+mo : locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo
+else
+mo :
+endif
+
 locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.KOI8-R.po ru_all
-	msgfmt -o $@ -c $<
+	${MSGFMT} -o $@ -c $<
 
 libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o $(ARCH)/fileutl.o
 	ar rcv $@ $^
