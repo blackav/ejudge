@@ -1,3 +1,9 @@
+2003-09-15  Alexander Chernov  <cher@ispras.ru>
+
+	* serve.c:
+	(cmd_priv_command_0) command `SRV_CMD_DURATION' is handled correctly.
+	  The command is enabled if the contest is already started.
+
 2003-09-06  Alexander Chernov  <cher@ispras.ru>
 
 	* prepare.c:
