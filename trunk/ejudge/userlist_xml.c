@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -487,10 +487,13 @@ parse_passwd(char const *path, struct xml_tree *t)
     nested_tag(path, t);
     return 0;
   }
+  if (!t->text) t->text = xstrdup("");
+  /*
   if (!t->text || !*t->text) {
     empty_tag(path, t);
     return 0;
   }
+  */
 
   for (a = t->first; a; a = a->next) {
     if (a->tag != USERLIST_A_METHOD) {
@@ -515,6 +518,7 @@ parse_passwd(char const *path, struct xml_tree *t)
     }
     */
   }
+  if (!*t->text) pwd->method = USERLIST_PWD_PLAIN;
   return pwd;
 }
 
