@@ -608,3 +608,5 @@ serve_clnt/view.c 1 1 294584
 serve_clnt/gen_passwords.c 1 1 218580
 serve_clnt/message.c 1 1 239897
 serve_clnt/simple_cmd.c 1 1 172139
+serve_clnt/edit_run.c 1 1 216736
+serve_clnt/standings.c 1 2 301265
