@@ -168,7 +168,7 @@ userlist-server: ${UL_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT}
 
 clean:
-	-rm *.o $(TARGETS) revinfo version.c $(ARCH)/*.o
+	-rm *.o *~ $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po
 
 deps:
 	$(CC) $(CFLAGS) -MM $(CFILES)
@@ -198,9 +198,19 @@ new_version: revinfo force
 force:
 
 # localization stuff
-po: ejudge.po
+po: ejudge.ru_RU.KOI8-R.po
+ejudge.ru_RU.KOI8-R.po: $(CFILES) ejudge.po
+	msgmerge -U $@ ejudge.po
+
 ejudge.po: $(CFILES)
-	xgettext -d ejudge --foreign-user `[ -f ejudge.po ] && echo -j` -k_ -s *.c
+	xgettext -d ejudge --foreign-user  -k_ -s -o $@ *.c
+
+ru_all:
+	-mkdir -p locale/ru_RU.KOI8-R/LC_MESSAGES
+
+mo: locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo
+locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.KOI8-R.po ru_all
+	msgfmt -o $@ -c $<
 
 # automatically generated dependencies
 base64.o: base64.c base64.h pathutl.h
