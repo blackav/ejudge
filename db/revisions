@@ -1469,3 +1469,9 @@ win32/cr_serialize.c 1 1 88232
 unix/interrupt.c 1 1 131301
 win32/interrupt.c 1 2 87132
 super_clnt/main_page.c 1 1 285941
+super_actions.h 1 1 132740
+super_html.h 1 1 170575
+super-serve.h 1 1 121752
+userlist_clnt.h 1 21 635430
+super_html.c 1 1 2732466
+userlist_clnt/get_uid_by_pid_2.c 1 2 228007
