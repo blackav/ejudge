@@ -51,8 +51,8 @@ extern int   pathmake4(char *, ...);
 extern char *chop(char *);
 
 extern void vverr(/* char const *, va_list args*/);
-extern void err(char const *, ...);
-extern void info(char const *, ...);
+extern void err(char const *, ...) __attribute__((format(printf, 1, 2)));
+extern void info(char const *, ...) __attribute__((format(printf, 1, 2)));
 extern void do_err_r(char const *func, char const *txt, ...);
 
 extern inline char *
