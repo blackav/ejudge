@@ -875,3 +875,15 @@ master_html.c 1 11 4203338
 teamdb.c 1 23 1056233
 userlist.c 1 7 1568779
 userlist_xml.c 1 12 3675592
+prepare.h 1 34 1149114
+runlog.h 1 16 330884
+teamdb.h 1 19 150397
+register.c 1 25 7613844
+run.c 1 43 3108386
+serve.c 1 48 7359849
+html.c 1 37 4162134
+master_html.c 1 12 4262144
+prepare.c 1 50 6402378
+runlog.c 1 20 2347604
+teamdb.c 1 24 1064747
+userlist_clnt/generate_team_passwd.c 1 4 153030
