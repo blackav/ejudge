@@ -411,7 +411,7 @@ static struct user_filter_info *allocate_user_info(int user_id, unsigned long lo
 
 static void
 print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
-                 int attempts, int disq_attempts)
+                 int attempts, int disq_attempts, int prev_successes)
 {
   // indices
   enum
@@ -445,6 +445,7 @@ print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
     RAW_RUN_SCORE_ADJ,
     RAW_RUN_DISQ_ATTEMPT,
     RAW_RUN_DISQ_PENALTY,
+    RAW_RUN_PREV_SUCCESS,
 
     RAW_RUN_LAST
   };
@@ -541,7 +542,7 @@ print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
         }
 
         score = calc_kirov_score(0, 0, pe, pp, attempts, disq_attempts,
-                                 &date_penalty);
+                                 prev_successes, &date_penalty);
         if (pp->score_multiplier >= 1) mult = pp->score_multiplier;
         snprintf((fields[RAW_RUN_SCORE] = alloca(BSIZE)), BSIZE, "%d", score);
         snprintf((fields[RAW_RUN_BASE_SCORE] = alloca(BSIZE)), BSIZE,
@@ -564,6 +565,8 @@ print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
           snprintf((fields[RAW_RUN_DISQ_PENALTY] = alloca(BSIZE)), BSIZE,
                    "%d", pp->disqualified_penalty);
         }
+        snprintf((fields[RAW_RUN_PREV_SUCCESS] = alloca(BSIZE)), BSIZE,
+                 "%d", prev_successes);
       }
     }
   }
@@ -595,7 +598,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
   int list_tot = 0;
   unsigned char *str1 = 0, *str2 = 0;
   unsigned char durstr[64], statstr[64];
-  int rid, attempts, disq_attempts;
+  int rid, attempts, disq_attempts, prev_successes;
   time_t run_time, start_time;
   struct run_entry *pe;
   unsigned char *fe_html;
@@ -836,7 +839,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
         run_status_str(pe->status, statstr, 0);
 
         if (raw_format) {
-          print_raw_record(f, rid, pe, 0, 0, 0);
+          print_raw_record(f, rid, pe, 0, 0, 0, 0);
           continue;
         }
 
@@ -872,7 +875,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
         run_status_str(pe->status, statstr, 0);
 
         if (raw_format) {
-          print_raw_record(f, rid, pe, 0, 0, 0);
+          print_raw_record(f, rid, pe, 0, 0, 0, 0);
           continue;
         }
 
@@ -912,6 +915,14 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
         continue;
       }
 
+      prev_successes = RUN_TOO_MANY;
+      if (global->score_system_val == SCORE_KIROV && pe->status == RUN_OK
+          && pe->problem > 0 && pe->problem <= max_prob && !pe->is_hidden
+          && probs[pe->problem] && probs[pe->problem]->score_bonus_total > 0) {
+        if ((prev_successes = run_get_prev_successes(rid)) < 0)
+          prev_successes = RUN_TOO_MANY;
+      }
+
       attempts = 0; disq_attempts = 0;
       if (global->score_system_val == SCORE_KIROV && !pe->is_hidden) {
         run_get_attempts(rid, &attempts, &disq_attempts,
@@ -938,7 +949,8 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
       run_status_str(pe->status, statstr, 0);
 
       if (raw_format) {
-        print_raw_record(f, rid, pe, start_time, attempts, disq_attempts);
+        print_raw_record(f, rid, pe, start_time, attempts, disq_attempts,
+                         prev_successes);
         continue;
       }
 
@@ -981,7 +993,8 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
       } else {
         fprintf(f, "<td>??? - %d</td>", pe->language);
       }
-      write_html_run_status(f, pe, priv_level, attempts, disq_attempts);
+      write_html_run_status(f, pe, priv_level, attempts, disq_attempts,
+                            prev_successes);
       if (priv_level == PRIV_LEVEL_ADMIN) {
         snprintf(stat_select_name, sizeof(stat_select_name), "stat_%d", rid);
         write_change_status_dialog(f, stat_select_name, pe->is_imported,
