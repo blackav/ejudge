@@ -1,3 +1,43 @@
+2003-09-20  Alexander Chernov  <cher@ispras.ru>
+
+	* userlist_proto.h:
+	new command request `ULS_GENERATE_PASSWORDS' is added.
+
+	* userlist_clnt.h:
+	(userlist_clnt_generate_team_passwd) a new parameter `cmd' is added.
+
+	* userlist-server.c:
+	(do_generate_passwd) new function, which generates random register
+	  passwords;
+	(cmd_generate_register_passwords) a new function to handle
+	  `ULS_GENERATE_PASSWORDS' request;
+	(do_generate_team_passwd) invalid usage of `is_privileged_user'
+	  is fixed;
+	(cmd_table) entry for `ULS_GENERATE_PASSWORDS' is added.
+
+	* teamdb.h, teamdb.c:
+	(teamdb_regenerate_paswords) function is removed as no longer used.
+
+	* prepare.c:
+	(set_defaults) `test_score_list' problem configuration variable is
+	  no longer inherited.
+
+	* master.c:
+	(print_regenerate_reg_button) new function to print "Regenerate
+	  register user passwords" button;
+	(confirm_regenerate_register_if_asked) new function;
+	(do_generate_register_passwords_if_asked) new function;
+	(do_generate_passwords_if_asked) interface to
+	  `userlist_clnt_generate_team_passwd' changed;
+	(main) new actions `GENERATE_REG_PASSWORDS_1' and
+	  `GENERATE_REG_PASSWORDS_2' are supported;
+	  "regenerate passwords" and "regenerate register passwords" buttons
+	  are moved to a separate line.
+
+	* client_actions.h:
+	new actions `GENERATE_REG_PASSWORDS_1' and `GENERATE_REG_PASSWORDS_2'
+	added.
+
 2003-09-15  Alexander Chernov  <cher@ispras.ru>
 
 	* serve.c:
