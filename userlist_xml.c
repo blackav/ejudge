@@ -19,6 +19,7 @@
 #include "userlist.h"
 #include "pathutl.h"
 #include "protocol.h"
+#include "misctext.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -1229,8 +1230,33 @@ static void
 unparse_final_tag(FILE *f, int t, unsigned char const *val,
                   unsigned char const *ind)
 {
+  size_t alen = 0;
+  unsigned char *astr;
+
   if (!val) return;
+  if (html_armor_needed(val, &alen)) {
+    astr = alloca(alen + 2);
+    html_armor_string(val, astr);
+    val = astr;
+  }
   fprintf(f, "%s<%s>%s</%s>\n", ind, tag_map[t], val, tag_map[t]);
+}
+
+static void
+unparse_attributed_elem(FILE *f, int t, unsigned char const *val,
+                        const unsigned char *attr_str,
+                        unsigned char const *ind)
+{
+  size_t alen = 0;
+  unsigned char *astr;
+
+  if (!val) return;
+  if (html_armor_needed(val, &alen)) {
+    astr = alloca(alen + 2);
+    html_armor_string(val, astr);
+    val = astr;
+  }
+  fprintf(f, "%s<%s%s>%s</%s>\n", ind, tag_map[t], attr_str, val, tag_map[t]);
 }
 
 static void
@@ -1382,18 +1408,11 @@ unparse_user_short(struct userlist_user *p, FILE *f, int contest_id)
   }
   fprintf(f, "  <%s %s=\"%d\">", tag_map[USERLIST_T_USER],
           attn_map[USERLIST_A_ID], p->id);
-  if (p->login) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_LOGIN],
-            p->login, tag_map[USERLIST_T_LOGIN]);
-  }
+  unparse_final_tag(f, USERLIST_T_LOGIN, p->login, "    ");
   if (p->name && *p->name) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_NAME],
-            p->name, tag_map[USERLIST_T_NAME]);
+    unparse_final_tag(f, USERLIST_T_NAME, p->name, "    ");
   }
-  if (p->email) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_EMAIL],
-            p->email, tag_map[USERLIST_T_EMAIL]);
-  }
+  unparse_final_tag(f, USERLIST_T_EMAIL, p->email, "    ");
   if (uc) {
     fprintf(f, "    <%s>\n", tag_map[USERLIST_T_CONTESTS]);
     unparse_contest(uc, f, "      ");
@@ -1405,6 +1424,8 @@ unparse_user_short(struct userlist_user *p, FILE *f, int contest_id)
 static void
 unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
 {
+  unsigned char attr_str[128];
+
   if (!p) return;
   fprintf(f, "  <%s %s=\"%d\"", tag_map[USERLIST_T_USER],
           attn_map[USERLIST_A_ID], p->id);
@@ -1454,88 +1475,50 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   }
   fputs(">\n", f);
   if (p->login) {
-    fprintf(f, "    <%s %s=\"%s\">%s</%s>\n", tag_map[USERLIST_T_LOGIN],
-            attn_map[USERLIST_A_PUBLIC], unparse_bool(p->show_login),
-            p->login, tag_map[USERLIST_T_LOGIN]);
+    snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
+             attn_map[USERLIST_A_PUBLIC], unparse_bool(p->show_login));
+    unparse_attributed_elem(f, USERLIST_T_LOGIN, p->login, attr_str, "    ");
   }
   if (p->register_passwd && mode == USERLIST_MODE_ALL) {
-    fprintf(f, "    <%s %s=\"%s\">%s</%s>\n",
-            tag_map[USERLIST_T_PASSWORD], attn_map[USERLIST_A_METHOD],
-            unparse_passwd_method(p->register_passwd->method),
-            p->register_passwd->b.text, tag_map[USERLIST_T_PASSWORD]);
+    snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
+             attn_map[USERLIST_A_METHOD],
+             unparse_passwd_method(p->register_passwd->method));
+    unparse_attributed_elem(f, USERLIST_T_PASSWORD, p->register_passwd->b.text,
+                            attr_str, "    ");
   }
   if (p->team_passwd && mode == USERLIST_MODE_ALL) {
-    fprintf(f, "    <%s %s=\"%s\">%s</%s>\n",
-            tag_map[USERLIST_T_TEAM_PASSWORD], attn_map[USERLIST_A_METHOD],
-            unparse_passwd_method(p->team_passwd->method),
-            p->team_passwd->b.text, tag_map[USERLIST_T_TEAM_PASSWORD]);
+    snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
+             attn_map[USERLIST_A_METHOD],
+             unparse_passwd_method(p->team_passwd->method));
+    unparse_attributed_elem(f, USERLIST_T_TEAM_PASSWORD,
+                            p->team_passwd->b.text, attr_str, "    ");
   }
   if (p->name && *p->name) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_NAME],
-            p->name, tag_map[USERLIST_T_NAME]);
+    unparse_final_tag(f, USERLIST_T_NAME, p->name, "    ");
   }
   if (p->email && mode != USERLIST_MODE_STAND) {
-    fprintf(f, "    <%s %s=\"%s\">%s</%s>\n", tag_map[USERLIST_T_EMAIL],
-            attn_map[USERLIST_A_PUBLIC], unparse_bool(p->show_email),
-            p->email, tag_map[USERLIST_T_EMAIL]);
+    snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
+             attn_map[USERLIST_A_PUBLIC], unparse_bool(p->show_email));
+    unparse_attributed_elem(f, USERLIST_T_EMAIL, p->email, attr_str, "    ");
   }
   if (mode == USERLIST_MODE_ALL) {
     unparse_cookies(p->cookies, f);
   }
   unparse_contests(p->contests, f, USERLIST_MODE_STAND, contest_id);
 
-  if (p->inst) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_INST],
-            p->inst, tag_map[USERLIST_T_INST]);
-  }
-  if (p->inst_en) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_INST_EN],
-            p->inst_en, tag_map[USERLIST_T_INST_EN]);
-  }
-  if (p->instshort) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_INSTSHORT],
-            p->instshort, tag_map[USERLIST_T_INSTSHORT]);
-  }
-  if (p->instshort_en) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_INSTSHORT_EN],
-            p->instshort_en, tag_map[USERLIST_T_INSTSHORT_EN]);
-  }
-  if (p->fac) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_FAC],
-            p->fac, tag_map[USERLIST_T_FAC]);
-  }
-  if (p->fac_en) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_FAC_EN],
-            p->fac_en, tag_map[USERLIST_T_FAC_EN]);
-  }
-  if (p->facshort) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_FACSHORT],
-            p->facshort, tag_map[USERLIST_T_FACSHORT]);
-  }
-  if (p->facshort_en) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_FACSHORT_EN],
-            p->facshort_en, tag_map[USERLIST_T_FACSHORT_EN]);
-  }
-  if (p->homepage) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_HOMEPAGE],
-            p->homepage, tag_map[USERLIST_T_HOMEPAGE]);
-  }
-  if (p->city) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_CITY],
-            p->city, tag_map[USERLIST_T_CITY]);
-  }
-  if (p->city_en) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_CITY_EN],
-            p->city_en, tag_map[USERLIST_T_CITY_EN]);
-  }
-  if (p->country) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_COUNTRY],
-            p->country, tag_map[USERLIST_T_COUNTRY]);
-  }
-  if (p->country_en) {
-    fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_COUNTRY_EN],
-            p->country_en, tag_map[USERLIST_T_COUNTRY_EN]);
-  }
+  unparse_final_tag(f, USERLIST_T_INST, p->inst, "    ");
+  unparse_final_tag(f, USERLIST_T_INST_EN, p->inst_en, "    ");
+  unparse_final_tag(f, USERLIST_T_INSTSHORT, p->instshort, "    ");
+  unparse_final_tag(f, USERLIST_T_INSTSHORT_EN, p->instshort_en, "    ");
+  unparse_final_tag(f, USERLIST_T_FAC, p->fac, "    ");
+  unparse_final_tag(f, USERLIST_T_FAC_EN, p->fac_en, "    ");
+  unparse_final_tag(f, USERLIST_T_FACSHORT, p->facshort, "    ");
+  unparse_final_tag(f, USERLIST_T_FACSHORT_EN, p->facshort_en, "    ");
+  unparse_final_tag(f, USERLIST_T_HOMEPAGE, p->homepage, "    ");
+  unparse_final_tag(f, USERLIST_T_CITY, p->city, "    ");
+  unparse_final_tag(f, USERLIST_T_CITY_EN, p->city_en, "    ");
+  unparse_final_tag(f, USERLIST_T_COUNTRY, p->country, "    ");
+  unparse_final_tag(f, USERLIST_T_COUNTRY_EN, p->country_en, "    ");
 
   if (mode != USERLIST_MODE_STAND) {
     unparse_phones(p->phones, f, "    ");
