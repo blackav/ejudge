@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,7 +33,7 @@ userlist_clnt_register_new(struct userlist_clnt *clnt,
   int res;
   int r;
 
-  len = sizeof(struct userlist_pk_register_new)+strlen(login)+strlen(email)+2;
+  len = sizeof(struct userlist_pk_register_new)+strlen(login)+strlen(email);
   data = alloca(len);
   memset(data, 0, len);
   data->request_id = ULS_REGISTER_NEW;
@@ -57,6 +57,5 @@ userlist_clnt_register_new(struct userlist_clnt *clnt,
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
