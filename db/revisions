@@ -343,3 +343,6 @@ contests.h 1 3 157640
 contests.c 1 3 839493
 register.c 1 8 2148457
 userlist_clnt.c 1 2 354537
+userlist_clnt.h 1 2 174935
+register.c 1 9 2625943
+userlist_clnt.c 1 3 492898
