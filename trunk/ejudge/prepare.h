@@ -53,6 +53,14 @@ struct penalty_info
 
 struct variant_map;
 
+struct pers_dead_info
+{
+  unsigned char *login;
+  int user_id;
+  time_t deadline;
+  int penalty;
+};
+
 struct user_adjustment_info
 {
   unsigned char *login;
@@ -297,6 +305,15 @@ struct section_global_data
   char **user_priority_adjustments;
   struct user_adjustment_info *user_adjustment_info;
   struct user_adjustment_map *user_adjustment_map;
+
+  // contestant status support
+  int contestant_status_num;
+  char **contestant_status_legend;
+  char **contestant_status_row_attr;
+  int stand_show_contestant_status;
+  int stand_show_warn_number;
+  puc_t stand_contestant_status_attr[32];
+  puc_t stand_warn_number_attr[32];
 };
 
 struct section_problem_data
@@ -328,6 +345,7 @@ struct section_problem_data
   int    hidden;                /* hide the problem from standings */
   int    priority_adjustment;   /* priority adjustment for this problem */
   int    stand_hide_time;       /* do not show ok time */
+  int    score_multiplier;      /* additional score multiplier */
   puc_t super[32];              /* superproblem's short_name */
   puc_t short_name[32];         /* short problem name, eg A, B, ... */
   puc_t long_name[128];         /* long problem name */
@@ -369,6 +387,10 @@ struct section_problem_data
 
   char **disable_language;
   char **checker_env;           /* environment variables for checker */
+
+  char **personal_deadline;     /* personal deadline extensions */
+  int pd_total;
+  struct pers_dead_info *pd_infos;
 };
 
 struct section_language_data
