@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -133,6 +133,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(run_archive_dir, "s"),
   GLOBAL_PARAM(report_archive_dir, "s"),
   GLOBAL_PARAM(team_report_archive_dir, "s"),
+  GLOBAL_PARAM(team_extra_dir, "s"),
 
   GLOBAL_PARAM(status_dir, "s"),
   GLOBAL_PARAM(work_dir, "s"),
@@ -396,6 +397,7 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_RUN_ARCHIVE_DIR    "runs"
 #define DFLT_G_REPORT_ARCHIVE_DIR "reports"
 #define DFLT_G_TEAM_REPORT_ARCHIVE_DIR "teamreports"
+#define DFLT_G_TEAM_EXTRA_DIR     "team_extra"
 #define DFLT_G_PIPE_DIR           "pipe"
 #define DFLT_G_TEAM_DIR           "team"
 #define DFLT_G_TEAM_CMD_DIR       "cmd"
@@ -1173,6 +1175,7 @@ set_defaults(int mode)
     GLOBAL_INIT_FIELD(run_archive_dir, DFLT_G_RUN_ARCHIVE_DIR, archive_dir);
     GLOBAL_INIT_FIELD(report_archive_dir,DFLT_G_REPORT_ARCHIVE_DIR,archive_dir);
     GLOBAL_INIT_FIELD(team_report_archive_dir,DFLT_G_TEAM_REPORT_ARCHIVE_DIR,archive_dir);
+    GLOBAL_INIT_FIELD(team_extra_dir, DFLT_G_TEAM_EXTRA_DIR, var_dir);
 
     GLOBAL_INIT_FIELD(status_dir, DFLT_G_STATUS_DIR, var_dir);
     GLOBAL_INIT_FIELD(serve_socket, DFLT_G_SERVE_SOCKET, var_dir);
@@ -2453,6 +2456,7 @@ create_dirs(int mode)
     if (global->team_enable_rep_view) {
       if (make_dir(global->team_report_archive_dir, 0) < 0) return -1;
     }
+    if (make_dir(global->team_extra_dir, 0) < 0) return -1;
   } else if (mode == PREPARE_COMPILE) {
     if (global->root_dir[0] && make_dir(global->root_dir, 0) < 0) return -1;
     if (make_dir(global->var_dir, 0) < 0) return -1;
