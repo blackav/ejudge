@@ -4,7 +4,7 @@
 #ifndef __CLIENT_ACTIONS_H__
 #define __CLIENT_ACTIONS_H__
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -98,6 +98,7 @@ enum
     ACTION_CHANGE_CONTESTANT_STATUS,
     ACTION_ISSUE_WARNING,
     ACTION_RUN_CHANGE_SCORE_ADJ,
+    ACTION_RESET_CLAR_FILTER,
     ACTION_LAST
   };
 
