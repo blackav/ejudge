@@ -15,6 +15,9 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+#include "settings.h"
+
 #include "team_extra.h"
 #include "expat_iface.h"
 #include "pathutl.h"
@@ -23,6 +26,10 @@
 #include <reuse/xalloc.h>
 
 #include <ctype.h>
+
+#ifndef EJUDGE_CHARSET
+#define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
+#endif /* EJUDGE_CHARSET */
 
 #define RUNLOG_MAX_TEAM_ID 100000
 #define CLARLOG_MAX_CLAR_ID 100000
@@ -239,7 +246,7 @@ team_extra_unparse_xml(FILE *f, struct team_extra *te)
   ASSERT(te);
   ASSERT(te->user_id > 0);
 
-  fprintf(f, "<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n");
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
   fprintf(f, "<%s %s=\"%d\">\n", elem_map[TE_T_TEAM_EXTRA],
           attr_map[TE_A_USER_ID], te->user_id);
   fprintf(f, "  <%s>", elem_map[TE_T_VIEWED_CLARS]);
