@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "settings.h"
 #include "runlog.h"
 #include "parsecfg.h"
@@ -718,7 +720,7 @@ cmd_team_page(struct client_state *p, int len,
   unsigned char *self_url_ptr, *hidden_vars_ptr, *extra_args_ptr;
   FILE *f = 0;
   struct client_state *q = 0;
-  unsigned char *html_ptr = 0;
+  char *html_ptr = 0;
   size_t html_len = 0;
 
   if (get_peer_local_user(p) < 0) return;
@@ -755,7 +757,7 @@ cmd_team_page(struct client_state *p, int len,
     return;
   }
 
-  if (!(f = open_memstream((char**) &html_ptr, &html_len))) {
+  if (!(f = open_memstream(&html_ptr, &html_len))) {
     err("%d: open_memstream failed", p->id);
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
@@ -794,7 +796,7 @@ cmd_master_page(struct client_state *p, int len,
   unsigned char *self_url_ptr, *filter_expr_ptr, *hidden_vars_ptr;
   unsigned char *extra_args_ptr;
   FILE *f;
-  unsigned char *html_ptr = 0;
+  char *html_ptr = 0;
   size_t html_len = 0;
   struct client_state *q;
   opcap_t caps;
@@ -874,7 +876,7 @@ cmd_master_page(struct client_state *p, int len,
     return;
   }
 
-  if (!(f = open_memstream((char**) &html_ptr, &html_len))) {
+  if (!(f = open_memstream(&html_ptr, &html_len))) {
     err("%d: open_memstream failed", p->id);
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
@@ -913,7 +915,7 @@ cmd_priv_standings(struct client_state *p, int len,
 {
   unsigned char *self_url_ptr, *hidden_vars_ptr, *extra_args_ptr;
   FILE *f;
-  unsigned char *html_ptr = 0;
+  char *html_ptr = 0;
   size_t html_len = 0;
   struct client_state *q;
 
@@ -988,7 +990,7 @@ cmd_priv_standings(struct client_state *p, int len,
     return;
   }
 
-  if (!(f = open_memstream((char**) &html_ptr, &html_len))) {
+  if (!(f = open_memstream(&html_ptr, &html_len))) {
     err("%d: open_memstream failed", p->id);
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
@@ -1022,7 +1024,7 @@ cmd_view(struct client_state *p, int len,
          struct prot_serve_pkt_view *pkt)
 {
   unsigned char *self_url_ptr, *hidden_vars_ptr, *extra_args_ptr;
-  unsigned char *html_ptr = 0;
+  char *html_ptr = 0;
   size_t html_len = 0;
   struct client_state *q;
   int r = 0;
@@ -1067,7 +1069,7 @@ cmd_view(struct client_state *p, int len,
     return;
   }
 
-  if (!(f = open_memstream((char**) &html_ptr, &html_len))) {
+  if (!(f = open_memstream(&html_ptr, &html_len))) {
     err("%d: open_memstream failed", p->id);
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
@@ -1289,7 +1291,7 @@ cmd_import_xml_runs(struct client_state *p, int len,
 {
   size_t xml_data_len, html_len = 0;
   FILE *f;
-  unsigned char *html_ptr = 0;
+  char *html_ptr = 0;
   struct client_state *q;
 
   if (get_peer_local_user(p) < 0) return;
@@ -1328,7 +1330,7 @@ cmd_import_xml_runs(struct client_state *p, int len,
   }
 
   info("%d: import_xml_runs: %d", p->id, (int) xml_data_len);
-  if (!(f = open_memstream((char**) &html_ptr, &html_len))) {
+  if (!(f = open_memstream(&html_ptr, &html_len))) {
     err("%d: open_memstream failed", p->id);
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
@@ -1362,7 +1364,8 @@ cmd_message(struct client_state *p, int len,
   int dest_uid;
   unsigned char txt_subj_short[CLAR_MAX_SUBJ_TXT_LEN + 10];
   unsigned char b64_subj_short[CLAR_MAX_SUBJ_LEN + 10];
-  unsigned char *msg, *orig_txt, *quoted_ptr, *new_subj;
+  unsigned char *msg, *quoted_ptr, *new_subj;
+  char *orig_txt = 0;
   size_t msg_len, orig_txt_len, new_subj_len, quoted_len;
   int clar_id;
   unsigned char clar_name[64], orig_clar_name[64];
@@ -1481,7 +1484,7 @@ cmd_message(struct client_state *p, int len,
     snprintf(orig_clar_name, sizeof(orig_clar_name), "%06d", pkt->ref_clar_id);
     orig_txt = 0;
     orig_txt_len = 0;
-    if (generic_read_file((char**) &orig_txt, 0, &orig_txt_len, 0,
+    if (generic_read_file(&orig_txt, 0, &orig_txt_len, 0,
                           global->clar_archive_dir, orig_clar_name, "") < 0) {
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
@@ -1526,7 +1529,7 @@ cmd_team_show_item(struct client_state *p, int len,
                    struct prot_serve_pkt_show_item *pkt)
 {
   FILE *f;
-  unsigned char *html_ptr = 0;
+  char *html_ptr = 0;
   size_t html_len = 0;
   struct client_state *q;
   int r;
@@ -1567,7 +1570,7 @@ cmd_team_show_item(struct client_state *p, int len,
     return;
   }
 
-  if (!(f = open_memstream((char**) &html_ptr, &html_len))) {
+  if (!(f = open_memstream(&html_ptr, &html_len))) {
     err("%d: open_memstream failed", p->id);
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
@@ -3120,7 +3123,7 @@ read_compile_packet(char *pname)
   int  rsize, wsize;
   int  code;
   int  runid;
-  int  cn, rep_flags, team_flags, prio;
+  int  cn, rep_flags, team_flags = 0, prio;
 
   int  final_test, variant = 0;
   struct run_entry re;
