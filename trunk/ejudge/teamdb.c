@@ -19,13 +19,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/*
- * team file
- *   teamlogin:teamid:flags:name
- * passwd file
- *   teamid:flags:passwd
- */
-
 #include "teamdb.h"
 
 #include "pathutl.h"
@@ -310,9 +303,15 @@ teamdb_lookup(int teamno)
 int
 teamdb_lookup_login(char const *login)
 {
-  ASSERT(server_conn);
-  err("teamdb_lookup_login: operation not implemented in client mode");
-  return 0;
+  int i;
+
+  if (!cached_map) return -1;
+  for (i = 1; i < cached_size; i++) {
+    if (!cached_map[i]) continue;
+    if (!strcmp(cached_users->pool + cached_map[i]->login_idx, login))
+      return i;
+  }
+  return -1;
 }
 
 char *
@@ -340,46 +339,6 @@ teamdb_get_name(int teamid)
 }
 
 int
-teamdb_scramble_passwd(char const *passwd, char *scramble)
-{
-  ASSERT(server_conn);
-  err("teamdb_scramble_passwd: operation not implemented in client mode");
-  return 0;
-}
-
-int
-teamdb_check_scrambled_passwd(int id, char const *scrambled)
-{
-  ASSERT(server_conn);
-  err("teamdb_check_scrambled_passwd: not implemented in client mode");
-  return 0;
-}
-
-int
-teamdb_check_passwd(int id, char const *passwd)
-{
-  ASSERT(server_conn);
-  err("teamdb_check_passwd: operation not implemented in client mode");
-  return 0;
-}
-
-int
-teamdb_set_scrambled_passwd(int id, char const *scrambled)
-{
-  ASSERT(server_conn);
-  err("teamdb_set_scrambled_passwd: operation not implemented in client mode");
-  return 0;
-}
-
-int
-teamdb_get_plain_password(int id, char *buf, int size)
-{
-  ASSERT(server_conn);
-  err("teamdb_get_plain_password: operation not implemented in client mode");
-  return -1;
-}
-
-int
 teamdb_get_flags(int id)
 {
   int new_flags = 0;
@@ -400,22 +359,6 @@ teamdb_get_flags(int id)
 }
 
 int
-teamdb_write_passwd(char const *path)
-{
-  ASSERT(server_conn);
-  err("teamdb_write_passwd: operation not implemented in client mode");
-  return 0;
-}
-
-int
-teamdb_write_teamdb(char const *path)
-{
-  ASSERT(server_conn);
-  err("teamdb_write_teamdb: operation not implemented in client mode");
-  return 0;
-}
-
-int
 teamdb_get_max_team_id(void)
 {
   ASSERT(server_conn);
@@ -427,38 +370,6 @@ teamdb_get_total_teams(void)
 {
   ASSERT(server_conn);
   return cached_users->total;
-}
-
-int
-teamdb_is_valid_login(char const *str)
-{
-  ASSERT(server_conn);
-  err("teamdb_is_valid_login: not implemented in client mode");
-  return 0;
-}
-
-int
-teamdb_is_valid_name(char const *str)
-{
-  ASSERT(server_conn);
-  err("teamdb_is_valid_name: not implemented in client mode");
-  return 0;
-}
-
-int
-teamdb_change_login(int tid, char const *login)
-{
-  ASSERT(server_conn);
-  err("teamdb_change_login: not implemented in client mode");
-  return -1;
-}
-
-int
-teamdb_change_name(int tid, char const *name)
-{
-  ASSERT(server_conn);
-  err("teamdb_change_name: not implemented in client mode");
-  return -1;
 }
 
 int
@@ -475,43 +386,6 @@ teamdb_toggle_ban(int tid)
   ASSERT(server_conn);
   err("teamdb_toggle_ban: not implemented in client mode");
   return -1;
-}
-
-int
-teamdb_add_team(int tid,
-                char const *login,
-                char const *name,
-                char const *passwd,
-                int vis,
-                int ban,
-                char **msg)
-{
-  ASSERT(server_conn);
-
-  err("teamdb_add_team: not implemented in client mode");
-  *msg = "Not implemented in client mode";
-  return -1;
-}
-
-void
-teamdb_transaction(void)
-{
-  ASSERT(server_conn);
-  info("teamdb_transaction called");
-}
-
-void
-teamdb_commit(void)
-{
-  ASSERT(server_conn);
-  info("teamdb_commit called");
-}
-
-void
-teamdb_rollback(void)
-{
-  ASSERT(server_conn);
-  info("teamdb_rollback called");
 }
 
 int
@@ -539,16 +413,11 @@ teamdb_export_team(int tid, struct teamdb_export *pdata)
 }
 
 int
-teamdb_regenerate_passwords(unsigned char const *path)
+teamdb_regenerate_passwords(int fd)
 {
-  int fd, r;
+  int r;
 
   ASSERT(server_conn);
-  if ((fd = open(path, O_WRONLY)) < 0) {
-    err("teamdb_regenerate_passwords: cannot open %s: %s",
-        path, os_ErrorMsg());
-    return -1;
-  }
  restart_server_request:
   r = userlist_clnt_generate_team_passwd(server_conn, contest_id, fd);
   if (r == -ULS_ERR_NO_CONNECT || r == -ULS_ERR_DISCONNECT) {
@@ -633,14 +502,15 @@ teamdb_set_archive_time(int uid, time_t time)
 int
 teamdb_get_uid_by_pid(int system_uid, int system_gid, int system_pid,
                       int *p_uid, int *p_priv_level,
-                      unsigned long long *p_cookie)
+                      unsigned long long *p_cookie,
+                      unsigned long *p_ip)
 {
   int r;
 
  restart_operation:
   r = userlist_clnt_get_uid_by_pid(server_conn, system_uid, system_gid,
                                    system_pid, p_uid,
-                                   p_priv_level, p_cookie);
+                                   p_priv_level, p_cookie, p_ip);
   if (r == -ULS_ERR_NO_CONNECT || r == -ULS_ERR_DISCONNECT) {
     r = restore_connection();
     if (r <= 0) return -1;
