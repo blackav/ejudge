@@ -24,6 +24,7 @@
 #include "version.h"
 #include "sha.h"
 #include "misctext.h"
+#include "l10n.h"
 
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
@@ -604,35 +605,6 @@ remove_from_system_uid_map(int uid)
 /* remove the entry from the system uid->local uid map upon removal */
 
 static int
-setup_locale(int locale_id)
-{
-#if CONF_HAS_LIBINTL - 0 == 1
-  char *e = 0;
-  char env_buf[128];
-
-  if (!config->l10n) return 0;
-
-  switch (locale_id) {
-  case 1:
-    e = "ru_RU.KOI8-R";
-    break;
-  case 0:
-  default:
-    locale_id = 0;
-    e = "C";
-    break;
-  }
-
-  sprintf(env_buf, "LC_ALL=%s", e);
-  putenv(env_buf);
-  setlocale(LC_ALL, "");
-  return locale_id;
-#else
-  return 0;
-#endif /* CONF_HAS_LIBINTL */
-}
-
-static int
 send_email_message(unsigned char const *to,
                    unsigned char const *from,
                    unsigned char const *charset,
@@ -1008,7 +980,7 @@ cmd_register_new(struct client_state *p,
   pwd->method = USERLIST_PWD_PLAIN;
   pwd->b.text = xstrdup(passwd_buf);
 
-  setup_locale(data->locale_id);
+  l10n_setlocale(data->locale_id);
   buf = (char *) xcalloc(1,1024);
   snprintf(buf, 1024,
            _("Hello,\n"
@@ -1038,7 +1010,7 @@ cmd_register_new(struct client_state *p,
                      _("You have been registered"),
                      buf);
   free(buf);
-  setup_locale(0);
+  l10n_setlocale(0);
   send_reply(p,ULS_OK);
   CONN_INFO("ok, user_id = %d", user->id);
 
@@ -3127,7 +3099,7 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
     u = userlist->user_map[user_id];
     ASSERT(u);
 
-    setup_locale(locale_id);
+    l10n_setlocale(locale_id);
     fprintf(f, "<h2>%s: %s</h2>\n",
             _("Detailed information for user (team)"), u->name);
     fprintf(f, "<h3>%s</h3>\n", _("General information"));
@@ -3278,7 +3250,7 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
       fprintf(f, "</table>\n");
     }
 
-    setup_locale(0);
+    l10n_setlocale(0);
     return;
   }
 
@@ -3310,10 +3282,10 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
   /* add additional filters */
   /* add additional sorts */
 
-  setup_locale(locale_id);
+  l10n_setlocale(locale_id);
   if (!u_num) {
     fprintf(f, "<p>%s</p>\n", _("No users registered for this contest"));
-    setup_locale(0);
+    l10n_setlocale(0);
     return;
   }
 
@@ -3346,7 +3318,7 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
     fprintf(f, "</tr>\n");
   }
   fprintf(f, "</table>\n");
-  setup_locale(0);
+  l10n_setlocale(0);
 }
 
 static void
@@ -5034,13 +5006,7 @@ main(int argc, char *argv[])
   }
   //userlist_unparse(userlist, stdout);
 
-#if CONF_HAS_LIBINTL - 0 == 1
-  /* load the language used */
-  if (config->l10n) {
-    bindtextdomain("ejudge", config->l10n_dir);
-    textdomain("ejudge");
-  }
-#endif /* CONF_HAS_LIBINTL */
+  l10n_prepare(config->l10n, config->l10n_dir);
 
   // initialize system uid->local uid map
   build_system_uid_map(config->user_map);
