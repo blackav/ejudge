@@ -225,20 +225,20 @@ initialize(int argc, char *argv[])
   os_rGetBasename(fullname, basename, PATH_MAX);
   strcpy(program_name, basename);
   if (strncmp(basename, "team", 4))
-    client_not_configured(global->charset, _("bad program_name"));
+    client_not_configured(0, _("bad program_name"));
 
   pathmake(cfgname, dirname, "/", "..", "/", "cgi-data", "/", basename,
            ".cfg", NULL);
   config = parse_param(cfgname, 0, params, 1);
   if (!config)
-    client_not_configured(global->charset, _("config file not parsed"));
+    client_not_configured(0, _("config file not parsed"));
 
   /* find global section */
   for (p = config; p; p = p->next) {
     if (!p->name[0] || !strcmp(p->name, "global"))
       break;
   }
-  if (!p) client_not_configured(global->charset, _("no global section"));
+  if (!p) client_not_configured(0, _("no global section"));
   global = (struct section_global_data *) p;
 
   if (set_defaults() < 0)
