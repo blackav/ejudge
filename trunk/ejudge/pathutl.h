@@ -3,22 +3,22 @@
 #ifndef __PATHUTL_H__
 #define __PATHUTL_H__
 
-/* Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
 
 /*
- *  This program is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 2 of the License, or (at your option) any later version.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
  */
 
 #include <stdlib.h>
@@ -55,6 +55,7 @@ extern void err(char const *, ...) __attribute__((format(printf, 1, 2)));
 extern void info(char const *, ...) __attribute__((format(printf, 1, 2)));
 extern void do_err_r(char const *func, char const *txt, ...);
 
+#ifdef __GNUC__
 extern inline char *
 pathcpy(char *dst, char const *src)
 {
@@ -77,5 +78,12 @@ path_init(char *path, char const *dir, char const *def)
   if (!path[0]) pathcpy(path, def);
   path_add_dir(path, dir);
 }
+#else
+char *pathcpy(char *dst, char const *src);
+char *pathcat(char *dst, char const *src);
+
+void path_add_dir(char *path, char const *dir);
+void path_init(char *path, char const *dir, char const *def);
+#endif /* __GNUC__ */
 
 #endif /* __PATHUTL_H__ */
