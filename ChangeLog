@@ -1,3 +1,13 @@
+2003-09-06  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare.c:
+	(set_defaults) problem parameters `input_file' and `output_file' are
+	  expanded with `sformat_message' when inherited.
+
+2003-08-01  Alexander Chernov  <cher@ispras.ru>
+
+	* cdeps.c: copyright notice changed.
+
 2003-07-11  Alexander Chernov  <cher@ispras.ru>
 
 	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***

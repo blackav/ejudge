@@ -1,3 +1,11 @@
+2003-09-06  Alexander Chernov  <cher@ispras.ru>
+
+	* team_set_passwd.c, team_cookie.c, send_packet.c, remove_member.c, register_contest.c, recv_packet.c, priv_login.c, priv_cookie.c, pass_fd.c, open.c, map_contest.c, lookup_cookie.c, logout.c, list_all_users.c, get_uid_by_pid.c, get_contests.c, generate_team_passwd.c, do_pass_fd.c, close.c, change_registration.c, admin_process.c:
+	copyright notice is updated
+
+	* login.c: copyright notice is updated.
+	(userlist_clnt_login) packet length calculation is fixed.
+
 2003-06-25  Alexander Chernov  <cher@ispras.ru>
 
 	* add_field.c: copyright notice is updated;
