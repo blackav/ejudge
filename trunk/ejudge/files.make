@@ -53,6 +53,7 @@ CFILES=\
  team.c\
  teamdb.c\
  userlist.c\
+ userlist-server.c\
  userlist_cfg.c\
  userlist_xml.c\
  utf8_utils.c\
