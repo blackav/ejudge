@@ -32,6 +32,7 @@
 #include "protocol.h"
 #include "userlist_proto.h"
 #include "userlist_clnt.h"
+#include "client_actions.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -45,6 +46,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <ctype.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -62,13 +64,7 @@
 
 /* defaults */
 #define DEFAULT_VAR_DIR        "var"
-#define DEFAULT_CONF_DIR       "conf"
-#define DEFAULT_PIPE_DIR       "pipe"
-#define DEFAULT_JUDGE_DIR      "judge"
-#define DEFAULT_JUDGE_CMD_DIR  "cmd"
-#define DEFAULT_JUDGE_DATA_DIR "data"
 #define DEFAULT_STATUS_FILE    "status/dir/status"
-#define DEFAULT_PROBLEMS_SUBMIT_FILE "status/dir/problems"
 #define DEFAULT_RUN_PAGE_SIZE  10
 #define DEFAULT_CLAR_PAGE_SIZE 10
 #define DEFAULT_CHARSET        "iso8859-1"
@@ -82,12 +78,7 @@ struct section_global_data
   int    clar_page_size;
   int    allow_deny;
   path_t root_dir;
-  path_t conf_dir;
   path_t var_dir;
-  path_t pipe_dir;
-  path_t judge_dir;
-  path_t judge_cmd_dir;
-  path_t judge_data_dir;
   path_t status_file;
   path_t allow_from;
   path_t deny_from;
@@ -104,6 +95,8 @@ struct section_global_data
   path_t serve_socket;
 };
 
+static void print_nav_buttons(void);
+
 static struct generic_section_config *config;
 static struct section_global_data    *global;
 
@@ -116,10 +109,6 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(allow_deny, "d"),
   GLOBAL_PARAM(root_dir, "s"),
   GLOBAL_PARAM(var_dir, "s"),
-  GLOBAL_PARAM(pipe_dir, "s"),
-  GLOBAL_PARAM(judge_dir, "s"),
-  GLOBAL_PARAM(judge_cmd_dir, "s"),
-  GLOBAL_PARAM(judge_data_dir, "s"),
   GLOBAL_PARAM(status_file, "s"),
   GLOBAL_PARAM(allow_from, "s"),
   GLOBAL_PARAM(deny_from, "s"),
@@ -147,7 +136,6 @@ static struct contest_desc *cur_contest;
 static struct userlist_clnt *userlist_conn;
 static unsigned long client_ip;
 static int serve_socket_fd = -1;
-static int serve_last_error = 0;
 static unsigned char *self_url = 0;
 static unsigned char hidden_vars[1024];
 static unsigned char *filter_expr;
@@ -156,7 +144,20 @@ static int filter_last_run;
 static int filter_first_clar;
 static int filter_last_clar;
 static int priv_level;
+static int client_action = 0;
 
+enum
+  {
+    SID_DISABLED = 0,
+    SID_EMBED,
+    SID_URL,
+    SID_COOKIE
+  };
+
+static int client_sid_mode;
+static int need_set_cookie;
+static unsigned long long client_cookie;
+static unsigned long long client_sid;
 static unsigned char *client_login;
 static unsigned char *client_password;
 static unsigned char *client_name;
@@ -168,52 +169,139 @@ static int force_recheck_status = 0;
 static char    form_start_simple[1024];
 static char    form_start_multipart[1024];
 
+static void open_serve(void);
+
 static void
 read_state_params(void)
 {
   unsigned char *a_passwd;
-  int passwd_len;
+  unsigned char *s;
+  int passwd_len, x, n;
+
+  client_action = 0;
+  if ((s = cgi_param("action"))) {
+    n = 0; x = 0;
+    if (sscanf(s, "%d%n", &x, &n) == 1 && !s[n]
+        && x > 0 && x < ACTION_LAST)
+      client_action = x;
+  }
+  if (!client_action && (s = cgi_nname("action_", 7))) {
+    n = 0; x = 0;
+    if (sscanf(s, "action_%d%n", &x, &n) == 1 && !s[n]
+        && x > 0 && x < ACTION_LAST)
+      client_action = x;
+  }
 
   passwd_len = html_armored_strlen(client_password);
   a_passwd = alloca(passwd_len + 10);
   html_armor_string(client_password, a_passwd);
 
-  sprintf(form_start_simple,
-          "%s"
-          "<input type=\"hidden\" name=\"login\" value=\"%s\">"
-          "<input type=\"hidden\" name=\"password\" value=\"%s\">",
-          form_header_simple, client_login, a_passwd);
-
-  sprintf(form_start_multipart,
-          "%s"
-          "<input type=\"hidden\" name=\"login\" value=\"%s\">"
-          "<input type=\"hidden\" name=\"password\" value=\"%s\">",
-          form_header_multipart, client_login, a_passwd);
-
-  snprintf(hidden_vars, sizeof(hidden_vars),
-          "<input type=\"hidden\" name=\"login\" value=\"%s\">"
-          "<input type=\"hidden\" name=\"password\" value=\"%s\">",
-           client_login, a_passwd);
+  switch (client_sid_mode) {
+  case SID_DISABLED:
+    sprintf(form_start_simple,
+            "%s"
+            "<input type=\"hidden\" name=\"sid_mode\" value=\"0\">"
+            "<input type=\"hidden\" name=\"login\" value=\"%s\">"
+            "<input type=\"hidden\" name=\"password\" value=\"%s\">",
+            form_header_simple, client_login, a_passwd);
+    sprintf(form_start_multipart,
+            "%s"
+            "<input type=\"hidden\" name=\"sid_mode\" value=\"0\">"
+            "<input type=\"hidden\" name=\"login\" value=\"%s\">"
+            "<input type=\"hidden\" name=\"password\" value=\"%s\">",
+            form_header_multipart, client_login, a_passwd);
+    snprintf(hidden_vars, sizeof(hidden_vars),
+             "<input type=\"hidden\" name=\"sid_mode\" value=\"0\">"
+             "<input type=\"hidden\" name=\"login\" value=\"%s\">"
+             "<input type=\"hidden\" name=\"password\" value=\"%s\">",
+             client_login, a_passwd);
+    break;
+  case SID_EMBED:
+    snprintf(form_start_simple, sizeof(form_start_simple),
+             "%s<input type=\"hidden\" name=\"SID\" value=\"%016llx\">"
+             "<input type=\"hidden\" name=\"sid_mode\" value=\"1\">",
+             form_header_simple, client_sid);
+    snprintf(form_start_multipart, sizeof(form_start_multipart),
+             "%s<input type=\"hidden\" name=\"SID\" value=\"%016llx\">"
+             "<input type=\"hidden\" name=\"sid_mode\" value=\"1\">",
+             form_header_multipart, client_sid);
+    snprintf(hidden_vars, sizeof(hidden_vars),
+             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">"
+             "<input type=\"hidden\" name=\"sid_mode\" value=\"1\">",
+             client_sid);
+    break;
+  case SID_URL:
+  case SID_COOKIE:
+    strcpy(form_start_simple, form_header_simple);
+    strcpy(form_start_multipart, form_header_multipart);
+    strcpy(hidden_vars, "");
+    break;
+  default:
+    SWERR(("Unhandled sid mode %d", client_sid_mode));
+  }
 }
 
 static void
 make_self_url(void)
 {
   unsigned char *http_host = getenv("HTTP_HOST");
-  unsigned char *server_port = getenv("SERVER_PORT");
   unsigned char *script_name = getenv("SCRIPT_NAME");
   unsigned char fullname[1024];
 
   if (!http_host) http_host = "localhost";
   if (!script_name) script_name = "/cgi-bin/master";
-  if (server_port) {
-    snprintf(fullname, sizeof(fullname),
-             "http://%s:%s%s", http_host, server_port, script_name);
-  } else {
-    snprintf(fullname, sizeof(fullname),
-             "http://%s%s", http_host, script_name);
-  }
+  snprintf(fullname, sizeof(fullname), "http://%s%s", http_host, script_name);
   self_url = xstrdup(fullname);
+}
+
+static unsigned char *
+hyperref(unsigned char *buf, int size,
+         int sid_mode, unsigned long long sid,
+         unsigned char const *self_url,
+         unsigned char const *format, ...)
+{
+  va_list args;
+  unsigned char *out = buf;
+  int left = size, n;
+
+  ASSERT(sid_mode == SID_URL || sid_mode == SID_COOKIE);
+  if (sid_mode == SID_COOKIE) {
+    n = snprintf(out, left, "%s?sid_mode=%d", self_url, SID_COOKIE);
+  } else {
+    n = snprintf(out, left, "%s?sid_mode=%d&SID=%016llx",
+                 self_url, SID_URL, sid);
+  }
+  if (n >= left) n = left;
+  left -= n; out += n;
+  if (format && *format) {
+    n = snprintf(out, left, "&");
+    if (n >= left) n = left;
+    left -= n; out += n;
+    va_start(args, format);
+    n = vsnprintf(out, left, format, args);
+    va_end(args);
+  }
+  return buf;
+}
+
+static void
+set_cookie_if_needed(void)
+{
+  time_t t;
+  struct tm gt;
+  char buf[128];
+
+  if (!need_set_cookie) return;
+  need_set_cookie = 0;
+  if (!client_cookie) {
+    printf("Set-cookie: MID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
+    return;
+  }
+  t = time(0);
+  t += 24 * 60 * 60;
+  gmtime_r(&t, &gt);
+  strftime(buf, sizeof(buf), "%A, %d-%b-%Y %H:%M:%S GMT", &gt);
+  printf("Set-cookie: MID=%llx; expires=%s\n", client_cookie, buf);
 }
 
 static int
@@ -227,6 +315,7 @@ display_enter_password(void)
     a_name = alloca(a_len + 10);
     html_armor_string(cur_contest->name, a_name);
   }
+  set_cookie_if_needed();
   if (a_name) {
     client_put_header(global->charset, "Enter password - %s - &quot;%s&quot;",
                       protocol_priv_level_str(priv_level), a_name);
@@ -245,37 +334,78 @@ display_enter_password(void)
          "<td>%s:</td>"
          "<td><input type=\"password\" size=16 name=\"password\"></td>"
          "</tr>"
+         "<tr valign=\"top\">"
+         "<td>%s:</td>"
+         "<td>"
+         "<input type=\"radio\" name=\"sid_mode\" value=\"0\">%s<br>"
+         "<input type=\"radio\" name=\"sid_mode\" value=\"1\">%s<br>"
+         "<input type=\"radio\" name=\"sid_mode\" value=\"2\">%s<br>"
+         "<input type=\"radio\" name=\"sid_mode\" value=\"3\" checked=\"yes\">%s"
+         "</td>"
          "<tr>"
          "<td><input type=\"submit\" value=\"%s\"></td>"
          "<td>&nbsp;</td>"
          "</tr>"
          "</table>"
          "</form>",
-         _("Login"), _("Password"), _("Submit"));
+         _("Login"), _("Password"),
+         _("Session support"), _("No session"),
+         _("In forms"), _("In URL"), _("In cookies"),
+         _("Submit"));
   client_put_footer();
   return 0;
 }
 
 static int
-ask_passwd(void)
+get_cookie(unsigned char const *var, unsigned long long *p_val)
 {
-  // FIXME: support cookies
-  return !cgi_param("password") || !cgi_param("login");
+  unsigned char const *cookie_str, *s, *p;
+  unsigned char *nstr, *vstr;
+  size_t cookie_len;
+  int n;
+  unsigned long long val;
+
+  if (!(cookie_str = getenv("HTTP_COOKIE"))) return 0;
+  cookie_len = strlen(cookie_str);
+  nstr = alloca(cookie_len + 10);
+  vstr = alloca(cookie_len + 10);
+  s = cookie_str;
+  while (1) {
+    while (isspace(*s)) s++;
+    if (!*s || *s == '=') return 0;
+    memset(nstr, 0, cookie_len + 10);
+    memset(vstr, 0, cookie_len + 10);
+    p = s;
+    while (*s && !isspace(*s) && *s != ';' && *s != '=') s++;
+    if (!*s || *s == ';') return 0;
+    memcpy(nstr, p, s - p);
+    while (*s && isspace(*s)) s++;
+    if (!*s || *s != '=') return 0;
+    s++;
+    while (*s && isspace(*s)) s++;
+    p = s;
+    while (*s && !isspace(*s) && *s != ';' && *s != '=') s++;
+    if (*s == '=') return 0;
+    memcpy(vstr, p, s - p);
+    while (*s && isspace(*s)) s++;
+    if (*s == ';') s++;
+
+    // nstr - name of the cookie, vstr - value
+    if (strcmp(nstr, var) != 0) continue;
+    if (sscanf(vstr, "%llx%n", &val, &n) != 1 || vstr[n]) continue;
+    if (!val) continue;
+
+    if (p_val) *p_val = val;
+    return 1;
+  }
 }
 
-static int
-check_passwd(void)
+static void
+open_userlist_server(void)
 {
-  unsigned char *login = cgi_param("login");
-  unsigned char *passwd = cgi_param("password");
-  int r;
-  
-  client_login = login;
-  client_password = passwd;
-  if (!login || !passwd) return 0;
-
   if (!userlist_conn) {
     if (!(userlist_conn = userlist_clnt_open(global->socket_path))) {
+      set_cookie_if_needed();
       client_put_header(global->charset, _("Server is down"));
       printf("<p>%s</p>",
              _("The server is down. Try again later."));
@@ -283,31 +413,175 @@ check_passwd(void)
       exit(0);
     }
   }
+}
 
+static void
+permission_denied(void)
+{
+  set_cookie_if_needed();
+  client_put_header(global->charset, _("Permission denied"));
+  printf("<p>%s</p>",
+         "Permission denied. You have typed invalid login, invalid password,"
+         " or do not have enough privileges.");
+  client_put_footer();
+  exit(0);
+}
+static void
+fatal_server_error(int r)
+{
+  set_cookie_if_needed();
+  client_put_header(global->charset, _("Server error"));
+  printf("<p>Server error: %s</p>", userlist_strerror(-r));
+  client_put_footer();
+  exit(0);
+}
+static int
+is_auth_error(int r)
+{
+  return r == -ULS_ERR_INVALID_LOGIN
+    || r == -ULS_ERR_INVALID_PASSWORD
+    || r == -ULS_ERR_NO_PERMS
+    || r == -ULS_ERR_NO_COOKIE
+    || r == -ULS_ERR_BAD_CONTEST_ID;
+}
+
+static int
+get_session_id(unsigned char const *var, unsigned long long *p_val)
+{
+  unsigned char const *str;
+  unsigned long long val;
+  int n;
+
+  if (!var) return 0;
+  if (!(str = cgi_param(var))) return 0;
+  if (sscanf(str, "%llx%n", &val, &n) != 1 || str[n]) return 0;
+  if (!val) return 0;
+
+  if (p_val) *p_val = val;
+  return 1;
+}
+
+static void
+client_put_refresh_header(unsigned char const *coding,
+                          unsigned char const *url,
+                          int interval,
+                          unsigned char const *format, ...)
+{
+  va_list args;
+
+  if (!coding) coding = "iso8859-1";
+
+  va_start(args, format);
+  fprintf(stdout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>\n", coding, coding, interval, url);
+  vfprintf(stdout, format, args);
+  fputs("\n</title></head><body><h1>\n", stdout);
+  vfprintf(stdout, format, args);
+  fputs("\n</h1>\n", stdout);
+}
+
+static int
+authentificate(void)
+{
+  unsigned long long session_id;
+  unsigned char const *sid_mode_str;
+  int r;
+
+  /* read and parse session mode */
+  sid_mode_str = cgi_param("sid_mode");
+  client_sid_mode = -1;
+  if (sid_mode_str) {
+    int x, n = 0;
+    if (sscanf(sid_mode_str, "%d%n", &x, &n) == 1 && !sid_mode_str[n]
+        && x >= SID_DISABLED && x <= SID_COOKIE) {
+      client_sid_mode = x;
+    }
+  }
+
+  if ((client_sid_mode == -1 || client_sid_mode == SID_COOKIE)
+      && get_cookie("MID", &session_id)) {
+    client_cookie = session_id;
+    open_userlist_server();
+    r = userlist_clnt_priv_cookie(userlist_conn, client_ip, global->contest_id,
+                                  session_id,
+                                  0 /* locale_id */,
+                                  priv_level, &client_user_id,
+                                  0, /* p_contest_id */
+                                  0 /* p_locale_id */,
+                                  &priv_level, &client_login, &client_name);
+    if (r >= 0) {
+      client_sid_mode = SID_COOKIE;
+      client_sid = client_cookie;
+      client_password = "";
+      return 1;
+    }
+    if (!is_auth_error(r)) fatal_server_error(r);
+    client_cookie = 0;
+    need_set_cookie = 1;
+  }
+
+  if ((client_sid_mode == -1 || client_sid_mode == SID_EMBED
+      || client_sid_mode == SID_URL)
+      && get_session_id("SID", &session_id)) {
+    open_userlist_server();
+    r = userlist_clnt_priv_cookie(userlist_conn, client_ip, global->contest_id,
+                                  session_id,
+                                  0 /* locale_id */,
+                                  priv_level, &client_user_id,
+                                  0 /* p_contest_id */,
+                                  0 /* p_locale_id */,
+                                  &priv_level, &client_login, &client_name);
+    if (r >= 0) {
+      if (client_sid_mode == -1) client_sid_mode = SID_URL;
+      client_sid = session_id;
+      client_password = "";
+      return 1;
+    }
+    if (!is_auth_error(r)) fatal_server_error(r);
+  }
+
+  client_login = cgi_param("login");
+  client_password = cgi_param("password");
+  if (!client_login || !client_password) {
+    display_enter_password();
+    exit(0);
+  }
+
+  // set default behavior
+  if (client_sid_mode == -1) {
+    client_sid_mode = SID_COOKIE;
+  }
+
+  open_userlist_server();
   r = userlist_clnt_priv_login(userlist_conn, client_ip, global->contest_id,
                                0, /* locale_id */
-                               0, /* use_cookies */
-                               priv_level, login, passwd,
+                               client_sid_mode != SID_DISABLED,
+                               priv_level, client_login, client_password,
                                &client_user_id,
-                               0, /* p_cookie */
+                               &client_sid,
                                0, /* p_locale_id */
                                &priv_level,
                                &client_name);
-  if (r == -ULS_ERR_INVALID_LOGIN || r == -ULS_ERR_INVALID_PASSWORD
-      || r == -ULS_ERR_NO_PERMS) {
-    client_put_header(global->charset, _("Permission denied"));
-    printf("<p>%s</p>",
-           "Permission denied. You have typed invalid login, invalid password,"
-           " or do not have enough privileges.");
-    client_put_footer();
+  if (r < 0 && is_auth_error(r)) permission_denied();
+  if (r < 0) fatal_server_error(r);
+  if (client_sid_mode == SID_COOKIE) {
+    client_cookie = client_sid;
+    need_set_cookie = 1;
+  }
+
+  if (client_sid_mode == SID_URL || client_sid_mode == SID_COOKIE) {
+    unsigned char hbuf[128];
+
+    hyperref(hbuf, sizeof(hbuf), client_sid_mode, client_sid, self_url, 0);
+    set_cookie_if_needed();
+    client_put_refresh_header(global->charset, hbuf, 1,
+                              "Login successful");
+    printf("<p>%s</p>", _("Login successfull. Now entering the main page."));
+    printf("<p>If automatic updating does not work, click on <a href=\"%s\">this</a> link.</p>", hbuf);
+           
+    //client_put_footer();
     exit(0);
   }
-  if (r < 0) {
-    client_put_header(global->charset, _("Server error"));
-    printf("<p>Server error: %s</p>", userlist_strerror(-r));
-    client_put_footer();
-    exit(0);
-  }
+
   return 1;
 }
 
@@ -316,36 +590,79 @@ print_refresh_button(char const *str)
 {
   if (!str) str = _("Refresh");
 
-  puts(form_start_simple);
-  printf("<input type=\"submit\" name=\"refresh\" value=\"%s\">", str);
-  puts("</form>");
+  if (client_sid_mode == SID_URL) {
+    printf("<a href=\"%s?sid_mode=%d&SID=%016llx\">%s</a>",
+           self_url, SID_URL, client_sid, str);
+  } else if (client_sid_mode == SID_COOKIE) {
+    printf("<a href=\"%s?sid_mode=%d\">%s</a>", self_url, SID_COOKIE, str);
+  } else {
+    puts(form_start_simple);
+    printf("<input type=\"submit\" name=\"refresh\" value=\"%s\">", str);
+    puts("</form>");
+  }
 }
 
 static void
 print_standings_button(char const *str)
 {
-  if (!str) str = _("standings");
-  puts(form_start_simple);
-  printf("<input type=\"submit\" name=\"stand\" value=\"%s\">", str);
-  puts("</form>");
+  if (!str) str = _("Standings");
+
+  if (client_sid_mode == SID_URL) {
+    printf("<a href=\"%s?sid_mode=%d&SID=%016llx&stand=1\">%s</a>",
+           self_url, SID_URL, client_sid, str);
+  } else if (client_sid_mode == SID_COOKIE) {
+    printf("<a href=\"%s?sid_mode=%d&stand=1\">%s</a>", self_url,
+           SID_COOKIE, str);
+  } else {
+    puts(form_start_simple);
+    printf("<input type=\"submit\" name=\"stand\" value=\"%s\">", str);
+    puts("</form>");
+  }
 }
 
 static void
 print_update_button(char const *str)
 {
-  if (!str) str = _("update public standings");
+  if (!str) str = _("Update public standings");
   puts(form_start_simple);
-  printf("<input type=\"submit\" name=\"update\" value=\"%s\">", str);
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+         ACTION_UPDATE_STANDINGS_1, str);
   puts("</form>");
 }
 
 static void
 print_teamview_button(char const *str)
 {
-  if (!str) str = _("view teams");
-  puts(form_start_simple);
-  printf("<input type=\"submit\" name=\"viewteams\" value=\"%s\">", str);
-  puts("</form>");
+  if (!str) str = _("View teams");
+
+  if (client_sid_mode == SID_URL) {
+    printf("<a href=\"%s?sid_mode=%d&SID=%016llx&viewteams=1\">%s</a>",
+           self_url, SID_URL, client_sid, str);
+  } else if (client_sid_mode == SID_COOKIE) {
+    printf("<a href=\"%s?sid_mode=%d&viewteams=1\">%s</a>", self_url,
+           SID_COOKIE, str);
+  } else {
+    puts(form_start_simple);
+    printf("<input type=\"submit\" name=\"viewteams\" value=\"%s\">", str);
+    puts("</form>");
+  }
+}
+
+static void
+print_logout_button(unsigned char const *str)
+{
+  if (!str) str = _("Log out");
+
+  if (client_sid_mode == SID_URL) {
+    printf("<a href=\"%s?sid_mode=%d&SID=%016llx&logout=1\">%s</a>",
+           self_url, SID_URL, client_sid, str);
+  } else if (client_sid_mode == SID_COOKIE) {
+    printf("<a href=\"%s?sid_mode=%d&logout=1\">%s</a>", self_url,
+           SID_COOKIE, str);
+  } else {
+    puts(form_start_simple);
+    printf("<input type=\"submit\" name=\"logout\" value=\"%s\"></form>", str);
+  }
 }
 
 static void
@@ -353,7 +670,8 @@ print_reset_button(char const *str)
 {
   if (!str) str = _("Reset the contest!");
   puts(form_start_simple);
-  printf("<input type=\"submit\" name=\"resetall\" value=\"%s\"></form>", str);
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+         ACTION_RESET_1, str);
 }
 
 static void
@@ -361,8 +679,8 @@ print_regenerate_button(unsigned char const *str)
 {
   if (!str) str = _("Regenerate user passwords!");
   puts(form_start_simple);
-  printf("<input type=\"submit\" name=\"regenerate\" value=\"%s\"></form>",
-         str);
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+         ACTION_GENERATE_PASSWORDS_1, str);
 }
 
 static void
@@ -370,7 +688,8 @@ print_suspend_button(char const *str)
 {
   if (!str) str = _("Suspend clients");
   puts(form_start_simple);
-  printf("<input type=\"submit\" name=\"suspend\" value=\"%s\"></form>", str);
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+         ACTION_SUSPEND, str);
 }
 
 static void
@@ -378,7 +697,8 @@ print_resume_button(char const *str)
 {
   if (!str) str = _("Resume clients");
   puts(form_start_simple);
-  printf("<input type=\"submit\" name=\"resume\" value=\"%s\"></form>", str);
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+         ACTION_RESUME, str);
 }
 
 static void
@@ -427,83 +747,98 @@ read_view_params(void)
 }
 
 static void
+operation_status_page(int code, unsigned char const *msg)
+{
+  unsigned char href[128];
+
+  if (client_sid_mode != SID_URL && client_sid_mode != SID_COOKIE) return;
+  set_cookie_if_needed();
+  if (code < 0) {
+    client_put_header(global->charset, "Operation failed");
+    if (code != -1 || !msg) msg = protocol_strerror(-code);
+    printf("<h2><font color=\"red\">%s</font></h2>\n", msg);
+  } else {
+    hyperref(href, sizeof(href), client_sid_mode, client_sid, self_url, 0);
+    client_put_refresh_header(global->charset, href, 1,
+                              "Operation successfull");
+    printf("<h2>Operation completed successfully</h2>");
+  }
+  print_refresh_button(_("Back"));
+  client_put_footer();
+  exit(0);
+}
+
+static void
 start_if_asked(void)
 {
-  char *sstr = cgi_param("start");
-  char  buf[64];
-  char  tname[64];
+  int r;
 
-  if (!sstr) return;
-  sprintf(buf, "START\n");
-  sprintf(tname, "%lu%d", time(0), getpid());
-  /* FIXME: be less ignorant about completion state */
-  client_transaction(tname, buf, 0, 0);
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_START, 0, 0);
+  operation_status_page(r, 0);
   force_recheck_status = 1;
 }
 
-void
+static void
 stop_if_asked(void)
 {
-  char buf[64];
-  char tname[64];
+  int r;
 
-  if (!cgi_param("stop")) return;
-  sprintf(buf, "STOP\n");
-  /* FIXME: be less ignorant about completion state */
-  client_transaction(client_packet_name(tname), buf, 0, 0);
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_STOP, 0, 0);
+  operation_status_page(r, 0);
   force_recheck_status = 1;
 }
 
-void
+static void
 update_standings_if_asked(void)
 {
-  char buf[64];
-  char tname[64];
+  int r;
 
-  if (!cgi_param("update")) return;
-  sprintf(buf, "UPDATE\n");
-  client_transaction(client_packet_name(tname), buf, 0, 0);
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_UPDATE_STAND, 0, 0);
+  operation_status_page(r, 0);
   force_recheck_status = 1;
 }
 
-void
+static void
 changedur_if_asked(void)
 {
-  char *sstr = cgi_param("changedur");
-  char *sdur = cgi_param("dur");
-  int   dh = 0, dm = 0;
-  char  buf[64];
-  char  tname[64];
+  unsigned char *s;
+  int dh, dm, n, r;
+  time_t d;
 
-  if (!sstr) return;
-  if (sscanf(sdur, "%d:%d", &dh, &dm) != 2) {
+  if (!(s = cgi_param("dur"))) goto invalid_dur;
+  if (sscanf(s, "%d:%d%n", &dh, &dm, &n) != 2 || s[n]) {
     dm = 0;
-    if (sscanf(sdur, "%d", &dh) != 1) return;
+    if (sscanf(s, "%d%n", &dh, &n) != 1 || s[n]) goto invalid_dur;
   }
-  sprintf(buf, "TIME %d\n", dh * 60 + dm);
-  /* FIXME: be less ignorant about completion state */
-  client_transaction(client_packet_name(tname), buf, 0, 0);
+  d = dh * 60 + dm;
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_DURATION,
+                            &d, sizeof(d));
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+  return;
+
+ invalid_dur:
+  operation_status_page(-1, "Invalid duration specification");
   force_recheck_status = 1;
 }
 
-void
+static void
 sched_if_asked(void)
 {
-  char *s;
-  char  buf[64];
-  char  tname[64];
-
-  int   h, m;
+  int   h = 0, m = 0, n, r;
   time_t     tloc;
   time_t     sloc;
   struct tm *ploc;
+  unsigned char *s;
 
-  if (!cgi_param("reschedule")) return;
-  s = cgi_param("sched_time");
-  if (!s) return;
-  if (sscanf(s, "%d:%d", &h, &m) != 2) {
+  if (!(s = cgi_param("sched_time"))) goto invalid_time;
+  if (scanf(s, "%d:%d%n", &h, &m, &n) != 2 || s[n]) {
+    if (scanf(s, "%d%n", &h, &n) != 1 || s[n]) goto invalid_time;
     m = 0;
-    if (sscanf(s, "%d", &h) != 1) return;
   }
 
   time(&tloc);
@@ -512,675 +847,485 @@ sched_if_asked(void)
   ploc->tm_min = m;
   ploc->tm_sec = 0;
   sloc = mktime(ploc);
-  if (sloc == (time_t) -1) return;
+  if (sloc == (time_t) -1) goto invalid_time;
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_SCHEDULE,
+                            &sloc, sizeof(sloc));
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+  return;
 
-  sprintf(buf, "SCHED %lu\n", sloc);
-  /* FIXME: be less ignorant about completion state */
-  client_transaction(client_packet_name(tname), buf, 0, 0);
+ invalid_time:
+  operation_status_page(-1, "Invalid time specification");
   force_recheck_status = 1;
 }
 
-void
+static void
 change_status_if_asked()
 {
-  char *s = cgi_nname("change_", 6);
-  char *s1;
-  int   runid, n, status;
-  char  p1[32];
-  char  cmd[32];
-  char  pname[32];
+  unsigned char *s;
+  unsigned char var_name[64];
+  int run_id, n, status, r;
 
-  if (!s) return;
-  if (sscanf(s, "change_%d%n", &runid, &n) != 1 || s[n]) return;
-  if (runid < 0 || runid >= server_total_runs) return;
-  sprintf(p1, "stat_%d", runid);
-  s1 = cgi_param(p1);
-  if (!s1) return;
-  if (sscanf(s1, "%d%n", &status, &n) != 1 || s1[n]) return;
+  if (!(s = cgi_nname("change_", 7))) return;
+
+  if (sscanf(s, "change_%d%n", &run_id, &n) != 1 || s[n])
+    goto invalid_operation;
+  if (run_id < 0 || run_id >= server_total_runs)
+    goto invalid_operation;
+  snprintf(var_name, sizeof(var_name), "stat_%d", run_id);
+  if (!(s = cgi_param(var_name)))
+    goto invalid_operation;
+  if (sscanf(s, "%d%n", &status, &n) != 1 || s[n])
+    goto invalid_operation;
   /* FIXME: symbolic constants should be used */
   /* We don't have information about scoring mode, so allow any */
-  if (status < 0 || status > 99 || (status > 9 && status < 99)
-      || status == 6) return;
+  if (status < 0 || status > 99 || (status > 9 && status < 99) || status == 6)
+    goto invalid_operation;
 
-  sprintf(cmd, "CHGSTAT %d %d %d %d\n", runid, status, -1, -1);
-  /* FIXME: be less ignorant about completion state */
-  client_transaction(client_packet_name(pname), cmd, 0, 0);
+  open_serve();
+  r = serve_clnt_edit_run(serve_socket_fd, run_id,
+                          PROT_SERVE_RUN_STATUS_SET,
+                          0, 0, 0, status, 0);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+  return;
+
+ invalid_operation:
+  operation_status_page(-1, "Invalid operation");
   force_recheck_status = 1;
 }
 
-void
+static void
+change_status()
+{
+  unsigned char *s;
+  int run_id, n, status, r;
+
+  if (!(s = cgi_param("run_id"))
+      || sscanf(s, "%d%n", &run_id, &n) != 1
+      || s[n]
+      || run_id < 0
+      || run_id >= server_total_runs)
+    goto invalid_operation;
+  if (!(s = cgi_param("status")))
+    goto invalid_operation;
+  if (sscanf(s, "%d%n", &status, &n) != 1 || s[n])
+    goto invalid_operation;
+  /* FIXME: symbolic constants should be used */
+  /* We don't have information about scoring mode, so allow any */
+  if (status < 0 || status > 99 || (status > 9 && status < 99) || status == 6)
+    goto invalid_operation;
+
+  open_serve();
+  r = serve_clnt_edit_run(serve_socket_fd, run_id,
+                          PROT_SERVE_RUN_STATUS_SET,
+                          0, 0, 0, status, 0);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+  return;
+
+ invalid_operation:
+  operation_status_page(-1, "Invalid operation");
+  force_recheck_status = 1;
+}
+
+static void
+change_problem()
+{
+  unsigned char *s;
+  int run_id, n, prob_id, r;
+
+  if (!(s = cgi_param("run_id"))
+      || sscanf(s, "%d%n", &run_id, &n) != 1
+      || s[n]
+      || run_id < 0
+      || run_id >= server_total_runs)
+    goto invalid_operation;
+  if (!(s = cgi_param("problem")))
+    goto invalid_operation;
+  if (sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n])
+    goto invalid_operation;
+  if (prob_id <= 0)
+    goto invalid_operation;
+
+  open_serve();
+  r = serve_clnt_edit_run(serve_socket_fd, run_id,
+                          PROT_SERVE_RUN_PROB_SET,
+                          0, prob_id, 0, 0, 0);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+  return;
+
+ invalid_operation:
+  operation_status_page(-1, "Invalid operation");
+  force_recheck_status = 1;
+}
+
+static void
+change_language()
+{
+  unsigned char *s;
+  int run_id, n, lang_id, r;
+
+  if (!(s = cgi_param("run_id"))
+      || sscanf(s, "%d%n", &run_id, &n) != 1
+      || s[n]
+      || run_id < 0
+      || run_id >= server_total_runs)
+    goto invalid_operation;
+  if (!(s = cgi_param("language")))
+    goto invalid_operation;
+  if (sscanf(s, "%d%n", &lang_id, &n) != 1 || s[n])
+    goto invalid_operation;
+  if (lang_id <= 0 || lang_id > 255)
+    goto invalid_operation;
+
+  open_serve();
+  r = serve_clnt_edit_run(serve_socket_fd, run_id,
+                          PROT_SERVE_RUN_LANG_SET,
+                          0, 0, lang_id, 0, 0);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+  return;
+
+ invalid_operation:
+  operation_status_page(-1, "Invalid operation");
+  force_recheck_status = 1;
+}
+
+static void
+change_user_id()
+{
+  unsigned char *s;
+  int run_id, n, user_id, r;
+
+  if (!(s = cgi_param("run_id"))
+      || sscanf(s, "%d%n", &run_id, &n) != 1
+      || s[n]
+      || run_id < 0
+      || run_id >= server_total_runs)
+    goto invalid_operation;
+  if (!(s = cgi_param("run_user_id")))
+    goto invalid_operation;
+  if (sscanf(s, "%d%n", &user_id, &n) != 1 || s[n])
+    goto invalid_operation;
+  if (user_id <= 0)
+    goto invalid_operation;
+
+  open_serve();
+  r = serve_clnt_edit_run(serve_socket_fd, run_id,
+                          PROT_SERVE_RUN_UID_SET,
+                          user_id, 0, 0, 0, 0);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+  return;
+
+ invalid_operation:
+  operation_status_page(-1, "Invalid operation");
+  force_recheck_status = 1;
+}
+
+static void
+change_user_login()
+{
+  unsigned char *user_login, *s;
+  int run_id, r, n;
+
+  if (!(s = cgi_param("run_id"))
+      || sscanf(s, "%d%n", &run_id, &n) != 1
+      || s[n]
+      || run_id < 0
+      || run_id >= server_total_runs)
+    goto invalid_operation;
+  if (!(user_login = cgi_param("run_user_login")))
+    goto invalid_operation;
+
+  open_serve();
+  r = serve_clnt_edit_run(serve_socket_fd, run_id,
+                          PROT_SERVE_RUN_LOGIN_SET,
+                          0, 0, 0, 0, user_login);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+  return;
+
+ invalid_operation:
+  operation_status_page(-1, "Invalid operation");
+  force_recheck_status = 1;
+}
+
+static void
 view_source_if_asked()
 {
   char *s = cgi_nname("source_", 7);
-  int   runid, n;
-  char  cmd[64];
-  char  pname[64];
-  char *src = 0;
-  int   slen;
+  int   runid, n, r;
 
   if (!s) return;
   if (sscanf(s, "source_%d%n", &runid, &n) != 1
       || (s[n] && s[n] != '.')) return;
   if (runid < 0 || runid >= server_total_runs) return;
 
-  sprintf(cmd, "SRC %d\n", runid);
-  client_transaction(client_packet_name(pname), cmd, &src, &slen);
-
-  printf("Content-Type: text/html; charset=%s\n\n", global->charset);
-  printf("<html><head><title>%s %d</title></head><body>\n",
-         _("View source for run"),
-         runid);
-  printf("<h1>%s %d</h1>\n", _("View source for run"), runid);
-  print_refresh_button(_("back"));
-  printf("<hr>");
-
-  for (s = src; slen; s++, slen--) putchar(*s);
-  printf("<hr>");
-  print_refresh_button(_("back"));
-  printf("</body></html>");
-
-  xfree(src);
+  set_cookie_if_needed();
+  client_put_header(global->charset, "Source for run %d", runid);
+  fflush(stdout);
+  open_serve();
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_SOURCE, runid,
+                      client_sid_mode, self_url, hidden_vars);
+  if (r < 0) {
+    printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
+  }
+  client_put_footer();
   exit(0);
 }
 
-void
+static void
 view_report_if_asked()
 {
   char *s = cgi_nname("report_", 7);
-  int   runid, n;
-  char  cmd[64];
-  char  pname[64];
-  char *src = 0;
-  int   slen = 0;
+  int   runid, n, r;
 
   if (!s) return;
   if (sscanf(s, "report_%d%n", &runid, &n) != 1
       || (s[n] && s[n] != '.')) return;
   if (runid < 0 || runid >= server_total_runs) return;
 
-  sprintf(cmd, "REPORT %d\n", runid);
-  client_transaction(client_packet_name(pname), cmd, &src, &slen);
-
-  printf("Content-Type: text/html; charset=%s\n\n", global->charset);
-  printf("<html><head><title>%s %d</title></head><body>\n",
-         _("View report for run"), runid);
-  printf("<h1>%s %d</h1>\n", _("View report for run"), runid);
-  print_refresh_button(_("back"));
-  printf("<hr>");
-
-  for (s = src; slen; s++, slen--) putchar(*s);
-  printf("<hr>");
-  print_refresh_button(_("back"));
-  printf("</body></html>");
-
-  xfree(src);
-  exit(0);
-}
-
-/*
- * this is experimental: html generated on client side.
- * file format for teams view:
- *   <number of teams: int>
- * for each team the following information is passed
- *   <table line length> <space> <table line>
- */
-void
-view_teams_if_asked(int forced_flag)
-{
-  char cmd[64], pk_name[64] = { 0 };
-  char *teams = 0;
-  int teams_len = 0;
-  int nteams;
-  char *p;
-  int i, n;
-
-  if (!forced_flag && !cgi_param("viewteams")) return;
-
-  sprintf(cmd, "%cTEAMS\n", (priv_level == PRIV_LEVEL_ADMIN)?'M':'J');
-  client_transaction(pk_name, cmd, &teams, &teams_len);
-  client_put_header(global->charset, "Teams information");
-  printf("<table><tr><td>");
-  print_refresh_button(_("back"));
-  printf("</td></tr></table><hr>");
-  printf("<h2>%s</h2>\n", _("Existing teams"));
-  if (sscanf(teams, "%d%n", &nteams, &n) != 1) goto _format_error;
-  p = teams + n;
-  if (nteams <= 0 || nteams > 10000) goto _format_error;
-  printf("<table border=\"1\"><tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th>",
-         _("Team login"), _("Team id"), _("Team name"), _("Flags"));
-  if (priv_level == PRIV_LEVEL_ADMIN) {
-    printf("<th>%s</th>", _("Change"));
+  set_cookie_if_needed();
+  client_put_header(global->charset, "Report for run %d", runid);
+  fflush(stdout);
+  open_serve();
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_REPORT, runid,
+                      client_sid_mode, self_url, hidden_vars);
+  if (r < 0) {
+    printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
   }
-  printf("</tr>\n");
-  for (i = 0; i < nteams; i++) {
-    int tll;
-    char *tl = 0;
-
-    if (sscanf(p, "%d%n", &tll, &n) != 1) goto _format_error;
-    if (tll <= 0 || tll > 2048) goto _format_error;
-    p += n;
-    if (*p++ != ' ') goto _format_error;
-    XCALLOC(tl, tll + 1);
-    memcpy(tl, p, tll);
-    tl[tll] = 0;
-    p += tll;
-
-    printf("%s%s</form>\n", form_start_simple, tl);
-    xfree(tl);
-  }
-  printf("</table>\n");
-  printf("<hr><h2>%s</h2>%s<table>",
-         _("Add new team"), form_start_simple);
-  printf("<tr><td>%s:</td><td><input type=\"text\" name=\"tnewid\" size=\"3\"></td><td>(%s)</td></tr>\n",
-         _("Team id"),
-         _("if empty, assigned automatically"));
-  printf("<tr><td>%s:</td><td><input type=\"text\" name=\"tnewlogin\" size=\"32\"></td></tr>\n",
-         _("Team login"));
-  printf("<tr><td>%s:</td><td><input type=\"text\" name=\"tnewname\" size=\"32\"></td></tr>\n",
-         _("Team name"));
-  printf("<tr><td>%s:</td><td><input type=\"password\" name=\"tnewpass1\" size=\"16\"></td></tr>\n",
-         _("Password"));
-  printf("<tr><td>%s:</td><td><input type=\"password\" name=\"tnewpass2\" size=\"16\"></td></tr>\n",
-         _("Retype password"));
-  printf("<tr><td>%s:</td><td><select name=\"tnewvis\"><option>%s<option>%s</select></td></tr>\n",
-         _("Visible?"), _("yes"), _("no"));
-  printf("<tr><td>%s:</td><td><select name=\"tnewban\"><option>%s<option>%s</select></td></tr>\n",
-         _("Banned?"), _("no"), _("yes"));
-  printf("<tr><td>&nbsp;</td><td><input type=\"submit\" name=\"tnewteam\" value=\"%s\"></td><tr>\n", _("Add!"));
-  printf("</table></form>\n");
-  printf("<hr><table><tr><td>");
-  print_refresh_button(_("back"));
-  printf("</td></tr></table>");
-  client_put_footer();
-  exit(0);
- _format_error:
-  printf("</td></tr></table></form><hr><b>Format error!</b>");
-  printf("<hr><table><tr><td>");
-  print_refresh_button(_("back"));
-  printf("</td></tr></table>");
-  client_put_footer();
-  exit(0);
-}
-
-void
-view_one_team_if_asked(int forced_teamid, char const *reply)
-{
-  char *s;
-  char  cmd[64], pk_name[64] = { 0 };
-  int   teamid, n;
-  char *team_data = 0;
-  int   team_len = 0;
-
-  if (forced_teamid <= 0) {
-    if (!(s = cgi_nname("team_", 5))) return;
-    if (sscanf(s, "team_%d%n", &teamid, &n) != 1 || s[n]) return;
-    if (teamid <= 0 || teamid > 10000) return;
-  } else {
-    teamid = forced_teamid;
-  }
-  // FIXME: magic
-  sprintf(cmd, "%s %d", "VTEAM", teamid);
-  client_transaction(pk_name, cmd, &team_data, &team_len);
-  client_put_header(global->charset, "Team %d information", teamid);
-  printf("<table><tr><td>");
-  print_refresh_button(_("top"));
-  printf("</td><td>");
-  print_teamview_button(_("back"));
-  printf("</td></tr></table><hr>\n");
-  if (reply) {
-    /*
-    printf("<h2>%s</h2>\n%s\n",
-           _("Last command completion status"), reply);
-    */
-    printf("%s<hr>\n", reply);
-  }
-  printf("%s%s</form>\n", form_start_simple, team_data);
-  printf("<hr><table><tr><td>");
-  print_refresh_button(_("top"));
-  printf("</td><td>");
-  print_teamview_button(_("back"));
-  printf("</td></tr></table>\n");
-  client_put_footer();
-  exit(0);
-}
-
-void
-do_team_action_if_asked(void)
-{
-  char cmd[64], pk_name[64] = { 0 };
-  char *reply = 0;
-  int   reply_len = 0;
-  char *stid;
-  int   n, teamid;
-  char *reply1 = 0;
-
-  if (!(stid = cgi_param("teamid"))) return;
-  if (sscanf(stid, "%d %n", &teamid, &n) != 1
-      || stid[n] || teamid <= 0 || teamid > 10000) return;
-
-  if (cgi_param("tchglogin")) {
-    // change team's login
-    char *new_login = cgi_param("tlogin");
-    char *b64_login;
-    if (!new_login) {
-      reply1 = _("New team login not specified");
-      goto _failed;
-    }
-    b64_login = alloca(strlen(new_login) * 2 + 16);
-    base64_encode_str(new_login, b64_login);
-    if (strlen(b64_login) > 48) {
-      reply1 = _("New team login is too long");
-      goto _failed;
-    }
-    sprintf(cmd, "CHGLOGIN %d %s", teamid, b64_login);
-  } else if (cgi_param("tchgname")) {
-    // change team's name
-    char *new_name = cgi_param("tname");
-    char *b64_name;
-    if (!new_name) {
-      reply1 = _("New team name not specified");
-      goto _failed;
-    }
-    b64_name = alloca(strlen(new_name) * 2 + 16);
-    base64_encode_str(new_name, b64_name);
-    if (strlen(b64_name) > 48) {
-      reply1 = _("New team name is too long");
-      goto _failed;
-    }
-    sprintf(cmd, "CHGNAME %d %s", teamid, b64_name);
-  } else if (cgi_param("tbanchg")) {
-    // change team's ban status
-    sprintf(cmd, "CHGBAN %d", teamid);
-  } else if (cgi_param("tinvchg")) {
-    // change team's visibility status
-    sprintf(cmd, "CHGVIS %d", teamid);
-  } else if (cgi_param("tchgpwd")) {
-    // change team's password
-    char *p1 = cgi_param("tpasswd1");
-    char *p2 = cgi_param("tpasswd2");
-    char b64_p[64];
-    if (!p1 || !p2 || !*p1 || !*p2) {
-      reply1 = _("Passwords not specified");
-    }
-    if (strcmp(p1, p2)) {
-      reply1 = _("Passwords do not match");
-      goto _failed;
-    }
-    if (strlen(p1) > 16) {
-      reply1 = _("Password is too long (>16 characters)");
-      goto _failed;
-    }
-    base64_encode_str(p1, b64_p);
-    sprintf(cmd, "CHGPASSWD %d %s", teamid, b64_p);
-  } else {
-    return;
-  }
-
-  client_transaction(pk_name, cmd, &reply, &reply_len);
-  if (!strcmp(reply, "OK")) {
-    reply = "<h2>Operation complete</h2><p>The last operation completed successfully</p>";
-  }
-  view_one_team_if_asked(teamid, reply);
-
- _failed:
-  XALLOCA(reply, strlen(reply1) + 64);
-  sprintf(reply, "<h2>%s</h2>%s<p>",
-          _("Operation is not performed"), reply1);
-  view_one_team_if_asked(teamid, reply);
-}
-
-void
-add_team_if_asked(void)
-{
-  char *reply = 0;
-  int   reply_len = 0;
-  char *reply1 = 0;
-  char *snewid, *snewlogin, *snewname, *snewpass1, *snewpass2, *svis, *sban;
-  int   vis, ban;
-  int   newid, n;
-  char  cmd[64], pk_name[64] = { 0 };
-  int   approx_len;
-  char *msg;
-  int   msg_len;
-
-  if (!(cgi_param("tnewteam"))) return;
-  if (!(snewid = cgi_param("tnewid")) || !*snewid) {
-    newid = 0;
-  } else {
-    if (sscanf(snewid, "%d %n", &newid, &n) != 1
-        || snewid[n] || newid <= 0 || newid > 10000) {
-      reply1 = _("Invalid team id");
-      goto _failed;
-    }
-  }
-  if (!(snewlogin = cgi_param("tnewlogin"))) {
-    reply1 = _("Team login not specified");
-    goto _failed;
-  }
-  if (!(snewname = cgi_param("tnewname"))) {
-    reply1 = _("Team name not specified");
-    goto _failed;
-  }
-  snewpass1 = cgi_param("tnewpass1");
-  snewpass2 = cgi_param("tnewpass2");
-  if (!snewpass1 || !snewpass2 || !*snewpass1 || !*snewpass2) {
-    reply1 = _("Password not specified");
-    goto _failed;
-  }
-  if (strcmp(snewpass1, snewpass2)) {
-    reply1 = _("Passwords do not match");
-    goto _failed;
-  }
-  vis = 1;
-  if ((svis = cgi_param("tnewvis"))) {
-    if (!strcmp(svis, "yes")) vis = 1;
-    else if (!strcmp(svis, "no")) vis = 0;
-    else {
-      reply = _("Invalid visible flag");
-      goto _failed;
-    }
-  }
-  ban = 0;
-  if ((sban = cgi_param("tnewban"))) {
-    if (!strcmp(sban, "yes")) ban = 1;
-    else if (!strcmp(sban, "no")) ban = 0;
-    else {
-      reply = _("Invalid banned flag");
-      goto _failed;
-    }
-  }
-
-  approx_len = strlen(snewlogin) + strlen(snewname) + strlen(snewpass1) + 128;
-  msg = alloca(approx_len);
-  msg_len = sprintf(msg, "%d %d %s %d %s %d %s %d %d\n",
-                   newid, strlen(snewlogin), snewlogin,
-                   strlen(snewname), snewname,
-                   strlen(snewpass1), snewpass1,
-                   vis, ban);
-
-  client_packet_name(pk_name);
-  generic_write_file(msg, msg_len, 0,
-                     global->judge_data_dir, pk_name, "");
-
-  sprintf(cmd, "NEWTEAM");
-  client_transaction(pk_name, cmd, &reply, &reply_len);
-  if (strcmp(reply, "OK")) goto _failed2;
-  view_teams_if_asked(1);
-  exit(0);
-
- _failed:  
-  XALLOCA(reply, strlen(reply1) + 64);
-  sprintf(reply, "<h2>%s</h2>%s<p>",
-          _("Operation is not performed"), reply1);
-
- _failed2:
-  client_put_header(global->charset, "Team add failed");
-  printf("%s<hr>\n", reply);
-  printf("<table><tr><td>");
-  print_refresh_button(_("top"));
-  printf("</td><td>");
-  print_teamview_button(_("back"));
-  printf("</td></tr></table>\n");
-  client_put_footer();
-  exit(0);
-}
-
-void
-view_standings_if_asked()
-{
-  char cmd[64], pk_name[64] = {0};
-  char *stand = 0;
-  int   stand_len = 0;
-  char *header = 0;
-  char *body   = 0;
-
-  if (!cgi_param("stand")) return;
-
-  sprintf(cmd, "%s\n", "STAND");
-  client_transaction(pk_name, cmd, &stand, &stand_len);
-  client_split(stand, 1, &header, &body, 0);
-
-  client_put_header(global->charset, "%s", header);
-
-  printf("<table><tr><td>");
-  print_refresh_button(_("back"));
-  printf("</td><td>");
-  print_standings_button(_("Refresh"));
-  printf("</td></tr></table>");
-
-  printf("%s", body);
-
-  printf("<table><tr><td>");
-  print_refresh_button(_("back"));
-  printf("</td><td>");
-  print_standings_button(_("Refresh"));
-  printf("</td></tr></table>");
-  client_put_footer();
-  exit(0);
-}
-
-void
-confirm_reset_if_asked(void)
-{
-  if (!cgi_param("resetall")) return;
-
-  client_put_header(global->charset, "Confirm contest reset");
-  printf("<table><tr><td>");
-  print_refresh_button(_("no"));
-  printf("</td><td>%s<input type=\"submit\" name=\"doresetall\" value=\"%s\">"
-         "</form></td></tr></table>", form_start_simple,
-         _("yes, reset the contest!"));
   client_put_footer();
   exit(0);
 }
 
 static void
-confirm_regenerate_if_asked(void)
+view_teams_if_asked(int forced_flag)
 {
-  if (!cgi_param("regenerate")) return;
+  int r;
 
-  client_put_header(global->charset, "Confirm user password generation");
-  printf("<table><tr><td>");
-  print_refresh_button(_("no"));
-  printf("</td><td>%s<input type=\"submit\" name=\"dogenerate\" value=\"%s\">"
-         "</form></td></tr></table>", form_start_simple,
-         _("yes, generate passwords!"));
-  client_put_footer();
-  exit(0);  
-}
+  if (!forced_flag && !cgi_param("viewteams")) return;
 
-void
-do_contest_reset_if_asked(void)
-{
-  char cmd[64];
-  char pkt_name[64];
-
-  if (!cgi_param("doresetall")) return;
-  // locale_id is not set currently
-  sprintf(cmd, "%s %d\n", "RESET", 0);
-  client_transaction(client_packet_name(pkt_name), cmd, 0, 0);
-  force_recheck_status = 1;
-}
-
-void
-do_generate_passwords_if_asked(void)
-{
-  char cmd[64];
-  char pkt_name[64];
-  char *reply = 0;
-  int reply_len = 0;
-
-  if (!cgi_param("dogenerate")) return;
-  sprintf(cmd, "%s %d\n", "GENPASSWD", 0);
-  client_transaction(client_packet_name(pkt_name), cmd, &reply, &reply_len);
-  client_put_header(global->charset, "New passwords");
-  print_refresh_button(_("back"));
-  printf("<hr>");
-  if (reply) {
-    printf("%s", reply);
+  set_cookie_if_needed();
+  client_put_header(global->charset, "Users list");
+  fflush(stdout);
+  open_serve();
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_USERS, 0,
+                      client_sid_mode, self_url, hidden_vars);
+  if (r < 0) {
+    printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
   }
   client_put_footer();
   exit(0);
 }
 
-void
+static void
+confirm_reset_if_asked(void)
+{
+  set_cookie_if_needed();
+  client_put_header(global->charset, "Confirm contest reset");
+  print_refresh_button(_("No"));
+  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+         "</form>", form_start_simple,
+         ACTION_RESET_2, _("Yes, reset the contest!"));
+  client_put_footer();
+  exit(0);
+}
+
+static void
+confirm_update_standings(void)
+{
+  set_cookie_if_needed();
+  client_put_header(global->charset, "Confirm update public standings");
+  printf("<p>");
+  print_refresh_button(_("No"));
+  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+         "</form></p>", form_start_simple, ACTION_UPDATE_STANDINGS_2,
+         _("Yes, update standings!"));
+  client_put_footer();
+  exit(0);  
+}
+
+static void
+confirm_regenerate_if_asked(void)
+{
+  set_cookie_if_needed();
+  client_put_header(global->charset, "Confirm user password generation");
+  printf("<p>");
+  print_refresh_button(_("No"));
+  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+         "</form></p>", form_start_simple, ACTION_GENERATE_PASSWORDS_2,
+         _("Yes, generate passwords!"));
+  client_put_footer();
+  exit(0);  
+}
+
+static void
+confirm_rejudge_all(void)
+{
+  set_cookie_if_needed();
+  client_put_header(global->charset, "Confirm rejudge all runs");
+  printf("<p>");
+  print_refresh_button(_("No"));
+  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+         "</form></p>", form_start_simple, ACTION_REJUDGE_ALL_2,
+         _("Yes, rejudge!"));
+  client_put_footer();
+  exit(0);  
+}
+
+static void
+do_contest_reset_if_asked(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_RESET, 0, 0);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+}
+
+static void
+do_generate_passwords_if_asked(void)
+{
+  int r;
+
+  set_cookie_if_needed();
+  client_put_header(global->charset, "New passwords");
+  print_nav_buttons();
+  printf("<hr>");
+  fflush(stdout);
+
+  open_serve();
+  r = serve_clnt_gen_passwords(serve_socket_fd, 1);
+  if (r < 0) {
+    printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
+  }
+
+  printf("<hr>");
+  print_nav_buttons();
+  client_put_footer();
+  exit(0);
+}
+
+static void
 do_suspend_if_asked(void)
 {
-  char cmd[64];
-  char pkt_name[64];
+  int r;
 
-  if (!cgi_param("suspend")) return;
-  sprintf(cmd, "%s\n", "SUSPEND");
-  client_transaction(client_packet_name(pkt_name), cmd, 0, 0);
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_SUSPEND, 0, 0);
+  operation_status_page(r, 0);
   force_recheck_status = 1;
 }
 
-void
+static void
 do_resume_if_asked(void)
 {
-  char cmd[64];
-  char pkt_name[64];
+  int r;
 
-  if (!cgi_param("resume")) return;
-  sprintf(cmd, "%s\n", "RESUME");
-  client_transaction(client_packet_name(pkt_name), cmd, 0, 0);
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_RESUME, 0, 0);
+  operation_status_page(r, 0);
   force_recheck_status = 1;
 }
 
-void
+static void
 do_rejudge_all_if_asked(void)
 {
-  char cmd[64];
-  char pkt_name[64];
+  int r;
 
-  if (!cgi_param("rejudge_all")) return;
-  sprintf(cmd, "%s %d\n", "REJUDGE", 0);
-  client_transaction(client_packet_name(pkt_name), cmd, 0, 0);
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_REJUDGE_ALL, 0, 0);
+  operation_status_page(r, 0);
   force_recheck_status = 1;
 }
 
-void
+static void
 do_rejudge_problem_if_asked(void)
 {
-  char cmd[64];
-  char pkt_name[64];
-  int prob = 0, n = 0;
-  char *p;
+  unsigned char *p;
+  int prob, n, r;
 
-  if (!cgi_param("rejudge_problem")) return;
-  if (!(p = cgi_param("problem"))) return;
-  if (sscanf(p, "%d %n", &prob, &n) != 1 || p[n] || prob < 0) return;
-  sprintf(cmd, "%s %d %d\n", "REJUDGEP", 0, prob);
-  client_transaction(client_packet_name(pkt_name), cmd, 0, 0);
+  if (!(p = cgi_param("problem")) ||
+      sscanf(p, "%d %n", &prob, &n) != 1 || p[n] || prob <= 0) {
+    operation_status_page(-1, "Problem to rejudge is not set");
+    return;
+  }
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_REJUDGE_PROBLEM,
+                            &prob, sizeof(prob));
+  operation_status_page(r, 0);
   force_recheck_status = 1;
 }
 
-void
+static void
 view_clar_if_asked()
 {
   char *s = cgi_nname("clar_", 5);
   int   clarid, n;
-  char  cmd[64], pname[64];
-  char *src = 0;
-  int   slen = 0;
-  int   enable_reply = 1;
+  int r;
 
   if (!s) return;
   if (sscanf(s, "clar_%d%n", &clarid, &n) != 1 || (s[n] && s[n]!='.')) return;
   if (clarid < 0 || clarid >= server_total_clars) return;
 
-  sprintf(cmd, "%s %d\n", (priv_level == PRIV_LEVEL_ADMIN)?"MPEEK":"JPEEK",
-          clarid);
-  client_transaction(client_packet_name(pname), cmd, &src, &slen);
-
-  s = cgi_param("enable_reply");
-  sscanf(s, "%d", &enable_reply);
-  enable_reply = !!enable_reply;
-
-  client_put_header(global->charset, _("Message view"));
-  for (s = src; slen; s++, slen--) putchar(*s);
-  xfree(src);
-
-  printf("<p>%s<input type=\"submit\" name=\"refresh\" value=\"%s\"></form></p>",
-         form_start_simple, _("back"));
-
-  if (enable_reply) {
-    puts(form_start_multipart);
-    printf("<input type=\"hidden\" name=\"in_reply_to\" value=\"%d\">",
-           clarid);
-    printf("<p><input type=\"submit\" name=\"answ_read\" value=\"%s\">",
-           _("Answer: Read the problem"));
-    printf("<input type=\"submit\" name=\"answ_no_comments\" value=\"%s\"><input type=\"submit\" name=\"answ_yes\" value=\"%s\"><input type=\"submit\" name=\"answ_no\" value=\"%s\"></p>",
-           _("Answer: No comments"), _("Answer: YES"), _("Answer: NO"));
-    printf("<p><textarea name=\"reply\" rows=\"20\" cols=\"60\"></textarea></p>");
-    printf("<p><input type=\"submit\" name=\"answ_text\" value=\"%s\">"
-           "<input type=\"submit\" name=\"answ_all\" value=\"%s\"></p>",
-           _("Send to sender"), _("Send to all"));
-    printf("</form>");
+  set_cookie_if_needed();
+  client_put_header(global->charset, "Clarification %d", clarid);
+  fflush(stdout);
+  open_serve();
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_CLAR, clarid,
+                      client_sid_mode, self_url, hidden_vars);
+  if (r < 0) {
+    printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
   }
 
+  client_put_footer();
   exit(0);
 }
 
-void
+static void
 send_msg_if_asked(void)
 {
-  char cmd[64];
-  char pname[64];
-  char subj1[CLAR_MAX_SUBJ_TXT_LEN + 4];
-  char subj2[CLAR_MAX_SUBJ_LEN + 4];
-  char *s, *t;
-  int  l2;
-  char *msg;
-  int   msglen;
+  unsigned char const *subj, *text, *dest_id_str, *dest_login;
+  int dest_id, x, n = 0, r;
 
   if (!cgi_param("msg_send")) return;
-  s = cgi_param("msg_subj");
-  t = cgi_param("msg_text");
-  if (!s) s = "";
-  if (!t) t = "";
-  memset(subj1, 0, sizeof(subj1));
-  if (!s || !*s) {
-    strncpy(subj1, _("(no subject)"), CLAR_MAX_SUBJ_TXT_LEN);
-  } else {
-    strncpy(subj1, s, CLAR_MAX_SUBJ_TXT_LEN);
-  }
-  if (subj1[CLAR_MAX_SUBJ_TXT_LEN - 1]) {
-    subj1[CLAR_MAX_SUBJ_TXT_LEN - 1] = 0;
-    subj1[CLAR_MAX_SUBJ_TXT_LEN - 2] = '.';
-    subj1[CLAR_MAX_SUBJ_TXT_LEN - 3] = '.';
-    subj1[CLAR_MAX_SUBJ_TXT_LEN - 4] = '.';
-  }
-  l2 = base64_encode(subj1, strlen(subj1), subj2);
-  subj2[l2] = 0;
 
-  msg = alloca(strlen(s) + strlen(t) + 32);
-  strcpy(msg, "Subject: ");
-  strcat(msg, s);
-  strcat(msg, "\n\n");
-  strcat(msg, t);
-  msglen = strlen(msg);
+  subj = cgi_param("msg_subj");
+  text = cgi_param("msg_text");
+  if ((dest_id_str = cgi_param("msg_dest_id"))
+      && sscanf(dest_id_str, "%d%n", &x, &n) == 1
+      && !dest_id_str[n])
+    dest_id = x;
+  dest_login = cgi_param("msg_dest_login");
+  if (!subj) subj = "";
+  if (!dest_login) dest_login = "";
+  if (!*text) {
+    if (client_sid_mode != SID_URL && client_sid_mode != SID_COOKIE) return;
+    operation_status_page(-1, "Empty message body");
+  }
+  if (!*subj) subj = _("(no subject)");
 
-  sprintf(cmd, "MSG %s %s\n", subj2, getenv("REMOTE_ADDR"));
-  client_packet_name(pname);
-  generic_write_file(msg, msglen, 0,
-                     global->judge_data_dir, pname, "");
-  /* FIXME: check transaction status */
-  client_transaction(pname, cmd, 0, 0);
+  open_serve();
+  r = serve_clnt_message(serve_socket_fd, SRV_CMD_PRIV_MSG,
+                         dest_id, -1, dest_login,
+                         subj, text);
+  if (client_sid_mode != SID_URL && client_sid_mode != SID_COOKIE) return;
+  operation_status_page(r, 0);
 }
 
-void
+static void
 send_reply_if_asked(void)
 {
-  int   to_all = 0;
-  char *txt = 0;
-  int   ref, n;
-  char *s;
-  char  cmd[64];
-  char  pname[64];
+  int dest_uid = 1, ref, n, r;
+  unsigned char *txt = 0, *s;
 
   if (cgi_param("answ_all")) {
-    to_all = 1;
+    dest_uid = 0;
     txt = cgi_param("reply");
     if (!txt) return;
   } else if (cgi_param("answ_text")) {
@@ -1197,17 +1342,42 @@ send_reply_if_asked(void)
   } else {
     return;
   }
+  if (!txt) {
+    operation_status_page(-1, "Message body is empty");
+    return;
+  }
 
   s = cgi_param("in_reply_to");
   if (!s || sscanf(s, "%d%n", &ref, &n) != 1 || s[n]
-      || ref < 0 || ref >= server_total_clars) return;
+      || ref < 0 || ref >= server_total_clars) {
+    operation_status_page(-1, "Invalid reference id");
+    return;
+  }
 
-  sprintf(cmd, "REPLY %d %d %s\n", ref, to_all, getenv("REMOTE_ADDR"));
-  client_packet_name(pname);
-  generic_write_file(txt, strlen(txt), 0,
-                     global->judge_data_dir, pname, "");
-  /* FIXME: check transaction status */
-  client_transaction(pname, cmd, 0, 0);
+  open_serve();
+  r = serve_clnt_message(serve_socket_fd, SRV_CMD_PRIV_REPLY,
+                         dest_uid, ref, 0, 0, txt);
+  operation_status_page(r, 0);
+}
+
+static void
+log_out_if_asked(void)
+{
+  if (!cgi_param("logout")) return;
+  if (client_sid) {
+    open_userlist_server();
+    userlist_clnt_logout(userlist_conn, client_ip, client_sid);
+  }
+  if (client_sid_mode == SID_COOKIE) {
+    client_cookie = 0;
+    need_set_cookie = 1;
+  }
+  set_cookie_if_needed();
+  client_put_header(global->charset, "%s", _("Good-bye"));
+  printf("<p>%s</p>\n",
+         _("Good-bye!"));
+  client_put_footer();
+  exit(0);
 }
 
 static int
@@ -1225,10 +1395,6 @@ set_defaults(void)
     return -1;
   }
   path_init(global->var_dir, global->root_dir, DEFAULT_VAR_DIR);
-  path_init(global->pipe_dir, global->var_dir, DEFAULT_PIPE_DIR);
-  path_init(global->judge_dir, global->var_dir, DEFAULT_JUDGE_DIR);
-  path_init(global->judge_cmd_dir, global->judge_dir, DEFAULT_JUDGE_CMD_DIR);
-  path_init(global->judge_data_dir, global->judge_dir, DEFAULT_JUDGE_DATA_DIR);
   path_init(global->status_file, global->var_dir, DEFAULT_STATUS_FILE);
   if (!global->charset[0]) {
     pathcpy(global->charset, DEFAULT_CHARSET);
@@ -1282,7 +1448,6 @@ initialize(int argc, char *argv[])
   if (s) pathcpy(fullname, s);
   os_rDirName(fullname, dirname, PATH_MAX);
   os_rGetBasename(fullname, basename, PATH_MAX);
-  strcpy(program_name, basename);
   if (!strncmp(basename, "master", 6)) {
     priv_level = PRIV_LEVEL_ADMIN;
   } else if (!strncmp(basename, "judge", 5)) {
@@ -1317,8 +1482,6 @@ initialize(int argc, char *argv[])
   if (set_defaults() < 0)
     client_not_configured(global->charset, "bad configuration");
   logger_set_level(-1, LOG_WARNING);
-  client_make_form_headers();
-
   parse_client_ip();
 
   if (!(contests = parse_contest_xml(global->contests_path))) {
@@ -1331,24 +1494,47 @@ initialize(int argc, char *argv[])
   }
 
   make_self_url();
-
-  /* copy this to help client utility functions */
-  pathcpy(client_pipe_dir, global->pipe_dir);
-  pathcpy(client_cmd_dir, global->judge_cmd_dir);
+  client_make_form_headers(self_url);
 }
 
-static int
+static void
 open_serve(void)
 {
-  if (serve_socket_fd >= 0) return 0;
-  if (serve_socket_fd < 0 && serve_last_error > 0) return serve_last_error;
+  if (serve_socket_fd >= 0) return;
   serve_socket_fd = serve_clnt_open(global->serve_socket);
   if (serve_socket_fd < 0) {
-    serve_last_error = -serve_socket_fd;
-    serve_socket_fd = -1;
-    return -serve_last_error;
+    printf("<h2><font color=\"red\">%s</font></h2>\n",
+           "Cannot connect to the contest server");
+    printf("<p>Error: %s</p>\n", protocol_strerror(-serve_socket_fd));
+    client_put_footer();
+    exit(0);
   }
-  return 0;
+}
+
+static void
+view_standings_if_asked()
+{
+  int r;
+
+  if (!cgi_param("stand")) return;
+
+  fflush(stdout);
+  open_serve();
+  r = serve_clnt_standings(serve_socket_fd, 1,
+                           client_user_id,
+                           global->contest_id, 0,
+                           priv_level,
+                           client_sid_mode,
+                           self_url,
+                           hidden_vars);
+
+  if (r < 0) {
+    printf("<h2><font color=\"red\">%s</font></h2>\n",
+           protocol_strerror(-r));
+  }
+
+  client_put_footer();
+  exit(0);
 }
 
 static void
@@ -1356,16 +1542,13 @@ display_master_page(void)
 {
   int r;
 
-  if (open_serve() < 0) {
-    printf("<h2><font color=\"red\">Cannot connect to the server</font></h2>\n");
-    return;
-  }
-
+  open_serve();
   r = serve_clnt_master_page(serve_socket_fd, 1,
                              client_user_id,
                              global->contest_id, 0,
                              client_ip,
                              priv_level,
+                             client_sid_mode,
                              filter_first_run,
                              filter_last_run,
                              filter_first_clar,
@@ -1380,6 +1563,20 @@ display_master_page(void)
   }
 }
 
+static void
+print_nav_buttons(void)
+{
+  printf("<table><tr><td>");
+  print_refresh_button(0);
+  printf("</td><td>");
+  print_standings_button(0);
+  printf("</td><td>");
+  print_teamview_button(0);
+  printf("</td><td>");
+  print_logout_button(0);
+  printf("</td></tr></table>\n");
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1392,11 +1589,7 @@ main(int argc, char *argv[])
 
   cgi_read(global->charset);
 
-  if (ask_passwd()) {
-    display_enter_password();
-    return 0;
-  }
-  if (!check_passwd()) client_access_denied(global->charset);
+  if (authentificate() != 1) client_access_denied(global->charset);
   read_state_params();
   read_view_params();
 
@@ -1405,29 +1598,79 @@ main(int argc, char *argv[])
   }
 
   if (priv_level == PRIV_LEVEL_ADMIN) {
-    stop_if_asked();
-    start_if_asked();
-    changedur_if_asked();
-    sched_if_asked();
-    update_standings_if_asked();
-    change_status_if_asked();
-    view_one_team_if_asked(-1, 0);
-    do_team_action_if_asked();
-    add_team_if_asked();
-    confirm_reset_if_asked();
-    confirm_regenerate_if_asked();
-    do_contest_reset_if_asked();
-    do_generate_passwords_if_asked();
-    do_rejudge_all_if_asked();
-    do_rejudge_problem_if_asked();
-    do_suspend_if_asked();
-    do_resume_if_asked();
+    //fprintf(stderr, ">>%d\n", client_action);
+
+    switch (client_action) {
+    case ACTION_GENERATE_PASSWORDS_1:
+      confirm_regenerate_if_asked();
+      break;
+    case ACTION_GENERATE_PASSWORDS_2:
+      do_generate_passwords_if_asked();
+      break;
+    case ACTION_SUSPEND:
+      do_suspend_if_asked();
+      break;
+    case ACTION_RESUME:
+      do_resume_if_asked();
+      break;
+    case ACTION_UPDATE_STANDINGS_1:
+      confirm_update_standings();
+      break;
+    case ACTION_UPDATE_STANDINGS_2:
+      update_standings_if_asked();
+      break;
+    case ACTION_RESET_1:
+      confirm_reset_if_asked();
+      break;
+    case ACTION_RESET_2:
+      do_contest_reset_if_asked();
+      break;
+    case ACTION_START:
+      start_if_asked();
+      break;
+    case ACTION_STOP:
+      stop_if_asked();
+      break;
+    case ACTION_REJUDGE_ALL_1:
+      confirm_rejudge_all();
+      break;
+    case ACTION_REJUDGE_ALL_2:
+      do_rejudge_all_if_asked();
+      break;
+    case ACTION_REJUDGE_PROBLEM:
+      do_rejudge_problem_if_asked();
+      break;
+    case ACTION_SCHEDULE:
+      sched_if_asked();
+      break;
+    case ACTION_DURATION:
+      changedur_if_asked();
+      break;
+    case ACTION_RUN_CHANGE_USER_ID:
+      change_user_id();
+      break;
+    case ACTION_RUN_CHANGE_USER_LOGIN:
+      change_user_login();
+      break;
+    case ACTION_RUN_CHANGE_LANG:
+      change_language();
+      break;
+    case ACTION_RUN_CHANGE_PROB:
+      change_problem();
+      break;
+    case ACTION_RUN_CHANGE_STATUS:
+      change_status();
+      break;
+    default:
+      change_status_if_asked();
+      break;
+    }
   }
+  log_out_if_asked();
   view_source_if_asked();
   view_report_if_asked();
   view_clar_if_asked();
   view_teams_if_asked(0);
-  view_standings_if_asked();
   send_reply_if_asked();
   send_msg_if_asked();
 
@@ -1436,6 +1679,7 @@ main(int argc, char *argv[])
     force_recheck_status = 0;
   }
 
+  set_cookie_if_needed();
   if (cur_contest->name) {
     client_put_header(global->charset, "%s: %s - &quot;%s&quot;",
                       _("Monitor"),
@@ -1447,23 +1691,15 @@ main(int argc, char *argv[])
                       protocol_priv_level_str(priv_level));
   }
 
-  printf("<table><tr><td>");
-  print_refresh_button(0);
-  printf("</td><td>");
-  print_standings_button(0);
-  printf("</td><td>");
-  print_teamview_button(0);
-  printf("</td></tr></table>\n");
+  view_standings_if_asked();
+
+  print_nav_buttons();
   client_print_server_status(priv_level, form_start_simple, 0);
-  printf("<table><tr><td>");
-  print_refresh_button(0);
-  printf("</td><td>");
-  print_standings_button(0);
-  printf("</td></tr></table>");
+
+  print_nav_buttons();
+
   if (priv_level == PRIV_LEVEL_ADMIN) {
     printf("<table><tr><td>");
-    print_teamview_button(0);
-    printf("</td><td>");
     print_update_button(0);
     printf("</td><td>");
     print_reset_button(0);
@@ -1494,11 +1730,7 @@ main(int argc, char *argv[])
     printf("</form>\n");
   }
 
-  printf("<p><table><tr><td>");
-  print_refresh_button(0);
-  printf("</td><td>");
-  print_standings_button(0);
-  printf("</td></tr></table>\n");
+  print_nav_buttons();
 
 #if 0
   puts("<hr><pre>");
