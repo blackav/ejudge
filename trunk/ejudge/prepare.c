@@ -37,6 +37,10 @@
 #include <unistd.h>
 #include <ctype.h>
 
+#if defined __GNUC__ && defined __MINGW32__
+#include <malloc.h>
+#endif
+
 struct generic_section_config *config;
 struct section_global_data    *global;
 
