@@ -178,6 +178,8 @@ client_lookup_ip(char const *ip, char const *iplist)
 
   if (!ip) return 0;
   if (!iplist) return 0;
+  // ugly hack
+  if (!strcmp(ip, "::1")) ip = "127.0.0.1";
   if (sscanf(ip, "%d.%d.%d.%d%n", &i1, &i2, &i3, &i4, &n) != 4
       || ip[n]) {
     err("bad ip: %s", ip);
@@ -541,6 +543,28 @@ client_make_form_headers(unsigned char const *self_url)
           "<form method=\"POST\" action=\"%s\" "
           "ENCTYPE=\"multipart/form-data\">",
           self_url);  
+}
+
+unsigned long
+parse_client_ip(void)
+{
+  unsigned int b1, b2, b3, b4;
+  int n = 0;
+  unsigned char *s = getenv("REMOTE_ADDR");
+  unsigned long client_ip = 0;
+
+  if (!s) return;
+
+  // ugly hack
+  if (!strcmp(s, "::1")) s = "127.0.0.1";
+
+  if (sscanf(s, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4
+      || s[n] || b1 > 255 || b2 > 255 || b3 > 255 || b4 > 255) {
+    client_ip = 0xffffffff;
+  } else {
+    client_ip = b1 << 24 | b2 << 16 | b3 << 8 | b4;
+  }
+  return client_ip;
 }
 
 /**
