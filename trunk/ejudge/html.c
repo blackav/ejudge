@@ -253,6 +253,7 @@ count_unread_clars(int user_id)
     if (clar_get_record(i, 0, 0, 0, &from, &to, 0, 0) < 0)
       continue;
     if (to > 0 && to != user_id) continue;
+    if (!to && from > 0) continue;
     if (from != user_id && !team_extra_get_clar_status(user_id, i))
       total++;
   }
@@ -1689,7 +1690,7 @@ write_team_page(FILE *f, int user_id,
                       0, 0, 0);
   }
 
-  if (server_start && (!global->disable_clars || !global->disable_team_clars)){
+  if (!global->disable_clars || !global->disable_team_clars){
     unread_clars = count_unread_clars(user_id);
     if (unread_clars > 0) {
       fprintf(f, _("<hr><big><b>You have %d unread message(s)!</b></big>\n"),
