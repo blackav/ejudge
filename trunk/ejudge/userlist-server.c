@@ -1167,21 +1167,33 @@ cmd_do_login(struct client_state *p,
 {
   struct userlist_user * user;
   struct userlist_pk_login_ok * answer;
-  int ans_len;
+  int ans_len, act_pkt_len;
   char * login;
   char * password;
   char * name;
   struct userlist_cookie * cookie;
   struct passwd_internal pwdint;
 
+  if (pkt_len < sizeof(*data)) {
+    CONN_BAD("packet is too small: %d", pkt_len);
+    return;
+  }
   login = data->data;
+  if (strlen(login) != data->login_length) {
+    CONN_BAD("login length mismatch");
+    return;
+  }
   password = data->data + data->login_length + 1;
-
-  if (strlen(login) != data->login_length
-      || strlen(password) != data->password_length) {
+  if (strlen(password) != data->password_length) {
+    CONN_BAD("password length mismatch");
+    return;
+  }
+  act_pkt_len = sizeof(*data) + data->login_length + data->password_length;
+  if (act_pkt_len != pkt_len) {
     CONN_BAD("packet length mismatch");
     return;
   }
+
   CONN_INFO("%s, %s", unparse_ip(data->origin_ip), login);
 
   if (p->user_id >= 0) {
