@@ -51,7 +51,12 @@
  *   MT - inst_short_en
  *   Mu - inst
  *   MU - inst_en
+ *   Mf - fac_short
+ *   MF - fac_short_en
+ *   Md - fac
+ *   MD - fac_en
  *   ML - location
+ *   Mp - printer_name
  */
 
 int
@@ -319,7 +324,12 @@ sformat_message(char *buf, size_t maxsize, char const *format,
          *   MT - inst_short_en
          *   Mu - inst
          *   MU - inst_en
+         *   Mf - fac_short
+         *   MF - fac_short_en
+         *   Md - fac
+         *   MD - fac_en
          *   ML - location
+         *   Mp - printer_name
          */
         pf++;
         switch (*pf) {
@@ -327,7 +337,8 @@ sformat_message(char *buf, size_t maxsize, char const *format,
         case 'c': case 'C':
         case 't': case 'T':
         case 'u': case 'U':
-        case 'o': case 'O': case 'L':
+        case 'o': case 'O': case 'L': case 'p':
+        case 'f': case 'F': case 'd': case 'D':
           break;
         case 0:
           is_invalid = 1;
@@ -390,10 +401,35 @@ sformat_message(char *buf, size_t maxsize, char const *format,
             if (team_data->user && team_data->user->inst_en)
               papp = team_data->user->inst_en;
             break;
+          case 'f':
+            papp = "";
+            if (team_data->user && team_data->user->facshort)
+              papp = team_data->user->facshort;
+            break;
+          case 'F':
+            papp = "";
+            if (team_data->user && team_data->user->facshort_en)
+              papp = team_data->user->facshort_en;
+            break;
+          case 'd':
+            papp = "";
+            if (team_data->user && team_data->user->fac)
+              papp = team_data->user->fac;
+            break;
+          case 'D':
+            papp = "";
+            if (team_data->user && team_data->user->fac_en)
+              papp = team_data->user->fac_en;
+            break;
           case 'L':
             papp = "";
             if (team_data->user && team_data->user->location)
               papp = team_data->user->location;
+            break;
+          case 'p':
+            papp = "";
+            if (team_data->user && team_data->user->printer_name)
+              papp = team_data->user->printer_name;
             break;
           default:
             abort();
