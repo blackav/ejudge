@@ -174,4 +174,6 @@ HFILES=\
 
 OTHERFILES=\
  filter_expr.y\
- filter_scan.lex
+ filter_scan.lex\
+ NEWS.RUS\
+ NEWS
