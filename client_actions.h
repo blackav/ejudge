@@ -4,7 +4,7 @@
 #ifndef __CLIENT_ACTIONS_H__
 #define __CLIENT_ACTIONS_H__
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -81,6 +81,10 @@ enum
     ACTION_RUN_CHANGE_TESTS,
     ACTION_RUN_CHANGE_SCORE,
     ACTION_RUN_CHANGE_READONLY,
+    ACTION_SET_ACCEPTING_MODE,
+    ACTION_PRINT_RUN,
+    ACTION_PRINT_PRIV_RUN,
+    ACTION_RUN_CHANGE_PAGES,
     ACTION_LAST
   };
 
