@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,7 @@
 int
 serve_clnt_master_page(int sock_fd,
                        int out_fd,
+                       unsigned long long session_id,
                        int user_id,
                        int contest_id,
                        int locale_id,
@@ -78,6 +79,7 @@ serve_clnt_master_page(int sock_fd,
   extra_args_ptr = hidden_vars_ptr + hidden_vars_len + 1;
   out->b.id = SRV_CMD_MASTER_PAGE;
   out->b.magic = PROT_SERVE_PACKET_MAGIC;
+  out->session_id = session_id;
   out->user_id = user_id;
   out->contest_id = contest_id;
   out->locale_id = locale_id;
