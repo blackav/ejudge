@@ -99,9 +99,9 @@ parse_cmdline(const unsigned char *str, struct cmdline_buf *pcmd)
     goto failure;
   }
   while (isspace(*p)) p++;
-  if (*p) {
+  if (*p && *p != '#') {
     while (1) {
-      if (!*p) {
+      if (!*p || (*p == '#' && !q_char)) {
         if (q_char) {
           code = -TINF_E_UNCLOSED_QUOTE;
           goto failure;
@@ -338,15 +338,16 @@ static int
 parse_file(FILE *fin, testinfo_t *pt)
 {
   struct line_buf buf;
-  unsigned char *t;
   int retval;
 
   memset(&buf, 0, sizeof(buf));
   while (read_line(fin, &buf) >= 0) {
+    /*
     if ((t = strchr(buf.v, '#'))) {
       *t = 0;
       buf.u = t - buf.v;
     }
+    */
     while (buf.u > 0 && isspace(buf.v[buf.u - 1]))
       buf.v[--buf.u] = 0;
     if (!buf.u) continue;
