@@ -133,6 +133,10 @@ struct section_problem_data
   path_t corr_sfx;              /* correct files suffix */
   path_t input_file;            /* input file name */
   path_t output_file;           /* output file name */
+  path_t test_score_list;       /* scores for individual tests */
+
+  int     ntests;               /* number of tests found */
+  int    *tscores;              /* internal scores array  */
 };
 
 struct section_language_data
