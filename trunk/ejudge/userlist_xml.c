@@ -349,7 +349,6 @@ parse_priv_level(char const *path, int l, int c, char const *str)
 {
   if (str) {
     if (!strcasecmp(str, "user")) return PRIV_LEVEL_USER;
-    if (!strcasecmp(str, "observer")) return PRIV_LEVEL_OBSERVER;
     if (!strcasecmp(str, "judge")) return PRIV_LEVEL_JUDGE;
     if (!strcasecmp(str, "administrator")) return PRIV_LEVEL_ADMIN;
     if (!strcasecmp(str, "admin")) return PRIV_LEVEL_ADMIN;
