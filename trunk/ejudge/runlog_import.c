@@ -19,6 +19,7 @@
 #include "misctext.h"
 #include "prepare.h"
 #include "teamdb.h"
+#include "archive_paths.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -27,42 +28,25 @@
 #include <stdlib.h>
 
 static void
-do_rename(const unsigned char *dir, FILE *flog,
-          int n1, const unsigned char *pfx1,
-          int n2, const unsigned char *pfx2)
-{
-  path_t name1, name2;
-
-  if (!pfx1) pfx1 = "";
-  if (!pfx2) pfx2 = "";
-  snprintf(name1, sizeof(name1), "%s/%s%06d", dir, pfx1, n1);
-  snprintf(name2, sizeof(name2), "%s/%s%06d", dir, pfx2, n2);
-  if (rename(name1, name2) < 0) {
-    fprintf(flog, "rename %s - %s failed: %s", name1, name2, os_ErrorMsg());
-    err("rename(%s,%s) failed: %s", name1, name2, os_ErrorMsg());
-  }
-}
-
-static void
 rename_archive_files(FILE *flog, int num, int *map)
 {
   int i;
 
   for (i = 0; i < num; i++) {
     if (map[i] < 0) continue;
-    do_rename(global->run_archive_dir, flog, i, "", i, "_");
-    do_rename(global->report_archive_dir, flog, i, "", i, "_");
+    archive_rename(global->run_archive_dir, flog, i, "", i, "_", 0);
+    archive_rename(global->report_archive_dir, flog, i, "", i, "_", 1);
     if (global->team_enable_rep_view) {
-      do_rename(global->team_report_archive_dir, flog, i, "", i, "_");
+      archive_rename(global->team_report_archive_dir, flog, i, "", i, "_", 0);
     }
   }
 
   for (i = 0; i < num; i++) {
     if (map[i] < 0) continue;
-    do_rename(global->run_archive_dir, flog, i, "_", map[i], "");
-    do_rename(global->report_archive_dir, flog, i, "_", map[i], "");
+    archive_rename(global->run_archive_dir, flog, i, "_", map[i], "", 0);
+    archive_rename(global->report_archive_dir, flog, i, "_", map[i], "", 1);
     if (global->team_enable_rep_view) {
-      do_rename(global->team_report_archive_dir, flog, i, "_", map[i], "");
+      archive_rename(global->team_report_archive_dir,flog,i, "_",map[i],"",0);
     }
   }
 }
