@@ -46,6 +46,13 @@
 #define _(x) x
 #endif
 
+/*
+ * The default path to data directory
+ */
+#if !defined CGI_DATA_PATH
+#define CGI_DATA_PATH "../cgi-data"
+#endif
+
 /* defaults */
 #define DEFAULT_VAR_DIR        "var"
 #define DEFAULT_CONF_DIR       "conf"
@@ -1041,8 +1048,15 @@ initialize(int argc, char *argv[])
     client_not_configured(0, _("bad program name"));
   }
 
-  pathmake(cfgname, dirname, "/", "..", "/", "cgi-data", "/", basename,
-           ".cfg", NULL);
+  /*
+   * if CGI_DATA_PATH is absolute, do not append the program start dir
+   */
+  /* FIXME: we need to perform "/" translation */
+  if (CGI_DATA_PATH[0] == '/') {
+    pathmake(cfgname, CGI_DATA_PATH, "/", basename, ".cfg", NULL);
+  } else {
+    pathmake(cfgname, dirname, "/",CGI_DATA_PATH, "/", basename, ".cfg", NULL);
+  }
   config = parse_param(cfgname, 0, params, 1);
   if (!config)
     client_not_configured(0, _("config file not parsed"));
