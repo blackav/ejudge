@@ -124,7 +124,11 @@ ED_OBJECTS = ${ED_CFILES:.c=.o} libcharsets.a
 
 TARGETS=compile$(EXESFX) serve$(EXESFX) run$(EXESFX) master$(EXESFX) team$(EXESFX) register${EXESFX} userlist-server${EXESFX} users${EXESFX} edit-userlist${EXESFX}
 
-all: $(TARGETS)
+local_all: $(TARGETS)
+all: local_all subdirs_all
+
+subdirs_all:
+	$(MAKE) -C extra all
 
 install: ${TARGETS} po mo
 	install -d ${INST_BIN_PATH}
@@ -191,7 +195,10 @@ edit-userlist: $(ED_OBJECTS)
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT} -lmenu -lpanel -lncurses
 
 clean:
-	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog serve_clnt/*.o charsets/*.o
+	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog serve_clnt/*.o charsets/*.o cdeps deps.make
+	-rm -rf locale
+	$(MAKE) -C tex clean
+	$(MAKE) -C extra clean
 
 deps:
 	$(CC) $(CFLAGS) -MM -MG $(CFILES)
@@ -208,6 +215,10 @@ revinfo.o: revinfo.c
 mkChangeLog: mkChangeLog.o
 	${LD} ${LDFLAGS} $^ -o $@
 mkChangeLog.o: mkChangeLog.c
+
+cdeps: cdeps.o
+	${LD} ${LDFLAGS} $^ -o $@
+cdeps.o: cdeps.c
 
 log: mkChangeLog
 	cvs log -l | ./mkChangeLog AUTHORS ChangeLog ChangeLog
@@ -242,58 +253,7 @@ libserve_clnt.a: serve_clnt/open.o serve_clnt/do_pass_fd.o serve_clnt/pass_fd.o 
 libcharsets.a: charsets/nls.o charsets/nls_cp1251.o charsets/nls_cp866.o charsets/nls_iso8859-5.o charsets/nls_koi8-r.o charsets/nls_utf8.o charsets/utf8_to_enc.o charsets/utf8_to_enc_unchecked.o charsets/utf8_to_enc_heap.o charsets/utf8_to_koi8.o charsets/utf8_to_koi8_heap.o charsets/utf8_to_koi8_unchecked.o charsets/koi8_to_enc.o charsets/koi8_to_enc_unchecked.o charsets/koi8_to_enc_heap.o 
 	ar rcv $@ $^
 
-# automatically generated dependencies
-base64.o: base64.c base64.h pathutl.h
-cgi.o: cgi.c cgi.h pathutl.h
-clar.o: clar.c clarlog.h prepare.h pathutl.h parsecfg.h teamdb.h \
-  misctext.h fileutl.h base64.h
-clarlog.o: clarlog.c clarlog.h teamdb.h unix/unix_fileutl.h pathutl.h
-clntutil.o: clntutil.c clntutil.h version.h pathutl.h fileutl.h \
-  unix/unix_fileutl.h misctext.h protocol.h
-compile.o: compile.c prepare.h pathutl.h parsecfg.h fileutl.h
-contests.o: contests.c contests.h expat_iface.h pathutl.h
-expat_iface.o: expat_iface.c expat_iface.h nls.h pathutl.h
-html.o: html.c html.h misctext.h pathutl.h fileutl.h runlog.h clarlog.h \
-  teamdb.h prepare.h parsecfg.h base64.h sformat.h
-idmap.o: idmap.c idmap.h
-inetdb.o: inetdb.c inetdb.h
-localdb.o: localdb.c localdb.h
-make-teamdb-inet.o: make-teamdb-inet.c inetdb.h
-make-teamdb.o: make-teamdb.c idmap.h localdb.h
-master.o: master.c cgi.h fileutl.h pathutl.h clarlog.h base64.h \
-  parsecfg.h clntutil.h /home/cher/c-sema/include/reuse/osdeps.h
-misctext.o: misctext.c misctext.h base64.h
-mkpasswd.o: mkpasswd.c teamdb.h
-nls.o: nls.c nls.h
-nls_cp1251.o: nls_cp1251.c nls.h
-nls_cp866.o: nls_cp866.c nls.h
-nls_iso8859-5.o: nls_iso8859-5.c nls.h
-nls_koi8-r.o: nls_koi8-r.c nls.h
-nls_utf8.o: nls_utf8.c nls.h
-parsecfg.o: parsecfg.c parsecfg.h pathutl.h
-pathutl.o: pathutl.c pathutl.h
-prepare.o: prepare.c prepare.h pathutl.h parsecfg.h fileutl.h sformat.h \
-  teamdb.h
-register.o: register.c expat_iface.h pathutl.h clntutil.h cgi.h \
-  contests.h userlist_clnt.h userlist.h userlist_proto.h misctext.h
-run.o: run.c prepare.h pathutl.h parsecfg.h runlog.h fileutl.h
-runlog.o: runlog.c runlog.h pathutl.h unix/unix_fileutl.h
-send-passwords.o: send-passwords.c inetdb.h teamdb.h fileutl.h
-serve.o: serve.c runlog.h parsecfg.h teamdb.h prepare.h pathutl.h html.h \
-  clarlog.h protocol.h misctext.h base64.h fileutl.h
-sformat.o: sformat.c sformat.h prepare.h pathutl.h parsecfg.h teamdb.h
-sha.o: sha.c /home/cher/c-sema/include/ix86-linux/p_integral.h sha.h
-submit.o: submit.c pathutl.h prepare.h parsecfg.h teamdb.h fileutl.h
-team.o: team.c cgi.h teamdb.h parsecfg.h pathutl.h fileutl.h clntutil.h \
-  clarlog.h base64.h
-teamdb.o: teamdb.c teamdb.h pathutl.h base64.h
-userlist.o: userlist.c userlist.h expat_iface.h contests.h
-userlist-server.o: userlist-server.c userlist_cfg.h expat_iface.h \
-  userlist.h pathutl.h contests.h userlist.h
-userlist_cfg.o: userlist_cfg.c userlist_cfg.h expat_iface.h pathutl.h
-userlist_clnt.o: userlist_clnt.c userlist_clnt.h pathutl.h \
-  userlist_proto.h
-userlist_xml.o: userlist_xml.c nls.h userlist.h \
-  expat_iface.h pathutl.h contests.h
-unix/fileutl.o: unix/fileutl.c fileutl.h unix/unix_fileutl.h pathutl.h
-win32/fileutl.o: win32/fileutl.c fileutl.h logger.h pathutl.h osdeps.h xalloc.h
+deps.make : cdeps ${CFILES} ${HFILES}
+	./cdeps ${CFILES} > deps.make
+
+include deps.make
