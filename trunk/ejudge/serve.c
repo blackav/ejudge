@@ -1619,7 +1619,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
   }
-  if (!check_cnts_caps(p->user_id, OPCAP_SUBMIT_RUNS)) {
+  if (!check_cnts_caps(p->user_id, OPCAP_SUBMIT_RUN)) {
     err("%d: user has no capability to submit runs", p->id);
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     return;
@@ -2508,9 +2508,9 @@ cmd_priv_command_0(struct client_state *p, int len,
     return;
 
   case SRV_CMD_PRIV_PRINT_RUN:
-    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+    if (!check_cnts_caps(p->user_id, OPCAP_PRINT_RUN)) {
       err("%d: user %d has no capability %d for the contest",
-          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+          p->id, p->user_id, OPCAP_PRINT_RUN);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
       return;
     }
