@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -142,6 +142,7 @@ main(int argc, char *argv[])
   char buf[1024];
   struct stat ss;
   char *input_name = "";
+  int pid;
 
   if (argc != 2) myerr("wrong number of arguments: %d", argc);
 
@@ -185,9 +186,21 @@ main(int argc, char *argv[])
 
   snprintf(buf, sizeof(buf), "%s/../bin/dos", EMUPATH);
   if (chmod(EMUPATH, 0500) < 0) myerr("chmod failed: %s", strerror(errno));
-  execl(buf, buf, "-I", "video { none }", 0);
-  myerr("execl failed: %s", strerror(errno));
-  return 100;
+
+  /*
+  if ((pid = fork()) > 0) {
+    wait(0);
+    return 0;
+  } else {
+  */
+  //close(0); close(1); close(2);
+  //if (setsid() < 0) fprintf(stderr, "Setsid failed!\n");
+    execl(buf, buf, "-I", "video { none }", 0);
+    myerr("execl failed: %s", strerror(errno));
+    return 100;
+    /*
+  }
+    */
 }
 
 /*
