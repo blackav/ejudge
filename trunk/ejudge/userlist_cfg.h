@@ -46,6 +46,7 @@ struct userlist_cfg
   unsigned char *email_program;
   unsigned char *register_url;
   unsigned char *register_email;
+  unsigned char *admin_email;
   unsigned char *l10n_dir;
   unsigned char *serve_path;
   unsigned char *run_path;
@@ -56,6 +57,7 @@ struct userlist_cfg
   unsigned char *compile_home_dir;
   unsigned char *testing_work_dir;
   unsigned char *script_dir;
+  unsigned char *userlist_log;
   struct xml_tree *user_map;
 
   opcaplist_t capabilities;
