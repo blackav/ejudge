@@ -141,12 +141,13 @@ compile_request_packet_read(size_t in_size, const void *in_data,
     pin_ptr += pkt_bin_align(pout->env_num * sizeof(rint32_t));
 
     for (i = 0; i < pout->env_num; i++) {
-      if (pin_ptr + str_lens[i] + 1 > end_ptr) {
+      if (pin_ptr + str_lens[i] > end_ptr) {
         errcode = 17;
         goto failed_badly;
       }
-      memcpy(pout->env_vars[i], pin_ptr, str_lens[i] + 1);
-      pin_ptr += str_lens[i] + 1;
+      memcpy(pout->env_vars[i], pin_ptr, str_lens[i]);
+      pout->env_vars[i][str_lens[i]] = 0;
+      pin_ptr += str_lens[i];
     }
   }
 
