@@ -64,7 +64,7 @@ struct server_cmd
 };
 
 void
-update_standings_file(void)
+update_standings_file(int force_flag)
 {
   time_t cur_time = time(0);
   time_t start_time, stop_time, duration, start_fog_time;
@@ -72,10 +72,12 @@ update_standings_file(void)
   run_get_times(&start_time, 0, &duration, &stop_time);
   start_fog_time = start_time + duration - global->board_fog_time;
 
-  if (start_time) ASSERT(cur_time >= start_time);
-  if (stop_time)  ASSERT(cur_time >= stop_time);
-  if (stop_time && cur_time <= stop_time + global->board_unfog_time) return;
-  if (start_time && cur_time >= start_fog_time) return;
+  if (!force_flag) {
+    if (start_time) ASSERT(cur_time >= start_time);
+    if (stop_time)  ASSERT(cur_time >= stop_time);
+    if (stop_time && cur_time <= stop_time + global->board_unfog_time) return;
+    if (start_time && cur_time >= start_fog_time) return;
+  }
 
   write_standings(global->status_dir, "standings.html");
 }
@@ -589,7 +591,7 @@ read_compile_packet(char *pname)
     if (generic_copy_file(REMOVE, global->compile_report_dir, pname, "",
                           0, global->report_archive_dir, pname, "") < 0)
       return -1;
-    update_standings_file();
+    update_standings_file(0);
     return 1;
   }
   if (run_change_status(runid, RUN_COMPILED, 0) < 0) return -1;
@@ -643,7 +645,7 @@ read_run_packet(char *pname)
   if (log_stat != RUN_RUNNING) goto bad_packet_error;
   if (status<0 || status>RUN_PARTIAL || test<0) goto bad_packet_error;
   if (run_change_status(runid, status, test) < 0) return -1;
-  update_standings_file();
+  update_standings_file(0);
   if (generic_copy_file(REMOVE, global->run_report_dir, pname, "",
                         0, global->report_archive_dir, pname, "") < 0)
     return -1;
@@ -783,6 +785,20 @@ judge_standings(char const *pk_name, const packet_t pk_str, void *ptr)
 }
 
 int
+judge_update_public_standings(char const     *pk_name,
+                              const packet_t  pk_str,
+                              void           *ptr)
+{
+  packet_t cmd;
+  int      n;
+
+  if (sscanf(pk_str, "%s %n", cmd, &n) != 1 || pk_str[n])
+    return report_bad_packet(pk_name, 0);
+  update_standings_file(1);
+  return 0;
+}
+
+int
 judge_view_clar(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   int      is_master = (int) ptr;
@@ -850,7 +866,7 @@ judge_start(char const *pk_name, const packet_t pk_str, void *ptr)
   run_start_contest(time(&ts));
   contest_start_time = ts;
   info(_("contest started: %lu"), ts);
-  update_standings_file();
+  update_standings_file(0);
   update_status_file(1);
   report_ok(pk_name);
   return 0;
@@ -870,7 +886,7 @@ judge_stop(char const *pk_name, const packet_t pk_str, void *ptr)
   run_stop_contest(time(&ts));
   contest_stop_time = ts;
   info(_("contest stopped: %lu"), ts);
-  update_standings_file();
+  update_standings_file(0);
   update_status_file(1);
   report_ok(pk_name);
   return 0;
@@ -891,7 +907,7 @@ judge_sched(char const *pk_name, const packet_t pk_str, void *ptr)
   run_sched_contest(newtime);
   contest_sched_time = newtime;
   info(_("contest scheduled: %lu"), newtime);
-  update_standings_file();
+  update_standings_file(0);
   update_status_file(1);
 
   report_to_client(pk_name, reply);
@@ -919,7 +935,7 @@ judge_time(char const *pk_name, const packet_t pk_str, void *ptr)
   contest_duration = newtime * 60;
   run_set_duration(contest_duration);
   info(_("contest time reset to %d"), newtime);
-  update_standings_file();
+  update_standings_file(0);
   update_status_file(1);
 
  _cleanup:
@@ -1025,6 +1041,7 @@ struct server_cmd judge_cmds[] =
   { "REPLY", judge_reply, 0 },
   { "MSG", judge_message, 0 },
   { "STAND", judge_standings, 0 },
+  { "UPDATE", judge_update_public_standings, 0 },
 
   { 0, 0, 0 },
 };
@@ -1057,7 +1074,7 @@ do_loop(void)
   path_t packetname;
   int    r;
 
-  update_standings_file();
+  update_standings_file(0);
 
   run_get_times(&contest_start_time, &contest_sched_time,
                 &contest_duration, &contest_stop_time);
