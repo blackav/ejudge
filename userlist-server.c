@@ -57,6 +57,10 @@
 #define CLIENT_TIMEOUT 600
 #define DEFAULT_SERVER_USE_COOKIES 1
 
+#define CONN_ERR(msg, ...) err("%d: %s: " msg, p->id, __FUNCTION__, ## __VA_ARGS__)
+#define CONN_INFO(msg, ...) info("%d: %s: " msg, p->id, __FUNCTION__, ## __VA_ARGS__)
+#define CONN_BAD(msg, ...) do { err("%d: %s: bad packet: " msg, p->id, __FUNCTION__, ##__VA_ARGS__); disconnect_client(p); } while (0)
+
 // server connection states
 enum
   {
@@ -72,7 +76,6 @@ struct contest_extra
 {
   int nref;
   int id;
-  struct contest_desc *desc;
   key_t sem_key;
   key_t shm_key;
   int sem_id;
@@ -111,6 +114,9 @@ struct client_state
   unsigned long long cookie;
   unsigned long ip;
 
+  // user capabilities
+  //opcap_t caps;
+
   // passed file descriptors
   int client_fds[2];
 
@@ -125,9 +131,9 @@ static char *socket_name;
 static struct client_state *first_client;
 static struct client_state *last_client;
 static int serial_id = 1;
-static struct contest_list *contests;
 static unsigned char *program_name;
 static struct contest_extra **contest_extras;
+static int contest_extras_size;
 
 static time_t cur_time;
 static time_t last_flush;
@@ -195,17 +201,29 @@ static char const * const member_status_string[] =
 #define NEXT_CONTEST(c)  ((struct userlist_contest*)(c)->b.right)
 
 static struct contest_extra *
-attach_contest_extra(int id)
+attach_contest_extra(int id, struct contest_desc *cnts)
 {
   struct contest_extra *ex = 0;
   key_t ipc_key, shm_key, sem_key;
   int sem_id = -1, shm_id = -1;
   void *shm_addr = 0;
 
-  ASSERT(id > 0 && id < contests->id_map_size);
-  ASSERT(contests->id_map[id]);
-  if (!contest_extras) {
-    contest_extras = xcalloc(contests->id_map_size, sizeof(contest_extras[0]));
+  ASSERT(id > 0);
+  ASSERT(cnts);
+  if (!contest_extras || contest_extras_size >= id) {
+    int new_size = contest_extras_size;
+    struct contest_extra **new_extras = 0;
+
+    if (!new_size) new_size = 16;
+    while (new_size <= id) new_size *= 2;
+    new_extras = xcalloc(new_size, sizeof(new_extras[0]));
+    if (contest_extras) {
+      memcpy(new_extras, contest_extras,
+             sizeof(new_extras[0]) * contest_extras_size);
+      xfree(contest_extras);
+    }
+    contest_extras = new_extras;
+    contest_extras_size = new_size;
   }
   if (contest_extras[id]) {
     contest_extras[id]->nref++;
@@ -216,7 +234,6 @@ attach_contest_extra(int id)
   ex = xcalloc(1, sizeof(*ex));
   ex->nref = 1;
   ex->id = id;
-  ex->desc = contests->id_map[id];
 
   ipc_key = ftok(program_name, id);
   sem_key = ipc_key;
@@ -271,9 +288,8 @@ detach_contest_extra(struct contest_extra *ex)
 {
   if (!ex) return 0;
 
-  ASSERT(ex->id > 0 && ex->id < contests->id_map_size);
+  ASSERT(ex->id > 0 && ex->id < contest_extras_size);
   ASSERT(ex == contest_extras[ex->id]);
-  ASSERT(ex->desc == contests->id_map[ex->id]);
   if (--ex->nref > 0) return 0;
   info("destroying shared contest info for %d", ex->id);
   ex->tbl->vintage = 0xffff;    /* the client must note this change */
@@ -282,6 +298,7 @@ detach_contest_extra(struct contest_extra *ex)
   if (semctl(ex->sem_id,0,IPC_RMID)<0) info("semctl failed: %s",os_ErrorMsg());
   contest_extras[ex->id] = 0;
   memset(ex, 0, sizeof(*ex));
+  xfree(ex);
   info("done");
   return 0;
 }
@@ -327,12 +344,16 @@ update_userlist_table(int cnts_id)
   struct userlist_contest *c;
   unsigned char *n;
   int name_len;
-  int login_len;
+  int login_len, errcode;
   struct contest_extra *ex;
+  struct contest_desc *cnts = 0;
 
-  ASSERT(cnts_id > 0 && cnts_id < contests->id_map_size);
-  ASSERT(contests->id_map[cnts_id]);
-  if (!contest_extras || !contest_extras[cnts_id]) return;
+  if ((errcode = contests_get(cnts_id, &cnts)) < 0) {
+    // FIXME: what to do if the contest unexpectedly disappeared?
+    err("contests_get failed: %s", contests_strerror(-errcode));
+    abort();
+  }
+  if (cnts_id >= contest_extras_size || !contest_extras[cnts_id]) return;
 
   ex = contest_extras[cnts_id];
   ntb = alloca(sizeof(*ntb));
@@ -693,7 +714,7 @@ graceful_exit(void)
   }
   // we need to deallocate shared memory and semafores
   if (contest_extras) {
-    for (i = 1; i < contests->id_map_size; i++) {
+    for (i = 1; i < contest_extras_size; i++) {
       if (!contest_extras[i]) continue;
       contest_extras[i]->nref = 1;
       detach_contest_extra(contest_extras[i]);
@@ -744,6 +765,69 @@ bad_packet(struct client_state *p, char const *format, ...)
     err("%d: bad packet", p->id);
   }
   disconnect_client(p);
+}
+
+/* this is not good! */
+static int
+get_uid_caps(const opcaplist_t *list, int uid, opcap_t *pcap)
+{
+  struct userlist_user *u = 0;
+
+  if (uid <= 0 || uid >= userlist->user_map_size) return -1;
+  if (!(u = userlist->user_map[uid])) return -1;
+  return opcaps_find(list, u->login, pcap);
+}
+
+static int
+is_db_capable(struct client_state *p, int bit)
+{
+  opcap_t caps;
+
+  if (get_uid_caps(&config->capabilities, p->user_id, &caps) < 0) {
+    CONN_ERR("user %d has no capabilities for the user database", p->user_id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return -1;
+  }
+  if (opcaps_check(caps, bit) < 0) {
+    CONN_ERR("user %d has no %d capability", p->user_id, bit);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return -1;
+  }
+  return 0;
+}
+
+static int
+is_cnts_capable(struct client_state *p, struct contest_desc *cnts, int bit)
+{
+  opcap_t caps;
+
+  if (get_uid_caps(&cnts->capabilities, p->user_id, &caps) < 0) {
+    CONN_ERR("user %d has no capabilities for contest %d",
+             p->user_id, cnts->id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return -1;
+  }
+  if (opcaps_check(caps, bit) < 0) {
+    CONN_ERR("user %d has no %d capability for contest %d",
+             p->user_id, bit, cnts->id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return -1;
+  }
+  return 0;
+}
+
+/*
+ * FIXME: this is terribly wrong, since a user may have capabilities
+ * FIXME: for some contest, but not for the userbase.
+ * FIXME: But lookup of all the contest is very expensive,
+ * FIXME: so it is not currently supported.
+ */
+static int
+is_privileged_user(struct userlist_user *u)
+{
+  opcap_t caps;
+
+  return opcaps_find(&config->capabilities, u->login, &caps);
 }
 
 struct passwd_internal
@@ -828,16 +912,16 @@ allocate_new_user(void)
 }
 
 static void
-create_newuser(struct client_state *p,
-               int pkt_len,
-               struct userlist_pk_register_new * data)
+cmd_register_new(struct client_state *p,
+                 int pkt_len,
+                 struct userlist_pk_register_new * data)
 {
   struct userlist_user * user;
   char * buf;
   unsigned char * login;
   unsigned char * email;
   unsigned char urlbuf[1024], *urlptr = urlbuf;
-  int login_len, email_len;
+  int login_len, email_len, errcode, exp_pkt_len;
   struct userlist_passwd *pwd;
   unsigned char passwd_buf[64];
   struct contest_desc *cnts = 0;
@@ -847,27 +931,27 @@ create_newuser(struct client_state *p,
   login = data->data;
   login_len = strlen(login);
   if (login_len != data->login_length) {
-    bad_packet(p, "new_user: login length mismatch");
+    CONN_BAD("login length mismatch: %d, %d", login_len, data->login_length);
     return;
   }
   email = data->data + data->login_length + 1;
   email_len = strlen(email);
   if (email_len != data->email_length) {
-    bad_packet(p, "new_user: email length mismatch");
+    CONN_BAD("email length mismatch: %d, %d", email_len, data->email_length);
     return;
   }
-  if (pkt_len != sizeof(*data) + login_len + email_len + 2) {
-    bad_packet(p, "new_user: packet length mismatch");
+  exp_pkt_len = sizeof(*data) + login_len + email_len;
+  if (pkt_len != exp_pkt_len) {
+    CONN_BAD("packet length mismatch: %d, %d", pkt_len, exp_pkt_len);
     return;
   }
 
-  info("%d: new_user: %s, %s, %s, %ld", p->id,
-       unparse_ip(data->origin_ip), login, email, data->contest_id);
+  CONN_INFO("%s, %s, %s, %ld",
+            unparse_ip(data->origin_ip), login, email, data->contest_id);
 
   if (data->contest_id != 0) {
-    if (data->contest_id <= 0 || data->contest_id >= contests->id_map_size
-        || !(cnts = contests->id_map[data->contest_id])) {
-      err("%d: invalid contest id", p->id);
+    if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+      CONN_ERR("invalid contest id: %s", contests_strerror(-errcode));
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
       return;
     }
@@ -888,7 +972,7 @@ create_newuser(struct client_state *p,
     urlptr += sprintf(urlptr, "%s",
                       "http://contest.cmc.msu.ru/cgi-bin/register");
   }
-  urlptr += sprintf(urlptr, "?action=%d&login=%s", 6, login);
+  urlptr += sprintf(urlptr, "?action=%d&login=%s", 3, login);
   if (data->contest_id > 0) {
     urlptr += sprintf(urlptr, "&contest_id=%ld", data->contest_id);
   }
@@ -901,7 +985,7 @@ create_newuser(struct client_state *p,
     if (!strcmp(user->login,login)) {
       //Login already exists
       send_reply(p, -ULS_ERR_LOGIN_USED);
-      err("%d: login already exists", p->id);
+      CONN_ERR("login already exists");
       return;
     }
     user = (struct userlist_user*) user->b.right;
@@ -956,7 +1040,7 @@ create_newuser(struct client_state *p,
   free(buf);
   setup_locale(0);
   send_reply(p,ULS_OK);
-  info("%d: new_user: ok, user_id = %d", p->id, user->id);
+  CONN_INFO("ok, user_id = %d", user->id);
 
   user->registration_time = cur_time;
   dirty = 1;
@@ -1105,9 +1189,9 @@ check_all_users(void)
 }
 
 static void
-login_user(struct client_state *p,
-           int pkt_len,
-           struct userlist_pk_do_login * data)
+cmd_do_login(struct client_state *p,
+             int pkt_len,
+             struct userlist_pk_do_login * data)
 {
   struct userlist_user * user;
   struct userlist_pk_login_ok * answer;
@@ -1123,19 +1207,19 @@ login_user(struct client_state *p,
 
   if (strlen(login) != data->login_length
       || strlen(password) != data->password_length) {
-    bad_packet(p, "");
+    CONN_BAD("packet length mismatch");
     return;
   }
-  info("%d: login_user: %s, %s", p->id, unparse_ip(data->origin_ip), login);
+  CONN_INFO("%s, %s", unparse_ip(data->origin_ip), login);
 
   if (p->user_id >= 0) {
-    err("%d: this connection already authentificated", p->id);
+    CONN_ERR("this connection already authentificated");
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
   }
 
   if (passwd_convert_to_internal(password, &pwdint) < 0) {
-    err("%d: invalid password", p->id);
+    CONN_ERR("invalid password");
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
@@ -1145,7 +1229,7 @@ login_user(struct client_state *p,
     ASSERT(user->b.tag == USERLIST_T_USER);
     if (!strcmp(user->login,login)) {
       if (!user->register_passwd || !user->register_passwd->b.text) {
-        info("%d: login_user: EMPTY PASSWORD", p->id);
+        CONN_INFO("EMPTY PASSWORD");
         send_reply(p, -ULS_ERR_INVALID_PASSWORD);
         user->last_access_time = cur_time;
         dirty = 1;
@@ -1191,14 +1275,14 @@ login_user(struct client_state *p,
         user->last_login_time = cur_time;
         user->last_access_time = cur_time;
         dirty = 1;
-        info("%d: login_user: OK, cookie = %llx", p->id, answer->cookie);
+        CONN_INFO("OK, cookie = %llx", answer->cookie);
         p->user_id = user->id;
         p->ip = data->origin_ip;
         p->cookie = answer->cookie;
         return;
       } else {
         //Incorrect password
-        info("%d: login_user: BAD PASSWORD", p->id);
+        CONN_INFO("BAD PASSWORD");
         send_reply(p, -ULS_ERR_INVALID_PASSWORD);
         user->last_access_time = cur_time;
         dirty = 1;
@@ -1210,12 +1294,12 @@ login_user(struct client_state *p,
 
   //Wrong login
   send_reply(p, -ULS_ERR_INVALID_LOGIN);
-  info("%d: login_user: BAD USER", p->id);
+  CONN_INFO("BAD USER");
 }
 
 static void
-login_team_user(struct client_state *p, int pkt_len,
-                struct userlist_pk_do_login * data)
+cmd_team_login(struct client_state *p, int pkt_len,
+               struct userlist_pk_do_login * data)
 {
   unsigned char *login_ptr, *passwd_ptr, *name_ptr;
   struct userlist_user *u = 0;
@@ -1225,48 +1309,51 @@ login_team_user(struct client_state *p, int pkt_len,
   struct userlist_pk_login_ok *out = 0;
   struct userlist_cookie *cookie;
   int out_size = 0, login_len, name_len;
-  int i;
+  int i, errcode;
 
   if (pkt_len < sizeof(*data)) {
-    bad_packet(p, "login_team_user: packet length is too small: %d", pkt_len);
+    CONN_BAD("packet length is too small: %d", pkt_len);
     return;
   }
   login_ptr = data->data;
   if (strlen(login_ptr) != data->login_length) {
-    bad_packet(p, "login_team_user: login length mismatch");
+    CONN_BAD("login length mismatch");
     return;
   }
   passwd_ptr = login_ptr + data->login_length + 1;
   if (strlen(passwd_ptr) != data->password_length) {
-    bad_packet(p, "login_team_user: password length mismatch");
+    CONN_BAD("password length mismatch");
     return;
   }
-  if (pkt_len != sizeof(*data)+data->login_length+data->password_length+2) {
-    bad_packet(p, "login_team_user: packet length mismatch");
+  if (pkt_len != sizeof(*data)+data->login_length+data->password_length) {
+    CONN_BAD("packet length mismatch");
     return;
   }
-  info("%d: login_team_user: %s, %s, %ld, %d, %d", p->id,
-       unparse_ip(data->origin_ip), login_ptr, data->contest_id,
-       data->locale_id, data->use_cookies);
+  CONN_INFO("%s, %s, %ld, %d, %d",
+            unparse_ip(data->origin_ip), login_ptr, data->contest_id,
+            data->locale_id, data->use_cookies);
   if (p->user_id >= 0) {
-    err("%d: this connection already authentificated", p->id);
+    CONN_ERR("this connection already authentificated");
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
   }
   if (passwd_convert_to_internal(passwd_ptr, &pwdint) < 0) {
-    bad_packet(p, "password parse error");
+    CONN_BAD("password parse error");
     return;
   }
-  if (data->contest_id <= 0
-      || data->contest_id >= contests->id_map_size
-      || !(cnts = contests->id_map[data->contest_id])) {
-    err("%d: invalid contest identifier", p->id);
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    CONN_ERR("invalid contest: %s", contests_strerror(-errcode));
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
     return;
   }
-  if (!contests_check_ip(cnts, data->origin_ip)) {
-    err("%d: IP is not allowed", p->id);
+  if (!contests_check_team_ip(data->contest_id, data->origin_ip)) {
+    CONN_ERR("IP is not allowed");
     send_reply(p, -ULS_ERR_IP_NOT_ALLOWED);
+    return;
+  }
+  if (cnts->client_disable_team) {
+    CONN_ERR("team login is disabled");
+    send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
 
@@ -1275,12 +1362,12 @@ login_team_user(struct client_state *p, int pkt_len,
     if (!strcmp(u->login, login_ptr)) break;
   }
   if (i >= userlist->user_map_size) {
-    err("%d: BAD LOGIN", p->id);
+    CONN_ERR("BAD LOGIN");
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
   }
   if(passwd_check(&pwdint,u->team_passwd?u->team_passwd:u->register_passwd)<0){
-    err("%d: BAD PASSWORD", p->id);
+    CONN_ERR("BAD PASSWORD");
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
@@ -1291,7 +1378,7 @@ login_team_user(struct client_state *p, int pkt_len,
     }
   }
   if (!c || c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)) {
-    err("%d: not allowed to participate", p->id);
+    CONN_ERR("not allowed to participate");
     send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
     return;
   }
@@ -1340,63 +1427,61 @@ login_team_user(struct client_state *p, int pkt_len,
   enqueue_reply_to_client(p, out_size, out);
   dirty = 1;
   u->last_login_time = cur_time;
-  info("%d: login_team_user: %d,%s,%llx", p->id, u->id, u->login,out->cookie);
+  CONN_INFO("%d,%s,%llx", u->id, u->login,out->cookie);
 }
 
 static void
-cmd_login_priv_user(struct client_state *p, int len,
+cmd_priv_login(struct client_state *p, int pkt_len,
                     struct userlist_pk_do_login *data)
 {
   unsigned char *login_ptr, *passwd_ptr, *name_ptr;
-  struct contest_desc *cnts;
+  struct contest_desc *cnts = 0;
   struct passwd_internal pwdint;
   struct userlist_user *u = 0;
-  struct xml_tree *t;
   struct userlist_pk_login_ok *out = 0;
   int i, priv_level, login_len, name_len;
-  size_t out_size = 0;
+  size_t out_size = 0, errcode;
   struct userlist_cookie *cookie;
+  opcap_t caps;
 
-  if (len < sizeof(*data)) {
-    bad_packet(p, "login_priv_user: packet length too small: %d", len);
+  if (pkt_len < sizeof(*data)) {
+    CONN_BAD("packet length too small: %d", pkt_len);
     return;
   }
   login_ptr = data->data;
   if (strlen(login_ptr) != data->login_length) {
-    bad_packet(p, "login_priv_user: login length mismatch");
+    CONN_BAD("login length mismatch");
     return;
   }
   passwd_ptr = login_ptr + data->login_length + 1;
   if (strlen(passwd_ptr) != data->password_length) {
-    bad_packet(p, "login_priv_user: password length mismatch");
+    CONN_BAD("password length mismatch");
     return;
   }
-  if (len != sizeof(*data) + data->login_length + data->password_length) {
-    bad_packet(p, "login_priv_user: packet length mismatch");
+  if (pkt_len != sizeof(*data) + data->login_length + data->password_length) {
+    CONN_BAD("packet length mismatch");
     return;
   }
 
-  info("%d: login_priv_user: %s, %s, %ld, %d, %d", p->id,
-       unparse_ip(data->origin_ip), login_ptr, data->contest_id,
-       data->locale_id, data->use_cookies);
+  CONN_INFO("%s, %s, %ld, %d, %d",
+            unparse_ip(data->origin_ip), login_ptr, data->contest_id,
+            data->locale_id, data->use_cookies);
   if (p->user_id >= 0) {
-    err("%d: this connection already authentificated", p->id);
+    CONN_ERR("this connection already authentificated");
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
   }
   if (passwd_convert_to_internal(passwd_ptr, &pwdint) < 0) {
-    bad_packet(p, "password parse error");
+    CONN_BAD("password parse error");
     return;
   }
-  if (data->contest_id <= 0
-      || data->contest_id >= contests->id_map_size
-      || !(cnts = contests->id_map[data->contest_id])) {
-    err("%d: invalid contest identifier", p->id);
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    CONN_ERR("invalid contest: %s", contests_strerror(-errcode));
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
     return;
   }
   if (data->priv_level <= 0 || data->priv_level > PRIV_LEVEL_ADMIN) {
-    err("%d: invalid privelege level: %d", p->id, data->priv_level);
+    CONN_ERR("invalid privelege level: %d", data->priv_level);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
@@ -1406,46 +1491,38 @@ cmd_login_priv_user(struct client_state *p, int len,
     if (!strcmp(u->login, login_ptr)) break;
   }
   if (i >= userlist->user_map_size) {
-    err("%d: BAD LOGIN", p->id);
+    CONN_ERR("BAD LOGIN");
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
   }
   if (passwd_check(&pwdint, u->register_passwd) < 0) {
-    err("%d: BAD PASSWORD", p->id);
+    CONN_ERR("BAD PASSWORD");
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
 
-  t = 0;
-  if (cnts->priv_users) {
-    ASSERT(cnts->priv_users->tag == CONTEST_PRIVILEGED_USERS);
-    for (t = cnts->priv_users->first_down; t; t = t->right) {
-      if (!t->text) continue;
-      if (!strcmp(login_ptr, t->text)) break;
-    }
-  }
-  if (!t) {
-    err("%d: the user is not privileged", p->id);
+  // check user capabilities
+  if (opcaps_find(&cnts->capabilities, login_ptr, &caps) < 0) {
+    CONN_ERR("the user is not privileged");
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
   priv_level = 0;
-  switch (t->tag) {
-  case CONTEST_OBSERVER:
-    priv_level = PRIV_LEVEL_OBSERVER;
+  switch (data->priv_level) {
+  case PRIV_LEVEL_OBSERVER:
+    priv_level = OPCAP_OBSERVER_LOGIN;
     break;
-  case CONTEST_JUDGE:
-    priv_level = PRIV_LEVEL_JUDGE;
+  case PRIV_LEVEL_JUDGE:
+    priv_level = OPCAP_JUDGE_LOGIN;
     break;
-  case CONTEST_ADMINISTRATOR:
-    priv_level = PRIV_LEVEL_ADMIN;
+  case PRIV_LEVEL_ADMIN:
+    priv_level = OPCAP_MASTER_LOGIN;
     break;
   default:
     SWERR(("unhandled tag"));
   }
-  ASSERT(priv_level >= 1 && priv_level <= PRIV_LEVEL_ADMIN);
-  if (data->priv_level > priv_level) {
-    err("%d: the user cannot have the required privilege level", p->id);
+  if (opcaps_check(caps, priv_level) < 0) {
+    CONN_ERR("the user cannot have the required privilege level");
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
@@ -1497,13 +1574,13 @@ cmd_login_priv_user(struct client_state *p, int len,
   enqueue_reply_to_client(p, out_size, out);
   dirty = 1;
   u->last_login_time = cur_time;
-  info("%d: login_priv_user: %d,%s,%llx", p->id, u->id, u->login,out->cookie);
+  CONN_INFO("%d,%s,%llx", u->id, u->login,out->cookie);
 }
 
 static void
-login_cookie(struct client_state *p,
-             int pkt_len,
-             struct userlist_pk_check_cookie * data)
+cmd_check_cookie(struct client_state *p,
+                 int pkt_len,
+                 struct userlist_pk_check_cookie * data)
 {
   struct userlist_user * user;
   struct userlist_pk_login_ok * answer;
@@ -1511,12 +1588,17 @@ login_cookie(struct client_state *p,
   struct userlist_cookie * cookie;
   unsigned char *name_beg;
 
-  info("%d: login_cookie: ip = %s, cookie = %llx",
-       p->id, unparse_ip(data->origin_ip), data->cookie);
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+
+  CONN_INFO("ip = %s, cookie = %llx",
+            unparse_ip(data->origin_ip), data->cookie);
 
   // cannot login twice
   if (p->user_id >= 0) {
-    err("%d: this connection already authentificated", p->id);
+    CONN_ERR("this connection already authentificated");
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
@@ -1557,7 +1639,7 @@ login_cookie(struct client_state *p,
             enqueue_reply_to_client(p,anslen,answer);
             user->last_login_time = cur_time;
             dirty = 1;
-            info("%d: login_cookie: OK: %d, %s", p->id, user->id, user->login);
+            CONN_INFO("OK: %d, %s", user->id, user->login);
             p->user_id = user->id;
             p->ip = data->origin_ip;
             p->cookie = data->cookie;
@@ -1571,44 +1653,48 @@ login_cookie(struct client_state *p,
   }
 
   // cookie not found
-  info("%d: login_cookie: FAILED", p->id);
+  CONN_INFO("FAILED");
   send_reply(p, -ULS_ERR_NO_COOKIE);
 }
 
 static void
-login_team_cookie(struct client_state *p, int pkt_len,
-                  struct userlist_pk_check_cookie * data)
+cmd_team_check_cookie(struct client_state *p, int pkt_len,
+                      struct userlist_pk_check_cookie * data)
 {
   struct contest_desc *cnts = 0;
   struct userlist_user *u = 0;
   struct userlist_cookie *cookie = 0;
   struct userlist_contest *c = 0;
   struct userlist_pk_login_ok *out = 0;
-  int i, out_size = 0, login_len = 0, name_len = 0;
+  int i, out_size = 0, login_len = 0, name_len = 0, errcode;
   unsigned char *login_ptr, *name_ptr;
 
   if (pkt_len != sizeof(*data)) {
-    bad_packet(p, "login_team_cookie: bad packet length %d", pkt_len);
+    CONN_BAD("bad packet length: %d", pkt_len);
     return;
   }
-  info("%d: login_team_cookie: %s, %ld, %llx, %d",
-       p->id, unparse_ip(data->origin_ip), data->contest_id,
-       data->cookie, data->locale_id);
+  CONN_INFO("%s, %ld, %llx, %d",
+            unparse_ip(data->origin_ip), data->contest_id,
+            data->cookie, data->locale_id);
   if (p->user_id >= 0) {
-    err("%d: this connection already authentificated", p->id);
+    CONN_ERR("this connection already authentificated");
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
   if (data->contest_id) {
-    if (data->contest_id < 0 || data->contest_id >= contests->id_map_size
-        || !(cnts = contests->id_map[data->contest_id])) {
-      err("%d: invalid contest identifier", p->id);
+    if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+      CONN_ERR("invalid contest: %s", contests_strerror(-errno));
       send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
+    if (cnts->client_disable_team) {
+      CONN_ERR("team login is disabled");
+      send_reply(p, -ULS_ERR_NO_PERMS);
       return;
     }
   }
   if (!data->cookie) {
-    err("%d: cookie value is 0", p->id);
+    CONN_ERR("cookie value is 0");
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
@@ -1628,7 +1714,7 @@ login_team_cookie(struct client_state *p, int pkt_len,
     if (cookie) break;
   }
   if (i >= userlist->user_map_size) {
-    err("%d: cookie not found", p->id);
+    CONN_ERR("cookie not found");
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
@@ -1639,15 +1725,13 @@ login_team_cookie(struct client_state *p, int pkt_len,
   if (data->locale_id == -1) {
     data->locale_id = cookie->locale_id;
   }
-  if (data->contest_id <= 0
-      || data->contest_id >= contests->id_map_size
-      || !(cnts = contests->id_map[data->contest_id])) {
-    err("%d: invalid contest identifier", p->id);
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    CONN_ERR("invalid contest: %s", contests_strerror(-errno));
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
     return;
   }
-  if (!contests_check_ip(cnts, data->origin_ip)) {
-    err("%d: IP is not allowed", p->id);
+  if (!contests_check_team_ip(data->contest_id, data->origin_ip)) {
+    CONN_ERR("IP is not allowed");
     send_reply(p, -ULS_ERR_IP_NOT_ALLOWED);
     return;
   }
@@ -1658,7 +1742,7 @@ login_team_cookie(struct client_state *p, int pkt_len,
     }
   }
   if (!c || c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)) {
-    err("%d: not allowed to participate", p->id);
+    CONN_ERR("not allowed to participate");
     send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
     return;
   }
@@ -1693,57 +1777,56 @@ login_team_cookie(struct client_state *p, int pkt_len,
   enqueue_reply_to_client(p, out_size, out);
   dirty = 1;
   u->last_login_time = cur_time;
-  info("%d: login_team_cookie: %d,%s", p->id, u->id, u->login);
+  CONN_INFO("%d,%s", u->id, u->login);
 }
 
 static void
-login_priv_cookie(struct client_state *p,
-                  int len,
-                  struct userlist_pk_check_cookie *pkt)
+cmd_priv_check_cookie(struct client_state *p,
+                      int pkt_len,
+                      struct userlist_pk_check_cookie *data)
 {
   struct contest_desc *cnts = 0;
   struct userlist_user *u = 0;
   struct userlist_cookie *cookie = 0;
-  struct xml_tree *pu;
   struct userlist_pk_login_ok *out;
   size_t login_len, name_len, out_size;
   unsigned char *login_ptr, *name_ptr;
-  int priv_level, i;
+  int priv_level, i, errcode;
+  opcap_t caps;
 
-  if (len != sizeof(*pkt)) {
-    bad_packet(p, "login_priv_cookie: bad packet length: %d", len);
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
     return;
   }
-  info("%d: login_priv_cookie: %s, %ld, %llx",
-       p->id, unparse_ip(pkt->origin_ip), pkt->contest_id, pkt->cookie);
+  CONN_INFO("%s, %ld, %llx",
+            unparse_ip(data->origin_ip), data->contest_id, data->cookie);
   if (p->user_id >= 0) {
-    err("%d: this connection already authentificated", p->id);
+    CONN_ERR("this connection already authentificated");
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
-  if (!pkt->contest_id) {
-    err("%d: contest_id is not specified", p->id);
+  if (!data->contest_id) {
+    CONN_ERR("contest_id is not specified");
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
     return;
   }
-  if (pkt->contest_id < 0 || pkt->contest_id >= contests->id_map_size
-      || !(cnts = contests->id_map[pkt->contest_id])) {
-    err("%d: invalid contest identifier", p->id);
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    CONN_ERR("invalid contest: %s", contests_strerror(-errcode));
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
     return;
   }
-  if (!pkt->cookie) {
-    err("%d: cookie value is 0", p->id);
+  if (!data->cookie) {
+    CONN_ERR("cookie value is 0");
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
-  if (!pkt->origin_ip) {
-    err("%d: origin_ip is not set", p->id);
+  if (!data->origin_ip) {
+    CONN_ERR("origin_ip is not set");
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
-  if (pkt->priv_level <= 0 || pkt->priv_level > PRIV_LEVEL_ADMIN) {
-    err("%d: invalid privilege level", p->id);
+  if (data->priv_level <= 0 || data->priv_level > PRIV_LEVEL_ADMIN) {
+    CONN_ERR("invalid privilege level");
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
@@ -1752,61 +1835,54 @@ login_priv_cookie(struct client_state *p,
     if (!u->cookies) continue;
     for (cookie = (struct userlist_cookie*) u->cookies->first_down;
          cookie; cookie = (struct userlist_cookie*) cookie->b.right) {
-      if (cookie->ip == pkt->origin_ip
-          && cookie->contest_id == pkt->contest_id
+      if (cookie->ip == data->origin_ip
+          && cookie->contest_id == data->contest_id
           && cookie->expire > cur_time
           && cookie->priv_level > 0
-          && cookie->cookie == pkt->cookie) break;
+          && cookie->cookie == data->cookie) break;
     }
     if (cookie) break;
   }
   if (i >= userlist->user_map_size) {
-    err("%d: cookie not found", p->id);
+    CONN_ERR("cookie not found");
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
 
-  pu = 0;
-  if (cnts->priv_users) {
-    for (pu = cnts->priv_users->first_down; pu; pu = pu->right) {
-      if (!pu->text) continue;
-      if (!strcmp(pu->text, u->login)) break;
-    }
-  }
-  if (!pu) {
-    err("%d: user has no privileges", p->id);
+  // check user capabilities
+  if (get_uid_caps(&cnts->capabilities, u->id, &caps) < 0) {
+    CONN_ERR("the user is not privileged");
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
   priv_level = 0;
-  switch (pu->tag) {
-  case CONTEST_OBSERVER:
-    priv_level = PRIV_LEVEL_OBSERVER;
+  switch (data->priv_level) {
+  case PRIV_LEVEL_OBSERVER:
+    priv_level = OPCAP_OBSERVER_LOGIN;
     break;
-  case CONTEST_JUDGE:
-    priv_level = PRIV_LEVEL_JUDGE;
+  case PRIV_LEVEL_JUDGE:
+    priv_level = OPCAP_JUDGE_LOGIN;
     break;
-  case CONTEST_ADMINISTRATOR:
-    priv_level = PRIV_LEVEL_ADMIN;
+  case PRIV_LEVEL_ADMIN:
+    priv_level = OPCAP_MASTER_LOGIN;
     break;
   default:
-    SWERR(("Unhandled privilege tag %d", pu->tag));
+    abort();
   }
-  if (pkt->priv_level > priv_level) {
-    err("%d: requested privileges %d > user privileges %d",
-        p->id, pkt->priv_level, priv_level);
+  if (opcaps_check(caps, priv_level) < 0) {
+    CONN_ERR("the user cannot have the required privilege level");
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
 
   /* everything is ok, update cookie */
-  if (pkt->locale_id >= 0) {
-    cookie->locale_id = pkt->locale_id;
+  if (data->locale_id >= 0) {
+    cookie->locale_id = data->locale_id;
     dirty = 1;
     u->last_minor_change_time = cur_time;
   }
-  if (pkt->priv_level != cookie->priv_level) {
-    cookie->priv_level = pkt->priv_level;
+  if (data->priv_level != cookie->priv_level) {
+    cookie->priv_level = data->priv_level;
     dirty = 1;
     u->last_minor_change_time = cur_time;
   }
@@ -1822,54 +1898,50 @@ login_priv_cookie(struct client_state *p,
   out->reply_id = ULS_LOGIN_COOKIE;
   out->user_id = u->id;
   out->contest_id = cookie->contest_id;
-  out->locale_id = pkt->locale_id;
+  out->locale_id = data->locale_id;
   out->login_len = login_len;
   out->name_len = name_len;
-  out->priv_level = pkt->priv_level;
+  out->priv_level = data->priv_level;
   strcpy(login_ptr, u->login);
   strcpy(name_ptr, u->name);
   
   p->user_id = u->id;
   p->priv_level = out->priv_level;
   p->cookie = cookie->cookie;
-  p->ip = pkt->origin_ip;
+  p->ip = data->origin_ip;
   enqueue_reply_to_client(p, out_size, out);
   dirty = 1;
   u->last_login_time = cur_time;
-  info("%d: login_priv_cookie: %d, %s", p->id, u->id, u->login);
+  CONN_INFO("%d, %s", u->id, u->login);
 }
       
 static void
-logout_user(struct client_state *p,
-            int pkt_len,
-            struct userlist_pk_do_logout * data)
+cmd_do_logout(struct client_state *p,
+              int pkt_len,
+              struct userlist_pk_do_logout * data)
 {
   struct userlist_user *u;
   struct userlist_cookie *cookie;
 
   if (pkt_len != sizeof(*data)) {
-    bad_packet(p, "logout_user: packet length mismatch: %d", pkt_len);
+    CONN_BAD("packet length mismatch: %d", pkt_len);
     return;
   }
-  info("%d: logout_user: %s, %016llx", p->id,
-       unparse_ip(data->origin_ip), data->cookie);
+  CONN_INFO("%s, %016llx", unparse_ip(data->origin_ip), data->cookie);
   if (p->user_id < 0) {
-    err("%d: connection is not authentificated", p->id);
+    CONN_ERR("connection is not authentificated");
     send_reply(p, ULS_OK);
     return;
   }
-  if (!p->user_id) {
-    err("%d: cannot logout administrator user", p->id);
-    send_reply(p, ULS_OK);
-    return;
-  }
+  // user_id == 0 is deprecated
+  ASSERT(p->user_id > 0);
   if (!data->cookie) {
-    err("%d: cookie is empty", p->id);
+    CONN_ERR("cookie is empty");
     send_reply(p, ULS_OK);
     return;
   }
   if (!data->origin_ip) {
-    err("%d: origin_ip is empty", p->id);
+    CONN_ERR("origin_ip is empty");
     send_reply(p, ULS_OK);
     return;
   }
@@ -1887,7 +1959,7 @@ logout_user(struct client_state *p,
     }
   }
   if (!cookie) {
-    err("%d: cookie not found", p->id);
+    CONN_ERR("cookie not found");
     send_reply(p, ULS_OK);
     return;
   }
@@ -1896,13 +1968,17 @@ logout_user(struct client_state *p,
   u->last_minor_change_time = cur_time;
   dirty = 1;
   send_reply(p, ULS_OK);
-  info("%d: cookie removed", p->id);
+  CONN_INFO("cookie removed");
 }
 
+/*
+ * Unpriveleged: get information about a user.
+ * A user may only get information about himself.
+ */
 static void
-get_user_info(struct client_state *p,
-              int pkt_len,
-              struct userlist_pk_get_user_info *pack)
+cmd_get_user_info(struct client_state *p,
+                  int pkt_len,
+                  struct userlist_pk_get_user_info *data)
 {
   FILE *f = 0;
   unsigned char *xml_ptr = 0;
@@ -1910,34 +1986,41 @@ get_user_info(struct client_state *p,
   struct userlist_pk_xml_data *out = 0;
   size_t out_size = 0;
   struct userlist_user *user = 0;
-  int mode = 1;
 
-  if (pkt_len != sizeof(*pack)) {
-    bad_packet(p, "");
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("packet length mismatch: %d", pkt_len);
     return;
   }
 
-  info("%d: get_user_info: %ld", p->id, pack->user_id);
+  CONN_INFO("%ld", data->user_id);
 
-  if (pack->user_id < 0 || pack->user_id >= userlist->user_map_size
-      || !userlist->user_map[pack->user_id]) {
-    err("%d: invalid user id", p->id);
-    send_reply(p, -ULS_ERR_BAD_UID);
-    return;
-  }
-  if (p->user_id != 0 && (p->user_id < 0 || p->user_id != pack->user_id)) {
-    err("%d: permission denied", p->id);
+  if (p->user_id < 0) {
+    CONN_ERR("not authentificated");
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  user = userlist->user_map[pack->user_id];
+  // user_id == 0 is deprecated
+  ASSERT(p->user_id > 0);
 
-  if (!(f = open_memstream((char**) &xml_ptr, &xml_size))) {
-    err("%d: open_memstream failed!", p->id);
+  if (data->user_id <= 0 || data->user_id >= userlist->user_map_size
+      || !userlist->user_map[data->user_id]) {
+    CONN_ERR("invalid user id");
+    send_reply(p, -ULS_ERR_BAD_UID);
     return;
   }
-  if (!p->user_id) mode = 0;
-  userlist_unparse_user(user, f, mode);
+  if (data->user_id != p->user_id) {
+    CONN_ERR("user ids does not match: %d, %ld", p->user_id, data->user_id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  user = userlist->user_map[data->user_id];
+
+  if (!(f = open_memstream((char**) &xml_ptr, &xml_size))) {
+    CONN_ERR("open_memstream() failed!");
+    send_reply(p, -ULS_ERR_OUT_OF_MEM);
+    return;
+  }
+  userlist_unparse_user(user, f, USERLIST_MODE_USER);
   fclose(f);
 
   ASSERT(xml_size == strlen(xml_ptr));
@@ -1952,50 +2035,141 @@ get_user_info(struct client_state *p,
   user->last_access_time = cur_time;
   dirty = 1;
   enqueue_reply_to_client(p, out_size, out);
-  info("%d: get_user_info: size = %d", p->id, out_size);
+  CONN_INFO("size = %d", out_size);
 }
 
 static void
-cmd_list_all_users(struct client_state *p,
-                   int len,
-                   struct userlist_pk_map_contest *pack)
+cmd_priv_get_user_info(struct client_state *p,
+                       int pkt_len,
+                       struct userlist_pk_get_user_info *data)
 {
   FILE *f = 0;
   unsigned char *xml_ptr = 0;
   size_t xml_size = 0;
   struct userlist_pk_xml_data *out = 0;
   size_t out_size = 0;
+  struct userlist_user *user = 0;
+  struct userlist_contest *user_cnts = 0;
+  struct contest_desc *cnts = 0;
+  opcap_t caps;
 
-  if (len != sizeof(*pack)) {
-    bad_packet(p, "list_all_users: packet length mismatch");
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("packet length mismatch: %d", pkt_len);
     return;
   }
 
-  info("%d: list_all_users: %d", p->id, pack->contest_id);
-  if (p->user_id != 0) {
-    err("%d: only administrator is allowed to do that", p->id);
+  CONN_INFO("%ld", data->user_id);
+
+  if (p->user_id < 0) {
+    CONN_ERR("not authentificated");
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  if (pack->contest_id &&
-      (pack->contest_id < 1 || pack->contest_id >= contests->id_map_size
-       || !contests->id_map[pack->contest_id])) {
-    err("%d: invalid contest id", p->id);
-    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+  // user_id == 0 is deprecated
+  ASSERT(p->user_id > 0);
+
+  if (data->user_id <= 0 || data->user_id >= userlist->user_map_size
+      || !userlist->user_map[data->user_id]) {
+    CONN_ERR("invalid user id");
+    send_reply(p, -ULS_ERR_BAD_UID);
     return;
   }
+  user = userlist->user_map[data->user_id];
+
+  // either p->user_id == data->user_id,
+  // or general GET_USER capability is present,
+  // or the user is registered for the contest with GET_USER capability
+  while (1) {
+    if (p->user_id == data->user_id) break;
+
+    if (get_uid_caps(&config->capabilities, p->user_id, &caps) >= 0
+        && opcaps_check(caps, OPCAP_GET_USER) >= 0) break;
+
+    // scan contests
+    if (user->contests) {
+      for (user_cnts = FIRST_CONTEST(user); user_cnts;
+           user_cnts = NEXT_CONTEST(user_cnts)) {
+        if (contests_get(user_cnts->id, &cnts) < 0)
+          continue;
+        if (get_uid_caps(&cnts->capabilities, p->user_id, &caps) < 0)
+          continue;
+        if (opcaps_check(caps, OPCAP_GET_USER) >= 0) break;
+      }
+      if (user_cnts) break;
+    }
+
+    // no access condition holds
+    CONN_ERR("user %d has no permission to view this user", p->user_id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (!(f = open_memstream((char**) &xml_ptr, &xml_size))) {
+    CONN_ERR("open_memstream() failed!");
+    send_reply(p, -ULS_ERR_OUT_OF_MEM);
+    return;
+  }
+  userlist_unparse_user(user, f, USERLIST_MODE_ALL);
+  fclose(f);
+
+  ASSERT(xml_size == strlen(xml_ptr));
+  out_size = sizeof(*out) + xml_size + 1;
+  out = alloca(out_size);
+  ASSERT(out);
+  memset(out, 0, out_size);
+  out->reply_id = ULS_XML_DATA;
+  out->info_len = xml_size;
+  memcpy(out->data, xml_ptr, xml_size + 1);
+  xfree(xml_ptr);
+  user->last_access_time = cur_time;
+  dirty = 1;
+  enqueue_reply_to_client(p, out_size, out);
+  CONN_INFO("size = %d", out_size);
+}
+
+static void
+cmd_list_all_users(struct client_state *p,
+                   int pkt_len,
+                   struct userlist_pk_map_contest *data)
+{
+  FILE *f = 0;
+  unsigned char *xml_ptr = 0;
+  size_t xml_size = 0;
+  struct userlist_pk_xml_data *out = 0;
+  size_t out_size = 0;
+  int errcode;
+  struct contest_desc *cnts = 0;
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("packet length mismatch");
+    return;
+  }
+
+  CONN_INFO("%d", data->contest_id);
+  if (p->user_id < 0) {
+    CONN_ERR("not authentificated");
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (data->contest_id) {
+    // list users for a particular contest
+    if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+      CONN_ERR("invalid contest: %s", contests_strerror(-errcode));
+      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
+    if (is_cnts_capable(p, cnts, OPCAP_LIST_CONTEST_USERS) < 0) return;
+  } else {
+    // list all users
+    if (is_db_capable(p, OPCAP_LIST_ALL_USERS) < 0) return;
+  }
+
   f = open_memstream((char**) &xml_ptr, &xml_size);
   ASSERT(f);
-  userlist_unparse_short(userlist, f, pack->contest_id);
+  userlist_unparse_short(userlist, f, data->contest_id);
   fclose(f);
   ASSERT(xml_size == strlen(xml_ptr));
-  /*
-  if (xml_size > 65535) {
-    err("%d: XML data is too large", p->id);
-    send_reply(p, -ULS_ERR_INVALID_SIZE);
-    return;
-  }
-  */
   out_size = sizeof(*out) + xml_size + 1;
   out = alloca(out_size);
   ASSERT(out);
@@ -2009,9 +2183,9 @@ cmd_list_all_users(struct client_state *p,
 }
 
 static void
-get_user_contests(struct client_state *p,
-                  int pkt_len,
-                  struct userlist_pk_get_user_info *pack)
+cmd_get_user_contests(struct client_state *p,
+                      int pkt_len,
+                      struct userlist_pk_get_user_info *data)
 {
   FILE *f = 0;
   unsigned char *xml_ptr = 0;
@@ -2020,33 +2194,44 @@ get_user_contests(struct client_state *p,
   size_t out_size = 0;
   struct userlist_user *user = 0;
 
-  if (pkt_len != sizeof(*pack)) {
-    bad_packet(p, "");
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("packet length mismatch");
     return;
   }
 
-  info("%d: get_user_contests: %ld", p->id, pack->user_id);
+  CONN_INFO("%ld", data->user_id);
 
-  if (pack->user_id < 0 || pack->user_id >= userlist->user_map_size
-      || !userlist->user_map[pack->user_id]) {
-    bad_packet(p, "");
-    return;
-  }
-  if (p->user_id < 0 || p->user_id != pack->user_id) {
-    // FIXME: send in somewhat reduced view
+  if (p->user_id < 0) {
+    CONN_ERR("connection is not authentificated");
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  user = userlist->user_map[pack->user_id];
+  ASSERT(p->user_id > 0);
+  if (data->user_id <= 0 || data->user_id >= userlist->user_map_size
+      || !userlist->user_map[data->user_id]) {
+    CONN_ERR("invalid user_id");
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  // this is unprivileged version
+  if (data->user_id != p->user_id) {
+    CONN_ERR("requested user_id does not match to the original");
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  user = userlist->user_map[data->user_id];
 
   if (!(f = open_memstream((char**) &xml_ptr, &xml_size))) {
-    err("%d: open_memstream failed!", p->id);
+    CONN_ERR("open_memstream failed!");
+    send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
   }
   userlist_unparse_contests(user, f);
   fclose(f);
 
   ASSERT(xml_size == strlen(xml_ptr));
+  // FIXME: extend the packet!!!
   ASSERT(xml_size <= 65535);
   out_size = sizeof(*out) + xml_size + 1;
   out = alloca(out_size);
@@ -2059,7 +2244,7 @@ get_user_contests(struct client_state *p,
   user->last_access_time = cur_time;
   dirty = 1;
   enqueue_reply_to_client(p, out_size, out);
-  info("%d: get_user_contests: size = %d", p->id, out_size);
+  CONN_INFO("size = %d", out_size);
 }
 
 static struct userlist_member *
@@ -2159,11 +2344,9 @@ needs_name_update(unsigned char const *old, unsigned char const *new)
 }
 
 static void
-set_user_info(struct client_state *p,
-              int pkt_len,
-              struct userlist_pk_set_user_info *pack)
+do_set_user_info(struct client_state *p,
+                 struct userlist_pk_set_user_info *data)
 {
-  int xml_len;
   struct userlist_user *new_u = 0, *old_u = 0;
   int old_role, old_pers, new_role, new_pers;
   struct userlist_members *old_ms = 0, *new_ms;
@@ -2171,39 +2354,15 @@ set_user_info(struct client_state *p,
   unsigned char const *role_str = 0;
   int updated = 0;
 
-  xml_len = strlen(pack->data);
-  if (xml_len != pack->info_len) {
-    bad_packet(p, "");
-    return;
-  }
-  if (pkt_len != sizeof(*pack) + xml_len + 1) {
-    bad_packet(p, "");
-    return;
-  }
-
-  info("%d: set_user_info: %ld, %d", p->id, pack->user_id, pack->info_len);
-  if (p->user_id <= 0) {
-    err("%d: client not authentificated", p->id);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
-  if (p->user_id != pack->user_id) {
-    err("%d: user_id does not match", p->id);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
-
-  //fprintf(stderr, "======\n%s\n======\n", pack->data);
-
-  if (!(new_u = userlist_parse_user_str(pack->data))) {
+  if (!(new_u = userlist_parse_user_str(data->data))) {
     err("%d: XML parse error", p->id);
     send_reply(p, -ULS_ERR_XML_PARSE);
     return;
   }
 
-  if (pack->user_id != new_u->id) {
+  if (data->user_id != new_u->id) {
     err("%d: XML user_id %d does not correspond to packet user_id %lu",
-        p->id, new_u->id, pack->user_id);
+        p->id, new_u->id, data->user_id);
     send_reply(p, -ULS_ERR_PROTOCOL);
     userlist_free(&new_u->b);
     return;
@@ -2462,81 +2621,108 @@ set_user_info(struct client_state *p,
 }
 
 static void
-set_password(struct client_state *p, int len,
-             struct userlist_pk_set_password *pack)
+cmd_set_user_info(struct client_state *p,
+                  int pkt_len,
+                  struct userlist_pk_set_user_info *data)
 {
-  int old_len, new_len;
+  size_t xml_len;
+
+  xml_len = strlen(data->data);
+  if (xml_len != data->info_len) {
+    CONN_BAD("XML length does not match");
+    return;
+  }
+  if (pkt_len != sizeof(*data) + xml_len) {
+    CONN_BAD("packet length mismatch");
+    return;
+  }
+
+  CONN_INFO("%ld, %d", data->user_id, data->info_len);
+  if (p->user_id < 0) {
+    CONN_ERR("client not authentificated");
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+  if (p->user_id != data->user_id) {
+    CONN_ERR("user_id does not match: %d, %ld", p->user_id, data->user_id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  do_set_user_info(p, data);
+}
+
+static void
+cmd_set_passwd(struct client_state *p, int pkt_len,
+               struct userlist_pk_set_password *data)
+{
+  int old_len, new_len, exp_len;
   unsigned char *old_pwd, *new_pwd;
   struct userlist_user *u;
   struct passwd_internal oldint, newint;
 
-  // check packet
-  if (len < sizeof(*pack)) {
-    bad_packet(p, "set_password: bad packet length %d", len);
+  if (pkt_len < sizeof(*data)) {
+    CONN_BAD("packet is too small: %d", pkt_len);
     return;
   }
-  old_pwd = pack->data;
+  old_pwd = data->data;
   old_len = strlen(old_pwd);
-  if (old_len != pack->old_len) {
-    bad_packet(p, "set_password: old password length mismatch");
+  if (old_len != data->old_len) {
+    CONN_BAD("old password length mismatch: %d, %d", old_len, data->old_len);
     return;
   }
   new_pwd = old_pwd + old_len + 1;
   new_len = strlen(new_pwd);
-  if (new_len != pack->new_len) {
-    bad_packet(p, "set_password: new password length mismatch");
+  if (new_len != data->new_len) {
+    CONN_BAD("new password length mismatch: %d, %d", new_len, data->new_len);
     return;
   }
-  if (len != sizeof(*pack) + old_len + new_len + 2) {
-    bad_packet(p, "set_password: packet length mismatch");
+  exp_len = sizeof(*data) + old_len + new_len;
+  if (pkt_len != exp_len) {
+    CONN_BAD("packet length mismatch: %d, %d", exp_len, pkt_len);
     return;
   }
 
-  info("%d: set_password: %d", p->id, pack->user_id);
-  if (p->user_id <= 0) {
-    err("%d: client not authentificated", p->id);
+  CONN_INFO("%d", data->user_id);
+  if (p->user_id < 0) {
+    CONN_ERR("client not authentificated");
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  if (p->user_id != pack->user_id) {
-    err("%d: user_id does not match", p->id);
+  ASSERT(p->user_id > 0);
+  if (p->user_id != data->user_id) {
+    CONN_ERR("user_ids does not match: %d, %d", p->user_id, data->user_id);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  if (pack->user_id <= 0 || pack->user_id >= userlist->user_map_size) {
-    err("%d: user id is out of range", p->id);
-    send_reply(p, -ULS_ERR_BAD_UID);
-    return;
-  }
-  u = userlist->user_map[pack->user_id];
-  if (!u) {
-    err("%d: user id nonexistent", p->id);
-    send_reply(p, -ULS_ERR_BAD_UID);
-    return;
-  }
+  // just in case
+  ASSERT(p->user_id < userlist->user_map_size);
+  u = userlist->user_map[p->user_id];
+  ASSERT(u);
+
   if (!new_len) {
-    err("%d: new password cannot be empty", p->id);
+    CONN_ERR("new password is empty");
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
   if (!u->register_passwd || !u->register_passwd->b.text) {
-    err("%d: password is not set for %d", p->id, p->user_id);
+    CONN_ERR("old password is not set");
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
   if (passwd_convert_to_internal(old_pwd, &oldint) < 0) {
-    err("%d: cannot parse old password", p->id);
+    CONN_ERR("cannot parse old password");
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
   if (passwd_convert_to_internal(new_pwd, &newint) < 0) {
-    err("%d: cannot parse new password", p->id);
+    CONN_ERR("cannot parse new password");
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
   if (passwd_check(&oldint, u->register_passwd) < 0) {
-    err("%d: provided password does not match", p->id);
-    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    CONN_ERR("passwords do not match");
+    send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
   xfree(u->register_passwd->b.text);
@@ -2548,103 +2734,102 @@ set_password(struct client_state *p, int len,
   dirty = 1;
   flush_interval /= 2;
   send_reply(p, ULS_OK);
+  CONN_INFO("ok");
 }
 
 static void
-team_set_password(struct client_state *p, int len,
-                  struct userlist_pk_set_password *pack)
+cmd_team_set_passwd(struct client_state *p, int pkt_len,
+                    struct userlist_pk_set_password *data)
 {
-  int old_len, new_len;
+  int old_len, new_len, exp_len;
   unsigned char *old_pwd, *new_pwd;
   struct userlist_user *u;
   struct passwd_internal oldint, newint;
   struct contest_desc *cnts = 0;
+  int errcode;
 
   // check packet
-  if (len < sizeof(*pack)) {
-    bad_packet(p, "team_set_password: bad length %d", len);
+  if (pkt_len < sizeof(*data)) {
+    CONN_BAD("packet is too small: %d", pkt_len);
     return;
   }
-  old_pwd = pack->data;
+  old_pwd = data->data;
   old_len = strlen(old_pwd);
-  if (old_len != pack->old_len) {
-    bad_packet(p, "team_set_password: old password length mismatch");
+  if (old_len != data->old_len) {
+    CONN_BAD("old password length mismatch: %d, %d", old_len, data->old_len);
     return;
   }
   new_pwd = old_pwd + old_len + 1;
   new_len = strlen(new_pwd);
-  if (new_len != pack->new_len) {
-    bad_packet(p, "team_set_password: new password length mismatch");
+  if (new_len != data->new_len) {
+    CONN_BAD("new password length mismatch: %d, %d", new_len, data->new_len);
     return;
   }
-  if (len != sizeof(*pack) + old_len + new_len + 2) {
-    bad_packet(p, "team_set_password: packet length mismatch %d, %d",
-               len, sizeof(*pack) + old_len + new_len + 2);
+  exp_len = sizeof(*data) + old_len + new_len;
+  if (pkt_len !=  exp_len) {
+    CONN_BAD("packet length mismatch: %d, %d", exp_len, pkt_len);
     return;
   }
 
-  info("%d: team_set_password: %d, %d", p->id, pack->user_id,pack->contest_id);
-  if (p->user_id <= 0) {
-    err("%d: client not authentificated", p->id);
+  CONN_INFO("%d, %d", data->user_id, data->contest_id);
+  if (p->user_id < 0) {
+    CONN_ERR("client not authentificated");
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  if (p->user_id != pack->user_id) {
-    err("%d: user_id does not match", p->id);
+  ASSERT(p->user_id > 0);
+  if (p->user_id != data->user_id) {
+    CONN_ERR("user_ids do not match: %d, %d", p->user_id, data->user_id);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  if (pack->user_id <= 0 || pack->user_id >= userlist->user_map_size) {
-    err("%d: user id is out of range", p->id);
-    send_reply(p, -ULS_ERR_BAD_UID);
-    return;
-  }
-  u = userlist->user_map[pack->user_id];
-  if (!u) {
-    err("%d: user id nonexistent", p->id);
-    send_reply(p, -ULS_ERR_BAD_UID);
-    return;
-  }
-  if (pack->contest_id <= 0 || pack->contest_id >= contests->id_map_size
-      || !(cnts = contests->id_map[pack->contest_id])) {
-    err("%d: invalid contest_id", p->id);
+
+  // FIXME: check for proper user removal. If this works, no checking
+  // is necessary.
+  ASSERT(p->user_id < userlist->user_map_size);
+  u = userlist->user_map[data->user_id];
+  ASSERT(u);
+
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    CONN_ERR("invalid contest: %s", contests_strerror(-errcode));
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
     return;
   }
   if (cnts->disable_team_password) {
-    err("%d: team password changing is disabled for this contest", p->id);
+    CONN_ERR("team password is disabled");
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
   if (!new_len) {
-    err("%d: new password cannot be empty", p->id);
+    CONN_ERR("new password is empty");
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
   if (passwd_convert_to_internal(old_pwd, &oldint) < 0) {
-    err("%d: cannot parse old password", p->id);
+    CONN_ERR("cannot parse old password");
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
   if (passwd_convert_to_internal(new_pwd, &newint) < 0) {
-    err("%d: cannot parse new password", p->id);
+    CONN_ERR("cannot parse new password");
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
+
   // verify the existing password
   if (u->team_passwd) {
     if (passwd_check(&oldint, u->team_passwd) < 0) {
-      err("%d: OLD team password does not match", p->id);
+      CONN_ERR("OLD team password does not match");
       if (passwd_check(&oldint, u->register_passwd) < 0) {
-        err("%d: OLD password does not match", p->id);
-        send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+        CONN_ERR("OLD registration password does not match");
+        send_reply(p, -ULS_ERR_NO_PERMS);
         return;
       }
     }
   } else {
     if (passwd_check(&oldint, u->register_passwd) < 0) {
-      err("%d: OLD password does not match", p->id);
-      send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+      CONN_ERR("OLD registration password does not match");
+      send_reply(p, -ULS_ERR_NO_PERMS);
       return;
     }
   }
@@ -2666,64 +2851,53 @@ team_set_password(struct client_state *p, int len,
   dirty = 1;
   flush_interval /= 2;
   send_reply(p, ULS_OK);
-  info("%d: ok", p->id);
+  CONN_INFO("ok");
 }
 
+/* unprivileged version of the function */
 static void
-register_for_contest(struct client_state *p, int len,
-                     struct userlist_pk_register_contest *pack)
+cmd_register_contest(struct client_state *p, int pkt_len,
+                     struct userlist_pk_register_contest *data)
 {
   struct userlist_user *u;
-  struct contest_desc *c;
+  struct contest_desc *c = 0;
   struct userlist_contest *r;
+  int errcode;
 
-  if (len != sizeof(*pack)) {
-    bad_packet(p, "");
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
     return;
   }
 
-  info("%d: register_for_contest: %d, %d",
-       p->id, pack->user_id, pack->contest_id);
+  CONN_INFO("%d, %d", data->user_id, data->contest_id);
   if (p->user_id < 0) {
-    err("%d: client not authentificated", p->id);
+    CONN_ERR("client not authentificated");
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  if (pack->user_id <= 0 || pack->user_id >= userlist->user_map_size) {
-    err("%d: user id is out of range", p->id);
-    send_reply(p, -ULS_ERR_BAD_UID);
+  ASSERT(p->user_id > 0);
+  if (p->user_id != data->user_id) {
+    CONN_ERR("user_ids do not match: %d, %d", p->user_id, data->user_id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  u = userlist->user_map[pack->user_id];
-  if (!u) {
-    err("%d: user id nonexistent", p->id);
-    send_reply(p, -ULS_ERR_BAD_UID);
-    return;
-  }
-  if (pack->contest_id <= 0 || pack->contest_id >= contests->id_map_size) {
-    err("%d: contest id is out of range", p->id);
+
+  ASSERT(p->user_id < userlist->user_map_size);
+  u = userlist->user_map[p->user_id];
+  ASSERT(u);
+
+  if ((errcode = contests_get(data->contest_id, &c)) < 0) {
+    CONN_ERR("invalid contest: %s", contests_strerror(-errcode));
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
     return;
   }
-  c = contests->id_map[pack->contest_id];
-  if (!c) {
-    err("%d: contest id is nonexistent", p->id);
-    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+  if (c->reg_deadline && cur_time > c->reg_deadline) {
+    CONN_ERR("registration deadline exceeded");
+    send_reply(p, -ULS_ERR_DEADLINE);
     return;
   }
-  if (p->user_id > 0) {
-    if (p->user_id != pack->user_id) {
-      err("%d: user_id does not match", p->id);
-      send_reply(p, -ULS_ERR_NO_PERMS);
-      return;
-    }
-    if (c->reg_deadline && cur_time > c->reg_deadline) {
-      err("%d: registration deadline exceeded", p->id);
-      send_reply(p, -ULS_ERR_DEADLINE);
-      return;
-    }
-  }
-  /* FIXME: check conditions */
+
+  /* FIXME: check conditions. What conditions? */
 
   /* Registration is possible */
   if (!u->contests) {
@@ -2735,20 +2909,20 @@ register_for_contest(struct client_state *p, int len,
   for (r = (struct userlist_contest*) u->contests->first_down; r;
        r = (struct userlist_contest*) r->b.right) {
     ASSERT(r->b.tag == USERLIST_T_CONTEST);
-    if (r->id == pack->contest_id) break;
+    if (r->id == data->contest_id) break;
   }
   if (r) {
-    info("%d: already registered", p->id);
+    CONN_INFO("already registered");
     send_reply(p, ULS_OK);
     return;
   }
   r = (struct userlist_contest*) userlist_node_alloc(USERLIST_T_CONTEST);
   r->b.tag = USERLIST_T_CONTEST;
   xml_link_node_last(u->contests, &r->b);
-  r->id = pack->contest_id;
+  r->id = data->contest_id;
   if (c->autoregister) {
     r->status = USERLIST_REG_OK;
-    update_userlist_table(pack->contest_id);
+    update_userlist_table(data->contest_id);
   } else {
     r->status = USERLIST_REG_PENDING;
   }
@@ -2756,94 +2930,172 @@ register_for_contest(struct client_state *p, int len,
   dirty = 1;
   u->last_change_time = cur_time;
   u->last_access_time = cur_time;
-  info("%d: registered", p->id);
+  CONN_INFO("registered");
   send_reply(p, ULS_OK);
   return;
 }
 
+/* privileged version */
 static void
-remove_member(struct client_state *p, int len,
-              struct userlist_pk_remove_member *pack)
+cmd_priv_register_contest(struct client_state *p, int pkt_len,
+                          struct userlist_pk_register_contest *data)
+{
+  struct userlist_user *u;
+  struct contest_desc *c = 0;
+  struct userlist_contest *r;
+  int errcode;
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+
+  CONN_INFO("%d, %d", data->user_id, data->contest_id);
+  if (p->user_id < 0) {
+    CONN_ERR("client not authentificated");
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+
+  if ((errcode = contests_get(data->contest_id, &c)) < 0) {
+    CONN_ERR("invalid contest: %s", contests_strerror(-errcode));
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+
+  if (data->user_id <= 0 || data->user_id >= userlist->user_map_size
+      || !(u = userlist->user_map[data->user_id])) {
+    CONN_ERR("invalid user_id");
+    send_reply(p, -ULS_ERR_BAD_UID);
+    return;
+  }
+
+  if (p->user_id != data->user_id) {
+    if (is_privileged_user(u) >= 0) {
+      if (is_cnts_capable(p, c, OPCAP_PRIV_CREATE_REG) < 0) return;
+    } else {
+      if (is_cnts_capable(p, c, OPCAP_CREATE_REG) < 0) return;
+    }
+  }
+
+  /* Registration is possible */
+  if (!u->contests) {
+    u->contests = userlist_node_alloc(USERLIST_T_CONTESTS);
+    u->contests->tag = USERLIST_T_CONTESTS;
+    xml_link_node_last(&u->b, u->contests);
+  }
+  /* check that we are already registered */
+  for (r = (struct userlist_contest*) u->contests->first_down; r;
+       r = (struct userlist_contest*) r->b.right) {
+    ASSERT(r->b.tag == USERLIST_T_CONTEST);
+    if (r->id == data->contest_id) break;
+  }
+  if (r) {
+    CONN_INFO("already registered");
+    send_reply(p, ULS_OK);
+    return;
+  }
+  r = (struct userlist_contest*) userlist_node_alloc(USERLIST_T_CONTEST);
+  r->b.tag = USERLIST_T_CONTEST;
+  xml_link_node_last(u->contests, &r->b);
+  r->id = data->contest_id;
+  if (c->autoregister) {
+    r->status = USERLIST_REG_OK;
+    update_userlist_table(data->contest_id);
+  } else {
+    r->status = USERLIST_REG_PENDING;
+  }
+  flush_interval /= 2;
+  dirty = 1;
+  u->last_change_time = cur_time;
+  u->last_access_time = cur_time;
+  CONN_INFO("registered");
+  send_reply(p, ULS_OK);
+  return;
+
+
+
+
+  SWERR(("not implemented yet!"));
+}
+
+static void
+cmd_remove_member(struct client_state *p, int pkt_len,
+                  struct userlist_pk_remove_member *data)
 {
   struct userlist_user *u;
   struct userlist_members *ms;
   struct userlist_member *m;
 
-  if (len != sizeof(*pack)) {
-    bad_packet(p, "");
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
     return;
   }
 
-  info("%d: remove_member: %d, %d, %d, %d",
-       p->id, pack->user_id, pack->role_id, pack->pers_id, pack->serial);
+  CONN_INFO("%d, %d, %d, %d",
+            data->user_id, data->role_id, data->pers_id, data->serial);
   if (p->user_id <= 0) {
-    info("%d: client not authentificated", p->id);
+    CONN_ERR("client not authentificated");
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  if (p->user_id != pack->user_id) {
-    info("%d: user_id does not match", p->id);
+  ASSERT(p->user_id > 0);
+  if (p->user_id != data->user_id) {
+    CONN_ERR("user_ids do not match: %d, %d", p->user_id, data->user_id);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  if (pack->user_id <= 0 || pack->user_id >= userlist->user_map_size) {
-    info("%d: user id is out of range", p->id);
-    send_reply(p, -ULS_ERR_BAD_UID);
-    return;
-  }
-  u = userlist->user_map[pack->user_id];
-  if (!u) {
-    info("%d: user id nonexistent", p->id);
-    send_reply(p, -ULS_ERR_BAD_UID);
-    return;
-  }
-  if (pack->role_id < 0 || pack->role_id >= CONTEST_LAST_MEMBER) {
-    err("%d: invalid role", p->id);
+
+  ASSERT(p->user_id < userlist->user_map_size);
+  u = userlist->user_map[p->user_id];
+  ASSERT(u);
+
+  if (data->role_id < 0 || data->role_id >= CONTEST_LAST_MEMBER) {
+    CONN_ERR("invalid role");
     send_reply(p, -ULS_ERR_BAD_MEMBER);
     return;
   }
-  ms = u->members[pack->role_id];
+  ms = u->members[data->role_id];
   if (!ms) {
-    err("%d: no members with that role", p->id);
+    CONN_ERR("no members with that role");
     send_reply(p, -ULS_ERR_BAD_MEMBER);
     return;
   }
-  if (pack->pers_id < 0 || pack->pers_id >= ms->total) {
-    err("%d: invalid person", p->id);
+  if (data->pers_id < 0 || data->pers_id >= ms->total) {
+    CONN_ERR("invalid person");
     send_reply(p, -ULS_ERR_BAD_MEMBER);
     return;
   }
-  m = ms->members[pack->pers_id];
-  if (!m || m->serial != pack->serial) {
-    err("%d: invalid person", p->id);
+  m = ms->members[data->pers_id];
+  if (!m || m->serial != data->serial) {
+    CONN_ERR("invalid person");
     send_reply(p, -ULS_ERR_BAD_MEMBER);
     return;
   }
 
-  m = unlink_member(u, pack->role_id, pack->pers_id);
+  m = unlink_member(u, data->role_id, data->pers_id);
   userlist_free(&m->b);
 
   flush_interval /= 2;
   dirty = 1;
   u->last_change_time = cur_time;
   u->last_access_time = cur_time;
-  info("%d: member removed", p->id);
+  CONN_INFO("member removed");
   send_reply(p, ULS_OK);
 }
 
 static void
-pass_descriptors(struct client_state *p, int len,
-                 struct userlist_packet *pack)
+cmd_pass_fd(struct client_state *p, int pkt_len,
+            struct userlist_packet *data)
 {
-  if (len != sizeof(*pack)) {
-    bad_packet(p, "");
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
     return;
   }
 
-  // cannot stack uprocessed descriptors
   if (p->client_fds[0] >= 0 || p->client_fds[1] >= 0) {
-    err("%d: cannot stack unprocessed client descriptors", p->id);
-    bad_packet(p, "");
+    CONN_BAD("cannot stack unprocessed client descriptors");
     return;
   }
 
@@ -2851,7 +3103,8 @@ pass_descriptors(struct client_state *p, int len,
 }
 
 static void
-do_list_users(FILE *f, int contest_id, int locale_id,
+do_list_users(FILE *f, int contest_id, struct contest_desc *d,
+              int locale_id,
               int user_id, unsigned long flags,
               unsigned char *url, unsigned char *srch)
 {
@@ -2859,7 +3112,7 @@ do_list_users(FILE *f, int contest_id, int locale_id,
   struct userlist_contest *c;
   struct userlist_user **us = 0;
   struct userlist_contest **cs = 0;
-  struct contest_desc *d, *tmpd;
+  struct contest_desc *tmpd, *cnts;
   struct contest_member *cm;
   struct userlist_member *m;
   int u_num = 0, i, regtot;
@@ -2873,14 +3126,6 @@ do_list_users(FILE *f, int contest_id, int locale_id,
     ASSERT(user_id < userlist->user_map_size);
     u = userlist->user_map[user_id];
     ASSERT(u);
-
-    d = 0;
-    if (contest_id) {
-      ASSERT(contest_id > 0);
-      ASSERT(contest_id < contests->id_map_size);
-      d = contests->id_map[contest_id];
-      ASSERT(d);
-    }
 
     setup_locale(locale_id);
     fprintf(f, "<h2>%s: %s</h2>\n",
@@ -3015,8 +3260,7 @@ do_list_users(FILE *f, int contest_id, int locale_id,
       for (c = (struct userlist_contest*) u->contests->first_down;
            c; c = (struct userlist_contest*) c->b.right) {
         if (d && c->id != d->id) continue;
-        if (c->id <= 0 || c->id >= contests->id_map_size
-            || !contests->id_map[c->id]) continue;
+        if (contests_get(c->id, &cnts) < 0) continue;
         regtot++;
       }
     }
@@ -3027,8 +3271,7 @@ do_list_users(FILE *f, int contest_id, int locale_id,
       for (c = (struct userlist_contest*) u->contests->first_down;
            c; c = (struct userlist_contest*) c->b.right) {
         if (d && c->id != d->id) continue;
-        if (c->id <= 0 || c->id >= contests->id_map_size
-            || !(tmpd = contests->id_map[c->id])) continue;
+        if (contests_get(c->id, &tmpd) < 0) continue;
         fprintf(f, "<tr><td>%s</td><td>%s</td></tr>\n",
                 tmpd->name, gettext(status_str_map[c->status]));
       }
@@ -3107,19 +3350,13 @@ do_list_users(FILE *f, int contest_id, int locale_id,
 }
 
 static void
-do_dump_database(FILE *f, int contest_id)
+do_dump_database(FILE *f, int contest_id, struct contest_desc *d)
 {
   struct userlist_user *u;
   struct userlist_contest *c;
-  struct contest_desc *d;
   struct userlist_member *m;
   unsigned char *notset = 0, *banstr = 0, *invstr = 0, *statstr = 0;
   int i, role, pers, pers_tot;
-
-  ASSERT(contest_id > 0);
-  ASSERT(contest_id < contests->id_map_size);
-  d = contests->id_map[contest_id];
-  ASSERT(d);
 
   fprintf(f, "Content-type: text/plain\n\n");
 
@@ -3196,59 +3433,64 @@ do_dump_database(FILE *f, int contest_id)
 }
 
 static void
-list_users(struct client_state *p, int len,
-           struct userlist_pk_list_users *pack)
+cmd_list_users(struct client_state *p, int pkt_len,
+               struct userlist_pk_list_users *data)
 {
   struct client_state *q;
   FILE *f = 0;
   unsigned char *html_ptr = 0;
   size_t html_size = 0;
   unsigned char *url_ptr, *srch_ptr;
+  struct contest_desc *cnts = 0;
+  int errcode, exp_len, url_len, srch_len;
 
-  if (len < sizeof (*pack)) {
-    bad_packet(p, "list_users: packet too short");
+  if (pkt_len < sizeof (*data)) {
+    CONN_BAD("packet is too short: %d", pkt_len);
     return;
   }
-  url_ptr = pack->data;
-  if (strlen(url_ptr) != pack->url_len) {
-    bad_packet(p, "list_users: url length mismatch");
+  url_ptr = data->data;
+  url_len = strlen(url_ptr);
+  if (url_len != data->url_len) {
+    CONN_BAD("url_len mismatch: %d, %d", url_len, data->url_len);
     return;
   }
-  srch_ptr = url_ptr + pack->url_len + 1;
-  if (strlen(srch_ptr) != pack->srch_len) {
-    bad_packet(p, "list_users: srch length mismatch");
+  srch_ptr = url_ptr + data->url_len + 1;
+  srch_len = strlen(srch_ptr);
+  if (srch_len != data->srch_len) {
+    CONN_BAD("srch_len mismatch: %d, %d", srch_len, data->srch_len);
     return;
   }
-  if (len != sizeof(*pack) + pack->url_len + pack->srch_len + 2) {
-    bad_packet(p, "list_users: packet length mismatch");
+  exp_len = sizeof(*data) + data->url_len + data->srch_len;
+  if (pkt_len != exp_len) {
+    CONN_BAD("packet length mismatch: %d, %d", pkt_len, exp_len);
     return;
   }
   if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
-    err("%d: two client file descriptors required", p->id);
-    disconnect_client(p);
+    CONN_BAD("two client file descriptors required");
     return;
   }
-  if (pack->user_id) {
-    if (pack->user_id <= 0 || pack->user_id >= userlist->user_map_size
-        || !userlist->user_map[pack->user_id]) {
-      err("%d: invalid user %d", p->id, pack->user_id);
+
+  if (data->user_id) {
+    if (data->user_id <= 0 || data->user_id >= userlist->user_map_size
+        || !userlist->user_map[data->user_id]) {
+      CONN_ERR("invalid user: %d", data->user_id);
       send_reply(p, -ULS_ERR_BAD_UID);
       return;
     }
   }
-  if (pack->contest_id <= 0 || pack->contest_id >= contests->id_map_size
-      || !contests->id_map[pack->contest_id]) {
-    err("%d: invalid contest %ld", p->id, pack->contest_id);
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    CONN_ERR("invalid contest: %s", contests_strerror(-errcode));
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
     return;
   }
 
   if (!(f = open_memstream((char**) &html_ptr, &html_size))) {
-    err("%d: open_memstream failed!", p->id);
+    CONN_ERR("open_memstream failed!");
+    send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
   }
-  do_list_users(f, pack->contest_id, pack->locale_id,
-                pack->user_id, pack->flags, url_ptr, srch_ptr);
+  do_list_users(f, data->contest_id, cnts, data->locale_id,
+                data->user_id, data->flags, url_ptr, srch_ptr);
   fclose(f);
 
   q = (struct client_state*) xcalloc(1, sizeof(*q));
@@ -3264,41 +3506,63 @@ list_users(struct client_state *p, int len,
   q->write_buf = html_ptr;
   q->write_len = html_size;
   link_client_state(q);
-  info("%d: created new connection %d", p->id, q->id);
+  CONN_INFO("created new connection %d", q->id);
   send_reply(p, ULS_OK);
 }
 
 static void
-action_dump_user_database(struct client_state *p, int len,
-                          struct userlist_pk_dump_database *pack)
+cmd_dump_database(struct client_state *p, int pkt_len,
+                          struct userlist_pk_dump_database *data)
 {
   struct client_state *q;
   FILE *f = 0;
   unsigned char *html_ptr = 0;
   size_t html_size = 0;
+  struct contest_desc *cnts = 0;
+  int errcode;
+  opcap_t caps;
 
-  if (len != sizeof(*pack)) {
-    bad_packet(p, "dump_user_database: packet length mismatch");
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
     return;
   }
   if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
-    err("%d: dump_user_database: two client file descriptors required", p->id);
-    disconnect_client(p);
+    CONN_BAD("two client file descriptors required");
     return;
   }
-  if (pack->contest_id <= 0 || pack->contest_id >= contests->id_map_size
-      || !contests->id_map[pack->contest_id]) {
-    err("%d: dump_user_database: invalid contest %d",
-        p->id, pack->contest_id);
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    CONN_ERR("invalid contest %d: %s",
+             data->contest_id, contests_strerror(-errcode));
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (p->user_id < 0) {
+    CONN_ERR("not authentificated");
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+  while (1) {
+    if (get_uid_caps(&config->capabilities, p->user_id, &caps) >= 0
+        && opcaps_check(caps, OPCAP_DUMP_USERS) >= 0)
+      break;
+
+    if (get_uid_caps(&cnts->capabilities, p->user_id, &caps) >= 0
+        && opcaps_check(caps, OPCAP_DUMP_USERS) >= 0)
+      break;
+
+    CONN_ERR("user %d has no capability %d for contest %d",
+             p->user_id, OPCAP_DUMP_USERS, data->contest_id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
 
   if (!(f = open_memstream((char**) &html_ptr, &html_size))) {
-    err("%d: open_memstream failed!", p->id);
+    CONN_ERR("open_memstream failed!");
+    send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
   }
-  do_dump_database(f, pack->contest_id);
+  do_dump_database(f, data->contest_id, cnts);
   fclose(f);
 
   q = (struct client_state*) xcalloc(1, sizeof(*q));
@@ -3314,40 +3578,40 @@ action_dump_user_database(struct client_state *p, int len,
   q->write_buf = html_ptr;
   q->write_len = html_size;
   link_client_state(q);
-  info("%d: created new connection %d", p->id, q->id);
+  CONN_INFO("created new connection %d", q->id);
   send_reply(p, ULS_OK);
 }
 
 static void
-cmd_map_contest(struct client_state *p, int len,
-                struct userlist_pk_map_contest *pack)
+cmd_map_contest(struct client_state *p, int pkt_len,
+                struct userlist_pk_map_contest *data)
 {
   struct contest_desc *cnts = 0;
   struct contest_extra *ex = 0;
   size_t out_size;
   struct userlist_pk_contest_mapped *out;
+  int errcode;
 
-  if (len != sizeof(*pack)) {
-    bad_packet(p, "map_contest: bad packet length: %d", len);
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
     return;
   }
-  info("%d: map_contest: %d", p->id, pack->contest_id);
-  if (p->user_id != 0) {
-    err("%d: map_contest: permission denied: %d", p->id, p->user_id);
+  CONN_INFO("%d", data->contest_id);
+  if (p->user_id < 0) {
+    CONN_ERR("not authentificated");
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  if (pack->contest_id <= 0 || pack->contest_id >= contests->id_map_size) {
-    err("%d: map_contest: contest identifier is out of range", p->id);
+  ASSERT(p->user_id > 0);
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    CONN_ERR("invalid contest %d: %s", data->contest_id,
+             contests_strerror(-errcode));
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
     return;
   }
-  if (!(cnts = contests->id_map[pack->contest_id])) {
-    err("%d: map_contest: nonexistant contest", p->id);
-    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-    return;
-  }
-  if (!(ex = attach_contest_extra(pack->contest_id))) {
+  if (is_cnts_capable(p, cnts, OPCAP_MAP_CONTEST) < 0) return;
+
+  if (!(ex = attach_contest_extra(data->contest_id, cnts))) {
     send_reply(p, -ULS_ERR_IPC_FAILURE);
     return;
   }
@@ -3359,53 +3623,55 @@ cmd_map_contest(struct client_state *p, int len,
   out->sem_key = ex->sem_key;
   out->shm_key = ex->shm_key;
   enqueue_reply_to_client(p, out_size, out);
-  update_userlist_table(pack->contest_id);
-  info("%d: map_contest: %d, %d", p->id, ex->sem_key, ex->shm_key);
+  update_userlist_table(data->contest_id);
+  CONN_INFO("%d, %d", ex->sem_key, ex->shm_key);
 }
 
+// just assigns the connection user_id by the system user_id
 static void
-cmd_admin_process(struct client_state *p, int len,
-                  struct userlist_packet *pack)
+cmd_admin_process(struct client_state *p, int pkt_len,
+                  struct userlist_packet *data)
 {
-  unsigned char proc_buf[1024];
-  unsigned char exe_buf[1024];
-  struct userlist_cfg_admin_proc *prc;
+  struct userlist_cfg_user_map *um = 0;
+  struct xml_tree *ut = 0;
+  int i;
 
-  if (len != sizeof(*pack)) {
-    bad_packet(p, "admin_process: bad packet length: %d", len);
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
     return;
   }
-  info("%d: admin_process: %d, %d", p->id, p->peer_pid, p->peer_uid);
-  // try just an user
-  for (prc = (struct userlist_cfg_admin_proc*) config->admin_processes->first_down; prc; prc = (struct userlist_cfg_admin_proc*) prc->b.right) {
-    if (prc->uid == p->peer_uid && !strcmp(prc->path, "ANY")) break;
-  }
-  if (!prc) {
-    snprintf(proc_buf, sizeof(proc_buf), "/proc/%d/exe", p->peer_pid);
-    memset(exe_buf, 0, sizeof(exe_buf));
-    if (readlink(proc_buf, exe_buf, sizeof(exe_buf) - 1) < 0) {
-      err("%d: admin_process: readlink failed: %s", p->id, os_ErrorMsg());
-      send_reply(p, -ULS_ERR_NO_PERMS);
-      return;    
-    }
-    info("%d: admin_process: path = %s", p->id, exe_buf);
-    if (!config->admin_processes) {
-      err("%d: admin_process: no admin processes specified", p->id);
-      send_reply(p, -ULS_ERR_NO_PERMS);
-      return;
-    }
-    for (prc = (struct userlist_cfg_admin_proc *) config->admin_processes->first_down; prc; prc = (struct userlist_cfg_admin_proc*) prc->b.right) {
-      if (!strcmp(prc->path, exe_buf) && prc->uid == p->peer_uid) break;
-    }
-  }
-  if (!prc) {
-    err("%d: admin_process: no such admin process", p->id);
+  CONN_INFO("%d, %d", p->peer_pid, p->peer_uid);
+  if (!p->peer_uid) {
+    CONN_ERR("root is not allowed");
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
+
+  if (config->user_map) {
+    for (ut = config->user_map->first_down; ut; ut = ut->right) {
+      um = (struct userlist_cfg_user_map*) ut;
+      if (um->system_uid == p->peer_uid) break;
+    }
+  }
+  if (!ut) {
+    CONN_ERR("user id %d is not found in the user id map", p->peer_uid);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  //CONN_INFO("user map: %d->%s", p->peer_uid, um->local_user_str);
+
+  for (i = 1; i < userlist->user_map_size; i++) {
+    if (!userlist->user_map[i]) continue;
+    if (!strcmp(userlist->user_map[i]->login, um->local_user_str)) break;
+  }
+  if (i >= userlist->user_map_size) {
+    CONN_ERR("local user %s does not exist", um->local_user_str);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  CONN_INFO("user map: %d->%d", p->peer_uid, i);
+  p->user_id = i;
   send_reply(p, ULS_OK);
-  p->user_id = 0;
-  info("%d: admin_process: ok", p->id);
 }
 
 static void
@@ -3426,6 +3692,9 @@ do_generate_team_passwd(int contest_id, FILE *log)
       if (c->id == contest_id && c->status == USERLIST_REG_OK) break;
     }
     if (!c) continue;
+
+    // do not change password for privileged users
+    if (is_privileged_user(u)) continue;
 
     t = u->cookies;
     if (t) {
@@ -3459,41 +3728,45 @@ do_generate_team_passwd(int contest_id, FILE *log)
 }
 
 static void
-cmd_generate_team_passwd(struct client_state *p, int len,
-                         struct userlist_pk_map_contest *pack)
+cmd_generate_team_passwords(struct client_state *p, int pkt_len,
+                            struct userlist_pk_map_contest *data)
 {
   unsigned char *log_ptr = 0;
   size_t log_size = 0;
   FILE *f = 0;
   struct client_state *q = 0;
+  struct contest_desc *cnts = 0;
+  int errcode;
 
-  if (len != sizeof(*pack)) {
-    bad_packet(p, "generate_team_paswords: bad length %d", len);
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
     return;
   }
-  info("%d: generate_team_paswords: %d", p->id, pack->contest_id);
-  if (p->user_id != 0) {
-    err("%d: only administrator can do that", p->id);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
-  if (pack->contest_id <= 0 || pack->contest_id >= contests->id_map_size
-      || !contests->id_map[pack->contest_id]) {
-    err("%d: invalid contest identifier", p->id);
+  CONN_INFO("%d", data->contest_id);
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    CONN_ERR("invalid contest: %d: %s", data->contest_id,
+             contests_strerror(-errcode));
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
     return;
   }
+  if (p->user_id < 0) {
+    CONN_ERR("not authentificated");
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+  if (is_cnts_capable(p, cnts, OPCAP_GENERATE_TEAM_PASSWORDS) < 0)
+    return;
   if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
-    err("%d: two client file descriptors required", p->id);
-    disconnect_client(p);
+    CONN_BAD("two client file descriptors required");
     return;
   }
   if (!(f = open_memstream((char**) &log_ptr, &log_size))) {
-    err("%d: open_memstream failed!", p->id);
-    disconnect_client(p);
+    CONN_ERR("open_memstream failed");
+    send_reply(p, ULS_ERR_OUT_OF_MEM);
     return;
   }
-  do_generate_team_passwd(pack->contest_id, f);
+  do_generate_team_passwd(data->contest_id, f);
   fclose(f);
 
   q = (struct client_state*) xcalloc(1, sizeof(*q));
@@ -3509,34 +3782,34 @@ cmd_generate_team_passwd(struct client_state *p, int len,
   q->write_buf = log_ptr;
   q->write_len = log_size;
   link_client_state(q);
-  info("%d: created new connection %d", p->id, q->id);
+  CONN_INFO("created new connection %d", q->id);
   send_reply(p, ULS_OK);
 }
 
 static void
-cmd_get_contest_name(struct client_state *p, int len,
-                     struct userlist_pk_map_contest *pack)
+cmd_get_contest_name(struct client_state *p, int pkt_len,
+                     struct userlist_pk_map_contest *data)
 {
   struct userlist_pk_xml_data *out = 0;
   struct contest_desc *cnts = 0;
   int out_size = 0, name_len = 0;
+  int errcode;
 
-  if (len != sizeof(*pack)) {
-    bad_packet(p, "get_contest_name: bad length %d", len);
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length %d", pkt_len);
     return;
   }
-  info("%d: get_contest_name: %d", p->id, pack->contest_id);
-  if (pack->contest_id <= 0 || pack->contest_id >= contests->id_map_size
-      || !(cnts = contests->id_map[pack->contest_id])) {
-    err("%d: invalid contest identifier", p->id);
+  CONN_INFO("%d", data->contest_id);
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    CONN_ERR("invalid contest: %s", contests_strerror(-errcode));
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
     return;
   }
 
   name_len = strlen(cnts->name);
-  if (name_len > 65535) {
-    err("%d: contest name is too long", p->id);
-    name_len = 65535;
+  if (name_len > 65000) {
+    CONN_ERR("contest name is too long");
+    name_len = 65000;
   }
   out_size = sizeof(*out) + name_len;
   out = alloca(out_size);
@@ -3545,92 +3818,105 @@ cmd_get_contest_name(struct client_state *p, int len,
   out->info_len = out_size;
   memcpy(out->data, cnts->name, name_len);
   enqueue_reply_to_client(p, out_size, out);
-  info("%d: get_contest_name: %d", p->id, out->info_len);
+  CONN_INFO("%d", out->info_len);
 }
 
 static void
-cmd_edit_registration(struct client_state *p, int len,
-                      struct userlist_pk_edit_registration *pack)
+cmd_edit_registration(struct client_state *p, int pkt_len,
+                      struct userlist_pk_edit_registration *data)
 {
   struct userlist_user *u;
-  struct contest_desc *c;
+  struct contest_desc *c = 0;
   struct userlist_contest *uc = 0;
   unsigned int new_flags;
-  int updated = 0;
+  int updated = 0, errcode;
 
-  if (len != sizeof(*pack)) {
-    bad_packet(p, "edit_registration: packet length mismatch");
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
     return;
   }
-  info("%d: edit_registration: %d, %d, %d, %d, %08x",
-       p->id, pack->user_id, pack->contest_id, pack->new_status,
-       pack->flags_cmd, pack->new_flags);
-  if (p->user_id != 0) {
-    err("%d: only administrator can do that", p->id);
+  CONN_INFO("%d, %d, %d, %d, %08x",
+            data->user_id, data->contest_id, data->new_status,
+            data->flags_cmd, data->new_flags);
+  if (p->user_id < 0) {
+    CONN_ERR("not authentificated");
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  if (pack->user_id <= 0 || pack->user_id >= userlist->user_map_size
-      || !(u = userlist->user_map[pack->user_id])) {
-    err("%d: invalid user", p->id);
-    send_reply(p, -ULS_ERR_BAD_UID);
+  ASSERT(p->user_id > 0);
+  if ((errcode = contests_get(data->contest_id, &c)) < 0) {
+    CONN_ERR("invalid contest: %s", contests_strerror(-errcode));
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
     return;
   }
-  if (pack->contest_id <= 0 || pack->contest_id >= contests->id_map_size
-      || !(c = contests->id_map[pack->contest_id])) {
-    err("%d: invalid contest", p->id);
-    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+  if (data->user_id <= 0 || data->user_id >= userlist->user_map_size
+      || !(u = userlist->user_map[data->user_id])) {
+    CONN_ERR("invalid user");
+    send_reply(p, -ULS_ERR_BAD_UID);
     return;
   }
   if (u->contests) {
     for (uc = (struct userlist_contest*) u->contests->first_down;
          uc; uc = (struct userlist_contest*) uc->b.right) {
-      if (uc->id == pack->contest_id) break;
+      if (uc->id == data->contest_id) break;
     }
   }
   if (!uc) {
-    err("%d: not registered", p->id);
+    CONN_ERR("not registered");
     send_reply(p, -ULS_ERR_NOT_REGISTERED);
     return;
   }
-  if (pack->new_status < -2 || pack->new_status >= USERLIST_REG_LAST) {
-    err("%d: invalid new status", p->id);
+
+  /* check field values */
+  if (data->new_status < -2 || data->new_status >= USERLIST_REG_LAST) {
+    CONN_ERR("invalid new status");
     send_reply(p, -ULS_ERR_PROTOCOL);
     return;
   }
-  if (pack->flags_cmd < 0 || pack->flags_cmd > 3) {
-    err("%d: invalid flags command", p->id);
+  if (data->flags_cmd < 0 || data->flags_cmd > 3) {
+    CONN_ERR("invalid flags command");
     send_reply(p, -ULS_ERR_PROTOCOL);
     return;
   }
-  if ((pack->new_flags & ~USERLIST_UC_ALL)) {
-    err("%d: invalid new flags", p->id);
+  if ((data->new_flags & ~USERLIST_UC_ALL)) {
+    CONN_ERR("invalid new flags");
     send_reply(p, -ULS_ERR_PROTOCOL);
     return;
   }
-  if (pack->new_status == -2) {
+
+  if (data->new_status == -2) {
+    if (p->user_id != data->user_id) {
+      if (is_privileged_user(u) >= 0) {
+        if (is_cnts_capable(p, c, OPCAP_PRIV_DELETE_REG) < 0) return;
+      } else {
+        if (is_cnts_capable(p, c, OPCAP_DELETE_REG) < 0) return;
+      }
+    }
+
     xml_unlink_node(&uc->b);
     if (!u->contests->first_down) {
       xml_unlink_node(u->contests);
       u->contests = 0;
     }
     updated = 1;
-    info("%d: registration deleted", p->id);
+    CONN_INFO("registration deleted");
   } else {
-    if (pack->new_status != -1 && uc->status != pack->new_status) {
-      uc->status = pack->new_status;
+    if (is_cnts_capable(p, c, OPCAP_EDIT_REG) < 0) return;
+
+    if (data->new_status != -1 && uc->status != data->new_status) {
+      uc->status = data->new_status;
       updated = 1;
-      info("%d: status changed", p->id);
+      CONN_INFO("status changed");
     }
     new_flags = uc->flags;
-    switch (pack->flags_cmd) {
-    case 1: new_flags |= pack->new_flags; break;
-    case 2: new_flags &= ~pack->new_flags; break;
-    case 3: new_flags ^= pack->new_flags; break;
+    switch (data->flags_cmd) {
+    case 1: new_flags |= data->new_flags; break;
+    case 2: new_flags &= ~data->new_flags; break;
+    case 3: new_flags ^= data->new_flags; break;
     }
     if (new_flags != uc->flags) {
       uc->flags = new_flags;
-      info("%d: flags changed", p->id);
+      CONN_INFO("flags changed");
       updated = 1;
     }
   }
@@ -3640,72 +3926,126 @@ cmd_edit_registration(struct client_state *p, int len,
     u->last_change_time = cur_time;
     update_userlist_table(c->id);
   }
-  info("%d: edit_registration: ok", p->id);
+  CONN_INFO("ok");
   send_reply(p, ULS_OK);
 }
 
 static void
-cmd_delete_field(struct client_state *p, int len,
-                 struct userlist_pk_edit_field *pack)
+cmd_delete_field(struct client_state *p, int pkt_len,
+                 struct userlist_pk_edit_field *data)
 {
   struct userlist_user *u;
   struct userlist_member *m;
   int updated = 0;
+  opcap_t caps;
+  struct userlist_contest *cntsreg;
+  struct contest_desc *cnts;
 
-  if (len != sizeof(*pack) + 1) {
-    bad_packet(p, "delete_field: packet length mismatch: %d", len);
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
     return;
   }
-  info("%d: delete_field: %d, %d, %d, %d",
-       p->id, pack->user_id, pack->role, pack->pers, pack->field);
-  if (p->user_id != 0) {
-    err("%d: only administrator can do that", p->id);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
-  if (pack->user_id <= 0 || pack->user_id >= userlist->user_map_size
-      || !(u = userlist->user_map[pack->user_id])) {
-    err("%d: invalid user", p->id);
+  CONN_INFO("%d, %d, %d, %d",
+            data->user_id, data->role, data->pers, data->field);
+
+  if (data->user_id <= 0 || data->user_id >= userlist->user_map_size
+      || !(u = userlist->user_map[data->user_id])) {
+    CONN_ERR("invalid user");
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
   }
-  if (pack->role < -2 || pack->role >= CONTEST_LAST_MEMBER) {
-    err("%d: invalid role", p->id);
+  if (data->role < -2 || data->role >= CONTEST_LAST_MEMBER) {
+    CONN_ERR("invalid role");
     send_reply(p, -ULS_ERR_BAD_MEMBER);
     return;
   }
-  if (pack->role == -2) {
+
+  if (data->role == -2) {
     // delete the whole user
+    if (is_privileged_user(u) >= 0) {
+      if (is_db_capable(p, OPCAP_PRIV_DELETE_USER) < 0) return;
+    } else {
+      if (is_db_capable(p, OPCAP_DELETE_USER) < 0) return;
+    }
     do_remove_user(u);
     updated = 1;
-  } else if (pack->role == -1) {
-    if (pack->pers == -1) {
-      do_remove_user(u);
-      updated = 1;
-    } else if (pack->pers == 2) {
+
+    // oh, it might be ugly :-(
+    goto done;
+  }
+
+  while (1) {
+    if (p->user_id == data->user_id) break;
+
+    if (is_privileged_user(u) >= 0) {
+      if (get_uid_caps(&config->capabilities, p->user_id, &caps) >= 0
+          && opcaps_check(caps, OPCAP_PRIV_EDIT_USER) >= 0) break;
+
+      if (u->contests) {
+        for (cntsreg = FIRST_CONTEST(u); cntsreg;
+             cntsreg = NEXT_CONTEST(cntsreg)) {
+          if (contests_get(cntsreg->id, &cnts) < 0)
+            continue;
+          if (get_uid_caps(&cnts->capabilities, p->user_id, &caps) < 0)
+            continue;
+          if (opcaps_check(caps, OPCAP_PRIV_EDIT_USER) >= 0) break;
+        }
+        if (cntsreg) break;
+      }
+    } else {
+      if (get_uid_caps(&config->capabilities, p->user_id, &caps) >= 0
+          && opcaps_check(caps, OPCAP_EDIT_USER) >= 0) break;
+
+      if (u->contests) {
+        for (cntsreg = FIRST_CONTEST(u); cntsreg;
+             cntsreg = NEXT_CONTEST(cntsreg)) {
+          if (contests_get(cntsreg->id, &cnts) < 0)
+            continue;
+          if (get_uid_caps(&cnts->capabilities, p->user_id, &caps) < 0)
+            continue;
+          if (opcaps_check(caps, OPCAP_EDIT_USER) >= 0) break;
+        }
+        if (cntsreg) break;
+      }
+    }
+
+    CONN_ERR("user %d has no capability to edit user %d",
+             p->user_id, data->user_id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (data->role == -1) {
+    if (data->pers == -1) {
+      CONN_ERR("role==-1, pers==-1 way for deleting users no longer works");
+      send_reply(p, -ULS_ERR_PROTOCOL);
+      return;
+    }
+
+    if (data->pers == 2) {
       // cookies
-      if (pack->field == -1) {
+      if (data->field == -1) {
         // remove all cookies
         if (!u->cookies) {
-          info("%d: no cookies", p->id);
+          CONN_INFO("no cookies");
         } else {
           xml_unlink_node(u->cookies);
           userlist_free(u->cookies);
           u->cookies = 0;
-          info("%d: removed all cookies", p->id);
+          CONN_INFO("removed all cookies");
           updated = 1;
         }
       } else {
         // remove one particular cookie
         if (!u->cookies) {
-          info("%d: no cookies", p->id);
+          CONN_INFO("no cookies");
         } else {
           int i;
           struct userlist_cookie *cook = 0;
           for (cook = FIRST_COOKIE(u), i = 0;
-               cook && i != pack->field; cook = NEXT_COOKIE(cook), i++);
+               cook && i != data->field; cook = NEXT_COOKIE(cook), i++);
           if (!cook) {
-            info("%d: no such cookie %d", p->id, pack->field);
+            CONN_INFO("no such cookie %d", data->field);
           } else {
             xml_unlink_node(&cook->b);
             userlist_free(&cook->b);
@@ -3714,142 +4054,191 @@ cmd_delete_field(struct client_state *p, int len,
               userlist_free(u->cookies);
               u->cookies = 0;
             }
-            info("%d: removed cookie", p->id);
+            CONN_INFO("removed cookie");
             updated = 1;
           }
         }
       }
-    } else if (pack->pers != 0) {
-      err("%d: invalid pers", p->id);
-      send_reply(p, -ULS_ERR_NOT_IMPLEMENTED);
-      return;
-    } else {
-      if (pack->field < 0 || pack->field > USERLIST_NN_LAST) {
-        err("%d: invalid field", p->id);
-        send_reply(p, -ULS_ERR_NOT_IMPLEMENTED);
-        return;
-      }
-      if ((updated = userlist_delete_user_field(u, pack->field)) < 0) {
-        err("%d: the field cannot be deleted", p->id);
-        send_reply(p, -ULS_ERR_CANNOT_DELETE);
-        return;
-      }
-    }
-  } else {
-    if (!u->members[pack->role]
-        || pack->pers < 0 || pack->pers >= u->members[pack->role]->total) {
-      err("%d: invalid pers", p->id);
-      send_reply(p, -ULS_ERR_BAD_MEMBER);
+      goto done;
+    } // done with cookies
+    
+    if (data->pers != 0) {
+      CONN_ERR("invalid pers");
+      send_reply(p, -ULS_ERR_CANNOT_DELETE);
       return;
     }
-    m = u->members[pack->role]->members[pack->pers];
-    if (!m) {
-      err("%d: invalid pers", p->id);
-      send_reply(p, -ULS_ERR_BAD_MEMBER);
-      return;
-    }
-    if (pack->field < -1 || pack->field > USERLIST_NM_LAST) {
-      err("%d: invalid field", p->id);
-      send_reply(p, -ULS_ERR_NOT_IMPLEMENTED);
-      return;
-    }
-    if (pack->field == -1) {
-      // remove the whole member
-      m = unlink_member(u, pack->role, pack->pers);
-      userlist_free(&m->b);
-      updated = 1;
-    } else {
-      if ((updated = userlist_delete_member_field(m, pack->field)) < 0) {
-        err("%d: the field cannot be deleted", p->id);
-        send_reply(p, -ULS_ERR_CANNOT_DELETE);
-        return;
-      }
-    }
-  }
 
-  if (updated) {
-    dirty = 1;
-    flush_interval /= 2;
-    u->last_change_time = cur_time;
-  }
-  send_reply(p, ULS_OK);
-  info("%d: delete_field: done %d", p->id, updated);
-}
+    if (data->field < 0 || data->field > USERLIST_NN_LAST) {
+      CONN_ERR("invalid field");
+      send_reply(p, -ULS_ERR_CANNOT_DELETE);
+      return;
+    }
+    if ((updated = userlist_delete_user_field(u, data->field)) < 0) {
+      CONN_ERR("the field cannot be deleted");
+      send_reply(p, -ULS_ERR_CANNOT_DELETE);
+      return;
+    }
+    goto done;
+  } // done with (data->role == -1)
 
-static void
-cmd_edit_field(struct client_state *p, int len,
-               struct userlist_pk_edit_field *pack)
-{
-  struct userlist_user *u;
-  struct userlist_member *m;
-  int updated = 0;
-
-  if (len < sizeof(*pack)) {
-    bad_packet(p, "edit_field: length is too small: %d", len);
-    return;
-  }
-  if (strlen(pack->data) != pack->value_len) {
-    bad_packet(p, "edit_field: value length mismatch");
-    return;
-  }
-  if (len != sizeof(*pack) + pack->value_len + 1) {
-    bad_packet(p, "edit_field: packet length mismatch");
-    return;
-  }
-  info("%d: edit_field: %d, %d, %d, %d",
-       p->id, pack->user_id, pack->role, pack->pers, pack->field);
-  if (p->user_id != 0) {
-    err("%d: only administrator can do that", p->id);
-    send_reply(p, -ULS_ERR_NO_PERMS);
-    return;
-  }
-  if (pack->user_id <= 0 || pack->user_id >= userlist->user_map_size
-      || !(u = userlist->user_map[pack->user_id])) {
-    err("%d: invalid user", p->id);
-    send_reply(p, -ULS_ERR_BAD_UID);
-    return;
-  }
-  if (pack->role < -1 || pack->role >= CONTEST_LAST_MEMBER) {
-    err("%d: invalid role", p->id);
+  // other roles: contestants, reserves, advisors, coaches, guests
+  if (!u->members[data->role]
+      || data->pers < 0 || data->pers >= u->members[data->role]->total) {
+    CONN_ERR("invalid pers");
     send_reply(p, -ULS_ERR_BAD_MEMBER);
     return;
   }
-  if (pack->role == -1) {
-    if (pack->pers != 0) {
-      err("%d: invalid pers", p->id);
+  m = u->members[data->role]->members[data->pers];
+  if (!m) {
+    CONN_ERR("invalid pers");
+    send_reply(p, -ULS_ERR_BAD_MEMBER);
+    return;
+  }
+  if (data->field < -1 || data->field > USERLIST_NM_LAST) {
+    CONN_ERR("invalid field");
+    send_reply(p, -ULS_ERR_CANNOT_DELETE);
+    return;
+  }
+  if (data->field == -1) {
+    // remove the whole member
+    m = unlink_member(u, data->role, data->pers);
+    userlist_free(&m->b);
+    updated = 1;
+  } else {
+    if ((updated = userlist_delete_member_field(m, data->field)) < 0) {
+      CONN_ERR("the field cannot be deleted");
+      send_reply(p, -ULS_ERR_CANNOT_DELETE);
+      return;
+    }
+  }
+
+ done:
+  if (updated) {
+    dirty = 1;
+    flush_interval /= 2;
+    u->last_change_time = cur_time;
+  }
+  send_reply(p, ULS_OK);
+  CONN_INFO("done %d", updated);
+}
+
+static void
+cmd_edit_field(struct client_state *p, int pkt_len,
+               struct userlist_pk_edit_field *data)
+{
+  struct userlist_user *u;
+  struct userlist_member *m;
+  int updated = 0;
+  int vallen, explen, cap_bit;
+  struct userlist_contest *cntsreg;
+  struct contest_desc *cnts;
+  opcap_t caps;
+
+  if (pkt_len < sizeof(*data)) {
+    CONN_BAD("packet is too small: %d", pkt_len);
+    return;
+  }
+  vallen = strlen(data->data);
+  if (vallen != data->value_len) {
+    CONN_BAD("value_len mismatch: %d, %d", vallen, data->value_len);
+    return;
+  }
+  explen = sizeof(*data) + data->value_len;
+  if (pkt_len != explen) {
+    CONN_BAD("packet length mismatch: %d, %d", explen, pkt_len);
+    return;
+  }
+
+  CONN_INFO("%d, %d, %d, %d",
+            data->user_id, data->role, data->pers, data->field);
+  if (p->user_id < 0) {
+    CONN_ERR("not authentificated");
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  if (data->user_id <= 0 || data->user_id >= userlist->user_map_size
+      || !(u = userlist->user_map[data->user_id])) {
+    CONN_ERR("invalid user");
+    send_reply(p, -ULS_ERR_BAD_UID);
+    return;
+  }
+  if (data->role < -1 || data->role >= CONTEST_LAST_MEMBER) {
+    CONN_ERR("invalid role");
+    send_reply(p, -ULS_ERR_BAD_MEMBER);
+    return;
+  }
+
+  if (data->role == -1 && data->pers == 0 && data->field == USERLIST_NN_LOGIN){
+    if (is_privileged_user(u) >= 0) cap_bit = OPCAP_PRIV_DELETE_USER;
+    else cap_bit = OPCAP_DELETE_USER;
+  } else {
+    if (is_privileged_user(u) >= 0) cap_bit = OPCAP_PRIV_EDIT_USER;
+    else cap_bit = OPCAP_EDIT_USER;
+  }
+
+  while (1) {
+    if (data->user_id == p->user_id
+        && (cap_bit == OPCAP_PRIV_EDIT_USER || cap_bit == OPCAP_EDIT_USER))
+      break;
+
+    if (get_uid_caps(&config->capabilities, p->user_id, &caps) >= 0
+        && opcaps_check(caps, cap_bit) >= 0) break;
+
+    if (u->contests
+        && (cap_bit == OPCAP_PRIV_EDIT_USER || cap_bit == OPCAP_EDIT_USER)) {
+        for (cntsreg = FIRST_CONTEST(u); cntsreg;
+             cntsreg = NEXT_CONTEST(cntsreg)) {
+          if (contests_get(cntsreg->id, &cnts) < 0)
+            continue;
+          if (get_uid_caps(&cnts->capabilities, p->user_id, &caps) < 0)
+            continue;
+          if (opcaps_check(caps, cap_bit) >= 0) break;
+        }
+        if (cntsreg) break;
+    }
+
+    CONN_ERR("user %d has no capability to edit user %d",
+             p->user_id, data->user_id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (data->role == -1) {
+    if (data->pers != 0) {
+      CONN_ERR("invalid pers");
       send_reply(p, -ULS_ERR_NOT_IMPLEMENTED);
       return;
     }
-    if (pack->field < 0 || pack->field > USERLIST_NN_LAST) {
-      err("%d: invalid field", p->id);
+    if (data->field < 0 || data->field > USERLIST_NN_LAST) {
+      CONN_ERR("invalid field");
       send_reply(p, -ULS_ERR_NOT_IMPLEMENTED);
       return;
     }
-    if ((updated=userlist_set_user_field_str(u,pack->field,pack->data)) < 0) {
-      err("%d: the field cannot be changed", p->id);
+    if ((updated=userlist_set_user_field_str(u,data->field,data->data)) < 0) {
+      CONN_ERR("the field cannot be changed");
       send_reply(p, -ULS_ERR_CANNOT_CHANGE);
       return;
     }
   } else {
-    if (!u->members[pack->role]
-        || pack->pers < 0 || pack->pers >= u->members[pack->role]->total) {
-      err("%d: invalid pers", p->id);
+    if (!u->members[data->role]
+        || data->pers < 0 || data->pers >= u->members[data->role]->total) {
+      CONN_ERR("invalid pers");
       send_reply(p, -ULS_ERR_BAD_MEMBER);
       return;
     }
-    m = u->members[pack->role]->members[pack->pers];
+    m = u->members[data->role]->members[data->pers];
     if (!m) {
-      err("%d: invalid pers", p->id);
+      CONN_ERR("invalid pers");
       send_reply(p, -ULS_ERR_BAD_MEMBER);
       return;
     }
-    if (pack->field < 0 || pack->field > USERLIST_NM_LAST) {
-      err("%d: invalid field", p->id);
+    if (data->field < 0 || data->field > USERLIST_NM_LAST) {
+      CONN_ERR("invalid field");
       send_reply(p, -ULS_ERR_NOT_IMPLEMENTED);
       return;
     }
-    if ((updated=userlist_set_member_field_str(m,pack->field,pack->data))<0) {
-      err("%d: the field cannot be changed", p->id);
+    if ((updated=userlist_set_member_field_str(m,data->field,data->data))<0) {
+      CONN_ERR("the field cannot be changed");
       send_reply(p, -ULS_ERR_CANNOT_CHANGE);
       return;
     }
@@ -3861,33 +4250,41 @@ cmd_edit_field(struct client_state *p, int len,
     u->last_change_time = cur_time;
   }
   send_reply(p, ULS_OK);
-  info("%d: edit_field: done %d", p->id, updated);
+  CONN_INFO("done %d", updated);
 }
 
 static void
-cmd_add_field(struct client_state *p, int len,
-              struct userlist_pk_edit_field *pack)
+cmd_add_field(struct client_state *p, int pkt_len,
+              struct userlist_pk_edit_field *data)
 {
   struct userlist_user *u;
   struct userlist_member *m;
-  int updated = 0;
+  int updated = 0, cap_bit;
+  struct userlist_contest *reg = 0;
+  struct contest_desc *cnts = 0;
+  opcap_t caps;
 
-  if (len != sizeof(*pack) + 1) {
-    bad_packet(p, "add_field: packet length mismatch: %d", len);
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
     return;
   }
-  if (pack->value_len != 0) {
-    bad_packet(p, "add_field: value_len not 0: %d", pack->value_len);
+  if (data->value_len != 0) {
+    CONN_BAD("value_len != 0: %d", data->value_len);
     return;
   }
-  info("%d: add_field: %d, %d, %d, %d", p->id, pack->user_id,
-       pack->role, pack->pers, pack->field);
-  if (p->user_id != 0) {
-    err("%d: only administrator can do that", p->id);
+  CONN_INFO("%d, %d, %d, %d",
+            data->user_id, data->role, data->pers, data->field);
+  if (p->user_id < 0) {
+    CONN_ERR("not authentificated");
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  if (pack->user_id == -1) {
+  ASSERT(p->user_id > 0);
+
+  if (data->user_id == -1) {
+    // the operating user must have CREATE_USER capability
+    if (is_db_capable(p, OPCAP_CREATE_USER)) return;
+
     u = allocate_new_user();
     ASSERT(u->id > 0);
     u->login = xstrdup("New login");
@@ -3901,42 +4298,68 @@ cmd_add_field(struct client_state *p, int len,
     flush_interval /= 2;
     u->last_change_time = cur_time;
     send_reply(p, ULS_OK);
-    info("add_field: added new user: %d", u->id);
+    CONN_INFO("added new user: %d", u->id);
     return;
   }
-  if (pack->user_id <= 0 || pack->user_id >= userlist->user_map_size
-      || !(u = userlist->user_map[pack->user_id])) {
-    err("%d: invalid user", p->id);
+
+  if (data->user_id <= 0 || data->user_id >= userlist->user_map_size
+      || !(u = userlist->user_map[data->user_id])) {
+    CONN_ERR("invalid user");
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
   }
-  if (pack->role < -1 || pack->role >= CONTEST_LAST_MEMBER) {
-    err("%d: invalid role", p->id);
+
+  if (is_privileged_user(u) >= 0) cap_bit = OPCAP_PRIV_EDIT_USER;
+  else cap_bit = OPCAP_EDIT_USER;
+
+  while (1) {
+    if (p->user_id == data->user_id) break;
+
+    if (get_uid_caps(&config->capabilities, p->user_id, &caps) >= 0
+        && opcaps_check(caps, cap_bit)) break;
+
+    if (u->contests) {
+      for (reg = FIRST_CONTEST(u); reg; reg = NEXT_CONTEST(reg)) {
+        if (contests_get(reg->id, &cnts) < 0) continue;
+        if (get_uid_caps(&cnts->capabilities, p->user_id, &caps) < 0)
+          continue;
+        if (opcaps_check(caps, cap_bit) >= 0) break;
+      }
+      if (reg) break;
+    }
+
+    CONN_ERR("user %d cannot change user %d", p->user_id, data->user_id);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (data->role < -1 || data->role >= CONTEST_LAST_MEMBER) {
+    CONN_ERR("invalid role");
     send_reply(p, -ULS_ERR_BAD_MEMBER);
     return;
   }
-  if (pack->role == -1) {
-    if (pack->pers != 0 || pack->field != -1) {
-      err("%d: invalid field", p->id);
+  if (data->role == -1) {
+    if (data->pers != 0 || data->field != -1) {
+      CONN_ERR("invalid field");
       send_reply(p, -ULS_ERR_BAD_MEMBER);
       return;
     }
     // add a new user
   } else {
-    if (pack->pers != -1 || pack->field != -1) {
-      err("%d: invalid field", p->id);
+    if (data->pers != -1 || data->field != -1) {
+      CONN_ERR("invalid field");
       send_reply(p, -ULS_ERR_BAD_MEMBER);
       return;
     }
     // add a new participant
     m = (struct userlist_member*) userlist_node_alloc(USERLIST_T_MEMBER);
     m->serial = userlist->member_serial++;
-    link_member(u, pack->role, m);
+    link_member(u, data->role, m);
     dirty = 1;
     flush_interval /= 2;
     u->last_change_time = cur_time;
     send_reply(p, ULS_OK);
-    info("add_field: added new member: %d", m->serial);
+    CONN_INFO("added new member: %d", m->serial);
     return;
   }
 
@@ -3946,38 +4369,42 @@ cmd_add_field(struct client_state *p, int len,
     u->last_change_time = cur_time;
   }
   send_reply(p, ULS_OK);
-  info("add_field: done");
+  CONN_INFO("done");
 }
 
+/*
+ * This request is sent from serve to userlist-server
+ * each time client connects to the contest server.
+ * Thus the regular logging is disable just to reduce the number
+ * of messages in the log.
+ */
+
 static void
-cmd_get_uid_by_pid(struct client_state *p, int len,
-                   struct userlist_pk_get_uid_by_pid *pack)
+cmd_get_uid_by_pid(struct client_state *p, int pkt_len,
+                   struct userlist_pk_get_uid_by_pid *data)
 {
   struct client_state *q = 0;
   struct userlist_pk_uid out;
 
-  if (len != sizeof(*pack)) {
-    bad_packet(p, "get_uid_by_pid: packet lendth mismatch: %d", len);
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
     return;
   }
-  /*
-  info("%d: get_uid_by_pid: %d, %d, %d", p->id, pack->system_uid,
-       pack->system_gid, pack->system_pid);
-  */
-  if (pack->system_uid < 0 || pack->system_gid < 0 || pack->system_pid <= 1) {
-    err("%d: invalid parameters", p->id);
+
+  if (data->system_uid < 0 || data->system_gid < 0 || data->system_pid <= 1) {
+    CONN_ERR("invalid parameters");
     send_reply(p, -ULS_ERR_BAD_UID);
     return;
   }
 
   for (q = first_client; q; q = q->next) {
-    if (q->peer_uid == pack->system_uid
-        && q->peer_gid == pack->system_gid
-        && q->peer_pid == pack->system_pid)
+    if (q->peer_uid == data->system_uid
+        && q->peer_gid == data->system_gid
+        && q->peer_pid == data->system_pid)
       break;
   }
   if (!q) {
-    err("%d: not found among clients", p->id);
+    CONN_ERR("not found among clients");
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
   }
@@ -3988,142 +4415,61 @@ cmd_get_uid_by_pid(struct client_state *p, int len,
   out.priv_level = q->priv_level;
   out.cookie = q->cookie;
   out.ip = q->ip;
-  /*
-  info("%d: get_uid_by_pid: %d, %d, %016llx, %s", p->id, out.uid,
-       out.priv_level, out.cookie, unparse_ip(out.ip));
-  */
   enqueue_reply_to_client(p, sizeof(out), &out);
 }
 
+static void (*cmd_table[])() =
+{
+  [ULS_REGISTER_NEW]            cmd_register_new,
+  [ULS_DO_LOGIN]                cmd_do_login,
+  [ULS_CHECK_COOKIE]            cmd_check_cookie,
+  [ULS_DO_LOGOUT]               cmd_do_logout,
+  [ULS_GET_USER_INFO]           cmd_get_user_info,
+  [ULS_SET_USER_INFO]           cmd_set_user_info,
+  [ULS_SET_PASSWD]              cmd_set_passwd,
+  [ULS_GET_USER_CONTESTS]       cmd_get_user_contests,
+  [ULS_REGISTER_CONTEST]        cmd_register_contest,
+  [ULS_REMOVE_MEMBER]           cmd_remove_member,
+  [ULS_PASS_FD]                 cmd_pass_fd,
+  [ULS_LIST_USERS]              cmd_list_users,
+  [ULS_MAP_CONTEST]             cmd_map_contest,
+  [ULS_ADMIN_PROCESS]           cmd_admin_process,
+  [ULS_GENERATE_TEAM_PASSWORDS] cmd_generate_team_passwords,
+  [ULS_TEAM_LOGIN]              cmd_team_login,
+  [ULS_TEAM_CHECK_COOKIE]       cmd_team_check_cookie,
+  [ULS_GET_CONTEST_NAME]        cmd_get_contest_name,
+  [ULS_TEAM_SET_PASSWD]         cmd_team_set_passwd,
+  [ULS_LIST_ALL_USERS]          cmd_list_all_users,
+  [ULS_EDIT_REGISTRATION]       cmd_edit_registration,
+  [ULS_EDIT_FIELD]              cmd_edit_field,
+  [ULS_DELETE_FIELD]            cmd_delete_field,
+  [ULS_ADD_FIELD]               cmd_add_field,
+  [ULS_GET_UID_BY_PID]          cmd_get_uid_by_pid,
+  [ULS_PRIV_LOGIN]              cmd_priv_login,
+  [ULS_PRIV_CHECK_COOKIE]       cmd_priv_check_cookie,
+  [ULS_DUMP_DATABASE]           cmd_dump_database,
+  [ULS_PRIV_GET_USER_INFO]      cmd_priv_get_user_info,
+  [ULS_PRIV_REGISTER_CONTEST]   cmd_priv_register_contest,
+
+  [ULS_LAST_CMD] 0
+};
+
 static void
-process_packet(struct client_state *p, int len, unsigned char *pack)
+process_packet(struct client_state *p, int pkt_len, unsigned char *data)
 {
   struct userlist_packet * packet;
 
-  if (len < sizeof(*packet)) {
-    bad_packet(p, "length %d < minimum %d", len, sizeof(*packet));
+  if (pkt_len < sizeof(*data)) {
+    bad_packet(p, "length %d < minimum %d", pkt_len, sizeof(*packet));
     return;
   }
 
-  packet = (struct userlist_packet *) pack;
-  switch (packet->id) {
-  case ULS_REGISTER_NEW:
-    create_newuser(p, len, (struct userlist_pk_register_new *) pack);  
-    break;
-  
-  case ULS_DO_LOGIN:
-    login_user(p, len, (struct userlist_pk_do_login *) pack);  
-    break;
-    
-  case ULS_CHECK_COOKIE:
-    login_cookie(p, len, (struct userlist_pk_check_cookie *) pack);  
-    break;
-
-  case ULS_DO_LOGOUT:
-    logout_user(p, len, (struct userlist_pk_do_logout *) pack);
-    break;
-
-  case ULS_GET_USER_INFO:
-    get_user_info(p, len, (struct userlist_pk_get_user_info *) pack);
-    break;
-
-  case ULS_SET_USER_INFO:
-    set_user_info(p, len, (struct userlist_pk_set_user_info *) pack);
-    break;
-
-  case ULS_SET_PASSWD:
-    set_password(p, len, (struct userlist_pk_set_password *) pack);
-    break;
-
-  case ULS_GET_USER_CONTESTS:
-    get_user_contests(p, len, (struct userlist_pk_get_user_info *) pack);
-    break;
-
-  case ULS_REGISTER_CONTEST:
-    register_for_contest(p, len, (struct userlist_pk_register_contest*) pack);
-    break;
-
-  case ULS_REMOVE_MEMBER:
-    remove_member(p, len, (struct userlist_pk_remove_member*) pack);
-    break;
-
-  case ULS_PASS_FD:
-    pass_descriptors(p, len, packet);
-    break;
-
-  case ULS_LIST_USERS:
-    list_users(p, len, (struct userlist_pk_list_users*) pack);
-    break;
-
-  case ULS_MAP_CONTEST:
-    cmd_map_contest(p, len, (struct userlist_pk_map_contest*) pack);
-    break;
-
-  case ULS_ADMIN_PROCESS:
-    cmd_admin_process(p, len, (struct userlist_packet*) pack);
-    break;
-
-  case ULS_GENERATE_TEAM_PASSWORDS:
-    cmd_generate_team_passwd(p, len, (struct userlist_pk_map_contest*) pack);
-    break;
-
-  case ULS_TEAM_LOGIN:
-    login_team_user(p, len, (struct userlist_pk_do_login*) pack);
-    break;
-
-  case ULS_TEAM_CHECK_COOKIE:
-    login_team_cookie(p, len, (struct userlist_pk_check_cookie*) pack);
-    break;
-
-  case ULS_GET_CONTEST_NAME:
-    cmd_get_contest_name(p, len, (struct userlist_pk_map_contest*) pack);
-    break;
-
-  case ULS_TEAM_SET_PASSWD:
-    team_set_password(p, len, (struct userlist_pk_set_password *) pack);
-    break;
-
-  case ULS_LIST_ALL_USERS:
-    cmd_list_all_users(p, len, (struct userlist_pk_map_contest*) pack);
-    break;
-
-  case ULS_EDIT_REGISTRATION:
-    cmd_edit_registration(p, len,
-                          (struct userlist_pk_edit_registration*) pack);
-    break;
-
-  case ULS_EDIT_FIELD:
-    cmd_edit_field(p, len, (struct userlist_pk_edit_field*) pack);
-    break;
-
-  case ULS_DELETE_FIELD:
-    cmd_delete_field(p, len, (struct userlist_pk_edit_field*) pack);
-    break;
-
-  case ULS_ADD_FIELD:
-    cmd_add_field(p, len, (struct userlist_pk_edit_field*) pack);
-    break;
-
-  case ULS_GET_UID_BY_PID:
-    cmd_get_uid_by_pid(p, len, (struct userlist_pk_get_uid_by_pid*) pack);
-    break;
-
-  case ULS_PRIV_LOGIN:
-    cmd_login_priv_user(p, len, (struct userlist_pk_do_login*) pack);
-    break;
-
-  case ULS_PRIV_CHECK_COOKIE:
-    login_priv_cookie(p, len, (struct userlist_pk_check_cookie*) pack);
-    break;
-
-  case ULS_DUMP_DATABASE:
-    action_dump_user_database(p, len,(struct userlist_pk_dump_database *)pack);
-    break;
-
-  default:
-    bad_packet(p, "request_id = %d, packet_len = %d", packet->id, len);
+  packet = (struct userlist_packet *) data;
+  if (packet->id<=0 || packet->id>=ULS_LAST_CMD || !cmd_table[packet->id]) {
+    bad_packet(p, "request_id = %d, packet_len = %d", packet->id, pkt_len);
     return;
   }
+  (*cmd_table[packet->id])(p, pkt_len, data);
 }
 
 static void
@@ -4316,6 +4662,7 @@ do_work(void)
     }
 
     // disconnect idle clients
+    /*
     while (1) {
       for (p = first_client; p; p = p->next)
         if (p->last_time + CLIENT_TIMEOUT < cur_time && p->user_id != 0) break;
@@ -4323,6 +4670,7 @@ do_work(void)
       info("%d: timeout, client disconnected", p->id);
       disconnect_client(p);
     }
+    */
 
     FD_ZERO(&rset);
     FD_ZERO(&wset);
@@ -4665,12 +5013,12 @@ main(int argc, char *argv[])
   program_name = argv[0];
   config = userlist_cfg_parse(argv[1]);
   if (!config) return 1;
-  if (!config->contests_path) {
-    err("<contests> tag is not set!");
+  if (!config->contests_dir) {
+    err("<contests_dir> tag is not set!");
     return 1;
   }
-  if (!(contests = parse_contest_xml(config->contests_path))) {
-    err("cannot parse contest database");
+  if (contests_set_directory(config->contests_dir) < 0) {
+    err("contests directory is invalid");
     return 1;
   }
   if (stat(config->db_path, &finfo) < 0) {
@@ -4713,6 +5061,5 @@ main(int argc, char *argv[])
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "XML_Parser" "XML_Char" "XML_Encoding" "va_list")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
