@@ -1,3 +1,10 @@
+2003-12-14  Alexander Chernov  <cher@ispras.ru>
+
+	* set_info.c:
+	(userlist_clnt_set_info) a new parameter `contest_id' is added to
+	  pass to the server in order to enable strict checking for
+	  member limits.
+
 2003-10-30  Alexander Chernov  <cher@ispras.ru>
 
 	* list_all_users.c:

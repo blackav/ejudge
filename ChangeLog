@@ -1,3 +1,270 @@
+2003-12-29  Alexander Chernov  <cher@ispras.ru>
+
+	* NEWS, NEWS.RUS: *** empty log message ***
+
+	* master.c:
+	(operation_status_page) an extra paramter `run_id' is accepted. If
+	  this parameter is set to >= 0 value, the autorefreshing refreshes
+	  to the "View source" page for the given run;
+	(start_if_asked) usage of `operation_status_page' is updated;
+	(stop_if_asked) the same;
+	(action_reload_server) the same;
+	(update_standings_if_asked) the same;
+	(changedur_if_asked) the same;
+	(sched_if_asked) the same;
+	(change_status_if_asked) the same;
+	(change_status) the `operation_status_page' is called so that the
+	  current page remains the source view page for the given run;
+	(change_problem) the same;
+	(change_language) the same;
+	(change_variant) the same;
+	(change_user_id) the same;
+	(change_user_login) the same;
+	(change_imported) the same;
+	(change_hidden) the same;
+	(change_tests) the same;
+	(change_score) the same;
+	(change_readonly) the same;
+	(action_submit_run) usage of `operation_status_page' is updated, the
+	  `run_id' parameter is passed as "undefined" (-1);
+	(confirm_clear_run) the same as above;
+	(do_contest_reset_if_asked) the same as above;
+	(do_clear_team_passwords) the same as above;
+	(do_suspend_if_asked) the same as above;
+	(do_resume_if_asked) the same as above;
+	(action_test_suspend) the same as above;
+	(action_test_resume) the same as above;
+	(action_set_judging_mode) the same as above;
+	(do_rejudge_all_if_asked) the same as above;
+	(action_judge_suspended) the same as above;
+	(action_squeeze_runs) the same as above;
+	(action_continue) the same as above;
+	(action_clear_run) the same as above;
+	(action_reset_filter) the same as above;
+	(action_toggle_visibility) the same as above;
+	(action_toggle_ban) the same as above;
+	(action_toggle_lock) the same as above;
+	(do_rejudge_problem_if_asked) the same as above;
+	(send_msg_if_asked) the same as above;
+	(send_reply_if_asked) the same as above.
+
+	* html.c:
+	(do_write_kirov_standings) the new `variable_full_score' problem
+	  configuration variable is supported.
+
+	* master_html.c:
+	(write_priv_users) added a hyperlink, which returns to the main page
+	  and sets the filter expression to "uid == UID" to the Team ID column
+	  of the participant list.
+
+	* prepare.c:
+	A new problem configuration variable `variable_full_score' is added;
+	(problem_init_func) the `variable_full_score' is initialized to -1;
+	(set_defaults) the `variable_full_score' is processed.
+
+	* prepare.h:
+	(struct section_problem_data) a new configuration variable
+	  `variable_full_score' is added.
+
+2003-12-26  Alexander Chernov  <cher@ispras.ru>
+
+	* files.make: NEWS and NEWS.RUS are added to OTHERFILES.
+
+	* filter_eval.c:
+	(do_eval) support for the new tree node types is implemented:
+	  IMPORTED, HIDDEN, READONLY, VARIANT, RAWVARIANT, CURIMPORTED,
+	  CURHIDDEN, CURREADONLY, CURVARIANT, CURRAWVARIANT.
+
+	* filter_expr.y: new constructs are handled:
+	  imported[(run_id)], curimported, hidden[(run_id)], curhidden,
+	  readonly[(run_id)], curreadonly, varant[(run_id)], curvariant,
+	  rawvariant[(run_id)], currawvariant.
+
+	* filter_scan.lex:
+	new tokens are handled: imported, curimported, hidden, curhidden,
+	  readonly, curreadonly, variant, curvariant, rawvariant,
+	  currawvariant.
+
+	* master.c:
+	(display_enter_password) the `sid_mode' variable is moved to a
+	  hidden field and always have value of 2;
+	(change_status_if_asked) the `serve_clnt_edit_run' now accepts an
+	  additional parameter, so the call is updated;
+	(change_status) the same as above;
+	(change_problem) the same as above;
+	(change_language) the same as above;
+	(change_variant) the same as above;
+	(change_user_id) the same as above;
+	(change_user_login) the same as above;
+	(change_imported) the same as above;
+	(change_hidden) the same as above;
+	(change_tests) the same as above;
+	(change_score) the same as above;
+	(change_readonly) a new function to support editing of `is_readonly'
+	  field;
+	(main) the new action `ACTION_RUN_CHANGE_READONLY' is handled.
+
+	* master_html.c:
+	(write_priv_source) hyperlinks, which set up filter expressions,
+	  are generated for IP-address, size, hash, user_id, problem,
+	  variand, and language fields. Hyperlinks are only generated
+	  in the `SID_URL' session mode, which is default;
+	  editing is disabled, if the run has `is_readonly' field set;
+	  editing of `is_readonly' field is supported;
+	(write_runs_dump) `is_readonly' field is dumped.
+
+	* misctext.c: <ctype.h> is included;
+	(url_armor_string) a new function, which escapes-for-url character
+	  strings. For example, string "a=b" is converted to "a%3db". Such
+	  url-armored strings may be used to specify values directly in
+	  URLs.
+
+2003-12-25  Alexander Chernov  <cher@ispras.ru>
+
+	* misctext.h: (url_armor_string) new function prototype is added.
+
+	* prepare.c:
+	new global configuration variable `disable_testing' is added;
+	new problem configuration variable `disable_testing' is added;
+	(problem_init_func) `disable_testing' field is initialized to -1;
+	(set_defaults) new configuration variables are processed.
+
+	* prepare.h:
+	(struct section_global_data) field `disable_testing' is added;
+	(struct section_problem_data) field `disable_testing' is added.
+
+	* run.c:
+	(do_loop) testing requests for problems with `disable_testing'
+	  configuration variable set are rejected;
+	(process_default_testers) problems with `disable_testing' configuration
+	  variable set are ignored;
+	(check_config) the same as above.
+
+	* serve.c:
+	(cmd_priv_submit_run) the new `disable_testing' problem configuration
+	  variable is supported;
+	(cmd_team_submit_run) the same as above;
+	(cmd_priv_command_0) runs with `is_readonly' flag set cannot be
+	  cleared;
+	(cmd_edit_run) runs with `is_readonly' flag set cannot be edited,
+	  except changing of `is_readonly' field;
+	  editing of `is_readonly' field is supported;
+	(rejudge_run) runs with `is_readonly' flag set are not rejudged;
+	(do_rejudge_all) the same as above;
+	(do_judge_suspended) runs, which problem has `disable_testing'
+	  configuration variable set, are not rejudged;
+	  runs with `is_readonly' flag set are not rejudged;
+	(do_rejudge_problem) the same as above.
+
+2003-12-22  Alexander Chernov  <cher@ispras.ru>
+
+	* client_actions.h: new actions added: `ACTION_RUN_CHANGE_TESTS',
+	  `ACTION_RUN_CHANGE_SCORE', `ACTION_RUN_CHANGE_READONLY'.
+
+2003-12-21  Alexander Chernov  <cher@ispras.ru>
+
+	* runlog_xml.c: new attribute `readonly' is added;
+	(process_run_elements) new attribute `readonly' is handed;
+	(unparse_runlog_xml) new attribute `readonly' is generated.
+
+	* runlog_import.c:
+	(runlog_import_xml) the new `is_readonly' field is supported.
+
+	* runlog.h: new runlog entry editing constant `RUN_ENTRY_READONLY';
+	(struct run_entry) field `is_readonly' is added;
+	(run_is_readonly) a new function prototype.
+
+	* runlog.c:
+	(run_change_status) the status of runs with `is_readonly' flag set
+	  cannot be changed;
+	(run_set_entry) runs with `is_readonly' flag set cannot be edited
+	  (except to clear the flag);
+	  `is_readonly' field editing is supported;
+	(run_is_readonly) a new function, which returns whether the run has
+	  `is_readonly' flag set;
+	(run_clear_entry) runs with `is_readonly' flag set cannot be cleared;
+	(runlog_check) `is_readonly' field is checked.
+
+	* protocol.h: new error code `SRV_ERR_READONLY_RUN' is added;
+	new runlog entry field constant `PROT_SERVE_RUN_READONLY_SET' added;
+	(struct prot_serve_pkt_run_info) field `is_readonly' is added.
+
+	* protocol.c: message for SRV_ERR_READONLY_RUN is added.
+
+	* serve_clnt.h:
+	(serve_clnt_edit_run) new parameter `is_readonly' is added.
+
+2003-12-14  Alexander Chernov  <cher@ispras.ru>
+
+	* master.c:
+	(change_status_if_asked) `serve_clnt_edit_run' usage is updated;
+	(change_language) the same as above;
+	(change_problem) the same as above;
+	(change_variant) the same as above;
+	(change_user_id) the same as above;
+	(change_user_login) the same as above;
+	(change_imported) the same as above;
+	(change_hidden) the same as above;
+	(change_tests) new function to implement editing of `test' field of
+	  runlog entries;
+	(change_score) new function to implement editing of `score' field of
+	  runlog entries;
+	(main) new actions `ACTION_RUN_CHANGE_TESTS', `ACTION_RUN_CHANGE_SCORE'
+	  are supported.
+
+	* master_html.c:
+	(print_nav_buttons) new parameters added: `run_id' to be used for
+	  "View source" and "View report" navigation,
+	  `t5' text for "View source" navigation, if NULL, this navigation
+	  is disabled;
+	  `t6' text for "View report" navigation, disabled if NULL;
+	  so, "View source", "View report" navigation is supported;
+	(write_all_runs) use of `print_nav_buttons' is updated;
+	(write_all_clars) the same as above;
+	(write_priv_standings) the same as above;
+	(write_priv_source) editing of "Tests" and "Score" fields is
+	  implemented;
+	  "View report" navigation is supported;
+	(write_priv_report) "View source" navigation is supported;
+	(write_priv_clar) use of `print_nav_buttons' is updated;
+	(write_priv_users) the same as above.
+
+	* protocol.h:
+	constants `PROT_SERVE_RUN_TESTS_SET', `PROT_SERVE_RUN_SCORE_SET'
+	  are added to enable editing of `test' and `score' runlog fields;
+	(struct prot_serve_pkt_run_info) fields `tests' and `score' added.
+
+	* register.c:
+	(action_register_for_contest) use of `userlist_clnt_set_info' is
+	  updated: the contest identifier is passed to it.
+
+	* serve.c:
+	(cmd_edit_run) editing of `test' and `score' fields is supported.
+
+	* serve_clnt.h:
+	(serve_clnt_edit_run) new parameters `tests' and `score' are added.
+
+	* userlist-server.c:
+	(cmd_check_cookie) removed prevously commented code;
+	(do_set_user_info) parameter `cnts' added to enable strict member
+	  limits check;
+	  strict member limits check is implemented, i.e. it is not allowed
+	  to add a member, if the user already has the maximal number of
+	  members of that kind;
+	(cmd_set_user_info) lookup for the contest with the contest_id from
+	  the client is added. The contest descriptor is then passed to
+	  `do_set_user_info'.
+
+	* userlist_clnt.h:
+	(userlist_clnt_set_info) parameter `contest_id' is added.
+
+	* userlist_proto.h:
+	(struct userlist_pk_set_user_info) field `contest_id' is added.
+
+2003-12-09  Alexander Chernov  <cher@ispras.ru>
+
+	* NEWS.RUS, ejudge.ru_RU.KOI8-R.po, NEWS: *** empty log message ***
+
 2003-12-09  Alexander Chernov  <cher@ispras.ru>
 
 	* prepare.h:
