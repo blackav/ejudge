@@ -26,6 +26,9 @@
 #include "fileutl.h"
 #include "cr_serialize.h"
 #include "interrupt.h"
+#include "runlog.h"
+#include "compile_packet.h"
+#include "curtime.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -54,22 +57,19 @@ do_loop(void)
 
   path_t exe_out;
   path_t log_out;
-  char   statbuf[64];
   path_t report_dir, status_dir;
 
   path_t  pkt_name, run_name;
-  char   *pkt_ptr, *ptr, *end_ptr;
+  char   *pkt_ptr;
   int     pkt_len;
-  int     locale_id;
-  int     contest_id;
-  int     run_id;
-  int     lang_id;
-  int    r, n, i, v;
-  tpTask tsk;
+  int    r, i;
+  tpTask tsk = 0;
   unsigned char msgbuf[512];
   int ce_flag;
-  char **compiler_env = 0;
-  int env_count = 0, env_size = 0;
+  struct compile_request_packet *req = 0;
+  struct compile_reply_packet rpl;
+  void *rpl_pkt = 0;
+  size_t rpl_size = 0;
 
   if (cr_serialize_init() < 0) return -1;
   interrupt_init();
@@ -106,8 +106,6 @@ do_loop(void)
 
     pkt_ptr = 0;
     pkt_len = 0;
-    compiler_env = 0;
-    env_count = 0;
     r = generic_read_file(&pkt_ptr, 0, &pkt_len,
                           SAFE | REMOVE, global->compile_queue_dir,
                           pkt_name, "");
@@ -118,130 +116,45 @@ do_loop(void)
       continue;
     }
 
-    chop(pkt_ptr);
-    end_ptr = pkt_ptr + strlen(pkt_ptr);
-    info("compile packet: <%s>", pkt_ptr);
-
-    n = 0;
-    if (sscanf(pkt_ptr, "%d %d %d %d %n", &contest_id, &run_id,
-               &lang_id, &locale_id, &n) != 4) {
-      // packet parse error, we cannot report such error back to
-      // the contest's serve since the contest id is unknown
-      // just ignore the error
-      err("packet parse error");
-    silent_packet_error:
-      xfree(pkt_ptr);
-      if (compiler_env) {
-        for (i = 0; i < env_count; i++) xfree(compiler_env[i]);
-        xfree(compiler_env);
-      }
-      continue;
+    r = compile_request_packet_read(pkt_len, pkt_ptr, &req);
+    if (r < 0) {
+      /*
+       * the incoming packet is completely broken, so just drop it
+       */
+      goto cleanup_and_continue;
     }
 
-    if (contest_id <= 0 || contest_id > 9999) {
-      // cannot report to the server, just ignore
-      err("contest_id is invalid: %d", contest_id);
-      goto silent_packet_error;
-    }
-    if (run_id < 0 || run_id > 999999) {
-      err("run_id is invalid: %d", run_id);
-      goto silent_packet_error;
-    }
+    memset(&rpl, 0, sizeof(rpl));
+    rpl.judge_id = req->judge_id;
+    rpl.contest_id = req->contest_id;
+    rpl.run_id = req->run_id;
+    rpl.ts1 = req->ts1;
+    rpl.ts1_us = req->ts1_us;
+    get_current_time(&rpl.ts2, &rpl.ts2_us);
+    rpl.run_block_len = req->run_block_len;
+    rpl.run_block = req->run_block; /* !!! shares memory with req */
+    msgbuf[0] = 0;
 
-    ptr = pkt_ptr + n;
-    n = 0;
-    if (sscanf(ptr, "%d%n", &env_count, &n) == 1) {
-      ptr += n;
-      if (env_count < 0 || env_count > 9999) {
-        err("env_count is invalid: %d", env_count);
-        env_count = 0;
-        goto silent_packet_error;
-      }
-      if (env_count > 0) {
-        XCALLOC(compiler_env, env_count + 1);
-        for (i = 0; i < env_count; i++) {
-          n = 0;
-          env_size = 0;
-          if (sscanf(ptr, "%d%n", &env_size, &n) != 1) {
-            err("cannot read compiler_env[%d] length", i);
-            goto silent_packet_error;
-          }
-          ptr += n;
-          if (env_size <= 0 || env_size > 999999) {
-            err("invalid compiler_env[%d] length %d", i, env_size);
-            goto silent_packet_error;
-          }
-          if (*ptr != ' ') {
-            err("space expected after compiler_env[%d] length", i);
-            goto silent_packet_error;
-          }
-          ptr++;
-          if (end_ptr - ptr < env_size) {
-            err("not enough space for compiler_env[%d]", i);
-            goto silent_packet_error;
-          }
-          compiler_env[i] = (char*) xmalloc(env_size + 1);
-          memcpy(compiler_env[i], ptr, env_size);
-          compiler_env[i][env_size] = 0;
-          ptr += env_size;
-        }
-      }
-    }
-
-    n = 0;
-    if (sscanf(ptr, "%d%n", &v, &n) != 1 || ptr[n] || v) {
-      err("invalid packet tail");
-      goto silent_packet_error;
-    }
-
-    // don't need packet source any more
-    xfree(pkt_ptr); pkt_ptr = 0;
-
-    // at this point we may try to report messages to the contest server
+    /* prepare paths useful to report messages to the serve */
     snprintf(report_dir, sizeof(report_dir),
-             "%s/%04d/report", global->compile_dir, contest_id);
+             "%s/%04d/report", global->compile_dir, rpl.contest_id);
     snprintf(status_dir, sizeof(status_dir),
-             "%s/%04d/status", global->compile_dir, contest_id);
-    snprintf(run_name, sizeof(run_name), "%06d", run_id);
+             "%s/%04d/status", global->compile_dir, rpl.contest_id);
+    snprintf(run_name, sizeof(run_name), "%06d", rpl.run_id);
     pathmake(log_out, report_dir, "/", run_name, NULL);
 
-    if (lang_id <= 0 || lang_id > max_lang || !langs[lang_id]) {
-      snprintf(msgbuf, sizeof(msgbuf),
-               "compile packet error: invalid language id %d\n", lang_id);
-      err("invalid language id %d", lang_id);
-
-    report_internal_error:
-      if (generic_write_file(msgbuf, strlen(msgbuf), 0, 0, log_out, 0) < 0){
-        // we tried, but it didn't work out :-(
-        if (compiler_env) {
-          for (i = 0; i < env_count; i++) xfree(compiler_env[i]);
-          xfree(compiler_env);
-        }
-        continue;
-      }
-      snprintf(statbuf, sizeof(statbuf), "6\n");
-      if (generic_write_file(statbuf, sizeof(statbuf), SAFE,
-                             status_dir, run_name, 0) < 0) {
-        // remove the report file
-        unlink(log_out);
-      }
-      clear_directory(global->compile_work_dir);
-      if (compiler_env) {
-        for (i = 0; i < env_count; i++) xfree(compiler_env[i]);
-        xfree(compiler_env);
-      }
-      continue;
-    }
-
-    if (locale_id < 0 || locale_id > 1024) {
-      snprintf(msgbuf, sizeof(msgbuf),
-               "compile packet error: invalid locale id %d\n", locale_id);
-      err("invalid locale id %d", locale_id);
+    if (!r) {
+      /*
+       * there is something wrong, but we have contest_id, judge_id
+       * and run_id in place, so we can report an error back
+       * to serve
+       */
+      snprintf(msgbuf, sizeof(msgbuf), "invalid compile packet\n");
       goto report_internal_error;
     }
-
-    pathmake(src_name, run_name, langs[lang_id]->src_sfx, NULL);
-    pathmake(exe_name, run_name, langs[lang_id]->exe_sfx, NULL);
+    
+    pathmake(src_name, run_name, langs[req->lang_id]->src_sfx, NULL);
+    pathmake(exe_name, run_name, langs[req->lang_id]->exe_sfx, NULL);
 
     pathmake(src_path, global->compile_work_dir, "/", src_name, NULL);
     pathmake(exe_path, global->compile_work_dir, "/", exe_name, NULL);
@@ -251,43 +164,35 @@ do_loop(void)
 
     /* move the source file into the working dir */
     r = generic_copy_file(REMOVE, global->compile_src_dir, pkt_name,
-                          langs[lang_id]->src_sfx,
+                          langs[req->lang_id]->src_sfx,
                           0, global->compile_work_dir, src_name, "");
     if (!r) {
-      snprintf(msgbuf, sizeof(msgbuf),
-               "the source file is missing\n");
+      snprintf(msgbuf, sizeof(msgbuf), "the source file is missing\n");
       err("the source file is missing");
       goto report_internal_error;
     }
     if (r < 0) {
-      // wait some time, then try again
-      info("waiting 5 seconds hoping for things to change");
-      interrupt_enable();
-      os_Sleep(5000);
-      interrupt_disable();
-      if (compiler_env) {
-        for (i = 0; i < env_count; i++) xfree(compiler_env[i]);
-        xfree(compiler_env);
-      }
-      continue;
+      snprintf(msgbuf, sizeof(msgbuf), "error reading the source file\n");
+      err("cannot read the source file");
+      goto report_internal_error;
     }
 
-    info("Starting: %s %s %s", langs[lang_id]->cmd, src_name, exe_name);
+    info("Starting: %s %s %s", langs[req->lang_id]->cmd, src_name, exe_name);
     tsk = task_New();
-    task_AddArg(tsk, langs[lang_id]->cmd);
+    task_AddArg(tsk, langs[req->lang_id]->cmd);
     task_AddArg(tsk, src_name);
     task_AddArg(tsk, exe_name);
     task_SetPathAsArg0(tsk);
-    if (compiler_env) {
-      for (i = 0; compiler_env[i]; i++)
-        task_PutEnv(tsk, compiler_env[i]);
+    if (req->env_num > 0) {
+      for (i = 0; i < req->env_num; i++)
+        task_PutEnv(tsk, req->env_vars[i]);
     }
     task_SetWorkingDir(tsk, global->compile_work_dir);
     task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_REWRITE, 0777);
     task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
     task_SetRedir(tsk, 2, TSR_DUP, 1);
-    if (langs[lang_id]->compile_real_time_limit > 0) {
-      task_SetMaxRealTime(tsk, langs[lang_id]->compile_real_time_limit);
+    if (langs[req->lang_id]->compile_real_time_limit > 0) {
+      task_SetMaxRealTime(tsk, langs[req->lang_id]->compile_real_time_limit);
     }
     if (cr_serialize_lock() < 0) {
       // FIXME: propose reasonable recovery?
@@ -301,22 +206,24 @@ do_loop(void)
     }
 
     if (task_IsTimeout(tsk)) {
-      task_Delete(tsk);
       err("Compilation process timed out");
-      snprintf(msgbuf, sizeof(msgbuf),
-               "compilation process timed out\n");
+      snprintf(msgbuf, sizeof(msgbuf), "compilation process timed out\n");
       goto report_internal_error;
     }
 
     if (task_IsAbnormal(tsk)) {
       info("Compilation failed");
       ce_flag = 1;
-      sprintf(statbuf, "%d%s", 1, PATH_EOL);
+      rpl.status = RUN_COMPILE_ERR;
     } else {
       info("Compilation sucessful");
       ce_flag = 0;
-      sprintf(statbuf, "0%s", PATH_EOL);
+      rpl.status = RUN_OK;
     }
+
+    get_current_time(&rpl.ts3, &rpl.ts3_us);
+    if (compile_reply_packet_write(&rpl, &rpl_size, &rpl_pkt) < 0)
+      goto cleanup_and_continue;
 
     while (1) {
       if (ce_flag) {
@@ -324,7 +231,7 @@ do_loop(void)
       } else {
         r = generic_copy_file(0, 0, exe_path, "", 0, 0, exe_out, "");
       }
-      if (r >= 0 && generic_write_file(statbuf, strlen(statbuf), SAFE,
+      if (r >= 0 && generic_write_file(rpl_pkt, rpl_size, SAFE,
                                        status_dir, run_name, "") >= 0)
         break;
 
@@ -333,14 +240,25 @@ do_loop(void)
       os_Sleep(5000);
       interrupt_disable();
     }
+    goto cleanup_and_continue;
 
-    task_Delete(tsk);
+  report_internal_error:;
+    rpl.status = RUN_CHECK_FAILED;
+    get_current_time(&rpl.ts3, &rpl.ts3_us);
+    if (compile_reply_packet_write(&rpl, &rpl_size, &rpl_pkt) < 0)
+      goto cleanup_and_continue;
+    if (generic_write_file(msgbuf, strlen(msgbuf), 0, 0, log_out, 0) < 0)
+      goto cleanup_and_continue;
+    if (generic_write_file(rpl_pkt, rpl_size, SAFE, status_dir, run_name, 0) < 0)
+      unlink(log_out);
+    goto cleanup_and_continue;
+
+  cleanup_and_continue:;
+    task_Delete(tsk); tsk = 0;
     clear_directory(global->compile_work_dir);
-    if (compiler_env) {
-      for (i = 0; i < env_count; i++) xfree(compiler_env[i]);
-      xfree(compiler_env);
-    }
-  }
+    xfree(rpl_pkt); rpl_pkt = 0;
+    req = compile_request_packet_free(req);
+  } /* while (1) */
 
   return 0;
 }
