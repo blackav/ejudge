@@ -193,3 +193,6 @@ inetdb.c 6 1 642740
 idmap.c 6 2 537810
 register.c 6 2 402566
 make-teamdb.c 6 2 261422
+inetdb.h 6 1 102245
+localdb.h 6 1 113153
+idmap.h 6 1 104314
