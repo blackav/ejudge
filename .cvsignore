@@ -8,3 +8,5 @@ filter_test filter_scan.c filter_expr.c filter_expr.h
 autom4te.cache config.log config.status Makefile configure
 *.cgi config.h
 ejudge-install.sh ejudge-config ejudge-config.v
+NEWS-*
+NEWS.RUS-*
