@@ -21,7 +21,6 @@
 
 #include "expat_iface.h"
 #include "nls.h"
-#include "utf8_utils.h"
 #include "pathutl.h"
 
 #include "reuse/logger.h"
