@@ -1,4 +1,11 @@
+2001-05-19  Alexander Chernov  <cher@ispras.ru>
+
+	* html.c: write_judge_allruns: new score textfield
+	should not be shown not in KIROV mode
+
 2001-05-14  Alexander Chernov  <cher@ispras.ru>
+
+	* VERSION: boosted to 1.4
 
 	* html.c: 1) new `write_judge_teams_view' to write to the client the
 	information about all the registered teams;
