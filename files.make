@@ -65,54 +65,56 @@ SERVE_CLNT_CFILES=\
  serve_clnt/team_page.c\
  serve_clnt/view.c
 
-CFILES=\
+COMMON_CFILES=\
  base64.c\
  cgi.c\
- clar.c\
  clarlog.c\
- clean-users.c\
  clntutil.c\
- compile.c\
  contests.c\
  copyright.c\
  cr_serialize.c\
- edit-userlist.c\
  expat_iface.c\
  filter_eval.c\
- filter_test.c\
  filter_tree.c\
  html.c\
- idmap.c\
- inetdb.c\
  l10n.c\
- localdb.c\
- make-teamdb-inet.c\
- make-teamdb.c\
- master.c\
  master_html.c\
  misctext.c\
- mkpasswd.c\
  opcaps.c\
  parsecfg.c\
  pathutl.c\
  prepare.c\
  protocol.c\
- register.c\
- run.c\
  runlog.c\
- send-passwords.c\
- serve.c\
  sformat.c\
  sha.c\
+ teamdb.c\
+ userlist.c\
+ userlist_cfg.c\
+ userlist_proto.c\
+ userlist_xml.c
+
+CFILES=\
+ clar.c\
+ clean-users.c\
+ compile.c\
+ edit-userlist.c\
+ filter_test.c\
+ idmap.c\
+ inetdb.c\
+ localdb.c\
+ make-teamdb-inet.c\
+ make-teamdb.c\
+ master.c\
+ mkpasswd.c\
+ register.c\
+ run.c\
+ send-passwords.c\
+ serve.c\
  submit.c\
  super-serve.c\
  team.c\
- teamdb.c\
- userlist.c\
  userlist-server.c\
- userlist_cfg.c\
- userlist_proto.c\
- userlist_xml.c\
  users.c\
  unix/fileutl.c\
  win32/fileutl.c\
@@ -131,6 +133,7 @@ CFILES=\
  charsets/utf8_to_koi8.c\
  charsets/utf8_to_koi8_heap.c\
  charsets/utf8_to_koi8_unchecked.c\
+ ${COMMON_CFILES}\
  ${SERVE_CLNT_CFILES}\
  ${USERLIST_CLNT_CFILES}
 
