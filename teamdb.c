@@ -632,13 +632,15 @@ teamdb_set_archive_time(int uid, time_t time)
 
 int
 teamdb_get_uid_by_pid(int system_uid, int system_gid, int system_pid,
-                      int *p_uid, unsigned long long *p_cookie)
+                      int *p_uid, int *p_priv_level,
+                      unsigned long long *p_cookie)
 {
   int r;
 
  restart_operation:
   r = userlist_clnt_get_uid_by_pid(server_conn, system_uid, system_gid,
-                                   system_pid, p_uid, p_cookie);
+                                   system_pid, p_uid,
+                                   p_priv_level, p_cookie);
   if (r == -ULS_ERR_NO_CONNECT || r == -ULS_ERR_DISCONNECT) {
     r = restore_connection();
     if (r <= 0) return -1;
