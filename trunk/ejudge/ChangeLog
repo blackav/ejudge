@@ -1,6 +1,140 @@
+2003-01-06  Alexander Chernov  <cher@ispras.ru>
+
+	* serve.c: copyright notice is updated;
+	(cmd_team_submit_run) now uses `queue_compile_request';
+	(read_compile_packet) serve->run interaction protocol is changed;
+	(b32_number) new function to convert the given number to radix-32
+	  number;
+	(generate_packet_name) new function to generate an unique packet
+	  name. The packet name is 11 characters long and contains only
+	  digits and latin capitals;
+	(queue_compile_request) new function to add a compile packet to
+	  the corresponding compile queue;
+	(rejudge_run) now uses `queue_compile_request';
+
+	* run.c: copyright notice is updated;
+	(generate_report) new parameter `score_system_val' which is used
+	  instead of global configuration variable global->score_system_val;
+	(generate_team_report) new parameter `score_system_val',
+	  which is used instead of global configuration variable;
+	  new parameter `report_error_code' which is used instead of
+	  the global configuration variable;
+	(run_tests) new parameter `team_enable_rep_view' which is used
+	  instead of global configuration variable;
+	  new parameter `report_error_code';
+	  new parameter `score_system_val';
+	  global->run_work_dir is used instead of global->tmp_dir;
+	  tst->check_dir is used instead of tst->work_dir;
+	(do_loop) incoming packets are now read from a single spool]
+	  directory;
+	  the run packet now containt the contest_id, the run_id, the
+	  problem_id, accept_testing flag, locale_id, score_system_val
+	  (the scoring system for this run), team_enable_rep_view flag,
+	  report_error_code flag, exe_sfx executable suffix,
+	  arch - architecture;
+	  the incoming packet name is now unique and contain a random
+	  component to enable using of one tester agent by several
+	  contests;
+	  the checker result is put to the output spool directories, path
+	  to which now contain the contest_id.
+
+	* prepare.h: copyright notice is updated;
+	global parameters `teamdb_file', `passwd_file' are removed;
+	new global parameter `compile_out_dir', not settable by user;
+	new global parameter `compile_work_dir';
+	new global parameter `run_out_dir', not settable by user;
+	new global parameter `run_work_dir';
+	new global parameter `run_check_dir';
+	new global parameter `auto_short_problem_name';
+	new problem parameter `tester_id';
+	new language parameter `compile_id';
+	compile parameters `server_root_dir', `server_var_dir',
+	  `server_compile_dir', `server_queue_dir', `server_src_dir',
+	  `compile_status_dir', `compile_report_dir', `queue_dir',
+	  `work_dir' are removed;
+	new language parameter `compile_dir';
+	new language parameter `compile_queue_dir', `compile_src_dir',
+	  `compile_out_dir' - not settable by user;
+	new tester parameter `any';
+	removed tester parameters: `server_root_dir', `server_var_dir',
+	  `server_run_dir', `server_exe_dir', `server_queue_dir',
+	  `run_status_dir', `run_report_dir', `run_team_report_dir',
+	  `queue_dir', `tester_dir', `tmp_dir', `work_dir';
+	new tester parameter `run_dir';
+	new tester parameters `run_queue_dir', `run_exe_dir', `run_out_dir',
+	  not settable by user;
+	new tester parameter `check_dir'.
+
+	* prepare.c:
+	`teamdb_file', `passwd_file' global configuration parameters are
+	  removed;
+	`compile_queue_dir', `compile_src_dir', `compile_status_dir',
+	  `compile_report_dir' global configuration variables are no longer
+	   can be set by user;
+	`compile_work_dir' - new global configuration parameter;
+	`run_queue_dir', `run_exe_dir', `run_status_dir', `run_report_dir',
+	  `run_team_report_dir' global configuration variables are no longer
+	  can be set by user;
+	`run_work_dir' - new global configuration parameter - a replacement
+	  for tester->tmp_dir;
+	`run_check_dir' - new global configuration parameter - a replacement
+	  for tester->work_dir;
+	`auto_short_problem_name' - new global configuration parameter;
+	`tester_id' new problem parameter;
+	`compile_id' new language parameter;
+	`server_root_dir', `server_var_dir', `server_compile_dir',
+	  `server_queue_dir', `server_src_dir', `compile_status_dir',
+	  `compile_report_dir' language parameters are removed;
+	`queue_dir', `work_dir' language parameters are removed;
+	`compile_dir' - new language parameter - used by serve to place the
+	  compilation request to the specific compilation queue;
+	`any' - new tester parameter - default tester;
+	`server_root_dir', `server_var_dir', `server_run_dir',
+	  `server_exe_dir', `server_queue_dir', `run_status_dir',
+	  `run_report_dir', `run_team_report_dir', `queue_dir',
+	  `tester_dir', `tmp_dir', `work_dir' tester parameters are removed;
+	run_dir - new tester parameter;
+	check_dir - new tester parameter;
+	(find_tester) function searches for default testers for the given
+	  architecture when it cannot find precise tester;
+	(tester_inheritance_info) updated according to changes in tester
+	  parameters;
+	(process_abstract_tester) abstract tester cannot be default tester;
+	(set_defaults) updated to handle new configuration parameters;
+	(collect_sections) compile_id is set to the language id, if the
+	  former is not set;
+	  tester_id is set to the problem id, if the former is not set;
+	  default checkers are supported;
+	(make_symlink) new function;
+	(create_dirs) updated for the new serve<->compile and serve<->run
+	  packet exchange scheme;
+	(print_tester) removed all removed parameters.
+
+	* parsecfg.c: copyright notice is updated;
+	(parse_param) the input file is correctly closed.
+
+	* master.c: copyright notice is updated;
+	(read_state_params) `SID_URL' is supported properly (form headers
+	  and hidden vars contain sid_mode and SID).
+
+	* compile.c:
+	GENERAL: serve<->compile interaction protocol is changed;
+	copyright notice is updated (now is 2003);
+	theory of operation is commented to be obsoleted;
+	(do_loop) the incoming packets are watched only in a single
+	  directory;
+	  the compile packets have unique randomized names, which allows using
+	  the same compilation agent for several contests;
+	  the compile packet now contains the contest_id, the run_id, the
+	  language_id and the locale_id (currently unused);
+	  the compile result is written to the output directory, which path
+	  is composed using the contest_id.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
 2002-12-30  Alexander Chernov  <cher@ispras.ru>
 
-	* version 2.0 is released! 
+	* ALL_FILES: version 2.0 is released! 
 
 2002-12-30  Alexander Chernov  <cher@ispras.ru>
 
