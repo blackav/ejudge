@@ -23,6 +23,7 @@
 #include "prepare.h"
 #include "teamdb.h"
 #include "xalloc.h"
+#include "osdeps.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -355,7 +356,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
 
     if (is_invalid) {
       // FIXME: need reasonable behavour
-      snprintf(tbuf, sizeof(tbuf), "<invalid:%.*s>", pf-specstart, specstart);
+      os_snprintf(tbuf, sizeof(tbuf), "<invalid:%.*s>", pf-specstart, specstart);
       papp = tbuf;
     }
 
@@ -363,9 +364,9 @@ sformat_message(char *buf, size_t maxsize, char const *format,
       // FIXME: ugly hack
       if (width > 100) width = 100;
       if (width >= 0 && put_zeros) {
-        snprintf(tbuf, sizeof(tbuf), "%0*d", width, int_format_value);
+        os_snprintf(tbuf, sizeof(tbuf), "%0*d", width, int_format_value);
       } else {
-        snprintf(tbuf, sizeof(tbuf), "%d", int_format_value);
+        os_snprintf(tbuf, sizeof(tbuf), "%d", int_format_value);
       }
       papp = tbuf;
     }
