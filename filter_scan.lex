@@ -169,12 +169,14 @@ handle_int(void)
 {
   unsigned char *buf, *eptr;
   int val;
+  char *tmpeptr = 0;
 
   buf = alloca(yyleng + 16);
   memset(buf, 0, yyleng + 16);
   memcpy(buf, yytext, yyleng);
   errno = 0;
-  val = strtol(buf, (char**) &eptr, 0);
+  val = strtol(buf, &tmpeptr, 0);
+  eptr = tmpeptr;
   if (errno) {
     (*scan_err)("value is out of range");
     val = 0;
