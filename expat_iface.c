@@ -233,6 +233,17 @@ chardata_hnd(void *data, const XML_Char *s, int len)
   pd->tag_stack->str[pd->tag_stack->u] = 0;
 }
 
+static void *
+generic_tag_alloc(int tag)
+{
+  return xcalloc(1, sizeof(struct xml_tree));
+}
+static void *
+generic_attn_alloc(int attn)
+{
+  return xcalloc(1, sizeof(struct xml_attn));
+}
+
 struct xml_tree *
 xml_build_tree(char const *path,
                char **tag_map,
@@ -250,6 +261,8 @@ xml_build_tree(char const *path,
   ASSERT(path);
   ASSERT(tag_map);
   ASSERT(attn_map);
+  if (!tag_alloc) tag_alloc = generic_tag_alloc;
+  if (!attn_alloc) attn_alloc = generic_attn_alloc;
 
   if (!(f = fopen(path, "r"))) {
     err("cannot open input file `%s'", path);
@@ -316,6 +329,8 @@ xml_build_tree_str(char const *str,
   ASSERT(tag_map);
   ASSERT(attn_map);
   len = strlen(str);
+  if (!tag_alloc) tag_alloc = generic_tag_alloc;
+  if (!attn_alloc) attn_alloc = generic_attn_alloc;
 
   if (!(p = XML_ParserCreate(NULL))) {
     err("cannot create an XML parser");
@@ -352,10 +367,37 @@ xml_build_tree_str(char const *str,
 
 struct xml_tree *
 xml_tree_free(struct xml_tree *tree,
-              void (*tag_free)(void *),
-              void (*attn_free)(void *))
+              void (*tag_free)(struct xml_tree *),
+              void (*attn_free)(struct xml_attn *))
 {
+  struct xml_tree *d, *t;
+  struct xml_attn *a, *b;
+
+  for (d = tree->first_down; d; d = t) {
+    t = d->right;
+    xml_tree_free(d, tag_free, attn_free);
+  }
+  for (a = tree->first; a; a = b) {
+    b = a->next;
+    if (attn_free) (*attn_free)(a);
+    xfree(a->text);
+    xfree(a);
+  }
+  if (tag_free) (*tag_free)(tree);
+  xfree(tree->text);
+  xfree(tree);
+
   return 0;
+}
+
+void
+xml_unparse_tree(FILE *out,
+                 struct xml_tree *tree,
+                 char **tag_map,
+                 char **attn_map,
+                 int (*tag_print)(FILE *, struct xml_tree *),
+                 int (*attn_print)(FILE *, struct xml_attn *))
+{
 }
 
 /**
