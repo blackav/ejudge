@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,8 +33,8 @@
 #endif
 
 #define MAX_NAME_SIZE      63
-#define MAX_VALUE_SIZE     (256 * 1024)
-#define MAX_CONTENT_LENGTH (256 * 1024)
+#define MAX_VALUE_SIZE     (1024 * 1024)
+#define MAX_CONTENT_LENGTH (1024 * 1024)
 
 struct param
 {
@@ -431,6 +431,22 @@ cgi_param(char const *name)
   return NULL;
 }
 
+int
+cgi_param_bin(const unsigned char *name, 
+              size_t *psize,
+              const unsigned char **pvalue)
+{
+  int i;
+
+  for (i = 0; i < param_u; i++)
+    if (!strcmp(params[i].name, name)) {
+      if (psize) *psize = params[i].size;
+      if (pvalue) *pvalue = params[i].value;
+      return 0;
+    }
+  return -1;
+}
+
 /**
  * NAME:    cgi_nparam
  * PURPOSE: return the value of the parameter with the given prefix
@@ -447,6 +463,25 @@ cgi_nparam(char const *name, int nsymb)
     if (!strncmp(params[i].name, name, nsymb))
       return params[i].value;
   return NULL;
+}
+
+int
+cgi_nparam_bin(const unsigned char *prefix,
+               size_t nsyms,
+               const unsigned char **pname,
+               size_t *psize,
+               const unsigned char **pvalue)
+{
+  int i;
+
+  for (i = 0; i < param_u; i++)
+    if (!strncmp(params[i].name, prefix, nsyms)) {
+      if (pname) *pname = params[i].name;
+      if (psize) *psize = params[i].size;
+      if (pvalue) *pvalue = params[i].value;
+      return 0;
+    }
+  return -1;
 }
 
 /**
