@@ -20,6 +20,7 @@
 #include "prepare.h"
 #include "settings.h"
 #include "varsubst.h"
+#include "version.h"
 
 #include "fileutl.h"
 #include "sformat.h"
@@ -152,6 +153,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(run_check_dir, "s"),
 
   GLOBAL_PARAM(score_system, "s"),
+  GLOBAL_PARAM(rounding_mode, "s"),
   GLOBAL_PARAM(virtual, "d"),
 
   GLOBAL_PARAM(htdocs_dir, "s"),
@@ -1486,6 +1488,22 @@ set_defaults(int mode)
     global->score_system_val = SCORE_OLYMPIAD;
   } else {
     err("Invalid scoring system: %s", global->score_system);
+    return -1;
+  }
+
+  /*
+   * Seconds rounding mode.
+   */
+  if (!global->rounding_mode[0]) {
+    global->rounding_mode_val = SEC_CEIL;
+  } else if (!strcmp(global->rounding_mode, "ceil")) {
+    global->rounding_mode_val = SEC_CEIL;
+  } else if (!strcmp(global->rounding_mode, "floor")) {
+    global->rounding_mode_val = SEC_FLOOR;
+  } else if (!strcmp(global->rounding_mode, "round")) {
+    global->rounding_mode_val = SEC_ROUND;
+  } else {
+    err("Invalid rounding mode: %s", global->rounding_mode);
     return -1;
   }
 
@@ -2936,13 +2954,44 @@ create_dirs(int mode)
 }
 
 int
-prepare(char const *config_file, int flags, int mode, char const *opts)
+parse_version_string(int *pmajor, int *pminor, int *ppatch, int *pbuild)
+{
+  const unsigned char *p = compile_version;
+  int n;
+
+  if (sscanf(p, "%d.%dpre%d #%d%n", pmajor, pminor, ppatch, pbuild, &n) == 4
+      && !p[n]) {
+    *ppatch = -*ppatch;
+  } else if (sscanf(p, "%d.%dpre%d%n", pmajor, pminor, ppatch, &n) == 3
+             && !p[n]) {
+    *ppatch = -*ppatch;
+    *pbuild = 0;
+  } else if (sscanf(p, "%d.%d.%d #%d%n", pmajor, pminor, ppatch, pbuild, &n)==4
+             && !p[n]) {
+  } else if (sscanf(p, "%d.%d.%d%n", pmajor, pminor, ppatch, &n) == 3
+             && !p[n]) {
+    *pbuild = 0;
+  } else {
+    err("cannot parse version string %s", compile_version);
+    return -1;
+  }
+  if (*pmajor < 2 || *pmajor > 1000) return -1;
+  if (*pminor < 0 || *pminor > 1000) return -1;
+  return 0;
+}
+
+int
+prepare(char const *config_file, int flags, int mode, char const *opts,
+        int managed_flag)
 {
   cfg_cond_var_t *cond_vars;
   int ncond_var;
+  int major, minor, patch, build;
+
+  if (parse_version_string(&major, &minor, &patch, &build) < 0) return -1;
 
   // initialize predefined variables
-  ncond_var = 2;
+  ncond_var = 7;
   XALLOCAZ(cond_vars, ncond_var);
   cond_vars[0].name = "host";
   cond_vars[0].val.tag = PARSECFG_T_STRING;
@@ -2950,6 +2999,21 @@ prepare(char const *config_file, int flags, int mode, char const *opts)
   cond_vars[1].name = "mode";
   cond_vars[1].val.tag = PARSECFG_T_LONG;
   cond_vars[1].val.l.val = mode;
+  cond_vars[2].name = "major";
+  cond_vars[2].val.tag = PARSECFG_T_LONG;
+  cond_vars[2].val.l.val = major;
+  cond_vars[3].name = "minor";
+  cond_vars[3].val.tag = PARSECFG_T_LONG;
+  cond_vars[3].val.l.val = minor;
+  cond_vars[4].name = "patch";
+  cond_vars[4].val.tag = PARSECFG_T_LONG;
+  cond_vars[4].val.l.val = patch;
+  cond_vars[5].name = "build";
+  cond_vars[5].val.tag = PARSECFG_T_LONG;
+  cond_vars[5].val.l.val = build;
+  cond_vars[5].name = "managed";
+  cond_vars[5].val.tag = PARSECFG_T_LONG;
+  cond_vars[5].val.l.val = managed_flag;
 
   if ((flags & PREPARE_USE_CPP)) {
     FILE   *f = 0;
