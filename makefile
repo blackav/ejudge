@@ -30,7 +30,7 @@ HFILES=base64.h cgi.h clarlog.h clntutil.h exec.h fileutl.h html.h logger.h\
   unix/unix_fileutl.h
 
 ifeq ($(shell uname),Linux)
-CFLAGS=-Wall -I. -DCONF_HAS_SNPRINTF -DCONF_HAS_STRERROR -g -D_GNU_SOURCE -DCONF_HAS_LIBINTL 
+CFLAGS=-Wall -I. -DCONF_HAS_SNPRINTF -DCONF_HAS_STRERROR -D_GNU_SOURCE -DCONF_HAS_LIBINTL -g
 LDFLAGS=-g
 LDLIBS=
 ARCH=unix
@@ -70,7 +70,7 @@ P_OBJECTS=$(P_CFILES:.c=.o)
 T_CFILES = team.c version.c cgi.c teamdb.c base64.c clntutil.c parsecfg.c misctext.c pathutl.c xalloc.c $(ARCH)/fileutl.c $(ARCH)/logger.c $(ARCH)/osdeps.c
 T_OBJECTS = $(T_CFILES:.c=.o)
 
-REG_CFILES = register.c
+REG_CFILES = register.c version.c cgi.c base64.c clntutil.c parsecfg.c misctext.c pathutl.c xalloc.c ${ARCH}/fileutl.c ${ARCH}/logger.c ${ARCH}/osdeps.c
 REG_OBJECTS = ${REG_CFILES:.c=.o}
 
 TARGETS=compile$(EXESFX) serve$(EXESFX) submit$(EXESFX) run$(EXESFX) master$(EXESFX) clar$(EXESFX) mkpasswd$(EXESFX) team$(EXESFX) register${EXESFX}
@@ -174,9 +174,8 @@ team.o: team.c cgi.h teamdb.h parsecfg.h pathutl.h osdeps.h logger.h \
 teamdb.o: teamdb.c teamdb.h pathutl.h osdeps.h logger.h xalloc.h \
  base64.h
 xalloc.o: xalloc.c xalloc.h
-
-
-register.o: register.c
+register.o: register.c cgi.h fileutl.h pathutl.h xalloc.h logger.h \
+ base64.h osdeps.h parsecfg.h clntutil.h
 
 unix/exec.o: unix/exec.c exec.h xalloc.h logger.h osdeps.h
 unix/fileutl.o: unix/fileutl.c fileutl.h unix/unix_fileutl.h logger.h \
