@@ -758,7 +758,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   unsigned long run_time;
   time_t        contest_dur;
   time_t        current_dur;
-  time_t        tdur, tstart;
+  time_t        tdur = 0, tstart;
   int           team_id;
   int           prob_id;
   int           score;
