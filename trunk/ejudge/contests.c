@@ -915,11 +915,11 @@ parse_contest(struct contest_desc *cnts, char const *path)
   if (!cnts->team_par_style)
     cnts->team_par_style = xstrdup("");
   if (!cnts->users_table_style)
-    cnts->users_par_style = xstrdup("");
+    cnts->users_table_style = xstrdup("");
   if (!cnts->register_table_style)
-    cnts->register_par_style = xstrdup("");
+    cnts->register_table_style = xstrdup("");
   if (!cnts->users_verb_style)
-    cnts->users_par_style = xstrdup("");
+    cnts->users_verb_style = xstrdup("");
 
   return 0;
 }
