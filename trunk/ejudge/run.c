@@ -21,6 +21,7 @@
 
 #include "prepare.h"
 #include "runlog.h"
+#include "cr_serialize.h"
 
 #include "fileutl.h"
 
@@ -333,6 +334,7 @@ generate_team_report(int accept_testing,
   fprintf(f, _("Test #  Status  Time (sec)  %sResult\n"),
           (global->score_system_val == SCORE_KIROV)?_("Score   "):"");
   for (i = 1; i < total_tests; i++) {
+    score_buf[0] = 0;
     if (global->score_system_val == SCORE_KIROV) {
       sprintf(score_buf2, "%d (%d)", tests[i].score, tests[i].max_score);
       sprintf(score_buf, "%-8s", score_buf2);
@@ -503,7 +505,11 @@ run_tests(struct section_tester_data *tst,
       for (jj = 0; tst->start_env[jj]; jj++)
         task_PutEnv(tsk, tst->start_env[jj]);
     }
-    if (prb->time_limit > 0) task_SetMaxTime(tsk, prb->time_limit);
+    if (prb->time_limit > 0 && tst->time_limit_adjustment > 0) {
+      task_SetMaxTime(tsk, prb->time_limit + tst->time_limit_adjustment);
+    } else if (prb->time_limit > 0) {
+      task_SetMaxTime(tsk, prb->time_limit);
+    }
     if (prb->real_time_limit>0) task_SetMaxRealTime(tsk,prb->real_time_limit);
     if (tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
     if (tst->no_core_dump) task_DisableCoreDump(tsk);
@@ -516,6 +522,7 @@ run_tests(struct section_tester_data *tst,
       status = RUN_CHECK_FAILED;
       tests[cur_test].code = task_ErrorCode(tsk, 0, 0);
       task_Delete(tsk); tsk = 0;
+      total_failed_tests++;
     } else {
       /* task hopefully started */
       task_Wait(tsk);
@@ -745,6 +752,8 @@ do_loop(void)
   int    accept_testing;
   int    n;
 
+  if (cr_serialize_init() < 0) return -1;
+
   while (1) {
     for (i = 1; i <= max_tester; i++) {
       if (!testers[i]) continue;
@@ -788,9 +797,14 @@ do_loop(void)
     team_report_path[0] = 0;
 
     os_rGetBasename(exe_name, new_base, PATH_MAX);
+    if (cr_serialize_lock() < 0) return -1;
     if (run_tests(testers[i], locale_id, accept_testing, exe_name, new_base,
                   status_string, report_path,
-                  team_report_path) < 0) return -1;
+                  team_report_path) < 0) {
+      cr_serialize_unlock();
+      return -1;
+    }
+    if (cr_serialize_unlock() < 0) return -1;
     if (generic_copy_file(0, NULL, report_path, "",
                           0, testers[i]->run_report_dir, new_base, "") < 0)
       return -1;
