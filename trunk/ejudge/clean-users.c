@@ -22,11 +22,15 @@
 #include "pathutl.h"
 #include "runlog.h"
 #include "clarlog.h"
+#include "userlist_clnt.h"
+#include "userlist_proto.h"
 
 #include <reuse/xalloc.h>
+#include <reuse/osdeps.h>
 
 #include <stdio.h>
 #include <limits.h>
+#include <ctype.h>
 
 static struct userlist_cfg  *config;
 static struct userlist_list *userlist;
@@ -54,13 +58,13 @@ static void
 print_info(unsigned char const *program_path)
 {
   printf("clean-users %s, compiled %s\n", compile_version, compile_date);
-  printf("Usage: %s config-file\n", program_path);
+  printf("Usage: %s [-r [-f]] config-file\n", program_path);
 }
 
 int
 main(int argc, char **argv)
 {
-  int user_total, i, max_user_id, j;
+  int user_total, i, max_user_id, j, r;
   int contest_max_ind, errcode;
   unsigned char *contest_map;
   struct contest_desc *cnts;
@@ -73,19 +77,32 @@ main(int argc, char **argv)
   int clar_from, clar_to;
   unsigned char *out_flags;
   struct vcntslist *cntsp;
+  struct userlist_clnt *server_conn;
+  int force_flag = 0, remove_flag = 0;
+  const unsigned char *cfg_path = 0;
+  unsigned char reply_buf[128], *reply;
+  size_t reply_len;
 
   if (argc == 1) {
     print_info(argv[0]);
     return 0;
   }
-  if (argc != 2) {
+  for (i = 1; i < argc; i++) {
+    if (!strcmp(argv[i], "-r")) {
+      remove_flag = 1;
+    } else if (!strcmp(argv[i], "-f")) {
+      force_flag = 1;
+    } else break;
+  }
+  if (i + 1 != argc) {
     fprintf(stderr, "%s: invalid number of parameters\n", argv[0]);
     return 1;
   }
+  cfg_path = argv[i];
 
   info("clean-users %s, compiled %s", compile_version, compile_date);
 
-  config = userlist_cfg_parse(argv[1]);
+  config = userlist_cfg_parse(cfg_path);
   if (!config) return 1;
   if (!config->contests_dir) {
     err("<contests_dir> tag is not set!");
@@ -307,6 +324,55 @@ main(int argc, char **argv)
         printf(" %d", cntsp->contest_id);
       }
       printf("\n");
+    }
+  }
+  if (!remove_flag) return 0;
+
+  if (!(server_conn = userlist_clnt_open(config->socket_path))) {
+    err("cannot open server connection: %s", os_ErrorMsg());
+    return 1;
+  }
+  if ((r = userlist_clnt_admin_process(server_conn)) < 0) {
+    err("cannot become admin process: %s", userlist_strerror(-r));
+    return 1;
+  }
+
+  printf("Removing users\n");
+  for (i = 1; i <= max_user_id; i++) {
+    if (!userlist->user_map[i]) continue;
+    if (user_stat[i].run_num != 0 || user_stat[i].clar_num != 0) continue;
+    if (user_stat[i].virt_events != 0 || user_stat[i].is_privileged) continue;
+    if (user_stat[i].never_clean) continue;
+
+    reply = 0;
+    while (!force_flag) {
+      printf("Remove user %d,%s,%s? ", i,
+             userlist->user_map[i]->login,
+             userlist->user_map[i]->name);
+      if (!fgets(reply_buf, sizeof(reply_buf), stdin)) {
+        err("cannot read input from the standard input");
+        return 1;
+      }
+      if ((reply_len = strlen(reply_buf)) > sizeof(reply_buf) - 4) {
+        printf("Answer is too long\n");
+        continue;
+      }
+      while (reply_len > 0 && isspace(reply_buf[reply_len - 1]))
+        reply_buf[--reply_len] = 0;
+      reply = reply_buf;
+      while (*reply && isspace(*reply)) reply++;
+      if (!strcasecmp(reply, "n") || !strcasecmp(reply, "no")) break;
+      if (!strcasecmp(reply, "y") || !strcasecmp(reply, "yes")) {
+        reply = 0;
+        break;
+      }
+      printf("Please answer y[es] or n[o].\n"); 
+    }
+    if (reply) continue;
+
+    r = userlist_clnt_delete_field(server_conn, i, -2, 0, 0);
+    if (r < 0) {
+      err("Remove failed: %s", userlist_strerror(-j));
     }
   }
 
