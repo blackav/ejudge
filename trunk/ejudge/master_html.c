@@ -317,9 +317,9 @@ write_all_runs(FILE *f, struct user_state_info *u,
   struct filter_env env;
   int i, r;
   int *match_idx;
-  int match_tot;
-  int *list_idx;
-  int list_tot;
+  int match_tot = 0;
+  int *list_idx = 0;
+  int list_tot = 0;
   unsigned char *str1 = 0, *str2 = 0;
   unsigned char durstr[64], statstr[64];
   int rid, attempts, score;
@@ -758,7 +758,7 @@ write_all_clars(FILE *f, struct user_state_info *u,
   unsigned char durstr[64];
   unsigned char ip[CLAR_MAX_IP_LEN + 4];
   unsigned char hbuf[128];
-  unsigned char *asubj;
+  unsigned char *asubj = 0;
   int asubj_len = 0, new_len;
   int show_astr_time;
 
