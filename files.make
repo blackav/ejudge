@@ -167,6 +167,7 @@ HFILES=\
  protocol.h\
  runlog.h\
  serve_clnt.h\
+ settings.h\
  sformat.h\
  sha.h\
  teamdb.h\
