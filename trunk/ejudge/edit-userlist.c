@@ -2206,7 +2206,7 @@ display_registered_users(unsigned char const *upper,
     return -1;
   }
   users = userlist_parse_str(xml_text);
-  xfree(xml_text);
+  xfree(xml_text); xml_text = 0;
   if (!users) {
     vis_err("XML parse error");
     return -1;
@@ -2772,6 +2772,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
     xfree(xml_text);
     return -1;
   }
+  xfree(xml_text); xml_text = 0;
 
   // count all users
   nusers = 0;
