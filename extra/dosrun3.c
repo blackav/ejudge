@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -142,7 +142,6 @@ main(int argc, char *argv[])
   char buf[1024];
   struct stat ss;
   char *input_name = "";
-  int pid;
 
   if (argc != 2) myerr("wrong number of arguments: %d", argc);
 
@@ -194,6 +193,6 @@ main(int argc, char *argv[])
 
 /*
  * Local variables:
- *  compile-command: "gcc -Wall -O2 dosrun3.c -o dosrun3"
+ *  compile-command: "make"
  * End:
  */
