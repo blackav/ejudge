@@ -1,4 +1,4 @@
-/* -*- mode: c; coding: koi8-r -*- */
+/* -*- mode: c -*- */
 /* $Id$ */
 
 /* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
@@ -16,6 +16,7 @@
  */
 
 #include "config.h"
+#include "settings.h"
 
 #include "html.h"
 #include "misctext.h"
@@ -43,6 +44,10 @@
 
 #include <time.h>
 #include <unistd.h>
+
+#ifndef EJUDGE_CHARSET
+#define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
+#endif /* EJUDGE_CHARSET */
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -533,7 +538,7 @@ write_standings_header(FILE *f, int client_flag,
         process_template(f, header_str, 0, global->charset, header, 0);
       } else {
         fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>\n",
-                global->standings_charset,
+                global->charset,
                 header, header);
       }
     } else {
@@ -575,7 +580,7 @@ write_standings_header(FILE *f, int client_flag,
       process_template(f, header_str, 0, global->charset, header, 0);
     } else {
       fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>",
-              global->standings_charset,
+              global->charset,
               header, header);
     }
   } else {
@@ -1335,6 +1340,7 @@ write_standings(char const *stat_dir, char const *name,
   path_t  tpath;
   FILE   *f;
 
+#if 0
   if (global->charset_ptr && global->standings_charset_ptr
       && global->charset_ptr != global->standings_charset_ptr) {
     char *html_ptr = 0;
@@ -1353,11 +1359,16 @@ write_standings(char const *stat_dir, char const *name,
       html_len = 0;
     }
     // FIXME: local encoding might be any
+    // FIXME: this is broken!!!
+    /*
     str_koi8_to_enc_unchecked(global->standings_charset_ptr,
                               html_ptr, html_ptr);
+    */
+    info("converting the charset of the standings is broken!");
     generic_write_file(html_ptr, html_len, SAFE, stat_dir, name, "");
     return;
   }
+#endif
 
   sprintf(tbuf, "XXX_%lu%d", time(0), getpid());
   pathmake(tpath, stat_dir, "/", tbuf, 0);
@@ -1409,7 +1420,7 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
   if (header_str) {
     fprintf(f, "%s", header_str);
   } else {
-    fprintf(f, "Content-type: text/plain; charset=koi8-r\n\n");
+    fprintf(f, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
   }
 
   /* header */
