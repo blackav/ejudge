@@ -393,6 +393,7 @@ problem_init_func(struct generic_section_config *gp)
   p->tests_to_accept = -1;
   p->test_sfx[0] = 1;
   p->corr_sfx[0] = 1;
+  p->run_penalty = -1;
 }
 
 static void
@@ -1079,13 +1080,13 @@ set_defaults(int mode)
       info("problem.%s.test_score set to %d", ish,  DFLT_P_TEST_SCORE);
     }
 
-    if (!probs[i]->run_penalty && si != -1
-        && abstr_probs[si]->run_penalty) {
+    if (probs[i]->run_penalty == -1 && si != -1
+        && abstr_probs[si]->run_penalty >= 0) {
       probs[i]->run_penalty = abstr_probs[si]->run_penalty;
       info("problem.%s.run_penalty inherited from problem.%s (%d)",
            ish, sish, probs[i]->run_penalty);
     }
-    if (!probs[i]->run_penalty) {
+    if (probs[i]->run_penalty == -1) {
       probs[i]->run_penalty = DFLT_P_RUN_PENALTY;
       info("problem.%s.run_penalty set to %d", ish, DFLT_P_RUN_PENALTY);
     }
