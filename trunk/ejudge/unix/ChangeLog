@@ -1,3 +1,22 @@
+2004-12-31  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.c: (generic_file_size) bug in snprintf usage fixed.
+
+	* fileutl.c:
+	(generic_file_size) return type is now `ssize_t', NULL `dir' param
+	  is handled slightly differently.
+
+2004-11-13  Alexander Chernov  <cher@ispras.ru>
+
+	* interrupt.c: initial revision
+
+	* cr_serialize.c: compile-command is updated.
+
+2004-06-20  Alexander Chernov  <cher@ispras.ru>
+
+	* cr_serialize.c:
+	The `koi8-r' charset specification is removed from the file header.
+
 2004-05-04  Alexander Chernov  <cher@ispras.ru>
 
 	* fileutl.c:

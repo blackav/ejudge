@@ -1,3 +1,13 @@
+2004-12-05  Alexander Chernov  <cher@ispras.ru>
+
+	* read_file_by_line_f.c: initial revision
+
+	* Makefile.in: read_file_by_line_f.c is added.
+
+	* checker_internal.h:
+	new experimental `checker_read_file_by_line_f' function prototype
+	  is added.
+
 2004-05-27  Alexander Chernov  <cher@ispras.ru>
 
 	* Makefile.in: --disable-rpath option from configure is supported;

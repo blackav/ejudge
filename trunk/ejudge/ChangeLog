@@ -1,3 +1,530 @@
+2005-01-08  Alexander Chernov  <cher@ispras.ru>
+
+	* run.c: copyright notice is updated;
+	(run_tests) the path to the input file in the test directory is given
+	  to the checker instead of the path to the input file in the
+	  current directory. This fixes a critical error, because the program
+	  being tested may (under certain conditions) modify the input file.
+
+2004-12-31  Alexander Chernov  <cher@ispras.ru>
+
+	* super_proto.h, super_proto.c, super_html.c, super_html.h, super_clnt.h, super_actions.h, super-serve.h, super-serve.c, serve-control.c:
+	in progress...
+
+	* serve.c:
+	(do_loop) if the current time exceeds the scheduled contest start
+	  time, the latter time is set as the contest start time.
+
+	* run.c:
+	a denial-of-service bug is fixed. `run' now does not load all the
+	  program output or error files into memory, if the size of the file
+	  exceeds the limit `global->max_file_length'.
+	(struct testinfo) new fields: input_size, output_size, error_size,
+	  correct_size, chk_out_size;
+	(print_by_line) new parameter `size' is accepted, `strlen' is no longer
+	  used in the function;
+	  if the file or a line in the file is too long, its length is printed;
+	  NULL input strings (parameter `s') are allowed;
+	(generate_report) checks for NULL pointer before call of print_by_line
+	  are removed, since NULL pointers are now handled in that function;
+	(run_tests) bug fixed: since tests is now pointer into dynamic memory,
+	  sizeof(tests) is no longer correct expression for the size of array;
+	  if the team input, output, or error files are too large, such files
+	  are not read into memory, but the _size field of `struct testinfo'
+	  structure is filled anyway.
+
+	* fileutl.h: copyright notice is updated;
+	(generic_file_size) return type is now `ssize_t'.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2004-12-25  Alexander Chernov  <cher@ispras.ru>
+
+	* files.make:
+	new files added: collect-emails.c, serve-cmd.c, serve-control.c,
+	  slice-userlist.c.
+
+	* serve-cmd.c:
+	(handle_dump_master_runs) handling of `first_run', `last_run'
+	  parameters is improved.
+
+2004-12-20  Alexander Chernov  <cher@ispras.ru>
+
+	* serve_clnt.h: 
+	(serve_clnt_master_page) `cmd' parameter is added;
+	(serve_clnt_edit_run) `score_adj' parameter is added.
+
+	* serve.c:
+	(cmd_master_page) pkt->user_id is no longer user, p->user_id (i.e.
+	  the user_id stored in the connection information structure) is
+	  used instead, check for correspondence of the two fields are
+	  disabled;
+	  SRV_CMD_DUMP_MASTER_RUNS request is handled;
+	  if the resulting html file is empty, no data connection is created;
+	(cmd_view) PRIV_DOWNLOAD_REPORT, PRIV_DOWNLOAD_TEAM_REPORT requests
+	  are handled;
+	(cmd_edit_run) editing of `score_adj' field is supported;
+	(packet_handlers) new commands PRIV_DOWNLOAD_REPORT,
+	  PRIV_DOWNLOAD_TEAM_REPORT, DUMP_MASTER_RUNS are handled.
+
+	* serve-cmd.c:
+	(handle_dump_source) new function to handle "dump-source",
+	  "dump-report", "dump-team-report" commands;
+	(handle_dump_master_runs) new function to handle "dump-master-runs".
+
+	* runlog_xml.c: support for `score_adj' attribute is added.
+
+	* runlog.h: new field code: RUN_ENTRY_SCORE_ADJ;
+	(struct run_entry) new field `score_adj' added.
+
+	* runlog.c: 
+	(run_set_entry) support for `score_adj' field is implemented.
+
+	* protocol.c: two new error messages added.
+
+	* protocol.h:
+	new commands: PRIV_DOWNLOAD_REPORT, PRIV_DOWNLOAD_TEAM_REPORT,
+	  DUMP_MASTER_RUNS;
+	new error codes: FILE_NOT_EXIST, FILTER_EXPR;
+	new constant RUN_SCORE_ADJ_SET;
+	(struct prot_serve_pkt_run_info) field `score_adj' is added.
+
+	* master_html.c:
+	(print_raw_record) a new function to generate the raw runlog record;
+	(write_priv_all_runs) renamed to this name from `write_all_runs' and
+	  made public;
+	  if the `self_url' parameter is an empty string, the raw output
+	  format is used;
+	(write_master_page) `write_priv_all_runs' is called instead of
+	  `write_all_runs';
+	(write_priv_source) new field `score_adj' of a runlog entry is
+	  displayed;
+	(write_raw_source) `self_url' parameter is added. If it is an empty
+	  string, no HTTP headers are generated to the output;
+	  FILE_NOT_EXIST error is returned if the file does not exist instead
+	  of returning ERR_SYSTEM_ERROR;
+	  "Content-disposition:" header is generated for the text source files;
+	(write_raw_report) a new function to dump the report in the raw format
+	  (i.e. without HTML decorations).
+
+	* master.c:
+	(change_status_if_asked) the call of `serve_clnt_edit_run' is updated;
+	(change_status) the same as above;
+	(change_problem) the same as above;
+	(change_language) the same as above;
+	(change_variant) the same as above;
+	(action_run_change_pages) the same as above;
+	(change_user_id) the same as above;
+	(change_user_login) the same as above;
+	(change_imported) the same as above;
+	(change_hidden) the same as above;
+	(change_tests) the same as above;
+	(change_score) the same as above;
+	(change_readonly) the same as above;
+	(change_score_adj) new function to change the `score_adj' value of a
+	  run record;
+	(display_master_page) call of `serve_clnt_master_page' is updated;
+	(main) RUN_CHANGE_SCORE_ADJ action is handled.
+
+	* html.h: 
+	(write_priv_all_runs) new prototype added;
+	(write_raw_source) new parameter `self_url' added;
+	(write_raw_report) new function prototype;
+	(calc_kirov_score) new parameter `p_date_penalty' added.
+
+	* html.c:
+	(calc_kirov_score) new parameter `p_date_penalty' is added, which
+	  is the address to store the date penalty value;
+	  `score_adj' field of the run information is used;
+	  the value of `score_adj' is printed in verbose scoring string;
+	(write_html_run_status) call of `calc_kirov_score' is updated;
+	(do_write_kirov_standings) call of `calc_kirov_score' is updated;
+	(new_write_user_source_view) ERR_FILE_NOT_EXIST error code is
+	  returned, if the source file does not exist;
+	(new_write_user_report_view) the same as above.
+
+	* client_actions.h: RUN_CHANGE_SCORE_ADJ action is added.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2004-12-14  Alexander Chernov  <cher@ispras.ru>
+
+	* diff.c: (compare_runs) invalid handling of the return values of the
+	  `archive_make_read_path' function is fixed.
+
+2004-12-13  Alexander Chernov  <cher@ispras.ru>
+
+	* serve.c:
+	(client_new_state) the socket file descriptor is put to the
+	  non-blocking mode;
+	(client_disconnect) the socket file descriptor is put back to
+	  the blocking mode;
+	(is_valid_status) RUN_DISQUALIFIED run status is supported;
+	(cmd_view) `SRV_CMD_VIEW_TEAM' command is handled;
+	  extra argument is passed to the `write_runs_dump';
+	  the HTML header is only printed, if the self_url_ptr is a non-empty
+	  string;
+	(cmd_import_xml_runs) an extra parameter is passed to the
+	  `runlog_import_xml';
+	(cmd_priv_submit_run) `archive_dir_prepare' is called with one extra
+	  argument;
+	(cmd_upload_report) the same as above;
+	(cmd_team_submit_run) personal deadline for the problem and the user
+	  is checked;
+	  `archive_dir_prepare' is called with one extra argument;
+	(cmd_priv_command_0) `SOFT_UPDATE_STAND' command is handled;
+	(cmd_new_run) `archive_dir_prepare' is called with one extra argument;
+	(cmd_edit_user) new function to handle ISSUE_WARNING and
+	  SET_TEAM_STATUS commands;
+	(read_compile_packet) `archive_dir_prepare' is called with one extra
+	  argument;
+	(read_run_packet) the problem penalty is not counted, because it will
+	  be counted when the corresponding HTML page will be generated;
+	  `archive_dir_prepare' is called with one extra argument;
+	(do_rejudge_all) RUN_DISQUALIFIED run status is handled;
+	(do_rejudge_problem) RUN_DISQUALIFIED run status is handled;
+	(do_rejudge_by_mask) the same;
+	(packet_handlers) handlers for VIEW_TEAM, SET_TEAM_STATUS,
+	  ISSUE_WARNING, SOFT_UPDATE_STAND are added;
+	(create_socket) in the forced socket creation mode (-f option) the
+	  socket file is removed before binding a new socket;
+	(check_sockets) error codes EINTR and EAGAIN are handled;
+	(do_loop) if the initialize mode is activated, (-i option), quit
+	  as soon as all the files are created.
+	(main) two new options are supported: -f (forced socket creation),
+	  -i (initialization of the working directories and files).
+
+	* serve_clnt.h: 
+	(serve_clnt_edit_user) new function prototype is added.
+
+	* runlog_xml.c:
+	(parse_status) RUN_DISQUALIFIED run status is supported;
+	(unparse_status) the same is above.
+
+	* runlog_import.c:
+	(rename_archive_files) if the old and the new run numbers are the same,
+	  no renaming is performed;
+	(runlog_import_xml) new `flags' parameter is added;
+	  several critical bugs is log merging are fixed.
+
+	* runlog.h: new run status RUN_DISQUALIFIED is added;
+	(runlog_import_xml) new parameter `flags' is added.
+
+	* runlog.c: (run_status_str) `RUN_DISQUALIFIED' is supported;
+	(run_write_xml) check for valid run statuses is disabled, since
+	  invalid run statuses are ignored anyway by `unparse_runlog_xml'.
+
+	* run.c: "interrupt.h" is included;
+	<signal.h> is removed;
+	(do_loop) `interrupt_init', `interrupt_disable', `interrupt_enable',
+	  `interrupt_get_status' functions are used instead of direct
+	  manipulation with `sigprocmask'.
+
+	* protocol.h:
+	new commands added: VIEW_TEAM, SET_TEAM_STATUS, ISSUE_WARNING,
+	  SOFT_UPDATE_STAND;
+	(struct prot_serve_pkt_user_info) new structure for the
+	  `SET_TEAM_STATUS' command.
+
+	* prepare.h:
+	(struct pers_dead_info) new structure to descript the personal
+	  deadlines;
+	(struct section_global_data) new fields added: contestant_status_num,
+	  contestant_status_legend, contestant_status_row_attr,
+	  stand_show_contestant_status, stand_show_warn_number,
+	  stand_contestant_status_attr, stand_warn_number_attr;
+	(struct section_problem_data) new fields added: score_multiplier,
+	  personal_deadline, pd_total, pd_infos.
+
+	* prepare.c:
+	new global parameters: contestant_status_num, contestant_status_legend,
+	  contestant_status_row_attr, stand_show_contestant_status,
+	  stand_show_warn_number, stand_contestant_status_attr,
+	  stand_warn_number_attr;
+	new problem parameters: score_multiplier, personal_deadline;
+	(parse_personal_deadlines) new function to parse the value of the
+	  `personal_deadline' problem configuration variable;
+	(set_defaults) all the new configuration variables are supported.
+
+	* misctext.h: copyright notice is updated;
+	(html_armor_string_dup) new function prototype is added;
+	(html_armor_string_dupa) new macro is defined.
+
+	* misctext.c: <reuse/xalloc.h> is added;
+	(html_armor_string_dup) new function.
+
+	* master_html.c: "team_extra.h" is included;
+	"xml_utils.h" is included;
+	"userlist.h" is included;
+	(write_change_status_dialog) "Disqualify" option is enabled;
+	(write_all_runs) `write_html_run_status' is used;
+	  "Disqualify" option is enabled;
+	(write_priv_users) the users table is redone: added "status" and
+	  "number of warnings" columns. Also added "view details" link;
+	(write_priv_user) new function, which generates an HTML page with
+	  user's detailed information;
+	(write_runs_dump) new parameter 'url' is added. If this parameter
+	  is not an empty string, the HTML header is generated (text/plain)
+	  is generated.
+
+	* master.c:
+	(sched_if_asked) the full date specification, which includes the date
+	  and the time is supported;
+	(change_status_if_asked) RUN_DISQUALIFIED (10) is supported;
+	(change_status) the same;
+	(action_set_team_status) new function to set the user's status;
+	(action_issue_warning) new function to add a warning to the user's
+	  record;
+	(action_view_team) new function to display the user information page;
+	(action_merge_runs) `serve_clnt_import_xml_runs' new parameter `flags'
+	  (== 0) is passed to `serve_clnt_import_xml_runs';
+	(main) new actions handled: VIEW_TEAM, CHANGE_CONTESTANT_STATUS,
+	  ISSUE_WARNING.
+
+	* html.h: (write_priv_user) new function prototype;
+	(write_runs_dump) new parameter is added;
+	(calc_kirov_score) new function prototype;
+	(write_html_run_status) new function prototype.
+
+	* html.c: "xml_utils.h" is included;
+	(calc_kirov_score) new function to calculate the score for the
+	  given run using the KIROV scoring system;
+	(write_html_run_status) new function to generate HTML fragment with
+	  the run status (several columns, containing the status, score,
+	  failed tests, etc);
+	(new_write_user_runs) `write_html_run_status' is used;
+	(do_write_kirov_standings) `calc_kirov_score' is used;
+	  contestant status is displayed, if the global configuration variable
+	  `stand_show_contestant_status' is set to TRUE;
+	  global configuration variable `contestant_status_row_attr' is
+	  handled;
+	  number of warnings is shown, if the global configuration variable
+	  `stand_show_warn_number' is set to TRUE;
+	  runs is the future of the current time are ignore, when the standings
+	  are not privileged;
+	(do_write_standings) runs from the "future" of the current time
+	  are ignored, if standings are not privileged;
+	  contestant status is displayed, if the global configuration variable
+	  `stand_show_contestant_status' is set to TRUE;
+	  number of warnings is shown, if the global configuration variable
+	  `stand_show_warn_number' is set to TRUE;
+	  global configuration variable `contestant_status_row_attr' is
+	  handled;
+	(do_write_public_log) `write_html_run_status' is used;
+	(write_team_page) the list of warnings is printed for a user;
+	  personal deadlines are supported;
+	  the current penalty for all the available problems is shown;
+
+	* filter_tree.c:
+	(filter_tree_result_str) "DQ" status (RUN_DISQUALIFIED) is supported;
+	(filter_tree_eval_node) RUN_DISQUALIFIED status is supported.
+
+	* filter_scan.lex: 
+	"DQ" run status (RUN_DISQUALIFIED) is supported.
+
+	* files.make: new files are added.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* team_extra_xml.c: "xml_utils.h" is included;
+	new elements: <warnings>, <warning>, <text>, <comment>, <status>;
+	new attributes: "issuer_id", "issuer_ip", "date";
+	(parse_warnings) new function to parse the <warnings> element;
+	(parse_status) new function to parse <status> element;
+	(team_extra_parse_xml) new elements are supported;
+	(team_extra_unparse_xml) new elements are supported.
+
+	* team_extra.h: <time.h> is included;
+	(struct team_warning) new structure to describe a warning to a user;
+	(struct team_extra) `status' field is added to store the user's
+	  status;
+	  `warns' field is added to store the array of warnings;
+	(team_extra_get_entry) new function prototype;
+	(team_extra_append_warning) new function prototype.
+
+	* team_extra.c:
+	(team_extra_get_entry) new function, which returns team extra
+	  information entry for the given user;
+	(team_extra_flush) `is_dirty' flag is cleared;
+	(team_extra_append_warning) new function, which appends a warning
+	  to a user's record.
+
+	* ejudge-setup.c: setting of super-serve-socket-path is supported;
+	<serve_control_access> is generated.
+
+	* edit-userlist.c: editing of "privileged" field is supported.
+
+	* contests.h: <stdlib.h> is included;
+	new elements: <serve_control_access>, <run_user>, <run_group>;
+	new attribute: "invisible";
+	new error codes: FILE_CREATION_ERROR, IO_ERROR;
+	(contests_make_path) prototype is added;
+	(contests_check_register_ip_2) new function prototype;
+	(contests_check_users_ip_2) the same;
+	(contests_check_master_ip_2) the same;
+	(contests_check_judge_ip_2) the same;
+	(contests_check_team_ip_2) the same;
+	(contests_check_serve_control_ip) the same;
+	(contests_check_serve_control_ip_2) the same;
+	(contests_write_header) new function prototype;
+	(contests_save_xml) new function prototype.
+
+	* contests.c: <sys/fcntl.h> is included;
+	<errno.h> is included;
+	new XML elements supported: <serve_control_access>, <run_user>,
+	  <run_group>;
+	new XML (<contest>) attribute: "invisible";
+	(parse_contest) new XML attributes and elements are supported;
+	(contests_check_ip) `CONTEST_SERVE_CONTROL_ACCESS' is supported;
+	(contests_check_register_ip_2) new function;
+	(contests_check_users_ip_2) new function;
+	(contests_check_master_ip_2) new function;
+	(contests_check_judge_ip_2) new function;
+	(contests_check_team_ip_2) new function;
+	(contests_check_serve_control_ip) new function;
+	(contests_check_serve_control_ip_2) new function;
+	(contests_make_path) is made non-static function;
+	(contests_write_header) a new function to write the <contest> element
+	  to the given stream;
+	(contests_save_xml) new function to store the contests XML to a file.
+
+	* configure.ac: new option --with-super-serve-socket is supported.
+
+	* config.h.in: EJUDGE_SUPER_SERVE_SOCKET is added.
+
+	* compile.c: "interrupt.h" is included;
+	(do_loop) `interrupt_enable', `interrupt_disable', `interrupt_init',
+	  `interrupt_get_status' are used instead of direct manipulation with
+	   sigprocmask.
+
+	* client_actions.h:
+	new client actions: VIEW_TEAM, CHANGE_CONTESTANT_STATUS,
+	  ISSUE_WARNING.
+
+	* clean-users.c: 
+	(main) RUN_DISQUALIFIED run status is supported.
+
+	* archive_paths.h: 
+	(archive_dir_prepare) new parameter added.
+
+	* archive_paths.c:
+	(archive_dir_prepare) new parameter `prefix' is accepted. This is
+	  the name prefix;
+	(archive_make_read_path) error message is corrected;
+	(archive_make_write_path) the same;
+	(archive_make_move_path) the same;
+	(archive_rename) use of `archive_dir_prepare' is updated.
+
+	* Makefile.in:
+	rules for the new programs added: serve-cmd, serve-control,
+	  slice-userlist;
+	new library rule: libsuper_clnt.a.
+
+2004-12-05  Alexander Chernov  <cher@ispras.ru>
+
+	* userlist-server.c:
+	new option `-f' is added for "forced" mode. In this mode the socket
+	file is removed prior binding a socket. The forced mode may be used
+	for crash recovery.
+	(disconnect_client) the primary file descriptor is returned to the
+	  blocking mode before closing;
+	(is_privileged_user) returns 1, if the `privileged' field is set
+	  to TRUE;
+	(cmd_priv_login) handle new case, when the `contest_id' is 0, this
+	  mode is used by `serve-control' program. If the contest_id is 0,
+	  the user must have the corresponding global capability bit set;
+	  the privilege level is automatically adjusted in this mode;
+	(cmd_priv_check_cookie) `contest_id' == 0 is allowed as described
+	  above; the user privilege level is also automatically adjusted;
+	  strict match between the contest_id is the incoming packet and
+	  the stored cookie is no longer required. The cookie is updated
+	  automatically;
+	(cmd_list_users) the output data file descriptor is switched
+	  to the non-blocking mode;
+	(cmd_dump_database) the same as above;
+	(do_generate_passwd) the password for the banned, invisible or
+	  locked users is not changed automatically;
+	(cmd_generate_register_passwords) the output file descriptor
+	  is switched to the non-blocking mode;
+	(do_generate_team_passwd) the password for the banned, invisible or
+	  locked users is not changed automatically;
+	(cmd_generate_team_passwords) the output file descriptor is switched
+	  to the non-blocking mode;
+	(cmd_delete_field) the `privileged' field of the user structure
+	  is supported;
+	(cmd_get_uid_by_pid_2) new function to handle ULS_GET_UID_BY_PID_2
+	  request;
+	(cmd_table) ULS_GET_UID_BY_PID_2 command is added;
+	(do_work) the control socket is removed before `bind', if the
+	  forced mode is enabled;
+	  all the select'ed file descriptors are now used in the non-blocking
+	  mode, so the non-blocking i/o specific error codes are handled;
+	  incoming command socket is also turned to the non-blocking i/o;
+	(main) option parsing is redone;
+	  new `-f' (forced mode) option is added.
+
+	* userlist_cfg.h:
+	(struct userlist_cfg) new fields `super_serve_socket',
+	  `super_serve_user', `super_serve_group', `userlist_user',
+	  `userlist_user' are added.
+
+	* userlist.c:
+	(userlist_get_user_field_str) `privileged' field is supported;
+	(userlist_set_user_field_str) the same as above;
+	(userlist_delete_user_field) the same as above.
+
+	* userlist.h: new user's attribute 'privileged' is added;
+
+	* userlist_cfg.c:
+	new configuration file elements are added: <super_serve_socket>,
+	  <super_serve_user>, <super_serve_group>, <userlist_user>,
+	  <userlist_group>.
+
+	* userlist_proto.c: error code 1 is added.
+
+	* userlist_proto.h: copyright notice is updated;
+	new userlist request: ULS_GET_UID_BY_PID_2;
+	new userlist reply: ULS_UID_2;
+	error code 1 is reserved;
+	(struct userlist_pk_uid_2) new packet structure for
+	  ULS_GET_UID_BY_PID_2 request.
+
+	* userlist_xml.c: 
+	(do_parse_user) new `privileged' field is supported;
+	(unparse_user) new `privileged' field is supported.
+
+	* xml_utils.h:
+	many new function prototypes are added: xml_err, xml_err_a,
+	  xml_err_attrs, xml_err_nested_elems, xml_err_attr_not_allowed,
+	  xml_err_elem_not_allowed, xml_err_elem_redefined, xml_err_top_level,
+	  xml_err_attr_invalid, xml_err_elem_undefined, xml_err_attr_undefined,
+	  xml_leaf_elem, xml_empty_text, xml_attr_bool, xml_elem_ip_mask.
+
+2004-11-26  Alexander Chernov  <cher@ispras.ru>
+
+	* super-serve.h, super_actions.h, super_html.c, super_html.h:
+	initial revision
+
+	* userlist_clnt.h: copyright notice is updated
+
+	* userlist_clnt.h:
+	(userlist_clnt_get_uid_by_pid_2) new prototype added.
+
+2004-11-13  Alexander Chernov  <cher@ispras.ru>
+
+	* interrupt.h: initial revision
+
+2004-11-09  Alexander Chernov  <cher@ispras.ru>
+
+	* cher-configure, unicorn-configure: *** empty log message ***
+
+	* serve-cmd.c, serve-control.c, slice-userlist.c, super_clnt.h, super_proto.c, super_proto.h:
+	initial revision
+
+2004-10-31  Alexander Chernov  <cher@ispras.ru>
+
+	* xml_utils.h: initial revision
+
 2004-10-27  Alexander Chernov  <cher@ispras.ru>
 
 	* prepare.c:
