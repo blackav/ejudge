@@ -780,6 +780,8 @@ run_tests(struct section_tester_data *tst,
 
         /* now start checker */
         /* checker <input data> <output result> <corr answer> <info file> */
+        info("starting checker: %s", var_check_cmd);
+
         tsk = task_New();
         task_AddArg(tsk, var_check_cmd);
         task_AddArg(tsk, prb->input_file);
@@ -806,9 +808,20 @@ run_tests(struct section_tester_data *tst,
         if (prb->checker_real_time_limit > 0) {
           task_SetMaxRealTime(tsk, prb->checker_real_time_limit);
         }
+        if (prb->checker_env) {
+          int jj;
+          for (jj = 0; prb->checker_env[jj]; jj++)
+            task_PutEnv(tsk, prb->checker_env[jj]);
+        }
+        if (tst->checker_env) {
+          int jj;
+          for (jj = 0; tst->checker_env[jj]; jj++)
+            task_PutEnv(tsk, tst->checker_env[jj]);
+        }
 
         task_Start(tsk);
         task_Wait(tsk);
+        task_Log(tsk, 0, LOG_INFO);
 
         generic_read_file(&tests[cur_test].chk_out, 0, 0, 0,
                           0, check_out_path, "");
