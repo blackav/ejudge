@@ -1,3 +1,18 @@
+2001-12-08  Alexander Chernov  <cher@ispras.ru>
+
+	* osdeps.c:
+	(NOT_IMPLEMENTED) new macro to mark not implemented stuff;
+	(os_rDirName) new function (not implemented).
+
+	* exec.c: (NOT_IMPLEMENTED) new macro to mark not implemented stuff;
+	(task_PutEnv) new function (not implemented);
+	(task_ClearEnv) new function (not implemented);
+	(task_DisableCoreDump) new function (not implemented);
+	(task_SetDataSize) new function (not implemented);
+	(task_SetStackSize) new function (not implemented);
+	(task_SetVMSize) new function (not implemented);
+	(task_SetKillSignal) new function (not implemented).
+
 2001-06-16  Alexander Chernov  <cher@ispras.ru>
 
 	* osdeps.c:
@@ -155,4 +170,5 @@
 
 	* exec.c 1.1, logger.c 1.1, osdeps.c 1.1: New file.
 
+END	
 	$Id$
