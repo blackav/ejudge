@@ -1,3 +1,82 @@
+2003-10-06  Alexander Chernov  <cher@ispras.ru>
+
+	* html.c: (new_write_user_runs) variant problems are supported;
+	(do_write_public_log) variant problems are supported;
+	(write_team_page) variant problems are supported;
+	  problem deadlines are supported.
+
+	* master_html.c: 
+	(write_all_runs) variant problems are supported;
+	(write_priv_source) variant problems are supported.
+
+	* prepare.c:
+	New global parameters: `disable_auto_testing', `show_deadline',
+	  `variant_map_file';
+	New problem parameters: `disable_auto_testing', `deadline',
+	  `variant_num';
+	(problem_init_func) `variant_num' and `disable_auto_testing' are
+	  initalized to `undefined' (-1) value;
+	(parse_date) new function to parse date from the string format to
+	  time_t;
+	(parse_variant_map) new function to parse the variant map and store
+	  it in internal data structures;
+	(find_variant) new function to find the correct variant for the team
+	  and the problem;
+	(set_defaults) all the new parameters are supported.
+
+	* prepare.h: <time.h> is included;
+	(struct section_global_data) new field `disable_auto_testing';
+	  new field `show_deadline';
+	  new field `variant_map_file';
+	  new field `variant_map' which stores the parsed variant map;
+	(struct section_problem_data) new field `disable_auto_testing';
+	  new field `deadline';
+	  new field `t_deadline' which stores the parsed deadline;
+	  new field `variant_num';
+	(find_variant) new function prototype added.
+
+	* register.c:
+	bug: incorrect initialization of static variable `head_style' is fixed;
+	(display_register_new_user_page) one missed paragraph style generation
+	  is added for greeting message.
+
+	* run.c: (run_tests) new parameter `cur_variant' is added;
+	  variant problems are supported;
+	(do_loop) `variant' parameter is read from the run packet;
+	  variant problems are supported;
+	(process_default_testers)
+	  variant problems are supported for consistency check;
+	(check_config)
+	  variant problems are supported for consistency check.
+
+	* runlog.c, runlog.h:
+	(run_get_param) one more parameter is added to return (via pointer)
+	  to the caller function the user identifier for the given run.
+
+	* serve.c:
+	(is_valid_status) `RUN_ACCEPTED' is valid status even for ACM and
+	  Kirov score systems (for cases whtn `disable_auto_testing' is set);
+	(cmd_team_submit_run) variant problems are supported, if no variant
+	  is defined for some problem and some team, the submission is
+	  rejected;
+	  `deadline' configuration variable is supported, the submission is
+	  rejected after the deadline for the problem;
+	  `disable_auto_testing' configuration variable is supported;
+	(read_compile_packet) `run_get_param' now have one more parameter to
+	  return the user identifier;
+	  variant problems are supported: variant is passed to the `run'
+	  program in the tester packet;
+	(read_run_packet) `run_get_param' now have one more parameter to
+	  return the user identifier.
+
+	* teamdb.c:
+	(teamdb_get_vintage) new function, which returns `vintage' parameter
+	  of the user table, which is shared between `userlist-server' and
+	  `serve' programs.
+
+	* teamdb.h: 
+	(teamdb_get_vintage) new function prototype added.
+
 2003-10-02  Alexander Chernov  <cher@ispras.ru>
 
 	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***

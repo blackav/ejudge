@@ -1,3 +1,9 @@
+2003-10-06  Alexander Chernov  <cher@ispras.ru>
+
+	* generate_team_passwd.c:
+	(userlist_clnt_generate_team_passwd) bug fixed: we must wait until
+	  the server completes writing of the passwd file.
+
 2003-09-20  Alexander Chernov  <cher@ispras.ru>
 
 	* generate_team_passwd.c:
