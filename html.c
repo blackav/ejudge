@@ -81,9 +81,10 @@ calc_kirov_score(unsigned char *outbuf,
                  struct section_problem_data *pr,
                  int attempts,
                  int disq_attempts,
+                 int prev_successes,
                  int *p_date_penalty)
 {
-  int score, init_score, dpi, date_penalty = 0, score_mult = 1;
+  int score, init_score, dpi, date_penalty = 0, score_mult = 1, score_bonus = 0;
 
   ASSERT(pe);
   ASSERT(pr);
@@ -103,9 +104,15 @@ calc_kirov_score(unsigned char *outbuf,
   }
   if (p_date_penalty) *p_date_penalty = date_penalty;
 
+  // count the bonus depending on the number of previous successes
+  if (pr->score_bonus_total > 0) {
+    if (prev_successes >= 0 && prev_successes < pr->score_bonus_total)
+      score_bonus = pr->score_bonus_val[prev_successes];
+  }
+
   // score_mult is applied to the initial score
   // run_penalty is subtracted, but date_penalty is added
-  score = init_score * score_mult - attempts * pr->run_penalty + date_penalty + pe->score_adj - disq_attempts * pr->disqualified_penalty;
+  score = init_score * score_mult - attempts * pr->run_penalty + date_penalty + pe->score_adj - disq_attempts * pr->disqualified_penalty + score_bonus;
   //if (score > pr->full_score) score = pr->full_score;
   if (score < 0) score = 0;
   if (!outbuf) return score;
@@ -117,6 +124,7 @@ calc_kirov_score(unsigned char *outbuf,
     unsigned char final_score_str[64];
     unsigned char score_adj_str[64];
     unsigned char disq_penalty_str[64];
+    unsigned char score_bonus_str[64];
 
     if (score_mult > 1) {
       snprintf(init_score_str, sizeof(init_score_str),
@@ -152,8 +160,14 @@ calc_kirov_score(unsigned char *outbuf,
       disq_penalty_str[0] = 0;
     }
 
+    if (score_bonus > 0) {
+      snprintf(score_bonus_str, sizeof(score_bonus_str), "%+d", score_bonus);
+    } else {
+      score_bonus_str[0] = 0;
+    }
+
     if (score_mult > 1 || run_penalty_str[0] || date_penalty_str[0]
-        || score_adj_str[0] || disq_penalty_str[0]) {
+        || score_adj_str[0] || disq_penalty_str[0] || score_bonus_str[0]) {
       snprintf(final_score_str, sizeof(final_score_str),
                "<b>%d</b>=", score);
     } else {
@@ -162,17 +176,18 @@ calc_kirov_score(unsigned char *outbuf,
                "<b>%d</b>", score);
     }
 
-    snprintf(outbuf, outsize, "%s%s%s%s%s%s",
+    snprintf(outbuf, outsize, "%s%s%s%s%s%s%s",
              final_score_str,
              init_score_str, run_penalty_str, date_penalty_str, score_adj_str,
-             disq_penalty_str);
+             disq_penalty_str, score_bonus_str);
     return score;
   }
 }
 
 void
 write_html_run_status(FILE *f, struct run_entry *pe,
-                      int priv_level, int attempts, int disq_attempts)
+                      int priv_level, int attempts, int disq_attempts,
+                      int prev_successes)
 {
   unsigned char status_str[64], score_str[64];
   struct section_problem_data *pr = 0;
@@ -231,7 +246,7 @@ write_html_run_status(FILE *f, struct run_entry *pe,
     fprintf(f, "<td>%s</td>", _("N/A"));
   } else {
     calc_kirov_score(score_str, sizeof(score_str), pe, pr, attempts,
-                     disq_attempts, 0);
+                     disq_attempts, prev_successes, 0);
     fprintf(f, "<td>%s</td>", score_str);
   }
 }
@@ -245,7 +260,7 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
                     unsigned char const *extra_args)
 {
   int i, showed, runs_to_show;
-  int attempts, disq_attempts;
+  int attempts, disq_attempts, prev_successes;
   time_t start_time, time;
   unsigned char dur_str[64];
   unsigned char stat_str[64];
@@ -254,6 +269,7 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
   unsigned char href[128];
   struct run_entry re;
   const unsigned char *run_kind_str = 0;
+  struct section_problem_data *cur_prob;
 
   if (global->virtual) {
     start_time = run_get_virtual_start_time(uid);
@@ -294,12 +310,25 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
     if (re.status == RUN_VIRTUAL_START || re.status == RUN_VIRTUAL_STOP
         || re.status == RUN_EMPTY)
       continue;
+    if (re.team != uid) continue;
+    showed++;
+
     attempts = 0; disq_attempts = 0;
     if (global->score_system_val == SCORE_KIROV && !re.is_hidden)
       run_get_attempts(i, &attempts, &disq_attempts,
                        global->ignore_compile_errors);
-    if (re.team != uid) continue;
-    showed++;
+
+    cur_prob = 0;
+    if (re.problem > 0 && re.problem <= max_prob) cur_prob = probs[re.problem];
+
+    prev_successes = RUN_TOO_MANY;
+    if (global->score_system_val == SCORE_KIROV
+        && re.status == RUN_OK
+        && !re.is_hidden
+        && cur_prob && cur_prob->score_bonus_total > 0) {
+      if ((prev_successes = run_get_prev_successes(i)) < 0)
+        prev_successes = RUN_TOO_MANY;
+    }
 
     run_kind_str = "";
     if (re.is_imported) run_kind_str = "*";
@@ -338,7 +367,7 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
     fprintf(f, "<td>%s</td>", prob_str);
     fprintf(f, "<td>%s</td>", lang_str);
 
-    write_html_run_status(f, &re, 0, attempts, disq_attempts);
+    write_html_run_status(f, &re, 0, attempts, disq_attempts, prev_successes);
 
     if (global->team_enable_src_view) {
       fprintf(f, "<td>");
@@ -987,7 +1016,9 @@ do_write_kirov_standings(FILE *f, int client_flag,
       if (run_score == -1) run_score = 0;
       if (pe->status == RUN_OK) {
         score = calc_kirov_score(0, 0, pe, p, att_num[tind][pind],
-                                 disq_num[tind][pind], 0);
+                                 disq_num[tind][pind],
+                                 full_sol[tind][pind]?RUN_TOO_MANY:succ_att[pind],
+                                 0);
         if (score > prob_score[tind][pind]) {
           prob_score[tind][pind] = score;
           if (!p->stand_hide_time) sol_time[tind][pind] = pe->timestamp;
@@ -1002,7 +1033,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
         full_sol[tind][pind] = 1;
       } else if (pe->status == RUN_PARTIAL) {
         score = calc_kirov_score(0, 0, pe, p, att_num[tind][pind],
-                                 disq_num[tind][pind], 0);
+                                 disq_num[tind][pind], RUN_TOO_MANY, 0);
         if (score > prob_score[tind][pind]) prob_score[tind][pind] = score;
         att_num[tind][pind]++;
         if (!full_sol[tind][pind]) tot_att[pind]++;
@@ -1923,12 +1954,13 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
   int i;
 
   time_t time, start;
-  int attempts, disq_attempts;
+  int attempts, disq_attempts, prev_successes;
 
   char durstr[64], statstr[64];
   char *str1 = 0, *str2 = 0;
 
   struct run_entry *runs, *pe;
+  struct section_problem_data *cur_prob;
 
   start = run_get_start_time();
   total = run_get_total();
@@ -1973,9 +2005,23 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
     pe = &runs[i];
     if (pe->is_hidden) continue;
 
+    cur_prob = 0;
+    if (pe->problem > 0 && pe->problem <= max_prob)
+      cur_prob = probs[pe->problem];
+
+    attempts = 0;
+    disq_attempts = 0;
+    prev_successes = RUN_TOO_MANY;
+
     time = pe->timestamp;
-    run_get_attempts(i, &attempts, &disq_attempts,
-                     global->ignore_compile_errors);
+    if (global->score_system_val == SCORE_KIROV) {
+      run_get_attempts(i, &attempts, &disq_attempts,
+                       global->ignore_compile_errors);
+      if (pe->status == RUN_OK && cur_prob && cur_prob->score_bonus_total > 0){
+        prev_successes = run_get_prev_successes(i);
+        if (prev_successes < 0) prev_successes = RUN_TOO_MANY;
+      }
+    }
 
     if (!start) time = start;
     if (start > time) time = start;
@@ -2004,7 +2050,7 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
       fprintf(f, "<td>%s</td>", langs[pe->language]->short_name);
     else fprintf(f, "<td>??? - %d</td>", pe->language);
 
-    write_html_run_status(f, pe, 0, attempts, disq_attempts);
+    write_html_run_status(f, pe, 0, attempts, disq_attempts, prev_successes);
 
     fputs("</tr>\n", f);
   }
