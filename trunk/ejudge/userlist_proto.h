@@ -66,6 +66,7 @@ enum
     ULS_PRIV_REGISTER_CONTEST,
     ULS_GENERATE_PASSWORDS,
     ULS_CLEAR_TEAM_PASSWORDS,
+    ULS_LIST_STANDINGS_USERS,
 
     ULS_LAST_CMD
   };
@@ -129,27 +130,9 @@ enum
   };
 #endif /* __USERLIST_UC_ENUM_DEFINED__ */
 
-/* These structures are for userlist->serve exchange */
-/* FIXME: user_id is deliberately a 16-bit quantity */
-struct userlist_user_short
-{
-  unsigned short user_id;
-  unsigned short login_idx;
-  unsigned short name_idx;
-  unsigned short flags;
-};
-/* FIXME: Maximal number of participating user is too small? */
-enum 
-  {
-    USERLIST_TABLE_SIZE = 1024,
-    USERLIST_TABLE_POOL = 32768,
-  };
 struct userlist_table
 {
-  unsigned short vintage;
-  unsigned short total;
-  struct userlist_user_short users[USERLIST_TABLE_SIZE];
-  unsigned char pool[USERLIST_TABLE_POOL];
+  unsigned long vintage;
 };
 
 /* a generic packet structure */
