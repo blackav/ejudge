@@ -1,16 +1,20 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2002-2003 Alexander Chernov
+# Copyright (c) 2002-2004 Alexander Chernov
 
-# If GNU Compiler Collection is installed at non-standard place
-# GCCDIR=/usr/upd/gcc-3.3.2
+GCJRUN="@ac_cv_contest_gcj@"
+GCJDIR="@ac_cv_contest_gcj_dir@"
 
-GCCRUN=gcj
-if [ "${GCCDIR}" != "" ]
+if [ x"${GCJRUN}" = x -o x"${GCJRUN}" = xno ]
 then
-    PATH=${GCCDIR}/bin:${PATH}
-    GCCRUN=${GCCDIR}/bin/${GCCRUN}
+  echo "This language is not supported." >&2
+  exit 1
 fi
 
-mv $1 Main.java
-exec ${GCCRUN} --main=Main -static -s -O2 Main.java -o $2
+if [ x"${GCJDIR}" != x ]
+then
+    PATH="${GCJDIR}:${PATH}"
+fi
+
+#mv "$1" Main.java
+exec "${GCJRUN}" --main=Main -static -s -O2 "$1" -o "$2"

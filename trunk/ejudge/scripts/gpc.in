@@ -2,14 +2,18 @@
 # $Id$
 # Copyright (c) 2001-2003 Alexander Chernov
 
-# If GNU Pascal Compiler is installed at non-standard place
-GPCDIR=/usr/local/pkg/gpc-2.1
+GPCRUN="@ac_cv_contest_gpc@"
+GPCDIR="@ac_cv_contest_gpc_dir@"
 
-GPCRUN=gpc
-if [ "${GPCDIR}" != "" ]
+if [ x"${GPCRUN}" = x -o x"${GPCRUN}" = xno ]
 then
-    PATH=${GPCDIR}/bin:${PATH}
-    GPCRUN=${GPCDIR}/bin/${GPCRUN}
+  echo "This language is not supported." >&2
+  exit 1
 fi
 
-exec ${GPCRUN} -static -s -O2 $1 -o $2
+if [ x"${GPCDIR}" != x ]
+then
+    PATH="${GPCDIR}:${PATH}"
+fi
+
+exec "${GPCRUN}" -static -s -O2 "$1" -o "$2"

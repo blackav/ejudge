@@ -1,13 +1,15 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2003 Alexander Chernov
+# Copyright (c) 2003,2004 Alexander Chernov
 
 # This is a `compilation' script for yabasic language.
-# The idea is to append "#!/usr/local/bin/yabasic" string
+# The idea is to append "#!${YABASICPATH}" string
 # to the beginning of the file.
 # Usage: yabasic <input> <output>
 
-echo '#!/usr/local/bin/yabasic' > $2
+YABASICPATH="@ac_cv_contest_yabasic_path@"
+
+echo "#!${YABASICPATH}" > $2
 echo >> $2
 cat $1 >> $2
 chmod +x $2

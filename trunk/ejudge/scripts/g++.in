@@ -1,15 +1,19 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2001-2003 Alexander Chernov
+# Copyright (c) 2001-2004 Alexander Chernov
 
-# If GNU Compiler Collection is installed at non-standard place
-# GCCDIR=/usr/upd/gcc-3.3.2
+GPPRUN="@ac_cv_contest_gpp@"
+GPPDIR="@ac_cv_contest_gpp_dir@"
 
-GCCRUN=g++
-if [ "${GCCDIR}" != "" ]
+if [ x"${GPPRUN}" = x -o x"${GPPRUN}" = xno ]
 then
-    PATH=${GCCDIR}/bin:${PATH}
-    GCCRUN=${GCCDIR}/bin/${GCCRUN}
+  echo "This language is not supported." >&2
+  exit 1
 fi
 
-exec ${GCCRUN} -Wall -static -s -O2 $1 -o $2 -lm
+if [ x"${GPPDIR}" != x"" -o x"${GPPDIR}" != xno ]
+then
+    PATH="${GPPDIR}:${PATH}"
+fi
+
+exec "${GPPRUN}" -Wall -static -s -O2 "$1" -o "$2" -lm
