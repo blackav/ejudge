@@ -3,7 +3,7 @@
 #ifndef __FILEUTL_H__
 #define __FILEUTL_H__
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -32,9 +32,9 @@ int generic_copy_file(int sflags,
                       char const *sdir, char const *sname, char const *ssfx,
                       int dflags,
                       char const *ddir, char const *dname, char const *dsfx);
-int generic_file_size(const unsigned char *dir,
-                      const unsigned char *name,
-                      const unsigned char *sfx);
+ssize_t generic_file_size(const unsigned char *dir,
+                          const unsigned char *name,
+                          const unsigned char *sfx);
 
 int   clear_directory(char const *path);
 int   make_dir(char const *, int);
