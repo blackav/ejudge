@@ -96,6 +96,7 @@ enum
     USERLIST_T_ADVISORS,
     USERLIST_T_GUESTS,
     USERLIST_T_FIRSTNAME,
+    USERLIST_T_TEAM_PASSWORD,
 
     USERLIST_LAST_TAG,
   };
@@ -178,6 +179,13 @@ struct userlist_contest
   int status;
 };
 
+struct userlist_passwd
+{
+  struct xml_tree b;
+
+  int method;
+};
+
 struct userlist_user
 {
   struct xml_tree b;
@@ -193,8 +201,8 @@ struct userlist_user
   unsigned char *name;
   unsigned char *email;
 
-  int passwd_method;
-  unsigned char *passwd;
+  struct userlist_passwd *register_passwd;
+  struct userlist_passwd *team_passwd;
 
   unsigned char *inst;
   unsigned char *instshort;
