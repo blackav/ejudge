@@ -4,7 +4,7 @@
 #ifndef __USERLIST_H__
 #define __USERLIST_H__
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -122,6 +122,8 @@ enum
     USERLIST_T_SPELLING,
     USERLIST_T_PRINTER_NAME,
     USERLIST_T_LANGUAGES,
+
+    USERLIST_T_EXTRA1,
 
     USERLIST_LAST_TAG,
   };
@@ -355,6 +357,8 @@ struct userlist_user
   unsigned char *spelling;
   unsigned char *printer_name;
   unsigned char *languages;
+
+  unsigned char *extra1;
 
   struct xml_tree *cookies;
   struct userlist_members *members[USERLIST_MB_LAST];
