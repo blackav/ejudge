@@ -419,7 +419,7 @@ main(int argc, char *argv[])
   return code;
   
  print_usage:
-  printf(_("Usage: %s config-file\n"), argv[0]);
+  printf("Usage: %s config-file\n", argv[0]);
   return code;
 }
 
