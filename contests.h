@@ -48,6 +48,24 @@ enum
 
     CONTEST_LAST_ATTN
   };
+enum
+  {
+    CONTEST_F_LOGIN = 1,
+    CONTEST_F_EMAIL,
+    CONTEST_F_NAME,
+    CONTEST_F_HOMEPAGE,
+
+    CONTEST_LAST_FIELD
+  };
+
+struct contest_field
+{
+  struct xml_tree b;
+  int mandatory;
+  int id;
+  int size;
+  int maxlength;
+};
 
 struct contest_ip
 {
