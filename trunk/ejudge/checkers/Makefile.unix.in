@@ -154,6 +154,8 @@ install : all
 	[ x"${STATIC}" = x ] && install -m 755 libchecker.so "${DESTDIR}${libdir}"
 	mkdir -p "${DESTDIR}${datadir}/ejudge/testlib"
 	for i in symbols.pas testlib.pas; do install -m 644 $$i "${DESTDIR}${datadir}/ejudge/testlib"; done
+	mkdir -p "${DESTDIR}${libexecdir}/ejudge"
+	for i in ${CHKXFILES}; do install -m 755 $$i "${DESTDIR}${libexecdir}/ejudge"; done
 
 libchecker.a : ${OFILES}
 	${AR} rcv $@ $^
