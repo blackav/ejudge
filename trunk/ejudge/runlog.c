@@ -1368,7 +1368,7 @@ run_clear_variables(void)
 }
 
 int
-run_write_xml(FILE *f)
+run_write_xml(FILE *f, int export_mode)
 {
   int i;
 
@@ -1399,7 +1399,7 @@ run_write_xml(FILE *f)
       return -1;
     }
   }
-  unparse_runlog_xml(f, &head, run_u, runs);
+  unparse_runlog_xml(f, &head, run_u, runs, export_mode);
   return 0;
 }
 
