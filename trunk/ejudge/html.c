@@ -177,7 +177,7 @@ write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
   int clars_to_show = all_clars_flag?100000:15;
 
   pathmake(path, dir, "/", name, 0);
-  info(_("team %d statistics to %s"), team, path);
+  info("team %d statistics to %s", team, path);
   if (!(f = sf_fopen(path, "w"))) return;
 
   /* write run statistics: show last 15 in the reverse order */
@@ -204,7 +204,7 @@ write_team_statistics(int team, int all_runs_flag, int all_clars_flag,
   for (showed = 0, i = run_get_total() - 1;
        i >= 0 && showed < runs_to_show;
        i--) {
-    run_get_record(i, &time, &size, 0,
+    run_get_record(i, &time, &size, 0, 0,
                    &team_id, &lang_id, &prob_id, &status, &test, &score);
     if (global->score_system_val == SCORE_KIROV)
       run_get_attempts(i, &attempts);
@@ -524,7 +524,7 @@ do_write_kirov_standings(FILE *f, int client_flag)
 
     struct section_problem_data *p;
 
-    run_get_record(k, 0, 0, 0, &team_id, 0, &prob_id, &status, &tests,
+    run_get_record(k, 0, 0, 0, 0, &team_id, 0, &prob_id, &status, &tests,
                    &run_score);
     if (team_id <= 0 || team_id >= t_max) continue;
     if (prob_id <= 0 || prob_id > max_prob) continue;
@@ -773,7 +773,7 @@ do_write_standings(FILE *f, int client_flag)
   /* now scan runs log */
   r_tot = run_get_total();
   for (k = 0; k < r_tot; k++) {
-    run_get_record(k, &run_time, 0, 0, &team_id, 0, &prob_id, &status, 0,
+    run_get_record(k, &run_time, 0, 0, 0, &team_id, 0, &prob_id, &status, 0,
                    &score);
     if (team_id <= 0 || team_id >= t_max) continue;
     if (t_rev[team_id] < 0) continue;
@@ -979,7 +979,7 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
           _("View source"), _("View report"));
 
   for (i = total - 1; i >= 0 && show_num; i--, show_num--) {
-    run_get_record(i, &time, &size, ip,
+    run_get_record(i, &time, &size, ip, 0,
                    &teamid, &langid, &probid, &status, &test, &score);
     run_get_attempts(i, &attempts);
 
@@ -1024,29 +1024,35 @@ write_judge_allruns(int master_mode, int show_all, FILE *f)
       if (global->score_system_val == SCORE_KIROV) {
         fprintf(f,
                 "<td><select name=\"stat_%d\">"
-                "<option value=\"\"> "
-                "<option value=\"0\">%s"
-                "<option value=\"1\">%s"
-                "<option value=\"7\">%s"
-                "<option value=\"99\">%s"
+                "<option value=\"\"></option>"
+                "<option value=\"99\">%s</option>"
+                "<optgroup label=\"%s:\">"
+                "<option value=\"0\">%s</option>"
+                "<option value=\"1\">%s</option>"
+                "<option value=\"7\">%s</option>"
+                "</optgroup>"
                 "</select></td>\n", i,
-                _("OK"), _("Compilation"),
-                _("Partial solution"), _("Rejudge"));
+                _("Rejudge"), _("Judgements"),
+                _("OK"), _("Compilation error"),
+                _("Partial solution"));
       } else {
         fprintf(f,
                 "<td><select name=\"stat_%d\">"
                 "<option value=\"\"> "
+                "<option value=\"99\">%s"
+                "<optgroup label=\"%s:\">"
                 "<option value=\"0\">%s"
                 "<option value=\"1\">%s"
                 "<option value=\"2\">%s"
                 "<option value=\"3\">%s"
                 "<option value=\"4\">%s"
                 "<option value=\"5\">%s"
-                "<option value=\"99\">%s"
+                "</optgroup>"
                 "</select></td>\n", i,
-                _("OK"), _("Compilation"), _("Run-time"),
-                _("Time-limit"), _("Presentation"), _("Wrong"),
-                _("Rejudge"));
+                _("Rejudge"), _("Judgements"),
+                _("OK"), _("Compilation error"), _("Run-time error"),
+                _("Time-limit exceeded"), _("Presentation error"),
+                _("Wrong answer"));
       }
 
       fprintf(f,
@@ -1218,7 +1224,7 @@ write_team_source_view(char const *pk_name, int team, int rid)
   pathmake(path, global->pipe_dir, "/", pk_name, 0);
   if (!(f = sf_fopen(path, "w"))) return;
 
-  run_get_record(rid, 0, 0, 0, &run_team, 0, 0, 0, 0, 0);
+  run_get_record(rid, 0, 0, 0, 0, &run_team, 0, 0, 0, 0, 0);
   if (team != run_team) {
     fprintf(f, "<h2>%s</h2><p>%s</p>",
             _("Permission denied"),
@@ -1265,7 +1271,7 @@ write_team_report_view(char const *pk_name, int team, int rid)
   pathmake(out_path, global->pipe_dir, "/", pk_name, 0);
   if (!(f = fopen(out_path, "w"))) return;
 
-  run_get_record(rid, 0, 0, 0, &run_team, 0, &prob_id, 0, 0, 0);
+  run_get_record(rid, 0, 0, 0, 0, &run_team, 0, &prob_id, 0, 0, 0);
   if (team != run_team || !probs[prob_id]->team_enable_rep_view) {
     fprintf(f, "<h2>%s</h2><p>%s</p>",
             _("Permission denied"),
