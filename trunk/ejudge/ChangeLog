@@ -1,3 +1,190 @@
+2001-11-08  Alexander Chernov  <cher@ispras.ru>
+
+	* run.c:
+	(struct testinfo) added field termsig to hold the termination signal;
+	(result2str) 2 extra parameters added to verbosely print the
+	  description of the terminating signal;
+	(generate_report) updated to use the new result2str prototype;
+	(generate_team_report) updated to use the new result2str prototype;
+	(run_tests) added support for the new parameters:
+	  `kill_signal', `no_core_dump', `max_stack_size', `max_data_size',
+	  `max_vm_size';
+	(run_tests) if the program is terminated due to a signal, its number
+	  is saved in struct testinfo.
+
+	* prepare.c:
+	support for the new parameters `no_core_dump', `kill_signal',
+	  `max_stack_size', `max_data_size', `max_vm_size' added.
+
+	* prepare.h: new checker parameters: `no_core_dump', `kill_signal',
+	  `max_stack_size', `max_data_size', `max_vm_size'.
+
+	* exec.h: prototypes for new functions `task_SetKillSignal',
+	  `task_SetStackSize', `task_SetDataSize', `task_SetVMSize',
+	  `task_DisableCoreDump' added.
+
+2001-11-07  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare.c:
+	new static variables `abstr_probs', `abstr_testers', `max_abstr_prob',
+	  `max_abstr_tester';
+	new problem parameters `abstract', `super';
+	(set_initial_values) removed since never used;
+	(problem_init_func) new function, which initializes some fields in
+	  a new problem data structure to a special `uninitialized' value;
+	(tester_init_func) new function;
+	(set_defaults)
+	  1) added code to check goodness of abstract problem specification
+	    (must have `short_name' field filled, cannot define `id',
+	    `long_name', `super');
+	  2) if the problem specification has `super' field, the corresponding
+	    abstract problem is looked up;
+	  3) any problem now must have `short_name' field defined;
+	  4) if `long_name' is not defined, it is composed from `short_name';
+	  5) for fields: `enable_rep_view', `full_score', `test_score',
+	    `run_penalty', `use_stdin', `use_stdout', `time_limit',
+	    `test_score_list', `test_sfx', `corr_sfx', `test_dir' (*),
+	    `corr_dir' (*), `input_file', `output_file':
+	    if a field is not defined in problem specification, but defined
+	    in a superproblem for this problem, the field value is copied
+	    from the superproblem, for fields marked (*) sformat_message
+	    substitution is performed;
+	  6) `test_sfx', `corr_sfx' are properly inherited from global, if
+	    necessary;
+	  6) added code to check abstract tester specification
+	    (must define `name' field, cannot define `id', `super', `problem',
+	    `problem_name');
+	  7) for the following tester fields: `arch', `key', `tester_dir' (*),
+	     `tmp_dir' (*), `work_dir' (*), `server_root_dir', `exe_dir' (*),
+	     `is_dos', `no_redirect', `error_file' (*), `errorcode_file' (*),
+	     `start_cmd', `prepare_cmd':
+	    if a field is not defined in tester specification, but defined
+	    in a supertester, the field value is copied
+	    from the supertester, for fields marked (*) sformat_message
+	    substitution is performed;
+	(collect_sections)
+	  1) abstract problems are collected to `abstr_probs' array;
+	  2) abstract testers are collected to `abstr_testers' array;
+	(prepare)
+	  1) removed call of `set_initial_values';
+	  2) fixed invalid usage of the 4th argument of parse_param function
+	    call.
+
+	* prepare.h:
+	problem.abstract - new parameter, which is set to 1, if the problem
+	  is the abstract problem specification;
+	problem.use_corr - new parameter, which is set to 1, if the correct
+	  answers for tests are provided. The initialization code contains
+	  some heuristics to set it, if it was not set. For example, if the
+	  correct answer directory was provided, this parameter is set to 1.
+	problem.super - is the name of the superproblem specification
+	  (which must be an abstract problem).
+	  Most of the field values may be inherited from this abstract
+	  problem's values.
+	tester.abstract - new parameter, which is set to 1, if the tester
+	  specification is abstract;
+	tester.super - is the name of the supertester specification
+	  (which must be an abstract tester).
+
+	* teamdb.c:
+	(teamdb_export_team) new function, which fills up a structure,
+	  containing all the information about a team.
+
+	* teamdb.h:
+	(struct teamdb_export) a new structure is defined just to export
+	  all the information about a team in one place. This structure
+	  is then passed further to sformat_message function;
+	(teamdb_export_team) a new function, which fills up this structure.
+
+	* sformat.c: some debugging
+
+	* run.c:
+	(check_config) new tester parameter use_corr is used to decide
+	  whether the correct answer files to be used.
+
+	* pathutl.h:
+	added GNU C specific function attributes to perform printf format
+	checking on function calls of err and warn.
+
+	* parsecfg.c:
+	(read_variable) if only the variable name is provided, without the
+	  value, "1" is assumed (like in C preprocessor -D option);
+	(parse_param) section initialization function is called right
+	  after xcalloc;
+	(parse_param) stdout is flushed in order to not lost debugging output.
+
+	* parsecfg.h:
+	(struct config_section_info) added field `init_func' --- the initialize
+	  function, which is called right after the memory for the new section
+	  is allocated.
+
+	* team.c, master.c:
+	(initialize) configurable data directory is implemented --
+	  CGI_DATA_PATH variable is used.
+
+	* makefile:
+	new variable CGI_DATA_PATH_FLAG allows setting of CGI scripts data dir;
+	sformat.[ch] files added.
+
+	* html.c:
+	(sformat_url) function is removed, since it is superseded by a new
+	  function `sformat_message' from sformat.c;
+	(do_write_kirov_standings) changed to use `sformat_message';
+	(do_write_standings) changed to use `sformat_message'.
+
+	* clarlog.c: (clar_open) minor printf format warning is fixed.
+
+	* sformat.h, sformat.c: Initial revision
+
+2001-10-08  Alexander Chernov  <cher@ispras.ru>
+
+	* html.c:
+	(write_clar_view) team name is printed instead of team login;
+	(do_write_kirov_standings) invalid <a> tag generation fixed;
+	(write_judge_allclars) team name is printed instead of team login.
+
+	* localdb.c:
+	(localdb_selection_team) The team participates in selection tour,
+	  if it does not participate in the training tour.
+
+	* prepare.c:
+	(create_dirs) correctly handled situation, when checker ids are
+	  not successive (if testers[i] == null, it is skipped).
+
+2001-10-05  Alexander Chernov  <cher@ispras.ru>
+
+	* makefile: new files added
+
+	* html.c:
+	(sformat_url) new function, which formats the URL template from
+	  the configuration file;
+	(do_write_kirov_standings) new global parameters `prob_info_url',
+	  `team_info_url' are supported;
+	(do_write_standings) the same as above.
+
+	* prepare.c: new global parameters `team_info_url', `prob_info_url'.
+
+	* prepare.h: new parameters `team_info_url' and `prob_info_url'.
+
+	* make-teamdb-inet.c, send-passwords.c: compilation command changed
+
+	* teamdb.c:
+	(teamdb_get_plain_password) new function, which returns the password
+	  from the database in the plain text.
+
+	* teamdb.h: new function teamdb_get_plain_password.
+
+	* .cvsignore: new files added
+
+	* make-teamdb.c: compilation command fixed
+
+	* make-teamdb-inet.c, make-teamdb.c, send-passwords.c, inetdb.c, inetdb.h, localdb.c, localdb.h:
+	initial revision
+
+	* idmap.c: compilation command fixed
+
+	* idmap.h, idmap.c: initial revision
+
 2001-06-16  Alexander Chernov  <cher@ispras.ru>
 
 	* osdeps.h: 1) added prototypes for os_readll, os_readull;
@@ -220,9 +407,9 @@
 
 2001-04-20  Alexander Chernov  <cher@ispras.ru>
 
-        * master.c, serve.c:
-        added support for master's UPDATE command: force update
-        of public standings
+	* master.c, serve.c:
+	added support for master's UPDATE command: force update
+	of public standings
 
 2001-03-31  Alexander Chernov  <cher@ispras.ru>
 
@@ -842,5 +1029,7 @@
 
 	* exec.h 6.0, logger.h 6.0, osdeps.h 6.0, xalloc.h 6.0, xalloc.c 6.0:
 	New file.
+
+END
 
 	$Id$
