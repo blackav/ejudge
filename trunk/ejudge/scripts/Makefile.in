@@ -62,12 +62,18 @@ SCRIPTS = \
  javac\
  runjava
 
+POLICIES = \
+ fileio.policy \
+ default.policy
+
 # do nothing on all
 all :
 
 install :
 	mkdir -p "${DESTDIR}${libexecdir}/ejudge"
 	for i in ${SCRIPTS}; do j="${DESTDIR}${libexecdir}/ejudge/$$i"; if [ -f "$$j" ]; then if ! diff -q "$$i" "$$j" >/dev/null 2>&1; then rm -f "$$j.old"; mv "$$j" "$$j.old"; fi; fi; install -m 0755 "$$i" "$$j"; done
+	mkdir -p "${DESTDIR}${datadir}/ejudge"
+	for i in ${POLICIES}; do j="${DESTDIR}${datadir}/ejudge/$$i"; if [ -f "$$j" ]; then if ! diff -q "$$i" "$$j" >/dev/null 2>&1; then rm -f "$$j.old"; mv "$$j" "$$j.old"; fi; fi; install -m 0644 "$$i" "$$j"; done
 
 clean:
 
