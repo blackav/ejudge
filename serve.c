@@ -2513,6 +2513,7 @@ static void do_rejudge_all(void);
 static void do_judge_suspended(void);
 static void do_rejudge_problem(int);
 static void do_rejudge_by_mask(int, unsigned long *);
+static int count_transient_runs(void);
 
 static void
 do_squeeze_runs(void)
@@ -3038,6 +3039,19 @@ cmd_priv_command_0(struct client_state *p, int len,
       generic_write_file(buf, wsize, SAFE, global->run_queue_dir, "QUIT", "");
     }
     interrupt_signaled = 1;
+    new_send_reply(p, SRV_RPL_OK);
+    return;
+  case SRV_CMD_HAS_TRANSIENT_RUNS:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      new_send_reply(p, -SRV_ERR_NO_PERMS);
+      return;
+    }
+    if ((res = count_transient_runs()) > 0) {
+      err("%d: there are %d transient runs", p->id, res);
+      new_send_reply(p, -SRV_ERR_TRANSIENT_RUNS);
+    }
     new_send_reply(p, SRV_RPL_OK);
     return;
 
@@ -4050,6 +4064,21 @@ rejudge_run(int run_id)
   run_change_status(run_id, RUN_COMPILING, 0, -1);
 }
 
+static int
+count_transient_runs(void)
+{
+  int total_runs, r, counter = 0;
+  struct run_entry re;
+
+  total_runs = run_get_total();
+  for (r = 0; r < total_runs; r++) {
+    if (run_get_entry(r, &re) < 0) continue;
+    if (re.status >= RUN_TRANSIENT_FIRST && re.status <= RUN_TRANSIENT_LAST)
+      counter++;
+  }
+  return counter;
+}
+
 static void
 do_rejudge_all(void)
 {
@@ -4345,6 +4374,7 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT] { cmd_view },
   [SRV_CMD_DUMP_MASTER_RUNS] { cmd_master_page },
   [SRV_CMD_RESET_CLAR_FILTER] { cmd_reset_filter },
+  [SRV_CMD_HAS_TRANSIENT_RUNS] { cmd_priv_command_0 },
 };
 
 static void
