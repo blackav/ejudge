@@ -729,6 +729,15 @@ initialize(int argc, char const *argv[])
   if (s) pathcpy(fullname, s);
   os_rDirName(fullname, dirname, PATH_MAX);
   os_rGetBasename(fullname, basename, PATH_MAX);
+#if defined CGI_PROG_SUFFIX
+ {
+   size_t baselen = strlen(basename);
+   size_t sufflen = strlen(CGI_PROG_SUFFIX);
+   if (baselen>sufflen && !strcmp(basename+baselen-sufflen,CGI_PROG_SUFFIX)) {
+     basename[baselen - sufflen] = 0;
+   }
+ }
+#endif /* CGI_PROG_SUFFIX */
   strcpy(program_name, basename);
   if (strncmp(basename, "register", 8) != 0) {
     client_not_configured(0, "bad program name", 0);
