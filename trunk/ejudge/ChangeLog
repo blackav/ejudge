@@ -1,5 +1,39 @@
 2003-10-24  Alexander Chernov  <cher@ispras.ru>
 
+	* prepare.c:
+	(set_defaults) `inactivity_timeout' is set for both serve and run
+	  programs;
+	(split_path) a new function, which splits the given path into
+	  an array of path components;
+	(make_relative_path) a new function, which constructs a relative
+	  path from two absolute paths. The constructed path is suitable for
+	  a symlink;
+	(make_symlink) function is reworked and several bugs fixed;
+	  a relative symlink is created instead of an absolute one;
+	  `split_path', `make_relative_path' functions are used.
+
+	* run.c:
+	(do_loop) bug: inactivity_timeout is honored only in the managed
+	  mode.
+
+	* runlog_import.c:
+	(runlog_import_xml) unused variables are removed to eliminate
+	  gcc warnings.
+
+	* super-serve.c:
+	(do_loop) a serve or a run service is disabled for 60 seconds, if
+	  the corresponding process respawns too fast (atleast twice in the
+	  same second).
+
+	* testinfo.c:
+	(read_line) bug: potential use of uninitialized variable is fixed.
+
+	* userlist-server.c:
+	(cmd_clear_team_passwords) unused variables are removed;
+	(do_clear_team_passwords) unused variable `buf' is removed.
+
+2003-10-24  Alexander Chernov  <cher@ispras.ru>
+
 	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
 
 	* client_actions.h: `ACTION_RELOAD_SERVER' is added.
