@@ -1497,7 +1497,7 @@ cmd_team_submit_run(struct client_state *p, int len,
   stop_time = contest_stop_time;
   if (global->virtual) {
     start_time = run_get_virtual_start_time(p->user_id);
-    stop_time = run_get_virtual_stop_time(p->user_id);
+    stop_time = run_get_virtual_stop_time(p->user_id, current_time);
   }
   if (!start_time) {
     err("%d: contest is not started", p->id);
@@ -1629,7 +1629,7 @@ cmd_team_submit_clar(struct client_state *p, int len,
   stop_time = contest_stop_time;
   if (global->virtual) {
     start_time = run_get_virtual_start_time(p->user_id);
-    stop_time = run_get_virtual_stop_time(p->user_id);
+    stop_time = run_get_virtual_stop_time(p->user_id, current_time);
   }
   if (!start_time) {
     err("%d: contest is not started", p->id);
@@ -1728,7 +1728,7 @@ cmd_command_0(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
       return;
     }
-    stop_time = run_get_virtual_stop_time(p->user_id);
+    stop_time = run_get_virtual_stop_time(p->user_id, current_time);
     if (stop_time) {
       err("%d: virtual contest for %d already stopped", p->id, p->user_id);
       new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
