@@ -1617,7 +1617,8 @@ cmd_team_show_item(struct client_state *p, int len,
 
 static int queue_compile_request(unsigned char const *str, int len,
                                  int run_id, int lang_id, int locale_id,
-                                 unsigned char const *sfx);
+                                 unsigned char const *sfx,
+                                 char **);
 
 static void
 move_files_to_insert_run(int run_id)
@@ -1794,7 +1795,8 @@ cmd_priv_submit_run(struct client_state *p, int len,
   if (queue_compile_request(pkt->data, pkt->run_len, run_id,
                             langs[pkt->lang_id]->compile_id,
                             pkt->locale_id,
-                            langs[pkt->lang_id]->src_sfx) < 0) {
+                            langs[pkt->lang_id]->src_sfx,
+                            langs[pkt->lang_id]->compiler_env) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -2096,7 +2098,8 @@ cmd_team_submit_run(struct client_state *p, int len,
   if (queue_compile_request(pkt->data, pkt->run_len, run_id,
                             langs[pkt->lang_id]->compile_id,
                             pkt->locale_id,
-                            langs[pkt->lang_id]->src_sfx) < 0) {
+                            langs[pkt->lang_id]->src_sfx,
+                            langs[pkt->lang_id]->compiler_env) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -3366,19 +3369,35 @@ generate_packet_name(int run_id, int prio, unsigned char buf[PACKET_NAME_SIZE])
 static int
 queue_compile_request(unsigned char const *str, int len,
                       int run_id, int lang_id, int locale_id,
-                      unsigned char const *sfx)
+                      unsigned char const *sfx,
+                      char **compiler_env)
 {
-  unsigned char pkt_buf[1024];
+  unsigned char *pkt_buf, *ptr;
   unsigned char pkt_name[PACKET_NAME_SIZE];
   path_t run_arch;
-  int pkt_len, arch_flags;
+  size_t env_size = 0;
+  int pkt_len, arch_flags, i, env_count = 0;
+
+  if (compiler_env) {
+    for (env_count = 0; compiler_env[env_count]; env_count++) {
+      env_size += strlen(compiler_env[env_count]) + 32;
+    }
+  }
+  pkt_buf = (unsigned char*) alloca(env_size + 256);
 
   if (!sfx) sfx = "";
   generate_packet_name(run_id, 0, pkt_name);
-  pkt_len = snprintf(pkt_buf, sizeof(pkt_buf),
-                     "%d %d %d %d\n",
-                     global->contest_id, run_id,
-                     lang_id, locale_id);
+
+  ptr = pkt_buf + sprintf(pkt_buf, "%d %d %d %d\n",
+                          global->contest_id, run_id,
+                          lang_id, locale_id);
+  if (env_count > 0) {
+    ptr += sprintf(ptr, "%d ", env_count);
+    for (i = 0; i < env_count; i++) {
+      ptr += sprintf(ptr, "%zu %s ", strlen(compiler_env[i]), compiler_env[i]);
+    }
+  }
+  pkt_len = ptr - pkt_buf;
 
   if (len == -1) {
     // copy from archive
@@ -3417,7 +3436,8 @@ rejudge_run(int run_id)
 
   queue_compile_request(0, -1, run_id,
                         langs[re.language]->compile_id, re.locale_id,
-                        langs[re.language]->src_sfx);
+                        langs[re.language]->src_sfx,
+                        langs[re.language]->compiler_env);
 
   run_change_status(run_id, RUN_COMPILING, 0, -1);
 }
