@@ -44,6 +44,7 @@ struct prot_serve_status
   unsigned char standings_frozen;
   unsigned char score_system;
   unsigned char clients_suspended;
+  unsigned char testing_suspended;
   unsigned char is_virtual;
   unsigned char olympiad_judging_mode;
   unsigned char continuation_enabled;
@@ -101,6 +102,9 @@ enum
     SRV_CMD_QUIT,
     SRV_CMD_EXPORT_XML_RUNS,
     SRV_CMD_PRIV_SUBMIT_RUN,
+    SRV_CMD_TEST_SUSPEND,
+    SRV_CMD_TEST_RESUME,
+    SRV_CMD_JUDGE_SUSPENDED,
 
     SRV_CMD_LAST
   };
@@ -308,6 +312,7 @@ enum
     PROT_SERVE_RUN_STATUS_SET = 16,
     PROT_SERVE_RUN_IMPORTED_SET = 32,
     PROT_SERVE_RUN_VARIANT_SET = 64,
+    PROT_SERVE_RUN_HIDDEN_SET = 128,
   };
 
 struct prot_serve_pkt_run_info
@@ -322,6 +327,7 @@ struct prot_serve_pkt_run_info
   int status;
   int is_imported;
   int variant;
+  int is_hidden;
   int user_login_len;
   unsigned char data[1];
 };
