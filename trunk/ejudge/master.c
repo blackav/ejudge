@@ -1245,6 +1245,17 @@ do_rejudge_all_if_asked(void)
 }
 
 static void
+action_reset_filter(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_RESET_FILTER, 0, 0);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+}
+
+static void
 action_toggle_visibility(void)
 {
   unsigned char const *p;
@@ -1709,6 +1720,11 @@ main(int argc, char *argv[])
       change_status_if_asked();
       break;
     }
+  }
+  switch (client_action) {
+  case ACTION_RESET_FILTER:
+    action_reset_filter();
+    break;
   }
   log_out_if_asked();
   view_source_if_asked();
