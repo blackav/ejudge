@@ -364,7 +364,8 @@ enum
     USERLIST_MODE_ALL,
     USERLIST_MODE_USER,
     USERLIST_MODE_OTHER,
-    USERLIST_MODE_SHORT
+    USERLIST_MODE_SHORT,
+    USERLIST_MODE_STAND,
   };
 
 struct userlist_list *userlist_new(void);
@@ -374,6 +375,7 @@ struct userlist_user *userlist_parse_user_str(char const *str);
 void userlist_unparse(struct userlist_list *p, FILE *f);
 void userlist_unparse_user(struct userlist_user *p, FILE *f, int mode);
 void userlist_unparse_short(struct userlist_list *p, FILE *f, int contest_id);
+void userlist_unparse_for_standings(struct userlist_list *, FILE *, int);
 
 unsigned char const *userlist_unparse_reg_status(int s);
 unsigned char const *userlist_member_status_str(int status);
