@@ -1005,3 +1005,13 @@ prepare.c 1 58 7237402
 runlog.c 1 25 3615669
 runlog_import.c 1 5 1494524
 prepare.h 1 39 1338681
+protocol.h 1 20 556619
+serve_clnt.h 1 10 377844
+userlist_clnt.h 1 19 602871
+master.c 1 45 6105534
+register.c 1 27 7607236
+serve.c 1 57 8685093
+userlist-server.c 1 34 13147678
+master_html.c 1 17 4915091
+serve_clnt/edit_run.c 1 5 214252
+userlist_clnt/set_info.c 1 3 139787
