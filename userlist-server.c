@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 
+#include "settings.h"
 #include "userlist_cfg.h"
 #include "userlist.h"
 #include "pathutl.h"
@@ -60,6 +61,7 @@
 #define DEFAULT_BACKUP_INTERVAL (24*60*60)
 #define CLIENT_TIMEOUT 600
 #define DEFAULT_SERVER_USE_COOKIES 1
+#define MAX_EXPECTED_LEN MAX_USERLIST_PACKET_LEN
 
 #define CONN_ERR(msg, ...) err("%d: %s: " msg, p->id, __FUNCTION__, ## __VA_ARGS__)
 #define CONN_INFO(msg, ...) info("%d: %s: " msg, p->id, __FUNCTION__, ## __VA_ARGS__)
@@ -5693,7 +5695,7 @@ do_work(void)
         p->read_state += l;
         memcpy(&p->expected_len, rbuf, 4);
         if (p->read_state == 4) {
-          if (p->expected_len <= 0 || p->expected_len > 256 * 1024) {
+          if (p->expected_len <= 0 || p->expected_len > MAX_EXPECTED_LEN) {
             err("%d: protocol error: bad packet length: %d",
                 p->id, p->expected_len);
             disconnect_client(p);
