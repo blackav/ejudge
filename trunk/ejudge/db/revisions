@@ -79,3 +79,9 @@ win32/fileutl.c 1 4 1190762
 win32/logger.c 1 13 666921
 win32/osdeps.c 1 17 1080726
 teamdb.c 1 7 771601
+pathutl.h 1 7 177840
+prepare.h 1 10 648003
+base64.c 1 4 541984
+cgi.c 1 7 1001656
+clar.c 1 5 250957
+prepare.c 1 12 2166882
