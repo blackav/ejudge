@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+# Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -13,10 +13,6 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
 
-# You should have received a copy of the GNU Lesser General Public
-# License along with this library; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
-
 USERLIST_CLNT_CFILES=\
  userlist_clnt/add_field.c\
  userlist_clnt/admin_process.c\
@@ -24,6 +20,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/close.c\
  userlist_clnt/delete_field.c\
  userlist_clnt/do_pass_fd.c\
+ userlist_clnt/dump_database.c\
  userlist_clnt/edit_field.c\
  userlist_clnt/generate_team_passwd.c\
  userlist_clnt/get_contests.c\
@@ -53,7 +50,6 @@ USERLIST_CLNT_CFILES=\
 SERVE_CLNT_CFILES=\
  serve_clnt/do_pass_fd.c\
  serve_clnt/edit_run.c\
- serve_clnt/gen_passwords.c\
  serve_clnt/get_archive.c\
  serve_clnt/list_runs.c\
  serve_clnt/master_page.c\
@@ -68,6 +64,7 @@ SERVE_CLNT_CFILES=\
  serve_clnt/submit_clar.c\
  serve_clnt/submit_run.c\
  serve_clnt/team_page.c\
+ serve_clnt/userlist_cmd.c\
  serve_clnt/view.c
 
 CFILES=\
