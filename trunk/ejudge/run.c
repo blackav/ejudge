@@ -32,6 +32,7 @@
 #include <reuse/xalloc.h>
 #include <reuse/number_io.h>
 #include <reuse/format_io.h>
+#include <reuse/integral.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -41,6 +42,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <time.h>
+
+#if defined __GNUC__ && defined __MINGW32__
+#include <malloc.h>
+#endif
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
@@ -633,9 +638,18 @@ run_tests(struct section_tester_data *tst,
 
   pathmake3(exe_path, tst->check_dir, "/", new_name, NULL);
   if (prb->use_tgz) {
+#ifdef __WIN32__
+    snprintf(arg0_path, sizeof(arg0_path), "%s%s..%s%s", tst->check_dir,
+             CONF_DIRSEP, CONF_DIRSEP, new_name);
+#else
     snprintf(arg0_path, sizeof(arg0_path), "../%s", new_name);
+#endif
   } else {
+#ifdef __WIN32__
+    snprintf(arg0_path, sizeof(arg0_path), "%s", exe_path);
+#else
     snprintf(arg0_path, sizeof(arg0_path), "./%s", new_name);
+#endif
   }
   
   if (tst->is_dos) copy_flag = CONVERT;
