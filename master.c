@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -155,6 +155,7 @@ static unsigned char hidden_vars[1024];
 static unsigned char *filter_expr;
 static int filter_first_run;
 static int filter_last_run;
+static int filter_mode_clar;
 static int filter_first_clar;
 static int filter_last_clar;
 static int priv_level;
@@ -1036,6 +1037,11 @@ read_view_params(void)
     filter_last_clar = 1;
   }
   if (cgi_param("filter_view_clars")) {
+    s = cgi_param("filter_mode_clar");
+    n = 0;
+    if (s && sscanf(s, "%d%n", &x, &n) == 1 && !s[n] && x >= 1 && x <= 2) {
+      filter_mode_clar = x;
+    }
     s = cgi_param("filter_first_clar");
     n = 0;
     if (s && sscanf(s, "%d %n", &x, &n) == 1 && !s[n]) {
@@ -2654,6 +2660,17 @@ action_reset_filter(void)
 }
 
 static void
+action_reset_clar_filter(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_reset_filter(serve_socket_fd, SRV_CMD_RESET_CLAR_FILTER,
+                              client_sid, client_user_id, global->contest_id);
+  operation_status_page(r, 0, -1);
+}
+
+static void
 action_toggle_visibility(void)
 {
   unsigned char const *p;
@@ -3188,6 +3205,7 @@ display_master_page(void)
                              client_sid_mode,
                              filter_first_run,
                              filter_last_run,
+                             filter_mode_clar,
                              filter_first_clar,
                              filter_last_clar,
                              self_url,
@@ -3471,6 +3489,9 @@ main(int argc, char *argv[])
     break;
   case ACTION_RESET_FILTER:
     action_reset_filter();
+    break;
+  case ACTION_RESET_CLAR_FILTER:
+    action_reset_clar_filter();
     break;
   case ACTION_PRINT_PRIV_RUN:
     action_priv_print_run();
