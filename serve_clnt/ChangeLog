@@ -1,3 +1,9 @@
+2002-12-27  Alexander Chernov  <cher@ispras.ru>
+
+	* show_item.c:
+	(serve_clnt_show_item) `SRV_CMD_VIRTUAL_STANDINGS' command is
+	  enabled.
+
 2002-12-21  Alexander Chernov  <cher@ispras.ru>
 
 	* view.c:

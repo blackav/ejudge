@@ -1,3 +1,204 @@
+2002-12-27  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* team.c: GLOBAL CHANGE: virtual contest mode is supported;
+	(make_self_url) `REDIRECT_URL' environment variable is checked;
+	(print_standings_button) new function to print the standings button;
+	(show_clar_if_asked) `print_nav_buttons' accepts 3 parameters instead
+	  of 2;
+	(request_source_if_asked) the same as above;
+	(action_stangings) new function to generate virtual standings in
+	  the virtual contest mode;
+	(request_report_if_asked) `print_nav_buttons' accepts 3 parameters instead
+	  of 2;
+	(action_virtual_start) new function to start the virtual contest;
+	(action_virtual_stop) new function to stop the virtual contest;
+	(print_nav_buttons) now accepts 3 parameters instead of 2. The
+	  second parameter is now "Virtual standings" label; the 3rd
+	  parameter is "Log out" label;
+	(main) client actions `ACTION_START_VIRTUAL', `ACTION_STOP_VIRTUAL',
+	  `ACTION_STANGINGS' are supported;
+	  `print_nav_buttons' accepts 3 parameters instead of 2.
+
+	* serve.c: GLOBAL CHANGE: virtual contests are supported;
+	(update_standings_file) fog time is not checked when in virtual
+	  contest mode;
+	(update_status_file) `is_virtual' flag of the status structure
+	  is filled;
+	  standings are never frozen in virtual contest mode;
+	(cmd_team_show_item) `SRV_CMD_VIRTUAL_STANDINGS' request is
+	  handled;
+	(cmd_team_submit_run) virtual contests are supported: duration is
+	  counted relative to the participant's contest start time;
+	(cmd_team_submit_clar) the same as above;
+	(cmd_command_0) a new function to handle unprivileged command with 0
+	  or 1 parameter;
+	  `SRV_CMD_VIRTUAL_START', `SRV_CMD_VIRTUAL_STOP' commands are
+	  handled;
+	(cmd_judge_command_0) a new function to handle commands with 0 or 1
+	  parameter, which are allowed for any user with privileges;
+	  `SRV_CMD_RESET_FILTER' command is handled;
+	(packet_handlers) handlers for the new commands
+	  `SRV_CMD_VIRTUAL_STOP', `SRV_CMD_VIRTUAL_START',
+	  `SRV_CMD_VIRTUAL_STANDINGS', `SRV_CMD_RESET_FILTER' are added;
+	(do_loop) fog period is not checked in virtual contest mode;
+	  contest is never auto-started and auto-stopped in virtual contest
+	  mode;
+	(main) if virtual contest is requested for not SCORE_ACM scoring
+	  system, an error is printed;
+	  `run_build_virtual_table' is called in virtual contest mode.
+
+	* runlog.h:
+	new run entry statuses: `RUN_VIRTUAL_START', `RUN_VIRTUAL_STOP';
+	(run_get_duration) new function prototype;
+	(run_build_virtual_table) new function prototype;
+	(run_get_virtual_start_time) new function prototype;
+	(run_get_virtual_stop_time) new function prototype;
+	(run_virtual_start) new function prototype;
+	(run_virtual_stop) new function prototype.
+
+	* runlog.c:
+	(append_record) new static function to add a new record to the log;
+	(run_add_record) `append_record' function is used to create a new
+	  record;
+	(run_change_status) status of `RUN_VIRTUAL_START', `RUN_VIRTUAL_STOP'
+	  entries cannot be changed;
+	(run_get_duration) a new function to return the contest duration;
+	(run_status_str) `RUN_VIRTUAL_START', `RUN_VIRTUAL_STOP' are
+	  supported;
+	(run_set_entry) `RUN_VIRTUAL_START', `RUN_VIRTUAL_STOP' entries
+	  cannot be edited;
+	(struct vt_entry) new structure to hold the virtual contest status
+	  for all the participants;
+	(get_entry) new static function to create a new virtual participant
+	  entry, if such does not exist, and return the entry;
+	(run_build_virtual_table) new function to build the virtual
+	  participation table by the run log;
+	(run_get_virtual_start_time) new function to return the virtual
+	  contest start time for the given user;
+	(run_get_virtual_stop_time) new function to return the virtual
+	  contest stop time for the given user;
+	(run_virtual_start) new function to start the virtual contest for
+	  the given user;
+	(run_virtual_stop) new function to stop the virtual contest for
+	  the given user.
+
+	* protocol.h: (struct prot_serve_status) field `is_virtual' added;
+	several new commands added: `SRV_CMD_VIRTUAL_START',
+	  `SRV_CMD_VIRTUAL_STOP', `SRV_CMD_VIRTUAL_STANDINGS',
+	  `SRV_CMD_RESET_FILTER';
+	new error code: `SRV_ERR_ONLY_VIRTUAL'.
+
+	* protocol.c: text for `SRV_ERR_ONLY_VIRTUAL' error is added.
+
+	* prepare.h:
+	two new global parameters added: `virtual', `standings_team_color'.
+
+	* prepare.c: global parameters:
+	  virtual - if set to 1, denotes virtual contest;
+	  standings_team_color - may be set to some HTML color to highlight
+	  the team's line on the virtual standings page.
+
+	* master_html.c: (write_all_runs) virtual contests are handled;
+	  "Reset filter" button is generated;
+	  filter parse and execution errors are printed;
+	  special output format for `RUN_VIRTUAL_START', `RUN_VIRTUAL_STOP'
+	  runlog entries;
+	  virtual participant's entries time is printed in virtual time;
+	(write_all_clars) astronimic time is used in virtual contest mode;
+	(write_priv_standings) use of `write_standings_header',
+	  `do_write_standings' is updated due to changed parameters;
+	(write_priv_source) source cannot be printed for `RUN_VIRTUAL_START'
+	  and `RUN_VIRTUAL_STOP' entries;
+	(write_priv_clar) astronomical time is used in virtual contest mode;
+	(html_reset_filter) new function to reset the runlog filter to
+	  its initial state.
+
+	* master.c:
+	(action_reset_filter) new function to send `SRV_CMD_RESET_FILTER'
+	  command. Use to reset the filter to default state;
+	(main) `ACTION_RESET_FILTER' is handled.
+
+	* html.h: 
+	(write_standings_header) prototype is changed;
+	(do_write_standings) prototype is changed;
+	(html_reset_filter) new function prototype added.
+
+	* html.c: 
+	(new_write_user_runs) virtual contests are supported;
+	(new_write_user_clars) virtual contests are supported. In virtual
+	  contest mode all clarification requests are replies are tagged
+	  with astronomic time, not duration from the start;
+	(new_write_user_clar) the same as above;
+	(write_standings_header) two new parameters added: `user_id' and
+	  `user_name'. They are used in virtual contest mode to print
+	  personal standings;
+	(do_write_kirov_standings) RUN_VIRTUAL_START and RUN_VIRTUAL_STOP
+	  run statuses are ignored;
+	(do_write_standings) new parameter `user_id' added. Used in virtual
+	  contest mode to generate standings relative to the current virtual
+	  time of the given participant;
+	(write_standings) use of `write_standings_header' and
+	  `do_write_standings' is updated to due changes in their parameters;
+	(print_nav_buttons) new parameter `t3', which is now button label
+	  for "Log Out", `t2' is now button label for "Virtual standings"
+	  button;
+	  "Virtual standings" button is printed;
+	(time_to_str) new function;
+	(write_team_page) virtual contest mode is supported. In this mode
+	  general contest information section is also printed on the
+	  server side;
+	  use of `print_nav_buttons' updated;
+	(write_virtual_standings) new function to print the user's virtual
+	  standings.
+
+	* clntutil.h: external declaration of `server_is_virtual' added.
+
+	* clntutil.c: `server_is_virtual' global variable added;
+	(client_check_server_status) `is_virtual' flag is read;
+	(client_print_server_status) virtual contests are supported.
+
+	* client_actions.h:
+	several new actions added: virtual contest actions and reset filter
+	  action.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2002-12-23  Alexander Chernov  <cher@ispras.ru>
+
+	* teamdb.h: (teamdb_toggle_ban) prototype removed;
+	(teamdb_toggle_vis) prototype removed;
+	(teamdb_toggle_flags) new function prototype added.
+
+	* teamdb.c: (teamdb_toggle_vis) function removed;
+	(teamdb_toggle_ban) function removed;
+	(teamdb_toggle_flags) a new function to request visibility/ban
+	  flag toggling from the userlist-server.
+
+	* serve.c:
+	(cmd_priv_command_0) `SRV_CMD_TOGGLE_VISIBILITY', `SRV_CMD_TOGGLE_BAN'
+	  commands are supported;
+	(packet_handlers) packet handler for the commands above added.
+
+	* protocol.h:
+	new server commands: SRV_CMD_TOGGLE_VISIBILITY, SRV_CMD_TOGGLE_BAN.
+
+	* master.c: user banning/making invisible is now supported;
+	(action_toggle_visibility) a new function to request toggle of
+	  user visibility status;
+	(action_toggle_ban) a new function to request toggle of user ban
+	  status;
+	(main) client actions `ACTION_USER_TOGGLE_BAN',
+	  `ACTION_USER_TOGGLE_VISIBILITY' are supporting by calling the
+	  corresponding functions (described above).
+
+2002-12-22  Alexander Chernov  <cher@ispras.ru>
+
+	* makefile:
+	ChangeLog for userlist_clnt, serve_clnt, charsets subdirectories
+	  is updated with `log' rule.
+
 2002-12-22  Alexander Chernov  <cher@ispras.ru>
 
 	* master.c:
