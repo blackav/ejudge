@@ -183,4 +183,11 @@ userlist_clnt_add_field(struct userlist_clnt *clnt,
                         int pers,
                         int field);
 
+int userlist_clnt_get_uid_by_pid(struct userlist_clnt *clnt,
+                                 int system_uid,
+                                 int system_gid,
+                                 int system_pid,
+                                 int *p_uid,
+                                 unsigned long long *p_cookie);
+
 #endif /* __USERLIST_CLNT_H__ */
