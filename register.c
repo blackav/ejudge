@@ -159,6 +159,7 @@ static unsigned char *user_city;
 static unsigned char *user_city_en;
 static unsigned char *user_country;
 static unsigned char *user_country_en;
+static unsigned char *user_languages;
 static int user_show_email;
 static int user_contest_id;
 static struct userlist_clnt *server_conn;
@@ -251,6 +252,8 @@ static struct field_desc field_descs[CONTEST_LAST_FIELD] =
     name_accept_chars, '?', 64, 64 },
   { "country_en", _("Country (En)"), "country_en", &user_country_en,
     name_en_accept_chars, '?', 64, 64 },
+  { "languages", _("Programming languages"), "languages", &user_languages,
+    name_accept_chars, '?', 64, 64 },
 };
 static struct field_desc member_field_descs[CONTEST_LAST_MEMBER_FIELD] =
 {
@@ -1336,6 +1339,7 @@ read_user_info_from_server(void)
   user_city_en = u->city_en;
   user_country = u->country;
   user_country_en = u->country_en;
+  user_languages = u->languages;
 
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
     if (member_max[role] <= 0) continue;
