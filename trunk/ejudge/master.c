@@ -778,6 +778,15 @@ print_regenerate_button(unsigned char const *str)
 }
 
 static void
+print_regenerate_reg_button(unsigned char const *str)
+{
+  if (!str) str = _("Regenerate register user passwords!");
+  puts(form_start_simple);
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+         ACTION_GENERATE_REG_PASSWORDS_1, str);
+}
+
+static void
 print_suspend_button(char const *str)
 {
   if (!str) str = _("Suspend clients");
@@ -1311,6 +1320,21 @@ confirm_update_standings(void)
 }
 
 static void
+confirm_regenerate_register_if_asked(void)
+{
+  set_cookie_if_needed();
+  client_put_header(stdout, 0, 0, global->charset, 1,
+                    "Confirm register user password generation");
+  printf("<p>");
+  print_refresh_button(_("No"));
+  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+         "</form></p>", form_start_simple, ACTION_GENERATE_REG_PASSWORDS_2,
+         _("Yes, generate passwords!"));
+  client_put_footer(stdout, 0);
+  exit(0);  
+}
+
+static void
 confirm_regenerate_if_asked(void)
 {
   set_cookie_if_needed();
@@ -1411,6 +1435,32 @@ do_contest_reset_if_asked(void)
 }
 
 static void
+do_generate_register_passwords_if_asked(void)
+{
+  int r;
+
+  set_cookie_if_needed();
+  client_put_header(stdout, 0, 0, global->charset, 1,
+                    "New register passwords");
+  print_nav_buttons();
+  printf("<hr>");
+  fflush(stdout);
+
+  r = userlist_clnt_generate_team_passwd(userlist_conn,
+                                         ULS_GENERATE_PASSWORDS,
+                                         global->contest_id, 1);
+  if (r < 0) {
+    printf("<h2><font color=\"red\">%s</font></h2>\n",
+           userlist_strerror(-r));
+  }
+
+  printf("<hr>");
+  print_nav_buttons();
+  client_put_footer(stdout, 0);
+  exit(0);
+}
+
+static void
 do_generate_passwords_if_asked(void)
 {
   int r;
@@ -1422,6 +1472,7 @@ do_generate_passwords_if_asked(void)
   fflush(stdout);
 
   r = userlist_clnt_generate_team_passwd(userlist_conn,
+                                         ULS_GENERATE_TEAM_PASSWORDS,
                                          global->contest_id, 1);
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n",
@@ -2119,6 +2170,12 @@ main(int argc, char *argv[])
     case ACTION_GENERATE_PASSWORDS_2:
       do_generate_passwords_if_asked();
       break;
+    case ACTION_GENERATE_REG_PASSWORDS_1:
+      confirm_regenerate_register_if_asked();
+      break;
+    case ACTION_GENERATE_REG_PASSWORDS_2:
+      do_generate_register_passwords_if_asked();
+      break;
     case ACTION_SUSPEND:
       do_suspend_if_asked();
       break;
@@ -2259,7 +2316,6 @@ main(int argc, char *argv[])
     printf("</td><td>");
     print_reset_button(0);
     printf("</td><td>");
-    print_regenerate_button(0);
     if (!server_clients_suspended) {
       printf("</td><td>");
       print_suspend_button(0);
@@ -2272,6 +2328,11 @@ main(int argc, char *argv[])
       printf("</td><td>");
       print_judging_mode_button(0);
     }
+    printf("</td></tr></table>\n");
+    printf("<table><tr><td>");
+    print_regenerate_button(0);
+    printf("</td><td>");
+    print_regenerate_reg_button(0);
     printf("</td></tr></table>\n");
   }
 
