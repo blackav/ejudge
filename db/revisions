@@ -445,3 +445,5 @@ serve_clnt/open.c 1 1 290815
 serve_clnt/pass_fd.c 1 1 145912
 serve_clnt/recv_packet.c 1 1 247707
 serve_clnt/send_packet.c 1 1 151208
+serve_clnt.h 1 1 144111
+teamdb.h 1 11 230923
