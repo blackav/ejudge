@@ -1196,8 +1196,10 @@ send_clar_if_asked(void)
 static void
 submit_if_asked(void)
 {
-  char *p, *l, *t;
+  char *p, *l;
   int prob, lang, n;
+  const unsigned char *prog_data = 0;
+  size_t prog_size = 0;
 
   if (!server_is_virtual) {
     if (!server_start_time) {
@@ -1212,7 +1214,10 @@ submit_if_asked(void)
 
   p = cgi_param("problem");  if (!p) p = "";
   l = cgi_param("language"); if (!l) l = "";
-  t = cgi_param("file");     if (!t) t = "";
+  if (cgi_param_bin("file", &prog_size, &prog_data) < 0) {
+    operation_status_page(-1, _("Submission data is empty"));
+    return;
+  }
 
   if (sscanf(p, "%d%n", &prob, &n) != 1
       || p[n]
@@ -1222,7 +1227,7 @@ submit_if_asked(void)
     return;
   }
 
-  if (strlen(t) > global->max_run_size) {
+  if (prog_size > global->max_run_size) {
     operation_status_page(-1, _("The submission cannot be sent because its size exceeds maximal allowed."));
     return;
   }
@@ -1231,7 +1236,8 @@ submit_if_asked(void)
   n = serve_clnt_submit_run(serve_socket_fd, SRV_CMD_SUBMIT_RUN,
                             client_team_id,
                             global->contest_id, client_locale_id,
-                            client_ip, prob, lang, 0, t);
+                            client_ip, prob, lang, 0,
+                            prog_size, prog_data);
   operation_status_page(n, 0);
   force_recheck_status = 1;
 }
