@@ -1,5 +1,13 @@
 2001-12-04  Alexander Chernov  <cher@ispras.ru>
 
+	* makefile: compilation of run.exe for Windows is disabled fow now.
+
+	* sformat.c:
+	(sformat_message) os_snprintf is used instead of snprintf, this
+	  allows compilation on Windows platform.
+
+2001-12-04  Alexander Chernov  <cher@ispras.ru>
+
 	* NEWS: Many additions for version 1.4.
 
 	* pathutl.c, submit.c:
