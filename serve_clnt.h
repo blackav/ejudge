@@ -76,13 +76,11 @@ int serve_clnt_submit_clar(int sock_fd,
 
 int serve_clnt_team_page(int sock_fd,
                          int out_fd,
-                         int user_id,
-                         int contest_id,
+                         int sid_mode,
                          int locale_id,
-                         unsigned long ip,
                          unsigned int flags,
-                         unsigned char const *simple_form,
-                         unsigned char const *multi_form);
+                         unsigned char const *self_url,
+                         unsigned char const *hidden_vars);
 
 int serve_clnt_master_page(int sock_fd,
                            int out_fd,
@@ -91,6 +89,7 @@ int serve_clnt_master_page(int sock_fd,
                            int locale_id,
                            unsigned long ip,
                            int priv_level,
+                           int sid_mode,
                            int first_run,
                            int last_run,
                            int first_clar,
@@ -98,5 +97,47 @@ int serve_clnt_master_page(int sock_fd,
                            unsigned char const *self_url,
                            unsigned char const *filter_expr,
                            unsigned char const *hidden_vars);
+
+int serve_clnt_standings(int sock_fd,
+                         int out_fd,
+                         int user_id,
+                         int contest_id,
+                         int locale_id,
+                         int priv_level,
+                         int sid_mode,
+                         unsigned char const *self_url,
+                         unsigned char const *hidden_vars);
+
+int serve_clnt_view(int sock_fd,
+                    int out_fd,
+                    int cmd,
+                    int item,
+                    int sid_mode,
+                    unsigned char const *self_url,
+                    unsigned char const *hidden_vars);
+
+int serve_clnt_message(int sock_fd,
+                       int cmd,
+                       int dest_user_id,
+                       int ref_clar_id,
+                       unsigned char const *dest_login,
+                       unsigned char const *subj,
+                       unsigned char const *text);
+
+int serve_clnt_gen_passwords(int sock_fd, int out_fd);
+
+int serve_clnt_simple_cmd(int sock_fd,
+                          int cmd,
+                          void const *val,
+                          size_t val_len);
+
+int serve_clnt_edit_run(int sock_fd,
+                        int run_id,
+                        int mask,
+                        int user_id,
+                        int prob_id,
+                        int lang_id,
+                        int status,
+                        unsigned char const *user_login);
 
 #endif /* __SERVE_CLNT_H__ */
