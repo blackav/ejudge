@@ -1351,13 +1351,16 @@ unparse_contest(struct userlist_contest const *cc, FILE *f,
   fprintf(f, "/>\n");
 }
 static void
-unparse_contests(struct xml_tree *p, FILE *f)
+unparse_contests(struct xml_tree *p, FILE *f, int mode, int contest_id)
 {
   if (!p) return;
   ASSERT(p->tag == USERLIST_T_CONTESTS);
   fprintf(f, "    <%s>\n", tag_map[USERLIST_T_CONTESTS]);
   for (p = p->first_down; p; p = p->right) {
     ASSERT(p->tag == USERLIST_T_CONTEST);
+    if (mode == USERLIST_MODE_STAND && contest_id > 0
+        && ((struct userlist_contest*) p)->id != contest_id)
+      continue;
     unparse_contest((struct userlist_contest*) p, f, "      ");
   }
   fprintf(f, "    </%s>\n", tag_map[USERLIST_T_CONTESTS]);
@@ -1400,12 +1403,12 @@ unparse_user_short(struct userlist_user *p, FILE *f, int contest_id)
 }
 
 static void
-unparse_user(struct userlist_user *p, FILE *f, int mode)
+unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
 {
   if (!p) return;
   fprintf(f, "  <%s %s=\"%d\"", tag_map[USERLIST_T_USER],
           attn_map[USERLIST_A_ID], p->id);
-  if (p->default_use_cookies >= 0) {
+  if (p->default_use_cookies >= 0 && mode != USERLIST_MODE_STAND) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_USE_COOKIES],
             unparse_bool(p->default_use_cookies));
   }
@@ -1421,7 +1424,7 @@ unparse_user(struct userlist_user *p, FILE *f, int mode)
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LOCKED],
             unparse_bool(p->is_locked));
   }
-  if (p->read_only) {
+  if (p->read_only && mode != USERLIST_MODE_STAND) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_READ_ONLY],
             unparse_bool(p->read_only));
   }
@@ -1471,7 +1474,7 @@ unparse_user(struct userlist_user *p, FILE *f, int mode)
     fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_NAME],
             p->name, tag_map[USERLIST_T_NAME]);
   }
-  if (p->email) {
+  if (p->email && mode != USERLIST_MODE_STAND) {
     fprintf(f, "    <%s %s=\"%s\">%s</%s>\n", tag_map[USERLIST_T_EMAIL],
             attn_map[USERLIST_A_PUBLIC], unparse_bool(p->show_email),
             p->email, tag_map[USERLIST_T_EMAIL]);
@@ -1479,7 +1482,7 @@ unparse_user(struct userlist_user *p, FILE *f, int mode)
   if (mode == USERLIST_MODE_ALL) {
     unparse_cookies(p->cookies, f);
   }
-  unparse_contests(p->contests, f);
+  unparse_contests(p->contests, f, USERLIST_MODE_STAND, contest_id);
 
   if (p->inst) {
     fprintf(f, "    <%s>%s</%s>\n", tag_map[USERLIST_T_INST],
@@ -1534,8 +1537,10 @@ unparse_user(struct userlist_user *p, FILE *f, int mode)
             p->country_en, tag_map[USERLIST_T_COUNTRY_EN]);
   }
 
-  unparse_phones(p->phones, f, "    ");
-  unparse_members(p->members, f);
+  if (mode != USERLIST_MODE_STAND) {
+    unparse_phones(p->phones, f, "    ");
+    unparse_members(p->members, f);
+  }
 
   fprintf(f, "  </%s>\n", tag_map[USERLIST_T_USER]);
 }
@@ -1546,7 +1551,7 @@ userlist_unparse_user(struct userlist_user *p, FILE *f, int mode)
   if (!p) return;
 
   fputs("<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n", f);
-  unparse_user(p, f, mode);
+  unparse_user(p, f, mode, 0);
 }
 
 void
@@ -1558,7 +1563,7 @@ userlist_unparse_contests(struct userlist_user *p, FILE *f)
     fprintf(f, "<%s></%s>\n", tag_map[USERLIST_T_CONTESTS],
             tag_map[USERLIST_T_CONTESTS]);
   } else {
-    unparse_contests(p->contests, f);
+    unparse_contests(p->contests, f, 0, 0);
   }
 }
 
@@ -1577,7 +1582,7 @@ userlist_unparse(struct userlist_list *p, FILE *f)
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_NAME], p->name);
   fputs(">\n", f);
   for (i = 1; i < p->user_map_size; i++)
-    unparse_user(p->user_map[i], f, 0);
+    unparse_user(p->user_map[i], f, 0, 0);
   fprintf(f, "</%s>\n", tag_map[USERLIST_T_USERLIST]);
 }
 void
@@ -1591,6 +1596,37 @@ userlist_unparse_short(struct userlist_list *p, FILE *f, int contest_id)
   fprintf(f, "<%s>", tag_map[USERLIST_T_USERLIST]);
   for (i = 1; i < p->user_map_size; i++)
     unparse_user_short(p->user_map[i], f, contest_id);
+  fprintf(f, "</%s>\n", tag_map[USERLIST_T_USERLIST]);
+}
+void
+userlist_unparse_for_standings(struct userlist_list *p,
+                               FILE *f, int contest_id)
+{
+  int i;
+  struct userlist_user *uu;
+  struct userlist_contest *uc;
+
+  if (!p) return;
+  if (contest_id < 0) contest_id = 0;
+
+  fputs("<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n", f);
+  fprintf(f, "<%s>", tag_map[USERLIST_T_USERLIST]);
+
+  for (i = 1; i < p->user_map_size; i++) {
+    uu = p->user_map[i];
+    if (!uu) continue;
+    if (contest_id > 0) {
+      if (!uu->contests) continue;
+      for (uc = (struct userlist_contest*) uu->contests->first_down;
+           uc; uc = (struct userlist_contest*) uc->b.right) {
+        if (uc->id == contest_id) break;
+      }
+      if (!uc) continue;
+      if (uc->status != USERLIST_REG_OK) continue;
+    }
+
+    unparse_user(uu, f, USERLIST_MODE_STAND, contest_id);
+  }
   fprintf(f, "</%s>\n", tag_map[USERLIST_T_USERLIST]);
 }
 
