@@ -52,6 +52,7 @@ serve_clnt_show_item(int sock_fd, int out_fd, int cmd,
   if (sock_fd < 0) return -SRV_ERR_NOT_CONNECTED;
   if (cmd != SRV_CMD_SHOW_CLAR
       && cmd != SRV_CMD_SHOW_SOURCE
+      && cmd != SRV_CMD_VIRTUAL_STANDINGS
       && cmd != SRV_CMD_SHOW_REPORT)
     return -SRV_ERR_PROTOCOL;
 
