@@ -1,3 +1,82 @@
+2002-10-28  Alexander Chernov  <cher@ispras.ru>
+
+	* userlist_clnt.c: in progress...
+
+	* userlist_xml.c: completely rewritten.
+
+	* userlist_proto.h: packet formats are reworked considerably.
+
+	* userlist_clnt.h:
+	(userlist_clnt_get_email) a new function prototype.
+
+	* userlist_cfg.c:
+	(userlist_cfg_parse) a newly created tree is returned instead of
+	  quitting the whole program.
+
+	* userlist.h: completely rewritten.
+
+	* userlist.c: removed all the old stuff (so the file is empty now ;-)
+
+	* userlist-server.c: (generate_random_cookie) a new function;
+	(generate_random_password) a new function;
+	merged in Victor Matyukhin's stuff;
+
+	* register.c: in progress...
+
+	* makefile: base64.c is added to the list of `userlist-server' files;
+	dependencies are regenerated.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2002-10-26  Alexander Chernov  <cher@ispras.ru>
+
+	* contests.c, contests.h, register.c, userlist_clnt.c, userlist_proto.h:
+	in progress...
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* cgi.c:
+	(do_cgi_read) A case, when the first parameter is specified without
+	  value is handled correctly (for example, in URL xxx?yyy).
+
+2002-10-25  Alexander Chernov  <cher@ispras.ru>
+
+	* contests.c, contests.h, register.c: in progress...
+
+2002-10-24  Alexander Chernov  <cher@ispras.ru>
+
+	* register.c, userlist_clnt.c, userlist_clnt.h, userlist_proto.h:
+	in progress...
+
+2002-10-23  Alexander Chernov  <cher@ispras.ru>
+
+	* contests.c, contests.h: in progress...
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* makefile: userlist_clnt.c is added to the list of `register' files.
+
+	* register.c, userlist_clnt.c: in progress...
+
+	* userlist_proto.h: Initial revision
+
+2002-10-22  Alexander Chernov  <cher@ispras.ru>
+
+	* register.c: "contests.h" is included;
+	(initialize) `contests.xml' file is parsed.
+
+	* makefile: contests.c is added to the list of `register' files.
+
+	* contests.h, contests.c: in progress...
+
+2002-10-21  Alexander Chernov  <cher@ispras.ru>
+
+	* files.make: contests.[ch] is added.
+
+	* contests.h, contests.c: Initial revision
+
+	* register.c: in progress...
+
 2002-10-21  Alexander Chernov  <cher@ispras.ru>
 
 	* userlist_cfg.h: "expat_iface.h" is included;
