@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2000 Alexander Chernov <cher@ispras.ru> */
+# Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
 
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -29,7 +29,7 @@ HFILES=base64.h cgi.h clarlog.h clntutil.h exec.h fileutl.h html.h logger.h\
   unix/unix_fileutl.h
 
 ifeq ($(shell uname),Linux)
-CFLAGS=-Wall -I. -DCONF_HAS_LIBINTL -DCONF_HAS_SNPRINTF -DCONF_HAS_STRERROR -O3
+CFLAGS=-Wall -I. -DCONF_HAS_LIBINTL -DCONF_HAS_SNPRINTF -DCONF_HAS_STRERROR -O3 -D_GNU_SOURCE
 LDFLAGS=-s
 ARCH=unix
 EXESFX=
