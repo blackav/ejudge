@@ -40,38 +40,36 @@
 
 int
 serve_clnt_team_page(int sock_fd, int out_fd,
-                     int user_id, int contest_id, int locale_id,
-                     unsigned long ip, unsigned int flags,
-                     unsigned char const *simple_form,
-                     unsigned char const *multi_form)
+                     int sid_mode, int locale_id,
+                     unsigned int flags,
+                     unsigned char const *self_url,
+                     unsigned char const *hidden_vars)
 {
   struct prot_serve_pkt_team_page *out = 0;
   struct prot_serve_packet *in = 0;
-  size_t simple_form_len, multi_form_len, out_size, in_size = 0;
-  unsigned char *simple_form_ptr, *multi_form_ptr, c;
+  size_t self_url_len, hidden_vars_len, out_size, in_size = 0;
+  unsigned char *self_url_ptr, *hidden_vars_ptr, c;
   int r, pipe_fd[2], pass_fd[2];
 
   if (sock_fd < 0) return -SRV_ERR_NOT_CONNECTED;
-  if (!simple_form) simple_form = "";
-  if (!multi_form) multi_form = "";
-  simple_form_len = strlen(simple_form);
-  multi_form_len = strlen(multi_form);
-  out_size = sizeof(*out) + simple_form_len + multi_form_len;
+  if (!self_url) self_url = "";
+  if (!hidden_vars) hidden_vars = "";
+  self_url_len = strlen(self_url);
+  hidden_vars_len = strlen(hidden_vars);
+  out_size = sizeof(*out) + self_url_len + hidden_vars_len;
   out = alloca(out_size);
   memset(out, 0, out_size);
-  simple_form_ptr = out->data;
-  multi_form_ptr = simple_form_ptr + simple_form_len + 1;
+  self_url_ptr = out->data;
+  hidden_vars_ptr = self_url_ptr + self_url_len + 1;
   out->b.id = SRV_CMD_TEAM_PAGE;
   out->b.magic = PROT_SERVE_PACKET_MAGIC;
-  out->user_id = user_id;
-  out->contest_id = contest_id;
+  out->sid_mode = sid_mode;
   out->locale_id = locale_id;
-  out->ip = ip;
   out->flags = flags;
-  out->simple_form_len = simple_form_len;
-  out->multi_form_len = multi_form_len;
-  memcpy(simple_form_ptr, simple_form, simple_form_len);
-  memcpy(multi_form_ptr, multi_form, multi_form_len);
+  out->self_url_len = self_url_len;
+  out->hidden_vars_len = hidden_vars_len;
+  memcpy(self_url_ptr, self_url, self_url_len);
+  memcpy(hidden_vars_ptr, hidden_vars, hidden_vars_len);
 
   if (pipe(pipe_fd) < 0) {
     err("serve_clnt_team_page: pipe() failed: %s", os_ErrorMsg());
@@ -123,7 +121,7 @@ serve_clnt_team_page(int sock_fd, int out_fd,
 
 /**
  * Local variables:
- *  compile-command: "make"
+ *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
