@@ -1536,3 +1536,14 @@ serve-control.c 1 1 1817675
 slice-userlist.c 1 1 243749
 fileutl.h 1 11 167557
 unix/fileutl.c 1 19 2580497
+super_actions.h 1 2 137448
+super_clnt.h 1 2 129533
+super_html.h 1 2 265568
+super_proto.h 1 2 190037
+super-serve.h 1 2 129330
+run.c 1 60 4327316
+serve.c 1 78 11794254
+serve-control.c 1 2 1817681
+super-serve.c 1 8 4729183
+super_html.c 1 2 3677310
+super_proto.c 1 2 139920
