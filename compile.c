@@ -40,6 +40,7 @@
 #include "pathutl.h"
 #include "parsecfg.h"
 #include "fileutl.h"
+#include "cr_serialize.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -82,6 +83,8 @@ do_loop(void)
 
   int    r, i, n;
   tpTask tsk;
+
+  if (cr_serialize_init() < 0) return -1;
 
   while (1) {
     for (i = 0; i <= max_lang; i++) {
@@ -141,8 +144,10 @@ do_loop(void)
                   O_WRONLY|O_CREAT|O_TRUNC, 0777);
     task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", O_WRONLY);
     task_SetRedir(tsk, 2, TSR_DUP, 1);
+    if (cr_serialize_lock() < 0) return -1;
     task_Start(tsk);
     task_Wait(tsk);
+    if (cr_serialize_unlock() < 0) return -1;
 
     if (task_IsAbnormal(tsk)) {
       // compilation error?
