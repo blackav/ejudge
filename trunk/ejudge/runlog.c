@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -814,7 +814,7 @@ run_get_fog_period(time_t cur_time, int fog_time, int unfog_time)
     return 1;
   } else {
     estimated_stop = head.start_time + head.duration;
-    ASSERT(cur_time <= estimated_stop);
+    //ASSERT(cur_time <= estimated_stop);
     if (fog_time > head.duration) fog_time = head.duration;
     fog_start = estimated_stop - fog_time;
     if (cur_time >= fog_start) return 1;
