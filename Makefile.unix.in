@@ -98,7 +98,7 @@ P_OBJECTS=$(P_CFILES:.c=.o)
 T_CFILES = team.c version.c cgi.c teamdb.c base64.c clntutil.c parsecfg.c misctext.c pathutl.c $(ARCH)/fileutl.c  
 T_OBJECTS = $(T_CFILES:.c=.o)
 
-REG_CFILES = register.c version.c cgi.c base64.c clntutil.c parsecfg.c misctext.c pathutl.c ${ARCH}/fileutl.c
+REG_CFILES = register.c version.c expat_iface.c cgi.c base64.c clntutil.c pathutl.c misctext.c $(ARCH)/fileutl.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c
 REG_OBJECTS = ${REG_CFILES:.c=.o}
 
 MT_CFILES = make-teamdb.c localdb.c idmap.c
@@ -149,7 +149,7 @@ team: $(T_OBJECTS)
 
 register.exe:
 register: ${REG_OBJECTS}
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT}
 
 make-teamdb.exe:
 make-teamdb: ${MT_OBJECTS}
