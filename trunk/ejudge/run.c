@@ -770,7 +770,7 @@ run_tests(struct section_tester_data *tst,
       } else {
         task_Delete(tsk); tsk = 0;
 
-        if (prb->variant_num > 0 && !tst->builtin_checker_used) {
+        if (prb->variant_num > 0 && !tst->standard_checker_used) {
           var_check_cmd = (unsigned char*) alloca(sizeof(path_t));
           snprintf(var_check_cmd, sizeof(path_t),
                    "%s-%d", tst->check_cmd, cur_variant);
@@ -1294,7 +1294,7 @@ process_default_testers(void)
       if (prepare_tester_refinement(&tn, i, k) < 0) return -1;
       if (create_tester_dirs(&tn) < 0) return -1;
 
-      if (ts->variant_num > 0 && !tn.builtin_checker_used) {
+      if (ts->variant_num > 0 && !tn.standard_checker_used) {
         if (!var_check_cmd)
           var_check_cmd = (unsigned char*) alloca(sizeof(path_t));
         for (n = 1; n <= ts->variant_num; n++) {
