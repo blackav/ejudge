@@ -1,0 +1,65 @@
+Version 2.1.23 (20031121)
+=========================
+A bugfix release. No new features. No new configuration variables.
+
+An unofficial Russian translations of the GNU General Public License
+and GNU Lesser General Public License is added to source distribution.
+
+serve, compile, run
+-------------------
+
+Configuration file format now supports quotes inside parameters. The
+standard syntax of ", ', and \ (see description of test.inf file
+format) is supported. For example,
+table_head_style = 'h2 style="common"'
+
+serve/master
+------------
+
+XML export of standings properly escapes ", & and other problematic
+HTML/XML characters.
+
+team
+----
+
+Verbose error messages are displayed in case of non-registered users,
+banned users.
+
+run
+---
+
+Escaped `#' are correctly handled in test.inf file. 
+
+userlist-server
+---------------
+
+XML save of userlist database now properly escapes ", & and other
+problematic HTML/XML characters.
+
+Hash table lookup is implemented for login lookup and session id lookup.
+This drastically (100 times) decreases lookup time.
+
+register
+--------
+
+Silent truncating of input fields on "Number" sign is fixed.
+
+libchecker.a
+------------
+
+If NEED_TGZ checker flag is on, a checker has access to `dir_in_path'
+and `dir_out_path' variables, which contain the path to input directory
+(in the tests source directory) and to the working directory of program
+being tested respectively. I.e., to open the input directory the
+checker should use `opendir(dir_in_path)' function call. To open the
+output directory of the program, the checker should use
+`opendir(dir_out_path)' function call.
+
+New functions are added to the library:
+  checker_read_corr_double,
+  checker_read_corr_long_long,
+  checker_read_int,
+  checker_read_in_long_double,
+  checker_read_long_double,
+  checker_read_long_long.
+
