@@ -78,3 +78,4 @@ win32/exec.c 1 8 1386974
 win32/fileutl.c 1 4 1190762
 win32/logger.c 1 13 666921
 win32/osdeps.c 1 17 1080726
+teamdb.c 1 7 771601
