@@ -60,6 +60,7 @@ CFILES=\
  userlist_clnt.c\
  userlist_proto.c\
  userlist_xml.c\
+ users.c\
  utf8_utils.c\
  unix/fileutl.c\
  win32/fileutl.c
