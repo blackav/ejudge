@@ -28,6 +28,7 @@
 #include "fileutl.h"
 #include "client_actions.h"
 #include "sformat.h"
+#include "archive_paths.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -549,8 +550,10 @@ write_all_runs(FILE *f, struct user_state_info *u,
         }
         fprintf(f, "<td>&nbsp;</td>");
         fprintf(f, "<td>&nbsp;</td>");
-        fprintf(f, "<td>&nbsp;</td>");
-        fprintf(f, "<td>&nbsp;</td>");
+        if (priv_level == PRIV_LEVEL_ADMIN) {
+          fprintf(f, "<td>&nbsp;</td>");
+          fprintf(f, "<td>&nbsp;</td>");
+        }
         fprintf(f, "</tr>\n");
         continue;
       }
@@ -589,8 +592,10 @@ write_all_runs(FILE *f, struct user_state_info *u,
         } else {
           fprintf(f, "<td>&nbsp;</td>");
         }
-        fprintf(f, "<td>&nbsp;</td>");
-        fprintf(f, "<td>&nbsp;</td>");
+        if (priv_level == PRIV_LEVEL_ADMIN) {
+          fprintf(f, "<td>&nbsp;</td>");
+          fprintf(f, "<td>&nbsp;</td>");
+        }
         fprintf(f, "</tr>\n");
         continue;
       }
@@ -1045,7 +1050,6 @@ write_priv_source(FILE *f, int user_id, int priv_level,
                   unsigned char const *extra_args,
                   int run_id)
 {
-  unsigned char src_base[64];
   unsigned char *s;
   int i;
   path_t src_path;
@@ -1053,13 +1057,14 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   char *src_text = 0, *html_text;
   size_t src_len, html_len;
   time_t start_time;
-  int variant;
+  int variant, src_flags;
   unsigned char const *nbsp = "<td>&nbsp;</td><td>&nbsp;</td>";
 
   if (run_id < 0 || run_id >= run_get_total()) return -SRV_ERR_BAD_RUN_ID;
   run_get_entry(run_id, &info);
-  snprintf(src_base, sizeof(src_base), "%06d", run_id);
-  pathmake(src_path, global->run_archive_dir, "/", src_base, 0);
+
+  src_flags = archive_make_read_path(src_path, sizeof(src_path),
+                                     global->run_archive_dir, run_id, 0, 0);
   start_time = run_get_start_time();
   if (info.timestamp < start_time) info.timestamp = start_time;
 
@@ -1215,7 +1220,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
                     _("Main page"), 0, 0, 0);
   fprintf(f, "<hr>\n");
   if (!info.is_imported) {
-    if (generic_read_file(&src_text, 0, &src_len, 0, 0, src_path, "") < 0) {
+    if (src_flags < 0 || generic_read_file(&src_text, 0, &src_len, src_flags, 0, src_path, "") < 0) {
       fprintf(f, "<big><font color=\"red\">Cannot read source text!</font></big>\n");
     } else {
       html_len = html_armored_memlen(src_text, src_len);
@@ -1240,18 +1245,19 @@ write_priv_report(FILE *f, int user_id, int priv_level,
                   unsigned char const *extra_args,
                   int run_id)
 {
-  unsigned char rep_base[64];
   path_t rep_path;
   char *rep_text = 0, *html_text;
   size_t rep_len = 0, html_len;
+  int rep_flag;
 
   if (run_id < 0 || run_id >= run_get_total()) return -SRV_ERR_BAD_RUN_ID;
-  snprintf(rep_base, sizeof(rep_base), "%06d", run_id);
-  pathmake(rep_path, global->report_archive_dir, "/", rep_base, 0);
+  rep_flag = archive_make_read_path(rep_path, sizeof(rep_path),
+                                    global->report_archive_dir, run_id,
+                                    0, 1);
   print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), 0, 0, 0);
   fprintf(f, "<hr>\n");
-  if (generic_read_file(&rep_text, 0, &rep_len, 0, 0, rep_path, "") < 0) {
+  if (rep_flag < 0 || generic_read_file(&rep_text, 0, &rep_len, rep_flag,0,rep_path, "") < 0) {
     fprintf(f, "<big><font color=\"red\">Cannot read report text!</font></big>\n");
   } else {
     html_len = html_armored_memlen(rep_text, rep_len);
@@ -1340,7 +1346,7 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
     fprintf(f, "<pre>%s</pre><hr>", html_msg);
   }
 
-  if (priv_level > PRIV_LEVEL_OBSERVER && from) {
+  if (priv_level >= PRIV_LEVEL_JUDGE && from) {
     html_start_form(f, 2, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<input type=\"hidden\" name=\"in_reply_to\" value=\"%d\">\n",
             clar_id);
