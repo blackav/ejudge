@@ -35,6 +35,7 @@ int teamdb_lookup_login(char const *);
 
 char *teamdb_get_login(int);
 char *teamdb_get_name(int);
+int   teamdb_get_plain_password(int, char *, int);
 int   teamdb_scramble_passwd(char const *, char *);
 int   teamdb_check_scrambled_passwd(int, char const *);
 int   teamdb_set_scrambled_passwd(int, char const *);
