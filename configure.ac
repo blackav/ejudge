@@ -48,6 +48,23 @@ AC_ARG_ENABLE([conf-dir], AC_HELP_STRING([--enable-conf-dir=CONF-DIR],[specify t
 AC_ARG_ENABLE([cgi-conf-dir], AC_HELP_STRING([--enable-cgi-conf-dir],[specify path to CGI configuration files]),[ac_cv_cgi_conf_dir="$enableval"],[ac_cv_cgi_conf_dir=""])
 AC_ARG_ENABLE([ejudge-xml],AC_HELP_STRING([--enable-ejudge-xml],[specify the default location of ejudge.xml]),[ac_cv_ejudge_xml="$enableval"],[ac_cv_ejudge_xml=""])
 AC_ARG_ENABLE([contests-dir],AC_HELP_STRING([--enable-contests-dir],[specify the default path to the contest configuration directory]),[ac_cv_contests_dir="$enableval"],[ac_cv_contests_dir=""])
+AC_ARG_ENABLE([contests-home-dir],AC_HELP_STRING([--enable-contests-home-dir],[specify the default path to the contests home directory]),[ac_cv_contests_home_dir="$enableval"],[ac_cv_contests_home_dir=""])
+
+AC_ARG_WITH([httpd-cgi-bin-dir],AC_HELP_STRING([--with-httpd-cgi-bin-dir],[specify the path to the web serve CGI directory]),[ac_cv_httpd_cgi_bin_dir="${withval}"])
+AC_ARG_WITH([httpd-htdocs-dir],AC_HELP_STRING([--with-httpd-htdocs-dir],[specify the path to the web server HTML directory]),[ac_cv_httpd_htdocs_dir="${withval}"])
+
+AC_ARG_WITH([gcc],AC_HELP_STRING([--with-gcc],[specify the GNU C compiler to use in contests]),[ac_cv_contest_gcc=$withval])
+AC_ARG_WITH([g++],AC_HELP_STRING([--with-g++],[specify the GNU C++ compiler to use in contests]),[ac_cv_contest_gpp=$withval])
+AC_ARG_WITH([fpc],AC_HELP_STRING([--with-fpc],[specify the Free Pascal compiler to use in contests]),[ac_cv_contest_fpc=$withval])
+AC_ARG_WITH([gpc],AC_HELP_STRING([--with-gpc],[specify the GNU Pascal compiler to use in contests]),[ac_cv_contest_gpc=$withval])
+AC_ARG_WITH([gcj],AC_HELP_STRING([--with-gcj],[specify the GNU Java (GCJ) compiler to use in contests]),[ac_cv_contest_gcj=$withval])
+AC_ARG_WITH([g77],AC_HELP_STRING([--with-g77],[specify the GNU Fortran 77 compiler to use in contests]),[ac_cv_contest_g77=$withval])
+AC_ARG_WITH([dcc],AC_HELP_STRING([--with-dcc],[specify the Borland Delphi compiler to use in contests]),[ac_cv_contest_dcc=$withval])
+AC_ARG_WITH([yabasic],AC_HELP_STRING([--with-yabasic],[specify the Yabasic interpreter to use in contests]),[ac_cv_contest_yabasic=$withval])
+AC_ARG_WITH([scheme],AC_HELP_STRING([--with-scheme],[specify the MzScheme interpreter to use in contests]),[ac_cv_contest_mzscheme=$withval])
+AC_ARG_WITH([python],AC_HELP_STRING([--with-python],[specify the Python interpreter to use in contests]),[ac_cv_contest_python=$withval])
+AC_ARG_WITH([perl],AC_HELP_STRING([--with-perl],[specify the Perl interpreter to use in contests]),[ac_cv_contest_perl=$withval])
+AC_ARG_WITH([prolog],AC_HELP_STRING([--with-prolog],[specify the GNU Prolog compiler to use in contests]),[ac_cv_contest_gprolog=$withval])
 
 dnl Expat checking stuff
 ac_cv_has_expat=1
@@ -367,6 +384,441 @@ then
   AC_CHECK_HEADER([libintl.h],[],[ac_cv_nls=""])
 fi
 
+dnl Checking for available languages
+AC_MSG_NOTICE([checking available languages])
+
+dnl It looks like we cannot use the autoconf's macros :(
+
+AC_MSG_CHECKING([whether GNU C is available])
+if [[ x"${ac_cv_contest_gcc}" != xno ]]
+then
+  [[ x"${ac_cv_contest_gcc}" = xyes ]] && ac_cv_contest_gcc=""
+  [[ x"${ac_cv_contest_gcc}" = x ]] && ac_cv_contest_gcc="gcc"
+  ${ac_cv_contest_gcc} -v >/dev/null 2>/dev/null
+  [[ $? != 0 ]] && ac_cv_contest_gcc=no
+  if [[ x"${ac_cv_contest_gcc}" != xno ]]
+  then
+    ac_cv_gcc_version=`${ac_cv_contest_gcc} -v 2>&1 | grep "gcc version" | sed 's/gcc version //g'`
+    [[ $? != 0 ]] && ac_cv_contest_gcc=no
+  fi
+  if [[ x"${ac_cv_contest_gcc}" != xno ]]
+  then
+    echo "int main(void) { return 0; }" > conftest.c
+    ${ac_cv_contest_gcc} conftest.c -o conftest 2>/dev/null >/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_gcc=no
+  fi
+  if [[ x"${ac_cv_contest_gcc}" != xno ]]
+  then
+    ./conftest
+    [[ $? != 0 ]] && ac_cv_contest_gcc=no
+  fi  
+  rm -f ./conftest*
+  ac_cv_contest_gcc_dir=`dirname "${ac_cv_contest_gcc}"`
+  [[ x"${ac_cv_contest_gcc_dir}" = x. ]] && ac_cv_contest_gcc_dir=""
+  if [[ x"${ac_cv_contest_gcc}" != xno ]]
+  then
+    AC_MSG_RESULT([yes, ${ac_cv_contest_gcc}, ${ac_cv_gcc_version}])
+  else
+    AC_MSG_RESULT([no])
+  fi
+else
+  AC_MSG_RESULT([disabled by user])
+fi
+
+AC_MSG_CHECKING([whether GNU C++ is available])
+if [[ x"${ac_cv_contest_gpp}" != xno ]]
+then
+  [[ x"${ac_cv_contest_gpp}" = xyes ]] && ac_cv_contest_gpp=""
+  [[ x"${ac_cv_contest_gpp}" = x ]] && ac_cv_contest_gpp="g++"
+  ${ac_cv_contest_gpp} -v >/dev/null 2>/dev/null
+  [[ $? != 0 ]] && ac_cv_contest_gpp=no
+  if [[ x"${ac_cv_contest_gpp}" != xno ]]
+  then
+    ac_cv_gpp_version=`${ac_cv_contest_gpp} -v 2>&1 | grep "gcc version" | sed 's/gcc version //g'`
+    [[ $? != 0 ]] && ac_cv_contest_gpp=no
+  fi
+  if [[ x"${ac_cv_contest_gpp}" != xno ]]
+  then
+    echo "int main(void) { return 0; }" > conftest.c
+    ${ac_cv_contest_gpp} conftest.c -o conftest 2>/dev/null >/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_gpp=no
+  fi
+  if [[ x"${ac_cv_contest_gpp}" != xno ]]
+  then
+    ./conftest
+    [[ $? != 0 ]] && ac_cv_contest_gpp=no
+  fi  
+  rm -f ./conftest*
+  ac_cv_contest_gpp_dir=`dirname "${ac_cv_contest_gpp}"`
+  [[ x"${ac_cv_contest_gpp_dir}" = x. ]] && ac_cv_contest_gpp_dir=""
+  if [[ x"${ac_cv_contest_gpp}" != xno ]]
+  then
+    AC_MSG_RESULT([yes, ${ac_cv_contest_gpp}, ${ac_cv_gpp_version}])
+  else
+    AC_MSG_RESULT([no])
+  fi
+else
+  AC_MSG_RESULT([disabled by user])
+fi
+
+AC_MSG_CHECKING([whether Free Pascal is available])
+if [[ x"${ac_cv_contest_fpc}" != xno ]]
+then
+  [[ x"${ac_cv_contest_fpc}" = xyes ]] && ac_cv_contest_fpc=""
+  [[ x"${ac_cv_contest_fpc}" = x ]] && ac_cv_contest_fpc="fpc"
+  ${ac_cv_contest_fpc} -v >/dev/null 2>/dev/null
+  [[ $? != 0 -a $? != 1 ]] && ac_cv_contest_fpc=no
+  if [[ x"${ac_cv_contest_fpc}" != xno ]]
+  then
+    ac_cv_fpc_version=`${ac_cv_contest_fpc} -h 2>/dev/null | grep "Free Pascal Compiler" | gawk '{ print $5; }'`
+    [[ $? != 0 -a $? != 1 ]] && ac_cv_contest_fpc=no
+  fi
+  if [[ x"${ac_cv_contest_fpc}" != xno ]]
+  then
+    echo "begin end." > conftest.pas
+    ${ac_cv_contest_fpc} conftest.pas -oconftest 2>/dev/null >/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_fpc=no
+  fi
+  if [[ x"${ac_cv_contest_fpc}" != xno ]]
+  then
+    ./conftest
+    [[ $? != 0 ]] && ac_cv_contest_fpc=no
+  fi  
+  rm -f ./conftest*
+  ac_cv_contest_fpc_dir=`dirname "${ac_cv_contest_fpc}"`
+  [[ x"${ac_cv_contest_fpc_dir}" = x. ]] && ac_cv_contest_fpc_dir=""
+  if [[ x"${ac_cv_contest_fpc}" != xno ]]
+  then
+    AC_MSG_RESULT([yes, ${ac_cv_contest_fpc}, ${ac_cv_fpc_version}])
+  else
+    AC_MSG_RESULT([no])
+  fi
+else
+  AC_MSG_RESULT([disabled by user])
+fi
+
+AC_MSG_CHECKING([whether GNU Pascal is available])
+if [[ x"${ac_cv_contest_gpc}" != xno ]]
+then
+  [[ x"${ac_cv_contest_gpc}" = xyes ]] && ac_cv_contest_gpc=""
+  [[ x"${ac_cv_contest_gpc}" = x ]] && ac_cv_contest_gpc="gpc"
+  ${ac_cv_contest_gpc} -v >/dev/null 2>/dev/null
+  [[ $? != 0 ]] && ac_cv_contest_gpc=no
+  if [[ x"${ac_cv_contest_gpc}" != xno ]]
+  then
+    ac_cv_gpc_version=`${ac_cv_contest_gpc} --version | gawk '{ print $1; }'`
+    [[ $? != 0 -a $? != 1 ]] && ac_cv_contest_gpc=no
+  fi
+  if [[ x"${ac_cv_contest_gpc}" != xno ]]
+  then
+    echo "begin end." > conftest.pas
+    ${ac_cv_contest_gpc} conftest.pas -o conftest 2>/dev/null >/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_gpc=no
+  fi
+  if [[ x"${ac_cv_contest_gpc}" != xno ]]
+  then
+    ./conftest
+    [[ $? != 0 ]] && ac_cv_contest_gpc=no
+  fi  
+  rm -f ./conftest*
+  ac_cv_contest_gpc_dir=`dirname "${ac_cv_contest_gpc}"`
+  [[ x"${ac_cv_contest_gpc_dir}" = x. ]] && ac_cv_contest_gpc_dir=""
+  if [[ x"${ac_cv_contest_gpc}" != xno ]]
+  then
+    AC_MSG_RESULT([yes, ${ac_cv_contest_gpc}, ${ac_cv_gpc_version}])
+  else
+    AC_MSG_RESULT([no])
+  fi
+else
+  AC_MSG_RESULT([disabled by user])
+fi
+
+AC_MSG_CHECKING([whether Borland Delphi is available])
+if [[ x"${ac_cv_contest_dcc}" != xno ]]
+then
+  [[ x"${ac_cv_contest_dcc}" = xyes ]] && ac_cv_contest_dcc=""
+  [[ x"${ac_cv_contest_dcc}" = x ]] && ac_cv_contest_dcc="dcc"
+  ${ac_cv_contest_dcc} -v >/dev/null 2>/dev/null
+  [[ $? != 0 ]] && ac_cv_contest_dcc=no
+  if [[ x"${ac_cv_contest_dcc}" != xno ]]
+  then
+    ac_cv_dcc_version=`${ac_cv_contest_dcc} -h 2>/dev/null | grep "Borland Delphi" | gawk '{ print $6; }'`
+    [[ $? != 0 ]] && ac_cv_contest_dcc=no
+  fi
+  if [[ x"${ac_cv_contest_dcc}" != xno ]]
+  then
+    echo "begin end." > conftest.pas
+    ${ac_cv_contest_dcc} conftest.pas 2>/dev/null >/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_dcc=no
+  fi
+  if [[ x"${ac_cv_contest_dcc}" != xno ]]
+  then
+    ./conftest 2>/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_dcc=no
+  fi  
+  rm -f ./conftest*
+  ac_cv_contest_dcc_dir=`dirname "${ac_cv_contest_dcc}"`
+  [[ x"${ac_cv_contest_dcc_dir}" = x. ]] && ac_cv_contest_dcc_dir=""
+  if [[ x"${ac_cv_contest_dcc}" != xno ]]
+  then
+    AC_MSG_RESULT([yes, ${ac_cv_contest_dcc}, ${ac_cv_dcc_version}])
+  else
+    AC_MSG_RESULT([no])
+  fi
+else
+  AC_MSG_RESULT([disabled by user])
+fi
+
+AC_MSG_CHECKING([whether GNU Java (GCJ) is available])
+if [[ x"${ac_cv_contest_gcj}" != xno ]]
+then
+  [[ x"${ac_cv_contest_gcj}" = xyes ]] && ac_cv_contest_gcj=""
+  [[ x"${ac_cv_contest_gcj}" = x ]] && ac_cv_contest_gcj="gcj"
+  ${ac_cv_contest_gcj} -v >/dev/null 2>/dev/null
+  [[ $? != 0 ]] && ac_cv_contest_gcj=no
+  if [[ x"${ac_cv_contest_gcj}" != xno ]]
+  then
+    ac_cv_gcj_version=`${ac_cv_contest_gcj} --version | grep gcj | gawk '{ print $3; }'`
+    [[ $? != 0 -a $? != 1 ]] && ac_cv_contest_gcj=no
+  fi
+  if [[ x"${ac_cv_contest_gcj}" != xno ]]
+  then
+    echo "class Main { public static void main(String args[[]]) { System.exit(0); } }" > conftest.java
+    ${ac_cv_contest_gcj} --main=Main conftest.java -o conftest 2>/dev/null >/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_gcj=no
+  fi
+  if [[ x"${ac_cv_contest_gcj}" != xno ]]
+  then
+    ./conftest 2>/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_gcj=no
+  fi  
+  rm -f ./conftest*
+  ac_cv_contest_gcj_dir=`dirname "${ac_cv_contest_gcj}"`
+  [[ x"${ac_cv_contest_gcj_dir}" = x. ]] && ac_cv_contest_gcj_dir=""
+  if [[ x"${ac_cv_contest_gcj}" != xno ]]
+  then
+    AC_MSG_RESULT([yes, ${ac_cv_contest_gcj}, ${ac_cv_gcj_version}])
+  else
+    AC_MSG_RESULT([no])
+  fi
+else
+  AC_MSG_RESULT([disabled by user])
+fi
+
+AC_MSG_CHECKING([whether GNU Fortran 77 is available])
+if [[ x"${ac_cv_contest_g77}" != xno ]]
+then
+  [[ x"${ac_cv_contest_g77}" = xyes ]] && ac_cv_contest_g77=""
+  [[ x"${ac_cv_contest_g77}" = x ]] && ac_cv_contest_g77="g77"
+  ${ac_cv_contest_g77} -v >/dev/null 2>/dev/null
+  [[ $? != 0 ]] && ac_cv_contest_g77=no
+  if [[ x"${ac_cv_contest_g77}" != xno ]]
+  then
+    ac_cv_g77_version=`${ac_cv_contest_g77} --version | grep "GNU Fortran (GCC)" | gawk '{ print $4; }'`
+    [[ $? != 0 -a $? != 1 ]] && ac_cv_contest_g77=no
+  fi
+  if [[ x"${ac_cv_contest_g77}" != xno ]]
+  then
+    echo "        END" > conftest.for
+    ${ac_cv_contest_g77} conftest.for -o conftest 2>/dev/null >/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_g77=no
+  fi
+  if [[ x"${ac_cv_contest_g77}" != xno ]]
+  then
+    ./conftest 2>/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_g77=no
+  fi  
+  rm -f ./conftest*
+  ac_cv_contest_g77_dir=`dirname "${ac_cv_contest_g77}"`
+  [[ x"${ac_cv_contest_g77_dir}" = x. ]] && ac_cv_contest_g77_dir=""
+  if [[ x"${ac_cv_contest_g77}" != xno ]]
+  then
+    AC_MSG_RESULT([yes, ${ac_cv_contest_g77}, ${ac_cv_g77_version}])
+  else
+    AC_MSG_RESULT([no])
+  fi
+else
+  AC_MSG_RESULT([disabled by user])
+fi
+
+AC_MSG_CHECKING([whether Yabasic interpreter is available])
+if [[ x"${ac_cv_contest_yabasic}" != xno ]]
+then
+  [[ x"${ac_cv_contest_yabasic}" = xyes ]] && ac_cv_contest_yabasic=""
+  [[ x"${ac_cv_contest_yabasic}" = x ]] && ac_cv_contest_yabasic="yabasic"
+  ${ac_cv_contest_yabasic} -help 2>/dev/null 1>/dev/null
+  [[ $? != 0 ]] && ac_cv_contest_yabasic=no
+  if [[ x"${ac_cv_contest_yabasic}" != xno ]]
+  then
+    ac_cv_yabasic_version=`${ac_cv_contest_yabasic} -help 2>&1 | grep "yabasic version" | gawk '{ print $5; }'`
+    [[ $? != 0 ]] && ac_cv_contest_yabasic=no
+  fi
+  if [[ x"${ac_cv_contest_yabasic}" != xno ]]
+  then
+    ac_cv_contest_yabasic_path=`which "${ac_cv_contest_yabasic}"`
+    [[ $? != 0 ]] && ac_cv_contest_yabasic=no
+  fi
+  if [[ x"${ac_cv_contest_yabasic}" != xno ]]
+  then
+    echo "#!${ac_cv_contest_yabasic_path}" > conftest.bas
+    echo 'PRINT "OK"' >> conftest.bas 
+    echo "END" >> conftest.bas
+    chmod +x ./conftest.bas
+    ./conftest.bas 2>/dev/null 1>/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_yabasic=no
+  fi
+  if [[ x"${ac_cv_contest_yabasic}" != xno ]]
+  then
+    AC_MSG_RESULT([yes, ${ac_cv_contest_yabasic}, ${ac_cv_yabasic_version}])
+  else
+    AC_MSG_RESULT([no])
+  fi
+else
+  AC_MSG_RESULT([disabled by user])
+fi
+
+AC_MSG_CHECKING([whether MzScheme interpreter is available])
+if [[ x"${ac_cv_contest_mzscheme}" != xno ]]
+then
+  [[ x"${ac_cv_contest_mzscheme}" = xyes ]] && ac_cv_contest_mzscheme=""
+  [[ x"${ac_cv_contest_mzscheme}" = x ]] && ac_cv_contest_mzscheme="mzscheme"
+  ${ac_cv_contest_mzscheme} --version 2>/dev/null 1>/dev/null
+  [[ $? != 0 ]] && ac_cv_contest_mzscheme=no
+  if [[ x"${ac_cv_contest_mzscheme}" != xno ]]
+  then
+    ac_cv_mzscheme_version=`${ac_cv_contest_mzscheme} --version 2>&1 | grep "MzScheme version" | gawk -v FS="[[ ,]]" '{ print $5; }'`
+    [[ $? != 0 ]] && ac_cv_contest_mzscheme=no
+  fi
+  if [[ x"${ac_cv_contest_mzscheme}" != xno ]]
+  then
+    ac_cv_contest_mzscheme_path=`which "${ac_cv_contest_mzscheme}"`
+    [[ $? != 0 ]] && ac_cv_contest_mzscheme=no
+  fi
+  if [[ x"${ac_cv_contest_mzscheme}" != xno ]]
+  then
+    echo "#!${ac_cv_contest_mzscheme_path} -qr" > conftest.scm
+    echo '(display "OK")' >> conftest.scm
+    chmod +x ./conftest.scm
+    ./conftest.scm 2>/dev/null 1>/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_mzscheme=no
+  fi
+  if [[ x"${ac_cv_contest_mzscheme}" != xno ]]
+  then
+    AC_MSG_RESULT([yes, ${ac_cv_contest_mzscheme}, ${ac_cv_mzscheme_version}])
+  else
+    AC_MSG_RESULT([no])
+  fi
+else
+  AC_MSG_RESULT([disabled by user])
+fi
+
+AC_MSG_CHECKING([whether Perl interpreter is available])
+if [[ x"${ac_cv_contest_perl}" != xno ]]
+then
+  [[ x"${ac_cv_contest_perl}" = xyes ]] && ac_cv_contest_perl=""
+  [[ x"${ac_cv_contest_perl}" = x ]] && ac_cv_contest_perl="perl"
+  ${ac_cv_contest_perl} --version 2>/dev/null 1>/dev/null
+  [[ $? != 0 ]] && ac_cv_contest_perl=no
+  if [[ x"${ac_cv_contest_perl}" != xno ]]
+  then
+    ac_cv_perl_version=`${ac_cv_contest_perl} --version 2>&1 | grep "This is perl" | gawk -v FS="[[ v]]" '{ print $5; }'`
+    [[ $? != 0 ]] && ac_cv_contest_perl=no
+  fi
+  if [[ x"${ac_cv_contest_perl}" != xno ]]
+  then
+    ac_cv_contest_perl_path=`which "${ac_cv_contest_perl}"`
+    [[ $? != 0 ]] && ac_cv_contest_perl=no
+  fi
+  if [[ x"${ac_cv_contest_perl}" != xno ]]
+  then
+    echo "#!${ac_cv_contest_perl_path} -W" > conftest.pl
+    echo 'print "OK"' >> conftest.pl
+    chmod +x ./conftest.pl
+    ./conftest.pl 2>/dev/null 1>/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_perl=no
+  fi
+  if [[ x"${ac_cv_contest_perl}" != xno ]]
+  then
+    AC_MSG_RESULT([yes, ${ac_cv_contest_perl}, ${ac_cv_perl_version}])
+  else
+    AC_MSG_RESULT([no])
+  fi
+else
+  AC_MSG_RESULT([disabled by user])
+fi
+
+AC_MSG_CHECKING([whether Python interpreter is available])
+if [[ x"${ac_cv_contest_python}" != xno ]]
+then
+  [[ x"${ac_cv_contest_python}" = xyes ]] && ac_cv_contest_python=""
+  [[ x"${ac_cv_contest_python}" = x ]] && ac_cv_contest_python="python"
+  ${ac_cv_contest_python} -V 2>/dev/null 1>/dev/null
+  [[ $? != 0 ]] && ac_cv_contest_python=no
+  if [[ x"${ac_cv_contest_python}" != xno ]]
+  then
+    ac_cv_python_version=`${ac_cv_contest_python} -V 2>&1 | gawk '{ print $2; }'`
+    [[ $? != 0 ]] && ac_cv_contest_python=no
+  fi
+  if [[ x"${ac_cv_contest_python}" != xno ]]
+  then
+    ac_cv_contest_python_path=`which "${ac_cv_contest_python}"`
+    [[ $? != 0 ]] && ac_cv_contest_python=no
+  fi
+  if [[ x"${ac_cv_contest_python}" != xno ]]
+  then
+    echo "#!${ac_cv_contest_python_path}" > conftest.py
+    echo 'print "OK"' >> conftest.py
+    chmod +x ./conftest.py
+    ./conftest.py 2>/dev/null 1>/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_python=no
+  fi
+  if [[ x"${ac_cv_contest_python}" != xno ]]
+  then
+    AC_MSG_RESULT([yes, ${ac_cv_contest_python}, ${ac_cv_python_version}])
+  else
+    AC_MSG_RESULT([no])
+  fi
+else
+  AC_MSG_RESULT([disabled by user])
+fi
+
+AC_MSG_CHECKING([whether GNU Prolog is available])
+if [[ x"${ac_cv_contest_gprolog}" != xno ]]
+then
+  [[ x"${ac_cv_contest_gprolog}" = xyes ]] && ac_cv_contest_gprolog=""
+  [[ x"${ac_cv_contest_gprolog}" = x ]] && ac_cv_contest_gprolog="gplc"
+  ${ac_cv_contest_gprolog} --version >/dev/null 2>/dev/null
+  [[ $? != 0 ]] && ac_cv_contest_gprolog=no
+  if [[ x"${ac_cv_contest_gprolog}" != xno ]]
+  then
+    ac_cv_gprolog_version=`${ac_cv_contest_gprolog} --version 2>&1 | grep "Prolog compiler" | gawk '{ print $5; }'`
+    [[ $? != 0 -a $? != 1 ]] && ac_cv_contest_gprolog=no
+  fi
+  if [[ x"${ac_cv_contest_gprolog}" != xno ]]
+  then
+    echo ":-initialization(main)." > conftest.pro
+    echo "main :- write('OK'), halt." >> conftest.pro
+    ${ac_cv_contest_gprolog} -L --no-top-level conftest.pro -o conftest 2>/dev/null >/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_gprolog=no
+  fi
+  if [[ x"${ac_cv_contest_gprolog}" != xno ]]
+  then
+    ./conftest 2>/dev/null >/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_gprolog=no
+  fi  
+  rm -f ./conftest*
+  ac_cv_contest_gprolog_dir=`dirname "${ac_cv_contest_gprolog}"`
+  [[ x"${ac_cv_contest_gprolog_dir}" = x. ]] && ac_cv_contest_gprolog_dir=""
+  if [[ x"${ac_cv_contest_gprolog}" != xno ]]
+  then
+    AC_MSG_RESULT([yes, ${ac_cv_contest_gprolog}, ${ac_cv_gprolog_version}])
+  else
+    AC_MSG_RESULT([no])
+  fi
+else
+  AC_MSG_RESULT([disabled by user])
+fi
+
 dnl Create the expanded locale_dir path
 if [[ x"${prefix}" = xNONE ]]
 then
@@ -379,6 +831,12 @@ ac_cv_expanded_locale_dir="${actual_prefix}/share/locale"
 ac_cv_ejudge_serve_path="${actual_prefix}/bin/serve"
 ac_cv_ejudge_run_path="${actual_prefix}/bin/run"
 ac_cv_ejudge_script_dir="${actual_prefix}/libexec/ejudge"
+if [[ x"${cgibindir}" = x'${prefix}/cgi-bin' ]]
+then
+  ac_cv_ejudge_cgi_bin_dir="${actual_prefix}/cgi-bin"
+else
+  ac_cv_ejudge_cgi_bin_dir="${cgibindir}"
+fi
 
 [[ x"${ac_cv_charset}" = xyes -o x"${ac_cv_charset}" = xno ]] && ac_cv_charset=""
 [[ x"${ac_cv_socket_path}" = xyes -o x"${ac_cv_socket_path}" = xno ]] && ac_cv_socket_path=""
@@ -405,6 +863,13 @@ else
 [[ x"${ac_cv_contests_dir}" = xyes -o x"${ac_cv_contests_dir}" = xno ]] && ac_cv_contests_dir=""
 fi
 
+# ac_cv_httpd_cgi_bin_dir
+[[ x"${ac_cv_httpd_cgi_bin_dir}" = xyes -o x"${ac_cv_httpd_cgi_bin_dir}" = xno ]] && ac_cv_httpd_cgi_bin_dir=""
+# ac_cv_httpd_htdocs_dir
+[[ x"${ac_cv_httpd_htdocs_dir}" = xyes -o x"${ac_cv_httpd_htdocs_dir}" = xno ]] && ac_cv_httpd_htdocs_dir=""
+
+# ac_cv_contests_home_dir
+[[ x"${ac_cv_contests_home_dir}" = xyes -o x"${ac_cv_contests_home_dir}" = xno ]] && ac_cv_contests_home_dir=""
 
 dnl Output generation
 
@@ -427,10 +892,38 @@ AC_SUBST(cgibindir)
 AC_SUBST(XGETTEXT)
 AC_SUBST(MSGMERGE)
 AC_SUBST(MSGFMT)
+
+AC_SUBST(ac_cv_contest_gcc)
+AC_SUBST(ac_cv_contest_gcc_dir)
+AC_SUBST(ac_cv_contest_gpp)
+AC_SUBST(ac_cv_contest_gpp_dir)
+AC_SUBST(ac_cv_contest_fpc)
+AC_SUBST(ac_cv_contest_fpc_dir)
+AC_SUBST(ac_cv_contest_gpc)
+AC_SUBST(ac_cv_contest_gpc_dir)
+AC_SUBST(ac_cv_contest_dcc)
+AC_SUBST(ac_cv_contest_dcc_dir)
+AC_SUBST(ac_cv_contest_g77)
+AC_SUBST(ac_cv_contest_g77_dir)
+AC_SUBST(ac_cv_contest_gcj)
+AC_SUBST(ac_cv_contest_gcj_dir)
+AC_SUBST(ac_cv_contest_gprolog)
+AC_SUBST(ac_cv_contest_gprolog_dir)
+AC_SUBST(ac_cv_contest_yabasic_path)
+AC_SUBST(ac_cv_contest_mzscheme_path)
+AC_SUBST(ac_cv_contest_perl_path)
+AC_SUBST(ac_cv_contest_python_path)
+
 if [[ x"${ac_cv_nls}" = x1 ]]
 then
   AC_DEFINE(CONF_HAS_LIBINTL,1)
 fi
+
+if [[ x"${ac_cv_no_kernel}" = x1 ]]
+then
+  AC_DEFINE(CONF_HAS_LIBCAP,1)
+fi
+
 AC_DEFINE_UNQUOTED(CGI_PROG_SUFFIX,"$ac_cv_cgi_suffix")
 if [[ x"${ac_cv_conf_dir}" != x ]]
 then
@@ -448,10 +941,15 @@ if [[ x"${ac_cv_contests_dir}" != x ]]
 then
   AC_DEFINE_UNQUOTED(EJUDGE_CONTESTS_DIR,"${ac_cv_contests_dir}")
 fi
+if [[ x"${ac_cv_contests_home_dir}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_CONTESTS_HOME_DIR,"${ac_cv_contests_home_dir}")
+fi
 AC_DEFINE_UNQUOTED(EJUDGE_LOCALE_DIR,"$ac_cv_expanded_locale_dir")
 AC_DEFINE_UNQUOTED(EJUDGE_SERVE_PATH,"${ac_cv_ejudge_serve_path}")
 AC_DEFINE_UNQUOTED(EJUDGE_RUN_PATH,"${ac_cv_ejudge_run_path}")
 AC_DEFINE_UNQUOTED(EJUDGE_SCRIPT_DIR,"${ac_cv_ejudge_script_dir}")
+AC_DEFINE_UNQUOTED(EJUDGE_CGI_BIN_DIR,"${ac_cv_ejudge_cgi_bin_dir}")
 if [[ x"${ac_cv_charset}" != x ]]
 then
   AC_DEFINE_UNQUOTED(EJUDGE_CHARSET,"${ac_cv_charset}")
@@ -460,5 +958,65 @@ if [[ x"${ac_cv_socket_path}" != x ]]
 then
   AC_DEFINE_UNQUOTED(EJUDGE_SOCKET_PATH,"${ac_cv_socket_path}")
 fi
+if [[ x"${ac_cv_httpd_cgi_bin_dir}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_HTTPD_CGI_BIN_DIR,"${ac_cv_httpd_cgi_bin_dir}")
+fi
+if [[ x"${ac_cv_httpd_htdocs_dir}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_HTTPD_HTDOCS_DIR,"${ac_cv_httpd_htdocs_dir}")
+fi
+
+if [[ x"${ac_cv_gcc_version}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(COMPILE_GCC_VERSION,"${ac_cv_gcc_version}")
+fi
+if [[ x"${ac_cv_gpp_version}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(COMPILE_GPP_VERSION,"${ac_cv_gpp_version}")
+fi
+if [[ x"${ac_cv_fpc_version}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(COMPILE_FPC_VERSION,"${ac_cv_fpc_version}")
+fi
+if [[ x"${ac_cv_gpc_version}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(COMPILE_GPC_VERSION,"${ac_cv_gpc_version}")
+fi
+if [[ x"${ac_cv_dcc_version}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(COMPILE_DCC_VERSION,"${ac_cv_dcc_version}")
+fi
+if [[ x"${ac_cv_g77_version}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(COMPILE_G77_VERSION,"${ac_cv_g77_version}")
+fi
+if [[ x"${ac_cv_gcj_version}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(COMPILE_GCJ_VERSION,"${ac_cv_gcj_version}")
+fi
+if [[ x"${ac_cv_gprolog_version}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(COMPILE_GPROLOG_VERSION,"${ac_cv_gprolog_version}")
+fi
+if [[ x"${ac_cv_yabasic_version}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(COMPILE_YABASIC_VERSION,"${ac_cv_yabasic_version}")
+fi
+if [[ x"${ac_cv_mzscheme_version}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(COMPILE_MZSCHEME_VERSION,"${ac_cv_mzscheme_version}")
+fi
+if [[ x"${ac_cv_perl_version}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(COMPILE_PERL_VERSION,"${ac_cv_perl_version}")
+fi
+if [[ x"${ac_cv_python_version}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(COMPILE_PYTHON_VERSION,"${ac_cv_python_version}")
+fi
+
 AC_CONFIG_HEADERS([config.h])
-AC_OUTPUT(Makefile extra/Makefile checkers/Makefile scripts/Makefile)
+AC_OUTPUT(Makefile extra/Makefile checkers/Makefile scripts/Makefile scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python)
+
+chmod +x scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python
