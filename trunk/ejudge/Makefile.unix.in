@@ -119,10 +119,13 @@ SS_OBJECTS = ${SS_CFILES:.c=.o} libcommon.a
 CU_CFILES = clean-users.c version.c
 CU_OBJECTS = ${CU_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 
+CE_CFILES = collect-emails.c version.c
+CE_OBJECTS = ${CE_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
+
 ST_CFILES = ejudge-setup.c version.c
 ST_OBJECTS = ${ST_CFILES:.c=.o} libcommon.a
 
-BINTARGETS = compile serve run userlist-server edit-userlist super-serve clean-users ejudge-setup
+BINTARGETS = compile serve run userlist-server edit-userlist super-serve clean-users ejudge-setup collect-emails
 CGITARGETS = master${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX} users${CGI_PROG_SUFFIX}
 TARGETS = ${BINTARGETS} ${CGITARGETS}
 
@@ -182,6 +185,9 @@ super-serve: ${SS_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 clean-users: ${CU_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
+
+collect-emails: ${CE_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 users${CGI_PROG_SUFFIX}: ${US_OBJECTS}
