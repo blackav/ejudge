@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -906,7 +906,7 @@ cmd_master_page(struct client_state *p, int len,
     write_master_page(f, p->user_id, pkt->priv_level,
                       pkt->sid_mode, p->cookie,
                       pkt->first_run, pkt->last_run,
-                      pkt->first_clar, pkt->last_clar,
+                      pkt->mode_clar, pkt->first_clar, pkt->last_clar,
                       self_url_ptr, filter_expr_ptr, hidden_vars_ptr,
                       extra_args_ptr, &caps);
     /* l10n_setlocale(0); */
@@ -1887,7 +1887,9 @@ cmd_priv_submit_run(struct client_state *p, int len,
   }
 
   if (probs[pkt->prob_id]->disable_auto_testing
-      || probs[pkt->prob_id]->disable_testing) {
+      || probs[pkt->prob_id]->disable_testing
+      || langs[pkt->lang_id]->disable_auto_testing
+      || langs[pkt->lang_id]->disable_testing) {
     info("%d: team_submit_run: auto testing disabled", p->id);
     run_change_status(run_id, RUN_ACCEPTED, 0, -1);
     new_send_reply(p, SRV_RPL_OK);
@@ -2205,7 +2207,9 @@ cmd_team_submit_run(struct client_state *p, int len,
   }
 
   if (probs[pkt->prob_id]->disable_auto_testing
-      || probs[pkt->prob_id]->disable_testing) {
+      || probs[pkt->prob_id]->disable_testing
+      || langs[pkt->lang_id]->disable_auto_testing
+      || langs[pkt->lang_id]->disable_testing) {
     info("%d: team_submit_run: auto testing disabled", p->id);
     run_change_status(run_id, RUN_ACCEPTED, 0, -1);
     new_send_reply(p, SRV_RPL_OK);
@@ -2457,7 +2461,14 @@ cmd_reset_filter(struct client_state *p, int len,
     return;
   }
 
-  html_reset_filter(p->user_id, pkt->session_id);
+  switch (pkt->b.id) {
+  case SRV_CMD_RESET_FILTER:
+    html_reset_filter(p->user_id, pkt->session_id);
+    break;
+  case SRV_CMD_RESET_CLAR_FILTER:
+    html_reset_clar_filter(p->user_id, pkt->session_id);
+    break;
+  }
 
   info("%d: reset_filter: ok", p->id);
   new_send_reply(p, SRV_RPL_OK);
@@ -4116,7 +4127,9 @@ do_judge_suspended(void)
         && probs[re.problem]
         && !re.is_readonly
         && !probs[re.problem]->disable_testing
-        && !probs[re.problem]->disable_auto_testing) {
+        && !probs[re.problem]->disable_auto_testing
+        && !langs[re.language]->disable_testing
+        && !langs[re.language]->disable_auto_testing) {
       rejudge_run(r);
     }
   }
@@ -4326,6 +4339,7 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_PRIV_DOWNLOAD_REPORT] { cmd_view },
   [SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT] { cmd_view },
   [SRV_CMD_DUMP_MASTER_RUNS] { cmd_master_page },
+  [SRV_CMD_RESET_CLAR_FILTER] { cmd_reset_filter },
 };
 
 static void
@@ -4981,6 +4995,7 @@ main(int argc, char *argv[])
 
   if (prepare(argv[i], p_flags, PREPARE_SERVE, cpp_opts,
               (cmdline_socket_fd >= 0)) < 0) return 1;
+  if (prepare_serve_defaults() < 0) return 1;
 
   l10n_prepare(global->enable_l10n, global->l10n_dir);
 
