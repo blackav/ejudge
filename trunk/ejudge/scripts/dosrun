@@ -1,4 +1,8 @@
 #!/bin/bash
+# $Id$
+
+# just in case...
+chmod 755 .
 
 # DOSEMU environment expects file to be named program.exe
 mv $1 program.exe
@@ -11,8 +15,18 @@ mv $1 program.exe
 # remove write permissions
 chmod 555 .
 
-# Run dosemu
-exec /usr/local/pkg/dosemu-1.0.1/usr/bin/dos
+# set path to the dos executable
+if [ x"${DOSPATH}" = x ]
+then
+  echo "DOSPATH environment variable is not set" > error
+  echo 100 > e
+  exit 100
+fi
 
-# Actually, the number in .e file should be error code, but,
-# let the run program parses it...
+# Run dosemu
+exec ${DOSPATH} -I 'video { none }'
+
+# Something went wrong
+echo "exec ${DOSPATH} failed" > error
+echo 100 > e
+exit 100
