@@ -850,6 +850,22 @@ print_resume_button(char const *str)
 }
 
 static void
+print_testing_suspend_button(void)
+{
+  const unsigned char *str;
+  int action;
+
+  str = _("Suspend testing");
+  action = ACTION_TEST_SUSPEND;
+  if (server_testing_suspended) {
+    str = _("Resume testing");
+    action = ACTION_TEST_RESUME;
+  }
+  printf("%s<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+         form_start_simple, action, str);
+}
+
+static void
 print_judging_mode_button(unsigned char const *str)
 {
   if (!str) str = _("Set judging mode");
@@ -1064,7 +1080,7 @@ change_status_if_asked()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_STATUS_SET,
-                          0, 0, 0, status, 0, 0);
+                          0, 0, 0, status, 0, 0, 0, 0);
   operation_status_page(r, 0);
   force_recheck_status = 1;
   return;
@@ -1098,7 +1114,7 @@ change_status()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_STATUS_SET,
-                          0, 0, 0, status, 0, 0);
+                          0, 0, 0, status, 0, 0, 0, 0);
   operation_status_page(r, 0);
   force_recheck_status = 1;
   return;
@@ -1130,7 +1146,7 @@ change_problem()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_PROB_SET,
-                          0, prob_id, 0, 0, 0, 0);
+                          0, prob_id, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0);
   force_recheck_status = 1;
   return;
@@ -1162,7 +1178,39 @@ change_language()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_LANG_SET,
-                          0, 0, lang_id, 0, 0, 0);
+                          0, 0, lang_id, 0, 0, 0, 0, 0);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+  return;
+
+ invalid_operation:
+  operation_status_page(-1, "Invalid operation");
+  force_recheck_status = 1;
+}
+
+static void
+change_variant()
+{
+  unsigned char *s;
+  int run_id, n, variant, r;
+
+  if (!(s = cgi_param("run_id"))
+      || sscanf(s, "%d%n", &run_id, &n) != 1
+      || s[n]
+      || run_id < 0
+      || run_id >= server_total_runs)
+    goto invalid_operation;
+  if (!(s = cgi_param("variant")))
+    goto invalid_operation;
+  if (sscanf(s, "%d%n", &variant, &n) != 1 || s[n])
+    goto invalid_operation;
+  if (variant < 0 || variant > 255)
+    goto invalid_operation;
+
+  open_serve();
+  r = serve_clnt_edit_run(serve_socket_fd, run_id,
+                          PROT_SERVE_RUN_VARIANT_SET,
+                          0, 0, 0, 0, 0, variant, 0, 0);
   operation_status_page(r, 0);
   force_recheck_status = 1;
   return;
@@ -1194,7 +1242,7 @@ change_user_id()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_UID_SET,
-                          user_id, 0, 0, 0, 0, 0);
+                          user_id, 0, 0, 0, 0, 0, 0, 0);
   operation_status_page(r, 0);
   force_recheck_status = 1;
   return;
@@ -1222,7 +1270,7 @@ change_user_login()
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_LOGIN_SET,
-                          0, 0, 0, 0, 0, user_login);
+                          0, 0, 0, 0, 0, 0, 0, user_login);
   operation_status_page(r, 0);
   force_recheck_status = 1;
   return;
@@ -1253,7 +1301,38 @@ change_imported(void)
   open_serve();
   r = serve_clnt_edit_run(serve_socket_fd, run_id,
                           PROT_SERVE_RUN_IMPORTED_SET,
-                          0, 0, 0, 0, v, 0);
+                          0, 0, 0, 0, v, 0, 0, 0);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+  return;
+
+ invalid_operation:
+  operation_status_page(-1, "Invalid operation");
+  force_recheck_status = 1;
+}
+
+static void
+change_hidden(void)
+{
+  unsigned char *s;
+  int n = 0, v, run_id, r;
+
+  if (!(s = cgi_param("run_id"))
+      || sscanf(s, "%d%n", &run_id, &n) != 1
+      || s[n]
+      || run_id < 0
+      || run_id >= server_total_runs)
+    goto invalid_operation;
+  if (!(s = cgi_param("is_hidden"))
+      || sscanf(s, "%d%n", &v, &n) != 1
+      || s[n]
+      || v < 0 || v > 1)
+    goto invalid_operation;
+
+  open_serve();
+  r = serve_clnt_edit_run(serve_socket_fd, run_id,
+                          PROT_SERVE_RUN_HIDDEN_SET,
+                          0, 0, 0, 0, 0, 0, v, 0);
   operation_status_page(r, 0);
   force_recheck_status = 1;
   return;
@@ -1421,6 +1500,34 @@ action_dump_standings(void)
 }
 
 static void
+action_submit_run(void)
+{
+  const unsigned char *p, *l, *t;
+  int prob_id, lang_id, variant, n;
+
+  if (!(p = cgi_param("problem"))) p = "";
+  if (!(l = cgi_param("language"))) l = "";
+  if (!(t = cgi_param("file"))) t = "";
+
+  if (sscanf(p, "%d%n", &prob_id, &n) == 1 && !p[n]) {
+    variant = 0;
+  } else if (sscanf(p, "%d,%d%n", &prob_id, &variant, &n) != 2 || p[n]) {
+    operation_status_page(-1, _("Invalid problem specification"));
+  }
+  if (sscanf(l, "%d%n", &lang_id, &n) != 1 || l[n]) {
+    operation_status_page(-1, _("Invalid language specification"));
+  }
+
+  open_serve();
+  n = serve_clnt_submit_run(serve_socket_fd, SRV_CMD_PRIV_SUBMIT_RUN,
+                            client_user_id,
+                            global->contest_id, 0,
+                            client_ip, prob_id, lang_id, variant, t);
+  operation_status_page(n, 0);
+  force_recheck_status = 1;
+}
+
+static void
 confirm_reset_if_asked(void)
 {
   set_cookie_if_needed();
@@ -1504,6 +1611,21 @@ confirm_rejudge_all(void)
   printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
          "</form></p>", form_start_simple, ACTION_REJUDGE_ALL_2,
          _("Yes, rejudge!"));
+  client_put_footer(stdout, 0);
+  exit(0);  
+}
+
+static void
+confirm_judge_suspended(void)
+{
+  set_cookie_if_needed();
+  client_put_header(stdout, 0, 0, global->charset, 1, 0,
+                    "Confirm judge suspended runs");
+  printf("<p>");
+  print_refresh_button(_("No"));
+  printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
+         "</form></p>", form_start_simple, ACTION_JUDGE_SUSPENDED_2,
+         _("Yes, judge!"));
   client_put_footer(stdout, 0);
   exit(0);  
 }
@@ -1678,17 +1800,6 @@ do_suspend_if_asked(void)
 }
 
 static void
-action_set_judgind_mode(void)
-{
-  int r;
-
-  open_serve();
-  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_SET_JUDGING_MODE, 0, 0);
-  operation_status_page(r, 0);
-  force_recheck_status = 1;
-}
-
-static void
 do_resume_if_asked(void)
 {
   int r;
@@ -1700,12 +1811,56 @@ do_resume_if_asked(void)
 }
 
 static void
+action_test_suspend(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_TEST_SUSPEND, 0, 0);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+}
+
+static void
+action_test_resume(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_TEST_RESUME, 0, 0);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+}
+
+static void
+action_set_judgind_mode(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_SET_JUDGING_MODE, 0, 0);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+}
+
+static void
 do_rejudge_all_if_asked(void)
 {
   int r;
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_REJUDGE_ALL, 0, 0);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+}
+
+static void
+action_judge_suspended(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_JUDGE_SUSPENDED, 0, 0);
   operation_status_page(r, 0);
   force_recheck_status = 1;
 }
@@ -2387,6 +2542,12 @@ main(int argc, char *argv[])
     case ACTION_RESUME:
       do_resume_if_asked();
       break;
+    case ACTION_TEST_SUSPEND:
+      action_test_suspend();
+      break;
+    case ACTION_TEST_RESUME:
+      action_test_resume();
+      break;
     case ACTION_UPDATE_STANDINGS_1:
       confirm_update_standings();
       break;
@@ -2410,6 +2571,12 @@ main(int argc, char *argv[])
       break;
     case ACTION_REJUDGE_ALL_2:
       do_rejudge_all_if_asked();
+      break;
+    case ACTION_JUDGE_SUSPENDED_1:
+      confirm_judge_suspended();
+      break;
+    case ACTION_JUDGE_SUSPENDED_2:
+      action_judge_suspended();
       break;
     case ACTION_REJUDGE_PROBLEM:
       do_rejudge_problem_if_asked();
@@ -2437,6 +2604,9 @@ main(int argc, char *argv[])
       break;
     case ACTION_RUN_CHANGE_IMPORTED:
       change_imported();
+      break;
+    case ACTION_RUN_CHANGE_HIDDEN:
+      change_hidden();
       break;
     case ACTION_USER_TOGGLE_BAN:
       action_toggle_ban();
@@ -2489,12 +2659,18 @@ main(int argc, char *argv[])
     case ACTION_RELOAD_SERVER:
       action_reload_server();
       break;
+    case ACTION_RUN_CHANGE_VARIANT:
+      change_variant();
+      break;
     default:
       change_status_if_asked();
       break;
     }
   }
   switch (client_action) {
+  case ACTION_SUBMIT_RUN:
+    action_submit_run();
+    break;
   case ACTION_RESET_FILTER:
     action_reset_filter();
     break;
@@ -2546,6 +2722,8 @@ main(int argc, char *argv[])
       printf("</td><td>");
       print_resume_button(0);
     }
+    printf("</td><td>");
+    print_testing_suspend_button();
     if (server_score_system == SCORE_OLYMPIAD
         && !server_olympiad_judging_mode) {
       printf("</td><td>");
