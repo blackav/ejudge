@@ -136,6 +136,10 @@ struct section_global_data
   /* --- server status reporting --- */
   path_t status_dir;            /* server status directory */
   path_t work_dir;              /* subdir for working dirs */
+  path_t print_work_dir;        /* subdir for printing */
+
+  path_t a2ps_path;
+  path_t lpr_path;
 
   /* --- server <-> compile interaction --- */
   /* global parameters are used by compile utility, whereas 
@@ -244,6 +248,10 @@ struct section_global_data
   // variant support
   path_t variant_map_file;
   struct variant_map *variant_map;
+
+  // printing support
+  int enable_printing;
+  int team_page_quota;
 };
 
 struct section_problem_data
@@ -268,6 +276,7 @@ struct section_problem_data
   int    use_info;              /* whether use the info files */
   int    use_tgz;               /* whether use tar test files */
   int    tests_to_accept;       /* how many tests to accept a submit */
+  int    accept_partial;        /* whether accept partial solutions */
   int    checker_real_time_limit;
   int    disable_auto_testing;
   int    disable_testing;
