@@ -70,7 +70,9 @@
 #define _(x) x
 #endif
 
+#ifndef XALLOCAZ
 #define XALLOCAZ(p,s) (XALLOCA((p),(s)),XMEMZERO((p),(s)))
+#endif
 
 #define PACKET_NAME_SIZE SERVE_PACKET_NAME_SIZE
 #define MAX_EXPECTED_LEN MAX_SERVE_PACKET_LEN

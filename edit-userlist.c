@@ -96,7 +96,9 @@ enum
     SRCH_LAST
   };
 
+#ifndef XALLOCAZ
 #define XALLOCAZ(p,s) (XALLOCA((p),(s)),XMEMZERO((p),(s)))
+#endif
 
 static struct userlist_clnt *server_conn;
 static struct userlist_cfg *config;

@@ -34,7 +34,9 @@
 #include <time.h>
 #include <errno.h>
 
-#define XALLOCAZ(p,s) (XALLOCA((p),(s)),XMEMZERO((p),(s)))
+#ifndef XALLOCAZ
+#define XALLOCAZ(p,s) ((p) = (typeof(p)) alloca((s) * sizeof((p)[0])), memset((p), 0, ((s) * sizeof((p)[0]))))
+#endif
 
 WINDOW *root_window = 0;
 
