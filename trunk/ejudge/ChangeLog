@@ -1,3 +1,44 @@
+2002-10-21  Alexander Chernov  <cher@ispras.ru>
+
+	* userlist_cfg.h: "expat_iface.h" is included;
+	(struct userlist_cfg) it is now a subtype of xml_tree.
+
+	* userlist_cfg.c:
+	new module `expat_iface' is used instead of direct use of the expat
+	  XML parser.
+
+	* register.c: rewritten completely.
+
+	* makefile: `register' files are changed;
+	`register' utility needs expat.
+
+	* expat_iface.h: (struct xml_attn) `line', `column' fields are added;
+	(struct xml_tree) `line', `column' fields are added;
+	(xml_build_tree) `tag_map', `attn_map' are declared `const';
+	(xml_build_tree_str) the same as above;
+	(xml_unparse_tree) parameters are changed;
+	(xml_unparse_tree_str) parameters are changed.
+
+	* expat_iface.c:
+	(struct parser_data) `tag_map', `attn_map' fields are defined `const';
+	(start_hnd) `tag_map' may be NULL;
+	  current line and column is stored in the tree;
+	  the root tree node is saved in `parser_data' structure;
+	  `attn_map' may be NULL;
+	  attribute line and column are saved in the tree;
+	(xml_build_tree) `tag_map', `attn_map' are declared `const';
+	(xml_build_tree_str) `tag_map', `attn_map' are declared `const';
+	(do_xml_unparse_tree) a new function to do XML unparsing;
+	(xml_unparse_tree) a new function to do XML unparsing.
+
+	* ejudge.ru_RU.KOI8-R.po: new messages are translated
+
+	* ejudge.fr_FR.ISO8859-1.po: Initial revision
+
+2002-10-19  Alexander Chernov  <cher@ispras.ru>
+
+	* expat_iface.c, expat_iface.h: in progress...
+
 2002-10-19  Alexander Chernov  <cher@ispras.ru>
 
 	* team.c:
