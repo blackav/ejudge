@@ -387,6 +387,37 @@ static struct userlist_clnt *server_conn;
 static unsigned long user_ip;
 static int user_contest_id;
 static int client_locale_id;
+static unsigned char *self_url;
+
+static void
+set_locale_by_id(int id)
+{
+#if CONF_HAS_LIBINTL - 0 == 1
+  char *e = 0;
+  char env_buf[512];
+
+  if (!config->l10n) return;
+  if (!config->l10n_dir) return;
+  if (client_locale_id == -1) return;
+
+  switch (client_locale_id) {
+  case 1:
+    e = "ru_RU.KOI8-R";
+    break;
+  case 0:
+  default:
+    client_locale_id = 0;
+    e = "C";
+    break;
+  }
+
+  sprintf(env_buf, "LC_ALL=%s", e);
+  putenv(env_buf);
+  setlocale(LC_ALL, "");
+  bindtextdomain("ejudge", config->l10n_dir);
+  textdomain("ejudge");
+#endif /* CONF_HAS_LIBINTL */
+}
 
 static void
 parse_user_ip(void)
@@ -480,6 +511,20 @@ initialize(int argc, char const *argv[])
     client_not_configured(0, "contests database not parsed");
   }
   parse_user_ip();
+
+  // construct self-reference URL
+  {
+    unsigned char *http_host = getenv("HTTP_HOST");
+    unsigned char *server_port = getenv("SERVER_PORT");
+    unsigned char *script_name = getenv("SCRIPT_NAME");
+
+    if (!http_host) http_host = "localhost";
+    if (!server_port) server_port = "80";
+    if (!script_name) script_name = "/cgi-bin/register";
+    snprintf(fullname, sizeof(fullname),
+             "http://%s:%s%s", http_host, server_port, script_name);
+    self_url = xstrdup(fullname);
+  }
 }
 
 static void
@@ -512,6 +557,7 @@ main(int argc, char const *argv[])
   cgi_read(config->charset);
   read_locale_id();
   read_contest_id();
+  set_locale_by_id(client_locale_id);
 
   if (user_contest_id > 0 && user_contest_id < contests->id_map_size) {
     cnts = contests->id_map[user_contest_id];
@@ -536,8 +582,8 @@ main(int argc, char const *argv[])
       printf("<p>%s</p>\n", _("Information is not available"));
     } else {
       fflush(stdout);
-      r = userlist_list_users(server_conn, user_ip, user_contest_id,
-                              client_locale_id);
+      r = userlist_clnt_list_users(server_conn, user_ip, user_contest_id,
+                                   client_locale_id, 0, 0, self_url, "");
       if (r < 0) {
         printf("<p>%s</p>\n", _("Information is not available"));
         printf("<pre>%s</pre>\n", gettext(userlist_strerror(-r)));
