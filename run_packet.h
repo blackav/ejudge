@@ -34,6 +34,7 @@ struct run_request_packet
   int accept_partial;           /* accept partially passed in OLYMPIAD mode */
   int user_id;                  /* the user identifier */
   int html_report;              /* generate judge protocol in HTML */
+  int disable_sound;            /* disable sound notifications */
   /* time when the compile request was queued by serve */
   int ts1;
   int ts1_us;
@@ -75,9 +76,12 @@ struct run_reply_packet
   /* time when the run request was received by run */
   int ts5;
   int ts5_us;
-  /* time when the run request was completed by run */
+  /* time when the testing was completed by run */
   int ts6;
   int ts6_us;
+  /* time when the report was generated */
+  int ts7;
+  int ts7_us;
 };
 
 int
@@ -90,6 +94,8 @@ run_request_packet_write(const struct run_request_packet *in_data,
 
 struct run_request_packet *
 run_request_packet_free(struct run_request_packet *in_data);
+
+int run_request_packet_quit(size_t *p_out_size, void **p_out_data);
 
 int
 run_reply_packet_read(size_t in_size, const void *in_data,
