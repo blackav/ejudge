@@ -98,7 +98,7 @@ P_OBJECTS=$(P_CFILES:.c=.o)
 T_CFILES = team.c version.c cgi.c teamdb.c base64.c clntutil.c parsecfg.c misctext.c pathutl.c $(ARCH)/fileutl.c  
 T_OBJECTS = $(T_CFILES:.c=.o)
 
-REG_CFILES = register.c contests.c userlist_clnt.c version.c expat_iface.c cgi.c base64.c clntutil.c pathutl.c misctext.c $(ARCH)/fileutl.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c
+REG_CFILES = register.c contests.c userlist_clnt.c userlist_xml.c userlist_proto.c version.c expat_iface.c cgi.c base64.c clntutil.c pathutl.c misctext.c $(ARCH)/fileutl.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c
 REG_OBJECTS = ${REG_CFILES:.c=.o}
 
 MT_CFILES = make-teamdb.c localdb.c idmap.c
@@ -110,7 +110,7 @@ MTI_OBJECTS = ${MTI_CFILES:.c=.o}
 SP_CFILES = send-passwords.c inetdb.c teamdb.c pathutl.c base64.c ${ARCH}/fileutl.c
 SP_OBJECTS = ${SP_CFILES:.c=.o}
 
-UL_CFILES = userlist-server.c userlist_cfg.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c pathutl.c userlist_xml.c userlist.c userlist_clnt.c expat_iface.c base64.c
+UL_CFILES = userlist-server.c contests.c userlist_cfg.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c pathutl.c userlist_xml.c userlist.c userlist_clnt.c expat_iface.c base64.c
 UL_OBJECTS = ${UL_CFILES:.c=.o}
 
 TARGETS=compile$(EXESFX) serve$(EXESFX) submit$(EXESFX) run$(EXESFX) master$(EXESFX) clar$(EXESFX) mkpasswd$(EXESFX) team$(EXESFX) register${EXESFX} make-teamdb${EXESFX} make-teamdb-inet${EXESFX} send-passwords${EXESFX} userlist-server${EXESFX}
@@ -246,7 +246,7 @@ pathutl.o: pathutl.c pathutl.h
 prepare.o: prepare.c prepare.h pathutl.h parsecfg.h fileutl.h sformat.h \
   teamdb.h
 register.o: register.c expat_iface.h pathutl.h clntutil.h cgi.h \
-  contests.h userlist_clnt.h userlist_proto.h misctext.h
+  contests.h userlist_clnt.h userlist.h userlist_proto.h misctext.h
 run.o: run.c prepare.h pathutl.h parsecfg.h runlog.h fileutl.h
 runlog.o: runlog.c runlog.h pathutl.h unix/unix_fileutl.h
 send-passwords.o: send-passwords.c inetdb.h teamdb.h fileutl.h
@@ -258,14 +258,14 @@ submit.o: submit.c pathutl.h prepare.h parsecfg.h teamdb.h fileutl.h
 team.o: team.c cgi.h teamdb.h parsecfg.h pathutl.h fileutl.h clntutil.h \
   clarlog.h base64.h
 teamdb.o: teamdb.c teamdb.h pathutl.h base64.h
-userlist.o: userlist.c userlist.h expat_iface.h
+userlist.o: userlist.c userlist.h expat_iface.h contests.h
 userlist-server.o: userlist-server.c userlist_cfg.h expat_iface.h \
-  userlist.h pathutl.h
+  userlist.h pathutl.h contests.h userlist.h
 userlist_cfg.o: userlist_cfg.c userlist_cfg.h expat_iface.h pathutl.h
 userlist_clnt.o: userlist_clnt.c userlist_clnt.h pathutl.h \
   userlist_proto.h
 userlist_xml.o: userlist_xml.c nls.h utf8_utils.h userlist.h \
-  expat_iface.h pathutl.h
+  expat_iface.h pathutl.h contests.h
 utf8_utils.o: utf8_utils.c nls.h
 unix/fileutl.o: unix/fileutl.c fileutl.h unix/unix_fileutl.h pathutl.h
 win32/fileutl.o: win32/fileutl.c fileutl.h logger.h pathutl.h osdeps.h xalloc.h
