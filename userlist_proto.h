@@ -36,6 +36,7 @@ enum
     ULS_REGISTER_CONTEST,
     ULS_REMOVE_MEMBER,
     ULS_PASS_FD,
+    ULS_LIST_USERS,
   };
 
 /* server reply codes (each corresponds to a different packet) */
@@ -172,6 +173,15 @@ struct userlist_pk_remove_member
   int   role_id;
   int   pers_id;
   int   serial;
+};
+
+struct userlist_pk_list_users __attribute__((packed, aligned(1)));
+struct userlist_pk_list_users
+{
+  short         request_id;
+  unsigned long origin_ip;
+  long          contest_id;
+  signed char   locale_id;
 };
 
 /* server->client replies */
