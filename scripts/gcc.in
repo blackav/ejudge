@@ -1,4 +1,4 @@
 #!/bin/sh
 
 PATH=/usr/upd/gcc-3.2/bin:${PATH}
-exec gcc -Wall -static -s -O2 $1 -o $2
+exec gcc -Wall -static -s -O2 $1 -o $2 -lm
