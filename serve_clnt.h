@@ -49,4 +49,39 @@ int serve_clnt_list_runs(int sock_fd,
                          unsigned int flags,
                          unsigned char const *form_start);
 
+int serve_clnt_show_item(int sock_fd,
+                         int out_fd,
+                         int cmd,
+                         int user_id,
+                         int contest_id,
+                         int locale_id,
+                         int item_id);
+
+int serve_clnt_submit_run(int sock_fd,
+                          int user_id,
+                          int contest_id,
+                          int locale_id,
+                          unsigned long ip,
+                          int prob_id,
+                          int lang_id,
+                          unsigned char const *run_src);
+
+int serve_clnt_submit_clar(int sock_fd,
+                           int user_id,
+                           int contest_id,
+                           int locale_id,
+                           unsigned long ip,
+                           unsigned char const *subj,
+                           unsigned char const *text);
+
+int serve_clnt_team_page(int sock_fd,
+                         int out_fd,
+                         int user_id,
+                         int contest_id,
+                         int locale_id,
+                         unsigned long ip,
+                         unsigned int flags,
+                         unsigned char const *simple_form,
+                         unsigned char const *multi_form);
+
 #endif /* __SERVE_CLNT_H__ */
