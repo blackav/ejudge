@@ -50,8 +50,8 @@ LDLIBS=
 ARCH=unix
 EXESFX=
 else
-CFLAGS=-mno-cygwin -O3 -Wall -I. -DCONF_HAS__SNPRINTF
-LDFLAGS=-mno-cygwin
+CFLAGS=-mno-cygwin -O2 -Wall -I. -DCONF_HAS__SNPRINTF
+LDFLAGS=-mno-cygwin -s
 ARCH=win32
 EXESFX=.exe
 LDLIBS=
@@ -103,6 +103,9 @@ all: $(TARGETS)
 compile$(EXESFX) : $(C_OBJECTS)
 	$(LD) $(LDFLAGS) $(C_OBJECTS) -o $@ $(LDLIBS)
 
+run${EXESFX} : $(RUN_OBJECTS)
+	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS)
+
 serve.exe:
 serve : $(SERVE_OBJECTS)
 	$(LD) $(LDFLAGS) $(SERVE_OBJECTS) -o $@ $(LDLIBS)
@@ -114,10 +117,6 @@ submit$ : $(SUBMIT_OBJECTS)
 clar.exe:
 clar : $(CLAR_OBJECTS)
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS)
-
-run.exe:
-run : $(RUN_OBJECTS)
-	$(LD) $(LDFLAGS) $(RUN_OBJECTS) -o $@ $(LDLIBS)
 
 master.exe:
 master : $(M_OBJECTS)
