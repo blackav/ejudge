@@ -53,11 +53,13 @@ CFILES=base64.c cgi.c clar.c clarlog.c clntutil.c compile.c html.c\
   master.c misctext.c mkpasswd.c parsecfg.c pathutl.c prepare.c\
   run.c runlog.c serve.c submit.c team.c teamdb.c\
   register.c make-teamdb.c make-teamdb-inet.c send-passwords.c\
-  inetdb.c localdb.c idmap.c sformat.c unix/fileutl.c win32/fileutl.c
+  inetdb.c localdb.c idmap.c sformat.c unix/fileutl.c win32/fileutl.c\
+  sha.c nls_cp1251.c nls_cp866.c nls_iso8859-5.c nls_koi8-r.c nls_utf8.c\
+  userlist.c userlist_xml.c
 
 HFILES=base64.h cgi.h clarlog.h clntutil.h fileutl.h html.h\
   misctext.h parsecfg.h pathutl.h prepare.h runlog.h\
-  inetdb.h localdb.h idmap.h sformat.h\
+  inetdb.h localdb.h idmap.h sformat.h sha.h nls.h userlist.h\
   teamdb.h version.h\
   unix/unix_fileutl.h
 
