@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2003-07-11 23:52+0400\n"
+"POT-Creation-Date: 2003-09-21 10:22+0400\n"
 "PO-Revision-Date: 2003-07-09 21:40+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -37,7 +37,7 @@ msgstr ""
 "%s, тест #%d\n"
 "\n"
 
-#: master.c:1640 misctext.c:270 misctext.c:272 serve.c:1607 team.c:1121
+#: master.c:1691 misctext.c:270 misctext.c:272 serve.c:1607 team.c:1121
 msgid "(no subject)"
 msgstr "(без темы)"
 
@@ -253,7 +253,7 @@ msgstr "Доступна"
 msgid "Available contests"
 msgstr "Доступные турниры"
 
-#: master.c:871 register.c:1702 team.c:1018 team.c:1026
+#: master.c:880 register.c:1702 team.c:1018 team.c:1026
 msgid "Back"
 msgstr "Назад"
 
@@ -363,7 +363,7 @@ msgstr "Скомпилировано"
 msgid "Compiling..."
 msgstr "Компилируется..."
 
-#: master.c:2282
+#: master.c:2343
 msgid "Compose a message to all the teams"
 msgstr "Написать сообщение всем командам"
 
@@ -636,11 +636,11 @@ msgstr "Общая информация"
 msgid "General user information"
 msgstr "Общая информация об участнике"
 
-#: master.c:1705 register.c:2422 team.c:1433
+#: master.c:1756 register.c:2422 team.c:1433
 msgid "Good-bye"
 msgstr "До свидания"
 
-#: master.c:1707 team.c:1441
+#: master.c:1758 team.c:1441
 msgid "Good-bye!"
 msgstr "До свидания!"
 
@@ -967,7 +967,7 @@ msgstr "Сообщения от жюри"
 msgid "Middle name"
 msgstr "Отчество"
 
-#: master.c:2239 master.c:2244 team.c:1584 team.c:1587
+#: master.c:2296 master.c:2301 team.c:1584 team.c:1587
 msgid "Monitor"
 msgstr "Монитор"
 
@@ -976,7 +976,7 @@ msgstr "Монитор"
 msgid "N/A"
 msgstr "Неизв."
 
-#: master.c:1670
+#: master.c:1721
 msgid "NO."
 msgstr "НЕТ."
 
@@ -1016,12 +1016,12 @@ msgstr "Новый вердикт"
 msgid "New user is registered"
 msgstr "Новый пользователь зарегистрирован"
 
-#: master.c:1290 master.c:1305 master.c:1320 master.c:1335 master.c:1350
-#: master.c:1365 master.c:1392
+#: master.c:1299 master.c:1314 master.c:1329 master.c:1344 master.c:1359
+#: master.c:1374 master.c:1389 master.c:1416
 msgid "No"
 msgstr "Нет"
 
-#: master.c:1666
+#: master.c:1717
 msgid "No comments.\n"
 msgstr "Без комментариев.\n"
 
@@ -1257,7 +1257,7 @@ msgstr "Re"
 msgid "Re: Your question"
 msgstr "Re: Ваш вопрос"
 
-#: master.c:1664
+#: master.c:1715
 msgid "Read the problem.\n"
 msgstr "Читайте условие задачи.\n"
 
@@ -1265,6 +1265,11 @@ msgstr "Читайте условие задачи.\n"
 #: master_html.c:993 master_html.c:1312 master_html.c:1408 team.c:1034
 msgid "Refresh"
 msgstr "Обновить"
+
+#: master.c:783
+#, fuzzy
+msgid "Regenerate register user passwords!"
+msgstr "Сгенерировать пароли заново!"
 
 #: master.c:774
 msgid "Regenerate user passwords!"
@@ -1347,7 +1352,7 @@ msgstr "Сбросить турнир!"
 msgid "Result"
 msgstr "Результат"
 
-#: master.c:792
+#: master.c:801
 msgid "Resume clients"
 msgstr "Приостановить клиентов"
 
@@ -1413,7 +1418,7 @@ msgstr "Получено баллов"
 msgid "Scores gained: %d (out of %d)\n"
 msgstr "Получено баллов: %d (из %d)\n"
 
-#: master.c:2302
+#: master.c:2363
 msgid "Send"
 msgstr "Послать"
 
@@ -1485,7 +1490,7 @@ msgstr "Сервис недоступен. Пожалуйста, приходите позже."
 msgid "Session support"
 msgstr "Поддержка сессии"
 
-#: master.c:801
+#: master.c:810
 msgid "Set judging mode"
 msgstr "Включить режим проверки"
 
@@ -1569,7 +1574,7 @@ msgstr "Закончить виртуальный турнир"
 msgid "Student"
 msgstr "Студент"
 
-#: html.c:232 html.c:366 html.c:1561 master.c:2297 master_html.c:871
+#: html.c:232 html.c:366 html.c:1561 master.c:2358 master_html.c:871
 #: master_html.c:1256
 msgid "Subject"
 msgstr "Тема"
@@ -1594,7 +1599,7 @@ msgstr "Послать"
 msgid "Submit solution"
 msgstr "Сдача решений"
 
-#: master.c:783
+#: master.c:792
 msgid "Suspend clients"
 msgstr "Приостановить клиентов"
 
@@ -1714,11 +1719,11 @@ msgstr "Превышено максимальное время работы"
 msgid "To"
 msgstr "Кому"
 
-#: master.c:2288
+#: master.c:2349
 msgid "To user id"
 msgstr "Кому (рег. номер)"
 
-#: master.c:2292
+#: master.c:2353
 msgid "To user login"
 msgstr "Кому (рег. имя)"
 
@@ -1865,35 +1870,35 @@ msgstr "Неправильный ответ"
 msgid "XML parse error"
 msgstr "ошибка разбора XML"
 
-#: master.c:1668
+#: master.c:1719
 msgid "YES."
 msgstr "ДА."
 
-#: master.c:1397
+#: master.c:1421
 msgid "Yes, clear!"
 msgstr "Да, очистить!"
 
-#: master.c:1368
+#: master.c:1392
 msgid "Yes, continue!"
 msgstr "Да, продолжить!"
 
-#: master.c:1323
+#: master.c:1332 master.c:1347
 msgid "Yes, generate passwords!"
 msgstr "Да, перегенерировать пароли!"
 
-#: master.c:1338
+#: master.c:1362
 msgid "Yes, rejudge!"
 msgstr "Да, пересудить!"
 
-#: master.c:1293
+#: master.c:1302
 msgid "Yes, reset the contest!"
 msgstr "Да, сбросить турнир!"
 
-#: master.c:1353
+#: master.c:1377
 msgid "Yes, squeeze!"
 msgstr "Да, сжать!"
 
-#: master.c:1308
+#: master.c:1317
 msgid "Yes, update standings!"
 msgstr "Да, обновить таблицу"
 

@@ -1,3 +1,37 @@
+2003-09-21  Alexander Chernov  <cher@ispras.ru>
+
+	* serve.c:
+	(read_compile_packet) `RUN_CHECK_FAILED' error code from the compile
+	  program is handled properly.
+
+	* run.c: (run_tests) new problem configuration variable
+	  `checker_real_time_limit' which sets time limit for checker
+	  is supported.
+
+	* prepare.h:
+	(struct section_global_data) new fields `checker_real_time_limit'
+	  and `compile_real_time_limit';
+	(struct section_problem_data) new field `checker_real_time_limit';
+	(struct section_language_data) new field `compile_real_time_limit'.
+
+	* prepare.c:
+	new global configuration variables: `checker_real_time_limit',
+	  `compile_real_time_limit';
+	new problem configuration variable: `checker_real_time_limit';
+	new language configuration variable: `compile_real_time_limit';
+	(params) an initializing function is added to `language' section;
+	(global_init_func) new global configuration variables are initialized
+	  with -1;
+	(language_init_func) new function to initialize the language
+	  section;
+	(problem_init_func) initialization of the new problem configuration
+	  variable in added;
+	(set_defaults) the new configuration variables are handled.
+
+	* compile.c: copyright notice is slightly changed;
+	(do_loop) new configuration variable `compile_real_time_limit' which
+	  sets time limit for compilation is supported.
+
 2003-09-20  Alexander Chernov  <cher@ispras.ru>
 
 	* userlist_proto.h:
