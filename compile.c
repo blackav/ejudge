@@ -63,7 +63,7 @@ do_loop(void)
   int     contest_id;
   int     run_id;
   int     lang_id;
-  int    r, n, i;
+  int    r, n, i, v;
   tpTask tsk;
   sigset_t work_mask;
   unsigned char msgbuf[512];
@@ -187,12 +187,12 @@ do_loop(void)
           ptr += env_size;
         }
       }
-    } else {
-      while (*ptr && isspace(*ptr)) ptr++;
-      if (*ptr) {
-        err("garbage at the end of packet");
-        goto silent_packet_error;
-      }
+    }
+
+    n = 0;
+    if (sscanf(ptr, "%d%n", &v, &n) != 1 || ptr[n] || v) {
+      err("invalid packet tail");
+      goto silent_packet_error;
     }
 
     // don't need packet source any more
