@@ -229,6 +229,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(use_gzip, "d"),
   GLOBAL_PARAM(min_gzip_size, "d"),
   GLOBAL_PARAM(use_dir_hierarchy, "d"),
+  GLOBAL_PARAM(html_report, "d"),
 
   GLOBAL_PARAM(variant_map_file, "s"),
 
