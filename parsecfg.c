@@ -23,8 +23,667 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <errno.h>
 
 static int lineno = 1;
+
+typedef struct bufstring_struct
+{
+  size_t a, u;
+  unsigned char *s;
+} bufstring_t;
+
+static bufstring_t raw;
+static int raw_i;
+static int ncond_var;
+static cfg_cond_var_t *cond_vars;
+
+enum
+{
+  CV_VOID = PARSECFG_T_VOID,
+  CV_LONG = PARSECFG_T_LONG,
+  CV_STRING = PARSECFG_T_STRING,
+};
+
+struct cond_stack
+{
+  struct cond_stack *next;
+  int was_true;
+  int was_else;
+  int output_enabled;
+};
+static struct cond_stack *cond_stack;
+static int output_enabled = 1;
+
+static int
+convert_to_bool(cfg_cond_value_t *pv)
+{
+  switch (pv->tag) {
+  case CV_LONG:
+    return !!pv->l.val;
+  case CV_STRING:
+    return !!pv->s.str[0];
+  }
+  abort();
+}
+static void
+set_bool_value(cfg_cond_value_t *pv, int val)
+{
+  XMEMZERO(pv, 1);
+  pv->tag = CV_LONG;
+  pv->l.val = !!val;
+}
+static void
+free_value(cfg_cond_value_t *pv)
+{
+  if (pv->tag == CV_STRING)
+    xfree(pv->s.str);
+  pv->s.str = 0;
+}
+static void
+copy_value(cfg_cond_value_t *pdst, cfg_cond_value_t *psrc)
+{
+  *pdst = *psrc;
+  if (pdst->tag == CV_STRING) pdst->s.str = xstrdup(pdst->s.str);
+}
+
+#if 0
+static void
+print_value(cfg_cond_value_t *pv)
+{
+  if (!pv) {
+    fprintf(stderr, "(null)\n");
+  } else {
+    switch (pv->tag) {
+    case CV_VOID: fprintf(stderr, "(void)\n"); break;
+    case CV_LONG: fprintf(stderr, "%lld\n", pv->l.val); break;
+    case CV_STRING: fprintf(stderr, ">%s<\n", pv->s.str); break;
+    default:
+      abort();
+    }
+  }
+}
+#endif
+
+static int parse_conditional_expr(int need_eval, cfg_cond_value_t *pv);
+static int parse_logical_OR_expr(int need_eval, cfg_cond_value_t *prv);
+static int parse_logical_AND_expr(int need_eval, cfg_cond_value_t *prv);
+static int parse_OR_expr(int need_eval, cfg_cond_value_t *prv);
+static int parse_XOR_expr(int need_eval, cfg_cond_value_t *prv);
+static int parse_AND_expr(int need_eval, cfg_cond_value_t *prv);
+static int parse_equality_expr(int need_eval, cfg_cond_value_t *prv);
+static int parse_relational_expr(int need_eval, cfg_cond_value_t *prv);
+static int parse_shift_expr(int need_eval, cfg_cond_value_t *prv);
+static int parse_additive_expr(int need_eval, cfg_cond_value_t *prv);
+static int parse_multiplicative_expr(int need_eval, cfg_cond_value_t *prv);
+static int parse_unary_expr(int need_eval, cfg_cond_value_t *prv);
+static int parse_primary_expr(int need_eval, cfg_cond_value_t *prv);
+
+static int
+parse_expr(int need_eval, cfg_cond_value_t *prv)
+{
+  int b = 0;
+
+  if (parse_conditional_expr(need_eval, prv) < 0) return -1;
+  while (raw.s[raw_i] > 0 && raw.s[raw_i] <= ' ') raw_i++;
+  if (raw.s[raw_i]) {
+    fprintf(stderr, "%d: syntax error\n", lineno);
+    if (need_eval) free_value(prv);
+    return -1;
+  }
+  if (need_eval) b = convert_to_bool(prv);
+  return b;
+}
+
+static int
+parse_conditional_expr(int need_eval, cfg_cond_value_t *prv)
+{
+  return parse_logical_OR_expr(need_eval, prv);
+}
+
+static int
+parse_logical_OR_expr(int need_eval, cfg_cond_value_t *prv)
+{
+  cfg_cond_value_t v1, v2;
+  int b = 0, r;
+
+  if ((r = parse_logical_AND_expr(need_eval, &v1)) < 0) return -1;
+  if (need_eval) {
+    while (raw.s[raw_i] > 0 && raw.s[raw_i] <= ' ') raw_i++;
+    if (raw.s[raw_i] != '|' || raw.s[raw_i + 1] != '|') {
+      *prv = v1;
+      return r;
+    }
+    if (convert_to_bool(&v1)) {
+      set_bool_value(prv, 1);
+      b = 1;
+      need_eval = 0;
+      free_value(&v1);
+    }
+  }
+  while (1) {
+    while (raw.s[raw_i] > 0 && raw.s[raw_i] <= ' ') raw_i++;
+    if (raw.s[raw_i] != '|' || raw.s[raw_i + 1] != '|') break;
+    raw_i += 2;
+    while (raw.s[raw_i] > 0 && raw.s[raw_i] <= ' ') raw_i++;
+    if (parse_logical_AND_expr(need_eval, &v2) < 0) return -1;
+    if (need_eval && convert_to_bool(&v2)) {
+      set_bool_value(prv, 1);
+      b = 1;
+      need_eval = 0;
+      free_value(&v2);
+    }
+  }
+  if (need_eval) {
+    set_bool_value(prv, 0);
+    b = 0;
+  }
+  return b;
+}
+
+static int
+parse_logical_AND_expr(int need_eval, cfg_cond_value_t *prv)
+{
+  cfg_cond_value_t v1, v2;
+  int b = 0, r;
+
+  if ((r = parse_OR_expr(need_eval, &v1)) < 0) return -1;
+  if (need_eval) {
+    while (raw.s[raw_i] > 0 && raw.s[raw_i] <= ' ') raw_i++;
+    if (raw.s[raw_i] != '&' || raw.s[raw_i + 1] != '&') {
+      *prv = v1;
+      return r;
+    }
+    if (!convert_to_bool(&v1)) {
+      set_bool_value(prv, 0);
+      b = 0;
+      need_eval = 0;
+      free_value(&v1);
+    }
+  }
+  while (1) {
+    while (raw.s[raw_i] > 0 && raw.s[raw_i] <= ' ') raw_i++;
+    if (raw.s[raw_i] != '&' || raw.s[raw_i + 1] != '&') break;
+    raw_i += 2;
+    while (raw.s[raw_i] > 0 && raw.s[raw_i] <= ' ') raw_i++;
+    if (parse_OR_expr(need_eval, &v2) < 0) return -1;
+    if (need_eval && !convert_to_bool(&v2)) {
+      set_bool_value(prv, 0);
+      b = 0;
+      need_eval = 0;
+      free_value(&v2);
+    }
+  }
+  if (need_eval) {
+    set_bool_value(prv, 1);
+    b = 1;
+  }
+  return b;
+}
+
+static int
+parse_OR_expr(int need_eval, cfg_cond_value_t *prv)
+{
+  return parse_XOR_expr(need_eval, prv);
+}
+
+static int
+parse_XOR_expr(int need_eval, cfg_cond_value_t *prv)
+{
+  return parse_AND_expr(need_eval, prv);
+}
+
+static int
+parse_AND_expr(int need_eval, cfg_cond_value_t *prv)
+{
+  return parse_equality_expr(need_eval, prv);
+}
+
+static int
+parse_equality_expr(int need_eval, cfg_cond_value_t *prv)
+{
+  cfg_cond_value_t v1, v2;
+  int op;
+
+  if (parse_relational_expr(need_eval, &v1) < 0) return -1;
+  if (need_eval) *prv = v1;
+  while (1) {
+    while (raw.s[raw_i] > 0 && raw.s[raw_i] <= ' ') raw_i++;
+    if ((raw.s[raw_i] != '=' && raw.s[raw_i] != '!')
+        || raw.s[raw_i + 1] != '=')
+      break;
+    if (raw.s[raw_i] == '=') op = 0;
+    else op = 1;
+    raw_i += 2;
+    while (raw.s[raw_i] > 0 && raw.s[raw_i] <= ' ') raw_i++;
+    if (parse_relational_expr(need_eval, &v2) < 0) {
+      if (need_eval) free_value(prv);
+      return -1;
+    }
+    if (need_eval) {
+      if (prv->tag != v2.tag) {
+        fprintf(stderr, "%d: type mismatch in expression\n", lineno);
+        free_value(prv);
+        free_value(&v2);
+        return -1;
+      }
+      XMEMZERO(&v1, 1);
+      v1.tag = CV_LONG;
+      if (prv->tag == CV_LONG) {
+        switch (op) {
+        case 0: v1.l.val = (prv->l.val == v2.l.val); break;
+        case 1: v1.l.val = (prv->l.val != v2.l.val); break;
+        default:
+          abort();
+        }
+      } else if (prv->tag == CV_STRING) {
+        switch (op) {
+        case 0: v1.l.val = (strcmp(prv->s.str, v2.s.str) == 0); break;
+        case 1: v1.l.val = (strcmp(prv->s.str, v2.s.str) != 0); break;
+        default:
+          abort();
+        }
+      } else {
+        fprintf(stderr, "%d: invalid type in expression\n", lineno);
+        free_value(prv);
+        free_value(&v2);
+        return -1;
+      }
+      free_value(prv);
+      free_value(&v2);
+      *prv = v1;
+    }
+  }
+  return 0;
+}
+
+static int
+parse_relational_expr(int need_eval, cfg_cond_value_t *prv)
+{
+  cfg_cond_value_t v1, v2;
+  int op = -1;
+
+  if (parse_shift_expr(need_eval, &v1) < 0) return -1;
+  if (need_eval) *prv = v1;
+  while (1) {
+    while (raw.s[raw_i] > 0 && raw.s[raw_i] <= ' ') raw_i++;
+    if (raw.s[raw_i] == '<' && raw.s[raw_i + 1] == '=') {
+      op = 0;
+      raw_i += 2;
+    } else if (raw.s[raw_i] == '>' && raw.s[raw_i + 1] == '=') {
+      op = 1;
+      raw_i += 2;
+    } else if (raw.s[raw_i] == '<') {
+      op = 2;
+      raw_i += 1;
+    } else if (raw.s[raw_i] == '>') {
+      op = 3;
+      raw_i += 1;
+    } else {
+      break;
+    }
+    while (raw.s[raw_i] > 0 && raw.s[raw_i] <= ' ') raw_i++;
+    if (parse_shift_expr(need_eval, &v2) < 0) {
+      if (need_eval) free_value(prv);
+      return -1;
+    }
+    if (need_eval) {
+      if (prv->tag != v2.tag) {
+        fprintf(stderr, "%d: type mismatch in expression\n", lineno);
+        free_value(prv);
+        free_value(&v2);
+        return -1;
+      }
+      XMEMZERO(&v1, 1);
+      v1.tag = CV_LONG;
+      if (prv->tag == CV_LONG) {
+        switch (op) {
+        case 0: v1.l.val = (prv->l.val <= v2.l.val); break;
+        case 1: v1.l.val = (prv->l.val >= v2.l.val); break;
+        case 2: v1.l.val = (prv->l.val < v2.l.val); break;
+        case 3: v1.l.val = (prv->l.val > v2.l.val); break;
+        default:
+          abort();
+        }
+      } else if (prv->tag == CV_STRING) {
+        switch (op) {
+        case 0: v1.l.val = (strcmp(prv->s.str, v2.s.str) <= 0); break;
+        case 1: v1.l.val = (strcmp(prv->s.str, v2.s.str) >= 0); break;
+        case 2: v1.l.val = (strcmp(prv->s.str, v2.s.str) < 0); break;
+        case 3: v1.l.val = (strcmp(prv->s.str, v2.s.str) > 0); break;
+        default:
+          abort();
+        }
+      } else {
+        fprintf(stderr, "%d: invalid type in expression\n", lineno);
+        free_value(prv);
+        free_value(&v2);
+        return -1;
+      }
+      free_value(prv);
+      free_value(&v2);
+      *prv = v1;
+    }
+  }
+  return 0;
+}
+
+static int
+parse_shift_expr(int need_eval, cfg_cond_value_t *prv)
+{
+  return parse_additive_expr(need_eval, prv);
+}
+
+static int
+parse_additive_expr(int need_eval, cfg_cond_value_t *prv)
+{
+  return parse_multiplicative_expr(need_eval, prv);
+}
+
+static int
+parse_multiplicative_expr(int need_eval, cfg_cond_value_t *prv)
+{
+  return parse_unary_expr(need_eval, prv);
+}
+
+static int
+parse_unary_expr(int need_eval, cfg_cond_value_t *prv)
+{
+  return parse_primary_expr(need_eval, prv);
+}
+
+static int
+parse_string(int need_eval, cfg_cond_value_t *prv)
+{
+  int j;
+  unsigned char *p, *q;
+  unsigned char nb[16];
+
+  j = raw_i + 1;
+  while (raw.s[j] && raw.s[j] != '\"') {
+    if (raw.s[j] == '\\' && !raw.s[j + 1]) {
+      fprintf(stderr, "%d: '\\' at the end of line\n", lineno);
+      return -1;
+    }
+    if (raw.s[j] == '\\') j += 2;
+    else j++;
+  }
+  if (!raw.s[j]) {
+    fprintf(stderr, "%d: unterminated string\n", lineno);
+    return -1;
+  }
+  j++;
+  if (!need_eval) {
+    raw_i = j++;
+    return 0;
+  }
+
+  XMEMZERO(prv, 1);
+  prv->tag = CV_STRING;
+  q = prv->s.str = (unsigned char*) xmalloc(j - raw_i);
+  p = raw.s + raw_i + 1;
+  while (*p && *p != '\"') {
+    if (*p != '\\') {
+      *q++ = *p++;
+      continue;
+    }
+
+    switch (p[1]) {
+    case 0:
+      *q++ = '\\';
+      p++;
+      break;
+    case 'x': case 'X':
+      if (!isxdigit(p[2])) {
+        fprintf(stderr, "%d: invalid escape sequence\n", lineno);
+        return -1;
+      }
+      p += 2;
+      memset(nb, 0, sizeof(nb));
+      nb[0] = *p++;
+      if (isxdigit(*p)) nb[1] = *p++;
+      *q++ = strtol(nb, 0, 16);
+      break;
+    case '0': case '1': case '2': case '3':
+      p++;
+      memset(nb, 0, sizeof(nb));
+      nb[0] = *p++;
+      if (*p >= '0' && *p <= '7') nb[1] = *p++;
+      if (*p >= '0' && *p <= '7') nb[2] = *p++;
+      *q++ = strtol(nb, 0, 8);
+      break;
+    case '4': case '5': case '6': case '7':
+      p++;
+      memset(nb, 0, sizeof(nb));
+      nb[0] = *p++;
+      if (*p >= '0' && *p <= '7') nb[1] = *p++;
+      *q++ = strtol(nb, 0, 8);
+      break;
+    case 'a': *q++ = '\a'; p += 2; break;
+    case 'b': *q++ = '\b'; p += 2; break;
+    case 'f': *q++ = '\f'; p += 2; break;
+    case 'n': *q++ = '\n'; p += 2; break;
+    case 'r': *q++ = '\r'; p += 2; break;
+    case 't': *q++ = '\t'; p += 2; break;
+    case 'v': *q++ = '\v'; p += 2; break;
+    default:
+      p++;
+      *q++ = *p++;
+      break;
+    }
+  }
+  *q = 0;
+  raw_i = j;
+  return 0;
+}
+
+static int
+parse_number(int need_eval, cfg_cond_value_t *prv)
+{
+  int j;
+  unsigned char *buf;
+
+  j = raw_i;
+  while (isdigit(raw.s[j])) j++;
+  if (!need_eval) {
+    raw_i = j;
+    return 0;
+  }
+
+  XALLOCAZ(buf, j - raw_i + 2);
+  memcpy(buf, raw.s + raw_i, j - raw_i);
+  raw_i = j;
+  XMEMZERO(prv, 1);
+  prv->tag = CV_LONG;
+  errno = 0;
+  prv->l.val = strtoll(buf, 0, 10);
+  if (errno) {
+    fprintf(stderr, "%d: value is too large\n", lineno);
+    return -1;
+  }
+  return 0;
+}
+
+static int
+parse_ident(int need_eval, cfg_cond_value_t *prv)
+{
+  int j = raw_i, i;
+  unsigned char *idbuf = 0;
+
+  while (isalnum(raw.s[j]) || raw.s[j] == '_') j++;
+  XALLOCAZ(idbuf, j - raw_i + 2);
+  memcpy(idbuf, raw.s + raw_i, j - raw_i);
+  raw_i = j;
+
+  if (!need_eval) return 0;
+  for (i = 0; i < ncond_var; i++) {
+    if (!strcmp(idbuf, cond_vars[i].name)) break;
+  }
+  if (i >= ncond_var) {
+    fprintf(stderr, "%d: variable `%s' does not exist\n", lineno, idbuf);
+    return -1;
+  }
+  copy_value(prv, &cond_vars[i].val);
+  return 0;
+}
+
+static int
+parse_primary_expr(int need_eval, cfg_cond_value_t *prv)
+{
+  int r;
+
+  while (raw.s[raw_i] > 0 && raw.s[raw_i] <= ' ') raw_i++;
+  if (raw.s[raw_i] == '(') {
+    raw_i++;
+    if ((r = parse_conditional_expr(need_eval, prv)) < 0) return -1;
+    while (raw.s[raw_i] > 0 && raw.s[raw_i] <= ' ') raw_i++;
+    if (raw.s[raw_i] != ')') {
+      fprintf(stderr, "%d: ')' expected\n", lineno);
+      if (need_eval) free_value(prv);
+      return -1;
+    }
+    raw_i++;
+    return r;
+  } else if (raw.s[raw_i] == '\"') {
+    return parse_string(need_eval, prv);
+  } else if (isalpha(raw.s[raw_i]) || raw.s[raw_i] == '_') {
+    return parse_ident(need_eval, prv);
+  } else if (isdigit(raw.s[raw_i])) {
+    return parse_number(need_eval, prv);
+  }
+  fprintf(stderr, "%d: primary expression expected\n", lineno);
+  return -1;
+}
+
+static int
+handle_conditional(FILE *f)
+{
+  int c;
+  unsigned char *cmd, *p;
+  struct cond_stack *new_item = 0;
+  cfg_cond_value_t val;
+
+  // initialize the raw buffer
+  raw.u = 0;
+  if (!raw.a) {
+    raw.a = 1024;
+    XCALLOC(raw.s, raw.a);
+  }
+  raw.s[raw.u] = 0;
+
+  // read the line into the buffer
+  while ((c = fgetc(f)) != EOF && c != '\n') {
+    if (!c) continue;
+    if (raw.u >= raw.a) {
+      raw.a *= 2;
+      XREALLOC(raw.s, raw.a);
+    }
+    raw.s[raw.u++] = c;
+  }
+  if (raw.u >= raw.a) {
+    raw.a *= 2;
+    XREALLOC(raw.s, raw.a);
+  }
+  raw.s[raw.u] = 0;
+
+  while (raw.u > 0 && isspace(raw.s[raw.u - 1])) raw.s[--raw.u] = 0;
+  raw_i = 0;
+  while (raw.s[raw_i] > 0 && raw.s[raw_i] <= ' ') raw_i++;
+
+  //fprintf(stderr, ">>%s\n", raw.s + raw_i);
+  if (raw.s[raw_i] != '@') {
+    fprintf(stderr, "%d: invalid conditional directive\n", lineno);
+    goto failure;
+  }
+  raw_i++;
+  while (raw.s[raw_i] > 0 && raw.s[raw_i] <= ' ') raw_i++;
+
+  XALLOCA(cmd, raw.u + 1);
+  p = cmd;
+  while (isalnum(raw.s[raw_i]) || raw.s[raw_i] == '_') *p++ = raw.s[raw_i++];
+  *p = 0;
+
+  if (!strcmp(cmd, "if")) {
+    XCALLOC(new_item, 1);
+    new_item->next = cond_stack;
+    cond_stack = new_item;
+    if (parse_expr(1, &val) < 0) goto failure;
+    //print_value(&val);
+    if (!output_enabled) {
+      cond_stack->was_true = 1;
+      output_enabled = cond_stack->output_enabled = 0;
+    } else if (convert_to_bool(&val)) {
+      cond_stack->was_true = 1;
+      output_enabled = cond_stack->output_enabled = 1;
+    } else {
+      output_enabled = cond_stack->output_enabled = 0;
+    }
+    free_value(&val);
+  } else if (!strcmp(cmd, "elif")) {
+    if (!cond_stack) {
+      fprintf(stderr, "%d: dangling elif\n", lineno);
+      goto failure;
+    }
+    if (cond_stack->was_else) {
+      fprintf(stderr, "%d: elif after else\n", lineno);
+      goto failure;
+    }
+    if (parse_expr(1, &val) < 0) goto failure;
+    if (!cond_stack->was_true && convert_to_bool(&val)) {
+      cond_stack->was_true = 1;
+      output_enabled = cond_stack->output_enabled = 1;
+    } else {
+      output_enabled = cond_stack->output_enabled = 0;
+    }
+    free_value(&val);
+  } else if (!strcmp(cmd, "else")) {
+    if (!cond_stack) {
+      fprintf(stderr, "%d: dangling else\n", lineno);
+      goto failure;
+    }
+    if (cond_stack->was_else) {
+      fprintf(stderr, "%d: else after else\n", lineno);
+      goto failure;
+    }
+    while (raw.s[raw_i] > 0 && raw.s[raw_i] <= ' ') raw_i++;
+    if (raw.s[raw_i]) {
+      fprintf(stderr, "%d: garbage after else\n", lineno);
+      goto failure;
+    }
+    cond_stack->was_else = 1;
+    if (!cond_stack->was_true) {
+      cond_stack->was_true = 1;
+      output_enabled = cond_stack->output_enabled = 1;
+    } else {
+      output_enabled = cond_stack->output_enabled = 0;
+    }
+  } else if (!strcmp(cmd, "endif")) {
+    if (!cond_stack) {
+      fprintf(stderr, "%d: dangling endif\n", lineno);
+      goto failure;
+    }
+    while (raw.s[raw_i] > 0 && raw.s[raw_i] <= ' ') raw_i++;
+    if (raw.s[raw_i]) {
+      fprintf(stderr, "%d: garbage after endif\n", lineno);
+      goto failure;
+    }
+    new_item = cond_stack;
+    cond_stack = cond_stack->next;
+    if (!cond_stack) output_enabled = 1;
+    else output_enabled = cond_stack->output_enabled;
+    xfree(new_item);
+  } else {
+    fprintf(stderr, "%d: invalid conditional compilation directive\n", lineno);
+    goto failure;
+  }
+
+  lineno++;
+  return 0;
+
+ failure:
+  lineno++;
+  return -1;
+}
 
 static int
 read_first_char(FILE *f)
@@ -349,7 +1008,9 @@ struct generic_section_config *
 parse_param(char const *path,
             void *vf,
             struct config_section_info *params,
-            int quiet_flag)
+            int quiet_flag,
+            int _ncond_var,
+            cfg_cond_var_t *_cond_vars)
 {
   struct generic_section_config  *cfg = NULL;
   struct generic_section_config **psect, *sect;
@@ -360,6 +1021,11 @@ parse_param(char const *path,
   char           varvalue[1024];
   int            c, sindex;
   FILE          *f = (FILE *) vf;
+
+  ncond_var = _ncond_var;
+  cond_vars = _cond_vars;
+  cond_stack = 0;
+  output_enabled = 1;
 
   /* found the global section description */
   for (sindex = 0; params[sindex].name; sindex++) {
@@ -387,6 +1053,14 @@ parse_param(char const *path,
     c = read_first_char(f);
     if (c == EOF || c == '[') break;
     if (c == '#' || c== '%' || c == ';') {
+      read_comment(f);
+      continue;
+    }
+    if (c == '@') {
+      if (handle_conditional(f) < 0) goto cleanup;
+      continue;
+    }
+    if (!output_enabled) {
       read_comment(f);
       continue;
     }
@@ -433,6 +1107,14 @@ parse_param(char const *path,
         read_comment(f);
         continue;
       }
+      if (c == '@') {
+        if (handle_conditional(f) < 0) goto cleanup;
+        continue;
+      }
+      if (!output_enabled) {
+        read_comment(f);
+        continue;
+      }
       if (read_variable(f, varname, sizeof(varname),
                         varvalue, sizeof(varvalue)) < 0) goto cleanup;
       if (!quiet_flag) {
@@ -440,6 +1122,11 @@ parse_param(char const *path,
       }
       if (copy_param(sect, sinfo, varname, varvalue) < 0) goto cleanup;
     }
+  }
+
+  if (cond_stack) {
+    fprintf(stderr, "%d: unclosed conditional compilation\n", lineno);
+    goto cleanup;
   }
 
   fflush(stdout);
@@ -459,6 +1146,10 @@ param_make_global_section(struct config_section_info *params)
   int sindex;
   struct config_parse_info *sinfo;
   struct generic_section_config *cfg;
+
+  ncond_var = 0;
+  cond_vars = 0;
+  output_enabled = 1;
 
   for (sindex = 0; params[sindex].name; sindex++) {
     if (!strcmp(params[sindex].name, "global")) break;
