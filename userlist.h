@@ -4,7 +4,7 @@
 #ifndef __USERLIST_H__
 #define __USERLIST_H__
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -118,6 +118,7 @@ enum
     USERLIST_T_CITY_EN,
     USERLIST_T_COUNTRY,
     USERLIST_T_COUNTRY_EN,
+    USERLIST_T_LOCATION,
 
     USERLIST_LAST_TAG,
   };
@@ -148,6 +149,7 @@ enum
     USERLIST_A_SERIAL,
     USERLIST_A_READ_ONLY,
     USERLIST_A_PRIV_LEVEL,
+    USERLIST_A_NEVER_CLEAN,
 
     USERLIST_LAST_ATTN,
   };
@@ -166,32 +168,34 @@ enum
     USERLIST_NN_SHOW_EMAIL,     /* 8 */
     USERLIST_NN_USE_COOKIES,    /* 9 */
     USERLIST_NN_READ_ONLY,      /* 10 */
-    USERLIST_NN_TIMESTAMPS,     /* 11 */
-    USERLIST_NN_REG_TIME,       /* 12 */
-    USERLIST_NN_LOGIN_TIME,     /* 13 */
-    USERLIST_NN_ACCESS_TIME,    /* 14 */
-    USERLIST_NN_CHANGE_TIME,    /* 15 */
-    USERLIST_NN_PWD_CHANGE_TIME, /* 16 */
-    USERLIST_NN_MINOR_CHANGE_TIME, /* 17 */
+    USERLIST_NN_NEVER_CLEAN,    /* 11 */
+    USERLIST_NN_TIMESTAMPS,     /* 12 */
+    USERLIST_NN_REG_TIME,       /* 13 */
+    USERLIST_NN_LOGIN_TIME,     /* 14 */
+    USERLIST_NN_ACCESS_TIME,    /* 15 */
+    USERLIST_NN_CHANGE_TIME,    /* 16 */
+    USERLIST_NN_PWD_CHANGE_TIME, /* 17 */
+    USERLIST_NN_MINOR_CHANGE_TIME, /* 18 */
     USERLIST_NN_TIMESTAMP_LAST = USERLIST_NN_MINOR_CHANGE_TIME,
-    USERLIST_NN_PASSWORDS,      /* 18 */
-    USERLIST_NN_REG_PASSWORD,   /* 19 */
-    USERLIST_NN_TEAM_PASSWORD,  /* 20 */
-    USERLIST_NN_GENERAL_INFO,   /* 21 */
-    USERLIST_NN_INST,           /* 22 */
-    USERLIST_NN_INST_EN,        /* 23 */
-    USERLIST_NN_INSTSHORT,      /* 24 */
-    USERLIST_NN_INSTSHORT_EN,   /* 25 */
-    USERLIST_NN_FAC,            /* 26 */
-    USERLIST_NN_FAC_EN,         /* 27 */
-    USERLIST_NN_FACSHORT,       /* 28 */
-    USERLIST_NN_FACSHORT_EN,    /* 29 */
-    USERLIST_NN_HOMEPAGE,       /* 30 */
-    USERLIST_NN_CITY,           /* 31 */
-    USERLIST_NN_CITY_EN,        /* 32 */
-    USERLIST_NN_COUNTRY,        /* 33 */
-    USERLIST_NN_COUNTRY_EN,     /* 34 */
-    USERLIST_NN_LAST = USERLIST_NN_COUNTRY_EN,
+    USERLIST_NN_PASSWORDS,      /* 19 */
+    USERLIST_NN_REG_PASSWORD,   /* 20 */
+    USERLIST_NN_TEAM_PASSWORD,  /* 21 */
+    USERLIST_NN_GENERAL_INFO,   /* 22 */
+    USERLIST_NN_INST,           /* 23 */
+    USERLIST_NN_INST_EN,        /* 24 */
+    USERLIST_NN_INSTSHORT,      /* 25 */
+    USERLIST_NN_INSTSHORT_EN,   /* 26 */
+    USERLIST_NN_FAC,            /* 27 */
+    USERLIST_NN_FAC_EN,         /* 28 */
+    USERLIST_NN_FACSHORT,       /* 29 */
+    USERLIST_NN_FACSHORT_EN,    /* 30 */
+    USERLIST_NN_HOMEPAGE,       /* 31 */
+    USERLIST_NN_CITY,           /* 32 */
+    USERLIST_NN_CITY_EN,        /* 33 */
+    USERLIST_NN_COUNTRY,        /* 34 */
+    USERLIST_NN_COUNTRY_EN,     /* 35 */
+    USERLIST_NN_LOCATION,       /* 36 */
+    USERLIST_NN_LAST = USERLIST_NN_LOCATION,
 
     USERLIST_NM_SERIAL = 0,              /* 0 */
     USERLIST_NM_FIRSTNAME,               /* 1 */
@@ -314,6 +318,7 @@ struct userlist_user
   int show_email;
   int default_use_cookies;
   int read_only;
+  int never_clean;
 
   unsigned char *login;
   unsigned char *name;
@@ -337,6 +342,7 @@ struct userlist_user
   unsigned char *city_en;
   unsigned char *country;
   unsigned char *country_en;
+  unsigned char *location;
 
   struct xml_tree *cookies;
   struct userlist_members *members[USERLIST_MB_LAST];
