@@ -47,6 +47,7 @@ struct prot_serve_status
   unsigned char standings_frozen;
   unsigned char score_system;
   unsigned char clients_suspended;
+  unsigned char is_virtual;
 };
 
 #define PROT_SERVE_PACKET_MAGIC (0xe342)
@@ -91,6 +92,10 @@ enum
     SRV_CMD_EDIT_RUN,
     SRV_CMD_TOGGLE_VISIBILITY,
     SRV_CMD_TOGGLE_BAN,
+    SRV_CMD_VIRTUAL_START,
+    SRV_CMD_VIRTUAL_STOP,
+    SRV_CMD_VIRTUAL_STANDINGS,
+    SRV_CMD_RESET_FILTER,
 
     SRV_CMD_LAST
   };
@@ -141,6 +146,7 @@ enum
     SRV_ERR_NO_PERMS,
     SRV_ERR_BAD_DURATION,
     SRV_ERR_BAD_STATUS,
+    SRV_ERR_ONLY_VIRTUAL,
 
     SRV_ERR_LAST
   };
