@@ -427,6 +427,7 @@ userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
     *p_locale_id = answer->locale_id;
     *p_login = xstrdup(answer->data);
     *p_name = xcalloc(1,answer->name_len + 1);
+    *p_contest_id = answer->contest_id;
     strcpy(*p_name,answer->data + answer->login_len + 1);
   }
   res = answer->reply_id;
@@ -441,6 +442,7 @@ userlist_clnt_team_cookie(struct userlist_clnt *clnt,
                           unsigned long long cookie,
                           int locale_id,
                           int *p_user_id,
+                          int *p_contest_id,
                           int *p_locale_id,
                           unsigned char **p_login,
                           unsigned char **p_name)
@@ -488,6 +490,7 @@ userlist_clnt_team_cookie(struct userlist_clnt *clnt,
   }
   *p_user_id = in->user_id;
   *p_locale_id = in->locale_id;
+  *p_contest_id = in->contest_id;
   *p_login = xstrdup(login_ptr);
   *p_name = xstrdup(name_ptr);
 
