@@ -70,13 +70,14 @@ struct compile_reply_bin_packet
 #define cvt_bin_to_host(x) (x)
 #define cvt_host_to_bin(x) (x)
 
-#define pkt_bin_align(v) (((v) + 1) & ~0xf)
-#define pkt_bin_align_addr(v) ((v) = (typeof(v)) pkt_bin_align((unsigned long) v))
+#define pkt_bin_align(v) (((v) + 0xf) & ~0xf)
+#define pkt_bin_align_addr(v,b) ((v) = (typeof(v)) ((unsigned long) b + pkt_bin_align((unsigned long) v - (unsigned long) b)))
 
 #define MAX_PACKET_SIZE   65535
 #define MAX_JUDGE_ID      65535
 #define MAX_CONTEST_ID    999999
 #define MAX_RUN_ID        999999
+#define MAX_LANG_ID       999999
 #define MAX_RUN_BLOCK_LEN 65535
 #define MAX_ENV_NUM       65535
 #define MAX_ENV_LEN       65535
