@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2001-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -57,6 +57,17 @@
  *   MD - fac_en
  *   ML - location
  *   Mp - printer_name
+ *  U - userinfo data
+ *   Ui - user id
+ *   Un - user name
+ *   Ue - email
+ *   Ul - login
+ *   Uz - password (in plain text)
+ *   UZ - team password (in plain text)
+ *  C - contest data
+ *  V - variable data
+ *   Vl - locale_id
+ *   Vu - url
  */
 
 int
@@ -65,7 +76,10 @@ sformat_message(char *buf, size_t maxsize, char const *format,
                 struct section_problem_data *prob_data,
                 struct section_language_data *lang_data,
                 struct section_tester_data *tester_data,
-                struct teamdb_export *team_data)
+                struct teamdb_export *team_data,
+                struct userlist_user *user_data,
+                struct contest_desc *cnts_data,
+                struct sformat_extra_data *extra_data)
 {
   char const *pf = format;
   char const *specstart = 0;
@@ -430,6 +444,120 @@ sformat_message(char *buf, size_t maxsize, char const *format,
             papp = "";
             if (team_data->user && team_data->user->printer_name)
               papp = team_data->user->printer_name;
+            break;
+          default:
+            abort();
+          }
+          pf++;
+        }
+        break;
+      case 'U':
+        /*
+         *   Ui - user id
+         *   Un - user name
+         *   Ul - login
+         *   Ue - email
+         *   Uz - password (in plain text)
+         *   UZ - team password (in plain text)
+         */
+        pf++;
+        switch (*pf) {
+        case 'i': case 'n': case 'l': case 'e':
+        case 'z': case 'Z':
+          break;
+        case 0:
+          is_invalid = 1;
+          break;
+        default:
+          is_invalid = 1;
+          pf++;
+          break;
+        }
+        if (!is_invalid && !user_data) is_invalid = 1;
+        if (!is_invalid) {
+          switch (*pf) {
+          case 'i':
+            need_int_format = 1;
+            int_format_value = user_data->id;
+            break;
+          case 'n':
+            papp = user_data->name;
+            if (!papp) papp = "";
+            break;
+          case 'l':
+            papp = user_data->login;
+            if (!papp) papp = "";
+            break;
+          case 'e':
+            papp = user_data->email;
+            if (!papp) papp = "";
+            break;
+          case 'z':
+            if (user_data->register_passwd)
+              papp = user_data->register_passwd->b.text;
+            if (!papp) papp = "";
+            break;
+          case 'Z':
+            if (user_data->team_passwd)
+              papp = user_data->team_passwd->b.text;
+            if (!papp) papp = "";
+            break;
+          default:
+            abort();
+          }
+          pf++;
+        }
+        break;
+      case 'C':
+        pf++;
+        switch (*pf) {
+          // FIXME: list of `C' formats here
+        case 0:
+          is_invalid = 1;
+          break;
+        default:
+          is_invalid = 1;
+          pf++;
+          break;
+        }
+        if (!is_invalid && !cnts_data) is_invalid = 1;
+        if (!is_invalid) {
+          switch (*pf) {
+          // FIXME: list of `C' formats here
+          default:
+            abort();
+          }
+          pf++;
+        }
+        break;
+      case 'V':
+        /*
+         *   Vl - locale_id
+         *   Vu - url
+         */
+        pf++;
+        switch (*pf) {
+        case 'l':
+        case 'u':
+          break;
+        case 0:
+          is_invalid = 1;
+          break;
+        default:
+          is_invalid = 1;
+          pf++;
+          break;
+        }
+        if (!is_invalid && !extra_data) is_invalid = 1;
+        if (!is_invalid) {
+          switch (*pf) {
+          case 'l':
+            need_int_format = 1;
+            int_format_value = extra_data->locale_id;
+            break;
+          case 'u':
+            papp = extra_data->url;
+            if (!papp) papp = "";
             break;
           default:
             abort();
