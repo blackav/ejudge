@@ -586,6 +586,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
       if (run_score == -1) run_score = 0;
       switch (status) {
       case RUN_OK:
+        full_sol[tind][pind] = 1;
       case RUN_PARTIAL:
         prob_score[tind][pind] = run_score;
         att_num[tind][pind]++;
