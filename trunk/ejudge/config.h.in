@@ -34,6 +34,9 @@
 /* the default path to the userlist-serve socket */
 #undef EJUDGE_SOCKET_PATH
 
+/* the default path to the super-server control socket */
+#undef EJUDGE_SUPER_SERVE_SOCKET
+
 /* the path to the ejudge configuration directory */
 #undef EJUDGE_CONF_DIR
 
