@@ -1,3 +1,295 @@
+2002-11-09  Alexander Chernov  <cher@ispras.ru>
+
+	* users.c: new static variable `self_url';
+	(set_locale_by_id) a new function;
+	(initialize) self-reference URL is constructed and stored in
+	  `self_url';
+	(main) the needed locale is set with `set_locale_by_id' call;
+	  new parameters passed to `userlist_clnt_list_users'.
+
+	* userlist_xml.c:
+	(parse_passwd) all password encoding methods are now supported.
+
+	* userlist_proto.h: new requests: ULS_MAP_CONTEST, ULS_ADMIN_PROCESS,
+	  ULS_GENERATE_TEAM_PASSWORDS, ULS_TEAM_LOGIN, ULS_TEAM_CHECK_COOKIE,
+	  ULS_GET_CONTEST_NAME, ULS_TEAM_SET_PASSWD;
+	new reply: ULS_CONTEST_MAPPED;
+	new error codes: ULS_ERR_IPC_FAILURE, ULS_ERR_IP_NOT_ALLOWED,
+	  ULS_ERR_CANNOT_PARTICIPATE;
+	new enumeration for user invisible and banned status;
+	(struct userlist_user_short) a user information to share with `serve';
+	(struct userlist_table) a user information structure to share with
+	  `serve';
+	(struct userlist_pk_list_users) new fields added;
+	(struct userlist_pk_map_contest) new request structure;
+	(struct userlist_pk_contest_mapped) new reply structure.
+
+	* userlist_proto.c: new error message texts added.
+
+	* userlist_clnt.h: 
+	(userlist_clnt_team_login) a new prototype;
+	(userlist_clnt_team_cookie) a new prototype;
+	(userlist_clnt_team_set_passwd) a new prototype;
+	(userlist_clnt_list_users) new parameters added;
+	(userlist_clnt_admin_process) a new prototype;
+	(userlist_clnt_map_contest) a new prototype;
+	(userlist_clnt_generate_team_passwd) a new prototype.
+
+	* userlist_clnt.c: 
+	(userlist_clnt_team_login) a new function;
+	(userlist_clnt_team_cookie) a new function;
+	(userlist_clnt_set_passwd) a new function;
+	(userlist_clnt_map_contest) a new function;
+	(userlist_clnt_list_users) more parameters added;
+	(userlist_clnt_admin_process) a new function;
+	(userlist_clnt_generate_team_passwd) a new function.
+
+	* userlist_cfg.h: (struct userlist_cfg_admin_proc) new structure;
+	(struct userlist_cfg) new field `admin_processes'.
+
+	* userlist_cfg.c: <pwd.h> is included;
+	new tags <admin_processes>, <admin_process> are supported;
+	new attributes "user", "path";
+	(err_dupl_elem) new function;
+	(err_text_not_allowed) new function;
+	(err_attr_not_allowed) new function;
+	(err_empty_elem) new function;
+	(err_nested_not_allowed) new function;
+	(err_invalid_elem) new function;
+	(err_invalid_attn) new function;
+	(handle_final_tag) rewritten with use of the new functions;
+	(parse_processes) new function;
+	(userlist_cfg_parse) <processes> element is handled.
+
+	* userlist.h:
+	enum for invisible and banned user contest status is defined;
+	(struct userlist_contest) new field `flags'.
+
+2002-11-08  Alexander Chernov  <cher@ispras.ru>
+
+	* userlist-server.c: IPC-related header files are included;
+	"version.h", "sha.h", "misctext.h" are included;
+	new static variable "program_name" to store the program name;
+	new static variable `contest_extras' to store the extra info about
+	  contests;
+	support for contest users table sharing between server and client is
+	  implemented;
+	(attach_contest_extra) a new function;
+	(detach_contest_extra) a new function;
+	(lock_userlist_table) a new function;
+	(unlock_userlist_table) a new function;
+	(update_userlist_table) a new function;
+	(disconnect_client) contest shared info is detached;
+	(graceful_exit) now is a simple function, not a signal handler;
+	  it also releases the IPC objects;
+	(interrupt_signal) a new function: interrupt signal handler;
+	(make_sha1_ascii) a new function;
+	(passwd_convert_to_internal) a new function;
+	(passwd_check) a new function;
+	(login_user) internal representation of the password is used;
+	  passwd_check is used instead of strcmp;
+	(login_team_user) a new function;
+	(login_team_cookie) a new function;
+	(set_user_info) all the contests, which are OK for the user, regenerate
+	  teamdb tables;
+	(set_password) `info' are replaced with `err' in many places;
+	  a user-provided password is stored in sha1 format;
+	(team_set_password) a new function;
+	(do_list_users) arguments are changed;
+	  more checking added;
+	(cmd_map_contest) a new function;
+	(cmd_admin_process) a new function;
+	(do_generate_team_passwd) a new function;
+	(cmd_generate_team_passwd) a new function;
+	(cmd_get_contest_name) a new function;
+	(process_packet) many new valid packets are added;
+	(do_work) signal disposition is slightly changed;
+	  root clients are never detached.
+
+	* teamdb.h: (teamdb_open_client) a new prototype;
+	(teamdb_refresh) a new prototype;
+	(teamdb_regenerate_passwords) a new prototype.
+
+	* teamdb.c: support for userlist-server mode is implemented;
+	"userlist_clnt.h", "userlist_proto.h" are included;
+	a number of system headers is included;
+	several static variables to hold userlist-server related info;
+	(lock_userlist_table) a new function;
+	(unlock_userlist_table) a new function;
+	(teamdb_refresh) a new function;
+	(teamdb_open_client) a new function;
+	(teamdb_regenerate_passwords) a new function;
+	all the other function are modified to support the new client mode.
+
+	* team.c:
+	"contests.h", "userlist_proto.h", "userlist_clnt.h" included;
+	new global parameters: contest_id, socket_path, contests_path;
+	(fix_string) function to check a string for valid chars;
+	(set_defaults) if `contest_id' is set, the program works in the
+	  new mode, which includes userlist-server;
+	(parse_client_ip) a new function;
+	(initialize) if `contest_id' is set, the contests database is parsed;
+	(check_passwd) new userlist-server mode is supported;
+	(change_passwd_if_asked) new userlist-server mode is supported;
+	(main) contest IP limitations are checked;
+	  new userlist-server mode is supported.
+
+	* serve.c:
+	(judge_generate_passwords) a new function, which generates random
+	  team passwords for the current contest;
+	GENPASSWD command is handled;
+	(do_loop) team database is refreshed from the server on each
+	  server cycle;
+	(main) if `contest_id' is set, team database is opened in client mode.
+
+	* register.c: new static variable `self_url';
+	(initialize) self referenced url is constructed;
+	(logout_page) messages are changed to use `self_url';
+	(registration_is_complete) `self_url' is used;
+	(main) all the environment is printed (in debug mode).
+
+	* prepare.h: "contests.h" is included;
+	new global parameters: `contest_id', `socket_path', `contests_path';
+	new global variables: `contests', `cur_contest'.
+
+	* prepare.c:
+	new global variables: `contests' - the list of all contests;
+	  `cur_contest' the current contest;
+	global parameters contest_id, socket_path, contests_path handled;
+	(set_defaults) if global.contest_id is set (which means new client
+	  mode, socket_path and contests_path must be set);
+	  if global.contest_id == 0, old compatibility mode is supported.
+
+	* master.c: "misctext.h" is included;
+	(print_regenerate_button) a new function to print
+	  "Regenerate user password" button;
+	(confirm_regenerate_if_asked) a new function to print confirmation
+	  dialog;
+	(do_generate_passwords_if_asked) a new function;
+	(main) support for user passwords regeneration is added.
+
+	* makefile: default installation path changed;
+	lists of .c files necessary for compile, serve, submit, clar, run,
+	  mkpasswd, team, send-passwords, userlist-server are changed;
+	no longer compiled: submit, clar, mkpasswd, make-teamdb,
+	  make-teamdb-inet, send-passwords;
+	require expat: compile, run, serve, submit, clar, team.
+
+	* ejudge.ru_RU.KOI8-R.po: new messages added.
+
+2002-11-06  Alexander Chernov  <cher@ispras.ru>
+
+	* users.c: (main) the messages are slightly changed.
+
+	* userlist_xml.c: element tag <team_password> is added;
+	(userlist_node_alloc) `tag' field of the created node is filled;
+	(node_free) freeing of `passwd' removed;
+	(parse_passwd) changed to support the new XML tree;
+	(do_parse_user) new element tag <team_password> is handled,
+	  handling of <password> is updated.
+
+	* userlist_cfg.c: first attribute constant now has number 1.
+
+	* userlist.h: new element <team_password> added;
+	new structure `struct userlist_passwd';
+	struct `userlist_user' now contains two passwords: register_passwd and
+	  team_passwd, which are references to the subnodes.
+
+	* userlist-server.c:
+	team participation status strings are now localized;
+	(create_newuser) user password XML tree generation changed;
+	  e-mail is sent to the user in the requested language;
+	(login_user) password checking is updated due to changes in the
+	  XML tree structure;
+	(set_password) updated due to changes in the XML tree structure;
+	(do_list_users) the list of the users is generated in the requested
+	  language.
+
+	* register.c:
+	"Pending" status is printed in magenta instead of yellow;
+	(change_password) invalid closing tag is fixed.
+
+	* makefile: rule `install' added.
+
+	* files.make: users.c file added
+
+	* ejudge.ru_RU.KOI8-R.po: some translations are fixed
+
+2002-11-05  Alexander Chernov  <cher@ispras.ru>
+
+	* userlist_proto.h: ULS_LIST_USERS command is added;
+	`struct userlist_pk_list_users' is added.
+
+	* userlist_clnt.h: 
+	(userlist_list_users) prototype added.
+
+	* userlist_clnt.c:
+	(userlist_list_users) a new function to request the list of users,
+	  registered for a particular contest.
+
+	* userlist-server.c:
+	(create_newuser) incoming packed is strictly validated for size match;
+	  some logging is added;
+	  user_map is extended when full;
+	(create_cookie) debugging fprintf is removed;
+	(do_list_users) a new function to print the list of users, registered
+	  for a particular contest;
+	(list_users) a new function to handle ULS_LIST_USERS request;
+	(process_packet) ULS_LIST_USERS request is handled.
+
+	* makefile: new utility `users' is added;
+	`submit' dependency rule is fixed.
+
+	* contests.h: Element tags <header_file>, <footer_file> are added.
+
+	* contests.c:
+	Two new element tags: header_file, footer_file are added;
+	(handle_final_tag) copied here from userlist_cfg.c;
+	(parse_contest) <name> tag is parsed with handle_final_tag;
+	  <header_file>, <footer_file> tags are parsed.
+
+	* users.c: Initial revision
+
+	* .cvsignore: *** empty log message ***
+
+2002-11-04  Alexander Chernov  <cher@ispras.ru>
+
+	* userlist_xml.c, userlist_proto.h, userlist_clnt.h, userlist_clnt.c:
+	an initial version is completed.
+
+	* userlist_cfg.h: *** empty log message ***
+
+	* userlist_cfg.c, userlist.h, userlist.c:
+	an initial version is completed.
+
+	* makefile: `register' file list corrected;
+	`userlist-server' file list corrected;
+	`register.o' dependencies corrected;
+	`userlist-server.o' dependencies corrected;
+	`expat_iface.o' dependencies corrected.
+
+	* contests.h, contests.c, userlist-server.c, register.c:
+	an initial version is completed.
+
+	* expat_iface.c:
+	(xml_unlink_node) a new function to remove an xml_tree node from the
+	  tree;
+	(xml_link_node_first) a new function to add a new xml_tree node to
+	  the front of the other node's children list;
+	(xml_link_node_last) a new function to add a new xml_tree node to
+	  the back of the other node's children list.
+
+	* expat_iface.h: 
+	(xml_unlink_node) new function prototype;
+	(xml_link_node_first) new function prototype;
+	(xml_link_node_last) new function prototype.
+
+	* files.make: userlist_proto.c is added.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* userlist_proto.c: Initial revision
+
 2002-10-28  Alexander Chernov  <cher@ispras.ru>
 
 	* userlist_clnt.c: in progress...
