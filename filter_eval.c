@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #define YYSTYPE struct filter_tree *
@@ -49,6 +45,7 @@ do_eval(struct filter_env *env,
 {
   int c;
   struct filter_tree r1, r2;
+  int lang_id, prob_id, user_id;
 
   memset(res, 0, sizeof(res));
   switch (t->kind) {
@@ -154,7 +151,12 @@ do_eval(struct filter_env *env,
     case TOK_PROB:
       res->kind = TOK_STRING_L;
       res->type = FILTER_TYPE_STRING;
-      res->v.s = envdup(env, env->probs[env->rentries[r1.v.i].problem]->short_name);
+      prob_id = env->rentries[r1.v.i].problem;
+      if (!prob_id || !env->probs[prob_id]) {
+        res->v.s = envdup(env, "");
+      } else {
+        res->v.s = envdup(env, env->probs[prob_id]->short_name);
+      }
       break;
     case TOK_UID:
       res->kind = TOK_INT_L;
@@ -164,12 +166,22 @@ do_eval(struct filter_env *env,
     case TOK_LOGIN:
       res->kind = TOK_STRING_L;
       res->type = FILTER_TYPE_STRING;
-      res->v.s = envdup(env, teamdb_get_login(env->rentries[r1.v.i].team));
+      user_id = env->rentries[r1.v.i].team;
+      if (!user_id) {
+        res->v.s = envdup(env, "");
+      } else {
+        res->v.s = envdup(env, teamdb_get_login(user_id));
+      }
       break;
     case TOK_LANG:
       res->kind = TOK_STRING_L;
       res->type = FILTER_TYPE_STRING;
-      res->v.s = envdup(env, env->langs[env->rentries[r1.v.i].language]->short_name);
+      lang_id = env->rentries[r1.v.i].language;
+      if (!lang_id || !env->langs[lang_id]) {
+        res->v.s = envdup(env, "");
+      } else {
+        res->v.s = envdup(env, env->langs[lang_id]->short_name);
+      }
       break;
     case TOK_RESULT:
       res->kind = TOK_RESULT_L;
@@ -237,7 +249,11 @@ do_eval(struct filter_env *env,
   case TOK_CURPROB:
     res->kind = TOK_STRING_L;
     res->type = FILTER_TYPE_STRING;
-    res->v.s = envdup(env, env->probs[env->cur->problem]->short_name);
+    if (!env->cur->problem || !env->probs[env->cur->problem]) {
+      res->v.s = envdup(env, "");
+    } else {
+      res->v.s = envdup(env, env->probs[env->cur->problem]->short_name);
+    }
     break;
   case TOK_CURUID:
     res->kind = TOK_INT_L;
@@ -247,12 +263,20 @@ do_eval(struct filter_env *env,
   case TOK_CURLOGIN:
     res->kind = TOK_STRING_L;
     res->type = FILTER_TYPE_STRING;
-    res->v.s = envdup(env, teamdb_get_login(env->cur->team));
+    if (!env->cur->team) {
+      res->v.s = envdup(env, "");
+    } else {
+      res->v.s = envdup(env, teamdb_get_login(env->cur->team));
+    }
     break;
   case TOK_CURLANG:
     res->kind = TOK_STRING_L;
     res->type = FILTER_TYPE_STRING;
-    res->v.s = envdup(env, env->langs[env->cur->language]->short_name);
+    if (!env->cur->language || !env->langs[env->cur->language]) {
+      res->v.s = envdup(env, "");
+    } else {
+      res->v.s = envdup(env, env->langs[env->cur->language]->short_name);
+    }
     break;
   case TOK_CURRESULT:
     res->kind = TOK_RESULT_L;
