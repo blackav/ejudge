@@ -110,7 +110,7 @@ MTI_OBJECTS = ${MTI_CFILES:.c=.o}
 SP_CFILES = send-passwords.c inetdb.c teamdb.c pathutl.c base64.c ${ARCH}/fileutl.c
 SP_OBJECTS = ${SP_CFILES:.c=.o}
 
-UL_CFILES = userlist-server.c userlist_cfg.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c pathutl.c userlist_xml.c userlist.c userlist_clnt.c expat_iface.c
+UL_CFILES = userlist-server.c userlist_cfg.c utf8_utils.c nls.c nls_cp1251.c nls_koi8-r.c nls_utf8.c nls_iso8859-5.c nls_cp866.c pathutl.c userlist_xml.c userlist.c userlist_clnt.c expat_iface.c base64.c
 UL_OBJECTS = ${UL_CFILES:.c=.o}
 
 TARGETS=compile$(EXESFX) serve$(EXESFX) submit$(EXESFX) run$(EXESFX) master$(EXESFX) clar$(EXESFX) mkpasswd$(EXESFX) team$(EXESFX) register${EXESFX} make-teamdb${EXESFX} make-teamdb-inet${EXESFX} send-passwords${EXESFX} userlist-server${EXESFX}
@@ -171,7 +171,7 @@ clean:
 	-rm -f *.o *~ $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog
 
 deps:
-	$(CC) $(CFLAGS) -MM $(CFILES)
+	$(CC) $(CFLAGS) -MM -MG $(CFILES)
 
 # experimental
 version.c: revinfo $(HFILES) $(CFILES)
@@ -215,40 +215,57 @@ locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.KOI8-R.po ru_all
 
 # automatically generated dependencies
 base64.o: base64.c base64.h pathutl.h
-cgi.o: cgi.c cgi.h
+cgi.o: cgi.c cgi.h pathutl.h
 clar.o: clar.c clarlog.h prepare.h pathutl.h parsecfg.h teamdb.h \
- misctext.h fileutl.h base64.h
+  misctext.h fileutl.h base64.h
 clarlog.o: clarlog.c clarlog.h teamdb.h unix/unix_fileutl.h pathutl.h
-clntutil.o: clntutil.c clntutil.h pathutl.h \
- fileutl.h unix/unix_fileutl.h misctext.h
+clntutil.o: clntutil.c clntutil.h version.h pathutl.h fileutl.h \
+  unix/unix_fileutl.h misctext.h protocol.h
 compile.o: compile.c prepare.h pathutl.h parsecfg.h fileutl.h
-html.o: html.c html.h misctext.h pathutl.h fileutl.h runlog.h \
- clarlog.h teamdb.h prepare.h parsecfg.h base64.h
-master.o: master.c cgi.h fileutl.h pathutl.h \
- clarlog.h base64.h parsecfg.h clntutil.h
+contests.o: contests.c contests.h expat_iface.h pathutl.h
+expat_iface.o: expat_iface.c expat_iface.h nls.h utf8_utils.h pathutl.h
+html.o: html.c html.h misctext.h pathutl.h fileutl.h runlog.h clarlog.h \
+  teamdb.h prepare.h parsecfg.h base64.h sformat.h
+idmap.o: idmap.c idmap.h
+inetdb.o: inetdb.c inetdb.h
+localdb.o: localdb.c localdb.h
+make-teamdb-inet.o: make-teamdb-inet.c inetdb.h
+make-teamdb.o: make-teamdb.c idmap.h localdb.h
+master.o: master.c cgi.h fileutl.h pathutl.h clarlog.h base64.h \
+  parsecfg.h clntutil.h /home/cher/c-sema/include/reuse/osdeps.h
 misctext.o: misctext.c misctext.h base64.h
 mkpasswd.o: mkpasswd.c teamdb.h
+nls.o: nls.c nls.h
+nls_cp1251.o: nls_cp1251.c nls.h
+nls_cp866.o: nls_cp866.c nls.h
+nls_iso8859-5.o: nls_iso8859-5.c nls.h
+nls_koi8-r.o: nls_koi8-r.c nls.h
+nls_utf8.o: nls_utf8.c nls.h
 parsecfg.o: parsecfg.c parsecfg.h pathutl.h
 pathutl.o: pathutl.c pathutl.h
-prepare.o: prepare.c prepare.h pathutl.h parsecfg.h fileutl.h \
- sformat.h teamdb.h
+prepare.o: prepare.c prepare.h pathutl.h parsecfg.h fileutl.h sformat.h \
+  teamdb.h
+register.o: register.c expat_iface.h pathutl.h clntutil.h cgi.h \
+  contests.h userlist_clnt.h userlist_proto.h misctext.h
 run.o: run.c prepare.h pathutl.h parsecfg.h runlog.h fileutl.h
 runlog.o: runlog.c runlog.h pathutl.h unix/unix_fileutl.h
-serve.o: serve.c runlog.h parsecfg.h teamdb.h prepare.h pathutl.h \
- html.h clarlog.h misctext.h base64.h fileutl.h
-submit.o: submit.c pathutl.h prepare.h parsecfg.h teamdb.h fileutl.h
-team.o: team.c cgi.h teamdb.h parsecfg.h pathutl.h \
- fileutl.h clntutil.h clarlog.h base64.h
-teamdb.o: teamdb.c teamdb.h pathutl.h base64.h
-idmap.o: idmap.c idmap.h
-localdb.o: localdb.c localdb.h
-inetdb.o: inetdb.c inetdb.h
-register.o: register.c cgi.h fileutl.h pathutl.h \
- base64.h parsecfg.h clntutil.h
 send-passwords.o: send-passwords.c inetdb.h teamdb.h fileutl.h
-make-teamdb.o: make-teamdb.c idmap.h localdb.h
-make-teamdb-inet.o: make-teamdb-inet.c inetdb.h
-sformat.o: sformat.c prepare.h pathutl.h parsecfg.h teamdb.h
-
+serve.o: serve.c runlog.h parsecfg.h teamdb.h prepare.h pathutl.h html.h \
+  clarlog.h protocol.h misctext.h base64.h fileutl.h
+sformat.o: sformat.c sformat.h prepare.h pathutl.h parsecfg.h teamdb.h
+sha.o: sha.c /home/cher/c-sema/include/ix86-linux/p_integral.h sha.h
+submit.o: submit.c pathutl.h prepare.h parsecfg.h teamdb.h fileutl.h
+team.o: team.c cgi.h teamdb.h parsecfg.h pathutl.h fileutl.h clntutil.h \
+  clarlog.h base64.h
+teamdb.o: teamdb.c teamdb.h pathutl.h base64.h
+userlist.o: userlist.c userlist.h expat_iface.h
+userlist-server.o: userlist-server.c userlist_cfg.h expat_iface.h \
+  userlist.h pathutl.h
+userlist_cfg.o: userlist_cfg.c userlist_cfg.h expat_iface.h pathutl.h
+userlist_clnt.o: userlist_clnt.c userlist_clnt.h pathutl.h \
+  userlist_proto.h
+userlist_xml.o: userlist_xml.c nls.h utf8_utils.h userlist.h \
+  expat_iface.h pathutl.h
+utf8_utils.o: utf8_utils.c nls.h
 unix/fileutl.o: unix/fileutl.c fileutl.h unix/unix_fileutl.h pathutl.h
-win32/fileutl.o: win32/fileutl.c fileutl.h pathutl.h
+win32/fileutl.o: win32/fileutl.c fileutl.h logger.h pathutl.h osdeps.h xalloc.h
