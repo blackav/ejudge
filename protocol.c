@@ -53,12 +53,16 @@ static unsigned char const * const error_map[] =
   _("user's runs downloading disabled"),
   _("user tries to download runs too often"),
   _("action is temporarily unavailable"),
+  _("the contest is already started"),
   _("the contest is not started"),
   _("the contest is already finished"),
+  _("the contest is not finished"),
   _("the user quota is exceeded"),
   _("message subject is too long"),
   _("duplicated submission"),
   _("permission denied"),
+  _("invalid contest duration"),
+  _("invalid run status"),
 };
 #undef _
 
