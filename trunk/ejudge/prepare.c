@@ -96,7 +96,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(disable_testing, "d"),
 
   GLOBAL_PARAM(charset, "s"),
-  GLOBAL_PARAM(standings_charset, "s"),
+  //GLOBAL_PARAM(standings_charset, "s"),
 
   GLOBAL_PARAM(root_dir, "s"),
   GLOBAL_PARAM(conf_dir, "s"),
@@ -1501,10 +1501,13 @@ set_defaults(int mode)
                "%s", DFLT_G_CHARSET);
       info("global.charset set to %s", global->charset);
     }
+    /*
     if (!(global->charset_ptr = nls_lookup_table(global->charset))) {
       err("global.charset `%s' is invalid", global->charset);
       return -1;
     }
+    */
+    /*
     if (!global->standings_charset[0]) {
       snprintf(global->standings_charset, sizeof(global->standings_charset),
                "%s", global->charset);
@@ -1514,6 +1517,7 @@ set_defaults(int mode)
       err("global.standings_charset `%s' is invalid", global->standings_charset);
       return -1;
     }
+    */
     if (!global->standings_file_name[0]) {
       snprintf(global->standings_file_name,sizeof(global->standings_file_name),
                "%s", DFLT_G_STANDINGS_FILE_NAME);
