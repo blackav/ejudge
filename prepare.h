@@ -190,6 +190,12 @@ struct section_tester_data
   int abstract;                 /* is this tester abstract */
   path_t super;                 /* name of the supertester */
 
+  int no_core_dump;             /* disable core dumps */
+  path_t kill_signal;           /* the signal to kill processes */
+  int max_stack_size;           /* max size of the stack */
+  int max_data_size;            /* max size of the data */
+  int max_vm_size;              /* max size of the virtual memory */
+
   path_t server_root_dir;
   path_t server_var_dir;
   path_t server_run_dir;
