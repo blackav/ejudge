@@ -456,9 +456,10 @@ run_get_status(int runid)
 }
 
 int
-run_get_param(int runid, int *ploc, int *plang, int *pprob, int *pstat)
+run_get_param(int runid, int *pt,int *ploc, int *plang, int *pprob, int *pstat)
 {
   if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
+  if (pt)    *pt    = runs[runid].team;
   if (ploc)  *ploc  = runs[runid].locale_id;
   if (plang) *plang = runs[runid].language;
   if (pprob) *pprob = runs[runid].problem;
