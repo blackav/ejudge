@@ -137,4 +137,40 @@ int
 userlist_clnt_generate_team_passwd(struct userlist_clnt *clnt,
                                    int contest_id, int out_fd);
 
+
+int
+userlist_clnt_list_all_users(struct userlist_clnt *clnt,
+                             int contest_id,
+                             unsigned char **p_info);
+
+int
+userlist_clnt_change_registration(struct userlist_clnt *clnt,
+                                  int user_id,
+                                  int contest_id,
+                                  int new_status,
+                                  int flags_cmd,
+                                  unsigned int new_flags);
+
+int
+userlist_clnt_edit_field(struct userlist_clnt *clnt,
+                         int user_id,
+                         int role,
+                         int pers,
+                         int field,
+                         unsigned char const *value);
+
+int
+userlist_clnt_delete_field(struct userlist_clnt *clnt,
+                           int user_id,
+                           int role,
+                           int pers,
+                           int field);
+
+int
+userlist_clnt_add_field(struct userlist_clnt *clnt,
+                        int user_id,
+                        int role,
+                        int pers,
+                        int field);
+
 #endif /* __USERLIST_CLNT_H__ */
