@@ -300,6 +300,7 @@ static struct config_parse_info section_language_params[] =
 
   LANGUAGE_PARAM(compile_dir, "s"),
   LANGUAGE_PARAM(compile_real_time_limit, "d"),
+  LANGUAGE_PARAM(compiler_env, "x"),
 
   { 0, 0, 0, 0 }
 };
@@ -1674,6 +1675,17 @@ set_defaults(int mode)
         info("language.%d.compile_real_time_limit is inherited from global (%d)", i, langs[i]->compile_real_time_limit);
       }
       ASSERT(langs[i]->compile_real_time_limit >= 0);
+    }
+
+    if (langs[i]->compiler_env) {
+      for (j = 0; langs[i]->compiler_env[j]; j++) {
+        langs[i]->compiler_env[j] = varsubst_heap(langs[i]->compiler_env[j], 1,
+                                                  section_global_params,
+                                                  section_problem_params,
+                                                  section_language_params,
+                                                  section_tester_params);
+        if (!langs[i]->compiler_env[j]) return -1;
+      }
     }
   }
 
