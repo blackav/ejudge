@@ -41,10 +41,40 @@ struct config_section_info
   void (*init_func)(struct generic_section_config *);
 };
 
+enum
+{
+  PARSECFG_T_VOID = 0,
+  PARSECFG_T_LONG,
+  PARSECFG_T_STRING,
+};
+
+typedef union cfg_cond_value
+{
+  int tag;
+  struct
+  {
+    int tag;
+    long long val;
+  } l;
+  struct
+  {
+    int tag;
+    unsigned char *str;
+  } s;
+} cfg_cond_value_t;
+
+typedef struct cfg_cond_var
+{
+  unsigned char *name;
+  cfg_cond_value_t val;
+} cfg_cond_var_t;
+
 struct generic_section_config *parse_param(char const *path,
                                            void *f, /* actually, FILE * */
                                            struct config_section_info *,
-                                           int quiet_flag);
+                                           int quiet_flag,
+                                           int nvar,
+                                           cfg_cond_var_t *pvar);
 struct generic_section_config *param_make_global_section(struct config_section_info *params);
 
 int    sarray_len(char **);
