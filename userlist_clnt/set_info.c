@@ -19,7 +19,7 @@
 
 int
 userlist_clnt_set_info(struct userlist_clnt *clnt,
-                       int uid, unsigned char *info)
+                       int uid, int contest_id, unsigned char *info)
 {
   struct userlist_pk_set_user_info *out;
   struct userlist_packet *in = 0;
@@ -36,6 +36,7 @@ userlist_clnt_set_info(struct userlist_clnt *clnt,
   memset(out, 0, out_size);
   out->request_id = ULS_SET_USER_INFO;
   out->user_id = uid;
+  out->contest_id = contest_id;
   strcpy(out->data, info);
   out->info_len = strlen(info);
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
