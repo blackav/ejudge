@@ -79,7 +79,8 @@ calc_kirov_score(unsigned char *outbuf,
                  size_t outsize,
                  struct run_entry *pe,
                  struct section_problem_data *pr,
-                 int attempts)
+                 int attempts,
+                 int *p_date_penalty)
 {
   int score, init_score, dpi, date_penalty = 0, score_mult = 1;
 
@@ -99,10 +100,11 @@ calc_kirov_score(unsigned char *outbuf,
   if (dpi < pr->dp_total) {
     date_penalty = pr->dp_infos[dpi].penalty;
   }
+  if (p_date_penalty) *p_date_penalty = date_penalty;
 
   // score_mult is applied to the initial score
   // run_penalty is subtracted, but date_penalty is added
-  score = init_score * score_mult - attempts * pr->run_penalty + date_penalty;
+  score = init_score * score_mult - attempts * pr->run_penalty + date_penalty + pe->score_adj;
   if (score > pr->full_score) score = pr->full_score;
   if (score < 0) score = 0;
   if (!outbuf) return score;
@@ -112,6 +114,7 @@ calc_kirov_score(unsigned char *outbuf,
     unsigned char run_penalty_str[64];
     unsigned char date_penalty_str[64];
     unsigned char final_score_str[64];
+    unsigned char score_adj_str[64];
 
     if (score_mult > 1) {
       snprintf(init_score_str, sizeof(init_score_str),
@@ -134,7 +137,14 @@ calc_kirov_score(unsigned char *outbuf,
       date_penalty_str[0] = 0;
     }
 
-    if (score_mult > 1 || run_penalty_str[0] || date_penalty_str[0]) {
+    if (pe->score_adj != 0) {
+      snprintf(score_adj_str, sizeof(score_adj_str), "%+d", pe->score_adj);
+    } else {
+      score_adj_str[0] = 0;
+    }
+
+    if (score_mult > 1 || run_penalty_str[0] || date_penalty_str[0]
+        || score_adj_str[0]) {
       snprintf(final_score_str, sizeof(final_score_str),
                "<b>%d</b>=", score);
     } else {
@@ -143,9 +153,9 @@ calc_kirov_score(unsigned char *outbuf,
                "<b>%d</b>", score);
     }
 
-    snprintf(outbuf, outsize, "%s%s%s%s",
+    snprintf(outbuf, outsize, "%s%s%s%s%s",
              final_score_str,
-             init_score_str, run_penalty_str, date_penalty_str);
+             init_score_str, run_penalty_str, date_penalty_str, score_adj_str);
     return score;
   }
 }
@@ -209,7 +219,7 @@ write_html_run_status(FILE *f, struct run_entry *pe,
   if (pe->score < 0 || !pr) {
     fprintf(f, "<td>%s</td>", _("N/A"));
   } else {
-    calc_kirov_score(score_str, sizeof(score_str), pe, pr, attempts);
+    calc_kirov_score(score_str, sizeof(score_str), pe, pr, attempts, 0);
     fprintf(f, "<td>%s</td>", score_str);
   }
 }
@@ -911,7 +921,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
     } else {
       if (run_score == -1) run_score = 0;
       if (pe->status == RUN_OK) {
-        score = calc_kirov_score(0, 0, pe, p, att_num[tind][pind]);
+        score = calc_kirov_score(0, 0, pe, p, att_num[tind][pind], 0);
         if (score > prob_score[tind][pind]) {
           prob_score[tind][pind] = score;
           if (!p->stand_hide_time) sol_time[tind][pind] = pe->timestamp;
@@ -925,7 +935,7 @@ do_write_kirov_standings(FILE *f, int client_flag,
         att_num[tind][pind]++;
         full_sol[tind][pind] = 1;
       } else if (pe->status == RUN_PARTIAL) {
-        score = calc_kirov_score(0, 0, pe, p, att_num[tind][pind]);
+        score = calc_kirov_score(0, 0, pe, p, att_num[tind][pind], 0);
         if (score > prob_score[tind][pind]) prob_score[tind][pind] = score;
         att_num[tind][pind]++;
         if (!full_sol[tind][pind]) tot_att[pind]++;
@@ -1948,7 +1958,7 @@ new_write_user_source_view(FILE *f, int uid, int rid)
 
   if ((src_flags=archive_make_read_path(src_path, sizeof(src_path),
                                         global->run_archive_dir,rid,0,1))<0){
-    return -SRV_ERR_SYSTEM_ERROR;
+    return -SRV_ERR_FILE_NOT_EXIST;
   }
   if (generic_read_file(&src, 0, &src_len, src_flags, 0, src_path, "") < 0) {
     return -SRV_ERR_SYSTEM_ERROR;
@@ -2004,7 +2014,7 @@ new_write_user_report_view(FILE *f, int uid, int rid)
 
   report_flags = archive_make_read_path(report_path, sizeof(report_path),
                                         archive_dir, rid, 0, 1);
-  if (report_flags < 0) return -SRV_ERR_SYSTEM_ERROR;
+  if (report_flags < 0) return -SRV_ERR_FILE_NOT_EXIST;
   if (generic_read_file(&report, 0, &report_len, report_flags,
                         0, report_path, "") < 0) {
     return -SRV_ERR_SYSTEM_ERROR;
