@@ -412,7 +412,7 @@ initialize(int argc, char *argv[])
   os_rDirName(fullname, dirname, PATH_MAX);
   os_rGetBasename(fullname, basename, PATH_MAX);
   if (strncmp(basename, "team", 4))
-    client_not_configured(0, "bad program name");
+    client_not_configured(0, "bad program name", 0);
   memset(progname, 0, sizeof(progname));
   strncpy(progname, basename, 4);
   namelen = 4;
@@ -473,7 +473,7 @@ initialize(int argc, char *argv[])
   } else if (strlen(basename) == namelen) {
     // second case
     if (cgi_contest_id <= 0) {
-      client_not_configured(0, "Contest ID is unknown");
+      client_not_configured(0, "Contest ID is unknown", 0);
       /* never get here */
     }
     snprintf(cfgname, sizeof(cfgname), "%s%s-%d.cfg", cfgdir, progname,
@@ -497,18 +497,18 @@ initialize(int argc, char *argv[])
 
   config = parse_param(cfgname, 0, params, 1);
   if (!config)
-    client_not_configured(0, "config file not parsed");
+    client_not_configured(0, "config file not parsed", 0);
 
   /* find global section */
   for (p = config; p; p = p->next) {
     if (!p->name[0] || !strcmp(p->name, "global"))
       break;
   }
-  if (!p) client_not_configured(0, "no global section");
+  if (!p) client_not_configured(0, "no global section", 0);
   global = (struct section_global_data *) p;
 
   if (!global->contests_dir[0]) {
-    client_not_configured(0, "contests are not defined");
+    client_not_configured(0, "contests are not defined", 0);
     /* never get here */
   }
   contests_set_directory(global->contests_dir);
@@ -516,19 +516,19 @@ initialize(int argc, char *argv[])
   /* verify contest_id from the configuration file */
   if (name_contest_id > 0) {
     if (global->contest_id > 0 && name_contest_id != global->contest_id) {
-      client_not_configured(0, "contest_id's do not match");
+      client_not_configured(0, "contest_id's do not match", 0);
       /* never get here */
     }
     global->contest_id = name_contest_id;
   } else if (cgi_contest_id > 0) {
     if (global->contest_id > 0 && cgi_contest_id != global->contest_id) {
-      client_not_configured(0, "contest_id's do not match");
+      client_not_configured(0, "contest_id's do not match", 0);
       /* never get here */
     }
     global->contest_id = cgi_contest_id;
   } else {
     if (global->contest_id <= 0) {
-      client_not_configured(0, "contest_id is not set");
+      client_not_configured(0, "contest_id is not set", 0);
       /* never get here */
     }
   }
@@ -541,7 +541,7 @@ initialize(int argc, char *argv[])
   if ((errcode = contests_get(global->contest_id, &cur_contest)) < 0) {
     err("contests_get failed: %d: %s", global->contest_id,
         contests_strerror(-errcode));
-    client_not_configured(0, "invalid contest");
+    client_not_configured(0, "invalid contest", 0);
     /* never get here */
   }
 
@@ -560,7 +560,7 @@ initialize(int argc, char *argv[])
   }
 
   if (set_defaults() < 0)
-    client_not_configured(global->charset, "bad defaults");
+    client_not_configured(global->charset, "bad defaults", 0);
 
   parse_client_ip();
 
@@ -685,9 +685,11 @@ display_enter_password(void)
   set_cookie_if_needed();
   if (a_name) {
     client_put_header(stdout, header_txt, 0, global->charset, 1,
+                      client_locale_id,
                       "%s - &quot;%s&quot;", _("Enter password"), a_name);
   } else {
     client_put_header(stdout, header_txt, 0, global->charset, 1,
+                      client_locale_id,
                       "%s", _("Enter password"));
   }
 
@@ -799,7 +801,7 @@ open_userlist_server(void)
     if (!(server_conn = userlist_clnt_open(global->socket_path))) {
       set_cookie_if_needed();
       client_put_header(stdout, header_txt, 0, global->charset, 1,
-                        _("Server is down"));
+                        client_locale_id, _("Server is down"));
       printf("<p>%s</p>",
              _("The server is down. Try again later."));
       client_put_footer(stdout, footer_txt);
@@ -813,7 +815,7 @@ permission_denied(void)
 {
   set_cookie_if_needed();
   client_put_header(stdout, header_txt, 0, global->charset, 1,
-                    _("Permission denied"));
+                    client_locale_id, _("Permission denied"));
   printf("<p>%s</p>",
          _("Permission denied. You have typed invalid login, invalid password,"
            " or do not have enough privileges."));
@@ -826,7 +828,7 @@ fatal_server_error(int r)
 {
   set_cookie_if_needed();
   client_put_header(stdout, header_txt, 0, global->charset, 1,
-                    _("Server error"));
+                    client_locale_id, _("Server error"));
   printf("<p>%s: %s</p>", _("Server error"),
          gettext(userlist_strerror(-r)));
   client_put_footer(stdout, footer_txt);
@@ -1012,7 +1014,7 @@ operation_status_page(int code, unsigned char const *msg)
   set_cookie_if_needed();
   if (code < 0) {
     client_put_header(stdout, header_txt, 0, global->charset, 1,
-                      _("Operation failed"));
+                      client_locale_id, _("Operation failed"));
     if (code != -1 || !msg) msg = protocol_strerror(-code);
     printf("<h2><font color=\"red\">%s</font></h2>\n", msg);
     print_refresh_button(_("Back"));
@@ -1245,7 +1247,7 @@ show_clar_if_asked(void)
 
   set_cookie_if_needed();
   client_put_header(stdout, header_txt, 0, global->charset, 1,
-                    _("Message view"));
+                    client_locale_id, _("Message view"));
   print_nav_buttons(_("Main page"), 0, 0);
   printf("<hr>\n");
   fflush(stdout);
@@ -1277,7 +1279,7 @@ request_source_if_asked(void)
 
   set_cookie_if_needed();
   client_put_header(stdout, header_txt, 0, global->charset, 1,
-                    _("Source view"));
+                    client_locale_id, _("Source view"));
   print_nav_buttons(_("Main page"), 0, 0);
   printf("<hr>");
   fflush(stdout);
@@ -1302,7 +1304,7 @@ action_standings(void)
 
   set_cookie_if_needed();
   client_put_header(stdout, header_txt, 0, global->charset, 1,
-                    _("Current virtual standings"));
+                    client_locale_id, _("Current virtual standings"));
   print_nav_buttons(_("Main page"), 0, 0);
   printf("<hr>");
   fflush(stdout);
@@ -1335,7 +1337,7 @@ request_report_if_asked(void)
 
   set_cookie_if_needed();
   client_put_header(stdout, header_txt, 0, global->charset, 1,
-                    _("Report view"));
+                    client_locale_id, _("Report view"));
   print_nav_buttons(_("Main page"), 0, 0);
   printf("<hr>");
   fflush(stdout);
@@ -1430,7 +1432,7 @@ action_logout(void)
   }
   set_cookie_if_needed();
   client_put_header(stdout, header_txt, 0, global->charset, 1,
-                    "%s", _("Good-bye"));
+                    client_locale_id, "%s", _("Good-bye"));
 
   s1[0] = 0;
   if (client_locale_id >= 0) {
@@ -1503,10 +1505,10 @@ main(int argc, char *argv[])
   if (!client_check_source_ip(global->allow_deny,
                               global->allow_from,
                               global->deny_from))
-    client_access_denied(global->charset);
+    client_access_denied(global->charset, 0);
 
   if (!contests_check_team_ip(global->contest_id, client_ip)) {
-    client_access_denied(global->charset);
+    client_access_denied(global->charset, 0);
   }
 
   /*
@@ -1521,7 +1523,8 @@ main(int argc, char *argv[])
   l10n_prepare(global->enable_l10n, global->l10n_dir);
   l10n_setlocale(client_locale_id);
 
-  if (authentificate() != 1) client_access_denied(global->charset);
+  if (authentificate() != 1)
+    client_access_denied(global->charset, client_locale_id);
 
   read_state_params();
 
@@ -1530,7 +1533,8 @@ main(int argc, char *argv[])
     server_lag = 0;
   }
   if (!client_check_server_status(global->charset,
-                                  global->status_file, server_lag)) {
+                                  global->status_file, server_lag,
+                                  client_locale_id)) {
     return 0;
   }
 
@@ -1573,17 +1577,20 @@ main(int argc, char *argv[])
 
   if (force_recheck_status) {
     client_check_server_status(global->charset,
-                               global->status_file, server_lag);
+                               global->status_file, server_lag,
+                               client_locale_id);
     force_recheck_status = 0;
   }
 
   set_cookie_if_needed();
   if (cur_contest->name) {
     client_put_header(stdout, header_txt, 0, global->charset, 1,
+                      client_locale_id,
                       "%s: &quot;%s&quot - &quot;%s&quot;",
                       _("Monitor"), client_team_name, cur_contest->name);
   } else {
     client_put_header(stdout, header_txt, 0, global->charset, 1,
+                      client_locale_id,
                       "%s: &quot;%s&quot", _("Monitor"), client_team_name);
   }
 
