@@ -603,8 +603,54 @@ userlist_clnt_pass_fd(struct userlist_clnt *clnt, int nfd, int *fds)
   out = alloca(out_size);
   out->id = ULS_PASS_FD;
   if ((r = send_packet(clnt, out_size, out)) < 0) return r;
-  // FIXME: obtain the confirmation?
   return do_userlist_clnt_pass_fd(clnt, nfd, fds);
+}
+
+/* FIXME: this function leaks file descriptors */
+int
+userlist_list_users(struct userlist_clnt *clnt,
+                    unsigned long origin_ip, int contest_id,
+                    int locale_id)
+{
+  struct userlist_pk_list_users *out = 0;
+  struct userlist_packet *in = 0;
+  int out_size = 0, in_size = 0, r;
+  int pp[2];
+  int pfd[2];
+  char b;
+
+  if (pipe(pp) < 0) {
+    err("pipe() failed: %s", os_ErrorMsg());
+    return -ULS_ERR_WRITE_ERROR;
+  }
+  pfd[0] = 1;
+  pfd[1] = pp[1];
+
+  out_size = sizeof(*out);
+  out = (struct userlist_pk_list_users*) alloca(out_size);
+  if (!out) return -ULS_ERR_OUT_OF_MEM;
+  memset(out, 0, sizeof(*out));
+  out->request_id = ULS_LIST_USERS;
+  out->origin_ip = origin_ip;
+  out->contest_id = contest_id;
+  out->locale_id = locale_id;
+
+  if ((r = userlist_clnt_pass_fd(clnt, 2, pfd)) < 0) return r;
+  if ((r = send_packet(clnt, out_size, out)) < 0) return r;
+  if ((r = receive_packet(clnt, &in_size, (void*) &in)) < 0) return r;
+  if (in_size != sizeof(*in)) {
+    xfree(in);
+    return -ULS_ERR_PROTOCOL;
+  }
+  r = in->id;
+  xfree(in);
+  if (r < 0) return r;
+
+  close(pfd[1]);
+  r = read(pp[0], &b, 1);
+  if (r > 0) return -ULS_ERR_PROTOCOL;
+  if (r < 0) return -ULS_ERR_READ_ERROR;
+  return 0;
 }
 
 /*
