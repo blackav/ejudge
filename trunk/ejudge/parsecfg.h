@@ -50,4 +50,9 @@ struct generic_section_config *parse_param(char const *path,
                                            struct config_section_info *,
                                            int quiet_flag);
 
+int    sarray_len(char **);
+char **sarray_merge_pf(char **, char **);
+char **sarray_free(char **);
+char **sarray_merge_arr(int, char ***);
+
 #endif /* __PARSECFG_H__ */
