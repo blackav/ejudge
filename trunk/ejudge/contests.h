@@ -22,4 +22,63 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "expat_iface.h"
+
+enum
+  {
+    CONTEST_CONTESTS = 1,
+    CONTEST_CONTEST,
+    CONTEST_ACCESS,
+    CONTEST_IP,
+    CONTEST_FIELD,
+    CONTEST_NAME,
+
+    CONTEST_LAST_TAG
+  };
+enum
+  {
+    CONTEST_A_ID = 1,
+    CONTEST_A_DEFAULT,
+    CONTEST_A_ALLOW,
+    CONTEST_A_DENY,
+    CONTEST_A_MANDATORY,
+    CONTEST_A_OPTIONAL,
+    CONTEST_A_SIZE,
+    CONTEST_A_MAXLENGTH,
+
+    CONTEST_LAST_ATTN
+  };
+
+struct contest_ip
+{
+  struct xml_tree b;
+  int allow;
+  unsigned int addr;
+  unsigned int mask;
+};
+
+struct contest_access
+{
+  struct xml_tree b;
+  int default_is_allow;
+};
+
+struct contest_desc
+{
+  struct xml_tree b;
+  int id;
+  unsigned char *name;
+  struct contest_access *access;
+};
+
+struct contest_list
+{
+  struct xml_tree b;
+
+  int id_map_size;
+  struct contest_desc **id_map;
+};
+
+struct contest_list *parse_contest_xml(char const *path);
+
 #endif /* __CONTESTS_H__ */
