@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,32 +17,44 @@
 
 #include "cr_serialize.h"
 #include "prepare.h"
-#include "pathutl.h"
 
-#include <reuse/osdeps.h>
-#include <reuse/logger.h>
+#include <windows.h>
+
+static HANDLE hMutex = 0;
 
 int
 cr_serialize_init(void)
 {
-  SWERR(("Not implemented"));
+  char name[128];
+
+  if (!global->cr_serialization_key) return 0;
+  if (hMutex) return 0;
+
+  snprintf(name, sizeof(name), "ejudge_%d", global->cr_serialization_key);
+  hMutex = CreateMutex(NULL, FALSE, name);
+  if (!hMutex) return -1;
+  return 0;
 }
 
 int
 cr_serialize_lock(void)
 {
-  SWERR(("Not implemented"));
+  if (!global->cr_serialization_key) return 0;
+  if (WaitForSingleObject(hMutex, INFINITE) == WAIT_FAILED) return -1;
+  return 0;
 }
 
 int
 cr_serialize_unlock(void)
 {
-  SWERR(("Not implemented"));
+  if (!global->cr_serialization_key) return 0;
+  if (!ReleaseMutex(hMutex)) return -1;
+  return 0;
 }
 
 /**
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "HANDLE")
  * End:
  */
