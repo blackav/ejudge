@@ -156,6 +156,7 @@ enum
     SRV_ERR_BAD_DURATION,
     SRV_ERR_BAD_STATUS,
     SRV_ERR_ONLY_VIRTUAL,
+    SRV_ERR_READONLY_RUN,
 
     SRV_ERR_LAST
   };
@@ -315,6 +316,7 @@ enum
     PROT_SERVE_RUN_HIDDEN_SET = 128,
     PROT_SERVE_RUN_TESTS_SET = 256,
     PROT_SERVE_RUN_SCORE_SET = 512,
+    PROT_SERVE_RUN_READONLY_SET = 1024,
   };
 
 struct prot_serve_pkt_run_info
@@ -332,6 +334,7 @@ struct prot_serve_pkt_run_info
   int is_hidden;
   int tests;
   int score;
+  int is_readonly;
   int user_login_len;
   unsigned char data[1];
 };
