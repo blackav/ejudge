@@ -58,6 +58,8 @@ int           server_total_clars;
 int           server_clars_disabled;
 int           server_team_clars_disabled;
 int           server_standings_frozen;
+int           server_score_system;
+int           server_clients_suspended;
 
 unsigned long client_cur_time;
 
@@ -303,6 +305,8 @@ client_check_server_status(char const *charset, char const *path, int lag)
   server_clars_disabled = status.clars_disabled;
   server_team_clars_disabled = status.team_clars_disabled;
   server_standings_frozen = status.standings_frozen;
+  server_score_system = status.score_system;
+  server_clients_suspended = status.clients_suspended;
   client_cur_time = time(0);
 
   if (client_cur_time>=server_cur_time
@@ -357,6 +361,9 @@ client_print_server_status(int read_only, char const *form_start,
     printf("<p><big><b>%s</b></big></p>", _("The contest is in progress"));
   } else {
     printf("<p><big><b>%s</b></big></p>", _("The contest is not started"));
+  }
+  if (server_clients_suspended) {
+    printf("<p><big><b>%s</b></big></p>", _("Team requests are suspended"));
   }
   puts("");
 
