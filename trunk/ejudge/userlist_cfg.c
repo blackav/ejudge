@@ -29,6 +29,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#if CONF_HAS_LIBINTL - 0 == 1
+#include <libintl.h>
+#include <locale.h>
+#endif
+
 enum
   {
     TG_CONFIG = 1,
@@ -41,7 +46,7 @@ enum
   };
 enum
   {
-    AT_ENABLE_L10N,
+    AT_ENABLE_L10N = 1,
     AT_DISABLE_L10N,
     AT_L10N,
     AT_L10N_DIR,
