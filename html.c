@@ -402,16 +402,16 @@ process_template(FILE *out,
     }
     switch (*++s) {
     case 'C':
-      fputs(charset, out);
+      if (charset) fputs(charset, out);
       break;
     case 'T':
-      fputs(content_type, out);
+      if (content_type) fputs(content_type, out);
       break;
     case 'H':
-      fputs(title, out);
+      if (title) fputs(title, out);
       break;
     case 'R':
-      fputs(copyright, out);
+      if (copyright) fputs(copyright, out);
       break;
     default:
       putc('%', out);
@@ -981,12 +981,26 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   }
 
   /* now sort the teams in the descending order */
+  /* t_sort: sorted->unsorted index map */
+  /* ties are resolved in the order of the team's ids */
   for (i = 0; i < t_tot - 1; i++) {
     int maxind = i, temp;
     for (j = i + 1; j < t_tot; j++) {
-      if (t_prob[t_sort[j]] > t_prob[t_sort[maxind]]
-          || (t_prob[t_sort[j]] == t_prob[t_sort[maxind]] && t_pen[t_sort[j]] < t_pen[t_sort[maxind]]))
+      if (t_prob[t_sort[j]] < t_prob[t_sort[maxind]]) continue;
+      if (t_prob[t_sort[j]] > t_prob[t_sort[maxind]]) {
         maxind = j;
+        continue;
+      }
+      /* t_prob[t_sort[j]] == t_prob[t_sort[maxind]] */
+      if (t_pen[t_sort[j]] > t_pen[t_sort[maxind]]) continue;
+      if (t_pen[t_sort[j]] < t_pen[t_sort[maxind]]) {
+        maxind = j;
+        continue;
+      }
+      /* t_pen[t_sort[j]] == t_pen[t_sort[maxind]] */
+      if (t_sort[j] < t_sort[maxind]) {
+        maxind = j;
+      }
     }
     temp = t_sort[i];
     t_sort[i] = t_sort[maxind];
