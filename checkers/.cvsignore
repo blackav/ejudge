@@ -1,1 +1,3 @@
 maxs summ *.o core check_? *.a testinfo.[ch]
+cmp_int cmp_unsigned_int cmp_long_long cmp_unsigned_long_long
+cmp_file
