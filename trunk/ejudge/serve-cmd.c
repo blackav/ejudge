@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -324,7 +324,7 @@ handle_dump_master_runs(const unsigned char *cmd,
                              session_id, 0,
                              contest_id, 0, local_ip,
                              PRIV_LEVEL_ADMIN, SID_URL,
-                             first_run, last_run, 0, 0, "", argv[1], "", "");
+                             first_run, last_run, 0,0, 0, "", argv[1], "", "");
   if (r < 0) {
     err("server error: %s", protocol_strerror(-r));
     return 1;
