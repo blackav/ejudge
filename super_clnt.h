@@ -1,0 +1,35 @@
+/* -*- c -*- */
+/* $Id$ */
+
+#ifndef __SUPER_CLNT_H__
+#define __SUPER_CLNT_H__
+
+/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+
+/*
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+#include "super_proto.h"
+
+#include <string.h>
+
+int super_clnt_open(const unsigned char *path);
+
+int super_clnt_do_pass_fd(int sock_fd, int fds_num, int *fds);
+int super_clnt_send_packet(int sock_fd, int size, const void *buf);
+int super_clnt_recv_packet(int sock_fd,
+                           struct prot_super_packet *p_res,
+                           size_t *p_size, void **p_data);
+
+int super_clnt_pass_fd(int sock_fd, int nfd, int *fds);
+
+#endif /* __SUPER_CLNT_H__ */
