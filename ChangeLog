@@ -1,3 +1,113 @@
+2002-10-19  Alexander Chernov  <cher@ispras.ru>
+
+	* team.c:
+	(main) all the action, which require team<->serve interaction are
+	  disabled, if `server_clients_suspended' variable is set.
+
+	* serve.c:
+	(update_status_file) score_system_val and clients_suspended are
+	  written to server status;
+	(is_valid_status) SCORE_OLYMPIAD score system is supported;
+	(read_compile_packet) SCORE_OLYMPIAD score system is supported
+	  if the contest is not over, run packet is generated to have
+	  `accept_testing' parameter set;
+	(read_run_packet) SCORE_OLYMPIAD score system is supported;
+	(judge_rejudge_all) a new function;
+	(judge_rejudge_problem) a new function;
+	(judge_reset_contest) a new function;
+	(judge_suspend_clients) a new function;
+	(judge_resume_clients) a new function;
+	(judge_cmds) new commands `REJUDGE', `REJUDGEP', `RESET',
+	  `SUSPEND', `RESUME' are supported;
+	(do_loop) team's packets are not processed, if clients_suspended
+	  variable is set.
+
+	* runlog.h:
+	`RUN_ACCEPTED', `RUN_MAX_STATUS' are added to testing outcome
+	  enumeration;
+	(run_reset) a new function prototype is added.
+
+	* runlog.c: <reuse/osdeps.h> is included;
+	(run_status_str) a new return code RUN_ACCEPTED is handled;
+	(run_reset) a new function to clear the submission log.
+
+	* run.c:
+	(generate_report) a new parameter `accept_testing' is accepted, if
+	  this parameter is 1, only acceptance testing is performed;
+	  new SCORE_OLYMPIAD score system is supported;
+	(generate_team_report) a new parameter `accept_testing' is accepted;
+	  new SCORE_OLYMPIAD score system is supported;
+	(run_tests) a new parameter `accept_testing' is added;
+	  new SCORE_OLYMPIAD score system is supported;
+	(do_loop) a new parameter is the serve's packet: `accept_testing'
+	  is parsed and supported;
+	(check_config) number of acceptance tests cannot exceed the total
+	  number of tests.
+
+	* protocol.h: score system enumeration is also defined here;
+	(struct prot_serve_status) fields `score_system', `clients_suspended'
+	  are added.
+
+	* prepare.h:
+	score system enumeration definition is protected with conditional
+	  compilation, as it also defined in another file (protocol.h);
+	(struct section_global_data) `tests_to_accept' parameter is added;
+	(struct section_problem_data) `tests_to_accept' parameter is added.
+
+	* prepare.c: new parameter `tests_to_accept' is parsed;
+	(global_init_func) `tests_to_accept' parameter is set to -1;
+	(problem_init_func) `tests_to_accept' parameter is set to -1;
+	(set_defaults) `tests_to_accept' parameter is processed.
+
+	* master.c:
+	new configuration parameter `problems_submit_file' to read the list
+	  of all the problems;
+	(print_reset_button) a new function;
+	(print_suspend_button) a new function;
+	(print_resume_button) a new function;
+	(confirm_reset_if_asked) a new function, which generates the
+	  "Confirm reset" dialog;
+	(do_contest_reset_if_asked) a new function to perform contest reset;
+	(do_suspend_if_asked) a new function to suspend clients;
+	(do_resume_if_asked) a new function to resume clients;
+	(do_rejudge_all_if_asked) a new function to rejudge all the
+	  solutions;
+	(do_rejudge_problem_if_asked) a new function to rejudge one particular
+	  problem;
+	(main) all the new master commands are supported.
+
+	* html.c:
+	(write_team_statistics) new SCORE_OLYMPIAD score system is supported;
+	(do_write_kirov_standings) the same as above;
+	(write_standings) the same as above;
+	(write_judge_allruns) the same as above;
+	(write_judge_standings) the same as above.
+
+	* makefile: expat_iface is added to the userlist-server files.
+
+	* files.make: expat_iface.[ch] module is added.
+
+	* ejudge.ru_RU.KOI8-R.po: new translations added.
+
+	* clarlog.c:
+	(clar_reset) a new function, which clears the clarification log.
+
+	* clarlog.h: (clar_reset) a prototype added.
+
+	* clntutil.c:
+	new global variables: server_score_system, server_clients_suspended;
+	(client_check_server_status) new server status fields (see above)
+	  are read;
+	(client_print_server_status) message is printed, if clients are
+	  suspended.
+
+	* clntutil.h: new variables are exported: server_score_system,
+	server_clients_suspended.
+
+2002-10-18  Alexander Chernov  <cher@ispras.ru>
+
+	* expat_iface.h, expat_iface.c: Initial revision
+
 2002-10-15  Alexander Chernov  <cher@ispras.ru>
 
 	* sformat.c, serve.c:
