@@ -163,6 +163,40 @@ report_bad_packet(char const *pk_name, int rm_mode)
   return 0;
 }
 
+/* mode == 1 - from master, mode == 2 - from run */
+int
+is_valid_status(int status, int mode)
+{
+  if (global->score_system_val == SCORE_KIROV) {
+    switch (status) {
+    case RUN_OK:
+    case RUN_PARTIAL:
+      return 1;
+    case RUN_COMPILE_ERR:
+    case RUN_REJUDGE:
+      if (mode != 1) return 0;
+      return 1;
+    default:
+      return 0;
+    }
+  } else {
+    switch (status) {
+    case RUN_OK:
+    case RUN_RUN_TIME_ERR:
+    case RUN_TIME_LIMIT_ERR:
+    case RUN_PRESENTATION_ERR:
+    case RUN_WRONG_ANSWER_ERR:
+      return 1;
+    case RUN_COMPILE_ERR:
+    case RUN_REJUDGE:
+      if (mode != 1) return 0;
+      return 1;
+    default:
+      return 0;
+    }
+  }
+}
+
 int
 report_ok(char const *pk_name)
 {
@@ -182,7 +216,6 @@ check_period(char const *pk_name, char const *func, char const *extra,
     /* before the contest */
     if (!before) {
       s = _("contest is not started");
-      //t = "<p>Соревнование еще не началось.";
       t = _("<p>The contest is not started.");
       goto _failed;
     }
@@ -190,7 +223,6 @@ check_period(char const *pk_name, char const *func, char const *extra,
     /* during the contest */
     if (!during) {
       s = _("contest is already started");
-      //t = "<p>Соревнование уже началось.";
       t = _("<p>The contest is already started.");
       goto _failed;
     }
@@ -198,7 +230,6 @@ check_period(char const *pk_name, char const *func, char const *extra,
     /* after the contest */
     if (!after) {
       s = _("contest is stopped");
-      //t = "<p>Соревнование уже закончилось.";
       t = _("<p>The contest is already over.");
       goto _failed;
     }
@@ -273,13 +304,11 @@ team_send_clar(char const *pk_name, const packet_t pk_str, void *ptr)
 
   if (generic_read_file(&msg, 0, &rsize, REMOVE,
                         global->team_data_dir, pk_name, "") < 0) {
-    //reply = "<p>Сервер не смог считать текст сообщения.";
     reply = _("<p>Server failed to read the message body.");
     goto report_to_client;
   }
 
   if (check_clar_qouta(team, rsize) < 0) {
-    //reply = "<p>Сообщение не может быть послано: превышен лимит посылок для команды.";
     reply = _("<p>The message cannot be sent. Message quota exceeded for this team.");
     goto report_to_client;
   }
@@ -287,7 +316,6 @@ team_send_clar(char const *pk_name, const packet_t pk_str, void *ptr)
   /* update log */
   if ((clar_id = clar_add_record(time(0), rsize, ip,
                                  team, 0, 0, subj)) < 0) {
-    //reply = "<p>Сообщение не отослано. Ошибка обновления журнала сообщений.";
     reply = _("<p>The message is not sent. Error while updating message log.");
     goto report_to_client;
   }
@@ -296,12 +324,10 @@ team_send_clar(char const *pk_name, const packet_t pk_str, void *ptr)
   sprintf(clar_name, "%06d", clar_id);
   if (generic_write_file(msg, rsize, 0,
                          global->clar_archive_dir, clar_name, "") < 0) {
-    //reply = "<p>Сообщение не отослано. Ошибка записи сообщения в архив.";
     reply = _("<p>The message is not sent. Failed to write the message to the archive.");
     goto report_to_client;
   }
 
-  //reply = "<p>Сообщение отослано.";
   reply = _("<p>The message is sent.");
 
  report_to_client:
@@ -346,7 +372,6 @@ team_submit(char const *pk_name, const packet_t pk_str, void *ptr)
   /* try to read source file */
   if (generic_read_file(&src, 0, &src_len, REMOVE,
                         global->team_data_dir, pk_name, "") < 0) {
-    //reply = "<p>Сервер не смог считать текст программы.";
     reply = _("<p>Server failed to read the program source.");
     goto report_to_client;
   }
@@ -356,7 +381,6 @@ team_submit(char const *pk_name, const packet_t pk_str, void *ptr)
 
   /* check the limits */
   if (check_team_quota(team, src_len) < 0) {
-    //reply = "<p>Решение не может быть принято: превышен лимит посылок";
     reply = _("<p>The submission cannot be accepted. Quota exceeded.");
     err(_("team %d:run quota exceeded"), team);
     goto report_to_client;
@@ -364,7 +388,6 @@ team_submit(char const *pk_name, const packet_t pk_str, void *ptr)
 
     /* now save the source and create a log record */
   if ((run_id = run_add_record(time(NULL),src_len,ip,team, prob, lang)) < 0){
-    //reply = "<p>Сервер не смог обновить журнал посылок.";
     reply = _("<p>Server failed to update submission log.");
     goto report_to_client;
   }
@@ -374,24 +397,20 @@ team_submit(char const *pk_name, const packet_t pk_str, void *ptr)
 
   if (generic_write_file(src, src_len, 0,
                          global->run_archive_dir, run_name, "") < 0) {
-    //reply = "<p>Сервер не смог сохранить программу в архиве.";
     reply = _("<p>Server failed to save the program in the archive.");
     goto report_to_client;
   }
   if (generic_write_file(src, src_len, SAFE,
                          langs[lang]->src_dir, run_name,
                          langs[lang]->src_sfx) < 0) {
-    //reply = "<p>Сервер не смог передать программу для компиляции.";
     reply = _("<p>Server failed to pass the program for compilation.");
     goto report_to_client;
   }
 
   if (run_change_status(run_id, RUN_COMPILING, 0) < 0) {
-    //reply = "<p>Сервер не смог обновить журнал посылок.";
     reply = _("<p>Server failed to update submission log.");
     goto report_to_client;
   }
-  //reply = "<p>Решение отослано на проверку.";
   reply = _("<p>Submission is sent.");
   
  report_to_client:
@@ -421,17 +440,14 @@ team_change_passwd(char const *pk_name, const packet_t pk_str, void *ptr)
     report_bad_packet(pk_name, 0);
 
   if (!teamdb_set_scrambled_passwd(team_id, passwd)) {
-    //reply = "<p>Новый пароль не может быть установлен.";
     reply = _("<p>New password cannot be set.");
     goto report_to_client;
   }
   if (teamdb_write_passwd(global->passwd_file) < 0) {
-    //reply = "<p>Новый пароль не может быть сохранен.";
     reply = _("<p>New password cannot be saved.");
     goto report_to_client;
   }
 
-  //reply = "<p>Пароль успешно изменен.";
   reply = _("<p>Password is changed successfully.");
 
  report_to_client:
@@ -456,6 +472,45 @@ team_stat(char const *pk_name, packet_t const pk_str, void *ptr)
   return 0;
 }
 
+int
+team_view_report(char const *pk_name, const packet_t pk_str, void *ptr)
+{
+  int      n, rid, team;
+  packet_t cmd;
+
+  /* teams not allowed to do that */
+  if (!global->team_enable_rep_view)
+    return report_bad_packet(pk_name, 1);
+
+  if (sscanf(pk_str, "%s %d %d %n", cmd, &team, &rid, &n) != 3
+      || pk_str[n]
+      || rid < 0 || rid >= run_get_total()
+      || !teamdb_lookup(team))
+    return report_bad_packet(pk_name, 1);
+
+  write_team_report_view(pk_name, team, rid);
+  return 0;
+}
+
+int
+team_view_source(char const *pk_name, const packet_t pk_str, void *ptr)
+{
+  int      n, rid, team;
+  packet_t cmd;
+
+  if (!global->team_enable_src_view)
+    return report_bad_packet(pk_name, 1);
+
+  if (sscanf(pk_str, "%s %d %d %n", cmd, &team, &rid, &n) != 3
+      || pk_str[n]
+      || rid < 0 || rid >= run_get_total()
+      || !teamdb_lookup(team))
+    return report_bad_packet(pk_name, 0);
+
+  write_team_source_view(pk_name, team, rid);
+  return 0;
+}
+
 struct server_cmd team_commands[]=
 {
   { "SUBMIT", team_submit, 0 },
@@ -463,6 +518,8 @@ struct server_cmd team_commands[]=
   { "PASSWD", team_change_passwd, 0 },
   { "VIEW", team_view_clar, 0 },
   { "CLAR", team_send_clar, 0 },
+  { "REPORT", team_view_report, 0 },
+  { "SOURCE", team_view_source, 0 },
   { 0, 0, 0 }
 };
 
@@ -523,6 +580,12 @@ read_compile_packet(char *pname)
   if (code == RUN_COMPILE_ERR) {
     /* compilation error */
     if (run_change_status(runid, RUN_COMPILE_ERR, 0) < 0) return -1;
+    /* probably we need a user's copy of compilation log */
+    if (global->team_enable_rep_view) {
+      if (generic_copy_file(0, global->compile_report_dir, pname, "",
+                            0, global->team_report_archive_dir, pname, "") < 0)
+        return -1;
+    }
     if (generic_copy_file(REMOVE, global->compile_report_dir, pname, "",
                           0, global->report_archive_dir, pname, "") < 0)
       return -1;
@@ -578,12 +641,17 @@ read_run_packet(char *pname)
   if (run_get_param(runid, &log_lang, &log_prob, &log_stat) < 0)
     goto bad_packet_error;
   if (log_stat != RUN_RUNNING) goto bad_packet_error;
-  if (status<0 || status>RUN_CHECK_FAILED || test<0) goto bad_packet_error;
+  if (status<0 || status>RUN_PARTIAL || test<0) goto bad_packet_error;
   if (run_change_status(runid, status, test) < 0) return -1;
   update_standings_file();
   if (generic_copy_file(REMOVE, global->run_report_dir, pname, "",
                         0, global->report_archive_dir, pname, "") < 0)
     return -1;
+  if (global->team_enable_rep_view) {
+    if (generic_copy_file(REMOVE, global->run_team_report_dir, pname, "",
+                          0, global->team_report_archive_dir, pname, "") < 0)
+      return -1;
+  }
   return 1;
 
  bad_packet_error:
@@ -721,7 +789,7 @@ judge_view_clar(char const *pk_name, const packet_t pk_str, void *ptr)
   packet_t cmd;
   int      c_id, n, flags = 0;
 
-  if (sscanf(pk_name, "%s %d %n", cmd, &c_id, &n) != 2 || pk_str[n]
+  if (sscanf(pk_str, "%s %d %n", cmd, &c_id, &n) != 2 || pk_str[n]
       || c_id < 0 || c_id >= clar_get_total())
     return report_bad_packet(pk_name, 0);
 
@@ -844,7 +912,6 @@ judge_time(char const *pk_name, const packet_t pk_str, void *ptr)
   if (check_period(pk_name, "TIME", 0, 1, 1, 0) < 0) return 0;
   if (newtime * 60 < global->contest_time) {
     err(_("contest time cannot be decreased"));
-    //reply = "<p>Время соревнования не может быть уменьшено.";
     reply = _("<p>The contest time cannot be decreased.");
     goto _cleanup;
   }
@@ -869,10 +936,15 @@ judge_change_status(char const *pk_name, const packet_t pk_str, void *ptr)
   if (sscanf(pk_str, "%s %d %d %d %n", cmd, &runid, &status, &test, &n) != 4
       || pk_str[n]
       || runid < 0 || runid >= run_get_total()
-      || status < 0 || status > RUN_REJUDGE
-      || (status > RUN_WRONG_ANSWER_ERR && status < RUN_REJUDGE)
-      || test < 0 || test > 99)
+      || !is_valid_status(status, 1)
+      || test < -1 || test > 99)
     return report_bad_packet(pk_name, 0);
+
+  if (global->score_system_val == SCORE_KIROV) {
+    if (status == RUN_COMPILE_ERR || status == RUN_REJUDGE) test = 0;
+    else test++;
+  } else {
+  }
 
   run_change_status(runid, status, test);
   if (status == RUN_REJUDGE) {
@@ -916,13 +988,11 @@ judge_message(char const *pk_name, const packet_t pk_str, void *ptr)
 
   if (generic_read_file(&msg, 0, &mlen, REMOVE,
                         global->judge_data_dir, pk_name, "") < 0) {
-    //reply = "<p>Сервер не может прочитать файл с текстом сообщения.";
     reply = _("<p>Server failed to read the message file.");
     goto _cleanup;
   }
 
   if ((c_id = clar_add_record(time(0), mlen, ip, 0, 0, 0, subj)) < 0) {
-    //reply = "<p>Сервер не может обновить журнал сообщений.";
     reply = _("<p>Server failed to update message log.");
     goto _cleanup;
   }
@@ -930,7 +1000,6 @@ judge_message(char const *pk_name, const packet_t pk_str, void *ptr)
   sprintf(c_name, "%06d", c_id);
   if (generic_write_file(msg, mlen, 0,
                          global->clar_archive_dir, c_name, "") < 0) {
-    //reply = "<p>Сервер не может сохранить сообщение.";
     reply = _("<p>Server failed to save the message.");
   }
 
