@@ -51,6 +51,5 @@ userlist_clnt_register_contest(struct userlist_clnt *clnt,
 /**
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
