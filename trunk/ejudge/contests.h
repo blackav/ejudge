@@ -37,6 +37,8 @@ enum
     CONTEST_COACHES,
     CONTEST_ADVISORS,
     CONTEST_GUESTS,
+    CONTEST_HEADER_FILE,
+    CONTEST_FOOTER_FILE,
 
     CONTEST_LAST_TAG
   };
@@ -128,6 +130,8 @@ struct contest_desc
   int id;
   int autoregister;
   unsigned char *name;
+  unsigned char *header_file;
+  unsigned char *footer_file;
   struct contest_access *access;
   struct contest_field *fields[CONTEST_LAST_FIELD];
   struct contest_member *members[CONTEST_LAST_MEMBER];
