@@ -26,6 +26,8 @@
 #include "html.h"
 #include "clarlog.h"
 #include "protocol.h"
+#include "userlist.h"
+#include "sha.h"
 
 #include "misctext.h"
 #include "base64.h"
@@ -41,6 +43,16 @@
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
+#include <errno.h>
+#include <signal.h>
+#include <fcntl.h>
+#include <stdarg.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -49,6 +61,105 @@
 #else
 #define _(x) x
 #endif
+
+#define XALLOCAZ(p,s) (XALLOCA((p),(s)),XMEMZERO((p),(s)))
+
+// server connection states
+enum
+  {
+    STATE_READ_CREDS,
+    STATE_READ_DATA,
+    STATE_READ_FDS,
+    STATE_AUTOCLOSE,
+  };
+struct client_state
+{
+  struct client_state *next;
+  struct client_state *prev;
+
+  int id;
+  int fd;
+
+  /* write status */
+  int write_len;
+  int written;
+  unsigned char *write_buf;
+
+  /* read status */
+  int read_state;
+  int expected_len;
+  int read_len;
+  unsigned char *read_buf;
+  int processed;
+
+  int state;
+
+  // some peer information
+  int peer_pid;
+  int peer_uid;
+  int peer_gid;
+
+  int user_id;
+
+  // passed file descriptors
+  int client_fds[2];
+};
+static struct client_state *client_first;
+static struct client_state *client_last;
+static int                  client_serial_id = 1;
+
+static struct client_state *
+client_new_state(int fd)
+{
+  struct client_state *p;
+
+  XCALLOC(p, 1);
+  p->id = client_serial_id++;
+  if (!client_last) {
+    p->next = p->prev = 0;
+    client_first = client_last = p;
+  } else {
+    p->next = 0;
+    p->prev = client_last;
+    client_last->next = p;
+    client_last = p;
+  }
+
+  p->fd = fd;
+  p->user_id = -1;
+  p->client_fds[0] = -1;
+  p->client_fds[1] = -1;
+
+  return p;
+}
+static struct client_state *
+client_disconnect(struct client_state *p, int force_flag)
+{
+  ASSERT(p);
+
+  if (!force_flag && p->state != STATE_AUTOCLOSE && p->write_len > 0) {
+    p->state = STATE_AUTOCLOSE;
+  }
+
+  close(p->fd);
+  if (p->write_buf) xfree(p->write_buf);
+  if (p->read_buf) xfree(p->read_buf);
+  if (p->client_fds[0] >= 0) close(p->client_fds[0]);
+  if (p->client_fds[1] >= 0) close(p->client_fds[1]);
+
+  if (p->prev) {
+    p->prev->next = p->next;
+  } else {
+    client_first = p->next;
+  }
+  if (p->next) {
+    p->next->prev = p->prev;
+  } else {
+    client_last = p->prev;
+  }
+  xfree(p);
+  return 0;
+}
 
 /* max. packet size */
 #define MAX_PACKET_SIZE 256
@@ -62,12 +173,51 @@ static unsigned long contest_duration;
 static unsigned long contest_stop_time;
 static int clients_suspended;
 
+static int socket_fd = -1;
+static unsigned char *socket_name = 0;
+static int interrupt_signaled = 0;
+
 struct server_cmd
 {
   char const  *cmd;
   int        (*func)(char const *, packet_t const, void *);
   void        *ptr;
 };
+
+/* remove queue stuff */
+struct remove_queue_item
+{
+  struct remove_queue_item *next;
+
+  time_t rmtime;
+  int    token;
+  int    is_dir;
+  path_t path;
+};
+
+static struct remove_queue_item *remove_queue_first, *remove_queue_last;
+static int remove_queue_token = 1;
+
+static int
+remove_queue_add(time_t rmtime, int is_dir, path_t path)
+{
+  struct remove_queue_item *p = 0;
+
+  XCALLOC(p, 1);
+  p->token = remove_queue_token++;
+  p->rmtime = rmtime;
+  p->is_dir = is_dir;
+  pathcpy(p->path, path);
+
+  if (!remove_queue_last) {
+    remove_queue_first = remove_queue_last = p;
+  } else {
+    remove_queue_last->next = p;
+    remove_queue_last = p;
+  }
+
+  return p->token;
+}
 
 static int
 setup_locale(int locale_id)
@@ -98,10 +248,15 @@ setup_locale(int locale_id)
 #endif /* CONF_HAS_LIBINTL */
 }
 
-void
+static void
+interrupt_signal(int s)
+{
+  interrupt_signaled = 1;
+}
+
+static void
 update_standings_file(int force_flag)
 {
-  time_t cur_time = time(0);
   time_t start_time, stop_time, duration;
   int p;
 
@@ -113,17 +268,17 @@ update_standings_file(int force_flag)
     if (!duration) break;
     if (!global->board_fog_time) break;
 
-    ASSERT(cur_time >= start_time);
+    ASSERT(current_time >= start_time);
     ASSERT(global->board_fog_time >= 0);
     ASSERT(global->board_unfog_time >= 0);
     
-    p = run_get_fog_period(cur_time, global->board_fog_time,
+    p = run_get_fog_period(current_time, global->board_fog_time,
                            global->board_unfog_time);
     if (p == 1) return;
     break;
   }
 
-  p = run_get_fog_period(cur_time, global->board_fog_time,
+  p = run_get_fog_period(current_time, global->board_fog_time,
                          global->board_unfog_time);
   setup_locale(global->standings_locale_id);
   write_standings(global->status_dir, global->standings_file_name,
@@ -146,16 +301,15 @@ update_standings_file(int force_flag)
   }
 }
 
-void
+static void
 update_public_log_file(void)
 {
   static time_t last_update = 0;
-  time_t cur_time = time(0);
   time_t start_time, stop_time, duration;
   int p;
 
   if (!global->plog_update_time) return;
-  if (cur_time < last_update + global->plog_update_time) return;
+  if (current_time < last_update + global->plog_update_time) return;
 
   run_get_times(&start_time, 0, &duration, &stop_time);
 
@@ -163,11 +317,11 @@ update_public_log_file(void)
     if (!duration) break;
     if (!global->board_fog_time) break;
 
-    ASSERT(cur_time >= start_time);
+    ASSERT(current_time >= start_time);
     ASSERT(global->board_fog_time >= 0);
     ASSERT(global->board_unfog_time >= 0);
     
-    p = run_get_fog_period(cur_time, global->board_fog_time,
+    p = run_get_fog_period(current_time, global->board_fog_time,
                            global->board_unfog_time);
     if (p == 1) return;
     break;
@@ -176,25 +330,23 @@ update_public_log_file(void)
   setup_locale(global->standings_locale_id);
   write_public_log(global->status_dir, global->plog_file_name,
                    global->plog_header_txt, global->plog_footer_txt);
-  last_update = cur_time;
+  last_update = current_time;
   setup_locale(0);
 }
 
-int
+static int
 update_status_file(int force_flag)
 {
   static time_t prev_status_update = 0;
-  time_t cur_time;
   struct prot_serve_status status;
   int p;
 
-  cur_time = time(0);
-  if (!force_flag && cur_time <= prev_status_update) return 0;
+  if (!force_flag && current_time <= prev_status_update) return 0;
 
   memset(&status, 0, sizeof(status));
   status.magic = PROT_SERVE_STATUS_MAGIC;
 
-  status.cur_time = cur_time;
+  status.cur_time = current_time;
   run_get_times(&status.start_time,
                 &status.sched_time,
                 &status.duration,
@@ -205,8 +357,9 @@ update_status_file(int force_flag)
   status.team_clars_disabled = global->disable_team_clars;
   status.score_system = global->score_system_val;
   status.clients_suspended = clients_suspended;
+  status.download_interval = global->team_download_time / 60;
 
-  p = run_get_fog_period(cur_time,
+  p = run_get_fog_period(current_time,
                          global->board_fog_time, global->board_unfog_time);
   if (p == 1 && global->autoupdate_standings) {
     status.standings_frozen = 1;
@@ -214,15 +367,15 @@ update_status_file(int force_flag)
 
   generic_write_file((char*) &status, sizeof(status), SAFE,
                      global->status_dir, "status", "");
-  prev_status_update = cur_time;
+  prev_status_update = current_time;
   return 1;
 }
 
-int
+static int
 check_team_quota(int teamid, unsigned int size)
 {
   int num;
-  unsigned long total;
+  size_t total;
 
   if (size > global->max_run_size) return -1;
   run_get_team_usage(teamid, &num, &total);
@@ -231,7 +384,7 @@ check_team_quota(int teamid, unsigned int size)
   return 0;
 }
 
-int
+static int
 check_clar_qouta(int teamid, unsigned int size)
 {
   int num;
@@ -244,7 +397,7 @@ check_clar_qouta(int teamid, unsigned int size)
   return 0;
 }
 
-int
+static int
 report_to_client(char const *pk_name, char const *str)
 {
   if (str) {
@@ -254,7 +407,7 @@ report_to_client(char const *pk_name, char const *str)
   return 0;
 }
 
-int
+static int
 report_error(char const *pk_name, int rm_mode,
              char const *header, char const *msg)
 {
@@ -264,13 +417,12 @@ report_error(char const *pk_name, int rm_mode,
   os_snprintf(buf, 1020, "<h2>%s</h2><p>%s</p>\n",
               header, msg);
   report_to_client(pk_name, buf);
-  if (rm_mode == 1) relaxed_remove(global->team_data_dir, pk_name);
   if (rm_mode == 2) relaxed_remove(global->judge_data_dir, pk_name);
 
   return 0;
 }
 
-int
+static int
 report_bad_packet(char const *pk_name, int rm_mode)
 {
   err("bad packet");
@@ -278,7 +430,7 @@ report_bad_packet(char const *pk_name, int rm_mode)
 }
 
 /* mode == 1 - from master, mode == 2 - from run */
-int
+static int
 is_valid_status(int status, int mode)
 {
   if (global->score_system_val == SCORE_OLYMPIAD) {
@@ -293,6 +445,7 @@ is_valid_status(int status, int mode)
       return 1;
     case RUN_COMPILE_ERR:
     case RUN_REJUDGE:
+    case RUN_IGNORED:
       if (mode != 1) return 0;
       return 1;
     default:
@@ -305,6 +458,7 @@ is_valid_status(int status, int mode)
       return 1;
     case RUN_COMPILE_ERR:
     case RUN_REJUDGE:
+    case RUN_IGNORED:
       if (mode != 1) return 0;
       return 1;
     default:
@@ -320,6 +474,7 @@ is_valid_status(int status, int mode)
       return 1;
     case RUN_COMPILE_ERR:
     case RUN_REJUDGE:
+    case RUN_IGNORED:
       if (mode != 1) return 0;
       return 1;
     default:
@@ -337,7 +492,7 @@ report_ok(char const *pk_name)
   return 0;
 }
 
-int
+static int
 check_period(char const *pk_name, char const *func, char const *extra,
              int before, int during, int after)
 {
@@ -388,333 +543,598 @@ check_period(char const *pk_name, char const *func, char const *extra,
   return -1;
 }
 
-int
-team_view_clar(char const *pk_name, const packet_t pk_str, void *ptr)
+static void
+new_enqueue_reply(struct client_state *p, int msg_length, void const *msg)
 {
-  packet_t cmd;
-  int  locale_id, team_id, clar_id, n;
+  ASSERT(p);
+  ASSERT(msg_length > 0);
+  ASSERT(msg);
 
-  if (sscanf(pk_str, "%s %d %d %d %n", cmd, &locale_id,
-             &team_id, &clar_id, &n) != 4)
-    return report_bad_packet(pk_name ,1);
-
-  setup_locale(locale_id);
-  if (global->disable_clars) {
-    err("attempt to read a clar, but clars are disabled");
-    return report_error(pk_name, 0, 0, _("Clarifications are disabled"));
+  if (p->write_len) {
+    SWERR(("Server->client reply slot is busy!"));
   }
-  if (pk_str[n] || !teamdb_lookup(team_id))
-    return report_bad_packet(pk_name, 1);
-  if (clar_id < 0 || clar_id >= clar_get_total())
-    return report_bad_packet(pk_name, 1);
-  write_team_clar(team_id, clar_id,
-                  global->clar_archive_dir, global->pipe_dir, pk_name);
-  return 0;
+  p->write_buf = xmalloc(msg_length + 4);
+  memcpy(p->write_buf, &msg_length, 4);
+  memcpy(p->write_buf + 4, msg, msg_length);
+  p->write_len = msg_length + 4;
 }
 
-int
-team_send_clar(char const *pk_name, const packet_t pk_str, void *ptr)
+static void
+new_send_reply(struct client_state *p, short answer)
 {
-  packet_t cmd, subj, ip;
-  int  locale_id, team, n;
+  struct prot_serve_packet pack;
 
-  char *msg = 0;
-  int   rsize = 0;
-  char *reply = 0;
-  int   clar_id;
-  char  clar_name[64];
+  pack.id = answer;
+  pack.magic = PROT_SERVE_PACKET_MAGIC;
+  new_enqueue_reply(p, sizeof(pack), &pack);
+}
 
-  if (sscanf(pk_str, "%s %d %d %s %s %n", cmd,
-             &locale_id, &team, subj, ip, &n) != 5)
-    return report_bad_packet(pk_name, 1);
-  setup_locale(locale_id);
-  if (global->disable_clars || global->disable_team_clars) {
-    err("clarifications are disabled!");
-    return report_error(pk_name, 1, 0, _("Clarifications are disabled"));
-  }
-  if (pk_str[n] || !teamdb_lookup(team))
-    return report_bad_packet(pk_name, 1);
-  if (strlen(subj) > CLAR_MAX_SUBJ_LEN)
-    return report_bad_packet(pk_name, 1);
-  if (strlen(ip) > RUN_MAX_IP_LEN)
-    return report_bad_packet(pk_name, 1);
-
-  /* disallow sending messages from team before and after the contest */
-  if (check_period(pk_name, "team_send_clar", teamdb_get_login(team),
-                   0, 1, 0) < 0) {
-    relaxed_remove(global->team_data_dir, pk_name);
-    return 0;
-  }
-
-  if (generic_read_file(&msg, 0, &rsize, REMOVE,
-                        global->team_data_dir, pk_name, "") < 0) {
-    reply = _("<p>Server failed to read the message body.");
-    goto report_to_client;
-  }
-
-  if (check_clar_qouta(team, rsize) < 0) {
-    reply = _("<p>The message cannot be sent. Message quota exceeded for this team.");
-    goto report_to_client;
-  }
-
-  /* update log */
-  if ((clar_id = clar_add_record(time(0), rsize, ip,
-                                 team, 0, 0, subj)) < 0) {
-    reply = _("<p>The message is not sent. Error while updating message log.");
-    goto report_to_client;
-  }
-
-  /* write this request to base */
-  sprintf(clar_name, "%06d", clar_id);
-  if (generic_write_file(msg, rsize, 0,
-                         global->clar_archive_dir, clar_name, "") < 0) {
-    reply = _("<p>The message is not sent. Failed to write the message to the archive.");
-    goto report_to_client;
-  }
-
-  reply = _("<p>The message is sent.");
-
- report_to_client:
-  if (reply) {
-    generic_write_file(reply, strlen(reply), PIPE,
-                       global->pipe_dir, pk_name, "");
-  }
-  xfree(msg);
-  return 0;
-} 
-
-int
-team_submit(char const *pk_name, const packet_t pk_str, void *ptr)
+static void
+new_bad_packet(struct client_state *p, char const *format, ...)
 {
-  char cmd[256];
-  char ip[256];
-  int  team, prob, lang, n;
-  char *reply = 0;
-  char *src = 0;
-  int   src_len = 0;
-  int   run_id;
-  int   locale_id;
-  char  run_name[64];
-  char  run_full[64];
-  int   needs_remove = 1;
+  unsigned char msgbuf[1024];
 
-  char comp_pkt_buf[128];
-  char comp_pkt_len;
+  if (format && *format) {
+    va_list args;
 
-  if (sscanf(pk_str, "%s %d %d %d %d %s %n",
-             cmd, &locale_id, &team, &prob, &lang, ip, &n) != 6
-      || pk_str[n]
-      || strlen(ip) > RUN_MAX_IP_LEN
-      || !teamdb_lookup(team)
-      || lang < 1 || lang > max_lang
-      || !(langs[lang])
-      || prob < 1 || prob > max_prob
-      || !(probs[prob]))
-    return report_bad_packet(pk_name, 1);
+    va_start(args, format);
+    vsnprintf(msgbuf, sizeof(msgbuf), format, args);
+    va_end(args);
+    err("%d: bad packet: %s", p->id, msgbuf);
+  } else {
+    err("%d: bad packet", p->id);
+  }
+  client_disconnect(p, 0);
+}
 
-  locale_id = setup_locale(locale_id);
-
-  /* disallow submissions out of contest time */
-  if (check_period(pk_name, "SUBMIT", teamdb_get_login(team), 0, 1, 0) < 0)
-    goto _cleanup;
-
-  /* this looks like a valid packet */
-  /* try to read source file */
-  if (generic_read_file(&src, 0, &src_len, REMOVE,
-                        global->team_data_dir, pk_name, "") < 0) {
-    reply = _("<p>Server failed to read the program source.");
-    goto report_to_client;
+static void
+cmd_pass_descriptors(struct client_state *p, int len,
+                     struct prot_serve_packet *pkt)
+{
+  if (len != sizeof(*pkt)) {
+    new_bad_packet(p, "cmd_pass_descriptors: bad packet length: %d", len);
+    return;
   }
 
-  /* the last generic_read_file should remove the data file */
-  needs_remove = 0;
-
-  /* check the limits */
-  if (check_team_quota(team, src_len) < 0) {
-    reply = _("<p>The submission cannot be accepted. Quota exceeded.");
-    err("team %d:run quota exceeded", team);
-    goto report_to_client;
+  if (p->client_fds[0] >= 0 || p->client_fds[1] >= 0) {
+    err("%d: cannot stack unprocessed client descriptors", p->id);
+    new_send_reply(p, -SRV_ERR_PROTOCOL);
+    return;
   }
 
-    /* now save the source and create a log record */
-  if ((run_id = run_add_record(time(NULL),src_len,ip,
-                               locale_id, team, prob, lang)) < 0){
-    reply = _("<p>Server failed to update submission log.");
-    goto report_to_client;
+  p->state = STATE_READ_FDS;
+}
+
+static void
+cmd_team_get_archive(struct client_state *p, int len,
+                     struct prot_serve_pkt_get_archive *pkt)
+{
+  time_t last_time;
+  path_t dirname, fullpath, linkpath, origpath;
+  int total_runs, r, run_team, run_lang, run_prob, token, path_len, out_size;
+  struct prot_serve_pkt_archive_path *out;
+
+  if (len != sizeof(*pkt)) {
+    new_bad_packet(p, "team_get_archive: bad packet length: %d", len);
+    return;
+  }
+  info("%d: team_get_archive: %d, %d, %d", p->id,
+       pkt->user_id, pkt->contest_id, pkt->locale_id);
+  if (global->contest_id <= 0) {
+    new_send_reply(p, -SRV_ERR_NOT_SUPPORTED);
+    err("%d: operation is not supported", p->id);
+    return;
+  }
+  if (!teamdb_lookup(pkt->user_id)) {
+    new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+    err("%d: bad user id", p->id);
+    return;
+  }
+  if (pkt->contest_id != global->contest_id) {
+    new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
+    err("%d: contest_id does not match", p->id);
+    return;
+  }
+
+  last_time = teamdb_get_archive_time(pkt->user_id);
+  if (last_time + global->team_download_time > current_time) {
+    new_send_reply(p, -SRV_ERR_DOWNLOAD_TOO_OFTEN);
+    err("%d: download is too often", p->id);
+    return;
+  }
+
+  snprintf(dirname, sizeof(dirname), "runs_%d_%d",
+           global->contest_id, pkt->user_id);
+  snprintf(fullpath, sizeof(fullpath), "%s/%s", global->pipe_dir, dirname);
+  if (mkdir(fullpath, 0755) < 0) {
+    new_send_reply(p, -SRV_ERR_TRY_AGAIN);
+    err("%d: cannot create new directory %s", p->id, fullpath);
+    return;
+  }
+  total_runs = run_get_total();
+  for (r = 0; r < total_runs; r++) {
+    if (run_get_record(r,0,0,0,0,0,&run_team,&run_lang,&run_prob,0,0,0) < 0)
+      continue;
+    if (run_team != pkt->user_id) continue;
+    snprintf(linkpath, sizeof(linkpath), "%s/%s_%06d%s",
+             fullpath, probs[run_prob]->short_name, r,
+             langs[run_lang]->src_sfx);
+    snprintf(origpath, sizeof(origpath), "%s/%06d", global->run_archive_dir,
+             r);
+    if (link(origpath, linkpath) < 0) {
+      err("link %s->%s failed: %s", linkpath, origpath, os_ErrorMsg());
+    }
+  }
+  token = remove_queue_add(current_time + global->team_download_time / 2,
+                           1, fullpath);
+
+  teamdb_set_archive_time(pkt->user_id, current_time);
+  path_len = strlen(fullpath);
+  out_size = sizeof(*out) + path_len;
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  out->b.magic = PROT_SERVE_PACKET_MAGIC;
+  out->b.id = SRV_RPL_ARCHIVE_PATH;
+  out->token = token;
+  out->path_len = path_len;
+  memcpy(out->data, fullpath, path_len);
+  new_enqueue_reply(p, out_size, out);
+  info("%d: completed: %d, %s", p->id, token, fullpath);
+}
+
+static void
+cmd_team_list_runs(struct client_state *p, int len,
+                   struct prot_serve_pkt_list_runs *pkt)
+{
+  FILE *f = 0;
+  struct client_state *q = 0;
+  unsigned char *html_ptr = 0;
+  size_t html_len = 0;
+
+  if (len < sizeof(*pkt)) {
+    new_bad_packet(p, "cmd_team_list_runs: packet is too small: %d", len);
+    return;
+  }
+  if (strlen(pkt->data) != pkt->form_start_len) {
+    new_bad_packet(p, "cmd_team_list_runs: form_start_len mismatch");
+    return;
+  }
+  if (len != sizeof(*pkt) + pkt->form_start_len) {
+    new_bad_packet(p, "cmd_team_list_runs: packet length mismatch");
+    return;
+  }
+  if (pkt->b.id != SRV_CMD_LIST_RUNS && pkt->b.id != SRV_CMD_LIST_CLARS) {
+    new_bad_packet(p, "cmd_team_list_runs: bad command: %d", pkt->b.id);
+    return;
+  }
+
+  info("%d: cmd_team_list_runs: %d, %d, %d, %d, %d", p->id, pkt->b.id,
+       pkt->user_id, pkt->contest_id, pkt->locale_id, pkt->flags);
+  if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
+    err("%d: two client file descriptors required", p->id);
+    new_send_reply(p, -SRV_ERR_PROTOCOL);
+    return;
+  }
+  if (!teamdb_lookup(pkt->user_id)) {
+    err("%d: user_id is invalid", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+    return;
+  }
+  if (pkt->contest_id != global->contest_id) {
+    err("%d: contest_id does not match", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
+    return;
+  }
+
+  if (!(f = open_memstream((char**) &html_ptr, &html_len))) {
+    err("%d: open_memstream failed", p->id);
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  setup_locale(pkt->locale_id);
+  switch (pkt->b.id) {
+  case SRV_CMD_LIST_RUNS:
+    new_write_user_runs(f, pkt->user_id, pkt->flags, pkt->data);
+    break;
+  case SRV_CMD_LIST_CLARS:
+    new_write_user_clars(f, pkt->user_id, pkt->flags, pkt->data);
+    break;
+  }
+  setup_locale(0);
+  fclose(f);
+
+  q = client_new_state(p->client_fds[0]);
+  q->client_fds[0] = -1;
+  q->client_fds[1] = p->client_fds[1];
+  p->client_fds[0] = -1;
+  p->client_fds[1] = -1;
+  q->state = STATE_AUTOCLOSE;
+  q->write_buf = html_ptr;
+  q->write_len = html_len;
+
+  info("%d: cmd_team_list_runs: ok", p->id);
+  new_send_reply(p, SRV_RPL_OK);
+}
+
+static void
+cmd_team_page(struct client_state *p, int len,
+              struct prot_serve_pkt_team_page *pkt)
+{
+  unsigned char *simple_form_ptr, *multi_form_ptr;
+  FILE *f = 0;
+  struct client_state *q = 0;
+  unsigned char *html_ptr = 0;
+  size_t html_len = 0;
+
+  if (len < sizeof(*pkt)) {
+    new_bad_packet(p, "cmd_team_page: packet is too small: %d", len);
+    return;
+  }
+  simple_form_ptr = pkt->data;
+  if (strlen(simple_form_ptr) != pkt->simple_form_len) {
+    new_bad_packet(p, "cmd_team_page: simple_form_len mismatch");
+    return;
+  }
+  multi_form_ptr = simple_form_ptr + pkt->simple_form_len + 1;
+  if (strlen(multi_form_ptr) != pkt->multi_form_len) {
+    new_bad_packet(p, "cmd_team_page: multi_form_len mismatch");
+    return;
+  }
+  if (len != sizeof(*pkt) + pkt->simple_form_len + pkt->multi_form_len) {
+    new_bad_packet(p, "cmd_team_page: packet length mismatch");
+    return;
+  }
+
+  info("%d: cmd_team_page: %d, %d, %d",
+       p->id, pkt->user_id, pkt->contest_id, pkt->locale_id);
+
+  if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
+    err("%d: two client file descriptors required", p->id);
+    new_send_reply(p, -SRV_ERR_PROTOCOL);
+    return;
+  }
+  if (!teamdb_lookup(pkt->user_id)) {
+    err("%d: user_id is invalid", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+    return;
+  }
+  if (pkt->contest_id != global->contest_id) {
+    err("%d: contest_id does not match", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
+    return;
+  }
+
+  if (!(f = open_memstream((char**) &html_ptr, &html_len))) {
+    err("%d: open_memstream failed", p->id);
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  setup_locale(pkt->locale_id);
+  write_team_page(f, pkt->user_id, (pkt->flags & 1),
+                  (pkt->flags & 2) >> 1,
+                  simple_form_ptr, multi_form_ptr,
+                  contest_start_time, contest_stop_time);
+  setup_locale(0);
+  fclose(f);
+
+  if (!html_ptr) {
+    html_ptr = xstrdup("");
+    html_len = 0;
+  }
+
+  q = client_new_state(p->client_fds[0]);
+  q->client_fds[0] = -1;
+  q->client_fds[1] = p->client_fds[1];
+  p->client_fds[0] = -1;
+  p->client_fds[1] = -1;
+  q->state = STATE_AUTOCLOSE;
+  q->write_buf = html_ptr;
+  q->write_len = html_len;
+
+  info("%d: cmd_team_page: ok", p->id);
+  new_send_reply(p, SRV_RPL_OK);
+}
+
+static void
+cmd_team_show_item(struct client_state *p, int len,
+                   struct prot_serve_pkt_show_item *pkt)
+{
+  FILE *f;
+  unsigned char *html_ptr = 0;
+  size_t html_len = 0;
+  struct client_state *q;
+  int r;
+
+  if (len != sizeof(*pkt)) {
+    new_bad_packet(p, "cmd_team_show_item: bad packet length: %d", len);
+    return;
+  }
+  if (pkt->b.id != SRV_CMD_SHOW_CLAR
+      && pkt->b.id != SRV_CMD_SHOW_REPORT
+      && pkt->b.id != SRV_CMD_SHOW_SOURCE) {
+    new_bad_packet(p, "cmd_team_show_item: bad command: %d", pkt->b.id);
+    return;
+  }
+  info("%d: team_show_item: %d, %d, %d, %d, %d", p->id, pkt->b.id,
+       pkt->user_id, pkt->contest_id, pkt->locale_id, pkt->item_id);
+  if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
+    err("%d: two client file descriptors required", p->id);
+    new_send_reply(p, -SRV_ERR_PROTOCOL);
+    return;
+  }
+  if (!teamdb_lookup(pkt->user_id)) {
+    err("%d: user_id is invalid", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+    return;
+  }
+  if (pkt->contest_id != global->contest_id) {
+    err("%d: contest_id does not match", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
+    return;
+  }
+
+  if (!(f = open_memstream((char**) &html_ptr, &html_len))) {
+    err("%d: open_memstream failed", p->id);
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  setup_locale(pkt->locale_id);
+  switch (pkt->b.id) {
+  case SRV_CMD_SHOW_CLAR:
+    r = new_write_user_clar(f, pkt->user_id, pkt->item_id);
+    break;
+  case SRV_CMD_SHOW_SOURCE:
+    r = new_write_user_source_view(f, pkt->user_id, pkt->item_id);
+    break;
+  case SRV_CMD_SHOW_REPORT:
+    r = new_write_user_report_view(f, pkt->user_id, pkt->item_id);
+    break;
+  default:
+    abort();
+  }
+  setup_locale(0);
+  fclose(f);
+
+  if (r < 0) {
+    xfree(html_ptr);
+    new_send_reply(p, r);
+    return;
+  }
+
+  q = client_new_state(p->client_fds[0]);
+  q->client_fds[0] = -1;
+  q->client_fds[1] = p->client_fds[1];
+  p->client_fds[0] = -1;
+  p->client_fds[1] = -1;
+  q->state = STATE_AUTOCLOSE;
+  q->write_buf = html_ptr;
+  q->write_len = html_len;
+
+  info("%d: team_show_item: ok", p->id);
+  new_send_reply(p, SRV_RPL_OK);
+}
+
+static void
+cmd_team_submit_run(struct client_state *p, int len, 
+                    struct prot_serve_pkt_submit_run *pkt)
+{
+  int run_id, comp_pkt_len, r;
+  path_t run_name, run_full;
+  unsigned char comp_pkt_buf[256];
+  unsigned long shaval[5];
+
+  if (len < sizeof(*pkt)) {
+    new_bad_packet(p, "team_submit_run: packet is too small: %d", len);
+    return;
+  }
+  if (pkt->run_len != strlen(pkt->data)) {
+    new_bad_packet(p, "team_submit_run: run_len does not match");
+    return;
+  }
+  if (len != sizeof(*pkt) + pkt->run_len) {
+    new_bad_packet(p, "team_submit_run: packet length does not match");
+    return;
+  }
+
+  info("%d: team_submit_run: %d, %d, %d, %d, %d",
+       p->id, pkt->user_id, pkt->contest_id, pkt->locale_id,
+       pkt->prob_id, pkt->lang_id);
+  if (pkt->contest_id != global->contest_id) {
+    err("%d: contest_id does not match", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (!teamdb_lookup(pkt->user_id)) {
+    err("%d: user_id is invalid", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+    return;
+  }
+  if (pkt->prob_id < 1 || pkt->prob_id > max_prob || !probs[pkt->prob_id]) {
+    err("%d: prob_id is invalid", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
+    return;
+  }
+  if (pkt->lang_id < 1 || pkt->lang_id > max_lang || !langs[pkt->lang_id]) {
+    err("%d: lang_id is invalid", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_LANG_ID);
+    return;
+  }
+  if (!contest_start_time) {
+    err("%d: contest is not started", p->id);
+    new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
+    return;
+  }
+  if (contest_stop_time) {
+    err("%d: contest already finished", p->id);
+    new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
+    return;
+  }
+  if (check_team_quota(pkt->user_id, pkt->run_len) < 0) {
+    err("%d: user quota exceeded", p->id);
+    new_send_reply(p, -SRV_ERR_QUOTA_EXCEEDED);
+    return;
+  }
+  sha_buffer(pkt->data, pkt->run_len, shaval);
+  if ((run_id = run_add_record(current_time,
+                               pkt->run_len,
+                               shaval,
+                               pkt->ip,
+                               pkt->locale_id,
+                               pkt->user_id,
+                               pkt->prob_id,
+                               pkt->lang_id)) < 0){
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
   }
 
   sprintf(run_name, "%06d", run_id);
-  sprintf(run_full, "%06d%s", run_id, langs[lang]->src_sfx);
-
-  if (generic_write_file(src, src_len, 0,
+  sprintf(run_full, "%06d%s", run_id, langs[pkt->lang_id]->src_sfx);
+  if (generic_write_file(pkt->data, pkt->run_len, 0,
                          global->run_archive_dir, run_name, "") < 0) {
-    reply = _("<p>Server failed to save the program in the archive.");
-    goto report_to_client;
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
   }
 
-  if (generic_write_file(src, src_len, 0,
-                         global->compile_src_dir, run_full, "") < 0) {
-    reply = _("<p>Server failed to pass the program for compilation");
-    goto report_to_client;
-  }
-
-  comp_pkt_len = sprintf(comp_pkt_buf, "%s %d\n", run_full, 0);
-  if (generic_write_file(comp_pkt_buf, comp_pkt_len, SAFE,
-                         langs[lang]->queue_dir, run_name, "") < 0) {
-    reply = _("<p>Server failed to pass the program for compilation");
-    goto report_to_client;
-  }
-
-  if (run_change_status(run_id, RUN_COMPILING, 0, -1) < 0) {
-    reply = _("<p>Server failed to update submission log.");
-    goto report_to_client;
-  }
-  reply = _("<p>Submission is sent.");
-  
- report_to_client:
-  if (reply) {
-    generic_write_file(reply, strlen(reply), PIPE,
-                       global->pipe_dir, pk_name, "");
-  }
-
- _cleanup:
-  if (needs_remove) relaxed_remove(global->team_data_dir, pk_name);
-  xfree(src);
-  return 0;
-}
-
-int
-team_change_passwd(char const *pk_name, const packet_t pk_str, void *ptr)
-{
-  char  cmd[256];
-  char  passwd[256];
-  int   team_id, n;
-  char *reply = 0;
-  int   locale_id;
-
-  if (sscanf(pk_str, "%s %d %d %s %n", cmd, &locale_id,
-             &team_id, passwd, &n) != 4
-      || pk_str[n]
-      || !teamdb_lookup(team_id)
-      || strlen(passwd) > TEAMDB_MAX_SCRAMBLED_PASSWD_SIZE)
-    report_bad_packet(pk_name, 0);
-
-  setup_locale(locale_id);
-  if (!teamdb_set_scrambled_passwd(team_id, passwd)) {
-    reply = _("<p>New password cannot be set.");
-    goto report_to_client;
-  }
-  if (teamdb_write_passwd(global->passwd_file) < 0) {
-    reply = _("<p>New password cannot be saved.");
-    goto report_to_client;
-  }
-
-  reply = _("<p>Password is changed successfully.");
-
- report_to_client:
-  if (reply) {
-    generic_write_file(reply, strlen(reply), PIPE,
-                       global->pipe_dir, pk_name, "");
-  }
-  return 0;
-}
-
-int
-team_stat(char const *pk_name, packet_t const pk_str, void *ptr)
-{
-  packet_t cmd;
-  int      team, p1, p2, n, locale_id;
-
-  if (sscanf(pk_str, "%s %d %d %d %d %n", cmd, &locale_id,
-             &team, &p1, &p2, &n) != 5
-      || pk_str[n] || !teamdb_lookup(team))
-    return report_bad_packet(pk_name, 0);
-
-  setup_locale(locale_id);
-  write_team_statistics(team, p1, p2, global->pipe_dir, pk_name);
-  return 0;
-}
-
-int
-team_view_report(char const *pk_name, const packet_t pk_str, void *ptr)
-{
-  int      n, rid, team, locale_id;
-  packet_t cmd;
-
-  /* teams not allowed to do that */
-  if (!global->team_enable_rep_view)
-    return report_bad_packet(pk_name, 1);
-
-  if (sscanf(pk_str, "%s %d %d %d %n", cmd, &locale_id, &team, &rid, &n) != 4
-      || pk_str[n]
-      || rid < 0 || rid >= run_get_total()
-      || !teamdb_lookup(team))
-    return report_bad_packet(pk_name, 1);
-
-  setup_locale(locale_id);
-  write_team_report_view(pk_name, team, rid);
-  return 0;
-}
-
-int
-team_view_source(char const *pk_name, const packet_t pk_str, void *ptr)
-{
-  int      n, rid, team, locale_id;
-  packet_t cmd;
-
-  if (!global->team_enable_src_view)
-    return report_bad_packet(pk_name, 1);
-
-  if (sscanf(pk_str, "%s %d %d %d %n", cmd, &locale_id, &team, &rid, &n) != 4
-      || pk_str[n]
-      || rid < 0 || rid >= run_get_total()
-      || !teamdb_lookup(team))
-    return report_bad_packet(pk_name, 0);
-
-  setup_locale(locale_id);
-  write_team_source_view(pk_name, team, rid);
-  return 0;
-}
-
-struct server_cmd team_commands[]=
-{
-  { "SUBMIT", team_submit, 0 },
-  { "STAT", team_stat, 0 },
-  { "PASSWD", team_change_passwd, 0 },
-  { "VIEW", team_view_clar, 0 },
-  { "CLAR", team_send_clar, 0 },
-  { "REPORT", team_view_report, 0 },
-  { "SOURCE", team_view_source, 0 },
-  { 0, 0, 0 }
-};
-
-int
-read_team_packet(char const *pk_name)
-{
-  packet_t  pk_str, cmd;
-  char     *pbuf = pk_str;
-  int       i, r, rsize;
-
-  memset(pk_str, 0, sizeof(pk_str));
-  r = generic_read_file(&pbuf, sizeof(pk_str), &rsize, SAFE|REMOVE,
-                        global->team_cmd_dir, pk_name, "");
-  if (r == 0) return 0;
-  if (r < 0) return -1;
-
-  info("packet: %s", chop(pk_str));
-  sscanf(pk_str, "%s", cmd);
-  for (i = 0; team_commands[i].cmd; i++) {
-    if (!strcmp(team_commands[i].cmd, cmd)) {
-      r = team_commands[i].func(pk_name, pk_str, team_commands[i].ptr);
-      setup_locale(0);
-      return r;
+  if (global->ignore_duplicated_runs) {
+    if ((r = run_check_duplicate(run_id)) < 0) {
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    } else if (r) {
+      info("%d: team_submit_run: duplicated run, match %d", p->id, r - 1);
+      new_send_reply(p, -SRV_ERR_DUPLICATED_RUN);
+      return;
     }
   }
-  report_bad_packet(pk_name, 0);
-  return 0;
+
+  if (generic_write_file(pkt->data, pkt->run_len, 0,
+                         global->compile_src_dir, run_full, "") < 0) {
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  comp_pkt_len = sprintf(comp_pkt_buf, "%s %d\n", run_full, 0);
+  if (generic_write_file(comp_pkt_buf, comp_pkt_len, SAFE,
+                         langs[pkt->lang_id]->queue_dir, run_name, "") < 0) {
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  if (run_change_status(run_id, RUN_COMPILING, 0, -1) < 0) {
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+
+  info("%d: team_submit_run: ok", p->id);
+  new_send_reply(p, SRV_RPL_OK);
 }
 
-int
+static void
+cmd_team_submit_clar(struct client_state *p, int len, 
+                     struct prot_serve_pkt_submit_clar *pkt)
+{
+  unsigned char *subj_ptr, *text_ptr;
+  int clar_id, subj_len, full_len;
+  path_t clar_name;
+  unsigned char *full_txt = 0;
+
+  unsigned char subj[CLAR_MAX_SUBJ_TXT_LEN + 16];
+  unsigned char bsubj[CLAR_MAX_SUBJ_LEN + 16];
+
+  if (len < sizeof(*pkt)) {
+    new_bad_packet(p, "team_submit_clar: packet is too small: %d", len);
+    return;
+  }
+  subj_ptr = pkt->data;
+  if (strlen(subj_ptr) != pkt->subj_len) {
+    new_bad_packet(p, "team_submit_clar: subj_len does not match");
+    return;
+  }
+  text_ptr = subj_ptr + pkt->subj_len + 1;
+  if (strlen(text_ptr) != pkt->text_len) {
+    new_bad_packet(p, "team_submit_clar: text_len does not match");
+    return;
+  }
+  if (len != sizeof(*pkt) + pkt->subj_len + pkt->text_len) {
+    new_bad_packet(p, "team_submit_clar: packet length does not match");
+    return;
+  }
+
+  info("%d: team_submit_clar: %d, %d, %d",
+       p->id, pkt->user_id, pkt->contest_id, pkt->locale_id);
+
+  if (pkt->contest_id != global->contest_id) {
+    err("%d: contest_id does not match", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (!teamdb_lookup(pkt->user_id)) {
+    err("%d: user_id is invalid", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+    return;
+  }
+  if (global->disable_clars || global->disable_team_clars) {
+    err("%d: clarifications are disabled", p->id);
+    new_send_reply(p, -SRV_ERR_CLARS_DISABLED);
+    return;
+  }
+  /* FIXME: parametrize it! */
+  if (pkt->subj_len > 80) {
+    err("%d: subject length exceeds maximal", p->id);
+    new_send_reply(p, -SRV_ERR_SUBJECT_TOO_LONG);
+    return;
+  }
+  if (!contest_start_time) {
+    err("%d: contest is not started", p->id);
+    new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
+    return;
+  }
+  if (contest_stop_time) {
+    err("%d: contest already finished", p->id);
+    new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
+    return;
+  }
+
+  // process subject and message body
+  memset(subj, 0, sizeof(subj));
+  if (pkt->subj_len >= CLAR_MAX_SUBJ_TXT_LEN) {
+    strncpy(subj, subj_ptr, CLAR_MAX_SUBJ_TXT_LEN);
+    subj[CLAR_MAX_SUBJ_TXT_LEN - 1] = '.';
+    subj[CLAR_MAX_SUBJ_TXT_LEN - 2] = '.';
+    subj[CLAR_MAX_SUBJ_TXT_LEN - 3] = '.';
+  } else if (!pkt->subj_len) {
+    subj_ptr = _("(no subject)");
+    strcpy(subj, subj_ptr);
+  } else {
+    strcpy(subj, subj_ptr);
+  }
+  subj_len = strlen(subj_ptr);
+  base64_encode_str(subj, bsubj);
+
+  full_txt = alloca(subj_len + pkt->text_len + 64);
+  full_len = sprintf(full_txt, "Subject: %s\n\n%s", subj_ptr, text_ptr);
+
+  if (check_clar_qouta(pkt->user_id, full_len) < 0) {
+    err("%d: user quota exceeded", p->id);
+    new_send_reply(p, -SRV_ERR_QUOTA_EXCEEDED);
+    return;
+  }
+
+  if ((clar_id = clar_add_record(current_time, full_len,
+                                 run_unparse_ip(pkt->ip),
+                                 pkt->user_id, 0, 0, bsubj)) < 0) {
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  sprintf(clar_name, "%06d", clar_id);
+  if (generic_write_file(full_txt, full_len, 0,
+                         global->clar_archive_dir, clar_name, "") < 0) {
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+
+  info("%d: team_submit_clar: ok", p->id);
+  new_send_reply(p, SRV_RPL_OK);
+}
+
+static int
 read_compile_packet(char *pname)
 {
   char   buf[256];
@@ -793,7 +1213,7 @@ read_compile_packet(char *pname)
   return 0;
 }
 
-int
+static int
 read_run_packet(char *pname)
 {
   char  buf[256];
@@ -852,7 +1272,7 @@ read_run_packet(char *pname)
   return 0;
 }
 
-void
+static void
 process_judge_reply(int clar_ref, int to_all,
                     char const *pname, char const *ip)
 {
@@ -904,7 +1324,7 @@ process_judge_reply(int clar_ref, int to_all,
 
   /* create new clarid */
   info("coded (%d): %s", strlen(codedsubj), codedsubj);
-  if ((newclar = clar_add_record(time(0), fullmsglen,
+  if ((newclar = clar_add_record(current_time, fullmsglen,
                                  ip, 0, to, 0, codedsubj)) < 0)
     goto exit_notok;
   sprintf(name2, "%06d", newclar);
@@ -922,7 +1342,7 @@ process_judge_reply(int clar_ref, int to_all,
                      global->pipe_dir, pname, "");
 }
 
-void
+static void
 rejudge_run(int run_id)
 {
   int lang, loc;
@@ -930,7 +1350,8 @@ rejudge_run(int run_id)
   char pkt_buf[128];
   char pkt_len;
 
-  if (run_get_record(run_id, 0, 0, 0, &loc, 0, &lang, 0, 0, 0, 0) < 0) return;
+  if (run_get_record(run_id, 0, 0, 0, 0, &loc, 0, &lang, 0, 0, 0, 0) < 0)
+    return;
   if (lang <= 0 || lang > max_lang || !langs[lang]) {
     err("rejudge_run: bad language: %d", lang);
     return;
@@ -950,7 +1371,7 @@ rejudge_run(int run_id)
   run_change_status(run_id, RUN_COMPILING, 0, -1);
 }
 
-int
+static int
 judge_stat(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   packet_t cmd;
@@ -970,7 +1391,7 @@ judge_stat(char const *pk_name, const packet_t pk_str, void *ptr)
   return 1;
 }
 
-int
+static int
 judge_standings(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   packet_t cmd;
@@ -982,7 +1403,7 @@ judge_standings(char const *pk_name, const packet_t pk_str, void *ptr)
   return 0;
 }
 
-int
+static int
 judge_update_public_standings(char const     *pk_name,
                               const packet_t  pk_str,
                               void           *ptr)
@@ -997,7 +1418,7 @@ judge_update_public_standings(char const     *pk_name,
   return 0;
 }
 
-int
+static int
 judge_view_clar(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   int      is_master = (int) ptr;
@@ -1021,7 +1442,7 @@ judge_view_clar(char const *pk_name, const packet_t pk_str, void *ptr)
   return 0;
 }
 
-int
+static int
 judge_view_report(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   int      n, rid;
@@ -1036,7 +1457,7 @@ judge_view_report(char const *pk_name, const packet_t pk_str, void *ptr)
   return 0;
 }
 
-int
+static int
 judge_view_src(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   packet_t  cmd;
@@ -1051,45 +1472,43 @@ judge_view_src(char const *pk_name, const packet_t pk_str, void *ptr)
   return 0;
 }
 
-int
+static int
 judge_start(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   packet_t cmd;
   int      n;
-  time_t   ts;
 
   if(sscanf(pk_str, "%s %n", cmd, &n) != 1 || pk_str[n])
     return report_bad_packet(pk_name, 0);
   if (check_period(pk_name, "START", 0, 1, 0, 0) < 0) return 0;
 
-  run_start_contest(time(&ts));
-  contest_start_time = ts;
-  info("contest started: %lu", ts);
+  run_start_contest(current_time);
+  contest_start_time = current_time;
+  info("contest started: %lu", current_time);
   update_status_file(1);
   report_ok(pk_name);
   return 0;
 }
 
-int
+static int
 judge_stop(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   packet_t cmd;
   int      n;
-  time_t   ts;
 
   if (sscanf(pk_str, "%s %n", cmd, &n) != 1 || pk_str[n])
     return report_bad_packet(pk_name, 0);
   if (check_period(pk_name, "STOP", 0, 1, 1, 0) < 0) return 0;
 
-  run_stop_contest(time(&ts));
-  contest_stop_time = ts;
-  info("contest stopped: %lu", ts);
+  run_stop_contest(current_time);
+  contest_stop_time = current_time;
+  info("contest stopped: %lu", current_time);
   update_status_file(1);
   report_ok(pk_name);
   return 0;
 }
 
-int
+static int
 judge_sched(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   packet_t  cmd;
@@ -1111,7 +1530,7 @@ judge_sched(char const *pk_name, const packet_t pk_str, void *ptr)
   return 0;
 }
 
-int
+static int
 judge_time(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   packet_t  cmd;
@@ -1140,7 +1559,7 @@ judge_time(char const *pk_name, const packet_t pk_str, void *ptr)
   return 0;  
 }
 
-int
+static int
 judge_change_status(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   packet_t cmd;
@@ -1156,7 +1575,8 @@ judge_change_status(char const *pk_name, const packet_t pk_str, void *ptr)
     return report_bad_packet(pk_name, 0);
 
   if (global->score_system_val == SCORE_KIROV) {
-    if (status == RUN_COMPILE_ERR || status == RUN_REJUDGE) test = 0;
+    if (status == RUN_COMPILE_ERR || status == RUN_REJUDGE
+        || status == RUN_IGNORED) test = 0;
     else test++;
   } else {
   }
@@ -1171,7 +1591,7 @@ judge_change_status(char const *pk_name, const packet_t pk_str, void *ptr)
   return 0;
 }
 
-int
+static int
 judge_reply(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   packet_t cmd, ip;
@@ -1187,7 +1607,7 @@ judge_reply(char const *pk_name, const packet_t pk_str, void *ptr)
   return 0;
 }
 
-int
+static int
 judge_view_teams(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   packet_t cmd;
@@ -1201,7 +1621,7 @@ judge_view_teams(char const *pk_name, const packet_t pk_str, void *ptr)
   return 0;
 }
 
-int
+static int
 judge_view_one_team(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   packet_t cmd;
@@ -1215,7 +1635,7 @@ judge_view_one_team(char const *pk_name, const packet_t pk_str, void *ptr)
   return 0;
 }
 
-int
+static int
 judge_change_team_login(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   packet_t cmd, l_b64, l_asc;
@@ -1249,7 +1669,7 @@ judge_change_team_login(char const *pk_name, const packet_t pk_str, void *ptr)
   return 0;
 }
 
-int
+static int
 judge_change_team_name(char const *pk_name, const packet_t pk_str, void *p)
 {
   packet_t cmd, l_b64, l_asc;
@@ -1283,7 +1703,7 @@ judge_change_team_name(char const *pk_name, const packet_t pk_str, void *p)
   return 0;
 }
 
-int
+static int
 judge_change_team_password(char const *pk_name, const packet_t pk_str, void *p)
 {
   packet_t cmd, passwd;
@@ -1311,7 +1731,7 @@ judge_change_team_password(char const *pk_name, const packet_t pk_str, void *p)
   return 0;
 }
 
-int
+static int
 judge_change_team_vis(char const *pk_name, const packet_t pk_str, void *p)
 {
   int tid, n;
@@ -1336,7 +1756,7 @@ judge_change_team_vis(char const *pk_name, const packet_t pk_str, void *p)
   return 0;
 }
 
-int
+static int
 judge_change_team_ban(char const *pk_name, const packet_t pk_str, void *p)
 {
   int tid, n;
@@ -1361,7 +1781,7 @@ judge_change_team_ban(char const *pk_name, const packet_t pk_str, void *p)
   return 0;
 }
 
-int
+static int
 do_add_team(char const *s, char **msg)
 {
   int n;
@@ -1406,7 +1826,7 @@ do_add_team(char const *s, char **msg)
   return -1;
 }
 
-int
+static int
 judge_add_team(char const *pk_name, const packet_t pk_str, void *p)
 {
   packet_t cmd;
@@ -1445,7 +1865,7 @@ judge_add_team(char const *pk_name, const packet_t pk_str, void *p)
   return 0;
 }
 
-int
+static int
 judge_message(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   packet_t cmd, subj, ip, c_name;
@@ -1466,7 +1886,7 @@ judge_message(char const *pk_name, const packet_t pk_str, void *ptr)
     goto _cleanup;
   }
 
-  if ((c_id = clar_add_record(time(0), mlen, ip, 0, 0, 0, subj)) < 0) {
+  if ((c_id = clar_add_record(current_time, mlen, ip, 0, 0, 0, subj)) < 0) {
     reply = _("<p>Server failed to update message log.");
     goto _cleanup;
   }
@@ -1484,7 +1904,7 @@ judge_message(char const *pk_name, const packet_t pk_str, void *ptr)
 }
 
 /* FORMAT: "REJUDGE <locale_id>" */
-int
+static int
 judge_rejudge_all(char const *pk_name, const packet_t pk_str, void *ptr)
 {
   packet_t cmd;
@@ -1499,8 +1919,9 @@ judge_rejudge_all(char const *pk_name, const packet_t pk_str, void *ptr)
 
   total_runs = run_get_total();
   for (r = 0; r < total_runs; r++) {
-    if (run_get_record(r, 0, 0, 0, 0, 0, 0, 0, &status, 0, 0) >= 0
-        && status >= RUN_OK && status <= RUN_MAX_STATUS) {
+    if (run_get_record(r, 0, 0, 0, 0, 0, 0, 0, 0, &status, 0, 0) >= 0
+        && status >= RUN_OK && status <= RUN_MAX_STATUS
+        && status != RUN_IGNORED) {
       rejudge_run(r);
     }
   }
@@ -1509,7 +1930,7 @@ judge_rejudge_all(char const *pk_name, const packet_t pk_str, void *ptr)
 }
 
 /* FORMAT: "REJUDGEP <locale_id> <problem_id>" */
-int
+static int
 judge_rejudge_problem(char const *pk_name, const packet_t pk_str, void *str)
 {
   packet_t cmd;
@@ -1525,8 +1946,9 @@ judge_rejudge_problem(char const *pk_name, const packet_t pk_str, void *str)
 
   total_runs = run_get_total();
   for (r = 0; r < total_runs; r++) {
-    if (run_get_record(r, 0, 0, 0, 0, 0, 0, &prob, &status, 0, 0) >= 0
-        && prob == prob_id && status >= RUN_OK && status <= RUN_MAX_STATUS) {
+    if (run_get_record(r, 0, 0, 0, 0, 0, 0, 0, &prob, &status, 0, 0) >= 0
+        && prob == prob_id && status >= RUN_OK && status <= RUN_MAX_STATUS
+        && status != RUN_IGNORED) {
       rejudge_run(r);
     }
   }
@@ -1535,7 +1957,7 @@ judge_rejudge_problem(char const *pk_name, const packet_t pk_str, void *str)
 }
 
 /* FORMAT: "RESET <locale_id>" */
-int
+static int
 judge_reset_contest(char const *pk_name, const packet_t pk_str, void *str)
 {
   packet_t cmd;
@@ -1562,7 +1984,7 @@ judge_reset_contest(char const *pk_name, const packet_t pk_str, void *str)
   return 0;
 }
 
-int
+static int
 judge_suspend_clients(char const *pk_name, const packet_t pk_str, void *str)
 {
   packet_t cmd;
@@ -1578,7 +2000,7 @@ judge_suspend_clients(char const *pk_name, const packet_t pk_str, void *str)
   return 0;
 }
 
-int
+static int
 judge_resume_clients(char const *pk_name, const packet_t pk_str, void *str)
 {
   packet_t cmd;
@@ -1614,7 +2036,7 @@ judge_generate_passwords(char const *pk_name, const packet_t pk_str, void *p)
   return 0;
 }
 
-struct server_cmd judge_cmds[] =
+static struct server_cmd judge_cmds[] =
 {
   { "START", judge_start, 0 },
   { "STOP", judge_stop, 0 },
@@ -1650,7 +2072,7 @@ struct server_cmd judge_cmds[] =
   { 0, 0, 0 },
 };
 
-int
+static int
 read_judge_packet(char const *pk_name)
 {
   int       rsize, i, r;
@@ -1672,12 +2094,462 @@ read_judge_packet(char const *pk_name)
   return 0;
 }
 
-int
+static void
+check_remove_queue(void)
+{
+  struct remove_queue_item *p;
+
+  while (1) {
+    if (!remove_queue_first) return;
+    if (remove_queue_first->rmtime > current_time) return;
+
+    clear_directory(remove_queue_first->path);
+    if (rmdir(remove_queue_first->path) < 0) {
+      err("rmdir failed: %s", os_ErrorMsg());
+    }
+
+    p = remove_queue_first;
+    remove_queue_first = p->next;
+    if (!remove_queue_first) remove_queue_last = 0;
+    xfree(p);
+  }
+}
+
+struct packet_handler
+{
+  void (*func)();
+};
+
+static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
+{
+  [SRV_CMD_PASS_FD] { cmd_pass_descriptors },
+  [SRV_CMD_GET_ARCHIVE] { cmd_team_get_archive },
+  [SRV_CMD_LIST_RUNS] { cmd_team_list_runs },
+  [SRV_CMD_LIST_CLARS] { cmd_team_list_runs },
+  [SRV_CMD_SHOW_CLAR] { cmd_team_show_item },
+  [SRV_CMD_SHOW_SOURCE] { cmd_team_show_item },
+  [SRV_CMD_SHOW_REPORT] { cmd_team_show_item },
+  [SRV_CMD_SUBMIT_RUN] { cmd_team_submit_run },
+  [SRV_CMD_SUBMIT_CLAR] { cmd_team_submit_clar },
+  [SRV_CMD_TEAM_PAGE] { cmd_team_page },
+};
+
+static void
+process_packet(struct client_state *p, int len,
+               struct prot_serve_packet *pack)
+{
+  if (len < sizeof(*pack)) {
+    err("%d: packet length is too small: %d", p->id, len);
+    client_disconnect(p, 0);
+    return;
+  }
+  if (pack->magic != PROT_SERVE_PACKET_MAGIC) {
+    err("%d: bad magic header: %04x", p->id, pack->magic);
+    client_disconnect(p, 0);
+    return;
+  }
+
+  if (pack->id <= 0 || pack->id >= SRV_CMD_LAST
+      || !packet_handlers[pack->id].func) {
+    err("%d: unknown request id: %d, %d", p->id, pack->id, len);
+    client_disconnect(p, 0);
+    return;
+  }
+
+  (*packet_handlers[pack->id].func)(p, len, pack);
+}
+
+static int
+create_socket(void)
+{
+  struct sockaddr_un addr;
+
+  if ((socket_fd = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
+    err("socket() failed :%s", os_ErrorMsg());
+    return -1;
+  }
+  memset(&addr, 0, sizeof(addr));
+  addr.sun_family = AF_UNIX;
+  strncpy(addr.sun_path, global->serve_socket, 108);
+  addr.sun_path[107] = 0;
+  if (bind(socket_fd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
+    err("bind() failed: %s", os_ErrorMsg());
+    return -1;
+  }
+  socket_name = global->serve_socket;
+
+  if (chmod(global->serve_socket, 0777) < 0) {
+    err("chmod() failed: %s", os_ErrorMsg());
+    return -1;
+  }
+  if (listen(socket_fd, 20) < 0) {
+    err("listen() failed: %s", os_ErrorMsg());
+    return -1;
+  }
+
+  return 0;
+}
+
+static int
+check_sockets(int may_wait_flag)
+{
+  fd_set rset, wset;
+  int max_fd, val, new_fd, addrlen, l, w, r;
+  struct client_state *p;
+  struct timeval timeout;
+  struct sockaddr_un addr;
+
+  if (may_wait_flag && socket_fd < 0) {
+    os_Sleep(global->serve_sleep_time);
+    return 1;
+  }
+
+  FD_ZERO(&rset);
+  FD_ZERO(&wset);
+  max_fd = -1;
+
+  if (!interrupt_signaled) {
+    FD_SET(socket_fd, &rset);
+    max_fd = socket_fd + 1;
+  }
+  for (p = client_first; p; p = p->next) {
+    p->processed = 0;
+    if (p->write_len > 0) {
+      FD_SET(p->fd, &wset);
+      if (p->fd >= max_fd) max_fd = p->fd + 1;
+    } else if (!interrupt_signaled) {
+      FD_SET(p->fd, &rset);
+      if (p->fd >= max_fd) max_fd = p->fd + 1;
+    }
+  }
+
+  if (may_wait_flag) {
+    timeout.tv_sec = global->serve_sleep_time / 1000;
+    timeout.tv_usec = (global->serve_sleep_time % 1000) * 1000;
+  } else {
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
+  }
+
+  val = select(max_fd, &rset, &wset, NULL, &timeout);
+  if (val < 0 && errno == EINTR) {
+    info("select interrupted, restarting it");
+    return 0;
+  }
+  if (val < 0) {
+    err("select() failed: %s", os_ErrorMsg());
+    return 0;
+  }
+  if (!val) {
+    // nothing... :-(
+    return 1;
+  }
+  may_wait_flag = 1;
+
+  while (FD_ISSET(socket_fd, &rset)) {
+    memset(&addr, 0, sizeof(addr));
+    addrlen = sizeof(addr);
+    new_fd = accept(socket_fd, (struct sockaddr*) &addr, &addrlen);
+    if (new_fd < 0) {
+      err("accept failed: %s", os_ErrorMsg());
+      break;
+    }
+
+    p = client_new_state(new_fd);
+    val = 1;
+    if (setsockopt(new_fd, SOL_SOCKET, SO_PASSCRED, &val, sizeof(val)) < 0) {
+      err("%d: setsockopt() failed: %s", p->id, os_ErrorMsg());
+      client_disconnect(p, 1);
+      break;
+    }
+
+    info("%d: connection accepted", p->id);
+    may_wait_flag = 0;
+    break;
+  }
+
+  /* check writers */
+  while (1) {
+    for (p = client_first; p; p = p->next) {
+      if (FD_ISSET(p->fd, &wset) && !p->processed) break;
+    }
+    if (!p) break;
+
+    p->processed = 1;
+    may_wait_flag = 0;
+    l = p->write_len - p->written;
+    w = write(p->fd, &p->write_buf[p->written], l);
+
+    if (w <= 0) {
+      err("%d: write() failed: %s (%d, %d, %d)", p->id, os_ErrorMsg(),
+          p->fd, l, p->write_len);
+      client_disconnect(p, 1);
+      continue;
+    }
+    p->written += w;
+    if (p->write_len == p->written) {
+      p->written = 0;
+      p->write_len = 0;
+      xfree(p->write_buf);
+      p->write_buf = 0;
+      if (p->state == STATE_AUTOCLOSE) {
+        info("%d: auto-disconnecting: %d, %d, %d", p->id,
+             p->fd, p->client_fds[0], p->client_fds[1]);
+        client_disconnect(p, 1);
+        continue;
+      }
+    }
+  }
+
+  while (1) {
+    for (p = client_first; p; p = p->next)
+      if (FD_ISSET(p->fd, &rset) && !p->processed) break;
+    if (!p) break;
+
+    p->processed = 1;
+    may_wait_flag = 0;
+
+    /* read peer credentials */
+    if (p->state == STATE_READ_CREDS) {
+      struct msghdr msg;
+      unsigned char msgbuf[512];
+      struct cmsghdr *pmsg;
+      struct ucred *pcred;
+      struct iovec recv_vec[1];
+      int val;
+
+      // we expect 4 zero bytes and credentials
+      memset(&msg, 0, sizeof(msg));
+      msg.msg_flags = 0;
+      msg.msg_control = msgbuf;
+      msg.msg_controllen = sizeof(msgbuf);
+      recv_vec[0].iov_base = &val;
+      recv_vec[0].iov_len = 4;
+      msg.msg_iov = recv_vec;
+      msg.msg_iovlen = 1;
+      val = -1;
+      r = recvmsg(p->fd, &msg, 0);
+      if (r < 0) {
+        err("%d: recvmsg failed: %s", p->id, os_ErrorMsg());
+        client_disconnect(p, 1);
+        continue;
+      }
+      if (r != 4) {
+        err("%d: read %d bytes instead of 4", p->id, r);
+        client_disconnect(p, 1);
+        continue;
+      }
+      if (val != 0) {
+        err("%d: expected 4 zero bytes", p->id);
+        client_disconnect(p, 1);
+        continue;
+      }
+      if ((msg.msg_flags & MSG_CTRUNC)) {
+        err("%d: protocol error: control buffer too small", p->id);
+        client_disconnect(p, 1);
+        continue;
+      }
+
+      pmsg = CMSG_FIRSTHDR(&msg);
+      if (!pmsg) {
+        err("%d: empty control data", p->id);
+        client_disconnect(p, 1);
+        continue;
+      }
+      /* cmsg_len, cmsg_level, cmsg_type */
+      if (pmsg->cmsg_level != SOL_SOCKET
+          || pmsg->cmsg_type != SCM_CREDENTIALS
+          || pmsg->cmsg_len != CMSG_LEN(sizeof(*pcred))) {
+        err("%d: protocol error: unexpected control data", p->id);
+        client_disconnect(p, 1);
+        continue;
+      }
+      pcred = (struct ucred*) CMSG_DATA(pmsg);
+      p->peer_pid = pcred->pid;
+      p->peer_uid = pcred->uid;
+      p->peer_gid = pcred->gid;
+      if (CMSG_NXTHDR(&msg, pmsg)) {
+        err("%d: protocol error: unexpected control data", p->id);
+        client_disconnect(p, 1);
+        continue;
+      }
+
+      info("%d: received peer information: %d, %d, %d", p->id,
+           p->peer_pid, p->peer_uid, p->peer_gid);
+
+      p->state = STATE_READ_DATA;
+      continue;
+    }
+
+    /* read peer file descriptors */
+    if (p->state == STATE_READ_FDS) {
+      struct msghdr msg;
+      unsigned char msgbuf[512];
+      struct cmsghdr *pmsg;
+      struct iovec recv_vec[1];
+      int *fds;
+      int val;
+
+      // we expect 4 zero bytes and 1 or 2 file descriptors
+      memset(&msg, 0, sizeof(msg));
+      msg.msg_flags = 0;
+      msg.msg_control = msgbuf;
+      msg.msg_controllen = sizeof(msgbuf);
+      recv_vec[0].iov_base = &val;
+      recv_vec[0].iov_len = 4;
+      msg.msg_iov = recv_vec;
+      msg.msg_iovlen = 1;
+      val = -1;
+      r = recvmsg(p->fd, &msg, 0);
+      if (r < 0) {
+        err("%d: recvmsg failed: %s", p->id, os_ErrorMsg());
+        client_disconnect(p, 1);
+        continue;
+      }
+      if (r != 4) {
+        err("%d: read %d bytes instead of 4", p->id, r);
+        client_disconnect(p, 1);
+        continue;
+      }
+      if (val != 0) {
+        err("%d: expected 4 zero bytes", p->id);
+        client_disconnect(p, 1);
+        continue;
+      }
+      if ((msg.msg_flags & MSG_CTRUNC)) {
+        err("%d: protocol error: control buffer too small", p->id);
+        client_disconnect(p, 1);
+        continue;
+      }
+
+      /*
+       * actually, the first control message could be credentials
+       * so we need to skip it
+       */
+      pmsg = CMSG_FIRSTHDR(&msg);
+      while (1) {
+        if (!pmsg) break;
+        if (pmsg->cmsg_level == SOL_SOCKET
+            && pmsg->cmsg_type == SCM_RIGHTS) break;
+        pmsg = CMSG_NXTHDR(&msg, pmsg);
+      }
+      if (!pmsg) {
+        err("%d: empty control data", p->id);
+        client_disconnect(p, 1);
+        continue;
+      }
+      fds = (int*) CMSG_DATA(pmsg);
+      if (pmsg->cmsg_len == CMSG_LEN(2 * sizeof(int))) {
+        info("%d: received 2 file descriptors: %d, %d",p->id,fds[0],fds[1]);
+        p->client_fds[0] = fds[0];
+        p->client_fds[1] = fds[1];
+      } else if (pmsg->cmsg_len == CMSG_LEN(1 * sizeof(int))) {
+        info("%d: received 1 file descriptor: %d", p->id, fds[0]);
+        p->client_fds[0] = fds[0];
+        p->client_fds[1] = -1;
+      } else {
+        err("%d: invalid number of file descriptors passed", p->id);
+        client_disconnect(p, 1);
+        continue;
+      }
+
+      p->state = STATE_READ_DATA;
+      continue;
+    }
+
+    /* read packet length */
+    if (p->read_state < 4) {
+      unsigned char rbuf[4];
+
+      memcpy(rbuf, &p->expected_len, 4);
+      l = 4 - p->read_state;
+      r = read(p->fd, &rbuf[p->read_state], l);
+      if (!p->read_state && !r) {
+        info("%d: client closed connection", p->id);
+        client_disconnect(p, 1);
+        continue;
+      }
+      if (!r) {
+        err("%d: unexpected EOF from client", p->id);
+        client_disconnect(p, 1);
+        continue;
+      }
+      if (r < 0) {
+        err("%d: read() failed: %s", p->id, os_ErrorMsg());
+        client_disconnect(p, 1);
+        continue;
+      }
+
+      p->read_state += l;
+      memcpy(&p->expected_len, rbuf, 4);
+      if (p->read_state == 4) {
+        if (p->expected_len <= 0 || p->expected_len > 128 * 1024) {
+          err("%d: protocol error: bad packet length: %d",
+              p->id, p->expected_len);
+          client_disconnect(p, 0);
+          continue;
+        }
+        p->read_len = 0;
+        p->read_buf = (unsigned char*) xcalloc(1, p->expected_len);
+      }
+      continue;
+    }
+
+    /* read packet data */
+    l = p->expected_len - p->read_len;
+    r = read(p->fd, &p->read_buf[p->read_len], l);
+    if (!r) {
+      err("%d: unexpected EOF from client", p->id);
+      client_disconnect(p, 1);
+      continue;
+    }
+    if (r < 0) {
+      err("%d: read() failed: %s", p->id, os_ErrorMsg());
+      client_disconnect(p, 1);
+      continue;
+    }
+
+    p->read_len += r;
+    if (p->expected_len == p->read_len) {
+      /* as packet read completely, we may run handle function */
+      process_packet(p, p->expected_len,
+                     (struct prot_serve_packet*) p->read_buf);
+      p->read_len = 0;
+      p->expected_len = 0;
+      p->read_state = 0;
+      xfree(p->read_buf);
+      p->read_buf = 0;
+    }
+  }
+
+  return may_wait_flag;
+}
+
+static int
+may_safely_exit(void)
+{
+  struct client_state *p;
+
+  for (p = client_first; p; p = p->next) {
+    if (p->write_len > 0) break;
+  }
+  if (p) return 0;
+  return 1;
+}
+
+static int
 do_loop(void)
 {
   path_t packetname;
   int    r, p;
+  int    may_wait_flag = 0;
 
+  signal(SIGPIPE, SIG_IGN);
+  signal(SIGINT, interrupt_signal);
+  signal(SIGTERM, interrupt_signal);
+  if (create_socket() < 0) return -1;
+
+  current_time = time(0);
   p = run_get_fog_period(time(0), global->board_fog_time,
                          global->board_unfog_time);
   if (p == 1) {
@@ -1693,82 +2565,78 @@ do_loop(void)
   }
 
   while (1) {
-    while (1) {
-      /* update current time */
-      current_time = time(0);
+    /* update current time */
+    current_time = time(0);
 
-      /* refresh user database */
-      teamdb_refresh();
+    /* refresh user database */
+    teamdb_refresh();
 
-      /* check stop and start times */
-      if (contest_start_time && !contest_stop_time && contest_duration) {
-        if (current_time >= contest_start_time + contest_duration) {
-          /* the contest is over! */
-          info("CONTEST OVER");
-          run_stop_contest(contest_start_time + contest_duration);
-          contest_stop_time = contest_start_time + contest_duration;
-        }
-      } else if (contest_sched_time && !contest_start_time) {
-        if (current_time >= contest_sched_time) {
-          /* it's time to start! */
-          info("CONTEST STARTED");
-          run_start_contest(current_time);
-          contest_start_time = current_time;
-        }
+    /* check items pending for removal */
+    check_remove_queue();
+
+    /* check stop and start times */
+    if (contest_start_time && !contest_stop_time && contest_duration) {
+      if (current_time >= contest_start_time + contest_duration) {
+        /* the contest is over! */
+        info("CONTEST OVER");
+        run_stop_contest(contest_start_time + contest_duration);
+        contest_stop_time = contest_start_time + contest_duration;
       }
-
-      /* indicate, that we're alive, and do it somewhat quiet  */
-      logger_set_level(-1, LOG_WARNING);
-      update_status_file(0);
-      logger_set_level(-1, 0);
-
-      /* automatically update standings in certain situations */
-      p = run_get_fog_period(time(0),
-                             global->board_fog_time, global->board_unfog_time);
-      if (p == 0 && !global->start_standings_updated) {
-        update_standings_file(0);
-      } else if (global->autoupdate_standings
-                 && p == 1 && !global->fog_standings_updated) {
-        update_standings_file(1);
-      } else if (global->autoupdate_standings
-                 && p == 2 && !global->unfog_standings_updated) {
-        update_standings_file(0);
+    } else if (contest_sched_time && !contest_start_time) {
+      if (current_time >= contest_sched_time) {
+        /* it's time to start! */
+        info("CONTEST STARTED");
+        run_start_contest(current_time);
+        contest_start_time = current_time;
       }
+    }
 
-      /* update public log */
-      update_public_log_file();
+    /* indicate, that we're alive, and do it somewhat quiet  */
+    logger_set_level(-1, LOG_WARNING);
+    update_status_file(0);
+    logger_set_level(-1, 0);
 
-      if (!clients_suspended) {
-        r = scan_dir(global->team_cmd_dir, packetname);
-        if (r < 0) return -1;
-        if (r > 0) {
-          if (read_team_packet(packetname) < 0) return -1;
-          break;
-        }
-      }
+    /* automatically update standings in certain situations */
+    p = run_get_fog_period(time(0),
+                           global->board_fog_time, global->board_unfog_time);
+    if (p == 0 && !global->start_standings_updated) {
+      update_standings_file(0);
+    } else if (global->autoupdate_standings
+               && p == 1 && !global->fog_standings_updated) {
+      update_standings_file(1);
+    } else if (global->autoupdate_standings
+               && p == 2 && !global->unfog_standings_updated) {
+      update_standings_file(0);
+    }
 
-      r = scan_dir(global->judge_cmd_dir, packetname);
-      if (r < 0) return -1;
-      if (r > 0) {
-        if (read_judge_packet(packetname) < 0) return -1;
-        break;
-      }
+    /* update public log */
+    update_public_log_file();
 
-      r = scan_dir(global->compile_status_dir, packetname);
-      if (r < 0) return -1;
-      if (r > 0) {
-        if (read_compile_packet(packetname) < 0) return -1;
-        break;
-      }
+    if (interrupt_signaled && may_safely_exit()) {
+      return 0;
+    }
 
-      r = scan_dir(global->run_status_dir, packetname);
-      if (r < 0) return -1;
-      if (r > 0) {
-        if (read_run_packet(packetname) < 0) return -1;
-        break;
-      }
-    
-      os_Sleep(global->serve_sleep_time);
+    may_wait_flag = check_sockets(may_wait_flag);
+
+    r = scan_dir(global->judge_cmd_dir, packetname);
+    if (r < 0) return -1;
+    if (r > 0) {
+      if (read_judge_packet(packetname) < 0) return -1;
+      may_wait_flag = 0;
+    }
+
+    r = scan_dir(global->compile_status_dir, packetname);
+    if (r < 0) return -1;
+    if (r > 0) {
+      if (read_compile_packet(packetname) < 0) return -1;
+      may_wait_flag = 0;
+    }
+
+    r = scan_dir(global->run_status_dir, packetname);
+    if (r < 0) return -1;
+    if (r > 0) {
+      if (read_run_packet(packetname) < 0) return -1;
+      may_wait_flag = 0;
     }
   }
 }
@@ -1867,9 +2735,12 @@ main(int argc, char *argv[])
   if (run_open(global->run_log_file, 0) < 0) return 1;
   if (clar_open(global->clar_log_file, 0) < 0) return 1;
   if (write_submit_templates(global->status_dir) < 0) return 1;
-  if (do_loop() < 0) return 1;
-
-  return 0;
+  i = do_loop();
+  if (i < 0) i = 1;
+  if (socket_name) {
+    unlink(socket_name);
+  }
+  return i;
 
  print_usage:
   printf("Usage: %s [ OPTS ] config-file\n", argv[0]);
@@ -1882,7 +2753,7 @@ main(int argc, char *argv[])
 /**
  * Local variables:
  *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "fd_set")
  *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
