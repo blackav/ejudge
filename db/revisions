@@ -252,3 +252,6 @@ win32/exec.c 1 12 1436620
 win32/logger.c 1 18 683596
 win32/osdeps.c 1 25 1032140
 number_io.h 1 5 256060
+xalloc.h 6 7 264804
+number_io.c 1 5 471170
+unix/exec.c 6 19 2724695
