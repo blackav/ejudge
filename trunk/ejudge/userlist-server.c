@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,8 @@
 #include "misctext.h"
 #include "l10n.h"
 #include "tsc.h"
+#include "sformat.h"
+#include "fileutl.h"
 
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
@@ -850,6 +852,11 @@ cmd_register_new(struct client_state *p,
   userlist_login_hash_t login_hash = 0;
   int i;
   unsigned char logbuf[1024];
+  unsigned char email_tmpl_path[PATH_MAX];
+  unsigned char email_tmpl_path2[PATH_MAX];
+  struct sformat_extra_data sformat_data;
+  char *email_tmpl = 0;
+  size_t email_tmpl_size = 0, buf_size = 0;
 
   // validate packet
   login = data->data;
@@ -967,36 +974,71 @@ cmd_register_new(struct client_state *p,
   pwd->method = USERLIST_PWD_PLAIN;
   pwd->b.text = xstrdup(passwd_buf);
 
+  // prepare the file path for the email template
+  memset(&sformat_data, 0, sizeof(sformat_data));
+  sformat_data.locale_id = data->locale_id;
+  sformat_data.url = urlbuf;
+  if (cnts->register_email_file) {
+    sformat_message(email_tmpl_path, sizeof(email_tmpl_path),
+                    cnts->register_email_file,
+                    0, 0, 0, 0, 0, user, cnts, &sformat_data);
+    if (generic_read_file(&email_tmpl, 0, &email_tmpl_size, 0,
+                          "", email_tmpl_path, "") < 0) {
+      sformat_data.locale_id = 0;
+      sformat_message(email_tmpl_path2, sizeof(email_tmpl_path2),
+                      cnts->register_email_file,
+                      0, 0, 0, 0, 0, user, cnts, &sformat_data);
+      if (strcmp(email_tmpl_path, email_tmpl_path2) != 0) {
+        strcpy(email_tmpl_path, email_tmpl_path2);
+        if (generic_read_file(&email_tmpl, 0, &email_tmpl_size, 0,
+                              "", email_tmpl_path, "") < 0) {
+          email_tmpl = 0;
+          email_tmpl_size = 0;
+        }
+      } else {
+        email_tmpl = 0;
+        email_tmpl_size = 0;
+      }
+    }
+  }
+
   l10n_setlocale(data->locale_id);
-  buf = (char *) xcalloc(1,1024);
-  snprintf(buf, 1024,
-           _("Hello,\n"
-             "\n"
-             "Somebody (probably you) have specified this e-mail address (%s)\n"
-             "when registering an account on the Moscow Programming Contests\n"
-             "Server.\n"
-             "\n"
-             "To confirm registration, you should enter the provided login\n"
-             "and password on the login page of the server at the\n"
-             "following url: %s.\n"
-             "\n"
-             "Note, that if you do not do this in 24 hours from the moment\n"
-             "of sending this letter, registration will be void.\n"
-             "\n"
-             "login:    %s\n"
-             "password: %s\n"
-             "\n"
-             "Regards,\n"
-             "The ejudge contest administration system\n"),
-           user->email,
-           urlbuf,
-           user->login, pwd->b.text);
+  if (!email_tmpl) {
+    email_tmpl =
+      _("Hello,\n"
+        "\n"
+        "Somebody (probably you) have specified this e-mail address (%Ue)\n"
+        "when registering an account on the Moscow Programming Contests\n"
+        "Server.\n"
+        "\n"
+        "To confirm registration, you should enter the provided login\n"
+        "and password on the login page of the server at the\n"
+        "following url: %Vu.\n"
+        "\n"
+        "Note, that if you do not do this in 24 hours from the moment\n"
+        "of sending this letter, registration will be void.\n"
+        "\n"
+        "login:    %Ul\n"
+        "password: %Uz\n"
+        "\n"
+        "Regards,\n"
+        "The ejudge contest administration system\n");
+    email_tmpl = xstrdup(email_tmpl);
+    email_tmpl_size = strlen(email_tmpl);
+  }
+
+  buf_size = email_tmpl_size * 2;
+  if (buf_size < 2048) buf_size = 2048;
+  buf = (char*) xmalloc(buf_size);
+  sformat_message(buf, buf_size, email_tmpl,
+                  0, 0, 0, 0, 0, user, cnts, &sformat_data);
   send_email_message(user->email,
                      originator_email,
                      NULL,
                      _("You have been registered"),
                      buf);
-  free(buf);
+  xfree(buf);
+  xfree(email_tmpl);
   l10n_setlocale(0);
   send_reply(p,ULS_OK);
   info("%s -> ok, %d", logbuf, user->id);
@@ -5207,6 +5249,15 @@ cmd_edit_field(struct client_state *p, int pkt_len,
       err("%s -> attempt to reset is_privileged field", logbuf);
       send_reply(p, -ULS_ERR_NO_PERMS);
       return;
+    }
+    // nobody can set empty password
+    if (data->field == USERLIST_NN_REG_PASSWORD
+        || data->field == USERLIST_NN_TEAM_PASSWORD) {
+      if (!data->data || !*data->data) {
+        err("%s -> the password is empty", logbuf);
+        send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+        return;
+      }
     }
     if ((updated=userlist_set_user_field_str(userlist,
                                              u,data->field,data->data)) < 0) {
