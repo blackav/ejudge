@@ -50,8 +50,8 @@ struct parser_data
   struct tag_list *tag_stack;
   int err_cntr;
   struct xml_tree *tree;
-  char **tag_map;
-  char **attn_map;
+  char const * const *tag_map;
+  char const * const *attn_map;
   void * (*alloc_tag_func)(int);
   void * (*alloc_attn_func)(int);
 };
@@ -114,6 +114,12 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
     return;
   }
 
+  if (!pd->tag_map) {
+    err("unknown tag <%s> at line %d, skipping",
+        cur_tag, XML_GetCurrentLineNumber(p));
+    pd->err_cntr++;
+    goto start_skipping;
+  }
   for (itag = 1; pd->tag_map[itag]; itag++)
     if (!strcmp(cur_tag, pd->tag_map[itag]))
       break;
@@ -126,6 +132,8 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
 
   new_node = (struct xml_tree*) pd->alloc_tag_func(itag);
   new_node->tag = itag;
+  new_node->line = XML_GetCurrentLineNumber(p);
+  new_node->column = XML_GetCurrentColumnNumber(p);
   if (pd->tag_stack) {
     parent_node = pd->tag_stack->tree;
     new_node->up = parent_node;
@@ -136,6 +144,8 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
     } else {
       parent_node->first_down = parent_node->last_down = new_node;
     }
+  } else {
+    pd->tree = new_node;
   }
 
   while (*atts) {
@@ -156,12 +166,19 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
     str_utf8_to_koi8(cur_attr, cur_attr_size, atts[0]);
     str_utf8_to_koi8(cur_val, cur_val_size, atts[1]);
 
+    if (!pd->attn_map) {
+      err("unknown attribute <%s> at line %d",
+          cur_attr, XML_GetCurrentLineNumber(p));
+      pd->err_cntr++;
+      atts += 2;
+      continue;
+    }
     for (iattn = 1; pd->attn_map[iattn]; iattn++)
       if (!strcmp(cur_attr, pd->attn_map[iattn]))
         break;
     if (!pd->attn_map[iattn]) {
       err("unknown attribute <%s> at line %d",
-          cur_tag, XML_GetCurrentLineNumber(p));
+          cur_attr, XML_GetCurrentLineNumber(p));
       pd->err_cntr++;
       atts += 2;
       continue;
@@ -169,6 +186,8 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
     new_attn = (struct xml_attn*) pd->alloc_attn_func(iattn);
     new_attn->tag = iattn;
     new_attn->text = xstrdup(cur_val);
+    new_attn->line = XML_GetCurrentLineNumber(p);
+    new_attn->column = XML_GetCurrentColumnNumber(p);
     if (!new_node->first) {
       new_node->first = new_node->last = new_attn;
     } else {
@@ -246,8 +265,8 @@ generic_attn_alloc(int attn)
 
 struct xml_tree *
 xml_build_tree(char const *path,
-               char **tag_map,
-               char **attn_map,
+               char const * const *tag_map,
+               char const * const *attn_map,
                void * (*tag_alloc)(int),
                void * (*attn_alloc)(int))
 {
@@ -259,8 +278,6 @@ xml_build_tree(char const *path,
 
   memset(&data, 0, sizeof(data));
   ASSERT(path);
-  ASSERT(tag_map);
-  ASSERT(attn_map);
   if (!tag_alloc) tag_alloc = generic_tag_alloc;
   if (!attn_alloc) attn_alloc = generic_attn_alloc;
 
@@ -315,8 +332,8 @@ xml_build_tree(char const *path,
 
 struct xml_tree *
 xml_build_tree_str(char const *str,
-                   char **tag_map,
-                   char **attn_map,
+                   char const * const *tag_map,
+                   char const * const *attn_map,
                    void * (*tag_alloc)(int),
                    void * (*attn_alloc)(int))
 {
@@ -390,14 +407,58 @@ xml_tree_free(struct xml_tree *tree,
   return 0;
 }
 
+static void
+do_xml_unparse_tree(int nest,
+                    FILE *out,
+                    struct xml_tree const *tree,
+                    char const * const *tag_map,
+                    char const * const *attn_map,
+                    int (*tag_print)(FILE *, struct xml_tree const *),
+                    int (*attn_print)(FILE *, struct xml_attn const *),
+                    void (*fmt_print)(FILE *, struct xml_tree const *,int,int))
+{
+  int r;
+  struct xml_attn const *a;
+  struct xml_tree const *t;
+
+  if (!tree || !tag_map) return;
+
+  if (fmt_print) (*fmt_print)(out, tree, 0, nest);
+  fprintf(out, "<%s", tag_map[tree->tag]);
+  for (a = tree->first; a; a = a->next) {
+    if (!attn_map) continue;
+    fprintf(out, " %s=\"", attn_map[a->tag]);
+    r = 0;
+    if (attn_print) r = (*attn_print)(out, a);
+    if (!r && a->text) fprintf(out, "%s", a->text);
+    fprintf(out, "\"");
+  }
+  fprintf(out, ">");
+  if (fmt_print) (*fmt_print)(out, tree, 1, nest);
+  r = 0;
+  if (tag_print) r = (*tag_print)(out, tree);
+  if (!r && tree->text) fprintf(out, "%s", tree->text);
+  for (t = tree->first_down; t; t = t->right)
+    do_xml_unparse_tree(nest + 1,
+                        out, t, tag_map, attn_map, tag_print, attn_print,
+                        fmt_print);
+  if (fmt_print) (*fmt_print)(out, tree, 2, nest);
+  fprintf(out, "</%s>", tag_map[tree->tag]);
+  if (fmt_print) (*fmt_print)(out, tree, 3, nest);
+}
+
 void
 xml_unparse_tree(FILE *out,
-                 struct xml_tree *tree,
-                 char **tag_map,
-                 char **attn_map,
-                 int (*tag_print)(FILE *, struct xml_tree *),
-                 int (*attn_print)(FILE *, struct xml_attn *))
+                 struct xml_tree const *tree,
+                 char const * const *tag_map,
+                 char const * const *attn_map,
+                 int (*tag_print)(FILE *, struct xml_tree const *),
+                 int (*attn_print)(FILE *, struct xml_attn const *),
+                 void (*fmt_print)(FILE *, struct xml_tree const *, int, int))
 {
+  fprintf(out, "<?xml version=\"1.0\" encoding=\"koi8-r\"?>\n");
+  do_xml_unparse_tree(0, out, tree, tag_map, attn_map, tag_print, attn_print,
+                      fmt_print);
 }
 
 /**
