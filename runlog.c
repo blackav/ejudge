@@ -653,6 +653,29 @@ run_add_record(time_t         timestamp,
   return i;
 }
 
+int
+run_undo_add_record(int run_id)
+{
+  if (run_id < 0 || run_id >= run_u) {
+    err("run_undo_add_record: invalid run_id");
+    return -1;
+  }
+  if (run_id == run_u - 1) {
+    run_u--;
+    memset(&runs[run_u], 0, sizeof(runs[0]));
+    if (ftruncate(run_fd, sizeof(head) + sizeof(runs[0]) * run_u) < 0) {
+      err("run_undo_add_record: ftruncate failed: %s", os_ErrorMsg());
+      return -1;
+    }
+    return 0;
+  }
+  // clear run
+  memset(&runs[run_id], 0, sizeof(runs[0]));
+  runs[run_id].submission = run_id;
+  runs[run_id].status = RUN_EMPTY;
+  return 0;
+}
+
 static int
 run_flush_header(void)
 {
