@@ -58,6 +58,7 @@ SERVE_CLNT_CFILES=\
  serve_clnt/open.c\
  serve_clnt/pass_fd.c\
  serve_clnt/recv_packet.c\
+ serve_clnt/reset_filter.c\
  serve_clnt/send_packet.c\
  serve_clnt/show_item.c\
  serve_clnt/simple_cmd.c\
