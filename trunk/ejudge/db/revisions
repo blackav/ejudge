@@ -845,3 +845,8 @@ userlist-server.c 1 24 11409965
 prepare.c 1 48 5603027
 teamdb.c 1 22 1043081
 userlist_clnt/generate_team_passwd.c 1 3 142087
+prepare.h 1 33 1106135
+compile.c 1 18 661696
+run.c 1 42 2832627
+serve.c 1 47 7297844
+prepare.c 1 49 5782387
