@@ -31,7 +31,7 @@ struct filter_env
   struct section_problem_data **probs;
   int rtotal;
   struct run_header rhead;
-  struct run_entry *renties;
+  struct run_entry *rentries;
   int rid;
   struct run_entry *cur;
   time_t cur_time;
