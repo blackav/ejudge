@@ -138,6 +138,11 @@ int serve_clnt_edit_run(int sock_fd,
                         int prob_id,
                         int lang_id,
                         int status,
+                        int is_imported,
                         unsigned char const *user_login);
+
+int serve_clnt_import_xml_runs(int sock_fd,
+                               int out_fd,
+                               const unsigned char *xml_runs);
 
 #endif /* __SERVE_CLNT_H__ */
