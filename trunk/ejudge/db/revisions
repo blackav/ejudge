@@ -887,3 +887,12 @@ prepare.c 1 50 6402378
 runlog.c 1 20 2347604
 teamdb.c 1 24 1064747
 userlist_clnt/generate_team_passwd.c 1 4 153030
+fileutl.h 1 9 155428
+prepare.h 1 35 1204484
+testinfo.h 1 1 125040
+run.c 1 44 3660009
+testinfo.c 1 1 753003
+userlist-server.c 1 26 12222844
+unix/fileutl.c 1 13 1558026
+contests.c 1 17 2581120
+prepare.c 1 51 6740197
