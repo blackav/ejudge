@@ -319,6 +319,20 @@ clar_flags_html(int flags, int from, int to, char *buf, int len)
   return buf;
 }
 
+void
+clar_reset(void)
+{
+  if (ftruncate(clar_fd, 0) < 0) {
+    err("ftruncate() failed: %s", os_ErrorMsg());
+    return;
+  }
+
+  clars.u = 0;
+  if (clars.a > 0) {
+    memset(clars.v, 0, sizeof(clars.v[0]) * clars.a);
+  }
+}
+
 /**
  * Local variables:
  *  compile-command: "make"
