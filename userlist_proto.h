@@ -22,6 +22,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* privelege level */
+#ifndef __MASTER_PAGE_ENUM_DEFINED__
+#define __MASTER_PAGE_ENUM_DEFINED__
+enum
+{
+  PRIV_LEVEL_USER = 0,
+  PRIV_LEVEL_OBSERVER,
+  PRIV_LEVEL_JUDGE,
+  PRIV_LEVEL_ADMIN
+};
+#endif /* __MASTER_PAGE_ENUM_DEFINED__ */
+
 /* server requests codes */
 enum
   {
@@ -50,6 +62,8 @@ enum
     ULS_DELETE_FIELD,
     ULS_ADD_FIELD,
     ULS_GET_UID_BY_PID,
+    ULS_PRIV_LOGIN,
+    ULS_PRIV_CHECK_COOKIE,
   };
 
 /* server reply codes (each corresponds to a different packet) */
@@ -150,7 +164,7 @@ struct userlist_pk_register_new
   signed char   use_cookies;
   unsigned char login_length;
   unsigned char email_length;
-  unsigned char data[0];
+  unsigned char data[2];
 };
 
 struct userlist_pk_do_login __attribute__((packed,aligned(1)));
@@ -161,9 +175,10 @@ struct userlist_pk_do_login
   long          contest_id;
   signed char   locale_id;
   signed char   use_cookies;
+  unsigned char priv_level;
   unsigned char login_length;
   unsigned char password_length;
-  unsigned char data[0];
+  unsigned char data[2];
 };
 
 struct userlist_pk_check_cookie __attribute__((packed,aligned(1)));
@@ -199,7 +214,7 @@ struct userlist_pk_set_user_info
   short          request_id;
   unsigned long  user_id;
   unsigned short info_len;
-  unsigned char  data[0];
+  unsigned char  data[1];
 };
 
 struct userlist_pk_set_password __attribute__((packed,aligned(1)));
@@ -209,7 +224,7 @@ struct userlist_pk_set_password
   int           user_id;
   unsigned char old_len;
   unsigned char new_len;
-  unsigned char data[0];
+  unsigned char data[2];
 };
 
 struct userlist_pk_register_contest __attribute__((packed,aligned(1)));
@@ -241,7 +256,7 @@ struct userlist_pk_list_users
   unsigned long flags;
   unsigned char url_len;
   unsigned char srch_len;
-  unsigned char data[0];
+  unsigned char data[2];
 };
 
 struct userlist_pk_map_contest __attribute__((packed,aligned(1)));
@@ -270,7 +285,7 @@ struct userlist_pk_edit_field
   int   pers;
   int   field;
   unsigned char value_len;
-  unsigned char data[0];
+  unsigned char data[1];
 };
 
 struct userlist_pk_get_uid_by_pid __attribute__((packed, aligned(1)));
@@ -291,9 +306,10 @@ struct userlist_pk_login_ok
   unsigned long long cookie;
   int                contest_id;
   signed char        locale_id;
+  unsigned char      priv_level;
   unsigned char      login_len;
   unsigned char      name_len;
-  char               data[0];
+  char               data[2];
 };
 
 struct userlist_pk_xml_data __attribute__((packed,aligned(1)));
@@ -301,7 +317,7 @@ struct userlist_pk_xml_data
 {
   short          reply_id;
   unsigned short info_len;
-  unsigned char  data[0];
+  unsigned char  data[1];
 };
 
 struct userlist_pk_contest_mapped __attribute__((packed, aligned(1)));
@@ -317,6 +333,7 @@ struct userlist_pk_uid
 {
   short reply_id;
   int   uid;
+  int   priv_level;
   unsigned long long cookie;
 };
 
