@@ -32,6 +32,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
+#include <string.h>
 
 /**
  * Valid format conversions as follows:
