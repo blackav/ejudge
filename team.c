@@ -1228,9 +1228,10 @@ submit_if_asked(void)
   }
 
   open_serve();
-  n = serve_clnt_submit_run(serve_socket_fd, client_team_id,
+  n = serve_clnt_submit_run(serve_socket_fd, SRV_CMD_SUBMIT_RUN,
+                            client_team_id,
                             global->contest_id, client_locale_id,
-                            client_ip, prob, lang, t);
+                            client_ip, prob, lang, 0, t);
   operation_status_page(n, 0);
   force_recheck_status = 1;
 }
