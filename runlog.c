@@ -685,13 +685,14 @@ run_flush_header(void)
 }
 
 int
-run_change_status(int runid, int newstatus, int newtest, int newscore)
+run_change_status(int runid, int newstatus, int newtest, int newscore, int judge_id)
 {
   if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
   if (newstatus < 0 || newstatus > 255) ERR_R("bad newstatus: %d", newstatus);
   if (newtest < -1 || newtest > 127) ERR_R("bad newtest: %d", newtest);
   if (newscore < -1 || newscore > RUNLOG_MAX_SCORE)
     ERR_R("bad newscore: %d", newscore);
+  if (judge_id < 0 || judge_id > 65535) ERR_R("bad judge_id: %d", judge_id);
 
   if (newstatus == RUN_VIRTUAL_START || newstatus == RUN_VIRTUAL_STOP)
     ERR_R("virtual status cannot be changed that way");
@@ -708,6 +709,7 @@ run_change_status(int runid, int newstatus, int newtest, int newscore)
   runs[runid].status = newstatus;
   runs[runid].test = newtest;
   runs[runid].score = newscore;
+  runs[runid].judge_id = judge_id;
   run_flush_entry(runid);
   return 0;
 }
