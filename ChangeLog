@@ -1,3 +1,184 @@
+2003-07-10  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po, ejudge.ru_RU.KOI8-R.po:
+	*** empty log message ***
+
+	* files.make: added files: `copyright.[ch]', `l10n.[ch]'.
+
+	* html.c: "copyright.h" included;
+	(process_template) new function to generate html headers and footers,
+	  performing %C, %T, %H, %R substitutes;
+	(write_standings_header) `process_template' is used to generate header;
+	  the current time is always used for overall standings in virtual
+	  mode;
+	(do_write_standings) css classes `st_place', `st_team', `st_prob',
+	  `st_total', `st_pen', `st_time' are added to the generated html;
+	  `process_template' is used to generate html footer;
+	(write_team_page) "</a>" is generated for each "<a name="XXX">".
+
+	* l10n.c: <stdio.h> is included.
+
+	* makefile: (SERVE_CFILES) `copyright.c', `l10n.c' added;
+	(M_CFILES) `copyright.c' added;
+	(T_CFILES) `copyright.c', `l10n.c' added;
+	(REG_CFILES) the same;
+	(UL_CFILES) `l10n.c' added;
+	(US_CFILES) `copyright.c', `l10n.c' added;
+	(install) `judge' (hardlink to `master') is installed.
+
+	* master.c:
+	(display_enter_password) use of `client_put_header' updated;
+	  use of `client_put_footer' updated;
+	(open_userlist_server) the same as above;
+	(permission_denied) the same as above;
+	(fatal_server_error) the same as above;
+	(operation_status_page) the same as above;
+	(view_source_if_asked) the same as above;
+	(view_report_if_asked) the same as above;
+	(view_teams_if_asked) the same as above;
+	(action_dump_runs) the same as above;
+	(action_dump_users) the same as above;
+	(action_dump_standings) the same as above;
+	(confirm_reset_if_asked) the same as above;
+	(confirm_update_standings) the same as above;
+	(confirm_regenerate_if_asked) the same as above;
+	(confirm_rejudge_all) the same as above;
+	(confirm_squeeze) the same as above;
+	(confirm_continue) the same as above;
+	(confirm_clear_run) the same as above;
+	(do_generate_passwords_if_asked) the same as above;
+	(view_clar_if_asked) the same as above;
+	(log_out_if_asked) the same as above;
+	(open_serve) use of `client_put_footer' updated;
+	(view_standings_if_asked) the same as above;
+	(main) contests_check_{master,judge,observer}_ip function is called
+	  depending on the privilege level;
+	  use of `client_put_header', `client_put_footer' updated.
+
+	* register.c: "l10n.h", "fileutl.h" are included;
+	new global variables `header_txt', `footer_txt', `header_len',
+	  `footer_len';
+	(initialize) header and footer for html output are loaded;
+	(set_locale_by_id) function removed;
+	(read_user_info_from_server) use of `client_put_header' updated;
+	(authentificate) the same as above;
+	(display_edit_registration_data_page) the same as about;
+	  `l10n_setlocale' is used instead of `set_locale_by_id';
+	  contest_id is added to the generated "logout" URL;
+	(display_initial_page) use of `client_put_header' updated;
+	  `l10n_setlocale' is used instead of `set_locale_by_id';
+	(display_login_page) the same as above;
+	(display_register_new_user_page) the same as above;
+	(display_user_registered_page) the same as above;
+	(display_main_page) the same as above;
+	  contest_id is added to the generated "logout" URL;
+	(action_change_lang_at_initial) `exit' added at the end of func.;
+	  `l10n_setlocale' is used instead of `set_locale_by_id';
+	(action_change_lang_at_register_new_user) the same as above;
+	(action_change_lang_at_main_page) the same as above;
+	(action_register_new_user) the same as above;
+	  use of `client_put_header' updated;
+	(action_login) the same as above;
+	(action_change_password) the same as above;
+	(action_remove_member) use of `client_put_header' updated;
+	  `exit' is used instead of `return';
+	(action_register_for_contest) the same as above;
+	(main) use of `client_put_footer' updated.
+
+2003-07-09  Alexander Chernov  <cher@ispras.ru>
+
+	* serve.c: "l10n.h" is included;
+	(setup_locale) is removed;
+	(update_standings_file) `l10n_setlocale' is used instead of
+	  `setup_locale';
+	(update_public_log_file) the same as above;
+	(cmd_team_login) the same as above;
+	(cmd_master_page) the same as above;
+	(cmd_priv_standings) the same as above;
+	(cmd_team_show_item) the same as above;
+	(main) `l10n_prepare' function is used.
+
+	* team.c: "l10n.h" is included;
+	new static variables `header_txt', `footer_txt', `header_len',
+	  `footer_len';
+	(setup_locale) function is removed;
+	(open_serve) use of `client_put_footer' updated;
+	(initialize) the header and footer files are loaded using
+	  contest's `team_header_file' and `team_footer_file' parameters;
+	(display_enter_password) use of `client_put_header',
+	  `client_put_footer' updated;
+	(open_userlist_server) the same as above;
+	(permission_denied) the same as above;
+	(fatal_server_error) the same as above;
+	(authentificate) `l10n_setlocale' used of `setup_locale';
+	(operation_status_page) use of `client_put_header',
+	  `client_put_footer' updated;
+	(show_clar_if_asked) the same as above;
+	(request_source_if_asked) the same as above;
+	(action_standings) the same as above;
+	(request_report_if_asked) the same as above;
+	(action_logout) the same as above;
+	  `locale_id' and `contest_id' are added to "login again" hyperlink;
+	(main) `l10n_prepare', `l10n_setlocale' are used;
+	   use of `client_put_header', `client_put_footer' updated;
+	  </a> tag is generated for <a name="xxx"> tags.
+
+	* userlist-server.c: "l10n.h" is included;
+	(setup_locale) is removed, `l10n_setlocale' from `l10n.h' is used
+	  instead;
+	(cmd_register_new) `l10n_setlocale' is used instead of `setup_locale';
+	(do_list_users) the same as above;
+	(main) `l10n_prepare' is used.
+
+	* users.c: "l10n.h" included;
+	(set_locale_by_id) removed, and `l10n_prepare', `l10n_setlocale'
+	  functions are used instead;
+	(put_http_header) function removed, `client_put_header' is used
+	  instead;
+	(put_header) function removed, `client_put_header' is used instead;
+	(information_not_available) `header_txt', `footer_txt' parameters
+	  added;
+	  use of `client_put_header', `client_put_footer' updated;
+	(main) `l10n_prepare', `l10n_setlocale' functions are used instead
+	  of `set_locale_by_id';
+	  use of `client_put_header', `client_put_footer' updated;
+	  use of `information_not_available' updated;
+	  contest's `header_file', `footer_file' parameters are renamed
+	  to `users_header_file', `users_footer_file';
+	  use of `put_http_header', `put_header' removed;
+	  use of `client_put_copyright' removed.
+
+	* clntutil.h: (client_put_copyright) function removed;
+	(client_put_header) many new parameters added;
+	(client_put_footer) `out' and `template' parameters added.
+
+	* clntutil.c: "version.h" is no longer included;
+	"copyright.h" is included;
+	(process_template) a new function to process html header and footer
+	  template. It handles "%C", "%T", "%H", "%R" format specifiers;
+	(client_put_copyright) function is removed;
+	(client_put_header) many parameters added, and the new
+	  `process_template' function is used to perform output;
+	(client_put_footer) `out' and `template' parameters are added, and
+	  `process_template' function is used to perform output;
+	(client_access_denied) usage of `client_put_header' and
+	  `client_put_footer' is corrected;
+	(client_not_configured) the same as above;
+	(client_check_server_status) the same as above;
+	  also the closing </a> is generated for <a name="XXX">.
+
+	* contests.h, contests.c:
+	elements <header_file>, <footer_file> are renamed to
+	<users_header_file>, <users_footer_file>;
+	new elements <register_header_file>, <register_footer_file>,
+	<team_header_file>, <team_footer_file> are added.
+
+	* copyright.h, copyright.c: Initial revision
+
+2003-07-08  Alexander Chernov  <cher@ispras.ru>
+
+	* l10n.h, l10n.c: Initial revision
+
 2003-07-01  Alexander Chernov  <cher@ispras.ru>
 
 	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
