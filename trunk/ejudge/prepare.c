@@ -53,6 +53,10 @@ int max_lang;
 int max_prob;
 int max_tester;
 
+/* new userlist-server interaction */
+struct contest_list *contests;
+struct contest_desc *cur_contest;
+
 static struct section_problem_data  *abstr_probs[MAX_PROBLEM + 1];
 static struct section_tester_data   *abstr_testers[MAX_TESTER + 1];
 
@@ -98,6 +102,10 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(corr_sfx, "s"),
 
   GLOBAL_PARAM(var_dir, "s"),
+
+  GLOBAL_PARAM(contest_id, "d"),
+  GLOBAL_PARAM(socket_path, "s"),
+  GLOBAL_PARAM(contests_path, "s"),
 
   //GLOBAL_PARAM(log_file, "s"),
   GLOBAL_PARAM(run_log_file, "s"),
@@ -600,6 +608,29 @@ set_defaults(int mode)
   }
   global = (struct section_global_data*) p;
 
+  /* userlist-server interaction */
+  if (mode == PREPARE_SERVE && global->contest_id > 0) {
+    if (!global->socket_path[0]) {
+      err("global.socket_path must be set");
+      return -1;
+    }
+    if (!global->contests_path[0]) {
+      err("global.contests_path must be set");
+      return -1;
+    }
+    if (!(contests = parse_contest_xml(global->contests_path))) {
+      err("cannot parse contests definitions");
+      return -1;
+    }
+    if (global->contest_id <= 0
+        || global->contest_id >= contests->id_map_size
+        || !(cur_contest = contests->id_map[global->contest_id])) {
+      err("invalid contest identifier");
+      return -1;
+    }
+    pathcpy(global->name, cur_contest->name);
+  }
+
   /* directory poll intervals */
   if (global->sleep_time < 0 || global->sleep_time > 10000) {
     err("Invalid global.sleep_time value");
@@ -688,7 +719,7 @@ set_defaults(int mode)
   /* CONFIGURATION FILES DEFAULTS */
 #define GLOBAL_INIT_FIELD(f,d,c) do { if (!global->f[0]) { info("global." #f " set to %s", d); pathcpy(global->f, d); } pathmake2(global->f,global->c, "/", global->f, NULL); } while (0)
 
-  if (mode == PREPARE_SERVE) {
+  if (mode == PREPARE_SERVE && !global->contest_id) {
     GLOBAL_INIT_FIELD(teamdb_file, DFLT_G_TEAMDB_FILE, conf_dir);
     GLOBAL_INIT_FIELD(passwd_file, DFLT_G_PASSWD_FILE, conf_dir);
   }
