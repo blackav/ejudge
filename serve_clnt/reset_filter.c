@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,6 @@ serve_clnt_reset_filter(int sock_fd,
   int in_size = 0, r;
   void *void_in = 0;
 
-  if (cmd != SRV_CMD_RESET_FILTER) return -SRV_ERR_PROTOCOL;
   if (sock_fd < 0) return -SRV_ERR_NOT_CONNECTED;
 
   out_size = sizeof(*out);
