@@ -32,8 +32,9 @@ enum
   FLAGS_REPORT_ERROR_CODE    = 0x040,
   FLAGS_ACCEPT_PARTIAL       = 0x080,
   FLAGS_HTML_REPORT          = 0x100,
+  FLAGS_DISABLE_SOUND        = 0x200,
 
-  FLAGS_ALL_MASK             = 0x1ff, /* scoring system incl. */
+  FLAGS_ALL_MASK             = 0x3ff, /* scoring system incl. */
 };
 
 /* serve->run binary packet structure */
@@ -94,7 +95,9 @@ struct run_reply_bin_packet
   rint32_t  ts5_us;
   rint32_t  ts6;
   rint32_t  ts6_us;
-  unsigned char pad[48];        /* padding to 128 bytes */
+  rint32_t  ts7;
+  rint32_t  ts7_us;
+  unsigned char pad[40];        /* padding to 128 bytes */
 };
 
 /* FIXME: these normally should depend on host endianness */
