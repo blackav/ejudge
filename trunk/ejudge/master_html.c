@@ -1626,6 +1626,7 @@ write_priv_users(FILE *f, int user_id, int priv_level,
   unsigned char href_buf[128];
   struct teamdb_export info;
   unsigned char team_modes[128];
+  unsigned char filtbuf1[512], filtbuf2[512], filtbuf3[512], *ps1, *ps2;
 
   tot_teams = teamdb_get_total_teams();
   max_team = teamdb_get_max_team_id();
@@ -1656,6 +1657,8 @@ write_priv_users(FILE *f, int user_id, int priv_level,
           _("Number of clars"), _("Size of clars"));
   for (i = 1; i <= max_team; i++) {
     if (!teamdb_lookup(i)) continue;
+    teamdb_export_team(i, &info);
+
     run_get_team_usage(i, &runs_num, &runs_total);
     clar_get_team_usage(i, &clars_num, (unsigned long *) &clars_total);
     if (priv_level == PRIV_LEVEL_ADMIN) {
@@ -1664,24 +1667,33 @@ write_priv_users(FILE *f, int user_id, int priv_level,
     }
     fprintf(f, "<tr>");
 
-    fprintf(f, "<td>");
-    if (global->team_info_url[0]) {
-      teamdb_export_team(i, &info);
-      sformat_message(href_buf, sizeof(href_buf), global->team_info_url,
-                      NULL, NULL, NULL, NULL, &info);
-      fprintf(f, "<a href=\"%s\">", href_buf);
+
+    ps1 = ""; ps2 = "";
+    if (sid_mode == SID_URL) {
+      snprintf(filtbuf1, sizeof(filtbuf1), "uid == %d", i);
+      url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
+      html_hyperref(filtbuf3, sizeof(filtbuf3), sid_mode, sid, self_url,
+                    extra_args, "filter_expr=%s&filter_view=View",
+                    filtbuf2);
+      ps1 = filtbuf3; ps2 = "</a>";
     }
-    fprintf(f, "%d", i);
-    if (global->team_info_url[0]) {
-      fprintf(f, "</a>");
-    }
-    fprintf(f, "</td>");
+    fprintf(f, "<td>%s%d%s</td>", ps1, i, ps2);
 
     txt_login = teamdb_get_login(i);
     html_login_len = html_armored_strlen(txt_login);
     html_login = alloca(html_login_len + 16);
     html_armor_string(txt_login, html_login);
-    fprintf(f, "<td>%s</td>", html_login);
+    fprintf(f, "<td>");
+    if (global->team_info_url[0]) {
+      sformat_message(href_buf, sizeof(href_buf), global->team_info_url,
+                      NULL, NULL, NULL, NULL, &info);
+      fprintf(f, "<a href=\"%s\">", href_buf);
+    }
+    fprintf(f, "%s", html_login);
+    if (global->team_info_url[0]) {
+      fprintf(f, "</a>");
+    }
+    fprintf(f, "</td>");
 
     txt_name = teamdb_get_name(i);
     html_name_len = html_armored_strlen(txt_name);
