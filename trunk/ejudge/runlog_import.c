@@ -147,6 +147,10 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
       fprintf(flog, "Run %d has run_id %d\n", i, in_entries[i].submission);
       goto done;
     }
+    if (in_entries[i].is_hidden) {
+      fprintf(flog, "Run %d is hidden\n", i);
+      goto done;
+    }
     st = in_entries[i].status;
     if (st < RUN_OK || st > RUN_TRANSIENT_LAST) {
       fprintf(flog, "Run %d status %d is invalid\n", i, st);
@@ -224,6 +228,10 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
   while (1) {
     if (i >= cur_entries_num) break;
     if (cur_entries[i].status == RUN_EMPTY) {
+      i++;
+      continue;
+    }
+    if (cur_entries[i].is_hidden) {
       i++;
       continue;
     }
@@ -306,6 +314,10 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
         fprintf(flog,"Local run %d, imported %d: `test' does not match\n",
                 i, j);
       }
+      if (pa->variant != pb->variant) {
+        fprintf(flog,"Local run %d, imported %d: `variant' does not match\n",
+                i, j);
+      }
     }
   }
 
@@ -361,6 +373,10 @@ runlog_import_xml(FILE *hlog, const unsigned char *in_xml)
       }
       if (pa->test != pb->test) {
         pa->test = pb->test;
+        r = 1;
+      }
+      if (pa->variant != pb->variant) {
+        pa->variant = pb->variant;
         r = 1;
       }
       if (r) {
