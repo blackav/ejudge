@@ -211,6 +211,34 @@ handle_priv_command_0(const unsigned char *cmd,
  * argv[0] - session_id_file
  */
 static int
+handle_priv_transient_runs(const unsigned char *cmd,
+                           int srv_cmd, int argc, char *argv[])
+{
+  int r;
+
+  if (argc < 1) return too_few_params(cmd);
+  if (argc > 1) return too_many_params(cmd);
+
+  authentificate(argv[0]);
+  open_server();
+
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_HAS_TRANSIENT_RUNS, 0, 0);
+  if (r == -SRV_ERR_TRANSIENT_RUNS) {
+    printf("There are transient runs\n");
+    return 2;
+  }
+  if (r < 0) {
+    err("server error: %s", protocol_strerror(-r));
+    return 1;
+  }
+  printf("There is no transient runs\n");
+  return 0;
+}
+
+/*
+ * argv[0] - session_id_file
+ */
+static int
 handle_logout(const unsigned char *cmd,
               int srv_cmd, int argc, char *argv[])
 {
@@ -352,6 +380,10 @@ static struct cmdinfo cmds[] =
   { "dump-report", handle_dump_source, SRV_CMD_PRIV_DOWNLOAD_REPORT },
   { "dump-team-report", handle_dump_source, SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT},
   { "dump-master-runs", handle_dump_master_runs, 0 },
+  { "suspend-testing", handle_priv_command_0, SRV_CMD_TEST_SUSPEND },
+  { "resume-testing", handle_priv_command_0, SRV_CMD_TEST_RESUME },
+  { "judge-suspended-runs", handle_priv_command_0, SRV_CMD_JUDGE_SUSPENDED },
+  { "has-transient-runs", handle_priv_transient_runs, 0 },
 
   { 0, 0 },
 };
