@@ -231,6 +231,7 @@ path_init(char *path, char const *dir, char const *def)
   path_add_dir(path, dir);
 }
 
+
 /**
  * Local variables:
  *  compile-command: "make"
