@@ -26,9 +26,11 @@
 #include "fileutl.h"
 #include "unix/unix_fileutl.h"
 #include "misctext.h"
+#include "protocol.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
+#include <reuse/osdeps.h>
 
 #include <stdio.h>
 #include <time.h>
@@ -37,6 +39,7 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -52,6 +55,9 @@ unsigned long server_duration;
 unsigned long server_stop_time;
 int           server_total_runs;
 int           server_total_clars;
+int           server_clars_disabled;
+int           server_team_clars_disabled;
+int           server_standings_frozen;
 
 unsigned long client_cur_time;
 
@@ -254,24 +260,57 @@ client_not_configured(char const *charset, char const *str)
 int
 client_check_server_status(char const *charset, char const *path, int lag)
 {
-  FILE   *f = 0;
+  int fd = -1, r, tmp;
+  struct prot_serve_status status;
 
-  if (!(f = fopen(path, "r"))) goto server_down;
-  if (fscanf(f, "%lu %lu %lu %lu %lu %d %d",
-             &server_cur_time,
-             &server_start_time,
-             &server_sched_time,
-             &server_duration,
-             &server_stop_time,
-             &server_total_runs,
-             &server_total_clars) != 7)
+  memset(&status, 0, sizeof(status));
+  if ((fd = open(path, O_RDONLY)) < 0) {
+    err("cannot open status file %s: %s", path, os_ErrorMsg());
+    goto server_down;
+  }
+  r = read(fd, &status, sizeof(status));
+  if (r < 0) {
+    err("read error from %s: %s", path, os_ErrorMsg());
+    goto server_down;
+  }
+  if (r != sizeof(status)) {
+    err("short read from %s: %d", path, r);
+    goto server_down;
+  }
+  r = read(fd, &tmp, sizeof(tmp));
+  if (r < 0) {
+    err("read error from %s: %s", path, os_ErrorMsg());
+    goto server_down;
+  }
+  if (r > 0) {
+    err("garbage after data in %s", path);
     goto bad_server;
-  fclose(f);
+  }
+  close(fd);
+
+  if (status.magic != PROT_SERVE_STATUS_MAGIC) {
+    err("invalid magic header in %s", path);
+    goto bad_server;
+  }
+
+  server_cur_time = status.cur_time;
+  server_start_time = status.start_time;
+  server_sched_time = status.sched_time;
+  server_duration = status.duration;
+  server_stop_time = status.stop_time;
+  server_total_runs = status.total_runs;
+  server_total_clars = status.total_clars;
+  server_clars_disabled = status.clars_disabled;
+  server_team_clars_disabled = status.team_clars_disabled;
+  server_standings_frozen = status.standings_frozen;
   client_cur_time = time(0);
 
   if (client_cur_time>=server_cur_time
-      && client_cur_time - server_cur_time > lag)
+      && client_cur_time - server_cur_time > lag) {
+    err("client current time > timestamp by %lu",
+        client_cur_time - server_cur_time);
     goto server_down;
+  }
   if (client_cur_time < server_cur_time)
     goto server_down;
 
@@ -311,6 +350,9 @@ client_print_server_status(int read_only, char const *form_start,
   printf("<h2>%s</h2>", _("Server status"));
   if (server_stop_time) {
     printf("<p><big><b>%s</b></big></p>", _("The contest is over"));
+  } else if (server_start_time && server_standings_frozen) {
+    printf("<p><big><b>%s</b></big></p>",
+           _("The contest is in progress (standings are frozen)"));    
   } else if (server_start_time) {
     printf("<p><big><b>%s</b></big></p>", _("The contest is in progress"));
   } else {
