@@ -2,7 +2,7 @@
 # $Id$
 # @configure_input@
 
-# Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+# Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,6 +27,8 @@ CGI_PROG_SUFFIX=@ac_cv_cgi_suffix@
 STATIC=@ac_cv_static@
 NO_KERNEL=@ac_cv_no_kernel@
 ENABLE_NLS=@ac_cv_nls@
+ARCH=@ac_cv_ejudge_arch@
+EXESFX=@ac_cv_exe_suffix@
 
 XGETTEXT=@XGETTEXT@
 MSGMERGE=@MSGMERGE@
@@ -47,7 +49,7 @@ LIBCAP_LIB_OPT=@ac_cv_libcap_lib_opt@
 
 include files.make
 
-#ifeq (${REUSE_CONF}, ix86-linux)
+ifeq (${ARCH}, unix)
 ifdef RELEASE
 CDEBUGFLAGS=-O2 -s -Wall -DNDEBUG -DRELEASE
 else
@@ -62,23 +64,21 @@ EXTRALIBS=
 CCOMPFLAGS=-D_GNU_SOURCE
 LDCOMPFLAGS=
 EXESFX=
-ARCH=unix
-#else
-#ifeq (${REUSE_CONF}, ix86-win32-mingw)
-#CDEBUGFLAGS=-O2 -s -Wall
-#CEXTRAFLAGS=
-#LDEXTRAFLAGS=
-#EXTRALIBS=
+else
+ifeq (${ARCH}, win32)
+CDEBUGFLAGS=-O2 -s -Wall
+CEXTRAFLAGS=
+LDEXTRAFLAGS=
+EXTRALIBS=
 #CCOMPFLAGS=-mno-cygwin
 #LDCOMPFLAGS=-mno-cygwin
-#EXESFX=.exe
-#ARCH=win32
-#else
-#$(error "unsupported configuration")
-#endif
-#endif
+EXESFX=.exe
+else
+$(error "unsupported configuration")
+endif
+endif
 
-LDLIBS=${EXTRALIBS} -lreuse -lz
+LDLIBS=${EXTRALIBS} -lreuse -lz -lm
 CFLAGS=-I. ${REUSE_INCL_OPT} ${EXPAT_INCL_OPT} ${CDEBUGFLAGS} ${CCOMPFLAGS} ${CEXTRAFLAGS}
 LDFLAGS=${REUSE_LIB_OPT} ${EXPAT_LIB_OPT} ${CDEBUGFLAGS} ${LDCOMPFLAGS} ${LDEXTRAFLAGS}
 CC=gcc
@@ -87,13 +87,21 @@ EXPAT_LIB=-lexpat
 REUSE_LIB=-lreuse
 
 C_CFILES=compile.c version.c
-C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a libuserlist_clnt.a
+ifeq (${ARCH}, win32)
+  C_OBJECTS=$(C_CFILES:.c=.o) prepare.o $(ARCH)/fileutl.o $(ARCH)/interrupt.o $(ARCH)/cr_serialize.o pathutl.o parsecfg.o varsubst.o sformat.o
+else
+  C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a
+endif
 
 SERVE_CFILES=serve.c version.c
 SERVE_OBJECTS=$(SERVE_CFILES:.c=.o) libcommon.a libuserlist_clnt.a
 
 RUN_CFILES=run.c version.c
-RUN_OBJECTS=$(RUN_CFILES:.c=.o) libcommon.a libuserlist_clnt.a
+ifeq (${ARCH}, win32)
+  RUN_OBJECTS=$(RUN_CFILES:.c=.o) prepare.o pathutl.o $(ARCH)/fileutl.o $(ARCH)/interrupt.o $(ARCH)/cr_serialize.o sformat.o varsubst.o parsecfg.o testinfo.o
+else
+  RUN_OBJECTS=$(RUN_CFILES:.c=.o) libcommon.a
+endif
 
 M_CFILES=master.c version.c 
 M_OBJECTS=$(M_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libserve_clnt.a
