@@ -143,6 +143,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(use_stdin, "d"),
   PROBLEM_PARAM(use_stdout, "d"),
   PROBLEM_PARAM(time_limit, "d"),
+  PROBLEM_PARAM(real_time_limit, "d"),
   PROBLEM_PARAM(team_enable_rep_view, "d"),
   PROBLEM_PARAM(full_score, "d"),
   PROBLEM_PARAM(test_score, "d"),
@@ -896,6 +897,12 @@ set_defaults(int mode)
       probs[i]->time_limit = abstr_probs[si]->time_limit;
       info(_("problem.%s.time_limit inherited from problem.%s (%d)"),
            ish, sish, probs[i]->time_limit);
+    }
+    if (!probs[i]->real_time_limit && si != -1
+        && abstr_probs[si]->real_time_limit) {
+      probs[i]->real_time_limit = abstr_probs[si]->real_time_limit;
+      info(_("problem.%s.real_time_limit inherited from problem.%s (%d)"),
+           ish, sish, probs[i]->real_time_limit);
     }
     if (!probs[i]->test_score_list[0] && si != -1
         && abstr_probs[si]->test_score_list[0]) {
