@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "serve_clnt.h"
@@ -56,7 +52,7 @@ serve_clnt_standings(int sock_fd,
   out = alloca(out_size);
   memset(out, 0, out_size);
   self_url_ptr = out->data;
-  hidden_vars_ptr = self_url_ptr + hidden_vars_len + 1;
+  hidden_vars_ptr = self_url_ptr + self_url_len + 1;
   out->b.id = SRV_CMD_PRIV_STANDINGS;
   out->b.magic = PROT_SERVE_PACKET_MAGIC;
   out->user_id = user_id;
