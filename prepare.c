@@ -173,6 +173,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(cr_serialization_key, "d"),
   GLOBAL_PARAM(show_astr_time, "d"),
   GLOBAL_PARAM(ignore_duplicated_runs, "d"),
+  GLOBAL_PARAM(report_error_code, "d"),
 
   { 0, 0, 0, 0 }
 };
