@@ -551,3 +551,14 @@ filter_scan.lex 1 2 364837
 filter_tree.h 1 2 291845
 filter_tree.c 1 2 1038862
 filter_expr.y 1 2 1133388
+filter_eval.h 1 1 97487
+filter_tree.h 1 3 429550
+runlog.h 1 9 265687
+filter_eval.c 1 1 643510
+filter_test.c 1 2 354289
+filter_tree.c 1 3 3252905
+prepare.c 1 37 4933847
+runlog.c 1 13 1363966
+userlist-server.c 1 13 9456836
+filter_expr.y 1 3 1844550
+filter_scan.lex 1 3 430904

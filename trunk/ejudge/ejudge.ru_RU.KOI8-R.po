@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 1.5\n"
-"POT-Creation-Date: 2002-12-09 09:26+0300\n"
-"PO-Revision-Date: 2002-12-09 09:28+0300\n"
+"POT-Creation-Date: 2002-12-11 09:02+0300\n"
+"PO-Revision-Date: 2002-12-10 22:55+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -208,7 +208,7 @@ msgstr "ПРИНЯТО"
 msgid "Accepted"
 msgstr "Принято"
 
-#: runlog.c:612
+#: runlog.c:589
 msgid "Accepted for testing"
 msgstr "Принято на проверку"
 
@@ -268,7 +268,7 @@ msgstr "Ответ: ДА"
 msgid "Availability"
 msgstr "Доступность"
 
-#: runlog.c:617
+#: runlog.c:594
 msgid "Available"
 msgstr "Доступна"
 
@@ -354,7 +354,7 @@ msgstr "Сменить пароль"
 msgid "Change!"
 msgstr "Изменить!"
 
-#: runlog.c:610
+#: runlog.c:587
 msgid "Check failed"
 msgstr "Проверка завершилась неудачно"
 
@@ -390,15 +390,15 @@ msgstr "Тренеры"
 msgid "Commit changes"
 msgstr "Сохранить изменения"
 
-#: html.c:1280 html.c:1300 html.c:1320 runlog.c:605
+#: html.c:1280 html.c:1300 html.c:1320 runlog.c:582
 msgid "Compilation error"
 msgstr "Ошибка компиляции"
 
-#: runlog.c:615
+#: runlog.c:592
 msgid "Compiled"
 msgstr "Скомпилировано"
 
-#: runlog.c:616
+#: runlog.c:593
 msgid "Compiling..."
 msgstr "Компилируется..."
 
@@ -704,7 +704,7 @@ msgstr ""
 msgid "Ignore"
 msgstr "Игнорировать"
 
-#: runlog.c:613
+#: runlog.c:590
 msgid "Ignored"
 msgstr "Проигнорирована"
 
@@ -963,7 +963,7 @@ msgid "Number"
 msgstr "Номер"
 
 #: html.c:1280 html.c:1300 html.c:1320 run.c:128 run.c:215 run.c:319
-#: runlog.c:604
+#: runlog.c:581
 msgid "OK"
 msgstr "OK"
 
@@ -1004,7 +1004,7 @@ msgstr ""
 msgid "Page generation time"
 msgstr "Время генерации страницы"
 
-#: html.c:1281 html.c:1302 runlog.c:611
+#: html.c:1281 html.c:1302 runlog.c:588
 msgid "Partial solution"
 msgstr "Неполное решение"
 
@@ -1106,7 +1106,7 @@ msgstr ""
 "Пожалуйста, укажите, желаете ли Вы использовать cookie для поддержки HTTP-"
 "сессии. Обычно использовать cookie предпочтительнее, чем не использовать."
 
-#: html.c:1301 html.c:1321 run.c:139 runlog.c:608
+#: html.c:1301 html.c:1321 run.c:139 runlog.c:585
 msgid "Presentation error"
 msgstr "Неправильный формат вывода"
 
@@ -1268,11 +1268,11 @@ msgstr "Введите пароль ещё раз"
 msgid "Run ID"
 msgstr "Номер решения"
 
-#: html.c:1300 html.c:1320 runlog.c:606
+#: html.c:1300 html.c:1320 runlog.c:583
 msgid "Run-time error"
 msgstr "Ошибка выполнения"
 
-#: runlog.c:614
+#: runlog.c:591
 msgid "Running..."
 msgstr "Выполняется..."
 
@@ -1562,7 +1562,7 @@ msgstr "Решение не может быть послано. Турнир окончен."
 msgid "Time"
 msgstr "Время"
 
-#: html.c:1301 html.c:1321 run.c:137 runlog.c:607
+#: html.c:1301 html.c:1321 run.c:137 runlog.c:584
 msgid "Time-limit exceeded"
 msgstr "Превышено максимальное время работы"
 
@@ -1613,7 +1613,7 @@ msgstr ""
 msgid "Unknown result (%d)"
 msgstr "Неожиданный код результата (%d)"
 
-#: runlog.c:619
+#: runlog.c:596
 #, c-format
 msgid "Unknown: %d"
 msgstr "Unknown: %d"
@@ -1674,7 +1674,7 @@ msgstr "Видимость"
 msgid "Visible?"
 msgstr "Видимая?"
 
-#: html.c:1302 html.c:1322 run.c:141 runlog.c:609
+#: html.c:1302 html.c:1322 run.c:141 runlog.c:586
 msgid "Wrong answer"
 msgstr "Неправильный ответ"
 
@@ -1784,19 +1784,40 @@ msgstr "турнир не запущен"
 msgid "contest is stopped"
 msgstr "турнир остановлен"
 
-#: filter_tree.c:558
+#: filter_tree.c:283
+msgid "conversion from string to bool failed"
+msgstr "преобразование из типа string в тип bool завершилось с ошибкой"
+
+#: filter_tree.c:284
 msgid "conversion from string to dur_t failed"
 msgstr "преобразование из типа string в тип dur_t завершилось с ошибкой"
 
-#: filter_tree.c:557
+#: filter_tree.c:287
+msgid "conversion from string to hash_t failed"
+msgstr "преобразование из типа string в тип hash_t завершилось с ошибкой"
+
+#: filter_tree.c:282
 msgid "conversion from string to int failed"
 msgstr "преобразование из типа string в тип int завершилось с ошибкой"
+
+#: filter_tree.c:288
+#, fuzzy
+msgid "conversion from string to ip_t failed"
+msgstr "преобразование из типа string в тип int завершилось с ошибкой"
+
+#: filter_tree.c:286
+msgid "conversion from string to result_t failed"
+msgstr "преобразование из типа string в тип result_t завершилось с ошибкой"
+
+#: filter_tree.c:285
+msgid "conversion from string to time_t failed"
+msgstr "преобразование из типа string в тип time_t завершилось с ошибкой"
 
 #: register.c:2157
 msgid "default"
 msgstr "по умолчанию"
 
-#: filter_tree.c:556
+#: filter_tree.c:281
 msgid "division by zero"
 msgstr "деление на ноль"
 
@@ -1816,9 +1837,17 @@ msgstr "неопределённая ошибка сервера"
 msgid "if empty, assigned automatically"
 msgstr "если поле оставлено пустым, значение выбирается автоматически"
 
-#: filter_tree.c:555
+#: filter_tree.c:280
 msgid "integer overflow"
 msgstr "целочисленное переполнение"
+
+#: filter_tree.c:290
+msgid "invalid argument"
+msgstr "неверный аргумент"
+
+#: filter_tree.c:291
+msgid "invalid argument type"
+msgstr "неверный тип аргумента"
 
 #: protocol.c:46
 msgid "invalid clar_id"
@@ -1926,7 +1955,7 @@ msgstr "нет"
 msgid "no connection to server"
 msgstr "нет связи с сервером"
 
-#: filter_tree.c:553 protocol.c:31 userlist_proto.c:30
+#: filter_tree.c:278 protocol.c:31 userlist_proto.c:30
 msgid "no error"
 msgstr "нет ошибки"
 
@@ -1985,6 +2014,10 @@ msgstr "в доступе отказано"
 #: protocol.c:37 userlist_proto.c:40
 msgid "protocol error"
 msgstr "ошибка протокола"
+
+#: filter_tree.c:289
+msgid "range error"
+msgstr "ошибка диапазона"
 
 #: userlist_proto.c:43
 msgid "read error"
@@ -2074,7 +2107,7 @@ msgstr "неожиданный конец файла"
 msgid "unexpected EOF from server"
 msgstr "неожиданный конец файла от сервера"
 
-#: filter_tree.c:554
+#: filter_tree.c:279
 msgid "unknown error"
 msgstr "неизвестная ошибка"
 
