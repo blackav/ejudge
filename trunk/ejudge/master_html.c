@@ -78,7 +78,8 @@ static const unsigned char form_header_multipart[] =
 void
 html_start_form(FILE *f, int mode, int sid_mode, unsigned long long sid,
                 unsigned char const *self_url,
-                unsigned char const *hidden_vars)
+                unsigned char const *hidden_vars,
+                unsigned char const *extra_args)
 {
   switch (mode) {
   case 0:                       /* simple idempotent form */
@@ -88,15 +89,10 @@ html_start_form(FILE *f, int mode, int sid_mode, unsigned long long sid,
       fprintf(f, "<%s\"%s\">%s", form_header_post, self_url, hidden_vars);
       break;
     case SID_URL:
-      fprintf(f, "<%s\"%s\">"
-              "<input type=\"hidden\" name=\"sid_mode\" value=\"%d\">"
-              "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
-              form_header_get, self_url, SID_URL, sid);
+      fprintf(f, "<%s\"%s\">%s", form_header_get, self_url, hidden_vars);
       break;
     case SID_COOKIE:
-      fprintf(f, "<%s\"%s\">"
-              "<input type=\"hidden\" name=\"sid_mode\" value=\"%d\">",
-              form_header_get, self_url, SID_COOKIE);
+      fprintf(f, "<%s\"%s\">%s", form_header_get, self_url, hidden_vars);
       break;
     default:
       SWERR(("unhandled sid_mode: %d", sid_mode));
@@ -109,15 +105,10 @@ html_start_form(FILE *f, int mode, int sid_mode, unsigned long long sid,
       fprintf(f, "<%s\"%s\">%s", form_header_post, self_url, hidden_vars);
       break;
     case SID_URL:
-      fprintf(f, "<%s\"%s\">"
-              "<input type=\"hidden\" name=\"sid_mode\" value=\"%d\">"
-              "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
-              form_header_post, self_url, SID_URL, sid);
+      fprintf(f, "<%s\"%s\">%s", form_header_post, self_url, hidden_vars);
       break;
     case SID_COOKIE:
-      fprintf(f, "<%s\"%s\">"
-              "<input type=\"hidden\" name=\"sid_mode\" value=\"%d\">",
-              form_header_post, self_url, SID_COOKIE);
+      fprintf(f, "<%s\"%s\">%s", form_header_post, self_url, hidden_vars);
       break;
     default:
       SWERR(("unhandled sid_mode: %d", sid_mode));
@@ -130,15 +121,10 @@ html_start_form(FILE *f, int mode, int sid_mode, unsigned long long sid,
       fprintf(f, "<%s\"%s\">%s", form_header_multipart, self_url, hidden_vars);
       break;
     case SID_URL:
-      fprintf(f, "<%s\"%s\">"
-              "<input type=\"hidden\" name=\"sid_mode\" value=\"%d\">"
-              "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
-              form_header_multipart, self_url, SID_URL, sid);
+      fprintf(f, "<%s\"%s\">%s", form_header_multipart, self_url, hidden_vars);
       break;
     case SID_COOKIE:
-      fprintf(f, "<%s\"%s\">"
-              "<input type=\"hidden\" name=\"sid_mode\" value=\"%d\">",
-              form_header_multipart, self_url, SID_COOKIE);
+      fprintf(f, "<%s\"%s\">%s", form_header_multipart, self_url, hidden_vars);
       break;
     default:
       SWERR(("unhandled sid_mode: %d", sid_mode));
@@ -153,6 +139,7 @@ unsigned char *
 html_hyperref(unsigned char *buf, int size,
               int sid_mode, unsigned long long sid,
               unsigned char const *self_url,
+              unsigned char const *extra_args,
               unsigned char const *format, ...)
 {
   va_list args;
@@ -161,10 +148,11 @@ html_hyperref(unsigned char *buf, int size,
 
   ASSERT(sid_mode == SID_URL || sid_mode == SID_COOKIE);
   if (sid_mode == SID_COOKIE) {
-    n = snprintf(out, left, "<a href=\"%s?sid_mode=%d", self_url, SID_COOKIE);
+    n = snprintf(out, left, "<a href=\"%s?sid_mode=%d%s",
+                 self_url, SID_COOKIE, extra_args);
   } else {
-    n = snprintf(out, left, "<a href=\"%s?sid_mode=%d&SID=%016llx",
-                 self_url, SID_URL, sid);
+    n = snprintf(out, left, "<a href=\"%s?sid_mode=%d&SID=%016llx%s",
+                 self_url, SID_URL, sid, extra_args);
   }
   if (n >= left) n = left;
   left -= n; out += n;
@@ -188,6 +176,7 @@ print_nav_buttons(FILE *f,
                   int sid_mode, unsigned long long sid,
                   unsigned char const *self_url,
                   unsigned char const *hidden_vars,
+                  unsigned char const *extra_args,
                   unsigned char const *t1,
                   unsigned char const *t2,
                   unsigned char const *t3,
@@ -201,7 +190,7 @@ print_nav_buttons(FILE *f,
   if (!t4) t4 = _("Log out");
 
   if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
-    html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars);
+    html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<table><tr>"
             "<td><input type=\"submit\" name=\"refresh\" value=\"%s\"></td>"
             "<td><input type=\"submit\" name=\"stand\" value=\"%s\"></td>"
@@ -211,17 +200,21 @@ print_nav_buttons(FILE *f,
   } else {
     fprintf(f, "<table><tr><td>");
     fprintf(f, "%s",
-            html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url, 0));
+            html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url,
+                          extra_args, 0));
     fprintf(f, "%s</a></td><td>", t1);
     fprintf(f, "%s",
-            html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url, "stand=1"));
+            html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url,
+                          extra_args, "stand=1"));
     fprintf(f, "%s</a></td><td>", t2);
     fprintf(f, "%s",
             html_hyperref(hbuf, sizeof(hbuf),
-                     sid_mode, sid, self_url, "viewteams=1"));
+                          sid_mode, sid, self_url,
+                          extra_args, "viewteams=1"));
     fprintf(f, "%s</a></td><td>", t3);
     fprintf(f, "%s",
-            html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url, "logout=1"));
+            html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url,
+                          extra_args, "logout=1"));
     fprintf(f, "%s</a></td></tr></table>", t4);
   }
 
@@ -312,7 +305,8 @@ write_all_runs(FILE *f, struct user_state_info *u,
                int first_run, int last_run,
                unsigned char const *self_url,
                unsigned char const *filter_expr,
-               unsigned char const *hidden_vars)
+               unsigned char const *hidden_vars,
+               unsigned char const *extra_args)
 {
   struct filter_env env;
   int i, r;
@@ -469,7 +463,7 @@ write_all_runs(FILE *f, struct user_state_info *u,
     snprintf(last_run_str, sizeof(last_run_str), "%d",
              (u->prev_last_run > 0)?u->prev_last_run - 1:u->prev_last_run);
   }
-  html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars);
+  html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args);
   fprintf(f, "<p>%s: <input type=\"text\" name=\"filter_expr\" size=\"32\" maxlength=\"128\" value=\"%s\">", _("Filter expression"), fe_html);
   fprintf(f, "%s: <input type=\"text\" name=\"filter_first_run\" size=\"16\" value=\"%s\">", _("First run"), first_run_str);
   fprintf(f, "%s: <input type=\"text\" name=\"filter_last_run\" size=\"16\" value=\"%s\">", _("Last run"), last_run_str);
@@ -578,7 +572,8 @@ write_all_runs(FILE *f, struct user_state_info *u,
         fprintf(f, "<td>&nbsp;</td>");
         if (priv_level == PRIV_LEVEL_ADMIN) {
           fprintf(f, "<td>");
-          html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+          html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars,
+                          extra_args);
           fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">",
                   rid);
           fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
@@ -608,7 +603,8 @@ write_all_runs(FILE *f, struct user_state_info *u,
       if (priv_level == PRIV_LEVEL_ADMIN
           || sid_mode == SID_DISABLED
           || sid_mode == SID_EMBED) {
-        html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+        html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars,
+                        extra_args);
       }
       fprintf(f, "<tr>");
       fprintf(f, "<td>%d</td>", rid);
@@ -727,12 +723,14 @@ write_all_runs(FILE *f, struct user_state_info *u,
         fprintf(f, "<td>");
         fprintf(f, "%s",
                 html_hyperref(hbuf, sizeof(hbuf),
-                         sid_mode, sid, self_url, "source_%d=1", rid));
+                              sid_mode, sid, self_url,
+                              extra_args, "source_%d=1", rid));
         fprintf(f, "%s</a></td>", _("View"));
         fprintf(f, "<td>");
         fprintf(f, "%s",
                 html_hyperref(hbuf, sizeof(hbuf),
-                         sid_mode, sid, self_url, "report_%d=1", rid));
+                              sid_mode, sid, self_url,
+                              extra_args, "report_%d=1", rid));
         fprintf(f, "%s</a></td>", _("View"));
         fprintf(f, "</tr>\n");
         if (priv_level == PRIV_LEVEL_ADMIN) {
@@ -748,21 +746,22 @@ write_all_runs(FILE *f, struct user_state_info *u,
   //fprintf(f, "</font>\n");
   }
 
-  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, 0, 0, 0, 0);
+  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
+                    0, 0, 0, 0);
 
   if (priv_level == PRIV_LEVEL_ADMIN &&!has_parse_errors&&!has_filter_errors) {
     fprintf(f, "<table border=\"0\"><tr><td>");
-    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
             ACTION_REJUDGE_ALL_1, _("Rejudge all"));
     fprintf(f, "</form></td><td>\n");
 
-    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
             ACTION_SQUEEZE_RUNS, _("Squeeze runs"));
     fprintf(f, "</form></td></tr></table>\n");
 
-    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "%s: <select name=\"problem\"><option value=\"\">\n",
             _("Rejudge problem"));
     for (i = 1; i <= max_prob; i++)
@@ -782,7 +781,8 @@ write_all_clars(FILE *f, struct user_state_info *u,
                 int priv_level, int sid_mode, unsigned long long sid,
                 int first_clar, int last_clar,
                 unsigned char const *self_url,
-                unsigned char const *hidden_vars)
+                unsigned char const *hidden_vars,
+                unsigned char const *extra_args)
 {
   int total, i, j;
 
@@ -856,7 +856,7 @@ write_all_clars(FILE *f, struct user_state_info *u,
     snprintf(last_clar_str, sizeof(last_clar_str), "%d",
              (u->prev_last_clar > 0)?u->prev_last_clar - 1:u->prev_last_clar);
   }
-  html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars);
+  html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args);
   fprintf(f, "%s: <input type=\"text\" name=\"filter_first_clar\" size=\"16\" value=\"%s\">", _("First clar"), first_clar_str);
   fprintf(f, "%s: <input type=\"text\" name=\"filter_last_clar\" size=\"16\" value=\"%s\">", _("Last clar"), last_clar_str);
   fprintf(f, "<input type=\"submit\" name=\"filter_view_clars\" value=\"%s\">", _("View"));
@@ -886,7 +886,7 @@ write_all_clars(FILE *f, struct user_state_info *u,
     duration_str(show_astr_time, time, start, durstr, 0);
 
     if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
-      html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars);
+      html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args);
     }
     fprintf(f, "<tr>");
     fprintf(f, "<td>%d</td>", i);
@@ -912,7 +912,8 @@ write_all_clars(FILE *f, struct user_state_info *u,
     } else {
       fprintf(f, "<td>%s%s</a></td>",
               html_hyperref(hbuf, sizeof(hbuf),
-                       sid_mode, sid, self_url, "clar_%d=1", i),
+                            sid_mode, sid, self_url, extra_args,
+                            "clar_%d=1", i),
               _("View"));
     }
 
@@ -923,7 +924,8 @@ write_all_clars(FILE *f, struct user_state_info *u,
   }
   fputs("</table>\n", f);
 
-  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, 0, 0, 0, 0);
+  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
+                    0, 0, 0, 0);
 }
 
 static struct user_state_info *
@@ -959,24 +961,26 @@ write_master_page(FILE *f, int user_id, int priv_level,
                   int first_clar, int last_clar,
                   unsigned char const *self_url,
                   unsigned char const *filter_expr,
-                  unsigned char const *hidden_vars)
+                  unsigned char const *hidden_vars,
+                  unsigned char const *extra_args)
 {
   struct user_state_info *u = allocate_user_info(user_id);
 
   write_all_runs(f, u, priv_level, sid_mode, sid, first_run, last_run,
-                 self_url, filter_expr, hidden_vars);
+                 self_url, filter_expr, hidden_vars, extra_args);
   write_all_clars(f, u, priv_level, sid_mode, sid, first_clar, last_clar,
-                  self_url, hidden_vars);
+                  self_url, hidden_vars, extra_args);
 }
 
 void
 write_priv_standings(FILE *f, int sid_mode, unsigned long long sid,
                      unsigned char const *self_url,
-                     unsigned char const *hidden_vars)
+                     unsigned char const *hidden_vars,
+                     unsigned char const *extra_args)
 {
   write_standings_header(f, 1, 0, 0, 0);
 
-  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars,
+  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), _("Refresh"), 0, 0);
 
   if (global->score_system_val == SCORE_KIROV
@@ -985,7 +989,7 @@ write_priv_standings(FILE *f, int sid_mode, unsigned long long sid,
   else
     do_write_standings(f, 1, 0, 0, 0);
 
-  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars,
+  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), _("Refresh"), 0, 0);
 }
 
@@ -994,6 +998,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
                   int sid_mode, unsigned long long sid,
                   unsigned char const *self_url,
                   unsigned char const *hidden_vars,
+                  unsigned char const *extra_args,
                   int run_id)
 {
   unsigned char src_base[64];
@@ -1020,7 +1025,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
       || info.status == RUN_EMPTY) {
     fprintf(f, "<p>Information is not available.</p>\n");
     fprintf(f, "<hr>\n");
-    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars,
+    print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
                       _("Main page"), 0, 0, 0);
     return 0;
   }
@@ -1044,7 +1049,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   fprintf(f, "<tr><td>%s:</td><td>%d</td>",
           _("User ID"), info.team);
   if (priv_level == PRIV_LEVEL_ADMIN) {
-    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
     fprintf(f, "<td><input type=\"text\" name=\"run_user_id\" value=\"%d\" size=\"10\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", info.team, ACTION_RUN_CHANGE_USER_ID, _("Change"));
   } else {
@@ -1054,7 +1059,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   fprintf(f, "<tr><td>%s:</td><td>%s</td>",
           _("User login"), teamdb_get_login(info.team));
   if (priv_level == PRIV_LEVEL_ADMIN) {
-    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
     fprintf(f, "<td><input type=\"text\" name=\"run_user_login\" value=\"%s\" size=\"20\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", teamdb_get_login(info.team), ACTION_RUN_CHANGE_USER_LOGIN, _("Change"));
   } else {
@@ -1066,7 +1071,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   fprintf(f, "<tr><td>%s:</td><td>%s</td>",
           _("Problem"), probs[info.problem]->short_name);
   if (priv_level == PRIV_LEVEL_ADMIN) {
-    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
     fprintf(f, "<td><select name=\"problem\"><option value=\"\">\n");
     for (i = 1; i <= max_prob; i++)
@@ -1084,7 +1089,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
           _("Language"),
           (langs[info.language])?(langs[info.language]->short_name):"");
   if (priv_level == PRIV_LEVEL_ADMIN) {
-    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
     fprintf(f, "<td><select name=\"language\"><option value=\"\">\n");
     for (i = 1; i <= max_lang; i++)
@@ -1103,7 +1108,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   fprintf(f, "<tr><td>%s:</td><td>%s</td>",
           _("Status"), run_status_str(info.status, 0, 0));
   if (priv_level == PRIV_LEVEL_ADMIN) {
-    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
     write_change_status_dialog(f, 0);
     fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>\n", ACTION_RUN_CHANGE_STATUS, _("Change"));
@@ -1135,11 +1140,11 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   }
   fprintf(f, "</table>\n");
   if (priv_level == PRIV_LEVEL_ADMIN) {
-    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+    html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
     fprintf(f, "<p><input type=\"submit\" name=\"action_%d\" value=\"%s\"></p></form>\n", ACTION_CLEAR_RUN, _("Clear this entry"));
   }
-  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars,
+  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), 0, 0, 0);
   fprintf(f, "<hr>\n");
   if (generic_read_file(&src_text, 0, &src_len, 0, 0, src_path, "") < 0) {
@@ -1153,7 +1158,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
     xfree(src_text);
   }
   fprintf(f, "<hr>\n");
-  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars,
+  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), 0, 0, 0);
   return 0;
 }
@@ -1163,6 +1168,7 @@ write_priv_report(FILE *f, int user_id, int priv_level,
                   int sid_mode, unsigned long long sid,
                   unsigned char const *self_url,
                   unsigned char const *hidden_vars,
+                  unsigned char const *extra_args,
                   int run_id)
 {
   unsigned char rep_base[64];
@@ -1173,7 +1179,7 @@ write_priv_report(FILE *f, int user_id, int priv_level,
   if (run_id < 0 || run_id >= run_get_total()) return -SRV_ERR_BAD_RUN_ID;
   snprintf(rep_base, sizeof(rep_base), "%06d", run_id);
   pathmake(rep_path, global->report_archive_dir, "/", rep_base, 0);
-  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars,
+  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), 0, 0, 0);
   fprintf(f, "<hr>\n");
   if (generic_read_file(&rep_text, 0, &rep_len, 0, 0, rep_path, "") < 0) {
@@ -1187,7 +1193,7 @@ write_priv_report(FILE *f, int user_id, int priv_level,
     xfree(rep_text);
   }
   fprintf(f, "<hr>\n");
-  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars,
+  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), 0, 0, 0);
   return 0;
 }
@@ -1197,6 +1203,7 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
                 int sid_mode, unsigned long long sid,
                 unsigned char const *self_url,
                 unsigned char const *hidden_vars,
+                unsigned char const *extra_args,
                 int clar_id)
 {
   time_t clar_time, start_time;
@@ -1248,7 +1255,7 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
   fprintf(f, "</tr>\n");
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"), html_subj);
   fprintf(f, "</table>\n");
-  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars,
+  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), 0, 0, 0);
   fprintf(f, "<hr>\n");
 
@@ -1265,7 +1272,7 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
   }
 
   if (priv_level > PRIV_LEVEL_OBSERVER && from) {
-    html_start_form(f, 2, sid_mode, sid, self_url, hidden_vars);
+    html_start_form(f, 2, sid_mode, sid, self_url, hidden_vars, extra_args);
     fprintf(f, "<input type=\"hidden\" name=\"in_reply_to\" value=\"%d\">\n",
             clar_id);
     fprintf(f, "<p><input type=\"submit\" name=\"answ_read\" value=\"%s\">\n",
@@ -1278,7 +1285,7 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
            _("Send to sender"), _("Send to all"));
     fprintf(f, "</form>\n");
   }
-  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars,
+  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), 0, 0, 0);
 
   return 0;
@@ -1288,7 +1295,8 @@ int
 write_priv_users(FILE *f, int user_id, int priv_level,
                  int sid_mode, unsigned long long sid,
                  unsigned char const *self_url,
-                 unsigned char const *hidden_vars)
+                 unsigned char const *hidden_vars,
+                 unsigned char const *extra_args)
 {
   int tot_teams, i, max_team, flags, runs_num = 0, clars_num = 0;
   unsigned char const *txt_login, *txt_name, *t;
@@ -1300,7 +1308,7 @@ write_priv_users(FILE *f, int user_id, int priv_level,
   tot_teams = teamdb_get_total_teams();
   max_team = teamdb_get_max_team_id();
 
-  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars,
+  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), 0, _("Refresh"), 0);
   fprintf(f, "<hr/><p><big>Total teams: %d</big></p>\n", tot_teams);
   fprintf(f,
@@ -1328,7 +1336,7 @@ write_priv_users(FILE *f, int user_id, int priv_level,
     run_get_team_usage(i, &runs_num, &runs_total);
     clar_get_team_usage(i, &clars_num, (unsigned long *) &clars_total);
     if (priv_level == PRIV_LEVEL_ADMIN) {
-      html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars);
+      html_start_form(f, 1, sid_mode, sid, self_url, hidden_vars, extra_args);
       fprintf(f, "<input type=\"hidden\" name=\"user_id\" value=\"%d\">", i);
     }
     fprintf(f, "<tr>");
@@ -1396,7 +1404,7 @@ write_priv_users(FILE *f, int user_id, int priv_level,
   }
   fprintf(f, "</table>\n");
 
-  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars,
+  print_nav_buttons(f, sid_mode, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), 0, _("Refresh"), 0);
   return 0;
 }
@@ -1540,6 +1548,5 @@ write_raw_standings(FILE *f, unsigned char const *charset)
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
- *  eval: (set-language-environment "Cyrillic-KOI8")
  * End:
  */
