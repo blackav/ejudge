@@ -120,6 +120,7 @@ enum
     USERLIST_T_COUNTRY_EN,
     USERLIST_T_LOCATION,
     USERLIST_T_SPELLING,
+    USERLIST_T_PRINTER_NAME,
 
     USERLIST_LAST_TAG,
   };
@@ -197,7 +198,8 @@ enum
     USERLIST_NN_COUNTRY_EN,     /* 35 */
     USERLIST_NN_LOCATION,       /* 36 */
     USERLIST_NN_SPELLING,       /* 37 */
-    USERLIST_NN_LAST = USERLIST_NN_SPELLING,
+    USERLIST_NN_PRINTER_NAME,   /* 38 */
+    USERLIST_NN_LAST = USERLIST_NN_PRINTER_NAME,
 
     USERLIST_NM_SERIAL = 0,              /* 0 */
     USERLIST_NM_FIRSTNAME,               /* 1 */
@@ -346,6 +348,7 @@ struct userlist_user
   unsigned char *country_en;
   unsigned char *location;
   unsigned char *spelling;
+  unsigned char *printer_name;
 
   struct xml_tree *cookies;
   struct userlist_members *members[USERLIST_MB_LAST];
