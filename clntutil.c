@@ -47,6 +47,12 @@
 #define _(x) x
 #endif
 
+#if defined EJUDGE_CHARSET
+#define DEFAULT_CHARSET              EJUDGE_CHARSET
+#else
+#define DEFAULT_CHARSET              "iso8859-1"
+#endif /* EJUDGE_CHARSET */
+
 time_t server_cur_time;
 time_t server_start_time;
 time_t server_sched_time;
@@ -141,7 +147,7 @@ client_put_header(FILE *out, unsigned char const *template,
     va_end(args);
   }
 
-  if (!charset) charset = "iso8859-1";
+  if (!charset) charset = DEFAULT_CHARSET;
   if (!content_type) content_type = "text/html";
   if (!template) template = default_header_template;
 
