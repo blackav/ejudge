@@ -189,3 +189,7 @@ make-teamdb.c 1 2 261417
 localdb.c 1 2 853852
 html.c 1 14 3459417
 prepare.c 1 19 2415434
+inetdb.c 6 1 642740
+idmap.c 6 2 537810
+register.c 6 2 402566
+make-teamdb.c 6 2 261422
