@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -143,7 +143,7 @@ parse_cmdline(const unsigned char *str, struct cmdline_buf *pcmd)
           *q++ = *p++;
         }
       } else if (*p == '\\') {
-        if (q_char) {
+        if (q_char == '\'') {
           *q++ = *p++;
         } else {
           switch (p[1]) {
