@@ -27,6 +27,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/get_contests.c\
  userlist_clnt/get_info.c\
  userlist_clnt/get_uid_by_pid.c\
+ userlist_clnt/get_uid_by_pid_2.c\
  userlist_clnt/list_all_users.c\
  userlist_clnt/list_users.c\
  userlist_clnt/login.c\
@@ -51,6 +52,7 @@ USERLIST_CLNT_CFILES=\
 SERVE_CLNT_CFILES=\
  serve_clnt/do_pass_fd.c\
  serve_clnt/edit_run.c\
+ serve_clnt/edit_user.c\
  serve_clnt/get_archive.c\
  serve_clnt/import_xml_runs.c\
  serve_clnt/master_page.c\
@@ -70,6 +72,15 @@ SERVE_CLNT_CFILES=\
  serve_clnt/upload_report.c\
  serve_clnt/view.c
 
+SUPER_CLNT_CFILES=\
+ super_clnt/do_pass_fd.c\
+ super_clnt/main_page.c\
+ super_clnt/open.c\
+ super_clnt/pass_fd.c\
+ super_clnt/recv_packet.c\
+ super_clnt/send_packet.c\
+ super_clnt/simple_cmd.c
+
 COMMON_CFILES=\
  archive_paths.c\
  base64.c\
@@ -78,7 +89,6 @@ COMMON_CFILES=\
  clntutil.c\
  contests.c\
  copyright.c\
- cr_serialize.c\
  diff.c\
  expat_iface.c\
  filter_eval.c\
@@ -98,6 +108,8 @@ COMMON_CFILES=\
  runlog_import.c\
  runlog_xml.c\
  sformat.c\
+ super_html.c\
+ super_proto.c\
  sha.c\
  teamdb.c\
  team_extra.c\
@@ -112,7 +124,29 @@ COMMON_CFILES=\
  userlist_cfg.c\
  userlist_proto.c\
  userlist_xml.c\
- varsubst.c
+ varsubst.c\
+ xml_utils/attr_bool.c\
+ xml_utils/elem_ip_mask.c\
+ xml_utils/empty_text.c\
+ xml_utils/err_attrs.c\
+ xml_utils/err_attr_invalid.c\
+ xml_utils/err_attr_not_allowed.c\
+ xml_utils/err_attr_undefined.c\
+ xml_utils/err_elem_not_allowed.c\
+ xml_utils/err_elem_redefined.c\
+ xml_utils/err_elem_undefined.c\
+ xml_utils/err_nested_elems.c\
+ xml_utils/err_top_level.c\
+ xml_utils/err_variables.c\
+ xml_utils/leaf_elem.c\
+ xml_utils/parse_date.c\
+ xml_utils/parse_int.c\
+ xml_utils/parse_ip.c\
+ xml_utils/unparse_date.c\
+ xml_utils/unparse_ip.c\
+ xml_utils/unparse_text.c\
+ xml_utils/xml_err.c\
+ xml_utils/xml_err_a.c
 
 CFILES=\
  clean-users.c\
@@ -130,8 +164,13 @@ CFILES=\
  users.c\
  unix/fileutl.c\
  win32/fileutl.c\
+ unix/cr_serialize.c\
+ win32/cr_serialize.c\
+ unix/interrupt.c\
+ win32/interrupt.c\
  ${COMMON_CFILES}\
  ${SERVE_CLNT_CFILES}\
+ ${SUPER_CLNT_CFILES}\
  ${USERLIST_CLNT_CFILES}
 
 HFILES=\
@@ -150,6 +189,7 @@ HFILES=\
  filter_eval.h\
  filter_tree.h\
  html.h\
+ interrupt.h\
  l10n.h\
  misctext.h\
  ncurses_utils.h\
@@ -163,6 +203,11 @@ HFILES=\
  serve_clnt.h\
  settings.h\
  sformat.h\
+ super_actions.h\
+ super_clnt.h\
+ super_html.h\
+ super_proto.h\
+ super-serve.h\
  sha.h\
  teamdb.h\
  team_extra.h\
@@ -175,7 +220,8 @@ HFILES=\
  varsubst.h\
  version.h\
  unix/unix_fileutl.h\
- userlist_clnt/private.h
+ userlist_clnt/private.h\
+ xml_utils.h
 
 OTHERFILES=\
  filter_expr.y\
