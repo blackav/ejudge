@@ -107,7 +107,8 @@ userlist_clnt_set_passwd(struct userlist_clnt *clnt,
                          unsigned char *new_pwd);
 int
 userlist_clnt_team_set_passwd(struct userlist_clnt *clnt,
-                              int uid, unsigned char *old_pwd,
+                              int uid, int contest_id,
+                              unsigned char *old_pwd,
                               unsigned char *new_pwd);
 int
 userlist_clnt_get_contests(struct userlist_clnt *clnt,
