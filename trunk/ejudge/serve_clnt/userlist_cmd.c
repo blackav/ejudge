@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "serve_clnt.h"
@@ -30,7 +26,7 @@
 #include <unistd.h>
 
 int
-serve_clnt_gen_passwords(int sock_fd, int out_fd)
+serve_clnt_userlist_cmd(int sock_fd, int cmd, int out_fd)
 {
   struct prot_serve_packet *out, *in = 0;
   size_t out_size, in_size = 0;
@@ -42,11 +38,14 @@ serve_clnt_gen_passwords(int sock_fd, int out_fd)
   out = alloca(out_size);
   memset(out, 0, out_size);
 
-  out->id = SRV_CMD_GEN_PASSWORDS;
+  if (cmd != SRV_CMD_GEN_PASSWORDS && cmd != SRV_CMD_DUMP_USERS) {
+    return -SRV_ERR_PROTOCOL;
+  }
+  out->id = cmd;
   out->magic = PROT_SERVE_PACKET_MAGIC;
 
   if (pipe(pipe_fd) < 0) {
-    err("serve_clnt_view: pipe() failed: %s", os_ErrorMsg());
+    err("serve_clnt_userlist_cmd: pipe() failed: %s", os_ErrorMsg());
     return -SRV_ERR_SYSTEM_ERROR;
   }
   pass_fd[0] = out_fd;
@@ -75,18 +74,18 @@ serve_clnt_gen_passwords(int sock_fd, int out_fd)
   if (in->id != SRV_RPL_OK) {
     close(pipe_fd[0]);
     xfree(in);
-    err("serve_clnt_view: unexpected reply: %d", in->id);
+    err("serve_clnt_userlist_cmd: unexpected reply: %d", in->id);
     return -SRV_ERR_PROTOCOL;
   }
   xfree(in);
   r = read(pipe_fd[0], &c, 1);
   if (r < 0) {
-    err("serve_clnt_view: read() failed: %s", os_ErrorMsg());
+    err("serve_clnt_userlist_cmd: read() failed: %s", os_ErrorMsg());
     close(pipe_fd[0]);
     return -SRV_ERR_READ_FROM_SERVER;
   }
   if (r > 0) {
-    err("serve_clnt_view: data in wait pipe");
+    err("serve_clnt_userlist_cmd: data in wait pipe");
     close(pipe_fd[0]);
     return -SRV_ERR_PROTOCOL;
   }
