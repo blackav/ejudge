@@ -1323,6 +1323,15 @@ set_defaults(int mode)
     }
   }
 
+  if (cur_contest && !global->root_dir[0] && cur_contest->root_dir) {
+    snprintf(global->root_dir, sizeof(global->root_dir), "%s",
+             cur_contest->root_dir);
+  }
+  if (!global->root_dir[0]) {
+    err("global.root_dir must be set!");
+    return -1;
+  }
+
   /* root_dir, conf_dir, var_dir */
   if (!global->root_dir[0] && !global->var_dir[0] && !global->conf_dir[0]) {
     info("global.root_dir set to %s", DFLT_G_ROOT_DIR);
