@@ -1,5 +1,5 @@
 /* -*- mode: c; coding: koi8-r -*- */
-/* $Id*/
+/* $Id$ */
 
 /* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
 
