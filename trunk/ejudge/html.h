@@ -64,9 +64,14 @@ void write_priv_standings(FILE *f,
                           unsigned char const *self_url,
                           unsigned char const *hidden_vars);
 
-void write_standings_header(FILE *, int, unsigned char const *);
+void write_standings_header(FILE *f,
+                            int client_flag,
+                            int user_id,
+                            unsigned char const * header_str,
+                            unsigned char const * user_name);
+
 void do_write_kirov_standings(FILE *, int, unsigned char const *);
-void do_write_standings(FILE *, int, unsigned char const *);
+void do_write_standings(FILE *, int, int, unsigned char const *);
 
 int write_priv_source(FILE *f, int user_id, int priv_level,
                       int sid_mode, unsigned long long sid,
@@ -98,5 +103,9 @@ unsigned char *html_hyperref(unsigned char *buf, int size,
                              int sid_mode, unsigned long long sid,
                              unsigned char const *self_url,
                              unsigned char const *format, ...);
+
+int write_virtual_standings(FILE *f, int user_id);
+
+void html_reset_filter(int user_id);
 
 #endif /* __HTML_H__ */
