@@ -1,3 +1,11 @@
+2003-10-26  Alexander Chernov  <cher@ispras.ru>
+
+	* html.c:
+	(process_template) check for NULL pointers passed as parameters
+	  added;
+	(do_write_standings) bug: in case of a tie, participants are now
+	  sorted in the order of their ids.
+
 2003-10-24  Alexander Chernov  <cher@ispras.ru>
 
 	* prepare.c:
