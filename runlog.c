@@ -26,6 +26,7 @@
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
+#include <reuse/osdeps.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -462,6 +463,7 @@ run_status_str(int status, char *out, int len)
   case RUN_WRONG_ANSWER_ERR: s = _("Wrong answer");        break;
   case RUN_CHECK_FAILED:     s = _("Check failed");        break;
   case RUN_PARTIAL:          s = _("Partial solution");    break;
+  case RUN_ACCEPTED:         s = _("Accepted for testing"); break;
   case RUN_RUNNING:          s = _("Running...");          break;
   case RUN_COMPILED:         s = _("Compiled");            break;
   case RUN_COMPILING:        s = _("Compiling...");        break;
@@ -505,6 +507,21 @@ run_get_fog_period(unsigned long cur_time, int fog_time, int unfog_time)
     if (cur_time >= fog_start) return 1;
     return 0;
   }
+}
+
+void
+run_reset(void)
+{
+  if (ftruncate(run_fd, 0) < 0) {
+    err("ftruncate failed: %s", os_ErrorMsg());
+    return;
+  }
+  
+  run_u = 0;
+  if (run_a > 0) {
+    memset(runs, 0, sizeof(runs[0]) * run_a);
+  }
+  memset(&head, 0, sizeof(head));
 }
 
 /**
