@@ -4109,6 +4109,80 @@ cmd_generate_team_passwords(struct client_state *p, int pkt_len,
 }
 
 static void
+do_clear_team_passwords(int contest_id)
+{
+  struct userlist_user *u;
+  struct userlist_contest *c;
+  struct userlist_passwd *p;
+  struct xml_tree *t;
+  unsigned char buf[16];
+
+  for (u = (struct userlist_user*) userlist->b.first_down;
+       u; u = (struct userlist_user*) u->b.right) {
+    if (!u->contests) continue;
+    for (c = (struct userlist_contest*) u->contests->first_down;
+         c; c = (struct userlist_contest*) c->b.right) {
+      if (c->id == contest_id && c->status == USERLIST_REG_OK) break;
+    }
+    if (!c) continue;
+
+    // do not change password for privileged users
+    if (is_privileged_user(u) >= 0) continue;
+
+    t = u->cookies;
+    if (t) {
+      info("removed all cookies for %d (%s)", u->id, u->login);
+      xml_unlink_node(t);
+      userlist_free(t);
+      u->cookies = 0;
+    }
+    if ((p = u->team_passwd)) {
+      info("removed team password for %d (%s)", u->id, u->login);
+      xml_unlink_node(p);
+      userlist_free(p);
+      u->team_passwd = 0;
+    }
+  }
+  dirty = 1;
+  flush_interval /= 2;
+}
+
+static void
+cmd_clear_team_passwords(struct client_state *p, int pkt_len,
+                         struct userlist_pk_map_contest *data)
+{
+  unsigned char *log_ptr = 0;
+  size_t log_size = 0;
+  FILE *f = 0;
+  struct client_state *q = 0;
+  struct contest_desc *cnts = 0;
+  int errcode;
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+  CONN_INFO("%d", data->contest_id);
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    CONN_ERR("invalid contest: %d: %s", data->contest_id,
+             contests_strerror(-errcode));
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (p->user_id < 0) {
+    CONN_ERR("not authentificated");
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+  if (is_cnts_capable(p, cnts, OPCAP_GENERATE_TEAM_PASSWORDS) < 0)
+    return;
+  do_clear_team_passwords(data->contest_id);
+  CONN_INFO("ok");
+  send_reply(p, ULS_OK);
+}
+
+static void
 cmd_get_contest_name(struct client_state *p, int pkt_len,
                      struct userlist_pk_map_contest *data)
 {
@@ -4773,6 +4847,7 @@ static void (*cmd_table[])() =
   [ULS_PRIV_GET_USER_INFO]      cmd_priv_get_user_info,
   [ULS_PRIV_REGISTER_CONTEST]   cmd_priv_register_contest,
   [ULS_GENERATE_PASSWORDS]      cmd_generate_register_passwords,
+  [ULS_CLEAR_TEAM_PASSWORDS]    cmd_clear_team_passwords,
 
   [ULS_LAST_CMD] 0
 };
@@ -5274,7 +5349,7 @@ do_work(void)
         p->read_state += l;
         memcpy(&p->expected_len, rbuf, 4);
         if (p->read_state == 4) {
-          if (p->expected_len <= 0 || p->expected_len > 128 * 1024) {
+          if (p->expected_len <= 0 || p->expected_len > 256 * 1024) {
             err("%d: protocol error: bad packet length: %d",
                 p->id, p->expected_len);
             disconnect_client(p);
