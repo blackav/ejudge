@@ -414,15 +414,35 @@ create_newuser(struct client_state *p,
   unsigned char * email;
   int usernum;
   unsigned char urlbuf[1024];
+  int login_len, email_len;
 
+  // validate packet
   login = data->data;
+  login_len = strlen(login);
+  if (login_len != data->login_length) {
+    bad_packet(p, "new_user: login length mismatch");
+    return;
+  }
   email = data->data + data->login_length + 1;
+  email_len = strlen(email);
+  if (email_len != data->email_length) {
+    bad_packet(p, "new_user: email length mismatch");
+    return;
+  }
+  if (pkt_len != sizeof(*data) + login_len + email_len + 2) {
+    bad_packet(p, "new_user: packet length mismatch");
+    return;
+  }
+
+  info("%d: new_user: %s, %s, %s", p->id,
+       unparse_ip(data->origin_ip), login, email);
 
   user = (struct userlist_user*) userlist->b.first_down;
   while (user) {
     if (!strcmp(user->login,login)) {
       //Login already exists
       send_reply(p, -ULS_ERR_LOGIN_USED);
+      err("%d: login already exists", p->id);
       return;
     }
     user = (struct userlist_user*) user->b.right;
@@ -437,9 +457,21 @@ create_newuser(struct client_state *p,
   }
   userlist->b.last_down = (struct xml_tree *)user;
 
-  usernum = 1;
-  while (userlist->user_map[usernum]) {
-    usernum++;
+  for (usernum = 1;
+       usernum < userlist->user_map_size && userlist->user_map[usernum];
+       usernum++);
+  if (usernum >= userlist->user_map_size) {
+    struct userlist_user **new_map = 0;
+    size_t new_size;
+
+    new_size = userlist->user_map_size * 2;
+    new_map = (struct userlist_user**) xcalloc(new_size, sizeof(new_map[0]));
+    memcpy(new_map, userlist->user_map,
+           userlist->user_map_size * sizeof(new_map[0]));
+    xfree(userlist->user_map);
+    userlist->user_map = new_map;
+    userlist->user_map_size = new_size;
+    info("userlist: user_map extended to %d", new_size);
   }
   userlist->user_map[usernum] = user;
   user->id = usernum;
@@ -491,6 +523,7 @@ create_newuser(struct client_state *p,
                      buf);
   free(buf);
   send_reply(p,ULS_OK);
+  info("%d: new_user: ok, user_id = %d", p->id, usernum);
 
   user->registration_time = cur_time;
   dirty = 1;
@@ -503,9 +536,6 @@ create_cookie(struct userlist_user * user)
   struct userlist_cookie * cookie;
 
   cookie = xcalloc(1,sizeof(struct userlist_cookie));
-
-  fprintf(stderr, "adding a cookie for user %d\n",
-          user->id);
 
   if (!(user->cookies)) {
     user->cookies = xcalloc(1,sizeof (struct xml_tree));
@@ -1527,12 +1557,83 @@ pass_descriptors(struct client_state *p, int len,
   p->state = STATE_READ_FDS;
 }
 
-/*
+static unsigned char const * const status_str_map[] =
+{
+  "<font color=\"green\">OK</font>",
+  "<font color=\"yellow\">Pending</font>",
+};
 static void
-simple_test(struct client_state *p, int len,
-            struct userlist_packet *pack)
+do_list_users(FILE *f, int contest_id, int locale_id)
+{
+  struct userlist_user *u;
+  struct userlist_contest *c;
+  struct userlist_user **us = 0;
+  struct userlist_contest **cs = 0;
+  int u_num = 0, i;
+  unsigned char *s;
+
+  us = (struct userlist_user**) alloca(userlist->user_map_size*sizeof(us[0]));
+  cs =(struct userlist_contest**)alloca(userlist->user_map_size*sizeof(us[0]));
+
+  for (i = 1; i < userlist->user_map_size; i++) {
+    u = userlist->user_map[i];
+    if (!u) continue;
+    c = 0;
+    if (u->contests) {
+      c = (struct userlist_contest*) u->contests->first_down;
+    }
+    if (!c) continue;
+
+    for (; c; c = (struct userlist_contest*) c->b.right) {
+      if (c->id == contest_id) break;
+    }
+    if (!c) continue;
+    if (c->status < USERLIST_REG_OK || c->status > USERLIST_REG_PENDING)
+      continue;
+
+    us[u_num] = u;
+    cs[u_num] = c;
+    u_num++;
+  }
+
+  /* add additional filters */
+  /* add additional sorts */
+
+  if (!u_num) {
+    fprintf(f, "<p>%s</p>\n", _("No users registered for this contest"));
+    return;
+  }
+
+  fprintf(f, _("<p>%d users listed</p>\n"), u_num);
+  fprintf(f, "<table>\n<hr><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th></hr>\n",
+          _("Serial No"), _("User name"), _("Institution"), _("Faculty"),
+          _("Status"));
+  for (i = 0; i < u_num; i++) {
+    fprintf(f, "<tr><td>%d</td>", i + 1);
+    // FIXME: do html armoring?
+    s = us[i]->name;
+    if (!s) s = "&nbsp;";
+    fprintf(f, "<td>%s</td>", s);
+    s = us[i]->instshort;
+    if (!s) s = "&nbsp;";
+    fprintf(f, "<td>%s</td>", s);
+    s = us[i]->facshort;
+    if (!s) s = "&nbsp;";
+    fprintf(f, "<td>%s</td>", s);
+    fprintf(f, "<td>%s</td>", gettext(status_str_map[cs[i]->status]));
+    fprintf(f, "</tr>\n");
+  }
+  fprintf(f, "</table>\n");
+}
+
+static void
+list_users(struct client_state *p, int len,
+           struct userlist_pk_list_users *pack)
 {
   struct client_state *q;
+  FILE *f = 0;
+  unsigned char *html_ptr = 0;
+  size_t html_size = 0;
 
   if (len != sizeof (*pack)) {
     bad_packet(p, "");
@@ -1544,6 +1645,13 @@ simple_test(struct client_state *p, int len,
     return;
   }
 
+  if (!(f = open_memstream((char**) &html_ptr, &html_size))) {
+    err("%d: open_memstream failed!", p->id);
+    return;
+  }
+  do_list_users(f, pack->contest_id, pack->locale_id);
+  fclose(f);
+
   q = (struct client_state*) xcalloc(1, sizeof(*q));
   q->client_fds[0] = -1;
   q->client_fds[1] = p->client_fds[1];
@@ -1554,13 +1662,12 @@ simple_test(struct client_state *p, int len,
   p->client_fds[0] = -1;
   p->client_fds[1] = -1;
   q->state = STATE_AUTOCLOSE;
-  q->write_buf = xstrdup("A test!\n");
-  q->write_len = strlen(q->write_buf);
+  q->write_buf = html_ptr;
+  q->write_len = html_size;
   link_client_state(q);
   info("%d: created new connection %d", p->id, q->id);
   send_reply(p, ULS_OK);
 }
-*/
 
 static void
 process_packet(struct client_state *p, int len, unsigned char *pack)
@@ -1616,6 +1723,10 @@ process_packet(struct client_state *p, int len, unsigned char *pack)
 
   case ULS_PASS_FD:
     pass_descriptors(p, len, packet);
+    break;
+
+  case ULS_LIST_USERS:
+    list_users(p, len, (struct userlist_pk_list_users*) pack);
     break;
 
   default:
