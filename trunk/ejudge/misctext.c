@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000,2001 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,8 @@
 
 #include "misctext.h"
 #include "base64.h"
-#include "logger.h"
+
+#include <reuse/logger.h>
 
 #include <stdio.h>
 #include <string.h>
