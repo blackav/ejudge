@@ -29,6 +29,7 @@
 
 int
 serve_clnt_import_xml_runs(int sock_fd, int out_fd,
+                           int flags,
                            const unsigned char *xml_runs)
 {
   struct prot_serve_pkt_archive_path *out = 0;
@@ -46,6 +47,7 @@ serve_clnt_import_xml_runs(int sock_fd, int out_fd,
   memset(out, 0, out_size);
   out->b.id = SRV_CMD_IMPORT_XML_RUNS;
   out->b.magic = PROT_SERVE_PACKET_MAGIC;
+  out->token = flags;
   out->path_len = xml_runs_len;
   memcpy(out->data, xml_runs, xml_runs_len);
 
