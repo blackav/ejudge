@@ -993,3 +993,6 @@ team.c 1 36 4167376
 clntutil.c 1 31 1217170
 serve_clnt/edit_run.c 1 4 208033
 filter_scan.lex 1 8 472804
+runlog.h 1 21 383061
+serve.c 1 55 8610396
+runlog_xml.c 1 4 1567967
