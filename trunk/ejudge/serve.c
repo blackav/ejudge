@@ -1446,7 +1446,8 @@ cmd_team_submit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
     return;
   }
-  if (pkt->lang_id < 1 || pkt->lang_id > max_lang || !langs[pkt->lang_id]) {
+  if (pkt->lang_id < 1 || pkt->lang_id > max_lang || !langs[pkt->lang_id]
+      || langs[pkt->lang_id]->disabled) {
     err("%d: lang_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_LANG_ID);
     return;
