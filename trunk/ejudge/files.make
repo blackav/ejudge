@@ -150,6 +150,7 @@ COMMON_CFILES=\
 
 CFILES=\
  clean-users.c\
+ collect-emails.c\
  compile.c\
  edit-userlist.c\
  ejudge-setup.c\
@@ -157,6 +158,9 @@ CFILES=\
  register.c\
  run.c\
  serve.c\
+ serve-cmd.c\
+ serve-control.c\
+ slice-userlist.c\
  super-serve.c\
  team.c\
  testinfo.c\
