@@ -29,6 +29,7 @@
 #include "userlist_cfg.h"
 #include "pathutl.h"
 #include "fileutl.h"
+#include "xml_utils.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -36,6 +37,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/fcntl.h>
@@ -61,13 +63,13 @@ hyperref(unsigned char *buf, size_t size,
   }
 
   if (extra_args && *extra_args && *b) {
-    snprintf(buf,size,"%s?SID=%16llx&%s&%s",self_url,session_id,extra_args,b);
+    snprintf(buf,size,"%s?SID=%016llx&%s&%s",self_url,session_id,extra_args,b);
   } else if (extra_args && *extra_args) {
-    snprintf(buf, size, "%s?SID=%16llx&%s", self_url, session_id, extra_args);
+    snprintf(buf, size, "%s?SID=%016llx&%s", self_url, session_id, extra_args);
   } else if (*b) {
-    snprintf(buf, size, "%s?SID=%16llx&%s", self_url, session_id, b);
+    snprintf(buf, size, "%s?SID=%016llx&%s", self_url, session_id, b);
   } else {
-    snprintf(buf, size, "%s?SID=%16llx", self_url, session_id);
+    snprintf(buf, size, "%s?SID=%016llx", self_url, session_id);
   }
 
   return buf;
@@ -287,6 +289,7 @@ super_html_main_page(FILE *f,
                      const unsigned char *login,
                      unsigned long long session_id,
                      unsigned long ip_address,
+                     unsigned int flags,
                      struct userlist_cfg *config,
                      const unsigned char *self_url,
                      const unsigned char *hidden_vars,
@@ -339,17 +342,91 @@ super_html_main_page(FILE *f,
           "<th>Master</th>\n"
           "<th>Details</th>\n"
           "</tr>\n");
-  for (contest_id = 1; contest_id <= contest_max_id; contest_id++) {
+  for (contest_id = 1; contest_id < contest_max_id; contest_id++) {
     if (!contests_map[contest_id]) {
       if (priv_level < PRIV_LEVEL_ADMIN) continue;
 
-      // also check that the contest is handled locally
+      extra = get_existing_contest_extra(contest_id);
+      if (!extra) continue;
+      if (!extra->serve_used && !extra->run_used) continue;
+
+      fprintf(f, "<tr>");
+      fprintf(f, "<td>%d</td>", contest_id);
+      fprintf(f, "<td>(removed)</td>");
+      fprintf(f, "<td>&nbsp;</td>");
+
+      if (!extra || !extra->serve_used) {
+        fprintf(f, "<td><i>Not managed</i></td>\n");
+      } else {
+        if (extra->serve_suspended) {
+          fprintf(f, "<td bgcolor=\"#ff8888\">Failed</td>\n");
+        } else if (extra->serve_pid > 0) {
+          fprintf(f, "<td bgcolor=\"#ffff88\">Running, %d</td>\n",
+                  extra->serve_pid);
+        } else {
+          fprintf(f, "<td bgcolor=\"#ffff88\">Waiting</td>\n");
+        }
+      }
+
+      if (!extra || !extra->run_used) {
+        fprintf(f, "<td><i>Not managed</i></td>\n");
+      } else {
+        if (extra->run_suspended) {
+          fprintf(f, "<td bgcolor=\"#ff8888\">Failed</td>\n");
+        } else if (extra->run_pid > 0) {
+          fprintf(f, "<td bgcolor=\"#ffff88\">Running, %d</td>\n",
+                  extra->run_pid);
+        } else {
+          fprintf(f, "<td bgcolor=\"#ffff88\">Waiting</td>\n");
+        }
+      }
+
+      fprintf(f, "<td>&nbsp;</td><td>&nbsp;</td>");
+      fprintf(f, "<td><a href=\"%s\">Details</a></td>\n",
+              hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                       "contest_id=%d&action=%d", contest_id,
+                       SUPER_ACTION_VIEW_CONTEST));
       continue;
     }
     if ((errcode = contests_get(contest_id, &cnts)) < 0) {
       if (priv_level < PRIV_LEVEL_ADMIN) continue;
 
-      // check, that the contest is still handled
+      fprintf(f, "<tr>");
+      fprintf(f, "<td>%d</td>", contest_id);
+      fprintf(f, "<td bgcolor=\"#ff8888\">(XML parse error)</td>");
+      fprintf(f, "<td>&nbsp;</td>");
+
+      if (!extra || !extra->serve_used) {
+        fprintf(f, "<td><i>Not managed</i></td>\n");
+      } else {
+        if (extra->serve_suspended) {
+          fprintf(f, "<td bgcolor=\"#ff8888\">Failed</td>\n");
+        } else if (extra->serve_pid > 0) {
+          fprintf(f, "<td bgcolor=\"#ffff88\">Running, %d</td>\n",
+                  extra->serve_pid);
+        } else {
+          fprintf(f, "<td bgcolor=\"#ffff88\">Waiting</td>\n");
+        }
+      }
+
+      if (!extra || !extra->run_used) {
+        fprintf(f, "<td><i>Not managed</i></td>\n");
+      } else {
+        if (extra->run_suspended) {
+          fprintf(f, "<td bgcolor=\"#ff8888\">Failed</td>\n");
+        } else if (extra->run_pid > 0) {
+          fprintf(f, "<td bgcolor=\"#ffff88\">Running, %d</td>\n",
+                  extra->run_pid);
+        } else {
+          fprintf(f, "<td bgcolor=\"#ffff88\">Waiting</td>\n");
+        }
+      }
+
+      fprintf(f, "<td>&nbsp;</td><td>&nbsp;</td>");
+      fprintf(f, "<td><a href=\"%s\">Details</a></td>\n",
+              hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                       "contest_id=%d&action=%d", contest_id,
+                       SUPER_ACTION_VIEW_CONTEST));
       continue;
     }
     if (priv_level < PRIV_LEVEL_ADMIN) {
@@ -362,9 +439,9 @@ super_html_main_page(FILE *f,
       opcaps_find(&cnts->capabilities, login, &caps);
     }
 
-    if (cnts->invisible) continue;
+    if (!(flags & SSERV_VIEW_INVISIBLE) && cnts->invisible) continue;
 
-    extra = get_contest_extra(contest_id);
+    extra = get_existing_contest_extra(contest_id);
 
     fprintf(f, "<tr>");
     fprintf(f, "<td>%d</td>", contest_id);
@@ -550,7 +627,7 @@ super_html_contest_page(FILE *f,
     xfree(html_log);
     return 0;
   }
-  extra = get_contest_extra(contest_id);
+  extra = get_existing_contest_extra(contest_id);
 
   if (opcaps_find(&cnts->capabilities, login, &caps) < 0) {
     err("super_html_contest_page: not enough privileges");
@@ -634,7 +711,7 @@ super_html_contest_page(FILE *f,
   // report serve status
   mng_status = get_serve_management_status(cnts, extra);
   snprintf(mng_status_str, sizeof(mng_status_str),
-           mng_status_table[mng_status], extra->serve_pid);
+           mng_status_table[mng_status], extra?extra->serve_pid:0);
   fprintf(f, "<tr><td><tt>serve</tt> management status:</td><td>%s</td>",
           mng_status_str);
   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
@@ -759,7 +836,7 @@ super_html_contest_page(FILE *f,
   // report run status
   mng_status = get_run_management_status(cnts, extra);
   snprintf(mng_status_str, sizeof(mng_status_str),
-           mng_status_table[mng_status], extra->serve_pid);
+           mng_status_table[mng_status], extra?extra->run_pid:0);
   fprintf(f, "<tr><td><tt>run</tt> management status:</td><td>%s</td>",
           mng_status_str);
   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
@@ -874,6 +951,29 @@ super_html_contest_page(FILE *f,
     fprintf(f, "</td>");
   }
   fprintf(f, "</tr>\n");
+
+  fprintf(f, "<tr><td>XML configuration file:</td><td>&nbsp;</td>");
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
+    fprintf(f, "<td><a href=\"%s\">View</a></td>",
+            hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                     "contest_id=%d&action=%d", contest_id,
+                     SUPER_ACTION_VIEW_CONTEST_XML));
+  } else {
+    fprintf(f, "<td>&nbsp;</td>");
+  }
+  fprintf(f, "</tr>\n");
+
+  fprintf(f, "<tr><td>serve configuration file:</td><td>&nbsp;</td>");
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
+    fprintf(f, "<td><a href=\"%s\">View</a></td>",
+            hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                     "contest_id=%d&action=%d", contest_id,
+                     SUPER_ACTION_VIEW_SERVE_CFG));
+  } else {
+    fprintf(f, "<td>&nbsp;</td>");
+  }
+  fprintf(f, "</tr>\n");
+
   fprintf(f, "</table>\n");
 
   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
@@ -892,6 +992,16 @@ super_html_contest_page(FILE *f,
           hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                    "action=%d", SUPER_ACTION_LOGOUT));
   fprintf(f, "</tr></table>");
+
+  if (extra && extra->messages) {
+    fprintf(f, "<hr><h3>Start-up messages</h3>\n");
+    if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
+      fprintf(f, "<p>");
+      html_submit_button(f, SUPER_ACTION_CONTEST_RESTART, "Clear");
+    }
+    html_log = html_armor_string_dupa(extra->messages);
+    fprintf(f, "<p><pre>%s</pre>\n", html_log);
+  }
 
   return 0;
 }
@@ -958,6 +1068,17 @@ super_html_log_page(FILE *f,
     progname = "run";
     refresh_action = SUPER_ACTION_RUN_LOG_VIEW;
     break;
+  case SSERV_CMD_VIEW_CONTEST_XML:
+    contests_make_path(log_file_path, sizeof(log_file_path), cnts->id);
+    progname = "contest.xml";
+    refresh_action = SUPER_ACTION_VIEW_CONTEST_XML;
+    break;
+  case SSERV_CMD_VIEW_SERVE_CFG:
+    snprintf(log_file_path, sizeof(log_file_path),
+             "%s/conf/serve.cfg", cnts->root_dir);
+    progname = "serve.cfg";
+    refresh_action = SUPER_ACTION_VIEW_SERVE_CFG;
+    break;
   default:
     abort();
   }
@@ -972,7 +1093,16 @@ super_html_log_page(FILE *f,
     return -SSERV_ERR_LOG_IS_DEV_NULL;
   }
 
-  fprintf(f, "<h2><tt>%s</tt> log file</h2>\n", progname);
+  switch (cmd) {
+  case SSERV_CMD_VIEW_SERVE_LOG:
+  case SSERV_CMD_VIEW_RUN_LOG:
+    fprintf(f, "<h2><tt>%s</tt> log file</h2>\n", progname);
+    break;
+  case SSERV_CMD_VIEW_CONTEST_XML:
+  case SSERV_CMD_VIEW_SERVE_CFG:
+    fprintf(f, "<h2><tt>%s</tt> configuration file</h2>\n", progname);
+    break;
+  }
 
   fprintf(f, "<table border=\"0\"><tr>");
   fprintf(f, "<td><a href=\"%s\">To contests list</a></td>",
@@ -1002,6 +1132,308 @@ super_html_log_page(FILE *f,
   xfree(html_log);
   xfree(raw_log);
 
+  return 0;
+}
+
+int
+super_html_parse_contest_xml(int contest_id,
+                             unsigned char **before_start,
+                             unsigned char **after_start)
+{
+  unsigned char path[1024];
+  char *raw_xml = 0, *s, *p;
+  unsigned char *xml_1 = 0, *xml_2 = 0;
+  size_t raw_xml_size = 0;
+  struct stat statbuf;
+  int errcode;
+
+  contests_make_path(path, sizeof(path), contest_id);
+  if (stat(path, &statbuf) < 0) return -SSERV_ERR_FILE_NOT_EXIST;
+
+  if (generic_read_file(&raw_xml, 0, &raw_xml_size, 0,
+                        0, path, 0) < 0) {
+    return -SSERV_ERR_FILE_READ_ERROR;
+  }
+
+  xml_1 = (unsigned char*) xmalloc(raw_xml_size + 10);
+  xml_2 = (unsigned char*) xmalloc(raw_xml_size + 10);
+
+  // find opening <contest tag
+  s = raw_xml;
+  while (*s) {
+    if (s[0] != '<') {
+      s++;
+      continue;
+    }
+    if (s[1] == '!' && s[2] == '-' && s[3] == '-') {
+      while (*s) {
+        if (s[0] == '-' && s[1] == '-' && s[2] == '>') break;
+        s++;
+      }
+      if (!*s) break;
+      continue;
+    }
+    p = s;
+    p++;
+    while (*p && isspace(*p)) s++;
+    if (!*p) {
+      errcode = -SSERV_ERR_FILE_FORMAT_INVALID;
+      goto failure;
+    }
+    if (!strncmp(p, "contest", 7) && p[7] && isspace(p[7])) break;
+    s++;
+  }
+  if (!*s) {
+    errcode = -SSERV_ERR_FILE_FORMAT_INVALID;
+    goto failure;
+  }
+
+  memcpy(xml_1, raw_xml, s - raw_xml);
+  xml_1[s - raw_xml] = 0;
+
+  // find closing > tag
+  while (*s && *s != '>') s++;
+  if (!*s) {
+    errcode = -SSERV_ERR_FILE_FORMAT_INVALID;
+    goto failure;
+  }
+  s++;
+  strcpy(xml_2, s);
+
+  *before_start = xml_1;
+  *after_start = xml_2;
+  xfree(raw_xml);
+  return 0;
+
+ failure:
+  xfree(xml_1);
+  xfree(xml_2);
+  xfree(raw_xml);
+  return errcode;
+}
+
+// assume, that the permissions are checked
+int
+super_html_open_contest(struct contest_desc *cnts, int user_id,
+                        const unsigned char *user_login)
+{
+  int errcode;
+  unsigned char *txt1, *txt2;
+  unsigned char audit_str[1024];
+
+  if (!cnts->closed) return 0;
+  if ((errcode = super_html_parse_contest_xml(cnts->id, &txt1, &txt2)) < 0)
+    return errcode;
+
+  cnts->closed = 0;
+  snprintf(audit_str, sizeof(audit_str),
+           "<!-- audit: closed->open %s %d (%s) -->\n",
+           xml_unparse_date(time(0)), user_id, user_login);
+
+  if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
+    xfree(txt1);
+    xfree(txt2);
+    return -SSERV_ERR_SYSTEM_ERROR;
+  }
+
+  xfree(txt1);
+  xfree(txt2);
+  return 0;
+}
+
+int
+super_html_close_contest(struct contest_desc *cnts, int user_id,
+                         const unsigned char *user_login)
+{
+  int errcode = 0;
+  unsigned char *txt1 = 0, *txt2 = 0;
+  unsigned char audit_str[1024];
+
+  if (cnts->closed) return 0;
+  if ((errcode = super_html_parse_contest_xml(cnts->id, &txt1, &txt2)) < 0)
+    return errcode;
+
+  cnts->closed = 1;
+  snprintf(audit_str, sizeof(audit_str),
+           "<!-- audit: open->closed %s %d (%s) -->\n",
+           xml_unparse_date(time(0)), user_id, user_login);
+
+  if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
+    xfree(txt1);
+    xfree(txt2);
+    return -SSERV_ERR_SYSTEM_ERROR;
+  }
+
+  xfree(txt1);
+  xfree(txt2);
+  return 0;
+}
+
+int
+super_html_make_invisible_contest(struct contest_desc *cnts, int user_id,
+                                  const unsigned char *user_login)
+{
+  int errcode;
+  unsigned char *txt1, *txt2;
+  unsigned char audit_str[1024];
+
+  if (cnts->invisible) return 0;
+  if ((errcode = super_html_parse_contest_xml(cnts->id, &txt1, &txt2)) < 0)
+    return errcode;
+
+  cnts->invisible = 1;
+  snprintf(audit_str, sizeof(audit_str),
+           "<!-- audit: visible->invisible %s %d (%s) -->\n",
+           xml_unparse_date(time(0)), user_id, user_login);
+
+  if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
+    xfree(txt1);
+    xfree(txt2);
+    return -SSERV_ERR_SYSTEM_ERROR;
+  }
+
+  xfree(txt1);
+  xfree(txt2);
+  return 0;
+}
+
+int
+super_html_make_visible_contest(struct contest_desc *cnts, int user_id,
+                                const unsigned char *user_login)
+{
+  int errcode;
+  unsigned char *txt1, *txt2;
+  unsigned char audit_str[1024];
+
+  if (!cnts->invisible) return 0;
+  if ((errcode = super_html_parse_contest_xml(cnts->id, &txt1, &txt2)) < 0)
+    return errcode;
+
+  cnts->invisible = 0;
+  snprintf(audit_str, sizeof(audit_str),
+           "<!-- audit: invisible->visible %s %d (%s) -->\n",
+           xml_unparse_date(time(0)), user_id, user_login);
+
+  if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
+    xfree(txt1);
+    xfree(txt2);
+    return -SSERV_ERR_SYSTEM_ERROR;
+  }
+
+  xfree(txt1);
+  xfree(txt2);
+  return 0;
+}
+
+int
+super_html_serve_managed_contest(struct contest_desc *cnts, int user_id,
+                                 const unsigned char *user_login)
+{
+  int errcode;
+  unsigned char *txt1, *txt2;
+  unsigned char audit_str[1024];
+
+  if (cnts->managed) return 0;
+  if ((errcode = super_html_parse_contest_xml(cnts->id, &txt1, &txt2)) < 0)
+    return errcode;
+
+  cnts->managed = 1;
+  snprintf(audit_str, sizeof(audit_str),
+           "<!-- audit: unmanaged->managed %s %d (%s) -->\n",
+           xml_unparse_date(time(0)), user_id, user_login);
+
+  if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
+    xfree(txt1);
+    xfree(txt2);
+    return -SSERV_ERR_SYSTEM_ERROR;
+  }
+
+  xfree(txt1);
+  xfree(txt2);
+  return 0;
+}
+
+int
+super_html_serve_unmanaged_contest(struct contest_desc *cnts, int user_id,
+                                   const unsigned char *user_login)
+{
+  int errcode;
+  unsigned char *txt1, *txt2;
+  unsigned char audit_str[1024];
+
+  if (!cnts->managed) return 0;
+  if ((errcode = super_html_parse_contest_xml(cnts->id, &txt1, &txt2)) < 0)
+    return errcode;
+
+  cnts->managed = 0;
+  snprintf(audit_str, sizeof(audit_str),
+           "<!-- audit: managed->unmanaged %s %d (%s) -->\n",
+           xml_unparse_date(time(0)), user_id, user_login);
+
+  if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
+    xfree(txt1);
+    xfree(txt2);
+    return -SSERV_ERR_SYSTEM_ERROR;
+  }
+
+  xfree(txt1);
+  xfree(txt2);
+  return 0;
+}
+
+int
+super_html_run_managed_contest(struct contest_desc *cnts, int user_id,
+                               const unsigned char *user_login)
+{
+  int errcode;
+  unsigned char *txt1, *txt2;
+  unsigned char audit_str[1024];
+
+  if (cnts->run_managed) return 0;
+  if ((errcode = super_html_parse_contest_xml(cnts->id, &txt1, &txt2)) < 0)
+    return errcode;
+
+  cnts->run_managed = 1;
+  snprintf(audit_str, sizeof(audit_str),
+           "<!-- audit: run_unmanaged->run_managed %s %d (%s) -->\n",
+           xml_unparse_date(time(0)), user_id, user_login);
+
+  if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
+    xfree(txt1);
+    xfree(txt2);
+    return -SSERV_ERR_SYSTEM_ERROR;
+  }
+
+  xfree(txt1);
+  xfree(txt2);
+  return 0;
+}
+
+int
+super_html_run_unmanaged_contest(struct contest_desc *cnts, int user_id,
+                                 const unsigned char *user_login)
+{
+  int errcode;
+  unsigned char *txt1, *txt2;
+  unsigned char audit_str[1024];
+
+  if (!cnts->run_managed) return 0;
+  if ((errcode = super_html_parse_contest_xml(cnts->id, &txt1, &txt2)) < 0)
+    return errcode;
+
+  cnts->run_managed = 0;
+  snprintf(audit_str, sizeof(audit_str),
+           "<!-- audit: run_managed->run_unmanaged %s %d (%s) -->\n",
+           xml_unparse_date(time(0)), user_id, user_login);
+
+  if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
+    xfree(txt1);
+    xfree(txt2);
+    return -SSERV_ERR_SYSTEM_ERROR;
+  }
+
+  xfree(txt1);
+  xfree(txt2);
   return 0;
 }
 

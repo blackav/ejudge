@@ -29,6 +29,16 @@ struct prot_super_packet
 enum
 {
   SSERV_CMD_PASS_FD = 1,
+  SSERV_CMD_MAIN_PAGE,
+  SSERV_CMD_CONTEST_PAGE,
+  SSERV_CMD_VIEW_SERVE_LOG,
+  SSERV_CMD_VIEW_RUN_LOG,
+  SSERV_CMD_VIEW_CONTEST_XML,
+  SSERV_CMD_VIEW_SERVE_CFG,
+  SSERV_CMD_OPEN_CONTEST,
+  SSERV_CMD_CLOSE_CONTEST,
+  SSERV_CMD_INVISIBLE_CONTEST,
+  SSERV_CMD_VISIBLE_CONTEST,
 
   SSERV_CMD_LAST,
 };
@@ -45,6 +55,7 @@ enum
 enum
 {
   SSERV_ERR_NO_ERROR = 0,
+  SSERV_ERR_1,                  /* to reserve -1 */
   SSERV_ERR_NOT_CONNECTED,
   SSERV_ERR_INVALID_FD,
   SSERV_ERR_WRITE_TO_SERVER,
@@ -54,9 +65,47 @@ enum
   SSERV_ERR_READ_FROM_SERVER,
   SSERV_ERR_EOF_FROM_SERVER,
   SSERV_ERR_PROTOCOL_ERROR,
+  SSERV_ERR_USERLIST_DOWN,
+  SSERV_ERR_PERMISSION_DENIED,
+  SSERV_ERR_SYSTEM_ERROR,
+  SSERV_ERR_INVALID_CONTEST,
+  SSERV_ERR_BANNED_IP,
+  SSERV_ERR_ROOT_DIR_NOT_SET,
+  SSERV_ERR_FILE_NOT_EXIST,
+  SSERV_ERR_LOG_IS_DEV_NULL,
+  SSERV_ERR_FILE_READ_ERROR,
+  SSERV_ERR_FILE_FORMAT_INVALID,
+  SSERV_ERR_UNEXPECTED_USERLIST_ERROR,
 
   SSERV_UNKNOWN_ERROR,
   SSERV_ERR_LAST,
+};
+
+unsigned char const *super_proto_strerror(int n);
+
+enum
+{
+  SSERV_VIEW_INVISIBLE = 1,
+};
+
+struct prot_super_pkt_main_page
+{
+  struct prot_super_packet b;
+
+  int locale_id;
+  int contest_id;               /* for viewing contest details */
+  unsigned int flags;           /* view flags */
+  int self_url_len;
+  int hidden_vars_len;
+  int extra_args_len;
+  unsigned char data[3];
+};
+
+struct prot_super_pkt_simple_cmd
+{
+  struct prot_super_packet b;
+
+  int contest_id;
 };
 
 #endif /* __SUPER_PROTO_H__ */

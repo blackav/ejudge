@@ -27,6 +27,7 @@ int super_html_main_page(FILE *f,
                          const unsigned char *login,
                          unsigned long long session_id,
                          unsigned long ip_address,
+                         unsigned int flags,
                          struct userlist_cfg *config,
                          const unsigned char *self_url,
                          const unsigned char *hidden_vars,
@@ -56,5 +57,27 @@ int super_html_log_page(FILE *f,
                         const unsigned char *self_url,
                         const unsigned char *hidden_vars,
                         const unsigned char *extra_args);
+
+struct contest_desc;
+
+int super_html_open_contest(struct contest_desc *cnts, int user_id,
+                            const unsigned char *user_login);
+int super_html_close_contest(struct contest_desc *cnts, int user_id,
+                             const unsigned char *user_login);
+
+int super_html_make_invisible_contest(struct contest_desc *cnts, int user_id,
+                                      const unsigned char *user_login);
+int super_html_make_visible_contest(struct contest_desc *cnts, int user_id,
+                                    const unsigned char *user_login);
+
+int super_html_serve_managed_contest(struct contest_desc *cnts, int user_id,
+                                     const unsigned char *user_login);
+int super_html_serve_unmanaged_contest(struct contest_desc *cnts, int user_id,
+                                       const unsigned char *user_login);
+
+int super_html_run_managed_contest(struct contest_desc *cnts, int user_id,
+                                   const unsigned char *user_login);
+int super_html_run_unmanaged_contest(struct contest_desc *cnts, int user_id,
+                                     const unsigned char *user_login);
 
 #endif /* __SUPER_HTML_H__ */
