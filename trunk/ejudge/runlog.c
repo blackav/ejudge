@@ -989,7 +989,7 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
   ASSERT(out->submission == run_id);
 
   ASSERT(head.start_time >= 0);
-  if (!head.start_time) {
+  if (!out->is_hidden && !head.start_time) {
     err("run_set_entry: %d: the contest is not started", run_id);
     return -1;
   }
