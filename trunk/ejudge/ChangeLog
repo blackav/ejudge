@@ -1,3 +1,509 @@
+2002-12-02  Alexander Chernov  <cher@ispras.ru>
+
+	* VERSION: *** empty log message ***
+
+	* serve.c: MAJOR CHANGES:
+	  team<->serve protocol is changed:
+	  o a single UNIX socket is used instead of spool directory;
+	  o requests and responses are passed in binary form;
+	  o team credentials are passed upon connection (normally, they are
+	    credentials of the web server);
+	  o to handle reguests, where large amount of html is generated,
+	    remote client socket file descriptors are passed via UNIX
+	    socket, so the server writes directly to the remote client;
+	DETAILED DESCRIPTION:
+	"userlist.h", "sha.h" files are included;
+	lots of system includes related to the sockets and select are
+	  included;
+	(struct client_state) a new structure to store the state of the
+	  client;
+	(client_new_state) a new function to contstruct new client structure;
+	(client_disconnect) a new function to destroy client structure;
+	(struct remove_queue_item) a new structure to store the list
+	  of items pending to removal;
+	(remove_queue_add) a new function to add an item to the remove queue;
+	(interrupt_signal) a new function - handler for SIGTERM, SIGINT;
+	global variable `current_time' is used instead of local `time()' calls
+	  in all the functions;
+	(update_standings_file) declared `static';
+	(update_public_log_file) declared `static';
+	(update_status_file) declared `static';
+	  `download_interval' field is written;
+	(check_team_quota) declared `static';
+	  `size_t' type is used;
+	(check_clar_qouta) declared `static';
+	(report_to_client) declared `static';
+	(report_error) declared `static';
+	  team_data_dir parameter is now removed;
+	(report_bad_packet) declared `static';
+	(is_valid_status) declared `static';
+	  `RUN_IGNORED' is valid;
+	(check_period) declared `static';
+	(team_view_clar) function is removed;
+	(new_enqueue_reply) a new function to add the packet to send slot
+	  for the client;
+	(team_send_clar) function is removed;
+	(new_send_reply) a new function to send to the client a message
+	  without any additional data;
+	(new_bad_packet) a new function to report bad packet error and
+	  close the connection;
+	(cmd_pass_descriptors) a new function to handle SRV_CMD_PASS_FD
+	  request;
+	(cmd_team_get_archive) a new function to handle SRV_CMD_GET_ARCHIVE
+	  request;
+	(team_submit) function is removed;
+	(cmd_team_list_runs) a new function to handle SRV_CMD_LIST_RUNS;
+	(cmd_team_page) a new function to handle SRV_CMD_TEAM_PAGE;
+	(team_change_passwd) removed;
+	(cmd_team_show_item) a new function to handle SRV_CMD_SHOW_SOURCE,
+	  SRV_CMD_SHOW_CLAR and SRV_CMD_SHOW_REPORT requests;
+	(team_stat) removed;
+	(cmd_team_submit_run) a new function to handle SRV_CMD_SUBMIT_RUN;
+	(team_view_report) removed;
+	(team_view_source) removed;
+	(cmd_team_submit_clar) a new function to handle SRV_CMD_SUBMIT_CLAR;
+	(read_team_packet) removed;
+	(read_compile_packet) declared `static';
+	(read_run_packet) declared `static';
+	(process_judge_reply) declared `static';
+	(rejudge_run) declared `static';
+	  `run_get_record' call is updated;
+	(judge_stat) declared `static';
+	(judge_standings) declared `static';
+	(judge_update_public_standings) declared `static';
+	(judge_view_clar) declared `static';
+	(judge_view_report) declared `static';
+	(judge_view_src) declared `static';
+	(judge_start) declared `static';
+	(judge_stop) declared `static';
+	(judge_sched) declared `static';
+	(judge_time) declared `static';
+	(judge_change_status) declared `static';
+	  `RUN_IGNORED' run status is handled;
+	(judge_reply) declared `static';
+	(judge_view_teams) declared `static';
+	(judge_view_one_team) declared `static';
+	(judge_change_team_login) declared `static';
+	(judge_change_team_name) declared `static';
+	(judge_change_team_password) declared `static';
+	(judge_change_team_vis) declared `static';
+	(judge_change_team_ban) declared `static';
+	(do_add_team) declared `static';
+	(judge_add_team) declared `static';
+	(judge_message) declared `static';
+	(judge_rejudge_all) declared `static';
+	  `RUN_IGNORED' runs are not rejudged;
+	(judge_rejudge_problem) declared `static';
+	  `RUN_IGNORED' runs are not rejudged;
+	(judge_reset_contest) declared `static';
+	(judge_suspend_clients) declared `static';
+	(judge_resume_clients) declared `static';
+	(judge_cmds) declared `static';
+	(read_judge_packet) declared `static';
+	(check_remove_queue) a new function to check the remove queue and
+	  unlink pending items;
+	(process_packet) a new function to handle packets from UNIX socket;
+	(create_socket) a new function to create the socket and initialize
+	  the related data structures;
+	(check_sockets) a new function, which watch on the icoming file
+	  descriptors;
+	(may_safely_exit) a new function, which checks whether the server
+	  may be exited. All the write buffers must be empty;
+	(do_loop) declared `static';
+	  signal handler for SIGINT, SIGTERM is installed;
+	  SIGPIPE signal is ignored;
+	  team spool directory is no longer checked and the corresponding
+	  configuration parameters are removed;
+	(main) socket file is unlinked when do_loop exits.
+
+	* html.h: <stdio.h>, <time.h> are included;
+	(write_team_clar) prototype is removed;
+	(write_team_report_view) removed;
+	(write_team_source_view) removed;
+	(new_write_user_runs) prototype added;
+	(new_write_user_clars) prototype added;
+	(new_write_user_clar) prototype added;
+	(new_write_user_source_view) prototype added;
+	(new_write_user_report_view) prototype added;
+	(write_team_page) prototype added.
+
+	* html.c: "protocol.h" file is included;
+	(write_clar_view) call of `duration_str' is updated due to changes
+	  in its parameters;
+	(new_write_user_runs) a new function (a part of former
+	  `write_team_statistics'), which prints only run log for a user;
+	(new_write_user_clars) a new function (a part of former
+	  `write_team_statistics'), which prints only clar log for a user;
+	(write_team_statistics) split into the two new functions (see above);
+	(write_team_clar) removed;
+	(new_write_user_clars) a new function (previously write_team_clar),
+	  which prints detailed clarification request;
+	(do_write_kirov_standings) standings_charset global parameter is
+	  used;
+	  `run_get_record' call is updated;
+	  `duration_str' call is updated;
+	(do_write_standings) the same changes as above;
+	(write_standings) if `charset' and `standings_charset' does not
+	  match, standings are recoded;
+	(do_write_public_log) `time_t', `size_t' types are used;
+	  `duration_str' call is updated;
+	(write_public_log) `time_t', `size_t' types are used;
+	  `run_get_record' call is updated;
+	  `duration_str' call is updated;
+	  printf format specifiers are changed for size_t-typed vars;
+	  "Ignore" option is added;
+	(write_judge_allclars) `duration_str' call is updated;
+	(new_write_user_source_view) this is new name for
+	  `write_team_source_view';
+	  the user source is generated to the passed stream descriptor;
+	  the possible error code is returned from the function;
+	(new_write_user_report_view) this is new name for
+	  `write_team_report_view';
+	  the report is written to the passed stream descriptor;
+	  the function returns its error code;
+	(write_team_page) a new function, which generates the team main page,
+	  including run log, submit dialog, clar log, write new clar dialog.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* team.c: ARCHITECTURE CHANGED:
+	  `userlist-server' daemon is used for authentification. The old files
+	  method (teamdb, passwd) is no longer supported;
+	  team->serve protocol is completely changed. It uses a single UNIX
+	  socket. It passes the data in binary format. In some cases the client
+	  passes to the server the file descriptors, which may be user to
+	  write the HTML code to the remote client directly.
+	PARAMETERS CHANGED:
+	  o `contest_name' parameter is removed, the contest name is taken
+	    from the contests XML database,
+	  o `conf_dir' parameter is removed: no longer used;
+	  o `teamdb_file' parameter is removed: authentification is performed
+	    with `userlist-server' daemon;
+	  o `passwd_file' is removed: the same is above;
+	  o `languages_file' parameter is removed, the main team page
+	    is now generated on the server side, which has all the necessary
+	    information;
+	  o `problems_submit_file' is removed: the same as above;
+	  o `problems_clar_file' is removed: the same as above;
+	  o `pipe_dir' is removed: team<->serve interaction is performed
+	     through UNIX socket, so no separate directory is necessary;
+	  o `team_dir' is removed: the same as above;
+	  o `team_cmd_dir' is removed: the same as above;
+	  o `team_data_dir' is removed: the same as above;
+	  o `serve_socket' new parameter to specify the name of the UNIX
+	    socket to communicate with server. Default value `serve' works,
+	    if not changed on server;
+	"teamdb.h" is removed;
+	"protocol.h", "serve_clnt.h" are included;
+	<stdarg.h> is included;
+	default parameter values of removed parameters are removed;
+	(struct section_global_data) fields which corresponds to the
+	  removed parameters are removed;
+	  new field `serve_socket';
+	(error) new function to append messages to the error log;
+	(set_defaults) changed substantially;
+	(initialize) changed substantially;
+	(read_server_templates) no longer used;
+	(check_passwd) old files-based method is no longer supported;
+	(get_team_statistics) removed;
+	(send_clar_if_asked) changed substantially;
+	(submit_if_asked) changed substantially;
+	(change_passwd_if_asked) changed substantially;
+	(show_clar_if_asked) changed substantially;
+	(request_source_if_asked) changed substantially;
+	(request_report_if_asked) changed substantially;
+	(request_archive_if_asked) new function to download the user's
+	  submit archive (in tar.gz format);
+	(display_team_page) new function to send `team page' request to the
+	  server. The remove client socket file descriptor is passed in the
+	  request;
+	(main) changed substantially.
+
+	* runlog.c:
+	MAJOR CHANGE: the database is now stored in the binary format;
+	(struct run_header) `time_t' type is used instead of `unsigned long';
+	  `version' field is added to store the database file version,
+	   version 0 is the text database file, version 1 is the current,
+	  `pad' field is added to pad the structure size to 64 bytes;
+	(struct run_entry) `time_t', `size_t' types are used where appropriate;
+	  `ip' is stored in binary format (ie unsigned long) rather than in
+	  textual format;
+	  new field `sha1' to store the run hash value;
+	  `locale_id', `test' are now `signed char's to save the memory;
+	  `language', `status' are now `unsigned char's;
+	(run_read_entry) `sscanf' specification is updated since field
+	  types are changed;
+	  `ip' is parsed from textual to binary representation using
+	  `run_parse_ip';
+	(is_runlog_version_0) new function, which checks, whether the
+	  run database file is in textual format (version 0 format);
+	(read_runlog_version_0) new function, which reads the runlog
+	  in textual format;
+	(save_runlog_backup) new function, which saves the runlog file
+	  under the name `runlog.bak';
+	(do_write) a new function to write block to file, handing partial
+	  writes;
+	(do_read) a new function to read block from file, handing partial
+	  reads;
+	(write_full_runlog_current_version) a new function to write the
+	  runlog in the current version format;
+	(read_runlog) a new function to read the runlog in binary format;
+	(run_open) function is rewritten. It handles different database
+	  formats. If the database is in text format, the backup copy is
+	  saved;
+	(run_make_record) function removed;
+	(run_make_header) function removed;
+	(run_flush_entry) changed to binary format;
+	(run_add_record) `time_t', `size_t' types are used;
+	  `ip' is passed in binary format (i.e. `unsigned long') rather
+	  than in textual format;
+	  new parameter `sha1' to pass the run hash value;
+	  `locale_id', `language' are checked to fit into byte;
+	  record is zeroed before setting its fields;
+	(run_flush_header) changed to binary format;
+	(run_change_status) `newstatus', `newtest' are checked to fit into
+	  a byte;
+	(run_get_record) `time_t', `size_t' types are used;
+	  `pip' now is pointer to its binary representation (`unsigned long')
+	  rather than textual representation;
+	  new parameter `psha1' to return the hash value;
+	(run_start_contest) `time_t' type is used;
+	(run_stop_contest) the same;
+	(run_set_duration) the same;
+	(run_sched_contest) the same;
+	(run_get_start_time) the same;
+	(run_get_stop_time) the same;
+	(run_get_times) the same;
+	(run_get_team_usage) `size_t' type is used;
+	(run_get_attempts) runs with `RUN_IGNORED' status are ignored;
+	(run_status_str) `RUN_IGNORED' status is handled;
+	(run_get_fog_period) `time_t' type is used;
+	(run_unparse_ip) new function to convert the IPv4 address from
+	  binary to textual representation;
+	(run_parse_ip) new function to convert the IPv4 address from
+	  textual to binary representation;
+	(run_check_duplicate) new function, which checks whether the
+	  given run is a duplicate of some of the previous runs.
+
+	* runlog.h: <time.h> is included;
+	<string.h> is included;
+	new status RUN_IGNORED added;
+	(run_open) prototype changed to use `const' qualifier;
+	(run_add_record) `time_t', `size_t' types are used instead of
+	  unsigned long;
+	  `ip' is passed as unsigned long rather than char;
+	  new parameter `sha1' to pass the hash value;
+	(run_start_contest,run_get_start_time) `time_t' type is used;
+	(run_get_record)  `time_t', `size_t' types are used;
+	  `ip' pointer is now `unsigned long *', not `unsigned char*';
+	  new parameter to return the sha1 hash value;
+	(run_get_times) `time_t' type is used;
+	(run_set_duration) the same;
+	(run_get_stop_time) the same;
+	(run_stop_contest) the same;
+	(run_sched_contest) the same;
+	(run_get_total) the same;
+	(run_get_fog_period) the same;
+	(run_get_team_usage) `size_t' type is used;
+	(run_unparse_ip) new function prototype;
+	(run_parse_ip) new function prototype;
+	(run_check_duplicate) new function prototype.
+
+	* run.c:
+	(run_tests) empty output file is created even if no_redirect flag
+	  is set.
+
+	* run.c: "cr_serialize.h" is included;
+	(generate_team_report) `score_buf' variable is initialized on each
+	  iteration;
+	(run_tests) tester parameter `time_limit_adjustment' is handled. If
+	  the parameter is > 0, its value is added to the problem's time limit;
+	  if task start failed, it is counted as failed test;
+	(do_loop) subprocess run serialization is used. `cr_serialize_init'
+	  is called at the start of the function, when a run is to be
+	  started `cr_serialize_lock' is called, when the run is completed,
+	  `cr_serialize_unlock' is called.
+
+	* register.c:
+	(parse_cookies) handing of Internet Explorer (mis?)feature is added.
+	  The Internet Explorer passes back all the cookies passed to it
+	  in one session instead of the last cookie.
+
+	* protocol.h:
+	(struct prot_serve_status) field `download_interval' is added;
+	(struct prot_serve_packet) new structure to describe the minimal
+	  packet passed through team<->serve socket;
+	SRV_CMD_* constants for team->serve requests are defined;
+	SRV_RPL_* server replies for team->serve requests are defined;
+	SRV_ERR_* error code constants are defined;
+	number of prot_serve_pkt_* structure, which describe packets for
+	  team->serve commands and serve->team replies are defined;
+	(protocol_strerror) prototype added.
+
+	* protocol.c: more error code descriptions are added.
+
+	* prepare.h: "nls.h" is included;
+	(struct section_global_data) new field `serve_socket';
+	  new internal field `charset_ptr', which contains the reference to
+	  the charset functions for the current charset;
+	  new field `standings_charset';
+	  new internal field `standings_charset_ptr';
+	  fields `team_dir', `team_cmd_dir', `team_data_dir' are removed;
+	  new field `team_download_time';
+	  new field `cr_serialization_key';
+	  new field `show_astr_time';
+	  new field `ignore_duplicated_runs';
+	(struct section_tester_data) new field `time_limit_adjustment'.
+
+	* prepare.c:
+	new global parameter `standings_charset' which contains the charset
+	  in which static standings are generated;
+	new global parameter `serve_socket' which contains the name of UNIX
+	  socket for team<->serve communication;
+	parameters `team_dir', `team_cmd_dir', `team_data_dir' are removed,
+	  since the communication is performed via UNIX socket;
+	new global parameter `team_download_time', which is set to the
+	  inverval in minutes, after which the user may again download his
+	  runs after its downloads. The parameter may be explicitly set to 0,
+	  user downloads are then completely disabled;
+	new global parameter `cr_serialization_key'. If this parameter is
+	  non-zero, it contain the value of SYSV semaphore key, which is used
+	  by `compile' and `run' utilities to serialize subprocess execution;
+	new global parameter `show_astr_time'. If this parameter is non-zero,
+	  the astronomic time of submission is printed instead of duration
+	  from the contest start;
+	new global parameter `ignore_duplicated_runs'. If this parameter is
+	  non-zero, the runs are checked for duplicates. If the previous
+	  run of the same user has the same language, problem, ip, size,
+	  checksum values, the current run is marked `Ignored';
+	new tester parameter `time_limit_adjustment'. If this parameter is
+	  non-zero, the time-limit is increased by a given number of seconds;
+	default charset is set to "koi8-r";
+	(global_init_func) initialization of `team_download_time',
+	  `ignore_duplicated_runs' is added;
+	(inheritance_info) `time_limit_adjustment' is added;
+	(set_defaults) all the new fields are initialized;
+	(create_dirs) `team_dir', `team_cmd_dir', `team_data_dir' are not
+	  created, since the parameters are removed.
+
+	* nls.h:
+	(struct nls_table) new field `is_singlebyte', which is set to 1, if
+	  each character in the charset is represented with 1 byte;
+	(struct nls_table) new field `unilen', which is reference to function,
+	  that returns the length of the given unicode character in bytes
+	  in this charset;
+	all nls_table_* global variables are added as extern references;
+	(str_utf8_to_enc) new function prototype;
+	(str_utf8_to_enc_unchecked) new function prototype;
+	(str_utf8_to_enc_heap) new function prototype;
+	(str_utf8_to_koi8) new function prototype;
+	(str_utf8_to_koi8_unchecked) new function prototype;
+	(str_utf8_to_koi8_heap) new function prototype;
+	(str_koi8_to_enc) new function prototype;
+	(str_koi8_to_enc_unchecked) new function prototype;
+	(str_koi8_to_enc_heap) new function prototype.
+
+	* misctext.h: 
+	(duration_str) prototype is updated.
+
+	* misctext.c: <time.h> is included;
+	(duration_str) new parameter `show_astr' is added. If this parameter
+	  is non-zero, astronomic time of `cur' is displayed instead of
+	  duraction `cur-start';
+	  previous parameter `time' is decomposed into two: `cur' and `start',
+	  `cur' is the time to convert to string, `start' is the contest start
+	  time.
+
+	* master.c:
+	(change_status_if_asked) range of valid status constants is extended.
+
+	* makefile: utf8_utils.[ch] module is removed;
+	rules for compilation of `libcharsets.a' are added;
+	rules for compilation of `libserve_clnt.a' are added;
+	rule `clean' is updated to clean subdirectories;
+	lists of c files for individual utilities are corrected.
+
+	* files.make: cr_serialize.[ch] module added;
+	all charset handling functions are moved to a separate directory
+	  (charsets);
+	utf8_utils.h is merged to nls.h;
+	utf8_utils.c is decomposed into individual functions which are put
+	  to `charsets' directory.
+
+	* expat_iface.c: "utf8_utils.h" is no longer included.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* cr_serialize.c: 
+	(cr_serialize_lock) debugging output is commented out;
+	(cr_serialize_unlock) the same.
+
+	* compile.c: "cr_serialize.h" is included;
+	(do_loop) subprocess creation serialization is implemented using the
+	  new `cr_serialize' module.
+
+	* clntutil.h:
+	`server_download_interval' variable is declared as extern.
+
+	* clntutil.c:
+	new server state variable `server_download_interval', which contains
+	  the allowed interval (in seconds) between team submit downloads;
+	(client_check_server_status) `server_download_interval' variable is
+	  read;
+	(client_print_server_status) calls of `duration_str' are updated as
+	  the function parameters are changed.
+
+2002-12-01  Alexander Chernov  <cher@ispras.ru>
+
+	* serve_clnt.h: (serve_clnt_show_item) new function prototype;
+	(serve_clnt_submit_run) new function prototype;
+	(serve_clnt_submit_clar) new function prototype;
+	(serve_clnt_team_page) new function prototype.
+
+	* userlist-server.c:
+	(cmd_admin_process) if there is an admin record for the given user
+	  with the path "ANY", the path is not checked.
+
+	* userlist_xml.c: "nls_utils.h" is no longer included;
+	(userlist_unparse_ip) this is the new name for `unparse_ip',
+	  function became externally visible;
+	(unparse_cookies) use of `unparse_ip' is updated.
+
+	* userlist.h: 
+	(userlist_unparse_ip) prototype added.
+
+	* .cvsignore: edit-userlist utility added
+
+2002-11-30  Alexander Chernov  <cher@ispras.ru>
+
+	* cr_serialize.h, cr_serialize.c: Initial revision
+
+2002-11-24  Alexander Chernov  <cher@ispras.ru>
+
+	* teamdb.c:
+	(struct teamdb_extra) a new structure for each team, this structure
+	  contains various temporary information about the team. Currently
+	  it contains only the time of the last run archive downloading.
+	(teamdb_refresh) team extra information is marked `out of sync';
+	(teamdb_lookup_client) a new inline function to check the
+	  validity of user_id in case of client-server operation mode;
+	(syncronize_team_extra) a new function to syncronize list of
+	  users with the current extra information;
+	(teamdb_get_archive_time) a new function, which returns the time
+	  of the last run archive download for a given team;
+	(teamdb_set_archive_time) a new function, which sets the time of the
+	  last run archive download for a given team.
+
+	* teamdb.h: <time.h> is included;
+	(teamdb_get_archive_time) new prototype;
+	(teamdb_set_archive_time) new prototype.
+
+	* serve_clnt.h: Initial revision
+
+2002-11-23  Alexander Chernov  <cher@ispras.ru>
+
+	* protocol.c: Initial revision
+
 2002-11-18  Alexander Chernov  <cher@ispras.ru>
 
 	* run.c:
