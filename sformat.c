@@ -22,8 +22,9 @@
 #include "sformat.h"
 #include "prepare.h"
 #include "teamdb.h"
-#include "xalloc.h"
-#include "number_io.h"
+
+#include <reuse/xalloc.h>
+#include <reuse/number_io.h>
 
 #include <stdio.h>
 #include <stdlib.h>
