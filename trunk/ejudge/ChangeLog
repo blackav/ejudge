@@ -1,3 +1,67 @@
+2003-02-04  Alexander Chernov  <cher@ispras.ru>
+
+	* serve.c: new global variable `olympiad_judging_mode';
+	(update_status_file) `olympiad_judging_mode' field is set from
+	  `olympiad_judging_mode' global variable;
+	(cmd_priv_command_0) `SRV_CMD_SET_JUDGING_MODE' command is
+	  handled;
+	(read_compile_packet) in OLYMPIAD scoring system the final testing
+	  is performed only if `olympiad_judging_mode' variable is set;
+	(do_rejudge_all) better handling of OLYMPIAD scoring system is
+	  implemented: only the last accepted run for each participant and
+	  each problem is considered for final judging;
+	(do_rejudge_problem) better handling of OLYMPIAD scoring system
+	  is implemented: only the last accepted run for each participant
+	  is considered;
+	(packet_handlers) `SRV_CMD_SET_JUDGING_MODE' command is handled.
+
+	* master.c: 
+	(authentificate) page reload delay is set to 0 secs;
+	(print_judging_mode_button) a new function to generate HTML code
+	  for "Set judging mode" button;
+	(operation_status_page) page reload delay is set to 0 secs;
+	(action_set_judging_mode) new function to perform action for the
+	  "Set judging mode" button;
+	(main) ACTION_SET_JUDGING_MODE is handled;
+	  "Set judging mode" button is printed, if scoring system is
+	  OLYMPIAD.
+
+	* html.c:
+	(do_write_kirov_standings) full solutions are counted properly
+	  in OLYMPIAD judging mode.
+
+	* clntutil.h: copyright notice is updated;
+	external declaration for `server_olympiad_judging_mode' is added.
+
+	* clntutil.c: new global variable `server_olympiad_judging_mode';
+	(client_check_server_status) `server_olympiad_judging_mode' variable
+	  is filled from the server status structure;
+	(client_print_server_status) the current judging status is printed,
+	  if the scoring system is olympiad;
+	  the actual ending time is printed in case of permature contest
+	  termination.
+
+	* client_actions.h: new action SET_JUDGING_MODE is added.
+
+	* prepare.c: copyright notice is slightly updated;
+	(set_defaults) `tests_to_accept' field is set properly in any
+	  judging mode, since now the checker must be able to check
+	  problems from contests running in different modes.
+
+	* protocol.h:
+	(struct prot_serve_status) field `olympiad_judging_mode' is added,
+	  which is set to 1, if the current scoring mode is "OLYMPIAD";
+	SRV_CMD_SET_JUDGING_MODE request code is added.
+
+	* team.c: copyright notice is updated;
+	(authentificate) page refresh time is changed to 0 sec;
+	(operation_status_page) the same.
+
+2003-02-01  Alexander Chernov  <cher@ispras.ru>
+
+	* makefile: copyright notice is updated;
+	minor reorganization.
+
 2003-01-31  Alexander Chernov  <cher@ispras.ru>
 
 	* userlist_proto.h: copyright notice is updated;
