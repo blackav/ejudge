@@ -84,6 +84,7 @@ int serve_clnt_team_page(int sock_fd,
 
 int serve_clnt_master_page(int sock_fd,
                            int out_fd,
+                           unsigned long long session_id,
                            int user_id,
                            int contest_id,
                            int locale_id,
@@ -160,5 +161,9 @@ int serve_clnt_upload_report(int sock_fd, int cmd,
                              int user_id, int contest_id, int run_id,
                              unsigned int flags, size_t report_size,
                              const unsigned char *report_data);
+
+int serve_clnt_reset_filter(int sock_fd, int cmd,
+                            unsigned long long session_id,
+                            int user_id, int contest_id);
 
 #endif /* __SERVE_CLNT_H__ */
