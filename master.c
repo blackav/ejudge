@@ -584,7 +584,7 @@ authentificate(void)
 
     hyperref(hbuf, sizeof(hbuf), client_sid_mode, client_sid, self_url, 0);
     set_cookie_if_needed();
-    client_put_refresh_header(global->charset, hbuf, 1,
+    client_put_refresh_header(global->charset, hbuf, 0,
                               "Login successful");
     printf("<p>%s</p>", _("Login successfull. Now entering the main page."));
     printf("<p>If automatic updating does not work, click on <a href=\"%s\">this</a> link.</p>", hbuf);
@@ -767,6 +767,15 @@ print_resume_button(char const *str)
 }
 
 static void
+print_judging_mode_button(unsigned char const *str)
+{
+  if (!str) str = _("Set judging mode");
+  puts(form_start_simple);
+  printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
+         ACTION_SET_JUDGING_MODE, str);
+}
+
+static void
 read_view_params(void)
 {
   unsigned char *s;
@@ -824,7 +833,7 @@ operation_status_page(int code, unsigned char const *msg)
     printf("<h2><font color=\"red\">%s</font></h2>\n", msg);
   } else {
     hyperref(href, sizeof(href), client_sid_mode, client_sid, self_url, 0);
-    client_put_refresh_header(global->charset, href, 1,
+    client_put_refresh_header(global->charset, href, 0,
                               "Operation successfull");
     printf("<h2>Operation completed successfully</h2>");
   }
@@ -1375,6 +1384,17 @@ do_suspend_if_asked(void)
 
   open_serve();
   r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_SUSPEND, 0, 0);
+  operation_status_page(r, 0);
+  force_recheck_status = 1;
+}
+
+static void
+action_set_judgind_mode(void)
+{
+  int r;
+
+  open_serve();
+  r = serve_clnt_simple_cmd(serve_socket_fd, SRV_CMD_SET_JUDGING_MODE, 0, 0);
   operation_status_page(r, 0);
   force_recheck_status = 1;
 }
@@ -1938,6 +1958,9 @@ main(int argc, char *argv[])
     case ACTION_DUMP_STANDINGS:
       action_dump_standings();
       break;
+    case ACTION_SET_JUDGING_MODE:
+      action_set_judgind_mode();
+      break;
     default:
       change_status_if_asked();
       break;
@@ -1994,6 +2017,11 @@ main(int argc, char *argv[])
     } else {
       printf("</td><td>");
       print_resume_button(0);
+    }
+    if (server_score_system == SCORE_OLYMPIAD
+        && !server_olympiad_judging_mode) {
+      printf("</td><td>");
+      print_judging_mode_button(0);
     }
     printf("</td></tr></table>\n");
   }
