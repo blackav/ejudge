@@ -73,8 +73,13 @@ static char const password_accept_chars[] =
 #define DEFAULT_VAR_DIR              "var"
 #define DEFAULT_STATUS_FILE          "status/dir/status"
 #define DEFAULT_SERVER_LAG           10
-#define DEFAULT_CHARSET              "iso8859-1"
 #define DEFAULT_SERVE_SOCKET         "serve"
+
+#if defined EJUDGE_CHARSET
+#define DEFAULT_CHARSET              EJUDGE_CHARSET
+#else
+#define DEFAULT_CHARSET              "iso8859-1"
+#endif /* EJUDGE_CHARSET */
 
 /* global configuration settings */
 struct section_global_data
@@ -154,6 +159,8 @@ static unsigned char form_start_simple[1024];
 static unsigned char form_start_multipart[1024];
 static unsigned char hidden_vars[1024];
 
+static void global_init_func(struct generic_section_config *);
+
 /* description of configuration parameters */
 #define GLOBAL_OFFSET(x) XOFFSET(struct section_global_data, x)
 #define GLOBAL_PARAM(x, t) { #x, t, GLOBAL_OFFSET(x) }
@@ -180,9 +187,19 @@ static struct config_parse_info section_global_params[] =
 };
 static struct config_section_info params[] =
 {
-  { "global" ,sizeof(struct section_global_data), section_global_params },
+  { "global" ,sizeof(struct section_global_data), section_global_params,
+    0, global_init_func },
   { NULL, 0, NULL }
 };
+
+static void
+global_init_func(struct generic_section_config *gp)
+{
+  struct section_global_data *p = (struct section_global_data *) gp;
+
+  p->enable_l10n = -1;
+  p->allow_deny = -1;
+}
 
 static void print_refresh_button(unsigned char const *);
 static void print_logout_button(unsigned char const *);
@@ -323,10 +340,15 @@ set_defaults(void)
     pathcpy(global->charset, DEFAULT_CHARSET);
   }
 
-  if (!global->l10n_dir[0] || !global->enable_l10n) {
-    global->enable_l10n = 0;
-    global->l10n_dir[0] = 0;
+#if CONF_HAS_LIBINTL - 0 == 1
+  if (global->enable_l10n < 0) global->enable_l10n = 1;
+  if (global->enable_l10n && !global->l10n_dir[0]) {
+    strcpy(global->l10n_dir, EJUDGE_LOCALE_DIR);
   }
+  if (global->enable_l10n && !global->l10n_dir[0]) global->enable_l10n = 0;
+#else
+  global->enable_l10n = 0;
+#endif /* CONF_HAS_LIBINTL */
   return 0;
 }
 
@@ -485,7 +507,11 @@ initialize(int argc, char *argv[])
     name_ok = check_config_exist(cfgname);
   }
 
-  config = parse_param(cfgname, 0, params, 1);
+  if (!check_config_exist(cfgname)) {
+    config = param_make_global_section(params);
+  } else {
+    config = parse_param(cfgname, 0, params, 1);
+  }
   if (!config)
     client_not_configured(0, "config file not parsed", 0);
 
@@ -497,11 +523,26 @@ initialize(int argc, char *argv[])
   if (!p) client_not_configured(0, "no global section", 0);
   global = (struct section_global_data *) p;
 
+#if defined EJUDGE_SOCKET_PATH
+  if (!global->socket_path[0]) {
+    snprintf(global->socket_path, sizeof(global->socket_path),
+             "%s", EJUDGE_SOCKET_PATH);
+  }
+#endif /* EJUDGE_SOCKET_PATH */
+#if defined EJUDGE_CONTESTS_DIR
+  if (!global->contests_dir[0]) {
+    snprintf(global->contests_dir, sizeof(global->contests_dir),
+             "%s", EJUDGE_CONTESTS_DIR);
+  }
+#endif /* EJUDGE_CONTESTS_DIR */
+
   if (!global->contests_dir[0]) {
     client_not_configured(0, "contests are not defined", 0);
     /* never get here */
   }
   contests_set_directory(global->contests_dir);
+
+  if (global->allow_deny < 0) global->allow_deny = 1;
 
   /* verify contest_id from the configuration file */
   if (name_contest_id > 0) {
@@ -879,7 +920,7 @@ client_put_refresh_header(unsigned char const *coding,
 {
   va_list args;
 
-  if (!coding) coding = "iso8859-1";
+  if (!coding) coding = DEFAULT_CHARSET;
 
   va_start(args, format);
   fprintf(stdout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>\n", coding, coding, interval, url);
