@@ -364,6 +364,8 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
   case USERLIST_NN_LOGIN: s = u->login; break;
   case USERLIST_NN_EMAIL: s = u->email; break;
   case USERLIST_NN_NAME: s = u->name; break;
+  case USERLIST_NN_IS_PRIVILEGED:
+    s = userlist_unparse_bool(u->is_privileged); break;
   case USERLIST_NN_IS_INVISIBLE:
     s = userlist_unparse_bool(u->is_invisible); break;
   case USERLIST_NN_IS_BANNED:
@@ -504,6 +506,8 @@ userlist_set_user_field_str(struct userlist_list *lst,
     updated = 1;
     break;
 
+  case USERLIST_NN_IS_PRIVILEGED:
+    iptr = &u->is_privileged; goto do_bool_fields;
   case USERLIST_NN_IS_INVISIBLE:
     iptr = &u->is_invisible; goto do_bool_fields;
   case USERLIST_NN_IS_BANNED:
@@ -624,6 +628,8 @@ userlist_delete_user_field(struct userlist_user *u, int field_id)
     xfree(*sptr); *sptr = xstrdup("");
     break;
 
+  case USERLIST_NN_IS_PRIVILEGED:
+    iptr = &u->is_privileged; goto do_flags_delete;
   case USERLIST_NN_IS_INVISIBLE:
     iptr = &u->is_invisible; goto do_flags_delete;
   case USERLIST_NN_IS_BANNED:
