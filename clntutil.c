@@ -1,7 +1,7 @@
 /* -*- mode: c; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "clntutil.h"
@@ -89,7 +85,7 @@ void
 client_put_copyright(void)
 {
   printf(_("<p>This is <b>ejudge</b> contest administration system, version %s, compiled %s.\n"
-           "<p>This program is copyright (C) 2000-2002 Alexander Chernov.\n"
+           "<p>This program is copyright (C) 2000-2003 Alexander Chernov.\n"
            "<p>"
            "This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.\n"
            "<p>You can download the latest version from <a href=\"%s\">this site</a>.\n"), 
