@@ -2628,6 +2628,15 @@ initialize(int argc, char *argv[])
   if (s) pathcpy(fullname, s);
   os_rDirName(fullname, dirname, PATH_MAX);
   os_rGetBasename(fullname, basename, PATH_MAX);
+#if defined CGI_PROG_SUFFIX
+ {
+   size_t baselen = strlen(basename);
+   size_t sufflen = strlen(CGI_PROG_SUFFIX);
+   if (baselen>sufflen && !strcmp(basename+baselen-sufflen,CGI_PROG_SUFFIX)) {
+     basename[baselen - sufflen] = 0;
+   }
+ }
+#endif /* CGI_PROG_SUFFIX */
   if (!strncmp(basename, "master", 6)) {
     priv_level = PRIV_LEVEL_ADMIN;
     namelen = 6;
