@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003,2004 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "l10n.h"
 
 #include <stdlib.h>
@@ -25,7 +27,9 @@
 #include <locale.h>
 #endif
 
+#if CONF_HAS_LIBINTL - 0 == 1
 static int l10n_flag = 0;
+#endif /* CONF_HAS_LIBINTL */
 
 void
 l10n_prepare(int _l10n_flag, unsigned char const *l10n_dir)
