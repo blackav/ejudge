@@ -45,6 +45,9 @@ static char const * const tag_map[] =
   "guests",
   "header_file",
   "footer_file",
+  "register_email",
+  "register_url",
+  "team_url",
 
   0
 };
@@ -60,6 +63,7 @@ static char const * const attn_map[] =
   "min",
   "max",
   "autoregister",
+  "initial",
 
   0
 };
@@ -265,15 +269,16 @@ parse_member(struct contest_member *mb, char const *path)
     switch (a->tag) {
     case CONTEST_A_MIN:
     case CONTEST_A_MAX:
+    case CONTEST_A_INITIAL:
       if (!a->text || sscanf(a->text, "%d %n", &i, &n) != 1
           || a->text[n] || i < 0 || i > 100) {
         err("%s:%d:%d: invalid value", path, a->line, a->column);
         return -1;
       }
-      if (a->tag == CONTEST_A_MIN) {
-        mb->min_count = i;
-      } else {
-        mb->max_count = i;
+      switch (a->tag) {
+      case CONTEST_A_MIN:     mb->min_count = i;  break;
+      case CONTEST_A_MAX:     mb->max_count = i;  break;
+      case CONTEST_A_INITIAL: mb->init_count = i; break;
       }
       break;
     default:
@@ -423,6 +428,15 @@ parse_contest(struct contest_desc *cnts, char const *path)
       break;
     case CONTEST_FOOTER_FILE:
       if (handle_final_tag(path, t, &cnts->footer_file) < 0) return -1;
+      break;
+    case CONTEST_REGISTER_EMAIL:
+      if (handle_final_tag(path, t, &cnts->register_email) < 0) return -1;
+      break;
+    case CONTEST_REGISTER_URL:
+      if (handle_final_tag(path, t, &cnts->register_url) < 0) return -1;
+      break;
+    case CONTEST_TEAM_URL:
+      if (handle_final_tag(path, t, &cnts->team_url) < 0) return -1;
       break;
     case CONTEST_CONTESTANTS:
       mb_id = CONTEST_M_CONTESTANT;
