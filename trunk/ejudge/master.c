@@ -533,6 +533,31 @@ fatal_server_error(int r)
   exit(0);
 }
 
+static void
+client_server_down(void)
+{
+  unsigned char *a_name = 0;
+  int a_len;
+
+  if (cur_contest->name) {
+    a_len = html_armored_strlen(cur_contest->name);
+    a_name = alloca(a_len + 10);
+    html_armor_string(cur_contest->name, a_name);
+  }
+
+  if (a_name) {
+    client_put_header(stdout, 0, 0, global->charset, 1, 0,
+                      "%s - &quot;%s&quot;", _("Server is down"), a_name);
+  } else {
+    client_put_header(stdout, 0, 0, global->charset, 1, 0,
+                      "%s", _("Server is down"));
+  }
+
+  printf("<p>%s</p>", _("Server is down."));
+  client_put_footer(stdout, 0);
+  exit(0);
+}
+
 static int
 get_session_id(unsigned char const *var, unsigned long long *p_val)
 {
@@ -1554,6 +1579,117 @@ change_readonly(void)
 }
 
 static void
+action_new_run(void)
+{
+  const unsigned char *s, *prog_data = 0, *user_login = 0;
+  int user_id = 0, prob_id = 0, lang_id = 0, status = 0, variant = 0;
+  int n, r, flags = 0;
+  int is_imported = 0, is_hidden = 0, is_readonly = 0, tests = 0, score = 0;
+  size_t prog_size = 0;
+
+  if (cgi_param("file")) {
+    if (cgi_param_bin("file", &prog_size, &prog_data) < 0) {
+      operation_status_page(-1, _("Submission data is empty"), -1);
+      return;
+    }
+  }
+
+  if ((s = cgi_param("run_user_id")) && s && *s) {
+    if (sscanf(s, "%d%n", &user_id, &n) != 1 || s[n] || user_id <= 0)
+      goto invalid_operation;
+    flags |= PROT_SERVE_RUN_UID_SET;
+  }
+  if ((s = cgi_param("run_user_login")) && s && *s) {
+    user_login = s;
+    flags |= PROT_SERVE_RUN_LOGIN_SET;
+  }
+  if (!user_login && user_id <= 0) {
+    operation_status_page(-1, "Login or Id must be specified", -1);
+    return;
+  }
+  if (user_login && user_id > 0) {
+    operation_status_page(-1, "Login and Id cannot both be specified", -1);
+    return;
+  }
+  
+  if (!(s = cgi_param("problem")) || !*s) {
+    operation_status_page(-1, "Problem must be specified", -1);
+    return;
+  }
+  if (sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n] || prob_id <= 0)
+    goto invalid_operation;
+  flags |= PROT_SERVE_RUN_PROB_SET;
+
+  if (!(s = cgi_param("language")) || !*s) {
+    operation_status_page(-1, "Language must be specified", -1);
+    return;
+  }
+  if (sscanf(s, "%d%n", &lang_id, &n) != 1 || s[n] || lang_id <= 0)
+    goto invalid_operation;
+  flags |= PROT_SERVE_RUN_LANG_SET;
+
+  if (!(s = cgi_param("status")) || !*s) {
+    operation_status_page(-1, "Status must be specified", -1);
+    return;
+  }
+  if (sscanf(s, "%d%n", &status, &n) != 1 || s[n] || status < 0)
+    goto invalid_operation;
+  flags |= PROT_SERVE_RUN_STATUS_SET;
+
+  if ((s = cgi_param("variant")) && *s) {
+    if (sscanf(s, "%d%n", &variant, &n) != 1 || s[n] || variant < 0)
+      goto invalid_operation;
+    flags |= PROT_SERVE_RUN_VARIANT_SET;
+  }
+
+  if ((s = cgi_param("is_imported")) && *s) {
+    if (sscanf(s, "%d%n", &is_imported, &n) != 1 || s[n] 
+        || is_imported < 0 || is_imported > 1)
+      goto invalid_operation;
+    flags |= PROT_SERVE_RUN_IMPORTED_SET;
+  }
+
+  if ((s = cgi_param("is_hidden")) && *s) {
+    if (sscanf(s, "%d%n", &is_hidden, &n) != 1 || s[n] 
+        || is_hidden < 0 || is_hidden > 1)
+      goto invalid_operation;
+    flags |= PROT_SERVE_RUN_HIDDEN_SET;
+  }
+
+  if ((s = cgi_param("is_readonly")) && *s) {
+    if (sscanf(s, "%d%n", &is_readonly, &n) != 1 || s[n] 
+        || is_readonly < 0 || is_readonly > 1)
+      goto invalid_operation;
+    flags |= PROT_SERVE_RUN_READONLY_SET;
+  }
+
+  if ((s = cgi_param("tests")) && *s) {
+    if (sscanf(s, "%d%n", &tests, &n) != 1 || s[n])
+      goto invalid_operation;
+    flags |= PROT_SERVE_RUN_TESTS_SET;
+  }
+
+  if ((s = cgi_param("score")) && *s) {
+    if (sscanf(s, "%d%n", &score, &n) != 1 || s[n])
+      goto invalid_operation;
+    flags |= PROT_SERVE_RUN_SCORE_SET;
+  }
+
+  open_serve();
+  r = serve_clnt_new_run(serve_socket_fd, flags,
+                         user_id, prob_id, lang_id, status,
+                         is_imported, variant, is_hidden,
+                         tests, score, is_readonly, 0,
+                         client_ip, prog_size, user_login, prog_data);
+  operation_status_page(r, 0, -1);
+  return;
+
+ invalid_operation:
+  fprintf(stderr, ">>%s<<\n", s);
+  operation_status_page(-1, "Invalid operation", -1);
+}
+
+static void
 view_source_if_asked()
 {
   char *s = cgi_nname("source_", 7);
@@ -1570,6 +1706,24 @@ view_source_if_asked()
   fflush(stdout);
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_SOURCE, runid, 0, 0,
+                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+  if (r < 0) {
+    printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
+  }
+  client_put_footer(stdout, 0);
+  exit(0);
+}
+
+static void
+action_new_run_form(void)
+{
+  int r;
+
+  set_cookie_if_needed();
+  client_put_header(stdout, 0, 0, global->charset, 1, 0, "New run form");
+  fflush(stdout);
+  open_serve();
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_NEW_RUN_FORM, 0, 0, 0,
                       client_sid_mode, self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
@@ -2604,24 +2758,6 @@ set_defaults(void)
   return 0;
 }
 
-static void
-parse_client_ip(void)
-{
-  unsigned int b1, b2, b3, b4;
-  int n;
-  unsigned char *s = getenv("REMOTE_ADDR");
-
-  client_ip = 0;
-  if (!s) return;
-  n = 0;
-  if (sscanf(s, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4
-      || s[n] || b1 > 255 || b2 > 255 || b3 > 255 || b4 > 255) {
-    client_ip = 0xffffffff;
-    return;
-  }
-  client_ip = b1 << 24 | b2 << 16 | b3 << 8 | b4;
-}
-
 static int
 parse_contest_id(void)
 {
@@ -2857,7 +2993,7 @@ initialize(int argc, char *argv[])
   if (set_defaults() < 0)
     client_not_configured(global->charset, "bad configuration", 0);
   logger_set_level(-1, LOG_WARNING);
-  parse_client_ip();
+  client_ip = parse_client_ip();
 
   make_self_url();
   client_make_form_headers(self_url);
@@ -3000,6 +3136,12 @@ main(int argc, char *argv[])
                                   server_lag, 0)) {
     return 0;
   }
+
+  if (serve_socket_fd < 0) {
+    serve_socket_fd = serve_clnt_open(global->serve_socket);
+    if (serve_socket_fd < 0) client_server_down();
+  }
+
 
   if (priv_level == PRIV_LEVEL_ADMIN) {
     //fprintf(stderr, ">>%d\n", client_action);
@@ -3175,6 +3317,12 @@ main(int argc, char *argv[])
       break;
     case ACTION_RUN_CHANGE_PAGES:
       action_run_change_pages();
+      break;
+    case ACTION_NEW_RUN_FORM:
+      action_new_run_form();
+      break;
+    case ACTION_NEW_RUN:
+      action_new_run();
       break;
     default:
       change_status_if_asked();
