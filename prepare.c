@@ -202,6 +202,7 @@ static struct config_parse_info section_global_params[] =
 
   // just for fun
   GLOBAL_PARAM(extended_sound, "d"),
+  GLOBAL_PARAM(disable_sound, "d"),
   GLOBAL_PARAM(sound_player, "s"),
   GLOBAL_PARAM(accept_sound, "s"),
   GLOBAL_PARAM(runtime_sound, "s"),
@@ -315,6 +316,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(info_pat, "s"),
   PROBLEM_PARAM(tgz_pat, "s"),
   PROBLEM_PARAM(personal_deadline, "x"),
+  PROBLEM_PARAM(score_bonus, "s"),
 
   { 0, 0, 0, 0 }
 };
@@ -1184,6 +1186,45 @@ parse_user_adjustment(char **strs)
     pinfo[i].adjustment = x;
   }
   return pinfo;
+}
+
+static int
+parse_score_bonus(const unsigned char *str, int *p_total, int **p_values)
+{
+  int total = 0, p, n, r, x, i;
+  int *values = 0;
+
+  p = 0;
+  while (1) {
+    if ((r = sscanf(str + p, "%d%n", &x, &n)) < 0) break;
+    if (r != 1 || (str[p + n] && !isspace(str[p + n]))) {
+      err("invalid score_bonus specification `%s'", str);
+      goto failed;
+    }
+    if (x < -100000 || x > 100000) {
+      err("score_bonus value %d is out of range", x);
+      goto failed;
+    }
+    total++;
+    p += n;
+  }
+
+  XCALLOC(values, total);
+  for (i = 0, p = 0; i < total; i++, p += n) {
+    if (sscanf(str + p, "%d%n", &x, &n) != 1) {
+      err("oops, something strange during score_bonus parsing");
+      goto failed;
+    }
+    values[i] = x;
+  }
+
+  if (p_total) *p_total = total;
+  if (p_values) *p_values = values;
+  return 0;
+
+ failed:
+  xfree(values);
+  return -1;
 }
 
 static int
@@ -2194,6 +2235,17 @@ set_defaults(int mode)
                                                    section_tester_params);
           if (!probs[i]->checker_env[j]) return -1;
         }
+      }
+
+      /* score bonus */
+      if (!probs[i]->score_bonus[0] && si != -1 && abstr_probs[si]->score_bonus[0]) {
+        strcpy(probs[i]->score_bonus, abstr_probs[si]->score_bonus);
+        info("problem.%s.score_bonus inherited from abstract problem (%s)",
+             probs[i]->short_name, probs[i]->score_bonus);
+      }
+      if (probs[i]->score_bonus[0]) {
+        if (parse_score_bonus(probs[i]->score_bonus, &probs[i]->score_bonus_total,
+                              &probs[i]->score_bonus_val) < 0) return -1;
       }
     }
 
