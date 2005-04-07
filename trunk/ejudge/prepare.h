@@ -269,6 +269,7 @@ struct section_global_data
 
   // fun
   int extended_sound;
+  int disable_sound;
   path_t sound_player;
   path_t accept_sound;
   path_t runtime_sound;
@@ -393,6 +394,10 @@ struct section_problem_data
   char **personal_deadline;     /* personal deadline extensions */
   int pd_total;
   struct pers_dead_info *pd_infos;
+
+  puc_t score_bonus[256];       /* bonus for the Nth full solution of the problem */
+  int   score_bonus_total;      /* parsed: number of entries in score_bonus */
+  int   *score_bonus_val;       /* parsed: score_bonus values */
 };
 
 struct section_language_data
