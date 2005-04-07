@@ -18,6 +18,7 @@
 #include "config.h"
 
 #include "runlog.h"
+#include "teamdb.h"
 
 #include "pathutl.h"
 #include "unix/unix_fileutl.h"
@@ -81,6 +82,14 @@ static struct user_entry **ut_table;
 
 static void build_indices(void);
 static struct user_entry *get_user_entry(int user_id);
+
+struct user_flags_info_s
+{
+  int nuser;
+  int *flags;
+};
+static struct user_flags_info_s user_flags = { -1, 0 };
+static int update_user_flags(void);
 
 static int
 run_read_record(char *buf, int size)
@@ -384,12 +393,15 @@ read_runlog(void)
   return -1;
 }
 
+static void teamdb_update_callback(void *);
+
 int
 run_open(const char *path, int flags)
 {
   int           oflags = 0;
   int           i;
 
+  teamdb_register_update_hook(teamdb_update_callback, 0);
   if (runs) {
     xfree(runs); runs = 0; run_u = run_a = 0;
   }
@@ -834,6 +846,56 @@ run_get_attempts(int runid, int *pattempts,
   if (pattempts) *pattempts = n;
   if (pdisqattempts) *pdisqattempts = m;
   return 0;
+}
+
+/* FIXME: EVER DUMBER */
+/*
+ * if the specified run_id is OK run, how many successes were on the
+ * same problem by other people before.
+ * returns: -1 on error
+ *          number of previous successes
+ *          RUN_TOO_MANY (100000), if invisible or banned user or run
+ */
+int
+run_get_prev_successes(int run_id)
+{
+  int user_id, successes = 0, i, cur_uid;
+  unsigned char *has_success = 0;
+
+  if (run_id < 0 || run_id >= run_u) ERR_R("bad runid: %d", run_id);
+  if (runs[run_id].status != RUN_OK) ERR_R("runid %d is not OK", run_id);
+
+  // invisible run
+  if (runs[run_id].is_hidden) return RUN_TOO_MANY;
+
+  if (update_user_flags() < 0) return -1;
+
+  // invalid, banned or invisible user
+  user_id = runs[run_id].team;
+  if (user_id <= 0 || user_id >= user_flags.nuser
+      || user_flags.flags[user_id] < 0
+      || (user_flags.flags[user_id] & TEAM_BANNED)
+      || (user_flags.flags[user_id] & TEAM_INVISIBLE))
+    return RUN_TOO_MANY;
+
+  XALLOCAZ(has_success, user_flags.nuser);
+  for (i = 0; i < run_id; i++) {
+    if (runs[i].status != RUN_OK) continue;
+    if (runs[i].is_hidden) continue;
+    if (runs[i].problem != runs[run_id].problem) continue;
+    cur_uid = runs[i].team;
+    if (cur_uid <= 0 || cur_uid >= user_flags.nuser
+        || user_flags.flags[cur_uid] < 0
+        || (user_flags.flags[cur_uid] & TEAM_BANNED)
+        || (user_flags.flags[cur_uid] & TEAM_INVISIBLE))
+      continue;
+    if (cur_uid == user_id) {
+      // the user already had OK before
+      return successes;
+    }
+    successes++;
+  }
+  return successes;
 }
 
 char *
@@ -2110,6 +2172,28 @@ run_str_short_to_status(const unsigned char *str, int *pr)
       return str_to_status_table[i].value;
     }
   return -1;
+}
+
+static void
+teamdb_update_callback(void *user_ptr)
+{
+  // invalidate user_flags
+  xfree(user_flags.flags);
+  memset(&user_flags, 0, sizeof(user_flags));
+  user_flags.nuser = -1;
+}
+
+static int
+update_user_flags(void)
+{
+  int size = 0;
+  int *map = 0;
+
+  if (user_flags.nuser >= 0) return 0;
+  if (teamdb_get_user_status_map(&size, &map) < 0) return -1;
+  user_flags.nuser = size;
+  user_flags.flags = map;
+  return 1;
 }
 
 /**
