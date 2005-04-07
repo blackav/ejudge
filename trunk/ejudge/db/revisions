@@ -1693,3 +1693,10 @@ html.h 1 28 573042
 ejudge-setup.c 1 7 8875871
 html.c 1 59 6635700
 master_html.c 1 35 7727813
+prepare.h 1 63 1698523
+runlog.h 1 31 482062
+teamdb.h 1 21 169260
+serve.c 1 88 12590319
+prepare.c 1 86 8801545
+runlog.c 1 39 4494420
+teamdb.c 1 29 1087572
