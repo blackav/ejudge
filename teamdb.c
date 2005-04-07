@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -63,6 +63,49 @@ struct teamdb_extra
 static int extra_out_of_sync;
 static int extra_num;
 static struct teamdb_extra **extra_info;
+
+/* update hooks */
+struct update_hook
+{
+  struct update_hook *next;
+  void (*func)(void *);
+  void *user_ptr;
+};
+static struct update_hook *first_update_hook = 0;
+
+void
+teamdb_register_update_hook(void (*func)(void *), void *user_ptr)
+{
+  struct update_hook **pp = &first_update_hook;
+
+  while (*pp && (*pp)->func != func) pp = &(*pp)->next;
+  if (!*pp) {
+    XCALLOC(*pp, 1);
+  }
+  (*pp)->func = func;
+  (*pp)->user_ptr = user_ptr;
+}
+void
+teamdb_unregister_update_hook(void (*func)(void *))
+{
+  struct update_hook **pp = &first_update_hook, *p;
+
+  while (*pp && (*pp)->func != func) pp = &(*pp)->next;
+  if (*pp) {
+    p = *pp;
+    *pp = p->next;
+    xfree(p);
+  }
+}
+static void
+call_update_hooks(void)
+{
+  struct update_hook *p;
+
+  for (p = first_update_hook; p; p = p->next) {
+    (*p->func)(p->user_ptr);
+  }
+}
 
 static int
 open_connection(void)
@@ -176,6 +219,7 @@ teamdb_refresh(void)
 
   if (users->user_map_size <= 0) {
     info("teamdb_refresh: no users in updated contest");
+    call_update_hooks();
     return 1;
   }
 
@@ -183,6 +227,7 @@ teamdb_refresh(void)
     if (users->user_map[i]) total_participants++;
   if (!total_participants) {
     info("teamdb_refresh: no users in updated contest");
+    call_update_hooks();
     return 1;
   }
 
@@ -210,6 +255,7 @@ teamdb_refresh(void)
   info("teamdb_refresh: updated: %d users, %d max user, XML size = %d",
        total_participants, users->user_map_size - 1, strlen(xml_text));
   extra_out_of_sync = 1;
+  call_update_hooks();
   return 1;
 }
 
@@ -341,6 +387,8 @@ teamdb_toggle_flags(int user_id, int contest_id, unsigned int flags)
   r = userlist_clnt_change_registration(server_conn, user_id, contest_id,
                                         -1, 3, flags);
   if (r < 0) return -1;
+  // force userdb reload
+  local_users.vintage = 0;
   return r;
 }
 
@@ -464,6 +512,49 @@ teamdb_get_uid_by_pid(int system_uid, int system_gid, int system_pid,
                                    p_priv_level, p_cookie, p_ip);
   if (r < 0) return -1;
   return r;
+}
+
+int
+teamdb_get_user_status_map(int *p_size, int **p_map)
+{
+  int map_size = 0, i;
+  int *map = 0;
+  struct userlist_contest *uc;
+  int old_flags, new_flags;
+
+  if (teamdb_refresh() < 0) return -1;
+
+  if (users->user_map_size <= 0) {
+    *p_size = 0;
+    *p_map = 0;
+    return 0;
+  }
+
+  map_size = users->user_map_size;
+  XCALLOC(map, map_size);
+
+  for (i = 1; i < users->user_map_size; i++) {
+    if (!(uc = u_contests[i])) {
+      map[i] = -1;
+      continue;
+    }
+    old_flags = uc->flags;
+    new_flags = 0;
+    if ((old_flags & USERLIST_UC_INVISIBLE)) {
+      new_flags |= TEAM_INVISIBLE;
+    }
+    if ((old_flags & USERLIST_UC_BANNED)) {
+      new_flags |= TEAM_BANNED;
+    }
+    if ((old_flags & USERLIST_UC_LOCKED)) {
+      new_flags |= TEAM_LOCKED;
+    }
+    map[i] = new_flags;
+  }
+
+  *p_size = map_size;
+  *p_map = map;
+  return 1;
 }
 
 /**
