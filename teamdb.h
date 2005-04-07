@@ -3,7 +3,7 @@
 #ifndef __TEAMDB_H__
 #define __TEAMDB_H__
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,8 +18,6 @@
  */
 
 #include <time.h>
-
-#define TEAMDB_MAX_SCRAMBLED_PASSWD_SIZE 48
 
 /* various team flags */
 enum { TEAM_BANNED = 1, TEAM_INVISIBLE = 2, TEAM_LOCKED = 4 };
@@ -64,5 +62,9 @@ int    teamdb_set_archive_time(int uid, time_t time);
 
 int teamdb_get_uid_by_pid(int, int, int, int *, int *,unsigned long long *,
                           unsigned long *);
+
+void teamdb_register_update_hook(void (*)(void *), void *);
+void teamdb_unregister_update_hook(void (*)(void *));
+int teamdb_get_user_status_map(int *p_size, int **p_map);
 
 #endif /* __TEAMDB_H__ */
