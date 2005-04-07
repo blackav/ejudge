@@ -3936,6 +3936,7 @@ read_compile_packet(char *pname)
   run_pkt->accept_partial = probs[re.problem]->accept_partial;
   run_pkt->user_id = re.team;
   run_pkt->html_report = global->html_report;
+  run_pkt->disable_sound = global->disable_sound;
   run_pkt->ts1 = comp_pkt->ts1;
   run_pkt->ts1_us = comp_pkt->ts1_us;
   run_pkt->ts2 = comp_pkt->ts2;
