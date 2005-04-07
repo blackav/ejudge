@@ -195,4 +195,7 @@ int run_is_failed_attempt(int status);
 int run_status_to_str_short(unsigned char *buf, size_t size, int val);
 int run_str_short_to_status(const unsigned char *str, int *pr);
 
+#define RUN_TOO_MANY 100000
+int run_get_prev_successes(int run_id);
+
 #endif /* __RUNLOG_H__ */
