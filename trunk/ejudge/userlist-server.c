@@ -6270,6 +6270,11 @@ main(int argc, char *argv[])
 
   info("userlist-server %s, compiled %s", compile_version, compile_date);
 
+  if (getuid() == 0) {
+    err("sorry, will not run as the root");
+    return 1;
+  }
+
   if (tsc_init() < 0) return 1;
   program_name = argv[0];
   config = userlist_cfg_parse(ejudge_xml_path);

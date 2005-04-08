@@ -2119,6 +2119,10 @@ main(int argc, char **argv)
   }
 
   info("super-serve %s, compiled %s", compile_version, compile_date);
+  if (getuid() == 0) {
+    err("sorry, will not run as the root");
+    return 1;
+  }
 
   config = userlist_cfg_parse(ejudge_xml_path);
   if (!config) return 1;
