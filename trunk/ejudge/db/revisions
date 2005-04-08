@@ -1700,3 +1700,8 @@ serve.c 1 88 12590319
 prepare.c 1 86 8801545
 runlog.c 1 39 4494420
 teamdb.c 1 29 1087572
+compile.c 1 29 791587
+run.c 1 66 4927106
+serve.c 1 89 12596575
+super-serve.c 1 11 4744215
+userlist-server.c 1 52 14600771
