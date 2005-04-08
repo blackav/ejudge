@@ -5228,6 +5228,11 @@ main(int argc, char *argv[])
   }
   if (i >= argc) goto print_usage;
 
+  if (getuid() == 0) {
+    err("sorry, will not run as the root");
+    return 1;
+  }
+
   if (prepare(argv[i], p_flags, PREPARE_SERVE, cpp_opts,
               (cmdline_socket_fd >= 0)) < 0) return 1;
   if (prepare_serve_defaults() < 0) return 1;

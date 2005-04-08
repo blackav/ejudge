@@ -338,6 +338,13 @@ main(int argc, char *argv[])
   }
   if (i >= argc) goto print_usage;
 
+#if defined __unix__
+  if (getuid() == 0) {
+    err("sorry, will not run as the root");
+    return 1;
+  }
+#endif
+
   if (prepare(argv[i], prepare_flags, PREPARE_COMPILE, cpp_opts, 0) < 0)
     return 1;
   if (T_flag) {
