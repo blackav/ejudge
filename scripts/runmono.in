@@ -1,0 +1,19 @@
+#!/bin/bash
+# $Id$
+# Copyright (c) 2005 Alexander Chernov
+
+# A helper script to start C# programs using the mono runtime.
+# Usage: runmono file
+
+# EJUDGE_MONO_FLAGS may be used to pass additional flags
+# security policy is not yet supported (mono does not support it)
+
+runfile="$1"
+
+MONORUN="@ac_cv_contest_mono@"
+MONODIR="@ac_cv_contest_mono_dir@"
+
+[ x"${MONODIR}" != x ] && PATH="${MONODIR}/bin:$PATH"
+
+exec "${MONORUN}" ${EJUDGE_MONO_FLAGS} "${runfile}"
+
