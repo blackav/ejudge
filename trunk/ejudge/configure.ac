@@ -69,6 +69,7 @@ AC_ARG_WITH([perl],AC_HELP_STRING([--with-perl],[specify the Perl interpreter to
 AC_ARG_WITH([prolog],AC_HELP_STRING([--with-prolog],[specify the GNU Prolog compiler to use in contests]),[ac_cv_contest_gprolog=$withval])
 AC_ARG_WITH([festival],AC_HELP_STRING([--with-festival],[specify the home directory of the festival speech generator]),[ac_cv_festival_home="$withval"])
 AC_ARG_WITH([javac],AC_HELP_STRING([--with-javac],[specify the Java2 SDK javac path to use in contests]),[ac_cv_contest_javac="$withval"])
+AC_ARG_WITH([mcs],AC_HELP_STRING([--with-mcs],[specify the C-sharp Mono mcs path to use in contests]),[ac_cv_contest_mcs="$withval"])
 
 dnl choose an arch type
 AC_MSG_CHECKING([for arch type])
@@ -1023,6 +1024,61 @@ else
   ac_cv_contest_java=no
 fi
 
+
+
+####
+AC_MSG_CHECKING([whether C-sharp (Mono) is available])
+if [[ x"${ac_cv_contest_mcs}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
+then
+  [[ x"${ac_cv_contest_mcs}" = xyes ]] && ac_cv_contest_mcs=""
+  [[ x"${ac_cv_contest_mcs}" = x ]] && ac_cv_contest_mcs="mcs"
+
+  ac_cv_contest_mono=`dirname "${ac_cv_contest_mcs}"`
+  if [[ x"${ac_cv_contest_mono}" = x. ]]
+  then
+    dnl probably mcs is specified without full path
+    ac_cv_contest_mono=mono
+  else
+    ac_cv_contest_mono="${ac_cv_contest_mono}/mono"
+  fi
+
+  "${ac_cv_contest_mono}" --version >/dev/null 2>/dev/null
+  [[ $? != 0 ]] && ac_cv_contest_mono=no
+
+  if [[ x"${ac_cv_contest_mono}" != xno ]]
+  then
+    ac_cv_contest_mono_version_string=`${ac_cv_contest_mono} --version 2>&1 | grep "version" | awk '{gsub(",","",$5); print $5;}'`
+    [[ x"${ac_cv_contest_mono_version_string}" = x ]] && ac_cv_contest_mono=no
+  fi
+
+  if [[ x"${ac_cv_contest_mono}" != xno ]]
+  then
+    echo 'public class conftest { public static void Main() { System.Console.WriteLine("OK"); } }' > conftest.cs
+    ${ac_cv_contest_mcs} conftest.cs -out:conftest.exe >/dev/null 2>/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_mono=no
+  fi
+
+  if [[ x"${ac_cv_contest_mono}" != xno ]]
+  then
+    ${ac_cv_contest_mono} conftest.exe >/dev/null 2>/dev/null
+    [[ $? != 0 ]] && ac_cv_contest_mono=no
+  fi
+  rm -f ./conftest*
+
+  if [[ x"${ac_cv_contest_mono}" != xno ]]
+  then
+    AC_MSG_RESULT([yes, ${ac_cv_contest_mono}, ${ac_cv_contest_mono_version_string}])
+  else
+    AC_MSG_RESULT([no])
+    ac_cv_contest_mcs=no
+  fi
+else
+  AC_MSG_RESULT([disabled by user])
+  ac_cv_contest_mono=no
+fi
+
+####
+
 dnl Create the expanded locale_dir path
 if [[ x"${prefix}" = xNONE ]]
 then
@@ -1142,6 +1198,9 @@ AC_SUBST(ac_cv_contest_javac)
 AC_SUBST(ac_cv_contest_java)
 AC_SUBST(ac_cv_contest_java_dir)
 AC_SUBST(ac_cv_contest_java_version)
+AC_SUBST(ac_cv_contest_mcs)
+AC_SUBST(ac_cv_contest_mono)
+AC_SUBST(ac_cv_contest_mono_dir)
 
 if [[ x"${ac_cv_nls}" = x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
@@ -1253,11 +1312,15 @@ if [[ x"${ac_cv_contest_java_version_string}" != x ]]
 then
   AC_DEFINE_UNQUOTED(COMPILE_JAVA_VERSION,"${ac_cv_contest_java_version_string}")
 fi
+if [[ x"${ac_cv_contest_mono_version_string}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(COMPILE_MONO_VERSION,"${ac_cv_contest_mono_version_string}")
+fi
 
 AC_CONFIG_HEADERS([config.h])
-AC_OUTPUT(Makefile extra/Makefile checkers/Makefile scripts/Makefile scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python ejudge-config.v scripts/festival scripts/javac scripts/runjava)
+AC_OUTPUT(Makefile extra/Makefile checkers/Makefile scripts/Makefile scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python ejudge-config.v scripts/festival scripts/javac scripts/runjava scripts/mcs scripts/runmono)
 
-chmod +x scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python ejudge-config.v scripts/festival scripts/javac scripts/runjava
+chmod +x scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python ejudge-config.v scripts/festival scripts/javac scripts/runjava scripts/mcs scripts/runmono
 
 if [[ "x${ac_cv_has_libcap}" = x1 -a "x${ac_cv_has_runtime_libcap}" != x1 ]]
 then
