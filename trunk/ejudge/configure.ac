@@ -1092,19 +1092,19 @@ then
       [[ x"${ac_cv_contest_mbas_version_string}" = x ]] && ac_cv_contest_mbas=no
     fi
 
-#    if [[ x"${ac_cv_contest_mbas}" != xno ]]
-#    then
-#      echo 'public class conftest { public static void Main() { System.Console.WriteLine("OK"); } }' > conftest.cs
-#      ${ac_cv_contest_mbas} conftest.cs -out:conftest.exe >/dev/null 2>/dev/null
-#      [[ $? != 0 ]] && ac_cv_contest_mbas=no
-#    fi
+    if [[ x"${ac_cv_contest_mbas}" != xno ]]
+    then
+      echo 'Imports System\nModule Test\nSub Main()\nConsole.WriteLine("OK")\nEnd Sub\nEnd Module' > conftest.vb
+      ${ac_cv_contest_mbas} conftest.vb -out:conftest.exe >/dev/null 2>/dev/null
+      [[ $? != 0 ]] && ac_cv_contest_mbas=no
+    fi
 
-#    if [[ x"${ac_cv_contest_mbas}" != xno ]]
-#    then
-#      ${ac_cv_contest_mono} conftest.exe >/dev/null 2>/dev/null
-#      [[ $? != 0 ]] && ac_cv_contest_mbas=no
-#    fi
-#    rm -f ./conftest*
+    if [[ x"${ac_cv_contest_mbas}" != xno ]]
+    then
+      ${ac_cv_contest_mono} conftest.exe >/dev/null 2>/dev/null
+      [[ $? != 0 ]] && ac_cv_contest_mbas=no
+    fi
+    rm -f ./conftest*
 
     if [[ x"${ac_cv_contest_mbas}" != xno ]]
     then
