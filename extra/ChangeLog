@@ -1,0 +1,89 @@
+2004-05-04  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in: `install' rule is corrected.
+
+	* Makefile.in: copyright notice is updated;
+	renamed from Makefile;
+	integrated the top-level configure framework;
+	added `distclean' and `install' rules.
+
+	* dosrun3.c: copyright notice is updated;
+	(main) unised variable `pid' is removed.
+
+	* Makefile: Renamed to Makefile.in
+
+2003-10-05  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile, Makefile.in: `qbemu' program is added.
+
+	* bppemu.c: minor comment change
+
+	* bccemu.c:
+	(main) the command line for dosemu changed: added `keystroke' and
+	  `dpmi' parameters.
+
+	* qbemu.c: initial revision
+
+	* bpcemu2.c, bppemu.c, dosrun3.c:
+	(main) the command line for dosemu changed: added `keystroke' and
+	  `dpmi' parameters.
+
+2003-03-20  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile, Makefile.in:
+	conditional compilation for 2.2 kernels is removed.
+
+2003-02-24  Alexander Chernov  <cher@ispras.ru>
+
+	* dosproxy.c: copyright notice updated.
+
+	* dosrun3.c: minor changes.
+
+	* dosproxy.c: Heap size increased to 8K.
+	Standard streams are not closed.
+
+2003-02-16  Alexander Chernov  <cher@ispras.ru>
+
+	* dosrun3.c, bpcemu2.c: copyright notice is updated.
+
+	* Makefile, Makefile.in: copyright notice is updated;
+	`bppemu', `bccemu' utilities added.
+
+	* bccemu.c, bppemu.c: initial revision
+
+2003-01-27  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile, Makefile.in:
+	`uname -r' is used to get the kernel version;
+	libdropcaps.so is added to the list of targets;
+	-lcap library is used for linking;
+	rules for libdropcaps.so are added.
+
+	* libdropcaps.c: initial revision
+
+2002-12-03  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile, Makefile.in: Initial revision
+
+2002-12-01  Alexander Chernov  <cher@ispras.ru>
+
+	* dosproxy.c, dosrun3.c, bpcemu2.c: Initial revision
+
+2002-10-02  Alexander Chernov  <cher@ispras.ru>
+
+	* capexec.c: compile-command variable is slightly changed.
+
+2002-06-16  Alexander Chernov  <cher@ispras.ru>
+
+	* capexec.c: compilation command is changed.
+
+2001-12-02  Alexander Chernov  <cher@ispras.ru>
+
+	* dosrun2.c: initial revision
+
+2001-11-09  Alexander Chernov  <cher@ispras.ru>
+
+	* capexec.c: minor changes
+
+	* capexec.c: initial revision
+
