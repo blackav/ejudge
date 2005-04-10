@@ -1,0 +1,140 @@
+2005-04-10  Alexander Chernov  <cher@ispras.ru>
+
+	* mbas.in: initial revision
+
+2005-04-09  Alexander Chernov  <cher@ispras.ru>
+
+	* mcs.in, runmono.in: initial revision
+
+2004-10-27  Alexander Chernov  <cher@ispras.ru>
+
+	* fileio.policy, default.policy: comments in policy file are fixed.
+
+	* javac.in: -Xlint:unchecked option is added.
+
+	* runjava.in: security policy support is improved
+
+2004-10-25  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in: added rules to install Java security policy files.
+
+	* javac.in:
+	nested classes are supported: all the resulted .class files are
+	packed into one .jar archive.
+
+	* runjava.in:
+	Java security policy is now configurable via EJUDGE_JAVA_POLICY
+	environment variable.
+
+	* default.policy, fileio.policy: initial revision
+
+2004-10-21  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in: javac and runjava scripts are added.
+
+	* javac.in, runjava.in: initial revision
+
+2004-10-11  Alexander Chernov  <cher@ispras.ru>
+
+	* festival.in:
+	support for "Partial solution" error code and for score reporting is
+	added.
+
+2004-09-27  Alexander Chernov  <cher@ispras.ru>
+
+	* gcc.in:
+	environment variable EJUDGE_FLAGS is supported. The variable may
+	contain additional flags, which are passed to the compiler.
+
+2004-09-18  Alexander Chernov  <cher@ispras.ru>
+
+	* festival.in: added space after '.' in message.
+
+2004-09-17  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in: festival script added.
+
+	* festival.in: initial revision
+
+2004-05-26  Alexander Chernov  <cher@ispras.ru>
+
+	* gcj.in: a dynamic executable is generated;
+	the source file is renamed to Main.java.
+
+2004-05-18  Alexander Chernov  <cher@ispras.ru>
+
+	* yabasic.in, python.in, perl.in, mzscheme.in, gprolog.in, gpc.in, gcj.in, gcc.in, g77.in, g++.in, fpc.in, dcc.in:
+	adapted to the new `configure' environment.
+
+	* Makefile.in: SCRIPTS are also removed on `distclean' rule.
+
+2004-05-04  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in: initial revision
+
+	* fpc.in: excessive run-time checkings are disabled.
+
+2003-11-10  Alexander Chernov  <cher@ispras.ru>
+
+	* bpcemu, dcc.in, dosrun, fpc.in, g++.in, g77.in, gcc.in, gcj.in, gpc.in, mzscheme.in, perl.in, python.in, yabasic.in:
+	*** empty log message ***
+
+	* gprolog.in: initial revision
+
+2003-09-06  Alexander Chernov  <cher@ispras.ru>
+
+	* fpc.in: Free Pascal 1.0.10 is used.
+
+2003-06-30  Alexander Chernov  <cher@ispras.ru>
+
+	* python.in, python.in: *** empty log message ***
+
+	* perl.in: minor changes in comments.
+
+2003-06-28  Alexander Chernov  <cher@ispras.ru>
+
+	* mzscheme.in, perl.in, yabasic.in: initial revision
+
+2003-01-28  Alexander Chernov  <cher@ispras.ru>
+
+	* dcc.in: *** empty log message ***
+
+2003-01-27  Alexander Chernov  <cher@ispras.ru>
+
+	* dcc.in: initial revision
+
+2002-12-01  Alexander Chernov  <cher@ispras.ru>
+
+	* bpcemu: Initial revision
+
+2002-11-17  Alexander Chernov  <cher@ispras.ru>
+
+	* gcj.in: input .java file is forcebly renamed to Main.java
+
+	* g++.in, gcc.in: Math library is linked.
+
+2002-10-05  Alexander Chernov  <cher@ispras.ru>
+
+	* gcj.in, fpc.in, g77.in: initial revision
+
+	* g++.in, gcc.in, gpc.in: PATH setting is added
+
+2001-12-01  Alexander Chernov  <cher@ispras.ru>
+
+	* dosrun:
+	1) DOSPATH environment variable is used to get path to `dos';
+	2) error 100 is reported, if exec failed;
+	3) minor cleanups
+
+2001-11-07  Alexander Chernov  <cher@ispras.ru>
+
+	* g++.in: initial revision
+
+	* gcc.in: program is linked statically and stripped
+
+	* gpc.in: initial revision
+
+2001-01-26  Alexander Chernov  <cher@ispras.ru>
+
+	* bc.bat, bp.bat, dosrun, gcc.in: initial revision
+

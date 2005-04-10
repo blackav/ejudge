@@ -1,0 +1,21 @@
+2004-12-05  Alexander Chernov  <cher@ispras.ru>
+
+	* main_page.c: "pathutl.h" is included;
+	<reuse/osdeps.h> is included;
+	<stdlib.h>, <unistd.h> are included;
+	(super_clnt_main_page) new parameters `cmd', `contest_id', `flags'
+	  are added.
+
+2004-12-03  Alexander Chernov  <cher@ispras.ru>
+
+	* simple_cmd.c: initial revision
+
+2004-11-15  Alexander Chernov  <cher@ispras.ru>
+
+	* main_page.c: initial revision
+
+2004-11-09  Alexander Chernov  <cher@ispras.ru>
+
+	* do_pass_fd.c, open.c, pass_fd.c, recv_packet.c, send_packet.c:
+	initial revision
+

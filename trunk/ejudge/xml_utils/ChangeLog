@@ -1,0 +1,10 @@
+2004-11-07  Alexander Chernov  <cher@ispras.ru>
+
+	* attr_bool.c, elem_ip_mask.c, empty_text.c, err_attr_invalid.c, err_attr_not_allowed.c, err_attr_undefined.c, err_attrs.c, err_elem_not_allowed.c, err_elem_redefined.c, err_elem_undefined.c, err_nested_elems.c, err_top_level.c, err_variables.c, leaf_elem.c, xml_err.c, xml_err_a.c:
+	initial revision
+
+2004-10-31  Alexander Chernov  <cher@ispras.ru>
+
+	* parse_date.c, parse_int.c, parse_ip.c, unparse_date.c, unparse_ip.c, unparse_text.c:
+	initial revision
+
