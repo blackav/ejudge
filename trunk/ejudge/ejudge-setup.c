@@ -2325,7 +2325,7 @@ generate_serve_cfg(FILE *f)
           "short_name = \"VB\"\n"
           "long_name = \"Mono Visual Basic %s\"\n"
           "disabled = 1 # Enable manually!\n"
-          "src_sfx = \".bas\"\n"
+          "src_sfx = \".vb\"\n"
           "exe_sfx = \".exe\"\n"
           "arch = \"msil\"\n"
           "\n",
@@ -2800,7 +2800,7 @@ generate_compile_cfg(FILE *f)
           "%sid = 20\n"
           "%sshort_name = \"VB\"\n"
           "%slong_name = \"Mono Visual Basic %s\"\n"
-          "%ssrc_sfx = \".bas\"\n"
+          "%ssrc_sfx = \".vb\"\n"
           "%sexe_sfx = \".exe\"\n"
           "%scmd = \"mbas\"\n"
           "%sarch = \"msil\"\n"
