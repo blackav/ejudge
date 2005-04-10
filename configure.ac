@@ -70,6 +70,7 @@ AC_ARG_WITH([prolog],AC_HELP_STRING([--with-prolog],[specify the GNU Prolog comp
 AC_ARG_WITH([festival],AC_HELP_STRING([--with-festival],[specify the home directory of the festival speech generator]),[ac_cv_festival_home="$withval"])
 AC_ARG_WITH([javac],AC_HELP_STRING([--with-javac],[specify the Java2 SDK javac path to use in contests]),[ac_cv_contest_javac="$withval"])
 AC_ARG_WITH([mcs],AC_HELP_STRING([--with-mcs],[specify the C-sharp Mono mcs path to use in contests]),[ac_cv_contest_mcs="$withval"])
+AC_ARG_WITH([mbas],AC_HELP_STRING([--with-mbas],[specify the Visual Basic Mono mbas path to use in contests]),[ac_cv_contest_mbas="$withval"])
 
 dnl choose an arch type
 AC_MSG_CHECKING([for arch type])
@@ -1024,9 +1025,6 @@ else
   ac_cv_contest_java=no
 fi
 
-
-
-####
 AC_MSG_CHECKING([whether C-sharp (Mono) is available])
 if [[ x"${ac_cv_contest_mcs}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
@@ -1077,7 +1075,53 @@ else
   ac_cv_contest_mono=no
 fi
 
-####
+if [[ x"${ac_cv_contest_mono}" != xno -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
+then
+  AC_MSG_CHECKING([whether Visual Basic (Mono) is available])
+  if [[ x"${ac_cv_contest_mbas}" != xno ]]
+  then
+    [[ x"${ac_cv_contest_mbas}" = xyes ]] && ac_cv_contest_mbas=""
+    [[ x"${ac_cv_contest_mbas}" = x ]] && ac_cv_contest_mbas="mbas"
+
+    "${ac_cv_contest_mbas}" -about >/dev/null 2>/dev/null
+    [[ $? != 0 -a $? != 1 ]] && ac_cv_contest_mbas=no
+
+    if [[ x"${ac_cv_contest_mbas}" != xno ]]
+    then
+      ac_cv_contest_mbas_version_string=`${ac_cv_contest_mbas} -about 2>&1 | head -1 | awk '{print $3;}'`
+      [[ x"${ac_cv_contest_mbas_version_string}" = x ]] && ac_cv_contest_mbas=no
+    fi
+
+#    if [[ x"${ac_cv_contest_mbas}" != xno ]]
+#    then
+#      echo 'public class conftest { public static void Main() { System.Console.WriteLine("OK"); } }' > conftest.cs
+#      ${ac_cv_contest_mbas} conftest.cs -out:conftest.exe >/dev/null 2>/dev/null
+#      [[ $? != 0 ]] && ac_cv_contest_mbas=no
+#    fi
+
+#    if [[ x"${ac_cv_contest_mbas}" != xno ]]
+#    then
+#      ${ac_cv_contest_mono} conftest.exe >/dev/null 2>/dev/null
+#      [[ $? != 0 ]] && ac_cv_contest_mbas=no
+#    fi
+#    rm -f ./conftest*
+
+    if [[ x"${ac_cv_contest_mbas}" != xno ]]
+    then
+      AC_MSG_RESULT([yes, ${ac_cv_contest_mbas}, ${ac_cv_contest_mbas_version_string}])
+    else
+      AC_MSG_RESULT([no])
+      ac_cv_contest_mbas=no
+    fi
+  else
+    AC_MSG_RESULT([disabled by user])
+    ac_cv_contest_mbas=no
+  fi
+else
+  ac_cv_contest_mbas=no
+fi
+
+AC_CHECK_PROG([ac_cv_prog_uudecode], [uudecode], [uudecode], [none])
 
 dnl Create the expanded locale_dir path
 if [[ x"${prefix}" = xNONE ]]
@@ -1201,6 +1245,7 @@ AC_SUBST(ac_cv_contest_java_version)
 AC_SUBST(ac_cv_contest_mcs)
 AC_SUBST(ac_cv_contest_mono)
 AC_SUBST(ac_cv_contest_mono_dir)
+AC_SUBST(ac_cv_contest_mbas)
 
 if [[ x"${ac_cv_nls}" = x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
@@ -1316,11 +1361,19 @@ if [[ x"${ac_cv_contest_mono_version_string}" != x ]]
 then
   AC_DEFINE_UNQUOTED(COMPILE_MONO_VERSION,"${ac_cv_contest_mono_version_string}")
 fi
+if [[ x"${ac_cv_contest_mbas_version_string}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(COMPILE_MBAS_VERSION,"${ac_cv_contest_mbas_version_string}")
+fi
+if [[ x"${ac_cv_prog_uudecode}" != xnone ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_PROGRAM_UUDECODE,"${ac_cv_prog_uudecode}")
+fi
 
 AC_CONFIG_HEADERS([config.h])
-AC_OUTPUT(Makefile extra/Makefile checkers/Makefile scripts/Makefile scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python ejudge-config.v scripts/festival scripts/javac scripts/runjava scripts/mcs scripts/runmono)
+AC_OUTPUT(Makefile extra/Makefile checkers/Makefile scripts/Makefile scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python ejudge-config.v scripts/festival scripts/javac scripts/runjava scripts/mcs scripts/runmono scripts/mbas)
 
-chmod +x scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python ejudge-config.v scripts/festival scripts/javac scripts/runjava scripts/mcs scripts/runmono
+chmod +x scripts/gcc scripts/g++ scripts/fpc scripts/gpc scripts/dcc scripts/g77 scripts/gcj scripts/gprolog scripts/yabasic scripts/mzscheme scripts/perl scripts/python ejudge-config.v scripts/festival scripts/javac scripts/runjava scripts/mcs scripts/runmono scripts/mbas
 
 if [[ "x${ac_cv_has_libcap}" = x1 -a "x${ac_cv_has_runtime_libcap}" != x1 ]]
 then
@@ -1333,4 +1386,16 @@ then
   echo "utility will include support for the patched kernel, and"
   echo "may result in inability of proper testing of programs by"
   echo "the run program."
+fi
+
+if [[ x"${ac_cv_prog_uudecode}" = xnone ]]
+then
+  echo
+  echo "WARNING:"
+  echo "The uudecode program is not found in your system."
+  echo "Proper initial setup of the ejudge system using"
+  echo "the ejudge-install script generated by the ejudge-setup"
+  echo "program requires this utility."
+  echo "You should install the sharutils package. Please refer"
+  echo "to your system installation guide."
 fi
