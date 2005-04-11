@@ -1707,3 +1707,6 @@ super-serve.c 1 11 4744215
 userlist-server.c 1 52 14600771
 ejudge-setup.c 1 8 9063275
 ejudge-setup.c 1 9 9063083
+compile.c 1 30 791575
+run.c 1 67 4927101
+prepare.c 1 87 8801546
