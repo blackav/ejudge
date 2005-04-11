@@ -137,9 +137,9 @@ do_loop(void)
 
     /* prepare paths useful to report messages to the serve */
     snprintf(report_dir, sizeof(report_dir),
-             "%s/%04d/report", global->compile_dir, rpl.contest_id);
+             "%s/%06d/report", global->compile_dir, rpl.contest_id);
     snprintf(status_dir, sizeof(status_dir),
-             "%s/%04d/status", global->compile_dir, rpl.contest_id);
+             "%s/%06d/status", global->compile_dir, rpl.contest_id);
     snprintf(run_name, sizeof(run_name), "%06d", rpl.run_id);
     pathmake(log_out, report_dir, "/", run_name, NULL);
 
