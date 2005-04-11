@@ -1767,7 +1767,7 @@ set_defaults(int mode)
       info("language.%d.compile_src_dir is %s",
            i, langs[i]->compile_src_dir);
       snprintf(langs[i]->compile_out_dir, sizeof(langs[i]->compile_out_dir),
-               "%s/%04d", langs[i]->compile_dir, global->contest_id);
+               "%s/%06d", langs[i]->compile_dir, global->contest_id);
       info("language.%d.compile_out_dir is %s",
            i, langs[i]->compile_out_dir);
     }
@@ -2512,7 +2512,7 @@ set_defaults(int mode)
         pathmake(tp->run_exe_dir, tp->run_dir, "/",
                  DFLT_G_RUN_EXE_DIR, 0);
         info("tester.%d.run_exe_dir is %s", i, tp->run_exe_dir);
-        snprintf(tp->run_out_dir, sizeof(tp->run_out_dir), "%s/%04d",
+        snprintf(tp->run_out_dir, sizeof(tp->run_out_dir), "%s/%06d",
                  tp->run_dir, global->contest_id);
         info("tester.%d.run_out_dir is %s", i, tp->run_out_dir);
 
