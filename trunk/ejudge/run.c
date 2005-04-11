@@ -1490,11 +1490,11 @@ do_loop(void)
     }
 
     snprintf(full_report_dir, sizeof(full_report_dir),
-             "%s/%04d/report", global->run_dir, req_pkt->contest_id);
+             "%s/%06d/report", global->run_dir, req_pkt->contest_id);
     snprintf(full_team_report_dir, sizeof(full_team_report_dir),
-             "%s/%04d/teamreport", global->run_dir, req_pkt->contest_id);
+             "%s/%06d/teamreport", global->run_dir, req_pkt->contest_id);
     snprintf(full_status_dir, sizeof(full_status_dir),
-             "%s/%04d/status", global->run_dir, req_pkt->contest_id);
+             "%s/%06d/status", global->run_dir, req_pkt->contest_id);
              
     if (generic_copy_file(0, NULL, report_path, "",
                           0, full_report_dir, run_base, "") < 0)
