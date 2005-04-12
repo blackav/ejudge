@@ -2774,7 +2774,7 @@ generate_compile_cfg(FILE *f)
 #if defined COMPILE_MONO_VERSION
   cmt = ""; version = COMPILE_MONO_VERSION;
 #else
-  cmd = "# "; version = "";
+  cmt = "# "; version = "";
 #endif /* COMPILE_MONO_VERSION */
 
   fprintf(f,
