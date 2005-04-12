@@ -2792,7 +2792,7 @@ generate_compile_cfg(FILE *f)
 #if defined COMPILE_MBAS_VERSION
   cmt = ""; version = COMPILE_MBAS_VERSION;
 #else
-  cmd = "# "; version = "";
+  cmt = "# "; version = "";
 #endif /* COMPILE_MONO_VERSION */
 
   fprintf(f,
