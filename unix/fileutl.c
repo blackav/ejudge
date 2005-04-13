@@ -98,11 +98,11 @@ clear_directory(char const *path)
 int
 make_dir(char const *path, int access)
 {
-  int saved_errno;
+  int saved_errno, r;
   int prev_umask = umask(0);
 
   if (!access) access = 0755 & ~prev_umask;
-  if (mkdir(path, access) < 0 && errno != EEXIST) {
+  if ((r = mkdir(path, access)) < 0 && errno != EEXIST) {
     saved_errno = errno;
     umask(prev_umask);
     err("make_dir: mkdir(\"%s\") failed: %s", path, os_ErrorMsg());
@@ -110,7 +110,7 @@ make_dir(char const *path, int access)
     return -saved_errno;
   }
   umask(prev_umask);
-  info("make_dir: %s created", path);
+  if (r >= 0) info("make_dir: %s created", path);
   return 0;
 }
 
