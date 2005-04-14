@@ -3725,7 +3725,9 @@ static void generate_packet_name(int run_id, int prio,
                                  unsigned char buf[PACKET_NAME_SIZE]);
 
 static int
-read_compile_packet(char *pname)
+read_compile_packet(const unsigned char *compile_status_dir,
+                    const unsigned char *compile_report_dir,
+                    char *pname)
 {
   unsigned char pkt_base[PACKET_NAME_SIZE];
   unsigned char exe_in_name[128];
@@ -3750,7 +3752,7 @@ read_compile_packet(char *pname)
   void *run_pkt_out = 0;
 
   r = generic_read_file((char**) &comp_pkt_buf, 0, &comp_pkt_size, SAFE | REMOVE,
-                        global->compile_status_dir, pname, "");
+                        compile_status_dir, pname, "");
   if (r == 0) return 0;
   if (r < 0) return -1;
 
@@ -3778,10 +3780,10 @@ read_compile_packet(char *pname)
   }
 
   if (comp_pkt->status == RUN_CHECK_FAILED || comp_pkt->status == RUN_COMPILE_ERR) {
-    if ((report_size = generic_file_size(global->compile_report_dir, pname, "")) < 0) {
+    if ((report_size = generic_file_size(compile_report_dir, pname, "")) < 0) {
       err("read_compile_packet: cannot get report file size");
       snprintf(errmsg, sizeof(errmsg), "cannot get size of %s/%s\n",
-               global->compile_report_dir, pname);
+               compile_report_dir, pname);
       goto report_check_failed;
     }
 
@@ -3811,10 +3813,10 @@ read_compile_packet(char *pname)
       goto non_fatal_error;
     if (archive_dir_prepare(global->report_archive_dir, comp_pkt->run_id, 0) < 0)
       goto non_fatal_error;
-    if (generic_copy_file(REMOVE, global->compile_report_dir, pname, "",
+    if (generic_copy_file(REMOVE, compile_report_dir, pname, "",
                           rep_flags, 0, rep_path, "") < 0) {
       snprintf(errmsg, sizeof(errmsg), "generic_copy_file: %s, %s, %d, %s failed\n",
-               global->compile_report_dir, pname, rep_flags, rep_path);
+               compile_report_dir, pname, rep_flags, rep_path);
       goto report_check_failed;
     }
     goto success;
@@ -3831,10 +3833,10 @@ read_compile_packet(char *pname)
                  global->team_report_archive_dir, comp_pkt->run_id);
         goto report_check_failed;
       }
-      if (generic_copy_file(0, global->compile_report_dir, pname, "",
+      if (generic_copy_file(0, compile_report_dir, pname, "",
                             team_flags, 0, team_path, "") < 0) {
         snprintf(errmsg, sizeof(errmsg), "generic_copy_file: %s, %s, %d, %s failed\n",
-                 global->compile_report_dir, pname, team_flags, team_path);
+                 compile_report_dir, pname, team_flags, team_path);
         goto report_check_failed;
       }
     }
@@ -3843,10 +3845,10 @@ read_compile_packet(char *pname)
                global->report_archive_dir, comp_pkt->run_id);
       goto report_check_failed;
     }
-    if (generic_copy_file(REMOVE, global->compile_report_dir, pname, "",
+    if (generic_copy_file(REMOVE, compile_report_dir, pname, "",
                           rep_flags, 0, rep_path, "") < 0) {
       snprintf(errmsg, sizeof(errmsg), "generic_copy_file: %s, %s, %d, %s failed\n",
-               global->compile_report_dir, pname, rep_flags, rep_path);
+               compile_report_dir, pname, rep_flags, rep_path);
       goto report_check_failed;
     }
     update_standings_file(0);
@@ -3912,10 +3914,10 @@ read_compile_packet(char *pname)
            "%s%s", pkt_base, langs[re.language]->exe_sfx);
 
   /* copy the executable into the testers's queue */
-  if (generic_copy_file(REMOVE, global->compile_report_dir, exe_in_name, "",
+  if (generic_copy_file(REMOVE, compile_report_dir, exe_in_name, "",
                         0, global->run_exe_dir, exe_out_name, "") < 0) {
     snprintf(errmsg, sizeof(errmsg), "generic_copy_file: %s, %s, %s, %s failed\n",
-             global->compile_report_dir, exe_in_name, global->run_exe_dir,
+             compile_report_dir, exe_in_name, global->run_exe_dir,
              exe_out_name);
     goto report_check_failed;
   }
@@ -4014,7 +4016,10 @@ read_compile_packet(char *pname)
 }
 
 static int
-read_run_packet(char *pname)
+read_run_packet(const unsigned char *run_status_dir,
+                const unsigned char *run_report_dir,
+                const unsigned char *run_team_report_dir,
+                char *pname)
 {
   path_t rep_path, team_path;
   int r, rep_flags, rep_size, team_flags, team_size;
@@ -4024,7 +4029,7 @@ read_run_packet(char *pname)
   struct run_reply_packet *reply_pkt = 0;
 
   r = generic_read_file((char**) &reply_buf, 0, &reply_buf_size, SAFE | REMOVE,
-                        global->run_status_dir, pname, "");
+                        run_status_dir, pname, "");
   if (r < 0) return -1;
   if (r == 0) return 0;
 
@@ -4083,7 +4088,7 @@ read_run_packet(char *pname)
                         reply_pkt->failed_test,
                         reply_pkt->score, 0) < 0) return -1;
   update_standings_file(0);
-  rep_size = generic_file_size(global->run_report_dir, pname, "");
+  rep_size = generic_file_size(run_report_dir, pname, "");
   if (rep_size < 0) return -1;
   rep_flags = archive_make_write_path(rep_path, sizeof(rep_path),
                                       global->report_archive_dir,
@@ -4091,18 +4096,18 @@ read_run_packet(char *pname)
                                       rep_size, 0);
   if (archive_dir_prepare(global->report_archive_dir, reply_pkt->run_id, 0) < 0)
     return -1;
-  if (generic_copy_file(REMOVE, global->run_report_dir, pname, "",
+  if (generic_copy_file(REMOVE, run_report_dir, pname, "",
                         rep_flags, 0, rep_path, "") < 0)
     return -1;
   if (global->team_enable_rep_view) {
-    team_size = generic_file_size(global->run_team_report_dir, pname, "");
+    team_size = generic_file_size(run_team_report_dir, pname, "");
     team_flags = archive_make_write_path(team_path, sizeof(team_path),
                                          global->team_report_archive_dir,
                                          reply_pkt->run_id, team_size, 0);
     if (archive_dir_prepare(global->team_report_archive_dir,
                             reply_pkt->run_id, 0) < 0)
       return -1;
-    if (generic_copy_file(REMOVE, global->run_team_report_dir, pname, "",
+    if (generic_copy_file(REMOVE, run_team_report_dir, pname, "",
                           team_flags, 0, team_path, "") < 0)
       return -1;
   }
@@ -5069,11 +5074,98 @@ create_symlinks(void)
   return 0;
 }
 
+/* a collated list of different compile directories we need to look into */
+struct compile_dir_item
+{
+  unsigned char *status_dir;
+  unsigned char *report_dir;
+};
+static struct compile_dir_item *compile_dirs = 0;
+static int compile_dirs_u = 0, compile_dirs_a = 0;
+static int
+do_build_compile_dirs(const unsigned char *status_dir, const unsigned char *report_dir)
+{
+  int i;
+
+  if (!status_dir || !*status_dir || !report_dir || !*report_dir) abort();
+
+  for (i = 0; i < compile_dirs_u; i++)
+    if (!strcmp(compile_dirs[i].status_dir, status_dir))
+      break;
+  if (i < compile_dirs_u) return i;
+
+  if (compile_dirs_u == compile_dirs_a) {
+    if (!compile_dirs_a) compile_dirs_a = 8;
+    compile_dirs_a *= 2;
+    XREALLOC(compile_dirs, compile_dirs_a);
+  }
+
+  compile_dirs[compile_dirs_u].status_dir = xstrdup(status_dir);
+  compile_dirs[compile_dirs_u].report_dir = xstrdup(report_dir);
+  return compile_dirs_u++;
+}
+static void
+build_compile_dirs(void)
+{
+  int i;
+
+  for (i = 1; i <= max_lang; i++) {
+    if (!langs[i]) continue;
+    do_build_compile_dirs(langs[i]->compile_status_dir, langs[i]->compile_report_dir);
+  }
+}
+
+struct run_dir_item
+{
+  unsigned char *status_dir;
+  unsigned char *report_dir;
+  unsigned char *team_report_dir;
+};
+static struct run_dir_item *run_dirs = 0;
+static int run_dirs_u = 0, run_dirs_a = 0;
+static int
+do_build_run_dirs(const unsigned char *status_dir,
+                  const unsigned char *report_dir,
+                  const unsigned char *team_report_dir)
+{
+  int i;
+
+  if (!status_dir || !*status_dir) abort();
+
+  for (i = 0; i < run_dirs_u; i++)
+    if (!strcmp(run_dirs[i].status_dir, status_dir))
+      break;
+  if (i < run_dirs_u) return i;
+
+  if (run_dirs_u == run_dirs_a) {
+    if (!run_dirs_a) run_dirs_a = 8;
+    run_dirs_a *= 2;
+    XREALLOC(run_dirs, run_dirs_a);
+  }
+
+  run_dirs[run_dirs_u].status_dir = xstrdup(status_dir);
+  run_dirs[run_dirs_u].report_dir = xstrdup(report_dir);
+  run_dirs[run_dirs_u].team_report_dir = xstrdup(team_report_dir);
+  return run_dirs_u++;
+}
+static void
+build_run_dirs(void)
+{
+  int i;
+
+  for (i = 1; i <= max_tester; i++) {
+    if (!testers[i]) continue;
+    do_build_run_dirs(testers[i]->run_status_dir,
+                      testers[i]->run_report_dir,
+                      testers[i]->run_team_report_dir);
+  }
+}
+
 static int
 do_loop(void)
 {
   path_t packetname;
-  int    r, p;
+  int    r, p, i;
   int    may_wait_flag = 0;
 
   signal(SIGPIPE, SIG_IGN);
@@ -5171,17 +5263,25 @@ do_loop(void)
 
     may_wait_flag = check_sockets(may_wait_flag);
 
-    r = scan_dir(global->compile_status_dir, packetname);
-    if (r < 0) return -1;
-    if (r > 0) {
-      if (read_compile_packet(packetname) < 0) return -1;
-      may_wait_flag = 0;
+    for (i = 0; i < compile_dirs_u; i++) {
+      r = scan_dir(compile_dirs[i].status_dir, packetname);
+      if (r < 0) return -1;
+      if (r > 0) {
+        if (read_compile_packet(compile_dirs[i].status_dir,
+                                compile_dirs[i].report_dir,
+                                packetname) < 0) return -1;
+        may_wait_flag = 0;
+      }
     }
 
-    r = scan_dir(global->run_status_dir, packetname);
-    if (r < 0) return -1;
-    if (r > 0) {
-      if (read_run_packet(packetname) < 0) return -1;
+    for (i = 0; i < run_dirs_u; i++) {
+      r = scan_dir(run_dirs[i].status_dir, packetname);
+      if (r < 0) return -1;
+      if (!r) continue;
+      if (read_run_packet(run_dirs[i].status_dir,
+                          run_dirs[i].report_dir,
+                          run_dirs[i].team_report_dir,
+                          packetname) < 0) return -1;
       may_wait_flag = 0;
     }
   }
@@ -5257,6 +5357,8 @@ main(int argc, char *argv[])
   }
   if (clar_open(global->clar_log_file, 0) < 0) return 1;
   load_status_file();
+  build_compile_dirs();
+  build_run_dirs();
   i = do_loop();
   team_extra_flush();
   if (i < 0) i = 1;
