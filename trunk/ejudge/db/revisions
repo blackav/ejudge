@@ -1713,3 +1713,6 @@ prepare.c 1 87 8801546
 ejudge-setup.c 1 10 9063149
 ejudge-setup.c 1 11 9063162
 unix/fileutl.c 1 22 2836645
+prepare.h 1 64 1727322
+serve.c 1 90 12832731
+prepare.c 1 88 9024130
