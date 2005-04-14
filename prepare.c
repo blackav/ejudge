@@ -1425,8 +1425,9 @@ set_defaults(int mode)
   }
 
   if (mode == PREPARE_SERVE) {
-    pathmake(global->compile_out_dir, global->var_dir, "/",
-             DFLT_G_COMPILE_DIR, 0);
+    /* compile_out_dir is no longer parametrized, also it uses compile_dir */
+    snprintf(global->compile_out_dir, sizeof(global->compile_out_dir),
+             "%s/%06d", global->compile_dir, global->contest_id);
     info("global.compile_out_dir is %s", global->compile_out_dir);
     pathmake(global->compile_status_dir, global->compile_out_dir, "/",
              DFLT_G_COMPILE_STATUS_DIR, 0);
@@ -1468,7 +1469,8 @@ set_defaults(int mode)
     info("global.run_exe_dir is %s", global->run_exe_dir);
   }
   if (mode == PREPARE_SERVE) {
-    pathmake(global->run_out_dir, global->var_dir, "/", DFLT_G_RUN_DIR, 0);
+    snprintf(global->run_out_dir, sizeof(global->run_out_dir),
+             "%s/%06d", global->run_dir, global->contest_id);
     info("global.run_out_dir is %s", global->run_out_dir);
     pathmake(global->run_status_dir, global->run_out_dir, "/",
              DFLT_G_RUN_STATUS_DIR, 0);
@@ -1753,23 +1755,33 @@ set_defaults(int mode)
     
     if (mode == PREPARE_SERVE) {
       if (!langs[i]->compile_dir[0]) {
+        // use the global compile queue settings
         pathcpy(langs[i]->compile_dir, global->compile_dir);
-        info("language.%d.compile_dir is inherited from global ('%s')",
-             i, langs[i]->compile_dir);
+        pathcpy(langs[i]->compile_queue_dir, global->compile_queue_dir);
+        pathcpy(langs[i]->compile_src_dir, global->compile_src_dir);
+        pathcpy(langs[i]->compile_out_dir, global->compile_out_dir);
+        pathcpy(langs[i]->compile_status_dir, global->compile_status_dir);
+        pathcpy(langs[i]->compile_report_dir, global->compile_report_dir);
+      } else {
+        // prepare language-specific compile queue settings
+        pathmake(langs[i]->compile_queue_dir, langs[i]->compile_dir, "/",
+                 DFLT_G_COMPILE_QUEUE_DIR, 0);
+        info("language.%d.compile_queue_dir is %s",
+             i, langs[i]->compile_queue_dir);
+        pathmake(langs[i]->compile_src_dir, langs[i]->compile_dir, "/",
+                 DFLT_G_COMPILE_SRC_DIR, 0);
+        info("language.%d.compile_src_dir is %s",
+             i, langs[i]->compile_src_dir);
+        snprintf(langs[i]->compile_out_dir, sizeof(langs[i]->compile_out_dir),
+                 "%s/%06d", langs[i]->compile_dir, global->contest_id);
+        info("language.%d.compile_out_dir is %s", i, langs[i]->compile_out_dir);
+        pathmake(langs[i]->compile_status_dir, langs[i]->compile_out_dir, "/",
+                 DFLT_G_COMPILE_STATUS_DIR, 0);
+        info("language.%d.compile_status_dir is %s", i, langs[i]->compile_status_dir);
+        pathmake(langs[i]->compile_report_dir, langs[i]->compile_out_dir, "/",
+                 DFLT_G_COMPILE_REPORT_DIR, 0);
+        info("language.%d.compile_report_dir is %s", i, langs[i]->compile_report_dir);
       }
-      ASSERT(langs[i]->compile_dir);
-      pathmake(langs[i]->compile_queue_dir, langs[i]->compile_dir, "/",
-               DFLT_G_COMPILE_QUEUE_DIR, 0);
-      info("language.%d.compile_queue_dir is %s",
-           i, langs[i]->compile_queue_dir);
-      pathmake(langs[i]->compile_src_dir, langs[i]->compile_dir, "/",
-               DFLT_G_COMPILE_SRC_DIR, 0);
-      info("language.%d.compile_src_dir is %s",
-           i, langs[i]->compile_src_dir);
-      snprintf(langs[i]->compile_out_dir, sizeof(langs[i]->compile_out_dir),
-               "%s/%06d", langs[i]->compile_dir, global->contest_id);
-      info("language.%d.compile_out_dir is %s",
-           i, langs[i]->compile_out_dir);
     }
 
     if (!langs[i]->src_sfx[0]) {
@@ -2505,16 +2517,36 @@ set_defaults(int mode)
           info("tester.%d.run_dir inherited from global ('%s')",
                i, global->run_dir);
           pathcpy(tp->run_dir, global->run_dir);
+          pathcpy(tp->run_queue_dir, global->run_queue_dir);
+          pathcpy(tp->run_exe_dir, global->run_exe_dir);
+          pathcpy(tp->run_out_dir, global->run_out_dir);
+          pathcpy(tp->run_status_dir, global->run_status_dir);
+          pathcpy(tp->run_report_dir, global->run_report_dir);
+          if (global->team_enable_rep_view) {
+            pathcpy(tp->run_team_report_dir, global->run_team_report_dir);
+          }
+        } else {
+          pathmake(tp->run_queue_dir, tp->run_dir, "/",
+                   DFLT_G_RUN_QUEUE_DIR, 0);
+          info("tester.%d.run_queue_dir is %s", i, tp->run_queue_dir);
+          pathmake(tp->run_exe_dir, tp->run_dir, "/",
+                   DFLT_G_RUN_EXE_DIR, 0);
+          info("tester.%d.run_exe_dir is %s", i, tp->run_exe_dir);
+          snprintf(tp->run_out_dir, sizeof(tp->run_out_dir), "%s/%06d",
+                   tp->run_dir, global->contest_id);
+          info("tester.%d.run_out_dir is %s", i, tp->run_out_dir);
+          pathmake(tp->run_status_dir, tp->run_out_dir, "/",
+                   DFLT_G_RUN_STATUS_DIR, 0);
+          info("tester.%d.run_status_dir is %s", i, tp->run_status_dir);
+          pathmake(tp->run_report_dir, tp->run_out_dir, "/",
+                   DFLT_G_RUN_REPORT_DIR, 0);
+          info("tester.%d.run_report_dir is %s", i, tp->run_report_dir);
+          if (global->team_enable_rep_view) {
+            pathmake(tp->run_team_report_dir, tp->run_out_dir, "/",
+                     DFLT_G_RUN_TEAM_REPORT_DIR, 0);
+            info("tester.%d.run_team_report_dir is %s", i, tp->run_team_report_dir);
+          }
         }
-        pathmake(tp->run_queue_dir, tp->run_dir, "/",
-                 DFLT_G_RUN_QUEUE_DIR, 0);
-        info("tester.%d.run_queue_dir is %s", i, tp->run_queue_dir);
-        pathmake(tp->run_exe_dir, tp->run_dir, "/",
-                 DFLT_G_RUN_EXE_DIR, 0);
-        info("tester.%d.run_exe_dir is %s", i, tp->run_exe_dir);
-        snprintf(tp->run_out_dir, sizeof(tp->run_out_dir), "%s/%06d",
-                 tp->run_dir, global->contest_id);
-        info("tester.%d.run_out_dir is %s", i, tp->run_out_dir);
 
         if (tp->priority_adjustment == -1000 && atp
             && atp->priority_adjustment != -1000) {
@@ -2830,6 +2862,9 @@ create_dirs(int mode)
     if (make_dir(global->compile_dir, 0) < 0) return -1;
     if (make_all_dir(global->compile_queue_dir, 0777) < 0) return -1;
     if (make_dir(global->compile_src_dir, 0) < 0) return -1;
+    // remove possible symlink from previous versions
+    // the return code is intentionally ignored
+    remove(global->compile_out_dir);
     if (make_dir(global->compile_out_dir, 0) < 0) return -1;
     if (make_all_dir(global->compile_status_dir, 0) < 0) return -1;
     if (make_dir(global->compile_report_dir, 0) < 0) return -1;
@@ -2838,6 +2873,7 @@ create_dirs(int mode)
     if (make_dir(global->run_dir, 0) < 0) return -1;
     if (make_all_dir(global->run_queue_dir, 0) < 0) return -1;
     if (make_dir(global->run_exe_dir, 0) < 0) return -1;
+    remove(global->run_out_dir);
     if (make_dir(global->run_out_dir, 0) < 0) return -1;
     if (make_all_dir(global->run_status_dir, 0777) < 0) return -1;
     if (make_dir(global->run_report_dir, 0777) < 0) return -1;
@@ -2894,8 +2930,12 @@ create_dirs(int mode)
       if (make_dir(langs[i]->compile_dir, 0) < 0) return -1;
       if (make_all_dir(langs[i]->compile_queue_dir, 0777) < 0) return -1;
       if (make_dir(langs[i]->compile_src_dir, 0) < 0) return -1;
-      if (make_symlink(global->compile_out_dir, langs[i]->compile_out_dir) < 0)
-        return -1;
+      // remove possible symlink from previous versions
+      // the return code is intentionally ignored
+      remove(langs[i]->compile_out_dir);
+      if (make_dir(langs[i]->compile_out_dir, 0) < 0) return -1;
+      if (make_all_dir(langs[i]->compile_status_dir, 0) < 0) return -1;
+      if (make_dir(langs[i]->compile_report_dir, 0) < 0) return -1;
     }
   }
 
@@ -2905,8 +2945,13 @@ create_dirs(int mode)
       if (make_dir(testers[i]->run_dir, 0) < 0) return -1;
       if (make_all_dir(testers[i]->run_queue_dir, 0777) < 0) return -1;
       if (make_dir(testers[i]->run_exe_dir, 0) < 0) return -1;
-      if (make_symlink(global->run_out_dir, testers[i]->run_out_dir) < 0)
-        return -1;
+      remove(testers[i]->run_out_dir);
+      if (make_dir(testers[i]->run_out_dir, 0) < 0) return -1;
+      if (make_all_dir(testers[i]->run_status_dir, 0) < 0) return -1;
+      if (make_dir(testers[i]->run_report_dir, 0) < 0) return -1;
+      if (global->team_enable_rep_view) {
+        if (make_dir(testers[i]->run_team_report_dir, 0) < 0) return -1;
+      }
     }
     if (mode == PREPARE_RUN) {
       if (testers[i]->any) continue;
