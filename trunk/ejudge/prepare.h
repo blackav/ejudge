@@ -425,6 +425,8 @@ struct section_language_data
   path_t compile_queue_dir;     /* directory for serve->compile packets */
   path_t compile_src_dir;       /* directory for source files */
   path_t compile_out_dir;       /* base directory for compile results */
+  path_t compile_status_dir;    /* directory for compile->serve packets */
+  path_t compile_report_dir;    /* directory for executables/error logs */
   char **compiler_env;          /* environment to pass to the compiler */
 };
 
@@ -461,6 +463,9 @@ struct section_tester_data
   path_t run_queue_dir;
   path_t run_exe_dir;
   path_t run_out_dir;
+  path_t run_status_dir;        /* run->serve status dir */
+  path_t run_report_dir;        /* run->serve report dir */
+  path_t run_team_report_dir;   /* run->serve team report dir */
 
   path_t check_dir;
   puc_t errorcode_file[64];     /* file that contains completion status */
