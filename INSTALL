@@ -1,3 +1,6 @@
+-*- mode: text; mode: auto-fill -*-
+$Id$
+
 Ejudge system installation manual
 =================================
 
@@ -88,7 +91,9 @@ mandatory options are as follows.
         for compilation of the ejudge system. If the REUSE-PATH
         does not contain the reuse library, or the library
         version does not satisfy the above mentioned requirement,
-        the configure script terminates with error.
+        the configure script terminates with error. The latest
+        version of the reuse library is recommended for use, as
+        of this writing - 4.0.1.
 
         As a rule, the reuse library is compiled and installed
         in the same directory, where the source archive is
@@ -221,6 +226,24 @@ The description of all the recommended options is given below.
         If you are not sure, use the PATH as given above,
         /tmp/userlist-socket.
 
+    --enable-super-serve-socket=PATH
+        This option allows specifying the default path to the
+        UNIX-socket, which is used for controlling the
+        `super-serve' program by the `serve-control' CGI
+        program. The PATH must be the full absolute path to a
+        non-existent file in an existent directory. Upon startup
+        the `userlist-server' will create a UNIX socket bound to
+        this PATH. The PATH must not reside on network file
+        systems (smb, nfs) or file systems without UNIX socket
+        support (vfat). It is recommended to put the UNIX socket
+        to a local public accessible file system. /tmp or
+        /var/tmp are good candidates. For example, use the
+        following option:
+        --enable-super-serve-socket=/tmp/userlist-socket
+
+        If you are not sure, use the PATH as given above,
+        /tmp/super-serve-socket.
+
     --enable-conf-dir=DIR
         This option allows specifying the path to the ejudge
         configuration directory. The path to each individual
@@ -317,6 +340,9 @@ automatically detected and supported:
   o Dr. Scheme (Scheme Interpreter)     http://www.drscheme.org
   o Python                              http://www.python.org
   o Perl                                http://www.cpan.org
+  o SUN Java SDK 2                      http://java.sun.com
+  o Mono C# (mcs)                       http://www.mono-project.com
+  o Mono Visual Basic (mbas)            http://www.mono-project.com
 
 If a supported compiler or interpreter is located in a
 non-standard location, i.e. it is not accessible via the PATH
@@ -353,6 +379,24 @@ disable.
         Specify the path to the Python (python) interpreter.
     --with-perl
         Specify the path to the Perl (perl) interpreter.
+    --with-javac
+        Specify the path to the Java bytecode compiler (javac).
+    --with-mcs
+        Specify the path to the Mono C# compiler (mcs).
+    --with-mbas
+        Specify the path to the Mono Visual Basic compiler
+        (mbas).
+
+Note, that support for the Mono C# and Visual Basic languages is
+experimental. The current version of the mono package does not
+support specification of data size and stack size limitations as
+well as specification of security policy. Thus use of these
+compilers in open (untrusted) contests is not recommended. Even
+if the mcs and mbas compilers are found in the system, they are
+disabled in the serve.cfg configuration file for the test
+contest 1. To enable their use it is necessary to edit the
+serve.cfg file manually and remove `disabled = 1' line from the
+language configuration section of these languages.
 
 1.4. Fine tuning options for configuration paths and directories
 ----------------------------------------------------------------
@@ -631,6 +675,14 @@ not necessary.
         localization, in case, when the operating system
         contains all the necessary support. All the interface
         will be provided in English only.
+
+    --with-festival=PATH
+        This option allows specifying the path, where the
+        festival speech synthesizer is installed. PATH must be
+        specified so, that the `festival' program is located in
+        the ${PATH}/bin directory. The current version of the
+        configure does not check the correctness of the
+        PATH specification.
 
 2. Compilation of the ejudge system
 -----------------------------------
@@ -1090,6 +1142,24 @@ variable is marked with an exclamation sign `!'.
         must be specified in the ejudge-setup program, or the
         ejudge setup script will not be generated.
 
+    Super-serve socket path
+        This menu item allows changing the path to the UNIX
+        socket, which is used for controlling the super-serve
+        program by the serve-control CGI program. This
+        configuration variable corresponds to the
+        --enable-super-serve-socket option of the configure
+        script. If this option were specified during the
+        configuration step, its value will be displayed 
+        here. In this case it is not recommended to change it,
+        because the new value of the path has to be specified in
+        all the configuration files, including the configuration
+        files of the CGI programs. Otherwise, if during the
+        configuration step the --enable-super-serve-socket
+        option was not specified, the "Super-serve socket path"
+        configuration variable must be specified in the
+        ejudge-setup program, or the ejudge setup script will
+        not be generated.
+
     Config directory
         This menu item allows changing the path to the ejudge
         configuration directory. This configuration variable
@@ -1429,12 +1499,27 @@ line arguments. During its execution the setup script prints
 verbose information about performed actions, and in case of
 error it will print the detailed description of the error.
 
+The setup script uses the `uudecode' program. If this program is
+not installed in your system, you need to install the
+`sharutils' package, which contains this program. Please refer
+your operating system information for further information about
+the sharutils package and package installation.
+
+The setup script also uses the following programs: install, dd,
+mke2fs, mount, ln, chown, tar. These programs should be
+installed in any Linux distribution by default.
+
 6. Checking the correct operation of the ejudge system
 ------------------------------------------------------
 If execution of the ejudge setup script is completed
-successfully, the ejudge system is ready to work. In order to
-check its operation it is necessary to perform the following
-actions:
+successfully, the ejudge system is ready to work.
+
+Note, that all the programs of the ejudge system cannot be run
+under the `root' (superuser) system account. You should either
+use an existing unprivileged account, or create a new account.
+
+In order to check its operation it is necessary to perform the
+following actions:
   1) start the user database server userlist-server.
         To do this change the current directory to the
         EJUDGE-CONF-DIR directory and start the server with the
@@ -1487,16 +1572,25 @@ After starting of all these programs ensure, that the web server
 also started, and start it, if necessary.
 
 Now you may enter the contestant's personal page located at the
-URL http://SERVER-NAME/cgi-bin/team?contest_id=1. Specify the
+URL http://localhost/cgi-bin/team?contest_id=1. Specify the
 login and password you specified in the ejudge-setup program in
 the administrator identity section. You may also enter the
 administrator's personal page, located at the URL
-URL http://SERVER-NAME/cgi-bin/master?contest_id=1. Also specify
+URL http://localhost/cgi-bin/master?contest_id=1. Also specify
 the login and password you specified in the ejudge-setup program
 in the administrator identity section. Check that all actions
 work correct. Note, that the solutions for all the supported
 languages for the tasks of the test contest 1 are located in the
 CONTEST1-HOME-DIR/solutions directory.
+
+By default, the ejudge system is configured so, that only
+localhost (i.e. the computer running the ejudge programs) is
+allowed to access them. To access the running contest from other
+computers, you should edit the XML contest configuration file
+000001.xml, which is usually located in the
+/home/judges/data/contests directory. There are XML elements
+corresponding to each ejudge CGI program, these XML elements
+determine, which IP-addresses are allowed, and which are not.
 
 7. Post-installation steps
 --------------------------
