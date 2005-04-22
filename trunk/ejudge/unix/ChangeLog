@@ -1,3 +1,9 @@
+2005-04-13  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.c:
+	(make_dir) message about creation of a new dir is not printed, if this
+	  directory already exists.
+
 2005-03-03  Alexander Chernov  <cher@ispras.ru>
 
 	* curtime.c: initial revision
