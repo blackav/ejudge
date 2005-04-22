@@ -1,3 +1,245 @@
+2005-04-22  Alexander Chernov  <cher@ispras.ru>
+
+	* INSTALL, INSTALL.RUS: *** empty log message ***
+
+2005-04-22  Alexander Chernov  <cher@ispras.ru>
+
+	* FAQ.RUS: initial revision
+
+2005-04-14  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare.c:
+	(set_defaults) the compile->serve spool directory scheme is changed,
+	  both `compile' and `serve' use the subdirectory with the
+	  contest number as the base directory of all the exchange directories;
+	  the run->serve spool directory scheme is changed similarly;
+	(create_dirs) new compile->serve and run->serve directories are
+	  created;
+	  symlinks are no longer used.
+
+	* serve.c:
+	(read_compile_packet) the function now has 3 arguments instead of 1:
+	  `compile_status_dir', `compile_report_dir' are added;
+	  the new parameters are used instead of the global configuration
+	  variables of the same name to access the compile->serve
+	  directories;
+	(read_run_packet) the function now has 4 parameters instead of 1:
+	  `run_status_dir', `run_report_dir', `run_team_report_dir'
+	  are added;
+	  the new function parameters are used instead of the global
+	  configuration variables of the same name to access the
+	  run->serve spool directories;
+	(do_build_compile_dirs) a new function - see below;
+	(build_compile_dirs) a new function, which makes the list of all
+	  the compile->serve exchange directories `compile_dirs' using the
+	  `compile_status_dir' and `compile_report_dir' of all the language
+	  sections, the list of the exchange directories is build so it has
+	  no duplicates;
+	(do_build_run_dirs) a new function - see below;
+	(build_run_dirs) a new function, which makes the list of all the
+	  run->serve exchange directories `run_dirs' using the
+	  `run_status_dir', `run_report_dir', `run_team_report_dir' variables
+	  of all the tester sections, the list of the exchange directories has
+	  no duplicates;
+	(do_loop) all the directories in the `compile_dirs' list of directories
+	  are scanned instead of a single global `compile_status_dir';
+	  call of `read_compile_packet' is updated;
+	  all the directories in the `run_dirs' list of directories are
+	  scanned instead of a single global `run_status_dir';
+	  call of `read_run_packet' is updated;
+	(main) call of `build_compile_dirs' is added;
+	  call of `build_run_dirs' is added.
+
+	* prepare.h:
+	(struct section_language_data) new fields `compile_status_dir',
+	  `compile_report_dir' are added;
+	(struct section_tester_data) new fields `run_status_dir',
+	  `run_report_dir', `run_team_report_dir' are added.
+
+2005-04-12  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge-setup.c:
+	(generate_compile_cfg) a fix for a stupid bug again.
+
+	* ejudge-setup.c:
+	(generate_compile_cfg) a typo is fixed that caused a compilation error
+	  if Visual Basic compiler (mbas) was not detected.
+
+2005-04-11  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare.c:
+	(set_defaults) the contest identifier in the status and report dirs is
+	  printed with 6 digits instead of 4 (%06d).
+
+	* run.c, compile.c:
+	(do_loop) the contest identifier in the status and report dirs is
+	  printed with 6 digits instead of 4 (%06d).
+
+2005-04-10  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge-setup.c:
+	(generate_serve_cfg) the suffix of Visual Basic programs changed to
+	   ".vb";
+	(generate_compile_cfg) the same as above.
+
+	* configure.ac:
+	enabled compilation and testing of a simple Visual Basic program.
+
+	* configure.ac:
+	added experimental support for the Mono Visual Basic compiler (mbas);
+	added check that uudecode program is present;
+	added warning, when uudecode program is not found.
+
+	* config.h.in: added COMPILE_MBAS_VERSION
+	added EJUDGE_PROGRAM_UUDECODE
+
+	* Makefile.unix.in:
+	(log) new subdirectories added to the list of directories where
+	  ChangeLog is generated: extra scripts super_clnt xml_utils.
+
+2005-04-10  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge-setup.c:
+	(generate_master_cfg) `;' as comment char is replaced with `#';
+	(generate_serve_cfg) `;' as comment char is replaced with `#';
+	  added support for Mono C# (mcs) and Mono Visual Basic (mbas)
+	  compilers, they use new architecture `msil'. Both compilers are
+	  by default disabled, though;
+	(generate_compile_cfg) `;' as comment char is replaced with `#';
+	  added support for Mono C# (mcs) and Mono Visual Basic (mbas)
+	  compilers;
+	(generate_install_script) the EJUDGE_PROGRAM_UUDECODE macro from
+	  config.h is used instead of hard-coded uudecode.
+
+2005-04-09  Alexander Chernov  <cher@ispras.ru>
+
+	* configure.ac:
+	Support for the Mono C# compiler and runtime is added.
+
+	* config.h.in: COMPILE_MONO_VERSION is added
+
+2005-04-08  Alexander Chernov  <cher@ispras.ru>
+
+	* userlist-server.c, super-serve.c, serve.c, run.c, compile.c: 
+	(main) the program refuses to run under the uid == 0 (root).
+
+2005-04-07  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* configure.ac:
+	added check, that the CAP_SYS_OPERATIONS patch is supported by
+	  the running kernel;
+	fixed condition when CONF_HAS_LIBCAP variable is set;
+	added warning at the end of configuration, if the CAP_SYS_OPERATIONS
+	  bit is supported by the libcap library, but is not supported
+	  by the running kernel.
+
+	* teamdb.h: copyright notice is updated;
+	definition of TEAMDB_MAX_SCRAMBLED_PASSWD_SIZE is removed;
+	(teamdb_register_update_hook) new function prototype;
+	(teamdb_unregister_update_hook) new function prototype;
+	(teamdb_get_user_status_map) new function prototype.
+
+	* teamdb.c: copyright notice is updated;
+	added support for callbacks, which are called each time when the
+	  user database is reloaded from the server;
+	(teamdb_register_update_hook) a new function to register a new
+	  update callback;
+	(teamdb_unregister_update_hook) a new function to remove a
+	  registered update callback function;
+	(call_update_hooks) a new function to call all the registered
+	  callback functions;
+	(teamdb_refresh) `call_update_hooks' is called each time when
+	  the user database is reloaded;
+	(teamdb_toggle_flags) reload of the user database is forced;
+	(teamdb_get_user_status_map) a new function, which returns the
+	  user status flags for all the users registered for the contest.
+
+	* serve.c:
+	(read_compile_packet) the value of new global configuration
+	  variable `disable_sound' is passed in the run request packet
+	  to the `run' program.
+
+	* runlog.c: "teamdb.h" is included;
+	(run_open) the function registers the user database update callback;
+	(run_get_prev_successes) a new function, which returns the number of
+	  previous successful attempts on this problem by different users;
+	  the function is implemented to support the new `score_bonus'
+	  feature of KIROV contests;
+	  the function needs the table of various flags (invisible, banned,
+	  etc) of all the users registered for the contest, so the array
+	  of flags is requested by `update_user_flags'. The array of flags
+	  is cached, and it is dropped by a callback which is called, when
+	  the user database is updated.
+	(teamdb_update_callback) a new function, which is called each time
+	  when the user database is updated, the function drops the
+	  cached user flags array;
+	(update_user_flags) a new function, which loads the new array
+	  of flags of all the registered users. The new function
+	  `teamdb_get_user_status_map' is used.
+
+	* runlog.h: (run_get_prev_successes) new function prototype is added.
+
+	* prepare.h:
+	(struct section_global_data) new field `disable_sound' is added;
+	(struct section_problem_data) new fields `score_bonus',
+	  `score_bonus_total', `score_bonus_val' are added.
+
+	* prepare.c: new global parameter `disable_sound' added;
+	new problem parameter `score_bonus' added;
+	(parse_score_bonus) new function to parse a score_bonus specification;
+	(set_defaults) `parse_score_bonus' is called.
+
+2005-04-06  Alexander Chernov  <cher@ispras.ru>
+
+	* master_html.c:
+	(print_raw_record) new parameter `prev_successes' is added;
+	  the value of `prev_successes' parameter is printed to the output
+	  as the last field;
+	(write_priv_all_runs) use of `print_raw_record' is updated;
+	  if the contest scoring system is KIROV, the current runlog entry
+	  is not invisible, the number of previous successes of the different
+	  participants on the same contest, the number of previous succeses
+	  is calculated by a call of `run_get_priv_successes';
+	  calls of `print_raw_record' and `write_html_run_status' are updated.
+
+	* html.h: 
+	(calc_kirov_score) new parameter `prev_successes' added;
+	(write_html_run_status) new parameter `prev_successes' added.
+
+	* html.c: (calc_kirov_score) new parameter `prev_successes' is added;
+	  the `score_bonus' problem configuration variable is supported, the
+	  value of `prev_successes' parameter is used to calculate the score
+	  bonus, the score bonus is also displayed as the last optional
+	  parameter;
+	(write_html_run_status) new parameter `prev_successes' is added, the
+	  parameter is then passed to `calc_kirov_score' for further
+	  processing;
+	(new_write_user_runs) if the current run has OK status, the contest
+	  type is KIROV, the run is visible, and the `score_bonus' problem
+	  configuration variable is set for the current problem, the number of
+	  previous successes of other users is calculated by call of
+	  `run_get_prev_successes'; the calculated value is then passed to
+	  `write_html_run_status' function;
+	(do_write_kirov_standings) the number of previous successes of other
+	  participants is passed as the new parameter of `calc_kirov_score';
+	(do_write_public_log) if the current run has OK status, the contest
+	  type is KIROV, and the `score_bonus' problem configuration variable
+	  is set for the current problem, the number of previous successes of
+	  other users is calculated by call of `run_get_prev_successes';
+	  the calculated value is then passed to `write_html_run_status'
+	  function.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* ejudge-setup.c: copyright notice is updated;
+	(generate_contest_xml) removed russian name of the test contest because
+	  it may conflict with the default encoding.
+
+	* Makefile.win32.in:
+	new modules required for compile and run are added.
+
 2005-04-02  Alexander Chernov  <cher@ispras.ru>
 
 	* super-serve.c: 
