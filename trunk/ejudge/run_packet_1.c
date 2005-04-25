@@ -74,6 +74,8 @@ run_request_packet_read(size_t in_size, const void *in_data,
   if ((flags & FLAGS_ACCEPT_PARTIAL)) pout->accept_partial = 1;
   if ((flags & FLAGS_HTML_REPORT)) pout->html_report = 1;
   if ((flags & FLAGS_DISABLE_SOUND)) pout->disable_sound = 1;
+  if ((flags & FLAGS_FULL_ARCHIVE)) pout->full_archive = 1;
+  if ((flags & FLAGS_XML_REPORT)) pout->xml_report = 1;
 
   pout->ts1 = cvt_bin_to_host_32(pin->ts1);
   pout->ts1_us = cvt_bin_to_host_32(pin->ts1_us);
