@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -68,6 +68,7 @@ static const char * const elem_map[] =
   [TE_T_TEXT]         "text",
   [TE_T_COMMENT]      "comment",
   [TE_T_STATUS]       "status",
+  [TE_T_LAST_TAG]     0,
 };
 static const char * const attr_map[] =
 {
@@ -75,6 +76,7 @@ static const char * const attr_map[] =
   [TE_A_ISSUER_ID] "issuer_id",
   [TE_A_ISSUER_IP] "issuer_ip",
   [TE_A_DATE]      "date",
+  [TE_A_LAST_ATTR] 0,
 };
 static const size_t elem_sizes[TE_T_LAST_TAG];
 static const size_t attr_sizes[TE_A_LAST_ATTR];
