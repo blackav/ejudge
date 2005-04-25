@@ -33,8 +33,10 @@ enum
   FLAGS_ACCEPT_PARTIAL       = 0x080,
   FLAGS_HTML_REPORT          = 0x100,
   FLAGS_DISABLE_SOUND        = 0x200,
+  FLAGS_FULL_ARCHIVE         = 0x400,
+  FLAGS_XML_REPORT           = 0x800,
 
-  FLAGS_ALL_MASK             = 0x3ff, /* scoring system incl. */
+  FLAGS_ALL_MASK             = 0xfff, /* scoring system incl. */
 };
 
 /* serve->run binary packet structure */
