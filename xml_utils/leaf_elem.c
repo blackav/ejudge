@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,8 @@
 #include "expat_iface.h"
 
 int
-xml_leaf_elem(struct xml_tree *tree, unsigned char **value_addr, int move_flag)
+xml_leaf_elem(struct xml_tree *tree, unsigned char **value_addr, int move_flag,
+              int empty_allowed_flag)
 {
   if (tree->first) {
     xml_err_attrs(tree);
@@ -30,7 +31,7 @@ xml_leaf_elem(struct xml_tree *tree, unsigned char **value_addr, int move_flag)
     xml_err_nested_elems(tree);
     return -1;
   }
-  if (!tree->text || !tree->text[0]) {
+  if (!tree->text || (!empty_allowed_flag && !tree->text[0])) {
     xml_err(tree, "element <%s> is empty", xml_err_elem_names[tree->tag]);
     return -1;
   }
