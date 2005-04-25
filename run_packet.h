@@ -35,6 +35,8 @@ struct run_request_packet
   int user_id;                  /* the user identifier */
   int html_report;              /* generate judge protocol in HTML */
   int disable_sound;            /* disable sound notifications */
+  int full_archive;             /* enable full archive */
+  int xml_report;               /* generate judge protocol in XML */
   /* time when the compile request was queued by serve */
   int ts1;
   int ts1_us;
