@@ -4,7 +4,7 @@
 #ifndef __XML_UTILS_H__
 #define __XML_UTILS_H__
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -59,12 +59,12 @@ void xml_err_attr_undefined(const struct xml_tree *p, int attr);
 
 int xml_leaf_elem(struct xml_tree *tree, /* ->text may be modified */
                   unsigned char **value_addr,
-                  int move_flag);
+                  int move_flag, int empty_allowed_flag);
 int xml_empty_text(struct xml_tree *tree);
 int xml_attr_bool(struct xml_attn *attr, int *value_ptr);
 int xml_elem_ip_mask(struct xml_tree *tree,
                      unsigned int *addr_ptr, unsigned int *mask_ptr);
-
+int xml_parse_int_attr(struct xml_attn *attr, int *value_ptr);
 
 #endif /* __XML_UTILS_H__ */
 
