@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -194,7 +194,7 @@ parse_config(const unsigned char *path, const unsigned char *default_config)
     case TG_CHARSET:
       leaf_elem_addr = &cfg->charset; goto parse_final_tag;
     parse_final_tag:
-      if (xml_leaf_elem(t1, leaf_elem_addr, 1) < 0)
+      if (xml_leaf_elem(t1, leaf_elem_addr, 1, 0) < 0)
         goto failed;
       break;
     case TG_SERVE_CONTROL_ACCESS:
