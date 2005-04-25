@@ -2091,38 +2091,21 @@ run_is_failed_attempt(int status)
   return is_failed_attempt_table[status];
 }
 
-static const unsigned char tree_result_strs[RUN_LAST + 1][4] =
+static const unsigned char is_valid_test_status_table[RUN_LAST + 1] =
 {
-  [RUN_OK] =               "OK",
-  [RUN_COMPILE_ERR] =      "CE",
-  [RUN_RUN_TIME_ERR] =     "RT",
-  [RUN_TIME_LIMIT_ERR] =   "TL",
-  [RUN_PRESENTATION_ERR] = "PE",
-  [RUN_WRONG_ANSWER_ERR] = "WA",
-  [RUN_CHECK_FAILED] =     "CF",
-  [RUN_PARTIAL] =          "PT",
-  [RUN_ACCEPTED] =         "AC",
-  [RUN_IGNORED] =          "IG",
-  [RUN_DISQUALIFIED] =     "DQ",
-  [RUN_PENDING] =          "PD",
-  [RUN_MEM_LIMIT_ERR] =    "ML",
-  [RUN_SECURITY_ERR] =     "SE",
-  [RUN_VIRTUAL_START] =    "VS",
-  [RUN_VIRTUAL_STOP] =     "VT",
-  [RUN_EMPTY] =            "EM",
-  [RUN_RUNNING] =          "RU",
-  [RUN_COMPILED] =         "CD",
-  [RUN_COMPILING] =        "CG",
-  [RUN_AVAILABLE] =        "AV",
+  [RUN_OK]               = 1,
+  [RUN_RUN_TIME_ERR]     = 1,
+  [RUN_TIME_LIMIT_ERR]   = 1,
+  [RUN_PRESENTATION_ERR] = 1,
+  [RUN_WRONG_ANSWER_ERR] = 1,
+  [RUN_MEM_LIMIT_ERR]    = 1,
+  [RUN_SECURITY_ERR]     = 1,
 };
-
 int
-run_status_to_str_short(unsigned char *buf, size_t size, int val)
+run_is_valid_test_status(int status)
 {
-  if (val >= 0 && val <= RUN_LAST && tree_result_strs[val]) {
-    return snprintf(buf, size, "%s", tree_result_strs[val]);
-  }
-  return snprintf(buf, sizeof(buf), "result_%d", val);
+  if (status < 0 || status > RUN_LAST) return 0;
+  return is_valid_test_status_table[status];
 }
 
 /*
