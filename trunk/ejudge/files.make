@@ -99,6 +99,7 @@ COMMON_CFILES=\
  expat_iface.c\
  filter_eval.c\
  filter_tree.c\
+ full_archive.c\
  html.c\
  l10n.c\
  master_html.c\
@@ -129,6 +130,7 @@ COMMON_CFILES=\
  team_extra.c\
  team_extra_xml.c\
  testinfo.c\
+ testing_report_xml.c\
  tex_dom.c\
  tex_dom_parse.c\
  tex_dom_doc.c\
@@ -155,9 +157,11 @@ COMMON_CFILES=\
  xml_utils/leaf_elem.c\
  xml_utils/parse_date.c\
  xml_utils/parse_int.c\
+ xml_utils/parse_int_attr.c\
  xml_utils/parse_ip.c\
  xml_utils/unparse_date.c\
  xml_utils/unparse_ip.c\
+ xml_utils/unparse_run_status.c\
  xml_utils/unparse_text.c\
  xml_utils/xml_err.c\
  xml_utils/xml_err_a.c
@@ -211,6 +215,7 @@ HFILES=\
  fileutl.h\
  filter_eval.h\
  filter_tree.h\
+ full_archive.h\
  html.h\
  interrupt.h\
  l10n.h\
@@ -238,6 +243,7 @@ HFILES=\
  teamdb.h\
  team_extra.h\
  testinfo.h\
+ testing_report_xml.h\
  tex_dom.h\
  tsc.h\
  userlist.h\
