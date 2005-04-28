@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -59,20 +59,6 @@ serve_clnt_view(int sock_fd,
   self_url_ptr = out->data;
   hidden_vars_ptr = self_url_ptr + self_url_len + 1;
   extra_args_ptr = hidden_vars_ptr + hidden_vars_len + 1;
-  if (cmd != SRV_CMD_VIEW_REPORT && cmd != SRV_CMD_VIEW_CLAR
-      && cmd != SRV_CMD_VIEW_SOURCE
-      && cmd != SRV_CMD_VIEW_USERS
-      && cmd != SRV_CMD_DUMP_RUNS
-      && cmd != SRV_CMD_EXPORT_XML_RUNS
-      && cmd != SRV_CMD_WRITE_XML_RUNS
-      && cmd != SRV_CMD_PRIV_DOWNLOAD_RUN
-      && cmd != SRV_CMD_COMPARE_RUNS
-      && cmd != SRV_CMD_DUMP_STANDINGS
-      && cmd != SRV_CMD_VIEW_TEAM
-      && cmd != SRV_CMD_NEW_RUN_FORM) {
-    err("serve_clnt_view: invalid command %d", cmd);
-    return -SRV_ERR_PROTOCOL;
-  }
 
   out->b.id = cmd;
   out->b.magic = PROT_SERVE_PACKET_MAGIC;
