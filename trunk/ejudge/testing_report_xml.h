@@ -50,6 +50,7 @@ typedef struct testing_report_xml
   int scoring_system;
   int archive_available;
   int correct_available;
+  int info_available;
   int run_tests;
   int variant;
   int accepting_mode;
