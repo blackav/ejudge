@@ -68,6 +68,8 @@ static unsigned char const * const error_map[] =
   _("the requested file does not exist"),
   _("invalid filter expression"),
   _("there are transient runs"),
+  _("invalid test number"),
+  _("bad XML"),
 };
 #undef _
 
