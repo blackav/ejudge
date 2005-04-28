@@ -34,7 +34,7 @@
 #endif /* EJUDGE_CHARSET */
 
 /*
-<testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"]>
+<testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"]>
   <comment>T</comment>
   <tests>
     <test num="N" status="O" [exit-code="N"] [term-signal="N"] time="N" [nominal-score="N" score="N"] [comment="S"] [checker-comment="S"] output-available="B" stderr-available="B" checker-output-available="B" args-too-long="B">
@@ -73,6 +73,7 @@ enum
   TR_A_SCORING,
   TR_A_ARCHIVE_AVAILABLE,
   TR_A_CORRECT_AVAILABLE,
+  TR_A_INFO_AVAILABLE,
   TR_A_RUN_TESTS,
   TR_A_VARIANT,
   TR_A_ACCEPTING_MODE,
@@ -118,6 +119,7 @@ static const char * const attr_map[] =
   [TR_A_SCORING] = "scoring",
   [TR_A_ARCHIVE_AVAILABLE] = "archive-available",
   [TR_A_CORRECT_AVAILABLE] = "correct-available",
+  [TR_A_INFO_AVAILABLE] = "info-available",
   [TR_A_RUN_TESTS] = "run-tests",
   [TR_A_VARIANT] = "variant",
   [TR_A_ACCEPTING_MODE] = "accepting-mode",
@@ -127,9 +129,9 @@ static const char * const attr_map[] =
   [TR_A_MAX_SCORE] = "max-score",
   [TR_A_NUM] = "num",
   [TR_A_EXIT_CODE] = "exit-code",
-  [TR_A_TERM_SIGNAL] = "term-report-xml",
+  [TR_A_TERM_SIGNAL] = "term-signal",
   [TR_A_TIME] = "time",
-  [TR_A_NOMINAL_SCORE] = "nominal score",
+  [TR_A_NOMINAL_SCORE] = "nominal-score",
   [TR_A_COMMENT] = "comment",
   [TR_A_CHECKER_COMMENT] = "checker-comment",
   [TR_A_OUTPUT_AVAILABLE] = "output-available",
@@ -443,6 +445,11 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
     case TR_A_CORRECT_AVAILABLE:
       if (xml_attr_bool(a, &x) < 0) return -1;
       r->correct_available = x;
+      break;
+
+    case TR_A_INFO_AVAILABLE:
+      if (xml_attr_bool(a, &x) < 0) return -1;
+      r->info_available = x;
       break;
 
     case TR_A_RUN_TESTS:
