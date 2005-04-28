@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,7 @@ checker_do_init(int argc, char **argv, int corr_flag, int info_flag,
   if (corr_flag) need_arg++;
   if (info_flag) need_arg++;
   if (tgz_flag) need_arg += 2;
-  if (argc != need_arg)
+  if (argc < need_arg)
     fatal_CF("Invalid number of arguments: %d instead of %d", argc, need_arg);
 
   if (!(f_in = fopen(argv[1], "r")))
