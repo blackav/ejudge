@@ -1733,3 +1733,11 @@ testing_report_xml.c 1 1 1203450
 xml_utils/leaf_elem.c 1 2 114721
 xml_utils/parse_int_attr.c 1 1 98015
 xml_utils/unparse_run_status.c 1 1 136438
+client_actions.h 1 24 216868
+full_archive.h 1 1 180469
+protocol.h 1 33 771345
+testing_report_xml.h 1 2 153005
+full_archive.c 1 1 696418
+protocol.c 1 15 239109
+testing_report_xml.c 1 2 1218249
+serve_clnt/view.c 1 14 298444
