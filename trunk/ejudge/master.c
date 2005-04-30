@@ -1873,6 +1873,60 @@ action_view_team(void)
 }
 
 static void
+action_view_audit_log(void)
+{
+  unsigned char *s;
+  int run_id, n, r;
+
+  if (!(s = cgi_param("run_id"))) goto invalid_operation;
+  if (sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]) goto invalid_operation;
+  if (run_id < 0 || run_id > 999999) goto invalid_operation;
+
+  open_serve();
+  r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_AUDIT_LOG, run_id, 0, 0,
+                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+  if (r < 0) {
+    client_put_header(stdout, 0, 0, global->charset, 1, 0,
+                      "Audit log for run %d", run_id);
+    printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
+    client_put_footer(stdout, 0);
+  }
+  exit(0);
+
+ invalid_operation:
+  operation_status_page(-1, "Invalid operation", -1);
+}
+
+static void
+action_view_test(int cmd)
+{
+  unsigned char *s;
+  int run_id, test_num, n, r;
+
+  if (!(s = cgi_param("run_id"))) goto invalid_operation;
+  if (sscanf(s, "%d%n", &run_id, &n) != 1 || s[n]) goto invalid_operation;
+  if (run_id < 0 || run_id > 999999) goto invalid_operation;
+
+  if (!(s = cgi_param("test_num"))) goto invalid_operation;
+  if (sscanf(s, "%d%n", &test_num, &n) != 1 || s[n]) goto invalid_operation;
+  if (test_num < 1 || test_num > 255) goto invalid_operation;
+
+  open_serve();
+  r = serve_clnt_view(serve_socket_fd, 1, cmd, run_id, test_num, 0,
+                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+  if (r < 0) {
+    client_put_header(stdout, 0, 0, global->charset, 1, 0,
+                      "Details about run %d, test %d", run_id, test_num);
+    printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
+    client_put_footer(stdout, 0);
+  }
+  exit(0);
+
+ invalid_operation:
+  operation_status_page(-1, "Invalid operation", -1);
+}
+
+static void
 action_new_run_form(void)
 {
   int r;
@@ -3533,6 +3587,27 @@ main(int argc, char *argv[])
     break;
   case ACTION_ISSUE_WARNING:
     action_issue_warning();
+    break;
+  case ACTION_VIEW_TEST_INPUT:
+    action_view_test(SRV_CMD_VIEW_TEST_INPUT);
+    break;
+  case ACTION_VIEW_TEST_OUTPUT:
+    action_view_test(SRV_CMD_VIEW_TEST_OUTPUT);
+    break;
+  case ACTION_VIEW_TEST_ANSWER:
+    action_view_test(SRV_CMD_VIEW_TEST_ANSWER);
+    break;
+  case ACTION_VIEW_TEST_ERROR:
+    action_view_test(SRV_CMD_VIEW_TEST_ERROR);
+    break;
+  case ACTION_VIEW_TEST_CHECKER:
+    action_view_test(SRV_CMD_VIEW_TEST_CHECKER);
+    break;
+  case ACTION_VIEW_TEST_INFO:
+    action_view_test(SRV_CMD_VIEW_TEST_INFO);
+    break;
+  case ACTION_VIEW_AUDIT_LOG:
+    action_view_audit_log();
     break;
   }
   log_out_if_asked();
