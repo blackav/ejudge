@@ -3,7 +3,7 @@
 #ifndef __ARCHIVE_PATHS_H__
 #define __ARCHIVE_PATHS_H__
 
-/* Copyright (C) 2003,2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int archive_dir_prepare(const unsigned char *, int, const unsigned char *);
+int archive_dir_prepare(const unsigned char *, int, const unsigned char *, int);
 int archive_make_read_path(unsigned char *, size_t,
                            const unsigned char *, int,
                            const unsigned char *, int);
