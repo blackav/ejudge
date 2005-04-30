@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-04-30 20:49+0400\n"
+"POT-Creation-Date: 2005-04-30 21:39+0400\n"
 "PO-Revision-Date: 2005-04-30 19:31+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -23,12 +23,12 @@ msgstr "Поле \"Электронный адрес\" содержит недопустимые символы"
 msgid "\"Login\" field contains invalid characters"
 msgstr "Поле \"Регистрационное имя\" содержит недопустимые символы"
 
-#: run.c:544 run.c:719 run.c:733
+#: run.c:507 run.c:642 run.c:656
 #, c-format
 msgid "%d total tests runs, %d passed, %d failed\n"
 msgstr "Всего тестов: %d, пройдено: %d, не пройдено: %d\n"
 
-#: run.c:526
+#: run.c:489
 #, c-format
 msgid ""
 "%d total tests runs, %d passed, %d failed\n"
@@ -37,7 +37,7 @@ msgstr ""
 "Всего тестов: %d, пройдено: %d, не пройдено: %d\n"
 "\n"
 
-#: run.c:522 run.c:539 run.c:716 run.c:729
+#: run.c:485 run.c:502 run.c:639 run.c:652
 #, c-format
 msgid ""
 "%s, test #%d\n"
@@ -50,37 +50,37 @@ msgstr ""
 msgid "(no subject)"
 msgstr "(без темы)"
 
-#: run.c:667
+#: run.c:590
 #, c-format
 msgid "--- Checker output ---\n"
 msgstr "--- Вывод проверяющей программы ---\n"
 
-#: run.c:652
+#: run.c:575
 #, c-format
 msgid "--- Command line arguments ---\n"
 msgstr "--- Аргументы командной строки ---\n"
 
-#: run.c:663
+#: run.c:586
 #, c-format
 msgid "--- Correct ---\n"
 msgstr "--- Правильный ответ ---\n"
 
-#: run.c:659
+#: run.c:582
 #, c-format
 msgid "--- Input ---\n"
 msgstr "--- Входные данные ---\n"
 
-#: run.c:661
+#: run.c:584
 #, c-format
 msgid "--- Output ---\n"
 msgstr "--- Результат работы программы ---\n"
 
-#: run.c:665
+#: run.c:588
 #, c-format
 msgid "--- Stderr ---\n"
 msgstr "--- Ошибки ---\n"
 
-#: master_html.c:2235 run.c:620
+#: master_html.c:2235 run.c:543
 #, c-format
 msgid "<b>====== Test #%d =======</b>\n"
 msgstr "<b>====== Тест #%d =======</b>\n"
@@ -107,7 +107,7 @@ msgstr "<font color=\"green\">OK</font>"
 msgid "<font color=\"magenta\">Pending</font>"
 msgstr "<font color=\"magenta\">Ожидает подтверждения</font>"
 
-#: run.c:523 run.c:540
+#: run.c:486 run.c:503
 #, c-format
 msgid ""
 "<font color=\"red\">%s, test #%d</font>\n"
@@ -125,7 +125,7 @@ msgstr "<font color=\"red\">Отказано</font>"
 msgid "<hr><big><b>You have %d unread message(s)!</b></big>\n"
 msgstr "<hr><big><b>Непрочитанных сообщений: %d!</b></big>\n"
 
-#: master_html.c:2240 run.c:628
+#: master_html.c:2240 run.c:551
 #, c-format
 msgid "<i>Command line is too long</i>\n"
 msgstr "<i>Командная строка слишком длинна</i>\n"
@@ -246,46 +246,46 @@ msgstr "<p%s>Максимальное количество %s - %d.</p>\n"
 msgid "<p%s>The minimal number of %s is %d.</p>\n"
 msgstr "<p%s>Минимальное количество %s - %d.</p>\n"
 
-#: master_html.c:2277 run.c:643
+#: master_html.c:2277 run.c:566
 #, c-format
 msgid "<u>--- Checker output ---</u>\n"
 msgstr "<u>--- Вывод проверяющей программы ---</u>\n"
 
-#: master_html.c:2238 run.c:626
+#: master_html.c:2238 run.c:549
 #, c-format
 msgid "<u>--- Command line arguments ---</u>\n"
 msgstr "<u>--- Аргументы командной строки ---</u>\n"
 
-#: master_html.c:2263 run.c:639
+#: master_html.c:2263 run.c:562
 #, c-format
 msgid "<u>--- Correct ---</u>\n"
 msgstr "<u>--- Правильный ответ ---</u>\n"
 
-#: master_html.c:2249 run.c:635
+#: master_html.c:2249 run.c:558
 #, c-format
 msgid "<u>--- Input ---</u>\n"
 msgstr "<u>--- Входные данные ---</u>\n"
 
-#: master_html.c:2256 run.c:637
+#: master_html.c:2256 run.c:560
 #, c-format
 msgid "<u>--- Output ---</u>\n"
 msgstr "<u>--- Результат работы программы ---</u>\n"
 
-#: master_html.c:2270 run.c:641
+#: master_html.c:2270 run.c:564
 #, c-format
 msgid "<u>--- Stderr ---</u>\n"
 msgstr "<u>--- Ошибки ---</u>\n"
 
-#: run.c:623
+#: run.c:546
 msgid "<u>Comment</u>"
 msgstr "<u>Комментарий</u>"
 
-#: run.c:646
+#: run.c:569
 #, c-format
 msgid "====== Test #%d =======\n"
 msgstr "====== Тест #%d =======\n"
 
-#: run.c:520 run.c:714
+#: run.c:483 run.c:637
 msgid "ACCEPTED"
 msgstr "ПРИНЯТО"
 
@@ -480,7 +480,7 @@ msgstr "Тренер"
 msgid "Coaches"
 msgstr "Тренеры"
 
-#: run.c:654
+#: run.c:577
 #, c-format
 msgid "Command line is too long\n"
 msgstr "Командная строка слишком длинна\n"
@@ -489,11 +489,11 @@ msgstr "Командная строка слишком длинна\n"
 msgid "Command-line parameters"
 msgstr "Параметры командной строки"
 
-#: master_html.c:2033 run.c:649
+#: master_html.c:2033 run.c:572
 msgid "Comment"
 msgstr "Комментарий"
 
-#: run.c:766
+#: run.c:689
 msgid "Comments for failed tests:"
 msgstr "Комментарии к тестам, на которых решение не прошло:"
 
@@ -1080,7 +1080,7 @@ msgstr "Проверить отложенные посылки"
 msgid "Judge's report"
 msgstr "Судейский протокол"
 
-#: run.c:621 run.c:647
+#: run.c:544 run.c:570
 #, c-format
 msgid "Judgement: %s\n"
 msgstr "Вердикт: %s\n"
@@ -1106,7 +1106,7 @@ msgstr "Последняя посылка"
 msgid "Last success"
 msgstr "Последняя успешная сдача"
 
-#: master_html.c:2035 run.c:554
+#: master_html.c:2035 run.c:517
 msgid "Link"
 msgstr "Ссылка"
 
@@ -1344,7 +1344,7 @@ msgstr "Не зарегистрированы"
 msgid "Not set"
 msgstr "Не установлено"
 
-#: run.c:762
+#: run.c:685
 msgid "Note: non-zero return code is always reported as 1"
 msgstr "Обратите внимание: ненулевые коды возврата всегда показываются как 1."
 
@@ -1373,7 +1373,7 @@ msgstr "Количество напечатанных страниц"
 msgid "Number of warnings"
 msgstr "Число предупреждений"
 
-#: run.c:153 run.c:532 run.c:724 runlog.c:910
+#: run.c:153 run.c:495 run.c:647 runlog.c:910
 msgid "OK"
 msgstr "OK"
 
@@ -1422,11 +1422,11 @@ msgstr "IP-адрес отправителя"
 msgid "Other"
 msgstr "Прочее"
 
-#: run.c:537
+#: run.c:500
 msgid "PARTIAL SOLUTION"
 msgstr "НЕПОЛНОЕ РЕШЕНИЕ"
 
-#: run.c:727
+#: run.c:650
 #, c-format
 msgid ""
 "PARTIAL SOLUTION\n"
@@ -1718,7 +1718,7 @@ msgstr "Сбросить фильтр"
 msgid "Reset the contest!"
 msgstr "Сбросить турнир!"
 
-#: html.c:287 html.c:1998 master_html.c:833 master_html.c:2028 run.c:552
+#: html.c:287 html.c:1998 master_html.c:833 master_html.c:2028 run.c:515
 msgid "Result"
 msgstr "Результат"
 
@@ -1782,7 +1782,7 @@ msgstr "Научный сотрудник"
 msgid "Score"
 msgstr "Баллы"
 
-#: run.c:556 run.c:742
+#: run.c:519 run.c:665
 msgid "Score   "
 msgstr "Баллы   "
 
@@ -1799,7 +1799,7 @@ msgstr "Получено баллов"
 msgid "Score gained: %d (out of %d).<br><br></big>\n"
 msgstr "Получено баллов: %d (из %d).<br><br></big>\n"
 
-#: run.c:547 run.c:736
+#: run.c:510 run.c:659
 #, c-format
 msgid "Scores gained: %d (out of %d)\n"
 msgstr "Получено баллов: %d (из %d)\n"
@@ -2052,16 +2052,16 @@ msgstr "Обработка запросов участников приостановлена"
 msgid "Team standings"
 msgstr "Положение участников"
 
-#: run.c:772
+#: run.c:695
 msgid "Test"
 msgstr "Тест"
 
-#: run.c:555
+#: run.c:518
 #, c-format
 msgid "Test #  Status  Time (sec)  %s%-32s%s\n"
 msgstr "Тест #  Статус  Время (сек) %s%-32s%s\n"
 
-#: run.c:741
+#: run.c:664
 #, c-format
 msgid "Test #  Status  Time (sec)  %sResult\n"
 msgstr "Тест #  Статус  Время (сек) %sРезультат\n"
