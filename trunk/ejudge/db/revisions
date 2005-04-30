@@ -1744,3 +1744,10 @@ serve_clnt/view.c 1 14 298444
 userlist-server.c 1 53 14620292
 runlog.c 1 41 4464210
 testing_report_xml.c 1 3 1218568
+archive_paths.h 1 4 122872
+client_actions.h 1 25 218680
+html.h 1 29 617640
+prepare.h 1 65 1763060
+protocol.h 1 34 773276
+team.c 1 48 4568806
+archive_paths.c 1 4 689038
