@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003,2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -54,7 +54,7 @@ b32_number(unsigned long num, size_t size, unsigned char buf[])
 
 int
 archive_dir_prepare(const unsigned char *base_dir, int serial,
-                    const unsigned char *prefix)
+                    const unsigned char *prefix, int no_unlink_flag)
 {
   unsigned char sbuf[16];
   path_t path;
@@ -102,11 +102,13 @@ archive_dir_prepare(const unsigned char *base_dir, int serial,
     }
   }
 
-  if (!prefix) prefix = "";
-  sprintf(pp, "/%s%06d", prefix, serial);
-  unlink(path);
-  strcat(pp, ".gz");
-  unlink(path);
+  if (!no_unlink_flag) {
+    if (!prefix) prefix = "";
+    sprintf(pp, "/%s%06d", prefix, serial);
+    unlink(path);
+    strcat(pp, ".gz");
+    unlink(path);
+  }
 
   return 0;
 }
@@ -274,7 +276,7 @@ archive_rename(const unsigned char *dir, FILE *flog,
     return -1;
   }
   archive_make_move_path(name2, sizeof(name2), dir, n2, f, pfx2);
-  if (archive_dir_prepare(dir, n2, pfx2) < 0) {
+  if (archive_dir_prepare(dir, n2, pfx2, 0) < 0) {
     if (flog) {
       fprintf(flog, "cannot create directory for entry %d in `%s'\n", n2, dir);
     }
