@@ -893,6 +893,8 @@ run_get_prev_successes(int run_id)
       // the user already had OK before
       return successes;
     }
+    if (has_success[cur_uid]) continue;
+    has_success[cur_uid] = 1;
     successes++;
   }
   return successes;
