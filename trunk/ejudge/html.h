@@ -40,7 +40,11 @@ void new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
 
 int new_write_user_clar(FILE *, int, int);
 int new_write_user_source_view(FILE *, int, int);
-int new_write_user_report_view(FILE *, int, int);
+int new_write_user_report_view(FILE *f, int uid, int rid,
+                               int sid_mode, unsigned long long sid,
+                               const unsigned char *self_url,
+                               const unsigned char *hidden_vars,
+                               const unsigned char *extra_args);
 
 void write_team_page(FILE *f, int user_id,
                      int printing_suspended,
@@ -170,5 +174,13 @@ int calc_kirov_score(unsigned char *outbuf, size_t outsize,
 void write_html_run_status(FILE *f, struct run_entry *pe,
                            int priv_level, int attempts,
                            int disq_attempts, int prev_successes);
+
+int write_tests(FILE *f, int cmd, int run_id, int test_num);
+
+int write_xml_testing_report(FILE *f, unsigned char const *txt,
+                             int sid_mode, unsigned long long sid,
+                             unsigned char const *self_url,
+                             unsigned char const *extra_args);
+int write_audit_log(FILE *f, int run_id);
 
 #endif /* __HTML_H__ */
