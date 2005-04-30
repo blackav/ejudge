@@ -2119,9 +2119,15 @@ new_write_user_source_view(FILE *f, int uid, int rid)
   return 0;
 }
 
-static const char content_type_str[] = "content-type: text/html\n\n";
+static const char content_text_html[] = "content-type: text/html\n\n";
+static const char content_text_xml[] = "content-type: text/xml\n\n";
+
 int
-new_write_user_report_view(FILE *f, int uid, int rid)
+new_write_user_report_view(FILE *f, int uid, int rid,
+                           int sid_mode, unsigned long long sid,
+                           const unsigned char *self_url,
+                           const unsigned char *hidden_vars,
+                           const unsigned char *extra_args)
 {
   int report_len = 0, html_len = 0, report_flags;
   path_t report_path;
@@ -2166,8 +2172,11 @@ new_write_user_report_view(FILE *f, int uid, int rid)
     return -SRV_ERR_SYSTEM_ERROR;
   }
 
-  if (!strncasecmp(report, content_type_str, sizeof(content_type_str)-1)) {
-    fprintf(f, "%s", report + sizeof(content_type_str) - 1);
+  if (!strncasecmp(report, content_text_xml, sizeof(content_text_xml)-1)) {
+    write_xml_testing_report(f, report + sizeof(content_text_xml) - 1,
+                             sid_mode, sid, self_url, extra_args);
+  } else if (!strncasecmp(report, content_text_html, sizeof(content_text_html)-1)) {
+    fprintf(f, "%s", report + sizeof(content_text_html) - 1);
   } else {
     html_len = html_armored_memlen(report, report_len);
     html_report = alloca(html_len + 16);
