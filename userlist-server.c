@@ -1449,6 +1449,11 @@ cmd_team_login(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
   }
+  if (!u->register_passwd) {
+    err("%s -> EMPTY PASSWORD", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
   if(passwd_check(&pwdint,u->team_passwd?u->team_passwd:u->register_passwd)<0){
     err("%s -> WRONG PASSWORD", logbuf);
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
@@ -1615,6 +1620,11 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   if (!u) {
     err("%s -> WRONG LOGIN", logbuf);
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+  if (!u->register_passwd) {
+    err("%s -> EMPTY PASSWORD", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
   if (passwd_check(&pwdint, u->register_passwd) < 0) {
