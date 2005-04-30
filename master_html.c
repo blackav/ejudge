@@ -34,14 +34,21 @@
 #include "team_extra.h"
 #include "xml_utils.h"
 #include "userlist.h"
+#include "testing_report_xml.h"
+#include "full_archive.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
+#include <reuse/osdeps.h>
 
+#include <zlib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -201,11 +208,13 @@ print_nav_buttons(FILE *f, int run_id,
                   const unsigned char *t7)
 {
   unsigned char hbuf[128];
+  const unsigned char *t8 = 0;
 
   if (!t1) t1 = _("Refresh");
   if (!t2) t2 = _("Standings");
   if (!t3) t3 = _("View teams");
   if (!t4) t4 = _("Log out");
+  if (!t8) t8 = _("Audit log");
 
   if (sid_mode == SID_DISABLED || sid_mode == SID_EMBED) {
     html_start_form(f, 0, sid_mode, sid, self_url, hidden_vars, extra_args);
@@ -270,6 +279,11 @@ print_nav_buttons(FILE *f, int run_id,
                             extra_args, "report_%d=1&t=1", run_id),
               t7);
     }
+    fprintf(f, "<td>%s%s</a></td>",
+            html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url,
+                          extra_args, "action=%d&run_id=%d",
+                          ACTION_VIEW_AUDIT_LOG, run_id),
+            t8);
     fprintf(f, "<td>%s",
             html_hyperref(hbuf, sizeof(hbuf), sid_mode, sid, self_url,
                           extra_args, "logout=1"));
@@ -1948,6 +1962,333 @@ write_new_run_form(FILE *f, int user_id, int priv_level,
 }
 
 int
+write_xml_testing_report(FILE *f, unsigned char const *txt,
+                         int sid_mode, unsigned long long sid,
+                         unsigned char const *self_url,
+                         unsigned char const *extra_args)
+{
+  testing_report_xml_t r = 0;
+  unsigned char *s = 0;
+  unsigned char *font_color = 0;
+  int i, is_kirov = 0, need_comment = 0;
+  struct testing_report_test *t;
+  unsigned char opening_a[512];
+  unsigned char *closing_a = "";
+
+  if (!(r = testing_report_parse_xml(txt))) {
+    fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
+    s = html_armor_string_dup(txt);
+    fprintf(f, "<pre>%s</pre>\n", s);
+    xfree(s);
+    return 0;
+  }
+
+  // report the testing status
+  if (r->status == RUN_OK || r->status == RUN_ACCEPTED) {
+    font_color = "green";
+  } else {
+    font_color = "red";
+  }
+  fprintf(f, "<h2><font color=\"%s\">%s</font></h2>\n",
+          font_color, run_status_str(r->status, 0, 0));
+
+  if (r->scoring_system == SCORE_KIROV ||
+      (r->scoring_system == SCORE_OLYMPIAD && !r->accepting_mode)) {
+    is_kirov = 1;
+  }
+
+  if (is_kirov) {
+    fprintf(f, _("<big>%d total tests runs, %d passed, %d failed.<br>\n"),
+            r->run_tests, r->tests_passed, r->run_tests - r->tests_passed);
+    fprintf(f, _("Score gained: %d (out of %d).<br><br></big>\n"),
+            r->score, r->max_score);
+  } else {
+    if (r->status != RUN_OK && r->status != RUN_ACCEPTED) {
+      fprintf(f, _("<big>Failed test: %d.<br><br></big>\n"), r->failed_test);
+    }
+  }
+
+  if (r->comment) {
+    s = html_armor_string_dup(r->comment);
+    fprintf(f, "<big>Note: %s.<br><br></big>\n", s);
+    xfree(s);
+  }
+
+  for (i = 0; i < r->run_tests; i++) {
+    if (!(t = r->tests[i])) continue;
+    if (t->comment) {
+      need_comment = 1;
+      break;
+    }
+  }
+
+  fprintf(f,
+          "<table border=\"1\">"
+          "<tr><th>N</th><th>%s</th><th>%s</th><th>%s</th>",
+          _("Result"), _("Time (sec)"), _("Extra info"));
+  if (is_kirov) {
+    fprintf(f, "<th>%s</th>", _("Score"));
+  }
+  if (need_comment) {
+    fprintf(f, "<th>%s</th>", _("Comment"));
+  }
+  fprintf(f, "<th>%s</th>", _("Link"));
+  fprintf(f, "</tr>\n");
+  for (i = 0; i < r->run_tests; i++) {
+    if (!(t = r->tests[i])) continue;
+    fprintf(f, "<tr>");
+    fprintf(f, "<td>%d</td>", t->num);
+    if (t->status == RUN_OK || t->status == RUN_ACCEPTED) {
+      font_color = "green";
+    } else {
+      font_color = "red";
+    }
+    fprintf(f, "<td><font color=\"%s\">%s</font></td>\n",
+            font_color, run_status_str(t->status, 0, 0));
+    fprintf(f, "<td>%d.%03d</td>", t->time / 1000, t->time % 1000);
+    // extra information
+    fprintf(f, "<td>");
+    switch (t->status) {
+    case RUN_OK:
+    case RUN_ACCEPTED:
+      if (t->checker_comment) {
+        s = html_armor_string_dup(t->checker_comment);
+        fprintf(f, "%s", s);
+        xfree(s);
+      } else {
+        fprintf(f, "&nbsp;");
+      }
+      break;
+
+    case RUN_RUN_TIME_ERR:
+      if (t->term_signal >= 0) {
+        fprintf(f, "%s %d (%s)", _("Signal"), t->term_signal,
+                os_GetSignalString(t->term_signal));
+      } else {
+        fprintf(f, "%s %d", _("Exit code"), t->exit_code);
+      }
+      break;
+
+    case RUN_TIME_LIMIT_ERR:
+      fprintf(f, "&nbsp;");
+      break;
+
+    case RUN_PRESENTATION_ERR:
+    case RUN_WRONG_ANSWER_ERR:
+      if (t->checker_comment) {
+        s = html_armor_string_dup(t->checker_comment);
+        fprintf(f, "%s", s);
+        xfree(s);
+      } else {
+        fprintf(f, "&nbsp;");
+      }
+      break;
+
+    case RUN_CHECK_FAILED: /* what to print here? */
+      fprintf(f, "&nbsp;");
+      break;
+
+    case RUN_MEM_LIMIT_ERR:
+    case RUN_SECURITY_ERR:
+      fprintf(f, "&nbsp;");
+      break;
+
+    default:
+      fprintf(f, "&nbsp;");
+    }
+    fprintf(f, "</td>");
+    if (is_kirov) {
+      fprintf(f, "<td>%d (%d)</td>", t->score, t->nominal_score);
+    }
+    if (need_comment) {
+      if (!t->comment) {
+        fprintf(f, "<td>&nbsp;</td>");
+      } else {
+        s = html_armor_string_dup(t->comment);
+        fprintf(f, "<td>%s</td>", s);
+        xfree(s);
+      }
+    }
+    // links to extra information
+    fprintf(f, "<td>");
+    // command line parameters (always inline)
+    if (t->args || t->args_too_long) {
+      snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dL\">", t->num);
+      closing_a = "</a>";
+    } else {
+      opening_a[0] = 0;
+      closing_a = "";
+    }
+    fprintf(f, "%sL%s", opening_a, closing_a);
+    // test input
+    if (r->archive_available) {
+      html_hyperref(opening_a, sizeof(opening_a), sid_mode, sid, self_url, extra_args,
+                    "action=%d&run_id=%d&test_num=%d",
+                    ACTION_VIEW_TEST_INPUT, r->run_id, t->num);
+      closing_a = "</a>";
+    } else if (t->input) {
+      snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dI\">", t->num);
+      closing_a = "</a>";
+    } else {
+      opening_a[0] = 0;
+      closing_a = "";
+    }
+    fprintf(f, "&nbsp;%sI%s", opening_a, closing_a);
+    // program output
+    if (r->archive_available && t->output_available) {
+      html_hyperref(opening_a, sizeof(opening_a), sid_mode, sid, self_url, extra_args,
+                    "action=%d&run_id=%d&test_num=%d",
+                    ACTION_VIEW_TEST_OUTPUT, r->run_id, t->num);
+      closing_a = "</a>";
+    } else if (t->output) {
+      snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dO\">", t->num);
+      closing_a = "</a>";
+    } else {
+      opening_a[0] = 0;
+      closing_a = "";
+    }
+    fprintf(f, "&nbsp;%sO%s", opening_a, closing_a);
+    // correct output (answer)
+    if (r->archive_available && r->correct_available) {
+      html_hyperref(opening_a, sizeof(opening_a), sid_mode, sid, self_url, extra_args,
+                    "action=%d&run_id=%d&test_num=%d",
+                    ACTION_VIEW_TEST_ANSWER, r->run_id, t->num);
+      closing_a = "</a>";
+    } else if (t->correct) {
+      snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dA\">", t->num);
+      closing_a = "</a>";
+    } else {
+      opening_a[0] = 0;
+      closing_a = "";
+    }
+    fprintf(f, "&nbsp;%sA%s", opening_a, closing_a);
+    // program stderr
+    if (r->archive_available && t->stderr_available) {
+      html_hyperref(opening_a, sizeof(opening_a), sid_mode, sid, self_url, extra_args,
+                    "action=%d&run_id=%d&test_num=%d",
+                    ACTION_VIEW_TEST_ERROR, r->run_id, t->num);
+      closing_a = "</a>";
+    } else if (t->error) {
+      snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dE\">", t->num);
+      closing_a = "</a>";
+    } else {
+      opening_a[0] = 0;
+      closing_a = "";
+    }
+    fprintf(f, "&nbsp;%sE%s", opening_a, closing_a);
+    // checker output
+    if (r->archive_available && t->checker_output_available) {
+      html_hyperref(opening_a, sizeof(opening_a), sid_mode, sid, self_url, extra_args,
+                    "action=%d&run_id=%d&test_num=%d",
+                    ACTION_VIEW_TEST_CHECKER, r->run_id, t->num);
+      closing_a = "</a>";
+    } else if (t->checker) {
+      snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dC\">", t->num);
+      closing_a = "</a>";
+    } else {
+      opening_a[0] = 0;
+      closing_a = "";
+    }
+    fprintf(f, "&nbsp;%sC%s", opening_a, closing_a);
+    // test info file
+    if (r->archive_available && r->info_available) {
+      html_hyperref(opening_a, sizeof(opening_a), sid_mode, sid, self_url, extra_args,
+                    "action=%d&run_id=%d&test_num=%d",
+                    ACTION_VIEW_TEST_INFO, r->run_id, t->num);
+      closing_a = "</a>";
+    } else {
+      opening_a[0] = 0;
+      closing_a = "";
+    }
+    fprintf(f, "&nbsp;%sF%s", opening_a, closing_a);
+    fprintf(f, "</td>");
+    fprintf(f, "</tr>\n");
+  }
+  fprintf(f, "</table>\n");
+
+  fprintf(f,
+          "<br><table><font size=\"-2\">\n"
+          "<tr><td>L</td><td>%s</td></tr>\n"
+          "<tr><td>I</td><td>%s</td></tr>\n"
+          "<tr><td>O</td><td>%s</td></tr>\n"
+          "<tr><td>A</td><td>%s</td></tr>\n"
+          "<tr><td>E</td><td>%s</td></tr>\n"
+          "<tr><td>C</td><td>%s</td></tr>\n"
+          "<tr><td>F</td><td>%s</td></tr>\n"
+          "</font></table>\n",
+          _("Command-line parameters"),
+          _("Test input"),
+          _("Program output"),
+          _("Correct output"),
+          _("Program output to stderr"),
+          _("Checker output"),
+          _("Additional test information"));
+
+
+  // print detailed test information
+  fprintf(f, "<pre>");
+  for (i = 0; i < r->run_tests; i++) {
+    if (!(t = r->tests[i])) continue;
+    if (!t->args && !t->args_too_long && !t->input
+        && !t->output && !t->error && !t->correct && !t->checker) continue;
+
+    fprintf(f, _("<b>====== Test #%d =======</b>\n"), t->num);
+    if (t->args || t->args_too_long) {
+      fprintf(f, "<a name=\"%dL\"></a>", t->num);
+      fprintf(f, _("<u>--- Command line arguments ---</u>\n"));
+      if (t->args_too_long) {
+        fprintf(f, _("<i>Command line is too long</i>\n"));
+      } else {
+        s = html_armor_string_dup(t->args);
+        fprintf(f, "%s", s);
+        xfree(s);
+      }
+    }
+    if (t->input) {
+      fprintf(f, "<a name=\"%dI\"></a>", t->num);
+      fprintf(f, _("<u>--- Input ---</u>\n"));
+      s = html_armor_string_dup(t->input);
+      fprintf(f, "%s", s);
+      xfree(s);
+    }
+    if (t->output) {
+      fprintf(f, "<a name=\"%dO\"></a>", t->num);
+      fprintf(f, _("<u>--- Output ---</u>\n"));
+      s = html_armor_string_dup(t->output);
+      fprintf(f, "%s", s);
+      xfree(s);
+    }
+    if (t->correct) {
+      fprintf(f, "<a name=\"%dA\"></a>", t->num);
+      fprintf(f, _("<u>--- Correct ---</u>\n"));
+      s = html_armor_string_dup(t->correct);
+      fprintf(f, "%s", s);
+      xfree(s);
+    }
+    if (t->correct) {
+      fprintf(f, "<a name=\"%dE\"></a>", t->num);
+      fprintf(f, _("<u>--- Stderr ---</u>\n"));
+      s = html_armor_string_dup(t->error);
+      fprintf(f, "%s", s);
+      xfree(s);
+    }
+    if (t->checker) {
+      fprintf(f, "<a name=\"%dC\"></a>", t->num);
+      fprintf(f, _("<u>--- Checker output ---</u>\n"));
+      s = html_armor_string_dup(t->checker);
+      fprintf(f, "%s", s);
+      xfree(s);
+    }
+  }
+  fprintf(f, "</pre>");
+
+  return 0;
+}
+
+static const char content_text_html[] = "content-type: text/html\n\n";
+static const char content_text_xml[] = "content-type: text/xml\n\n";
+
+int
 write_priv_report(FILE *f, int user_id, int priv_level,
                   int sid_mode, unsigned long long sid,
                   int team_report_flag,
@@ -1983,10 +2324,12 @@ write_priv_report(FILE *f, int user_id, int priv_level,
   if (rep_flag < 0 || generic_read_file(&rep_text, 0, &rep_len, rep_flag,0,rep_path, "") < 0) {
     fprintf(f, "<big><font color=\"red\">Cannot read report text!</font></big>\n");
   } else {
-    static const char content_type_str[] = "content-type: text/html\n\n";
 
-    if (!strncasecmp(rep_text, content_type_str, sizeof(content_type_str)-1)) {
-      fprintf(f, "%s", rep_text + sizeof(content_type_str) - 1);
+    if (!strncasecmp(rep_text, content_text_xml, sizeof(content_text_xml)-1)) {
+      write_xml_testing_report(f, rep_text + sizeof(content_text_xml) - 1,
+                               sid_mode, sid, self_url, extra_args);
+    } else if (!strncasecmp(rep_text, content_text_html, sizeof(content_text_html)-1)) {
+      fprintf(f, "%s", rep_text + sizeof(content_text_html) - 1);
     } else {
       html_len = html_armored_memlen(rep_text, rep_len);
       html_text = alloca(html_len + 16);
@@ -2754,6 +3097,267 @@ write_raw_report(FILE *f, const unsigned char *self_url, int run_id,
 
   if (fwrite(src_text, 1, src_len, f) != src_len) return -SRV_ERR_SYSTEM_ERROR;
   return 0;
+}
+
+int
+write_tests(FILE *f, int cmd, int run_id, int test_num)
+{
+  path_t rep_path;
+  path_t arch_path;
+  int rep_flag, errcode = 0;
+  char *rep_text = 0;
+  size_t rep_len = 0;
+  testing_report_xml_t r = 0;
+  struct testing_report_test *t = 0;
+  unsigned char fnbuf[64];
+  full_archive_t far = 0;
+  long arch_size, arch_raw_size;
+  unsigned int arch_flags;
+  const unsigned char *arch_data;
+  unsigned char *text = 0;
+  struct run_entry re;
+  struct section_problem_data *prb;
+  path_t path1, path2;
+  unsigned char *indir;
+  char *text2 = 0;
+  size_t text2_len = 0;
+
+  if (run_id < 0 || run_id >= run_get_total()) {
+    errcode = SRV_ERR_BAD_RUN_ID;
+    goto failure;
+  }
+  if (test_num <= 0) {
+    errcode = SRV_ERR_BAD_TEST_NUM;
+    goto failure;
+  }
+
+  rep_flag = archive_make_read_path(rep_path, sizeof(rep_path),
+                                    global->report_archive_dir, run_id, 0, 1);
+  if (rep_flag < 0) {
+    errcode = SRV_ERR_SYSTEM_ERROR;
+    goto failure;
+  }
+  if (generic_read_file(&rep_text, 0, &rep_len, rep_flag,0,rep_path, "") < 0) {
+    errcode = SRV_ERR_SYSTEM_ERROR;
+    goto failure;
+  }
+  if (strncasecmp(rep_text, content_text_xml, sizeof(content_text_xml)-1) != 0){
+    // we expect the master log in XML format
+    errcode = SRV_ERR_BAD_XML;
+    goto failure;
+  }
+  if (!(r = testing_report_parse_xml(rep_text + sizeof(content_text_xml)-1))) {
+    errcode = SRV_ERR_BAD_XML;
+    goto failure;
+  }
+  if (test_num > r->run_tests) {
+    errcode = SRV_ERR_BAD_TEST_NUM;
+    goto failure;
+  }
+
+  if (cmd == SRV_CMD_VIEW_TEST_ANSWER || cmd == SRV_CMD_VIEW_TEST_INPUT
+      || cmd == SRV_CMD_VIEW_TEST_INFO) {
+    if (run_get_entry(run_id, &re) < 0) {
+      errcode = SRV_ERR_SYSTEM_ERROR;
+      goto failure;
+    }
+    if (re.problem <= 0 || re.problem > max_prob || !(prb = probs[re.problem])) {
+      errcode = SRV_ERR_BAD_PROB_ID;
+      goto failure;
+    }
+
+    switch (cmd) {
+    case SRV_CMD_VIEW_TEST_INPUT:
+      indir = prb->test_dir;
+      if (prb->test_pat[0]) {
+        snprintf(path2, sizeof(path2), prb->test_pat, test_num);
+      } else {
+        snprintf(path2, sizeof(path2), "%03d%s", test_num, prb->test_sfx);
+      }
+      break;
+    case SRV_CMD_VIEW_TEST_ANSWER:
+      if (!prb->use_corr || !r->correct_available) {
+        errcode = SRV_ERR_NOT_SUPPORTED;
+        goto failure;
+      }
+      indir = prb->corr_dir;
+      if (prb->corr_pat[0]) {
+        snprintf(path2, sizeof(path2), prb->corr_pat, test_num);
+      } else {
+        snprintf(path2, sizeof(path2), "%03d%s", test_num, prb->corr_sfx);
+      }
+      break;
+    case SRV_CMD_VIEW_TEST_INFO:
+      if (!prb->use_info || !r->info_available) {
+        errcode = SRV_ERR_NOT_SUPPORTED;
+        goto failure;
+      }
+      indir = prb->info_dir;
+      if (prb->info_pat[0]) {
+        snprintf(path2, sizeof(path2), prb->info_pat, test_num);
+      } else {
+        snprintf(path2, sizeof(path2), "%03d%s", test_num, prb->info_sfx);
+      }
+      break;
+    default:
+      abort();
+    }
+
+    if ((prb->variant_num > 0 && r->variant <= 0)
+        || (prb->variant_num <= 0 && r->variant > 0)) { 
+      errcode = SRV_ERR_NOT_SUPPORTED;
+      goto failure;
+    }
+
+    if (r->variant > 0) {
+      snprintf(path1, sizeof(path1), "%s-%d/%s", indir, r->variant, path2);
+    } else {
+      snprintf(path1, sizeof(path1), "%s/%s", indir, path2);
+    }
+
+    if (generic_read_file(&text2, 0, &text2_len, 0, 0, path1, 0) < 0) {
+      errcode = SRV_ERR_SYSTEM_ERROR;
+      goto failure;
+    }
+
+    fprintf(f, "Content-type: text/plain\n\n");
+    if (text2_len > 0) {
+      if (fwrite(text2, 1, text2_len, f) != text2_len) {
+        err("write_tests: fwrite failed");
+        errcode = SRV_ERR_SYSTEM_ERROR;
+        goto failure;
+      }
+    }
+  } else {
+    t = r->tests[test_num - 1];
+    switch (cmd) {
+    case SRV_CMD_VIEW_TEST_OUTPUT:
+      if (!t->output_available) {
+        errcode = SRV_ERR_NOT_SUPPORTED;
+        goto failure;
+      }
+      snprintf(fnbuf, sizeof(fnbuf), "%06d.o", test_num);
+      break;
+    case SRV_CMD_VIEW_TEST_ERROR:
+      if (!t->stderr_available) {
+        errcode = SRV_ERR_NOT_SUPPORTED;
+        goto failure;
+      }
+      snprintf(fnbuf, sizeof(fnbuf), "%06d.e", test_num);
+      break;
+    case SRV_CMD_VIEW_TEST_CHECKER:
+      if (!t->checker_output_available) {
+        errcode = SRV_ERR_NOT_SUPPORTED;
+        goto failure;
+      }
+      snprintf(fnbuf, sizeof(fnbuf), "%06d.c", test_num);
+      break;
+    default:
+      abort();
+    }
+
+    rep_flag = archive_make_read_path(arch_path, sizeof(arch_path),
+                                      global->full_archive_dir, run_id, 0, 0);
+    if (rep_flag < 0) {
+      errcode = SRV_ERR_SYSTEM_ERROR;
+      goto failure;
+    }
+    if (!(far = full_archive_open_read(arch_path))) {
+      errcode = SRV_ERR_FILE_NOT_EXIST;
+      goto failure;
+    }
+    rep_flag = full_archive_find_file(far, fnbuf,
+                                      &arch_size,&arch_raw_size,&arch_flags,&arch_data);
+    if (rep_flag < 0) {
+      errcode = SRV_ERR_SYSTEM_ERROR;
+      goto failure;
+    }
+    if (!rep_flag) {
+      errcode = SRV_ERR_FILE_NOT_EXIST;
+      goto failure;
+    }
+
+    if (arch_raw_size > 0) {
+      text = (unsigned char*) xmalloc(arch_raw_size);
+      if (uncompress(text, &arch_raw_size, arch_data, arch_size) != Z_OK) {
+        err("write_tests: uncompress failed");
+        errcode = SRV_ERR_SYSTEM_ERROR;
+        goto failure;
+      }
+    }
+
+    fprintf(f, "Content-type: text/plain\n\n");
+    if (arch_raw_size > 0) {
+      if (fwrite(text, 1, arch_raw_size, f) != arch_raw_size) {
+        err("write_tests: fwrite failed");
+        errcode = SRV_ERR_SYSTEM_ERROR;
+        goto failure;
+      }
+    }
+  }
+
+  xfree(text2);
+  xfree(text);
+  full_archive_close(far);
+  xfree(rep_text);
+  testing_report_free(r);
+  return 0;
+
+ failure:
+  xfree(text2);
+  xfree(text);
+  full_archive_close(far);
+  testing_report_free(r);
+  xfree(rep_text);
+  return -errcode;
+}
+
+int
+write_audit_log(FILE *f, int run_id)
+{
+  int errcode = 0, rep_flag;
+  path_t audit_log_path;
+  struct stat stb;
+  char *audit_text = 0;
+  size_t audit_text_size = 0;
+
+  if (run_id < 0 || run_id >= run_get_total()) {
+    errcode = SRV_ERR_BAD_RUN_ID;
+    goto failure;
+  }
+
+  if ((rep_flag = archive_make_read_path(audit_log_path, sizeof(audit_log_path),
+                                         global->audit_log_dir, run_id, 0, 0)) < 0) {
+    goto empty_log;
+  }
+
+  if (lstat(audit_log_path, &stb) < 0) goto empty_log;
+  if (!S_ISREG(stb.st_mode)) {
+    errcode = SRV_ERR_SYSTEM_ERROR;
+    goto failure;
+  }
+
+  if (generic_read_file(&audit_text, 0, &audit_text_size, 0, 0, audit_log_path, 0)<0) {
+    errcode = SRV_ERR_SYSTEM_ERROR;
+    goto failure;
+  }
+
+  fprintf(f, "Content-type: text/plain\n\n");
+  if (audit_text_size > 0) {
+    if (fwrite(audit_text, 1, audit_text_size, f) != audit_text_size) {
+      err("write_tests: fwrite failed");
+      errcode = SRV_ERR_SYSTEM_ERROR;
+      goto failure;
+    }
+  }
+  return 0;
+
+ empty_log:
+  fprintf(f, "Content-type: text/plain\n\n");
+  return 0;
+
+ failure:
+  return -errcode;
 }
 
 /**
