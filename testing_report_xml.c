@@ -585,10 +585,12 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
     xml_err_elem_undefined(t, TR_T_TESTS);
     return -1;
   }
+  /*
   if (t->first_down->right) {
     xml_err_elem_not_allowed(t->first_down->right);
     return -1;
   }
+  */
 
   XCALLOC(r->tests, r->run_tests);
 
