@@ -35,6 +35,7 @@
 #include "compile_packet.h"
 #include "run_packet.h"
 #include "curtime.h"
+#include "xml_utils.h"
 
 #include "misctext.h"
 #include "base64.h"
@@ -659,6 +660,54 @@ cmd_pass_descriptors(struct client_state *p, int len,
   p->state = STATE_READ_FDS;
 }
 
+static void append_audit_log(int, struct client_state *, const char *, ...)
+  __attribute__((format(printf, 3, 4)));
+static void
+append_audit_log(int run_id, struct client_state *p, const char *format, ...)
+{
+  unsigned char buf[16384];
+  unsigned char tbuf[128];
+  va_list args;
+  struct tm *ltm;
+  path_t audit_path;
+  FILE *f;
+  unsigned char *login;
+  size_t buf_len;
+
+  va_start(args, format);
+  vsnprintf(buf, sizeof(buf), format, args);
+  va_end(args);
+  buf_len = strlen(buf);
+  while (buf_len > 0 && isspace(buf[buf_len - 1])) buf[--buf_len] = 0;
+
+  ltm = localtime(&current_time);
+  snprintf(tbuf, sizeof(tbuf), "%04d/%02d/%02d %02d:%02d:%02d",
+           ltm->tm_year + 1900, ltm->tm_mon + 1, ltm->tm_mday,
+           ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
+
+  archive_make_write_path(audit_path, sizeof(audit_path),
+                          global->audit_log_dir, run_id, 0, 0);
+  if (archive_dir_prepare(global->audit_log_dir, run_id, 0, 1) < 0) return;
+  if (!(f = fopen(audit_path, "a"))) return;
+
+  fprintf(f, "Date: %s\n", tbuf);
+  if (!p) {
+    fprintf(f, "From: SYSTEM\n");
+  } else if (p->user_id <= 0) {
+    fprintf(f, "From: unauthentificated user\n");
+  } else if (!(login = teamdb_get_login(p->user_id))) {
+    fprintf(f, "From: user %d (login unknown)\n", p->user_id);
+  } else {
+    fprintf(f, "From: %s (uid %d)\n", login, p->user_id);
+  }
+  if (p) {
+    fprintf(f, "Ip: %s\n", xml_unparse_ip(p->ip));
+  }
+  fprintf(f, "%s\n\n", buf);
+
+  fclose(f);
+}
+
 static void
 cmd_team_get_archive(struct client_state *p, int len,
                      struct prot_serve_pkt_get_archive *pkt)
@@ -1097,9 +1146,10 @@ cmd_view(struct client_state *p, int len,
   char *html_ptr = 0;
   size_t html_len = 0;
   struct client_state *q;
-  int r = 0, accepting_mode = 0;
+  int r = 0, accepting_mode = 0, need_priv_check = 1;
   FILE *f;
   opcap_t caps;
+  struct run_entry re;
 
   if (get_peer_local_user(p) < 0) return;
 
@@ -1136,7 +1186,10 @@ cmd_view(struct client_state *p, int len,
     err("%d: sid_mode %d is invalid", p->id, pkt->sid_mode);
     return;
   }
-  if (get_cnts_caps(p->user_id, &caps) < 0) {
+
+  if (pkt->b.id == SRV_CMD_SHOW_REPORT) need_priv_check = 0;
+
+  if (need_priv_check && get_cnts_caps(p->user_id, &caps) < 0) {
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     err("%d: cannot get capabilities", p->id);
     return;
@@ -1388,6 +1441,63 @@ cmd_view(struct client_state *p, int len,
 
     write_raw_standings(f, global->charset);
     break;
+
+  case SRV_CMD_VIEW_TEST_INPUT:
+  case SRV_CMD_VIEW_TEST_OUTPUT:
+  case SRV_CMD_VIEW_TEST_ANSWER:
+  case SRV_CMD_VIEW_TEST_ERROR:
+  case SRV_CMD_VIEW_TEST_CHECKER:
+  case SRV_CMD_VIEW_TEST_INFO:
+    /* either user has priv_level > 0, OPCAP_VIEW_REPORT cap bit
+     * or team_show_judge_report is on, and the user is the author
+     */
+    if (!p->priv_level) {
+      if (!global->team_show_judge_report) {
+        err("%d: user %d attempted to view judge report", p->id, p->user_id);
+        r = -SRV_ERR_NO_PERMS;
+        break;
+      }
+      if (run_get_entry(pkt->item, &re) < 0 || re.team != p->user_id) {
+        err("%d: user %d tries to view another's runs", p->id, p->user_id);
+        r = -SRV_ERR_NO_PERMS;
+        break;
+      }
+    } else {
+      if (!check_cnts_caps(p->user_id, OPCAP_VIEW_REPORT)) {
+        err("%d: user %d has no capability %d for the contest",
+            p->id, p->user_id, OPCAP_VIEW_REPORT);
+        r = -SRV_ERR_NO_PERMS;
+        break;
+      }
+    }
+    r = write_tests(f, pkt->b.id, pkt->item, pkt->item2);
+    break;
+
+  case SRV_CMD_VIEW_AUDIT_LOG:
+    if (!check_cnts_caps(p->user_id, OPCAP_CONTROL_CONTEST)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_CONTROL_CONTEST);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+    r = write_audit_log(f, pkt->item);
+    break;
+
+  case SRV_CMD_SHOW_REPORT:
+    // this is unprivileged command
+    if (run_get_entry(pkt->item, &re) < 0 || re.team != p->user_id) {
+      err("%d: user %d tries to view another's runs", p->id, p->user_id);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+    l10n_setlocale(pkt->item2);
+    r = new_write_user_report_view(f, p->user_id, pkt->item,
+                                   pkt->sid_mode, p->cookie,
+                                   self_url_ptr, hidden_vars_ptr, extra_args_ptr);
+    l10n_setlocale(0);
+
+    break;
+
   default:
     err("%d: operation is not yet supported", p->id);
     fprintf(f, "<h2>Operation is not yet supported.</h2>\n");
@@ -1716,7 +1826,7 @@ cmd_team_show_item(struct client_state *p, int len,
     r = new_write_user_source_view(f, pkt->user_id, pkt->item_id);
     break;
   case SRV_CMD_SHOW_REPORT:
-    r = new_write_user_report_view(f, pkt->user_id, pkt->item_id);
+    r = new_write_user_report_view(f, pkt->user_id, pkt->item_id, 0, 0, 0, 0, 0);
     break;
   case SRV_CMD_VIRTUAL_STANDINGS:
     if (!global->virtual) r = -SRV_ERR_ONLY_VIRTUAL;
@@ -1771,12 +1881,18 @@ move_files_to_insert_run(int run_id)
     if (global->team_enable_rep_view) {
       archive_remove(global->team_report_archive_dir, i + 1, 0);
     }
+    if (global->enable_full_archive) {
+      archive_remove(global->full_archive_dir, i + 1, 0);
+    }
     s = run_get_status(i);
     if (s >= RUN_PSEUDO_FIRST && s <= RUN_PSEUDO_LAST) continue;
     archive_rename(global->run_archive_dir, 0, i, 0, i + 1, 0, 0);
     archive_rename(global->report_archive_dir, 0, i, 0, i + 1, 0, 0);
     if (global->team_enable_rep_view) {
       archive_rename(global->team_report_archive_dir, 0, i, 0, i + 1, 0, 0);
+    }
+    if (global->enable_full_archive) {
+      archive_rename(global->full_archive_dir, 0, i, 0, i + 1, 0, 0);
     }
   }
 }
@@ -1905,7 +2021,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  if (archive_dir_prepare(global->run_archive_dir, run_id, 0) < 0) {
+  if (archive_dir_prepare(global->run_archive_dir, run_id, 0, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -2008,7 +2124,7 @@ cmd_upload_report(struct client_state *p, int len,
     wflags = archive_make_write_path(wpath, sizeof(wpath),
                                      global->report_archive_dir,
                                      pkt->run_id, pkt->report_size, 0);
-    if (archive_dir_prepare(global->report_archive_dir, pkt->run_id, 0) < 0) {
+    if (archive_dir_prepare(global->report_archive_dir, pkt->run_id, 0, 0) < 0) {
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
     }
@@ -2023,7 +2139,7 @@ cmd_upload_report(struct client_state *p, int len,
     wflags = archive_make_write_path(wpath, sizeof(wpath),
                                      global->team_report_archive_dir,
                                      pkt->run_id, pkt->report_size, 0);
-    if (archive_dir_prepare(global->team_report_archive_dir,pkt->run_id,0)< 0){
+    if (archive_dir_prepare(global->team_report_archive_dir,pkt->run_id,0,0)< 0){
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
     }
@@ -2211,7 +2327,7 @@ cmd_team_submit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  if (archive_dir_prepare(global->run_archive_dir, run_id, 0) < 0) {
+  if (archive_dir_prepare(global->run_archive_dir, run_id, 0, 0) < 0) {
     run_undo_add_record(run_id);
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
@@ -2541,10 +2657,10 @@ cmd_judge_command_0(struct client_state *p, int len,
 }
 #endif /* cmd_judge_command_0 is not compiled */
 
-static void do_rejudge_all(void);
-static void do_judge_suspended(void);
-static void do_rejudge_problem(int);
-static void do_rejudge_by_mask(int, unsigned long *);
+static void do_rejudge_all(struct client_state *p);
+static void do_judge_suspended(struct client_state *p);
+static void do_rejudge_problem(int, struct client_state *p);
+static void do_rejudge_by_mask(int, unsigned long *, struct client_state *p);
 static int count_transient_runs(void);
 
 static void
@@ -2561,6 +2677,9 @@ do_squeeze_runs(void)
       if (global->team_enable_rep_view) {
         archive_rename(global->team_report_archive_dir, 0, i, 0, j, 0, 0);
       }
+      if (global->enable_full_archive) {
+        archive_rename(global->full_archive_dir, 0, i, 0, j, 0, 0);
+      }
     }
     j++;
   }
@@ -2569,6 +2688,9 @@ do_squeeze_runs(void)
     archive_remove(global->report_archive_dir, j, 0);
     if (global->team_enable_rep_view) {
       archive_remove(global->team_report_archive_dir, j, 0);
+    }
+    if (global->enable_full_archive) {
+      archive_remove(global->full_archive_dir, j, 0);
     }
   }
   run_squeeze_log();
@@ -2603,7 +2725,7 @@ cmd_rejudge_by_mask(struct client_state *p, int len,
     return;
   }
 
-  do_rejudge_by_mask(pkt->mask_size, pkt->mask);
+  do_rejudge_by_mask(pkt->mask_size, pkt->mask, p);
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -2813,6 +2935,7 @@ cmd_priv_command_0(struct client_state *p, int len,
     clear_directory(global->report_archive_dir);
     clear_directory(global->run_archive_dir);
     clear_directory(global->team_report_archive_dir);
+    clear_directory(global->full_archive_dir);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_START:
@@ -2872,7 +2995,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
 
-    do_rejudge_all();
+    do_rejudge_all(p);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_JUDGE_SUSPENDED:
@@ -2883,7 +3006,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
 
-    do_judge_suspended();
+    do_judge_suspended(p);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_REJUDGE_PROBLEM:
@@ -2899,7 +3022,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
       return;
     }
-    do_rejudge_problem(pkt->v.i);
+    do_rejudge_problem(pkt->v.i, p);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_SCHEDULE:
@@ -3122,7 +3245,7 @@ cmd_simple_command(struct client_state *p, int len,
   }
 }
 
-static void rejudge_run(int run_id, int force_full_rejudge);
+static void rejudge_run(int run_id, struct client_state *p, int force_full_rejudge);
 
 static void
 cmd_edit_run(struct client_state *p, int len,
@@ -3361,7 +3484,7 @@ cmd_edit_run(struct client_state *p, int len,
 
   if ((run_flags & RUN_ENTRY_STATUS)
       && (run.status == RUN_REJUDGE || run.status == RUN_FULL_REJUDGE)) {
-    rejudge_run(pkt->run_id, (run.status == RUN_FULL_REJUDGE));
+    rejudge_run(pkt->run_id, p, (run.status == RUN_FULL_REJUDGE));
   }
   info("%d: edit_run: ok", p->id);
   new_send_reply(p, SRV_RPL_OK);
@@ -3595,7 +3718,7 @@ cmd_new_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  if (archive_dir_prepare(global->run_archive_dir, run_id, 0) < 0) {
+  if (archive_dir_prepare(global->run_archive_dir, run_id, 0, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -3811,7 +3934,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
     /* if status change fails, we cannot do reasonable recovery */
     if (run_change_status(comp_pkt->run_id, RUN_CHECK_FAILED, 0, -1, 0) < 0)
       goto non_fatal_error;
-    if (archive_dir_prepare(global->report_archive_dir, comp_pkt->run_id, 0) < 0)
+    if (archive_dir_prepare(global->report_archive_dir, comp_pkt->run_id, 0, 0) < 0)
       goto non_fatal_error;
     if (generic_copy_file(REMOVE, compile_report_dir, pname, "",
                           rep_flags, 0, rep_path, "") < 0) {
@@ -3828,7 +3951,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
       goto non_fatal_error;
 
     if (global->team_enable_rep_view) {
-      if (archive_dir_prepare(global->team_report_archive_dir, comp_pkt->run_id,0)<0) {
+      if (archive_dir_prepare(global->team_report_archive_dir,comp_pkt->run_id,0,0)<0) {
         snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
                  global->team_report_archive_dir, comp_pkt->run_id);
         goto report_check_failed;
@@ -3840,7 +3963,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
         goto report_check_failed;
       }
     }
-    if (archive_dir_prepare(global->report_archive_dir, comp_pkt->run_id, 0) < 0) {
+    if (archive_dir_prepare(global->report_archive_dir, comp_pkt->run_id, 0, 0) < 0) {
       snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
                global->report_archive_dir, comp_pkt->run_id);
       goto report_check_failed;
@@ -3939,6 +4062,8 @@ read_compile_packet(const unsigned char *compile_status_dir,
   run_pkt->user_id = re.team;
   run_pkt->html_report = global->html_report;
   run_pkt->disable_sound = global->disable_sound;
+  run_pkt->xml_report = global->xml_report;
+  run_pkt->full_archive = global->enable_full_archive;
   run_pkt->ts1 = comp_pkt->ts1;
   run_pkt->ts1_us = comp_pkt->ts1_us;
   run_pkt->ts2 = comp_pkt->ts2;
@@ -4002,7 +4127,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
   rep_flags = archive_make_write_path(rep_path, sizeof(rep_path),
                                       global->report_archive_dir, comp_pkt->run_id,
                                       report_size, 0);
-  if (archive_dir_prepare(global->report_archive_dir, comp_pkt->run_id, 0) < 0)
+  if (archive_dir_prepare(global->report_archive_dir, comp_pkt->run_id, 0, 0) < 0)
     goto non_fatal_error;
   /* error code is ignored */
   generic_write_file(errmsg, report_size, rep_flags, 0, rep_path, 0);
@@ -4015,19 +4140,61 @@ read_compile_packet(const unsigned char *compile_status_dir,
   return 0;
 }
 
+static unsigned char *
+time_to_str(unsigned char *buf, size_t size, int secs, int usecs)
+{
+  struct tm *ltm;
+  time_t tt = secs;
+
+  if (secs <= 0) {
+    snprintf(buf, size, "N/A");
+    return buf;
+  }
+  ltm = localtime(&tt);
+  snprintf(buf, size, "%04d/%02d/%02d %02d:%02d:%02d.%06d",
+           ltm->tm_year + 1900, ltm->tm_mon + 1, ltm->tm_mday,
+           ltm->tm_hour, ltm->tm_min, ltm->tm_sec, usecs);
+  return buf;
+}
+static unsigned char *
+dur_to_str(unsigned char *buf, size_t size, int sec1, int usec1,
+           int sec2, int usec2)
+{
+  long long d;
+
+  if (sec1 <= 0 || sec2 <= 0) {
+    snprintf(buf, size, "N/A");
+    return buf;
+  }
+  if ((d = sec2 * 1000000 + usec2 - (sec1 * 1000000 + usec1)) < 0) {
+    snprintf(buf, size, "t1 > t2");
+    return buf;
+  }
+  d = (d + 500) / 1000;
+  snprintf(buf, size, "%lld.%03lld", d / 1000, d % 1000);
+  return buf;
+}
+
 static int
 read_run_packet(const unsigned char *run_status_dir,
                 const unsigned char *run_report_dir,
                 const unsigned char *run_team_report_dir,
+                const unsigned char *run_full_archive_dir,
                 char *pname)
 {
-  path_t rep_path, team_path;
-  int r, rep_flags, rep_size, team_flags, team_size;
+  path_t rep_path, team_path, full_path;
+  int r, rep_flags, rep_size, team_flags, team_size, full_flags;
   struct run_entry re;
   void *reply_buf = 0;
   size_t reply_buf_size = 0;
   struct run_reply_packet *reply_pkt = 0;
+  char *audit_text = 0;
+  size_t audit_text_size = 0;
+  FILE *f = 0;
+  int ts8, ts8_us;
+  unsigned char time_buf[64];
 
+  get_current_time(&ts8, &ts8_us);
   r = generic_read_file((char**) &reply_buf, 0, &reply_buf_size, SAFE | REMOVE,
                         run_status_dir, pname, "");
   if (r < 0) return -1;
@@ -4094,7 +4261,7 @@ read_run_packet(const unsigned char *run_status_dir,
                                       global->report_archive_dir,
                                       reply_pkt->run_id,
                                       rep_size, 0);
-  if (archive_dir_prepare(global->report_archive_dir, reply_pkt->run_id, 0) < 0)
+  if (archive_dir_prepare(global->report_archive_dir, reply_pkt->run_id, 0, 0) < 0)
     return -1;
   if (generic_copy_file(REMOVE, run_report_dir, pname, "",
                         rep_flags, 0, rep_path, "") < 0)
@@ -4105,12 +4272,69 @@ read_run_packet(const unsigned char *run_status_dir,
                                          global->team_report_archive_dir,
                                          reply_pkt->run_id, team_size, 0);
     if (archive_dir_prepare(global->team_report_archive_dir,
-                            reply_pkt->run_id, 0) < 0)
+                            reply_pkt->run_id, 0, 0) < 0)
       return -1;
     if (generic_copy_file(REMOVE, run_team_report_dir, pname, "",
                           team_flags, 0, team_path, "") < 0)
       return -1;
   }
+  if (global->enable_full_archive) {
+    full_flags = archive_make_write_path(full_path, sizeof(full_path),
+                                         global->full_archive_dir,
+                                         reply_pkt->run_id, 0, 0);
+    if (archive_dir_prepare(global->full_archive_dir, reply_pkt->run_id, 0, 0) < 0)
+      return -1;
+    if (generic_copy_file(REMOVE, run_full_archive_dir, pname, "",
+                          0, 0, full_path, "") < 0)
+      return -1;
+  }
+
+  /* add auditing information */
+  if (!(f = open_memstream(&audit_text, &audit_text_size))) return 1;
+  fprintf(f, "Judging complete\n");
+  fprintf(f, "Profiling information:\n");
+  fprintf(f, "  Request start time:                %s\n",
+          time_to_str(time_buf, sizeof(time_buf),
+                      reply_pkt->ts1, reply_pkt->ts1_us));
+  fprintf(f, "  Request completion time:           %s\n",
+          time_to_str(time_buf, sizeof(time_buf),
+                      ts8, ts8_us));
+  fprintf(f, "  Total testing duration:            %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts1, reply_pkt->ts1_us,
+                     ts8, ts8_us));
+  fprintf(f, "  Waiting in compile queue duration: %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts1, reply_pkt->ts1_us,
+                     reply_pkt->ts2, reply_pkt->ts2_us));
+  fprintf(f, "  Compilation duration:              %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts2, reply_pkt->ts2_us,
+                     reply_pkt->ts3, reply_pkt->ts3_us));
+  fprintf(f, "  Waiting in serve queue duration:   %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts3, reply_pkt->ts3_us,
+                     reply_pkt->ts4, reply_pkt->ts4_us));
+  fprintf(f, "  Waiting in run queue duration:     %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts4, reply_pkt->ts4_us,
+                     reply_pkt->ts5, reply_pkt->ts5_us));
+  fprintf(f, "  Testing duration:                  %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts5, reply_pkt->ts5_us,
+                     reply_pkt->ts6, reply_pkt->ts6_us));
+  fprintf(f, "  Post-processing duration:          %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts6, reply_pkt->ts6_us,
+                     reply_pkt->ts7, reply_pkt->ts7_us));
+  fprintf(f, "  Waiting in serve queue duration:   %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts7, reply_pkt->ts7_us,
+                     ts8, ts8_us));
+  fprintf(f, "\n");
+  fclose(f);
+  append_audit_log(reply_pkt->run_id, 0, "%s", audit_text);
+
   return 1;
 
  bad_packet_error:
@@ -4243,7 +4467,7 @@ queue_compile_request(unsigned char const *str, int len,
 }
 
 static void
-rejudge_run(int run_id, int force_full_rejudge)
+rejudge_run(int run_id, struct client_state *p, int force_full_rejudge)
 {
   struct run_entry re;
   int accepting_mode = -1;
@@ -4266,6 +4490,8 @@ rejudge_run(int run_id, int force_full_rejudge)
                         langs[re.language]->src_sfx,
                         langs[re.language]->compiler_env,
                         accepting_mode);
+
+  append_audit_log(run_id, p, "Rejudge");
 }
 
 static int
@@ -4284,7 +4510,7 @@ count_transient_runs(void)
 }
 
 static void
-do_rejudge_all(void)
+do_rejudge_all(struct client_state *p)
 {
   int total_runs, r;
   struct run_entry re;
@@ -4321,7 +4547,7 @@ do_rejudge_all(void)
       idx = re.team * total_probs + re.problem;
       if (flag[idx]) continue;
       flag[idx] = 1;
-      rejudge_run(r, 0);
+      rejudge_run(r, p, 0);
     }
     return;
   }
@@ -4337,13 +4563,13 @@ do_rejudge_all(void)
         && !langs[re.language]->disable_testing
         && !re.is_readonly
         && !re.is_imported) {
-      rejudge_run(r, 0);
+      rejudge_run(r, p, 0);
     }
   }
 }
 
 static void
-do_judge_suspended(void)
+do_judge_suspended(struct client_state *p)
 {
   int total_runs, r;
   struct run_entry re;
@@ -4365,13 +4591,13 @@ do_judge_suspended(void)
         && !probs[re.problem]->disable_auto_testing
         && !langs[re.language]->disable_testing
         && !langs[re.language]->disable_auto_testing) {
-      rejudge_run(r, 0);
+      rejudge_run(r, p, 0);
     }
   }
 }
 
 static void
-do_rejudge_problem(int prob_id)
+do_rejudge_problem(int prob_id, struct client_state *p)
 {
   int total_runs, r;
   struct run_entry re;
@@ -4401,7 +4627,7 @@ do_rejudge_problem(int prob_id)
       if (flag[re.team]) continue;
       if (!langs[re.language] || langs[re.language]->disable_testing) continue;
       flag[re.team] = 1;
-      rejudge_run(r, 0);
+      rejudge_run(r, p, 0);
     }
     return;
   }
@@ -4413,7 +4639,7 @@ do_rejudge_problem(int prob_id)
         && re.status != RUN_IGNORED
         && re.status != RUN_DISQUALIFIED
         && !re.is_imported) {
-      rejudge_run(r, 0);
+      rejudge_run(r, p, 0);
     }
   }
 }
@@ -4421,7 +4647,7 @@ do_rejudge_problem(int prob_id)
 #define BITS_PER_LONG (8*sizeof(unsigned long)) 
 
 static void
-do_rejudge_by_mask(int mask_size, unsigned long *mask)
+do_rejudge_by_mask(int mask_size, unsigned long *mask, struct client_state *p)
 {
   int total_runs, r;
   struct run_entry re;
@@ -4464,7 +4690,7 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask)
       idx = re.team * total_probs + re.problem;
       if (flag[idx]) continue;
       flag[idx] = 1;
-      rejudge_run(r, 0);
+      rejudge_run(r, p, 0);
     }
     return;
   }
@@ -4481,7 +4707,7 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask)
         && !re.is_readonly
         && !re.is_imported
         && (mask[r / BITS_PER_LONG] & (1 << (r % BITS_PER_LONG)))) {
-      rejudge_run(r, 0);
+      rejudge_run(r, p, 0);
     }
   }
 }
@@ -4518,7 +4744,7 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_GET_ARCHIVE] { cmd_team_get_archive },
   [SRV_CMD_SHOW_CLAR] { cmd_team_show_item },
   [SRV_CMD_SHOW_SOURCE] { cmd_team_show_item },
-  [SRV_CMD_SHOW_REPORT] { cmd_team_show_item },
+  [SRV_CMD_SHOW_REPORT] { cmd_view },
   [SRV_CMD_SUBMIT_RUN] { cmd_team_submit_run },
   [SRV_CMD_SUBMIT_CLAR] { cmd_team_submit_clar },
   [SRV_CMD_TEAM_PAGE] { cmd_team_page },
@@ -4580,6 +4806,13 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_RESET_CLAR_FILTER] { cmd_reset_filter },
   [SRV_CMD_HAS_TRANSIENT_RUNS] { cmd_priv_command_0 },
   [SRV_CMD_GET_TEST_SUSPEND] { cmd_simple_command },
+  [SRV_CMD_VIEW_TEST_INPUT] { cmd_view },
+  [SRV_CMD_VIEW_TEST_OUTPUT] { cmd_view },
+  [SRV_CMD_VIEW_TEST_ANSWER] { cmd_view },
+  [SRV_CMD_VIEW_TEST_ERROR] { cmd_view },
+  [SRV_CMD_VIEW_TEST_CHECKER] { cmd_view },
+  [SRV_CMD_VIEW_TEST_INFO] { cmd_view },
+  [SRV_CMD_VIEW_AUDIT_LOG] { cmd_view },
 };
 
 static void
@@ -5120,13 +5353,15 @@ struct run_dir_item
   unsigned char *status_dir;
   unsigned char *report_dir;
   unsigned char *team_report_dir;
+  unsigned char *full_report_dir;
 };
 static struct run_dir_item *run_dirs = 0;
 static int run_dirs_u = 0, run_dirs_a = 0;
 static int
 do_build_run_dirs(const unsigned char *status_dir,
                   const unsigned char *report_dir,
-                  const unsigned char *team_report_dir)
+                  const unsigned char *team_report_dir,
+                  const unsigned char *full_report_dir)
 {
   int i;
 
@@ -5146,6 +5381,7 @@ do_build_run_dirs(const unsigned char *status_dir,
   run_dirs[run_dirs_u].status_dir = xstrdup(status_dir);
   run_dirs[run_dirs_u].report_dir = xstrdup(report_dir);
   run_dirs[run_dirs_u].team_report_dir = xstrdup(team_report_dir);
+  run_dirs[run_dirs_u].full_report_dir = xstrdup(full_report_dir);
   return run_dirs_u++;
 }
 static void
@@ -5157,7 +5393,8 @@ build_run_dirs(void)
     if (!testers[i]) continue;
     do_build_run_dirs(testers[i]->run_status_dir,
                       testers[i]->run_report_dir,
-                      testers[i]->run_team_report_dir);
+                      testers[i]->run_team_report_dir,
+                      testers[i]->run_full_archive_dir);
   }
 }
 
@@ -5281,6 +5518,7 @@ do_loop(void)
       if (read_run_packet(run_dirs[i].status_dir,
                           run_dirs[i].report_dir,
                           run_dirs[i].team_report_dir,
+                          run_dirs[i].full_report_dir,
                           packetname) < 0) return -1;
       may_wait_flag = 0;
     }
