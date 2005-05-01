@@ -360,6 +360,11 @@ generate_xml_report(struct run_request_packet *req_pkt,
       fprintf(f, " comment=\"%s\"", msg);
       xfree(msg);
     }
+    if (tests[i].team_comment && tests[i].team_comment[0]) {
+      msg = html_armor_string_dup(tests[i].team_comment);
+      fprintf(f, " team-comment=\"%s\"", msg);
+      xfree(msg);
+    }
     if ((tests[i].status == RUN_WRONG_ANSWER_ERR 
          || tests[i].status == RUN_PRESENTATION_ERR || tests[i].status == RUN_OK)
         && tests[i].chk_out_size > 0 && tests[i].chk_out && tests[i].chk_out[0]) {
