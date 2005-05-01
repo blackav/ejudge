@@ -24,6 +24,7 @@
 #include "interrupt.h"
 #include "run_packet.h"
 #include "curtime.h"
+#include "full_archive.h"
 
 #include "fileutl.h"
 #include "misctext.h"
@@ -61,6 +62,10 @@
 #define _(x) x
 #endif
 
+#ifndef EJUDGE_CHARSET
+#define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
+#endif /* EJUDGE_CHARSET */
+
 //#define MAX_TEST    514
 
 static int managed_mode_flag = 0;
@@ -75,15 +80,15 @@ struct testinfo
   int            max_score;     /* maximal score for this test */
   unsigned long  times;		/* execution time */
   char          *input;		/* the input */
-  size_t         input_size;
+  long           input_size;
   char          *output;	/* the output */
-  size_t         output_size;
+  long           output_size;
   char          *error;		/* the error */
-  size_t         error_size;
+  long           error_size;
   char          *correct;	/* the correct result */
-  size_t         correct_size;
+  long           correct_size;
   char          *chk_out;       /* checker's output */
-  size_t         chk_out_size;
+  long           chk_out_size;
   unsigned char *args;          /* command-line arguments */
   unsigned char *comment;       /* judge's comment */
   unsigned char *team_comment;  /* team's comment */
@@ -174,13 +179,13 @@ html_print_by_line(FILE *f, unsigned char const *s, size_t size)
   const unsigned char * const * trans_table;
 
   if (global->max_file_length > 0 && size > global->max_file_length) {
-    fprintf(f, "<i>(%s, %s = %zu)</i>\n",
+    fprintf(f, "(%s, %s = %zu)\n",
             _("file is too long"), _("size"), size);
     return;
   }
 
   if (!s) {
-    fprintf(f, "<i>(%s)</i>\n", _("file is missing"));
+    fprintf(f, "(%s)\n", _("file is missing"));
     return;
   }
 
@@ -236,47 +241,201 @@ print_by_line(FILE *f, char const *s, size_t size)
   putc('\n', f);
 }
 
-static unsigned char *
-time_to_str(unsigned char *buf, size_t size, int secs, int usecs)
+unsigned char *
+prepare_checker_comment(const unsigned char *str)
 {
-  struct tm *ltm;
-  time_t tt = secs;
+  size_t len = strlen(str);
+  unsigned char *wstr = alloca(len + 1), *p;
 
-  if (secs <= 0) {
-    snprintf(buf, size, "N/A");
-    return buf;
+  strcpy(wstr, str);
+  for (p = wstr; *p; *p++)
+    if (*p < ' ') *p = ' ';
+  for (--p; p >= wstr && *p == ' '; *p-- = 0);
+  if (p - wstr > 64) {
+    p = wstr + 60;
+    *p++ = '.';
+    *p++ = '.';
+    *p++ = '.';
+    *p = 0;
   }
-  ltm = localtime(&tt);
-  snprintf(buf, size, "%04d/%02d/%02d %02d:%02d:%02d.%06d",
-           ltm->tm_year + 1900, ltm->tm_mon + 1, ltm->tm_mday,
-           ltm->tm_hour, ltm->tm_min, ltm->tm_sec, usecs);
-  return buf;
+
+  return html_armor_string_dup(wstr);
 }
-static unsigned char *
-dur_to_str(unsigned char *buf, size_t size, int sec1, int usec1,
-           int sec2, int usec2)
-{
-  long long d;
 
-  if (sec1 <= 0 || sec2 <= 0) {
-    snprintf(buf, size, "N/A");
-    return buf;
-  }
-  if ((d = sec2 * 1000000 + usec2 - (sec1 * 1000000 + usec1)) < 0) {
-    snprintf(buf, size, "t1 > t2");
-    return buf;
-  }
-  d = (d + 500) / 1000;
-  snprintf(buf, size, "%lld.%03lld", d / 1000, d % 1000);
+static const char * const scoring_system_strs[] =
+{
+  [SCORE_ACM] "ACM",
+  [SCORE_KIROV] "KIROV",
+  [SCORE_OLYMPIAD] "OLYMPIAD",
+};
+static const unsigned char *
+unparse_scoring_system(unsigned char *buf, size_t size, int val)
+{
+  if (val >= SCORE_ACM && val <= SCORE_OLYMPIAD) return scoring_system_strs[val];
+  snprintf(buf, size, "scoring_%d", val);
   return buf;
 }
 
 static int
-generate_report(struct run_reply_packet *reply_pkt,
+generate_xml_report(struct run_request_packet *req_pkt,
+                    struct run_reply_packet *reply_pkt,
+                    const unsigned char *report_path,
+                    int variant, int scores, int max_score,
+                    int correct_available_flag,
+                    int info_available_flag,
+                    const unsigned char *additional_comment)
+{
+  FILE *f = 0;
+  unsigned char buf1[32], buf2[32];
+  int i;
+  unsigned char *msg = 0;
+
+  if (!(f = fopen(report_path, "w"))) {
+    err("generate_xml_report: cannot open protocol file %s", report_path);
+    return -1;
+  }
+
+  fprintf(f, "Content-type: text/xml\n\n");
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
+
+  run_status_to_str_short(buf1, sizeof(buf1), reply_pkt->status);
+  fprintf(f, "<testing-report run-id=\"%d\" judge-id=\"%d\" status=\"%s\" scoring=\"%s\" archive-available=\"%s\" run-tests=\"%d\"",
+          req_pkt->run_id, req_pkt->judge_id, buf1,
+          unparse_scoring_system(buf2, sizeof(buf2), req_pkt->scoring_system),
+          (req_pkt->full_archive)?"yes":"no", total_tests - 1);
+  if (correct_available_flag) {
+    fprintf(f, " correct-available=\"yes\"");
+  }
+  if (info_available_flag) {
+    fprintf(f, " info-available=\"yes\"");
+  }
+  if (variant > 0) {
+    fprintf(f, " variant=\"%d\"", variant);
+  }
+  if (req_pkt->scoring_system == SCORE_OLYMPIAD) {
+    fprintf(f, " accepting-mode=\"%s\"", req_pkt->accepting_mode?"yes":"no");
+  }
+  if (req_pkt->scoring_system == SCORE_OLYMPIAD && req_pkt->accepting_mode
+      && reply_pkt->status != RUN_ACCEPTED) {
+    fprintf(f, " failed-test=\"%d\"", total_tests - 1);
+  } else if (req_pkt->scoring_system == SCORE_ACM && reply_pkt->status != RUN_OK) {
+    fprintf(f, " failed-test=\"%d\"", total_tests - 1);
+  } else if (req_pkt->scoring_system == SCORE_OLYMPIAD && !req_pkt->accepting_mode) {
+    fprintf(f, " tests-passed=\"%d\" score=\"%d\" max-score=\"%d\"",
+            reply_pkt->failed_test - 1, reply_pkt->score, max_score);
+  } else if (req_pkt->scoring_system == SCORE_KIROV) {
+    fprintf(f, " tests-passed=\"%d\" score=\"%d\" max-score=\"%d\"",
+            reply_pkt->failed_test - 1, reply_pkt->score, max_score);
+  }
+  fprintf(f, " >\n");
+
+  if (additional_comment) {
+    msg = html_armor_string_dup(additional_comment);
+    fprintf(f, "  <comment>%s</comment>", msg);
+    xfree(msg);
+  }
+
+  fprintf(f, "  <tests>\n");
+
+  for (i = 1; i < total_tests; i++) {
+    run_status_to_str_short(buf1, sizeof(buf1), tests[i].status);
+    fprintf(f, "    <test num=\"%d\" status=\"%s\"", i, buf1);
+    if (tests[i].status == RUN_RUN_TIME_ERR) {
+      if (tests[i].code == 256) {
+        fprintf(f, " term-signal=\"%d\"", tests[i].termsig);
+      } else {
+        fprintf(f, " exit-code=\"%d\"", tests[i].code);
+      }
+    }
+    fprintf(f, " time=\"%lu\"", tests[i].times);
+    if (req_pkt->scoring_system == SCORE_OLYMPIAD && !req_pkt->accepting_mode) {
+      fprintf(f, " nominal-score=\"%d\" score=\"%d\"",
+              tests[i].max_score, tests[i].score);
+    } else if (req_pkt->scoring_system == SCORE_KIROV) {
+      fprintf(f, " nominal-score=\"%d\" score=\"%d\"",
+              tests[i].max_score, tests[i].score);
+    }
+    if (tests[i].comment && tests[i].comment[0]) {
+      msg = html_armor_string_dup(tests[i].comment);
+      fprintf(f, " comment=\"%s\"", msg);
+      xfree(msg);
+    }
+    if ((tests[i].status == RUN_WRONG_ANSWER_ERR 
+         || tests[i].status == RUN_PRESENTATION_ERR || tests[i].status == RUN_OK)
+        && tests[i].chk_out_size > 0 && tests[i].chk_out && tests[i].chk_out[0]) {
+      msg = prepare_checker_comment(tests[i].chk_out);
+      fprintf(f, " checker-comment=\"%s\"", msg);
+      xfree(msg);
+    }
+    if (tests[i].output_size >= 0 && req_pkt->full_archive) {
+      fprintf(f, " output-available=\"yes\"");
+    }
+    if (tests[i].error_size >= 0 && req_pkt->full_archive) {
+      fprintf(f, " stderr-available=\"yes\"");
+    }
+    if (tests[i].chk_out_size >= 0 && req_pkt->full_archive) {
+      fprintf(f, " checker-output-available=\"yes\"");
+    }
+    if (tests[i].args && strlen(tests[i].args) >= global->max_cmd_length) {
+      fprintf(f, " args-too-long=\"yes\"");
+    }
+    fprintf(f, " >\n");
+
+    if (tests[i].args && strlen(tests[i].args) < global->max_cmd_length) {
+      msg = html_armor_string_dup(tests[i].args);
+      fprintf(f, "      <args>%s</args>\n", msg);
+      xfree(msg);
+    }
+
+    if (tests[i].input_size >= 0 && !req_pkt->full_archive) {
+      fprintf(f, "      <input>");
+      html_print_by_line(f, tests[i].input, tests[i].input_size);
+      fprintf(f, "</input>\n");
+    }
+
+    if (tests[i].output_size >= 0 && !req_pkt->full_archive) {
+      fprintf(f, "      <output>");
+      html_print_by_line(f, tests[i].output, tests[i].output_size);
+      fprintf(f, "</output>\n");
+    }
+
+    if (tests[i].correct_size >= 0 && !req_pkt->full_archive) {
+      fprintf(f, "      <correct>");
+      html_print_by_line(f, tests[i].correct, tests[i].correct_size);
+      fprintf(f, "</correct>\n");
+    }
+
+    if (tests[i].error_size >= 0 && !req_pkt->full_archive) {
+      fprintf(f, "      <stderr>");
+      html_print_by_line(f, tests[i].error, tests[i].error_size);
+      fprintf(f, "</stderr>\n");
+    }
+
+    if (tests[i].chk_out_size >= 0 && !req_pkt->full_archive) {
+      fprintf(f, "      <checker>");
+      html_print_by_line(f, tests[i].chk_out, tests[i].chk_out_size);
+      fprintf(f, "</checker>\n");
+    }
+
+    fprintf(f, "    </test>\n");
+  }
+
+  fprintf(f, "  </tests>\n");
+
+  fprintf(f, "</testing-report>\n");
+  fclose(f); f = 0;
+  return 0;
+}
+
+static int
+generate_report(struct run_request_packet *req_pkt,
+                struct run_reply_packet *reply_pkt,
                 int score_system_val,
                 int accept_testing,
-                char *report_path, int scores,
-                int max_score, int html_flag)
+                char *report_path, int variant, int scores,
+                int max_score, int html_flag, int correct_available_flag,
+                int info_available_flag,
+                const unsigned char *additional_comment)
 {
   FILE *f;
   int   i;
@@ -290,7 +449,13 @@ generate_report(struct run_reply_packet *reply_pkt,
   unsigned char res_buf[64];
   unsigned char link_buf[64];
   unsigned char *msg = 0;
-  unsigned char time_buf[64];
+  //unsigned char time_buf[64];
+
+  if (req_pkt->xml_report)
+    return generate_xml_report(req_pkt, reply_pkt, report_path,
+                               variant, scores, max_score,
+                               correct_available_flag, info_available_flag,
+                               additional_comment);
 
   if (!(f = fopen(report_path, "w"))) {
     err("generate_report: cannot open protocol file %s", report_path);
@@ -369,44 +534,6 @@ generate_report(struct run_reply_packet *reply_pkt,
             i, tests[i].code, (double) tests[i].times / 1000,
             score_buf, res_buf, link_buf);
   }
-  fprintf(f, "\n");
-
-  /* print timing information */
-  fprintf(f, "Profiling information:\n");
-  fprintf(f, "  Request start time:                %s\n",
-          time_to_str(time_buf, sizeof(time_buf),
-                      reply_pkt->ts1, reply_pkt->ts1_us));
-  fprintf(f, "  Report generation time:            %s\n",
-          time_to_str(time_buf, sizeof(time_buf),
-                      reply_pkt->ts7, reply_pkt->ts7_us));
-  fprintf(f, "  Total testing duration:            %s\n",
-          dur_to_str(time_buf, sizeof(time_buf),
-                     reply_pkt->ts1, reply_pkt->ts1_us,
-                     reply_pkt->ts7, reply_pkt->ts7_us));
-  fprintf(f, "  Waiting in compile queue duration: %s\n",
-          dur_to_str(time_buf, sizeof(time_buf),
-                     reply_pkt->ts1, reply_pkt->ts1_us,
-                     reply_pkt->ts2, reply_pkt->ts2_us));
-  fprintf(f, "  Compilation duration:              %s\n",
-          dur_to_str(time_buf, sizeof(time_buf),
-                     reply_pkt->ts2, reply_pkt->ts2_us,
-                     reply_pkt->ts3, reply_pkt->ts3_us));
-  fprintf(f, "  Waiting in serve queue duration:   %s\n",
-          dur_to_str(time_buf, sizeof(time_buf),
-                     reply_pkt->ts3, reply_pkt->ts3_us,
-                     reply_pkt->ts4, reply_pkt->ts4_us));
-  fprintf(f, "  Waiting in run queue duration:     %s\n",
-          dur_to_str(time_buf, sizeof(time_buf),
-                     reply_pkt->ts4, reply_pkt->ts4_us,
-                     reply_pkt->ts5, reply_pkt->ts5_us));
-  fprintf(f, "  Testing duration:                  %s\n",
-          dur_to_str(time_buf, sizeof(time_buf),
-                     reply_pkt->ts5, reply_pkt->ts5_us,
-                     reply_pkt->ts6, reply_pkt->ts6_us));
-  fprintf(f, "  Post-processing duration:          %s\n",
-          dur_to_str(time_buf, sizeof(time_buf),
-                     reply_pkt->ts6, reply_pkt->ts6_us,
-                     reply_pkt->ts7, reply_pkt->ts7_us));
   fprintf(f, "\n");
 
   i = total_tests - 1;
@@ -611,6 +738,7 @@ run_tests(struct section_tester_data *tst,
           char const *new_base,
           char *report_path,                /* path to the report */
           char *team_report_path,           /* path to the team report */
+          char *full_report_path,           /* path to the full output dir */
           const unsigned char *user_spelling,
           const unsigned char *problem_spelling)
 {
@@ -649,6 +777,9 @@ run_tests(struct section_tester_data *tst,
   int time_limit_value;
   unsigned char ejudge_prefix_dir_env[1024] = { 0 };
   ssize_t file_size;
+  unsigned char arch_entry_name[64];
+  full_archive_t far = 0;
+  unsigned char *additional_comment = 0;
 
 #ifdef HAVE_TERMIOS_H
   struct termios term_attrs;
@@ -693,6 +824,12 @@ run_tests(struct section_tester_data *tst,
   if (team_enable_rep_view) {
     pathmake(team_report_path, global->run_work_dir, "/", "team_report", NULL);
   }
+  full_report_path[0] = 0;
+  if (req_pkt->full_archive) {
+    pathmake(full_report_path, global->run_work_dir, "/", "full_output", NULL);
+    far = full_archive_open_write(full_report_path);
+  }
+
   memset(tests, 0, sizeof(tests[0]) * tests_a);
   total_tests = 1;
   cur_test = 1;
@@ -757,6 +894,12 @@ run_tests(struct section_tester_data *tst,
       // testing is done as no tests left in the testing directory
       break;
     }
+
+    tests[cur_test].input_size = -1;
+    tests[cur_test].output_size = -1;
+    tests[cur_test].error_size = -1;
+    tests[cur_test].correct_size = -1;
+    tests[cur_test].chk_out_size = -1;
 
     /* Load test information file */
     if (prb->use_info) {
@@ -935,13 +1078,13 @@ run_tests(struct section_tester_data *tst,
 
       /* fill test report structure */
       tests[cur_test].times = task_GetRunningTime(tsk);
-      file_size = generic_file_size(0, input_path, 0);
+      file_size = generic_file_size(0, test_src, 0);
       if (file_size >= 0) {
         tests[cur_test].input_size = file_size;
         if (global->max_file_length > 0
             && file_size <= global->max_file_length) {
           generic_read_file(&tests[cur_test].input, 0, 0, 0,
-                            0, input_path, "");
+                            0, test_src, "");
         }
       }
       file_size = generic_file_size(0, output_path, 0);
@@ -952,6 +1095,11 @@ run_tests(struct section_tester_data *tst,
           generic_read_file(&tests[cur_test].output, 0, 0, 0,
                             0, output_path, "");
         }
+        if (far) {
+          snprintf(arch_entry_name, sizeof(arch_entry_name),
+                   "%06d.o", cur_test);
+          full_archive_append_file(far, arch_entry_name, 0, output_path);
+        }
       }
       file_size = generic_file_size(0, error_path, 0);
       if (file_size >= 0) {
@@ -960,6 +1108,11 @@ run_tests(struct section_tester_data *tst,
             && file_size <= global->max_file_length) {
           generic_read_file(&tests[cur_test].error, 0, 0, 0,
                             0, error_path, "");
+        }
+        if (far) {
+          snprintf(arch_entry_name, sizeof(arch_entry_name),
+                   "%06d.e", cur_test);
+          full_archive_append_file(far, arch_entry_name, 0, error_path);
         }
       }
       if (prb->use_info) {
@@ -1081,8 +1234,18 @@ run_tests(struct section_tester_data *tst,
         task_Wait(tsk);
         task_Log(tsk, 0, LOG_INFO);
 
-        generic_read_file(&tests[cur_test].chk_out, 0, 0, 0,
-                          0, check_out_path, "");
+        file_size = generic_file_size(0, check_out_path, 0);
+        if (file_size >= 0) {
+          tests[cur_test].chk_out_size = file_size;
+          generic_read_file(&tests[cur_test].chk_out, 0, 0, 0,
+                            0, check_out_path, "");
+          if (far) {
+            snprintf(arch_entry_name, sizeof(arch_entry_name),
+                     "%06d.c", cur_test);
+            full_archive_append_file(far, arch_entry_name, 0, check_out_path);
+          }
+        }
+
         /* analyze error codes */
         if (task_IsTimeout(tsk)) {
           status = RUN_CHECK_FAILED;
@@ -1178,7 +1341,7 @@ run_tests(struct section_tester_data *tst,
     if (retcode == RUN_PARTIAL && prb->ts_total > 0) {
       int ts;
 
-      /* FIXME: check testsets */
+      /* check testsets */
       for (ts = 0; ts < prb->ts_total; ts++) {
         struct testset_info *ti = &prb->ts_infos[ts];
 
@@ -1201,6 +1364,22 @@ run_tests(struct section_tester_data *tst,
         if (jj < ti->total) continue;
         // set the score
         score = ti->score;
+        // set additional judging comment
+        {
+          unsigned char *outp, first_item = 1;
+          outp = additional_comment = alloca(ti->total * 64 + 128);
+
+          outp += sprintf(outp, "Test set {");
+          for (jj = 0; jj < ti->total; jj++) {
+            if (!ti->nums[jj]) continue;
+            if (!first_item) {
+              outp += sprintf(outp, ",");
+              first_item = 0;
+            }
+            outp += sprintf(outp, " %d", jj + 1);
+          }
+          outp += sprintf(outp, " } is scored as %d\n", ti->score);
+        }
       }
     }
 
@@ -1292,8 +1471,10 @@ run_tests(struct section_tester_data *tst,
                          team_report_path, score, prb->full_score);
     setup_locale(0);
   }
-  generate_report(reply_pkt, score_system_val, accept_testing,
-                  report_path, score, prb->full_score, html_report_flag);
+  generate_report(req_pkt, reply_pkt, score_system_val, accept_testing,
+                  report_path, cur_variant, score, prb->full_score, html_report_flag,
+                  (prb->use_corr && prb->corr_dir[0]),
+                  prb->use_info, additional_comment);
 
   goto _cleanup;
 
@@ -1302,9 +1483,12 @@ run_tests(struct section_tester_data *tst,
   reply_pkt->failed_test = 0;
   reply_pkt->score = -1;
   get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
+  reply_pkt->ts7 = reply_pkt->ts6;
+  reply_pkt->ts7_us = reply_pkt->ts6_us;
   goto _cleanup;
 
  _cleanup:
+  if (far) full_archive_close(far);
   if (tsk) task_Delete(tsk);
   tsk = 0;
   clear_directory(tst->check_dir);
@@ -1329,6 +1513,7 @@ do_loop(void)
 
   path_t report_path;
   path_t team_report_path;
+  path_t full_report_path;
 
   unsigned char pkt_name[64];
   unsigned char exe_pkt_name[64];
@@ -1336,6 +1521,7 @@ do_loop(void)
   path_t full_report_dir;
   path_t full_team_report_dir;
   path_t full_status_dir;
+  path_t full_full_dir;
 
   char   exe_name[64];
   int    tester_id;
@@ -1455,6 +1641,7 @@ do_loop(void)
     report_path[0] = 0;
     /* team report might be not produced */
     team_report_path[0] = 0;
+    full_report_path[0] = 0;
 
     /* start filling run_reply_packet */
     memset(&reply_pkt, 0, sizeof(reply_pkt));
@@ -1478,7 +1665,7 @@ do_loop(void)
                   req_pkt->accept_partial,
                   req_pkt->variant, req_pkt->html_report,
                   exe_name, run_base,
-                  report_path, team_report_path,
+                  report_path, team_report_path, full_report_path,
                   req_pkt->user_spelling, req_pkt->prob_spelling) < 0) {
       cr_serialize_unlock();
       return -1;
@@ -1495,6 +1682,8 @@ do_loop(void)
              "%s/%06d/teamreport", global->run_dir, req_pkt->contest_id);
     snprintf(full_status_dir, sizeof(full_status_dir),
              "%s/%06d/status", global->run_dir, req_pkt->contest_id);
+    snprintf(full_full_dir, sizeof(full_full_dir),
+             "%s/%06d/output", global->run_dir, req_pkt->contest_id);
              
     if (generic_copy_file(0, NULL, report_path, "",
                           0, full_report_dir, run_base, "") < 0)
@@ -1502,6 +1691,11 @@ do_loop(void)
     if (team_report_path[0]
         && generic_copy_file(0, NULL, team_report_path, "",
                              0, full_team_report_dir,
+                             run_base, "") < 0)
+      return -1;
+    if (full_report_path[0]
+        && generic_copy_file(0, NULL, full_report_path, "",
+                             0, full_full_dir,
                              run_base, "") < 0)
       return -1;
     
