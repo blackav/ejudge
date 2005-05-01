@@ -32,6 +32,7 @@ struct testing_report_test
   int args_too_long;
 
   unsigned char *comment;
+  unsigned char *team_comment;
   unsigned char *checker_comment;
 
   unsigned char *args;
