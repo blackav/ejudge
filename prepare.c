@@ -235,6 +235,8 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(min_gzip_size, "d"),
   GLOBAL_PARAM(use_dir_hierarchy, "d"),
   GLOBAL_PARAM(html_report, "d"),
+  GLOBAL_PARAM(xml_report, "d"),
+  GLOBAL_PARAM(enable_full_archive, "d"),
 
   GLOBAL_PARAM(variant_map_file, "s"),
 
@@ -462,6 +464,8 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_CLAR_ARCHIVE_DIR   "clars"
 #define DFLT_G_RUN_ARCHIVE_DIR    "runs"
 #define DFLT_G_REPORT_ARCHIVE_DIR "reports"
+#define DFLT_G_FULL_ARCHIVE_DIR   "output"
+#define DFLT_G_AUDIT_LOG_DIR      "audit"
 #define DFLT_G_TEAM_REPORT_ARCHIVE_DIR "teamreports"
 #define DFLT_G_TEAM_EXTRA_DIR     "team_extra"
 #define DFLT_G_PIPE_DIR           "pipe"
@@ -490,6 +494,7 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_RUN_STATUS_DIR     "status"
 #define DFLT_G_RUN_REPORT_DIR     "report"
 #define DFLT_G_RUN_TEAM_REPORT_DIR "teamreport"
+#define DFLT_G_RUN_FULL_ARCHIVE_DIR "output"
 #define DFLT_G_RUN_WORK_DIR       "runwork"
 #define DFLT_G_RUN_CHECK_DIR      "runcheck"
 
@@ -545,6 +550,9 @@ global_init_func(struct generic_section_config *gp)
   p->min_gzip_size = -1;
   p->team_page_quota = -1;
   p->enable_l10n = -1;
+  p->enable_continue = -1;
+  p->html_report = -1;
+  p->xml_report = -1;
 }
 
 static void
@@ -1378,11 +1386,14 @@ set_defaults(int mode)
   }
 #endif /* EJUDGE_SCRIPT_DIR */
 
-  if (mode == PREPARE_RUN) {
+  if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
     GLOBAL_INIT_FIELD(test_dir, DFLT_G_TEST_DIR, conf_dir);
     GLOBAL_INIT_FIELD(corr_dir, DFLT_G_CORR_DIR, conf_dir);
     GLOBAL_INIT_FIELD(info_dir, DFLT_G_INFO_DIR, conf_dir);
     GLOBAL_INIT_FIELD(tgz_dir, DFLT_G_TGZ_DIR, conf_dir);
+  }
+
+  if (mode == PREPARE_RUN) {
     GLOBAL_INIT_FIELD(checker_dir, DFLT_G_CHECKER_DIR, conf_dir);
 
     if (!global->info_sfx[0]) {
@@ -1404,6 +1415,8 @@ set_defaults(int mode)
     GLOBAL_INIT_FIELD(clar_archive_dir, DFLT_G_CLAR_ARCHIVE_DIR, archive_dir);
     GLOBAL_INIT_FIELD(run_archive_dir, DFLT_G_RUN_ARCHIVE_DIR, archive_dir);
     GLOBAL_INIT_FIELD(report_archive_dir,DFLT_G_REPORT_ARCHIVE_DIR,archive_dir);
+    GLOBAL_INIT_FIELD(full_archive_dir, DFLT_G_FULL_ARCHIVE_DIR, archive_dir);
+    GLOBAL_INIT_FIELD(audit_log_dir, DFLT_G_AUDIT_LOG_DIR, archive_dir);
     GLOBAL_INIT_FIELD(team_report_archive_dir,DFLT_G_TEAM_REPORT_ARCHIVE_DIR,archive_dir);
     GLOBAL_INIT_FIELD(team_extra_dir, DFLT_G_TEAM_EXTRA_DIR, var_dir);
 
@@ -1483,6 +1496,11 @@ set_defaults(int mode)
                DFLT_G_RUN_TEAM_REPORT_DIR, 0);
       info("global.run_team_report_dir is %s", global->run_team_report_dir);
     }
+    if (global->enable_full_archive) {
+      pathmake(global->run_full_archive_dir, global->run_out_dir, "/",
+               DFLT_G_RUN_FULL_ARCHIVE_DIR, 0);
+      info("global.run_full_archive_dir is %s", global->run_full_archive_dir);
+    }
   }
 
   if (mode == PREPARE_RUN) {
@@ -1521,6 +1539,11 @@ set_defaults(int mode)
     err("Invalid rounding mode: %s", global->rounding_mode);
     return -1;
   }
+
+  if (global->enable_continue == -1) global->enable_continue = 1;
+  if (global->html_report == -1) global->html_report = 1;
+  if (global->xml_report == -1) global->xml_report = 0;
+  if (global->xml_report) global->html_report = 0;
 
   if (global->tests_to_accept == -1) {
     global->tests_to_accept = 1;
@@ -2261,7 +2284,7 @@ set_defaults(int mode)
       }
     }
 
-    if (mode == PREPARE_RUN) {
+    if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
       if (!probs[i]->test_dir[0] && si != -1
           && abstr_probs[si]->test_dir[0]) {
         sformat_message(probs[i]->test_dir, PATH_MAX,
@@ -2344,7 +2367,9 @@ set_defaults(int mode)
         path_add_dir(probs[i]->tgz_dir, global->tgz_dir);
         info("problem.%s.tgz_dir is '%s'", ish, probs[i]->tgz_dir);
       }
+    }
 
+    if (mode == PREPARE_RUN) {
       if (!probs[i]->input_file[0] && si != -1
           && abstr_probs[si]->input_file[0]) {
         sformat_message(probs[i]->input_file, PATH_MAX,
@@ -2525,6 +2550,9 @@ set_defaults(int mode)
           if (global->team_enable_rep_view) {
             pathcpy(tp->run_team_report_dir, global->run_team_report_dir);
           }
+          if (global->enable_full_archive) {
+            pathcpy(tp->run_full_archive_dir, global->run_full_archive_dir);
+          }
         } else {
           pathmake(tp->run_queue_dir, tp->run_dir, "/",
                    DFLT_G_RUN_QUEUE_DIR, 0);
@@ -2545,6 +2573,11 @@ set_defaults(int mode)
             pathmake(tp->run_team_report_dir, tp->run_out_dir, "/",
                      DFLT_G_RUN_TEAM_REPORT_DIR, 0);
             info("tester.%d.run_team_report_dir is %s", i, tp->run_team_report_dir);
+          }
+          if (global->enable_full_archive) {
+            pathmake(tp->run_full_archive_dir, tp->run_out_dir, "/",
+                     DFLT_G_RUN_FULL_ARCHIVE_DIR, 0);
+            info("tester.%d.run_full_archive_dir is %s", i, tp->run_full_archive_dir);
           }
         }
 
@@ -2880,6 +2913,10 @@ create_dirs(int mode)
     if (global->team_enable_rep_view) {
       if (make_dir(global->run_team_report_dir, 0777) < 0) return -1;
     }
+    if (global->enable_full_archive) {
+      if (make_dir(global->run_full_archive_dir, 0777) < 0) return -1;
+    }
+    if (make_dir(global->audit_log_dir, 0777) < 0) return -1;
 
     /* SERVE's status directory */
     if (make_all_dir(global->status_dir, 0) < 0) return -1;
@@ -2894,6 +2931,9 @@ create_dirs(int mode)
     if (make_dir(global->clar_archive_dir, 0) < 0) return -1;
     if (make_dir(global->run_archive_dir, 0) < 0) return -1;
     if (make_dir(global->report_archive_dir, 0) < 0) return -1;
+    if (global->enable_full_archive) {
+      if (make_dir(global->full_archive_dir, 0) < 0) return -1;
+    }
     if (global->team_enable_rep_view) {
       if (make_dir(global->team_report_archive_dir, 0) < 0) return -1;
     }
@@ -2951,6 +2991,9 @@ create_dirs(int mode)
       if (make_dir(testers[i]->run_report_dir, 0) < 0) return -1;
       if (global->team_enable_rep_view) {
         if (make_dir(testers[i]->run_team_report_dir, 0) < 0) return -1;
+      }
+      if (global->enable_full_archive) {
+        if (make_dir(testers[i]->run_full_archive_dir, 0) < 0) return -1;
       }
     }
     if (mode == PREPARE_RUN) {
