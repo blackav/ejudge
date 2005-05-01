@@ -37,7 +37,7 @@
 <testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"]>
   <comment>T</comment>
   <tests>
-    <test num="N" status="O" [exit-code="N"] [term-signal="N"] time="N" [nominal-score="N" score="N"] [comment="S"] [checker-comment="S"] output-available="B" stderr-available="B" checker-output-available="B" args-too-long="B">
+    <test num="N" status="O" [exit-code="N"] [term-signal="N"] time="N" [nominal-score="N" score="N"] [comment="S"] [team-comment="S"] [checker-comment="S"] output-available="B" stderr-available="B" checker-output-available="B" args-too-long="B">
        [<args>T</args>]
        [<input>T</input>]
        [<output>T</output>]
@@ -87,6 +87,7 @@ enum
   TR_A_TIME,
   TR_A_NOMINAL_SCORE,
   TR_A_COMMENT,
+  TR_A_TEAM_COMMENT,
   TR_A_CHECKER_COMMENT,
   TR_A_OUTPUT_AVAILABLE,
   TR_A_STDERR_AVAILABLE,
@@ -133,6 +134,7 @@ static const char * const attr_map[] =
   [TR_A_TIME] = "time",
   [TR_A_NOMINAL_SCORE] = "nominal-score",
   [TR_A_COMMENT] = "comment",
+  [TR_A_TEAM_COMMENT] = "team-comment",
   [TR_A_CHECKER_COMMENT] = "checker-comment",
   [TR_A_OUTPUT_AVAILABLE] = "output-available",
   [TR_A_STDERR_AVAILABLE] = "stderr-available",
@@ -272,6 +274,11 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
 
     case TR_A_COMMENT:
       p->comment = a->text;
+      a->text = 0;
+      break;
+
+    case TR_A_TEAM_COMMENT:
+      p->team_comment = a->text;
       a->text = 0;
       break;
 
@@ -644,10 +651,9 @@ testing_report_test_free(struct testing_report_test *p)
 {
   if (!p) return 0;
 
-  xfree(p->comment);
-  p->comment = 0;
-  xfree(p->checker_comment);
-  p->checker_comment = 0;
+  xfree(p->comment); p->comment = 0;
+  xfree(p->team_comment); p->comment = 0;
+  xfree(p->checker_comment); p->checker_comment = 0;
 
   xfree(p->args); p->args = 0;
   xfree(p->input); p->input = 0;
