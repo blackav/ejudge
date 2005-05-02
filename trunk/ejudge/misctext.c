@@ -409,6 +409,24 @@ text_number_lines(const unsigned char *intxt, size_t insize,
   *s = 0;
 }
 
+static const char content_text_html[] = "content-type: text/html\n\n";
+static const char content_text_xml[] = "content-type: text/xml\n\n";
+
+int
+get_content_type(const unsigned char *txt, const unsigned char **p_start_ptr)
+{
+  if (!strncasecmp(txt, content_text_xml, sizeof(content_text_xml)-1)) {
+    if (p_start_ptr) *p_start_ptr = txt + sizeof(content_text_xml) - 1;
+    return CONTENT_TYPE_XML;
+  }
+  if (!strncasecmp(txt, content_text_html, sizeof(content_text_xml)-1)) {
+    if (p_start_ptr) *p_start_ptr = txt + sizeof(content_text_xml) - 1;
+    return CONTENT_TYPE_HTML;
+  }
+  if (p_start_ptr) *p_start_ptr = txt;
+  return CONTENT_TYPE_TEXT;
+}
+
 /**
  * Local variables:
  *  compile-command: "make"
