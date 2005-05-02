@@ -27,13 +27,13 @@ void write_public_log(char const *, char const *, char const *, char const *);
 
 void new_write_user_runs(FILE *f, int uid, int printing_suspended,
                          unsigned int show_flags,
-                         int sid_mode, unsigned long long sid,
+                         unsigned long long sid,
                          unsigned char const *self_url,
                          unsigned char const *hidden_vars,
                          unsigned char const *extra_args);
 
 void new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
-                          int sid_mode, unsigned long long sid,
+                          unsigned long long sid,
                           unsigned char const *self_url,
                           unsigned char const *hidden_vars,
                           unsigned char const *extra_args);
@@ -41,14 +41,14 @@ void new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
 int new_write_user_clar(FILE *, int, int);
 int new_write_user_source_view(FILE *, int, int);
 int new_write_user_report_view(FILE *f, int uid, int rid,
-                               int sid_mode, unsigned long long sid,
+                               unsigned long long sid,
                                const unsigned char *self_url,
                                const unsigned char *hidden_vars,
                                const unsigned char *extra_args);
 
 void write_team_page(FILE *f, int user_id,
                      int printing_suspended,
-                     int sid_mode, unsigned long long sid,
+                     unsigned long long sid,
                      int all_runs, int all_clars,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars,
@@ -58,7 +58,7 @@ void write_team_page(FILE *f, int user_id,
 
 void write_master_page(FILE *f,
                        int user_id, int priv_level,
-                       int sid_mode, unsigned long long sid,
+                       unsigned long long sid,
                        int first_run, int last_run,
                        int mode_clar, int first_clar, int last_clar,
                        int accepting_mode,
@@ -69,7 +69,6 @@ void write_master_page(FILE *f,
                        const opcap_t *pcaps);
 
 void write_priv_standings(FILE *f,
-                          int sid_mode,
                           unsigned long long sid,
                           unsigned char const *self_url,
                           unsigned char const *hidden_vars,
@@ -78,7 +77,7 @@ void write_priv_standings(FILE *f,
 
 struct user_filter_info;
 int write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
-                        int priv_level, int sid_mode, unsigned long long sid,
+                        int priv_level, unsigned long long sid,
                         int first_run, int last_run,
                         int accepting_mode,
                         unsigned char const *self_url,
@@ -96,20 +95,20 @@ void do_write_kirov_standings(FILE *, int, unsigned char const *, int, int);
 void do_write_standings(FILE *, int, int, unsigned char const *, int);
 
 int write_priv_source(FILE *f, int user_id, int priv_level,
-                      int sid_mode, unsigned long long sid,
+                      unsigned long long sid,
                       int accepting_mode,
                       unsigned char const *self_url,
                       unsigned char const *hidden_vars,
                       unsigned char const *extra_args,
                       int run_id, const opcap_t *);
 int write_new_run_form(FILE *f, int user_id, int priv_level,
-                       int sid_mode, unsigned long long sid,
+                       unsigned long long sid,
                        unsigned char const *self_url,
                        unsigned char const *hidden_vars,
                        unsigned char const *extra_args,
                        int run_id, const opcap_t *);
 int write_priv_report(FILE *f, int user_id, int priv_level,
-                      int sid_mode, unsigned long long sid,
+                      unsigned long long sid,
                       int team_report_flag,
                       unsigned char const *self_url,
                       unsigned char const *hidden_vars,
@@ -117,21 +116,21 @@ int write_priv_report(FILE *f, int user_id, int priv_level,
                       int run_id, const opcap_t *);
 
 int write_priv_clar(FILE *f, int user_id, int priv_level,
-                    int sid_mode, unsigned long long sid,
+                    unsigned long long sid,
                     unsigned char const *self_url,
                     unsigned char const *hidden_vars,
                     unsigned char const *extra_args,
                     int clar_id, const opcap_t *);
 
 int write_priv_users(FILE *f, int user_id, int priv_level,
-                     int sid_mode, unsigned long long sid,
+                     unsigned long long sid,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars,
                      unsigned char const *extra_args,
                      const opcap_t *);
 
 int write_priv_user(FILE *f, int user_id, int priv_level,
-                    int sid_mode, unsigned long long sid,
+                    unsigned long long sid,
                     unsigned char const *self_url,
                     unsigned char const *hidden_vars,
                     unsigned char const *extra_args,
@@ -139,12 +138,12 @@ int write_priv_user(FILE *f, int user_id, int priv_level,
                     const opcap_t *);
 
 void html_start_form(FILE *f, int mode,
-                     int sid_mode, unsigned long long sid,
+                     unsigned long long sid,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars,
                      unsigned char const *extra_args);
 unsigned char *html_hyperref(unsigned char *buf, int size,
-                             int sid_mode, unsigned long long sid,
+                             unsigned long long sid,
                              unsigned char const *self_url,
                              unsigned char const *format,
                              unsigned char const *extra_args, ...);
@@ -178,9 +177,11 @@ void write_html_run_status(FILE *f, struct run_entry *pe,
 int write_tests(FILE *f, int cmd, int run_id, int test_num);
 
 int write_xml_testing_report(FILE *f, unsigned char const *txt,
-                             int sid_mode, unsigned long long sid,
+                             unsigned long long sid,
                              unsigned char const *self_url,
                              unsigned char const *extra_args);
+int write_xml_team_testing_report(FILE *f, const unsigned char *txt);
+
 int write_audit_log(FILE *f, int run_id);
 
 #endif /* __HTML_H__ */
