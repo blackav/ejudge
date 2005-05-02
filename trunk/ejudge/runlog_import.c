@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,20 +36,30 @@ rename_archive_files(FILE *flog, int num, int *map)
     if (map[i] < 0) continue;
     if (map[i] == i) continue;
     archive_rename(global->run_archive_dir, flog, i, "", i, "_", 0);
+    archive_rename(global->xml_report_archive_dir, flog, i, "", i, "_", 1);
     archive_rename(global->report_archive_dir, flog, i, "", i, "_", 1);
     if (global->team_enable_rep_view) {
       archive_rename(global->team_report_archive_dir, flog, i, "", i, "_", 0);
     }
+    if (global->enable_full_archive) {
+      archive_rename(global->full_archive_dir, flog, i, "", i, "_", 0);
+    }
+    archive_rename(global->audit_log_dir, flog, i, "", i, "_", 0);
   }
 
   for (i = 0; i < num; i++) {
     if (map[i] < 0) continue;
     if (map[i] == i) continue;
     archive_rename(global->run_archive_dir, flog, i, "_", map[i], "", 0);
+    archive_rename(global->xml_report_archive_dir, flog, i, "_", map[i], "", 1);
     archive_rename(global->report_archive_dir, flog, i, "_", map[i], "", 1);
     if (global->team_enable_rep_view) {
       archive_rename(global->team_report_archive_dir,flog,i, "_",map[i],"",0);
     }
+    if (global->enable_full_archive) {
+      archive_rename(global->full_archive_dir,flog,i, "_",map[i],"",0);
+    }
+    archive_rename(global->audit_log_dir,flog,i, "_",map[i],"",0);
   }
 }
 
