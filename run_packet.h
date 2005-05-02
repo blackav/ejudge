@@ -26,17 +26,12 @@ struct run_request_packet
   int run_id;
   int problem_id;
   int accepting_mode;           /* accepting testing for OLYMPIAD contest */
-  int locale_id;
   int scoring_system;           /* the scoring system */
-  int team_enable_rep_view;     /* generate report for a team */
-  int report_error_code;        /* report the exit code in the protocol */
   int variant;
   int accept_partial;           /* accept partially passed in OLYMPIAD mode */
   int user_id;                  /* the user identifier */
-  int html_report;              /* generate judge protocol in HTML */
   int disable_sound;            /* disable sound notifications */
   int full_archive;             /* enable full archive */
-  int xml_report;               /* generate judge protocol in XML */
   /* time when the compile request was queued by serve */
   int ts1;
   int ts1_us;
