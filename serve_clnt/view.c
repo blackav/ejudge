@@ -33,7 +33,6 @@ serve_clnt_view(int sock_fd,
                 int item,
                 int item2,
                 unsigned int flags,
-                int sid_mode,
                 unsigned char const *self_url,
                 unsigned char const *hidden_vars,
                 unsigned char const *extra_args)
@@ -65,7 +64,6 @@ serve_clnt_view(int sock_fd,
   out->item = item;
   out->item2 = item2;
   out->flags = flags;
-  out->sid_mode = sid_mode;
   out->self_url_len = self_url_len;
   out->hidden_vars_len = hidden_vars_len;
   out->extra_args_len = extra_args_len;
