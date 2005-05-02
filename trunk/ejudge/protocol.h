@@ -292,7 +292,6 @@ struct prot_serve_pkt_team_page
 {
   struct prot_serve_packet b;
 
-  int sid_mode;
   int locale_id;
   unsigned int flags;
   int self_url_len;
@@ -321,7 +320,6 @@ struct prot_serve_pkt_master_page
   int locale_id;
   unsigned long ip;
   int priv_level;
-  int sid_mode;
   int first_run;
   int last_run;
   int mode_clar;
@@ -342,7 +340,6 @@ struct prot_serve_pkt_standings
   int contest_id;
   int locale_id;
   int priv_level;
-  int sid_mode;
   int self_url_len;
   int hidden_vars_len;
   int extra_args_len;
@@ -356,7 +353,6 @@ struct prot_serve_pkt_view
   int item;
   int item2;
   unsigned int flags;
-  int sid_mode;
   int self_url_len;
   int hidden_vars_len;
   int extra_args_len;
