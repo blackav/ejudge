@@ -45,4 +45,13 @@ void text_number_lines(const unsigned char *intxt, size_t insize,
                        unsigned char *outtxt);
 const unsigned char * const * html_get_armor_table(void);
 
+enum
+{
+  CONTENT_TYPE_TEXT = 0,
+  CONTENT_TYPE_HTML,
+  CONTENT_TYPE_XML,
+};
+int get_content_type(const unsigned char *txt, const unsigned char **p_start_ptr);
+
+
 #endif /* __MISCTEXT_H__ */
