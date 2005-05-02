@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,6 @@ serve_clnt_standings(int sock_fd,
                      int contest_id,
                      int locale_id,
                      int priv_level,
-                     int sid_mode,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars,
                      unsigned char const *extra_args)
@@ -64,7 +63,6 @@ serve_clnt_standings(int sock_fd,
   out->contest_id = contest_id;
   out->locale_id = locale_id;
   out->priv_level = priv_level;
-  out->sid_mode = sid_mode;
   out->self_url_len = self_url_len;
   out->hidden_vars_len = hidden_vars_len;
   out->extra_args_len = extra_args_len;
