@@ -51,14 +51,6 @@ static int serve_socket_fd = -1;
 static unsigned long local_ip;  /* 127.0.0.1 */
 static unsigned long long session_id;
 
-enum
-  {
-    SID_DISABLED = 0,
-    SID_EMBED,
-    SID_URL,
-    SID_COOKIE
-  };
-
 static int
 too_many_params(const unsigned char *cmd)
 {
@@ -138,7 +130,7 @@ handle_login(const unsigned char *cmd,
   if (argc > 3) return too_many_params(cmd);
 
   r = userlist_clnt_priv_login(userlist_conn, local_ip, contest_id,
-                               0, SID_URL, PRIV_LEVEL_ADMIN,
+                               0, 1, PRIV_LEVEL_ADMIN,
                                argv[1], argv[2],
                                &user_id, &session_id, 0, 0, &user_name);
   if (r < 0) {
@@ -177,8 +169,7 @@ handle_dump_runs(const unsigned char *cmd,
   authentificate(argv[0]);
   open_server();
 
-  r = serve_clnt_view(serve_socket_fd, 1, srv_cmd, 0, 0, 0,
-                      0, "", "", "");
+  r = serve_clnt_view(serve_socket_fd, 1, srv_cmd, 0, 0, 0, "", "", "");
   if (r < 0) {
     err("server error: %s", protocol_strerror(-r));
     return 1;
@@ -306,8 +297,7 @@ handle_dump_source(const unsigned char *cmd,
   authentificate(argv[0]);
   open_server();
 
-  r = serve_clnt_view(serve_socket_fd, 1, srv_cmd, run_id,
-                      0, 0, 0, 0, 0, 0);
+  r = serve_clnt_view(serve_socket_fd, 1, srv_cmd, run_id, 0, 0, 0, 0, 0);
   if (r < 0) {
     err("server error: %s", protocol_strerror(-r));
     return 1;
@@ -353,8 +343,8 @@ handle_dump_master_runs(const unsigned char *cmd,
                              SRV_CMD_DUMP_MASTER_RUNS,
                              session_id, 0,
                              contest_id, 0, local_ip,
-                             PRIV_LEVEL_ADMIN, SID_URL,
-                             first_run, last_run, 0,0, 0, "", argv[1], "", "");
+                             PRIV_LEVEL_ADMIN,
+                             first_run, last_run, 0, 0, 0, "", argv[1], "", "");
   if (r < 0) {
     err("server error: %s", protocol_strerror(-r));
     return 1;
