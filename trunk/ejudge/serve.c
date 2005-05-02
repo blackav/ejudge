@@ -62,6 +62,7 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 #ifndef EJUDGE_CHARSET
 #define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
@@ -1877,6 +1878,7 @@ move_files_to_insert_run(int run_id)
   if (run_id >= total - 1) return;
   for (i = total - 1; i >= run_id; i--) {
     archive_remove(global->run_archive_dir, i + 1, 0);
+    archive_remove(global->xml_report_archive_dir, i + 1, 0);
     archive_remove(global->report_archive_dir, i + 1, 0);
     if (global->team_enable_rep_view) {
       archive_remove(global->team_report_archive_dir, i + 1, 0);
@@ -1884,9 +1886,11 @@ move_files_to_insert_run(int run_id)
     if (global->enable_full_archive) {
       archive_remove(global->full_archive_dir, i + 1, 0);
     }
+    archive_remove(global->audit_log_dir, i + 1, 0);
     s = run_get_status(i);
     if (s >= RUN_PSEUDO_FIRST && s <= RUN_PSEUDO_LAST) continue;
     archive_rename(global->run_archive_dir, 0, i, 0, i + 1, 0, 0);
+    archive_rename(global->xml_report_archive_dir, 0, i, 0, i + 1, 0, 0);
     archive_rename(global->report_archive_dir, 0, i, 0, i + 1, 0, 0);
     if (global->team_enable_rep_view) {
       archive_rename(global->team_report_archive_dir, 0, i, 0, i + 1, 0, 0);
@@ -1894,6 +1898,7 @@ move_files_to_insert_run(int run_id)
     if (global->enable_full_archive) {
       archive_rename(global->full_archive_dir, 0, i, 0, i + 1, 0, 0);
     }
+    archive_rename(global->audit_log_dir, 0, i, 0, i + 1, 0, 0);
   }
 }
 
@@ -2121,6 +2126,7 @@ cmd_upload_report(struct client_state *p, int len,
   }
 
   if (!global->team_enable_rep_view || (pkt->flags & 1)) {
+    archive_remove(global->xml_report_archive_dir, pkt->run_id, 0);
     wflags = archive_make_write_path(wpath, sizeof(wpath),
                                      global->report_archive_dir,
                                      pkt->run_id, pkt->report_size, 0);
@@ -2136,6 +2142,7 @@ cmd_upload_report(struct client_state *p, int len,
   }
 
   if (global->team_enable_rep_view && (pkt->flags & 2)) {
+    archive_remove(global->xml_report_archive_dir, pkt->run_id, 0);
     wflags = archive_make_write_path(wpath, sizeof(wpath),
                                      global->team_report_archive_dir,
                                      pkt->run_id, pkt->report_size, 0);
@@ -2673,6 +2680,7 @@ do_squeeze_runs(void)
     if (run_get_status(i) == RUN_EMPTY) continue;
     if (i != j) {
       archive_rename(global->run_archive_dir, 0, i, 0, j, 0, 0);
+      archive_rename(global->xml_report_archive_dir, 0, i, 0, j, 0, 1);
       archive_rename(global->report_archive_dir, 0, i, 0, j, 0, 1);
       if (global->team_enable_rep_view) {
         archive_rename(global->team_report_archive_dir, 0, i, 0, j, 0, 0);
@@ -2680,11 +2688,13 @@ do_squeeze_runs(void)
       if (global->enable_full_archive) {
         archive_rename(global->full_archive_dir, 0, i, 0, j, 0, 0);
       }
+      archive_rename(global->audit_log_dir, 0, i, 0, j, 0, 1);
     }
     j++;
   }
   for (; j < tot; j++) {
     archive_remove(global->run_archive_dir, j, 0);
+    archive_remove(global->xml_report_archive_dir, j, 0);
     archive_remove(global->report_archive_dir, j, 0);
     if (global->team_enable_rep_view) {
       archive_remove(global->team_report_archive_dir, j, 0);
@@ -2692,6 +2702,7 @@ do_squeeze_runs(void)
     if (global->enable_full_archive) {
       archive_remove(global->full_archive_dir, j, 0);
     }
+    archive_remove(global->audit_log_dir, j, 0);
   }
   run_squeeze_log();
 }
@@ -2932,10 +2943,12 @@ cmd_priv_command_0(struct client_state *p, int len,
     clar_reset();
     /* clear all submissions and clarifications */
     clear_directory(global->clar_archive_dir);
+    clear_directory(global->xml_report_archive_dir);
     clear_directory(global->report_archive_dir);
     clear_directory(global->run_archive_dir);
     clear_directory(global->team_report_archive_dir);
     clear_directory(global->full_archive_dir);
+    clear_directory(global->audit_log_dir);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_START:
@@ -3855,10 +3868,10 @@ read_compile_packet(const unsigned char *compile_status_dir,
   unsigned char pkt_base[PACKET_NAME_SIZE];
   unsigned char exe_in_name[128];
   unsigned char exe_out_name[128];
-  unsigned char rep_path[PATH_MAX], team_path[PATH_MAX];
+  unsigned char rep_path[PATH_MAX];
   struct teamdb_export te;
 
-  int  r, cn, rep_flags, team_flags = 0, prio;
+  int  r, cn, rep_flags, prio;
 
   int  variant = 0;
   struct run_entry re;
@@ -3911,14 +3924,15 @@ read_compile_packet(const unsigned char *compile_status_dir,
     }
 
     rep_flags = archive_make_write_path(rep_path, sizeof(rep_path),
-                                        global->report_archive_dir, comp_pkt->run_id,
+                                        global->xml_report_archive_dir,comp_pkt->run_id,
                                         report_size, 0);
     if (rep_flags < 0) {
       snprintf(errmsg, sizeof(errmsg), "archive_make_write_path: %s, %d, %ld failed\n",
-               global->report_archive_dir, comp_pkt->run_id, report_size);
+               global->xml_report_archive_dir, comp_pkt->run_id, report_size);
       goto report_check_failed;
     }
   }
+  /*
   if (comp_pkt->status == RUN_COMPILE_ERR && global->team_enable_rep_view) {
     team_flags = archive_make_write_path(team_path, sizeof(team_path),
                                          global->team_report_archive_dir,
@@ -3929,12 +3943,13 @@ read_compile_packet(const unsigned char *compile_status_dir,
       goto report_check_failed;
     }
   }
+  */
 
   if (comp_pkt->status == RUN_CHECK_FAILED) {
     /* if status change fails, we cannot do reasonable recovery */
     if (run_change_status(comp_pkt->run_id, RUN_CHECK_FAILED, 0, -1, 0) < 0)
       goto non_fatal_error;
-    if (archive_dir_prepare(global->report_archive_dir, comp_pkt->run_id, 0, 0) < 0)
+    if (archive_dir_prepare(global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0)
       goto non_fatal_error;
     if (generic_copy_file(REMOVE, compile_report_dir, pname, "",
                           rep_flags, 0, rep_path, "") < 0) {
@@ -3950,6 +3965,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
     if (run_change_status(comp_pkt->run_id, RUN_COMPILE_ERR, 0, -1, 0) < 0)
       goto non_fatal_error;
 
+    /*
     if (global->team_enable_rep_view) {
       if (archive_dir_prepare(global->team_report_archive_dir,comp_pkt->run_id,0,0)<0) {
         snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
@@ -3963,9 +3979,10 @@ read_compile_packet(const unsigned char *compile_status_dir,
         goto report_check_failed;
       }
     }
-    if (archive_dir_prepare(global->report_archive_dir, comp_pkt->run_id, 0, 0) < 0) {
+    */
+    if (archive_dir_prepare(global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0) {
       snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
-               global->report_archive_dir, comp_pkt->run_id);
+               global->xml_report_archive_dir, comp_pkt->run_id);
       goto report_check_failed;
     }
     if (generic_copy_file(REMOVE, compile_report_dir, pname, "",
@@ -4053,16 +4070,11 @@ read_compile_packet(const unsigned char *compile_status_dir,
   run_pkt->run_id = comp_pkt->run_id;
   run_pkt->problem_id = probs[re.problem]->tester_id;
   run_pkt->accepting_mode = comp_extra->accepting_mode;
-  run_pkt->locale_id = re.locale_id;
   run_pkt->scoring_system = global->score_system_val;
-  run_pkt->team_enable_rep_view = global->team_enable_rep_view;
-  run_pkt->report_error_code = global->report_error_code;
   run_pkt->variant = variant;
   run_pkt->accept_partial = probs[re.problem]->accept_partial;
   run_pkt->user_id = re.team;
-  run_pkt->html_report = global->html_report;
   run_pkt->disable_sound = global->disable_sound;
-  run_pkt->xml_report = global->xml_report;
   run_pkt->full_archive = global->enable_full_archive;
   run_pkt->ts1 = comp_pkt->ts1;
   run_pkt->ts1_us = comp_pkt->ts1_us;
@@ -4125,9 +4137,9 @@ read_compile_packet(const unsigned char *compile_status_dir,
     goto non_fatal_error;
   report_size = strlen(errmsg);
   rep_flags = archive_make_write_path(rep_path, sizeof(rep_path),
-                                      global->report_archive_dir, comp_pkt->run_id,
+                                      global->xml_report_archive_dir, comp_pkt->run_id,
                                       report_size, 0);
-  if (archive_dir_prepare(global->report_archive_dir, comp_pkt->run_id, 0, 0) < 0)
+  if (archive_dir_prepare(global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0)
     goto non_fatal_error;
   /* error code is ignored */
   generic_write_file(errmsg, report_size, rep_flags, 0, rep_path, 0);
@@ -4182,8 +4194,8 @@ read_run_packet(const unsigned char *run_status_dir,
                 const unsigned char *run_full_archive_dir,
                 char *pname)
 {
-  path_t rep_path, team_path, full_path;
-  int r, rep_flags, rep_size, team_flags, team_size, full_flags;
+  path_t rep_path, full_path;
+  int r, rep_flags, rep_size, full_flags;
   struct run_entry re;
   void *reply_buf = 0;
   size_t reply_buf_size = 0;
@@ -4258,14 +4270,15 @@ read_run_packet(const unsigned char *run_status_dir,
   rep_size = generic_file_size(run_report_dir, pname, "");
   if (rep_size < 0) return -1;
   rep_flags = archive_make_write_path(rep_path, sizeof(rep_path),
-                                      global->report_archive_dir,
+                                      global->xml_report_archive_dir,
                                       reply_pkt->run_id,
                                       rep_size, 0);
-  if (archive_dir_prepare(global->report_archive_dir, reply_pkt->run_id, 0, 0) < 0)
+  if (archive_dir_prepare(global->xml_report_archive_dir, reply_pkt->run_id, 0, 0) < 0)
     return -1;
   if (generic_copy_file(REMOVE, run_report_dir, pname, "",
                         rep_flags, 0, rep_path, "") < 0)
     return -1;
+  /*
   if (global->team_enable_rep_view) {
     team_size = generic_file_size(run_team_report_dir, pname, "");
     team_flags = archive_make_write_path(team_path, sizeof(team_path),
@@ -4278,6 +4291,7 @@ read_run_packet(const unsigned char *run_status_dir,
                           team_flags, 0, team_path, "") < 0)
       return -1;
   }
+  */
   if (global->enable_full_archive) {
     full_flags = archive_make_write_path(full_path, sizeof(full_path),
                                          global->full_archive_dir,
