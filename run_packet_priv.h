@@ -28,15 +28,11 @@
 enum
 {
   FLAGS_ACCEPTING_MODE       = 0x010,
-  FLAGS_TEAM_ENABLE_REP_VIEW = 0x020,
-  FLAGS_REPORT_ERROR_CODE    = 0x040,
-  FLAGS_ACCEPT_PARTIAL       = 0x080,
-  FLAGS_HTML_REPORT          = 0x100,
-  FLAGS_DISABLE_SOUND        = 0x200,
-  FLAGS_FULL_ARCHIVE         = 0x400,
-  FLAGS_XML_REPORT           = 0x800,
+  FLAGS_ACCEPT_PARTIAL       = 0x020,
+  FLAGS_DISABLE_SOUND        = 0x040,
+  FLAGS_FULL_ARCHIVE         = 0x080,
 
-  FLAGS_ALL_MASK             = 0xfff, /* scoring system incl. */
+  FLAGS_ALL_MASK             = 0x0ff, /* scoring system incl. */
 };
 
 /* serve->run binary packet structure */
@@ -63,9 +59,8 @@ struct run_request_bin_packet
   ruint16_t prob_spelling_len;
   ruint8_t  exe_sfx_len;
   ruint8_t  arch_len;
-  rint8_t   locale_id;
   ruint8_t  variant;
-  unsigned char pad[58];        /* padding to 128 bytes */
+  unsigned char pad[59];        /* padding to 128 bytes */
   /* exe_sfx */
   /* arch */
   /* user spelling */
@@ -121,7 +116,6 @@ struct run_reply_bin_packet
 #define MAX_PROB_SPELLING_LEN 65535
 #define MAX_EXE_SFX_LEN       255
 #define MAX_ARCH_LEN          255
-#define MAX_LOCALE_ID         127
 #define MAX_VARIANT           255
 #define MAX_SCORING_SYSTEM    2
 #define MAX_FAILED_TEST       127
