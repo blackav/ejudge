@@ -34,6 +34,7 @@
 #include "archive_paths.h"
 #include "team_extra.h"
 #include "xml_utils.h"
+#include "testing_report_xml.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -2119,8 +2120,118 @@ new_write_user_source_view(FILE *f, int uid, int rid)
   return 0;
 }
 
-static const char content_text_html[] = "content-type: text/html\n\n";
-static const char content_text_xml[] = "content-type: text/xml\n\n";
+static int
+write_xml_team_testing_report(FILE *f, const unsigned char *txt)
+{
+  testing_report_xml_t r = 0;
+  struct testing_report_test *t;
+  unsigned char *font_color = 0, *s;
+  int need_comment = 0, need_info = 0, is_kirov = 0, i;
+
+  if (!(r = testing_report_parse_xml(txt))) {
+    fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
+    return 0;
+  }
+
+  if (r->status == RUN_OK || r->status == RUN_ACCEPTED) {
+    font_color = "green";
+  } else {
+    font_color = "red";
+  }
+  fprintf(f, "<h2><font color=\"%s\">%s</font></h2>\n",
+          font_color, run_status_str(r->status, 0, 0));
+
+  if (r->scoring_system == SCORE_KIROV ||
+      (r->scoring_system == SCORE_OLYMPIAD && !r->accepting_mode)) {
+    is_kirov = 1;
+  }
+
+  if (is_kirov) {
+    fprintf(f, _("<big>%d total tests runs, %d passed, %d failed.<br>\n"),
+            r->run_tests, r->tests_passed, r->run_tests - r->tests_passed);
+    fprintf(f, _("Score gained: %d (out of %d).<br><br></big>\n"),
+            r->score, r->max_score);
+  } else {
+    if (r->status != RUN_OK && r->status != RUN_ACCEPTED) {
+      fprintf(f, _("<big>Failed test: %d.<br><br></big>\n"), r->failed_test);
+    }
+  }
+
+  if (r->comment) {
+    s = html_armor_string_dup(r->comment);
+    fprintf(f, "<big>Note: %s.<br><br></big>\n", s);
+    xfree(s);
+  }
+
+  for (i = 0; i < r->run_tests; i++) {
+    if (!(t = r->tests[i])) continue;
+    if (t->team_comment) {
+      need_comment = 1;
+    }
+    if (global->report_error_code && t->status == RUN_RUN_TIME_ERR) {
+      need_info = 1;
+    }
+  }
+
+  fprintf(f,
+          "<table border=\"1\">"
+          "<tr><th>N</th><th>%s</th><th>%s</th>",
+          _("Result"), _("Time (sec)"));
+  if (need_info) {
+    fprintf(f, "<th>%s</th>", _("Extra info"));
+  }
+  if (is_kirov) {
+    fprintf(f, "<th>%s</th>", _("Score"));
+  }
+  if (need_comment) {
+    fprintf(f, "<th>%s</th>", _("Comment"));
+  }
+
+  fprintf(f, "</tr>\n");
+  fprintf(f, "</tr>\n");
+  for (i = 0; i < r->run_tests; i++) {
+    if (!(t = r->tests[i])) continue;
+    fprintf(f, "<tr>");
+    fprintf(f, "<td>%d</td>", t->num);
+    if (t->status == RUN_OK || t->status == RUN_ACCEPTED) {
+      font_color = "green";
+    } else {
+      font_color = "red";
+    }
+    fprintf(f, "<td><font color=\"%s\">%s</font></td>\n",
+            font_color, run_status_str(t->status, 0, 0));
+    fprintf(f, "<td>%d.%03d</td>", t->time / 1000, t->time % 1000);
+    if (need_info) {
+      fprintf(f, "<td>");
+      if (t->status == RUN_RUN_TIME_ERR && global->report_error_code) {
+        if (t->term_signal >= 0) {
+          fprintf(f, "%s %d (%s)", _("Signal"), t->term_signal,
+                  os_GetSignalString(t->term_signal));
+        } else {
+          fprintf(f, "%s %d", _("Exit code"), t->exit_code);
+        }
+      } else {
+        fprintf(f, "&nbsp;");
+      }
+      fprintf(f, "</td>");
+    }
+    if (is_kirov) {
+      fprintf(f, "<td>%d (%d)</td>", t->score, t->nominal_score);
+    }
+    if (need_comment) {
+      if (!t->team_comment) {
+        fprintf(f, "<td>&nbsp;</td>");
+      } else {
+        s = html_armor_string_dup(t->team_comment);
+        fprintf(f, "<td>%s</td>", s);
+        xfree(s);
+      }
+    }
+    fprintf(f, "</tr>\n");
+  }
+  fprintf(f, "</table>\n");
+  return 0;
+}
 
 int
 new_write_user_report_view(FILE *f, int uid, int rid,
@@ -2129,11 +2240,13 @@ new_write_user_report_view(FILE *f, int uid, int rid,
                            const unsigned char *hidden_vars,
                            const unsigned char *extra_args)
 {
-  int report_len = 0, html_len = 0, report_flags;
+  int report_len = 0, html_len = 0, report_flags, content_type;
   path_t report_path;
   char *report = 0, *html_report;
+  const unsigned char *start_ptr = 0;
   const unsigned char *archive_dir = 0;
   struct run_entry re;
+  struct section_problem_data *prb = 0;
 
   if (rid < 0 || rid >= run_get_total()) {
     err("invalid run_id: %d", rid);
@@ -2142,7 +2255,7 @@ new_write_user_report_view(FILE *f, int uid, int rid,
   if (run_get_entry(rid, &re) < 0) {
     return -SRV_ERR_BAD_RUN_ID;
   }
-  if (re.problem <= 0 || re.problem > max_prob || !probs[re.problem]) {
+  if (re.problem <= 0 || re.problem > max_prob || !(prb = probs[re.problem])) {
     err("get_record returned bad prob_id %d", re.problem);
     return -SRV_ERR_BAD_PROB_ID;
   }
@@ -2150,40 +2263,64 @@ new_write_user_report_view(FILE *f, int uid, int rid,
     err("user ids does not match");
     return -SRV_ERR_ACCESS_DENIED;
   }
-  if (!probs[re.problem]->team_enable_rep_view) {
-    if (probs[re.problem]->team_enable_ce_view && re.status == RUN_COMPILE_ERR)
-      archive_dir = global->report_archive_dir;
-    else {
-      err("viewing report is disabled for this problem");
-      return -SRV_ERR_REPORT_DISABLED;
-    }
-  } else {
-    if (probs[re.problem]->team_show_judge_report)
-      archive_dir = global->report_archive_dir;
-    else
-      archive_dir = global->team_report_archive_dir;
+  if (!prb->team_enable_rep_view
+      && (!prb->team_enable_ce_view || re.status != RUN_COMPILE_ERR)) {
+    err("viewing report is disabled for this problem");
+    return -SRV_ERR_REPORT_DISABLED;
+  }
+  if (!run_is_team_report_available(re.status)) {
+    return -SRV_ERR_REPORT_NOT_AVAILABLE;
   }
 
   report_flags = archive_make_read_path(report_path, sizeof(report_path),
-                                        archive_dir, rid, 0, 1);
-  if (report_flags < 0) return -SRV_ERR_FILE_NOT_EXIST;
-  if (generic_read_file(&report, 0, &report_len, report_flags,
-                        0, report_path, "") < 0) {
-    return -SRV_ERR_SYSTEM_ERROR;
+                                        global->xml_report_archive_dir, rid, 0, 1);
+  if (report_flags >= 0) {
+    if (generic_read_file(&report, 0, &report_len, report_flags,
+                          0, report_path, "") < 0) {
+      return -SRV_ERR_SYSTEM_ERROR;
+    }
+    content_type = get_content_type(report, &start_ptr);
+    if (content_type != CONTENT_TYPE_XML && re.status != RUN_COMPILE_ERR)
+      return -SRV_ERR_REPORT_NOT_AVAILABLE;
+  } else {
+    if (prb->team_enable_ce_view && re.status == RUN_COMPILE_ERR)
+      archive_dir = global->report_archive_dir;
+    else if (prb->team_show_judge_report)
+      archive_dir = global->report_archive_dir;
+    else
+      archive_dir = global->team_report_archive_dir;
+    report_flags = archive_make_read_path(report_path, sizeof(report_path),
+                                          archive_dir, rid, 0, 1);
+    if (report_flags < 0) return -SRV_ERR_FILE_NOT_EXIST;
+    if (generic_read_file(&report, 0, &report_len, report_flags,
+                          0, report_path, "") < 0) {
+      return -SRV_ERR_SYSTEM_ERROR;
+    }
+    content_type = get_content_type(report, &start_ptr);
   }
 
-  if (!strncasecmp(report, content_text_xml, sizeof(content_text_xml)-1)) {
-    write_xml_testing_report(f, report + sizeof(content_text_xml) - 1,
-                             sid_mode, sid, self_url, extra_args);
-  } else if (!strncasecmp(report, content_text_html, sizeof(content_text_html)-1)) {
-    fprintf(f, "%s", report + sizeof(content_text_html) - 1);
-  } else {
+  switch (content_type) {
+  case CONTENT_TYPE_TEXT:
     html_len = html_armored_memlen(report, report_len);
     html_report = alloca(html_len + 16);
     html_armor_text(report, report_len, html_report);
     html_report[html_len] = 0;
     fprintf(f, "<pre>%s</pre>", html_report);
+    break;
+  case CONTENT_TYPE_HTML:
+    fprintf(f, "%s", start_ptr);
+    break;
+  case CONTENT_TYPE_XML:
+    if (prb->team_show_judge_report) {
+      write_xml_testing_report(f, start_ptr, sid_mode, sid, self_url, extra_args);
+    } else {
+      write_xml_team_testing_report(f, start_ptr);
+    }
+    break;
+  default:
+    abort();
   }
+
   xfree(report);
 
   return 0;
