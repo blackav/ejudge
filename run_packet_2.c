@@ -83,13 +83,9 @@ run_request_packet_write(const struct run_request_packet *in_data,
   }
   flags |= FLAGS_PUT_SCORING_SYSTEM(in_data->scoring_system);
   if (in_data->accepting_mode) flags |= FLAGS_ACCEPTING_MODE;
-  if (in_data->team_enable_rep_view) flags |= FLAGS_TEAM_ENABLE_REP_VIEW;
-  if (in_data->report_error_code) flags |= FLAGS_REPORT_ERROR_CODE;
   if (in_data->accept_partial) flags |= FLAGS_ACCEPT_PARTIAL;
-  if (in_data->html_report) flags |= FLAGS_HTML_REPORT;
   if (in_data->disable_sound) flags |= FLAGS_DISABLE_SOUND;
   if (in_data->full_archive) flags |= FLAGS_FULL_ARCHIVE;
-  if (in_data->xml_report) flags |= FLAGS_XML_REPORT;
   out_data->flags = cvt_host_to_bin_32(flags);
 
   /* copy timestamps without care */
@@ -127,11 +123,6 @@ run_request_packet_write(const struct run_request_packet *in_data,
     goto failed;
   }
   out_data->arch_len = arch_len;
-  if (in_data->locale_id < 0 || in_data->locale_id > MAX_LOCALE_ID) {
-    errcode = 12;
-    goto failed;
-  }
-  out_data->locale_id = in_data->locale_id;
   if (in_data->variant < 0 || in_data->variant > MAX_VARIANT) {
     errcode = 13;
     goto failed;
