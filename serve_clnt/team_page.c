@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@
 
 int
 serve_clnt_team_page(int sock_fd, int out_fd,
-                     int sid_mode, int locale_id,
+                     int locale_id,
                      unsigned int flags,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars,
@@ -65,7 +65,6 @@ serve_clnt_team_page(int sock_fd, int out_fd,
   extra_args_ptr = hidden_vars_ptr + hidden_vars_len + 1;
   out->b.id = SRV_CMD_TEAM_PAGE;
   out->b.magic = PROT_SERVE_PACKET_MAGIC;
-  out->sid_mode = sid_mode;
   out->locale_id = locale_id;
   out->flags = flags;
   out->self_url_len = self_url_len;
