@@ -70,6 +70,7 @@ static unsigned char const * const error_map[] =
   _("there are transient runs"),
   _("invalid test number"),
   _("bad XML"),
+  _("report is not available"),
 };
 #undef _
 
