@@ -69,13 +69,9 @@ run_request_packet_read(size_t in_size, const void *in_data,
   pout->scoring_system = FLAGS_GET_SCORING_SYSTEM(flags);
   if (pout->scoring_system < 0 || pout->scoring_system > MAX_SCORING_SYSTEM) ERR(10);
   if ((flags & FLAGS_ACCEPTING_MODE)) pout->accepting_mode = 1;
-  if ((flags & FLAGS_TEAM_ENABLE_REP_VIEW)) pout->team_enable_rep_view = 1;
-  if ((flags & FLAGS_REPORT_ERROR_CODE)) pout->report_error_code = 1;
   if ((flags & FLAGS_ACCEPT_PARTIAL)) pout->accept_partial = 1;
-  if ((flags & FLAGS_HTML_REPORT)) pout->html_report = 1;
   if ((flags & FLAGS_DISABLE_SOUND)) pout->disable_sound = 1;
   if ((flags & FLAGS_FULL_ARCHIVE)) pout->full_archive = 1;
-  if ((flags & FLAGS_XML_REPORT)) pout->xml_report = 1;
 
   pout->ts1 = cvt_bin_to_host_32(pin->ts1);
   pout->ts1_us = cvt_bin_to_host_32(pin->ts1_us);
@@ -96,14 +92,12 @@ run_request_packet_read(size_t in_size, const void *in_data,
   if (exe_sfx_len > MAX_EXE_SFX_LEN) ERR(14);
   arch_len = pin->arch_len;
   if (arch_len > MAX_ARCH_LEN) ERR(15);
-  pout->locale_id = pin->locale_id;
-  if (pout->locale_id < 0 || pout->locale_id > MAX_LOCALE_ID) ERR(16);
   pout->variant = pin->variant;
-  if (pout->variant < 0 || pout->variant > MAX_VARIANT) ERR(17);
+  if (pout->variant < 0 || pout->variant > MAX_VARIANT) ERR(16);
 
   packet_len = pkt_bin_align(sizeof(*pin) + user_spelling_len + prob_spelling_len
                              + exe_sfx_len + arch_len);
-  if (packet_len != pin->packet_len) ERR(18);
+  if (packet_len != pin->packet_len) ERR(17);
   inptr = (const unsigned char*) pin + sizeof(*pin);
 
   pout->exe_sfx = xmalloc(exe_sfx_len + 1);
