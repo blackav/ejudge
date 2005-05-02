@@ -2285,9 +2285,6 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
   return 0;
 }
 
-static const char content_text_html[] = "content-type: text/html\n\n";
-static const char content_text_xml[] = "content-type: text/xml\n\n";
-
 int
 write_priv_report(FILE *f, int user_id, int priv_level,
                   int sid_mode, unsigned long long sid,
@@ -2300,10 +2297,12 @@ write_priv_report(FILE *f, int user_id, int priv_level,
   path_t rep_path;
   char *rep_text = 0, *html_text;
   size_t rep_len = 0, html_len;
-  int rep_flag;
+  int rep_flag, content_type;
   const unsigned char *t6 = _("Refresh");
   const unsigned char *t7 = _("View team report");
   const unsigned char *report_dir = global->report_archive_dir;
+  const unsigned char *start_ptr = 0;
+  struct run_entry re;
 
   if (team_report_flag && global->team_enable_rep_view) {
     t7 = t6;
@@ -2315,30 +2314,47 @@ write_priv_report(FILE *f, int user_id, int priv_level,
   }
 
   if (run_id < 0 || run_id >= run_get_total()) return -SRV_ERR_BAD_RUN_ID;
-  rep_flag = archive_make_read_path(rep_path, sizeof(rep_path),
-                                    report_dir, run_id,
-                                    0, 1);
+  if (run_get_entry(run_id, &re) < 0) return -SRV_ERR_BAD_RUN_ID;
+  if (!run_is_report_available(re.status)) return -SRV_ERR_REPORT_NOT_AVAILABLE;
+
   print_nav_buttons(f,run_id,sid_mode,sid,self_url,hidden_vars,extra_args,
                     _("Main page"), 0, 0, 0, _("View source"), t6, t7);
   fprintf(f, "<hr>\n");
-  if (rep_flag < 0 || generic_read_file(&rep_text, 0, &rep_len, rep_flag,0,rep_path, "") < 0) {
-    fprintf(f, "<big><font color=\"red\">Cannot read report text!</font></big>\n");
-  } else {
 
-    if (!strncasecmp(rep_text, content_text_xml, sizeof(content_text_xml)-1)) {
-      write_xml_testing_report(f, rep_text + sizeof(content_text_xml) - 1,
-                               sid_mode, sid, self_url, extra_args);
-    } else if (!strncasecmp(rep_text, content_text_html, sizeof(content_text_html)-1)) {
-      fprintf(f, "%s", rep_text + sizeof(content_text_html) - 1);
-    } else {
-      html_len = html_armored_memlen(rep_text, rep_len);
-      html_text = alloca(html_len + 16);
-      html_armor_text(rep_text, rep_len, html_text);
-      html_text[html_len] = 0;
-      fprintf(f, "<pre>%s</pre>", html_text);
-    }
-    xfree(rep_text);
+  rep_flag = archive_make_read_path(rep_path, sizeof(rep_path),
+                                    global->xml_report_archive_dir, run_id, 0, 1);
+  if (rep_flag >= 0) {
+    if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0)
+      return -SRV_ERR_SYSTEM_ERROR;
+    content_type = get_content_type(rep_text, &start_ptr);
+  } else {
+    rep_flag = archive_make_read_path(rep_path, sizeof(rep_path),
+                                      report_dir, run_id, 0, 1);
+    if (rep_flag < 0) return -SRV_ERR_FILE_NOT_EXIST;
+    if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0)
+      return -SRV_ERR_SYSTEM_ERROR;
+    content_type = get_content_type(rep_text, &start_ptr);
   }
+
+  switch (content_type) {
+  case CONTENT_TYPE_TEXT:
+    html_len = html_armored_memlen(start_ptr, rep_len);
+    html_text = alloca(html_len + 16);
+    html_armor_text(rep_text, rep_len, html_text);
+    html_text[html_len] = 0;
+    fprintf(f, "<pre>%s</pre>", html_text);
+    break;
+  case CONTENT_TYPE_HTML:
+    fprintf(f, "%s", start_ptr);
+    break;
+  case CONTENT_TYPE_XML:
+    write_xml_testing_report(f, start_ptr, sid_mode, sid, self_url, extra_args);
+    break;
+  default:
+    abort();
+  }
+
+  xfree(rep_text);
   fprintf(f, "<hr>\n");
   print_nav_buttons(f,run_id,sid_mode,sid,self_url,hidden_vars,extra_args,
                     _("Main page"), 0, 0, 0, _("View source"), t6, t7);
@@ -3121,6 +3137,7 @@ write_tests(FILE *f, int cmd, int run_id, int test_num)
   unsigned char *indir;
   char *text2 = 0;
   size_t text2_len = 0;
+  const unsigned char *start_ptr = 0;
 
   if (run_id < 0 || run_id >= run_get_total()) {
     errcode = SRV_ERR_BAD_RUN_ID;
@@ -3141,12 +3158,12 @@ write_tests(FILE *f, int cmd, int run_id, int test_num)
     errcode = SRV_ERR_SYSTEM_ERROR;
     goto failure;
   }
-  if (strncasecmp(rep_text, content_text_xml, sizeof(content_text_xml)-1) != 0){
+  if (get_content_type(rep_text, &start_ptr) != CONTENT_TYPE_XML) {
     // we expect the master log in XML format
     errcode = SRV_ERR_BAD_XML;
     goto failure;
   }
-  if (!(r = testing_report_parse_xml(rep_text + sizeof(content_text_xml)-1))) {
+  if (!(r = testing_report_parse_xml(start_ptr))) {
     errcode = SRV_ERR_BAD_XML;
     goto failure;
   }
