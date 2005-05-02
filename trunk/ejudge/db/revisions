@@ -1777,3 +1777,14 @@ runlog.c 1 42 4547517
 runlog_import.c 1 11 1762634
 run_packet_1.c 1 5 411547
 run_packet_2.c 1 5 439543
+html.h 1 30 602917
+protocol.h 1 36 770354
+serve_clnt.h 1 21 474680
+userlist_clnt.h 1 22 635444
+register.c 1 35 7662671
+serve-cmd.c 1 7 1261161
+super_html.c 1 3 3673611
+serve_clnt/master_page.c 1 11 389109
+serve_clnt/standings.c 1 7 305806
+serve_clnt/team_page.c 1 6 311114
+serve_clnt/view.c 1 15 294284
