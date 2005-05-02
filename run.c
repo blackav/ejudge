@@ -99,35 +99,6 @@ static int tests_a = 0;
 static struct testinfo *tests = 0; //[MAX_TEST + 1];
 
 static int
-setup_locale(int locale_id)
-{
-#if CONF_HAS_LIBINTL - 0 == 1
-  char *e = 0;
-  char env_buf[128];
-
-  if (!global->enable_l10n) return 0;
-
-  switch (locale_id) {
-  case 1:
-    e = "ru_RU.KOI8-R";
-    break;
-  case 0:
-  default:
-    locale_id = 0;
-    e = "C";
-    break;
-  }
-
-  sprintf(env_buf, "LC_ALL=%s", e);
-  putenv(env_buf);
-  setlocale(LC_ALL, "");
-  return locale_id;
-#else
-  return 0;
-#endif /* CONF_HAS_LIBINTL */
-}
-
-static int
 filter_testers(char *key)
 {
   int i, total = 0;
@@ -143,35 +114,6 @@ filter_testers(char *key)
   return 0;
 }
 
-char *
-result2str(int s, int st, int sig)
-{
-  static char result2str_buf[1024];
-
-  switch (s) {
-  case 0:
-    return _("OK");
-  case 2:
-    if (st == 256) {
-      sprintf(result2str_buf, "%s (%s)", _("Runtime error"),
-              os_GetSignalString(sig));
-      return result2str_buf;
-    }
-    return _("Runtime error");
-  case 3:
-    return _("Time-limit exceeded");
-  case 4:
-    return _("Presentation error");
-  case 5:
-    return _("Wrong answer");
-  case 6:
-    return _("Manual check required");
-  default:
-    sprintf(result2str_buf, _("Unknown result (%d)"), s);
-    return result2str_buf;
-  }
-}
-
 static void
 html_print_by_line(FILE *f, unsigned char const *s, size_t size)
 {
@@ -180,12 +122,12 @@ html_print_by_line(FILE *f, unsigned char const *s, size_t size)
 
   if (global->max_file_length > 0 && size > global->max_file_length) {
     fprintf(f, "(%s, %s = %zu)\n",
-            _("file is too long"), _("size"), size);
+            "file is too long", "size", size);
     return;
   }
 
   if (!s) {
-    fprintf(f, "(%s)\n", _("file is missing"));
+    fprintf(f, "(%s)\n", "file is missing");
     return;
   }
 
@@ -195,7 +137,7 @@ html_print_by_line(FILE *f, unsigned char const *s, size_t size)
     while (*s && *s != '\r' && *s != '\n') s++;
     if (global->max_line_length > 0 && s - p > global->max_line_length) {
       fprintf(f, "<i>(%s, %s = %d)</i>\n",
-              _("line is too long"), _("size"), s - p);
+              "line is too long", "size", s - p);
     } else {
       while (p != s)
         if (trans_table[*p]) {
@@ -204,35 +146,6 @@ html_print_by_line(FILE *f, unsigned char const *s, size_t size)
         } else {
           putc(*p++, f);
         }
-    }
-    while (*s == '\r' || *s == '\n')
-      putc(*s++, f);
-    p = s;
-  }
-  putc('\n', f);
-}
-
-static void
-print_by_line(FILE *f, char const *s, size_t size)
-{
-  char const *p = s;
-
-  if (global->max_file_length > 0 && size > global->max_file_length) {
-    fprintf(f, "<%s, %s = %zu>\n", _("file is too long"), _("size"), size);
-    return;
-  }
-  if (!s) {
-    fprintf(f, "<%s>\n", _("file is missing"));
-    return;
-  }
-
-  while (*s) {
-    while (*s && *s != '\r' && *s != '\n') s++;
-    if (global->max_line_length > 0 && s - p > global->max_line_length) {
-      fprintf(f, "<%s, %s = %d>\n", _("line is too long"), _("size"), s - p);
-    } else {
-      while (p != s)
-        putc(*p++, f);
     }
     while (*s == '\r' || *s == '\n')
       putc(*s++, f);
@@ -433,279 +346,6 @@ generate_xml_report(struct run_request_packet *req_pkt,
 }
 
 static int
-generate_report(struct run_request_packet *req_pkt,
-                struct run_reply_packet *reply_pkt,
-                int score_system_val,
-                int accept_testing,
-                char *report_path, int variant, int scores,
-                int max_score, int html_flag, int correct_available_flag,
-                int info_available_flag,
-                const unsigned char *additional_comment)
-{
-  FILE *f;
-  int   i;
-  int   status = 0;
-  int   first_failed = 0;
-  int   passed_tests = 0;
-  int   failed_tests = 0;
-  int   addition = -1;
-  char  score_buf[32];
-  char  score_buf2[32];
-  unsigned char res_buf[64];
-  unsigned char link_buf[64];
-  unsigned char *msg = 0;
-  //unsigned char time_buf[64];
-
-  if (req_pkt->xml_report)
-    return generate_xml_report(req_pkt, reply_pkt, report_path,
-                               variant, scores, max_score,
-                               correct_available_flag, info_available_flag,
-                               additional_comment);
-
-  if (!(f = fopen(report_path, "w"))) {
-    err("generate_report: cannot open protocol file %s", report_path);
-    return -1;
-  }
-
-  for (i = 1; i < total_tests; i++) {
-    if (status == 0 && tests[i].status != 0) {
-      status = tests[i].status;
-      first_failed = i;
-    }
-    if (tests[i].status == 0) passed_tests++;
-    else failed_tests++;
-  }
-
-  if (html_flag) {
-    fprintf(f, "Content-type: text/html\n\n");
-    fprintf(f, "<pre>");
-  }
-
-  if (score_system_val == SCORE_OLYMPIAD && accept_testing) {
-    if (status == 0) {
-      msg = "%s\n\n";
-      if (html_flag) msg = "<font color=\"green\">%s</font>\n\n";
-      fprintf(f, msg, _("ACCEPTED"));
-    } else {
-      msg = _("%s, test #%d\n\n");
-      if (html_flag) msg = _("<font color=\"red\">%s, test #%d</font>\n\n");
-      fprintf(f, msg, result2str(status,0,0), first_failed);
-    }
-    fprintf(f, _("%d total tests runs, %d passed, %d failed\n\n"),
-            total_tests - 1, passed_tests, failed_tests);
-  } else {
-    if (status == 0) {
-      msg = "%s\n\n";
-      if (html_flag) msg = "<font color=\"green\">%s</font>\n\n";
-      fprintf(f, msg, _("OK"));
-    } else {
-      if (score_system_val==SCORE_KIROV || score_system_val==SCORE_OLYMPIAD) {
-        msg = "%s\n\n";
-        if (html_flag) msg = "<font color=\"red\">%s</font>\n\n";
-        fprintf(f, msg, _("PARTIAL SOLUTION"));
-      } else {
-        msg = _("%s, test #%d\n\n");
-        if (html_flag) msg = _("<font color=\"red\">%s, test #%d</font>\n\n");
-        fprintf(f, msg, result2str(status,0,0), first_failed);
-      }
-    }
-    fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
-            total_tests - 1, passed_tests, failed_tests);
-    if (score_system_val==SCORE_KIROV || score_system_val==SCORE_OLYMPIAD) {
-      fprintf(f, _("Scores gained: %d (out of %d)\n"), scores, max_score);
-    }
-    fprintf(f, "\n");
-  }
-
-  snprintf(res_buf, sizeof(res_buf), "%s", _("Result"));
-  link_buf[0] = 0;
-  if (html_flag) snprintf(link_buf, sizeof(link_buf), "%s", _("Link"));
-  fprintf(f, _("Test #  Status  Time (sec)  %s%-32s%s\n"),
-          (score_system_val == SCORE_KIROV || score_system_val==SCORE_OLYMPIAD)?_("Score   "):"", res_buf, link_buf);
-
-  for (i = 1; i < total_tests; i++) {
-    score_buf[0] = 0;
-    if (score_system_val == SCORE_KIROV || score_system_val==SCORE_OLYMPIAD){
-      sprintf(score_buf2, "%d (%d)", tests[i].score, tests[i].max_score);
-      sprintf(score_buf, "%-8s", score_buf2);
-    }
-    snprintf(res_buf, sizeof(res_buf), "%s", 
-             result2str(tests[i].status, tests[i].code, tests[i].termsig));
-    link_buf[0] = 0;
-    if (html_flag)
-      snprintf(link_buf, sizeof(link_buf),
-               "<a href=\"#T%d\">View %d</a>", i, i);
-    fprintf(f, "%-8d%-8d%-12.3f%s%-32s%s\n",
-            i, tests[i].code, (double) tests[i].times / 1000,
-            score_buf, res_buf, link_buf);
-  }
-  fprintf(f, "\n");
-
-  i = total_tests - 1;
-  for (; i >= 1 && i < total_tests; i += addition) {
-    if (html_flag) {
-      fprintf(f, "<a name=\"T%d\"></a>", i);
-      fprintf(f, _("<b>====== Test #%d =======</b>\n"), i);
-      fprintf(f, _("Judgement: %s\n"), result2str(tests[i].status, 0, 0));
-      if (tests[i].comment) {
-        fprintf(f, "%s: %s\n", _("<u>Comment</u>"), tests[i].comment);
-      }
-      if (tests[i].args) {
-        fprintf(f, _("<u>--- Command line arguments ---</u>\n"));
-        if (strlen(tests[i].args) >= global->max_cmd_length) {
-          fprintf(f, _("<i>Command line is too long</i>\n"));
-        } else {
-          msg = html_armor_string_dup(tests[i].args);
-          fprintf(f, "%s", tests[i].args);
-          xfree(msg);
-        }
-      }
-      fprintf(f, _("<u>--- Input ---</u>\n"));
-      html_print_by_line(f, tests[i].input, tests[i].input_size);
-      fprintf(f, _("<u>--- Output ---</u>\n"));
-      html_print_by_line(f, tests[i].output, tests[i].output_size);
-      fprintf(f, _("<u>--- Correct ---</u>\n"));
-      html_print_by_line(f, tests[i].correct, tests[i].correct_size);
-      fprintf(f, _("<u>--- Stderr ---</u>\n"));
-      html_print_by_line(f, tests[i].error, tests[i].error_size);
-      fprintf(f, _("<u>--- Checker output ---</u>\n"));
-      html_print_by_line(f, tests[i].chk_out, tests[i].chk_out_size);
-    } else {
-      fprintf(f, _("====== Test #%d =======\n"), i);
-      fprintf(f, _("Judgement: %s\n"), result2str(tests[i].status, 0, 0));
-      if (tests[i].comment) {
-        fprintf(f, "%s: %s\n", _("Comment"), tests[i].comment);
-      }
-      if (tests[i].args) {
-        fprintf(f, _("--- Command line arguments ---\n"));
-        if (strlen(tests[i].args) >= global->max_cmd_length) {
-          fprintf(f, _("Command line is too long\n"));
-        } else {
-          fprintf(f, "%s", tests[i].args);
-        }
-      }
-      fprintf(f, _("--- Input ---\n"));
-      print_by_line(f, tests[i].input, tests[i].input_size);
-      fprintf(f, _("--- Output ---\n"));
-      print_by_line(f, tests[i].output, tests[i].output_size);
-      fprintf(f, _("--- Correct ---\n"));
-      print_by_line(f, tests[i].correct, tests[i].correct_size);
-      fprintf(f, _("--- Stderr ---\n"));
-      print_by_line(f, tests[i].error, tests[i].error_size);
-      fprintf(f, _("--- Checker output ---\n"));
-      print_by_line(f, tests[i].chk_out, tests[i].chk_out_size);
-    }
-  }
-
-  if (html_flag) {
-    fprintf(f, "</pre>\n");
-  }
-
-  fclose(f);
-  return 0;
-}
-
-static int
-generate_team_report(int score_system_val,
-                     int accept_testing,
-                     int report_error_code,
-                     char const *report_path, int scores, int max_score)
-{
-  FILE *f;
-  int   i;
-  int   status = 0;
-  int   first_failed = 0;
-  int   passed_tests = 0;
-  int   failed_tests = 0;
-  int   retcode;
-  int   need_test_comments = 0;
-
-  char  score_buf[32];
-  char  score_buf2[32];
-
-  if (!(f = fopen(report_path, "w"))) {
-    err("generate_report: cannot open protocol file %s", report_path);
-    return -1;
-  }
-
-  for (i = 1; i < total_tests; i++) {
-    if (status == 0 && tests[i].status != 0) {
-      status = tests[i].status;
-      first_failed = i;
-    }
-    if (tests[i].status == 0) passed_tests++;
-    else failed_tests++;
-  }
-
-  if (score_system_val == SCORE_OLYMPIAD && accept_testing) {
-    if (status == 0) {
-      fprintf(f, "%s\n\n", _("ACCEPTED"));
-    } else {
-      fprintf(f, _("%s, test #%d\n\n"),
-              result2str(status,0,0), first_failed);
-    }
-    fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
-            total_tests - 1, passed_tests, failed_tests);
-    fprintf(f, "\n");
-  } else {
-    if (status == 0) {
-      fprintf(f, "%s\n\n", _("OK"));
-    } else {
-      if (score_system_val == SCORE_KIROV || score_system_val==SCORE_OLYMPIAD){
-        fprintf(f, _("PARTIAL SOLUTION\n\n"));
-      } else {
-        fprintf(f, _("%s, test #%d\n\n"),
-                result2str(status,0,0), first_failed);
-      }
-    }
-    fprintf(f, _("%d total tests runs, %d passed, %d failed\n"),
-            total_tests - 1, passed_tests, failed_tests);
-    if (score_system_val == SCORE_KIROV || score_system_val==SCORE_OLYMPIAD) {
-      fprintf(f, _("Scores gained: %d (out of %d)\n"), scores, max_score);
-    }
-    fprintf(f, "\n");
-  }
-
-  fprintf(f, _("Test #  Status  Time (sec)  %sResult\n"),
-          (score_system_val == SCORE_KIROV || score_system_val==SCORE_OLYMPIAD)?_("Score   "):"");
-  for (i = 1; i < total_tests; i++) {
-    score_buf[0] = 0;
-    if (score_system_val == SCORE_KIROV || score_system_val==SCORE_OLYMPIAD) {
-      sprintf(score_buf2, "%d (%d)", tests[i].score, tests[i].max_score);
-      sprintf(score_buf, "%-8s", score_buf2);
-    }
-    retcode = tests[i].code;
-    if (tests[i].code != 0 && !report_error_code) {
-      retcode = 1;
-    }
-    fprintf(f, "%-8d%-8d%-12.3f%s%s\n",
-	    i, retcode, (double) tests[i].times / 1000,
-            score_buf,
-	    result2str(tests[i].status,0,0));
-    if (tests[i].team_comment) need_test_comments = 1;
-  }
-  fprintf(f, "\n");
-
-  if (!report_error_code) {
-    fprintf(f, "\n%s\n", _("Note: non-zero return code is always reported as 1"));
-  }
-
-  if (need_test_comments) {
-    fprintf(f, "%s\n", _("Comments for failed tests:"));
-    for (i = 1; i < total_tests; i++) {
-      if (tests[i].status == RUN_OK || tests[i].status == RUN_CHECK_FAILED)
-        continue;
-      if (!tests[i].team_comment)
-        continue;
-      fprintf(stderr, "%s %3d: %s\n", _("Test"), i, tests[i].team_comment);
-    }
-  }
-
-  fclose(f);
-  return 0;
-}
-
-static int
 read_error_code(char const *path)
 {
   FILE *f;
@@ -731,18 +371,13 @@ static int
 run_tests(struct section_tester_data *tst,
           struct run_request_packet *req_pkt,
           struct run_reply_packet *reply_pkt,
-          int locale_id,
-          int team_enable_rep_view,
-          int report_error_code,
           int score_system_val,
           int accept_testing,
           int accept_partial,
           int cur_variant,
-          int html_report_flag,
           char const *new_name,
           char const *new_base,
           char *report_path,                /* path to the report */
-          char *team_report_path,           /* path to the team report */
           char *full_report_path,           /* path to the full output dir */
           const unsigned char *user_spelling,
           const unsigned char *problem_spelling)
@@ -825,10 +460,6 @@ run_tests(struct section_tester_data *tst,
   }
 
   pathmake(report_path, global->run_work_dir, "/", "report", NULL);
-  team_report_path[0] = 0;
-  if (team_enable_rep_view) {
-    pathmake(team_report_path, global->run_work_dir, "/", "team_report", NULL);
-  }
   full_report_path[0] = 0;
   if (req_pkt->full_archive) {
     pathmake(full_report_path, global->run_work_dir, "/", "full_output", NULL);
@@ -1469,17 +1100,10 @@ run_tests(struct section_tester_data *tst,
 
   get_current_time(&reply_pkt->ts7, &reply_pkt->ts7_us);
 
-  if (team_enable_rep_view) {
-    setup_locale(locale_id);
-    generate_team_report(score_system_val, accept_testing,
-                         report_error_code,
-                         team_report_path, score, prb->full_score);
-    setup_locale(0);
-  }
-  generate_report(req_pkt, reply_pkt, score_system_val, accept_testing,
-                  report_path, cur_variant, score, prb->full_score, html_report_flag,
-                  (prb->use_corr && prb->corr_dir[0]),
-                  prb->use_info, additional_comment);
+  generate_xml_report(req_pkt, reply_pkt, report_path, cur_variant,
+                      score, prb->full_score,
+                      (prb->use_corr && prb->corr_dir[0]), prb->use_info,
+                      additional_comment);
 
   goto _cleanup;
 
@@ -1517,14 +1141,12 @@ do_loop(void)
   int r;
 
   path_t report_path;
-  path_t team_report_path;
   path_t full_report_path;
 
   unsigned char pkt_name[64];
   unsigned char exe_pkt_name[64];
   unsigned char run_base[64];
   path_t full_report_dir;
-  path_t full_team_report_dir;
   path_t full_status_dir;
   path_t full_full_dir;
 
@@ -1644,8 +1266,6 @@ do_loop(void)
     }
 
     report_path[0] = 0;
-    /* team report might be not produced */
-    team_report_path[0] = 0;
     full_report_path[0] = 0;
 
     /* start filling run_reply_packet */
@@ -1664,13 +1284,11 @@ do_loop(void)
     get_current_time(&reply_pkt.ts5, &reply_pkt.ts5_us);
 
     if (cr_serialize_lock() < 0) return -1;
-    if (run_tests(tst, req_pkt, &reply_pkt, req_pkt->locale_id,
-                  req_pkt->team_enable_rep_view, req_pkt->report_error_code,
+    if (run_tests(tst, req_pkt, &reply_pkt,
                   req_pkt->scoring_system, req_pkt->accepting_mode,
-                  req_pkt->accept_partial,
-                  req_pkt->variant, req_pkt->html_report,
+                  req_pkt->accept_partial, req_pkt->variant,
                   exe_name, run_base,
-                  report_path, team_report_path, full_report_path,
+                  report_path, full_report_path,
                   req_pkt->user_spelling, req_pkt->prob_spelling) < 0) {
       cr_serialize_unlock();
       return -1;
@@ -1683,8 +1301,6 @@ do_loop(void)
 
     snprintf(full_report_dir, sizeof(full_report_dir),
              "%s/%06d/report", global->run_dir, req_pkt->contest_id);
-    snprintf(full_team_report_dir, sizeof(full_team_report_dir),
-             "%s/%06d/teamreport", global->run_dir, req_pkt->contest_id);
     snprintf(full_status_dir, sizeof(full_status_dir),
              "%s/%06d/status", global->run_dir, req_pkt->contest_id);
     snprintf(full_full_dir, sizeof(full_full_dir),
@@ -1692,11 +1308,6 @@ do_loop(void)
              
     if (generic_copy_file(0, NULL, report_path, "",
                           0, full_report_dir, run_base, "") < 0)
-      return -1;
-    if (team_report_path[0]
-        && generic_copy_file(0, NULL, team_report_path, "",
-                             0, full_team_report_dir,
-                             run_base, "") < 0)
       return -1;
     if (full_report_path[0]
         && generic_copy_file(0, NULL, full_report_path, "",
