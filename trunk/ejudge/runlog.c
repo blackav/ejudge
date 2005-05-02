@@ -2110,6 +2110,52 @@ run_is_valid_test_status(int status)
   return is_valid_test_status_table[status];
 }
 
+static const unsigned char is_team_report_available_table[RUN_LAST + 1] =
+{
+  [RUN_OK]               = 1,
+  [RUN_COMPILE_ERR]      = 1,
+  [RUN_RUN_TIME_ERR]     = 1,
+  [RUN_TIME_LIMIT_ERR]   = 1,
+  [RUN_PRESENTATION_ERR] = 1,
+  [RUN_WRONG_ANSWER_ERR] = 1,
+  [RUN_PARTIAL]          = 1,
+  [RUN_ACCEPTED]         = 1,
+  [RUN_MEM_LIMIT_ERR]    = 1,
+  [RUN_SECURITY_ERR]     = 1,
+
+};
+int
+run_is_team_report_available(int status)
+{
+  if (status < 0 || status > RUN_LAST) return 0;
+  return is_team_report_available_table[status];
+}
+
+static const unsigned char is_report_available_table[RUN_LAST + 1] =
+{
+  [RUN_OK]               = 1,
+  [RUN_COMPILE_ERR]      = 1,
+  [RUN_RUN_TIME_ERR]     = 1,
+  [RUN_TIME_LIMIT_ERR]   = 1,
+  [RUN_PRESENTATION_ERR] = 1,
+  [RUN_WRONG_ANSWER_ERR] = 1,
+  [RUN_CHECK_FAILED]     = 1,
+  [RUN_PARTIAL]          = 1,
+  [RUN_ACCEPTED]         = 1,
+  [RUN_IGNORED]          = 1,
+  [RUN_DISQUALIFIED]     = 1,
+  [RUN_PENDING]          = 1,
+  [RUN_MEM_LIMIT_ERR]    = 1,
+  [RUN_SECURITY_ERR]     = 1,
+
+};
+int
+run_is_report_available(int status)
+{
+  if (status < 0 || status > RUN_LAST) return 0;
+  return is_report_available_table[status];
+}
+
 /*
  * the set of status strings is as follows:
     OK CE RT TL PE WA CF PT AC IG DQ PD ML SE RU CD CG AV RJ EM VS VT
