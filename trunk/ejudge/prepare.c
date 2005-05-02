@@ -464,6 +464,7 @@ find_tester(int problem, char const *arch)
 #define DFLT_G_CLAR_ARCHIVE_DIR   "clars"
 #define DFLT_G_RUN_ARCHIVE_DIR    "runs"
 #define DFLT_G_REPORT_ARCHIVE_DIR "reports"
+#define DFLT_G_XML_REPORT_ARCHIVE_DIR "xmlreports"
 #define DFLT_G_FULL_ARCHIVE_DIR   "output"
 #define DFLT_G_AUDIT_LOG_DIR      "audit"
 #define DFLT_G_TEAM_REPORT_ARCHIVE_DIR "teamreports"
@@ -1415,6 +1416,7 @@ set_defaults(int mode)
     GLOBAL_INIT_FIELD(clar_archive_dir, DFLT_G_CLAR_ARCHIVE_DIR, archive_dir);
     GLOBAL_INIT_FIELD(run_archive_dir, DFLT_G_RUN_ARCHIVE_DIR, archive_dir);
     GLOBAL_INIT_FIELD(report_archive_dir,DFLT_G_REPORT_ARCHIVE_DIR,archive_dir);
+    GLOBAL_INIT_FIELD(xml_report_archive_dir,DFLT_G_XML_REPORT_ARCHIVE_DIR,archive_dir);
     GLOBAL_INIT_FIELD(full_archive_dir, DFLT_G_FULL_ARCHIVE_DIR, archive_dir);
     GLOBAL_INIT_FIELD(audit_log_dir, DFLT_G_AUDIT_LOG_DIR, archive_dir);
     GLOBAL_INIT_FIELD(team_report_archive_dir,DFLT_G_TEAM_REPORT_ARCHIVE_DIR,archive_dir);
@@ -2930,12 +2932,13 @@ create_dirs(int mode)
     if (make_dir(global->archive_dir, 0) < 0) return -1;
     if (make_dir(global->clar_archive_dir, 0) < 0) return -1;
     if (make_dir(global->run_archive_dir, 0) < 0) return -1;
+    if (make_dir(global->xml_report_archive_dir, 0) < 0) return -1;
     if (make_dir(global->report_archive_dir, 0) < 0) return -1;
-    if (global->enable_full_archive) {
-      if (make_dir(global->full_archive_dir, 0) < 0) return -1;
-    }
     if (global->team_enable_rep_view) {
       if (make_dir(global->team_report_archive_dir, 0) < 0) return -1;
+    }
+    if (global->enable_full_archive) {
+      if (make_dir(global->full_archive_dir, 0) < 0) return -1;
     }
     if (make_dir(global->team_extra_dir, 0) < 0) return -1;
   } else if (mode == PREPARE_COMPILE) {
