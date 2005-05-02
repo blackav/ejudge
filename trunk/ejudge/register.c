@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2001-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1461,7 +1461,7 @@ authentificate(void)
   int new_user_id = 0, new_locale_id = 0, new_contest_id = 0;
   unsigned char *new_login = 0, *new_name = 0;
 
-  if (!(sid_str = cgi_param("sid"))) goto failed;
+  if (!(sid_str = cgi_param("SID"))) goto failed;
   if (sscanf(sid_str, "%llx%n", &sid_value, &n) != 1) goto failed;
   if (sid_str[n] || !sid_value) goto failed;
   if (!server_conn) {
@@ -1651,7 +1651,7 @@ display_edit_registration_data_page(void)
   printf("<form method=\"POST\" action=\"%s\" "
          "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
          self_url);
-  printf("<input type=\"hidden\" name=\"sid\" value=\"%llx\">\n"
+  printf("<input type=\"hidden\" name=\"SID\" value=\"%llx\">\n"
          "<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n"
          "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
          user_cookie, user_contest_id, client_locale_id);
@@ -1799,12 +1799,12 @@ display_edit_registration_data_page(void)
   if (!user_show_all) {
     snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
   }
-  snprintf(url, sizeof(url), "%s?action=%d&sid=%llx&locale_id=%d%s",
+  snprintf(url, sizeof(url), "%s?action=%d&SID=%llx&locale_id=%d%s",
            self_url, STATE_MAIN_PAGE, user_cookie, client_locale_id, s1);
   printf("<p%s><a href=\"%s\">%s</a></p>\n", par_style, url, _("Back"));
 
   printf("<%s>%s</%s>\n", head_style, _("Quit the system"), head_style);
-  snprintf(url, sizeof(url), "%s?action=%d&sid=%llx&locale_id=%d%s",
+  snprintf(url, sizeof(url), "%s?action=%d&SID=%llx&locale_id=%d%s",
            self_url, ACTION_LOGOUT, user_cookie, client_locale_id, s1);
   printf("<p%s><a href=\"%s\">%s</a></p>\n", par_style, url, _("Logout"));
 
@@ -2119,7 +2119,7 @@ display_main_page(void)
   printf("<form method=\"POST\" action=\"%s\" "
          "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
          self_url);
-  printf("<input type=\"hidden\" name=\"sid\" value=\"%llx\">\n"
+  printf("<input type=\"hidden\" name=\"SID\" value=\"%llx\">\n"
          "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
          user_cookie, client_locale_id);
   if (user_contest_id > 0) {
@@ -2170,7 +2170,7 @@ display_main_page(void)
         snprintf(s1, sizeof(s1), "&show_all=1");
       }
       snprintf(url, sizeof(url),
-               "%s?action=%d&sid=%llx&contest_id=%d&locale_id=%d%s",
+               "%s?action=%d&SID=%llx&contest_id=%d&locale_id=%d%s",
                self_url, STATE_EDIT_REGISTRATION_DATA,
                user_cookie, regx->id, client_locale_id, s1);
       printf("<td%s><a href=\"%s\">%s</a></td>\n", table_style,
@@ -2178,7 +2178,7 @@ display_main_page(void)
       if (cnts->team_url && regx->status == USERLIST_REG_OK && !cnts->closed) {
         /* FIXME: need to set client mode correctly */
         snprintf(url, sizeof(url),
-                 "%s?locale_id=%d&contest_id=%d&sid=%llx",
+                 "%s?locale_id=%d&contest_id=%d&SID=%llx",
                  cnts->team_url, client_locale_id, regx->id, user_cookie);
         printf("<td%s><a href=\"%s\">%s</a></td>\n", table_style,
                url, _("Submit solution"));
@@ -2240,7 +2240,7 @@ display_main_page(void)
         snprintf(s1, sizeof(s1), "&show_all=1");
       }
       snprintf(url, sizeof(url),
-               "%s?action=%d&sid=%llx&locale_id=%d&contest_id=%d%s",
+               "%s?action=%d&SID=%llx&locale_id=%d&contest_id=%d%s",
                self_url, STATE_EDIT_REGISTRATION_DATA, user_cookie,
                client_locale_id, cnts->id, s1);
       printf("<tr><td%s>%d</td><td%s>%s</td>"
@@ -2257,14 +2257,14 @@ display_main_page(void)
   }
   printf("<%s>%s</%s>\n", head_style, _("Quit the system"), head_style);
   snprintf(url, sizeof(url),
-           "%s?action=%d&sid=%llx&locale_id=%d%s",
+           "%s?action=%d&SID=%llx&locale_id=%d%s",
            self_url, ACTION_LOGOUT, user_cookie, client_locale_id, s1);
   printf("<p%s><a href=\"%s\">%s</a></p>\n", par_style, url, _("Logout"));
 
   printf("<form method=\"POST\" action=\"%s\" "
          "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
          self_url);
-  printf("<input type=\"hidden\" name=\"sid\" value=\"%llx\">\n", user_cookie);
+  printf("<input type=\"hidden\" name=\"SID\" value=\"%llx\">\n", user_cookie);
   if (user_contest_id > 0) {
     printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
            user_contest_id);
@@ -2368,7 +2368,7 @@ action_change_lang_at_main_page(void)
   if (user_contest_id > 0) {
     snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
   }
-  snprintf(url, sizeof(url), "%s?action=%d&locale_id=%d&sid=%llx%s",
+  snprintf(url, sizeof(url), "%s?action=%d&locale_id=%d&SID=%llx%s",
            self_url, STATE_MAIN_PAGE, client_locale_id, user_cookie, s1);
   client_put_refresh_header(config->charset, url, 0,
                             "%s", _("Language is changed"));
@@ -2509,7 +2509,7 @@ action_login(void)
   if (user_contest_id > 0) {
     snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
   }
-  snprintf(url, sizeof(url), "%s?action=%d&sid=%llx%s&locale_id=%d",
+  snprintf(url, sizeof(url), "%s?action=%d&SID=%llx%s&locale_id=%d",
            self_url, STATE_MAIN_PAGE, user_cookie, s1, client_locale_id);
 
   client_put_refresh_header(config->charset, url, 0,
@@ -2598,7 +2598,7 @@ action_change_password(void)
   if (user_contest_id > 0) {
     snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
   }
-  snprintf(url, sizeof(url), "%s?sid=%llx&locale_id=%d&action=%d%s",
+  snprintf(url, sizeof(url), "%s?SID=%llx&locale_id=%d&action=%d%s",
            self_url, user_cookie, client_locale_id, STATE_MAIN_PAGE, s1);
 
   if (!error_log) {
@@ -2633,7 +2633,7 @@ action_remove_member(void)
   if (user_contest_id > 0) {
     snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
   }
-  snprintf(url, sizeof(url), "%s?action=%d&sid=%llx&locale_id=%d%s",
+  snprintf(url, sizeof(url), "%s?action=%d&SID=%llx&locale_id=%d%s",
            self_url, STATE_EDIT_REGISTRATION_DATA, user_cookie,
            client_locale_id, s1);
 
@@ -2816,7 +2816,7 @@ action_register_for_contest(void)
   if (!user_show_all) {
     snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
   }
-  snprintf(url, sizeof(url), "%s?action=%d&sid=%llx&locale_id=%d%s",
+  snprintf(url, sizeof(url), "%s?action=%d&SID=%llx&locale_id=%d%s",
            self_url, STATE_MAIN_PAGE, user_cookie, client_locale_id, s1);
   client_put_refresh_header(config->charset, url, 0,
                             "%s", _("Registration is successful"));
