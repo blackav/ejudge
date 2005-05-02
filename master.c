@@ -164,17 +164,6 @@ static int client_action = 0;
 static int cgi_contest_id = 0;
 static unsigned char contest_id_str[64];
 
-enum
-  {
-    SID_DISABLED = 0,
-    SID_EMBED,
-    SID_URL,
-    SID_COOKIE
-  };
-
-static int client_sid_mode;
-static int need_set_cookie;
-static unsigned long long client_cookie;
 static unsigned long long client_sid;
 static unsigned char *client_login;
 static unsigned char *client_password;
@@ -220,66 +209,17 @@ read_state_params(void)
              global->contest_id);
   }
 
-  switch (client_sid_mode) {
-  case SID_DISABLED:
-    sprintf(form_start_simple,
-            "%s"
-            "<input type=\"hidden\" name=\"sid_mode\" value=\"0\">"
-            "<input type=\"hidden\" name=\"login\" value=\"%s\">"
-            "<input type=\"hidden\" name=\"password\" value=\"%s\">%s",
-            form_header_simple, client_login, a_passwd, form_contest_id);
-    sprintf(form_start_multipart,
-            "%s"
-            "<input type=\"hidden\" name=\"sid_mode\" value=\"0\">"
-            "<input type=\"hidden\" name=\"login\" value=\"%s\">"
-            "<input type=\"hidden\" name=\"password\" value=\"%s\">%s",
-            form_header_multipart, client_login, a_passwd, form_contest_id);
-    snprintf(hidden_vars, sizeof(hidden_vars),
-             "<input type=\"hidden\" name=\"sid_mode\" value=\"0\">"
-             "<input type=\"hidden\" name=\"login\" value=\"%s\">"
-             "<input type=\"hidden\" name=\"password\" value=\"%s\">%s",
-             client_login, a_passwd, form_contest_id);
-    break;
-  case SID_EMBED:
-    snprintf(form_start_simple, sizeof(form_start_simple),
-             "%s<input type=\"hidden\" name=\"SID\" value=\"%016llx\">"
-             "<input type=\"hidden\" name=\"sid_mode\" value=\"1\">%s",
-             form_header_simple, client_sid, form_contest_id);
-    snprintf(form_start_multipart, sizeof(form_start_multipart),
-             "%s<input type=\"hidden\" name=\"SID\" value=\"%016llx\">"
-             "<input type=\"hidden\" name=\"sid_mode\" value=\"1\">%s",
-             form_header_multipart, client_sid, form_contest_id);
-    snprintf(hidden_vars, sizeof(hidden_vars),
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">"
-             "<input type=\"hidden\" name=\"sid_mode\" value=\"1\">%s",
-             client_sid, form_contest_id);
-    break;
-  case SID_URL:
-    snprintf(form_start_simple, sizeof(form_start_simple),
-             "%s"
-             "<input type=\"hidden\" name=\"sid_mode\" value=\"2\">"
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
-             form_header_simple, client_sid, form_contest_id);
-    snprintf(form_start_multipart, sizeof(form_start_multipart),
-             "%s"
-             "<input type=\"hidden\" name=\"sid_mode\" value=\"2\">"
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
-             form_header_multipart, client_sid, form_contest_id);
-    snprintf(hidden_vars, sizeof(hidden_vars),
-             "<input type=\"hidden\" name=\"sid_mode\" value=\"2\">"
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
-             client_sid, form_contest_id);
-    break;
-  case SID_COOKIE:
-    snprintf(form_start_simple, sizeof(form_start_simple),
-             "%s%s", form_header_simple, form_contest_id);
-    snprintf(form_start_multipart, sizeof(form_start_multipart),
-             "%s%s", form_header_multipart, form_contest_id);
-    snprintf(hidden_vars, sizeof(hidden_vars), "%s", form_contest_id);
-    break;
-  default:
-    SWERR(("Unhandled sid mode %d", client_sid_mode));
-  }
+  snprintf(form_start_simple, sizeof(form_start_simple),
+           "%s"
+           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
+           form_header_simple, client_sid, form_contest_id);
+  snprintf(form_start_multipart, sizeof(form_start_multipart),
+           "%s"
+           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
+           form_header_multipart, client_sid, form_contest_id);
+  snprintf(hidden_vars, sizeof(hidden_vars),
+           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
+           client_sid, form_contest_id);
 }
 
 static void
@@ -298,7 +238,7 @@ make_self_url(void)
 
 static unsigned char *
 hyperref(unsigned char *buf, int size,
-         int sid_mode, unsigned long long sid,
+         unsigned long long sid,
          unsigned char const *contest_id_str,
          unsigned char const *self_url,
          unsigned char const *format, ...)
@@ -307,14 +247,7 @@ hyperref(unsigned char *buf, int size,
   unsigned char *out = buf;
   int left = size, n;
 
-  ASSERT(sid_mode == SID_URL || sid_mode == SID_COOKIE);
-  if (sid_mode == SID_COOKIE) {
-    n = snprintf(out, left, "%s?sid_mode=%d%s",
-                 self_url, SID_COOKIE, contest_id_str);
-  } else {
-    n = snprintf(out, left, "%s?sid_mode=%d&SID=%016llx%s",
-                 self_url, SID_URL, sid, contest_id_str);
-  }
+  n = snprintf(out, left, "%s?SID=%016llx%s", self_url, sid, contest_id_str);
   if (n >= left) n = left;
   left -= n; out += n;
   if (format && *format) {
@@ -328,26 +261,6 @@ hyperref(unsigned char *buf, int size,
   return buf;
 }
 
-static void
-set_cookie_if_needed(void)
-{
-  time_t t;
-  struct tm gt;
-  char buf[128];
-
-  if (!need_set_cookie) return;
-  need_set_cookie = 0;
-  if (!client_cookie) {
-    printf("Set-cookie: MID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
-    return;
-  }
-  t = time(0);
-  t += 24 * 60 * 60;
-  gmtime_r(&t, &gt);
-  strftime(buf, sizeof(buf), "%A, %d-%b-%Y %H:%M:%S GMT", &gt);
-  printf("Set-cookie: MID=%llx; expires=%s\n", client_cookie, buf);
-}
-
 /* this function is called, if the contest_id is not known */
 static int
 display_enter_password_2(void)
@@ -359,7 +272,6 @@ display_enter_password_2(void)
   printf("<form method=\"POST\" action=\"%s\" "
          "ENCTYPE=\"application/x-www-form-urlencoded\">",
          self_url);
-  printf("<input type=\"hidden\" name=\"sid_mode\" value=\"2\">\n");
   printf("<table>"
          "<tr>"
          "<td>%s:</td>"
@@ -395,7 +307,6 @@ display_enter_password(void)
     a_name = alloca(a_len + 10);
     html_armor_string(cur_contest->name, a_name);
   }
-  set_cookie_if_needed();
   if (a_name) {
     client_put_header(stdout, 0, 0, global->charset, 1, 0,
                       "Enter password - %s - &quot;%s&quot;",
@@ -411,7 +322,6 @@ display_enter_password(void)
     printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n", 
            cgi_contest_id);
   }
-  printf("<input type=\"hidden\" name=\"sid_mode\" value=\"2\">\n");
   printf("<table>"
          "<tr>"
          "<td>%s:</td>"
@@ -432,56 +342,11 @@ display_enter_password(void)
   return 0;
 }
 
-static int
-get_cookie(unsigned char const *var, unsigned long long *p_val)
-{
-  unsigned char const *cookie_str, *s, *p;
-  unsigned char *nstr, *vstr;
-  size_t cookie_len;
-  int n;
-  unsigned long long val;
-
-  if (!(cookie_str = getenv("HTTP_COOKIE"))) return 0;
-  cookie_len = strlen(cookie_str);
-  nstr = alloca(cookie_len + 10);
-  vstr = alloca(cookie_len + 10);
-  s = cookie_str;
-  while (1) {
-    while (isspace(*s)) s++;
-    if (!*s || *s == '=') return 0;
-    memset(nstr, 0, cookie_len + 10);
-    memset(vstr, 0, cookie_len + 10);
-    p = s;
-    while (*s && !isspace(*s) && *s != ';' && *s != '=') s++;
-    if (!*s || *s == ';') return 0;
-    memcpy(nstr, p, s - p);
-    while (*s && isspace(*s)) s++;
-    if (!*s || *s != '=') return 0;
-    s++;
-    while (*s && isspace(*s)) s++;
-    p = s;
-    while (*s && !isspace(*s) && *s != ';' && *s != '=') s++;
-    if (*s == '=') return 0;
-    memcpy(vstr, p, s - p);
-    while (*s && isspace(*s)) s++;
-    if (*s == ';') s++;
-
-    // nstr - name of the cookie, vstr - value
-    if (strcmp(nstr, var) != 0) continue;
-    if (sscanf(vstr, "%llx%n", &val, &n) != 1 || vstr[n]) continue;
-    if (!val) continue;
-
-    if (p_val) *p_val = val;
-    return 1;
-  }
-}
-
 static void
 open_userlist_server(void)
 {
   if (!userlist_conn) {
     if (!(userlist_conn = userlist_clnt_open(global->socket_path))) {
-      set_cookie_if_needed();
       client_put_header(stdout, 0, 0, global->charset, 1, 0, _("Server is down"));
       printf("<p>%s</p>",
              _("The server is down. Try again later."));
@@ -494,7 +359,6 @@ open_userlist_server(void)
 static void
 permission_denied(void)
 {
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0, _("Permission denied"));
   printf("<p>%s</p>",
          "Permission denied. You have typed invalid login, invalid password,"
@@ -506,7 +370,6 @@ permission_denied(void)
 static void
 error_not_registered(void)
 {
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0, _("Not registered"));
   printf("<p>%s</p>", _("You are not registered for this contest."));
   client_put_footer(stdout, 0);
@@ -516,7 +379,6 @@ error_not_registered(void)
 static void
 error_cannot_participate(void)
 {
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     _("Cannot participate"));
   printf("<p>%s</p>",
@@ -528,7 +390,6 @@ error_cannot_participate(void)
 static void
 fatal_server_error(int r)
 {
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0, _("Server error"));
   printf("<p>Server error: %s</p>", userlist_strerror(-r));
   client_put_footer(stdout, 0);
@@ -598,54 +459,10 @@ static int
 authentificate(void)
 {
   unsigned long long session_id;
-  unsigned char const *sid_mode_str;
   int r;
+  unsigned char hbuf[128];
 
-  /* read and parse session mode */
-  sid_mode_str = cgi_param("sid_mode");
-  client_sid_mode = -1;
-  if (sid_mode_str) {
-    int x, n = 0;
-    if (sscanf(sid_mode_str, "%d%n", &x, &n) == 1 && !sid_mode_str[n]
-        && x >= SID_DISABLED && x <= SID_COOKIE) {
-      client_sid_mode = x;
-    }
-  }
-
-  if ((client_sid_mode == -1 || client_sid_mode == SID_COOKIE)
-      && get_cookie("MID", &session_id)) {
-    client_cookie = session_id;
-    open_userlist_server();
-    r = userlist_clnt_priv_cookie(userlist_conn, client_ip, global->contest_id,
-                                  session_id,
-                                  0 /* locale_id */,
-                                  priv_level, &client_user_id,
-                                  0, /* p_contest_id */
-                                  0 /* p_locale_id */,
-                                  &priv_level, &client_login, &client_name);
-    if (r >= 0) {
-      client_sid_mode = SID_COOKIE;
-      client_sid = client_cookie;
-      client_password = "";
-      return 1;
-    }
-    if (r != -ULS_ERR_NO_COOKIE) {
-      switch (-r) {
-      case ULS_ERR_NOT_REGISTERED:
-        error_cannot_participate();
-      case ULS_ERR_CANNOT_PARTICIPATE:
-        error_not_registered();
-      default:
-        fatal_server_error(r);
-      }
-    }
-    client_cookie = 0;
-    need_set_cookie = 1;
-  }
-
-  if ((client_sid_mode == -1 || client_sid_mode == SID_EMBED
-      || client_sid_mode == SID_URL)
-      && get_session_id("SID", &session_id)) {
+  if (get_session_id("SID", &session_id)) {
     open_userlist_server();
     r = userlist_clnt_priv_cookie(userlist_conn, client_ip, global->contest_id,
                                   session_id,
@@ -655,7 +472,6 @@ authentificate(void)
                                   0 /* p_locale_id */,
                                   &priv_level, &client_login, &client_name);
     if (r >= 0) {
-      if (client_sid_mode == -1) client_sid_mode = SID_URL;
       client_sid = session_id;
       client_password = "";
       return 1;
@@ -679,15 +495,10 @@ authentificate(void)
     exit(0);
   }
 
-  // set default behavior
-  if (client_sid_mode == -1) {
-    client_sid_mode = SID_COOKIE;
-  }
-
   open_userlist_server();
   r = userlist_clnt_priv_login(userlist_conn, client_ip, global->contest_id,
                                0, /* locale_id */
-                               client_sid_mode != SID_DISABLED,
+                               1,
                                priv_level, client_login, client_password,
                                &client_user_id,
                                &client_sid,
@@ -710,28 +521,13 @@ authentificate(void)
       fatal_server_error(r);
     }
   }
-  if (client_sid_mode == SID_COOKIE) {
-    client_cookie = client_sid;
-    need_set_cookie = 1;
-  }
-
-  if (client_sid_mode == SID_URL || client_sid_mode == SID_COOKIE) {
-    unsigned char hbuf[128];
-
-    hyperref(hbuf, sizeof(hbuf), client_sid_mode, client_sid,
-             contest_id_str,
-             self_url, 0);
-    set_cookie_if_needed();
-    client_put_refresh_header(global->charset, hbuf, 0,
-                              "Login successful");
-    printf("<p>%s</p>", _("Login successfull. Now entering the main page."));
-    printf("<p>If automatic updating does not work, click on <a href=\"%s\">this</a> link.</p>", hbuf);
-           
-    //client_put_footer();
-    exit(0);
-  }
-
-  return 1;
+  hyperref(hbuf, sizeof(hbuf), client_sid, contest_id_str, self_url, 0);
+  client_put_refresh_header(global->charset, hbuf, 0,
+                            "Login successful");
+  printf("<p>%s</p>", _("Login successfull. Now entering the main page."));
+  printf("<p>If automatic updating does not work, click on <a href=\"%s\">this</a> link.</p>", hbuf);
+  //client_put_footer();
+  exit(0);
 }
 
 static void
@@ -739,17 +535,8 @@ print_refresh_button(char const *str)
 {
   if (!str) str = _("Refresh");
 
-  if (client_sid_mode == SID_URL) {
-    printf("<a href=\"%s?sid_mode=%d&SID=%016llx%s\">%s</a>",
-           self_url, SID_URL, client_sid, contest_id_str, str);
-  } else if (client_sid_mode == SID_COOKIE) {
-    printf("<a href=\"%s?sid_mode=%d%s\">%s</a>", self_url, SID_COOKIE,
-           contest_id_str, str);
-  } else {
-    puts(form_start_simple);
-    printf("<input type=\"submit\" name=\"refresh\" value=\"%s\">", str);
-    puts("</form>");
-  }
+  printf("<a href=\"%s?SID=%016llx%s\">%s</a>",
+         self_url, client_sid, contest_id_str, str);
 }
 
 static void
@@ -757,17 +544,8 @@ print_standings_button(char const *str)
 {
   if (!str) str = _("Standings");
 
-  if (client_sid_mode == SID_URL) {
-    printf("<a href=\"%s?sid_mode=%d&SID=%016llx%s&stand=1\">%s</a>",
-           self_url, SID_URL, client_sid, contest_id_str, str);
-  } else if (client_sid_mode == SID_COOKIE) {
-    printf("<a href=\"%s?sid_mode=%d%s&stand=1\">%s</a>", self_url,
-           SID_COOKIE, contest_id_str, str);
-  } else {
-    puts(form_start_simple);
-    printf("<input type=\"submit\" name=\"stand\" value=\"%s\">", str);
-    puts("</form>");
-  }
+  printf("<a href=\"%s?SID=%016llx%s&stand=1\">%s</a>",
+         self_url, client_sid, contest_id_str, str);
 }
 
 static void
@@ -785,17 +563,8 @@ print_teamview_button(char const *str)
 {
   if (!str) str = _("View teams");
 
-  if (client_sid_mode == SID_URL) {
-    printf("<a href=\"%s?sid_mode=%d&SID=%016llx%s&viewteams=1\">%s</a>",
-           self_url, SID_URL, client_sid, contest_id_str, str);
-  } else if (client_sid_mode == SID_COOKIE) {
-    printf("<a href=\"%s?sid_mode=%d%s&viewteams=1\">%s</a>", self_url,
-           SID_COOKIE, contest_id_str, str);
-  } else {
-    puts(form_start_simple);
-    printf("<input type=\"submit\" name=\"viewteams\" value=\"%s\">", str);
-    puts("</form>");
-  }
+  printf("<a href=\"%s?SID=%016llx%s&viewteams=1\">%s</a>",
+         self_url, client_sid, contest_id_str, str);
 }
 
 static void
@@ -803,16 +572,8 @@ print_logout_button(unsigned char const *str)
 {
   if (!str) str = _("Log out");
 
-  if (client_sid_mode == SID_URL) {
-    printf("<a href=\"%s?sid_mode=%d&SID=%016llx%s&logout=1\">%s</a>",
-           self_url, SID_URL, client_sid, contest_id_str, str);
-  } else if (client_sid_mode == SID_COOKIE) {
-    printf("<a href=\"%s?sid_mode=%d%s&logout=1\">%s</a>", self_url,
-           SID_COOKIE, contest_id_str, str);
-  } else {
-    puts(form_start_simple);
-    printf("<input type=\"submit\" name=\"logout\" value=\"%s\"></form>", str);
-  }
+  printf("<a href=\"%s?SID=%016llx%s&logout=1\">%s</a>",
+         self_url, client_sid, contest_id_str, str);
 }
 
 static void
@@ -820,18 +581,8 @@ print_dump_runs_button(unsigned char const *str)
 {
   if (!str) str = _("Dump runs database");
 
-  if (client_sid_mode == SID_URL) {
-    printf("<a href=\"%s?sid_mode=%d&SID=%016llx%s&action=%d\">%s</a>",
-           self_url, SID_URL, client_sid,
-           contest_id_str, ACTION_DUMP_RUNS, str);
-  } else if (client_sid_mode == SID_COOKIE) {
-    printf("<a href=\"%s?sid_mode=%d%s&action=%d\">%s</a>", self_url,
-           SID_COOKIE, contest_id_str, ACTION_DUMP_RUNS, str);
-  } else {
-    puts(form_start_simple);
-    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
-           ACTION_DUMP_RUNS, str);
-  }
+  printf("<a href=\"%s?SID=%016llx%s&action=%d\">%s</a>",
+         self_url, client_sid, contest_id_str, ACTION_DUMP_RUNS, str);
 }
 
 static void
@@ -839,18 +590,8 @@ print_write_xml_runs_button(unsigned char const *str)
 {
   if (!str) str = _("Write XML runs (internal format)");
 
-  if (client_sid_mode == SID_URL) {
-    printf("<a href=\"%s?sid_mode=%d&SID=%016llx%s&action=%d\">%s</a>",
-           self_url, SID_URL, client_sid,
-           contest_id_str, ACTION_WRITE_XML_RUNS, str);
-  } else if (client_sid_mode == SID_COOKIE) {
-    printf("<a href=\"%s?sid_mode=%d%s&action=%d\">%s</a>", self_url,
-           SID_COOKIE, contest_id_str, ACTION_WRITE_XML_RUNS, str);
-  } else {
-    puts(form_start_simple);
-    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
-           ACTION_WRITE_XML_RUNS, str);
-  }
+  printf("<a href=\"%s?SID=%016llx%s&action=%d\">%s</a>",
+         self_url, client_sid, contest_id_str, ACTION_WRITE_XML_RUNS, str);
 }
 
 static void
@@ -858,18 +599,8 @@ print_export_xml_runs_button(unsigned char const *str)
 {
   if (!str) str = _("Export XML runs (external format)");
 
-  if (client_sid_mode == SID_URL) {
-    printf("<a href=\"%s?sid_mode=%d&SID=%016llx%s&action=%d\">%s</a>",
-           self_url, SID_URL, client_sid,
-           contest_id_str, ACTION_EXPORT_XML_RUNS, str);
-  } else if (client_sid_mode == SID_COOKIE) {
-    printf("<a href=\"%s?sid_mode=%d%s&action=%d\">%s</a>", self_url,
-           SID_COOKIE, contest_id_str, ACTION_EXPORT_XML_RUNS, str);
-  } else {
-    puts(form_start_simple);
-    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
-           ACTION_EXPORT_XML_RUNS, str);
-  }
+    printf("<a href=\"%s?SID=%016llx%s&action=%d\">%s</a>",
+           self_url, client_sid, contest_id_str, ACTION_EXPORT_XML_RUNS, str);
 }
 
 static void
@@ -877,18 +608,8 @@ print_dump_users_button(unsigned char const *str)
 {
   if (!str) str = _("Dump users database");
 
-  if (client_sid_mode == SID_URL) {
-    printf("<a href=\"%s?sid_mode=%d&SID=%016llx%s&action=%d\">%s</a>",
-           self_url, SID_URL, client_sid,
-           contest_id_str, ACTION_DUMP_USERS, str);
-  } else if (client_sid_mode == SID_COOKIE) {
-    printf("<a href=\"%s?sid_mode=%d%s&action=%d\">%s</a>", self_url,
-           SID_COOKIE, contest_id_str, ACTION_DUMP_USERS, str);
-  } else {
-    puts(form_start_simple);
-    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
-           ACTION_DUMP_USERS, str);
-  }
+  printf("<a href=\"%s?SID=%016llx%s&action=%d\">%s</a>",
+         self_url, client_sid, contest_id_str, ACTION_DUMP_USERS, str);
 }
 
 static void
@@ -896,18 +617,8 @@ print_dump_standings_button(unsigned char const *str)
 {
   if (!str) str = _("Dump standings database");
 
-  if (client_sid_mode == SID_URL) {
-    printf("<a href=\"%s?sid_mode=%d&SID=%016llx%s&action=%d\">%s</a>",
-           self_url, SID_URL, client_sid,
-           contest_id_str, ACTION_DUMP_STANDINGS, str);
-  } else if (client_sid_mode == SID_COOKIE) {
-    printf("<a href=\"%s?sid_mode=%d%s&action=%d\">%s</a>", self_url,
-           SID_COOKIE, contest_id_str, ACTION_DUMP_STANDINGS, str);
-  } else {
-    puts(form_start_simple);
-    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
-           ACTION_DUMP_STANDINGS, str);
-  }
+  printf("<a href=\"%s?SID=%016llx%s&action=%d\">%s</a>",
+         self_url, client_sid, contest_id_str, ACTION_DUMP_STANDINGS, str);
 }
 
 static void
@@ -1084,15 +795,12 @@ operation_status_page(int code, unsigned char const *msg, int run_id)
     snprintf(src_view_str, sizeof(src_view_str), "&source_%d=1", run_id);
   }
 
-  if (client_sid_mode != SID_URL && client_sid_mode != SID_COOKIE) return;
-  set_cookie_if_needed();
   if (code < 0) {
     client_put_header(stdout, 0, 0, global->charset, 1, 0, "Operation failed");
     if (code != -1 || !msg) msg = protocol_strerror(-code);
     printf("<h2><font color=\"red\">%s</font></h2>\n", msg);
   } else {
-    hyperref(href, sizeof(href), client_sid_mode, client_sid,
-             contest_id_str,
+    hyperref(href, sizeof(href), client_sid, contest_id_str,
              self_url, "%s", src_view_str);
     client_put_refresh_header(global->charset, href, 0,
                               "Operation successfull");
@@ -1832,13 +1540,12 @@ view_source_if_asked()
       || (s[n] && s[n] != '.')) return;
   if (runid < 0 || runid >= server_total_runs) return;
 
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Source for run %d", runid);
   fflush(stdout);
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_SOURCE, runid, 0, 0,
-                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+                      self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
   }
@@ -1856,13 +1563,12 @@ action_view_team(void)
   if (sscanf(s, "%d%n", &user_id, &n) != 1 || s[n]) goto invalid_operation;
   if (user_id <= 0 || user_id > 100000) goto invalid_operation;
 
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Details about user %d", user_id);
   fflush(stdout);
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_TEAM, user_id, 0, 0,
-                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+                      self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
   }
@@ -1884,7 +1590,7 @@ action_view_audit_log(void)
 
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_AUDIT_LOG, run_id, 0, 0,
-                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+                      self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     client_put_header(stdout, 0, 0, global->charset, 1, 0,
                       "Audit log for run %d", run_id);
@@ -1913,7 +1619,7 @@ action_view_test(int cmd)
 
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, cmd, run_id, test_num, 0,
-                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+                      self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     client_put_header(stdout, 0, 0, global->charset, 1, 0,
                       "Details about run %d, test %d", run_id, test_num);
@@ -1931,12 +1637,11 @@ action_new_run_form(void)
 {
   int r;
 
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0, "New run form");
   fflush(stdout);
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_NEW_RUN_FORM, 0, 0, 0,
-                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+                      self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
   }
@@ -1957,13 +1662,12 @@ view_report_if_asked()
   if (runid < 0 || runid >= server_total_runs) return;
   if (cgi_param("t")) flags = 1;
 
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Report for run %d", runid);
   fflush(stdout);
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_REPORT, runid, 0, flags,
-                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+                      self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
   }
@@ -1978,12 +1682,11 @@ view_teams_if_asked(int forced_flag)
 
   if (!forced_flag && !cgi_param("viewteams")) return;
 
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0, "Users list");
   fflush(stdout);
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_USERS, 0, 0, 0,
-                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+                      self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
   }
@@ -1998,9 +1701,8 @@ action_dump_runs(void)
 
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_DUMP_RUNS, 0, 0, 0,
-                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+                      self_url, hidden_vars, contest_id_str);
   if (r < 0) {
-    set_cookie_if_needed();
     client_put_header(stdout, 0, 0, global->charset, 1, 0, "Runs database error");
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
     client_put_footer(stdout, 0);
@@ -2015,9 +1717,8 @@ action_write_xml_runs(void)
 
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_WRITE_XML_RUNS, 0, 0, 0,
-                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+                      self_url, hidden_vars, contest_id_str);
   if (r < 0) {
-    set_cookie_if_needed();
     client_put_header(stdout, 0, 0, global->charset, 1, 0, "Runs database error");
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
     client_put_footer(stdout, 0);
@@ -2032,9 +1733,8 @@ action_export_xml_runs(void)
 
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_EXPORT_XML_RUNS, 0, 0, 0,
-                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+                      self_url, hidden_vars, contest_id_str);
   if (r < 0) {
-    set_cookie_if_needed();
     client_put_header(stdout, 0, 0, global->charset, 1, 0, "Runs database error");
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
     client_put_footer(stdout, 0);
@@ -2051,7 +1751,6 @@ action_dump_users(void)
   fflush(stdout);
   r = userlist_clnt_dump_database(userlist_conn, global->contest_id, 1);
   if (r < 0) {
-    set_cookie_if_needed();
     client_put_header(stdout, 0, 0, global->charset, 1, 0, "Users database error");
     printf("<h2><font color=\"red\">%s</font></h2>\n",
            userlist_strerror(-r));
@@ -2067,9 +1766,8 @@ action_dump_standings(void)
 
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_DUMP_STANDINGS, 0, 0, 0,
-                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+                      self_url, hidden_vars, contest_id_str);
   if (r < 0) {
-    set_cookie_if_needed();
     client_put_header(stdout, 0, 0, global->charset, 1, 0,
                       "Standings database error");
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
@@ -2140,7 +1838,6 @@ action_upload_report(void)
 static void
 confirm_reset_if_asked(void)
 {
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0, "Confirm contest reset");
   print_refresh_button(_("No"));
   printf("<p>%s<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
@@ -2153,7 +1850,6 @@ confirm_reset_if_asked(void)
 static void
 confirm_update_standings(void)
 {
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Confirm update public standings");
   printf("<p>");
@@ -2168,7 +1864,6 @@ confirm_update_standings(void)
 static void
 confirm_clear_team_passwords(void)
 {
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Confirm clear team passwords");
   printf("<p>");
@@ -2183,7 +1878,6 @@ confirm_clear_team_passwords(void)
 static void
 confirm_regenerate_register_if_asked(void)
 {
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Confirm register user password generation");
   printf("<p>");
@@ -2198,7 +1892,6 @@ confirm_regenerate_register_if_asked(void)
 static void
 confirm_regenerate_if_asked(void)
 {
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Confirm user password generation");
   printf("<p>");
@@ -2213,7 +1906,6 @@ confirm_regenerate_if_asked(void)
 static void
 confirm_rejudge_all(void)
 {
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Confirm rejudge all runs");
   printf("<p>");
@@ -2228,7 +1920,6 @@ confirm_rejudge_all(void)
 static void
 confirm_judge_suspended(void)
 {
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Confirm judge suspended runs");
   printf("<p>");
@@ -2270,7 +1961,6 @@ confirm_rejudge_displayed(void)
   }
   if (*p) goto invalid_parameters;
 
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Confirm rejudge displayed runs");
   printf("<p>%s:\n", _("The following runs will be rejudged"));
@@ -2307,7 +1997,6 @@ confirm_rejudge_displayed(void)
 static void
 confirm_squeeze(void)
 {
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Confirm squeeze run log");
   printf("<p>");
@@ -2322,7 +2011,6 @@ confirm_squeeze(void)
 static void
 confirm_continue(void)
 {
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Confirm continue contest");
   printf("<p>");
@@ -2349,7 +2037,6 @@ confirm_clear_run(void)
     return;
   }
 
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Confirm clear run %d", r);
   printf("<p>");
@@ -2388,7 +2075,6 @@ do_generate_register_passwords_if_asked(void)
 {
   int r;
 
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "New register passwords");
   print_nav_buttons();
@@ -2414,7 +2100,6 @@ do_generate_passwords_if_asked(void)
 {
   int r;
 
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0, "New passwords");
   print_nav_buttons();
   printf("<hr>");
@@ -2441,7 +2126,6 @@ action_merge_runs(void)
   unsigned char *xml;
 
   open_serve();
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0, "Run merge results");
   print_nav_buttons();
   printf("<hr>");
@@ -2677,9 +2361,8 @@ action_priv_download_run(void)
 
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_PRIV_DOWNLOAD_RUN, r, 0, 0,
-                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+                      self_url, hidden_vars, contest_id_str);
   if (r < 0) {
-    set_cookie_if_needed();
     client_put_header(stdout, 0, 0, global->charset, 1, 0, "Download error");
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
     client_put_footer(stdout, 0);
@@ -2712,9 +2395,8 @@ action_compare_runs(void)
 
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_COMPARE_RUNS, r, r2, 0,
-                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+                      self_url, hidden_vars, contest_id_str);
   if (r < 0) {
-    set_cookie_if_needed();
     client_put_header(stdout, 0, 0, global->charset, 1, 0, "Compare error");
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
     client_put_footer(stdout, 0);
@@ -2832,13 +2514,12 @@ view_clar_if_asked()
   if (sscanf(s, "clar_%d%n", &clarid, &n) != 1 || (s[n] && s[n]!='.')) return;
   if (clarid < 0 || clarid >= server_total_clars) return;
 
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0,
                     "Clarification %d", clarid);
   fflush(stdout);
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_VIEW_CLAR, clarid, 0, 0,
-                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+                      self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     printf("<h2><font color=\"red\">%s</font></h2>\n", protocol_strerror(-r));
   }
@@ -2865,7 +2546,6 @@ send_msg_if_asked(void)
   if (!subj) subj = "";
   if (!dest_login || !*dest_login) dest_login = "all";
   if (!*text) {
-    if (client_sid_mode != SID_URL && client_sid_mode != SID_COOKIE) return;
     operation_status_page(-1, "Empty message body", -1);
   }
   if (!*subj) subj = _("(no subject)");
@@ -2874,7 +2554,6 @@ send_msg_if_asked(void)
   r = serve_clnt_message(serve_socket_fd, SRV_CMD_PRIV_MSG,
                          dest_id, -1, dest_login,
                          subj, text);
-  if (client_sid_mode != SID_URL && client_sid_mode != SID_COOKIE) return;
   operation_status_page(r, 0, -1);
 }
 
@@ -2928,11 +2607,6 @@ log_out_if_asked(void)
     open_userlist_server();
     userlist_clnt_logout(userlist_conn, client_ip, client_sid);
   }
-  if (client_sid_mode == SID_COOKIE) {
-    client_cookie = 0;
-    need_set_cookie = 1;
-  }
-  set_cookie_if_needed();
   client_put_header(stdout, 0, 0, global->charset, 1, 0, "%s", _("Good-bye"));
   printf("<p>%s</p>\n",
          _("Good-bye!"));
@@ -3110,8 +2784,7 @@ initialize(int argc, char *argv[])
     }
   } else if (strlen(basename) == namelen) {
     // second case
-    if (!cgi_param("contest_id") && !cgi_param("sid_mode")
-        && !cgi_param("SID")) {
+    if (!cgi_param("contest_id") && !cgi_param("SID")) {
       display_enter_password_2();
       exit(0);
     }
@@ -3249,7 +2922,6 @@ view_standings_if_asked()
                            client_user_id,
                            global->contest_id, 0,
                            priv_level,
-                           client_sid_mode,
                            self_url,
                            hidden_vars,
                            contest_id_str);
@@ -3276,7 +2948,6 @@ display_master_page(void)
                              global->contest_id, 0,
                              client_ip,
                              priv_level,
-                             client_sid_mode,
                              filter_first_run,
                              filter_last_run,
                              filter_mode_clar,
@@ -3618,7 +3289,6 @@ main(int argc, char *argv[])
   send_reply_if_asked();
   send_msg_if_asked();
 
-  set_cookie_if_needed();
   if (cur_contest->name) {
     client_put_header(stdout, 0, 0, global->charset, 1, 0,
                       "%s: %s - &quot;%s&quot;",
