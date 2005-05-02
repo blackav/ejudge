@@ -164,6 +164,7 @@ struct section_global_data
   path_t run_archive_dir;       /* run archive directory */
   path_t report_archive_dir;    /* report archive directory */
   path_t team_report_archive_dir; /* team report archive directory */
+  path_t xml_report_archive_dir;  /* new (XML-only) report archive directory */
   path_t full_archive_dir;      /* full output archive directory */
   path_t audit_log_dir;         /* directory for audit logs */
   path_t team_extra_dir;        /* team extra information directory */
