@@ -88,7 +88,6 @@ struct section_global_data
 
   int    allow_deny;
   int    show_generation_time;
-  int    enable_session_mode;
   path_t root_dir;
   path_t var_dir;
   path_t allow_from;
@@ -142,18 +141,7 @@ static int header_len, footer_len;
 
 static int serve_socket_fd = -1;
 
-enum
-  {
-    SID_DISABLED = 0,
-    SID_EMBED,
-    SID_URL,
-    SID_COOKIE
-  };
-
-static int client_sid_mode;
-static int need_set_cookie;
 static unsigned long long client_sid;
-static unsigned long long client_cookie;
 
 static unsigned char form_start_simple[1024];
 static unsigned char form_start_multipart[1024];
@@ -168,7 +156,6 @@ static struct config_parse_info section_global_params[] =
 {
   GLOBAL_PARAM(allow_deny, "d"),
   GLOBAL_PARAM(show_generation_time, "d"),
-  GLOBAL_PARAM(enable_session_mode, "d"),
   GLOBAL_PARAM(root_dir, "s"),
   GLOBAL_PARAM(var_dir, "s"),
   GLOBAL_PARAM(allow_from, "s"),
@@ -257,7 +244,7 @@ make_self_url(void)
 
 static unsigned char *
 hyperref(unsigned char *buf, int size,
-         int sid_mode, unsigned long long sid,
+         unsigned long long sid,
          unsigned char const *self_url,
          unsigned char const *extra_args,
          unsigned char const *format, ...)
@@ -266,14 +253,7 @@ hyperref(unsigned char *buf, int size,
   unsigned char *out = buf;
   int left = size, n;
 
-  ASSERT(sid_mode == SID_URL || sid_mode == SID_COOKIE);
-  if (sid_mode == SID_COOKIE) {
-    n = snprintf(out, left, "%s?sid_mode=%d%s",
-                 self_url, SID_COOKIE, extra_args);
-  } else {
-    n = snprintf(out, left, "%s?sid_mode=%d&SID=%016llx%s",
-                 self_url, SID_URL, sid, extra_args);
-  }
+  n = snprintf(out, left, "%s?SID=%016llx%s", self_url, sid, extra_args);
   if (n >= left) n = left;
   left -= n; out += n;
   if (format && *format) {
@@ -300,26 +280,6 @@ open_serve(void)
     client_put_footer(stdout, footer_txt);
     exit(0);
   }
-}
-
-static void
-set_cookie_if_needed(void)
-{
-  time_t t;
-  struct tm gt;
-  char buf[128];
-
-  if (!need_set_cookie) return;
-  need_set_cookie = 0;
-  if (!client_cookie) {
-    printf("Set-cookie: UID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
-    return;
-  }
-  t = time(0);
-  t += 24 * 60 * 60;
-  gmtime_r(&t, &gt);
-  strftime(buf, sizeof(buf), "%A, %d-%b-%Y %H:%M:%S GMT", &gt);
-  printf("Set-cookie: UID=%llx; expires=%s\n", client_cookie, buf);
 }
 
 static int
@@ -623,74 +583,17 @@ read_state_params(void)
              global->contest_id);
   }
 
-  switch (client_sid_mode) {
-  case SID_DISABLED:
-    snprintf(form_start_simple, sizeof(form_start_simple),
-             "%s"
-             "<input type=\"hidden\" name=\"sid_mode\" value=\"0\">"
-             "<input type=\"hidden\" name=\"login\" value=\"%s\">"
-             "<input type=\"hidden\" name=\"password\" value=\"%s\">"
-             "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">%s",
-             form_header_simple, client_login, client_password,
-             client_locale_id, form_contest_id);
-    snprintf(form_start_multipart, sizeof(form_start_multipart),
-             "%s"
-             "<input type=\"hidden\" name=\"sid_mode\" value=\"0\">"
-             "<input type=\"hidden\" name=\"login\" value=\"%s\">"
-             "<input type=\"hidden\" name=\"password\" value=\"%s\">"
-             "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">%s",
-             form_header_multipart, client_login, client_password,
-             client_locale_id, form_contest_id);
-    snprintf(hidden_vars, sizeof(hidden_vars),
-             "<input type=\"hidden\" name=\"sid_mode\" value=\"0\">"
-             "<input type=\"hidden\" name=\"login\" value=\"%s\">"
-             "<input type=\"hidden\" name=\"password\" value=\"%s\">"
-             "<input type=\"hidden\" name=\"locale_id\" value=\"%d\">%s",
-             client_login, client_password, client_locale_id,
-             form_contest_id);
-    break;
-  case SID_EMBED:
-    snprintf(form_start_simple, sizeof(form_start_simple),
-             "%s"
-             "<input type=\"hidden\" name=\"sid_mode\" value=\"1\">"
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
-             form_header_simple, client_sid, form_contest_id);
-    snprintf(form_start_multipart, sizeof(form_start_multipart),
-             "%s"
-             "<input type=\"hidden\" name=\"sid_mode\" value=\"1\">"
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
-             form_header_multipart, client_sid, form_contest_id);
-    snprintf(hidden_vars, sizeof(hidden_vars),
-             "<input type=\"hidden\" name=\"sid_mode\" value=\"1\">"
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
-             client_sid, form_contest_id);
-    break;
-  case SID_URL:
-    snprintf(form_start_simple, sizeof(form_start_simple),
-             "%s"
-             "<input type=\"hidden\" name=\"sid_mode\" value=\"2\">"
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
-             form_header_simple, client_sid, form_contest_id);
-    snprintf(form_start_multipart, sizeof(form_start_multipart),
-             "%s"
-             "<input type=\"hidden\" name=\"sid_mode\" value=\"2\">"
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
-             form_header_multipart, client_sid, form_contest_id);
-    snprintf(hidden_vars, sizeof(hidden_vars),
-             "<input type=\"hidden\" name=\"sid_mode\" value=\"2\">"
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
-             client_sid, form_contest_id);
-    break;
-  case SID_COOKIE:
-    snprintf(form_start_simple, sizeof(form_start_simple),
-             "%s%s", form_header_simple, form_contest_id);
-    snprintf(form_start_multipart, sizeof(form_start_multipart),
-             "%s%s", form_header_multipart, form_contest_id);
-    snprintf(hidden_vars, sizeof(hidden_vars), "%s", form_contest_id);
-    break;
-  default:
-    SWERR(("Unhandled sid mode %d", client_sid_mode));
-  }
+  snprintf(form_start_simple, sizeof(form_start_simple),
+           "%s"
+           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
+           form_header_simple, client_sid, form_contest_id);
+  snprintf(form_start_multipart, sizeof(form_start_multipart),
+           "%s"
+           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
+           form_header_multipart, client_sid, form_contest_id);
+  snprintf(hidden_vars, sizeof(hidden_vars),
+           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">%s",
+           client_sid, form_contest_id);
 
   client_view_all_runs = 0;
   client_view_all_clars = 0;
@@ -709,7 +612,6 @@ display_enter_password(void)
     a_name = alloca(a_len + 10);
     html_armor_string(cur_contest->name, a_name);
   }
-  set_cookie_if_needed();
   if (a_name) {
     client_put_header(stdout, header_txt, 0, global->charset, 1,
                       client_locale_id,
@@ -736,22 +638,6 @@ display_enter_password(void)
          "</tr>",
          _("Login"), _("Password"));
 
-  if (global->enable_session_mode) {
-    printf("<tr valign=\"top\">"
-           "<td>%s:</td>"
-           "<td>"
-           "<input type=\"radio\" name=\"sid_mode\" value=\"0\">%s<br>"
-           "<input type=\"radio\" name=\"sid_mode\" value=\"1\">%s<br>"
-           "<input type=\"radio\" name=\"sid_mode\" value=\"2\">%s<br>"
-           "<input type=\"radio\" name=\"sid_mode\" value=\"3\" checked=\"yes\">%s"
-           "</td>"
-           "</tr>",
-           _("Session support"), _("No session"),
-           _("In forms"), _("In URL"), _("In cookies"));
-  } else {
-    printf("<input type=\"hidden\" name=\"sid_mode\" value=\"2\">");
-  }
-
   if (global->enable_l10n) {
     printf("<tr valign=\"top\">"
            "<td>%s:</td>"
@@ -777,56 +663,11 @@ display_enter_password(void)
   return 0;
 }
 
-static int
-get_cookie(unsigned char const *var, unsigned long long *p_val)
-{
-  unsigned char const *cookie_str, *s, *p;
-  unsigned char *nstr, *vstr;
-  size_t cookie_len;
-  int n;
-  unsigned long long val;
-
-  if (!(cookie_str = getenv("HTTP_COOKIE"))) return 0;
-  cookie_len = strlen(cookie_str);
-  nstr = alloca(cookie_len + 10);
-  vstr = alloca(cookie_len + 10);
-  s = cookie_str;
-  while (1) {
-    while (isspace(*s)) s++;
-    if (!*s || *s == '=') return 0;
-    memset(nstr, 0, cookie_len + 10);
-    memset(vstr, 0, cookie_len + 10);
-    p = s;
-    while (*s && !isspace(*s) && *s != ';' && *s != '=') s++;
-    if (!*s || *s == ';') return 0;
-    memcpy(nstr, p, s - p);
-    while (*s && isspace(*s)) s++;
-    if (!*s || *s != '=') return 0;
-    s++;
-    while (*s && isspace(*s)) s++;
-    p = s;
-    while (*s && !isspace(*s) && *s != ';' && *s != '=') s++;
-    if (*s == '=') return 0;
-    memcpy(vstr, p, s - p);
-    while (*s && isspace(*s)) s++;
-    if (*s == ';') s++;
-
-    // nstr - name of the cookie, vstr - value
-    if (strcmp(nstr, var) != 0) continue;
-    if (sscanf(vstr, "%llx%n", &val, &n) != 1 || vstr[n]) continue;
-    if (!val) continue;
-
-    if (p_val) *p_val = val;
-    return 1;
-  }
-}
-
 static void
 open_userlist_server(void)
 {
   if (!server_conn) {
     if (!(server_conn = userlist_clnt_open(global->socket_path))) {
-      set_cookie_if_needed();
       client_put_header(stdout, header_txt, 0, global->charset, 1,
                         client_locale_id, _("Server is down"));
       printf("<p%s>%s</p>",
@@ -840,7 +681,6 @@ open_userlist_server(void)
 static void
 permission_denied(void)
 {
-  set_cookie_if_needed();
   client_put_header(stdout, header_txt, 0, global->charset, 1,
                     client_locale_id, _("Permission denied"));
   printf("<p%s>%s</p>",
@@ -854,7 +694,6 @@ permission_denied(void)
 static void
 error_not_registered(void)
 {
-  set_cookie_if_needed();
   client_put_header(stdout, header_txt, 0, global->charset, 1,
                     client_locale_id, _("Not registered"));
   printf("<p%s>%s</p>", par_style,
@@ -866,7 +705,6 @@ error_not_registered(void)
 static void
 error_cannot_participate(void)
 {
-  set_cookie_if_needed();
   client_put_header(stdout, header_txt, 0, global->charset, 1,
                     client_locale_id, _("Cannot participate"));
   printf("<p%s>%s</p>", par_style,
@@ -878,7 +716,6 @@ error_cannot_participate(void)
 static void
 fatal_server_error(int r)
 {
-  set_cookie_if_needed();
   client_put_header(stdout, header_txt, 0, global->charset, 1,
                     client_locale_id, _("Server error"));
   printf("<p%s>%s: %s</p>", par_style, _("Server error"),
@@ -925,59 +762,12 @@ static int
 authentificate(void)
 {
   unsigned long long session_id;
-  unsigned char const *sid_mode_str;
   int new_locale_id = client_locale_id;
   int r;
+  unsigned char hbuf[128];
 
   /* read and parse session mode */
-  sid_mode_str = cgi_param("sid_mode");
-  client_sid_mode = -1;
-  if (sid_mode_str) {
-    int x, n = 0;
-    if (sscanf(sid_mode_str, "%d%n", &x, &n) == 1 && !sid_mode_str[n]
-        && x >= SID_DISABLED && x <= SID_COOKIE) {
-      client_sid_mode = x;
-    }
-  }
-
-  if ((client_sid_mode == -1 || client_sid_mode == SID_COOKIE)
-      && get_cookie("UID", &session_id)) {
-    client_cookie = session_id;
-    open_userlist_server();
-    r = userlist_clnt_team_cookie(server_conn, client_ip, global->contest_id,
-                                  session_id,
-                                  client_locale_id,
-                                  &client_team_id,
-                                  0, /* p_contest_id */
-                                  &new_locale_id,
-                                  &client_login, &client_team_name);
-    if (r >= 0) {
-      client_sid_mode = SID_COOKIE;
-      client_sid = client_cookie;
-      client_password = "";
-      if (new_locale_id != client_locale_id) {
-        l10n_setlocale(new_locale_id);
-        client_locale_id = new_locale_id;
-      }
-      return 1;
-    }
-    if (r != -ULS_ERR_NO_COOKIE) {
-      switch (-r) {
-      case ULS_ERR_NOT_REGISTERED:
-        error_cannot_participate();
-      case ULS_ERR_CANNOT_PARTICIPATE:
-        error_not_registered();
-      default:
-        fatal_server_error(r);
-      }
-    }
-    client_cookie = 0;
-    need_set_cookie = 1;
-  }
-
-  if ((client_sid_mode == -1 || client_sid_mode == SID_EMBED
-      || client_sid_mode == SID_URL)
-      && get_session_id("SID", &session_id)) {
+  if (get_session_id("SID", &session_id)) {
     open_userlist_server();
     r = userlist_clnt_team_cookie(server_conn, client_ip, global->contest_id,
                                   session_id,
@@ -987,7 +777,6 @@ authentificate(void)
                                   &new_locale_id,
                                   &client_login, &client_team_name);
     if (r >= 0) {
-      if (client_sid_mode == -1) client_sid_mode = SID_URL;
       client_sid = session_id;
       client_password = "";
       if (new_locale_id != client_locale_id) {
@@ -1015,15 +804,10 @@ authentificate(void)
     exit(0);
   }
 
-  // set default behavior
-  if (client_sid_mode == -1) {
-    client_sid_mode = SID_COOKIE;
-  }
-
   open_userlist_server();
   r = userlist_clnt_team_login(server_conn, client_ip, global->contest_id,
                                client_locale_id,
-                               client_sid_mode != SID_DISABLED,
+                               1,
                                client_login, client_password,
                                &client_team_id,
                                &client_sid,
@@ -1045,32 +829,17 @@ authentificate(void)
       fatal_server_error(r);
     }
   }
-  if (client_sid_mode == SID_COOKIE) {
-    client_cookie = client_sid;
-    need_set_cookie = 1;
-  }
   if (new_locale_id != client_locale_id) {
     l10n_setlocale(new_locale_id);
     client_locale_id = new_locale_id;
   }
 
-  if (client_sid_mode == SID_URL || client_sid_mode == SID_COOKIE) {
-    unsigned char hbuf[128];
-
-    hyperref(hbuf, sizeof(hbuf), client_sid_mode, client_sid, self_url,
-             contest_id_str, 0);
-    set_cookie_if_needed();
-    client_put_refresh_header(global->charset, hbuf, 0,
-                              _("Login successful"));
-    printf("<p%s>%s</p>", par_style,
-           _("Login successfull. Now entering the main page."));
-    printf(_("<p%s>If automatic updating does not work, click on <a href=\"%s\">this</a> link.</p>"), par_style, hbuf);
-           
-    //client_put_footer(stdout, footer_txt);
-    exit(0);
-  }
-
-  return 1;
+  hyperref(hbuf, sizeof(hbuf), client_sid, self_url, contest_id_str, 0);
+  client_put_refresh_header(global->charset, hbuf, 0, _("Login successful"));
+  printf("<p%s>%s</p>", par_style,
+         _("Login successfull. Now entering the main page."));
+  printf(_("<p%s>If automatic updating does not work, click on <a href=\"%s\">this</a> link.</p>"), par_style, hbuf);
+  exit(0);
 }
 
 static void
@@ -1078,15 +847,6 @@ operation_status_page(int code, unsigned char const *msg)
 {
   unsigned char href[128];
 
-  if (client_sid_mode != SID_URL && client_sid_mode != SID_COOKIE) {
-    if (code == -1 && msg) {
-      error("%s", msg);
-    } else if (code < 0) {
-      error("%s", gettext(protocol_strerror(-code)));
-    }
-    return;
-  }
-  set_cookie_if_needed();
   if (code < 0) {
     client_put_header(stdout, header_txt, 0, global->charset, 1,
                       client_locale_id, _("Operation failed"));
@@ -1096,8 +856,7 @@ operation_status_page(int code, unsigned char const *msg)
     print_refresh_button(_("Back"));
     client_put_footer(stdout, footer_txt);
   } else {
-    hyperref(href, sizeof(href), client_sid_mode, client_sid, self_url,
-             contest_id_str, 0);
+    hyperref(href, sizeof(href), client_sid, self_url, contest_id_str, 0);
     client_put_refresh_header(global->charset, href, 0,
                               _("Operation successfull"));
     printf("<%s>%s</%s>", head_style,
@@ -1112,17 +871,8 @@ print_refresh_button(unsigned char const *str)
 {
   if (!str) str = _("Refresh");
 
-  if (client_sid_mode == SID_URL) {
-    printf("<a href=\"%s?sid_mode=%d&SID=%016llx%s\">%s</a>",
-           self_url, SID_URL, client_sid, contest_id_str, str);
-  } else if (client_sid_mode == SID_COOKIE) {
-    printf("<a href=\"%s?sid_mode=%d%s\">%s</a>",
-           self_url, SID_COOKIE, contest_id_str, str);
-  } else {
-    puts(form_start_simple);
-    printf("<input type=\"submit\" name=\"refresh\" value=\"%s\">", str);
-    puts("</form>");
-  }
+  printf("<a href=\"%s?SID=%016llx%s\">%s</a>",
+         self_url, client_sid, contest_id_str, str);
 }
 
 static void
@@ -1130,18 +880,8 @@ print_standings_button(unsigned char const *str)
 {
   if (!str) str = _("Virtual standings");
 
-  if (client_sid_mode == SID_URL) {
-    printf("<a href=\"%s?sid_mode=%d&SID=%016llx&action=%d%s\">%s</a>",
-           self_url, SID_URL, client_sid, ACTION_STANDINGS,
-           contest_id_str, str);
-  } else if (client_sid_mode == SID_COOKIE) {
-    printf("<a href=\"%s?sid_mode=%d&action=%d%s\">%s</a>",
-           self_url, SID_COOKIE, ACTION_STANDINGS, contest_id_str, str);
-  } else {
-    puts(form_start_simple);
-    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
-           ACTION_STANDINGS, str);
-  }
+  printf("<a href=\"%s?SID=%016llx&action=%d%s\">%s</a>",
+         self_url, client_sid, ACTION_STANDINGS, contest_id_str, str);
 }
 
 static void
@@ -1149,18 +889,8 @@ print_logout_button(unsigned char const *str)
 {
   if (!str) str = _("Log out");
 
-  if (client_sid_mode == SID_URL) {
-    printf("<a href=\"%s?sid_mode=%d&SID=%016llx&action=%d%s\">%s</a>",
-           self_url, SID_URL, client_sid, ACTION_LOGOUT,
-           contest_id_str, str);
-  } else if (client_sid_mode == SID_COOKIE) {
-    printf("<a href=\"%s?sid_mode=%d&action=%d%s\">%s</a>",
-           self_url, SID_COOKIE, ACTION_LOGOUT, contest_id_str, str);
-  } else {
-    puts(form_start_simple);
-    printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\"></form>",
-           ACTION_LOGOUT, str);
-  }
+  printf("<a href=\"%s?SID=%016llx&action=%d%s\">%s</a>",
+         self_url, client_sid, ACTION_LOGOUT, contest_id_str, str);
 }
 
 static void
@@ -1318,7 +1048,6 @@ show_clar_if_asked(void)
     return;
   if (clar_id < 0 || clar_id >= server_total_clars) return;
 
-  set_cookie_if_needed();
   client_put_header(stdout, header_txt, 0, global->charset, 1,
                     client_locale_id, _("Message view"));
   print_nav_buttons(_("Main page"), 0, 0);
@@ -1350,7 +1079,6 @@ request_source_if_asked(void)
     return;
   if (run_id < 0 || run_id >= server_total_runs) return;
 
-  set_cookie_if_needed();
   client_put_header(stdout, header_txt, 0, global->charset, 1,
                     client_locale_id, _("Source view"));
   print_nav_buttons(_("Main page"), 0, 0);
@@ -1375,7 +1103,6 @@ action_standings(void)
 {
   int r;
 
-  set_cookie_if_needed();
   client_put_header(stdout, header_txt, 0, global->charset, 1,
                     client_locale_id, _("Current virtual standings"));
   print_nav_buttons(_("Main page"), 0, 0);
@@ -1408,7 +1135,6 @@ request_report_if_asked(void)
     return;
   if (run_id < 0 || run_id >= server_total_runs) return;
 
-  set_cookie_if_needed();
   client_put_header(stdout, header_txt, 0, global->charset, 1,
                     client_locale_id, _("Report view"));
   print_nav_buttons(_("Main page"), 0, 0);
@@ -1416,8 +1142,7 @@ request_report_if_asked(void)
   fflush(stdout);
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, SRV_CMD_SHOW_REPORT, run_id, 
-                      client_locale_id, 0,
-                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+                      client_locale_id, 0, self_url, hidden_vars, contest_id_str);
   /*
   r = serve_clnt_show_item(serve_socket_fd, 1, SRV_CMD_SHOW_REPORT,
                            client_team_id, global->contest_id,
@@ -1443,8 +1168,6 @@ request_printing_if_asked(void)
   if (sscanf(s, "print_%d%n", &run_id, &n) != 1 || (s[n] && s[n] != '.'))
     return;
   if (run_id < 0 || run_id >= server_total_runs) return;
-
-  set_cookie_if_needed();
 
   client_put_header(stdout, header_txt, 0, global->charset, 1,
                     client_locale_id, "%s %d", _("Confirm printing run"), run_id);
@@ -1553,7 +1276,7 @@ action_view_test(int cmd)
 
   open_serve();
   r = serve_clnt_view(serve_socket_fd, 1, cmd, run_id, test_num, 0,
-                      client_sid_mode, self_url, hidden_vars, contest_id_str);
+                      self_url, hidden_vars, contest_id_str);
   if (r < 0) {
     client_put_header(stdout, 0, 0, global->charset, 1, 0,
                       _("Details about run %d, test %d"), run_id, test_num);
@@ -1582,11 +1305,6 @@ action_logout(void)
     open_userlist_server();
     userlist_clnt_logout(server_conn, client_ip, client_sid);
   }
-  if (client_sid_mode == SID_COOKIE) {
-    client_cookie = 0;
-    need_set_cookie = 1;
-  }
-  set_cookie_if_needed();
   client_put_header(stdout, header_txt, 0, global->charset, 1,
                     client_locale_id, "%s", _("Good-bye"));
 
@@ -1610,8 +1328,7 @@ display_team_page(void)
 
   fflush(stdout);
   open_serve();
-  r = serve_clnt_team_page(serve_socket_fd, 1,
-                           client_sid_mode, client_locale_id,
+  r = serve_clnt_team_page(serve_socket_fd, 1, client_locale_id,
                            ((client_view_all_clars?1:0)<<1)|(client_view_all_runs?1:0),
                            self_url, hidden_vars, contest_id_str);
   if (r < 0) {
@@ -1823,7 +1540,6 @@ main(int argc, char *argv[])
     force_recheck_status = 0;
   }
 
-  set_cookie_if_needed();
   if (cur_contest->name) {
     client_put_header(stdout, header_txt, 0, global->charset, 1,
                       client_locale_id,
@@ -1906,13 +1622,7 @@ main(int argc, char *argv[])
   if (global->enable_l10n) {
     printf("<hr><a name=\"chglanguage\"></a><%s>%s</%s>\n",
            head_style, _("Change language"), head_style);
-    if (!client_sid_mode) {
-      printf("%s<input type=\"hidden\" name=\"login\" value=\"%s\">"
-             "<input type=\"hidden\" name=\"password\" value=\"%s\">",
-             form_header_simple, client_login, client_password);
-    } else {
-      printf("%s", form_start_simple);
-    }
+    printf("%s", form_start_simple);
     if (cgi_contest_id > 0) {
       printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">",
              global->contest_id);
