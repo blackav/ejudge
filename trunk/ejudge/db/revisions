@@ -1790,3 +1790,6 @@ serve_clnt/team_page.c 1 6 311114
 serve_clnt/view.c 1 15 294284
 master.c 1 65 7066345
 html.c 1 62 6743998
+serve.c 1 93 13476240
+team.c 1 49 3811587
+master_html.c 1 38 8705579
