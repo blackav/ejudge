@@ -831,7 +831,7 @@ cmd_team_page(struct client_state *p, int len,
     return;
   }
 
-  info("%d: cmd_team_page: %d, %d", p->id, pkt->sid_mode, pkt->locale_id);
+  info("%d: cmd_team_page: %d", p->id, pkt->locale_id);
 
   if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
     err("%d: two client file descriptors required", p->id);
@@ -846,8 +846,7 @@ cmd_team_page(struct client_state *p, int len,
   }
   l10n_setlocale(pkt->locale_id);
   write_team_page(f, p->user_id, printing_suspended,
-                  pkt->sid_mode, p->cookie,
-                  (pkt->flags & 1), (pkt->flags & 2) >> 1,
+                  p->cookie, (pkt->flags & 1), (pkt->flags & 2) >> 1,
                   self_url_ptr, hidden_vars_ptr, extra_args_ptr,
                   contest_start_time, contest_stop_time);
   l10n_setlocale(0);
@@ -955,11 +954,6 @@ cmd_master_page(struct client_state *p, int len,
     err("%d: priv_level does not match", p->id);
     return;
   }
-  if (pkt->sid_mode < 0 || pkt->sid_mode > 3) {
-    new_send_reply(p, -SRV_ERR_NO_PERMS);
-    err("%d: sid_mode %d is invalid", p->id, pkt->sid_mode);
-    return;
-  }
   if (get_cnts_caps(p->user_id, &caps) < 0) {
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     err("%d: cannot get capabilities", p->id);
@@ -975,7 +969,7 @@ cmd_master_page(struct client_state *p, int len,
   if (pkt->b.id == SRV_CMD_MASTER_PAGE) {
     /* l10n_setlocale(pkt->locale_id); */
     write_master_page(f, p->user_id, pkt->priv_level,
-                      pkt->sid_mode, p->cookie,
+                      p->cookie,
                       pkt->first_run, pkt->last_run,
                       pkt->mode_clar, pkt->first_clar, pkt->last_clar,
                       accepting_mode,
@@ -985,7 +979,7 @@ cmd_master_page(struct client_state *p, int len,
   } else {
     /* SRV_CMD_DUMP_MASTER_RUNS */
     r = write_priv_all_runs(f, p->user_id, 0, pkt->priv_level,
-                            pkt->sid_mode, p->cookie,
+                            p->cookie,
                             pkt->first_run, pkt->last_run,
                             accepting_mode,
                             0, filter_expr_ptr, 0, 0);
@@ -1062,8 +1056,7 @@ cmd_priv_standings(struct client_state *p, int len,
     return;
   }
 
-  info("%d: priv_standings: %d, %d",
-       p->id, pkt->user_id, pkt->sid_mode);
+  info("%d: priv_standings: %d", p->id, pkt->user_id);
 
   if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
     err("%d: two client file descriptors required", p->id);
@@ -1095,11 +1088,6 @@ cmd_priv_standings(struct client_state *p, int len,
     err("%d: priv_level does not match", p->id);
     return;
   }
-  if (pkt->sid_mode < 0 || pkt->sid_mode > 3) {
-    new_send_reply(p, -SRV_ERR_NO_PERMS);
-    err("%d: sid_mode %d is invalid", p->id, pkt->sid_mode);
-    return;
-  }
   if (!check_cnts_caps(p->user_id, OPCAP_VIEW_STANDINGS)) {
     err("%d: user %d has no capability %d for the contest",
         p->id, p->user_id, OPCAP_VIEW_STANDINGS);
@@ -1115,7 +1103,7 @@ cmd_priv_standings(struct client_state *p, int len,
   /* l10n_setlocale(pkt->locale_id); */
   if (global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
     accepting_mode = 1;
-  write_priv_standings(f, pkt->sid_mode, p->cookie,
+  write_priv_standings(f, p->cookie,
                        self_url_ptr, hidden_vars_ptr, extra_args_ptr,
                        accepting_mode);
   /* l10n_setlocale(0); */
@@ -1181,12 +1169,7 @@ cmd_view(struct client_state *p, int len,
     return;
   }
 
-  info("%d: view %d, %d, %d", p->id, pkt->b.id, pkt->item, pkt->sid_mode);
-  if (pkt->sid_mode < 0 || pkt->sid_mode > 3) {
-    new_send_reply(p, -SRV_ERR_NO_PERMS);
-    err("%d: sid_mode %d is invalid", p->id, pkt->sid_mode);
-    return;
-  }
+  info("%d: view %d, %d", p->id, pkt->b.id, pkt->item);
 
   if (pkt->b.id == SRV_CMD_SHOW_REPORT) need_priv_check = 0;
 
@@ -1216,8 +1199,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    r = write_priv_source(f, p->user_id, p->priv_level,
-                          pkt->sid_mode, p->cookie,
+    r = write_priv_source(f, p->user_id, p->priv_level, p->cookie,
                           accepting_mode, self_url_ptr, hidden_vars_ptr,
                           extra_args_ptr, pkt->item, &caps);
     break;
@@ -1235,8 +1217,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    r = write_new_run_form(f, p->user_id, p->priv_level,
-                           pkt->sid_mode, p->cookie,
+    r = write_new_run_form(f, p->user_id, p->priv_level, p->cookie,
                            self_url_ptr, hidden_vars_ptr,
                            extra_args_ptr, pkt->item, &caps);
     break;
@@ -1298,8 +1279,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    r = write_priv_report(f, p->user_id, p->priv_level,
-                          pkt->sid_mode, p->cookie, (int) pkt->flags,
+    r = write_priv_report(f, p->user_id, p->priv_level, p->cookie, (int) pkt->flags,
                           self_url_ptr, hidden_vars_ptr, extra_args_ptr,
                           pkt->item, &caps);
     break;
@@ -1317,8 +1297,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    r = write_priv_clar(f, p->user_id, p->priv_level,
-                        pkt->sid_mode, p->cookie,
+    r = write_priv_clar(f, p->user_id, p->priv_level, p->cookie,
                         self_url_ptr, hidden_vars_ptr, extra_args_ptr,
                         pkt->item, &caps);
     if (p->priv_level == PRIV_LEVEL_JUDGE) {
@@ -1345,8 +1324,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    r = write_priv_users(f, p->user_id, p->priv_level,
-                         pkt->sid_mode, p->cookie,
+    r = write_priv_users(f, p->user_id, p->priv_level, p->cookie,
                          self_url_ptr, hidden_vars_ptr, extra_args_ptr, &caps);
     break;
 
@@ -1363,8 +1341,7 @@ cmd_view(struct client_state *p, int len,
       r = -SRV_ERR_NO_PERMS;
       break;
     }
-    r = write_priv_user(f, p->user_id, p->priv_level,
-                        pkt->sid_mode, p->cookie,
+    r = write_priv_user(f, p->user_id, p->priv_level, p->cookie,
                         self_url_ptr, hidden_vars_ptr, extra_args_ptr,
                         pkt->item, &caps);
     break;
@@ -1492,8 +1469,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
     l10n_setlocale(pkt->item2);
-    r = new_write_user_report_view(f, p->user_id, pkt->item,
-                                   pkt->sid_mode, p->cookie,
+    r = new_write_user_report_view(f, p->user_id, pkt->item, p->cookie,
                                    self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     l10n_setlocale(0);
 
@@ -1825,9 +1801,6 @@ cmd_team_show_item(struct client_state *p, int len,
     break;
   case SRV_CMD_SHOW_SOURCE:
     r = new_write_user_source_view(f, pkt->user_id, pkt->item_id);
-    break;
-  case SRV_CMD_SHOW_REPORT:
-    r = new_write_user_report_view(f, pkt->user_id, pkt->item_id, 0, 0, 0, 0, 0);
     break;
   case SRV_CMD_VIRTUAL_STANDINGS:
     if (!global->virtual) r = -SRV_ERR_ONLY_VIRTUAL;
