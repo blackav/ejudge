@@ -905,6 +905,7 @@ parse_date(const unsigned char *s, time_t *pd)
   if (!s) goto failed;
 
   memset(&tt, 0, sizeof(tt));
+  tt.tm_isdst = -1;
   while (1) {
     year = month = day = hour = min = sec = 0;
     if (sscanf(s, "%d/%d/%d %d:%d:%d %n", &year, &month, &day, &hour,
@@ -1396,7 +1397,9 @@ set_defaults(int mode)
 
   if (mode == PREPARE_RUN) {
     GLOBAL_INIT_FIELD(checker_dir, DFLT_G_CHECKER_DIR, conf_dir);
+  }
 
+  if (mode != PREPARE_COMPILE) {
     if (!global->info_sfx[0]) {
       snprintf(global->info_sfx, sizeof(global->info_sfx),
                "%s", DFLT_G_INFO_SFX);
