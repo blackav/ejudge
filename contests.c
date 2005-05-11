@@ -261,6 +261,7 @@ parse_date(unsigned char const *s, unsigned long *pd)
   struct tm tt;
 
   memset(&tt, 0, sizeof(tt));
+  tt.tm_isdst = -1;
   if (!s) goto failed;
   if (sscanf(s, "%d/%d/%d %d:%d:%d %n", &year, &month, &day, &hour,
              &min, &sec, &n) != 6) goto failed;
