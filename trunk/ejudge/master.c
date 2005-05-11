@@ -889,6 +889,7 @@ sched_if_asked(void)
   if (sscanf(s, "%d/%d/%d %d:%d:%d%n",
              &year, &mon, &day, &h, &m, &sec, &n) == 6 && !s[n]) {
     memset(&loc2, 0, sizeof(loc2));
+    loc2.tm_isdst = -1;
     loc2.tm_year = year - 1900;
     loc2.tm_mon = mon - 1;
     loc2.tm_mday = day;
