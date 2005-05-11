@@ -1369,6 +1369,7 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
         s = p1->v.s;
         l = strlen(s);
         memset(&tt, 0, sizeof(tt));
+        tt.tm_isdst = -1;
         ty = alloca(l + 10); memset(ty, 0, l + 10);
         tm = alloca(l + 10); memset(tm, 0, l + 10);
         td = alloca(l + 10); memset(td, 0, l + 10);
