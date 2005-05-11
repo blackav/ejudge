@@ -3002,10 +3002,13 @@ write_tests(FILE *f, int cmd, int run_id, int test_num)
     goto failure;
   }
 
-  rep_flag = archive_make_read_path(rep_path, sizeof(rep_path),
-                                    global->report_archive_dir, run_id, 0, 1);
-  if (rep_flag < 0) {
-    errcode = SRV_ERR_SYSTEM_ERROR;
+  if ((rep_flag = archive_make_read_path(rep_path, sizeof(rep_path),
+                                         global->xml_report_archive_dir, run_id,
+                                         0, 1)) < 0
+      && (rep_flag = archive_make_read_path(rep_path, sizeof(rep_path),
+                                            global->report_archive_dir, run_id,
+                                            0, 1)) < 0) {
+    errcode = SRV_ERR_FILE_NOT_EXIST;
     goto failure;
   }
   if (generic_read_file(&rep_text, 0, &rep_len, rep_flag,0,rep_path, "") < 0) {
