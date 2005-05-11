@@ -1873,6 +1873,8 @@ move_files_to_insert_run(int run_id)
     }
     archive_rename(global->audit_log_dir, 0, i, 0, i + 1, 0, 0);
   }
+
+  /* FIXME: add audit information for all the renamed runs */
 }
 
 static void
@@ -2012,6 +2014,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
   if (testing_suspended) {
     info("%d: testing is suspended", p->id);
     run_change_status(run_id, RUN_PENDING, 0, -1, 0);
+    append_audit_log(run_id, p, "Command: priv_submit\nStatus: pending\nRun-id: %d\n  Testing is suspended by the contest administrator\n", run_id);
     new_send_reply(p, SRV_RPL_OK);
     return;
   }
@@ -2022,6 +2025,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
       || langs[pkt->lang_id]->disable_testing) {
     info("%d: priv_submit_run: auto testing disabled", p->id);
     run_change_status(run_id, RUN_PENDING, 0, -1, 0);
+    append_audit_log(run_id, p, "Command: priv_submit\nStatus: pending\nRun-id: %d\n  Testing is disabled for this language or problem\n", run_id);
     new_send_reply(p, SRV_RPL_OK);
     return;
   }
@@ -2036,6 +2040,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
   }
 
   info("%d: priv_submit_run: ok", p->id);
+  append_audit_log(run_id, p, "Command: priv_submit\nStatus: ok\nRun-id: %d\n", run_id);
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -2045,6 +2050,7 @@ cmd_upload_report(struct client_state *p, int len,
 {
   path_t wpath;
   int wflags;
+  const unsigned char *t1 = "", *t2 = "";
 
   if (get_peer_local_user(p) < 0) return;
   if (len < sizeof(*pkt)) {
@@ -2112,6 +2118,7 @@ cmd_upload_report(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
     }
+    t1 = "  Judge's report uploaded\n";
   }
 
   if (global->team_enable_rep_view && (pkt->flags & 2)) {
@@ -2128,8 +2135,11 @@ cmd_upload_report(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
     }
+    t2 = "  Participant's report uploaded\n";
   }
+
   info("%d: cmd_upload_report: ok", p->id);
+  append_audit_log(pkt->run_id, p, "Command: upload_report\nStatus: ok\n%s%s", t2, t2);
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -2159,6 +2169,7 @@ cmd_team_print(struct client_state *p, int len,
   }
 
   info("%d: team_print: ok, %d pages printed", p->id, res);
+  append_audit_log(pkt->v.i, p, "Command: print\nStatus: ok\n  %d pages printed\n", res);
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -2334,6 +2345,7 @@ cmd_team_submit_run(struct client_state *p, int len,
   if (testing_suspended) {
     info("%d: testing is suspended", p->id);
     run_change_status(run_id, RUN_PENDING, 0, -1, 0);
+    append_audit_log(run_id, p, "Command: submit\nStatus: pending\nRun-id: %d\n  Testing is suspended by the contest administrator\n", run_id);
     new_send_reply(p, SRV_RPL_OK);
     return;
   }
@@ -2344,6 +2356,7 @@ cmd_team_submit_run(struct client_state *p, int len,
       || langs[pkt->lang_id]->disable_testing) {
     info("%d: team_submit_run: auto testing disabled", p->id);
     run_change_status(run_id, RUN_PENDING, 0, -1, 0);
+    append_audit_log(run_id, p, "Command: submit\nStatus: pending\nRun-id: %d\n  Testing disabled for this problem or language\n", run_id);
     new_send_reply(p, SRV_RPL_OK);
     return;
   }
@@ -2358,6 +2371,7 @@ cmd_team_submit_run(struct client_state *p, int len,
   }
 
   info("%d: team_submit_run: ok", p->id);
+  append_audit_log(run_id, p, "Command: submit\nStatus: ok\nRun-id: %d\n", run_id);
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -2678,6 +2692,8 @@ do_squeeze_runs(void)
     archive_remove(global->audit_log_dir, j, 0);
   }
   run_squeeze_log();
+
+  /* FIXME: add an audit record for each renumbered run */
 }
 
 static void
@@ -4278,8 +4294,8 @@ read_run_packet(const unsigned char *run_status_dir,
 
   /* add auditing information */
   if (!(f = open_memstream(&audit_text, &audit_text_size))) return 1;
-  fprintf(f, "Judging complete\n");
-  fprintf(f, "Profiling information:\n");
+  fprintf(f, "Status: Judging complete\n");
+  fprintf(f, "  Profiling information:\n");
   fprintf(f, "  Request start time:                %s\n",
           time_to_str(time_buf, sizeof(time_buf),
                       reply_pkt->ts1, reply_pkt->ts1_us));
@@ -4478,7 +4494,7 @@ rejudge_run(int run_id, struct client_state *p, int force_full_rejudge)
                         langs[re.language]->compiler_env,
                         accepting_mode);
 
-  append_audit_log(run_id, p, "Rejudge");
+  append_audit_log(run_id, p, "Command: Rejudge");
 }
 
 static int
