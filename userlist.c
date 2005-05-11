@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -101,6 +101,7 @@ userlist_parse_date(unsigned char const *s, unsigned long *pd)
   struct tm tt;
 
   memset(&tt, 0, sizeof(tt));
+  tt.tm_isdst = -1;
   if (!s) goto failed;
   if (sscanf(s, "%d/%d/%d %d:%d:%d %n", &year, &month, &day, &hour,
              &min, &sec, &n) != 6) goto failed;
