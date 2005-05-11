@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,7 @@ xml_parse_date(unsigned char const *path, int line, int column,
   struct tm tt;
 
   memset(&tt, 0, sizeof(tt));
+  tt.tm_isdst = -1;
   if (!s) goto failed;
 
   while (1) {
