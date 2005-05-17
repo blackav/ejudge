@@ -1870,7 +1870,7 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
 
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
-    if (t->comment) {
+    if (t->comment || t->team_comment) {
       need_comment = 1;
       break;
     }
@@ -1955,12 +1955,16 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
       fprintf(f, "<td>%d (%d)</td>", t->score, t->nominal_score);
     }
     if (need_comment) {
-      if (!t->comment) {
-        fprintf(f, "<td>&nbsp;</td>");
-      } else {
+      if (t->comment) {
         s = html_armor_string_dup(t->comment);
         fprintf(f, "<td>%s</td>", s);
         xfree(s);
+      } else if (t->team_comment) {
+        s = html_armor_string_dup(t->team_comment);
+        fprintf(f, "<td>%s</td>", s);
+        xfree(s);
+      } else {
+        fprintf(f, "<td>&nbsp;</td>");
       }
     }
     // links to extra information
