@@ -1,3 +1,17 @@
+2005-05-11  Alexander Chernov  <cher@ispras.ru>
+
+	* parse_date.c: copyright notice is updated;
+	(xml_parse_date) `tm_isdst' field is properly initialized with -1.
+
+2005-04-25  Alexander Chernov  <cher@ispras.ru>
+
+	* parse_int_attr.c, unparse_run_status.c: initial revision
+
+	* leaf_elem.c: copyright notice is updated;
+	(xml_leaf_elem) new parameter `empty_allowed_flag' is added. if this
+	  parameter is set to 1, the element value may be an empty string
+	 (but not NULL).
+
 2004-11-07  Alexander Chernov  <cher@ispras.ru>
 
 	* attr_bool.c, elem_ip_mask.c, empty_text.c, err_attr_invalid.c, err_attr_not_allowed.c, err_attr_undefined.c, err_attrs.c, err_elem_not_allowed.c, err_elem_redefined.c, err_elem_undefined.c, err_nested_elems.c, err_top_level.c, err_variables.c, leaf_elem.c, xml_err.c, xml_err_a.c:
