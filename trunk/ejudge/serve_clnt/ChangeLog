@@ -1,3 +1,26 @@
+2005-05-02  Alexander Chernov  <cher@ispras.ru>
+
+	* master_page.c:
+	(serve_clnt_master_page) `sid_mode' parameter is removed since the
+	  corresponding packet field is removed.
+
+	* standings.c: copyright notice is updated;
+	(serve_clnt_standings) `sid_mode' parameter is removed since the
+	  corresponding packet field is removed.
+
+	* team_page.c: copyright notice is updated;
+	(serve_clnt_team_page) `sid_mode' parameter is removed since the
+	  corresponding packet field is removed.
+
+	* view.c:
+	(serve_clnt_view) `sid_mode' parameter is removed, since the
+	  corresponding field is removed.
+
+2005-04-28  Alexander Chernov  <cher@ispras.ru>
+
+	* view.c: copyright notice is updated;
+	(serve_clnt_view) remove check for valid command code.
+
 2005-01-15  Alexander Chernov  <cher@ispras.ru>
 
 	* simple_cmd.c: copyright notice is updated;

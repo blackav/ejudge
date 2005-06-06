@@ -1,3 +1,718 @@
+2005-05-17  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* master_html.c:
+	(write_xml_testing_report) the `team_comment' is used in the judge's
+	  report if the `comment' is not available.
+
+2005-05-11  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* serve.c: (cmd_priv_submit_run) audit record generation is added;
+	(cmd_upload_report) the same as above;
+	(cmd_team_print) the same as above;
+	(cmd_team_submit_run) the same as above;
+	(read_run_packet) audit log format is slightly changed;
+	(rejudge_run) the same as above.
+
+	* master_html.c:
+	(write_tests) `xml_report_archive_dir' directory is tried first for
+	  the XML testing protocol.
+
+	* userlist_xml.c:
+	(parse_date) `tm_isdst' field is properly initialized with -1.
+
+	* userlist.c: copyright notice is updated;
+	(userlist_parse_date) `tm_isdst' field is properly initialized with
+	  -1.
+
+	* revinfo.c: copyright notice is updated;
+	(read_verdb) `tm_isdst' field is properly initialized with -1.
+
+	* prepare.c:
+	(parse_date) `tm_isdst' field is properly initialized with -1;
+	(set_defaults) `info_sfx', `tgz_sfx' fields are initialized even
+	  for the `serve' program.
+
+	* master.c:
+	(sched_if_asked) `tm_isdst' field is properly initialized with -1.
+
+	* filter_tree.c:
+	(filter_tree_eval_node) `tm_isdst' field is properly initialized with
+	  -1.
+
+	* contests.c:
+	(parse_date) `tm_isdst' field is properly initialized with -1.
+
+2005-05-03  Alexander Chernov  <cher@ispras.ru>
+
+	* team.c:
+	GLOBAL CHANGE: now only one session id passing mode (SID_URL) is
+	  supported, the code that handles all other types of session id
+	  passing is removed;
+	sid_mode enumerated type (SID_DISABLED, etc) is removed;
+	global configuration variable `enable_session_mode' is removed;
+	(struct section_global_data) `enable_session_mode' field is removed;
+	(hyperref) `sid' parameter is removed;
+	  handling of all session id passing mode other that SID_URL is
+	  removed;
+	(set_cookie_if_needed) function removed;
+	(read_state_params) handling of all session id passing mode other that
+	  SID_URL is removed;
+	(display_enter_password) call of `set_cookie_if_needed' is removed;
+	  html generation for session id mode is removed;
+	(get_cookie) function removed;
+	(open_userlist_server) call of `set_cookie_if_needed' is removed;
+	(permission_denied) the same as above;
+	(error_not_registered) the same as above;
+	(error_cannot_participate) the same as above;
+	(fatal_server_error) the same as above;
+	(authentificate) handling of all session id passing mode other that
+	  SID_URL is removed;
+	  need_cookie parameter is always passed as 1 in call of
+	  `userlist_clnt_team_login';
+	(operation_status_page) handling of all session id passing mode other
+	  that SID_URL is removed;
+	  call of `set_cookie_if_needed' removed;
+	  call of `hyperref' updated;
+	(print_refresh_button) handling of all session id passing mode other
+	  that SID_URL is removed;
+	  call of `hyperref' updated;
+	(print_standings_button) the same as above;
+	(print_logout_button) the same as above;
+	(show_clar_if_asked) call of `set_cookie_if_needed' removed;
+	(request_source_if_asked) the same as above;
+	(action_standings) the same as above;
+	(request_report_if_asked) call of `set_cookie_if_needed' removed;
+	  call of `serve_clnt_view' is updated;
+	(request_printing_if_asked)  call of `set_cookie_if_needed' removed;
+	(action_view_test) call of `serve_clnt_view' is updated;
+	(action_logout) handling of all session id passing mode other
+	  that SID_URL is removed;
+	  call of `set_cookie_if_needed' removed;
+	(display_team_page) call of `serve_clnt_team_page' is updated;
+	(main) call of `set_cookie_if_needed' removed;
+	  handling of all session id passing mode other that SID_URL is
+	  removed.
+
+	* serve.c:
+	(cmd_team_page) handling of the sid_mode field in the incoming packet
+	  is removed, since the field is removed;
+	  call of `write_team_page' is updated;
+	(cmd_master_page) handling of the sid_mode field in the incoming packet
+	  is removed, since the field is removed;
+	  call of `write_master_page' is updated;
+	  call of `write_priv_all_runs' is updated;
+	(cmd_priv_standings) handling of the sid_mode field in the incoming
+	  packet is removed, since the field is removed;
+	  call of `write_priv_standings' is updated;
+	(cmd_view) handling of the sid_mode field in the incoming packet is
+	  removed, since the field is removed;
+	  call of `write_priv_source' is updated;
+	  call of `write_new_run_form' is updated;
+	  call of `write_priv_report' is updated;
+	  call of `write_priv_clar' is updated;
+	  call of `write_priv_users' is updated;
+	  call of `write_priv_user' is updated;
+	  call of `new_write_user_report_view' is updated;
+	(cmd_team_show_item) handling of SRV_CMD_SHOW_REPORT is removed,
+	  because the command is handled in `cmd_view'.
+
+	* master_html.c:
+	GLOBAL CHANGE: now only one session id passing mode (SID_URL) is
+	  supported, the code that handles all other types of session id
+	  passing is removed;
+	sid_mode enumerated type (SID_DISABLED, etc) is removed;
+	(html_start_form) `sid_mode' parameter is removed;
+	  handling of session id passing modes other that SID_URL is removed;
+	(html_hyperref) `sid_mode' parameter is removed;
+	  handling of session id passing modes other that SID_URL is removed;
+	  "sid_mode" CGI variable is not generated into URL;
+	(print_nav_buttons) `sid_mode' parameter is removed;
+	  handling of session id passing modes other that SID_URL is removed;
+	(write_priv_all_runs) `sid_mode' parameter is removed;
+	  calls of `html_start_form' are updated;
+	  handling of session id passing modes other that SID_URL is removed;
+	  calls of `html_hyperref' are updated;
+	  calls of `print_nav_buttons' are updated;
+	(write_all_clars) `sid_mode' parameter is removed;
+	  calls of `html_start_form' are updated;
+	  handling of session id passing modes other that SID_URL is removed;
+	  calls of `html_hyperref' are updated;
+	  calls of `print_nav_buttons' are updated;
+	(write_master_page) `sid_mode' parameter is removed;
+	  call of `write_priv_all_runs' is updated;
+	  call of `write_all_clars' is updated;
+	(write_priv_standings) `sid_mode' parameter is removed;
+	  calls of `print_nav_buttons' is updated;
+	(write_priv_source) `sid_mode' parameter is removed;
+	  calls of `print_nav_buttons' is updated;
+	  handling of session id passing modes other that SID_URL is removed;
+	  calls of `html_hyperref' are updated;
+	  calls of `html_start_form' are updated;
+	(write_new_run_form) `sid_mode' parameter is removed;
+	  calls of `print_nav_buttons' is updated;
+	  calls of `html_start_form' are updated;
+	(write_xml_testing_report) `sid_mode' parameter is removed;
+	  calls of `html_hyperref' are updated;
+	(write_priv_report) `sid_mode' parameter is removed;
+	  calls of `print_nav_buttons' is updated;
+	  if `team_report_flag' is enabled, the team's version of XML log
+	  is generated by calling `write_xml_team_testing_report';
+	  call of `write_xml_testing_report' is updated;
+	(write_priv_clar) `sid_mode' parameter is removed;
+	  calls of `print_nav_buttons' is updated;
+	  calls of `html_start_form' are updated;
+	(write_priv_users) `sid_mode' parameter is removed;
+	  calls of `print_nav_buttons' is updated;
+	  calls of `html_start_form' are updated;
+	  handling of session id passing modes other that SID_URL is removed;
+	(write_priv_user) `sid_mode' parameter is removed;
+	  calls of `print_nav_buttons' is updated;
+	  calls of `html_start_form' are updated.
+
+2005-05-02  Alexander Chernov  <cher@ispras.ru>
+
+	* master.c:
+	GLOBAL CHANGE: session id passing mode constants (SID_DISABLED, etc)
+	  are removed, now only URL passing is supported (SID_URL), and the
+	  code that handled other passing modes is removed;
+	(read_state_params) code for handling non-SID_URL passing modes
+	  is removed;
+	(hyperref) `sid_mode' parameter is removed;
+	  code for handling non-SID_URL passing modes is removed;
+	(set_cookie_if_needed) function removed;
+	(display_enter_password_2) hidden HTML variable `sid_mode' is no
+	  longer generated;
+	(get_cookie) function removed;
+	(open_userlist_server) call of `set_cookie_if_needed' removed;
+	(permission_denied) the same as above;
+	(error_not_registered) the same as above;
+	(error_cannot_participate) the same as above;
+	(fatal_server_error) the same as above;
+	(authentificate) code for handling non-SID_URL passing modes is
+	  removed;
+	  1 is passed as the `use_cookies' flag to
+	  `userlist_clnt_priv_login';
+	(print_refresh_button) code for handling non-SID_URL passing modes is
+	  removed;
+	(print_standings_button) the same as above;
+	(print_update_button) the same as above;
+	(print_teamview_button) the same as above;
+	(print_logout_button) the same as above;
+	(print_dump_runs_button) the same as above;
+	(print_write_xml_runs_button) the same as above;
+	(print_export_xml_runs_button) the same as above;
+	(print_dump_users_button) the same as above;
+	(print_dump_standings_button) the same as above;
+	(operation_status_page) code for handling non-SID_URL passing modes is
+	  removed;
+	  call of `set_cookie_if_needed' is removed;
+	(view_source_if_asked) call of `set_cookie_if_needed' is removed;
+	  call of `serve_clnt_view' is updated;
+	(action_view_team) the same as above;
+	(action_view_audit_log) call of `serve_clnt_view' is updated;
+	(action_view_test) the same as above;
+	(action_new_run_form) call of `set_cookie_if_needed' is removed;
+	  call of `serve_clnt_view' is updated;
+	(view_report_if_asked) the same as above;
+	(view_teams_if_asked) the same as above;
+	(action_dump_runs) the same as above;
+	(action_write_xml_runs) the same as above;
+	(action_export_xml_runs) the same as above;
+	(action_dump_users) call of `set_cookie_if_needed' is removed;
+	(action_dump_standings) call of `set_cookie_if_needed' is removed;
+	  call of `serve_clnt_view' is updated;
+	(confirm_reset_if_asked) call of `set_cookie_if_needed' is removed;
+	(confirm_update_standings) the same as above;
+	(confirm_clear_team_passwords) the same as above;
+	(confirm_regenerate_register_if_asked) the same as above;
+	(confirm_regenerate_if_asked) the same as above;
+	(confirm_rejudge_all) the same as above;
+	(confirm_judge_suspended) the same as above;
+	(confirm_rejudge_displayed) the same as above;
+	(confirm_squeeze) the same as above;
+	(confirm_continue) the same as above;
+	(confirm_clear_run) the same as above;
+	(do_generate_register_passwords_if_asked) the same as above;
+	(do_generate_passwords_if_asked) the saem as above;
+	(action_merge_runs) the same as above;
+	(action_set_team_status) call of `set_cookie_if_needed' is removed;
+	  call of `serve_clnt_view' is updated;
+	(action_compare_runs) the same as above;
+	(view_clar_if_asked) the same as above;
+	(send_msg_if_asked) call of `set_cookie_if_needed' is removed;
+	  call of `serve_clnt_view' is updated;
+	  the code for handling non-SID_URL passing modes is removed;
+	(send_msg_if_asked) the same as above;
+	(log_out_if_asked) the code for handling non-SID_URL passing modes
+	  is removed;
+	(view_standings_if_asked) call of `serve_clnt_standings' is updated;
+	(display_master_page) call of `serve_clnt_master_page' updated
+	  (sid_mode) parameter is removed;
+	(main) call of `set_cookie_if_needed' is removed.
+
+	* html.c:
+	session id passing mode constants (SID_DISABLED, etc) are removed,
+	now only URL passing is supported (SID_URL), and the code that handled
+	other passing modes is removed;
+	(new_write_user_runs) `sid_mode' parameter is removed;
+	  handling of session id passing mode other than SID_URL is removed;
+	(new_write_user_clars) the same as above;
+	(write_xml_team_testing_report) function is made non-static because
+	  it is used from `master_html.c' when the team view is requested;
+	(new_write_user_report_view) `sid_mode' parameter is removed;
+	  call of `write_xml_testing_report' is updated;
+	(print_nav_buttons) `sid_mode' parameter is removed;
+	  handling of session id passing mode other than SID_URL is removed;
+	(write_team_page) the same as above.
+
+	* super_html.c: copyright notice is updated;
+	(super_html_main_page) sid_mode CGI parameter is removed from URLs
+	  of `master', `judge' and `team' programs.
+
+	* serve_clnt.h:
+	(serve_clnt_team_page) `sid_mode' parameter is removed;
+	(serve_clnt_master_page) the same as above;
+	(serve_clnt_standings) the same as above;
+	(serve_clnt_view) the same is above.
+
+	* serve-cmd.c: sid_mode (SID_DISABLED, etc) enumeration is removed;
+	(handle_login) sid_mode == SID_URL is removed from parameters of
+	  `userlist_clnt_priv_login': 1 is used instead;
+	(handle_dump_runs) call of `serve_clnt_view' is updated;
+	(handle_dump_source) call of `serve_clnt_view' is updated;
+	(handle_dump_master_runs) sid_mode == SID_URL parameter is removed
+	  from `serve_clnt_master_page'.
+
+	* register.c: copyright notice is updated;
+	(authentificate) "SID" is used as CGI variable name instead of "sid";
+	(display_edit_registration_data_page) the same as above;
+	(display_main_page) the same as above;
+	(action_change_lang_at_main_page) the same as above;
+	(action_login) the same as above;
+	(action_change_password) the same as above;
+	(action_remove_member) the same as above;
+	(action_register_for_contest) the same as above.
+
+	* protocol.h:
+	(struct prot_serve_pkt_team_page) `sid_mode' field is removed;
+	(struct prot_serve_pkt_master_page) the same as above;
+	(struct prot_serve_pkt_standings) the same as above;
+	(struct prot_serve_pkt_view) the same as above.
+
+	* html.h: (new_write_user_runs) `sid_mode' parameter is removed;
+	(new_write_user_clars) the same as above;
+	(new_write_user_report_view) the same as above;
+	(write_team_page) the same as above;
+	(write_master_page) the same as above;
+	(write_priv_standings) the same as above;
+	(write_priv_all_runs) the same as above;
+	(write_priv_source) the same as above;
+	(write_new_run_form) the same as above;
+	(write_priv_report) the same as above;
+	(write_priv_clar) the same as above;
+	(write_priv_users) the same as above;
+	(write_priv_user) the same as above;
+	(html_start_form) the same as above;
+	(html_hyperref) the same as above;
+	(write_xml_testing_report) the same as above;
+	(write_xml_team_testing_report) new function prototype.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* userlist_clnt.h: copyright notice is updated.
+
+	* serve.c: <ctype.h> is included;
+	(move_files_to_insert_run) xml_report_archive_dir, audit_log_dir
+	  are handled;
+	(cmd_upload_report) the report in the xml_report_archive_dir is
+	  removed and the uploaded report is stored in either
+	  report_archive_dir or team_report_archive_dir;
+	(do_squeeze_runs) xml_report_archive_dir, audit_log_dir are handled;
+	(cmd_priv_command_0) xml_report_archive_dir, audit_log_dir are
+	  cleared on SRV_CMD_RESET;
+	(read_compile_packet) the compiling protocol is stored to
+	  xml_report_archive_dir;
+	  report_archive_dir and team_report_archive_dir are no longer used;
+	  handling of removed fields in struct run_request_packet filling
+	  is also removed;
+	(read_run_packet) the testing protocol is stored to
+	  xml_report_archive_dir;
+	  report_archive_dir and team_report_archive_dir are no longer used.
+
+	* runlog_import.c: copyright notice is updated;
+	(rename_archive_files) `xml_report_archive_dir', `full_archive_dir',
+	  `audit_log_dir' archive directories are handled.
+
+	* runlog.h: (run_is_team_report_available) new function prototype;
+	(run_is_report_available) new function prototype.
+
+	* runlog.c:
+	(run_is_team_report_available) a new function, which accepts the
+	  run status and returns the flag whether the team protocol
+	  should be available for such run;
+	(run_is_report_available) a new function, which accepts the run status
+	  and returns the flag whether the master protocol should be
+	  available for such run.
+
+	* run_packet_priv.h:
+	flags corresponding to the removed fields are removed;
+	(struct run_request_bin_packet) `locale_id' field is removed.
+
+	* run_packet_2.c:
+	(run_request_packet_write) handling of removed fields is removed.
+
+	* run_packet_1.c:
+	(run_request_packet_read) handling of removed fields is removed.
+
+	* run_packet.h:
+	(struct run_request_packet) the following fields removed: `locale_id',
+	  `team_enable_rep_view', `report_error_code', `html_report',
+	  `xml_report'.
+
+	* run.c:
+	`run' now always generate one report in XML format, so lot of
+	  no longer used code is removed;
+	(setup_locale) function removed;
+	(result2str) function removed;
+	(html_print_by_line) _() (gettext translation) is no longer used;
+	(print_by_line) function removed;
+	(generate_report) function removed;
+	(generate_team_report) function removed;
+	(run_tests) `locale_id', `team_enable_rep_view', `report_error_code'
+	  parameters are removed;
+	  team protocol is no longer generated;
+	  generate_xml_report is called instead of generate_report;
+	(do_loop) team protocol is no longer generated;
+	  unnecessary variables are removed.
+
+	* protocol.h: error SRV_ERR_REPORT_NOT_AVAILABLE is added.
+
+	* protocol.c: error text for SRV_ERR_REPORT_NOT_AVAILABLE is added.
+
+	* prepare.h:
+	(struct section_global_data) `xml_report_archive_dir' field added.
+
+	* prepare.c:
+	(set_defaults) xml_report_archive_dir is properly initialized;
+	(create_dirs) xml_report_archive_dir is created.
+
+	* misctext.h:
+	new constants CONTENT_TYPE_TEXT, CONTENT_TYPE_HTML, CONTENT_TYPE_XML
+	  are defined;
+	(get_content_type) new function prototype.
+
+	* misctext.c:
+	(get_content_type) new function to determine the content type of
+	  a text file (XML, HTML or plain text).
+
+	* master_html.c:
+	(write_priv_report) the xml_report_archive_dir is checked for the
+	  report first, using report_archive_dir as fallback for
+	  compatibility;
+	  `get_content_type' function is used to determine the report type;
+	(write_tests) `get_content_type' is used.
+
+	* html.c: "testing_report_xml.h" is included;
+	(write_xml_team_testing_report) new function, which prints a
+	  contestant's view of the testing protocol from the XML report;
+	(new_write_user_report_view) when the report file is loaded,
+	  the xml_report_archive_dir is tried first, then, as fallback,
+	  the team_report_archive_dir or report_archive_dir;
+	  the xml_report_archive_dir may either contain a testing report
+	  in XML format, or report in the plain text format, which is
+	  shown to the contestant only if the run status is RUN_COMPILE_ERR;
+	  new function `get_content_type' is used to determine the file
+	  type.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2005-05-01  Alexander Chernov  <cher@ispras.ru>
+
+	* testing_report_xml.h:
+	(struct testing_report_test) `team_comment' field is added.
+
+	* testing_report_xml.c: new attribute `team-comment' is added;
+	(parse_test) attribute `team-comment' is handled;
+	(testing_report_test_free) the same as above.
+
+	* run.c:
+	(generate_xml_report) `team_comment' is also generated to the output
+	  XML file.
+
+	* serve.c: "xml_utils.h" is included;
+	(append_audit_log) new function, which adds a record to the audit log
+	  for the specified run;
+	(cmd_view) SRV_CMD_SHOW_REPORT is now handled here instead of
+	  `cmd_team_show_item', in the case of this command the privilege
+	  check is relaxed;
+	  new commands SRV_CMD_VIEW_TEST_INPUT, SRV_CMD_VIEW_TEST_OUTPUT,
+	  SRV_CMD_VIEW_TEST_ANSWER, SRV_CMD_VIEW_TEST_ERROR,
+	  SRV_CMD_VIEW_TEST_CHECKER, SRV_CMD_VIEW_TEST_INFO,
+	  SRV_CMD_VIEW_AUDIT_LOG are handled;
+	(cmd_team_show_item) arguments of call of `new_write_user_report_view'
+	  are updated, however, the SRV_CMD_SHOW_REPORT command is no
+	  longer handled by this function because various session information
+	  passed from the client is requered for `new_write_user_report_view',
+	  but this information is not provided by the packet type
+	  handled by `cmd_team_show_item';
+	(move_files_to_insert_run) `full_archive_dir' is handled;
+	(cmd_priv_submit_run) call of `archive_dir_prepare' is updated;
+	(cmd_upload_report) the same as above;
+	(cmd_team_submit_run) the same as above;
+	(do_squeeze_runs) `full_archive_dir' is handled;
+	(cmd_rejudge_by_mask) call of `do_rejudge_by_mask' is updated;
+	(cmd_priv_command_0) `full_archive_dir' is cleared in handling of
+	  SRV_CMD_RESET;
+	  call of `do_rejudge_all' is updated;
+	  call of `do_judge_suspended' is updated;
+	  call of `do_rejudge_problem' is updated;
+	(cmd_edit_run) call of `rejudge_run' is updated;
+	(cmd_new_run) call of `archive_dir_prepare' is updated;
+	(read_compile_packet) the same as above;
+	  `xml_report' and `full_archive' flags are set in the run request;
+	(time_to_str) a new function, which is moved here from `run.c',
+	  this function converts time in unix format with usecs into
+	  string representation;
+	(dur_to_str) a new function, which accepts two timestamps, calculates
+	  duration between them, and convert the calculated duration into
+	  string representation;
+	(read_run_packet) new parameter `run_full_archive_dir' is accepted,
+	  which is the path to the spool directory for the full output
+	  archive;
+	  calls of `archive_dir_prepare' are updated;
+	  if the global configuration variable `enable_full_archive' is set,
+	  the full archive file is stored into an appropriate directory;
+	  auditing information, which includes detailed timing statistics
+	  previously generated by `run.c' into the judging protocol, is
+	  generated;
+	(rejudge_run) new parameter `p' for the client state is added, this
+	  parameter is used for auditing purposes;
+	  audit record is generated;
+	(do_rejudge_all) new parameter `p' for the client state is added,
+	  this parameter is passed to `rejudge_run';
+	(do_judge_suspended) new parameter `p' for the client state is added,
+	  this parameter is passed to `rejudge_run';
+	(do_rejudge_problem) new parameter `p' for the client state is added,
+	  this parameter is passed to `rejudge_run';
+	(do_rejudge_by_mask) new parameter `p' for the client state is added,
+	  this parameter is passed to `rejudge_run';
+	(packet_handlers) SRV_CMD_SHOW_REPORT is handled by cmd_view;
+	  new commands SRV_CMD_VIEW_TEST_INPUT, SRV_CMD_VIEW_TEST_OUTPUT,
+	  SRV_CMD_VIEW_TEST_ANSWER, SRV_CMD_VIEW_TEST_ERROR,
+	  SRV_CMD_VIEW_TEST_CHECKER, SRV_CMD_VIEW_TEST_INFO,
+	  SRV_CMD_VIEW_AUDIT_LOG - all handled by cmd_view;
+	(struct run_dir_item) field `full_report_dir' is added;
+	(do_build_run_dirs) new parameter `full_report_dir' for the
+	  corresponding field of struct run_dir_item is added;
+	(do_loop) call of `do_build_run_dirs' is updated.
+
+	* run.c: "full_archive.h" is included;
+	(struct testinfo) all the file size fields (input_size, output_size,
+	  error_size, correct_size, chk_out_size) are now of the `long' type
+	  instead of `size_t', the fields are initialized with -1 as
+	  "no file checked" flag;
+	(html_print_by_line) <i> html formatting is removed because this
+	  function is used for generation of XML log as well;
+	(time_to_str) function moved to serve.c;
+	(dur_to_str) function moved to serve.c;
+	(prepare_checker_comment) new function, which prepares the checker
+	  output for use in the "details" field of the XML judging report:
+	  the output is truncated length 80 and html-armored;
+	(unparse_scoring_system) new function, which prints a string
+	  representation for the scoring system value;
+	(generate_xml_report) new function to generate a juding report in the
+	  XML format;
+	(generate_report) many new parameters are added:
+	  req_pkt - the run request;
+	  variant - the variant;
+	  correct_available_flag - whether the correct output is available;
+	  info_available_flag - whether the test info file is available;
+	  additional_comment - additional text (currently about test sets);
+	  `generate_xml_report' is called, if the xml_report flag is enabled
+	  in the request packet;
+	  generation of the timing information is moved to serve.c, and the
+	  timing information is added to the audit log for the run;
+	(run_tests) new parameter `full_report_path' which is filled by the
+	  function with the full path to the full output archive;
+	  if `full_archive' flag of the request packet is set, the archive
+	  with full (not truncated) output files of the program being tested
+	  is created;
+	  the original test input file is used when the report is generated
+	  instead of the test input file is the working directory (because
+	  the latter may be modified by the program being tested);
+	  a verbose judging comment about testsets is generated;
+	  call of `generate_report' is updated with the new parameters;
+	(do_loop) creation of the full output archive is supported.
+
+	* prepare.c:
+	new global configuration parameters: xml_report, enable_full_archive;
+	(global_init_func) new parameters are initialized to -1,
+	  `enable_continue' parameter is also initialized to -1, as the
+	  default value is 1 now;
+	(set_defaults) the test and related information paths are initialized
+	  in the SERVE mode as well because now the serve program accesses
+	  test, correct answers, test info information files;
+	  `full_archive_dir', `audit_log_dir' are initialized;
+	  default value of `enable_continue' variable is 1;
+	  default value of `html_report' variable is 1;
+	(create_dirs) `full_archive_dir', `audit_log_dir' directories are
+	  created;
+	  `run_full_archive_dir' is created for all active testers.
+
+2005-04-30  Alexander Chernov  <cher@ispras.ru>
+
+	* master_html.c:
+	"testing_report_xml.h", "full_archive.h" are included;
+	<reuse/osdeps.h> is included;
+	<zlib.h>, <sys/types.h>, <sys/stat.h>, <fcntl.h> are included;
+	(print_nav_buttons) "Audit log" link is printed;
+	(write_xml_testing_report) new function, which generates HTML
+	  for a testing report in XML format;
+	(write_priv_report) "text/xml" content type is supported, and
+	  `write_xml_testing_report' is called in this case;
+	(write_tests) new function, which handles requests to view
+	  tests, correct answers, output files, etc;
+	(write_audit_log) new function, which handles request to view
+	  the audit log.
+
+	* master.c:
+	(action_view_audit_log) new function, which issues the corresponding
+	  server command;
+	(action_view_test) new function;
+	(main) new client actions supported: ACTION_VIEW_TEST_INPUT,
+	  ACTION_VIEW_TEST_OUTPUT, ACTION_VIEW_TEST_ANSWER,
+	  ACTION_VIEW_TEST_ERROR, ACTION_VIEW_TEST_CHECKER,
+	  ACTION_VIEW_TEST_INFO, ACTION_VIEW_AUDIT_LOG.
+
+	* html.c:
+	(new_write_user_report_view) new parameters added: sid_mode,
+	  sid, self_url, hidden_vars, extra_args;
+	  if the content-type of the report file is XML, the
+	  `write_xml_testing_report' function is called.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* html.h: (new_write_user_report_view) many new parameters added:
+	  sid_mode, sid, self_url, hidden_vars, extra_args;
+	(write_tests) new function prototype;
+	(write_xml_testing_report) new function prototype;
+	(write_audit_log) new function prototype.
+
+	* prepare.h:
+	(struct section_global_data) new fields added: full_archive_dir,
+	  audit_log_dir, run_full_archive_dir, xml_report, enable_full_archive;
+	(struct section_tester_data) new field added: run_full_archive_dir.
+
+	* protocol.h: new command SRV_CMD_VIEW_AUDIT_LOG added.
+
+	* client_actions.h: new action ACTION_VIEW_AUDIT_LOG is added.
+
+	* archive_paths.h: copyright notice is updated;
+	(archive_dir_prepare) new parameter `no_unlink_flag' is added, if this
+	  parameter is set to 1, the function does not remove old files
+	  in the destination directory.
+
+	* archive_paths.c: copyright notice is updated;
+	(archive_dir_prepare) new parameter `no_unlink_flag' is added, if this
+	  parameter is set to 1, the function does not remove old files
+	  in the destination directory;
+	(archive_rename) call of `archive_dir_prepare' is updated.
+
+	* team.c: copyright notice is updated;
+	(request_report_if_asked) `serve_clnt_view' is called instead
+	  `serve_clnt_show_item';
+	(action_view_test) new function to implement test information viewing;
+	(main) new actions supported: VIEW_TEST_INPUT, VIEW_TEST_OUTPUT,
+	  VIEW_TEST_ANSWER, VIEW_TEST_ERROR, VIEW_TEST_CHECKER,
+	  VIEW_TEST_INFO.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* runlog.c:
+	(run_get_priv_successes) added check, that one participant submitted
+	  a solution several times.
+
+	* testing_report_xml.c:
+	(parse_testing_report) removed one too strict check.
+
+	* userlist-server.c:
+	(cmd_team_login) added check, that register_passwd is not NULL;
+	(cmd_priv_login) the same as above.
+
+2005-04-28  Alexander Chernov  <cher@ispras.ru>
+
+	* protocol.c:
+	strings for the new error codes BAD_TEST_NUM and BAD_XML are added.
+
+	* protocol.h:
+	new request codes added: VIEW_TEST_INPUT, VIEW_TEST_OUTPUT,
+	  VIEW_TEST_ANSWER, VIEW_TEST_ERROR, VIEW_TEST_CHECKER,VIEW_TEST_INFO;
+	new error codes added: BAD_TEST_NUM, BAD_XML.
+
+	* client_actions.h:
+	new actions added: ACTION_VIEW_TEST_INPUT, ACTION_VIEW_TEST_OUTPUT,
+	 ACTION_VIEW_TEST_ANSWER, ACTION_VIEW_TEST_ERROR,
+	 ACTION_VIEW_TEST_CHECKER, ACTION_VIEW_TEST_INFO.
+
+	* testing_report_xml.c: added support for `info-available' attribut;
+	fixed bugs in attribute tables.
+
+	* testing_report_xml.h:
+	(struct testing_report_xml) added new field `info_available'.
+
+	* full_archive.c, full_archive.h: initial revision
+
+2005-04-25  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po, ejudge.ru_RU.KOI8-R.po:
+	*** empty log message ***
+
+	* files.make: new files added: full_archive.c, testing_report_xml.c,
+	  xml_utils/parse_int_attr.c, xml_utils/unparse_run_status.c,
+	  full_archive.h, testing_report_xml.h.
+
+	* run_packet.h:
+	(struct run_request_packet) new fields `full_archive', `xml_report'
+	  are added.
+
+	* run_packet_1.c:
+	(run_request_packet_read) added handling of `full_archive' and
+	  `xml_report' fields.
+
+	* run_packet_2.c:
+	(run_request_packet_write) added handling of `full_archive' and
+	  `xml_report' fields.
+
+	* run_packet_priv.h:
+	bits for new flags FLAGS_FULL_ARCHIVE, FLAGS_XML_REPORT are added.
+
+	* runlog.c: (run_status_to_str_short) moved to a separate file:
+	  xml_utils/unparse_run_status;
+	(run_is_valid_test_status) new function, which returns 1, if the
+	  given run status may appear as an outcome of one test during
+	  testing.
+
+	* runlog.h:
+	(run_is_valid_test_status) new function prototype is added.
+
+	* serve-control.c: copyright notice is updated;
+	(parse_config) use of `xml_leaf_elem' is updated.
+
+	* xml_utils.h: copyright notice is updated;
+	(xml_leaf_elem) new parameter `empty_allowed_flag' is added;
+	(xml_parse_int_attr) new function prototype is added.
+
+	* team_extra_xml.c: copyright notice is updated;
+	fixed incorrect initialization of element and attribute names table.
+
+	* testing_report_xml.h, testing_report_xml.c: initial revision
+
+	* copyright.c: copyright notice is updated
+
 2005-04-22  Alexander Chernov  <cher@ispras.ru>
 
 	* INSTALL, INSTALL.RUS: *** empty log message ***

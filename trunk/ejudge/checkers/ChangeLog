@@ -1,3 +1,9 @@
+2005-04-28  Alexander Chernov  <cher@ispras.ru>
+
+	* init.c: copyright notice is updated;
+	(checker_do_init) relaxed check for the number of command line
+	  parameters: now it is allowed to pass more parameters than needed.
+
 2004-12-05  Alexander Chernov  <cher@ispras.ru>
 
 	* read_file_by_line_f.c: initial revision
