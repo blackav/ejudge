@@ -30,6 +30,13 @@ struct testing_report_test
   int stderr_available;
   int checker_output_available;
   int args_too_long;
+  int has_input_digest;
+  int has_correct_digest;
+  int has_info_digest;
+
+  unsigned char input_digest[32];
+  unsigned char correct_digest[32];
+  unsigned char info_digest[32];
 
   unsigned char *comment;
   unsigned char *team_comment;
