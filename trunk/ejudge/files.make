@@ -96,7 +96,13 @@ COMMON_CFILES=\
  contests.c\
  copyright.c\
  diff.c\
+ digest_1.c\
+ digest_2.c\
+ digest_3.c\
+ digest_4.c\
+ digest_5.c\
  expat_iface.c\
+ filehash.c\
  filter_eval.c\
  filter_tree.c\
  full_archive.c\
@@ -192,6 +198,8 @@ CFILES=\
  win32/interrupt.c\
  unix/curtime.c\
  win32/curtime.c\
+ unix/timestamp.c\
+ win32/timestamp.c\
  ${COMMON_CFILES}\
  ${SERVE_CLNT_CFILES}\
  ${SUPER_CLNT_CFILES}\
@@ -211,7 +219,9 @@ HFILES=\
  cr_serialize.h\
  curtime.h\
  diff.h\
+ digest_io.h\
  expat_iface.h\
+ filehash.h\
  fileutl.h\
  filter_eval.h\
  filter_tree.h\
@@ -245,6 +255,7 @@ HFILES=\
  testinfo.h\
  testing_report_xml.h\
  tex_dom.h\
+ timestamp.h\
  tsc.h\
  userlist.h\
  userlist_cfg.h\
