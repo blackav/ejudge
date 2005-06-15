@@ -36,6 +36,8 @@
 #include "userlist.h"
 #include "testing_report_xml.h"
 #include "full_archive.h"
+#include "filehash.h"
+#include "digest_io.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -2996,6 +2998,9 @@ write_tests(FILE *f, int cmd, int run_id, int test_num)
   char *text2 = 0;
   size_t text2_len = 0;
   const unsigned char *start_ptr = 0;
+  const unsigned char *digest_ptr = 0;
+  unsigned char cur_digest[32];
+  int good_digest_flag = 1;
 
   if (run_id < 0 || run_id >= run_get_total()) {
     errcode = SRV_ERR_BAD_RUN_ID;
@@ -3032,6 +3037,7 @@ write_tests(FILE *f, int cmd, int run_id, int test_num)
     errcode = SRV_ERR_BAD_TEST_NUM;
     goto failure;
   }
+  t = r->tests[test_num - 1];
 
   if (cmd == SRV_CMD_VIEW_TEST_ANSWER || cmd == SRV_CMD_VIEW_TEST_INPUT
       || cmd == SRV_CMD_VIEW_TEST_INFO) {
@@ -3052,6 +3058,7 @@ write_tests(FILE *f, int cmd, int run_id, int test_num)
       } else {
         snprintf(path2, sizeof(path2), "%03d%s", test_num, prb->test_sfx);
       }
+      if (t->has_input_digest) digest_ptr = t->input_digest;
       break;
     case SRV_CMD_VIEW_TEST_ANSWER:
       if (!prb->use_corr || !r->correct_available) {
@@ -3064,6 +3071,7 @@ write_tests(FILE *f, int cmd, int run_id, int test_num)
       } else {
         snprintf(path2, sizeof(path2), "%03d%s", test_num, prb->corr_sfx);
       }
+      if (t->has_correct_digest) digest_ptr = t->correct_digest;
       break;
     case SRV_CMD_VIEW_TEST_INFO:
       if (!prb->use_info || !r->info_available) {
@@ -3076,6 +3084,7 @@ write_tests(FILE *f, int cmd, int run_id, int test_num)
       } else {
         snprintf(path2, sizeof(path2), "%03d%s", test_num, prb->info_sfx);
       }
+      if (t->has_info_digest) digest_ptr = t->info_digest;
       break;
     default:
       abort();
@@ -3093,12 +3102,27 @@ write_tests(FILE *f, int cmd, int run_id, int test_num)
       snprintf(path1, sizeof(path1), "%s/%s", indir, path2);
     }
 
+    if (digest_ptr) {
+      if (filehash_get(path1, cur_digest) < 0) {
+        errcode = SRV_ERR_SYSTEM_ERROR;
+        goto failure;
+      }
+      good_digest_flag = digest_is_equal(DIGEST_SHA1, digest_ptr, cur_digest);
+    }
+
     if (generic_read_file(&text2, 0, &text2_len, 0, 0, path1, 0) < 0) {
       errcode = SRV_ERR_SYSTEM_ERROR;
       goto failure;
     }
 
     fprintf(f, "Content-type: text/plain\n\n");
+    if (!good_digest_flag) {
+      fprintf(f,
+              "*********\n"
+              "NOTE: The file checksum has been changed!\n"
+              "It is possible, that the file was edited!\n"
+              "*********\n\n");
+    }
     if (text2_len > 0) {
       if (fwrite(text2, 1, text2_len, f) != text2_len) {
         err("write_tests: fwrite failed");
@@ -3107,7 +3131,6 @@ write_tests(FILE *f, int cmd, int run_id, int test_num)
       }
     }
   } else {
-    t = r->tests[test_num - 1];
     switch (cmd) {
     case SRV_CMD_VIEW_TEST_OUTPUT:
       if (!t->output_available) {
