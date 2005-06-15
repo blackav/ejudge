@@ -25,6 +25,8 @@
 #include "run_packet.h"
 #include "curtime.h"
 #include "full_archive.h"
+#include "digest_io.h"
+#include "filehash.h"
 
 #include "fileutl.h"
 #include "misctext.h"
@@ -81,12 +83,18 @@ struct testinfo
   unsigned long  times;		/* execution time */
   char          *input;		/* the input */
   long           input_size;
+  int            has_input_digest;
+  unsigned char  input_digest[32];
   char          *output;	/* the output */
   long           output_size;
   char          *error;		/* the error */
   long           error_size;
   char          *correct;	/* the correct result */
   long           correct_size;
+  int            has_correct_digest;
+  unsigned char  correct_digest[32];
+  int            has_info_digest;
+  unsigned char  info_digest[32];
   char          *chk_out;       /* checker's output */
   long           chk_out_size;
   unsigned char *args;          /* command-line arguments */
@@ -199,7 +207,7 @@ generate_xml_report(struct run_request_packet *req_pkt,
                     const unsigned char *additional_comment)
 {
   FILE *f = 0;
-  unsigned char buf1[32], buf2[32];
+  unsigned char buf1[32], buf2[32], buf3[128];
   int i;
   unsigned char *msg = 0;
 
@@ -284,6 +292,20 @@ generate_xml_report(struct run_request_packet *req_pkt,
       msg = prepare_checker_comment(tests[i].chk_out);
       fprintf(f, " checker-comment=\"%s\"", msg);
       xfree(msg);
+    }
+    if (req_pkt->full_archive) {
+      if (tests[i].has_input_digest) {
+        digest_to_ascii(DIGEST_SHA1, tests[i].input_digest, buf3);
+        fprintf(f, " input-digest=\"%s\"", buf3);
+      }
+      if (tests[i].has_correct_digest) {
+        digest_to_ascii(DIGEST_SHA1, tests[i].correct_digest, buf3);
+        fprintf(f, " correct-digest=\"%s\"", buf3);
+      }
+      if (tests[i].has_info_digest) {
+        digest_to_ascii(DIGEST_SHA1, tests[i].info_digest, buf3);
+        fprintf(f, " info-digest=\"%s\"", buf3);
+      }
     }
     if (tests[i].output_size >= 0 && req_pkt->full_archive) {
       fprintf(f, " output-available=\"yes\"");
@@ -714,13 +736,18 @@ run_tests(struct section_tester_data *tst,
 
       /* fill test report structure */
       tests[cur_test].times = task_GetRunningTime(tsk);
-      file_size = generic_file_size(0, test_src, 0);
-      if (file_size >= 0) {
-        tests[cur_test].input_size = file_size;
-        if (global->max_file_length > 0
-            && file_size <= global->max_file_length) {
-          generic_read_file(&tests[cur_test].input, 0, 0, 0,
-                            0, test_src, "");
+      if (req_pkt->full_archive) {
+        filehash_get(test_src, tests[cur_test].input_digest);
+        tests[cur_test].has_input_digest = 1;
+      } else {
+        file_size = generic_file_size(0, test_src, 0);
+        if (file_size >= 0) {
+          tests[cur_test].input_size = file_size;
+          if (global->max_file_length > 0
+              && file_size <= global->max_file_length) {
+            generic_read_file(&tests[cur_test].input, 0, 0, 0,
+                              0, test_src, "");
+          }
         }
       }
       file_size = generic_file_size(0, output_path, 0);
@@ -755,6 +782,11 @@ run_tests(struct section_tester_data *tst,
         size_t cmd_args_len = 0;
         int i;
         unsigned char *args = 0, *s;
+
+        if (req_pkt->full_archive) {
+          filehash_get(info_src, tests[cur_test].info_digest);
+          tests[cur_test].has_info_digest = 1;
+        }
 
         for (i = 0; i < tstinfo.cmd_argc; i++) {
           cmd_args_len += 16;
@@ -829,13 +861,18 @@ run_tests(struct section_tester_data *tst,
         if (prb->use_corr && prb->corr_dir[0]) {
           pathmake3(corr_path, var_corr_dir, "/", corr_base, NULL);
           task_AddArg(tsk, corr_path);
-          file_size = generic_file_size(0, corr_path, 0);
-          if (file_size >= 0) {
-            tests[cur_test].correct_size = file_size;
-            if (global->max_file_length > 0
-                && file_size <= global->max_file_length) {
-              generic_read_file(&tests[cur_test].correct, 0, 0, 0,
-                                0, corr_path, "");
+          if (req_pkt->full_archive) {
+            filehash_get(corr_path, tests[cur_test].correct_digest);
+            tests[cur_test].has_correct_digest = 1;
+          } else {
+            file_size = generic_file_size(0, corr_path, 0);
+            if (file_size >= 0) {
+              tests[cur_test].correct_size = file_size;
+              if (global->max_file_length > 0
+                  && file_size <= global->max_file_length) {
+                generic_read_file(&tests[cur_test].correct, 0, 0, 0,
+                                  0, corr_path, "");
+              }
             }
           }
         }
