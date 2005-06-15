@@ -23,6 +23,7 @@
 #include "xml_utils.h"
 #include "protocol.h"
 #include "runlog.h"
+#include "digest_io.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -37,7 +38,7 @@
 <testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"]>
   <comment>T</comment>
   <tests>
-    <test num="N" status="O" [exit-code="N"] [term-signal="N"] time="N" [nominal-score="N" score="N"] [comment="S"] [team-comment="S"] [checker-comment="S"] output-available="B" stderr-available="B" checker-output-available="B" args-too-long="B">
+    <test num="N" status="O" [exit-code="N"] [term-signal="N"] time="N" [nominal-score="N" score="N"] [comment="S"] [team-comment="S"] [checker-comment="S"] output-available="B" stderr-available="B" checker-output-available="B" args-too-long="B" [input-digest="X"] [correct-digest="X"]>
        [<args>T</args>]
        [<input>T</input>]
        [<output>T</output>]
@@ -93,6 +94,9 @@ enum
   TR_A_STDERR_AVAILABLE,
   TR_A_CHECKER_OUTPUT_AVAILABLE,
   TR_A_ARGS_TOO_LONG,
+  TR_A_INPUT_DIGEST,
+  TR_A_CORRECT_DIGEST,
+  TR_A_INFO_DIGEST,
 
   TR_A_LAST_ATTR,
 };
@@ -140,6 +144,9 @@ static const char * const attr_map[] =
   [TR_A_STDERR_AVAILABLE] = "stderr-available",
   [TR_A_CHECKER_OUTPUT_AVAILABLE] = "checker-output-available",
   [TR_A_ARGS_TOO_LONG] = "args-too-long",
+  [TR_A_INPUT_DIGEST] = "input-digest",
+  [TR_A_CORRECT_DIGEST] = "correct-digest",
+  [TR_A_INFO_DIGEST] = "info-digest",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -302,6 +309,27 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
     case TR_A_ARGS_TOO_LONG:
       if (xml_attr_bool(a, &x) < 0) goto failure;
       p->args_too_long = x;
+      break;
+    case TR_A_INPUT_DIGEST:
+      if (digest_from_ascii(DIGEST_SHA1, a->text, p->input_digest) < 0) {
+        xml_err_attr_invalid(a);
+        goto failure;
+      }
+      p->has_input_digest = 1;
+      break;
+    case TR_A_CORRECT_DIGEST:
+      if (digest_from_ascii(DIGEST_SHA1, a->text, p->correct_digest) < 0) {
+        xml_err_attr_invalid(a);
+        goto failure;
+      }
+      p->has_correct_digest = 1;
+      break;
+    case TR_A_INFO_DIGEST:
+      if (digest_from_ascii(DIGEST_SHA1, a->text, p->info_digest) < 0) {
+        xml_err_attr_invalid(a);
+        goto failure;
+      }
+      p->has_info_digest = 1;
       break;
 
     default:
