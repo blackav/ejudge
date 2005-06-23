@@ -231,6 +231,7 @@ int userlist_clnt_priv_cookie(struct userlist_clnt *clnt,
                               unsigned char **p_name);
 
 int userlist_clnt_logout(struct userlist_clnt *clnt,
+                         int cmd,
                          unsigned long origin_ip,
                          unsigned long long cookie);
 
