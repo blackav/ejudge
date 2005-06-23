@@ -5596,6 +5596,57 @@ cmd_get_uid_by_pid_2(struct client_state *p, int pkt_len,
   enqueue_reply_to_client(p, out_len, out);
 }
 
+static void
+cmd_is_valid_cookie(struct client_state *p,
+                    int pkt_len,
+                    struct userlist_pk_do_logout *data)
+{
+  int i;
+  struct userlist_cookie *cookie = 0;
+  struct userlist_user *user = 0;
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+  if (p->user_id <= 0) {
+    CONN_ERR("not authentificated");
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  if (is_db_capable(p, OPCAP_MAP_CONTEST, "IS_VALID_COOKIE") < 0) {
+    CONN_ERR("no MAP_CONTEST capability");
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (userlist->cookie_hash_table) {
+    i = data->cookie % userlist->cookie_hash_size;
+    while ((cookie = userlist->cookie_hash_table[i])
+           && cookie->cookie != data->cookie) {
+      i = (i + userlist->cookie_hash_step) % userlist->cookie_hash_size;
+    }
+  } else {
+    for (i = 1; i < userlist->user_map_size; i++) {
+      if (!(user = userlist->user_map[i])) continue;
+      if (!user->cookies) continue;
+      cookie = (struct userlist_cookie*) user->cookies->first_down;
+      while (cookie) {
+        if (cookie->cookie == data->cookie) break;
+        cookie = (struct userlist_cookie*) cookie->b.right;
+      }
+      if (cookie) break;
+    }
+    if (i >= userlist->user_map_size) cookie = 0;
+  }
+
+  if (!cookie) {
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  send_reply(p, ULS_OK);
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW]            cmd_register_new,
@@ -5632,6 +5683,7 @@ static void (*cmd_table[])() =
   [ULS_CLEAR_TEAM_PASSWORDS]    cmd_clear_team_passwords,
   [ULS_LIST_STANDINGS_USERS]    cmd_list_standings_users,
   [ULS_GET_UID_BY_PID_2]        cmd_get_uid_by_pid_2,
+  [ULS_IS_VALID_COOKIE]         cmd_is_valid_cookie,
 
   [ULS_LAST_CMD] 0
 };
