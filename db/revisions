@@ -1829,3 +1829,7 @@ xml_utils/unparse_ip_mask.c 1 1 139451
 super_clnt/create_contest.c 1 1 306223
 super_clnt/set_param.c 1 1 168657
 userlist_clnt/logout.c 1 5 121585
+userlist_clnt.h 1 23 636963
+xml_utils.h 1 4 271744
+team.c 1 50 3812719
+userlist-server.c 1 54 14735457
