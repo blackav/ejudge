@@ -30,6 +30,9 @@ int xml_parse_date(unsigned char const *path, int line, int column,
                    unsigned char const *s, time_t *pd);
 int xml_parse_int(unsigned char const *path, int line, int column,
                   unsigned char const *str, int *pval);
+int xml_parse_ip_mask(const unsigned char *path, int line, int column,
+                      const unsigned char *s,
+                      unsigned *p_ip, unsigned *p_mask);
 
 void xml_unparse_text(FILE *f, const unsigned char *tag_name,
                       unsigned char const *value,
@@ -37,6 +40,7 @@ void xml_unparse_text(FILE *f, const unsigned char *tag_name,
 
 const unsigned char *xml_unparse_ip(unsigned long ip);
 const unsigned char *xml_unparse_date(time_t d);
+const unsigned char *xml_unparse_ip_mask(unsigned int addr, unsigned int mask);
 
 extern const unsigned char *xml_err_path;
 extern const char * const *xml_err_elem_names;
