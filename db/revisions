@@ -1821,3 +1821,11 @@ digest_5.c 1 1 85650
 filehash.c 1 1 432343
 master_html.c 1 41 8792564
 testing_report_xml.c 1 5 1300621
+contest_tmpl.c 1 1 766520
+html_hyperref.c 1 1 141781
+super_html_2.c 1 1 2548650
+xml_utils/parse_ip_mask.c 1 1 156275
+xml_utils/unparse_ip_mask.c 1 1 139451
+super_clnt/create_contest.c 1 1 306223
+super_clnt/set_param.c 1 1 168657
+userlist_clnt/logout.c 1 5 121585
