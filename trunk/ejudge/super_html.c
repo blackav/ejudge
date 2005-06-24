@@ -47,37 +47,6 @@
 
 #define MAX_LOG_VIEW_SIZE (8 * 1024 * 1024)
 
-static const unsigned char form_header_get[] =
-"form method=\"GET\" action=";
-static const unsigned char form_header_post[] =
-"form method=\"POST\" ENCTYPE=\"application/x-www-form-urlencoded\" action=";
-static const unsigned char form_header_multipart[] =
-"form method=\"POST\" ENCTYPE=\"multipart/form-data\" action=";
-
-static void
-html_start_form(FILE *f, int mode, unsigned long long sid,
-                unsigned char const *self_url,
-                unsigned char const *hidden_vars,
-                unsigned char const *extra_args)
-{
-  switch (mode) {
-  case 0:                       /* simple idempotent form */
-    fprintf(f, "<%s\"%s\">%s%s", form_header_get, self_url, hidden_vars,
-            extra_args);
-    break;
-  case 1:                       /* simple side-effect form */
-    fprintf(f, "<%s\"%s\">%s%s", form_header_post, self_url, hidden_vars,
-            extra_args);
-    break;
-  case 2:                       /* multipart form */
-    fprintf(f, "<%s\"%s\">%s%s", form_header_multipart, self_url, hidden_vars,
-            extra_args);
-    break;
-  default:
-    SWERR(("unhandled form start mode: %d", mode));
-  }
-}
-
 static void
 html_submit_button(FILE *f,
                    int action,
@@ -384,7 +353,7 @@ super_html_main_page(FILE *f,
 
   fprintf(f, "<table border=\"0\"><tr>\n");
   fprintf(f, "<td>");
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   if ((sstate->flags & SID_STATE_SHOW_HIDDEN)) {
     html_submit_button(f, SUPER_ACTION_HIDE_HIDDEN, "Hide hidden contests");
   } else {
@@ -392,7 +361,7 @@ super_html_main_page(FILE *f,
   }
   fprintf(f, "</form></td>");
   fprintf(f, "<td>");
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   if ((sstate->flags & SID_STATE_SHOW_CLOSED)) {
     html_submit_button(f, SUPER_ACTION_HIDE_CLOSED, "Hide closed contests");
   } else {
@@ -400,7 +369,7 @@ super_html_main_page(FILE *f,
   }
   fprintf(f, "</form></td>");
   fprintf(f, "<td>");
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   if ((sstate->flags & SID_STATE_SHOW_UNMNG)) {
     html_submit_button(f, SUPER_ACTION_HIDE_UNMNG, "Hide unmanageable contests");
   } else {
@@ -411,7 +380,7 @@ super_html_main_page(FILE *f,
 
   fprintf(f, "<table border=\"0\"><tr>\n");
   fprintf(f, "<td>");
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   html_submit_button(f, SUPER_ACTION_RESTART, "Restart the daemon");
   fprintf(f, "</form></td>");
   fprintf(f, "</tr></table>");
@@ -679,7 +648,7 @@ super_html_contest_page(FILE *f,
   unsigned char master_url[1024] = { 0 };
   unsigned char prog_pat[128];
   unsigned char hbuf[1024];
-  unsigned char contest_id_hidden[1024];
+  unsigned char new_hidden_vars[1024];
   unsigned char mng_status_str[128];
   unsigned char log_file_path[1024];
   int prog_pat_len, self_url_len;
@@ -708,9 +677,9 @@ super_html_contest_page(FILE *f,
 
   }
 
-  snprintf(contest_id_hidden, sizeof(contest_id_hidden),
-           "<input type=\"hidden\" name=\"contest_id\" value=\"%d\">",
-           contest_id);
+  snprintf(new_hidden_vars, sizeof(new_hidden_vars),
+           "%s<input type=\"hidden\" name=\"contest_id\" value=\"%d\">",
+           hidden_vars, contest_id);
 
   if ((errcode = contests_get(contest_id, &cnts)) < 0) {
     if (priv_level < PRIV_LEVEL_ADMIN) {
@@ -783,8 +752,7 @@ super_html_contest_page(FILE *f,
           cnts->closed?"closed":"open");
   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
     fprintf(f, "<td>");
-    html_start_form(f, 1, session_id, self_url, hidden_vars,
-                    contest_id_hidden);
+    html_start_form(f, 1, session_id, self_url, new_hidden_vars);
     if (cnts->closed) {
       html_submit_button(f, SUPER_ACTION_OPEN_CONTEST, "Open");
     } else {
@@ -800,8 +768,7 @@ super_html_contest_page(FILE *f,
           cnts->invisible?"invisible":"visible");
   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
     fprintf(f, "<td>");
-    html_start_form(f, 1, session_id, self_url, hidden_vars,
-                    contest_id_hidden);
+    html_start_form(f, 1, session_id, self_url, new_hidden_vars);
     if (cnts->invisible) {
       html_submit_button(f, SUPER_ACTION_CONTEST_VISIBLE, "Make visible");
     } else {
@@ -820,8 +787,7 @@ super_html_contest_page(FILE *f,
           mng_status_str);
   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
     fprintf(f, "<td>");
-    html_start_form(f, 1, session_id, self_url, hidden_vars,
-                    contest_id_hidden);
+    html_start_form(f, 1, session_id, self_url, new_hidden_vars);
     switch (mng_status) {
     case MNG_STAT_NOT_MANAGED:
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_TEMP,
@@ -914,8 +880,7 @@ super_html_contest_page(FILE *f,
   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0
       && logfilemode != 3) {
     fprintf(f, "<td>");
-    html_start_form(f, 1, session_id, self_url, hidden_vars,
-                    contest_id_hidden);
+    html_start_form(f, 1, session_id, self_url, new_hidden_vars);
     if (logfilemode == 0) {
       html_submit_button(f, SUPER_ACTION_SERVE_LOG_DEV_NULL,
                          "Redirect to /dev/null");
@@ -945,8 +910,7 @@ super_html_contest_page(FILE *f,
           mng_status_str);
   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
     fprintf(f, "<td>");
-    html_start_form(f, 1, session_id, self_url, hidden_vars,
-                    contest_id_hidden);
+    html_start_form(f, 1, session_id, self_url, new_hidden_vars);
     switch (mng_status) {
     case MNG_STAT_NOT_MANAGED:
       html_submit_button(f, SUPER_ACTION_RUN_MNG_TEMP,
@@ -1033,8 +997,7 @@ super_html_contest_page(FILE *f,
   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0
       && logfilemode != 3) {
     fprintf(f, "<td>");
-    html_start_form(f, 1, session_id, self_url, hidden_vars,
-                    contest_id_hidden);
+    html_start_form(f, 1, session_id, self_url, new_hidden_vars);
     if (logfilemode == 0) {
       html_submit_button(f, SUPER_ACTION_RUN_LOG_DEV_NULL,
                          "Redirect to /dev/null");
@@ -1623,7 +1586,7 @@ super_html_create_contest(FILE *f,
   contest_max_id = contests_get_list(&contests_map);
   if (contest_max_id > 0) recomm_id = contest_max_id;
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<h2>Contest number</h2>\n");
   fprintf(f, "<table border=\"0\">"
           "<tr><td><input type=\"radio\" name=\"num_mode\" value=\"0\" checked=\"yes\"></td><td>Assign automatically</td><td>&nbsp;</td></tr>\n"
@@ -1667,7 +1630,7 @@ print_string_editing_row(FILE *f,
 {
   unsigned char hbuf[1024];
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<tr><td>%s</td><td>", title);
   html_edit_text_form(f, 0, 0, "param", value);
   fprintf(f, "</td><td>");
@@ -1727,7 +1690,7 @@ print_permissions(FILE *f, struct contest_desc *cnts,
 
   for (i = 0; p; p = (struct opcap_list_item*) p->b.right, i++) {
     snprintf(href, sizeof(href), "%d", i);
-    html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+    html_start_form(f, 1, session_id, self_url, hidden_vars);
     html_hidden_var(f, "num", href);
     fprintf(f, "<tr><td>");
     s = html_armor_string_dup(p->login);
@@ -1743,7 +1706,7 @@ print_permissions(FILE *f, struct contest_desc *cnts,
     fprintf(f, "</td></tr></form>");
   }
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<tr><td>Add new user:</td><td>Login:");
   html_edit_text_form(f, 32, 32, "param", "");
   fprintf(f, "</td><td>");
@@ -1952,7 +1915,7 @@ super_html_edit_contest_page(FILE *f,
 
   fprintf(f, "<tr><td colspan=\"3\" align=\"center\"><b>Registration settings</b></td></tr>");
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<tr><td>Registration mode:</td><td>");
   html_boolean_select(f, cnts->autoregister, "param", "Moderated registration",
                       "Free registration");
@@ -1960,7 +1923,7 @@ super_html_edit_contest_page(FILE *f,
   html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_AUTOREGISTER, "Change");
   fprintf(f, "</td></tr></form>\n");
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<tr><td>Registration deadline:</td><td>");
   html_date_select(f, cnts->reg_deadline);
   fprintf(f, "</td><td>");
@@ -2025,7 +1988,7 @@ super_html_edit_contest_page(FILE *f,
                            extra_args,
                            hidden_vars);
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<tr><td colspan=\"3\" align=\"center\"><b>Various contest's flags</b>");
   if (sstate->advanced_view) {
     html_submit_button(f, SUPER_ACTION_CNTS_BASIC_VIEW, "Basic view");
@@ -2034,21 +1997,21 @@ super_html_edit_contest_page(FILE *f,
   }
   fprintf(f, "</td></tr></form>");
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<tr><td>Disable separate team password?</td><td>");
   html_boolean_select(f, cnts->disable_team_password, "param", 0, 0);
   fprintf(f, "</td><td>");
   html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_TEAM_PASSWD, "Change");
   fprintf(f, "</td></tr></form>\n");
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<tr><td>Manage the contest server?</td><td>");
   html_boolean_select(f, cnts->managed, "param", 0, 0);
   fprintf(f, "</td><td>");
   html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_MANAGED, "Change");
   fprintf(f, "</td></tr></form>\n");
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<tr><td>Manage the testing server?</td><td>");
   html_boolean_select(f, cnts->run_managed, "param", 0, 0);
   fprintf(f, "</td><td>");
@@ -2056,7 +2019,7 @@ super_html_edit_contest_page(FILE *f,
   fprintf(f, "</td></tr></form>\n");
 
   if (sstate->advanced_view) {
-    html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+    html_start_form(f, 1, session_id, self_url, hidden_vars);
     fprintf(f, "<tr><td>Allow pruning users?</td><td>");
     html_boolean_select(f, cnts->clean_users, "param", 0, 0);
     fprintf(f, "</td><td>");
@@ -2064,7 +2027,7 @@ super_html_edit_contest_page(FILE *f,
     fprintf(f, "</td></tr></form>\n");
   }
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<tr><td>Closed for participation?</td><td>");
   html_boolean_select(f, cnts->closed, "param", 0, 0);
   fprintf(f, "</td><td>");
@@ -2072,7 +2035,7 @@ super_html_edit_contest_page(FILE *f,
   fprintf(f, "</td></tr></form>\n");
 
   if (sstate->advanced_view) {
-    html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+    html_start_form(f, 1, session_id, self_url, hidden_vars);
     fprintf(f, "<tr><td>Invisible in serve-control?</td><td>");
     html_boolean_select(f, cnts->invisible, "param", 0, 0);
     fprintf(f, "</td><td>");
@@ -2081,7 +2044,7 @@ super_html_edit_contest_page(FILE *f,
   }
 
   if (sstate->advanced_view) {
-    html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+    html_start_form(f, 1, session_id, self_url, hidden_vars);
     fprintf(f, "<tr><td>Allow time desync between `team' and `serve'?</td><td>");
     html_boolean_select(f, cnts->client_ignore_time_skew, "param", 0, 0);
     fprintf(f, "</td><td>");
@@ -2090,7 +2053,7 @@ super_html_edit_contest_page(FILE *f,
   }
 
   if (sstate->advanced_view) {
-    html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+    html_start_form(f, 1, session_id, self_url, hidden_vars);
     fprintf(f, "<tr><td>Disallow team login?</td><td>");
     html_boolean_select(f, cnts->client_disable_team, "param", 0, 0);
     fprintf(f, "</td><td>");
@@ -2098,7 +2061,7 @@ super_html_edit_contest_page(FILE *f,
     fprintf(f, "</td></tr></form>\n");
   }
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<tr><td colspan=\"3\" align=\"center\"><b>IP-address access rules for CGI programs</b>");
   if (sstate->show_access_rules) {
     html_submit_button(f, SUPER_ACTION_CNTS_HIDE_ACCESS_RULES, "Hide");
@@ -2129,7 +2092,7 @@ super_html_edit_contest_page(FILE *f,
                          session_id, self_url, extra_args);
   }
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<tr><td colspan=\"3\" align=\"center\"><b>Users permissions</b>");
   if (sstate->show_permissions) {
     html_submit_button(f, SUPER_ACTION_CNTS_HIDE_PERMISSIONS, "Hide");
@@ -2142,7 +2105,7 @@ super_html_edit_contest_page(FILE *f,
     print_permissions(f, cnts, session_id, self_url, hidden_vars, extra_args);
   }
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<tr><td colspan=\"3\" align=\"center\"><b>Registration form fields</b>");
   if (sstate->show_form_fields) {
     html_submit_button(f, SUPER_ACTION_CNTS_HIDE_FORM_FIELDS, "Hide");
@@ -2155,7 +2118,7 @@ super_html_edit_contest_page(FILE *f,
     print_form_fields(f, cnts, session_id, self_url, hidden_vars, extra_args);
   }
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<tr><td colspan=\"3\" align=\"center\"><b>HTML headers and footers for CGI-programs</b>");
   if (sstate->show_html_headers) {
     html_submit_button(f, SUPER_ACTION_CNTS_HIDE_HTML_HEADERS, "Hide");
@@ -2221,7 +2184,7 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
   }
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<tr><td colspan=\"3\" align=\"center\"><b>extra HTML attributes for CGI-programs</b>");
   if (sstate->show_html_attrs) {
     html_submit_button(f, SUPER_ACTION_CNTS_HIDE_HTML_ATTRS, "Hide");
@@ -2314,7 +2277,7 @@ super_html_edit_contest_page(FILE *f,
                              hidden_vars);
   }
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<tr><td colspan=\"3\" align=\"center\"><b>Advanced path settings</b>");
   if (sstate->show_paths) {
     html_submit_button(f, SUPER_ACTION_CNTS_HIDE_PATHS, "Hide");
@@ -2346,7 +2309,7 @@ super_html_edit_contest_page(FILE *f,
 
   fprintf(f, "</table>\n");
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<table border=\"0\"><tr><td>%sTo the top</a></td><td>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, ""));
   html_submit_button(f, SUPER_ACTION_CNTS_FORGET, "Forget it");
   fprintf(f, "</td><td>");
@@ -2430,7 +2393,7 @@ super_html_edit_access_rules(FILE *f,
     for (p = (struct contest_ip*) acc->b.first_down, i = 0;
          p; p = (struct contest_ip*) p->b.right, i++) {
       snprintf(num_str, sizeof(num_str), "%d", i);
-      html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+      html_start_form(f, 1, session_id, self_url, hidden_vars);
       html_hidden_var(f, "acc_mode", acc_mode);
       html_hidden_var(f, "rule_num", num_str);
       fprintf(f, "<tr><td>%d</td><td><tt>%s</tt></td><td>", i,
@@ -2445,7 +2408,7 @@ super_html_edit_access_rules(FILE *f,
     }
   }
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   html_hidden_var(f, "acc_mode", acc_mode);
   fprintf(f, "<tr><td>New address:</td><td>");
   html_edit_text_form(f, 16, 16, "ip", "");
@@ -2455,7 +2418,7 @@ super_html_edit_access_rules(FILE *f,
   html_submit_button(f, SUPER_ACTION_CNTS_ADD_RULE, "Add");
   fprintf(f, "</td></tr></form>\n");
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   html_hidden_var(f, "acc_mode", acc_mode);
   fprintf(f, "<tr><td>Default access:</td><td>");
   html_boolean_select(f, default_is_allow, "access", "deny", "allow");
@@ -2542,7 +2505,7 @@ super_html_edit_permission(FILE *f,
   fprintf(f, "<h2>Editing capabilities for user %s, contest %d</h2>",
           p->login, cnts->id);
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   snprintf(hbuf, sizeof(hbuf), "%d", num);
   html_hidden_var(f, "num", hbuf);
   fprintf(f, "<table border=\"0\">\n");
@@ -2675,7 +2638,7 @@ super_html_edit_form_fields(FILE *f,
 
   fprintf(f, "<h2>Editing %s, Contest %d</h2>", desc_txt, cnts->id);
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
 
   fprintf(f, "<table border=\"0\">");
   if (allow_setting_minmax) {
@@ -2891,7 +2854,7 @@ super_html_edit_template_file(FILE *f,
   }
   if (!*p_str) *p_str = xstrdup("");
 
-  html_start_form(f, 2, session_id, self_url, hidden_vars, "");
+  html_start_form(f, 2, session_id, self_url, hidden_vars);
   s = html_armor_string_dup(*p_str);
   fprintf(f, "<textarea name=\"param\" rows=\"20\" cols=\"80\">%s</textarea>\n",
           s);
