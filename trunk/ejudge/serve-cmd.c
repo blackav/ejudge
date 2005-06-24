@@ -239,7 +239,7 @@ handle_logout(const unsigned char *cmd,
   if (argc > 1) return too_many_params(cmd);
 
   authentificate(argv[0]);
-  userlist_clnt_logout(userlist_conn, local_ip, session_id);
+  userlist_clnt_logout(userlist_conn, ULS_DO_LOGOUT, local_ip, session_id);
   unlink(argv[0]);
   return 0;
 }
