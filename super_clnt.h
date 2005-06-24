@@ -4,7 +4,7 @@
 #ifndef __SUPER_CLNT_H__
 #define __SUPER_CLNT_H__
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -45,5 +45,23 @@ int super_clnt_main_page(int sock_fd,
 int super_clnt_simple_cmd(int sock_fd,
                           int cmd,
                           int contest_id);
+
+int super_clnt_create_contest(int sock_fd,
+                              int out_fd,
+                              int cmd,
+                              int num_mode,
+                              int templ_mode,
+                              int contest_id,
+                              int templ_id,
+                              const unsigned char *self_url,
+                              const unsigned char *hidden_vars,
+                              const unsigned char *extra_args);
+
+int super_clnt_set_param(int sock_fd,
+                         int cmd,
+                         int param1,
+                         const unsigned char *param2,
+                         int param3,
+                         int param4);
 
 #endif /* __SUPER_CLNT_H__ */
