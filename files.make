@@ -73,12 +73,14 @@ SERVE_CLNT_CFILES=\
  serve_clnt/view.c
 
 SUPER_CLNT_CFILES=\
+ super_clnt/create_contest.c\
  super_clnt/do_pass_fd.c\
  super_clnt/main_page.c\
  super_clnt/open.c\
  super_clnt/pass_fd.c\
  super_clnt/recv_packet.c\
  super_clnt/send_packet.c\
+ super_clnt/set_param.c\
  super_clnt/simple_cmd.c
 
 COMMON_CFILES=\
@@ -94,6 +96,7 @@ COMMON_CFILES=\
  compile_packet_5.c\
  compile_packet_6.c\
  contests.c\
+ contest_tmpl.c\
  copyright.c\
  diff.c\
  digest_1.c\
@@ -107,6 +110,7 @@ COMMON_CFILES=\
  filter_tree.c\
  full_archive.c\
  html.c\
+ html_hyperref.c\
  l10n.c\
  master_html.c\
  misctext.c\
@@ -130,6 +134,7 @@ COMMON_CFILES=\
  run_packet_7.c\
  sformat.c\
  super_html.c\
+ super_html_2.c\
  super_proto.c\
  sha.c\
  teamdb.c\
@@ -165,8 +170,10 @@ COMMON_CFILES=\
  xml_utils/parse_int.c\
  xml_utils/parse_int_attr.c\
  xml_utils/parse_ip.c\
+ xml_utils/parse_ip_mask.c\
  xml_utils/unparse_date.c\
  xml_utils/unparse_ip.c\
+ xml_utils/unparse_ip_mask.c\
  xml_utils/unparse_run_status.c\
  xml_utils/unparse_text.c\
  xml_utils/xml_err.c\
