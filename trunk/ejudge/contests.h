@@ -190,15 +190,15 @@ struct contest_desc
 {
   struct xml_tree b;
   int id;
-  int autoregister;
-  int disable_team_password;
+  unsigned char autoregister;
+  unsigned char disable_team_password;
   unsigned char managed;
   unsigned char run_managed;
   unsigned char clean_users;
   unsigned char closed;
   unsigned char invisible;
 
-  unsigned long  reg_deadline;
+  time_t         reg_deadline;
   unsigned char *name;
   unsigned char *name_en;
   unsigned char *users_header_file;
@@ -227,6 +227,7 @@ struct contest_desc
   struct contest_access *serve_control_access;
   struct contest_field *fields[CONTEST_LAST_FIELD];
   struct contest_member *members[CONTEST_LAST_MEMBER];
+  struct xml_tree *caps_node;
   opcaplist_t capabilities;
   unsigned char *users_head_style;
   unsigned char *users_par_style;
@@ -272,6 +273,11 @@ int contests_set_directory(unsigned char const *);
 int contests_make_path(unsigned char *buf, size_t sz, int num);
 int contests_get_list(unsigned char **);
 int contests_get(int, struct contest_desc **);
+int contests_load(int number, struct contest_desc **p_cnts);
+struct contest_desc *contests_free(struct contest_desc *cnts);
+void contests_free_2(struct xml_tree *t);
+struct xml_tree *contests_new_node(int tag);
+
 unsigned char *contests_strerror(int);
 
 /* if the contest has disappeared, use old copy */
@@ -295,10 +301,14 @@ int contests_check_serve_control_ip_2(struct contest_desc *, unsigned long);
 void contests_set_load_callback(void (*f)(const struct contest_desc *));
 void contests_set_unload_callback(void (*f)(const struct contest_desc *));
 
-void contests_write_header(FILE *f, struct contest_desc *cnts);
+void contests_write_header(FILE *f, const struct contest_desc *cnts);
 int contests_save_xml(struct contest_desc *cnts,
                       const unsigned char *txt1,
                       const unsigned char *txt2,
                       const unsigned char *txt3);
+int contests_unparse_and_save(struct contest_desc *cnts,
+                              const unsigned char *header,
+                              const unsigned char *footer,
+                              const unsigned char *add_footer);
 
 #endif /* __CONTESTS_H__ */
