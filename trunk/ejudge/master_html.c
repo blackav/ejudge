@@ -112,35 +112,6 @@ html_start_form(FILE *f, int mode, unsigned long long sid,
   }
 }
 
-unsigned char *
-html_hyperref(unsigned char *buf, int size,
-              unsigned long long sid,
-              unsigned char const *self_url,
-              unsigned char const *extra_args,
-              unsigned char const *format, ...)
-{
-  va_list args;
-  unsigned char *out = buf;
-  int left = size, n;
-
-  n = snprintf(out, left, "<a href=\"%s?SID=%016llx%s", self_url, sid, extra_args);
-  if (n >= left) n = left;
-  left -= n; out += n;
-  if (format && *format) {
-    n = snprintf(out, left, "&");
-    if (n >= left) n = left;
-    left -= n; out += n;
-    va_start(args, format);
-    n = vsnprintf(out, left, format, args);
-    va_end(args);
-    if (n >= left) n = left;
-    left -= n; out += n;
-
-  }
-  snprintf(out, left, "\">");
-  return buf;
-}
-
 static void
 print_nav_buttons(FILE *f, int run_id,
                   unsigned long long sid,
