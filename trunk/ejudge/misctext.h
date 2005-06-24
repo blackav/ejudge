@@ -17,6 +17,7 @@
  * GNU General Public License for more details.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 
 int html_armored_memlen(char const *text, int size);
@@ -58,5 +59,9 @@ unsigned char *html_hyperref(unsigned char *buf, size_t size,
                              const unsigned char *self_url,
                              const unsigned char *extra_args,
                              const unsigned char *format, ...);
+
+void html_start_form(FILE *f, int mode, unsigned long long sid,
+                     unsigned char const *self_url,
+                     unsigned char const *hidden_vars);
 
 #endif /* __MISCTEXT_H__ */
