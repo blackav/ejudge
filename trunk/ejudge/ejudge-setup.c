@@ -2875,6 +2875,8 @@ generate_contest_xml(FILE *f)
           "      REPLY_MESSAGE,\n"
           "      CONTROL_CONTEST,\n"
           "      IMPORT_XML_RUNS,\n"
+          "      OPCAP_PRINT_RUN,\n"
+          "      OPCAP_EDIT_CONTEST,\n"
           "    </cap>\n"
           "  </caps>\n"
           "\n"
@@ -3058,6 +3060,7 @@ generate_ejudge_xml(FILE *f)
           "      PRIV_EDIT_USER,\n"
           "      PRIV_DELETE_USER,\n"
           "      DUMP_USERS,\n"
+          "      OPCAP_EDIT_CONTEST,\n"
           "    </cap>\n"
           "  </caps>\n", config_login);
 
