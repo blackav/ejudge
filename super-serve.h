@@ -3,7 +3,7 @@
 #ifndef __SUPER_SERVE_H__
 #define __SUPER_SERVE_H__
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -55,5 +55,38 @@ struct contest_extra
 
 struct contest_extra *get_contest_extra(int num);
 struct contest_extra *get_existing_contest_extra(int num);
+
+enum
+{
+  SID_STATE_SHOW_HIDDEN = 1,
+  SID_STATE_SHOW_CLOSED = 2,
+  SID_STATE_SHOW_UNMNG = 4,
+};
+
+struct contest_desc;
+struct sid_state
+{
+  struct sid_state *next;
+  struct sid_state *prev;
+  unsigned long long sid;
+  time_t init_time;
+  unsigned long flags;
+  struct contest_desc *edited_cnts;
+  int advanced_view;
+  int show_html_attrs;
+  int show_html_headers;
+  int show_paths;
+  int show_access_rules;
+  int show_permissions;
+  int show_form_fields;
+
+  unsigned char *users_header_text;
+  unsigned char *users_footer_text;
+  unsigned char *register_header_text;
+  unsigned char *register_footer_text;
+  unsigned char *team_header_text;
+  unsigned char *team_footer_text;
+  unsigned char *register_email_text;
+};
 
 #endif /* __SUPER_SERVE_H__ */
