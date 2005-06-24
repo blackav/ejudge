@@ -2411,12 +2411,12 @@ write_team_page(FILE *f, int user_id,
     }
     fprintf(f, "</table>\n");
     if (!server_start && global_server_start) {
-      html_start_form(f, 1, sid, self_url, hidden_vars, extra_args);
+      html_start_form(f, 1, sid, self_url, hidden_vars);
       fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
               ACTION_START_VIRTUAL, _("Start virtual contest"));
       fprintf(f, "</form>\n");
     } else if (server_start && !server_end) {
-      html_start_form(f, 1, sid, self_url, hidden_vars, extra_args);
+      html_start_form(f, 1, sid, self_url, hidden_vars);
       fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
               ACTION_STOP_VIRTUAL, _("Stop virtual contest"));
       fprintf(f, "</form>\n");
@@ -2453,7 +2453,7 @@ write_team_page(FILE *f, int user_id,
     fprintf(f, "<hr><a name=\"submit\"></a><%s>%s</%s>\n",
             cur_contest->team_head_style, _("Send a submission"),
             cur_contest->team_head_style);
-    html_start_form(f, 2, sid, self_url, hidden_vars, extra_args);
+    html_start_form(f, 2, sid, self_url, hidden_vars);
     fprintf(f, "<table>\n");
     fprintf(f, "<tr><td>%s:</td><td>", _("Problem"));
     fprintf(f, "<select name=\"problem\"><option value=\"\">\n");
@@ -2546,7 +2546,7 @@ write_team_page(FILE *f, int user_id,
     print_nav_buttons(f, sid, self_url, hidden_vars, extra_args, 0, 0, 0);
     if (global->team_download_time > 0) {
       fprintf(f, "<p%s>", cur_contest->team_par_style);
-      html_start_form(f, 1, sid, self_url, hidden_vars, extra_args);
+      html_start_form(f, 1, sid, self_url, hidden_vars);
       fprintf(f,
               "<input type=\"submit\" name=\"archive\" value=\"%s\"></form>\n",
               _("Download your submits"));
@@ -2559,7 +2559,7 @@ write_team_page(FILE *f, int user_id,
     fprintf(f, "<hr><a name=\"clar\"></a><%s>%s</%s>\n",
             cur_contest->team_head_style, _("Send a message to judges"),
             cur_contest->team_head_style);
-    html_start_form(f, 2, sid, self_url, hidden_vars, extra_args);
+    html_start_form(f, 2, sid, self_url, hidden_vars);
     fprintf(f, "<table><tr><td>%s:</td><td>", _("Problem"));
     fprintf(f, "<select name=\"problem\"><option value=\"\">\n");
     for (i = 1; i <= max_prob; i++)
