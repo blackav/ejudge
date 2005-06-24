@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003,2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -60,8 +60,46 @@ static const unsigned char * const cap_list [] =
   [OPCAP_CONTROL_CONTEST]         "CONTROL_CONTEST",
   [OPCAP_IMPORT_XML_RUNS]         "IMPORT_XML_RUNS",
   [OPCAP_PRINT_RUN]               "PRINT_RUN",
+  [OPCAP_EDIT_CONTEST]            "EDIT_CONTEST",
 
   [OPCAP_LAST]                    0
+};
+
+static const unsigned char is_contest_cap[] =
+{
+  [OPCAP_MASTER_LOGIN] = 1,
+  [OPCAP_JUDGE_LOGIN] = 1,
+  [OPCAP_SUBMIT_RUN] = 1,
+  [OPCAP_MAP_CONTEST] = 1,
+  [OPCAP_LIST_CONTEST_USERS] = 1,
+  [OPCAP_LIST_ALL_USERS] = 0,
+  [OPCAP_CREATE_USER] = 0,
+  [OPCAP_GET_USER] = 1,
+  [OPCAP_EDIT_USER] = 1,
+  [OPCAP_DELETE_USER] = 0,
+  [OPCAP_PRIV_EDIT_USER] = 1,
+  [OPCAP_PRIV_DELETE_USER] = 0,
+  [OPCAP_GENERATE_TEAM_PASSWORDS] = 1,
+  [OPCAP_CREATE_REG] = 1,
+  [OPCAP_EDIT_REG] = 1,
+  [OPCAP_DELETE_REG] = 1,
+  [OPCAP_PRIV_CREATE_REG] = 1,
+  [OPCAP_PRIV_DELETE_REG] = 1,
+  [OPCAP_DUMP_USERS] = 1,
+  [OPCAP_DUMP_RUNS] = 1,
+  [OPCAP_DUMP_STANDINGS] = 1,
+  [OPCAP_VIEW_STANDINGS] = 1,
+  [OPCAP_VIEW_SOURCE] = 1,
+  [OPCAP_VIEW_REPORT] = 1,
+  [OPCAP_VIEW_CLAR] = 1,
+  [OPCAP_EDIT_RUN] = 1,
+  [OPCAP_REJUDGE_RUN] = 1,
+  [OPCAP_NEW_MESSAGE] = 1,
+  [OPCAP_REPLY_MESSAGE] = 1,
+  [OPCAP_CONTROL_CONTEST] = 1,
+  [OPCAP_IMPORT_XML_RUNS] = 1,
+  [OPCAP_PRINT_RUN] = 1,
+  [OPCAP_EDIT_CONTEST] = 1,
 };
 
 int
@@ -101,12 +139,14 @@ opcaps_find_by_uid(const opcaplist_t *list,
 }
 
 /* FIXME: this probably must be inlined... */
+/*
 int
 opcaps_check(opcap_t cap, int bit)
 {
   if ((cap & (1ULL << bit))) return 0;
   return -1;
 }
+*/
 
 int
 opcaps_parse(unsigned char const *str, opcap_t *pcap)
@@ -162,6 +202,49 @@ opcaps_parse(unsigned char const *str, opcap_t *pcap)
 
   if (pcap) *pcap = lcap;
   return 0;
+}
+
+unsigned char *
+opcaps_unparse(int left_margin, int max_width, opcap_t cap)
+{
+  char *out_str = 0;
+  size_t out_len = 0;
+  int first_flag = 1;
+  int cur_pos = 0, i, j;
+  FILE *f;
+
+  f = open_memstream(&out_str, &out_len);
+  for (i = 0; i < OPCAP_LAST; i++) {
+    if (!(cap & (1ULL << i))) continue;
+    if (first_flag) {
+      first_flag = 0;
+      for (j = 0; j < left_margin; j++) putc(' ', f);
+      cur_pos = left_margin;
+    }
+    fprintf(f, "%s,", cap_list[i]);
+    cur_pos += strlen(cap_list[i]) + 1;
+    if (cur_pos >= max_width) {
+      fprintf(f, "\n");
+      first_flag = 1;
+    }
+  }
+  if (!first_flag) fprintf(f, "\n");
+  fclose(f);
+  return out_str;
+}
+
+int
+opcaps_is_contest_cap(int cap)
+{
+  if (cap < 0 || cap >= OPCAP_LAST) return 0;
+  return is_contest_cap[cap];
+}
+
+const unsigned char *
+opcaps_get_name(int cap)
+{
+  if (cap < 0 || cap >= OPCAP_LAST) return 0;
+  return cap_list[cap];
 }
 
 /**
