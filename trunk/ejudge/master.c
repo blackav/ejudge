@@ -2606,7 +2606,7 @@ log_out_if_asked(void)
   if (!cgi_param("logout")) return;
   if (client_sid) {
     open_userlist_server();
-    userlist_clnt_logout(userlist_conn, client_ip, client_sid);
+    userlist_clnt_logout(userlist_conn, ULS_DO_LOGOUT, client_ip, client_sid);
   }
   client_put_header(stdout, 0, 0, global->charset, 1, 0, "%s", _("Good-bye"));
   printf("<p>%s</p>\n",
