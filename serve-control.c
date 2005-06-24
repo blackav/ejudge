@@ -744,6 +744,9 @@ action_view_contest(int cmd)
   case SSERV_CMD_VIEW_CONTEST_XML:
     extra_str = ", contest.xml";
     break;
+  case SSERV_CMD_EDIT_CONTEST_XML:
+    extra_str = ", editing contest.xml";
+    break;
   case SSERV_CMD_VIEW_SERVE_CFG:
     extra_str = ", serve.cfg";
     break;
@@ -767,6 +770,133 @@ action_view_contest(int cmd)
   operation_status_page(-1, -1, "Contest view parameters are invalid");
 }
 
+static void action_create_contest(void) __attribute__((noreturn));
+static void
+action_create_contest(void)
+{
+  int r;
+
+  open_super_server();
+  client_put_header(stdout, 0, 0, config->charset, 1, 0,
+                    "%s: %s, creating new contest", "serve-control", user_name);
+  fflush(stdout);
+
+  r = super_clnt_main_page(super_serve_fd, 1, SSERV_CMD_CREATE_CONTEST,
+                           0, 0, 0, self_url, hidden_vars, "");
+  if (r < 0) {
+    printf("<h2><font color=\"red\">%s</font></h2>\n",
+           super_proto_strerror(-r));
+  }
+  client_put_footer(stdout, 0);
+  exit(0);
+}
+
+static void action_edit_current_contest(int cmd) __attribute__((noreturn));
+static void
+action_edit_current_contest(int cmd)
+{
+  int r;
+
+  open_super_server();
+  client_put_header(stdout, 0, 0, config->charset, 1, 0,
+                    "%s: %s, editing contest", "serve-control", user_name);
+  fflush(stdout);
+
+  r = super_clnt_main_page(super_serve_fd, 1, cmd,
+                           0, 0, 0, self_url, hidden_vars, "");
+  if (r < 0) {
+    printf("<h2><font color=\"red\">%s</font></h2>\n",
+           super_proto_strerror(-r));
+  }
+  client_put_footer(stdout, 0);
+  exit(0);
+}
+
+static void action_edit_permissions(void) __attribute__((noreturn));
+static void
+action_edit_permissions(void)
+{
+  char *s;
+  int num, n, r;
+
+  if (!(s = cgi_param("num"))
+      || sscanf(s, "%d%n", &num, &n) != 1
+      || s[n]
+      || num < 0 || num >= 100000)
+    goto invalid_parameter;
+
+  open_super_server();
+  client_put_header(stdout, 0, 0, config->charset, 1, 0,
+                    "%s: %s, editing permissions for contest", "serve-control",
+                    user_name);
+  fflush(stdout);
+
+  r = super_clnt_main_page(super_serve_fd, 1, SSERV_CMD_CNTS_EDIT_PERMISSION,
+                           0, 0, num, self_url, hidden_vars, "");
+  if (r < 0) {
+    printf("<h2><font color=\"red\">%s</font></h2>\n",
+           super_proto_strerror(-r));
+  }
+  client_put_footer(stdout, 0);
+  exit(0);
+
+ invalid_parameter:
+  operation_status_page(-1, -1, "Contest view parameters are invalid");
+}
+
+static void action_create_contest_2(void) __attribute__((noreturn));
+static void
+action_create_contest_2(void)
+{
+  int r, n;
+  unsigned char *s;
+  int num_mode, templ_mode, contest_id = 0, templ_id = 0;
+
+  if (!(s = cgi_param("num_mode"))
+      || sscanf(s, "%d%n", &num_mode, &n) != 1
+      || s[n]
+      || num_mode < 0 || num_mode > 1)
+    goto invalid_parameter;
+  if (!(s = cgi_param("templ_mode"))
+      || sscanf(s, "%d%n", &templ_mode, &n) != 1
+      || s[n]
+      || templ_mode < 0 || templ_mode > 1)
+    goto invalid_parameter;
+  if (num_mode) {
+    if (!(s = cgi_param("contest_id"))
+        || sscanf(s, "%d%n", &contest_id, &n) != 1
+        || s[n]
+        || contest_id <= 0 || contest_id > 999999)
+      goto invalid_parameter;
+  }
+  if (templ_mode) {
+    if (!(s = cgi_param("templ_id"))
+        || sscanf(s, "%d%n", &templ_id, &n) != 1
+        || s[n]
+        || templ_id <= 0 || templ_id > 999999)
+      goto invalid_parameter;
+  }
+
+  open_super_server();
+  client_put_header(stdout, 0, 0, config->charset, 1, 0,
+                    "%s: %s, editing new contest", "serve-control", user_name);
+  fflush(stdout);
+
+  r = super_clnt_create_contest(super_serve_fd, 1, SSERV_CMD_CREATE_CONTEST_2,
+                                num_mode, templ_mode, contest_id, templ_id,
+                                self_url, hidden_vars, "");
+  if (r < 0) {
+    printf("<h2><font color=\"red\">%s</font></h2>\n",
+           super_proto_strerror(-r));
+  }
+
+  client_put_footer(stdout, 0);
+  exit(0);
+
+ invalid_parameter:
+  operation_status_page(-1, -1, "Contest creation parameters are invalid");
+}
+
 static void action_simple_command(int cmd) __attribute__((noreturn));
 static void
 action_simple_command(int cmd)
@@ -782,6 +912,420 @@ action_simple_command(int cmd)
  invalid_parameter:
   operation_status_page(-1, -1, "Contest control parameters are invalid");
 }
+
+static void action_simple_top_command(int cmd) __attribute__((noreturn));
+static void
+action_simple_top_command(int cmd)
+{
+  int r;
+
+  open_super_server();
+  r = super_clnt_simple_cmd(super_serve_fd, cmd, 0);
+  operation_status_page(-1, r, "");
+}
+
+static void action_simple_contest_edit_command(int cmd) __attribute__((noreturn));
+static void
+action_simple_contest_edit_command(int cmd)
+{
+  int r;
+
+  open_super_server();
+  r = super_clnt_simple_cmd(super_serve_fd, cmd, 0);
+  operation_status_page(-1, r, "action=%d", SUPER_ACTION_EDIT_CURRENT_CONTEST);
+}
+
+static void action_simple_edit_command(int, int) __attribute__((noreturn));
+static void action_simple_edit_command(int cmd, int next_state)
+{
+  int r;
+
+  open_super_server();
+  r = super_clnt_simple_cmd(super_serve_fd, cmd, 0);
+  if (next_state) {
+    operation_status_page(-1, r, "action=%d", next_state);
+  } else {
+    operation_status_page(-1, r, "");
+  }
+}
+
+static void action_set_param(int, int) __attribute__((noreturn));
+static void
+action_set_param(int cmd, int next_state)
+{
+  int r;
+  unsigned char *param = cgi_param("param");
+
+  open_super_server();
+  r = super_clnt_set_param(super_serve_fd, cmd, 0, param, 0, 0);
+  if (next_state) {
+    operation_status_page(-1, r, "action=%d", next_state);
+  } else {
+    operation_status_page(-1, r, "");
+  }
+}
+
+static void action_set_date_param(int cmd, int nextstate) __attribute__((noreturn));
+static void
+action_set_date_param(int cmd, int nextstate)
+{
+  int r;
+  unsigned char *d_hour = cgi_param("d_hour");
+  unsigned char *d_min = cgi_param("d_min");
+  unsigned char *d_sec = cgi_param("d_sec");
+  unsigned char *d_mday = cgi_param("d_mday");
+  unsigned char *d_mon = cgi_param("d_mon");
+  unsigned char *d_year = cgi_param("d_year");
+  unsigned char buf[182];
+
+  if (!d_hour) d_hour = "0";
+  if (!d_min) d_min = "0";
+  if (!d_sec) d_sec = "0";
+  if (!d_mday) d_mday = "1";
+  if (!d_mon) d_mon = "1";
+  if (!d_year) d_year = "2001";
+  snprintf(buf, sizeof(buf), "%s/%s/%s %s:%s:%s",
+           d_year, d_mon, d_mday, d_hour, d_min, d_sec);
+
+  open_super_server();
+  r = super_clnt_set_param(super_serve_fd, cmd, 0, buf, 0, 0);
+  if (nextstate) {
+    operation_status_page(-1, r, "action=%d", nextstate);
+  } else {
+    operation_status_page(-1, r, "");
+  }
+}
+
+static void action_set_ip_param(int cmd) __attribute__((noreturn));
+static void
+action_set_ip_param(int cmd)
+{
+  static const int next_state[] =
+  {
+    SUPER_ACTION_CNTS_EDIT_REGISTER_ACCESS,
+    SUPER_ACTION_CNTS_EDIT_USERS_ACCESS,
+    SUPER_ACTION_CNTS_EDIT_MASTER_ACCESS,
+    SUPER_ACTION_CNTS_EDIT_JUDGE_ACCESS,
+    SUPER_ACTION_CNTS_EDIT_TEAM_ACCESS,
+    SUPER_ACTION_CNTS_EDIT_SERVE_CONTROL_ACCESS,
+  };
+  unsigned char *s;
+  int r = 0, n;
+  int acc_mode;
+  int access = -1;
+  int rule_num = -1;
+  unsigned char *ip_str = cgi_param("ip");
+
+  if (!(s = cgi_param("acc_mode")) || sscanf(s, "%d%n", &acc_mode, &n) != 1
+      || s[n] || acc_mode < 0 || acc_mode > 5)
+    goto invalid_parameter;
+  if ((s = cgi_param("access"))) {
+    if (sscanf(s, "%d%n", &access, &n) != 1 || s[n] || access < 0 || access > 1)
+      goto invalid_parameter;
+  }
+  if ((s = cgi_param("rule_num"))) {
+    if (sscanf(s, "%d%n", &rule_num, &n) != 1 || s[n] || rule_num < 0)
+      goto invalid_parameter;
+  }
+  if (!ip_str) ip_str = "";
+
+  open_super_server();
+  r = super_clnt_set_param(super_serve_fd, cmd, acc_mode, ip_str, access, rule_num);
+  operation_status_page(-1, r, "action=%d", next_state[acc_mode]);
+
+ invalid_parameter:
+  operation_status_page(-1, -1, "Invalid parameter");
+}
+
+static void action_perform_permission_op(int, int) __attribute__((noreturn));
+static void
+action_perform_permission_op(int cmd, int next_state)
+{
+  int num = -1, n, r;
+  unsigned char *s;
+  unsigned char *param = 0;
+  unsigned char varbuf[64];
+
+  if (cmd == SSERV_CMD_CNTS_ADD_PERMISSION) {
+    if (!(param = cgi_param("param")) || !*param)
+      goto invalid_parameter;
+  } else {
+    if (!(s = cgi_param("num")) || sscanf(s, "%d%n", &num, &n) != 1 || s[n] || num < 0)
+      goto invalid_parameter;
+  }
+  if (cmd == SSERV_CMD_CNTS_SAVE_PERMISSIONS) {
+    param = alloca(65);
+    memset(param, '0', 64);
+    param[64] = 0;
+    for (n = 0; n < 64; n++) {
+      snprintf(varbuf, sizeof(varbuf), "cap_%d", n);
+      if (cgi_param(varbuf)) param[n] = '1';
+    }
+  }
+
+  open_super_server();
+  r = super_clnt_set_param(super_serve_fd, cmd, num, param, 0, 0);
+  operation_status_page(-1, r, "action=%d", next_state);
+
+ invalid_parameter:
+  operation_status_page(-1, -1, "Invalid parameter");
+}
+
+static void action_save_form_fields(int, int) __attribute__((noreturn));
+static void
+action_save_form_fields(int cmd, int next_state)
+{
+  unsigned char *s;
+  int min_count = -1, max_count = -1, init_count = -1, n, i, total_fields, f, r;
+  unsigned char varname[64];
+  unsigned char *fields_str = 0;
+
+  if ((s = cgi_param("min_count"))) {
+    if (sscanf(s, "%d%n", &min_count, &n) != 1 || s[n]
+        || min_count < 0 || min_count > 5)
+      goto invalid_parameter;
+  }
+  if ((s = cgi_param("max_count"))) {
+    if (sscanf(s, "%d%n", &max_count, &n) != 1 || s[n]
+        || max_count < 0 || max_count > 5)
+      goto invalid_parameter;
+  }
+  if ((s = cgi_param("init_count"))) {
+    if (sscanf(s, "%d%n", &init_count, &n) != 1 || s[n]
+        || max_count < 0 || init_count > 5)
+      goto invalid_parameter;
+  }
+
+  for (total_fields = 1; ;total_fields++) {
+    snprintf(varname, sizeof(varname), "field_%d", total_fields);
+    if (!cgi_param(varname)) break;
+  }
+  fields_str = alloca(total_fields + 1);
+  memset(fields_str, '0', total_fields);
+  fields_str[total_fields] = 0;
+  for (i = 1; i < total_fields; i++) {
+    snprintf(varname, sizeof(varname), "field_%d", i);
+    if (!(s = cgi_param(varname)) || sscanf(s, "%d%n", &f, &n) != 1 || s[n]
+        || f < 0 || f > 2)
+      goto invalid_parameter;
+    fields_str[i] = '0' + f;
+  }
+
+  open_super_server();
+  r = super_clnt_set_param(super_serve_fd, cmd, init_count, fields_str,
+                           min_count, max_count);
+  operation_status_page(-1, r, "action=%d", next_state);
+
+ invalid_parameter:
+  operation_status_page(-1, -1, "Invalid parameter");
+}
+
+static const int action_to_cmd_map[SUPER_ACTION_LAST] =
+{
+  [SUPER_ACTION_CNTS_BASIC_VIEW] = SSERV_CMD_CNTS_BASIC_VIEW,
+  [SUPER_ACTION_CNTS_ADVANCED_VIEW] = SSERV_CMD_CNTS_ADVANCED_VIEW,
+  [SUPER_ACTION_CNTS_HIDE_HTML_HEADERS] = SSERV_CMD_CNTS_HIDE_HTML_HEADERS,
+  [SUPER_ACTION_CNTS_SHOW_HTML_HEADERS] = SSERV_CMD_CNTS_SHOW_HTML_HEADERS,
+  [SUPER_ACTION_CNTS_HIDE_HTML_ATTRS] = SSERV_CMD_CNTS_HIDE_HTML_ATTRS,
+  [SUPER_ACTION_CNTS_SHOW_HTML_ATTRS] = SSERV_CMD_CNTS_SHOW_HTML_ATTRS,
+  [SUPER_ACTION_CNTS_FORGET] = SSERV_CMD_CNTS_FORGET,
+  [SUPER_ACTION_CNTS_HIDE_PATHS] = SSERV_CMD_CNTS_HIDE_PATHS,
+  [SUPER_ACTION_CNTS_SHOW_PATHS] = SSERV_CMD_CNTS_SHOW_PATHS,
+  [SUPER_ACTION_CNTS_HIDE_ACCESS_RULES] = SSERV_CMD_CNTS_HIDE_ACCESS_RULES,
+  [SUPER_ACTION_CNTS_SHOW_ACCESS_RULES] = SSERV_CMD_CNTS_SHOW_ACCESS_RULES,
+  [SUPER_ACTION_EDIT_CURRENT_CONTEST] = SSERV_CMD_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_EDIT_REGISTER_ACCESS] = SSERV_CMD_EDIT_REGISTER_ACCESS,
+  [SUPER_ACTION_CNTS_EDIT_USERS_ACCESS] = SSERV_CMD_EDIT_USERS_ACCESS,
+  [SUPER_ACTION_CNTS_EDIT_MASTER_ACCESS] = SSERV_CMD_EDIT_MASTER_ACCESS,
+  [SUPER_ACTION_CNTS_EDIT_JUDGE_ACCESS] = SSERV_CMD_EDIT_JUDGE_ACCESS,
+  [SUPER_ACTION_CNTS_EDIT_TEAM_ACCESS] = SSERV_CMD_EDIT_TEAM_ACCESS,
+  [SUPER_ACTION_CNTS_EDIT_SERVE_CONTROL_ACCESS] = SSERV_CMD_EDIT_SERVE_CONTROL_ACCESS,
+  [SUPER_ACTION_CNTS_HIDE_PERMISSIONS] = SSERV_CMD_CNTS_HIDE_PERMISSIONS,
+  [SUPER_ACTION_CNTS_SHOW_PERMISSIONS] = SSERV_CMD_CNTS_SHOW_PERMISSIONS,
+  [SUPER_ACTION_EDIT_CONTEST_XML] = SSERV_CMD_EDIT_CONTEST_XML,
+  [SUPER_ACTION_CNTS_HIDE_FORM_FIELDS] = SSERV_CMD_CNTS_HIDE_FORM_FIELDS,
+  [SUPER_ACTION_CNTS_SHOW_FORM_FIELDS] = SSERV_CMD_CNTS_SHOW_FORM_FIELDS,
+  [SUPER_ACTION_CNTS_EDIT_FORM_FIELDS] = SSERV_CMD_CNTS_EDIT_FORM_FIELDS,
+  [SUPER_ACTION_CNTS_EDIT_CONTESTANT_FIELDS] = SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS,
+  [SUPER_ACTION_CNTS_EDIT_RESERVE_FIELDS] = SSERV_CMD_CNTS_EDIT_RESERVE_FIELDS,
+  [SUPER_ACTION_CNTS_EDIT_COACH_FIELDS] = SSERV_CMD_CNTS_EDIT_COACH_FIELDS,
+  [SUPER_ACTION_CNTS_EDIT_ADVISOR_FIELDS] = SSERV_CMD_CNTS_EDIT_ADVISOR_FIELDS,
+  [SUPER_ACTION_CNTS_EDIT_GUEST_FIELDS] = SSERV_CMD_CNTS_EDIT_GUEST_FIELDS,
+  [SUPER_ACTION_CNTS_EDIT_USERS_HEADER] = SSERV_CMD_CNTS_EDIT_USERS_HEADER,
+  [SUPER_ACTION_CNTS_EDIT_USERS_FOOTER] = SSERV_CMD_CNTS_EDIT_USERS_FOOTER,
+  [SUPER_ACTION_CNTS_EDIT_REGISTER_HEADER] = SSERV_CMD_CNTS_EDIT_REGISTER_HEADER,
+  [SUPER_ACTION_CNTS_EDIT_REGISTER_FOOTER] = SSERV_CMD_CNTS_EDIT_REGISTER_FOOTER,
+  [SUPER_ACTION_CNTS_EDIT_TEAM_HEADER] = SSERV_CMD_CNTS_EDIT_TEAM_HEADER,
+  [SUPER_ACTION_CNTS_EDIT_TEAM_FOOTER] = SSERV_CMD_CNTS_EDIT_TEAM_FOOTER,
+  [SUPER_ACTION_CNTS_EDIT_REGISTER_EMAIL_FILE] = SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE,
+  [SUPER_ACTION_CNTS_CLEAR_NAME] = SSERV_CMD_CNTS_CLEAR_NAME,
+  [SUPER_ACTION_CNTS_CLEAR_NAME_EN] = SSERV_CMD_CNTS_CLEAR_NAME_EN,
+  [SUPER_ACTION_CNTS_CLEAR_DEADLINE] = SSERV_CMD_CNTS_CLEAR_DEADLINE,
+  [SUPER_ACTION_CNTS_CLEAR_USERS_HEADER] = SSERV_CMD_CNTS_CLEAR_USERS_HEADER,
+  [SUPER_ACTION_CNTS_CLEAR_USERS_FOOTER] = SSERV_CMD_CNTS_CLEAR_USERS_FOOTER,
+  [SUPER_ACTION_CNTS_CLEAR_REGISTER_HEADER] = SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER,
+  [SUPER_ACTION_CNTS_CLEAR_REGISTER_FOOTER] = SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER,
+  [SUPER_ACTION_CNTS_CLEAR_TEAM_HEADER] = SSERV_CMD_CNTS_CLEAR_TEAM_HEADER,
+  [SUPER_ACTION_CNTS_CLEAR_TEAM_FOOTER] = SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER,
+  [SUPER_ACTION_CNTS_CLEAR_USERS_HEAD_STYLE] = SSERV_CMD_CNTS_CLEAR_USERS_HEAD_STYLE,
+  [SUPER_ACTION_CNTS_CLEAR_USERS_PAR_STYLE] = SSERV_CMD_CNTS_CLEAR_USERS_PAR_STYLE,
+  [SUPER_ACTION_CNTS_CLEAR_USERS_TABLE_STYLE] = SSERV_CMD_CNTS_CLEAR_USERS_TABLE_STYLE,
+  [SUPER_ACTION_CNTS_CLEAR_USERS_VERB_STYLE] = SSERV_CMD_CNTS_CLEAR_USERS_VERB_STYLE,
+  [SUPER_ACTION_CNTS_CLEAR_REGISTER_HEAD_STYLE] = SSERV_CMD_CNTS_CLEAR_REGISTER_HEAD_STYLE,
+  [SUPER_ACTION_CNTS_CLEAR_REGISTER_PAR_STYLE] = SSERV_CMD_CNTS_CLEAR_REGISTER_PAR_STYLE,
+  [SUPER_ACTION_CNTS_CLEAR_REGISTER_TABLE_STYLE] = SSERV_CMD_CNTS_CLEAR_REGISTER_TABLE_STYLE,
+  [SUPER_ACTION_CNTS_CLEAR_TEAM_HEAD_STYLE] = SSERV_CMD_CNTS_CLEAR_TEAM_HEAD_STYLE,
+  [SUPER_ACTION_CNTS_CLEAR_TEAM_PAR_STYLE] = SSERV_CMD_CNTS_CLEAR_TEAM_PAR_STYLE,
+  [SUPER_ACTION_CNTS_CLEAR_REGISTER_EMAIL] = SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL,
+  [SUPER_ACTION_CNTS_CLEAR_REGISTER_URL] = SSERV_CMD_CNTS_CLEAR_REGISTER_URL,
+  [SUPER_ACTION_CNTS_CLEAR_REGISTER_EMAIL_FILE] = SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE,
+  [SUPER_ACTION_CNTS_CLEAR_TEAM_URL] = SSERV_CMD_CNTS_CLEAR_TEAM_URL,
+  [SUPER_ACTION_CNTS_CLEAR_STANDINGS_URL] = SSERV_CMD_CNTS_CLEAR_STANDINGS_URL,
+  [SUPER_ACTION_CNTS_CLEAR_PROBLEMS_URL] = SSERV_CMD_CNTS_CLEAR_PROBLEMS_URL,
+  [SUPER_ACTION_CNTS_CLEAR_ROOT_DIR] = SSERV_CMD_CNTS_CLEAR_ROOT_DIR,
+  [SUPER_ACTION_CNTS_CLEAR_CONF_DIR] = SSERV_CMD_CNTS_CLEAR_CONF_DIR,
+  [SUPER_ACTION_CNTS_CHANGE_NAME] = SSERV_CMD_CNTS_CHANGE_NAME,
+  [SUPER_ACTION_CNTS_CHANGE_NAME_EN] = SSERV_CMD_CNTS_CHANGE_NAME_EN,
+  [SUPER_ACTION_CNTS_CHANGE_AUTOREGISTER] = SSERV_CMD_CNTS_CHANGE_AUTOREGISTER,
+  [SUPER_ACTION_CNTS_CHANGE_TEAM_PASSWD] = SSERV_CMD_CNTS_CHANGE_TEAM_PASSWD,
+  [SUPER_ACTION_CNTS_CHANGE_MANAGED] = SSERV_CMD_CNTS_CHANGE_MANAGED,
+  [SUPER_ACTION_CNTS_CHANGE_RUN_MANAGED] = SSERV_CMD_CNTS_CHANGE_RUN_MANAGED,
+  [SUPER_ACTION_CNTS_CHANGE_CLEAN_USERS] = SSERV_CMD_CNTS_CHANGE_CLEAN_USERS,
+  [SUPER_ACTION_CNTS_CHANGE_CLOSED] = SSERV_CMD_CNTS_CHANGE_CLOSED,
+  [SUPER_ACTION_CNTS_CHANGE_INVISIBLE] = SSERV_CMD_CNTS_CHANGE_INVISIBLE,
+  [SUPER_ACTION_CNTS_CHANGE_TIME_SKEW] = SSERV_CMD_CNTS_CHANGE_TIME_SKEW,
+  [SUPER_ACTION_CNTS_CHANGE_TEAM_LOGIN] = SSERV_CMD_CNTS_CHANGE_TEAM_LOGIN,
+  [SUPER_ACTION_CNTS_CHANGE_DEADLINE] = SSERV_CMD_CNTS_CHANGE_DEADLINE,
+  [SUPER_ACTION_CNTS_CHANGE_USERS_HEADER] = SSERV_CMD_CNTS_CHANGE_USERS_HEADER,
+  [SUPER_ACTION_CNTS_CHANGE_USERS_FOOTER] = SSERV_CMD_CNTS_CHANGE_USERS_FOOTER,
+  [SUPER_ACTION_CNTS_CHANGE_REGISTER_HEADER] = SSERV_CMD_CNTS_CHANGE_REGISTER_HEADER,
+  [SUPER_ACTION_CNTS_CHANGE_REGISTER_FOOTER] = SSERV_CMD_CNTS_CHANGE_REGISTER_FOOTER,
+  [SUPER_ACTION_CNTS_CHANGE_TEAM_HEADER] = SSERV_CMD_CNTS_CHANGE_TEAM_HEADER,
+  [SUPER_ACTION_CNTS_CHANGE_TEAM_FOOTER] = SSERV_CMD_CNTS_CHANGE_TEAM_FOOTER,
+  [SUPER_ACTION_CNTS_CHANGE_USERS_HEAD_STYLE] = SSERV_CMD_CNTS_CHANGE_USERS_HEAD_STYLE,
+  [SUPER_ACTION_CNTS_CHANGE_USERS_PAR_STYLE] = SSERV_CMD_CNTS_CHANGE_USERS_PAR_STYLE,
+  [SUPER_ACTION_CNTS_CHANGE_USERS_TABLE_STYLE] = SSERV_CMD_CNTS_CHANGE_USERS_TABLE_STYLE,
+  [SUPER_ACTION_CNTS_CHANGE_USERS_VERB_STYLE] = SSERV_CMD_CNTS_CHANGE_USERS_VERB_STYLE,
+  [SUPER_ACTION_CNTS_CHANGE_REGISTER_HEAD_STYLE] = SSERV_CMD_CNTS_CHANGE_REGISTER_HEAD_STYLE,
+  [SUPER_ACTION_CNTS_CHANGE_REGISTER_PAR_STYLE] = SSERV_CMD_CNTS_CHANGE_REGISTER_PAR_STYLE,
+  [SUPER_ACTION_CNTS_CHANGE_REGISTER_TABLE_STYLE] = SSERV_CMD_CNTS_CHANGE_REGISTER_TABLE_STYLE,
+  [SUPER_ACTION_CNTS_CHANGE_TEAM_HEAD_STYLE] = SSERV_CMD_CNTS_CHANGE_TEAM_HEAD_STYLE,
+  [SUPER_ACTION_CNTS_CHANGE_TEAM_PAR_STYLE] = SSERV_CMD_CNTS_CHANGE_TEAM_PAR_STYLE,
+  [SUPER_ACTION_CNTS_CHANGE_REGISTER_EMAIL] = SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL,
+  [SUPER_ACTION_CNTS_CHANGE_REGISTER_URL] = SSERV_CMD_CNTS_CHANGE_REGISTER_URL,
+  [SUPER_ACTION_CNTS_CHANGE_REGISTER_EMAIL_FILE] = SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL_FILE,
+  [SUPER_ACTION_CNTS_CHANGE_TEAM_URL] = SSERV_CMD_CNTS_CHANGE_TEAM_URL,
+  [SUPER_ACTION_CNTS_CHANGE_STANDINGS_URL] = SSERV_CMD_CNTS_CHANGE_STANDINGS_URL,
+  [SUPER_ACTION_CNTS_CHANGE_PROBLEMS_URL] = SSERV_CMD_CNTS_CHANGE_PROBLEMS_URL,
+  [SUPER_ACTION_CNTS_CHANGE_ROOT_DIR] = SSERV_CMD_CNTS_CHANGE_ROOT_DIR,
+  [SUPER_ACTION_CNTS_CHANGE_CONF_DIR] = SSERV_CMD_CNTS_CHANGE_CONF_DIR,
+  [SUPER_ACTION_CNTS_DEFAULT_ACCESS] = SSERV_CMD_CNTS_DEFAULT_ACCESS,
+  [SUPER_ACTION_CNTS_ADD_RULE] = SSERV_CMD_CNTS_ADD_RULE,
+  [SUPER_ACTION_CNTS_CHANGE_RULE] = SSERV_CMD_CNTS_CHANGE_RULE,
+  [SUPER_ACTION_CNTS_DELETE_RULE] = SSERV_CMD_CNTS_DELETE_RULE,
+  [SUPER_ACTION_CNTS_UP_RULE] = SSERV_CMD_CNTS_UP_RULE,
+  [SUPER_ACTION_CNTS_DOWN_RULE] = SSERV_CMD_CNTS_DOWN_RULE,
+  [SUPER_ACTION_CNTS_DELETE_PERMISSION] = SSERV_CMD_CNTS_DELETE_PERMISSION,
+  [SUPER_ACTION_CNTS_ADD_PERMISSION] = SSERV_CMD_CNTS_ADD_PERMISSION,
+  [SUPER_ACTION_CNTS_SAVE_PERMISSIONS] = SSERV_CMD_CNTS_SAVE_PERMISSIONS,
+  [SUPER_ACTION_CNTS_SAVE_FORM_FIELDS] = SSERV_CMD_CNTS_SAVE_FORM_FIELDS,
+  [SUPER_ACTION_CNTS_SAVE_CONTESTANT_FIELDS] = SSERV_CMD_CNTS_SAVE_CONTESTANT_FIELDS,
+  [SUPER_ACTION_CNTS_SAVE_RESERVE_FIELDS] = SSERV_CMD_CNTS_SAVE_RESERVE_FIELDS,
+  [SUPER_ACTION_CNTS_SAVE_COACH_FIELDS] = SSERV_CMD_CNTS_SAVE_COACH_FIELDS,
+  [SUPER_ACTION_CNTS_SAVE_ADVISOR_FIELDS] = SSERV_CMD_CNTS_SAVE_ADVISOR_FIELDS,
+  [SUPER_ACTION_CNTS_SAVE_GUEST_FIELDS] = SSERV_CMD_CNTS_SAVE_GUEST_FIELDS,
+  [SUPER_ACTION_CNTS_SAVE_USERS_HEADER] = SSERV_CMD_CNTS_SAVE_USERS_HEADER,
+  [SUPER_ACTION_CNTS_SAVE_USERS_FOOTER] = SSERV_CMD_CNTS_SAVE_USERS_FOOTER,
+  [SUPER_ACTION_CNTS_SAVE_REGISTER_HEADER] = SSERV_CMD_CNTS_SAVE_REGISTER_HEADER,
+  [SUPER_ACTION_CNTS_SAVE_REGISTER_FOOTER] = SSERV_CMD_CNTS_SAVE_REGISTER_FOOTER,
+  [SUPER_ACTION_CNTS_SAVE_TEAM_HEADER] = SSERV_CMD_CNTS_SAVE_TEAM_HEADER,
+  [SUPER_ACTION_CNTS_SAVE_TEAM_FOOTER] = SSERV_CMD_CNTS_SAVE_TEAM_FOOTER,
+  [SUPER_ACTION_CNTS_SAVE_REGISTER_EMAIL_FILE] =SSERV_CMD_CNTS_SAVE_REGISTER_EMAIL_FILE,
+  [SUPER_ACTION_CNTS_CLEAR_USERS_HEADER_TEXT] = SSERV_CMD_CNTS_CLEAR_USERS_HEADER_TEXT,
+  [SUPER_ACTION_CNTS_CLEAR_USERS_FOOTER_TEXT] = SSERV_CMD_CNTS_CLEAR_USERS_FOOTER_TEXT,
+  [SUPER_ACTION_CNTS_CLEAR_REGISTER_HEADER_TEXT] = SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER_TEXT,
+  [SUPER_ACTION_CNTS_CLEAR_REGISTER_FOOTER_TEXT] = SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER_TEXT,
+  [SUPER_ACTION_CNTS_CLEAR_TEAM_HEADER_TEXT] = SSERV_CMD_CNTS_CLEAR_TEAM_HEADER_TEXT,
+  [SUPER_ACTION_CNTS_CLEAR_TEAM_FOOTER_TEXT] = SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER_TEXT,
+  [SUPER_ACTION_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT] = SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT,
+  [SUPER_ACTION_CNTS_READ_USERS_HEADER] = SSERV_CMD_CNTS_CLEAR_USERS_HEADER_TEXT,
+  [SUPER_ACTION_CNTS_READ_USERS_FOOTER] = SSERV_CMD_CNTS_CLEAR_USERS_FOOTER_TEXT,
+  [SUPER_ACTION_CNTS_READ_REGISTER_HEADER] = SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER_TEXT,
+  [SUPER_ACTION_CNTS_READ_REGISTER_FOOTER] = SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER_TEXT,
+  [SUPER_ACTION_CNTS_READ_TEAM_HEADER] = SSERV_CMD_CNTS_CLEAR_TEAM_HEADER_TEXT,
+  [SUPER_ACTION_CNTS_READ_TEAM_FOOTER] = SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER_TEXT,
+  [SUPER_ACTION_CNTS_READ_REGISTER_EMAIL_FILE] = SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT,
+  [SUPER_ACTION_CNTS_COMMIT] = SSERV_CMD_CNTS_COMMIT,
+};
+
+static const int next_action_map[SUPER_ACTION_LAST] =
+{
+  [SUPER_ACTION_CNTS_CHANGE_NAME] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_NAME_EN] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_AUTOREGISTER] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_TEAM_PASSWD] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_MANAGED] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_RUN_MANAGED] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_CLEAN_USERS] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_CLOSED] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_INVISIBLE] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_TIME_SKEW] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_TEAM_LOGIN] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_DEADLINE] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_USERS_HEADER] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_USERS_FOOTER] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_REGISTER_HEADER] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_REGISTER_FOOTER] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_TEAM_HEADER] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_TEAM_FOOTER] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_USERS_HEAD_STYLE] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_USERS_PAR_STYLE] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_USERS_TABLE_STYLE] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_USERS_VERB_STYLE] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_REGISTER_HEAD_STYLE] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_REGISTER_PAR_STYLE] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_REGISTER_TABLE_STYLE] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_TEAM_HEAD_STYLE] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_TEAM_PAR_STYLE] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_REGISTER_EMAIL] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_REGISTER_URL] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_REGISTER_EMAIL_FILE] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_TEAM_URL] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_STANDINGS_URL] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_PROBLEMS_URL] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_ROOT_DIR] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CHANGE_CONF_DIR] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_DELETE_PERMISSION] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_ADD_PERMISSION] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_SAVE_PERMISSIONS] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_SAVE_FORM_FIELDS] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_SAVE_CONTESTANT_FIELDS] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_SAVE_RESERVE_FIELDS] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_SAVE_COACH_FIELDS] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_SAVE_ADVISOR_FIELDS] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_SAVE_GUEST_FIELDS] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_SAVE_USERS_HEADER] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_SAVE_USERS_FOOTER] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_SAVE_REGISTER_HEADER] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_SAVE_REGISTER_FOOTER] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_SAVE_TEAM_HEADER] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_SAVE_TEAM_FOOTER] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_SAVE_REGISTER_EMAIL_FILE] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CLEAR_USERS_HEADER_TEXT] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CLEAR_USERS_FOOTER_TEXT] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CLEAR_REGISTER_HEADER_TEXT] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CLEAR_REGISTER_FOOTER_TEXT] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CLEAR_TEAM_HEADER_TEXT] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CLEAR_TEAM_FOOTER_TEXT] = SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT] =SUPER_ACTION_EDIT_CURRENT_CONTEST,
+  [SUPER_ACTION_CNTS_READ_USERS_HEADER] = SUPER_ACTION_CNTS_EDIT_USERS_HEADER,
+  [SUPER_ACTION_CNTS_READ_USERS_FOOTER] = SUPER_ACTION_CNTS_EDIT_USERS_FOOTER,
+  [SUPER_ACTION_CNTS_READ_REGISTER_HEADER] = SUPER_ACTION_CNTS_EDIT_REGISTER_HEADER,
+  [SUPER_ACTION_CNTS_READ_REGISTER_FOOTER] = SUPER_ACTION_CNTS_EDIT_REGISTER_FOOTER,
+  [SUPER_ACTION_CNTS_READ_TEAM_HEADER] = SUPER_ACTION_CNTS_EDIT_TEAM_HEADER,
+  [SUPER_ACTION_CNTS_READ_TEAM_FOOTER] = SUPER_ACTION_CNTS_EDIT_TEAM_FOOTER,
+  [SUPER_ACTION_CNTS_READ_REGISTER_EMAIL_FILE] = SUPER_ACTION_CNTS_EDIT_REGISTER_EMAIL_FILE,
+};
 
 int
 main(int argc, char *argv[])
@@ -825,6 +1369,197 @@ main(int argc, char *argv[])
     break;
   case SUPER_ACTION_CONTEST_INVISIBLE:
     action_simple_command(SSERV_CMD_INVISIBLE_CONTEST);
+    break;
+  case SUPER_ACTION_HIDE_HIDDEN:
+    action_simple_top_command(SSERV_CMD_HIDE_HIDDEN);
+    break;
+  case SUPER_ACTION_SHOW_HIDDEN:
+    action_simple_top_command(SSERV_CMD_SHOW_HIDDEN);
+    break;
+  case SUPER_ACTION_HIDE_CLOSED:
+    action_simple_top_command(SSERV_CMD_HIDE_CLOSED);
+    break;
+  case SUPER_ACTION_SHOW_CLOSED:
+    action_simple_top_command(SSERV_CMD_SHOW_CLOSED);
+    break;
+  case SUPER_ACTION_HIDE_UNMNG:
+    action_simple_top_command(SSERV_CMD_HIDE_UNMNG);
+    break;
+  case SUPER_ACTION_SHOW_UNMNG:
+    action_simple_top_command(SSERV_CMD_SHOW_UNMNG);
+    break;
+  case SUPER_ACTION_CREATE_CONTEST:
+    action_create_contest();
+    break;
+  case SUPER_ACTION_CREATE_CONTEST_2:
+    action_create_contest_2();
+    break;
+  case SUPER_ACTION_CNTS_BASIC_VIEW:
+  case SUPER_ACTION_CNTS_ADVANCED_VIEW:
+  case SUPER_ACTION_CNTS_HIDE_HTML_HEADERS:
+  case SUPER_ACTION_CNTS_SHOW_HTML_HEADERS:
+  case SUPER_ACTION_CNTS_HIDE_HTML_ATTRS:
+  case SUPER_ACTION_CNTS_SHOW_HTML_ATTRS:
+  case SUPER_ACTION_CNTS_HIDE_PATHS:
+  case SUPER_ACTION_CNTS_SHOW_PATHS:
+  case SUPER_ACTION_CNTS_HIDE_ACCESS_RULES:
+  case SUPER_ACTION_CNTS_SHOW_ACCESS_RULES:
+  case SUPER_ACTION_CNTS_HIDE_PERMISSIONS:
+  case SUPER_ACTION_CNTS_SHOW_PERMISSIONS:
+  case SUPER_ACTION_CNTS_HIDE_FORM_FIELDS:
+  case SUPER_ACTION_CNTS_SHOW_FORM_FIELDS:
+  case SUPER_ACTION_CNTS_CLEAR_NAME:
+  case SUPER_ACTION_CNTS_CLEAR_NAME_EN:
+  case SUPER_ACTION_CNTS_CLEAR_DEADLINE:
+  case SUPER_ACTION_CNTS_CLEAR_USERS_HEADER:
+  case SUPER_ACTION_CNTS_CLEAR_USERS_FOOTER:
+  case SUPER_ACTION_CNTS_CLEAR_REGISTER_HEADER:
+  case SUPER_ACTION_CNTS_CLEAR_REGISTER_FOOTER:
+  case SUPER_ACTION_CNTS_CLEAR_TEAM_HEADER:
+  case SUPER_ACTION_CNTS_CLEAR_TEAM_FOOTER:
+  case SUPER_ACTION_CNTS_CLEAR_USERS_HEAD_STYLE:
+  case SUPER_ACTION_CNTS_CLEAR_USERS_PAR_STYLE:
+  case SUPER_ACTION_CNTS_CLEAR_USERS_TABLE_STYLE:
+  case SUPER_ACTION_CNTS_CLEAR_USERS_VERB_STYLE:
+  case SUPER_ACTION_CNTS_CLEAR_REGISTER_HEAD_STYLE:
+  case SUPER_ACTION_CNTS_CLEAR_REGISTER_PAR_STYLE:
+  case SUPER_ACTION_CNTS_CLEAR_REGISTER_TABLE_STYLE:
+  case SUPER_ACTION_CNTS_CLEAR_TEAM_HEAD_STYLE:
+  case SUPER_ACTION_CNTS_CLEAR_TEAM_PAR_STYLE:
+  case SUPER_ACTION_CNTS_CLEAR_REGISTER_EMAIL:
+  case SUPER_ACTION_CNTS_CLEAR_REGISTER_URL:
+  case SUPER_ACTION_CNTS_CLEAR_REGISTER_EMAIL_FILE:
+  case SUPER_ACTION_CNTS_CLEAR_TEAM_URL:
+  case SUPER_ACTION_CNTS_CLEAR_STANDINGS_URL:
+  case SUPER_ACTION_CNTS_CLEAR_PROBLEMS_URL:
+  case SUPER_ACTION_CNTS_CLEAR_ROOT_DIR:
+  case SUPER_ACTION_CNTS_CLEAR_CONF_DIR:
+  case SUPER_ACTION_CNTS_CLEAR_USERS_HEADER_TEXT:
+  case SUPER_ACTION_CNTS_CLEAR_USERS_FOOTER_TEXT:
+  case SUPER_ACTION_CNTS_CLEAR_REGISTER_HEADER_TEXT:
+  case SUPER_ACTION_CNTS_CLEAR_REGISTER_FOOTER_TEXT:
+  case SUPER_ACTION_CNTS_CLEAR_TEAM_HEADER_TEXT:
+  case SUPER_ACTION_CNTS_CLEAR_TEAM_FOOTER_TEXT:
+  case SUPER_ACTION_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT:
+    action_simple_contest_edit_command(action_to_cmd_map[client_action]);
+    break;
+  case SUPER_ACTION_EDIT_CURRENT_CONTEST:
+  case SUPER_ACTION_CNTS_EDIT_REGISTER_ACCESS:
+  case SUPER_ACTION_CNTS_EDIT_USERS_ACCESS:
+  case SUPER_ACTION_CNTS_EDIT_MASTER_ACCESS:
+  case SUPER_ACTION_CNTS_EDIT_JUDGE_ACCESS:
+  case SUPER_ACTION_CNTS_EDIT_TEAM_ACCESS:
+  case SUPER_ACTION_CNTS_EDIT_SERVE_CONTROL_ACCESS:
+  case SUPER_ACTION_CNTS_EDIT_FORM_FIELDS:
+  case SUPER_ACTION_CNTS_EDIT_CONTESTANT_FIELDS:
+  case SUPER_ACTION_CNTS_EDIT_RESERVE_FIELDS:
+  case SUPER_ACTION_CNTS_EDIT_COACH_FIELDS:
+  case SUPER_ACTION_CNTS_EDIT_ADVISOR_FIELDS:
+  case SUPER_ACTION_CNTS_EDIT_GUEST_FIELDS:
+  case SUPER_ACTION_CNTS_EDIT_USERS_HEADER:
+  case SUPER_ACTION_CNTS_EDIT_USERS_FOOTER:
+  case SUPER_ACTION_CNTS_EDIT_REGISTER_HEADER:
+  case SUPER_ACTION_CNTS_EDIT_REGISTER_FOOTER:
+  case SUPER_ACTION_CNTS_EDIT_TEAM_HEADER:
+  case SUPER_ACTION_CNTS_EDIT_TEAM_FOOTER:
+  case SUPER_ACTION_CNTS_EDIT_REGISTER_EMAIL_FILE:
+  case SUPER_ACTION_CNTS_COMMIT:
+    action_edit_current_contest(action_to_cmd_map[client_action]);
+    break;
+  case SUPER_ACTION_CNTS_FORGET:
+    action_simple_top_command(action_to_cmd_map[client_action]);
+    break;
+  case SUPER_ACTION_EDIT_CONTEST_XML:
+    action_view_contest(action_to_cmd_map[client_action]);
+    break;
+  case SUPER_ACTION_CNTS_EDIT_PERMISSION:
+    action_edit_permissions();
+    break;
+
+  case SUPER_ACTION_CNTS_CHANGE_NAME:
+  case SUPER_ACTION_CNTS_CHANGE_NAME_EN:
+  case SUPER_ACTION_CNTS_CHANGE_AUTOREGISTER:
+  case SUPER_ACTION_CNTS_CHANGE_TEAM_PASSWD:
+  case SUPER_ACTION_CNTS_CHANGE_MANAGED:
+  case SUPER_ACTION_CNTS_CHANGE_RUN_MANAGED:
+  case SUPER_ACTION_CNTS_CHANGE_CLEAN_USERS:
+  case SUPER_ACTION_CNTS_CHANGE_CLOSED:
+  case SUPER_ACTION_CNTS_CHANGE_INVISIBLE:
+  case SUPER_ACTION_CNTS_CHANGE_TIME_SKEW:
+  case SUPER_ACTION_CNTS_CHANGE_TEAM_LOGIN:
+  case SUPER_ACTION_CNTS_CHANGE_USERS_HEADER:
+  case SUPER_ACTION_CNTS_CHANGE_USERS_FOOTER:
+  case SUPER_ACTION_CNTS_CHANGE_REGISTER_HEADER:
+  case SUPER_ACTION_CNTS_CHANGE_REGISTER_FOOTER:
+  case SUPER_ACTION_CNTS_CHANGE_TEAM_HEADER:
+  case SUPER_ACTION_CNTS_CHANGE_TEAM_FOOTER:
+  case SUPER_ACTION_CNTS_CHANGE_USERS_HEAD_STYLE:
+  case SUPER_ACTION_CNTS_CHANGE_USERS_PAR_STYLE:
+  case SUPER_ACTION_CNTS_CHANGE_USERS_TABLE_STYLE:
+  case SUPER_ACTION_CNTS_CHANGE_USERS_VERB_STYLE:
+  case SUPER_ACTION_CNTS_CHANGE_REGISTER_HEAD_STYLE:
+  case SUPER_ACTION_CNTS_CHANGE_REGISTER_PAR_STYLE:
+  case SUPER_ACTION_CNTS_CHANGE_REGISTER_TABLE_STYLE:
+  case SUPER_ACTION_CNTS_CHANGE_TEAM_HEAD_STYLE:
+  case SUPER_ACTION_CNTS_CHANGE_TEAM_PAR_STYLE:
+  case SUPER_ACTION_CNTS_CHANGE_REGISTER_EMAIL:
+  case SUPER_ACTION_CNTS_CHANGE_REGISTER_URL:
+  case SUPER_ACTION_CNTS_CHANGE_REGISTER_EMAIL_FILE:
+  case SUPER_ACTION_CNTS_CHANGE_TEAM_URL:
+  case SUPER_ACTION_CNTS_CHANGE_STANDINGS_URL:
+  case SUPER_ACTION_CNTS_CHANGE_PROBLEMS_URL:
+  case SUPER_ACTION_CNTS_CHANGE_ROOT_DIR:
+  case SUPER_ACTION_CNTS_CHANGE_CONF_DIR:
+  case SUPER_ACTION_CNTS_SAVE_USERS_HEADER:
+  case SUPER_ACTION_CNTS_SAVE_USERS_FOOTER:
+  case SUPER_ACTION_CNTS_SAVE_REGISTER_HEADER:
+  case SUPER_ACTION_CNTS_SAVE_REGISTER_FOOTER:
+  case SUPER_ACTION_CNTS_SAVE_TEAM_HEADER:
+  case SUPER_ACTION_CNTS_SAVE_TEAM_FOOTER:
+  case SUPER_ACTION_CNTS_SAVE_REGISTER_EMAIL_FILE:
+    action_set_param(action_to_cmd_map[client_action], next_action_map[client_action]);
+    break;
+
+  case SUPER_ACTION_CNTS_CHANGE_DEADLINE:
+    action_set_date_param(action_to_cmd_map[client_action],
+                          next_action_map[client_action]);
+    break;
+
+  case SUPER_ACTION_CNTS_DEFAULT_ACCESS:
+  case SUPER_ACTION_CNTS_ADD_RULE:
+  case SUPER_ACTION_CNTS_CHANGE_RULE:
+  case SUPER_ACTION_CNTS_DELETE_RULE:
+  case SUPER_ACTION_CNTS_UP_RULE:
+  case SUPER_ACTION_CNTS_DOWN_RULE:
+    action_set_ip_param(action_to_cmd_map[client_action]);
+    break;
+
+  case SUPER_ACTION_CNTS_DELETE_PERMISSION:
+  case SUPER_ACTION_CNTS_ADD_PERMISSION:
+  case SUPER_ACTION_CNTS_SAVE_PERMISSIONS:
+    action_perform_permission_op(action_to_cmd_map[client_action],
+                                 next_action_map[client_action]);
+    break;
+
+  case SUPER_ACTION_CNTS_SAVE_FORM_FIELDS:
+  case SUPER_ACTION_CNTS_SAVE_CONTESTANT_FIELDS:
+  case SUPER_ACTION_CNTS_SAVE_RESERVE_FIELDS:
+  case SUPER_ACTION_CNTS_SAVE_COACH_FIELDS:
+  case SUPER_ACTION_CNTS_SAVE_ADVISOR_FIELDS:
+  case SUPER_ACTION_CNTS_SAVE_GUEST_FIELDS:
+    action_save_form_fields(action_to_cmd_map[client_action],
+                            next_action_map[client_action]);
+    break;
+
+  case SUPER_ACTION_CNTS_READ_USERS_HEADER:
+  case SUPER_ACTION_CNTS_READ_USERS_FOOTER:
+  case SUPER_ACTION_CNTS_READ_REGISTER_HEADER:
+  case SUPER_ACTION_CNTS_READ_REGISTER_FOOTER:
+  case SUPER_ACTION_CNTS_READ_TEAM_HEADER:
+  case SUPER_ACTION_CNTS_READ_TEAM_FOOTER:
+  case SUPER_ACTION_CNTS_READ_REGISTER_EMAIL_FILE:
+    action_simple_edit_command(action_to_cmd_map[client_action],
+                               next_action_map[client_action]);
     break;
   }
 
