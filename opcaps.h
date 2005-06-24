@@ -3,7 +3,7 @@
 
 /* $Id$ */
 
-/* Copyright (C) 2003,2004 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2003-2005 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -55,6 +55,8 @@ enum
   OPCAP_IMPORT_XML_RUNS = 30,
   OPCAP_PRINT_RUN = 31,
 
+  OPCAP_EDIT_CONTEST = 32,
+
   OPCAP_LAST
 };
 
@@ -81,8 +83,19 @@ int opcaps_find_by_uid(const opcaplist_t *list,
                        int uid,
                        opcap_t *pcap);
 
-int opcaps_check(opcap_t cap, int bit);
+static inline int opcaps_check(opcap_t cap, int bit);
+static inline int
+opcaps_check(opcap_t cap, int bit)
+{
+  if ((cap & (1ULL << bit))) return 0;
+  return -1;
+}
 
 int opcaps_parse(unsigned char const *str, opcap_t *pcap);
+
+unsigned char *opcaps_unparse(int left_margin, int max_width, opcap_t cap);
+
+int opcaps_is_contest_cap(int cap);
+const unsigned char *opcaps_get_name(int cap);
 
 #endif /* __OPCAPS_H__ */
