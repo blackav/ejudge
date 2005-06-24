@@ -137,12 +137,6 @@ int write_priv_user(FILE *f, int user_id, int priv_level,
                     int view_user_id,
                     const opcap_t *);
 
-void html_start_form(FILE *f, int mode,
-                     unsigned long long sid,
-                     unsigned char const *self_url,
-                     unsigned char const *hidden_vars,
-                     unsigned char const *extra_args);
-
 int write_virtual_standings(FILE *f, int user_id);
 
 void html_reset_filter(int user_id, unsigned long long session_id);
