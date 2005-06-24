@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,8 @@ static unsigned char const * const error_map[] =
   "read from server failed",
   "unexpected EOF from server",
   "protocol error",
-  "system call failed",
+  "userlist-server is down",
+  "permission denied",
   "invalid contest",
   "IP-address is banned",
   "contest root_dir is not set",
@@ -43,6 +44,12 @@ static unsigned char const * const error_map[] =
   "read error",
   "file format is invalid",
   "unexpected userlist-server error",
+  "contest is already used",
+  "another contest is edited in this session",
+  "not implemented yet",
+  "invalid parameter",
+  "no contest is edited",
+  "duplicated login name",
 
   "unknown error",
 };
