@@ -53,5 +53,10 @@ enum
 };
 int get_content_type(const unsigned char *txt, const unsigned char **p_start_ptr);
 
+unsigned char *html_hyperref(unsigned char *buf, size_t size,
+                             unsigned long long session_id,
+                             const unsigned char *self_url,
+                             const unsigned char *extra_args,
+                             const unsigned char *format, ...);
 
 #endif /* __MISCTEXT_H__ */
