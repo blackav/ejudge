@@ -914,7 +914,14 @@ super_html_commit_contest(FILE *f,
   fprintf(f, "<td>%sTo the top</a></td></tr></table>\n",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,""));
 
-  // FIXME: clear the current contest
+  contests_free(sstate->edited_cnts); sstate->edited_cnts = 0;
+  xfree(sstate->users_header_text); sstate->users_header_text = 0;
+  xfree(sstate->users_footer_text); sstate->users_footer_text = 0;
+  xfree(sstate->register_header_text); sstate->register_header_text = 0;
+  xfree(sstate->register_footer_text); sstate->register_footer_text = 0;
+  xfree(sstate->team_header_text); sstate->team_header_text = 0;
+  xfree(sstate->team_footer_text); sstate->team_footer_text = 0;
+  xfree(sstate->register_email_text); sstate->register_email_text = 0;
 
   return 0;
 
@@ -923,7 +930,6 @@ super_html_commit_contest(FILE *f,
   xfree(xml_footer);
   fclose(flog);
 
-  // FIXME: rollback all changes
   if (users_header_path_2[0]) unlink(users_header_path_2);
   if (users_footer_path_2[0]) unlink(users_footer_path_2);
   if (register_header_path_2[0]) unlink(register_header_path_2);
