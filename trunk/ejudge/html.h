@@ -142,11 +142,6 @@ void html_start_form(FILE *f, int mode,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars,
                      unsigned char const *extra_args);
-unsigned char *html_hyperref(unsigned char *buf, int size,
-                             unsigned long long sid,
-                             unsigned char const *self_url,
-                             unsigned char const *format,
-                             unsigned char const *extra_args, ...);
 
 int write_virtual_standings(FILE *f, int user_id);
 
