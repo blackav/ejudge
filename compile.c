@@ -331,9 +331,6 @@ main(int argc, char *argv[])
     } else if (!strncmp(argv[i], "-D", 2)) {
       if (cpp_opts[0]) pathcat(cpp_opts, " ");
       pathcat(cpp_opts, argv[i++]);
-    } else if (!strcmp(argv[i], "-E")) {
-      i++;
-      prepare_flags |= PREPARE_USE_CPP;
     } else break;
   }
   if (i >= argc) goto print_usage;
@@ -362,7 +359,6 @@ main(int argc, char *argv[])
   printf("Usage: %s [ OPTS ] config-file\n", argv[0]);
   printf("  -T     - print configuration and exit\n");
   printf("  -k key - specify language key\n");
-  printf("  -E     - enable C preprocessor\n");
   printf("  -DDEF  - define a symbol for preprocessor\n");
   return code;
 }
