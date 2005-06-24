@@ -329,7 +329,7 @@ startup_err(const char *format, ...)
   va_list args;
 
   va_start(args, format);
-  snprintf(msg, sizeof(msg), format, args);
+  vsnprintf(msg, sizeof(msg), format, args);
   va_end(args);
 
   if (global_contest_id > 0) err("contest %d: %s", global_contest_id, msg);
@@ -1357,6 +1357,100 @@ cmd_pass_fd(struct client_state *p, int len,
   p->state = STATE_READ_FDS;
 }
 
+static struct sid_state *sid_state_first = 0;
+static struct sid_state *sid_state_last = 0;
+static time_t sid_state_last_check_time = 0;
+#define SID_STATE_CLEANUP_TIME (24*3600)
+#define SID_STATE_CHECK_INTERVAL 3600
+
+static struct sid_state*
+sid_state_find(unsigned long long sid)
+{
+  struct sid_state *p;
+
+  ASSERT(sid);
+  for (p = sid_state_first; p; p = p->next)
+    if (p->sid == sid) break;
+  return p;
+}
+static struct sid_state*
+sid_state_add(unsigned long long sid)
+{
+  struct sid_state *n;
+
+  ASSERT(sid);
+  XCALLOC(n, 1);
+  n->sid = sid;
+  n->init_time = time(0);
+  n->flags |= SID_STATE_SHOW_CLOSED;
+
+  if (!sid_state_last) {
+    ASSERT(!sid_state_first);
+    sid_state_first = sid_state_last = n;
+  } else {
+    ASSERT(sid_state_first);
+    sid_state_last->next = n;
+    n->prev = sid_state_last;
+    sid_state_last = n;
+  }
+  return n;
+}
+static struct sid_state*
+sid_state_get(unsigned long long sid)
+{
+  struct sid_state *p;
+
+  if (!(p = sid_state_find(sid))) p = sid_state_add(sid);
+  return p;
+}
+static void
+sid_state_clear(struct sid_state *p)
+{
+  contests_free(p->edited_cnts);
+  xfree(p->users_header_text);
+  xfree(p->users_footer_text);
+  xfree(p->register_header_text);
+  xfree(p->register_footer_text);
+  xfree(p->team_header_text);
+  xfree(p->team_footer_text);
+  xfree(p->register_email_text);
+  XMEMZERO(p, 1);
+}
+static struct sid_state*
+sid_state_delete(struct sid_state *p)
+{
+  ASSERT(p);
+  if (!p->prev) {
+    sid_state_first = p->next;
+  } else {
+    p->prev->next = p->next;
+  }
+  if (!p->next) {
+    sid_state_last = p->prev;
+  } else {
+    p->next->prev = p->prev;
+  }
+  sid_state_clear(p);
+  xfree(p);
+  return 0;
+}
+static void
+sid_state_cleanup(void)
+{
+  time_t cur_time;
+  struct sid_state *p;
+
+  cur_time = time(0);
+  do {
+    for (p = sid_state_first; p; p = p->next) {
+      if (p->init_time + SID_STATE_CLEANUP_TIME < cur_time) {
+        sid_state_delete(p);
+        break;
+      }
+    }
+  } while (p);
+}
+
 static void
 cmd_main_page(struct client_state *p, int len,
               struct prot_super_pkt_main_page *pkt)
@@ -1371,6 +1465,7 @@ cmd_main_page(struct client_state *p, int len,
   opcap_t caps;
   int capbit;
   struct contest_desc *cnts = 0;
+  struct sid_state *sstate = 0;
 
   if (len < sizeof(*pkt)) return error_packet_too_short(p, len, sizeof(*pkt));
   self_url_ptr = pkt->data;
@@ -1402,6 +1497,8 @@ cmd_main_page(struct client_state *p, int len,
     return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
   }
 
+  sstate = sid_state_get(p->cookie);
+
   // extra incoming packet checks
   switch (pkt->b.id) {
   case SSERV_CMD_CONTEST_PAGE:
@@ -1417,6 +1514,14 @@ cmd_main_page(struct client_state *p, int len,
   case SSERV_CMD_VIEW_SERVE_CFG:
     if ((r = contests_get(pkt->contest_id, &cnts)) < 0 || !cnts) {
       return send_reply(p, -SSERV_ERR_INVALID_CONTEST);
+    }
+    break;
+  case SSERV_CMD_EDIT_CONTEST_XML:
+    if ((r = contests_get(pkt->contest_id, &cnts)) < 0 || !cnts) {
+      return send_reply(p, -SSERV_ERR_INVALID_CONTEST);
+    }
+    if (sstate->edited_cnts) {
+      return send_reply(p, -SSERV_ERR_CONTEST_EDITED);
     }
     break;
   }
@@ -1461,6 +1566,33 @@ cmd_main_page(struct client_state *p, int len,
   case SSERV_CMD_VIEW_SERVE_CFG:
     // all checks are performed in super_html_log_page
     break;
+  case SSERV_CMD_CREATE_CONTEST:
+  case SSERV_CMD_EDIT_CURRENT_CONTEST:
+  case SSERV_CMD_EDIT_REGISTER_ACCESS:
+  case SSERV_CMD_EDIT_USERS_ACCESS:
+  case SSERV_CMD_EDIT_MASTER_ACCESS:
+  case SSERV_CMD_EDIT_JUDGE_ACCESS:
+  case SSERV_CMD_EDIT_TEAM_ACCESS:
+  case SSERV_CMD_EDIT_SERVE_CONTROL_ACCESS:
+  case SSERV_CMD_EDIT_CONTEST_XML:
+  case SSERV_CMD_CNTS_EDIT_PERMISSION:
+  case SSERV_CMD_CNTS_EDIT_FORM_FIELDS:
+  case SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS:
+  case SSERV_CMD_CNTS_EDIT_RESERVE_FIELDS:
+  case SSERV_CMD_CNTS_EDIT_COACH_FIELDS:
+  case SSERV_CMD_CNTS_EDIT_ADVISOR_FIELDS:
+  case SSERV_CMD_CNTS_EDIT_GUEST_FIELDS:
+  case SSERV_CMD_CNTS_EDIT_USERS_HEADER:
+  case SSERV_CMD_CNTS_EDIT_USERS_FOOTER:
+  case SSERV_CMD_CNTS_EDIT_REGISTER_HEADER:
+  case SSERV_CMD_CNTS_EDIT_REGISTER_FOOTER:
+  case SSERV_CMD_CNTS_EDIT_TEAM_HEADER:
+  case SSERV_CMD_CNTS_EDIT_TEAM_FOOTER:
+  case SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE:
+  case SSERV_CMD_CNTS_COMMIT:
+
+    // FIXME: add permissions checks
+    break;
   default:
     err("%d: unhandled request %d", p->id, pkt->b.id);
     return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
@@ -1475,7 +1607,7 @@ cmd_main_page(struct client_state *p, int len,
   switch (pkt->b.id) {
   case SSERV_CMD_MAIN_PAGE:
     r = super_html_main_page(f, p->priv_level, p->user_id, p->login,
-                             p->cookie, p->ip, pkt->flags, config,
+                             p->cookie, p->ip, pkt->flags, config, sstate,
                              self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SSERV_CMD_CONTEST_PAGE:
@@ -1492,6 +1624,69 @@ cmd_main_page(struct client_state *p, int len,
                             config,
                             self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
+  case SSERV_CMD_CREATE_CONTEST:
+    r = super_html_create_contest(f, p->priv_level, p->user_id, p->login,
+                                  p->cookie, p->ip, config, sstate,
+                                  self_url_ptr, hidden_vars_ptr, extra_args_ptr);
+    break;
+  case SSERV_CMD_EDIT_CURRENT_CONTEST:
+    r = super_html_edit_contest_page(f, p->priv_level, p->user_id, p->login,
+                                     p->cookie, p->ip, config, sstate,
+                                     self_url_ptr, hidden_vars_ptr, extra_args_ptr);
+    break;
+  case SSERV_CMD_EDIT_REGISTER_ACCESS:
+  case SSERV_CMD_EDIT_USERS_ACCESS:
+  case SSERV_CMD_EDIT_MASTER_ACCESS:
+  case SSERV_CMD_EDIT_JUDGE_ACCESS:
+  case SSERV_CMD_EDIT_TEAM_ACCESS:
+  case SSERV_CMD_EDIT_SERVE_CONTROL_ACCESS:
+    r = super_html_edit_access_rules(f, p->priv_level, p->user_id, p->login,
+                                     p->cookie, p->ip, config, sstate, pkt->b.id,
+                                     self_url_ptr, hidden_vars_ptr, extra_args_ptr);
+    break;
+  case SSERV_CMD_EDIT_CONTEST_XML:
+    if ((r = contests_load(pkt->contest_id, &cnts)) < 0 || !cnts) {
+      return send_reply(p, -SSERV_ERR_INVALID_CONTEST);
+    }
+    sstate->edited_cnts = cnts;
+    r = super_html_edit_contest_page(f, p->priv_level, p->user_id, p->login,
+                                     p->cookie, p->ip, config, sstate,
+                                     self_url_ptr, hidden_vars_ptr, extra_args_ptr);
+    break;
+  case SSERV_CMD_CNTS_EDIT_PERMISSION:
+    r = super_html_edit_permission(f, p->priv_level, p->user_id, p->login,
+                                   p->cookie, p->ip, config, sstate, pkt->flags,
+                                   self_url_ptr, hidden_vars_ptr, extra_args_ptr);
+    break;
+  case SSERV_CMD_CNTS_EDIT_FORM_FIELDS:
+  case SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS:
+  case SSERV_CMD_CNTS_EDIT_RESERVE_FIELDS:
+  case SSERV_CMD_CNTS_EDIT_COACH_FIELDS:
+  case SSERV_CMD_CNTS_EDIT_ADVISOR_FIELDS:
+  case SSERV_CMD_CNTS_EDIT_GUEST_FIELDS:
+    r = super_html_edit_form_fields(f, p->priv_level, p->user_id, p->login,
+                                    p->cookie, p->ip, config, sstate, pkt->b.id,
+                                    self_url_ptr, hidden_vars_ptr, extra_args_ptr);
+    break;
+
+  case SSERV_CMD_CNTS_EDIT_USERS_HEADER:
+  case SSERV_CMD_CNTS_EDIT_USERS_FOOTER:
+  case SSERV_CMD_CNTS_EDIT_REGISTER_HEADER:
+  case SSERV_CMD_CNTS_EDIT_REGISTER_FOOTER:
+  case SSERV_CMD_CNTS_EDIT_TEAM_HEADER:
+  case SSERV_CMD_CNTS_EDIT_TEAM_FOOTER:
+  case SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE:
+    r = super_html_edit_template_file(f, p->priv_level, p->user_id, p->login,
+                                      p->cookie, p->ip, config, sstate, pkt->b.id,
+                                      self_url_ptr, hidden_vars_ptr, extra_args_ptr);
+    break;
+  case SSERV_CMD_CNTS_COMMIT:
+    r = super_html_commit_contest(f, p->priv_level, p->user_id, p->login,
+                                  p->cookie, p->ip, config, sstate, pkt->b.id,
+                                  self_url_ptr, hidden_vars_ptr,
+                                  extra_args_ptr);
+    break;
+
   default:
     abort();
   }
@@ -1501,6 +1696,84 @@ cmd_main_page(struct client_state *p, int len,
   q = client_state_new_autoclose(p, html_ptr, html_len);
 
   info("cmd_main_page: %d", html_len);
+  send_reply(p, SSERV_RPL_OK);
+}
+
+static void
+cmd_create_contest(struct client_state *p, int len,
+                   struct prot_super_pkt_create_contest *pkt)
+{
+  int r;
+  unsigned char *self_url_ptr, *hidden_vars_ptr, *extra_args_ptr;
+  int self_url_len, hidden_vars_len, extra_args_len, total_len;
+  struct sid_state *sstate;
+  char *html_ptr = 0;
+  size_t html_len = 0;
+  FILE *f;
+  struct client_state *q;
+
+  if (len < sizeof(*pkt)) return error_packet_too_short(p, len, sizeof(*pkt));
+  self_url_ptr = pkt->data;
+  self_url_len = strlen(self_url_ptr);
+  if (self_url_len != pkt->self_url_len)
+    return error_field_len_mismatch(p, "self_url",
+                                    self_url_len, pkt->self_url_len);
+  hidden_vars_ptr = self_url_ptr + self_url_len + 1;
+  hidden_vars_len = strlen(hidden_vars_ptr);
+  if (hidden_vars_len != pkt->hidden_vars_len)
+    return error_field_len_mismatch(p, "hidden_vars",
+                                    hidden_vars_len, pkt->hidden_vars_len);
+  extra_args_ptr = hidden_vars_ptr + hidden_vars_len + 1;
+  extra_args_len = strlen(extra_args_ptr);
+  if (extra_args_len != pkt->extra_args_len)
+    return error_field_len_mismatch(p, "extra_args",
+                                    extra_args_len, pkt->extra_args_len);
+  total_len = sizeof(*pkt) + self_url_len + hidden_vars_len + extra_args_len;
+  if (total_len != len)
+    return error_bad_packet_length(p, len, total_len);
+
+  if ((r = get_peer_local_user(p)) < 0) {
+    send_reply(p, r);
+    return;
+  }
+
+  if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
+    err("cmd_main_page: two file descriptors expected");
+    return send_reply(p, -SSERV_ERR_PROTOCOL_ERROR);
+  }
+
+  // FIXME: check permissions
+
+  sstate = sid_state_get(p->cookie);
+  if (!(f = open_memstream(&html_ptr, &html_len))) {
+    err("%d: open_memstream failed", p->id);
+    return send_reply(p, -SSERV_ERR_SYSTEM_ERROR);
+  }
+
+  switch (pkt->b.id) {
+  case SSERV_CMD_CREATE_CONTEST_2:
+    r = super_html_create_contest_2(f, p->priv_level, p->user_id, p->login,
+                                    p->cookie, p->ip, config, sstate,
+                                    pkt->num_mode, pkt->templ_mode,
+                                    pkt->contest_id, pkt->templ_id,
+                                    self_url_ptr, hidden_vars_ptr, extra_args_ptr);
+    break;
+  default:
+    abort();
+  }
+
+  if (r < 0) {
+    fclose(f);
+    xfree(html_ptr);
+    send_reply(p, r);
+    return;
+  }
+
+  fclose(f);
+  if (!html_ptr) html_ptr = xstrdup("");
+  q = client_state_new_autoclose(p, html_ptr, html_len);
+
+  info("cmd_create_contest: %d", html_len);
   send_reply(p, SSERV_RPL_OK);
 }
 
@@ -1554,23 +1827,377 @@ cmd_simple_command(struct client_state *p, int len,
   send_reply(p, r);
 }
 
+static void
+cmd_simple_top_command(struct client_state *p, int len,
+                       struct prot_super_pkt_simple_cmd *pkt)
+{
+  int r;
+  struct sid_state *sstate;
+
+  if (sizeof(*pkt) != len)
+    return error_bad_packet_length(p, len, sizeof(*pkt));
+
+  if ((r = get_peer_local_user(p)) < 0) {
+    return send_reply(p, r);
+  }
+  sstate = sid_state_get(p->cookie);
+
+  switch (pkt->b.id) {
+  case SSERV_CMD_SHOW_HIDDEN:
+    sstate->flags |= SID_STATE_SHOW_HIDDEN;
+    break;
+  case SSERV_CMD_HIDE_HIDDEN:
+    sstate->flags &= ~SID_STATE_SHOW_HIDDEN;
+    break;
+  case SSERV_CMD_SHOW_CLOSED:
+    sstate->flags |= SID_STATE_SHOW_CLOSED;
+    break;
+  case SSERV_CMD_HIDE_CLOSED:
+    sstate->flags &= ~SID_STATE_SHOW_CLOSED;
+    break;
+  case SSERV_CMD_SHOW_UNMNG:
+    sstate->flags |= SID_STATE_SHOW_UNMNG;
+    break;
+  case SSERV_CMD_HIDE_UNMNG:
+    sstate->flags &= ~SID_STATE_SHOW_UNMNG;
+    break;
+  case SSERV_CMD_CNTS_BASIC_VIEW:
+    sstate->advanced_view = 0;
+    break;
+  case SSERV_CMD_CNTS_ADVANCED_VIEW:
+    sstate->advanced_view = 1;
+    break;
+  case SSERV_CMD_CNTS_SHOW_HTML_HEADERS:
+    sstate->show_html_headers = 1;
+    break;
+  case SSERV_CMD_CNTS_HIDE_HTML_HEADERS:
+    sstate->show_html_headers = 0;
+    break;
+  case SSERV_CMD_CNTS_SHOW_HTML_ATTRS:
+    sstate->show_html_attrs = 1;
+    break;
+  case SSERV_CMD_CNTS_HIDE_HTML_ATTRS:
+    sstate->show_html_attrs = 0;
+    break;
+  case SSERV_CMD_CNTS_SHOW_PATHS:
+    sstate->show_paths = 1;
+    break;
+  case SSERV_CMD_CNTS_HIDE_PATHS:
+    sstate->show_paths = 0;
+    break;
+  case SSERV_CMD_CNTS_SHOW_ACCESS_RULES:
+    sstate->show_access_rules = 1;
+    break;
+  case SSERV_CMD_CNTS_HIDE_ACCESS_RULES:
+    sstate->show_access_rules = 0;
+    break;
+  case SSERV_CMD_CNTS_SHOW_PERMISSIONS:
+    sstate->show_permissions = 1;
+    break;
+  case SSERV_CMD_CNTS_HIDE_PERMISSIONS:
+    sstate->show_permissions = 0;
+    break;
+  case SSERV_CMD_CNTS_SHOW_FORM_FIELDS:
+    sstate->show_form_fields = 1;
+    break;
+  case SSERV_CMD_CNTS_HIDE_FORM_FIELDS:
+    sstate->show_form_fields = 0;
+    break;
+  case SSERV_CMD_CNTS_FORGET:
+    sid_state_clear(sstate);
+    break;
+
+  case SSERV_CMD_CNTS_CLEAR_NAME:
+  case SSERV_CMD_CNTS_CLEAR_NAME_EN:
+  case SSERV_CMD_CNTS_CLEAR_DEADLINE:
+  case SSERV_CMD_CNTS_CLEAR_USERS_HEADER:
+  case SSERV_CMD_CNTS_CLEAR_USERS_FOOTER:
+  case SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER:
+  case SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER:
+  case SSERV_CMD_CNTS_CLEAR_TEAM_HEADER:
+  case SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER:
+  case SSERV_CMD_CNTS_CLEAR_USERS_HEAD_STYLE:
+  case SSERV_CMD_CNTS_CLEAR_USERS_PAR_STYLE:
+  case SSERV_CMD_CNTS_CLEAR_USERS_TABLE_STYLE:
+  case SSERV_CMD_CNTS_CLEAR_USERS_VERB_STYLE:
+  case SSERV_CMD_CNTS_CLEAR_REGISTER_HEAD_STYLE:
+  case SSERV_CMD_CNTS_CLEAR_REGISTER_PAR_STYLE:
+  case SSERV_CMD_CNTS_CLEAR_REGISTER_TABLE_STYLE:
+  case SSERV_CMD_CNTS_CLEAR_TEAM_HEAD_STYLE:
+  case SSERV_CMD_CNTS_CLEAR_TEAM_PAR_STYLE:
+  case SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL:
+  case SSERV_CMD_CNTS_CLEAR_REGISTER_URL:
+  case SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE:
+  case SSERV_CMD_CNTS_CLEAR_TEAM_URL:
+  case SSERV_CMD_CNTS_CLEAR_STANDINGS_URL:
+  case SSERV_CMD_CNTS_CLEAR_PROBLEMS_URL:
+  case SSERV_CMD_CNTS_CLEAR_ROOT_DIR:
+  case SSERV_CMD_CNTS_CLEAR_CONF_DIR:
+  case SSERV_CMD_CNTS_CLEAR_USERS_HEADER_TEXT:
+  case SSERV_CMD_CNTS_CLEAR_USERS_FOOTER_TEXT:
+  case SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER_TEXT:
+  case SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER_TEXT:
+  case SSERV_CMD_CNTS_CLEAR_TEAM_HEADER_TEXT:
+  case SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER_TEXT:
+  case SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT:
+    r = super_html_clear_variable(sstate, pkt->b.id);
+    break;
+
+  default:
+    err("%d: unhandled command: %d", p->id, pkt->b.id);
+    p->state = STATE_DISCONNECT;
+    return;
+  }
+
+  send_reply(p, r);
+}
+
+static void
+cmd_set_value(struct client_state *p, int len,
+              struct prot_super_pkt_set_param *pkt)
+{
+  unsigned char *param2_ptr;
+  size_t param2_len, total_len;
+  struct sid_state *sstate;
+  int r;
+
+  if (len < sizeof(*pkt))
+    return error_packet_too_short(p, len, sizeof(*pkt));
+  param2_ptr = pkt->data;
+  param2_len = strlen(param2_ptr);
+  if (param2_len != pkt->param2_len)
+    return error_field_len_mismatch(p, "param2", param2_len, pkt->param2_len);
+  total_len = sizeof(*pkt) + param2_len;
+  if (total_len != len)
+    return error_bad_packet_length(p, len, total_len);
+
+  if ((r = get_peer_local_user(p)) < 0) {
+    return send_reply(p, r);
+  }
+  sstate = sid_state_get(p->cookie);
+
+  switch (pkt->b.id) {
+  case SSERV_CMD_CNTS_CHANGE_NAME:
+  case SSERV_CMD_CNTS_CHANGE_NAME_EN:
+  case SSERV_CMD_CNTS_CHANGE_AUTOREGISTER:
+  case SSERV_CMD_CNTS_CHANGE_TEAM_PASSWD:
+  case SSERV_CMD_CNTS_CHANGE_MANAGED:
+  case SSERV_CMD_CNTS_CHANGE_RUN_MANAGED:
+  case SSERV_CMD_CNTS_CHANGE_CLEAN_USERS:
+  case SSERV_CMD_CNTS_CHANGE_CLOSED:
+  case SSERV_CMD_CNTS_CHANGE_INVISIBLE:
+  case SSERV_CMD_CNTS_CHANGE_TIME_SKEW:
+  case SSERV_CMD_CNTS_CHANGE_TEAM_LOGIN:
+  case SSERV_CMD_CNTS_CHANGE_DEADLINE:
+  case SSERV_CMD_CNTS_CHANGE_USERS_HEADER:
+  case SSERV_CMD_CNTS_CHANGE_USERS_FOOTER:
+  case SSERV_CMD_CNTS_CHANGE_REGISTER_HEADER:
+  case SSERV_CMD_CNTS_CHANGE_REGISTER_FOOTER:
+  case SSERV_CMD_CNTS_CHANGE_TEAM_HEADER:
+  case SSERV_CMD_CNTS_CHANGE_TEAM_FOOTER:
+  case SSERV_CMD_CNTS_CHANGE_USERS_HEAD_STYLE:
+  case SSERV_CMD_CNTS_CHANGE_USERS_PAR_STYLE:
+  case SSERV_CMD_CNTS_CHANGE_USERS_TABLE_STYLE:
+  case SSERV_CMD_CNTS_CHANGE_USERS_VERB_STYLE:
+  case SSERV_CMD_CNTS_CHANGE_REGISTER_HEAD_STYLE:
+  case SSERV_CMD_CNTS_CHANGE_REGISTER_PAR_STYLE:
+  case SSERV_CMD_CNTS_CHANGE_REGISTER_TABLE_STYLE:
+  case SSERV_CMD_CNTS_CHANGE_TEAM_HEAD_STYLE:
+  case SSERV_CMD_CNTS_CHANGE_TEAM_PAR_STYLE:
+  case SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL:
+  case SSERV_CMD_CNTS_CHANGE_REGISTER_URL:
+  case SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL_FILE:
+  case SSERV_CMD_CNTS_CHANGE_TEAM_URL:
+  case SSERV_CMD_CNTS_CHANGE_STANDINGS_URL:
+  case SSERV_CMD_CNTS_CHANGE_PROBLEMS_URL:
+  case SSERV_CMD_CNTS_CHANGE_ROOT_DIR:
+  case SSERV_CMD_CNTS_CHANGE_CONF_DIR:
+  case SSERV_CMD_CNTS_DEFAULT_ACCESS:
+  case SSERV_CMD_CNTS_ADD_RULE:
+  case SSERV_CMD_CNTS_CHANGE_RULE:
+  case SSERV_CMD_CNTS_DELETE_RULE:
+  case SSERV_CMD_CNTS_UP_RULE:
+  case SSERV_CMD_CNTS_DOWN_RULE:
+  case SSERV_CMD_CNTS_DELETE_PERMISSION:
+  case SSERV_CMD_CNTS_ADD_PERMISSION:
+  case SSERV_CMD_CNTS_SAVE_PERMISSIONS:
+  case SSERV_CMD_CNTS_SAVE_FORM_FIELDS:
+  case SSERV_CMD_CNTS_SAVE_CONTESTANT_FIELDS:
+  case SSERV_CMD_CNTS_SAVE_RESERVE_FIELDS:
+  case SSERV_CMD_CNTS_SAVE_COACH_FIELDS:
+  case SSERV_CMD_CNTS_SAVE_ADVISOR_FIELDS:
+  case SSERV_CMD_CNTS_SAVE_GUEST_FIELDS:
+  case SSERV_CMD_CNTS_SAVE_USERS_HEADER:
+  case SSERV_CMD_CNTS_SAVE_USERS_FOOTER:
+  case SSERV_CMD_CNTS_SAVE_REGISTER_HEADER:
+  case SSERV_CMD_CNTS_SAVE_REGISTER_FOOTER:
+  case SSERV_CMD_CNTS_SAVE_TEAM_HEADER:
+  case SSERV_CMD_CNTS_SAVE_TEAM_FOOTER:
+  case SSERV_CMD_CNTS_SAVE_REGISTER_EMAIL_FILE:
+    r = super_html_set_contest_var(sstate, pkt->b.id, pkt->param1, param2_ptr,
+                                   pkt->param3, pkt->param4);
+    break;
+
+  default:
+    abort();
+  }
+
+  send_reply(p, r);
+}
+
 struct packet_handler
 {
   void (*func)();
 };
 static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
 {
-  [SSERV_CMD_PASS_FD] { cmd_pass_fd },
-  [SSERV_CMD_MAIN_PAGE] { cmd_main_page },
-  [SSERV_CMD_CONTEST_PAGE] { cmd_main_page },
-  [SSERV_CMD_VIEW_SERVE_LOG] { cmd_main_page },
-  [SSERV_CMD_VIEW_RUN_LOG] { cmd_main_page },
-  [SSERV_CMD_VIEW_CONTEST_XML] { cmd_main_page },
-  [SSERV_CMD_VIEW_SERVE_CFG] { cmd_main_page },
-  [SSERV_CMD_OPEN_CONTEST] { cmd_simple_command },
-  [SSERV_CMD_CLOSE_CONTEST] { cmd_simple_command },
-  [SSERV_CMD_INVISIBLE_CONTEST] { cmd_simple_command },
-  [SSERV_CMD_VISIBLE_CONTEST] { cmd_simple_command },
+  [SSERV_CMD_PASS_FD] = { cmd_pass_fd },
+  [SSERV_CMD_MAIN_PAGE] = { cmd_main_page },
+  [SSERV_CMD_CONTEST_PAGE] = { cmd_main_page },
+  [SSERV_CMD_VIEW_SERVE_LOG] = { cmd_main_page },
+  [SSERV_CMD_VIEW_RUN_LOG] = { cmd_main_page },
+  [SSERV_CMD_VIEW_CONTEST_XML] = { cmd_main_page },
+  [SSERV_CMD_VIEW_SERVE_CFG] = { cmd_main_page },
+  [SSERV_CMD_OPEN_CONTEST] = { cmd_simple_command },
+  [SSERV_CMD_CLOSE_CONTEST] = { cmd_simple_command },
+  [SSERV_CMD_INVISIBLE_CONTEST] = { cmd_simple_command },
+  [SSERV_CMD_VISIBLE_CONTEST] = { cmd_simple_command },
+  [SSERV_CMD_SHOW_HIDDEN] = { cmd_simple_top_command },
+  [SSERV_CMD_HIDE_HIDDEN] = { cmd_simple_top_command },
+  [SSERV_CMD_SHOW_CLOSED] = { cmd_simple_top_command },
+  [SSERV_CMD_HIDE_CLOSED] = { cmd_simple_top_command },
+  [SSERV_CMD_SHOW_UNMNG] = { cmd_simple_top_command },
+  [SSERV_CMD_HIDE_UNMNG] = { cmd_simple_top_command },
+  [SSERV_CMD_CREATE_CONTEST] = { cmd_main_page },
+  [SSERV_CMD_CREATE_CONTEST_2] = { cmd_create_contest },
+  [SSERV_CMD_EDIT_CURRENT_CONTEST] = { cmd_main_page },
+  [SSERV_CMD_CNTS_BASIC_VIEW] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_ADVANCED_VIEW] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_SHOW_HTML_HEADERS] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_HIDE_HTML_HEADERS] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_SHOW_HTML_ATTRS] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_HIDE_HTML_ATTRS] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_FORGET] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_SHOW_PATHS] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_HIDE_PATHS] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_SHOW_ACCESS_RULES] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_HIDE_ACCESS_RULES] = { cmd_simple_top_command },
+  [SSERV_CMD_EDIT_REGISTER_ACCESS] = { cmd_main_page },
+  [SSERV_CMD_EDIT_USERS_ACCESS] = { cmd_main_page },
+  [SSERV_CMD_EDIT_MASTER_ACCESS] = { cmd_main_page },
+  [SSERV_CMD_EDIT_JUDGE_ACCESS] = { cmd_main_page },
+  [SSERV_CMD_EDIT_TEAM_ACCESS] = { cmd_main_page },
+  [SSERV_CMD_EDIT_SERVE_CONTROL_ACCESS] = { cmd_main_page },
+  [SSERV_CMD_CNTS_SHOW_PERMISSIONS] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_HIDE_PERMISSIONS] = { cmd_simple_top_command },
+  [SSERV_CMD_EDIT_CONTEST_XML] = { cmd_main_page },
+  [SSERV_CMD_CNTS_EDIT_PERMISSION] = { cmd_main_page },
+  [SSERV_CMD_CNTS_SHOW_FORM_FIELDS] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_HIDE_FORM_FIELDS] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_EDIT_FORM_FIELDS] = { cmd_main_page },
+  [SSERV_CMD_CNTS_EDIT_CONTESTANT_FIELDS] = { cmd_main_page },
+  [SSERV_CMD_CNTS_EDIT_RESERVE_FIELDS] = { cmd_main_page },
+  [SSERV_CMD_CNTS_EDIT_COACH_FIELDS] = { cmd_main_page },
+  [SSERV_CMD_CNTS_EDIT_ADVISOR_FIELDS] = { cmd_main_page },
+  [SSERV_CMD_CNTS_EDIT_GUEST_FIELDS] = { cmd_main_page },
+  [SSERV_CMD_CNTS_EDIT_USERS_HEADER] = { cmd_main_page },
+  [SSERV_CMD_CNTS_EDIT_USERS_FOOTER] = { cmd_main_page },
+  [SSERV_CMD_CNTS_EDIT_REGISTER_HEADER] = { cmd_main_page },
+  [SSERV_CMD_CNTS_EDIT_REGISTER_FOOTER] = { cmd_main_page },
+  [SSERV_CMD_CNTS_EDIT_TEAM_HEADER] = { cmd_main_page },
+  [SSERV_CMD_CNTS_EDIT_TEAM_FOOTER] = { cmd_main_page },
+  [SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE] = { cmd_main_page },
+  [SSERV_CMD_CNTS_CLEAR_NAME] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_NAME_EN] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_DEADLINE] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_USERS_HEADER] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_USERS_FOOTER] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_TEAM_HEADER] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_USERS_HEAD_STYLE] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_USERS_PAR_STYLE] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_USERS_TABLE_STYLE] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_USERS_VERB_STYLE] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_REGISTER_HEAD_STYLE] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_REGISTER_PAR_STYLE] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_REGISTER_TABLE_STYLE] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_TEAM_HEAD_STYLE] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_TEAM_PAR_STYLE] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_REGISTER_URL] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_TEAM_URL] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_STANDINGS_URL] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_PROBLEMS_URL] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_ROOT_DIR] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_CONF_DIR] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CHANGE_NAME] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_NAME_EN] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_AUTOREGISTER] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_TEAM_PASSWD] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_MANAGED] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_RUN_MANAGED] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_CLEAN_USERS] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_CLOSED] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_INVISIBLE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_TIME_SKEW] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_TEAM_LOGIN] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_DEADLINE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_USERS_HEADER] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_USERS_FOOTER] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_REGISTER_HEADER] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_REGISTER_FOOTER] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_TEAM_HEADER] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_TEAM_FOOTER] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_USERS_HEAD_STYLE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_USERS_PAR_STYLE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_USERS_TABLE_STYLE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_USERS_VERB_STYLE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_REGISTER_HEAD_STYLE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_REGISTER_PAR_STYLE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_REGISTER_TABLE_STYLE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_TEAM_HEAD_STYLE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_TEAM_PAR_STYLE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_REGISTER_URL] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL_FILE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_TEAM_URL] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_STANDINGS_URL] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_PROBLEMS_URL] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_ROOT_DIR] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_CONF_DIR] = { cmd_set_value },
+  [SSERV_CMD_CNTS_DEFAULT_ACCESS] = { cmd_set_value },
+  [SSERV_CMD_CNTS_ADD_RULE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_RULE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_DELETE_RULE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_UP_RULE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_DOWN_RULE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_DELETE_PERMISSION] = { cmd_set_value },
+  [SSERV_CMD_CNTS_ADD_PERMISSION] = { cmd_set_value },
+  [SSERV_CMD_CNTS_SAVE_PERMISSIONS] = { cmd_set_value },
+  [SSERV_CMD_CNTS_SAVE_FORM_FIELDS] = { cmd_set_value },
+  [SSERV_CMD_CNTS_SAVE_CONTESTANT_FIELDS] = { cmd_set_value },
+  [SSERV_CMD_CNTS_SAVE_RESERVE_FIELDS] = { cmd_set_value },
+  [SSERV_CMD_CNTS_SAVE_COACH_FIELDS] = { cmd_set_value },
+  [SSERV_CMD_CNTS_SAVE_ADVISOR_FIELDS] = { cmd_set_value },
+  [SSERV_CMD_CNTS_SAVE_GUEST_FIELDS] = { cmd_set_value },
+  [SSERV_CMD_CNTS_SAVE_USERS_HEADER] = { cmd_set_value },
+  [SSERV_CMD_CNTS_SAVE_USERS_FOOTER] = { cmd_set_value },
+  [SSERV_CMD_CNTS_SAVE_REGISTER_HEADER] = { cmd_set_value },
+  [SSERV_CMD_CNTS_SAVE_REGISTER_FOOTER] = { cmd_set_value },
+  [SSERV_CMD_CNTS_SAVE_TEAM_HEADER] = { cmd_set_value },
+  [SSERV_CMD_CNTS_SAVE_TEAM_FOOTER] = { cmd_set_value },
+  [SSERV_CMD_CNTS_SAVE_REGISTER_EMAIL_FILE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CLEAR_USERS_HEADER_TEXT] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CLEAR_USERS_FOOTER_TEXT] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER_TEXT] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER_TEXT] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CLEAR_TEAM_HEADER_TEXT] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER_TEXT] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT] = { cmd_set_value },
+  [SSERV_CMD_CNTS_COMMIT] = { cmd_main_page },
 };
 
 static void
@@ -1675,6 +2302,12 @@ do_loop(void)
 
     while (1) {
       current_time = time(0);
+
+      if (sid_state_last_check_time < current_time + SID_STATE_CHECK_INTERVAL) {
+        sid_state_cleanup();
+        sid_state_last_check_time = current_time;
+      }
+
       fd_max = -1;
       FD_ZERO(&rset);
       FD_ZERO(&wset);
