@@ -3074,25 +3074,7 @@ prepare(char const *config_file, int flags, int mode, char const *opts,
   cond_vars[5].val.tag = PARSECFG_T_LONG;
   cond_vars[5].val.l.val = managed_flag;
 
-  if ((flags & PREPARE_USE_CPP)) {
-    FILE   *f = 0;
-    path_t  cmd;
-    /* invoke a preprocessor. */
-    /* FIXME: check for preprocessor invokation variants? */
-    /* FIXME: use task_New, etc...? */
-    pathcpy(cmd, "cpp ");
-    pathcat(cmd, opts);
-    pathcat(cmd, " ");
-    pathcat(cmd, config_file);
-    if (!(f = popen(cmd, "r"))) {
-      err("popen(\"%s\") failed: %s", cmd, os_ErrorMsg());
-      return -1;
-    }
-    config = parse_param(NULL, f, params, 1, ncond_var, cond_vars);
-    f = 0;
-  } else {
-    config = parse_param(config_file, 0, params, 1, ncond_var, cond_vars);
-  }
+  config = parse_param(config_file, 0, params, 1, ncond_var, cond_vars);
   if (!config) return -1;
   write_log(0, LOG_INFO, "Configuration file parsed ok");
   if (collect_sections(mode) < 0) return -1;
