@@ -16,6 +16,8 @@ then
     PATH="${GCJDIR}:${PATH}"
 fi
 
+[ x"$1" = x-f ] && echo -n "GNU Java (GCJ) "
+
 "${GCJRUN}" --version | grep gcj | gawk '{ print $3; }'
 [ $? != 0 -a $? != 1 ] && exit 1
 exit 0

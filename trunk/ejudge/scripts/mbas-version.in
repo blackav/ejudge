@@ -16,4 +16,6 @@ then
   PATH="${MBASDIR}/bin:${PATH}"
 fi
 
+[ x"$1" = x-f ] && echo -n "Mono Visual Basic "
+
 "${MBASRUN}" -about 2>&1 | head -1 | awk '{print $3;}'

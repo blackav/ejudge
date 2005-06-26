@@ -10,4 +10,6 @@ then
   exit 1
 fi
 
+[ x"$1" = x-f ] && echo -n "YaBasic "
+
 "${YABASICPATH}" -help 2>&1 | grep "yabasic version" | gawk -F '[ ,]' '{ print $5; }'

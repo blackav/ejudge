@@ -16,6 +16,8 @@ then
     PATH="${GPROLOGDIR}:${PATH}"
 fi
 
+[ x"$1" = x-f ] && echo -n "GNU Prolog "
+
 "${GPLCRUN}" --version 2>&1 | grep "Prolog compiler" | gawk '{ print $5; }'
 [ $? != 0 -a $? != 1 ] && exit 1
 exit 0

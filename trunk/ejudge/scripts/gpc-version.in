@@ -16,6 +16,8 @@ then
     PATH="${GPCDIR}:${PATH}"
 fi
 
+[ x"$1" = x-f ] && echo -n "GNU Pascal "
+
 "${GPCRUN}" --version | gawk '{ print $1; }'
 [ $? != 0 -a $? != 1 ] && exit 1
 exit 0
