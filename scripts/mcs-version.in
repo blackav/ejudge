@@ -16,4 +16,6 @@ then
   PATH="${MCSDIR}/bin:${PATH}"
 fi
 
+[ x"$1" = x-f ] && echo -n "Mono C# "
+
 "${MCSRUN}" --version 2>&1 | grep "version" | awk '{gsub(",","",$5); print $5;}'

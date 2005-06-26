@@ -10,4 +10,6 @@ then
   exit 1
 fi
 
+[ x"$1" = x-f ] && echo -n "Mz Scheme "
+
 "${MZSCHEMEPATH}" --version 2>&1 | grep "MzScheme version" | gawk -v FS="[ ,]" '{ print $5; }'

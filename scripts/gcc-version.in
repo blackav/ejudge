@@ -16,4 +16,6 @@ then
     PATH="${GCCDIR}:${PATH}"
 fi
 
+[ x"$1" = x-f ] && echo -n "GNU C "
+
 "${GCCRUN}" -v 2>&1 | grep "gcc version" | sed 's/gcc version //g'

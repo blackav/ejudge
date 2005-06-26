@@ -10,4 +10,6 @@ then
   exit 1
 fi
 
+[ x"$1" = x-f ] && echo -n "Perl "
+
 "${PERLPATH}" --version 2>&1 | grep "This is perl" | gawk -v FS="[ v]" '{ print $5; }'

@@ -16,6 +16,8 @@ then
     PATH="${FPCDIR}:${PATH}"
 fi
 
+[ x"$1" = x-f ] && echo -n "Free Pascal "
+
 "${FPCRUN}" -h 2>/dev/null | grep "Free Pascal Compiler" | gawk '{ print $5; }'
 [ $? != 0 -a $? != 1 ] && exit 1
 exit 0
