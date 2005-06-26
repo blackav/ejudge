@@ -1,0 +1,21 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+
+FPCRUN="@ac_cv_contest_fpc@"
+FPCDIR="@ac_cv_contest_fpc_dir@"
+
+if [ x"${FPCRUN}" = x -o x"${FPCRUN}" = xno ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"${FPCDIR}" != x ]
+then
+    PATH="${FPCDIR}:${PATH}"
+fi
+
+"${FPCRUN}" -h 2>/dev/null | grep "Free Pascal Compiler" | gawk '{ print $5; }'
+[ $? != 0 -a $? != 1 ] && exit 1
+exit 0

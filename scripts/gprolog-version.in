@@ -1,0 +1,21 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+
+GPLCRUN="@ac_cv_contest_gprolog@"
+GPROLOGDIR="@ac_cv_contest_gprolog_dir@"
+
+if [ x"${GPLCRUN}" = x -o x"${GPLCRUN}" = xno ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"${GPROLOGDIR}" != x ]
+then
+    PATH="${GPROLOGDIR}:${PATH}"
+fi
+
+"${GPLCRUN}" --version 2>&1 | grep "Prolog compiler" | gawk '{ print $5; }'
+[ $? != 0 -a $? != 1 ] && exit 1
+exit 0

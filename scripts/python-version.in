@@ -1,0 +1,13 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+
+PYTHONPATH="@ac_cv_contest_python_path@"
+
+if [ x"${PYTHONPATH}" = x -o x"${PYTHONPATH}" = xno ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+"${PYTHONPATH}" -V 2>&1 | gawk '{ print $2; }'

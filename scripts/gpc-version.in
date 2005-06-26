@@ -1,0 +1,21 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+
+GPCRUN="@ac_cv_contest_gpc@"
+GPCDIR="@ac_cv_contest_gpc_dir@"
+
+if [ x"${GPCRUN}" = x -o x"${GPCRUN}" = xno ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"${GPCDIR}" != x ]
+then
+    PATH="${GPCDIR}:${PATH}"
+fi
+
+"${GPCRUN}" --version | gawk '{ print $1; }'
+[ $? != 0 -a $? != 1 ] && exit 1
+exit 0

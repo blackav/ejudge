@@ -1,0 +1,19 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+
+GPPRUN="@ac_cv_contest_gpp@"
+GPPDIR="@ac_cv_contest_gpp_dir@"
+
+if [ x"${GPPRUN}" = x -o x"${GPPRUN}" = xno ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"${GPPDIR}" != x ]
+then
+    PATH="${GPPDIR}:${PATH}"
+fi
+
+"${GPPRUN}" -v 2>&1 | grep "gcc version" | sed 's/gcc version //g'
