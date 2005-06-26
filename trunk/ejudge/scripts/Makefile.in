@@ -2,7 +2,7 @@
 # $Id$
 # @configure_input@
 
-# Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+# Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -47,19 +47,31 @@ LIBCAP_LIB_OPT=@ac_cv_libcap_lib_opt@
 
 SCRIPTS = \
  dcc\
+ dcc-version\
  fpc\
+ fpc-version\
  g++\
+ g++-version\
  g77\
+ g77-version\
  gcc\
+ gcc-version\
  gcj\
+ gcj-version\
  gpc\
+ gpc-version\
  gprolog\
+ gprolog-version\
  mzscheme\
+ mzscheme-version\
  perl\
+ perl-version\
  python\
+ python-version\
  yabasic\
  festival\
  javac\
+ javac-version\
  runjava
 
 POLICIES = \
