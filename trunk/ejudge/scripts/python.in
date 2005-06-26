@@ -1,15 +1,23 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2003,2004 Alexander Chernov
+# Copyright (c) 2003-2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
 
 # This is a `compilation' script for the Python language.
 # The idea is to append "#!${PYTHONPATH}" string
 # to the beginning of the file.
 # Usage: python <input> <output>
 
+# using EJUDGE_FLAGS we may pass additional flags
+
 PYTHONPATH="@ac_cv_contest_python_path@"
 
-echo "#!${PYTHONPATH} -W ignore" > $2
+if [ x"${PYTHONPATH}" = x -o x"${PYTHONPATH}" = xno ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+echo "#!${PYTHONPATH} -W ignore ${EJUDGE_FLAGS}" > $2
 echo >> $2
 cat $1 >> $2
 chmod +x $2

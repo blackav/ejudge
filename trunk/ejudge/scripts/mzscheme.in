@@ -1,11 +1,13 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2003,2004 Alexander Chernov
+# Copyright (c) 2003-2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
 
 # This is a `compilation' script for Dr. Scheme language.
 # The idea is to append "#!${MZSCHEMEPATH} -qr" string
 # to the beginning of the file.
 # Usage: mzscheme <input> <output>
+
+# using EJUDGE_FLAGS we may pass additional flags
 
 MZSCHEMEPATH="@ac_cv_contest_mzscheme_path@"
 
@@ -15,7 +17,7 @@ then
   exit 1
 fi
 
-echo "#!${MZSCHEMEPATH} -qr" > $2
+echo "#!${MZSCHEMEPATH} -qr ${EJUDGE_FLAGS}" > $2
 echo >> $2
 cat $1 >> $2
 chmod +x $2
