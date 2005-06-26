@@ -1,0 +1,19 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+
+MCSRUN="@ac_cv_contest_mcs@"
+MCSDIR="@ac_cv_contest_mono_dir@"
+
+if [ x"${MCSRUN}" = x -o x"${MCSRUN}" = xno ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"${MCSDIR}" != x ]
+then
+  PATH="${MCSDIR}/bin:${PATH}"
+fi
+
+"${MCSRUN}" --version 2>&1 | grep "version" | awk '{gsub(",","",$5); print $5;}'

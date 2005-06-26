@@ -1,0 +1,21 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+
+GCJRUN="@ac_cv_contest_gcj@"
+GCJDIR="@ac_cv_contest_gcj_dir@"
+
+if [ x"${GCJRUN}" = x -o x"${GCJRUN}" = xno ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"${GCJDIR}" != x ]
+then
+    PATH="${GCJDIR}:${PATH}"
+fi
+
+"${GCJRUN}" --version | grep gcj | gawk '{ print $3; }'
+[ $? != 0 -a $? != 1 ] && exit 1
+exit 0

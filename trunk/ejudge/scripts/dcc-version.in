@@ -1,0 +1,21 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+
+DCCRUN="@ac_cv_contest_dcc@"
+DCCDIR="@ac_cv_contest_dcc_dir@"
+
+if [ x"${DCCRUN}" = x -o x"${DCCRUN}" = xno ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"${DCCDIR}" != x ]
+then
+    PATH="${DCCDIR}:${PATH}"
+    KYLIXDIR="${DCCDIR}"
+    export KYLIXDIR
+fi
+
+"${DCCRUN}" -h 2>/dev/null | grep "Borland Delphi" | gawk '{ print $6; }'

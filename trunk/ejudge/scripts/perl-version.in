@@ -1,0 +1,13 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+
+PERLPATH="@ac_cv_contest_perl_path@"
+
+if [ x"${PERLPATH}" = x -o x"${PERLPATH}" = xno ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+"${PERLPATH}" --version 2>&1 | grep "This is perl" | gawk -v FS="[ v]" '{ print $5; }'

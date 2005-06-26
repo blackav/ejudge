@@ -1,0 +1,13 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+
+YABASICPATH="@ac_cv_contest_yabasic_path@"
+
+if [ x"${YABASICPATH}" = x -o x"${YABASICPATH}" = xno ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+"${YABASICPATH}" -help 2>&1 | grep "yabasic version" | gawk -F '[ ,]' '{ print $5; }'

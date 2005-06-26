@@ -1,0 +1,20 @@
+#!/bin/sh
+# $Id$
+# Copyright (c) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+
+JAVARUN="@ac_cv_contest_java@"
+JAVACRUN="@ac_cv_contest_javac@"
+JAVADIR="@ac_cv_contest_java_dir@"
+JAVAVER="@ac_cv_contest_java_version@"
+
+if [ x"${JAVACRUN}" = x -o x"${JAVACRUN}" = xno ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+JAVA_HOME="${JAVADIR}"
+PATH="${JAVA_HOME}/bin:${PATH}"
+export JAVA_HOME PATH
+
+"${JAVARUN}" -version 2>&1 | grep "java version" | sed 's/^.*"\(.*\)"$/\1/g'
