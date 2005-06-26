@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2002-2004 Alexander Chernov
+# Copyright (c) 2002-2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
 
 GCJRUN="@ac_cv_contest_gcj@"
 GCJDIR="@ac_cv_contest_gcj_dir@"
@@ -17,4 +17,4 @@ then
 fi
 
 mv "$1" Main.java
-exec "${GCJRUN}" --main=Main -s -O2 Main.java -o "$2"
+exec "${GCJRUN}" ${EJUDGE_FLAGS} --main=Main -s -O2 Main.java -o "$2"

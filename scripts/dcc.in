@@ -1,6 +1,6 @@
 #!/bin/sh
 # $Id$
-# Copyright (c) 2003,2004 Alexander Chernov
+# Copyright (c) 2003-2005 Alexander Chernov <cher@unicorn.cmc.msu.ru>
 
 DCCRUN="@ac_cv_contest_dcc@"
 DCCDIR="@ac_cv_contest_dcc_dir@"
@@ -18,4 +18,4 @@ then
     export KYLIXDIR
 fi
 
-exec "${DCCRUN}" -$I+,Q-,R-,X+ -Q "$1"
+exec "${DCCRUN}" ${EJUDGE_FLAGS:- -$I+,Q-,R-,X+} -Q "$1"
