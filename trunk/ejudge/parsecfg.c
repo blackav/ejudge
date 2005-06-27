@@ -19,6 +19,7 @@
 #include "pathutl.h"
 
 #include <reuse/xalloc.h>
+#include <reuse/logger.h>
 
 #include <stdio.h>
 #include <ctype.h>
@@ -1179,6 +1180,58 @@ param_make_global_section(struct config_section_info *params)
   return cfg;
 }
 
+struct generic_section_config *
+param_free(struct generic_section_config *cfg,
+           const struct config_section_info *params)
+{
+  struct generic_section_config *p, *q;
+  int i;
+
+  for (p = cfg; p; p = q) {
+    q = p->next;
+
+    for (i = 0; params[i].name; i++)
+      if (!strcmp(p->name, params[i].name))
+        break;
+    ASSERT(params[i].name);
+
+    if (params[i].free_func) (*params[i].free_func)(p);
+    else {
+      memset(p, 0, params[i].size);
+      xfree(p);
+    }
+  }
+
+  return 0;
+}
+
+struct generic_section_config *
+param_alloc_section(const unsigned char *name,
+                    const struct config_section_info *params)
+{
+  int i;
+  struct generic_section_config *p;
+
+  for (i = 0; params[i].name; i++)
+    if (!strcmp(name, params[i].name))
+      break;
+  ASSERT(params[i].name);
+
+  p = (typeof(p)) xcalloc(1, params[i].size);
+  snprintf(p->name, sizeof(p->name), "%s", name);
+  return p;
+}
+
+struct generic_section_config *
+param_merge(struct generic_section_config *s1,
+            struct generic_section_config *s2)
+{
+  struct generic_section_config **ps = &s1;
+
+  for (; *ps; ps = &(*ps)->next);
+  *ps = s2;
+  return s1;
+}
 
 int sarray_len(char **a)
 {
