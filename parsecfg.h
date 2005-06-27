@@ -3,7 +3,7 @@
 #ifndef __PARSECFG_H__
 #define __PARSECFG_H__
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,6 +39,7 @@ struct config_section_info
   struct config_parse_info *info;
   int                      *pcounter;
   void (*init_func)(struct generic_section_config *);
+  void (*free_func)(struct generic_section_config *);
 };
 
 enum
@@ -76,6 +77,15 @@ struct generic_section_config *parse_param(char const *path,
                                            int nvar,
                                            cfg_cond_var_t *pvar);
 struct generic_section_config *param_make_global_section(struct config_section_info *params);
+
+struct generic_section_config *param_free(struct generic_section_config *,
+                                          const struct config_section_info *);
+
+struct generic_section_config *param_merge(struct generic_section_config *s1,
+                                           struct generic_section_config *s2);
+
+struct generic_section_config *param_alloc_section(const unsigned char *name,
+                                                   const struct config_section_info *);
 
 int    sarray_len(char **);
 char **sarray_merge_pf(char **, char **);
