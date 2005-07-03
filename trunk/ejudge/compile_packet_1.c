@@ -19,6 +19,7 @@
 #include "compile_packet_priv.h"
 #include "pathutl.h"
 #include "prepare.h"
+#include "prepare_vars.h"
 #include "runlog.h"
 
 #include <reuse/integral.h>

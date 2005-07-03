@@ -23,6 +23,7 @@
 #include "pathutl.h"
 #include "teamdb.h"
 #include "prepare.h"
+#include "prepare_vars.h"
 #include "misctext.h"
 
 #include <reuse/logger.h>

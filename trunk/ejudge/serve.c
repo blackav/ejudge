@@ -22,6 +22,7 @@
 #include "parsecfg.h"
 #include "teamdb.h"
 #include "prepare.h"
+#include "prepare_vars.h"
 #include "html.h"
 #include "clarlog.h"
 #include "protocol.h"

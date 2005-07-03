@@ -20,6 +20,7 @@
 #include "filter_tree.h"
 #include "filter_eval.h"
 #include "prepare.h"
+#include "prepare_vars.h"
 #include "protocol.h"
 #include "misctext.h"
 #include "teamdb.h"

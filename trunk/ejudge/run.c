@@ -18,6 +18,7 @@
 #include "config.h"
 
 #include "prepare.h"
+#include "prepare_vars.h"
 #include "runlog.h"
 #include "cr_serialize.h"
 #include "testinfo.h"
