@@ -17,6 +17,7 @@
 
 #include "archive_paths.h"
 #include "prepare.h"
+#include "prepare_vars.h"
 #include "fileutl.h"
 #include "pathutl.h"
 

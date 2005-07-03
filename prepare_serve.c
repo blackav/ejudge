@@ -18,6 +18,7 @@
 #include "config.h"
 
 #include "prepare.h"
+#include "prepare_vars.h"
 #include "settings.h"
 #include "varsubst.h"
 #include "version.h"

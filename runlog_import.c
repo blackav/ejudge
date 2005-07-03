@@ -18,6 +18,7 @@
 #include "runlog.h"
 #include "misctext.h"
 #include "prepare.h"
+#include "prepare_vars.h"
 #include "teamdb.h"
 #include "archive_paths.h"
 

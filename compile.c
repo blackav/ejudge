@@ -21,6 +21,7 @@
  */
 
 #include "prepare.h"
+#include "prepare_vars.h"
 #include "pathutl.h"
 #include "parsecfg.h"
 #include "fileutl.h"

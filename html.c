@@ -26,6 +26,7 @@
 #include "clarlog.h"
 #include "teamdb.h"
 #include "prepare.h"
+#include "prepare_vars.h"
 #include "base64.h"
 #include "sformat.h"
 #include "protocol.h"
