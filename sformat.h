@@ -34,13 +34,13 @@ struct sformat_extra_data
 };
 
 int sformat_message(char *, size_t, char const *,
-                    struct section_global_data *glob_data,
-                    struct section_problem_data *prob_data,
-                    struct section_language_data *lang_data,
-                    struct section_tester_data *tester_data,
-                    struct teamdb_export *team_data,
-                    struct userlist_user *user_data,
-                    struct contest_desc *cnts_data,
-                    struct sformat_extra_data *extra_data);
+                    const struct section_global_data *glob_data,
+                    const struct section_problem_data *prob_data,
+                    const struct section_language_data *lang_data,
+                    const struct section_tester_data *tester_data,
+                    const struct teamdb_export *team_data,
+                    const struct userlist_user *user_data,
+                    const struct contest_desc *cnts_data,
+                    const struct sformat_extra_data *extra_data);
 
 #endif /* __SFORMAT_H__ */
