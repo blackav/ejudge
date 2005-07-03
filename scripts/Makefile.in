@@ -69,6 +69,7 @@ SCRIPTS = \
  python\
  python-version\
  yabasic\
+ yabasic-version\
  festival\
  javac\
  javac-version\
