@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 #include "runlog.h"
 #include "protocol.h"
 #include "prepare.h"
+#include "prepare_vars.h"
 #include "archive_paths.h"
 #include "fileutl.h"
 
