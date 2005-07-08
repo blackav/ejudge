@@ -355,7 +355,7 @@ main(int argc, char **argv)
     err("cannot open server connection: %s", os_ErrorMsg());
     return 1;
   }
-  if ((r = userlist_clnt_admin_process(server_conn)) < 0) {
+  if ((r = userlist_clnt_admin_process(server_conn, 0, 0, 0)) < 0) {
     err("cannot become admin process: %s", userlist_strerror(-r));
     return 1;
   }
