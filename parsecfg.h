@@ -17,6 +17,8 @@
  * GNU General Public License for more details.
  */
 
+#include <stdio.h>
+
 struct generic_section_config
 {
   struct generic_section_config *next;
@@ -71,11 +73,12 @@ typedef struct cfg_cond_var
 } cfg_cond_var_t;
 
 struct generic_section_config *parse_param(char const *path,
-                                           void *f, /* actually, FILE * */
+                                           FILE *f,
                                            struct config_section_info *,
                                            int quiet_flag,
                                            int nvar,
-                                           cfg_cond_var_t *pvar);
+                                           cfg_cond_var_t *pvar,
+                                           int *p_cond_count);
 struct generic_section_config *param_make_global_section(struct config_section_info *params);
 
 struct generic_section_config *param_free(struct generic_section_config *,
