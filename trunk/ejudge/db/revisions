@@ -1886,3 +1886,12 @@ team_extra.c 1 3 611369
 varsubst.c 1 2 305885
 master.c 1 68 7069319
 team.c 1 51 3812834
+parsecfg.h 1 12 211204
+userlist_clnt.h 1 24 644978
+clean-users.c 1 9 998937
+edit-userlist.c 1 22 7327436
+ejudge-setup.c 1 13 9060415
+userlist-server.c 1 55 14797931
+parsecfg.c 1 21 2392888
+teamdb.c 1 30 1087939
+userlist_clnt/admin_process.c 1 4 187172
