@@ -4411,6 +4411,10 @@ cmd_admin_process(struct client_state *p, int pkt_len,
   struct xml_tree *ut = 0;
   int i;
   unsigned char logbuf[1024];
+  struct userlist_user *u = 0;
+  unsigned char *login, *name, *login_ptr, *name_ptr;
+  size_t login_len, name_len, out_len;
+  struct userlist_pk_uid_2 *out;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -4451,12 +4455,33 @@ cmd_admin_process(struct client_state *p, int pkt_len,
     return;
   }
 
+  u = userlist->user_map[i];
   p->user_id = i;
 
   snprintf(logbuf, sizeof(logbuf), "ADMIN_PROCESS: %d, %d, %d",
            p->peer_pid, p->peer_uid, p->user_id);
-  info("%s -> OK", logbuf);
-  send_reply(p, ULS_OK);
+
+  login = u->login;
+  if (!login) login = "";
+  name = u->name;
+  if (!name || !*name) name = u->login;
+  login_len = strlen(login);
+  name_len = strlen(name);
+
+  out_len = sizeof(*out) + login_len + name_len;
+  out = (struct userlist_pk_uid_2 *) alloca(out_len);
+  memset(out, 0, out_len);
+  login_ptr = out->data;
+  name_ptr = login_ptr + login_len + 1;
+
+  out->reply_id = ULS_UID_2;
+  out->uid = p->user_id;
+  out->priv_level = p->priv_level;
+  out->login_len = login_len;
+  out->name_len = name_len;
+  strcpy(login_ptr, login);
+  strcpy(name_ptr, name);
+  enqueue_reply_to_client(p, out_len, out);
 }
 
 static void
