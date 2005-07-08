@@ -3403,7 +3403,7 @@ main(int argc, char **argv)
             argv[0], os_ErrorMsg());
     return 1;
   }
-  if ((r = userlist_clnt_admin_process(server_conn)) < 0) {
+  if ((r = userlist_clnt_admin_process(server_conn, 0, 0, 0)) < 0) {
     fprintf(stderr, "%s: cannot become admin process: %s\n",
             argv[0], userlist_strerror(-r));
     return 1;
