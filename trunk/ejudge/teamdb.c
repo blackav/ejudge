@@ -121,7 +121,7 @@ open_connection(void)
     err("teamdb_open_client: connect to server failed");
     return -1;
   }
-  if ((r = userlist_clnt_admin_process(server_conn)) < 0) {
+  if ((r = userlist_clnt_admin_process(server_conn, 0, 0, 0)) < 0) {
     err("teamdb_open_client: cannot became an admin process: %s",
         userlist_strerror(-r));
     return -1;
