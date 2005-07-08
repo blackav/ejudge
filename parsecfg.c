@@ -1021,11 +1021,12 @@ copy_param(void *cfg, struct config_parse_info *params,
 
 struct generic_section_config *
 parse_param(char const *path,
-            void *vf,
+            FILE *f,
             struct config_section_info *params,
             int quiet_flag,
             int _ncond_var,
-            cfg_cond_var_t *_cond_vars)
+            cfg_cond_var_t *_cond_vars,
+            int *p_cond_count)
 {
   struct generic_section_config  *cfg = NULL;
   struct generic_section_config **psect, *sect;
@@ -1035,12 +1036,12 @@ parse_param(char const *path,
   char           varname[32];
   char           varvalue[1024];
   int            c, sindex;
-  FILE          *f = (FILE *) vf;
 
   ncond_var = _ncond_var;
   cond_vars = _cond_vars;
   cond_stack = 0;
   output_enabled = 1;
+  if (p_cond_count) *p_cond_count = 0;
 
   /* found the global section description */
   for (sindex = 0; params[sindex].name; sindex++) {
@@ -1073,6 +1074,7 @@ parse_param(char const *path,
     }
     if (c == '@') {
       if (handle_conditional(f) < 0) goto cleanup;
+      if (p_cond_count) (*p_cond_count)++;
       continue;
     }
     if (!output_enabled) {
@@ -1124,6 +1126,7 @@ parse_param(char const *path,
       }
       if (c == '@') {
         if (handle_conditional(f) < 0) goto cleanup;
+        if (p_cond_count) (*p_cond_count)++;
         continue;
       }
       if (!output_enabled) {
@@ -1151,7 +1154,7 @@ parse_param(char const *path,
 
  cleanup:
   xfree(cfg);
-  if (vf && f) fclose(f);
+  if (f) fclose(f);
   return NULL;
 }
 
@@ -1186,12 +1189,15 @@ param_free(struct generic_section_config *cfg,
 {
   struct generic_section_config *p, *q;
   int i;
+  unsigned char *name;
 
   for (p = cfg; p; p = q) {
     q = p->next;
 
+    name = p->name;
+    if (!name[0]) name = "global";
     for (i = 0; params[i].name; i++)
-      if (!strcmp(p->name, params[i].name))
+      if (!strcmp(name, params[i].name))
         break;
     ASSERT(params[i].name);
 
