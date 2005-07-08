@@ -2340,6 +2340,7 @@ generate_serve_cfg(FILE *f)
         "use_corr = 1\n"
         "corr_dir = \"%Ps\"\n"
         "real_time_limit = 30\n"
+        "check_cmd = \"check_%lPs\"\n"
         "\n"
         "[problem]\n"
         "short_name = \"A\"\n"
@@ -2362,9 +2363,8 @@ generate_serve_cfg(FILE *f)
         "abstract\n"
         "no_core_dump\n"
         "kill_signal = KILL\n"
-        "max_vm_size = 8388608\n"
-        "clear_env\n"
-        "check_cmd = \"check_%lPs\"\n",
+        "max_vm_size = 64M\n"
+        "clear_env\n",
         f);
 #if CONF_HAS_LIBCAP - 0 == 1
   fprintf(f, "start_cmd = \"capexec\"\n");
@@ -2384,9 +2384,8 @@ generate_serve_cfg(FILE *f)
         "abstract\n"
         "no_core_dump\n"
         "kill_signal = KILL\n"
-        "max_vm_size = 25165824\n"
-        "clear_env\n"
-        "check_cmd = \"check_%lPs\"\n",
+        "max_vm_size = 64M\n"
+        "clear_env\n",
         f);
 
 #if CONF_HAS_LIBCAP - 0 == 1
@@ -2412,8 +2411,7 @@ generate_serve_cfg(FILE *f)
         "kill_signal = TERM\n"
         "start_cmd = runjava\n"
         "start_env = \"EJUDGE_PREFIX_DIR\"\n"
-        "start_env = \"EJUDGE_JAVA_FLAGS=-Xmx64M -Xss8M\"\n"
-        "check_cmd = \"check_%lPs\"\n",
+        "start_env = \"EJUDGE_JAVA_FLAGS=-Xmx64M\"\n",
         f);
 
   if (!strcmp(config_workdisk_flag, "yes")) {
@@ -2435,8 +2433,7 @@ generate_serve_cfg(FILE *f)
         "kill_signal = TERM\n"
         "start_cmd = runmono\n"
         "start_env = \"EJUDGE_PREFIX_DIR\"\n"
-        "# start_env = \"EJUDGE_MONO_FLAGS=\"\n"
-        "check_cmd = \"check_%lPs\"\n",
+        "# start_env = \"EJUDGE_MONO_FLAGS=\"\n",
         f);
 
   if (!strcmp(config_workdisk_flag, "yes")) {
