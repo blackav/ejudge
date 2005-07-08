@@ -111,6 +111,7 @@ COMMON_CFILES=\
  full_archive.c\
  html.c\
  html_hyperref.c\
+ html_start_form.c\
  l10n.c\
  master_html.c\
  misctext.c\
@@ -119,6 +120,7 @@ COMMON_CFILES=\
  parsecfg.c\
  pathutl.c\
  prepare.c\
+ prepare_out.c\
  prepare_serve.c\
  printing.c\
  protocol.c\
@@ -135,6 +137,7 @@ COMMON_CFILES=\
  sformat.c\
  super_html.c\
  super_html_2.c\
+ super_html_3.c\
  super_proto.c\
  sha.c\
  teamdb.c\
@@ -242,6 +245,8 @@ HFILES=\
  parsecfg.h\
  pathutl.h\
  prepare.h\
+ prepare_dflt.h\
+ prepare_vars.h\
  prepare_serve.h\
  printing.h\
  protocol.h\
