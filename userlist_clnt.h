@@ -133,7 +133,10 @@ userlist_clnt_list_users(struct userlist_clnt *clnt,
                          unsigned char *url, unsigned char *srch);
 
 int
-userlist_clnt_admin_process(struct userlist_clnt *clnt);
+userlist_clnt_admin_process(struct userlist_clnt *clnt,
+                            int *p_uid,
+                            unsigned char **p_login,
+                            unsigned char **p_name);
 
 int
 userlist_clnt_map_contest(struct userlist_clnt *clnt,
