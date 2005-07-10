@@ -1895,3 +1895,4 @@ userlist-server.c 1 55 14797931
 parsecfg.c 1 21 2392888
 teamdb.c 1 30 1087939
 userlist_clnt/admin_process.c 1 4 187172
+userlist_clnt/register_contest.c 1 5 131025
