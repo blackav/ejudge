@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,7 @@ userlist_clnt_register_contest(struct userlist_clnt *clnt,
 
   out_size = sizeof(*out);
   out = alloca(out_size);
+  memset(out, 0, out_size);
   if (!out) return -ULS_ERR_OUT_OF_MEM;
   out->request_id = cmd;
   out->user_id = user_id;
