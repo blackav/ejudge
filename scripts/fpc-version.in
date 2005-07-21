@@ -16,6 +16,12 @@ then
     PATH="${FPCDIR}:${PATH}"
 fi
 
+if [ x"$1" = x-p ]
+then
+    echo "${FPCRUN}"
+    exit 0
+fi
+    
 [ x"$1" = x-f ] && echo -n "Free Pascal "
 
 "${FPCRUN}" -h 2>/dev/null | grep "Free Pascal Compiler" | gawk '{ print $5; }'

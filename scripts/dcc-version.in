@@ -18,6 +18,12 @@ then
     export KYLIXDIR
 fi
 
+if [ x"$1" = x-p ]
+then
+    echo "${DCCRUN}"
+    exit 0
+fi
+    
 [ x"$1" = x-f ] && echo -n "Borland Delphi "
 
 "${DCCRUN}" -h 2>/dev/null | grep "Borland Delphi" | gawk '{ print $6; }'

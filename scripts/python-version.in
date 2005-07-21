@@ -10,6 +10,12 @@ then
   exit 1
 fi
 
+if [ x"$1" = x-p ]
+then
+    echo "${PYTHONPATH}"
+    exit 0
+fi
+    
 [ x"$1" = x-f ] && echo -n "Python "
 
 "${PYTHONPATH}" -V 2>&1 | gawk '{ print $2; }'
