@@ -16,6 +16,12 @@ then
     PATH="${G77DIR}:${PATH}"
 fi
 
+if [ x"$1" = x-p ]
+then
+    echo "${G77RUN}"
+    exit 0
+fi
+    
 [ x"$1" = x-f ] && echo -n "GNU Fortran 77 "
 
 "${G77RUN}" --version | grep "GNU Fortran (GCC)" | gawk '{ print $4; }'
