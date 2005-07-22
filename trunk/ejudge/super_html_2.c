@@ -30,6 +30,10 @@
 #include "pathutl.h"
 #include "fileutl.h"
 #include "xml_utils.h"
+#include "prepare.h"
+#include "userlist_proto.h"
+#include "userlist_clnt.h"
+#include "userlist.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -627,8 +631,24 @@ save_conf_file(FILE *flog, const unsigned char *desc,
                const unsigned char *conf_path,
                unsigned char *path, unsigned char *path_2)
 {
+  int errcode;
+  char *old_text = 0;
+  size_t old_size = 0;
+
   if (file && *file && text) {
     make_conf_path(path, conf_path, file);
+
+    // try to read the file
+    errcode = generic_read_file(&old_text, 0, &old_size, 0, 0, path, 0);
+    if (errcode >= 0 && strlen(text) == old_size
+        && memcmp(text, old_text, old_size) == 0) {
+      // file not changed
+      fprintf(flog, "%s `%s' is not changed\n", desc, file);
+      xfree(old_text);
+      return 0;
+    }
+    xfree(old_text); old_text = 0; old_size = 0;
+
     if (make_temp_file(path_2, path) < 0) {
       fprintf(flog, "error: cannot create a temporary %s `%s'\n"
               "error: %s\n", desc, path, os_ErrorMsg());
@@ -641,7 +661,7 @@ save_conf_file(FILE *flog, const unsigned char *desc,
     }
     fprintf(flog, "%s `%s' is temporarily saved as `%s'\n", desc, file, path_2);
   }
-  return 0;
+  return 1;
 }
 
 static int
@@ -660,7 +680,7 @@ get_contest_header_and_footer(const unsigned char *path,
   if (generic_read_file(&xml_text, 0, &xml_text_size, 0, 0, path, 0) < 0)
     return -SSERV_ERR_FILE_READ_ERROR;
 
-  if (!(p1 = strstr(xml_text, "<contest>"))) {
+  if (!(p1 = strstr(xml_text, "<contest "))) {
     errcode = -SSERV_ERR_FILE_FORMAT_INVALID;
     goto failure;
   }
@@ -688,8 +708,9 @@ get_contest_header_and_footer(const unsigned char *path,
 }
 
 static void
-rename_files(FILE *flog, unsigned char *from, unsigned char *to)
+rename_files(FILE *flog, int flag, unsigned char *to, unsigned char *from)
 {
+  if (!flag) return;
   if (!from || !*from || !to || !*to) return;
   if (rename(from, to) < 0) {
     fprintf(flog, "error: renaming %s to %s failed: %s\n",
@@ -707,6 +728,7 @@ super_html_commit_contest(FILE *f,
                           unsigned long long session_id,
                           unsigned int ip_address,
                           struct userlist_cfg *config,
+                          struct userlist_clnt *us_conn,
                           struct sid_state *sstate,
                           int cmd,
                           const unsigned char *self_url,
@@ -714,6 +736,7 @@ super_html_commit_contest(FILE *f,
                           const unsigned char *extra_args)
 {
   struct contest_desc *cnts = sstate->edited_cnts;
+  struct section_global_data *global = sstate->global;
   struct stat sb;
   char *flog_txt = 0;
   size_t flog_size = 0;
@@ -723,10 +746,17 @@ super_html_commit_contest(FILE *f,
   unsigned char hbuf[1024];
   unsigned char *xml_header = 0;
   unsigned char *xml_footer = 0;
+  unsigned char *serve_header = 0;
+  unsigned char *serve_footer = 0;
   unsigned char audit_rec[1024];
+  unsigned char serve_audit_rec[1024];
+  int i, j;
 
   path_t conf_path;
+  path_t var_path;
   path_t xml_path;
+  path_t serve_path;
+  path_t serve_path_2 = { 0 };
   path_t users_header_path = { 0 };
   path_t users_header_path_2 = { 0 };
   path_t users_footer_path = { 0 };
@@ -741,6 +771,23 @@ super_html_commit_contest(FILE *f,
   path_t team_footer_path_2 = { 0 };
   path_t register_email_path = { 0 };
   path_t register_email_path_2 = { 0 };
+  path_t contest_start_cmd_path = { 0 };
+  path_t contest_start_cmd_path_2 = { 0 };
+  path_t stand_header_path = { 0 };
+  path_t stand_header_path_2 = { 0 };
+  path_t stand_footer_path = { 0 };
+  path_t stand_footer_path_2 = { 0 };
+  path_t stand2_header_path = { 0 };
+  path_t stand2_header_path_2 = { 0 };
+  path_t stand2_footer_path = { 0 };
+  path_t stand2_footer_path_2 = { 0 };
+  path_t plog_header_path = { 0 };
+  path_t plog_header_path_2 = { 0 };
+  path_t plog_footer_path = { 0 };
+  path_t plog_footer_path_2 = { 0 };
+
+  int uhf, uff, rhf, rff, thf, tff, ref;
+  int csf = 0, shf = 0, sff = 0, s2hf = 0, s2ff = 0, phf = 0, pff = 0, sf = 0;
 
   if (!cnts) {
     return super_html_report_error(f, session_id, self_url, extra_args,
@@ -750,6 +797,10 @@ super_html_commit_contest(FILE *f,
     return super_html_report_error(f, session_id, self_url, extra_args,
                                    "root_dir is not set!");
   }
+  if (!cnts->name) {
+    return super_html_report_error(f, session_id, self_url, extra_args,
+                                   "contest name is not defined");
+  }
   if (!os_IsAbsolutePath(cnts->root_dir)) {
     return super_html_report_error(f, session_id, self_url, extra_args,
                                    "root_dir is not an absolute path!");
@@ -757,6 +808,28 @@ super_html_commit_contest(FILE *f,
   if (stat(cnts->root_dir, &sb) >= 0 && !S_ISDIR(sb.st_mode)) {
     return super_html_report_error(f, session_id, self_url, extra_args,
                                    "root_dir is not a directory!");
+  }
+  if (!sstate->serve_parse_errors && sstate->disable_compilation_server) {
+    return super_html_report_error(f, session_id, self_url, extra_args,
+                                   "Compilation server must be enabled");
+  }
+  if (!sstate->serve_parse_errors && sstate->global) {
+    j = 0;
+    if (sstate->langs) {
+      for (i = 1; i < sstate->lang_a; i++)
+        if (sstate->langs[i]) j++;
+    }
+    if (!j)
+      return super_html_report_error(f, session_id, self_url, extra_args,
+                                     "No languages activated");
+    j = 0;
+    if (sstate->probs) {
+      for (i = 1; i < sstate->prob_a; i++)
+        if (sstate->probs[i]) j++;
+    }
+    if (!j)
+      return super_html_report_error(f, session_id, self_url, extra_args,
+                                     "No problems defined");
   }
   // FIXME: what else we should validate
 
@@ -806,54 +879,91 @@ super_html_commit_contest(FILE *f,
   }
 
   /* 3. Save the users_header_file as temporary file */
-  if (save_conf_file(flog, "`users' HTML header file",
-                     cnts->users_header_file, sstate->users_header_text,
-                     conf_path,
-                     users_header_path, users_header_path_2))
+  if ((uhf = save_conf_file(flog, "`users' HTML header file",
+                            cnts->users_header_file, sstate->users_header_text,
+                            conf_path,
+                            users_header_path, users_header_path_2)) < 0)
     goto failed;
 
   /* 4. Save the users_footer_file as temporary file */
-  if (save_conf_file(flog, "`users' HTML footer file",
-                     cnts->users_footer_file, sstate->users_footer_text,
-                     conf_path,
-                     users_footer_path, users_footer_path_2))
+  if ((uff = save_conf_file(flog, "`users' HTML footer file",
+                            cnts->users_footer_file, sstate->users_footer_text,
+                            conf_path,
+                            users_footer_path, users_footer_path_2)) < 0)
     goto failed;
 
   /* 5. Save the register_header_file as temporary file */
-  if (save_conf_file(flog, "`register' HTML header file",
-                     cnts->register_header_file, sstate->register_header_text,
-                     conf_path,
-                     register_header_path, register_header_path_2))
+  if ((rhf = save_conf_file(flog, "`register' HTML header file",
+                            cnts->register_header_file, sstate->register_header_text,
+                            conf_path,
+                            register_header_path, register_header_path_2)) < 0)
     goto failed;
 
   /* 6. Save the register_footer_file as temporary file */
-  if (save_conf_file(flog, "`register' HTML footer file",
-                     cnts->register_footer_file, sstate->register_footer_text,
-                     conf_path,
-                     register_footer_path, register_footer_path_2))
+  if ((rff = save_conf_file(flog, "`register' HTML footer file",
+                            cnts->register_footer_file, sstate->register_footer_text,
+                            conf_path,
+                            register_footer_path, register_footer_path_2)) < 0)
     goto failed;
 
   /* 7. Save the team_header_file as temporary file */
-  if (save_conf_file(flog, "`team' HTML header file",
-                     cnts->team_header_file, sstate->team_header_text,
-                     conf_path,
-                     team_header_path, team_header_path_2))
+  if ((thf = save_conf_file(flog, "`team' HTML header file",
+                            cnts->team_header_file, sstate->team_header_text,
+                            conf_path,
+                            team_header_path, team_header_path_2)) < 0)
     goto failed;
 
   /* 8. Save the team_footer_file as temporary file */
-  if (save_conf_file(flog, "`team' HTML footer file",
-                     cnts->team_footer_file, sstate->team_footer_text,
-                     conf_path,
-                     team_footer_path, team_footer_path_2))
+  if ((tff = save_conf_file(flog, "`team' HTML footer file",
+                            cnts->team_footer_file, sstate->team_footer_text,
+                            conf_path,
+                            team_footer_path, team_footer_path_2)) < 0)
     goto failed;
 
   /* 9. Save the register_email_file as temporary file */
-  if (save_conf_file(flog, "registration e-mail template",
-                     cnts->register_email_file, sstate->register_email_text,
-                     conf_path,
-                     register_email_path, register_email_path_2))
+  if ((ref = save_conf_file(flog, "registration e-mail template",
+                            cnts->register_email_file, sstate->register_email_text,
+                            conf_path,
+                            register_email_path, register_email_path_2)) < 0)
     goto failed;
 
+  if (global) {
+    if ((csf = save_conf_file(flog, "contest start command script",
+                              global->contest_start_cmd,sstate->contest_start_cmd_text,
+                              conf_path,
+                              contest_start_cmd_path, contest_start_cmd_path_2)) < 0)
+      goto failed;
+    if ((shf = save_conf_file(flog, "standings HTML header file",
+                              global->stand_header_file, sstate->stand_header_text,
+                              conf_path,
+                              stand_header_path, stand_header_path_2)) < 0)
+      goto failed;
+    if ((sff = save_conf_file(flog, "standings HTML footer file",
+                              global->stand_footer_file, sstate->stand_footer_text,
+                              conf_path,
+                              stand_footer_path, stand_footer_path_2)) < 0)
+      goto failed;
+    if ((s2hf = save_conf_file(flog, "supplementary standings HTML header file",
+                               global->stand2_header_file, sstate->stand2_header_text,
+                               conf_path,
+                               stand2_header_path, stand2_header_path_2)) < 0)
+      goto failed;
+    if ((s2ff = save_conf_file(flog, "supplementary standings HTML footer file",
+                               global->stand2_footer_file, sstate->stand2_footer_text,
+                               conf_path,
+                               stand2_footer_path, stand2_footer_path_2)) < 0)
+      goto failed;
+    if ((phf = save_conf_file(flog, "public submission log HTML header file",
+                              global->plog_header_file, sstate->plog_header_text,
+                              conf_path,
+                              plog_header_path, plog_header_path_2)) < 0)
+      goto failed;
+    if ((pff = save_conf_file(flog, "public submission log HTML footer file",
+                              global->plog_footer_file, sstate->plog_footer_text,
+                              conf_path,
+                              plog_footer_path, plog_footer_path_2)) < 0)
+      goto failed;
+  }
 
   /* 10. Load the previous contest.xml and extract header and footer */
   contests_make_path(xml_path, sizeof(xml_path), cnts->id);
@@ -881,6 +991,41 @@ super_html_commit_contest(FILE *f,
   }
   if (!xml_footer) xml_footer = xstrdup("\n");
 
+  /* Load the previous serve.cfg */
+  if (!sstate->serve_parse_errors && sstate->global) {
+    snprintf(serve_path, sizeof(serve_path), "%s/serve.cfg", conf_path);
+    if (make_temp_file(serve_path_2, serve_path) < 0) {
+      fprintf(flog, "error: cannot create a temporary serve.cfg `%s'\n"
+              "error: %s\n", serve_path, os_ErrorMsg());
+      goto failed;
+    }
+
+    errcode = super_html_get_serve_header_and_footer(serve_path, &serve_header, &serve_footer);
+    if (errcode == -SSERV_ERR_FILE_NOT_EXIST) {
+      fprintf(flog, "serve configuration file `%s' does not exist\n",
+              serve_path);
+      snprintf(serve_audit_rec, sizeof(serve_audit_rec),
+               "# audit: created %s %d (%s) %s\n",
+               xml_unparse_date(time(0)), user_id, login,
+               xml_unparse_ip(ip_address));
+    } else if (errcode < 0) {
+      fprintf(flog, "failed to read serve configuration file `%s': %s\n",
+              serve_path, super_proto_strerror(-errcode));
+      goto failed;
+    } else {
+      snprintf(serve_audit_rec, sizeof(audit_rec),
+               "# audit: edited %s %d (%s) %s\n",
+               xml_unparse_date(time(0)), user_id, login,
+               xml_unparse_ip(ip_address));
+    }
+
+    if ((sf = super_html_serve_unparse_and_save(serve_path, serve_path_2,
+                                                sstate, config,
+                                                serve_header, serve_footer,
+                                                serve_audit_rec)) < 0)
+      goto failed;
+  }
+
   /* 11. Save the XML file */
   errcode = contests_unparse_and_save(cnts, xml_header, xml_footer, audit_rec);
   if (errcode < 0) {
@@ -892,13 +1037,43 @@ super_html_commit_contest(FILE *f,
   }
 
   /* 12. Rename files */
-  rename_files(flog, users_header_path_2, users_header_path);
-  rename_files(flog, users_footer_path_2, users_footer_path);
-  rename_files(flog, register_header_path_2, register_header_path);
-  rename_files(flog, register_footer_path_2, register_footer_path);
-  rename_files(flog, team_header_path_2, team_header_path);
-  rename_files(flog, team_footer_path_2, team_footer_path);
-  rename_files(flog, register_email_path_2, register_email_path);
+  rename_files(flog, uhf, users_header_path, users_header_path_2);
+  rename_files(flog, uff, users_footer_path, users_footer_path_2);
+  rename_files(flog, rhf, register_header_path, register_header_path_2);
+  rename_files(flog, rff, register_footer_path, register_footer_path_2);
+  rename_files(flog, thf, team_header_path, team_header_path_2);
+  rename_files(flog, tff, team_footer_path, team_footer_path_2);
+  rename_files(flog, ref, register_email_path, register_email_path_2);
+  rename_files(flog, csf, contest_start_cmd_path, contest_start_cmd_path_2);
+  if (csf) chmod(contest_start_cmd_path, 0755);
+  rename_files(flog, shf, stand_header_path, stand_header_path_2);
+  rename_files(flog, sff, stand_footer_path, stand_footer_path_2);
+  rename_files(flog, s2hf, stand2_header_path, stand2_header_path_2);
+  rename_files(flog, s2ff, stand2_footer_path, stand2_footer_path_2);
+  rename_files(flog, phf, plog_header_path, plog_header_path_2);
+  rename_files(flog, pff, plog_footer_path, plog_footer_path_2);
+  rename_files(flog, sf, serve_path, serve_path_2);
+
+  if ((i = userlist_clnt_register_contest(us_conn, ULS_PRIV_REGISTER_CONTEST,
+                                          user_id, cnts->id)) < 0
+      || (i = userlist_clnt_change_registration(us_conn, user_id, cnts->id,
+                                                USERLIST_REG_OK, 0, 0) < 0)) {
+    fprintf(flog, "failed to register user %s (%d) for contest %d: %s\n",
+            login, user_id, cnts->id, userlist_strerror(-i));
+  } else {
+    fprintf(flog, "user %s (%d) is registered for contest %d\n",
+            login, user_id, cnts->id);
+  }
+
+  // start serve and create all the necessary dirs
+  snprintf(var_path, sizeof(var_path), "%s/var", cnts->root_dir);
+  if (stat(var_path, &sb) < 0) {
+    unsigned char *serve_buf = 0;
+    fprintf(flog, "starting `serve' in prepare mode:\n\n");
+    i = super_serve_start_serve_test_mode(cnts, &serve_buf);
+    fprintf(flog, "%s\n", serve_buf);
+    xfree(serve_buf);
+  }
 
   fclose(flog);
   xfree(xml_header);
@@ -910,19 +1085,25 @@ super_html_commit_contest(FILE *f,
   fprintf(f, "<p>Contest saving log:<br><pre>%s</pre>\n", s);
   xfree(s);
   xfree(flog_txt);
+
+  if (!sstate->serve_parse_errors) {
+    flog_txt = 0; flog_size = 0;
+    flog = open_memstream(&flog_txt, &flog_size);
+    prepare_further_instructions(flog, cnts->root_dir, cnts->conf_dir,
+                                 global, sstate->aprob_u, sstate->aprobs,
+                                 sstate->prob_a, sstate->probs);
+    fclose(flog);
+    s = html_armor_string_dup(flog_txt);
+    fprintf(f, "<h2>Further instructions</h2><p><pre>%s</pre>\n", s);
+    xfree(s);
+    xfree(flog_txt);
+  }
+
   fprintf(f, "<table border=\"0\"><tr>");
   fprintf(f, "<td>%sTo the top</a></td></tr></table>\n",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,""));
 
-  contests_free(sstate->edited_cnts); sstate->edited_cnts = 0;
-  xfree(sstate->users_header_text); sstate->users_header_text = 0;
-  xfree(sstate->users_footer_text); sstate->users_footer_text = 0;
-  xfree(sstate->register_header_text); sstate->register_header_text = 0;
-  xfree(sstate->register_footer_text); sstate->register_footer_text = 0;
-  xfree(sstate->team_header_text); sstate->team_header_text = 0;
-  xfree(sstate->team_footer_text); sstate->team_footer_text = 0;
-  xfree(sstate->register_email_text); sstate->register_email_text = 0;
-
+  super_serve_clear_edited_contest(sstate);
   return 0;
 
  failed:
@@ -937,6 +1118,14 @@ super_html_commit_contest(FILE *f,
   if (team_header_path_2[0]) unlink(team_header_path_2);
   if (team_footer_path_2[0]) unlink(team_footer_path_2);
   if (register_email_path_2[0]) unlink(register_email_path_2);
+  if (contest_start_cmd_path_2[0]) unlink(contest_start_cmd_path_2);
+  if (stand_header_path_2[0]) unlink(stand_header_path_2);
+  if (stand_footer_path_2[0]) unlink(stand_footer_path_2);
+  if (stand2_header_path_2[0]) unlink(stand2_header_path_2);
+  if (stand2_footer_path_2[0]) unlink(stand2_footer_path_2);
+  if (plog_header_path_2[0]) unlink(plog_header_path_2);
+  if (plog_footer_path_2[0]) unlink(plog_footer_path_2);
+  if (serve_path_2[0]) unlink(serve_path_2);
 
   fprintf(f, "<h2><font color=\"red\">Contest saving failed</font></h2>\n");
   s = html_armor_string_dup(flog_txt);
