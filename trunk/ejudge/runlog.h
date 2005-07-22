@@ -58,7 +58,7 @@ enum
 
 enum { RUN_LOG_CREATE = 1, RUN_LOG_READONLY = 2 };
 
-int run_open(const char *path, int flags);
+int run_open(const char *path, int flags, time_t init_duration);
 int run_add_record(time_t         timestamp,
                    long           nsec,
                    size_t         size,
