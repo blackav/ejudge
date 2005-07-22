@@ -20,6 +20,7 @@
 #include "userlist.h"
 #include "xml_utils.h"
 #include "misctext.h"
+#include "fileutl.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -1708,23 +1709,50 @@ contests_unparse_and_save(struct contest_desc *cnts,
   int fd;
   FILE *f;
   struct stat xml_stat;
+  char *old_text = 0;
+  size_t old_size = 0;
+  char *new_text = 0;
+  size_t new_size = 0;
+
+  f = open_memstream(&new_text, &new_size);
+  fputs(header, f);
+  contests_unparse(f, cnts);
+  fputs(footer, f);
+  fclose(f); f = 0;
+
+  contests_make_path(xml_path, sizeof(xml_path), cnts->id);
+
+  // read the previuos file and compare it with the new
+  if (generic_read_file(&old_text, 0, &old_size, 0, 0, xml_path, 0) >= 0
+      && new_size == old_size && memcmp(new_text, old_text, new_size) == 0) {
+    info("contest_save_xml: %d is not changed", cnts->id);
+    xfree(old_text);
+    xfree(new_text);
+    return 0;
+  }
+  xfree(old_text); old_text = 0;
+  old_size = 0;
 
   while (1) {
     snprintf(tmp_path, sizeof(tmp_path), "%s/_contests_tmp_%d.xml",
              contests_dir, serial++);
     if ((fd = open(tmp_path, O_WRONLY| O_CREAT| O_TRUNC|O_EXCL, 0600)) >= 0)
       break;
-    if (errno != EEXIST) return -CONTEST_ERR_FILE_CREATION_ERROR;
+    if (errno != EEXIST) {
+      xfree(new_text);
+      return -CONTEST_ERR_FILE_CREATION_ERROR;
+    }
   }
   if (!(f = fdopen(fd, "w"))) {
     close(fd);
+    xfree(new_text);
     unlink(tmp_path);
     return -CONTEST_ERR_FILE_CREATION_ERROR;
   }
 
-  fputs(header, f);
-  contests_unparse(f, cnts);
-  fputs(footer, f);
+  fwrite(new_text, 1, new_size, f);
+  xfree(new_text); new_text = 0;
+  new_size = 0;
   fputs(add_footer, f);
   if (ferror(f)) {
     fclose(f);
@@ -1736,7 +1764,6 @@ contests_unparse_and_save(struct contest_desc *cnts,
     return -CONTEST_ERR_IO_ERROR;
   }
 
-  contests_make_path(xml_path, sizeof(xml_path), cnts->id);
   if (stat(xml_path, &xml_stat) >= 0) {
     if (!S_ISREG(xml_stat.st_mode)) {
       unlink(tmp_path);
@@ -1751,6 +1778,10 @@ contests_unparse_and_save(struct contest_desc *cnts,
     }
     // try to change permissions and log errors
     if (chmod(tmp_path, xml_stat.st_mode & 07777) < 0) {
+      err("contests_save_xml: chmod failed: %s", os_ErrorMsg());
+    }
+  } else {
+    if (chmod(tmp_path, 0664) < 0) {
       err("contests_save_xml: chmod failed: %s", os_ErrorMsg());
     }
   }
