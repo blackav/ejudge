@@ -2094,6 +2094,10 @@ generate_serve_cfg(FILE *f)
           "compile_dir = \"%s/var/compile\"\n\n",
           config_serialization_key, config_compile_home_dir);
 
+#if CONF_HAS_LIBCAP - 0 == 1
+  fprintf(f, "secure_run\n");
+#endif /* CONF_HAS_LIBCAP */
+
 #if defined COMPILE_FPC_VERSION
   fprintf(f,
           "[language]\n"
@@ -2872,8 +2876,8 @@ generate_contest_xml(FILE *f)
           "      REPLY_MESSAGE,\n"
           "      CONTROL_CONTEST,\n"
           "      IMPORT_XML_RUNS,\n"
-          "      OPCAP_PRINT_RUN,\n"
-          "      OPCAP_EDIT_CONTEST,\n"
+          "      PRINT_RUN,\n"
+          "      EDIT_CONTEST,\n"
           "    </cap>\n"
           "  </caps>\n"
           "\n"
@@ -3031,7 +3035,7 @@ generate_ejudge_xml(FILE *f)
     fprintf(f, "  <var_dir>%s</var_dir>\n", config_var_dir);
     // FIXME: should make configurable paths?
     fprintf(f, "  <userlist_log>userlist.log</userlist_log>\n");
-    //fprintf(f, "  <super_serve_log>%s</super_serve_log>\n");
+    fprintf(f, "  <super_serve_log>super_serve.log</super_serve_log>\n");
     //fprintf(f, "  <compile_log>%s</compile_log>\n");
   }
 
@@ -3057,7 +3061,7 @@ generate_ejudge_xml(FILE *f)
           "      PRIV_EDIT_USER,\n"
           "      PRIV_DELETE_USER,\n"
           "      DUMP_USERS,\n"
-          "      OPCAP_EDIT_CONTEST,\n"
+          "      EDIT_CONTEST,\n"
           "    </cap>\n"
           "  </caps>\n", config_login);
 
