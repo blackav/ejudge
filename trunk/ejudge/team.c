@@ -1016,9 +1016,13 @@ action_change_password(void)
   }
 
   open_userlist_server();
-  r = userlist_clnt_team_set_passwd(server_conn, client_team_id,
-                                    global->contest_id,
-                                    p0, p1);
+  if (cur_contest && cur_contest->disable_team_password) {
+    r = userlist_clnt_set_passwd(server_conn, client_team_id, p0, p1);
+  } else {
+    r = userlist_clnt_team_set_passwd(server_conn, client_team_id,
+                                      global->contest_id,
+                                      p0, p1);
+  }
   if (r < 0) {
     operation_status_page(-1, gettext(userlist_strerror(-r)));
     return;
@@ -1603,7 +1607,7 @@ main(int argc, char *argv[])
     display_team_page();
   }
 
-  if (!server_clients_suspended && !cur_contest->disable_team_password) {
+  if (!server_clients_suspended /*&& !cur_contest->disable_team_password*/) {
     printf("<hr><a name=\"chgpasswd\"></a><%s>%s</%s>\n"
            "%s<table>\n"
            "<tr><td>%s:</td><td><input type=\"password\" name=\"oldpasswd\" size=\"16\"></td></tr>\n"
