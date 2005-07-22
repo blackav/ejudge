@@ -2932,13 +2932,22 @@ cmd_priv_command_0(struct client_state *p, int len,
     run_set_duration(contest_duration);
     clar_reset();
     /* clear all submissions and clarifications */
-    clear_directory(global->clar_archive_dir);
-    clear_directory(global->xml_report_archive_dir);
-    clear_directory(global->report_archive_dir);
-    clear_directory(global->run_archive_dir);
-    clear_directory(global->team_report_archive_dir);
-    clear_directory(global->full_archive_dir);
-    clear_directory(global->audit_log_dir);
+    if (global->clar_archive_dir[0])
+      clear_directory(global->clar_archive_dir);
+    if (global->xml_report_archive_dir[0])
+      clear_directory(global->xml_report_archive_dir);
+    if (global->report_archive_dir[0])
+      clear_directory(global->report_archive_dir);
+    if (global->run_archive_dir[0])
+      clear_directory(global->run_archive_dir);
+    if (global->team_report_archive_dir[0])
+      clear_directory(global->team_report_archive_dir);
+    if (global->full_archive_dir[0])
+      clear_directory(global->full_archive_dir);
+    if (global->audit_log_dir[0])
+      clear_directory(global->audit_log_dir);
+    if (global->team_extra_dir[0])
+      clear_directory(global->team_extra_dir);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_START:
@@ -3072,15 +3081,28 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
     if (!pkt->v.t) {
+      contest_duration = 0;
+      run_set_duration(contest_duration);
+      info("contest duration set to infinite time");
+      update_standings_file(0);
+      update_status_file(1);
+      new_send_reply(p, SRV_RPL_OK);
+      return;
+    }
+    /*
+    if (!pkt->v.t) {
       err("%d: duration cannot be set to unlimited", p->id);
       new_send_reply(p, -SRV_ERR_BAD_DURATION);
       return;
     }
+    */
+    /*
     if (!contest_duration) {
       err("%d: unlimited contest duration cannot be changed", p->id);
       new_send_reply(p, -SRV_ERR_BAD_DURATION);
       return;
     }
+    */
     if (contest_start_time && contest_start_time+pkt->v.t*60 < current_time) {
       err("%d: contest duration is too short", p->id);
       new_send_reply(p, -SRV_ERR_BAD_DURATION);
@@ -4949,7 +4971,9 @@ check_sockets(int may_wait_flag)
     addrlen = sizeof(addr);
     new_fd = accept(socket_fd, (struct sockaddr*) &addr, &addrlen);
     if (new_fd < 0) {
+      int e = errno;
       err("accept failed: %s", os_ErrorMsg());
+      if (e == ENOTSOCK) return 0;
       break;
     }
 
@@ -5429,7 +5453,7 @@ do_loop(void)
 
   run_get_times(&contest_start_time, &contest_sched_time,
                 &contest_duration, &contest_stop_time);
-  if (!contest_duration) {
+  if (!contest_duration == -1) {
     contest_duration = global->contest_time;
     run_set_duration(contest_duration);
   }
@@ -5589,7 +5613,7 @@ main(int argc, char *argv[])
   }
   if (teamdb_open_client(global->socket_path, global->contest_id) < 0)
     return 1;
-  if (run_open(global->run_log_file, 0) < 0) return 1;
+  if (run_open(global->run_log_file, 0, global->contest_time) < 0) return 1;
   if (global->virtual && global->score_system_val != SCORE_ACM) {
     err("invalid score system for virtual contest");
     return 1;
