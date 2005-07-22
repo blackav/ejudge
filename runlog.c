@@ -335,8 +335,10 @@ run_set_runlog(int total_entries, struct run_entry *entries)
   return 0;
 }
 
+static int run_flush_header(void);
+
 static int
-read_runlog(void)
+read_runlog(time_t init_duration)
 {
   int filesize;
   int rem;
@@ -354,7 +356,9 @@ read_runlog(void)
     /* runs file is empty */
     XMEMZERO(&head, 1);
     head.version = 1;
+    head.duration = init_duration;
     run_u = 0;
+    run_flush_header();
     return 0;
   }
 
@@ -396,7 +400,7 @@ read_runlog(void)
 static void teamdb_update_callback(void *);
 
 int
-run_open(const char *path, int flags)
+run_open(const char *path, int flags, time_t init_duration)
 {
   int           oflags = 0;
   int           i;
@@ -427,7 +431,7 @@ run_open(const char *path, int flags)
       if ((run_fd = write_full_runlog_current_version(path)) < 0) return -1;
     }
   } else {
-    if (read_runlog() < 0) return -1;
+    if (read_runlog(init_duration) < 0) return -1;
   }
   return 0;
 }
@@ -984,14 +988,14 @@ run_reset(time_t new_duration)
   ut_table = 0;
   ut_size = 0;
   memset(&head, 0, sizeof(head));
+  head.version = 1;
   head.duration = new_duration;
 
   if (ftruncate(run_fd, 0) < 0) {
     err("ftruncate failed: %s", os_ErrorMsg());
     return -1;
   }
-  if (sf_lseek(run_fd, 0, SEEK_SET, "run_reset") == (off_t) -1) return -1;
-  if (do_write(run_fd, &head, sizeof(head)) < 0) return -1;
+  run_flush_header();
   return 0;
 }
 
@@ -1647,7 +1651,7 @@ runlog_check(FILE *ferr,
     check_msg(1,ferr, "Stop time %ld is before the epoch", phead->stop_time);
     return -1;
   }
-  if (phead->duration < 0) {
+  if (phead->duration < -1) {
     check_msg(1,ferr, "Contest duration %ld is negative", phead->duration);
     return -1;
   }
@@ -2102,6 +2106,7 @@ static const unsigned char is_valid_test_status_table[RUN_LAST + 1] =
   [RUN_WRONG_ANSWER_ERR] = 1,
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
+  [RUN_CHECK_FAILED]     = 1,
 };
 int
 run_is_valid_test_status(int status)
