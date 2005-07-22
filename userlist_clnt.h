@@ -181,7 +181,7 @@ userlist_clnt_delete_field(struct userlist_clnt *clnt,
 
 int
 userlist_clnt_add_field(struct userlist_clnt *clnt,
-                        int user_id,
+                        int *p_user_id,
                         int role,
                         int pers,
                         int field);
@@ -238,8 +238,8 @@ int userlist_clnt_logout(struct userlist_clnt *clnt,
                          unsigned long origin_ip,
                          unsigned long long cookie);
 
-int userlist_clnt_dump_database(struct userlist_clnt *clnt,
-                                int contest_id, int out_fd);
+int userlist_clnt_dump_database(struct userlist_clnt *clnt, int cmd,
+                                int contest_id, int out_fd, int html_flag);
 
 int userlist_clnt_clear_team_passwords(struct userlist_clnt *clnt,
                                        int contest_id);
