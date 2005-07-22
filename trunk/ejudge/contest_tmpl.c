@@ -51,6 +51,7 @@ struct contest_desc *
 contest_tmpl_new(int contest_id,
                  const unsigned char *login,
                  const unsigned char *self_url,
+                 const unsigned char *ss_login,
                  const struct userlist_cfg *ejudge_config)
 {
   struct contest_desc *cnts;
@@ -59,7 +60,7 @@ contest_tmpl_new(int contest_id,
   unsigned char ubuf[1024];
   unsigned char *contests_home_dir = 0;
   struct contest_access *acc;
-  int self_url_len;
+  int self_url_len, i;
   struct xml_tree *t;
   struct opcap_list_item *cap;
 
@@ -113,10 +114,18 @@ contest_tmpl_new(int contest_id,
   cnts->caps_node = t;
 
   cap = (typeof(cap)) contests_new_node(CONTEST_CAP);
-  cap->caps |= (1ULL << OPCAP_EDIT_CONTEST);
+  for (i = 0; i < OPCAP_LAST; i++)
+    cap->caps |= 1ULL << i;
   cap->login = xstrdup(login);
   xml_link_node_last(t, &cap->b);
   cnts->capabilities.first = cap;
+
+  if (ss_login && *ss_login && strcmp(cap->login, ss_login)) {
+    cap = (typeof(cap)) contests_new_node(CONTEST_CAP);
+    cap->caps |= 1ULL << OPCAP_MAP_CONTEST;
+    cap->login = xstrdup(ss_login);
+    xml_link_node_last(t, &cap->b);
+  }
 
   cnts->client_ignore_time_skew = 1;
   return cnts;
@@ -203,13 +212,15 @@ load_header_files(struct sid_state *sstate, struct contest_desc *cnts)
 
 struct contest_desc *
 contest_tmpl_clone(struct sid_state *sstate,
-                   int contest_id, int orig_id, const unsigned char *login)
+                   int contest_id, int orig_id, const unsigned char *login,
+                   const unsigned char *ss_login)
 {
   struct contest_desc *cnts = 0;
   unsigned char substs_from[6][32];
   unsigned char substs_to[6][32];
   struct opcap_list_item *cap;
   struct xml_tree *caps;
+  int i;
 
   if (contests_load(orig_id, &cnts) < 0 || !cnts) return 0;
   load_header_files(sstate, cnts);
@@ -255,7 +266,20 @@ contest_tmpl_clone(struct sid_state *sstate,
     xml_link_node_last(cnts->caps_node, &cap->b);
     if (!cnts->capabilities.first) cnts->capabilities.first = cap;
   }
-  cap->caps |= 1ULL << OPCAP_EDIT_CONTEST;
+  for (i = 0; i < OPCAP_LAST; i++)
+    cap->caps |= 1ULL << i;
+
+  if (ss_login && *ss_login && strcmp(login, ss_login)) {
+    for (cap = cnts->capabilities.first; cap; cap = (typeof(cap)) cap->b.right)
+      if (!strcmp(cap->login, ss_login))
+        break;
+    if (!cap) {
+      cap = (typeof(cap)) contests_new_node(CONTEST_CAP);
+      cap->login = xstrdup(ss_login);
+      xml_link_node_last(cnts->caps_node, &cap->b);
+    }
+    cap->caps |= 1ULL << OPCAP_MAP_CONTEST;
+  }
 
   return cnts;
 }
