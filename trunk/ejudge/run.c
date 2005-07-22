@@ -145,7 +145,7 @@ html_print_by_line(FILE *f, unsigned char const *s, size_t size)
   while (*s) {
     while (*s && *s != '\r' && *s != '\n') s++;
     if (global->max_line_length > 0 && s - p > global->max_line_length) {
-      fprintf(f, "<i>(%s, %s = %d)</i>\n",
+      fprintf(f, "(%s, %s = %d)\n",
               "line is too long", "size", s - p);
     } else {
       while (p != s)
@@ -754,7 +754,7 @@ run_tests(struct section_tester_data *tst,
       file_size = generic_file_size(0, output_path, 0);
       if (file_size >= 0) {
         tests[cur_test].output_size = file_size;
-        if (global->max_file_length > 0
+        if (global->max_file_length > 0 && !req_pkt->full_archive
             && file_size <= global->max_file_length) {
           generic_read_file(&tests[cur_test].output, 0, 0, 0,
                             0, output_path, "");
@@ -762,13 +762,14 @@ run_tests(struct section_tester_data *tst,
         if (far) {
           snprintf(arch_entry_name, sizeof(arch_entry_name),
                    "%06d.o", cur_test);
+          //info("appending program output to archive");
           full_archive_append_file(far, arch_entry_name, 0, output_path);
         }
       }
       file_size = generic_file_size(0, error_path, 0);
       if (file_size >= 0) {
         tests[cur_test].error_size = file_size;
-        if (global->max_file_length > 0
+        if (global->max_file_length > 0 && !req_pkt->full_archive
             && file_size <= global->max_file_length) {
           generic_read_file(&tests[cur_test].error, 0, 0, 0,
                             0, error_path, "");
@@ -776,6 +777,7 @@ run_tests(struct section_tester_data *tst,
         if (far) {
           snprintf(arch_entry_name, sizeof(arch_entry_name),
                    "%06d.e", cur_test);
+          //info("appending program error stream to archive");
           full_archive_append_file(far, arch_entry_name, 0, error_path);
         }
       }
@@ -911,11 +913,13 @@ run_tests(struct section_tester_data *tst,
         file_size = generic_file_size(0, check_out_path, 0);
         if (file_size >= 0) {
           tests[cur_test].chk_out_size = file_size;
-          generic_read_file(&tests[cur_test].chk_out, 0, 0, 0,
-                            0, check_out_path, "");
+          if (!req_pkt->full_archive) {
+            generic_read_file(&tests[cur_test].chk_out, 0, 0, 0, 0, check_out_path, "");
+          }
           if (far) {
             snprintf(arch_entry_name, sizeof(arch_entry_name),
                      "%06d.c", cur_test);
+            //info("appending checker output to archive");
             full_archive_append_file(far, arch_entry_name, 0, check_out_path);
           }
         }
@@ -1371,6 +1375,7 @@ do_loop(void)
     xfree(reply_pkt_buf);
     reply_pkt_buf = 0;
     clear_directory(global->run_work_dir);
+    last_activity_time = time(0);
     continue;
 
   report_check_failed_and_continue:;
@@ -1710,7 +1715,7 @@ check_config(void)
     */
 
     ASSERT(prb->test_score >= 0);
-    if (prb->test_score >= 0) {
+    if (prb->test_score >= 0 && global->score_system_val != SCORE_ACM) {
       int score_summ = 0;
 
       prb->ntests = n1;
