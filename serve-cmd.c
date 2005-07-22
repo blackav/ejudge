@@ -181,6 +181,28 @@ handle_dump_runs(const unsigned char *cmd,
  * argv[0] - session_id_file
  */
 static int
+handle_dump_all_users(const unsigned char *cmd,
+                      int srv_cmd, int argc, char *argv[])
+{
+  int r;
+
+  if (argc < 1) return too_few_params(cmd);
+  if (argc > 1) return too_many_params(cmd);
+
+  authentificate(argv[0]);
+  r = userlist_clnt_dump_database(userlist_conn, ULS_DUMP_WHOLE_DATABASE, 0, 1, 0);
+  if (r < 0) {
+    err("userlist-server error: %s", userlist_strerror(-r));
+    return 1;
+  }
+
+  return 0;
+}
+
+/*
+ * argv[0] - session_id_file
+ */
+static int
 handle_priv_command_0(const unsigned char *cmd,
                       int srv_cmd, int argc, char *argv[])
 {
@@ -499,6 +521,7 @@ static struct cmdinfo cmds[] =
   { "judge-suspended-runs", handle_priv_command_0, SRV_CMD_JUDGE_SUSPENDED },
   { "has-transient-runs", handle_priv_transient_runs, 0 },
   { "full-import-xml-runs", handle_full_import_xml, 0 },
+  { "dump-all-users", handle_dump_all_users, 0 },
 
   { 0, 0 },
 };
