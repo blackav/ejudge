@@ -461,6 +461,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
   int i, r, j;
   int *match_idx = 0;
   int match_tot = 0;
+  int transient_tot = 0;
   int *list_idx = 0;
   int list_tot = 0;
   unsigned char *str1 = 0, *str2 = 0;
@@ -543,8 +544,12 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
     match_idx = alloca((env.rtotal + 1) * sizeof(match_idx[0]));
     memset(match_idx, 0, (env.rtotal + 1) * sizeof(match_idx[0]));
     match_tot = 0;
+    transient_tot = 0;
 
     for (i = 0; i < env.rtotal; i++) {
+      if (env.rentries[i].status >= RUN_TRANSIENT_FIRST
+          && env.rentries[i].status <= RUN_TRANSIENT_LAST)
+        transient_tot++;
       env.rid = i;
       if (u->prev_tree) {
         r = filter_tree_bool_eval(&env, u->prev_tree);
@@ -623,6 +628,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
             _("Total submissions"), env.rtotal,
             _("Filtered"), match_tot,
             _("Shown"), list_tot);
+    fprintf(f, "<p><big>Compiling and running: %d</big></p>\n", transient_tot);
   }
 
   if (!raw_format) {
