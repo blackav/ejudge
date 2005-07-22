@@ -68,6 +68,7 @@ enum
     ULS_LIST_STANDINGS_USERS,
     ULS_GET_UID_BY_PID_2,
     ULS_IS_VALID_COOKIE,
+    ULS_DUMP_WHOLE_DATABASE,
 
     ULS_LAST_CMD
   };
@@ -296,6 +297,7 @@ struct userlist_pk_dump_database
 {
   short request_id;
   int   contest_id;
+  int   html_flag;
 };
 
 /* server->client replies */
