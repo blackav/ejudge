@@ -118,6 +118,7 @@ do_loop(void)
     }
 
     r = compile_request_packet_read(pkt_len, pkt_ptr, &req);
+    xfree(pkt_ptr); pkt_ptr = 0;
     if (r < 0) {
       /*
        * the incoming packet is completely broken, so just drop it
