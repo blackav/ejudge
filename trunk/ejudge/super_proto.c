@@ -50,6 +50,8 @@ static unsigned char const * const error_map[] =
   "invalid parameter",
   "no contest is edited",
   "duplicated login name",
+  "such problem already exists",
+  "this problem is used as base problem",
 
   "unknown error",
 };
