@@ -1924,3 +1924,10 @@ teamdb.c 1 31 1089441
 testing_report_xml.c 1 6 1302824
 userlist_clnt/add_field.c 1 4 163465
 userlist_clnt/dump_database.c 1 4 160631
+super_actions.h 1 4 1312817
+super_proto.h 1 5 1304900
+super-serve.h 1 4 339796
+serve-control.c 1 5 8848131
+super-serve.c 1 13 10117421
+super_html.c 1 6 9022099
+super_proto.c 1 4 164132
