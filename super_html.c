@@ -30,6 +30,7 @@
 #include "pathutl.h"
 #include "fileutl.h"
 #include "xml_utils.h"
+#include "prepare.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -378,12 +379,14 @@ super_html_main_page(FILE *f,
   fprintf(f, "</form></td>");
   fprintf(f, "</tr></table>");
 
+  /*
   fprintf(f, "<table border=\"0\"><tr>\n");
   fprintf(f, "<td>");
   html_start_form(f, 1, session_id, self_url, hidden_vars);
   html_submit_button(f, SUPER_ACTION_RESTART, "Restart the daemon");
   fprintf(f, "</form></td>");
   fprintf(f, "</tr></table>");
+  */
 
   fprintf(f, "<table border=\"0\"><tr><td>%sCreate new contest</a></td>", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, "action=%d", SUPER_ACTION_CREATE_CONTEST));
   if (sstate->edited_cnts) {
@@ -616,6 +619,8 @@ super_html_main_page(FILE *f,
     fprintf(f, "</tr>\n");
   }
   fprintf(f, "</table>\n");
+
+  xfree(contests_map);
   return 0;
 }
 
@@ -790,56 +795,79 @@ super_html_contest_page(FILE *f,
     html_start_form(f, 1, session_id, self_url, new_hidden_vars);
     switch (mng_status) {
     case MNG_STAT_NOT_MANAGED:
+      fprintf(f, "&nbsp;");
+      /* FIXME: disabled for now
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_TEMP,
                          "Manage temporarily");
       html_submit_button(f, SUPER_ACTION_SERVE_MNG, "Manage permanently");
+      */
       break;
     case MNG_STAT_TEMP_NOT_MANAGED:
+      fprintf(f, "&nbsp;");
+      /*
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_RESUME,
                          "Resume management");
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_STOP, "Stop management");
+      */
       break;
     case MNG_STAT_TEMP_FAILED:
+      /*
       html_submit_button(f, SUPER_ACTION_SERVE_MNG, "Manage permanently");
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_STOP, "Stop management");
+      */
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_RESET_ERROR,
                          "Reset error flag");
+      /*
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_PROBE_RUN,
                          "Do probe run");
+      */
       break;
     case MNG_STAT_TEMP_RUNNING:
+      /*
       html_submit_button(f, SUPER_ACTION_SERVE_MNG, "Manage permanently");
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_STOP, "Stop management");
+      */
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_TERM, "Terminate serve");
       break;
     case MNG_STAT_TEMP_WAITING:
+      /*
       html_submit_button(f, SUPER_ACTION_SERVE_MNG, "Manage permanently");
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_STOP, "Stop management");
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_PROBE_RUN,
                          "Do probe run");
+      */
       break;
     case MNG_STAT_FAILED:
+      /*
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_SUSPEND,
                          "Suspend management");
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_STOP, "Stop management");
+      */
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_RESET_ERROR,
                          "Reset error flag");
+      /*
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_PROBE_RUN,
                          "Do probe run");
+      */
       break;
     case MNG_STAT_RUNNING:
+      /*
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_SUSPEND,
                          "Suspend management");
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_STOP, "Stop management");
+      */
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_TERM, "Terminate serve");
       break;
     case MNG_STAT_WAITING:
+      fprintf(f, "&nbsp;");
+      /*
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_SUSPEND,
                          "Suspend management");
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_STOP,
                          "Stop management");
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_PROBE_RUN,
                          "Do probe run");
+      */
       break;
     default:
       abort();
@@ -913,56 +941,80 @@ super_html_contest_page(FILE *f,
     html_start_form(f, 1, session_id, self_url, new_hidden_vars);
     switch (mng_status) {
     case MNG_STAT_NOT_MANAGED:
+      fprintf(f, "&nbsp;");
+      /*
       html_submit_button(f, SUPER_ACTION_RUN_MNG_TEMP,
                          "Manage temporarily");
       html_submit_button(f, SUPER_ACTION_RUN_MNG, "Manage permanently");
+      */
       break;
     case MNG_STAT_TEMP_NOT_MANAGED:
+      fprintf(f, "&nbsp;");
+      /*
       html_submit_button(f, SUPER_ACTION_RUN_MNG_RESUME,
                          "Resume management");
       html_submit_button(f, SUPER_ACTION_RUN_MNG_STOP, "Stop management");
+      */
       break;
     case MNG_STAT_TEMP_FAILED:
+      /*
       html_submit_button(f, SUPER_ACTION_RUN_MNG, "Manage permanently");
       html_submit_button(f, SUPER_ACTION_RUN_MNG_STOP, "Stop management");
+      */
       html_submit_button(f, SUPER_ACTION_RUN_MNG_RESET_ERROR,
                          "Reset error flag");
+      /*
       html_submit_button(f, SUPER_ACTION_RUN_MNG_PROBE_RUN,
                          "Do probe run");
+      */
       break;
     case MNG_STAT_TEMP_RUNNING:
+      /*
       html_submit_button(f, SUPER_ACTION_RUN_MNG, "Manage permanently");
       html_submit_button(f, SUPER_ACTION_RUN_MNG_STOP, "Stop management");
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_TERM, "Terminate serve");
+      */
+      html_submit_button(f, SUPER_ACTION_RUN_MNG_TERM, "Terminate run");
       break;
     case MNG_STAT_TEMP_WAITING:
+      fprintf(f, "&nbsp;");
+      /*
       html_submit_button(f, SUPER_ACTION_RUN_MNG, "Manage permanently");
       html_submit_button(f, SUPER_ACTION_RUN_MNG_STOP, "Stop management");
       html_submit_button(f, SUPER_ACTION_RUN_MNG_PROBE_RUN,
                          "Do probe run");
+      */
       break;
     case MNG_STAT_FAILED:
+      /*
       html_submit_button(f, SUPER_ACTION_RUN_MNG_SUSPEND,
                          "Suspend management");
       html_submit_button(f, SUPER_ACTION_RUN_MNG_STOP, "Stop management");
+      */
       html_submit_button(f, SUPER_ACTION_RUN_MNG_RESET_ERROR,
                          "Reset error flag");
+      /*
       html_submit_button(f, SUPER_ACTION_RUN_MNG_PROBE_RUN,
                          "Do probe run");
+      */
       break;
     case MNG_STAT_RUNNING:
+      /*
       html_submit_button(f, SUPER_ACTION_RUN_MNG_SUSPEND,
                          "Suspend management");
       html_submit_button(f, SUPER_ACTION_RUN_MNG_STOP, "Stop management");
-      html_submit_button(f, SUPER_ACTION_RUN_MNG_TERM, "Terminate serve");
+      */
+      html_submit_button(f, SUPER_ACTION_RUN_MNG_TERM, "Terminate run");
       break;
     case MNG_STAT_WAITING:
+      fprintf(f, "&nbsp;");
+      /*
       html_submit_button(f, SUPER_ACTION_RUN_MNG_SUSPEND,
                          "Suspend management");
       html_submit_button(f, SUPER_ACTION_RUN_MNG_STOP,
                          "Stop management");
       html_submit_button(f, SUPER_ACTION_RUN_MNG_PROBE_RUN,
                          "Do probe run");
+      */
       break;
     default:
       abort();
@@ -1053,18 +1105,16 @@ super_html_contest_page(FILE *f,
                           SUPER_ACTION_VIEW_SERVE_CFG));
     refcount++;
   }
-  /*
   // FIXME: check editing permissions
   if (1 >= 0)
   {
-    if (refcount) fprintf("&nbsp;");
-    fprintf(f, "<a href=\"%s\">Edit</a>",
-            hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                     "contest_id=%d&action=%d", contest_id,
-                     SUPER_ACTION_EDIT_SERVE_CFG));
+    if (refcount) fprintf(f, "&nbsp;");
+    fprintf(f, "%sEdit</a>",
+            html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                          "contest_id=%d&action=%d", contest_id,
+                          SUPER_ACTION_EDIT_CONTEST_XML));
     refcount++;
   }
-  */
   if (!refcount) fprintf(f, "&nbsp;");
   fprintf(f, "</td>");
   fprintf(f, "</tr>\n");
@@ -1073,7 +1123,14 @@ super_html_contest_page(FILE *f,
 
   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
     fprintf(f, "<p>");
+    html_start_form(f, 1, session_id, self_url, new_hidden_vars);
     html_submit_button(f, SUPER_ACTION_CONTEST_RESTART, "Restart management");
+    fprintf(f, "</form>\n");
+
+    fprintf(f, "<p>");
+    html_start_form(f, 1, session_id, self_url, new_hidden_vars);
+    html_submit_button(f, SUPER_ACTION_CHECK_TESTS, "Check contest settings");
+    fprintf(f, "</form>\n");
   }
 
   fprintf(f, "<table border=\"0\"><tr>");
@@ -1563,6 +1620,77 @@ super_html_report_error(FILE *f,
   return 0;
 }
 
+void
+super_html_contest_page_menu(FILE *f, 
+                             unsigned long long session_id,
+                             struct sid_state *sstate,
+                             int cur_page,
+                             const unsigned char *self_url,
+                             const unsigned char *hidden_vars,
+                             const unsigned char *extra_args)
+{
+  unsigned char hbuf[1024];
+
+  fprintf(f, "<table border=\"0\"><tr><td>%sTo the top (postpone editing)</a></td><td>",
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, ""));
+  if (cur_page != 1) {
+    fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                                   "action=%d", SUPER_ACTION_EDIT_CURRENT_CONTEST));
+  }
+  fprintf(f, "General settings (contest.xml)");
+  if (cur_page != 1) {
+    fprintf(f, "</a>");
+  }
+  fprintf(f, "</td><td>");
+  if (cur_page != 2) {
+    fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                                   "action=%d", SUPER_ACTION_EDIT_CURRENT_GLOBAL));
+  }
+  fprintf(f, "Global settings (serve.cfg)");
+  if (cur_page != 2) {
+    fprintf(f, "</a>");
+  }
+  fprintf(f, "</td><td>");
+  if (cur_page != 3) {
+    fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                                   "action=%d", SUPER_ACTION_EDIT_CURRENT_LANG));
+  }
+  fprintf(f, "Language settings (serve.cfg)");
+  if (cur_page != 3) {
+    fprintf(f, "</a>");
+  }
+  fprintf(f, "</td><td>");
+  if (cur_page != 4) {
+    fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                                   "action=%d", SUPER_ACTION_EDIT_CURRENT_PROB));
+  }
+  fprintf(f, "Problems (serve.cfg)");
+  if (cur_page != 4) {
+    fprintf(f, "</a>");
+  }
+  fprintf(f, "</td></tr></table>");
+}
+
+void
+super_html_contest_footer_menu(FILE *f, 
+                               unsigned long long session_id,
+                               struct sid_state *sstate,
+                               const unsigned char *self_url,
+                               const unsigned char *hidden_vars,
+                               const unsigned char *extra_args)
+{
+  unsigned char hbuf[1024];
+
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  fprintf(f, "<table border=\"0\"><tr><td>%sTo the top</a></td><td>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, ""));
+  html_submit_button(f, SUPER_ACTION_CNTS_FORGET, "Forget it");
+  fprintf(f, "</td><td>");
+  html_submit_button(f, SUPER_ACTION_CNTS_COMMIT, "COMMIT changes!");
+  fprintf(f, "</td><td>%sView serve.cfg</a>",
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                        "action=%d", SUPER_ACTION_VIEW_NEW_SERVE_CFG));
+  fprintf(f, "</td></tr></table></form>\n");
+}
 
 int
 super_html_create_contest(FILE *f,
@@ -1890,6 +2018,9 @@ super_html_edit_contest_page(FILE *f,
             html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,""));
     return 0;
   }
+
+  super_html_contest_page_menu(f, session_id, sstate, 1, self_url, hidden_vars,
+                               extra_args);
 
   fprintf(f, "<table border=\"0\">\n");
 
@@ -2309,12 +2440,8 @@ super_html_edit_contest_page(FILE *f,
 
   fprintf(f, "</table>\n");
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
-  fprintf(f, "<table border=\"0\"><tr><td>%sTo the top</a></td><td>\n", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, ""));
-  html_submit_button(f, SUPER_ACTION_CNTS_FORGET, "Forget it");
-  fprintf(f, "</td><td>");
-  html_submit_button(f, SUPER_ACTION_CNTS_COMMIT, "COMMIT changes!");
-  fprintf(f, "</td></tr></table></form>\n");
+  super_html_contest_footer_menu(f, session_id, sstate,
+                                 self_url, hidden_vars, extra_args);
 
   return 0;
 }
@@ -2699,6 +2826,7 @@ static const unsigned char template_help_2[] =
 "<tr><td><tt>%Vu</tt></td>The `register' CGI-program URL<td></td></tr>\n"
 "<tr><td><tt>%%</tt></td><td>The percent sign <tt>%</tt></td></tr>\n"
 "</table>\n";
+static const unsigned char template_help_3[] = "";
 
 int
 super_html_edit_template_file(FILE *f,
@@ -2715,6 +2843,7 @@ super_html_edit_template_file(FILE *f,
                               const unsigned char *extra_args)
 {
   struct contest_desc *cnts = sstate->edited_cnts;
+  struct section_global_data *global = sstate->global;
   unsigned char hbuf[1024];
   unsigned char conf_path[PATH_MAX];
   unsigned char full_path[PATH_MAX];
@@ -2724,76 +2853,206 @@ super_html_edit_template_file(FILE *f,
   unsigned char **p_str;
   unsigned char *s;
   struct stat stb;
-  int commit_action, reread_action, clear_action;
+  int commit_action, reread_action, clear_action, back_action;
   const unsigned char *help_txt;
 
-  if (!cnts) {
-    failure_text = "no current contest";
-    goto failure;
-  }
-
   switch (cmd) {
+  case SSERV_CMD_GLOB_EDIT_CONTEST_START_CMD:
+    if (!global) {
+      failure_text = "no current contest";
+      goto failure;
+    }
+    file_path1 = global->contest_start_cmd;
+    param_expl = "Contest start script";
+    p_str = &sstate->contest_start_cmd_text;
+    commit_action = SUPER_ACTION_GLOB_SAVE_CONTEST_START_CMD;
+    reread_action = SUPER_ACTION_GLOB_READ_CONTEST_START_CMD;
+    clear_action = SUPER_ACTION_GLOB_CLEAR_CONTEST_START_CMD_TEXT;
+    back_action = SUPER_ACTION_EDIT_CURRENT_GLOBAL;
+    help_txt = template_help_3;
+    break;
+
+  case SSERV_CMD_GLOB_EDIT_STAND_HEADER_FILE:
+    if (!global) {
+      failure_text = "no current contest";
+      goto failure;
+    }
+    file_path1 = global->stand_header_file;
+    param_expl = "Standings HTML header file";
+    p_str = &sstate->stand_header_text;
+    commit_action = SUPER_ACTION_GLOB_SAVE_STAND_HEADER;
+    reread_action = SUPER_ACTION_GLOB_READ_STAND_HEADER;
+    clear_action = SUPER_ACTION_GLOB_CLEAR_STAND_HEADER_TEXT;
+    back_action = SUPER_ACTION_EDIT_CURRENT_GLOBAL;
+    help_txt = template_help_1;
+    break;
+  case SSERV_CMD_GLOB_EDIT_STAND_FOOTER_FILE:
+    if (!global) {
+      failure_text = "no current contest";
+      goto failure;
+    }
+    file_path1 = global->stand_footer_file;
+    param_expl = "Standings HTML footer file";
+    p_str = &sstate->stand_footer_text;
+    commit_action = SUPER_ACTION_GLOB_SAVE_STAND_FOOTER;
+    reread_action = SUPER_ACTION_GLOB_READ_STAND_FOOTER;
+    clear_action = SUPER_ACTION_GLOB_CLEAR_STAND_FOOTER_TEXT;
+    back_action = SUPER_ACTION_EDIT_CURRENT_GLOBAL;
+    help_txt = template_help_1;
+    break;
+  case SSERV_CMD_GLOB_EDIT_STAND2_HEADER_FILE:
+    if (!global) {
+      failure_text = "no current contest";
+      goto failure;
+    }
+    file_path1 = global->stand2_header_file;
+    param_expl = "Supplementary standings HTML header file";
+    p_str = &sstate->stand2_header_text;
+    commit_action = SUPER_ACTION_GLOB_SAVE_STAND2_HEADER;
+    reread_action = SUPER_ACTION_GLOB_READ_STAND2_HEADER;
+    clear_action = SUPER_ACTION_GLOB_CLEAR_STAND2_HEADER_TEXT;
+    back_action = SUPER_ACTION_EDIT_CURRENT_GLOBAL;
+    help_txt = template_help_1;
+    break;
+  case SSERV_CMD_GLOB_EDIT_STAND2_FOOTER_FILE:
+    if (!global) {
+      failure_text = "no current contest";
+      goto failure;
+    }
+    file_path1 = global->stand2_footer_file;
+    param_expl = "Supplementary standings HTML footer file";
+    p_str = &sstate->stand2_footer_text;
+    commit_action = SUPER_ACTION_GLOB_SAVE_STAND2_FOOTER;
+    reread_action = SUPER_ACTION_GLOB_READ_STAND2_FOOTER;
+    clear_action = SUPER_ACTION_GLOB_CLEAR_STAND2_FOOTER_TEXT;
+    back_action = SUPER_ACTION_EDIT_CURRENT_GLOBAL;
+    help_txt = template_help_1;
+    break;
+  case SSERV_CMD_GLOB_EDIT_PLOG_HEADER_FILE:
+    if (!global) {
+      failure_text = "no current contest";
+      goto failure;
+    }
+    file_path1 = global->plog_header_file;
+    param_expl = "Public submission log HTML header file";
+    p_str = &sstate->plog_header_text;
+    commit_action = SUPER_ACTION_GLOB_SAVE_PLOG_HEADER;
+    reread_action = SUPER_ACTION_GLOB_READ_PLOG_HEADER;
+    clear_action = SUPER_ACTION_GLOB_CLEAR_PLOG_HEADER_TEXT;
+    back_action = SUPER_ACTION_EDIT_CURRENT_GLOBAL;
+    help_txt = template_help_1;
+    break;
+  case SSERV_CMD_GLOB_EDIT_PLOG_FOOTER_FILE:
+    if (!global) {
+      failure_text = "no current contest";
+      goto failure;
+    }
+    file_path1 = global->plog_footer_file;
+    param_expl = "Public submission log HTML footer file";
+    p_str = &sstate->plog_footer_text;
+    commit_action = SUPER_ACTION_GLOB_SAVE_PLOG_FOOTER;
+    reread_action = SUPER_ACTION_GLOB_READ_PLOG_FOOTER;
+    clear_action = SUPER_ACTION_GLOB_CLEAR_PLOG_FOOTER_TEXT;
+    back_action = SUPER_ACTION_EDIT_CURRENT_GLOBAL;
+    help_txt = template_help_1;
+    break;
+
   case SSERV_CMD_CNTS_EDIT_USERS_HEADER:
+    if (!cnts) {
+      failure_text = "no current contest";
+      goto failure;
+    }
     file_path1 = cnts->users_header_file;
     param_expl = "`users' HTML header file";
     p_str = &sstate->users_header_text;
     commit_action = SUPER_ACTION_CNTS_SAVE_USERS_HEADER;
     reread_action = SUPER_ACTION_CNTS_READ_USERS_HEADER;
     clear_action = SUPER_ACTION_CNTS_CLEAR_USERS_HEADER_TEXT;
+    back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_USERS_FOOTER:
+    if (!cnts) {
+      failure_text = "no current contest";
+      goto failure;
+    }
     file_path1 = cnts->users_footer_file;
     param_expl = "`users' HTML footer file";
     p_str = &sstate->users_footer_text;
     commit_action = SUPER_ACTION_CNTS_SAVE_USERS_FOOTER;
     reread_action = SUPER_ACTION_CNTS_READ_USERS_FOOTER;
     clear_action = SUPER_ACTION_CNTS_CLEAR_USERS_FOOTER_TEXT;
+    back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_REGISTER_HEADER:
+    if (!cnts) {
+      failure_text = "no current contest";
+      goto failure;
+    }
     file_path1 = cnts->register_header_file;
     param_expl = "`register' HTML header file";
     p_str = &sstate->register_header_text;
     commit_action = SUPER_ACTION_CNTS_SAVE_REGISTER_HEADER;
     reread_action = SUPER_ACTION_CNTS_READ_REGISTER_HEADER;
     clear_action = SUPER_ACTION_CNTS_CLEAR_REGISTER_HEADER_TEXT;
+    back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_REGISTER_FOOTER:
+    if (!cnts) {
+      failure_text = "no current contest";
+      goto failure;
+    }
     file_path1 = cnts->register_footer_file;
     param_expl = "`register' HTML footer file";
     p_str = &sstate->register_footer_text;
     commit_action = SUPER_ACTION_CNTS_SAVE_REGISTER_FOOTER;
     reread_action = SUPER_ACTION_CNTS_READ_REGISTER_FOOTER;
     clear_action = SUPER_ACTION_CNTS_CLEAR_REGISTER_FOOTER_TEXT;
+    back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_TEAM_HEADER:
+    if (!cnts) {
+      failure_text = "no current contest";
+      goto failure;
+    }
     file_path1 = cnts->team_header_file;
     param_expl = "`team' HTML header file";
     p_str = &sstate->team_header_text;
     commit_action = SUPER_ACTION_CNTS_SAVE_TEAM_HEADER;
     reread_action = SUPER_ACTION_CNTS_READ_TEAM_HEADER;
     clear_action = SUPER_ACTION_CNTS_CLEAR_TEAM_HEADER_TEXT;
+    back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_TEAM_FOOTER:
+    if (!cnts) {
+      failure_text = "no current contest";
+      goto failure;
+    }
     file_path1 = cnts->team_footer_file;
     param_expl = "`team' HTML footer file";
     p_str = &sstate->team_footer_text;
     commit_action = SUPER_ACTION_CNTS_SAVE_TEAM_FOOTER;
     reread_action = SUPER_ACTION_CNTS_READ_TEAM_FOOTER;
     clear_action = SUPER_ACTION_CNTS_CLEAR_TEAM_FOOTER_TEXT;
+    back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
     help_txt = template_help_1;
     break;
   case SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE:
+    if (!cnts) {
+      failure_text = "no current contest";
+      goto failure;
+    }
     file_path1 = cnts->register_email_file;
     param_expl = "registration letter template";
     p_str = &sstate->register_email_text;
     commit_action = SUPER_ACTION_CNTS_SAVE_REGISTER_EMAIL_FILE;
     reread_action = SUPER_ACTION_CNTS_READ_REGISTER_EMAIL_FILE;
     clear_action = SUPER_ACTION_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT;
+    back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
     help_txt = template_help_2;
     break;
   default:
@@ -2864,7 +3123,7 @@ super_html_edit_template_file(FILE *f,
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, ""));
   fprintf(f, "<td>%sBack</a></td><td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
-                   "action=%d", SUPER_ACTION_EDIT_CURRENT_CONTEST));
+                   "action=%d", back_action));
   fprintf(f, "</td><td>");
   html_submit_button(f, reread_action, "Re-read");
   fprintf(f, "</td><td>");
@@ -2882,11 +3141,49 @@ super_html_edit_template_file(FILE *f,
                                  "%s", failure_text);
 }
 
+void
+super_html_load_serve_cfg(const struct contest_desc *cnts,
+                          const struct userlist_cfg *config,
+                          struct sid_state *sstate)
+{
+  path_t serve_cfg_path;
+  char *flog_txt = 0;
+  size_t flog_len = 0;
+  FILE *flog = 0;
+
+  if (!cnts->conf_dir || !*cnts->conf_dir) {
+    snprintf(serve_cfg_path,sizeof(serve_cfg_path),"%s/conf/serve.cfg",cnts->root_dir);
+  } else if (!os_IsAbsolutePath(cnts->conf_dir)) {
+    snprintf(serve_cfg_path, sizeof(serve_cfg_path), "%s/%s/serve.cfg",
+             cnts->root_dir, cnts->conf_dir);
+  } else {
+    snprintf(serve_cfg_path, sizeof(serve_cfg_path), "%s/serve.cfg", cnts->conf_dir);
+  }
+
+  flog = open_memstream(&flog_txt, &flog_len);
+
+  if (access(serve_cfg_path, R_OK) < 0) {
+    fprintf(flog, "file %s does not exist or is not readable\n", serve_cfg_path);
+    fclose(flog); flog = 0;
+    sstate->serve_parse_errors = flog_txt;
+    flog_txt = 0; flog_len = 0;
+  } else if (super_html_read_serve(flog, serve_cfg_path, config, cnts, sstate) < 0) {
+    fclose(flog); flog = 0;
+    sstate->serve_parse_errors = flog_txt;
+    flog_txt = 0; flog_len = 0;
+  } else {
+    fclose(flog); flog = 0;
+    xfree(flog_txt); flog_txt = 0;
+    flog_len = 0;
+  }
+}
+
 int
 super_html_create_contest_2(FILE *f,
                             int priv_level,
                             int user_id,
                             const unsigned char *login,
+                            const unsigned char *ss_login,
                             unsigned long long session_id,
                             unsigned long ip_address,
                             struct userlist_cfg *config,
@@ -2942,11 +3239,20 @@ super_html_create_contest_2(FILE *f,
   if (!templ_mode) {
     sstate->edited_cnts = contest_tmpl_new(contest_id,
                                            login,
-                                           self_url, config);
+                                           self_url,
+                                           ss_login,
+                                           config);
+    sstate->global = prepare_new_global_section(contest_id,
+                                                sstate->edited_cnts->root_dir,
+                                                config);
   } else {
-    sstate->edited_cnts = contest_tmpl_clone(sstate, contest_id, templ_id, login);
+    super_html_load_serve_cfg(templ_cnts, config, sstate);
+    super_html_fix_serve(sstate, templ_id, contest_id);
+    sstate->edited_cnts = contest_tmpl_clone(sstate, contest_id, templ_id, login,
+                                             ss_login);
   }
 
+  xfree(contests_map);
   return super_html_edit_contest_page(f, priv_level, user_id, login,
                                       session_id, ip_address, config, sstate,
                                       self_url, hidden_vars, extra_args);

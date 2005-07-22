@@ -51,6 +51,7 @@ struct contest_extra
   time_t serve_suspend_end;
   time_t run_last_start;
   time_t run_suspend_end;
+  time_t last_forced_check;
 };
 
 struct contest_extra *get_contest_extra(int num);
@@ -64,6 +65,11 @@ enum
 };
 
 struct contest_desc;
+struct section_global_data;
+struct section_language_data;
+struct section_problem_data;
+struct section_tester_data;
+
 struct sid_state
 {
   struct sid_state *next;
@@ -87,6 +93,63 @@ struct sid_state
   unsigned char *team_header_text;
   unsigned char *team_footer_text;
   unsigned char *register_email_text;
+
+  unsigned char *serve_parse_errors;
+
+  struct generic_section_config *cfg;
+  struct section_global_data *global;
+  int lang_a;
+  struct section_language_data **langs;
+  int *loc_cs_map;              /* map from local ids to compile ids */
+  int *cs_loc_map;              /* reverse map */
+  unsigned char **lang_opts;
+  int *lang_flags;
+
+  /* abstract problems */
+  int aprob_u;
+  int aprob_a;
+  struct section_problem_data **aprobs;
+  int *aprob_flags;
+
+  /* concrete problems */
+  int prob_a;
+  struct section_problem_data **probs;
+  int *prob_flags;
+
+  int atester_total;
+  struct section_tester_data **atesters;
+
+  int tester_total;
+  struct section_tester_data **testers;
+
+  int show_global_1;
+  int show_global_2;
+  int show_global_3;
+  int show_global_4;
+  int show_global_5;
+  int show_global_6;
+  int show_global_7;
+  int enable_stand2;
+  int enable_plog;
+  int enable_extra_col;
+  int disable_compilation_server;
+
+  int cs_langs_loaded;
+  int cs_lang_total;
+  struct generic_section_config *cs_cfg;
+  struct section_language_data **cs_langs;
+  unsigned char **cs_lang_names;
+
+  unsigned char *contest_start_cmd_text;
+  unsigned char *stand_header_text;
+  unsigned char *stand_footer_text;
+  unsigned char *stand2_header_text;
+  unsigned char *stand2_footer_text;
+  unsigned char *plog_header_text;
+  unsigned char *plog_footer_text;
 };
+
+void super_serve_clear_edited_contest(struct sid_state *sstate);
+int super_serve_start_serve_test_mode(struct contest_desc *cnts, unsigned char **p_log);
 
 #endif /* __SUPER_SERVE_H__ */
