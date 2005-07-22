@@ -4091,7 +4091,7 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
 }
 
 static void
-do_dump_database(FILE *f, int contest_id, struct contest_desc *d)
+do_dump_database(FILE *f, int contest_id, struct contest_desc *d, int html_flag)
 {
   struct userlist_user *u;
   struct userlist_contest *c;
@@ -4099,7 +4099,9 @@ do_dump_database(FILE *f, int contest_id, struct contest_desc *d)
   unsigned char *notset = 0, *banstr = 0, *invstr = 0, *statstr = 0;
   int i, role, pers, pers_tot;
 
-  fprintf(f, "Content-type: text/plain\n\n");
+  if (html_flag) {
+    fprintf(f, "Content-type: text/plain\n\n");
+  }
 
   notset = "";
   for (i = 1; i < userlist->user_map_size; i++) {
@@ -4196,6 +4198,42 @@ do_dump_database(FILE *f, int contest_id, struct contest_desc *d)
 }
 
 static void
+do_dump_whole_database(FILE *f, int contest_id, struct contest_desc *d,
+                       int html_flag)
+{
+  struct userlist_user *u;
+  unsigned char *notset = 0;
+  int i;
+
+  if (html_flag) {
+    fprintf(f, "Content-type: text/plain\n\n");
+  }
+
+  notset = "";
+  for (i = 1; i < userlist->user_map_size; i++) {
+    if (!(u = userlist->user_map[i])) continue;
+
+    fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
+            u->id, u->login, u->name, u->email,
+            u->inst?u->inst:notset,
+            u->inst_en?u->inst_en:notset,
+            u->instshort?u->instshort:notset,
+            u->instshort_en?u->instshort_en:notset,
+            u->fac?u->fac:notset,
+            u->fac_en?u->fac_en:notset,
+            u->facshort?u->facshort:notset,
+            u->facshort_en?u->facshort_en:notset,
+            u->city?u->city:notset,
+            u->city_en?u->city_en:notset,
+            u->country?u->country:notset,
+            u->country_en?u->country_en:notset,
+            u->location?u->location:notset,
+            u->printer_name?u->printer_name:notset,
+            u->languages?u->languages:notset);
+    }
+}
+
+static void
 cmd_list_users(struct client_state *p, int pkt_len,
                struct userlist_pk_list_users *data)
 {
@@ -4280,7 +4318,7 @@ cmd_list_users(struct client_state *p, int pkt_len,
 
 static void
 cmd_dump_database(struct client_state *p, int pkt_len,
-                          struct userlist_pk_dump_database *data)
+                  struct userlist_pk_dump_database *data)
 {
   struct client_state *q;
   FILE *f = 0;
@@ -4333,7 +4371,71 @@ cmd_dump_database(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
   }
-  do_dump_database(f, data->contest_id, cnts);
+  do_dump_database(f, data->contest_id, cnts, data->html_flag);
+  fclose(f);
+
+  q = (struct client_state*) xcalloc(1, sizeof(*q));
+  q->client_fds[0] = -1;
+  q->client_fds[1] = p->client_fds[1];
+  q->last_time = cur_time;
+  q->id = serial_id++;
+  q->user_id = -1;
+  q->fd = p->client_fds[0];
+  p->client_fds[0] = -1;
+  p->client_fds[1] = -1;
+  q->state = STATE_AUTOCLOSE;
+  q->write_buf = html_ptr;
+  q->write_len = html_size;
+  fcntl(q->fd, F_SETFL, fcntl(q->fd, F_GETFL) | O_NONBLOCK);
+  link_client_state(q);
+  info("%s -> OK, %d", logbuf, q->id);
+  send_reply(p, ULS_OK);
+}
+
+static void
+cmd_dump_whole_database(struct client_state *p, int pkt_len,
+                        struct userlist_pk_dump_database *data)
+{
+  struct client_state *q;
+  FILE *f = 0;
+  char *html_ptr = 0;
+  size_t html_size = 0;
+  struct contest_desc *cnts = 0;
+  opcap_t caps;
+  unsigned char logbuf[1024];
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+  if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
+    CONN_BAD("two client file descriptors required");
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf), "DUMP_ALL_DATA: %d",
+           p->user_id);
+
+  if (p->user_id < 0) {
+    err("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+
+  if (get_uid_caps(&config->capabilities, p->user_id, &caps) < 0
+      || opcaps_check(caps, OPCAP_DUMP_USERS) < 0) {
+    err("%s -> no capability %d", logbuf, OPCAP_DUMP_USERS);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (!(f = open_memstream(&html_ptr, &html_size))) {
+    err("%s -> open_memstream failed!", logbuf);
+    send_reply(p, -ULS_ERR_OUT_OF_MEM);
+    return;
+  }
+  do_dump_whole_database(f, data->contest_id, cnts, data->html_flag);
   fclose(f);
 
   q = (struct client_state*) xcalloc(1, sizeof(*q));
@@ -5348,6 +5450,7 @@ cmd_add_field(struct client_state *p, int pkt_len,
   int i, new_login_serial;
   unsigned char new_login_buf[64];
   unsigned char logbuf[1024];
+  struct userlist_pk_login_ok out;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -5430,8 +5533,11 @@ cmd_add_field(struct client_state *p, int pkt_len,
     dirty = 1;
     flush_interval /= 2;
     u->last_change_time = cur_time;
-    send_reply(p, ULS_OK);
     info("%s -> new user %d", logbuf, u->id);
+    memset(&out, 0, sizeof(out));
+    out.reply_id = ULS_LOGIN_OK;
+    out.user_id = u->id;
+    enqueue_reply_to_client(p, sizeof(out), &out);
     return;
   }
 
@@ -5709,6 +5815,7 @@ static void (*cmd_table[])() =
   [ULS_LIST_STANDINGS_USERS]    cmd_list_standings_users,
   [ULS_GET_UID_BY_PID_2]        cmd_get_uid_by_pid_2,
   [ULS_IS_VALID_COOKIE]         cmd_is_valid_cookie,
+  [ULS_DUMP_WHOLE_DATABASE]     cmd_dump_whole_database,
 
   [ULS_LAST_CMD] 0
 };
