@@ -1750,7 +1750,8 @@ action_dump_users(void)
 
   ASSERT(userlist_conn);
   fflush(stdout);
-  r = userlist_clnt_dump_database(userlist_conn, global->contest_id, 1);
+  r = userlist_clnt_dump_database(userlist_conn, ULS_DUMP_DATABASE,
+                                  global->contest_id, 1, 1);
   if (r < 0) {
     client_put_header(stdout, 0, 0, global->charset, 1, 0, "Users database error");
     printf("<h2><font color=\"red\">%s</font></h2>\n",
