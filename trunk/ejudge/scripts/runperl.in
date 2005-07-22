@@ -1,0 +1,23 @@
+#!@ac_cv_contest_perl_path@
+# $Id$
+# Copyright (c) 2005 Alexander Chernov
+
+use Safe;
+use strict;
+
+if (!defined($ARGV[0])) {
+  print STDERR "File name expected\n";
+  exit(5);
+}
+
+my $cpt = new Safe;
+$cpt->permit("open", "close",  "require", "sort", "exit", ":base_math");
+$cpt->rdo($ARGV[0]);
+if ($@) {
+  if ($@ =~ /trapped by operation mask/) {
+    print STDERR $@;
+    # FIXME: report security violation in a different way?
+    exit(2); # violation
+  }
+  die("$@");
+}
