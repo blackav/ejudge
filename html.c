@@ -905,6 +905,9 @@ do_write_kirov_standings(FILE *f, int client_flag,
       if (run_time < start_time) run_time = start_time;
       if (stop_time && run_time > stop_time) run_time = stop_time;
       if (run_time - start_time > cur_duration) continue;
+      if (global->stand_ignore_after_d > 0
+          && pe->timestamp >= global->stand_ignore_after_d)
+        continue;
     }
 
     run_score = pe->score;
@@ -1323,6 +1326,9 @@ sec_to_min(int secs)
   abort();
 }
 
+/*
+ * ACM-style standings
+ */
 void
 do_write_standings(FILE *f, int client_flag, int user_id,
                    unsigned char const *footer_str, int raw_flag)
@@ -1496,7 +1502,10 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       // client_flag == 1 && user_id == 0 --- privileged standings
       if (client_flag != 1 || user_id) {
         if (run_time < start_time) run_time = start_time;
-        if (run_time - start_time > current_dur) continue;
+        if (current_dur > 0 && run_time - start_time > current_dur) continue;
+        if (global->stand_ignore_after_d > 0
+            && pe->timestamp >= global->stand_ignore_after_d)
+          continue;
       }
     }
     tt = t_rev[pe->team];
@@ -1514,13 +1523,13 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       tot_att[pp]++;
       if (global->virtual) {
         ok_time[tt][pp] = sec_to_min(tdur);
-        t_pen[tt] += ok_time[tt][pp];
+        if (!global->ignore_success_time) t_pen[tt] += ok_time[tt][pp];
         last_success_time = run_time;
         last_success_start = tstart;
       } else {
         if (run_time < start_time) run_time = start_time;
         ok_time[tt][pp] = sec_to_min(run_time - start_time);
-        t_pen[tt] += ok_time[tt][pp];
+        if (!global->ignore_success_time) t_pen[tt] += ok_time[tt][pp];
         last_success_time = run_time;
         last_success_start = start_time;
       }
@@ -1755,13 +1764,21 @@ do_write_standings(FILE *f, int client_flag, int user_id,
         if (calc[t][j] < 0) {
           fprintf(f, "%d", calc[t][j]);
         } else if (calc[t][j] == 1) {
-          fprintf(f, "+ <div%s>(%ld:%02ld)</div>",
-                  global->stand_time_attr,
-                  ok_time[t][j] / 60, ok_time[t][j] % 60);
+          if (global->ignore_success_time || !global->stand_show_ok_time) {
+            fprintf(f, "+");
+          } else {
+            fprintf(f, "+ <div%s>(%ld:%02ld)</div>",
+                    global->stand_time_attr,
+                    ok_time[t][j] / 60, ok_time[t][j] % 60);
+          }
         } else if (calc[t][j] > 0) {
-          fprintf(f, "+%d <div%s>(%ld:%02ld)</div>", calc[t][j] - 1,
-                  global->stand_time_attr,
-                  ok_time[t][j] / 60, ok_time[t][j] % 60);
+          if (global->ignore_success_time || !global->stand_show_ok_time) {
+            fprintf(f, "+%d", calc[t][j] - 1);
+          } else {
+            fprintf(f, "+%d <div%s>(%ld:%02ld)</div>", calc[t][j] - 1,
+                    global->stand_time_attr,
+                    ok_time[t][j] / 60, ok_time[t][j] % 60);
+          }
         } else {
           fprintf(f, "&nbsp;");
         }
