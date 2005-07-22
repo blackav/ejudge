@@ -1782,7 +1782,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
       r = display_role_menu(LINES / 2, 0);
       if (r < 0 || r >= CONTEST_LAST_MEMBER) goto menu_continue;
 
-      r = userlist_clnt_add_field(server_conn, u->id, r, -1, -1);
+      r = userlist_clnt_add_field(server_conn, &u->id, r, -1, -1);
       if (r < 0) {
         vis_err("Add failed: %s", userlist_strerror(-r));
         goto menu_continue;
@@ -2920,13 +2920,15 @@ display_contests_menu(unsigned char *upper, int only_choose)
   return retval;
 }
 
+static struct selected_users_info g_sel_users;
+
 static int
 do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
 {
   int r;
   unsigned char *xml_text = 0;
   struct userlist_list *users = 0;
-  int nusers, i, j;
+  int nusers, i, j, k;
   struct userlist_user **uu = 0;
   unsigned char **descs = 0;
   unsigned char buf[128];
@@ -2967,7 +2969,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
   if (!nusers) {
     j = okcancel("No users in database. Add new user?");
     if (j != 1) return -1;
-    j = userlist_clnt_add_field(server_conn, -1, -1, -1, -1);
+    j = userlist_clnt_add_field(server_conn, 0, -1, -1, -1);
     if (j < 0) {
       vis_err("Add failed: %s", userlist_strerror(-j));
       return -1;
@@ -2985,6 +2987,24 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
   }
   ASSERT(j == nusers);
 
+  // extend selection
+  if (nusers >= g_sel_users.allocated) {
+    int new_size = g_sel_users.allocated;
+    unsigned char *new_ptr = 0;
+
+    if (!new_size) new_size = 64;
+    while (nusers > new_size) new_size *= 2;
+    new_ptr = (unsigned char*) xcalloc(new_size, 1);
+    if (g_sel_users.allocated > 0)
+      memcpy(new_ptr, g_sel_users.mask, g_sel_users.allocated);
+    g_sel_users.allocated = new_size;
+    xfree(g_sel_users.mask);
+    g_sel_users.mask = new_ptr;
+  }
+  g_sel_users.total_selected = 0;
+  if (g_sel_users.allocated > 0)
+    memset(g_sel_users.mask, 0, g_sel_users.mask[0] * g_sel_users.allocated);
+
   if (registered_users_sort_flag > 0) {
     qsort(uu, nusers, sizeof(uu[0]), registered_users_sort_func);
   }
@@ -2992,7 +3012,8 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
   descs = alloca(nusers * sizeof(descs[0]));
   memset(descs, 0, nusers * sizeof(descs[0]));
   for (i = 0; i < nusers; i++) {
-    len = snprintf(buf, sizeof(buf), "%6d  %-16.16s  %-51.51s",
+    len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-50.50s",
+		   g_sel_users.mask[i]?"!":" ",
                    uu[i]->id, uu[i]->login, uu[i]->name);
     descs[i] = alloca(len + 16);
     strcpy(descs[i], buf);
@@ -3070,6 +3091,15 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
       case 'e': case 'E': case 'Õ' & 255: case 'õ' & 255:
         c = 'e';
         goto menu_done;
+      case 'm': case 'M': case 'Ø' & 255: case 'ø' & 255:
+        c = 'm';
+        goto menu_done;
+      case ':': case ';': case 'Ö' & 255: case 'ö' & 255:
+	c = ':';
+	goto menu_done;
+      case 'c': case 'C': case 'Ó' & 255: case 'ó' & 255:
+        c = 'c';
+        goto menu_done;
       }
       cmd = -1;
       switch (c) {
@@ -3123,7 +3153,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
     if (c == 'a' && !only_choose) {
       j = okcancel("Add new user?");
       if (j != 1) goto menu_continue;
-      j = userlist_clnt_add_field(server_conn, -1, -1, -1, -1);
+      j = userlist_clnt_add_field(server_conn, 0, -1, -1, -1);
       if (j < 0) {
         vis_err("Add failed: %s", userlist_strerror(-j));
         goto menu_continue;
@@ -3180,6 +3210,146 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
         retval = -2;
         c = 'q';
       }
+    }
+    if (c == 'm' ) {
+      unsigned char templ_buf[256];
+      unsigned char passwd_buf[256];
+      unsigned char num_buf[256];
+      unsigned char valbuf[1024];
+      int first_num, last_num, n, contest_num, user_id;
+      // mass creating new user
+
+      memset(templ_buf, 0, sizeof(templ_buf));
+      i = edit_string(LINES / 2, COLS, "Template for new names?", templ_buf, 200);
+      if (i < 0) goto menu_continue;
+      memset(passwd_buf, 0, sizeof(passwd_buf));
+      i = edit_string(LINES / 2, COLS, "Template for passwords?", passwd_buf, 200);
+      if (i < 0) goto menu_continue;
+      memset(num_buf, 0, sizeof(num_buf));
+      i = edit_string(LINES / 2, COLS, "First number:", num_buf, 200);
+      if (i < 0) goto menu_continue;
+      if (sscanf(num_buf, "%d%n", &first_num, &n) != 1 || num_buf[n]
+          || first_num < 0 || first_num >= 1000000) {
+        vis_err("Invalid number");
+        goto menu_continue;
+      }
+      memset(num_buf, 0, sizeof(num_buf));
+      i = edit_string(LINES / 2, COLS, "Last number:", num_buf, 200);
+      if (i < 0) goto menu_continue;
+      if (sscanf(num_buf, "%d%n", &last_num, &n) != 1 || num_buf[n]
+          || last_num < 0 || last_num >= 1000000 || last_num < first_num) {
+        vis_err("Invalid number");
+        goto menu_continue;
+      }
+      memset(num_buf, 0, sizeof(num_buf));
+      i = edit_string(LINES / 2, COLS, "Contest number:", num_buf, 200);
+      if (i < 0) goto menu_continue;
+      if (sscanf(num_buf, "%d%n", &contest_num, &n) != 1 || num_buf[n]
+          || contest_num <= 0 || contest_num >= 1000000) {
+        vis_err("Invalid number");
+        goto menu_continue;
+      }
+
+      for (i = first_num; i <= last_num; i++) {
+        user_id = -1;
+        j = userlist_clnt_add_field(server_conn, &user_id, -1, -1, -1);
+        if (j < 0) {
+          vis_err("Adding failed: %s", userlist_strerror(-j));
+          goto menu_continue;
+        }
+        snprintf(valbuf, sizeof(valbuf), templ_buf, i);
+        j = userlist_clnt_edit_field(server_conn, user_id, -1, 0,
+                                     USERLIST_NN_LOGIN, valbuf);
+        if (j < 0) {
+          vis_err("Setting login failed: %s", userlist_strerror(-j));
+          goto menu_continue;
+        }
+        j = userlist_clnt_edit_field(server_conn, user_id, -1, 0,
+                                     USERLIST_NN_NAME, valbuf);
+        if (j < 0) {
+          vis_err("Setting name failed: %s", userlist_strerror(-j));
+          goto menu_continue;
+        }
+        snprintf(valbuf, sizeof(valbuf), "N/A");
+        j = userlist_clnt_edit_field(server_conn, user_id, -1, 0,
+                                     USERLIST_NN_EMAIL, valbuf);
+        if (j < 0) {
+          vis_err("Setting name failed: %s", userlist_strerror(-j));
+          goto menu_continue;
+        }
+        snprintf(valbuf, sizeof(valbuf), passwd_buf, i);
+        j = userlist_clnt_edit_field(server_conn, user_id, -1, 0,
+                                     USERLIST_NN_REG_PASSWORD, valbuf);
+        if (j < 0) {
+          vis_err("Setting name failed: %s", userlist_strerror(-j));
+          goto menu_continue;
+        }
+        j = userlist_clnt_register_contest(server_conn, ULS_PRIV_REGISTER_CONTEST,
+                                           user_id,contest_num);
+        if (j < 0) {
+          vis_err("Registration for contest %d failed: %s",
+                  contest_num, userlist_strerror(-j));
+          goto menu_continue;
+        }
+      }
+      retval = -2;
+      c = 'q';
+    }
+    if (c == ':') {
+      i = item_index(current_item(menu));
+      ASSERT(i >= 0 && i < nusers);
+      if (g_sel_users.mask[i]) {
+        g_sel_users.mask[i] = 0;
+        g_sel_users.total_selected--;
+      } else {
+        g_sel_users.mask[i] = 1;
+        g_sel_users.total_selected++;
+      }
+      len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-50.50s",
+                     g_sel_users.mask[i]?"!":" ",
+                     uu[i]->id, uu[i]->login, uu[i]->name);
+      strcpy(descs[i], buf);
+      menu_driver(menu, REQ_DOWN_ITEM);
+      goto menu_continue;
+    }
+    if (c == 'c') {
+      if ((k = display_contests_menu(current_level, 1)) <= 0) continue;
+
+      if (!g_sel_users.total_selected) {
+        // register the current user to the specified contest
+        i = item_index(current_item(menu));
+        if (okcancel("Register user %d for contest %d?", uu[i]->id, k) != 1)
+          goto menu_continue;
+        r = userlist_clnt_register_contest(server_conn,
+                                           ULS_PRIV_REGISTER_CONTEST,
+                                           uu[i]->id, k);
+        if (r < 0) {
+          vis_err("Registration failed: %s", userlist_strerror(-r));
+          goto menu_continue;
+        }
+      } else {
+        // register the selected users to the specified contest
+        if (okcancel("Register selected users for contest %d?", k) != 1)
+          goto menu_continue;
+        for (j = 0; j < nusers; j++) {
+          if (!g_sel_users.mask[j]) continue;
+          r = userlist_clnt_register_contest(server_conn,
+                                             ULS_PRIV_REGISTER_CONTEST,
+                                             uu[j]->id, k);
+          if (r < 0) {
+            vis_err("Registration failed: %s", userlist_strerror(-r));
+            goto menu_continue;
+          }
+          g_sel_users.mask[j] = 0;
+          len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-50.50s",
+                         g_sel_users.mask[j]?"!":" ",
+                         uu[j]->id, uu[j]->login, uu[j]->name);
+          strcpy(descs[j], buf);
+        }
+        memset(g_sel_users.mask, 0, g_sel_users.allocated);
+        g_sel_users.total_selected = 0;
+      }
+      goto menu_continue;
     }
 
   menu_continue:
