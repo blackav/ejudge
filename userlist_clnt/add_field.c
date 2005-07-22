@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 
 int
 userlist_clnt_add_field(struct userlist_clnt *clnt,
-                        int user_id,
+                        int *p_user_id,
                         int role,
                         int pers,
                         int field)
@@ -27,18 +27,37 @@ userlist_clnt_add_field(struct userlist_clnt *clnt,
   struct userlist_pk_edit_field *out = 0;
   struct userlist_packet *in = 0;
   int out_size = 0, in_size = 0, r;
+  struct userlist_pk_login_ok *uin = 0;
+  void *void_in = 0;
 
   out_size = sizeof(*out);
   out = alloca(out_size);
   memset(out, 0, out_size);
   out->request_id = ULS_ADD_FIELD;
-  out->user_id = user_id;
+  if (!p_user_id) out->user_id = -1;
+  else out->user_id = *p_user_id;
   out->role = role;
   out->pers = pers;
   out->field = field;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
-  if ((r = userlist_clnt_recv_packet(clnt, &in_size, (void*) &in)) < 0)
+  if ((r = userlist_clnt_recv_packet(clnt, &in_size, &void_in)) < 0)
     return r;
+  in = (struct userlist_packet *) void_in;
+  if (in_size < sizeof(*in)) {
+    xfree(in);
+    return -ULS_ERR_PROTOCOL;
+  }
+  if (in->id == ULS_LOGIN_OK) {
+    uin = (struct userlist_pk_login_ok*) in;
+    if (in_size != sizeof(*uin)) {
+      xfree(in);
+      return -ULS_ERR_PROTOCOL;
+    }
+    if (p_user_id) *p_user_id = uin->user_id;
+    xfree(in);
+    return ULS_LOGIN_OK;
+  }
+
   if (in_size != sizeof(*in)) {
     xfree(in);
     return -ULS_ERR_PROTOCOL;
