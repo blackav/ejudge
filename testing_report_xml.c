@@ -489,7 +489,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
 
     case TR_A_RUN_TESTS:
       if (xml_parse_int_attr(a, &x) < 0) return -1;
-      if (x < 1 || x > 255) {
+      if (x < 0 || x > 255) {
         xml_err_attr_invalid(a);
         return -1;
       }
@@ -627,7 +627,9 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
   }
   */
 
-  XCALLOC(r->tests, r->run_tests);
+  if (r->run_tests > 0) {
+    XCALLOC(r->tests, r->run_tests);
+  }
 
   for (t2 = t->first_down; t2; t2 = t2->right) {
     switch (t2->tag) {
