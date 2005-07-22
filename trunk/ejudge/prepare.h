@@ -94,6 +94,10 @@ struct section_global_data
   int    disable_auto_testing;  /* do not test automatically */
   int    disable_testing;       /* do not test the submit at all */
   int    enable_runlog_merge;   /* enable runlog merging */
+  int    secure_run;            /* run securely */
+
+  puc_t  stand_ignore_after[256];
+  time_t stand_ignore_after_d; /* ignore submits after this time in standings */
 
   int    fog_standings_updated; /* INTERNAL: updated at the moment of fog? */
   int    start_standings_updated; /* INTERNAL: updated at the start */
@@ -109,6 +113,7 @@ struct section_global_data
   int    enable_continue;       /* enable contest continuation after stop */
   int    enable_report_upload;  /* enable manual upload of checking reports */
   int    priority_adjustment;   /* priority adjustment for the contest */
+  int    ignore_success_time;   /* for ACM standings: do not count success time */
 
   puc_t name[256];              /* name of the contest */
   path_t root_dir;
@@ -322,6 +327,9 @@ struct section_global_data
   int stand_show_warn_number;
   puc_t stand_contestant_status_attr[32];
   puc_t stand_warn_number_attr[32];
+
+  // internal use: text with unhandled variables
+  unsigned char *unhandled_vars;
 };
 
 struct section_problem_data
@@ -396,6 +404,7 @@ struct section_problem_data
 
   char **disable_language;
   char **checker_env;           /* environment variables for checker */
+  path_t check_cmd;
 
   char **personal_deadline;     /* personal deadline extensions */
   int pd_total;
@@ -404,6 +413,11 @@ struct section_problem_data
   puc_t score_bonus[256];       /* bonus for the Nth full solution of the problem */
   int   score_bonus_total;      /* parsed: number of entries in score_bonus */
   int   *score_bonus_val;       /* parsed: score_bonus values */
+
+  /* these fields are for CGI editing of contest configuration files */
+  unsigned long max_vm_size;
+  unsigned long max_stack_size;
+  unsigned char *unhandled_vars;
 };
 
 struct section_language_data
@@ -434,6 +448,9 @@ struct section_language_data
   path_t compile_status_dir;    /* directory for compile->serve packets */
   path_t compile_report_dir;    /* directory for executables/error logs */
   char **compiler_env;          /* environment to pass to the compiler */
+
+  // for internal use
+  unsigned char *unhandled_vars;
 };
 
 struct section_tester_data
@@ -490,20 +507,6 @@ struct section_tester_data
 
 #undef puc_t
 
-extern struct generic_section_config *config;
-extern struct section_global_data    *global;
-
-extern struct section_language_data *langs[];
-extern struct section_problem_data  *probs[];
-extern struct section_tester_data   *testers[];
-
-extern int max_tester;
-extern int max_lang;
-extern int max_prob;
-
-/* userlist-server interaction */
-extern struct contest_desc *cur_contest;
-
 int prepare(char const *, int flags, int mode, char const *opts,
             int managed_flag);
 int create_dirs(int mode);
@@ -526,5 +529,123 @@ void print_configuration(FILE *);
 
 int prepare_tester_refinement(struct section_tester_data *, int, int);
 int create_tester_dirs(struct section_tester_data *);
+
+struct userlist_cfg;
+struct section_global_data *prepare_new_global_section(int contest_id, const unsigned char *root_dir, const struct userlist_cfg *config);
+struct generic_section_config * prepare_parse_config_file(const unsigned char *path,
+                                                          int *p_cond_count);
+void prepare_set_global_defaults(struct section_global_data *global);
+
+void prepare_global_free_func(struct generic_section_config *gp);
+void prepare_language_free_func(struct generic_section_config *gp);
+void prepare_problem_free_func(struct generic_section_config *gp);
+void prepare_tester_free_func(struct generic_section_config *gp);
+struct generic_section_config *prepare_free_config(struct generic_section_config *cfg);
+
+struct section_global_data *prepare_alloc_global(void);
+struct section_language_data *prepare_alloc_language(void);
+struct section_problem_data *prepare_alloc_problem(void);
+struct section_tester_data *prepare_alloc_tester(void);
+
+void prepare_problem_init_func(struct generic_section_config *gp);
+
+// field identification enumeration
+enum
+{
+  PREPARE_FIELD_ZERO,
+
+  PREPARE_FIELD_PROB_USE_STDIN,
+  PREPARE_FIELD_PROB_USE_STDOUT,
+  PREPARE_FIELD_PROB_TIME_LIMIT,
+  PREPARE_FIELD_PROB_REAL_TIME_LIMIT,
+  PREPARE_FIELD_PROB_TEAM_ENABLE_REP_VIEW,
+  PREPARE_FIELD_PROB_TEAM_ENABLE_CE_VIEW,
+  PREPARE_FIELD_PROB_TEAM_SHOW_JUDGE_REPORT,
+  PREPARE_FIELD_PROB_DISABLE_TESTING,
+  PREPARE_FIELD_PROB_DISABLE_AUTO_TESTING,
+  PREPARE_FIELD_PROB_FULL_SCORE,
+  PREPARE_FIELD_PROB_TEST_SCORE,
+  PREPARE_FIELD_PROB_RUN_PENALTY,
+  PREPARE_FIELD_PROB_DISQUALIFIED_PENALTY,
+  PREPARE_FIELD_PROB_VARIABLE_FULL_SCORE,
+  PREPARE_FIELD_PROB_TESTS_TO_ACCEPT,
+  PREPARE_FIELD_PROB_ACCEPT_PARTIAL,
+  PREPARE_FIELD_PROB_HIDDEN,
+  PREPARE_FIELD_PROB_STAND_HIDE_TIME,
+  PREPARE_FIELD_PROB_CHECKER_REAL_TIME_LIMIT,
+  PREPARE_FIELD_PROB_MAX_VM_SIZE,
+  PREPARE_FIELD_PROB_MAX_STACK_SIZE,
+  PREPARE_FIELD_PROB_INPUT_FILE,
+  PREPARE_FIELD_PROB_OUTPUT_FILE,
+  PREPARE_FIELD_PROB_USE_CORR,
+  PREPARE_FIELD_PROB_USE_INFO,
+  PREPARE_FIELD_PROB_TEST_DIR,
+  PREPARE_FIELD_PROB_CORR_DIR,
+  PREPARE_FIELD_PROB_INFO_DIR,
+  PREPARE_FIELD_PROB_TEST_SFX,
+  PREPARE_FIELD_PROB_CORR_SFX,
+  PREPARE_FIELD_PROB_INFO_SFX,
+  PREPARE_FIELD_PROB_TGZ_SFX,
+  PREPARE_FIELD_PROB_TEST_PAT,
+  PREPARE_FIELD_PROB_CORR_PAT,
+  PREPARE_FIELD_PROB_INFO_PAT,
+  PREPARE_FIELD_PROB_TGZ_PAT,
+  PREPARE_FIELD_PROB_SCORE_BONUS,
+  PREPARE_FIELD_PROB_CHECK_CMD,
+  PREPARE_FIELD_PROB_SECURE_RUN,
+};
+
+void prepare_copy_problem(struct section_problem_data *out,
+                          const struct section_problem_data *in);
+
+void prepare_set_prob_value(int field, struct section_problem_data *out,
+                            const struct section_problem_data *abstr,
+                            const struct section_global_data *global);
+
+void prepare_unparse_global(FILE *f, struct section_global_data *global,
+                            const unsigned char *compile_dir);
+void prepare_unparse_unhandled_global(FILE *f,
+                                      const struct section_global_data *global);
+int prepare_check_forbidden_global(FILE *f, const struct section_global_data *global);
+
+void prepare_unparse_lang(FILE *f, const struct section_language_data *lang,
+                          const unsigned char *long_name,
+                          const unsigned char *options);
+void prepare_unparse_unhandled_lang(FILE *f,
+                                    const struct section_language_data *lang);
+int prepare_check_forbidden_lang(FILE *f, const struct section_language_data *lang);
+
+void prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
+                          const struct section_global_data *global,
+                          int score_system_val);
+void prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
+                                    const struct section_global_data *global);
+int prepare_check_forbidden_prob(FILE *f, const struct section_problem_data *prob);
+
+int prepare_unparse_testers(FILE *f,
+                            int secure_run,
+                            const struct section_global_data *global,
+                            int max_lang,
+                            struct section_language_data **langs,
+                            int total_aprobs,
+                            struct section_problem_data **aprobs,
+                            int total_probs,
+                            struct section_problem_data **probs,
+                            int total_atesters,
+                            struct section_tester_data **atesters,
+                            const unsigned char *testing_work_dir);
+
+void prepare_further_instructions(FILE *f,
+                                  const unsigned char *root_dir,
+                                  const unsigned char *conf_dir,
+                                  const struct section_global_data *global,
+                                  int aprob_a, struct section_problem_data **aprobs,
+                                  int prob_a, struct section_problem_data **probs);
+
+int prepare_unparse_is_supported_arch(const unsigned char *arch);
+int prepare_unparse_is_supported_tester(const unsigned char *tester_name);
+
+void prepare_set_problem_defaults(struct section_problem_data *prob,
+                                  struct section_global_data *global);
 
 #endif /* __PREPARE_H__ */
