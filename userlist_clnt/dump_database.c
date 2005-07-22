@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003,2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,8 +18,9 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_dump_database(struct userlist_clnt *clnt,
-                            int contest_id, int out_fd)
+userlist_clnt_dump_database(struct userlist_clnt *clnt, int cmd,
+                            int contest_id, int out_fd,
+                            int html_flag)
 {
   struct userlist_pk_dump_database *out = 0;
   struct userlist_packet *in = 0;
@@ -37,8 +38,9 @@ userlist_clnt_dump_database(struct userlist_clnt *clnt,
   out_size = sizeof(*out);
   out = alloca(out_size);
   memset(out, 0, out_size);
-  out->request_id = ULS_DUMP_DATABASE;
+  out->request_id = cmd;
   out->contest_id = contest_id;
+  out->html_flag = html_flag;
   if ((r = userlist_clnt_pass_fd(clnt, 2, pfd)) < 0) goto _cleanup;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) goto _cleanup;
   if ((r = userlist_clnt_recv_packet(clnt, &in_size, (void*) &in)) < 0)
