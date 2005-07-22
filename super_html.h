@@ -140,6 +140,7 @@ int super_html_create_contest_2(FILE *f,
                                 int priv_level,
                                 int user_id,
                                 const unsigned char *login,
+                                const unsigned char *ss_login,
                                 unsigned long long session_id,
                                 unsigned long ip_address,
                                 struct userlist_cfg *config,
@@ -152,6 +153,7 @@ int super_html_create_contest_2(FILE *f,
                                 const unsigned char *hidden_vars,
                                 const unsigned char *extra_args);
 
+struct userlist_clnt;
 int super_html_commit_contest(FILE *f,
                               int priv_level,
                               int user_id,
@@ -159,11 +161,75 @@ int super_html_commit_contest(FILE *f,
                               unsigned long long session_id,
                               unsigned int ip_address,
                               struct userlist_cfg *config,
+                              struct userlist_clnt *us_conn,
                               struct sid_state *sstate,
                               int cmd,
                               const unsigned char *self_url,
                               const unsigned char *hidden_vars,
                               const unsigned char *extra_args);
+
+int super_html_edit_global_parameters(FILE *f,
+                                      int priv_level,
+                                      int user_id,
+                                      const unsigned char *login,
+                                      unsigned long long session_id,
+                                      unsigned long ip_address,
+                                      struct userlist_cfg *config,
+                                      struct sid_state *sstate,
+                                      const unsigned char *self_url,
+                                      const unsigned char *hidden_vars,
+                                      const unsigned char *extra_args);
+
+int super_html_edit_languages(FILE *f,
+                              int priv_level,
+                              int user_id,
+                              const unsigned char *login,
+                              unsigned long long session_id,
+                              unsigned long ip_address,
+                              const struct userlist_cfg *config,
+                              struct sid_state *sstate,
+                              const unsigned char *self_url,
+                              const unsigned char *hidden_vars,
+                              const unsigned char *extra_args);
+
+int super_html_edit_problems(FILE *f,
+                             int priv_level,
+                             int user_id,
+                             const unsigned char *login,
+                             unsigned long long session_id,
+                             unsigned long ip_address,
+                             const struct userlist_cfg *config,
+                             struct sid_state *sstate,
+                             const unsigned char *self_url,
+                             const unsigned char *hidden_vars,
+                             const unsigned char *extra_args);
+
+int super_html_view_new_serve_cfg(FILE *f,
+                                  int priv_level,
+                                  int user_id,
+                                  const unsigned char *login,
+                                  unsigned long long session_id,
+                                  unsigned long ip_address,
+                                  const struct userlist_cfg *config,
+                                  struct sid_state *sstate,
+                                  const unsigned char *self_url,
+                                  const unsigned char *hidden_vars,
+                                  const unsigned char *extra_args);
+
+void super_html_contest_page_menu(FILE *f, 
+                                  unsigned long long session_id,
+                                  struct sid_state *sstate,
+                                  int cur_page,
+                                  const unsigned char *self_url,
+                                  const unsigned char *hidden_vars,
+                                  const unsigned char *extra_args);
+
+void super_html_contest_footer_menu(FILE *f, 
+                                    unsigned long long session_id,
+                                    struct sid_state *sstate,
+                                    const unsigned char *self_url,
+                                    const unsigned char *hidden_vars,
+                                    const unsigned char *extra_args);
 
 struct contest_desc;
 struct sid_state;
@@ -191,10 +257,12 @@ int super_html_run_unmanaged_contest(struct contest_desc *cnts, int user_id,
 struct contest_desc *contest_tmpl_new(int contest_id,
                                       const unsigned char *login,
                                       const unsigned char *self_url,
+                                      const unsigned char *ss_login,
                                       const struct userlist_cfg *ejudge_config);
 struct contest_desc *contest_tmpl_clone(struct sid_state *sstate,
                                         int contest_id, int orig_id,
-                                        const unsigned char *login);
+                                        const unsigned char *login,
+                                        const unsigned char *ss_login);
 
 int super_html_clear_variable(struct sid_state *sstate, int cmd);
 
@@ -202,10 +270,60 @@ int super_html_set_contest_var(struct sid_state *sstate, int cmd,
                                int param1, const unsigned char *param2,
                                int param3, int param4);
 
+int super_html_lang_cmd(struct sid_state *sstate, int cmd,
+                        int param1, const unsigned char *param2,
+                        int param3, int param4);
+
+int super_html_prob_cmd(struct sid_state *sstate, int cmd,
+                        int param1, const unsigned char *param2,
+                        int param3, int param4);
+
+int super_html_prob_param(struct sid_state *sstate, int cmd,
+                          int param1, const unsigned char *param2,
+                          int param3, int param4);
+
+int super_html_global_param(struct sid_state *sstate, int cmd,
+                            const struct userlist_cfg *config,
+                            int param1, const unsigned char *param2,
+                            int param3, int param4);
+
 int super_html_report_error(FILE *f,
                             unsigned long long session_id,
                             const unsigned char *self_url,
                             const unsigned char *extra_args,
                             const char *format, ...);
+
+int super_html_get_serve_header_and_footer(const unsigned char *path,
+                                           unsigned char **p_header,
+                                           unsigned char **p_footer);
+int super_html_serve_unparse_and_save(const unsigned char *path,
+                                      const unsigned char *tmp_path,
+                                      const struct sid_state *sstate,
+                                      const struct userlist_cfg *config,
+                                      const unsigned char *header,
+                                      const unsigned char *footer,
+                                      const unsigned char *audit);
+int super_html_read_serve(FILE *flog,
+                          const unsigned char *path,
+                          const struct userlist_cfg *config,
+                          const struct contest_desc *cnts,
+                          struct sid_state *sstate);
+void super_html_load_serve_cfg(const struct contest_desc *cnts,
+                               const struct userlist_cfg *config,
+                               struct sid_state *sstate);
+void super_html_fix_serve(struct sid_state *sstate,
+                          int orig_id, int contest_id);
+
+int super_html_check_tests(FILE *f,
+                           int priv_level,
+                           int user_id,
+                           const unsigned char *login,
+                           unsigned long long session_id,
+                           unsigned long ip_address,
+                           struct userlist_cfg *config,
+                           struct sid_state *sstate,
+                           const unsigned char *self_url,
+                           const unsigned char *hidden_vars,
+                           const unsigned char *extra_args);
 
 #endif /* __SUPER_HTML_H__ */
