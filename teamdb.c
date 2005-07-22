@@ -435,7 +435,7 @@ teamdb_dump_database(int fd)
     close(fd);
     return -1;
   }
-  r = userlist_clnt_dump_database(server_conn, contest_id, fd);
+  r = userlist_clnt_dump_database(server_conn, ULS_DUMP_DATABASE, contest_id, fd, 1);
   if (r < 0) {
     close(fd);
     return -1;
