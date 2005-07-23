@@ -679,13 +679,17 @@ run_tests(struct section_tester_data *tst,
         }
       }
     }
-    time_limit_value = 0;
-    if (prb->time_limit > 0)
-      time_limit_value += prb->time_limit;
-    if (tst->time_limit_adjustment > 0)
-      time_limit_value += tst->time_limit_adjustment;
-    if (time_limit_value > 0) {
-      task_SetMaxTime(tsk, time_limit_value);
+    if (prb->time_limit_millis > 0) {
+      task_SetMaxTimeMillis(tsk, prb->time_limit_millis);
+    } else {
+      time_limit_value = 0;
+      if (prb->time_limit > 0)
+        time_limit_value += prb->time_limit;
+      if (tst->time_limit_adjustment > 0)
+        time_limit_value += tst->time_limit_adjustment;
+      if (time_limit_value > 0) {
+        task_SetMaxTime(tsk, time_limit_value);
+      }
     }
     if (prb->real_time_limit>0) task_SetMaxRealTime(tsk,prb->real_time_limit);
     if (tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
