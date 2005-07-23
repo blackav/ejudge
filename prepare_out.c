@@ -876,6 +876,9 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   if ((prob->abstract && prob->time_limit > 0)
       || (!prob->abstract && prob->time_limit >= 0))
     fprintf(f, "time_limit = %d\n", prob->time_limit);
+  if ((prob->abstract && prob->time_limit_millis > 0)
+      || (!prob->abstract && prob->time_limit_millis >= 0))
+    fprintf(f, "time_limit_millis = %d\n", prob->time_limit_millis);
   if ((prob->abstract && prob->real_time_limit > 0)
       || (!prob->abstract && prob->real_time_limit >= 0))
     fprintf(f, "real_time_limit = %d\n", prob->real_time_limit);
