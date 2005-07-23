@@ -274,6 +274,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(use_stdin, "d"),
   PROBLEM_PARAM(use_stdout, "d"),
   PROBLEM_PARAM(time_limit, "d"),
+  PROBLEM_PARAM(time_limit_millis, "d"),
   PROBLEM_PARAM(real_time_limit, "d"),
   PROBLEM_PARAM(team_enable_rep_view, "d"),
   PROBLEM_PARAM(team_enable_ce_view, "d"),
@@ -545,6 +546,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->use_stdin = -1;
   p->use_stdout = -1;
   p->time_limit = -1;
+  p->time_limit_millis = -1;
   p->real_time_limit = -1;
   p->team_enable_rep_view = -1;
   p->team_enable_ce_view = -1;
@@ -2071,6 +2073,8 @@ set_defaults(int mode)
                            probs[i], aprob, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TIME_LIMIT,
                            probs[i], aprob, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_TIME_LIMIT_MILLIS,
+                           probs[i], aprob, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_REAL_TIME_LIMIT,
                            probs[i], aprob, global);
 
@@ -3478,6 +3482,7 @@ prepare_set_problem_defaults(struct section_problem_data *prob,
   if (prob->use_stdin < 0) prob->use_stdin = 0;
   if (prob->use_stdout < 0) prob->use_stdout = 0;
   if (prob->time_limit < 0) prob->time_limit = 0;
+  if (prob->time_limit_millis < 0) prob->time_limit_millis = 0;
   if (prob->real_time_limit < 0) prob->real_time_limit = 0;
   if (prob->full_score < 0) prob->full_score = DFLT_P_FULL_SCORE;
   if (prob->test_score < 0) prob->test_score = DFLT_P_TEST_SCORE;
@@ -3825,6 +3830,12 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
   case PREPARE_FIELD_PROB_TIME_LIMIT:
     if (out->time_limit == -1 && abstr) out->time_limit = abstr->time_limit;
     if (out->time_limit == -1) out->time_limit = 0;
+    break;
+
+  case PREPARE_FIELD_PROB_TIME_LIMIT_MILLIS:
+    if (out->time_limit_millis == -1 && abstr)
+      out->time_limit_millis = abstr->time_limit_millis;
+    if (out->time_limit_millis == -1) out->time_limit_millis = 0;
     break;
 
   case PREPARE_FIELD_PROB_REAL_TIME_LIMIT:
