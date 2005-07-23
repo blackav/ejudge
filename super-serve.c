@@ -2544,6 +2544,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CHANGE_USE_STDIN:
   case SSERV_CMD_PROB_CHANGE_USE_STDOUT:
   case SSERV_CMD_PROB_CHANGE_TIME_LIMIT:
+  case SSERV_CMD_PROB_CHANGE_TIME_LIMIT_MILLIS:
   case SSERV_CMD_PROB_CHANGE_REAL_TIME_LIMIT:
   case SSERV_CMD_PROB_CHANGE_TEAM_ENABLE_REP_VIEW:
   case SSERV_CMD_PROB_CHANGE_TEAM_ENABLE_CE_VIEW:
@@ -2963,6 +2964,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_USE_STDIN] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_USE_STDOUT] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TIME_LIMIT] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_TIME_LIMIT_MILLIS] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_REAL_TIME_LIMIT] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TEAM_ENABLE_REP_VIEW] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TEAM_ENABLE_CE_VIEW] = { cmd_set_value },
