@@ -343,6 +343,7 @@ struct section_problem_data
   int    use_stdout;            /* 1, if solution uses stdout for output */
   int    real_time_limit;       /* maximum astronomical time for a problem */
   int    time_limit;            /* time limit in secs */
+  int    time_limit_millis;     /* time limit in milliseconds */
   int    team_enable_rep_view;  /* are teams allowed to view reports? */
   int    team_enable_ce_view;
   int    team_show_judge_report;
@@ -557,6 +558,7 @@ enum
   PREPARE_FIELD_PROB_USE_STDIN,
   PREPARE_FIELD_PROB_USE_STDOUT,
   PREPARE_FIELD_PROB_TIME_LIMIT,
+  PREPARE_FIELD_PROB_TIME_LIMIT_MILLIS,
   PREPARE_FIELD_PROB_REAL_TIME_LIMIT,
   PREPARE_FIELD_PROB_TEAM_ENABLE_REP_VIEW,
   PREPARE_FIELD_PROB_TEAM_ENABLE_CE_VIEW,
