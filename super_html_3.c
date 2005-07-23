@@ -3248,6 +3248,28 @@ super_html_print_problem(FILE *f,
                         SUPER_ACTION_PROB_CHANGE_TIME_LIMIT,
                         session_id, self_url, extra_args, prob_hidden_vars);
 
+  //PROBLEM_PARAM(time_limit_millis, "d"),
+  extra_msg = "";
+  if (prob->abstract) {
+    if (prob->time_limit_millis == -1) extra_msg = "<i>(Undefined)</i>";
+    else if (!prob->time_limit_millis) extra_msg = "<i>(Unlimited)</i>";
+  } else {
+    if (prob->time_limit_millis == -1) {
+      prepare_set_prob_value(PREPARE_FIELD_PROB_TIME_LIMIT_MILLIS,
+                             &tmp_prob, sup_prob, sstate->global);
+      if (!tmp_prob.time_limit_millis)
+        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - Unlimited)</i>");
+      else
+        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
+                 tmp_prob.time_limit_millis);
+      extra_msg = msg_buf;
+    } else if (!prob->time_limit_millis) extra_msg = "<i>(Unlimited)</i>";
+  }
+  print_int_editing_row(f, "Processor time limit (ms, ovverides prev. limit):",
+                        prob->time_limit_millis, extra_msg,
+                        SUPER_ACTION_PROB_CHANGE_TIME_LIMIT_MILLIS,
+                        session_id, self_url, extra_args, prob_hidden_vars);
+
   //PROBLEM_PARAM(real_time_limit, "d"),
   extra_msg = "";
   if (prob->abstract) {
@@ -3823,6 +3845,7 @@ super_html_prob_cmd(struct sid_state *sstate, int cmd,
     prob->use_stdin = 1;
     prob->use_stdout = 1;
     prob->time_limit = 5;
+    prob->time_limit_millis = 0;
     prob->real_time_limit = 30;
     snprintf(prob->test_dir, sizeof(prob->test_sfx), "%s", "%Ps");
     snprintf(prob->test_sfx, sizeof(prob->test_sfx), "%s", ".dat");
@@ -3986,6 +4009,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
     if (val < -1) return -SSERV_ERR_INVALID_PARAMETER;
     *p_int = val;
     return 0;
+
+  case SSERV_CMD_PROB_CHANGE_TIME_LIMIT_MILLIS:
+    p_int = &prob->time_limit_millis;
+    goto handle_int_1;
 
   case SSERV_CMD_PROB_CHANGE_REAL_TIME_LIMIT:
     p_int = &prob->real_time_limit;
