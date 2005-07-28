@@ -5804,9 +5804,11 @@ super_html_check_tests(FILE *f,
     if (tmp_prob.standard_checker[0]) continue;
     if (recompile_checker(flog, checker_path) < 0) goto check_failed;
 
-    if (check_test_score(flog, total_tests, tmp_prob.test_score,
-                         tmp_prob.full_score, tmp_prob.test_score_list) < 0)
-      goto check_failed;
+    if (global->score_system_val != SCORE_ACM) {
+      if (check_test_score(flog, total_tests, tmp_prob.test_score,
+                           tmp_prob.full_score, tmp_prob.test_score_list) < 0)
+        goto check_failed;
+    }
   }
 
   fclose(flog);
