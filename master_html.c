@@ -2843,8 +2843,6 @@ write_runs_dump(FILE *f, const unsigned char *url,
 void
 write_raw_standings(FILE *f, unsigned char const *charset)
 {
-  fprintf(f, "Content-type: text/plain; charset=%s\n\n", charset);
-
   if (global->score_system_val == SCORE_KIROV
       || global->score_system_val == SCORE_OLYMPIAD)
     do_write_kirov_standings(f, 1, 0, 1, 0);
