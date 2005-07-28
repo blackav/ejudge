@@ -5552,6 +5552,84 @@ recompile_checker(FILE *f, const unsigned char *checker_path)
   return 0;
 }
 
+static int
+check_test_score(FILE *flog, int ntests, int test_score, int full_score,
+                 const unsigned char *test_score_list)
+{
+  int *scores;
+  int i, sum;
+  int index, score, n, tn = 1, was_indices = 0;
+  const unsigned char *s;
+
+  ASSERT(ntests >= 0);
+
+  if (test_score < 0) {
+    fprintf(flog, "Error: test_score is negative\n");
+    return -1;
+  }
+
+  XALLOCA(scores, ntests + 1);
+  for (i = 0; i <= ntests; i++)
+    scores[i] = test_score;
+
+  if (test_score_list && *test_score_list) {
+    s = test_score_list;
+
+    while (1) {
+      while (*s > 0 && *s <= ' ') s++;
+      if (!*s) break;
+
+      if (*s == '[') {
+        if (sscanf(s, "[ %d ] %d%n", &index, &score, &n) != 2) {
+          fprintf(flog, "Error: invalid test_score_list specification \"%s\"\n",
+                  test_score_list);
+          return -1;
+        }
+        if (index < 1 || index > ntests) {
+          fprintf(flog, "Error: test index %d is out of range\n", index);
+          return -1;
+        }
+        if (score < 0) {
+          fprintf(flog, "Error: score %d is invalid\n", score);
+          return -1;
+        }
+        tn = index;
+        was_indices = 1;
+      } else {
+        if (sscanf(s, "%d%n", &score, &n) != 1) {
+          fprintf(flog, "Error: invalid test_score_list specification \"%s\"\n",
+                  test_score_list);
+          return -1;
+        }
+        if (score < 0) {
+          fprintf(flog, "Error: score %d is invalid\n", score);
+          return -1;
+        }
+        if (tn > ntests) {
+          fprintf(flog, "Error: too many scores specified\n");
+          return -1;
+        }
+      }
+      scores[tn++] = score;
+      s += n;
+    }
+
+    if (!was_indices && tn <= ntests) {
+      fprintf(flog, "Info: test_score_list defines only %d tests\n", tn - 1);
+    }
+  }
+
+  for (i = 1, sum = 0; i <= ntests; i++)
+    sum += scores[i];
+
+  if (sum > full_score) {
+    fprintf(flog, "Error: summ of all test scores (%d) is greater then full_score (%d)\n", sum, full_score);
+    return -1;
+  }
+
+  return 0;
+}
+
 int
 super_html_check_tests(FILE *f,
                        int priv_level,
@@ -5631,6 +5709,8 @@ super_html_check_tests(FILE *f,
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_CORR, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_SFX, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_PAT, &tmp_prob, abstr, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_SCORE, &tmp_prob, abstr, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_FULL_SCORE, &tmp_prob, abstr, global);
     mkpath(test_path, g_test_path, tmp_prob.test_dir, "");
     if (tmp_prob.use_corr) {
       prepare_set_prob_value(PREPARE_FIELD_PROB_CORR_DIR, &tmp_prob, abstr, 0);
@@ -5724,7 +5804,9 @@ super_html_check_tests(FILE *f,
     if (tmp_prob.standard_checker[0]) continue;
     if (recompile_checker(flog, checker_path) < 0) goto check_failed;
 
-    // FIXME: add score test!
+    if (check_test_score(flog, total_tests, tmp_prob.test_score,
+                         tmp_prob.full_score, tmp_prob.test_score_list) < 0)
+      goto check_failed;
   }
 
   fclose(flog);
