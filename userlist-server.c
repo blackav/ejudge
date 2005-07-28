@@ -4948,7 +4948,7 @@ cmd_get_contest_name(struct client_state *p, int pkt_len,
   out = alloca(out_size);
   memset(out, 0, out_size);
   out->reply_id = ULS_XML_DATA;
-  out->info_len = out_size;
+  out->info_len = name_len;
   memcpy(out->data, cnts->name, name_len);
   enqueue_reply_to_client(p, out_size, out);
   info("%s -> OK, %d", logbuf, out->info_len);
