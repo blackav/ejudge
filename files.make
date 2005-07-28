@@ -26,6 +26,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/generate_team_passwd.c\
  userlist_clnt/get_contests.c\
  userlist_clnt/get_info.c\
+ userlist_clnt/get_param.c\
  userlist_clnt/get_uid_by_pid.c\
  userlist_clnt/get_uid_by_pid_2.c\
  userlist_clnt/list_all_users.c\
@@ -54,6 +55,7 @@ SERVE_CLNT_CFILES=\
  serve_clnt/edit_run.c\
  serve_clnt/edit_user.c\
  serve_clnt/get_archive.c\
+ serve_clnt/get_param.c\
  serve_clnt/import_xml_runs.c\
  serve_clnt/master_page.c\
  serve_clnt/message.c\
