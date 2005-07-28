@@ -871,6 +871,84 @@ cmd_team_page(struct client_state *p, int len,
   new_send_reply(p, SRV_RPL_OK);
 }
 
+static const unsigned char * const contest_types[] =
+{
+  [SCORE_ACM] "acm",
+  [SCORE_KIROV] "kirov",
+  [SCORE_OLYMPIAD] "olympiad",
+};
+
+static void
+cmd_get_param(struct client_state *p, int len,
+              struct prot_serve_packet *pkt)
+{
+  opcap_t caps;
+  FILE *f = 0;
+  char *txt_ptr = 0;
+  size_t txt_len = 0;
+  size_t out_len;
+  struct prot_serve_pkt_data *out_pkt = 0;
+
+  if (get_peer_local_user(p) < 0) return;
+
+  if (len != sizeof(*pkt)) {
+    new_bad_packet(p, "cmd_get_param: packet length mismatch", len);
+    return;
+  }
+
+  /*
+  if (p->priv_level < PRIV_LEVEL_JUDGE) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: unsifficient privilege level", p->id);
+    return;
+  }
+  */
+
+  if (get_cnts_caps(p->user_id, &caps) < 0) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: cannot get capabilities", p->id);
+    return;
+  }
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: no CONTROL_CONTEST capability", p->id);
+    return;
+  }
+
+  if (!(f = open_memstream(&txt_ptr, &txt_len))) {
+    err("%d: open_memstream failed", p->id);
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  switch (pkt->id) {
+  case SRV_CMD_GET_CONTEST_TYPE:
+    if (global->score_system_val < SCORE_ACM ||
+        global->score_system_val > SCORE_OLYMPIAD) {
+      // FIXME:!!!
+      abort();
+    }
+    fprintf(f, "%s", contest_types[global->score_system_val]);
+    break;
+  default:
+    abort();
+  }
+  fclose(f); f = 0;
+
+  if (!txt_ptr) txt_ptr = xstrdup("");
+  txt_len = strlen(txt_ptr);
+  out_len = sizeof(*out_pkt) + txt_len;
+  out_pkt = alloca(out_len);
+  memset(out_pkt, 0, out_len);
+  out_pkt->b.magic = PROT_SERVE_PACKET_MAGIC;
+  out_pkt->b.id = SRV_RPL_DATA;
+  out_pkt->data_len = txt_len;
+  if (txt_len > 0) memcpy(out_pkt->data, txt_ptr, txt_len);
+  xfree(txt_ptr);
+  
+  info("%d: cmd_get_param: %d", p->id, out_len);
+  new_enqueue_reply(p, out_len, out_pkt);
+}
+
 static void
 cmd_master_page(struct client_state *p, int len,
                 struct prot_serve_pkt_master_page *pkt)
@@ -1126,6 +1204,19 @@ cmd_priv_standings(struct client_state *p, int len,
 
   info("%d: priv_standings: ok %d", p->id, html_len);
   new_send_reply(p, SRV_RPL_OK);
+}
+
+static int
+dump_problems(FILE *f)
+{
+  int i;
+  struct section_problem_data *prob;
+
+  for (i = 0; i <= max_prob; i++) {
+    if (!(prob = probs[i])) continue;
+    fprintf(f, "%d;%s;%s\n", prob->id, prob->short_name, prob->long_name);
+  }
+  return 0;
 }
 
 static void
@@ -1384,6 +1475,26 @@ cmd_view(struct client_state *p, int len,
     if (run_write_xml(f, 0) < 0) r = -SRV_ERR_TRY_AGAIN;
     break;
 
+  case SRV_CMD_DUMP_PROBLEMS:
+    if (!p->priv_level) {
+      err("%d: unprivileged users cannot dump problems", p->id);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+
+    if (!check_cnts_caps(p->user_id, OPCAP_DUMP_RUNS)) {
+      err("%d: user %d has no capability %d for the contest",
+          p->id, p->user_id, OPCAP_DUMP_RUNS);
+      r = -SRV_ERR_NO_PERMS;
+      break;
+    }
+
+    if (self_url_ptr && *self_url_ptr) {
+      fprintf(f, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
+    }
+    r = dump_problems(f);
+    break;
+
   case SRV_CMD_EXPORT_XML_RUNS:
     if (!p->priv_level) {
       err("%d: unprivileged users cannot export XML runs", p->id);
@@ -1416,6 +1527,10 @@ cmd_view(struct client_state *p, int len,
           p->id, p->user_id, OPCAP_DUMP_STANDINGS);
       r = -SRV_ERR_NO_PERMS;
       break;
+    }
+
+    if (self_url_ptr && *self_url_ptr) {
+      fprintf(f, "Content-type: text/plain; charset=%s\n\n", global->charset);
     }
 
     write_raw_standings(f, global->charset);
@@ -4803,6 +4918,7 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_CLEAR_RUN] { cmd_priv_command_0 },
   [SRV_CMD_SQUEEZE_RUNS] { cmd_priv_command_0 },
   [SRV_CMD_DUMP_RUNS] { cmd_view },
+  [SRV_CMD_DUMP_PROBLEMS] { cmd_view },
   [SRV_CMD_DUMP_STANDINGS] { cmd_view },
   [SRV_CMD_SET_JUDGING_MODE] { cmd_priv_command_0 },
   [SRV_CMD_CONTINUE] { cmd_priv_command_0 },
@@ -4839,6 +4955,7 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_VIEW_TEST_CHECKER] { cmd_view },
   [SRV_CMD_VIEW_TEST_INFO] { cmd_view },
   [SRV_CMD_VIEW_AUDIT_LOG] { cmd_view },
+  [SRV_CMD_GET_CONTEST_TYPE] { cmd_get_param },
 };
 
 static void
