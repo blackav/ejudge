@@ -180,4 +180,7 @@ int serve_clnt_reset_filter(int sock_fd, int cmd,
 int serve_clnt_rejudge_by_mask(int sock_fd, int cmd, int mask_size,
                                unsigned long *mask);
 
+int
+serve_clnt_get_param(int sock_fd, int cmd, unsigned char **p_data);
+
 #endif /* __SERVE_CLNT_H__ */
