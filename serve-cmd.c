@@ -29,6 +29,7 @@
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
+#include <reuse/logger.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -50,6 +51,7 @@ static unsigned char serve_socket_path[PATH_MAX];
 static int serve_socket_fd = -1;
 static unsigned long local_ip;  /* 127.0.0.1 */
 static unsigned long long session_id;
+static int user_id;
 
 static int
 too_many_params(const unsigned char *cmd)
@@ -79,7 +81,7 @@ static void
 authentificate(const unsigned char *pwdfile)
 {
   FILE *f;
-  int r, user_id;
+  int r;
   unsigned char *user_login, *user_name;
 
   if (!(f = fopen(pwdfile, "r"))) {
@@ -203,6 +205,30 @@ handle_dump_all_users(const unsigned char *cmd,
  * argv[0] - session_id_file
  */
 static int
+handle_userlist_server_param(const unsigned char *cmd,
+                             int srv_cmd, int argc, char *argv[])
+{
+  int r;
+  unsigned char *out_str = 0;
+
+  if (argc < 1) return too_few_params(cmd);
+  if (argc > 1) return too_many_params(cmd);
+
+  authentificate(argv[0]);
+  r = userlist_clnt_get_param(userlist_conn, srv_cmd, contest_id, &out_str);
+  if (r < 0) {
+    err("userlist-server error: %s", userlist_strerror(-r));
+    return 1;
+  }
+
+  printf("%s\n", out_str);
+  return 0;
+}
+
+/*
+ * argv[0] - session_id_file
+ */
+static int
 handle_priv_command_0(const unsigned char *cmd,
                       int srv_cmd, int argc, char *argv[])
 {
@@ -219,6 +245,32 @@ handle_priv_command_0(const unsigned char *cmd,
     err("server error: %s", protocol_strerror(-r));
     return 1;
   }
+  return 0;
+}
+
+/*
+ * argv[0] - session_id_file
+ */
+static int
+handle_serve_get_param(const unsigned char *cmd,
+                       int srv_cmd, int argc, char *argv[])
+{
+  int r;
+  unsigned char *str = 0;
+
+  if (argc < 1) return too_few_params(cmd);
+  if (argc > 1) return too_many_params(cmd);
+
+  authentificate(argv[0]);
+  open_server();
+
+  r = serve_clnt_get_param(serve_socket_fd, srv_cmd, &str);
+  if (r < 0) {
+    err("server error: %s", protocol_strerror(-r));
+    return 1;
+  }
+  printf("%s\n", str);
+  xfree(str);
   return 0;
 }
 
@@ -510,11 +562,13 @@ static struct cmdinfo cmds[] =
   { "write-xml-runs", handle_dump_runs, SRV_CMD_WRITE_XML_RUNS },
   { "export-xml-runs", handle_dump_runs, SRV_CMD_EXPORT_XML_RUNS },
   { "dump-runs", handle_dump_runs, SRV_CMD_DUMP_RUNS },
+  { "dump-problems", handle_dump_runs, SRV_CMD_DUMP_PROBLEMS },
   { "soft-update-stand", handle_priv_command_0, SRV_CMD_SOFT_UPDATE_STAND },
   { "import-xml-runs", handle_import_xml, 0 },
   { "dump-source", handle_dump_source, SRV_CMD_PRIV_DOWNLOAD_RUN },
   { "dump-report", handle_dump_source, SRV_CMD_PRIV_DOWNLOAD_REPORT },
-  { "dump-team-report", handle_dump_source, SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT},
+  { "dump-team-report", handle_dump_source, SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT },
+  { "dump-standings", handle_dump_runs, SRV_CMD_DUMP_STANDINGS },
   { "dump-master-runs", handle_dump_master_runs, 0 },
   { "suspend-testing", handle_priv_command_0, SRV_CMD_TEST_SUSPEND },
   { "resume-testing", handle_priv_command_0, SRV_CMD_TEST_RESUME },
@@ -522,6 +576,8 @@ static struct cmdinfo cmds[] =
   { "has-transient-runs", handle_priv_transient_runs, 0 },
   { "full-import-xml-runs", handle_full_import_xml, 0 },
   { "dump-all-users", handle_dump_all_users, 0 },
+  { "get-contest-name", handle_userlist_server_param, ULS_GET_CONTEST_NAME },
+  { "get-contest-type", handle_serve_get_param, SRV_CMD_GET_CONTEST_TYPE },
 
   { 0, 0 },
 };
@@ -533,6 +589,7 @@ main(int argc, char *argv[])
 
   program_path = argv[0];
   program_name = os_GetBasename(program_path);
+  logger_set_level(-1, LOG_WARNING);
 
   // parse global options
   while (i < argc) {
