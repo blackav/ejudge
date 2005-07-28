@@ -160,6 +160,8 @@ enum
     SRV_CMD_VIEW_TEST_CHECKER,
     SRV_CMD_VIEW_TEST_INFO,
     SRV_CMD_VIEW_AUDIT_LOG,
+    SRV_CMD_DUMP_PROBLEMS,
+    SRV_CMD_GET_CONTEST_TYPE,
 
     SRV_CMD_LAST
   };
@@ -169,6 +171,7 @@ enum
   {
     SRV_RPL_OK = 0,
     SRV_RPL_ARCHIVE_PATH = 1,
+    SRV_RPL_DATA,
 
     SRV_RPL_LAST
   };
@@ -457,6 +460,13 @@ struct prot_serve_pkt_user_info
   int txt_len;
   int cmt_len;
   unsigned char data[2];
+};
+
+struct prot_serve_pkt_data
+{
+  struct prot_serve_packet b;
+  int data_len;
+  unsigned char data[1];
 };
 
 unsigned char const *protocol_strerror(int n);
