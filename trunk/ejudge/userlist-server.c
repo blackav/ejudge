@@ -263,6 +263,7 @@ attach_contest_extra(int id, struct contest_desc *cnts)
       goto cleanup;
     }
     shm_key++;
+    if (!shm_key) shm_key = 1;
   }
   if ((int) (shm_addr = shmat(shm_id, 0, 0)) == -1) {
     err("shmat failed: %s", os_ErrorMsg());
