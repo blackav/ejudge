@@ -159,9 +159,14 @@ install : all
 	install -m 644 libchecker.a "${DESTDIR}${libdir}"
 	if [ x"${STATIC}" = x ]; then install -m 755 libchecker.so "${DESTDIR}${libdir}"; else rm -f "${DESTDIR}${libdir}/libchecker.so"; fi
 	mkdir -p "${DESTDIR}${datadir}/ejudge/testlib"
-	for i in symbols.pas testlib.pas; do install -m 644 $$i "${DESTDIR}${datadir}/ejudge/testlib"; done
+	mkdir -p "${DESTDIR}${datadir}/ejudge/testlib/fpc"
+	mkdir -p "${DESTDIR}${datadir}/ejudge/testlib/delphi"
+	for i in symbols.pas testlib.pas; do install -m 644 fpc/$$i "${DESTDIR}${datadir}/ejudge/testlib/fpc"; done
+	install -m 644 delphi/testlib.pas "${DESTDIR}${datadir}/ejudge/testlib/delphi"
 	mkdir -p "${DESTDIR}${libexecdir}/ejudge"
 	for i in ${CHKXFILES}; do install -m 755 $$i "${DESTDIR}${libexecdir}/ejudge"; done
+	-cd "${DESTDIR}${datadir}/ejudge/testlib/fpc"; FPC=`"${DESTDIR}${libexecdir}/ejudge"/fpc-version -p`; [ x"$$FPC" != x ] && "$$FPC" testlib.pas
+	-cd "${DESTDIR}${datadir}/ejudge/testlib/delphi"; DCC=`"${DESTDIR}${libexecdir}/ejudge"/dcc-version -p`; [ x"$$DCC" != x ] && "$$DCC" testlib.pas
 
 libchecker.a : ${OFILES}
 	${AR} rcv $@ $^
