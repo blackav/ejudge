@@ -391,6 +391,12 @@ then
   AC_CHECK_LIB([reuse], [os_GetWorkingDir], [], [ac_cv_has_reuse=""])
 fi
 
+dnl Check new reuse features
+if [[ x"${ac_cv_has_reuse}" = x1 ]]
+then
+  AC_CHECK_FUNCS([task_SetMaxTimeMillis task_GetRealTime task_IsMemoryLimit task_EnableMemoryLimitError])
+fi
+
 ac_cv_version_detected=
 if [[ x"${ac_cv_has_reuse}" = x1 ]]
 then
