@@ -38,7 +38,7 @@
 <testing-report run-id="N" judge-id="N" status="O" scoring="R" archive-available="B" [correct-available="B"] [info-available="B"] run-tests="N" [variant="N"] [accepting-mode="B"] [failed-test="N"] [tests-passed="N"] [score="N"]>
   <comment>T</comment>
   <tests>
-    <test num="N" status="O" [exit-code="N"] [term-signal="N"] time="N" [nominal-score="N" score="N"] [comment="S"] [team-comment="S"] [checker-comment="S"] output-available="B" stderr-available="B" checker-output-available="B" args-too-long="B" [input-digest="X"] [correct-digest="X"]>
+    <test num="N" status="O" [exit-code="N"] [term-signal="N"] time="N" real-time="N" [nominal-score="N" score="N"] [comment="S"] [team-comment="S"] [checker-comment="S"] output-available="B" stderr-available="B" checker-output-available="B" args-too-long="B" [input-digest="X"] [correct-digest="X"]>
        [<args>T</args>]
        [<input>T</input>]
        [<output>T</output>]
@@ -86,6 +86,7 @@ enum
   TR_A_EXIT_CODE,
   TR_A_TERM_SIGNAL,
   TR_A_TIME,
+  TR_A_REAL_TIME,
   TR_A_NOMINAL_SCORE,
   TR_A_COMMENT,
   TR_A_TEAM_COMMENT,
@@ -136,6 +137,7 @@ static const char * const attr_map[] =
   [TR_A_EXIT_CODE] = "exit-code",
   [TR_A_TERM_SIGNAL] = "term-signal",
   [TR_A_TIME] = "time",
+  [TR_A_REAL_TIME] = "real-time",
   [TR_A_NOMINAL_SCORE] = "nominal-score",
   [TR_A_COMMENT] = "comment",
   [TR_A_TEAM_COMMENT] = "team-comment",
@@ -215,6 +217,7 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
   p->num = -1;
   p->status = -1;
   p->time = -1;
+  p->real_time = -1;
   p->exit_code = -1;
   p->term_signal = -1;
   p->nominal_score = -1;
@@ -245,6 +248,14 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
         goto failure;
       }
       p->time = x;
+      break;
+    case TR_A_REAL_TIME:
+      if (xml_parse_int_attr(a, &x) < 0) goto failure;
+      if (x < 0) {
+        xml_err_attr_invalid(a);
+        goto failure;
+      }
+      p->real_time = x;
       break;
     case TR_A_EXIT_CODE:
       if (xml_parse_int_attr(a, &x) < 0) goto failure;
