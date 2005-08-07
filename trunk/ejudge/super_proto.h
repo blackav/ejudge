@@ -359,6 +359,7 @@ enum
   SSERV_CMD_GLOB_CHANGE_TEAM_DOWNLOAD_TIME,
   SSERV_CMD_GLOB_DISABLE_TEAM_DOWNLOAD_TIME,
   SSERV_CMD_GLOB_CHANGE_SECURE_RUN,
+  SSERV_CMD_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR,
 
   SSERV_CMD_LANG_CHANGE_DISABLED,
   SSERV_CMD_LANG_CHANGE_LONG_NAME,
@@ -542,6 +543,7 @@ struct prot_super_pkt_set_param
   int param2_len;
   int param3;
   int param4;
+  int param5;
   unsigned char data[1];
 };
 
