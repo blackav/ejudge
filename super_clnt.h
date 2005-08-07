@@ -62,6 +62,7 @@ int super_clnt_set_param(int sock_fd,
                          int param1,
                          const unsigned char *param2,
                          int param3,
-                         int param4);
+                         int param4,
+                         int param5);
 
 #endif /* __SUPER_CLNT_H__ */
