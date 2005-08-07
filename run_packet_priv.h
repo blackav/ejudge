@@ -31,8 +31,9 @@ enum
   FLAGS_ACCEPT_PARTIAL       = 0x020,
   FLAGS_DISABLE_SOUND        = 0x040,
   FLAGS_FULL_ARCHIVE         = 0x080,
+  FLAGS_MEMORY_LIMIT         = 0x100,
 
-  FLAGS_ALL_MASK             = 0x0ff, /* scoring system incl. */
+  FLAGS_ALL_MASK             = 0x1ff, /* scoring system incl. */
 };
 
 /* serve->run binary packet structure */
