@@ -42,6 +42,8 @@ xml_unparse_ip_mask(unsigned int addr, unsigned int mask)
   } else if (mask == 0xff000000) {
     snprintf(buf, sizeof(buf), "%u.",
              (addr >> 24) & 0xff);
+  } else if (mask == 0 && addr == 0) {
+    snprintf(buf, sizeof(buf), "0");
   } else {
     for (k = (unsigned) -1, n = 0; n <= 32 && k != mask; n++, k <<= 1);
     if (n <= 32) 
