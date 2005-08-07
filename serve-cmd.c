@@ -99,7 +99,7 @@ authentificate(const unsigned char *pwdfile)
   }
   fclose(f);
 
-  r = userlist_clnt_priv_cookie(userlist_conn, local_ip, contest_id,
+  r = userlist_clnt_priv_cookie(userlist_conn, local_ip, 1, contest_id,
                                 session_id,
                                 0 /* locale_id */,
                                 PRIV_LEVEL_ADMIN,
@@ -131,7 +131,7 @@ handle_login(const unsigned char *cmd,
   if (argc < 3) return too_few_params(cmd);
   if (argc > 3) return too_many_params(cmd);
 
-  r = userlist_clnt_priv_login(userlist_conn, local_ip, contest_id,
+  r = userlist_clnt_priv_login(userlist_conn, local_ip, 1, contest_id,
                                0, 1, PRIV_LEVEL_ADMIN,
                                argv[1], argv[2],
                                &user_id, &session_id, 0, 0, &user_name);
