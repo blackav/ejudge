@@ -502,14 +502,14 @@ int
 teamdb_get_uid_by_pid(int system_uid, int system_gid, int system_pid,
                       int *p_uid, int *p_priv_level,
                       unsigned long long *p_cookie,
-                      unsigned long *p_ip)
+                      unsigned long *p_ip, int *p_ssl)
 {
   int r;
 
   if (open_connection() < 0) return -1;
   r = userlist_clnt_get_uid_by_pid(server_conn, system_uid, system_gid,
                                    system_pid, p_uid,
-                                   p_priv_level, p_cookie, p_ip);
+                                   p_priv_level, p_cookie, p_ip, p_ssl);
   if (r < 0) return -1;
   return r;
 }
