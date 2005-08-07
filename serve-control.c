@@ -304,6 +304,7 @@ static unsigned char *user_login;
 static unsigned char *user_name;
 static unsigned char *user_password;
 static unsigned char *self_url;
+static int ssl_flag;
 static int super_serve_fd = -1;
 static int priv_level;
 static int client_action;
@@ -315,11 +316,15 @@ make_self_url(void)
   unsigned char *http_host = getenv("HTTP_HOST");
   unsigned char *script_name = getenv("SCRIPT_NAME");
   unsigned char fullname[1024];
+  unsigned char *protocol = "http";
 
+  if (getenv("SSL_PROTOCOL")) {
+    ssl_flag = 1;
+    protocol = "https";
+  }
   if (!http_host) http_host = "localhost";
   if (!script_name) script_name = "/cgi-bin/serve-control";
-  snprintf(fullname, sizeof(fullname), "http://%s%s",
-           http_host, script_name);
+  snprintf(fullname, sizeof(fullname), "%s://%s%s", protocol, http_host, script_name);
   self_url = xstrdup(fullname);
 }
 
@@ -664,7 +669,7 @@ authentificate(void)
 
   if (get_session_id("SID", &session_id)) {
     open_userlist_server();
-    r = userlist_clnt_priv_cookie(userlist_conn, user_ip,
+    r = userlist_clnt_priv_cookie(userlist_conn, user_ip, ssl_flag,
                                   0, /* contest_id */
                                   session_id,
                                   0, /* locale_id */
@@ -693,7 +698,7 @@ authentificate(void)
   fprintf(stderr, "%s, %s\n", user_login, user_password);
 
   open_userlist_server();
-  r = userlist_clnt_priv_login(userlist_conn, user_ip,
+  r = userlist_clnt_priv_login(userlist_conn, user_ip, ssl_flag,
                                0, /* contest_id */
                                0, /* locale_id */
                                1, /* session_id is enabled */
@@ -952,7 +957,7 @@ action_set_param(int cmd, int next_state)
   unsigned char *param = cgi_param("param");
 
   open_super_server();
-  r = super_clnt_set_param(super_serve_fd, cmd, 0, param, 0, 0);
+  r = super_clnt_set_param(super_serve_fd, cmd, 0, param, 0, 0, 0);
   if (next_state) {
     operation_status_page(-1, r, "action=%d", next_state);
   } else {
@@ -983,7 +988,7 @@ action_set_date_param(int cmd, int nextstate)
            d_year, d_mon, d_mday, d_hour, d_min, d_sec);
 
   open_super_server();
-  r = super_clnt_set_param(super_serve_fd, cmd, 0, buf, 0, 0);
+  r = super_clnt_set_param(super_serve_fd, cmd, 0, buf, 0, 0, 0);
   if (nextstate) {
     operation_status_page(-1, r, "action=%d", nextstate);
   } else {
@@ -1009,6 +1014,7 @@ action_set_ip_param(int cmd)
   int acc_mode;
   int access = -1;
   int rule_num = -1;
+  int ssl = -1;
   unsigned char *ip_str = cgi_param("ip");
 
   if (!(s = cgi_param("acc_mode")) || sscanf(s, "%d%n", &acc_mode, &n) != 1
@@ -1018,6 +1024,10 @@ action_set_ip_param(int cmd)
     if (sscanf(s, "%d%n", &access, &n) != 1 || s[n] || access < 0 || access > 1)
       goto invalid_parameter;
   }
+  if ((s = cgi_param("ssl"))) {
+    if (sscanf(s, "%d%n", &ssl, &n) != 1 || s[n] || ssl < -1 || ssl > 1)
+      goto invalid_parameter;
+  }
   if ((s = cgi_param("rule_num"))) {
     if (sscanf(s, "%d%n", &rule_num, &n) != 1 || s[n] || rule_num < 0)
       goto invalid_parameter;
@@ -1025,7 +1035,7 @@ action_set_ip_param(int cmd)
   if (!ip_str) ip_str = "";
 
   open_super_server();
-  r = super_clnt_set_param(super_serve_fd, cmd, acc_mode, ip_str, access, rule_num);
+  r = super_clnt_set_param(super_serve_fd, cmd, acc_mode, ip_str, access, rule_num,ssl);
   operation_status_page(-1, r, "action=%d", next_state[acc_mode]);
 
  invalid_parameter:
@@ -1059,7 +1069,7 @@ action_perform_permission_op(int cmd, int next_state)
   }
 
   open_super_server();
-  r = super_clnt_set_param(super_serve_fd, cmd, num, param, 0, 0);
+  r = super_clnt_set_param(super_serve_fd, cmd, num, param, 0, 0, 0);
   operation_status_page(-1, r, "action=%d", next_state);
 
  invalid_parameter:
@@ -1108,7 +1118,7 @@ action_save_form_fields(int cmd, int next_state)
 
   open_super_server();
   r = super_clnt_set_param(super_serve_fd, cmd, init_count, fields_str,
-                           min_count, max_count);
+                           min_count, max_count, 0);
   operation_status_page(-1, r, "action=%d", next_state);
 
  invalid_parameter:
@@ -1126,7 +1136,7 @@ action_lang_cmd(int cmd, int next_state)
       || s[n] || lang_id <= 0 || lang_id > 999999) goto invalid_parameter;
 
   open_super_server();
-  r = super_clnt_set_param(super_serve_fd, cmd, lang_id, param, 0, 0);
+  r = super_clnt_set_param(super_serve_fd, cmd, lang_id, param, 0, 0, 0);
   if (next_state) {
     operation_status_page(-1, r, "action=%d", next_state);
   } else {
@@ -1148,7 +1158,7 @@ action_prob_cmd(int cmd, int next_state)
     goto invalid_parameter;
 
   open_super_server();
-  r = super_clnt_set_param(super_serve_fd, cmd, prob_id, 0, 0, 0);
+  r = super_clnt_set_param(super_serve_fd, cmd, prob_id, 0, 0, 0, 0);
   if (next_state) {
     operation_status_page(-1, r, "action=%d", next_state);
   } else {
@@ -1171,7 +1181,7 @@ action_prob_param(int cmd, int next_state)
     goto invalid_parameter;
 
   open_super_server();
-  r = super_clnt_set_param(super_serve_fd, cmd, prob_id, param, 0, 0);
+  r = super_clnt_set_param(super_serve_fd, cmd, prob_id, param, 0, 0, 0);
   if (next_state) {
     operation_status_page(-1, r, "action=%d", next_state);
   } else {
@@ -1191,7 +1201,7 @@ action_prob_add_abstract(int cmd, int next_state)
   if (!(s = cgi_param("prob_name"))) goto invalid_parameter;
 
   open_super_server();
-  r = super_clnt_set_param(super_serve_fd, cmd, 0, s, 0, 0);
+  r = super_clnt_set_param(super_serve_fd, cmd, 0, s, 0, 0, 0);
   operation_status_page(-1, r, "action=%d", next_state);
 
  invalid_parameter:
@@ -1212,7 +1222,7 @@ action_prob_add(int cmd, int next_state)
   }
 
   open_super_server();
-  r = super_clnt_set_param(super_serve_fd, cmd, prob_id, 0, 0, 0);
+  r = super_clnt_set_param(super_serve_fd, cmd, prob_id, 0, 0, 0, 0);
   operation_status_page(-1, r, "action=%d", next_state);
 
  invalid_parameter:
@@ -1600,6 +1610,7 @@ static const int action_to_cmd_map[SUPER_ACTION_LAST] =
   [SUPER_ACTION_GLOB_CHANGE_ENABLE_RUNLOG_MERGE] = SSERV_CMD_GLOB_CHANGE_ENABLE_RUNLOG_MERGE,
   [SUPER_ACTION_GLOB_CHANGE_USE_COMPILATION_SERVER] = SSERV_CMD_GLOB_CHANGE_USE_COMPILATION_SERVER,
   [SUPER_ACTION_GLOB_CHANGE_SECURE_RUN] = SSERV_CMD_GLOB_CHANGE_SECURE_RUN,
+  [SUPER_ACTION_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR] = SSERV_CMD_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR,
   [SUPER_ACTION_GLOB_CHANGE_ENABLE_L10N] = SSERV_CMD_GLOB_CHANGE_ENABLE_L10N,
   [SUPER_ACTION_GLOB_CHANGE_CHARSET] = SSERV_CMD_GLOB_CHANGE_CHARSET,
   [SUPER_ACTION_GLOB_CLEAR_CHARSET] = SSERV_CMD_GLOB_CLEAR_CHARSET,
@@ -1978,6 +1989,7 @@ static const int next_action_map[SUPER_ACTION_LAST] =
   [SUPER_ACTION_GLOB_CHANGE_ENABLE_RUNLOG_MERGE] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
   [SUPER_ACTION_GLOB_CHANGE_USE_COMPILATION_SERVER] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
   [SUPER_ACTION_GLOB_CHANGE_SECURE_RUN] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
+  [SUPER_ACTION_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
   [SUPER_ACTION_GLOB_CHANGE_ENABLE_L10N] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
   [SUPER_ACTION_GLOB_CHANGE_CHARSET] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
   [SUPER_ACTION_GLOB_CLEAR_CHARSET] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
@@ -2493,6 +2505,7 @@ main(int argc, char *argv[])
   case SUPER_ACTION_GLOB_CHANGE_ENABLE_RUNLOG_MERGE:
   case SUPER_ACTION_GLOB_CHANGE_USE_COMPILATION_SERVER:
   case SUPER_ACTION_GLOB_CHANGE_SECURE_RUN:
+  case SUPER_ACTION_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR:
   case SUPER_ACTION_GLOB_CHANGE_ENABLE_L10N:
   case SUPER_ACTION_GLOB_CHANGE_CHARSET:
   case SUPER_ACTION_GLOB_CLEAR_CHARSET:
