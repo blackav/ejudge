@@ -126,6 +126,7 @@ struct client_state
   int priv_level;
   unsigned long long cookie;
   unsigned long ip;
+  int ssl;
 
   // user capabilities
   //opcap_t caps;
@@ -1256,8 +1257,8 @@ cmd_do_login(struct client_state *p,
     return;
   }
 
-  snprintf(logbuf, sizeof(logbuf), "LOGIN: %s, %s",
-           unparse_ip(data->origin_ip), login);
+  snprintf(logbuf, sizeof(logbuf), "LOGIN: %s, %d, %s",
+           unparse_ip(data->origin_ip), data->ssl, login);
 
   if (p->user_id >= 0) {
     err("%s -> already authentificated", logbuf);
@@ -1354,6 +1355,7 @@ cmd_do_login(struct client_state *p,
   dirty = 1;
   p->user_id = user->id;
   p->ip = data->origin_ip;
+  p->ssl = data->ssl;
   p->cookie = answer->cookie;
   info("%s -> OK, %d, %llx", logbuf, user->id, answer->cookie);
 }
@@ -1395,8 +1397,8 @@ cmd_team_login(struct client_state *p, int pkt_len,
   }
 
   snprintf(logbuf, sizeof(logbuf),
-           "TEAM_LOGIN: %s, %s, %ld, %d, %d",
-           unparse_ip(data->origin_ip), login_ptr, data->contest_id,
+           "TEAM_LOGIN: %s, %d, %s, %ld, %d, %d",
+           unparse_ip(data->origin_ip), data->ssl, login_ptr, data->contest_id,
            data->locale_id, data->use_cookies);
 
   if (p->user_id >= 0) {
@@ -1414,7 +1416,7 @@ cmd_team_login(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
     return;
   }
-  if (!contests_check_team_ip(data->contest_id, data->origin_ip)) {
+  if (!contests_check_team_ip(data->contest_id, data->origin_ip, data->ssl)) {
     err("%s -> IP is not allowed", logbuf);
     send_reply(p, -ULS_ERR_IP_NOT_ALLOWED);
     return;
@@ -1519,6 +1521,7 @@ cmd_team_login(struct client_state *p, int pkt_len,
   
   p->user_id = u->id;
   p->ip = data->origin_ip;
+  p->ssl = data->ssl;
   p->cookie = out->cookie;
   enqueue_reply_to_client(p, out_size, out);
   dirty = 1;
@@ -1569,8 +1572,8 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   }
 
   snprintf(logbuf, sizeof(logbuf),
-           "PRIV_LOGIN: %s, %s, %ld, %d, %d",
-           unparse_ip(data->origin_ip), login_ptr, data->contest_id,
+           "PRIV_LOGIN: %s, %d, %s, %ld, %d, %d",
+           unparse_ip(data->origin_ip), data->ssl, login_ptr, data->contest_id,
            data->locale_id, data->use_cookies);
 
   if (p->user_id >= 0) {
@@ -1735,6 +1738,7 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   p->priv_level = data->priv_level;
   p->cookie = out->cookie;
   p->ip = data->origin_ip;
+  p->ssl = data->ssl;
   enqueue_reply_to_client(p, out_size, out);
   dirty = 1;
   u->last_login_time = cur_time;
@@ -1767,8 +1771,8 @@ cmd_check_cookie(struct client_state *p,
   }
 
   snprintf(logbuf, sizeof(logbuf),
-           "COOKIE: ip = %s, cookie = %llx",
-            unparse_ip(data->origin_ip), data->cookie);
+           "COOKIE: ip = %s, %d, cookie = %llx",
+           unparse_ip(data->origin_ip), data->ssl, data->cookie);
 
   // cannot login twice
   if (p->user_id >= 0) {
@@ -1851,6 +1855,7 @@ cmd_check_cookie(struct client_state *p,
   }
   p->user_id = user->id;
   p->ip = data->origin_ip;
+  p->ssl = data->ssl;
   p->cookie = data->cookie;
   return;
 }
@@ -1876,9 +1881,9 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   }
 
   snprintf(logbuf, sizeof(logbuf),
-           "TEAM_COOKIE: %s, %ld, %llx, %d",
-            unparse_ip(data->origin_ip), data->contest_id,
-            data->cookie, data->locale_id);
+           "TEAM_COOKIE: %s, %d, %ld, %llx, %d",
+           unparse_ip(data->origin_ip), data->ssl, data->contest_id,
+           data->cookie, data->locale_id);
 
   if (p->user_id >= 0) {
     err("%s -> already authentificated", logbuf);
@@ -1985,7 +1990,7 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   if (data->locale_id == -1) {
     data->locale_id = cookie->locale_id;
   }
-  if (!contests_check_team_ip(data->contest_id, data->origin_ip)) {
+  if (!contests_check_team_ip(data->contest_id, data->origin_ip, data->ssl)) {
     err("%s -> IP is not allowed", logbuf);
     send_reply(p, -ULS_ERR_IP_NOT_ALLOWED);
     return;
@@ -2034,6 +2039,7 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   
   p->user_id = u->id;
   p->ip = data->origin_ip;
+  p->ssl = data->ssl;
   p->cookie = data->cookie;
   enqueue_reply_to_client(p, out_size, out);
   dirty = 1;
@@ -2067,8 +2073,8 @@ cmd_priv_check_cookie(struct client_state *p,
   }
 
   snprintf(logbuf, sizeof(logbuf),
-           "PRIV_COOKIE: %s, %ld, %llx",
-            unparse_ip(data->origin_ip), data->contest_id, data->cookie);
+           "PRIV_COOKIE: %s, %d, %ld, %llx",
+           unparse_ip(data->origin_ip), data->ssl, data->contest_id, data->cookie);
 
   if (p->user_id >= 0) {
     err("%s -> already authentificated", logbuf);
@@ -2245,6 +2251,7 @@ cmd_priv_check_cookie(struct client_state *p,
   p->priv_level = out->priv_level;
   p->cookie = cookie->cookie;
   p->ip = data->origin_ip;
+  p->ssl = data->ssl;
   enqueue_reply_to_client(p, out_size, out);
   dirty = 1;
   u->last_login_time = cur_time;
@@ -5655,6 +5662,7 @@ cmd_get_uid_by_pid(struct client_state *p, int pkt_len,
   out.priv_level = q->priv_level;
   out.cookie = q->cookie;
   out.ip = q->ip;
+  out.ssl = q->ssl;
   enqueue_reply_to_client(p, sizeof(out), &out);
 }
 
@@ -5721,6 +5729,7 @@ cmd_get_uid_by_pid_2(struct client_state *p, int pkt_len,
   out->priv_level = q->priv_level;
   out->cookie = q->cookie;
   out->ip = q->ip;
+  out->ssl = q->ssl;
   out->login_len = login_len;
   out->name_len = name_len;
   strcpy(login_ptr, login);
