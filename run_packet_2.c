@@ -86,6 +86,7 @@ run_request_packet_write(const struct run_request_packet *in_data,
   if (in_data->accept_partial) flags |= FLAGS_ACCEPT_PARTIAL;
   if (in_data->disable_sound) flags |= FLAGS_DISABLE_SOUND;
   if (in_data->full_archive) flags |= FLAGS_FULL_ARCHIVE;
+  if (in_data->memory_limit) flags |= FLAGS_MEMORY_LIMIT;
   out_data->flags = cvt_host_to_bin_32(flags);
 
   /* copy timestamps without care */
