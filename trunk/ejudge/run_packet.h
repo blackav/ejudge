@@ -32,6 +32,7 @@ struct run_request_packet
   int user_id;                  /* the user identifier */
   int disable_sound;            /* disable sound notifications */
   int full_archive;             /* enable full archive */
+  int memory_limit;             /* enable memory limit (if supported by reuse&kernel) */
   /* time when the compile request was queued by serve */
   int ts1;
   int ts1_us;
