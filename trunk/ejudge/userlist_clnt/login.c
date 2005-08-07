@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 int
 userlist_clnt_login(struct userlist_clnt *clnt,
                     unsigned long origin_ip,
+                    int ssl,
                     int contest_id,
                     int locale_id,
                     int use_cookies,
@@ -43,6 +44,7 @@ userlist_clnt_login(struct userlist_clnt *clnt,
   memset(data, 0, len);
   data->request_id = ULS_DO_LOGIN;
   data->origin_ip = origin_ip;
+  data->ssl = ssl;
   data->contest_id = contest_id;
   data->locale_id = locale_id;
   data->use_cookies = use_cookies;
