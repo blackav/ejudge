@@ -567,6 +567,13 @@ super_html_edit_global_parameters(FILE *f,
                            session_id, self_url, extra_args,
                            hidden_vars);
 
+  //GLOBAL_PARAM(enable_memory_limit_error, "d"),
+  print_boolean_select_row(f, "Enable support for MemoryLimit error:",
+                           global->enable_memory_limit_error,
+                           SUPER_ACTION_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR,
+                           session_id, self_url, extra_args,
+                           hidden_vars);
+
   //GLOBAL_PARAM(standings_locale, "s"),
   if (!strcmp(global->standings_locale, "ru_RU.KOI8-R")
       || !strcmp(global->standings_locale, "ru")) {
@@ -2076,6 +2083,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     p_int = &global->secure_run;
     goto handle_boolean;
 
+  case SSERV_CMD_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR:
+    p_int = &global->enable_memory_limit_error;
+    goto handle_boolean;
+
   case SSERV_CMD_GLOB_CHANGE_ENABLE_L10N:
     p_int = &global->enable_l10n;
     goto handle_boolean;
@@ -2757,6 +2768,7 @@ print_std_checker_row(FILE *f,
   TESTER_PARAM(super, "x"),
 
   TESTER_PARAM(no_core_dump, "d"),
+  TESTER_PARAM(enable_memory_limit_error, "d"),
   TESTER_PARAM(kill_signal, "s"),
   TESTER_PARAM(max_data_size, "d"),
   TESTER_PARAM(clear_env, "d"),
