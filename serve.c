@@ -123,6 +123,7 @@ struct client_state
   int priv_level;
   unsigned long long cookie;
   unsigned long ip;
+  int ssl;
 
   // passed file descriptors
   int client_fds[2];
@@ -617,12 +618,12 @@ get_peer_local_user(struct client_state *p)
 {
   unsigned long long cookie = 0;
   unsigned long ip = 0;
-  int user_id = 0, priv_level = 0;
+  int user_id = 0, priv_level = 0, ssl = 0;
   int r;
 
   if (p->user_id >= 0) return p->user_id;
   r = teamdb_get_uid_by_pid(p->peer_uid, p->peer_gid, p->peer_pid,
-                            &user_id, &priv_level, &cookie, &ip);
+                            &user_id, &priv_level, &cookie, &ip, &ssl);
   if (r < 0) {
     // FIXME: what else can we do?
     err("%d: cannot get local user_id", p->id);
@@ -638,6 +639,7 @@ get_peer_local_user(struct client_state *p)
   p->priv_level = priv_level;
   p->cookie = cookie;
   p->ip = ip;
+  p->ssl = ssl;
   info("%d: user_id is %d", p->id, user_id);
   return user_id;
 }
@@ -4203,6 +4205,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
   run_pkt->user_id = re.team;
   run_pkt->disable_sound = global->disable_sound;
   run_pkt->full_archive = global->enable_full_archive;
+  run_pkt->memory_limit = global->enable_memory_limit_error;
   run_pkt->ts1 = comp_pkt->ts1;
   run_pkt->ts1_us = comp_pkt->ts1_us;
   run_pkt->ts2 = comp_pkt->ts2;
