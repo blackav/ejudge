@@ -61,7 +61,7 @@ time_t teamdb_get_archive_time(int uid);
 int    teamdb_set_archive_time(int uid, time_t time);
 
 int teamdb_get_uid_by_pid(int, int, int, int *, int *,unsigned long long *,
-                          unsigned long *);
+                          unsigned long *, int *);
 
 void teamdb_register_update_hook(void (*)(void *), void *);
 void teamdb_unregister_update_hook(void (*)(void *));
