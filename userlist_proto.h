@@ -166,6 +166,7 @@ struct userlist_pk_do_login
 {
   short         request_id;
   unsigned long origin_ip;
+  int           ssl;
   long          contest_id;
   signed char   locale_id;
   signed char   use_cookies;
@@ -180,6 +181,7 @@ struct userlist_pk_check_cookie
 {
   short              request_id;
   unsigned long      origin_ip;
+  int                ssl;
   long               contest_id;
   unsigned long long cookie;
   signed char        locale_id;
@@ -339,6 +341,7 @@ struct userlist_pk_uid
   int   priv_level;
   unsigned long long cookie;
   unsigned long ip;
+  int ssl;
 };
 
 struct userlist_pk_uid_2 __attribute__((packed, aligned(1)));
@@ -348,6 +351,7 @@ struct userlist_pk_uid_2
   int uid;
   int priv_level;
   unsigned long ip;
+  int ssl;
   int login_len;
   int name_len;
   unsigned long long cookie;
