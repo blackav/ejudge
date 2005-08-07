@@ -30,7 +30,8 @@ super_clnt_set_param(int sock_fd,
                      int param1,
                      const unsigned char *param2,
                      int param3,
-                     int param4)
+                     int param4,
+                     int param5)
 {
   size_t param2_len, out_size;
   struct prot_super_pkt_set_param *out = 0;
@@ -55,6 +56,7 @@ super_clnt_set_param(int sock_fd,
   memcpy(param2_ptr, param2, param2_len);
   out->param3 = param3;
   out->param4 = param4;
+  out->param5 = param5;
 
   in = (struct prot_super_packet*) alloca(sizeof(*in));
   memset(in, 0, sizeof(*in));
