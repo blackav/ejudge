@@ -105,6 +105,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(disable_auto_testing, "d"),
   GLOBAL_PARAM(disable_testing, "d"),
   GLOBAL_PARAM(secure_run, "d"),
+  GLOBAL_PARAM(enable_memory_limit_error, "d"),
 
   GLOBAL_PARAM(stand_ignore_after, "s"),
   GLOBAL_PARAM(charset, "s"),
@@ -379,6 +380,7 @@ static struct config_parse_info section_tester_params[] =
   TESTER_PARAM(super, "x"),
 
   TESTER_PARAM(no_core_dump, "d"),
+  TESTER_PARAM(enable_memory_limit_error, "d"),
   TESTER_PARAM(kill_signal, "s"),
   TESTER_PARAM(max_stack_size, "d"),
   TESTER_PARAM(max_data_size, "d"),
@@ -468,6 +470,7 @@ global_init_func(struct generic_section_config *gp)
   p->enable_report_upload = -1;
   p->enable_runlog_merge = -1;
   p->secure_run = -1;
+  p->enable_memory_limit_error = -1;
   p->ignore_success_time = -1;
 
   p->autoupdate_standings = -1;
@@ -612,6 +615,7 @@ tester_init_func(struct generic_section_config *gp)
   p->is_dos = -1;
   p->no_redirect = -1;
   p->no_core_dump = -1;
+  p->enable_memory_limit_error = -1;
   p->clear_env = -1;
   p->time_limit_adjustment = -1;
   p->priority_adjustment = -1000;
@@ -732,6 +736,7 @@ static struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(key, path, path),
   TESTER_INH(run_dir, path, path),
   TESTER_INH(no_core_dump, int, int),
+  TESTER_INH(enable_memory_limit_error, int, int),
   TESTER_INH(clear_env, int, int),
   TESTER_INH(time_limit_adjustment, int, int),
   TESTER_INH(kill_signal, path, path),
@@ -1434,6 +1439,8 @@ set_defaults(int mode)
     global->ignore_success_time = DFLT_G_IGNORE_SUCCESS_TIME;
   if (global->secure_run == -1)
     global->secure_run = DFLT_G_SECURE_RUN;
+  if (global->enable_memory_limit_error == -1)
+    global->enable_memory_limit_error = DFLT_G_ENABLE_MEMORY_LIMIT_ERROR;
 
 #if defined EJUDGE_HTTPD_HTDOCS_DIR
   if (!global->htdocs_dir[0]) {
@@ -2457,6 +2464,12 @@ set_defaults(int mode)
       if (tp->no_core_dump == -1) {
         tp->no_core_dump = 0;
       }
+      if (tp->enable_memory_limit_error == -1 && atp && atp->enable_memory_limit_error != -1) {
+        tp->enable_memory_limit_error = atp->enable_memory_limit_error;
+      }
+      if (tp->enable_memory_limit_error == -1) {
+        tp->enable_memory_limit_error = 0;
+      }
       if (tp->clear_env == -1 && atp && atp->clear_env != -1) {
         tp->clear_env = atp->clear_env;
         info("tester.%d.clear_env inherited from tester.%s (%d)",
@@ -3033,6 +3046,15 @@ prepare_tester_refinement(struct section_tester_data *out,
     out->no_core_dump = 0;
   }
 
+  /* copy enable_memory_limit */
+  out->enable_memory_limit_error = tp->enable_memory_limit_error;
+  if (out->enable_memory_limit_error == -1 && atp) {
+    out->enable_memory_limit_error = atp->enable_memory_limit_error;
+  }
+  if (out->enable_memory_limit_error == -1) {
+    out->enable_memory_limit_error = 0;
+  }
+
   /* copy clear_env */
   out->clear_env = tp->clear_env;
   if (out->clear_env == -1 && atp) {
@@ -3312,6 +3334,7 @@ void print_tester(FILE *o, struct section_tester_data *t)
   fprintf(o, "key = \"%s\"\n", t->key);
   fprintf(o, "check_dir = \"%s\"\n", t->check_dir);
   fprintf(o, "no_core_dump = %d\n", t->no_core_dump);
+  fprintf(o, "enable_memory_limit_error = %d\n", t->enable_memory_limit_error);
   fprintf(o, "kill_signal = \"%s\"\n", t->kill_signal);
   fprintf(o, "max_stack_size = %d\n", t->max_stack_size);
   fprintf(o, "max_data_size = %d\n", t->max_data_size);
@@ -3457,6 +3480,8 @@ prepare_set_global_defaults(struct section_global_data *g)
     g->ignore_success_time = DFLT_G_IGNORE_SUCCESS_TIME;
   if (g->secure_run < 0)
     g->secure_run = DFLT_G_SECURE_RUN;
+  if (g->enable_memory_limit_error < 0)
+    g->enable_memory_limit_error = DFLT_G_ENABLE_MEMORY_LIMIT_ERROR;
   if (g->prune_empty_users < 0)
     g->prune_empty_users = DFLT_G_PRUNE_EMPTY_USERS;
   if (g->enable_report_upload < 0)
@@ -3600,6 +3625,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->enable_runlog_merge = 1;
   global->ignore_success_time = DFLT_G_IGNORE_SUCCESS_TIME;
   global->secure_run = 1;
+  global->enable_memory_limit_error = DFLT_G_ENABLE_MEMORY_LIMIT_ERROR;
   global->prune_empty_users = DFLT_G_PRUNE_EMPTY_USERS;
   global->enable_report_upload = DFLT_G_ENABLE_REPORT_UPLOAD;
   global->team_download_time = 0;
