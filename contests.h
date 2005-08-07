@@ -96,6 +96,7 @@ enum
     CONTEST_A_RUN_MANAGED,
     CONTEST_A_CLOSED,
     CONTEST_A_INVISIBLE,
+    CONTEST_A_SSL,
 
     CONTEST_LAST_ATTN
   };
@@ -167,6 +168,7 @@ struct contest_ip
 {
   struct xml_tree b;
   int allow;
+  int ssl;
   unsigned int addr;
   unsigned int mask;
 };
@@ -284,19 +286,19 @@ unsigned char *contests_strerror(int);
 int contests_lock(int);
 int contests_unlock(int);
 
-int contests_check_ip(int, int, unsigned long);
-int contests_check_register_ip(int, unsigned long);
-int contests_check_register_ip_2(struct contest_desc *, unsigned long);
-int contests_check_users_ip(int, unsigned long);
-int contests_check_users_ip_2(struct contest_desc *, unsigned long);
-int contests_check_master_ip(int, unsigned long);
-int contests_check_master_ip_2(struct contest_desc *, unsigned long);
-int contests_check_judge_ip(int, unsigned long);
-int contests_check_judge_ip_2(struct contest_desc *, unsigned long);
-int contests_check_team_ip(int, unsigned long);
-int contests_check_team_ip_2(struct contest_desc *, unsigned long);
-int contests_check_serve_control_ip(int num, unsigned long ip);
-int contests_check_serve_control_ip_2(struct contest_desc *, unsigned long);
+int contests_check_ip(int, int, unsigned long, int);
+int contests_check_register_ip(int, unsigned long, int);
+int contests_check_register_ip_2(struct contest_desc *, unsigned long, int);
+int contests_check_users_ip(int, unsigned long, int);
+int contests_check_users_ip_2(struct contest_desc *, unsigned long, int);
+int contests_check_master_ip(int, unsigned long, int);
+int contests_check_master_ip_2(struct contest_desc *, unsigned long, int);
+int contests_check_judge_ip(int, unsigned long, int);
+int contests_check_judge_ip_2(struct contest_desc *, unsigned long, int);
+int contests_check_team_ip(int, unsigned long, int);
+int contests_check_team_ip_2(struct contest_desc *, unsigned long, int);
+int contests_check_serve_control_ip(int num, unsigned long ip, int ssl);
+int contests_check_serve_control_ip_2(struct contest_desc *, unsigned long, int);
 
 void contests_set_load_callback(void (*f)(const struct contest_desc *));
 void contests_set_unload_callback(void (*f)(const struct contest_desc *));
