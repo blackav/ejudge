@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 int
 userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
                             unsigned long origin_ip,
+                            int ssl,
                             unsigned long long cookie,
                             int *p_user_id,
                             unsigned char **p_login,
@@ -40,6 +41,7 @@ userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
   memset(data, 0, len);
   data->request_id = ULS_CHECK_COOKIE;
   data->origin_ip = origin_ip;
+  data->ssl = ssl;
   //  data->contest_id = contest_id;
   data->cookie = cookie;
   data->locale_id = -1;
