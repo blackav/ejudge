@@ -114,6 +114,7 @@ static char const * const attn_map[] =
   "run_managed",
   "closed",
   "invisible",
+  "ssl",
 
   0
 };
@@ -379,7 +380,22 @@ parse_access(struct contest_access *acc, char const *path)
 
     ip = (struct contest_ip*) t;
     ip->allow = -1;
+    ip->ssl = -1;
     for (a = ip->b.first; a; a = a->next) {
+      if (a->tag == CONTEST_A_SSL) {
+        if (!strcasecmp(a->text, "yes")) {
+          ip->ssl = 1;
+        } else if (!strcasecmp(a->text, "no")) {
+          ip->ssl = 0;
+        } else if (!strcasecmp(a->text, "any")) {
+          ip->ssl = -1;
+        } else {
+          xml_err_attr_invalid(a);
+          return -1;
+        }
+        xfree(a->text); a->text = 0;
+        continue;
+      }
       if (a->tag != CONTEST_A_ALLOW && a->tag != CONTEST_A_DENY) {
         err("%s:%d:%d: attribute \"%s\" is invalid here",
             path, a->line, a->column, attn_map[a->tag]);
@@ -1108,7 +1124,7 @@ contests_new_node(int tag)
 }
 
 static int
-do_check_ip(struct contest_access *acc, unsigned long ip)
+do_check_ip(struct contest_access *acc, unsigned long ip, int ssl)
 {
   struct contest_ip *p;
 
@@ -1118,13 +1134,14 @@ do_check_ip(struct contest_access *acc, unsigned long ip)
 
   for (p = (struct contest_ip*) acc->b.first_down;
        p; p = (struct contest_ip*) p->b.right) {
-    if ((ip & p->mask) == p->addr) return p->allow;
+    if ((ip & p->mask) == p->addr && (p->ssl == -1 || p->ssl == ssl))
+      return p->allow;
   }
   return acc->default_is_allow;
 }
 
 int
-contests_check_ip(int num, int field, unsigned long ip)
+contests_check_ip(int num, int field, unsigned long ip, int ssl)
 {
   struct contest_desc *d = 0;
   struct contest_access *acc = 0;
@@ -1145,68 +1162,68 @@ contests_check_ip(int num, int field, unsigned long ip)
     err("contests_check_ip: %d: invalid field %d", num, field);
     return 0;
   }
-  return do_check_ip(acc, ip);
+  return do_check_ip(acc, ip, ssl);
 }
 
 int
-contests_check_register_ip(int num, unsigned long ip)
+contests_check_register_ip(int num, unsigned long ip, int ssl)
 {
-  return contests_check_ip(num, CONTEST_REGISTER_ACCESS, ip);
+  return contests_check_ip(num, CONTEST_REGISTER_ACCESS, ip, ssl);
 }
 int
-contests_check_register_ip_2(struct contest_desc *cnts, unsigned long ip)
+contests_check_register_ip_2(struct contest_desc *cnts, unsigned long ip, int ssl)
 {
-  return do_check_ip(cnts->register_access, ip);
+  return do_check_ip(cnts->register_access, ip, ssl);
 }
 int
-contests_check_users_ip(int num, unsigned long ip)
+contests_check_users_ip(int num, unsigned long ip, int ssl)
 {
-  return contests_check_ip(num, CONTEST_USERS_ACCESS, ip);
+  return contests_check_ip(num, CONTEST_USERS_ACCESS, ip, ssl);
 }
 int
-contests_check_users_ip_2(struct contest_desc *cnts, unsigned long ip)
+contests_check_users_ip_2(struct contest_desc *cnts, unsigned long ip, int ssl)
 {
-  return do_check_ip(cnts->users_access, ip);
+  return do_check_ip(cnts->users_access, ip, ssl);
 }
 int
-contests_check_master_ip(int num, unsigned long ip)
+contests_check_master_ip(int num, unsigned long ip, int ssl)
 {
-  return contests_check_ip(num, CONTEST_MASTER_ACCESS, ip);
+  return contests_check_ip(num, CONTEST_MASTER_ACCESS, ip, ssl);
 }
 int
-contests_check_master_ip_2(struct contest_desc *cnts, unsigned long ip)
+contests_check_master_ip_2(struct contest_desc *cnts, unsigned long ip, int ssl)
 {
-  return do_check_ip(cnts->master_access, ip);
+  return do_check_ip(cnts->master_access, ip, ssl);
 }
 int
-contests_check_judge_ip(int num, unsigned long ip)
+contests_check_judge_ip(int num, unsigned long ip, int ssl)
 {
-  return contests_check_ip(num, CONTEST_JUDGE_ACCESS, ip);
+  return contests_check_ip(num, CONTEST_JUDGE_ACCESS, ip, ssl);
 }
 int
-contests_check_judge_ip_2(struct contest_desc *cnts, unsigned long ip)
+contests_check_judge_ip_2(struct contest_desc *cnts, unsigned long ip, int ssl)
 {
-  return do_check_ip(cnts->judge_access, ip);
+  return do_check_ip(cnts->judge_access, ip, ssl);
 }
 int
-contests_check_team_ip(int num, unsigned long ip)
+contests_check_team_ip(int num, unsigned long ip, int ssl)
 {
-  return contests_check_ip(num, CONTEST_TEAM_ACCESS, ip);
+  return contests_check_ip(num, CONTEST_TEAM_ACCESS, ip, ssl);
 }
 int
-contests_check_team_ip_2(struct contest_desc *cnts, unsigned long ip)
+contests_check_team_ip_2(struct contest_desc *cnts, unsigned long ip, int ssl)
 {
-  return do_check_ip(cnts->team_access, ip);
+  return do_check_ip(cnts->team_access, ip, ssl);
 }
 int
-contests_check_serve_control_ip(int num, unsigned long ip)
+contests_check_serve_control_ip(int num, unsigned long ip, int ssl)
 {
-  return contests_check_ip(num, CONTEST_SERVE_CONTROL_ACCESS, ip);
+  return contests_check_ip(num, CONTEST_SERVE_CONTROL_ACCESS, ip, ssl);
 }
 int
-contests_check_serve_control_ip_2(struct contest_desc *cnts, unsigned long ip)
+contests_check_serve_control_ip_2(struct contest_desc *cnts, unsigned long ip, int ssl)
 {
-  return do_check_ip(cnts->serve_control_access, ip);
+  return do_check_ip(cnts->serve_control_access, ip, ssl);
 }
 
 struct callback_list_item
@@ -1474,6 +1491,7 @@ static void
 unparse_access(FILE *f, const struct contest_access *acc, int tag)
 {
   struct contest_ip *ip;
+  unsigned char ssl_str[64];
 
   if (!acc) return;
   if (!acc->default_is_allow && !acc->b.first_down) return;
@@ -1486,9 +1504,13 @@ unparse_access(FILE *f, const struct contest_access *acc, int tag)
           acc->default_is_allow?"allow":"deny");
   for (ip = (typeof(ip)) acc->b.first_down; ip;
        ip = (typeof(ip)) ip->b.right) {
-    fprintf(f, "    <%s %s=\"%s\">%s</%s>\n",
+    ssl_str[0] = 0;
+    if (ip->ssl >= 0)
+      snprintf(ssl_str, sizeof(ssl_str), " %s=\"%s\"",
+               attn_map[CONTEST_A_SSL], ip->ssl?"yes":"no");
+    fprintf(f, "    <%s %s=\"%s\"%s>%s</%s>\n",
             tag_map[CONTEST_IP], attn_map[CONTEST_A_ALLOW],
-            ip->allow?"yes":"no",
+            ip->allow?"yes":"no", ssl_str,
             xml_unparse_ip_mask(ip->addr, ip->mask),
             tag_map[CONTEST_IP]);
   }
