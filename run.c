@@ -76,21 +76,22 @@ static time_t last_activity_time;
 
 struct testinfo
 {
-  int            status;	/* the execution status */
-  int            code;		/* the process exit code */
+  int            status;        /* the execution status */
+  int            code;          /* the process exit code */
   int            termsig;       /* the termination signal */
   int            score;         /* score gained for this test */
   int            max_score;     /* maximal score for this test */
-  unsigned long  times;		/* execution time */
-  char          *input;		/* the input */
+  long           times;         /* execution time */
+  long           real_time;     /* execution real time */
+  char          *input;         /* the input */
   long           input_size;
   int            has_input_digest;
   unsigned char  input_digest[32];
-  char          *output;	/* the output */
+  char          *output;        /* the output */
   long           output_size;
-  char          *error;		/* the error */
+  char          *error;         /* the error */
   long           error_size;
-  char          *correct;	/* the correct result */
+  char          *correct;       /* the correct result */
   long           correct_size;
   int            has_correct_digest;
   unsigned char  correct_digest[32];
@@ -270,6 +271,9 @@ generate_xml_report(struct run_request_packet *req_pkt,
       }
     }
     fprintf(f, " time=\"%lu\"", tests[i].times);
+    if (tests[i].real_time > 0) {
+      fprintf(f, " real-time=\"%ld\"", tests[i].real_time);
+    }
     if (req_pkt->scoring_system == SCORE_OLYMPIAD && !req_pkt->accepting_mode) {
       fprintf(f, " nominal-score=\"%d\" score=\"%d\"",
               tests[i].max_score, tests[i].score);
@@ -680,16 +684,22 @@ run_tests(struct section_tester_data *tst,
       }
     }
     if (prb->time_limit_millis > 0) {
-      task_SetMaxTimeMillis(tsk, prb->time_limit_millis);
-    } else {
-      time_limit_value = 0;
-      if (prb->time_limit > 0)
-        time_limit_value += prb->time_limit;
+#if defined HAVE_TASK_SETMAXTIMEMILLIS
+      time_limit_value = prb->time_limit_millis;
+      if (tst->time_limit_adjustment > 0)
+        time_limit_value += tst->time_limit_adjustment * 1000;
+      task_SetMaxTimeMillis(tsk, time_limit_value);
+#else
+      time_limit_value = (prb->time_limit_millis + 999) / 1000;;
       if (tst->time_limit_adjustment > 0)
         time_limit_value += tst->time_limit_adjustment;
-      if (time_limit_value > 0) {
-        task_SetMaxTime(tsk, time_limit_value);
-      }
+      task_SetMaxTime(tsk, time_limit_value);
+#endif
+    } else if (prb->time_limit > 0) {
+      time_limit_value = prb->time_limit;
+      if (tst->time_limit_adjustment > 0)
+        time_limit_value += tst->time_limit_adjustment;
+      task_SetMaxTime(tsk, time_limit_value);
     }
     if (prb->real_time_limit>0) task_SetMaxRealTime(tsk,prb->real_time_limit);
     if (tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
@@ -697,6 +707,11 @@ run_tests(struct section_tester_data *tst,
     if (tst->max_stack_size) task_SetStackSize(tsk, tst->max_stack_size);
     if (tst->max_data_size) task_SetDataSize(tsk, tst->max_data_size);
     if (tst->max_vm_size) task_SetVMSize(tsk, tst->max_vm_size);
+#if defined HAVE_TASK_ENABLEMEMORYLIMITERROR
+    if (tst->enable_memory_limit_error && req_pkt->memory_limit) {
+      task_EnableMemoryLimitError(tsk);
+    }
+#endif
 
 #ifdef HAVE_TERMIOS_H
     memset(&term_attrs, 0, sizeof(term_attrs));
@@ -741,6 +756,9 @@ run_tests(struct section_tester_data *tst,
 
       /* fill test report structure */
       tests[cur_test].times = task_GetRunningTime(tsk);
+#if defined HAVE_TASK_GETREALTIME
+      tests[cur_test].real_time = task_GetRealTime(tsk);
+#endif
       if (req_pkt->full_archive) {
         filehash_get(test_src, tests[cur_test].input_digest);
         tests[cur_test].has_input_digest = 1;
@@ -822,6 +840,15 @@ run_tests(struct section_tester_data *tst,
 
       task_Log(tsk, 0, LOG_INFO);
 
+#if defined HAVE_TASK_ISMEMORYLIMIT
+      if (tst->enable_memory_limit_error && req_pkt->memory_limit
+          && task_IsMemoryLimit(tsk)) {
+        failed_test = cur_test;
+        status = RUN_MEM_LIMIT_ERR;
+        total_failed_tests++;
+        task_Delete(tsk); tsk = 0;
+      } else
+#endif
       if (task_IsTimeout(tsk)) {
         failed_test = cur_test;
         status = RUN_TIME_LIMIT_ERR;
