@@ -416,6 +416,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "enable_runlog_merge", global->enable_runlog_merge);
   if (global->secure_run != DFLT_G_SECURE_RUN)
     unparse_bool(f, "secure_run", global->secure_run);
+  if (global->enable_memory_limit_error != DFLT_G_ENABLE_MEMORY_LIMIT_ERROR)
+    unparse_bool(f, "enable_memory_limit_error", global->enable_memory_limit_error);
   //???
   unparse_bool(f, "enable_l10n", global->enable_l10n);
   if (global->charset[0] && strcmp(global->charset, DFLT_G_CHARSET))
@@ -1130,6 +1132,7 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
             "arch = \"%s\"\n"
             "abstract\n"
             "no_core_dump\n"
+            "enable_memory_limit_error\n"
             "kill_signal = KILL\n"
             "clear_env\n",
             arch_abstract_names[arch], supported_archs[arch]);
@@ -1149,6 +1152,7 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
             "arch = \"%s\"\n"
             "abstract\n"
             "no_core_dump\n"
+            "enable_memory_limit_error\n"
             "kill_signal = KILL\n"
             "clear_env\n",
             arch_abstract_names[arch], supported_archs[arch]);
