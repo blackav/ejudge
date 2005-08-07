@@ -115,6 +115,7 @@ static struct contest_desc *cur_contest;
 static struct userlist_clnt *server_conn;
 static unsigned long client_ip;
 static unsigned char *self_url;
+static int ssl_flag = 0;
 static unsigned char *head_style = "h2";
 static unsigned char *par_style = "";
 
@@ -234,11 +235,16 @@ make_self_url(void)
   unsigned char *http_host = getenv("HTTP_HOST");
   unsigned char *script_name = getenv("REDIRECT_URL");
   unsigned char fullname[1024];
-  
+  unsigned char *protocol = "http";
+
+  if (getenv("SSL_PROTOCOL")) {
+    ssl_flag = 1;
+    protocol = "https";
+  }
   if (!script_name) script_name = getenv("SCRIPT_NAME");
   if (!http_host) http_host = "localhost";
   if (!script_name) script_name = "/cgi-bin/team";
-  snprintf(fullname, sizeof(fullname), "http://%s%s", http_host, script_name);
+  snprintf(fullname, sizeof(fullname), "%s://%s%s", protocol, http_host, script_name);
   self_url = xstrdup(fullname);
 }
 
@@ -769,7 +775,7 @@ authentificate(void)
   /* read and parse session mode */
   if (get_session_id("SID", &session_id)) {
     open_userlist_server();
-    r = userlist_clnt_team_cookie(server_conn, client_ip, global->contest_id,
+    r = userlist_clnt_team_cookie(server_conn, client_ip, ssl_flag, global->contest_id,
                                   session_id,
                                   client_locale_id,
                                   &client_team_id,
@@ -805,7 +811,7 @@ authentificate(void)
   }
 
   open_userlist_server();
-  r = userlist_clnt_team_login(server_conn, client_ip, global->contest_id,
+  r = userlist_clnt_team_login(server_conn, client_ip, ssl_flag, global->contest_id,
                                client_locale_id,
                                1,
                                client_login, client_password,
@@ -1438,7 +1444,7 @@ main(int argc, char *argv[])
                               global->deny_from))
     client_access_denied(global->charset, 0);
 
-  if (!contests_check_team_ip(global->contest_id, client_ip)) {
+  if (!contests_check_team_ip(global->contest_id, client_ip, ssl_flag)) {
     client_access_denied(global->charset, 0);
   }
 
