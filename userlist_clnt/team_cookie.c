@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 int
 userlist_clnt_team_cookie(struct userlist_clnt *clnt,
                           unsigned long origin_ip,
+                          int ssl,
                           int contest_id,
                           unsigned long long cookie,
                           int locale_id,
@@ -44,6 +45,7 @@ userlist_clnt_team_cookie(struct userlist_clnt *clnt,
   memset(out, 0, out_size);
   out->request_id = ULS_TEAM_CHECK_COOKIE;
   out->origin_ip = origin_ip;
+  out->ssl = ssl;
   out->contest_id = contest_id;
   out->cookie = cookie;
   out->locale_id = locale_id;
