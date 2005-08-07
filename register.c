@@ -140,6 +140,7 @@ static struct config_node *config;
 static int client_locale_id;
 
 static unsigned char *self_url;
+static int ssl_flag;
 static unsigned char *user_login;
 static unsigned char *user_password;
 static int user_usecookies;
@@ -850,11 +851,15 @@ initialize(int argc, char const *argv[])
   {
     unsigned char *http_host = getenv("HTTP_HOST");
     unsigned char *script_name = getenv("SCRIPT_NAME");
+    unsigned char *protocol = "http";
 
+    if (getenv("SSL_PROTOCOL")) {
+      ssl_flag = 1;
+      protocol = "https";
+    }
     if (!http_host) http_host = "localhost";
     if (!script_name) script_name = "/cgi-bin/register";
-    snprintf(fullname, sizeof(fullname),
-             "http://%s%s", http_host, script_name);
+    snprintf(fullname, sizeof(fullname), "%s://%s%s", protocol, http_host, script_name);
     self_url = xstrdup(fullname);
   }
 }
@@ -966,7 +971,7 @@ check_contest_eligibility(int id)
   if (contests_get(id, &d) < 0 || !d) return 0;
   if (d->closed) return 0;
   if (d->reg_deadline && cur_time > d->reg_deadline) return 0;
-  return contests_check_register_ip(id, user_ip);
+  return contests_check_register_ip(id, user_ip, ssl_flag);
 }
 
 static void
@@ -1471,7 +1476,7 @@ authentificate(void)
     fprintf(stderr, "connection to server failed\n");
     goto failed;
   }
-  errcode = userlist_clnt_lookup_cookie(server_conn, user_ip,
+  errcode = userlist_clnt_lookup_cookie(server_conn, user_ip, ssl_flag,
                                         sid_value,
                                         &new_user_id,
                                         &new_login,
@@ -2485,7 +2490,7 @@ action_login(void)
     return;
   }
 
-  errcode = userlist_clnt_login(server_conn, user_ip, user_contest_id,
+  errcode = userlist_clnt_login(server_conn, user_ip, ssl_flag, user_contest_id,
                                 client_locale_id,
                                 1 /* usecookies */,
                                 user_login, user_password,
