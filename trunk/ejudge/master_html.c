@@ -1830,8 +1830,8 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
 
   fprintf(f,
           "<table border=\"1\">"
-          "<tr><th>N</th><th>%s</th><th>%s</th><th>%s</th>",
-          _("Result"), _("Time (sec)"), _("Extra info"));
+          "<tr><th>N</th><th>%s</th><th>%s</th><th>%s</th><th>%s</th>",
+          _("Result"), _("Time (sec)"), _("Real time (sec)"), _("Extra info"));
   if (is_kirov) {
     fprintf(f, "<th>%s</th>", _("Score"));
   }
@@ -1852,6 +1852,11 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
     fprintf(f, "<td><font color=\"%s\">%s</font></td>\n",
             font_color, run_status_str(t->status, 0, 0));
     fprintf(f, "<td>%d.%03d</td>", t->time / 1000, t->time % 1000);
+    if (t->real_time > 0) {
+      fprintf(f, "<td>%d.%03d</td>", t->real_time / 1000, t->real_time % 1000);
+    } else {
+      fprintf(f, "<td>N/A</td>");
+    }
     // extra information
     fprintf(f, "<td>");
     switch (t->status) {
