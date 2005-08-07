@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2001-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -431,6 +431,7 @@ static unsigned long user_ip;
 static int user_contest_id = 0;
 static int client_locale_id;
 static unsigned char *self_url;
+static int ssl_flag;
 static int user_id;
 
 static int
@@ -644,11 +645,15 @@ initialize(int argc, char const *argv[])
   {
     unsigned char *http_host = getenv("HTTP_HOST");
     unsigned char *script_name = getenv("SCRIPT_NAME");
+    unsigned char *protocol = "http";
 
+    if (getenv("SSL_PROTOCOL")) {
+      ssl_flag = 1;
+      protocol = "https";
+    }
     if (!http_host) http_host = "localhost";
     if (!script_name) script_name = "/cgi-bin/users";
-    snprintf(fullname, sizeof(fullname),
-             "http://%s%s", http_host, script_name);
+    snprintf(fullname, sizeof(fullname), "%s://%s%s", protocol, http_host, script_name);
     self_url = xstrdup(fullname);
   }
 }
@@ -741,7 +746,7 @@ main(int argc, char const *argv[])
   name_str = alloca(name_len + 16);
   html_armor_string(in_name_str, name_str);
 
-  if (!contests_check_users_ip(user_contest_id, user_ip)) {
+  if (!contests_check_users_ip(user_contest_id, user_ip, ssl_flag)) {
     client_put_header(stdout, header_txt, 0, config->charset, 1,
                       client_locale_id, _("Permission denied"));
     printf("<h2>%s</h2>\n",_("You have no permissions to view this contest."));
