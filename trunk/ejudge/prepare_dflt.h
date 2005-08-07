@@ -124,6 +124,7 @@
 #define DFLT_G_ENABLE_RUNLOG_MERGE 0
 #define DFLT_G_IGNORE_SUCCESS_TIME 0
 #define DFLT_G_SECURE_RUN 0
+#define DFLT_G_ENABLE_MEMORY_LIMIT_ERROR 0
 
 #define DFLT_P_INPUT_FILE         "input"
 #define DFLT_P_OUTPUT_FILE        "output"
