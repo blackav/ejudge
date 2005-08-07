@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,7 @@ userlist_clnt_get_uid_by_pid_2(struct userlist_clnt *clnt,
                                int *p_priv_level,
                                unsigned long long *p_cookie,
                                unsigned long *p_ip,
+                               int *p_ssl,
                                unsigned char **p_login,
                                unsigned char **p_name)
 {
@@ -83,6 +84,7 @@ userlist_clnt_get_uid_by_pid_2(struct userlist_clnt *clnt,
   if (p_cookie) *p_cookie = in->cookie;
   if (p_priv_level) *p_priv_level = in->priv_level;
   if (p_ip) *p_ip = in->ip;
+  if (p_ssl) *p_ssl = in->ssl;
   if (p_login) *p_login = strdup(login_ptr);
   if (p_name) *p_name = strdup(name_ptr);
   xfree(in);
