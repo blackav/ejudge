@@ -93,6 +93,7 @@ struct client_state
   int priv_level;
   unsigned long long cookie;
   unsigned long ip;
+  int ssl;
   unsigned char *login;
   unsigned char *name;
   unsigned char *html_login;
@@ -1532,7 +1533,7 @@ static int
 get_peer_local_user(struct client_state *p)
 {
   int r;
-  int uid, priv_level;
+  int uid, priv_level, ssl;
   unsigned long long cookie;
   unsigned long ip;
   unsigned char *login, *name;
@@ -1543,7 +1544,7 @@ get_peer_local_user(struct client_state *p)
 
   r = userlist_clnt_get_uid_by_pid_2(userlist_clnt, p->peer_uid,
                                      p->peer_gid, p->peer_pid,
-                                     &uid, &priv_level, &cookie, &ip,
+                                     &uid, &priv_level, &cookie, &ip, &ssl,
                                      &login, &name);
   if (r < 0) {
     err("get_peer_local_user: %s", userlist_strerror(-r));
@@ -1575,6 +1576,7 @@ get_peer_local_user(struct client_state *p)
   p->user_id = uid;
   p->cookie = cookie;
   p->ip = ip;
+  p->ssl = ssl;
   p->login = login;
   p->name = name;
   p->priv_level = priv_level;
@@ -1965,12 +1967,12 @@ cmd_main_page(struct client_state *p, int len,
   switch (pkt->b.id) {
   case SSERV_CMD_MAIN_PAGE:
     r = super_html_main_page(f, p->priv_level, p->user_id, p->login,
-                             p->cookie, p->ip, pkt->flags, config, sstate,
+                             p->cookie, p->ip, p->ssl, pkt->flags, config, sstate,
                              self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SSERV_CMD_CONTEST_PAGE:
     r = super_html_contest_page(f, p->priv_level, p->user_id, pkt->contest_id,
-                                p->login, p->cookie, p->ip, config,
+                                p->login, p->cookie, p->ip, p->ssl, config,
                                 self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SSERV_CMD_VIEW_SERVE_LOG:
@@ -1978,7 +1980,7 @@ cmd_main_page(struct client_state *p, int len,
   case SSERV_CMD_VIEW_CONTEST_XML:
   case SSERV_CMD_VIEW_SERVE_CFG:
     r = super_html_log_page(f, pkt->b.id, p->priv_level, p->user_id,
-                            pkt->contest_id, p->login, p->cookie, p->ip,
+                            pkt->contest_id, p->login, p->cookie, p->ip, p->ssl,
                             config,
                             self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
@@ -2507,7 +2509,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_SAVE_TEAM_FOOTER:
   case SSERV_CMD_CNTS_SAVE_REGISTER_EMAIL_FILE:
     r = super_html_set_contest_var(sstate, pkt->b.id, pkt->param1, param2_ptr,
-                                   pkt->param3, pkt->param4);
+                                   pkt->param3, pkt->param4, pkt->param5);
     break;
 
   case SSERV_CMD_LANG_SHOW_DETAILS:
@@ -2722,6 +2724,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_GLOB_CHANGE_ENABLE_RUNLOG_MERGE:
   case SSERV_CMD_GLOB_CHANGE_USE_COMPILATION_SERVER:
   case SSERV_CMD_GLOB_CHANGE_SECURE_RUN:
+  case SSERV_CMD_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR:
   case SSERV_CMD_GLOB_CHANGE_ENABLE_L10N:
   case SSERV_CMD_GLOB_CHANGE_CHARSET:
   case SSERV_CMD_GLOB_CLEAR_CHARSET:
@@ -3146,6 +3149,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_ENABLE_RUNLOG_MERGE] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_USE_COMPILATION_SERVER] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_SECURE_RUN] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_ENABLE_L10N] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_CHARSET] = { cmd_set_value },
   [SSERV_CMD_GLOB_CLEAR_CHARSET] = { cmd_set_value },
