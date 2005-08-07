@@ -183,7 +183,7 @@ static unsigned char const login_accept_chars[] =
 int
 super_html_set_contest_var(struct sid_state *sstate, int cmd,
                            int param1, const unsigned char *param2,
-                           int param3, int param4)
+                           int param3, int param4, int param5)
 {
   unsigned char **p_str = 0;
   unsigned char *p_bool = 0;
@@ -382,6 +382,7 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
       new_ip->addr = ip_addr;
       new_ip->mask = ip_mask;
       new_ip->allow = param3;
+      new_ip->ssl = param5;
       xml_link_node_last(&(*p_access)->b, &new_ip->b);
       return 0;
     case SSERV_CMD_CNTS_CHANGE_RULE:
@@ -389,6 +390,7 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
       if (!(new_ip = (struct contest_ip*) get_nth_child(&(*p_access)->b, param4)))
         return -SSERV_ERR_INVALID_PARAMETER;
       new_ip->allow = param3;
+      new_ip->ssl = param5;
       return 0;
     case SSERV_CMD_CNTS_DELETE_RULE:
       if (!(new_ip = (struct contest_ip*) get_nth_child(&(*p_access)->b, param4)))
