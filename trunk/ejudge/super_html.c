@@ -315,6 +315,7 @@ super_html_main_page(FILE *f,
                      const unsigned char *login,
                      unsigned long long session_id,
                      unsigned long ip_address,
+                     int ssl,
                      unsigned int flags,
                      struct userlist_cfg *config,
                      struct sid_state *sstate,
@@ -590,7 +591,7 @@ super_html_main_page(FILE *f,
 
     // report judge URL
     if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
-        && contests_check_judge_ip_2(cnts, ip_address)) {
+        && contests_check_judge_ip_2(cnts, ip_address, ssl)) {
       fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d\">Judge</a></td>\n",
               judge_url, session_id, contest_id);
     } else {
@@ -598,7 +599,7 @@ super_html_main_page(FILE *f,
     }
     // report master URL
     if (opcaps_check(caps, OPCAP_MASTER_LOGIN) >= 0 && master_url[0]
-        && contests_check_master_ip_2(cnts, ip_address)) {
+        && contests_check_master_ip_2(cnts, ip_address, ssl)) {
       fprintf(f, "<td><a href=\"%s?SID=%016llx&contest_id=%d\">Master</a></td>\n",
               master_url, session_id, contest_id);
     } else {
@@ -607,7 +608,7 @@ super_html_main_page(FILE *f,
 
     if (priv_level >= PRIV_LEVEL_ADMIN
         && opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0
-        && contests_check_serve_control_ip_2(cnts, ip_address)) {
+        && contests_check_serve_control_ip_2(cnts, ip_address, ssl)) {
       fprintf(f, "<td>%sDetails</a></td>\n",
               html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
                             "contest_id=%d&action=%d", contest_id,
@@ -644,6 +645,7 @@ super_html_contest_page(FILE *f,
                         const unsigned char *login,
                         unsigned long long session_id,
                         unsigned long ip_address,
+                        int ssl,
                         struct userlist_cfg *config,
                         const unsigned char *self_url,
                         const unsigned char *hidden_vars,
@@ -718,7 +720,7 @@ super_html_contest_page(FILE *f,
     return -SSERV_ERR_PERMISSION_DENIED;
   }
 
-  if (!contests_check_serve_control_ip_2(cnts, ip_address)) {
+  if (!contests_check_serve_control_ip_2(cnts, ip_address, ssl)) {
     err("super_html_contest_page: invalid IP address");
     return -SSERV_ERR_BANNED_IP;
   }
@@ -740,14 +742,14 @@ super_html_contest_page(FILE *f,
 
   // report judge URL
   if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
-      && contests_check_judge_ip_2(cnts, ip_address)) {
+      && contests_check_judge_ip_2(cnts, ip_address, ssl)) {
     fprintf(f, "<tr><td>Judge CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d\">Judge</a></td></tr>\n",
             judge_url, session_id, contest_id);
   }
 
   // report master URL
   if (opcaps_check(caps, OPCAP_MASTER_LOGIN) >= 0 && master_url[0]
-      && contests_check_master_ip_2(cnts, ip_address)) {
+      && contests_check_master_ip_2(cnts, ip_address, ssl)) {
     fprintf(f, "<tr><td>Master CGI program</td><td><a href=\"%s?SID=%016llx&contest_id=%d\">Master</a></td></tr>\n",
             master_url, session_id, contest_id);
   }
@@ -1167,6 +1169,7 @@ super_html_log_page(FILE *f,
                     const unsigned char *login,
                     unsigned long long session_id,
                     unsigned long ip_address,
+                    int ssl,
                     struct userlist_cfg *config,
                     const unsigned char *self_url,
                     const unsigned char *hidden_vars,
@@ -1199,7 +1202,7 @@ super_html_log_page(FILE *f,
     err("super_html_log_page: not enough privileges");
     return -SSERV_ERR_PERMISSION_DENIED;
   }
-  if (!contests_check_serve_control_ip_2(cnts, ip_address)) {
+  if (!contests_check_serve_control_ip_2(cnts, ip_address, ssl)) {
     err("super_html_log_page: invalid IP address");
     return -SSERV_ERR_BANNED_IP;
   }
@@ -1784,6 +1787,7 @@ print_access_summary(FILE *f, struct contest_access *acc,
   unsigned char hbuf[1024];
   FILE *af;
   struct contest_ip *p;
+  unsigned char ssl_str[64];
 
   af = open_memstream(&acc_txt, &acc_len);
   ASSERT(af);
@@ -1792,8 +1796,11 @@ print_access_summary(FILE *f, struct contest_access *acc,
   } else {
     for (p = (struct contest_ip*) acc->b.first_down;
          p; p = (struct contest_ip*) p->b.right) {
-      fprintf(af, "%s %s\n",
-              xml_unparse_ip_mask(p->addr, p->mask),
+      ssl_str[0] = 0;
+      if (p->ssl >= 0)
+        snprintf(ssl_str, sizeof(ssl_str), " %s", p->ssl?"(SSL)":"(No SSL)");
+      fprintf(af, "%s%s %s\n",
+              xml_unparse_ip_mask(p->addr, p->mask), ssl_str,
               p->allow?"allow":"deny");
     }
     fprintf(af, "default %s\n", acc->default_is_allow?"allow":"deny");
@@ -2446,6 +2453,16 @@ super_html_edit_contest_page(FILE *f,
   return 0;
 }
 
+static void
+html_ssl_select(FILE *f, int value)
+{
+  fprintf(f, "<select name=\"ssl\"><option value=\"-1\"%s>Any</option><option value=\"0\"%s>No SSL</option><option value=\"1\"%s>SSL</option></select>",
+          value < 0 ? " selected=\"1\"" : "",
+          !value ? " selected=\"1\"" : "",
+          value > 0 ? " selected=\"1\"" : "");
+
+}
+
 int
 super_html_edit_access_rules(FILE *f,
                              int priv_level,
@@ -2527,6 +2544,8 @@ super_html_edit_access_rules(FILE *f,
               xml_unparse_ip_mask(p->addr, p->mask));
       html_boolean_select(f, p->allow, "access", "deny", "allow");
       fprintf(f, "</td><td>");
+      html_ssl_select(f, p->ssl);
+      fprintf(f, "</td><td>");
       html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_RULE, "Change");
       html_submit_button(f, SUPER_ACTION_CNTS_DELETE_RULE, "Delete");
       if (i > 0) html_submit_button(f, SUPER_ACTION_CNTS_UP_RULE, "Move up");
@@ -2541,6 +2560,8 @@ super_html_edit_access_rules(FILE *f,
   html_edit_text_form(f, 16, 16, "ip", "");
   fprintf(f, "</td><td>");
   html_boolean_select(f, 0, "access", "deny", "allow");
+  fprintf(f, "</td><td>");
+  html_ssl_select(f, -1);
   fprintf(f, "</td><td>");
   html_submit_button(f, SUPER_ACTION_CNTS_ADD_RULE, "Add");
   fprintf(f, "</td></tr></form>\n");
