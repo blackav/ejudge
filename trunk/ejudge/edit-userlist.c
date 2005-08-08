@@ -3220,7 +3220,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
       // mass creating new user
 
       memset(templ_buf, 0, sizeof(templ_buf));
-      i = edit_string(LINES / 2, COLS, "Template for new names?", templ_buf, 200);
+      i = edit_string(LINES / 2, COLS, "Template for new logins?", templ_buf, 200);
       if (i < 0) goto menu_continue;
       memset(passwd_buf, 0, sizeof(passwd_buf));
       i = edit_string(LINES / 2, COLS, "Template for passwords?", passwd_buf, 200);
