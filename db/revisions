@@ -1995,3 +1995,8 @@ userlist_clnt/priv_cookie.c 1 5 237207
 userlist_clnt/priv_login.c 1 5 274474
 userlist_clnt/team_cookie.c 1 6 223202
 userlist_clnt/team_login.c 1 6 256920
+edit-userlist.c 1 24 7818411
+ejudge-setup.c 1 15 9069847
+prepare_out.c 1 4 4629224
+NEWS.RUS 1 20 24075854
+NEWS 1 20 14387108
