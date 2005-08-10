@@ -1,3 +1,31 @@
+2005-07-22  Alexander Chernov  <cher@ispras.ru>
+
+	* runperl.in: initial revision
+
+2005-07-21  Alexander Chernov  <cher@ispras.ru>
+
+	* fpc-version.in, g++-version.in, g77-version.in, gcc-version.in, gcj-version.in, gpc-version.in, gprolog-version.in, javac-version.in, mbas-version.in, mcs-version.in, mzscheme-version.in, perl-version.in, python-version.in, yabasic-version.in, dcc-version.in:
+	Support for -p option (print the compiler path and exit) is added.
+
+2005-07-03  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in: yabasic-version script is added.
+
+2005-06-26  Alexander Chernov  <cher@ispras.ru>
+
+	* dcc-version.in, fpc-version.in, g++-version.in, g77-version.in, gcc-version.in, gcj-version.in, gpc-version.in, gprolog-version.in, javac-version.in, mbas-version.in, mcs-version.in, mzscheme-version.in, perl-version.in, python-version.in, yabasic-version.in:
+	support for -f option is added.
+
+	* Makefile.in: version scripts are added.
+
+	* gcj.in, yabasic.in, python.in, perl.in, mzscheme.in, gprolog.in, gpc.in, g77.in, g++.in, fpc.in, dcc.in:
+	copyright notice is updated;
+	e-mail address added;
+	EJUDGE_FLAGS environment variable is supported.
+
+	* yabasic-version.in, python-version.in, perl-version.in, mzscheme-version.in, mcs-version.in, mbas-version.in, javac-version.in, g++-version.in, gprolog-version.in, gpc-version.in, gcj-version.in, gcc-version.in, g77-version.in, fpc-version.in, dcc-version.in:
+	initial revision
+
 2005-04-10  Alexander Chernov  <cher@ispras.ru>
 
 	* mbas.in: initial revision

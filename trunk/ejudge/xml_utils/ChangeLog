@@ -1,3 +1,17 @@
+2005-08-07  Alexander Chernov  <cher@ispras.ru>
+
+	* parse_ip_mask.c:
+	(xml_parse_ip_mask) added support for default mask "0" (addr == 0
+	  && mask == 0).
+
+	* unparse_ip_mask.c:
+	(unparse_ip_mask) added support for "default" mask (addr == 0 &&
+	  mask == 0). This mask is generated as "0".
+
+2005-06-23  Alexander Chernov  <cher@ispras.ru>
+
+	* parse_ip_mask.c, unparse_ip_mask.c: initial revision
+
 2005-05-11  Alexander Chernov  <cher@ispras.ru>
 
 	* parse_date.c: copyright notice is updated;

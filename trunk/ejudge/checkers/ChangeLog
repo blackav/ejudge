@@ -1,3 +1,12 @@
+2005-08-06  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in: testlib for delphi is added;
+	testlib destination directory is slightly changed: Free Pascal version
+	  is copied to fpc subdirectory, Delphi version is copied to delphi
+	  subdirectory;
+	automatic compilation of testlibs is added, if the corresponding
+	  languages are supported.
+
 2005-04-28  Alexander Chernov  <cher@ispras.ru>
 
 	* init.c: copyright notice is updated;
