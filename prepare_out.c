@@ -1142,8 +1142,10 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
     if (max_stack_size)
       fprintf(f, "max_stack_size = %s\n",
               num_to_size(nbuf, sizeof(nbuf), max_stack_size));
+#if CONF_HAS_LIBCAP - 0 == 1
     if (secure_run)
       fprintf(f, "start_cmd = \"capexec\"\n");
+#endif /* CONF_HAS_LIBCAP */
     break;
 
   case ARCH_LINUX_SHARED:
@@ -1162,9 +1164,11 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
     if (max_stack_size)
       fprintf(f, "max_stack_size = %s\n",
               num_to_size(nbuf, sizeof(nbuf), max_stack_size));
+#if CONF_HAS_LIBCAP - 0 == 1
     if (secure_run)
       fprintf(f, "start_env = \"LD_BIND_NOW=1\"\n"
               "start_env = \"LD_PRELOAD=${script_dir}/libdropcaps.so\"\n");
+#endif /* CONF_HAS_LIBCAP */
     break;
 
   case ARCH_JAVA:
