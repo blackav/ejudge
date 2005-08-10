@@ -2826,7 +2826,7 @@ generate_contest_xml(FILE *f)
   fprintf(f, "<!-- Generation date: %s -->\n", date_buf);
 
   fprintf(f,
-          "<contest id=\"1\" disable_team_password=\"yes\">\n"
+          "<contest id=\"1\" disable_team_password=\"yes\" managed=\"yes\" run_managed=\"yes\">\n"
           "  <name>Test contest</name>\n"
           "  <name_en>Test contest</name_en>\n"
           "\n"
