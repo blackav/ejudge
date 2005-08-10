@@ -1,3 +1,7 @@
+2005-07-28  Alexander Chernov  <cher@ispras.ru>
+
+	* get_param.c: initial revision
+
 2005-05-02  Alexander Chernov  <cher@ispras.ru>
 
 	* master_page.c:

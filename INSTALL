@@ -1,6 +1,86 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
+Brief instructions for installation of ejudge system
+====================================================
+В данном разделе описывается установка ejudge с минимальным
+ручным конфигурированием. Если данный вариант установки не
+сработал на Вашей системе или Вас не устраивают настройки по
+умолчанию, читайте далее более полное руководство по
+инсталляции.
+
+Итак, по шагам:
+1. Создайте пользователя ejudge с домашним каталогом
+/home/ejudge. Желательно, чтобы для пользователя ejudge была
+создана группа ejudge. Если Вы не знаете, как создавать новых
+пользователей, обратитесь, пожалуйста, к документации по Вашей
+системе.
+2. Создайте каталог /home/judges, владельцем которого является
+пользователь ejudge. Для создания каталога Вам могут
+потребоваться привилегии пользователя root. Для создания
+каталогов достаточно выполнить следующие команды из-под root:
+mkdir /home/judges
+chown ejudge:ejudge /home/judges
+3. Войдите в систему под пользователем ejudge, разархивируйте и
+скомпилируйте библиотеку reuse в домашнем каталоге:
+cd ~
+tar xvfz REUSE-ARCH-DIR/reuse-VERSION.tgz
+cd reuse/source
+./configure
+make
+make install
+
+Здесь REUSE-ARCH-DIR - это каталог, в котором находится архив
+библиотеки reuse. VERSION - версия библиотеки. Всегда
+используйте самую последнюю версию (на текущий момент -
+это 4.2.0).
+4. Перейдите снова в домашний каталог с разархивируйте ejudge
+cd ~
+tar xvfz EJUDGE-ARCH-DIR/reuse-EJUDGE.tgz
+cd ejudge
+5. Сконфигурируйте ejudge
+./configure --prefix=/home/ejudge/inst-ejudge  --with-reuse=/home/ejudge/reuse  --enable-charset=koi8-r --enable-socket-path=/tmp/userlist-socket --enable-super-serve-socket=/tmp/super-serve-socket --enable-contests-home-dir=/home/judges --enable-conf-dir=/home/judges/data --enable-cgi-conf-dir=../cgi-data --with-httpd-cgi-bin-dir=CGI-BIN-DIR --with-httpd-htdocs-dir=HTDOCS-DIR
+
+Здесь CGI-BIN-DIR - это каталог CGI скриптов веб сервера
+(например, это может быть /home/httpd/cgi-bin), HTDOCS-DIR -
+корень документов веб сервера (например, /home/httpd/html).
+Чтобы уточнить эти пути обратитесь к документации по Вашей
+версии Linux.
+6. Скомпилируйте и проинсталлируйте систему:
+make
+make install
+7. Запустите программу ejudge-setup, перейдите в раздел
+"Administrator identity", заполните требуемые поля:
+./ejudge-setup
+Admin ID:       1
+Admin Login:    ejudge
+Admin e-mail:   YOUR-E-MAIL
+Admin name:     Ejudge administrator
+Admin password: PASSWORD
+Затем сгенерируйте настроечный скрипт с помощью "Save setup
+script". При выборе этого пункта меню будет запрошено имя
+скрипта, назовите его ejudge-install.sh.
+8. Из-под пользователя root выполните настроечный скрипт.
+su -
+cd ~ejudge/ejudge
+./ejudge-install.sh
+9. Запустите систему. Запуск программ должен выполняться из-под
+пользователя ejudge:
+cd /home/judges/data/db
+~/inst-ejudge/bin/userlist-server -D &
+cd /home/judges/compile
+~/inst-ejudge/bin/compile conf/compile.cfg &
+cd /home/judges
+~/inst-ejudge/bin/super-serve &
+
+Установка системы ejudge завершена. Теперь можно в строке URL
+браузера (естественно, httpd-сервер должен быть запущен) указать
+http://localhost/cgi-bin/super-serve.
+
+Если при выполнении какого-либо шага возникла ошибка, некоторые
+шаги Вам не понятны, либо Вы хотите изменить настройки по
+умолчанию, читайте документацию дальше.
+
 Ejudge system installation manual
 =================================
 
@@ -93,7 +173,7 @@ mandatory options are as follows.
         version does not satisfy the above mentioned requirement,
         the configure script terminates with error. The latest
         version of the reuse library is recommended for use, as
-        of this writing - 4.0.1.
+        of this writing - 4.2.0.
 
         As a rule, the reuse library is compiled and installed
         in the same directory, where the source archive is
@@ -1557,16 +1637,11 @@ following actions:
         COMPILE-HOME-DIR directory and start the compilation
         server using the command
                 EJUDGE-BIN-DIR/compile conf/compile.cfg
-  3) start the test contest 1 contest server `serve'.
+  3) start the contest management server `super-serve'.
         To do this change the current directory to the
-        CONTEST1-HOME-DIR directory and start the server using
-        the command
-                EJUDGE-BIN-DIR/serve conf/serve.cfg
-  4) start the testing server for the contest 1 `run'.
-        To do this change the current directory to the
-        CONTEST1-HOME-DIR directory and start the `run' program
-        using the command
-                EJUDGE-BIN-DIR/run conf/serve.cfg
+        CONTESTS-HOME-DIR directory and start the contest
+        manager using the command
+	       EJUDGE-BIN-DIR/super-serve
 
 After starting of all these programs ensure, that the web server
 also started, and start it, if necessary.
@@ -1582,6 +1657,11 @@ in the administrator identity section. Check that all actions
 work correct. Note, that the solutions for all the supported
 languages for the tasks of the test contest 1 are located in the
 CONTEST1-HOME-DIR/solutions directory.
+
+You may use the URL http://localhost/cgi-bin/serve-control to
+control the contest manager. You can view the current status of
+all the contests and you can edit the contest configuration
+files.
 
 By default, the ejudge system is configured so, that only
 localhost (i.e. the computer running the ejudge programs) is

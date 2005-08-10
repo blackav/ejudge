@@ -1,3 +1,982 @@
+2005-08-10  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge-setup.c:
+	(generate_contest_xml) "managed" and "run_managed" attributes are
+	  set in the generated contest.
+
+	* prepare_out.c:
+	(generate_abstract_tester) references to "capexec" and "libdropcaps.so"
+	  are generated only if the kernel support is detected.
+
+2005-08-08  Alexander Chernov  <cher@ispras.ru>
+
+	* edit-userlist.c: 
+	(do_display_user_menu) minor spelling fix.
+
+2005-08-07  Alexander Chernov  <cher@ispras.ru>
+
+	* contests.c: new attribute "ssl" for element <ip> is added;
+	(parse_access) attribute "ssl" is handled;
+	(do_check_ip) `ssl' parameter is added;
+	(contests_check_ip) `ssl' parameter is added;
+	(contests_check_register_ip) the same;
+	(contests_check_register_ip_2) the same;
+	(contests_check_users_ip) the same;
+	(contests_check_users_ip_2) the same;
+	(contests_check_team_ip) the same;
+	(contests_check_team_ip_2) the same;
+	(contests_check_judge_ip) the same;
+	(contests_check_judge_ip_2) the same;
+	(contests_check_master_ip) the same;
+	(contests_check_master_ip_2) the same;
+	(contests_check_serve_control_ip) the same;
+	(contests_check_serve_control_ip_2) the same;
+	(unparse_access) "ssl" attribute is supported.
+
+	* contests.h: new attribute "ssl" for element <ip> is added;
+	(struct contest_ip) `ssl' field is added;
+	(contests_check_ip) `ssl' parameter is added;
+	(contests_check_register_ip) the same;
+	(contests_check_register_ip_2) the same;
+	(contests_check_users_ip) the same;
+	(contests_check_users_ip_2) the same;
+	(contests_check_team_ip) the same;
+	(contests_check_team_ip_2) the same;
+	(contests_check_judge_ip) the same;
+	(contests_check_judge_ip_2) the same;
+	(contests_check_master_ip) the same;
+	(contests_check_master_ip_2) the same;
+	(contests_check_serve_control_ip) the same;
+	(contests_check_serve_control_ip_2) the same.
+
+	* master.c:
+	(make_self_url) connections over https (secure channel) are supported:
+	  self-referencing URL is constructed correctly, and the global
+	  variable `ssl_flag' is set;
+	(authentificate) `ssl_flag' is passed to `userlist_clnt_priv_cookie',
+	  `userlist_clnt_priv_login';
+	(main) `ssl_flag' is passed to `contests_check_master_ip',
+	  `contests_check_judge_ip'.
+
+	* master_html.c:
+	(write_xml_testing_report) "real-time" for each run is reported,
+	  if available.
+
+	* prepare.c:
+	new global configuration variable: `enable_memory_limit_error';
+	new tester configuration variable: `enable_memory_limit_error'.
+
+	* prepare.h:
+	(struct section_global_data) `enable_memory_limit_error' field added;
+	(struct section_tester_data) `enable_memory_limit_error' field added.
+
+	* prepare_dflt.h: DFLT_G_ENABLE_MEMORY_LIMIT_ERROR is added.
+
+	* prepare_out.c:
+	(prepare_unparse_global) `enable_memory_limit_error' variable is
+	  supported;
+	(generate_abstract_tester) `enable_memory_limit_error' configuration
+	  variable is set for the "Linux" and "Linux-shared" abstract testers.
+
+	* register.c:
+	(initialize) support for connections over https (secure channel) is
+	  implemented: self-referencing URL is constructed correctly, and the
+	  global `ssl_flag' variable is set;
+	(check_contest_eligibility) `ssl_flag' is passed to
+	  `contests_check_register_ip';
+	(authentificate) `ssl_flag' is passed to `userlist_clnt_lookup_cookie',
+	  `userlist_clnt_login'.
+
+	* run.c:
+	(struct testinfo) `real_time' field is added to store the real
+	  execution time on the test;
+	(generate_xml_report) "real-time" attribute of the <test> element
+	  is generated, if set;
+	(run_tests) `task_SetMaxTimeMillis' function is used only if
+	  present in the reuse library. The result of the `configure' tests
+	  is used;
+	  memory limit error detection is implemented;
+	  `task_EnableMemoryLimitError' function is called, if supported by
+	  the reuse library (as reported by configure script);
+	  `task_GetRealTime' function is called, if supported by the reuse
+	  library;
+	  `task_IsMemoryLimit' function is called, if memory limit error
+	  detection is enabled in the incoming run request packed and in
+	  the current tester configuration. Also support from the reuse
+	  library is required.
+
+	* run_packet.h:
+	(struct run_request_packet) `memory_limit' flag is added.
+
+	* run_packet_1.c:
+	(run_request_packet_read) FLAGS_MEMORY_LIMIT flag is supported.
+
+	* run_packet_2.c:
+	(run_request_packet_write) FLAGS_MEMORY_LIMIT flag is supported.
+
+	* run_packet_priv.h: new flag `FLAGS_MEMORY_LIMIT' is added.
+
+	* serve-cmd.c: 
+	(authentificate) new parameter `ssl' in call of
+	  `userlist_clnt_priv_cookie' is set to 1;
+	(handle_login) new parameter `ssl' in call of
+	  `userlist_clnt_priv_login' is set to 1.
+
+	* serve-control.c:
+	(make_self_url) connectons over https (secure channel) are supported,
+	  the self-referencing URL is constructed correctly, and the
+	  global variable `ssl_flag' is set;
+	(authentificate) the `ssl_flag' is passed to
+	  `userlist_clnt_priv_cookie', `userlist_clnt_priv_login';
+	(action_set_param) call of `super_clnt_set_param' is updated;
+	(action_set_date_param) the same as above;
+	(action_set_ip_param) the `ssl' CGI parameter variable is parsed
+	  and passed to the server;
+	(action_perform_permission_op) call of `super_clnt_set_param' is
+	  updated;
+	(action_save_form_fields) the same as above;
+	(action_lang_cmd) the same as above;
+	(action_prob_cmd) the same as above;
+	(action_prob_param) the same as above;
+	(action_prob_add_abstract) the same as above;
+	(action_prob_add) the same as above;
+	(main) SUPER_ACTION_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR is handled.
+
+	* serve.c:
+	(struct client_state) `ssl' field is added to store whether the
+	  connection uses https (secure channel);
+	(get_peer_local_user) call of `teamdb_get_uid_by_pid' is updated,
+	  and the `ssl' flag is stored to the client state structure;
+	(read_compile_packet) the value of the `enable_memory_limit_error'
+	  global configuration variable is stored to the run request packet.
+
+	* super-serve.c:
+	(struct client_state) `ssl' field is added to store whether the
+	  connection uses https (secure channel);
+	(get_peer_local_user) call of `userlist_clnt_get_uid_by_pid_2'
+	  is updated, and the value of the `ssl' flag is stored to the
+	  client state structure;
+	(cmd_main_page) `ssl' flag is passed to `super_html_main_page',
+	  `super_html_contest_page', `super_html_log_page';
+	(cmd_set_value) `param5' is passed to `super_html_set_contest_var';
+	  `SSERV_CMD_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR' is handled.
+
+	* super_actions.h:
+	new action SUPER_ACTION_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR added.
+
+	* super_clnt.h: (super_clnt_set_param) `param5' parameter is added.
+
+	* super_html.c:
+	(super_html_main_page) `ssl' parameter is added, which is set to 1
+	  by the CGI-script, if the connection uses https (secure channel);
+	  `ssl' flag is passed to `contests_check_judge_ip_2',
+	    `contests_check_master_ip_2',
+	    `contests_check_serve_control_ip_2';
+	(super_html_contest_page) the same as above;
+	(super_html_log_page) the same as above;
+	(print_access_summary) support for "ssl" attribute of the <ip>
+	  element is added;
+	(html_ssl_select) new function to generate HTML selection form
+	  for the `ssl' flag;
+	(super_html_edit_access_rules) dialog for changing `ssl' flag of the
+	  <ip> element is generated.
+
+	* super_html.h: (super_html_main_page) `ssl' parameter is added;
+	(super_html_contest_page) `ssl' parameter is added;
+	(super_html_log_page) `ssl' parameter is added;
+	(super_html_set_contest_var) `param5' parameter is added.
+
+	* super_html_2.c:
+	(super_html_set_contest_var) parameter `param5' is added according
+	  to the change in the corresponding command packet;
+	  editing of the `ssl' attribute of IP limitations is supported.
+
+	* super_html_3.c: (super_html_edit_global_parameters) editing of
+	  `enable_memory_limit_error' is supported;
+	(super_html_global_param) changing value of `enable_memory_limit_error'
+	  is supported.
+
+	* super_proto.h:
+	new command SSERV_CMD_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR added;
+	(struct prot_super_pkt_set_param) field `param5' is added.
+
+	* team.c:
+	(make_self_url) support for connections over https is added. The
+	  self-referencing URL is constructed correctly, and the global
+	  variable `ssl_flag' is set;
+	(authentificate) the `ssl_flag' is passed to
+	  `userlist_clnt_team_cookie' and `userlist_clnt_team_login';
+	(main) the `ssl_flag' is passed to `contests_check_team_ip' to
+	  allow discrimination between secure and unsecure connections.
+
+	* teamdb.c:
+	(teamdb_get_uid_by_pid) new parameter `p_ssl' is added to store
+	  the `ssl' flag, i.e. whether the connection uses secure channel;
+	  this information is received from the userlist-server.
+
+	* teamdb.h:
+	(teamdb_get_uid_by_pid) new parameter `p_ssl' is added to store whether
+	  the connection uses https (secure channel).
+
+	* testing_report_xml.c:
+	the "real-time" attribute of the <test> element is supported;
+	(parse_test) "real-time" attribute is parsed.
+
+	* testing_report_xml.h:
+	(struct testing_report_test) field `real_time' added to store the real
+	  execution time for a test.
+
+	* unicorn-configure: upgraded to fpc-2.0.0.
+
+	* userlist-server.c:
+	(struct client_state) `ssl' field is added to store whether the client
+	  uses https (secure channel);
+	(cmd_do_login) `ssl' flag of the incoming packet is handled, i.e.
+	  connections over https are supported;
+	(cmd_team_login) the same as above;
+	(cmd_priv_login) the same as above;
+	(cmd_check_cookie) the same as above;
+	(cmd_team_check_cookie) the same as above;
+	(cmd_priv_check_cookie) the same as above;
+	(cmd_get_uid_by_pid) the `ssl' flag is stored to the outbound packet;
+	(cmd_get_uid_by_pid_2) the same as above.
+
+	* userlist_clnt.h:
+	(userlist_clnt_login) `ssl' parameter is added, which should be set
+	  to 1, if the connection uses https (secure channel);
+	(userlist_clnt_team_login) the same as above;
+	(userlist_clnt_lookup_cookie) the same as above;
+	(userlist_clnt_team_cookie) the same as above;
+	(userlist_clnt_priv_login) the same as above;
+	(userlist_clnt_priv_cookie) the same as above;
+	(userlist_clnt_get_uid_by_pid) new parameter `p_ssl' is added, which is
+	  used to store the ssl flag of the connection, i.e. whether the
+	  connection uses https (secure channel);
+	(userlist_clnt_get_uid_by_pid_2) the same as above.
+
+	* userlist_proto.h: 
+	(struct userlist_pk_do_login) `ssl' field is added;
+	(struct userlist_pk_check_cookie) `ssl' field is added;
+	(struct userlist_pk_uid) `ssl' field is added;
+	(struct userlist_pk_uid_2) `ssl' field is added.
+
+	* users.c: copyright notice is updated;
+	(initialize) added support for https. If the connection uses https
+	  rather that http, self-referencing url is constructed correctly,
+	  and the global flag `ssl_flag' is set;
+	(main) `ssl_flag' is passed to `contests_check_users_ip' to allow
+	  discrimination between secure and insecure connections.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2005-08-06  Alexander Chernov  <cher@ispras.ru>
+
+	* configure.ac: added check for the new reuse functions:
+	  task_SetMaxTimeMillis, task_GetRealTime, task_IsMemoryLimit,
+	  task_EnableMemoryLimitError.
+
+	* config.h.in: added HAVE_* macros for the new reuse functions:
+	  task_SetMaxTimeMillis, task_GetRealTime, task_IsMemoryLimit,
+	  task_EnableMemoryLimitError.
+
+2005-07-30  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* userlist-server.c:
+	(attach_contest_extra) avoid shared memory key == 0.
+
+2005-07-28  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* files.make:
+	new files added: userlist_clnt/get_param.c, serve_clnt/get_param.c.
+
+	* super_html_3.c:
+	(super_html_check_tests) the test score is checked only if the
+	  contest is not in ACM system.
+
+	* serve-cmd.c: <reuse/logger.h> is included;
+	(handle_userlist_server_param) new function to handle userlist-server
+	  parameter request commands;
+	(handle_serve_get_param) new function to handle serve parameter
+	  request commands;
+	new commands handled: "dump-problems", "dump-standings",
+	  "get-contest-name", "get-contest-type";
+	(main) default logger level is set to LOG_WARNING.
+
+	* serve.c:
+	(cmd_get_param) new function to perform various parameter viewing
+	  requests;
+	(dump_problems) new function to dump the problems info in the CSV
+	  format;
+	(cmd_view) `DUMP_PROBLEMS' request is handled;
+	  "Content-type" HTML header is printed in this function in the
+	  `DUMP_STANDINGS' request;
+	`DUMP_PROBLEMS', `GET_CONTEST_TYPE' requests are handled.
+
+	* serve_clnt.h: (serve_clnt_get_param) new function prototype.
+
+	* super_html_3.c:
+	(check_test_score) new function to validate the test score lists;
+	(super_html_check_tests) checking of test score is added using the
+	  `check_test_score' function.
+
+	* userlist-server.c:
+	(cmd_get_contest_name) bug in output packet length calculation is
+	  fixed.
+
+	* userlist_clnt.h:
+	(userlist_clnt_get_param) new function prototype added.
+
+	* protocol.h:
+	new commands added: SRV_CMD_DUMP_PROBLEMS, SRV_CMD_GET_CONTEST_TYPE;
+	new reply code added: SRV_RPL_DATA;
+	(struct prot_serve_pkt_data) new reply structure.
+
+	* master_html.c:
+	(write_raw_standings) "Content-Type" header generation is moved out
+	  of this function.
+
+2005-07-23  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare.c:
+	`time_limit_millis' problem configuration variable is added;
+	(prepare_problem_init_func) `time_limit_millis' initialized to -1;
+	(set_defaults) `time_limit_millis' problem configuration variable
+	  is supported;
+	(prepare_set_problem_defaults) `time_limit_millis' is supported;
+	(prepare_set_prob_value) `time_limit_millis' is supported.
+
+	* prepare.h:
+	(struct section_problem_data) `time_limit_millis' field is added;
+	`PREPARE_FIELD_PROB_TIME_LIMIT_MILLIS' field code is added.
+
+	* prepare_out.c:
+	(prepare_unparse_prob) `time_limit_millis' variable is supported.
+
+	* run.c:
+	(run_tests) `time_limit_millis' problem configuration variable
+	  is supported.
+
+	* serve-control.c: editing `time_limit_millis' is supported.
+
+	* super-serve.c:
+	(cmd_set_value) SSERV_CMD_PROB_CHANGE_TIME_LIMIT_MILLIS request
+	  is supported.
+
+	* super_actions.h:
+	SUPER_ACTION_PROB_CHANGE_TIME_LIMIT_MILLIS action added.
+
+	* super_html_3.c:
+	(super_html_print_problem) support for editing `time_limit_millis'
+	  problem configuration variable is added;
+	(super_html_prob_cmd) `time_limit_millis' is initialized to 0;
+	(super_html_prob_param) `time_limit_millis' variable is supported.
+
+	* super_proto.h:
+	SSERV_CMD_PROB_CHANGE_TIME_LIMIT_MILLIS action is added.
+
+2005-07-22  Alexander Chernov  <cher@ispras.ru>
+
+	* super-serve.h:
+	Too many fixes and additions. The super-serve functionality is
+	  basically implemented.
+
+	* super_proto.c: texts for two new errors are added.
+
+	* super_html.c:
+	Too many fixes and additions. The super-serve functionality is
+	  basically implemented.
+
+	* super_proto.h: many new commands added.
+
+	* super_actions.h: many new actions added.
+
+	* super-serve.c:
+	Many new additions. Interactive editing of contest settings is
+	  supported.
+
+	* serve-control.c:
+	Many new additions. The functionality is basically implemented.
+
+	* super_html.h: super-serve functionality is basically completed.
+
+	* super_html_2.c: in progress...
+
+	* prepare.c: "prepare_vars.h" is included;
+	"prepare_dflt.h" is included;
+	"userlist_cfg.h" is included;
+	new global configuration variables: `secure_run', `stand_ignore_after',
+	  `ignore_success_time';
+	new problem configuration variable: `check_cmd';
+	section free functions are added to all section descriptors;
+	all the default values for fields are moved to "prepare_dflt.h";
+	(global_init_func) almost all fields are initialized to -1;
+	(prepare_global_free_func) new function to free the global section;
+	(prepare_language_free_func) new function to free the language
+	  section;
+	(prepare_problem_init_func) fields `time_limit', `real_time_limit',
+	  `full_score', `max_vm_size', `max_stack_size' are initialized to -1;
+	(prepare_problem_free_func) new function to free the problem
+	  section;
+	(prepare_tester_free_func) a new function;
+	(free_testsets) a new function;
+	(free_deadline_penalties) a new function;
+	(free_personal_deadlines) a new function;
+	(free_variant_map) a new function;
+	(free_user_adjustment_map) a new function;
+	(free_user_adjustment_info) a new function;
+	(set_defaults) global fields are initialized;
+	  initialization of problem section variable is reorganized;
+	  new fields are reorganized;
+	(prepare_set_global_defaults) a new function, which processes the
+	  global section and set default values to unset variabled;
+	(prepare_set_problem_defaults) a new function, which processes the
+	  problem configuration section and set the default values to
+	  unset variables;
+	(prepare_new_global_section) a new function, which creates a brand
+	  new global section and sets reasonable default values;
+	(prepare_parse_config_file) new function;
+	(prepare_alloc_global) new function;
+	(prepare_alloc_language) new function;
+	(prepare_alloc_problem) new function;
+	(prepare_alloc_tester) new function;
+	(prepare_copy_problem) new function;
+	(prepare_set_prob_value) new function.
+
+	* prepare.h:
+	(struct section_global_data) new fields added: `secure_run',
+	  `stand_ignore_after', `stand_ignore_after_d', `ignore_success_time',
+	  `unhandled_vars';
+	(struct section_problem_data) new fields are added: `check_cmd',
+	  `max_vm_size', `max_stack_size', `unhandled_vars';
+	(struct section_tester_data) new field `unhandled_vars';
+	all definitions of external variables are moved to a separate header
+	  file;
+	(prepare_new_global_section) new function prototype;
+	(prepare_parse_config_file) new function prototype;
+	(prepare_set_global_defaults) new function prototype;
+	(prepare_global_free_func) new function prototype;
+	(prepare_language_free_func) new function prototype;
+	(prepare_problem_free_func) new function prototype;
+	(prepare_tester_free_func) new function prototype;
+	(prepare_free_config) new function prototype;
+	(prepare_alloc_global) new function prototype;
+	(prepare_alloc_language) new function prototype;
+	(prepare_alloc_problem) new function prototype;
+	(prepare_alloc_tester) new function prototype;
+	(prepare_problem_init_func) new function prototype;
+	(prepare_copy_problem) new function prototype;
+	(prepare_set_prob_value) new function prototype;
+	(prepare_unparse_global) new function prototype;
+	(prepare_unparse_unhandled_global) new function prototype;
+	(prepare_check_forbidden_global) new function prototype;
+	(prepare_unparse_lang) new function prototype;
+	(prepare_unparse_unhandled_lang) new function prototype;
+	(prepare_check_forbidden_lang) new function prototype;
+	(prepare_unparse_prob) new function prototype;
+	(prepare_unparse_unhandled_prob) new function prototype;
+	(prepare_check_forbidden_prob) new function prototype;
+	(prepare_unparse_testers) new function prototype;
+	(prepare_further_instructions) new function prototype;
+	(prepare_unparse_is_supported_arch) new function prototype;
+	(prepare_unparse_is_supported_tester) new function prototype;
+	(prepare_set_problem_defaults) new function prototope.
+
+	* html.c:
+	(do_write_kirov_standings) new global configuration variable
+	  `stand_ignore_after' is supported: all the submits after the
+	  specified date are ignored;
+	(do_write_standings) `stand_ignore_after' configuration variable is
+	  supported;
+	  `ignore_success_time' global configuration variable is supported.
+
+	* serve.c:
+	(cmd_priv_command_0) the archive directories are removed only
+	  if the corresponding configuration variable is set;
+	  it is possible to change limited duration to unlimited and vice
+	  versa;
+	(main) call of `run_open' function is updated.
+
+	* serve-cmd.c:
+	(handle_dump_all_users) new function to dump the whole user
+	  database;
+	new command "dump-all-users" is supported.
+
+	* runlog.h: 
+	(run_open) new parameter `init_duration' is added.
+
+	* runlog.c:
+	(read_runlog) parameter `init_duration' is added, which is the initial
+	  contest duration;
+	  if the new file is created, its header is initialized correctly and
+	  flushed to the file;
+	(run_open) new parameter `init_duration' is added, which is used when
+	  a new runlog file is created;
+	(run_reset) file version number is set to 1, and the file header is
+	  flushed;
+	(runlog_check) invalid duration is considered to be < -1;
+	RUN_CHECK_FAILED is a valid run status.
+
+	* run.c:
+	(html_print_by_line) <i> tag is no longer generated to the output;
+	(run_tests) output file, error file, checker output file are not
+	  read explicitly, if the full archive mode is set;
+	(do_loop) `last_activity_time' variable is correctly updated;
+	(check_config) score summ is not checked in the ACM mode.
+
+	* ejudge-setup.c:
+	(generate_serve_cfg) "secure_run" parameter set in the configuration
+	  file, if secure execution is supported;
+	(generate_contest_xml) capability bit names are fixed;
+	(generate_ejudge_xml) <super_serve_log> element is generated,
+	  capability bit names are fixed.
+
+	* edit-userlist.c:
+	(display_user) call of `userlist_clnt_add_field' is updated;
+	(do_display_user_menu) user selection and mass user operation commands
+	  are supported, new commands are added:
+	  `:' - select/unselect a user;
+	  'c' - register one user/selected users for a contest;
+	  'm' - add many new users using login pattern.
+
+	* contests.c: "fileutl.h" is included;
+	(contests_unparse_and_save) the contest XML file is not overwritten
+	  if it is not changed;
+	  default permission for a new file is set to 0644.
+
+	* contest_tmpl.c: additions and improvements.
+
+	* master.c:
+	(action_dump_users) call of `userlist_clnt_dump_database' is updated.
+
+	* master_html.c:
+	(write_priv_all_runs) calculation of compiling and running runs
+	  is added.
+
+	* compile.c: (do_loop) the compile request packet is properly freed.
+
+	* clean-users.c: 
+	(main) call of `run_open' is updated.
+
+	* team.c:
+	(action_change_password) if the team password is disabled, the master
+	  password is changed;
+	(main) `Change password' option is always available.
+
+	* teamdb.c:
+	(teamdb_dump_database) call of `userlist_clnt_dump_database' is
+	  updated;
+
+	* testing_report_xml.c:
+	(parse_testing_report) 0 tests for a problem is allowed.
+
+	* userlist-server.c:
+	(do_dump_database) new parameter `html_flag' is added. If this
+	  parameter is not set, html decorations (Content-type:, etc),
+	  are not generated;
+	(do_dump_whole_database) new function to dump the whole user
+	  database;
+	(cmd_dump_database) call of `do_dump_database' is updated;
+	(cmd_dump_whole_database) new function to handle
+	  ULS_DUMP_WHOLE_DATABASE request;
+	(cmd_add_field) when a new user is added, its id is returned
+	  to the client;
+	(cmd_table) ULS_DUMP_WHOLE_DATABASE is handled.
+
+	* userlist_clnt.h:
+	(userlist_clnt_add_field) parameter `user_id' is now a pointer
+	  parameter `p_user_id', because when a new user is created, its
+	  user_id is returned to the client and is stored in this variable;
+	(userlist_clnt_dump_database) parameter `cmd' is added;
+	  parameter `html_flag' is added.
+
+	* userlist_proto.h: ULS_DUMP_WHOLE_DATABASE command is added;
+	(struct userlist_pk_dump_database) new field `html_flag' is added.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* configure.ac: `runperl' script is added.
+
+	* prepare_dflt.h, prepare_out.c, super_html_3.c: initial revision
+
+2005-07-08  Alexander Chernov  <cher@ispras.ru>
+
+	* userlist_clnt.h:
+	(userlist_clnt_admin_process) new parameters added:
+	  `p_uid', `p_login', `p_name'.
+
+	* userlist-server.c:
+	(cmd_admin_process) the verbose information including user id,
+	  user login, and user name is returned to the client.
+
+	* teamdb.c:
+	(open_connection) use of `userlist_clnt_admin_process' is updated.
+
+	* parsecfg.h: <stdio.h> is included;
+	(parse_param) the second parameter now has `FILE *' type as it should;
+	  new parameter `p_cond_count' is added.
+
+	* parsecfg.c:
+	(parse_param) the input stream parameter is passed as FILE * instead
+	  of void * hack;
+	  new parameter `p_cond_count' is added, where the count for
+	  conditional compilation fragments is stored;
+	(param_free) the empty section name is treated as the [global]
+	  section.
+
+	* files.make:
+	new files added: html_start_form.c, prepare_out.c, super_html_3.c,
+	  prepare_vars.h, prepare_dflt.h.
+
+	* ejudge-setup.c:
+	(generate_serve_cfg) generation of `serve.cfg' is updated: memory
+	  limits are set to 64M, check_cmd is moved to [problem] section.
+
+	* edit-userlist.c, clean-users.c: 
+	(main) use of `userlist_clnt_admin_process' is updated.
+
+2005-07-04  Alexander Chernov  <cher@ispras.ru>
+
+	* master.c: 
+	(initialize) call of `parse_param' is updated.
+
+	* team.c: (initialize) call of `parse_param' is updated.
+
+2005-07-03  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare_vars.h: initial revision
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* sformat.c, sformat.h:
+	(sformat_message) all structure pointers are declared as `const'.
+
+	* varsubst.c, team_extra.c: copyright notice is updated;
+	"prepare_vars.h" is included.
+
+	* serve.c, runlog_xml.c, runlog_import.c, run.c:
+	"prepare_vars.h" is included.
+
+	* printing.c: copyright notice is updated;
+	"prepare_vars.h" is included.
+
+	* prepare_serve.c, master_html.c, html.c:
+	"prepare_vars.h" is included.
+
+	* diff.c: copyright notice is updated;
+	"prepare_vars.h" is included.
+
+	* compile_packet_1.c, compile.c, archive_paths.c:
+	"prepare_vars.h" is included.
+
+2005-06-27  Alexander Chernov  <cher@ispras.ru>
+
+	* parsecfg.h: copyright notice is updated;
+	(struct config_section_info) new field `free_func' is added;
+	(param_free) new function prototype added;
+	(param_merge) new function prototype added;
+	(param_alloc_section) new function prototype added.
+
+	* parsecfg.c: <reuse/logger.h> is included;
+	(param_free) new function implemented;
+	(param_alloc_section) new function implemented;
+	(param_merge) new function implemented.
+
+2005-06-26  Alexander Chernov  <cher@ispras.ru>
+
+	* cher-configure: support for FreePascal 2.0.0
+
+	* configure.ac: compilers version scripts are added
+
+2005-06-24  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare.h: PREPARE_USE_CPP flag is removed.
+
+	* prepare.c:
+	(prepare) support for preprocessor invokation is removed.
+
+	* html_start_form.c: initial revision
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* misctext.h: <stdio.h> is included;
+	(html_start_form) prototype is added.
+
+	* master_html.c:
+	(html_start_form) is moved to a separate file (html_start_form.c);
+	calls of `html_start_form' are updated according to prototype change.
+
+	* html.h: (html_start_form) prototype is moved to misctext.h.
+
+	* html.c: calls of `html_start_form' are updated.
+
+	* run.c, compile.c, serve.c:
+	(main) removed handling of `-E' option (preprocessor invocation)
+	  since conditional compilation support is implemented in the
+	  configuration parser itself.
+
+	* super_html.c:
+	(html_start_form) is moved to a separate file (html_start_form.c);
+	calls of `html_start_form' are updated according to prototype change.
+
+	* contests.c: "xml_utils.h", "misctext.h" are included;
+	(node_free) `CONTEST_CONTEST' and `CONTEST_CAP' nodes are handled
+	  properly by freeing all the strings stored. Now the strings in the
+	  tree have only one reference from the primary point of use;
+	(parse_access) `text' fields of DOM tree are freed;
+	  `xml_parse_ip_mask' is used;
+	(parse_member) `text' fields of DOM tree are freed;
+	(parse_capabilities) `text' fields of DOM tree are freed;
+	  `caps_node' field is set;
+	(parse_contest) new parameter `no_subst_flag' is added. If this
+	  parameter is set, no default values are assigned to the fields;
+	(parse_one_contest_xml) new parameter `no_subst_flag' is added,
+	  which is passed to the `parse_contest' function;
+	(contests_load) a new function, which just loads the XML file;
+	(contests_new_node) a new function, which creates a new DOM node;
+	(contests_free) NULL pointers are supported;
+	(contests_free_2) new function to release an arbitrary subtree
+	  of the DOM tree;
+	(contests_get) use of `parse_one_contest_xml' is updated;
+	(contests_write_header) `cnts' parameter is now "const";
+	(unparse_access) new static function is implemented;
+	(unparse_fields) new static function is implemented;
+	(unparse_text) new static function is implemented;
+	(contests_unparse) new function which generates textual representation
+	  for the given contest DOM tree;
+	(contests_unparse_and_save) new function, which saves the XML
+	  for the given contest.
+
+	* contests.h:
+	(struct contest_desc) `autoregister', `disable_team_password' fields
+	    how have `unsigned char' type instead of `int';
+	  `reg_deadline' field now has `time_t' type instead of
+	    `unsigned long';
+	  field `caps_node' is added to simplify editing of the DOM tree;
+	(contests_load) new function prototype;
+	(contests_free) new function prototype;
+	(contests_free_2) new function prototype;
+	(contests_new_node) new function prototype;
+	(contests_unparse_and_save) new function prototype;
+	(contests_write_header) `cnts' parameter is now "const".
+
+	* ejudge-setup.c:
+	(generate_contest_xml) capabilities OPCAP_PRINT_RUN, OPCAP_EDIT_CONTEST
+	  are set on the new contest;
+	(generate_ejudge_xml) capability OPCAP_EDIT_CONTEST is set.
+
+	* files.make: new files added:
+	  super_clnt/create_contest.c, super_clnt/set_param.c;
+	  contest_tmpl.c, html_hyperref.c, super_html_2.c;
+	  xml_utils/parse_ip_mask.c, xml_utils/unparse_ip_mask.c.
+
+	* html.h:
+	(html_hyperref) the function prototype is moved to `misctext.h'.
+
+	* master.c:
+	(log_out_if_asked) use of `userlist_clnt_logout' is updated.
+
+	* master_html.c:
+	(html_hyperref) the function is moved to a separate file
+	  `html_hyperref.c'.
+
+	* misctext.h: (html_hyperref) new function prototype is added.
+
+	* opcaps.c: copyright notice is updated;
+	new capability `OPCAP_EDIT_CONTEST' is supported;
+	(opcaps_check) the implementation is moved to opcaps.h as inline
+	  function;
+	(opcaps_unparse) new function to generate a textual representation
+	  of capability bits;
+	(opcaps_is_contest_cap) new function to check whether a capability
+	  bit is a contest capability bit;
+	(opcaps_get_name) new function, which returns the name of the
+	  capability bit.
+
+	* opcaps.h: copyright notice is updated;
+	new capability `OPCAP_EDIT_CONTEST' is added;
+	(opcaps_check) is implemented as inline function;
+	(opcaps_unparse) new function prototype;
+	(opcaps_is_contest_cap) new function prototype;
+	(opcaps_get_name) new function prototype.
+
+	* serve-cmd.c:
+	(handle_logout) use of `userlist_clnt_logout' is updated.
+
+	* serve-control.c:
+	(action_view_contest) `EDIT_CONTEST_XML' command is supported;
+	(action_create_contest) new function is implemented;
+	(action_edit_current_contest) new function is implemented;
+	(action_edit_permissions) new function is implemented;
+	(action_create_contest_2) new function is implemented;
+	(action_simple_command) new function is implemented;
+	(action_simple_contest_edit_command) new function is implemented;
+	(action_simple_edit_command) new function is implemented;
+	(action_set_param) new function is implemented;
+	(action_set_date_param) new function is implemented;
+	(action_set_ip_param) new function is implemented;
+	(action_perform_permission_op) new function is implemented;
+	(action_save_form_fields) new function is implemented;
+	(main) many new actions to support editing of `contest.xml' file
+	  are supported.
+
+	* super-serve.c:
+	(startup_err) bug is fixed: vsnprintf is called instead snprintf;
+	(sid_state_find) new function is implemented;
+	(sid_state_add) new function is implemented;
+	(sid_state_get) new function is implemented;
+	(sid_state_clear) new function is implemented;
+	(sid_state_delete) new function is implemented;
+	(sid_state_cleanup) new function is implemented;
+	(cmd_main_page) many new commands for editing of contest.xml
+	  are supported;
+	(cmd_create_contest) new function is implemented;
+	(cmd_simple_top_command) new function is implemented;
+	(cmd_set_value) new function is implemented;
+	(packet_handlers) many new commands for editing of contest.xml
+	  are supported.
+
+	* super-serve.h: copyright notice is updated;
+	(struct sid_state) new structure to store the server state
+	  regarding communication with the client with the given session_id.
+
+	* super_actions.h: many new actions for contest editing are added;
+	unimplemented actions are marked with /* ! */.
+
+	* super_clnt.h: copyright notice is updated;
+	(super_clnt_create_contest) new function prototype;
+	(super_clnt_set_param) new function prototype.
+
+	* super_html.c: <time.h> is included;
+	(hyperref) the function is removed, since its replacement
+	  function `html_hyperref' is now located in a separate file;
+	(html_hidden_var) new function implemented;
+	(html_boolean_select) new function implemented;
+	(html_edit_text_form) new function implemented;
+	(html_date_select) new function implemented;
+	(html_numeric_select) new function implemented;
+	(super_html_main_page) new parameter `sstate' is added;
+	  `html_hyperref' is used instead of `hyperref';
+	  added controls to change vieving mode: viewing of invisible,
+	    closed, or unmanageable files;
+	  added controls to create a new contest or edit the current
+	    contest;
+	  added button to restart the server;
+	(super_html_contest_page) `html_hyperref' is used instead of
+	    `hyperref';
+	  added control to edit the contest configuration file;
+	(super_html_report_error) new function implemented;
+	(super_html_create_contest) new function implemented;
+	(print_string_editing_row) new static function implemented;
+	(print_access_summary) new static function implemented;
+	(print permissions) new static function implemented;
+	(print_form_fields_2) new static function implemented;
+	(print_form_fields_3) new static function implemented;
+	(print_form_fields) new static function implemented;
+	(super_html_edit_contest_page) new function implemented;
+	(super_html_edit_access_rules) new function implemented;
+	(super_html_edit_permission) new function implemented;
+	(print_field_row_select) new static function implemented;
+	(super_html_edit_form_fields) new function implemented;
+	(super_html_edit_template_file) new function implemented;
+	(super_html_create_contest_2) new function implemented.
+
+	* super_html.h: copyright notice is updated;
+	(super_html_main_page) the `sstate' parameter is added;
+	(super_html_edit_contest_page) new function prototype;
+	(super_html_edit_access_rules) new function prototype;
+	(super_html_edit_permission) new function prototype;
+	(super_html_edit_form_fields) new function prototype;
+	(super_html_edit_template_file) new function prototype;
+	(super_html_create_contest) new function prototype;
+	(super_html_create_contest_2) new function prototype;
+	(super_html_commit_contest) new function prototype;
+	(contest_tmpl_new) new function prototype;
+	(contest_tmpl_clone) new function prototype;
+	(super_html_clear_variable) new function prototype;
+	(super_html_set_contest_var) new function prototype;
+	(super_html_report_error) new function prototype.
+
+	* super_html_2.c:
+	(super_html_commit_contest) the current contest is cleared after
+	  successful commit.
+
+	* super_proto.c: copyright notice is updated;
+	texts for the new error codes are added.
+
+	* super_proto.h:
+	many new super-serve commands are added to support editing of
+	  contest.xml file;
+	new error codes: CONTEST_ALREADY_USED, CONTEST_EDITED, NOT_IMPLEMENTED,
+	  INVALID_PARAMETER, CONTEST_NOT_EDITED, DUPLICATED_LOGIN.
+	new packet structures: prot_super_pkt_create_contest,
+	  prot_super_pkt_set_param.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2005-06-23  Alexander Chernov  <cher@ispras.ru>
+
+	* team.c: 
+	(action_logout) call of `userlist_clnt_logout' is updated.
+
+	* userlist-server.c:
+	(cmd_is_valid_cookie) new function to perform ULS_IS_VALID_COOKIE
+	  command;
+	(cmd_table) ULS_IS_VALID_COOKIE command is handled.
+
+	* userlist_clnt.h: 
+	(userlist_clnt_logout) new parameter `cmd' is added.
+
+	* userlist_proto.h: copyright notice is updated;
+	new command ULS_IS_VALID_COOKIE is added.
+
+	* xml_utils.h: 
+	(xml_parse_ip_mask) new function prototype;
+	(xml_unparse_ip_mask) new function prototype.
+
+	* contest_tmpl.c, html_hyperref.c, super_html_2.c: initial revision
+
+2005-06-15  Alexander Chernov  <cher@ispras.ru>
+
+	* run.c: "digest_io.h", "filehash.h" are included;
+	(struct testinfo) new fields added: has_input_digest,
+	  has_correct_digest, has_info_digest, input_digest, correct_digest,
+	  info_digest;
+	(generate_xml_report) the input, correct, and info files digest (sha1)
+	  is written to the protocol file, if available;
+	(run_tests) in the full archive mode the input, correct and info
+	  files digests are calculated.
+
+	* master_html.c: "filehash.h", "digest_io.h" are included;
+	(write_tests) when input, correct, or info files are displayed, their
+	  sha1 checksum (digest) is checked against the checksum stored in the
+	  testing protocol file, and a warning is displayed in case of
+	  mismatch.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* testing_report_xml.h:
+	(struct testing_report_test) new fields added: has_input_digest,
+	  has_correct_digest, has_info_digest, input_digest, correct_digest,
+	  info_digest.
+
+	* testing_report_xml.c:
+	new attributes supported: input-digest, correct-digest, info-digest.
+
+	* sha.h: documetation comments are fixed.
+
+	* files.make: digest_[1-5].c, filehash.c, {unix,win32}/timestamp.c
+	digest_io.h, filehash.h, timestamp.h are added.
+
+	* Makefile.unix.in:
+	$(ARCH)/timestamp.c is added to libcommon.a dependencies.
+
+	* digest_1.c, digest_2.c, digest_3.c, digest_4.c, digest_5.c, digest_io.h, filehash.c, filehash.h, timestamp.h:
+	initial revision
+
 2005-05-17  Alexander Chernov  <cher@ispras.ru>
 
 	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***

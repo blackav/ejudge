@@ -1,6 +1,345 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
+Version 2.1.39 (200506??)
+=========================
+
+Interactive editing of the contest settings and contest
+configuration files is supported. Editing is performed using the
+`serve-control' CGI program, which interacts with `super-serve'
+contest manager, thus to enable contest editing both
+`userlist-server' and `super-serve' programs must be running on
+the server.
+
+https protocol is fully supported. IP restriction rules of the
+XML contest configuration file now allows specifying whether
+this rule is applicable for https connections, http connections,
+or both. Thus it is possible, for example, allow access from
+limited number of IP-addresses using the http protocol and allow
+access from arbitrary hosts using the https protocol.
+
+Time limits with milliseconds precision are supported. The most
+recent version of the reuse library (4.2.0) and special support
+from the Linux kernel, as provided by the patch 2.4.31-cher2 are
+required for this.
+
+Support for detection of "Memory Limit Exceeded" testing error
+is implemented. This error is detected, if the program being
+tested attempts to increase its address space or stack size over
+the limits, defined in the contest configuration file. Also the
+most recent version of the reuse library (4.2.0) and special
+support from the Linux kernel, as provided by the patch
+2.4.31-cher2 are required for this.
+
+contest.xml
+-----------
+A new attribute "ssl" is supported in the <ip> element. The
+attribute may have the following values: "any" (default value,
+if this attribute is omitted), "yes", "no". The attribute
+defines the type of connection for this rule. If the attribute
+is set to "yes", this rule applies only to https connections, if
+the attribute is set to "no", the rule applies only to http
+connections. The "any" value means, that the rule applies to all
+types of connections.
+
+Number "0" allowed as the IP-address. It means "any IP
+address". For example, the following rules allow http
+(nonencrypted) connections from the localhost only, but secure
+https connections are allowed from arbitrary host.
+<master_access default="deny">
+  <ip allow="yes">127.</ip>
+  <ip allow="yes" ssl="yes">0</ip>
+</master_access>
+
+The form "A.B.C.D/E" is allowed in the IP-address field of the
+<ip> element. Here "E" is the number of bits in the network part
+of the IP-address. This, "192.168.0." and "129.168.0.0/24" are
+equivalent.
+
+New capability bit EDIT_CONTEST is supported. If this bit is set
+for a particular user, the user is allowed to edit contest
+settings using the `serve-control' CGI program.
+
+serve-control,super-serve
+-------------------------
+The `serve-control' contest management CGI-program and its
+server part `super-serve' are basically completed. Its use is
+now recommented for contest management. These programs also
+support editing of contest configuration files (contest.xml,
+serve.cfg) and creation of new contests from scratch and using
+existing contests as template.
+
+compile
+-------
+A memory leak is plugged, which occured each time, when a
+compile request was processed.
+
+The command line option `-E' (filtering the configuration file
+through the external C preprocessor) is no longer supported.
+
+serve,run
+---------
+The checksum (SHA1) of the test input data file and the correct
+answer file for each test are stored in the run testing protocol
+file. When these files are displayed the current checksum is
+compared with the checksum as stored in the file, and the
+warning is displayed in case of mismatch. The mismatch is
+possible, for example, if the test data file or the correct
+answer file were changed, but the submit was not rejudged.
+
+edit-userlist
+-------------
+Selection/deselection of users is supported in the "View users"
+screen. Selection/deselection is performed using ':' key. The
+only command, which can be applied to the group of users is 'c'
+command - registration of the selected users for a contest.
+
+Mass creation of new users command is available in the "View
+users" screen. The command is performed using the 'm' key.
+A number of dialogs is then displayed. The dialogs are as
+follows:
+"Template for new logins?" - allows specifying a template for
+the new logins. The template must contain the only %d format
+specification (printf-style flag, width and precision
+specification are allowed, e.g. %03d). This format specification
+will be substituted with the number of the user.
+"Template for passwords?" - allows specifying a template for the
+passwords of the new users. The template must obey the same
+rules, as new logins template.
+"First number:" - the minimal number, which will be used in the
+generated sequence of new logins and passwords.
+"Last number:" - the maximal number, which will be used in the
+generated sequence of new logins and passwords.
+"Contest number:" - the contest number, on which all the newly
+created users will be registered.
+
+For example, if the login template is specified as "u2005%02d",
+password template is specified as "pass%02d", the first number
+is 1, and the last number is 50, then 50 new users will be
+created with logins u200501...u200550 and passwords pass01...pass50.
+The user id will be assigned for each user individually (the
+first unused user id). Thus the user ids form increasing
+sequence, but not necessarilly sequental.
+
+ejudge-setup
+------------
+The element <super_serve_log> is defined in the generated
+ejudge.xml file. This element is required for start of the
+`super-serve' program.
+
+serve
+-----
+New global configuration variable `stand_ignore_after' is
+supported in the `serve.cfg' file. This variable allows setting
+the date, after which the submits are not shown in the current
+standings table. I.e. if a submit is received after the
+specified data, it will be tested, the testing results will be
+available for judges and the originator of this submit, but the
+public version of the current standings table will not be
+updated. The privileged current standings table will be, of
+couse, updated. However, changes in statuses of submits before
+this date will be reflected in the current standings table.
+The data is specified in the standard format: 
+YYYY/MM/DD HH:MM:SS
+
+This variable is useful, if a contest should be opened for
+additional unofficial submissions after the contest end to
+allow participants to complete solutions of problems.
+
+New global configuration variable `ignore_success_time' is
+supported in the `serve.cfg' file. This variable works only in
+the ACM contests. If this variable is set, the duration from the
+start of the contest to the successful submit is not added
+during calculation of penalty score for a problem. This variable
+is useful for contests, where there is no partial solutions
+(i.e. each problem is either solved, or not) and where the
+contest duration is not meaningful.
+
+serve-control,super-serve
+-------------------------
+New global configuration variable `secure_run' is supported in
+the `serve.cfg' file. This variable is used only for interactive
+editing of the contest configuration files with the
+`serve-control' CGI-program. If this variable is set, the secure
+execution of programs is enabled, and the generated `serve.cfg'
+configuration file contains all necessary settings for the
+Linux, Linux-shared and Java architectures.
+
+serve,run
+---------
+New global configuration variable `enable_memory_limit_error' is
+supported in the `serve.cfg' file. If this variable is set, the
+support for detection of the "Memory Limit Exceeded" condition
+is enabled for submits.
+
+New tester configuration variable `enable_memory_limit_error' is
+added. If this variable is set, the corresponding tester
+supports detection of the "Memory Limit Exceeded" error during
+testing. Not all testers may ever detect such error (for
+example, DOS or Java may not). This variable should be set for
+testers for the Linux and Linux-shared architectures (actually,
+during initial contest setup using the `ejudge-setup' program,
+or during editing of contest settings using `serve-control' CGI
+program, this variable is set for these testers automatically). 
+The variable must not be set for Java or DOS testers because the
+corresponding virtual machines control the amount of allocated
+memory using their own means.
+
+Thus, detection of "Memory Limit Exceeded" error is activated
+only if the `enable_memory_limit_error' global configuration
+variable is set for the contest and only for testers for the
+Linux and Linux-shared architectures (i. e. for gcc, g++, fpc,
+dcc languages).
+
+New problem configuration variable `time_limit_millis' is
+added. This configuration variable allows setting of the problem
+time limit with millisecond precision. If this variable is set,
+the value of `time_limit' variable is ignored. Support for
+millisecond time limits is works only if the latest (4.2.0)
+version of the reuse library is used. If the linux kernel does
+not support millisecond time limits, the reuse library will
+emulate them using the standard second-precision time limits.
+
+New problem configuration variable `check_cmd' is added. This
+variable has exactly the same meaning as the the `check_cmd'
+configuration variable of the tester section. This variable
+allows specifying the template for the checker name for this
+problem. Because in the current version of the ejudge the
+checker does not depend on the architecture of the language
+(e.g. submits on gcc, dcc and java are checked by the same
+checker), the `check_cmd' variable was the same value for all
+the testers, so it is reasonable to move it into the problem
+section.
+
+The `check_cmd' variable of the tester section is preserved for
+compatibility, and has the priority over the `check_cmd'
+variable of the problem section, however, its use is not
+recommended, because editing of the contest configuration files
+using the `serve-control' CGI program does not preserve
+`check_cmd' variable in tester sections.
+
+serve
+-----
+`-E' command line option is no longer supported. This option
+allowed filtering the configuration file through external C
+preprocessor. Now some sort of preprocessing is built-in, and
+the external preprocessor is no longer needed.
+
+Fixed a bug, when the audit record directory was created before
+the directory in which it is located. Because of this the `serve'
+program failed to start on a new contest.
+
+run
+---
+`-E' command line option is no longer supported. This option
+allowed filtering the configuration file through external C
+preprocessor. Now some sort of preprocessing is built-in, and
+the external preprocessor is no longer needed.
+
+When the `run' program is started by the `super-serve' program,
+the inactivity timeout is counted starting from the end of
+testing of the program. In the previous versions, the inactivity
+timeout was counted from the beginning of testing, and if
+testing took too long (longer, than inactivity timeout), the
+`run' program exited right after finishing testing of this
+submit even if there are other submits in the run queue.
+
+In the ACM contest mode it is no longer required, that the sum
+of all test scores is less, than the full score for the
+problem. Since the default problem score is 25, the default test
+score is 1, if some problem had more, that 25 test, explicit
+specification of the `full_score' or `test_score' configuration
+variable was necessary in the problem specification section. Now
+this hack is not required. However, in the KIROV and OLYMPIAD
+contest the total score for all tests is still checked
+against the full score for each problem.
+
+serve
+-----
+A bug is fixed in handling of the "Reset Contest" command.
+The bug was in the incorrect generation of the run database
+file, after which the `serve' program refused to work with this
+file.
+
+serve,master
+------------
+Changing contest duration from limited to unlimited and back is
+supported in the `master' CGI program. The unlimited duration is
+specified as "0".
+
+run
+---
+For each supported language LANG the version script LANG-version
+is generated along with the compilation script LANG. For
+example, for the gcc language, gcc and gcc-version scripts are
+generated. The version script prints the version of its language
+to the standard output. Also, each version script supports two
+options:
+-f	Print the language name and the language version to the
+	standard output.
+-p	Print the path to the compiler to the standard output.
+
+master,judge,team,serve-control,register,users
+----------------------------------------------
+The https (secure http) protocol is supported. The web server
+must be configured to support https, of course.
+
+master,judge
+------------
+On the main page of the `master' CGI program the total number of
+submits, which are currently being compiled or tested is
+displayed.
+
+The testing protocol viewing screen includes information about
+real time elapsed for each test, if this information is
+available in the XML testing protocol.
+
+In the contests with full_archive mode enabled, if the checksum
+of the input file or the correct answer file does not match the
+checksum stored in the testing report file, a warning is
+reported.
+
+serve-cmd
+---------
+New commands are supported:
+serve-cmd CONTEST-ID dump-problems SESSION-ID-FILE
+	Prints information about the problems of the specified
+	contest in the CSV format (fields are separated with ';').
+	[0] - id
+	[1] - short_name
+	[2] - long_name
+serve-cmd CONTEST-ID dump-standings SESSION-ID-FILE
+	Prints the current standings table in the CSV-format.
+	The full version of the standings table (available from
+	`judge' or `master' CGI-programs for privileged users)
+	is printed. This command is equivalent to the
+	"Dump standings" command of the `master' CGI program.
+serve-cmd CONTEST-ID dump-all-users SESSION-ID-FILE
+	Prints the user database in the CSV format. The contest
+	number is not used and may be arbitrary.
+serve-cmd CONTEST-ID get-contest-name SESSION-ID-FILE
+	Prints the name of the specified contest.
+serve-cmd CONTEST-ID get-contest-type SESSION-ID-FILE
+	Prints the type of the specified contest. One of the
+	following strings is printed to the standard output:
+	acm, kirov, olympiad.
+
+
+testlib
+-------
+Added a testlib version for delphi/kylix. The fpc version of
+testlib is now installed to ${prefix}/share/ejudge/testlib/fpc,
+the delphi version is installed to ${prefix}/share/ejudge/testlib/delphi.
+If support for the corresponding languages was enabled during
+configuration of the ejudge system, the testlib files are
+compiled during installation.
+
+Path to the testlib library for the corresponding language is
+passed in the command line of the compiler when "Check
+contest settings" command of the `serve-control' CGI program is
+performed. It means, that the testlib files are not required in
+the checker directory of contests.
+
 Version 2.1.38 (20050607)
 =========================
 

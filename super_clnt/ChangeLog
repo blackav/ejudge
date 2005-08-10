@@ -1,3 +1,13 @@
+2005-08-07  Alexander Chernov  <cher@ispras.ru>
+
+	* set_param.c:
+	(super_clnt_set_param) added `param5' parameter, which is passed to the
+	  server.
+
+2005-06-23  Alexander Chernov  <cher@ispras.ru>
+
+	* create_contest.c, set_param.c: initial revision
+
 2004-12-05  Alexander Chernov  <cher@ispras.ru>
 
 	* main_page.c: "pathutl.h" is included;

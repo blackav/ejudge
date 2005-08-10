@@ -1,3 +1,12 @@
+2005-07-03  Alexander Chernov  <cher@ispras.ru>
+
+	* cr_serialize.c: copyright notice is updated;
+	"prepare_vars.h" is included.
+
+2005-06-15  Alexander Chernov  <cher@ispras.ru>
+
+	* timestamp.c: initial revision
+
 2005-04-13  Alexander Chernov  <cher@ispras.ru>
 
 	* fileutl.c:

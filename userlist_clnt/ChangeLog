@@ -1,3 +1,75 @@
+2005-08-07  Alexander Chernov  <cher@ispras.ru>
+
+	* get_uid_by_pid.c: copyright notice is updated;
+	(userlist_clnt_get_uid_by_pid) added parameter `p_ssl' to store
+	  whether the requested connection was over https.
+
+	* get_uid_by_pid_2.c: copyright notice is updated;
+	(userlist_clnt_get_uid_by_pid_2) added parameter `p_ssl' to store
+	  whether the requested connection was over https.
+
+	* login.c: copyright notice is updated;
+	(userlist_clnt_login) added parameter `ssl' for logins over https,
+	  the `ssl' flag is passed to the server.
+
+	* lookup_cookie.c: copyright notice is updated;
+	(userlist_clnt_lookup_cookie) added parameter `ssl' for logins over
+	  https, the `ssl' flag is passed to the server.
+
+	* priv_cookie.c: copyright notice is updated;
+	(userlist_clnt_priv_cookie) added parameter `ssl' for logins over https,
+	  the `ssl' flag is passed to the server.
+
+	* priv_login.c: copyright notice is updated;
+	(userlist_clnt_priv_login) added parameter `ssl' for logins over https,
+	  the `ssl' flag is passed to the server.
+
+	* team_cookie.c: copyright notice is updated;
+	(userlist_clnt_team_cookie) added parameter `ssl' for logins over https,
+	  the `ssl' flag is passed to the server.
+
+	* team_login.c: copyright notice is updated;
+	(userlist_clnt_team_login) added parameter `ssl' for logins over https,
+	  the `ssl' flag is passed to the server.
+
+2005-07-28  Alexander Chernov  <cher@ispras.ru>
+
+	* get_param.c: initial revision
+
+2005-07-22  Alexander Chernov  <cher@ispras.ru>
+
+	* dump_database.c: copyright notice is updated;
+	(userlist_clnt_dump_database) `cmd' parameter is added to pass the
+	  command code;
+	  `html_flag' parameter is added, which determines whether HTML
+	  format is used.
+
+	* add_field.c: copyright notice is updated;
+	(userlist_clnt_add_field) pointer to the user_id variable is passed
+	  in parameters instead of value. The user_id of the new user is
+	  returned from the server.
+
+2005-07-10  Alexander Chernov  <cher@ispras.ru>
+
+	* register_contest.c: copyright notice is updated;
+	(userlist_clnt_register_contest) allocated memory is zeroed.
+
+2005-07-08  Alexander Chernov  <cher@ispras.ru>
+
+	* admin_process.c: copyright notice is updated;
+	(userlist_clnt_admin_process) new parameters added:
+	  p_uid - pointer where to store the returned user_id;
+	  p_login - pointer where to store pointer to the user login string;
+	  p_name - pointer where to store pointer to the user name string;
+	  the returned packet is parsed and the data is stored according to
+	  the passed parameters.
+
+2005-06-23  Alexander Chernov  <cher@ispras.ru>
+
+	* logout.c: copyright notice is updated;
+	(userlist_clnt_logout) new parameter `cmd' is added, which value is
+	  used as the command code.
+
 2004-11-26  Alexander Chernov  <cher@ispras.ru>
 
 	* get_uid_by_pid_2.c:
