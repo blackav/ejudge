@@ -433,8 +433,10 @@ parse_member(struct contest_member *mb, char const *path)
   struct contest_field *pf;
   int i, n;
 
+  /*
   mb->min_count = -1;
   mb->max_count = -1;
+  */
   for (a = mb->b.first; a; a = a->next) {
     switch (a->tag) {
     case CONTEST_A_MIN:
@@ -1523,11 +1525,11 @@ unparse_fields(FILE *f, const struct contest_member *memb, int tag)
 
   if (!memb) return;
   fprintf(f, "  <%s", tag_map[tag]);
-  if (memb->min_count)
+  if (memb->min_count >= 0)
     fprintf(f, " %s=\"%d\"", attn_map[CONTEST_A_MIN], memb->min_count);
-  if (memb->max_count)
+  if (memb->max_count >= 0)
     fprintf(f, " %s=\"%d\"", attn_map[CONTEST_A_MAX], memb->max_count);
-  if (memb->init_count)
+  if (memb->init_count >= 0)
     fprintf(f, " %s=\"%d\"", attn_map[CONTEST_A_INITIAL], memb->init_count);
   fprintf(f, ">\n");
   for (i = 1; i < CONTEST_LAST_MEMBER_FIELD; i++) {
@@ -1723,7 +1725,10 @@ int
 contests_unparse_and_save(struct contest_desc *cnts,
                           const unsigned char *header,
                           const unsigned char *footer,
-                          const unsigned char *add_footer)
+                          const unsigned char *add_footer,
+                          unsigned char *(*diff_func)(const unsigned char *,
+                                                      const unsigned char *),
+                          unsigned char **p_diff_txt)
 {
   int serial = 1;
   unsigned char tmp_path[1024];
@@ -1735,6 +1740,7 @@ contests_unparse_and_save(struct contest_desc *cnts,
   size_t old_size = 0;
   char *new_text = 0;
   size_t new_size = 0;
+  unsigned char *diff_txt = 0;
 
   f = open_memstream(&new_text, &new_size);
   fputs(header, f);
@@ -1786,9 +1792,14 @@ contests_unparse_and_save(struct contest_desc *cnts,
     return -CONTEST_ERR_IO_ERROR;
   }
 
+  if (diff_func && p_diff_txt) {
+    diff_txt = (*diff_func)(xml_path, tmp_path);
+  }
+
   if (stat(xml_path, &xml_stat) >= 0) {
     if (!S_ISREG(xml_stat.st_mode)) {
       unlink(tmp_path);
+      xfree(diff_txt);
       return -CONTEST_ERR_NO_CONTEST;
     }
 
@@ -1811,8 +1822,10 @@ contests_unparse_and_save(struct contest_desc *cnts,
   if (rename(tmp_path, xml_path) < 0) {
     err("contests_save_xml: rename failed: %s", os_ErrorMsg());
     unlink(tmp_path);
+    xfree(diff_txt);
     return -CONTEST_ERR_FILE_CREATION_ERROR;
   }
+  if (p_diff_txt) *p_diff_txt = diff_txt;
   return 0;
 }
 
