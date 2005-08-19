@@ -34,6 +34,8 @@
 #include "userlist_proto.h"
 #include "userlist_clnt.h"
 #include "userlist.h"
+#include "ej_process.h"
+#include "vcs.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -722,6 +724,16 @@ rename_files(FILE *flog, int flag, unsigned char *to, unsigned char *from)
   }
 }
 
+static unsigned char *
+diff_func(const unsigned char *path1, const unsigned char *path2)
+{
+  path_t diff_cmdline;
+
+  snprintf(diff_cmdline, sizeof(diff_cmdline),
+           "/usr/bin/diff -u \"%s\" \"%s\"", path1, path2);
+  return read_process_output(diff_cmdline, 0, 1, 0);
+}
+
 int
 super_html_commit_contest(FILE *f,
                           int priv_level,
@@ -790,6 +802,10 @@ super_html_commit_contest(FILE *f,
 
   int uhf, uff, rhf, rff, thf, tff, ref;
   int csf = 0, shf = 0, sff = 0, s2hf = 0, s2ff = 0, phf = 0, pff = 0, sf = 0;
+
+  path_t diff_cmdline;
+  unsigned char *diff_str = 0, *vcs_str = 0;
+  int vcs_add_flag = 0;
 
   if (!cnts) {
     return super_html_report_error(f, session_id, self_url, extra_args,
@@ -976,6 +992,7 @@ super_html_commit_contest(FILE *f,
              "<!-- audit: created %s %d (%s) %s -->\n",
              xml_unparse_date(time(0)), user_id, login,
              xml_unparse_ip(ip_address));
+    vcs_add_flag = 1;
   } else if (errcode < 0) {
     fprintf(flog, "Failed to read XML file `%s': %s\n",
             xml_path, super_proto_strerror(-errcode));
@@ -1026,17 +1043,40 @@ super_html_commit_contest(FILE *f,
                                                 serve_header, serve_footer,
                                                 serve_audit_rec)) < 0)
       goto failed;
+
+    if (sf > 0) {
+      // invoke diff on the new and old config files
+      snprintf(diff_cmdline, sizeof(diff_cmdline),
+               "/usr/bin/diff -u \"%s\" \"%s\"", serve_path, serve_path_2);
+      diff_str = read_process_output(diff_cmdline, 0, 1, 0);
+      fprintf(flog, "Changes in serve.cfg:\n%s\n", diff_str);
+      xfree(diff_str); diff_str = 0;
+    }
   }
 
   /* 11. Save the XML file */
-  errcode = contests_unparse_and_save(cnts, xml_header, xml_footer, audit_rec);
+  errcode = contests_unparse_and_save(cnts, xml_header, xml_footer, audit_rec, 
+                                      diff_func, &diff_str);
   if (errcode < 0) {
     fprintf(flog, "error: saving of `%s' failed: %s\n", xml_path,
             contests_strerror(-errcode));
     goto failed;
-  } else {
+  } else if (diff_str && *diff_str) {
     fprintf(flog, "contest XML file `%s' saved successfully\n", xml_path);
+    fprintf(flog, "Changes in the file:\n%s\n", diff_str);
+    if (vcs_add_flag && vcs_add(xml_path, &vcs_str) > 0) {
+      fprintf(flog, "Version control:\n%s\n", vcs_str);
+      xfree(vcs_str); vcs_str = 0;
+    }
+    if (vcs_commit(xml_path, &vcs_str) > 0) {
+      fprintf(flog, "Version control:\n%s\n", vcs_str);
+    }
+  } else {
+    fprintf(flog, "contest XML file `%s' is not changed\n", xml_path);
   }
+  xfree(diff_str); diff_str = 0;
+  xfree(vcs_str); vcs_str = 0;
+        
 
   /* 12. Rename files */
   rename_files(flog, uhf, users_header_path, users_header_path_2);
