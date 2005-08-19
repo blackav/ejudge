@@ -109,6 +109,7 @@
 #define DFLT_G_DISABLE_TEAM_CLARS 0
 #define DFLT_G_IGNORE_COMPILE_ERRORS 0
 #define DFLT_G_IGNORE_DUPLICATED_RUNS 1
+#define DFLT_G_SHOW_DEADLINE 0
 #define DFLT_G_ENABLE_PRINTING 0
 #define DFLT_G_PRUNE_EMPTY_USERS 0
 #define DFLT_G_ENABLE_FULL_ARCHIVE 0
@@ -133,6 +134,7 @@
 #define DFLT_P_RUN_PENALTY        1
 #define DFLT_P_VARIABLE_FULL_SCORE 0
 #define DFLT_P_HIDDEN             0
+#define DFLT_P_BINARY_INPUT       0
 
 #define DFLT_T_WORK_DIR           "work"
 #define DFLT_T_TMP_DIR            "tmp"
