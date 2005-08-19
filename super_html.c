@@ -31,6 +31,7 @@
 #include "fileutl.h"
 #include "xml_utils.h"
 #include "prepare.h"
+#include "vcs.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -1367,10 +1368,19 @@ super_html_parse_contest_xml(int contest_id,
   return errcode;
 }
 
+static void
+commit_contest_xml(int id)
+{
+  path_t xml_path;
+
+  contests_make_path(xml_path, sizeof(xml_path), id);
+  vcs_commit(xml_path, 0);
+}
+
 // assume, that the permissions are checked
 int
 super_html_open_contest(struct contest_desc *cnts, int user_id,
-                        const unsigned char *user_login)
+                        const unsigned char *user_login, unsigned long ip)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1382,14 +1392,15 @@ super_html_open_contest(struct contest_desc *cnts, int user_id,
 
   cnts->closed = 0;
   snprintf(audit_str, sizeof(audit_str),
-           "<!-- audit: closed->open %s %d (%s) -->\n",
-           xml_unparse_date(time(0)), user_id, user_login);
+           "<!-- audit: closed->open %s %d (%s) %s -->\n",
+           xml_unparse_date(time(0)), user_id, user_login, xml_unparse_ip(ip));
 
   if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
     xfree(txt1);
     xfree(txt2);
     return -SSERV_ERR_SYSTEM_ERROR;
   }
+  commit_contest_xml(cnts->id);
 
   xfree(txt1);
   xfree(txt2);
@@ -1398,7 +1409,7 @@ super_html_open_contest(struct contest_desc *cnts, int user_id,
 
 int
 super_html_close_contest(struct contest_desc *cnts, int user_id,
-                         const unsigned char *user_login)
+                         const unsigned char *user_login, unsigned long ip)
 {
   int errcode = 0;
   unsigned char *txt1 = 0, *txt2 = 0;
@@ -1410,14 +1421,15 @@ super_html_close_contest(struct contest_desc *cnts, int user_id,
 
   cnts->closed = 1;
   snprintf(audit_str, sizeof(audit_str),
-           "<!-- audit: open->closed %s %d (%s) -->\n",
-           xml_unparse_date(time(0)), user_id, user_login);
+           "<!-- audit: open->closed %s %d (%s) %s -->\n",
+           xml_unparse_date(time(0)), user_id, user_login, xml_unparse_ip(ip));
 
   if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
     xfree(txt1);
     xfree(txt2);
     return -SSERV_ERR_SYSTEM_ERROR;
   }
+  commit_contest_xml(cnts->id);
 
   xfree(txt1);
   xfree(txt2);
@@ -1426,7 +1438,8 @@ super_html_close_contest(struct contest_desc *cnts, int user_id,
 
 int
 super_html_make_invisible_contest(struct contest_desc *cnts, int user_id,
-                                  const unsigned char *user_login)
+                                  const unsigned char *user_login,
+                                  unsigned long ip)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1438,14 +1451,15 @@ super_html_make_invisible_contest(struct contest_desc *cnts, int user_id,
 
   cnts->invisible = 1;
   snprintf(audit_str, sizeof(audit_str),
-           "<!-- audit: visible->invisible %s %d (%s) -->\n",
-           xml_unparse_date(time(0)), user_id, user_login);
+           "<!-- audit: visible->invisible %s %d (%s) %s -->\n",
+           xml_unparse_date(time(0)), user_id, user_login, xml_unparse_ip(ip));
 
   if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
     xfree(txt1);
     xfree(txt2);
     return -SSERV_ERR_SYSTEM_ERROR;
   }
+  commit_contest_xml(cnts->id);
 
   xfree(txt1);
   xfree(txt2);
@@ -1454,7 +1468,8 @@ super_html_make_invisible_contest(struct contest_desc *cnts, int user_id,
 
 int
 super_html_make_visible_contest(struct contest_desc *cnts, int user_id,
-                                const unsigned char *user_login)
+                                const unsigned char *user_login,
+                                unsigned long ip)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1466,14 +1481,15 @@ super_html_make_visible_contest(struct contest_desc *cnts, int user_id,
 
   cnts->invisible = 0;
   snprintf(audit_str, sizeof(audit_str),
-           "<!-- audit: invisible->visible %s %d (%s) -->\n",
-           xml_unparse_date(time(0)), user_id, user_login);
+           "<!-- audit: invisible->visible %s %d (%s) %s -->\n",
+           xml_unparse_date(time(0)), user_id, user_login, xml_unparse_ip(ip));
 
   if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
     xfree(txt1);
     xfree(txt2);
     return -SSERV_ERR_SYSTEM_ERROR;
   }
+  commit_contest_xml(cnts->id);
 
   xfree(txt1);
   xfree(txt2);
@@ -1482,7 +1498,8 @@ super_html_make_visible_contest(struct contest_desc *cnts, int user_id,
 
 int
 super_html_serve_managed_contest(struct contest_desc *cnts, int user_id,
-                                 const unsigned char *user_login)
+                                 const unsigned char *user_login,
+                                 unsigned long ip)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1494,14 +1511,15 @@ super_html_serve_managed_contest(struct contest_desc *cnts, int user_id,
 
   cnts->managed = 1;
   snprintf(audit_str, sizeof(audit_str),
-           "<!-- audit: unmanaged->managed %s %d (%s) -->\n",
-           xml_unparse_date(time(0)), user_id, user_login);
+           "<!-- audit: unmanaged->managed %s %d (%s) %s -->\n",
+           xml_unparse_date(time(0)), user_id, user_login, xml_unparse_ip(ip));
 
   if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
     xfree(txt1);
     xfree(txt2);
     return -SSERV_ERR_SYSTEM_ERROR;
   }
+  commit_contest_xml(cnts->id);
 
   xfree(txt1);
   xfree(txt2);
@@ -1510,7 +1528,8 @@ super_html_serve_managed_contest(struct contest_desc *cnts, int user_id,
 
 int
 super_html_serve_unmanaged_contest(struct contest_desc *cnts, int user_id,
-                                   const unsigned char *user_login)
+                                   const unsigned char *user_login,
+                                   unsigned long ip)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1522,14 +1541,15 @@ super_html_serve_unmanaged_contest(struct contest_desc *cnts, int user_id,
 
   cnts->managed = 0;
   snprintf(audit_str, sizeof(audit_str),
-           "<!-- audit: managed->unmanaged %s %d (%s) -->\n",
-           xml_unparse_date(time(0)), user_id, user_login);
+           "<!-- audit: managed->unmanaged %s %d (%s) %s -->\n",
+           xml_unparse_date(time(0)), user_id, user_login, xml_unparse_ip(ip));
 
   if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
     xfree(txt1);
     xfree(txt2);
     return -SSERV_ERR_SYSTEM_ERROR;
   }
+  commit_contest_xml(cnts->id);
 
   xfree(txt1);
   xfree(txt2);
@@ -1538,7 +1558,8 @@ super_html_serve_unmanaged_contest(struct contest_desc *cnts, int user_id,
 
 int
 super_html_run_managed_contest(struct contest_desc *cnts, int user_id,
-                               const unsigned char *user_login)
+                               const unsigned char *user_login,
+                               unsigned long ip)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1550,14 +1571,15 @@ super_html_run_managed_contest(struct contest_desc *cnts, int user_id,
 
   cnts->run_managed = 1;
   snprintf(audit_str, sizeof(audit_str),
-           "<!-- audit: run_unmanaged->run_managed %s %d (%s) -->\n",
-           xml_unparse_date(time(0)), user_id, user_login);
+           "<!-- audit: run_unmanaged->run_managed %s %d (%s) %s -->\n",
+           xml_unparse_date(time(0)), user_id, user_login, xml_unparse_ip(ip));
 
   if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
     xfree(txt1);
     xfree(txt2);
     return -SSERV_ERR_SYSTEM_ERROR;
   }
+  commit_contest_xml(cnts->id);
 
   xfree(txt1);
   xfree(txt2);
@@ -1566,7 +1588,8 @@ super_html_run_managed_contest(struct contest_desc *cnts, int user_id,
 
 int
 super_html_run_unmanaged_contest(struct contest_desc *cnts, int user_id,
-                                 const unsigned char *user_login)
+                                 const unsigned char *user_login,
+                                 unsigned long ip)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1578,14 +1601,15 @@ super_html_run_unmanaged_contest(struct contest_desc *cnts, int user_id,
 
   cnts->run_managed = 0;
   snprintf(audit_str, sizeof(audit_str),
-           "<!-- audit: run_managed->run_unmanaged %s %d (%s) -->\n",
-           xml_unparse_date(time(0)), user_id, user_login);
+           "<!-- audit: run_managed->run_unmanaged %s %d (%s) %s -->\n",
+           xml_unparse_date(time(0)), user_id, user_login, xml_unparse_ip(ip));
 
   if ((errcode = contests_save_xml(cnts, txt1, txt2, audit_str)) < 0) {
     xfree(txt1);
     xfree(txt2);
     return -SSERV_ERR_SYSTEM_ERROR;
   }
+  commit_contest_xml(cnts->id);
 
   xfree(txt1);
   xfree(txt2);
