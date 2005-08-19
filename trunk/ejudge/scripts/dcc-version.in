@@ -23,7 +23,9 @@ then
     echo "${DCCRUN}"
     exit 0
 fi
+
+"${DCCRUN}" -h 2>/dev/null >/dev/null || exit 1
     
-[ x"$1" = x-f ] && echo -n "Borland Delphi "
+[ x"$1" = x-f ] && echo -n "Borland Delphi 6 - "
 
 "${DCCRUN}" -h 2>/dev/null | grep "Borland Delphi" | gawk '{ print $6; }'

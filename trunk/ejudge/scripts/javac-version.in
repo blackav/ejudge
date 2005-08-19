@@ -23,6 +23,8 @@ then
     exit 0
 fi
     
+"${JAVARUN}" -version 2>/dev/null >/dev/null || exit 1
+
 [ x"$1" = x-f ] && echo -n "Java JDK "
 
 "${JAVARUN}" -version 2>&1 | grep "java version" | sed 's/^.*"\(.*\)"$/\1/g'

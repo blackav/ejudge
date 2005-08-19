@@ -22,6 +22,8 @@ then
     exit 0
 fi
     
+"${GPCRUN}" --version 2>/dev/null >/dev/null || exit 1
+
 [ x"$1" = x-f ] && echo -n "GNU Pascal "
 
 "${GPCRUN}" --version | gawk '{ print $1; }'

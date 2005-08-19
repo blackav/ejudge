@@ -22,6 +22,8 @@ then
     exit 0
 fi
     
+"${MBASRUN}" -about 2>/dev/null >/dev/null || exit 1
+
 [ x"$1" = x-f ] && echo -n "Mono Visual Basic "
 
 "${MBASRUN}" -about 2>&1 | head -1 | awk '{print $3;}'

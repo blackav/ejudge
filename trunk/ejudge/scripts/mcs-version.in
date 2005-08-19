@@ -21,6 +21,8 @@ then
     echo "${MCSRUN}"
     exit 0
 fi
+
+"${MCSRUN}" --version 2>/dev/null >/dev/null || exit 1
     
 [ x"$1" = x-f ] && echo -n "Mono C# "
 
