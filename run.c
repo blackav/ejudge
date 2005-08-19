@@ -530,7 +530,7 @@ run_tests(struct section_tester_data *tst,
 #endif
   }
   
-  if (tst->is_dos) copy_flag = CONVERT;
+  if (tst->is_dos && !prb->binary_input) copy_flag = CONVERT;
 
   error_code[0] = 0;
   if (tst->errorcode_file[0]) {
