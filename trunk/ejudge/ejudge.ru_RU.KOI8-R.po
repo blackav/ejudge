@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-08-07 00:37+0400\n"
+"POT-Creation-Date: 2005-08-12 18:34+0400\n"
 "PO-Revision-Date: 2005-08-05 12:16+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -940,7 +940,7 @@ msgstr "Неверный идентификатор турнира."
 msgid "Invalid language specification"
 msgstr "Неверная спецификация языка программирования"
 
-#: serve-control.c:474
+#: serve-control.c:491
 msgid "Invalid login"
 msgstr "Неверное регистрационное имя"
 
@@ -1034,7 +1034,7 @@ msgid "Log out"
 msgstr "Выйти из системы"
 
 #: master.c:299 master.c:345 register.c:1666 register.c:1877 register.c:1948
-#: register.c:2027 serve-control.c:505 team.c:645 userlist-server.c:3760
+#: register.c:2027 serve-control.c:522 team.c:645 userlist-server.c:3760
 msgid "Login"
 msgstr "Регистрационное имя (login)"
 
@@ -1046,7 +1046,7 @@ msgstr "Вход в систему невозможен"
 msgid "Login successful"
 msgstr "Вход успешен"
 
-#: master.c:532 serve-control.c:728 team.c:846
+#: master.c:532 serve-control.c:745 team.c:846
 msgid "Login successfull. Now entering the main page."
 msgstr "Вход успешный. Теперь переходим к главной странице."
 
@@ -1330,7 +1330,7 @@ msgid "Participants' solutions are being judged"
 msgstr "Решения участников проверяются"
 
 #: master.c:299 master.c:345 register.c:1880 register.c:1951
-#: serve-control.c:505 team.c:645
+#: serve-control.c:522 team.c:645
 msgid "Password"
 msgstr "Пароль"
 
@@ -1354,7 +1354,7 @@ msgstr "Штраф"
 msgid "Pending check"
 msgstr "Ожидает проверки"
 
-#: master.c:367 register.c:1549 register.c:2760 serve-control.c:463 team.c:691
+#: master.c:367 register.c:1549 register.c:2760 serve-control.c:480 team.c:691
 #: users.c:751
 msgid "Permission denied"
 msgstr "В доступе отказано"
@@ -1714,12 +1714,12 @@ msgstr "NN"
 msgid "Server configuration error."
 msgstr "Ошибка конфигурации сервера."
 
-#: master.c:398 serve-control.c:453 team.c:726 team.c:727 team.c:1345
+#: master.c:398 serve-control.c:470 team.c:726 team.c:727 team.c:1345
 msgid "Server error"
 msgstr "Ошибка сервера"
 
-#: clntutil.c:365 master.c:355 master.c:418 master.c:421 serve-control.c:428
-#: serve-control.c:441 team.c:678 team.c:1419 team.c:1423
+#: clntutil.c:365 master.c:355 master.c:418 master.c:421 serve-control.c:445
+#: serve-control.c:458 team.c:678 team.c:1419 team.c:1423
 msgid "Server is down"
 msgstr "Сервер не работает"
 
@@ -1870,7 +1870,7 @@ msgid "Submissions"
 msgstr "Посылки"
 
 #: master.c:299 master.c:345 master_html.c:1761 register.c:1883
-#: register.c:1954 serve-control.c:505 team.c:666
+#: register.c:1954 serve-control.c:522 team.c:666
 msgid "Submit"
 msgstr "Отослать"
 
@@ -1971,7 +1971,7 @@ msgstr "Сообщение не может быть послано. Турнир не начался."
 msgid "The message cannot be sent. The contest is over."
 msgstr "Сообщение не может быть послано. Турнир закончился."
 
-#: master.c:357 serve-control.c:430 serve-control.c:443 team.c:680
+#: master.c:357 serve-control.c:447 serve-control.c:460 team.c:680
 msgid "The server is down. Try again later."
 msgstr "Сервер не работает. Пожалуйста, повторите операцию позднее."
 
@@ -2278,7 +2278,7 @@ msgstr ""
 "Вы не можете участвовать в данном турнире. Ваша регистрация не подтверждена, "
 "либо Ваше участие заблокировано администратором."
 
-#: serve-control.c:464
+#: serve-control.c:481
 msgid "You do not have permissions to use this service"
 msgstr "У Вас нет прав использовать данный сервис"
 

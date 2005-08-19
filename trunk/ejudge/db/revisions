@@ -2000,3 +2000,7 @@ ejudge-setup.c 1 15 9069847
 prepare_out.c 1 4 4629224
 NEWS.RUS 1 20 24075854
 NEWS 1 20 14387108
+vcs.h 1 1 68909
+unix/ej_process.c 1 1 185842
+win32/ej_process.c 1 1 80555
+vcs.c 1 1 351476
