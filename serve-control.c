@@ -63,7 +63,7 @@
  *   <socket_path>PATH</socket_path>
  *   <contests_dir>PATH</contests_dir>
  *   <serve_control_access default="allow|deny">
- *     <ip allow="YES|NO">IP</ip>
+ *     <ip allow="YES|NO" [ssl="YES|NO|ANY"]>IP</ip>
  *   </serve_control_access>
  * </serve_control_config>
  */
@@ -83,12 +83,14 @@ enum
 {
   AT_DEFAULT = 1,
   AT_ALLOW,
+  AT_SSL,
 };
 
 struct ip_node
 {
   struct xml_tree b;
   int allow;
+  int ssl;
   unsigned int addr;
   unsigned int mask;
 };
@@ -125,6 +127,7 @@ static const char * const attr_map[] =
   0,
   "default",
   "allow",
+  "ssl",
   0,
 };
 static size_t elem_size[TG_LAST_TAG] =
@@ -161,8 +164,7 @@ parse_config(const unsigned char *path, const unsigned char *default_config)
     tree = xml_build_tree_str(default_config, elem_map, attr_map,
                               elem_alloc, attr_alloc);
   } else {
-    tree = xml_build_tree_str(path, elem_map, attr_map,
-                              elem_alloc, attr_alloc);
+    tree = xml_build_tree(path, elem_map, attr_map, elem_alloc, attr_alloc);
   }
   if (!tree) goto failed;
 
@@ -220,18 +222,32 @@ parse_config(const unsigned char *path, const unsigned char *default_config)
           goto failed;
         }
       }
-      for (t2 = t1->first_down; t2; t2 = t2->left) {
+      for (t2 = t1->first_down; t2; t2 = t2->right) {
         if (t2->tag != TG_IP) {
           xml_err_elem_not_allowed(t2);
           goto failed;
         }
         pip = (struct ip_node*) t2;
+        pip->ssl = -1;
         for (attr = t2->first; attr; attr = attr->next) {
-          if (attr->tag != AT_ALLOW) {
+          if (attr->tag != AT_ALLOW && attr->tag != AT_SSL) {
             xml_err_attr_not_allowed(t2, attr);
             goto failed;
           }
-          if (xml_attr_bool(attr, &pip->allow) < 0) goto failed;
+          if (attr->tag == AT_SSL) {
+            if (!strcasecmp(attr->text, "yes")) {
+              pip->ssl = 1;
+            } else if (!strcasecmp(attr->text, "no")) {
+              pip->ssl = 0;
+            } else if (!strcasecmp(attr->text, "any")) {
+              pip->ssl = -1;
+            } else {
+              xml_err_attr_invalid(attr);
+              goto failed;
+            }
+          } else {
+            if (xml_attr_bool(attr, &pip->allow) < 0) goto failed;
+          }
         }
         if (xml_elem_ip_mask(t2, &pip->addr, &pip->mask) < 0) goto failed;
       }
@@ -398,7 +414,8 @@ check_source_ip(void)
 
   for (p = (struct ip_node*) config->access->b.first_down;
        p; p = (struct ip_node*) p->b.right) {
-    if ((user_ip & p->mask) == p->addr) return p->allow;
+    if ((user_ip & p->mask) == p->addr
+        && (p->ssl == -1 || p->ssl == ssl_flag)) return p->allow;
   }
   return config->access->default_is_allow;
 }
@@ -1427,6 +1444,7 @@ static const int action_to_cmd_map[SUPER_ACTION_LAST] =
   [SUPER_ACTION_PROB_CHANGE_SUPER] = SSERV_CMD_PROB_CHANGE_SUPER,
   [SUPER_ACTION_PROB_CHANGE_USE_STDIN] = SSERV_CMD_PROB_CHANGE_USE_STDIN,
   [SUPER_ACTION_PROB_CHANGE_USE_STDOUT] = SSERV_CMD_PROB_CHANGE_USE_STDOUT,
+  [SUPER_ACTION_PROB_CHANGE_BINARY_INPUT] = SSERV_CMD_PROB_CHANGE_BINARY_INPUT,
   [SUPER_ACTION_PROB_CHANGE_TIME_LIMIT] = SSERV_CMD_PROB_CHANGE_TIME_LIMIT,
   [SUPER_ACTION_PROB_CHANGE_TIME_LIMIT_MILLIS] = SSERV_CMD_PROB_CHANGE_TIME_LIMIT_MILLIS,
   [SUPER_ACTION_PROB_CHANGE_REAL_TIME_LIMIT] = SSERV_CMD_PROB_CHANGE_REAL_TIME_LIMIT,
@@ -1505,6 +1523,8 @@ static const int action_to_cmd_map[SUPER_ACTION_LAST] =
   [SUPER_ACTION_GLOB_CLEAR_CORR_DIR] = SSERV_CMD_GLOB_CLEAR_CORR_DIR,
   [SUPER_ACTION_GLOB_CHANGE_INFO_DIR] = SSERV_CMD_GLOB_CHANGE_INFO_DIR,
   [SUPER_ACTION_GLOB_CLEAR_INFO_DIR] = SSERV_CMD_GLOB_CLEAR_INFO_DIR,
+  [SUPER_ACTION_GLOB_CHANGE_TGZ_DIR] = SSERV_CMD_GLOB_CHANGE_TGZ_DIR,
+  [SUPER_ACTION_GLOB_CLEAR_TGZ_DIR] = SSERV_CMD_GLOB_CLEAR_TGZ_DIR,
   [SUPER_ACTION_GLOB_CHANGE_CHECKER_DIR] = SSERV_CMD_GLOB_CHANGE_CHECKER_DIR,
   [SUPER_ACTION_GLOB_CLEAR_CHECKER_DIR] = SSERV_CMD_GLOB_CLEAR_CHECKER_DIR,
   [SUPER_ACTION_GLOB_CHANGE_CONTEST_START_CMD] = SSERV_CMD_GLOB_CHANGE_CONTEST_START_CMD,
@@ -1639,6 +1659,7 @@ static const int action_to_cmd_map[SUPER_ACTION_LAST] =
   [SUPER_ACTION_GLOB_READ_PLOG_FOOTER] = SSERV_CMD_GLOB_CLEAR_PLOG_FOOTER_TEXT,
   [SUPER_ACTION_GLOB_CLEAR_PLOG_FOOTER_TEXT] = SSERV_CMD_GLOB_CLEAR_PLOG_FOOTER_TEXT,
   [SUPER_ACTION_VIEW_NEW_SERVE_CFG] = SSERV_CMD_VIEW_NEW_SERVE_CFG,
+  [SUPER_ACTION_LANG_UPDATE_VERSIONS] = SSERV_CMD_LANG_UPDATE_VERSIONS,
 };
 
 static const int next_action_map[SUPER_ACTION_LAST] =
@@ -1813,6 +1834,7 @@ static const int next_action_map[SUPER_ACTION_LAST] =
   [SUPER_ACTION_PROB_CHANGE_SUPER] = SUPER_ACTION_EDIT_CURRENT_PROB,
   [SUPER_ACTION_PROB_CHANGE_USE_STDIN] = SUPER_ACTION_EDIT_CURRENT_PROB,
   [SUPER_ACTION_PROB_CHANGE_USE_STDOUT] = SUPER_ACTION_EDIT_CURRENT_PROB,
+  [SUPER_ACTION_PROB_CHANGE_BINARY_INPUT] = SUPER_ACTION_EDIT_CURRENT_PROB,
   [SUPER_ACTION_PROB_CHANGE_TIME_LIMIT] = SUPER_ACTION_EDIT_CURRENT_PROB,
   [SUPER_ACTION_PROB_CHANGE_TIME_LIMIT_MILLIS] = SUPER_ACTION_EDIT_CURRENT_PROB,
   [SUPER_ACTION_PROB_CHANGE_REAL_TIME_LIMIT] = SUPER_ACTION_EDIT_CURRENT_PROB,
@@ -1891,6 +1913,8 @@ static const int next_action_map[SUPER_ACTION_LAST] =
   [SUPER_ACTION_GLOB_CLEAR_CORR_DIR] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
   [SUPER_ACTION_GLOB_CHANGE_INFO_DIR] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
   [SUPER_ACTION_GLOB_CLEAR_INFO_DIR] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
+  [SUPER_ACTION_GLOB_CHANGE_TGZ_DIR] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
+  [SUPER_ACTION_GLOB_CLEAR_TGZ_DIR] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
   [SUPER_ACTION_GLOB_CHANGE_CHECKER_DIR] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
   [SUPER_ACTION_GLOB_CLEAR_CHECKER_DIR] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
   [SUPER_ACTION_GLOB_CHANGE_CONTEST_START_CMD] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
@@ -2017,6 +2041,7 @@ static const int next_action_map[SUPER_ACTION_LAST] =
   [SUPER_ACTION_GLOB_SAVE_PLOG_FOOTER] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
   [SUPER_ACTION_GLOB_READ_PLOG_FOOTER] = SUPER_ACTION_GLOB_EDIT_PLOG_FOOTER_FILE,
   [SUPER_ACTION_GLOB_CLEAR_PLOG_FOOTER_TEXT] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
+  [SUPER_ACTION_LANG_UPDATE_VERSIONS] = SUPER_ACTION_EDIT_CURRENT_LANG,
 };
 
 int
@@ -2284,6 +2309,7 @@ main(int argc, char *argv[])
   case SUPER_ACTION_GLOB_HIDE_6:
   case SUPER_ACTION_GLOB_SHOW_7:
   case SUPER_ACTION_GLOB_HIDE_7:
+  case SUPER_ACTION_LANG_UPDATE_VERSIONS:
     action_simple_edit_command(action_to_cmd_map[client_action],
                                next_action_map[client_action]);
     break;
@@ -2327,6 +2353,7 @@ main(int argc, char *argv[])
   case SUPER_ACTION_PROB_CHANGE_SUPER:
   case SUPER_ACTION_PROB_CHANGE_USE_STDIN:
   case SUPER_ACTION_PROB_CHANGE_USE_STDOUT:
+  case SUPER_ACTION_PROB_CHANGE_BINARY_INPUT:
   case SUPER_ACTION_PROB_CHANGE_TIME_LIMIT:
   case SUPER_ACTION_PROB_CHANGE_TIME_LIMIT_MILLIS:
   case SUPER_ACTION_PROB_CHANGE_REAL_TIME_LIMIT:
@@ -2408,6 +2435,8 @@ main(int argc, char *argv[])
   case SUPER_ACTION_GLOB_CLEAR_CORR_DIR:
   case SUPER_ACTION_GLOB_CHANGE_INFO_DIR:
   case SUPER_ACTION_GLOB_CLEAR_INFO_DIR:
+  case SUPER_ACTION_GLOB_CHANGE_TGZ_DIR:
+  case SUPER_ACTION_GLOB_CLEAR_TGZ_DIR:
   case SUPER_ACTION_GLOB_CHANGE_CHECKER_DIR:
   case SUPER_ACTION_GLOB_CLEAR_CHECKER_DIR:
   case SUPER_ACTION_GLOB_CHANGE_CONTEST_START_CMD:
