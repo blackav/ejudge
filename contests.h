@@ -311,6 +311,9 @@ int contests_save_xml(struct contest_desc *cnts,
 int contests_unparse_and_save(struct contest_desc *cnts,
                               const unsigned char *header,
                               const unsigned char *footer,
-                              const unsigned char *add_footer);
+                              const unsigned char *add_footer,
+                              unsigned char *(*diff_func)(const unsigned char *,
+                                                          const unsigned char *),
+                              unsigned char **p_diff_txt);
 
 #endif /* __CONTESTS_H__ */
