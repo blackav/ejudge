@@ -16,6 +16,8 @@ then
     exit 0
 fi
     
+"${MZSCHEMEPATH}" --version 2>/dev/null >/dev/null || exit 1
+
 [ x"$1" = x-f ] && echo -n "Mz Scheme "
 
 "${MZSCHEMEPATH}" --version 2>&1 | grep "MzScheme version" | gawk -v FS="[ ,]" '{ print $5; }'
