@@ -94,7 +94,7 @@ c_armor(struct str_buf *pb, const unsigned char *s)
       break;
     default:
       if (*ps >= ' ') {
-        *pq++ = *ps++;
+        *pq++ = *ps;
       } else {
         *pq++ = '\\';
         *pq++ = (*ps >> 6) + '0';
@@ -221,6 +221,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "ignore_compile_errors", global->ignore_compile_errors);
   if (global->ignore_duplicated_runs != DFLT_G_IGNORE_DUPLICATED_RUNS)
     unparse_bool(f, "ignore_duplicated_runs", global->ignore_duplicated_runs);
+  if (global->show_deadline != DFLT_G_SHOW_DEADLINE)
+    unparse_bool(f, "show_deadline", global->show_deadline);
   if (global->enable_printing != DFLT_G_ENABLE_PRINTING)
     unparse_bool(f, "enable_printing", global->enable_printing);
   if (global->prune_empty_users != DFLT_G_PRUNE_EMPTY_USERS)
@@ -235,10 +237,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     fprintf(f, "corr_dir = \"%s\"\n", c_armor(&sbuf, global->corr_dir));
   if (global->info_dir[0] && strcmp(global->info_dir, DFLT_G_INFO_DIR))
     fprintf(f, "info_dir = \"%s\"\n", c_armor(&sbuf, global->info_dir));
-  /*
   if (global->tgz_dir[0] && strcmp(global->tgz_dir, DFLT_G_TGZ_DIR))
     fprintf(f, "tgz_dir = \"%s\"\n", c_armor(&sbuf, global->tgz_dir));
-  */
   if (global->checker_dir[0] && strcmp(global->checker_dir, DFLT_G_CHECKER_DIR))
     fprintf(f, "checker_dir = \"%s\"\n", c_armor(&sbuf, global->checker_dir));
   if (global->contest_start_cmd[0])
@@ -436,7 +436,6 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
    *
   GLOBAL_PARAM(tests_to_accept, "d"),
   GLOBAL_PARAM(script_dir, "s"),
-  GLOBAL_PARAM(tgz_dir, "s"),
   GLOBAL_PARAM(test_sfx, "s"),
   GLOBAL_PARAM(corr_sfx, "s"),
   GLOBAL_PARAM(info_sfx, "s"),
@@ -510,16 +509,16 @@ prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *glob
     fprintf(f, "tests_to_accept = %d\n", global->tests_to_accept);
   //GLOBAL_PARAM(script_dir, "s"),
   do_str(f, &sbuf, "script_dir", global->script_dir);
-  //GLOBAL_PARAM(tgz_dir, "s"),
-  do_str(f, &sbuf, "tgz_dir", global->tgz_dir);
   //GLOBAL_PARAM(test_sfx, "s"),
   do_str(f, &sbuf, "test_sfx", global->test_sfx);
   //GLOBAL_PARAM(corr_sfx, "s"),
   do_str(f, &sbuf, "corr_sfx", global->corr_sfx);
   //GLOBAL_PARAM(info_sfx, "s"),
-  do_str(f, &sbuf, "info_sfx", global->info_sfx);
+  if (global->info_sfx[0] && strcmp(global->info_sfx, DFLT_G_INFO_SFX))
+      do_str(f, &sbuf, "info_sfx", global->info_sfx);
   //GLOBAL_PARAM(tgz_sfx, "s"),
-  do_str(f, &sbuf, "tgz_sfx", global->tgz_sfx);
+  if (global->tgz_sfx[0] && strcmp(global->tgz_sfx, DFLT_G_TGZ_SFX))
+    do_str(f, &sbuf, "tgz_sfx", global->tgz_sfx);
   //GLOBAL_PARAM(ejudge_checkers_dir, "s"),
   do_str(f, &sbuf, "ejudge_checkers_dir", global->ejudge_checkers_dir);
   //GLOBAL_PARAM(test_pat, "s"),
@@ -823,6 +822,9 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     unparse_bool(f, "use_stdout", prob->use_stdout);
   if (prob->output_file[0])
     fprintf(f, "output_file = \"%s\"\n", c_armor(&sbuf, prob->output_file));
+  if ((prob->abstract && prob->binary_input == 1)
+      || (!prob->abstract && prob->binary_input >= 0))
+    unparse_bool(f, "binary_input", prob->binary_input);
   if (prob->test_dir[0])
     fprintf(f, "test_dir = \"%s\"\n", c_armor(&sbuf, prob->test_dir));
   if (prob->test_sfx[0] != 1) {
@@ -856,7 +858,9 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   if (prob->info_dir[0])
     fprintf(f, "info_dir = \"%s\"\n", c_armor(&sbuf, prob->info_dir));
   if (prob->info_sfx[0] != 1) {
-    if ((prob->abstract && strcmp(prob->info_sfx, global->info_sfx))
+    if ((prob->abstract
+         && ((global->info_sfx[0] && strcmp(prob->info_sfx, global->info_sfx))
+             || (!global->info_sfx[0] && strcmp(prob->info_sfx, DFLT_G_INFO_SFX))))
         || !prob->abstract)
       fprintf(f, "info_sfx = \"%s\"\n", c_armor(&sbuf, prob->info_sfx));
   }
@@ -864,6 +868,23 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     if ((prob->abstract && strcmp(prob->info_pat, global->info_pat))
         || !prob->abstract)
       fprintf(f, "info_pat = \"%s\"\n", c_armor(&sbuf, prob->info_pat));
+  }
+  if ((prob->abstract && prob->use_tgz == 1)
+      || (!prob->abstract && prob->use_tgz >= 0))
+    unparse_bool(f, "use_tgz", prob->use_tgz);
+  if (prob->tgz_dir[0])
+    fprintf(f, "tgz_dir = \"%s\"\n", c_armor(&sbuf, prob->tgz_dir));
+  if (prob->tgz_sfx[0] != 1) {
+    if ((prob->abstract
+         && ((global->tgz_sfx[0] && strcmp(prob->tgz_sfx, global->tgz_sfx))
+             || (!global->tgz_sfx[0] && strcmp(prob->tgz_sfx, DFLT_G_TGZ_SFX))))
+        || !prob->abstract)
+      fprintf(f, "tgz_sfx = \"%s\"\n", c_armor(&sbuf, prob->tgz_sfx));
+  }
+  if (prob->tgz_pat[0] != 1) {
+    if ((prob->abstract && strcmp(prob->tgz_pat, global->tgz_pat))
+        || !prob->abstract)
+      fprintf(f, "tgz_pat = \"%s\"\n", c_armor(&sbuf, prob->tgz_pat));
   }
   /*
   if (prob->use_tgz != -1) unparse_bool(f, "use_tgz", prob->use_tgz);
@@ -921,8 +942,13 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   }
   if (score_system_val == SCORE_OLYMPIAD) {
     if (prob->tests_to_accept >= 0) {
-      // FIXME: discriminate abstract and concrete problems?
-      fprintf(f, "tests_to_accept = %d\n", prob->tests_to_accept);
+      if ((prob->abstract
+           && ((global->tests_to_accept >= 0
+                && prob->tests_to_accept != global->tests_to_accept)
+               || (global->tests_to_accept < 0
+                   && prob->tests_to_accept != DFLT_G_TESTS_TO_ACCEPT)))
+          || !prob->abstract)
+        fprintf(f, "tests_to_accept = %d\n", prob->tests_to_accept);
     }
     if (prob->accept_partial >= 0) {
       if ((prob->abstract && prob->accept_partial)
@@ -993,7 +1019,10 @@ prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
   do_str(f, &sbuf, "tgz_dir", prob->tgz_dir);
   //PROBLEM_PARAM(tgz_sfx, "s"),
   if (prob->tgz_sfx[0] != 1) {
-    if (strcmp(prob->tgz_sfx, global->tgz_sfx) || !prob->abstract)
+    if ((prob->abstract
+         && ((global->tgz_sfx[0] && strcmp(prob->tgz_sfx, global->tgz_sfx))
+             || (!global->tgz_sfx[0] && strcmp(prob->tgz_sfx, DFLT_G_TGZ_SFX))))
+        || !prob->abstract)
       do_str_mb_empty(f, &sbuf, "tgz_sfx", prob->tgz_sfx);
   }
   //PROBLEM_PARAM(tgz_pat, "s"),
@@ -1058,6 +1087,8 @@ enum
   ARCH_JAVA14,
   ARCH_PERL,
   ARCH_MSIL,
+
+  ARCH_LAST,
 };
 
 static const unsigned char * const supported_archs[] =
@@ -1202,7 +1233,37 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
     break;
 
   case ARCH_DOS:
+    fprintf(f, "[tester]\n"
+            "name = DOSTester\n"
+            "arch = dos\n"
+            "abstract\n"
+            "no_core_dump\n"
+            "no_redirect\n"
+            "time_limit_adjustment\n"
+            "is_dos\n"
+            "kill_signal = KILL\n"
+            "errorcode_file = \"retcode.txt\"\n"
+            "start_cmd = \"dosrun3\"\n");
+    break;
+
   case ARCH_PERL:
+    fprintf(f, "[tester]\n"
+            "name = %s\n"
+            "arch = \"%s\"\n"
+            "abstract\n"
+            "no_core_dump\n"
+            "kill_signal = TERM\n",
+            arch_abstract_names[arch], supported_archs[arch]);
+    if (max_vm_size)
+      fprintf(f, "max_vm_size = %s\n",
+              num_to_size(nbuf, sizeof(nbuf), max_vm_size));
+    if (max_stack_size)
+      fprintf(f, "max_stack_size = %s\n",
+              num_to_size(nbuf, sizeof(nbuf), max_stack_size));
+    if (secure_run)
+      fprintf(f, "start_cmd = \"runperl\"\n");
+    break;
+
   case ARCH_MSIL:
   default:
     abort();
@@ -1247,6 +1308,8 @@ generate_concrete_tester(FILE *f, int arch,
     break;
 
   case ARCH_DOS:
+    break;
+
   case ARCH_JAVA:
   case ARCH_JAVA14:
     if (use_files) {
@@ -1268,6 +1331,8 @@ generate_concrete_tester(FILE *f, int arch,
     break;
 
   case ARCH_PERL:
+    break;
+
   case ARCH_MSIL:
   default:
     abort();
@@ -1304,6 +1369,7 @@ prepare_unparse_testers(FILE *f,
   int def_tester_total = 0;
   int *arch_codes = 0;
   struct str_buf sbuf = { 0, 0};
+  int arch_flags[ARCH_LAST];
 
   // how many languages
   for (i = 1, j = 0; i < total_langs; i++)
@@ -1336,14 +1402,19 @@ prepare_unparse_testers(FILE *f,
   }
 
   // check for unsupported archs
+  memset(arch_flags, 0, sizeof(arch_flags));
   for (i = 0; i < total_archs; i++) {
     if ((j = prepare_unparse_is_supported_arch(archs[i])) < 0) {
       err("prepare_unparse_testers: unsupported arch: `%s'", archs[i]);
       retcode = -1;
       goto cleanup;
     }
-    arch_codes[i] = j;
+    ASSERT(j >= 0 && j < ARCH_LAST);
+    arch_flags[j] = 1;
   }
+  for (i = 0, j = 0; i < ARCH_LAST; i++)
+    if (arch_flags[i])
+      arch_codes[j++] = i;
 
   // collect memory limits, stack sizes, and file io flags
   XCALLOC(vm_sizes, total_probs);
@@ -1372,6 +1443,8 @@ prepare_unparse_testers(FILE *f,
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDIN,
                            &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDOUT,
+                           &tmp_prob, abstr, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_BINARY_INPUT,
                            &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_VM_SIZE,
                            &tmp_prob, abstr, global);
@@ -1564,6 +1637,17 @@ prob_instr(FILE *f, const unsigned char *root_dir,
     prepare_set_prob_value(PREPARE_FIELD_PROB_INFO_SFX, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_INFO_PAT, &tmp_prob, abstr, global);
     print_files(f, "Test info file names", tmp_prob.info_sfx, tmp_prob.info_pat);
+  }
+
+  prepare_set_prob_value(PREPARE_FIELD_PROB_USE_TGZ, &tmp_prob, abstr, global);
+  if (tmp_prob.use_tgz) {
+    mkpath(g_path, conf_path, global->tgz_dir, DFLT_G_TGZ_DIR);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_TGZ_DIR, &tmp_prob, abstr, 0);
+    mkpath(l_path, g_path, tmp_prob.tgz_dir, "");
+    fprintf(f, "Directory with test tgz files: %s\n", l_path);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_TGZ_SFX, &tmp_prob, abstr, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_TGZ_PAT, &tmp_prob, abstr, global);
+    print_files(f, "Test tgz file names", tmp_prob.tgz_sfx, tmp_prob.tgz_pat);
   }
 
   fprintf(f, "\n");
