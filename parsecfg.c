@@ -819,7 +819,7 @@ read_variable(FILE *f, char *name, int nlen, char *val, int vlen)
       }
       continue;
     }
-    if (quot_char) {
+    if (quot_char == '\'') {
       *q++ = *p++;
       continue;
     }
