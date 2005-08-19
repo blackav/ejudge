@@ -342,6 +342,7 @@ struct section_problem_data
   int    abstract;              /* is this abstract problem specification */
   int    use_stdin;             /* 1, if solution uses stdin for input */
   int    use_stdout;            /* 1, if solution uses stdout for output */
+  int    binary_input;          /* input data for problem is binary */
   int    real_time_limit;       /* maximum astronomical time for a problem */
   int    time_limit;            /* time limit in secs */
   int    time_limit_millis;     /* time limit in milliseconds */
@@ -559,6 +560,7 @@ enum
 
   PREPARE_FIELD_PROB_USE_STDIN,
   PREPARE_FIELD_PROB_USE_STDOUT,
+  PREPARE_FIELD_PROB_BINARY_INPUT,
   PREPARE_FIELD_PROB_TIME_LIMIT,
   PREPARE_FIELD_PROB_TIME_LIMIT_MILLIS,
   PREPARE_FIELD_PROB_REAL_TIME_LIMIT,
@@ -583,9 +585,11 @@ enum
   PREPARE_FIELD_PROB_OUTPUT_FILE,
   PREPARE_FIELD_PROB_USE_CORR,
   PREPARE_FIELD_PROB_USE_INFO,
+  PREPARE_FIELD_PROB_USE_TGZ,
   PREPARE_FIELD_PROB_TEST_DIR,
   PREPARE_FIELD_PROB_CORR_DIR,
   PREPARE_FIELD_PROB_INFO_DIR,
+  PREPARE_FIELD_PROB_TGZ_DIR,
   PREPARE_FIELD_PROB_TEST_SFX,
   PREPARE_FIELD_PROB_CORR_SFX,
   PREPARE_FIELD_PROB_INFO_SFX,
