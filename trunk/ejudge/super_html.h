@@ -238,24 +238,30 @@ struct contest_desc;
 struct sid_state;
 
 int super_html_open_contest(struct contest_desc *cnts, int user_id,
-                            const unsigned char *user_login);
+                            const unsigned char *user_login, unsigned long ip);
 int super_html_close_contest(struct contest_desc *cnts, int user_id,
-                             const unsigned char *user_login);
+                             const unsigned char *user_login, unsigned long ip);
 
 int super_html_make_invisible_contest(struct contest_desc *cnts, int user_id,
-                                      const unsigned char *user_login);
+                                      const unsigned char *user_login,
+                                      unsigned long ip);
 int super_html_make_visible_contest(struct contest_desc *cnts, int user_id,
-                                    const unsigned char *user_login);
+                                    const unsigned char *user_login,
+                                    unsigned long ip);
 
 int super_html_serve_managed_contest(struct contest_desc *cnts, int user_id,
-                                     const unsigned char *user_login);
+                                     const unsigned char *user_login,
+                                     unsigned long ip);
 int super_html_serve_unmanaged_contest(struct contest_desc *cnts, int user_id,
-                                       const unsigned char *user_login);
+                                       const unsigned char *user_login,
+                                       unsigned long ip);
 
 int super_html_run_managed_contest(struct contest_desc *cnts, int user_id,
-                                   const unsigned char *user_login);
+                                   const unsigned char *user_login,
+                                   unsigned long ip);
 int super_html_run_unmanaged_contest(struct contest_desc *cnts, int user_id,
-                                     const unsigned char *user_login);
+                                     const unsigned char *user_login,
+                                     unsigned long ip);
 
 struct contest_desc *contest_tmpl_new(int contest_id,
                                       const unsigned char *login,
@@ -328,5 +334,7 @@ int super_html_check_tests(FILE *f,
                            const unsigned char *self_url,
                            const unsigned char *hidden_vars,
                            const unsigned char *extra_args);
+
+int super_html_update_versions(struct sid_state *sstate);
 
 #endif /* __SUPER_HTML_H__ */
