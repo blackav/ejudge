@@ -157,6 +157,7 @@ COMMON_CFILES=\
  userlist_proto.c\
  userlist_xml.c\
  varsubst.c\
+ vcs.c\
  xml_utils/attr_bool.c\
  xml_utils/elem_ip_mask.c\
  xml_utils/empty_text.c\
@@ -206,6 +207,8 @@ CFILES=\
  win32/fileutl.c\
  unix/cr_serialize.c\
  win32/cr_serialize.c\
+ unix/ej_process.c\
+ win32/ej_process.c\
  unix/interrupt.c\
  win32/interrupt.c\
  unix/curtime.c\
@@ -232,6 +235,7 @@ HFILES=\
  curtime.h\
  diff.h\
  digest_io.h\
+ ej_process.h\
  expat_iface.h\
  filehash.h\
  fileutl.h\
@@ -275,6 +279,7 @@ HFILES=\
  userlist_cfg.h\
  userlist_clnt.h\
  varsubst.h\
+ vcs.h\
  version.h\
  unix/unix_fileutl.h\
  userlist_clnt/private.h\
