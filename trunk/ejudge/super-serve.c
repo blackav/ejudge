@@ -2226,16 +2226,16 @@ cmd_simple_command(struct client_state *p, int len,
 
   switch (pkt->b.id) {
   case SSERV_CMD_OPEN_CONTEST:
-    r = super_html_open_contest(cnts, p->user_id, p->login);
+    r = super_html_open_contest(cnts, p->user_id, p->login, p->ip);
     break;
   case SSERV_CMD_CLOSE_CONTEST:
-    r = super_html_close_contest(cnts, p->user_id, p->login);
+    r = super_html_close_contest(cnts, p->user_id, p->login, p->ip);
     break;
   case SSERV_CMD_INVISIBLE_CONTEST:
-    r = super_html_make_invisible_contest(cnts, p->user_id, p->login);
+    r = super_html_make_invisible_contest(cnts, p->user_id, p->login, p->ip);
     break;
   case SSERV_CMD_VISIBLE_CONTEST:
-    r = super_html_make_visible_contest(cnts, p->user_id, p->login);
+    r = super_html_make_visible_contest(cnts, p->user_id, p->login, p->ip);
     break;
   case SSERV_CMD_SERVE_LOG_TRUNC:
   case SSERV_CMD_SERVE_LOG_DEV_NULL:
@@ -2417,6 +2417,10 @@ cmd_simple_top_command(struct client_state *p, int len,
     r = super_html_clear_variable(sstate, pkt->b.id);
     break;
 
+  case SSERV_CMD_LANG_UPDATE_VERSIONS:
+    r = super_html_update_versions(sstate);
+    break;
+
   default:
     err("%d: unhandled command: %d", p->id, pkt->b.id);
     p->state = STATE_DISCONNECT;
@@ -2545,6 +2549,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CHANGE_SUPER:
   case SSERV_CMD_PROB_CHANGE_USE_STDIN:
   case SSERV_CMD_PROB_CHANGE_USE_STDOUT:
+  case SSERV_CMD_PROB_CHANGE_BINARY_INPUT:
   case SSERV_CMD_PROB_CHANGE_TIME_LIMIT:
   case SSERV_CMD_PROB_CHANGE_TIME_LIMIT_MILLIS:
   case SSERV_CMD_PROB_CHANGE_REAL_TIME_LIMIT:
@@ -2626,6 +2631,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_GLOB_CLEAR_CORR_DIR:
   case SSERV_CMD_GLOB_CHANGE_INFO_DIR:
   case SSERV_CMD_GLOB_CLEAR_INFO_DIR:
+  case SSERV_CMD_GLOB_CHANGE_TGZ_DIR:
+  case SSERV_CMD_GLOB_CLEAR_TGZ_DIR:
   case SSERV_CMD_GLOB_CHANGE_CHECKER_DIR:
   case SSERV_CMD_GLOB_CLEAR_CHECKER_DIR:
   case SSERV_CMD_GLOB_CHANGE_CONTEST_START_CMD:
@@ -2966,6 +2973,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_SUPER] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_USE_STDIN] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_USE_STDOUT] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_BINARY_INPUT] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TIME_LIMIT] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TIME_LIMIT_MILLIS] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_REAL_TIME_LIMIT] = { cmd_set_value },
@@ -3044,6 +3052,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CLEAR_CORR_DIR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_INFO_DIR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CLEAR_INFO_DIR] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CHANGE_TGZ_DIR] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CLEAR_TGZ_DIR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_CHECKER_DIR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CLEAR_CHECKER_DIR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_CONTEST_START_CMD] = { cmd_set_value },
@@ -3170,6 +3180,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_SAVE_PLOG_FOOTER] = { cmd_set_value },
   [SSERV_CMD_GLOB_CLEAR_PLOG_FOOTER_TEXT] = { cmd_set_value },
   [SSERV_CMD_VIEW_NEW_SERVE_CFG] = { cmd_main_page },
+  [SSERV_CMD_LANG_UPDATE_VERSIONS] = { cmd_simple_top_command },
 };
 
 static void
