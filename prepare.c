@@ -204,7 +204,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(stand_r_row_attr, "s"),
   GLOBAL_PARAM(stand_u_row_attr, "s"),
   GLOBAL_PARAM(stand_success_attr, "s"),
-  GLOBAL_PARAM(stand_show_ok_time, "s"),
+  GLOBAL_PARAM(stand_show_ok_time, "d"),
 
   // just for fun
   GLOBAL_PARAM(extended_sound, "d"),
@@ -274,6 +274,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(abstract, "d"),
   PROBLEM_PARAM(use_stdin, "d"),
   PROBLEM_PARAM(use_stdout, "d"),
+  PROBLEM_PARAM(binary_input, "d"),
   PROBLEM_PARAM(time_limit, "d"),
   PROBLEM_PARAM(time_limit_millis, "d"),
   PROBLEM_PARAM(real_time_limit, "d"),
@@ -480,6 +481,7 @@ global_init_func(struct generic_section_config *gp)
   p->tests_to_accept = -1;
   p->team_download_time = -1;
   p->ignore_duplicated_runs = -1;
+  p->show_deadline = -1;
   p->inactivity_timeout = -1;
   p->checker_real_time_limit = -1;
   p->compile_real_time_limit = -1;
@@ -548,6 +550,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
 
   p->use_stdin = -1;
   p->use_stdout = -1;
+  p->binary_input = -1;
   p->time_limit = -1;
   p->time_limit_millis = -1;
   p->real_time_limit = -1;
@@ -1413,6 +1416,8 @@ set_defaults(int mode)
     global->ignore_compile_errors = DFLT_G_IGNORE_COMPILE_ERRORS;
   if (global->ignore_duplicated_runs == -1)
     global->ignore_duplicated_runs = DFLT_G_IGNORE_DUPLICATED_RUNS;
+  if (global->show_deadline == -1)
+    global->show_deadline = DFLT_G_SHOW_DEADLINE;
   if (global->enable_printing == -1)
     global->enable_printing = DFLT_G_ENABLE_PRINTING;
   if (global->prune_empty_users == -1)
@@ -2077,6 +2082,8 @@ set_defaults(int mode)
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDIN,
                            probs[i], aprob, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDOUT,
+                           probs[i], aprob, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_BINARY_INPUT,
                            probs[i], aprob, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TIME_LIMIT,
                            probs[i], aprob, global);
@@ -2940,9 +2947,9 @@ prepare(char const *config_file, int flags, int mode, char const *opts,
   cond_vars[5].name = "build";
   cond_vars[5].val.tag = PARSECFG_T_LONG;
   cond_vars[5].val.l.val = build;
-  cond_vars[5].name = "managed";
-  cond_vars[5].val.tag = PARSECFG_T_LONG;
-  cond_vars[5].val.l.val = managed_flag;
+  cond_vars[6].name = "managed";
+  cond_vars[6].val.tag = PARSECFG_T_LONG;
+  cond_vars[6].val.l.val = managed_flag;
 
   config = parse_param(config_file, 0, params, 1, ncond_var, cond_vars, 0);
   if (!config) return -1;
@@ -3429,6 +3436,8 @@ prepare_set_global_defaults(struct section_global_data *g)
     snprintf(g->corr_dir, sizeof(g->corr_dir), "%s", DFLT_G_CORR_DIR);
   if (!g->info_dir[0])
     snprintf(g->info_dir, sizeof(g->info_dir), "%s", DFLT_G_INFO_DIR);
+  if (!g->tgz_dir[0])
+    snprintf(g->tgz_dir, sizeof(g->tgz_dir), "%s", DFLT_G_TGZ_DIR);
   if (!g->checker_dir[0])
     snprintf(g->checker_dir, sizeof(g->checker_dir), "%s", DFLT_G_CHECKER_DIR);
 
@@ -3470,6 +3479,8 @@ prepare_set_global_defaults(struct section_global_data *g)
   if (g->show_astr_time < 0) g->show_astr_time = DFLT_G_SHOW_ASTR_TIME;
   if (g->ignore_duplicated_runs < 0)
     g->ignore_duplicated_runs = DFLT_G_IGNORE_DUPLICATED_RUNS;
+  if (g->show_deadline < 0)
+    g->show_deadline = DFLT_G_SHOW_DEADLINE;
   if (g->report_error_code < 0)
     g->report_error_code = DFLT_G_REPORT_ERROR_CODE;
   if (g->enable_continue < 0)
@@ -3506,6 +3517,7 @@ prepare_set_problem_defaults(struct section_problem_data *prob,
 
   if (prob->use_stdin < 0) prob->use_stdin = 0;
   if (prob->use_stdout < 0) prob->use_stdout = 0;
+  if (prob->binary_input < 0) prob->binary_input = DFLT_P_BINARY_INPUT;
   if (prob->time_limit < 0) prob->time_limit = 0;
   if (prob->time_limit_millis < 0) prob->time_limit_millis = 0;
   if (prob->real_time_limit < 0) prob->real_time_limit = 0;
@@ -3514,7 +3526,7 @@ prepare_set_problem_defaults(struct section_problem_data *prob,
   if (prob->variable_full_score < 0)
     prob->variable_full_score = DFLT_P_VARIABLE_FULL_SCORE;
   if (prob->run_penalty < 0) prob->run_penalty = DFLT_P_RUN_PENALTY;
-  if (prob->disqualified_penalty < 0) prob->disqualified_penalty = DFLT_P_RUN_PENALTY;
+  if (prob->disqualified_penalty < 0) prob->disqualified_penalty = prob->run_penalty;
   if (prob->use_corr < 0) prob->use_corr = 0;
   if (prob->use_info < 0) prob->use_info = 0;
   if (prob->use_tgz < 0) prob->use_tgz = 0;
@@ -3536,15 +3548,17 @@ prepare_set_problem_defaults(struct section_problem_data *prob,
     }
   }
   if (prob->info_sfx[0] == 1) {
-    prob->info_sfx[0] = 0;
     if (global->info_sfx[0]) {
       snprintf(prob->info_sfx, sizeof(prob->info_sfx), "%s", global->info_sfx);
+    } else {
+      snprintf(prob->info_sfx, sizeof(prob->info_sfx), "%s", DFLT_G_INFO_SFX);
     }
   }
   if (prob->tgz_sfx[0] == 1) {
-    prob->tgz_sfx[0] = 0;
     if (global->tgz_sfx[0]) {
       snprintf(prob->tgz_sfx, sizeof(prob->tgz_sfx), "%s", global->tgz_sfx);
+    } else {
+      snprintf(prob->tgz_sfx, sizeof(prob->tgz_sfx), "%s", DFLT_G_TGZ_SFX);
     }
   }
   if (prob->test_pat[0] == 1) {
@@ -3616,6 +3630,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->cr_serialization_key = config->serialization_key;
   global->show_astr_time = DFLT_G_SHOW_ASTR_TIME;
   global->ignore_duplicated_runs = DFLT_G_IGNORE_DUPLICATED_RUNS;
+  global->show_deadline = DFLT_G_SHOW_DEADLINE;
   global->report_error_code = DFLT_G_REPORT_ERROR_CODE;
   global->auto_short_problem_name = 0;
   global->enable_continue = DFLT_G_ENABLE_CONTINUE;
@@ -3781,7 +3796,37 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
 struct generic_section_config *
 prepare_parse_config_file(const unsigned char *path, int *p_cond_count)
 {
-  return parse_param(path, 0, params, 1, 0, 0, p_cond_count);
+  int major, minor, patch, build, ncond_var;
+  cfg_cond_var_t *cond_vars;
+
+  if (parse_version_string(&major, &minor, &patch, &build) < 0) return 0;
+
+  // initialize predefined variables
+  ncond_var = 7;
+  XALLOCAZ(cond_vars, ncond_var);
+  cond_vars[0].name = "host";
+  cond_vars[0].val.tag = PARSECFG_T_STRING;
+  cond_vars[0].val.s.str = os_NodeName();
+  cond_vars[1].name = "mode";
+  cond_vars[1].val.tag = PARSECFG_T_LONG;
+  cond_vars[1].val.l.val = PREPARE_SERVE;
+  cond_vars[2].name = "major";
+  cond_vars[2].val.tag = PARSECFG_T_LONG;
+  cond_vars[2].val.l.val = major;
+  cond_vars[3].name = "minor";
+  cond_vars[3].val.tag = PARSECFG_T_LONG;
+  cond_vars[3].val.l.val = minor;
+  cond_vars[4].name = "patch";
+  cond_vars[4].val.tag = PARSECFG_T_LONG;
+  cond_vars[4].val.l.val = patch;
+  cond_vars[5].name = "build";
+  cond_vars[5].val.tag = PARSECFG_T_LONG;
+  cond_vars[5].val.l.val = build;
+  cond_vars[6].name = "managed";
+  cond_vars[6].val.tag = PARSECFG_T_LONG;
+  cond_vars[6].val.l.val = 1;
+
+  return parse_param(path, 0, params, 1, ncond_var, cond_vars, p_cond_count);
 }
 
 struct section_global_data *
@@ -3851,6 +3896,11 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
   case PREPARE_FIELD_PROB_USE_STDOUT:
     if (out->use_stdout == -1 && abstr) out->use_stdout = abstr->use_stdout;
     if (out->use_stdout == -1) out->use_stdout = 0;
+    break;
+
+  case PREPARE_FIELD_PROB_BINARY_INPUT:
+    if (out->binary_input == -1 && abstr) out->binary_input = abstr->binary_input;
+    if (out->binary_input == -1) out->binary_input = DFLT_P_BINARY_INPUT;
     break;
 
   case PREPARE_FIELD_PROB_TIME_LIMIT:
@@ -4025,6 +4075,11 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     if (out->use_info == -1) out->use_info = 0;
     break;
 
+  case PREPARE_FIELD_PROB_USE_TGZ:
+    if (out->use_tgz == -1 && abstr) out->use_tgz = abstr->use_tgz;
+    if (out->use_tgz == -1) out->use_tgz = 0;
+    break;
+
   case PREPARE_FIELD_PROB_TEST_DIR:
     if (!out->test_dir[0] && abstr && abstr->test_dir[0]) {
       sformat_message(out->test_dir, PATH_MAX, abstr->test_dir,
@@ -4053,8 +4108,24 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       sformat_message(out->info_dir, PATH_MAX, abstr->info_dir,
                       NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
+    if (!out->info_dir[0]) {
+      snprintf(out->info_dir, sizeof(out->info_dir), "%s", out->short_name);
+    }
     if (global && out->info_dir[0]) {
       path_add_dir(out->info_dir, global->info_dir);
+    }
+    break;
+
+  case PREPARE_FIELD_PROB_TGZ_DIR:
+    if (!out->tgz_dir[0] && abstr && abstr->tgz_dir[0]) {
+      sformat_message(out->tgz_dir, PATH_MAX, abstr->tgz_dir,
+                      NULL, out, NULL, NULL, NULL, 0, 0, 0);
+    }
+    if (!out->tgz_dir[0]) {
+      snprintf(out->tgz_dir, sizeof(out->tgz_dir), "%s", out->short_name);
+    }
+    if (global && out->tgz_dir[0]) {
+      path_add_dir(out->tgz_dir, global->tgz_dir);
     }
     break;
 
@@ -4086,8 +4157,11 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     if (out->info_sfx[0] == 1 && abstr && abstr->info_sfx[0] != 1) {
       strcpy(out->info_sfx, abstr->info_sfx);
     }
-    if (out->info_sfx[0] == 1 && global && global->info_sfx[0] != 1) {
+    if (out->info_sfx[0] == 1 && global && global->info_sfx[0]) {
       strcpy(out->info_sfx, global->info_sfx);
+    }
+    if (out->info_sfx[0] == 1) {
+      strcpy(out->info_sfx, DFLT_G_INFO_SFX);
     }
     if (out->info_sfx[0] == 1) {
       out->info_sfx[0] = 0;
@@ -4100,6 +4174,9 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     }
     if (out->tgz_sfx[0] == 1 && global && global->tgz_sfx[0] != 1) {
       strcpy(out->tgz_sfx, global->tgz_sfx);
+    }
+    if (out->tgz_sfx[0] == 1) {
+      strcpy(out->tgz_sfx, DFLT_G_TGZ_SFX);
     }
     if (out->tgz_sfx[0] == 1) {
       out->tgz_sfx[0] = 0;
