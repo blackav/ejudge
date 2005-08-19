@@ -28,6 +28,7 @@
 #include "fileutl.h"
 #include "prepare_dflt.h"
 #include "xml_utils.h"
+#include "ej_process.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -753,9 +754,15 @@ super_html_edit_global_parameters(FILE *f,
                            extra_args,
                            hidden_vars);
 
-  /*
-  GLOBAL_PARAM(tgz_dir, "s"),
-  */
+    //GLOBAL_PARAM(tgz_dir, "s"),
+    print_string_editing_row(f, "Directory for test tgz files (relative to contest configuration dir):", global->tgz_dir,
+                           SUPER_ACTION_GLOB_CHANGE_TGZ_DIR,
+                           SUPER_ACTION_GLOB_CLEAR_TGZ_DIR,
+                           0,
+                           session_id,
+                           self_url,
+                           extra_args,
+                           hidden_vars);
 
     //GLOBAL_PARAM(checker_dir, "s"),
     print_string_editing_row(f, "Directory for checkers (relative to contest configuration dir):", global->checker_dir,
@@ -1710,6 +1717,12 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_GLOB_CLEAR_INFO_DIR: 
     GLOB_CLEAR_STRING(info_dir);
 
+  case SSERV_CMD_GLOB_CHANGE_TGZ_DIR:
+    GLOB_SET_STRING(tgz_dir);
+
+  case SSERV_CMD_GLOB_CLEAR_TGZ_DIR: 
+    GLOB_CLEAR_STRING(tgz_dir);
+
   case SSERV_CMD_GLOB_CHANGE_CHECKER_DIR:
     GLOB_SET_STRING(checker_dir);
 
@@ -2175,37 +2188,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   return 0;
 }
 
-static unsigned char *
-read_process_output(const unsigned char *cmd)
-{
-  FILE *fin = 0;
-  FILE *fout = 0;
-  char *out_txt = 0;
-  size_t out_len = 0;
-  int c;
-
-  if (!(fout = open_memstream(&out_txt, &out_len))) goto failed;
-  if (!(fin = popen(cmd, "r"))) goto failed;
-  while ((c = getc(fin)) != EOF) putc(c, fout);
-  c = pclose(fin);
-  fclose(fout);
-
-  if (c) {
-    xfree(out_txt);
-    return xstrdup("");
-  }
-
-  out_len = strlen(out_txt);
-  while (out_len > 0 && isspace(out_txt[out_len - 1])) out_txt[--out_len] = 0;
-  return out_txt;
-
- failed:
-  if (fin) pclose(fin);
-  if (fout) fclose(fout);
-  xfree(out_txt);
-  return 0;
-}
-
 static int
 load_cs_languages(const struct userlist_cfg *config,
                   struct sid_state *sstate,
@@ -2284,7 +2266,7 @@ load_cs_languages(const struct userlist_cfg *config,
                script_dir, lp->cmd);
         //}
       if (access(cmdpath, X_OK) >= 0) {
-        sstate->cs_lang_names[cur_lang] = read_process_output(cmdline);
+        sstate->cs_lang_names[cur_lang] = read_process_output(cmdline, 0, 0, 0);
         //fprintf(stderr, ">>%s<<\n", sstate->cs_lang_names[cur_lang]);
       }
     }
@@ -2477,6 +2459,12 @@ super_html_edit_languages(FILE *f,
 
   fprintf(f, "</table>\n");
 
+  // update compiler versions
+  fprintf(f, "<table><tr><td>");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_submit_button(f, SUPER_ACTION_LANG_UPDATE_VERSIONS, "Update versions");
+  fprintf(f, "</form></td></tr></table>\n");
+
   super_html_contest_footer_menu(f, session_id, sstate,
                                  self_url, hidden_vars, extra_args);
 
@@ -2654,6 +2642,31 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
     abort();
   }
 
+  return 0;
+}
+
+int
+super_html_update_versions(struct sid_state *sstate)
+{
+  int i, j;
+
+  if (!sstate->cs_langs) {
+    return -SSERV_ERR_CONTEST_NOT_EDITED;
+  }
+
+  for (i = 1; i < sstate->lang_a; i++) {
+    if (!sstate->langs[i]) continue;
+    j = 0;
+    if (sstate->loc_cs_map) {
+      j = sstate->loc_cs_map[i];
+      if (j <= 0 || j >= sstate->cs_lang_total || !sstate->cs_langs[j])
+        j = 0;
+    }
+    if (j > 0) {
+      snprintf(sstate->langs[i]->long_name,sizeof(sstate->langs[i]->long_name),
+               "%s", sstate->cs_lang_names[j]);
+    }
+  }
   return 0;
 }
 
@@ -2978,6 +2991,24 @@ super_html_print_problem(FILE *f,
                                session_id, self_url, extra_args, prob_hidden_vars);
                                
   }
+
+  if (show_adv) {
+    //PROBLEM_PARAM(binary_input, "d"),
+    extra_msg = 0;
+    if (!prob->abstract) {
+      prepare_set_prob_value(PREPARE_FIELD_PROB_BINARY_INPUT,
+                             &tmp_prob, sup_prob, sstate->global);
+      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+               tmp_prob.binary_input?"Yes":"No");
+      extra_msg = msg_buf;
+    }
+    print_boolean_3_select_row(f, "Input data is binary", prob->binary_input,
+                               SUPER_ACTION_PROB_CHANGE_BINARY_INPUT,
+                               extra_msg,
+                               session_id, self_url, extra_args,
+                               prob_hidden_vars);
+  }
+
 
   //PROBLEM_PARAM(test_dir, "s"),
   extra_msg = 0;
@@ -3856,6 +3887,7 @@ super_html_prob_cmd(struct sid_state *sstate, int cmd,
     prob->abstract = 1;
     prob->use_stdin = 1;
     prob->use_stdout = 1;
+    prob->binary_input = DFLT_P_BINARY_INPUT;
     prob->time_limit = 5;
     prob->time_limit_millis = 0;
     prob->real_time_limit = 30;
@@ -3867,6 +3899,9 @@ super_html_prob_cmd(struct sid_state *sstate, int cmd,
     prob->use_info = 0;
     snprintf(prob->info_dir, sizeof(prob->info_dir), "%s", "%Ps");
     snprintf(prob->info_sfx, sizeof(prob->info_sfx), "%s", ".inf");
+    prob->use_tgz = 0;
+    snprintf(prob->tgz_dir, sizeof(prob->tgz_dir), "%s", "%Ps");
+    snprintf(prob->tgz_sfx, sizeof(prob->tgz_sfx), "%s", ".inf");
     snprintf(prob->check_cmd, sizeof(prob->check_cmd), "%s", "check_%Ps");
     prob->max_vm_size = 64 * SIZE_M;
     prob->variant_num = 0;
@@ -4010,6 +4045,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_USE_STDOUT:
     p_int = &prob->use_stdout;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_BINARY_INPUT:
+    p_int = &prob->binary_input;
     goto handle_boolean_1;
 
   case SSERV_CMD_PROB_CHANGE_TIME_LIMIT:
@@ -4886,6 +4925,11 @@ super_html_read_serve(FILE *flog,
     total++;
   }
 
+  if (!total) {
+    fprintf(flog, "No abstract testers defined\n");
+    return -1;
+  }
+
   sstate->atester_total = total;
   XCALLOC(sstate->atesters, sstate->atester_total);
   for (pg = sstate->cfg, i = 0; pg; pg = pg->next) {
@@ -5251,7 +5295,7 @@ dos2unix_str(const unsigned char *s)
 
 static int
 check_test_file(FILE *flog, int n, const unsigned char *path, const unsigned char *pat,
-                const unsigned char *sfx, int q_flag)
+                const unsigned char *sfx, int q_flag, int bin_flag)
 {
   path_t name;
   path_t name2;
@@ -5316,33 +5360,35 @@ check_test_file(FILE *flog, int n, const unsigned char *path, const unsigned cha
     }
   }
 
-  if (generic_read_file(&test_txt, 0, &test_len, 0, 0, full, 0) < 0) {
-    fprintf(flog, "Error: failed to read %s\n", full);
-    return -1;
-  }
-  if (test_len != strlen(test_txt)) {
-    fprintf(flog, "Error: file %s contains zero bytes\n", full);
-    xfree(test_txt);
-    return -1;
-  }
-  d2u_txt = dos2unix_str(test_txt);
-  if (strcmp(d2u_txt, test_txt)) {
-    changed = 1;
-    fprintf(flog, "Info: file %s converted from DOS to UNIX format\n", full);
-  }
-  xfree(test_txt); test_txt = 0;
-  test_len = strlen(d2u_txt);
-  if (test_len > 0 && d2u_txt[test_len - 1] != '\n') {
-    changed = 1;
-    out_txt = xmalloc(test_len + 2);
-    strcpy(out_txt, d2u_txt);
-    out_txt[test_len] = '\n';
-    out_txt[test_len + 1] = 0;
-    xfree(d2u_txt); d2u_txt = 0;
-    fprintf(flog, "Info: file %s: final newline appended\n", full);
-    test_len++;
-  } else {
-    out_txt = d2u_txt; d2u_txt = 0;
+  if (!bin_flag) {
+    if (generic_read_file(&test_txt, 0, &test_len, 0, 0, full, 0) < 0) {
+      fprintf(flog, "Error: failed to read %s\n", full);
+      return -1;
+    }
+    if (test_len != strlen(test_txt)) {
+      fprintf(flog, "Error: file %s contains zero bytes\n", full);
+      xfree(test_txt);
+      return -1;
+    }
+    d2u_txt = dos2unix_str(test_txt);
+    if (strcmp(d2u_txt, test_txt)) {
+      changed = 1;
+      fprintf(flog, "Info: file %s converted from DOS to UNIX format\n", full);
+    }
+    xfree(test_txt); test_txt = 0;
+    test_len = strlen(d2u_txt);
+    if (test_len > 0 && d2u_txt[test_len - 1] != '\n') {
+      changed = 1;
+      out_txt = xmalloc(test_len + 2);
+      strcpy(out_txt, d2u_txt);
+      out_txt[test_len] = '\n';
+      out_txt[test_len + 1] = 0;
+      xfree(d2u_txt); d2u_txt = 0;
+      fprintf(flog, "Info: file %s: final newline appended\n", full);
+      test_len++;
+    } else {
+      out_txt = d2u_txt; d2u_txt = 0;
+    }
   }
 
   if (changed) {
@@ -5460,7 +5506,7 @@ get_compiler_path(const unsigned char *short_name, unsigned char *old_path)
 
   snprintf(cmd, sizeof(cmd), "%s/libexec/ejudge/%s-version -p",
            EJUDGE_PREFIX_DIR, short_name);
-  if (!(s = read_process_output(cmd))) s = xstrdup("");
+  if (!(s = read_process_output(cmd, 0, 0, 0))) s = xstrdup("");
   return s;
 } 
 
@@ -5660,6 +5706,7 @@ super_html_check_tests(FILE *f,
   path_t g_test_path;
   path_t g_corr_path;
   path_t g_info_path;
+  path_t g_tgz_path;
   path_t g_checker_path;
   path_t test_path, corr_path, info_path, checker_path;
   struct contest_desc *cnts;
@@ -5696,12 +5743,18 @@ super_html_check_tests(FILE *f,
   mkpath(g_test_path, conf_path, global->test_dir, DFLT_G_TEST_DIR);
   mkpath(g_corr_path, conf_path, global->corr_dir, DFLT_G_CORR_DIR);
   mkpath(g_info_path, conf_path, global->info_dir, DFLT_G_INFO_DIR);
+  mkpath(g_tgz_path, conf_path, global->tgz_dir, DFLT_G_TGZ_DIR);
   mkpath(g_checker_path, conf_path, global->checker_dir, DFLT_G_CHECKER_DIR);
 
   for (i = 1; i < sstate->prob_a; i++) {
     if (!(prob = sstate->probs[i])) continue;
 
     fprintf(flog, "*** Checking problem %s ***\n", prob->short_name);
+    if (prob->disable_testing > 0) {
+      fprintf(flog, "Testing is disabled, skipping\n");
+      continue;
+    }
+
     abstr = 0;
     if (prob->super[0]) {
       for (j = 0; j < sstate->aprob_u; j++)
@@ -5717,6 +5770,7 @@ super_html_check_tests(FILE *f,
     }
 
     prepare_copy_problem(&tmp_prob, prob);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_BINARY_INPUT, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_DIR, &tmp_prob, abstr, 0);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_CORR, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_SFX, &tmp_prob, abstr, global);
@@ -5775,7 +5829,7 @@ super_html_check_tests(FILE *f,
 
     total_tests = 1;
     while (1) {
-      k = check_test_file(flog, total_tests, test_path, tmp_prob.test_pat, tmp_prob.test_sfx, 1);
+      k = check_test_file(flog, total_tests, test_path, tmp_prob.test_pat, tmp_prob.test_sfx, 1, tmp_prob.binary_input);
       if (k < 0) goto check_failed;
       if (!k) break;
       total_tests++;
@@ -5791,23 +5845,23 @@ super_html_check_tests(FILE *f,
     for (j = 1; j <= total_tests; j++) {
       if (tmp_prob.use_corr
           && check_test_file(flog, j, corr_path, tmp_prob.corr_pat,
-                             tmp_prob.corr_sfx, 0) <= 0)
+                             tmp_prob.corr_sfx, 0, tmp_prob.binary_input) <= 0)
         goto check_failed;
       if (tmp_prob.use_info
           && check_test_file(flog, j, info_path, tmp_prob.info_pat,
-                             tmp_prob.info_sfx, 0) <= 0)
+                             tmp_prob.info_sfx, 0, 0) <= 0)
         goto check_failed;
     }
     if (tmp_prob.use_corr
         && check_test_file(flog, j, corr_path, tmp_prob.corr_pat,
-                           tmp_prob.corr_sfx, 1) != 0) {
+                           tmp_prob.corr_sfx, 1, tmp_prob.binary_input) != 0) {
       fprintf(flog, "Error: there is answer file for test %d, but no data file\n",
               j);
       goto check_failed;
     }
     if (tmp_prob.use_info
         && check_test_file(flog, j, info_path, tmp_prob.info_pat,
-                           tmp_prob.info_sfx, 1) != 0) {
+                           tmp_prob.info_sfx, 1, 0) != 0) {
       fprintf(flog, "Error: there is test info file for test %d, but no data file\n",
               j);
       goto check_failed;
