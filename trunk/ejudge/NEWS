@@ -1,6 +1,47 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
+Version 2.1.40 (20050902)
+=========================
+This version fixes several bugs of the previous versions.
+
+Support for Version Control Systems (VCS) is implemented. When
+an XML contest configuration file is changed by the
+`serve-control' CGI-program, the updated file is committed to
+the VCS. The directory with XML contest configuration files must
+be under the VCS control. Two Version Control Systems are
+supported: subversion and CVS. The VCS is detected automatically
+depending on the name of the VCS directory: if in the contest
+XML directory there exists `.svn' directory, subversion is used,
+and if `CVS' directory exists, CVS is used.
+
+Updated the link to the ejudge home page, which is always
+printed on the bottom of ejudge-generated HTML pages. Now it is 
+http://acm.msu.ru/ejudge.
+
+New problem configuration variable `binary_input' is added to
+the serve.cfg contest configuration file. If this variable is
+set, the corresponding problem is assumed to have binary input
+data, which are never automatically recoded. Automatic recoding
+is possible if this configuration variable is not set in two
+cases:
+1) when an input file is being copied to the submitted program
+working directory, if the corresponding tester has the `is_dos'
+flag set. During copying unix-like line terminators \n are
+replaced with dos-like line terminators \r\n.
+2) when the "Check contest settings" command is performed in the
+contest detailed information view page in the `serve-control'
+CGI program. During this operation all \r characters are removed
+from file, and \n is added to the end of file, if there was no
+\n there.
+
+The attribute "ssl" of the <ip> element is supported in the
+`serve-control.xml' configuration file of the `serve-control'
+CGI program. This attribute allows specifying whether the <ip>
+element is applicable to HTTP connections, HTTPS connections, or
+both. This attribute corresponds to the "ssl" attribute in the
+contest.xml configuration file.
+
 Version 2.1.39 (20050811)
 =========================
 
