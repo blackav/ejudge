@@ -203,6 +203,8 @@ CFILES=\
  testinfo.c\
  userlist-server.c\
  users.c\
+ unix/cpu.c\
+ win32/cpu.c\
  unix/fileutl.c\
  win32/fileutl.c\
  unix/cr_serialize.c\
@@ -231,6 +233,7 @@ HFILES=\
  compile_packet_priv.h\
  contests.h\
  copyright.h\
+ cpu.h\
  cr_serialize.h\
  curtime.h\
  diff.h\
