@@ -2025,3 +2025,5 @@ copyright.c 1 6 170342
 NEWS.RUS 1 21 24381930
 NEWS 1 21 14565574
 win32/cpu.c 1 1 68383
+cpu.h 1 1 59802
+unix/cpu.c 1 1 124287
