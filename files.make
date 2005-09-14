@@ -112,6 +112,7 @@ COMMON_CFILES=\
  filter_tree.c\
  full_archive.c\
  html.c\
+ html_date_select.c\
  html_hyperref.c\
  html_start_form.c\
  l10n.c\
