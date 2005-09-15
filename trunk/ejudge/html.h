@@ -54,7 +54,8 @@ void write_team_page(FILE *f, int user_id,
                      unsigned char const *hidden_vars,
                      unsigned char const *extra_args,
                      time_t server_start,
-                     time_t server_end);
+                     time_t server_end,
+                     int accepting_mode);
 
 void write_master_page(FILE *f,
                        int user_id, int priv_level,
