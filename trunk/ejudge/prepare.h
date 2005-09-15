@@ -306,6 +306,7 @@ struct section_global_data
   int html_report;              /* whether generate master report in HTML */
   int xml_report;               /* whether generate master report in XML */
   int enable_full_archive;      /* enable storing the full output */
+  int cpu_bogomips;             /* CPU speed (BogoMIPS) */
 
   // variant support
   path_t variant_map_file;
