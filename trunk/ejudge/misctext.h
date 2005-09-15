@@ -64,4 +64,6 @@ void html_start_form(FILE *f, int mode, unsigned long long sid,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars);
 
+void html_date_select(FILE *f, time_t t);
+
 #endif /* __MISCTEXT_H__ */
