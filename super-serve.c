@@ -493,7 +493,8 @@ check_user_identity(const unsigned char *prog_name,
 static void close_all_client_sockets(void);
 
 int
-super_serve_start_serve_test_mode(struct contest_desc *cnts, unsigned char **p_log)
+super_serve_start_serve_test_mode(struct contest_desc *cnts, unsigned char **p_log,
+                                  int pass_socket)
 {
   FILE *flog = 0;
   char *flog_txt = 0;
@@ -505,6 +506,7 @@ super_serve_start_serve_test_mode(struct contest_desc *cnts, unsigned char **p_l
   unsigned char *corestr = "";
   unsigned char **args;
   path_t conf_path, conf_dir;
+  unsigned char sock_str[64];
 
   flog = open_memstream(&flog_txt, &flog_len);
 
@@ -542,6 +544,7 @@ super_serve_start_serve_test_mode(struct contest_desc *cnts, unsigned char **p_l
       if (!extras[i]) continue;
       if (!extras[i]->serve_used) continue;
       if (extras[i]->socket_fd < 0) continue;
+      if (pass_socket >= 0 && extras[i]->socket_fd == pass_socket) continue;
       close(extras[i]->socket_fd);
     }
     for (i = 0; i < extra_a; i++) {
@@ -584,10 +587,17 @@ super_serve_start_serve_test_mode(struct contest_desc *cnts, unsigned char **p_l
     }
 
     // setup argument vector
+    sock_str[0] = 0;
+    if (pass_socket >= 0) {
+      snprintf(sock_str, sizeof(sock_str), "-S%d", pass_socket);
+    }
     args = (unsigned char **) alloca(10 * sizeof(args[0]));
     i = 0;
     args[i++] = config->serve_path;
     args[i++] = "-i";
+    if (sock_str[0]) {
+      args[i++] = sock_str;
+    }
     args[i++] = conf_path;
     args[i++] = 0;
 
@@ -1820,6 +1830,7 @@ cmd_main_page(struct client_state *p, int len,
   case SSERV_CMD_VIEW_RUN_LOG:
   case SSERV_CMD_VIEW_CONTEST_XML:
   case SSERV_CMD_VIEW_SERVE_CFG:
+  case SSERV_CMD_SERVE_MNG_PROBE_RUN:
     if ((r = contests_get(pkt->contest_id, &cnts)) < 0 || !cnts) {
       return send_reply(p, -SSERV_ERR_INVALID_CONTEST);
     }
@@ -1861,6 +1872,7 @@ cmd_main_page(struct client_state *p, int len,
     }
     break;
   case SSERV_CMD_CONTEST_PAGE:
+  case SSERV_CMD_SERVE_MNG_PROBE_RUN:
     if (p->priv_level != PRIV_LEVEL_ADMIN) {
       err("%d: inappropriate privilege level", p->id);
       return send_reply(p, -SSERV_ERR_PERMISSION_DENIED);
@@ -1974,6 +1986,13 @@ cmd_main_page(struct client_state *p, int len,
     r = super_html_contest_page(f, p->priv_level, p->user_id, pkt->contest_id,
                                 p->login, p->cookie, p->ip, p->ssl, config,
                                 self_url_ptr, hidden_vars_ptr, extra_args_ptr);
+    break;
+  case SSERV_CMD_SERVE_MNG_PROBE_RUN:
+    r = super_html_serve_probe_run(f, p->priv_level, p->user_id,
+                                   pkt->contest_id,
+                                   p->login, p->cookie, p->ip, p->ssl, config,
+                                   self_url_ptr, hidden_vars_ptr,
+                                   extra_args_ptr);
     break;
   case SSERV_CMD_VIEW_SERVE_LOG:
   case SSERV_CMD_VIEW_RUN_LOG:
@@ -2496,6 +2515,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_DELETE_RULE:
   case SSERV_CMD_CNTS_UP_RULE:
   case SSERV_CMD_CNTS_DOWN_RULE:
+  case SSERV_CMD_CNTS_COPY_ACCESS:
   case SSERV_CMD_CNTS_DELETE_PERMISSION:
   case SSERV_CMD_CNTS_ADD_PERMISSION:
   case SSERV_CMD_CNTS_SAVE_PERMISSIONS:
@@ -2601,6 +2621,10 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CLEAR_SCORE_BONUS:
   case SSERV_CMD_PROB_CHANGE_CHECK_CMD:
   case SSERV_CMD_PROB_CLEAR_CHECK_CMD:
+  case SSERV_CMD_PROB_CHANGE_START_DATE:
+  case SSERV_CMD_PROB_CLEAR_START_DATE:
+  case SSERV_CMD_PROB_CHANGE_DEADLINE:
+  case SSERV_CMD_PROB_CLEAR_DEADLINE:
     r = super_html_prob_param(sstate, pkt->b.id, pkt->param1, param2_ptr,
                               pkt->param3, pkt->param4);
     break;
@@ -2737,6 +2761,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_GLOB_CLEAR_CHARSET:
   case SSERV_CMD_GLOB_CHANGE_TEAM_DOWNLOAD_TIME:
   case SSERV_CMD_GLOB_DISABLE_TEAM_DOWNLOAD_TIME:
+  case SSERV_CMD_GLOB_CHANGE_CPU_BOGOMIPS:
+  case SSERV_CMD_GLOB_DETECT_CPU_BOGOMIPS:
   case SSERV_CMD_GLOB_SAVE_CONTEST_START_CMD:
   case SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD_TEXT:
   case SSERV_CMD_GLOB_SAVE_STAND_HEADER:
@@ -2771,6 +2797,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PASS_FD] = { cmd_pass_fd },
   [SSERV_CMD_MAIN_PAGE] = { cmd_main_page },
   [SSERV_CMD_CONTEST_PAGE] = { cmd_main_page },
+  [SSERV_CMD_SERVE_MNG_PROBE_RUN] = { cmd_main_page },
   [SSERV_CMD_VIEW_SERVE_LOG] = { cmd_main_page },
   [SSERV_CMD_VIEW_RUN_LOG] = { cmd_main_page },
   [SSERV_CMD_VIEW_CONTEST_XML] = { cmd_main_page },
@@ -2904,6 +2931,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_DELETE_RULE] = { cmd_set_value },
   [SSERV_CMD_CNTS_UP_RULE] = { cmd_set_value },
   [SSERV_CMD_CNTS_DOWN_RULE] = { cmd_set_value },
+  [SSERV_CMD_CNTS_COPY_ACCESS] = { cmd_set_value },
   [SSERV_CMD_CNTS_DELETE_PERMISSION] = { cmd_set_value },
   [SSERV_CMD_CNTS_ADD_PERMISSION] = { cmd_set_value },
   [SSERV_CMD_CNTS_SAVE_PERMISSIONS] = { cmd_set_value },
@@ -3025,6 +3053,10 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CLEAR_SCORE_BONUS] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_CHECK_CMD] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_CHECK_CMD] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_START_DATE] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_START_DATE] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_DEADLINE] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_DEADLINE] = { cmd_set_value },
 
   [SSERV_CMD_GLOB_CHANGE_DURATION] = { cmd_set_value },
   [SSERV_CMD_GLOB_UNLIMITED_DURATION] = { cmd_set_value },
@@ -3165,6 +3197,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CLEAR_CHARSET] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_TEAM_DOWNLOAD_TIME] = { cmd_set_value },
   [SSERV_CMD_GLOB_DISABLE_TEAM_DOWNLOAD_TIME] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CHANGE_CPU_BOGOMIPS] = { cmd_set_value },
+  [SSERV_CMD_GLOB_DETECT_CPU_BOGOMIPS] = { cmd_set_value },
   [SSERV_CMD_GLOB_SAVE_CONTEST_START_CMD] = { cmd_set_value },
   [SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD_TEXT] = { cmd_set_value },
   [SSERV_CMD_GLOB_SAVE_STAND_HEADER] = { cmd_set_value },
