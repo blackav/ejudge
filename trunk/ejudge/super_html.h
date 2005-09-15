@@ -49,6 +49,19 @@ int super_html_contest_page(FILE *f,
                             const unsigned char *hidden_vars,
                             const unsigned char *extra_args);
 
+int super_html_serve_probe_run(FILE *f,
+                               int priv_level,
+                               int user_id,
+                               int contest_id,
+                               const unsigned char *login,
+                               unsigned long long session_id,
+                               unsigned int ip_address,
+                               int ssl,
+                               struct userlist_cfg *config,
+                               const unsigned char *self_url,
+                               const unsigned char *hidden_vars,
+                               const unsigned char *extra_args);
+
 int super_html_log_page(FILE *f,
                         int cmd,
                         int priv_level,
