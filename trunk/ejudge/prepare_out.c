@@ -136,6 +136,7 @@ do_str(FILE *f, struct str_buf *pb, const unsigned char *name, const unsigned ch
   fprintf(f, "%s = \"%s\"\n", name, c_armor(pb, val));
 }
 
+/*
 static void
 do_str_mb_empty(FILE *f, struct str_buf *pb, const unsigned char *name,
                 const unsigned char *val)
@@ -143,6 +144,7 @@ do_str_mb_empty(FILE *f, struct str_buf *pb, const unsigned char *name,
   if (!val) val = "";
   fprintf(f, "%s = \"%s\"\n", name, c_armor(pb, val));
 }
+*/
 
 static void
 do_xstr(FILE *f, struct str_buf *pb, const unsigned char *name, char **val)
@@ -424,6 +426,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     fprintf(f, "charset = \"%s\"\n", c_armor(&sbuf, global->charset));
   if (global->team_download_time != DFLT_G_TEAM_DOWNLOAD_TIME)
     fprintf(f, "team_download_time = %d\n", global->team_download_time);
+  if (global->cpu_bogomips > 0)
+    fprintf(f, "cpu_bogomips = %d\n", global->cpu_bogomips);
   fprintf(f, "\n");
 
   if (global->unhandled_vars) fprintf(f, "%s\n", global->unhandled_vars);
@@ -978,8 +982,12 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   }
   if (prob->stand_hide_time)
     unparse_bool(f, "stand_hide_time", prob->stand_hide_time);
-  fprintf(f, "\n");
+  if (!prob->abstract && prob->start_date[0])
+    fprintf(f, "start_date = \"%s\"\n", c_armor(&sbuf, prob->start_date));
+  if (!prob->abstract && prob->deadline[0])
+    fprintf(f, "deadline = \"%s\"\n", c_armor(&sbuf, prob->deadline));
 
+  fprintf(f, "\n");
   if (prob->unhandled_vars) fprintf(f, "%s\n", prob->unhandled_vars);
 
   xfree(sbuf.s); sbuf.s = 0; sbuf.a = 0;
@@ -992,11 +1000,7 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   PROBLEM_PARAM(priority_adjustment, "d"),
   PROBLEM_PARAM(spelling, "s"),
   PROBLEM_PARAM(score_multiplier, "d"),
-  PROBLEM_PARAM(tgz_dir, "s"),
-  PROBLEM_PARAM(tgz_sfx, "s"),
   PROBLEM_PARAM(test_sets, "x"),
-  PROBLEM_PARAM(deadline, "s"),
-  PROBLEM_PARAM(start_date, "s"),
   PROBLEM_PARAM(variant_num, "d"),
   PROBLEM_PARAM(date_penalty, "x"),
   PROBLEM_PARAM(disable_language, "x"),
@@ -1015,6 +1019,7 @@ prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
     if (prob->use_tgz || !prob->abstract)
       unparse_bool(f, "use_tgz", prob->use_tgz);
   }
+  /*
   //PROBLEM_PARAM(tgz_dir, "s"),
   do_str(f, &sbuf, "tgz_dir", prob->tgz_dir);
   //PROBLEM_PARAM(tgz_sfx, "s"),
@@ -1030,6 +1035,7 @@ prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
     if (strcmp(prob->tgz_pat, global->tgz_pat) || !prob->abstract)
       do_str_mb_empty(f, &sbuf, "tgz_pat", prob->tgz_pat);
   }
+  */
   //PROBLEM_PARAM(priority_adjustment, "d"),
   if (prob->priority_adjustment != -1000) {
     if (prob->priority_adjustment || !prob->abstract)
@@ -1042,10 +1048,6 @@ prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
     fprintf(f, "score_multiplier = %d\n", prob->score_multiplier);
   //PROBLEM_PARAM(test_sets, "x"),
   do_xstr(f, &sbuf, "test_sets", prob->test_sets);
-  //PROBLEM_PARAM(deadline, "s"),
-  do_str(f, &sbuf, "deadline", prob->deadline);
-  //PROBLEM_PARAM(start_date, "s"),
-  do_str(f, &sbuf, "start_date", prob->start_date);
   //PROBLEM_PARAM(variant_num, "d"),
   if (prob->variant_num >= 0) {
     if (prob->variant_num || !prob->abstract)
@@ -1382,7 +1384,7 @@ prepare_unparse_testers(FILE *f,
 
   // how many problems
   for (i = 1, j = 0; i < total_probs; i++)
-    if (probs[i]) j++;
+    if (probs[i] && probs[i]->disable_testing <= 0) j++;
   if (!j) {
     err("prepare_unparse_testers: no problems defined");
     retcode = -1;
@@ -1425,7 +1427,7 @@ prepare_unparse_testers(FILE *f,
   XCALLOC(vm_count, total_probs);
   XCALLOC(stack_count, total_probs);
   for (i = 0; i < total_probs; i++) {
-    if (!probs[i]) continue;
+    if (!probs[i] || probs[i]->disable_testing > 0) continue;
     abstr = 0;
     if (probs[i]->super[0]) {
       for (j = 0; j < total_aprobs; j++)
@@ -1457,7 +1459,7 @@ prepare_unparse_testers(FILE *f,
 
   // collect memory and stack limits for the default tester
   for (i = 0; i < total_probs; i++) {
-    if (!probs[i]) continue;
+    if (!probs[i] || probs[i]->disable_testing > 0) continue;
 
     for (j = 0; j < vm_total; j++)
       if (vm_ind[j] == vm_sizes[i])
@@ -1494,7 +1496,7 @@ prepare_unparse_testers(FILE *f,
   // which problems require specific testers
   XCALLOC(need_sep_tester, total_probs);
   for (i = 0; i < total_probs; i++) {
-    if (!probs[i]) continue;
+    if (!probs[i] || probs[i]->disable_testing > 0) continue;
     if (vm_sizes[i] != def_vm_size 
         || stack_sizes[i] != def_stack_size
         || file_ios[i] != def_use_files)
@@ -1504,7 +1506,8 @@ prepare_unparse_testers(FILE *f,
   // how many default testers do we need
   def_tester_total = 0;
   for (i = 0; i < total_probs; i++) {
-    if (probs[i] && !need_sep_tester[i]) def_tester_total++;
+    if (probs[i] && probs[i]->disable_testing <= 0 && !need_sep_tester[i])
+      def_tester_total++;
   }
 
   for (i = 0; i < total_archs; i++) {
@@ -1525,7 +1528,7 @@ prepare_unparse_testers(FILE *f,
   }
 
   for (i = 0; i < total_probs; i++) {
-    if (!probs[i] || !need_sep_tester[i]) continue;
+    if (!probs[i] || probs[i]->disable_testing > 0 || !need_sep_tester[i]) continue;
     for (j = 0; j < total_archs; j++) {
       generate_concrete_tester(f, arch_codes[j], probs[i],
                                vm_sizes[i], stack_sizes[i], file_ios[i]);
@@ -1667,7 +1670,7 @@ prepare_further_instructions(FILE *f,
   if (!global) return;
 
   for (i = 1; i < prob_a; i++) {
-    if (!probs[i]) continue;
+    if (!probs[i] || probs[i]->disable_testing > 0) continue;
     abstr = 0;
     if (probs[i]->super[0]) {
       for (j = 0; j < aprob_a; j++)
