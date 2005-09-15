@@ -760,6 +760,9 @@ action_view_contest(int cmd)
   case SSERV_CMD_VIEW_SERVE_LOG:
     extra_str = ", serve log";
     break;
+  case SSERV_CMD_SERVE_MNG_PROBE_RUN:
+    extra_str = ", serve probe run";
+    break;
   case SSERV_CMD_VIEW_RUN_LOG:
     extra_str = ", run log";
     break;
@@ -1013,19 +1016,20 @@ action_set_date_param(int cmd, int nextstate)
   }
 }
 
+static const int ip_param_next_state[] =
+{
+  SUPER_ACTION_CNTS_EDIT_REGISTER_ACCESS,
+  SUPER_ACTION_CNTS_EDIT_USERS_ACCESS,
+  SUPER_ACTION_CNTS_EDIT_MASTER_ACCESS,
+  SUPER_ACTION_CNTS_EDIT_JUDGE_ACCESS,
+  SUPER_ACTION_CNTS_EDIT_TEAM_ACCESS,
+  SUPER_ACTION_CNTS_EDIT_SERVE_CONTROL_ACCESS,
+};
+
 static void action_set_ip_param(int cmd) __attribute__((noreturn));
 static void
 action_set_ip_param(int cmd)
 {
-  static const int next_state[] =
-  {
-    SUPER_ACTION_CNTS_EDIT_REGISTER_ACCESS,
-    SUPER_ACTION_CNTS_EDIT_USERS_ACCESS,
-    SUPER_ACTION_CNTS_EDIT_MASTER_ACCESS,
-    SUPER_ACTION_CNTS_EDIT_JUDGE_ACCESS,
-    SUPER_ACTION_CNTS_EDIT_TEAM_ACCESS,
-    SUPER_ACTION_CNTS_EDIT_SERVE_CONTROL_ACCESS,
-  };
   unsigned char *s;
   int r = 0, n;
   int acc_mode;
@@ -1053,7 +1057,32 @@ action_set_ip_param(int cmd)
 
   open_super_server();
   r = super_clnt_set_param(super_serve_fd, cmd, acc_mode, ip_str, access, rule_num,ssl);
-  operation_status_page(-1, r, "action=%d", next_state[acc_mode]);
+  operation_status_page(-1, r, "action=%d", ip_param_next_state[acc_mode]);
+
+ invalid_parameter:
+  operation_status_page(-1, -1, "Invalid parameter");
+}
+
+static void action_copy_ip_param(int cmd) __attribute__((noreturn));
+static void
+action_copy_ip_param(int cmd)
+{
+  unsigned char *s;
+  int acc_mode, templ_id, acc_from, n, r;
+
+  if (!(s = cgi_param("acc_mode")) || sscanf(s, "%d%n", &acc_mode, &n) != 1
+      || s[n] || acc_mode < 0 || acc_mode > 5)
+    goto invalid_parameter;
+  if (!(s = cgi_param("templ_id")) || sscanf(s, "%d%n", &templ_id, &n) != 1
+      || s[n] || templ_id < 0 || templ_id >= 1000000)
+    goto invalid_parameter;
+  if (!(s = cgi_param("acc_from")) || sscanf(s, "%d%n", &acc_from, &n) != 1
+      || s[n] || acc_from < 0 || acc_from > 5)
+    goto invalid_parameter;
+
+  open_super_server();
+  r = super_clnt_set_param(super_serve_fd, cmd, acc_mode, 0, templ_id, acc_from, 0);
+  operation_status_page(-1, r, "action=%d", ip_param_next_state[acc_mode]);
 
  invalid_parameter:
   operation_status_page(-1, -1, "Invalid parameter");
@@ -1199,6 +1228,46 @@ action_prob_param(int cmd, int next_state)
 
   open_super_server();
   r = super_clnt_set_param(super_serve_fd, cmd, prob_id, param, 0, 0, 0);
+  if (next_state) {
+    operation_status_page(-1, r, "action=%d", next_state);
+  } else {
+    operation_status_page(-1, r, "");
+  }
+
+ invalid_parameter:
+  operation_status_page(-1, -1, "Invalid parameter");
+}
+
+static void
+action_prob_date_param(int cmd, int next_state) __attribute__((noreturn));
+static void
+action_prob_date_param(int cmd, int next_state)
+{
+  int prob_id, n, r;
+  unsigned char *s;
+  unsigned char *d_hour = cgi_param("d_hour");
+  unsigned char *d_min = cgi_param("d_min");
+  unsigned char *d_sec = cgi_param("d_sec");
+  unsigned char *d_mday = cgi_param("d_mday");
+  unsigned char *d_mon = cgi_param("d_mon");
+  unsigned char *d_year = cgi_param("d_year");
+  unsigned char buf[256];
+
+  if (!(s = cgi_param("prob_id")) || sscanf(s, "%d%n", &prob_id, &n) != 1
+      || s[n] || prob_id < -999999 || prob_id > 999999)
+    goto invalid_parameter;
+
+  if (!d_hour) d_hour = "0";
+  if (!d_min) d_min = "0";
+  if (!d_sec) d_sec = "0";
+  if (!d_mday) d_mday = "1";
+  if (!d_mon) d_mon = "1";
+  if (!d_year) d_year = "2001";
+  snprintf(buf, sizeof(buf), "%s/%s/%s %s:%s:%s",
+           d_year, d_mon, d_mday, d_hour, d_min, d_sec);
+
+  open_super_server();
+  r = super_clnt_set_param(super_serve_fd, cmd, prob_id, buf, 0, 0, 0);
   if (next_state) {
     operation_status_page(-1, r, "action=%d", next_state);
   } else {
@@ -1368,6 +1437,7 @@ static const int action_to_cmd_map[SUPER_ACTION_LAST] =
   [SUPER_ACTION_CNTS_DELETE_RULE] = SSERV_CMD_CNTS_DELETE_RULE,
   [SUPER_ACTION_CNTS_UP_RULE] = SSERV_CMD_CNTS_UP_RULE,
   [SUPER_ACTION_CNTS_DOWN_RULE] = SSERV_CMD_CNTS_DOWN_RULE,
+  [SUPER_ACTION_CNTS_COPY_ACCESS] = SSERV_CMD_CNTS_COPY_ACCESS,
   [SUPER_ACTION_CNTS_DELETE_PERMISSION] = SSERV_CMD_CNTS_DELETE_PERMISSION,
   [SUPER_ACTION_CNTS_ADD_PERMISSION] = SSERV_CMD_CNTS_ADD_PERMISSION,
   [SUPER_ACTION_CNTS_SAVE_PERMISSIONS] = SSERV_CMD_CNTS_SAVE_PERMISSIONS,
@@ -1496,6 +1566,10 @@ static const int action_to_cmd_map[SUPER_ACTION_LAST] =
   [SUPER_ACTION_PROB_CLEAR_SCORE_BONUS] = SSERV_CMD_PROB_CLEAR_SCORE_BONUS,
   [SUPER_ACTION_PROB_CHANGE_CHECK_CMD] = SSERV_CMD_PROB_CHANGE_CHECK_CMD,
   [SUPER_ACTION_PROB_CLEAR_CHECK_CMD] = SSERV_CMD_PROB_CLEAR_CHECK_CMD,
+  [SUPER_ACTION_PROB_CHANGE_START_DATE] = SSERV_CMD_PROB_CHANGE_START_DATE,
+  [SUPER_ACTION_PROB_CLEAR_START_DATE] = SSERV_CMD_PROB_CLEAR_START_DATE,
+  [SUPER_ACTION_PROB_CHANGE_DEADLINE] = SSERV_CMD_PROB_CHANGE_DEADLINE,
+  [SUPER_ACTION_PROB_CLEAR_DEADLINE] = SSERV_CMD_PROB_CLEAR_DEADLINE,
 
   [SUPER_ACTION_GLOB_CHANGE_DURATION] = SSERV_CMD_GLOB_CHANGE_DURATION,
   [SUPER_ACTION_GLOB_UNLIMITED_DURATION] = SSERV_CMD_GLOB_UNLIMITED_DURATION,
@@ -1636,6 +1710,8 @@ static const int action_to_cmd_map[SUPER_ACTION_LAST] =
   [SUPER_ACTION_GLOB_CLEAR_CHARSET] = SSERV_CMD_GLOB_CLEAR_CHARSET,
   [SUPER_ACTION_GLOB_CHANGE_TEAM_DOWNLOAD_TIME] = SSERV_CMD_GLOB_CHANGE_TEAM_DOWNLOAD_TIME,
   [SUPER_ACTION_GLOB_DISABLE_TEAM_DOWNLOAD_TIME] = SSERV_CMD_GLOB_DISABLE_TEAM_DOWNLOAD_TIME,
+  [SUPER_ACTION_GLOB_CHANGE_CPU_BOGOMIPS] = SSERV_CMD_GLOB_CHANGE_CPU_BOGOMIPS,
+  [SUPER_ACTION_GLOB_DETECT_CPU_BOGOMIPS] = SSERV_CMD_GLOB_DETECT_CPU_BOGOMIPS,
 
   [SUPER_ACTION_GLOB_SAVE_CONTEST_START_CMD] = SSERV_CMD_GLOB_SAVE_CONTEST_START_CMD,
   [SUPER_ACTION_GLOB_READ_CONTEST_START_CMD] = SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD_TEXT,
@@ -1886,6 +1962,10 @@ static const int next_action_map[SUPER_ACTION_LAST] =
   [SUPER_ACTION_PROB_CLEAR_SCORE_BONUS] = SUPER_ACTION_EDIT_CURRENT_PROB,
   [SUPER_ACTION_PROB_CHANGE_CHECK_CMD] = SUPER_ACTION_EDIT_CURRENT_PROB,
   [SUPER_ACTION_PROB_CLEAR_CHECK_CMD] = SUPER_ACTION_EDIT_CURRENT_PROB,
+  [SUPER_ACTION_PROB_CHANGE_START_DATE] = SUPER_ACTION_EDIT_CURRENT_PROB,
+  [SUPER_ACTION_PROB_CLEAR_START_DATE] = SUPER_ACTION_EDIT_CURRENT_PROB,
+  [SUPER_ACTION_PROB_CHANGE_DEADLINE] = SUPER_ACTION_EDIT_CURRENT_PROB,
+  [SUPER_ACTION_PROB_CLEAR_DEADLINE] = SUPER_ACTION_EDIT_CURRENT_PROB,
 
   [SUPER_ACTION_GLOB_CHANGE_DURATION] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
   [SUPER_ACTION_GLOB_UNLIMITED_DURATION] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
@@ -2019,6 +2099,8 @@ static const int next_action_map[SUPER_ACTION_LAST] =
   [SUPER_ACTION_GLOB_CLEAR_CHARSET] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
   [SUPER_ACTION_GLOB_CHANGE_TEAM_DOWNLOAD_TIME] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
   [SUPER_ACTION_GLOB_DISABLE_TEAM_DOWNLOAD_TIME] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
+  [SUPER_ACTION_GLOB_CHANGE_CPU_BOGOMIPS] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
+  [SUPER_ACTION_GLOB_DETECT_CPU_BOGOMIPS] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
 
   [SUPER_ACTION_GLOB_SAVE_CONTEST_START_CMD] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
   [SUPER_ACTION_GLOB_READ_CONTEST_START_CMD] = SUPER_ACTION_GLOB_EDIT_CONTEST_START_CMD,
@@ -2062,6 +2144,9 @@ main(int argc, char *argv[])
   switch (client_action) {
   case SUPER_ACTION_VIEW_CONTEST:
     action_view_contest(SSERV_CMD_CONTEST_PAGE);
+    break;
+  case SUPER_ACTION_SERVE_MNG_PROBE_RUN:
+    action_view_contest(SSERV_CMD_SERVE_MNG_PROBE_RUN);
     break;
   case SUPER_ACTION_SERVE_LOG_VIEW:
     action_view_contest(SSERV_CMD_VIEW_SERVE_LOG);
@@ -2222,6 +2307,10 @@ main(int argc, char *argv[])
   case SUPER_ACTION_CNTS_UP_RULE:
   case SUPER_ACTION_CNTS_DOWN_RULE:
     action_set_ip_param(action_to_cmd_map[client_action]);
+    break;
+
+  case SUPER_ACTION_CNTS_COPY_ACCESS:
+    action_copy_ip_param(action_to_cmd_map[client_action]);
     break;
 
   case SUPER_ACTION_CNTS_DELETE_PERMISSION:
@@ -2405,8 +2494,16 @@ main(int argc, char *argv[])
   case SUPER_ACTION_PROB_CLEAR_SCORE_BONUS:
   case SUPER_ACTION_PROB_CHANGE_CHECK_CMD:
   case SUPER_ACTION_PROB_CLEAR_CHECK_CMD:
+  case SUPER_ACTION_PROB_CLEAR_START_DATE:
+  case SUPER_ACTION_PROB_CLEAR_DEADLINE:
     action_prob_param(action_to_cmd_map[client_action],
                       next_action_map[client_action]);
+    break;
+
+  case SUPER_ACTION_PROB_CHANGE_START_DATE:
+  case SUPER_ACTION_PROB_CHANGE_DEADLINE:
+    action_prob_date_param(action_to_cmd_map[client_action],
+                           next_action_map[client_action]);
     break;
 
   case SUPER_ACTION_GLOB_CHANGE_DURATION:
@@ -2540,6 +2637,8 @@ main(int argc, char *argv[])
   case SUPER_ACTION_GLOB_CLEAR_CHARSET:
   case SUPER_ACTION_GLOB_CHANGE_TEAM_DOWNLOAD_TIME:
   case SUPER_ACTION_GLOB_DISABLE_TEAM_DOWNLOAD_TIME:
+  case SUPER_ACTION_GLOB_CHANGE_CPU_BOGOMIPS:
+  case SUPER_ACTION_GLOB_DETECT_CPU_BOGOMIPS:
 
   case SUPER_ACTION_GLOB_SAVE_CONTEST_START_CMD:
   case SUPER_ACTION_GLOB_READ_CONTEST_START_CMD:
