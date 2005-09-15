@@ -807,6 +807,7 @@ cmd_team_page(struct client_state *p, int len,
   struct client_state *q = 0;
   char *html_ptr = 0;
   size_t html_len = 0;
+  int accepting_mode = 0;
 
   if (get_peer_local_user(p) < 0) return;
 
@@ -848,10 +849,12 @@ cmd_team_page(struct client_state *p, int len,
     return;
   }
   l10n_setlocale(pkt->locale_id);
+  if (global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
+    accepting_mode = 1;
   write_team_page(f, p->user_id, printing_suspended,
                   p->cookie, (pkt->flags & 1), (pkt->flags & 2) >> 1,
                   self_url_ptr, hidden_vars_ptr, extra_args_ptr,
-                  contest_start_time, contest_stop_time);
+                  contest_start_time, contest_stop_time, accepting_mode);
   l10n_setlocale(0);
   fclose(f);
 
