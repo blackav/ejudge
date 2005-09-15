@@ -29,6 +29,7 @@
 #include "prepare_serve.h"
 #include "prepare_dflt.h"
 #include "userlist_cfg.h"
+#include "cpu.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -244,6 +245,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(html_report, "d"),
   GLOBAL_PARAM(xml_report, "d"),
   GLOBAL_PARAM(enable_full_archive, "d"),
+  GLOBAL_PARAM(cpu_bogomips, "d"),
 
   GLOBAL_PARAM(variant_map_file, "s"),
 
@@ -3644,6 +3646,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->prune_empty_users = DFLT_G_PRUNE_EMPTY_USERS;
   global->enable_report_upload = DFLT_G_ENABLE_REPORT_UPLOAD;
   global->team_download_time = 0;
+  global->cpu_bogomips = cpu_get_bogomips();
   global->use_gzip = DFLT_G_USE_GZIP;
   global->min_gzip_size = DFLT_G_MIN_GZIP_SIZE;
   global->use_dir_hierarchy = DFLT_G_USE_DIR_HIERARCHY;
