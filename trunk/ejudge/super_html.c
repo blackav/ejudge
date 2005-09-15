@@ -98,36 +98,6 @@ html_edit_text_form(FILE *f,
   xfree(s);
 }
 
-static const unsigned char * const months_names[] =
-{
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-};
-
-static void
-html_date_select(FILE *f, time_t t)
-{
-  struct tm *tt = localtime(&t);
-  int i;
-
-  fprintf(f, "Time: <input type=\"text\" name=\"d_hour\" value=\"%02d\" size=\"2\" maxlength=\"2\">:<input type=\"text\" name=\"d_min\" value=\"%02d\" size=\"2\" maxlength=\"2\">:<input type=\"text\" name=\"d_sec\" value=\"%02d\" size=\"2\" maxlength=\"2\">",
-          tt->tm_hour, tt->tm_min, tt->tm_sec);
-  fprintf(f, "Date: <select name=\"d_mday\">");
-  for (i = 1; i <= 31; i++) {
-    fprintf(f, "<option value=\"%d\"%s>%02d</option>",
-            i, (i == tt->tm_mday)?" selected=\"1\"":"", i);
-  }
-  fprintf(f, "</select>");
-  fprintf(f, "/<select name=\"d_mon\">");
-  for (i = 0; i < 12; i++) {
-    fprintf(f, "<option value=\"%d\"%s>%s</option>",
-            i + 1, (i == tt->tm_mon)?" selected=\"1\"":"", months_names[i]);
-  }
-  fprintf(f, "</select>");
-  fprintf(f, "/<input type=\"text\" name=\"d_year\" value=\"%d\" size=\"4\" maxlength=\"4\">", tt->tm_year + 1900);
-  if (!t) fprintf(f, "<i>(Not set)</i>");
-}
-
 static void
 html_numeric_select(FILE *f, const unsigned char *param,
                     int val, int min_val, int max_val)
@@ -820,10 +790,8 @@ super_html_contest_page(FILE *f,
       */
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_RESET_ERROR,
                          "Reset error flag");
-      /*
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_PROBE_RUN,
                          "Do probe run");
-      */
       break;
     case MNG_STAT_TEMP_RUNNING:
       /*
@@ -836,9 +804,9 @@ super_html_contest_page(FILE *f,
       /*
       html_submit_button(f, SUPER_ACTION_SERVE_MNG, "Manage permanently");
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_STOP, "Stop management");
+      */
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_PROBE_RUN,
                          "Do probe run");
-      */
       break;
     case MNG_STAT_FAILED:
       /*
@@ -848,10 +816,8 @@ super_html_contest_page(FILE *f,
       */
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_RESET_ERROR,
                          "Reset error flag");
-      /*
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_PROBE_RUN,
                          "Do probe run");
-      */
       break;
     case MNG_STAT_RUNNING:
       /*
@@ -868,9 +834,9 @@ super_html_contest_page(FILE *f,
                          "Suspend management");
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_STOP,
                          "Stop management");
+      */
       html_submit_button(f, SUPER_ACTION_SERVE_MNG_PROBE_RUN,
                          "Do probe run");
-      */
       break;
     default:
       abort();
@@ -2509,6 +2475,10 @@ super_html_edit_access_rules(FILE *f,
   int default_is_allow = 0, i;
   unsigned char num_str[128];
   unsigned char hbuf[1024];
+  unsigned char *contests_map = 0;
+  int contest_max_id, cnts_id;
+  struct contest_desc *tmp_cnts = 0;
+  unsigned char *cnts_name = 0;
 
   if (!cnts) {
     fprintf(f, "<h2>No current contest!</h2>\n"
@@ -2596,8 +2566,36 @@ super_html_edit_access_rules(FILE *f,
   html_boolean_select(f, default_is_allow, "access", "deny", "allow");
   fprintf(f, "</td><td>");
   html_submit_button(f, SUPER_ACTION_CNTS_DEFAULT_ACCESS, "Change");
-  fprintf(f, "</td></tr>\n");
+  fprintf(f, "</td></tr></form>\n");
   fprintf(f, "</table>\n");
+
+  contest_max_id = contests_get_list(&contests_map);
+  fprintf(f, "<p><table border=\"0\">\n");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_hidden_var(f, "acc_mode", acc_mode);
+  fprintf(f, "<tr><td>Copy access rules from:</td><td>");
+  fprintf(f, "<select name=\"templ_id\">\n");
+  fprintf(f, "<option value=\"0\">Current contest</option>\n");
+  for (cnts_id = 1; cnts_id < contest_max_id; cnts_id++) {
+    if (!contests_map[cnts_id]) continue;
+    if (contests_get(cnts_id, &tmp_cnts) < 0) continue;
+    cnts_name = html_armor_string_dup(tmp_cnts->name);
+    fprintf(f, "<option value=\"%d\">%d - %s</option>", cnts_id, cnts_id, cnts_name);
+    xfree(cnts_name);
+  }
+  fprintf(f,
+          "</td><td><select name=\"acc_from\">\n"
+          "<option value=\"0\">&lt;register_access&gt;</option>\n"
+          "<option value=\"1\">&lt;users_access&gt;</option>\n"
+          "<option value=\"2\">&lt;master_access&gt;</option>\n"
+          "<option value=\"3\">&lt;judge_access&gt;</option>\n"
+          "<option value=\"4\">&lt;team_access&gt;</option>\n"
+          "<option value=\"5\">&lt;serve_control_access&gt;</option>\n"
+          "</select></td><td>");
+  html_submit_button(f, SUPER_ACTION_CNTS_COPY_ACCESS, "Copy");
+  fprintf(f, "</td></tr></form>");
+  fprintf(f, "</table>\n");
+  xfree(contests_map); contests_map = 0;
 
   fprintf(f, "<table border=\"0\"><tr><td>%sTo the top</a></td>",
           html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args, ""));
