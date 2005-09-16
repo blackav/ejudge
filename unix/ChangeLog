@@ -1,3 +1,11 @@
+2005-09-12  Alexander Chernov  <cher@ispras.ru>
+
+	* cpu.c: initial revision
+
+2005-08-19  Alexander Chernov  <cher@ispras.ru>
+
+	* ej_process.c: initial revision
+
 2005-07-03  Alexander Chernov  <cher@ispras.ru>
 
 	* cr_serialize.c: copyright notice is updated;

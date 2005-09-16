@@ -1,3 +1,333 @@
+2005-09-16  Alexander Chernov  <cher@ispras.ru>
+
+	* super_html_2.c: fix
+
+	* ejudge-setup.c, super_html_2.c:
+	$Id$ is properly escaped in order not to be substutued by
+	  the ejudge CVS.
+
+	* team.c:
+	(main) link to the "Problem status summary" is added to the table of
+	  contents;
+	  the link to the problem statements is not printed in the table of
+	  contents in the virtual contest mode.
+
+	* super_proto.h:
+	new protocol commands: SSERV_CMD_SERVE_MNG_PROBE_RUN,
+	  SSERV_CMD_CNTS_COPY_ACCESS,
+	  SSERV_CMD_GLOB_CHANGE_CPU_BOGOMIPS,
+	  SSERV_CMD_GLOB_DETECT_CPU_BOGOMIPS,
+	  SSERV_CMD_PROB_CHANGE_START_DATE,
+	  SSERV_CMD_PROB_CLEAR_START_DATE,
+	  SSERV_CMD_PROB_CHANGE_DEADLINE,
+	  SSERV_CMD_PROB_CLEAR_DEADLINE.
+
+	* super_html_3.c: "cpu.h" is included;
+	(html_date_select) is moved to a separate file;
+	(super_html_edit_global_parameters) editing of `cpu_bogomips' is
+	  supported;
+	(super_html_global_param) handling of `cr_serialization_key' is fixed;
+	  editing of `cpu_bogomips' is supported;
+	(super_html_edit_languages) the language's `compile_id' is used as the
+	  language key in the parameter editing forms;
+	(super_html_print_problem) editing of `start_date', `deadline'
+	  is supported;
+	(super_html_prob_cmd) default suffix for `tgz_sfx' is fixed;
+	(super_html_prob_param) editing of `start_date', `deadline' is
+	  supported.
+
+	* super_html_2.c:
+	(get_contest_access_by_num) new function to return the reference to
+	  IP access list by the ip access number;
+	(copy_contest_access) new function to copy IP access lists;
+	(super_html_set_contest_var) `get_contest_access_by_num' is used, so
+	  the code is slightly restructured;
+	  `SSERV_CMD_CNTS_COPY_ACCESS' is handled using `copy_contest_access';
+	(super_html_serve_probe_run) new function to handle
+	  `SSERV_CMD_SERVE_MNG_PROBE_RUN';
+	(super_html_commit_contest) "$Id$" is printed to the header of the
+	  new contest XML file and serve.cfg file;
+	  the new contest XML file is put under version control;
+	  version control for the serve.cfg is supported, but the new serve.cfg
+	  is not put under version control automatically;
+	  call of `super_serve_start_serve_test_mode' is updated.
+
+2005-09-15  Alexander Chernov  <cher@ispras.ru>
+
+	* super_html.h: (super_html_serve_probe_run) new function prototype.
+
+	* super_html.c: (html_date_select) moved to a separate file;
+	(super_html_contest_page) "Do probe run" button for the `serve'
+	  is uncommented - invokes SUPER_ACTION_SERVE_MNG_PROBE_RUN action;
+	(super_html_edit_access_rules) added generation of a control to
+	  copy ip access rules - invokes SUPER_ACTION_CNTS_COPY_ACCESS
+	  action.
+
+	* super_actions.h: new actions: SUPER_ACTION_CNTS_COPY_ACCESS,
+	  SUPER_ACTION_GLOB_CHANGE_CPU_BOGOMIPS,
+	  SUPER_ACTION_GLOB_DETECT_CPU_BOGOMIPS,
+	  SUPER_ACTION_PROB_CHANGE_START_DATE,
+	  SUPER_ACTION_PROB_CLEAR_START_DATE,
+	  SUPER_ACTION_PROB_CHANGE_DEADLINE,
+	  SUPER_ACTION_PROB_CLEAR_DEADLINE.
+
+	* super-serve.h:
+	(super_serve_start_serve_test_mode) parameter `pass_socket' is added.
+
+	* super-serve.c:
+	(super_serve_start_serve_test_mode) new parameter `pass_socket'
+	  is added;
+	  this socket is passed with -S option to the `serve';
+	(cmd_main_page) SSERV_CMD_SERVE_MNG_PROBE_RUN command is handled,
+	  `super_html_serve_probe_run' is called in this case;
+	(cmd_set_value) SSERV_CMD_CNTS_COPY_ACCESS,
+	  SSERV_CMD_PROB_CHANGE_START_DATE,
+	  SSERV_CMD_PROB_CLEAR_START_DATE,
+	  SSERV_CMD_PROB_CHANGE_DEADLINE,
+	  SSERV_CMD_PROB_CLEAR_DEADLINE,
+	  SSERV_CMD_GLOB_CHANGE_CPU_BOGOMIPS,
+	  SSERV_CMD_GLOB_DETECT_CPU_BOGOMIPS
+	  are handled.
+
+	* serve.c: (cmd_team_page) parameter `accepting_mode' is passed to
+	  `write_team_page'.
+
+	* serve-control.c:
+	(action_view_contest) SSERV_CMD_SERVE_MNG_PROBE_RUN is handled;
+	(action_copy_ip_param) new function to handle ip access list
+	  copying command;
+	(action_prob_date_param) new function to handle problem date
+	  parameters commands;
+	(main) new actions SUPER_ACTION_SERVE_MNG_PROBE_RUN,
+	  SUPER_ACTION_CNTS_COPY_ACCESS,
+	  SUPER_ACTION_PROB_CLEAR_START_DATE,
+	  SUPER_ACTION_PROB_CLEAR_DEADLINE,
+	  SUPER_ACTION_PROB_CHANGE_START_DATE,
+	  SUPER_ACTION_PROB_CHANGE_DEADLINE,
+	  SUPER_ACTION_GLOB_CHANGE_CPU_BOGOMIPS,
+	  SUPER_ACTION_GLOB_DETECT_CPU_BOGOMIPS
+	  are handled.
+
+	* prepare_out.c: (do_str_mb_empty) function is commented out;
+	(prepare_unparse_global) `cpu_bogomips' is printed;
+	(prepare_unparse_prob) `start_date', `deadline' are printed;
+	(prepare_unparse_unhandled_prob) `tgz_dir' is commented out;
+	  `deadline', `start_date' is commented out;
+	(prepare_unparse_testers) problems with `disable_testing' are ignored;
+	(prepare_further_instructions) problems with `disable_testing'
+	  are ignored.
+
+	* prepare.h:
+	(struct section_global_data) `cpu_bogomips' field is added.
+
+	* prepare.c: "cpu.h" is included;
+	new global parameter `cpu_bogomips' is added;
+	(prepare_new_global_section) `cpu_bogomips' is initialized.
+
+	* misctext.h: (html_date_select) function prototype is added.
+
+	* html.h: (write_team_page) parameter `accepting_mode' is added.
+
+	* html.c:
+	(write_user_problems_summary) new function to report the summary
+	  for all problems on the team's page;
+	(write_team_page) new parameter `accepting_mode' is added;
+	  new "Problem status summary" section is printed;
+	  link to the problem text is generated;
+	  `write_user_problems_summary' is called.
+
+	* ejudge-setup.c: "cpu.h" is included;
+	(generate_serve_cfg) "cpu_bogomips" is generated;
+	  "$Id$" is generated;
+	(generate_contest_xml) "$Id$" is added.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2005-09-14  Alexander Chernov  <cher@ispras.ru>
+
+	* files.make: html_date_select.c is added.
+
+	* html_date_select.c: initial revision
+
+2005-09-12  Alexander Chernov  <cher@ispras.ru>
+
+	* cpu.h: initial revision
+
+	* files.make: cpu.h, win32/cpu.c, unix/cpu.c are added.
+
+	* Makefile.unix.in: libcommon.a: $(ARCH)/cpu.o added
+
+2005-08-27  Alexander Chernov  <cher@ispras.ru>
+
+	* copyright.c: (make_copyright) ejudge home page is updated.
+
+2005-08-19  Alexander Chernov  <cher@ispras.ru>
+
+	* super_proto.h: new commands: SSERV_CMD_GLOB_CHANGE_TGZ_DIR,
+	  SSERV_CMD_GLOB_CLEAR_TGZ_DIR,
+	  SSERV_CMD_PROB_CHANGE_BINARY_INPUT.
+
+	* super_html_3.c: "ej_process.h" is included;
+	(super_html_edit_global_parameters) editing of `tgz_dir' is supported;
+	(super_html_global_param) editing `tgz_dir' is supported;
+	(read_process_output) moved to a separate file;
+	(load_cs_languages) call of `read_process_output' is updated;
+	(super_html_edit_languages) "Update versions" button is added;
+	(super_html_update_versions) new function to update the version
+	  info for all supported languages;
+	(super_html_print_problem) editing of `binary_input' is supported;
+	(super_html_prob_cmd) `binary_input', `tgz_dir', `tgz_sfx' are
+	  properly initialized in handling of `SSERV_CMD_PROB_ADD_ABSTRACT'
+	  request;
+	  editing of `binary_input' is supported;
+	(super_html_read_serve) error is reported, if no abstract testers
+	  are defined;
+	(check_test_file) new parameter `bin_flag' is added. The test files
+	  are not checked for end-of-line characters, if this flag is set;
+	(get_compiler_path) call of `read_process_output' is updated;
+	(super_html_check_tests) problems, which testing is disabled
+	  are skipped;
+	  `binary_input' problem variable is handled.
+
+	* super_html_2.c: "ej_process.h" is included;
+	"vcs.h" is included;
+	(diff_func) new function to generate difference file for two
+	  contest XML files;
+	(super_html_commit_contest) the difference between the old and the
+	  new versions of serve.cfg and contest.xml files is printed;
+	  the updated version of the contest.xml is commited to the
+	  version control system.
+
+	* super_html.h: (super_html_open_contest) `ip' parameter is added;
+	(super_html_close_contest) the same as above;
+	(super_html_make_invisible_contest) the same as above;
+	(super_html_make_visible_contest) the same as above;
+	(super_html_serve_managed_contest) the same as above;
+	(super_html_serve_unmanaged_contest) the same as above;
+	(super_html_run_managed_contest) the same as above;
+	(super_html_run_unmanaged_contest) the same as above;
+	(super_html_update_versions) new function prototype is added.
+
+	* super_html.c: "vcs.h" is included;
+	(commit_contest_xml) new function to commit the updated file;
+	(super_html_open_contest) `ip' parameter is added;
+	  the IP-address is printed to the audit record;
+	  the updated XML is commited to the version control system;
+	(super_html_close_contest) the same as above;
+	(super_html_make_invisible_contest) the same as above;
+	(super_html_make_visible_contest) the same as above;
+	(super_html_serve_managed_contest) the same as above;
+	(super_html_serve_unmanaged_contest) the same as above;
+	(super_html_run_managed_contest) the same as above;
+	(super_html_run_unmanaged_contest) the same as above.
+
+	* super_actions.h:
+	new actions added: SUPER_ACTION_GLOB_CHANGE_TGZ_DIR,
+	  SUPER_ACTION_GLOB_CLEAR_TGZ_DIR,
+	  SUPER_ACTION_PROB_CHANGE_BINARY_INPUT,
+	  SUPER_ACTION_LANG_UPDATE_VERSIONS.
+
+	* super-serve.c:
+	(cmd_simple_command) call of `super_html_open_contest' updated;
+	  call of `super_html_close_contest' updated;
+	  call of `super_html_make_visible_contest' updated;
+	  call of `super_html_make_invisible_contest' updated;
+	(cmd_simple_top_command) SSERV_CMD_LANG_UPDATE_VERSIONS handled;
+	(cmd_set_value) SSERV_CMD_PROB_CHANGE_BINARY_INPUT handled;
+	  SSERV_CMD_GLOB_CHANGE_TGZ_DIR handled;
+	  SSERV_CMD_GLOB_CLEAR_TGZ_DIR handled.
+
+	* serve-control.c:
+	(parse_config) bug in parsing of the configuration file is fixed:
+	  the configuration file name was parsed as the file contents;
+	  attribute "ssl" for <ip> element is supported in the configuration
+	  file;
+	(check_source_ip) "ssl" attribute is handled to discriminate
+	  the SSL and the non-SSL connections;
+	(main) SUPER_ACTION_LANG_UPDATE_VERSIONS is handled;
+	  SUPER_ACTION_PROB_CHANGE_BINARY_INPUT;
+	  SUPER_ACTION_GLOB_CHANGE_TGZ_DIR is handled;
+	  SUPER_ACTION_GLOB_CLEAR_TGZ_DIR is handled.
+
+	* run.c:
+	(run_tests) the tests are not converted unix->dos, if `binary_input'
+	  flag is set for the problem.
+
+	* prepare_out.c: (c_armor) bug fixed;
+	(prepare_unparse_global) `show_deadline' is handled;
+	  `tgz_dir' is handled;
+	(prepare_unparse_unhandled_global) `tgz_dir' removed, because
+	  handled in `prepare_unparse_global';
+	(prepare_unparse_prob) `binary_input' is handled;
+	  handling of `info_sfx' improved;
+	  `use_tgz', `tgz_sfx', `tgz_pat' are handled;
+	  `tests_to_accept' is handled better;
+	(prepare_unparse_unhandled_prob) handling of `tgz_sfx' improved;
+	(generate_abstract_tester) testers for DOS and Perl are supported;
+	(prepare_unparse_testers) the testers are generated in the
+	  order of the corresponding enumerated type;
+	(prob_instr) instructions for .tgz files are generated,
+	  if necessary.
+
+	* prepare_dflt.h:
+	default values for `show_deadline', `binary_input' configuration
+	  variables are added.
+
+	* prepare.h:
+	(struct section_problem_data) new field `binary_input' is added;
+	new field codes: PREPARE_FIELD_PROB_BINARY_INPUT,
+	  PREPARE_FIELD_PROB_USE_TGZ, PREPARE_FIELD_PROB_TGZ_DIR.
+
+	* prepare.c: fixed type of the `stand_show_ok_time' global variable;
+	new problem variable `binary_input';
+	(global_init_func) `show_deadline' is initialized;
+	(prepare_problem_init_func) `binary_input' is initialized;
+	(set_defaults) `show_deadline' is initialized properly;
+	  `binary_input' is handled;
+	(prepare) fixed a bug in initialization of conditional variables;
+	(prepare_set_global_defaults) `tgz_dir' is handled;
+	  `show_deadline' is handled;
+	(prepare_set_problem_defaults) `binary_input' is handled;
+	  `disqualified_penalty' is initialized to the `run_penalty' by
+	  default;
+	  `tgz_sfx', `info_sfx' are initialized to default values;
+	(prepare_new_global_section) `show_deadline' is initialized;
+	(prepare_parse_config_file) conditional variables are initialized;
+	(prepare_set_prob_value) `binary_input' field is handled;
+	  `use_tgz' field is handled;
+	  `tgz_dir' field is handled;
+	  handling of `info_sfx', `tgz_sfx' is updated.
+
+	* parsecfg.c:
+	(read_variable) fixed invalid reading of escaped characters
+	  inside "string".
+
+	* files.make: new files added: vcs.[ch], ej_process.[ch].
+
+	* contests.h:
+	(contests_unparse_and_save) new parameters added: `diff_func',
+	  `p_diff_txt'.
+
+	* contests.c:
+	(parse_member) removed initialization of `min_count' and
+	  `max_count' fields to -1: they must be initialized to 0;
+	(unparse_fields) `min_count', `max_count', `init_count' are
+	  unparsed even if their values are 0. 0 is valid.
+	(contests_unparse_and_save) two parameters added:
+	  `diff_func', `p_diff_txt', which allows getting the diff
+	  between the old and the new versions of the file.
+
+	* Makefile.unix.in:
+	(libcommon.a) added ej_process.o to the list of dependencies.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* ej_process.h, vcs.c, vcs.h: initial revision
+
+2005-08-10  Alexander Chernov  <cher@ispras.ru>
+
+	* INSTALL, INSTALL.RUS: *** empty log message ***
+
 2005-08-10  Alexander Chernov  <cher@ispras.ru>
 
 	* ejudge-setup.c:

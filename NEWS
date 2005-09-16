@@ -1,6 +1,61 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
+Version 2.1.41 (20050916)
+=========================
+This version fixes noticed bugs of the previous version and adds
+some minor enhancements.
+
+A new global configuration variable `cpu_bogomips' of the
+`serve.cfg' file is added. The value of this variable is equal
+to the processor speed, which is used to determine the time
+limit for the problems. In the future this variable will be used
+for automatic scaling of time-limits in case when the speed of
+the testing computer processor differs significantly.
+
+The processor's BogoMIPS value is available in the /proc/cpuinfo
+file. When a new contest is created using the `serve-control'
+CGI program, the `cpu_bogomips' variable is set automatically to
+the speed of the server's processor.
+
+team, master
+------------
+The "Problem status summary" table is printed on the team's
+personal page. This table includes the current result of solving
+and the gained score (if available) for each problem.
+
+In the virtual contest mode the link to the problem statements
+is removed from the team's table of contents at the top of the
+page and moved to "Problem status summary" section. The link to
+the problem statements is opened only when the virtual contest
+is started by the team.
+
+serve-control, super-serve
+--------------------------
+Noticed bugs in the contest settings editing code are fixed.
+
+On the IP-address access list editing page the new operation of
+copying existing IP-address access list from another contest or
+another CGI program is supported.
+
+Editing of the global variable `cpu_bogomips' is supported.
+
+Editing of the problem variables `deadline', `start_date' is
+supported.
+
+Probe run of the `serve' contest server program is supported
+(the "Do probe run" button on the "Contest details" page). The
+`serve' output is then displayed on the HTML page. This feature
+may be convenient for checking contest settings and debugging
+serve.cfg configuration problems.
+
+Adding of a new XML contest configuration file to the version
+control system (VCS) is supported. In the previous version of
+the ejudge the file should be added to the VCS manually.
+Committing of the `serve.cfg' file to the version control system
+is also supported, but this file has to be added to the VCS
+manually.
+
 Version 2.1.40 (20050902)
 =========================
 This version fixes several bugs of the previous versions.

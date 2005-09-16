@@ -1,3 +1,11 @@
+2005-09-12  Alexander Chernov  <cher@ispras.ru>
+
+	* cpu.c: initial revision
+
+2005-08-19  Alexander Chernov  <cher@ispras.ru>
+
+	* ej_process.c: initial revision
+
 2005-06-15  Alexander Chernov  <cher@ispras.ru>
 
 	* timestamp.c: initial revision
