@@ -179,6 +179,57 @@ swap_tree_nodes(struct xml_tree *first)
   }
 }
 
+static struct contest_access **
+get_contest_access_by_num(struct contest_desc *cnts, int num)
+{
+  switch (num) {
+  case 0: return &cnts->register_access;
+  case 1: return &cnts->users_access;
+  case 2: return &cnts->master_access;
+  case 3: return &cnts->judge_access;
+  case 4: return &cnts->team_access;
+  case 5: return &cnts->serve_control_access;
+  default:
+    return 0;
+  }
+}
+
+static struct contest_access *
+copy_contest_access(struct contest_access *p)
+{
+  struct contest_access *q;
+  struct contest_ip *pp, *qq;
+
+  if (!p) return 0;
+  switch (p->b.tag) {
+  case CONTEST_REGISTER_ACCESS:
+  case CONTEST_USERS_ACCESS:
+  case CONTEST_MASTER_ACCESS:
+  case CONTEST_JUDGE_ACCESS:
+  case CONTEST_TEAM_ACCESS:
+  case CONTEST_SERVE_CONTROL_ACCESS:
+    break;
+
+  default:
+    abort();
+  }
+
+  q = (struct contest_access*) contests_new_node(p->b.tag);
+  q->default_is_allow = p->default_is_allow;
+
+  for (pp = (struct contest_ip*) p->b.first_down;
+       pp; pp = (struct contest_ip*) pp->b.right) {
+    qq = (struct contest_ip*) contests_new_node(CONTEST_IP);
+    qq->allow = pp->allow;
+    qq->ssl = pp->ssl;
+    qq->addr = pp->addr;
+    qq->mask = pp->mask;
+    xml_link_node_last(&q->b, &qq->b);
+  }
+
+  return q;
+}
+
 static unsigned char const login_accept_chars[] =
 "._-0123456789?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -192,12 +243,13 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   time_t *p_date = 0;
   int v, n, memb_ind;
   struct contest_desc *cnts = sstate->edited_cnts;
-  struct contest_access **p_access = 0, *new_acc;
+  struct contest_access **p_access = 0, *new_acc, **p_src_access = 0;
   unsigned int ip_addr, ip_mask;
   struct contest_ip *new_ip;
   struct opcap_list_item *cap_node;
   struct contest_field *fld_node;
   struct contest_member *memb;
+  struct contest_desc *src_cnts = 0;
 
   if (!cnts) {
     return -SSERV_ERR_CONTEST_NOT_EDITED;
@@ -333,93 +385,107 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     break;
 
   case SSERV_CMD_CNTS_DEFAULT_ACCESS:
-  case SSERV_CMD_CNTS_ADD_RULE:
-  case SSERV_CMD_CNTS_CHANGE_RULE:
-  case SSERV_CMD_CNTS_DELETE_RULE:
-  case SSERV_CMD_CNTS_UP_RULE:
-  case SSERV_CMD_CNTS_DOWN_RULE:
-    switch (param1) {
-    case 0: p_access = &cnts->register_access; break;
-    case 1: p_access = &cnts->users_access; break;
-    case 2: p_access = &cnts->master_access; break;
-    case 3: p_access = &cnts->judge_access; break;
-    case 4: p_access = &cnts->team_access; break;
-    case 5: p_access = &cnts->serve_control_access; break;
-    default:
+    if (!(p_access = get_contest_access_by_num(cnts, param1)))
       return -SSERV_ERR_INVALID_PARAMETER;
-    }
-    
-    switch (cmd) {
-    case SSERV_CMD_CNTS_DEFAULT_ACCESS:
-      if (param3 < 0 || param3 > 1) return -SSERV_ERR_INVALID_PARAMETER;
-      if (!param3) {
-        // setting access to deny
-        if (!*p_access) return 0;
-        (*p_access)->default_is_allow = 0;
-        if (!(*p_access)->b.first_down) {
-          xml_unlink_node(&(*p_access)->b);
-          contests_free_2(&(*p_access)->b);
-          *p_access = 0;
-        }
-      } else {
-        // setting access to allow
-        if (!*p_access) {
-          new_acc = (struct contest_access*)contests_new_node(access_tags_map[param1]);
-          xml_link_node_last(&cnts->b, &new_acc->b);
-          *p_access = new_acc;
-        }
-        (*p_access)->default_is_allow = 1;
-      }
-      return 0;
-    case SSERV_CMD_CNTS_ADD_RULE:
-      if (param3 < 0 || param3 > 1) return -SSERV_ERR_INVALID_PARAMETER;
-      if (xml_parse_ip_mask(0, -1, 0, param2, &ip_addr, &ip_mask) < 0)
-        return -SSERV_ERR_INVALID_PARAMETER;
-      if (!*p_access) {
-        new_acc = (struct contest_access*) contests_new_node(access_tags_map[param1]);
-        xml_link_node_last(&cnts->b, &new_acc->b);
-        *p_access = new_acc;
-      }
-      new_ip = (struct contest_ip*) contests_new_node(CONTEST_IP);
-      new_ip->addr = ip_addr;
-      new_ip->mask = ip_mask;
-      new_ip->allow = param3;
-      new_ip->ssl = param5;
-      xml_link_node_last(&(*p_access)->b, &new_ip->b);
-      return 0;
-    case SSERV_CMD_CNTS_CHANGE_RULE:
-      if (param3 < 0 || param3 > 1) return -SSERV_ERR_INVALID_PARAMETER;
-      if (!(new_ip = (struct contest_ip*) get_nth_child(&(*p_access)->b, param4)))
-        return -SSERV_ERR_INVALID_PARAMETER;
-      new_ip->allow = param3;
-      new_ip->ssl = param5;
-      return 0;
-    case SSERV_CMD_CNTS_DELETE_RULE:
-      if (!(new_ip = (struct contest_ip*) get_nth_child(&(*p_access)->b, param4)))
-        return -SSERV_ERR_INVALID_PARAMETER;
-      xml_unlink_node(&new_ip->b);
-      contests_free_2(&new_ip->b);
+    if (param3 < 0 || param3 > 1) return -SSERV_ERR_INVALID_PARAMETER;
+    if (!param3) {
+      // setting access to deny
+      if (!*p_access) return 0;
+      (*p_access)->default_is_allow = 0;
       if (!(*p_access)->b.first_down) {
         xml_unlink_node(&(*p_access)->b);
         contests_free_2(&(*p_access)->b);
         *p_access = 0;
       }
-      return 0;
-    case SSERV_CMD_CNTS_UP_RULE:
-      if (!(new_ip = (struct contest_ip*) get_nth_child(&(*p_access)->b, param4)))
-        return -SSERV_ERR_INVALID_PARAMETER;
-      if (!new_ip->b.left) return -SSERV_ERR_INVALID_PARAMETER;
-      swap_tree_nodes(new_ip->b.left);
-      return 0;
-    case SSERV_CMD_CNTS_DOWN_RULE:
-      if (!(new_ip = (struct contest_ip*) get_nth_child(&(*p_access)->b, param4)))
-        return -SSERV_ERR_INVALID_PARAMETER;
-      if (!new_ip->b.right) return -SSERV_ERR_INVALID_PARAMETER;
-      swap_tree_nodes(&new_ip->b);
-      return 0;
-    default:
-      abort();
+    } else {
+      // setting access to allow
+      if (!*p_access) {
+        new_acc = (struct contest_access*)contests_new_node(access_tags_map[param1]);
+        xml_link_node_last(&cnts->b, &new_acc->b);
+        *p_access = new_acc;
+      }
+      (*p_access)->default_is_allow = 1;
     }
+    return 0;
+  case SSERV_CMD_CNTS_ADD_RULE:
+    if (!(p_access = get_contest_access_by_num(cnts, param1)))
+      return -SSERV_ERR_INVALID_PARAMETER;
+    if (param3 < 0 || param3 > 1) return -SSERV_ERR_INVALID_PARAMETER;
+    if (xml_parse_ip_mask(0, -1, 0, param2, &ip_addr, &ip_mask) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    if (!*p_access) {
+      new_acc = (struct contest_access*) contests_new_node(access_tags_map[param1]);
+      xml_link_node_last(&cnts->b, &new_acc->b);
+      *p_access = new_acc;
+    }
+    new_ip = (struct contest_ip*) contests_new_node(CONTEST_IP);
+    new_ip->addr = ip_addr;
+    new_ip->mask = ip_mask;
+    new_ip->allow = param3;
+    new_ip->ssl = param5;
+    xml_link_node_last(&(*p_access)->b, &new_ip->b);
+    return 0;
+  case SSERV_CMD_CNTS_CHANGE_RULE:
+    if (!(p_access = get_contest_access_by_num(cnts, param1)))
+      return -SSERV_ERR_INVALID_PARAMETER;
+    if (param3 < 0 || param3 > 1) return -SSERV_ERR_INVALID_PARAMETER;
+    if (!(new_ip = (struct contest_ip*) get_nth_child(&(*p_access)->b, param4)))
+      return -SSERV_ERR_INVALID_PARAMETER;
+    new_ip->allow = param3;
+    new_ip->ssl = param5;
+    return 0;
+  case SSERV_CMD_CNTS_DELETE_RULE:
+    if (!(p_access = get_contest_access_by_num(cnts, param1)))
+      return -SSERV_ERR_INVALID_PARAMETER;
+    if (!(new_ip = (struct contest_ip*) get_nth_child(&(*p_access)->b, param4)))
+      return -SSERV_ERR_INVALID_PARAMETER;
+    xml_unlink_node(&new_ip->b);
+    contests_free_2(&new_ip->b);
+    if (!(*p_access)->b.first_down) {
+      xml_unlink_node(&(*p_access)->b);
+      contests_free_2(&(*p_access)->b);
+      *p_access = 0;
+    }
+    return 0;
+  case SSERV_CMD_CNTS_UP_RULE:
+    if (!(p_access = get_contest_access_by_num(cnts, param1)))
+      return -SSERV_ERR_INVALID_PARAMETER;
+    if (!(new_ip = (struct contest_ip*) get_nth_child(&(*p_access)->b, param4)))
+      return -SSERV_ERR_INVALID_PARAMETER;
+    if (!new_ip->b.left) return -SSERV_ERR_INVALID_PARAMETER;
+    swap_tree_nodes(new_ip->b.left);
+    return 0;
+  case SSERV_CMD_CNTS_DOWN_RULE:
+    if (!(p_access = get_contest_access_by_num(cnts, param1)))
+      return -SSERV_ERR_INVALID_PARAMETER;
+    if (!(new_ip = (struct contest_ip*) get_nth_child(&(*p_access)->b, param4)))
+      return -SSERV_ERR_INVALID_PARAMETER;
+    if (!new_ip->b.right) return -SSERV_ERR_INVALID_PARAMETER;
+    swap_tree_nodes(&new_ip->b);
+    return 0;
+
+  case SSERV_CMD_CNTS_COPY_ACCESS:
+    /*
+     * param1 - destination access list
+     * param3 - source contest
+     * param4 - source access list
+     */
+    // cnts - current contest
+    if (param3 > 0) {
+      if (contests_get(param3, &src_cnts) < 0)
+        return -SSERV_ERR_INVALID_PARAMETER;
+    } else {
+      src_cnts = cnts;
+    }
+    if (!(p_access = get_contest_access_by_num(cnts, param1)))
+      return -SSERV_ERR_INVALID_PARAMETER;
+    if (!(p_src_access = get_contest_access_by_num(src_cnts, param4)))
+      return -SSERV_ERR_INVALID_PARAMETER;
+    if (*p_access == *p_src_access) return 0;
+    xml_unlink_node(&(*p_access)->b);
+    contests_free_2(&(*p_access)->b);
+    *p_access = copy_contest_access(*p_src_access);
+    return 0;
 
   case SSERV_CMD_CNTS_DELETE_PERMISSION:
     if (!(cap_node = (struct opcap_list_item*) get_nth_child(cnts->caps_node, param1)))
@@ -735,6 +801,75 @@ diff_func(const unsigned char *path1, const unsigned char *path2)
 }
 
 int
+super_html_serve_probe_run(FILE *f,
+                           int priv_level,
+                           int user_id,
+                           int contest_id,
+                           const unsigned char *login,
+                           unsigned long long session_id,
+                           unsigned int ip_address,
+                           int ssl,
+                           struct userlist_cfg *config,
+                           const unsigned char *self_url,
+                           const unsigned char *hidden_vars,
+                           const unsigned char *extra_args)
+{
+  int errcode;
+  struct contest_desc *cnts = 0;
+  struct contest_extra *extra = 0;
+  unsigned char *serve_buf = 0, *s = 0;
+  opcap_t caps;
+  unsigned char hbuf[1024];
+
+  if ((errcode = contests_get(contest_id, &cnts)) < 0) {
+    return super_html_report_error(f, session_id, self_url, extra_args,
+                                   "Invalid contest %d!", contest_id);
+  }
+  if (priv_level < PRIV_LEVEL_JUDGE
+      || opcaps_find(&cnts->capabilities, login, &caps) < 0
+      || opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0
+      || !contests_check_serve_control_ip_2(cnts, ip_address, ssl)) {
+    return super_html_report_error(f, session_id, self_url, extra_args,
+                                   "Permission denied");
+  }
+  if (!cnts->root_dir) {
+    return super_html_report_error(f, session_id, self_url, extra_args,
+                                   "Root dir is not defined");
+  }
+  if (!(extra = get_existing_contest_extra(contest_id))) {
+    return super_html_report_error(f, session_id, self_url, extra_args,
+                                   "Contest is not handled");
+  }
+  if (!extra->serve_used) {
+    return super_html_report_error(f, session_id, self_url, extra_args,
+                                   "Contest is not managed");
+  }
+  if (extra->serve_pid > 0) {
+    return super_html_report_error(f, session_id, self_url, extra_args,
+                                   "serve is already running");
+  }
+  if (extra->socket_fd < 0) {
+    return super_html_report_error(f, session_id, self_url, extra_args,
+                                   "no socket is opened");
+  }
+
+  errcode = super_serve_start_serve_test_mode(cnts, &serve_buf, extra->socket_fd);
+  s = html_armor_string_dup(serve_buf);
+  fprintf(f, "<p>Probe run log:<br><pre>%s</pre>\n", s);
+  xfree(s);
+  xfree(serve_buf);
+  fprintf(f, "<table border=\"0\"><tr>");
+  fprintf(f, "<td>%sTo the top</a></td>",
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,""));
+  fprintf(f, "<td>%sBack</a></td>",
+          html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                        "contest_id=%d&action=%d", contest_id,
+                        SUPER_ACTION_VIEW_CONTEST));
+  fprintf(f, "</tr></table>\n");
+  return 0;
+}
+
+int
 super_html_commit_contest(FILE *f,
                           int priv_level,
                           int user_id,
@@ -1005,7 +1140,8 @@ super_html_commit_contest(FILE *f,
   }
   if (!xml_header) {
     snprintf(hbuf, sizeof(hbuf),
-             "<?xml version=\"1.0\" encoding=\"%s\" ?>\n", EJUDGE_CHARSET);
+             "<?xml version=\"1.0\" encoding=\"%s\" ?>\n"
+             "<!-- $Id$ -->\n", EJUDGE_CHARSET);
     xml_header = xstrdup(hbuf);
   }
   if (!xml_footer) xml_footer = xstrdup("\n");
@@ -1023,6 +1159,7 @@ super_html_commit_contest(FILE *f,
     if (errcode == -SSERV_ERR_FILE_NOT_EXIST) {
       fprintf(flog, "serve configuration file `%s' does not exist\n",
               serve_path);
+      serve_header = xstrdup("# $Id$\n");
       snprintf(serve_audit_rec, sizeof(serve_audit_rec),
                "# audit: created %s %d (%s) %s\n",
                xml_unparse_date(time(0)), user_id, login,
@@ -1072,7 +1209,18 @@ super_html_commit_contest(FILE *f,
       fprintf(flog, "Version control:\n%s\n", vcs_str);
     }
   } else {
-    fprintf(flog, "contest XML file `%s' is not changed\n", xml_path);
+    if (vcs_add_flag) {
+      fprintf(flog, "contest XML file `%s' is generated\n", xml_path);
+      if (vcs_add(xml_path, &vcs_str) > 0) {
+        fprintf(flog, "Version control:\n%s\n", vcs_str);
+        xfree(vcs_str); vcs_str = 0;
+      }
+      if (vcs_commit(xml_path, &vcs_str) > 0) {
+        fprintf(flog, "Version control:\n%s\n", vcs_str);
+      }
+    } else {
+      fprintf(flog, "contest XML file `%s' is not changed\n", xml_path);
+    }
   }
   xfree(diff_str); diff_str = 0;
   xfree(vcs_str); vcs_str = 0;
@@ -1096,6 +1244,13 @@ super_html_commit_contest(FILE *f,
   rename_files(flog, pff, plog_footer_path, plog_footer_path_2);
   rename_files(flog, sf, serve_path, serve_path_2);
 
+  if (sf > 0) {
+    if (vcs_commit(serve_path, &vcs_str) > 0) {
+      fprintf(flog, "Version control:\n%s\n", vcs_str);
+    }
+    xfree(vcs_str); vcs_str = 0;
+  }
+
   if ((i = userlist_clnt_register_contest(us_conn, ULS_PRIV_REGISTER_CONTEST,
                                           user_id, cnts->id)) < 0
       || (i = userlist_clnt_change_registration(us_conn, user_id, cnts->id,
@@ -1112,7 +1267,7 @@ super_html_commit_contest(FILE *f,
   if (stat(var_path, &sb) < 0) {
     unsigned char *serve_buf = 0;
     fprintf(flog, "starting `serve' in prepare mode:\n\n");
-    i = super_serve_start_serve_test_mode(cnts, &serve_buf);
+    i = super_serve_start_serve_test_mode(cnts, &serve_buf, -1);
     fprintf(flog, "%s\n", serve_buf);
     xfree(serve_buf);
   }
