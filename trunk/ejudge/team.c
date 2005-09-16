@@ -1570,6 +1570,8 @@ main(int argc, char *argv[])
   if (error_log)
     printf("<li><a href=\"#lastcmd\">%s</a>\n",
            _("The last command completion status"));
+  if (server_start_time && !server_clients_suspended)
+    printf("<li><a href=\"#probstat\">%s</a>\n", _("Problem status summary"));
   if (need_show_submit)
     printf("<li><a href=\"#submit\">%s</a>\n", _("Send a submission"));
   if (server_start_time && !server_clients_suspended)
@@ -1590,7 +1592,7 @@ main(int argc, char *argv[])
     printf("<li><a href=\"%s\" target=_blank>%s</a>\n",
            cur_contest->standings_url, _("Team standings"));
   }
-  if (cur_contest->problems_url && server_start_time) {
+  if (!server_is_virtual && cur_contest->problems_url && server_start_time) {
     printf("<li><a href=\"%s\" target=_blank>%s</a>\n",
            cur_contest->problems_url, _("Problems"));
   }
