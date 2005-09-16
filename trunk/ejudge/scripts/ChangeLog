@@ -1,3 +1,9 @@
+2005-08-19  Alexander Chernov  <cher@ispras.ru>
+
+	* dcc-version.in, fpc-version.in, g++-version.in, g77-version.in, gcc-version.in, gcj-version.in, gpc-version.in, gprolog-version.in, javac-version.in, mbas-version.in, mcs-version.in, mzscheme-version.in, perl-version.in, python-version.in, yabasic-version.in:
+	Added check, that the compiler program is runnable before
+	extracting its version.
+
 2005-07-22  Alexander Chernov  <cher@ispras.ru>
 
 	* runperl.in: initial revision
