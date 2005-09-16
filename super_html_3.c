@@ -29,6 +29,7 @@
 #include "prepare_dflt.h"
 #include "xml_utils.h"
 #include "ej_process.h"
+#include "cpu.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -121,36 +122,6 @@ html_edit_text_form(FILE *f,
 
   fprintf(f, "<input type=\"text\" name=\"%s\" value=\"%s\" size=\"%d\" maxlength=\"%d\">%s", param_name, s, size, maxlength, p);
   xfree(s);
-}
-
-static const unsigned char * const months_names[] =
-{
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-};
-
-static void
-html_date_select(FILE *f, time_t t)
-{
-  struct tm *tt = localtime(&t);
-  int i;
-
-  fprintf(f, "Time: <input type=\"text\" name=\"d_hour\" value=\"%02d\" size=\"2\" maxlength=\"2\">:<input type=\"text\" name=\"d_min\" value=\"%02d\" size=\"2\" maxlength=\"2\">:<input type=\"text\" name=\"d_sec\" value=\"%02d\" size=\"2\" maxlength=\"2\">",
-          tt->tm_hour, tt->tm_min, tt->tm_sec);
-  fprintf(f, "Date: <select name=\"d_mday\">");
-  for (i = 1; i <= 31; i++) {
-    fprintf(f, "<option value=\"%d\"%s>%02d</option>",
-            i, (i == tt->tm_mday)?" selected=\"1\"":"", i);
-  }
-  fprintf(f, "</select>");
-  fprintf(f, "/<select name=\"d_mon\">");
-  for (i = 0; i < 12; i++) {
-    fprintf(f, "<option value=\"%d\"%s>%s</option>",
-            i + 1, (i == tt->tm_mon)?" selected=\"1\"":"", months_names[i]);
-  }
-  fprintf(f, "</select>");
-  fprintf(f, "/<input type=\"text\" name=\"d_year\" value=\"%d\" size=\"4\" maxlength=\"4\">", tt->tm_year + 1900);
-  if (!t) fprintf(f, "<i>(Not set)</i>");
 }
 
 static void
@@ -413,6 +384,7 @@ Advanced settings:
   GLOBAL_PARAM(enable_continue, "d"),
   GLOBAL_PARAM(enable_report_upload, "d"),
   GLOBAL_PARAM(enable_runlog_merge, "d"),
+  GLOBAL_PARAM(cpu_bogomips, "d"),
 
 Not settable (atleast for now):
   GLOBAL_PARAM(a2ps_path, "s"),
@@ -1512,6 +1484,18 @@ super_html_edit_global_parameters(FILE *f,
       html_submit_button(f, SUPER_ACTION_GLOB_DISABLE_TEAM_DOWNLOAD_TIME, "Disable");
     }
     fprintf(f, "</td></tr></form>\n");
+
+    //GLOBAL_PARAM(cpu_bogomips, "d"),
+    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    fprintf(f, "<tr><td>CPU speed (BogoMIPS):</td>");
+    if (global->cpu_bogomips <= 0) {
+      fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"0\" size=\"8\"><i>(Unknown)</i></td><td>");
+    } else {
+      fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"%d\" size=\"8\"></td><td>", global->cpu_bogomips);
+    }
+    html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_CPU_BOGOMIPS, "Change");
+    html_submit_button(f, SUPER_ACTION_GLOB_DETECT_CPU_BOGOMIPS, "Detect");
+    fprintf(f, "</td></tr></form>\n");
   }
 
   if (global->unhandled_vars) {
@@ -2068,7 +2052,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_CR_SERIALIZATION_KEY:
     p_int = &global->cr_serialization_key; default_val = config->serialization_key;
-    goto handle_boolean;
+    goto handle_int_def;
 
   case SSERV_CMD_GLOB_CHANGE_SHOW_ASTR_TIME:
     p_int = &global->show_astr_time;
@@ -2116,6 +2100,14 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_DISABLE_TEAM_DOWNLOAD_TIME:
     global->team_download_time = 0;
+    return 0;
+
+  case SSERV_CMD_GLOB_CHANGE_CPU_BOGOMIPS:
+    p_int = &global->cpu_bogomips;
+    goto handle_int;
+
+  case SSERV_CMD_GLOB_DETECT_CPU_BOGOMIPS:
+    global->cpu_bogomips = cpu_get_bogomips();
     return 0;
 
   case SSERV_CMD_GLOB_SAVE_CONTEST_START_CMD:
@@ -2407,7 +2399,7 @@ super_html_edit_languages(FILE *f,
 
     snprintf(lang_hidden_vars, sizeof(lang_hidden_vars),
              "%s<input type=\"hidden\" name=\"lang_id\" value=\"%d\">",
-             hidden_vars, lang->id);
+             hidden_vars, lang->compile_id);
 
     //LANGUAGE_PARAM(long_name, "s"),
     print_string_editing_row(f, "Language long name:", lang->long_name,
@@ -2821,6 +2813,7 @@ super_html_print_problem(FILE *f,
   int flags, show_adv = 0, show_details = 0;;
   unsigned char num_buf[1024];
   struct section_global_data *global = sstate->global;
+  time_t tmp_date;
 
   if (is_abstract) {
     prob = sstate->aprobs[num];
@@ -3725,6 +3718,31 @@ super_html_print_problem(FILE *f,
                                session_id, self_url, extra_args,
                                prob_hidden_vars);
 
+  //PROBLEM_PARAM(start_date, "s"),
+  if (!prob->abstract && show_adv && !global->contest_time) {
+    html_start_form(f, 1, session_id, self_url, prob_hidden_vars);
+    if (!prob->start_date[0] || xml_parse_date(0,0,0,prob->start_date,&tmp_date) < 0)
+      tmp_date = 0;
+    fprintf(f, "<tr><td>Accept start date:</td><td>");
+    html_date_select(f, tmp_date);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SUPER_ACTION_PROB_CHANGE_START_DATE, "Change");
+    html_submit_button(f, SUPER_ACTION_PROB_CLEAR_START_DATE, "Clear");
+    fprintf(f, "</td></tr></form>\n");
+  }
+  //PROBLEM_PARAM(deadline, "s"),
+  if (!prob->abstract && show_adv && !global->contest_time) {
+    html_start_form(f, 1, session_id, self_url, prob_hidden_vars);
+    if (!prob->deadline[0] || xml_parse_date(0, 0, 0, prob->deadline, &tmp_date) < 0)
+      tmp_date = 0;
+    fprintf(f, "<tr><td>Accept deadline:</td><td>");
+    html_date_select(f, tmp_date);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SUPER_ACTION_PROB_CHANGE_DEADLINE, "Change");
+    html_submit_button(f, SUPER_ACTION_PROB_CLEAR_DEADLINE, "Clear");
+    fprintf(f, "</td></tr></form>\n");
+  }
+
   if (prob->unhandled_vars) {
     s = html_armor_string_dup(prob->unhandled_vars);
     fprintf(f, "<tr><td colspan=\"3\" align=\"center\"><b>Uneditable parameters</td></tr>\n<tr><td colspan=\"3\"><pre>%s</pre></td></tr>\n", s);
@@ -3901,7 +3919,7 @@ super_html_prob_cmd(struct sid_state *sstate, int cmd,
     snprintf(prob->info_sfx, sizeof(prob->info_sfx), "%s", ".inf");
     prob->use_tgz = 0;
     snprintf(prob->tgz_dir, sizeof(prob->tgz_dir), "%s", "%Ps");
-    snprintf(prob->tgz_sfx, sizeof(prob->tgz_sfx), "%s", ".inf");
+    snprintf(prob->tgz_sfx, sizeof(prob->tgz_sfx), "%s", ".tgz");
     snprintf(prob->check_cmd, sizeof(prob->check_cmd), "%s", "check_%Ps");
     prob->max_vm_size = 64 * SIZE_M;
     prob->variant_num = 0;
@@ -3955,6 +3973,9 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   int i, n, val;
   int *p_int;
   unsigned long *p_ulong, ulval;
+  time_t tmp_date;
+  unsigned char *p_str;
+  size_t str_size;
 
   if (prob_id > 0) {
     if (prob_id >= sstate->prob_a || !sstate->probs[prob_id])
@@ -4302,6 +4323,26 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CLEAR_CHECK_CMD:
     PROB_CLEAR_STRING(check_cmd);
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_START_DATE:
+    p_str = prob->start_date; str_size = sizeof(prob->start_date);
+  handle_date:;
+    if (xml_parse_date(0, 0, 0, param2, &tmp_date) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    snprintf(p_str, str_size, "%s", xml_unparse_date(tmp_date));
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_START_DATE:
+    PROB_CLEAR_STRING(start_date);
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_DEADLINE:
+    p_str = prob->deadline; str_size = sizeof(prob->deadline);
+    goto handle_date;
+
+  case SSERV_CMD_PROB_CLEAR_DEADLINE:
+    PROB_CLEAR_STRING(deadline);
     return 0;
 
   default:
