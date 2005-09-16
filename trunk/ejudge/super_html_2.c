@@ -1141,7 +1141,7 @@ super_html_commit_contest(FILE *f,
   if (!xml_header) {
     snprintf(hbuf, sizeof(hbuf),
              "<?xml version=\"1.0\" encoding=\"%s\" ?>\n"
-             "<!-- $Id$ -->\n", EJUDGE_CHARSET);
+             "<!-- %cId%c -->\n", EJUDGE_CHARSET, '$', '$');
     xml_header = xstrdup(hbuf);
   }
   if (!xml_footer) xml_footer = xstrdup("\n");
@@ -1159,7 +1159,7 @@ super_html_commit_contest(FILE *f,
     if (errcode == -SSERV_ERR_FILE_NOT_EXIST) {
       fprintf(flog, "serve configuration file `%s' does not exist\n",
               serve_path);
-      serve_header = xstrdup("# $Id$\n");
+      serve_header = xstrdup("# %cId%c\n", '$', '$');
       snprintf(serve_audit_rec, sizeof(serve_audit_rec),
                "# audit: created %s %d (%s) %s\n",
                xml_unparse_date(time(0)), user_id, login,
