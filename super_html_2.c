@@ -1159,7 +1159,7 @@ super_html_commit_contest(FILE *f,
     if (errcode == -SSERV_ERR_FILE_NOT_EXIST) {
       fprintf(flog, "serve configuration file `%s' does not exist\n",
               serve_path);
-      serve_header = xstrdup("# %cId%c\n", '$', '$');
+      serve_header = xstrdup("# $" "Id" "$\n");
       snprintf(serve_audit_rec, sizeof(serve_audit_rec),
                "# audit: created %s %d (%s) %s\n",
                xml_unparse_date(time(0)), user_id, login,
