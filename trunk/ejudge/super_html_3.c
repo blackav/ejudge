@@ -2113,9 +2113,9 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_GLOB_SAVE_CONTEST_START_CMD:
     pp_str = &sstate->contest_start_cmd_text;
 
-  handle_string_2:
+  handle_string_3:
     xfree(*pp_str);
-    *pp_str = xstrdup(param2);
+    *pp_str = dos2unix_str(param2);
     return 0;
 
   case SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD_TEXT:
@@ -2128,7 +2128,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_SAVE_STAND_HEADER:
     pp_str = &sstate->stand_header_text;
-    goto handle_string_2;
+    goto handle_string_3;
 
   case SSERV_CMD_GLOB_CLEAR_STAND_HEADER_TEXT:
     pp_str = &sstate->stand_header_text;
@@ -2136,7 +2136,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_SAVE_STAND_FOOTER:
     pp_str = &sstate->stand_footer_text;
-    goto handle_string_2;
+    goto handle_string_3;
 
   case SSERV_CMD_GLOB_CLEAR_STAND_FOOTER_TEXT:
     pp_str = &sstate->stand_footer_text;
@@ -2144,7 +2144,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_SAVE_STAND2_HEADER:
     pp_str = &sstate->stand2_header_text;
-    goto handle_string_2;
+    goto handle_string_3;
 
   case SSERV_CMD_GLOB_CLEAR_STAND2_HEADER_TEXT:
     pp_str = &sstate->stand2_header_text;
@@ -2152,7 +2152,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_SAVE_STAND2_FOOTER:
     pp_str = &sstate->stand2_footer_text;
-    goto handle_string_2;
+    goto handle_string_3;
 
   case SSERV_CMD_GLOB_CLEAR_STAND2_FOOTER_TEXT:
     pp_str = &sstate->stand2_footer_text;
@@ -2160,7 +2160,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_SAVE_PLOG_HEADER:
     pp_str = &sstate->plog_header_text;
-    goto handle_string_2;
+    goto handle_string_3;
 
   case SSERV_CMD_GLOB_CLEAR_PLOG_HEADER_TEXT:
     pp_str = &sstate->plog_header_text;
@@ -2168,7 +2168,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_SAVE_PLOG_FOOTER:
     pp_str = &sstate->plog_footer_text;
-    goto handle_string_2;
+    goto handle_string_3;
 
   case SSERV_CMD_GLOB_CLEAR_PLOG_FOOTER_TEXT:
     pp_str = &sstate->plog_footer_text;
@@ -2696,10 +2696,19 @@ static struct std_checker_info std_checkers[] =
   { "", "" },
   { "cmp_file", "compare two files (trailing whitespace ignored)" },
   { "cmp_file_nospace", "compare two files (duplicated whitespace ignored)" },
+  { "cmp_bytes", "compare two files byte by byte" },
   { "cmp_int", "compare two ints (32 bit)" },
+  { "cmp_int_seq", "compare two sequences of ints (32 bit)" },
   { "cmp_long_long", "compare two long longs (64 bit)" },
+  { "cmp_long_long_seq", "compare two sequences of long longs (64 bit)" },
   { "cmp_unsigned_int", "compare two unsigned ints (32 bit)" },
+  { "cmp_unsigned_int_seq", "compare two sequences of unsigned ints (32 bit)" },
   { "cmp_unsigned_long_long", "compare two unsigned long longs (64 bit)" },
+  { "cmp_unsigned_long_long_seq", "compare two sequences of unsigned long longs (64 bit)" },
+  { "cmp_double", "compare two doubles (EPS env. var is required)" },
+  { "cmp_double_seq", "compare two sequences of doubles (EPS is required)" },
+  { "cmp_long_double", "compare two long doubles (EPS is required)" },
+  { "cmp_long_double_seq", "compare two sequences of long doubles (EPS is required)" },
   { 0, 0 },
 };
 static void
@@ -2805,7 +2814,7 @@ super_html_print_problem(FILE *f,
   unsigned char name_buf[1024];
   int i, sel_num;
   struct section_problem_data *prob, *sup_prob = 0;
-  unsigned char *s;
+  unsigned char *s, *checker_env;
   unsigned char prob_hidden_vars[4096];
   unsigned char *extra_msg = 0;
   struct section_problem_data tmp_prob;
@@ -3718,6 +3727,24 @@ super_html_print_problem(FILE *f,
                                session_id, self_url, extra_args,
                                prob_hidden_vars);
 
+  //PROBLEM_PARAM(checker_env, "x"),
+  if (!prob->abstract) {
+    if (!prob->checker_env || !prob->checker_env[0]) {
+      extra_msg = "(not set)";
+      checker_env = xstrdup("");
+    } else {
+      extra_msg = "";
+      checker_env = sarray_unparse(prob->checker_env);
+    }
+    print_string_editing_row_3(f, "Checker environment:", checker_env,
+                               SUPER_ACTION_PROB_CHANGE_CHECKER_ENV,
+                               SUPER_ACTION_PROB_CLEAR_CHECKER_ENV,
+                               extra_msg,
+                               session_id, self_url, extra_args,
+                               prob_hidden_vars);
+    xfree(checker_env);
+  }
+
   //PROBLEM_PARAM(start_date, "s"),
   if (!prob->abstract && show_adv && !global->contest_time) {
     html_start_form(f, 1, session_id, self_url, prob_hidden_vars);
@@ -3976,6 +4003,7 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   time_t tmp_date;
   unsigned char *p_str;
   size_t str_size;
+  char **tmp_env = 0;
 
   if (prob_id > 0) {
     if (prob_id >= sstate->prob_a || !sstate->probs[prob_id])
@@ -4323,6 +4351,17 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CLEAR_CHECK_CMD:
     PROB_CLEAR_STRING(check_cmd);
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_CHECKER_ENV:
+    if (sarray_parse(param2, &tmp_env) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sarray_free(prob->checker_env);
+    prob->checker_env = tmp_env;
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_CHECKER_ENV:
+    sarray_free(prob->checker_env);
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_START_DATE:
@@ -5316,22 +5355,6 @@ mkpath(unsigned char *out, const unsigned char *d, const unsigned char *n,
   } else {
     snprintf(out, sizeof(path_t), "%s", n);
   }
-}
-
-static unsigned char *
-dos2unix_str(const unsigned char *s)
-{
-  unsigned char *out, *pout;
-  const unsigned char *pin;
-  size_t len;
-
-  ASSERT(s);
-  len = strlen(s);
-  out = xmalloc(len + 1);
-  for (pout = out, pin = s; *pin; pin++)
-    if (*pin != '\r') *pout++ = *pin;
-  *pout = 0;
-  return out;
 }
 
 static int
