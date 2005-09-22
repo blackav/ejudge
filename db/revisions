@@ -2059,3 +2059,7 @@ serve-control.c 1 10 9330693
 super-serve.c 1 18 10306369
 parsecfg.c 1 23 2665600
 prepare_out.c 1 7 4911721
+misctext.h 1 14 245544
+dos2unix_str.c 1 1 93931
+super_html_2.c 1 9 3724414
+super_html_3.c 1 8 15915887
