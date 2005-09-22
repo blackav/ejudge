@@ -3,7 +3,7 @@
 
 /* $Id$ */
 
-/* Copyright (C) 2003,2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -140,6 +140,10 @@ int  checker_read_corr_unsigned_long_long(const CHECKER_char_t *, int,
                                           unsigned long long *);
 int  checker_read_corr_double(const CHECKER_char_t *, int, double *);
 int  checker_read_corr_long_double(const CHECKER_char_t *, int, long double *);
+
+int checker_eq_double(double v1, double v2, double eps);
+int checker_eq_long_double(long double v1, long double v2, long double eps);
+int checker_eq_float(float v1, float v2, float eps);
 
 #ifdef __cplusplus
 }
