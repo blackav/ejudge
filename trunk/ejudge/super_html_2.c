@@ -238,7 +238,7 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
                            int param1, const unsigned char *param2,
                            int param3, int param4, int param5)
 {
-  unsigned char **p_str = 0;
+  unsigned char **p_str = 0, **p_str_d2u = 0;
   unsigned char *p_bool = 0;
   time_t *p_date = 0;
   int v, n, memb_ind;
@@ -363,25 +363,25 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     break;
 
   case SSERV_CMD_CNTS_SAVE_USERS_HEADER:
-    p_str = &sstate->users_header_text;
+    p_str_d2u = &sstate->users_header_text;
     break;
   case SSERV_CMD_CNTS_SAVE_USERS_FOOTER:
-    p_str = &sstate->users_footer_text;
+    p_str_d2u = &sstate->users_footer_text;
     break;
   case SSERV_CMD_CNTS_SAVE_REGISTER_HEADER:
-    p_str = &sstate->register_header_text;
+    p_str_d2u = &sstate->register_header_text;
     break;
   case SSERV_CMD_CNTS_SAVE_REGISTER_FOOTER:
-    p_str = &sstate->register_footer_text;
+    p_str_d2u = &sstate->register_footer_text;
     break;
   case SSERV_CMD_CNTS_SAVE_TEAM_HEADER:
-    p_str = &sstate->team_header_text;
+    p_str_d2u = &sstate->team_header_text;
     break;
   case SSERV_CMD_CNTS_SAVE_TEAM_FOOTER:
-    p_str = &sstate->team_footer_text;
+    p_str_d2u = &sstate->team_footer_text;
     break;
   case SSERV_CMD_CNTS_SAVE_REGISTER_EMAIL_FILE:
-    p_str = &sstate->register_email_text;
+    p_str_d2u = &sstate->register_email_text;
     break;
 
   case SSERV_CMD_CNTS_DEFAULT_ACCESS:
@@ -654,6 +654,12 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     if (!param2 || sscanf(param2, "%d%n", &v, &n) != 1 || param2[n] || v < 0 || v > 1)
       return -SSERV_ERR_INVALID_PARAMETER;
     *p_bool = v;
+    return 0;
+  }
+
+  if (p_str_d2u) {
+    xfree(*p_str);
+    *p_str_d2u = dos2unix_str(param2);
     return 0;
   }
 
