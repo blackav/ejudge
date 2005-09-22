@@ -40,9 +40,14 @@ int checker_main(int argc, char **argv)
     i++;
     snprintf(buf, sizeof(buf), "[%d]", i);
     if (checker_read_corr_double(buf, 0, &corr_ans) < 0) break;
-    checker_read_team_double(buf, 1, &team_ans);
+    if (checker_read_team_double(buf, 0, &team_ans) < 0) {
+      fatal_WA("Too few numbers in the team output");
+    }
     if (!checker_eq_double(corr_ans, team_ans, eps))
       fatal_WA("Answers differ: %s: team: %.10g, corr: %.10g", buf, team_ans, corr_ans);
+  }
+  if (checker_read_team_double("x", 0, &team_ans) >= 0) {
+    fatal_WA("Too many numbers in the team output");
   }
   checker_team_eof();
 
@@ -51,7 +56,7 @@ int checker_main(int argc, char **argv)
 
 /*
  * Local variables:
- *  compile-command: "gcc -Wall -O2 -s -I. -L. cmp_double_seq.c -o cmp_double_seq -lchecker -lm"
+ *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
