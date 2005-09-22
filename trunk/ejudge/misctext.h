@@ -66,4 +66,6 @@ void html_start_form(FILE *f, int mode, unsigned long long sid,
 
 void html_date_select(FILE *f, time_t t);
 
+unsigned char *dos2unix_str(const unsigned char *s);
+
 #endif /* __MISCTEXT_H__ */
