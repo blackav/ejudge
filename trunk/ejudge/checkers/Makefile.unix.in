@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2003,2004 Alexander Chernov <cher@ispras.ru> */
+# Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -73,6 +73,9 @@ CFILES=\
  in_close.c\
  team_close.c\
  corr_close.c\
+ eq_double.c\
+ eq_float.c\
+ eq_long_double.c\
  in_eof.c\
  team_eof.c\
  corr_eof.c\
@@ -122,10 +125,19 @@ CFILES=\
  xstrdup.c
 
 CHKCFILES =\
+ cmp_bytes.c\
+ cmp_double.c\
+ cmp_double_seq.c\
  cmp_int.c\
+ cmp_int_seq.c\
  cmp_unsigned_int.c\
+ cmp_unsigned_int_seq.c\
+ cmp_long_double.c\
+ cmp_long_double_seq.c\
  cmp_long_long.c\
+ cmp_long_long_seq.c\
  cmp_unsigned_long_long.c\
+ cmp_unsigned_long_long_seq.c\
  cmp_file.c\
  cmp_file_nospace.c
 
@@ -177,6 +189,18 @@ corr_close.o: corr_close.c checker_internal.h
 pic/corr_close.o: corr_close.c checker_internal.h
 corr_eof.o: corr_eof.c checker_internal.h
 pic/corr_eof.o: corr_eof.c checker_internal.h
+eq_double.o : eq_double.c checker_internal.h
+	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
+pic/eq_double.o : eq_double.c checker_internal.h
+	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
+eq_float.o : eq_float.c checker_internal.h
+	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
+pic/eq_float.o : eq_float.c checker_internal.h
+	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
+eq_long_double.o : eq_long_double.c checker_internal.h
+	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
+pic/eq_long_double.o : eq_long_double.c checker_internal.h
+	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
 fatal.o: fatal.c checker_internal.h
 pic/fatal.o: fatal.c checker_internal.h
 fatal_cf.o: fatal_cf.c checker_internal.h
