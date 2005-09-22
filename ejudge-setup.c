@@ -3459,6 +3459,9 @@ generate_install_script(FILE *f)
       gen_cmd_run(f, "ln -sf \"%s/users%s\" \"%s/users%s\"",
                   config_ejudge_cgi_bin_dir, CGI_PROG_SUFFIX,
                   config_cgi_bin_dir, CGI_PROG_SUFFIX);
+      gen_cmd_run(f, "ln -sf \"%s/serve-control%s\" \"%s/serve-control%s\"",
+                  config_ejudge_cgi_bin_dir, CGI_PROG_SUFFIX,
+                  config_cgi_bin_dir, CGI_PROG_SUFFIX);
     }
   }
 
