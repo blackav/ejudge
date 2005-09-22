@@ -94,5 +94,7 @@ int    sarray_len(char **);
 char **sarray_merge_pf(char **, char **);
 char **sarray_free(char **);
 char **sarray_merge_arr(int, char ***);
+char  *sarray_unparse(char **);
+int    sarray_parse(const unsigned char *, char ***);
 
 #endif /* __PARSECFG_H__ */
