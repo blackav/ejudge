@@ -106,6 +106,7 @@ COMMON_CFILES=\
  digest_3.c\
  digest_4.c\
  digest_5.c\
+ dos2unix_str.c\
  expat_iface.c\
  filehash.c\
  filter_eval.c\
