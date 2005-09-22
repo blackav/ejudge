@@ -964,6 +964,7 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     fprintf(f, "standard_checker = \"%s\"\n", c_armor(&sbuf, prob->standard_checker));
   if (prob->check_cmd[0])
     fprintf(f, "check_cmd = \"%s\"\n", c_armor(&sbuf, prob->check_cmd));
+  do_xstr(f, &sbuf, "checker_env", prob->checker_env);
  
   if (prob->team_enable_rep_view >= 0)
     unparse_bool(f, "team_enable_rep_view", prob->team_enable_rep_view);
@@ -1004,7 +1005,6 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   PROBLEM_PARAM(variant_num, "d"),
   PROBLEM_PARAM(date_penalty, "x"),
   PROBLEM_PARAM(disable_language, "x"),
-  PROBLEM_PARAM(checker_env, "x"),
   PROBLEM_PARAM(tgz_pat, "s"),
   PROBLEM_PARAM(personal_deadline, "x"),
 */
@@ -1057,8 +1057,6 @@ prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
   do_xstr(f, &sbuf, "date_penalty", prob->date_penalty);
   //PROBLEM_PARAM(disable_language, "x"),
   do_xstr(f, &sbuf, "disable_language", prob->disable_language);
-  //PROBLEM_PARAM(checker_env, "x"),
-  do_xstr(f, &sbuf, "checker_env", prob->checker_env);
   //PROBLEM_PARAM(personal_deadline, "x"),
   do_xstr(f, &sbuf, "personal_deadline", prob->personal_deadline);
 
