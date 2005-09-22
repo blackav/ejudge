@@ -252,7 +252,12 @@ new_version: revinfo force
 force:
 
 # localization stuff
-po: ejudge.ru_RU.KOI8-R.po
+ifdef ENABLE_NLS
+po : ejudge.ru_RU.KOI8-R.po
+else
+po :
+endif
+
 ejudge.ru_RU.KOI8-R.po: $(CFILES) ejudge.po
 	chmod +w $@
 	${MSGMERGE} -U $@ ejudge.po
