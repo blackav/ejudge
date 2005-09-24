@@ -5656,7 +5656,7 @@ recompile_checker(FILE *f, const unsigned char *checker_path)
       fprintf(f, "Error: GNU C support is not configured\n");
       return -1;
     }
-    snprintf(cmd, sizeof(cmd), "%s -I%s/include -L%s/lib -Wl,--rpath,%s/lib %s -lchecker", gcc_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2);
+    snprintf(cmd, sizeof(cmd), "%s -I%s/include -L%s/lib -Wl,--rpath,%s/lib %s -o %s -lchecker -lm", gcc_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2, filename);
     break;
 
   default:
