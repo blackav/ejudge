@@ -1118,7 +1118,7 @@ super_html_contest_page(FILE *f,
     fprintf(f, "<hr><h3>Start-up messages</h3>\n");
     if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) >= 0) {
       fprintf(f, "<p>");
-      html_submit_button(f, SUPER_ACTION_CONTEST_RESTART, "Clear");
+      html_submit_button(f, SUPER_ACTION_CLEAR_MESSAGES, "Clear");
     }
     html_log = html_armor_string_dupa(extra->messages);
     fprintf(f, "<p><pre>%s</pre>\n", html_log);
