@@ -2267,6 +2267,7 @@ cmd_simple_command(struct client_state *p, int len,
   case SSERV_CMD_CONTEST_RESTART:
   case SSERV_CMD_SERVE_MNG_RESET_ERROR:
   case SSERV_CMD_RUN_MNG_RESET_ERROR:
+  case SSERV_CMD_CLEAR_MESSAGES:
     r = contest_mngmt_cmd(cnts, pkt->b.id, p->user_id, p->login);
     break;
   default:
@@ -2819,6 +2820,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CONTEST_RESTART] = { cmd_simple_command },
   [SSERV_CMD_SERVE_MNG_RESET_ERROR] = { cmd_simple_command },
   [SSERV_CMD_RUN_MNG_RESET_ERROR] = { cmd_simple_command },
+  [SSERV_CMD_CLEAR_MESSAGES] = { cmd_simple_command },
 
   [SSERV_CMD_SHOW_HIDDEN] = { cmd_simple_top_command },
   [SSERV_CMD_HIDE_HIDDEN] = { cmd_simple_top_command },
@@ -3349,6 +3351,14 @@ contest_mngmt_cmd(struct contest_desc *cnts,
     extra = get_existing_contest_extra(cnts->id);
     if (!extra || !extra->run_suspended) return 0;
     extra->run_suspend_end = 0;
+    return 0;
+
+  case SSERV_CMD_CLEAR_MESSAGES:
+    extra = get_existing_contest_extra(cnts->id);
+    if (extra && extra->messages) {
+      xfree(extra->messages);
+      extra->messages = 0;
+    }
     return 0;
 
   default:
