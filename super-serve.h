@@ -147,6 +147,9 @@ struct sid_state
   unsigned char *stand2_footer_text;
   unsigned char *plog_header_text;
   unsigned char *plog_footer_text;
+
+  unsigned char *var_header_text;
+  unsigned char *var_footer_text;
 };
 
 void super_serve_clear_edited_contest(struct sid_state *sstate);
