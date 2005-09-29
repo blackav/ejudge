@@ -19,6 +19,7 @@
  */
 
 int vcs_add(const unsigned char *path, unsigned char **p_log_txt);
+int vcs_add_dir(const unsigned char *path, unsigned char **p_log_txt);
 int vcs_commit(const unsigned char *path, unsigned char **p_log_txt);
 
 #endif /* __VCS_H__ */
