@@ -20,6 +20,7 @@
 #include "prepare.h"
 #include "prepare_dflt.h"
 #include "xml_utils.h"
+#include "prepare_serve.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -159,7 +160,8 @@ do_xstr(FILE *f, struct str_buf *pb, const unsigned char *name, char **val)
 
 void
 prepare_unparse_global(FILE *f, struct section_global_data *global,
-                       const unsigned char *compile_dir)
+                       const unsigned char *compile_dir,
+                       int need_variant_map)
 {
   struct str_buf sbuf = { 0, 0};
   path_t compile_spool_dir;
@@ -428,6 +430,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     fprintf(f, "team_download_time = %d\n", global->team_download_time);
   if (global->cpu_bogomips > 0)
     fprintf(f, "cpu_bogomips = %d\n", global->cpu_bogomips);
+  if (global->variant_map_file[0] && need_variant_map)
+    fprintf(f, "variant_map_file = \"%s\"\n", c_armor(&sbuf, global->variant_map_file));
   fprintf(f, "\n");
 
   if (global->unhandled_vars) fprintf(f, "%s\n", global->unhandled_vars);
@@ -493,7 +497,6 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   GLOBAL_PARAM(use_gzip, "d"),
   GLOBAL_PARAM(min_gzip_size, "d"),
   GLOBAL_PARAM(use_dir_hierarchy, "d"),
-  GLOBAL_PARAM(variant_map_file, "s"),
   GLOBAL_PARAM(priority_adjustment, "d"),
   GLOBAL_PARAM(user_priority_adjustments, "x"),
   GLOBAL_PARAM(contestant_status_num, "d"),
@@ -632,9 +635,6 @@ prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *glob
   if (global->use_dir_hierarchy >= 0
       && global->use_dir_hierarchy != DFLT_G_USE_DIR_HIERARCHY)
     unparse_bool(f, "use_dir_hierarchy", global->use_dir_hierarchy);
-
-  //GLOBAL_PARAM(variant_map_file, "s"),
-  do_str(f, &sbuf, "variant_map_file", global->variant_map_file);
 
   //GLOBAL_PARAM(priority_adjustment, "d"),
   if (global->priority_adjustment)
@@ -965,6 +965,10 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   if (prob->check_cmd[0])
     fprintf(f, "check_cmd = \"%s\"\n", c_armor(&sbuf, prob->check_cmd));
   do_xstr(f, &sbuf, "checker_env", prob->checker_env);
+
+  if (!prob->abstract && prob->variant_num > 0) {
+    fprintf(f, "variant_num = %d\n", prob->variant_num);
+  }
  
   if (prob->team_enable_rep_view >= 0)
     unparse_bool(f, "team_enable_rep_view", prob->team_enable_rep_view);
@@ -1002,7 +1006,6 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   PROBLEM_PARAM(spelling, "s"),
   PROBLEM_PARAM(score_multiplier, "d"),
   PROBLEM_PARAM(test_sets, "x"),
-  PROBLEM_PARAM(variant_num, "d"),
   PROBLEM_PARAM(date_penalty, "x"),
   PROBLEM_PARAM(disable_language, "x"),
   PROBLEM_PARAM(tgz_pat, "s"),
@@ -1048,11 +1051,6 @@ prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
     fprintf(f, "score_multiplier = %d\n", prob->score_multiplier);
   //PROBLEM_PARAM(test_sets, "x"),
   do_xstr(f, &sbuf, "test_sets", prob->test_sets);
-  //PROBLEM_PARAM(variant_num, "d"),
-  if (prob->variant_num >= 0) {
-    if (prob->variant_num || !prob->abstract)
-      fprintf(f, "variant_num = %d\n", prob->variant_num);
-  }
   //PROBLEM_PARAM(date_penalty, "x"),
   do_xstr(f, &sbuf, "date_penalty", prob->date_penalty);
   //PROBLEM_PARAM(disable_language, "x"),
@@ -1272,6 +1270,8 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
   if (atst && atst->check_dir[0]) {
     fprintf(f, "check_dir = \"%s\"\n",
             c_armor(&sbuf, atst->check_dir));
+  } else if (arch == ARCH_DOS) {
+    fprintf(f, "check_dir = \"%s\"\n", "home/judges/dosemu/run");
   } else if(testing_work_dir) {
     fprintf(f, "check_dir = \"%s\"\n",
             c_armor(&sbuf, testing_work_dir));
@@ -1685,6 +1685,25 @@ prepare_further_instructions(FILE *f,
           "Copy test files, correct answer files (if needed), test info files (if needed)\n"
           "to the specified directories and name them as specified!\n\n"
           "Make sure, that all input files are in UNIX text format!\n");
+}
+
+void
+prepare_unparse_variants(FILE *f, const struct variant_map *vmap,
+                         const unsigned char *header,
+                         const unsigned char *footer)
+{
+  int i, j;
+
+  fprintf(f, "<variant_map version=\"1\">\n");
+  if (header) fprintf(f, "%s", header);
+  for (i = 0; i < vmap->u; i++) {
+    fprintf(f, "%s", vmap->v[i].login);
+    for (j = 0; j < vmap->prob_rev_map_size; j++)
+      fprintf(f, " %d", vmap->v[i].variants[j]);
+    fprintf(f, "\n");
+  }
+  fprintf(f, "</variant_map>\n");
+  if (footer) fprintf(f, "%s", footer);
 }
 
 /**
