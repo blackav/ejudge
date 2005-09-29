@@ -1767,6 +1767,8 @@ super_serve_clear_edited_contest(struct sid_state *p)
   xfree(p->stand2_footer_text); p->stand2_footer_text = 0;
   xfree(p->plog_header_text); p->plog_header_text = 0;
   xfree(p->plog_footer_text); p->plog_footer_text = 0;
+  xfree(p->var_header_text); p->var_header_text = 0;
+  xfree(p->var_footer_text); p->var_footer_text = 0;
 }
 
 static void
@@ -1962,6 +1964,8 @@ cmd_main_page(struct client_state *p, int len,
   case SSERV_CMD_GLOB_EDIT_PLOG_HEADER_FILE:
   case SSERV_CMD_GLOB_EDIT_PLOG_FOOTER_FILE:
   case SSERV_CMD_VIEW_NEW_SERVE_CFG:
+  case SSERV_CMD_PROB_EDIT_VARIANTS:
+  case SSERV_CMD_PROB_EDIT_VARIANTS_2:
     // FIXME: add permissions checks
     break;
 
@@ -2111,6 +2115,14 @@ cmd_main_page(struct client_state *p, int len,
                                       p->cookie, p->ip, config, sstate,
                                       self_url_ptr, hidden_vars_ptr,
                                       extra_args_ptr);
+    break;
+
+  case SSERV_CMD_PROB_EDIT_VARIANTS:
+  case SSERV_CMD_PROB_EDIT_VARIANTS_2:
+    r = super_html_edit_variants(f, pkt->b.id, p->priv_level, p->user_id, p->login,
+                                 p->cookie, p->ip, p->ssl, userlist_clnt,
+                                 config, sstate, self_url_ptr, hidden_vars_ptr,
+                                 extra_args_ptr);
     break;
 
   default:
@@ -2628,6 +2640,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CLEAR_START_DATE:
   case SSERV_CMD_PROB_CHANGE_DEADLINE:
   case SSERV_CMD_PROB_CLEAR_DEADLINE:
+  case SSERV_CMD_PROB_CHANGE_VARIANT_NUM:
     r = super_html_prob_param(sstate, pkt->b.id, pkt->param1, param2_ptr,
                               pkt->param3, pkt->param4);
     break;
@@ -2782,6 +2795,12 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_GLOB_CLEAR_PLOG_FOOTER_TEXT:
     r = super_html_global_param(sstate, pkt->b.id, config,
                                 pkt->param1, param2_ptr, pkt->param3, pkt->param4);
+    break;
+
+  case SSERV_CMD_PROB_CHANGE_VARIANTS:
+  case SSERV_CMD_PROB_DELETE_VARIANTS:
+    r = super_html_variant_param(sstate, pkt->b.id,
+                                 pkt->param1, param2_ptr, pkt->param3, pkt->param4);
     break;
 
   default:
@@ -3063,6 +3082,11 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CLEAR_START_DATE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_DEADLINE] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_DEADLINE] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_VARIANT_NUM] = { cmd_set_value },
+  [SSERV_CMD_PROB_EDIT_VARIANTS] = { cmd_main_page },
+  [SSERV_CMD_PROB_EDIT_VARIANTS_2] = { cmd_main_page },
+  [SSERV_CMD_PROB_CHANGE_VARIANTS] = { cmd_set_value },
+  [SSERV_CMD_PROB_DELETE_VARIANTS] = { cmd_set_value },
 
   [SSERV_CMD_GLOB_CHANGE_DURATION] = { cmd_set_value },
   [SSERV_CMD_GLOB_UNLIMITED_DURATION] = { cmd_set_value },
