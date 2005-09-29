@@ -30,6 +30,10 @@
 #include "xml_utils.h"
 #include "ej_process.h"
 #include "cpu.h"
+#include "userlist_clnt.h"
+#include "userlist_proto.h"
+#include "userlist.h"
+#include "prepare_serve.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -2823,6 +2827,7 @@ super_html_print_problem(FILE *f,
   unsigned char num_buf[1024];
   struct section_global_data *global = sstate->global;
   time_t tmp_date;
+  unsigned char hbuf[1024];
 
   if (is_abstract) {
     prob = sstate->aprobs[num];
@@ -3745,6 +3750,28 @@ super_html_print_problem(FILE *f,
     xfree(checker_env);
   }
 
+  //PROBLEM_PARAM(variant_num, "d"),
+  if (!prob->abstract && show_adv) {
+    extra_msg = "";
+    if (prob->variant_num <= 0) {
+      prob->variant_num = 0;
+      extra_msg = "<i>(No variants)</i>";
+    }
+
+    snprintf(num_buf, sizeof(num_buf), "%d", prob->variant_num);
+    html_start_form(f, 1, session_id, self_url, prob_hidden_vars);
+    fprintf(f, "<tr><td>%s</td><td>", "Number of variants:");
+    html_edit_text_form(f, 0, 0, "param", num_buf);
+    fprintf(f, "%s</td><td>", extra_msg);
+    html_submit_button(f, SUPER_ACTION_PROB_CHANGE_VARIANT_NUM, "Change");
+    if (prob->variant_num > 0) {
+      fprintf(f, "%sEdit variants</a>",
+              html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                            "action=%d", SUPER_ACTION_PROB_EDIT_VARIANTS));
+    }
+    fprintf(f, "</td></tr></form>\n");
+  }
+
   //PROBLEM_PARAM(start_date, "s"),
   if (!prob->abstract && show_adv && !global->contest_time) {
     html_start_form(f, 1, session_id, self_url, prob_hidden_vars);
@@ -4384,6 +4411,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
     PROB_CLEAR_STRING(deadline);
     return 0;
 
+  case SSERV_CMD_PROB_CHANGE_VARIANT_NUM:
+    p_int = &prob->variant_num;
+    goto handle_int_1;
+
   default:
     abort();
   }
@@ -4396,7 +4427,7 @@ unparse_serve_cfg(FILE *f,
 {
   struct section_global_data *global = sstate->global;
   struct contest_desc *cnts = sstate->edited_cnts;
-  int i, active_langs;
+  int i, active_langs, need_variant_map = 0;
 
   if (!global) return;
   if (sstate->serve_parse_errors) return;
@@ -4421,7 +4452,11 @@ unparse_serve_cfg(FILE *f,
   }
   if (!sstate->enable_extra_col) global->stand_extra_format[0] = 0;
 
-  prepare_unparse_global(f, global, config->compile_home_dir);
+  for (i = 1; i < sstate->prob_a; i++)
+    if (sstate->probs[i] && sstate->probs[i]->variant_num > 0)
+      need_variant_map = 1;
+
+  prepare_unparse_global(f, global, config->compile_home_dir, need_variant_map);
 
   if (sstate->lang_a > 0) {
     for (i = 1, active_langs = 0; i < sstate->lang_a; i++) {
@@ -5773,16 +5808,17 @@ super_html_check_tests(FILE *f,
   path_t g_tgz_path;
   path_t g_checker_path;
   path_t test_path, corr_path, info_path, checker_path;
+  path_t v_test_path, v_corr_path, v_info_path, v_checker_path;
   struct contest_desc *cnts;
   struct section_global_data *global;
   struct section_problem_data *prob, *abstr;
   struct section_problem_data tmp_prob;
-  int i, j, k;
+  int i, j, k, variant;
   char *flog_txt = 0;
   size_t flog_len = 0;
   FILE *flog = 0;
   struct stat stbuf;
-  int total_tests;
+  int total_tests, v_total_tests = 0;
   unsigned char hbuf[1024];
 
   if (sstate->serve_parse_errors) {
@@ -5862,77 +5898,170 @@ super_html_check_tests(FILE *f,
     }
 
     // check tests
-    if (stat(test_path, &stbuf) < 0) {
-      fprintf(flog, "Error: test directory %s does not exist\n", test_path);
-      goto check_failed;
-    }
-    if (!S_ISDIR(stbuf.st_mode)) {
-      fprintf(flog, "Error: test directory %s is not a directory\n", test_path);
-      goto check_failed;
-    }
-    if (tmp_prob.use_corr) {
-      if (stat(corr_path, &stbuf) < 0) {
-        fprintf(flog, "Error: test directory %s does not exist\n", corr_path);
+    if (prob->variant_num <= 0) {
+      if (stat(test_path, &stbuf) < 0) {
+        fprintf(flog, "Error: test directory %s does not exist\n", test_path);
         goto check_failed;
       }
       if (!S_ISDIR(stbuf.st_mode)) {
-        fprintf(flog, "Error: test directory %s is not a directory\n", corr_path);
+        fprintf(flog, "Error: test directory %s is not a directory\n", test_path);
         goto check_failed;
       }
-    }
-    if (tmp_prob.use_info) {
-      if (stat(info_path, &stbuf) < 0) {
-        fprintf(flog, "Error: test directory %s does not exist\n", info_path);
-        goto check_failed;
+      if (tmp_prob.use_corr) {
+        if (stat(corr_path, &stbuf) < 0) {
+          fprintf(flog, "Error: test directory %s does not exist\n", corr_path);
+          goto check_failed;
+        }
+        if (!S_ISDIR(stbuf.st_mode)) {
+          fprintf(flog, "Error: test directory %s is not a directory\n", corr_path);
+          goto check_failed;
+        }
       }
-      if (!S_ISDIR(stbuf.st_mode)) {
-        fprintf(flog, "Error: test directory %s is not a directory\n", info_path);
-        goto check_failed;
+      if (tmp_prob.use_info) {
+        if (stat(info_path, &stbuf) < 0) {
+          fprintf(flog, "Error: test directory %s does not exist\n", info_path);
+          goto check_failed;
+        }
+        if (!S_ISDIR(stbuf.st_mode)) {
+          fprintf(flog, "Error: test directory %s is not a directory\n", info_path);
+          goto check_failed;
+        }
       }
-    }
 
-    total_tests = 1;
-    while (1) {
-      k = check_test_file(flog, total_tests, test_path, tmp_prob.test_pat, tmp_prob.test_sfx, 1, tmp_prob.binary_input);
-      if (k < 0) goto check_failed;
-      if (!k) break;
-      total_tests++;
-    }
-    total_tests--;
-    if (!total_tests) {
-      fprintf(flog, "Error: no tests defined for the problem\n");
-      goto check_failed;
-    }
-    fprintf(flog, "Info: assuming, that there are %d tests for this problem\n",
-            total_tests);
-
-    for (j = 1; j <= total_tests; j++) {
+      total_tests = 1;
+      while (1) {
+        k = check_test_file(flog, total_tests, test_path, tmp_prob.test_pat, tmp_prob.test_sfx, 1, tmp_prob.binary_input);
+        if (k < 0) goto check_failed;
+        if (!k) break;
+        total_tests++;
+      }
+      total_tests--;
+      if (!total_tests) {
+        fprintf(flog, "Error: no tests defined for the problem\n");
+        goto check_failed;
+      }
+      fprintf(flog, "Info: assuming, that there are %d tests for this problem\n",
+              total_tests);
+      
+      for (j = 1; j <= total_tests; j++) {
+        if (tmp_prob.use_corr
+            && check_test_file(flog, j, corr_path, tmp_prob.corr_pat,
+                               tmp_prob.corr_sfx, 0, tmp_prob.binary_input) <= 0)
+          goto check_failed;
+        if (tmp_prob.use_info
+            && check_test_file(flog, j, info_path, tmp_prob.info_pat,
+                               tmp_prob.info_sfx, 0, 0) <= 0)
+          goto check_failed;
+      }
       if (tmp_prob.use_corr
           && check_test_file(flog, j, corr_path, tmp_prob.corr_pat,
-                             tmp_prob.corr_sfx, 0, tmp_prob.binary_input) <= 0)
+                             tmp_prob.corr_sfx, 1, tmp_prob.binary_input) != 0) {
+        fprintf(flog, "Error: there is answer file for test %d, but no data file\n",
+                j);
         goto check_failed;
+      }
       if (tmp_prob.use_info
           && check_test_file(flog, j, info_path, tmp_prob.info_pat,
-                             tmp_prob.info_sfx, 0, 0) <= 0)
+                             tmp_prob.info_sfx, 1, 0) != 0) {
+        fprintf(flog, "Error: there is test info file for test %d, but no data file\n",
+                j);
         goto check_failed;
-    }
-    if (tmp_prob.use_corr
-        && check_test_file(flog, j, corr_path, tmp_prob.corr_pat,
-                           tmp_prob.corr_sfx, 1, tmp_prob.binary_input) != 0) {
-      fprintf(flog, "Error: there is answer file for test %d, but no data file\n",
-              j);
-      goto check_failed;
-    }
-    if (tmp_prob.use_info
-        && check_test_file(flog, j, info_path, tmp_prob.info_pat,
-                           tmp_prob.info_sfx, 1, 0) != 0) {
-      fprintf(flog, "Error: there is test info file for test %d, but no data file\n",
-              j);
-      goto check_failed;
+      }
+    } else {
+      for (variant = 1; variant <= prob->variant_num; variant++) {
+        snprintf(v_test_path, sizeof(v_test_path), "%s-%d", test_path, variant);
+        if (stat(v_test_path, &stbuf) < 0) {
+          fprintf(flog, "Error: test directory %s does not exist\n", v_test_path);
+          goto check_failed;
+        }
+        if (!S_ISDIR(stbuf.st_mode)) {
+          fprintf(flog, "Error: test directory %s is not a directory\n", v_test_path);
+          goto check_failed;
+        }
+        if (tmp_prob.use_corr) {
+          snprintf(v_corr_path, sizeof(v_corr_path), "%s-%d", corr_path, variant);
+          if (stat(v_corr_path, &stbuf) < 0) {
+            fprintf(flog, "Error: test directory %s does not exist\n", v_corr_path);
+            goto check_failed;
+          }
+          if (!S_ISDIR(stbuf.st_mode)) {
+            fprintf(flog, "Error: test directory %s is not a directory\n", v_corr_path);
+            goto check_failed;
+          }
+        }
+        if (tmp_prob.use_info) {
+          snprintf(v_info_path, sizeof(v_info_path), "%s-%d", info_path, variant);
+          if (stat(v_info_path, &stbuf) < 0) {
+            fprintf(flog, "Error: test directory %s does not exist\n", v_info_path);
+            goto check_failed;
+          }
+          if (!S_ISDIR(stbuf.st_mode)) {
+            fprintf(flog, "Error: test directory %s is not a directory\n", v_info_path);
+            goto check_failed;
+          }
+        }
+
+        total_tests = 1;
+        while (1) {
+          k = check_test_file(flog, total_tests, v_test_path, tmp_prob.test_pat, tmp_prob.test_sfx, 1, tmp_prob.binary_input);
+          if (k < 0) goto check_failed;
+          if (!k) break;
+          total_tests++;
+        }
+        total_tests--;
+        if (!total_tests) {
+          fprintf(flog, "Error: no tests defined for the problem\n");
+          goto check_failed;
+        }
+        if (variant == 1) {
+          fprintf(flog, "Info: assuming, that there are %d tests for this problem\n",
+                  total_tests);
+          v_total_tests = total_tests;
+        } else {
+          if (v_total_tests != total_tests) {
+            fprintf(flog, "Error: variant 1 defines %d tests, but variant %d defines %d tests\n", v_total_tests, variant, total_tests);
+            goto check_failed;
+          }
+        }
+      
+        for (j = 1; j <= total_tests; j++) {
+          if (tmp_prob.use_corr
+              && check_test_file(flog, j, v_corr_path, tmp_prob.corr_pat,
+                                 tmp_prob.corr_sfx, 0, tmp_prob.binary_input) <= 0)
+            goto check_failed;
+          if (tmp_prob.use_info
+              && check_test_file(flog, j, v_info_path, tmp_prob.info_pat,
+                                 tmp_prob.info_sfx, 0, 0) <= 0)
+            goto check_failed;
+        }
+        if (tmp_prob.use_corr
+            && check_test_file(flog, j, v_corr_path, tmp_prob.corr_pat,
+                               tmp_prob.corr_sfx, 1, tmp_prob.binary_input) != 0) {
+          fprintf(flog, "Error: there is answer file for test %d, but no data file, variant %d\n",
+                  j, variant);
+          goto check_failed;
+        }
+        if (tmp_prob.use_info
+            && check_test_file(flog, j, v_info_path, tmp_prob.info_pat,
+                               tmp_prob.info_sfx, 1, 0) != 0) {
+          fprintf(flog, "Error: there is test info file for test %d, but no data file, variant %d\n",
+                  j, variant);
+          goto check_failed;
+        }
+      }
     }
 
     if (tmp_prob.standard_checker[0]) continue;
-    if (recompile_checker(flog, checker_path) < 0) goto check_failed;
+
+    if (prob->variant_num <= 0) {
+      if (recompile_checker(flog, checker_path) < 0) goto check_failed;
+    } else {
+      for (variant = 1; variant <= prob->variant_num; variant++) {
+        snprintf(v_checker_path, sizeof(v_checker_path), "%s-%d",
+                 checker_path, variant);
+        if (recompile_checker(flog, v_checker_path) < 0) goto check_failed;
+      }
+    }
 
     if (global->score_system_val != SCORE_ACM) {
       if (check_test_score(flog, total_tests, tmp_prob.test_score,
@@ -5967,6 +6096,629 @@ super_html_check_tests(FILE *f,
   fprintf(f, "<p><pre><font color=\"red\">%s</font></pre></p>\n", s);
   xfree(s);
   xfree(flog_txt);
+  return 0;
+}
+
+static struct variant_map *
+parse_variant_map(FILE *flog, const unsigned char *path,
+                  unsigned char **p_header_txt,
+                  unsigned char **p_footer_txt)
+{
+  FILE *f = 0;
+  struct variant_map *pmap = 0;
+  int lineno = 0, i, j;
+  unsigned char lbuf[1200], login_buf[sizeof(lbuf)], *str;
+  size_t lbuflen;
+  int mode = -1, vintage, n, var;
+  char *header_txt = 0;
+  char *footer_txt = 0;
+  size_t header_len = 0, footer_len = 0;
+  FILE *header_f = 0, *footer_f = 0;
+  int *vars = 0;
+  int vars_u = 0, vars_a = 0;
+
+  if (!(f = fopen(path, "r"))) {
+    fprintf(flog, "parse_variant_map: cannot open file `%s'\n", path);
+    goto failed;
+  }
+
+  if (p_header_txt)
+    header_f = open_memstream(&header_txt, &header_len);
+  if (p_footer_txt)
+    footer_f = open_memstream(&footer_txt, &footer_len);
+
+  XCALLOC(pmap, 1);
+
+  while (fgets(lbuf, sizeof(lbuf), f)) {
+    lineno++;
+    lbuflen = strlen(lbuf);
+    if (lbuflen > sizeof(lbuf) - 2) {
+      fprintf(flog, "parse_variant_map: %s: %d: line is too long\n",
+              path, lineno);
+      goto failed;
+    }
+    while (lbuflen > 0 && isspace(lbuf[lbuflen - 1])) lbuf[--lbuflen] = 0;
+    if (!lbuflen) continue;
+
+    if (mode == -1) {
+      if (sscanf(lbuf, " < variant_map version = \"%d\" >%n",
+                 &vintage, &n) != 2 && !lbuf[n] && vintage == 1) {
+        mode = 0;
+      } else {
+        fprintf(flog, "parse_variant_map: %s: %d: file header is expected\n",
+                path, lineno);
+        goto failed;
+      }
+      continue;
+    }
+    if (mode == 2) {
+      // in file footer mode
+      if (footer_f) {
+        if (lbuf[0] != '#') putc('#', footer_f);
+        fprintf(footer_f, "%s\n", lbuf);
+      }
+      continue;
+    }
+
+    // in the body mode
+    if (!strcmp(lbuf, "</variant_map>")) {
+      mode = 2;
+      continue;
+    }
+
+    if (mode == 0) {
+      if (lbuf[0] == '#') {
+        if (header_f) {
+          fprintf(header_f, "%s\n", lbuf);
+        }
+      }
+      mode = 1;
+    }
+
+    if ((str = strchr(lbuf, '#'))) *str = 0;
+    lbuflen = strlen(lbuf);
+    while (lbuflen > 0 && isspace(lbuf[lbuflen - 1])) lbuf[--lbuflen] = 0;
+    if (!lbuflen) continue;
+
+    if (pmap->u >= pmap->a) {
+      if (!pmap->a) pmap->a = 32;
+      pmap->a *= 2;
+      pmap->v = (typeof(pmap->v)) xrealloc(pmap->v,
+                                           pmap->a * sizeof(pmap->v[0]));
+    }
+    memset(&pmap->v[pmap->u], 0, sizeof(pmap->v[0]));
+
+    str = lbuf;
+    if (sscanf(str, "%s%n", login_buf, &n) != 1) {
+      fprintf(flog, "parse_variant_map: %s: %d: user login expected\n",
+              path, lineno);
+      goto failed;
+    }
+    str += n;
+    pmap->v[pmap->u].login = xstrdup(login_buf);
+
+    vars_u = 0;
+    while (*str) {
+      if (sscanf(str, "%d%n", &var, &n) != 1) {
+        fprintf(flog, 
+                "parse_variant_map: %s: %d: cannot parse variant for [%s,%d]\n",
+                path, lineno, login_buf, vars_u);
+        goto failed;
+      }
+      str += n;
+      if (var < 0) {
+        fprintf(flog,
+                "parse_variant_map: %s: %d: variant %d is invalid for [%s,%d]\n",
+                path, lineno, var, login_buf, vars_u);
+        goto failed;
+      }
+      if (vars_u >= vars_a) {
+        if (!vars_a) vars_a = 16;
+        vars_a *= 2;
+        vars = (typeof(vars)) xrealloc(vars, vars_a * sizeof(vars[0]));
+      }
+      vars[vars_u++] = var;
+    }
+
+    pmap->v[pmap->u].var_num = vars_u;
+    if (vars_u > 0) {
+      XCALLOC(pmap->v[pmap->u].variants, vars_u);
+      memcpy(pmap->v[pmap->u].variants, vars, vars_u * sizeof(vars[0]));
+    }
+    pmap->u++;
+  }
+
+  if (ferror(f)) {
+    fprintf(flog, "parse_variant_map: input error on `%s'\n", path);
+    goto failed;
+  }
+  fclose(f); f = 0;
+  xfree(vars); vars = 0;
+  if (header_f) {
+    fclose(header_f); header_f = 0;
+  }
+  if (footer_f) {
+    fclose(footer_f); footer_f = 0;
+  }
+
+  for (i = 1; i < pmap->u; i++) {
+    if (pmap->v[i].var_num != pmap->v[0].var_num) {
+      fprintf(flog, "parse_variant_map: different number of problems specified for different users\n");
+      goto failed;
+    }
+    for (j = 0; j < i; j++)
+      if (!strcmp(pmap->v[i].login, pmap->v[j].login))
+        break;
+    if (j < i) {
+      fprintf(flog, "parse_variant_map: duplicated entry for login %s\n",
+              pmap->v[i].login);
+      goto failed;
+    }
+  }
+
+  pmap->var_prob_num = pmap->v[0].var_num;
+  if (p_header_txt) *p_header_txt = header_txt;
+  if (p_footer_txt) *p_footer_txt = footer_txt;
+  return pmap;
+
+ failed:
+  if (f) fclose(f);
+  if (footer_f) fclose(footer_f);
+  xfree(footer_txt);
+  if (header_f) fclose(header_f);
+  xfree(header_txt);
+  for (i = 0; i < pmap->u; i++) {
+    xfree(pmap->v[i].login);
+    xfree(pmap->v[i].variants);
+  }
+  xfree(pmap->v);
+  xfree(pmap);
+  xfree(vars);
+  return 0;
+}
+
+static int
+vmap_sort_func(const void *v1, const void *v2)
+{
+  const struct variant_map_item *p1 = (typeof(p1)) v1;
+  const struct variant_map_item *p2 = (typeof(p2)) v2;
+
+  if (p1->user_id > 0 && p2->user_id > 0) {
+    if (p1->user_id < p2->user_id) return -1;
+    if (p1->user_id > p2->user_id) return 1;
+    return 0;
+  }
+  if (p1->user_id > 0) return -1;
+  if (p2->user_id > 0) return 1;
+  return strcmp(p1->login, p2->login);
+}
+
+static int
+update_variant_map(FILE *flog, int contest_id,
+                   struct userlist_clnt *server_conn,
+                   struct contest_desc *cnts,
+                   struct section_global_data *global,
+                   int total_probs,
+                   struct section_problem_data **probs,
+                   unsigned char **p_header_txt, unsigned char **p_footer_txt)
+{
+  int r;
+  unsigned char *xml_text = 0;
+  struct userlist_list *users = 0;
+  path_t conf_dir;
+  path_t variant_file;
+  struct stat stbuf;
+  int var_prob_num, i, n, j, uid;
+  struct variant_map *vmap = 0;
+  int *tvec = 0, *new_map, *new_rev_map;
+  struct userlist_user *user;
+
+  if (!cnts->root_dir && !cnts->root_dir[0]) {
+    fprintf(flog, "update_variant_map: contest root_dir is not set");
+    goto failed;
+  }
+  if (!os_IsAbsolutePath(cnts->root_dir)) {
+    fprintf(flog, "update_variant_map: contest root_dir is not absolute");
+    goto failed;
+  }
+
+  if (!global->variant_map) {
+    if (!cnts->conf_dir || !cnts->conf_dir[0]) {
+      snprintf(conf_dir, sizeof(conf_dir), "%s/conf", cnts->root_dir);
+    } else if (!os_IsAbsolutePath(cnts->conf_dir)) {
+      snprintf(conf_dir, sizeof(conf_dir), "%s/%s", cnts->root_dir, cnts->conf_dir);
+    } else {
+      snprintf(conf_dir, sizeof(conf_dir), "%s", cnts->conf_dir);
+    }
+
+    if (!global->variant_map_file[0]) {
+      snprintf(global->variant_map_file, sizeof(global->variant_map_file),
+               "variant.map");
+    }
+
+    if (!os_IsAbsolutePath(global->variant_map_file)) {
+      snprintf(variant_file, sizeof(variant_file), "%s/%s", conf_dir,
+               global->variant_map_file);
+    } else {
+      snprintf(variant_file, sizeof(variant_file), "%s", global->variant_map_file);
+    }
+
+    if (stat(variant_file, &stbuf) < 0) {
+      XCALLOC(global->variant_map, 1);
+      if (p_header_txt)
+        *p_header_txt = xstrdup("# $" "Id" "$\n");
+    } else {
+      if (!S_ISREG(stbuf.st_mode)) {
+        fprintf(flog, "update_variant_map: variant map file %s is not regular file\n",
+                variant_file);
+        goto failed;
+      }
+
+      if (!(global->variant_map = parse_variant_map(flog, variant_file,
+                                                    p_header_txt, p_footer_txt)))
+        goto failed;
+    }
+  }
+
+  if (!(vmap = global->variant_map)) {
+    fprintf(flog, "update_variant_map: variant map is not set");
+    goto failed;
+  }
+
+  // remap problems, if necessary
+  for (var_prob_num = 0, i = 1; i < total_probs; i++)
+    if (probs[i] && probs[i]->variant_num > 0)
+      var_prob_num++;
+
+  if (!var_prob_num) {
+    fprintf(flog, "update_variant_map: no variant problems");
+    goto failed;
+  }
+
+  if (vmap->prob_map) {
+    ASSERT(vmap->prob_map_size > 0);
+    ASSERT(vmap->prob_rev_map_size > 0);
+    ASSERT(vmap->prob_rev_map);
+    // update forward and reverse mappings
+    XCALLOC(new_map, total_probs);
+    memset(new_map, -1, sizeof(new_map[0]) * total_probs);
+    XCALLOC(new_rev_map, var_prob_num);
+    for (i = 1, j = 0; i < total_probs; i++)
+      if (probs[i] && probs[i]->variant_num > 0) {
+        new_map[i] = j;
+        new_rev_map[j] = i;
+        j++;
+      }
+    for (i = 0; i < vmap->u; i++) {
+      XCALLOC(tvec, var_prob_num);
+      ASSERT(vmap->v[i].var_num == vmap->prob_rev_map_size);
+      for (j = 0; j < vmap->prob_rev_map_size; j++) {
+        n = vmap->prob_rev_map[j];
+        if (n > 0 && n < total_probs && probs[n] && probs[n]->variant_num > 0)
+          tvec[new_map[n]] = vmap->v[i].variants[j];
+      }
+      xfree(vmap->v[i].variants);
+      vmap->v[i].var_num = var_prob_num;
+      vmap->v[i].variants = tvec;
+    }
+    xfree(vmap->prob_map);
+    xfree(vmap->prob_rev_map);
+    vmap->prob_map = new_map;
+    vmap->prob_map_size = total_probs;
+    vmap->prob_rev_map = new_rev_map;
+    vmap->prob_rev_map_size = var_prob_num;
+  } else if (vmap->var_prob_num > 0) {
+    // reallocate new array for each entry
+    for (i = 0; i < vmap->u; i++) {
+      XCALLOC(tvec, var_prob_num);
+      if (vmap->v[i].var_num > 0) {
+        n = vmap->v[i].var_num;
+        if (n > var_prob_num) n = var_prob_num;
+        memcpy(tvec, vmap->v[i].variants, n * sizeof(tvec[0]));
+        xfree(vmap->v[i].variants);
+      }
+      vmap->v[i].var_num = var_prob_num;
+      vmap->v[i].variants = tvec;
+    }
+    // create forward and reverse mappings
+    vmap->prob_map_size = total_probs;
+    XCALLOC(vmap->prob_map, total_probs);
+    memset(vmap->prob_map, -1, sizeof(vmap->prob_map[0]) * total_probs);
+    vmap->prob_rev_map_size = var_prob_num;
+    XCALLOC(vmap->prob_rev_map, var_prob_num);
+    for (i = 1, j = 0; i < total_probs; i++)
+      if (probs[i] && probs[i]->variant_num > 0) {
+        vmap->prob_map[i] = j;
+        vmap->prob_rev_map[j] = i;
+        j++;
+      }
+  } else {
+    // allocate new array
+    for (i = 0; i < vmap->u; i++) {
+      vmap->v[i].var_num = var_prob_num;
+      XCALLOC(vmap->v[i].variants, var_prob_num);
+    }
+    // create forward and reverse mappings
+    vmap->prob_map_size = total_probs;
+    XCALLOC(vmap->prob_map, total_probs);
+    memset(vmap->prob_map, -1, sizeof(vmap->prob_map[0]) * total_probs);
+    vmap->prob_rev_map_size = var_prob_num;
+    XCALLOC(vmap->prob_rev_map, var_prob_num);
+    for (i = 1, j = 0; i < total_probs; i++)
+      if (probs[i] && probs[i]->variant_num > 0) {
+        vmap->prob_map[i] = j;
+        vmap->prob_rev_map[j] = i;
+        j++;
+      }
+  }
+
+  if ((r = userlist_clnt_list_all_users(server_conn, ULS_LIST_ALL_USERS,
+                                        contest_id, &xml_text)) < 0) {
+    fprintf(flog, "update_variant_map: cannot get list of participants\n");
+    goto failed;
+  }
+  if (!(users = userlist_parse_str(xml_text))) {
+    fprintf(flog, "update_variant_map: parsing of XML file failed\n");
+    goto failed;
+  }
+  xfree(xml_text); xml_text = 0;
+
+  // find registered users, which are not in the variant map
+  for (uid = 1; uid < users->user_map_size; uid++) {
+    if (!(user = users->user_map[uid])) continue;
+    if (!user->login || !user->login[0]) continue;
+    for (i = 0; i < vmap->u; i++)
+      if (!strcmp(user->login, vmap->v[i].login))
+        break;
+    if (i < vmap->u) {
+      vmap->v[i].user_id = uid;
+      if (vmap->v[i].name && user->name) {
+        if (strcmp(vmap->v[i].name, user->name)) {
+          xfree(vmap->v[i].name);
+          vmap->v[i].name = xstrdup(user->name);
+        }
+      } else if (user->name) {
+        vmap->v[i].name = xstrdup(user->name);
+      } else {
+        xfree(vmap->v[i].name);
+        vmap->v[i].name = 0;
+      }
+      continue;
+    }
+    if (vmap->u >= vmap->a) {
+      if (!vmap->a) vmap->a = 32;
+      vmap->a *= 2;
+      vmap->v = (typeof(vmap->v)) xrealloc(vmap->v,
+                                           vmap->a * sizeof(vmap->v[0]));
+    }
+    vmap->v[vmap->u].login = xstrdup(user->login);
+    vmap->v[vmap->u].user_id = uid;
+    vmap->v[vmap->u].var_num = vmap->prob_rev_map_size;
+    vmap->v[vmap->u].name = 0;
+    if (user->name) vmap->v[vmap->u].name = xstrdup(user->name);
+    XCALLOC(vmap->v[vmap->u].variants, vmap->prob_rev_map_size);
+    vmap->u++;
+  }
+  userlist_free(&users->b); users = 0;
+
+  // sort the entries by the user_id
+  qsort(vmap->v, vmap->u, sizeof(vmap->v[0]), vmap_sort_func);
+
+  return 0;
+
+ failed:
+  xfree(xml_text);
+  if (users) userlist_free(&users->b);
+  return -1;
+}
+
+int
+super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
+                         const unsigned char *login,
+                         unsigned long long session_id,
+                         unsigned long ip_address,
+                         int ssl_flag,
+                         struct userlist_clnt *userlist_conn,
+                         const struct userlist_cfg *config,
+                         struct sid_state *sstate,
+                         const unsigned char *self_url,
+                         const unsigned char *hidden_vars,
+                         const unsigned char *extra_args)
+{
+  unsigned char *s = 0;
+  struct section_global_data *global = 0;
+  struct contest_desc *cnts = 0;
+  int var_prob_num = 0, i, j, k;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  FILE *log_file = 0;
+  struct variant_map *vmap = 0;
+  struct section_problem_data *prob = 0;
+  unsigned char buf[32];
+
+  if (sstate->serve_parse_errors) {
+    s = html_armor_string_dup(sstate->serve_parse_errors);
+    super_html_contest_page_menu(f, session_id, sstate, -1, self_url, hidden_vars,
+                                 extra_args);
+    fprintf(f, "<h2><tt>serve.cfg</tt> cannot be edited</h2>\n");
+    fprintf(f, "<font color=\"red\"><pre>%s</pre></font>\n", s);
+    xfree(s);
+    return 0;
+  }
+
+  if (!sstate->global || !sstate->edited_cnts) {
+    super_html_contest_page_menu(f, session_id, sstate, -1, self_url, hidden_vars,
+                                 extra_args);
+    fprintf(f, "<h3>No contest is edited</h2>\n");
+    return 0;
+  }
+
+  cnts = sstate->edited_cnts;
+  global = sstate->global;
+
+  if (sstate->probs) {
+    for (i = 1; i < sstate->prob_a; i++)
+      if (sstate->probs[i] && sstate->probs[i]->variant_num > 0)
+        var_prob_num++;
+  }
+
+  if (!var_prob_num) {
+    super_html_contest_page_menu(f, session_id, sstate, -1, self_url, hidden_vars,
+                                 extra_args);
+    fprintf(f, "<h3>Contest does not have variant problems</h2>\n");
+    prepare_free_variant_map(global->variant_map);
+    global->variant_map = 0;
+    return 0;
+  }
+
+  log_file = open_memstream(&log_txt, &log_len);
+  if (cmd == SSERV_CMD_PROB_EDIT_VARIANTS_2) {
+    if (!(vmap = global->variant_map) || vmap->prob_map_size != sstate->prob_a
+        || vmap->prob_rev_map_size <= 0) {
+      fclose(log_file);
+      xfree(log_txt);
+      super_html_contest_page_menu(f, session_id, sstate, -1, self_url, hidden_vars,
+                                   extra_args);
+      fprintf(f, "<h2>variant map is obsolete</h2>\n");
+      return 0;
+    }
+  } else {
+    if (update_variant_map(log_file, cnts->id, userlist_conn, cnts, global,
+                           sstate->prob_a, sstate->probs,
+                           &sstate->var_header_text, &sstate->var_footer_text) < 0){
+      fclose(log_file); log_file = 0;
+
+      s = html_armor_string_dup(log_txt);
+      super_html_contest_page_menu(f, session_id, sstate, -1, self_url, hidden_vars,
+                                   extra_args);
+      fprintf(f, "<h2>variant map cannot be edited</h2>\n");
+      fprintf(f, "<font color=\"red\"><pre>%s</pre></font>\n", s);
+      xfree(s); xfree(log_txt);
+      return 0;
+    }
+  }
+
+  super_html_contest_page_menu(f, session_id, sstate, -1, self_url, hidden_vars,
+                               extra_args);
+
+  fclose(log_file); log_file = 0;
+
+  fprintf(f, "<h2>Variant map</h2>\n");
+
+  while (log_len > 0 && isspace(log_txt[log_len - 1])) log_txt[--log_len] = 0;
+  if (log_txt && *log_txt) {
+    s = html_armor_string_dup(log_txt);
+    fprintf(f, "Variant map parsing messages:\n<pre>%s</pre>\n", s);
+    xfree(s);
+  }
+
+  xfree(log_txt); log_txt = 0;
+  vmap = global->variant_map;
+
+  fprintf(f, "<table border=\"1\">\n");
+  fprintf(f, "<tr><th>User Id</th><th>User Login</th><th>User Name</th>");
+  for (j = 0; j < vmap->prob_rev_map_size; j++) {
+    prob = sstate->probs[vmap->prob_rev_map[j]];
+    s = html_armor_string_dup(prob->short_name);
+    fprintf(f, "<th>%s</th>", s);
+    xfree(s);
+  }
+  fprintf(f, "<th>Action</th></tr>\n");
+
+  for (i = 0; i < vmap->u; i++) {
+    snprintf(buf, sizeof(buf), "%d", i);
+    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_hidden_var(f, "row", buf);
+    if (vmap->v[i].user_id > 0)
+      snprintf(buf, sizeof(buf), "%d", vmap->v[i].user_id);
+    else
+      snprintf(buf, sizeof(buf), "&nbsp;");
+    if (vmap->v[i].login)
+      s = html_armor_string_dup(vmap->v[i].login);
+    else
+      s = xstrdup("&nbsp;");
+    fprintf(f, "<tr><td>%s</td><td>%s</td>", buf, s);
+    xfree(s);
+    if (vmap->v[i].name)
+      s = html_armor_string_dup(vmap->v[i].name);
+    else
+      s = xstrdup("&nbsp;");
+    fprintf(f, "<td>%s</td>", s);
+    xfree(s);
+
+    for (j = 0; j < vmap->prob_rev_map_size; j++) {
+      prob = sstate->probs[vmap->prob_rev_map[j]];
+      fprintf(f, "<td><select name=\"param_%d\">"
+              "<option value=\"0\"%s>N/A</option>",
+              j, !vmap->v[i].variants[j]?" selected=\"1\"" : "");
+      for (k = 1; k <= prob->variant_num; k++)
+        fprintf(f, "<option value=\"%d\"%s>%d</option>",
+                k, vmap->v[i].variants[j] == k?" selected=\"1\"" : "", k);
+      fprintf(f, "</select></td>");
+    }
+    fprintf(f, "<td>");
+    html_submit_button(f, SUPER_ACTION_PROB_CHANGE_VARIANTS, "Change");
+    html_submit_button(f, SUPER_ACTION_PROB_DELETE_VARIANTS, "Delete row");
+    fprintf(f, "</td></tr></form>\n");
+  }
+  fprintf(f, "</table>\n");
+  return 0;
+}
+
+int
+super_html_variant_param(struct sid_state *sstate, int cmd,
+                         int map_i, const unsigned char *param2,
+                         int param3, int param4)
+{
+  struct variant_map *vmap = 0;
+  const unsigned char *s;
+  int n, total, i;
+  int *vars = 0;
+  struct section_problem_data *prob = 0;
+
+  if (!sstate || !sstate->global) return -SSERV_ERR_INVALID_PARAMETER;
+  if (!(vmap = sstate->global->variant_map)) return -SSERV_ERR_INVALID_PARAMETER;
+  if (map_i < 0 || map_i >= vmap->u) return -SSERV_ERR_INVALID_PARAMETER;
+  if (!sstate->prob_a || !sstate->probs) return -SSERV_ERR_INVALID_PARAMETER;
+
+  s = param2;
+  if (sscanf(s, "%d%n", &total, &n) != 1) return -SSERV_ERR_INVALID_PARAMETER;
+  s += n;
+  if (total < 0 || total != vmap->prob_rev_map_size)
+    return -SSERV_ERR_INVALID_PARAMETER;
+  XALLOCAZ(vars, total);
+  for (i = 0; i < total; i++) {
+    if (sscanf(s, "%d%n", &vars[i], &n) != 1) return -SSERV_ERR_INVALID_PARAMETER;
+    if (vars[i] < 0 || vmap->prob_rev_map[i] <= 0
+        || vmap->prob_rev_map[i] >= sstate->prob_a
+        || !(prob = sstate->probs[vmap->prob_rev_map[i]]))
+      return -SSERV_ERR_INVALID_PARAMETER;
+    if (prob->variant_num <= 0 || vars[i] > prob->variant_num)
+      return -SSERV_ERR_INVALID_PARAMETER;
+  }
+
+  switch (cmd) {
+  case SSERV_CMD_PROB_DELETE_VARIANTS:
+    if (vmap->v[map_i].user_id > 0) {
+      for (i = 0; i < total; i++)
+        vmap->v[map_i].variants[i] = 0;
+    } else {
+      xfree(vmap->v[map_i].variants);
+      xfree(vmap->v[map_i].login);
+      xfree(vmap->v[map_i].name);
+      if (map_i < vmap->u - 1)
+        memmove(&vmap->v[map_i], &vmap->v[map_i + 1],
+                (vmap->u - map_i - 1) * sizeof(vmap->v[0]));
+      vmap->u--;
+    }
+  case SSERV_CMD_PROB_CHANGE_VARIANTS:
+    for (i = 0; i < total; i++)
+      vmap->v[map_i].variants[i] = vars[i];
+    break;
+  default:
+    abort();
+  }
+
   return 0;
 }
 
