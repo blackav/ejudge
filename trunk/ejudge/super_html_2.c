@@ -940,13 +940,19 @@ super_html_commit_contest(FILE *f,
   path_t plog_header_path_2 = { 0 };
   path_t plog_footer_path = { 0 };
   path_t plog_footer_path_2 = { 0 };
+  path_t vmap_path = { 0 };
+  path_t vmap_path_2 = { 0 };
 
   int uhf, uff, rhf, rff, thf, tff, ref;
-  int csf = 0, shf = 0, sff = 0, s2hf = 0, s2ff = 0, phf = 0, pff = 0, sf = 0;
+  int csf = 0, shf = 0, sff = 0, s2hf = 0, s2ff = 0, phf = 0, pff = 0, sf = 0, vmf = 0;
 
   path_t diff_cmdline;
   unsigned char *diff_str = 0, *vcs_str = 0;
   int vcs_add_flag = 0;
+  int need_variant_map = 0, vmap_vcs_add_flag = 0;
+  char *vmap_txt = 0;
+  size_t vmap_size = 0;
+  FILE *vmap_f = 0;
 
   if (!cnts) {
     return super_html_report_error(f, session_id, self_url, extra_args,
@@ -989,6 +995,18 @@ super_html_commit_contest(FILE *f,
     if (!j)
       return super_html_report_error(f, session_id, self_url, extra_args,
                                      "No problems defined");
+    if (sstate->probs) {
+      for (i = 1; i < sstate->prob_a; i++)
+        if (sstate->probs[i] && sstate->probs[i]->variant_num > 0)
+          need_variant_map = 1;
+    }
+
+    if (need_variant_map && !sstate->global->variant_map)
+      return super_html_report_error(f, session_id, self_url, extra_args,
+                                     "No variant map defined");
+    if (need_variant_map && !sstate->global->variant_map_file)
+      snprintf(sstate->global->variant_map_file,
+               sizeof(sstate->global->variant_map_file), "variant.map");
   }
   // FIXME: what else we should validate
 
@@ -1018,6 +1036,10 @@ super_html_commit_contest(FILE *f,
       goto failed;
     }
     fprintf(flog, "contest root directory `%s' is created\n", cnts->root_dir);
+    if (vcs_add_dir(cnts->root_dir, &vcs_str) > 0) {
+      fprintf(flog, "Version control:\n%s\n", vcs_str);
+      xfree(vcs_str); vcs_str = 0;
+    }
   }
 
   /* 2. Create the contest configuration directory */
@@ -1035,6 +1057,10 @@ super_html_commit_contest(FILE *f,
       goto failed;
     }
     fprintf(flog, "contest configuration directory `%s' is created\n", conf_path);
+    if (vcs_add_dir(conf_path, &vcs_str) > 0) {
+      fprintf(flog, "Version control:\n%s\n", vcs_str);
+      xfree(vcs_str); vcs_str = 0;
+    }
   }
 
   /* 3. Save the users_header_file as temporary file */
@@ -1122,6 +1148,19 @@ super_html_commit_contest(FILE *f,
                               conf_path,
                               plog_footer_path, plog_footer_path_2)) < 0)
       goto failed;
+
+    if (need_variant_map) {
+      vmap_f = open_memstream(&vmap_txt, &vmap_size);
+      prepare_unparse_variants(vmap_f, global->variant_map,
+                               sstate->var_header_text, sstate->var_footer_text);
+      fclose(vmap_f); vmap_f = 0;
+      if ((vmf = save_conf_file(flog, "variant map file",
+                                global->variant_map_file, vmap_txt,
+                                conf_path,
+                                vmap_path, vmap_path_2)) < 0)
+        goto failed;
+      if (access(vmap_path, F_OK) < 0) vmap_vcs_add_flag = 1;
+    }
   }
 
   /* 10. Load the previous contest.xml and extract header and footer */
@@ -1248,7 +1287,19 @@ super_html_commit_contest(FILE *f,
   rename_files(flog, s2ff, stand2_footer_path, stand2_footer_path_2);
   rename_files(flog, phf, plog_header_path, plog_header_path_2);
   rename_files(flog, pff, plog_footer_path, plog_footer_path_2);
+  rename_files(flog, vmf, vmap_path, vmap_path_2);
   rename_files(flog, sf, serve_path, serve_path_2);
+
+  if (vmf > 0) {
+    if (vmap_vcs_add_flag && vcs_add(vmap_path, &vcs_str) > 0) {
+      fprintf(flog, "Version control:\n%s\n", vcs_str);
+      xfree(vcs_str); vcs_str = 0;
+    }
+    if (vcs_commit(vmap_path, &vcs_str) > 0) {
+      fprintf(flog, "Version control:\n%s\n", vcs_str);
+    }
+    xfree(vcs_str); vcs_str = 0;
+  }
 
   if (sf > 0) {
     if (vcs_commit(serve_path, &vcs_str) > 0) {
@@ -1313,6 +1364,8 @@ super_html_commit_contest(FILE *f,
   xfree(xml_header);
   xfree(xml_footer);
   fclose(flog);
+  if (vmap_f) fclose(vmap_f);
+  xfree(vmap_txt);
 
   if (users_header_path_2[0]) unlink(users_header_path_2);
   if (users_footer_path_2[0]) unlink(users_footer_path_2);
