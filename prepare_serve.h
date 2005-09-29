@@ -20,14 +20,18 @@
 struct variant_map_item
 {
   unsigned char *login;
+  unsigned char *name;
   int user_id;
+  int var_num;
   int *variants;
 };
 
 struct variant_map
 {
   int *prob_map;
+  int prob_map_size;
   int *prob_rev_map;
+  int prob_rev_map_size;
   int var_prob_num;
   int vintage;
 
