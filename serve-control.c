@@ -39,6 +39,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <ctype.h>
 
 /*
 #if CONF_HAS_LIBINTL - 0 == 1
@@ -778,6 +779,10 @@ action_view_contest(int cmd)
   case SSERV_CMD_CHECK_TESTS:
     extra_str = ", checking contest settings";
     break;
+  case SSERV_CMD_PROB_EDIT_VARIANTS:
+  case SSERV_CMD_PROB_EDIT_VARIANTS_2:
+    extra_str = ", editing variant map";
+    break;
   }
 
   open_super_server();
@@ -1239,6 +1244,54 @@ action_prob_param(int cmd, int next_state)
 }
 
 static void
+action_variant_param(int cmd, int next_state) __attribute__((noreturn));
+static void
+action_variant_param(int cmd, int next_state)
+{
+  int row, n, r, total = 0, i;
+  unsigned char *s;
+  unsigned char nbuf[64];
+  char *param_txt = 0;
+  FILE *param_f = 0;
+  size_t param_len = 0;
+
+  if (!(s = cgi_param("row")) || sscanf(s, "%d%n", &row, &n) != 1
+      || s[n] || row < 0 || row > 999999)
+    goto invalid_parameter;
+
+  // collect all param_<NUM> into a single string
+  total = -1;
+  do {
+    total++;
+    snprintf(nbuf, sizeof(nbuf), "param_%d", total);
+  } while (cgi_param(nbuf));
+
+  param_f = open_memstream(&param_txt, &param_len);
+  fprintf(param_f, "%d", total);
+  for (i = 0; i < total; i++) {
+    snprintf(nbuf, sizeof(nbuf), "param_%d", i);
+    if (!(s = cgi_param(nbuf)) || sscanf(s, "%d%n", &r, &n) != 1
+        || s[n] || r < 0 || r > 999999)
+      goto invalid_parameter;
+    fprintf(param_f, " %d", r);
+  }
+  fclose(param_f);
+  while (param_len > 0 && isspace(param_txt[param_len - 1])) param_txt[--param_len]=0;
+
+  open_super_server();
+  r = super_clnt_set_param(super_serve_fd, cmd, row, param_txt, 0, 0, 0);
+  xfree(param_txt);
+  if (next_state) {
+    operation_status_page(-1, r, "action=%d", next_state);
+  } else {
+    operation_status_page(-1, r, "");
+  }
+
+ invalid_parameter:
+  operation_status_page(-1, -1, "Invalid parameter");
+}
+
+static void
 action_prob_date_param(int cmd, int next_state) __attribute__((noreturn));
 static void
 action_prob_date_param(int cmd, int next_state)
@@ -1573,6 +1626,11 @@ static const int action_to_cmd_map[SUPER_ACTION_LAST] =
   [SUPER_ACTION_PROB_CLEAR_START_DATE] = SSERV_CMD_PROB_CLEAR_START_DATE,
   [SUPER_ACTION_PROB_CHANGE_DEADLINE] = SSERV_CMD_PROB_CHANGE_DEADLINE,
   [SUPER_ACTION_PROB_CLEAR_DEADLINE] = SSERV_CMD_PROB_CLEAR_DEADLINE,
+  [SUPER_ACTION_PROB_CHANGE_VARIANT_NUM] = SSERV_CMD_PROB_CHANGE_VARIANT_NUM,
+  [SUPER_ACTION_PROB_EDIT_VARIANTS] = SSERV_CMD_PROB_EDIT_VARIANTS,
+  [SUPER_ACTION_PROB_EDIT_VARIANTS_2] = SSERV_CMD_PROB_EDIT_VARIANTS_2,
+  [SUPER_ACTION_PROB_CHANGE_VARIANTS] = SSERV_CMD_PROB_CHANGE_VARIANTS,
+  [SUPER_ACTION_PROB_DELETE_VARIANTS] = SSERV_CMD_PROB_DELETE_VARIANTS,
 
   [SUPER_ACTION_GLOB_CHANGE_DURATION] = SSERV_CMD_GLOB_CHANGE_DURATION,
   [SUPER_ACTION_GLOB_UNLIMITED_DURATION] = SSERV_CMD_GLOB_UNLIMITED_DURATION,
@@ -1972,6 +2030,11 @@ static const int next_action_map[SUPER_ACTION_LAST] =
   [SUPER_ACTION_PROB_CLEAR_START_DATE] = SUPER_ACTION_EDIT_CURRENT_PROB,
   [SUPER_ACTION_PROB_CHANGE_DEADLINE] = SUPER_ACTION_EDIT_CURRENT_PROB,
   [SUPER_ACTION_PROB_CLEAR_DEADLINE] = SUPER_ACTION_EDIT_CURRENT_PROB,
+  [SUPER_ACTION_PROB_CHANGE_VARIANT_NUM] = SUPER_ACTION_EDIT_CURRENT_PROB,
+  [SUPER_ACTION_PROB_EDIT_VARIANTS] = SUPER_ACTION_PROB_EDIT_VARIANTS,
+  [SUPER_ACTION_PROB_EDIT_VARIANTS_2] = SUPER_ACTION_PROB_EDIT_VARIANTS_2,
+  [SUPER_ACTION_PROB_CHANGE_VARIANTS] = SUPER_ACTION_PROB_EDIT_VARIANTS_2,
+  [SUPER_ACTION_PROB_DELETE_VARIANTS] = SUPER_ACTION_PROB_EDIT_VARIANTS_2,
 
   [SUPER_ACTION_GLOB_CHANGE_DURATION] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
   [SUPER_ACTION_GLOB_UNLIMITED_DURATION] = SUPER_ACTION_EDIT_CURRENT_GLOBAL,
@@ -2244,6 +2307,8 @@ main(int argc, char *argv[])
   case SUPER_ACTION_GLOB_EDIT_PLOG_HEADER_FILE:
   case SUPER_ACTION_GLOB_EDIT_PLOG_FOOTER_FILE:
   case SUPER_ACTION_VIEW_NEW_SERVE_CFG:
+  case SUPER_ACTION_PROB_EDIT_VARIANTS:
+  case SUPER_ACTION_PROB_EDIT_VARIANTS_2:
     action_edit_current_contest(action_to_cmd_map[client_action]);
     break;
   case SUPER_ACTION_CNTS_FORGET:
@@ -2505,6 +2570,7 @@ main(int argc, char *argv[])
   case SUPER_ACTION_PROB_CLEAR_CHECKER_ENV:
   case SUPER_ACTION_PROB_CLEAR_START_DATE:
   case SUPER_ACTION_PROB_CLEAR_DEADLINE:
+  case SUPER_ACTION_PROB_CHANGE_VARIANT_NUM:
     action_prob_param(action_to_cmd_map[client_action],
                       next_action_map[client_action]);
     break;
@@ -2672,6 +2738,12 @@ main(int argc, char *argv[])
   case SUPER_ACTION_GLOB_CLEAR_PLOG_FOOTER_TEXT:
     action_set_param(action_to_cmd_map[client_action],
                      next_action_map[client_action]);
+    break;
+
+  case SUPER_ACTION_PROB_CHANGE_VARIANTS:
+  case SUPER_ACTION_PROB_DELETE_VARIANTS:
+    action_variant_param(action_to_cmd_map[client_action],
+                         next_action_map[client_action]);
     break;
   }
 
