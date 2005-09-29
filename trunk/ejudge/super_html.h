@@ -325,6 +325,7 @@ int super_html_serve_unparse_and_save(const unsigned char *path,
                                       const unsigned char *header,
                                       const unsigned char *footer,
                                       const unsigned char *audit);
+
 int super_html_read_serve(FILE *flog,
                           const unsigned char *path,
                           const struct userlist_cfg *config,
@@ -349,5 +350,21 @@ int super_html_check_tests(FILE *f,
                            const unsigned char *extra_args);
 
 int super_html_update_versions(struct sid_state *sstate);
+
+int super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
+                             const unsigned char *login,
+                             unsigned long long session_id,
+                             unsigned long ip_address,
+                             int ssl_flag,
+                             struct userlist_clnt *userlist_conn,
+                             const struct userlist_cfg *config,
+                             struct sid_state *sstate,
+                             const unsigned char *self_url,
+                             const unsigned char *hidden_vars,
+                             const unsigned char *extra_args);
+
+int super_html_variant_param(struct sid_state *sstate, int cmd,
+                             int param1, const unsigned char *param2,
+                             int param3, int param4);
 
 #endif /* __SUPER_HTML_H__ */
