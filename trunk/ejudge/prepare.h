@@ -612,7 +612,7 @@ void prepare_set_prob_value(int field, struct section_problem_data *out,
                             const struct section_global_data *global);
 
 void prepare_unparse_global(FILE *f, struct section_global_data *global,
-                            const unsigned char *compile_dir);
+                            const unsigned char *compile_dir, int need_variant_map);
 void prepare_unparse_unhandled_global(FILE *f,
                                       const struct section_global_data *global);
 int prepare_check_forbidden_global(FILE *f, const struct section_global_data *global);
@@ -656,5 +656,12 @@ int prepare_unparse_is_supported_tester(const unsigned char *tester_name);
 
 void prepare_set_problem_defaults(struct section_problem_data *prob,
                                   struct section_global_data *global);
+struct variant_map;
+void prepare_free_variant_map(struct variant_map *p);
+
+void prepare_unparse_variants(FILE *f, const struct variant_map *vmap,
+                              const unsigned char *header,
+                              const unsigned char *footer);
+
 
 #endif /* __PREPARE_H__ */
