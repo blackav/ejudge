@@ -107,6 +107,29 @@ cvs_add(const unsigned char *dir, const unsigned char *file,
 }
 
 static int
+svn_add_dir(const unsigned char *path, const unsigned char *dir,
+            unsigned char **p_log_txt)
+{
+  path_t cmd1;
+  path_t cmd2;
+  const unsigned char *cmds[] = { cmd1, cmd2, 0 };
+
+  snprintf(cmd1, sizeof(cmd1), "svn add -N \"%s\"", dir);
+  snprintf(cmd2, sizeof(cmd2), "svn ci -m \"\" \"%s\"", dir);
+  return execute_commands(path, cmds, p_log_txt);
+}
+static int
+cvs_add_dir(const unsigned char *path, const unsigned char *dir,
+            unsigned char **p_log_txt)
+{
+  path_t cmd1;
+  const unsigned char *cmds[] = { cmd1, 0 };
+
+  snprintf(cmd1, sizeof(cmd1), "cvs add \"%s\"", dir);
+  return execute_commands(path, cmds, p_log_txt);
+}
+
+static int
 svn_commit(const unsigned char *dir, const unsigned char *file,
            unsigned char **p_log_txt)
 {
@@ -167,6 +190,18 @@ int
 vcs_commit(const unsigned char *path, unsigned char **p_log_txt)
 {
   return vcs_do_action(path, p_log_txt, vcs_commit_funcs);
+}
+
+static vcs_func_t vcs_add_dir_funcs[] =
+{
+  [VCS_SVN] = svn_add_dir,
+  [VCS_CVS] = cvs_add_dir,
+};
+
+int
+vcs_add_dir(const unsigned char *path, unsigned char **p_log_txt)
+{
+  return vcs_do_action(path, p_log_txt, vcs_add_dir_funcs);
 }
 
 /**
