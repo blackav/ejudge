@@ -1114,6 +1114,17 @@ remove_cookie(struct userlist_cookie * cookie)
 }
 
 static void
+remove_all_user_cookies(struct userlist_user *user)
+{
+  struct xml_tree *cookies = user->cookies;
+
+  if (!cookies) return;
+  xml_unlink_node(cookies);
+  userlist_free(cookies);
+  user->cookies = 0;
+}
+
+static void
 check_all_cookies(void)
 {
   struct userlist_user * user;
@@ -3333,6 +3344,7 @@ cmd_set_passwd(struct client_state *p, int pkt_len,
   xfree(u->register_passwd->b.text);
   u->register_passwd->b.text = xstrdup(newint.pwds[USERLIST_PWD_SHA1]);
   u->register_passwd->method = USERLIST_PWD_SHA1;
+  remove_all_user_cookies(u);
 
   u->last_pwdchange_time = cur_time;
   u->last_access_time = cur_time;
@@ -3454,6 +3466,7 @@ cmd_team_set_passwd(struct client_state *p, int pkt_len,
   }
   u->team_passwd->b.text = xstrdup(newint.pwds[USERLIST_PWD_SHA1]);
   u->team_passwd->method = USERLIST_PWD_SHA1;
+  remove_all_user_cookies(u);
 
   u->last_pwdchange_time = cur_time;
   u->last_access_time = cur_time;
