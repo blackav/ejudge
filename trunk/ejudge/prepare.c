@@ -497,7 +497,6 @@ global_init_func(struct generic_section_config *gp)
   p->xml_report = -1;
 }
 
-static void free_variant_map(struct variant_map *p);
 static void free_user_adjustment_info(struct user_adjustment_info*);
 static void free_user_adjustment_map(struct user_adjustment_map*);
 
@@ -517,7 +516,7 @@ prepare_global_free_func(struct generic_section_config *gp)
   sarray_free(p->user_priority_adjustments);
   sarray_free(p->contestant_status_legend);
   sarray_free(p->contestant_status_row_attr);
-  free_variant_map(p->variant_map);
+  prepare_free_variant_map(p->variant_map);
   free_user_adjustment_info(p->user_adjustment_info);
   free_user_adjustment_map(p->user_adjustment_map);
   xfree(p->unhandled_vars);
@@ -1117,8 +1116,8 @@ parse_personal_deadlines(char **pdstr, int *p_total,
   return i;
 }
 
-static void
-free_variant_map(struct variant_map *p)
+void
+prepare_free_variant_map(struct variant_map *p)
 {
   int i;
 
@@ -1126,6 +1125,7 @@ free_variant_map(struct variant_map *p)
 
   for (i = 0; i < p->u; i++) {
     xfree(p->v[i].login);
+    xfree(p->v[i].name);
     xfree(p->v[i].variants);
   }
   xfree(p->prob_map);
@@ -1219,7 +1219,7 @@ parse_variant_map(const unsigned char *path)
             login_buf, probs[i]->short_name);
         return 0;
       }
-      if (v <= 0 || v > probs[i]->variant_num) {
+      if (v < 0 || v > probs[i]->variant_num) {
         err("Invalid variant %d for team %s and problem %s",
             v, login_buf, probs[i]->short_name);
         return 0;
