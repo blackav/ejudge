@@ -1,3 +1,28 @@
+2005-09-22  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in: copyright notice is updated;
+	new standard checkers cmp_bytes, cmp_double, cmp_long_double,
+	  cmp_double_seq, cmp_long_double_seq,
+	  cmp_int_seq, cmp_unsigned_int_seq,
+	  cmp_long_long_seq, cmp_unsigned_long_long_seq are added;
+	new files eq_double.c, eq_float.c, eq_long_double.c are added.
+
+	* checker_internal.h: (checker_eq_double) new function prototype;
+	(checker_eq_long_double) new function prototype;
+	(checker_eq_float) new function prototype.
+
+	* cmp_double_seq.c:
+	diagnostics when the sequence length differs in the correct and the
+	team output is improved.
+
+	* cmp_int_seq.c, cmp_long_double_seq.c, cmp_long_long_seq.c, cmp_unsigned_int_seq.c, cmp_unsigned_long_long_seq.c:
+	initial revision
+
+2005-09-19  Alexander Chernov  <cher@ispras.ru>
+
+	* cmp_bytes.c, cmp_double.c, cmp_double_seq.c, cmp_long_double.c, eq_double.c, eq_float.c, eq_long_double.c:
+	initial revision
+
 2005-08-06  Alexander Chernov  <cher@ispras.ru>
 
 	* Makefile.in: testlib for delphi is added;

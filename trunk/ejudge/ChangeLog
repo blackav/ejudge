@@ -1,9 +1,231 @@
+2005-09-29  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* prepare.c:
+	(prepare_global_free_func) `free_variant_map' is renamed to
+	  `prepare_free_variant_map';
+	(prepare_free_variant_map) see above;
+	(prepare_free_variant_map) `name' field is freed;
+	(parse_variant_map) variant number is allowed to be 0.
+
+	* prepare.h:
+	(prepare_unparse_global) `need_variant_map' parameter is added;
+	(prepare_free_variant_map) new function prototype;
+	(prepare_unparse_variants) new function prototype.
+
+	* prepare_out.c: "prepare_serve.h" is included;
+	(prepare_unparse_global) `need_variant_map' parameter is added;
+	  `variant_map_file' configuration variable is printed, if the
+	  `need_variant_map' parameter is added;
+	(prepare_unparse_unhandled_global) `variant_map_file' is handled
+	  fully;
+	(prepare_unparse_prob) `variant_num' is handled;
+	(prepare_unparse_unhandled_prob) `variant_num' is no longer
+	  handled;
+	(generate_abstract_tester) the default value for `check_dir'
+	  is changed for DOS checker;
+	(prepare_unparse_variants) new function to unparse the
+	  variant map.
+
+	* prepare_serve.h:
+	(struct variant_map_item) `name', `var_num' fields are added;
+	(struct variant_map) `prob_map_size', `prob_rev_map_size'
+	  fields are added.
+
+	* serve-control.c: <ctype.h> is included;
+	(action_view_contest) SSERV_CMD_PROB_EDIT_VARIANTS,
+	  SSERV_CMD_PROB_EDIT_VARIANTS_2 actions are supported;
+	(action_variant_param) new function to implement
+	  variant assingment table editing;
+	(main) new actions are handled.
+
+	* super-serve.c:
+	(super_serve_clear_edited_contest) `var_header_text',
+	  `var_footer_text' are freed;
+	(cmd_main_page) new commands handled: SSERV_CMD_PROB_EDIT_VARIANTS,
+	  SSERV_CMD_PROB_EDIT_VARIANTS_2;
+	(cmd_set_value) new commands handled:
+	  SSERV_CMD_PROB_CHANGE_VARIANT_NUM,
+	  SSERV_CMD_PROB_CHANGE_VARIANTS,
+	  SSERV_CMD_PROB_DELETE_VARIANTS.
+
+	* super-serve.h:
+	(struct sid_state) new fields added: `var_header_text',
+	  `var_footer_text'.
+
+	* super_actions.h: new actions added.
+
+	* super_html.c:
+	(super_html_main_page) "Master" and "Judge" CGI program are
+	  opened in a new browser window;
+	(super_html_contest_page) the same as above.
+
+	* super_html.h: (super_html_edit_variants) new function prototype;
+	(super_html_variant_param) new function prototype.
+
+	* super_html_2.c:
+	(super_html_commit_contest) saving of the `variant_map' file
+	  is supported; the contest root and conf directories are
+	  commited to the VCS.
+
+	* super_html_3.c: "userlist_clnt.h" is included;
+	"userlist_proto.h" is included;
+	"userlist.h" is included;
+	"prepare_serve.h" is included;
+	(super_html_print_problem) editing of `variant_num' is supported;
+	(super_html_prob_param) setting of `variant_num' is supported;
+	(unparse_serve_cfg) detection whether the variant map is required
+	  is added, and the call of `prepare_unparse_global' is updated;
+	(super_html_check_tests) variant problems are supported;
+	(parse_variant_map) new function to parse the variant map file;
+	(vmap_sort_func) function for sorting variant map users;
+	(update_variant_map) new function for updating the variant map
+	  with the current contest information;
+	(super_html_edit_variants) new function to display the
+	  "Variant assignment table" page;
+	(super_html_variant_param) new function to edit the
+	  variants assignments.
+
+	* super_proto.h:
+	new commands added: SSERV_CMD_PROB_CHANGE_VARIANT_NUM,
+	  SSERV_CMD_PROB_EDIT_VARIANTS, SSERV_CMD_PROB_EDIT_VARIANTS_2,
+	  SSERV_CMD_PROB_CHANGE_VARIANTS, SSERV_CMD_PROB_DELETE_VARIANTS.
+
+	* userlist-server.c:
+	(remove_all_user_cookies) new function to remove all the user's
+	  cookies;
+	(cmd_set_passwd) all the user's cookies are removed after password
+	  change;
+	(cmd_team_set_passwd) the same as above.
+
+	* vcs.c:
+	(svn_add_dir) new function to perform "add dir" action for SVN;
+	(cvs_add_dir) new function to perform "add dir" action for CVS;
+	(vcs_add_dir) new function to perform "add dir" action.
+
+	* vcs.h: (vcs_add_dir) new function prototype.
+
+2005-09-27  Alexander Chernov  <cher@ispras.ru>
+
+	* collect-emails.c: the copyright notice is updated;
+	(main) the program banner is printed to the stderr.
+
+2005-09-24  Alexander Chernov  <cher@ispras.ru>
+
+	* super_proto.h: SSERV_CMD_CLEAR_MESSAGES command is added.
+
+	* super_html_3.c:
+	(recompile_checker) C checker compilation command is fixed.
+
+	* super_html.c:
+	(super_html_contest_page) "Clear" button action changed to
+	  SUPER_ACTION_CLEAR_MESSAGES.
+
+	* super_actions.h: SUPER_ACTION_CLEAR_MESSAGES is added.
+
+	* super-serve.c:
+	(cmd_simple_command) `SSERV_CMD_CLEAR_MESSAGES' is handled;
+	(contest_mngmt_cmd) `SSERV_CMD_CLEAR_MESSAGES' is handled.
+
+	* serve-control.c: SUPER_ACTION_CLEAR_MESSAGES action is supported.
+
+2005-09-23  Alexander Chernov  <cher@ispras.ru>
+
+	* super_html_3.c:
+	(recompile_checker) command line option for gcc is fixed.
+
+2005-09-22  Alexander Chernov  <cher@ispras.ru>
+
+	* dos2unix_str.c: initial revision
+
+	* super_html_3.c:
+	(super_html_global_param) dos2unix recoding is performed for
+	  template texts;
+	support for new standard checkers added:
+	  cmp_bytes, cmp_int_seq, cmp_long_long_seq
+	  cmp_unsigned_int_seq, cmp_unsigned_long_long_seq,
+	  cmp_double, cmp_double_seq,
+	  cmp_long_double, cmp_long_double_seq;
+	(super_html_print_problem) editing of `checker_env' is supported;
+	(super_html_prob_param) editing of `checker_env' is supported;
+	(dos2unix_str) moved to a separate files.
+
+	* super_html_2.c:
+	(super_html_set_contest_var) dos2unix recoding is performed for
+	  header and footer texts.
+
+	* misctext.h: (dos2unix_str) new function prototype is added.
+
+	* files.make: dos2unix_str.c is added.
+
+	* super_proto.h:
+	new commands added: SSERV_CMD_PROB_CHANGE_CHECKER_ENV,
+	  SSERV_CMD_PROB_CLEAR_CHECKER_ENV.
+
+	* super_actions.h:
+	new actions added: SUPER_ACTION_PROB_CHANGE_CHECKER_ENV,
+	  SUPER_ACTION_PROB_CLEAR_CHECKER_ENV.
+
+	* super-serve.c: new super-serve commands are handled:
+	  SSERV_CMD_PROB_CHANGE_CHECKER_ENV,
+	  SSERV_CMD_PROB_CLEAR_CHECKER_ENV.
+
+	* serve-control.c:
+	new actions handled: SUPER_ACTION_PROB_CHANGE_CHECKER_ENV,
+	  SUPER_ACTION_PROB_CLEAR_CHECKER_ENV.
+
+	* prepare_out.c: (prepare_unparse_prob) `checker_env' is generated;
+	(prepare_unparse_unhandled_prob) `checker_env' is no longer
+	  printed because handled.
+
+	* parsecfg.h: (sarray_unparse) new function prototype;
+	(sarray_parse) new function prototype.
+
+	* parsecfg.c:
+	(sarray_unparse) new function, which generates string representation
+	  for a set of environment variables to be used in contest
+	  settings editing;
+	(sarray_parse) new function, which parses string representation
+	  for a set of environment variables.
+
+	* ejudge-setup.c:
+	(generate_install_script) creation of symlink for serve-control
+	  is added.
+
+	* Makefile.unix.in:
+	`po' file is generated only if ENABLE_NLS flag is set.
+
+	* INSTALL.RUS, INSTALL: fixes and additions
+
+2005-09-16  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge-setup.c, super_html_2.c:
+	$Id$ is properly escaped in order not to be substutued by
+	  the ejudge CVS.
+
+	* super_html_2.c:
+	(get_contest_access_by_num) new function to return the reference to
+	  IP access list by the ip access number;
+	(copy_contest_access) new function to copy IP access lists;
+	(super_html_set_contest_var) `get_contest_access_by_num' is used, so
+	  the code is slightly restructured;
+	  `SSERV_CMD_CNTS_COPY_ACCESS' is handled using `copy_contest_access';
+	(super_html_serve_probe_run) new function to handle
+	  `SSERV_CMD_SERVE_MNG_PROBE_RUN';
+	(super_html_commit_contest) "$Id$" is printed to the header of the
+	  new contest XML file and serve.cfg file;
+	  the new contest XML file is put under version control;
+	  version control for the serve.cfg is supported, but the new serve.cfg
+	  is not put under version control automatically;
+	  call of `super_serve_start_serve_test_mode' is updated.
+
 2005-09-16  Alexander Chernov  <cher@ispras.ru>
 
 	* super_html_2.c: fix
 
 	* ejudge-setup.c, super_html_2.c:
-	$Id$ is properly escaped in order not to be substutued by
+	\$Id\$ is properly escaped in order not to be substutued by
 	  the ejudge CVS.
 
 	* team.c:
@@ -45,7 +267,7 @@
 	  `SSERV_CMD_CNTS_COPY_ACCESS' is handled using `copy_contest_access';
 	(super_html_serve_probe_run) new function to handle
 	  `SSERV_CMD_SERVE_MNG_PROBE_RUN';
-	(super_html_commit_contest) "$Id$" is printed to the header of the
+	(super_html_commit_contest) "\$Id\$" is printed to the header of the
 	  new contest XML file and serve.cfg file;
 	  the new contest XML file is put under version control;
 	  version control for the serve.cfg is supported, but the new serve.cfg
@@ -138,8 +360,8 @@
 
 	* ejudge-setup.c: "cpu.h" is included;
 	(generate_serve_cfg) "cpu_bogomips" is generated;
-	  "$Id$" is generated;
-	(generate_contest_xml) "$Id$" is added.
+	  "\$Id\$" is generated;
+	(generate_contest_xml) "\$Id\$" is added.
 
 	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
 
