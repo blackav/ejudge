@@ -1,6 +1,91 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
+Version 2.1.42 (20050930)
+=========================
+This version fixes some bugs if the installation process and
+introduces some minor enhancements.
+
+ejudge-setup
+------------
+The command of creation of the symlink to the serve-control CGI
+program is added to the installation script generation code.
+
+Makefile
+--------
+Handling of situation, when the localization utilities xgettext,
+etc were not found during the ejudge configuration is improved.
+
+userlist-server
+---------------
+All the user cookies are dropped when the password is changed.
+
+super-serve,serve-control
+-------------------------
+Editing of the `checker_env' problem configuration variable is
+supported.
+
+The new standard checkers (see below) are supported.
+
+When the content of the header and the footer files and the
+start script is edited, it is automatically converted from the
+DOS text format to the UNIX text format, because browsers send
+the data in the DOS text format (i. e. with \r\n as line
+terminators).
+
+The `master' and `judge' CGI-programs are opened in a new
+browser window when clicking on the corresponding links.
+
+Editing of the `variant_num' problem configuration variable is
+supported. Editing of the variant assingment table (variant map)
+is supported. Checking of contest settings for variant problems
+is supported.
+
+libchecker
+----------
+New functions for comparing floating-point numbers are added.
+
+int checker_eq_double(double v1, double v2, double eps);
+int checker_eq_long_double(long double v1, long double v2, long double eps);
+int checker_eq_float(float v1, float v2, float eps);
+
+These functions compare two floating-point numbers v1 and v2 of
+the corresponding types with the given precision eps. Special
+values NaN, +Inf, -Inf are handled correctly. If the absolute
+values of the numbers do not exceed 1, the absolute value of
+their difference must be less than 2*eps, i.e.
+|v1 - v2| < 2*eps. Else both numbers must have the same sign,
+must have the exponents with difference <= 1, and then their
+exponent are changed, so the both numbers fit into the [0,2)
+interval, then the condition |v1 - v2| < 2*eps. Thus the eps
+value determines how many matching decimal digits do the numbers
+have.
+
+Several new standard checkers are added:
+cmp_float, cmp_double, cmp_long_double - compare the output of
+the program being checked, which must be the only floating-point
+number of the corresponding type, and the correct answers. The
+floating-point comparison functions described above are used.
+The eps parameter must be defined by the EPS environment
+variable, which must be set using the `checker_env' problem
+configuration variable.
+cmp_bytes - compares the output of the program being checked and
+the correct answer byte by byte.
+cmp_int_seq, cmp_unsigned_int_seq, cmp_long_long_seq,
+cmp_unsigned_long_long_seq - compare the sequence of the integer
+numbers of the corresponding type in the output of the program
+being tested and the correct answer. The checked output must
+consist only of integer numbers separated with whitespace
+characters. The total number of numbers and the numbers themself
+in the output must match those in the correct answer.
+cmp_double_seq, cmp_long_double_seq - compare the sequence of
+the floating-point numbers of the corresponding type in the
+output of the program being checked and in the correct answer.
+The checked output must consist only of floating-point numbers
+separated with whitespace characters. The total number of
+numbers and the numbers themself in the output must match those
+in the correct answer.
+
 Version 2.1.41 (20050916)
 =========================
 This version fixes noticed bugs of the previous version and adds
