@@ -74,6 +74,8 @@ enum
     CONTEST_RUN_USER,
     CONTEST_RUN_GROUP,
     CONTEST_REGISTER_EMAIL_FILE,
+    CONTEST_USER_NAME_COMMENT,
+    CONTEST_ALLOWED_LANGUAGES,
 
     CONTEST_LAST_TAG
   };
@@ -104,6 +106,7 @@ enum
   {
     CONTEST_FIRST_FIELD = 1,
     CONTEST_F_HOMEPAGE = CONTEST_FIRST_FIELD,
+    CONTEST_F_PHONE,
     CONTEST_F_INST,
     CONTEST_F_INST_EN,
     CONTEST_F_INSTSHORT,
@@ -144,6 +147,7 @@ enum
     CONTEST_MF_GROUP_EN,
     CONTEST_MF_EMAIL,
     CONTEST_MF_HOMEPAGE,
+    CONTEST_MF_PHONE,
     CONTEST_MF_INST,
     CONTEST_MF_INST_EN,
     CONTEST_MF_INSTSHORT,
@@ -241,8 +245,12 @@ struct contest_desc
   unsigned char *team_head_style;
   unsigned char *team_par_style;
 
+  unsigned char *user_name_comment;
+  unsigned char *allowed_languages;
+
   unsigned char client_ignore_time_skew;
   unsigned char client_disable_team;
+  unsigned char disable_member_delete;
 
   time_t last_check_time;
   time_t last_file_time;
