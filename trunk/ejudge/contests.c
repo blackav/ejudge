@@ -91,6 +91,8 @@ static char const * const tag_map[] =
   "run_user",
   "run_group",
   "register_email_file",
+  "user_name_comment",
+  "allowed_languages",
 
   0
 };
@@ -169,6 +171,8 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   0,                            /* RUN_USER */
   0,                            /* RUN_GROUP */
   0,                            /* REGISTER_EMAIL_FILE */
+  0,                            /* USER_NAME_COMMENT */
+  0,                            /* ALLOWED_LANGUAGES */
 };
 static size_t const attn_sizes[CONTEST_LAST_ATTN] =
 {
@@ -232,6 +236,8 @@ node_free(struct xml_tree *t)
       xfree(cnts->register_table_style);
       xfree(cnts->team_head_style);
       xfree(cnts->team_par_style);
+      xfree(cnts->user_name_comment);
+      xfree(cnts->allowed_languages);
     }
     break;
   case CONTEST_CAP:
@@ -251,6 +257,7 @@ static char const * const field_map[] =
 {
   0,
   "homepage",
+  "phone",
   "inst",
   "inst_en",
   "instshort",
@@ -283,6 +290,7 @@ static char const * const member_field_map[] =
   "group_en",
   "email",
   "homepage",
+  "phone",
   "inst",
   "inst_en",
   "instshort",
@@ -659,6 +667,8 @@ parse_client_flags(unsigned char const *path, struct contest_desc *cnts,
       cnts->client_ignore_time_skew = 1;
     } else if (!strcmp(str3, "DISABLE_TEAM")) {
       cnts->client_disable_team = 1;
+    } else if (!strcmp(str3, "DISABLE_MEMBER_DELETE")) {
+      cnts->disable_member_delete = 1;
     } else {
       err("%s:%d:%d: unknown flag '%s'", path, xt->line, xt->column, str3);
       return -1;
@@ -863,6 +873,14 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
     case CONTEST_REGISTER_EMAIL_FILE:
       if (handle_final_tag(path, t, &cnts->register_email_file) < 0) return -1;
       break;
+
+    case CONTEST_USER_NAME_COMMENT:
+      if (handle_final_tag(path, t, &cnts->user_name_comment) < 0) return -1;
+      break;
+    case CONTEST_ALLOWED_LANGUAGES:
+      if (handle_final_tag(path, t, &cnts->allowed_languages) < 0) return -1;
+      break;
+
     case CONTEST_CLIENT_FLAGS:
       if (t->first_down) {
         err("%s:%d:%d: element <%s> cannot contain nested elements",
@@ -1641,12 +1659,17 @@ contests_unparse(FILE *f,
   unparse_text(f, CONTEST_RUN_USER, cnts->run_user);
   unparse_text(f, CONTEST_RUN_GROUP, cnts->run_group);
 
+  unparse_text(f, CONTEST_USER_NAME_COMMENT, cnts->user_name_comment);
+  unparse_text(f, CONTEST_ALLOWED_LANGUAGES, cnts->allowed_languages);
+
   if (cnts->client_ignore_time_skew || cnts->client_disable_team) {
     fprintf(f, "  <%s>\n", tag_map[CONTEST_CLIENT_FLAGS]);
     if (cnts->client_ignore_time_skew)
       fprintf(f, "    IGNORE_TIME_SKEW,\n");
     if (cnts->client_disable_team)
       fprintf(f, "    DISABLE_TEAM,\n");
+    if (cnts->disable_member_delete)
+      fprintf(f, "    DISABLE_MEMBER_DELETE,\n");
     fprintf(f, "  </%s>\n", tag_map[CONTEST_CLIENT_FLAGS]);
   }
   fprintf(f, "</%s>", tag_map[CONTEST_CONTEST]);
