@@ -1828,7 +1828,7 @@ check_config(void)
     prb = probs[testers[i]->problem];
     total++;
 
-    if (prb->variant_num > 0) {
+    if (prb->variant_num > 0 && !testers[i]->standard_checker_used) {
       if (!var_check_cmd)
         var_check_cmd = (unsigned char*) alloca(sizeof(path_t));
       for (n = 1; n <= prb->variant_num; n++) {
