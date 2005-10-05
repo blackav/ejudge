@@ -1219,6 +1219,7 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NN_FACSHORT]          { "Fac. (short)", 1, 1 },
   [USERLIST_NN_FACSHORT_EN]       { "Fac. (short) (En)", 1, 1 },
   [USERLIST_NN_HOMEPAGE]          { "Homepage", 1, 1 },
+  [USERLIST_NN_PHONE]             { "Phone", 1, 1 },
   [USERLIST_NN_CITY]              { "City", 1, 1 },
   [USERLIST_NN_CITY_EN]           { "City (En)", 1, 1 },
   [USERLIST_NN_COUNTRY]           { "Country", 1, 1 },
@@ -1245,6 +1246,7 @@ static const struct user_field_desc member_descs[] =
   [USERLIST_NM_OCCUPATION_EN] { "Occupation (En)", 1, 1 },
   [USERLIST_NM_EMAIL]      { "E-mail", 1, 1 },
   [USERLIST_NM_HOMEPAGE]   { "Homepage", 1, 1 },
+  [USERLIST_NM_PHONE]      { "Phone", 1, 1 },
   [USERLIST_NM_INST]       { "Institution", 1, 1 },
   [USERLIST_NM_INST_EN]    { "Institution (En)", 1, 1 },
   [USERLIST_NM_INSTSHORT]  { "Inst. (short)", 1, 1 },
@@ -1515,6 +1517,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
         case USERLIST_NN_FACSHORT:
         case USERLIST_NN_FACSHORT_EN:
         case USERLIST_NN_HOMEPAGE:
+        case USERLIST_NN_PHONE:
         case USERLIST_NN_CITY:
         case USERLIST_NN_CITY_EN:
         case USERLIST_NN_COUNTRY:
@@ -2036,6 +2039,7 @@ user_match(struct userlist_user *u, int kind)
     if (user_regmatch(u->facshort)) return 1;
     if (user_regmatch(u->facshort_en)) return 1;
     if (user_regmatch(u->homepage)) return 1;
+    if (user_regmatch(u->phone)) return 1;
     if (user_regmatch(u->city)) return 1;
     if (user_regmatch(u->city_en)) return 1;
     if (user_regmatch(u->country)) return 1;
@@ -2064,6 +2068,7 @@ user_match(struct userlist_user *u, int kind)
           if (user_regmatch(pm->group_en)) return 1;
           if (user_regmatch(pm->email)) return 1;
           if (user_regmatch(pm->homepage)) return 1;
+          if (user_regmatch(pm->phone)) return 1;
           if (user_regmatch(pm->occupation)) return 1;
           if (user_regmatch(pm->occupation_en)) return 1;
           if (user_regmatch(pm->inst)) return 1;
