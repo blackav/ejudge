@@ -148,6 +148,7 @@ static int user_read_only;
 static unsigned char *user_email;
 static unsigned char *user_name;
 static unsigned char *user_homepage;
+static unsigned char *user_phone;
 static unsigned char *user_inst;
 static unsigned char *user_inst_en;
 static unsigned char *user_instshort;
@@ -179,9 +180,14 @@ static int user_already_registered;
 static char *header_txt, *footer_txt;
 static int header_len, footer_len;
 
+static unsigned char **allowed_languages;
+static size_t allowed_languages_u;
+
 static unsigned char *head_style = "h2";
 static unsigned char *par_style = "";
 static unsigned char *table_style = "";
+static unsigned char *contest_user_name_comment;
+static int disable_member_delete;
 
 static unsigned char ***member_info[CONTEST_LAST_MEMBER];
 
@@ -231,6 +237,8 @@ static struct field_desc field_descs[CONTEST_LAST_FIELD] =
 
   { "homepage", _("Homepage"), "homepage", &user_homepage,
     homepage_accept_chars, '?', 128, 64 },
+  { "phone", _("Phone"), "phone", &user_phone,
+    homepage_accept_chars, '?', 128, 64 },
   { "inst", _("Institution"), "inst", &user_inst,
     name_accept_chars, '?', 128, 64 },
   { "inst_en", _("Institution (En)"), "inst_en", &user_inst_en,
@@ -272,6 +280,7 @@ static struct field_desc member_field_descs[CONTEST_LAST_MEMBER_FIELD] =
   { "group_en", _("Group (En)"), 0, 0, name_en_accept_chars, '?', 16, 16 },
   { "email",_("E-mail"), 0, 0, name_accept_chars, '?', 64, 64 },
   { "homepage",_("Homepage"), 0, 0, homepage_accept_chars, '?', 128, 64 },
+  { "phone",_("Phone"), 0, 0, homepage_accept_chars, '?', 128, 64 },
   { "inst", _("Institution"), 0, 0, name_accept_chars, '?', 128, 64 },
   { "inst_en", _("Institution (En)"), 0, 0, name_en_accept_chars, '?', 128, 64 },
   { "instshort", _("Institution (short)"),0,0,name_accept_chars, '?', 32, 32 },
@@ -691,6 +700,55 @@ check_config_exist(unsigned char const *path)
   return 0;
 }
 
+static void
+parse_allowed_languages(const unsigned char *str, unsigned char ***pv, size_t *pu)
+{
+  const unsigned char *s, *q;
+  unsigned char *p;
+  int i;
+  size_t sz;
+  unsigned char **v = 0;
+  size_t u = 0;
+
+  *pv = 0;
+  *pu = 0;
+  if (!str) return;
+
+  for (s = str; *s; s++)
+    if (*s == ',')
+      u++;
+  u++;
+
+  XCALLOC(v, u);
+  s = str;
+  for (i = 0; i < u && *s;) {
+    while (*s && isspace(*s)) s++;
+    if (*s == ',') {
+      s++;
+      continue;
+    }
+    if (!*s) break;
+    q = strchr(s, ',');
+    if (!q) q = s + strlen(s);
+    v[i] = p = xmemdup(s, q - s);
+    sz = strlen(p);
+    while (sz > 0 && isspace(p[sz - 1])) p[--sz] = 0;
+    if (!sz) {
+      xfree(p);
+      v[i] = 0;
+    } else {
+      i++;
+    }
+    if (*s) s = q + 1;
+  }
+  u = i;
+  if (!u) {
+    xfree(v); v = 0;
+  }
+  *pv = v;
+  *pu = u;
+}
+
 static const unsigned char default_config[] =
 "<?xml version=\"1.0\" ?>\n"
 "<register_config><access default=\"allow\"/></register_config>\n";
@@ -830,6 +888,10 @@ initialize(int argc, char const *argv[])
     head_style = cnts->register_head_style;
     par_style = cnts->register_par_style;
     table_style = cnts->register_table_style;
+    contest_user_name_comment = cnts->user_name_comment;
+    disable_member_delete = cnts->disable_member_delete;
+    parse_allowed_languages(cnts->allowed_languages,
+                            &allowed_languages, &allowed_languages_u);
     logger_set_level(-1, LOG_WARNING);
     if (cnts->register_header_file) {
       generic_read_file(&header_txt, 0, &header_len, 0,
@@ -1054,16 +1116,14 @@ read_user_info_from_form(void)
   unsigned char varbuf[128];
   unsigned char *val = 0;
   int x, n, i;
+  FILE *lang_f = 0;
+  char *lang_s = 0;
+  size_t lang_l = 0;
+  int lang_t = 0;
 
-  if (cgi_param("show_login")) {
-    user_show_login = 1;
-  }
-  if (cgi_param("show_email")) {
-    user_show_email = 1;
-  }
-  if (cgi_param("use_cookies_default")) {
-    user_use_cookies_default = 1;
-  }
+  user_show_login = 0;
+  user_show_email = 0;
+  user_use_cookies_default = 1;
 
   if ((val = cgi_param("user_registering"))) {
     x = n = 0;
@@ -1103,6 +1163,29 @@ read_user_info_from_form(void)
     }
   }
 
+  if (field_descs[CONTEST_F_LANGUAGES].orig_name
+      && field_descs[CONTEST_F_LANGUAGES].is_editable
+      && allowed_languages
+      && allowed_languages_u > 0) {
+    lang_f = open_memstream(&lang_s, &lang_l);
+    for (i = 0; i < allowed_languages_u; i++) {
+      snprintf(varbuf, sizeof(varbuf), "proglang_%d", i);
+      if (cgi_param(varbuf)) {
+        if (lang_t) fprintf(lang_f, ", ");
+        fprintf(lang_f, "%s", allowed_languages[i]);
+        lang_t++;
+      }
+    }
+    fclose(lang_f); lang_f = 0;
+    if (lang_t) {
+      user_languages = lang_s;
+    } else {
+      xfree(lang_s);
+    }
+    lang_s = 0;
+    lang_l = 0;
+  }
+
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
     if (member_max[role] <= 0) continue;
     snprintf(varbuf, sizeof(varbuf), "member_cur_%d", role);
@@ -1135,7 +1218,7 @@ read_user_info_from_form(void)
           }
         } else if (val && i == CONTEST_MF_GRADE) {
           if (sscanf(val, "%d %n", &x, &n) != 1 || val[n]
-              || x <= 0 || x >= 20) {
+              || x <= 0 || x >= 100000) {
             val = "";
           }
         }
@@ -1325,13 +1408,14 @@ read_user_info_from_server(void)
 
   ASSERT(u->id == user_id);
   user_xml = u;
-  user_show_email = u->show_email;
-  user_use_cookies_default = u->default_use_cookies;
-  user_show_login = u->show_login;
+  user_show_email = 0;
+  user_use_cookies_default = 1;
+  user_show_login = 0;
   user_read_only = u->read_only;
   user_email = u->email;
   user_name = u->name;
   user_homepage = u->homepage;
+  user_phone = u->phone;
   user_inst = u->inst;
   user_inst_en = u->inst_en;
   user_instshort = u->instshort;
@@ -1394,7 +1478,7 @@ read_user_info_from_server(void)
       }
       if (member_edit_flags[role][CONTEST_MF_GRADE].is_editable) {
         buf[0] = 0;
-        if (m->grade > 0 && m->grade < 20) {
+        if (m->grade > 0 && m->grade < 100000) {
           snprintf(buf, sizeof(buf), "%d", m->grade);
         }
         member_info[role][pers][CONTEST_MF_GRADE] = xstrdup(buf);
@@ -1410,6 +1494,9 @@ read_user_info_from_server(void)
       }
       if (member_edit_flags[role][CONTEST_MF_HOMEPAGE].is_editable) {
         member_info[role][pers][CONTEST_MF_HOMEPAGE] = m->homepage;
+      }
+      if (member_edit_flags[role][CONTEST_MF_PHONE].is_editable) {
+        member_info[role][pers][CONTEST_MF_PHONE] = m->phone;
       }
       if (member_edit_flags[role][CONTEST_MF_INST].is_editable) {
         member_info[role][pers][CONTEST_MF_INST] = m->inst;
@@ -1509,14 +1596,40 @@ authentificate(void)
 }
 
 static void
+map_user_languages(const unsigned char *user_langs, int **pmap)
+{
+  int *map = 0;
+  unsigned char **langs = 0;
+  size_t langs_u = 0;
+  int i, j;
+
+  *pmap = 0;
+  if (!allowed_languages || !allowed_languages_u) return;
+  XCALLOC(map, allowed_languages_u);
+  *pmap = map;
+
+  parse_allowed_languages(user_langs, &langs, &langs_u);
+  if (!langs || !langs_u) return;
+  for (i = 0; i < allowed_languages_u; i++) {
+    for (j = 0; j < langs_u; j++)
+      if (!strcmp(allowed_languages[i], langs[j]))
+        break;
+    if (j < langs_u)
+      map[i] = 1;
+  }
+}
+
+static void
 display_edit_registration_data_page(void)
 {
   struct contest_desc *cnts = 0;
-  int errcode, role, pers, i, user_show_all = 0;
+  int errcode, role, pers, i, user_show_all = 0, j;
   unsigned char *user_name_arm;
   unsigned char *cnts_name_arm, *cnts_name_loc;
   char const *dis_str = " disabled=\"yes\"";
   unsigned char s1[128], url[512];
+  int *user_lang_map = 0;
+  unsigned char *s;
 
   if (!authentificate()) return;
 
@@ -1664,33 +1777,41 @@ display_edit_registration_data_page(void)
   printf("<hr><%s>%s</%s>", head_style, _("General user information"),
          head_style);
   printf("<p%s>%s: <input type=\"text\" disabled=\"1\" name=\"user_login\" value=\"%s\" size=\"16\">\n", par_style, _("Login"), user_login);
-  printf("<br><input type=\"checkbox\" name=\"show_login\"%s%s>%s",
-         user_show_login?" checked=\"yes\"":"",
-         user_read_only?dis_str:"",
-         _("Show your login to the public?"));
-  printf("<br><input type=\"checkbox\" name=\"use_cookies_default\"%s%s>%s",
-         user_use_cookies_default?" checked=\"yes\"":"",
-         user_read_only?dis_str:"",
-         _("Use cookies by default?"));
 
   printf("<input type=\"hidden\" name=\"user_email\" value=\"%s\">\n",
          user_email);
   printf("<p%s>%s: <a href=\"mailto:%s\">%s</a>\n", par_style, _("E-mail"),
          user_email, user_email);
-  printf("<br><input type=\"checkbox\" name=\"show_email\"%s%s> %s",
-         user_show_email?" checked=\"yes\"":"",
-         user_read_only?dis_str:"",
-         _("Show your e-mail address to public?"));
 
-  /*
-  printf("<p>%s</p>\n", _("In the \"User name\" field you type the name of the user, not the participant. For example, if you are registering for participation in a collegiate contest, this field contains the name of your team. The value of this field is used in the list of registered teams, in the standings, etc."));
-  */
   printf("<p%s>%s</p>\n", par_style, _("In the next field type the name, which will be used in standings, personal information display, etc."));
+  if (contest_user_name_comment) {
+    printf("<p%s>%s</p>\n", par_style, contest_user_name_comment);
+  }
   printf("<p%s>%s%s: <input type=\"text\" name=\"name\" value=\"%s\" maxlength=\"64\" size=\"64\"%s>\n", par_style, _("User name"), user_contest_id>0?" (*)":"", user_name, user_read_only?dis_str:"");
 
   /* display change forms */
   for (i = 1; i < CONTEST_LAST_FIELD; i++) {
     if (!field_descs[i].is_editable) continue;
+    if (i == CONTEST_F_LANGUAGES && allowed_languages_u > 0) {
+      map_user_languages(user_languages, &user_lang_map);
+      printf("<p%s>%s%s:\n", par_style, gettext(field_descs[i].orig_name),
+             field_descs[i].is_mandatory?" (*)":"");
+
+      printf("<table border=\"0\">\n");
+      for (j = 0; j < allowed_languages_u; j++) {
+        s = html_armor_string_dup(allowed_languages[j]);
+        printf("<tr><td><input type=\"checkbox\" name=\"proglang_%d\"%s%s></td>"
+               "<td>%s</td></tr>\n",
+               j, user_lang_map[j]?" checked=\"yes\"":"",
+               user_read_only? dis_str : "",
+               s);
+        xfree(s);
+      }
+      printf("</table>\n");
+
+      continue;
+    }
+
     printf("<p%s>%s%s: <input type=\"text\" name=\"%s\" value=\"%s\" maxlength=\"%d\" size=\"%d\"%s>\n",
            par_style,
            gettext(field_descs[i].orig_name),
@@ -1713,19 +1834,22 @@ display_edit_registration_data_page(void)
 
     printf("<%s>%s: %s</%s>\n", head_style, _("Member information"),
            gettext(member_string_pl[role]), head_style);
-    printf(_("<p%s>The current number of %s is %d.</p>\n"), par_style,
-           gettext(member_string_pl[role]), member_cur[role]);
-    printf(_("<p%s>The minimal number of %s is %d.</p>\n"), par_style,
-           gettext(member_string_pl[role]), member_min[role]);
-    printf(_("<p%s>The maximal number of %s is %d.</p>\n"), par_style,
-           gettext(member_string_pl[role]), member_max[role]);
+    if (member_cur[role] != member_min[role] || member_cur[role] != member_max[role]) {
+      printf(_("<p%s>The current number of %s is %d.</p>\n"), par_style,
+             gettext(member_string_pl[role]), member_cur[role]);
+      printf(_("<p%s>The minimal number of %s is %d.</p>\n"), par_style,
+             gettext(member_string_pl[role]), member_min[role]);
+      printf(_("<p%s>The maximal number of %s is %d.</p>\n"), par_style,
+             gettext(member_string_pl[role]), member_max[role]);
+    }
     printf("<input type=\"hidden\" name=\"member_cur_%d\" value=\"%d\">\n",
            role, member_cur[role]);
 
     for (pers = 0; pers < member_cur[role]; pers++) {
-      if (!user_read_only) {
-        printf("<h3>%s %d</h3><p%s><input type=\"submit\" name=\"remove_%d_%d\" value=\"%s\">%s</p>\n",
-               gettext(member_string[role]), pers + 1, par_style,
+      printf("<h3>%s %d</h3>\n", gettext(member_string[role]), pers + 1);
+      if (!user_read_only && !disable_member_delete) {
+        printf("<p%s><input type=\"submit\" name=\"remove_%d_%d\" value=\"%s\">%s</p>\n",
+               par_style,
                role, pers,
                _("Remove member"),
                _("<b>Note!</b> All uncommited changes will be lost!"));
@@ -2603,8 +2727,8 @@ action_change_password(void)
   if (user_contest_id > 0) {
     snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
   }
-  snprintf(url, sizeof(url), "%s?SID=%llx&locale_id=%d&action=%d%s",
-           self_url, user_cookie, client_locale_id, STATE_MAIN_PAGE, s1);
+  snprintf(url, sizeof(url), "%s?locale_id=%d&action=%d%s",
+           self_url, client_locale_id, STATE_LOGIN, s1);
 
   if (!error_log) {
     client_put_refresh_header(config->charset, url, 0,
