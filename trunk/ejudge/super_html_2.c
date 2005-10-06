@@ -85,6 +85,8 @@ super_html_clear_variable(struct sid_state *sstate, int cmd)
   case SSERV_CMD_CNTS_CLEAR_REGISTER_HEAD_STYLE: p_str=&cnts->register_head_style;break;
   case SSERV_CMD_CNTS_CLEAR_REGISTER_PAR_STYLE: p_str = &cnts->register_par_style; break;
   case SSERV_CMD_CNTS_CLEAR_REGISTER_TABLE_STYLE: p_str = &cnts->register_table_style; break;
+  case SSERV_CMD_CNTS_CLEAR_REGISTER_NAME_COMMENT: p_str = &cnts->user_name_comment; break;
+  case SSERV_CMD_CNTS_CLEAR_ALLOWED_LANGUAGES: p_str = &cnts->allowed_languages; break;
   case SSERV_CMD_CNTS_CLEAR_TEAM_HEAD_STYLE: p_str = &cnts->team_head_style; break;
   case SSERV_CMD_CNTS_CLEAR_TEAM_PAR_STYLE: p_str = &cnts->team_par_style; break;
   case SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL: p_str = &cnts->register_email; break;
@@ -289,6 +291,9 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   case SSERV_CMD_CNTS_CHANGE_TEAM_LOGIN:
     p_bool = &cnts->client_disable_team;
     break;
+  case SSERV_CMD_CNTS_CHANGE_MEMBER_DELETE:
+    p_bool = &cnts->disable_member_delete;
+    break;
   case SSERV_CMD_CNTS_CHANGE_DEADLINE:
     p_date = &cnts->reg_deadline;
     break;
@@ -330,6 +335,12 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     break;
   case SSERV_CMD_CNTS_CHANGE_REGISTER_TABLE_STYLE:
     p_str = &cnts->register_table_style;
+    break;
+  case SSERV_CMD_CNTS_CHANGE_REGISTER_NAME_COMMENT:
+    p_str = &cnts->user_name_comment;
+    break;
+  case SSERV_CMD_CNTS_CHANGE_ALLOWED_LANGUAGES:
+    p_str = &cnts->allowed_languages;
     break;
   case SSERV_CMD_CNTS_CHANGE_TEAM_HEAD_STYLE:
     p_str = &cnts->team_head_style;
@@ -658,7 +669,7 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   }
 
   if (p_str_d2u) {
-    xfree(*p_str);
+    xfree(*p_str_d2u);
     *p_str_d2u = dos2unix_str(param2);
     return 0;
   }
@@ -1001,12 +1012,27 @@ super_html_commit_contest(FILE *f,
           need_variant_map = 1;
     }
 
-    if (need_variant_map && !sstate->global->variant_map)
-      return super_html_report_error(f, session_id, self_url, extra_args,
-                                     "No variant map defined");
     if (need_variant_map && !sstate->global->variant_map_file)
       snprintf(sstate->global->variant_map_file,
                sizeof(sstate->global->variant_map_file), "variant.map");
+    if (need_variant_map && !sstate->global->variant_map) {
+      flog = open_memstream(&flog_txt, &flog_size);
+      if (super_html_update_variant_map(flog, sstate->edited_cnts->id,
+                                        us_conn, sstate->edited_cnts,
+                                        sstate->global, sstate->prob_a,
+                                        sstate->probs,
+                                        &sstate->var_header_text,
+                                        &sstate->var_footer_text) < 0) {
+        fclose(flog); flog = 0;
+        xfree(flog_txt); flog_txt = 0; flog_size = 0;
+        return super_html_report_error(f, session_id, self_url, extra_args,
+                                       "Cannot update the variant map");
+      }
+      fclose(flog); xfree(flog_txt); flog_txt = 0; flog_size = 0; flog = 0;
+    }
+    if (need_variant_map && !sstate->global->variant_map)
+      return super_html_report_error(f, session_id, self_url, extra_args,
+                                     "No variant map defined");
   }
   // FIXME: what else we should validate
 
