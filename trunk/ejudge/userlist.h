@@ -89,7 +89,6 @@ enum
     USERLIST_T_PASSWORD,
     USERLIST_T_EMAIL,
     USERLIST_T_HOMEPAGE,
-    USERLIST_T_PHONES,
     USERLIST_T_PHONE,
     USERLIST_T_MEMBER,
     USERLIST_T_SURNAME,
@@ -197,14 +196,15 @@ enum
     USERLIST_NN_FACSHORT,       /* 30 */
     USERLIST_NN_FACSHORT_EN,    /* 31 */
     USERLIST_NN_HOMEPAGE,       /* 32 */
-    USERLIST_NN_CITY,           /* 33 */
-    USERLIST_NN_CITY_EN,        /* 34 */
-    USERLIST_NN_COUNTRY,        /* 35 */
-    USERLIST_NN_COUNTRY_EN,     /* 36 */
-    USERLIST_NN_LOCATION,       /* 37 */
-    USERLIST_NN_SPELLING,       /* 38 */
-    USERLIST_NN_PRINTER_NAME,   /* 39 */
-    USERLIST_NN_LANGUAGES,      /* 40 */
+    USERLIST_NN_PHONE,          /* 33 */
+    USERLIST_NN_CITY,           /* 34 */
+    USERLIST_NN_CITY_EN,        /* 35 */
+    USERLIST_NN_COUNTRY,        /* 36 */
+    USERLIST_NN_COUNTRY_EN,     /* 37 */
+    USERLIST_NN_LOCATION,       /* 38 */
+    USERLIST_NN_SPELLING,       /* 39 */
+    USERLIST_NN_PRINTER_NAME,   /* 40 */
+    USERLIST_NN_LANGUAGES,      /* 41 */
     USERLIST_NN_LAST = USERLIST_NN_LANGUAGES,
 
     USERLIST_NM_SERIAL = 0,              /* 0 */
@@ -222,14 +222,15 @@ enum
     USERLIST_NM_OCCUPATION_EN,           /* 12 */
     USERLIST_NM_EMAIL,                   /* 13 */
     USERLIST_NM_HOMEPAGE,                /* 14 */
-    USERLIST_NM_INST,                    /* 15 */
-    USERLIST_NM_INST_EN,                 /* 16 */
-    USERLIST_NM_INSTSHORT,               /* 17 */
-    USERLIST_NM_INSTSHORT_EN,            /* 18 */
-    USERLIST_NM_FAC,                     /* 19 */
-    USERLIST_NM_FAC_EN,                  /* 20 */
-    USERLIST_NM_FACSHORT,                /* 21 */
-    USERLIST_NM_FACSHORT_EN,             /* 22 */
+    USERLIST_NM_PHONE,                   /* 15 */
+    USERLIST_NM_INST,                    /* 16 */
+    USERLIST_NM_INST_EN,                 /* 17 */
+    USERLIST_NM_INSTSHORT,               /* 18 */
+    USERLIST_NM_INSTSHORT_EN,            /* 19 */
+    USERLIST_NM_FAC,                     /* 20 */
+    USERLIST_NM_FAC_EN,                  /* 21 */
+    USERLIST_NM_FACSHORT,                /* 22 */
+    USERLIST_NM_FACSHORT_EN,             /* 23 */
     USERLIST_NM_LAST = USERLIST_NM_FACSHORT_EN,
   };
 
@@ -274,7 +275,7 @@ struct userlist_member
   unsigned char *fac_en;
   unsigned char *facshort;
   unsigned char *facshort_en;
-  struct xml_tree *phones;
+  unsigned char *phone;
 };
 
 struct userlist_members
@@ -357,12 +358,12 @@ struct userlist_user
   unsigned char *spelling;
   unsigned char *printer_name;
   unsigned char *languages;
+  unsigned char *phone;
 
   unsigned char *extra1;
 
   struct xml_tree *cookies;
   struct userlist_members *members[USERLIST_MB_LAST];
-  struct xml_tree *phones;
   struct xml_tree *contests;
 
   unsigned long registration_time;
