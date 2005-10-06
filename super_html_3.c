@@ -6293,14 +6293,15 @@ vmap_sort_func(const void *v1, const void *v2)
   return strcmp(p1->login, p2->login);
 }
 
-static int
-update_variant_map(FILE *flog, int contest_id,
-                   struct userlist_clnt *server_conn,
-                   struct contest_desc *cnts,
-                   struct section_global_data *global,
-                   int total_probs,
-                   struct section_problem_data **probs,
-                   unsigned char **p_header_txt, unsigned char **p_footer_txt)
+int
+super_html_update_variant_map(FILE *flog, int contest_id,
+                              struct userlist_clnt *server_conn,
+                              struct contest_desc *cnts,
+                              struct section_global_data *global,
+                              int total_probs,
+                              struct section_problem_data **probs,
+                              unsigned char **p_header_txt,
+                              unsigned char **p_footer_txt)
 {
   int r;
   unsigned char *xml_text = 0;
@@ -6583,9 +6584,11 @@ super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
       return 0;
     }
   } else {
-    if (update_variant_map(log_file, cnts->id, userlist_conn, cnts, global,
-                           sstate->prob_a, sstate->probs,
-                           &sstate->var_header_text, &sstate->var_footer_text) < 0){
+    if (super_html_update_variant_map(log_file, cnts->id, userlist_conn,
+                                      cnts, global,
+                                      sstate->prob_a, sstate->probs,
+                                      &sstate->var_header_text,
+                                      &sstate->var_footer_text) < 0){
       fclose(log_file); log_file = 0;
 
       s = html_armor_string_dup(log_txt);
@@ -6662,6 +6665,10 @@ super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
     fprintf(f, "</td></tr></form>\n");
   }
   fprintf(f, "</table>\n");
+
+  super_html_contest_footer_menu(f, session_id, sstate,
+                                 self_url, hidden_vars, extra_args);
+
   return 0;
 }
 
@@ -6689,6 +6696,7 @@ super_html_variant_param(struct sid_state *sstate, int cmd,
   XALLOCAZ(vars, total);
   for (i = 0; i < total; i++) {
     if (sscanf(s, "%d%n", &vars[i], &n) != 1) return -SSERV_ERR_INVALID_PARAMETER;
+    s += n;
     if (vars[i] < 0 || vmap->prob_rev_map[i] <= 0
         || vmap->prob_rev_map[i] >= sstate->prob_a
         || !(prob = sstate->probs[vmap->prob_rev_map[i]]))
