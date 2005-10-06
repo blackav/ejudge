@@ -1116,12 +1116,12 @@ remove_cookie(struct userlist_cookie * cookie)
 static void
 remove_all_user_cookies(struct userlist_user *user)
 {
-  struct xml_tree *cookies = user->cookies;
+  struct userlist_cookie *cookie;
 
-  if (!cookies) return;
-  xml_unlink_node(cookies);
-  userlist_free(cookies);
-  user->cookies = 0;
+  if (user->cookies) {
+    for (cookie = FIRST_COOKIE(user); cookie; cookie = NEXT_COOKIE(cookie))
+      remove_cookie(cookie);
+  }
 }
 
 static void
@@ -2862,6 +2862,12 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
     if (!daemon_mode) info("%d: homepage updated", p->id);
     updated = 1;
   }
+  if (needs_update(old_u->phone, new_u->phone)) {
+    xfree(old_u->phone);
+    old_u->phone = xstrdup(new_u->phone);
+    if (!daemon_mode) info("%d: phone updated", p->id);
+    updated = 1;
+  }
   if (needs_update(old_u->inst, new_u->inst)) {
     xfree(old_u->inst);
     old_u->inst = xstrdup(new_u->inst);
@@ -3078,6 +3084,13 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
         old_m->homepage = xstrdup(new_m->homepage);
         if (!daemon_mode)
           info("%d: updated %s.%d.homepage", p->id, role_str, old_pers);
+        updated = 1;
+      }
+      if (needs_update(old_m->phone, new_m->phone)) {
+        xfree(old_m->phone);
+        old_m->phone = xstrdup(new_m->phone);
+        if (!daemon_mode)
+          info("%d: updated %s.%d.phone", p->id, role_str, old_pers);
         updated = 1;
       }
       if (needs_update(old_m->inst, new_m->inst)) {
