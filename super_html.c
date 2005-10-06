@@ -1661,6 +1661,15 @@ super_html_contest_page_menu(FILE *f,
   if (cur_page != 4) {
     fprintf(f, "</a>");
   }
+  fprintf(f, "</td><td>");
+  if (cur_page != 5) {
+    fprintf(f, "%s", html_hyperref(hbuf, sizeof(hbuf), session_id, self_url, extra_args,
+                                   "action=%d", SUPER_ACTION_PROB_EDIT_VARIANTS));
+  }
+  fprintf(f, "Variants (variant.map)");
+  if (cur_page != 5) {
+    fprintf(f, "</a>");
+  }
   fprintf(f, "</td></tr></table>");
 }
 
@@ -1842,6 +1851,7 @@ print_permissions(FILE *f, struct contest_desc *cnts,
 static const unsigned char *const form_field_names[] =
 {
   [CONTEST_F_HOMEPAGE] = "Home page",
+  [CONTEST_F_PHONE] = "Phone",
   [CONTEST_F_INST] = "Institution",
   [CONTEST_F_INST_EN] = "Institution (English)",
   [CONTEST_F_INSTSHORT] = "Institution, short",
@@ -1871,6 +1881,7 @@ static const unsigned char *const member_field_names[] =
   [CONTEST_MF_GROUP_EN] = "Group (English)",
   [CONTEST_MF_EMAIL] = "E-mail",
   [CONTEST_MF_HOMEPAGE] = "Homepage",
+  [CONTEST_MF_PHONE] = "Phone",
   [CONTEST_MF_INST] = "Institution",
   [CONTEST_MF_INST_EN] = "Institution (English)",
   [CONTEST_MF_INSTSHORT] = "Institution, short",
@@ -2189,6 +2200,15 @@ super_html_edit_contest_page(FILE *f,
     fprintf(f, "</td></tr></form>\n");
   }
 
+  if (sstate->advanced_view) {
+    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    fprintf(f, "<tr><td>Disallow team member removal?</td><td>");
+    html_boolean_select(f, cnts->disable_member_delete, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_MEMBER_DELETE, "Change");
+    fprintf(f, "</td></tr></form>\n");
+  }
+
   html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<tr><td colspan=\"3\" align=\"center\"><b>IP-address access rules for CGI programs</b>");
   if (sstate->show_access_rules) {
@@ -2385,6 +2405,15 @@ super_html_edit_contest_page(FILE *f,
                              self_url,
                              extra_args,
                              hidden_vars);
+    print_string_editing_row(f, "Additional comment for user name field:",
+                             cnts->user_name_comment,
+                             SUPER_ACTION_CNTS_CHANGE_REGISTER_NAME_COMMENT,
+                             SUPER_ACTION_CNTS_CLEAR_REGISTER_NAME_COMMENT,
+                             0,
+                             session_id,
+                             self_url,
+                             extra_args,
+                             hidden_vars);
     print_string_editing_row(f, "HTML attributes for `team' headers:",
                              cnts->team_head_style,
                              SUPER_ACTION_CNTS_CHANGE_TEAM_HEAD_STYLE,
@@ -2398,6 +2427,15 @@ super_html_edit_contest_page(FILE *f,
                              cnts->team_par_style,
                              SUPER_ACTION_CNTS_CHANGE_TEAM_PAR_STYLE,
                              SUPER_ACTION_CNTS_CLEAR_TEAM_PAR_STYLE,
+                             0,
+                             session_id,
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+    print_string_editing_row(f, "Allowed programming languages:",
+                             cnts->allowed_languages,
+                             SUPER_ACTION_CNTS_CHANGE_ALLOWED_LANGUAGES,
+                             SUPER_ACTION_CNTS_CLEAR_ALLOWED_LANGUAGES,
                              0,
                              session_id,
                              self_url,
