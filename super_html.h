@@ -367,4 +367,16 @@ int super_html_variant_param(struct sid_state *sstate, int cmd,
                              int param1, const unsigned char *param2,
                              int param3, int param4);
 
+struct section_problem_data;
+struct section_global_data;
+int
+super_html_update_variant_map(FILE *flog, int contest_id,
+                              struct userlist_clnt *server_conn,
+                              struct contest_desc *cnts,
+                              struct section_global_data *global,
+                              int total_probs,
+                              struct section_problem_data **probs,
+                              unsigned char **p_header_txt,
+                              unsigned char **p_footer_txt);
+
 #endif /* __SUPER_HTML_H__ */
