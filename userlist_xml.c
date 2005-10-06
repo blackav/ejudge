@@ -57,7 +57,6 @@ static char const * const tag_map[] =
   "password",
   "email",
   "homepage",
-  "phones",
   "phone",
   "member",
   "surname",
@@ -144,7 +143,6 @@ static size_t const tag_sizes[USERLIST_LAST_TAG] =
   sizeof(struct userlist_passwd), /* PASSWORD */
   sizeof(struct xml_tree),      /* EMAIL */
   sizeof(struct xml_tree),      /* HOMEPAGE */
-  sizeof(struct xml_tree),      /* PHONES */
   sizeof(struct xml_tree),      /* PHONE */
   sizeof(struct userlist_member), /* MEMBER */
   sizeof(struct xml_tree),      /* SURNAME */
@@ -526,38 +524,6 @@ parse_passwd(char const *path, struct xml_tree *t)
   return pwd;
 }
 
-static struct xml_tree*
-parse_phones(char const *path, struct xml_tree *t)
-{
-  struct xml_tree *q;
-
-  ASSERT(t->tag == USERLIST_T_PHONES);
-  if (t->first) {
-    no_attr(path, t);
-    return 0;
-  }
-  xfree(t->text); t->text = 0;
-  for (q = t->first_down; q; q = q->right) {
-    if (q->tag != USERLIST_T_PHONE) {
-      invalid_tag(path, q);
-      return 0;
-    }
-    if (q->first) {
-      no_attr(path, q);
-      return 0;
-    }
-    if (q->first_down) {
-      nested_tag(path, q);
-      return 0;
-    }
-    if (!q->text || !*q->text) {
-      empty_tag(path, q);
-      return 0;
-    }
-  }
-  return t;
-}
-
 static int
 parse_cookies(char const *path, struct xml_tree *cookies,
               struct userlist_user *usr)
@@ -688,8 +654,8 @@ parse_members(char const *path, struct xml_tree *q,
       case USERLIST_T_EMAIL:
         if (handle_final_tag(path, p, &mb->email) < 0) return -1;
         break;
-      case USERLIST_T_PHONES:
-        if (!(mb->phones = parse_phones(path, p))) return -1;
+      case USERLIST_T_PHONE:
+        if (handle_final_tag(path, p, &mb->phone) < 0) return -1;
         break;
       case USERLIST_T_HOMEPAGE:
         if (handle_final_tag(path, p, &mb->homepage) < 0) return -1;
@@ -764,7 +730,7 @@ parse_members(char const *path, struct xml_tree *q,
         if (!p->text || !*p->text) break;
         if (parse_int(path, p->line, p->column, p->text, &mb->grade) < 0)
           return invalid_tag_value(path, p);
-        if (mb->grade < 0 || mb->grade >= 20)
+        if (mb->grade < 0 || mb->grade >= 100000)
           return invalid_tag_value(path, p);
         break;
       case USERLIST_T_GROUP:
@@ -1030,8 +996,8 @@ do_parse_user(char const *path, struct userlist_user *usr)
     case USERLIST_T_EXTRA1:
       if (handle_final_tag(path, t, &usr->extra1) < 0) return -1;
       break;
-    case USERLIST_T_PHONES:
-      if (!(usr->phones = parse_phones(path, t))) return -1;
+    case USERLIST_T_PHONE:
+      if (handle_final_tag(path, t, &usr->phone) < 0) return -1;
       break;
     case USERLIST_T_HOMEPAGE:
       if (handle_final_tag(path, t, &usr->homepage) < 0) return -1;
@@ -1311,21 +1277,6 @@ unparse_attributed_elem(FILE *f, int t, unsigned char const *val,
 }
 
 static void
-unparse_phones(struct xml_tree *p, FILE *f, char const *i)
-{
-  char ind_buf[32];
-
-  if (!p) return;
-  ASSERT(p->tag == USERLIST_T_PHONES);
-  fprintf(f, "%s<%s>\n", i, tag_map[USERLIST_T_PHONES]);
-  snprintf(ind_buf, sizeof(ind_buf), "%s  ", i);
-  for (p = p->first_down; p; p = p->right) {
-    ASSERT(p->tag == USERLIST_T_PHONE);
-    unparse_final_tag(f, USERLIST_T_PHONE, p->text, ind_buf);
-  }
-  fprintf(f, "%s</%s>\n", i, tag_map[USERLIST_T_PHONES]);
-}
-static void
 unparse_member(struct userlist_member *p, FILE *f)
 {
   unsigned char const *ind = "        ";
@@ -1353,6 +1304,7 @@ unparse_member(struct userlist_member *p, FILE *f)
   unparse_final_tag(f, USERLIST_T_OCCUPATION, p->occupation, ind);
   unparse_final_tag(f, USERLIST_T_OCCUPATION_EN, p->occupation_en, ind);
   unparse_final_tag(f, USERLIST_T_HOMEPAGE, p->homepage, ind);
+  unparse_final_tag(f, USERLIST_T_PHONE, p->phone, ind);
   unparse_final_tag(f, USERLIST_T_INST, p->inst, ind);
   unparse_final_tag(f, USERLIST_T_INST_EN, p->inst_en, ind);
   unparse_final_tag(f, USERLIST_T_INSTSHORT, p->instshort, ind);
@@ -1361,7 +1313,6 @@ unparse_member(struct userlist_member *p, FILE *f)
   unparse_final_tag(f, USERLIST_T_FAC_EN, p->fac_en, ind);
   unparse_final_tag(f, USERLIST_T_FACSHORT, p->facshort, ind);  
   unparse_final_tag(f, USERLIST_T_FACSHORT_EN, p->facshort_en, ind);  
-  unparse_phones(p->phones, f, "        ");
   fprintf(f, "      </%s>\n", tag_map[USERLIST_T_MEMBER]);
 }
 static void
@@ -1574,6 +1525,7 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   unparse_final_tag(f, USERLIST_T_FACSHORT, p->facshort, "    ");
   unparse_final_tag(f, USERLIST_T_FACSHORT_EN, p->facshort_en, "    ");
   unparse_final_tag(f, USERLIST_T_HOMEPAGE, p->homepage, "    ");
+  unparse_final_tag(f, USERLIST_T_PHONE, p->phone, "    ");
   unparse_final_tag(f, USERLIST_T_CITY, p->city, "    ");
   unparse_final_tag(f, USERLIST_T_CITY_EN, p->city_en, "    ");
   unparse_final_tag(f, USERLIST_T_COUNTRY, p->country, "    ");
@@ -1600,7 +1552,6 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   }
 
   if (mode != USERLIST_MODE_STAND) {
-    unparse_phones(p->phones, f, "    ");
     unparse_members(p->members, f);
   }
 
