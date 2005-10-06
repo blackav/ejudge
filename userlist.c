@@ -190,6 +190,7 @@ userlist_get_member_field_str(unsigned char *buf, size_t len,
   case USERLIST_NM_OCCUPATION_EN: s = m->occupation_en; break;
   case USERLIST_NM_EMAIL:      s = m->email;      break;
   case USERLIST_NM_HOMEPAGE:   s = m->homepage;   break;
+  case USERLIST_NM_PHONE:      s = m->phone;      break;
   case USERLIST_NM_INST:       s = m->inst;       break;
   case USERLIST_NM_INST_EN:    s = m->inst_en;    break;
   case USERLIST_NM_INSTSHORT:  s = m->instshort;  break;
@@ -246,6 +247,8 @@ userlist_delete_member_field(struct userlist_member *m, int field_id)
     ps = &m->email; goto do_text_field;
   case USERLIST_NM_HOMEPAGE:
     ps = &m->homepage; goto do_text_field;
+  case USERLIST_NM_PHONE:
+    ps = &m->phone; goto do_text_field;
   case USERLIST_NM_INST:
     ps = &m->inst; goto do_text_field;
   case USERLIST_NM_INST_EN:
@@ -326,6 +329,7 @@ userlist_set_member_field_str(struct userlist_member *m, int field_id,
   case USERLIST_NM_OCCUPATION_EN: ps = &m->occupation_en; break;
   case USERLIST_NM_EMAIL:      ps = &m->email;      break;
   case USERLIST_NM_HOMEPAGE:   ps = &m->homepage;   break;
+  case USERLIST_NM_PHONE:      ps = &m->phone;      break;
   case USERLIST_NM_INST:       ps = &m->inst;       break;
   case USERLIST_NM_INST_EN:    ps = &m->inst_en;    break;
   case USERLIST_NM_INSTSHORT:  ps = &m->instshort;  break;
@@ -413,6 +417,7 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
   case USERLIST_NN_FACSHORT: s = u->facshort; break;
   case USERLIST_NN_FACSHORT_EN: s = u->facshort_en; break;
   case USERLIST_NN_HOMEPAGE: s = u->homepage; break;
+  case USERLIST_NN_PHONE: s = u->phone; break;
   case USERLIST_NN_CITY: s = u->city; break;
   case USERLIST_NN_CITY_EN: s = u->city_en; break;
   case USERLIST_NN_COUNTRY: s = u->country; break;
@@ -581,6 +586,8 @@ userlist_set_user_field_str(struct userlist_list *lst,
     sptr = &u->facshort_en; goto do_text_fields;
   case USERLIST_NN_HOMEPAGE:
     sptr = &u->homepage; goto do_text_fields;
+  case USERLIST_NN_PHONE:
+    sptr = &u->phone; goto do_text_fields;
   case USERLIST_NN_CITY:
     sptr = &u->city; goto do_text_fields;
   case USERLIST_NN_CITY_EN:
@@ -688,6 +695,8 @@ userlist_delete_user_field(struct userlist_user *u, int field_id)
     sptr = &u->facshort_en; goto do_string_delete;
   case USERLIST_NN_HOMEPAGE:
     sptr = &u->homepage; goto do_string_delete;
+  case USERLIST_NN_PHONE:
+    sptr = &u->phone; goto do_string_delete;
   case USERLIST_NN_CITY:
     sptr = &u->city; goto do_string_delete;
   case USERLIST_NN_CITY_EN:
