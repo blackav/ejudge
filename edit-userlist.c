@@ -2187,6 +2187,7 @@ struct selected_users_info
   unsigned char *mask;
 };
 static struct selected_users_info sel_users;
+static struct selected_users_info sel_cnts;
 
 static int
 generate_reg_user_item(unsigned char *buf, size_t size, int i,
@@ -2352,7 +2353,7 @@ display_registered_users(unsigned char const *upper,
   while (1) {
     mvwprintw(stdscr, 0, 0, "%s", current_level);
     wclrtoeol(stdscr);
-    print_help("A-add R-register D-delete B-(un)ban I-(in)visible S-sort Enter-edit Q-quit");
+    print_help("Add Register Delete (un)Ban (in)vIsible Sort Enter-edit Quit :-select Toggle 0-clear");
     show_panel(out_pan);
     show_panel(in_pan);
     post_menu(menu);
@@ -2408,6 +2409,12 @@ display_registered_users(unsigned char const *upper,
       case 'c': case 'C': case 'Ó' & 255: case 'ó' & 255:
         c = 'c';
         goto menu_done;
+      case 't': case 'T': case 'Å' & 255: case 'å' & 255:
+        c = 't';
+        goto menu_done;
+      case '0': case ')':
+        c = '0';
+        goto menu_done;
       }
       cmd = -1;
       switch (c) {
@@ -2454,10 +2461,23 @@ display_registered_users(unsigned char const *upper,
       }
       generate_reg_user_item(descs[i], 128, i, uu, uc, sel_users.mask);
       menu_driver(menu, REQ_DOWN_ITEM);
+    } else if (c == '0') {
+      // clear all selection
+      memset(sel_users.mask, 0, sel_users.allocated);
+      sel_users.total_selected = 0;
+      c = 'q';
+      retcode = 0;
+    } else if (c == 't') {
+      // toggle all selection
+      sel_users.total_selected = 0;
+      for (j = 0; j < nuser; j++)
+        sel_users.total_selected += (sel_users.mask[j] ^= 1);
+      c = 'q';
+      retcode = 0;
     } else if (c == 'c') {
       if ((k = display_contests_menu(current_level, 1)) <= 0) continue;
 
-      if (!sel_users.total_selected) {
+      if (!sel_users.total_selected && !sel_cnts.total_selected) {
         // register the current user to the specified contest
         i = item_index(current_item(menu));
         if (okcancel("Register user %d for contest %d?", uu[i]->id, k) != 1)
@@ -2469,7 +2489,7 @@ display_registered_users(unsigned char const *upper,
           vis_err("Registration failed: %s", userlist_strerror(-r));
           continue;
         }
-      } else {
+      } else if (!sel_cnts.total_selected) {
         // register the selected users to the specified contest
         if (okcancel("Register selected users for contest %d?", k) != 1)
           continue;
@@ -2481,6 +2501,43 @@ display_registered_users(unsigned char const *upper,
           if (r < 0) {
             vis_err("Registration failed: %s", userlist_strerror(-r));
             continue;
+          }
+          sel_users.mask[j] = 0;
+          generate_reg_user_item(descs[j], 128, j, uu, uc, sel_users.mask);
+        }
+        memset(sel_users.mask, 0, sel_users.allocated);
+        sel_users.total_selected = 0;
+      } else if (!sel_users.total_selected) {
+        // register the current user to the selected contests
+        i = item_index(current_item(menu));
+        if (okcancel("Register user %d for selected contests?", uu[i]->id) != 1)
+          continue;
+        for (k = 1; k < sel_cnts.allocated; k++) {
+          if (!sel_cnts.mask[k]) continue;
+          r = userlist_clnt_register_contest(server_conn,
+                                             ULS_PRIV_REGISTER_CONTEST,
+                                             uu[i]->id, k);
+          if (r < 0) {
+            vis_err("Registration for contest %d failed: %s", userlist_strerror(-r), k);
+            continue;
+          }
+        }
+      } else {
+        // register the selected users to the selected contests
+        if (okcancel("Register selected users for selected contests?", k) != 1)
+          continue;
+        for (j = 0; j < nuser; j++) {
+          if (!sel_users.mask[j]) continue;
+          for (k = 1; k < sel_cnts.allocated; k++) {
+            if (!sel_cnts.mask[k]) continue;
+            r = userlist_clnt_register_contest(server_conn,
+                                               ULS_PRIV_REGISTER_CONTEST,
+                                               uu[j]->id, k);
+            if (r < 0) {
+              vis_err("Registration of user %d to contest %d failed: %s",
+                      j, k, userlist_strerror(-r));
+              continue;
+            }
           }
           sel_users.mask[j] = 0;
           generate_reg_user_item(descs[j], 128, j, uu, uc, sel_users.mask);
@@ -2767,11 +2824,10 @@ display_contests_menu(unsigned char *upper, int only_choose)
   struct contest_desc *cc;
   unsigned char **descs;
   unsigned char buf[128];
-  int len;
   ITEM **items;
-  MENU *menu;
-  WINDOW *in_win, *out_win;
-  PANEL *out_pan, *in_pan;
+  MENU *menu = 0;
+  WINDOW *in_win = 0, *out_win = 0;
+  PANEL *out_pan = 0, *in_pan = 0;
   int c, cmd;
   unsigned char current_level[512];
   int sel_num, r;
@@ -2779,6 +2835,8 @@ display_contests_menu(unsigned char *upper, int only_choose)
   unsigned char *cnts_set = 0;
   int cnts_set_card;
   int *cntsi;
+  unsigned char **cnts_names = 0;
+  int cur_item = 0, first_row;
 
   snprintf(current_level, sizeof(current_level),
            "%s->%s", upper, "Contest list");
@@ -2786,13 +2844,37 @@ display_contests_menu(unsigned char *upper, int only_choose)
   // request the set of the existing contests
   cnts_set_card = contests_get_list(&cnts_set);
 
-  //fprintf(stderr, ">>%d\n", cnts_set_card);
+  /* update the selected mask array */
+  if (cnts_set_card > sel_cnts.allocated) {
+    size_t new_a = sel_cnts.allocated;
+    unsigned char *new_m;
+
+    if (!new_a) new_a = 64;
+    while (cnts_set_card > new_a) new_a *= 2;
+    new_m = (unsigned char*) xcalloc(new_a, 1);
+    if (sel_cnts.allocated > 0)
+      memcpy(new_m, sel_cnts.mask, sel_cnts.allocated);
+    xfree(sel_cnts.mask);
+    sel_cnts.allocated = new_a;
+    sel_cnts.mask = new_m;
+  }
+
+  sel_cnts.total_selected = 0;
+  if (sel_cnts.allocated > 0)
+    memset(sel_cnts.mask, 0, sel_cnts.allocated);
 
   // count the total contests
   for (i = 1; i < cnts_set_card; i++) {
     if (cnts_set[i]) ncnts++;
   }
   if (!ncnts) return -1;
+
+  XALLOCAZ(cnts_names, cnts_set_card);
+  for (i = 1; i < cnts_set_card; i++) {
+    if (contests_get(i, &cc) >= 0) {
+      cnts_names[i] = xstrdup(cc->name);
+    }
+  }
 
   cntsi = alloca(ncnts * sizeof(cntsi[0]));
   memset(cntsi, 0, sizeof(cntsi[0]) * ncnts);
@@ -2801,20 +2883,33 @@ display_contests_menu(unsigned char *upper, int only_choose)
   }
   ASSERT(j == ncnts);
 
-  descs = alloca(ncnts * sizeof(descs[0]));
-  memset(descs, 0, sizeof(descs[0]) * ncnts);
+  XALLOCAZ(descs, ncnts);
+  XALLOCAZ(items, ncnts);
+
+ restart_menu:
+
   for (i = 0; i < ncnts; i++) {
-    if (contests_get(cntsi[i], &cc) >= 0) {
-      len = snprintf(buf, sizeof(buf), "%-8d  %-67.67s", cc->id, cc->name);
+    j = cntsi[i];
+    if (cnts_names[j]) {
+      snprintf(buf, sizeof(buf), "%c%-8d  %-66.66s",
+               sel_cnts.mask[j]?'!':' ', j, cnts_names[j]);
     } else {
-      len = snprintf(buf, sizeof(buf), "%-8d  (removed)", cntsi[i]);
+      snprintf(buf, sizeof(buf), "%c%-8d  (removed)", sel_cnts.mask[j]?'!':' ', j);
     }
-    descs[i] = alloca(len + 16);
-    strcpy(descs[i], buf);
+    xfree(descs[i]);
+    descs[i] = xstrdup(buf);
   }
 
-  items = alloca((ncnts + 1) * sizeof(items[0]));
-  memset(items, 0, sizeof(items[0]) * (ncnts + 1));
+  // free menus from the previous iteration
+  if (in_pan) del_panel(in_pan);
+  if (out_pan) del_panel(out_pan);
+  if (menu) free_menu(menu);
+  if (out_win) delwin(out_win);
+  if (in_win) delwin(in_win);
+  for (i = 0; i < ncnts; i++) {
+    if (items[i]) free_item(items[i]);
+  }
+
   for (i = 0; i < ncnts; i++) {
     items[i] = new_item(descs[i], 0);
   }
@@ -2835,10 +2930,18 @@ display_contests_menu(unsigned char *upper, int only_choose)
   set_menu_win(menu, in_win);
   set_menu_format(menu, LINES - 4, 0);
 
+  if (cur_item < 0) cur_item = 0;
+  if (cur_item >= ncnts) cur_item = ncnts - 1;
+  first_row = cur_item - (LINES - 4) / 2;
+  if (first_row + LINES - 4 > ncnts) first_row = ncnts - (LINES - 4);
+  if (first_row < 0) first_row = 0;
+  set_top_row(menu, first_row);
+  set_current_item(menu, items[cur_item]);
+
   while (1) {
     mvwprintw(stdscr, 0, 0, "%s", current_level);
     wclrtoeol(stdscr);
-    print_help("Enter-view Q-quit");
+    print_help("Enter-view Q-quit :-select T-toggle 0-clear");
     show_panel(out_pan);
     show_panel(in_pan);
     post_menu(menu);
@@ -2854,6 +2957,15 @@ display_contests_menu(unsigned char *upper, int only_choose)
         goto menu_done;
       case '\n': case '\r': case ' ':
         c = '\n';
+        goto menu_done;
+      case ':': case ';': case 'Ö' & 255: case 'ö' & 255:
+        c = ':';
+        goto menu_done;
+      case 't': case 'T': case 'Å' & 255: case 'å' & 255:
+        c = 't';
+        goto menu_done;
+      case '0': case ')':
+        c = '0';
         goto menu_done;
       }
       cmd = -1;
@@ -2896,6 +3008,37 @@ display_contests_menu(unsigned char *upper, int only_choose)
     update_panels();
     doupdate();
 
+    if (c == ':') {
+      cur_item = i = item_index(current_item(menu));
+      if (i >= 0 && i < ncnts) {
+        j = cntsi[i];
+        if (cnts_names[j]) {
+          if (sel_cnts.mask[j]) {
+            sel_cnts.mask[j] = 0;
+            sel_cnts.total_selected--;
+          } else {
+            sel_cnts.mask[j] = 1;
+            sel_cnts.total_selected++;
+          }
+        }
+      }
+      if (cur_item < ncnts - 1) cur_item++;
+      goto restart_menu;
+    }
+    if (c == 't') {
+      cur_item = item_index(current_item(menu));
+      sel_cnts.total_selected = 0;
+      for (i = 1; i < cnts_set_card; i++)
+        sel_cnts.total_selected += (sel_cnts.mask[i] ^= 1);
+      goto restart_menu;
+    }
+    if (c == '0') {
+      cur_item = item_index(current_item(menu));
+      memset(sel_cnts.mask, 0, sel_cnts.allocated);
+      sel_cnts.total_selected = 0;
+      goto restart_menu;
+    }
+
     if (c == 'q') break;
     if (c == '\n' && only_choose) {
       sel_num = item_index(current_item(menu));
@@ -2922,6 +3065,10 @@ display_contests_menu(unsigned char *upper, int only_choose)
   for (i = 0; i < ncnts; i++) {
     free_item(items[i]);
   }
+  for (i = 0; i < ncnts; i++)
+    xfree(descs[i]);
+  for (i = 1; i < cnts_set_card; i++)
+    xfree(cnts_names[i]);
   return retval;
 }
 
@@ -3006,9 +3153,11 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
     xfree(g_sel_users.mask);
     g_sel_users.mask = new_ptr;
   }
+  /*
   g_sel_users.total_selected = 0;
   if (g_sel_users.allocated > 0)
-    memset(g_sel_users.mask, 0, g_sel_users.mask[0] * g_sel_users.allocated);
+    memset(g_sel_users.mask, 0, g_sel_users.allocated);
+  */
 
   if (registered_users_sort_flag > 0) {
     qsort(uu, nusers, sizeof(uu[0]), registered_users_sort_func);
@@ -3062,7 +3211,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
   while (1) {
     mvwprintw(stdscr, 0, 0, "%s", current_level);
     wclrtoeol(stdscr);
-    print_help("Enter-view A-add D-delete Q-quit");
+    print_help("Enter-view Add Delete Quit Sort Jump sEarch Mass Contest :-Sel Toggle 0-clear");
     show_panel(out_pan);
     show_panel(in_pan);
     post_menu(menu);
@@ -3104,6 +3253,12 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
 	goto menu_done;
       case 'c': case 'C': case 'Ó' & 255: case 'ó' & 255:
         c = 'c';
+        goto menu_done;
+      case 't': case 'T': case 'Å' & 256: case 'å' & 255:
+        c = 't';
+        goto menu_done;
+      case '0': case ')':
+        c = '0';
         goto menu_done;
       }
       cmd = -1;
@@ -3317,10 +3472,25 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
       menu_driver(menu, REQ_DOWN_ITEM);
       goto menu_continue;
     }
+    if (c == 't') {
+      g_sel_users.total_selected = 0;
+      for (j = 0; j < nusers; j++)
+        g_sel_users.total_selected += (g_sel_users.mask[j] ^= 1);
+      retval = -2;
+      c = 'q';
+      *p_start_item = uu[item_index(current_item(menu))]->id;
+    }
+    if (c == '0') {
+      memset(g_sel_users.mask, 0, g_sel_users.allocated);
+      g_sel_users.total_selected = 0;
+      retval = -2;
+      c = 'q';
+      *p_start_item = uu[item_index(current_item(menu))]->id;
+    }
     if (c == 'c') {
       if ((k = display_contests_menu(current_level, 1)) <= 0) continue;
 
-      if (!g_sel_users.total_selected) {
+      if (!g_sel_users.total_selected && !sel_cnts.total_selected) {
         // register the current user to the specified contest
         i = item_index(current_item(menu));
         if (okcancel("Register user %d for contest %d?", uu[i]->id, k) != 1)
@@ -3332,7 +3502,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
           vis_err("Registration failed: %s", userlist_strerror(-r));
           goto menu_continue;
         }
-      } else {
+      } else if (!sel_cnts.total_selected) {
         // register the selected users to the specified contest
         if (okcancel("Register selected users for contest %d?", k) != 1)
           goto menu_continue;
@@ -3344,6 +3514,46 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
           if (r < 0) {
             vis_err("Registration failed: %s", userlist_strerror(-r));
             goto menu_continue;
+          }
+          g_sel_users.mask[j] = 0;
+          len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-50.50s",
+                         g_sel_users.mask[j]?"!":" ",
+                         uu[j]->id, uu[j]->login, uu[j]->name);
+          strcpy(descs[j], buf);
+        }
+        memset(g_sel_users.mask, 0, g_sel_users.allocated);
+        g_sel_users.total_selected = 0;
+      } else if (!g_sel_users.total_selected) {
+        // register the current user to the selected contests 
+        i = item_index(current_item(menu));
+        if (okcancel("Register user %d for selected contests?", uu[i]->id) != 1)
+          goto menu_continue;
+        for (j = 1; j < sel_cnts.allocated; j++) {
+          if (!sel_cnts.mask[j]) continue;
+          r = userlist_clnt_register_contest(server_conn,
+                                             ULS_PRIV_REGISTER_CONTEST,
+                                             uu[i]->id, j);
+          if (r < 0) {
+            vis_err("Registration for contest %d failed: %s", j, userlist_strerror(-r));
+            goto menu_continue;
+          }
+        }
+      } else {
+        // register the selected users to the selected contests
+        if (okcancel("Register selected users for selected contests?") != 1)
+          goto menu_continue;
+        for (j = 0; j < nusers; j++) {
+          if (!g_sel_users.mask[j]) continue;
+          for (k = 1; k < sel_cnts.allocated; k++) {
+            if (!sel_cnts.mask[k]) continue;
+            r = userlist_clnt_register_contest(server_conn,
+                                               ULS_PRIV_REGISTER_CONTEST,
+                                               uu[j]->id, k);
+            if (r < 0) {
+              vis_err("Registration of user %d to contest %d failed: %s",
+                      uu[j]->id, k, userlist_strerror(-r));
+              goto menu_continue;
+            }
           }
           g_sel_users.mask[j] = 0;
           len = snprintf(buf, sizeof(buf), "%s%6d  %-16.16s  %-50.50s",
