@@ -82,6 +82,10 @@ super_html_clear_variable(struct sid_state *sstate, int cmd)
   case SSERV_CMD_CNTS_CLEAR_USERS_PAR_STYLE: p_str = &cnts->users_par_style; break;
   case SSERV_CMD_CNTS_CLEAR_USERS_TABLE_STYLE: p_str = &cnts->users_table_style; break;
   case SSERV_CMD_CNTS_CLEAR_USERS_VERB_STYLE: p_str = &cnts->users_verb_style; break;
+  case SSERV_CMD_CNTS_CLEAR_USERS_TABLE_FORMAT: p_str = &cnts->users_table_format; break;
+  case SSERV_CMD_CNTS_CLEAR_USERS_TABLE_FORMAT_EN: p_str = &cnts->users_table_format_en; break;
+  case SSERV_CMD_CNTS_CLEAR_USERS_TABLE_LEGEND: p_str = &cnts->users_table_legend; break;
+  case SSERV_CMD_CNTS_CLEAR_USERS_TABLE_LEGEND_EN: p_str = &cnts->users_table_legend_en; break;
   case SSERV_CMD_CNTS_CLEAR_REGISTER_HEAD_STYLE: p_str=&cnts->register_head_style;break;
   case SSERV_CMD_CNTS_CLEAR_REGISTER_PAR_STYLE: p_str = &cnts->register_par_style; break;
   case SSERV_CMD_CNTS_CLEAR_REGISTER_TABLE_STYLE: p_str = &cnts->register_table_style; break;
@@ -326,6 +330,18 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     break;
   case SSERV_CMD_CNTS_CHANGE_USERS_VERB_STYLE:
     p_str = &cnts->users_verb_style;
+    break;
+  case SSERV_CMD_CNTS_CHANGE_USERS_TABLE_FORMAT:
+    p_str = &cnts->users_table_format;
+    break;
+  case SSERV_CMD_CNTS_CHANGE_USERS_TABLE_FORMAT_EN:
+    p_str = &cnts->users_table_format_en;
+    break;
+  case SSERV_CMD_CNTS_CHANGE_USERS_TABLE_LEGEND:
+    p_str = &cnts->users_table_legend;
+    break;
+  case SSERV_CMD_CNTS_CHANGE_USERS_TABLE_LEGEND_EN:
+    p_str = &cnts->users_table_legend_en;
     break;
   case SSERV_CMD_CNTS_CHANGE_REGISTER_HEAD_STYLE:
     p_str = &cnts->register_head_style;
