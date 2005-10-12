@@ -178,6 +178,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(stand_header_file, "s"),
   GLOBAL_PARAM(stand_footer_file, "s"),
   GLOBAL_PARAM(stand_symlink_dir, "s"),
+  GLOBAL_PARAM(users_on_page, "d"),
   GLOBAL_PARAM(stand2_file_name, "s"),
   GLOBAL_PARAM(stand2_header_file, "s"),
   GLOBAL_PARAM(stand2_footer_file, "s"),
@@ -1337,6 +1338,32 @@ parse_score_bonus(const unsigned char *str, int *p_total, int **p_values)
   return -1;
 }
 
+static void
+make_stand_file_name_2(void)
+{
+  path_t b1, b2;
+  unsigned char *s = global->standings_file_name;
+  int i;
+
+  if (global->users_on_page <= 0) return;
+  i = strlen(s);
+  ASSERT(i > 0);
+
+  snprintf(b1, sizeof(b1), s, 1);
+  snprintf(b2, sizeof(b2), s, 2);
+  if (strcmp(b1, b2) != 0) {
+    snprintf(global->stand_file_name_2, sizeof(global->stand_file_name_2),
+             "%s", s);
+    return;
+  }
+
+  i--;
+  while (i >= 0 && s[i] != '.' && s[i] != '/') i--;
+  if (i < 0 || s[i] == '/') i++;
+  snprintf(global->stand_file_name_2, sizeof(global->stand_file_name_2),
+           "%.*s%s%s", i, s, "%d", s + i);
+}
+
 static int
 set_defaults(int mode)
 {
@@ -1757,8 +1784,8 @@ set_defaults(int mode)
     if (!global->standings_file_name[0]) {
       snprintf(global->standings_file_name,sizeof(global->standings_file_name),
                "%s", DFLT_G_STANDINGS_FILE_NAME);
-      info("global.standings_file_name set to %s", global->standings_file_name);
     }
+    make_stand_file_name_2();
 
     if (global->contest_start_cmd[0]) {
       pathmake2(global->contest_start_cmd, global->conf_dir, "/",
@@ -3467,9 +3494,10 @@ prepare_set_global_defaults(struct section_global_data *g)
     g->rounding_mode_val = SEC_CEIL;
   }
 
-  if (!g->standings_file_name[0])
+  if (!g->standings_file_name[0]) {
     snprintf(g->standings_file_name, sizeof(g->standings_file_name),
              "%s", DFLT_G_STANDINGS_FILE_NAME);
+  }
 
   if (g->enable_l10n < 0) g->enable_l10n = 1; /* ??? */
   if (g->team_download_time < 0) g->team_download_time = DFLT_G_TEAM_DOWNLOAD_TIME;
