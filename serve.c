@@ -293,10 +293,11 @@ update_standings_file(int force_flag)
   if (global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
     accepting_mode = 1;
   write_standings(global->status_dir, global->standings_file_name,
+                  global->users_on_page,
                   global->stand_header_txt, global->stand_footer_txt,
                   accepting_mode);
   if (global->stand2_file_name[0]) {
-    write_standings(global->status_dir, global->stand2_file_name,
+    write_standings(global->status_dir, global->stand2_file_name, 0,
                     global->stand2_header_txt, global->stand2_footer_txt,
                     accepting_mode);
   }
@@ -5404,21 +5405,52 @@ create_symlinks(void)
 {
   unsigned char src_path[PATH_MAX];
   unsigned char dst_path[PATH_MAX];
+  path_t stand_file;
+  int npages, pgn;
 
   if (global->stand_symlink_dir[0] && global->htdocs_dir[0]) {
-    snprintf(src_path, sizeof(src_path), "%s/dir/%s",
-             global->status_dir, global->standings_file_name);
-    snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
-             global->htdocs_dir, global->stand_symlink_dir,
-             global->standings_file_name);
-    os_normalize_path(dst_path);
-    if (unlink(dst_path) < 0 && errno != ENOENT) {
-      err("unlink %s failed: %s", dst_path, os_ErrorMsg());
-      return -1;
-    }
-    if (symlink(src_path, dst_path) < 0) {
-      err("symlink %s->%s failed: %s", dst_path, src_path, os_ErrorMsg());
-      return -1;
+    if (global->users_on_page > 0) {
+      // FIXME: check, that standings_file_name depends on page number
+      npages = (teamdb_get_total_teams() + global->users_on_page - 1)
+        / global->users_on_page;
+      for (pgn = 0; pgn < npages; pgn++) {
+        if (!pgn) {
+          snprintf(stand_file, sizeof(stand_file), global->standings_file_name,
+                   pgn + 1);
+        } else {
+          snprintf(stand_file, sizeof(stand_file), global->stand_file_name_2,
+                   pgn + 1);
+        }
+        snprintf(src_path, sizeof(src_path), "%s/dir/%s",
+                 global->status_dir, stand_file);
+        snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
+                 global->htdocs_dir, global->stand_symlink_dir,
+                 stand_file);
+        os_normalize_path(dst_path);
+        if (unlink(dst_path) < 0 && errno != ENOENT) {
+          err("unlink %s failed: %s", dst_path, os_ErrorMsg());
+          return -1;
+        }
+        if (symlink(src_path, dst_path) < 0) {
+          err("symlink %s->%s failed: %s", dst_path, src_path, os_ErrorMsg());
+          return -1;
+        }
+      }
+    } else {
+      snprintf(src_path, sizeof(src_path), "%s/dir/%s",
+               global->status_dir, global->standings_file_name);
+      snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
+               global->htdocs_dir, global->stand_symlink_dir,
+               global->standings_file_name);
+      os_normalize_path(dst_path);
+      if (unlink(dst_path) < 0 && errno != ENOENT) {
+        err("unlink %s failed: %s", dst_path, os_ErrorMsg());
+        return -1;
+      }
+      if (symlink(src_path, dst_path) < 0) {
+        err("symlink %s->%s failed: %s", dst_path, src_path, os_ErrorMsg());
+        return -1;
+      }
     }
   }
   if (global->stand2_symlink_dir[0] && global->htdocs_dir[0]
@@ -5560,6 +5592,9 @@ do_loop(void)
   signal(SIGINT, interrupt_signal);
   signal(SIGTERM, interrupt_signal);
   if (create_socket() < 0) return -1;
+
+  // we need the number of users to create correct the number of symlinks
+  teamdb_refresh();
   if (create_symlinks() < 0) return -1;
 
   current_time = time(0);
