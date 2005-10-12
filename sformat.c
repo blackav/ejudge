@@ -68,6 +68,53 @@
  *   Ul - login
  *   Uz - password (in plain text)
  *   UZ - team password (in plain text)
+ *   Uc - city
+ *   UC - city_en
+ *   Uo - country
+ *   UO - country_en
+ *   Ut - inst_short
+ *   UT - inst_short_en
+ *   Uu - inst
+ *   UU - inst_en
+ *   Uf - fac_short
+ *   UF - fac_short_en
+ *   Ud - fac
+ *   UD - fac_en
+ *   UL - location
+ *   Up - printer_name
+ *   Uh - homepage
+ *   UH - phones
+ *   UP - languages
+ *   UMp - participant
+ *   UMr - reserve
+ *   UMa - advisor
+ *   UMc - coach
+ *   UMg - guest
+ *     f - firstname
+ *     F - firstname_en
+ *     m - middlename
+ *     M - middlename_en
+ *     s - surname
+ *     S - surname_en
+ *     g - group
+ *     G - group_en
+ *     e - email
+ *     h - homepage
+ *     o - occupation
+ *     O - occupation_en
+ *     u - inst
+ *     U - inst_en
+ *     t - inst_short
+ *     T - inst_short_en
+ *     d - fac
+ *     D - fac_en
+ *     a - facshort
+ *     A - facshort_en
+ *     H - phone
+ *     b - status
+ *     B - status_en
+ *     c - grade
+ *     C - number
  *  C - contest data
  *  V - variable data
  *   Vl - locale_id
@@ -351,6 +398,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
          *   M1 - extra1
          */
         pf++;
+
         switch (*pf) {
         case 'i': case 'n': case 'l':
         case 'c': case 'C':
@@ -470,11 +518,151 @@ sformat_message(char *buf, size_t maxsize, char const *format,
          *   Ue - email
          *   Uz - password (in plain text)
          *   UZ - team password (in plain text)
+         *   UM - information about team members (see below)
+         *   Uc - city
+         *   UC - city_en
+         *   Uo - country
+         *   UO - country_en
+         *   Ut - inst_short
+         *   UT - inst_short_en
+         *   Uu - inst
+         *   UU - inst_en
+         *   Uf - fac_short
+         *   UF - fac_short_en
+         *   Ud - fac
+         *   UD - fac_en
+         *   UL - location
+         *   Up - printer_name
+         *   Uh - homepage
+         *   UH - phones
+         *   UP - languages
          */
         pf++;
+
+        if (*pf == 'M') {
+          struct userlist_members *pm = 0;
+          struct userlist_member *pp = 0;
+          int idx = -1, n, nmemb;
+          /*
+           * UMp - participant
+           * UMr - reserve
+           * UMa - advisor
+           * UMc - coach
+           * UMg - guest
+           */
+          pf++;
+          switch (*pf) {
+          case 'p': idx = USERLIST_MB_CONTESTANT; break;
+          case 'r': idx = USERLIST_MB_RESERVE; break;
+          case 'a': idx = USERLIST_MB_ADVISOR; break;
+          case 'c': idx = USERLIST_MB_COACH; break;
+          case 'g': idx = USERLIST_MB_GUEST; break;
+          default:
+            is_invalid = 1;
+            break;
+          }
+          if (is_invalid) break;
+          pf++;
+          if (sscanf(pf, "%d%n", &nmemb, &n) != 1) {
+            is_invalid = 1;
+            break;
+          }
+          nmemb--;
+          pf += n;
+          /*
+           * f - firstname
+           * F - firstname_en
+           * m - middlename
+           * M - middlename_en
+           * s - surname
+           * S - surname_en
+           * g - group
+           * G - group_en
+           * e - email
+           * h - homepage
+           * o - occupation
+           * O - occupation_en
+           * u - inst
+           * U - inst_en
+           * t - inst_short
+           * T - inst_short_en
+           * d - fac
+           * D - fac_en
+           * a - facshort
+           * A - facshort_en
+           * H - phone
+           * b - status
+           * B - status_en
+           * c - grade
+           * C - number
+           */
+          switch (*pf) {
+          case 'f': case 'F': case 'm': case 'M': case 's': case 'S':
+          case 'g': case 'G': case 'e': case 'h': case 'H':
+          case 'o': case 'O': case 'u': case 'U': case 't': case 'T':
+          case 'd': case 'D': case 'a': case 'A': case 'b': case 'B':
+            break;
+          default:
+            is_invalid = 1;
+            break;
+          }
+          if (is_invalid) break;
+          pf++;
+
+          if (!user_data || !(pm = user_data->members[idx])) {
+            papp = "";
+            break;
+          }
+          if (nmemb < 0 || nmemb >= pm->total || !(pp = pm->members[nmemb])) {
+            papp = "";
+            break;
+          }
+
+          switch (pf[-1]) {
+          case 'f': papp = pp->firstname; break;
+          case 'F': papp = pp->firstname_en; break;
+          case 'm': papp = pp->middlename; break;
+          case 'M': papp = pp->middlename_en; break;
+          case 's': papp = pp->surname; break;
+          case 'S': papp = pp->surname_en; break;
+          case 'g': papp = pp->group; break;
+          case 'G': papp = pp->group_en; break;
+          case 'e': papp = pp->email; break;
+          case 'h': papp = pp->homepage; break;
+          case 'H': papp = pp->phone; break;
+          case 'o': papp = pp->occupation; break;
+          case 'O': papp = pp->occupation_en; break;
+          case 'u': papp = pp->inst; break;
+          case 'U': papp = pp->inst_en; break;
+          case 't': papp = pp->instshort; break;
+          case 'T': papp = pp->instshort_en; break;
+          case 'd': papp = pp->fac; break;
+          case 'D': papp = pp->fac_en; break;
+          case 'a': papp = pp->facshort; break;
+          case 'A': papp = pp->facshort_en; break;
+          case 'b': /* FIXME: implement */ break;
+          case 'B': /* FIXME: implement */ break;
+          case 'c':
+            need_int_format = 1;
+            int_format_value = pp->grade;
+            break;
+          case 'C':
+            need_int_format = 1;
+            int_format_value = nmemb;
+            break;
+          default:
+            abort();
+          }
+          if (!need_int_format && !papp) papp = "";
+          break;
+        }
+
         switch (*pf) {
         case 'i': case 'n': case 'l': case 'e':
         case 'z': case 'Z':
+        case 'c': case 'C': case 'o': case 'O': case 't': case 'T':
+        case 'u': case 'U': case 'f': case 'F': case 'd': case 'D':
+        case 'L': case 'p': case 'h': case 'H': case 'P':
           break;
         case 0:
           is_invalid = 1;
@@ -484,40 +672,57 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           pf++;
           break;
         }
-        if (!is_invalid && !user_data) is_invalid = 1;
-        if (!is_invalid) {
-          switch (*pf) {
-          case 'i':
-            need_int_format = 1;
-            int_format_value = user_data->id;
-            break;
-          case 'n':
-            papp = user_data->name;
-            if (!papp) papp = "";
-            break;
-          case 'l':
-            papp = user_data->login;
-            if (!papp) papp = "";
-            break;
-          case 'e':
-            papp = user_data->email;
-            if (!papp) papp = "";
-            break;
-          case 'z':
-            if (user_data->register_passwd)
-              papp = user_data->register_passwd->b.text;
-            if (!papp) papp = "";
-            break;
-          case 'Z':
-            if (user_data->team_passwd)
-              papp = user_data->team_passwd->b.text;
-            if (!papp) papp = "";
-            break;
-          default:
-            abort();
-          }
-          pf++;
+        if (!user_data) is_invalid = 1;
+        if (is_invalid) break;
+        switch (*pf) {
+        case 'i':
+          need_int_format = 1;
+          int_format_value = user_data->id;
+          break;
+        case 'n':
+          papp = user_data->name;
+          if (!papp) papp = "";
+          break;
+        case 'l':
+          papp = user_data->login;
+          if (!papp) papp = "";
+          break;
+        case 'e':
+          papp = user_data->email;
+          if (!papp) papp = "";
+          break;
+        case 'z':
+          if (user_data->register_passwd)
+            papp = user_data->register_passwd->b.text;
+          if (!papp) papp = "";
+          break;
+        case 'Z':
+          if (user_data->team_passwd)
+            papp = user_data->team_passwd->b.text;
+          if (!papp) papp = "";
+          break;
+        case 'c': papp = user_data->city; break;
+        case 'C': papp = user_data->city_en; break;
+        case 'o': papp = user_data->country; break;
+        case 'O': papp = user_data->country_en; break;
+        case 't': papp = user_data->instshort; break;
+        case 'T': papp = user_data->instshort_en; break;
+        case 'u': papp = user_data->inst; break;
+        case 'U': papp = user_data->inst_en; break;
+        case 'f': papp = user_data->facshort; break;
+        case 'F': papp = user_data->facshort_en; break;
+        case 'd': papp = user_data->fac; break;
+        case 'D': papp = user_data->fac_en; break;
+        case 'L': papp = user_data->location; break;
+        case 'p': papp = user_data->printer_name; break;
+        case 'h': papp = user_data->homepage; break;
+        case 'H': papp = user_data->phone; break;
+        case 'P': papp = user_data->languages; break;
+        default:
+          abort();
         }
+        pf++;
+        if (!int_format_value && !papp) papp = "";
         break;
       case 'C':
         pf++;
