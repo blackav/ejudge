@@ -65,6 +65,10 @@ enum
     CONTEST_USERS_PAR_STYLE,
     CONTEST_USERS_TABLE_STYLE,
     CONTEST_USERS_VERB_STYLE,
+    CONTEST_USERS_TABLE_FORMAT,
+    CONTEST_USERS_TABLE_FORMAT_EN,
+    CONTEST_USERS_TABLE_LEGEND,
+    CONTEST_USERS_TABLE_LEGEND_EN,
     CONTEST_REGISTER_HEAD_STYLE,
     CONTEST_REGISTER_PAR_STYLE,
     CONTEST_REGISTER_TABLE_STYLE,
@@ -239,6 +243,10 @@ struct contest_desc
   unsigned char *users_par_style;
   unsigned char *users_table_style;
   unsigned char *users_verb_style;
+  unsigned char *users_table_format;
+  unsigned char *users_table_format_en;
+  unsigned char *users_table_legend;
+  unsigned char *users_table_legend_en;
   unsigned char *register_head_style;
   unsigned char *register_par_style;
   unsigned char *register_table_style;
