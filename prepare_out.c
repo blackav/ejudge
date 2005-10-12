@@ -280,6 +280,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
       strcmp(global->standings_file_name, DFLT_G_STANDINGS_FILE_NAME))
     fprintf(f, "standings_file_name = \"%s\"\n",
             c_armor(&sbuf, global->standings_file_name));
+  if (global->users_on_page > 0)
+    fprintf(f, "users_on_page = %d\n", global->users_on_page);
   if (global->stand_header_file[0])
     fprintf(f, "stand_header_file = \"%s\"\n",
             c_armor(&sbuf, global->stand_header_file));
