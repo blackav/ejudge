@@ -238,6 +238,8 @@ struct section_global_data
   path_t stand_header_file;     /* file to use as standings header */
   path_t stand_footer_file;     /* file to use as standings footer */
   path_t stand_symlink_dir;
+  int    users_on_page;         /* number of users on page */
+  puc_t stand_file_name_2[64];
 
   puc_t stand_extra_format[32]; /* extra standings info */
   puc_t stand_extra_legend[64]; /* extra standings info legend */
