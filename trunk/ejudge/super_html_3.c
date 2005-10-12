@@ -338,6 +338,7 @@ Standings files and URLs:
   GLOBAL_PARAM(team_info_url, "s"),
   GLOBAL_PARAM(prob_info_url, "s"),
   GLOBAL_PARAM(standings_file_name, "s"),
+  GLOBAL_PARAM(users_on_page, "d"),
   GLOBAL_PARAM(stand_header_file, "s"),
   GLOBAL_PARAM(stand_footer_file, "s"),
   GLOBAL_PARAM(stand_symlink_dir, "s"),
@@ -893,6 +894,20 @@ super_html_edit_global_parameters(FILE *f,
                              global->standings_file_name,
                              SUPER_ACTION_GLOB_CHANGE_STAND_FILE_NAME,
                              SUPER_ACTION_GLOB_CLEAR_STAND_FILE_NAME,
+                             0,
+                             session_id,
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+
+    //GLOBAL_PARAM(users_on_page, "d"),
+    hbuf[0] = 0;
+    if (global->users_on_page > 0)
+      snprintf(hbuf, sizeof(hbuf), "%d", global->users_on_page);
+    print_string_editing_row(f, "Number of users on standings page:",
+                             hbuf,
+                             SUPER_ACTION_GLOB_CHANGE_USERS_ON_PAGE,
+                             0,
                              0,
                              session_id,
                              self_url,
@@ -1787,6 +1802,13 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CLEAR_STAND_FILE_NAME:
     GLOB_CLEAR_STRING(standings_file_name);
+
+  case SSERV_CMD_GLOB_CHANGE_USERS_ON_PAGE:
+    if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n])
+      return -SSERV_ERR_INVALID_PARAMETER;
+    if (val <= 0) val = 0;
+    global->users_on_page = val;
+    return 0;
 
   case SSERV_CMD_GLOB_CHANGE_STAND_HEADER_FILE:
     GLOB_SET_STRING(stand_header_file);
