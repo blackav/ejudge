@@ -82,6 +82,10 @@ static char const * const tag_map[] =
   "users_par_style",
   "users_table_style",
   "users_verb_style",
+  "users_table_format",
+  "users_table_format_en",
+  "users_table_legend",
+  "users_table_legend_en",
   "register_head_style",
   "register_par_style",
   "register_table_style",
@@ -162,6 +166,10 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   0,                            /* USERS_PAR_STYLE */
   0,                            /* USERS_TABLE_STYLE */
   0,                            /* USERS_VERB_STYLE */
+  0,                            /* USERS_TABLE_FORMAT */
+  0,                            /* USERS_TABLE_FORMAT_EN */
+  0,                            /* USERS_TABLE_LEGEND */
+  0,                            /* USERS_TABLE_LEGEND_EN */
   0,                            /* REGISTER_HEAD_STYLE */
   0,                            /* REGISTER_PAR_STYLE */
   0,                            /* REGISTER_TABLE_STYLE */
@@ -231,6 +239,10 @@ node_free(struct xml_tree *t)
       xfree(cnts->users_par_style);
       xfree(cnts->users_table_style);
       xfree(cnts->users_verb_style);
+      xfree(cnts->users_table_format);
+      xfree(cnts->users_table_format_en);
+      xfree(cnts->users_table_legend);
+      xfree(cnts->users_table_legend_en);
       xfree(cnts->register_head_style);
       xfree(cnts->register_par_style);
       xfree(cnts->register_table_style);
@@ -821,6 +833,18 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
       break;
     case CONTEST_USERS_VERB_STYLE:
       if (handle_final_tag(path, t, &cnts->users_verb_style) < 0) return -1;
+      break;
+    case CONTEST_USERS_TABLE_FORMAT:
+      if (handle_final_tag(path, t, &cnts->users_table_format) < 0) return -1;
+      break;
+    case CONTEST_USERS_TABLE_FORMAT_EN:
+      if (handle_final_tag(path, t, &cnts->users_table_format_en) < 0)return -1;
+      break;
+    case CONTEST_USERS_TABLE_LEGEND:
+      if (handle_final_tag(path, t, &cnts->users_table_legend) < 0) return -1;
+      break;
+    case CONTEST_USERS_TABLE_LEGEND_EN:
+      if (handle_final_tag(path, t, &cnts->users_table_legend_en) < 0)return -1;
       break;
     case CONTEST_REGISTER_HEAD_STYLE:
       if (handle_final_tag(path, t, &cnts->register_head_style) < 0) return -1;
@@ -1648,6 +1672,10 @@ contests_unparse(FILE *f,
   unparse_text(f, CONTEST_USERS_PAR_STYLE, cnts->users_par_style);
   unparse_text(f, CONTEST_USERS_TABLE_STYLE, cnts->users_table_style);
   unparse_text(f, CONTEST_USERS_VERB_STYLE, cnts->users_verb_style);
+  unparse_text(f, CONTEST_USERS_TABLE_FORMAT, cnts->users_table_format);
+  unparse_text(f, CONTEST_USERS_TABLE_FORMAT_EN, cnts->users_table_format_en);
+  unparse_text(f, CONTEST_USERS_TABLE_LEGEND, cnts->users_table_legend);
+  unparse_text(f, CONTEST_USERS_TABLE_LEGEND_EN, cnts->users_table_legend_en);
   unparse_text(f, CONTEST_REGISTER_HEAD_STYLE, cnts->register_head_style);
   unparse_text(f, CONTEST_REGISTER_PAR_STYLE, cnts->register_par_style);
   unparse_text(f, CONTEST_REGISTER_TABLE_STYLE, cnts->register_table_style);
