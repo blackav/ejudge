@@ -1234,9 +1234,9 @@ write_priv_standings(FILE *f, unsigned long long sid,
 
   if (global->score_system_val == SCORE_KIROV
       || global->score_system_val == SCORE_OLYMPIAD)
-    do_write_kirov_standings(f, 1, 0, 0, accepting_mode);
+    do_write_kirov_standings(f, 0, 1, 0, 0, 0, accepting_mode);
   else
-    do_write_standings(f, 1, 0, 0, 0);
+    do_write_standings(f, 1, 0, 0, 0, 0, 0);
 
   print_nav_buttons(f, 0, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), _("Refresh"), 0, 0, 0, 0, 0);
@@ -2850,9 +2850,9 @@ write_raw_standings(FILE *f, unsigned char const *charset)
 {
   if (global->score_system_val == SCORE_KIROV
       || global->score_system_val == SCORE_OLYMPIAD)
-    do_write_kirov_standings(f, 1, 0, 1, 0);
+    do_write_kirov_standings(f, 0, 1, 0, 0, 1, 0);
   else
-    do_write_standings(f, 1, 0, 0, 1);
+    do_write_standings(f, 1, 0, 0, 0, 1, 0);
 }
 
 int
