@@ -2695,6 +2695,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_GLOB_CLEAR_PROB_INFO_URL:
   case SSERV_CMD_GLOB_CHANGE_STAND_FILE_NAME:
   case SSERV_CMD_GLOB_CLEAR_STAND_FILE_NAME:
+  case SSERV_CMD_GLOB_CHANGE_USERS_ON_PAGE:
   case SSERV_CMD_GLOB_CHANGE_STAND_HEADER_FILE:
   case SSERV_CMD_GLOB_CLEAR_STAND_HEADER_FILE:
   case SSERV_CMD_GLOB_CHANGE_STAND_FOOTER_FILE:
@@ -3144,6 +3145,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CLEAR_PROB_INFO_URL] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_STAND_FILE_NAME] = { cmd_set_value },
   [SSERV_CMD_GLOB_CLEAR_STAND_FILE_NAME] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CHANGE_USERS_ON_PAGE] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_STAND_HEADER_FILE] = { cmd_set_value },
   [SSERV_CMD_GLOB_CLEAR_STAND_HEADER_FILE] = { cmd_set_value },
   [SSERV_CMD_GLOB_EDIT_STAND_HEADER_FILE] = { cmd_main_page },
