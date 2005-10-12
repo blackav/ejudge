@@ -3747,6 +3747,46 @@ cmd_pass_fd(struct client_state *p, int pkt_len,
   p->state = STATE_READ_FDS;
 }
 
+static int
+split_table_spec(const unsigned char *str, unsigned char ***p_split)
+{
+  unsigned char **split = 0;
+  int field_count = 0, i;
+  const unsigned char *p, *q;
+
+  *p_split = 0;
+  if (!str || !*str) return 0;
+
+  for (p = str; *p; p++)
+    if (*p == '|')
+      field_count++;
+  field_count++;
+
+  XCALLOC(split, field_count);
+  for (p = str, i = 0; i < field_count && *p; i++) {
+    q = p;
+    while (*q && *q != '|') q++;
+    split[i] = xmemdup(p, q - p);
+    if (*q == '|') q++;
+    p = q;
+  }
+
+  *p_split = split;
+  return field_count;
+}
+
+static unsigned char **
+free_table_spec(int n, unsigned char **t)
+{
+  int i;
+
+  if (!t) return 0;
+  for (i = 0; i < n; i++)
+    xfree(t[i]);
+  xfree(t);
+  return 0;
+}
+
 static void
 do_list_users(FILE *f, int contest_id, struct contest_desc *d,
               int locale_id,
@@ -3760,11 +3800,15 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
   struct contest_desc *tmpd, *cnts;
   struct contest_member *cm;
   struct userlist_member *m;
-  int u_num = 0, i, regtot;
+  int u_num = 0, i, regtot, j;
   unsigned char *s;
   unsigned char buf[1024];
   unsigned char *notset = 0;
   int role, pers;
+  const unsigned char *table_format = 0, *table_legend = 0;
+  unsigned char **format_s = 0, **legend_s = 0;
+  int legend_n, format_n;
+  struct sformat_extra_data sformat_extra;
 
   if (user_id > 0) {
     ASSERT(user_id > 0);
@@ -4074,54 +4118,124 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
     return;
   }
 
+  cnts = 0;
+  if (contest_id > 0 && contests_get(contest_id, &cnts) >= 0) {
+    if (locale_id && cnts->users_table_format) {
+      table_format = cnts->users_table_format;
+      table_legend = cnts->users_table_legend;
+    } else if (!locale_id && cnts->users_table_format_en) {
+      table_format = cnts->users_table_format_en;
+      table_legend = cnts->users_table_legend_en;
+    } else if (cnts->users_table_format) {
+      table_format = cnts->users_table_format;
+      table_legend = cnts->users_table_legend;
+    } else if (cnts->users_table_format_en) {
+      table_format = cnts->users_table_format_en;
+      table_legend = cnts->users_table_legend_en;
+    }
+    if (table_format && !table_legend) table_format = 0;
+    if (!table_format && table_legend) table_legend = 0;
+  }
+  if (table_format) {
+    format_n = split_table_spec(table_format, &format_s);
+    legend_n = split_table_spec(table_legend, &legend_s);
+    if (format_n != legend_n) {
+      format_s = free_table_spec(format_n, format_s);
+      legend_s = free_table_spec(legend_n, legend_s);
+      format_n = legend_n = 0;
+      table_format = table_legend = 0;
+    }
+  }
+
   fprintf(f, _("<p%s>%d users listed</p>\n"), d->users_par_style, u_num);
-  fprintf(f, "<table width=\"100%%\">\n<tr><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th><th%s>%s</th></hr>\n",
-          d->users_table_style, _("Serial No"),
-          d->users_table_style, _("User ID"),
-          d->users_table_style, _("User name"),
-          d->users_table_style, _("Institution"),
-          d->users_table_style, _("Faculty"),
-          d->users_table_style, _("Status"));
+
+  fprintf(f, "<table width=\"100%%\">\n<tr><td%s><b>%s</b></td>",
+          d->users_table_style, _("Serial No"));
+  if (table_legend) {
+    for (j = 0; j < legend_n; j++) {
+      s = html_armor_string_dup(legend_s[j]);
+      fprintf(f, "<td%s><b>%s</b></td>", d->users_table_style, s);
+      xfree(s);
+    }
+  } else {
+    fprintf(f, "<td%s><b>%s</b></td><td%s><b>%s</b></td><td%s><b>%s</b></td><td%s><b>%s</b></td>\n",
+            d->users_table_style, _("User ID"),
+            d->users_table_style, _("User name"),
+            d->users_table_style, _("Institution"),
+            d->users_table_style, _("Faculty"));
+  }
+  fprintf(f, "<td%s><b>%s</b></td></tr>\n", d->users_table_style, _("Status"));
+
+  memset(&sformat_extra, 0, sizeof(sformat_extra));
+  sformat_extra.locale_id = locale_id;
+
   for (i = 0; i < u_num; i++) {
     fprintf(f, "<tr><td%s>%d</td>", d->users_table_style, i + 1);
-    // FIXME: do html armoring?
-    fprintf(f, "<td%s>%d</td>", d->users_table_style, us[i]->id);
-    s = us[i]->name;
-    if (!s) {
-      fprintf(f, "<td%s>&nbsp;</td>", d->users_table_style);
-    } else if (!url) {
+
+    if (table_format) {
+      for (j = 0; j < format_n; j++) {
+        sformat_message(buf, sizeof(buf), format_s[j], 0, 0, 0, 0, 0,
+                        us[i], cnts, &sformat_extra);
+        s = html_armor_string_dup(buf);
+        if (!s || !*s) {
+          fprintf(f, "<td%s>&nbsp;</td>", d->users_table_style);
+        } else {
+          if (!strcmp(format_s[j], "%Un")
+              || !strcmp(format_s[j], "%Ui")
+              || !strcmp(format_s[j], "%Ul")) {
+            fprintf(f, "<td%s><a href=\"%s?user_id=%d", d->users_table_style,
+                    url, us[i]->id);
+            if (contest_id > 0) fprintf(f, "&contest_id=%d", contest_id);
+            if (locale_id > 0) fprintf(f, "&locale_id=%d", locale_id);
+            fprintf(f, "\">%s</a></td>", s);
+          } else {
+            fprintf(f, "<td%s>%s</td>", d->users_table_style, s);
+          }
+        }
+        xfree(s);
+      }
+    } else {
+      // FIXME: do html armoring?
+      fprintf(f, "<td%s>%d</td>", d->users_table_style, us[i]->id);
+      s = us[i]->name;
+      if (!s) {
+        fprintf(f, "<td%s>&nbsp;</td>", d->users_table_style);
+      } else if (!url) {
+        fprintf(f, "<td%s>%s</td>", d->users_table_style, s);
+      } else {
+        fprintf(f, "<td%s><a href=\"%s?user_id=%d", d->users_table_style,
+                url, us[i]->id);
+        if (contest_id > 0) fprintf(f, "&contest_id=%d", contest_id);
+        if (locale_id > 0) fprintf(f, "&locale_id=%d", locale_id);
+        fprintf(f, "\">%s</a></td>", s);
+      }
+      if (!locale_id) {
+        s = us[i]->instshort_en;
+        if (!s) s = us[i]->instshort;
+      } else {
+        s = us[i]->instshort;
+        if (!s) s = us[i]->instshort_en;
+      }
+      if (!s) s = "&nbsp;";
       fprintf(f, "<td%s>%s</td>", d->users_table_style, s);
-    } else {
-      fprintf(f, "<td%s><a href=\"%s?user_id=%d", d->users_table_style,
-              url, us[i]->id);
-      if (contest_id > 0) fprintf(f, "&contest_id=%d", contest_id);
-      if (locale_id > 0) fprintf(f, "&locale_id=%d", locale_id);
-      fprintf(f, "\">%s</a></td>", s);
+      if (!locale_id) {
+        s = us[i]->facshort_en;
+        if (!s) s = us[i]->facshort;
+      } else {
+        s = us[i]->facshort;
+        if (!s) s = us[i]->facshort_en;
+      }
+      if (!s) s = "&nbsp;";
+      fprintf(f, "<td%s>%s</td>", d->users_table_style, s);
     }
-    if (!locale_id) {
-      s = us[i]->instshort_en;
-      if (!s) s = us[i]->instshort;
-    } else {
-      s = us[i]->instshort;
-      if (!s) s = us[i]->instshort_en;
-    }
-    if (!s) s = "&nbsp;";
-    fprintf(f, "<td%s>%s</td>", d->users_table_style, s);
-    if (!locale_id) {
-      s = us[i]->facshort_en;
-      if (!s) s = us[i]->facshort;
-    } else {
-      s = us[i]->facshort;
-      if (!s) s = us[i]->facshort_en;
-    }
-    if (!s) s = "&nbsp;";
-    fprintf(f, "<td%s>%s</td>", d->users_table_style, s);
     fprintf(f, "<td%s>%s</td>", d->users_table_style,
             gettext(status_str_map[cs[i]->status]));
     fprintf(f, "</tr>\n");
   }
   fprintf(f, "</table>\n");
   l10n_setlocale(0);
+  format_s = free_table_spec(format_n, format_s);
+  legend_s = free_table_spec(legend_n, legend_s);
 }
 
 static void
