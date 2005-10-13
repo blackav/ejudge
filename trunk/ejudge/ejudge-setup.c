@@ -3057,6 +3057,8 @@ generate_ejudge_xml(FILE *f)
   fprintf(f,
           "  <caps>\n"
           "    <cap login=\"%s\">\n"
+          "      MASTER_LOGIN,\n"
+          "      JUDGE_LOGIN,\n"
           "      LIST_CONTEST_USERS,\n"
           "      LIST_ALL_USERS,\n"
           "      CREATE_USER,\n"
