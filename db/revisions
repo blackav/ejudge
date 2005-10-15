@@ -2133,3 +2133,11 @@ ejudge-setup.c 1 19 9098384
 runlog.h 1 35 501860
 edit-userlist.c 1 27 8377059
 runlog.c 1 44 4562387
+prepare.h 1 75 2288555
+super_actions.h 1 15 1433239
+super_proto.h 1 16 1420240
+serve-control.c 1 16 9850165
+super-serve.c 1 24 10576941
+prepare.c 1 100 11146261
+prepare_out.c 1 10 4988930
+super_html_3.c 1 14 18004254
