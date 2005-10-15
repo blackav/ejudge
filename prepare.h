@@ -257,6 +257,8 @@ struct section_global_data
   puc_t stand_v_row_attr[32];   /* standings virtual team row attributes */
   puc_t stand_u_row_attr[32];   /* standings unknown team row attributes */
   puc_t stand_success_attr[32]; /* last success attributes */
+  puc_t stand_fail_attr[32];    /* attributes for "Check failed" */
+  puc_t stand_trans_attr[32];   /* attributes for transient cells */
   int stand_show_ok_time;       /* whether show time */
 
   unsigned char *stand_header_txt; /* actual header text */
