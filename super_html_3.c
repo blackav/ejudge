@@ -369,6 +369,8 @@ Standings table attributes:
   GLOBAL_PARAM(stand_r_row_attr, "s"),
   GLOBAL_PARAM(stand_u_row_attr, "s"),
   GLOBAL_PARAM(stand_success_attr, "s"),
+  GLOBAL_PARAM(stand_fail_attr, "s"),
+  GLOBAL_PARAM(stand_trans_attr, "s"),
   GLOBAL_PARAM(stand_show_ok_time, "d"),
   GLOBAL_PARAM(ignore_success_time, "d"),
 
@@ -1212,6 +1214,28 @@ super_html_edit_global_parameters(FILE *f,
                                hidden_vars);
     }
 
+    //GLOBAL_PARAM(stand_fail_attr, "s"),
+    print_string_editing_row(f, "HTML attributes for \"Check failed\" cells:",
+                             global->stand_fail_attr,
+                             SUPER_ACTION_GLOB_CHANGE_STAND_FAIL_ATTR,
+                             SUPER_ACTION_GLOB_CLEAR_STAND_FAIL_ATTR,
+                             0,
+                             session_id,
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+
+    //GLOBAL_PARAM(stand_trans_attr, "s"),
+    print_string_editing_row(f, "HTML attributes for transient cells:",
+                             global->stand_trans_attr,
+                             SUPER_ACTION_GLOB_CHANGE_STAND_TRANS_ATTR,
+                             SUPER_ACTION_GLOB_CLEAR_STAND_TRANS_ATTR,
+                             0,
+                             session_id,
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+
     if (global->virtual) {
       //GLOBAL_PARAM(stand_self_row_attr, "s"),
       print_string_editing_row(f, "HTML attributes for the participant's table row:",
@@ -1968,6 +1992,18 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CLEAR_STAND_SUCCESS_ATTR:
     GLOB_CLEAR_STRING(stand_success_attr);
+
+  case SSERV_CMD_GLOB_CHANGE_STAND_FAIL_ATTR:
+    GLOB_SET_STRING(stand_fail_attr);
+
+  case SSERV_CMD_GLOB_CLEAR_STAND_FAIL_ATTR:
+    GLOB_CLEAR_STRING(stand_fail_attr);
+
+  case SSERV_CMD_GLOB_CHANGE_STAND_TRANS_ATTR:
+    GLOB_SET_STRING(stand_trans_attr);
+
+  case SSERV_CMD_GLOB_CLEAR_STAND_TRANS_ATTR:
+    GLOB_CLEAR_STRING(stand_trans_attr);
 
   case SSERV_CMD_GLOB_CHANGE_STAND_SELF_ROW_ATTR:
     GLOB_SET_STRING(stand_self_row_attr);
