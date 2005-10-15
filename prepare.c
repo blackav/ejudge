@@ -206,6 +206,8 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(stand_r_row_attr, "s"),
   GLOBAL_PARAM(stand_u_row_attr, "s"),
   GLOBAL_PARAM(stand_success_attr, "s"),
+  GLOBAL_PARAM(stand_fail_attr, "s"),
+  GLOBAL_PARAM(stand_trans_attr, "s"),
   GLOBAL_PARAM(stand_show_ok_time, "d"),
 
   // just for fun
@@ -3787,6 +3789,8 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   GLOBAL_PARAM(stand_r_row_attr, "s"),
   GLOBAL_PARAM(stand_u_row_attr, "s"),
   GLOBAL_PARAM(stand_success_attr, "s"),
+  GLOBAL_PARAM(stand_fail_attr, "s"),
+  GLOBAL_PARAM(stand_trans_attr, "s"),
   */
 
   /*
