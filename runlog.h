@@ -160,6 +160,7 @@ void run_get_all_entries(struct run_entry *out);
 int run_get_entry(int run_id, struct run_entry *out);
 int run_set_entry(int run_id, unsigned int mask, struct run_entry const *in);
 int run_is_readonly(int run_id);
+const struct run_entry *run_get_entries_ptr(void);
 
 time_t run_get_virtual_start_time(int user_id);
 time_t run_get_virtual_stop_time(int user_id, time_t cur_time);

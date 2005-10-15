@@ -1069,6 +1069,12 @@ run_get_all_entries(struct run_entry *out)
   memcpy(out, runs, sizeof(out[0]) * run_u);
 }
 
+const struct run_entry *
+run_get_entries_ptr(void)
+{
+  return runs;
+}
+
 int
 run_get_entry(int run_id, struct run_entry *out)
 {
