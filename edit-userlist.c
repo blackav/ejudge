@@ -2884,7 +2884,7 @@ display_contests_menu(unsigned char *upper, int only_choose)
   ASSERT(j == ncnts);
 
   XALLOCAZ(descs, ncnts);
-  XALLOCAZ(items, ncnts);
+  XALLOCAZ(items, ncnts + 1);
 
  restart_menu:
 
@@ -2908,6 +2908,7 @@ display_contests_menu(unsigned char *upper, int only_choose)
   if (in_win) delwin(in_win);
   for (i = 0; i < ncnts; i++) {
     if (items[i]) free_item(items[i]);
+    items[i] = 0;
   }
 
   for (i = 0; i < ncnts; i++) {
