@@ -200,12 +200,12 @@ static char const login_accept_chars[] =
 static char const email_accept_chars[] =
 "@.%!+=_-0123456789?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static char const name_accept_chars[] =
-" !#$%()*+,-./0123456789=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_"
+" :!#$%()*+,-./0123456789=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_"
 "abcdefghijklmnopqrstuvwxyz{|}~"
 " ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞß"
 "àáâãäåæçèéêëìíîïğñòóôõö÷øùúûüışÿ";
 static char const name_en_accept_chars[] =
-" !#$%()*+,-./0123456789=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_"
+" :!#$%()*+,-./0123456789=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_"
 "abcdefghijklmnopqrstuvwxyz{|}~";
 static char const homepage_accept_chars[] =
 " :!#$%*+,-./0123456789=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_"
