@@ -1279,7 +1279,7 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
     fprintf(f, "check_dir = \"%s\"\n",
             c_armor(&sbuf, atst->check_dir));
   } else if (arch == ARCH_DOS) {
-    fprintf(f, "check_dir = \"%s\"\n", "home/judges/dosemu/run");
+    fprintf(f, "check_dir = \"%s\"\n", "/home/judges/dosemu/run");
   } else if(testing_work_dir) {
     fprintf(f, "check_dir = \"%s\"\n",
             c_armor(&sbuf, testing_work_dir));
