@@ -39,7 +39,7 @@ make_copyright(unsigned char *buf, size_t size)
            "<p class=\"ejudge_copyright\">This program is copyright (C) 2000-2005 Alexander Chernov.</p>\n"
            "<p class=\"ejudge_copyright\">"
            "This program is free software; you can redistribute it and/or modify it under the terms of the <a href=\"http://www.fsf.org/licenses/licenses.html#GPL\">GNU General Public License</a> as published by the <a href=\"http://www.fsf.org\">Free Software Foundation</a>; either version 2 of the License, or (at your option) any later version.</p>\n"),
-           "http://acm.msu.ru/ejudge",
+           "http://www.ejudge.ru",
            compile_version, compile_date);
 }
 
