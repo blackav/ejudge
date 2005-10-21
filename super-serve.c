@@ -2649,6 +2649,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CLEAR_CHECK_CMD:
   case SSERV_CMD_PROB_CHANGE_CHECKER_ENV:
   case SSERV_CMD_PROB_CLEAR_CHECKER_ENV:
+  case SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ:
+  case SSERV_CMD_PROB_CLEAR_LANG_TIME_ADJ:
   case SSERV_CMD_PROB_CHANGE_START_DATE:
   case SSERV_CMD_PROB_CLEAR_START_DATE:
   case SSERV_CMD_PROB_CHANGE_DEADLINE:
@@ -2746,6 +2748,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_GLOB_CHANGE_STAND_PENALTY_ATTR:
   case SSERV_CMD_GLOB_CLEAR_STAND_PENALTY_ATTR:
   case SSERV_CMD_GLOB_CHANGE_STAND_SHOW_OK_TIME:
+  case SSERV_CMD_GLOB_CHANGE_STAND_SHOW_ATT_NUM:
+  case SSERV_CMD_GLOB_CHANGE_STAND_SORT_BY_SOLVED:
   case SSERV_CMD_GLOB_CHANGE_IGNORE_SUCCESS_TIME:
   case SSERV_CMD_GLOB_CHANGE_STAND_TIME_ATTR:
   case SSERV_CMD_GLOB_CLEAR_STAND_TIME_ATTR:
@@ -3109,6 +3113,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CLEAR_CHECK_CMD] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_CHECKER_ENV] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_CHECKER_ENV] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_LANG_TIME_ADJ] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_START_DATE] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_START_DATE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_DEADLINE] = { cmd_set_value },
@@ -3214,6 +3220,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_STAND_PENALTY_ATTR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CLEAR_STAND_PENALTY_ATTR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_STAND_SHOW_OK_TIME] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CHANGE_STAND_SHOW_ATT_NUM] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CHANGE_STAND_SORT_BY_SOLVED] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_IGNORE_SUCCESS_TIME] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_STAND_TIME_ATTR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CLEAR_STAND_TIME_ATTR] = { cmd_set_value },
