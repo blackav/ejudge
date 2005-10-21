@@ -76,9 +76,14 @@ run_request_packet_write(const struct run_request_packet *in_data,
     goto failed;
   }
   out_data->user_id = cvt_host_to_bin_32(in_data->user_id);
+  if (in_data->time_limit_adj < 0 || in_data->time_limit_adj > MAX_TIME_LIMIT_ADJ) {
+    errcode = 6;
+    goto failed;
+  }
+  out_data->time_limit_adj = cvt_host_to_bin_32(in_data->time_limit_adj);
 
   if (in_data->scoring_system < 0 || in_data->scoring_system > MAX_SCORING_SYSTEM) {
-    errcode = 6;
+    errcode = 7;
     goto failed;
   }
   flags |= FLAGS_PUT_SCORING_SYSTEM(in_data->scoring_system);
@@ -100,27 +105,27 @@ run_request_packet_write(const struct run_request_packet *in_data,
   out_data->ts4_us = cvt_host_to_bin_32(in_data->ts4_us);
 
   if (in_data->judge_id < 0 || in_data->judge_id > MAX_JUDGE_ID) {
-    errcode = 7;
+    errcode = 8;
     goto failed;
   }
   out_data->judge_id = cvt_host_to_bin_16(in_data->judge_id);
   if (user_spelling_len > MAX_USER_SPELLING_LEN) {
-    errcode = 8;
+    errcode = 9;
     goto failed;
   }
   out_data->user_spelling_len = cvt_host_to_bin_16(user_spelling_len);
   if (prob_spelling_len > MAX_PROB_SPELLING_LEN) {
-    errcode = 9;
+    errcode = 10;
     goto failed;
   }
   out_data->prob_spelling_len = cvt_host_to_bin_16(prob_spelling_len);
   if (exe_sfx_len > MAX_EXE_SFX_LEN) {
-    errcode = 10;
+    errcode = 11;
     goto failed;
   }
   out_data->exe_sfx_len = exe_sfx_len;
   if (arch_len > MAX_ARCH_LEN) {
-    errcode = 11;
+    errcode = 12;
     goto failed;
   }
   out_data->arch_len = arch_len;
