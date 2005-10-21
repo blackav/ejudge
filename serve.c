@@ -4004,7 +4004,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
   unsigned char rep_path[PATH_MAX];
   struct teamdb_export te;
 
-  int  r, cn, rep_flags, prio;
+  int  r, cn, rep_flags, prio, i;
 
   int  variant = 0;
   struct run_entry re;
@@ -4019,6 +4019,8 @@ read_compile_packet(const unsigned char *compile_status_dir,
   struct run_request_packet *run_pkt = 0;
   size_t run_pkt_out_size = 0;
   void *run_pkt_out = 0;
+  struct section_problem_data *prob = 0;
+  struct section_language_data *lang = 0;
 
   r = generic_read_file((char**) &comp_pkt_buf, 0, &comp_pkt_size, SAFE | REMOVE,
                         compile_status_dir, pname, "");
@@ -4143,11 +4145,11 @@ read_compile_packet(const unsigned char *compile_status_dir,
    */
 
   /* find appropriate checker */
-  if (re.problem < 1 || re.problem > max_prob || !probs[re.problem]) {
+  if (re.problem < 1 || re.problem > max_prob || !(prob = probs[re.problem])) {
     snprintf(errmsg, sizeof(errmsg), "invalid problem %d\n", re.problem);
     goto report_check_failed;
   }
-  if (re.language < 1 || re.language > max_lang || !langs[re.language]) {
+  if (re.language < 1 || re.language > max_lang || !(lang = langs[re.language])) {
     snprintf(errmsg, sizeof(errmsg), "invalid language %d\n", re.language);
     goto report_check_failed;
   }
@@ -4155,36 +4157,36 @@ read_compile_packet(const unsigned char *compile_status_dir,
     snprintf(errmsg, sizeof(errmsg), "invalid team %d\n", re.team);
     goto report_check_failed;
   }
-  cn = find_tester(re.problem, langs[re.language]->arch);
+  cn = find_tester(re.problem, lang->arch);
   if (cn < 1 || cn > max_tester || !testers[cn]) {
     snprintf(errmsg, sizeof(errmsg), "no appropriate checker for <%s>, <%s>\n",
-             probs[re.problem]->short_name, langs[re.language]->arch);
+             prob->short_name, lang->arch);
     goto report_check_failed;
   }
 
-  if (probs[re.problem]->variant_num > 0) {
+  if (prob->variant_num > 0) {
     variant = re.variant;
     if (!variant) variant = find_variant(re.team, re.problem);
     if (!variant) {
       snprintf(errmsg, sizeof(errmsg), "no appropriate variant for <%s>, <%s>\n",
-               team_name, probs[re.problem]->short_name);
+               team_name, prob->short_name);
       goto report_check_failed;
     }
   }
 
   /* calculate a priority */
   prio = 0;
-  prio += langs[re.language]->priority_adjustment;
-  prio += probs[re.problem]->priority_adjustment;
+  prio += lang->priority_adjustment;
+  prio += prob->priority_adjustment;
   prio += find_user_priority_adjustment(re.team);
   prio += testers[cn]->priority_adjustment;
 
   /* generate a packet name */
   generate_packet_name(comp_pkt->run_id, prio, pkt_base);
   snprintf(exe_in_name, sizeof(exe_in_name),
-           "%06d%s", comp_pkt->run_id, langs[re.language]->exe_sfx);
+           "%06d%s", comp_pkt->run_id, lang->exe_sfx);
   snprintf(exe_out_name, sizeof(exe_out_name),
-           "%s%s", pkt_base, langs[re.language]->exe_sfx);
+           "%s%s", pkt_base, lang->exe_sfx);
 
   /* copy the executable into the testers's queue */
   if (generic_copy_file(REMOVE, compile_report_dir, exe_in_name, "",
@@ -4201,11 +4203,11 @@ read_compile_packet(const unsigned char *compile_status_dir,
   run_pkt->judge_id = comp_pkt->judge_id;
   run_pkt->contest_id = global->contest_id;
   run_pkt->run_id = comp_pkt->run_id;
-  run_pkt->problem_id = probs[re.problem]->tester_id;
+  run_pkt->problem_id = prob->tester_id;
   run_pkt->accepting_mode = comp_extra->accepting_mode;
   run_pkt->scoring_system = global->score_system_val;
   run_pkt->variant = variant;
-  run_pkt->accept_partial = probs[re.problem]->accept_partial;
+  run_pkt->accept_partial = prob->accept_partial;
   run_pkt->user_id = re.team;
   run_pkt->disable_sound = global->disable_sound;
   run_pkt->full_archive = global->enable_full_archive;
@@ -4217,8 +4219,28 @@ read_compile_packet(const unsigned char *compile_status_dir,
   run_pkt->ts3 = comp_pkt->ts3;
   run_pkt->ts3_us = comp_pkt->ts3_us;
   get_current_time(&run_pkt->ts4, &run_pkt->ts4_us);
-  run_pkt->exe_sfx = langs[re.language]->exe_sfx;
-  run_pkt->arch = langs[re.language]->arch;
+  run_pkt->exe_sfx = lang->exe_sfx;
+  run_pkt->arch = lang->arch;
+
+  // process language-specific time adjustments
+  if (prob->lang_time_adj) {
+    size_t lsn = strlen(lang->short_name);
+    size_t vl;
+    int adj, n;
+    unsigned char *sn;
+    for (i = 0; (sn = prob->lang_time_adj[i]); i++) {
+      vl = strlen(sn);
+      if (vl > lsn + 1
+          && !strncmp(sn, lang->short_name, lsn)
+          && sn[lsn] == '='
+          && sscanf(sn + lsn + 1, "%d%n", &adj, &n) == 1
+          && !sn[lsn + 1 + n]
+          && adj >= 0
+          && adj <= 100) {
+        run_pkt->time_limit_adj = adj;
+      }
+    }
+  }
 
   /* in new binary packet format we don't care about neither "special"
    * characters in spellings nor about spelling length
@@ -4235,11 +4257,11 @@ read_compile_packet(const unsigned char *compile_status_dir,
   }
   /* run_pkt->user_spelling is allowed to be NULL */
 
-  if (probs[re.problem]->spelling[0]) {
-    run_pkt->prob_spelling = probs[re.problem]->spelling;
+  if (prob->spelling[0]) {
+    run_pkt->prob_spelling = prob->spelling;
   }
   if (!run_pkt->prob_spelling) {
-    run_pkt->prob_spelling = probs[re.problem]->short_name;
+    run_pkt->prob_spelling = prob->short_name;
   }
   /* run_pkt->prob_spelling is allowed to be NULL */
 
