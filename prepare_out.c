@@ -359,6 +359,10 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
             c_armor(&sbuf, global->stand_trans_attr));
   if (global->stand_show_ok_time != DFLT_G_STAND_SHOW_OK_TIME)
     unparse_bool(f, "stand_show_ok_time", global->stand_show_ok_time);
+  if (global->stand_show_att_num)
+    unparse_bool(f, "stand_show_att_num", global->stand_show_att_num);
+  if (global->stand_sort_by_solved)
+    unparse_bool(f, "stand_sort_by_solved", global->stand_sort_by_solved);
   if (global->stand_show_ok_time && global->stand_time_attr[0])
     fprintf(f, "stand_time_attr = \"%s\"\n",
             c_armor(&sbuf, global->stand_time_attr));
@@ -973,6 +977,7 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   if (prob->check_cmd[0])
     fprintf(f, "check_cmd = \"%s\"\n", c_armor(&sbuf, prob->check_cmd));
   do_xstr(f, &sbuf, "checker_env", prob->checker_env);
+  do_xstr(f, &sbuf, "lang_time_adj", prob->lang_time_adj);
 
   if (!prob->abstract && prob->variant_num > 0) {
     fprintf(f, "variant_num = %d\n", prob->variant_num);
