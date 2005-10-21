@@ -46,6 +46,7 @@ struct run_request_bin_packet
   rint32_t  run_id;
   rint32_t  problem_id;
   rint32_t  user_id;
+  rint32_t  time_limit_adj;
   ruint32_t flags;              /* incl. scoring system */
   rint32_t  ts1;
   rint32_t  ts1_us;
@@ -61,7 +62,7 @@ struct run_request_bin_packet
   ruint8_t  exe_sfx_len;
   ruint8_t  arch_len;
   ruint8_t  variant;
-  unsigned char pad[59];        /* padding to 128 bytes */
+  unsigned char pad[55];        /* padding to 128 bytes */
   /* exe_sfx */
   /* arch */
   /* user spelling */
@@ -121,5 +122,6 @@ struct run_reply_bin_packet
 #define MAX_SCORING_SYSTEM    2
 #define MAX_FAILED_TEST       127
 #define MAX_SCORE             999999
+#define MAX_TIME_LIMIT_ADJ    100
 
 #endif /* __RUN_PACKET_PRIV_H__ */
