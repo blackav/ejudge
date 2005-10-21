@@ -688,17 +688,23 @@ run_tests(struct section_tester_data *tst,
       time_limit_value = prb->time_limit_millis;
       if (tst->time_limit_adjustment > 0)
         time_limit_value += tst->time_limit_adjustment * 1000;
+      if (req_pkt->time_limit_adj > 0)
+        time_limit_value += req_pkt->time_limit_adj * 1000;
       task_SetMaxTimeMillis(tsk, time_limit_value);
 #else
       time_limit_value = (prb->time_limit_millis + 999) / 1000;;
       if (tst->time_limit_adjustment > 0)
         time_limit_value += tst->time_limit_adjustment;
+      if (req_pkt->time_limit_adj > 0)
+        time_limit_value += req_pkt->time_limit_adj;
       task_SetMaxTime(tsk, time_limit_value);
 #endif
     } else if (prb->time_limit > 0) {
       time_limit_value = prb->time_limit;
       if (tst->time_limit_adjustment > 0)
         time_limit_value += tst->time_limit_adjustment;
+      if (req_pkt->time_limit_adj > 0)
+        time_limit_value += req_pkt->time_limit_adj;
       task_SetMaxTime(tsk, time_limit_value);
     }
     if (prb->real_time_limit>0) task_SetMaxRealTime(tsk,prb->real_time_limit);
@@ -1286,6 +1292,10 @@ do_loop(void)
     if (managed_mode_flag && req_pkt->contest_id == -1) {
       got_quit_packet = 1;
       info("got force quit run packet");
+      continue;
+    }
+    if (req_pkt->contest_id == -1) {
+      info("force quit packet is ignored in unmanaged mode");
       continue;
     }
 
