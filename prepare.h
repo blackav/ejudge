@@ -260,6 +260,8 @@ struct section_global_data
   puc_t stand_fail_attr[32];    /* attributes for "Check failed" */
   puc_t stand_trans_attr[32];   /* attributes for transient cells */
   int stand_show_ok_time;       /* whether show time */
+  int stand_show_att_num;       /* show number of attempts in Kirov standings */
+  int stand_sort_by_solved;     /* sort by solved problems first in Kirov standings */
 
   unsigned char *stand_header_txt; /* actual header text */
   unsigned char *stand_footer_txt; /* actual footer text */
@@ -413,6 +415,7 @@ struct section_problem_data
   char **disable_language;
   char **checker_env;           /* environment variables for checker */
   path_t check_cmd;
+  char **lang_time_adj;         /* time limit adjustments depending on language */
 
   char **personal_deadline;     /* personal deadline extensions */
   int pd_total;
