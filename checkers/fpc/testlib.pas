@@ -1,6 +1,8 @@
 {TESTLIB: Библиотека для проверяющих программ}
 {Copyright (c) Антон Суханов}
 
+{Версия 1.0 для ejudge}
+
 {Дата последнего изменения: 30/03/97}
 {Добавлен новый тип результата: "частично верно" (30/03/97)}
 {Функция ReadInteger снова работает}
@@ -20,7 +22,7 @@
 
   *)
 
-unit TESTLIB;
+unit testlib;
 
 (* ================================================================= *)
                               interface
@@ -181,7 +183,7 @@ begin
    Scr ({LightGray,} ' ' + msg + ' ');
    writeln;
 
-   if Res = _Fail then HALT (ord (res));
+   if Res = _Fail then HALT (6);
 
    close (inf.f); close (ouf.f); close (ans.f);
 
@@ -253,15 +255,15 @@ begin
 *)
    if cur = EofChar then QUIT (_PE, ' Неожиданный конец файла');
 
-   i := 0;
+   res := '';
+   i:=0;
    while not ((cur IN AFTER) or (cur = EofChar))  do
    begin
       inc (i);
       if i > 255 then QUIT (_PE, ' Слишком длинная строка во входном файле');
-      res [i] := cur;
+      res := res + cur;
       nextchar
    end;
-   res [0] := chr (i);
    ReadWord := res
 end;
 
@@ -317,9 +319,9 @@ end;
 function InStream.seekEoln: boolean;
 begin
   while (cur in [' ', #9]) do nextchar;
-  if cur = #13 then begin
+  if (cur = #13) or (cur = #10) then begin
     nextchar;
-    if cur = #10 then nextchar;
+    if (cur = #10) or (cur = #13) then nextchar;
     seekEoln := true;
   end else seekEoln := eof;
 end;
