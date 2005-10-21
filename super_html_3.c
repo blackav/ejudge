@@ -372,6 +372,8 @@ Standings table attributes:
   GLOBAL_PARAM(stand_fail_attr, "s"),
   GLOBAL_PARAM(stand_trans_attr, "s"),
   GLOBAL_PARAM(stand_show_ok_time, "d"),
+  GLOBAL_PARAM(stand_show_att_num, "d"),
+  GLOBAL_PARAM(stand_sort_by_solved, "d"),
   GLOBAL_PARAM(ignore_success_time, "d"),
 
 Advanced settings:
@@ -1191,6 +1193,28 @@ super_html_edit_global_parameters(FILE *f,
     html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_STAND_SHOW_OK_TIME, "Change");
     fprintf(f, "</td></tr></form>\n");
 
+    //GLOBAL_PARAM(stand_show_att_num, "d"),
+    if (global->score_system_val == SCORE_KIROV
+        || global->score_system_val == SCORE_OLYMPIAD) {
+      html_start_form(f, 1, session_id, self_url, hidden_vars);
+      fprintf(f, "<tr><td>Show number of attempts in standings:</td><td>");
+      html_boolean_select(f, global->stand_show_att_num, "param", 0, 0);
+      fprintf(f, "</td><td>");
+      html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_STAND_SHOW_ATT_NUM, "Change");
+      fprintf(f, "</td></tr></form>\n");
+    }
+
+    //GLOBAL_PARAM(stand_sort_by_solved, "d"),
+    if (global->score_system_val == SCORE_KIROV
+        || global->score_system_val == SCORE_OLYMPIAD) {
+      html_start_form(f, 1, session_id, self_url, hidden_vars);
+      fprintf(f, "<tr><td>Sort participants by the solved problems first:</td><td>");
+      html_boolean_select(f, global->stand_sort_by_solved, "param", 0, 0);
+      fprintf(f, "</td><td>");
+      html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_STAND_SORT_BY_SOLVED, "Change");
+      fprintf(f, "</td></tr></form>\n");
+    }
+
     //GLOBAL_PARAM(ignore_success_time, "d"),
     if (global->score_system_val == SCORE_ACM) {
       html_start_form(f, 1, session_id, self_url, hidden_vars);
@@ -1975,6 +1999,14 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_STAND_SHOW_OK_TIME:
     p_int = &global->stand_show_ok_time;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_STAND_SHOW_ATT_NUM:
+    p_int = &global->stand_show_att_num;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_STAND_SORT_BY_SOLVED:
+    p_int = &global->stand_sort_by_solved;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_IGNORE_SUCCESS_TIME:
@@ -3808,6 +3840,24 @@ super_html_print_problem(FILE *f,
     xfree(checker_env);
   }
 
+  //PROBLEM_PARAM(lang_time_adj, "x"),
+  if (!prob->abstract && show_adv) {
+    if (!prob->lang_time_adj || !prob->lang_time_adj[0]) {
+      extra_msg = "(not set)";
+      checker_env = xstrdup("");
+    } else {
+      extra_msg = "";
+      checker_env = sarray_unparse(prob->lang_time_adj);
+    }
+    print_string_editing_row_3(f, "Language-based time-limit adjustment:", checker_env,
+                               SUPER_ACTION_PROB_CHANGE_LANG_TIME_ADJ,
+                               SUPER_ACTION_PROB_CLEAR_LANG_TIME_ADJ,
+                               extra_msg,
+                               session_id, self_url, extra_args,
+                               prob_hidden_vars);
+    xfree(checker_env);
+  }
+
   //PROBLEM_PARAM(variant_num, "d"),
   if (!prob->abstract && show_adv) {
     extra_msg = "";
@@ -4447,6 +4497,19 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CLEAR_CHECKER_ENV:
     sarray_free(prob->checker_env);
+    prob->checker_env = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ:
+    if (sarray_parse(param2, &tmp_env) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sarray_free(prob->lang_time_adj);
+    prob->lang_time_adj = tmp_env;
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_LANG_TIME_ADJ:
+    sarray_free(prob->lang_time_adj);
+    prob->lang_time_adj = 0;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_START_DATE:
