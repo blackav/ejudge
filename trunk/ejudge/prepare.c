@@ -209,6 +209,8 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(stand_fail_attr, "s"),
   GLOBAL_PARAM(stand_trans_attr, "s"),
   GLOBAL_PARAM(stand_show_ok_time, "d"),
+  GLOBAL_PARAM(stand_show_att_num, "d"),
+  GLOBAL_PARAM(stand_sort_by_solved, "d"),
 
   // just for fun
   GLOBAL_PARAM(extended_sound, "d"),
@@ -327,6 +329,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(disable_language, "x"),
   PROBLEM_PARAM(standard_checker, "s"),
   PROBLEM_PARAM(checker_env, "x"),
+  PROBLEM_PARAM(lang_time_adj, "x"),
   PROBLEM_PARAM(check_cmd, "s"),
   PROBLEM_PARAM(test_pat, "s"),
   PROBLEM_PARAM(corr_pat, "s"),
@@ -603,6 +606,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->date_penalty);
   sarray_free(p->disable_language);
   sarray_free(p->checker_env);
+  sarray_free(p->lang_time_adj);
   sarray_free(p->personal_deadline);
   xfree(p->score_bonus_val);
   free_testsets(p->ts_total, p->ts_infos);
@@ -3910,6 +3914,7 @@ prepare_copy_problem(struct section_problem_data *out,
   out->dp_infos = 0;
   out->disable_language = 0;
   out->checker_env = 0;
+  out->lang_time_adj = 0;
   out->personal_deadline = 0;
   out->pd_total = 0;
   out->pd_infos = 0;
