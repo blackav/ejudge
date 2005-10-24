@@ -308,6 +308,7 @@ Participant's capabilities
   GLOBAL_PARAM(team_show_judge_report, "d"),
   GLOBAL_PARAM(disable_clars, "d"),
   GLOBAL_PARAM(disable_team_clars, "d"),
+  GLOBAL_PARAM(disable_submit_after_ok, "d"),
   GLOBAL_PARAM(ignore_compile_errors, "d"),
   GLOBAL_PARAM(enable_printing, "d"),
   GLOBAL_PARAM(ignore_duplicated_runs, "d"),
@@ -643,6 +644,14 @@ super_html_edit_global_parameters(FILE *f,
       html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_DISABLE_TEAM_CLARS, "Change");
       fprintf(f, "</td></tr></form>\n");
     }
+
+    //GLOBAL_PARAM(disable_submit_after_ok, "d"),
+    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    fprintf(f, "<tr><td>Disable submit of already solved problems:</td><td>");
+    html_boolean_select(f, global->disable_submit_after_ok, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_DISABLE_SUBMIT_AFTER_OK, "Change");
+    fprintf(f, "</td></tr></form>\n");
 
     //GLOBAL_PARAM(ignore_compile_errors, "d"),
     html_start_form(f, 1, session_id, self_url, hidden_vars);
@@ -1716,6 +1725,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_DISABLE_TEAM_CLARS:
     p_int = &global->disable_team_clars;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_DISABLE_SUBMIT_AFTER_OK:
+    p_int = &global->disable_submit_after_ok;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_IGNORE_COMPILE_ERRORS:
