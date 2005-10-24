@@ -98,6 +98,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(team_show_judge_report, "d"),
   GLOBAL_PARAM(disable_clars, "d"),
   GLOBAL_PARAM(disable_team_clars, "d"),
+  GLOBAL_PARAM(disable_submit_after_ok, "d"),
   GLOBAL_PARAM(max_file_length, "d"),
   GLOBAL_PARAM(max_line_length, "d"),
   GLOBAL_PARAM(tests_to_accept, "d"),
