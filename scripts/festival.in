@@ -23,7 +23,8 @@ score="$5"
 #  5 - wrong answer
 #  6 - internal error
 #  7 - partial solution
-
+# 12 - memory limit error
+# 13 - security error
 if [ x"${uspell}" = x ]
 then
   umsg="Unspecified user. "
@@ -45,11 +46,13 @@ then
   msg="Partial solution. ${umsg}${pmsg}Tests passed: ${testnum}."
 else
   case x"${errcode}" in
-    x2) cmsg="Run-time error. ";;
-    x3) cmsg="Time-limit exceeded. ";;
-    x4) cmsg="Presentation error. ";;
-    x5) cmsg="Wrong answer. ";;
-    x6) cmsg="Attention! Internal error! ";;
+    x2)  cmsg="Run-time error. ";;
+    x3)  cmsg="Time-limit exceeded. ";;
+    x4)  cmsg="Presentation error. ";;
+    x5)  cmsg="Wrong answer. ";;
+    x6)  cmsg="Attention! Internal error! ";;
+    x12) cmsg="Memory limit exceeded. ";;
+    x13) cmsg="Security error. ";;
     *) cmsg="Unknown code ${errcode}. ";;
   esac
   msg="${cmsg}${umsg}${pmsg}Test ${testnum}."
