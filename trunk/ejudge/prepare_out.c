@@ -221,6 +221,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "disable_clars", global->disable_clars);
   if (global->disable_team_clars != DFLT_G_DISABLE_TEAM_CLARS)
     unparse_bool(f, "disable_team_clars", global->disable_team_clars);
+  if (global->disable_submit_after_ok)
+    unparse_bool(f, "disable_submit_after_ok", global->disable_submit_after_ok);
   if (global->ignore_compile_errors != DFLT_G_IGNORE_COMPILE_ERRORS)
     unparse_bool(f, "ignore_compile_errors", global->ignore_compile_errors);
   if (global->ignore_duplicated_runs != DFLT_G_IGNORE_DUPLICATED_RUNS)
