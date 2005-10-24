@@ -110,6 +110,7 @@ struct section_global_data
   int    team_show_judge_report;
   int    disable_clars;         /* clarification requests disabled */
   int    disable_team_clars;    /* team cannot compose a clarification */
+  int    disable_submit_after_ok; /* disable submits of an already accepted problem */
   int    ignore_compile_errors; /* ignore CE result for score calculation */
   int    enable_continue;       /* enable contest continuation after stop */
   int    enable_report_upload;  /* enable manual upload of checking reports */
