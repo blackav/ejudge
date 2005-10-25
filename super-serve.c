@@ -2611,6 +2611,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CHANGE_VARIABLE_FULL_SCORE:
   case SSERV_CMD_PROB_CHANGE_TEST_SCORE_LIST:
   case SSERV_CMD_PROB_CLEAR_TEST_SCORE_LIST:
+  case SSERV_CMD_PROB_CHANGE_SCORE_TESTS:
+  case SSERV_CMD_PROB_CLEAR_SCORE_TESTS:
   case SSERV_CMD_PROB_CHANGE_TESTS_TO_ACCEPT:
   case SSERV_CMD_PROB_CHANGE_ACCEPT_PARTIAL:
   case SSERV_CMD_PROB_CHANGE_HIDDEN:
@@ -3076,6 +3078,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_VARIABLE_FULL_SCORE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TEST_SCORE_LIST] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_TEST_SCORE_LIST] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_SCORE_TESTS] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_SCORE_TESTS] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TESTS_TO_ACCEPT] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_ACCEPT_PARTIAL] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_HIDDEN] = { cmd_set_value },
