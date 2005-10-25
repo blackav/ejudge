@@ -446,6 +446,7 @@ super_html_edit_global_parameters(FILE *f,
     "ACM",
     "Kirov",
     "Olympiad",
+    "Moscow",
     "Virtual ACM",
     0,
   };
@@ -501,7 +502,7 @@ super_html_edit_global_parameters(FILE *f,
 
   //GLOBAL_PARAM(score_system, "s"),
   //GLOBAL_PARAM(virtual, "d"),
-  ASSERT(global->score_system_val >= SCORE_ACM && global->score_system_val <= SCORE_OLYMPIAD);
+  ASSERT(global->score_system_val >= SCORE_ACM && global->score_system_val < SCORE_TOTAL);
   if (global->virtual) {
     ASSERT(global->score_system_val == SCORE_ACM);
   }
@@ -1642,9 +1643,9 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_TYPE:
     if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n]
-        || val < 0 || val > 3)
+        || val < 0 || val > SCORE_TOTAL + 1)
       return -SSERV_ERR_INVALID_PARAMETER;
-    if (val < 3) {
+    if (val < SCORE_TOTAL) {
       global->score_system_val = val;
       global->virtual = 0;
     } else {
@@ -3638,7 +3639,11 @@ super_html_print_problem(FILE *f,
                           prob->full_score, extra_msg,
                           SUPER_ACTION_PROB_CHANGE_FULL_SCORE,
                           session_id, self_url, extra_args, prob_hidden_vars);
+  }
 
+  if (sstate->global &&
+      (sstate->global->score_system_val == SCORE_KIROV
+       || sstate->global->score_system_val == SCORE_OLYMPIAD)) {
     if (show_adv) {
       //PROBLEM_PARAM(variable_full_score, "d"),
       extra_msg = "Undefined";
@@ -3715,6 +3720,16 @@ super_html_print_problem(FILE *f,
     print_string_editing_row(f, "Test scores for tests:", prob->test_score_list,
                              SUPER_ACTION_PROB_CHANGE_TEST_SCORE_LIST,
                              SUPER_ACTION_PROB_CLEAR_TEST_SCORE_LIST,
+                             0,
+                             session_id, self_url, extra_args,
+                             prob_hidden_vars);
+  }
+
+  if (sstate->global && sstate->global->score_system_val == SCORE_MOSCOW) {
+    //PROBLEM_PARAM(score_tests, "s"),
+    print_string_editing_row(f, "Tests for problem scores:", prob->score_tests,
+                             SUPER_ACTION_PROB_CHANGE_SCORE_TESTS,
+                             SUPER_ACTION_PROB_CLEAR_SCORE_TESTS,
                              0,
                              session_id, self_url, extra_args,
                              prob_hidden_vars);
@@ -4319,6 +4334,15 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CLEAR_TEST_SCORE_LIST:
     PROB_CLEAR_STRING(test_score_list);
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_SCORE_TESTS:
+    // FIXME: check for correctness
+    PROB_ASSIGN_STRING(score_tests);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_SCORE_TESTS:
+    PROB_CLEAR_STRING(score_tests);
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_TESTS_TO_ACCEPT:
