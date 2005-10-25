@@ -30,7 +30,7 @@ enum { PREPARE_QUIET = 1 };
 #if !defined EJUDGE_SCORE_SYSTEM_DEFINED
 #define EJUDGE_SCORE_SYSTEM_DEFINED
 /* scoring systems */
-enum { SCORE_ACM, SCORE_KIROV, SCORE_OLYMPIAD };
+enum { SCORE_ACM, SCORE_KIROV, SCORE_OLYMPIAD, SCORE_MOSCOW, SCORE_TOTAL };
 #endif /* EJUDGE_SCORE_SYSTEM_DEFINED */
 
 /* second rounding mode */
@@ -388,6 +388,7 @@ struct section_problem_data
   puc_t input_file[64];         /* input file name */
   puc_t output_file[64];        /* output file name */
   puc_t test_score_list[256];   /* scores for individual tests */
+  puc_t score_tests[256];       /* number of tests for Moscow scoring */
   path_t standard_checker;      /* the name of the built-in checker */
   puc_t spelling[128];          /* spelling for speach generator */
 
