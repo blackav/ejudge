@@ -322,6 +322,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(input_file, "s"),
   PROBLEM_PARAM(output_file, "s"),
   PROBLEM_PARAM(test_score_list, "s"),
+  PROBLEM_PARAM(score_tests, "s"),
   PROBLEM_PARAM(test_sets, "x"),
   PROBLEM_PARAM(deadline, "s"),
   PROBLEM_PARAM(start_date, "s"),
@@ -1719,6 +1720,8 @@ set_defaults(int mode)
     global->score_system_val = SCORE_KIROV;
   } else if (!strcmp(global->score_system, "olympiad")) {
     global->score_system_val = SCORE_OLYMPIAD;
+  } else if (!strcmp(global->score_system, "moscow")) {
+    global->score_system_val = SCORE_MOSCOW;
   } else {
     err("Invalid scoring system: %s", global->score_system);
     return -1;
@@ -3485,6 +3488,8 @@ prepare_set_global_defaults(struct section_global_data *g)
     g->score_system_val = SCORE_KIROV;
   } else if (!strcmp(g->score_system, "olympiad")) {
     g->score_system_val = SCORE_OLYMPIAD;
+  } else if (!strcmp(g->score_system, "moscow")) {
+    g->score_system_val = SCORE_MOSCOW;
   } else {
     g->score_system_val = SCORE_ACM;
   }
