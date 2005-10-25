@@ -1463,15 +1463,28 @@ cmd_team_login(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
   }
-  if (!u->register_passwd) {
-    err("%s -> EMPTY PASSWORD", logbuf);
-    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
-    return;
-  }
-  if(passwd_check(&pwdint,u->team_passwd?u->team_passwd:u->register_passwd)<0){
-    err("%s -> WRONG PASSWORD", logbuf);
-    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
-    return;
+  if (cnts->disable_team_password) {
+    if (!u->register_passwd) {
+      err("%s -> EMPTY PASSWORD", logbuf);
+      send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+      return;
+    }
+    if(passwd_check(&pwdint, u->register_passwd) < 0){
+      err("%s -> WRONG PASSWORD", logbuf);
+      send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+      return;
+    }
+  } else {
+    if (!u->team_passwd) {
+      err("%s -> EMPTY PASSWORD", logbuf);
+      send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+      return;
+    }
+    if(passwd_check(&pwdint, u->team_passwd) < 0){
+      err("%s -> WRONG PASSWORD", logbuf);
+      send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+      return;
+    }
   }
   if (u->contests) {
     for (c = (struct userlist_contest*) u->contests->first_down;
