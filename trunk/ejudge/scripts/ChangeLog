@@ -1,3 +1,8 @@
+2005-10-24  Alexander Chernov  <cher@ispras.ru>
+
+	* festival.in:
+	new error codes (Memory Limit Exceeded, Security Error) are supported.
+
 2005-08-19  Alexander Chernov  <cher@ispras.ru>
 
 	* dcc-version.in, fpc-version.in, g++-version.in, g77-version.in, gcc-version.in, gcj-version.in, gpc-version.in, gprolog-version.in, javac-version.in, mbas-version.in, mcs-version.in, mzscheme-version.in, perl-version.in, python-version.in, yabasic-version.in:
