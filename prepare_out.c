@@ -170,6 +170,7 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     "acm",
     "kirov",
     "olympiad",
+    "moscow",
     0,
   };
   static const unsigned char * const rounding_modes[] =
@@ -188,7 +189,7 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   fprintf(f, "\n");
 
   fprintf(f, "contest_time = %d\n", global->contest_time);
-  ASSERT(global->score_system_val >= 0 && global->score_system_val <= 2);
+  ASSERT(global->score_system_val >= 0 && global->score_system_val < SCORE_TOTAL);
   fprintf(f, "score_system = %s\n", contest_types[global->score_system_val]);
   if (global->virtual)
     fprintf(f, "virtual\n");
@@ -957,6 +958,10 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
       fprintf(f, "test_score_list = \"%s\"\n", c_armor(&sbuf, prob->test_score_list));
     if (prob->score_bonus[0])
       fprintf(f, "score_bonus = \"%s\"\n", c_armor(&sbuf, prob->score_bonus));
+  }
+  if (score_system_val == SCORE_MOSCOW) {
+    if (prob->score_tests[0])
+      fprintf(f, "score_tests = \"%s\"\n", c_armor(&sbuf, prob->score_tests));
   }
   if (score_system_val == SCORE_OLYMPIAD) {
     if (prob->tests_to_accept >= 0) {
