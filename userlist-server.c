@@ -544,11 +544,15 @@ send_email_message(unsigned char const *to,
                    unsigned char const *text)
 {
   FILE *f = 0;
+  int r;
 
   ASSERT(config->email_program);
   if (!charset) charset = EJUDGE_CHARSET;
 
-  if (!(f = popen(config->email_program, "w"))) return -1;
+  if (!(f = popen(config->email_program, "w"))) {
+    err("send_email_message: popen failed: %s", os_ErrorMsg());
+    return -1;
+  }
 
   if (charset) {
     fprintf(f, "Content-type: text/plain; charset=\"%s\"\n",
@@ -558,7 +562,18 @@ send_email_message(unsigned char const *to,
   }
   fprintf(f, "To: %s\nFrom: %s\nSubject: %s\n\n%s\n",
           to, from, subject, text);
-  pclose(f);
+  if (ferror(f)) {
+    err("send_email_message: write error");
+    pclose(f);
+    return -1;
+  }
+  if ((r = pclose(f)) < 0) {
+    err("send_email_message: pclose failed: %s", os_ErrorMsg());
+    return -1;
+  } else if (r > 0) {
+    err("send_email_message: the MTA exit code is %d", r);
+    return -1;
+  }
   return 0;
 }
 
@@ -1034,11 +1049,23 @@ cmd_register_new(struct client_state *p,
   buf = (char*) xmalloc(buf_size);
   sformat_message(buf, buf_size, email_tmpl,
                   0, 0, 0, 0, 0, user, cnts, &sformat_data);
-  send_email_message(user->email,
-                     originator_email,
-                     NULL,
-                     _("You have been registered"),
-                     buf);
+  if (send_email_message(user->email,
+                         originator_email,
+                         NULL,
+                         _("You have been registered"),
+                         buf) < 0) {
+    // since we're unable to send a mail message, we should
+    // remove a newly added user and return an appropriate error code
+    userlist_remove_user(userlist, user);
+    xfree(buf);
+    xfree(email_tmpl);
+    l10n_setlocale(0);
+    send_reply(p, ULS_ERR_EMAIL_FAILED);
+    info("%s -> failed (e-mail)", logbuf);
+    dirty = 1;
+    return;
+  }
+
   xfree(buf);
   xfree(email_tmpl);
   l10n_setlocale(0);
