@@ -2548,7 +2548,12 @@ action_register_new_user(void)
                                            client_locale_id,
                                            1 /* usecookies */,
                                            user_login, user_email);
-      if (errcode) {
+      if (errcode == ULS_ERR_EMAIL_FAILED) {
+        error("%s", _("The server was unable to send a registration e-mail\n"
+                      "to the specified address. This is probably due\n"
+                      "to heavy server load rather than to an invalid\n"
+                      "e-mail address. You should try to register later.\n"));
+      } else if (errcode) {
         error("%s", gettext(userlist_strerror(-errcode)));
       }
     }
