@@ -27,8 +27,10 @@ userlist_clnt_register_contest(struct userlist_clnt *clnt,
   struct userlist_packet *in = 0;
   int out_size, in_size = 0, r;
 
+  /*
   if (cmd != ULS_REGISTER_CONTEST && cmd != ULS_PRIV_REGISTER_CONTEST)
     return -ULS_ERR_PROTOCOL;
+  */
 
   out_size = sizeof(*out);
   out = alloca(out_size);
