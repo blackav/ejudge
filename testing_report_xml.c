@@ -191,6 +191,8 @@ parse_scoring(const unsigned char *str, int *px)
     *px = SCORE_KIROV;
   } else if (!strcasecmp(str, "OLYMPIAD")) {
     *px = SCORE_OLYMPIAD;
+  } else if (!strcasecmp(str, "MOSCOW")) {
+    *px = SCORE_MOSCOW;
   } else {
     return -1;
   }
