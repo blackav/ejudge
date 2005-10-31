@@ -5968,6 +5968,144 @@ cmd_is_valid_cookie(struct client_state *p,
   send_reply(p, ULS_OK);
 }
 
+static void
+cmd_user_op(struct client_state *p,
+            int pkt_len,
+            struct userlist_pk_register_contest *data)
+{
+  unsigned char logbuf[1024];
+  struct userlist_user *u = 0;
+  int cap_bit;
+  opcap_t caps;
+  struct userlist_contest *cntsreg = 0;
+  struct contest_desc *cnts = 0;
+  struct userlist_passwd *pwd = 0, *pwd2 = 0;
+  struct userlist_passwd **ppwd = 0, **ppwd2 = 0;
+  unsigned char buf[16];
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf), "USER_OP: %d, %d, %d",
+           p->user_id, data->user_id, data->request_id);
+
+  if (p->user_id <= 0) {
+    CONN_ERR("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  if (data->user_id <= 0 || data->user_id >= userlist->user_map_size
+      || !(u = userlist->user_map[data->user_id])) {
+    err("%s -> invalid user", logbuf);
+    send_reply(p, -ULS_ERR_BAD_UID);
+    return;
+  }
+
+  if (is_privileged_user(u) >= 0) cap_bit = OPCAP_PRIV_EDIT_USER;
+  else cap_bit = OPCAP_EDIT_USER;
+
+  while (1) {
+    if (data->user_id == p->user_id) break;
+
+    if (get_uid_caps(&config->capabilities, p->user_id, &caps) >= 0
+        && opcaps_check(caps, cap_bit) >= 0) break;
+
+    if (u->contests
+        && (cap_bit == OPCAP_PRIV_EDIT_USER || cap_bit == OPCAP_EDIT_USER)) {
+        for (cntsreg = FIRST_CONTEST(u); cntsreg;
+             cntsreg = NEXT_CONTEST(cntsreg)) {
+          if (contests_get(cntsreg->id, &cnts) < 0)
+            continue;
+          if (get_uid_caps(&cnts->capabilities, p->user_id, &caps) < 0)
+            continue;
+          if (opcaps_check(caps, cap_bit) >= 0) break;
+        }
+        if (cntsreg) break;
+    }
+
+    err("%s -> no capability to edit user", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  switch (data->request_id) {
+  case ULS_RANDOM_PASSWD:
+  case ULS_COPY_TO_REGISTER:
+    ppwd = &u->register_passwd;
+    break;
+
+  case ULS_RANDOM_TEAM_PASSWD:
+  case ULS_COPY_TO_TEAM:
+    ppwd = &u->team_passwd;
+    break;
+
+  default:
+    err("%s -> not implemented", logbuf);
+    send_reply(p, -ULS_ERR_NOT_IMPLEMENTED);
+    return;
+  }
+
+  switch (data->request_id) {
+  case ULS_COPY_TO_REGISTER:
+    ppwd2 = &u->team_passwd;
+    break;
+  case ULS_COPY_TO_TEAM:
+    ppwd2 = &u->register_passwd;
+    break;
+  }
+
+  if (ppwd2 && !*ppwd2) {
+    err("%s -> empty password", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  if (ppwd2) {
+    pwd2 = *ppwd2;
+    if (!pwd2->b.text || !pwd2->b.text[0]) {
+      err("%s -> empty password", logbuf);
+      send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+      return;
+    }
+  }
+
+  if (ppwd) {
+    if (!(pwd = *ppwd)) {
+      pwd=(struct userlist_passwd*)userlist_node_alloc(USERLIST_T_PASSWORD);
+      xml_link_node_last(&u->b, &pwd->b);
+      *ppwd = pwd;
+    }
+    if (pwd->b.text) {
+      xfree(pwd->b.text);
+      pwd->b.text = 0;
+    }
+  }
+
+  switch (data->request_id) {
+  case ULS_RANDOM_PASSWD:
+  case ULS_RANDOM_TEAM_PASSWD:
+    memset(buf, 0, sizeof(buf));
+    generate_random_password(8, buf);
+    pwd->method = USERLIST_PWD_PLAIN;
+    pwd->b.text = xstrdup(buf);
+    break;
+
+  case ULS_COPY_TO_TEAM:
+  case ULS_COPY_TO_REGISTER:
+    ASSERT(pwd2);
+    pwd->method = pwd2->method;
+    pwd->b.text = xstrdup(pwd2->b.text);
+    break;
+
+  default:
+    abort();
+  }
+  info("%s -> OK", logbuf);
+  send_reply(p, ULS_OK);
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW]            cmd_register_new,
@@ -6006,6 +6144,10 @@ static void (*cmd_table[])() =
   [ULS_GET_UID_BY_PID_2]        cmd_get_uid_by_pid_2,
   [ULS_IS_VALID_COOKIE]         cmd_is_valid_cookie,
   [ULS_DUMP_WHOLE_DATABASE]     cmd_dump_whole_database,
+  [ULS_RANDOM_PASSWD]           cmd_user_op,
+  [ULS_RANDOM_TEAM_PASSWD]      cmd_user_op,
+  [ULS_COPY_TO_TEAM]            cmd_user_op,
+  [ULS_COPY_TO_REGISTER]        cmd_user_op,
 
   [ULS_LAST_CMD] 0
 };
