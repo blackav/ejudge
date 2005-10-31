@@ -21,6 +21,8 @@
 (*
     Modifications log:
       dd.mm.yyyy  modified by          modification log
+      31.10.2005  Alexander Chernov    Adaptation for ejudge.
+ 
       27.10.2002  Andrew Stankevich    Buffered input (speedup up to 2 times on big files)
                                        BP7.0 compatibility removed
       17.09.2000  Andrew Stankevich    XML correct comments
@@ -39,32 +41,32 @@ unit testlib;
 interface
 
 const 
-    eofChar  = #$1A;
-    eofRemap = ' ';
-    NumberBefore = [#10,#13,' ',#09];
-    NumberAfter  = [#10,#13,' ',#09,eofChar];
-    lineAfter    = [#10,#13,eofChar];
-    Blanks       = [#10,#13,' ',#09];
-    eolnChar     = [#10,#13,eofChar];
+    EOFCHAR  = #$1A;
+    EOFREMAP = ' ';
+    NUMBERBEFORE = [#10,#13,' ',#09];
+    NUMBERAFTER  = [#10,#13,' ',#09,EOFCHAR];
+    LINEAFTER    = [#10,#13,EOFCHAR];
+    BLANKS       = [#10,#13,' ',#09];
+    EOLNCHAR     = [#10,#13,EOFCHAR];
 
     BUFFER_SIZE = 1048576;
 
 type 
-    CharSet = set of char;
-    TMode   = (_Input, _Output, _Answer);
-    TResult = (_ok, _wa, _pe,  _fail, _dirt);
+    Charset = set of char;
+    Tmode   = (_INPUT, _OUTPUT, _ANSWER);
+    Tresult = (_OK, _WA, _PE,  _FAIL, _DIRT);
               { 
-                _ok - accepted, 
-                _wa - wrong answer, 
-                _pe - output format mismatch,
-                _fail - when everything fucks up 
-                _dirt - for inner using
+                _OK - accepted, 
+                _WA - wrong answer, 
+                _PE - output format mismatch,
+                _FAIL - when everything fucks up 
+                _DIRT - for inner using
               }
 
-    InStream = object
+    Instream = object
         f: file; { file }
         name: string; { file name }
-        mode: TMode;
+        mode: Tmode;
         opened: boolean;
         fpos: integer;
         size: integer;
@@ -75,57 +77,57 @@ type
 
         { for internal usage }
         procedure fillbuffer;
-        constructor init(fname: string; m: TMode);
+        constructor init(fname: string; m: Tmode);
 
         function curchar: char; { returns cur }
         procedure skipchar;  { skips current char }
         function nextchar: char;  { moves to next char }
 
-        procedure Reset;
+        procedure reset;
 
-        function Eof: boolean;
-        function SeekEof: boolean;
+        function eof: boolean;
+        function seekeof: boolean;
 
-        function Eoln: boolean;
-        function SeekEoln: boolean;
+        function eoln: boolean;
+        function seekeoln: boolean;
 
-        procedure NextLine; { skips current line }
+        procedure nextline; { skips current line }
 
         { Skips chars from given set }
         { Does not generate errors }
-        procedure Skip(setof: CharSet);
+        procedure skip(setof: Charset);
 
         { Read word. Skip before all chars from `before`
           and after all chars from `after`. }
-        function ReadWord(Before, After: CharSet): string;
+        function readword(before, after: Charset): string;
 
         { reads integer }
-        { _pe if error }
-        function ReadLongint: integer;
+        { _PE if error }
+        function readlongint: integer;
 
         { = readlongint }
-        function ReadInteger: integer;
+        function readinteger: integer;
 
         { reads real }
-        { _pe if error }
-        function ReadReal: extended;
+        { _PE if error }
+        function readreal: extended;
 
         { same as readword([], [#13 #10]) }
-        function ReadString: string;
+        function readstring: string;
 
         { for internal usage }
-        procedure Quit(res: TResult; msg: string);
-        procedure Close;
+        procedure quit(res: Tresult; msg: string);
+        procedure close;
 
     end;
 
 
-procedure Quit(res: TResult; msg: string);
+procedure quit(res: Tresult; msg: string);
 
 var 
-    inf, ouf, ans: InStream;
-    ResultName: string; { result file name }
-    AppesMode: boolean;
+    inf, ouf, ans: Instream;
+    resultname: string; { result file name }
+    appesmode: boolean;
 
 implementation
 
@@ -133,12 +135,12 @@ uses
     SysUtils;
 
 const
-    LightGray = $07;    
-    LightRed  = $0c;    
-    LightCyan = $0b;    
-    LightGreen = $0a;
+    LIGHTGRAY = $07;    
+    LIGHTRED  = $0c;    
+    LIGHTCYAN = $0b;    
+    LIGHTGREEN = $0a;
 
-procedure TextColor(x: word);
+procedure textcolor(x: word);
 {var
     h: THandle;}
 begin
@@ -147,7 +149,7 @@ begin
 end;
 
 const 
-    outcomes: array[TResult] of string = (
+    outcomes: array[Tresult] of string = (
         'accepted',
         'wrong-answer',
         'presentation-error',
@@ -155,7 +157,7 @@ const
         'fail'
     );
 
-procedure XMLSafeWrite(var t: text; s: string);
+procedure xmlsafewrite(var t: text; s: string);
 var
     i: integer;
 begin
@@ -166,7 +168,6 @@ begin
             '<': write(t, '&lt;');
             '>': write(t, '&gt;');
             '"': write(t, '&quot;');
-            #128..#255: write(t, '?');
             #0..#31: write(t, '.');
             else
                 write(t, s[i]);
@@ -174,86 +175,99 @@ begin
     end;
 end;
 
-procedure QUIT (res: TResult; msg: string);
-var RESFILE: Text;
-    ErrorName: string;
+procedure quit(res: Tresult; msg: string);
+var 
+    resfile: text;
+    errorname: string;
 
-    procedure scr ({color: word; }msg: string);
+    procedure scr(color: word; msg: string);
     begin
-       if ResultName = '' then {если не создается файл с рез-том}
+       if resultname = '' then { if no result file }
        begin
-          {TextColor (color);} write (msg); {TextColor (LightGray);}
+          textcolor(color); write(msg); textcolor(LIGHTGRAY);
        end;
     end;
 
 begin
    if (res = _OK) then
    begin
-      ouf.skip (Blanks);
-      if not ouf.eof then QUIT (_Dirt, 'Лишняя информация в выходном файле');
+      if not ouf.seekeof then quit(_DIRT, 'Extra information in the output file');
    end;
 
    case res of
-      _Fail: begin {sound (100); delay (30); nosound;}
-                   ErrorName := 'Облом';
-                   Scr ({LightRed,} ErrorName);
-             end;
-
-      _Dirt: begin
-                   ErrorName := 'PE Неверный формат вывода';
-                   Scr ({LightCyan, }ErrorName);
-                   res := _PE;
-                   msg := 'Лишняя информация в выходном файле';
-             end;
-
-      _PE: begin
-              ErrorName := 'PE Неверный формат вывода';
-              Scr ({LightRed, }ErrorName);
-           end;
-
-      _OK: begin
-              ErrorName := 'ok';
-              Scr ({LightGreen, }ErrorName);
-           end;
-
-
-      _WA: begin
-              ErrorName := 'WA Неверный ответ';
-              {TextColor (LightRed); }scr ({LightRed, }ErrorName);
-           end;
-
-      else QUIT (_Fail, 'Неизвестный код ???');
+     _FAIL : 
+   begin 
+      errorname := 'FAIL ';
+      scr(LIGHTRED, errorname);
    end;
 
-   if ResultName <> '' then
+     _DIRT : 
    begin
-      assign (RESFILE, ResultName); {Создаем файл с результатом проверки}
-      rewrite (ResFile);
-      if IORESULT <> 0 then QUIT (_Fail, 'Невозможно создать файл результатов');
-      writeln (ResFile, '.Testlib Result Number = ', ord (res));
-      writeln (ResFile, '.Result name (optional) = ', ErrorName);
-      writeln (ResFile, '.Check Comments = ', msg);
-      close (ResFile);
-      if IORESULT <> 0 then QUIT (_Fail, 'Невозможно создать файл результатов');
+      errorname := 'wrong output format ';
+      scr(LIGHTCYAN, errorname);
+      res := _PE;
    end;
 
-   Scr ({LightGray,} ' ' + msg + ' ');
-   writeln;
+     _PE   : 
+   begin
+      errorname := 'wrong output format ';
+      scr(LIGHTRED, errorname);
+   end;
 
-   if Res = _Fail then HALT (ord (res));
+     _OK   : 
+   begin
+      errorname := 'ok ';
+      scr(LIGHTGREEN, errorname);
+   end;
 
-   close (inf.f); close (ouf.f); close (ans.f);
+     _WA   : 
+   begin
+      errorname := 'wrong answer ';
+      scr(LIGHTRED, errorname);
+   end;
 
-   {TextColor (LightGray);}
+   else    
+      quit(_FAIL, 'What is the code ??? ');
+   end;    
 
-   if (res = _OK) or (ResultName <> '') then HALT (0);
-                                        {else HALT (ord (res));}
+   if resultname <> '' then
+   begin
+      assign(resfile, resultname); { Create file with result of evaluation }
+      rewrite(resfile);
+      if ioresult <> 0 then quit(_FAIL, 'Can not write to Result file');
+      if appesmode then
+      begin
+         write(resfile, '<?xml version="1.0" encoding="koi8-r"?>');
+         write(resfile, '<result outcome = "', outcomes[res], '">');
+         xmlsafewrite(resfile, msg);
+         writeln(resfile, '</result>');
+      end else  begin
+         writeln(resfile, '.Testlib Result Number = ', ord(res));
+         writeln(resfile, '.Result name (optional) = ', errorname);
+         writeln(resfile, '.Check Comments = ', msg);
+      end;
+      close(resfile);
+      if ioresult <> 0 then quit(_FAIL, 'Can not write to Result file');
+    end;
+
+    scr(LIGHTGRAY, msg);
+    writeln;
+
+    if res = _FAIL then HALT(ord(res));
+
+    close(inf.f); 
+    close(ouf.f); 
+    close(ans.f);
+
+    textcolor(LIGHTGRAY);
+
+   if (res = _OK) or (resultname <> '') then halt(0);
    if res=_PE then halt(4);
    if res=_WA then halt(5);
    halt(255);
 end;
 
-procedure InStream.fillbuffer;
+procedure Instream.fillbuffer;
 var
     left: integer;
 begin
@@ -263,14 +277,14 @@ begin
     if left = 0 then
     begin
         bsize := 1;
-        buffer[0] := eofchar;
+        buffer[0] := EOFCHAR;
     end else begin
-        blockread(f, buffer, buffer_size, bsize);
+        blockread(f, buffer, BUFFER_SIZE, bsize);
         fpos := fpos + bsize;
     end;
 end;
 
-procedure InStream.Reset;
+procedure Instream.reset;
 begin
     if opened then
         close;
@@ -282,11 +296,11 @@ begin
 
     if ioresult <> 0 then
     begin
-        if mode = _output then
-            quit(_pe, 'File not found: "' + name + '"');
+        if mode = _OUTPUT then
+            quit(_PE, 'File not found: "' + name + '"');
         bsize := 1;
         bpos := 0;
-        buffer[0] := eofchar;
+        buffer[0] := EOFCHAR;
     end else begin
         fillbuffer;
     end;
@@ -294,7 +308,7 @@ begin
     opened := true;
 end;
 
-constructor InStream.init(fname: string; m: TMode);
+constructor Instream.init(fname: string; m: Tmode);
 begin
     opened := false;
     name := fname;
@@ -305,20 +319,20 @@ begin
     reset;
 end;
 
-function InStream.Curchar: char;
+function Instream.curchar: char;
 begin
     curchar := buffer[bpos];
 end;
 
-function InStream.NextChar: char;
+function Instream.nextchar: char;
 begin
-    NextChar := buffer[bpos];
+    nextchar := buffer[bpos];
     skipchar;
 end;
 
-procedure InStream.skipchar;
+procedure Instream.skipchar;
 begin
-    if buffer[bpos] <> EofChar then 
+    if buffer[bpos] <> EOFCHAR then 
     begin
         inc(bpos);
         if bpos = bsize then
@@ -326,113 +340,113 @@ begin
     end;
 end;
 
-procedure InStream.Quit(res: TResult; msg: string);
+procedure Instream.quit(res: Tresult; msg: string);
 begin
-    if mode = _Output then 
+    if mode = _OUTPUT then 
         testlib.quit(res, msg)
     else 
-        testlib.quit(_fail, msg + ' (' + name + ')');
+        testlib.quit(_FAIL, msg + ' (' + name + ')');
 end;
 
-function InStream.ReadWord(Before, After: CharSet): string;
+function Instream.readword(before, after: Charset): string;
 begin
-    while buffer[bpos] in Before do skipchar;
+    while buffer[bpos] in before do skipchar;
 
-    if (buffer[bpos] = EofChar) and not (buffer[bpos] in after) then
-        quit(_pe, 'Unexpected end of file');
+    if (buffer[bpos] = EOFCHAR) and not (buffer[bpos] in after) then
+        quit(_PE, 'Unexpected end of file');
 
     result := '';
-    while not ((buffer[bpos] in After) or (buffer[bpos] = EofChar))  do
+    while not ((buffer[bpos] in after) or (buffer[bpos] = EOFCHAR))  do
     begin
         result := result + nextchar;
     end;
 end;
 
-function InStream.ReadInteger: integer;
+function Instream.readinteger: integer;
 var 
     help: string;
     code: integer;
 begin
-    while (buffer[bpos] in NumberBefore) do skipchar;
+    while (buffer[bpos] in NUMBERBEFORE) do skipchar;
 
-    if (buffer[bpos] = EofChar) then
-        quit(_pe, 'Unexpected end of file - integer expected');
+    if (buffer[bpos] = EOFCHAR) then
+        quit(_PE, 'Unexpected end of file - integer expected');
 
     help := '';
-    while not (buffer[bpos] in NumberAfter) do 
+    while not (buffer[bpos] in NUMBERAFTER) do 
         help := help + nextchar;
     val(help, result, code);
-    if code <> 0 then Quit(_pe, 'Expected integer instead of "' + help + '"');
+    if code <> 0 then quit(_PE, 'Expected integer instead of "' + help + '"');
 end;
 
-function InStream.ReadLongint: integer;
+function Instream.readlongint: integer;
 var 
     help: string;
     code: integer;
 begin
-    while (buffer[bpos] in NumberBefore) do skipchar;
+    while (buffer[bpos] in NUMBERBEFORE) do skipchar;
 
-    if (buffer[bpos] = EofChar) then
-        quit(_pe, 'Unexpected end of file - integer expected');
+    if (buffer[bpos] = EOFCHAR) then
+        quit(_PE, 'Unexpected end of file - integer expected');
 
     help := '';
-    while not (buffer[bpos] in NumberAfter) do 
+    while not (buffer[bpos] in NUMBERAFTER) do 
         help := help + nextchar;
     val(help, result, code);
-    if code <> 0 then Quit(_pe, 'Expected integer instead of "' + help + '"');
+    if code <> 0 then quit(_PE, 'Expected integer instead of "' + help + '"');
 end;
 
-function InStream.ReadReal: extended;
+function Instream.readreal: extended;
 var 
     help: string;
     code: integer;
 begin
-    help := ReadWord (NumberBefore, NumberAfter);
+    help := readword (NUMBERBEFORE, NUMBERAFTER);
     val(help, result, code);
-    if code <> 0 then Quit(_pe, 'Expected real instead of "' + help + '"');
+    if code <> 0 then quit(_PE, 'Expected real instead of "' + help + '"');
 end;
 
-procedure InStream.skip(setof: CharSet);
+procedure Instream.skip(setof: Charset);
 begin
-    while (buffer[bpos] in setof) and (buffer[bpos] <> eofchar) do skipchar;
+    while (buffer[bpos] in setof) and (buffer[bpos] <> EOFCHAR) do skipchar;
 end;
 
-function InStream.eof: boolean;
+function Instream.eof: boolean;
 begin
-    eof := buffer[bpos] = eofChar;
+    eof := buffer[bpos] = EOFCHAR;
 end;
 
-function InStream.seekEof: boolean;
+function Instream.seekeof: boolean;
 begin
-    while (buffer[bpos] in Blanks) do skipchar;
-    seekeof := buffer[bpos] = EofChar;
+    while (buffer[bpos] in BLANKS) do skipchar;
+    seekeof := buffer[bpos] = EOFCHAR;
 end;
 
-function InStream.eoln: boolean;
+function Instream.eoln: boolean;
 begin
-    eoln:= buffer[bpos] in eolnChar;
+    eoln:= buffer[bpos] in EOLNCHAR;
 end;
 
-function InStream.SeekEoln: boolean;
+function Instream.seekeoln: boolean;
 begin
     skip([' ', #9]);
-    seekEoln := eoln;
+    seekeoln := eoln;
 end;
 
-procedure InStream.nextLine;
+procedure Instream.nextline;
 begin
-    while not (buffer[bpos] in eolnChar) do skipchar;
+    while not (buffer[bpos] in EOLNCHAR) do skipchar;
     if buffer[bpos] = #13 then skipchar; 
     if buffer[bpos] = #10 then skipchar; 
 end;
 
-function InStream.ReadString: string;
+function Instream.readstring: string;
 begin
-    readstring := ReadWord([], lineAfter);
-    nextLine;
+    readstring := readword([], LINEAFTER);
+    nextline;
 end;
 
-procedure InStream.close;
+procedure Instream.close;
 begin
     if opened then system.close(f);
     opened := false;
@@ -440,33 +454,33 @@ end;
 
 initialization
     if sizeof(integer) <> 4 then
-        quit(_fail, '"testlib" unit assumes "sizeof(integer) = 4"');
+        quit(_FAIL, '"testlib" unit assumes "sizeof(integer) = 4"');
 
-    if (ParamCount < 3) or (ParamCount > 5) then
-        quit(_fail, 'Program must be run with the following arguments: ' +
+    if (paramcount < 3) or (paramcount > 5) then
+        quit(_FAIL, 'Program must be run with the following arguments: ' +
             '<input-file> <output-file> <answer-file> [<report-file> [<-appes>]]');
 
-    case ParamCount of
+    case paramcount of
         3: 
             begin
-                ResultName := '';
-                AppesMode := false;
+                resultname := '';
+                appesmode := false;
             end;
         4: 
             begin
-                ResultName := ParamStr(4);
-                AppesMode := false;
+                resultname := paramstr(4);
+                appesmode := false;
             end;
         5: begin
-                if uppercase(ParamStr(5)) <> '-APPES' then
-                    quit(_fail, 'Program must be run with the following arguments: ' +
+                if uppercase(paramstr(5)) <> '-APPES' then
+                    quit(_FAIL, 'Program must be run with the following arguments: ' +
                         '<input-file> <output-file> <answer-file> [<report-file> [<-appes>]]');
-                ResultName := ParamStr(4);
-                AppesMode := true;
+                resultname := paramstr(4);
+                appesmode := true;
            end;
     end; { case }
 
-    inf.init(ParamStr(1), _Input);
-    ouf.init(ParamStr(2), _Output);
-    ans.init(ParamStr(3), _Answer);
+    inf.init(paramstr(1), _INPUT);
+    ouf.init(paramstr(2), _OUTPUT);
+    ans.init(paramstr(3), _ANSWER);
 end.
