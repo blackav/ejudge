@@ -1503,11 +1503,9 @@ display_user(unsigned char const *upper, int user_id, int start_item,
           break;
         case USERLIST_NN_LOGIN:
         case USERLIST_NN_EMAIL:
-        case USERLIST_NN_REG_PASSWORD:
           help_str = "Enter-edit C-contest A-new member Q-quit";
           break;
         case USERLIST_NN_NAME:
-        case USERLIST_NN_TEAM_PASSWORD:
         case USERLIST_NN_INST:
         case USERLIST_NN_INST_EN:
         case USERLIST_NN_INSTSHORT:
@@ -1527,6 +1525,10 @@ display_user(unsigned char const *upper, int user_id, int start_item,
         case USERLIST_NN_PRINTER_NAME:
         case USERLIST_NN_LANGUAGES:
           help_str = "Enter-edit D-clear C-contest A-new member Q-quit";
+          break;
+        case USERLIST_NN_REG_PASSWORD:
+        case USERLIST_NN_TEAM_PASSWORD:
+          help_str = "Enter-edit D-clear O-random Y-copy C-contest A-new member Q-quit";
           break;
         case USERLIST_NN_IS_PRIVILEGED:
         case USERLIST_NN_IS_INVISIBLE:
@@ -1616,6 +1618,12 @@ display_user(unsigned char const *upper, int user_id, int start_item,
         goto menu_done;
       case 'c': case 'C': case 'Ó' & 255: case 'ó' & 255:
         c = 'c';
+        goto menu_done;
+      case 'o': case 'O': case 'Ý' & 255: case 'ý' & 255:
+        c = 'o';
+        goto menu_done;
+      case 'y': case 'Y': case 'Î' & 255: case 'î' & 255:
+        c = 'y';
         goto menu_done;
       }
       cmd = -1;
@@ -1811,6 +1819,56 @@ display_user(unsigned char const *upper, int user_id, int start_item,
                                          u->id, i);
       if (r < 0) {
         vis_err("Registration failed: %s", userlist_strerror(-r));
+        goto menu_continue;
+      }
+      retcode = 0;
+      c = 'q';
+      goto menu_continue;
+    }
+
+    if (c == 'o' || c == 'y') {
+      unsigned char *msg_txt = 0;
+      int cmd;
+
+      // assign a random password or copy password
+      cur_i = item_index(current_item(menu));
+      if (cur_i < 0 || cur_i >= tot_items) continue;
+      if (info[cur_i].role != -1) goto menu_continue;
+      if (info[cur_i].pers != 0) goto menu_continue;
+      if (info[cur_i].field != USERLIST_NN_REG_PASSWORD
+          && info[cur_i].field != USERLIST_NN_TEAM_PASSWORD)
+        goto menu_continue;
+      if (!user_descs[info[cur_i].field].is_editable
+          || !user_descs[info[cur_i].field].has_value)
+        goto menu_continue;
+
+      switch (info[cur_i].field) {
+      case USERLIST_NN_REG_PASSWORD:
+        if (c == 'o') {
+          msg_txt = "Assign a random registration password?";
+          cmd = ULS_RANDOM_PASSWD;
+        } else {
+          msg_txt = "Copy registration password to team password?";
+          cmd = ULS_COPY_TO_TEAM;
+        }
+        break;
+      case USERLIST_NN_TEAM_PASSWORD:
+        if (c == 'o') {
+          msg_txt = "Assign a random team password?";
+          cmd = ULS_RANDOM_TEAM_PASSWD;
+        } else {
+          msg_txt = "Copy team password to registration password?";
+          cmd = ULS_COPY_TO_REGISTER;
+        }
+        break;
+      default:
+        abort();
+      }
+      r = okcancel(msg_txt);
+      if (r != 1) goto menu_continue;
+      r = userlist_clnt_register_contest(server_conn, cmd, u->id, 0);
+      if (r < 0) {
+        vis_err("Server error: %s", userlist_strerror(-r));
         goto menu_continue;
       }
       retcode = 0;
@@ -2178,6 +2236,45 @@ registered_users_sort_func(void const *p1, void const *p2)
   }
 }
 
+static const unsigned char * const field_op_names[] =
+{
+  "Do nothing",
+  "Clear field",
+  "Set field",
+  0,
+};
+static const unsigned char * const field_op_keys[] =
+{
+  "QqêÊ",
+  "CcóÓ",
+  "Ss÷×",
+  0,
+};
+static const unsigned char * const field_names[] =
+{
+  "Do nothing",
+  "Read-only flag",
+  "Never clean flag",
+  "Location field",
+  0
+};
+static const unsigned char * const field_keys[] =
+{
+  "QqêÊ",
+  "RrëË",
+  "CcóÓ",
+  "LläÄ",
+  0,
+};
+static const int field_codes[] =
+{
+  0,
+  USERLIST_NN_READ_ONLY,
+  USERLIST_NN_NEVER_CLEAN,
+  USERLIST_NN_LOCATION,
+  0,
+};
+
 /* information about selected users */
 struct selected_users_info
 {
@@ -2228,6 +2325,7 @@ display_registered_users(unsigned char const *upper,
   int first_row;
   int retcode = -1, errcode;
   struct contest_desc *cnts = 0;
+  unsigned char edit_buf[512];
 
   if ((errcode = contests_get(contest_id, &cnts)) < 0) {
     vis_err("%s", contests_strerror(-errcode));
@@ -2414,6 +2512,9 @@ display_registered_users(unsigned char const *upper,
         goto menu_done;
       case '0': case ')':
         c = '0';
+        goto menu_done;
+      case 'f': case 'F': case 'Á' & 255: case 'á' & 255:
+        c = 'f';
         goto menu_done;
       }
       cmd = -1;
@@ -2787,6 +2888,59 @@ display_registered_users(unsigned char const *upper,
       if (i >= 0) {
         retcode = i;
         c = 'q';
+      }
+    } else if (c == 'f') {
+      int field_op, field_code;
+      field_op = generic_menu(10, -1, -1, -1, 0, 3, -1, -1,
+                              field_op_names, field_op_keys,
+                              "Enter-select ^G-cancel Q,C,S-select option",
+                              "Field operation");
+      if (field_op <= 0) continue;
+      i = generic_menu(10, -1, -1, -1, 0, (field_op == 2)?3:4, -1, -1,
+                       field_names, field_keys,
+                       "Enter-select ^G-cancel Q,R,C,L-select option",
+                       "Field");
+      if (i <= 0) continue;
+      field_code = field_codes[i];
+
+      if (!sel_users.total_selected) {
+        i = item_index(current_item(menu));
+        switch (field_op) {
+        case 1:                 /* clear field */
+          r = userlist_clnt_delete_field(server_conn, uu[i]->id,
+                                         -1, 0, field_code);
+          break;
+        case 2:                 /* set field */
+          snprintf(edit_buf, sizeof(edit_buf), "%d", 1);
+          r = userlist_clnt_edit_field(server_conn, uu[i]->id, -1, 0,
+                                       field_code, edit_buf);
+        }
+        if (r < 0) {
+          vis_err("Operation failed: %s", userlist_strerror(-r));
+          break;
+        }
+      } else {
+        for (i = 0; i < nuser; i++) {
+          if (!sel_users.mask[i]) continue;
+          switch (field_op) {
+          case 1:               /* clear field */
+            r = userlist_clnt_delete_field(server_conn, uu[i]->id,
+                                           -1, 0, field_code);
+            break;
+          case 2:               /* set field */
+            snprintf(edit_buf, sizeof(edit_buf), "%d", 1);
+            r = userlist_clnt_edit_field(server_conn, uu[i]->id, -1, 0,
+                                         field_code, edit_buf);
+          }
+          if (r < 0) {
+            vis_err("Operation failed for %d: %s", uu[i]->id, userlist_strerror(-r));
+            break;
+          }
+        }
+        memset(sel_users.mask, 0, sel_users.allocated);
+        sel_users.total_selected = 0;
+        c = 'q';
+        retcode = 0;
       }
     }
 
