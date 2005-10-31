@@ -2176,3 +2176,6 @@ prepare.c 1 103 11184942
 prepare_out.c 1 14 5038997
 super_html_3.c 1 17 18305955
 userlist-server.c 1 63 15422512
+register.c 1 39 7904357
+userlist-server.c 1 64 15610136
+userlist_proto.c 1 7 168770
