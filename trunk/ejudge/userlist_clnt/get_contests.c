@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@ userlist_clnt_get_contests(struct userlist_clnt *clnt,
 {
   struct userlist_pk_get_user_info out_pkt;
   struct userlist_pk_xml_data *in_pkt = 0;
-  int in_size;
+  size_t in_size;
   int info_len;
 
   ASSERT(clnt);
