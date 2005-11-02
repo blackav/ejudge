@@ -476,8 +476,8 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
   unsigned char *prob_str;
   const unsigned char *imported_str;
   const unsigned char *rejudge_dis_str;
-  unsigned long *displayed_mask;
-  int displayed_size, raw_format = 0;
+  unsigned long *displayed_mask = 0;
+  int displayed_size = 0, raw_format = 0;
   unsigned char stat_select_name[32];
 
   if (!u) u = allocate_user_info(user_id, sid);
