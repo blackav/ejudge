@@ -47,6 +47,8 @@ LIBCAP_DIR=@ac_cv_libcap_root@
 LIBCAP_INCL_OPT=@ac_cv_libcap_include_opt@
 LIBCAP_LIB_OPT=@ac_cv_libcap_lib_opt@
 
+WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@
+
 include files.make
 
 ifeq (${ARCH}, unix)
@@ -69,7 +71,7 @@ $(error "unsupported configuration")
 endif
 
 LDLIBS=${EXTRALIBS} -lreuse -lz -lm
-CFLAGS=-I. ${REUSE_INCL_OPT} ${EXPAT_INCL_OPT} ${CDEBUGFLAGS} ${CCOMPFLAGS} ${CEXTRAFLAGS}
+CFLAGS=-I. ${REUSE_INCL_OPT} ${EXPAT_INCL_OPT} ${CDEBUGFLAGS} ${CCOMPFLAGS} ${CEXTRAFLAGS} ${WPTRSIGN}
 LDFLAGS=${REUSE_LIB_OPT} ${EXPAT_LIB_OPT} ${CDEBUGFLAGS} ${LDCOMPFLAGS} ${LDEXTRAFLAGS}
 CC=gcc
 LD=gcc
