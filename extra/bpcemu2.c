@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -190,7 +190,7 @@ main(int argc, char *argv[])
     dup2(fd, 1);
     dup2(fd, 2);
     close(fd);
-    execl(buf, buf, "-I", "keystroke \"\\r\" video { none } dpmi 4096", 0);
+    execl(buf, buf, "-I", "keystroke \"\\r\" video { none } dpmi 4096", NULL);
     myerr("execl failed: %s", strerror(errno));
     _exit(1);
   }
