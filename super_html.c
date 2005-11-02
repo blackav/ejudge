@@ -298,7 +298,7 @@ super_html_main_page(FILE *f,
   int contest_max_id, contest_id, errcode;
   unsigned char *html_name;
   struct contest_desc *cnts;
-  struct contest_extra *extra;
+  struct contest_extra *extra = 0;
   unsigned char hbuf[1024];
   opcap_t caps;
   unsigned char judge_url[1024] = { 0 };
@@ -2459,7 +2459,7 @@ super_html_edit_contest_page(FILE *f,
                              self_url,
                              extra_args,
                              hidden_vars);
-    print_string_editing_row(f, "HTML attributes for `register' paragraphs:",
+    print_string_editing_row(f, "HTML attributes for `team' paragraphs:",
                              cnts->team_par_style,
                              SUPER_ACTION_CNTS_CHANGE_TEAM_PAR_STYLE,
                              SUPER_ACTION_CNTS_CLEAR_TEAM_PAR_STYLE,
