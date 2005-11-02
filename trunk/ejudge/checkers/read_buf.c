@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,9 +33,9 @@ checker_read_buf(int ind,
     fatal_CF("checker_read_buf: invalid buf_size %zu", buf_size);
 
   local_buf = (unsigned char*) alloca(buf_size + 1);
-  if (!local_buf) fatal_CF("checker_read_buf: alloca(%d) failed", buf_size+1);
+  if (!local_buf) fatal_CF("checker_read_buf: alloca(%zu) failed", buf_size+1);
   memset(local_buf, 0, buf_size + 1);
-  format_len = snprintf(format_str, sizeof(format_str), "%%%ds", buf_size);
+  format_len = snprintf(format_str, sizeof(format_str), "%%%zus", buf_size);
   if (format_len >= sizeof(format_str))
     fatal_CF("checker_read_buf: format string is too long: %zu", format_len);
 
