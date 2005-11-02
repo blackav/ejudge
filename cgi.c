@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -262,7 +262,7 @@ parse_multipart(char const *charset)
   lbuf[--llen] = 0;
   if (lbuf[llen - 1] == '\r') lbuf[--llen] = 0;
   if (lbuf[0] != '-' || lbuf[1] != '-' || strcmp(boundary, lbuf + 2)) {
-    err("got: %s(%d)", lbuf, strlen(lbuf));
+    err("got: %s(%zu)", lbuf, strlen(lbuf));
     bad_request(charset);
     exit(0);
   }
