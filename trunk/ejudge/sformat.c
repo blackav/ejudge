@@ -793,7 +793,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
 
     if (is_invalid) {
       // FIXME: need reasonable behavour
-      os_snprintf(tbuf, sizeof(tbuf), "<invalid:%.*s>", pf-specstart, specstart);
+      os_snprintf(tbuf, sizeof(tbuf), "<invalid:%.*s>", (int) (pf-specstart), specstart);
       papp = tbuf;
     }
 
