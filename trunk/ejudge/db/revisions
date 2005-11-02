@@ -2235,3 +2235,4 @@ serve_clnt/edit_user.c 1 2 188333
 serve_clnt/get_archive.c 1 4 224021
 serve_clnt/open.c 1 3 268485
 serve_clnt/recv_packet.c 1 3 225375
+serve_clnt.h 1 24 482164
