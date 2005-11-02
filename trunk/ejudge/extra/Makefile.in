@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+# Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -26,6 +26,7 @@ CGI_PROG_SUFFIX=@ac_cv_cgi_suffix@
 STATIC=@ac_cv_static@
 NO_KERNEL=@ac_cv_no_kernel@
 ENABLE_NLS=@ac_cv_nls@
+WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@
 
 XGETTEXT=@XGETTEXT@
 MSGMERGE=@MSGMERGE@
@@ -56,7 +57,7 @@ endif
 
 CC=gcc
 LD=gcc
-CFLAGS=${LIBCAP_INCL_OPT} ${CDEBUGFLAGS} ${CCOMPFLAGS} ${CINTLFLAG} ${CEXTRAFLAGS}
+CFLAGS=${LIBCAP_INCL_OPT} ${CDEBUGFLAGS} ${CCOMPFLAGS} ${CINTLFLAG} ${CEXTRAFLAGS} ${WPTRSIGN}
 LDFLAGS=${LIBCAP_LIB_OPT} ${CDEBUGFLAGS} ${LDCOMPFLAGS} ${LDEXTRAFLAGS}
 
 TARGETS=bpcemu2 dosrun3 bppemu bccemu qbemu
