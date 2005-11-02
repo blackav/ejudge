@@ -2207,3 +2207,15 @@ userlist_clnt/register_contest.c 1 7 132091
 userlist_clnt/register_new.c 1 4 152998
 userlist_clnt/remove_member.c 1 4 128299
 userlist_clnt/set_info.c 1 5 139514
+userlist_clnt.h 1 28 677467
+userlist_clnt/add_field.c 1 5 164022
+userlist_clnt/change_registration.c 1 4 142179
+userlist_clnt/delete_field.c 1 4 127437
+userlist_clnt/dump_database.c 1 5 160780
+userlist_clnt/edit_field.c 1 4 145443
+userlist_clnt/generate_team_passwd.c 1 6 152261
+userlist_clnt/get_contests.c 1 4 142439
+userlist_clnt/get_info.c 1 4 152985
+userlist_clnt/get_param.c 1 2 146967
+userlist_clnt/list_all_users.c 1 5 157287
+userlist_clnt/list_users.c 1 4 217603
