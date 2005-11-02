@@ -24,7 +24,7 @@
 
 int serve_clnt_open(char const *);
 int serve_clnt_do_pass_fd(int sock_fd, int fds_num, int *fds);
-int serve_clnt_send_packet(int sock_fd, int size, void const *buf);
+int serve_clnt_send_packet(int sock_fd, size_t size, void const *buf);
 int serve_clnt_recv_packet(int sock_fd, size_t *p_size, void **p_data);
 
 int serve_clnt_pass_fd(int sock_fd, int nfd, int *fds);
