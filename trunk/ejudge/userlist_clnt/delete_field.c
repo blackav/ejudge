@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,8 @@ userlist_clnt_delete_field(struct userlist_clnt *clnt,
 {
   struct userlist_pk_edit_field *out = 0;
   struct userlist_packet *in = 0;
-  int out_size = 0, in_size = 0, r;
+  int r;
+  size_t out_size, in_size = 0;
 
   out_size = sizeof(*out);
   out = alloca(out_size);
