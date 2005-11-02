@@ -27,6 +27,7 @@ STATIC=@ac_cv_static@
 NO_KERNEL=@ac_cv_no_kernel@
 ENABLE_NLS=@ac_cv_nls@
 NO_RPATH=@ac_cv_no_rpath@
+WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@
 
 XGETTEXT=@XGETTEXT@
 MSGMERGE=@MSGMERGE@
@@ -63,7 +64,7 @@ CCOMPFLAGS=-D_GNU_SOURCE
 LDCOMPFLAGS=
 
 LDLIBS=${EXTRALIBS} -lm
-CFLAGS=-I. ${CDEBUGFLAGS} ${CCOMPFLAGS} ${CEXTRAFLAGS}
+CFLAGS=-I. ${CDEBUGFLAGS} ${CCOMPFLAGS} ${CEXTRAFLAGS} ${WPTRSIGN}
 LDFLAGS=${CDEBUGFLAGS} ${LDCOMPFLAGS} ${LDEXTRAFLAGS}
 CC=gcc
 LD=gcc
@@ -192,15 +193,15 @@ pic/corr_eof.o: corr_eof.c checker_internal.h
 eq_double.o : eq_double.c checker_internal.h
 	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
 pic/eq_double.o : eq_double.c checker_internal.h
-	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
+	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu99 -c $< -o $@
 eq_float.o : eq_float.c checker_internal.h
 	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
 pic/eq_float.o : eq_float.c checker_internal.h
-	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
+	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu99 -c $< -o $@
 eq_long_double.o : eq_long_double.c checker_internal.h
 	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
 pic/eq_long_double.o : eq_long_double.c checker_internal.h
-	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
+	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu99 -c $< -o $@
 fatal.o: fatal.c checker_internal.h
 pic/fatal.o: fatal.c checker_internal.h
 fatal_cf.o: fatal_cf.c checker_internal.h
