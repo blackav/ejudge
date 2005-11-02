@@ -397,12 +397,12 @@ text_number_lines(const unsigned char *intxt, size_t insize,
   size_t i, j = 1;
   unsigned char *s = outtxt;
 
-  snprintf(lbuf1, sizeof(lbuf1), "[%d]", j++);
+  snprintf(lbuf1, sizeof(lbuf1), "[%zu]", j++);
   s += sprintf(s, "%-8s", lbuf1);
   for (i = 0; i < insize; i++) {
     *s++ = intxt[i];
     if (intxt[i] == '\n' && i + 1 != insize) {
-      snprintf(lbuf1, sizeof(lbuf1), "[%d]", j++);
+      snprintf(lbuf1, sizeof(lbuf1), "[%zu]", j++);
       s += sprintf(s, "%-8s", lbuf1);
     }
   }
