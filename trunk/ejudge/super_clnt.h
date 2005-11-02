@@ -25,7 +25,7 @@
 int super_clnt_open(const unsigned char *path);
 
 int super_clnt_do_pass_fd(int sock_fd, int fds_num, int *fds);
-int super_clnt_send_packet(int sock_fd, int size, const void *buf);
+int super_clnt_send_packet(int sock_fd, size_t size, const void *buf);
 int super_clnt_recv_packet(int sock_fd,
                            struct prot_super_packet *p_res,
                            size_t *p_size, void **p_data);
