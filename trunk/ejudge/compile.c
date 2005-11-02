@@ -62,7 +62,7 @@ do_loop(void)
 
   path_t  pkt_name, run_name;
   char   *pkt_ptr;
-  int     pkt_len;
+  size_t  pkt_len;
   int    r, i;
   tpTask tsk = 0;
   unsigned char msgbuf[512];
