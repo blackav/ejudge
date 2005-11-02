@@ -893,7 +893,7 @@ userlist_build_cookie_hash(struct userlist_list *p)
   /* choose hashtable size */
   for (i = 0; primes[i] && primes[i] < cookie_count * 3; i++);
   if (!primes[i]) {
-    err("size of hash table %d is too large", cookie_count * 3);
+    err("size of hash table %zu is too large", cookie_count * 3);
     goto cleanup;
   }
   p->cookie_hash_size = primes[i];
@@ -929,7 +929,7 @@ userlist_build_cookie_hash(struct userlist_list *p)
   info("cookie hashtable: size = %zu, step = %zu, thresh = %zu, current = %zu",
        p->cookie_hash_size, p->cookie_hash_step, p->cookie_thresh,
        p->cookie_cur_fill);
-  info("cookie hashtable: collisions = %d", collision_count);
+  info("cookie hashtable: collisions = %zu", collision_count);
   info("cookie hashtable: time = %llu (us)", tsc2);
 
   return 0;
