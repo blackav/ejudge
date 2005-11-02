@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -73,7 +73,7 @@ serve_clnt_get_archive(int sock_fd, int user_id, int contest_id,
     return -SRV_ERR_PROTOCOL;
   }
   if (in_size < sizeof(*in)) {
-    err("serve_clnt_get_archive: packet length mismatch: %d", in_size);
+    err("serve_clnt_get_archive: packet length mismatch: %zu", in_size);
     xfree(in);
     return -SRV_ERR_PROTOCOL;
   }
@@ -83,7 +83,7 @@ serve_clnt_get_archive(int sock_fd, int user_id, int contest_id,
     return -SRV_ERR_PROTOCOL;
   }
   if (in_size != sizeof(*in) + in->path_len) {
-    err("serve_clnt_get_archive: packet length mismatch: %d", in_size);
+    err("serve_clnt_get_archive: packet length mismatch: %zu", in_size);
     xfree(in);
     return -SRV_ERR_PROTOCOL;
   }
