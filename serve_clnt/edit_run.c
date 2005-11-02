@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -91,7 +91,7 @@ do_serve_clnt_edit_run(int sock_fd, int cmd, int run_id, int mask,
   in = void_in;
   if (in_size != sizeof(*in)) {
     xfree(in);
-    err("serve_clnt_edit_run: packet length mismatch: %d", in_size);
+    err("serve_clnt_edit_run: packet length mismatch: %zu", in_size);
     return -SRV_ERR_PROTOCOL;
   }
   if (in->id < 0) {
