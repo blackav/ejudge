@@ -178,7 +178,7 @@ static int user_registering;
 static int user_already_registered;
 
 static char *header_txt, *footer_txt;
-static int header_len, footer_len;
+static size_t header_len, footer_len;
 
 static unsigned char **allowed_languages;
 static size_t allowed_languages_u;

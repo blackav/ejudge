@@ -138,7 +138,7 @@ static int     force_recheck_status = 0;
 static char   *error_log;
 
 static char *header_txt, *footer_txt;
-static int header_len, footer_len;
+static size_t header_len, footer_len;
 
 static int serve_socket_fd = -1;
 
