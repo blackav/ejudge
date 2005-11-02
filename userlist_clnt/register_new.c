@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,7 @@ userlist_clnt_register_new(struct userlist_clnt *clnt,
   struct userlist_pk_register_new * data;
   int len;
   short * answer;
-  int anslen;
+  size_t anslen;
   int res;
   int r;
 
