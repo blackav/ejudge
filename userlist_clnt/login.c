@@ -35,7 +35,7 @@ userlist_clnt_login(struct userlist_clnt *clnt,
   struct userlist_pk_login_ok * answer;
   void *void_answer = 0;
   int len;
-  int anslen;
+  size_t anslen;
   int res;
   int r;
 
