@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,12 +23,13 @@ userlist_clnt_list_users(struct userlist_clnt *clnt,
                          int locale_id,
                          int user_id,
                          unsigned long flags,
-                         unsigned char *url, unsigned char *srch)
+                         const unsigned char *url,
+                         const unsigned char *srch)
 {
   struct userlist_pk_list_users *out = 0;
   struct userlist_packet *in = 0;
-  int out_size = 0, in_size = 0, r;
-  size_t url_len, srch_len;
+  int r;
+  size_t out_size, url_len, srch_len, in_size = 0;
   unsigned char *url_ptr, *srch_ptr;
   int pp[2];
   int pfd[2];
