@@ -27,7 +27,7 @@ cpu_get_bogomips(void)
   FILE *f = 0;
   unsigned char buf[1024], *s;
   size_t buflen;
-  int value, n;
+  int value = 0, n;
   double dv;
 
   if (!(f = fopen("/proc/cpuinfo", "r"))) goto failure;
