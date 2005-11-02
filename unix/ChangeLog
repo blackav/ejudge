@@ -1,3 +1,11 @@
+2005-11-02  Alexander Chernov  <cher@ispras.ru>
+
+	* cpu.c:
+	(cpu_get_bogomips) "use of uninitialized value" warning is fixed.
+
+	* ej_process.c:
+	(read_process_output) "missing sentinel point" warning is fixed.
+
 2005-09-12  Alexander Chernov  <cher@ispras.ru>
 
 	* cpu.c: initial revision

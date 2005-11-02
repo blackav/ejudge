@@ -1,3 +1,16 @@
+2005-11-03  Alexander Chernov  <cher@ispras.ru>
+
+	* read_buf.c: copyright notice is updated;
+	(checker_read_buf) fixes for 64-bit platforms.
+
+2005-11-02  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in: copyright notice is updated;
+	WPTRSIGN variable is added and used in CFLAGS, this variable
+	is autoconfigured by configure.
+	(pic/eq_double.o, pic/eq_float.o, pic/eq_long_double.o) -fPIC -DPIC
+	  flags are added.
+
 2005-09-22  Alexander Chernov  <cher@ispras.ru>
 
 	* Makefile.in: copyright notice is updated;

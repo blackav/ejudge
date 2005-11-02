@@ -1,3 +1,13 @@
+2005-11-02  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in: copyright notice is updated;
+	WPTRSIGN variable is added and used in CFLAGS, this variable
+	is autoconfigured by configure.
+
+	* bccemu.c, bpcemu2.c, bppemu.c, dosrun3.c, qbemu.c:
+	copyright notice is updated;
+	(main) "missing sentinel point" warning is fixed.
+
 2004-05-05  Alexander Chernov  <cher@ispras.ru>
 
 	* Makefile.in: `install' rule is corrected.
