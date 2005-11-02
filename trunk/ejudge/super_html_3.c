@@ -4733,7 +4733,7 @@ super_html_get_serve_header_and_footer(const unsigned char *path,
   char *text = 0;
   size_t size = 0;
   int at_beg = 1;
-  unsigned char *s, *after_start = 0, *before_end = 0, *tstart, *p;
+  unsigned char *s, *after_start = 0, *before_end = 0, *tstart, *p = 0;
   unsigned char *header = 0, *footer = 0;
 
   if (stat(path, &sb) < 0) return -SSERV_ERR_FILE_NOT_EXIST;
@@ -4791,8 +4791,8 @@ super_html_get_serve_header_and_footer(const unsigned char *path,
         *p++ = *s++;
       }
     }
+    *p = 0;
   }
-  *p = 0;
 
   if (!after_start) after_start = tstart + size;
   header = p = xmalloc(after_start - tstart + 1);
@@ -5692,7 +5692,7 @@ invoke_compile_process(FILE *flog, const unsigned char *cur_dir,
     if (pfd[1] != 1) dup2(pfd[1], 1);
     if (pfd[1] != 2) dup2(pfd[1], 2);
     if (pfd[1] != 1 && pfd[1] != 2) close(pfd[1]);
-    execl("/bin/sh", "/bin/sh", "-c", cmd, 0);
+    execl("/bin/sh", "/bin/sh", "-c", cmd, NULL);
     _exit(100);
   }
 
