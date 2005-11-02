@@ -2183,3 +2183,12 @@ edit-userlist.c 1 28 8712760
 userlist-server.c 1 65 15752462
 testing_report_xml.c 1 8 1328084
 userlist_clnt/register_contest.c 1 6 131360
+serve-cmd.c 1 12 1422347
+super-serve.c 1 28 10636875
+userlist-server.c 1 66 15752817
+unix/cpu.c 1 2 124455
+unix/ej_process.c 1 2 186082
+master_html.c 1 49 8643581
+super_html.c 1 14 9415874
+super_html_2.c 1 13 4045501
+super_html_3.c 1 18 18306447
