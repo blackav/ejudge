@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,8 @@ serve_clnt_show_item(int sock_fd, int out_fd, int cmd,
 {
   struct prot_serve_pkt_show_item *out;
   struct prot_serve_packet *in;
-  int out_size, in_size, r;
+  int r;
+  size_t out_size, in_size = 0;
   int pipe_fd[2], pass_fd[2];
   unsigned char c;
   void *void_in = 0;
