@@ -266,7 +266,7 @@ attach_contest_extra(int id, struct contest_desc *cnts)
     shm_key++;
     if (!shm_key) shm_key = 1;
   }
-  if ((int) (shm_addr = shmat(shm_id, 0, 0)) == -1) {
+  if ((long) (shm_addr = shmat(shm_id, 0, 0)) == -1) {
     err("shmat failed: %s", os_ErrorMsg());
     goto cleanup;
   }
@@ -844,7 +844,7 @@ allocate_new_user(void)
     userlist->user_map = new_map;
     userlist->user_map_size = new_size;
     if (!daemon_mode)
-      info("userlist: user_map extended to %d", new_size);
+      info("userlist: user_map extended to %zu", new_size);
   }
   userlist->user_map[i] = u;
   u->id = i;
@@ -2446,7 +2446,7 @@ cmd_get_user_info(struct client_state *p,
   dirty = 1;
   enqueue_reply_to_client(p, out_size, out);
   if (!daemon_mode) {
-    CONN_INFO("%s -> OK, size = %d", logbuf, out_size);
+    CONN_INFO("%s -> OK, size = %zu", logbuf, out_size);
   }
 }
 
@@ -2538,7 +2538,7 @@ cmd_priv_get_user_info(struct client_state *p,
   user->last_access_time = cur_time;
   dirty = 1;
   enqueue_reply_to_client(p, out_size, out);
-  info("%s -> OK, size = %d", logbuf, out_size);
+  info("%s -> OK, size = %zu", logbuf, out_size);
 }
 
 static void
@@ -2596,7 +2596,7 @@ cmd_list_all_users(struct client_state *p,
   memcpy(out->data, xml_ptr, xml_size + 1);
   xfree(xml_ptr);
   enqueue_reply_to_client(p, out_size, out);
-  info("%s -> OK, size = %d", logbuf, xml_size); 
+  info("%s -> OK, size = %zu", logbuf, xml_size); 
 }
 
 static void
@@ -2652,7 +2652,7 @@ cmd_list_standings_users(struct client_state *p,
   memcpy(out->data, xml_ptr, xml_size + 1);
   xfree(xml_ptr);
   enqueue_reply_to_client(p, out_size, out);
-  info("%s -> OK, size = %d", logbuf, xml_size); 
+  info("%s -> OK, size = %zu", logbuf, xml_size); 
 }
 
 
@@ -2721,7 +2721,7 @@ cmd_get_user_contests(struct client_state *p,
   dirty = 1;
   enqueue_reply_to_client(p, out_size, out);
   if (!daemon_mode) {
-    info("%s -> OK, size = %d", logbuf, out_size);
+    info("%s -> OK, size = %zu", logbuf, out_size);
   }
 }
 
