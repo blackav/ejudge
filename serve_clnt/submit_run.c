@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,8 @@ serve_clnt_submit_run(int sock_fd, int cmd,
 {
   struct prot_serve_pkt_submit_run *out = 0;
   struct prot_serve_packet *in = 0;
-  int out_size = 0, in_size = 0, r;
+  int r;
+  size_t out_size, in_size = 0;
   void *void_in = 0;
 
   if (cmd != SRV_CMD_SUBMIT_RUN && cmd != SRV_CMD_PRIV_SUBMIT_RUN)
