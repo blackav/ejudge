@@ -53,7 +53,7 @@ read_process_output(const unsigned char *cmd,
     if (workdir) chdir(workdir);
     sigemptyset(&mask);
     sigprocmask(SIG_SETMASK, &mask, 0);
-    execl("/bin/sh", "/bin/sh", "-c", cmd, 0);
+    execl("/bin/sh", "/bin/sh", "-c", cmd, NULL);
     _exit(1);
   }
   close(pfd[1]); pfd[1] = -1;
