@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -72,7 +72,7 @@ super_clnt_recv_packet(int sock_fd,
       goto failed;
     }
     if (in_size < sizeof(struct prot_super_packet) || in_size >= 256 * 1024) {
-      err("super_cnlt_recv_packet: invalid packet length %zd", in_size);
+      err("super_cnlt_recv_packet: invalid packet length %d", in_size);
       code = -SSERV_ERR_PROTOCOL_ERROR;
       goto failed;
     }
