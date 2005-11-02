@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -982,7 +982,7 @@ do_choose_file(const unsigned char *header, unsigned char *path_buf,
     snprintf(file_name, sizeof(file_name), "%s", path_buf + path_len);
     while (path_len > 0 && path_buf[path_len - 1] == '/') path_len--;
     if (!path_len) path_len++;
-    snprintf(dir_path, sizeof(dir_path), "%.*s", path_len, path_buf);
+    snprintf(dir_path, sizeof(dir_path), "%.*s", (int) path_len, path_buf);
   }
 
   //fprintf(stderr, "dir_path: %s\n", dir_path);
@@ -1107,13 +1107,14 @@ do_choose_file(const unsigned char *header, unsigned char *path_buf,
       beg_len = (sizeof(name_str) - 4) / 2;
       end_len = sizeof(name_str) - 4 - beg_len;
       snprintf(name_str, sizeof(name_str), "%.*s...%s",
-               beg_len, files[i]->name, files[i]->name + name_len - end_len);
+               (int) beg_len, files[i]->name, files[i]->name + name_len - end_len);
     } else {
       snprintf(name_str, sizeof(name_str), "%s", files[i]->name);
     }
 
     asprintf(&descs[i], "%s%s%-*.*s %10s %s %s",
-             lnk_str, type_str, sizeof(name_str) - 1, sizeof(name_str) - 1,
+             lnk_str, type_str, (int) (sizeof(name_str) - 1),
+             (int) (sizeof(name_str) - 1),
              name_str, size_str, time_str, mode_str);
   }
 
