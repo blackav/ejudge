@@ -2220,3 +2220,12 @@ userlist_clnt/get_param.c 1 2 146967
 userlist_clnt/list_all_users.c 1 5 157287
 userlist_clnt/list_users.c 1 4 217603
 super_clnt/recv_packet.c 1 2 249275
+super_clnt.h 1 5 175307
+serve_clnt/rejudge_by_mask.c 1 5 181129
+serve_clnt/reset_filter.c 1 5 167907
+serve_clnt/show_item.c 1 5 247660
+serve_clnt/submit_clar.c 1 5 209850
+serve_clnt/submit_run.c 1 6 204201
+serve_clnt/upload_report.c 1 4 189375
+super_clnt/send_packet.c 1 2 165479
+userlist_clnt/send_packet.c 1 6 171410
