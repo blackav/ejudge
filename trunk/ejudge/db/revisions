@@ -2193,3 +2193,7 @@ super_html.c 1 14 9415874
 super_html_2.c 1 13 4045501
 super_html_3.c 1 18 18306447
 userlist_clnt/send_packet.c 1 5 171349
+userlist_clnt/set_passwd.c 1 4 173247
+userlist_clnt/team_cookie.c 1 7 223930
+userlist_clnt/team_login.c 1 7 257651
+userlist_clnt/team_set_passwd.c 1 6 170810
