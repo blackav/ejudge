@@ -36,7 +36,8 @@ userlist_clnt_priv_login(struct userlist_clnt *clnt,
   struct userlist_pk_do_login *out = 0;
   struct userlist_pk_login_ok *in = 0;
   unsigned char *login_ptr, *passwd_ptr, *name_ptr;
-  int out_size = 0, in_size = 0, r, login_len, passwd_len;
+  int r, login_len, passwd_len;
+  size_t out_size, in_size = 0;
   void *void_in = 0;
 
   if (!login || !*login) return -ULS_ERR_INVALID_LOGIN;
