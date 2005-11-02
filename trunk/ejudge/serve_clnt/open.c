@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -55,7 +55,7 @@ serve_clnt_open(char const *socketpath)
   max_path_buf = sizeof(struct sockaddr_un) - 
     XOFFSET(struct sockaddr_un, sun_path);
   if (strlen(socketpath) >= max_path_buf) {
-    err("serve_clnt_open: socket path length is too long (%d)",
+    err("serve_clnt_open: socket path length is too long (%zu)",
         strlen(socketpath));
     return -SRV_ERR_BAD_SOCKET_NAME;
   }
