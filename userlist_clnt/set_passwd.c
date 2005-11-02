@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,12 +19,14 @@
 
 int
 userlist_clnt_set_passwd(struct userlist_clnt *clnt,
-                         int uid, unsigned char *old_pwd,
-                         unsigned char *new_pwd)
+                         int uid,
+                         const unsigned char *old_pwd,
+                         const unsigned char *new_pwd)
 {
   struct userlist_pk_set_password *out;
   struct userlist_packet *in;
-  int out_size, in_size, old_len, new_len, r;
+  int old_len, new_len, r;
+  size_t out_size = 0, in_size = 0;
   unsigned char *pkt_old_ptr;
   unsigned char *pkt_new_ptr;
 
