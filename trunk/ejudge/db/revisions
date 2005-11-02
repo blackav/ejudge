@@ -2229,3 +2229,9 @@ serve_clnt/submit_run.c 1 6 204201
 serve_clnt/upload_report.c 1 4 189375
 super_clnt/send_packet.c 1 2 165479
 userlist_clnt/send_packet.c 1 6 171410
+serve_clnt.h 1 23 481841
+serve_clnt/edit_run.c 1 12 377266
+serve_clnt/edit_user.c 1 2 188333
+serve_clnt/get_archive.c 1 4 224021
+serve_clnt/open.c 1 3 268485
+serve_clnt/recv_packet.c 1 3 225375
