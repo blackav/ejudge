@@ -3847,7 +3847,7 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
   int role, pers;
   const unsigned char *table_format = 0, *table_legend = 0;
   unsigned char **format_s = 0, **legend_s = 0;
-  int legend_n, format_n;
+  int legend_n = 0, format_n = 0;
   struct sformat_extra_data sformat_extra;
 
   if (user_id > 0) {
