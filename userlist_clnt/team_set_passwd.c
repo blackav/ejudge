@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,12 +20,13 @@
 int
 userlist_clnt_team_set_passwd(struct userlist_clnt *clnt,
                               int uid, int contest_id,
-                              unsigned char *old_pwd,
-                              unsigned char *new_pwd)
+                              const unsigned char *old_pwd,
+                              const unsigned char *new_pwd)
 {
   struct userlist_pk_set_password *out = 0;
   struct userlist_packet *in = 0;
-  int out_size = 0, in_size = 0, old_len = 0, new_len = 0, r;
+  int old_len = 0, new_len = 0, r;
+  size_t out_size = 0, in_size = 0;
   unsigned char *old_ptr, *new_ptr;
 
   ASSERT(clnt);
