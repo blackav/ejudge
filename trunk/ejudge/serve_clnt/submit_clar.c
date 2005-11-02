@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,8 @@ serve_clnt_submit_clar(int sock_fd,
 {
   struct prot_serve_pkt_submit_clar *out = 0;
   struct prot_serve_packet *in = 0;
-  int out_size = 0, in_size = 0, subj_len = 0, text_len = 0, r;
+  int subj_len = 0, text_len = 0, r;
+  size_t out_size, in_size = 0;
   unsigned char *subj_ptr = 0, *text_ptr = 0;
   void *void_in = 0;
 
