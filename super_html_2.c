@@ -468,7 +468,7 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
       return -SSERV_ERR_INVALID_PARAMETER;
     xml_unlink_node(&new_ip->b);
     contests_free_2(&new_ip->b);
-    if (!(*p_access)->b.first_down) {
+    if (!(*p_access)->b.first_down && !(*p_access)->default_is_allow) {
       xml_unlink_node(&(*p_access)->b);
       contests_free_2(&(*p_access)->b);
       *p_access = 0;
