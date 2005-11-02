@@ -24,9 +24,9 @@ userlist_clnt_dump_database(struct userlist_clnt *clnt, int cmd,
 {
   struct userlist_pk_dump_database *out = 0;
   struct userlist_packet *in = 0;
-  int out_size = 0, in_size = 0, r;
+  int w1, w2, r;
+  size_t out_size, in_size = 0;
   int pfd[2], pp[2] = { -1, -1 };
-  int w1, w2;
 
   if (pipe(pp) < 0) {
     err("pipe() failed: %s", os_ErrorMsg());
