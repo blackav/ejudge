@@ -1783,7 +1783,7 @@ cmd_main_page(struct client_state *p, int len,
   size_t html_len = 0;
   struct client_state *q;
   opcap_t caps;
-  int capbit;
+  int capbit = 0;
   struct contest_desc *cnts = 0;
   struct sid_state *sstate = 0;
 
