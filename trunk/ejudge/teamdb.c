@@ -136,7 +136,7 @@ open_connection(void)
         os_ErrorMsg());
     return -1;
   }
-  if ((int) (server_users = shmat(shm_id, 0, SHM_RDONLY)) == -1) {
+  if ((long) (server_users = shmat(shm_id, 0, SHM_RDONLY)) == -1) {
     err("teamdb_open_client: cannot attach shared memory: %s",
         os_ErrorMsg());
     return -1;
@@ -252,7 +252,7 @@ teamdb_refresh(void)
     err("teamdb_refresh: registered %d, passed %d", j, total_participants);
   }
 
-  info("teamdb_refresh: updated: %d users, %d max user, XML size = %d",
+  info("teamdb_refresh: updated: %d users, %d max user, XML size = %zu",
        total_participants, users->user_map_size - 1, strlen(xml_text));
   extra_out_of_sync = 1;
   call_update_hooks();
