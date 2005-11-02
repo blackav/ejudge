@@ -1,3 +1,47 @@
+2005-11-03  Alexander Chernov  <cher@ispras.ru>
+
+	* send_packet.c: copyright notice is updated;
+	<reuse/integral.h> is included;
+	<sys/uio.h> is included;
+	(serve_clnt_send_packet) `size' parameter now has type `size_t';
+	  the function is rewritten to avoid copying of sending data
+	  into a temporary buffer.
+
+	* edit_run.c: copyright notice is updated;
+	(do_serve_clnt_edit_run) fixes for 64-bit platforms.
+
+	* edit_user.c: copyright notice is updated;
+	(serve_clnt_edit_user) fixes for 64-bit platforms.
+
+	* get_archive.c: copyright notice is updated;
+	(serve_clnt_get_archive) fixes for 64-bit platforms.
+
+	* open.c: copyright notice is updated;
+	(serve_clnt_open) fixes for 64-bit platforms.
+
+	* recv_packet.c: copyright notice is updated;
+	(serve_clnt_recv_packet) fixes for 64-bit platforms.
+
+	* rejudge_by_mask.c: copyright notice is updated;
+	(serve_clnt_rejudge_by_mask) "const" qualifier added to `mask'
+	  parameter;
+	  fixes for 64-bit platforms.
+
+	* reset_filter.c:
+	(serve_clnt_reset_filter) fixes for 64-bit platforms.
+
+	* show_item.c: copyright notice is updated;
+	(serve_clnt_show_item) fixes for 64-bit platforms.
+
+	* submit_clar.c: copyright notice is updated;
+	(serve_clnt_submit_clar) fixes for 64-bit platforms.
+
+	* submit_run.c: copyright notice is updated;
+	(serve_clnt_submit_run) fixes for 64-bit platforms.
+
+	* upload_report.c: copyright notice is updated;
+	(serve_clnt_upload_report) fixes for 64-bit platforms.
+
 2005-07-28  Alexander Chernov  <cher@ispras.ru>
 
 	* get_param.c: initial revision

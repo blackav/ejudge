@@ -1,3 +1,13 @@
+2005-11-03  Alexander Chernov  <cher@ispras.ru>
+
+	* send_packet.c: copyright notice is updated;
+	(super_clnt_send_packet) `size' parameter now has type `size_t';
+	  the function is rewritten to avoid unnecessary packet
+	  copying.
+
+	* recv_packet.c: copyright notice is updated;
+	(super_clnt_recv_packet) fixes for 64-bit platforms.
+
 2005-08-07  Alexander Chernov  <cher@ispras.ru>
 
 	* set_param.c:

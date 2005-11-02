@@ -1,3 +1,101 @@
+2005-11-03  Alexander Chernov  <cher@ispras.ru>
+
+	* send_packet.c: (userlist_clnt_send_packet) fix for a stupid bug.
+
+	* add_field.c: (userlist_clnt_add_field) fixes for 64-bit platforms.
+
+	* change_registration.c: copyright notice is updated;
+	(userlist_clnt_change_registration) fixes for 64-bit platforms.
+
+	* delete_field.c: copyright notice is updated;
+	(userlist_clnt_delete_field) fixes for 64-bit platforms.
+
+2005-11-02  Alexander Chernov  <cher@ispras.ru>
+
+	* dump_database.c: copyright notice is updated;
+	(userlist_clnt_dump_database) fixes for 64-bit platforms.
+
+	* edit_field.c: copyright notice is updated;
+	(userlist_clnt_edit_field) fixes for 64-bit platforms.
+
+	* generate_team_passwd.c: copyright notice is updated;
+	(userlist_clnt_generate_team_passwd) fixes for 64-bit platforms.
+
+	* get_contests.c: copyright notice is updated;
+	(userlist_clnt_get_contests) fixes for 64-bit platforms.
+
+	* get_info.c: copyright notice is updated;
+	(userlist_clnt_get_info) fixes for 64-bit platforms.
+
+	* get_param.c: (userlist_clnt_get_param) fixes for 64-bit platforms.
+
+	* list_all_users.c: copyright notice is updated;
+	(userlist_clnt_list_all_users) fixes for 64-bit platforms.
+
+	* list_users.c: copyright notice is updated;
+	(userlist_clnt_list_users) "const" qualifier is added for `url'
+	  and `srch' parameters;
+	  fixes for 64-bit platforms.
+
+	* login.c: (userlist_clnt_lookup_login) fixes for 64-bit platforms.
+
+	* lookup_cookie.c:
+	(userlist_clnt_lookup_cookie) fixes for 64-bit platforms.
+
+	* map_contest.c: copyright notice is updated;
+	(userlist_clnt_map_contest) fixes for 64-bit platforms.
+
+	* open.c: copyright notice is updated;
+	(userlist_clnt_open) fixes for 64-bit platforms.
+
+	* priv_cookie.c:
+	(userlist_clnt_priv_cookie) fixes for 64-bit platforms.
+
+	* priv_login.c:
+	(userlist_clnt_priv_login) fixes for 64-bit platforms.
+
+	* register_contest.c:
+	(userlist_clnt_register_contest) fixes for 64-bit platforms.
+
+	* register_new.c: copyright notice is updated;
+	(userlist_clnt_register_new) fixes for 64-bit platforms.
+
+	* remove_member.c: copyright notice is updated;
+	(userlist_clnt_remove_member) fixes for 64-bit platforms.
+
+	* set_info.c: copyright notice is updated;
+	(userlist_clnt_set_info) "const" qualifier is added to `info' paramter;
+	  fixes for 64-bit platforms.
+
+	* team_cookie.c:
+	(userlist_clnt_team_cookie) fixes for 64-bit architectures.
+
+	* team_login.c:
+	(userlist_clnt_team_login) fixes for 64-bit architectures.
+
+	* set_passwd.c: copyright notice is updated;
+	(userlist_clnt_set_passwd) "const" qualifier is added to
+	  `old_pwd', `new_pwd' parameters;
+	  fixes for 64-bit architectures (x86_64, etc).
+
+	* team_set_passwd.c: copyright notice is updated;
+	(userlist_clnt_team_set_passwd) "const" qualifier is added to
+	  `old_pwd', `new_pwd' parameters;
+	  fixes for 64-bit architectures (x86_64, etc).
+
+	* send_packet.c: copyright notice is updated;
+	<reuse/integral.h> is included;
+	<sys/uio.h> is included;
+	(userlist_clnt_send_packet) function is rewritten to avoid copying
+	  of the buffer.
+
+2005-10-31  Alexander Chernov  <cher@ispras.ru>
+
+	* register_contest.c:
+	(userlist_clnt_register_contest) check of the `cmd' parameter is
+	  commented out, since the function may be called for 4 more
+	  commands.
+
 2005-08-07  Alexander Chernov  <cher@ispras.ru>
 
 	* get_uid_by_pid.c: copyright notice is updated;
