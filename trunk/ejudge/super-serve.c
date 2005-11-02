@@ -2140,7 +2140,7 @@ cmd_main_page(struct client_state *p, int len,
   if (!html_ptr) html_ptr = xstrdup("");
   q = client_state_new_autoclose(p, html_ptr, html_len);
 
-  info("cmd_main_page: %d", html_len);
+  info("cmd_main_page: %zu", html_len);
   send_reply(p, SSERV_RPL_OK);
 }
 
@@ -2219,7 +2219,7 @@ cmd_create_contest(struct client_state *p, int len,
   if (!html_ptr) html_ptr = xstrdup("");
   q = client_state_new_autoclose(p, html_ptr, html_len);
 
-  info("cmd_create_contest: %d", html_len);
+  info("cmd_create_contest: %zu", html_len);
   send_reply(p, SSERV_RPL_OK);
 }
 
