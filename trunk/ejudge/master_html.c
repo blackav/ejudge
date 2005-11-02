@@ -2403,9 +2403,9 @@ write_priv_users(FILE *f, int user_id, int priv_level,
 
     fprintf(f,
             "<td>%d</td>"
+            "<td>%zu</td>"
             "<td>%d</td>"
-            "<td>%d</td>"
-            "<td>%d</td>",
+            "<td>%zu</td>",
             runs_num, runs_total, clars_num, clars_total);
 
     if (t_extra) {
@@ -2613,13 +2613,13 @@ write_priv_user(FILE *f, int user_id, int priv_level,
 
   fprintf(f,"<tr><td>%s:</td><td>%d</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
           _("Number of Runs"), runs_num);
-  fprintf(f,"<tr><td>%s:</td><td>%d</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
+  fprintf(f,"<tr><td>%s:</td><td>%zu</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
           _("Total size of Runs"), runs_total);
   fprintf(f,"<tr><td>%s:</td><td>%d</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
           _("Number of Clars"), clars_num);
-  fprintf(f,"<tr><td>%s:</td><td>%d</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
+  fprintf(f,"<tr><td>%s:</td><td>%zu</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
           _("Total size of Clars"), clars_total);
-  fprintf(f,"<tr><td>%s:</td><td>%d</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
+  fprintf(f,"<tr><td>%s:</td><td>%zu</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
           _("Number of printed pages"), pages_total);
 
   if (global->contestant_status_num > 0) {
