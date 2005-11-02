@@ -36,7 +36,7 @@ userlist_clnt_send_packet(struct userlist_clnt *clnt,
   ASSERT(clnt->fd >= 0);
 
   /* the packet length is 4 bytes (signed), so do some sanity check... */
-  if ((size & 0xc000000)) {
+  if ((size & 0xc0000000)) {
     err("send_packet: packet length exceeds 1GiB");
     return -ULS_ERR_WRITE_ERROR;
   }
