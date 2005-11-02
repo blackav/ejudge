@@ -26,7 +26,8 @@ userlist_clnt_add_field(struct userlist_clnt *clnt,
 {
   struct userlist_pk_edit_field *out = 0;
   struct userlist_packet *in = 0;
-  int out_size = 0, in_size = 0, r;
+  int r;
+  size_t out_size, in_size = 0;
   struct userlist_pk_login_ok *uin = 0;
   void *void_in = 0;
 
