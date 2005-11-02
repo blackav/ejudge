@@ -107,7 +107,7 @@ runlog_import_xml(FILE *hlog, int flags, const unsigned char *in_xml)
     goto done;
   }
 
-  fprintf(flog, "Current run log has %d entries\n", cur_entries_num);
+  fprintf(flog, "Current run log has %zu entries\n", cur_entries_num);
   fprintf(flog, "Doing sanity check on the current log\n");
   if (runlog_check(flog, &cur_header, cur_entries_num, cur_entries) < 0) {
     fprintf(flog, "Sanity check failed!\n");
@@ -456,7 +456,7 @@ runlog_import_xml(FILE *hlog, int flags, const unsigned char *in_xml)
     fprintf(flog, "%d entries updated\n", update_flag);
     goto done;
   }
-  fprintf(flog, "The merged runlog contains %d records\n", out_entries_num);
+  fprintf(flog, "The merged runlog contains %zu records\n", out_entries_num);
 
   if (!out_entries_num) {
     fprintf(flog, "Refuse to create runlog of size 0\n");
