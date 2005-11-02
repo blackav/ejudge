@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -186,7 +186,7 @@ main(int argc, char *argv[])
   snprintf(buf, sizeof(buf), "%s/../bin/dos", EMUPATH);
   if (chmod(EMUPATH, 0500) < 0) myerr("chmod failed: %s", strerror(errno));
 
-  execl(buf, buf, "-I", "keystroke \"\\r\" video { none } dpmi off", 0);
+  execl(buf, buf, "-I", "keystroke \"\\r\" video { none } dpmi off", NULL);
   myerr("execl failed: %s", strerror(errno));
   return 100;
 }
