@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,32 +20,63 @@
 #include "pathutl.h"
 
 #include <reuse/osdeps.h>
+#include <reuse/integral.h>
 
+#include <sys/uio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-/* FIXME: maybe it is better to use writev? */
 int
-super_clnt_send_packet(int sock_fd, int size, const void *buf)
+super_clnt_send_packet(int sock_fd, size_t size, const void *buf)
 {
-  unsigned char *b;
-  int w = size + sizeof(size), n;
+  const unsigned char *b;
+  int w, n;
+  rint32_t size32;
+  struct iovec vv[2];
 
   if (sock_fd < 0) return -SSERV_ERR_NOT_CONNECTED;
 
-  b = (unsigned char *) alloca(w);
-  memcpy(b, &size, sizeof(size));
-  memcpy(b + sizeof(size), buf, size);
-
-  while (w > 0) {
-    if ((n = write(sock_fd, b, w)) <= 0) {
-      err("super_clnt_send_packet: write() failed: %s", os_ErrorMsg());
-      return -SSERV_ERR_WRITE_TO_SERVER;
-    }
-    w -= n; b += n;
+  if ((size & 0xc0000000)) {
+    err("send_packet: packet length exceeds 1GiB");
+    return -SSERV_ERR_WRITE_TO_SERVER;
   }
+  size32 = (ruint32_t) size;
+
+  vv[0].iov_base = &size32;
+  vv[0].iov_len = sizeof(size32);
+  vv[1].iov_base = (void*) buf;
+  vv[1].iov_len = size;
+
+  n = writev(sock_fd, vv, 2);
+  if (n == size + 4) return 0;
+  if (n <= 0) goto write_error;
+
+  /* if the fast method did not work out, try the slow one */
+  if (n < 4) {
+    w = 4 - n;
+    b = (const unsigned char*) size32 + n;
+    while (w > 0) {
+      if ((n = write(sock_fd, b, w)) <= 0) goto write_error;
+      w -= n;
+      b += n;
+    }
+    n = 4;
+  }
+
+  w = size + 4 - n;
+  b = (const unsigned char*) buf + n - 4;
+  while (w > 0) {
+    if ((n = write(sock_fd, b, w)) <= 0) goto write_error;
+    w -= n;
+    b += n;
+  }
+
   return 0;
+
+ write_error:
+  err("super_clnt_send_packet: write() failed: %s", os_ErrorMsg());
+  return -SSERV_ERR_WRITE_TO_SERVER;
 }
 
 /**
