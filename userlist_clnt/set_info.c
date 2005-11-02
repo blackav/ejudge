@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,11 +19,11 @@
 
 int
 userlist_clnt_set_info(struct userlist_clnt *clnt,
-                       int uid, int contest_id, unsigned char *info)
+                       int uid, int contest_id, const unsigned char *info)
 {
   struct userlist_pk_set_user_info *out;
   struct userlist_packet *in = 0;
-  int out_size, in_size;
+  size_t out_size, in_size = 0;
   int r;
 
   ASSERT(clnt);
