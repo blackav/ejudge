@@ -32,7 +32,8 @@ userlist_clnt_team_cookie(struct userlist_clnt *clnt,
 {
   struct userlist_pk_check_cookie *out = 0;
   struct userlist_pk_login_ok *in = 0;
-  int out_size = 0, in_size = 0, r;
+  int r;
+  size_t out_size = 0, in_size = 0;
   unsigned char *login_ptr, *name_ptr;
   void *void_in = 0;
 
