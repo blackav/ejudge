@@ -25,7 +25,8 @@ userlist_clnt_register_contest(struct userlist_clnt *clnt,
 {
   struct userlist_pk_register_contest *out;
   struct userlist_packet *in = 0;
-  int out_size, in_size = 0, r;
+  int r;
+  size_t out_size, in_size = 0;
 
   /*
   if (cmd != ULS_REGISTER_CONTEST && cmd != ULS_PRIV_REGISTER_CONTEST)
