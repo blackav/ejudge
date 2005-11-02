@@ -306,6 +306,41 @@ else
 ac_cv_no_kernel=
 fi
 
+dnl compiler warning checking
+saved_CC="${CC}"
+AC_MSG_CHECKING([for annoying gcc warnings])
+CC="${CC} -Werror"
+AC_COMPILE_IFELSE([[
+int main(void)
+{
+  unsigned char *str = "zzz";
+  return 0;
+}
+]],[
+AC_MSG_RESULT([no])
+],[
+AC_MSG_RESULT([yes])
+ac_cv_annoying_warning=1
+])
+if [[ x"${ac_cv_annoying_warning}" = x1 ]]
+then
+  AC_MSG_CHECKING([for -Wno-pointer-sign])
+  CC="${saved_CC} -Wno-pointer-sign -Werror"
+  AC_COMPILE_IFELSE([[
+int main(void)
+{
+  unsigned char *str = "zzz";
+  return 0;
+}
+]],[
+AC_MSG_RESULT([yes])
+ac_cv_gcc_wno_pointer_sign=-Wno-pointer-sign
+],[
+AC_MSG_RESULT([no])
+])
+fi
+CC="${saved_CC}"
+
 dnl reuse checking stuff
 
 ac_cv_has_reuse=1
@@ -1218,6 +1253,7 @@ AC_SUBST(ac_cv_cgi_conf_dir)
 AC_SUBST(ac_cv_no_kernel)
 AC_SUBST(ac_cv_no_rpath)
 AC_SUBST(ac_cv_nls)
+AC_SUBST(ac_cv_gcc_wno_pointer_sign)
 AC_SUBST(cgibindir)
 AC_SUBST(XGETTEXT)
 AC_SUBST(MSGMERGE)
