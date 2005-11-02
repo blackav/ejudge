@@ -23,7 +23,7 @@ userlist_clnt_get_param(struct userlist_clnt *clnt,
 {
   struct userlist_pk_map_contest out_pkt;
   struct userlist_pk_xml_data *in_pkt = 0;
-  int in_size;
+  size_t in_size;
   int info_len;
   int r;
 
