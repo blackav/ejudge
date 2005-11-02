@@ -487,7 +487,7 @@ handle_full_import_xml(const unsigned char *cmd,
   prev_state = serve_clnt_simple_cmd(serve_socket_fd,
                                      SRV_CMD_GET_TEST_SUSPEND, 0, 0);
   if (prev_state < 0) {
-    err("server error: %s", protocol_strerror(-r));
+    err("server error: %s", protocol_strerror(prev_state));
     return 1;
   }
 
