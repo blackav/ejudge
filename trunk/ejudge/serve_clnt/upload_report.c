@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,8 +35,8 @@ serve_clnt_upload_report(int sock_fd,
 {
   struct prot_serve_pkt_upload_report *out = 0;
   struct prot_serve_packet *in = 0;
-  size_t out_size = 0;
-  int in_size = 0, r;
+  size_t out_size = 0, in_size = 0;
+  int r;
   void *void_in = 0;
 
   if (cmd != SRV_CMD_UPLOAD_REPORT) return -SRV_ERR_PROTOCOL;
@@ -64,7 +64,7 @@ serve_clnt_upload_report(int sock_fd,
   in = void_in;
   if (in_size != sizeof(*in)) {
     xfree(in);
-    err("serve_clnt_upload_report: unexpected reply length %d", in_size);
+    err("serve_clnt_upload_report: unexpected reply length %zu", in_size);
     return -SRV_ERR_PROTOCOL;
   }
   if (in->id < 0) {
