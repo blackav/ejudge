@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002,2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -90,7 +90,7 @@ serve_clnt_recv_packet(int sock_fd, size_t *p_size, void **p_data)
   }
 
   if (sz < sizeof(struct prot_serve_packet)) {
-    err("serve_clnt_recv_packet: packet is too small: %d", sz);
+    err("serve_clnt_recv_packet: packet is too small: %zu", sz);
     code = -SRV_ERR_PROTOCOL;
     goto io_error;
   }
