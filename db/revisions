@@ -2197,3 +2197,13 @@ userlist_clnt/set_passwd.c 1 4 173247
 userlist_clnt/team_cookie.c 1 7 223930
 userlist_clnt/team_login.c 1 7 257651
 userlist_clnt/team_set_passwd.c 1 6 170810
+userlist_clnt/login.c 1 6 194777
+userlist_clnt/lookup_cookie.c 1 6 173931
+userlist_clnt/map_contest.c 1 5 134913
+userlist_clnt/open.c 1 5 235790
+userlist_clnt/priv_cookie.c 1 6 237770
+userlist_clnt/priv_login.c 1 6 275024
+userlist_clnt/register_contest.c 1 7 132091
+userlist_clnt/register_new.c 1 4 152998
+userlist_clnt/remove_member.c 1 4 128299
+userlist_clnt/set_info.c 1 5 139514
