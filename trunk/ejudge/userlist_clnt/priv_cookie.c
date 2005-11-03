@@ -19,10 +19,10 @@
 
 int
 userlist_clnt_priv_cookie(struct userlist_clnt *clnt,
-                          unsigned long origin_ip,
+                          ej_ip_t origin_ip,
                           int ssl,
                           int contest_id,
-                          unsigned long long cookie,
+                          ej_cookie_t cookie,
                           int locale_id,
                           int priv_level,
                           int *p_user_id,
