@@ -38,11 +38,12 @@ int
 serve_clnt_master_page(int sock_fd,
                        int out_fd,
                        int cmd,
-                       unsigned long long session_id,
+                       ej_cookie_t session_id,
                        int user_id,
                        int contest_id,
                        int locale_id,
-                       unsigned long ip,
+                       ej_ip_t ip,
+                       int ssl,
                        int priv_level,
                        int first_run,
                        int last_run,
@@ -86,6 +87,7 @@ serve_clnt_master_page(int sock_fd,
   out->contest_id = contest_id;
   out->locale_id = locale_id;
   out->ip = ip;
+  out->ssl = ssl;
   out->priv_level = priv_level;
   out->first_run = first_run;
   out->last_run = last_run;
