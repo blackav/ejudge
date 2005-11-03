@@ -2269,3 +2269,5 @@ userlist_clnt/register_new.c 1 5 155484
 userlist_clnt/send_packet.c 1 7 168924
 userlist_clnt/team_cookie.c 1 8 222692
 userlist_clnt/team_login.c 1 8 256419
+userlist_clnt.h 1 29 672561
+users.c 1 18 1700063
