@@ -28,7 +28,7 @@ do_serve_clnt_edit_run(int sock_fd, int cmd, int run_id, int mask,
                        int user_id, int prob_id, int lang_id, int status,
                        int is_imported, int variant, int is_hidden,
                        int tests, int score, int is_readonly, int pages,
-                       unsigned long ip, int run_size,
+                       ej_ip_t ip, int ssl, int run_size,
                        unsigned char const *user_login,
                        unsigned char const *run_src,
                        int score_adj)
@@ -76,6 +76,7 @@ do_serve_clnt_edit_run(int sock_fd, int cmd, int run_id, int mask,
   out->is_readonly = is_readonly;
   out->pages = pages;
   out->ip = ip;
+  out->ssl = ssl;
   out->score_adj = score_adj;
   out->user_login_len = user_login_len;
   out->run_src_len = run_size;
@@ -119,7 +120,7 @@ serve_clnt_edit_run(int sock_fd, int run_id, int mask,
   return do_serve_clnt_edit_run(sock_fd, SRV_CMD_EDIT_RUN, run_id, mask,
                                 user_id, prob_id, lang_id, status,
                                 is_imported, variant, is_hidden,
-                                tests, score, is_readonly, pages, 0, 0,
+                                tests, score, is_readonly, pages, 0, 0,0,
                                 user_login, 0, score_adj);
 }
 
@@ -128,7 +129,7 @@ serve_clnt_new_run(int sock_fd, int mask,
                    int user_id, int prob_id, int lang_id, int status,
                    int is_imported, int variant, int is_hidden,
                    int tests, int score, int is_readonly, int pages,
-                   unsigned long ip, int run_size,
+                   ej_ip_t ip, int ssl, int run_size,
                    unsigned char const *user_login,
                    unsigned char const *run_src)
 {
@@ -136,7 +137,7 @@ serve_clnt_new_run(int sock_fd, int mask,
                                 user_id, prob_id, lang_id, status,
                                 is_imported, variant, is_hidden,
                                 tests, score, is_readonly, pages, ip,
-                                run_size, user_login, run_src, 0);
+                                ssl, run_size, user_login, run_src, 0);
 }
 
 /**
