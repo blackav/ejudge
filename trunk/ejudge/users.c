@@ -17,6 +17,7 @@
 
 #include "config.h"
 #include "settings.h"
+#include "ej_types.h"
 
 #include "expat_iface.h"
 #include "cgi.h"
@@ -427,7 +428,7 @@ parse_config(char const *path, const unsigned char *default_config)
 
 static struct config_node *config;
 static struct userlist_clnt *server_conn;
-static unsigned long user_ip;
+static ej_ip_t user_ip;
 static int user_contest_id = 0;
 static int client_locale_id;
 static unsigned char *self_url;
@@ -772,7 +773,8 @@ main(int argc, char const *argv[])
     printf("<p>%s</p>\n", _("Information is not available"));
   } else {
     fflush(stdout);
-    r = userlist_clnt_list_users(server_conn, user_ip, user_contest_id,
+    r = userlist_clnt_list_users(server_conn, user_ip, ssl_flag,
+                                 user_contest_id,
                                  client_locale_id, user_id, 
                                  0, self_url, "");
     if (r < 0) {
