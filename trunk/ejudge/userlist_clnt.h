@@ -18,6 +18,8 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
+
 #include <string.h>
 
 struct userlist_clnt;
@@ -36,7 +38,8 @@ int userlist_clnt_do_pass_fd(struct userlist_clnt *clnt,
 
 int
 userlist_clnt_register_new(struct userlist_clnt *clnt,
-                           unsigned long origin_ip,
+                           ej_ip_t origin_ip,
+                           int ssl,
                            int contest_id,
                            int locale_id,
                            int use_cookies,
@@ -45,7 +48,7 @@ userlist_clnt_register_new(struct userlist_clnt *clnt,
 
 int
 userlist_clnt_login(struct userlist_clnt *clnt,
-                    unsigned long origin_ip,
+                    ej_ip_t origin_ip,
                     int ssl,
                     int contest_id,
                     int locale_id,
@@ -53,13 +56,13 @@ userlist_clnt_login(struct userlist_clnt *clnt,
                     unsigned char const *login,
                     unsigned char const *passwd,
                     int *p_user_id,
-                    unsigned long long *p_cookie,
+                    ej_cookie_t *p_cookie,
                     unsigned char **p_name,
                     int *p_locale_id);
 
 int
 userlist_clnt_team_login(struct userlist_clnt *clnt,
-                         unsigned long origin_ip,
+                         ej_ip_t origin_ip,
                          int ssl,
                          int contest_id,
                          int locale_id,
@@ -67,15 +70,15 @@ userlist_clnt_team_login(struct userlist_clnt *clnt,
                          unsigned char const *login,
                          unsigned char const *passwd,
                          int *p_user_id,
-                         unsigned long long *p_cookie,
+                         ej_cookie_t *p_cookie,
                          int *p_locale_id,
                          unsigned char **p_name);
 
 int
 userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
-                            unsigned long origin_ip,
+                            ej_ip_t origin_ip,
                             int ssl,
-                            unsigned long long cookie,
+                            ej_cookie_t cookie,
                             int *p_user_id,
                             unsigned char **p_login,
                             unsigned char **p_name,
@@ -84,10 +87,10 @@ userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
 
 int
 userlist_clnt_team_cookie(struct userlist_clnt *clnt,
-                          unsigned long origin_ip,
+                          ej_ip_t origin_ip,
                           int ssl,
                           int contest_id,
-                          unsigned long long cookie,
+                          ej_cookie_t cookie,
                           int locale_id,
                           int *p_user_id,
                           int *p_contest_id,
@@ -134,7 +137,9 @@ userlist_clnt_pass_fd(struct userlist_clnt *clnt,
 
 int
 userlist_clnt_list_users(struct userlist_clnt *clnt,
-                         unsigned long origin_ip, int contest_id,
+                         ej_ip_t origin_ip,
+                         int ssl,
+                         int contest_id,
                          int locale_id,
                          int user_id,
                          unsigned long flags,
@@ -201,8 +206,8 @@ int userlist_clnt_get_uid_by_pid(struct userlist_clnt *clnt,
                                  int system_pid,
                                  int *p_uid,
                                  int *p_priv_level,
-                                 unsigned long long *p_cookie,
-                                 unsigned long *p_ip,
+                                 ej_cookie_t *p_cookie,
+                                 ej_ip_t *p_ip,
                                  int *p_ssl);
 
 int userlist_clnt_get_uid_by_pid_2(struct userlist_clnt *clnt,
@@ -211,14 +216,14 @@ int userlist_clnt_get_uid_by_pid_2(struct userlist_clnt *clnt,
                                    int system_pid,
                                    int *p_uid,
                                    int *p_priv_level,
-                                   unsigned long long *p_cookie,
-                                   unsigned long *p_ip,
+                                   ej_cookie_t *p_cookie,
+                                   ej_ip_t *p_ip,
                                    int *p_ssl,
                                    unsigned char **p_login,
                                    unsigned char **p_name);
 
 int userlist_clnt_priv_login(struct userlist_clnt *clnt,
-                             unsigned long origin_ip,
+                             ej_ip_t origin_ip,
                              int ssl,
                              int contest_id,
                              int locale_id,
@@ -227,16 +232,16 @@ int userlist_clnt_priv_login(struct userlist_clnt *clnt,
                              unsigned char const *login,
                              unsigned char const *passwd,
                              int *p_user_id,
-                             unsigned long long *p_cookie,
+                             ej_cookie_t *p_cookie,
                              int *p_locale_id,
                              int *p_priv_level,
                              unsigned char **p_name);
 
 int userlist_clnt_priv_cookie(struct userlist_clnt *clnt,
-                              unsigned long origin_ip,
+                              ej_ip_t origin_ip,
                               int ssl,
                               int contest_id,
-                              unsigned long long cookie,
+                              ej_cookie_t cookie,
                               int locale_id,
                               int priv_level,
                               int *p_user_id,
@@ -248,8 +253,9 @@ int userlist_clnt_priv_cookie(struct userlist_clnt *clnt,
 
 int userlist_clnt_logout(struct userlist_clnt *clnt,
                          int cmd,
-                         unsigned long origin_ip,
-                         unsigned long long cookie);
+                         ej_ip_t origin_ip,
+                         int ssl,
+                         ej_cookie_t cookie);
 
 int userlist_clnt_dump_database(struct userlist_clnt *clnt, int cmd,
                                 int contest_id, int out_fd, int html_flag);
