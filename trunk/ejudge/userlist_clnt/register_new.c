@@ -19,7 +19,8 @@
 
 int
 userlist_clnt_register_new(struct userlist_clnt *clnt,
-                           unsigned long origin_ip,
+                           ej_ip_t origin_ip,
+                           int ssl,
                            int contest_id,
                            int locale_id,
                            int use_cookies,
@@ -38,6 +39,7 @@ userlist_clnt_register_new(struct userlist_clnt *clnt,
   memset(data, 0, len);
   data->request_id = ULS_REGISTER_NEW;
   data->origin_ip = origin_ip;
+  data->ssl = ssl;
   data->contest_id = contest_id;
   data->locale_id = locale_id;
   data->use_cookies = use_cookies;
