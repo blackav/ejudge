@@ -37,7 +37,8 @@ super_clnt_send_packet(int sock_fd, size_t size, const void *buf)
 
   if (sock_fd < 0) return -SSERV_ERR_NOT_CONNECTED;
 
-  if ((size & 0xc0000000)) {
+  /* -1073741824 is 0xc0000000 or 0xffffffffc0000000 */
+  if ((size & -1073741824L)) {
     err("send_packet: packet length exceeds 1GiB");
     return -SSERV_ERR_WRITE_TO_SERVER;
   }
@@ -55,7 +56,7 @@ super_clnt_send_packet(int sock_fd, size_t size, const void *buf)
   /* if the fast method did not work out, try the slow one */
   if (n < 4) {
     w = 4 - n;
-    b = (const unsigned char*) size32 + n;
+    b = (const unsigned char*) &size32 + n;
     while (w > 0) {
       if ((n = write(sock_fd, b, w)) <= 0) goto write_error;
       w -= n;
