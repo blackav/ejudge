@@ -19,9 +19,9 @@
 
 int
 userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
-                            unsigned long origin_ip,
+                            ej_ip_t origin_ip,
                             int ssl,
-                            unsigned long long cookie,
+                            ej_cookie_t cookie,
                             int *p_user_id,
                             unsigned char **p_login,
                             unsigned char **p_name,
