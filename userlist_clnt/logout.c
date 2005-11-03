@@ -20,8 +20,9 @@
 int
 userlist_clnt_logout(struct userlist_clnt *clnt,
                      int cmd,
-                     unsigned long origin_ip,
-                     unsigned long long cookie)
+                     ej_ip_t origin_ip,
+                     int ssl,
+                     ej_cookie_t cookie)
 {
   struct userlist_pk_do_logout out;
   struct userlist_packet *in = 0;
@@ -32,6 +33,7 @@ userlist_clnt_logout(struct userlist_clnt *clnt,
   memset(&out, 0, sizeof(out));
   out.request_id = cmd;
   out.origin_ip = origin_ip;
+  out.ssl = ssl;
   out.cookie = cookie;
   if ((r = userlist_clnt_send_packet(clnt, sizeof(out), &out)) < 0) return r;
   if ((r = userlist_clnt_recv_packet(clnt, &in_size, &void_in)) < 0)
