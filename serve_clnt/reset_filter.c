@@ -26,7 +26,7 @@
 int
 serve_clnt_reset_filter(int sock_fd,
                         int cmd,
-                        unsigned long long session_id,
+                        ej_cookie_t session_id,
                         int user_id,
                         int contest_id)
 {
