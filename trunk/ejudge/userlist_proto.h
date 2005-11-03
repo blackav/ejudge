@@ -18,16 +18,7 @@
  * GNU General Public License for more details.
  */
 
-/* privelege level */
-#ifndef __MASTER_PAGE_ENUM_DEFINED__
-#define __MASTER_PAGE_ENUM_DEFINED__
-enum
-{
-  PRIV_LEVEL_USER = 0,
-  PRIV_LEVEL_JUDGE,
-  PRIV_LEVEL_ADMIN
-};
-#endif /* __MASTER_PAGE_ENUM_DEFINED__ */
+#include "ej_types.h"
 
 /* server requests codes */
 enum
@@ -127,25 +118,12 @@ enum
 
 unsigned char const *userlist_strerror(int code);
 
-#if !defined __USERLIST_UC_ENUM_DEFINED__
-#define __USERLIST_UC_ENUM_DEFINED__
-enum
-  {
-    USERLIST_UC_INVISIBLE = 0x00000001,
-    USERLIST_UC_BANNED    = 0x00000002,
-    USERLIST_UC_LOCKED    = 0x00000004,
-
-    USERLIST_UC_ALL       = 0x00000007
-  };
-#endif /* __USERLIST_UC_ENUM_DEFINED__ */
-
 struct userlist_table
 {
-  unsigned long vintage;
+  unsigned int vintage;
 };
 
 /* a generic packet structure */
-struct userlist_packet __attribute__((packed,aligned(1)));
 struct userlist_packet
 {
   short id;
@@ -153,12 +131,12 @@ struct userlist_packet
 };
 
 /* client->server requests packet */
-struct userlist_pk_register_new __attribute__((packed,aligned(1)));
 struct userlist_pk_register_new
 {
   short         request_id;
-  unsigned long origin_ip;
-  long          contest_id;
+  ej_ip_t       origin_ip;
+  int           ssl;
+  int           contest_id;
   signed char   locale_id;
   signed char   use_cookies;
   unsigned char login_length;
@@ -166,13 +144,12 @@ struct userlist_pk_register_new
   unsigned char data[2];
 };
 
-struct userlist_pk_do_login __attribute__((packed,aligned(1)));
 struct userlist_pk_do_login
 {
   short         request_id;
-  unsigned long origin_ip;
+  ej_ip_t       origin_ip;
   int           ssl;
-  long          contest_id;
+  int           contest_id;
   signed char   locale_id;
   signed char   use_cookies;
   unsigned char priv_level;
@@ -181,44 +158,40 @@ struct userlist_pk_do_login
   unsigned char data[2];
 };
 
-struct userlist_pk_check_cookie __attribute__((packed,aligned(1)));
 struct userlist_pk_check_cookie
 {
   short              request_id;
-  unsigned long      origin_ip;
+  ej_ip_t            origin_ip;
   int                ssl;
-  long               contest_id;
-  unsigned long long cookie;
+  int                contest_id;
+  ej_cookie_t        cookie;
   signed char        locale_id;
   unsigned char      priv_level;
 };
 
-struct userlist_pk_do_logout __attribute__((packed,aligned(1)));
 struct userlist_pk_do_logout
 {
   short              request_id;
-  unsigned long      origin_ip;
-  unsigned long long cookie;
+  ej_ip_t            origin_ip;
+  int                ssl;
+  ej_cookie_t        cookie;
 };
 
-struct userlist_pk_get_user_info __attribute__((packed,aligned(1)));
 struct userlist_pk_get_user_info
 {
   short         request_id;
-  unsigned long user_id;       /* which user_info we want */
+  int           user_id;       /* which user_info we want */
 };
 
-struct userlist_pk_set_user_info __attribute__((packed,aligned(1)));
 struct userlist_pk_set_user_info
 {
   short          request_id;
-  unsigned long  user_id;
+  int            user_id;
   int            contest_id;
   unsigned short info_len;
   unsigned char  data[1];
 };
 
-struct userlist_pk_set_password __attribute__((packed,aligned(1)));
 struct userlist_pk_set_password
 {
   short         request_id;
@@ -229,7 +202,6 @@ struct userlist_pk_set_password
   unsigned char data[2];
 };
 
-struct userlist_pk_register_contest __attribute__((packed,aligned(1)));
 struct userlist_pk_register_contest
 {
   short request_id;
@@ -237,7 +209,6 @@ struct userlist_pk_register_contest
   int   contest_id;
 };
 
-struct userlist_pk_remove_member __attribute__((packed,aligned(1)));
 struct userlist_pk_remove_member
 {
   short request_id;
@@ -247,28 +218,26 @@ struct userlist_pk_remove_member
   int   serial;
 };
 
-struct userlist_pk_list_users __attribute__((packed, aligned(1)));
 struct userlist_pk_list_users
 {
   short         request_id;
-  unsigned long origin_ip;
-  long          contest_id;
-  signed char   locale_id;
+  ej_ip_t       origin_ip;
+  int           ssl;
+  int           contest_id;
   int           user_id;
   unsigned long flags;
+  signed char   locale_id;
   unsigned char url_len;
   unsigned char srch_len;
   unsigned char data[2];
 };
 
-struct userlist_pk_map_contest __attribute__((packed,aligned(1)));
 struct userlist_pk_map_contest
 {
   short request_id;
   int   contest_id;
 };
 
-struct userlist_pk_edit_registration __attribute__((packed, aligned(1)));
 struct userlist_pk_edit_registration
 {
   short          request_id;
@@ -278,7 +247,7 @@ struct userlist_pk_edit_registration
   int            flags_cmd; /* 0 - no change, 1 - set, 2 - clear, 3 - toggle */
   unsigned int   new_flags;
 };
-struct userlist_pk_edit_field __attribute__((packed, aligned(1)));
+
 struct userlist_pk_edit_field
 {
   short request_id;
@@ -286,11 +255,10 @@ struct userlist_pk_edit_field
   int   role;
   int   pers;
   int   field;
-  unsigned char value_len;
+  int   value_len;
   unsigned char data[1];
 };
 
-struct userlist_pk_get_uid_by_pid __attribute__((packed, aligned(1)));
 struct userlist_pk_get_uid_by_pid
 {
   short request_id;
@@ -299,7 +267,6 @@ struct userlist_pk_get_uid_by_pid
   int   system_pid;
 };
 
-struct userlist_pk_dump_database __attribute__((packed, aligned(1)));
 struct userlist_pk_dump_database
 {
   short request_id;
@@ -308,12 +275,11 @@ struct userlist_pk_dump_database
 };
 
 /* server->client replies */
-struct userlist_pk_login_ok __attribute__((packed,aligned(1)));
 struct userlist_pk_login_ok
 {
   short              reply_id;
-  long               user_id;
-  unsigned long long cookie;
+  int                user_id;
+  ej_cookie_t        cookie;
   int                contest_id;
   signed char        locale_id;
   unsigned char      priv_level;
@@ -322,7 +288,6 @@ struct userlist_pk_login_ok
   char               data[2];
 };
 
-struct userlist_pk_xml_data __attribute__((packed,aligned(1)));
 struct userlist_pk_xml_data
 {
   short          reply_id;
@@ -330,7 +295,6 @@ struct userlist_pk_xml_data
   unsigned char  data[1];
 };
 
-struct userlist_pk_contest_mapped __attribute__((packed, aligned(1)));
 struct userlist_pk_contest_mapped
 {
   short reply_id;
@@ -338,28 +302,26 @@ struct userlist_pk_contest_mapped
   int   shm_key;
 };
 
-struct userlist_pk_uid __attribute__((packed, aligned(1)));
 struct userlist_pk_uid
 {
   short reply_id;
   int   uid;
   int   priv_level;
-  unsigned long long cookie;
-  unsigned long ip;
+  ej_cookie_t cookie;
+  ej_ip_t ip;
   int ssl;
 };
 
-struct userlist_pk_uid_2 __attribute__((packed, aligned(1)));
 struct userlist_pk_uid_2
 {
   short reply_id;
   int uid;
   int priv_level;
-  unsigned long ip;
+  ej_ip_t ip;
   int ssl;
   int login_len;
   int name_len;
-  unsigned long long cookie;
+  ej_cookie_t cookie;
   unsigned char data[2];
 };
 
