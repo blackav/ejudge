@@ -19,7 +19,9 @@
 
 int
 userlist_clnt_list_users(struct userlist_clnt *clnt,
-                         unsigned long origin_ip, int contest_id,
+                         ej_ip_t origin_ip,
+                         int ssl,
+                         int contest_id,
                          int locale_id,
                          int user_id,
                          unsigned long flags,
@@ -57,6 +59,7 @@ userlist_clnt_list_users(struct userlist_clnt *clnt,
   srch_ptr = url_ptr + url_len + 1;
   out->request_id = ULS_LIST_USERS;
   out->origin_ip = origin_ip;
+  out->ssl = ssl;
   out->contest_id = contest_id;
   out->locale_id = locale_id;
   out->user_id = user_id;
