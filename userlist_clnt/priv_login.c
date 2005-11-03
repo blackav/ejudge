@@ -19,7 +19,7 @@
 
 int
 userlist_clnt_priv_login(struct userlist_clnt *clnt,
-                         unsigned long origin_ip,
+                         ej_ip_t origin_ip,
                          int ssl,
                          int contest_id,
                          int locale_id,
@@ -28,7 +28,7 @@ userlist_clnt_priv_login(struct userlist_clnt *clnt,
                          unsigned char const *login,
                          unsigned char const *passwd,
                          int *p_user_id,
-                         unsigned long long *p_cookie,
+                         ej_cookie_t *p_cookie,
                          int *p_locale_id,
                          int *p_priv_level,
                          unsigned char **p_name)
