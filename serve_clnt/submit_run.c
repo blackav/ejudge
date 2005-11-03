@@ -37,7 +37,8 @@
 int
 serve_clnt_submit_run(int sock_fd, int cmd,
                       int user_id, int contest_id, int locale_id,
-                      unsigned long ip, int prob_id, int lang_id,
+                      ej_ip_t ip, int ssl,
+                      int prob_id, int lang_id,
                       int variant,
                       size_t run_size,
                       unsigned char const *run_src)
@@ -60,6 +61,7 @@ serve_clnt_submit_run(int sock_fd, int cmd,
   out->contest_id = contest_id;
   out->locale_id = locale_id;
   out->ip = ip;
+  out->ssl = ssl;
   out->prob_id = prob_id;
   out->lang_id = lang_id;
   out->variant = variant;
