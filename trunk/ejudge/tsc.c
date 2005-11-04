@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
 #include <ctype.h>
 #include <errno.h>
 
-long long cpu_frequency;
+ej_tsc_t cpu_frequency;
 int
 tsc_init(void)
 {
@@ -51,7 +51,7 @@ tsc_init(void)
       fprintf(stderr, "%s: %d: cannot parse `cpu MHz' line\n", path, lineno);
       goto failure;
     }
-    cpu_frequency = (long long) (cpuf * 1000000.0L);
+    cpu_frequency = (ej_tsc_t) (cpuf * 1000000.0L);
     fprintf(stderr, "Detected CPU frequency is %lld\n", cpu_frequency);
     break;
   }
