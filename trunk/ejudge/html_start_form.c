@@ -29,7 +29,7 @@ static const unsigned char * const form_methods[] =
 };
 
 void
-html_start_form(FILE *f, int mode, unsigned long long sid,
+html_start_form(FILE *f, int mode, ej_cookie_t sid,
                 unsigned char const *self_url,
                 unsigned char const *hidden_vars)
 {
