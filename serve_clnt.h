@@ -18,6 +18,8 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
+
 #include <string.h>
 
 /* error codes are defined in protocol.h */
@@ -58,7 +60,8 @@ int serve_clnt_submit_run(int sock_fd,
                           int user_id,
                           int contest_id,
                           int locale_id,
-                          unsigned long ip,
+                          ej_ip_t ip,
+                          int ssl,
                           int prob_id,
                           int lang_id,
                           int variant,
@@ -69,7 +72,8 @@ int serve_clnt_submit_clar(int sock_fd,
                            int user_id,
                            int contest_id,
                            int locale_id,
-                           unsigned long ip,
+                           ej_ip_t ip,
+                           int ssl,
                            unsigned char const *subj,
                            unsigned char const *text);
 
@@ -84,11 +88,12 @@ int serve_clnt_team_page(int sock_fd,
 int serve_clnt_master_page(int sock_fd,
                            int out_fd,
                            int cmd,
-                           unsigned long long session_id,
+                           ej_cookie_t session_id,
                            int user_id,
                            int contest_id,
                            int locale_id,
-                           unsigned long ip,
+                           ej_ip_t ip,
+                           int ssl,
                            int priv_level,
                            int first_run,
                            int last_run,
@@ -156,7 +161,7 @@ int serve_clnt_new_run(int sock_fd, int mask,
                        int user_id, int prob_id, int lang_id, int status,
                        int is_imported, int variant, int is_hidden,
                        int tests, int score, int is_readonly, int pages,
-                       unsigned long ip, int run_size,
+                       ej_ip_t ip, int ssl, int run_size,
                        unsigned char const *user_login,
                        unsigned char const *run_src);
 
@@ -174,7 +179,7 @@ int serve_clnt_upload_report(int sock_fd, int cmd,
                              const unsigned char *report_data);
 
 int serve_clnt_reset_filter(int sock_fd, int cmd,
-                            unsigned long long session_id,
+                            ej_cookie_t session_id,
                             int user_id, int contest_id);
 
 int serve_clnt_rejudge_by_mask(int sock_fd, int cmd, int mask_size,
