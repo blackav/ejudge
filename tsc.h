@@ -3,7 +3,7 @@
 #ifndef __TSC_H__
 #define __TSC_H__
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003,2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,8 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
+
 /* taken from linux/include/asm-i386/msr.h */
 #define rdtsc(low,high) \
      __asm__ __volatile__("rdtsc" : "=a" (low), "=d" (high))
@@ -27,7 +29,7 @@
 #define rdtscll(val) \
      __asm__ __volatile__("rdtsc" : "=A" (val))
 
-extern long long cpu_frequency;
+extern ej_tsc_t cpu_frequency;
 
 int tsc_init(void);
 
