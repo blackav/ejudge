@@ -240,7 +240,9 @@ HFILES=\
  curtime.h\
  diff.h\
  digest_io.h\
+ ej_limits.h\
  ej_process.h\
+ ej_types.h\
  expat_iface.h\
  filehash.h\
  fileutl.h\
