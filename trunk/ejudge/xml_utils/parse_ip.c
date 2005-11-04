@@ -20,7 +20,7 @@
 
 int
 xml_parse_ip(unsigned char const *path, int line, int column,
-             unsigned char const *s, unsigned long *pip)
+             unsigned char const *s, ej_ip_t *pip)
 {
   unsigned int b1, b2, b3, b4;
   int n;
