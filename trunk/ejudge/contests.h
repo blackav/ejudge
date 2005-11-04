@@ -18,6 +18,7 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
 #include "expat_iface.h"
 #include "opcaps.h"
 
@@ -302,19 +303,19 @@ unsigned char *contests_strerror(int);
 int contests_lock(int);
 int contests_unlock(int);
 
-int contests_check_ip(int, int, unsigned long, int);
-int contests_check_register_ip(int, unsigned long, int);
-int contests_check_register_ip_2(struct contest_desc *, unsigned long, int);
-int contests_check_users_ip(int, unsigned long, int);
-int contests_check_users_ip_2(struct contest_desc *, unsigned long, int);
-int contests_check_master_ip(int, unsigned long, int);
-int contests_check_master_ip_2(struct contest_desc *, unsigned long, int);
-int contests_check_judge_ip(int, unsigned long, int);
-int contests_check_judge_ip_2(struct contest_desc *, unsigned long, int);
-int contests_check_team_ip(int, unsigned long, int);
-int contests_check_team_ip_2(struct contest_desc *, unsigned long, int);
-int contests_check_serve_control_ip(int num, unsigned long ip, int ssl);
-int contests_check_serve_control_ip_2(struct contest_desc *, unsigned long, int);
+int contests_check_ip(int, int, ej_ip_t, int);
+int contests_check_register_ip(int, ej_ip_t, int);
+int contests_check_register_ip_2(struct contest_desc *, ej_ip_t, int);
+int contests_check_users_ip(int, ej_ip_t, int);
+int contests_check_users_ip_2(struct contest_desc *, ej_ip_t, int);
+int contests_check_master_ip(int, ej_ip_t, int);
+int contests_check_master_ip_2(struct contest_desc *, ej_ip_t, int);
+int contests_check_judge_ip(int, ej_ip_t, int);
+int contests_check_judge_ip_2(struct contest_desc *, ej_ip_t, int);
+int contests_check_team_ip(int, ej_ip_t, int);
+int contests_check_team_ip_2(struct contest_desc *, ej_ip_t, int);
+int contests_check_serve_control_ip(int num, ej_ip_t ip, int ssl);
+int contests_check_serve_control_ip_2(struct contest_desc *, ej_ip_t, int);
 
 void contests_set_load_callback(void (*f)(const struct contest_desc *));
 void contests_set_unload_callback(void (*f)(const struct contest_desc *));
