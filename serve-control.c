@@ -17,6 +17,7 @@
 
 #include "config.h"
 #include "settings.h"
+#include "ej_types.h"
 
 #include "expat_iface.h"
 #include "xml_utils.h"
@@ -313,9 +314,9 @@ static const unsigned char default_config[] =
 "</serve_control_config>\n";
 
 static struct config_node *config;
-static unsigned long user_ip;
+static ej_ip_t user_ip;
 static userlist_clnt_t userlist_conn;
-static unsigned long long session_id;
+static ej_cookie_t session_id;
 static unsigned int user_id;
 static unsigned char *user_login;
 static unsigned char *user_name;
@@ -422,10 +423,10 @@ check_source_ip(void)
 }
 
 static int
-get_session_id(unsigned char const *var, unsigned long long *p_val)
+get_session_id(unsigned char const *var, ej_cookie_t *p_val)
 {
   unsigned char const *str;
-  unsigned long long val;
+  ej_cookie_t val;
   int n;
 
   if (!var) return 0;
@@ -526,13 +527,13 @@ display_login_page(void)
 }
 
 static unsigned char * hyperref(unsigned char *, size_t,
-                                unsigned long long,
+                                ej_cookie_t,
                                 const unsigned char *,
                                 const char *, ...)
      __attribute__((format(printf, 5, 6)));
 static unsigned char *
 hyperref(unsigned char *buf, size_t size,
-         unsigned long long sid,
+         ej_cookie_t sid,
          unsigned char const *self_url,
          char const *format, ...)
 {
@@ -553,7 +554,7 @@ hyperref(unsigned char *buf, size_t size,
 }
 static unsigned char *
 vhyperref(unsigned char *buf, size_t size,
-          unsigned long long sid,
+          ej_cookie_t sid,
           unsigned char const *self_url,
           const unsigned char *format,
           va_list args)
