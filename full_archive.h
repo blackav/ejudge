@@ -17,6 +17,8 @@
  * GNU General Public License for more details.
  */
 
+#include <reuse/integral.h>
+
 struct full_archive
 {
   int fd;
@@ -41,9 +43,9 @@ struct full_archive_file_header
 
 typedef struct full_archive_entry_header
 {
-  long size;                    /* entry size (compressed in file) */
-  long raw_size;                /* uncompressed entry size */
-  long header_size;             /* size of this header */
+  rint32_t size;                /* entry size (compressed in file) */
+  rint32_t raw_size;            /* uncompressed entry size */
+  rint32_t header_size;         /* size of this header */
   unsigned int flags;           /* various flags */
   unsigned char name[1];        /* name (up to 255 chars + \0) */
 } full_archive_entry_header_t;
