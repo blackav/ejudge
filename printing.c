@@ -65,7 +65,7 @@ print_banner_page(const unsigned char *banner_path, int run_id,
   if (is_privileged) {
     fprintf(f, "Originator IP:    %s\n", run_unparse_ip(info.ip));
   }
-  fprintf(f, "Size:             %zu\n", info.size);
+  fprintf(f, "Size:             %u\n", info.size);
   if (is_privileged) {
     fprintf(f, "Hash code (SHA1): ");
     s = (unsigned char *) &info.sha1;
