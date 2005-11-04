@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_limits.h"
 #include "team_extra.h"
 #include "prepare.h"
 #include "prepare_vars.h"
@@ -30,8 +31,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define RUNLOG_MAX_TEAM_ID 100000
-#define CLARLOG_MAX_CLAR_ID 100000
 #define MAX_USER_ID_32DIGITS 4
 #define BPE (CHAR_BIT * sizeof(((struct team_extra*)0)->clar_map[0]))
 
@@ -41,7 +40,7 @@ static struct team_extra **team_map;
 static const unsigned char b32_digits[]=
 "0123456789ABCDEFGHIJKLMNOPQRSTUV";
 static void
-b32_number(unsigned long num, size_t size, unsigned char buf[])
+b32_number(unsigned num, size_t size, unsigned char buf[])
 {
   int i;
 
@@ -63,7 +62,7 @@ make_read_path(unsigned char *path, size_t size, int user_id)
 {
   unsigned char b32[16];
 
-  ASSERT(user_id > 0 && user_id <= RUNLOG_MAX_TEAM_ID);
+  ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
   b32_number(user_id, MAX_USER_ID_32DIGITS + 1, b32);
   return snprintf(path, size, "%s/%c/%c/%c/%06d.xml",
                   global->team_extra_dir, b32[0], b32[1], b32[2], user_id);
@@ -77,7 +76,7 @@ make_write_path(unsigned char *path, size_t size, int user_id)
   struct stat sb;
   int i;
 
-  ASSERT(user_id > 0 && user_id <= RUNLOG_MAX_TEAM_ID);
+  ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
   b32_number(user_id, MAX_USER_ID_32DIGITS + 1, b32);
 
   mpath = alloca(strlen(global->team_extra_dir) + 32);
@@ -164,7 +163,7 @@ team_extra_get_entry(int user_id)
 {
   struct team_extra *tmpval;
 
-  ASSERT(user_id > 0 && user_id <= RUNLOG_MAX_TEAM_ID);
+  ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
   if (user_id >= team_map_size) extend_team_map(user_id);
 
   tmpval = get_entry(user_id);
@@ -197,8 +196,8 @@ team_extra_get_clar_status(int user_id, int clar_id)
 {
   struct team_extra *te;
 
-  ASSERT(user_id > 0 && user_id <= RUNLOG_MAX_TEAM_ID);
-  ASSERT(clar_id >= 0 && clar_id <= CLARLOG_MAX_CLAR_ID);
+  ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
+  ASSERT(clar_id >= 0 && clar_id <= EJ_MAX_CLAR_ID);
 
   if (user_id >= team_map_size) extend_team_map(user_id);
   te = get_entry(user_id);
@@ -216,8 +215,8 @@ team_extra_set_clar_status(int user_id, int clar_id)
 {
   struct team_extra *te;
 
-  ASSERT(user_id > 0 && user_id <= RUNLOG_MAX_TEAM_ID);
-  ASSERT(clar_id >= 0 && clar_id <= CLARLOG_MAX_CLAR_ID);
+  ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
+  ASSERT(clar_id >= 0 && clar_id <= EJ_MAX_CLAR_ID);
 
   if (user_id >= team_map_size) extend_team_map(user_id);
   te = get_entry(user_id);
@@ -256,7 +255,7 @@ team_extra_flush(void)
 
 int
 team_extra_append_warning(int user_id,
-                          int issuer_id, unsigned long issuer_ip,
+                          int issuer_id, ej_ip_t issuer_ip,
                           time_t issue_date,
                           const unsigned char *txt,
                           const unsigned char *cmt)
@@ -264,7 +263,7 @@ team_extra_append_warning(int user_id,
   struct team_extra *te;
   struct team_warning *cur_warn;
 
-  ASSERT(user_id > 0 && user_id <= RUNLOG_MAX_TEAM_ID);
+  ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
 
   if (user_id >= team_map_size) extend_team_map(user_id);
   te = get_entry(user_id);
