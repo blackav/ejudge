@@ -284,8 +284,8 @@ super_html_main_page(FILE *f,
                      int priv_level,
                      int user_id,
                      const unsigned char *login,
-                     unsigned long long session_id,
-                     unsigned long ip_address,
+                     ej_cookie_t session_id,
+                     ej_ip_t ip_address,
                      int ssl,
                      unsigned int flags,
                      struct userlist_cfg *config,
@@ -614,8 +614,8 @@ super_html_contest_page(FILE *f,
                         int user_id,
                         int contest_id,
                         const unsigned char *login,
-                        unsigned long long session_id,
-                        unsigned long ip_address,
+                        ej_cookie_t session_id,
+                        ej_ip_t ip_address,
                         int ssl,
                         struct userlist_cfg *config,
                         const unsigned char *self_url,
@@ -1134,8 +1134,8 @@ super_html_log_page(FILE *f,
                     int user_id,
                     int contest_id,
                     const unsigned char *login,
-                    unsigned long long session_id,
-                    unsigned long ip_address,
+                    ej_cookie_t session_id,
+                    ej_ip_t ip_address,
                     int ssl,
                     struct userlist_cfg *config,
                     const unsigned char *self_url,
@@ -1346,7 +1346,7 @@ commit_contest_xml(int id)
 // assume, that the permissions are checked
 int
 super_html_open_contest(struct contest_desc *cnts, int user_id,
-                        const unsigned char *user_login, unsigned long ip)
+                        const unsigned char *user_login, ej_ip_t ip)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1375,7 +1375,7 @@ super_html_open_contest(struct contest_desc *cnts, int user_id,
 
 int
 super_html_close_contest(struct contest_desc *cnts, int user_id,
-                         const unsigned char *user_login, unsigned long ip)
+                         const unsigned char *user_login, ej_ip_t ip)
 {
   int errcode = 0;
   unsigned char *txt1 = 0, *txt2 = 0;
@@ -1405,7 +1405,7 @@ super_html_close_contest(struct contest_desc *cnts, int user_id,
 int
 super_html_make_invisible_contest(struct contest_desc *cnts, int user_id,
                                   const unsigned char *user_login,
-                                  unsigned long ip)
+                                  ej_ip_t ip)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1435,7 +1435,7 @@ super_html_make_invisible_contest(struct contest_desc *cnts, int user_id,
 int
 super_html_make_visible_contest(struct contest_desc *cnts, int user_id,
                                 const unsigned char *user_login,
-                                unsigned long ip)
+                                ej_ip_t ip)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1465,7 +1465,7 @@ super_html_make_visible_contest(struct contest_desc *cnts, int user_id,
 int
 super_html_serve_managed_contest(struct contest_desc *cnts, int user_id,
                                  const unsigned char *user_login,
-                                 unsigned long ip)
+                                 ej_ip_t ip)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1495,7 +1495,7 @@ super_html_serve_managed_contest(struct contest_desc *cnts, int user_id,
 int
 super_html_serve_unmanaged_contest(struct contest_desc *cnts, int user_id,
                                    const unsigned char *user_login,
-                                   unsigned long ip)
+                                   ej_ip_t ip)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1525,7 +1525,7 @@ super_html_serve_unmanaged_contest(struct contest_desc *cnts, int user_id,
 int
 super_html_run_managed_contest(struct contest_desc *cnts, int user_id,
                                const unsigned char *user_login,
-                               unsigned long ip)
+                               ej_ip_t ip)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1555,7 +1555,7 @@ super_html_run_managed_contest(struct contest_desc *cnts, int user_id,
 int
 super_html_run_unmanaged_contest(struct contest_desc *cnts, int user_id,
                                  const unsigned char *user_login,
-                                 unsigned long ip)
+                                 ej_ip_t ip)
 {
   int errcode;
   unsigned char *txt1, *txt2;
@@ -1584,7 +1584,7 @@ super_html_run_unmanaged_contest(struct contest_desc *cnts, int user_id,
 
 int
 super_html_report_error(FILE *f,
-                        unsigned long long session_id,
+                        ej_cookie_t session_id,
                         const unsigned char *self_url,
                         const unsigned char *extra_args,
                         const char *format, ...)
@@ -1615,7 +1615,7 @@ super_html_report_error(FILE *f,
 
 void
 super_html_contest_page_menu(FILE *f, 
-                             unsigned long long session_id,
+                             ej_cookie_t session_id,
                              struct sid_state *sstate,
                              int cur_page,
                              const unsigned char *self_url,
@@ -1675,7 +1675,7 @@ super_html_contest_page_menu(FILE *f,
 
 void
 super_html_contest_footer_menu(FILE *f, 
-                               unsigned long long session_id,
+                               ej_cookie_t session_id,
                                struct sid_state *sstate,
                                const unsigned char *self_url,
                                const unsigned char *hidden_vars,
@@ -1699,8 +1699,8 @@ super_html_create_contest(FILE *f,
                           int priv_level,
                           int user_id,
                           const unsigned char *login,
-                          unsigned long long session_id,
-                          unsigned long ip_address,
+                          ej_cookie_t session_id,
+                          ej_ip_t ip_address,
                           struct userlist_cfg *config,
                           struct sid_state *sstate,
                           const unsigned char *self_url,
@@ -1753,7 +1753,7 @@ print_string_editing_row(FILE *f,
                          int change_action,
                          int clear_action,
                          int edit_action,
-                         unsigned long long session_id,
+                         ej_cookie_t session_id,
                          const unsigned char *self_url,
                          const unsigned char *extra_args,
                          const unsigned char *hidden_vars)
@@ -1777,7 +1777,7 @@ static void
 print_access_summary(FILE *f, struct contest_access *acc,
                      const unsigned char *title,
                      int edit_action,
-                     unsigned long long session_id,
+                     ej_cookie_t session_id,
                      const unsigned char *self_url,
                      const unsigned char *extra_args)
 {
@@ -1812,7 +1812,7 @@ print_access_summary(FILE *f, struct contest_access *acc,
 
 static void
 print_permissions(FILE *f, struct contest_desc *cnts,
-                  unsigned long long session_id,
+                  ej_cookie_t session_id,
                   const unsigned char *self_url,
                   const unsigned char *hidden_vars,
                   const unsigned char *extra_args)
@@ -1898,7 +1898,7 @@ static void
 print_form_fields_2(FILE *f, struct contest_member *memb,
                     const unsigned char *title,
                     int edit_action,
-                    unsigned long long session_id,
+                    ej_cookie_t session_id,
                     const unsigned char *self_url,
                     const unsigned char *hidden_vars,
                     const unsigned char *extra_args)
@@ -1938,7 +1938,7 @@ static void
 print_form_fields_3(FILE *f, struct contest_field **descs,
                     const unsigned char *title,
                     int edit_action,
-                    unsigned long long session_id,
+                    ej_cookie_t session_id,
                     const unsigned char *self_url,
                     const unsigned char *hidden_vars,
                     const unsigned char *extra_args)
@@ -1967,7 +1967,7 @@ print_form_fields_3(FILE *f, struct contest_field **descs,
 
 static void
 print_form_fields(FILE *f, struct contest_desc *cnts,
-                  unsigned long long session_id,
+                  ej_cookie_t session_id,
                   const unsigned char *self_url,
                   const unsigned char *hidden_vars,
                   const unsigned char *extra_args)
@@ -2009,8 +2009,8 @@ super_html_edit_contest_page(FILE *f,
                              int priv_level,
                              int user_id,
                              const unsigned char *login,
-                             unsigned long long session_id,
-                             unsigned long ip_address,
+                             ej_cookie_t session_id,
+                             ej_ip_t ip_address,
                              struct userlist_cfg *config,
                              struct sid_state *sstate,
                              const unsigned char *self_url,
@@ -2532,8 +2532,8 @@ super_html_edit_access_rules(FILE *f,
                              int priv_level,
                              int user_id,
                              const unsigned char *login,
-                             unsigned long long session_id,
-                             unsigned long ip_address,
+                             ej_cookie_t session_id,
+                             ej_ip_t ip_address,
                              struct userlist_cfg *config,
                              struct sid_state *sstate,
                              int cmd,
@@ -2718,8 +2718,8 @@ super_html_edit_permission(FILE *f,
                            int priv_level,
                            int user_id,
                            const unsigned char *login,
-                           unsigned long long session_id,
-                           unsigned long ip_address,
+                           ej_cookie_t session_id,
+                           ej_ip_t ip_address,
                            struct userlist_cfg *config,
                            struct sid_state *sstate,
                            int num,
@@ -2792,8 +2792,8 @@ super_html_edit_form_fields(FILE *f,
                             int priv_level,
                             int user_id,
                             const unsigned char *login,
-                            unsigned long long session_id,
-                            unsigned long ip_address,
+                            ej_cookie_t session_id,
+                            ej_ip_t ip_address,
                             struct userlist_cfg *config,
                             struct sid_state *sstate,
                             int cmd,
@@ -2950,8 +2950,8 @@ super_html_edit_template_file(FILE *f,
                               int priv_level,
                               int user_id,
                               const unsigned char *login,
-                              unsigned long long session_id,
-                              unsigned long ip_address,
+                              ej_cookie_t session_id,
+                              ej_ip_t ip_address,
                               struct userlist_cfg *config,
                               struct sid_state *sstate,
                               int cmd,
@@ -3301,8 +3301,8 @@ super_html_create_contest_2(FILE *f,
                             int user_id,
                             const unsigned char *login,
                             const unsigned char *ss_login,
-                            unsigned long long session_id,
-                            unsigned long ip_address,
+                            ej_cookie_t session_id,
+                            ej_ip_t ip_address,
                             struct userlist_cfg *config,
                             struct sid_state *sstate,
                             int num_mode,
