@@ -22,7 +22,7 @@
 
 unsigned char *
 html_hyperref(unsigned char *buf, size_t size,
-              unsigned long long session_id,
+              ej_cookie_t session_id,
               const unsigned char *self_url,
               const unsigned char *extra_args,
               const unsigned char *format, ...)
