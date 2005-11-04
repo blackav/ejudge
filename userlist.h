@@ -18,20 +18,11 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
 #include "expat_iface.h"
 #include "contests.h"
 
 #include <stdio.h>
-
-#ifndef __MASTER_PAGE_ENUM_DEFINED__
-#define __MASTER_PAGE_ENUM_DEFINED__
-enum
-{
-  PRIV_LEVEL_USER = 0,
-  PRIV_LEVEL_JUDGE,
-  PRIV_LEVEL_ADMIN
-};
-#endif /* __MASTER_PAGE_ENUM_DEFINED__ */
 
 enum
   {
@@ -234,18 +225,6 @@ enum
     USERLIST_NM_LAST = USERLIST_NM_FACSHORT_EN,
   };
 
-#if !defined __USERLIST_UC_ENUM_DEFINED__
-#define __USERLIST_UC_ENUM_DEFINED__
-enum
-  {
-    USERLIST_UC_INVISIBLE = 0x00000001,
-    USERLIST_UC_BANNED    = 0x00000002,
-    USERLIST_UC_LOCKED    = 0x00000004,
-
-    USERLIST_UC_ALL       = 0x00000007
-  };
-#endif /* __USERLIST_UC_ENUM_DEFINED__ */
-
 typedef unsigned long userlist_login_hash_t;
 
 struct userlist_member
@@ -293,9 +272,9 @@ struct userlist_cookie
   struct xml_tree b;
 
   struct userlist_user *user;
-  unsigned long ip;
-  unsigned long long cookie;
-  unsigned long expire;
+  ej_ip_t ip;
+  ej_cookie_t cookie;
+  time_t expire;
   int contest_id;
   int locale_id;
   int priv_level;
@@ -366,12 +345,12 @@ struct userlist_user
   struct userlist_members *members[USERLIST_MB_LAST];
   struct xml_tree *contests;
 
-  unsigned long registration_time;
-  unsigned long last_login_time;
-  unsigned long last_change_time;
-  unsigned long last_access_time;
-  unsigned long last_pwdchange_time;
-  unsigned long last_minor_change_time;
+  time_t registration_time;
+  time_t last_login_time;
+  time_t last_change_time;
+  time_t last_access_time;
+  time_t last_pwdchange_time;
+  time_t last_minor_change_time;
 };
 
 struct userlist_list
@@ -428,12 +407,12 @@ unsigned char const *userlist_tag_to_str(int t);
 
 void userlist_unparse_contests(struct userlist_user *p, FILE *f);
 struct xml_tree *userlist_parse_contests_str(unsigned char const *str);
-int userlist_parse_date(unsigned char const *s, unsigned long *pd);
+int userlist_parse_date(unsigned char const *s, time_t *pd);
 int userlist_parse_bool(unsigned char const *str);
-unsigned char *userlist_unparse_ip(unsigned long ip);
+unsigned char *userlist_unparse_ip(ej_ip_t ip);
 
 unsigned char const *userlist_unparse_bool(int b);
-unsigned char *userlist_unparse_date(unsigned long d, int show_null);
+unsigned char *userlist_unparse_date(time_t d, int show_null);
 int userlist_get_member_field_str(unsigned char *buf, size_t len,
                                   struct userlist_member *m, int field_id,
                                   int convert_null);
