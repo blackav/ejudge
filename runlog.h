@@ -17,6 +17,8 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
+
 #include <time.h>
 #include <string.h>
 #include <stdio.h>
@@ -35,7 +37,7 @@ enum
   RUN_IGNORED          = 9,
   RUN_DISQUALIFIED     = 10,
   RUN_PENDING          = 11,
-  RUN_MEM_LIMIT_ERR    = 12,    /* not used currently, just in case... */
+  RUN_MEM_LIMIT_ERR    = 12,
   RUN_SECURITY_ERR     = 13,    /* not used currently */
   RUN_MAX_STATUS       = 13,
 
@@ -60,10 +62,10 @@ enum { RUN_LOG_CREATE = 1, RUN_LOG_READONLY = 2 };
 
 int run_open(const char *path, int flags, time_t init_duration);
 int run_add_record(time_t         timestamp,
-                   long           nsec,
+                   int            nsec,
                    size_t         size,
-                   unsigned long  sha1[5],
-                   unsigned long  ip,
+                   ruint32_t      sha1[5],
+                   ruint32_t      ip,
                    int            locale_id,
                    int            team,
                    int            problem,
@@ -93,18 +95,18 @@ int run_get_fog_period(time_t, int, int);
 int run_reset(time_t);
 int runlog_flush(void);
 
-unsigned char *run_unparse_ip(unsigned long ip);
-unsigned long run_parse_ip(unsigned char const *buf);
+unsigned char *run_unparse_ip(ej_ip_t ip);
+ej_ip_t run_parse_ip(unsigned char const *buf);
 
 int run_check_duplicate(int run_id);
 
 struct run_header
 {
   int    version;
-  time_t start_time;
-  time_t sched_time;
-  time_t duration;
-  time_t stop_time;
+  ej_time_t start_time;
+  ej_time_t sched_time;
+  ej_time_t duration;
+  ej_time_t stop_time;
   unsigned char pad[44];
 };
 
@@ -133,14 +135,14 @@ enum
 
 struct run_entry
 {
-  int            submission;
-  time_t         timestamp;
-  size_t         size;
-  unsigned long  ip;
-  unsigned long  sha1[5];
-  int            team;
-  int            problem;
-  int            score;
+  rint32_t       submission;
+  ej_time_t      timestamp;
+  ej_size_t      size;
+  ej_ip_t        ip;
+  ruint32_t      sha1[5];
+  rint32_t       team;
+  rint32_t       problem;
+  rint32_t       score;
   signed char    locale_id;
   unsigned char  language;
   unsigned char  status;
@@ -152,7 +154,7 @@ struct run_entry
   unsigned char  pages;
   signed char    score_adj;     /* manual score adjustment */
   unsigned short judge_id;      /* judge required identifier */
-  long           nsec;          /* nanosecond component of timestamp */
+  rint32_t       nsec;          /* nanosecond component of timestamp */
 };
 
 void run_get_header(struct run_header *out);
@@ -165,8 +167,8 @@ const struct run_entry *run_get_entries_ptr(void);
 time_t run_get_virtual_start_time(int user_id);
 time_t run_get_virtual_stop_time(int user_id, time_t cur_time);
 int run_get_virtual_status(int user_id);
-int run_virtual_start(int user_id, time_t, unsigned long, long);
-int run_virtual_stop(int user_id, time_t, unsigned long, long);
+int run_virtual_start(int user_id, time_t, ej_ip_t, int);
+int run_virtual_stop(int user_id, time_t, ej_ip_t, int);
 
 int run_clear_entry(int run_id);
 int run_squeeze_log(void);
