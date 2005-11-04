@@ -49,8 +49,8 @@ static struct contest_desc *cnts;
 static userlist_clnt_t userlist_conn;
 static unsigned char serve_socket_path[PATH_MAX];
 static int serve_socket_fd = -1;
-static unsigned long local_ip;  /* 127.0.0.1 */
-static unsigned long long session_id;
+static ej_ip_t local_ip;  /* 127.0.0.1 */
+static ej_cookie_t session_id;
 static int user_id;
 
 static int
@@ -313,7 +313,7 @@ handle_logout(const unsigned char *cmd,
   if (argc > 1) return too_many_params(cmd);
 
   authentificate(argv[0]);
-  userlist_clnt_logout(userlist_conn, ULS_DO_LOGOUT, local_ip, session_id);
+  userlist_clnt_logout(userlist_conn, ULS_DO_LOGOUT, local_ip, 1, session_id);
   unlink(argv[0]);
   return 0;
 }
@@ -416,7 +416,7 @@ handle_dump_master_runs(const unsigned char *cmd,
   r = serve_clnt_master_page(serve_socket_fd, 1,
                              SRV_CMD_DUMP_MASTER_RUNS,
                              session_id, 0,
-                             contest_id, 0, local_ip,
+                             contest_id, 0, local_ip, 1,
                              PRIV_LEVEL_ADMIN,
                              first_run, last_run, 0, 0, 0, "", argv[1], "", "");
   if (r < 0) {
