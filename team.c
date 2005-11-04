@@ -16,6 +16,7 @@
  */
 
 #include "config.h"
+#include "ej_types.h"
 
 #include "cgi.h"
 #include "parsecfg.h"
@@ -113,7 +114,7 @@ static struct section_global_data *global;
 /* new userlist-server related variables */
 static struct contest_desc *cur_contest;
 static struct userlist_clnt *server_conn;
-static unsigned long client_ip;
+static ej_ip_t client_ip;
 static unsigned char *self_url;
 static int ssl_flag = 0;
 static unsigned char *head_style = "h2";
@@ -142,7 +143,7 @@ static size_t header_len, footer_len;
 
 static int serve_socket_fd = -1;
 
-static unsigned long long client_sid;
+static ej_cookie_t client_sid;
 
 static unsigned char form_start_simple[1024];
 static unsigned char form_start_multipart[1024];
@@ -250,7 +251,7 @@ make_self_url(void)
 
 static unsigned char *
 hyperref(unsigned char *buf, int size,
-         unsigned long long sid,
+         ej_cookie_t sid,
          unsigned char const *self_url,
          unsigned char const *extra_args,
          unsigned char const *format, ...)
@@ -731,10 +732,10 @@ fatal_server_error(int r)
 }
 
 static int
-get_session_id(unsigned char const *var, unsigned long long *p_val)
+get_session_id(unsigned char const *var, ej_cookie_t *p_val)
 {
   unsigned char const *str;
-  unsigned long long val;
+  ej_cookie_t val;
   int n;
 
   if (!var) return 0;
@@ -767,7 +768,7 @@ client_put_refresh_header(unsigned char const *coding,
 static int
 authentificate(void)
 {
-  unsigned long long session_id;
+  ej_cookie_t session_id;
   int new_locale_id = client_locale_id;
   int r;
   unsigned char hbuf[128];
@@ -937,7 +938,7 @@ send_clar_if_asked(void)
   open_serve();
   n = serve_clnt_submit_clar(serve_socket_fd, client_team_id,
                              global->contest_id, client_locale_id,
-                             client_ip, full_subj, t);
+                             client_ip, ssl_flag, full_subj, t);
   operation_status_page(n, 0);
   force_recheck_status = 1;
 }
@@ -980,7 +981,7 @@ submit_if_asked(void)
   n = serve_clnt_submit_run(serve_socket_fd, SRV_CMD_SUBMIT_RUN,
                             client_team_id,
                             global->contest_id, client_locale_id,
-                            client_ip, prob, lang, 0,
+                            client_ip, ssl_flag, prob, lang, 0,
                             prog_size, prog_data);
   operation_status_page(n, 0);
   force_recheck_status = 1;
@@ -1313,7 +1314,8 @@ action_logout(void)
 
   if (client_sid) {
     open_userlist_server();
-    userlist_clnt_logout(server_conn, ULS_DO_LOGOUT, client_ip, client_sid);
+    userlist_clnt_logout(server_conn, ULS_DO_LOGOUT,
+                         client_ip, ssl_flag, client_sid);
   }
   client_put_header(stdout, header_txt, 0, global->charset, 1,
                     client_locale_id, "%s", _("Good-bye"));
