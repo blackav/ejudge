@@ -17,8 +17,11 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 int html_armored_memlen(char const *text, int size);
 int html_armored_strlen(char const *str);
@@ -30,9 +33,9 @@ int html_armor_needed(const unsigned char *str, size_t *psz);
 //unsigned char *html_armor_string_dupa(const unsigned char *str);
 #define html_armor_string_dupa(s) ({ unsigned char *_dupa_tmp_s = (s); size_t _dupa_tmp_len = strlen(_dupa_tmp_s), _dupa_tmp_len_2 = html_armored_memlen(_dupa_tmp_s, _dupa_tmp_len); unsigned char *_dupa_tmp_str = (unsigned char*) alloca(_dupa_tmp_len_2 + 1); html_armor_text(_dupa_tmp_s, _dupa_tmp_len, _dupa_tmp_str); _dupa_tmp_str; }) 
 
-char *duration_str(int show_astr, unsigned long cur,
-                   unsigned long time, char *buf, int len);
-char *duration_min_str(unsigned long time, char *buf, int len);
+char *duration_str(int show_astr, time_t cur,
+                   time_t time, char *buf, int len);
+char *duration_min_str(time_t time, char *buf, int len);
 
 int  message_quoted_size(char const *);
 int  message_quote(char const *, char *);
@@ -55,12 +58,12 @@ enum
 int get_content_type(const unsigned char *txt, const unsigned char **p_start_ptr);
 
 unsigned char *html_hyperref(unsigned char *buf, size_t size,
-                             unsigned long long session_id,
+                             ej_cookie_t session_id,
                              const unsigned char *self_url,
                              const unsigned char *extra_args,
                              const unsigned char *format, ...);
 
-void html_start_form(FILE *f, int mode, unsigned long long sid,
+void html_start_form(FILE *f, int mode, ej_cookie_t sid,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars);
 
