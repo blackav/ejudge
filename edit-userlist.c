@@ -16,6 +16,7 @@
  */
 
 #include "config.h"
+#include "ej_types.h"
 
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
@@ -1258,11 +1259,11 @@ static const struct user_field_desc member_descs[] =
 };
 
 static unsigned char *
-unparse_ip(unsigned long ip)
+unparse_ip(ej_ip_t ip)
 {
   static char buf[64];
 
-  snprintf(buf, sizeof(buf), "%lu.%lu.%lu.%lu",
+  snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
            ip >> 24, (ip >> 16) & 0xff,
            (ip >> 8) & 0xff, ip & 0xff);
   return buf;
