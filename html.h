@@ -18,6 +18,7 @@
  */
 
 #include "opcaps.h"
+#include "ej_types.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -27,13 +28,13 @@ void write_public_log(char const *, char const *, char const *, char const *);
 
 void new_write_user_runs(FILE *f, int uid, int printing_suspended,
                          unsigned int show_flags,
-                         unsigned long long sid,
+                         ej_cookie_t sid,
                          unsigned char const *self_url,
                          unsigned char const *hidden_vars,
                          unsigned char const *extra_args);
 
 void new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
-                          unsigned long long sid,
+                          ej_cookie_t sid,
                           unsigned char const *self_url,
                           unsigned char const *hidden_vars,
                           unsigned char const *extra_args);
@@ -41,14 +42,14 @@ void new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
 int new_write_user_clar(FILE *, int, int);
 int new_write_user_source_view(FILE *, int, int);
 int new_write_user_report_view(FILE *f, int uid, int rid,
-                               unsigned long long sid,
+                               ej_cookie_t sid,
                                const unsigned char *self_url,
                                const unsigned char *hidden_vars,
                                const unsigned char *extra_args);
 
 void write_team_page(FILE *f, int user_id,
                      int printing_suspended,
-                     unsigned long long sid,
+                     ej_cookie_t sid,
                      int all_runs, int all_clars,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars,
@@ -59,7 +60,7 @@ void write_team_page(FILE *f, int user_id,
 
 void write_master_page(FILE *f,
                        int user_id, int priv_level,
-                       unsigned long long sid,
+                       ej_cookie_t sid,
                        int first_run, int last_run,
                        int mode_clar, int first_clar, int last_clar,
                        int accepting_mode,
@@ -70,7 +71,7 @@ void write_master_page(FILE *f,
                        const opcap_t *pcaps);
 
 void write_priv_standings(FILE *f,
-                          unsigned long long sid,
+                          ej_cookie_t sid,
                           unsigned char const *self_url,
                           unsigned char const *hidden_vars,
                           unsigned char const *extra_args,
@@ -78,7 +79,7 @@ void write_priv_standings(FILE *f,
 
 struct user_filter_info;
 int write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
-                        int priv_level, unsigned long long sid,
+                        int priv_level, ej_cookie_t sid,
                         int first_run, int last_run,
                         int accepting_mode,
                         unsigned char const *self_url,
@@ -109,20 +110,20 @@ void do_write_standings(FILE *f,
                         const unsigned char *user_name);
 
 int write_priv_source(FILE *f, int user_id, int priv_level,
-                      unsigned long long sid,
+                      ej_cookie_t sid,
                       int accepting_mode,
                       unsigned char const *self_url,
                       unsigned char const *hidden_vars,
                       unsigned char const *extra_args,
                       int run_id, const opcap_t *);
 int write_new_run_form(FILE *f, int user_id, int priv_level,
-                       unsigned long long sid,
+                       ej_cookie_t sid,
                        unsigned char const *self_url,
                        unsigned char const *hidden_vars,
                        unsigned char const *extra_args,
                        int run_id, const opcap_t *);
 int write_priv_report(FILE *f, int user_id, int priv_level,
-                      unsigned long long sid,
+                      ej_cookie_t sid,
                       int team_report_flag,
                       unsigned char const *self_url,
                       unsigned char const *hidden_vars,
@@ -130,21 +131,21 @@ int write_priv_report(FILE *f, int user_id, int priv_level,
                       int run_id, const opcap_t *);
 
 int write_priv_clar(FILE *f, int user_id, int priv_level,
-                    unsigned long long sid,
+                    ej_cookie_t sid,
                     unsigned char const *self_url,
                     unsigned char const *hidden_vars,
                     unsigned char const *extra_args,
                     int clar_id, const opcap_t *);
 
 int write_priv_users(FILE *f, int user_id, int priv_level,
-                     unsigned long long sid,
+                     ej_cookie_t sid,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars,
                      unsigned char const *extra_args,
                      const opcap_t *);
 
 int write_priv_user(FILE *f, int user_id, int priv_level,
-                    unsigned long long sid,
+                    ej_cookie_t sid,
                     unsigned char const *self_url,
                     unsigned char const *hidden_vars,
                     unsigned char const *extra_args,
@@ -153,8 +154,8 @@ int write_priv_user(FILE *f, int user_id, int priv_level,
 
 int write_virtual_standings(FILE *f, int user_id);
 
-void html_reset_filter(int user_id, unsigned long long session_id);
-void html_reset_clar_filter(int user_id, unsigned long long session_id);
+void html_reset_filter(int user_id, ej_cookie_t session_id);
+void html_reset_clar_filter(int user_id, ej_cookie_t session_id);
 
 void write_runs_dump(FILE *f, const unsigned char *,
                      unsigned char const *charset);
@@ -180,7 +181,7 @@ void write_html_run_status(FILE *f, struct run_entry *pe,
 int write_tests(FILE *f, int cmd, int run_id, int test_num);
 
 int write_xml_testing_report(FILE *f, unsigned char const *txt,
-                             unsigned long long sid,
+                             ej_cookie_t sid,
                              unsigned char const *self_url,
                              unsigned char const *extra_args);
 int write_xml_team_testing_report(FILE *f, const unsigned char *txt);
