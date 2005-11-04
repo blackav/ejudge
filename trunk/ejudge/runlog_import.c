@@ -84,7 +84,7 @@ runlog_import_xml(FILE *hlog, int flags, const unsigned char *in_xml)
   int r, i, st, j, k, corr_total, i2, j2, i3, j3, cur_out, prev_i;
   int min_i, min_j;
   time_t prev_time, cur_time = 0;
-  long prev_nsec;
+  int prev_nsec;
   int *cur_new_map, *cur_merged_map, *new_cur_map, *new_merged_map;
   int update_flag = 0;
   int min_team_id;
@@ -251,7 +251,7 @@ runlog_import_xml(FILE *hlog, int flags, const unsigned char *in_xml)
       goto done;
     }
     if (in_entries[i].nsec < 0 || in_entries[i].nsec >= 1000000000) {
-      fprintf(flog, "Run %d nsec %ld is invalid\n", i, in_entries[i].nsec);
+      fprintf(flog, "Run %d nsec %d is invalid\n", i, in_entries[i].nsec);
       goto done;
     }
   }
