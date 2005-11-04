@@ -302,11 +302,11 @@ parse_int(char const *path, int l, int c, char const *str, int *pval)
   return 0;
 }
 static int
-parse_ip(char const *path, int l, int c, char const *s, unsigned long *pip)
+parse_ip(char const *path, int l, int c, char const *s, ej_ip_t *pip)
 {
   unsigned int b1, b2, b3, b4;
   int n;
-  unsigned long ip;
+  ej_ip_t ip;
 
   if (!s || sscanf(s, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4
       || s[n] || b1 > 255 || b2 > 255 || b3 > 255 || b4 > 255) {
@@ -318,7 +318,7 @@ parse_ip(char const *path, int l, int c, char const *s, unsigned long *pip)
   return 0;
 }
 static int
-parse_date(char const *path, int l, int c, char const *s, unsigned long *pd)
+parse_date(char const *path, int l, int c, char const *s, time_t *pd)
 {
   int year, month, day, hour, min, sec, n;
   time_t t;
@@ -550,7 +550,7 @@ parse_cookies(char const *path, struct xml_tree *cookies,
         break;
       case USERLIST_A_VALUE:
         {
-          unsigned long long val;
+          ej_cookie_t val;
           int n;
 
           if (!a->text || sscanf(a->text, "%llx %n", &val, &n) != 1
@@ -1179,7 +1179,7 @@ userlist_free(struct xml_tree *p)
 }
 
 static unsigned char *
-unparse_date(unsigned long d)
+unparse_date(time_t d)
 {
   static char buf[64];
   struct tm *ptm;
@@ -1233,11 +1233,11 @@ unparse_member_status(int s)
   return member_status_map[s];
 }
 unsigned char *
-userlist_unparse_ip(unsigned long ip)
+userlist_unparse_ip(ej_ip_t ip)
 {
   static char buf[64];
 
-  snprintf(buf, sizeof(buf), "%lu.%lu.%lu.%lu",
+  snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
            ip >> 24, (ip >> 16) & 0xff,
            (ip >> 8) & 0xff, ip & 0xff);
   return buf;
