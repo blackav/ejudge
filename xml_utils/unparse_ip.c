@@ -18,11 +18,11 @@
 #include "xml_utils.h"
 
 const unsigned char *
-xml_unparse_ip(unsigned long ip)
+xml_unparse_ip(ej_ip_t ip)
 {
   static char buf[64];
 
-  snprintf(buf, sizeof(buf), "%lu.%lu.%lu.%lu",
+  snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
            ip >> 24, (ip >> 16) & 0xff,
            (ip >> 8) & 0xff, ip & 0xff);
   return buf;
