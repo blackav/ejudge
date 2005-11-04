@@ -1,3 +1,17 @@
+2005-11-04  Alexander Chernov  <cher@ispras.ru>
+
+	* parse_ip.c:
+	(xml_parse_ip) "ej_ip_t" type is used instead of unsigned int.
+
+	* unparse_ip.c:
+	(xml_unparse_ip) "ej_ip_t" type is used instead of unsigned int.
+
+	* parse_ip_mask.c:
+	(xml_parse_ip_mask) "ej_ip_t" type is used instead of unsigned int.
+
+	* unparse_ip_mask.c:
+	(xml_unparse_ip_mask) "ej_ip_t" type is used instead of unsigned int.
+
 2005-08-07  Alexander Chernov  <cher@ispras.ru>
 
 	* parse_ip_mask.c:

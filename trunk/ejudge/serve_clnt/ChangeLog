@@ -1,5 +1,32 @@
 2005-11-03  Alexander Chernov  <cher@ispras.ru>
 
+	* edit_run.c:
+	(do_serve_clnt_edit_run) `ej_ip_t' type is used for `ip';
+	  `ssl' parameter is added and passed to the server;
+	(serve_clnt_edit_run) call of `do_serve_clnt_edit_run' is updated;
+	(serve_clnt_new_run) `ej_ip_t' type is used for `ip';
+	  `ssl' parameter is added and passed to `do_serve_clnt_edit_run'.
+
+	* master_page.c:
+	(serve_clnt_master_page) `ej_cookie_t' type is used for `session_id';
+	  `ej_ip_t' type is used for `ip';
+	  `ssl' parameter is added and passed to the server.
+
+	* reset_filter.c:
+	(serve_clnt_reset_filter) `ej_cookie_t' type is used for `session_id'.
+
+	* submit_clar.c: 
+	(serve_clnt_submit_clar) `ej_ip_t' is used for `ip';
+	  `ssl' parameter is added and passed to the server.
+
+	* submit_run.c: 
+	(serve_clnt_submit_run) `ej_ip_t' is used for `ip';
+	  `ssl' parameter is added and passed to the server.
+
+	* send_packet.c: (serve_clnt_send_packet) bugfixes.
+
+2005-11-03  Alexander Chernov  <cher@ispras.ru>
+
 	* send_packet.c: copyright notice is updated;
 	<reuse/integral.h> is included;
 	<sys/uio.h> is included;

@@ -1,5 +1,9 @@
 2005-11-03  Alexander Chernov  <cher@ispras.ru>
 
+	* send_packet.c: (super_clnt_send_packet) bugfixes.
+
+2005-11-03  Alexander Chernov  <cher@ispras.ru>
+
 	* send_packet.c: copyright notice is updated;
 	(super_clnt_send_packet) `size' parameter now has type `size_t';
 	  the function is rewritten to avoid unnecessary packet
