@@ -501,8 +501,8 @@ teamdb_set_archive_time(int uid, time_t time)
 int
 teamdb_get_uid_by_pid(int system_uid, int system_gid, int system_pid,
                       int *p_uid, int *p_priv_level,
-                      unsigned long long *p_cookie,
-                      unsigned long *p_ip, int *p_ssl)
+                      ej_cookie_t *p_cookie,
+                      ej_ip_t *p_ip, int *p_ssl)
 {
   int r;
 
