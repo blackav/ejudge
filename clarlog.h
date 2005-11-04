@@ -3,7 +3,7 @@
 #ifndef __CLARLOG_H__
 #define __CLARLOG_H__
 
-/* Copyright (C) 2000-2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,9 @@
  * GNU General Public License for more details.
  */
 
+#include <time.h>
+#include <stdlib.h>
+
 #define CLAR_MAX_SUBJ_LEN     24
 #define CLAR_MAX_SUBJ_TXT_LEN 18
 #define CLAR_MAX_IP_LEN       15
@@ -27,16 +30,16 @@ enum
   };
 
 int clar_open(char const *path, int flags);
-int clar_add_record(unsigned long  time,
-                    unsigned long  size,
+int clar_add_record(time_t         time,
+                    size_t         size,
                     char const    *ip,
                     int            from,
                     int            to,
                     int            flags,
                     char const    *subj);
 int clar_get_record(int            id,
-                    unsigned long *ptime,
-                    unsigned long *psize,
+                    time_t        *ptime,
+                    size_t        *psize,
                     char          *ip,
                     int           *pfrom,
                     int           *pto,
@@ -45,7 +48,7 @@ int clar_get_record(int            id,
 int clar_update_flags(int id, int flags);
 int clar_get_total(void);
 
-void clar_get_team_usage(int, int *, unsigned long *);
+void clar_get_team_usage(int, int *, size_t *);
 char *clar_flags_html(int, int, int, char *, int);
 void clar_reset(void);
 void clar_clear_variables(void);
