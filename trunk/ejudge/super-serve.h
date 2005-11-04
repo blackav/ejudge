@@ -17,6 +17,8 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
+
 #include <time.h>
 
 struct contest_extra
@@ -74,7 +76,7 @@ struct sid_state
 {
   struct sid_state *next;
   struct sid_state *prev;
-  unsigned long long sid;
+  ej_cookie_t sid;
   time_t init_time;
   unsigned long flags;
   struct contest_desc *edited_cnts;
