@@ -23,7 +23,7 @@
 int
 xml_parse_ip_mask(const unsigned char *path, int line, int column,
                   const unsigned char *s,
-                  unsigned *p_addr, unsigned *p_mask)
+                  ej_ip_t *p_addr, ej_ip_t *p_mask)
 {
   int n;
   unsigned int b1, b2, b3, b4, b5;
