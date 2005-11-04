@@ -17,6 +17,7 @@
 
 #include "config.h"
 #include "settings.h"
+#include "ej_types.h"
 
 #include "userlist_cfg.h"
 #include "userlist.h"
@@ -124,8 +125,8 @@ struct client_state
   // 0 - root, -1 - unknown (anonymous)
   int user_id;
   int priv_level;
-  unsigned long long cookie;
-  unsigned long ip;
+  ej_cookie_t cookie;
+  ej_ip_t ip;
   int ssl;
 
   // user capabilities
@@ -151,7 +152,7 @@ static int contest_extras_size;
 
 static time_t cur_time;
 static time_t last_flush;
-static unsigned long flush_interval;
+static unsigned flush_interval;
 static int dirty = 0;
 static time_t last_cookie_check;
 static time_t last_user_check;
@@ -346,10 +347,10 @@ force_flush(int s)
   flush_interval = 0;
 }
 
-static unsigned long
-generate_random_long(void)
+static unsigned
+generate_random_unsigned(void)
 {
-  unsigned long val = 0;
+  unsigned val = 0;
   int n, r;
   char *p;
 
@@ -378,10 +379,10 @@ generate_random_long(void)
   return val;
 }
 
-static unsigned long long
+static ej_cookie_t
 generate_random_cookie(void)
 {
-  unsigned long long val = 0;
+  ej_cookie_t val = 0;
   int n, r;
   char *p;
 
@@ -650,11 +651,11 @@ interrupt_signal(int s)
 }
 
 static unsigned char *
-unparse_ip(unsigned long ip)
+unparse_ip(ej_ip_t ip)
 {
   static char buf[64];
 
-  snprintf(buf, sizeof(buf), "%lu.%lu.%lu.%lu",
+  snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
            ip >> 24, (ip >> 16) & 0xff,
            (ip >> 8) & 0xff, ip & 0xff);
   return buf;
@@ -894,7 +895,7 @@ cmd_register_new(struct client_state *p,
     return;
   }
 
-  snprintf(logbuf, sizeof(logbuf), "NEW_USER: %s, %s, %s, %ld",
+  snprintf(logbuf, sizeof(logbuf), "NEW_USER: %s, %s, %s, %d",
            unparse_ip(data->origin_ip), login, email, data->contest_id);
 
   if (data->contest_id != 0) {
@@ -922,7 +923,7 @@ cmd_register_new(struct client_state *p,
   }
   urlptr += sprintf(urlptr, "?action=%d&login=%s", 3, login);
   if (data->contest_id > 0) {
-    urlptr += sprintf(urlptr, "&contest_id=%ld", data->contest_id);
+    urlptr += sprintf(urlptr, "&contest_id=%d", data->contest_id);
   }
   if (data->locale_id >= 0) {
     urlptr += sprintf(urlptr, "&locale_id=%d", data->locale_id);
@@ -1236,10 +1237,10 @@ check_all_users(void)
   }
 }
 
-static unsigned long long
+static ej_cookie_t
 generate_random_unique_cookie(void)
 {
-  unsigned long long val;
+  ej_cookie_t val;
   struct userlist_cookie *ck;
   int i;
 
@@ -1272,7 +1273,7 @@ cmd_do_login(struct client_state *p,
   struct userlist_cookie * cookie;
   struct passwd_internal pwdint;
   userlist_login_hash_t login_hash;
-  unsigned long long tsc1, tsc2;
+  ej_tsc_t tsc1, tsc2;
   unsigned char logbuf[1024];
 
   if (pkt_len < sizeof(*data)) {
@@ -1411,7 +1412,7 @@ cmd_team_login(struct client_state *p, int pkt_len,
   struct userlist_cookie *cookie;
   int out_size = 0, login_len, name_len;
   int i, errcode;
-  unsigned long long tsc1, tsc2;
+  ej_tsc_t tsc1, tsc2;
   userlist_login_hash_t login_hash;
   unsigned char logbuf[1024];
 
@@ -1435,7 +1436,7 @@ cmd_team_login(struct client_state *p, int pkt_len,
   }
 
   snprintf(logbuf, sizeof(logbuf),
-           "TEAM_LOGIN: %s, %d, %s, %ld, %d, %d",
+           "TEAM_LOGIN: %s, %d, %s, %d, %d, %d",
            unparse_ip(data->origin_ip), data->ssl, login_ptr, data->contest_id,
            data->locale_id, data->use_cookies);
 
@@ -1599,7 +1600,7 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   size_t out_size = 0, errcode;
   struct userlist_cookie *cookie;
   opcap_t caps;
-  unsigned long long tsc1, tsc2;
+  ej_tsc_t tsc1, tsc2;
   userlist_login_hash_t login_hash;
   unsigned char logbuf[1024];
 
@@ -1623,7 +1624,7 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   }
 
   snprintf(logbuf, sizeof(logbuf),
-           "PRIV_LOGIN: %s, %d, %s, %ld, %d, %d",
+           "PRIV_LOGIN: %s, %d, %s, %d, %d, %d",
            unparse_ip(data->origin_ip), data->ssl, login_ptr, data->contest_id,
            data->locale_id, data->use_cookies);
 
@@ -1811,7 +1812,7 @@ cmd_check_cookie(struct client_state *p,
   int anslen;
   struct userlist_cookie * cookie = 0;
   unsigned char *name_beg;
-  unsigned long long tsc1, tsc2;
+  ej_tsc_t tsc1, tsc2;
   int i;
   time_t current_time = time(0);
   unsigned char logbuf[1024];
@@ -1922,7 +1923,7 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   struct userlist_pk_login_ok *out = 0;
   int i, out_size = 0, login_len = 0, name_len = 0, errcode;
   unsigned char *login_ptr, *name_ptr;
-  unsigned long long tsc1, tsc2;
+  ej_tsc_t tsc1, tsc2;
   time_t current_time = time(0);
   unsigned char logbuf[1024];
 
@@ -1932,7 +1933,7 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   }
 
   snprintf(logbuf, sizeof(logbuf),
-           "TEAM_COOKIE: %s, %d, %ld, %llx, %d",
+           "TEAM_COOKIE: %s, %d, %d, %llx, %d",
            unparse_ip(data->origin_ip), data->ssl, data->contest_id,
            data->cookie, data->locale_id);
 
@@ -2115,7 +2116,7 @@ cmd_priv_check_cookie(struct client_state *p,
   int priv_level, i, errcode;
   opcap_t caps;
   time_t current_time = time(0);
-  unsigned long long tsc1, tsc2;
+  ej_tsc_t tsc1, tsc2;
   unsigned char logbuf[1024];
 
   if (pkt_len != sizeof(*data)) {
@@ -2124,7 +2125,7 @@ cmd_priv_check_cookie(struct client_state *p,
   }
 
   snprintf(logbuf, sizeof(logbuf),
-           "PRIV_COOKIE: %s, %d, %ld, %llx",
+           "PRIV_COOKIE: %s, %d, %d, %llx",
            unparse_ip(data->origin_ip), data->ssl, data->contest_id, data->cookie);
 
   if (p->user_id >= 0) {
@@ -2401,7 +2402,7 @@ cmd_get_user_info(struct client_state *p,
     return;
   }
 
-  snprintf(logbuf, sizeof(logbuf), "GET_USER_INFO: %ld", data->user_id);
+  snprintf(logbuf, sizeof(logbuf), "GET_USER_INFO: %d", data->user_id);
 
   if (p->user_id < 0) {
     err("%s -> not authentificated", logbuf);
@@ -2418,7 +2419,7 @@ cmd_get_user_info(struct client_state *p,
     return;
   }
   if (data->user_id != p->user_id) {
-    err("%s -> user ids does not match: %d, %ld",
+    err("%s -> user ids does not match: %d, %d",
         logbuf, p->user_id, data->user_id);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -2471,7 +2472,7 @@ cmd_priv_get_user_info(struct client_state *p,
     return;
   }
 
-  snprintf(logbuf, sizeof(logbuf), "PRIV_USER_INFO: %d, %lu",
+  snprintf(logbuf, sizeof(logbuf), "PRIV_USER_INFO: %d, %d",
            p->user_id, data->user_id);
 
   if (p->user_id < 0) {
@@ -2675,7 +2676,7 @@ cmd_get_user_contests(struct client_state *p,
     return;
   }
 
-  snprintf(logbuf, sizeof(logbuf), "GET_USER_CONTESTS: %ld", data->user_id);
+  snprintf(logbuf, sizeof(logbuf), "GET_USER_CONTESTS: %d", data->user_id);
 
   if (p->user_id < 0) {
     err("%s -> not authentificated", logbuf);
@@ -2841,7 +2842,7 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
   }
 
   if (data->user_id != new_u->id) {
-    err("%s -> XML user_id %d does not correspond to packet user_id %lu",
+    err("%s -> XML user_id %d does not correspond to packet user_id %d",
         msg, new_u->id, data->user_id);
     send_reply(p, -ULS_ERR_PROTOCOL);
     userlist_free(&new_u->b);
@@ -3293,7 +3294,7 @@ cmd_set_user_info(struct client_state *p,
   }
 
   snprintf(logbuf, sizeof(logbuf),
-           "SET_USER_INFO: %ld, %d", data->user_id, data->info_len);
+           "SET_USER_INFO: %d, %d", data->user_id, data->info_len);
 
   if (data->contest_id) {
     if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
@@ -3310,7 +3311,7 @@ cmd_set_user_info(struct client_state *p,
   }
   ASSERT(p->user_id > 0);
   if (p->user_id != data->user_id) {
-    err("%s -> user_id does not match: %d, %ld", logbuf,
+    err("%s -> user_id does not match: %d, %d", logbuf,
         p->user_id, data->user_id);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -4460,7 +4461,7 @@ cmd_list_users(struct client_state *p, int pkt_len,
     return;
   }
 
-  snprintf(logbuf, sizeof(logbuf), "LIST_USERS: %ld, %d",
+  snprintf(logbuf, sizeof(logbuf), "LIST_USERS: %d, %d",
            data->contest_id, data->user_id);
 
   if (data->user_id) {
@@ -6253,7 +6254,8 @@ flush_database(void)
   if (!dirty) return;
 
   tempname = os_DirName(config->db_path);
-  snprintf(basename, sizeof(basename), "/%lu", generate_random_long());
+  snprintf(basename, sizeof(basename), "/%u",
+           generate_random_unsigned());
   tempname = xstrmerge1(tempname, basename);
   if (!daemon_mode)
     info("bdflush: flushing database to `%s'", tempname);
