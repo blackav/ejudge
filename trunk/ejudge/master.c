@@ -16,6 +16,7 @@
  */
 
 #include "config.h"
+#include "ej_types.h"
 
 #include "cgi.h"
 #include "fileutl.h"
@@ -149,7 +150,7 @@ global_init_func(struct generic_section_config *gp)
 /* new userlist-server related variables */
 static struct contest_desc *cur_contest;
 static struct userlist_clnt *userlist_conn;
-static unsigned long client_ip;
+static ej_ip_t client_ip;
 static int serve_socket_fd = -1;
 static unsigned char *self_url = 0;
 static int ssl_flag = 0;
@@ -165,7 +166,7 @@ static int client_action = 0;
 static int cgi_contest_id = 0;
 static unsigned char contest_id_str[64];
 
-static unsigned long long client_sid;
+static ej_cookie_t client_sid;
 static unsigned char *client_login;
 static unsigned char *client_password;
 static unsigned char *client_name;
@@ -243,7 +244,7 @@ make_self_url(void)
 
 static unsigned char *
 hyperref(unsigned char *buf, int size,
-         unsigned long long sid,
+         ej_cookie_t sid,
          unsigned char const *contest_id_str,
          unsigned char const *self_url,
          unsigned char const *format, ...)
@@ -427,10 +428,10 @@ client_server_down(void)
 }
 
 static int
-get_session_id(unsigned char const *var, unsigned long long *p_val)
+get_session_id(unsigned char const *var, ej_cookie_t *p_val)
 {
   unsigned char const *str;
-  unsigned long long val;
+  ej_cookie_t val;
   int n;
 
   if (!var) return 0;
@@ -463,7 +464,7 @@ client_put_refresh_header(unsigned char const *coding,
 static int
 authentificate(void)
 {
-  unsigned long long session_id;
+  ej_cookie_t session_id;
   int r;
   unsigned char hbuf[128];
 
@@ -1527,7 +1528,8 @@ action_new_run(void)
                          user_id, prob_id, lang_id, status,
                          is_imported, variant, is_hidden,
                          tests, score, is_readonly, 0,
-                         client_ip, prog_size, user_login, prog_data);
+                         client_ip, ssl_flag,
+                         prog_size, user_login, prog_data);
   operation_status_page(r, 0, -1);
   return;
 
@@ -1810,7 +1812,8 @@ action_submit_run(void)
   n = serve_clnt_submit_run(serve_socket_fd, SRV_CMD_PRIV_SUBMIT_RUN,
                             client_user_id,
                             global->contest_id, 0,
-                            client_ip, prob_id, lang_id, variant,
+                            client_ip, ssl_flag,
+                            prob_id, lang_id, variant,
                             prog_size, prog_data);
   operation_status_page(n, 0, -1);
 }
@@ -2612,7 +2615,8 @@ log_out_if_asked(void)
   if (!cgi_param("logout")) return;
   if (client_sid) {
     open_userlist_server();
-    userlist_clnt_logout(userlist_conn, ULS_DO_LOGOUT, client_ip, client_sid);
+    userlist_clnt_logout(userlist_conn, ULS_DO_LOGOUT,
+                         client_ip, ssl_flag, client_sid);
   }
   client_put_header(stdout, 0, 0, global->charset, 1, 0, "%s", _("Good-bye"));
   printf("<p>%s</p>\n",
@@ -2953,7 +2957,7 @@ display_master_page(void)
                              client_sid,
                              client_user_id,
                              global->contest_id, 0,
-                             client_ip,
+                             client_ip, ssl_flag, 
                              priv_level,
                              filter_first_run,
                              filter_last_run,
