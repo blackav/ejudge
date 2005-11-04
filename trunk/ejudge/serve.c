@@ -17,6 +17,7 @@
 
 #include "config.h"
 #include "settings.h"
+#include "ej_types.h"
 
 #include "runlog.h"
 #include "parsecfg.h"
@@ -121,8 +122,8 @@ struct client_state
 
   int user_id;
   int priv_level;
-  unsigned long long cookie;
-  unsigned long ip;
+  ej_cookie_t cookie;
+  ej_ip_t ip;
   int ssl;
 
   // passed file descriptors
@@ -194,12 +195,12 @@ client_disconnect(struct client_state *p, int force_flag)
 #define MAX_PACKET_SIZE 256
 typedef char packet_t[MAX_PACKET_SIZE];
 
-static unsigned long current_time;
+static time_t current_time;
 
-static unsigned long contest_start_time;
-static unsigned long contest_sched_time;
-static unsigned long contest_duration;
-static unsigned long contest_stop_time;
+static time_t contest_start_time;
+static time_t contest_sched_time;
+static time_t contest_duration;
+static time_t contest_stop_time;
 static int clients_suspended;
 static int testing_suspended;
 static int printing_suspended;
@@ -354,6 +355,7 @@ update_status_file(int force_flag)
 {
   static time_t prev_status_update = 0;
   struct prot_serve_status_v2 status;
+  time_t t1, t2, t3, t4;
   int p;
 
   if (!force_flag && current_time <= prev_status_update) return 0;
@@ -362,10 +364,11 @@ update_status_file(int force_flag)
   status.magic = PROT_SERVE_STATUS_MAGIC_V2;
 
   status.cur_time = current_time;
-  run_get_times(&status.start_time,
-                &status.sched_time,
-                &status.duration,
-                &status.stop_time);
+  run_get_times(&t1, &t2, &t3, &t4);
+  status.start_time = t1;
+  status.sched_time = t2;
+  status.duration = t3;
+  status.stop_time = t4;
   status.total_runs = run_get_total();
   status.total_clars = clar_get_total();
   status.clars_disabled = global->disable_clars;
@@ -412,7 +415,7 @@ load_status_file(void)
   if (generic_read_file(&ptr, 0, &stat_len, 0, global->status_dir,
                         "dir/status", "") < 0) return;
   if (stat_len != sizeof(status)) {
-    info("load_status_file: length %d does not match %d",
+    info("load_status_file: length %zu does not match %zu",
          stat_len, sizeof(status));
     xfree(ptr);
     return;
@@ -493,7 +496,7 @@ static int
 check_clar_qouta(int teamid, unsigned int size)
 {
   int num;
-  unsigned long total;
+  size_t total;
 
   if (size > global->max_clar_size) return -1;
   clar_get_team_usage(teamid, &num, &total);
@@ -617,8 +620,8 @@ new_bad_packet(struct client_state *p, char const *format, ...)
 static int
 get_peer_local_user(struct client_state *p)
 {
-  unsigned long long cookie = 0;
-  unsigned long ip = 0;
+  ej_cookie_t cookie = 0;
+  ej_ip_t ip = 0;
   int user_id = 0, priv_level = 0, ssl = 0;
   int r;
 
@@ -882,6 +885,7 @@ static const unsigned char * const contest_types[] =
   [SCORE_ACM] "acm",
   [SCORE_KIROV] "kirov",
   [SCORE_OLYMPIAD] "olympiad",
+  [SCORE_MOSCOW] "moscow",
 };
 
 static void
@@ -929,7 +933,7 @@ cmd_get_param(struct client_state *p, int len,
   switch (pkt->id) {
   case SRV_CMD_GET_CONTEST_TYPE:
     if (global->score_system_val < SCORE_ACM ||
-        global->score_system_val > SCORE_OLYMPIAD) {
+        global->score_system_val >= SCORE_TOTAL) {
       // FIXME:!!!
       abort();
     }
@@ -951,7 +955,7 @@ cmd_get_param(struct client_state *p, int len,
   if (txt_len > 0) memcpy(out_pkt->data, txt_ptr, txt_len);
   xfree(txt_ptr);
   
-  info("%d: cmd_get_param: %d", p->id, out_len);
+  info("%d: cmd_get_param: %zu", p->id, out_len);
   new_enqueue_reply(p, out_len, out_pkt);
 }
 
@@ -1100,7 +1104,7 @@ cmd_master_page(struct client_state *p, int len,
     p->client_fds[1] = -1;
   }
 
-  info("%d: cmd_master_page: ok %d", p->id, html_len);
+  info("%d: cmd_master_page: ok %zu", p->id, html_len);
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -1208,7 +1212,7 @@ cmd_priv_standings(struct client_state *p, int len,
   q->write_buf = html_ptr;
   q->write_len = html_len;
 
-  info("%d: priv_standings: ok %d", p->id, html_len);
+  info("%d: priv_standings: ok %zu", p->id, html_len);
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -1622,7 +1626,7 @@ cmd_view(struct client_state *p, int len,
   q->write_buf = html_ptr;
   q->write_len = html_len;
 
-  info("%d: view: ok %d", p->id, html_len);
+  info("%d: view: ok %zu", p->id, html_len);
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -1693,7 +1697,7 @@ cmd_import_xml_runs(struct client_state *p, int len,
   q->write_buf = html_ptr;
   q->write_len = html_len;
 
-  info("%d: import_xml_runs: ok %d", p->id, html_len);
+  info("%d: import_xml_runs: ok %zu", p->id, html_len);
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -1796,7 +1800,7 @@ cmd_message(struct client_state *p, int len,
       return;
     }
 
-    info("%d: cmd_message: ok %d %d", p->id, clar_id, msg_len);
+    info("%d: cmd_message: ok %d %zu", p->id, clar_id, msg_len);
     new_send_reply(p, SRV_RPL_OK);
     return;
 
@@ -1855,7 +1859,7 @@ cmd_message(struct client_state *p, int len,
     }
     clar_update_flags(pkt->ref_clar_id, 2);
     xfree(orig_txt);
-    info("%d: cmd_message: ok %d %d", p->id, clar_id, msg_len);
+    info("%d: cmd_message: ok %d %zu", p->id, clar_id, msg_len);
     new_send_reply(p, SRV_RPL_OK);
     return;
 
@@ -2005,7 +2009,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
 {
   int run_id, arch_flags;
   path_t run_arch;
-  unsigned long shaval[5];
+  ruint32_t shaval[5];
   time_t start_time, stop_time;
   struct timeval precise_time;
 
@@ -2184,7 +2188,7 @@ cmd_upload_report(struct client_state *p, int len,
     return;
   }
 
-  info("%d: upload_report: %d, %d, %d, %zu",
+  info("%d: upload_report: %d, %d, %d, %d",
        p->id, pkt->user_id, pkt->contest_id, pkt->run_id,
        pkt->report_size);
 
@@ -2301,7 +2305,7 @@ cmd_team_submit_run(struct client_state *p, int len,
 {
   int run_id, r, arch_flags;
   path_t run_arch;
-  unsigned long shaval[5];
+  ruint32_t shaval[5];
   time_t start_time, stop_time, user_deadline = 0;
   struct timeval precise_time;
 
@@ -3646,7 +3650,7 @@ cmd_new_run(struct client_state *p, int len,
   struct run_entry new_run;
   int new_run_flags = 0;
   int run_id, arch_flags, locale_id;
-  unsigned long shaval[5];
+  ruint32_t shaval[5];
   struct timeval precise_time;
   path_t run_arch;
 
@@ -3912,14 +3916,14 @@ cmd_edit_user(struct client_state *p, int len,
   txt_ptr = pkt->data;
   actual_txt_len = strlen(txt_ptr);
   if (actual_txt_len != pkt->txt_len) {
-    err("%d: cmd_edit_user: txt_len mismatch (%d != %zu)",
+    err("%d: cmd_edit_user: txt_len mismatch (%zu != %d)",
         p->id, actual_txt_len, pkt->txt_len);
     goto protocol_error;
   }
   cmt_ptr = txt_ptr + pkt->txt_len + 1;
   actual_cmt_len = strlen(cmt_ptr);
   if (actual_cmt_len != pkt->cmt_len) {
-    err("%d: cmd_edit_user: cmt_len mismatch (%d != %zu)",
+    err("%d: cmd_edit_user: cmt_len mismatch (%zu != %d)",
         p->id, actual_cmt_len, pkt->cmt_len);
     goto protocol_error;
   }
@@ -4004,12 +4008,12 @@ read_compile_packet(const unsigned char *compile_status_dir,
   unsigned char rep_path[PATH_MAX];
   struct teamdb_export te;
 
-  int  r, cn, rep_flags, prio, i;
+  int  r, cn, rep_flags = 0, prio, i;
 
   int  variant = 0;
   struct run_entry re;
 
-  void *comp_pkt_buf = 0;
+  char *comp_pkt_buf = 0;       /* need char* for generic_read_file */
   size_t comp_pkt_size = 0;
   struct compile_reply_packet *comp_pkt = 0;
   long report_size = 0;
@@ -4022,7 +4026,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
   struct section_problem_data *prob = 0;
   struct section_language_data *lang = 0;
 
-  r = generic_read_file((char**) &comp_pkt_buf, 0, &comp_pkt_size, SAFE | REMOVE,
+  r = generic_read_file(&comp_pkt_buf, 0, &comp_pkt_size, SAFE | REMOVE,
                         compile_status_dir, pname, "");
   if (r == 0) return 0;
   if (r < 0) return -1;
@@ -4353,7 +4357,7 @@ read_run_packet(const unsigned char *run_status_dir,
   path_t rep_path, full_path;
   int r, rep_flags, rep_size, full_flags;
   struct run_entry re;
-  void *reply_buf = 0;
+  char *reply_buf = 0;          /* need char* for generic_read_file */
   size_t reply_buf_size = 0;
   struct run_reply_packet *reply_pkt = 0;
   char *audit_text = 0;
@@ -4363,7 +4367,7 @@ read_run_packet(const unsigned char *run_status_dir,
   unsigned char time_buf[64];
 
   get_current_time(&ts8, &ts8_us);
-  r = generic_read_file((char**) &reply_buf, 0, &reply_buf_size, SAFE | REMOVE,
+  r = generic_read_file(&reply_buf, 0, &reply_buf_size, SAFE | REMOVE,
                         run_status_dir, pname, "");
   if (r < 0) return -1;
   if (r == 0) return 0;
