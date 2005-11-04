@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -41,8 +41,8 @@
 struct clar_entry
 {
   int           id;          /* 4 + 1 */
-  unsigned long time;        /* 11 + 1 */
-  unsigned long size;        /* 4 + 1 */
+  time_t        time;        /* 11 + 1 */
+  size_t        size;        /* 4 + 1 */
   int           from;        /* 4 + 1 */
   int           to;          /* 4 + 1 */
   int           flags;       /* 2 + 1 */
@@ -87,7 +87,7 @@ clar_read_entry(int n)
 
   memset(buf, 0, sizeof(buf));
   if (clar_read_record(buf, CLAR_RECORD_SIZE) < 0) return -1;
-  r = sscanf(buf, "%d %lu %lu %d %d %d %s %s %n",
+  r = sscanf(buf, "%d %lu %zu %d %d %d %s %s %n",
              &clars.v[n].id, &clars.v[n].time, &clars.v[n].size,
              &clars.v[n].from,
              &clars.v[n].to, &clars.v[n].flags,
@@ -119,7 +119,7 @@ clar_read_entry(int n)
 int
 clar_open(char const *path, int flags)
 {
-  unsigned long filesize;
+  off_t filesize;
   int           i;
 
   info("clar_open: opening database %s", path);
@@ -156,8 +156,8 @@ clar_open(char const *path, int flags)
 }
 
 static int
-clar_make_record(char *buf, int ser, unsigned long tim,
-                 unsigned long size,
+clar_make_record(char *buf, int ser, time_t tim,
+                 size_t size,
                  int orig, int to, int flags,
                  char const *ip, char const *subj)
 {
@@ -169,7 +169,7 @@ clar_make_record(char *buf, int ser, unsigned long tim,
   memset(buf, ' ', CLAR_RECORD_SIZE);
   buf[CLAR_RECORD_SIZE] = 0;
   buf[CLAR_RECORD_SIZE - 1] = '\n';
-  sprintf(buf, "%-4d %-11lu %-4lu %-4d %-4d %-2d %s %s",
+  sprintf(buf, "%-4d %-11lu %-4zu %-4d %-4d %-2d %s %s",
           ser, tim, size, orig, to, flags, ip, subj);
   buf[strlen(buf)] = ' ';
   if (strlen(buf)!=CLAR_RECORD_SIZE)
@@ -201,8 +201,8 @@ clar_flush_entry(int num)
 }
 
 int
-clar_add_record(unsigned long  time,
-                unsigned long  size,
+clar_add_record(time_t         time,
+                size_t         size,
                 char const    *ip,
                 int            from,
                 int            to,
@@ -243,8 +243,8 @@ clar_add_record(unsigned long  time,
 
 int
 clar_get_record(int id,
-                unsigned long *ptime,
-                unsigned long *psize,
+                time_t        *ptime,
+                size_t        *psize,
                 char          *ip,
                 int           *pfrom,
                 int           *pto,
@@ -285,10 +285,10 @@ clar_get_total(void)
 }
 
 void
-clar_get_team_usage(int from, int *pn, unsigned long *ps)
+clar_get_team_usage(int from, int *pn, size_t *ps)
 {
   int i;
-  unsigned int total = 0;
+  size_t total = 0;
   int n = 0;
 
   for (i = 0; i < clars.u; i++)
