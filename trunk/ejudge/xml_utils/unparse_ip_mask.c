@@ -18,7 +18,7 @@
 #include "xml_utils.h"
 
 const unsigned char *
-xml_unparse_ip_mask(unsigned int addr, unsigned int mask)
+xml_unparse_ip_mask(ej_ip_t addr, ej_ip_t mask)
 {
   static unsigned char buf[64];
   int n;
