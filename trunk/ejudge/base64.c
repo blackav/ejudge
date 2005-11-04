@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -57,9 +57,9 @@ static char const base64_encode_table[]=
  *          the original char array in ratio 4/3)
  */
 int
-base64_encode(char const *in, int size, char *out)
+base64_encode(char const *in, size_t size, char *out)
 {
-  unsigned long  ebuf;
+  unsigned int   ebuf;
   int            nw = size / 3;
   int            l = size - nw * 3;
   int            i;
@@ -159,12 +159,12 @@ static char const base64_decode_table [] =
  *          accomodate all decoded chars
  */
 int
-base64_decode(char const *in, int size, char *out, int *pflag)
+base64_decode(char const *in, size_t size, char *out, int *pflag)
 {
   unsigned char const *p = (unsigned char const*) in;
   char *s = out;
   int i;
-  unsigned long b = 0;
+  unsigned int b = 0;
   int ac = 0;
 
   if (pflag) *pflag = 0;
