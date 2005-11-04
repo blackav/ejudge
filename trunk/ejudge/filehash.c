@@ -15,6 +15,8 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
+
 #include "filehash.h"
 #include "timestamp.h"
 #include "sha.h"
@@ -34,7 +36,7 @@ struct hash_entry
   unsigned char *path;
   unsigned char sha1_hash[SHA1_SIZE];
   file_stamp_t stamp;
-  long long tick;
+  unsigned tick;
 };
 
 #define HASH_SIZE 4099
@@ -43,7 +45,7 @@ struct hash_entry
 
 static struct hash_entry *hash_table[HASH_SIZE];
 static int hash_use = 0;
-static long long cur_tick = 1;
+static unsigned cur_tick = 1;
 
 /* this is a copy of `userlist_login_hash' */
 static const unsigned char id_hash_map[256] =
@@ -140,7 +142,7 @@ filehash_get(const unsigned char *path, unsigned char *val)
   unsigned int idx, i, min_i;
   struct hash_entry *p, *q;
   FILE *f = 0;
-  long long min_tick;
+  unsigned min_tick;
 
   ASSERT(path);
   p_hash = get_hash(path);
