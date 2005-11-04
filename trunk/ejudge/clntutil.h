@@ -3,7 +3,7 @@
 #ifndef __CLNTUTIL_H__
 #define __CLNTUTIL_H__
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+
+#include "ej_types.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -41,7 +43,7 @@ extern int    server_continuation_enabled;
 extern int    server_printing_enabled;
 extern int    server_printing_suspended;
 
-extern unsigned long client_cur_time;
+extern time_t client_cur_time;
 
 extern char program_name[];
 extern char form_header_simple[];
@@ -49,7 +51,7 @@ extern char form_header_multipart[];
 
 int   client_lookup_ip(char const *, char const *);
 int   client_check_source_ip(int, char const *, char const *);
-char *client_time_to_str(char *, unsigned long);
+char *client_time_to_str(char *, time_t);
 void  client_access_denied(char const *, int locale_id) __attribute__((noreturn));
 void  client_not_configured(char const*,char const*, int locale_id) __attribute__((noreturn));
 int   client_check_server_status(char const *, char const *, int, int);
@@ -61,9 +63,10 @@ void  client_put_header(FILE *out, unsigned char const *template,
                         unsigned char const *content_type,
                         unsigned char const *charset,
                         int http_flag, int locale_id, 
-                        unsigned char const *format, ...);
+                        char const *format, ...)
+  __attribute__((format(printf, 7, 8)));
 void  client_put_footer(FILE *out, unsigned char const *template);
-unsigned long parse_client_ip(void);
+ej_ip_t parse_client_ip(void);
 
 #endif /* __CLNTUTIL_H__ */
 /**

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  */
 
 #include "config.h"
+#include "ej_types.h"
 
 #include "clntutil.h"
 
@@ -74,7 +75,7 @@ int    server_continuation_enabled;
 int    server_printing_enabled;
 int    server_printing_suspended;
 
-unsigned long client_cur_time;
+time_t client_cur_time;
 
 path_t  program_name;
 char    form_header_simple[1024];
@@ -135,7 +136,7 @@ client_put_header(FILE *out, unsigned char const *template,
                   unsigned char const *charset,
                   int http_flag,
                   int locale_id,
-                  unsigned char const *format, ...)
+                  char const *format, ...)
 {
   va_list args;
   unsigned char title[1024];
@@ -228,7 +229,7 @@ client_check_source_ip(int allow_first,
 }
 
 char *
-client_time_to_str(char *buf, unsigned long time)
+client_time_to_str(char *buf, time_t time)
 {
   char *s = ctime(&time);
   strcpy(buf, s);
@@ -545,13 +546,13 @@ client_make_form_headers(unsigned char const *self_url)
           self_url);  
 }
 
-unsigned long
+ej_ip_t
 parse_client_ip(void)
 {
   unsigned int b1, b2, b3, b4;
   int n = 0;
   unsigned char *s = getenv("REMOTE_ADDR");
-  unsigned long client_ip = 0;
+  ej_ip_t client_ip = 0;
 
   if (!s) return client_ip;
 
