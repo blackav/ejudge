@@ -2,7 +2,7 @@ var compile serve run submit clar master team mkpasswd revinfo version.c .build
 register make-teamdb make-teamdb-inet send-passwords mkChangeLog
 userlist-server locale users edit-userlist cdeps deps.make
 clean-users super-serve ejudge-setup collect-emails
-serve-cmd serve-control slice-userlist
+serve-cmd serve-control slice-userlist genpasswd
 ejudge.po
 filter_test filter_scan.c filter_expr.c filter_expr.h
 autom4te.cache config.log config.status Makefile configure Makefile.in

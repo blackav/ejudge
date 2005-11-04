@@ -1,5 +1,52 @@
 2005-11-03  Alexander Chernov  <cher@ispras.ru>
 
+	* get_uid_by_pid.c:
+	(userlist_clnt_get_uid_by_pid) `ej_ip_t' is used for `origin_ip';
+	  `ej_cookie_t' type is used for `p_cookie'.
+
+	* get_uid_by_pid_2.c:
+	(userlist_clnt_get_uid_by_pid_2) `ej_ip_t' is used for `origin_ip';
+	  `ej_cookie_t' type is used for `p_cookie'.
+
+	* list_users.c:
+	(userlist_clnt_list_users) `ej_ip_t' is used for `origin_ip';
+	  `ssl' parameter is added and passed to the server.
+
+	* logout.c: (userlist_clnt_login) `ej_ip_t' is used for `origin_ip';
+	  `ej_cookie_t' type is used for `p_cookie';
+	  `ssl' parameter is added and passed to the server.
+
+	* login.c: (userlist_clnt_login) `ej_ip_t' is used for `origin_ip';
+	  `ej_cookie_t' type is used for `p_cookie'.
+
+	* lookup_cookie.c:
+	(userlist_clnt_lookup_cookie) `ej_ip_t' is used for `origin_ip';
+	  `ej_cookie_t' type is used for `p_cookie'.
+
+	* priv_cookie.c:
+	(userlist_clnt_priv_cookie) `ej_ip_t' is used for `origin_ip';
+	  `ej_cookie_t' type is used for `p_cookie'.
+
+	* priv_login.c:
+	(userlist_clnt_priv_login) `ej_ip_t' is used for `origin_ip';
+	  `ej_cookie_t' type is used for `p_cookie'.
+
+	* register_new.c:
+	(userlist_clnt_register_new) `ej_ip_t' is used for `origin_ip';
+	  `ssl' parameter is added and passed to the server.
+
+	* send_packet.c: (userlist_clnt_send_packet) bugfixes.
+
+	* team_cookie.c:
+	(userlist_clnt_team_cookie) `ej_ip_t' is used for for `origin_ip';
+	  `ej_cookie_t' is used for `p_cookie'.
+
+	* team_login.c:
+	(userlist_clnt_team_login) `ej_ip_t' is used for for `origin_ip';
+	  `ej_cookie_t' is used for `p_cookie'.
+
+2005-11-03  Alexander Chernov  <cher@ispras.ru>
+
 	* send_packet.c: (userlist_clnt_send_packet) fix for a stupid bug.
 
 	* add_field.c: (userlist_clnt_add_field) fixes for 64-bit platforms.
