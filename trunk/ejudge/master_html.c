@@ -64,7 +64,7 @@ struct user_filter_info
 {
   struct user_filter_info *next;
 
-  unsigned long long session_id;
+  ej_cookie_t session_id;
   int prev_first_run;
   int prev_last_run;
   int prev_first_clar;
@@ -87,7 +87,7 @@ static struct user_filter_info *cur_user;
 
 static void
 print_nav_buttons(FILE *f, int run_id,
-                  unsigned long long sid,
+                  ej_cookie_t sid,
                   unsigned char const *self_url,
                   unsigned char const *hidden_vars,
                   unsigned char const *extra_args,
@@ -274,7 +274,7 @@ write_change_status_dialog(FILE *f, unsigned char const *var_name,
 
 #define BITS_PER_LONG (8*sizeof(unsigned long)) 
 
-static struct user_filter_info *allocate_user_info(int user_id, unsigned long long session_id);
+static struct user_filter_info *allocate_user_info(int user_id, ej_cookie_t session_id);
 
 static void
 print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
@@ -332,8 +332,8 @@ print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
 
   if (pe->status != RUN_EMPTY) {
     snprintf((fields[RAW_RUN_TIMESTAMP] = alloca(BSIZE)), BSIZE,
-             "%ld", pe->timestamp);
-    snprintf((fields[RAW_RUN_NSEC] = alloca(BSIZE)), BSIZE, "%ld", pe->nsec);
+             "%d", pe->timestamp);
+    snprintf((fields[RAW_RUN_NSEC] = alloca(BSIZE)), BSIZE, "%d", pe->nsec);
     fields[RAW_RUN_IP] = run_unparse_ip(pe->ip);
     snprintf((fields[RAW_RUN_USER_ID] = alloca(BSIZE)), BSIZE, "%d", pe->team);
     fields[RAW_RUN_USER_LOGIN] = teamdb_get_login(pe->team);
@@ -350,7 +350,7 @@ print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
       snprintf((fields[RAW_RUN_IS_READONLY] = alloca(BSIZE)), BSIZE,
                 "%d", pe->is_readonly);
       snprintf((fields[RAW_RUN_TIME] = alloca(BSIZE)), BSIZE, "%ld", run_time);
-      snprintf((fields[RAW_RUN_SIZE] = alloca(BSIZE)), BSIZE, "%zu", pe->size);
+      snprintf((fields[RAW_RUN_SIZE] = alloca(BSIZE)), BSIZE, "%u", pe->size);
       sha_in = (unsigned char*) pe->sha1;
       sha_out = fields[RAW_RUN_HASH] = alloca(BSIZE);
       for (i = 0; i < 20; i++, sha_out += 2, sha_in++)
@@ -449,7 +449,7 @@ print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
 /* note: if self_url is an empty string, raw format is used */
 int
 write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
-                    int priv_level, unsigned long long sid,
+                    int priv_level, ej_cookie_t sid,
                     int first_run, int last_run,
                     int accepting_mode,
                     unsigned char const *self_url,
@@ -832,7 +832,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
       fprintf(f, "<tr>");
       fprintf(f, "<td>%d%s</td>", rid, imported_str);
       fprintf(f, "<td>%s</td>", durstr);
-      fprintf(f, "<td>%zu</td>", pe->size);
+      fprintf(f, "<td>%u</td>", pe->size);
       fprintf(f, "<td>%s</td>", run_unparse_ip(pe->ip));
       fprintf(f, "<td>%d</td>", pe->team);
       fprintf(f, "<td>%s</td>", teamdb_get_name(pe->team));
@@ -1002,7 +1002,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
 
 static void
 write_all_clars(FILE *f, struct user_filter_info *u,
-                int priv_level, unsigned long long sid,
+                int priv_level, ej_cookie_t sid,
                 int mode_clar, int first_clar, int last_clar,
                 unsigned char const *self_url,
                 unsigned char const *hidden_vars,
@@ -1026,7 +1026,6 @@ write_all_clars(FILE *f, struct user_filter_info *u,
   unsigned char *asubj = 0;
   int asubj_len = 0, new_len;
   int show_astr_time;
-  unsigned long tmpsizeval;
 
   fprintf(f, "<hr><h2>%s</h2>\n", _("Messages"));
 
@@ -1114,8 +1113,7 @@ write_all_clars(FILE *f, struct user_filter_info *u,
   for (j = 0; j < list_tot; j++) {
     i = list_idx[j];
 
-    clar_get_record(i, &time, &tmpsizeval, ip, &from, &to, &flags, subj);
-    size = tmpsizeval;
+    clar_get_record(i, &time, &size, ip, &from, &to, &flags, subj);
     if (mode_clar != 1 && (from <= 0 || flags >= 2)) continue; 
 
     base64_decode_str(subj, psubj, 0);
@@ -1159,7 +1157,7 @@ write_all_clars(FILE *f, struct user_filter_info *u,
 }
 
 static struct user_filter_info *
-allocate_user_info(int user_id, unsigned long long session_id)
+allocate_user_info(int user_id, ej_cookie_t session_id)
 {
   struct user_filter_info *p;
 
@@ -1201,7 +1199,7 @@ allocate_user_info(int user_id, unsigned long long session_id)
 
 void
 write_master_page(FILE *f, int user_id, int priv_level,
-                  unsigned long long sid,
+                  ej_cookie_t sid,
                   int first_run, int last_run,
                   int mode_clar, int first_clar, int last_clar,
                   int accepting_mode,
@@ -1222,7 +1220,7 @@ write_master_page(FILE *f, int user_id, int priv_level,
 }
 
 void
-write_priv_standings(FILE *f, unsigned long long sid,
+write_priv_standings(FILE *f, ej_cookie_t sid,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars,
                      unsigned char const *extra_args, int accepting_mode)
@@ -1244,7 +1242,7 @@ write_priv_standings(FILE *f, unsigned long long sid,
 
 int
 write_priv_source(FILE *f, int user_id, int priv_level,
-                  unsigned long long sid,
+                  ej_cookie_t sid,
                   int accepting_mode,
                   unsigned char const *self_url,
                   unsigned char const *hidden_vars,
@@ -1290,7 +1288,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   fprintf(f, "<table>\n");
   fprintf(f, "<tr><td>%s:</td><td>%d</td>%s</tr>\n",
           _("Run ID"), info.submission, nbsp);
-  fprintf(f, "<tr><td>%s:</td><td>%s:%ld</td>%s</tr>\n",
+  fprintf(f, "<tr><td>%s:</td><td>%s:%d</td>%s</tr>\n",
           _("Submission time"),
           duration_str(1, info.timestamp, start_time, 0, 0), info.nsec, nbsp);
   fprintf(f, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
@@ -1315,7 +1313,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
                 extra_args, "filter_expr=%s&filter_view=View",
                 filtbuf2);
   ps1 = filtbuf3; ps2 = "</a>";
-  fprintf(f, "<tr><td>%s:</td><td>%s%zu%s</td>%s</tr>\n",
+  fprintf(f, "<tr><td>%s:</td><td>%s%u%s</td>%s</tr>\n",
           _("Size"), ps1, info.size, ps2, nbsp);
 
 
@@ -1665,7 +1663,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
 
 int
 write_new_run_form(FILE *f, int user_id, int priv_level,
-                   unsigned long long sid,
+                   ej_cookie_t sid,
                    unsigned char const *self_url,
                    unsigned char const *hidden_vars,
                    unsigned char const *extra_args,
@@ -1769,7 +1767,7 @@ write_new_run_form(FILE *f, int user_id, int priv_level,
 
 int
 write_xml_testing_report(FILE *f, unsigned char const *txt,
-                         unsigned long long sid,
+                         ej_cookie_t sid,
                          unsigned char const *self_url,
                          unsigned char const *extra_args)
 {
@@ -2102,7 +2100,7 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
 
 int
 write_priv_report(FILE *f, int user_id, int priv_level,
-                  unsigned long long sid,
+                  ej_cookie_t sid,
                   int team_report_flag,
                   unsigned char const *self_url,
                   unsigned char const *hidden_vars,
@@ -2182,7 +2180,7 @@ write_priv_report(FILE *f, int user_id, int priv_level,
 
 int
 write_priv_clar(FILE *f, int user_id, int priv_level,
-                unsigned long long sid,
+                ej_cookie_t sid,
                 unsigned char const *self_url,
                 unsigned char const *hidden_vars,
                 unsigned char const *extra_args,
@@ -2196,15 +2194,12 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
   unsigned char txt_subj[CLAR_MAX_SUBJ_LEN + 16];
   unsigned char *html_subj, *txt_msg = 0, *html_msg;
   unsigned char name_buf[64];
-  unsigned long tmpsizeval;
   char *tmp_txt_msg = 0;
 
   if (clar_id < 0 || clar_id >= clar_get_total()) return -SRV_ERR_BAD_CLAR_ID;
 
   start_time = run_get_start_time();
-  clar_get_record(clar_id, &clar_time,
-                  &tmpsizeval, ip, &from, &to, &flags,b64_subj);
-  size = tmpsizeval;
+  clar_get_record(clar_id, &clar_time, &size, ip, &from, &to, &flags,b64_subj);
   txt_subj_len = base64_decode_str(b64_subj, txt_subj, 0);
   html_subj_len = html_armored_strlen(txt_subj);
   html_subj = alloca(html_subj_len);
@@ -2279,7 +2274,7 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
 
 int
 write_priv_users(FILE *f, int user_id, int priv_level,
-                 unsigned long long sid,
+                 ej_cookie_t sid,
                  unsigned char const *self_url,
                  unsigned char const *hidden_vars,
                  unsigned char const *extra_args,
@@ -2293,7 +2288,6 @@ write_priv_users(FILE *f, int user_id, int priv_level,
   struct teamdb_export info;
   unsigned char team_modes[128];
   unsigned char filtbuf1[512], filtbuf2[512], filtbuf3[512], *ps1, *ps2;
-  unsigned long tmpclarstotal;
   struct team_extra *t_extra;
 
   tot_teams = teamdb_get_total_teams();
@@ -2332,8 +2326,7 @@ write_priv_users(FILE *f, int user_id, int priv_level,
     t_extra = team_extra_get_entry(i);
 
     run_get_team_usage(i, &runs_num, &runs_total);
-    clar_get_team_usage(i, &clars_num, &tmpclarstotal);
-    clars_total = tmpclarstotal;
+    clar_get_team_usage(i, &clars_num, &clars_total);
     /*
     if (priv_level == PRIV_LEVEL_ADMIN) {
       html_start_form(f, 1, sid, self_url, hidden_vars, extra_args);
@@ -2467,7 +2460,7 @@ write_priv_users(FILE *f, int user_id, int priv_level,
 
 int
 write_priv_user(FILE *f, int user_id, int priv_level,
-                unsigned long long sid,
+                ej_cookie_t sid,
                 unsigned char const *self_url,
                 unsigned char const *hidden_vars,
                 unsigned char const *extra_args,
@@ -2478,7 +2471,6 @@ write_priv_user(FILE *f, int user_id, int priv_level,
   struct team_extra *t_extra;
   size_t runs_total = 0, clars_total = 0, pages_total = 0;
   int runs_num = 0, clars_num = 0;
-  unsigned long tmpclarstotal = 0;
   int allowed_edit = 0;
   int flags, needed_cap, init_value, i;
   struct team_warning *cur_warn;
@@ -2495,9 +2487,8 @@ write_priv_user(FILE *f, int user_id, int priv_level,
   teamdb_export_team(view_user_id, &info);
   t_extra = team_extra_get_entry(view_user_id);
   run_get_team_usage(view_user_id, &runs_num, &runs_total);
-  clar_get_team_usage(view_user_id, &clars_num, &tmpclarstotal);
+  clar_get_team_usage(view_user_id, &clars_num, &clars_total);
   pages_total = run_get_total_pages(view_user_id);
-  clars_total = tmpclarstotal;
   flags = teamdb_get_flags(view_user_id);
 
   // table has 4 columns
@@ -2705,7 +2696,7 @@ write_priv_user(FILE *f, int user_id, int priv_level,
 }
 
 void
-html_reset_filter(int user_id, unsigned long long session_id)
+html_reset_filter(int user_id, ej_cookie_t session_id)
 {
   struct user_filter_info *u = allocate_user_info(user_id, session_id);
 
@@ -2721,7 +2712,7 @@ html_reset_filter(int user_id, unsigned long long session_id)
 }
 
 void
-html_reset_clar_filter(int user_id, unsigned long long session_id)
+html_reset_clar_filter(int user_id, ej_cookie_t session_id)
 {
   struct user_filter_info *u = allocate_user_info(user_id, session_id);
 
@@ -2740,6 +2731,7 @@ write_runs_dump(FILE *f, const unsigned char *url,
   time_t start_time, dur;
   unsigned char *s;
   unsigned char statstr[64];
+  time_t tmp_time;
 
   if (url && *url) {
     fprintf(f, "Content-type: text/plain; charset=%s\n\n", charset);
@@ -2753,8 +2745,9 @@ write_runs_dump(FILE *f, const unsigned char *url,
       continue;
     }
     fprintf(f, "%d;", i);
-    fprintf(f, "%ld;", re.timestamp);
-    pts = localtime(&re.timestamp);
+    fprintf(f, "%d;", re.timestamp);
+    tmp_time = re.timestamp;
+    pts = localtime(&tmp_time);
     fprintf(f, "%04d%02d%02d%02d%02d%02d;",
             pts->tm_year + 1900,
             pts->tm_mon + 1,
@@ -2789,7 +2782,7 @@ write_runs_dump(FILE *f, const unsigned char *url,
     fprintf(f, "%ld;%02d;%02d;%02d;",
             dur, pts->tm_hour, pts->tm_min, pts->tm_sec);
 
-    fprintf(f, "%zu;", re.size);
+    fprintf(f, "%u;", re.size);
     fprintf(f, "%s;", run_unparse_ip(re.ip));
 
     s = (unsigned char*) re.sha1;
