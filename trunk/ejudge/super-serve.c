@@ -16,6 +16,7 @@
  */
 
 #include "config.h"
+#include "ej_types.h"
 
 #include "version.h"
 #include "userlist_cfg.h"
@@ -91,8 +92,8 @@ struct client_state
 
   int user_id;
   int priv_level;
-  unsigned long long cookie;
-  unsigned long ip;
+  ej_cookie_t cookie;
+  ej_ip_t ip;
   int ssl;
   unsigned char *login;
   unsigned char *name;
@@ -1544,8 +1545,8 @@ get_peer_local_user(struct client_state *p)
 {
   int r;
   int uid, priv_level, ssl;
-  unsigned long long cookie;
-  unsigned long ip;
+  ej_cookie_t cookie;
+  ej_ip_t ip;
   unsigned char *login, *name;
 
   if (p->user_id > 0) return p->user_id;
@@ -1619,7 +1620,7 @@ static time_t sid_state_last_check_time = 0;
 #define SID_STATE_CHECK_INTERVAL 3600
 
 static struct sid_state*
-sid_state_find(unsigned long long sid)
+sid_state_find(ej_cookie_t sid)
 {
   struct sid_state *p;
 
@@ -1629,7 +1630,7 @@ sid_state_find(unsigned long long sid)
   return p;
 }
 static struct sid_state*
-sid_state_add(unsigned long long sid)
+sid_state_add(ej_cookie_t sid)
 {
   struct sid_state *n;
 
@@ -1651,7 +1652,7 @@ sid_state_add(unsigned long long sid)
   return n;
 }
 static struct sid_state*
-sid_state_get(unsigned long long sid)
+sid_state_get(ej_cookie_t sid)
 {
   struct sid_state *p;
 
