@@ -247,7 +247,7 @@ filter_tree_new_result(struct filter_tree_mem *mem, int val)
 }
 
 struct filter_tree *
-filter_tree_new_hash(struct filter_tree_mem *mem, unsigned long *val)
+filter_tree_new_hash(struct filter_tree_mem *mem, ruint32_t *val)
 {
   struct filter_tree *p;
 
@@ -262,7 +262,7 @@ filter_tree_new_hash(struct filter_tree_mem *mem, unsigned long *val)
 }
 
 struct filter_tree *
-filter_tree_new_ip(struct filter_tree_mem *mem, unsigned long val)
+filter_tree_new_ip(struct filter_tree_mem *mem, ej_ip_t val)
 {
   struct filter_tree *p;
 
@@ -592,7 +592,7 @@ filter_tree_size_str(unsigned char *buf, size_t size, size_t val)
 }
 
 int
-filter_tree_hash_str(unsigned char *buf, size_t size, unsigned long *val)
+filter_tree_hash_str(unsigned char *buf, size_t size, ruint32_t *val)
 {
   unsigned char tmp[64];
   unsigned char *out = tmp;
@@ -606,9 +606,9 @@ filter_tree_hash_str(unsigned char *buf, size_t size, unsigned long *val)
 }
 
 int
-filter_tree_ip_str(unsigned char *buf, size_t size, unsigned long val)
+filter_tree_ip_str(unsigned char *buf, size_t size, ej_ip_t val)
 {
-  return snprintf(buf, size, "%lu.%lu.%lu.%lu",
+  return snprintf(buf, size, "%u.%u.%u.%u",
                   val >> 24, (val >> 16) & 0xff,
                   (val >> 8) & 0xff, val & 0xff);
 }
