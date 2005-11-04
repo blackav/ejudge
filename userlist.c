@@ -94,7 +94,7 @@ userlist_member_status_str(int status)
 }
 
 int
-userlist_parse_date(unsigned char const *s, unsigned long *pd)
+userlist_parse_date(unsigned char const *s, time_t *pd)
 {
   int year, month, day, hour, min, sec, n;
   time_t t;
@@ -131,7 +131,7 @@ userlist_unparse_bool(int b)
 }
 
 unsigned char *
-userlist_unparse_date(unsigned long d, int show_null)
+userlist_unparse_date(time_t d, int show_null)
 {
   static unsigned char buf[64];
   struct tm *ptm;
@@ -624,7 +624,7 @@ userlist_set_user_field_str(struct userlist_list *lst,
 int
 userlist_delete_user_field(struct userlist_user *u, int field_id)
 {
-  unsigned long *tptr;
+  time_t *tptr;
   int *iptr;
   unsigned char **sptr;
   int retval = -1;
@@ -797,7 +797,7 @@ userlist_build_login_hash(struct userlist_list *p)
 {
   int i, count, coll_count = 0, j, coll1_count = 0;
   struct userlist_user *u;
-  unsigned long long tsc1, tsc2;
+  ej_tsc_t tsc1, tsc2;
 
   if (p->login_hash_table) xfree(p->login_hash_table);
   p->login_hash_table = 0;
@@ -863,7 +863,7 @@ userlist_build_cookie_hash(struct userlist_list *p)
   int i, j;
   size_t cookie_count = 0, collision_count = 0;
   struct userlist_cookie *ck;
-  unsigned long long tsc1, tsc2;
+  ej_tsc_t tsc1, tsc2;
 
   rdtscll(tsc1);
 
