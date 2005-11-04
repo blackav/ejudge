@@ -17,6 +17,8 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
+
 #include <time.h>
 
 /* various team flags */
@@ -60,8 +62,14 @@ int teamdb_export_team(int id, struct teamdb_export *);
 time_t teamdb_get_archive_time(int uid);
 int    teamdb_set_archive_time(int uid, time_t time);
 
-int teamdb_get_uid_by_pid(int, int, int, int *, int *,unsigned long long *,
-                          unsigned long *, int *);
+int teamdb_get_uid_by_pid(int system_uid,
+                          int system_gid,
+                          int system_pid,
+                          int *p_uid,
+                          int *p_priv_level,
+                          ej_cookie_t *p_cookie,
+                          ej_ip_t *p_ip,
+                          int *p_ssl);
 
 void teamdb_register_update_hook(void (*)(void *), void *);
 void teamdb_unregister_update_hook(void (*)(void *));
