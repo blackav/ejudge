@@ -167,9 +167,7 @@ html_armor_string_dup(const unsigned char *str)
 }
 
 char *
-duration_str(int show_astr,
-             unsigned long cur, unsigned long start,
-             char *buf, int len)
+duration_str(int show_astr, time_t cur, time_t start, char *buf, int len)
 {
   int         hh, mm, ss;
   static char b[64];
@@ -181,7 +179,7 @@ duration_str(int show_astr,
             tt->tm_year + 1900, tt->tm_mon + 1, tt->tm_mday,
             tt->tm_hour, tt->tm_min, tt->tm_sec);
   } else {
-    unsigned long time = cur - start;
+    time_t time = cur - start;
 
     ss = time % 60;
     time /= 60;
@@ -198,7 +196,7 @@ duration_str(int show_astr,
 }
 
 char *
-duration_min_str(unsigned long time, char *buf, int len)
+duration_min_str(time_t time, char *buf, int len)
 {
   int         hh, mm;
   static char b[64];
