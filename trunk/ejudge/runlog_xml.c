@@ -171,7 +171,7 @@ check_empty_text(struct xml_tree *xt)
 }
 
 static int
-parse_ip(const unsigned char *str, unsigned long *pip)
+parse_ip(const unsigned char *str, ej_ip_t *pip)
 {
   int b1, b2, b3, b4;
   int n = 0;
@@ -187,7 +187,7 @@ parse_ip(const unsigned char *str, unsigned long *pip)
 }
 
 static int
-parse_sha1(const unsigned char *str, unsigned long *psha1)
+parse_sha1(const unsigned char *str, ruint32_t *psha1)
 {
   const unsigned char *s = str;
   unsigned char buf[3];
@@ -248,8 +248,8 @@ process_run_elements(struct xml_tree *xt)
   struct run_element *xr;
   struct xml_attn *xa;
   int iv, n;
-  long long llv;
-  long lv;
+  time_t tv;
+  int lv;
   size_t sv;
 
   while (xt) {
@@ -287,11 +287,9 @@ process_run_elements(struct xml_tree *xt)
       case RUNLOG_A_TIME:
         if (!xa->text) goto empty_attr_value;
         n = 0;
-        if (sscanf(xa->text, "%lld %n", &llv, &n) != 1 || xa->text[n])
+        if (sscanf(xa->text, "%ld %n", &tv, &n) != 1 || xa->text[n])
           goto invalid_attr_value;
-        if (llv < 0) goto invalid_attr_value;
-        if (llv > INT_MAX) goto invalid_attr_value;
-        xr->r.timestamp = (time_t) llv;
+        xr->r.timestamp = tv;
         break;
       case RUNLOG_A_SIZE:
         if (!xa->text) goto empty_attr_value;
@@ -390,7 +388,7 @@ process_run_elements(struct xml_tree *xt)
       case RUNLOG_A_NSEC:
         if (!xa->text) goto empty_attr_value;
         n = 0;
-        if (sscanf(xa->text, "%ld %n", &lv, &n) != 1 || xa->text[n])
+        if (sscanf(xa->text, "%d %n", &lv, &n) != 1 || xa->text[n])
           goto invalid_attr_value;
         if (lv < 0 || lv >= 1000000000) goto invalid_attr_value;
         xr->r.nsec = lv;
@@ -567,7 +565,7 @@ parse_runlog_xml(const unsigned char *str,
 }
 
 static int
-is_non_empty_sha1(const unsigned long *psha1)
+is_non_empty_sha1(const ruint32_t *psha1)
 {
   int i;
 
@@ -577,7 +575,7 @@ is_non_empty_sha1(const unsigned long *psha1)
 }
 
 static const unsigned char *
-unparse_sha1(const unsigned long *psha1)
+unparse_sha1(const ruint32_t *psha1)
 {
   static unsigned char buf[41];
   const unsigned char *s = (const unsigned char *) psha1;
@@ -598,7 +596,7 @@ unparse_runlog_xml(FILE *f,
 {
   int i, flags;
   struct run_entry *pp;
-  long long ts;
+  time_t ts;
   int max_user_id;
   unsigned char *astr1, *astr2, *val1, *val2;
   size_t alen1, alen2, asize1, asize2;
@@ -701,9 +699,9 @@ unparse_runlog_xml(FILE *f,
     ts = pp->timestamp;
     ts -= phead->start_time;
     if (ts < 0) ts = 0;
-    fprintf(f, " %s=\"%lld\"", attr_map[RUNLOG_A_TIME], ts);
+    fprintf(f, " %s=\"%ld\"", attr_map[RUNLOG_A_TIME], ts);
     if (!external_mode && pp->size > 0) {
-      fprintf(f, " %s=\"%zu\"", attr_map[RUNLOG_A_SIZE], pp->size);
+      fprintf(f, " %s=\"%u\"", attr_map[RUNLOG_A_SIZE], pp->size);
     }
     if (!external_mode && pp->ip) {
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_IP], run_unparse_ip(pp->ip));
@@ -738,7 +736,7 @@ unparse_runlog_xml(FILE *f,
     }
     fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_READONLY],
             (pp->is_readonly)?"yes":"no");
-    fprintf(f, " %s=\"%ld\"", attr_map[RUNLOG_A_NSEC], pp->nsec);
+    fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_NSEC], pp->nsec);
     fprintf(f, "/>\n");
   }
   fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_RUNS]);
