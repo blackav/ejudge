@@ -46,7 +46,7 @@ struct vcntslist
 struct user_stat
 {
   int clar_num;
-  int clar_size;
+  size_t clar_size;
   int run_num;
   int run_size;
   int is_privileged;
@@ -77,7 +77,7 @@ main(int argc, char **argv)
   int total_runs, total_clars;
   struct run_entry *run_entries, *cur_entry;
   int empty_entries, virt_events, temp_events, inv_events, reg_events;
-  unsigned long clar_size;
+  size_t clar_size;
   int clar_from, clar_to;
   unsigned char *out_flags;
   struct vcntslist *cntsp;
