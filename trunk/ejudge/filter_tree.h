@@ -4,7 +4,7 @@
 #ifndef __FILTER_TREE_H__
 #define __FILTER_TREE_H__
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+
+#include "ej_types.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -73,8 +75,8 @@ struct filter_tree
     time_t u;
     size_t z;
     int r;
-    unsigned long h[5];
-    unsigned long p;
+    ruint32_t h[5];
+    ej_ip_t p;
   } v;
 };
 struct filter_tree_mem;
@@ -109,9 +111,9 @@ struct filter_tree *filter_tree_new_size(struct filter_tree_mem *,
 struct filter_tree *filter_tree_new_result(struct filter_tree_mem *,
                                            int);
 struct filter_tree *filter_tree_new_hash(struct filter_tree_mem *,
-                                         unsigned long *);
+                                         ruint32_t *);
 struct filter_tree *filter_tree_new_ip(struct filter_tree_mem *,
-                                       unsigned long);
+                                       ej_ip_t);
 struct filter_tree *filter_tree_dup(struct filter_tree_mem *,
                                     struct filter_tree*);
 
@@ -136,8 +138,8 @@ int filter_tree_time_str(unsigned char *, size_t, time_t);
 int filter_tree_dur_str(unsigned char *, size_t, time_t);
 int filter_tree_size_str(unsigned char *, size_t, size_t);
 int filter_tree_result_str(unsigned char *, size_t, int);
-int filter_tree_hash_str(unsigned char *, size_t, unsigned long *);
-int filter_tree_ip_str(unsigned char *, size_t, unsigned long);
+int filter_tree_hash_str(unsigned char *, size_t, ruint32_t *);
+int filter_tree_ip_str(unsigned char *, size_t, ej_ip_t);
 
 int filter_tree_is_value_node(struct filter_tree *p);
 
