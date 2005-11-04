@@ -15,6 +15,9 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
+#include "ej_limits.h"
+
 #include "archive_paths.h"
 #include "prepare.h"
 #include "prepare_vars.h"
@@ -30,13 +33,10 @@
 #include <unistd.h>
 #include <string.h>
 
-#define MAX_RUN_NUM      1048575
-#define MAX_RUN_32DIGITS 4
-
 static const unsigned char b32_digits[]=
 "0123456789ABCDEFGHIJKLMNOPQRSTUV";
 static void
-b32_number(unsigned long num, size_t size, unsigned char buf[])
+b32_number(unsigned int num, size_t size, unsigned char buf[])
 {
   int i;
 
@@ -79,13 +79,13 @@ archive_dir_prepare(const unsigned char *base_dir, int serial,
     return -1;
   }
 
-  ASSERT(serial >= 0 && serial <= MAX_RUN_NUM);
-  b32_number(serial, MAX_RUN_32DIGITS + 1, sbuf);
-  ASSERT(strlen(sbuf) == MAX_RUN_32DIGITS);
+  ASSERT(serial >= 0 && serial <= EJ_MAX_RUN_ID);
+  b32_number(serial, EJ_MAX_32DIGITS + 1, sbuf);
+  ASSERT(strlen(sbuf) == EJ_MAX_32DIGITS);
   strcpy(path, base_dir);
   pp = (unsigned char*) path;
   pp += strlen(pp);
-  for (i = 0; i < MAX_RUN_32DIGITS - 1; i++) {
+  for (i = 0; i < EJ_MAX_32DIGITS - 1; i++) {
     *pp++ = '/';
     *pp++ = sbuf[i];
     *pp = 0;
@@ -129,9 +129,9 @@ make_hier_path(unsigned char *buf, size_t size,
   }
   strcpy(tb, base_dir);
   pp = tb + blen;
-  b32_number(serial, MAX_RUN_32DIGITS + 1, b32);
-  ASSERT(strlen(b32) == MAX_RUN_32DIGITS);
-  for (i = 0; i < MAX_RUN_32DIGITS - 1; i++) {
+  b32_number(serial, EJ_MAX_32DIGITS + 1, b32);
+  ASSERT(strlen(b32) == EJ_MAX_32DIGITS);
+  for (i = 0; i < EJ_MAX_32DIGITS - 1; i++) {
     *pp++ = '/';
     *pp++ = b32[i];
   }
@@ -148,7 +148,7 @@ archive_make_read_path(unsigned char *path, size_t size,
   unsigned char *pp;
   struct stat sb;
 
-  ASSERT(serial >= 0 && serial <= MAX_RUN_NUM);
+  ASSERT(serial >= 0 && serial <= EJ_MAX_RUN_ID);
   if (!name_prefix) name_prefix = "";
 
   if (global->use_dir_hierarchy) {
@@ -201,7 +201,7 @@ archive_make_write_path(unsigned char *path, size_t size,
 {
   unsigned char *pp;
 
-  ASSERT(serial >= 0 && serial <= MAX_RUN_NUM);
+  ASSERT(serial >= 0 && serial <= EJ_MAX_RUN_ID);
   if (!name_prefix) name_prefix = "";
 
   if (strlen(base_dir) + 32 >= size) {
@@ -234,7 +234,7 @@ archive_make_move_path(unsigned char *path, size_t size,
 {
   unsigned char *pp;
 
-  ASSERT(serial >= 0 && serial <= MAX_RUN_NUM);
+  ASSERT(serial >= 0 && serial <= EJ_MAX_RUN_ID);
   if (!name_prefix) name_prefix = "";
 
   if (strlen(base_dir) + 32 >= size) {
