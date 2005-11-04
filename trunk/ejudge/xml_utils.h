@@ -18,6 +18,8 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
+
 #include <stdio.h>
 #include <time.h>
 
@@ -25,22 +27,22 @@ struct xml_tree;
 struct xml_attn;
 
 int xml_parse_ip(unsigned char const *path, int line, int column,
-                 unsigned char const *s, unsigned long *pip);
+                 unsigned char const *s, ej_ip_t *pip);
 int xml_parse_date(unsigned char const *path, int line, int column,
                    unsigned char const *s, time_t *pd);
 int xml_parse_int(unsigned char const *path, int line, int column,
                   unsigned char const *str, int *pval);
 int xml_parse_ip_mask(const unsigned char *path, int line, int column,
                       const unsigned char *s,
-                      unsigned *p_ip, unsigned *p_mask);
+                      ej_ip_t *p_ip, ej_ip_t *p_mask);
 
 void xml_unparse_text(FILE *f, const unsigned char *tag_name,
                       unsigned char const *value,
                       unsigned char const *indent);
 
-const unsigned char *xml_unparse_ip(unsigned long ip);
+const unsigned char *xml_unparse_ip(ej_ip_t ip);
 const unsigned char *xml_unparse_date(time_t d);
-const unsigned char *xml_unparse_ip_mask(unsigned int addr, unsigned int mask);
+const unsigned char *xml_unparse_ip_mask(ej_ip_t addr, ej_ip_t mask);
 
 extern const unsigned char *xml_err_path;
 extern const char * const *xml_err_elem_names;
