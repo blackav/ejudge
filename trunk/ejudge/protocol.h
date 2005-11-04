@@ -18,24 +18,20 @@
  * GNU General Public License for more details.
  */
 
-#include <time.h>
+#include "ej_types.h"
 
-#if !defined EJUDGE_SCORE_SYSTEM_DEFINED
-#define EJUDGE_SCORE_SYSTEM_DEFINED
-/* scoring systems */
-enum { SCORE_ACM, SCORE_KIROV, SCORE_OLYMPIAD, SCORE_MOSCOW, SCORE_TOTAL };
-#endif /* EJUDGE_SCORE_SYSTEM_DEFINED */
+#include <time.h>
 
 #define PROT_SERVE_STATUS_MAGIC_V1 (0xe739aa02)
 struct prot_serve_status_v1
 {
   unsigned int magic;
-  time_t cur_time;
-  time_t start_time;
-  time_t sched_time;
-  time_t duration;
-  time_t stop_time;
-  time_t freeze_time;
+  ej_time_t cur_time;
+  ej_time_t start_time;
+  ej_time_t sched_time;
+  ej_time_t duration;
+  ej_time_t stop_time;
+  ej_time_t freeze_time;
   int total_runs;
   int total_clars;
   int download_interval;
@@ -54,12 +50,12 @@ struct prot_serve_status_v1
 struct prot_serve_status_v2
 {
   unsigned int magic;
-  time_t cur_time;
-  time_t start_time;
-  time_t sched_time;
-  time_t duration;
-  time_t stop_time;
-  time_t freeze_time;
+  ej_time_t cur_time;
+  ej_time_t start_time;
+  ej_time_t sched_time;
+  ej_time_t duration;
+  ej_time_t stop_time;
+  ej_time_t freeze_time;
   int total_runs;
   int total_clars;
   int download_interval;
@@ -267,7 +263,8 @@ struct prot_serve_pkt_submit_run
   int user_id;
   int contest_id;
   int locale_id;
-  unsigned long ip;
+  ej_ip_t ip;
+  int ssl;
   int prob_id;
   int lang_id;
   int variant;
@@ -282,7 +279,8 @@ struct prot_serve_pkt_submit_clar
   int user_id;
   int contest_id;
   int locale_id;
-  unsigned long ip;
+  ej_ip_t ip;
+  int ssl;
   int dest_user_id;
   int ref_clar_id;
   int dest_login_len;
@@ -303,25 +301,16 @@ struct prot_serve_pkt_team_page
   unsigned char data[3];
 };
 
-#ifndef __MASTER_PAGE_ENUM_DEFINED__
-#define __MASTER_PAGE_ENUM_DEFINED__
-enum
-{
-  PRIV_LEVEL_USER = 0,
-  PRIV_LEVEL_JUDGE,
-  PRIV_LEVEL_ADMIN
-};
-#endif /* __MASTER_PAGE_ENUM_DEFINED__ */
-
 struct prot_serve_pkt_master_page
 {
   struct prot_serve_packet b;
 
-  unsigned long long session_id;
+  ej_cookie_t session_id;
   int user_id;
   int contest_id;
   int locale_id;
-  unsigned long ip;
+  ej_ip_t ip;
+  int ssl;
   int priv_level;
   int first_run;
   int last_run;
@@ -408,7 +397,8 @@ struct prot_serve_pkt_run_info
   int score_adj;
   int is_readonly;
   int pages;
-  unsigned long ip;
+  ej_ip_t ip;
+  int ssl;
   int user_login_len;
   int run_src_len;
   unsigned char data[2];
@@ -439,7 +429,7 @@ struct prot_serve_pkt_reset_filter
 {
   struct prot_serve_packet b;
 
-  unsigned long long session_id;
+  ej_cookie_t session_id;
   int user_id;
   int contest_id;
 };
