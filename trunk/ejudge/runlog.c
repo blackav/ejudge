@@ -115,7 +115,7 @@ run_read_header(void)
 
   memset(buf, 0, sizeof(buf));
   if (run_read_record(buf, RUN_HEADER_SIZE) < 0) return -1;
-  r = sscanf(buf, " %lu %lu %lu %lu %n",
+  r = sscanf(buf, " %u %u %u %u %n",
              &head.start_time,
              &head.sched_time,
              &head.duration,
@@ -134,7 +134,7 @@ run_read_entry(int n)
 
   memset(buf, 0, sizeof(buf));
   if (run_read_record(buf, RUN_RECORD_SIZE) < 0) return -1;
-  r = sscanf(buf, " %lu %d %zu %hhu %d %hhu %d %hhu %hhu %d %s %n",
+  r = sscanf(buf, " %d %d %u %hhu %d %hhu %d %hhu %hhu %d %s %n",
              &runs[n].timestamp, &runs[n].submission, &runs[n].size,
              &runs[n].locale_id,
              &runs[n].team, &runs[n].language, &runs[n].problem,
@@ -143,7 +143,7 @@ run_read_entry(int n)
   if (buf[k] != 0) ERR_R("[%d]: excess data", n);
   if (strlen(tip) > RUN_MAX_IP_LEN) ERR_R("[%d]: ip is to long", n);
   runs[n].ip = run_parse_ip(tip);
-  if (runs[n].ip == (unsigned long) -1) ERR_R("[%d]: cannot parse IP");
+  if (runs[n].ip == (ej_ip_t) -1) ERR_R("[%d]: cannot parse IP");
   return 0;
 }
 
@@ -152,7 +152,7 @@ is_runlog_version_0(void)
 {
   unsigned char buf[RUN_HEADER_SIZE + 16];
   int r, n;
-  unsigned long v1, v2, v3, v4;
+  time_t v1, v2, v3, v4;
 
   memset(buf, 0, sizeof(buf));
   if (sf_lseek(run_fd, 0, SEEK_SET, "run") == (off_t) -1) return -1;
@@ -168,7 +168,7 @@ is_runlog_version_0(void)
       return 0;
     }
   }
-  r = sscanf(buf, " %lu %lu %lu %lu %n", &v1, &v2, &v3, &v4, &n);
+  r = sscanf(buf, " %ld %ld %ld %ld %n", &v1, &v2, &v3, &v4, &n);
   if (r != 4 || buf[n]) {
     //fprintf(stderr, "cannot parse header <%s>\n", buf);
     return 0;
@@ -179,7 +179,7 @@ is_runlog_version_0(void)
 static int
 read_runlog_version_0(void)
 {
-  unsigned long filesize;
+  off_t filesize;
   int i;
 
   info("reading runs log version 0");
@@ -340,7 +340,7 @@ static int run_flush_header(void);
 static int
 read_runlog(time_t init_duration)
 {
-  int filesize;
+  off_t filesize;
   int rem;
   int r;
 
@@ -351,7 +351,7 @@ read_runlog(time_t init_duration)
     return -1;
   if (sf_lseek(run_fd, 0, SEEK_SET, "run") == (off_t) -1) return -1;
 
-  info("runs file size: %d", filesize);
+  info("runs file size: %ld", filesize);
   if (filesize == 0) {
     /* runs file is empty */
     XMEMZERO(&head, 1);
@@ -475,7 +475,7 @@ runlog_flush(void)
 }
 
 static int
-append_record(time_t t, int uid, long nsec)
+append_record(time_t t, int uid, int nsec)
 {
   int i, j, k;
 
@@ -561,10 +561,10 @@ append_record(time_t t, int uid, long nsec)
 
 int
 run_add_record(time_t         timestamp,
-               long           nsec,
+               int            nsec,
                size_t         size,
-               unsigned long  sha1[5],
-               unsigned long  ip,
+               ruint32_t      sha1[5],
+               ruint32_t      ip,
                int            locale_id,
                int            team,
                int            problem,
@@ -616,7 +616,7 @@ run_add_record(time_t         timestamp,
     return -1;
   }
   if (nsec < 0 || nsec >= 1000000000) {
-    err("run_add_record: nsec field value %ld is invalid", nsec);
+    err("run_add_record: nsec field value %d is invalid", nsec);
     return -1;
   }
 
@@ -1000,26 +1000,26 @@ run_reset(time_t new_duration)
 }
 
 unsigned char *
-run_unparse_ip(unsigned long ip)
+run_unparse_ip(ej_ip_t ip)
 {
   static unsigned char buf[64];
 
-  snprintf(buf, sizeof(buf), "%lu.%lu.%lu.%lu",
+  snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
            ip >> 24, (ip >> 16) & 0xff,
            (ip >> 8) & 0xff, ip & 0xff);
   return buf;
 }
 
-unsigned long
+ej_ip_t
 run_parse_ip(unsigned char const *buf)
 {
   unsigned int b1, b2, b3, b4;
   int n;
 
-  if (!buf) return (unsigned long) -1;
+  if (!buf) return (ej_ip_t) -1;
   if (!buf || sscanf(buf, "%d.%d.%d.%d%n", &b1, &b2, &b3, &b4, &n) != 4
       || buf[n] || b1 > 255 || b2 > 255 || b3 > 255 || b4 > 255) {
-    return (unsigned long) -1;
+    return (ej_ip_t) -1;
   }
   return b1 << 24 | b2 << 16 | b3 << 8 | b4;
 }
@@ -1242,7 +1242,7 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
   }
 
   if (te.size > RUNLOG_MAX_SIZE) {
-    err("run_set_entry: %d: size %zu is invalid", run_id, te.size);
+    err("run_set_entry: %d: size %u is invalid", run_id, te.size);
     return -1;
   }
   if (te.problem <= 0 || te.problem > RUNLOG_MAX_PROB_ID) {
@@ -1283,7 +1283,7 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
     return -1;
   }
   if (te.nsec < 0 || te.nsec >= 1000000000) {
-    err("run_set_entry: %d: nsed %ld is invalid", run_id, te.nsec);
+    err("run_set_entry: %d: nsec %d is invalid", run_id, te.nsec);
     return -1;
   }
 
@@ -1352,7 +1352,7 @@ run_get_virtual_status(int user_id)
 }
 
 int
-run_virtual_start(int user_id, time_t t, unsigned long ip, long nsec)
+run_virtual_start(int user_id, time_t t, ej_ip_t ip, int nsec)
 {
   struct user_entry *pvt = get_user_entry(user_id);
   int i;
@@ -1375,7 +1375,7 @@ run_virtual_start(int user_id, time_t t, unsigned long ip, long nsec)
     return -1;
   }
   if (nsec < 0 || nsec >= 1000000000) {
-    err("run_virtual_start: nsec field value %ld is invalid", nsec);
+    err("run_virtual_start: nsec field value %d is invalid", nsec);
     return -1;
   }
   if ((i = append_record(t, user_id, nsec)) < 0) return -1;
@@ -1389,7 +1389,7 @@ run_virtual_start(int user_id, time_t t, unsigned long ip, long nsec)
 }
 
 int
-run_virtual_stop(int user_id, time_t t, unsigned long ip, long nsec)
+run_virtual_stop(int user_id, time_t t, ej_ip_t ip, int nsec)
 {
   struct user_entry *pvt = get_user_entry(user_id);
   int i;
@@ -1645,7 +1645,7 @@ runlog_check(FILE *ferr,
   time_t prev_time = 0;
   time_t stop_time = 0, v_stop_time;
   int retcode = 0;
-  long prev_nsec = 0;
+  int prev_nsec = 0;
 
   ASSERT(phead);
 
@@ -1749,7 +1749,7 @@ runlog_check(FILE *ferr,
       continue;
     }
     if (e->timestamp == prev_time && e->nsec < prev_nsec) {
-      check_msg(1, ferr, "Run %d nsec %ld is less than previous %ld",
+      check_msg(1, ferr, "Run %d nsec %d is less than previous %d",
                 i, e->nsec, prev_nsec);
     }
     prev_time = e->timestamp;
