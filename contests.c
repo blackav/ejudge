@@ -318,7 +318,7 @@ static char const * const member_field_map[] =
 };
 
 static int
-parse_date(unsigned char const *s, unsigned long *pd)
+parse_date(unsigned char const *s, time_t *pd)
 {
   int year, month, day, hour, min, sec, n;
   time_t t;
@@ -1168,7 +1168,7 @@ contests_new_node(int tag)
 }
 
 static int
-do_check_ip(struct contest_access *acc, unsigned long ip, int ssl)
+do_check_ip(struct contest_access *acc, ej_ip_t ip, int ssl)
 {
   struct contest_ip *p;
 
@@ -1185,7 +1185,7 @@ do_check_ip(struct contest_access *acc, unsigned long ip, int ssl)
 }
 
 int
-contests_check_ip(int num, int field, unsigned long ip, int ssl)
+contests_check_ip(int num, int field, ej_ip_t ip, int ssl)
 {
   struct contest_desc *d = 0;
   struct contest_access *acc = 0;
@@ -1210,62 +1210,62 @@ contests_check_ip(int num, int field, unsigned long ip, int ssl)
 }
 
 int
-contests_check_register_ip(int num, unsigned long ip, int ssl)
+contests_check_register_ip(int num, ej_ip_t ip, int ssl)
 {
   return contests_check_ip(num, CONTEST_REGISTER_ACCESS, ip, ssl);
 }
 int
-contests_check_register_ip_2(struct contest_desc *cnts, unsigned long ip, int ssl)
+contests_check_register_ip_2(struct contest_desc *cnts, ej_ip_t ip, int ssl)
 {
   return do_check_ip(cnts->register_access, ip, ssl);
 }
 int
-contests_check_users_ip(int num, unsigned long ip, int ssl)
+contests_check_users_ip(int num, ej_ip_t ip, int ssl)
 {
   return contests_check_ip(num, CONTEST_USERS_ACCESS, ip, ssl);
 }
 int
-contests_check_users_ip_2(struct contest_desc *cnts, unsigned long ip, int ssl)
+contests_check_users_ip_2(struct contest_desc *cnts, ej_ip_t ip, int ssl)
 {
   return do_check_ip(cnts->users_access, ip, ssl);
 }
 int
-contests_check_master_ip(int num, unsigned long ip, int ssl)
+contests_check_master_ip(int num, ej_ip_t ip, int ssl)
 {
   return contests_check_ip(num, CONTEST_MASTER_ACCESS, ip, ssl);
 }
 int
-contests_check_master_ip_2(struct contest_desc *cnts, unsigned long ip, int ssl)
+contests_check_master_ip_2(struct contest_desc *cnts, ej_ip_t ip, int ssl)
 {
   return do_check_ip(cnts->master_access, ip, ssl);
 }
 int
-contests_check_judge_ip(int num, unsigned long ip, int ssl)
+contests_check_judge_ip(int num, ej_ip_t ip, int ssl)
 {
   return contests_check_ip(num, CONTEST_JUDGE_ACCESS, ip, ssl);
 }
 int
-contests_check_judge_ip_2(struct contest_desc *cnts, unsigned long ip, int ssl)
+contests_check_judge_ip_2(struct contest_desc *cnts, ej_ip_t ip, int ssl)
 {
   return do_check_ip(cnts->judge_access, ip, ssl);
 }
 int
-contests_check_team_ip(int num, unsigned long ip, int ssl)
+contests_check_team_ip(int num, ej_ip_t ip, int ssl)
 {
   return contests_check_ip(num, CONTEST_TEAM_ACCESS, ip, ssl);
 }
 int
-contests_check_team_ip_2(struct contest_desc *cnts, unsigned long ip, int ssl)
+contests_check_team_ip_2(struct contest_desc *cnts, ej_ip_t ip, int ssl)
 {
   return do_check_ip(cnts->team_access, ip, ssl);
 }
 int
-contests_check_serve_control_ip(int num, unsigned long ip, int ssl)
+contests_check_serve_control_ip(int num, ej_ip_t ip, int ssl)
 {
   return contests_check_ip(num, CONTEST_SERVE_CONTROL_ACCESS, ip, ssl);
 }
 int
-contests_check_serve_control_ip_2(struct contest_desc *cnts, unsigned long ip, int ssl)
+contests_check_serve_control_ip_2(struct contest_desc *cnts, ej_ip_t ip, int ssl)
 {
   return do_check_ip(cnts->serve_control_access, ip, ssl);
 }
