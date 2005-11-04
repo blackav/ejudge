@@ -17,6 +17,7 @@
 
 #include "config.h"
 #include "settings.h"
+#include "ej_types.h"
 
 #include "expat_iface.h"
 #include "pathutl.h"
@@ -165,8 +166,8 @@ static unsigned char *user_languages;
 static int user_show_email;
 static int user_contest_id;
 static struct userlist_clnt *server_conn;
-static unsigned long user_ip;
-static unsigned long long user_cookie;
+static ej_ip_t user_ip;
+static ej_cookie_t user_cookie;
 static int user_id;
 static unsigned char *user_name;
 static int user_action;
@@ -1548,7 +1549,7 @@ static int
 authentificate(void)
 {
   unsigned char *sid_str = 0;
-  unsigned long long sid_value = 0;
+  ej_cookie_t sid_value = 0;
   int n = 0, errcode;
   int new_user_id = 0, new_locale_id = 0, new_contest_id = 0;
   unsigned char *new_login = 0, *new_name = 0;
@@ -2544,6 +2545,7 @@ action_register_new_user(void)
       error("%s", _("Connection to the server is broken."));
     } else {
       errcode = userlist_clnt_register_new(server_conn, user_ip,
+                                           ssl_flag,
                                            user_contest_id,
                                            client_locale_id,
                                            1 /* usecookies */,
@@ -2593,7 +2595,7 @@ action_login(void)
   int errcode;
   unsigned char s1[128], url[512];
   int new_user_id, new_locale_id;
-  unsigned long long new_cookie;
+  ej_cookie_t new_cookie;
   unsigned char *new_name;
 
   if (client_locale_id == -1) client_locale_id = 0;
