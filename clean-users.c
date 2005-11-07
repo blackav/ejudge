@@ -328,7 +328,7 @@ main(int argc, char **argv)
     } else {
       out_flags = "";
     }
-    printf("%-8s%-8d%-16.16s%-8d%-8d%-8d%-8d%-8d\n",
+    printf("%-8s%-8d%-16.16s%-8d%-8d%-8d%-8d%-8zu\n",
            out_flags, i, userlist->user_map[i]->login,
            user_stat[i].virt_events,
            user_stat[i].run_num, user_stat[i].run_size,
