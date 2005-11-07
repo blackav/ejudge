@@ -301,6 +301,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(checker_real_time_limit, "d"),
   PROBLEM_PARAM(disable_auto_testing, "d"),
   PROBLEM_PARAM(disable_testing, "d"),
+  PROBLEM_PARAM(skip_testing, "d"),
   PROBLEM_PARAM(variable_full_score, "d"),
   PROBLEM_PARAM(hidden, "d"),
   PROBLEM_PARAM(priority_adjustment, "d"),
@@ -382,6 +383,7 @@ static struct config_parse_info section_tester_params[] =
   TESTER_PARAM(problem_name, "s"),
   TESTER_PARAM(no_redirect, "d"),
   TESTER_PARAM(is_dos, "d"),
+  TESTER_PARAM(skip_testing, "d"),
   TESTER_PARAM(arch, "s"),
   TESTER_PARAM(key, "s"),
   TESTER_PARAM(any, "d"),
@@ -393,9 +395,9 @@ static struct config_parse_info section_tester_params[] =
   TESTER_PARAM(no_core_dump, "d"),
   TESTER_PARAM(enable_memory_limit_error, "d"),
   TESTER_PARAM(kill_signal, "s"),
-  TESTER_PARAM(max_stack_size, "d"),
-  TESTER_PARAM(max_data_size, "d"),
-  TESTER_PARAM(max_vm_size, "d"),
+  TESTER_PARAM(max_stack_size, "z"),
+  TESTER_PARAM(max_data_size, "z"),
+  TESTER_PARAM(max_vm_size, "z"),
   TESTER_PARAM(clear_env, "d"),
   TESTER_PARAM(time_limit_adjustment, "d"),
 
@@ -581,6 +583,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->variant_num = -1;
   p->disable_auto_testing = -1;
   p->disable_testing = -1;
+  p->skip_testing = -1;
   p->test_score = -1;
   p->full_score = -1;
   p->variable_full_score = -1;
@@ -590,8 +593,8 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->corr_pat[0] = 1;
   p->info_pat[0] = 1;
   p->tgz_pat[0] = 1;
-  p->max_vm_size = -1;
-  p->max_stack_size = -1;
+  p->max_vm_size = -1L;
+  p->max_stack_size = -1L;
 }
 
 static void free_testsets(int t, struct testset_info *p);
@@ -604,6 +607,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   struct section_problem_data *p = (struct section_problem_data*) gp;
 
   xfree(p->tscores);
+  xfree(p->x_score_tests);
   sarray_free(p->test_sets);
   sarray_free(p->date_penalty);
   sarray_free(p->disable_language);
@@ -626,12 +630,16 @@ tester_init_func(struct generic_section_config *gp)
   struct section_tester_data *p = (struct section_tester_data*) gp;
 
   p->is_dos = -1;
+  p->skip_testing = -1;
   p->no_redirect = -1;
   p->no_core_dump = -1;
   p->enable_memory_limit_error = -1;
   p->clear_env = -1;
   p->time_limit_adjustment = -1;
   p->priority_adjustment = -1000;
+  p->max_vm_size = -1L;
+  p->max_stack_size = -1L;
+  p->max_data_size = -1L;
 }
 
 void
@@ -672,11 +680,6 @@ inherit_fields(struct inheritance_info *iinfo,
 
   for (ii = 0; iinfo[ii].name; ii++) {
     objf = XPDEREF(void, obj, iinfo[ii].offset);
-    /*
-    fprintf(stderr, ">>objf: %#08lx,%lu,%#08lx\n",
-            (unsigned long) obj, (unsigned long) iinfo[ii].offset,
-            (unsigned long) objf);
-    */
     if (iinfo[ii].isdef_func(objf)) continue;
     for (j = 0, defpos = -1, defnum = 0; j < stot; j++) {
       sobjf = XPDEREF(void, sups[j], iinfo[ii].offset);
@@ -706,21 +709,25 @@ static int inh_isdef_int(void *vpint)
   if (*pint != -1) return 1;
   return 0;
 }
-static int inh_isdef_int2(void *vpint)
-{
-  int *pint = (int*) vpint;
-  if (*pint != 0) return 1;
-  return 0;
-}
 static int inh_isdef_int3(void *vpint)
 {
   int *pint = (int*) vpint;
   if (*pint != -1000) return 1;
   return 0;
 }
+static int inh_isdef_size(void *vpsize)
+{
+  size_t *psize = (size_t*) vpsize;
+  if (*psize != -1L) return 1;
+  return 0;
+}
 static void inh_copy_int(void *dst, void *src)
 {
   memcpy(dst, src, sizeof(int));
+}
+static void inh_copy_size(void *dst, void *src)
+{
+  memcpy(dst, src, sizeof(size_t));
 }
 
 static int inh_isdef_path(void *vppath)
@@ -753,10 +760,11 @@ static struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(clear_env, int, int),
   TESTER_INH(time_limit_adjustment, int, int),
   TESTER_INH(kill_signal, path, path),
-  TESTER_INH(max_stack_size, int2, int),
-  TESTER_INH(max_data_size, int2, int),
-  TESTER_INH(max_vm_size, int2, int),
+  TESTER_INH(max_stack_size, size, size),
+  TESTER_INH(max_data_size, size, size),
+  TESTER_INH(max_vm_size, size, size),
   TESTER_INH(is_dos, int, int),
+  TESTER_INH(skip_testing, int, int),
   TESTER_INH(no_redirect, int, int),
   TESTER_INH(priority_adjustment, int3, int),
   TESTER_INH(check_dir, path, path),
@@ -857,6 +865,48 @@ free_testsets(int t, struct testset_info *p)
     xfree(p[i].nums);
   memset(p, 0xab, t * sizeof(p[0]));
   xfree(p);
+}
+
+int *
+prepare_parse_score_tests(const unsigned char *str,
+                          int score)
+{
+  const unsigned char *p = str;
+  int n, s, i, r;
+  int *ps = 0;
+
+  for (i = 0; i < score - 1; i++) {
+    if ((r = sscanf(p, "%d%n", &s, &n)) != 1) {
+      if (r == -1) {
+        err("not enogh score specified");
+      } else {
+        err("cannot parse score_tests");
+      }
+      return 0;
+    }
+    if (s <= 0) {
+      err("score test %d is invalid at position %d", s, i + 1);
+      return 0;
+    }
+    p += n;
+  }
+  while (*p && isspace(*p)) p++;
+  if (*p) {
+    err("garbage after test specification");
+    return 0;
+  }
+  XCALLOC(ps, score);
+  for (i = 0, p = str; i < score - 1; i++) {
+    sscanf(p, "%d%n", &s, &n);
+    ps[i] = s;
+    p += n;
+    if (i > 0 && ps[i] <= ps[i - 1]) {
+      err("score_tests[%d] <= score_tests[%d]", i + 1, i);
+      xfree(ps);
+      return 0;
+    }
+  }
+  return ps;
 }
 
 static int
@@ -1714,13 +1764,13 @@ set_defaults(int mode)
    */
   if (!global->score_system[0]) {
     global->score_system_val = SCORE_ACM;
-  } else if (!strcmp(global->score_system, "acm")) {
+  } else if (!strcasecmp(global->score_system, "acm")) {
     global->score_system_val = SCORE_ACM;
-  } else if (!strcmp(global->score_system, "kirov")) {
+  } else if (!strcasecmp(global->score_system, "kirov")) {
     global->score_system_val = SCORE_KIROV;
-  } else if (!strcmp(global->score_system, "olympiad")) {
+  } else if (!strcasecmp(global->score_system, "olympiad")) {
     global->score_system_val = SCORE_OLYMPIAD;
-  } else if (!strcmp(global->score_system, "moscow")) {
+  } else if (!strcasecmp(global->score_system, "moscow")) {
     global->score_system_val = SCORE_MOSCOW;
   } else {
     err("Invalid scoring system: %s", global->score_system);
@@ -2103,6 +2153,8 @@ set_defaults(int mode)
     prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_AUTO_TESTING,
                            probs[i], aprob, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_TESTING,
+                           probs[i], aprob, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_SKIP_TESTING,
                            probs[i], aprob, global);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_FULL_SCORE,
@@ -2538,21 +2590,25 @@ set_defaults(int mode)
         info("tester.%d.kill_signal inherited from tester.%s ('%s')",
              i, sish, tp->kill_signal);
       }
-      if (!tp->max_stack_size && atp && atp->max_stack_size) {
+      if (tp->max_stack_size == -1L && atp && atp->max_stack_size != -1L) {
         tp->max_stack_size = atp->max_stack_size;
-        info("tester.%d.max_stack_size inherited from tester.%s (%d)",
+        info("tester.%d.max_stack_size inherited from tester.%s (%zu)",
              i, sish, tp->max_stack_size);        
       }
-      if (!tp->max_data_size && atp && atp->max_data_size) {
+      if (tp->max_data_size == -1L && atp && atp->max_data_size != -1L) {
         tp->max_data_size = atp->max_data_size;
-        info("tester.%d.max_data_size inherited from tester.%s (%d)",
+        info("tester.%d.max_data_size inherited from tester.%s (%zu)",
              i, sish, tp->max_data_size);        
       }
-      if (!tp->max_vm_size && atp && atp->max_vm_size) {
+      if (tp->max_vm_size == -1L && atp && atp->max_vm_size != -1L) {
         tp->max_vm_size = atp->max_vm_size;
-        info("tester.%d.max_vm_size inherited from tester.%s (%d)",
+        info("tester.%d.max_vm_size inherited from tester.%s (%zu)",
              i, sish, tp->max_vm_size);        
       }
+
+      if (tp->skip_testing == -1 && atp && atp->skip_testing != -1)
+        tp->skip_testing = atp->skip_testing;
+      if (tp->skip_testing == -1) tp->skip_testing = 0;
 
       if (tp->is_dos == -1 && atp && atp->is_dos != -1) {
         tp->is_dos = atp->is_dos;
@@ -3121,21 +3177,27 @@ prepare_tester_refinement(struct section_tester_data *out,
 
   /* copy max_stack_size */
   out->max_stack_size = tp->max_stack_size;
-  if (!out->max_stack_size && atp) {
+  if (out->max_stack_size == -1L && atp) {
     out->max_stack_size = atp->max_stack_size;
   }
 
   /* copy max_data_size */
   out->max_data_size = tp->max_data_size;
-  if (!out->max_data_size && atp) {
+  if (out->max_data_size == -1L && atp) {
     out->max_data_size = atp->max_data_size;
   }
 
   /* copy max_vm_size */
   out->max_vm_size = tp->max_vm_size;
-  if (!out->max_vm_size && atp) {
+  if (out->max_vm_size == -1L && atp) {
     out->max_vm_size = atp->max_vm_size;
   }
+
+  out->skip_testing = tp->skip_testing;
+  if (out->skip_testing == -1 && atp)
+    out->skip_testing = atp->skip_testing;
+  if (out->skip_testing == -1)
+    out->skip_testing = 0;
 
   /* copy is_dos */
   out->is_dos = tp->is_dos;
@@ -3375,6 +3437,7 @@ void print_tester(FILE *o, struct section_tester_data *t)
   fprintf(o, "problem = %d\n", t->problem);
   fprintf(o, "problem_name = \"%s\"\n", t->problem_name);
   fprintf(o, "is_dos = %d\n", t->is_dos);
+  fprintf(o, "skip_testing = %d\n", t->skip_testing);
   fprintf(o, "no_redirect = %d\n", t->no_redirect);
   fprintf(o, "arch = \"%s\"\n", t->arch);
   fprintf(o, "key = \"%s\"\n", t->key);
@@ -3382,9 +3445,9 @@ void print_tester(FILE *o, struct section_tester_data *t)
   fprintf(o, "no_core_dump = %d\n", t->no_core_dump);
   fprintf(o, "enable_memory_limit_error = %d\n", t->enable_memory_limit_error);
   fprintf(o, "kill_signal = \"%s\"\n", t->kill_signal);
-  fprintf(o, "max_stack_size = %d\n", t->max_stack_size);
-  fprintf(o, "max_data_size = %d\n", t->max_data_size);
-  fprintf(o, "max_vm_size = %d\n", t->max_vm_size);
+  fprintf(o, "max_stack_size = %zu\n", t->max_stack_size);
+  fprintf(o, "max_data_size = %zu\n", t->max_data_size);
+  fprintf(o, "max_vm_size = %zu\n", t->max_vm_size);
   fprintf(o, "clear_env = %d\n", t->clear_env);
   fprintf(o, "errorcode_file = \"%s\"\n", t->errorcode_file);
   fprintf(o, "error_file = \"%s\"\n", t->error_file);
@@ -3912,6 +3975,7 @@ prepare_copy_problem(struct section_problem_data *out,
   memmove(out, in, sizeof(*out));
   out->ntests = 0;
   out->tscores = 0;
+  out->x_score_tests = 0;
   out->test_sets = 0;
   out->ts_total = 0;
   out->ts_infos = 0;
@@ -4011,6 +4075,13 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->disable_auto_testing = 0;
     break;
 
+  case PREPARE_FIELD_PROB_SKIP_TESTING:
+    if (out->skip_testing == -1 && abstr)
+      out->skip_testing = abstr->skip_testing;
+    if (out->skip_testing == -1)
+      out->skip_testing = 0;
+    break;
+
   case PREPARE_FIELD_PROB_FULL_SCORE:
     if (out->full_score == -1 && abstr) out->full_score = abstr->full_score;
     if (out->full_score == -1) out->full_score = DFLT_P_FULL_SCORE;
@@ -4077,16 +4148,16 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
     break;
 
   case PREPARE_FIELD_PROB_MAX_VM_SIZE:
-    if (out->max_vm_size == (unsigned long) -1 && abstr)
+    if (out->max_vm_size == -1L && abstr)
       out->max_vm_size = abstr->max_vm_size;
-    if (out->max_vm_size == (unsigned long) -1)
+    if (out->max_vm_size == -1L)
       out->max_vm_size = 0;
     break;
 
   case PREPARE_FIELD_PROB_MAX_STACK_SIZE:
-    if (out->max_stack_size == (unsigned long) -1 && abstr)
+    if (out->max_stack_size == -1L && abstr)
       out->max_stack_size = abstr->max_stack_size;
-    if (out->max_stack_size == (unsigned long) -1)
+    if (out->max_stack_size == -1L)
       out->max_stack_size = 0;
     break;
 
