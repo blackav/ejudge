@@ -3565,7 +3565,8 @@ cmd_edit_run(struct client_state *p, int len,
       return;
     }
     if (global->score_system_val != SCORE_OLYMPIAD
-        && global->score_system_val != SCORE_KIROV) {
+        && global->score_system_val != SCORE_KIROV
+        && global->score_system_val != SCORE_MOSCOW) {
       err("%d: score cannot be set in the current scoring system", p->id);
       new_send_reply(p, -SRV_ERR_PROTOCOL);
       return;
@@ -3580,7 +3581,8 @@ cmd_edit_run(struct client_state *p, int len,
       return;
     }
     if (global->score_system_val != SCORE_OLYMPIAD
-        && global->score_system_val != SCORE_KIROV) {
+        && global->score_system_val != SCORE_KIROV
+        && global->score_system_val != SCORE_MOSCOW) {
       err("%d: score_adj cannot be set in the current scoring system", p->id);
       new_send_reply(p, -SRV_ERR_PROTOCOL);
       return;
@@ -3815,7 +3817,8 @@ cmd_new_run(struct client_state *p, int len,
       goto protocol_error;
     }
     if (global->score_system_val != SCORE_OLYMPIAD
-        && global->score_system_val != SCORE_KIROV) {
+        && global->score_system_val != SCORE_KIROV
+        && global->score_system_val != SCORE_MOSCOW) {
       err("%d: new_run: score cannot be set in the current scoring system",
           p->id);
       goto protocol_error;
@@ -4420,6 +4423,11 @@ read_run_packet(const unsigned char *run_status_dir,
       if (score < 0) score = 0;
     }
     */
+  } else if (global->score_system_val == SCORE_MOSCOW) {
+    if (re.problem < 1 || re.problem > max_prob || !probs[re.problem])
+      goto bad_packet_error;
+    if (reply_pkt->score < 0 || reply_pkt->score>probs[re.problem]->full_score)
+      goto bad_packet_error;
   } else {
     reply_pkt->score = -1;
   }
