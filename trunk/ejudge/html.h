@@ -109,6 +109,15 @@ void do_write_standings(FILE *f,
                         int raw_flag,
                         const unsigned char *user_name);
 
+void do_write_moscow_standings(FILE *f,
+                               const unsigned char *stand_dir,
+                               int client_flag,
+                               int user_id,
+                               const unsigned char *header_str,
+                               const unsigned char *footer_str,
+                               int raw_flag,
+                               const unsigned char *user_name);
+
 int write_priv_source(FILE *f, int user_id, int priv_level,
                       ej_cookie_t sid,
                       int accepting_mode,
