@@ -17,6 +17,7 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
 #include "pathutl.h"
 #include "contests.h"
 #include "parsecfg.h"
@@ -26,12 +27,6 @@
 
 enum { PREPARE_SERVE, PREPARE_COMPILE, PREPARE_RUN };
 enum { PREPARE_QUIET = 1 };
-
-#if !defined EJUDGE_SCORE_SYSTEM_DEFINED
-#define EJUDGE_SCORE_SYSTEM_DEFINED
-/* scoring systems */
-enum { SCORE_ACM, SCORE_KIROV, SCORE_OLYMPIAD, SCORE_MOSCOW, SCORE_TOTAL };
-#endif /* EJUDGE_SCORE_SYSTEM_DEFINED */
 
 /* second rounding mode */
 enum { SEC_CEIL, SEC_FLOOR, SEC_ROUND };
@@ -370,6 +365,7 @@ struct section_problem_data
   int    checker_real_time_limit;
   int    disable_auto_testing;
   int    disable_testing;
+  int    skip_testing;          /* skip testing this problem */
   int    hidden;                /* hide the problem from standings */
   int    priority_adjustment;   /* priority adjustment for this problem */
   int    stand_hide_time;       /* do not show ok time */
@@ -399,6 +395,7 @@ struct section_problem_data
 
   int     ntests;               /* number of tests found */
   int    *tscores;              /* internal scores array  */
+  int    *x_score_tests;        /* parsed `score_tests' */
 
   char  **test_sets;            /* defined test sets */
   int ts_total;
@@ -428,8 +425,8 @@ struct section_problem_data
   int   *score_bonus_val;       /* parsed: score_bonus values */
 
   /* these fields are for CGI editing of contest configuration files */
-  unsigned long max_vm_size;
-  unsigned long max_stack_size;
+  size_t max_vm_size;
+  size_t max_stack_size;
   unsigned char *unhandled_vars;
 };
 
@@ -486,13 +483,14 @@ struct section_tester_data
   int    abstract;              /* is this tester abstract */
   char **super;                 /* names of the supertesters */
   int    is_processed;          /* whether this tester has been processed */
+  int    skip_testing;
 
   int no_core_dump;             /* disable core dumps */
   int enable_memory_limit_error; /* enable memory limit detection */
   puc_t kill_signal[32];        /* the signal to kill processes */
-  int max_stack_size;           /* max size of the stack */
-  int max_data_size;            /* max size of the data */
-  int max_vm_size;              /* max size of the virtual memory */
+  size_t max_stack_size;        /* max size of the stack */
+  size_t max_data_size;         /* max size of the data */
+  size_t max_vm_size;           /* max size of the virtual memory */
   int clear_env;                /* whether the environment is cleared */
   int time_limit_adjustment;
 
@@ -579,6 +577,7 @@ enum
   PREPARE_FIELD_PROB_TEAM_SHOW_JUDGE_REPORT,
   PREPARE_FIELD_PROB_DISABLE_TESTING,
   PREPARE_FIELD_PROB_DISABLE_AUTO_TESTING,
+  PREPARE_FIELD_PROB_SKIP_TESTING,
   PREPARE_FIELD_PROB_FULL_SCORE,
   PREPARE_FIELD_PROB_TEST_SCORE,
   PREPARE_FIELD_PROB_RUN_PENALTY,
@@ -672,5 +671,6 @@ void prepare_unparse_variants(FILE *f, const struct variant_map *vmap,
                               const unsigned char *header,
                               const unsigned char *footer);
 
+int *prepare_parse_score_tests(const unsigned char *str, int score);
 
 #endif /* __PREPARE_H__ */
