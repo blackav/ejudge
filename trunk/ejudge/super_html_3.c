@@ -281,13 +281,23 @@ print_boolean_select_row(FILE *f,
 #define SIZE_K (1024)
 
 static unsigned char*
-num_to_size(unsigned char *buf, size_t buf_size, unsigned long long num)
+num_to_size(unsigned char *buf, size_t buf_size, int num)
 {
   if (!num) snprintf(buf, buf_size, "0");
-  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%lluG", num / SIZE_G);
-  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%lluM", num / SIZE_M);
-  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%lluK", num / SIZE_K);
-  else snprintf(buf, buf_size, "%llu", num);
+  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%uG", num / SIZE_G);
+  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%uM", num / SIZE_M);
+  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%uK", num / SIZE_K);
+  else snprintf(buf, buf_size, "%u", num);
+  return buf;
+}
+static unsigned char*
+size_t_to_size(unsigned char *buf, size_t buf_size, size_t num)
+{
+  if (!num) snprintf(buf, buf_size, "0");
+  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%zuG", num / SIZE_G);
+  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%zuM", num / SIZE_M);
+  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%zuK", num / SIZE_K);
+  else snprintf(buf, buf_size, "%zu", num);
   return buf;
 }
 
@@ -3449,24 +3459,24 @@ super_html_print_problem(FILE *f,
   //PROBLEM_PARAM(max_vm_size, "d"),
   extra_msg = "";
   if (prob->abstract) {
-    if (prob->max_vm_size == (unsigned long) -1) extra_msg = "<i>(Undefined)</i>";
+    if (prob->max_vm_size == -1L) extra_msg = "<i>(Undefined)</i>";
     else if (!prob->max_vm_size) extra_msg = "<i>(OS Limit)</i>";
   } else {
-    if (prob->max_vm_size == (unsigned long) -1) {
+    if (prob->max_vm_size == -1L) {
       prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_VM_SIZE,
                              &tmp_prob, sup_prob, sstate->global);
       if (!tmp_prob.max_vm_size)
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - OS Limit)</i>");
       else
         snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %s)</i>",
-                 num_to_size(num_buf, sizeof(num_buf), tmp_prob.max_vm_size));
+                 size_t_to_size(num_buf, sizeof(num_buf), tmp_prob.max_vm_size));
       extra_msg = msg_buf;
     } else if (!prob->max_vm_size) extra_msg = "<i>(OS Limit)</i>";
   }
-  if (prob->max_vm_size == (unsigned long) -1) {
+  if (prob->max_vm_size == -1L) {
     snprintf(num_buf, sizeof(num_buf), "-1");
   } else {
-    num_to_size(num_buf, sizeof(num_buf), tmp_prob.max_vm_size);
+    size_t_to_size(num_buf, sizeof(num_buf), tmp_prob.max_vm_size);
   }
   html_start_form(f, 1, session_id, self_url, prob_hidden_vars);
   fprintf(f, "<tr><td>%s</td><td>", "Maximum virtual memory size:");
@@ -3479,10 +3489,10 @@ super_html_print_problem(FILE *f,
     //PROBLEM_PARAM(max_stack_size, "d"),
     extra_msg = "";
     if (prob->abstract) {
-      if (prob->max_stack_size == (unsigned long) -1) extra_msg = "<i>(Undefined)</i>";
+      if (prob->max_stack_size == -1L) extra_msg = "<i>(Undefined)</i>";
       else if (!prob->max_stack_size) extra_msg = "<i>(OS Limit)</i>";
     } else {
-      if (prob->max_stack_size == (unsigned long) -1) {
+      if (prob->max_stack_size == -1L) {
         prepare_set_prob_value(PREPARE_FIELD_PROB_MAX_STACK_SIZE,
                                &tmp_prob, sup_prob, sstate->global);
         if (!tmp_prob.max_stack_size)
@@ -3493,7 +3503,7 @@ super_html_print_problem(FILE *f,
         extra_msg = msg_buf;
       } else if (!prob->max_stack_size) extra_msg = "<i>(OS Limit)</i>";
     }
-    if (prob->max_stack_size == (unsigned long) -1) {
+    if (prob->max_stack_size == -1L) {
       snprintf(num_buf, sizeof(num_buf), "-1");
     } else {
       num_to_size(num_buf, sizeof(num_buf), tmp_prob.max_stack_size);
@@ -4154,19 +4164,30 @@ super_html_prob_cmd(struct sid_state *sstate, int cmd,
 #define PROB_ASSIGN_STRING(f) snprintf(prob->f, sizeof(prob->f), "%s", param2)
 #define PROB_CLEAR_STRING(f) prob->f[0] = 0
 
+static int
+num_suffix(const unsigned char *str)
+{
+  if (!str[0]) return 1;
+  if (str[1]) return 0; 
+  if (str[0] == 'k' || str[0] == 'K') return 1024;
+  if (str[0] == 'm' || str[0] == 'M') return 1024 * 1024;
+  if (str[0] == 'g' || str[0] == 'G') return 1024 * 1024 * 1024;
+  return 0;
+}
+
 int
 super_html_prob_param(struct sid_state *sstate, int cmd,
                       int prob_id, const unsigned char *param2,
                       int param3, int param4)
 {
   struct section_problem_data *prob;
-  int i, n, val;
+  int i, n, val, mult;
   int *p_int;
-  unsigned long *p_ulong, ulval;
   time_t tmp_date;
   unsigned char *p_str;
   size_t str_size;
   char **tmp_env = 0;
+  size_t *p_size, zval;
 
   if (prob_id > 0) {
     if (prob_id >= sstate->prob_a || !sstate->probs[prob_id])
@@ -4371,30 +4392,25 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
     goto handle_int_1;
 
   case SSERV_CMD_PROB_CHANGE_MAX_VM_SIZE:
-    p_ulong = &prob->max_vm_size;
+    p_size = &prob->max_vm_size;
 
-  handle_ulong_1:
+  handle_size_t:
     if (!param2) return -SSERV_ERR_INVALID_PARAMETER;
     if (sscanf(param2, "%d%n", &val, &n) == 1 && !param2[n] && val == -1) {
-      *p_ulong = (unsigned long) -1;
+      *p_size = -1L;
       return 0;
     }
-    if (sscanf(param2, "%lu%n", &ulval, &n) != 1)
+    if (sscanf(param2, "%zu%n", &zval, &n) != 1)
       return -SSERV_ERR_INVALID_PARAMETER;
-    if (param2[n] == 'k' || param2[n] == 'K') {
-      ulval *= SIZE_K;
-      n++;
-    } else if (param2[n] == 'm' || param2[n] == 'M') {
-      ulval *= SIZE_M;
-      n++;
-    }
-    if (param2[n]) return -SSERV_ERR_INVALID_PARAMETER;
-    *p_ulong = ulval;
+    if (!(mult = num_suffix(param2 + n))) return -SSERV_ERR_INVALID_PARAMETER;
+    // FIXME: check for overflow
+    zval *= mult;
+    *p_size = zval;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_MAX_STACK_SIZE:
-    p_ulong = &prob->max_stack_size;
-    goto handle_ulong_1;
+    p_size = &prob->max_stack_size;
+    goto handle_size_t;
 
   case SSERV_CMD_PROB_CHANGE_INPUT_FILE:
     PROB_ASSIGN_STRING(input_file);
@@ -4858,8 +4874,8 @@ super_html_read_serve(FILE *flog,
   struct section_problem_data *prob, *aprob;
   struct section_tester_data *tst, *atst;
   struct section_language_data *lang;
-  unsigned long vm_size, st_size;
-  unsigned long *mem_lims, *st_lims;
+  size_t vm_size, st_size;
+  size_t *mem_lims, *st_lims;
   int *mem_cnt, *st_cnt;
   int mem_u, st_u, max_i;
   path_t check_cmd = { 0 };
@@ -5285,24 +5301,20 @@ super_html_read_serve(FILE *flog,
     }
     prob_no_any[prob->id] = 1;
 
-    // FIXME: max_vm_size == 0 or max_stack_size == 0 is treated as unset
-    // FIXME: should check for (unsigned long) -1
     vm_size = tst->max_vm_size;
-    if (!vm_size && atst) vm_size = atst->max_vm_size;
-    if (!vm_size) vm_size = (unsigned long) -1;
+    if (vm_size == -1L && atst) vm_size = atst->max_vm_size;
     st_size = tst->max_stack_size;
-    if (!st_size && atst) st_size = atst->max_stack_size;
-    if (!st_size) st_size = (unsigned long) -1;
-    if (vm_size != (unsigned long) -1) {
-      if (prob->max_vm_size == (unsigned long) -1) prob->max_vm_size = vm_size;
+    if (st_size == -1L && atst) st_size = atst->max_stack_size;
+    if (vm_size != -1L) {
+      if (prob->max_vm_size == -1L) prob->max_vm_size = vm_size;
       if (prob->max_vm_size != vm_size) {
         fprintf(flog, "Conflicting max_vm_size specifications for problem `%s'\n",
                 prob->short_name);
         return -1;
       }
     }
-    if (st_size != (unsigned long) -1) {
-      if (prob->max_stack_size == (unsigned long) -1) prob->max_stack_size = st_size;
+    if (st_size != -1L) {
+      if (prob->max_stack_size == -1L) prob->max_stack_size = st_size;
       if (prob->max_stack_size != st_size) {
         fprintf(flog, "Conflicting max_stack_size specifications for problem `%s'\n",
                 prob->short_name);
@@ -5332,24 +5344,20 @@ super_html_read_serve(FILE *flog,
       if (!(prob = sstate->probs[j])) continue;
       if (prob_no_any[j]) continue;
 
-      // FIXME: max_vm_size == 0 or max_stack_size == 0 is treated as unset
-      // FIXME: should check for (unsigned long) -1
       vm_size = tst->max_vm_size;
-      if (!vm_size && atst) vm_size = atst->max_vm_size;
-      if (!vm_size) vm_size = (unsigned long) -1;
+      if (vm_size == -1L && atst) vm_size = atst->max_vm_size;
       st_size = tst->max_stack_size;
-      if (!st_size && atst) st_size = atst->max_stack_size;
-      if (!st_size) st_size = (unsigned long) -1;
-      if (vm_size != (unsigned long) -1) {
-        if (prob->max_vm_size == (unsigned long) -1) prob->max_vm_size = vm_size;
+      if (st_size == -1L && atst) st_size = atst->max_stack_size;
+      if (vm_size != -1L) {
+        if (prob->max_vm_size == -1L) prob->max_vm_size = vm_size;
         if (prob->max_vm_size != vm_size) {
           fprintf(flog, "Conflicting max_vm_size specifications for problem `%s'\n",
                   prob->short_name);
           return -1;
         }
       }
-      if (st_size != (unsigned long) -1) {
-        if (prob->max_stack_size == (unsigned long) -1) prob->max_stack_size = st_size;
+      if (st_size != -1L) {
+        if (prob->max_stack_size == -1L) prob->max_stack_size = st_size;
         if (prob->max_stack_size != st_size) {
           fprintf(flog, "Conflicting max_stack_size specifications for problem `%s'\n",
                   prob->short_name);
@@ -5374,7 +5382,7 @@ super_html_read_serve(FILE *flog,
     for (j = 1; j < sstate->prob_a; j++) {
       if (!(prob = sstate->probs[j]) || !prob->super[0]
           || strcmp(prob->super, aprob->short_name)) continue;
-      if (prob->max_vm_size != (unsigned long) -1) {
+      if (prob->max_vm_size != -1L) {
         for (k = 0; k < mem_u; k++)
           if (mem_lims[k] == prob->max_vm_size)
             break;
@@ -5382,7 +5390,7 @@ super_html_read_serve(FILE *flog,
         mem_lims[k] = prob->max_vm_size;
         mem_cnt[k]++;
       }
-      if (prob->max_stack_size != (unsigned long) -1) {
+      if (prob->max_stack_size != -1L) {
         for (k = 0; k < st_u; k++)
           if (st_lims[k] == prob->max_stack_size)
             break;
@@ -5400,10 +5408,10 @@ super_html_read_serve(FILE *flog,
       for (j = 1; j < sstate->prob_a; j++) {
         if (!(prob = sstate->probs[j]) || !prob->super[0]
             || strcmp(prob->super, aprob->short_name)) continue;
-        if (prob->max_vm_size == (unsigned long) -1) {
+        if (prob->max_vm_size == -1L) {
           prob->max_vm_size = 0;
         } else if (prob->max_vm_size == aprob->max_vm_size) {
-          prob->max_vm_size = -1;
+          prob->max_vm_size = -1L;
         }
       }
     }
@@ -5416,10 +5424,10 @@ super_html_read_serve(FILE *flog,
       for (j = 1; j < sstate->prob_a; j++) {
         if (!(prob = sstate->probs[j]) || !prob->super[0]
             || strcmp(prob->super, aprob->short_name)) continue;
-        if (prob->max_stack_size == (unsigned long) -1) {
+        if (prob->max_stack_size == -1L) {
           prob->max_stack_size = 0;
         } else if (prob->max_stack_size == aprob->max_stack_size) {
-          prob->max_stack_size = -1;
+          prob->max_stack_size = -1L;
         }
       }
     }
