@@ -120,13 +120,23 @@ unparse_bool(FILE *f, const unsigned char *name, int value)
 #define SIZE_K (1024)
 
 static unsigned char*
-num_to_size(unsigned char *buf, size_t buf_size, unsigned long long num)
+num_to_size(unsigned char *buf, size_t buf_size, int num)
 {
   if (!num) snprintf(buf, buf_size, "0");
-  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%lluG", num / SIZE_G);
-  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%lluM", num / SIZE_M);
-  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%lluK", num / SIZE_K);
-  else snprintf(buf, buf_size, "%llu", num);
+  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%uG", num / SIZE_G);
+  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%uM", num / SIZE_M);
+  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%uK", num / SIZE_K);
+  else snprintf(buf, buf_size, "%u", num);
+  return buf;
+}
+static unsigned char*
+size_t_to_size(unsigned char *buf, size_t buf_size, size_t num)
+{
+  if (!num) snprintf(buf, buf_size, "0");
+  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%zuG", num / SIZE_G);
+  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%zuM", num / SIZE_M);
+  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%zuK", num / SIZE_K);
+  else snprintf(buf, buf_size, "%zu", num);
   return buf;
 }
 
@@ -1030,6 +1040,7 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   PROBLEM_PARAM(disable_language, "x"),
   PROBLEM_PARAM(tgz_pat, "s"),
   PROBLEM_PARAM(personal_deadline, "x"),
+  PROBLEM_PARAM(skip_testing, "d"),
 */
 void
 prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
@@ -1059,6 +1070,10 @@ prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
       do_str_mb_empty(f, &sbuf, "tgz_pat", prob->tgz_pat);
   }
   */
+  //PROBLEM_PARAM(skip_testing, "d"),
+  if (prob->skip_testing > 0) {
+    fprintf(f, "skip_testing = %d\n", prob->skip_testing);
+  }
   //PROBLEM_PARAM(priority_adjustment, "d"),
   if (prob->priority_adjustment != -1000) {
     if (prob->priority_adjustment || !prob->abstract)
@@ -1156,8 +1171,8 @@ prepare_unparse_is_supported_tester(const unsigned char *tester_name)
 
 static void
 generate_abstract_tester(FILE *f, int arch, int secure_run,
-                         unsigned long max_vm_size,
-                         unsigned long max_stack_size,
+                         size_t max_vm_size,
+                         size_t max_stack_size,
                          int use_files,
                          int total_abstr_testers,
                          struct section_tester_data **abstr_testers,
@@ -1185,12 +1200,12 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
             "kill_signal = KILL\n"
             "clear_env\n",
             arch_abstract_names[arch], supported_archs[arch]);
-    if (max_vm_size)
+    if (max_vm_size != -1L)
       fprintf(f, "max_vm_size = %s\n",
-              num_to_size(nbuf, sizeof(nbuf), max_vm_size));
-    if (max_stack_size)
+              size_t_to_size(nbuf, sizeof(nbuf), max_vm_size));
+    if (max_stack_size != -1)
       fprintf(f, "max_stack_size = %s\n",
-              num_to_size(nbuf, sizeof(nbuf), max_stack_size));
+              size_t_to_size(nbuf, sizeof(nbuf), max_stack_size));
 #if CONF_HAS_LIBCAP - 0 == 1
     if (secure_run)
       fprintf(f, "start_cmd = \"capexec\"\n");
@@ -1207,12 +1222,12 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
             "kill_signal = KILL\n"
             "clear_env\n",
             arch_abstract_names[arch], supported_archs[arch]);
-    if (max_vm_size)
+    if (max_vm_size != -1L)
       fprintf(f, "max_vm_size = %s\n",
-              num_to_size(nbuf, sizeof(nbuf), max_vm_size));
-    if (max_stack_size)
+              size_t_to_size(nbuf, sizeof(nbuf), max_vm_size));
+    if (max_stack_size != -1L)
       fprintf(f, "max_stack_size = %s\n",
-              num_to_size(nbuf, sizeof(nbuf), max_stack_size));
+              size_t_to_size(nbuf, sizeof(nbuf), max_stack_size));
 #if CONF_HAS_LIBCAP - 0 == 1
     if (secure_run)
       fprintf(f, "start_env = \"LD_BIND_NOW=1\"\n"
@@ -1232,16 +1247,16 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
             "start_env = \"EJUDGE_PREFIX_DIR\"\n",
             arch_abstract_names[arch], supported_archs[arch],
             arch == ARCH_JAVA14?"14":"");
-    if (max_vm_size && max_stack_size) {
+    if (max_vm_size != -1L && max_stack_size != -1L) {
       fprintf(f, "start_env = \"EJUDGE_JAVA_FLAGS=-Xmx%s -Xss%s\"\n",
-              num_to_size(nbuf, sizeof(nbuf), max_vm_size),
-              num_to_size(nbuf2, sizeof(nbuf2), max_stack_size));
-    } else if (max_vm_size) {
+              size_t_to_size(nbuf, sizeof(nbuf), max_vm_size),
+              size_t_to_size(nbuf2, sizeof(nbuf2), max_stack_size));
+    } else if (max_vm_size != -1L) {
       fprintf(f, "start_env = \"EJUDGE_JAVA_FLAGS=-Xmx%s\"\n",
-              num_to_size(nbuf, sizeof(nbuf), max_vm_size));
-    } else if (max_stack_size) {
+              size_t_to_size(nbuf, sizeof(nbuf), max_vm_size));
+    } else if (max_stack_size != -1L) {
       fprintf(f, "start_env = \"EJUDGE_JAVA_FLAGS=-Xss%s\"\n",
-              num_to_size(nbuf, sizeof(nbuf), max_stack_size));
+              size_t_to_size(nbuf, sizeof(nbuf), max_stack_size));
     }
     if (!secure_run) {
       fprintf(f, "start_env = \"EJUDGE_JAVA_POLICY=none\"\n");
@@ -1272,12 +1287,12 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
             "no_core_dump\n"
             "kill_signal = TERM\n",
             arch_abstract_names[arch], supported_archs[arch]);
-    if (max_vm_size)
+    if (max_vm_size != -1L)
       fprintf(f, "max_vm_size = %s\n",
-              num_to_size(nbuf, sizeof(nbuf), max_vm_size));
-    if (max_stack_size)
+              size_t_to_size(nbuf, sizeof(nbuf), max_vm_size));
+    if (max_stack_size != -1L)
       fprintf(f, "max_stack_size = %s\n",
-              num_to_size(nbuf, sizeof(nbuf), max_stack_size));
+              size_t_to_size(nbuf, sizeof(nbuf), max_stack_size));
     if (secure_run)
       fprintf(f, "start_cmd = \"runperl\"\n");
     break;
@@ -1304,8 +1319,8 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
 static void
 generate_concrete_tester(FILE *f, int arch,
                          struct section_problem_data *prob,
-                         unsigned long max_vm_size,
-                         unsigned long max_stack_size,
+                         size_t max_vm_size,
+                         size_t max_stack_size,
                          int use_files)
 {
   unsigned char nbuf[256], nbuf2[256];
@@ -1322,9 +1337,9 @@ generate_concrete_tester(FILE *f, int arch,
   case ARCH_LINUX:
   case ARCH_LINUX_SHARED:
     fprintf(f, "max_vm_size = %s\n",
-            num_to_size(nbuf, sizeof(nbuf), max_vm_size));
+            size_t_to_size(nbuf, sizeof(nbuf), max_vm_size));
     fprintf(f, "max_stack_size = %s\n",
-            num_to_size(nbuf, sizeof(nbuf), max_stack_size));
+            size_t_to_size(nbuf, sizeof(nbuf), max_stack_size));
     break;
 
   case ARCH_DOS:
@@ -1337,16 +1352,16 @@ generate_concrete_tester(FILE *f, int arch,
     } else {
       fprintf(f, "start_env = \"EJUDGE_JAVA_POLICY=default.policy\"\n");
     }
-    if (max_vm_size && max_stack_size) {
+    if (max_vm_size != -1L && max_stack_size != -1L) {
       fprintf(f, "start_env = \"EJUDGE_JAVA_FLAGS=-Xmx%s -Xss%s\"\n",
-              num_to_size(nbuf, sizeof(nbuf), max_vm_size),
-              num_to_size(nbuf2, sizeof(nbuf2), max_stack_size));
-    } else if (max_vm_size) {
+              size_t_to_size(nbuf, sizeof(nbuf), max_vm_size),
+              size_t_to_size(nbuf2, sizeof(nbuf2), max_stack_size));
+    } else if (max_vm_size != -1L) {
       fprintf(f, "start_env = \"EJUDGE_JAVA_FLAGS=-Xmx%s\"\n",
-              num_to_size(nbuf, sizeof(nbuf), max_vm_size));
-    } else if (max_stack_size) {
+              size_t_to_size(nbuf, sizeof(nbuf), max_vm_size));
+    } else if (max_stack_size != -1L) {
       fprintf(f, "start_env = \"EJUDGE_JAVA_FLAGS=-Xss%s\"\n",
-              num_to_size(nbuf, sizeof(nbuf), max_stack_size));
+              size_t_to_size(nbuf, sizeof(nbuf), max_stack_size));
     }
     break;
 
@@ -1376,7 +1391,7 @@ prepare_unparse_testers(FILE *f,
                         const unsigned char *testing_work_dir)
 {
   unsigned char **archs = 0;
-  unsigned long *vm_sizes = 0, *stack_sizes = 0, *vm_ind = 0, *stack_ind = 0;
+  size_t *vm_sizes = 0, *stack_sizes = 0, *vm_ind = 0, *stack_ind = 0;
   int *vm_count = 0, *stack_count = 0, vm_total = 0, stack_total = 0;
   int *file_ios = 0, *need_sep_tester = 0;
   int total_archs = 0, i, j;
