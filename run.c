@@ -146,7 +146,7 @@ html_print_by_line(FILE *f, unsigned char const *s, size_t size)
   while (*s) {
     while (*s && *s != '\r' && *s != '\n') s++;
     if (global->max_line_length > 0 && s - p > global->max_line_length) {
-      fprintf(f, "(%s, %s = %d)\n",
+      fprintf(f, "(%s, %s = %td)\n",
               "line is too long", "size", s - p);
     } else {
       while (p != s)
@@ -190,11 +190,12 @@ static const char * const scoring_system_strs[] =
   [SCORE_ACM] "ACM",
   [SCORE_KIROV] "KIROV",
   [SCORE_OLYMPIAD] "OLYMPIAD",
+  [SCORE_MOSCOW] "MOSCOW",
 };
 static const unsigned char *
 unparse_scoring_system(unsigned char *buf, size_t size, int val)
 {
-  if (val >= SCORE_ACM && val <= SCORE_OLYMPIAD) return scoring_system_strs[val];
+  if (val >= SCORE_ACM && val < SCORE_TOTAL) return scoring_system_strs[val];
   snprintf(buf, size, "scoring_%d", val);
   return buf;
 }
@@ -249,6 +250,11 @@ generate_xml_report(struct run_request_packet *req_pkt,
   } else if (req_pkt->scoring_system == SCORE_KIROV) {
     fprintf(f, " tests-passed=\"%d\" score=\"%d\" max-score=\"%d\"",
             reply_pkt->failed_test - 1, reply_pkt->score, max_score);
+  } else if (req_pkt->scoring_system == SCORE_MOSCOW) {
+    if (reply_pkt->status != RUN_OK) {
+      fprintf(f, " tests-passed=\"%d\"", reply_pkt->failed_test - 1);
+    }
+    fprintf(f, " score=\"%d\" max-score=\"%d\"", reply_pkt->score, max_score);
   }
   fprintf(f, " >\n");
 
@@ -710,9 +716,23 @@ run_tests(struct section_tester_data *tst,
     if (prb->real_time_limit>0) task_SetMaxRealTime(tsk,prb->real_time_limit);
     if (tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
     if (tst->no_core_dump) task_DisableCoreDump(tsk);
-    if (tst->max_stack_size) task_SetStackSize(tsk, tst->max_stack_size);
-    if (tst->max_data_size) task_SetDataSize(tsk, tst->max_data_size);
-    if (tst->max_vm_size) task_SetVMSize(tsk, tst->max_vm_size);
+    // debugging
+#if 0
+    if (tst->max_vm_size == -1L)
+      fprintf(stderr,">>max_vm_size == -1\n");
+    else
+      fprintf(stderr, ">>max_vm_size == %zu\n", tst->max_vm_size);
+    if (tst->max_stack_size == -1L)
+      fprintf(stderr, ">>max_stack_size == -1\n");
+    else
+      fprintf(stderr, ">>max_stack_size == %zu\n", tst->max_stack_size);
+#endif
+    if (tst->max_stack_size && tst->max_stack_size != -1L)
+      task_SetStackSize(tsk, tst->max_stack_size);
+    if (tst->max_data_size && tst->max_data_size != -1L)
+      task_SetDataSize(tsk, tst->max_data_size);
+    if (tst->max_vm_size && tst->max_vm_size != -1L)
+      task_SetVMSize(tsk, tst->max_vm_size);
 #if defined HAVE_TASK_ENABLEMEMORYLIMITERROR
     if (tst->enable_memory_limit_error && req_pkt->memory_limit) {
       task_EnableMemoryLimitError(tsk);
@@ -1005,6 +1025,7 @@ run_tests(struct section_tester_data *tst,
     if (status > 0) {
       // test failed, how to react on this
       if (score_system_val == SCORE_ACM) break;
+      if (score_system_val == SCORE_MOSCOW) break;
       if (score_system_val == SCORE_OLYMPIAD
           && accept_testing && !accept_partial) break;
     }
@@ -1129,9 +1150,20 @@ run_tests(struct section_tester_data *tst,
       tsk = 0;
     }
   } else {
+    // ACM, MOSCOW scoring system
     reply_pkt->status = status;
     reply_pkt->failed_test = failed_test;
     reply_pkt->score = -1;
+    if (score_system_val == SCORE_MOSCOW) {
+      reply_pkt->score = prb->full_score;
+      if (status != RUN_OK) {
+        int s;
+
+        ASSERT(failed_test <= prb->ntests && failed_test > 0);
+        for (s = 0; failed_test > prb->x_score_tests[s]; s++);
+        reply_pkt->score = s;
+      }
+    }
     get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
 
     if (global->sound_player[0] && global->extended_sound && !req_pkt->disable_sound) {
@@ -1234,7 +1266,7 @@ do_loop(void)
   struct section_tester_data tn, *tst;
   int got_quit_packet = 0;
 
-  void *req_buf = 0;
+  char *req_buf = 0;            /* char* is needed for generic_read_file */
   size_t req_buf_size = 0;
   struct run_request_packet *req_pkt = 0;
   struct section_problem_data *cur_prob = 0;
@@ -1280,7 +1312,7 @@ do_loop(void)
     xfree(req_buf), req_buf = 0;
     req_buf_size = 0;
 
-    r = generic_read_file((char**) &req_buf, 0, &req_buf_size, SAFE | REMOVE,
+    r = generic_read_file(&req_buf, 0, &req_buf_size, SAFE | REMOVE,
                           global->run_queue_dir, pkt_name, "");
     if (r == 0) continue;
     if (r < 0) return -1;
@@ -1306,6 +1338,23 @@ do_loop(void)
       goto report_check_failed_and_continue;
     }
     cur_prob = probs[req_pkt->problem_id];
+
+    /* if this problem is marked as "skip_testing" put the
+     * packet back to the spool directory
+     */
+    // UGLY :(
+    if (cur_prob->skip_testing > 0) {
+      r = generic_write_file(req_buf, req_buf_size, SAFE,
+                             global->run_queue_dir, pkt_name, "");
+      if (r < 0) return -1;
+      // make a chance for another run to pick up this packet
+      info("skipping problem %s", cur_prob->short_name);
+      interrupt_enable();
+      os_Sleep(global->sleep_time);
+      interrupt_disable();
+      continue;
+    }
+
     if (cur_prob->variant_num <= 0 && req_pkt->variant != 0) {
       snprintf(errmsg, sizeof(errmsg),
                "problem %d has no variants, but one was specified\n",
@@ -1328,6 +1377,23 @@ do_loop(void)
 
     info("fount tester %d for pair %d,%s", tester_id,req_pkt->problem_id,req_pkt->arch);
     tst = testers[tester_id];
+
+    /* if this tester is marked as "skip_testing" put the
+     * packet back to the spool directory
+     */
+    // UGLY :(
+    if (tst->skip_testing > 0) {
+      r = generic_write_file(req_buf, req_buf_size, SAFE,
+                             global->run_queue_dir, pkt_name, "");
+      if (r < 0) return -1;
+      // make a chance for another run to pick up this packet
+      info("skipping tester <%s,%s>", cur_prob->short_name, tst->arch);
+      interrupt_enable();
+      os_Sleep(global->sleep_time);
+      interrupt_disable();
+      continue;
+    }
+
     if (tst->any) {
       info("tester %d is a default tester", tester_id);
       r = prepare_tester_refinement(&tn, tester_id, req_pkt->problem_id);
@@ -1746,17 +1812,28 @@ check_config(void)
       xfree(tests);
       XCALLOC(tests, tests_a);
     }
-    /*
-    if (n1 >= MAX_TEST - 1) {
-      err("number of tests %d in problem %s exceeds maximal allowed number %d",
-          n1, prb->short_name, MAX_TEST - 2);
-      err("to fix it, recompile the run program with larger value of MAX_TEST constant");
-      return -1;
-    }
-    */
 
     ASSERT(prb->test_score >= 0);
-    if (prb->test_score >= 0 && global->score_system_val != SCORE_ACM) {
+    if (global->score_system_val == SCORE_MOSCOW) {
+      if (prb->full_score <= 0) {
+        err("problem %s: problem full_score is not set", prb->short_name);
+        return -1;
+      }
+      if (!(prb->x_score_tests = prepare_parse_score_tests(prb->score_tests,
+                                                           prb->full_score))) {
+        err("problem %s: parsing of score_tests failed", prb->short_name);
+        return -1;
+      }
+      prb->x_score_tests[prb->full_score - 1] = n1;
+      prb->ntests = n1;
+      if (prb->full_score > 1
+          && prb->x_score_tests[prb->full_score - 2] >= n1) {
+        err("problem %s: score_tests[%d] >= score_tests[%d]",
+            prb->short_name,
+            prb->full_score - 2, prb->full_score - 1);
+        return -1;
+      }
+    } else if (prb->test_score >= 0 && global->score_system_val != SCORE_ACM) {
       int score_summ = 0;
 
       prb->ntests = n1;
