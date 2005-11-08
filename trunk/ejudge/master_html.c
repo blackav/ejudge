@@ -676,6 +676,10 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
       str1 = _("Tests passed");
       str2 = _("Score");
       break;
+    case SCORE_MOSCOW:
+      str1 = _("Failed test");
+      str2 = _("Score");
+      break;
     default:
       abort();
     }
@@ -727,8 +731,9 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
         fprintf(f, "<td>&nbsp;</td>");
         fprintf(f, "<td><b>%s</b></td>", statstr);
         fprintf(f, "<td>&nbsp;</td>");
-        if (global->score_system_val == SCORE_KIROV ||
-            global->score_system_val == SCORE_OLYMPIAD) {
+        if (global->score_system_val == SCORE_KIROV
+            || global->score_system_val == SCORE_OLYMPIAD
+            || global->score_system_val == SCORE_MOSCOW) {
           fprintf(f, "<td>&nbsp;</td>");
         }
         fprintf(f, "<td>&nbsp;</td>");
@@ -763,8 +768,9 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
         fprintf(f, "<td>&nbsp;</td>");
         fprintf(f, "<td><b>%s</b></td>", statstr);
         fprintf(f, "<td>&nbsp;</td>");
-        if (global->score_system_val == SCORE_KIROV ||
-            global->score_system_val == SCORE_OLYMPIAD) {
+        if (global->score_system_val == SCORE_KIROV
+            || global->score_system_val == SCORE_OLYMPIAD
+            || global->score_system_val == SCORE_MOSCOW) {
           fprintf(f, "<td>&nbsp;</td>");
         }
         fprintf(f, "<td>&nbsp;</td>");
@@ -1233,6 +1239,8 @@ write_priv_standings(FILE *f, ej_cookie_t sid,
   if (global->score_system_val == SCORE_KIROV
       || global->score_system_val == SCORE_OLYMPIAD)
     do_write_kirov_standings(f, 0, 1, 0, 0, 0, accepting_mode);
+  else if (global->score_system_val == SCORE_MOSCOW)
+    do_write_moscow_standings(f, 0, 1, 0, 0, 0, 0, 0);
   else
     do_write_standings(f, 1, 0, 0, 0, 0, 0);
 
@@ -1551,6 +1559,53 @@ write_priv_source(FILE *f, int user_id, int priv_level,
       fprintf(f, "%s", nbsp);
     }
     fprintf(f, "</tr>\n");
+  } else if (global->score_system_val == SCORE_MOSCOW) {
+    if (info.test <= 0) {
+      snprintf(numbuf, sizeof(numbuf), "N/A");
+      info.test = 0;
+    } else {
+      snprintf(numbuf, sizeof(numbuf), "%d", info.test);
+    }
+    fprintf(f, "<tr><td>%s:</td><td>%s</td>", _("Failed test"), numbuf);
+    if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
+      html_start_form(f, 1, sid, self_url, hidden_vars);
+      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\">",run_id);
+      fprintf(f, "<td><input type=\"text\" name=\"tests\" value=\"%d\" size=\"10\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", info.test - 1, ACTION_RUN_CHANGE_TESTS, _("Change"));
+    } else {
+      fprintf(f, "%s", nbsp);
+    }
+    fprintf(f, "</tr>\n");
+
+    if (info.score < 0) {
+      snprintf(numbuf, sizeof(numbuf), "N/A");
+      info.score = -1;
+    } else {
+      snprintf(numbuf, sizeof(numbuf), "%d", info.score);
+    }
+    fprintf(f, "<tr><td>%s:</td><td>%s</td>", _("Score gained"), numbuf);
+    if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
+      html_start_form(f, 1, sid, self_url, hidden_vars);
+      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\">",run_id);
+      fprintf(f, "<td><input type=\"text\" name=\"score\" value=\"%d\" size=\"10\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", info.score, ACTION_RUN_CHANGE_SCORE, _("Change"));
+    } else {
+      fprintf(f, "%s", nbsp);
+    }
+    fprintf(f, "</tr>\n");
+
+    snprintf(numbuf, sizeof(numbuf), "%d", info.score_adj);
+    fprintf(f, "<tr><td>%s:</td><td>%s</td>", _("Score adjustment"), numbuf);
+    if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
+      html_start_form(f, 1, sid, self_url, hidden_vars);
+      fprintf(f,"<input type=\"hidden\" name=\"run_id\" value=\"%d\">",run_id);
+      fprintf(f, "<td><input type=\"text\" name=\"score_adj\" value=\"%d\" size=\"10\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", info.score_adj, ACTION_RUN_CHANGE_SCORE_ADJ, _("Change"));
+    } else {
+      fprintf(f, "%s", nbsp);
+    }
+    fprintf(f, "</tr>\n");
+
+
+
+
   } else {
     // ACM scoring system
     if (info.test <= 0) {
@@ -1740,6 +1795,14 @@ write_new_run_form(FILE *f, int user_id, int priv_level,
   if (global->score_system_val == SCORE_KIROV
       || global->score_system_val == SCORE_OLYMPIAD) {
     fprintf(f, "<tr><td>%s:</td>", _("Tests passed"));
+    fprintf(f, "<td><input type=\"text\" name=\"tests\" size=\"10\"></td>");
+    fprintf(f, "</tr>\n");
+
+    fprintf(f, "<tr><td>%s:</td>", _("Score gained"));
+    fprintf(f, "<td><input type=\"text\" name=\"score\" size=\"10\"></td>");
+    fprintf(f, "</tr>\n");
+  } else if (global->score_system_val == SCORE_MOSCOW) {
+    fprintf(f, "<tr><td>%s:</td>", _("Failed test"));
     fprintf(f, "<td><input type=\"text\" name=\"tests\" size=\"10\"></td>");
     fprintf(f, "</tr>\n");
 
@@ -2844,6 +2907,8 @@ write_raw_standings(FILE *f, unsigned char const *charset)
   if (global->score_system_val == SCORE_KIROV
       || global->score_system_val == SCORE_OLYMPIAD)
     do_write_kirov_standings(f, 0, 1, 0, 0, 1, 0);
+  else if (global->score_system_val == SCORE_MOSCOW)
+    do_write_moscow_standings(f, 0, 1, 0, 0, 0, 1, 0);
   else
     do_write_standings(f, 1, 0, 0, 0, 1, 0);
 }
