@@ -4150,15 +4150,19 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
   case PREPARE_FIELD_PROB_MAX_VM_SIZE:
     if (out->max_vm_size == -1L && abstr)
       out->max_vm_size = abstr->max_vm_size;
+    /*
     if (out->max_vm_size == -1L)
       out->max_vm_size = 0;
+    */
     break;
 
   case PREPARE_FIELD_PROB_MAX_STACK_SIZE:
     if (out->max_stack_size == -1L && abstr)
       out->max_stack_size = abstr->max_stack_size;
+    /*
     if (out->max_stack_size == -1L)
       out->max_stack_size = 0;
+    */
     break;
 
   case PREPARE_FIELD_PROB_INPUT_FILE:
