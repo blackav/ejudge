@@ -110,16 +110,12 @@ struct run_reply_bin_packet
 
 #define MAX_PACKET_SIZE       65535
 #define MAX_JUDGE_ID          65535
-#define MAX_CONTEST_ID        999999
-#define MAX_RUN_ID            999999
 #define MAX_PROB_ID           999999
-#define MAX_USER_ID           999999
 #define MAX_USER_SPELLING_LEN 65535
 #define MAX_PROB_SPELLING_LEN 65535
 #define MAX_EXE_SFX_LEN       255
 #define MAX_ARCH_LEN          255
 #define MAX_VARIANT           255
-#define MAX_SCORING_SYSTEM    2
 #define MAX_FAILED_TEST       127
 #define MAX_SCORE             999999
 #define MAX_TIME_LIMIT_ADJ    100
