@@ -15,6 +15,9 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
+#include "ej_limits.h"
+
 #include "compile_packet.h"
 #include "compile_packet_priv.h"
 #include "pathutl.h"
@@ -71,7 +74,7 @@ compile_reply_packet_read(size_t in_size, const void *in_data,
     goto failed;
   }
   pout->run_id = cvt_bin_to_host(pin->run_id);
-  if (pout->run_id < 0 || pout->run_id > MAX_RUN_ID) {
+  if (pout->run_id < 0 || pout->run_id > EJ_MAX_RUN_ID) {
     errcode = 8;
     goto failed;
   }
