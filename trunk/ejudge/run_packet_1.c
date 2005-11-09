@@ -15,6 +15,9 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
+#include "ej_limits.h"
+
 #include "run_packet.h"
 #include "run_packet_priv.h"
 #include "pathutl.h"
@@ -58,18 +61,18 @@ run_request_packet_read(size_t in_size, const void *in_data,
   }
   if (pout->contest_id <= 0 || pout->contest_id > MAX_CONTEST_ID) ERR(5);
   pout->run_id = cvt_bin_to_host_32(pin->run_id);
-  if (pout->run_id < 0 || pout->run_id > MAX_RUN_ID) ERR(6);
+  if (pout->run_id < 0 || pout->run_id > EJ_MAX_RUN_ID) ERR(6);
   pout->problem_id = cvt_bin_to_host_32(pin->problem_id);
   if (pout->problem_id <= 0 || pout->problem_id > MAX_PROB_ID) ERR(7);
   pout->user_id = cvt_bin_to_host_32(pin->user_id);
-  if (pout->user_id <= 0 || pout->user_id > MAX_USER_ID) ERR(8);
+  if (pout->user_id <= 0 || pout->user_id > EJ_MAX_USER_ID) ERR(8);
   pout->time_limit_adj = cvt_bin_to_host_32(pin->time_limit_adj);
   if (pout->time_limit_adj < 0 || pout->time_limit_adj > MAX_TIME_LIMIT_ADJ) ERR(9);
 
   flags = cvt_bin_to_host_32(pin->flags);
   if (flags != (flags & FLAGS_ALL_MASK)) ERR(10);
   pout->scoring_system = FLAGS_GET_SCORING_SYSTEM(flags);
-  if (pout->scoring_system < 0 || pout->scoring_system > MAX_SCORING_SYSTEM) ERR(11);
+  if (pout->scoring_system < 0 || pout->scoring_system >= SCORE_TOTAL) ERR(11);
   if ((flags & FLAGS_ACCEPTING_MODE)) pout->accepting_mode = 1;
   if ((flags & FLAGS_ACCEPT_PARTIAL)) pout->accept_partial = 1;
   if ((flags & FLAGS_DISABLE_SOUND)) pout->disable_sound = 1;

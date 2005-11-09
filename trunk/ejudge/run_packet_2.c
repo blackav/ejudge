@@ -15,6 +15,9 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
+#include "ej_limits.h"
+
 #include "run_packet.h"
 #include "run_packet_priv.h"
 #include "pathutl.h"
@@ -61,7 +64,7 @@ run_request_packet_write(const struct run_request_packet *in_data,
     goto failed;
   }
   out_data->contest_id = cvt_host_to_bin_32(in_data->contest_id);
-  if (in_data->run_id < 0 || in_data->run_id > MAX_RUN_ID) {
+  if (in_data->run_id < 0 || in_data->run_id > EJ_MAX_RUN_ID) {
     errcode = 3;
     goto failed;
   }
@@ -71,7 +74,7 @@ run_request_packet_write(const struct run_request_packet *in_data,
     goto failed;
   }
   out_data->problem_id = cvt_host_to_bin_32(in_data->problem_id);
-  if (in_data->user_id <= 0 || in_data->user_id > MAX_USER_ID) {
+  if (in_data->user_id <= 0 || in_data->user_id > EJ_MAX_USER_ID) {
     errcode = 5;
     goto failed;
   }
@@ -82,7 +85,7 @@ run_request_packet_write(const struct run_request_packet *in_data,
   }
   out_data->time_limit_adj = cvt_host_to_bin_32(in_data->time_limit_adj);
 
-  if (in_data->scoring_system < 0 || in_data->scoring_system > MAX_SCORING_SYSTEM) {
+  if (in_data->scoring_system < 0 || in_data->scoring_system >= SCORE_TOTAL) {
     errcode = 7;
     goto failed;
   }
