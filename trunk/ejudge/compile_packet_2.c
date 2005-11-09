@@ -15,6 +15,9 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
+#include "ej_limits.h"
+
 #include "compile_packet.h"
 #include "compile_packet_priv.h"
 #include "pathutl.h"
@@ -45,11 +48,11 @@ compile_request_packet_write(const struct compile_request_packet *in_data,
     errcode = 2;
     goto failed;
   }
-  if (in_data->run_id < 0 || in_data->run_id > MAX_RUN_ID) {
+  if (in_data->run_id < 0 || in_data->run_id > EJ_MAX_RUN_ID) {
     errcode = 3;
     goto failed;
   }
-  if (in_data->lang_id <= 0 || in_data->lang_id > MAX_LANG_ID) {
+  if (in_data->lang_id <= 0 || in_data->lang_id > EJ_MAX_LANG_ID) {
     errcode = 4;
     goto failed;
   }
