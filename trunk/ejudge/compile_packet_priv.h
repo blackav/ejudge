@@ -75,9 +75,6 @@ struct compile_reply_bin_packet
 
 #define MAX_PACKET_SIZE   65535
 #define MAX_JUDGE_ID      65535
-#define MAX_CONTEST_ID    999999
-#define MAX_RUN_ID        999999
-#define MAX_LANG_ID       999999
 #define MAX_RUN_BLOCK_LEN 65535
 #define MAX_ENV_NUM       65535
 #define MAX_ENV_LEN       65535
