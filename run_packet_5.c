@@ -15,6 +15,9 @@
  * GNU General Public License for more details.
  */
 
+#include "ej_types.h"
+#include "ej_limits.h"
+
 #include "run_packet.h"
 #include "run_packet_priv.h"
 #include "pathutl.h"
@@ -55,7 +58,7 @@ run_reply_packet_write(const struct run_reply_packet *in_data,
     goto failed;
   }
   out_data->contest_id = cvt_host_to_bin_32(in_data->contest_id);
-  if (in_data->run_id < 0 || in_data->run_id > MAX_RUN_ID) {
+  if (in_data->run_id < 0 || in_data->run_id > EJ_MAX_RUN_ID) {
     errcode = 4;
     goto failed;
   }
