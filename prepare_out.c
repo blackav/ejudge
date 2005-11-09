@@ -970,6 +970,11 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
       fprintf(f, "score_bonus = \"%s\"\n", c_armor(&sbuf, prob->score_bonus));
   }
   if (score_system_val == SCORE_MOSCOW) {
+    if (prob->full_score >= 0) {
+      if ((prob->abstract && prob->full_score != DFLT_P_FULL_SCORE)
+          || !prob->abstract)
+        fprintf(f, "full_score = %d\n", prob->full_score);
+    }
     if (prob->score_tests[0])
       fprintf(f, "score_tests = \"%s\"\n", c_armor(&sbuf, prob->score_tests));
   }
@@ -1203,7 +1208,7 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
     if (max_vm_size != -1L)
       fprintf(f, "max_vm_size = %s\n",
               size_t_to_size(nbuf, sizeof(nbuf), max_vm_size));
-    if (max_stack_size != -1)
+    if (max_stack_size != -1L)
       fprintf(f, "max_stack_size = %s\n",
               size_t_to_size(nbuf, sizeof(nbuf), max_stack_size));
 #if CONF_HAS_LIBCAP - 0 == 1
@@ -1336,10 +1341,14 @@ generate_concrete_tester(FILE *f, int arch,
   switch (arch) {
   case ARCH_LINUX:
   case ARCH_LINUX_SHARED:
-    fprintf(f, "max_vm_size = %s\n",
-            size_t_to_size(nbuf, sizeof(nbuf), max_vm_size));
-    fprintf(f, "max_stack_size = %s\n",
-            size_t_to_size(nbuf, sizeof(nbuf), max_stack_size));
+    if (max_vm_size != -1L) {
+      fprintf(f, "max_vm_size = %s\n",
+              size_t_to_size(nbuf, sizeof(nbuf), max_vm_size));
+    }
+    if (max_stack_size != -1L) {
+      fprintf(f, "max_stack_size = %s\n",
+              size_t_to_size(nbuf, sizeof(nbuf), max_stack_size));
+    }
     break;
 
   case ARCH_DOS:
