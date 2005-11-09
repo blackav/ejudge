@@ -2338,3 +2338,17 @@ parsecfg.c 1 24 2697559
 prepare.c 1 104 11322152
 prepare_out.c 1 15 5089656
 master_html.c 1 52 8842478
+compile_packet_priv.h 1 3 252058
+ej_limits.h 1 2 94931
+run_packet_priv.h 1 8 265604
+compile_packet_1.c 1 5 488616
+compile_packet_2.c 1 4 360097
+compile_packet_4.c 1 3 355016
+compile_packet_5.c 1 2 283868
+html.c 1 68 10802946
+prepare.c 1 105 11323064
+prepare_out.c 1 16 5109732
+run_packet_1.c 1 8 433100
+run_packet_2.c 1 8 464886
+run_packet_4.c 1 4 281484
+run_packet_5.c 1 4 290094
