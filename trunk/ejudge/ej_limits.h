@@ -29,6 +29,9 @@
 /* maximal possible number of a message */
 #define EJ_MAX_CLAR_ID  999999
 
+/* maximal possible number of a programming language */
+#define EJ_MAX_LANG_ID  255
+
 /* maximal directory depth in base32-encoding */
 #define EJ_MAX_32DIGITS 4
 
