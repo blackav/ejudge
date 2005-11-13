@@ -975,7 +975,7 @@ super_html_commit_contest(FILE *f,
 
   path_t diff_cmdline;
   unsigned char *diff_str = 0, *vcs_str = 0;
-  int vcs_add_flag = 0;
+  int vcs_add_flag = 0, serve_vcs_add_flag = 0;
   int need_variant_map = 0, vmap_vcs_add_flag = 0;
   char *vmap_txt = 0;
   size_t vmap_size = 0;
@@ -1251,6 +1251,7 @@ super_html_commit_contest(FILE *f,
                "# audit: created %s %d (%s) %s\n",
                xml_unparse_date(time(0)), user_id, login,
                xml_unparse_ip(ip_address));
+      serve_vcs_add_flag = 1;
     } else if (errcode < 0) {
       fprintf(flog, "failed to read serve configuration file `%s': %s\n",
               serve_path, super_proto_strerror(-errcode));
@@ -1344,6 +1345,10 @@ super_html_commit_contest(FILE *f,
   }
 
   if (sf > 0) {
+    if (serve_vcs_add_flag && vcs_add(serve_path, &vcs_str) > 0) {
+      fprintf(flog, "Version control:\n%s\n", vcs_str);
+      xfree(vcs_str); vcs_str = 0;
+    }
     if (vcs_commit(serve_path, &vcs_str) > 0) {
       fprintf(flog, "Version control:\n%s\n", vcs_str);
     }
