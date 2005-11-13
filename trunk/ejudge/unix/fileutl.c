@@ -310,7 +310,7 @@ generic_write_file(char const *buf, size_t size, int flags,
     r = do_write_file(buf, size, wrt_path,flags);
   }
   if (r < 0) {
-    if (!(flags & PIPE)) unlink(wrt_path);
+    if (!(flags & (PIPE | KEEP_ON_FAIL))) unlink(wrt_path);
     errno = -r;
     return r;
   }
