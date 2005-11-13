@@ -23,7 +23,7 @@
 int   scan_dir(char const *dir, char *result);
 
 /* operation flags */
-enum { SAFE = 1, REMOVE = 2, CONVERT = 4, PIPE = 8, GZIP = 16 };
+enum { SAFE = 1, REMOVE = 2, CONVERT = 4, PIPE = 8, GZIP = 16, KEEP_ON_FAIL = 32 };
 
 int generic_read_file(char **buf, size_t maxsz, size_t *readsz, int flags,
                       char const *dir, char const *name, char const *sfx);
