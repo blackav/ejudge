@@ -1375,6 +1375,46 @@ sarray_unparse(char **a)
   return out_txt;
 }
 
+char *
+sarray_unparse_2(char **a)
+{
+  char *out_txt = 0;
+  unsigned char *s, *q;
+  size_t out_len = 0;
+  FILE *out;
+  int i;
+
+  out = open_memstream(&out_txt, &out_len);
+  if (a) {
+    for (i = 0; a[i]; i++) {
+      // VAR[=[value]]
+      if (i > 0) fprintf(out, " ");
+      s = a[i];
+      q = s;
+      while (*q && *q > ' ' && *q < 127 && *q != '\"' && *q != '\\') q++;
+      if (*q) {
+        putc_unlocked('\"', out);
+        for (; *s; s++) {
+          if (*s < ' ') {
+            fprintf(out, "\\%03o", *s);
+          } else if (*s == '\"') {
+            fputs("\\\"", out);
+          } else if (*s == '\\') {
+            fputs("\\\\", out);
+          } else {
+            putc_unlocked(*s, out);
+          }
+        }
+        putc_unlocked('\"', out);
+      } else {
+        while (*s) putc_unlocked(*s++, out);
+      }
+    }
+  }
+  fclose(out);
+  return out_txt;
+}
+
 int
 sarray_parse(const unsigned char *str, char ***p_a)
 {
@@ -1446,6 +1486,128 @@ sarray_parse(const unsigned char *str, char ***p_a)
     *q++ = *s++;
     if (!*s) break;
     if (isspace(*s)) continue;
+    if (*s == '\"') {
+      s++;
+      while (*s != '\"') {
+        if (*s == '\\') {
+          switch (s[1]) {
+          case 0:
+            *q++ = '\\';
+            s++;
+            break;
+          case 'x': case 'X':
+            if (!isxdigit(s[2])) {
+              *q++ = s[1];
+              s += 2;
+              break;
+            }
+            s += 2;
+            memset(nb, 0, sizeof(nb));
+            nb[0] = *s++;
+            if (isxdigit(*s)) nb[1] = *s++;
+            *q++ = strtol(nb, 0, 16);
+            break;
+          case '0': case '1': case '2': case '3':
+            s++;
+            memset(nb, 0, sizeof(nb));
+            nb[0] = *s++;
+            if (*s >= '0' && *s <= '7') nb[1] = *s++;
+            if (*s >= '0' && *s <= '7') nb[2] = *s++;
+            *q++ = strtol(nb, 0, 8);
+            break;
+          case '4': case '5': case '6': case '7':
+            s++;
+            memset(nb, 0, sizeof(nb));
+            nb[0] = *s++;
+            if (*s >= '0' && *s <= '7') nb[1] = *s++;
+            *q++ = strtol(nb, 0, 8);
+            break;
+          case 'a': *q++ = '\a'; s += 2; break;
+          case 'b': *q++ = '\b'; s += 2; break;
+          case 'f': *q++ = '\f'; s += 2; break;
+          case 'n': *q++ = '\n'; s += 2; break;
+          case 'r': *q++ = '\r'; s += 2; break;
+          case 't': *q++ = '\t'; s += 2; break;
+          case 'v': *q++ = '\v'; s += 2; break;
+          default:
+            s++;
+            *q++ = *s++;
+            break;
+          }
+        } else {
+          *q++ = *s++;
+        }
+      }
+      s++;      
+    } else {
+      while (*s && !isspace(*s)) *q++ = *s++;
+    }
+  }
+  if (q) *q = 0;
+
+  *p_a = a;
+  return nvars;
+}
+
+int
+sarray_parse_2(const unsigned char *str, char ***p_a)
+{
+  char **a = 0;
+  int nvars = 0, i;
+  const unsigned char *s = str;
+  unsigned char *q;
+  size_t str_len;
+  unsigned char nb[8];
+
+  if (!str) {
+    *p_a = 0;
+    return 0;
+  }
+
+  str_len = strlen(str);
+  // check syntax and count variables
+  while (*s) {
+    while (*s && isspace(*s)) s++;
+    if (!*s) break;
+    nvars++;
+    if (*s == '\"') {
+      s++;
+      while (*s && *s != '\"') {
+        if (*s == '\\') {
+          if (!s[1]) return -1;
+          s += 2;
+        } else {
+          s++;
+        }
+      }
+      if (!*s) return -1;
+      s++;
+      if (*s && !isspace(*s)) return -1;
+    } else {
+      while (*s && !isspace(*s) && *s != '\"' && *s != '\\') s++;
+      if (*s == '\\' || *s == '\"') return -1;
+    }
+  }
+
+  if (!nvars) {
+    *p_a = 0;
+    return 0;
+  }
+  XCALLOC(a, nvars + 1);
+  for (i = 0; i < nvars; i++) {
+    a[i] = (char*) malloc(str_len + 1);
+    a[i][0] = 0;
+  }
+
+  // parse the string
+  s = str; i = -1; q = 0;
+  while (*s) {
+    i++;
+    if (q) *q = 0;
+    q = a[i];
+
+    while (*s && isspace(*s)) s++;
+    if (!*s) break;
     if (*s == '\"') {
       s++;
       while (*s != '\"') {
