@@ -252,7 +252,7 @@ generate_xml_report(struct run_request_packet *req_pkt,
             reply_pkt->failed_test - 1, reply_pkt->score, max_score);
   } else if (req_pkt->scoring_system == SCORE_MOSCOW) {
     if (reply_pkt->status != RUN_OK) {
-      fprintf(f, " tests-passed=\"%d\"", reply_pkt->failed_test - 1);
+      fprintf(f, " failed-test=\"%d\"", total_tests - 1);
     }
     fprintf(f, " score=\"%d\" max-score=\"%d\"", reply_pkt->score, max_score);
   }
