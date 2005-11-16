@@ -7,68 +7,68 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-10-21 21:59+0400\n"
-"PO-Revision-Date: 2005-10-18 22:32+0400\n"
+"POT-Creation-Date: 2005-11-16 11:25+0300\n"
+"PO-Revision-Date: 2005-11-14 17:33+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=koi8-r\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: register.c:2528
+#: register.c:2529
 msgid "\"E-mail\" field contains invalid characters"
 msgstr "Поле \"Электронный адрес\" содержит недопустимые символы"
 
-#: register.c:2521
+#: register.c:2522
 msgid "\"Login\" field contains invalid characters"
 msgstr "Поле \"Регистрационное имя\" содержит недопустимые символы"
 
-#: master.c:2558 misctext.c:312 misctext.c:314 serve.c:2588 team.c:935
+#: master.c:2561 misctext.c:310 misctext.c:312 serve.c:2592 team.c:936
 msgid "(no subject)"
 msgstr "(без темы)"
 
-#: master_html.c:2050
+#: master_html.c:2111
 #, c-format
 msgid "<b>====== Test #%d =======</b>\n"
 msgstr "<b>====== Тест #%d =======</b>\n"
 
-#: register.c:1855
+#: register.c:1856
 msgid "<b>Note!</b> All uncommited changes will be lost!"
 msgstr "<b>Внимание!</b> Все несохранённые изменения будут потеряны!"
 
-#: html.c:3505 master_html.c:1807
+#: html.c:3888 master_html.c:1868
 #, c-format
 msgid "<big>%d total tests runs, %d passed, %d failed.<br>\n"
 msgstr "<big>Всего тестов: %d, пройдено: %d, не пройдено: %d.<br>\n"
 
-#: html.c:3511 master_html.c:1813
+#: html.c:3894 master_html.c:1874
 #, c-format
 msgid "<big>Failed test: %d.<br><br></big>\n"
 msgstr "<big>Ошибка на тесте %d.<br><br></big>\n"
 
-#: register.c:325 userlist-server.c:174
+#: register.c:326 userlist-server.c:175
 msgid "<font color=\"green\">OK</font>"
 msgstr "<font color=\"green\">OK</font>"
 
-#: register.c:326 userlist-server.c:175
+#: register.c:327 userlist-server.c:176
 msgid "<font color=\"magenta\">Pending</font>"
 msgstr "<font color=\"magenta\">Ожидает подтверждения</font>"
 
-#: register.c:327 userlist-server.c:176
+#: register.c:328 userlist-server.c:177
 msgid "<font color=\"red\">Rejected</font>"
 msgstr "<font color=\"red\">Отказано</font>"
 
-#: html.c:3824
+#: html.c:4216
 #, c-format
 msgid "<hr><big><b>You have %d unread message(s)!</b></big>\n"
 msgstr "<hr><big><b>Непрочитанных сообщений: %d!</b></big>\n"
 
-#: master_html.c:2055
+#: master_html.c:2116
 #, c-format
 msgid "<i>Command line is too long</i>\n"
 msgstr "<i>Командная строка слишком длинна</i>\n"
 
-#: userlist-server.c:3840
+#: userlist-server.c:3881
 msgid "<i>Not set</i>"
 msgstr "<i>Не установлено</i>"
 
@@ -97,12 +97,12 @@ msgstr ""
 "\">Фондом свободного ПО</a> (Free Software Foundation), либо версии 2 "
 "Лицензии, либо (по Вашему желанию) любой последующей версии.\n"
 
-#: userlist-server.c:4150
+#: userlist-server.c:4191
 #, c-format
 msgid "<p%s>%d users listed</p>\n"
 msgstr "<p%s>Всего пользователей (команд): %d</p>\n"
 
-#: html.c:3958
+#: html.c:4351
 #, c-format
 msgid ""
 "<p%s><b>Note,</b> if downloads are allowed, you may download your runs once "
@@ -113,13 +113,13 @@ msgstr ""
 "разрешена, вы можете делать это не чаще, чем один раз в %d минут. Архив "
 "посылок имеет формат <tt>.tar.gz</tt> (<tt>.tgz</tt>).</p>\n"
 
-#: register.c:2674
+#: register.c:2681
 #, c-format
 msgid "<p%s>Click <a href=\"%s\">on this link</a> to login again.</p>\n"
 msgstr ""
 "<p%s>Нажмите <a href=\"%s\">на эту ссылку</a> для повторного входа.</p>\n"
 
-#: team.c:1328
+#: team.c:1330
 #, c-format
 msgid ""
 "<p%s>Follow this <a href=\"%s?contest_id=%d%s\">link</a> to login again.</p>"
@@ -127,12 +127,12 @@ msgstr ""
 "<p%s>Пойдите <a href=\"%s?contest_id=%d%s\">по этой ссылке</a> для "
 "повторного входа.</p>"
 
-#: register.c:2246
+#: register.c:2247
 #, c-format
 msgid "<p%s>Hello, %s!</p>\n"
 msgstr "<p%s>Здравствуйте, %s!</p>\n"
 
-#: team.c:847
+#: team.c:848
 #, c-format
 msgid ""
 "<p%s>If automatic updating does not work, click on <a href=\"%s\">this</a> "
@@ -141,7 +141,7 @@ msgstr ""
 "<p%s>Если автоматическое обновление не работает, нажмите <a href=\"%s\">на "
 "эту</a> ссылку.</p>"
 
-#: register.c:2021
+#: register.c:2022
 #, c-format
 msgid ""
 "<p%s>If you have not registered before, please <a href=\"%s\">register</a>.</"
@@ -150,7 +150,12 @@ msgstr ""
 "<p%s>Если Вы ещё не зарегистрировались, пожалуйста, <a href=\"%s"
 "\">зарегистрируйтесь</a>.</p>\n"
 
-#: register.c:2189
+#: html.c:1911 html.c:2812
+#, c-format
+msgid "<p%s>Page %d of %d.</p>\n"
+msgstr "<p%s>Страница %d из %d.</p>\n"
+
+#: register.c:2190
 #, c-format
 msgid ""
 "<p%s>Registration of a new user is completed successfully. An e-mail "
@@ -169,52 +174,47 @@ msgstr ""
 "течении 24 часов после первоначальной регистрации, а в противном случае "
 "регистрация будет отменена."
 
-#: register.c:1838
+#: register.c:1839
 #, c-format
 msgid "<p%s>The current number of %s is %d.</p>\n"
 msgstr "<p%s>Текущее количество %s - %d.</p>\n"
 
-#: register.c:1842
+#: register.c:1843
 #, c-format
 msgid "<p%s>The maximal number of %s is %d.</p>\n"
 msgstr "<p%s>Максимальное количество %s - %d.</p>\n"
 
-#: register.c:1840
+#: register.c:1841
 #, c-format
 msgid "<p%s>The minimal number of %s is %d.</p>\n"
 msgstr "<p%s>Минимальное количество %s - %d.</p>\n"
 
-#: html.c:1612 html.c:2463
-#, c-format
-msgid "<p><big>Page %d of %d.</big></p>\n"
-msgstr "<p><big>Страница %d из %d.</big></p>\n"
-
-#: master_html.c:2092
+#: master_html.c:2153
 #, c-format
 msgid "<u>--- Checker output ---</u>\n"
 msgstr "<u>--- Вывод проверяющей программы ---</u>\n"
 
-#: master_html.c:2053
+#: master_html.c:2114
 #, c-format
 msgid "<u>--- Command line arguments ---</u>\n"
 msgstr "<u>--- Аргументы командной строки ---</u>\n"
 
-#: master_html.c:2078
+#: master_html.c:2139
 #, c-format
 msgid "<u>--- Correct ---</u>\n"
 msgstr "<u>--- Правильный ответ ---</u>\n"
 
-#: master_html.c:2064
+#: master_html.c:2125
 #, c-format
 msgid "<u>--- Input ---</u>\n"
 msgstr "<u>--- Входные данные ---</u>\n"
 
-#: master_html.c:2071
+#: master_html.c:2132
 #, c-format
 msgid "<u>--- Output ---</u>\n"
 msgstr "<u>--- Результат работы программы ---</u>\n"
 
-#: master_html.c:2085
+#: master_html.c:2146
 #, c-format
 msgid "<u>--- Stderr ---</u>\n"
 msgstr "<u>--- Ошибки ---</u>\n"
@@ -223,55 +223,55 @@ msgstr "<u>--- Ошибки ---</u>\n"
 msgid "Accepted for testing"
 msgstr "Принято на проверку"
 
-#: clntutil.c:242
+#: clntutil.c:243
 msgid "Access denied"
 msgstr "В доступе отказано"
 
-#: register.c:1902
+#: register.c:1903
 msgid "Add new member"
 msgstr "Добавить нового члена команды"
 
-#: master_html.c:997
+#: master_html.c:1003
 msgid "Add new run"
 msgstr "Добавить новую посылку"
 
-#: master_html.c:1677
+#: master_html.c:1730
 msgid "Add new run form"
 msgstr "Форма добавления новой посылки"
 
-#: master_html.c:2040
+#: master_html.c:2101
 msgid "Additional test information"
 msgstr "Доп. инф. о тесте"
 
-#: edit-userlist.c:48 register.c:300 userlist-server.c:183
+#: edit-userlist.c:49 register.c:301 userlist-server.c:184
 msgid "Advisor"
 msgstr "Руководитель команды"
 
-#: edit-userlist.c:56 register.c:308 userlist-server.c:191
+#: edit-userlist.c:57 register.c:309 userlist-server.c:192
 msgid "Advisors"
 msgstr "Руководители"
 
-#: master_html.c:1097
+#: master_html.c:1102
 msgid "All clars"
 msgstr "Все сообщения"
 
-#: html.c:3852
+#: html.c:4244
 msgid "All problems"
 msgstr "Все задачи"
 
-#: master_html.c:2267
+#: master_html.c:2325
 msgid "Answer: NO"
 msgstr "Ответ: НЕТ"
 
-#: master_html.c:2267
+#: master_html.c:2325
 msgid "Answer: No comments"
 msgstr "Ответ: Без комментариев"
 
-#: master_html.c:2265
+#: master_html.c:2323
 msgid "Answer: Read the problem"
 msgstr "Ответ: См. условие задачи"
 
-#: master_html.c:2267
+#: master_html.c:2325
 msgid "Answer: YES"
 msgstr "Ответ: ДА"
 
@@ -279,11 +279,11 @@ msgstr "Ответ: ДА"
 msgid "Audit log"
 msgstr "Журнал аудита"
 
-#: register.c:1592
+#: register.c:1593
 msgid "Authentification failed"
 msgstr "Авторизация не выполнена"
 
-#: register.c:1594
+#: register.c:1595
 msgid "Authentification failed for some reason"
 msgstr "Авторизация неудалась по некоторой причине"
 
@@ -291,78 +291,79 @@ msgstr "Авторизация неудалась по некоторой причине"
 msgid "Available"
 msgstr "Доступна"
 
-#: register.c:2354
+#: register.c:2355
 msgid "Available contests"
 msgstr "Доступные турниры"
 
-#: master.c:814 register.c:1933 register.c:2980 team.c:862 team.c:870
+#: master.c:815 register.c:1934 register.c:2987 team.c:863 team.c:871
 msgid "Back"
 msgstr "Назад"
 
-#: master_html.c:2577
+#: master_html.c:2631
 msgid "Ban"
 msgstr "Заблокировать"
 
-#: master_html.c:2575
+#: master_html.c:2629
 msgid "Banned?"
 msgstr "Заблокированный?"
 
-#: register.c:1696
+#: register.c:1697
 msgid "Cannot add a new"
 msgstr "Не могу добавить нового члена команды"
 
-#: register.c:1694
+#: register.c:1695
 msgid "Cannot add a new member"
 msgstr "Невозможно добавить нового члена команды"
 
-#: register.c:2796
+#: register.c:2803
 msgid "Cannot parse role/person."
 msgstr "Не могу считать роль/члена команды."
 
-#: register.c:2817
+#: register.c:2824
 msgid "Cannot parse serial number."
 msgstr "Невозможно считать уникальный номер."
 
-#: master.c:388 team.c:715
+#: master.c:389 team.c:716
 msgid "Cannot participate"
 msgstr "Участие в турнире невозможно"
 
-#: register.c:2847
+#: register.c:2854
 msgid "Cannot remove a member due a reason given below"
 msgstr "Невозможно удалить члена команды по причинам, перечисленным ниже"
 
-#: register.c:2844
+#: register.c:2851
 msgid "Cannot remove team member"
 msgstr "Невозможно удалить участника"
 
-#: master_html.c:1346 master_html.c:1356 master_html.c:1384 master_html.c:1411
-#: master_html.c:1442 master_html.c:1459 master_html.c:1476 master_html.c:1493
-#: master_html.c:1507 master_html.c:1524 master_html.c:1540 master_html.c:1551
-#: master_html.c:1568 master_html.c:1581
+#: master_html.c:1352 master_html.c:1362 master_html.c:1390 master_html.c:1417
+#: master_html.c:1448 master_html.c:1465 master_html.c:1482 master_html.c:1499
+#: master_html.c:1513 master_html.c:1530 master_html.c:1546 master_html.c:1557
+#: master_html.c:1573 master_html.c:1589 master_html.c:1600 master_html.c:1621
+#: master_html.c:1634
 msgid "Change"
 msgstr "Изменить"
 
-#: clntutil.c:489
+#: clntutil.c:490
 msgid "Change duration"
 msgstr "Изменить длительность"
 
-#: register.c:1014 register.c:1015 team.c:1588 team.c:1636 team.c:1648
+#: register.c:1015 register.c:1016 team.c:1590 team.c:1638 team.c:1650
 msgid "Change language"
 msgstr "Сменить язык"
 
-#: team.c:1584 team.c:1626
+#: team.c:1586 team.c:1628
 msgid "Change password"
 msgstr "Сменить пароль"
 
-#: master_html.c:698
+#: master_html.c:702
 msgid "Change result"
 msgstr "Изменить результат"
 
-#: register.c:2258
+#: register.c:2259
 msgid "Change the password"
 msgstr "Сменить пароль"
 
-#: register.c:1004 register.c:2263 team.c:1629 team.c:1651
+#: register.c:1005 register.c:2264 team.c:1631 team.c:1653
 msgid "Change!"
 msgstr "Изменить!"
 
@@ -370,63 +371,63 @@ msgstr "Изменить!"
 msgid "Check failed"
 msgstr "Проверка завершилась неудачно"
 
-#: register.c:2268
+#: register.c:2269
 msgid "Check the registration status"
 msgstr "Проверить состояние регистрации"
 
-#: master_html.c:2039
+#: master_html.c:2100
 msgid "Checker output"
 msgstr "Вывод проверяющей программы"
 
-#: team.c:656
+#: team.c:657
 msgid "Choose language"
 msgstr "Выбрать язык"
 
-#: register.c:258 userlist-server.c:3899
+#: register.c:259 userlist-server.c:3940
 msgid "City"
 msgstr "Город"
 
-#: register.c:259 userlist-server.c:3904
+#: register.c:260 userlist-server.c:3945
 msgid "City (En)"
 msgstr "Город (Англ.)"
 
-#: html.c:849 master_html.c:1112 master_html.c:2215
+#: html.c:946 master_html.c:1117 master_html.c:2273
 msgid "Clar ID"
 msgstr "Номер сообщения"
 
-#: master.c:659
+#: master.c:660
 msgid "Clear team passwords!"
 msgstr "Сбросить пароли участников!"
 
-#: master_html.c:1596
+#: master_html.c:1649
 msgid "Clear this entry"
 msgstr "Очистить эту запись"
 
-#: clntutil.c:437
+#: clntutil.c:438
 msgid "Client time"
 msgstr "Время клиента"
 
-#: edit-userlist.c:47 register.c:299 userlist-server.c:182
+#: edit-userlist.c:48 register.c:300 userlist-server.c:183
 msgid "Coach"
 msgstr "Тренер"
 
-#: edit-userlist.c:55 register.c:307 userlist-server.c:190
+#: edit-userlist.c:56 register.c:308 userlist-server.c:191
 msgid "Coaches"
 msgstr "Тренеры"
 
-#: master_html.c:2034
+#: master_html.c:2095
 msgid "Command-line parameters"
 msgstr "Параметры командной строки"
 
-#: html.c:3542 master_html.c:1839
+#: html.c:3925 master_html.c:1900
 msgid "Comment"
 msgstr "Комментарий"
 
-#: master_html.c:1614
+#: master_html.c:1667
 msgid "Compare"
 msgstr "Сравнить"
 
-#: master_html.c:1613
+#: master_html.c:1666
 msgid "Compare this run with run"
 msgstr "Сравнить эту посылку с посылкой"
 
@@ -442,103 +443,103 @@ msgstr "Скомпилировано"
 msgid "Compiling..."
 msgstr "Компилируется..."
 
-#: master.c:3359
+#: master.c:3363
 msgid "Compose a message to all the teams"
 msgstr "Написать сообщение всем командам"
 
-#: users.c:706
+#: users.c:707
 msgid "Configuration error"
 msgstr "Ошибка конфигурации"
 
-#: team.c:1183
+#: team.c:1184
 msgid "Confirm printing run"
 msgstr "Подтвердить распечатывание"
 
-#: register.c:2544 register.c:2613
+#: register.c:2545 register.c:2620
 msgid "Connection to the server is broken."
 msgstr "Нет связи с сервером."
 
-#: html.c:1053 html.c:1095 users.c:767
+#: html.c:1150 html.c:1192 users.c:768
 msgid "Contest"
 msgstr "Турнир"
 
-#: master.c:299 register.c:2281 register.c:2359
+#: master.c:300 register.c:2282 register.c:2360
 msgid "Contest ID"
 msgstr "ID"
 
-#: team.c:1392 team.c:1396
+#: team.c:1394 team.c:1398
 msgid "Contest is closed"
 msgstr "Турнир закрыт"
 
-#: clntutil.c:444
+#: clntutil.c:445
 msgid "Contest is not started"
 msgstr "Турнир не начался"
 
-#: register.c:2282 register.c:2360 userlist-server.c:4070
+#: register.c:2283 register.c:2361 userlist-server.c:4111
 msgid "Contest name"
 msgstr "Название турнира"
 
-#: userlist-server.c:4068
+#: userlist-server.c:4109
 msgid "Contest registrations"
 msgstr "Регистрация на турниры"
 
-#: clntutil.c:450 html.c:3789
+#: clntutil.c:451 html.c:4181
 msgid "Contest start time"
 msgstr "Время начала турнира"
 
-#: team.c:1569
+#: team.c:1571
 msgid "Contest status"
 msgstr "Состояние турнира"
 
-#: html.c:3792
+#: html.c:4184
 msgid "Contest stop time"
 msgstr "Время окончания турнира"
 
-#: master_html.c:1297
+#: master_html.c:1303
 msgid "Contest time"
 msgstr "Продолжительность турнира"
 
-#: edit-userlist.c:45 register.c:297 userlist-server.c:180
+#: edit-userlist.c:46 register.c:298 userlist-server.c:181
 msgid "Contestant"
 msgstr "Основной участник"
 
-#: edit-userlist.c:53 register.c:305 userlist-server.c:188
+#: edit-userlist.c:54 register.c:306 userlist-server.c:189
 msgid "Contestants"
 msgstr "Основные участники"
 
-#: clntutil.c:457
+#: clntutil.c:458
 msgid "Continue"
 msgstr "Продолжить"
 
-#: master_html.c:2037
+#: master_html.c:2098
 msgid "Correct output"
 msgstr "Правильный ответ"
 
-#: register.c:260 userlist-server.c:3909
+#: register.c:261 userlist-server.c:3950
 msgid "Country"
 msgstr "Страна"
 
-#: register.c:262 userlist-server.c:3914
+#: register.c:263 userlist-server.c:3955
 msgid "Country (En)"
 msgstr "Страна (Англ.)"
 
-#: team.c:1117
+#: team.c:1118
 msgid "Current virtual standings"
 msgstr "Виртуальное положение участников"
 
-#: register.c:1016
+#: register.c:1017
 msgid "Default language"
 msgstr "Язык по умолчанию"
 
-#: users.c:760
+#: users.c:761
 msgid "Detailed information about participant"
 msgstr "Подробная информация об участнике"
 
-#: userlist-server.c:3822
+#: userlist-server.c:3863
 msgid "Detailed information for user (team)"
 msgstr "Подробная информация о пользователе (команде)"
 
-#: team.c:1292
+#: team.c:1293
 #, c-format
 msgid "Details about run %d, test %d"
 msgstr "Подробная информация о посылке %d, тесте %d"
@@ -547,28 +548,28 @@ msgstr "Подробная информация о посылке %d, тесте %d"
 msgid "Disqualified"
 msgstr "Дисквалифицирован"
 
-#: html.c:3957
+#: html.c:4350
 msgid "Download your submits"
 msgstr "Загрузить свои посылки"
 
-#: master.c:587
+#: master.c:588
 msgid "Dump runs database"
 msgstr "База запусков"
 
-#: master.c:623
+#: master.c:624
 msgid "Dump standings database"
 msgstr "База состояния"
 
-#: master.c:614
+#: master.c:615
 msgid "Dump users database"
 msgstr "База пользователей"
 
-#: clntutil.c:485 html.c:3786 master_html.c:2222
+#: clntutil.c:486 html.c:4178 master_html.c:2280
 msgid "Duration"
 msgstr "Продолжительность"
 
-#: master_html.c:2319 register.c:281 register.c:1783 register.c:2155
-#: userlist-server.c:3836
+#: master_html.c:2376 register.c:282 register.c:1784 register.c:2156
+#: userlist-server.c:3877
 msgid "E-mail"
 msgstr "Адрес электронной почты"
 
@@ -576,117 +577,118 @@ msgstr "Адрес электронной почты"
 msgid "EMPTY"
 msgstr "ПУСТО"
 
-#: register.c:2306
+#: register.c:2307
 msgid "Edit"
 msgstr "Редактировать"
 
-#: register.c:2284
+#: register.c:2285
 msgid "Edit personal data"
 msgstr "Редактировать<br>личные данные"
 
-#: clntutil.c:516 html.c:3799
+#: clntutil.c:517 html.c:4191
 msgid "Elapsed time"
 msgstr "Прошедшее время"
 
-#: edit-userlist.c:61
+#: edit-userlist.c:62
 msgid "Empty"
 msgstr "не заполнено"
 
-#: clntutil.c:497 clntutil.c:502
+#: clntutil.c:498 clntutil.c:503
 msgid "End time"
 msgstr "Время окончания турнира"
 
-#: register.c:1017 team.c:657 team.c:1649
+#: register.c:1018 team.c:658 team.c:1651
 msgid "English"
 msgstr "Английский"
 
-#: team.c:624 team.c:628
+#: team.c:625 team.c:629
 msgid "Enter password"
 msgstr "Введите пароль"
 
-#: html.c:3566 master_html.c:1879
+#: html.c:3954 master_html.c:1940
 msgid "Exit code"
 msgstr "Код завершения"
 
-#: html.c:3795
+#: html.c:4187
 msgid "Expected stop time"
 msgstr "Ожидаемое время окончания турнира"
 
-#: master.c:605
+#: master.c:606
 msgid "Export XML runs (external format)"
 msgstr "Сохранить журнал посылок во внешнем XML-формате"
 
-#: html.c:1570 html.c:1692 html.c:2354 html.c:2507 html.c:3061 html.c:3536
-#: master_html.c:1834
+#: html.c:1801 html.c:1930 html.c:2703 html.c:2831 html.c:3438 html.c:3919
+#: master_html.c:1895
 msgid "Extra info"
 msgstr "Доп. информация"
 
-#: register.c:250 register.c:288 userlist-server.c:3879 userlist-server.c:4022
-#: userlist-server.c:4165
+#: register.c:251 register.c:289 userlist-server.c:3920 userlist-server.c:4063
+#: userlist-server.c:4206
 msgid "Faculty"
 msgstr "Факультет"
 
-#: register.c:252 register.c:289 userlist-server.c:3884 userlist-server.c:4027
+#: register.c:253 register.c:290 userlist-server.c:3925 userlist-server.c:4068
 msgid "Faculty (En)"
 msgstr "Факультет (Англ.)"
 
-#: register.c:254 register.c:290 userlist-server.c:3889 userlist-server.c:4032
+#: register.c:255 register.c:291 userlist-server.c:3930 userlist-server.c:4073
 msgid "Faculty (short)"
 msgstr "Факультет (сокр.)"
 
-#: register.c:256 register.c:291 userlist-server.c:3894 userlist-server.c:4037
+#: register.c:257 register.c:292 userlist-server.c:3935 userlist-server.c:4078
 msgid "Faculty (short) (En)"
 msgstr "Факультет (сокр.) (Англ.)"
 
-#: html.c:529 html.c:674 html.c:3328 master_html.c:672 master_html.c:1564
-#: master_html.c:1752
+#: html.c:602 html.c:605 html.c:770 html.c:772 html.c:3707 html.c:3714
+#: master_html.c:672 master_html.c:680 master_html.c:1569 master_html.c:1617
+#: master_html.c:1805 master_html.c:1813
 msgid "Failed test"
 msgstr "Ошибка на тесте"
 
-#: register.c:2741
+#: register.c:2748
 msgid "Failed to change password"
 msgstr "Невозможно сменить пароль"
 
-#: register.c:1405
+#: register.c:1406
 msgid "Failed to read information from the server"
 msgstr "Невозможно считать информацию с сервера"
 
-#: register.c:275 userlist-server.c:3972
+#: register.c:276 userlist-server.c:4013
 msgid "Family name"
 msgstr "Фамилия"
 
-#: register.c:276 userlist-server.c:3977
+#: register.c:277 userlist-server.c:4018
 msgid "Family name (En)"
 msgstr "Фамилия (Англ.)"
 
-#: register.c:1402 register.c:2407
+#: register.c:1403 register.c:2408
 msgid "Fatal error"
 msgstr "Фатальная ошибка"
 
-#: register.c:1159
+#: register.c:1160
 #, c-format
 msgid ""
 "Field \"%s\" contained invalid characters, which were replaced with '%c'."
 msgstr "Поле \"%s\" содержало недопустимые символы, заменённые на '%c'."
 
-#: register.c:1162
+#: register.c:1163
 #, c-format
 msgid "Field \"%s\" was too long."
 msgstr "Поле \"%s\" имело слишком большую длину."
 
-#: register.c:1228
+#: register.c:1229
 #, c-format
 msgid ""
 "Field \"%s.%d.%s\" contained invalid characters, which were replaced with '%"
 "c'."
 msgstr "Поле \"%s.%d.%s\" содержало недопустимые символы, заменённые на '%c'."
 
-#: register.c:1234
+#: register.c:1235
 #, c-format
 msgid "Field \"%s.%d.%s\" was too long."
 msgstr "Поле \"%s.%d.%s\" имело слишком большую длину."
 
-#: register.c:1145
+#: register.c:1146
 msgid ""
 "Field \"User email\" contained invalid characters, which were replaced with "
 "'?'."
@@ -694,22 +696,22 @@ msgstr ""
 "Поле \"Адрес электронной почты\" содержало недопустимые символы, заменённые "
 "на '?'."
 
-#: register.c:1148
+#: register.c:1149
 msgid "Field \"User email\" was too long."
 msgstr "Поле \"Адрес электронной почты\" имело слишком большую длину."
 
-#: register.c:1137
+#: register.c:1138
 msgid ""
 "Field \"User name\" contained invalid characters, which were replaced with "
 "'?'."
 msgstr ""
 "Поле \"Имя пользователя\" содержало недопустимые символы, заменённые на '?'."
 
-#: register.c:1140
+#: register.c:1141
 msgid "Field \"User name\" was too long."
 msgstr "Поле \"Имя пользователя\" имело слишком большую длину."
 
-#: html.c:3932 master_html.c:990 master_html.c:1759
+#: html.c:4325 master_html.c:996 master_html.c:1820
 msgid "File"
 msgstr "Файл"
 
@@ -721,19 +723,19 @@ msgstr "Условие отбора"
 msgid "Filtered"
 msgstr "Отобрано"
 
-#: register.c:1906
+#: register.c:1907
 msgid "Finalize registration"
 msgstr "Завершить регистрацию"
 
-#: master_html.c:1100
+#: master_html.c:1105
 msgid "First clar"
 msgstr "Первое сообщение"
 
-#: register.c:271 userlist-server.c:3952
+#: register.c:272 userlist-server.c:3993
 msgid "First name"
 msgstr "Имя"
 
-#: register.c:272 userlist-server.c:3957
+#: register.c:273 userlist-server.c:3998
 msgid "First name (En)"
 msgstr "Имя (Англ.)"
 
@@ -741,68 +743,68 @@ msgstr "Имя (Англ.)"
 msgid "First run"
 msgstr "Первая посылка"
 
-#: html.c:849 master_html.c:1112 master_html.c:2216 master_html.c:2321
+#: html.c:946 master_html.c:1117 master_html.c:2274 master_html.c:2378
 msgid "Flags"
 msgstr "Флаги"
 
-#: register.c:2020
+#: register.c:2021
 msgid "For new users"
 msgstr "Для новых пользователей"
 
-#: register.c:1995
+#: register.c:1996
 msgid "For registered users"
 msgstr "Для зарегистрированных пользователей"
 
-#: register.c:1827
+#: register.c:1828
 msgid "For schools, liceums, etc, please, specify its number."
 msgstr ""
 "Для школ, лицеев и пр. укажите, пожалуйста, номер. Например, школа 1234."
 
-#: html.c:849 master_html.c:1113
+#: html.c:946 master_html.c:1118
 msgid "From"
 msgstr "От"
 
-#: userlist-server.c:3824
+#: userlist-server.c:3865
 msgid "General information"
 msgstr "Общая информация"
 
-#: register.c:1777
+#: register.c:1778
 msgid "General user information"
 msgstr "Общая информация об участнике"
 
-#: master.c:2617 register.c:2673 team.c:1319
+#: master.c:2621 register.c:2680 team.c:1321
 msgid "Good-bye"
 msgstr "До свидания"
 
-#: master.c:2619 team.c:1327
+#: master.c:2623 team.c:1329
 msgid "Good-bye!"
 msgstr "До свидания!"
 
-#: register.c:278 userlist-server.c:3987
+#: register.c:279 userlist-server.c:4028
 msgid "Grade"
 msgstr "Уровень (класс, курс)"
 
-#: register.c:279 userlist-server.c:3992
+#: register.c:280 userlist-server.c:4033
 msgid "Group"
 msgstr "Группа (класс)"
 
-#: register.c:280 userlist-server.c:3997
+#: register.c:281 userlist-server.c:4038
 msgid "Group (En)"
 msgstr "Группа (класс) (Англ.)"
 
-#: edit-userlist.c:49 register.c:301 userlist-server.c:184
+#: edit-userlist.c:50 register.c:302 userlist-server.c:185
 msgid "Guest"
 msgstr "Гость"
 
-#: edit-userlist.c:57 register.c:309 userlist-server.c:192
+#: edit-userlist.c:58 register.c:310 userlist-server.c:193
 msgid "Guests"
 msgstr "Гости"
 
-#: master_html.c:1329
+#: master_html.c:1335
 msgid "Hash value"
 msgstr "Хэш-код"
 
-#: userlist-server.c:1010
+#: userlist-server.c:1026
 msgid ""
 "Hello,\n"
 "\n"
@@ -841,19 +843,19 @@ msgstr ""
 "С уважением,\n"
 "Система проведения турниров ejudge\n"
 
-#: master_html.c:1466 master_html.c:1724
+#: master_html.c:1472 master_html.c:1777
 msgid "Hidden?"
 msgstr "Скрыт?"
 
-#: register.c:238 register.c:282 userlist-server.c:3854
+#: register.c:239 register.c:283 userlist-server.c:3895
 msgid "Homepage"
 msgstr "Личная страница WEB"
 
-#: master_html.c:690 master_html.c:1112
+#: master_html.c:694 master_html.c:1117
 msgid "IP"
 msgstr "IP"
 
-#: master_html.c:2224
+#: master_html.c:2282
 msgid "IP address"
 msgstr "IP-адрес"
 
@@ -861,7 +863,7 @@ msgstr "IP-адрес"
 msgid "IPC operation failed"
 msgstr "операция IPC завершилась с ошибкой"
 
-#: register.c:1996
+#: register.c:1997
 msgid ""
 "If you have registered before, please enter your login and password in the "
 "corresponding fields. Then press the \"Submit\" button."
@@ -873,15 +875,15 @@ msgstr ""
 msgid "Ignored"
 msgstr "Проигнорирована"
 
-#: master_html.c:951
+#: master_html.c:957
 msgid "Import and merge XML runs log"
 msgstr "Импорт и слияние XML-посылок"
 
-#: master_html.c:1449 master_html.c:1717
+#: master_html.c:1455 master_html.c:1770
 msgid "Imported?"
 msgstr "Импортирована?"
 
-#: register.c:1786
+#: register.c:1787
 msgid ""
 "In the next field type the name, which will be used in standings, personal "
 "information display, etc."
@@ -889,121 +891,121 @@ msgstr ""
 "В следующей строке введите имя, под которым Вы будете отображаться в таблице "
 "результатов, в списке зарегистрированных участников и т. д."
 
-#: clntutil.c:359
+#: clntutil.c:360
 msgid "Incompatible server"
 msgstr "Несовместимый сервер"
 
-#: master_html.c:1280
+#: master_html.c:1286
 msgid "Information about run"
 msgstr "Информация о попытке"
 
-#: users.c:668
+#: users.c:669
 msgid "Information by your request is not available."
 msgstr "Информация по Вашему запросу отсутствует"
 
-#: users.c:666 users.c:772 users.c:779
+#: users.c:667 users.c:773 users.c:781
 msgid "Information is not available"
 msgstr "Информация отсутствует"
 
-#: register.c:242 register.c:284 userlist-server.c:3859 userlist-server.c:4002
-#: userlist-server.c:4164
+#: register.c:243 register.c:285 userlist-server.c:3900 userlist-server.c:4043
+#: userlist-server.c:4205
 msgid "Institution"
 msgstr "Учебное заведение"
 
-#: register.c:244 register.c:285 userlist-server.c:3864 userlist-server.c:4007
+#: register.c:245 register.c:286 userlist-server.c:3905 userlist-server.c:4048
 msgid "Institution (En)"
 msgstr "Учебное заведение (Англ.)"
 
-#: register.c:246 register.c:286 userlist-server.c:3869 userlist-server.c:4012
+#: register.c:247 register.c:287 userlist-server.c:3910 userlist-server.c:4053
 msgid "Institution (short)"
 msgstr "Учебное заведение (сокр.)"
 
-#: register.c:248 register.c:287 userlist-server.c:3874 userlist-server.c:4017
+#: register.c:249 register.c:288 userlist-server.c:3915 userlist-server.c:4058
 msgid "Institution (short) (En)"
 msgstr "Учебное заведение (сокр.) (Англ.)"
 
-#: register.c:1376
+#: register.c:1377
 msgid "Internal error: insufficient memory."
 msgstr "Внутренняя ошибка: недостаточно памяти."
 
-#: users.c:704
+#: users.c:705
 msgid "Invalid configuration"
 msgstr "Неверная конфигурация"
 
-#: register.c:1653 register.c:2875
+#: register.c:1654 register.c:2882
 msgid "Invalid contest"
 msgstr "Неверный турнир"
 
-#: register.c:1644 register.c:2867
+#: register.c:1645 register.c:2874
 msgid "Invalid contest identifier"
 msgstr "Неверный идентификатор турнира"
 
-#: register.c:1654 register.c:2876
+#: register.c:1655 register.c:2883
 msgid "Invalid contest identifier specified"
 msgstr "Задан неверный идентификатор турнира."
 
-#: register.c:2772
+#: register.c:2779
 msgid "Invalid contest identifier."
 msgstr "Неверный идентификатор турнира."
 
-#: master.c:1806
+#: master.c:1808
 msgid "Invalid language specification"
 msgstr "Неверная спецификация языка программирования"
 
-#: serve-control.c:492
+#: serve-control.c:493
 msgid "Invalid login"
 msgstr "Неверное регистрационное имя"
 
-#: team.c:975 team.c:999
+#: team.c:976 team.c:1000
 msgid "Invalid parameters"
 msgstr "Неверные параметры"
 
-#: register.c:2808
+#: register.c:2815
 msgid "Invalid person."
 msgstr "Неверный участник."
 
-#: master.c:1803
+#: master.c:1805
 msgid "Invalid problem specification"
 msgstr "Неверная спецификация задачи"
 
-#: register.c:2800
+#: register.c:2807
 msgid "Invalid role parameter."
 msgstr "Неверная роль."
 
-#: master.c:1828
+#: master.c:1831
 msgid "Invalid run_id"
 msgstr "Неверный номер посылки"
 
-#: register.c:2822
+#: register.c:2829
 msgid "Invalid serial number."
 msgstr "Неверный уникальный номер."
 
-#: master_html.c:2547
+#: master_html.c:2601
 msgid "Invisible?"
 msgstr "Невидимый?"
 
-#: master_html.c:2697
+#: master_html.c:2751
 msgid "Issue warning"
 msgstr "Выдать предупреждение"
 
-#: master_html.c:913
+#: master_html.c:919
 msgid "Judge suspended runs"
 msgstr "Проверить отложенные посылки"
 
-#: master_html.c:1624
+#: master_html.c:1677
 msgid "Judge's report"
 msgstr "Судейский протокол"
 
-#: html.c:667 html.c:3354 html.c:3919 master_html.c:692 master_html.c:977
-#: master_html.c:1429 master_html.c:1707
+#: html.c:763 html.c:3736 html.c:4312 master_html.c:696 master_html.c:983
+#: master_html.c:1435 master_html.c:1760
 msgid "Language"
 msgstr "Язык"
 
-#: register.c:2482 register.c:2503
+#: register.c:2483 register.c:2504
 msgid "Language is changed"
 msgstr "Язык изменён"
 
-#: master_html.c:1101
+#: master_html.c:1106
 msgid "Last clar"
 msgstr "Последнее сообщение"
 
@@ -1011,119 +1013,119 @@ msgstr "Последнее сообщение"
 msgid "Last run"
 msgstr "Последняя посылка"
 
-#: html.c:2436
+#: html.c:1880 html.c:2785
 msgid "Last submit"
 msgstr "Последняя посылка"
 
-#: html.c:2401 html.c:3026
+#: html.c:1849 html.c:2750 html.c:3403
 msgid "Last success"
 msgstr "Последняя успешная сдача"
 
-#: master_html.c:1841
+#: master_html.c:1902
 msgid "Link"
 msgstr "Ссылка"
 
-#: users.c:764
+#: users.c:765
 msgid "List of registered participants"
 msgstr "Список зарегистрировавшихся участников"
 
-#: master_html.c:1500
+#: master_html.c:1506
 msgid "Locale ID"
 msgstr "Идентификатор языка"
 
-#: master_html.c:2605
+#: master_html.c:2659
 msgid "Lock"
 msgstr "Закрыть"
 
-#: master_html.c:2603
+#: master_html.c:2657
 msgid "Locked?"
 msgstr "Запертый?"
 
-#: register.c:1958 register.c:2035 register.c:2443
+#: register.c:1959 register.c:2036 register.c:2444
 msgid "Log into the system"
 msgstr "Войти в систему"
 
-#: html.c:3698 master.c:578 master_html.c:108 team.c:896
+#: html.c:4087 master.c:579 master_html.c:108 team.c:897
 msgid "Log out"
 msgstr "Выйти из системы"
 
-#: master.c:299 master.c:345 register.c:1779 register.c:2001 register.c:2072
-#: register.c:2151 serve-control.c:523 team.c:645 userlist-server.c:3830
+#: master.c:300 master.c:346 register.c:1780 register.c:2002 register.c:2073
+#: register.c:2152 serve-control.c:524 team.c:646 userlist-server.c:3871
 msgid "Login"
 msgstr "Регистрационное имя (login)"
 
-#: register.c:2611 register.c:2625
+#: register.c:2618 register.c:2632
 msgid "Login failed"
 msgstr "Вход в систему невозможен"
 
-#: register.c:2645 team.c:844
+#: register.c:2652 team.c:845
 msgid "Login successful"
 msgstr "Вход успешен"
 
-#: master.c:532 serve-control.c:746 team.c:846
+#: master.c:533 serve-control.c:747 team.c:847
 msgid "Login successfull. Now entering the main page."
 msgstr "Вход успешный. Теперь переходим к главной странице."
 
-#: register.c:1938 register.c:2391
+#: register.c:1939 register.c:2392
 msgid "Logout"
 msgstr "Выйти из системы"
 
-#: html.c:520
+#: html.c:593
 msgid "Long name"
 msgstr "Название задачи"
 
-#: edit-userlist.c:64 register.c:316 userlist.c:82 userlist-server.c:199
+#: edit-userlist.c:65 register.c:317 userlist.c:82 userlist-server.c:200
 msgid "Magistrant"
 msgstr "Студент магистратуры"
 
-#: master_html.c:1233 master_html.c:1242 master_html.c:1287 master_html.c:1635
-#: master_html.c:1660 master_html.c:1680 master_html.c:1765 master_html.c:2136
-#: master_html.c:2179 master_html.c:2244 master_html.c:2275 master_html.c:2303
-#: master_html.c:2464 master_html.c:2487 master_html.c:2670 master_html.c:2701
-#: team.c:1063 team.c:1075 team.c:1094 team.c:1106 team.c:1118 team.c:1131
-#: team.c:1150 team.c:1166
+#: master_html.c:1237 master_html.c:1248 master_html.c:1293 master_html.c:1688
+#: master_html.c:1713 master_html.c:1733 master_html.c:1826 master_html.c:2197
+#: master_html.c:2240 master_html.c:2302 master_html.c:2333 master_html.c:2360
+#: master_html.c:2520 master_html.c:2542 master_html.c:2724 master_html.c:2755
+#: team.c:1064 team.c:1076 team.c:1095 team.c:1107 team.c:1119 team.c:1132
+#: team.c:1151 team.c:1167
 msgid "Main page"
 msgstr "Главная"
 
-#: master_html.c:2549
+#: master_html.c:2603
 msgid "Make invisible"
 msgstr "Сделать невидимой"
 
-#: master_html.c:2549
+#: master_html.c:2603
 msgid "Make visible"
 msgstr "Сделать видимой"
 
-#: register.c:2535
+#: register.c:2536
 msgid "Mandatory \"E-mail\" field is empty."
 msgstr "Обязательное поле \"Адрес электронной почты\" не заполнено."
 
-#: register.c:2532
+#: register.c:2533
 msgid "Mandatory \"Login\" field is empty."
 msgstr "Обязательное поле \"Имя пользователя\" не заполнено."
 
-#: register.c:1250
+#: register.c:1251
 msgid "Mandatory \"User name\" field is empty."
 msgstr "Обязательное поле \"Имя пользователя\" не заполнено."
 
-#: register.c:1257
+#: register.c:1258
 #, c-format
 msgid "Mandatory field \"%s\" is empty."
 msgstr "Обязательное поле \"%s\" не заполнено."
 
-#: register.c:1272
+#: register.c:1273
 #, c-format
 msgid "Mandatory field \"%s.%d.%s\" is empty."
 msgstr "Обязательное поле \"%s.%d.%s\" не заполнено."
 
-#: register.c:1835
+#: register.c:1836
 msgid "Member information"
 msgstr "Информация об участниках"
 
-#: register.c:1859
+#: register.c:1860
 msgid "Member serial number is"
 msgstr "Уникальный номер участника"
 
-#: register.c:2804
+#: register.c:2811
 msgid "Members of this role are not allowed."
 msgstr "Участники команды с такой ролью не допускаются."
 
@@ -1131,150 +1133,150 @@ msgstr "Участники команды с такой ролью не допускаются."
 msgid "Memory limit exceeded"
 msgstr "Превышен лимит по памяти"
 
-#: html.c:959 master_html.c:2213
+#: html.c:1056 master_html.c:2271
 msgid "Message"
 msgstr "Сообщение"
 
-#: team.c:1062
+#: team.c:1063
 msgid "Message view"
 msgstr "Список сообщений"
 
-#: html.c:4034 master_html.c:1031
+#: html.c:4427 master_html.c:1036
 msgid "Messages"
 msgstr "Сообщения"
 
-#: team.c:1051
+#: team.c:1052
 msgid "Messages are disabled."
 msgstr "Возможность посылки сообщений отключена."
 
-#: team.c:1582
+#: team.c:1584
 msgid "Messages from judges"
 msgstr "Сообщения от жюри"
 
-#: register.c:273 userlist-server.c:3962
+#: register.c:274 userlist-server.c:4003
 msgid "Middle name"
 msgstr "Отчество"
 
-#: register.c:274 userlist-server.c:3967
+#: register.c:275 userlist-server.c:4008
 msgid "Middle name (En)"
 msgstr "Отчество (Англ.)"
 
-#: master.c:3302 master.c:3307 team.c:1557 team.c:1561
+#: master.c:3306 master.c:3311 team.c:1559 team.c:1563
 msgid "Monitor"
 msgstr "Монитор"
 
-#: html.c:201 html.c:204 html.c:216 html.c:219 html.c:226 html.c:234
-#: html.c:240
+#: html.c:206 html.c:208 html.c:221 html.c:223 html.c:230 html.c:239
+#: html.c:252 html.c:258
 msgid "N/A"
 msgstr "Неизв."
 
-#: master.c:2587
+#: master.c:2590
 msgid "NO."
 msgstr "НЕТ."
 
-#: userlist-server.c:3839
+#: userlist-server.c:3880
 msgid "Name"
 msgstr "Имя"
 
-#: team.c:1628
+#: team.c:1630
 msgid "New password"
 msgstr "Новый пароль"
 
-#: register.c:2260
+#: register.c:2261
 msgid "New password (1)"
 msgstr "Новый пароль (1)"
 
-#: register.c:2261
+#: register.c:2262
 msgid "New password (2)"
 msgstr "Новый пароль (2)"
 
-#: team.c:1020
+#: team.c:1021
 msgid "New password contain invalid characters."
 msgstr "Новый пароль содержит недопустимые символы"
 
-#: team.c:1016
+#: team.c:1017
 msgid "New password is too long"
 msgstr "Новый пароль имеет слишком большую длину"
 
-#: team.c:1012
+#: team.c:1013
 msgid "New passwords do not match"
 msgstr "Новые пароли не совпадают друг с другом"
 
-#: master_html.c:697
+#: master_html.c:701
 msgid "New result"
 msgstr "Новый вердикт"
 
-#: register.c:2567
+#: register.c:2574
 msgid "New user is registered"
 msgstr "Новый пользователь зарегистрирован"
 
-#: master.c:1849 master.c:1863 master.c:1877 master.c:1891 master.c:1905
-#: master.c:1919 master.c:1933 master.c:1982 master.c:2010 master.c:2024
-#: master.c:2050 master_html.c:1449 master_html.c:1455 master_html.c:1466
-#: master_html.c:1472 master_html.c:1483 master_html.c:1489 master_html.c:1719
-#: master_html.c:1726 master_html.c:1733 master_html.c:2522 master_html.c:2547
-#: master_html.c:2575 master_html.c:2603 team.c:1186
+#: master.c:1852 master.c:1866 master.c:1880 master.c:1894 master.c:1908
+#: master.c:1922 master.c:1936 master.c:1985 master.c:2013 master.c:2027
+#: master.c:2053 master_html.c:1455 master_html.c:1461 master_html.c:1472
+#: master_html.c:1478 master_html.c:1489 master_html.c:1495 master_html.c:1772
+#: master_html.c:1779 master_html.c:1786 master_html.c:2576 master_html.c:2601
+#: master_html.c:2629 master_html.c:2657 team.c:1187
 msgid "No"
 msgstr "Нет"
 
-#: master.c:2583
+#: master.c:2586
 msgid "No comments.\n"
 msgstr "Без комментариев.\n"
 
-#: register.c:2356
+#: register.c:2357
 msgid "No contests available."
 msgstr "Нет доступных турниров."
 
-#: register.c:2839
+#: register.c:2846
 msgid "No server request performed"
 msgstr "Запрос на сервер не выполнялся"
 
-#: userlist-server.c:4116
+#: userlist-server.c:4157
 msgid "No users registered for this contest"
 msgstr "На этот турнир никто не зарегистрировался"
 
-#: master_html.c:2323
+#: master_html.c:2380
 msgid "No. of clars"
 msgstr "Число вопросов"
 
-#: master_html.c:2322
+#: master_html.c:2379
 msgid "No. of runs"
 msgstr "Число попыток"
 
-#: master_html.c:2327
+#: master_html.c:2384
 msgid "No. of warns"
 msgstr "Число предупреждений"
 
-#: master.c:378 team.c:704
+#: master.c:379 team.c:705
 msgid "Not registered"
 msgstr "Не зарегистрированы"
 
-#: clntutil.c:466
+#: clntutil.c:467
 msgid "Not set"
 msgstr "Не установлено"
 
-#: register.c:2580
+#: register.c:2587
 msgid ""
 "Now please press the \"Back\" button of your browser and fix the error(s)."
 msgstr "Теперь нажмите кнопку \"Назад\" Вашего браузера и исправьте ошибки."
 
-#: html.c:961
+#: html.c:1058
 msgid "Number"
 msgstr "Номер"
 
-#: master_html.c:2619
+#: master_html.c:2673
 msgid "Number of Clars"
 msgstr "Число вопросов"
 
-#: master_html.c:2615
+#: master_html.c:2669
 msgid "Number of Runs"
 msgstr "Число попыток"
 
-#: master_html.c:2623
+#: master_html.c:2677
 msgid "Number of printed pages"
 msgstr "Количество напечатанных страниц"
 
-#: master_html.c:2665
+#: master_html.c:2719
 msgid "Number of warnings"
 msgstr "Число предупреждений"
 
@@ -1282,60 +1284,60 @@ msgstr "Число предупреждений"
 msgid "OK"
 msgstr "OK"
 
-#: register.c:292 userlist-server.c:4042
+#: register.c:293 userlist-server.c:4083
 msgid "Occupation"
 msgstr "Должность"
 
-#: register.c:293 userlist-server.c:4047
+#: register.c:294 userlist-server.c:4088
 msgid "Occupation (En)"
 msgstr "Должность (Англ.)"
 
-#: register.c:2259 team.c:1627
+#: register.c:2260 team.c:1629
 msgid "Old password"
 msgstr "Старый пароль"
 
-#: team.c:1008
+#: team.c:1009
 msgid "Old password contain invalid characters"
 msgstr "Старый пароль содержит недопустимые символы"
 
-#: team.c:1004
+#: team.c:1005
 msgid "Old password is too long"
 msgstr "Старый пароль имеет слишком большую длину"
 
-#: register.c:1264
+#: register.c:1265
 #, c-format
 msgid "Only %d members \"%s\" are specified instead of minimum %d."
 msgstr "Только %d участников \"%s\" указаны вместо минимальных %d."
 
-#: team.c:869
+#: team.c:870
 msgid "Operation completed successfully"
 msgstr "Операция успешно выполнена"
 
-#: register.c:2956 team.c:858
+#: register.c:2963 team.c:859
 msgid "Operation failed"
 msgstr "Операция не выполнена"
 
-#: team.c:867
+#: team.c:868
 msgid "Operation successfull"
 msgstr "Операция успешно выполнена"
 
-#: master_html.c:1301
+#: master_html.c:1307
 msgid "Originator IP"
 msgstr "IP-адрес отправителя"
 
-#: edit-userlist.c:69 register.c:321 userlist.c:87 userlist-server.c:204
+#: edit-userlist.c:70 register.c:322 userlist.c:87 userlist-server.c:205
 msgid "Other"
 msgstr "Прочее"
 
-#: html.c:2465
+#: html.c:2210
 msgid "Page"
 msgstr "Страница"
 
-#: register.c:3111 team.c:1664 users.c:792
+#: register.c:3118 team.c:1666 users.c:794
 msgid "Page generation time"
 msgstr "Время генерации страницы"
 
-#: master_html.c:1576
+#: master_html.c:1629
 msgid "Pages printed"
 msgstr "Напечатано страниц"
 
@@ -1343,36 +1345,36 @@ msgstr "Напечатано страниц"
 msgid "Partial solution"
 msgstr "Неполное решение"
 
-#: html.c:2347 html.c:2500
+#: html.c:2696
 msgid "Participant"
 msgstr "Участник"
 
-#: clntutil.c:402
+#: clntutil.c:403
 msgid "Participants' solutions are being accepted"
 msgstr "Решения участников принимаются на проверку"
 
-#: clntutil.c:426
+#: clntutil.c:427
 msgid "Participants' solutions are being judged"
 msgstr "Решения участников проверяются"
 
-#: master.c:299 master.c:345 register.c:2004 register.c:2075
-#: serve-control.c:523 team.c:645
+#: master.c:300 master.c:346 register.c:2005 register.c:2076
+#: serve-control.c:524 team.c:646
 msgid "Password"
 msgstr "Пароль"
 
-#: register.c:2735
+#: register.c:2742
 msgid "Password changed successfully"
 msgstr "Пароль успешно изменён"
 
-#: register.c:2736
+#: register.c:2743
 msgid "Password changed successfully."
 msgstr "Пароль успешно изменён."
 
-#: register.c:2744
+#: register.c:2751
 msgid "Password changing failed due to the following reasons."
 msgstr "Изменение пароля не удалось по следующим причинам."
 
-#: html.c:2376 html.c:2488 html.c:2529 html.c:3087
+#: html.c:2237 html.c:2725 html.c:2853 html.c:3464
 msgid "Penalty"
 msgstr "Штраф"
 
@@ -1380,12 +1382,12 @@ msgstr "Штраф"
 msgid "Pending check"
 msgstr "Ожидает проверки"
 
-#: master.c:367 register.c:1662 register.c:2884 serve-control.c:481 team.c:691
-#: users.c:751
+#: master.c:368 register.c:1663 register.c:2891 serve-control.c:482 team.c:692
+#: users.c:752
 msgid "Permission denied"
 msgstr "В доступе отказано"
 
-#: team.c:694
+#: team.c:695
 msgid ""
 "Permission denied. You have typed invalid login, invalid password, invalid "
 "contest, or your host is banned."
@@ -1393,36 +1395,36 @@ msgstr ""
 "В доступе отказано. Вы ввели неверное регистрационное имя, неверный пароль, "
 "неверный идентификатор турнира или участие с Вашего компьютера запрещено."
 
-#: register.c:2244
+#: register.c:2245
 #, c-format
 msgid "Personal page of %s"
 msgstr "Личная страница для %s"
 
-#: edit-userlist.c:65 register.c:317 userlist.c:83 userlist-server.c:200
+#: edit-userlist.c:66 register.c:318 userlist.c:83 userlist-server.c:201
 msgid "PhD student"
 msgstr "Аспирант"
 
-#: register.c:240 register.c:283
+#: register.c:241 register.c:284
 msgid "Phone"
 msgstr "Телефон"
 
-#: html.c:1562 html.c:1621 html.c:1684 html.c:2346 html.c:2472 html.c:2499
-#: html.c:3053
+#: html.c:1231 html.c:1793 html.c:1922 html.c:2219 html.c:2695 html.c:2823
+#: html.c:3430
 msgid "Place"
 msgstr "Место"
 
-#: clntutil.c:471
+#: clntutil.c:472
 msgid "Planned start time"
 msgstr "Планируемое время начала турнира"
 
-#: register.c:1760
+#: register.c:1761
 msgid ""
 "Please fill up blank fields in this form. Mandatory fields are marked with "
 "(*)."
 msgstr ""
 "Пожалуйста, заполните анкету. Поля, обязательные к заполнению, помечены (*)."
 
-#: register.c:2135
+#: register.c:2136
 msgid ""
 "Please, fill up all the fields in the form below. Fields, marked with (*), "
 "are mandatory. When the form is completed, press \"Register\" button."
@@ -1435,7 +1437,7 @@ msgstr ""
 msgid "Presentation error"
 msgstr "Неправильный формат вывода"
 
-#: register.c:1926
+#: register.c:1927
 msgid ""
 "Press on the \"Back\" button to return to the previous page without saving "
 "all your changes."
@@ -1443,7 +1445,7 @@ msgstr ""
 "Нажмите на кнопку \"Назад\" для возврата на предыдущую страницу без "
 "сохранения изменений."
 
-#: register.c:1915
+#: register.c:1916
 msgid ""
 "Press on the \"Register\" button to commit the entered values to server and "
 "register for participation for the chosen contest."
@@ -1451,211 +1453,211 @@ msgstr ""
 "Нажмите на кнопку \"ЗАРЕГИСТРИРОВАТЬСЯ!\" для сохранения введённых Вами "
 "данных на сервере и регистрации на выбранный турнир."
 
-#: register.c:1920
+#: register.c:1921
 msgid "Press on the \"Save\" button to save the entered values on the server."
 msgstr "Нажмите на кнопку \"Сохранить\" для сохранения изменений на сервере."
 
-#: html.c:780 master_html.c:1601
+#: html.c:878 master_html.c:1654
 msgid "Print"
 msgstr "Распечатать"
 
-#: clntutil.c:416
+#: clntutil.c:417
 msgid "Print requests are suspended"
 msgstr "Обработка запросов на печать приостановлена"
 
-#: html.c:682
+#: html.c:780
 msgid "Print sources"
 msgstr "Распечатать исходный текст"
 
-#: master_html.c:2521
+#: master_html.c:2575
 msgid "Privileged?"
 msgstr "Привилегированный?"
 
-#: html.c:666 html.c:3353 html.c:3863 html.c:3968 master_html.c:691
-#: master_html.c:961 master_html.c:1373 master_html.c:1693
+#: html.c:762 html.c:3735 html.c:4255 html.c:4361 master_html.c:695
+#: master_html.c:967 master_html.c:1379 master_html.c:1746
 msgid "Problem"
 msgstr "Задача"
 
-#: html.c:3848 team.c:1574
+#: html.c:4240 team.c:1576
 msgid "Problem status summary"
 msgstr "Итог по задачам"
 
-#: team.c:1597
+#: team.c:1599
 msgid "Problems"
 msgstr "Задачи"
 
-#: edit-userlist.c:67 register.c:319 userlist.c:85 userlist-server.c:202
+#: edit-userlist.c:68 register.c:320 userlist.c:85 userlist-server.c:203
 msgid "Professor"
 msgstr "Преподаватель вуза"
 
-#: userlist-server.c:3926
+#: userlist-server.c:3967
 msgid "Prog. languages"
 msgstr "Языки программирования"
 
-#: master_html.c:2036
+#: master_html.c:2097
 msgid "Program output"
 msgstr "Вывод программы"
 
-#: master_html.c:2038
+#: master_html.c:2099
 msgid "Program output to stderr"
 msgstr "Вывод программы на stderr"
 
-#: register.c:264
+#: register.c:265
 msgid "Programming languages"
 msgstr "Языки программирования"
 
-#: register.c:1935 register.c:2387
+#: register.c:1936 register.c:2388
 msgid "Quit the system"
 msgstr "Выйти из системы"
 
-#: register.c:1917
+#: register.c:1918
 msgid "REGISTER!"
 msgstr "ЗАРЕГИСТРИРОВАТЬСЯ!"
 
-#: misctext.c:284
+#: misctext.c:282
 msgid "Re"
 msgstr "Re"
 
-#: misctext.c:273 misctext.c:281
+#: misctext.c:271 misctext.c:279
 msgid "Re: Your question"
 msgstr "Re: Ваш вопрос"
 
-#: master.c:2581
+#: master.c:2584
 msgid "Read the problem.\n"
 msgstr "Читайте условие задачи.\n"
 
-#: master_html.c:1483 master_html.c:1731
+#: master_html.c:1489 master_html.c:1784
 msgid "Read-only?"
 msgstr "Только чтение?"
 
-#: master_html.c:1834
+#: html.c:3917 master_html.c:1895
 msgid "Real time (sec)"
 msgstr "Астр. время (с)"
 
-#: html.c:3837
+#: html.c:4229
 msgid "Received"
 msgstr "Получено"
 
-#: html.c:3696 master.c:541 master_html.c:105 master_html.c:1233
-#: master_html.c:1242 master_html.c:1635 master_html.c:1660 master_html.c:1680
-#: master_html.c:1765 master_html.c:2116 master_html.c:2303 master_html.c:2464
-#: team.c:878
+#: html.c:4085 master.c:542 master_html.c:105 master_html.c:1237
+#: master_html.c:1248 master_html.c:1688 master_html.c:1713 master_html.c:1733
+#: master_html.c:1826 master_html.c:2177 master_html.c:2360 master_html.c:2520
+#: team.c:879
 msgid "Refresh"
 msgstr "Обновить"
 
-#: master.c:650
+#: master.c:651
 msgid "Regenerate register user passwords!"
 msgstr "Сгенерировать регистрационные пароли заново!"
 
-#: master.c:641
+#: master.c:642
 msgid "Regenerate user passwords!"
 msgstr "Сгенерировать пароли заново!"
 
-#: register.c:2157 register.c:2361 register.c:2378
+#: register.c:2158 register.c:2362 register.c:2379
 msgid "Register"
 msgstr "Зарегистрироваться"
 
-#: register.c:2101
+#: register.c:2102
 msgid "Register a new user"
 msgstr "Зарегистрировать нового пользователя"
 
-#: register.c:2572
+#: register.c:2579
 msgid "Registration failed"
 msgstr "Регистрация не удалась"
 
-#: register.c:2959
+#: register.c:2966
 msgid "Registration failed by the following reason:"
 msgstr "Регистрация не удалось по следующим причинам:"
 
-#: register.c:2951
+#: register.c:2958
 msgid "Registration is successful"
 msgstr "Регистрация завершилась успешно"
 
-#: register.c:2134
+#: register.c:2135
 msgid "Registration rules"
 msgstr "Правила регистрации"
 
-#: master_html.c:908
+#: master_html.c:914
 msgid "Rejudge all"
 msgstr "Пересудить всё"
 
-#: master_html.c:926
+#: master_html.c:932
 msgid "Rejudge displayed runs"
 msgstr "Перепроверить отображённые посылки"
 
-#: master_html.c:936
+#: master_html.c:942
 msgid "Rejudge problem"
 msgstr "Пересудить задачу"
 
-#: master_html.c:944
+#: master_html.c:950
 msgid "Rejudge!"
 msgstr "Пересудить!"
 
-#: master.c:736
+#: master.c:737
 msgid "Reload server"
 msgstr "Перезапустить сервер"
 
-#: clntutil.c:524 html.c:3802
+#: clntutil.c:525 html.c:4194
 msgid "Remaining time"
 msgstr "Остающееся время"
 
-#: master_html.c:2577
+#: master_html.c:2631
 msgid "Remove ban"
 msgstr "Снять блокировку"
 
-#: register.c:1854
+#: register.c:1855
 msgid "Remove member"
 msgstr "Удалить участника"
 
-#: team.c:1149
+#: team.c:1150
 msgid "Report view"
 msgstr "Просмотр протокола"
 
-#: clntutil.c:476
+#: clntutil.c:477
 msgid "Reschedule"
 msgstr "Назначить время"
 
-#: edit-userlist.c:46 register.c:298 userlist-server.c:181
+#: edit-userlist.c:47 register.c:299 userlist-server.c:182
 msgid "Reserve"
 msgstr "Запасной участник"
 
-#: edit-userlist.c:54 register.c:306 userlist-server.c:189
+#: edit-userlist.c:55 register.c:307 userlist-server.c:190
 msgid "Reserves"
 msgstr "Запасные участники"
 
-#: master_html.c:659 master_html.c:1104
+#: master_html.c:659 master_html.c:1109
 msgid "Reset filter"
 msgstr "Сбросить фильтр"
 
-#: master.c:632
+#: master.c:633
 msgid "Reset the contest!"
 msgstr "Сбросить турнир!"
 
-#: html.c:667 html.c:3354 html.c:3534 master_html.c:692 master_html.c:1834
+#: html.c:763 html.c:3736 html.c:3917 master_html.c:696 master_html.c:1895
 msgid "Result"
 msgstr "Результат"
 
-#: master.c:677
+#: master.c:678
 msgid "Resume clients"
 msgstr "Разрешить работу клиентов"
 
-#: master.c:708
+#: master.c:709
 msgid "Resume printing"
 msgstr "Разрешить печать решений"
 
-#: master.c:692
+#: master.c:693
 msgid "Resume testing"
 msgstr "Разрешить проверку решений"
 
-#: team.c:1628
+#: team.c:1630
 msgid "Retype new password"
 msgstr "Пароль ещё раз"
 
-#: register.c:2791
+#: register.c:2798
 msgid "Role/person parameters are not defined."
 msgstr "Параметры роли/члена не определены."
 
-#: html.c:531 html.c:666 html.c:3352 master_html.c:690 master_html.c:1292
+#: html.c:607 html.c:762 html.c:3734 master_html.c:694 master_html.c:1298
 msgid "Run ID"
 msgstr "Номер решения"
 
@@ -1667,41 +1669,45 @@ msgstr "Ошибка выполнения"
 msgid "Running..."
 msgstr "Выполняется..."
 
-#: register.c:1018 team.c:658 team.c:1650
+#: html.c:1907
+msgid "Runs being processed"
+msgstr "Обрабатываемые посылки"
+
+#: register.c:1019 team.c:659 team.c:1652
 msgid "Russian"
 msgstr "Русский"
 
-#: register.c:1922
+#: register.c:1923
 msgid "Save"
 msgstr "Сохранить"
 
-#: edit-userlist.c:62 register.c:314 userlist.c:80 userlist-server.c:197
+#: edit-userlist.c:63 register.c:315 userlist.c:80 userlist-server.c:198
 msgid "School student"
 msgstr "Школьник"
 
-#: edit-userlist.c:66 register.c:318 userlist.c:84 userlist-server.c:201
+#: edit-userlist.c:67 register.c:319 userlist.c:84 userlist-server.c:202
 msgid "School teacher"
 msgstr "Школьный учитель"
 
-#: edit-userlist.c:68 register.c:320 userlist.c:86 userlist-server.c:203
+#: edit-userlist.c:69 register.c:321 userlist.c:86 userlist-server.c:204
 msgid "Scientist"
 msgstr "Научный сотрудник"
 
-#: html.c:527 html.c:672 html.c:1596 html.c:1657 html.c:1718 html.c:2375
-#: html.c:2480 html.c:2528 html.c:3333 html.c:3539 master_html.c:677
-#: master_html.c:1836
+#: html.c:600 html.c:603 html.c:768 html.c:770 html.c:1255 html.c:1827
+#: html.c:1956 html.c:2228 html.c:2724 html.c:2852 html.c:3712 html.c:3715
+#: html.c:3922 master_html.c:677 master_html.c:681 master_html.c:1897
 msgid "Score"
 msgstr "Баллы"
 
-#: master_html.c:1547
+#: master_html.c:1553 master_html.c:1596
 msgid "Score adjustment"
 msgstr "Поправка баллов"
 
-#: master_html.c:1536 master_html.c:1748
+#: master_html.c:1542 master_html.c:1585 master_html.c:1801 master_html.c:1809
 msgid "Score gained"
 msgstr "Получено баллов"
 
-#: html.c:3507 master_html.c:1809
+#: html.c:3890 master_html.c:1870
 #, c-format
 msgid "Score gained: %d (out of %d).<br><br></big>\n"
 msgstr "Получено баллов: %d (из %d).<br><br></big>\n"
@@ -1710,96 +1716,96 @@ msgstr "Получено баллов: %d (из %d).<br><br></big>\n"
 msgid "Security violation"
 msgstr "Нарушение правил безопасности"
 
-#: master.c:3379
+#: master.c:3383
 msgid "Send"
 msgstr "Отослать"
 
-#: html.c:3965 team.c:1580
+#: html.c:4358 team.c:1582
 msgid "Send a message to judges"
 msgstr "Отослать сообщение судьям"
 
-#: html.c:3859 master_html.c:958 team.c:1576
+#: html.c:4251 master_html.c:964 team.c:1578
 msgid "Send a submission"
 msgstr "Отослать решение"
 
-#: master_html.c:2271
+#: master_html.c:2329
 msgid "Send to all"
 msgstr "Отослать всем"
 
-#: master_html.c:2271
+#: master_html.c:2329
 msgid "Send to sender"
 msgstr "Отослать отправителю"
 
-#: html.c:3932 html.c:4028 master_html.c:953 master_html.c:990
+#: html.c:4325 html.c:4421 master_html.c:959 master_html.c:996
 msgid "Send!"
 msgstr "Отослать!"
 
-#: html.c:964 master_html.c:2226
+#: html.c:1061 master_html.c:2284
 msgid "Sender"
 msgstr "Отправитель"
 
-#: html.c:3940
+#: html.c:4333
 msgid "Sent submissions"
 msgstr "Отосланные решения"
 
-#: userlist-server.c:3946 userlist-server.c:4153
+#: userlist-server.c:3987 userlist-server.c:4194
 msgid "Serial No"
 msgstr "NN"
 
-#: clntutil.c:360
+#: clntutil.c:361
 msgid "Server configuration error."
 msgstr "Ошибка конфигурации сервера."
 
-#: master.c:398 serve-control.c:471 team.c:726 team.c:727 team.c:1345
+#: master.c:399 serve-control.c:472 team.c:727 team.c:728 team.c:1347
 msgid "Server error"
 msgstr "Ошибка сервера"
 
-#: clntutil.c:365 master.c:355 master.c:418 master.c:421 serve-control.c:446
-#: serve-control.c:459 team.c:678 team.c:1419 team.c:1423
+#: clntutil.c:366 master.c:356 master.c:419 master.c:422 serve-control.c:447
+#: serve-control.c:460 team.c:679 team.c:1421 team.c:1425
 msgid "Server is down"
 msgstr "Сервер не работает"
 
-#: master.c:424 team.c:1426
+#: master.c:425 team.c:1428
 msgid "Server is down."
 msgstr "Сервер не работает."
 
-#: clntutil.c:366
+#: clntutil.c:367
 msgid "Server is down. Please, come later."
 msgstr "Сервер не работает. Пожалуйста, приходите позже."
 
-#: clntutil.c:390
+#: clntutil.c:391
 msgid "Server status"
 msgstr "Состояние сервера"
 
-#: clntutil.c:432 html.c:3780
+#: clntutil.c:433 html.c:4172
 msgid "Server time"
 msgstr "Время на сервере"
 
-#: clntutil.c:252
+#: clntutil.c:253
 msgid "Service is not available"
 msgstr "Сервис недоступен"
 
-#: clntutil.c:253
+#: clntutil.c:254
 msgid "Service is not available. Please, come later."
 msgstr "Сервис недоступен. Пожалуйста, приходите позже."
 
-#: master.c:725
+#: master.c:726
 msgid "Set accepting mode"
 msgstr "Включить режим приёма решений"
 
-#: master.c:722
+#: master.c:723
 msgid "Set judging mode"
 msgstr "Включить режим проверки"
 
-#: master_html.c:2653
+#: master_html.c:2707
 msgid "Set status"
 msgstr "Установить статус"
 
-#: html.c:519
+#: html.c:592
 msgid "Short name"
 msgstr "ID Задачи"
 
-#: register.c:2139
+#: register.c:2140
 msgid ""
 "Shortly after that you should receive an e-mail message with a password to "
 "the system. Use this password for the first  login. <b>Note</b>, that you "
@@ -1813,92 +1819,92 @@ msgstr ""
 "после заполнения и посылки анкеты, или в противном случае Ваша регистрация "
 "будет отменена!"
 
-#: master_html.c:630 master_html.c:1080
+#: master_html.c:630 master_html.c:1085
 msgid "Shown"
 msgstr "Показано"
 
-#: html.c:3563 master_html.c:1876
+#: html.c:3951 master_html.c:1937
 msgid "Signal"
 msgstr "Сигнал"
 
-#: html.c:666 html.c:849 html.c:963 master_html.c:690 master_html.c:1112
-#: master_html.c:1319 master_html.c:2225
+#: html.c:762 html.c:946 html.c:1060 master_html.c:694 master_html.c:1117
+#: master_html.c:1325 master_html.c:2283
 msgid "Size"
 msgstr "Размер"
 
-#: master_html.c:2323
+#: master_html.c:2380
 msgid "Size of clars"
 msgstr "Размер вопросов"
 
-#: master_html.c:2322
+#: master_html.c:2379
 msgid "Size of runs"
 msgstr "Размер попыток"
 
-#: html.c:1636
+#: html.c:1241
 msgid "Solved"
 msgstr "Решено"
 
-#: html.c:1595 html.c:1717
+#: html.c:1826 html.c:1955
 msgid "Solved<br>problems"
 msgstr "Решённые<br>задачи"
 
-#: team.c:1093
+#: team.c:1094
 msgid "Source view"
 msgstr "Просмотр исходного текста"
 
-#: master_html.c:931
+#: master_html.c:937
 msgid "Squeeze runs"
 msgstr "Сжать журнал"
 
-#: master.c:550 master_html.c:106
+#: master.c:551 master_html.c:106
 msgid "Standings"
 msgstr "Положение команд"
 
-#: clntutil.c:509
+#: clntutil.c:510
 msgid "Standings freeze time"
 msgstr "Время заморозки таблицы результатов"
 
-#: clntutil.c:445
+#: clntutil.c:446
 msgid "Start"
 msgstr "Начать"
 
-#: html.c:3809
+#: html.c:4201
 msgid "Start virtual contest"
 msgstr "Начать виртуальный турнир"
 
-#: html.c:521 html.c:1575 html.c:1697 html.c:2358 html.c:2511 html.c:3066
-#: master_html.c:1502 master_html.c:1738 master_html.c:2325 master_html.c:2634
-#: register.c:277 register.c:2283 userlist-server.c:3982
-#: userlist-server.c:4070 userlist-server.c:4167
+#: html.c:594 html.c:1806 html.c:1935 html.c:2707 html.c:2835 html.c:3443
+#: master_html.c:1508 master_html.c:1791 master_html.c:2382 master_html.c:2688
+#: register.c:278 register.c:2284 userlist-server.c:4023
+#: userlist-server.c:4111 userlist-server.c:4208
 msgid "Status"
 msgstr "Статус"
 
-#: clntutil.c:454
+#: clntutil.c:455
 msgid "Stop"
 msgstr "Остановить"
 
-#: html.c:3814
+#: html.c:4206
 msgid "Stop virtual contest"
 msgstr "Закончить виртуальный турнир"
 
-#: edit-userlist.c:63 register.c:315 userlist.c:81 userlist-server.c:198
+#: edit-userlist.c:64 register.c:316 userlist.c:81 userlist-server.c:199
 msgid "Student"
 msgstr "Студент"
 
-#: html.c:850 html.c:979 html.c:4028 master.c:3374 master_html.c:1113
-#: master_html.c:2241
+#: html.c:947 html.c:1076 html.c:4421 master.c:3378 master_html.c:1118
+#: master_html.c:2299
 msgid "Subject"
 msgstr "Тема"
 
-#: master.c:1437 master.c:1796 master.c:1832 team.c:967
+#: master.c:1438 master.c:1798 master.c:1835 team.c:968
 msgid "Submission data is empty"
 msgstr "Посылка пуста"
 
-#: team.c:1578
+#: team.c:1580
 msgid "Submission log"
 msgstr "Журнал посылок"
 
-#: master_html.c:1294
+#: master_html.c:1300
 msgid "Submission time"
 msgstr "Время попытки"
 
@@ -1906,125 +1912,133 @@ msgstr "Время попытки"
 msgid "Submissions"
 msgstr "Посылки"
 
-#: master.c:299 master.c:345 master_html.c:1761 register.c:2007
-#: register.c:2078 serve-control.c:523 team.c:666
+#: master.c:300 master.c:346 master_html.c:1822 register.c:2008
+#: register.c:2079 serve-control.c:524 team.c:667
 msgid "Submit"
 msgstr "Отослать"
 
-#: register.c:2285 register.c:2313
+#: register.c:2286 register.c:2314
 msgid "Submit solution"
 msgstr "Сдача решений"
 
-#: html.c:1860 html.c:2667
+#: html.c:2112 html.c:3008
 msgid "Success"
 msgstr "Успешных"
 
-#: master.c:668
+#: master.c:669
 msgid "Suspend clients"
 msgstr "Приостановить клиентов"
 
-#: master.c:705
+#: master.c:706
 msgid "Suspend printing"
 msgstr "Приостановить печать решений"
 
-#: master.c:689
+#: master.c:690
 msgid "Suspend testing"
 msgstr "Приостановить проверку решений"
 
-#: html.c:1563 html.c:1685 html.c:3054
-msgid "Team"
-msgstr "Команда"
-
-#: master_html.c:691
+#: master_html.c:695
 msgid "Team ID"
 msgstr "ID Команды"
 
-#: register.c:2834
+#: register.c:2841
 msgid "Team member is removed"
 msgstr "Участник команды удалён"
 
-#: html.c:3353 master_html.c:691
+#: html.c:3735 master_html.c:695
 msgid "Team name"
 msgstr "Название команды"
 
-#: clntutil.c:409
+#: clntutil.c:410
 msgid "Team requests are suspended"
 msgstr "Обработка запросов участников приостановлена"
 
-#: html.c:1048 html.c:1055 html.c:1090 html.c:1097 team.c:1593
+#: html.c:1145 html.c:1152 html.c:1187 html.c:1194 team.c:1595
 msgid "Team standings"
 msgstr "Положение участников"
 
-#: master_html.c:2035
+#: master_html.c:2096
 msgid "Test input"
 msgstr "Входные данные"
 
-#: clntutil.c:413
+#: clntutil.c:414
 msgid "Testing of team's submits is suspended"
 msgstr "Проверка решений участников приостановлена"
 
-#: html.c:523 html.c:526 html.c:671 html.c:3332 master_html.c:676
-#: master_html.c:1520 master_html.c:1744
+#: html.c:596 html.c:599 html.c:767 html.c:3711 master_html.c:676
+#: master_html.c:1526 master_html.c:1797
 msgid "Tests passed"
 msgstr "Пройдено тестов"
 
-#: team.c:1399
+#: team.c:1401
 msgid "The contest is closed."
 msgstr "Турнир закрыт."
 
-#: clntutil.c:398
+#: clntutil.c:399
 msgid "The contest is in progress"
 msgstr "Турнир идёт"
 
-#: clntutil.c:396
+#: clntutil.c:397
 msgid "The contest is in progress (standings are frozen)"
 msgstr "Турнир идёт (текущее положение команд не отображается)"
 
-#: clntutil.c:405 html.c:1166 html.c:2052 html.c:2807
+#: clntutil.c:406 html.c:1366 html.c:2392 html.c:3182
 msgid "The contest is not started"
 msgstr "Турнир не начался"
 
-#: clntutil.c:393
+#: clntutil.c:394
 msgid "The contest is over"
 msgstr "Турнир закончился"
 
-#: master.c:1973
+#: master.c:1976
 msgid "The following runs will be rejudged"
 msgstr "Следующие посылки будут пересужены"
 
-#: register.c:2574
+#: register.c:2581
 msgid "The form contains error(s)"
 msgstr "Анкета заполнена неправильно"
 
-#: team.c:1572 team.c:1604
+#: team.c:1574 team.c:1606
 msgid "The last command completion status"
 msgstr "Статус выполнения последнего запроса"
 
-#: team.c:919
+#: team.c:920
 msgid "The message cannot be sent. Messages are disabled."
 msgstr "Сообщение не может быть послано. Сообщения отключены."
 
-#: team.c:910
+#: team.c:911
 msgid "The message cannot be sent. The contest is not started."
 msgstr "Сообщение не может быть послано. Турнир не начался."
 
-#: team.c:914
+#: team.c:915
 msgid "The message cannot be sent. The contest is over."
 msgstr "Сообщение не может быть послано. Турнир закончился."
 
-#: master.c:357 serve-control.c:448 serve-control.c:461 team.c:680
+#: master.c:358 serve-control.c:449 serve-control.c:462 team.c:681
 msgid "The server is down. Try again later."
 msgstr "Сервер не работает. Пожалуйста, повторите операцию позднее."
 
-#: team.c:955
+#: register.c:2554
+msgid ""
+"The server was unable to send a registration e-mail\n"
+"to the specified address. This is probably due\n"
+"to heavy server load rather than to an invalid\n"
+"e-mail address. You should try to register later.\n"
+msgstr ""
+"Сервер оказался не в состоянии отослать регистрационное письмо\n"
+"по указанному адресу. Это, возможно, произошло из-за\n"
+"слишком высокой загрузки сервера, а не из-за неправильного\n"
+"адреса e-mail. Повторите попытку регистрации позже.\n"
+
+#: team.c:956
 msgid "The submission cannot be sent. The contest is not started."
 msgstr "Решение не может быть послано. Турнир не начался."
 
-#: team.c:959
+#: team.c:960
 msgid "The submission cannot be sent. The contest is over."
 msgstr "Решение не может быть послано. Турнир окончен."
 
-#: users.c:707
+#: users.c:708
 msgid ""
 "This program is configured incorrectly and cannot perform normal operation. "
 "Please contact the site (or contest) administrator."
@@ -2032,12 +2046,12 @@ msgstr ""
 "Эта программа сконфигурирована неверно и не может работать. Пожалуйста, "
 "обратитесь к администратору сайта или турнира."
 
-#: html.c:666 html.c:849 html.c:962 html.c:3352 master_html.c:690
-#: master_html.c:1112 master_html.c:2219
+#: html.c:762 html.c:946 html.c:1059 html.c:3734 master_html.c:694
+#: master_html.c:1117 master_html.c:2277
 msgid "Time"
 msgstr "Время"
 
-#: html.c:3534 master_html.c:1834
+#: html.c:3917 master_html.c:1895
 msgid "Time (sec)"
 msgstr "Время (с)"
 
@@ -2045,43 +2059,43 @@ msgstr "Время (с)"
 msgid "Time-limit exceeded"
 msgstr "Превышено максимальное время работы"
 
-#: html.c:850 html.c:970 master_html.c:1113 master_html.c:2232
+#: html.c:947 html.c:1067 master_html.c:1118 master_html.c:2290
 msgid "To"
 msgstr "Кому"
 
-#: master.c:3365
+#: master.c:3369
 msgid "To user id"
 msgstr "Кому (рег. номер)"
 
-#: master.c:3369
+#: master.c:3373
 msgid "To user login"
 msgstr "Кому (рег. имя)"
 
-#: html.c:1840 html.c:2651 html.c:3086
+#: html.c:2092 html.c:2992 html.c:3463
 msgid "Total"
 msgstr "Всего"
 
-#: master_html.c:1079
+#: master_html.c:1084
 msgid "Total messages"
 msgstr "Всего сообщений"
 
-#: html.c:630
+#: html.c:726
 msgid "Total score"
 msgstr "Суммарный балл"
 
-#: master_html.c:2621
+#: master_html.c:2675
 msgid "Total size of Clars"
 msgstr "Суммарный размер вопросов"
 
-#: master_html.c:2617
+#: master_html.c:2671
 msgid "Total size of Runs"
 msgstr "Суммарный размер попыток"
 
-#: html.c:3347 master_html.c:628
+#: html.c:3729 master_html.c:628
 msgid "Total submissions"
 msgstr "Всего посылок"
 
-#: register.c:2146
+#: register.c:2147
 msgid ""
 "Type in a desirable login identifier. <b>Note</b>, that your login still "
 "<i>may be</i> (in some cases) assigned automatically."
@@ -2090,20 +2104,20 @@ msgstr ""
 "регистрационное имя в некоторых случаях всё равно <i>может</i> быть "
 "назначено автоматически."
 
-#: register.c:2069
+#: register.c:2070
 msgid "Type your login and password and then press \"Submit\" button"
 msgstr ""
 "Введите Ваше регистрационное имя и пароль, затем нажмите кнопку \"Отослать\""
 
-#: register.c:2152
+#: register.c:2153
 msgid "Type your valid e-mail address"
 msgstr "Введите Ваш действующий адрес электронной почты"
 
-#: master_html.c:1099
+#: master_html.c:1104
 msgid "Unanswered clars"
 msgstr "Неотвеченные сообщения"
 
-#: register.c:2575
+#: register.c:2582
 msgid ""
 "Unfortunately, your form cannot be accepted, since it contains several "
 "errors. The list of errors is given below."
@@ -2116,111 +2130,115 @@ msgstr ""
 msgid "Unknown: %d"
 msgstr "Unknown: %d"
 
-#: clntutil.c:483 html.c:3784
+#: clntutil.c:484 html.c:4176
 #, c-format
 msgid "Unlimited"
 msgstr "Не ограничена"
 
-#: master_html.c:2605
+#: master_html.c:2659
 msgid "Unlock"
 msgstr "Открыть"
 
-#: master.c:559
+#: master.c:560
 msgid "Update public standings"
 msgstr "Обновить публичную таблицу положения команд"
 
-#: master_html.c:1618
+#: master_html.c:1671
 msgid "Upload judging protocol"
 msgstr "Установить протокол тестирования"
 
-#: master_html.c:1630
+#: master_html.c:1683
 msgid "Upload!"
 msgstr "Установить!"
 
-#: register.c:1744
+#: html.c:1794 html.c:1923 html.c:2824 html.c:3431
+msgid "User "
+msgstr "Участник"
+
+#: register.c:1745
 #, c-format
 msgid "User %s: registration for %s"
 msgstr "Пользователь %s: регистрация на %s"
 
-#: master_html.c:1342 master_html.c:1685 master_html.c:2317
-#: userlist-server.c:3827 userlist-server.c:4162
+#: master_html.c:1348 master_html.c:1738 master_html.c:2374
+#: userlist-server.c:3868 userlist-server.c:4203
 msgid "User ID"
 msgstr "Id"
 
-#: master_html.c:2508
+#: master_html.c:2562
 msgid "User Id"
 msgstr "Id пользователя"
 
-#: master_html.c:2511
+#: master_html.c:2565
 msgid "User Login"
 msgstr "Рег. имя"
 
-#: master_html.c:2516
+#: master_html.c:2570
 msgid "User Name"
 msgstr "Имя участника"
 
-#: master_html.c:1352 master_html.c:1689 master_html.c:2318
+#: master_html.c:1358 master_html.c:1742 master_html.c:2375
 msgid "User login"
 msgstr "Рег. имя команды"
 
-#: master_html.c:1362 master_html.c:2320 register.c:1790
-#: userlist-server.c:4163
+#: master_html.c:1368 master_html.c:2377 register.c:1791
+#: userlist-server.c:4204
 msgid "User name"
 msgstr "Имя участника"
 
-#: register.c:2187
+#: register.c:2188
 msgid "User registration is complete"
 msgstr "Регистрация пользователя завершена"
 
-#: master_html.c:1627
+#: master_html.c:1680
 msgid "User's report"
 msgstr "Пользовательский протокол"
 
-#: master_html.c:1402 master_html.c:1703
+#: master_html.c:1408 master_html.c:1756
 msgid "Variant"
 msgstr "Вариант"
 
-#: html.c:753 html.c:762 html.c:770 html.c:850 html.c:894 master_html.c:655
-#: master_html.c:880 master_html.c:888 master_html.c:1102 master_html.c:1113
-#: master_html.c:1152 master_html.c:2432
+#: html.c:851 html.c:860 html.c:868 html.c:947 html.c:990 master_html.c:655
+#: master_html.c:886 master_html.c:894 master_html.c:1107 master_html.c:1118
+#: master_html.c:1156 master_html.c:2488
 msgid "View"
 msgstr "Просмотр"
 
-#: html.c:3949 html.c:4044
+#: html.c:4342 html.c:4437
 msgid "View all"
 msgstr "Посмотреть всё"
 
-#: html.c:680 master_html.c:701 master_html.c:1635 master_html.c:1660
-#: master_html.c:2124
+#: html.c:778 master_html.c:705 master_html.c:1688 master_html.c:1713
+#: master_html.c:2185
 msgid "View report"
 msgstr "Просмотреть протокол"
 
-#: html.c:678 master_html.c:701 master_html.c:2136 master_html.c:2179
+#: html.c:776 master_html.c:705 master_html.c:2197 master_html.c:2240
 msgid "View source"
 msgstr "Посмотреть исходный текст"
 
-#: master_html.c:1636 master_html.c:1661 master_html.c:2117
+#: master_html.c:1689 master_html.c:1714 master_html.c:2178
 msgid "View team report"
 msgstr "Просмотреть пользовательский протокол"
 
-#: master.c:569 master_html.c:107 master_html.c:2487 master_html.c:2670
-#: master_html.c:2701
+#: master.c:570 master_html.c:107 master_html.c:2542 master_html.c:2724
+#: master_html.c:2755
 msgid "View teams"
 msgstr "Посмотреть команды"
 
-#: html.c:3773
+#: html.c:4165
 msgid "Virtual contest is finished"
 msgstr "Виртуальный турнир завершён"
 
-#: html.c:3775
+#: html.c:4167
 msgid "Virtual contest is in progress"
 msgstr "Виртуальный турнир идёт"
 
-#: html.c:3771
+#: html.c:4163
 msgid "Virtual contest is not started"
 msgstr "Виртуальный турнир не начат"
 
-#: html.c:3697 team.c:887
+#: html.c:4086 team.c:888
 msgid "Virtual standings"
 msgstr "Виртуальное положение команд"
 
@@ -2232,15 +2250,15 @@ msgstr "Начало виртуального турнира"
 msgid "Virtual stop"
 msgstr "Окончание виртуального турнира"
 
-#: html.c:3837
+#: html.c:4229
 msgid "Warning"
 msgstr "Предупреждение"
 
-#: html.c:1579 html.c:1701 html.c:2361 html.c:2514 html.c:3070 html.c:3832
+#: html.c:1810 html.c:1939 html.c:2710 html.c:2838 html.c:3447 html.c:4224
 msgid "Warnings"
 msgstr "Предупреждения"
 
-#: master.c:596
+#: master.c:597
 msgid "Write XML runs (internal format)"
 msgstr "Сохранить журнал посылок во внутреннем XML-формате"
 
@@ -2248,70 +2266,70 @@ msgstr "Сохранить журнал посылок во внутреннем XML-формате"
 msgid "Wrong answer"
 msgstr "Неправильный ответ"
 
-#: register.c:1398 register.c:2234 userlist_proto.c:42
+#: register.c:1399 register.c:2235 userlist_proto.c:42
 msgid "XML parse error"
 msgstr "ошибка разбора XML"
 
-#: master.c:2585
+#: master.c:2588
 msgid "YES."
 msgstr "ДА."
 
-#: master_html.c:1449 master_html.c:1457 master_html.c:1466 master_html.c:1474
-#: master_html.c:1483 master_html.c:1491 master_html.c:1720 master_html.c:1727
-#: master_html.c:1734 master_html.c:2522 master_html.c:2547 master_html.c:2575
-#: master_html.c:2603
+#: master_html.c:1455 master_html.c:1463 master_html.c:1472 master_html.c:1480
+#: master_html.c:1489 master_html.c:1497 master_html.c:1773 master_html.c:1780
+#: master_html.c:1787 master_html.c:2576 master_html.c:2601 master_html.c:2629
+#: master_html.c:2657
 msgid "Yes"
 msgstr "Да"
 
-#: master.c:1880
+#: master.c:1883
 msgid "Yes, clear passwords!"
 msgstr "Да, сбросить пароли!"
 
-#: master.c:2055
+#: master.c:2058
 msgid "Yes, clear!"
 msgstr "Да, очистить!"
 
-#: master.c:2027
+#: master.c:2030
 msgid "Yes, continue!"
 msgstr "Да, продолжить!"
 
-#: master.c:1894 master.c:1908
+#: master.c:1897 master.c:1911
 msgid "Yes, generate passwords!"
 msgstr "Да, перегенерировать пароли!"
 
-#: master.c:1936
+#: master.c:1939
 msgid "Yes, judge!"
 msgstr "Да, проверить!"
 
-#: team.c:1191
+#: team.c:1192
 msgid "Yes, print!"
 msgstr "Да, напечатать!"
 
-#: master.c:1922 master.c:1996
+#: master.c:1925 master.c:1999
 msgid "Yes, rejudge!"
 msgstr "Да, пересудить!"
 
-#: master.c:1852
+#: master.c:1855
 msgid "Yes, reset the contest!"
 msgstr "Да, сбросить турнир!"
 
-#: master.c:2013
+#: master.c:2016
 msgid "Yes, squeeze!"
 msgstr "Да, сжать!"
 
-#: master.c:1866
+#: master.c:1869
 msgid "Yes, update standings!"
 msgstr "Да, обновить таблицу"
 
-#: master.c:379 team.c:706
+#: master.c:380 team.c:707
 msgid "You are not registered for this contest."
 msgstr "Вы не зарегистрированы на этот турнир."
 
-#: register.c:1663 register.c:2885
+#: register.c:1664 register.c:2892
 msgid "You cannot participate in this contest"
 msgstr "Вы не можете участвовать в этом турнире"
 
-#: master.c:390 team.c:717
+#: master.c:391 team.c:718
 msgid ""
 "You cannot participate in this contest. Your registration is not confirmed, "
 "or you have been banned."
@@ -2319,39 +2337,39 @@ msgstr ""
 "Вы не можете участвовать в данном турнире. Ваша регистрация не подтверждена, "
 "либо Ваше участие заблокировано администратором."
 
-#: serve-control.c:482
+#: serve-control.c:483
 msgid "You do not have permissions to use this service"
 msgstr "У Вас нет прав использовать данный сервис"
 
-#: clntutil.c:243
+#: clntutil.c:244
 msgid "You do not have permissions to use this service."
 msgstr "У Вас нет прав использовать данный сервис."
 
-#: register.c:1750
+#: register.c:1751
 msgid "You have already registered for this contest."
 msgstr "Вы уже зарегистрировались на этот турнир."
 
-#: userlist-server.c:1040
+#: userlist-server.c:1056
 msgid "You have been registered"
 msgstr "Вы успешно зарегистрированы"
 
-#: users.c:752
+#: users.c:753
 msgid "You have no permissions to view this contest."
 msgstr "У Вас нет прав просматривать данный турнир."
 
-#: register.c:2627
+#: register.c:2634
 msgid "You have specified incorrect login or password."
 msgstr "Вы указали неправильное регистрационное имя или пароль."
 
-#: register.c:1757
+#: register.c:1758
 msgid "You may edit your personal information."
 msgstr "Вы можете отредактировать Ваши личные данные."
 
-#: register.c:1755
+#: register.c:1756
 msgid "You may not edit your personal information."
 msgstr "Вы НЕ можете редактировать Ваши личные данные."
 
-#: register.c:1752
+#: register.c:1753
 msgid "You may register for this contest."
 msgstr "Вы можете зарегистрироваться на этот турнир."
 
@@ -2363,8 +2381,8 @@ msgstr "в доступе отказано"
 msgid "action is temporarily unavailable"
 msgstr "запрос временно не может быть выполнен"
 
-#: html.c:884 html.c:972 html.c:3941 html.c:4035 master_html.c:1142
-#: master_html.c:2234
+#: html.c:980 html.c:1069 html.c:4334 html.c:4428 master_html.c:1146
+#: master_html.c:2292
 msgid "all"
 msgstr "все"
 
@@ -2388,7 +2406,7 @@ msgstr "неверный идентификатор пользователя"
 msgid "cannot connect to the server"
 msgstr "нет связи с сервером"
 
-#: master_html.c:873
+#: master_html.c:879
 msgid "change"
 msgstr "изменить"
 
@@ -2396,7 +2414,7 @@ msgstr "изменить"
 msgid "clarification requests are disabled"
 msgstr "сообщения отключены"
 
-#: master_html.c:777
+#: master_html.c:783
 msgid "clear"
 msgstr "очистить"
 
@@ -2439,6 +2457,10 @@ msgstr "деление на ноль"
 #: protocol.c:58
 msgid "duplicated submission"
 msgstr "Повторная посылка"
+
+#: userlist_proto.c:55
+msgid "e-mail sending failed"
+msgstr "отсылка электронной почты завершилась неудачно"
 
 #: userlist_proto.c:27
 msgid "error code 1"
@@ -2516,12 +2538,12 @@ msgstr "неверный номер теста"
 msgid "invalid user_id"
 msgstr "неверный идентификатор пользователя"
 
-#: html.c:879 html.c:886 html.c:966 html.c:974 master_html.c:1137
-#: master_html.c:1144 master_html.c:2228 master_html.c:2236
+#: html.c:975 html.c:982 html.c:1063 html.c:1071 master_html.c:1141
+#: master_html.c:1148 master_html.c:2286 master_html.c:2294
 msgid "judges"
 msgstr "судьи"
 
-#: html.c:3941 html.c:4035
+#: html.c:4334 html.c:4428
 msgid "last 15"
 msgstr "последние 15"
 
@@ -2529,7 +2551,7 @@ msgstr "последние 15"
 msgid "login already used"
 msgstr "регистрационное имя занято"
 
-#: register.c:1698
+#: register.c:1699
 msgid "maximal number reached"
 msgstr "достигнуто максимальное количество"
 
@@ -2537,27 +2559,27 @@ msgstr "достигнуто максимальное количество"
 msgid "message subject is too long"
 msgstr "слишком длинная тема сообщения"
 
-#: register.c:3113 team.c:1666 users.c:794
+#: register.c:3120 team.c:1668 users.c:796
 msgid "msec"
 msgstr "мс"
 
-#: register.c:2698
+#: register.c:2705
 msgid "new password (1) not specified"
 msgstr "новый пароль (1) не задан"
 
-#: register.c:2701
+#: register.c:2708
 msgid "new password (2) not specified"
 msgstr "новый пароль (2) не задан"
 
-#: register.c:2713
+#: register.c:2720
 msgid "new password contain invalid characters"
 msgstr "новый пароль содержит недопустимые символы"
 
-#: register.c:2716
+#: register.c:2723
 msgid "new password is too long"
 msgstr "новый пароль имеет слишком большую длину"
 
-#: register.c:2710
+#: register.c:2717
 msgid "new passwords does not match"
 msgstr "новые пароли не совпадают друг с другом"
 
@@ -2581,15 +2603,15 @@ msgstr "нет связи с сервером"
 msgid "not implemented"
 msgstr "не реализовано"
 
-#: register.c:2707
+#: register.c:2714
 msgid "old password contain invalid characters"
 msgstr "старый пароль содержит недопустимые символы"
 
-#: register.c:2704
+#: register.c:2711
 msgid "old password is too long"
 msgstr "старый пароль имеет слишком большую длину"
 
-#: register.c:2695
+#: register.c:2702
 msgid "old password not specified"
 msgstr "старый пароль не задан"
 
@@ -2649,7 +2671,7 @@ msgstr "системный вызов завершился неудачно"
 msgid "team pages quota is exceeded"
 msgstr "превышена квота страниц пользователя"
 
-#: html.c:1046 html.c:1053 html.c:1087 html.c:1095
+#: html.c:1143 html.c:1150 html.c:1184 html.c:1192
 msgid "team standings"
 msgstr "положение команд"
 
@@ -2717,7 +2739,7 @@ msgstr "этот пользователь не может участвовать в этом турнире"
 msgid "this user is not registered for this contest"
 msgstr "этот пользователь не зарегистрирован на данный турнир"
 
-#: html.c:3832
+#: html.c:4224
 msgid "total"
 msgstr "всего"
 
