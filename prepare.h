@@ -118,7 +118,7 @@ struct section_global_data
 
   int    enable_l10n;           /* enable string translation? */
   path_t l10n_dir;              /* localization message catalog */
-  puc_t  standings_locale[32];
+  puc_t  standings_locale[128];
   int    standings_locale_id;
 
   /* userlist-server support */
@@ -127,9 +127,9 @@ struct section_global_data
   path_t contests_dir;
 
   /* charsets */
-  puc_t charset[32];            /* html pages charset */
+  puc_t charset[128];            /* html pages charset */
   //struct nls_table *charset_ptr; /* internal charset */
-  //puc_t standings_charset[32];  /* charset for standings */
+  //puc_t standings_charset[128];  /* charset for standings */
   //struct nls_table *standings_charset_ptr;
 
   /* ====== CONFIGURATION FILES/DIRECTORIES SETUP ====== */
@@ -237,27 +237,32 @@ struct section_global_data
   int    users_on_page;         /* number of users on page */
   puc_t stand_file_name_2[64];
 
-  puc_t stand_extra_format[32]; /* extra standings info */
+  puc_t stand_extra_format[128];/* extra standings info */
   puc_t stand_extra_legend[64]; /* extra standings info legend */
-  puc_t stand_extra_attr[32];   /* extra standings info attributes */
-  puc_t stand_table_attr[32];   /* standings table attributes */
-  puc_t stand_place_attr[32];   /* standings place column attributes */
-  puc_t stand_team_attr[32];    /* standings team column attributes */
-  puc_t stand_prob_attr[32];    /* standings problems column attributes */
-  puc_t stand_solved_attr[32];  /* standings solved column attributes */
-  puc_t stand_score_attr[32];   /* standings solved column attributes */
-  puc_t stand_penalty_attr[32]; /* standings penalty column attributes */
-  puc_t stand_time_attr[32];    /* standings time attributes */
-  puc_t stand_self_row_attr[32]; /* self-row attributes */
-  puc_t stand_r_row_attr[32];   /* standings real team row attributes */
-  puc_t stand_v_row_attr[32];   /* standings virtual team row attributes */
-  puc_t stand_u_row_attr[32];   /* standings unknown team row attributes */
-  puc_t stand_success_attr[32]; /* last success attributes */
-  puc_t stand_fail_attr[32];    /* attributes for "Check failed" */
-  puc_t stand_trans_attr[32];   /* attributes for transient cells */
+  puc_t stand_extra_attr[128];  /* extra standings info attributes */
+  puc_t stand_table_attr[128];  /* standings table attributes */
+  puc_t stand_place_attr[128];  /* standings place column attributes */
+  puc_t stand_team_attr[128];   /* standings team column attributes */
+  puc_t stand_prob_attr[128];   /* standings problems column attributes */
+  puc_t stand_solved_attr[128]; /* standings solved column attributes */
+  puc_t stand_score_attr[128];  /* standings solved column attributes */
+  puc_t stand_penalty_attr[128];/* standings penalty column attributes */
+  puc_t stand_time_attr[128];   /* standings time attributes */
+  puc_t stand_self_row_attr[128];/* self-row attributes */
+  puc_t stand_r_row_attr[128];  /* standings real team row attributes */
+  puc_t stand_v_row_attr[128];  /* standings virtual team row attributes */
+  puc_t stand_u_row_attr[128];  /* standings unknown team row attributes */
+  puc_t stand_success_attr[128];/* last success attributes */
+  puc_t stand_fail_attr[128];   /* attributes for "Check failed" */
+  puc_t stand_trans_attr[128];  /* attributes for transient cells */
   int stand_show_ok_time;       /* whether show time */
   int stand_show_att_num;       /* show number of attempts in Kirov standings */
   int stand_sort_by_solved;     /* sort by solved problems first in Kirov standings */
+  char **stand_row_attr;
+  puc_t stand_page_table_attr[128]; /* attribute for the page table */
+  char **stand_page_row_attr;   /* attributes for the page table rows */
+  char **stand_page_col_attr;   /* attributes for the page table columns */
+  puc_t stand_page_cur_attr[128]; /* attribute for Page %d out of %d msg */
 
   unsigned char *stand_header_txt; /* actual header text */
   unsigned char *stand_footer_txt; /* actual footer text */
@@ -329,8 +334,8 @@ struct section_global_data
   char **contestant_status_row_attr;
   int stand_show_contestant_status;
   int stand_show_warn_number;
-  puc_t stand_contestant_status_attr[32];
-  puc_t stand_warn_number_attr[32];
+  puc_t stand_contestant_status_attr[128];
+  puc_t stand_warn_number_attr[128];
 
   // internal use: text with unhandled variables
   unsigned char *unhandled_vars;
