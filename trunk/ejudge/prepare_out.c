@@ -410,6 +410,16 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
       fprintf(f, "stand_warn_number_attr = \"%s\"\n",
               c_armor(&sbuf, global->stand_warn_number_attr));
   }
+  //GLOBAL_PARAM(stand_row_attr, "x"),
+  do_xstr(f, &sbuf, "stand_row_attr", global->stand_row_attr);
+  //GLOBAL_PARAM(stand_page_table_attr, "s"),
+  do_str(f, &sbuf, "stand_page_table_attr", global->stand_page_table_attr);
+  //GLOBAL_PARAM(stand_page_cur_attr, "s"),
+  do_str(f, &sbuf, "stand_page_cur_attr", global->stand_page_cur_attr);
+  //GLOBAL_PARAM(stand_page_row_attr, "x"),
+  do_xstr(f, &sbuf, "stand_page_row_attr", global->stand_page_row_attr);
+  //GLOBAL_PARAM(stand_page_col_attr, "x"),  
+  do_xstr(f, &sbuf, "stand_page_col_attr", global->stand_page_col_attr);
   fprintf(f, "\n");
 
   if (global->sleep_time != DFLT_G_SLEEP_TIME)
