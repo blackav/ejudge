@@ -212,6 +212,11 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(stand_show_ok_time, "d"),
   GLOBAL_PARAM(stand_show_att_num, "d"),
   GLOBAL_PARAM(stand_sort_by_solved, "d"),
+  GLOBAL_PARAM(stand_row_attr, "x"),
+  GLOBAL_PARAM(stand_page_table_attr, "s"),
+  GLOBAL_PARAM(stand_page_row_attr, "x"),
+  GLOBAL_PARAM(stand_page_col_attr, "x"),
+  GLOBAL_PARAM(stand_page_cur_attr, "s"),
 
   // just for fun
   GLOBAL_PARAM(extended_sound, "d"),
@@ -526,6 +531,9 @@ prepare_global_free_func(struct generic_section_config *gp)
   sarray_free(p->user_priority_adjustments);
   sarray_free(p->contestant_status_legend);
   sarray_free(p->contestant_status_row_attr);
+  sarray_free(p->stand_row_attr);
+  sarray_free(p->stand_page_row_attr);
+  sarray_free(p->stand_page_col_attr);
   prepare_free_variant_map(p->variant_map);
   free_user_adjustment_info(p->user_adjustment_info);
   free_user_adjustment_map(p->user_adjustment_map);
