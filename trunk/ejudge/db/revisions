@@ -2364,3 +2364,8 @@ html.c 1 69 11459670
 parsecfg.c 1 25 2917319
 prepare.c 1 106 11349952
 prepare_out.c 1 17 5158989
+serve-control.c 1 21 10132625
+super-serve.c 1 31 10724069
+html.c 1 70 11459848
+super_html.c 1 16 9669438
+super_html_3.c 1 21 19205275
