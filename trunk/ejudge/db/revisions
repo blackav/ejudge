@@ -2355,3 +2355,12 @@ run_packet_5.c 1 4 290094
 fileutl.h 1 14 177515
 unix/fileutl.c 1 23 2837844
 super_html_2.c 1 15 4060850
+parsecfg.h 1 14 226053
+prepare.h 1 80 2359582
+super_actions.h 1 19 1490977
+super_proto.h 1 20 1473992
+run.c 1 81 4992102
+html.c 1 69 11459670
+parsecfg.c 1 25 2917319
+prepare.c 1 106 11349952
+prepare_out.c 1 17 5158989
