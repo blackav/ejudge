@@ -217,6 +217,7 @@ write_html_run_status(FILE *f, struct run_entry *pe,
   case RUN_IGNORED:
   case RUN_DISQUALIFIED:
   case RUN_PENDING:
+  case RUN_COMPILE_ERR:
     fprintf(f, "<td>%s</td>", _("N/A"));
     if (need_extra_col) {
       fprintf(f, "<td>%s</td>", _("N/A"));
@@ -1208,6 +1209,65 @@ write_standings_header(FILE *f, int client_flag,
   }
 }
 
+static void
+write_kirov_page_table(FILE *f, int total_pages, int current_page,
+                       unsigned char **pgrefs,
+                       int *u_sort, int *u_full, int *u_score,
+                       int *pg_n1, int *pg_n2,
+                       unsigned char **row_attrs, unsigned char **col_attrs)
+{
+  int j;
+
+  fprintf(f, "<table%s>\n<tr%s><td%s>&nbsp;</td>",
+          global->stand_page_table_attr, row_attrs[0], col_attrs[0]);
+  for (j = 0; j < total_pages; j++)
+    if (current_page != j + 1)
+      fprintf(f, "<td%s><a href=\"%s\">%d</a></td>",
+              col_attrs[1], pgrefs[j], j + 1);
+    else
+      fprintf(f, "<td%s>%d</td>", col_attrs[1], j + 1);
+
+  fprintf(f, "</tr>\n<tr%s><td%s>%s</td>",
+          row_attrs[1], col_attrs[0], _("Place"));
+  for (j = 0; j < total_pages; j++)
+    if (current_page != j + 1)
+      fprintf(f, "<td%s><a href=\"%s\">[%d-%d]</a></td>",
+              col_attrs[1], pgrefs[j], pg_n1[j], pg_n2[j]);
+    else
+      fprintf(f, "<td%s>[%d-%d]</td>",
+              col_attrs[1], pg_n1[j], pg_n2[j]);
+
+  fprintf(f, "</tr>\n<tr%s><td%s>%s</td>",
+          row_attrs[2], col_attrs[0], _("Solved"));
+  for (j = 0; j < total_pages; j++)
+    if (current_page != j + 1)
+      fprintf(f, "<td%s><a href=\"%s\">[%d-%d]</a></td>",
+              col_attrs[1], pgrefs[j],
+              u_full[u_sort[pg_n1[j] - 1]],
+              u_full[u_sort[pg_n2[j] - 1]]);
+    else
+      fprintf(f, "<td%s>[%d-%d]</td>", col_attrs[1],
+              u_full[u_sort[pg_n1[j] - 1]],
+              u_full[u_sort[pg_n2[j] - 1]]);
+
+
+  fprintf(f, "</tr>\n<tr%s><td%s>%s</td>",
+          row_attrs[3], col_attrs[0], _("Score"));
+  for (j = 0; j < total_pages; j++)
+    if (current_page != j + 1)
+      fprintf(f, "<td%s><a href=\"%s\">[%d-%d]</a></td>",
+              col_attrs[1], pgrefs[j],
+              u_score[u_sort[pg_n1[j] - 1]],
+              u_score[u_sort[pg_n2[j] - 1]]);
+    else
+      fprintf(f, "<td%s>[%d-%d]</td>", col_attrs[1],
+              u_score[u_sort[pg_n1[j] - 1]],
+              u_score[u_sort[pg_n2[j] - 1]]);
+
+  fprintf(f, "</tr>\n</table>\n");
+}
+
+
 void
 do_write_kirov_standings(FILE *f,
                          const unsigned char *stand_dir,
@@ -1228,28 +1288,72 @@ do_write_kirov_standings(FILE *f,
   unsigned char *t_runs;
 
   int i, k, j;
+  int last_submit_run = -1;
+  int last_success_run = -1;
 
-  int **prob_score;
-  int **att_num, **disq_num;
-  int **sol_att = 0;
-  int **full_sol;
-  time_t **sol_time;
+  int *prob_score = 0;
+  int *att_num = 0;
+  int *disq_num = 0;
+  int *sol_att = 0;
+  int *full_sol = 0;
+  time_t *sol_time = 0;
+  int *trans_num = 0;
+
   int  *tot_score, *tot_full, *succ_att, *tot_att;
-  int  *t_sort, *t_n1, *t_n2;
+  int  *t_sort, *t_sort2, *t_n1, *t_n2;
   char dur_str[1024];
   unsigned char *head_style;
-  struct teamdb_export ttt;
+  struct teamdb_export u_info;
   struct run_entry *runs;
   int ttot_att, ttot_succ, perc, t;
   struct team_extra *t_extra;
   const unsigned char *row_attr = 0;
   int users_per_page, total_pages, current_page, user_on_page, dur_len;
   unsigned char **pgrefs = 0;
+  int *pg_n1 = 0, *pg_n2 = 0;
   path_t stand_name, stand_tmp, stand_path;
   unsigned char att_buf[128];
+  unsigned char *r_attrs[2][2] = { { "", "" }, { "", "" }};
+  unsigned char *pr_attrs[4] = { "", "", "", ""};
+  unsigned char *pc_attrs[2] = { "", "" };
+  unsigned char *r0_attr = "", *rT_attr = "", *table_attr;
+  int attr_num;
+  int max_full, max_score;
+  int *ind_full = 0, *ind_score = 0;
+  int row_sz, row_sh, up_ind;
+  int prev_prob = -1, row_ind = 0, group_ind = 1;
+  int total_trans = 0;
 
   if (client_flag) head_style = cur_contest->team_head_style;
   else head_style = "h2";
+
+  if (!global->stand_table_attr[0] && !global->stand_row_attr) {
+    table_attr = " border=\"1\"";
+  } else {
+    table_attr = global->stand_table_attr;
+  }
+
+  attr_num = sarray_len(global->stand_row_attr);
+  i = 0;
+  if (attr_num >= 5) {
+    r0_attr = global->stand_row_attr[i++];
+    r_attrs[0][0] = global->stand_row_attr[i++];
+    r_attrs[0][1] = global->stand_row_attr[i++];
+    r_attrs[1][0] = global->stand_row_attr[i++];
+    r_attrs[1][1] = global->stand_row_attr[i++];
+    attr_num -= 5;
+  }
+  if (attr_num >= 1) {
+    rT_attr = global->stand_row_attr[i++];
+    attr_num -= 1;
+  }
+
+  attr_num = sarray_len(global->stand_page_row_attr);
+  for (i = 0; i < 4 && i < attr_num; i++)
+    pr_attrs[i] = global->stand_page_row_attr[i];
+  attr_num = sarray_len(global->stand_page_col_attr);
+  for (i = 0; i < 2 && i < attr_num; i++)
+    pc_attrs[i] = global->stand_page_col_attr[i];
 
   /* Check that the contest is started */
   start_time = run_get_start_time();
@@ -1332,6 +1436,10 @@ do_write_kirov_standings(FILE *f,
     p_ind[p_tot++] = i;
   }
 
+  /* calculate the power of 2 not less than p_tot */
+  for (row_sz = 1, row_sh = 0; row_sz < p_tot; row_sz <<= 1, row_sh++);
+  /* all two-dimensional arrays will have rows of size row_sz */
+
   /* calculation tables */
   /* prob_score[0..t_tot-1][0..p_tot-1] - maximum score for the problem
    * att_num[0..t_tot-1][0..p_tot-1]    - number of attempts made
@@ -1344,36 +1452,28 @@ do_write_kirov_standings(FILE *f,
    * disq_num[0..t_tot-1][0..p_tot-1]   - number of disqualified attempts
    * sol_att[0..t_tot-1][0..p_tot-1]    - number of attempts before the problem solved
    */
-  XALLOCAZ(prob_score, t_tot);
-  XALLOCAZ(att_num, t_tot);
-  XALLOCAZ(disq_num, t_tot);
-  XALLOCAZ(full_sol, t_tot);
+  if (t_tot > 0) {
+    up_ind = t_tot * row_sz;
+    XCALLOC(prob_score, up_ind);
+    XCALLOC(att_num, up_ind);
+    XCALLOC(disq_num, up_ind);
+    XCALLOC(full_sol, up_ind);
+    XCALLOC(sol_time, up_ind);
+    XCALLOC(sol_att, up_ind);
+    XCALLOC(trans_num, up_ind);
+  }
   XALLOCAZ(tot_score, t_tot);
   XALLOCAZ(tot_full, t_tot);
-  XALLOCAZ(sol_time, t_tot);
   XALLOCAZ(succ_att, p_tot);
   XALLOCAZ(tot_att, p_tot);
-  if (t_tot > 0) {
-    XCALLOC(sol_att, t_tot);
-  }
-  for (i = 0; i < t_tot; i++) {
-    XALLOCAZ(prob_score[i], p_tot);
-    XALLOCAZ(att_num[i], p_tot);
-    XALLOCAZ(disq_num[i], p_tot);
-    XALLOCAZ(full_sol[i], p_tot);
-    XALLOCAZ(sol_time[i], p_tot);
-    XCALLOC(sol_att[i], p_tot);
-  }
 
   /* auxiluary sorting stuff */
   /* t_sort[0..t_tot-1] - indices of teams (sorted)
    * t_n1[0..t_tot-1]   - first place in interval in case of ties
    * t_n2[0..t_tot-1]   - last place in interval in case of ties
    */
-  XALLOCAZ(t_sort, t_tot);
   XALLOCAZ(t_n1, t_tot);
   XALLOCAZ(t_n2, t_tot);
-  for (i = 0; i < t_tot; i++) t_sort[i] = i;
 
   for (k = 0; k < r_tot; k++) {
     int tind;
@@ -1389,6 +1489,7 @@ do_write_kirov_standings(FILE *f,
     if (pe->is_hidden) continue;
     tind = t_rev[pe->team];
     pind = p_rev[pe->problem];
+    up_ind = (tind << row_sh) + pind;
     p = probs[pe->problem];
     if (!p || tind < 0 || pind < 0 || p->hidden) continue;
 
@@ -1411,18 +1512,18 @@ do_write_kirov_standings(FILE *f,
       switch (pe->status) {
       case RUN_OK:
       case RUN_ACCEPTED:
-        if (!full_sol[tind][pind]) sol_att[tind][pind]++;
-        full_sol[tind][pind] = 1;
-        prob_score[tind][pind] = p->tests_to_accept;
-        att_num[tind][pind]++;  /* hmm, it is not used... */
+        if (!full_sol[up_ind]) sol_att[up_ind]++;
+        full_sol[up_ind] = 1;
+        prob_score[up_ind] = p->tests_to_accept;
+        att_num[up_ind]++;  /* hmm, it is not used... */
         break;
       case RUN_PARTIAL:
-        if (!full_sol[tind][pind]) sol_att[tind][pind]++;
+        if (!full_sol[up_ind]) sol_att[up_ind]++;
         if (run_tests > p->tests_to_accept) run_tests = p->tests_to_accept;
-        if (run_tests > prob_score[tind][pind]) 
-          prob_score[tind][pind] = run_tests;
-        full_sol[tind][pind] = 1;
-        att_num[tind][pind]++;
+        if (run_tests > prob_score[up_ind]) 
+          prob_score[up_ind] = run_tests;
+        full_sol[up_ind] = 1;
+        att_num[up_ind]++;
         break;
       case RUN_COMPILE_ERR:
       case RUN_TIME_LIMIT_ERR:
@@ -1431,19 +1532,24 @@ do_write_kirov_standings(FILE *f,
       case RUN_PRESENTATION_ERR:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
-        if (!full_sol[tind][pind]) sol_att[tind][pind]++;
+        if (!full_sol[up_ind]) sol_att[up_ind]++;
         if (run_tests > p->tests_to_accept) run_tests = p->tests_to_accept;
-        if (run_tests > prob_score[tind][pind]) 
-          prob_score[tind][pind] = run_score;
-        att_num[tind][pind]++;
+        if (run_tests > prob_score[up_ind]) 
+          prob_score[up_ind] = run_score;
+        att_num[up_ind]++;
         break;
       case RUN_DISQUALIFIED:
-        if (!full_sol[tind][pind]) sol_att[tind][pind]++;
-        disq_num[tind][pind]++;
+        if (!full_sol[up_ind]) sol_att[up_ind]++;
+        disq_num[up_ind]++;
         break;
       case RUN_PENDING:
-        if (!full_sol[tind][pind]) sol_att[tind][pind]++;
-        att_num[tind][pind]++;
+        if (!full_sol[up_ind]) sol_att[up_ind]++;
+        att_num[up_ind]++;
+        trans_num[up_ind]++;
+        break;
+      case RUN_COMPILING:
+      case RUN_RUNNING:
+        trans_num[up_ind]++;
         break;
       default:
         break;
@@ -1452,15 +1558,18 @@ do_write_kirov_standings(FILE *f,
       if (run_score == -1) run_score = 0;
       switch (pe->status) {
       case RUN_OK:
-        full_sol[tind][pind] = 1;
+        full_sol[up_ind] = 1;
         //if (run_score > p->full_score) run_score = p->full_score;
       case RUN_PARTIAL:
-        prob_score[tind][pind] = run_score;
-        att_num[tind][pind]++;
+        prob_score[up_ind] = run_score;
+        att_num[up_ind]++;
         break;
       case RUN_ACCEPTED:
+        att_num[up_ind]++;
+        break;
       case RUN_PENDING:
-        att_num[tind][pind]++;
+        att_num[up_ind]++;
+        trans_num[up_ind]++;
         break;
       case RUN_COMPILE_ERR:
       case RUN_TIME_LIMIT_ERR:
@@ -1469,10 +1578,14 @@ do_write_kirov_standings(FILE *f,
       case RUN_PRESENTATION_ERR:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
-        att_num[tind][pind]++;
+        att_num[up_ind]++;
         break;
       case RUN_DISQUALIFIED:
-        disq_num[tind][pind]++;
+        disq_num[up_ind]++;
+        break;
+      case RUN_COMPILING:
+      case RUN_RUNNING:
+        trans_num[up_ind]++;
         break;
       default:
         break;
@@ -1480,39 +1593,48 @@ do_write_kirov_standings(FILE *f,
     } else {
       if (run_score == -1) run_score = 0;
       if (pe->status == RUN_OK) {
-        if (!full_sol[tind][pind]) sol_att[tind][pind]++;
-        score = calc_kirov_score(0, 0, pe, p, att_num[tind][pind],
-                                 disq_num[tind][pind],
-                                 full_sol[tind][pind]?RUN_TOO_MANY:succ_att[pind],
+        if (!full_sol[up_ind]) sol_att[up_ind]++;
+        score = calc_kirov_score(0, 0, pe, p, att_num[up_ind],
+                                 disq_num[up_ind],
+                                 full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
                                  0);
-        if (score > prob_score[tind][pind]) {
-          prob_score[tind][pind] = score;
-          if (!p->stand_hide_time) sol_time[tind][pind] = pe->timestamp;
+        if (score > prob_score[up_ind]) {
+          prob_score[up_ind] = score;
+          if (!p->stand_hide_time) sol_time[up_ind] = pe->timestamp;
         }
-        if (!sol_time[tind][pind] && !p->stand_hide_time)
-          sol_time[tind][pind] = pe->timestamp;
-        if (!full_sol[tind][pind]) {
+        if (!sol_time[up_ind] && !p->stand_hide_time)
+          sol_time[up_ind] = pe->timestamp;
+        if (!full_sol[up_ind]) {
           succ_att[pind]++;
           tot_att[pind]++;
         }
-        att_num[tind][pind]++;
-        full_sol[tind][pind] = 1;
+        att_num[up_ind]++;
+        full_sol[up_ind] = 1;
+        last_submit_run = k;
+        last_success_run = k;
       } else if (pe->status == RUN_PARTIAL) {
-        if (!full_sol[tind][pind]) sol_att[tind][pind]++;
-        score = calc_kirov_score(0, 0, pe, p, att_num[tind][pind],
-                                 disq_num[tind][pind], RUN_TOO_MANY, 0);
-        if (score > prob_score[tind][pind]) prob_score[tind][pind] = score;
-        att_num[tind][pind]++;
-        if (!full_sol[tind][pind]) tot_att[pind]++;
+        if (!full_sol[up_ind]) sol_att[up_ind]++;
+        score = calc_kirov_score(0, 0, pe, p, att_num[up_ind],
+                                 disq_num[up_ind], RUN_TOO_MANY, 0);
+        if (score > prob_score[up_ind]) prob_score[up_ind] = score;
+        att_num[up_ind]++;
+        if (!full_sol[up_ind]) tot_att[pind]++;
+        last_submit_run = k;
       } else if (pe->status==RUN_COMPILE_ERR&&!global->ignore_compile_errors) {
-        if (!full_sol[tind][pind]) sol_att[tind][pind]++;
-        att_num[tind][pind]++;
-        if (!full_sol[tind][pind]) tot_att[pind]++;
+        if (!full_sol[up_ind]) sol_att[up_ind]++;
+        att_num[up_ind]++;
+        if (!full_sol[up_ind]) tot_att[pind]++;
+        last_submit_run = k;
       } else if (pe->status == RUN_DISQUALIFIED) {
-        if (!full_sol[tind][pind]) sol_att[tind][pind]++;
-        disq_num[tind][pind]++;
+        if (!full_sol[up_ind]) sol_att[up_ind]++;
+        disq_num[up_ind]++;
+      } else if (pe->status == RUN_PENDING
+                 || pe->status == RUN_COMPILING
+                 || pe->status == RUN_RUNNING) {
+        trans_num[up_ind]++;
+        total_trans++;
       } else {
-        /* something like "compiling..." or "running..." */
+        /* something strange... */
       }
     }
   }
@@ -1520,95 +1642,98 @@ do_write_kirov_standings(FILE *f,
   /* compute the total for each team */
   for (i = 0; i < t_tot; i++) {
     for (j = 0; j < p_tot; j++) {
-      tot_score[i] += prob_score[i][j];
-      tot_full[i] += full_sol[i][j];
+      up_ind = (i << row_sh) + j;
+      tot_score[i] += prob_score[up_ind];
+      tot_full[i] += full_sol[up_ind];
     }
   }
 
-  if (accepting_mode) {
-    for (i = 0; i < t_tot - 1; i++) {
-      int maxind = i, temp;
-      for (j = i + 1; j < t_tot; j++) {
-        if (tot_full[t_sort[j]] > tot_full[t_sort[maxind]]
-            || (tot_full[t_sort[j]] == tot_full[t_sort[maxind]]
-                && t_sort[j] < t_sort[maxind]))
-          maxind = j;
-      }
-      temp = t_sort[i];
-      t_sort[i] = t_sort[maxind];
-      t_sort[maxind] = temp;
+  if (t_tot > 0) {
+    max_full = -1;
+    max_score = -1;
+    for (t = 0; t < t_tot; t++) {
+      if (tot_full[t] > max_full) max_full = tot_full[t];
+      if (tot_score[t] > max_score) max_score = tot_score[t];
     }
-
-    /* resolve ties */
-    for(i = 0; i < t_tot;) {
-      for (j = i + 1; j < t_tot; j++) {
-        if (tot_full[t_sort[i]] != tot_full[t_sort[j]]) break;
-      }
-      for (k = i; k < j; k++) {
-        t_n1[k] = i;
-        t_n2[k] = j - 1;
-      }
+    XALLOCAZ(ind_full, max_full + 1);
+    XALLOCAZ(ind_score, max_score + 1);
+    for (t = 0; t < t_tot; t++) {
+      ind_full[tot_full[t]]++;
+      ind_score[tot_score[t]]++;
+    }
+    i = 0;
+    for (t = max_full - 1; t >= 0; t--) {
+      j = ind_full[t + 1] + i;
+      ind_full[t + 1] = i;
       i = j;
     }
-  } else if (global->stand_sort_by_solved) {
-    /* sort the teams */
-    for (i = 0; i < t_tot - 1; i++) {
-      int maxind = i, temp;
-      for (j = i + 1; j < t_tot; j++) {
-        if (tot_full[t_sort[j]] > tot_full[t_sort[maxind]]) {
-          maxind = j; 
-        } else if (tot_full[t_sort[j]] < tot_full[t_sort[maxind]]) {
-        } else if (tot_score[t_sort[j]] > tot_score[t_sort[maxind]]) {
-          maxind = j;
-        } else if (tot_score[t_sort[j]] < tot_score[t_sort[maxind]]) {
-        } else if (t_sort[j] < t_sort[maxind]) {
-          maxind = j;
+    ind_full[0] = i;
+    i = 0;
+    for (t = max_score - 1; t >= 0; t--) {
+      j = ind_score[t + 1] + i;
+      ind_score[t + 1] = i;
+      i = j;
+    }
+    ind_score[0] = i;
+
+    if (accepting_mode) {
+      /* sort by the number of solved problems */
+      XALLOCA(t_sort, t_tot);
+      for (t = 0; t < t_tot; t++)
+        t_sort[ind_full[tot_full[t]]++] = t;
+
+      /* resolve ties */
+      for(i = 0; i < t_tot;) {
+        for (j = i + 1; j < t_tot; j++) {
+          if (tot_full[t_sort[i]] != tot_full[t_sort[j]]) break;
         }
+        for (k = i; k < j; k++) {
+          t_n1[k] = i;
+          t_n2[k] = j - 1;
+        }
+        i = j;
       }
-      temp = t_sort[i];
-      t_sort[i] = t_sort[maxind];
-      t_sort[maxind] = temp;
-    }
+    } else if (global->stand_sort_by_solved) {
+      /* sort by the number of solved problems, then by the score */
+      XALLOCA(t_sort, t_tot);
+      XALLOCA(t_sort2, t_tot);
+      for (t = 0; t < t_tot; t++)
+        t_sort2[ind_score[tot_score[t]]++] = t;
+      for (t = 0; t < t_tot; t++)
+        t_sort[ind_full[tot_full[t_sort2[t]]]++] = t_sort2[t];
 
-    /* resolve ties */
-    for(i = 0; i < t_tot;) {
-      for (j = i + 1; j < t_tot; j++) {
-        if (tot_full[t_sort[i]] != tot_full[t_sort[j]]
-            || tot_score[t_sort[i]] != tot_score[t_sort[j]]) break;
+      /* resolve ties */
+      for(i = 0; i < t_tot;) {
+        for (j = i + 1; j < t_tot; j++) {
+          if (tot_full[t_sort[i]] != tot_full[t_sort[j]]
+              || tot_score[t_sort[i]] != tot_score[t_sort[j]]) break;
+        }
+        for (k = i; k < j; k++) {
+          t_n1[k] = i;
+          t_n2[k] = j - 1;
+        }
+        i = j;
       }
-      for (k = i; k < j; k++) {
-        t_n1[k] = i;
-        t_n2[k] = j - 1;
-      }
-      i = j;
-    }
-  } else {
-    /* sort the teams */
-    for (i = 0; i < t_tot - 1; i++) {
-      int maxind = i, temp;
-      for (j = i + 1; j < t_tot; j++) {
-        if (tot_score[t_sort[j]] > tot_score[t_sort[maxind]]
-            || (tot_score[t_sort[j]] == tot_score[t_sort[maxind]]
-                && t_sort[j] < t_sort[maxind]))
-          maxind = j;
-      }
-      temp = t_sort[i];
-      t_sort[i] = t_sort[maxind];
-      t_sort[maxind] = temp;
-    }
+    } else {
+      /* sort by the score */
+      XALLOCA(t_sort, t_tot);
+      for (t = 0; t < t_tot; t++)
+        t_sort[ind_score[tot_score[t]]++] = t;
 
-    /* resolve ties */
-    for(i = 0; i < t_tot;) {
-      for (j = i + 1; j < t_tot; j++) {
-        if (tot_score[t_sort[i]] != tot_score[t_sort[j]]) break;
+      /* resolve ties */
+      for(i = 0; i < t_tot;) {
+        for (j = i + 1; j < t_tot; j++) {
+          if (tot_score[t_sort[i]] != tot_score[t_sort[j]]) break;
+        }
+        for (k = i; k < j; k++) {
+          t_n1[k] = i;
+          t_n2[k] = j - 1;
+        }
+        i = j;
       }
-      for (k = i; k < j; k++) {
-        t_n1[k] = i;
-        t_n2[k] = j - 1;
-      }
-      i = j;
     }
   }
+
 
   if (raw_flag) {
     /* print table contents */
@@ -1618,12 +1743,13 @@ do_write_kirov_standings(FILE *f,
       fprintf(f, "%d;%d;", t_n1[i] + 1, t_n2[i] + 1);
       fprintf(f, "%d;", t_ind[t]);
       for (j = 0; j < p_tot; j++) {
-        if (!att_num[t][j]) {
+        up_ind = (t << row_sh) + j;
+        if (!att_num[up_ind]) {
           fprintf(f, "0;0;;");
-        } else if (full_sol[t][j]) {
-          fprintf(f, "%d;1;%d;", att_num[t][j], prob_score[t][j]);
+        } else if (full_sol[up_ind]) {
+          fprintf(f, "%d;1;%d;", att_num[up_ind], prob_score[up_ind]);
         } else {
-          fprintf(f, "%d;0;%d;", att_num[t][j], prob_score[t][j]);
+          fprintf(f, "%d;0;%d;", att_num[up_ind], prob_score[up_ind]);
         }
       }
       fprintf(f, "%d;%d;", tot_full[t], tot_score[t]);
@@ -1649,14 +1775,21 @@ do_write_kirov_standings(FILE *f,
       pgrefs[j - 1] = alloca(dur_len + 1);
       strcpy(pgrefs[j - 1], dur_str);
     }
+    XALLOCA(pg_n1, total_pages);
+    XALLOCA(pg_n2, total_pages);
+    for (j = 1; j <= total_pages; j++) {
+      pg_n1[j - 1] = 1 + users_per_page * (j - 1);
+      pg_n2[j - 1] = users_per_page * j;
+    }
+    pg_n2[total_pages - 1] = t_tot;
   }
 
   // no teams registered at all
   if (!t_tot) {
     if (!client_flag) write_standings_header(f, client_flag, 0, header_str, 0);
     /* print table header */
-    fprintf(f, "<table border=\"1\"%s><tr><th%s>%s</th><th%s>%s</th>",
-            global->stand_table_attr,
+    fprintf(f, "<table%s><tr%s><th%s>%s</th><th%s>%s</th>",
+            table_attr, r0_attr,
             global->stand_place_attr, _("Place"),
             global->stand_team_attr, _("User "));
     if (global->stand_extra_format[0]) {
@@ -1689,7 +1822,7 @@ do_write_kirov_standings(FILE *f,
       }
       fprintf(f, "</th>");
     }
-    fprintf(f, "<th%s>%s</th><th%s>%s</th></tr>",
+    fprintf(f, "<th%s>%s</th><th%s>%s</th></tr>\n",
             global->stand_solved_attr, _("Solved<br>problems"),
             global->stand_score_attr, _("Score"));
   }
@@ -1706,79 +1839,86 @@ do_write_kirov_standings(FILE *f,
       }
       if (!client_flag) write_standings_header(f, client_flag, 0, header_str, 0);
 
+      /* print "Last success" information */
+      if (last_success_run >= 0) {
+        duration_str(global->show_astr_time,
+                     runs[last_success_run].timestamp, start_time,
+                     dur_str, sizeof(dur_str));
+
+        fprintf(f, "<p%s>%s: %s, ",
+                global->stand_success_attr, _("Last success"), dur_str);
+        if (global->team_info_url[0]) {
+          teamdb_export_team(runs[last_success_run].team, &u_info);
+          sformat_message(dur_str, sizeof(dur_str), global->team_info_url,
+                          NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
+          fprintf(f, "<a href=\"%s\">", dur_str);
+        }
+        fprintf(f, "%s", teamdb_get_name(runs[last_success_run].team));
+        if (global->team_info_url[0]) {
+          fprintf(f, "</a>");
+        }
+        fprintf(f, ", ");
+
+        if (global->prob_info_url[0]) {
+          sformat_message(dur_str, sizeof(dur_str), global->prob_info_url,
+                          NULL, probs[runs[last_success_run].problem],
+                          NULL, NULL, NULL, 0, 0, 0);
+          fprintf(f, "<a href=\"%s\">", dur_str);
+        }
+        fprintf(f, "%s", probs[runs[last_success_run].problem]->short_name);
+        if (global->prob_info_url[0]) {
+          fprintf(f, "</a>");
+        }
+        fprintf(f, ".</p>\n");
+      }
+      /* print "Last submit" information */
+      if (last_submit_run >= 0) {
+        duration_str(global->show_astr_time,
+                     runs[last_submit_run].timestamp, start_time,
+                     dur_str, sizeof(dur_str));
+        fprintf(f, "<p%s>%s: %s, ",
+                global->stand_success_attr, _("Last submit"), dur_str);
+        if (global->team_info_url[0]) {
+          teamdb_export_team(runs[last_submit_run].team, &u_info);
+          sformat_message(dur_str, sizeof(dur_str), global->team_info_url,
+                          NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
+          fprintf(f, "<a href=\"%s\">", dur_str);
+        }
+        fprintf(f, "%s", teamdb_get_name(runs[last_submit_run].team));
+        if (global->team_info_url[0]) {
+          fprintf(f, "</a>");
+        }
+        fprintf(f, ", ");
+
+        if (global->prob_info_url[0]) {
+          sformat_message(dur_str, sizeof(dur_str), global->prob_info_url,
+                          NULL, probs[runs[last_submit_run].problem],
+                          NULL, NULL, NULL, 0, 0, 0);
+          fprintf(f, "<a href=\"%s\">", dur_str);
+        }
+        fprintf(f, "%s", probs[runs[last_submit_run].problem]->short_name);
+        if (global->prob_info_url[0]) {
+          fprintf(f, "</a>");
+        }
+        fprintf(f, ".</p>\n");
+      }
+      if (total_trans) {
+        fprintf(f, "<p%s>%s: %d</p>",
+                global->stand_success_attr, _("Runs being processed"), total_trans);
+      }
+
       if (total_pages > 1) {
-        fprintf(f, _("<p><big>Page %d of %d.</big></p>\n"), current_page, total_pages);
+        fprintf(f, _("<p%s>Page %d of %d.</p>\n"),
+                global->stand_page_cur_attr, current_page, total_pages);
 
-        fprintf(f, "<table border=\"0\">\n<tr><th>&nbsp;</th>");
-        for (j = 1; j <= total_pages; j++)
-          if (current_page != j)
-            fprintf(f, "<th><a href=\"%s\">%d</a></th>", pgrefs[j - 1], j);
-          else
-            fprintf(f, "<th>%d</th>", j);
-
-        fprintf(f, "</tr>\n<tr><td>%s</td>", _("Place"));
-        for (j = 1; j < total_pages; j++)
-          if (current_page != j)
-            fprintf(f, "<td><a href=\"%s\">[%d-%d]</a></td>",
-                    pgrefs[j - 1], 1 + users_per_page * (j - 1), users_per_page * j);
-          else
-            fprintf(f, "<td>[%d-%d]</td>",
-                    1 + users_per_page * (j - 1), users_per_page * j);
-        if (current_page != j)
-          fprintf(f, "<td><a href=\"%s\">[%d-%d]</a></td>",
-                  pgrefs[j - 1], 1 + users_per_page * (j - 1), t_tot);
-        else
-          fprintf(f, "<td>[%d-%d]</td>",
-                  1 + users_per_page * (j - 1), t_tot);
-
-        fprintf(f, "</tr>\n<tr><td>%s</td>", _("Solved"));
-        for (j = 1; j < total_pages; j++)
-          if (current_page != j)
-            fprintf(f, "<td><a href=\"%s\">[%d-%d]</a></td>",
-                    pgrefs[j - 1],
-                    tot_full[t_sort[users_per_page * (j - 1)]],
-                    tot_full[t_sort[users_per_page * j - 1]]);
-          else
-            fprintf(f, "<td>[%d-%d]</td>",
-                    tot_full[t_sort[users_per_page * (j - 1)]],
-                    tot_full[t_sort[users_per_page * j - 1]]);
-        if (current_page != j)
-          fprintf(f, "<td><a href=\"%s\">[%d-%d]</a></td>",
-                  pgrefs[j - 1],
-                  tot_full[t_sort[users_per_page * (j - 1)]],
-                  tot_full[t_sort[t_tot - 1]]);
-        else
-          fprintf(f, "<td>[%d-%d]</td>",
-                  tot_full[t_sort[users_per_page * (j - 1)]],
-                  tot_full[t_sort[t_tot - 1]]);
-
-        fprintf(f, "</tr>\n<tr><td>%s</td>", _("Score"));
-        for (j = 1; j < total_pages; j++)
-          if (current_page != j)
-            fprintf(f, "<td><a href=\"%s\">[%d-%d]</a></td>",
-                    pgrefs[j - 1],
-                    tot_score[t_sort[users_per_page * (j - 1)]],
-                    tot_score[t_sort[users_per_page * j - 1]]);
-          else
-            fprintf(f, "<td>[%d-%d]</td>",
-                    tot_score[t_sort[users_per_page * (j - 1)]],
-                    tot_score[t_sort[users_per_page * j - 1]]);
-        if (current_page != j)
-          fprintf(f, "<td><a href=\"%s\">[%d-%d]</a></td>",
-                  pgrefs[j - 1],
-                  tot_score[t_sort[users_per_page * (j - 1)]],
-                  tot_score[t_sort[t_tot - 1]]);
-        else
-          fprintf(f, "<td>[%d-%d]</td>",
-                  tot_score[t_sort[users_per_page * (j - 1)]],
-                  tot_score[t_sort[t_tot - 1]]);
-
-        fprintf(f, "</tr></table>\n");
+        write_kirov_page_table(f, total_pages, current_page, pgrefs,
+                               t_sort, tot_full, tot_score, pg_n1, pg_n2,
+                               pr_attrs, pc_attrs);
       }
 
       /* print table header */
-      fprintf(f, "<table border=\"1\"%s><tr><th%s>%s</th><th%s>%s</th>",
-              global->stand_table_attr,
+      fprintf(f, "<table%s><tr%s><th%s>%s</th><th%s>%s</th>",
+              table_attr, r0_attr,
               global->stand_place_attr, _("Place"),
               global->stand_team_attr, _("User "));
       if (global->stand_extra_format[0]) {
@@ -1811,7 +1951,7 @@ do_write_kirov_standings(FILE *f,
         }
         fprintf(f, "</th>");
       }
-      fprintf(f, "<th%s>%s</th><th%s>%s</th></tr>",
+      fprintf(f, "<th%s>%s</th><th%s>%s</th></tr>\n",
               global->stand_solved_attr, _("Solved<br>problems"),
               global->stand_score_attr, _("Score"));
     }
@@ -1820,9 +1960,9 @@ do_write_kirov_standings(FILE *f,
     t = t_sort[i];
 
     if (global->team_info_url[0] || global->stand_extra_format[0]) {
-      teamdb_export_team(t_ind[t], &ttt);
+      teamdb_export_team(t_ind[t], &u_info);
     } else {
-      memset(&ttt, 0, sizeof(ttt));
+      memset(&u_info, 0, sizeof(u_info));
     }
     if (global->stand_show_contestant_status
         || global->stand_show_warn_number
@@ -1831,12 +1971,18 @@ do_write_kirov_standings(FILE *f,
     } else {
       t_extra = 0;
     }
+    if (tot_full[t] != prev_prob) {
+      prev_prob = tot_full[t];
+      group_ind ^= 1;
+      row_ind = 0;
+    } else {
+      row_ind ^= 1;
+    }
+    row_attr = r_attrs[group_ind][row_ind];
     if (global->contestant_status_row_attr
         && t_extra && t_extra->status >= 0
         && t_extra->status < global->contestant_status_num) {
       row_attr = global->contestant_status_row_attr[t_extra->status];
-    } else {
-      row_attr = "";
     }
     fprintf(f, "<tr%s><td%s>", row_attr, global->stand_place_attr);
     if (t_n1[i] == t_n2[i]) fprintf(f, "%d", t_n1[i] + 1);
@@ -1845,7 +1991,7 @@ do_write_kirov_standings(FILE *f,
     fprintf(f, "<td%s>", global->stand_team_attr);
     if (global->team_info_url[0]) {
       sformat_message(dur_str, sizeof(dur_str), global->team_info_url,
-                      NULL, NULL, NULL, NULL, &ttt, 0, 0, 0);
+                      NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
       fprintf(f, "<a href=\"%s\">", dur_str);
     }
     fprintf(f, "%s", teamdb_get_name(t_ind[t]));
@@ -1855,7 +2001,7 @@ do_write_kirov_standings(FILE *f,
     fprintf(f, "</td>");
     if (global->stand_extra_format[0]) {
       sformat_message(dur_str, sizeof(dur_str), global->stand_extra_format,
-                      NULL, NULL, NULL, NULL, &ttt, 0, 0, 0);
+                      NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
       fprintf(f, "<td%s>%s</td>", global->stand_extra_attr, dur_str);
     }
     if (global->stand_show_contestant_status
@@ -1877,46 +2023,54 @@ do_write_kirov_standings(FILE *f,
       }
     }
     for (j = 0; j < p_tot; j++) {
-      if (!att_num[t][j]) {
-        fprintf(f, "<td%s>&nbsp;</td>", global->stand_prob_attr);
-      } else if (full_sol[t][j]) {
+      up_ind = (t << row_sh) + j;
+      row_attr = global->stand_prob_attr;
+      if (trans_num[up_ind] && global->stand_trans_attr[0])
+        row_attr = global->stand_trans_attr;
+      if (!att_num[up_ind]) {
+        fprintf(f, "<td%s>&nbsp;</td>", row_attr);
+      } else if (full_sol[up_ind]) {
         att_buf[0] = 0;
         if (global->stand_show_att_num) {
-          snprintf(att_buf, sizeof(att_buf), " (%d)", sol_att[t][j]);
+          snprintf(att_buf, sizeof(att_buf), " (%d)", sol_att[up_ind]);
         }
-        if (global->stand_show_ok_time && sol_time[t][j] > 0) {
-          duration_str(global->show_astr_time, sol_time[t][j], start_time,
+        if (global->stand_show_ok_time && sol_time[up_ind] > 0) {
+          duration_str(global->show_astr_time, sol_time[up_ind], start_time,
                        dur_str, 0);
           fprintf(f, "<td%s><b>%d</b>%s<div%s>%s</div></td>",
-                  global->stand_prob_attr, prob_score[t][j], att_buf,
+                  row_attr, prob_score[up_ind], att_buf,
                   global->stand_time_attr, dur_str);
         } else {
-          fprintf(f, "<td%s><b>%d</b>%s</td>", global->stand_prob_attr, 
-                  prob_score[t][j], att_buf);
+          fprintf(f, "<td%s><b>%d</b>%s</td>", row_attr, 
+                  prob_score[up_ind], att_buf);
         }
       } else {
         att_buf[0] = 0;
         if (global->stand_show_att_num) {
-          snprintf(att_buf, sizeof(att_buf), " (%d)", sol_att[t][j]);
+          snprintf(att_buf, sizeof(att_buf), " (%d)", sol_att[up_ind]);
         }
-        if (global->stand_show_ok_time && sol_time[t][j] > 0) {
-          duration_str(global->show_astr_time, sol_time[t][j], start_time,
-                       dur_str, 0);
+        if (global->stand_show_ok_time && sol_time[up_ind] > 0) {
+          duration_str(global->show_astr_time, sol_time[up_ind],
+                       start_time, dur_str, 0);
           fprintf(f, "<td%s>%d%s<div%s>%s</div></td>",
-                  global->stand_prob_attr, prob_score[t][j], att_buf,
+                  row_attr, prob_score[up_ind], att_buf,
                   global->stand_time_attr, dur_str);
         } else {
-          fprintf(f, "<td%s>%d%s</td>", global->stand_prob_attr, 
-                  prob_score[t][j], att_buf);
+          fprintf(f, "<td%s>%d%s</td>", row_attr, prob_score[up_ind], att_buf);
         }
       }
     }
-    fprintf(f, "<td%s>%d</td><td%s>%d</td></tr>",
+    fprintf(f, "<td%s>%d</td><td%s>%d</td></tr>\n",
             global->stand_solved_attr, tot_full[t],
             global->stand_score_attr, tot_score[t]);
 
     if (user_on_page == users_per_page - 1 && current_page != total_pages) {
       fputs("</table>\n", f);
+
+      write_kirov_page_table(f, total_pages, current_page, pgrefs,
+                             t_sort, tot_full, tot_score, pg_n1, pg_n2,
+                             pr_attrs, pc_attrs);
+
       if (!client_flag) {
         if (footer_str) {
           process_template(f, footer_str, 0, 0, 0, get_copyright());
@@ -1933,7 +2087,7 @@ do_write_kirov_standings(FILE *f,
   }
 
   // print row of total
-  fputs("<tr>", f);
+  fprintf(f, "<tr%s>", rT_attr);
   fprintf(f, "<td%s>&nbsp;</td>", global->stand_place_attr);
   fprintf(f, "<td%s>%s:</td>", global->stand_team_attr, _("Total"));
   if (global->stand_extra_format[0]) {
@@ -1950,10 +2104,10 @@ do_write_kirov_standings(FILE *f,
     fprintf(f, "<td%s>%d</td>", global->stand_prob_attr, tot_att[j]);
     ttot_att += tot_att[j];
   }
-  fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>",
+  fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>\n",
           global->stand_solved_attr, ttot_att, global->stand_penalty_attr);
   // print row of success
-  fputs("<tr>", f);
+  fprintf(f, "<tr%s>", rT_attr);
   fprintf(f, "<td%s>&nbsp;</td>", global->stand_place_attr);
   fprintf(f, "<td%s>%s:</td>", global->stand_team_attr, _("Success"));
   if (global->stand_extra_format[0]) {
@@ -1970,10 +2124,10 @@ do_write_kirov_standings(FILE *f,
     fprintf(f, "<td%s>%d</td>", global->stand_prob_attr, succ_att[j]);
     ttot_succ += succ_att[j];
   }
-  fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>",
+  fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>\n",
           global->stand_solved_attr, ttot_succ, global->stand_penalty_attr);
   // print row of percentage
-  fputs("<tr>", f);
+  fprintf(f, "<tr%s>", rT_attr);
   fprintf(f, "<td%s>&nbsp;</td>", global->stand_place_attr);
   fprintf(f, "<td%s>%%:</td>", global->stand_team_attr);
   if (global->stand_extra_format[0]) {
@@ -1997,10 +2151,15 @@ do_write_kirov_standings(FILE *f,
   if (ttot_att > 0) {
     perc = (int) ((double) ttot_succ / ttot_att * 100.0 + 0.5);
   }
-  fprintf(f, "<td%s>%d%%</td><td%s>&nbsp;</td></tr>",
+  fprintf(f, "<td%s>%d%%</td><td%s>&nbsp;</td></tr>\n",
           global->stand_solved_attr, perc, global->stand_penalty_attr);
 
   fputs("</table>\n", f);
+
+  write_kirov_page_table(f, total_pages, current_page, pgrefs,
+                         t_sort, tot_full, tot_score, pg_n1, pg_n2,
+                         pr_attrs, pc_attrs);
+
   if (!client_flag) {
     if (footer_str) {
       process_template(f, footer_str, 0, 0, 0, get_copyright());
@@ -2014,13 +2173,13 @@ do_write_kirov_standings(FILE *f,
   }
 
  cleanup:
-  if (sol_att) {
-    for (i = 0; i < t_tot; i++)
-      xfree(sol_att[i]);
-    xfree(sol_att);
-  }
-
-  return;
+  xfree(prob_score);
+  xfree(att_num);
+  xfree(disq_num);
+  xfree(sol_att);
+  xfree(full_sol);
+  xfree(sol_time);
+  xfree(trans_num);
 }
 
 static int
@@ -2035,6 +2194,55 @@ sec_to_min(int secs)
     return (secs + 30) / 60;
   }
   abort();
+}
+
+static void
+write_moscow_page_table(FILE *f, int total_pages, int current_page,
+                        unsigned char **pgrefs,
+                        int *pg_n1, int *pg_n2,
+                        int *pg_sc1, int *pg_sc2,
+                        int *pg_pen1, int *pg_pen2,
+                        unsigned char **pr_attrs, unsigned char **pc_attrs)
+{
+  int j;
+
+  fprintf(f, "<table%s>\n<tr%s><td%s>%s</td>",
+          global->stand_page_table_attr, pr_attrs[0], pc_attrs[0], _("Page"));
+  for (j = 1; j <= total_pages; j++)
+    if (current_page != j)
+      fprintf(f, "<td%s><b><a href=\"%s\">%d</a></b></td>",
+              pc_attrs[1], pgrefs[j - 1], j);
+    else
+      fprintf(f, "<td%s><b>%d</b></td>", pc_attrs[1], j);
+
+  fprintf(f, "</tr>\n<tr%s><td%s>%s</td>",
+          pr_attrs[1], pc_attrs[0], _("Place"));
+  for (j = 0; j < total_pages; j++)
+    if (current_page != j + 1)
+      fprintf(f, "<td%s><a href=\"%s\">[%d-%d]</a></td>",
+              pc_attrs[1], pgrefs[j], pg_n1[j], pg_n2[j]);
+    else
+      fprintf(f, "<td%s>[%d-%d]</td>", pc_attrs[1], pg_n1[j], pg_n2[j]);
+
+  fprintf(f, "</tr>\n<tr%s><td%s>%s</td>",
+          pr_attrs[2], pc_attrs[0], _("Score"));
+  for (j = 0; j < total_pages; j++)
+    if (current_page != j + 1)
+      fprintf(f, "<td%s><a href=\"%s\">[%d-%d]</a></td>",
+              pc_attrs[1], pgrefs[j], pg_sc1[j], pg_sc2[j]);
+    else
+      fprintf(f, "<td%s>[%d-%d]</td>", pc_attrs[1], pg_sc1[j], pg_sc2[j]);
+
+  fprintf(f, "</tr>\n<tr%s><td%s>%s</td>",
+          pr_attrs[3], pc_attrs[0], _("Penalty"));
+  for (j = 0; j < total_pages; j++)
+    if (current_page != j + 1)
+      fprintf(f, "<td%s><a href=\"%s\">[%d-%d]</a></td>",
+              pr_attrs[1], pgrefs[j], pg_pen1[j], pg_pen2[j]);
+    else
+      fprintf(f, "<td%s>[%d-%d]</td>", pr_attrs[1],
+              pg_pen1[j], pg_pen2[j]);
+  fprintf(f, "</tr></table>\n");
 }
 
 void
@@ -2112,6 +2320,12 @@ do_write_moscow_standings(FILE *f,
   path_t stand_tmp;             /* temporary file path */
   path_t stand_path;            /* final path for a standings page */
   unsigned char *row_attr;
+  unsigned char *r_attrs[2][2] = { { "", ""}, { "", "" }};
+  unsigned char *pr_attrs[4] = { "", "", "", "" };
+  unsigned char *pc_attrs[2] = { "", "" };
+  unsigned char *r0_attr = "", *rT_attr = "", *table_attr;
+  int attr_num;
+  int prev_prob = -1, row_ind = 0, group_ind = 1;
 
   /* variables, that must be freed */
   int *up_score = 0;            /* the best score gained by a user for a problem */
@@ -2125,6 +2339,34 @@ do_write_moscow_standings(FILE *f,
   
   if (client_flag) head_style = cur_contest->team_head_style;
   else head_style = "h2";
+
+  if (!global->stand_table_attr[0] && !global->stand_row_attr) {
+    table_attr = " border=\"1\"";
+  } else {
+    table_attr = global->stand_table_attr;
+  }
+
+  attr_num = sarray_len(global->stand_row_attr);
+  i = 0;
+  if (attr_num >= 5) {
+    r0_attr = global->stand_row_attr[i++];
+    r_attrs[0][0] = global->stand_row_attr[i++];
+    r_attrs[0][1] = global->stand_row_attr[i++];
+    r_attrs[1][0] = global->stand_row_attr[i++];
+    r_attrs[1][1] = global->stand_row_attr[i++];
+    attr_num -= 5;
+  }
+  if (attr_num >= 1) {
+    rT_attr = global->stand_row_attr[i++];
+    attr_num -= 1;
+  }
+
+  attr_num = sarray_len(global->stand_page_row_attr);
+  for (i = 0; i < 4 && i < attr_num; i++)
+    pr_attrs[i] = global->stand_page_row_attr[i];
+  attr_num = sarray_len(global->stand_page_col_attr);
+  for (i = 0; i < 2 && i < attr_num; i++)
+    pc_attrs[i] = global->stand_page_col_attr[i];
 
   cur_time = time(0);
   last_submit_start = last_success_start = start_time = run_get_start_time();
@@ -2254,6 +2496,10 @@ do_write_moscow_standings(FILE *f,
 
     if (up_solved[up_ind]) continue;
     if (pe->status >= RUN_TRANSIENT_FIRST && pe->status <= RUN_TRANSIENT_LAST) {
+      up_trans[up_ind] = 1;
+      continue;
+    }
+    if (pe->status == RUN_PENDING) {
       up_trans[up_ind] = 1;
       continue;
     }
@@ -2444,8 +2690,8 @@ do_write_moscow_standings(FILE *f,
   if (!u_tot) {
     write_standings_header(f, client_flag, user_id, header_str, user_name);
     /* print the table header */
-    fprintf(f, "<table border=\"1\"%s><tr><th%s>%s</th><th%s>%s</th>",
-            global->stand_table_attr,
+    fprintf(f, "<table%s><tr%s><th%s>%s</th><th%s>%s</th>",
+            table_attr, r0_attr,
             global->stand_place_attr, _("Place"),
             global->stand_team_attr, _("Participant"));
     if (global->stand_extra_format[0]) {
@@ -2489,7 +2735,7 @@ do_write_moscow_standings(FILE *f,
                  pgrefs[current_page - 1]);
         if (!(f = sf_fopen(stand_tmp, "w"))) return;
       }
-      if (header_str || client_flag)
+      if (!client_flag)
         write_standings_header(f, client_flag, user_id, header_str, user_name);
       /* print "Last success" information */
       if (last_success_run >= 0) {
@@ -2563,44 +2809,17 @@ do_write_moscow_standings(FILE *f,
       }
       /* print page number information and references */
       if (total_pages > 1) {
-        fprintf(f, _("<p><big>Page %d of %d.</big></p>\n"), current_page, total_pages);
+        fprintf(f, _("<p%s>Page %d of %d.</p>\n"),
+                global->stand_page_cur_attr, current_page, total_pages);
 
-        fprintf(f, "<table border=\"0\">\n<tr><td>%s</td>", _("Page"));
-        for (j = 1; j <= total_pages; j++)
-          if (current_page != j)
-            fprintf(f, "<td><b><a href=\"%s\">%d</a></b></td>", pgrefs[j - 1], j);
-          else
-            fprintf(f, "<td><b>%d</b></td>", j);
-
-        fprintf(f, "</tr>\n<tr><td>%s</td>", _("Place"));
-        for (j = 0; j < total_pages; j++)
-          if (current_page != j + 1)
-            fprintf(f, "<td><a href=\"%s\">[%d-%d]</a></td>",
-                    pgrefs[j], pg_n1[j], pg_n2[j]);
-          else
-            fprintf(f, "<td>[%d-%d]</td>", pg_n1[j], pg_n2[j]);
-
-        fprintf(f, "</tr>\n<tr><td>%s</td>", _("Score"));
-        for (j = 0; j < total_pages; j++)
-          if (current_page != j + 1)
-            fprintf(f, "<td><a href=\"%s\">[%d-%d]</a></td>",
-                    pgrefs[j], pg_sc1[j], pg_sc2[j]);
-          else
-            fprintf(f, "<td>[%d-%d]</td>", pg_sc1[j], pg_sc2[j]);
-
-        fprintf(f, "</tr>\n<tr><td>%s</td>", _("Penalty"));
-        for (j = 0; j < total_pages; j++)
-          if (current_page != j + 1)
-            fprintf(f, "<td><a href=\"%s\">[%d-%d]</a></td>",
-                    pgrefs[j], pg_pen1[j], pg_pen2[j]);
-          else
-            fprintf(f, "<td>[%d-%d]</td>", pg_pen1[j], pg_pen2[j]);
-        fprintf(f, "</tr></table>\n");
+        write_moscow_page_table(f, total_pages, current_page,
+                                pgrefs, pg_n1, pg_n2, pg_sc1, pg_sc2,
+                                pg_pen1, pg_pen2, pr_attrs, pc_attrs);
       }
 
       /* print the table header */
-      fprintf(f, "<table border=\"1\"%s><tr><th%s>%s</th><th%s>%s</th>",
-              global->stand_table_attr,
+      fprintf(f, "<table%s><tr%s><th%s>%s</th><th%s>%s</th>",
+              table_attr, r0_attr,
               global->stand_place_attr, _("Place"),
               global->stand_team_attr, _("User "));
       if (global->stand_extra_format[0]) {
@@ -2648,7 +2867,14 @@ do_write_moscow_standings(FILE *f,
         || global->contestant_status_row_attr)
       u_extra = team_extra_get_entry(u_ind[u]);
     /* FIXME: consider virtual and real users */
-    row_attr = "";
+    if (prev_prob != u_score[u]) {
+      prev_prob = u_score[u];
+      group_ind ^= 1;
+      row_ind = 0;
+    } else {
+      row_ind ^= 1;
+    }
+    row_attr = r_attrs[group_ind][row_ind];
     if (global->contestant_status_row_attr
         && u_extra && u_extra->status >= 0
         && u_extra->status < global->contestant_status_num)
@@ -2738,13 +2964,16 @@ do_write_moscow_standings(FILE *f,
       fprintf(f, "</td>");
     }
 
-    fprintf(f, "<td%s>%d</td><td%s>%d</td></tr>",
+    fprintf(f, "<td%s>%d</td><td%s>%d</td></tr>\n",
             global->stand_score_attr, u_score[u],
             global->stand_penalty_attr, u_pen[u]);
 
     if (user_on_page == users_per_page - 1 && current_page != total_pages) {
       fputs("</table>\n", f);
       if (!client_flag) {
+        write_moscow_page_table(f, total_pages, current_page,
+                                pgrefs, pg_n1, pg_n2, pg_sc1, pg_sc2,
+                                pg_pen1, pg_pen2, pr_attrs, pc_attrs);
         if (footer_str) {
           process_template(f, footer_str, 0, 0, 0, get_copyright());
         } else {
@@ -2759,7 +2988,7 @@ do_write_moscow_standings(FILE *f,
     }
   }
 
-  fprintf(f, "<tr><td%s>&nbsp;</td><td%s>%s:</td>",
+  fprintf(f, "<tr%s><td%s>&nbsp;</td><td%s>%s:</td>", rT_attr,
           global->stand_place_attr, global->stand_team_attr, _("Total"));
   if (global->stand_extra_format[0])
     fprintf(f, "<td%s>&nbsp;</td>", global->stand_extra_attr);
@@ -2772,10 +3001,10 @@ do_write_moscow_standings(FILE *f,
     fprintf(f, "<td%s>%d</td>", global->stand_prob_attr, p_att[j]);
     all_att += p_att[j];
   }
-  fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>",
+  fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>\n",
           global->stand_solved_attr, all_att, global->stand_penalty_attr);
 
-  fprintf(f, "<tr><td%s>&nbsp;</td><td%s>%s:</td>",
+  fprintf(f, "<tr%s><td%s>&nbsp;</td><td%s>%s:</td>", rT_attr,
           global->stand_place_attr, global->stand_team_attr, _("Success"));
   if (global->stand_extra_format[0])
     fprintf(f, "<td%s>&nbsp;</td>", global->stand_extra_attr);
@@ -2788,10 +3017,10 @@ do_write_moscow_standings(FILE *f,
     fprintf(f, "<td%s>%d</td>", global->stand_prob_attr, p_succ[j]);
     all_succ += p_succ[j];
   }
-  fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>",
+  fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>\n",
           global->stand_solved_attr, all_succ, global->stand_penalty_attr);
 
-  fprintf(f, "<tr><td%s>&nbsp;</td><td%s>%%:</td>",
+  fprintf(f, "<tr%s><td%s>&nbsp;</td><td%s>%%:</td>", rT_attr,
           global->stand_place_attr, global->stand_team_attr);
   if (global->stand_extra_format[0])
     fprintf(f, "<td%s>&nbsp;</td>", global->stand_extra_attr);
@@ -2808,16 +3037,21 @@ do_write_moscow_standings(FILE *f,
               (int)(p_succ[j] * 100.0 / p_att[j] + 0.5));
   }
   if (!all_att)
-    fprintf(f, "<td%s>&nbsp;</td><td%s>&nbsp;</td></tr>",
+    fprintf(f, "<td%s>&nbsp;</td><td%s>&nbsp;</td></tr>\n",
             global->stand_solved_attr, global->stand_penalty_attr);
   else
-    fprintf(f, "<td%s>%d%%</td><td%s>&nbsp;</td></tr>",
+    fprintf(f, "<td%s>%d%%</td><td%s>&nbsp;</td></tr>\n",
             global->stand_solved_attr,
             (int)(all_succ * 100.0 / all_att + 0.5),
             global->stand_penalty_attr);
   
   fputs("</table>\n", f);
   if (!client_flag) {
+    if (total_pages > 1) {
+      write_moscow_page_table(f, total_pages, current_page,
+                              pgrefs, pg_n1, pg_n2, pg_sc1, pg_sc2,
+                              pg_pen1, pg_pen2, pr_attrs, pc_attrs);
+    }
     if (footer_str) {
       process_template(f, footer_str, 0, 0, 0, get_copyright());
     } else {
@@ -2849,7 +3083,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
                    unsigned char const *footer_str, int raw_flag,
                    const unsigned char *user_name)
 {
-  int      i, j;
+  int      i, j, t;
 
   int     *t_ind;
   int      t_max;
@@ -2858,18 +3092,22 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   int     *t_pen;
   int     *t_rev;
   int     *t_sort;
+  int     *t_sort2;
+  int     *prob_cnt;
+  int     *pen_cnt;
+  int      max_pen, max_solved;
   int     *t_n1;
   int     *t_n2;
   int     *p_ind;
   int     *p_rev;
   int      p_max;
   int      p_tot;
-  int    **calc;
   int      r_tot, k;
   int      tt, pp;
   int      ttot_att, ttot_succ, perc;
 
-  time_t **ok_time;
+  time_t *ok_time = 0;
+  int    *calc = 0;
 
   time_t start_time;
   time_t stop_time;
@@ -2889,11 +3127,36 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   time_t last_success_start = 0;
   int *tot_att, *succ_att;
   struct team_extra *t_extra;
+  unsigned char *r0_attr = "", *rT_attr = "", *table_attr;
+  unsigned char *r_attrs[2][2] = {{"", ""}, {"", ""}};
+  int row_sh, row_sz, up_ind, attr_num;
+  int prev_prob = -1, row_ind = 0, group_ind = 1;
 
   write_standings_header(f, client_flag, user_id, header_str, user_name);
 
   if (client_flag) head_style = cur_contest->team_head_style;
   else head_style = "h2";
+
+  if (!global->stand_table_attr[0] && !global->stand_row_attr) {
+    table_attr = " border=\"1\"";
+  } else {
+    table_attr = global->stand_table_attr;
+  }
+
+  attr_num = sarray_len(global->stand_row_attr);
+  i = 0;
+  if (attr_num >= 5) {
+    r0_attr = global->stand_row_attr[i++];
+    r_attrs[0][0] = global->stand_row_attr[i++];
+    r_attrs[0][1] = global->stand_row_attr[i++];
+    r_attrs[1][0] = global->stand_row_attr[i++];
+    r_attrs[1][1] = global->stand_row_attr[i++];
+    attr_num -= 5;
+  }
+  if (attr_num >= 1) {
+    rT_attr = global->stand_row_attr[i++];
+    attr_num -= 1;
+  }
 
   cur_time = time(0);
   start_time = run_get_start_time();
@@ -2947,10 +3210,8 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   }
 
   /* make team index */
-  if (!XALLOCA(t_ind, t_max)) goto alloca_failed;
-  XMEMZERO(t_ind, t_max);
-  if (!XALLOCA(t_rev, t_max)) goto alloca_failed;
-  XMEMZERO(t_rev, t_max);
+  XALLOCAZ(t_ind, t_max);
+  XALLOCAZ(t_rev, t_max);
   for (i = 1, t_tot = 0; i < t_max; i++) {
     t_rev[i] = -1;
     if (!teamdb_lookup(i)) continue;
@@ -2959,22 +3220,15 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     t_rev[i] = t_tot;
     t_ind[t_tot++] = i;
   }
-  if (!XALLOCA(t_prob, t_tot)) goto alloca_failed;
-  XMEMZERO(t_prob, t_tot);
-  if (!XALLOCA(t_pen,t_tot)) goto alloca_failed;
-  XMEMZERO(t_pen, t_tot);
-  if (!XALLOCA(t_sort, t_tot)) goto alloca_failed;
-  for (i = 0; i < t_tot; i++)
-    t_sort[i] = i;
-  if (!XALLOCA(t_n1, t_tot)) goto alloca_failed;
-  if (!XALLOCA(t_n2, t_tot)) goto alloca_failed;
+  XALLOCAZ(t_prob, t_tot);
+  XALLOCAZ(t_pen,t_tot);
+  XALLOCA(t_n1, t_tot);
+  XALLOCA(t_n2, t_tot);
 
   /* make problem index */
   p_max = max_prob + 1;
-  if (!XALLOCA(p_ind, p_max)) goto alloca_failed;
-  XMEMZERO(p_ind, p_max);
-  if (!XALLOCA(p_rev, p_max)) goto alloca_failed;
-  XMEMZERO(p_rev, p_max);
+  XALLOCAZ(p_ind, p_max);
+  XALLOCAZ(p_rev, p_max);
   for (i = 1, p_tot = 0; i < p_max; i++) {
     p_rev[i] = -1;
     if (!probs[i] || probs[i]->hidden) continue;
@@ -2982,15 +3236,13 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     p_ind[p_tot++] = i;
   }
 
-  /* make calculation table */
-  if (!XALLOCA(calc, t_tot)) goto alloca_failed;
-  XMEMZERO(calc, t_tot);
-  if (!XALLOCA(ok_time, t_tot)) goto alloca_failed;
-  for (i = 0; i < t_tot; i++) {
-    if (!XALLOCA(calc[i], p_tot)) goto alloca_failed;
-    XMEMZERO(calc[i], p_tot);
-    if (!XALLOCA(ok_time[i], p_tot)) goto alloca_failed;
-    XMEMZERO(ok_time[i], p_tot);
+  /* calculate the power of 2 not less than p_tot */
+  for (row_sz = 1, row_sh = 0; row_sz < p_tot; row_sz <<= 1, row_sh++);
+  /* all two-dimensional arrays will have rows of size row_sz */
+
+  if (t_tot > 0) {
+    XCALLOC(calc, t_tot * row_sz);
+    XCALLOC(ok_time, t_tot * row_sz);
   }
 
   XALLOCAZ(succ_att, p_tot);
@@ -3028,38 +3280,39 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     }
     tt = t_rev[pe->team];
     pp = p_rev[pe->problem];
+    up_ind = (tt << row_sh) + pp;
 
     if (pe->status == RUN_OK) {
       /* program accepted */
-      if (calc[tt][pp] > 0) continue;
+      if (calc[up_ind] > 0) continue;
 
       last_success_run = k;
-      t_pen[tt] += 20 * -calc[tt][pp];
-      calc[tt][pp] = 1 - calc[tt][pp];
+      t_pen[tt] += 20 * - calc[up_ind];
+      calc[up_ind] = 1 - calc[up_ind];
       t_prob[tt]++;
       succ_att[pp]++;
       tot_att[pp]++;
       if (global->virtual) {
-        ok_time[tt][pp] = sec_to_min(tdur);
-        if (!global->ignore_success_time) t_pen[tt] += ok_time[tt][pp];
+        ok_time[up_ind] = sec_to_min(tdur);
+        if (!global->ignore_success_time) t_pen[tt] += ok_time[up_ind];
         last_success_time = run_time;
         last_success_start = tstart;
       } else {
         if (run_time < start_time) run_time = start_time;
-        ok_time[tt][pp] = sec_to_min(run_time - start_time);
-        if (!global->ignore_success_time) t_pen[tt] += ok_time[tt][pp];
+        ok_time[up_ind] = sec_to_min(run_time - start_time);
+        if (!global->ignore_success_time) t_pen[tt] += ok_time[up_ind];
         last_success_time = run_time;
         last_success_start = start_time;
       }
     } else if (pe->status==RUN_COMPILE_ERR && !global->ignore_compile_errors) {
-      if (calc[tt][pp] <= 0) {
-        calc[tt][pp]--;
+      if (calc[up_ind] <= 0) {
+        calc[up_ind]--;
         tot_att[pp]++;
       }
     } else if (run_is_failed_attempt(pe->status)) {
       /* some error */
-      if (calc[tt][pp] <= 0) {
-        calc[tt][pp]--;
+      if (calc[up_ind] <= 0) {
+        calc[up_ind]--;
         tot_att[pp]++;
       }
     }
@@ -3068,28 +3321,39 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   /* now sort the teams in the descending order */
   /* t_sort: sorted->unsorted index map */
   /* ties are resolved in the order of the team's ids */
-  for (i = 0; i < t_tot - 1; i++) {
-    int maxind = i, temp;
-    for (j = i + 1; j < t_tot; j++) {
-      if (t_prob[t_sort[j]] < t_prob[t_sort[maxind]]) continue;
-      if (t_prob[t_sort[j]] > t_prob[t_sort[maxind]]) {
-        maxind = j;
-        continue;
-      }
-      /* t_prob[t_sort[j]] == t_prob[t_sort[maxind]] */
-      if (t_pen[t_sort[j]] > t_pen[t_sort[maxind]]) continue;
-      if (t_pen[t_sort[j]] < t_pen[t_sort[maxind]]) {
-        maxind = j;
-        continue;
-      }
-      /* t_pen[t_sort[j]] == t_pen[t_sort[maxind]] */
-      if (t_sort[j] < t_sort[maxind]) {
-        maxind = j;
-      }
+  if (t_tot > 0) {
+    max_pen = -1;
+    max_solved = -1;
+    for (i = 0; i < t_tot; i++) {
+      if (t_prob[i] > max_solved) max_solved = t_prob[i];
+      if (t_pen[i] > max_pen) max_pen = t_pen[i];
     }
-    temp = t_sort[i];
-    t_sort[i] = t_sort[maxind];
-    t_sort[maxind] = temp;
+    XALLOCAZ(prob_cnt, max_solved + 1);
+    XALLOCAZ(pen_cnt, max_pen + 1);
+    for (i = 0; i < t_tot; i++) {
+      prob_cnt[t_prob[i]]++;
+      pen_cnt[t_pen[i]]++;
+    }
+    i = 0;
+    for (t = max_solved - 1; t >= 0; t--) {
+      j = prob_cnt[t + 1] + i;
+      prob_cnt[t + 1] = i;
+      i = j;
+    }
+    prob_cnt[0] = i;
+    i = 0;
+    for (t = 1; t <= max_pen; t++) {
+      j = pen_cnt[t - 1] + i;
+      pen_cnt[t - 1] = i;
+      i = j;
+    }
+    pen_cnt[t - 1] = i;
+    XALLOCA(t_sort2, t_tot);
+    XALLOCA(t_sort, t_tot);
+    for (t = 0; t < t_tot; t++)
+      t_sort2[pen_cnt[t_pen[t]]++] = t;
+    for (t = 0; t < t_tot; t++)
+      t_sort[prob_cnt[t_prob[t_sort2[t]]]++] = t_sort2[t];
   }
 
   /* now resolve ties */
@@ -3107,14 +3371,15 @@ do_write_standings(FILE *f, int client_flag, int user_id,
 
   if (raw_flag) {
     for (i = 0; i < t_tot; i++) {
-      int t = t_sort[i];
+      t = t_sort[i];
       fprintf(f, "%d;%d;", t_n1[i] + 1, t_n2[i] + 1);
       fprintf(f, "%d;", t_ind[t]);
       for (j = 0; j < p_tot; j++) {
-        if (calc[t][j] < 0) {
-          fprintf(f, "%d;0;;", -calc[t][j]);
-        } else if (calc[t][j] > 0) {
-          fprintf(f, "%d;1;%ld;", calc[t][j] - 1, ok_time[t][j]);
+        up_ind = (t << row_sh) + j;
+        if (calc[up_ind] < 0) {
+          fprintf(f, "%d;0;;", -calc[up_ind]);
+        } else if (calc[up_ind] > 0) {
+          fprintf(f, "%d;1;%ld;", calc[up_ind] - 1, ok_time[up_ind]);
         } else {
           fprintf(f, "0;0;;");
         }
@@ -3160,8 +3425,8 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       fprintf(f, ".</p>\n");
     }
     /* print table header */
-    fprintf(f, "<table border=\"1\"%s><tr><th%s>%s</th><th%s>%s</th>",
-            global->stand_table_attr,
+    fprintf(f, "<table%s><tr%s><th%s>%s</th><th%s>%s</th>",
+            table_attr, r0_attr,
             global->stand_place_attr, _("Place"),
             global->stand_team_attr, _("User "));
     if (global->stand_extra_format[0]) {
@@ -3194,12 +3459,12 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       }
       fprintf(f, "</th>");
     }
-    fprintf(f, "<th%s>%s</th><th%s>%s</th></tr>",
+    fprintf(f, "<th%s>%s</th><th%s>%s</th></tr>\n",
             global->stand_solved_attr, _("Total"),
             global->stand_penalty_attr, _("Penalty"));
 
     for (i = 0; i < t_tot; i++) {
-      int t = t_sort[i];
+      t = t_sort[i];
 
       if (global->stand_show_contestant_status
           || global->stand_show_warn_number
@@ -3209,7 +3474,14 @@ do_write_standings(FILE *f, int client_flag, int user_id,
         t_extra = 0;
       }
 
-      bgcolor_ptr = 0;
+      if (prev_prob != t_prob[t]) {
+        prev_prob = t_prob[t];
+        group_ind ^= 1;
+        row_ind = 0;
+      } else {
+        row_ind ^= 1;
+      }
+      bgcolor_ptr = r_attrs[group_ind][row_ind];
       if (user_id > 0 && user_id == t_ind[t] &&
           global->stand_self_row_attr[0]) {
         bgcolor_ptr = global->stand_self_row_attr;
@@ -3229,12 +3501,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
           && t_extra->status < global->contestant_status_num) {
         bgcolor_ptr = global->contestant_status_row_attr[t_extra->status];
       }
-      if (bgcolor_ptr) {
-        fprintf(f, "<tr%s>", bgcolor_ptr);
-      } else {
-        fputs("<tr>", f);
-      }
-      fprintf(f, "<td%s>", global->stand_place_attr);
+      fprintf(f, "<tr%s><td%s>", bgcolor_ptr, global->stand_place_attr);
       if (t_n1[i] == t_n2[i]) fprintf(f, "%d", t_n1[i] + 1);
       else fprintf(f, "%d-%d", t_n1[i] + 1, t_n2[i] + 1);
       fputs("</td>", f);
@@ -3278,37 +3545,38 @@ do_write_standings(FILE *f, int client_flag, int user_id,
         }
       }
       for (j = 0; j < p_tot; j++) {
+        up_ind = (t << row_sh) + j;
         fprintf(f, "<td%s>", global->stand_prob_attr);
-        if (calc[t][j] < 0) {
-          fprintf(f, "%d", calc[t][j]);
-        } else if (calc[t][j] == 1) {
+        if (calc[up_ind] < 0) {
+          fprintf(f, "%d", calc[up_ind]);
+        } else if (calc[up_ind] == 1) {
           if (global->ignore_success_time || !global->stand_show_ok_time) {
             fprintf(f, "+");
           } else {
             fprintf(f, "+ <div%s>(%ld:%02ld)</div>",
                     global->stand_time_attr,
-                    ok_time[t][j] / 60, ok_time[t][j] % 60);
+                    ok_time[up_ind] / 60, ok_time[up_ind] % 60);
           }
-        } else if (calc[t][j] > 0) {
+        } else if (calc[up_ind] > 0) {
           if (global->ignore_success_time || !global->stand_show_ok_time) {
-            fprintf(f, "+%d", calc[t][j] - 1);
+            fprintf(f, "+%d", calc[up_ind] - 1);
           } else {
-            fprintf(f, "+%d <div%s>(%ld:%02ld)</div>", calc[t][j] - 1,
+            fprintf(f, "+%d <div%s>(%ld:%02ld)</div>", calc[up_ind] - 1,
                     global->stand_time_attr,
-                    ok_time[t][j] / 60, ok_time[t][j] % 60);
+                    ok_time[up_ind] / 60, ok_time[up_ind] % 60);
           }
         } else {
           fprintf(f, "&nbsp;");
         }
         fputs("</td>", f);
       }
-      fprintf(f, "<td%s>%d</td><td%s>%d</td></tr>",
+      fprintf(f, "<td%s>%d</td><td%s>%d</td></tr>\n",
               global->stand_solved_attr, t_prob[t],
               global->stand_penalty_attr, t_pen[t]);
     }
 
     // print row of total
-    fputs("<tr>", f);
+    fprintf(f, "<tr%s>", rT_attr);
     fprintf(f, "<td%s>&nbsp;</td>", global->stand_place_attr);
     fprintf(f, "<td%s>Total:</td>", global->stand_team_attr);
     if (global->stand_extra_format[0]) {
@@ -3325,10 +3593,10 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       fprintf(f, "<td%s>%d</td>", global->stand_prob_attr, tot_att[j]);
       ttot_att += tot_att[j];
     }
-    fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>",
+    fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>\n",
             global->stand_solved_attr, ttot_att, global->stand_penalty_attr);
     // print row of success
-    fputs("<tr>", f);
+    fprintf(f, "<tr%s>", rT_attr);
     fprintf(f, "<td%s>&nbsp;</td>", global->stand_place_attr);
     fprintf(f, "<td%s>Success:</td>", global->stand_team_attr);
     if (global->stand_extra_format[0]) {
@@ -3345,10 +3613,10 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       fprintf(f, "<td%s>%d</td>", global->stand_prob_attr, succ_att[j]);
       ttot_succ += succ_att[j];
     }
-    fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>",
+    fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>\n",
             global->stand_solved_attr, ttot_succ, global->stand_penalty_attr);
     // print row of percentage
-    fputs("<tr>", f);
+    fprintf(f, "<tr%s>", rT_attr);
     fprintf(f, "<td%s>&nbsp;</td>", global->stand_place_attr);
     fprintf(f, "<td%s>%%:</td>", global->stand_team_attr);
     if (global->stand_extra_format[0]) {
@@ -3372,7 +3640,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     if (ttot_att > 0) {
       perc = (int) ((double) ttot_succ / ttot_att * 100.0 + 0.5);
     }
-    fprintf(f, "<td%s>%d%%</td><td%s>&nbsp;</td></tr>",
+    fprintf(f, "<td%s>%d%%</td><td%s>&nbsp;</td></tr>\n",
             global->stand_solved_attr, perc, global->stand_penalty_attr);
     
     fputs("</table>\n", f);
@@ -3384,12 +3652,9 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       } 
     }
   }
-    
-  return;
 
- alloca_failed: 
-  err("alloca failed");
-  return;
+  xfree(calc);
+  xfree(ok_time);
 }
 
 void
@@ -3648,8 +3913,8 @@ write_xml_team_testing_report(FILE *f, const unsigned char *txt)
 
   fprintf(f,
           "<table border=\"1\">"
-          "<tr><th>N</th><th>%s</th><th>%s</th>",
-          _("Result"), _("Time (sec)"));
+          "<tr><th>N</th><th>%s</th><th>%s</th><th>%s</th>",
+          _("Result"), _("Time (sec)"), _("Real time (sec)"));
   if (need_info) {
     fprintf(f, "<th>%s</th>", _("Extra info"));
   }
@@ -3674,6 +3939,11 @@ write_xml_team_testing_report(FILE *f, const unsigned char *txt)
     fprintf(f, "<td><font color=\"%s\">%s</font></td>\n",
             font_color, run_status_str(t->status, 0, 0));
     fprintf(f, "<td>%d.%03d</td>", t->time / 1000, t->time % 1000);
+    if (t->real_time > 0) {
+      fprintf(f, "<td>%d.%03d</td>", t->real_time / 1000, t->real_time % 1000);
+    } else {
+      fprintf(f, "<td>N/A</td>");
+    }
     if (need_info) {
       fprintf(f, "<td>");
       if (t->status == RUN_RUN_TIME_ERR && global->report_error_code) {
@@ -3829,7 +4099,7 @@ print_nav_buttons(FILE *f,
   fprintf(f, "%s",
           html_hyperref(hbuf, sizeof(hbuf), sid, self_url,
                         extra_args, "action=%d", ACTION_LOGOUT));
-  fprintf(f, "%s</a></td></tr></table>", t3);
+  fprintf(f, "%s</a></td></tr></table>\n", t3);
 }
 
 static unsigned char *
