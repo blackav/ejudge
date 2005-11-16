@@ -18,4 +18,4 @@ then
     export KYLIXDIR
 fi
 
-exec "${DCCRUN}" ${EJUDGE_FLAGS:- -$I+,Q-,R-,X+} -Q "$1"
+exec "${DCCRUN}" ${EJUDGE_FLAGS} -Q "$1"
