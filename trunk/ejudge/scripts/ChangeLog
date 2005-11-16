@@ -1,3 +1,7 @@
+2005-11-16  Alexander Chernov  <cher@ispras.ru>
+
+	* dcc.in: compiler flags are not set by default.
+
 2005-10-24  Alexander Chernov  <cher@ispras.ru>
 
 	* festival.in:
