@@ -2157,9 +2157,10 @@ do_write_kirov_standings(FILE *f,
   fputs("</table>\n", f);
 
   if (!client_flag) {
-    write_kirov_page_table(f, total_pages, current_page, pgrefs,
-                           t_sort, tot_full, tot_score, pg_n1, pg_n2,
-                           pr_attrs, pc_attrs);
+    if (total_pages > 1)
+      write_kirov_page_table(f, total_pages, current_page, pgrefs,
+                             t_sort, tot_full, tot_score, pg_n1, pg_n2,
+                             pr_attrs, pc_attrs);
 
     if (footer_str) {
       process_template(f, footer_str, 0, 0, 0, get_copyright());
