@@ -1,6 +1,536 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
+Version 2.1.43 (20051117)
+=========================
+The ejudge home page has moved. The new URL is
+http://www.ejudge.ru.
+
+The GCC compiler version 4.0.* is supported. If the 4.0.*
+compiler is detected during configuration, -Wno-pointer-sign
+compiler option is added to the compilation options. All
+warnings on -O2 optimization level, except those suppressed by
+-Wno-pointer-sign are eliminated.
+
+The ejudge system has been ported to Linux/x86_64. Note, that
+the lattest version of the Reuse library is required on this
+platform.
+
+fpc/testlib.pas
+---------------
+Fixed some bugs related to mishandling of the Unix-style
+end-of-line characters (Victor Matyukhin).
+
+delphi/testlib.pas
+------------------
+The latest version of the testlib from Andrew Stankevich is
+merged.
+
+contest.xml
+-----------
+Two new elements are supported: <user_name_comment> and
+<allowed_languages>. The <user_name_comment> element allows
+defining an arbitrary HTML text, which will be displayed in the
+contest registration form near to the "User name" field. This
+text may, for example, contain instructions for choosing a user
+name to conform to the contest rules.
+
+The <allowed_languages> allows defining the programming
+languages and programming environments, which are available for
+the users during registration to a contest. If this element is
+not defined, a user may enter arbitrary text in the "Programming
+language" field of the registration form. If this element is
+defined, a user may only choose one or several programming
+languages from the provided list. The <allowed_languages>
+element must list all available programming language separating
+them with a comma, for example:
+<allowed_languages>Borland C/C++, Borland Pascal, Delphi</allowed_languages>
+
+The DISABLE_MEMBER_DELETE contest flag is supported. If this
+flag is set for a contest, the registration form will not have
+"Delete" button for team members.
+
+New elements are added: <users_table_format>, <users_table_format_en>,
+<users_table_legend>, <users_table_legend_en>. These element
+allow changing the view of the list of the registered users for
+this contest. The <users_table_legend> and <users_table_legend_en>
+allow defining the header row of the table. The elements define
+text, which will be displayed in the header row in the columns
+from the first to the second to the last. The first column is
+always called "NN" (the serial number of a user in the list),
+and the last column is always called "Status" (the registration
+status for a user). The column texts are separated with "|"
+character. For example:
+<users_table_legend>Id|Team name|Institution|Faculty</users_table_legend>
+defines the table with the rows "NN", "Id", "Team name",
+"Institution", "Faculty", "Status". The <users_table_legend_en>
+is used when the table is displayed in English (i.e. locale_id == 0),
+element <users_table_legend> is used when the table is displayed
+in the local language (locale_id != 0) (for example, Russian).
+If the elements are undefined, the default table view is used.
+
+The <users_table_format> and <users_table_format_en> elements
+define information, which is displayed in the table of the
+registered participants for each registered participant. The
+values of the elements should use format conversion
+specifications (see below). The column descriptions are
+separated with "|". The first column of the table always contain
+the serial number of the participant in the table, and the last
+column always contain the registration status of the participant.
+For example, the following specification
+<users_table_format>%Ui|%Un|%Ut|%Uf</users_table_format>
+defines the table view with 6 columns: the serial number in the
+table, the participant's user id, the user name, the short form
+of the institution name, the short form of the faculty name, the
+registration status.  The <users_table_format_en> is used when
+the table is displayed in English (i.e. locale_id == 0), element
+<users_table_format> is used when the table is displayed in the
+local language (locale_id != 0) (for example, Russian). If the
+elements are undefined, the default table view is used.
+
+The elements <users_table_format> and <users_table_legend> must
+either be set both, or unset both, and if set they must describe
+the same number of columns. The same rule applies to the
+<users_table_format_en> and <users_table_legend_en> elements.
+If this rule is violated, the default table view is used.
+If the <users_table_format> is set, <users_table_format_en> may
+left unset and vice versa. The default view is used for the
+unset element.
+
+serve
+-----
+New global configuration variable `users_on_page' is added to
+the `serve.cfg' configuration file. If this variable is set to a
+positive value, the contest result table will be split into
+several HTML pages with the specified number of participants on
+each page. The page splitting is supported for the KIROV and
+MOSCOW contest scoring systems.
+
+New global configuration variables `stand_fail_attr' and
+`stand_trans_attr' are added to the `serve.cfg' configuration
+file. These variables allows specifying the attributes for the
+certain standing table cells. The `stand_fail_attr' variable
+specifies the attributes for the cell, if the participant has
+submits in the "Check failed" state for the corresponding
+problem. The `stand_trans_attr' specifies the attributes for the
+cell, if the participant has submits in the "Compiling...",
+"Running...", or "Pending" state. The `stand_fail_attr' may be
+used for indication of failures in the contest, and the
+`stand_trans_attr' may be used for indication, that there are
+submits being tested, so the standings table may change soon.
+
+A new global configuration variable `stand_show_att_num' is
+added to the `serve.cfg' configuration file. The variable works
+in the KIROV and OLYMPIAD contests only. If this variable is set
+to a non-zero positive value, the number of attempts is
+displayed in the standings table for each participant and each
+problem. If the problem is solved, the number of attempts before
+the first success is displayed. If the problem is not solved,
+the current number of attempts is displayed.
+
+A new global configuration variable `stand_sort_by_solved' is
+added to the `serve.cfg' configuration file. The variable works
+in the KIROV and OLYMPIAD contests only. If the variable is set
+to a non-zero positive value, the participants in the standings
+table are sorted in the decreasing order of the number of the
+solved problems, and then in the decreasing order of the score.
+If this variable is not set, the participants are sorted in the
+decreasing order of the score.
+
+A new problem configuration variable `lang_time_adj' is added to
+the `serve.cfg' configuration file. This variable allows
+adjusting the time limit for the problem depending on the
+programming language. The time limit adjustment specifies
+adjustment in seconds and must be greater than 0 and less than
+100 seconds. The `lang_time_adj' configuration variable may be
+specified several times specifying adjustments for several
+languages for the problem. Each time limit adjustments
+specification has the following form:
+LANG=ADJ
+where LANG is the short name of the programming language, and
+ADJ is the adjustment. For example,
+lang_time_adj="dcc=1"
+lang_time_adj="java=10"
+specifies for some problem, that the time limit for Delphi
+solutions is increased by 1 second, and the time limit for Java
+solutions is increased by 10 seconds.
+
+A new global configuration variable `disable_submit_after_ok' is
+added to the `serve.cfg' configuration file. If this variable is
+set to a non-zero positive value, the participants are
+disallowed to submit an already solved problem. The solved
+problems are not displayed in the list of problems, available
+for submit.
+
+A new problem configuration variable `skip_testing' is added to
+the `serve.cfg' configuration file. If this variable is set to a
+non-zero positive value, the `run' program will skip the
+requests for testing a submit on this problem, however the
+testing request will be avaible for other `run' programs. This
+configuration variable may be used for load-balancing between
+several `run' programs running on several testing computers.
+Conditional compilation is usable in such situations, for
+example:
+[problem]
+short_name = "Z"
+@if host == "host1"
+skip_testing
+@endif
+In this case the `run' program running on the "host1" computer
+will ignore requests for testing problem "Z".
+
+A new contest scoring system "Moscow" is supported. This scoring
+system is a generalization of the ACM scoring system. As opposed
+to the ACM, in the Moscow scoring system problems are scored in
+arbitrary number of points >= 1. The ACM contest score all
+problems at 1 point. In the Moscow scoring system submits are
+tested up to to the first failed test, and depending on the
+number of the tests passed the submit is scored to 0, 1, 2,
+... N points. The maximal score for a problem is specified by
+the `full_score' problem configuration variable. For each
+problem with maximal score N points (N > 1), there must be the
+`score_tests' problem configuration variable defined. This
+variable must define N-1 integer positive number. The numbers
+are separated with spaces. Each number in the list is a test
+number, and the test numbers must form an increasing sequence.
+The first number in the sequence must be >= 1, the last number
+in the sequence must be less than the total number of tests for
+this problem. The Kth number in this list specifies the number
+of tests, which must be successfully passed by a submit in order
+to give K points to the submit. For example, for the following
+specification:
+full_score = 5
+score_tests = "10 20 30 40"
+and the total number of tests 50 the following rules apply. If a
+submit passes 0-9 first tests, it is given 0 points, if a submit
+passes 10-19 first tests, it is given 1 point, 20-29 tests - 2
+points, 30-39 tests - 3 points, 40-49 tests - 4 points, 50 tests
+- 5 points.
+
+New global configuration variables to controw the view of the
+standings table are added to the `serve.cfg' configuration
+file. The `stand_row_attr' global configuration variable allows
+defining the row attributes of the table. These row attributes
+are used when no other row attributes, defined by the
+`stand_v_row_attr', `stand_r_row_attr', `stand_u_row_attr',
+`stand_self_row_attr', `stand_contestant_status_attr'
+configuration variables are applicable. This configuration
+variable must be defined 5 or 6 times defining the array of 5 or
+6 attributes. The array is used as follows:
+stand_row_attr[0] - the attribute of the table header row;
+stand_row_attr[1], stand_row_attr[2] - the attributes of the
+even and odd rows correspondingly;
+stand_row_attr[3], stand_row_attr[4] - the attributes of the
+even and odd rows correspondingly; these two groups of
+attributes are switched when the number of solved problems
+change.
+stand_row_attr[5] (if defined) - the attributes of the summary
+rows of the standings table. The example for `stand_row_attr'
+follows:
+stand_row_attr = " bgcolor=\"#cccccc\" valign=\"top\""
+stand_row_attr = " bgcolor=\"#eeffff\" valign=\"top\""
+stand_row_attr = " bgcolor=\"#ddffff\" valign=\"top\""
+stand_row_attr = " bgcolor=\"#ffeeff\" valign=\"top\""
+stand_row_attr = " bgcolor=\"#ffddff\" valign=\"top\""
+stand_row_attr = " bgcolor=\"#cccccc\" valign=\"top\""
+
+For compatibility with the standings table view of the previous
+versions of ejudge, if neither the `stand_table_attr', nor
+the `stand_row_attr' global configuration variables are set, the
+`stand_row_attr' variable is set to " border=\"1\"".
+
+A new global configuration variable `stand_page_table_attr' is
+added to the `serve.cfg' configuration file. This variable
+allows specifying attributes of the page links table on the
+standings pages, if the standings splitting (`users_on_page') is
+enabled.
+
+A new global configuration variable `stand_page_row_attr' is
+added to the `serve.cfg' configuration file. This variable
+allows specifying row attributes of the page links table, if the
+standings splitting (`users_on_page') is enabled. The
+`stand_page_row_attr' variables must be defined 4 times, forming
+an array of 4 attributes. The array is used as follows:
+stand_page_row_attr[0] - the attribute of the first row: page numbers,
+stand_page_row_attr[1] - the attribute of the seconds row: place,
+stand_page_row_attr[2] - the attribute of the third row: the
+number of solved problems (the score for MOSCOW contests);
+stand_page_row_attr[3] - the attribute of the fourth row: the
+score for KIROV contests, the penalty for ACM, MOSCOW contests.
+Example of usage:
+stand_page_row_attr = " bgcolor=\"#ccddcc\" valign=\"top\" align=\"center\""
+stand_page_row_attr = " bgcolor=\"#ccddcc\" valign=\"top\""
+stand_page_row_attr = " bgcolor=\"#ccddcc\" valign=\"top\""
+stand_page_row_attr = " bgcolor=\"#ccddcc\" valign=\"top\""
+
+A new global configuration variable `stand_page_col_attr' is
+added to the `serve.cfg' configuration file. This variable
+allows specifying attributes of the page links table columns, if
+the standings splitting is enabled (`users_on_page'). The
+`stand_page_col_attr' variable must be defined 2 times, forming
+an array of 2 attributes. The array is used as follows:
+stand_page_col_attr[0] - the attribute of the first column (the
+row names),
+stand_page_col_attr[1] - the attribute of the other columns
+(pages) of the table. Example of usage:
+stand_page_col_attr = ""
+stand_page_col_attr = " width=\"60\""
+
+A new global configuration variable `stand_page_cur_attr' is
+added to the `serve.cfg' configuration file. This variable
+allows specifying the attribute of the "Page N of M." text,
+which is displayed on the standings page when the standings
+splitting is enabled (`users_on_page').
+
+The running real time for each test is displayed on the
+participant's testing protocol.
+
+userlist
+--------
+Support for the `phone' field of the user and the member
+information of the user database is changed. In the previous
+version the <phone> was a nested element for the <phones>
+element, but the <phones> element was not used and its editing
+was not supported. Now the <phones> element is removed, <phone>
+is a plain string, editing of the <phone> element is supported
+by all the ejudge programs.
+
+userlist-server
+---------------
+A bug with incorrect removal of cookies upon password change is
+fixed.
+
+Editing of the <phone> field is supported.
+
+The authentification policy is changed for the `team'
+CGI-program. Now, if the `disable_team_password' flag is set for
+the contest, only the registration password (the
+`register_password' field) is checked, and if the
+`disable_team_password' flag is not set, only the team password
+(the `team_password' field) is checked, and the registration
+password is ignored. In the previous version the both passwords
+were checked and any of two was accepted.
+
+This change may result in incompatibilities with previous
+versions: the participants will be unable to log in to a
+contest, if the `disable_team_password' flag was set (or unset)
+incorrectly for this contest. Only participants, which changed
+their passwords using the `team' interface are affected. To
+resolve this problem, the contest administrator should fix the
+corresponding fields of the user information manually (for
+example, by copying the team password to the registration
+password using the `o' command of the `edit-userlist' program).
+
+New commands for manipulation with user passwords are added:
+generation of a random password and copying of one password into
+another password. See 'o', 'y' commands of the `edit-userlist'
+program.
+
+register,userlist-server
+------------------------
+After registration of a new user, the email sending status is
+checked. If e-mail sending failed, the user is notified and
+asked to register again.
+
+The `register' CGI program handles the new registration error
+code and produces a diagnostic message.
+
+super-serve
+-----------
+Support for contests with variant problems is improved. The link
+to the variant table editing page is added to the contest
+settings page header. The standard save buttons are added to the
+top of the variant table editing page. A bug regarding incorrect
+variant change is fixed.
+
+serve-control, super-serve
+--------------------------
+Editing of the new elements of the XML contest configuration file
+is supported: <user_name_comment>, <allowed_languages>,
+DISABLE_MEMBER_DELETE.
+
+Editing of the global configuration variable `users_on_page' is
+supported.
+
+Editing of the new XML contest configuration file elemens
+<users_table_format>, <users_table_format_en>,
+<users_table_legend>, <users_table_legend_en> is supported.
+
+Editing of the new global configuration variable
+`stand_show_att_num' is supported.
+
+Editing of the new global configuration variable
+`stand_sort_by_solved' is supported.
+
+Editing of the new language configuration variable
+`lang_time_adj' is supported. During editing all time
+adjustments for all languages are written in one string and are
+separated with spaces, for example:
+dcc=1 java=10
+
+Editing of the new global configuration variable
+`disable_submit_after_ok' is supported.
+
+Editing of the new global configuration variables
+`stand_page_table_attr', `stand_page_cur_attr' is supported.
+
+Editing of the new global configuration variables
+`stand_row_attr', `stand_page_row_attr', `stand_page_col_attr'
+is supported. The values of the variables must be written in one
+string with spaces sepating the values. The values must be
+enclosed in ", and the " character must be properly escaped
+inside. 
+
+A bug is fixed, when the first test was incorrectly removed if
+the `super-serve' program had not enough permissions to write to
+test files during execution of the "Check contest settings"
+command.
+
+When a new contest is created, the `serve.cfg' configuration
+file is correctly put under version control.
+
+run
+---
+A bug is fixed regarding support for standard checkers for
+variant problems.
+
+If the `run' program works in unmanaged mode, the forced QUIT
+packed are ignored (these packets are written by the `serve'
+program to the exchange directory as a result of the "Reload
+server" command). In the previous version, the `run' aborted.
+
+The run control packet contains a new field `time_limit_adj',
+which contains the time limit adjustment for this run. This
+field is handled by the `run' program. The time limit adjustment
+must be > 0 and <= 100 (see also `lang_time_adj' variable).
+
+register
+--------
+Editing of the `phone' field is supported in the registration
+form. The new contest XML configuration elements
+<user_name_comment>, <allowed_languages>, and
+DISABLE_MEMBER_DELETE flag are supported. The registration form
+is simplified due to removal of unused fields (show_email,
+show_login, use_cookies_default).
+
+edit-userlist
+-------------
+The `phone' field editing is supported.
+
+A new command `t' (Toggle) is added to the users and contests
+menus. This command toggles the selection flag for each line of
+the menu (i.e. for each user or contest). If no line was
+previously selected, all lines are selected as the result of
+operation. A new command (`0') (Clear) is supported, which
+clears all the selection flags.
+
+Selection of several contests is supported. The selection
+commands `:', `t', `0' are supported in the contests menus.
+
+A user may be registered to a selected set of the contests with a
+single operation. A selected set of users may be registered to a
+selected set of the contests with a signle operation.
+
+A new command `f' is added to the list of users, registered for
+a contest menu. This command allows setting or resetting certain
+user information fields. The following fields may be reset:
+Read-only, Never-clean, Location. The following fields may be
+set (to the `true' value): Read-only, Never-clean. The `t'
+command may be applied either to a single user, or to a group of
+users.
+
+Two new commands `o' and `y' are supported in the user
+information editing screen. These commands can be applied to
+passwords:
+  `o' - generate a new random password. The cursor must be
+        located either on the registration password field, or on
+        the team password field.
+  `y' - copy the current password to another passord. If the
+        cursor is located on the registration password, it is
+        copied to the team password and vice versa, if the
+        cursor is located on the team password, it is copied to
+        the registration password.
+
+users,userlist-server
+---------------------
+The new configuration elements <users_table_format>,
+<users_table_format_en>, <users_table_legend>,
+<users_table_legend_en> are supportd, so the view of the table
+of the registered uses may be changed (see above).
+
+The following format conversions are supported in the table
+format specification:
+%Ui	the user identifier (id)
+%Un	the user name (name)
+%Ul	the user login (login)
+%Ue	the email address (email)
+%Uz	the registration passwords (if not changed by the user)
+%UZ	the team password (if not changed by the user)
+%Uc	the city (city)
+%UC	the city (English) (city_en)
+%Uo	the country (country)
+%UO	the country (English) (country_en)
+%Ut	the abbreviation of the institution name (inst_short)
+%UT	the abbreviation of the institution name (English) (inst_short_en)
+%Uu	the institution (inst)
+%UU	the institution (English) (inst_en)
+%Uf	the abbreviation of the faculty name (fac_short)
+%UF	the abbreviation of the faculty name (English) (fac_short_en)
+%Ud	the faculty (fac)
+%UD	the faculty (English) (fac_en)
+%UL	the participant location (computer number) (location)
+%Up	the printer for participant's solutions (printer_name)
+%Uh	the participant's home page (homepage)
+%UH	the phone (phone)
+%UP	the programming languages (languages)
+
+Also, using the format conversions %UM it is possible to print
+the detailed information about the team members
+%UMp	the information about the contestants
+%UMr	the information about the reserves
+%UMa	the information about the team advisors
+%UMc	the information about the coaches
+%UMg	the information about the guests
+The member number is specified after the member type letter
+using a decimal number starting from 1, for example
+%UMp2 - the second contestant in the team, %UMc1 - the first
+coach of the team.
+Next, the field of the member info is specified:
+f	the first name (firstname)
+F	the first name (English) (firstname_en)
+m	the middle name (middlename)
+M	the middle name (English) (middlename_en)
+s	the surname (surname)
+S	the surname (English) (surname_en)
+g	the group or the form (group)
+G	the group or the form (English) (group_en)
+e	email
+h	the homepage (homepage)
+o	the occupation (for coaches and advisors) (occupation)
+O	the occupation (for coaches and advisors) (English) (occupation_en)
+u	the institution (inst)
+U	the institution (English) (inst_en)
+t	the abbreviation of the institution name (inst_short)
+T	the abbreviation of the institution name (English) (inst_short_en)
+a	аббревиатура факультета (facshort)
+A	аббревиатура факультета (English) (facshort_en)
+d	the faculty (fac)
+D	the faculty (English) (fac_en)
+H	the phone
+b	the status (student, school student, etc) (status)
+B	the status (English) (status_en)
+c	the course or grade number (grade)
+C	the number of the participant in the team (number)
+For example %UMp1s will be substituted with the surname of the
+first participant in the team.
+
+ejudge-setup
+------------
+When the `ejudge.xml' configuration file is generated, the
+ejudge administrator is given the MASTER_LOGIN and the
+JUDGE_LOGIN capability bits to be able to use the
+`serve-control' CGI program.
+
 Version 2.1.42 (20050930)
 =========================
 This version fixes some bugs if the installation process and
