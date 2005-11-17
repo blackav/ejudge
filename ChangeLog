@@ -1,3 +1,1276 @@
+2005-11-17  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* html.c:
+	(do_write_kirov_standings) check, that total_pages > 1 is added before
+	  a call of `write_kirov_page_table'.
+
+2005-11-16  Alexander Chernov  <cher@ispras.ru>
+
+	* html.c:
+	(do_write_kirov_standings) `write_kirov_page_table' is moved
+	  to its proper place.
+
+	* serve-control.c: (main) new actions are handled:
+	  SUPER_ACTION_GLOB_CHANGE_STAND_ROW_ATTR,
+	  SUPER_ACTION_GLOB_CLEAR_STAND_ROW_ATTR,
+	  SUPER_ACTION_GLOB_CHANGE_STAND_PAGE_TABLE_ATTR,
+	  SUPER_ACTION_GLOB_CLEAR_STAND_PAGE_TABLE_ATTR,
+	  SUPER_ACTION_GLOB_CHANGE_STAND_PAGE_CUR_ATTR,
+	  SUPER_ACTION_GLOB_CLEAR_STAND_PAGE_CUR_ATTR,
+	  SUPER_ACTION_GLOB_CHANGE_STAND_PAGE_ROW_ATTR,
+	  SUPER_ACTION_GLOB_CLEAR_STAND_PAGE_ROW_ATTR,
+	  SUPER_ACTION_GLOB_CHANGE_STAND_PAGE_COL_ATTR,
+	  SUPER_ACTION_GLOB_CLEAR_STAND_PAGE_COL_ATTR.
+
+	* super-serve.c: (cmd_set_value) new commands are supported:
+	  SSERV_CMD_GLOB_CHANGE_STAND_ROW_ATTR,
+	  SSERV_CMD_GLOB_CLEAR_STAND_ROW_ATTR,
+	  SSERV_CMD_GLOB_CHANGE_STAND_PAGE_TABLE_ATTR,
+	  SSERV_CMD_GLOB_CLEAR_STAND_PAGE_TABLE_ATTR,
+	  SSERV_CMD_GLOB_CHANGE_STAND_PAGE_CUR_ATTR,
+	  SSERV_CMD_GLOB_CLEAR_STAND_PAGE_CUR_ATTR,
+	  SSERV_CMD_GLOB_CHANGE_STAND_PAGE_ROW_ATTR,
+	  SSERV_CMD_GLOB_CLEAR_STAND_PAGE_ROW_ATTR,
+	  SSERV_CMD_GLOB_CHANGE_STAND_PAGE_COL_ATTR,
+	  SSERV_CMD_GLOB_CLEAR_STAND_PAGE_COL_ATTR.
+
+	* super_html.c: a color scheme is implemented for all forms.
+
+	* super_html_3.c: a color scheme is implemented for all forms;
+	(super_html_edit_global_parameters) editing of new configuration
+	  variables is supported: `stand_row_attr', `stand_page_table_attr',
+	  `stand_page_cur_attr', `stand_page_row_attr', `stand_page_col_attr';
+	(super_html_global_param) the same, as above.
+
+	* super_proto.h: new protocol commands are added:
+	  SUPER_ACTION_GLOB_CHANGE_STAND_ROW_ATTR,
+	  SUPER_ACTION_GLOB_CLEAR_STAND_ROW_ATTR,
+	  SUPER_ACTION_GLOB_CHANGE_STAND_PAGE_TABLE_ATTR,
+	  SUPER_ACTION_GLOB_CLEAR_STAND_PAGE_TABLE_ATTR,
+	  SUPER_ACTION_GLOB_CHANGE_STAND_PAGE_CUR_ATTR,
+	  SUPER_ACTION_GLOB_CLEAR_STAND_PAGE_CUR_ATTR,
+	  SUPER_ACTION_GLOB_CHANGE_STAND_PAGE_ROW_ATTR,
+	  SUPER_ACTION_GLOB_CLEAR_STAND_PAGE_ROW_ATTR,
+	  SUPER_ACTION_GLOB_CHANGE_STAND_PAGE_COL_ATTR,
+	  SUPER_ACTION_GLOB_CLEAR_STAND_PAGE_COL_ATTR.
+
+	* super_actions.h: new actions are added:
+	  SUPER_ACTION_GLOB_CHANGE_STAND_ROW_ATTR,
+	  SUPER_ACTION_GLOB_CLEAR_STAND_ROW_ATTR,
+	  SUPER_ACTION_GLOB_CHANGE_STAND_PAGE_TABLE_ATTR,
+	  SUPER_ACTION_GLOB_CLEAR_STAND_PAGE_TABLE_ATTR,
+	  SUPER_ACTION_GLOB_CHANGE_STAND_PAGE_CUR_ATTR,
+	  SUPER_ACTION_GLOB_CLEAR_STAND_PAGE_CUR_ATTR,
+	  SUPER_ACTION_GLOB_CHANGE_STAND_PAGE_ROW_ATTR,
+	  SUPER_ACTION_GLOB_CLEAR_STAND_PAGE_ROW_ATTR,
+	  SUPER_ACTION_GLOB_CHANGE_STAND_PAGE_COL_ATTR,
+	  SUPER_ACTION_GLOB_CLEAR_STAND_PAGE_COL_ATTR.
+
+	* run.c:
+	(generate_xml_report) the number of the failed test is written
+	  correctly in the Moscow contest mode.
+
+	* prepare_out.c:
+	(prepare_unparse_global) `stand_row_attr', `stand_page_table_attr',
+	  `stand_page_row_attr', `stand_page_col_attr', `stand_page_cur_attr'
+	  are unparsed.
+
+	* prepare.h:
+	(struct section_global_data) size of standings attribute variables
+	  is increased to 128;
+	  new fields: `stand_row_attr, `stand_page_table_attr',
+	  `stand_page_row_attr', `stand_page_col_attr', `stand_page_cur_attr'.
+
+	* prepare.c:
+	new global configuration variables added: stand_row_attr,
+	  stand_page_table_attr, stand_page_row_attr, stand_page_col_attr,
+	  stand_page_cur_attr;
+	(prepare_global_free_func) fields `stand_row_attr',
+	  `stand_page_row_attr', `stand_page_col_attr' are freed.
+
+	* parsecfg.h: (sarray_unparse_2) new function prototype added;
+	(sarray_parse_2) new function prototype added.
+
+	* parsecfg.c:
+	(sarray_unparse_2) new function to unparse the array of string
+	  pointers, the function is suitable for editing global conf.
+	  variables like `stand_row_attr' in the `super-serve' program;
+	(sarray_parse_2) new function to parse the array of string
+	  pointers, the function is suitable for editing global conf.
+	  variables like `stand_row_attr' in the `super-serve' program.
+
+	* html.c: (write_html_run_status) "Compilation error" is handled like
+	  "Ignored" runs, i.e. no score and test information available;
+	(write_kirov_page_table) new function, which prints the page
+	  links table for the kirov standings;
+	(do_write_kirov_standings) speed optimizations: one-dimensional
+	  array is used instead of array of pointers for all tables;
+	  bucket sort is used instead of selection sort;
+	  `stand_row_attr', `stand_page_row_attr', `stand_page_col_attr', etc
+	  global variables are supported;
+	  "Last success", "Last submit" information is printed;
+	(write_moscow_page_table) new function, which prints the page
+	  links table for the "Moscow" standings;
+	(do_write_moscow_standings) new global configuration variables,
+	  which governs the standings table are supported;
+	(do_write_standings) speed optimizations: one-dimensional
+	  array is used instead of array of pointers for all tables;
+	  bucket sort is used instead of selection sort;
+	  `stand_row_attr' global variables is supported;
+	(write_xml_team_testing_report) "Real time" column is printed.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2005-11-13  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.h: `KEEP_ON_FAIL' flag is added for `generic_write_file'.
+
+	* super_html_2.c:
+	(super_html_commit_contest) the `serve.cfg' file is added correctly
+	  to the VCS when created.
+
+2005-11-09  Alexander Chernov  <cher@ispras.ru>
+
+	* html.c:
+	(write_html_run_status) "Moscow" scoring system is supported;
+	(write_user_problems_summary) `solved_flag' parameter is added
+	  instead of local variable, this allows returning the
+	  problem solving status to the caller;
+	  "Moscow" scoring system is supported;
+	(new_write_user_runs) "ej_cookie_t" type is used for cookies
+	  instead of "unsigned long long";
+	  "Moscow" scoring system is supported;
+	  64-bit compatibility fixes;
+	(new_write_user_clars) "ej_cookie_t" type is used for cookies
+	  instead of "unsigned long long";
+	  64-bit compatibility fixes;
+	(new_write_user_clar) 64-bit compatibility fixes;
+	(do_write_kirov_standings) the total number of attempts
+	  is counted for each user and problem;
+	  the standings headers and footers are printed correctly in
+	  all corner cases (no users registered, etc);
+	  `stand_sort_by_solved' global configuration variable is
+	  supported: if this variable is set, the number of solved
+	  problems is the primary key for sorting, and the score is
+	  the secondary key;
+	  `stand_show_att_num' global configuration variable is
+	  supported: if this variable is set, the number of attempts
+	  is printed in the standings page;
+	  "Total", "Success" are localized;
+	(do_write_moscow_standings) new function to print the
+	  standings in the Moscow scoring system;
+	(do_write_standings) "time_t" type is used for timestamps
+	  instead of "unsigned long";
+	  the standings column is now called "User" instead of "Team";
+	(write_standings) Moscow scoring system is supported;
+	(do_write_public_log) Moscow scoring system is supported;
+	(new_write_user_report_view) "ej_cookie_t" type is used for cookies
+	  instead of "unsigned long long";
+	  64-bit compatibility fixes;
+	(print_nav_buttons) "ej_cookie_t" type is used for cookies
+	  instead of "unsigned long long";
+	(write_team_page) "ej_cookie_t" type is used for cookies
+	  instead of "unsigned long long";
+	  `disable_submit_after_ok' global configuration variable is
+	  supported: if this variable is set, the already solved
+	  problems are removed from the list of problems available
+	  for submit.
+
+	* compile_packet_1.c, compile_packet_4.c, compile_packet_5.c, compile_packet_2.c:
+	"ej_types.h", "ej_limits.h" are included;
+	the limit constants from "ej_limits.h" are used.
+
+	* compile_packet_priv.h:
+	constants MAX_CONTEST_ID, MAX_RUN_ID, MAX_LANG_ID are
+	  moved to "ej_limits.h".
+
+	* ej_limits.h: EJ_MAX_LANG_ID is added.
+
+	* prepare.c:
+	(prepare_set_prob_value) `max_vm_size', `max_stack_size' is
+	  not set to 0, if not defined.
+
+	* prepare_out.c:
+	(prepare_unparse_prob) `full_score' is unparsed in the MOSCOW
+	  scoring system;
+	(generate_abstract_tester) `long' incompatibility fix;
+	(generate_concrete_tester) `max_vm_size', `max_stack_size'
+	  are not generated for the "Linux" arch, if they are
+	  equal to -1L.
+
+	* run_packet_1.c, run_packet_2.c, run_packet_4.c, run_packet_5.c:
+	"ej_types.h", "ej_limits.h" are included;
+	the limit constants from "ej_limits.h" are used.
+
+	* run_packet_priv.h:
+	definitions of MAX_CONTEST_ID, MAX_RUN_ID, MAX_USER_ID
+	  are moved to "ej_limits.h";
+	definition of MAX_SCORING_SYSTEM is removed.
+
+2005-11-08  Alexander Chernov  <cher@ispras.ru>
+
+	* master_html.c:
+	(write_priv_all_runs) "Moscow" scoring system is supported;
+	(write_priv_standings) "Moscow" scoring system is supported;
+	(write_priv_source) "Moscow" scoring system is supported;
+	(write_new_run_form) "Moscow" scoring system is supported;
+	(write_raw_standings) "Moscow" scoring system is supported.
+
+	* clean-users.c:
+	(main) `run_size' now has type "size_t", so printf format specification
+	  is updated.
+
+	* html.h:
+	(do_write_moscow_standings) new function prototype is added.
+
+	* parsecfg.c: (num_suffix) a new function to parse K, M, G suffixes;
+	(copy_param) new parameter type "z" is supported for "size_t";
+	  `num_suffix' is used to parse the numeric suffix.
+
+	* prepare.c: new problem configuration variable `skip_testing';
+	new tester configuration variable `skip_testing';
+	tester configuration variables `max_vm_size', `max_stack_size',
+	  `max_data_size' now have type "size_t";
+	(prepare_problem_init_func) `skip_testing' is initialized;
+	  type of `max_*_size' is "size_t";
+	(prepare_problem_free_func) `x_score_tests' is freed;
+	(tester_init_func) `skip_testing' is initialized;
+	  type of `max_*_size' is "size_t";
+	(inh_isdef_size) new function for "size_t" inheritance;
+	(inh_copy_size) new function for "size_t" inheritance;
+	(prepare_parse_score_tests) new function to parse the `score_tests'
+	  specification;
+	(set_defaults) "Moscow" scoring system is supported;
+	  new `skip_testing' variables are supported;
+	  type of `max_*_size' is now "size_t";
+	(prepare_tester_refinement) new `skip_testing' variables are supported;
+	  type of `max_*_size' is now "size_t";
+	(print_tester) the same as above;
+	(prepare_copy_problem) `x_score_tests' is reset in the copies problem;
+	(prepare_set_prob_value) `skip_testing' is handled;
+	  type of `max_*_size' is now "size_t".
+
+	* prepare.h: "ej_types.h" is included;
+	SCORE_* definition is moved to "ej_types.h";
+	(struct section_problem_data) new fields `skip_testing',
+	  `x_score_tests' are added;
+	  `max_vm_size', `max_stack_size' now have "size_t" type;
+	(struct section_tester_data)
+	  new field `skip_testing' is added;
+	  `max_vm_size', `max_stack_size', `max_data_size' now have
+	  "size_t" type;
+	PREPARE_FIELD_PROB_SKIP_TESTING constant is added.
+
+	* prepare_out.c: (num_to_size) `num' parameter now has "int" type;
+	(size_t_to_size) new function to unparse a "size_t" argument;
+	(prepare_unparse_unhandled_global) `skip_testing' is unparsed;
+	(generate_abstract_tester) `max_vm_size', `max_stack_size' now
+	  have "size_t" type;
+	(generate_concrete_tester) the same as above;
+	(prepare_unparse_testers) the same as above.
+
+	* run.c:
+	(html_print_by_line) fix for proper printing of pointer difference;
+	(unparse_scoring_system) "Moscow" scoring system is supported;
+	(generate_xml_report) the same as above;
+	(run_tests) `max_stack_size', `max_vm_size', `max_data_size' now
+	  have "size_t" type;
+	  "Moscow" scoring system is supported;
+	(do_loop) a compiler warning at `generic_read_file' is fixed;
+	  added support for `skip_testing' problem and tester configuration
+	  variables;
+	(check_config) support for "Moscow" scoring system is implemented.
+
+	* serve.c:
+	(cmd_edit_run) support for the "Moscow" scoring system is added;
+	(cmd_new_run) the same as above;
+	(read_run_packet) the same as above.
+
+	* super_html_3.c: (num_to_size) parameter `num' now has type "int";
+	(size_t_to_size) a new function, which converts "size_t" argument
+	  to human-readable form (with K, M, or G suffixes);
+	(super_html_print_problem) `max_vm_size', `max_stack_size' now have
+	  "size_t" type;
+	(num_suffix) a new function, which parses a numeric suffix K, M, or G;
+	(super_html_prob_param) `max_vm_size', `max_stack_size' now have
+	  "size_t" type;
+	(super_html_read_serve) the same as above.
+
+2005-11-04  Alexander Chernov  <cher@ispras.ru>
+
+	* ej_limits.h, ej_types.h: *** empty log message ***
+
+	* html_hyperref.c:
+	"ej_cookie_t" is used instead of "unsigned long long" for cookies.
+
+	* edit-userlist.c: "ej_types.h" is included;
+	"ej_ip_t" is used instead of "unsigned long" for IP addresses.
+
+	* contests.h, contests.c: "ej_types.h" is included;
+	"time_t" is used instead of "unsigned long" for timestamps;
+	"ej_ip_t" is used instead of "unsigned long" for IP addresses.
+
+	* clntutil.h, clntutil.c: copyright notice is updated;
+	"ej_types.h" is included;
+	"time_t" is used instead of "unsigned long" for timestamps;
+	"ej_ip_t" is used instead of "unsigned long" for IP addresses.
+
+	* clean-users.c:
+	"size_t" is used instead of "unsigned long" for `clar_size'.
+
+	* clarlog.h: copyright notice is updated;
+	<time.h>, <stdlib.h> are included;
+	"time_t" is used for timestamps;
+	"size_t" is used for sizes;
+	"off_t" is used for file offsets.
+
+	* clarlog.c: copyright notice is updated;
+	"time_t" is used for timestamps;
+	"size_t" is used for sizes;
+	"off_t" is used for file offsets.
+
+	* base64.h: copyright notice is updated;
+	<stdlib.h> is included;
+	`size_t' is used instead of `int' for size parameter.
+
+	* base64.c: copyright notice is updated;
+	(base64_encode) `size' parameter now has type "size_t";
+	(base64_decode) `size' parameter now has type "size_t".
+
+	* archive_paths.c: "ej_types.h", "ej_limits.h" are included;
+	limit constants MAX_RUN_NUM, MAX_RUN_32DIGITS are moved to
+	  "ej_limits.h";
+	(b32_number) `num' parameter now has type "unsigned".
+
+	* filehash.c: "ej_types.h" is included;
+	(struct hash_entry) `tick' field now has type "unsigned".
+
+	* files.make: ej_limits.h, ej_types.h are added.
+
+	* filter_tree.c:
+	"ej_ip_t" is used for IP-addresses instead of "unsigned long";
+	"ruint32_t" is used for SHA1 hash array type instead of
+	  "unsigned long".
+
+	* filter_tree.h: copyright notice is updated;
+	"ej_types.h" is included;
+	"ej_ip_t" is used for IP-addresses instead of "unsigned long";
+	"ruint32_t" is used for SHA1 hash array type instead of
+	  "unsigned long".
+
+	* full_archive.h: <reuse/integral.h> is inclded;
+	(struct full_archive_entry_header) "rint32_t" type is used instead
+	  of "long" for binary compatibility between 32-bit and 64-bit
+	  platforms.
+
+	* html.h: "ej_types.h" is included;
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long";
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long".
+
+	* html_start_form.c:
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long".
+
+	* master.c: "ej_types.h" is included;
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long";
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long";
+	"time_t" type is used for timestamps instead "unsigned long";
+	"size_t" type is used for storing various sizes;
+	"ruint32_t" type is used instead of "unsigned long" in the
+	  SHA1 array;
+	"int" is used for nanosecond component of timestamp instead of "long";
+	(action_new_run) `ssl_flag' is passed to `serve_clnt_new_run';
+	(action_submit_run) `ssl_flag' is passed to `serve_clnt_submit_run';
+	(log_out_if_asked) `ssl_flag' is passed to `userlist_clnt_logout';
+	(display_master_page) `ssl_flag' is passed to `serve_clnt_master_page'.
+
+	* master_html.c:
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long";
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long";
+	"time_t" type is used for timestamps instead "unsigned long";
+	"size_t" type is used for storing various sizes;
+	"int" is used for nanosecond component of timestamp instead of "long".
+
+	* misctext.c:
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long";
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long";
+	"time_t" type is used for timestamps instead "unsigned long".
+
+	* misctext.h: "ej_types.h" is included;
+	<time.h> is included;
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long";
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long";
+	"time_t" type is used for timestamps instead "unsigned long".
+
+	* printing.c:
+	(print_banner_page) printf specifier for "info.size" field
+	  is corrected.
+
+	* protocol.h: "ej_types.h" is included;
+	SCORE_* constants are moved to "ej_types.h";
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long";
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long";
+	(struct prot_serve_status_v1) "ej_time_t" 32-bit type is used
+	  for compatibility between 32-bit and 64-bit platforms;
+	(struct prot_serve_status_v2) the same as above.
+
+	* register.c: "ej_types.h" is included;
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long";
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long";
+	(action_register_new_user) `ssl_flag' is passed to
+	  `userlist_clnt_register_new'.
+
+	* runlog.c: "ej_types.h" is included;
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long";
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long";
+	"time_t" type is used for timestamps instead "unsigned long";
+	"size_t" type is used for storing various sizes;
+	"ruint32_t" type is used instead of "unsigned long" in the
+	  SHA1 array;
+	"int" is used for nanosecond component of timestamp instead of "long";
+	"off_t" is used for file offsets instead of "int";
+	(struct run_header) "ej_time_t" type (which has fixed size of 32 bit)
+	  is used to ensure compatibility between 32-bit and 64-bit
+	  architectures;
+	(struct run_entry) "ej_time_t", "ej_size_t" 32-bit types are used
+	  for compatibility between 32-bit and 64-bit platforms.
+
+	* runlog.h: "ej_types.h" is included;
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long";
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long";
+	"time_t" type is used for timestamps instead "unsigned long";
+	"size_t" type is used for storing various sizes;
+	"ruint32_t" type is used instead of "unsigned long" in the
+	  SHA1 array;
+	"int" is used for nanosecond component of timestamp instead of "long";
+	(struct run_header) "ej_time_t" type (which has fixed size of 32 bit)
+	  is used to ensure compatibility between 32-bit and 64-bit
+	  architectures;
+	(struct run_entry) "ej_time_t", "ej_size_t" 32-bit types are used
+	  for compatibility between 32-bit and 64-bit platforms.
+
+	* runlog_import.c:
+	"int" is used instead of "long" for nanosecond timestamp.
+
+	* runlog_xml.c: "ej_types.h" is included;
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long";
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long";
+	"time_t" type is used for timestamps instead "unsigned long";
+	"size_t" type is used for storing various sizes;
+	"ruint32_t" type is used instead of "unsigned long" in the
+	  SHA1 array;
+	"int" is used instead of "long" for nanosecond timestamp.
+
+	* serve-cmd.c:
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long";
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long".
+	(handle_logout) `ssl' parameter is passed as 1 to
+	  `userlist_clnt_logout';
+	(handle_dump_master_runs) `ssl' parameter is passed as 1 to
+	  `serve_clnt_master_page'.
+
+	* serve-control.c: "ej_types.h" is included;
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long";
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long".
+
+	* serve.c: "ej_types.h" is included;
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long";
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long";
+	"time_t" type is used for timestamps instead "unsigned long";
+	"size_t" type is used for storing various sizes;
+	"ruint32_t" type is used instead of "unsigned long" in the
+	  SHA1 array;
+	(cmd_get_param) "Moscow" contest type is supported;
+	(read_compile_packet) fixed a GCC warning;
+	(read_run_packet) the same as above.
+
+	* serve_clnt.h: "ej_types.h" is included;
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long";
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long";
+	(serve_clnt_submit_run) `ssl' parameter is added;
+	(serve_clnt_submit_clar) `ssl' parameter is added;
+	(serve_clnt_master_page) the same as above;
+	(serve_clnt_new_run) the same as above.
+
+	* super-serve.c: "ej_types.h" is included;
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long";
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long".
+
+	* super-serve.h: "ej_types.h" is included;
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long".
+
+	* super_html.c:
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long";
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long".
+
+	* super_html.h: "ej_types.h" is included;
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long";
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long".
+
+	* super_html_2.c, super_html_3.c:
+	"ej_cookie_t" type is used for cookies instead of "unsigned long long";
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long".
+
+	* team.c: "ej_types.h" is included;
+	"ej_ip_t" type is used for IP-addresses instead of "unsigned long";
+	"ej_cookie_t" type is used for cookies inst. of "unsigned long long";
+	(send_clar_if_asked) call of `serve_clnt_submit_clar' is updated;
+	(submit_if_asked) call of `serve_clnt_submit_run' is updated;
+	(action_logout) call of `userlist_clnt_logout' is updated.
+
+	* team_extra.c: "ej_limits.h" is included;
+	new limit constants from "ej_limits.h" are used insteaf of
+	  RUNLOG_MAX_TEAM_ID, CLARLOG_MAX_CLAR_ID;
+	(b32_number) `num' argument now has type "unsigned";
+	(team_extra_append_warning) "ej_ip_t" is used for IP-address.
+
+	* team_extra.h: copyright notice is updated;
+	"ej_types.h" is included;
+	"ej_ip_t" type is used instead of "unsigned long" for IP-addresses.
+
+	* teamdb.c:
+	(teamdb_get_uid_by_pid) "ej_cookie_t", "ej_ip_t" types are used.
+
+	* teamdb.h: "ej_types.h" is included;
+	(teamdb_get_uid_by_pid) "ej_cookie_t", "ej_ip_t" types are used.
+
+	* tsc.c: copyright notice is updated;
+	"ej_tsc_t" is used for CPU timestamps instead of "unsigned long long".
+
+	* tsc.h: "ej_types.h" is included;
+	"ej_tsc_t" is used for CPU timestamps instead of "unsigned long long".
+
+	* userlist-server.c: "ej_types.h" is included;
+	"ej_cookie_t" is used for cookies instead of "unsigned long long";
+	"ej_ip_t" is used for IP-addresses instead of "unsigned long";
+	"ej_tsc_t" is used for CPU timestamps intead of "unsigned long long";
+	(generate_random_unsigned) this is new name for `generate_random_long'
+	  and returns "unsigned int" instead of "unsigned long";
+	contest identifier is "int" everywhere;
+	user identifier is "int" everywhere.
+
+	* userlist.c:
+	(userlist_parse_date) "time_t" is used instead of "unsigned long";
+	(userlist_unparse_date) the same as above;
+	(userlist_delete_user_field) the same as above;
+	(userlist_build_login_hash) "ej_tsc_t" type is used instead
+	  of "unsigned long long";
+	(userlist_build_cookie_hash) the same as above.
+
+	* userlist.h: code cleanups:
+	"ej_types.h" is included;
+	PRIV_LEVEL_* constants are moved to "ej_types.h";
+	USERLIST_UC_* constants are moved to "ej_types.h";
+	"ej_ip_t" type is used instead of "unsigned long" for IP-addresses;
+	"ej_cookie_t" type is used instead of "unsigned long long" for cookies;
+	"time_t" type is used instead of "unsigned long" for timestamps.
+
+	* userlist_xml.c:
+	(parse_ip) "ej_ip_t" type is used instead of "unsigned long";
+	(userlist_unparse_ip) the same as above;
+	(parse_date) "time_t" type is used instead of "unsigned long";
+	(unparse_date) the same as above.
+
+	* xml_utils.h: "ej_types.h" is included;
+	"ej_ip_t" type is used instead of "unsigned long" or "unsigned int".
+
+	* genpasswd.c: initial revision
+
+	* userlist_clnt.h: "ej_types.h" is included;
+	"ej_ip_t" is used instead "unsigned long" for IP-addresses;
+	"ej_cookie_t" is used instead of "unsigned long long" for cookies;
+	(userlist_clnt_register_new) `ssl' parameter is added;
+	(userlist_clnt_list_users) `ssl' parameter is added;
+	(userlist_clnt_logout) `ssl' parameter is added.
+
+	* userlist_proto.h: "ej_types.h" is included;
+	general ejudge type definitions are moved to "ej_types.h";
+	"ej_ip_t" type is used instead of "unsigned long" for IP-addresses;
+	"ej_cookie_t" type is used instead of "long long" for cookies;
+	"int" is used for contest identifiers instead of "long";
+	"int" is used for user identifiers instead of "unsigned long";
+	(struct userlist_table) `vintage' now has type "int";
+	(struct userlist_pk_register_new) `ssl' field is added;
+	(struct userlist_pk_do_logout) `ssl' field is added;
+	(struct userlist_pk_list_users) `ssl' field is added;
+
+	* users.c: "ej_types.h" is included;
+	"ej_ip_t" is used for `user_ip' variable;
+	(main) `ssl_flag' is passed to `userlist_clnt_list_users'.
+
+2005-11-03  Alexander Chernov  <cher@ispras.ru>
+
+	* compile.c: 
+	(do_loop) fixes for 64-bit platforms.
+
+	* cgi.c: 
+	(parse_multipart) fixes for 64-bit platforms.
+
+	* master_html.c: 
+	(write_priv_users) fixes for 64-bit platforms;
+	(write_priv_user) the same as above.
+
+	* misctext.c: 
+	(text_number_lines) fixes for 64-bit platforms.
+
+	* ncurses_utils.c: 
+	(do_choose_file) fixes for 64-bit platforms.
+
+	* register.c: fixes for 64-bit platforms.
+
+	* runlog_import.c: 
+	(runlog_import_xml) fixes for 64-bit platforms.
+
+	* sformat.c: 
+	(sformat_message) fixes for 64-bit platforms.
+
+	* super-serve.c: 
+	(cmd_main_page) fixes for 64-bit platforms;
+	(cmd_create_contest) fixes for 64-bit platforms.
+
+	* team.c: fixes for 64-bit platforms.
+
+	* teamdb.c: 
+	(open_connection) fixes for 64-bit platforms;
+	(teamdb_refresh) the same as above.
+
+	* userlist-server.c:
+	(attach_contest_extra) fixes for 64-bit platforms;
+	(allocate_new_user) the same as above;
+	(cmd_get_user_info) the same as above;
+	(cmd_priv_get_user_info) the same as above;
+	(cmd_list_all_users) the same as above;
+	(cmd_list_standings_users) the same as above;
+	(cmd_get_user_contests) the same as above.
+
+	* userlist.c:
+	(userlist_build_cookie_hash) fixes for 64-bit platforms.
+
+	* serve_clnt.h:
+	(serve_clnt_send_packet) parameter `size' now has type `size_t'.
+
+	* serve_clnt.h:
+	(serve_clnt_rejudge_by_mask) "const" qualifier is added to the
+	  `mask' parameter.
+
+	* super_clnt.h:
+	(super_clnt_send_packet) `size' parameter now has `size_t' type.
+
+	* userlist_clnt.h:
+	(userlist_clnt_set_info) "const" qualifier is added to `info'
+	  parameter;
+	(userlist_clnt_set_passwd) "const" qualifier is added to
+	  `old_pwd', `new_pwd' parameters;
+	(userlist_clnt_team_set_passwd) "const" qualifier is added to
+	  `old_pwd', `new_pwd' parameters.
+
+2005-11-02  Alexander Chernov  <cher@ispras.ru>
+
+	* configure.ac:
+	added auto-detection of necesserity of -Wno-pointer-sign flag.
+
+	* Makefile.unix.in:
+	WPTRSIGN variable is added and used in CFLAGS, this variable
+	is autoconfigured by configure.
+
+	* master_html.c:
+	(write_priv_all_runs) "use of uninitialized value" warning is fixed.
+
+	* serve-cmd.c:
+	(handle_full_import_xml) a bug in error reporting is fixed.
+
+	* super-serve.c:
+	(cmd_main_page) "use of uninitialized value" warning is fixed.
+
+	* super_html.c:
+	(super_html_main_page) "use of uninitialized value" warning is fixed;
+	(super_html_edit_contest_page) a typo is fixed.
+
+	* super_html_2.c:
+	(super_html_set_contest_var) access tree node is not deleted,
+	  if `default_is_allow' field is set.
+
+	* super_html_3.c:
+	(super_html_get_serve_header_and_footer) "use of uninitialized value"
+	  warning is fixed;
+	(invoke_compile_process) "missing sentinel point" warning is fixed.
+
+	* userlist-server.c:
+	(do_list_users) "use of uninitialized value" warning is fixed.
+
+2005-10-31  Alexander Chernov  <cher@ispras.ru>
+
+	* testing_report_xml.c:
+	(parse_scoring) `Moscow' scoring system is supported.
+
+	* edit-userlist.c:
+	(display_user) new commands `o' (random password), `y' (copy
+	  password) are handled;
+	(display_registered_users) new command `f' is handled (modify
+	  user's flag).
+
+	* userlist-server.c:
+	(cmd_user_op) new function to handle the new commands:
+	  ULS_RANDOM_PASSWD, ULS_RANDOM_TEAM_PASSWD, ULS_COPY_TO_TEAM,
+	  ULS_COPY_TO_REGISTER.
+
+	* userlist_proto.h:
+	new commands added: ULS_RANDOM_PASSWD, ULS_RANDOM_TEAM_PASSWD,
+	  ULS_COPY_TO_TEAM, ULS_COPY_TO_REGISTER.
+
+2005-10-29  Alexander Chernov  <cher@ispras.ru>
+
+	* register.c:
+	(action_register_new_user) check for e-mail sending error is
+	  implemented and an appropriate error message is displayed
+	  to the user.
+
+	* userlist-server.c:
+	(send_email_message) error is reported to the caller, if mail
+	  sending has failed;
+	(cmd_register_new) added check for email-sending failure and
+	  reporting an appropriate error code.
+
+	* userlist_proto.c: copyright notice is updated;
+	message for the ULS_ERR_EMAIL_FAILED error is added.
+
+	* userlist_proto.h: new error code ULS_ERR_EMAIL_FAILED is added.
+
+2005-10-25  Alexander Chernov  <cher@ispras.ru>
+
+	* userlist-server.c:
+	(cmd_team_login) authentification policy is changed: is the
+	  `disable_team_password' is set for the contest, only the registration
+	  password is checked, but if `disable_team_password' is not set,
+	  only the team password is checked.
+
+	* prepare.c:
+	New global configuration variable `score_tests' is added;
+	(set_defaults) "moscow" scoring system is parsed;
+	(prepare_set_global_defaults) "moscow" scoring system is parsed.
+
+	* prepare.h: new SCORE_MOSCOW scoring system is added;
+	(struct section_problem_data) field `score_tests' is added.
+
+	* prepare_out.c:
+	(prepare_unparse_global) "Moscow" scoring system is supported;
+	(prepare_unparse_prob) `score_tests' variable is unparsed.
+
+	* protocol.h: new SCORE_MOSCOW scoring system is added.
+
+	* serve-control.c:
+	(main) actions SUPER_ACTION_PROB_CHANGE_SCORE_TESTS,
+	  SUPER_ACTION_PROB_CLEAR_SCORE_TESTS are handled.
+
+	* super-serve.c:
+	(cmd_set_value) commands SSERV_CMD_PROB_CHANGE_SCORE_TESTS,
+	  SSERV_CMD_PROB_CLEAR_SCORE_TESTS are handled.
+
+	* super_actions.h:
+	new actions are added: SUPER_ACTION_PROB_CHANGE_SCORE_TESTS,
+	  SUPER_ACTION_PROB_CLEAR_SCORE_TESTS.
+
+	* super_html_3.c:
+	(super_html_edit_global_parameters) New "moscow" scoring system is
+	  supported;
+	(super_html_edit_global_parameters) the same as above;
+	(super_html_print_problem) form for editing `score_tests' variable is
+	  printed;
+	(super_html_prob_param) editing of `score_tests' is supported.
+
+	* super_proto.h: new commands SSERV_CMD_PROB_CHANGE_SCORE_TESTS,
+	  SSERV_CMD_PROB_CLEAR_SCORE_TESTS are added.
+
+2005-10-24  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare.c:
+	new global configuration variable `disable_submit_after_ok' added.
+
+	* prepare.h:
+	(struct section_global_data) new field `disable_submit_after_ok'
+	  added.
+
+	* prepare_out.c:
+	(prepare_unparse_global) unparsing of `disable_submit_after_ok'
+	  is added.
+
+	* serve-control.c:
+	(main) changing the value of `disable_submit_after_ok' is supported.
+
+	* super-serve.c:
+	(cmd_set_value) changing the value of `disable_submit_after_ok'
+	  is supported.
+
+	* super_actions.h:
+	new action SUPER_ACTION_GLOB_CHANGE_DISABLE_SUBMIT_AFTER_OK added.
+
+	* super_html_3.c:
+	(super_html_edit_global_parameters) form for editing
+	  `disable_submit_after_ok' is added;
+	(super_html_global_param) changind of `disable_submit_after_ok'
+	  is supported.
+
+	* super_proto.h:
+	new command SSERV_CMD_GLOB_CHANGE_DISABLE_SUBMIT_AFTER_OK added.
+
+2005-10-22  Alexander Chernov  <cher@ispras.ru>
+
+	* run_packet.h:
+	(struct run_request_packet) new field `time_limit_adj' is added.
+
+	* prepare.c:
+	global parameters `stand_show_att_num', `stand_sort_by_solved' are
+	  added;
+	problem parameter `lang_time_adj' is added.
+
+	* prepare.h:
+	(struct section_global_data) new fields `stand_show_att_num',
+	  `stand_sort_by_solved' are added;
+	(struct section_problem_data) new field `lang_time_adj' is added.
+
+	* prepare_out.c:
+	(prepare_unparse_global) `stand_show_att_num', `stand_sort_by_solved'
+	  are unparsed;
+	(prepare_unparse_prob) `lang_time_adj' is unparsed.
+
+	* run.c:
+	(run_tests) the `time_limit_adj' field of the incoming packet is
+	  handled;
+	(do_loop) the force quit packets are ignored in the unmanaged mode.
+
+	* run_packet_1.c:
+	(run_request_packet_read) the `time_limit_adj' field is handled.
+
+	* run_packet_2.c:
+	(run_request_packet_write) field `time_limit_adj' is handled.
+
+	* run_packet_priv.h:
+	(struct run_request_bin_packet) field `time_limit_adj' is added;
+	maximal value of time limit adjustments (MAX_TIME_LIMIT_ADJ)
+	is 100.
+
+	* serve-control.c:
+	editing of the new configuration variables `stand_show_att_num',
+	  `stand_sort_by_solved', `lang_time_adj' is supported.
+
+	* serve.c:
+	(read_compile_packet) new `lang_time_adj' problem configuration
+	  variable is supported.
+
+	* super-serve.c:
+	editing of the new configuration variables `stand_show_att_num',
+	  `stand_sort_by_solved', `lang_time_adj' is supported.
+
+	* super_actions.h: new actions added:
+	  SUPER_ACTION_GLOB_CHANGE_STAND_SHOW_ATT_NUM,
+	  SUPER_ACTION_GLOB_CHANGE_STAND_SORT_BY_SOLVED,
+	  SUPER_ACTION_PROB_CHANGE_LANG_TIME_ADJ,
+	  SUPER_ACTION_PROB_CLEAR_LANG_TIME_ADJ.
+
+	* super_html_3.c:
+	(super_html_edit_global_parameters) forms for editing
+	  `stand_show_att_num' and `stand_sort_by_solved' are generated;
+	(super_html_global_param) changing values of `stand_show_att_num'
+	  and `stand_sort_by_solved' is supported;
+	(super_html_print_problem) form for editing `lang_time_adj' is
+	  generated;
+	(super_html_prob_param) changing value of `lang_time_adj'
+	  is supported.
+
+	* super_proto.h:
+	new protocol commands added: SSERV_CMD_GLOB_CHANGE_STAND_SHOW_ATT_NUM,
+	  SSERV_CMD_GLOB_CHANGE_STAND_SORT_BY_SOLVED,
+	  SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ,
+	  SSERV_CMD_PROB_CLEAR_LANG_TIME_ADJ.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2005-10-20  Alexander Chernov  <cher@ispras.ru>
+
+	* copyright.c: URL of ejudge is changed to www.ejudge.ru.
+
+2005-10-17  Alexander Chernov  <cher@ispras.ru>
+
+	* register.c: `:' character is allowed in user name.
+
+	* prepare_out.c:
+	(generate_abstract_tester) stupid bug fixed: missed leading "/" in
+	  path.
+
+2005-10-15  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare.c: new global configuration variables `stand_fail_attr',
+	  `stand_trans_attr' are added.
+
+	* prepare.h:
+	(struct section_global_data) new fields `stand_fail_attr',
+	  `stand_trans_attr' are added.
+
+	* prepare_out.c:
+	(prepare_unparse_global) `stand_fail_attr', `stand_trans_attr' are
+	  unparsed.
+
+	* serve-control.c:
+	new actions for editing of `stand_fail_attr', `stand_trans_attr'
+	  are handled.
+
+	* super-serve.c:
+	(cmd_set_value) new commands for editing the value of
+	  `stand_fail_attr', `stand_trans_attr' are handled.
+
+	* super_actions.h: new actions added:
+	  SUPER_ACTION_GLOB_CHANGE_STAND_FAIL_ATTR,
+	  SUPER_ACTION_GLOB_CLEAR_STAND_FAIL_ATTR,
+	  SUPER_ACTION_GLOB_CHANGE_STAND_TRANS_ATTR,
+	  SUPER_ACTION_GLOB_CLEAR_STAND_TRANS_ATTR.
+
+	* super_html_3.c:
+	(super_html_edit_global_parameters) editing forms for
+	  `stand_fail_attr', `stand_trans_attr' are generated;
+	(super_html_global_param) changing value of `stand_fail_attr',
+	  `stand_trans_attr' is supported.
+
+	* super_proto.h:
+	new commands added: SSERV_CMD_GLOB_CHANGE_STAND_FAIL_ATTR,
+	  SSERV_CMD_GLOB_CLEAR_STAND_FAIL_ATTR,
+	  SSERV_CMD_GLOB_CHANGE_STAND_TRANS_ATTR,
+	  SSERV_CMD_GLOB_CLEAR_STAND_TRANS_ATTR.
+
+	* runlog.c, runlog.h:
+	(run_get_entries_ptr) new function, which returns a constant pointer
+	  to runs array.
+
+	* edit-userlist.c:
+	(display_contests_menu) the `items' array is properly allocated and
+	  initialized.
+
+2005-10-13  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge-setup.c:
+	(generate_ejudge_xml) capability bits MASTER_LOGIN, JUDGE_LOGIN
+	  are added for the administrator user.
+
+2005-10-13  Alexander Chernov  <cher@ispras.ru>
+
+	* sformat.c:
+	(sformat_message) many new format specifications are supported:
+	  %Uc, %UC, %Uo, %UO, %Ut, %UT, %Uu, %UU, %Uf, %UF, %Ud, %UD
+	  %UL, %Up, %Uh, %UH, %UP
+	  %UM[pracg]<num>[fFmMsSgGehoOuUtTdDaAHbBcC]
+
+	* userlist-server.c:
+	(split_table_spec) new function, which splits the user table rows
+	  specification in the form "f1|f2|...|fn" into the array of
+	  fields;
+	(free_table_spec) new function that frees the array of fields;
+	(do_list_users) customization of the registered users table using
+	  the new elements <users_table_format>, <users_table_format_en>,
+	  <users_table_legend>, <users_table_legend_en> is supported.
+
+	* super_proto.h: new commands added:
+	  SSERV_CMD_CNTS_CLEAR_USERS_TABLE_FORMAT,
+	  SSERV_CMD_CNTS_CLEAR_USERS_TABLE_FORMAT_EN,
+	  SSERV_CMD_CNTS_CLEAR_USERS_TABLE_LEGEND,
+	  SSERV_CMD_CNTS_CLEAR_USERS_TABLE_LEGEND_EN,
+	  SSERV_CMD_CNTS_CHANGE_USERS_TABLE_FORMAT,
+	  SSERV_CMD_CNTS_CHANGE_USERS_TABLE_FORMAT_EN,
+	  SSERV_CMD_CNTS_CHANGE_USERS_TABLE_LEGEND,
+	  SSERV_CMD_CNTS_CHANGE_USERS_TABLE_LEGEND_EN.
+
+	* super_html_2.c:
+	(super_html_clear_variable) support for clearing elements
+	  <users_table_format>, <users_table_format_en>,
+	  <users_table_legend>, <users_table_legend_en> is implemented;
+	(super_html_set_contest_var) support for setting values of the
+	  abovementioned elements is implemented.
+
+	* super_html.c:
+	(super_html_edit_contest_page) support for editing of elements
+	  <users_table_format>, <users_table_format_en>, <users_table_legend>,
+	  <users_table_legend_en> is implemented.
+
+	* super_actions.h: new actions added:
+	  SUPER_ACTION_CNTS_CHANGE_USERS_TABLE_FORMAT,
+	  SUPER_ACTION_CNTS_CLEAR_USERS_TABLE_FORMAT,
+	  SUPER_ACTION_CNTS_CHANGE_USERS_TABLE_FORMAT_EN,
+	  SUPER_ACTION_CNTS_CLEAR_USERS_TABLE_FORMAT_EN,
+	  SUPER_ACTION_CNTS_CHANGE_USERS_TABLE_LEGEND,
+	  SUPER_ACTION_CNTS_CLEAR_USERS_TABLE_LEGEND,
+	  SUPER_ACTION_CNTS_CHANGE_USERS_TABLE_LEGEND_EN,
+	  SUPER_ACTION_CNTS_CLEAR_USERS_TABLE_LEGEND_EN.
+
+	* super-serve.c:
+	new commands SSERV_CMD_CNTS_CHANGE_USERS_TABLE_FORMAT,
+	  SSERV_CMD_CNTS_CHANGE_USERS_TABLE_FORMAT_EN,
+	  SSERV_CMD_CNTS_CHANGE_USERS_TABLE_LEGEND,
+	  SSERV_CMD_CNTS_CHANGE_USERS_TABLE_LEGEND_EN,
+	  SSERV_CMD_CNTS_CLEAR_USERS_TABLE_FORMAT,
+	  SSERV_CMD_CNTS_CLEAR_USERS_TABLE_FORMAT_EN,
+	  SSERV_CMD_CNTS_CLEAR_USERS_TABLE_LEGEND,
+	  SSERV_CMD_CNTS_CLEAR_USERS_TABLE_LEGEND_EN
+	  are handled.
+
+	* serve-control.c:
+	new actions SUPER_ACTION_CNTS_CHANGE_USERS_TABLE_FORMAT,
+	  SUPER_ACTION_CNTS_CHANGE_USERS_TABLE_FORMAT_EN,
+	  SUPER_ACTION_CNTS_CHANGE_USERS_TABLE_LEGEND,
+	  SUPER_ACTION_CNTS_CHANGE_USERS_TABLE_LEGEND_EN
+	  are handled.
+
+	* contests.h:
+	new elements <users_table_format>, <users_table_format_en>,
+	<users_table_legend>, <users_table_legend_en> are supported;
+	(struct contest_desc) new fields `users_table_format',
+	  `users_table_format_en', `users_table_legend',
+	  `users_table_legend_en' are added.
+
+	* contests.c:
+	new elements <users_table_format>, <users_table_format_en>,
+	<users_table_legend>, <users_table_legend_en> are supported;
+	(node_free) new elements are supported;
+	(parse_contest) new elements are supported;
+	(contests_unparse) new elements are supported.
+
+2005-10-12  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* super_proto.h:
+	SSERV_CMD_GLOB_CHANGE_USERS_ON_PAGE command is added.
+
+	* super_html_3.c:
+	(super_html_edit_global_parameters) editing of `users_on_page'
+	  is supported;
+	(super_html_global_param) changing the value of `users_on_page'
+	  is supported.
+
+	* super_actions.h:
+	new action SUPER_ACTION_GLOB_CHANGE_USERS_ON_PAGE is added.
+
+	* super-serve.c:
+	SSERV_CMD_GLOB_CHANGE_USERS_ON_PAGE command is handled.
+
+	* serve.c:
+	(update_standings_file) call of `write_standings' is updated;
+	(create_symlinks) multiple symlinks to the standings table are
+	  created if standings page separation is supported;
+	(do_loop) `teamdb_refresh' is called before creation of symlinks
+	  in order to calculate the number of pages correctly.
+
+	* serve-control.c:
+	action SUPER_ACTION_GLOB_CHANGE_USERS_ON_PAGE is handled.
+
+	* prepare_out.c:
+	(prepare_unparse_global) `users_on_page' variable is unparsed.
+
+	* prepare.h:
+	(struct section_global_data) new field `users_on_page' is added;
+	  new field `stand_file_name_2' is added.
+
+	* prepare.c:
+	new global configuration variable `users_on_page' is added;
+	(make_stand_file_name_2) new function, which generates
+	  the file name for second and further pages of the
+	  standings table;
+	(set_defaults) `make_stand_file_name_2' is called;
+
+	* master_html.c:
+	(write_priv_standings) calls of `do_write_standings',
+	  `do_write_kirov_standings' are updated;
+	(write_raw_standings) the same as above.
+
+	* html.h: (write_standings) function prototype is updated;
+	(do_write_kirov_standings) function prototype is updated;
+	(do_write_standings) function prototype is updated.
+
+	* html.c: (do_write_kirov_standings) parameter `stand_dir' is added;
+	  parameter `header_str' is added;
+	  standings header is now printed in this function instead of the
+	  caller function;
+	  the standings are separated into several pages, if the
+	  `users_on_page' global configuration variable is set;
+	(do_write_standings) new parameter `header_str' is added;
+	  new parameter `user_name' is added;
+	  the standings table header is printed in this function instead
+	  of the caller;
+	(write_standings) new parameter `users_on_page' is added;
+	  lots of previously commented code is removed;
+	  the standings table header is now printed in the corresponding
+	  functions;
+	  call of `do_write_kirov_standings', `do_write_standings'
+	  is updated;
+	(write_virtual_standings) call of `do_write_standings'
+	  is updated.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2005-10-07  Alexander Chernov  <cher@ispras.ru>
+
+	* edit-userlist.c:
+	(display_registered_users) new commands 't' and '0' are supported. The
+	  first command toggles selection for all users, the second command
+	  clears the selection;
+	  registration of one or selected users for selected contests is
+	  supported;
+	(display_contests_menu) new commands ':', 't', '0' are supported for
+	  selecting contests;
+	(do_display_user_menu) the selection is preserved over editing
+	  sessions;
+	  new commands 't', '0' are supported (see above);
+	  registration of one or selected users for selected contests is
+	  supported.
+
+2005-10-06  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* mkChangeLog.c: copyright notice is updated;
+	(main) date parsing is updated for CVS 1.12.
+
+2005-10-06  Alexander Chernov  <cher@ispras.ru>
+
+	* userlist_xml.c: phones tag support is removed;
+	(parse_phones) function is removed;
+	(parse_members) <phone> element is treated as string;
+	  grade valid range is greatly extended;
+	(do_parse_user) <phone> element is treated as string;
+	(unparse_phones) function is removed;
+	(unparse_member) <phone> is unparsed as a string;
+	(unparse_user) <phone> is unparsed as a string.
+
+	* userlist.h: USERLIST_T_PHONES tag code is removed;
+	user field code USERLIST_NN_PHONE is added;
+	member field code USERLIST_NM_PHONE is added;
+	(struct userlist_member) `phone' field is now string;
+	(struct userlist_user) `phone' field is now string.
+
+	* userlist.c:
+	(userlist_get_member_field_str) `phone' field is supported;
+	(userlist_delete_member_field) `phone' field is supported;
+	(userlist_set_member_field_str) `phone' field is supported;
+	(userlist_get_user_field_str) `phone' field is supported;
+	(userlist_set_user_field_str) `phone' field is supported;
+	(userlist_delete_user_field) `phone' field is supported.
+
+	* userlist-server.c:
+	(remove_all_user_cookies) the previous implementation did not
+	  refresh the cookie hash, so it was rewritten;
+	(do_set_user_info) changing `phone' field of the user and members
+	  is supported.
+
+	* super_proto.h:
+	new commands added: SSERV_CMD_CNTS_CLEAR_REGISTER_NAME_COMMENT,
+	  SSERV_CMD_CNTS_CLEAR_ALLOWED_LANGUAGES,
+	  SSERV_CMD_CNTS_CHANGE_MEMBER_DELETE,
+	  SSERV_CMD_CNTS_CHANGE_REGISTER_NAME_COMMENT,
+	  SSERV_CMD_CNTS_CHANGE_ALLOWED_LANGUAGES.
+
+	* super_html_3.c:
+	(super_html_update_variant_map) renamed from `update_variant_map' and
+	  made non-static;
+	(super_html_edit_variants) call of `super_html_update_variant_map'
+	  is updated;
+	  the page footer is printed using `super_html_contest_footer_menu';
+	(super_html_variant_param) incorrect parsing of the parameter value
+	  is fixed.
+
+	* super_html_2.c:
+	(super_html_clear_variable) clearing of <user_name_comment>,
+	  <allowed_languages> is supported;
+	(super_html_set_contest_var) setting of DISABLE_MEMBER_DELETE,
+	  <user_name_comment>, <allowed_languages> is supported;
+	  bug is fixed with incorrect memory freeing;
+	(super_html_commit_contest) variant map is loaded from file,
+	  if necessary.
+
+	* super_html.h:
+	(super_html_update_variant_map) function prototype is added.
+
+	* super_html.c:
+	(super_html_contest_page_menu) "Variants" link is added to the variant
+	  mapping editing page;
+	(super_html_edit_contest_page) DISABLE_MEMBER_DELETE contest flag
+	  editing is supported;
+	  <user_name_comment> element editing is supported;
+	  <allowed_languages> element editing is supported.
+
+	* super_actions.h:
+	new actions added: SUPER_ACTION_CNTS_CHANGE_MEMBER_DELETE,
+	  SUPER_ACTION_CNTS_CHANGE_REGISTER_NAME_COMMENT,
+	  SUPER_ACTION_CNTS_CLEAR_REGISTER_NAME_COMMENT,
+	  SUPER_ACTION_CNTS_CHANGE_ALLOWED_LANGUAGES,
+	  SUPER_ACTION_CNTS_CLEAR_ALLOWED_LANGUAGES.
+
+	* super-serve.c:
+	new commands are handled: CNTS_CLEAR_REGISTER_NAME_COMMENT,
+	  CNTS_CLEAR_ALLOWED_LANGUAGES,
+	  CNTS_CHANGE_MEMBER_DELETE,
+	  CNTS_CHANGE_REGISTER_NAME_COMMENT,
+	  CNTS_CHANGE_ALLOWED_LANGUAGES.
+
+	* serve-control.c:
+	new actions are handled: CNTS_CLEAR_REGISTER_NAME_COMMENT,
+	  CNTS_CLEAR_ALLOWED_LANGUAGES,
+	  CNTS_CHANGE_MEMBER_DELETE,
+	  CNTS_CHANGE_REGISTER_NAME_COMMENT,
+	  CNTS_CHANGE_ALLOWED_LANGUAGES.
+
+	* run.c:
+	(check_config) standard checkers are supported for variant problems.
+
+	* register.c: editing of 'Phone' field is supported;
+	<allowed_languages> element of the contest XML file is handled;
+	<user_name_comment> element is handled;
+	DISABLE_MEMBER_DELETE flag is handled;
+	(parse_allowed_languages) new function to parse "allowed_languages"
+	  parameter;
+	(initialize) new contest XML fields are handled;
+	(read_user_info_from_form) setting `show_login', `show_email',
+	  `use_cookies_default' variables is no longer supported, these
+	  variables are always set to 0, 0, 1;
+	  specific handling of `languages' user info field is implemented;
+	(read_user_info_from_server) `show_email', `use_cookies_default',
+	  `show_login' flags are always set to 0, 1, 0;
+	  `phone' member field is supported;
+	  `grade' valid value range is increased;
+	(map_user_languages) new function to parse the user's `languages'
+	  field;
+	(display_edit_registration_data_page) forms for changing the
+	  values of `show_login', `show_email', `use_cookies_default'
+	  flags are removed, since these parameters are now not
+	  changeable;
+	  <user_name_comment> element is supported;
+	  special handling of `languages' field is implemented;
+	  message of the number of members in the role is not printed,
+	  is this number is not changeable;
+	  "Delete" button is not printed, if DISABLE_MEMBER_DELETE
+	  flag is set for the contest;
+	(action_change_password) the login page is displayed after
+	  password change.
+
+2005-10-05  Alexander Chernov  <cher@ispras.ru>
+
+	* edit-userlist.c: editing of `Phone' fields is supported.
+
+	* contests.h:
+	new elements <user_name_comment>, <allowed_languages> are added;
+	new field codes for `phone' user and member fields are added;
+	(struct contest_desc) new fields `user_name_comment',
+	  `allowed_languages', `disable_member_delete' are added.
+
+	* contests.c:
+	support for new elements <user_name_comment>, <allowed_languages>
+	  is added;
+	(node_free) `user_name_comment', `allowed_languages' fields are
+	  freed;
+	(parse_client_flags) `DISABLE_MEMBER_DELETE' flag support
+	  is added;
+	(parse_contest) new elements are handled;
+	(contests_unparse) new elements are handled.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
 2005-09-29  Alexander Chernov  <cher@ispras.ru>
 
 	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
