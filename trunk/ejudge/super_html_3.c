@@ -6255,7 +6255,7 @@ super_html_check_tests(FILE *f,
   size_t flog_len = 0;
   FILE *flog = 0;
   struct stat stbuf;
-  int total_tests, v_total_tests = 0;
+  int total_tests = 0, v_total_tests = 0;
   unsigned char hbuf[1024];
 
   if (sstate->serve_parse_errors) {
