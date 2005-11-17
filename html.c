@@ -1300,7 +1300,7 @@ do_write_kirov_standings(FILE *f,
   int *trans_num = 0;
 
   int  *tot_score, *tot_full, *succ_att, *tot_att;
-  int  *t_sort, *t_sort2, *t_n1, *t_n2;
+  int  *t_sort = 0, *t_sort2, *t_n1, *t_n2;
   char dur_str[1024];
   unsigned char *head_style;
   struct teamdb_export u_info;
@@ -2286,8 +2286,8 @@ do_write_moscow_standings(FILE *f,
   int row_sh;                   /* shift count for two-dim. tables */
   int *u_sort;                  /* sorted index to u_ind */
   int *u_sort1;                 /* intermediate sorted index */
-  int *u_score;                 /* total score for a user */
-  int *u_pen;                   /* total penalty for a user */
+  int *u_score = 0;             /* total score for a user */
+  int *u_pen = 0;               /* total penalty for a user */
   int *p_att;                   /* total attempts for a problem */
   int *p_succ;                  /* full solutions for a problem */
   int *pen_cnt;                 /* counters for all penalty values */
@@ -3092,7 +3092,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   int     *t_prob;
   int     *t_pen;
   int     *t_rev;
-  int     *t_sort;
+  int     *t_sort = 0;
   int     *t_sort2;
   int     *prob_cnt;
   int     *pen_cnt;
