@@ -3866,6 +3866,7 @@ write_xml_team_testing_report(FILE *f, const unsigned char *txt)
   struct testing_report_test *t;
   unsigned char *font_color = 0, *s;
   int need_comment = 0, need_info = 0, is_kirov = 0, i;
+  int disp_time;
 
   if (!(r = testing_report_parse_xml(txt))) {
     fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
@@ -3941,7 +3942,9 @@ write_xml_team_testing_report(FILE *f, const unsigned char *txt)
             font_color, run_status_str(t->status, 0, 0));
     fprintf(f, "<td>%d.%03d</td>", t->time / 1000, t->time % 1000);
     if (t->real_time > 0) {
-      fprintf(f, "<td>%d.%03d</td>", t->real_time / 1000, t->real_time % 1000);
+      disp_time = t->real_time;
+      if (disp_time < t->time) disp_time = t->time;
+      fprintf(f, "<td>%d.%03d</td>", disp_time / 1000, disp_time % 1000);
     } else {
       fprintf(f, "<td>N/A</td>");
     }
