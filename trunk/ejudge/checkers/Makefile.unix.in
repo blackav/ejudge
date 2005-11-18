@@ -117,6 +117,7 @@ CFILES=\
  fatal.c\
  fatal_cf.c\
  fatal_pe.c\
+ fatal_read.c\
  fatal_wa.c\
  init.c\
  vars.c\
