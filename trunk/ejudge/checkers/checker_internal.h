@@ -80,6 +80,8 @@ void fatal_PE(char const *format, ...)
      __attribute__ ((noreturn, format(printf, 1, 2)));
 void fatal_WA(char const *format, ...)
      __attribute__ ((noreturn, format(printf, 1, 2)));
+void fatal_read(int streamno, char const *format, ...)
+  __attribute__ ((noreturn, format(printf, 2, 3)));
 void checker_OK(void) __attribute__((noreturn));
 
 void *xmalloc(size_t size);
