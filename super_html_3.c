@@ -1275,7 +1275,8 @@ super_html_edit_global_parameters(FILE *f,
                                hidden_vars);
     }
 
-    if (global->score_system_val == SCORE_ACM) {
+    if (global->score_system_val == SCORE_ACM
+        || global->score_system_val == SCORE_MOSCOW) {
       //GLOBAL_PARAM(stand_penalty_attr, "s"),
       print_string_editing_row(f, "HTML attributes for the \"Penalty\" column:",
                                global->stand_penalty_attr,
@@ -1322,7 +1323,8 @@ super_html_edit_global_parameters(FILE *f,
     }
 
     //GLOBAL_PARAM(ignore_success_time, "d"),
-    if (global->score_system_val == SCORE_ACM) {
+    if (global->score_system_val == SCORE_ACM
+        || global->score_system_val == SCORE_MOSCOW) {
       html_start_form(f, 1, session_id, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Ignore success time in penalty calculation:</td><td>", form_row_attrs[row ^= 1]);
       html_boolean_select(f, global->ignore_success_time, "param", 0, 0);
