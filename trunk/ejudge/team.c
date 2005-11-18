@@ -983,7 +983,10 @@ submit_if_asked(void)
                             global->contest_id, client_locale_id,
                             client_ip, ssl_flag, prob, lang, 0,
                             prog_size, prog_data);
-  operation_status_page(n, 0);
+  if (n == -SRV_ERR_DATA_FORMAT)
+    operation_status_page(-1, _("Data format error. Maybe you've sent a binary file instead of a text one."));
+  else
+    operation_status_page(n, 0);
   force_recheck_status = 1;
 }
 
