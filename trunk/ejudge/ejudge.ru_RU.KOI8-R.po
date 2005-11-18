@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-11-18 21:48+0300\n"
-"PO-Revision-Date: 2005-11-18 21:48+0300\n"
+"POT-Creation-Date: 2005-11-18 22:08+0300\n"
+"PO-Revision-Date: 2005-11-18 22:09+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -527,11 +527,6 @@ msgstr "Страна (Англ.)"
 msgid "Current virtual standings"
 msgstr "Виртуальное положение участников"
 
-#: team.c:987
-msgid ""
-"Data format error. Maybe you've sent a binary file instead of a text one."
-msgstr "Ошибка формата данных. Возможно, Вы послали бинарный файл вместо текстового."
-
 #: register.c:1017
 msgid "Default language"
 msgstr "Язык по умолчанию"
@@ -719,6 +714,12 @@ msgstr "Поле \"Имя пользователя\" имело слишком большую длину."
 #: html.c:4329 master_html.c:996 master_html.c:1820
 msgid "File"
 msgstr "Файл"
+
+#: team.c:987
+msgid ""
+"File sending error. Maybe the file you've sent is not a text file (or is not "
+"saved as a text file)."
+msgstr "Ошибка отправки файла. Возможно, файл, который Вы отправляете, не является текстовым файлом (или не был сохранён как текстовый файл)."
 
 #: master_html.c:652
 msgid "Filter expression"
