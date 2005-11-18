@@ -71,6 +71,7 @@ static unsigned char const * const error_map[] =
   _("invalid test number"),
   _("bad XML"),
   _("report is not available"),
+  _("data format error"),
 };
 #undef _
 
