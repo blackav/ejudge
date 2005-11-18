@@ -2024,7 +2024,8 @@ cmd_priv_submit_run(struct client_state *p, int len,
     return;
   }
   if (!langs[pkt->lang_id]->binary && pkt->run_len != strlen(pkt->data)) {
-    new_bad_packet(p, "priv_submit_run: run_len does not match");
+    err("%d: data format error: binary file?", p->id);
+    new_send_reply(p, -SRV_ERR_DATA_FORMAT);
     return;
   }
   if (len != sizeof(*pkt) + pkt->run_len) {
@@ -2322,7 +2323,8 @@ cmd_team_submit_run(struct client_state *p, int len,
     return;
   }
   if (!langs[pkt->lang_id]->binary && pkt->run_len != strlen(pkt->data)) {
-    new_bad_packet(p, "team_submit_run: run_len does not match");
+    err("%d: data format error: binary file?", p->id);
+    new_send_reply(p, -SRV_ERR_DATA_FORMAT);
     return;
   }
   if (len != sizeof(*pkt) + pkt->run_len) {
