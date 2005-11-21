@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003,2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 #error You must define NEED_CORR macro
 #endif /* NEED_CORR */
 #ifndef NEED_INFO
-#error You must define NEED_INFO macro
+#define NEED_INFO 0
 #endif /* NEED_INFO */
 #ifndef NEED_TGZ
 #define NEED_TGZ 0
@@ -35,19 +35,24 @@
 
 #if NEED_INFO == 1
 #include "testinfo.h"
-int (*testinfo_parse_func)(const CHECK_char_t*,testinfo_t*) = testinfo_parse;
-const CHECK_char_t *(*testinfo_strerror_func)(int) = testinfo_strerror;
+extern int (*testinfo_parse_func)(const CHECK_char_t*,testinfo_t*);
+extern const CHECK_char_t *(*testinfo_strerror_func)(int);
 extern testinfo_t test_info;
 #else
 struct testinfo_struct;
-int (*testinfo_parse_func)(const CHECK_char_t*,struct testinfo_struct*) = 0;
-const CHECK_char_t *(*testinfo_strerror_func)(int) = 0;
+extern int (*testinfo_parse_func)(const CHECK_char_t*,struct testinfo_struct*);
+extern const CHECK_char_t *(*testinfo_strerror_func)(int);
 #endif /* NEED_INFO */
 
 extern int checker_main(int, char **);
 int
 main(int argc, char **argv)
 {
+#if NEED_INFO == 1
+  testinfo_parse_func = testinfo_parse;
+  testinfo_strerror_func = testinfo_strerror;
+#endif
+
   checker_do_init(argc, argv, NEED_CORR, NEED_INFO, NEED_TGZ);
   return checker_main(argc, argv);
 }
