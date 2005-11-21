@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,6 +35,10 @@ const unsigned char * const f_arr_names[3] =
   "team output",
   "correct output"
 };
+
+struct testinfo_struct;
+int (*testinfo_parse_func)() = 0;
+const unsigned char *(*testinfo_strerror_func)() = 0;
 
 /*
  * Local variables:
