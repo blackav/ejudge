@@ -6019,6 +6019,7 @@ enum
   CHECKER_LANG_PAS = CHECKER_LANG_FIRST,
   CHECKER_LANG_DPR,
   CHECKER_LANG_C,
+  CHECKER_LANG_CPP,
 
   CHECKER_LANG_LAST,
 };
@@ -6027,12 +6028,14 @@ static const unsigned char * const supported_suffixes[] =
   ".pas",
   ".dpr",
   ".c",
+  ".cpp",
   0,
 };
 
 static unsigned char *fpc_path = 0;
 static unsigned char *dcc_path = 0;
 static unsigned char *gcc_path = 0;
+static unsigned char *gpp_path = 0;
 
 static unsigned char *
 get_compiler_path(const unsigned char *short_name, unsigned char *old_path)
@@ -6131,6 +6134,14 @@ recompile_checker(FILE *f, const unsigned char *checker_path)
       return -1;
     }
     snprintf(cmd, sizeof(cmd), "%s -I%s/include -L%s/lib -Wl,--rpath,%s/lib %s -o %s -lchecker -lm", gcc_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2, filename);
+    break;
+  case CHECKER_LANG_CPP:
+    gpp_path = get_compiler_path("g++", gpp_path);
+    if (!*gpp_path) {
+      fprintf(f, "Error: GNU C++ support is not configured\n");
+      return -1;
+    }
+    snprintf(cmd, sizeof(cmd), "%s -I%s/include -L%s/lib -Wl,--rpath,%s/lib %s -o %s -lchecker -lm", gpp_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2, filename);
     break;
 
   default:
