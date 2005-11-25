@@ -17,6 +17,8 @@
 
 #include "userlist_clnt/private.h"
 
+#include "errlog.h"
+
 int
 userlist_clnt_generate_team_passwd(struct userlist_clnt *clnt,
                                    int cmd,
