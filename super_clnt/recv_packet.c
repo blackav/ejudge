@@ -17,7 +17,7 @@
 
 #include "super_clnt.h"
 #include "super_proto.h"
-#include "pathutl.h"
+#include "errlog.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
