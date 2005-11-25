@@ -15,11 +15,9 @@
  * GNU General Public License for more details.
  */
 
-#include "config.h"
-
 #include "cgi.h"
 #include "settings.h"
-#include "pathutl.h"
+#include "errlog.h"
 
 #include <reuse/xalloc.h>
 
