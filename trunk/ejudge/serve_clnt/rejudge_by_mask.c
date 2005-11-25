@@ -17,7 +17,7 @@
 
 #include "serve_clnt.h"
 #include "protocol.h"
-#include "pathutl.h"
+#include "errlog.h"
 
 #include <reuse/xalloc.h>
 
