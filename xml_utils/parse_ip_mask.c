@@ -16,7 +16,7 @@
  */
 
 #include "xml_utils.h"
-#include "pathutl.h"
+#include "errlog.h"
 
 #include <string.h>
 
