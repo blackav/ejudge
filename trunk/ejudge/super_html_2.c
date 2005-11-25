@@ -24,6 +24,7 @@
 #include "super_proto.h"
 #include "contests.h"
 #include "misctext.h"
+#include "mischtml.h"
 #include "opcaps.h"
 #include "protocol.h"
 #include "userlist_cfg.h"
