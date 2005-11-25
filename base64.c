@@ -17,7 +17,7 @@
 
 #include "base64.h"
 
-#include "pathutl.h"
+#include "errlog.h"
 
 #include <reuse/logger.h>
 

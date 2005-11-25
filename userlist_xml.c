@@ -19,7 +19,7 @@
 #include "settings.h"
 
 #include "userlist.h"
-#include "pathutl.h"
+#include "errlog.h"
 #include "protocol.h"
 #include "misctext.h"
 
