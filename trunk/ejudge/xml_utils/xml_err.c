@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  */
 
 #include "xml_utils.h"
-#include "pathutl.h"
+#include "errlog.h"
 #include "expat_iface.h"
 
 #include <stdarg.h>
