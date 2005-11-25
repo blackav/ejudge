@@ -24,6 +24,7 @@
 #include "version.h"
 #include "prepare_serve.h"
 #include "teamdb.h"
+#include "errlog.h"
 
 #include <reuse/xalloc.h>
 

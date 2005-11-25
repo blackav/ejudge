@@ -42,6 +42,7 @@
 #include "misctext.h"
 #include "base64.h"
 #include "pathutl.h"
+#include "errlog.h"
 #include "fileutl.h"
 
 #include <reuse/xalloc.h>

@@ -20,6 +20,7 @@
 
 #include "userlist_cfg.h"
 #include "pathutl.h"
+#include "errlog.h"
 #include "contests.h"
 #include "userlist_proto.h"
 #include "userlist_clnt.h"

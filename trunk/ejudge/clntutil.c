@@ -21,6 +21,7 @@
 #include "clntutil.h"
 
 #include "pathutl.h"
+#include "errlog.h"
 #include "fileutl.h"
 #include "unix/unix_fileutl.h"
 #include "misctext.h"

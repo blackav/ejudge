@@ -18,6 +18,7 @@
 #include "userlist.h"
 #include "contests.h"
 #include "pathutl.h"
+#include "errlog.h"
 #include "tsc.h"
 
 #include <reuse/logger.h>

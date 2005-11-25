@@ -21,6 +21,7 @@
 #include "team_extra.h"
 #include "expat_iface.h"
 #include "pathutl.h"
+#include "errlog.h"
 #include "xml_utils.h"
 
 #include <reuse/logger.h>

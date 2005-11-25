@@ -30,6 +30,7 @@
 #include "prepare_dflt.h"
 #include "userlist_cfg.h"
 #include "cpu.h"
+#include "errlog.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>

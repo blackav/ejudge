@@ -30,6 +30,7 @@
 #include "filehash.h"
 
 #include "fileutl.h"
+#include "errlog.h"
 #include "misctext.h"
 
 #include <reuse/osdeps.h>

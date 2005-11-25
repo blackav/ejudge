@@ -21,6 +21,7 @@
 
 #include "expat_iface.h"
 #include "pathutl.h"
+#include "errlog.h"
 #include "clntutil.h"
 #include "cgi.h"
 #include "contests.h"

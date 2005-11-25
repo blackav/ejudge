@@ -21,6 +21,7 @@
 #include "compile_packet.h"
 #include "compile_packet_priv.h"
 #include "pathutl.h"
+#include "errlog.h"
 #include "prepare.h"
 #include "prepare_vars.h"
 #include "runlog.h"

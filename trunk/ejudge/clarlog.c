@@ -21,6 +21,7 @@
 
 #include "unix/unix_fileutl.h"
 #include "pathutl.h"
+#include "errlog.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>

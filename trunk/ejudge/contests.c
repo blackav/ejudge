@@ -17,6 +17,7 @@
 
 #include "contests.h"
 #include "pathutl.h"
+#include "errlog.h"
 #include "userlist.h"
 #include "xml_utils.h"
 #include "misctext.h"

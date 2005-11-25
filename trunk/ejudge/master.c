@@ -21,6 +21,7 @@
 #include "cgi.h"
 #include "fileutl.h"
 #include "pathutl.h"
+#include "errlog.h"
 #include "clarlog.h"
 #include "base64.h"
 #include "parsecfg.h"

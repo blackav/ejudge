@@ -24,6 +24,7 @@
 #include "userlist_clnt.h"
 #include "clntutil.h"
 #include "pathutl.h"
+#include "errlog.h"
 #include "contests.h"
 #include "userlist_proto.h"
 #include "misctext.h"
