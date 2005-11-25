@@ -17,6 +17,7 @@
 
 #include "varsubst.h"
 #include "prepare_vars.h"
+#include "errlog.h"
 
 #include <reuse/xalloc.h>
 

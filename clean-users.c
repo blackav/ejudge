@@ -22,6 +22,7 @@
 #include "userlist.h"
 #include "contests.h"
 #include "pathutl.h"
+#include "errlog.h"
 #include "runlog.h"
 #include "clarlog.h"
 #include "userlist_clnt.h"

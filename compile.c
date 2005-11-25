@@ -23,6 +23,7 @@
 #include "prepare.h"
 #include "prepare_vars.h"
 #include "pathutl.h"
+#include "errlog.h"
 #include "parsecfg.h"
 #include "fileutl.h"
 #include "cr_serialize.h"

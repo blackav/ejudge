@@ -23,6 +23,7 @@
 #include "prepare_vars.h"
 #include "fileutl.h"
 #include "pathutl.h"
+#include "errlog.h"
 
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>

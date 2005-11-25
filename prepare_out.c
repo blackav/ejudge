@@ -21,6 +21,7 @@
 #include "prepare_dflt.h"
 #include "xml_utils.h"
 #include "prepare_serve.h"
+#include "errlog.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>

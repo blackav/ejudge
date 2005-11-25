@@ -21,6 +21,7 @@
 #include "teamdb.h"
 
 #include "pathutl.h"
+#include "errlog.h"
 #include "unix/unix_fileutl.h"
 
 #include <reuse/xalloc.h>

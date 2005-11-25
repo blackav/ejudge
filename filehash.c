@@ -21,6 +21,7 @@
 #include "timestamp.h"
 #include "sha.h"
 #include "pathutl.h"
+#include "errlog.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>

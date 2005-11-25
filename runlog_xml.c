@@ -21,6 +21,7 @@
 #include "runlog.h"
 #include "expat_iface.h"
 #include "pathutl.h"
+#include "errlog.h"
 #include "teamdb.h"
 #include "prepare.h"
 #include "prepare_vars.h"
