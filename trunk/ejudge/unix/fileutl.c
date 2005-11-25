@@ -18,6 +18,7 @@
 #include "fileutl.h"
 #include "unix/unix_fileutl.h"
 #include "pathutl.h"
+#include "errlog.h"
 #include "settings.h"
 
 #include <reuse/logger.h>
