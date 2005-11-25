@@ -17,6 +17,8 @@
 
 #include "userlist_clnt/private.h"
 
+#include "errlog.h"
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>

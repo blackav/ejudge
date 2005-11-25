@@ -17,6 +17,8 @@
 
 #include "userlist_clnt/private.h"
 
+#include "errlog.h"
+
 int
 userlist_clnt_list_users(struct userlist_clnt *clnt,
                          ej_ip_t origin_ip,

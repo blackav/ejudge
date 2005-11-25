@@ -17,6 +17,8 @@
 
 #include "userlist_clnt/private.h"
 
+#include "errlog.h"
+
 #include <reuse/integral.h>
 
 #include <sys/uio.h>

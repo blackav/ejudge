@@ -17,6 +17,8 @@
 
 #include "userlist_clnt/private.h"
 
+#include "errlog.h"
+
 int
 userlist_clnt_dump_database(struct userlist_clnt *clnt, int cmd,
                             int contest_id, int out_fd,
