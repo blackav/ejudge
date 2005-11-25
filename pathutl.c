@@ -184,46 +184,6 @@ chop(char *s)
   return s;
 }
 
-/* symbol verr exists :( */
-void
-vverr(char const *msg, va_list args)
-{
-  vwrite_log(0, LOG_ERR, msg, args);
-}
-
-void
-err(char const *msg, ...)
-{
-  va_list args;
-
-  va_start(args, msg);
-  vwrite_log(0, LOG_ERR, msg, args);
-  va_end(args);
-}
-
-/* we need this for proper localization */
-void
-do_err_r(char const *func, char const *txt, ...)
-{
-  va_list  args;
-  char    *s = alloca(strlen(func) + strlen(txt) + 10);
-
-  va_start(args, txt);
-  sprintf(s, "%s: %s", func, txt);
-  vverr(s, args);
-  va_end(args);
-}
-
-void
-info(char const *msg, ...)
-{
-  va_list args;
-
-  va_start(args, msg);
-  vwrite_log(0, LOG_INFO, msg, args);
-  va_end(args);
-}
-
 void
 path_add_dir(char *path, char const *dir)
 {
