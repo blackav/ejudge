@@ -17,10 +17,8 @@
  * GNU General Public License for more details.
  */
 
-#include "ej_types.h"
-
-#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 int html_armored_memlen(char const *text, int size);
@@ -56,18 +54,6 @@ enum
   CONTENT_TYPE_XML,
 };
 int get_content_type(const unsigned char *txt, const unsigned char **p_start_ptr);
-
-unsigned char *html_hyperref(unsigned char *buf, size_t size,
-                             ej_cookie_t session_id,
-                             const unsigned char *self_url,
-                             const unsigned char *extra_args,
-                             const unsigned char *format, ...);
-
-void html_start_form(FILE *f, int mode, ej_cookie_t sid,
-                     unsigned char const *self_url,
-                     unsigned char const *hidden_vars);
-
-void html_date_select(FILE *f, time_t t);
 
 unsigned char *dos2unix_str(const unsigned char *s);
 
