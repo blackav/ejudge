@@ -16,7 +16,6 @@
  */
 
 #include "parsecfg.h"
-#include "pathutl.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -25,6 +24,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 
 #if defined __GNUC__ && defined __MINGW32__
 #include <malloc.h>
