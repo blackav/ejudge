@@ -23,6 +23,7 @@
 #include "prepare_vars.h"
 #include "protocol.h"
 #include "misctext.h"
+#include "mischtml.h"
 #include "teamdb.h"
 #include "clarlog.h"
 #include "runlog.h"
@@ -39,6 +40,7 @@
 #include "full_archive.h"
 #include "filehash.h"
 #include "digest_io.h"
+#include "errlog.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
