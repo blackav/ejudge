@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 
-#include "misctext.h"
+#include "mischtml.h"
 
 #include <reuse/logger.h>
 
