@@ -21,6 +21,7 @@
 #include "super_html.h"
 #include "super-serve.h"
 #include "misctext.h"
+#include "mischtml.h"
 #include "prepare.h"
 #include "super_actions.h"
 #include "userlist_cfg.h"
@@ -34,6 +35,7 @@
 #include "userlist_proto.h"
 #include "userlist.h"
 #include "prepare_serve.h"
+#include "errlog.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
