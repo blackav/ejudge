@@ -107,6 +107,7 @@ COMMON_CFILES=\
  digest_4.c\
  digest_5.c\
  dos2unix_str.c\
+ errlog.c\
  expat_iface.c\
  filehash.c\
  filter_eval.c\
@@ -243,6 +244,7 @@ HFILES=\
  ej_limits.h\
  ej_process.h\
  ej_types.h\
+ errlog.h\
  expat_iface.h\
  filehash.h\
  fileutl.h\
@@ -252,6 +254,7 @@ HFILES=\
  html.h\
  interrupt.h\
  l10n.h\
+ mischtml.h\
  misctext.h\
  ncurses_utils.h\
  opcaps.h\
