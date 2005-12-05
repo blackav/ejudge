@@ -2482,3 +2482,9 @@ userlist_clnt/recv_packet.c 1 4 168380
 userlist_clnt/send_packet.c 1 8 170628
 parsecfg.c 1 26 2917261
 serve_clnt/submit_run_2.c 1 1 244561
+protocol.h 1 41 792508
+serve_clnt.h 1 26 515237
+edit-userlist.c 1 30 8741062
+serve.c 1 107 14340899
+serve-cmd.c 1 15 1872372
+userlist-server.c 1 70 15770856
