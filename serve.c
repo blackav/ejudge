@@ -2302,15 +2302,221 @@ cmd_team_print(struct client_state *p, int len,
 }
 
 static void
+do_submit_run(struct client_state *p,
+              const unsigned char *proc_name,
+              int need_retval,
+              int priv_submit,  /* not used yet... */
+              const struct section_problem_data *cur_prob,
+              const struct section_language_data *cur_lang,
+              int user_id,
+              int contest_id,
+              int locale_id,
+              int variant,
+              ej_ip_t ip,
+              int ssl,
+              size_t run_size,
+              const unsigned char *run_bytes)
+{
+  char **dis_lang;
+  const unsigned char *login;
+  int i, run_id, arch_flags, r;
+  time_t start_time, stop_time, user_deadline = 0;
+  ruint32_t shaval[5];
+  struct timeval precise_time;
+  path_t run_arch;
+  struct prot_serve_pkt_val retpack;
+
+  info("%d: %s: %d, %d, %d, %d, %s, %s",
+       p->id, proc_name, user_id, contest_id, locale_id,
+       variant, cur_prob->short_name, cur_lang->short_name);
+
+  /* sanity check for contest validity */
+  if (contest_id != global->contest_id) {
+    err("%d: contest_id does not match", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
+    return;
+  }
+
+  /* check for user validity */
+  if (!teamdb_lookup(user_id)) {
+    err("%d: user_id is invalid", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_USER_ID);
+    return;
+  }
+  if (user_id != p->user_id) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: pkt->user_id != p->user_id", p->id);
+    return;
+  }
+  if (teamdb_get_flags(user_id) & (TEAM_BANNED | TEAM_LOCKED)) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: user %d cannot submit runs", p->id, user_id);
+    return;
+  }
+
+  /* check for disabled languages */
+  if (cur_prob->disable_language) {
+    dis_lang = cur_prob->disable_language;
+    for (i = 0; dis_lang[i]; i++)
+      if (!strcmp(dis_lang[i], cur_lang->short_name))
+        break;
+    if (dis_lang[i]) {
+      err("%d: the language %s is disabled for problem %s", p->id,
+          cur_lang->short_name, cur_prob->short_name);
+      new_send_reply(p, -SRV_ERR_LANGUAGE_DISABLED);
+      return;
+    }
+  }
+
+  /* check for variant validity */
+  if (variant) {
+    new_send_reply(p, -SRV_ERR_NO_PERMS);
+    err("%d: variant cannot be set", p->id);
+    return;
+  }
+  if (cur_prob->variant_num > 0) {
+    if (!find_variant(user_id, cur_prob->id)) {
+      new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
+      err("%d: cannot get variant", p->id);
+      return;
+    }
+  }
+
+  /* check for start/stop times and deadlines */
+  start_time = contest_start_time;
+  stop_time = contest_stop_time;
+  if (global->virtual) {
+    start_time = run_get_virtual_start_time(user_id);
+    stop_time = run_get_virtual_stop_time(user_id, current_time);
+  }
+  // personal deadline
+  if (cur_prob->pd_total > 0) {
+    login = teamdb_get_login(user_id);
+    for (i = 0; i < cur_prob->pd_total; i++) {
+      if (!strcmp(login, cur_prob->pd_infos[i].login)) {
+        user_deadline = cur_prob->pd_infos[i].deadline;
+        break;
+      }
+    }
+  }
+  // common problem deadline
+  if (!user_deadline) user_deadline = cur_prob->t_deadline;
+  if (user_deadline && current_time >= user_deadline) {
+    err("%d: deadline expired", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
+    return;
+  }
+  // problem submit start time
+  if (cur_prob->t_start_date && current_time < cur_prob->t_start_date) {
+    err("%d: problem is not started", p->id);
+    new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
+    return;
+  }
+  // contest start/stop times
+  if (!start_time) {
+    err("%d: contest is not started", p->id);
+    new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
+    return;
+  }
+  if (stop_time) {
+    err("%d: contest already finished", p->id);
+    new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
+    return;
+  }
+  if (check_team_quota(user_id, run_size) < 0) {
+    err("%d: user quota exceeded", p->id);
+    new_send_reply(p, -SRV_ERR_QUOTA_EXCEEDED);
+    return;
+  }
+
+  sha_buffer(run_bytes, run_size, shaval);
+  gettimeofday(&precise_time, 0);
+  if ((run_id = run_add_record(precise_time.tv_sec,
+                               precise_time.tv_usec * 1000,
+                               run_size,
+                               shaval,
+                               ip,
+                               locale_id,
+                               user_id,
+                               cur_prob->id,
+                               cur_lang->id, 0, 0)) < 0){
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  move_files_to_insert_run(run_id);
+
+  arch_flags = archive_make_write_path(run_arch, sizeof(run_arch),
+                                       global->run_archive_dir, run_id,
+                                       run_size, 0);
+  if (arch_flags < 0) {
+    run_undo_add_record(run_id);
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  if (archive_dir_prepare(global->run_archive_dir, run_id, 0, 0) < 0) {
+    run_undo_add_record(run_id);
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+  if (generic_write_file(run_bytes, run_size, arch_flags, 0, run_arch, "") < 0) {
+    run_undo_add_record(run_id);
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+
+  if (global->ignore_duplicated_runs) {
+    if ((r = run_check_duplicate(run_id)) < 0) {
+      run_undo_add_record(run_id);
+      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+      return;
+    } else if (r) {
+      info("%d: %s: duplicated run, match %d", p->id, proc_name, r - 1);
+      new_send_reply(p, -SRV_ERR_DUPLICATED_RUN);
+      return;
+    }
+  }
+
+  if (testing_suspended) {
+    info("%d: testing is suspended", p->id);
+    run_change_status(run_id, RUN_PENDING, 0, -1, 0);
+    append_audit_log(run_id, p, "Command: submit\nStatus: pending\nRun-id: %d\n  Testing is suspended by the contest administrator\n", run_id);
+    goto success;
+  }
+
+  if (cur_prob->disable_auto_testing || cur_prob->disable_testing
+      || cur_lang->disable_auto_testing || cur_lang->disable_testing) {
+    info("%d: %s: auto testing disabled", p->id, proc_name);
+    run_change_status(run_id, RUN_PENDING, 0, -1, 0);
+    append_audit_log(run_id, p, "Command: submit\nStatus: pending\nRun-id: %d\n  Testing disabled for this problem or language\n", run_id);
+    goto success;
+  }
+
+  if (queue_compile_request(run_bytes, run_size, run_id,
+                            cur_lang->compile_id, locale_id,
+                            cur_lang->src_sfx,
+                            cur_lang->compiler_env, -1) < 0) {
+    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+    return;
+  }
+
+  info("%d: %s: ok", p->id, proc_name);
+  append_audit_log(run_id, p, "Command: submit\nStatus: ok\nRun-id: %d\n", run_id);
+  /* fallthrough */
+
+ success:
+  if (!need_retval) return new_send_reply(p, SRV_RPL_OK);
+
+  memset(&retpack, 0, sizeof(retpack));
+  retpack.b.id = SRV_RPL_VALUE;
+  retpack.b.magic = PROT_SERVE_PACKET_MAGIC;
+  retpack.value = run_id;
+  new_enqueue_reply(p, sizeof(retpack), &retpack);
+}
+
+static void
 cmd_team_submit_run(struct client_state *p, int len, 
                     struct prot_serve_pkt_submit_run *pkt)
 {
-  int run_id, r, arch_flags;
-  path_t run_arch;
-  ruint32_t shaval[5];
-  time_t start_time, stop_time, user_deadline = 0;
-  struct timeval precise_time;
-
   if (get_peer_local_user(p) < 0) return;
 
   if (len < sizeof(*pkt)) {
@@ -2332,176 +2538,92 @@ cmd_team_submit_run(struct client_state *p, int len,
     new_bad_packet(p, "team_submit_run: packet length does not match");
     return;
   }
-
-  info("%d: team_submit_run: %d, %d, %d, %d, %d",
-       p->id, pkt->user_id, pkt->contest_id, pkt->locale_id,
-       pkt->prob_id, pkt->lang_id);
-  if (pkt->contest_id != global->contest_id) {
-    err("%d: contest_id does not match", p->id);
-    new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
-    return;
-  }
-  if (!teamdb_lookup(pkt->user_id)) {
-    err("%d: user_id is invalid", p->id);
-    new_send_reply(p, -SRV_ERR_BAD_USER_ID);
-    return;
-  }
   if (pkt->prob_id < 1 || pkt->prob_id > max_prob || !probs[pkt->prob_id]) {
     err("%d: prob_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
     return;
   }
-  if (probs[pkt->prob_id]->disable_language) {
-    char **dl = probs[pkt->prob_id]->disable_language;
-    int i;
 
-    for (i = 0; dl[i]; i++) {
-      if (!strcmp(dl[i], langs[pkt->lang_id]->short_name)) {
-        err("%d: the language %s is disabled for problem %s", p->id,
-            langs[pkt->lang_id]->short_name, probs[pkt->prob_id]->short_name);
-        new_send_reply(p, -SRV_ERR_LANGUAGE_DISABLED);
-        return;
-      }
-    }
-  }
-  if (p->user_id && pkt->user_id != p->user_id) {
-    new_send_reply(p, -SRV_ERR_NO_PERMS);
-    err("%d: pkt->user_id != p->user_id", p->id);
+  do_submit_run(p, "team_submit_run", 0, 0,
+                probs[pkt->prob_id], langs[pkt->lang_id],
+                pkt->user_id, pkt->contest_id, pkt->locale_id, pkt->variant,
+                p->ip, p->ssl, pkt->run_len, pkt->data);
+  return;
+}
+
+static void
+cmd_user_submit_run_2(struct client_state *p, int len,
+                      struct prot_serve_pkt_submit_run_2 *pkt)
+{
+  const unsigned char *prob_ptr, *lang_ptr, *src_ptr;
+  size_t prob_len, lang_len, pkt_len, src_len;
+  int prob_id, lang_id;
+  struct section_problem_data *cur_prob;
+  struct section_language_data *cur_lang;
+
+  if (get_peer_local_user(p) < 0) return;
+
+  pkt_len = sizeof(*pkt);
+  if (len < pkt_len) {
+    new_bad_packet(p, "user_submit_run_2: packet is too small: %d", len);
     return;
   }
-  if (pkt->variant) {
-    new_send_reply(p, -SRV_ERR_NO_PERMS);
-    err("%d: variant cannot be set", p->id);
+  prob_ptr = pkt->data;
+  prob_len = strlen(prob_ptr);
+  pkt_len += prob_len;
+  if (prob_len != pkt->prob_size || len < pkt_len) {
+    new_bad_packet(p, "user_submit_run_2: prob_name length mismatch");
     return;
   }
-  if (probs[pkt->prob_id]->variant_num > 0) {
-    if (!find_variant(pkt->user_id, pkt->prob_id)) {
-      new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
-      err("%d: cannot get variant", p->id);
-      return;
-    }
+  lang_ptr = prob_ptr + prob_len + 1;
+  lang_len = strlen(lang_ptr);
+  pkt_len += lang_len;
+  if (lang_len != pkt->lang_size || len < pkt_len) {
+    new_bad_packet(p, "user_submit_run_2: lang_name length mismatch");
+    return;
   }
-  start_time = contest_start_time;
-  stop_time = contest_stop_time;
-  if (global->virtual) {
-    start_time = run_get_virtual_start_time(p->user_id);
-    stop_time = run_get_virtual_stop_time(p->user_id, current_time);
+  src_ptr = lang_ptr + lang_len + 1;
+  src_len = strlen(src_ptr);
+  pkt_len += pkt->run_size;
+  if (pkt_len != len) {
+    new_bad_packet(p, "user_submit_run_2: packet length mismatch");
+    return;
   }
-  if (probs[pkt->prob_id]->pd_total > 0) {
-    unsigned char *login = teamdb_get_login(p->user_id);
-    int pdi;
-    for (pdi = 0; pdi < probs[pkt->prob_id]->pd_total; pdi++) {
-      if (!strcmp(login, probs[pkt->prob_id]->pd_infos[pdi].login)) {
-        user_deadline = probs[pkt->prob_id]->pd_infos[pdi].deadline;
-      }
-    }
-  }
-  if (!user_deadline) user_deadline = probs[pkt->prob_id]->t_deadline;
-  if (user_deadline && current_time >= user_deadline) {
-    err("%d: deadline expired", p->id);
+
+  for (prob_id = 1; prob_id <= max_prob; prob_id++)
+    if (probs[prob_id] && !strcmp(probs[prob_id]->short_name, prob_ptr))
+      break;
+  if (prob_id > max_prob) {
+    err("%d: prob_name `%s' is invalid", p->id, prob_ptr);
     new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
     return;
   }
-  if (probs[pkt->prob_id]->t_start_date
-      && current_time < probs[pkt->prob_id]->t_start_date) {
-    err("%d: problem is not started", p->id);
-    new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
+  cur_prob = probs[prob_id];
+  for (lang_id = 1; lang_id <= max_lang; lang_id++)
+    if (langs[lang_id] && !strcmp(langs[lang_id]->short_name, lang_ptr))
+      break;
+  if (lang_id > max_lang) {
+    err("%d: lang_name `%s' is invalid", p->id, lang_ptr);
+    new_send_reply(p, -SRV_ERR_BAD_LANG_ID);
     return;
   }
-  if (!start_time) {
-    err("%d: contest is not started", p->id);
-    new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
-    return;
-  }
-  if (stop_time) {
-    err("%d: contest already finished", p->id);
-    new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
-    return;
-  }
-  if (check_team_quota(pkt->user_id, pkt->run_len) < 0) {
-    err("%d: user quota exceeded", p->id);
-    new_send_reply(p, -SRV_ERR_QUOTA_EXCEEDED);
-    return;
-  }
-  sha_buffer(pkt->data, pkt->run_len, shaval);
-  gettimeofday(&precise_time, 0);
-  if ((run_id = run_add_record(precise_time.tv_sec,
-                               precise_time.tv_usec * 1000,
-                               pkt->run_len,
-                               shaval,
-                               pkt->ip,
-                               pkt->locale_id,
-                               pkt->user_id,
-                               pkt->prob_id,
-                               pkt->lang_id, 0, 0)) < 0){
-    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
-    return;
-  }
-  move_files_to_insert_run(run_id);
+  cur_lang = langs[lang_id];
 
-  arch_flags = archive_make_write_path(run_arch, sizeof(run_arch),
-                                       global->run_archive_dir, run_id,
-                                       pkt->run_len, 0);
-  if (arch_flags < 0) {
-    run_undo_add_record(run_id);
-    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+  if (cur_lang->disabled) {
+    err("%d: language %d is disabled", p->id, lang_id);
+    new_send_reply(p, -SRV_ERR_BAD_LANG_ID);
     return;
   }
-  if (archive_dir_prepare(global->run_archive_dir, run_id, 0, 0) < 0) {
-    run_undo_add_record(run_id);
-    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
-    return;
-  }
-  if (generic_write_file(pkt->data, pkt->run_len, arch_flags,
-                         0, run_arch, "") < 0) {
-    run_undo_add_record(run_id);
-    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
+  if (!cur_lang->binary && pkt->run_size != src_len) {
+    err("%d: data format error: binary file?", p->id);
+    new_send_reply(p, -SRV_ERR_DATA_FORMAT);
     return;
   }
 
-  if (global->ignore_duplicated_runs) {
-    if ((r = run_check_duplicate(run_id)) < 0) {
-      run_undo_add_record(run_id);
-      new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
-      return;
-    } else if (r) {
-      info("%d: team_submit_run: duplicated run, match %d", p->id, r - 1);
-      new_send_reply(p, -SRV_ERR_DUPLICATED_RUN);
-      return;
-    }
-  }
-
-  if (testing_suspended) {
-    info("%d: testing is suspended", p->id);
-    run_change_status(run_id, RUN_PENDING, 0, -1, 0);
-    append_audit_log(run_id, p, "Command: submit\nStatus: pending\nRun-id: %d\n  Testing is suspended by the contest administrator\n", run_id);
-    new_send_reply(p, SRV_RPL_OK);
-    return;
-  }
-
-  if (probs[pkt->prob_id]->disable_auto_testing
-      || probs[pkt->prob_id]->disable_testing
-      || langs[pkt->lang_id]->disable_auto_testing
-      || langs[pkt->lang_id]->disable_testing) {
-    info("%d: team_submit_run: auto testing disabled", p->id);
-    run_change_status(run_id, RUN_PENDING, 0, -1, 0);
-    append_audit_log(run_id, p, "Command: submit\nStatus: pending\nRun-id: %d\n  Testing disabled for this problem or language\n", run_id);
-    new_send_reply(p, SRV_RPL_OK);
-    return;
-  }
-
-  if (queue_compile_request(pkt->data, pkt->run_len, run_id,
-                            langs[pkt->lang_id]->compile_id,
-                            pkt->locale_id,
-                            langs[pkt->lang_id]->src_sfx,
-                            langs[pkt->lang_id]->compiler_env, -1) < 0) {
-    new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
-    return;
-  }
-
-  info("%d: team_submit_run: ok", p->id);
-  append_audit_log(run_id, p, "Command: submit\nStatus: ok\nRun-id: %d\n", run_id);
-  new_send_reply(p, SRV_RPL_OK);
+  do_submit_run(p, "user_submit_run_2", 1, 0,
+                cur_prob, cur_lang,
+                pkt->user_id, pkt->contest_id, 0, pkt->variant,
+                p->ip, p->ssl, pkt->run_size, src_ptr);
 }
 
 static void
@@ -5000,6 +5122,7 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_VIEW_TEST_INFO] { cmd_view },
   [SRV_CMD_VIEW_AUDIT_LOG] { cmd_view },
   [SRV_CMD_GET_CONTEST_TYPE] { cmd_get_param },
+  [SRV_CMD_SUBMIT_RUN_2] { cmd_user_submit_run_2 },
 };
 
 static void
