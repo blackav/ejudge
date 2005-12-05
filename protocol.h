@@ -158,6 +158,7 @@ enum
     SRV_CMD_VIEW_AUDIT_LOG,
     SRV_CMD_DUMP_PROBLEMS,
     SRV_CMD_GET_CONTEST_TYPE,
+    SRV_CMD_SUBMIT_RUN_2,
 
     SRV_CMD_LAST
   };
@@ -168,6 +169,7 @@ enum
     SRV_RPL_OK = 0,
     SRV_RPL_ARCHIVE_PATH = 1,
     SRV_RPL_DATA,
+    SRV_RPL_VALUE,
 
     SRV_RPL_LAST
   };
@@ -271,6 +273,21 @@ struct prot_serve_pkt_submit_run
   int variant;
   int run_len;
   unsigned char data[1];
+};
+
+struct prot_serve_pkt_submit_run_2
+{
+  struct prot_serve_packet b;
+
+  int user_id;
+  int contest_id;
+  ej_ip_t ip;
+  int ssl;
+  int prob_size;
+  int lang_size;
+  int variant;
+  int run_size;
+  unsigned char data[3];
 };
 
 struct prot_serve_pkt_submit_clar
@@ -458,6 +475,12 @@ struct prot_serve_pkt_data
   struct prot_serve_packet b;
   int data_len;
   unsigned char data[1];
+};
+
+struct prot_serve_pkt_val
+{
+  struct prot_serve_packet b;
+  int value;
 };
 
 unsigned char const *protocol_strerror(int n);
