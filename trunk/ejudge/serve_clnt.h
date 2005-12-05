@@ -68,6 +68,16 @@ int serve_clnt_submit_run(int sock_fd,
                           size_t run_size,
                           unsigned char const *run_src);
 
+int serve_clnt_submit_run_2(int sock_fd, int cmd,
+                            int user_id, int contest_id,
+                            ej_ip_t ip, int ssl,
+                            const unsigned char *prob_name,
+                            const unsigned char *lang_name,
+                            int variant,
+                            size_t run_size,
+                            const unsigned char *run_src,
+                            int *p_run_id);
+
 int serve_clnt_submit_clar(int sock_fd,
                            int user_id,
                            int contest_id,
