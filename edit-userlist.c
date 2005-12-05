@@ -2242,6 +2242,7 @@ static const unsigned char * const field_op_names[] =
   "Do nothing",
   "Clear field",
   "Set field",
+  "Fix passwords",
   0,
 };
 static const unsigned char * const field_op_keys[] =
@@ -2249,6 +2250,7 @@ static const unsigned char * const field_op_keys[] =
   "QqêÊ",
   "CcóÓ",
   "Ss÷×",
+  "FfáÁ",
   0,
 };
 static const unsigned char * const field_names[] =
@@ -2891,18 +2893,20 @@ display_registered_users(unsigned char const *upper,
         c = 'q';
       }
     } else if (c == 'f') {
-      int field_op, field_code;
-      field_op = generic_menu(10, -1, -1, -1, 0, 3, -1, -1,
+      int field_op, field_code = 0;
+      field_op = generic_menu(10, -1, -1, -1, 0, 4, -1, -1,
                               field_op_names, field_op_keys,
                               "Enter-select ^G-cancel Q,C,S-select option",
                               "Field operation");
       if (field_op <= 0) continue;
-      i = generic_menu(10, -1, -1, -1, 0, (field_op == 2)?3:4, -1, -1,
-                       field_names, field_keys,
-                       "Enter-select ^G-cancel Q,R,C,L-select option",
-                       "Field");
-      if (i <= 0) continue;
-      field_code = field_codes[i];
+      if (field_op != 3) {
+        i = generic_menu(10, -1, -1, -1, 0, (field_op == 2)?3:4, -1, -1,
+                         field_names, field_keys,
+                         "Enter-select ^G-cancel Q,R,C,L-select option",
+                         "Field");
+        if (i <= 0) continue;
+        field_code = field_codes[i];
+      }
 
       if (!sel_users.total_selected) {
         i = item_index(current_item(menu));
@@ -2915,6 +2919,11 @@ display_registered_users(unsigned char const *upper,
           snprintf(edit_buf, sizeof(edit_buf), "%d", 1);
           r = userlist_clnt_edit_field(server_conn, uu[i]->id, -1, 0,
                                        field_code, edit_buf);
+          break;
+        case 3:
+          r = userlist_clnt_register_contest(server_conn, ULS_FIX_PASSWORD,
+                                             uu[i]->id, 0);
+          break;
         }
         if (r < 0) {
           vis_err("Operation failed: %s", userlist_strerror(-r));
@@ -2932,6 +2941,10 @@ display_registered_users(unsigned char const *upper,
             snprintf(edit_buf, sizeof(edit_buf), "%d", 1);
             r = userlist_clnt_edit_field(server_conn, uu[i]->id, -1, 0,
                                          field_code, edit_buf);
+          case 3:
+            r = userlist_clnt_register_contest(server_conn, ULS_FIX_PASSWORD,
+                                               uu[i]->id, 0);
+            break;
           }
           if (r < 0) {
             vis_err("Operation failed for %d: %s", uu[i]->id, userlist_strerror(-r));
