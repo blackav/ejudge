@@ -27,6 +27,7 @@
 #include "serve_clnt.h"
 #include "protocol.h"
 #include "fileutl.h"
+#include "xml_utils.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -51,6 +52,8 @@ static userlist_clnt_t userlist_conn;
 static unsigned char serve_socket_path[PATH_MAX];
 static int serve_socket_fd = -1;
 static ej_ip_t local_ip;  /* 127.0.0.1 */
+static int ssl_flag = 1;
+static int arg_session = 0;
 static ej_cookie_t session_id;
 static int user_id;
 
@@ -100,7 +103,7 @@ authentificate(const unsigned char *pwdfile)
   }
   fclose(f);
 
-  r = userlist_clnt_priv_cookie(userlist_conn, local_ip, 1, contest_id,
+  r = userlist_clnt_priv_cookie(userlist_conn, local_ip, ssl_flag, contest_id,
                                 session_id,
                                 0 /* locale_id */,
                                 PRIV_LEVEL_ADMIN,
@@ -116,6 +119,90 @@ authentificate(const unsigned char *pwdfile)
        user_id, user_login, user_name);
 }
 
+static void
+user_authentificate(const unsigned char *pwdfile)
+{
+  FILE *f;
+  int r;
+  unsigned char *user_login, *user_name;
+
+  if (arg_session) {
+    if (sscanf(pwdfile, "%llx%n", &session_id, &r) != 1 || pwdfile[r]) {
+      err("session_id is invalid");
+      exit(1);
+    }
+  } else {
+    if (!(f = fopen(pwdfile, "r"))) {
+      err("cannot open %s: %s", pwdfile, os_ErrorMsg());
+      exit(1);
+    }
+    if (fscanf(f, "%llx", &session_id) != 1) {
+      err("cannot parse session_id");
+      exit(1);
+    }
+    fscanf(f, " ");
+    if (!feof(f)) {
+      err("garbage in the session_id file");
+      exit(1);
+    }
+    fclose(f);
+  }
+
+  r = userlist_clnt_team_cookie(userlist_conn, local_ip, ssl_flag, contest_id,
+                                session_id,
+                                0 /* locale_id */,
+                                &user_id,
+                                0, /* p_contest_id */
+                                0 /* p_locale_id */,
+                                &user_login, &user_name);
+  if (r < 0) {
+    err("server error: %s", userlist_strerror(-r));
+    exit(1);
+  }
+  info("logged in as uid %d, login %s, name %s",
+       user_id, user_login, user_name);
+}
+
+static int
+parse_ip_flags(int *p_argc, char *argv[])
+{
+  int i, j;
+
+  i = 0;
+  while (i < *p_argc) {
+    if (!strcmp(argv[i], "--ssl")) {
+      ssl_flag = 1;
+      for (j = i + 1; j < *p_argc; j++)
+        argv[j - 1] = argv[j];
+      (*p_argc)--;
+    } else if (!strcmp(argv[i], "--no-ssl")) {
+      ssl_flag = 1;
+      for (j = i + 1; j < *p_argc; j++)
+        argv[j - 1] = argv[j];
+      (*p_argc)--;
+    } else if (!strcmp(argv[i], "--ip")) {
+      if (i + 1 >= *p_argc) {
+        err("parameter is required for --ip");
+        return 1;
+      }
+      if (xml_parse_ip(NULL, 0, 0, argv[i + 1], &local_ip) < 0)
+        return 1;
+      for (j = i + 2; j < *p_argc; j++)
+        argv[j - 2] = argv[j];
+      *p_argc -= 2;
+    } else if (!strcmp(argv[i], "--session")) {
+      arg_session = 1;
+      for (j = i + 1; j < *p_argc; j++)
+        argv[j - 1] = argv[j];
+      (*p_argc)--;
+    } else {
+      i++;
+    }
+  }
+
+  return 0;
+}
+
 /*
  * argv[0] - session_id_file
  * argv[1] - login
@@ -129,10 +216,12 @@ handle_login(const unsigned char *cmd,
   unsigned char *user_name;
   FILE *f;
 
+  if (parse_ip_flags(&argc, argv)) return 1;
+
   if (argc < 3) return too_few_params(cmd);
   if (argc > 3) return too_many_params(cmd);
 
-  r = userlist_clnt_priv_login(userlist_conn, local_ip, 1, contest_id,
+  r = userlist_clnt_priv_login(userlist_conn, local_ip, ssl_flag, contest_id,
                                0, 1, PRIV_LEVEL_ADMIN,
                                argv[1], argv[2],
                                &user_id, &session_id, 0, 0, &user_name);
@@ -159,12 +248,61 @@ handle_login(const unsigned char *cmd,
 
 /*
  * argv[0] - session_id_file
+ * argv[1] - login
+ * argv[2] - password
+ */
+static int
+handle_team_login(const unsigned char *cmd,
+                  int srv_cmd, int argc, char *argv[])
+{
+  int r, user_id, locale_id;
+  unsigned char *user_name;
+  FILE *f;
+
+  if (parse_ip_flags(&argc, argv)) return 1;
+
+  if (argc < 3) return too_few_params(cmd);
+  if (argc > 3) return too_many_params(cmd);
+
+  r = userlist_clnt_login(userlist_conn, local_ip, ssl_flag, contest_id,
+                          0, 1, argv[1], argv[2],
+                          &user_id, &session_id, &user_name, &locale_id);
+  if (r < 0) {
+    err("server error: %s", userlist_strerror(-r));
+    return 1;
+  }
+  info("logged in as uid %d, name %s, sid %016llx",
+       user_id, user_name, session_id);
+
+  if (arg_session || !strcmp(argv[0], "-")) {
+    printf("%016llx\n", session_id);
+    return 0;
+  }
+
+  if (!(f = fopen(argv[0], "w"))) {
+    err("cannot open %s for writing: %s", argv[0], os_ErrorMsg());
+    return 1;
+  }
+  fprintf(f, "%016llx\n", session_id);
+  if (fclose(f) < 0) {
+    err("output error: %s", os_ErrorMsg());
+    unlink(argv[0]);
+    return 1;
+  }
+
+  return 0;
+}
+
+/*
+ * argv[0] - session_id_file
  */
 static int
 handle_dump_runs(const unsigned char *cmd,
                  int srv_cmd, int argc, char *argv[])
 {
   int r;
+
+  if (parse_ip_flags(&argc, argv)) return 1;
 
   if (argc < 1) return too_few_params(cmd);
   if (argc > 1) return too_many_params(cmd);
@@ -189,6 +327,8 @@ handle_dump_all_users(const unsigned char *cmd,
 {
   int r;
 
+  if (parse_ip_flags(&argc, argv)) return 1;
+
   if (argc < 1) return too_few_params(cmd);
   if (argc > 1) return too_many_params(cmd);
 
@@ -212,6 +352,8 @@ handle_userlist_server_param(const unsigned char *cmd,
   int r;
   unsigned char *out_str = 0;
 
+  if (parse_ip_flags(&argc, argv)) return 1;
+
   if (argc < 1) return too_few_params(cmd);
   if (argc > 1) return too_many_params(cmd);
 
@@ -234,6 +376,8 @@ handle_priv_command_0(const unsigned char *cmd,
                       int srv_cmd, int argc, char *argv[])
 {
   int r;
+
+  if (parse_ip_flags(&argc, argv)) return 1;
 
   if (argc < 1) return too_few_params(cmd);
   if (argc > 1) return too_many_params(cmd);
@@ -259,6 +403,8 @@ handle_serve_get_param(const unsigned char *cmd,
   int r;
   unsigned char *str = 0;
 
+  if (parse_ip_flags(&argc, argv)) return 1;
+
   if (argc < 1) return too_few_params(cmd);
   if (argc > 1) return too_many_params(cmd);
 
@@ -283,6 +429,8 @@ handle_priv_transient_runs(const unsigned char *cmd,
                            int srv_cmd, int argc, char *argv[])
 {
   int r;
+
+  if (parse_ip_flags(&argc, argv)) return 1;
 
   if (argc < 1) return too_few_params(cmd);
   if (argc > 1) return too_many_params(cmd);
@@ -310,11 +458,33 @@ static int
 handle_logout(const unsigned char *cmd,
               int srv_cmd, int argc, char *argv[])
 {
+  if (parse_ip_flags(&argc, argv)) return 1;
+
   if (argc < 1) return too_few_params(cmd);
   if (argc > 1) return too_many_params(cmd);
 
   authentificate(argv[0]);
-  userlist_clnt_logout(userlist_conn, ULS_DO_LOGOUT, local_ip, 1, session_id);
+  userlist_clnt_logout(userlist_conn, ULS_DO_LOGOUT, local_ip, ssl_flag,
+                       session_id);
+  unlink(argv[0]);
+  return 0;
+}
+
+/*
+ * argv[0] - session_id_file
+ */
+static int
+handle_team_logout(const unsigned char *cmd,
+                   int srv_cmd, int argc, char *argv[])
+{
+  if (parse_ip_flags(&argc, argv)) return 1;
+
+  if (argc < 1) return too_few_params(cmd);
+  if (argc > 1) return too_many_params(cmd);
+
+  user_authentificate(argv[0]);
+  userlist_clnt_logout(userlist_conn, ULS_DO_LOGOUT, local_ip, ssl_flag,
+                       session_id);
   unlink(argv[0]);
   return 0;
 }
@@ -330,6 +500,8 @@ handle_import_xml(const unsigned char *cmd,
   char *xml_txt = 0;
   size_t xml_txt_size;
   int r;
+
+  if (parse_ip_flags(&argc, argv)) return 1;
 
   if (argc < 2) return too_few_params(cmd);
   if (argc > 2) return too_many_params(cmd);
@@ -359,6 +531,8 @@ handle_dump_source(const unsigned char *cmd,
                    int srv_cmd, int argc, char *argv[])
 {
   int run_id, r;
+
+  if (parse_ip_flags(&argc, argv)) return 1;
 
   if (argc < 2) return too_few_params(cmd);
   if (argc > 2) return too_many_params(cmd);
@@ -393,6 +567,8 @@ handle_dump_master_runs(const unsigned char *cmd,
 {
   int n, first_run = 0, last_run = 0, r;
 
+  if (parse_ip_flags(&argc, argv)) return 1;
+
   if (argc < 4) return too_few_params(cmd);
   if (argc > 4) return too_many_params(cmd);
 
@@ -417,7 +593,7 @@ handle_dump_master_runs(const unsigned char *cmd,
   r = serve_clnt_master_page(serve_socket_fd, 1,
                              SRV_CMD_DUMP_MASTER_RUNS,
                              session_id, 0,
-                             contest_id, 0, local_ip, 1,
+                             contest_id, 0, local_ip, ssl_flag,
                              PRIV_LEVEL_ADMIN,
                              first_run, last_run, 0, 0, 0, "", argv[1], "", "");
   if (r < 0) {
@@ -425,6 +601,68 @@ handle_dump_master_runs(const unsigned char *cmd,
     return 1;
   }
 
+  return 0;
+}
+
+/*
+ * argv[0] - session_id_file
+ * argv[1] - problem short name
+ * argv[2] - language short name
+ * argv[3] - source file name (or stdin)
+ */
+static int
+handle_submit_run(const unsigned char *cmd,
+                  int srv_cmd, int argc, char *argv[])
+{
+  char *run_bytes = 0;
+  size_t run_size = 0;
+  FILE *f;
+  int c, r, run_id;
+
+  if (parse_ip_flags(&argc, argv)) return 1;
+
+  if (argc < 3) return too_few_params(cmd);
+  if (argc > 4) return too_many_params(cmd);
+
+  if (argc == 3 || !strcmp(argv[3], "-")) {
+    // use the standard input
+    // FIXME: dumb :(
+    if (!(f = open_memstream(&run_bytes, &run_size))) {
+      err("out of memory");
+      return 1;
+    }
+    while ((c = getchar_unlocked()) != EOF)
+      putc_unlocked(c, f);
+    if (ferror(stdin)) {
+      err("read error");
+      return 1;
+    }
+    fclose(f);
+  } else {
+    if (generic_read_file(&run_bytes, 0, &run_size, 0, 0, argv[3], 0) < 0) {
+      err("reading %s failed", argv[3]);
+      return 1;
+    }
+  }
+
+  if (!run_size) {
+    err("no data to submit");
+    return 1;
+  }
+
+  user_authentificate(argv[0]);
+  open_server();
+
+  r = serve_clnt_submit_run_2(serve_socket_fd, SRV_CMD_SUBMIT_RUN_2,
+                              user_id, contest_id, local_ip, ssl_flag,
+                              argv[1], argv[2], 0, run_size, run_bytes,
+                              &run_id);
+  if (r < 0) {
+    err("server error: %s", protocol_strerror(-r));
+    return 1;
+  }
+
+  printf("%d\n", run_id);
   return 0;
 }
 
@@ -458,6 +696,8 @@ handle_full_import_xml(const unsigned char *cmd,
   int r, i, retcode = 1, prev_state = 0;
   sigset_t blkmask, origmask;
   struct itimerval tmval;
+
+  if (parse_ip_flags(&argc, argv)) return 1;
 
   if (argc < 2) return too_few_params(cmd);
 
@@ -559,7 +799,9 @@ struct cmdinfo
 static struct cmdinfo cmds[] =
 {
   { "login", handle_login, 0 },
+  { "team-login", handle_team_login, 0 },
   { "logout", handle_logout, 0 },
+  { "team-logout", handle_team_logout, 0 },
   { "write-xml-runs", handle_dump_runs, SRV_CMD_WRITE_XML_RUNS },
   { "export-xml-runs", handle_dump_runs, SRV_CMD_EXPORT_XML_RUNS },
   { "dump-runs", handle_dump_runs, SRV_CMD_DUMP_RUNS },
@@ -579,6 +821,7 @@ static struct cmdinfo cmds[] =
   { "dump-all-users", handle_dump_all_users, 0 },
   { "get-contest-name", handle_userlist_server_param, ULS_GET_CONTEST_NAME },
   { "get-contest-type", handle_serve_get_param, SRV_CMD_GET_CONTEST_TYPE },
+  { "team-submit-run", handle_submit_run, 0 },
 
   { 0, 0 },
 };
@@ -674,6 +917,7 @@ main(int argc, char *argv[])
 
   // set the IP address
   local_ip = (127 << 24) | 1;
+  ssl_flag = 1;
 
   if (i >= argc) goto too_few_arguments;
   for (n = 0; cmds[n].cmdname; n++) {
