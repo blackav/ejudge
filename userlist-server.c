@@ -6044,6 +6044,16 @@ cmd_user_op(struct client_state *p,
     ppwd = &u->team_passwd;
     break;
 
+  case ULS_FIX_PASSWORD:
+    if (!u->team_passwd) goto _OK;
+    pwd = u->register_passwd;
+    xml_unlink_node(&pwd->b);
+    userlist_free(&pwd->b);
+    u->register_passwd = u->team_passwd;
+    u->register_passwd->b.tag = USERLIST_T_PASSWORD;
+    u->team_passwd = 0;
+    goto _OK;
+
   default:
     err("%s -> not implemented", logbuf);
     send_reply(p, -ULS_ERR_NOT_IMPLEMENTED);
@@ -6104,6 +6114,8 @@ cmd_user_op(struct client_state *p,
   default:
     abort();
   }
+
+ _OK:;
   info("%s -> OK", logbuf);
   send_reply(p, ULS_OK);
 }
@@ -6150,6 +6162,7 @@ static void (*cmd_table[])() =
   [ULS_RANDOM_TEAM_PASSWD]      cmd_user_op,
   [ULS_COPY_TO_TEAM]            cmd_user_op,
   [ULS_COPY_TO_REGISTER]        cmd_user_op,
+  [ULS_FIX_PASSWORD]            cmd_user_op,
 
   [ULS_LAST_CMD] 0
 };
