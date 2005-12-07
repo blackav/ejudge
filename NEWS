@@ -1,6 +1,135 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
+Version 2.1.44 (20051207)
+=========================
+This version fixes minor bugs of the previous versions and adds
+minor improvements.
+
+libchecker
+----------
+The checker program now may omit setting of the NEED_INFO macro
+in the program header. If this macro is not set, its default
+value is 0.
+
+The library may be safely linked to the checker programs, which
+do not use the library actually. I.e. the command line
+gcc checker.c -o checker -lchecker
+works even if checker.c is an ordinary C program, not written
+especially for the libchecker library.
+
+A new function `fatal_read' is added to the library:
+void fatal_read(int streamno, char const *format, ...);
+This function prints a message given in the `format' parameter
+(printf-like format specifier and extra parameters are
+supported) and then terminate the checker either with the "Check
+failed" error code (if the `streamno' parameter equals to 0 or
+2), or with the "Presentation error" error code (if the
+`streamno' parameter equals to 1). This function is useful in
+the functions, which parse complex data structures to report an
+error in the input data.
+
+serve
+-----
+If the real time is less than CPU time in the participant's
+testing protocol (this is possible, because the CPU time is
+ceiled to the system timer period), the CPU time is shown
+instead of the real time to avoid confusion.
+
+A new command `SRV_CMD_SUBMIT_RUN_2' is supported for submitting
+runs. In this command the problem and the programming language
+are specified by their short names rather than their
+identifiers. This command is useful when these identifiers are
+unknown (see below the `team-submit-run' command of the
+`serve-cmd' program).
+
+serve, team
+-----------
+If the submit source code contains zero byte (i.e. instead of
+the source code, for example, the executable file has been
+sent), and the specified programming language does not allow
+binary submits, error message about invalid file format is
+displayed. In the previous versions the server just closed the
+connection and the client printed meaningless "Unexpected EOF
+from server" message.
+
+serve-cmd
+---------
+All commands support the following command line options:
+	--ip IP
+		Allows specifying the IP-address, which will be
+                passed to the server as the source IP-address.
+		The default value is 127.0.0.1.
+	--ssl
+		Allows setting the secure connection (SSL) flag,
+                which will be passed to the server. Note, that
+                the flag is already set by default.
+	--no-ssl
+		Allows clearing the secure connection (SSL)
+                flag, which will be passed to the server. The
+                flag is set by default (see --ssl option).
+	--session
+		Specifies, that that session file parameter of
+                the command line now specifies the session
+                identifier instead of the session file,
+                i.e. instead of the file name a 64-bit number in
+                the hexadecimal notation is given. For `login'
+                and `team-login' commands this option specifies,
+                that session identifier to be printed to the
+                standard output rather than written to the
+                specified file.
+These options may be given in any place of the command line
+after the command. For example:
+serve-cmd 1 login --ip 192.168.0.1 --no-ssl session user password
+
+New commands `team-login', `team-logout', `team-submit-run' are
+supported. All options described above are applicable to these
+commands and thus will not be described explicitly.
+serve-cmd CONTEST-ID team-login SESSION-FILE USER PASSWORD
+	Unprivileged login as in the `team' CGI program. The
+        specified user must have the right to participate in the
+        specified contest (i.e. must be registered, must not be
+        banned, etc). As a result a new session identifier is
+        generated and written to the SESSION-FILE file (or
+        printed to the standard output, if --session option is
+        given). This session identifier must be used for further
+        operations for this user.
+serve-cmd CONTEST-ID team-logout SESSION-FILE
+	Unprivileged login as in the `team' CGI program. The
+        session identifier is destroyed. Unprivileged logout
+        will not work for privileged login and vice versa.
+serve-cmd CONTEST-ID team-submit-run SESSION-FILE PROBLEM LANGUAGE [SRC-FILE]
+	Unprivileged submit. All restrictions for unprivileged
+        submits (as in the `team' CGI program) are applicable.
+	PROBLEM is the short name of the problem, LANGUAGE is
+        the short name of the programming language, SRC-FILE is
+        the file with the submit source code. This parameter may
+        be omitted or may be specified as `-', then the source
+        code is read from the standard input. If the submit is
+        sent successfully, its identifier is printed to the
+        standard output.
+
+userlist-server
+---------------
+A new command `ULS_FIX_PASSWORD' is supported for password fixing.
+
+edit-userlist
+-------------
+A new command "Fix password" is added to the `f' command group.
+The command fixes the user password according to the new
+password checking rules: if the contest password is set, this
+password is copied to the register password. This command may be
+applied to the selected participants in the list of users,
+registered for the contest.
+
+A new field "Team password" may be cleared using the `f' command
+group and "Clear field" subcommand.
+
+super-serve
+-----------
+Automatic compilation of checker programs written in C++ is
+supported (thanks to Artem Melentev).
+
 Version 2.1.43 (20051117)
 =========================
 The ejudge home page has moved. The new URL is

@@ -1,3 +1,150 @@
+2005-12-07  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* userlist-server.c:
+	(cmd_user_op) `ULS_FIX_PASSWORD' command does not clear the
+	  `team_passwd' field.
+
+	* edit-userlist.c:
+	(display_registered_users) clearing of the `team_password' field
+	  is supported in the `f' command.
+
+2005-12-05  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* edit-userlist.c:
+	(display_registered_users) new command "Fix passwords" is added;
+
+	* files.make: submit_run_2.c is added.
+
+	* protocol.h: new command `SRV_CMD_SUBMIT_RUN_2';
+	new reply code `SRV_RPL_VALUE';
+	(struct prot_serve_pkt_submit_run_2) new packet type;
+	(struct prot_serve_pkt_val) new packet type.
+
+	* serve-cmd.c: "xml_utils.h" is included;
+	(user_authentificate) new function, which performs unprivileged
+	  logins;
+	(parse_ip_flags) new function, which performs command line argument
+	  parsing (--ssl, --no-ssl, --ip, --session);
+	(handle_team_login) new function, which performs "team-login" command;
+	(handle_team_logout) new function, which performs "team-logout"
+	  commands;
+	(handle_submit_run) new function, which performs "team-submit-run";
+	all commands now support command-line arguments;
+	new commands are "team-login", "team-logout", "team-submit-run".
+
+	* serve.c:
+	(do_submit_run) new function, which performs actual handling of
+	  unprivileged submit commands;
+	(cmd_team_submit_run) function only checks the packet correctness
+	  and calls `do_submit_run';
+	(cmd_user_submit_run_2) new function, which performs
+	  `SRV_CMD_SUBMIT_RUN_2'.
+
+	* serve_clnt.h:
+	(serve_clnt_submit_run_2) new function prototype is added.
+
+	* userlist-server.c:
+	(cmd_user_op) `ULS_FIX_PASSWORD' command is handled.
+
+	* userlist_proto.h: ULS_FIX_PASSWORD command is added.
+
+2005-11-28  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2005-11-25  Alexander Chernov  <cher@ispras.ru>
+
+	* parsecfg.c: "pathutl.h" is no longer included;
+	<limits.h> is included instead.
+
+	* errlog.c, errlog.h, mischtml.h: initial revision
+
+	* misctext.h: "ej_types.h" is not included;
+	<stdio.h> is not included;
+	<string.h> is included instead;
+	html_hyperref, html_start_form, html_date_select are moved to
+	  "mischtml.h".
+
+	* misctext.c: "config.h" is no longer included.
+
+	* pathutl.c: vverr, err, info, do_err_r are moved to "errlog.h".
+
+	* pathutl.h: copyright notice is updated;
+	vverr, err, info, do_err_r are moved to "errlog.h".
+
+	* files.make: errlog.c, errlog.h, mischtml.h are added.
+
+	* html_hyperref.c, html_start_form.c:
+	"mischtml.h" is included instead of "misctext.h".
+
+	* super_html_2.c: "mischtml.h" is included.
+
+	* expat_iface.c: copyright notice is updated;
+	"errlog.h" is included.
+
+	* html.c, master_html.c, super_html.c, super_html_3.c:
+	"mischtml.h", "errlog.h" are included.
+
+	* userlist_cfg.c: copyright notice is updated;
+	"errlog.h" is included instead of "pathutl.h".
+
+	* cgi.c: copyright notice is updated;
+	"config.h" is no longer included;
+	"errlog.h" is included instead of "pathutl.h".
+
+	* userlist_xml.c, base64.c:
+	"errlog.h" is included instead of "pathutl.h".
+
+	* contests.c, compile_packet_5.c, compile_packet_4.c, compile_packet_2.c, compile_packet_1.c, compile.c, clntutil.c, clean-users.c, clarlog.c, archive_paths.c, filehash.c, full_archive.c, master.c, prepare.c, prepare_out.c, prepare_serve.c, register.c, run.c, run_packet_1.c, run_packet_2.c, run_packet_4.c, run_packet_5.c, runlog.c, runlog_xml.c, serve-cmd.c, serve.c, super-serve.c, team.c, team_extra.c, team_extra_xml.c, teamdb.c, userlist-server.c, userlist.c, users.c, varsubst.c:
+	"errlog.h" is included.
+
+2005-11-24  Alexander Chernov  <cher@ispras.ru>
+
+	* super_html_3.c: (recompile_checker) support for C++ is added.
+
+2005-11-18  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* team.c: (submit_if_asked) the message text is slightly changed.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* html.c:
+	(write_xml_team_testing_report) if the real time is less than the CPU
+	  time, the CPU time is reported as the real time as well to avoid
+	  confusion.
+
+	* protocol.c: the text for SRV_ERR_DATA_FORMAT is added.
+
+	* serve.c:
+	(cmd_priv_submit_run) the SRV_ERR_DATA_FORMAT error is reported, if
+	  the program length mismatch detected;
+	(cmd_team_submit_run) the same as above.
+
+	* super_html_3.c:
+	(super_html_edit_global_parameters) the `stand_penalty_attr',
+	  `ignore_success_time' configuration variables are available
+	  for MOSCOW contests.
+
+	* team.c:
+	(submit_if_asked) special handling of the -SRV_ERR_DATA_FORMAT error
+	  is implemeted to produce a verbose diagnostics.
+
+	* protocol.h: new error SRV_ERR_DATA_FORMAT is added.
+
+2005-11-17  Alexander Chernov  <cher@ispras.ru>
+
+	* super_html_3.c: (super_html_check_tests) gcc warnings are fixed.
+
+	* html.c: (do_write_kirov_standings) gcc warnings are fixed;
+	(do_write_moscow_standings) gcc warnings are fixed;
+	(do_write_standings) gcc warnings are fixed.
+
 2005-11-17  Alexander Chernov  <cher@ispras.ru>
 
 	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***

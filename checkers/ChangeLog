@@ -1,3 +1,21 @@
+2005-11-21  Alexander Chernov  <cher@ispras.ru>
+
+	* vars.c: copyright notice is updated;
+	`testinfo_parse_func', `testinfo_strerror_func' are defined.
+
+	* checker.h: copyright notice is updated;
+	NEED_INFO is now may not be not set in the checker programs;
+	fixes to allow the checker program not to define `testinfo_parse_func',
+	  `testinfo_strerror_func'.
+
+2005-11-18  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in: fatal_read.c is added.
+
+	* checker_internal.h: (fatal_read) a function prototype is added.
+
+	* fatal_read.c: *** empty log message ***
+
 2005-11-03  Alexander Chernov  <cher@ispras.ru>
 
 	* read_buf.c: copyright notice is updated;
