@@ -6046,13 +6046,8 @@ cmd_user_op(struct client_state *p,
 
   case ULS_FIX_PASSWORD:
     if (!u->team_passwd) goto _OK;
-    pwd = u->register_passwd;
-    xml_unlink_node(&pwd->b);
-    userlist_free(&pwd->b);
-    u->register_passwd = u->team_passwd;
-    u->register_passwd->b.tag = USERLIST_T_PASSWORD;
-    u->team_passwd = 0;
-    goto _OK;
+    ppwd = &u->register_passwd;
+    break;
 
   default:
     err("%s -> not implemented", logbuf);
@@ -6062,6 +6057,7 @@ cmd_user_op(struct client_state *p,
 
   switch (data->request_id) {
   case ULS_COPY_TO_REGISTER:
+  case ULS_FIX_PASSWORD:
     ppwd2 = &u->team_passwd;
     break;
   case ULS_COPY_TO_TEAM:
@@ -6106,6 +6102,7 @@ cmd_user_op(struct client_state *p,
 
   case ULS_COPY_TO_TEAM:
   case ULS_COPY_TO_REGISTER:
+  case ULS_FIX_PASSWORD:
     ASSERT(pwd2);
     pwd->method = pwd2->method;
     pwd->b.text = xstrdup(pwd2->b.text);
