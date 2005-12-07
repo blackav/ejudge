@@ -1,3 +1,13 @@
+2005-12-02  Alexander Chernov  <cher@ispras.ru>
+
+	* submit_run_2.c: initial revision
+
+2005-11-25  Alexander Chernov  <cher@ispras.ru>
+
+	* send_packet.c, show_item.c, standings.c, submit_clar.c, submit_run.c, team_page.c, upload_report.c, view.c, do_pass_fd.c, edit_run.c, edit_user.c, get_archive.c, get_param.c, import_xml_runs.c, master_page.c, message.c, open.c, recv_packet.c, rejudge_by_mask.c, reset_filter.c:
+	Copyright notice is updated.
+	"errlog.h" is included instead of "pathutl.h".
+
 2005-11-03  Alexander Chernov  <cher@ispras.ru>
 
 	* edit_run.c:

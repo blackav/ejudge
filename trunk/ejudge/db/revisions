@@ -2488,3 +2488,7 @@ edit-userlist.c 1 30 8741062
 serve.c 1 107 14340899
 serve-cmd.c 1 15 1872372
 userlist-server.c 1 70 15770856
+edit-userlist.c 1 31 8746074
+userlist-server.c 1 71 15760226
+NEWS.RUS 1 25 29603859
+NEWS 1 25 17706822

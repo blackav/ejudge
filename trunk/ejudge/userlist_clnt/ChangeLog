@@ -1,3 +1,9 @@
+2005-11-25  Alexander Chernov  <cher@ispras.ru>
+
+	* do_pass_fd.c, dump_database.c, generate_team_passwd.c, list_users.c, open.c, recv_packet.c, send_packet.c:
+	Copyright notice is updated;
+	"errlog.h" is included.
+
 2005-11-03  Alexander Chernov  <cher@ispras.ru>
 
 	* get_uid_by_pid.c:
