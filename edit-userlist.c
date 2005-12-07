@@ -2259,6 +2259,7 @@ static const unsigned char * const field_names[] =
   "Read-only flag",
   "Never clean flag",
   "Location field",
+  "Team password field",
   0
 };
 static const unsigned char * const field_keys[] =
@@ -2267,6 +2268,7 @@ static const unsigned char * const field_keys[] =
   "RrëË",
   "CcóÓ",
   "LläÄ",
+  "PpúÚ",
   0,
 };
 static const int field_codes[] =
@@ -2275,6 +2277,7 @@ static const int field_codes[] =
   USERLIST_NN_READ_ONLY,
   USERLIST_NN_NEVER_CLEAN,
   USERLIST_NN_LOCATION,
+  USERLIST_NN_TEAM_PASSWORD,
   0,
 };
 
@@ -2900,7 +2903,7 @@ display_registered_users(unsigned char const *upper,
                               "Field operation");
       if (field_op <= 0) continue;
       if (field_op != 3) {
-        i = generic_menu(10, -1, -1, -1, 0, (field_op == 2)?3:4, -1, -1,
+        i = generic_menu(10, -1, -1, -1, 0, (field_op == 2)?3:5, -1, -1,
                          field_names, field_keys,
                          "Enter-select ^G-cancel Q,R,C,L-select option",
                          "Field");
