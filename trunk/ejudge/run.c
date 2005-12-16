@@ -401,6 +401,36 @@ read_error_code(char const *path)
   return n;
 }
 
+static void
+append_msg_to_log(const unsigned char *path, char *format, ...)
+  __attribute__((format(printf, 2, 3)));
+static void
+append_msg_to_log(const unsigned char *path, char *format, ...)
+{
+  va_list args;
+  unsigned char buf[1024];
+  FILE *f;
+
+  va_start(args, format);
+  vsnprintf(buf, sizeof(buf), format, args);
+  va_end(args);
+
+  if (!(f = fopen(path, "a"))) {
+    err("append_msg_to_log: cannot open %s for appending", path);
+    return;
+  }
+  fprintf(f, "\n\nrun: %s\n", buf);
+  if (ferror(f)) {
+    err("append_msg_to_log: write error to %s", path);
+    fclose(f);
+    return;
+  }
+  if (fclose(f) < 0) {
+    err("append_msg_to_log: write error to %s", path);
+    return;
+  }
+}
+
 static int
 run_tests(struct section_tester_data *tst,
           struct run_request_packet *req_pkt,
@@ -454,6 +484,7 @@ run_tests(struct section_tester_data *tst,
   unsigned char arch_entry_name[64];
   full_archive_t far = 0;
   unsigned char *additional_comment = 0;
+  int jj;
 
 #ifdef HAVE_TERMIOS_H
   struct termios term_attrs;
@@ -681,7 +712,6 @@ run_tests(struct section_tester_data *tst,
 
     if (tst->clear_env) task_ClearEnv(tsk);
     if (tst->start_env) {
-      int jj;
       for (jj = 0; tst->start_env[jj]; jj++) {
         if (!strcmp(tst->start_env[jj], "EJUDGE_PREFIX_DIR")) {
           task_PutEnv(tsk, ejudge_prefix_dir_env);
@@ -954,19 +984,35 @@ run_tests(struct section_tester_data *tst,
           task_SetMaxRealTime(tsk, prb->checker_real_time_limit);
         }
         if (prb->checker_env) {
-          int jj;
           for (jj = 0; prb->checker_env[jj]; jj++)
             task_PutEnv(tsk, prb->checker_env[jj]);
         }
         if (tst->checker_env) {
-          int jj;
           for (jj = 0; tst->checker_env[jj]; jj++)
             task_PutEnv(tsk, tst->checker_env[jj]);
         }
 
         task_Start(tsk);
         task_Wait(tsk);
-        task_Log(tsk, 0, LOG_INFO);
+        if (task_IsTimeout(tsk)) {
+          append_msg_to_log(check_out_path, "checker timeout");
+          err("checker timeout");
+        } else {
+          task_Log(tsk, 0, LOG_INFO);
+          if (task_Status(tsk) == TSK_SIGNALED) {
+            jj = task_TermSignal(tsk);
+            append_msg_to_log(check_out_path,
+                              "checker terminated with signal %d (%s)",
+                              jj, os_GetSignalString(jj));
+          } else {
+            jj = task_ExitCode(tsk);
+            if (jj != RUN_OK && jj != RUN_PRESENTATION_ERR
+                && jj != RUN_WRONG_ANSWER_ERR) {
+              append_msg_to_log(check_out_path,
+                                "checker exited with code %d", jj);
+            }
+          }
+        }
 
         file_size = generic_file_size(0, check_out_path, 0);
         if (file_size >= 0) {
@@ -1037,8 +1083,6 @@ run_tests(struct section_tester_data *tst,
 
   if (score_system_val == SCORE_OLYMPIAD && accept_testing) {
     if (accept_partial) {
-      int jj;
-
       status = RUN_ACCEPTED;
       failed_test = 1;
       for (jj = 1; jj <= prb->tests_to_accept; jj++) {
@@ -1059,7 +1103,7 @@ run_tests(struct section_tester_data *tst,
     get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
   } else if (score_system_val == SCORE_KIROV
              || score_system_val == SCORE_OLYMPIAD) {
-    int jj, retcode = RUN_OK;
+    int retcode = RUN_OK;
 
     for (jj = 1; jj <= prb->ntests; jj++) {
       tests[jj].score = 0;
