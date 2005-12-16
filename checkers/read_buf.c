@@ -42,14 +42,9 @@ checker_read_buf(int ind,
   r = fscanf(f_arr[ind], format_str, local_buf);
   if (r == 1) {
     read_len = strlen(local_buf);
-    if (read_len > buf_size - 1) {
-      if (ind == 1)
-        fatal_PE("string `%s' is too long (>= %zu) in %s file",
+    if (read_len > buf_size - 1)
+      fatal_read(ind, "string `%s' is too long (>= %zu) in %s file",
                  name, read_len, f_arr_names[ind]);
-
-      fatal_CF("string `%s' is too long (>= %zu) in %s file",
-               name, read_len, f_arr_names[ind]);
-    }
     strcpy(buf, local_buf);
     return read_len;
   }
@@ -57,10 +52,7 @@ checker_read_buf(int ind,
   if (ferror(f_arr[ind]))
     fatal_CF("input error from %s file", f_arr_names[ind]);
   if (!eof_error_flag) return -1;
-  if (ind == 1)
-    fatal_PE("unexpected EOF while reading `%s'", name);
-  fatal_CF("unexpected EOF while reading `%s'", name);
-  return -1;
+  fatal_read(ind, "unexpected EOF while reading `%s'", name);
 }
 
 /*
