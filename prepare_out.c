@@ -1260,6 +1260,7 @@ generate_abstract_tester(FILE *f, int arch, int secure_run,
             "no_core_dump\n"
             "kill_signal = TERM\n"
             "start_cmd = \"runjava%s\"\n"
+            "start_env = \"LANG=C\"\n"
             "start_env = \"EJUDGE_PREFIX_DIR\"\n",
             arch_abstract_names[arch], supported_archs[arch],
             arch == ARCH_JAVA14?"14":"");
