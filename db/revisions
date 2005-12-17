@@ -2492,3 +2492,5 @@ edit-userlist.c 1 31 8746074
 userlist-server.c 1 71 15760226
 NEWS.RUS 1 25 29603859
 NEWS 1 25 17706822
+run.c 1 83 5095159
+prepare_out.c 1 19 5174592
