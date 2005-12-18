@@ -307,6 +307,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(checker_real_time_limit, "d"),
   PROBLEM_PARAM(disable_auto_testing, "d"),
   PROBLEM_PARAM(disable_testing, "d"),
+  PROBLEM_PARAM(enable_compilation, "d"),
   PROBLEM_PARAM(skip_testing, "d"),
   PROBLEM_PARAM(variable_full_score, "d"),
   PROBLEM_PARAM(hidden, "d"),
@@ -592,6 +593,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->variant_num = -1;
   p->disable_auto_testing = -1;
   p->disable_testing = -1;
+  p->enable_compilation = -1;
   p->skip_testing = -1;
   p->test_score = -1;
   p->full_score = -1;
@@ -2162,6 +2164,8 @@ set_defaults(int mode)
     prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_AUTO_TESTING,
                            probs[i], aprob, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_TESTING,
+                           probs[i], aprob, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_ENABLE_COMPILATION,
                            probs[i], aprob, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_SKIP_TESTING,
                            probs[i], aprob, global);
@@ -4082,6 +4086,13 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       out->disable_auto_testing = global->disable_auto_testing;
     if (out->disable_auto_testing == -1)
       out->disable_auto_testing = 0;
+    break;
+
+  case PREPARE_FIELD_PROB_ENABLE_COMPILATION:
+    if (out->enable_compilation == -1 && abstr)
+      out->enable_compilation = abstr->enable_compilation;
+    if (out->enable_compilation == -1)
+      out->enable_compilation = 0;
     break;
 
   case PREPARE_FIELD_PROB_SKIP_TESTING:
