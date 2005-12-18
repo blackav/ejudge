@@ -2148,7 +2148,8 @@ cmd_priv_submit_run(struct client_state *p, int len,
   }
 
   if (probs[pkt->prob_id]->disable_auto_testing
-      || probs[pkt->prob_id]->disable_testing
+      || (probs[pkt->prob_id]->disable_testing
+          && probs[pkt->prob_id]->enable_compilation <= 0)
       || langs[pkt->lang_id]->disable_auto_testing
       || langs[pkt->lang_id]->disable_testing) {
     info("%d: priv_submit_run: auto testing disabled", p->id);
@@ -2483,7 +2484,8 @@ do_submit_run(struct client_state *p,
     goto success;
   }
 
-  if (cur_prob->disable_auto_testing || cur_prob->disable_testing
+  if (cur_prob->disable_auto_testing 
+      || (cur_prob->disable_testing && cur_prob->enable_compilation <= 0)
       || cur_lang->disable_auto_testing || cur_lang->disable_testing) {
     info("%d: %s: auto testing disabled", p->id, proc_name);
     run_change_status(run_id, RUN_PENDING, 0, -1, 0);
@@ -4262,6 +4264,26 @@ read_compile_packet(const unsigned char *compile_status_dir,
     goto success;
   }
 
+  /* check run parameters */
+  if (re.problem < 1 || re.problem > max_prob || !(prob = probs[re.problem])) {
+    snprintf(errmsg, sizeof(errmsg), "invalid problem %d\n", re.problem);
+    goto report_check_failed;
+  }
+  if (re.language < 1 || re.language > max_lang || !(lang = langs[re.language])) {
+    snprintf(errmsg, sizeof(errmsg), "invalid language %d\n", re.language);
+    goto report_check_failed;
+  }
+  if (!(team_name = teamdb_get_name(re.team))) {
+    snprintf(errmsg, sizeof(errmsg), "invalid team %d\n", re.team);
+    goto report_check_failed;
+  }
+  if (prob->disable_testing && prob->enable_compilation > 0) {
+    if (run_change_status(comp_pkt->run_id, RUN_ACCEPTED, 0, -1,
+                          comp_pkt->judge_id) < 0)
+      goto non_fatal_error;
+    goto success;
+  }
+
   comp_extra = (typeof(comp_extra)) comp_pkt->run_block;
   if (!comp_extra || comp_pkt->run_block_len != sizeof(*comp_extra)
       || comp_extra->accepting_mode < 0 || comp_extra->accepting_mode > 1) {
@@ -4277,18 +4299,6 @@ read_compile_packet(const unsigned char *compile_status_dir,
    */
 
   /* find appropriate checker */
-  if (re.problem < 1 || re.problem > max_prob || !(prob = probs[re.problem])) {
-    snprintf(errmsg, sizeof(errmsg), "invalid problem %d\n", re.problem);
-    goto report_check_failed;
-  }
-  if (re.language < 1 || re.language > max_lang || !(lang = langs[re.language])) {
-    snprintf(errmsg, sizeof(errmsg), "invalid language %d\n", re.language);
-    goto report_check_failed;
-  }
-  if (!(team_name = teamdb_get_name(re.team))) {
-    snprintf(errmsg, sizeof(errmsg), "invalid team %d\n", re.team);
-    goto report_check_failed;
-  }
   cn = find_tester(re.problem, lang->arch);
   if (cn < 1 || cn > max_tester || !testers[cn]) {
     snprintf(errmsg, sizeof(errmsg), "no appropriate checker for <%s>, <%s>\n",
