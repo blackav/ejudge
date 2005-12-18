@@ -1631,6 +1631,7 @@ do_write_kirov_standings(FILE *f,
         if (!full_sol[up_ind]) sol_att[up_ind]++;
         disq_num[up_ind]++;
       } else if (pe->status == RUN_PENDING
+                 || pe->status == RUN_ACCEPTED
                  || pe->status == RUN_COMPILING
                  || pe->status == RUN_RUNNING) {
         trans_num[up_ind]++;
