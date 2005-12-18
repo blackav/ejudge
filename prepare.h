@@ -370,6 +370,7 @@ struct section_problem_data
   int    checker_real_time_limit;
   int    disable_auto_testing;
   int    disable_testing;
+  int    enable_compilation;
   int    skip_testing;          /* skip testing this problem */
   int    hidden;                /* hide the problem from standings */
   int    priority_adjustment;   /* priority adjustment for this problem */
@@ -582,6 +583,7 @@ enum
   PREPARE_FIELD_PROB_TEAM_SHOW_JUDGE_REPORT,
   PREPARE_FIELD_PROB_DISABLE_TESTING,
   PREPARE_FIELD_PROB_DISABLE_AUTO_TESTING,
+  PREPARE_FIELD_PROB_ENABLE_COMPILATION,
   PREPARE_FIELD_PROB_SKIP_TESTING,
   PREPARE_FIELD_PROB_FULL_SCORE,
   PREPARE_FIELD_PROB_TEST_SCORE,
