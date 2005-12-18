@@ -3895,6 +3895,25 @@ super_html_print_problem(FILE *f,
                                  session_id, form_row_attrs[row ^= 1],
                                  self_url, extra_args, prob_hidden_vars);
     }
+
+    if (tmp_prob.disable_testing == 1) {
+      //PROBLEM_PARAM(enable_compilation, "d"),
+      extra_msg = "Undefined";
+      tmp_prob.enable_compilation = prob->enable_compilation;
+      if (!prob->abstract) {
+        prepare_set_prob_value(PREPARE_FIELD_PROB_ENABLE_COMPILATION,
+                               &tmp_prob, sup_prob, sstate->global);
+        snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+                 tmp_prob.enable_compilation?"Yes":"No");
+        extra_msg = msg_buf;
+      }
+      print_boolean_3_select_row(f, "Still compile runs to mark as ACCEPTED:",
+                                 prob->enable_compilation,
+                                 SUPER_ACTION_PROB_CHANGE_ENABLE_COMPILATION,
+                                 extra_msg,
+                                 session_id, form_row_attrs[row ^= 1],
+                                 self_url, extra_args, prob_hidden_vars);
+    }
   } /* show_adv */
 
   if (sstate->global && sstate->global->score_system_val != SCORE_ACM) {
@@ -4601,6 +4620,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_DISABLE_AUTO_TESTING:
     p_int = &prob->disable_auto_testing;
+    goto handle_boolean_2;
+
+  case SSERV_CMD_PROB_CHANGE_ENABLE_COMPILATION:
+    p_int = &prob->enable_compilation;
     goto handle_boolean_2;
 
   case SSERV_CMD_PROB_CHANGE_FULL_SCORE:
