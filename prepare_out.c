@@ -1026,6 +1026,8 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     unparse_bool(f, "disable_auto_testing", prob->disable_auto_testing);
   if (prob->disable_testing >= 0)
     unparse_bool(f, "disable_testing", prob->disable_testing);
+  if (prob->enable_compilation >= 0)
+    unparse_bool(f, "enable_compilation", prob->enable_compilation);
   if (prob->hidden >= 0) {
     if ((prob->abstract && prob->hidden)
         || !prob->abstract)
