@@ -2494,3 +2494,13 @@ NEWS.RUS 1 25 29603859
 NEWS 1 25 17706822
 run.c 1 83 5095159
 prepare_out.c 1 19 5174592
+prepare.h 1 81 2365012
+super_actions.h 1 20 1494382
+super_proto.h 1 21 1477176
+serve.c 1 108 14368878
+serve-control.c 1 22 10149409
+super-serve.c 1 33 10734592
+html.c 1 75 11476417
+prepare.c 1 108 11384954
+prepare_out.c 1 20 5172377
+super_html_3.c 1 26 19325909
