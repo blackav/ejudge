@@ -10,3 +10,4 @@ autom4te.cache config.log config.status Makefile configure Makefile.in
 ejudge-install.sh ejudge-config ejudge-config.v
 NEWS-*
 NEWS.RUS-*
+job-server job-server-cmd
