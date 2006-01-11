@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -122,6 +122,7 @@ static char const * const attn_map[] =
   "priv_level",
   "never_clean",
   "privileged",
+  "date",
 
   0
 };
@@ -814,6 +815,10 @@ parse_contest(char const *path, struct xml_tree *t,
         if (parse_bool(path, a->line, a->column, a->text, &tmp) < 0) return -1;
         if (tmp) reg->flags |= USERLIST_UC_LOCKED;
         break;
+      case USERLIST_A_DATE:
+        if (parse_date(path, a->line, a->column, a->text, &reg->date) < 0)
+          return -1;
+        break;
       default:
         return invalid_attn(path, a);
       }
@@ -1375,6 +1380,9 @@ unparse_contest(struct userlist_contest const *cc, FILE *f,
   }
   if ((cc->flags & USERLIST_UC_LOCKED)) {
     fprintf(f, " %s=\"yes\"", attn_map[USERLIST_A_LOCKED]);
+  }
+  if (cc->date) {
+    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_DATE], unparse_date(cc->date));
   }
   fprintf(f, "/>\n");
 }
