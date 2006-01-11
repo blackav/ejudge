@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+# Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -140,6 +140,7 @@ COMMON_CFILES=\
  run_packet_5.c\
  run_packet_6.c\
  run_packet_7.c\
+ send_job_packet.c\
  sformat.c\
  super_html.c\
  super_html_2.c\
@@ -254,6 +255,7 @@ HFILES=\
  full_archive.h\
  html.h\
  interrupt.h\
+ job_packet.h\
  l10n.h\
  mischtml.h\
  misctext.h\
