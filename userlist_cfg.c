@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -64,6 +64,9 @@ enum
     TG_SUPER_SERVE_GROUP,
     TG_USERLIST_USER,
     TG_USERLIST_GROUP,
+    TG_JOB_SERVER_LOG,
+    TG_JOB_SERVER_SPOOL,
+    TG_JOB_SERVER_WORK,
   };
 enum
   {
@@ -111,6 +114,9 @@ static char const * const tag_map[] =
   "super_serve_group",
   "userlist_user",
   "userlist_group",
+  "job_server_log",
+  "job_server_spool",
+  "job_server_work",
   0
 };
 
@@ -163,6 +169,9 @@ tree_alloc_func(int tag)
   case TG_SUPER_SERVE_GROUP:
   case TG_USERLIST_USER:
   case TG_USERLIST_GROUP:
+  case TG_JOB_SERVER_LOG:
+  case TG_JOB_SERVER_SPOOL:
+  case TG_JOB_SERVER_WORK:
     return xcalloc(1, sizeof(struct xml_tree));
   case TG_MAP:
     return xcalloc(1, sizeof(struct userlist_cfg_user_map));
@@ -523,6 +532,15 @@ userlist_cfg_parse(char const *path)
       break;
     case TG_USERLIST_GROUP:
       if (handle_final_tag(path, p, &cfg->userlist_group) < 0) goto failed;
+      break;
+    case TG_JOB_SERVER_LOG:
+      if (handle_final_tag(path, p, &cfg->job_server_log) < 0) goto failed;
+      break;
+    case TG_JOB_SERVER_SPOOL:
+      if (handle_final_tag(path, p, &cfg->job_server_spool) < 0) goto failed;
+      break;
+    case TG_JOB_SERVER_WORK:
+      if (handle_final_tag(path, p, &cfg->job_server_work) < 0) goto failed;
       break;
     default:
       err("%s:%d:%d: element <%s> is invalid here",
