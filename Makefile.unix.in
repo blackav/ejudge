@@ -2,7 +2,7 @@
 # $Id$
 # @configure_input@
 
-# Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+# Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -105,6 +105,12 @@ REG_OBJECTS = ${REG_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 UL_CFILES = userlist-server.c version.c
 UL_OBJECTS = ${UL_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 
+JS_CFILES = job-server.c version.c
+JS_OBJECTS = ${JS_CFILES:.c=.o} libcommon.a
+
+JP_CFILES = job-server-cmd.c version.c
+JP_OBJECTS = ${JP_CFILES:.c=.o} libcommon.a
+
 US_CFILES = users.c version.c
 US_OBJECTS = ${US_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 
@@ -126,7 +132,7 @@ CE_OBJECTS = ${CE_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 ST_CFILES = ejudge-setup.c version.c
 ST_OBJECTS = ${ST_CFILES:.c=.o} libcommon.a
 
-BINTARGETS = compile serve run userlist-server edit-userlist super-serve clean-users ejudge-setup collect-emails serve-cmd slice-userlist
+BINTARGETS = compile serve run userlist-server job-server job-server-cmd edit-userlist super-serve clean-users ejudge-setup collect-emails serve-cmd slice-userlist
 CGITARGETS = master${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX} users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX}
 TARGETS = ${BINTARGETS} ${CGITARGETS}
 
@@ -186,6 +192,12 @@ register${CGI_PROG_SUFFIX}: ${REG_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 userlist-server: ${UL_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
+
+job-server: ${JS_OBJECTS}
+	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
+
+job-server-cmd: ${JP_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 super-serve: ${SS_OBJECTS}
