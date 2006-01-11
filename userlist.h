@@ -4,7 +4,7 @@
 #ifndef __USERLIST_H__
 #define __USERLIST_H__
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -146,6 +146,7 @@ enum
     USERLIST_A_PRIV_LEVEL,
     USERLIST_A_NEVER_CLEAN,
     USERLIST_A_PRIVILEGED,
+    USERLIST_A_DATE,
 
     USERLIST_LAST_ATTN,
   };
@@ -287,6 +288,7 @@ struct userlist_contest
   int id;
   int status;
   unsigned int flags;
+  time_t date;
 };
 
 struct userlist_passwd
