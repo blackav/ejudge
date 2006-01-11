@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3606,6 +3606,7 @@ cmd_register_contest(struct client_state *p, int pkt_len,
   r->b.tag = USERLIST_T_CONTEST;
   xml_link_node_last(u->contests, &r->b);
   r->id = data->contest_id;
+  r->date = time(0);
   if (c->autoregister) {
     r->status = USERLIST_REG_OK;
     update_userlist_table(data->contest_id);
@@ -3689,6 +3690,7 @@ cmd_priv_register_contest(struct client_state *p, int pkt_len,
   r->b.tag = USERLIST_T_CONTEST;
   xml_link_node_last(u->contests, &r->b);
   r->id = data->contest_id;
+  r->date = time(0);
   if (c->autoregister) {
     r->status = USERLIST_REG_OK;
     update_userlist_table(data->contest_id);
