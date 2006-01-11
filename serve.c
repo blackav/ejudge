@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,7 @@
 #include "run_packet.h"
 #include "curtime.h"
 #include "xml_utils.h"
+#include "job_packet.h"
 
 #include "misctext.h"
 #include "base64.h"
@@ -66,6 +67,7 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <pwd.h>
 
 #ifndef EJUDGE_CHARSET
 #define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
@@ -2628,6 +2630,18 @@ cmd_user_submit_run_2(struct client_state *p, int len,
                 p->ip, p->ssl, pkt->run_size, src_ptr);
 }
 
+static unsigned char *
+get_email_sender(struct contest_desc *cnts)
+{
+  int sysuid;
+  struct passwd *ppwd;
+
+  if (cnts && cnts->register_email) return cnts->register_email;
+  sysuid = getuid();
+  ppwd = getpwuid(sysuid);
+  return ppwd->pw_name;
+}
+
 static void
 cmd_team_submit_clar(struct client_state *p, int len, 
                      struct prot_serve_pkt_submit_clar *pkt)
@@ -2637,6 +2651,7 @@ cmd_team_submit_clar(struct client_state *p, int len,
   path_t clar_name;
   unsigned char *full_txt = 0;
   time_t start_time, stop_time;
+  struct contest_desc *cnts = 0;
 
   unsigned char subj[CLAR_MAX_SUBJ_TXT_LEN + 16];
   unsigned char bsubj[CLAR_MAX_SUBJ_LEN + 16];
@@ -2744,6 +2759,47 @@ cmd_team_submit_clar(struct client_state *p, int len,
                          global->clar_archive_dir, clar_name, "") < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
+  }
+
+  // send an e-mail
+  if (contests_get(global->contest_id, &cnts) >= 0
+      && cnts && cnts->clar_notify_email) {
+    unsigned char esubj[1024];
+    FILE *fmsg = 0;
+    char *ftxt = 0;
+    size_t flen = 0;
+    unsigned char *user_name = 0;
+    unsigned char *originator = 0;
+    unsigned char *mail_args[7];
+
+    snprintf(esubj, sizeof(esubj),
+             "New clar request in contest %d",
+             global->contest_id);
+    user_name = teamdb_get_name(pkt->user_id);
+    if (!user_name || !*user_name)
+      user_name = teamdb_get_login(pkt->user_id);
+    originator = get_email_sender(cnts);
+    fmsg = open_memstream(&ftxt, &flen);
+    fprintf(fmsg, "Hello,\n\nNew clarification request is received\n"
+            "Contest: %d (%s)\n"
+            "User: %d (%s)\n"
+            "Subject: %s\n\n"
+            "%s\n\n-\n"
+            "Regards,\n"
+            "the ejudge contest management system\n",
+            global->contest_id, cnts->name,
+            pkt->user_id, user_name,
+            subj_ptr, text_ptr);
+    fclose(fmsg); fmsg = 0;
+    mail_args[0] = "mail";
+    mail_args[1] = "";
+    mail_args[2] = esubj;
+    mail_args[3] = originator;
+    mail_args[4] = cnts->clar_notify_email;
+    mail_args[5] = ftxt;
+    mail_args[6] = 0;
+    send_job_packet(NULL, mail_args);
+    xfree(ftxt); ftxt = 0;
   }
 
   info("%d: team_submit_clar: ok", p->id);
@@ -4123,6 +4179,43 @@ cmd_edit_user(struct client_state *p, int len,
   return;
 }
 
+static void
+mail_check_failed(int run_id)
+{
+  struct contest_desc *cnts = 0;
+  unsigned char esubj[1024];
+  unsigned char *originator = 0;
+  FILE *fmsg = 0;
+  char *ftxt = 0;
+  size_t flen = 0;
+  unsigned char *mail_args[7];
+
+  if (contests_get(global->contest_id, &cnts) < 0 || !cnts
+      || !cnts->cf_notify_email) return;
+
+  snprintf(esubj, sizeof(esubj),
+           "Check failed in contest %d", global->contest_id);
+  originator = get_email_sender(cnts);
+
+  fmsg = open_memstream(&ftxt, &flen);
+  fprintf(fmsg, "Hello,\n\nRun evaluation got \"Check failed\"!\n"
+          "Contest: %d (%s)\n"
+          "Run Id: %d\n\n-\n"
+          "Regards,\n"
+          "the ejudge contest management system\n",
+          global->contest_id, cnts->name, run_id);
+  fclose(fmsg); fmsg = 0;
+  mail_args[0] = "mail";
+  mail_args[1] = "";
+  mail_args[2] = esubj;
+  mail_args[3] = originator;
+  mail_args[4] = cnts->cf_notify_email;
+  mail_args[5] = ftxt;
+  mail_args[6] = 0;
+  send_job_packet(NULL, mail_args);
+  xfree(ftxt); ftxt = 0;
+}
+
 
 static void generate_packet_name(int run_id, int prio,
                                  unsigned char buf[PACKET_NAME_SIZE]);
@@ -4226,6 +4319,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
                compile_report_dir, pname, rep_flags, rep_path);
       goto report_check_failed;
     }
+    mail_check_failed(comp_pkt->run_id);
     goto success;
   }
 
@@ -4430,6 +4524,8 @@ read_compile_packet(const unsigned char *compile_status_dir,
   return 1;
 
  report_check_failed:
+  mail_check_failed(comp_pkt->run_id);
+
   /* this is error recover, so if error happens again, we cannot do anything */
   if (run_change_status(comp_pkt->run_id, RUN_CHECK_FAILED, 0, -1, 0) < 0)
     goto non_fatal_error;
@@ -4566,6 +4662,8 @@ read_run_packet(const unsigned char *run_status_dir,
   } else {
     reply_pkt->score = -1;
   }
+  if (reply_pkt->status == RUN_CHECK_FAILED)
+    mail_check_failed(reply_pkt->run_id);
   if (run_change_status(reply_pkt->run_id, reply_pkt->status,
                         reply_pkt->failed_test,
                         reply_pkt->score, 0) < 0) return -1;
