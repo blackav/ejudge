@@ -4,7 +4,7 @@
 #ifndef __CONTESTS_H__
 #define __CONTESTS_H__
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -81,6 +81,9 @@ enum
     CONTEST_REGISTER_EMAIL_FILE,
     CONTEST_USER_NAME_COMMENT,
     CONTEST_ALLOWED_LANGUAGES,
+    CONTEST_CF_NOTIFY_EMAIL,
+    CONTEST_CLAR_NOTIFY_EMAIL,
+    CONTEST_DAYLY_STAT_EMAIL,
 
     CONTEST_LAST_TAG
   };
@@ -253,6 +256,9 @@ struct contest_desc
   unsigned char *register_table_style;
   unsigned char *team_head_style;
   unsigned char *team_par_style;
+  unsigned char *cf_notify_email;
+  unsigned char *clar_notify_email;
+  unsigned char *dayly_stat_email;
 
   unsigned char *user_name_comment;
   unsigned char *allowed_languages;
