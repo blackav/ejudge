@@ -4,7 +4,7 @@
 #ifndef __USERLIST_CFG_H__
 #define __USERLIST_CFG_H__ 1
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -60,12 +60,15 @@ struct userlist_cfg
   unsigned char *var_dir;
   unsigned char *userlist_log;
   unsigned char *super_serve_log;
+  unsigned char *job_server_log;
   unsigned char *compile_log;
   unsigned char *super_serve_socket;
   unsigned char *super_serve_user;
   unsigned char *super_serve_group;
   unsigned char *userlist_user;
   unsigned char *userlist_group;
+  unsigned char *job_server_spool;
+  unsigned char *job_server_work;
   struct xml_tree *user_map;
 
   opcaplist_t capabilities;
