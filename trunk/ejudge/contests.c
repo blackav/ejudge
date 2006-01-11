@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -98,6 +98,9 @@ static char const * const tag_map[] =
   "register_email_file",
   "user_name_comment",
   "allowed_languages",
+  "cf_notify_email",
+  "clar_notify_email",
+  "dayly_stat_email",
 
   0
 };
@@ -182,6 +185,9 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   0,                            /* REGISTER_EMAIL_FILE */
   0,                            /* USER_NAME_COMMENT */
   0,                            /* ALLOWED_LANGUAGES */
+  0,                            /* CF_NOTIFY_EMAIL */
+  0,                            /* CLAR_NOTIFY_EMAIL */
+  0,                            /* DAYLY_STAT_EMAIL */
 };
 static size_t const attn_sizes[CONTEST_LAST_ATTN] =
 {
@@ -251,6 +257,9 @@ node_free(struct xml_tree *t)
       xfree(cnts->team_par_style);
       xfree(cnts->user_name_comment);
       xfree(cnts->allowed_languages);
+      xfree(cnts->cf_notify_email);
+      xfree(cnts->clar_notify_email);
+      xfree(cnts->dayly_stat_email);
     }
     break;
   case CONTEST_CAP:
@@ -904,6 +913,16 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
       break;
     case CONTEST_ALLOWED_LANGUAGES:
       if (handle_final_tag(path, t, &cnts->allowed_languages) < 0) return -1;
+      break;
+
+    case CONTEST_CF_NOTIFY_EMAIL:
+      if (handle_final_tag(path, t, &cnts->cf_notify_email) < 0) return -1;
+      break;
+    case CONTEST_CLAR_NOTIFY_EMAIL:
+      if (handle_final_tag(path, t, &cnts->clar_notify_email) < 0) return -1;
+      break;
+    case CONTEST_DAYLY_STAT_EMAIL:
+      if (handle_final_tag(path, t, &cnts->dayly_stat_email) < 0) return -1;
       break;
 
     case CONTEST_CLIENT_FLAGS:
@@ -1690,6 +1709,9 @@ contests_unparse(FILE *f,
 
   unparse_text(f, CONTEST_USER_NAME_COMMENT, cnts->user_name_comment);
   unparse_text(f, CONTEST_ALLOWED_LANGUAGES, cnts->allowed_languages);
+  unparse_text(f, CONTEST_CF_NOTIFY_EMAIL, cnts->cf_notify_email);
+  unparse_text(f, CONTEST_CLAR_NOTIFY_EMAIL, cnts->clar_notify_email);
+  unparse_text(f, CONTEST_DAYLY_STAT_EMAIL, cnts->dayly_stat_email);
 
   if (cnts->client_ignore_time_skew || cnts->client_disable_team) {
     fprintf(f, "  <%s>\n", tag_map[CONTEST_CLIENT_FLAGS]);
