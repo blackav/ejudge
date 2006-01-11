@@ -3,7 +3,7 @@
 #ifndef __SUPER_SERVE_H__
 #define __SUPER_SERVE_H__
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -87,6 +87,7 @@ struct sid_state
   int show_access_rules;
   int show_permissions;
   int show_form_fields;
+  int show_notifications;
 
   unsigned char *users_header_text;
   unsigned char *users_footer_text;
