@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2551,6 +2551,49 @@ super_html_edit_contest_page(FILE *f,
                              cnts->allowed_languages,
                              SUPER_ACTION_CNTS_CHANGE_ALLOWED_LANGUAGES,
                              SUPER_ACTION_CNTS_CLEAR_ALLOWED_LANGUAGES,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+  }
+
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>E-mail notifications</b>", head_row_attr);
+  row = 1;
+  if (sstate->show_notifications) {
+    html_submit_button(f, SUPER_ACTION_CNTS_HIDE_NOTIFICATIONS, "Hide");
+  } else {
+    html_submit_button(f, SUPER_ACTION_CNTS_SHOW_NOTIFICATIONS, "Show");
+  }
+  fprintf(f, "</td></tr></form>");
+
+  if (sstate->show_notifications) {
+    print_string_editing_row(f, "Check failed e-mail notification address:",
+                             cnts->cf_notify_email,
+                             SUPER_ACTION_CNTS_CHANGE_CF_NOTIFY_EMAIL,
+                             SUPER_ACTION_CNTS_CLEAR_CF_NOTIFY_EMAIL,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+    print_string_editing_row(f, "Clar request e-mail notification address:",
+                             cnts->clar_notify_email,
+                             SUPER_ACTION_CNTS_CHANGE_CLAR_NOTIFY_EMAIL,
+                             SUPER_ACTION_CNTS_CLEAR_CLAR_NOTIFY_EMAIL,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+    print_string_editing_row(f, "Dayly statistics email:",
+                             cnts->dayly_stat_email,
+                             SUPER_ACTION_CNTS_CHANGE_DAYLY_STAT_EMAIL,
+                             SUPER_ACTION_CNTS_CLEAR_DAYLY_STAT_EMAIL,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
