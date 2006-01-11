@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2005 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1722,6 +1722,7 @@ super_serve_clear_edited_contest(struct sid_state *p)
   p->show_access_rules = 0;
   p->show_permissions = 0;
   p->show_form_fields = 0;
+  p->show_notifications = 0;
 
   xfree(p->serve_parse_errors); p->serve_parse_errors = 0;
   prepare_free_config(p->cfg); p->cfg = 0;
@@ -2351,6 +2352,12 @@ cmd_simple_top_command(struct client_state *p, int len,
   case SSERV_CMD_CNTS_HIDE_PATHS:
     sstate->show_paths = 0;
     break;
+  case SSERV_CMD_CNTS_SHOW_NOTIFICATIONS:
+    sstate->show_notifications = 1;
+    break;
+  case SSERV_CMD_CNTS_HIDE_NOTIFICATIONS:
+    sstate->show_notifications = 0;
+    break;
   case SSERV_CMD_CNTS_SHOW_ACCESS_RULES:
     sstate->show_access_rules = 1;
     break;
@@ -2437,6 +2444,9 @@ cmd_simple_top_command(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CLEAR_REGISTER_TABLE_STYLE:
   case SSERV_CMD_CNTS_CLEAR_REGISTER_NAME_COMMENT:
   case SSERV_CMD_CNTS_CLEAR_ALLOWED_LANGUAGES:
+  case SSERV_CMD_CNTS_CLEAR_CF_NOTIFY_EMAIL:
+  case SSERV_CMD_CNTS_CLEAR_CLAR_NOTIFY_EMAIL:
+  case SSERV_CMD_CNTS_CLEAR_DAYLY_STAT_EMAIL:
   case SSERV_CMD_CNTS_CLEAR_TEAM_HEAD_STYLE:
   case SSERV_CMD_CNTS_CLEAR_TEAM_PAR_STYLE:
   case SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL:
@@ -2527,6 +2537,9 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CHANGE_REGISTER_TABLE_STYLE:
   case SSERV_CMD_CNTS_CHANGE_REGISTER_NAME_COMMENT:
   case SSERV_CMD_CNTS_CHANGE_ALLOWED_LANGUAGES:
+  case SSERV_CMD_CNTS_CHANGE_CF_NOTIFY_EMAIL:
+  case SSERV_CMD_CNTS_CHANGE_CLAR_NOTIFY_EMAIL:
+  case SSERV_CMD_CNTS_CHANGE_DAYLY_STAT_EMAIL:
   case SSERV_CMD_CNTS_CHANGE_TEAM_HEAD_STYLE:
   case SSERV_CMD_CNTS_CHANGE_TEAM_PAR_STYLE:
   case SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL:
@@ -2898,6 +2911,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_FORGET] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_SHOW_PATHS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_HIDE_PATHS] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_SHOW_NOTIFICATIONS] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_HIDE_NOTIFICATIONS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_SHOW_ACCESS_RULES] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_HIDE_ACCESS_RULES] = { cmd_simple_top_command },
   [SSERV_CMD_EDIT_REGISTER_ACCESS] = { cmd_main_page },
@@ -2948,6 +2963,9 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CLEAR_REGISTER_TABLE_STYLE] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_REGISTER_NAME_COMMENT] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_ALLOWED_LANGUAGES] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_CF_NOTIFY_EMAIL] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_CLAR_NOTIFY_EMAIL] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_DAYLY_STAT_EMAIL] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_TEAM_HEAD_STYLE] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_TEAM_PAR_STYLE] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL] = { cmd_simple_top_command },
@@ -2990,6 +3008,9 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CHANGE_REGISTER_TABLE_STYLE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_REGISTER_NAME_COMMENT] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_ALLOWED_LANGUAGES] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_CF_NOTIFY_EMAIL] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_CLAR_NOTIFY_EMAIL] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_DAYLY_STAT_EMAIL] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_TEAM_HEAD_STYLE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_TEAM_PAR_STYLE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_REGISTER_EMAIL] = { cmd_set_value },
