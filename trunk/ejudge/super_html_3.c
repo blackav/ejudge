@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2005,2006 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -527,6 +527,18 @@ super_html_edit_global_parameters(FILE *f,
     html_submit_button(f, SUPER_ACTION_GLOB_UNLIMITED_DURATION, "Set unlimited");
   }
   fprintf(f, "</td></tr></form>\n");
+
+  if (!global->contest_time) {
+    //GLOBAL_PARAM(contest_finish_time, "s"),
+    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Contest end time:</td><td>",
+            form_row_attrs[row ^= 1]);
+    html_date_select(f, global->contest_finish_time_d);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_CONTEST_FINISH_TIME, "Change");
+    html_submit_button(f, SUPER_ACTION_GLOB_CLEAR_CONTEST_FINISH_TIME, "Clear");
+    fprintf(f, "</td></tr></form>\n");
+  }
 
   //GLOBAL_PARAM(score_system, "s"),
   //GLOBAL_PARAM(virtual, "d"),
@@ -2081,6 +2093,15 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CLEAR_STAND_IGNORE_AFTER:
     global->stand_ignore_after_d = 0;
+    return 0;
+
+  case SSERV_CMD_GLOB_CHANGE_CONTEST_FINISH_TIME:
+    if (xml_parse_date("", 0, 0, param2, &global->contest_finish_time_d) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    return 0;
+
+  case SSERV_CMD_GLOB_CLEAR_CONTEST_FINISH_TIME:
+    global->contest_finish_time_d = 0;
     return 0;
 
   case SSERV_CMD_GLOB_CHANGE_ENABLE_STAND2:
@@ -5268,6 +5289,11 @@ super_html_read_serve(FILE *flog,
   if (global->stand_ignore_after[0]
       && xml_parse_date("", 0, 0, global->stand_ignore_after,
                         &global->stand_ignore_after_d) < 0)
+    return -1;
+
+  if (global->contest_finish_time[0]
+      && xml_parse_date("", 0, 0, global->contest_finish_time,
+                        &global->contest_finish_time_d) < 0)
     return -1;
 
   prepare_set_global_defaults(global);
