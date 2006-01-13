@@ -3,7 +3,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -94,6 +94,9 @@ struct section_global_data
 
   puc_t  stand_ignore_after[256];
   time_t stand_ignore_after_d; /* ignore submits after this time in standings */
+
+  puc_t  contest_finish_time[256];
+  time_t contest_finish_time_d;
 
   int    fog_standings_updated; /* INTERNAL: updated at the moment of fog? */
   int    start_standings_updated; /* INTERNAL: updated at the start */
