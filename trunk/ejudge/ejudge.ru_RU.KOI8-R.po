@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-01-11 09:42+0300\n"
+"POT-Creation-Date: 2006-01-11 23:23+0300\n"
 "PO-Revision-Date: 2006-01-11 16:18+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -23,7 +23,7 @@ msgstr "Поле \"Электронный адрес\" содержит недопустимые символы"
 msgid "\"Login\" field contains invalid characters"
 msgstr "Поле \"Регистрационное имя\" содержит недопустимые символы"
 
-#: master.c:2562 misctext.c:308 misctext.c:310 serve.c:2734 team.c:937
+#: master.c:2562 misctext.c:308 misctext.c:310 serve.c:2736 team.c:937
 msgid "(no subject)"
 msgstr "(без темы)"
 
@@ -86,9 +86,16 @@ msgid ""
 "a>; either version 2 of the License, or (at your option) any later version.</"
 "p>\n"
 msgstr ""
-"<p class=\"ejudge_copyright\">Это - система администрирования турниров <a href=\"%s\"><b>ejudge</b></a>, версия %s, дата компиляции %s.\n"
-"<p class=\"ejudge_copyright\">Авторские права на программу: (C) 2000-2006 Alexander Chernov.\n"
-"<p class=\"ejudge_copyright\">Данная программа является свободным ПО. Вы можете распространять и/или модифицировать её в соответствии с <a href=\"http://www.fsf.org/licenses/licenses.html#GPL\">Общей Лицензией GNU</a> (GNU General Public License), опубликованной <a href=\"http://www.fsf.org\">Фондом свободного ПО</a> (Free Software Foundation), либо версии 2 Лицензии, либо (по Вашему желанию) любой последующей версии.\n"
+"<p class=\"ejudge_copyright\">Это - система администрирования турниров <a "
+"href=\"%s\"><b>ejudge</b></a>, версия %s, дата компиляции %s.\n"
+"<p class=\"ejudge_copyright\">Авторские права на программу: (C) 2000-2006 "
+"Alexander Chernov.\n"
+"<p class=\"ejudge_copyright\">Данная программа является свободным ПО. Вы "
+"можете распространять и/или модифицировать её в соответствии с <a href="
+"\"http://www.fsf.org/licenses/licenses.html#GPL\">Общей Лицензией GNU</a> "
+"(GNU General Public License), опубликованной <a href=\"http://www.fsf.org"
+"\">Фондом свободного ПО</a> (Free Software Foundation), либо версии 2 "
+"Лицензии, либо (по Вашему желанию) любой последующей версии.\n"
 
 #: userlist-server.c:4194
 #, c-format
@@ -216,7 +223,7 @@ msgstr "<u>--- Ошибки ---</u>\n"
 msgid "Accepted for testing"
 msgstr "Принято на проверку"
 
-#: clntutil.c:244
+#: clntutil.c:245
 msgid "Access denied"
 msgstr "В доступе отказано"
 
@@ -336,7 +343,7 @@ msgstr "Невозможно удалить участника"
 msgid "Change"
 msgstr "Изменить"
 
-#: clntutil.c:491
+#: clntutil.c:493
 msgid "Change duration"
 msgstr "Изменить длительность"
 
@@ -396,7 +403,7 @@ msgstr "Сбросить пароли участников!"
 msgid "Clear this entry"
 msgstr "Очистить эту запись"
 
-#: clntutil.c:439
+#: clntutil.c:441
 msgid "Client time"
 msgstr "Время клиента"
 
@@ -464,7 +471,7 @@ msgstr "ID"
 msgid "Contest is closed"
 msgstr "Турнир закрыт"
 
-#: clntutil.c:446
+#: clntutil.c:448
 msgid "Contest is not started"
 msgstr "Турнир не начался"
 
@@ -476,7 +483,7 @@ msgstr "Название турнира"
 msgid "Contest registrations"
 msgstr "Регистрация на турниры"
 
-#: clntutil.c:452 html.c:4188
+#: clntutil.c:454 html.c:4188
 msgid "Contest start time"
 msgstr "Время начала турнира"
 
@@ -500,7 +507,7 @@ msgstr "Основной участник"
 msgid "Contestants"
 msgstr "Основные участники"
 
-#: clntutil.c:459
+#: clntutil.c:461
 msgid "Continue"
 msgstr "Продолжить"
 
@@ -557,7 +564,7 @@ msgstr "База состояния"
 msgid "Dump users database"
 msgstr "База пользователей"
 
-#: clntutil.c:487 html.c:4185 master_html.c:2282
+#: clntutil.c:489 html.c:4185 master_html.c:2282
 msgid "Duration"
 msgstr "Продолжительность"
 
@@ -578,7 +585,7 @@ msgstr "Редактировать"
 msgid "Edit personal data"
 msgstr "Редактировать<br>личные данные"
 
-#: clntutil.c:518 html.c:4198
+#: clntutil.c:526 html.c:4198
 msgid "Elapsed time"
 msgstr "Прошедшее время"
 
@@ -586,7 +593,7 @@ msgstr "Прошедшее время"
 msgid "Empty"
 msgstr "не заполнено"
 
-#: clntutil.c:499 clntutil.c:504
+#: clntutil.c:502 clntutil.c:507 clntutil.c:512
 msgid "End time"
 msgstr "Время окончания турнира"
 
@@ -892,7 +899,7 @@ msgstr ""
 "В следующей строке введите имя, под которым Вы будете отображаться в таблице "
 "результатов, в списке зарегистрированных участников и т. д."
 
-#: clntutil.c:361
+#: clntutil.c:363
 msgid "Incompatible server"
 msgstr "Несовместимый сервер"
 
@@ -1252,7 +1259,7 @@ msgstr "Число предупреждений"
 msgid "Not registered"
 msgstr "Не зарегистрированы"
 
-#: clntutil.c:468
+#: clntutil.c:470
 msgid "Not set"
 msgstr "Не установлено"
 
@@ -1350,11 +1357,11 @@ msgstr "Неполное решение"
 msgid "Participant"
 msgstr "Участник"
 
-#: clntutil.c:404
+#: clntutil.c:406
 msgid "Participants' solutions are being accepted"
 msgstr "Решения участников принимаются на проверку"
 
-#: clntutil.c:428
+#: clntutil.c:430
 msgid "Participants' solutions are being judged"
 msgstr "Решения участников проверяются"
 
@@ -1414,7 +1421,7 @@ msgstr "Телефон"
 msgid "Place"
 msgstr "Место"
 
-#: clntutil.c:473
+#: clntutil.c:475
 msgid "Planned start time"
 msgstr "Планируемое время начала турнира"
 
@@ -1462,7 +1469,7 @@ msgstr "Нажмите на кнопку \"Сохранить\" для сохранения изменений на сервере."
 msgid "Print"
 msgstr "Распечатать"
 
-#: clntutil.c:418
+#: clntutil.c:420
 msgid "Print requests are suspended"
 msgstr "Обработка запросов на печать приостановлена"
 
@@ -1598,7 +1605,7 @@ msgstr "Пересудить!"
 msgid "Reload server"
 msgstr "Перезапустить сервер"
 
-#: clntutil.c:526 html.c:4201
+#: clntutil.c:534 html.c:4201
 msgid "Remaining time"
 msgstr "Остающееся время"
 
@@ -1614,7 +1621,7 @@ msgstr "Удалить участника"
 msgid "Report view"
 msgstr "Просмотр протокола"
 
-#: clntutil.c:478
+#: clntutil.c:480
 msgid "Reschedule"
 msgstr "Назначить время"
 
@@ -1753,7 +1760,7 @@ msgstr "Отосланные решения"
 msgid "Serial No"
 msgstr "NN"
 
-#: clntutil.c:362
+#: clntutil.c:364
 msgid "Server configuration error."
 msgstr "Ошибка конфигурации сервера."
 
@@ -1761,7 +1768,7 @@ msgstr "Ошибка конфигурации сервера."
 msgid "Server error"
 msgstr "Ошибка сервера"
 
-#: clntutil.c:367 master.c:357 master.c:420 master.c:423 serve-control.c:447
+#: clntutil.c:369 master.c:357 master.c:420 master.c:423 serve-control.c:447
 #: serve-control.c:460 team.c:680 team.c:1425 team.c:1429
 msgid "Server is down"
 msgstr "Сервер не работает"
@@ -1770,23 +1777,23 @@ msgstr "Сервер не работает"
 msgid "Server is down."
 msgstr "Сервер не работает."
 
-#: clntutil.c:368
+#: clntutil.c:370
 msgid "Server is down. Please, come later."
 msgstr "Сервер не работает. Пожалуйста, приходите позже."
 
-#: clntutil.c:392
+#: clntutil.c:394
 msgid "Server status"
 msgstr "Состояние сервера"
 
-#: clntutil.c:434 html.c:4179
+#: clntutil.c:436 html.c:4179
 msgid "Server time"
 msgstr "Время на сервере"
 
-#: clntutil.c:254
+#: clntutil.c:255
 msgid "Service is not available"
 msgstr "Сервис недоступен"
 
-#: clntutil.c:255
+#: clntutil.c:256
 msgid "Service is not available. Please, come later."
 msgstr "Сервис недоступен. Пожалуйста, приходите позже."
 
@@ -1861,11 +1868,11 @@ msgstr "Сжать журнал"
 msgid "Standings"
 msgstr "Положение команд"
 
-#: clntutil.c:511
+#: clntutil.c:519
 msgid "Standings freeze time"
 msgstr "Время заморозки таблицы результатов"
 
-#: clntutil.c:447
+#: clntutil.c:449
 msgid "Start"
 msgstr "Начать"
 
@@ -1880,7 +1887,7 @@ msgstr "Начать виртуальный турнир"
 msgid "Status"
 msgstr "Статус"
 
-#: clntutil.c:456
+#: clntutil.c:458
 msgid "Stop"
 msgstr "Остановить"
 
@@ -1950,7 +1957,7 @@ msgstr "Участник команды удалён"
 msgid "Team name"
 msgstr "Название команды"
 
-#: clntutil.c:411
+#: clntutil.c:413
 msgid "Team requests are suspended"
 msgstr "Обработка запросов участников приостановлена"
 
@@ -1962,7 +1969,7 @@ msgstr "Положение участников"
 msgid "Test input"
 msgstr "Входные данные"
 
-#: clntutil.c:415
+#: clntutil.c:417
 msgid "Testing of team's submits is suspended"
 msgstr "Проверка решений участников приостановлена"
 
@@ -1975,19 +1982,19 @@ msgstr "Пройдено тестов"
 msgid "The contest is closed."
 msgstr "Турнир закрыт."
 
-#: clntutil.c:400
+#: clntutil.c:402
 msgid "The contest is in progress"
 msgstr "Турнир идёт"
 
-#: clntutil.c:398
+#: clntutil.c:400
 msgid "The contest is in progress (standings are frozen)"
 msgstr "Турнир идёт (текущее положение команд не отображается)"
 
-#: clntutil.c:407 html.c:1368 html.c:2396 html.c:3186
+#: clntutil.c:409 html.c:1368 html.c:2396 html.c:3186
 msgid "The contest is not started"
 msgstr "Турнир не начался"
 
-#: clntutil.c:395
+#: clntutil.c:397
 msgid "The contest is over"
 msgstr "Турнир закончился"
 
@@ -2131,7 +2138,7 @@ msgstr ""
 msgid "Unknown: %d"
 msgstr "Unknown: %d"
 
-#: clntutil.c:485 html.c:4183
+#: clntutil.c:487 html.c:4183
 #, c-format
 msgid "Unlimited"
 msgstr "Не ограничена"
@@ -2342,7 +2349,7 @@ msgstr ""
 msgid "You do not have permissions to use this service"
 msgstr "У Вас нет прав использовать данный сервис"
 
-#: clntutil.c:245
+#: clntutil.c:246
 msgid "You do not have permissions to use this service."
 msgstr "У Вас нет прав использовать данный сервис."
 
