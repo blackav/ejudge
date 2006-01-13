@@ -392,6 +392,8 @@ update_status_file(int force_flag)
       status.freeze_time = status.start_time;
     }
   }
+  if (!status.duration && global->contest_finish_time_d)
+    status.finish_time = global->contest_finish_time_d;
   //if (status.duration) status.continuation_enabled = 0;
 
   if (!global->virtual) {
@@ -5906,7 +5908,14 @@ do_loop(void)
 
     /* check stop and start times */
     if (!global->virtual) {
-      if (contest_start_time && !contest_stop_time && contest_duration) {
+      if (contest_start_time && !contest_stop_time && !contest_duration
+          && global->contest_finish_time_d > 0
+          && current_time >= global->contest_finish_time_d) {
+        /* the contest is over! */
+        info("CONTEST OVER");
+        run_stop_contest(global->contest_finish_time_d);
+        contest_stop_time = global->contest_finish_time_d;
+      } else if (contest_start_time && !contest_stop_time && contest_duration) {
         if (current_time >= contest_start_time + contest_duration) {
           /* the contest is over! */
           info("CONTEST OVER");
