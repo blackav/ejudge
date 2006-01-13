@@ -578,7 +578,6 @@ main(int argc, char *argv[])
   if (prepare_config_vars() < 0) return 1;
   prepare_sinals();
   notify_signal_flag = 1;
-  if (prepare_directory_notify() < 0) return 1;
   if (chdir(job_server_work_path) < 0) {
     err("cannot change directory to %s", job_server_work_path);
     return 1;
@@ -600,6 +599,7 @@ main(int argc, char *argv[])
     setsid();
   }
 
+  if (prepare_directory_notify() < 0) return 1;
   do_work();
 
   return 0;
