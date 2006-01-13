@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2005,2006 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -200,6 +200,10 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   fprintf(f, "\n");
 
   fprintf(f, "contest_time = %d\n", global->contest_time);
+  if (global->contest_finish_time_d > 0) {
+    fprintf(f, "contest_finish_time = \"%s\"\n",
+            xml_unparse_date(global->contest_finish_time_d));
+  }
   ASSERT(global->score_system_val >= 0 && global->score_system_val < SCORE_TOTAL);
   fprintf(f, "score_system = %s\n", contest_types[global->score_system_val]);
   if (global->virtual)
