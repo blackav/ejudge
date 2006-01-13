@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -112,6 +112,7 @@ static struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(stand_ignore_after, "s"),
   GLOBAL_PARAM(charset, "s"),
+  GLOBAL_PARAM(contest_finish_time, "s"),
   //GLOBAL_PARAM(standings_charset, "s"),
 
   GLOBAL_PARAM(root_dir, "s"),
@@ -1555,6 +1556,12 @@ set_defaults(int mode)
   if (global->stand_ignore_after[0] &&
       parse_date(global->stand_ignore_after, &global->stand_ignore_after_d) < 0) {
     err("cannot parse stand_ignore_after parameter");
+    return -1;
+  }
+  if (global->contest_finish_time[0] &&
+      parse_date(global->contest_finish_time,
+                 &global->contest_finish_time_d) < 0) {
+    err("cannot parse contest_finish_time parameter");
     return -1;
   }
 
