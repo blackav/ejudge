@@ -4,7 +4,7 @@
 #ifndef __PROTOCOL_H__
 #define __PROTOCOL_H__
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -70,7 +70,9 @@ struct prot_serve_status_v2
   unsigned char continuation_enabled;
   unsigned char printing_enabled;
   unsigned char printing_suspended;
-  unsigned char _pad[77];
+  unsigned char _pad1[1];
+  ej_time_t finish_time;
+  unsigned char _pad[72];
 };
 
 #define PROT_SERVE_PACKET_MAGIC (0xe342)
