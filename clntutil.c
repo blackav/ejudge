@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -61,6 +61,7 @@ time_t server_sched_time;
 time_t server_duration;
 time_t server_stop_time;
 time_t server_freeze_time;
+time_t server_finish_time;
 int    server_total_runs;
 int    server_total_clars;
 int    server_clars_disabled;
@@ -343,6 +344,7 @@ client_check_server_status(char const *charset, char const *path, int lag,
   server_freeze_time = status_v2.freeze_time;
   server_printing_enabled = status_v2.printing_enabled;
   server_printing_suspended = status_v2.printing_suspended;
+  server_finish_time = status_v2.finish_time;
 
   if (lag > 0) {
     if (client_cur_time>=server_cur_time
@@ -493,6 +495,12 @@ client_print_server_status(int priv_level,
       puts("<td>&nbsp;</td><td>&nbsp;</td>");
   }
   puts("</tr>");
+
+  if (!server_duration && server_finish_time) {
+    client_time_to_str(str_end_time, server_finish_time);
+    printf("<tr><td>%s:</td><td>%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
+           _("End time"), str_end_time);
+  }
 
   if (server_stop_time) {
     client_time_to_str(str_end_time, server_stop_time);
