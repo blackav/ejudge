@@ -83,7 +83,7 @@ enum
     CONTEST_ALLOWED_LANGUAGES,
     CONTEST_CF_NOTIFY_EMAIL,
     CONTEST_CLAR_NOTIFY_EMAIL,
-    CONTEST_DAYLY_STAT_EMAIL,
+    CONTEST_DAILY_STAT_EMAIL,
 
     CONTEST_LAST_TAG
   };
@@ -258,7 +258,7 @@ struct contest_desc
   unsigned char *team_par_style;
   unsigned char *cf_notify_email;
   unsigned char *clar_notify_email;
-  unsigned char *dayly_stat_email;
+  unsigned char *daily_stat_email;
 
   unsigned char *user_name_comment;
   unsigned char *allowed_languages;

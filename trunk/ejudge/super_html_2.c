@@ -94,7 +94,7 @@ super_html_clear_variable(struct sid_state *sstate, int cmd)
   case SSERV_CMD_CNTS_CLEAR_ALLOWED_LANGUAGES: p_str = &cnts->allowed_languages; break;
   case SSERV_CMD_CNTS_CLEAR_CF_NOTIFY_EMAIL: p_str = &cnts->cf_notify_email; break;
   case SSERV_CMD_CNTS_CLEAR_CLAR_NOTIFY_EMAIL: p_str = &cnts->clar_notify_email; break;
-  case SSERV_CMD_CNTS_CLEAR_DAYLY_STAT_EMAIL: p_str = &cnts->dayly_stat_email; break;
+  case SSERV_CMD_CNTS_CLEAR_DAILY_STAT_EMAIL: p_str = &cnts->daily_stat_email; break;
   case SSERV_CMD_CNTS_CLEAR_TEAM_HEAD_STYLE: p_str = &cnts->team_head_style; break;
   case SSERV_CMD_CNTS_CLEAR_TEAM_PAR_STYLE: p_str = &cnts->team_par_style; break;
   case SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL: p_str = &cnts->register_email; break;
@@ -368,8 +368,8 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   case SSERV_CMD_CNTS_CHANGE_CLAR_NOTIFY_EMAIL:
     p_str = &cnts->clar_notify_email;
     break;
-  case SSERV_CMD_CNTS_CHANGE_DAYLY_STAT_EMAIL:
-    p_str = &cnts->dayly_stat_email;
+  case SSERV_CMD_CNTS_CHANGE_DAILY_STAT_EMAIL:
+    p_str = &cnts->daily_stat_email;
     break;
   case SSERV_CMD_CNTS_CHANGE_TEAM_HEAD_STYLE:
     p_str = &cnts->team_head_style;
