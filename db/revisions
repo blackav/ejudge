@@ -2534,3 +2534,11 @@ clntutil.c 1 40 1389717
 prepare.c 1 109 11405991
 prepare_out.c 1 21 5185735
 super_html_3.c 1 27 19403613
+contests.h 1 30 737229
+super_actions.h 1 23 1526982
+super_proto.h 1 24 1507478
+serve-control.c 1 25 10312966
+super-serve.c 1 36 10834494
+contests.c 1 36 4316077
+super_html.c 1 19 9800793
+super_html_2.c 1 18 4106572
