@@ -259,7 +259,7 @@ node_free(struct xml_tree *t)
       xfree(cnts->allowed_languages);
       xfree(cnts->cf_notify_email);
       xfree(cnts->clar_notify_email);
-      xfree(cnts->dayly_stat_email);
+      xfree(cnts->daily_stat_email);
     }
     break;
   case CONTEST_CAP:
@@ -921,8 +921,8 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
     case CONTEST_CLAR_NOTIFY_EMAIL:
       if (handle_final_tag(path, t, &cnts->clar_notify_email) < 0) return -1;
       break;
-    case CONTEST_DAYLY_STAT_EMAIL:
-      if (handle_final_tag(path, t, &cnts->dayly_stat_email) < 0) return -1;
+    case CONTEST_DAILY_STAT_EMAIL:
+      if (handle_final_tag(path, t, &cnts->daily_stat_email) < 0) return -1;
       break;
 
     case CONTEST_CLIENT_FLAGS:
@@ -1711,7 +1711,7 @@ contests_unparse(FILE *f,
   unparse_text(f, CONTEST_ALLOWED_LANGUAGES, cnts->allowed_languages);
   unparse_text(f, CONTEST_CF_NOTIFY_EMAIL, cnts->cf_notify_email);
   unparse_text(f, CONTEST_CLAR_NOTIFY_EMAIL, cnts->clar_notify_email);
-  unparse_text(f, CONTEST_DAYLY_STAT_EMAIL, cnts->dayly_stat_email);
+  unparse_text(f, CONTEST_DAILY_STAT_EMAIL, cnts->daily_stat_email);
 
   if (cnts->client_ignore_time_skew || cnts->client_disable_team) {
     fprintf(f, "  <%s>\n", tag_map[CONTEST_CLIENT_FLAGS]);
