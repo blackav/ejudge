@@ -100,7 +100,7 @@ static char const * const tag_map[] =
   "allowed_languages",
   "cf_notify_email",
   "clar_notify_email",
-  "dayly_stat_email",
+  "daily_stat_email",
 
   0
 };
@@ -187,7 +187,7 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   0,                            /* ALLOWED_LANGUAGES */
   0,                            /* CF_NOTIFY_EMAIL */
   0,                            /* CLAR_NOTIFY_EMAIL */
-  0,                            /* DAYLY_STAT_EMAIL */
+  0,                            /* DAILY_STAT_EMAIL */
 };
 static size_t const attn_sizes[CONTEST_LAST_ATTN] =
 {
