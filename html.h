@@ -3,7 +3,7 @@
 #ifndef __HTML_H__
 #define __HTML_H__
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -196,5 +196,7 @@ int write_xml_testing_report(FILE *f, unsigned char const *txt,
 int write_xml_team_testing_report(FILE *f, const unsigned char *txt);
 
 int write_audit_log(FILE *f, int run_id);
+
+void generate_daily_statistics(FILE *f, time_t from_time, time_t to_time);
 
 #endif /* __HTML_H__ */
