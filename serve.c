@@ -208,6 +208,8 @@ static int clients_suspended;
 static int testing_suspended;
 static int printing_suspended;
 static int olympiad_judging_mode;
+static time_t stat_reported_before;
+static time_t stat_report_time;
 
 static int socket_fd = -1;
 static unsigned char *socket_name = 0;
@@ -404,6 +406,9 @@ update_status_file(int force_flag)
     }
   }
 
+  status.stat_reported_before = stat_reported_before;
+  status.stat_report_time = stat_report_time;
+
   generic_write_file((char*) &status, sizeof(status), SAFE,
                      global->status_dir, "status", "");
   prev_status_update = current_time;
@@ -440,6 +445,8 @@ load_status_file(void)
   info("load_status_file: olympiad_judging_mode = %d", olympiad_judging_mode);
   printing_suspended = status.printing_suspended;
   info("load_status_file: printing_suspended = %d", printing_suspended);
+  stat_reported_before = status.stat_reported_before;
+  stat_report_time = status.stat_report_time;
 }
 
 static int
@@ -5658,6 +5665,145 @@ check_sockets(int may_wait_flag)
   return may_wait_flag;
 }
 
+static void
+generate_statistics_email(time_t from_time, time_t to_time)
+{
+  unsigned char esubj[1024];
+  struct tm *ptm;
+  char *etxt = 0, *ftxt = 0;
+  size_t elen = 0, flen = 0;
+  FILE *eout = 0, *fout = 0;
+  struct contest_desc *cnts = 0;
+  unsigned char *mail_args[7];
+  unsigned char *originator;
+  struct tm tm1;
+
+  if (contests_get(global->contest_id, &cnts) < 0 || !cnts) return;
+
+  ptm = localtime(&from_time);
+  snprintf(esubj, sizeof(esubj),
+           "Daily statistics for %04d/%02d/%02d, contest %d",
+           ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
+           global->contest_id);
+
+  eout = open_memstream(&etxt, &elen);
+  generate_daily_statistics(eout, from_time, to_time);
+  fclose(eout); eout = 0;
+  if (!etxt || !*etxt) {
+    xfree(etxt);
+    return;
+  }
+
+  localtime_r(&from_time, &tm1);
+
+  fout = open_memstream(&ftxt, &flen);
+  fprintf(fout,
+          "Hello,\n"
+          "\n"
+          "This is daily report for contest %d (%s)\n"
+          "Report day: %04d/%02d/%02d\n\n"
+          "%s\n\n"
+          "-\n"
+          "Regards,\n"
+          "the ejudge contest management system\n",
+          global->contest_id, cnts->name,
+          tm1.tm_year + 1900, tm1.tm_mon + 1, tm1.tm_mday,
+          etxt);
+  fclose(fout); fout = 0;
+
+  originator = get_email_sender(cnts);
+  mail_args[0] = "mail";
+  mail_args[1] = "";
+  mail_args[2] = esubj;
+  mail_args[3] = originator;
+  mail_args[4] = cnts->daily_stat_email;
+  mail_args[5] = ftxt;
+  mail_args[6] = 0;
+  send_job_packet(NULL, mail_args);
+  xfree(ftxt); ftxt = 0;
+  xfree(etxt); etxt = 0;
+}
+
+static void
+check_stat_generation(int force_flag)
+{
+  static time_t last_check_time = 0;
+  struct contest_desc *cnts = 0;
+  struct tm *ptm;
+  time_t thisday, nextday;
+
+  if (!force_flag && last_check_time > 0
+      && last_check_time + 600 > current_time)
+    return;
+  last_check_time = current_time;
+  if (contests_get(global->contest_id, &cnts) < 0 || !cnts) return;
+  if (!cnts->daily_stat_email) return;
+
+  if (!stat_reported_before) {
+    // set the time to the beginning of this day
+    ptm = localtime(&current_time);
+    ptm->tm_hour = 0;
+    ptm->tm_min = 0;
+    ptm->tm_sec = 0;
+    ptm->tm_isdst = -1;
+    if ((thisday = mktime(ptm)) == (time_t) -1) {
+      err("check_stat_generation: mktime() failed");
+      thisday = 0;
+    }
+    stat_reported_before = thisday;
+  }
+  if (!stat_report_time) {
+    // set the time to the beginning of the next day
+    ptm = localtime(&current_time);
+    ptm->tm_hour = 0;
+    ptm->tm_min = 0;
+    ptm->tm_sec = 0;
+    ptm->tm_isdst = -1;
+    ptm->tm_mday++;             // pretty valid. see man mktime
+    if ((nextday = mktime(ptm)) == (time_t) -1) {
+      err("check_stat_generation: mktime() failed");
+      nextday = 0;
+    }
+    stat_report_time = nextday;
+  }
+
+  if (current_time < stat_report_time) return;
+
+  // generate report for each day from stat_reported_before to stat_report_time
+  thisday = stat_reported_before;
+  while (thisday < stat_report_time) {
+    ptm = localtime(&thisday);
+    ptm->tm_hour = 0;
+    ptm->tm_min = 0;
+    ptm->tm_sec = 0;
+    ptm->tm_isdst = -1;
+    ptm->tm_mday++;
+    if ((nextday = mktime(ptm)) == (time_t) -1) {
+      err("check_stat_generation: mktime() failed");
+      stat_reported_before = 0;
+      stat_report_time = 0;
+      return;
+    }
+    generate_statistics_email(thisday, nextday);
+    thisday = nextday;
+  }
+
+  ptm = localtime(&thisday);
+  ptm->tm_hour = 0;
+  ptm->tm_min = 0;
+  ptm->tm_sec = 0;
+  ptm->tm_isdst = -1;
+  ptm->tm_mday++;
+  if ((nextday = mktime(ptm)) == (time_t) -1) {
+    err("check_stat_generation: mktime() failed");
+    stat_reported_before = 0;
+    stat_report_time = 0;
+    return;
+  }
+  stat_reported_before = thisday;
+  stat_report_time = nextday;
+}
+
 static int
 may_safely_exit(void)
 {
@@ -5906,6 +6052,9 @@ do_loop(void)
     /* check items pending for removal */
     check_remove_queue();
 
+    /* check whether we should generate dayly statistics */
+    check_stat_generation(0);
+
     /* check stop and start times */
     if (!global->virtual) {
       if (contest_start_time && !contest_stop_time && !contest_duration
@@ -6058,6 +6207,8 @@ main(int argc, char *argv[])
   build_compile_dirs();
   build_run_dirs();
   i = do_loop();
+  check_stat_generation(1);
+  update_status_file(1);
   team_extra_flush();
   if (i < 0) i = 1;
   if (socket_name && cmdline_socket_fd < 0) {
