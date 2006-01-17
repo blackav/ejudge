@@ -72,7 +72,9 @@ struct prot_serve_status_v2
   unsigned char printing_suspended;
   unsigned char _pad1[1];
   ej_time_t finish_time;
-  unsigned char _pad[72];
+  ej_time_t stat_reported_before;
+  ej_time_t stat_report_time;
+  unsigned char _pad[64];
 };
 
 #define PROT_SERVE_PACKET_MAGIC (0xe342)
