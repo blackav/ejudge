@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-01-11 23:23+0300\n"
+"POT-Creation-Date: 2006-01-14 16:53+0300\n"
 "PO-Revision-Date: 2006-01-11 16:18+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -23,7 +23,7 @@ msgstr "Поле \"Электронный адрес\" содержит недопустимые символы"
 msgid "\"Login\" field contains invalid characters"
 msgstr "Поле \"Регистрационное имя\" содержит недопустимые символы"
 
-#: master.c:2562 misctext.c:308 misctext.c:310 serve.c:2736 team.c:937
+#: master.c:2562 misctext.c:308 misctext.c:310 serve.c:2743 team.c:937
 msgid "(no subject)"
 msgstr "(без темы)"
 
