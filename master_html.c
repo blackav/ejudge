@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3272,6 +3272,421 @@ write_audit_log(FILE *f, int run_id)
 
  failure:
   return -errcode;
+}
+
+static int
+is_registered_today(struct userlist_user *user, time_t from_time,
+                    time_t to_time)
+{
+  struct userlist_contest *uc = 0;
+
+  if (!user || !user->contests) return 0;
+  uc = (struct userlist_contest*) user->contests->first_down;
+  while (uc) {
+    if (uc->id == global->contest_id
+        && uc->date >= from_time
+        && uc->date < to_time)
+      return 1;
+    uc = (struct userlist_contest*) uc->b.right;
+  }
+  return 0;
+}
+
+void
+generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
+{
+  int u_max, u_tot;
+  int *u_ind, *u_rev;
+  int p_max, p_tot, i, j;
+  int *p_ind, *p_rev;
+  int row_sz, row_sh;
+  unsigned char *solved = 0;
+  int r_tot, u, p, idx, max_u_total;
+  const struct run_entry *runs, *rcur;
+  int *u_total = 0, *u_ok = 0, *u_failed = 0, *u_afterok = 0, *u_errors = 0;
+  int *u_trans = 0, *u_cf = 0, *u_ac = 0, *u_ign = 0, *u_disq = 0, *u_pend = 0;
+  int *u_ce = 0, *u_sort = 0;
+  int *l_total = 0, *l_ok = 0, *l_ce = 0;
+  int *p_total = 0, *p_ok = 0;
+  unsigned char *u_reg = 0;
+  struct teamdb_export uinfo;
+  int *sort_num, *sort_idx;
+
+  int total_empty = 0;
+  int total_errors = 0;
+  int total_status[128];
+  int total_pseudo = 0;
+  int total_afterok = 0;
+  int total_trans = 0;
+  int total_ok = 0;
+  int total_failed = 0;
+  int total_cf = 0;
+  int total_ac = 0;
+  int total_ign = 0;
+  int total_disq = 0;
+  int total_pend = 0;
+  int total_ce = 0;
+  int total_reg = 0;
+  int total_runs = 0;
+
+  unsigned char *login, *name, probname[256], langname[256];
+
+  int clar_total = 0, clar_total_today = 0, clar_from_judges = 0;
+  int clar_to_judges = 0, clar_flags, clar_from, clar_to;
+  time_t clar_time;
+
+  /* u_tot             - total number of teams in index array
+   * u_max             - maximal possible number of teams
+   * u_ind[0..u_tot-1] - index array:   team_idx -> team_id
+   * u_rev[0..u_max-1] - reverse index: team_id -> team_idx
+   */
+  u_max = teamdb_get_max_team_id() + 1;
+  XALLOCAZ(u_ind, u_max);
+  XALLOCAZ(u_rev, u_max);
+  XALLOCAZ(u_reg, u_max);
+  for (i = 1, u_tot = 0; i < u_max; i++) {
+    u_rev[i] = -1;
+    if (teamdb_lookup(i) && teamdb_export_team(i, &uinfo) >= 0) {
+      if (is_registered_today(uinfo.user, from_time, to_time)) {
+        total_reg++;
+        u_reg[u_tot] = 1;
+      }
+      u_rev[i] = u_tot;
+      u_ind[u_tot++] = i;
+    }
+  }
+
+  /* p_tot             - total number of problems in index array
+   * p_max             - maximal possible number of problems
+   * p_ind[0..p_tot-1] - index array:   prob_idx -> prob_id
+   * p_rev[0..p_max-1] - reverse index: prob_id -> prob_idx
+   */
+  p_max = max_prob + 1;
+  XALLOCAZ(p_ind, p_max);
+  XALLOCAZ(p_rev, p_max);
+  for (i = 1, p_tot = 0; i < p_max; i++) {
+    p_rev[i] = -1;
+    if (probs[i]) {
+      p_rev[i] = p_tot;
+      p_ind[p_tot++] = i;
+    }
+  }
+
+  r_tot = run_get_total();
+  runs = run_get_entries_ptr();
+
+  if (!u_tot || !p_tot || !r_tot) return;
+
+  /* calculate the power of 2 not less than p_tot */
+  for (row_sz = 1, row_sh = 0; row_sz < p_tot; row_sz <<= 1, row_sh++);
+  /* all two-dimensional arrays will have rows of size row_sz */
+
+  XCALLOC(solved, row_sz * u_tot);
+  memset(total_status, 0, sizeof(total_status));
+  XALLOCAZ(u_total, u_tot);
+  XALLOCAZ(u_ok, u_tot);
+  XALLOCAZ(u_failed, u_tot);
+  XALLOCAZ(u_afterok, u_tot);
+  XALLOCAZ(u_errors, u_tot);
+  XALLOCAZ(u_trans, u_tot);
+  XALLOCAZ(u_cf, u_tot);
+  XALLOCAZ(u_ac, u_tot);
+  XALLOCAZ(u_ign, u_tot);
+  XALLOCAZ(u_disq, u_tot);
+  XALLOCAZ(u_pend, u_tot);
+  XALLOCAZ(u_ce, u_tot);
+  XALLOCA(u_sort, u_tot);
+
+  XALLOCAZ(l_total, max_lang + 1);
+  XALLOCAZ(l_ok, max_lang + 1);
+  XALLOCAZ(l_ce, max_lang + 1);
+
+  XALLOCAZ(p_total, p_tot);
+  XALLOCAZ(p_ok, p_tot);
+
+  for (i = 0, rcur = runs; i < r_tot; i++, rcur++) {
+    if (rcur->timestamp >= to_time) break;
+    if (rcur->timestamp < from_time) {
+      if (rcur->status == RUN_EMPTY) continue;
+      if (rcur->status != RUN_OK) continue;
+      if (rcur->team <= 0 || rcur->team >= u_max || u_rev[rcur->team] < 0)
+        continue;
+      if (rcur->problem <= 0 || rcur->problem >= p_max
+          || p_rev[rcur->problem] < 0)
+        continue;
+      solved[(u_rev[rcur->team] << row_sh) + p_rev[rcur->problem]] = 1;
+      continue;
+    }
+
+    // ok, collect statistics
+    if ((rcur->status > RUN_MAX_STATUS && rcur->status < RUN_PSEUDO_FIRST)
+        || (rcur->status>RUN_PSEUDO_LAST && rcur->status<RUN_TRANSIENT_FIRST)
+        || (rcur->status > RUN_TRANSIENT_LAST)) {
+      fprintf(f, "error: run %d has invalid status %d\n", i, rcur->status);
+      total_errors++;
+      continue;
+    }
+    if (rcur->status == RUN_EMPTY) {
+      total_empty++;
+      continue;
+    }
+    if (rcur->team <= 0 || rcur->team >= u_max || (u = u_rev[rcur->team]) < 0) {
+      fprintf(f, "error: run %d has invalid user_id %d\n",
+              i, rcur->team);
+      total_errors++;
+      continue;
+    }
+    if (rcur->status >= RUN_PSEUDO_FIRST && rcur->status <= RUN_PSEUDO_LAST) {
+      total_status[rcur->status]++;
+      total_pseudo++;
+      u_total[u]++;
+      continue;
+    }
+    if (rcur->problem <= 0 || rcur->problem >= p_max
+        || (p = p_rev[rcur->problem]) < 0) {
+      fprintf(f, "error: run %d has invalid prob_id %d\n",
+              i, rcur->problem);
+      total_errors++;
+      u_errors[u]++;
+      u_total[u]++;
+      continue;
+    }
+    idx = (u << row_sh) + p;
+    if (solved[idx]) {
+      u_afterok[u]++;
+      u_total[u]++;
+      total_afterok++;
+      continue;
+    }
+    if (rcur->language <= 0 || rcur->language > max_lang
+        || !langs[rcur->language]) {
+      fprintf(f, "error: run %d has invalid lang_id %d\n",
+              i, rcur->language);
+      total_errors++;
+      u_errors[u]++;
+      u_total[u]++;
+      continue;
+    }
+    if (rcur->status >= RUN_TRANSIENT_FIRST
+        && rcur->status <= RUN_TRANSIENT_LAST) {
+      total_trans++;
+      u_total[u]++;
+      u_trans[u]++;
+      continue;
+    }
+
+    switch (rcur->status) {
+    case RUN_OK:
+      total_ok++;
+      u_ok[u]++;
+      u_total[u]++;
+      l_total[rcur->language]++;
+      l_ok[rcur->language]++;
+      p_total[p]++;
+      p_ok[p]++;
+      solved[idx] = 1;
+      break;
+
+    case RUN_COMPILE_ERR:
+      total_ce++;
+      u_ce[u]++;
+      u_total[u]++;
+      l_total[rcur->language]++;
+      l_ce[rcur->language]++;
+      p_total[p]++;
+      break;
+
+    case RUN_RUN_TIME_ERR:
+    case RUN_TIME_LIMIT_ERR:
+    case RUN_PRESENTATION_ERR:
+    case RUN_WRONG_ANSWER_ERR:
+    case RUN_MEM_LIMIT_ERR:
+    case RUN_SECURITY_ERR:
+    case RUN_PARTIAL:
+      total_failed++;
+      u_failed[u]++;
+      u_total[u]++;
+      l_total[rcur->language]++;
+      p_total[p]++;
+      total_status[rcur->status]++;
+      break;
+
+    case RUN_CHECK_FAILED:
+      total_cf++;
+      u_cf[u]++;
+      u_total[u]++;
+      break;
+
+    case RUN_ACCEPTED:
+      total_ac++;
+      u_ac[u]++;
+      u_total[u]++;
+      break;
+
+    case RUN_IGNORED:
+      total_ign++;
+      u_ign[u]++;
+      u_total[u]++;
+      break;
+
+    case RUN_DISQUALIFIED:
+      total_disq++;
+      u_disq[u]++;
+      u_total[u]++;
+      break;
+
+    case RUN_PENDING:
+      total_pend++;
+      u_pend[u]++;
+      u_total[u]++;
+      break;
+
+    default:
+      abort();
+    }
+  }
+
+  // FIXME: collect some statistics about clarifications
+  clar_total = clar_get_total();
+  for (i = 0; i < clar_total; i++) {
+    if (clar_get_record(i, &clar_time, NULL, NULL,
+                        &clar_from, &clar_to, &clar_flags, NULL) < 0)
+      continue;
+    if (clar_time >= to_time) break;
+    if (clar_time < from_time) continue;
+
+    clar_total_today++;
+    if (!clar_from) clar_from_judges++;
+    else clar_to_judges++;
+  }
+
+  if (total_reg > 0) {
+    fprintf(f, "New users registered: %d\n", total_reg);
+    for (i = 0; i < u_tot; i++) {
+      if (!u_reg[i]) continue;
+      u = u_ind[i];
+      if (!(login = teamdb_get_login(u))) login = "";
+      if (!(name = teamdb_get_name(u))) name = "";
+      fprintf(f, "  %-6d %-15.15s %-30.30s\n", u, login, name);
+    }
+    fprintf(f, "\n");
+  }
+
+  total_runs = total_empty + total_pseudo + total_afterok + total_trans
+    + total_ok + total_failed + total_cf
+    + total_ac + total_ign + total_disq + total_pend + total_ce;
+  if (total_runs > 0)
+    fprintf(f, "Total new runs:            %d\n", total_runs);
+  if (total_empty > 0)
+    fprintf(f, "  Empty (cleared) records: %d\n", total_empty);
+  if (total_pseudo > 0)
+    fprintf(f, "  Virtual records:         %d\n", total_pseudo);
+  if (total_trans > 0)
+    fprintf(f, "  Currently being tested:  %d\n", total_trans);
+  if (total_afterok > 0)
+    fprintf(f, "  Submits after success:   %d\n", total_afterok);
+  if (total_ok > 0)
+    fprintf(f, "  Successful submits:      %d\n", total_ok);
+  if (total_failed > 0)
+    fprintf(f, "  Unsuccessful submits:    %d\n", total_failed);
+  if (total_status[RUN_RUN_TIME_ERR] > 0)
+    fprintf(f, "    Run-time error:        %d\n", total_status[RUN_RUN_TIME_ERR]);
+  if (total_status[RUN_TIME_LIMIT_ERR] > 0)
+    fprintf(f, "    Time-limit exceeded:   %d\n", total_status[RUN_TIME_LIMIT_ERR]);
+  if (total_status[RUN_PRESENTATION_ERR] > 0)
+    fprintf(f, "    Presentation error:    %d\n", total_status[RUN_PRESENTATION_ERR]);
+  if (total_status[RUN_WRONG_ANSWER_ERR] > 0)
+    fprintf(f, "    Wrong answer:          %d\n", total_status[RUN_WRONG_ANSWER_ERR]);
+  if (total_status[RUN_MEM_LIMIT_ERR] > 0)
+    fprintf(f, "    Memory limit exceeded: %d\n", total_status[RUN_MEM_LIMIT_ERR]);
+  if (total_status[RUN_SECURITY_ERR] > 0)
+    fprintf(f, "    Security violation:    %d\n", total_status[RUN_SECURITY_ERR]);
+  if (total_status[RUN_PARTIAL] > 0)
+    fprintf(f, "    Partial solution:      %d\n", total_status[RUN_PARTIAL]);
+  if (total_ce > 0)
+    fprintf(f, "  Compilation error:       %d\n", total_ce);
+  if (total_cf > 0)
+    fprintf(f, "  Checking failed:         %d\n", total_cf);
+  if (total_ac > 0)
+    fprintf(f, "  Accepted for testing:    %d\n", total_ac);
+  if (total_ign > 0)
+    fprintf(f, "  Ignored:                 %d\n", total_ign);
+  if (total_disq > 0)
+    fprintf(f, "  Disqualified:            %d\n", total_disq);
+  if (total_pend > 0)
+    fprintf(f, "  Pending check:           %d\n", total_pend);
+  if (total_runs > 0)
+    fprintf(f, "\n");
+
+  if (total_runs > 0) {
+    fprintf(f, "%-40.40s %-7.7s %-7.7s\n", "Problem", "Total", "Success");
+    for (i = 0; i < p_tot; i++) {
+      p = p_ind[i];
+      snprintf(probname, sizeof(probname), "%s: %s",
+               probs[p]->short_name, probs[p]->long_name);
+      fprintf(f, "%-40.40s %-7d %-7d\n", probname, p_total[i], p_ok[i]);
+    }
+    fprintf(f, "\n");
+  }
+
+  if (total_runs > 0) {
+    fprintf(f, "%-40.40s %-7.7s %-7.7s %-7.7s\n",
+            "Problem", "Total", "CE", "Success");
+    for (i = 1; i <= max_lang; i++) {
+      if (!langs[i]) continue;
+      snprintf(langname, sizeof(langname), "%s - %s",
+               langs[i]->short_name, langs[i]->long_name);
+      fprintf(f, "%-40.40s %-7d %-7d %-7d\n",
+              langname, l_total[i], l_ce[i], l_ok[i]);
+    }
+    fprintf(f, "\n");
+  }
+
+  // sort users by decreasing order of user's submit
+  max_u_total = 0;
+  for (i = 0; i < u_tot; i++)
+    if (u_total[i] > max_u_total)
+      max_u_total = u_total[i];
+  XALLOCAZ(sort_num, max_u_total + 1);
+  XALLOCAZ(sort_idx, max_u_total + 1);
+  for (i = 0; i < u_tot; i++)
+    sort_num[u_total[i]]++;
+  sort_idx[max_u_total] = 0;
+  for (i = max_u_total - 1; i >= 0; i--)
+    sort_idx[i] = sort_idx[i + 1] + sort_num[i + 1];
+  for (i = 0; i < u_tot; i++)
+    u_sort[sort_idx[u_total[i]]++] = i;
+
+  if (total_runs > 0) {
+    fprintf(f, "%-7.7s %-40.40s %-7.7s %-7.7s %s\n",
+            "Id", "User", "Total", "Success", "Other");
+    for (i = 0; i < u_tot; i++) {
+      j = u_sort[i];
+      if (!u_total[j]) break;
+
+      u = u_ind[j];
+      name = teamdb_get_name(u);
+      if (!name) name = teamdb_get_login(u);
+      if (!name) name = "";
+
+      fprintf(f, "%-7d %-40.40s %-7d %-7d %-7d %d/%d/%d %d/%d/%d/%d/%d/%d\n",
+              u, name, u_total[j], u_ok[j], u_failed[j],
+              u_cf[j], u_ce[j], u_ign[j],
+              u_afterok[j], u_errors[j], u_trans[j],
+              u_ac[j], u_disq[j], u_pend[j]);
+    }
+    fprintf(f, "\n");
+  }
+
+  if (clar_total_today > 0) {
+    fprintf(f,
+            "Clarification requests: %d\n"
+            "To judges:              %d\n"
+            "From judges:            %d\n\n",
+            clar_total_today, clar_to_judges, clar_from_judges);
+  }
+  
+  xfree(solved);
 }
 
 /**
