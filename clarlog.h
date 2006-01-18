@@ -3,7 +3,7 @@
 #ifndef __CLARLOG_H__
 #define __CLARLOG_H__
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,6 +36,7 @@ int clar_add_record(time_t         time,
                     int            from,
                     int            to,
                     int            flags,
+                    int            j_from,
                     char const    *subj);
 int clar_get_record(int            id,
                     time_t        *ptime,
@@ -44,6 +45,7 @@ int clar_get_record(int            id,
                     int           *pfrom,
                     int           *pto,
                     int           *pflags,
+                    int           *pj_from,
                     char          *subj);
 int clar_update_flags(int id, int flags);
 int clar_get_total(void);
