@@ -1025,7 +1025,7 @@ write_all_clars(FILE *f, struct user_filter_info *u,
 
   size_t size;
   time_t start, time;
-  int from, to, flags;
+  int from, to, flags, j_from;
   unsigned char subj[CLAR_MAX_SUBJ_LEN + 4];
   unsigned char psubj[CLAR_MAX_SUBJ_TXT_LEN + 4];
   unsigned char durstr[64];
@@ -1121,7 +1121,7 @@ write_all_clars(FILE *f, struct user_filter_info *u,
   for (j = 0; j < list_tot; j++) {
     i = list_idx[j];
 
-    clar_get_record(i, &time, &size, ip, &from, &to, &flags, subj);
+    clar_get_record(i, &time, &size, ip, &from, &to, &flags, &j_from, subj);
     if (mode_clar != 1 && (from <= 0 || flags >= 2)) continue; 
 
     base64_decode_str(subj, psubj, 0);
@@ -1140,7 +1140,11 @@ write_all_clars(FILE *f, struct user_filter_info *u,
     fprintf(f, "<td>%s</td>", ip);
     fprintf(f, "<td>%zu</td>", size);
     if (!from) {
-      fprintf(f, "<td><b>%s</b></td>", _("judges"));
+      if (!j_from)
+        fprintf(f, "<td><b>%s</b></td>", _("judges"));
+      else
+        fprintf(f, "<td><b>%s</b> (%s)</td>", _("judges"),
+                teamdb_get_name(j_from));
     } else {
       fprintf(f, "<td>%s</td>", teamdb_get_name(from));
     }
@@ -2253,7 +2257,7 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
 {
   time_t clar_time, start_time;
   size_t size, txt_subj_len, html_subj_len, txt_msg_len = 0, html_msg_len;
-  int from, to, flags;
+  int from, to, flags, j_from;
   unsigned char ip[CLAR_MAX_IP_LEN + 16];
   unsigned char b64_subj[CLAR_MAX_SUBJ_LEN + 16];
   unsigned char txt_subj[CLAR_MAX_SUBJ_LEN + 16];
@@ -2264,7 +2268,8 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
   if (clar_id < 0 || clar_id >= clar_get_total()) return -SRV_ERR_BAD_CLAR_ID;
 
   start_time = run_get_start_time();
-  clar_get_record(clar_id, &clar_time, &size, ip, &from, &to, &flags,b64_subj);
+  clar_get_record(clar_id, &clar_time, &size, ip, &from, &to, &flags,
+                  &j_from, b64_subj);
   txt_subj_len = base64_decode_str(b64_subj, txt_subj, 0);
   html_subj_len = html_armored_strlen(txt_subj);
   html_subj = alloca(html_subj_len);
@@ -2285,7 +2290,11 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
   fprintf(f, "<tr><td>%s:</td><td>%zu</td></tr>\n", _("Size"), size);
   fprintf(f, "<tr><td>%s:</td>", _("Sender"));
   if (!from) {
-    fprintf(f, "<td><b>%s</b></td>", _("judges"));
+    if (!j_from)
+      fprintf(f, "<td><b>%s</b></td>", _("judges"));
+    else
+      fprintf(f, "<td><b>%s</b> (%s)</td>", _("judges"),
+              teamdb_get_name(j_from));
   } else {
     fprintf(f, "<td>%s (%d)</td>", teamdb_get_name(from), from);
   }
@@ -3550,7 +3559,7 @@ generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
   clar_total = clar_get_total();
   for (i = 0; i < clar_total; i++) {
     if (clar_get_record(i, &clar_time, NULL, NULL,
-                        &clar_from, &clar_to, &clar_flags, NULL) < 0)
+                        &clar_from, &clar_to, &clar_flags, NULL, NULL) < 0)
       continue;
     if (clar_time >= to_time) break;
     if (clar_time < from_time) continue;
