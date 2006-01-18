@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -904,7 +904,7 @@ count_unread_clars(int user_id)
   int i, total = 0, from, to;
 
   for (i = clar_get_total() - 1; i >= 0; i--) {
-    if (clar_get_record(i, 0, 0, 0, &from, &to, 0, 0) < 0)
+    if (clar_get_record(i, 0, 0, 0, &from, &to, 0, 0, 0) < 0)
       continue;
     if (to > 0 && to != user_id) continue;
     if (!to && from > 0) continue;
@@ -951,7 +951,7 @@ new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
        showed < clars_to_show && i >= 0;
        i--) {
     if (clar_get_record(i, &time, &size,
-                        0, &from, &to, &flags, subj) < 0)
+                        0, &from, &to, &flags, 0, subj) < 0)
       continue;
     if (from > 0 && from != uid) continue;
     if (to > 0 && to != uid) continue;
@@ -1025,7 +1025,7 @@ new_write_user_clar(FILE *f, int uid, int cid)
   if (global->virtual) show_astr_time = 1;
   start_time = run_get_start_time();
   if (clar_get_record(cid, &time, &size, NULL,
-                      &from, &to, NULL, subj) < 0) {
+                      &from, &to, NULL, NULL, subj) < 0) {
     return -SRV_ERR_BAD_CLAR_ID;
   }
   if (from > 0 && from != uid) return -SRV_ERR_ACCESS_DENIED;
