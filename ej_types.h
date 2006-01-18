@@ -3,7 +3,7 @@
 #ifndef __EJ_TYPES_H__
 #define __EJ_TYPES_H__
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005,2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
 
 /* special types used to store/send data in binary format */
 typedef rint32_t  ej_time_t;     /* time_t as stored in files */
+typedef rint64_t  ej_time64_t;   /* time_t for new file formats */
 typedef ruint32_t ej_size_t;     /* size_t as stored in files */
 typedef ruint32_t ej_ip_t;       /* IP address as stored in files */
 typedef unsigned long long ej_cookie_t;   /* cookie */
