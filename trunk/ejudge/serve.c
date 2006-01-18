@@ -1417,7 +1417,7 @@ cmd_view(struct client_state *p, int len,
     if (p->priv_level == PRIV_LEVEL_JUDGE) {
       int flags = 1;
 
-      clar_get_record(pkt->item, 0, 0, 0, 0, 0, &flags, 0);
+      clar_get_record(pkt->item, 0, 0, 0, 0, 0, &flags, 0, 0);
       if (!flags) {
         flags = 1;
         clar_update_flags(pkt->item, flags);
@@ -1799,7 +1799,7 @@ cmd_message(struct client_state *p, int len,
     msg_len = sprintf(msg, "Subject: %s\n\n%s", subj_ptr, text_ptr);
     clar_id = clar_add_record(current_time, msg_len,
                               run_unparse_ip(p->ip),
-                              0, dest_uid, 0, b64_subj_short);
+                              0, dest_uid, 0, p->user_id, b64_subj_short);
     if (clar_id < 0) {
       err("%d: cannot add new message", p->id);
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
@@ -1833,7 +1833,7 @@ cmd_message(struct client_state *p, int len,
     // subj_ptr, dest_login_ptr to be ignored
     // if dest_user_id == 0, the reply is sent to all
     // ref_clar_id to be processed
-    if (clar_get_record(pkt->ref_clar_id, 0, 0, 0, &dest_uid, 0, 0, 0) < 0) {
+    if (clar_get_record(pkt->ref_clar_id, 0, 0, 0, &dest_uid, 0, 0, 0, 0) < 0) {
       err("%d: invalid ref_clar_id %d", p->id, pkt->ref_clar_id);
       new_send_reply(p, -SRV_ERR_BAD_CLAR_ID);
       return;
@@ -1858,7 +1858,7 @@ cmd_message(struct client_state *p, int len,
     if (!pkt->dest_user_id) dest_uid = 0;
     clar_id = clar_add_record(current_time, msg_len,
                               run_unparse_ip(p->ip), 0, dest_uid, 0,
-                              b64_subj_short);
+                              p->user_id, b64_subj_short);
     if (clar_id < 0) {
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
@@ -2759,7 +2759,7 @@ cmd_team_submit_clar(struct client_state *p, int len,
 
   if ((clar_id = clar_add_record(current_time, full_len,
                                  run_unparse_ip(pkt->ip),
-                                 pkt->user_id, 0, 0, bsubj)) < 0) {
+                                 pkt->user_id, 0, 0, 0, bsubj)) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
