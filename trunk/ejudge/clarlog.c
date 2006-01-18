@@ -355,6 +355,7 @@ clar_add_record(time_t         time,
                 int            from,
                 int            to,
                 int            flags,
+                int            j_from,
                 char const    *subj)
 {
   int i;
@@ -386,6 +387,7 @@ clar_add_record(time_t         time,
   clars.v[i].from = from;
   clars.v[i].to = to;
   clars.v[i].flags = flags;
+  clars.v[i].j_from = j_from;
   clars.v[i].a.ip = r_ip;
   base64_decode_str(subj, clars.v[i].subj, 0);
   if (clar_flush_entry(i) < 0) return -1;
@@ -400,6 +402,7 @@ clar_get_record(int id,
                 int           *pfrom,
                 int           *pto,
                 int           *pflags,
+                int           *pj_from,
                 char          *subj)
 {
   if (id < 0 || id >= clars.u) ERR_R("bad id: %d", id);
@@ -412,6 +415,7 @@ clar_get_record(int id,
   if (pfrom)   *pfrom   = clars.v[id].from;
   if (pto)     *pto     = clars.v[id].to;
   if (pflags)  *pflags  = clars.v[id].flags;
+  if (pj_from) *pj_from = clars.v[id].j_from;
   if (subj)               base64_encode_str(clars.v[id].subj, subj);
   return 0;
 }
