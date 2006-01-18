@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,13 +15,18 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+#include "ej_types.h"
+
 #include "clarlog.h"
 
 #include "teamdb.h"
+#include "base64.h"
 
 #include "unix/unix_fileutl.h"
 #include "pathutl.h"
 #include "errlog.h"
+#include "xml_utils.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -39,31 +44,53 @@
 #define SUBJ_STRING_SIZE 24
 #define IP_STRING_SIZE   15
 
-struct clar_entry
+static const char signature_v1[] = "eJudge clar log";
+
+/* new clarification log header */
+struct clar_header_v1
 {
-  int           id;          /* 4 + 1 */
-  time_t        time;        /* 11 + 1 */
-  size_t        size;        /* 4 + 1 */
-  int           from;        /* 4 + 1 */
-  int           to;          /* 4 + 1 */
-  int           flags;       /* 2 + 1 */
-  char          ip[16];      /* 15 + 1 */
-  char          subj[28];    /* 24 + 1 (up to 18 subj. chars) */
+  unsigned char signature[16];  /* "eJudge clar log" */
+  unsigned char version;        /* file version */
+  unsigned char endianness;     /* 0 - little, 1 - big endian */
+  unsigned char _pad[110];
 };
+
+/* new version of the clarification log */
+struct clar_entry_v1
+{
+  int id;                       /* 4 */
+  ej_size_t size;               /* 4 */
+  ej_time64_t time;             /* 8 */
+  int nsec;                     /* 4 */
+  int from;                     /* 4 */
+  int to;                       /* 4 */
+  int j_from;                   /* 4 */
+  unsigned int flags;           /* 4 */
+  unsigned char ip6_flag;       /* 1 */
+  unsigned char _pad1[3];       /* 3 */
+  union
+  {
+    ej_ip_t ip;
+    unsigned char ip6[16];
+  } a;                          /* 16 */
+  unsigned char _pad2[40];
+  unsigned char subj[32];
+};                              /* 128 */
 
 struct clar_array
 {
-  int                a, u;
-  struct clar_entry *v;
+  int                   a, u;
+  struct clar_entry_v1 *v;
 };
 
-static struct clar_array clars;
-static int               clar_fd = -1;
+static struct clar_header_v1 header;
+static struct clar_array     clars;
+static int                   clar_fd = -1;
 
 #define ERR_R(t, args...) do { do_err_r(__FUNCTION__, t , ##args); return -1; } while (0)
 
 static int
-clar_read_record(char *buf, int size)
+clar_read_record_v0(char *buf, int size)
 {
   int rsz, i;
 
@@ -86,10 +113,16 @@ clar_read_entry(int n)
   char b3[CLAR_RECORD_SIZE + 16];
   int  k, r;
 
+  int r_time;
+  unsigned int r_size;
+  ej_ip_t r_ip;
+
   memset(buf, 0, sizeof(buf));
-  if (clar_read_record(buf, CLAR_RECORD_SIZE) < 0) return -1;
-  r = sscanf(buf, "%d %lu %zu %d %d %d %s %s %n",
-             &clars.v[n].id, &clars.v[n].time, &clars.v[n].size,
+  memset(&clars.v[n], 0, sizeof(clars.v[0]));
+  if (clar_read_record_v0(buf, CLAR_RECORD_SIZE) < 0) return -1;
+
+  r = sscanf(buf, "%d %d %u %d %d %d %s %s %n",
+             &clars.v[n].id, &r_time, &r_size,
              &clars.v[n].from,
              &clars.v[n].to, &clars.v[n].flags,
              b2, b3, &k);
@@ -97,6 +130,8 @@ clar_read_entry(int n)
   if (buf[k] != 0) ERR_R("[%d]: excess data", n);
 
   /* do sanity checking */
+  clars.v[n].size = r_size;
+  clars.v[n].time = r_time;
   if (clars.v[n].id != n) ERR_R("[%d]: bad id: %d", n, clars.v[n].id);
   if (clars.v[n].size == 0 || clars.v[n].size >= 10000)
     ERR_R("[%d]: bad size: %d", n, clars.v[n].size);
@@ -111,17 +146,161 @@ clar_read_entry(int n)
     ERR_R("[%d]: bad flags: %d", n, clars.v[n].flags);
   if (strlen(b2) > IP_STRING_SIZE) ERR_R("[%d]: ip is too long", n);
   if (strlen(b3) > SUBJ_STRING_SIZE) ERR_R("[%d]: subj is too long", n);
+  if (xml_parse_ip(0, n + 1, 0, b2, &r_ip) < 0) ERR_R("[%d]: ip is invalid", n);
+  clars.v[n].a.ip = r_ip;
+  base64_decode_str(b3, clars.v[n].subj, 0);
+  return 0;
+}
 
-  strcpy(clars.v[n].ip, b2);
-  strcpy(clars.v[n].subj, b3);
+static int
+create_new_clar_log(int flags)
+{
+  int wsz;
+
+  memset(&header, 0, sizeof(header));
+  strncpy(header.signature, signature_v1, sizeof(header.signature));
+  header.version = 1;
+
+  if (clars.v) {
+    xfree(clars.v); clars.v = 0; clars.u = clars.a = 0;
+  }
+  clars.a = 128;
+  XCALLOC(clars.v, clars.a);
+
+  if (flags == CLAR_LOG_READONLY) return 0;
+
+  if (ftruncate(clar_fd, 0) < 0) {
+    err("clar_log: ftruncate() failed: %s", os_ErrorMsg());
+    return -1;
+  }
+  if (sf_lseek(clar_fd, 0, SEEK_SET, "clar") == (off_t) -1)
+    return -1;
+  wsz = write(clar_fd, &header, sizeof(header));
+  if (wsz <= 0) {
+    err("clar_log: write() failed: %s", os_ErrorMsg());
+    return -1;
+  }
+  if (wsz != sizeof(header)) {
+    err("clar_log: short write: %d instead of %d", wsz, sizeof(header));
+    return -1;
+  }
+  return 0;
+}
+
+static int
+write_all_clarlog(void)
+{
+  int wsz, bsz;
+  const unsigned char *buf;
+
+  if (sf_lseek(clar_fd, 0, SEEK_SET, "clar_write") < 0) return -1;
+
+  if ((wsz = sf_write(clar_fd, &header, sizeof(header), "clar_write")) < 0)
+    return -1;
+  if (wsz != sizeof(header)) {
+    err("clar_write: short write: %d", wsz);
+    return -1;
+  }
+
+  buf = (const unsigned char*) clars.v;
+  bsz = sizeof(clars.v[0]) * clars.u;
+  while (bsz > 0) {
+    if ((wsz = sf_write(clar_fd, buf, bsz, "clar_write")) <= 0)
+      return -1;
+    buf += wsz;
+    bsz -= wsz;
+  }
+  return 0;
+}
+
+static int
+convert_log_from_version_0(int flags, off_t length,
+                           const unsigned char *path)
+{
+  path_t v0_path;
+  int i;
+
+  if (length % CLAR_RECORD_SIZE != 0) {
+    err("invalid size %d of clar file (version 0)", (int) length);
+    return -1;
+  }
+
+  clars.u = length / CLAR_RECORD_SIZE;
+  clars.a = 128;
+  while (clars.u > clars.a) clars.a *= 2;
+  XCALLOC(clars.v, clars.a);
+  for (i = 0; i < clars.u; i++) {
+    if (clar_read_entry(i) < 0) return -1;
+  }
+
+  info("clar log version 0 successfully read");
+
+  memset(&header, 0, sizeof(header));
+  strncpy(header.signature, signature_v1, sizeof(header.signature));
+  header.version = 1;
+
+  if (flags == CLAR_LOG_READONLY) return 0;
+
+  close(clar_fd); clar_fd = -1;
+  snprintf(v0_path, sizeof(v0_path), "%s.v0", path);
+  if (rename(path, v0_path) < 0) {
+    err("rename() failed: %s", os_ErrorMsg());
+    return -1;
+  }
+
+  if ((clar_fd = sf_open(path, O_RDWR|O_CREAT|O_TRUNC, 0666)) < 0) return -1;
+
+  return write_all_clarlog();
+}
+
+static int
+read_clar_file_header(off_t length)
+{
+  int rsz = 0;
+
+  if (length < sizeof(struct clar_header_v1)) return 0;
+  if ((length - sizeof(struct clar_header_v1)) % sizeof(struct clar_entry_v1) != 0) return 0;
+  if (sf_lseek(clar_fd, 0, SEEK_SET, "clar_open") < 0) return -1;
+  if ((rsz = sf_read(clar_fd, &header, sizeof(header), "clar_open")) < 0)
+    return -1;
+  if (rsz != sizeof(header)) return -1;
+  if (strcmp(header.signature, signature_v1)) return 0;
+  if (header.endianness > 1) return 0;
+  return header.version;
+}
+
+static int
+read_clar_file(off_t length)
+{
+  unsigned char *buf;
+  int bsz, rsz;
+
+  clars.u = (length - sizeof(struct clar_header_v1)) / sizeof(struct clar_entry_v1);
+  clars.a = 128;
+  while (clars.a < clars.u) clars.a *= 2;
+  XCALLOC(clars.v, clars.a);
+
+  if (sf_lseek(clar_fd, sizeof(struct clar_header_v1), SEEK_SET, "clar_read")<0)
+    return -1;
+
+  buf = (unsigned char*) clars.v;
+  bsz = sizeof(clars.v[0]) * clars.u;
+  while (bsz > 0) {
+    if ((rsz = sf_read(clar_fd, buf, bsz, "clar_read")) < 0) return -1;
+    if (!rsz) {
+      err("clar_read: unexpected EOF");
+      return -1;
+    }
+    bsz -= rsz; buf += rsz;
+  }
   return 0;
 }
 
 int
 clar_open(char const *path, int flags)
 {
-  off_t filesize;
-  int           i;
+  int version;
+  struct stat stb;
 
   info("clar_open: opening database %s", path);
   if (clars.v) {
@@ -136,68 +315,36 @@ clar_open(char const *path, int flags)
     if ((clar_fd = sf_open(path, O_RDWR | O_CREAT, 0666)) < 0) return -1;
   }
 
-  if ((filesize = sf_lseek(clar_fd, 0, SEEK_END, "clar")) == (off_t) -1)
+  if (fstat(clar_fd, &stb) < 0) {
+    err("fstat() failed: %s", os_ErrorMsg());
+    close(clar_fd); clar_fd = -1;
     return -1;
-  if (sf_lseek(clar_fd, 0, SEEK_SET, "clar") == (off_t) -1) return -1;
-
-  info("clar_open: file size %lu", filesize);
-  if (filesize % CLAR_RECORD_SIZE != 0)
-    ERR_R("bad file size: remainder %d", filesize % CLAR_RECORD_SIZE);
-
-  clars.u = filesize / CLAR_RECORD_SIZE;
-  clars.a = 128;
-  while (clars.u > clars.a) clars.a *= 2;
-  XCALLOC(clars.v, clars.a);
-  for (i = 0; i < clars.u; i++) {
-    if (clar_read_entry(i) < 0) return -1;
   }
-
-  info("clar_open: success");
-  return 0;
-}
-
-static int
-clar_make_record(char *buf, int ser, time_t tim,
-                 size_t size,
-                 int orig, int to, int flags,
-                 char const *ip, char const *subj)
-{
-  if (strlen(subj) > SUBJ_STRING_SIZE)
-    ERR_R("invalid subj len: %d", strlen(subj));
-  if (strlen(ip) > IP_STRING_SIZE)
-    ERR_R("bad ip len: %d", strlen(ip));
-
-  memset(buf, ' ', CLAR_RECORD_SIZE);
-  buf[CLAR_RECORD_SIZE] = 0;
-  buf[CLAR_RECORD_SIZE - 1] = '\n';
-  sprintf(buf, "%-4d %-11lu %-4zu %-4d %-4d %-2d %s %s",
-          ser, tim, size, orig, to, flags, ip, subj);
-  buf[strlen(buf)] = ' ';
-  if (strlen(buf)!=CLAR_RECORD_SIZE)
-    ERR_R("record size bad: %d",strlen(buf));
-  if (buf[CLAR_RECORD_SIZE - 1] != '\n')
-    ERR_R("record terminator corrupted");
-  return 0;
+  if (!stb.st_size) {
+    return create_new_clar_log(flags);
+  }
+  if ((version = read_clar_file_header(stb.st_size)) < 0)
+    return -1;
+  if (!version) {
+    return convert_log_from_version_0(flags, stb.st_size, path);
+  }
+  if (version > 1) {
+    err("clar_log: cannot handle clar log file of version %d", version);
+    return -1;
+  }
+  return read_clar_file(stb.st_size);
 }
 
 static int
 clar_flush_entry(int num)
 {
-  char buf[CLAR_RECORD_SIZE + 16];
-  int  wsz;
+  int wsz;
 
-  if (clar_fd < 0) ERR_R("bad descriptor: %d", clar_fd);
-  if (num < 0 || num >= clars.u) ERR_R("bad entry number: %d", num);
-  if (clar_make_record(buf, clars.v[num].id, clars.v[num].time,
-                       clars.v[num].size,
-                       clars.v[num].from, clars.v[num].to,
-                       clars.v[num].flags,
-                       clars.v[num].ip, clars.v[num].subj) < 0)
+  if (sf_lseek(clar_fd, sizeof(struct clar_entry_v1) * num + sizeof(struct clar_header_v1), SEEK_SET, "clar_flush_entry") < 0)
     return -1;
-  if (sf_lseek(clar_fd, CLAR_RECORD_SIZE * num, SEEK_SET, "clar") == (off_t) -1) return -1;
 
-  if ((wsz = sf_write(clar_fd, buf, CLAR_RECORD_SIZE, "clar")) < 0) return -1;
-  if (wsz != CLAR_RECORD_SIZE) ERR_R("short write: %d", wsz);
+  if ((wsz = sf_write(clar_fd, &clars.v[num], sizeof(clars.v[0]), "clar_flush_entry")) < 0) return -1;
+  if (wsz != sizeof(clars.v[0])) ERR_R("short write: %d", wsz);
   return 0;
 }
 
@@ -211,6 +358,7 @@ clar_add_record(time_t         time,
                 char const    *subj)
 {
   int i;
+  ej_ip_t r_ip;
 
   if (size == 0 || size > 9999) ERR_R("bad size: %lu", size);
   // FIXME: how to check consistency?
@@ -222,6 +370,7 @@ clar_add_record(time_t         time,
   if (strlen(subj) > SUBJ_STRING_SIZE)
     ERR_R("bad subj size: %d", strlen(subj));
   if (strlen(ip) > IP_STRING_SIZE) ERR_R("bad ip size: %d", strlen(ip));
+  if (xml_parse_ip(0, 0, 0, ip, &r_ip) < 0) ERR_R("bad IP");
 
   if (clars.u >= clars.a) {
     if (!(clars.a *= 2)) clars.a = 128;
@@ -230,14 +379,15 @@ clar_add_record(time_t         time,
   }
   i = clars.u++;
 
+  memset(&clars.v[i], 0, sizeof(clars.v[0]));
   clars.v[i].id = i;
   clars.v[i].time = time;
   clars.v[i].size = size;
   clars.v[i].from = from;
   clars.v[i].to = to;
   clars.v[i].flags = flags;
-  strcpy(clars.v[i].ip, ip);
-  strcpy(clars.v[i].subj, subj);
+  clars.v[i].a.ip = r_ip;
+  base64_decode_str(subj, clars.v[i].subj, 0);
   if (clar_flush_entry(i) < 0) return -1;
   return i;
 }
@@ -258,11 +408,11 @@ clar_get_record(int id,
 
   if (ptime)   *ptime   = clars.v[id].time;
   if (psize)   *psize   = clars.v[id].size;
-  if (ip)                 strcpy(ip, clars.v[id].ip);
+  if (ip)                 strcpy(ip, xml_unparse_ip(clars.v[id].a.ip));
   if (pfrom)   *pfrom   = clars.v[id].from;
   if (pto)     *pto     = clars.v[id].to;
   if (pflags)  *pflags  = clars.v[id].flags;
-  if (subj)               strcpy(subj, clars.v[id].subj);
+  if (subj)               base64_encode_str(clars.v[id].subj, subj);
   return 0;
 }
 
@@ -322,15 +472,7 @@ clar_flags_html(int flags, int from, int to, char *buf, int len)
 void
 clar_reset(void)
 {
-  if (ftruncate(clar_fd, 0) < 0) {
-    err("ftruncate() failed: %s", os_ErrorMsg());
-    return;
-  }
-
-  clars.u = 0;
-  if (clars.a > 0) {
-    memset(clars.v, 0, sizeof(clars.v[0]) * clars.a);
-  }
+  create_new_clar_log(0);
 }
 
 void
