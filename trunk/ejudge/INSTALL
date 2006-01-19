@@ -3,26 +3,28 @@ $Id$
 
 Brief instructions for installation of ejudge system
 ====================================================
-В данном разделе описывается установка ejudge с минимальным
-ручным конфигурированием. Если данный вариант установки не
-сработал на Вашей системе или Вас не устраивают настройки по
-умолчанию, читайте далее более полное руководство по
-инсталляции.
+This section describes the ejudge installation process, which
+requires minimal manual configuration. This method of
+installation is recommented for novice users. If this method of
+installation does not work on your system, or you are not
+satisfied with the default settings, you should read the verbose
+manual further in this file.
 
-Итак, по шагам:
-1. Создайте пользователя ejudge с домашним каталогом
-/home/ejudge. Желательно, чтобы для пользователя ejudge была
-создана группа ejudge. Если Вы не знаете, как создавать новых
-пользователей, обратитесь, пожалуйста, к документации по Вашей
-системе.
-2. Создайте каталог /home/judges, владельцем которого является
-пользователь ejudge. Для создания каталога Вам могут
-потребоваться привилегии пользователя root. Для создания
-каталогов достаточно выполнить следующие команды из-под root:
+So, installation step by step
+-----------------------------
+1. Create a new user `ejudge' with the home directory as
+`/home/ejudge'. Create a separate user group `ejudge' with the
+only member `ejudge'. If you don't know how to create new users,
+please, refer to the system manuals.
+2. Create a new directory `/home/judges'. The owner of this
+directory must be `ejudge', and the group must be `ejudge' as
+well. The root privilegies are required to create this
+directory, so become root and issue the following commands:
 mkdir /home/judges
 chown ejudge:ejudge /home/judges
-3. Войдите в систему под пользователем ejudge, разархивируйте и
-скомпилируйте библиотеку reuse в домашнем каталоге:
+3. Log in as the `ejudge' users, unpack, compile and install the
+reuse library in the home directory.
+
 cd ~
 tar xvfz REUSE-ARCH-DIR/reuse-VERSION.tgz
 cd reuse/source
@@ -30,63 +32,81 @@ cd reuse/source
 make
 make install
 
-Здесь REUSE-ARCH-DIR - это каталог, в котором находится архив
-библиотеки reuse. VERSION - версия библиотеки. Всегда
-используйте самую последнюю версию (на текущий момент -
-это 4.2.0).
-4. Перейдите снова в домашний каталог с разархивируйте ejudge
+Here REUSE-ARCH-DIR is the directory where the reuse library
+archive is downloaded. VERSION is the library version. Always
+use the latest version (as of this writing it is 4.2.2).
+4. Change directory to the home directory and unpack the ejudge archive.
+
 cd ~
 tar xvfz EJUDGE-ARCH-DIR/reuse-EJUDGE.tgz
 cd ejudge
-5. Сконфигурируйте ejudge
+
+5. Configure the ejudge
+
 ./configure --prefix=/home/ejudge/inst-ejudge  --with-reuse=/home/ejudge/reuse  --enable-charset=koi8-r --enable-socket-path=/tmp/userlist-socket --enable-super-serve-socket=/tmp/super-serve-socket --enable-contests-home-dir=/home/judges --enable-conf-dir=/home/judges/data --enable-cgi-conf-dir=../cgi-data --with-httpd-cgi-bin-dir=CGI-BIN-DIR --with-httpd-htdocs-dir=HTDOCS-DIR
 
-Здесь CGI-BIN-DIR - это каталог CGI скриптов веб сервера
-(например, это может быть /home/httpd/cgi-bin), HTDOCS-DIR -
-корень документов веб сервера (например, /home/httpd/html).
-Чтобы уточнить эти пути обратитесь к документации по Вашей
-версии Linux.
-6. Скомпилируйте и проинсталлируйте систему:
+Here CGI-BIN-DIR is the CGI directory of your web server
+installation (for example, `/home/httpd/cgi-bin'), HTDOCS-DIR is
+the root of the HTML documents of your web server installation
+(for example, `/home/httpd/html'). Refer to your system manuals
+for exact information on this paths.
+6. Compile and install the ejudge system.
+
 make
 make install
-7. Запустите программу ejudge-setup, перейдите в раздел
-"Administrator identity", заполните требуемые поля:
+
+7. Run the `ejudge-setup' program, go to the "Administrator
+ identity" menu and fill up the required fields:
+
 ./ejudge-setup
 Admin ID:       1
 Admin Login:    ejudge
 Admin e-mail:   YOUR-E-MAIL
 Admin name:     Ejudge administrator
 Admin password: PASSWORD
-Затем сгенерируйте настроечный скрипт с помощью "Save setup
-script". При выборе этого пункта меню будет запрошено имя
-скрипта, назовите его ejudge-install.sh.
-8. Из-под пользователя root выполните настроечный скрипт.
+
+Then generate the setup script using the "Save setup script"
+menu item. When you invoke this menu item, the setup script file
+name will be requested. Preserve the default name `ejudge-install.sh'.
+
+8. Invoke the setup script as the root user.
 su -
 cd ~ejudge/ejudge
 ./ejudge-install.sh
-9. Запустите систему. Запуск программ должен выполняться из-под
-пользователя ejudge:
+
+9. Start the ejudge system. The programs must be started by the
+`ejudge' user.
+
 cd /home/judges/data/db
 ~/inst-ejudge/bin/userlist-server -D &
 cd /home/judges/compile
 ~/inst-ejudge/bin/compile conf/compile.cfg &
 cd /home/judges
 ~/inst-ejudge/bin/super-serve &
+~/inst-ejudge/bin/job-server &
 
-Убедитесь, что права доступа к каталогу /home/ejudge позволяют
-читать файлы в нём всем пользователям. Некоторые дистрибутивы
-Linux создают домашний каталог пользователей с правами 0700.
-В этом случае CGI-программы и необходимые библиотеки просто
-окажутся недоступными для web-сервера. Права на домашний каталог
-пользователя ejudge необходимо установить в 0755 или 0775.
+Make sure, that the access permissions of the `/home/ejudge'
+directory allows reading of files for arbitrary users. Some
+Linux distributions by default create the user home directory
+with the 0700 permissions. In this case the ejudge CGI-programs
+and the necessary libraries will be unavailable for the
+web-server. So, the permissions for the `/home/ejudge' directory
+should be changed to 0755 or 0775.
 
-Установка системы ejudge завершена. Теперь можно в строке URL
-браузера (естественно, httpd-сервер должен быть запущен) указать
-http://localhost/cgi-bin/serve-control.
+For the Fedora Core distributions make sure, that the SELinux
+module is disabled. Check the SELinux configuration file
+`/etc/selinux/config'. For more information (or, if you want to
+configure the SELinux for the ejudge system) refer to the
+SELinux documentation (man selinux).
 
-Если при выполнении какого-либо шага возникла ошибка, некоторые
-шаги Вам не понятны, либо Вы хотите изменить настройки по
-умолчанию, читайте документацию дальше.
+The installation of the ejudge system is complete. Now you can
+test the installation typing the
+`http://localhost/cgi-bin/serve-control' URL in the web browser.
+Of course, the web server should be started.
+
+If some step of the installation process described above has
+failed, you do not understand some steps, or you want to change
+some default settings, read the documentation below.
 
 Ejudge system installation manual
 =================================
