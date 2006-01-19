@@ -3555,7 +3555,6 @@ generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
     }
   }
 
-  // FIXME: collect some statistics about clarifications
   clar_total = clar_get_total();
   for (i = 0; i < clar_total; i++) {
     if (clar_get_record(i, &clar_time, NULL, NULL,
@@ -3667,7 +3666,7 @@ generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
     u_sort[sort_idx[u_total[i]]++] = i;
 
   if (total_runs > 0) {
-    fprintf(f, "%-7.7s %-40.40s %-7.7s %-7.7s %s\n",
+    fprintf(f, "%-7.7s %-24.24s %-7.7s %-7.7s %s\n",
             "Id", "User", "Total", "Success", "Other");
     for (i = 0; i < u_tot; i++) {
       j = u_sort[i];
@@ -3678,7 +3677,7 @@ generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
       if (!name) name = teamdb_get_login(u);
       if (!name) name = "";
 
-      fprintf(f, "%-7d %-40.40s %-7d %-7d %-7d %d/%d/%d %d/%d/%d/%d/%d/%d\n",
+      fprintf(f, "%-7d %-24.24s %-7d %-7d %-7d %d/%d/%d %d/%d/%d/%d/%d/%d\n",
               u, name, u_total[j], u_ok[j], u_failed[j],
               u_cf[j], u_ce[j], u_ign[j],
               u_afterok[j], u_errors[j], u_trans[j],
