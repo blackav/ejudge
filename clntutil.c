@@ -481,25 +481,27 @@ client_print_server_status(int priv_level,
     puts("</tr>");
   }
 
-  if (server_duration) {
-    duration_str(0, server_duration, 0, str_duration, 0);
-  } else {
-    sprintf(str_duration, "%s", _("Unlimited"));
+  if (server_duration || !server_finish_time || priv_level==PRIV_LEVEL_ADMIN) {
+    if (server_duration) {
+      duration_str(0, server_duration, 0, str_duration, 0);
+    } else {
+      sprintf(str_duration, "%s", _("Unlimited"));
+    }
+    printf("<tr><td>%s:</td><td>%s</td>", _("Duration"), str_duration);
+    if (priv_level == PRIV_LEVEL_ADMIN) {
+      if (!server_stop_time || server_continuation_enabled)
+        printf("<td><input type=\"text\" name=\"dur\" size=\"16\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>",
+               ACTION_DURATION, _("Change duration"));
+      else
+        puts("<td>&nbsp;</td><td>&nbsp;</td>");
+    }
+    puts("</tr>");
   }
-  printf("<tr><td>%s:</td><td>%s</td>", _("Duration"), str_duration);
-  if (priv_level == PRIV_LEVEL_ADMIN) {
-    if (!server_stop_time || server_continuation_enabled)
-      printf("<td><input type=\"text\" name=\"dur\" size=\"16\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>",
-             ACTION_DURATION, _("Change duration"));
-    else
-      puts("<td>&nbsp;</td><td>&nbsp;</td>");
-  }
-  puts("</tr>");
 
-  if (!server_duration && server_finish_time) {
+  if (!server_duration && server_finish_time && !server_stop_time) {
     client_time_to_str(str_end_time, server_finish_time);
     printf("<tr><td>%s:</td><td>%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
-           _("End time"), str_end_time);
+           _("Scheduled end time"), str_end_time);
   }
 
   if (server_stop_time) {
