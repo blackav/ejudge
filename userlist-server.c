@@ -3981,6 +3981,8 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
         continue;
       fprintf(f, "<h3>%s</h3>\n", gettext(member_string_pl[role]));
       for (pers = 0; pers < u->members[role]->total; pers++) {
+        if (d && d->members[role] && pers >= d->members[role]->max_count)
+          break;
         m = u->members[role]->members[pers];
         if (!m) continue;
         fprintf(f, "<h3>%s %d</h3>\n", gettext(member_string[role]),
