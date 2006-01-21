@@ -1,6 +1,158 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
+Version 2.1.45 (20060121)
+=========================
+
+Installation manual is updated (INSTALL and INSTALL.RUS).
+
+ejudge.xml
+----------
+New XML elements <job_server_log>, <job_server_spool>,
+<job_server_work> are added to the `ejudge.xml' configuration
+file. These elements are used by the new `job-server' program.
+The elements may be omitted, their default values are built
+using the <var_dir> element value as described below.
+The <job_server_log> element allows setting the filename, which
+will be used as the `job-server' program log file in the daemon
+mode. If the `job-server' program is started in non-daemon mode,
+the log file is not used and all messages are printed to the
+standard error stream. If the <job_server_log> element is not
+defined, the default value `$<var_dir>/job_server.log' is used,
+where $<var_dir> is the value of the <var_dir> element in the
+`ejudge.xml' file.
+The <job_server_spool> element allows setting the directory for
+the job queue of the `job-server' program. If the
+<job_server_spool> element is not defined, the default value
+$<var_dir>/jspool is used, where $<var_dir> is the value of the
+<var_dir> element in the `ejudge.xml' file.
+The <job_server_work> element allows setting the work directory
+for the `job-server' program and invoked jobs. If the element
+<job_server_work> is not defined, the default value
+$<var_dir>/jwork is used, where $<var_dir> is the value of the
+<var_dir> element in the `ejudge.xml' file.
+
+contest.xml
+-----------
+Added support for the new elements <cf_notify_email>,
+<clar_notify_email>, <daily_stat_email>. They are used by the
+`serve' contest server for e-mail notifications of certain
+contest events.
+<cf_notify_email> allows specifying e-mail address (or
+addresses), which will be used for e-mail notifications in case
+when testing completes with CHECK_FAILED status.
+<clar_notify_email> allows specifying e-mail address (or
+addresses), which will be used for e-mail notifications when a
+new clarification request appears.
+<daily_stat_email> allows specifying e-mail address (or
+addresses), which will be used for daily statistics.
+
+userlist-server
+---------------
+A new field `date' is added to the user database to the contest
+registration information. This field stores the date of the
+registration for the contest.
+
+libchecker
+----------
+The `checker_read_file_by_line' and
+`checker_read_file_by_line_f' do not use the stack for temporary
+buffer allocation. This allows reading large files into memory.
+
+serve
+-----
+New problem configuration variable `enable_compilation' is added
+to the `serve.cfg' configuration file. The variable works only
+when the problem configuration variable `disable_testing' is
+set. If the `enable_compilation' variable is set to 1, the
+submissions for this problem are compiled, but not tested. If
+compilation succeeds, the run gets the "Accepted for testing"
+(RUN_ACCEPTED) status, otherwise the "Compilation error"
+(RUN_COMPILE_ERR) is assigned.
+
+E-mail notifications on CHECK_FAILED condition and on
+clarification request condition are supported. The e-mail
+addresses are defined by the <cf_notify_email> and
+<clar_notify_email> elements correspondingly.
+
+New global variable `contest_finish_time' of the `serve.cfg' is
+added. This variable allows specifying the astronomical time for
+contest finish, when the contest duration is unlimited.
+
+Sending daily statistics by e-mail is supported. The e-mail
+address is defined by the <daily_stat_email> element of the
+`contest.xml' file.
+
+The clarification database (clar.log) is now stored in the
+binary format. When the `serve' starts, it recodes the
+clarification database from the old format to the new format
+automatically, if necessary. The new binary format supports IPv6
+addresses, 64-bit time type and some other extensions.
+
+When a clarification messages are viewed in the privileged
+`master' and `judge' programs, the name of the privileged user,
+who composed the reply to a user is displayed. This information
+is not available to the participants.
+
+super-serve
+-----------
+When the `serve.cfg' configuration file is generated for a
+contest, if the Java support is activated, the LANG environment
+variable is set to the "C" value for the Java programs, thus all
+the regional settings are reset to the default values. This is
+necessary in order to read and write the floating-point values
+in the standard format.
+
+Editing of the new elements <cf_notify_email>,
+<clar_notify_email>, <daily_stat_email> of the `contest.xml'
+file is supported.
+
+Editing of the `contest_finish_time' global configuration
+variable of the `serve.cfg' file is supported.
+
+Editing of the `enable_compilation' problem configuration
+variable of the `serve.cfg' file is supported.
+
+run
+---
+If the checker program is terminated due to a time-out or due to
+a fatal signal, or returns non-standard exit code, a diagnostic
+message is appended to the output file of the checker program.
+
+job-server
+----------
+This is a new program for executing background jobs from the
+queue of low-priority jobs. The contest server `serve' or the
+user server `userlist-server' may put a low-priority jobs into
+the queue of the `job-server' program, if the job may be
+executed not immediately, and the success status of the job is
+ignored. For example, the `serve' program uses the `job-server'
+program for sending e-mail notifications and daily statistics.
+
+Currently, the `job-server' program supports only e-mail
+sending. More functions (for example, sound playing or voice
+notifications) may be added later. Then sound playing function
+will be removed in the `run' program.
+
+The `job-server' program supports `-D' option: the daemon mode.
+In this mode the program switches to background and redirects
+all the diagnostic messages to the log file.
+
+job-server-cmd
+--------------
+A new program to control the low-priority job server
+`job-server'. The current version of the program only supports
+the e-mail sending command of the `job-server'.
+
+job-server-cmd mail CHARSET SUBJ FROM TO TEXT
+here CHARSET - character set of the message,
+SUBJ - the message subject,
+FROM - the destination address,
+TO - the source address,
+TEXT - the message text.
+Note, that the message text must be passed as the command line
+parameter.
+
 Version 2.1.44 (20051207)
 =========================
 This version fixes minor bugs of the previous versions and adds
