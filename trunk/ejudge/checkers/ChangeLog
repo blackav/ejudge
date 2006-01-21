@@ -1,3 +1,16 @@
+2005-12-16  Alexander Chernov  <cher@ispras.ru>
+
+	* read_file_by_line_f.c: copyright notice is updated;
+	(checker_read_file_by_line_f) the buffer for file reading is allocated
+	  in the heap, so reading of arbitrary-sized files is possible.
+
+	* read_file_by_line.c: copyright notice is updated;
+	(checker_read_file_by_line) the buffer for file reading is allocated
+	  in the heap, so reading of arbitrary-sized files is possible.
+
+	* read_buf.c:
+	(checker_read_buf) `fatal_read' is used to report errors.
+
 2005-11-21  Alexander Chernov  <cher@ispras.ru>
 
 	* vars.c: copyright notice is updated;

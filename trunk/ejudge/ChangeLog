@@ -1,3 +1,332 @@
+2006-01-21  Alexander Chernov  <cher@ispras.ru>
+
+	* clntutil.c:
+	(client_print_server_status) minor displaying changes to avoid printing
+	  unnecessary information.
+
+	* userlist-server.c:
+	(do_list_users) members over the maximal numbers for the given contest
+	  are not displayed.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2006-01-19  Alexander Chernov  <cher@ispras.ru>
+
+	* INSTALL: updated for the current version,
+	translated the first section.
+
+	* INSTALL.RUS: updated for the current version
+
+	* master_html.c:
+	(generate_daily_statistics) the formatting is slightly changed.
+
+2006-01-18  Alexander Chernov  <cher@ispras.ru>
+
+	* clarlog.c: (clar_add_record) new parameter `j_from' is added;
+	(clar_get_record) new parameter `pj_from' is added.
+
+	* clarlog.h: copyright notice is updated;
+	(clar_add_record) new parameter `j_from' is added;
+	(clar_get_record) new parameter `pj_from' is added.
+
+	* clean-users.c: copyright notice is updated;
+	(main) use of `clar_get_record' is updated.
+
+	* html.c: copyright notice is updated;
+	(count_unread_clars) call of `clar_get_record' is updated;
+	(new_write_user_clars) the same as above;
+	(new_write_user_clar) the same as above.
+
+	* master_html.c:
+	(write_all_clars) use of `clar_get_record' is updated;
+	  the judge's user name is displayed, if available;
+	(write_priv_clar) use of `clar_get_record' is updated;
+	  the judge's user name is displayed, if available;
+	(generate_daily_statistics) use of `clar_get_record' is updated.
+
+	* serve.c: (cmd_view) call of `clar_get_record' is updated;
+	(cmd_message) the judge's user_id is passed to `clar_add_record';
+	  use of `clar_get_record' is updated;
+	(cmd_team_submit_clar) use of `clar_add_record' is updated.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* ej_types.h: copyright notice is updated;
+	`ej_time64_t' type is added.
+
+	* clarlog.c: copyright notice is updated;
+	many functions are rewritten to use the binary file format.
+
+2006-01-17  Alexander Chernov  <cher@ispras.ru>
+
+	* html.h: copyright notice is updated;
+	(generate_daily_statistics) function prototype is added.
+
+	* master_html.c: copyright notice is updated;
+	(is_registered_today) a new function, which checks whether a
+	  user was registered in the given period of time;
+	(generate_daily_statistics) new function to generate the
+	  daily statistics e-mail content.
+
+	* serve.c:
+	(update_status_file) `stat_reported_before', `stat_report_time'
+	  are written to the status file;
+	(load_status_file) `stat_reported_before', `stat_report_time'
+	  are read from the status file;
+	(generate_statistics_email) new function to generate a statistics
+	  e-mail for a given period of time;
+	(check_stat_generation) new function to check necessity of generation
+	  of e-mail statistics;
+	(do_loop) `check_stat_generation' is called;
+	(main) `check_stat_generation' is called;
+	  `update_status_file' is called.
+
+	* protocol.h:
+	(struct prot_serve_status_magic_v2) new fields `stat_reported_before',
+	  `stat_report_time' are added.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2006-01-15  Alexander Chernov  <cher@ispras.ru>
+
+	* contests.c, contests.c, contests.h, serve-control.c, super-serve.c, super_actions.h, super_html.c, super_html_2.c, super_proto.h:
+	dayly -> daily
+
+2006-01-13  Alexander Chernov  <cher@ispras.ru>
+
+	* job-server.c:
+	(main) setting directory notifications flags is performed when
+	  the daemon process is already created.
+
+	* super_proto.h: new commands added:
+	  SSERV_CMD_GLOB_CHANGE_CONTEST_FINISH_TIME,
+	  SSERV_CMD_GLOB_CLEAR_CONTEST_FINISH_TIME.
+
+	* super_html_3.c: copyright notice is updated;
+	(super_html_edit_global_parameters) form for editing
+	  `contest_finish_time' is added;
+	(super_html_global_param) commands for editing
+	  `contest_finish_time' are supported.
+
+	* super_actions.h: new actions are added:
+	  SUPER_ACTION_GLOB_CHANGE_CONTEST_FINISH_TIME,
+	  SUPER_ACTION_GLOB_CLEAR_CONTEST_FINISH_TIME.
+
+	* super-serve.c: commands SSERV_CMD_GLOB_CHANGE_CONTEST_FINISH_TIME,
+	  SSERV_CMD_GLOB_CLEAR_CONTEST_FINISH_TIME
+	  are handled.
+
+	* serve.c:
+	(update_status_file) contest_finish_time is written to the status file;
+	(do_loop) check for `contest_finish_time' is added.
+
+	* serve-control.c:
+	actions SUPER_ACTION_GLOB_CHANGE_CONTEST_FINISH_TIME,
+	  SUPER_ACTION_GLOB_CLEAR_CONTEST_FINISH_TIME
+	  are handled.
+
+	* protocol.h: copyright notice is updated;
+	(struct prot_serve_status_v2) field `finish_time' is added.
+
+	* prepare_out.c: copyright notice is updated;
+	(prepare_unparse_global) `contest_finish_time' is unparsed.
+
+	* prepare.h: copyright notice is updated;
+	(struct section_global_data) new fields `contest_finish_time',
+	  `contest_finish_time_d' are added.
+
+	* prepare.c: copyright notice is updated;
+	new global variable `contest_finish_time' is added;
+	(set_defaults) `contest_finish_time' is parsed.
+
+	* clntutil.h: copyright notice is updated;
+	`server_finish_time' is declared.
+
+	* clntutil.c: copyright notice is updated;
+	global variable `server_finish_time' is added;
+	(client_check_server_status) `server_finish_time' is read from the
+	  server status file;
+	(client_print_server_status) the contest finish time is printed, if
+	  available.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2006-01-11  Alexander Chernov  <cher@ispras.ru>
+
+	* serve.c: copyright notice is updated;
+	"job_packet.h" is included;
+	<pwd.h> is included;
+	(get_email_sender) new function, which determines the name to be used
+	  as the originator (From:) of the e-mail message;
+	(cmd_team_submit_run) an e-mail notification is sent, if the elememt
+	  <clar_notify_email> is set;
+	(mail_check_failed) new function, which sends an e-mail notification
+	  for the CHECK_FAILED error;
+	(read_compile_packet) e-mailing notifications is supported;
+	(read_run_packet) e-mailing notifications is supported.
+
+	* super_html.c: copyright notice is updated;
+	(super_html_edit_contest_page) controls for changing values of
+	  <cf_notify_email>, <clar_notify_email>, <dayly_stat_email>
+	  are genereated.
+
+	* super_html_2.c: copyright notice is updated;
+	(super_html_clear_variable) new commands are handled:
+	  SSERV_CMD_CNTS_CLEAR_CF_NOTIFY_EMAIL,
+	  SSERV_CMD_CNTS_CLEAR_CLAR_NOTIFY_EMAIL,
+	  SSERV_CMD_CNTS_CLEAR_DAYLY_STAT_EMAIL;
+	(super_html_set_contest_var) new commands are handled:
+	  SSERV_CMD_CNTS_CHANGE_CF_NOTIFY_EMAIL,
+	  SSERV_CMD_CNTS_CHANGE_CLAR_NOTIFY_EMAIL,
+	  SSERV_CMD_CNTS_CHANGE_DAYLY_STAT_EMAIL.
+
+	* super_proto.h: copyright notice is updated;
+	new commands are added:
+	  SSERV_CMD_CNTS_CHANGE_CF_NOTIFY_EMAIL,
+	  SSERV_CMD_CNTS_CLEAR_CF_NOTIFY_EMAIL,
+	  SSERV_CMD_CNTS_CHANGE_CLAR_NOTIFY_EMAIL,
+	  SSERV_CMD_CNTS_CLEAR_CLAR_NOTIFY_EMAIL,
+	  SSERV_CMD_CNTS_CHANGE_DAYLY_STAT_EMAIL,
+	  SSERV_CMD_CNTS_CLEAR_DAYLY_STAT_EMAIL,
+	  SSERV_CMD_CNTS_HIDE_NOTIFICATIONS,
+	  SSERV_CMD_CNTS_SHOW_NOTIFICATIONS.
+
+	* super_actions.h: copyright notice is updated;
+	new actions are added:
+	  SUPER_ACTION_CNTS_CHANGE_CF_NOTIFY_EMAIL,
+	  SUPER_ACTION_CNTS_CLEAR_CF_NOTIFY_EMAIL,
+	  SUPER_ACTION_CNTS_CHANGE_CLAR_NOTIFY_EMAIL,
+	  SUPER_ACTION_CNTS_CLEAR_CLAR_NOTIFY_EMAIL,
+	  SUPER_ACTION_CNTS_CHANGE_DAYLY_STAT_EMAIL,
+	  SUPER_ACTION_CNTS_CLEAR_DAYLY_STAT_EMAIL,
+	  SUPER_ACTION_CNTS_HIDE_NOTIFICATIONS,
+	  SUPER_ACTION_CNTS_SHOW_NOTIFICATIONS.
+
+	* super-serve.h: copyright notice is updated;
+	(struct sid_state) new field `show_notifications' is added.
+
+	* super-serve.c: copyright notice is updated;
+	new commands are handled:
+	  SSERV_CMD_CNTS_CHANGE_CF_NOTIFY_EMAIL,
+	  SSERV_CMD_CNTS_CHANGE_CLAR_NOTIFY_EMAIL,
+	  SSERV_CMD_CNTS_CHANGE_DAYLY_STAT_EMAIL,
+	  SSERV_CMD_CNTS_CLEAR_CF_NOTIFY_EMAIL,
+	  SSERV_CMD_CNTS_CLEAR_CLAR_NOTIFY_EMAIL,
+	  SSERV_CMD_CNTS_CLEAR_DAYLY_STAT_EMAIL,
+	  SSERV_CMD_CNTS_HIDE_NOTIFICATIONS,
+	  SSERV_CMD_CNTS_SHOW_NOTIFICATIONS.
+
+	* serve-control.c: copyright notice is updated;
+	new actions are handled:
+	  SUPER_ACTION_CNTS_CHANGE_CF_NOTIFY_EMAIL,
+	  SUPER_ACTION_CNTS_CHANGE_CLAR_NOTIFY_EMAIL,
+	  SUPER_ACTION_CNTS_CHANGE_DAYLY_STAT_EMAIL,
+	  SUPER_ACTION_CNTS_CLEAR_CF_NOTIFY_EMAIL,
+	  SUPER_ACTION_CNTS_CLEAR_CLAR_NOTIFY_EMAIL,
+	  SUPER_ACTION_CNTS_CLEAR_DAYLY_STAT_EMAIL,
+	  SUPER_ACTION_CNTS_HIDE_NOTIFICATIONS,
+	  SUPER_ACTION_CNTS_SHOW_NOTIFICATIONS.
+
+	* contests.h: copyright notice is updated;
+	support for the new elements <cf_notify_email>, <clar_notify_email>,
+	  <dayly_stat_email> are added;
+	(struct contest_desc) fields `cf_notify_email', `clar_notify_email',
+	  `dayly_stat_email' are added.
+
+	* contests.c: copyright notice is updated;
+	support for the new elements <cf_notify_email>, <clar_notify_email>,
+	  <dayly_stat_email> is added.
+
+	* userlist_cfg.c: copyright notice is updated;
+	new elements <job_server_log>, <job_server_spool>, <job_server_work>
+	  are supported.
+
+	* userlist_cfg.h: copyright notice is updated;
+	(struct userlist_cfg) new fields `job_server_log', `job_server_spool',
+	  `job_server_work' are added.
+
+	* job-server-cmd.c, job-server.c, job_packet.h, send_job_packet.c:
+	initial revision
+
+	* files.make: copyright notice is updated;
+	send_job_packet.c, job_packet.h are added.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* Makefile.unix.in: copyright notice is updated;
+	new targets added: job-server, job-server-cmd.
+
+	* copyright.c: copyright notice is updated.
+
+	* userlist-server.c: copyright notice is updated;
+	(cmd_register_contest) the current time is stored to the "date" field;
+	(cmd_priv_register_contest) the same as above.
+
+	* userlist.h: copyright notice is updated;
+	(struct userlist_contest) "date" field is added.
+
+	* userlist_xml.c: copyright notice is updated;
+	(parse_contest) support for the "date" attribute is added;
+	(unparse_contest) support for the "date" attribute is added.
+
+2005-12-18  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* html.c:
+	(do_write_kirov_standings) RUN_ACCEPTED is counted as a transient run.
+
+	* prepare.c: new problem parameter `enable_compilation' is added;
+	(prepare_problem_init_func) `enable_compilation' is handled;
+	(set_defaults) `enable_compilation' is handled;
+	(prepare_set_prob_value) `enable_compilation' is handled.
+
+	* prepare.h:
+	(struct section_problem_data) `enable_compilation' field is added;
+	  `PREPARE_FIELD_PROB_ENABLE_COMPILATION' field code is added.
+
+	* prepare_out.c:
+	(prepare_unparse_prob) `enable_compilation' is handled.
+
+	* serve-control.c:
+	(main) action `SUPER_ACTION_PROB_CHANGE_ENABLE_COMPILATION'
+	  is handled.
+
+	* serve.c:
+	(cmd_priv_submit_run)  `enable_compilation' problem configuration
+	  variable is supported;
+	(do_submit_run) `enable_compilation' problem configuration variable
+	  is supported;
+	(read_compile_packet) `enable_compilation' problem configuration
+	  variable is supported.
+
+	* super-serve.c:
+	(cmd_set_value) command `SSERV_CMD_PROB_CHANGE_ENABLE_COMPILATION'
+	  is handled.
+
+	* super_actions.h:
+	added action `SUPER_ACTION_PROB_CHANGE_ENABLE_COMPILATION'.
+
+	* super_html_3.c:
+	(super_html_print_problem) controls for changing `enable_compilation'
+	  are printed;
+	(super_html_prob_param) `SSERV_CMD_PROB_CHANGE_ENABLE_COMPILATION'
+	  is handled.
+
+	* super_proto.h:
+	added command `SSERV_CMD_PROB_CHANGE_ENABLE_COMPILATION'.
+
+2005-12-16  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare_out.c:
+	(generate_abstract_tester) LANG environment variable is set to "C"
+	  for the java testers to avoid problems with decimal dots.
+
+	* run.c: (append_msg_to_log) new function;
+	(run_tests) if the checker either was terminated by a signal,
+	  or returned invalid exit code, a diagnostic message is
+	  appended to the checker log.
+
 2005-12-07  Alexander Chernov  <cher@ispras.ru>
 
 	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
