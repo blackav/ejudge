@@ -1,5 +1,5 @@
 dnl $Id$
-dnl Copyright (C) 2004-2005 Alexander Chernov
+dnl Copyright (C) 2004-2006 Alexander Chernov
 
 AC_INIT(ejudge,2.2)
 AC_PREREQ(2.59)
@@ -56,7 +56,7 @@ AC_ARG_WITH([httpd-cgi-bin-dir],AC_HELP_STRING([--with-httpd-cgi-bin-dir],[speci
 AC_ARG_WITH([httpd-htdocs-dir],AC_HELP_STRING([--with-httpd-htdocs-dir],[specify the path to the web server HTML directory]),[ac_cv_httpd_htdocs_dir="${withval}"])
 
 AC_ARG_WITH([gcc],AC_HELP_STRING([--with-gcc],[specify the GNU C compiler to use in contests]),[ac_cv_contest_gcc=$withval])
-AC_ARG_WITH([g++],AC_HELP_STRING([--with-g++],[specify the GNU C++ compiler to use in contests]),[ac_cv_contest_gpp=$withval])
+AC_ARG_WITH([gpp],AC_HELP_STRING([--with-gpp],[specify the GNU C++ compiler to use in contests]),[ac_cv_contest_gpp=$withval])
 AC_ARG_WITH([fpc],AC_HELP_STRING([--with-fpc],[specify the Free Pascal compiler to use in contests]),[ac_cv_contest_fpc=$withval])
 AC_ARG_WITH([gpc],AC_HELP_STRING([--with-gpc],[specify the GNU Pascal compiler to use in contests]),[ac_cv_contest_gpc=$withval])
 AC_ARG_WITH([gcj],AC_HELP_STRING([--with-gcj],[specify the GNU Java (GCJ) compiler to use in contests]),[ac_cv_contest_gcj=$withval])
