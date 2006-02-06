@@ -1285,7 +1285,14 @@ cmd_view(struct client_state *p, int len,
 
   info("%d: view %d, %d", p->id, pkt->b.id, pkt->item);
 
-  if (pkt->b.id == SRV_CMD_SHOW_REPORT) need_priv_check = 0;
+  if (pkt->b.id == SRV_CMD_SHOW_REPORT ||
+      pkt->b.id == SRV_CMD_VIEW_TEST_INPUT ||
+      pkt->b.id == SRV_CMD_VIEW_TEST_OUTPUT ||
+      pkt->b.id == SRV_CMD_VIEW_TEST_ANSWER ||
+      pkt->b.id == SRV_CMD_VIEW_TEST_ERROR ||
+      pkt->b.id == SRV_CMD_VIEW_TEST_CHECKER ||
+      pkt->b.id == SRV_CMD_VIEW_TEST_INFO)
+    need_priv_check = 0;
 
   if (need_priv_check && get_cnts_caps(p->user_id, &caps) < 0) {
     new_send_reply(p, -SRV_ERR_NO_PERMS);
