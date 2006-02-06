@@ -525,6 +525,7 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     xml_unlink_node(&(*p_access)->b);
     contests_free_2(&(*p_access)->b);
     *p_access = copy_contest_access(*p_src_access);
+    xml_link_node_last(cnts, &(*p_access)->b);
     return 0;
 
   case SSERV_CMD_CNTS_DELETE_PERMISSION:
