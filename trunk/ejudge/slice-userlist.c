@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
 
 #include "config.h"
 
@@ -99,7 +99,8 @@ main(int argc, char *argv[])
   if (!cfg_path) cfg_path = EJUDGE_XML_PATH;
 #endif /* EJUDGE_XML_PATH */
 
-  printf("slice-userlist %s, compiled %s\n", compile_version, compile_date);
+  fprintf(stderr, "slice-userlist %s, compiled %s\n",
+          compile_version, compile_date);
   config = userlist_cfg_parse(cfg_path);
   if (!config) return 1;
 
