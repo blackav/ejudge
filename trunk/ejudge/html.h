@@ -27,6 +27,7 @@ void write_standings(char const *, char const *,int,char const *,char const *,in
 void write_public_log(char const *, char const *, char const *, char const *);
 
 void new_write_user_runs(FILE *f, int uid, int printing_suspended,
+                         int accepting_mode,
                          unsigned int show_flags,
                          ej_cookie_t sid,
                          unsigned char const *self_url,
@@ -42,6 +43,7 @@ void new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
 int new_write_user_clar(FILE *, int, int);
 int new_write_user_source_view(FILE *, int, int);
 int new_write_user_report_view(FILE *f, int uid, int rid,
+                               int accepting_mode,
                                ej_cookie_t sid,
                                const unsigned char *self_url,
                                const unsigned char *hidden_vars,
