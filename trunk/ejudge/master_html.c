@@ -934,6 +934,22 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
             ACTION_REJUDGE_DISPLAYED_1, _("Rejudge displayed runs"));
     fprintf(f, "</form></td><td>\n");
 
+    if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+      html_start_form(f, 1, sid, self_url, hidden_vars);
+      fprintf(f,"<input type=\"hidden\" name=\"run_mask_size\" value=\"%d\">\n",
+              displayed_size);
+      fprintf(f, "<input type=\"hidden\" name=\"run_mask\" value=\"");
+      for (i = 0; i < displayed_size; i++) {
+        if (i > 0) fprintf(f, " ");
+        fprintf(f, "%lx", displayed_mask[i]);
+      }
+      fprintf(f, "\">\n");
+      fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+              ACTION_FULL_REJUDGE_DISPLAYED_1,
+              _("Full rejudge displayed runs"));
+      fprintf(f, "</form></td><td>\n");
+    }
+
     html_start_form(f, 1, sid, self_url, hidden_vars);
     fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
             ACTION_SQUEEZE_RUNS, _("Squeeze runs"));
@@ -1244,7 +1260,7 @@ write_priv_standings(FILE *f, ej_cookie_t sid,
 
   if (global->score_system_val == SCORE_KIROV
       || global->score_system_val == SCORE_OLYMPIAD)
-    do_write_kirov_standings(f, 0, 1, 0, 0, 0, accepting_mode);
+    do_write_kirov_standings(f, 0, 1, 0, 0, 0, 0 /*accepting_mode*/);
   else if (global->score_system_val == SCORE_MOSCOW)
     do_write_moscow_standings(f, 0, 1, 0, 0, 0, 0, 0);
   else
