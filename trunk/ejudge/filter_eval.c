@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,6 +36,56 @@ static unsigned char *envdup(struct filter_env *env,
   s = filter_tree_alloc(env->mem, len + 1);
   memcpy(s, str, len);
   return s;
+}
+
+/* FIXME: dumb :( */
+static int
+is_latest(struct filter_env *env, int rid)
+{
+  int r;
+
+  if (rid < 0 || rid >= env->rtotal) return 0;
+  switch (env->rentries[rid].status) {
+  case RUN_OK:
+  case RUN_PARTIAL:
+  case RUN_ACCEPTED:
+    break;
+  default:
+    return 0;
+  }
+  for (r = rid + 1; r < env->rtotal; r++) {
+    if (env->rentries[r].status > RUN_MAX_STATUS) continue;
+    if (env->rentries[rid].team != env->rentries[r].team
+        || env->rentries[rid].problem != env->rentries[r].problem)
+      continue;
+    switch (env->rentries[r].status) {
+    case RUN_OK:
+    case RUN_PARTIAL:
+    case RUN_ACCEPTED:
+      return 0;
+    }
+  }
+  return 1;
+}
+
+/* FIXME: dumb :( */
+static int
+is_afterok(struct filter_env *env, int rid)
+{
+  int r;
+
+  if (rid < 0 || rid >= env->rtotal) return 0;
+  if (env->rentries[rid].status >= RUN_PSEUDO_FIRST
+      && env->rentries[rid].status <= RUN_PSEUDO_LAST)
+    return 0;
+  for (r = rid - 1; r >= 0; r--) {
+    if (env->rentries[r].status != RUN_OK) continue;
+    if (env->rentries[rid].team != env->rentries[r].team
+        || env->rentries[rid].problem != env->rentries[r].problem)
+      continue;
+    return 1;
+  }
+  return 0;
 }
 
 static int
@@ -122,6 +172,11 @@ do_eval(struct filter_env *env,
   case TOK_READONLY:
   case TOK_VARIANT:
   case TOK_RAWVARIANT:
+  case TOK_USERINVISIBLE:
+  case TOK_USERBANNED:
+  case TOK_USERLOCKED:
+  case TOK_LATEST:
+  case TOK_AFTEROK:
     if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
     ASSERT(r1.kind == TOK_INT_L);
     if (r1.v.i < 0) r1.v.i = env->rtotal + r1.v.i;
@@ -275,6 +330,16 @@ do_eval(struct filter_env *env,
       } else {
         res->v.b = 0;
       }
+      break;
+    case TOK_LATEST:
+      res->kind = TOK_BOOL_L;
+      res->type = FILTER_TYPE_BOOL;
+      res->v.b = is_latest(env, r1.v.i);
+      break;
+    case TOK_AFTEROK:
+      res->kind = TOK_BOOL_L;
+      res->type = FILTER_TYPE_BOOL;
+      res->v.b = is_afterok(env, r1.v.i);
       break;
     default:
       abort();
@@ -440,6 +505,16 @@ do_eval(struct filter_env *env,
     } else {
       res->v.b = 0;
     }
+    break;
+  case TOK_CURLATEST:
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    res->v.b = is_latest(env, env->cur->submission);
+    break;
+  case TOK_CURAFTEROK:
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    res->v.b = is_afterok(env, env->cur->submission);
     break;
 
   case TOK_NOW:
