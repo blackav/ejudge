@@ -4,7 +4,7 @@
 #ifndef __CLIENT_ACTIONS_H__
 #define __CLIENT_ACTIONS_H__
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -106,6 +106,8 @@ enum
     ACTION_VIEW_TEST_CHECKER,
     ACTION_VIEW_TEST_INFO,
     ACTION_VIEW_AUDIT_LOG,
+    ACTION_FULL_REJUDGE_DISPLAYED_1,
+    ACTION_FULL_REJUDGE_DISPLAYED_2,
     ACTION_LAST
   };
 
