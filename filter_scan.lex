@@ -1,7 +1,7 @@
 /* -*- mode: fundamental -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -126,6 +126,10 @@ lett    [A-Za-z_]
 "curuserbanned" { TT(TOK_CURUSERBANNED, FILTER_TYPE_BOOL); }
 "userlocked" { TT(TOK_USERLOCKED, FILTER_TYPE_BOOL); }
 "curuserlocked" { TT(TOK_CURUSERLOCKED, FILTER_TYPE_BOOL); }
+"latest" { TT(TOK_LATEST, FILTER_TYPE_BOOL); }
+"curlatest" { TT(TOK_CURLATEST, FILTER_TYPE_BOOL); }
+"afterok" { TT(TOK_AFTEROK, FILTER_TYPE_BOOL); }
+"curafterok" { TT(TOK_CURAFTEROK, FILTER_TYPE_BOOL); }
 
 "int" { TT(TOK_INT, FILTER_TYPE_INT); }
 "string" { TT(TOK_STRING, FILTER_TYPE_STRING); }
