@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,7 +35,7 @@ serve_clnt_rejudge_by_mask(int sock_fd,
   int r;
   void *void_in = 0;
 
-  if (cmd != SRV_CMD_REJUDGE_BY_MASK) return -SRV_ERR_PROTOCOL;
+  //if (cmd != SRV_CMD_REJUDGE_BY_MASK) return -SRV_ERR_PROTOCOL;
   if (sock_fd < 0) return -SRV_ERR_NOT_CONNECTED;
   if (mask_size <= 0 || mask_size > 1000000) return -SRV_ERR_PROTOCOL;
 
