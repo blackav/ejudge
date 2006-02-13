@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1945,12 +1945,16 @@ confirm_judge_suspended(void)
 #define BITS_PER_LONG (8*sizeof(unsigned long)) 
 
 static void
-confirm_rejudge_displayed(void)
+confirm_rejudge_displayed(int cur_action, int next_action)
 {
   unsigned char *run_mask_size_str;
   unsigned char *run_mask_str, *p;
   int run_mask_size, n = 0, i;
   unsigned long *run_mask;
+  unsigned char *pgtitle = "Confirm rejudge displayed runs";
+
+  if (cur_action == ACTION_FULL_REJUDGE_DISPLAYED_1)
+    pgtitle = "Confirm FULL rejudge displayed runs";
 
   if (!(run_mask_size_str = cgi_param("run_mask_size")))
     goto invalid_parameters;
@@ -1972,8 +1976,7 @@ confirm_rejudge_displayed(void)
   }
   if (*p) goto invalid_parameters;
 
-  client_put_header(stdout, 0, 0, global->charset, 1, 0,
-                    "Confirm rejudge displayed runs");
+  client_put_header(stdout, 0, 0, global->charset, 1, 0, pgtitle);
   printf("<p>%s:\n", _("The following runs will be rejudged"));
   for (i = 0, n = 0; i < server_total_runs; i++) {
     if ((run_mask[i / BITS_PER_LONG] & (1 << (i % BITS_PER_LONG)))) {
@@ -1996,8 +1999,7 @@ confirm_rejudge_displayed(void)
   printf("\">\n");
 
   printf("<input type=\"submit\" name=\"action_%d\" value=\"%s\">"
-         "</form></p>", ACTION_REJUDGE_DISPLAYED_2,
-         _("Yes, rejudge!"));
+         "</form></p>", next_action, _("Yes, rejudge!"));
   client_put_footer(stdout, 0);
   exit(0);
 
@@ -2257,7 +2259,7 @@ action_judge_suspended(void)
 }
 
 static void
-action_rejudge_displayed(void)
+action_rejudge_displayed(int cmd)
 {
   unsigned char *run_mask_size_str;
   unsigned char *run_mask_str, *p;
@@ -2285,7 +2287,7 @@ action_rejudge_displayed(void)
   if (*p) goto invalid_parameters;
 
   open_serve();
-  r = serve_clnt_rejudge_by_mask(serve_socket_fd, SRV_CMD_REJUDGE_BY_MASK,
+  r = serve_clnt_rejudge_by_mask(serve_socket_fd, cmd,
                                  run_mask_size, run_mask);
   operation_status_page(r, 0, -1);
   return;
@@ -3122,10 +3124,18 @@ main(int argc, char *argv[])
       action_judge_suspended();
       break;
     case ACTION_REJUDGE_DISPLAYED_1:
-      confirm_rejudge_displayed();
+      confirm_rejudge_displayed(ACTION_REJUDGE_DISPLAYED_1,
+                                ACTION_REJUDGE_DISPLAYED_2);
       break;
     case ACTION_REJUDGE_DISPLAYED_2:
-      action_rejudge_displayed();
+      action_rejudge_displayed(SRV_CMD_REJUDGE_BY_MASK);
+      break;
+    case ACTION_FULL_REJUDGE_DISPLAYED_1:
+      confirm_rejudge_displayed(ACTION_FULL_REJUDGE_DISPLAYED_1,
+                                ACTION_FULL_REJUDGE_DISPLAYED_2);
+      break;
+    case ACTION_FULL_REJUDGE_DISPLAYED_2:
+      action_rejudge_displayed(SRV_CMD_FULL_REJUDGE_BY_MASK);
       break;
     case ACTION_REJUDGE_PROBLEM:
       do_rejudge_problem_if_asked();
