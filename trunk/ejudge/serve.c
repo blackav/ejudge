@@ -1253,6 +1253,7 @@ cmd_view(struct client_state *p, int len,
   FILE *f;
   opcap_t caps;
   struct run_entry re;
+  struct section_problem_data *prob;
 
   if (get_peer_local_user(p) < 0) return;
 
@@ -1585,6 +1586,19 @@ cmd_view(struct client_state *p, int len,
         r = -SRV_ERR_NO_PERMS;
         break;
       }
+      if (global->score_system_val==SCORE_OLYMPIAD && !olympiad_judging_mode) {
+        if (re.problem <= 0 || re.problem > max_prob
+            || !(prob = probs[re.problem])) {
+          err("%d: invalid problem %d", p->id, re.problem);
+          r = -SRV_ERR_BAD_PROB_ID;
+          break;
+        }
+        if (pkt->item2 <= 0 || pkt->item2 > prob->tests_to_accept) {
+          err("%d: user %d tries to view real tests", p->id, p->user_id);
+          r = -SRV_ERR_NO_PERMS;
+          break;
+        }
+      }
     } else {
       if (!check_cnts_caps(p->user_id, OPCAP_VIEW_REPORT)) {
         err("%d: user %d has no capability %d for the contest",
@@ -1614,7 +1628,8 @@ cmd_view(struct client_state *p, int len,
       break;
     }
     l10n_setlocale(pkt->item2);
-    r = new_write_user_report_view(f, p->user_id, pkt->item, p->cookie,
+    r = new_write_user_report_view(f, p->user_id, pkt->item,
+                                   accepting_mode, p->cookie,
                                    self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     l10n_setlocale(0);
 
@@ -1980,12 +1995,14 @@ cmd_team_show_item(struct client_state *p, int len,
 struct compile_run_extra
 {
   int accepting_mode;
+  int priority_adjustment;
 };
 
 static int queue_compile_request(unsigned char const *str, int len,
                                  int run_id, int lang_id, int locale_id,
                                  unsigned char const *sfx,
-                                 char **, int accepting_mode);
+                                 char **, int accepting_mode,
+                                 int priority_adjustment);
 
 static void
 move_files_to_insert_run(int run_id)
@@ -2181,7 +2198,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
                             langs[pkt->lang_id]->compile_id,
                             pkt->locale_id,
                             langs[pkt->lang_id]->src_sfx,
-                            langs[pkt->lang_id]->compiler_env, -1) < 0) {
+                            langs[pkt->lang_id]->compiler_env, -1, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -2514,7 +2531,7 @@ do_submit_run(struct client_state *p,
   if (queue_compile_request(run_bytes, run_size, run_id,
                             cur_lang->compile_id, locale_id,
                             cur_lang->src_sfx,
-                            cur_lang->compiler_env, -1) < 0) {
+                            cur_lang->compiler_env, -1, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -2979,7 +2996,8 @@ cmd_judge_command_0(struct client_state *p, int len,
 static void do_rejudge_all(struct client_state *p);
 static void do_judge_suspended(struct client_state *p);
 static void do_rejudge_problem(int, struct client_state *p);
-static void do_rejudge_by_mask(int, unsigned long *, struct client_state *p);
+static void do_rejudge_by_mask(int, unsigned long *, struct client_state *p,
+                               int force_flag, int priority_adjustment);
 static int count_transient_runs(void);
 
 static void
@@ -3025,6 +3043,9 @@ static void
 cmd_rejudge_by_mask(struct client_state *p, int len,
                     struct prot_serve_pkt_rejudge_by_mask *pkt)
 {
+  int force_full = 0;
+  int priority_adjustment = 0;
+
   if (get_peer_local_user(p) < 0) return;
 
   if (len < sizeof(*pkt)) {
@@ -3050,7 +3071,14 @@ cmd_rejudge_by_mask(struct client_state *p, int len,
     return;
   }
 
-  do_rejudge_by_mask(pkt->mask_size, pkt->mask, p);
+  if (global->score_system_val == SCORE_OLYMPIAD &&
+      !olympiad_judging_mode && pkt->b.id == SRV_CMD_FULL_REJUDGE_BY_MASK) {
+    force_full = 1;
+    priority_adjustment = 10;
+  }
+
+  do_rejudge_by_mask(pkt->mask_size, pkt->mask, p, force_full,
+                     priority_adjustment);
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -3594,7 +3622,8 @@ cmd_simple_command(struct client_state *p, int len,
   }
 }
 
-static void rejudge_run(int run_id, struct client_state *p, int force_full_rejudge);
+static void rejudge_run(int run_id, struct client_state *p,
+                        int force_full_rejudge, int priority_adjustment);
 
 static void
 cmd_edit_run(struct client_state *p, int len,
@@ -3835,7 +3864,7 @@ cmd_edit_run(struct client_state *p, int len,
 
   if ((run_flags & RUN_ENTRY_STATUS)
       && (run.status == RUN_REJUDGE || run.status == RUN_FULL_REJUDGE)) {
-    rejudge_run(pkt->run_id, p, (run.status == RUN_FULL_REJUDGE));
+    rejudge_run(pkt->run_id, p, (run.status == RUN_FULL_REJUDGE), 0);
   }
   info("%d: edit_run: ok", p->id);
   new_send_reply(p, SRV_RPL_OK);
@@ -4432,6 +4461,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
   prio += prob->priority_adjustment;
   prio += find_user_priority_adjustment(re.team);
   prio += testers[cn]->priority_adjustment;
+  prio += comp_extra->priority_adjustment;
 
   /* generate a packet name */
   generate_packet_name(comp_pkt->run_id, prio, pkt_base);
@@ -4825,7 +4855,8 @@ queue_compile_request(unsigned char const *str, int len,
                       int run_id, int lang_id, int locale_id,
                       unsigned char const *sfx,
                       char **compiler_env,
-                      int accepting_mode)
+                      int accepting_mode,
+                      int priority_adjustment)
 {
   struct compile_run_extra rx;
   struct compile_request_packet cp;
@@ -4856,6 +4887,7 @@ queue_compile_request(unsigned char const *str, int len,
 
   memset(&rx, 0, sizeof(rx));
   rx.accepting_mode = accepting_mode;
+  rx.priority_adjustment = priority_adjustment;
 
   if (compile_request_packet_write(&cp, &pkt_len, &pkt_buf) < 0) {
     // FIXME: need reasonable recovery?
@@ -4898,7 +4930,8 @@ queue_compile_request(unsigned char const *str, int len,
 }
 
 static void
-rejudge_run(int run_id, struct client_state *p, int force_full_rejudge)
+rejudge_run(int run_id, struct client_state *p, int force_full_rejudge,
+            int priority_adjustment)
 {
   struct run_entry re;
   int accepting_mode = -1;
@@ -4920,7 +4953,7 @@ rejudge_run(int run_id, struct client_state *p, int force_full_rejudge)
                         langs[re.language]->compile_id, re.locale_id,
                         langs[re.language]->src_sfx,
                         langs[re.language]->compiler_env,
-                        accepting_mode);
+                        accepting_mode, priority_adjustment);
 
   append_audit_log(run_id, p, "Command: Rejudge");
 }
@@ -4978,7 +5011,7 @@ do_rejudge_all(struct client_state *p)
       idx = re.team * total_probs + re.problem;
       if (flag[idx]) continue;
       flag[idx] = 1;
-      rejudge_run(r, p, 0);
+      rejudge_run(r, p, 0, 0);
     }
     return;
   }
@@ -4994,7 +5027,7 @@ do_rejudge_all(struct client_state *p)
         && !langs[re.language]->disable_testing
         && !re.is_readonly
         && !re.is_imported) {
-      rejudge_run(r, p, 0);
+      rejudge_run(r, p, 0, 0);
     }
   }
 }
@@ -5022,7 +5055,7 @@ do_judge_suspended(struct client_state *p)
         && !probs[re.problem]->disable_auto_testing
         && !langs[re.language]->disable_testing
         && !langs[re.language]->disable_auto_testing) {
-      rejudge_run(r, p, 0);
+      rejudge_run(r, p, 0, 0);
     }
   }
 }
@@ -5058,7 +5091,7 @@ do_rejudge_problem(int prob_id, struct client_state *p)
       if (flag[re.team]) continue;
       if (!langs[re.language] || langs[re.language]->disable_testing) continue;
       flag[re.team] = 1;
-      rejudge_run(r, p, 0);
+      rejudge_run(r, p, 0, 0);
     }
     return;
   }
@@ -5070,7 +5103,7 @@ do_rejudge_problem(int prob_id, struct client_state *p)
         && re.status != RUN_IGNORED
         && re.status != RUN_DISQUALIFIED
         && !re.is_imported) {
-      rejudge_run(r, p, 0);
+      rejudge_run(r, p, 0, 0);
     }
   }
 }
@@ -5078,7 +5111,8 @@ do_rejudge_problem(int prob_id, struct client_state *p)
 #define BITS_PER_LONG (8*sizeof(unsigned long)) 
 
 static void
-do_rejudge_by_mask(int mask_size, unsigned long *mask, struct client_state *p)
+do_rejudge_by_mask(int mask_size, unsigned long *mask, struct client_state *p,
+                   int force_flag, int priority_adjustment)
 {
   int total_runs, r;
   struct run_entry re;
@@ -5121,7 +5155,7 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask, struct client_state *p)
       idx = re.team * total_probs + re.problem;
       if (flag[idx]) continue;
       flag[idx] = 1;
-      rejudge_run(r, p, 0);
+      rejudge_run(r, p, 0, 0);
     }
     return;
   }
@@ -5138,7 +5172,7 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask, struct client_state *p)
         && !re.is_readonly
         && !re.is_imported
         && (mask[r / BITS_PER_LONG] & (1 << (r % BITS_PER_LONG)))) {
-      rejudge_run(r, p, 0);
+      rejudge_run(r, p, force_flag, priority_adjustment);
     }
   }
 }
@@ -5247,6 +5281,7 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_VIEW_AUDIT_LOG] { cmd_view },
   [SRV_CMD_GET_CONTEST_TYPE] { cmd_get_param },
   [SRV_CMD_SUBMIT_RUN_2] { cmd_user_submit_run_2 },
+  [SRV_CMD_FULL_REJUDGE_BY_MASK] { cmd_rejudge_by_mask },
 };
 
 static void
