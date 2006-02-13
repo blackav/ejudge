@@ -2563,3 +2563,15 @@ NEWS 1 26 18272948
 serve.c 1 113 14994787
 slice-userlist.c 1 3 245177
 super_html_2.c 1 19 4110486
+client_actions.h 1 26 223798
+html.h 1 38 630008
+protocol.h 1 44 805430
+master.c 1 73 7132156
+serve.c 1 114 15105205
+filter_eval.c 1 7 1098589
+html.c 1 77 12261531
+master_html.c 1 57 9851576
+super_html_2.c 1 20 4110717
+serve_clnt/rejudge_by_mask.c 1 7 181111
+filter_expr.y 1 9 2032350
+filter_scan.lex 1 18 578885
