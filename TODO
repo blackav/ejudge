@@ -26,14 +26,8 @@ o Passing of the run packets via the super-serve proxy, if the contest
 o Daemonized mode for `super-serve' and `compile' programs.
   Difficulty: medium. It may require changing of the log format of
   the utilities.
-o E-mail alert service. Severe errors should be reported to the
-  administrator email. Should be supported by `userlist-server',
-  `super-serve', `compile' programs.
-  Difficulty: medium.
 o Log analyzing utilities for the log files of the abovementioned
   tools.
-o The `team' utility should report the current total score/the number
-  of the solved problems.
 o Implement full support for conditional compilation.
 o Remove limitation on 127 tests in the runlog database.
   Difficulty: medium. May require changing of the runlog data format.
@@ -42,12 +36,15 @@ o Remove limitation on 127 tests in the runlog database.
 Major enhancements
 ==================
 
-o Contest configuration wizard. Web based or console tool for
-  menu-driven creation of new contests.
-  Difficulty: difficult.
 o Database backend. Support for storing the various data in the
   database (MySQL, Postgress).
   Difficulty: difficult. The data access layer (runlog,
   userlist-server, clarlog) should be rewritten.
 o Port to the Win32 platform. The `run' and `compile' utilities
   should be ported first to enable mixed judging environment.
+o Personal tester to allow preparing problems and simulating
+  their execution under ejudge.
+o Split the `run' program into `run-program' and `run-checker'
+  to separate program invocation and the result testing.
+  Basically, all infrastructure are in place (XML testing
+  protocol, full output archive).
