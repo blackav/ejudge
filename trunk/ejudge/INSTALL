@@ -464,7 +464,7 @@ disable.
     --with-gcc
         Specify the path to the GNU C (gcc) compiler to be used
         in contests.
-    --with-g++
+    --with-gpp
         Specify the path to the GNU C++ (g++) compiler.
     --with-fpc
         Specify the path to the Free Pascal (fpc) compiler.
