@@ -1372,6 +1372,9 @@ do_loop(void)
       continue;
     }
     if (req_pkt->contest_id == -1) {
+      r = generic_write_file(req_buf, req_buf_size, SAFE,
+                             global->run_queue_dir, pkt_name, "");
+      if (r < 0) return -1;
       info("force quit packet is ignored in unmanaged mode");
       scan_dir_add_ignored(global->run_queue_dir, pkt_name);
       continue;
