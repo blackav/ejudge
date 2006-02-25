@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1373,6 +1373,7 @@ do_loop(void)
     }
     if (req_pkt->contest_id == -1) {
       info("force quit packet is ignored in unmanaged mode");
+      scan_dir_add_ignored(global->run_queue_dir, pkt_name);
       continue;
     }
 
@@ -1384,19 +1385,26 @@ do_loop(void)
     }
     cur_prob = probs[req_pkt->problem_id];
 
+    /* if we are asked to do full testing, but don't want */
+    if ((global->skip_full_testing > 0 && !req_pkt->accepting_mode)
+        || (global->skip_accept_testing > 0 && req_pkt->accepting_mode)) {
+      r = generic_write_file(req_buf, req_buf_size, SAFE,
+                             global->run_queue_dir, pkt_name, "");
+      if (r < 0) return -1;
+      info("skipping problem %s", cur_prob->short_name);
+      scan_dir_add_ignored(global->run_queue_dir, pkt_name);
+      continue;
+    }
+
     /* if this problem is marked as "skip_testing" put the
      * packet back to the spool directory
      */
-    // UGLY :(
     if (cur_prob->skip_testing > 0) {
       r = generic_write_file(req_buf, req_buf_size, SAFE,
                              global->run_queue_dir, pkt_name, "");
       if (r < 0) return -1;
-      // make a chance for another run to pick up this packet
       info("skipping problem %s", cur_prob->short_name);
-      interrupt_enable();
-      os_Sleep(global->sleep_time);
-      interrupt_disable();
+      scan_dir_add_ignored(global->run_queue_dir, pkt_name);
       continue;
     }
 
@@ -1426,16 +1434,12 @@ do_loop(void)
     /* if this tester is marked as "skip_testing" put the
      * packet back to the spool directory
      */
-    // UGLY :(
     if (tst->skip_testing > 0) {
       r = generic_write_file(req_buf, req_buf_size, SAFE,
                              global->run_queue_dir, pkt_name, "");
       if (r < 0) return -1;
-      // make a chance for another run to pick up this packet
       info("skipping tester <%s,%s>", cur_prob->short_name, tst->arch);
-      interrupt_enable();
-      os_Sleep(global->sleep_time);
-      interrupt_disable();
+      scan_dir_add_ignored(global->run_queue_dir, pkt_name);
       continue;
     }
 
