@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -40,7 +40,7 @@ init(void)
   cap_set_proc(new_caps);
 
   /* if getppid works, CAP_SYS_OPERATIONS has no effect :-( */
-  if (getppid() >= 0) {
+  if (dup(0) >= 0) {
     fprintf(stderr,
             "capexec: CAP_SYS_OPERATIONS is not supported on this system\n");
     exit(6);
