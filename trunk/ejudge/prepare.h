@@ -317,6 +317,8 @@ struct section_global_data
   int xml_report;               /* whether generate master report in XML */
   int enable_full_archive;      /* enable storing the full output */
   int cpu_bogomips;             /* CPU speed (BogoMIPS) */
+  int skip_full_testing;
+  int skip_accept_testing;
 
   // variant support
   path_t variant_map_file;
