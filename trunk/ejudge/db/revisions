@@ -2577,3 +2577,6 @@ filter_expr.y 1 9 2032350
 filter_scan.lex 1 18 578885
 fileutl.h 1 15 186230
 run.c 1 84 5124758
+prepare.h 1 83 2376004
+prepare.c 1 110 11412516
+prepare_out.c 1 22 5211371
