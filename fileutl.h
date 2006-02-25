@@ -3,7 +3,7 @@
 #ifndef __FILEUTL_H__
 #define __FILEUTL_H__
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -21,6 +21,8 @@
 #include <sys/types.h>
 
 int   scan_dir(char const *dir, char *result);
+void  scan_dir_add_ignored(const unsigned char *dir,
+                           const unsigned char *filename);
 
 /* operation flags */
 enum { SAFE = 1, REMOVE = 2, CONVERT = 4, PIPE = 8, GZIP = 16, KEEP_ON_FAIL = 32 };
