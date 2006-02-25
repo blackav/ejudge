@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -138,6 +138,56 @@ make_all_dir(char const *path, int access)
   return 0;
 }
 
+struct ignored_items
+{
+  unsigned char *dir;
+  size_t a, u;
+  unsigned char **items;
+};
+static struct ignored_items *ign;
+static size_t ign_a, ign_u;
+
+void
+scan_dir_add_ignored(const unsigned char *dir, const unsigned char *filename)
+{
+  int i;
+  struct ignored_items *cur_ign = 0;
+
+  if (!dir || !*dir) return;
+  for (i = 0; i < ign_u; i++)
+    if (!strcmp(dir, ign[i].dir))
+      break;
+  if (i == ign_u) {
+    if (ign_u == ign_a) {
+      if (!ign_a) ign_a = 4;
+      ign_a *= 2;
+      XREALLOC(ign, ign_a);
+    }
+    memset(&ign[ign_u], 0, sizeof(ign[0]));
+    ign[ign_u++].dir = xstrdup(dir);
+  }
+  cur_ign = &ign[i];
+
+  if (!filename || !*filename) return;
+  for (i = 0; i < cur_ign->u; i++)
+    if (!strcmp(filename, cur_ign->items[i]))
+      return;
+
+  if (cur_ign->u == cur_ign->a) {
+    if (!cur_ign->a) cur_ign->a = 8;
+    cur_ign->a *= 2;
+    XREALLOC(cur_ign->items, cur_ign->a);
+  }
+  cur_ign->items[cur_ign->u++] = xstrdup(filename);
+}
+
+struct q_dir_entry
+{
+  unsigned char *name;
+  signed char    prio;
+  unsigned char  ign;
+};
+
 /* scans 'dir' directory and returns the filename found */
 int
 scan_dir(char const *partial_path, char *found_item)
@@ -146,8 +196,15 @@ scan_dir(char const *partial_path, char *found_item)
   DIR           *d;
   struct dirent *de;
   int saved_errno;
-  int prio, found = 0, i;
+  int prio, found = 0, i, got_quit = 0, j;
   unsigned char *items[32];
+  unsigned char *del_map = 0;
+  struct ignored_items *cur_ign = 0;
+
+  for (i = 0; i < ign_u; i++)
+    if (!strcmp(partial_path, ign[i].dir))
+      break;
+  if (i < ign_u) cur_ign = &ign[i];
 
   memset(items, 0, sizeof(items));
   pathmake(dir_path, partial_path, "/", "dir", NULL);
@@ -158,8 +215,27 @@ scan_dir(char const *partial_path, char *found_item)
     return -saved_errno;
   }
 
+  if (cur_ign && cur_ign->u > 0) {
+    XALLOCAZ(del_map, cur_ign->u);
+  }
+
   while ((de = readdir(d))) {
     if (!strcmp(de->d_name, ".") || !strcmp(de->d_name, "..")) continue;
+
+    if (cur_ign) {
+      for (i = 0; i < cur_ign->u; i++)
+        if (!strcmp(cur_ign->items[i], de->d_name))
+          break;
+      if (i < cur_ign->u) {
+        del_map[i] = 1;
+        continue;
+      }
+    }
+
+    if (!strcmp("QUIT", de->d_name)) {
+      got_quit = 1;
+      continue;
+    }
 
     if (strlen(de->d_name) != SERVE_PACKET_NAME_SIZE - 1) {
       prio = 0;
@@ -180,6 +256,26 @@ scan_dir(char const *partial_path, char *found_item)
     found++;
   }
   closedir(d);
+
+  // cleanup ignored files
+  if (cur_ign) {
+    for (j = 0; j < cur_ign->u && del_map[j]; j++);
+    for (i = j; i < cur_ign->u; i++) {
+      if (del_map[i]) {
+        cur_ign->items[j++] = cur_ign->items[i];
+      } else {
+        xfree(cur_ign->items[i]);
+      }
+    }
+    cur_ign->u = j;
+  }
+
+  if (got_quit) {
+    pathcpy(found_item, "QUIT");
+    info("scan_dir: found QUIT packet");
+    return 1;
+  }
+
   if (!found) return 0;
 
   for (i = 0; i < 32; i++) {
