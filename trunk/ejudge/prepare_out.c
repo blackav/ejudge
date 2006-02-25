@@ -681,6 +681,12 @@ prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *glob
     fprintf(f, "priority_adjustment = %d\n", global->priority_adjustment);
   //GLOBAL_PARAM(user_priority_adjustments, "x"),
   do_xstr(f, &sbuf, "user_priority_adjustments", global->user_priority_adjustments);
+  //GLOBAL_PARAM(skip_full_testing, "d"),
+  if (global->skip_full_testing)
+    fprintf(f, "skip_full_testing = %d\n", global->skip_full_testing);
+  //GLOBAL_PARAM(skip_accept_testing, "d"),
+  if (global->skip_accept_testing)
+    fprintf(f, "skip_accept_testing = %d\n", global->skip_accept_testing);
 
   //GLOBAL_PARAM(contestant_status_num, "d"),
   if (global->contestant_status_num > 0)
