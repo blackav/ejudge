@@ -2163,7 +2163,7 @@ write_xml_testing_report(FILE *f, unsigned char const *txt,
       fprintf(f, "%s", s);
       xfree(s);
     }
-    if (t->correct) {
+    if (t->error) {
       fprintf(f, "<a name=\"%dE\"></a>", t->num);
       fprintf(f, _("<u>--- Stderr ---</u>\n"));
       s = html_armor_string_dup(t->error);
