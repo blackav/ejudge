@@ -34,11 +34,11 @@ make install
 
 Here REUSE-ARCH-DIR is the directory where the reuse library
 archive is downloaded. VERSION is the library version. Always
-use the latest version (as of this writing it is 4.2.2).
+use the latest version (as of this writing it is 4.2.3).
 4. Change directory to the home directory and unpack the ejudge archive.
 
 cd ~
-tar xvfz EJUDGE-ARCH-DIR/reuse-EJUDGE.tgz
+tar xvfz EJUDGE-ARCH-DIR/ejudge-VERSION.tgz
 cd ejudge
 
 5. Configure the ejudge
@@ -190,7 +190,7 @@ mandatory options are as follows.
         directory of the reuse library installation. The
         REUSE-PATH must be an absolute path and point to the
         directory, where the reuse library is installed. This
-        directory must contain etc, include and lib
+        directory must contain `bin', `include', and `lib'
         subdirectories containing the corresponding components
         of the reuse library.
 
@@ -200,16 +200,16 @@ mandatory options are as follows.
         version does not satisfy the above mentioned requirement,
         the configure script terminates with error. The latest
         version of the reuse library is recommended for use, as
-        of this writing - 4.2.0.
+        of this writing - 4.2.3.
 
         As a rule, the reuse library is compiled and installed
         in the same directory, where the source archive is
         extracted. Thus, if the source code is extracted into
         the /home/you/reuse directory and is compiled there, the
-        /home/you/reuse directory should contain the etc,
-        include and lib directories containing the configuration
-        files, the header files, and the library files
-        respectively. In order to use the reuse library
+        /home/you/reuse directory should contain the `bin',
+        `include', and `lib' directories containing the
+        configuration scirpt, the header files, and the library
+        files respectively. In order to use the reuse library
         installed into /home/you/reuse directory the option
         --with-reuse=/home/you/reuse should be used.
 
@@ -720,19 +720,6 @@ not necessary.
         option is REUSE-LIB/lib. This corresponds to the
         standard structure of the directories of the reuse
         library installation.
-
-    --with-reuse-conf-dir=DIR
-        This option allows specifying the directory with the
-        reuse library configuration files. The default value of
-        this option is REUSE-DIR/etc, which corresponds to the
-        standard structure of the directories of the reuse
-        library installation. The ejudge configure script uses
-        the config.guess program from this directory in order to
-        determine the reuse library configuration name for the
-        current system. If the config.guess script does not
-        exist or is not executable, the reuse configuration name
-        must be specified explicitly using the
-        --with-reuse-config=CONFIG-NAME option.
 
 1.6. Other options
 ------------------
