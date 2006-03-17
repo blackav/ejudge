@@ -17,6 +17,7 @@
 
 #include "cr_serialize.h"
 #include "prepare.h"
+#include "prepare_vars.h"
 
 #include <windows.h>
 

@@ -17,6 +17,7 @@
 
 #include "fileutl.h"
 #include "pathutl.h"
+#include "errlog.h"
 
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
@@ -29,6 +30,11 @@ void
 get_uniq_prefix(char *prefix)
 {
   sprintf(prefix, "%lu_%s_", GetCurrentProcessId(), os_NodeName());
+}
+
+void
+scan_dir_add_ignored(const unsigned char *dir, const unsigned char *filename)
+{
 }
 
 /* scans 'dir' directory and returns the filename found */
