@@ -17,6 +17,27 @@
 
 #include "timestamp.h"
 
+file_stamp_t
+file_stamp_get(const unsigned char *path)
+{
+}
+
+int
+file_stamp_is_updated(const unsigned char *path, const file_stamp_t ts)
+{
+}
+
+file_stamp_t
+file_stamp_update(const unsigned char *path, file_stamp_t ts)
+{
+}
+
+file_stamp_t
+file_stamp_free(file_stamp_t ts)
+{
+}
+
+
 /**
  * Local variables:
  *  compile-command: "make"
