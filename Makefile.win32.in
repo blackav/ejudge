@@ -2,7 +2,7 @@
 # $Id$
 # @configure_input@
 
-# Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+# Copyright (C) 2005-2006 Alexander Chernov <cher@ispras.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -70,10 +70,10 @@ EXPAT_LIB=-lexpat
 REUSE_LIB=-lreuse
 
 C_CFILES=compile.c version.c
-C_OBJECTS=$(C_CFILES:.c=.o) prepare.o $(ARCH)/fileutl.o $(ARCH)/interrupt.o $(ARCH)/cr_serialize.o pathutl.o parsecfg.o varsubst.o sformat.o $(ARCH)/curtime.o compile_packet_1.o compile_packet_3.o compile_packet_5.o
+C_OBJECTS=$(C_CFILES:.c=.o) prepare.o $(ARCH)/fileutl.o $(ARCH)/interrupt.o $(ARCH)/cr_serialize.o pathutl.o parsecfg.o varsubst.o sformat.o $(ARCH)/curtime.o compile_packet_1.o compile_packet_3.o compile_packet_5.o errlog.o $(ARCH)/cpu.o
 
 RUN_CFILES=run.c version.c
-RUN_OBJECTS=$(RUN_CFILES:.c=.o) prepare.o pathutl.o $(ARCH)/fileutl.o $(ARCH)/interrupt.o $(ARCH)/cr_serialize.o sformat.o varsubst.o parsecfg.o testinfo.o misctext.o base64.o $(ARCH)/curtime.o run_packet_1.o run_packet_3.o run_packet_5.o
+RUN_OBJECTS=$(RUN_CFILES:.c=.o) prepare.o pathutl.o $(ARCH)/fileutl.o $(ARCH)/interrupt.o $(ARCH)/cr_serialize.o sformat.o varsubst.o parsecfg.o testinfo.o misctext.o base64.o $(ARCH)/curtime.o run_packet_1.o run_packet_3.o run_packet_5.o errlog.o $(ARCH)/cpu.o $(ARCH)/full_archive.o filehash.o sha.o digest_3.o $(ARCH)/timestamp.o xml_utils/unparse_run_status.o
 
 BINTARGETS = compile.exe run.exe
 CGITARGETS = 
