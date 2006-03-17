@@ -165,6 +165,48 @@ then
 AC_MSG_FAILURE([expat XML parsing library missing])
 fi
 
+dnl check zlib library
+AC_CHECK_HEADER([zlib.h],[ac_cv_has_zlib=1],[ac_cv_has_zlib=0])
+if [[ x"${ac_cv_has_zlib}" != x1 ]]
+then
+  AC_MSG_FAILURE([zlib.h is missing, please install zlib development package])
+fi
+
+AC_CHECK_LIB([z],[compressBound],[ac_cv_has_zlib=1],[ac_cv_has_zlib=0])
+if [[ x"${ac_cv_has_zlib}" != x1 ]]
+then
+  AC_MSG_FAILURE([zlib is too old or unusable, please update zlib])
+fi
+
+AC_MSG_CHECKING([that version of zlib >= 1.2])
+AC_RUN_IFELSE(
+[[
+#include <zlib.h>
+#include <stdio.h>
+int main(void)
+{
+  if (ZLIB_VERNUM >= 0x1200) return 0;
+  return 1;
+}
+]],[
+AC_MSG_RESULT([yes])
+ac_cv_has_zlib=1
+],[
+AC_MSG_RESULT([no])
+ac_cv_has_zlib=0
+])
+if [[ x"${ac_cv_has_zlib}" != x1 ]]
+then
+  AC_MSG_FAILURE([zlib is too old or unusable, please update zlib])
+fi
+
+dnl check ncurses library
+AC_CHECK_HEADER([ncurses.h],[ac_cv_has_ncurses=1],[ac_cv_has_ncurses=0])
+if [[ x"${ac_cv_has_ncurses}" != x1 ]]
+then
+  AC_MSG_FAILURE([ncurses.h is missing, please install ncurses development package])
+fi
+
 dnl Libcap checking stuff
 
 ac_cv_has_libcap=1
@@ -668,7 +710,7 @@ then
   [[ $? != 0 ]] && ac_cv_contest_gpc=no
   if [[ x"${ac_cv_contest_gpc}" != xno ]]
   then
-    ac_cv_gpc_version=`${ac_cv_contest_gpc} --version | gawk '{ print $1; }'`
+    ac_cv_gpc_version=`${ac_cv_contest_gpc} --version | gawk '{ print $1; exit 0; }'`
     [[ $? != 0 -a $? != 1 ]] && ac_cv_contest_gpc=no
   fi
   if [[ x"${ac_cv_contest_gpc}" != xno ]]
