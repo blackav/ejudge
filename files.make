@@ -113,7 +113,6 @@ COMMON_CFILES=\
  filehash.c\
  filter_eval.c\
  filter_tree.c\
- full_archive.c\
  html.c\
  html_date_select.c\
  html_hyperref.c\
@@ -124,6 +123,7 @@ COMMON_CFILES=\
  ncurses_utils.c\
  opcaps.c\
  parsecfg.c\
+ parsecfg_2.c\
  pathutl.c\
  prepare.c\
  prepare_out.c\
@@ -222,6 +222,8 @@ CFILES=\
  win32/curtime.c\
  unix/timestamp.c\
  win32/timestamp.c\
+ unix/full_archive.c\
+ win32/full_archive.c\
  ${COMMON_CFILES}\
  ${SERVE_CLNT_CFILES}\
  ${SUPER_CLNT_CFILES}\
