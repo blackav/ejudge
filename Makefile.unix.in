@@ -294,7 +294,7 @@ endif
 locale/ru_RU.KOI8-R/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.KOI8-R.po ru_all
 	${MSGFMT} -o $@ -c $<
 
-libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o $(ARCH)/fileutl.o $(ARCH)/cr_serialize.o $(ARCH)/interrupt.o $(ARCH)/curtime.o $(ARCH)/timestamp.o $(ARCH)/ej_process.o $(ARCH)/cpu.o
+libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o $(ARCH)/fileutl.o $(ARCH)/cr_serialize.o $(ARCH)/interrupt.o $(ARCH)/curtime.o $(ARCH)/timestamp.o $(ARCH)/ej_process.o $(ARCH)/cpu.o $(ARCH)/full_archive.o
 	ar rcv $@ $^
 
 libserve_clnt.a: $(SERVE_CLNT_CFILES:.c=.o)
