@@ -1737,7 +1737,7 @@ client_actions.h 1 24 216868
 full_archive.h 1 1 180469
 protocol.h 1 33 771345
 testing_report_xml.h 1 2 153005
-full_archive.c 1 1 696418
+unix/full_archive.c 1 1 696418
 protocol.c 1 15 239109
 testing_report_xml.c 1 2 1218249
 serve_clnt/view.c 1 14 298444
@@ -2412,7 +2412,7 @@ contests.c 1 34 4247084
 errlog.c 1 1 111426
 expat_iface.c 1 9 1509936
 filehash.c 1 3 435831
-full_archive.c 1 2 698097
+unix/full_archive.c 1 2 698097
 html.c 1 74 11473492
 html_hyperref.c 1 3 141111
 html_start_form.c 1 3 111315
@@ -2583,3 +2583,9 @@ prepare_out.c 1 22 5211371
 run.c 1 85 5135582
 unix/fileutl.c 1 25 2992091
 master_html.c 1 58 9851386
+win32/fileutl.c 1 8 1268123
+win32/cr_serialize.c 1 3 121099
+win32/timestamp.c 1 2 87971
+win32/full_archive.c 1 1 131867
+parsecfg.c 1 27 2776531
+parsecfg_2.c 1 1 198278
