@@ -104,6 +104,7 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(max_line_length, "d"),
   GLOBAL_PARAM(tests_to_accept, "d"),
   GLOBAL_PARAM(ignore_compile_errors, "d"),
+  GLOBAL_PARAM(disable_failed_test_view, "d"),
   GLOBAL_PARAM(inactivity_timeout, "d"),
   GLOBAL_PARAM(disable_auto_testing, "d"),
   GLOBAL_PARAM(disable_testing, "d"),
@@ -482,6 +483,7 @@ global_init_func(struct generic_section_config *gp)
   p->disable_clars = -1;
   p->disable_team_clars = -1;
   p->ignore_compile_errors = -1;
+  p->disable_failed_test_view = -1;
   p->enable_printing = -1;
   p->prune_empty_users = -1;
   p->enable_full_archive = -1;
@@ -1515,6 +1517,8 @@ set_defaults(int mode)
     global->disable_team_clars = DFLT_G_DISABLE_TEAM_CLARS;
   if (global->ignore_compile_errors == -1)
     global->ignore_compile_errors = DFLT_G_IGNORE_COMPILE_ERRORS;
+  if (global->disable_failed_test_view == -1)
+    global->disable_failed_test_view = DFLT_G_DISABLE_FAILED_TEST_VIEW;
   if (global->ignore_duplicated_runs == -1)
     global->ignore_duplicated_runs = DFLT_G_IGNORE_DUPLICATED_RUNS;
   if (global->show_deadline == -1)
@@ -3546,6 +3550,8 @@ prepare_set_global_defaults(struct section_global_data *g)
   if (!g->max_line_length) g->max_line_length = DFLT_G_MAX_LINE_LENGTH;
   if (g->ignore_compile_errors < 0)
     g->ignore_compile_errors = DFLT_G_IGNORE_COMPILE_ERRORS;
+  if (g->disable_failed_test_view < 0)
+    g->disable_failed_test_view = DFLT_G_DISABLE_FAILED_TEST_VIEW;
   if (g->inactivity_timeout <= 0)
     g->inactivity_timeout = DFLT_G_INACTIVITY_TIMEOUT;
   if (g->disable_auto_testing < 0)
@@ -3750,6 +3756,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->max_line_length = DFLT_G_MAX_LINE_LENGTH;
   global->tests_to_accept = DFLT_G_TESTS_TO_ACCEPT;
   global->ignore_compile_errors = 1;
+  global->disable_failed_test_view = DFLT_G_DISABLE_FAILED_TEST_VIEW;
   global->inactivity_timeout = DFLT_G_INACTIVITY_TIMEOUT;
   global->disable_auto_testing = DFLT_G_DISABLE_AUTO_TESTING;
   global->disable_testing = DFLT_G_DISABLE_TESTING;
