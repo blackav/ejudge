@@ -228,7 +228,8 @@ write_html_run_status(FILE *f, struct run_entry *pe,
   }
 
   if (global->score_system_val == SCORE_ACM) {
-    if (pe->status == RUN_OK || pe->test <= 0) {
+    if (pe->status == RUN_OK || pe->test <= 0
+        || global->disable_failed_test_view > 0) {
       fprintf(f, "<td>%s</td>", _("N/A"));
     } else {
       fprintf(f, "<td>%d</td>", pe->test);
@@ -237,7 +238,8 @@ write_html_run_status(FILE *f, struct run_entry *pe,
   }
 
   if (global->score_system_val == SCORE_MOSCOW) {
-    if (pe->status == RUN_OK || pe->test <= 0) {
+    if (pe->status == RUN_OK || pe->test <= 0
+        || global->disable_failed_test_view > 0) {
       fprintf(f, "<td>%s</td>", _("N/A"));
     } else {
       fprintf(f, "<td>%d</td>", pe->test);
@@ -692,7 +694,12 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
       case RUN_WRONG_ANSWER_ERR:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
-        fprintf(f, "<td>%d</td><td>%d</td>", re.test, best_score[prob_id]);
+        if (global->disable_failed_test_view > 0) {
+          fprintf(f, "<td>&nbsp;</td>");
+        } else {
+          fprintf(f, "<td>%d</td>", re.test);
+        }
+        fprintf(f, "<td>%d</td>", best_score[prob_id]);
         break;
       default:
         fprintf(f, "<td>&nbsp;</td><td>&nbsp;</td>");
@@ -707,7 +714,11 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
       case RUN_WRONG_ANSWER_ERR:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
-        fprintf(f, "<td>%d</td>", re.test);
+        if (global->disable_failed_test_view > 0) {
+          fprintf(f, "<td>&nbsp;</td>");
+        } else {
+          fprintf(f, "<td>%d</td>", re.test);
+        }
         break;
       default:
         fprintf(f, "<td>&nbsp;</td>");
