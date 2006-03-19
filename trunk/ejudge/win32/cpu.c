@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2005-2006 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,13 +16,15 @@
  */
 
 #include "cpu.h"
+#include "errlog.h"
 
 #include <stdlib.h>
 
 int
 cpu_get_bogomips(void)
 {
-  abort();
+  err("cpu_get_bogomips: not implemented");
+  return -1;
 }
 
 /**
