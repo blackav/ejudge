@@ -1,6 +1,104 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
+Version 2.1.46 (20060319)
+=========================
+
+configure
+---------
+The `--with-g++' option is renamed to `--with-gpp', as the
+`configure' script does not support `+' sign in option names.
+
+serve
+-----
+Two new predicates are supported in the run filter expressions:
+latest[(N)]
+	Evaluates to TRUE, if there are no submits with the same
+        used Id and the same problem having status "OK",
+        "Partial solution" or "Accepted for testing" after the
+        current submit or the N'th submit. The predicate is
+        useful in OLYMPIAD contest for selecting the runs for
+        full testing.
+afterok[(N)]
+	Evaluates to TRUE, if there is a submit with the same
+        user Id and the same problem having status "OK" before
+        the current submit of the N'th submit. The predicate is
+        useful in ACM, KIROV, MOSCOW contests for selecting the
+        submits which do not affect the current results, or vice
+        versa, for selecting the submits, affecting the current
+        results.
+
+The "shadow" full testing is completely implemented for OLYMPIAD
+contests. When the contest operates in `accepting' mode, the
+contest administrator may fully test either a particular submit
+(the "Full rejudge" command in the submit status change menu),
+or fully test the selected set of submits (using the "Full
+rejudge displayed runs" command). The selected submits are
+tested on the complete set of tests rather than on the accepting
+set of tests. The results of testing are available to the
+contest administrator and the contest judges and are shown in
+the privileged table of results. The fully tested submit need
+not be retested after the contest is over. Thus, even during the
+OLYMPIAD contest it is possible to accumulate the results, which
+became final results as soon as the contest ends. During the
+contest while the contest works in the `accepting' mode, the
+participants have access only to the information about the
+acceptance testing, even if the full information is already
+available. The full information will be available to the
+participants as soon as the contest is switched to the `testing'
+mode.
+
+The full "shadow" testing is performed with a lower priority,
+than the acceptance testing, so the participants submits will be
+processed for the acceptance testing as soon as possible.
+However, the current version of the `ejudge' system does not
+support testing on one test separately from the other tests,
+i. e. a submit is fully tested on all the test before the
+`ejudge' can proceed to the next submit. So, if the full testing
+takes considerable time, this may create the queue of submits
+for acceptance testing.
+
+serve, master
+-------------
+Support for the "Full rejudge displayed runs" command is added
+for the "shadow" full testing of the submits in the OLYMPIAD
+contests in the `acceptance' mode.
+
+run
+---
+Two new global configuration variables are added to the
+`serve.cfg' configuration file: skip_accept_testing,
+skip_full_testing. If the first variable is set to non-zero
+value, the `run' program will ignore all acceptance testing
+requests for the OLYMPIAD contests. If the second variable is
+set, the `run' program will ignore all full testing requests for
+the OLYMPIAD contests.
+
+Requests are ignored correctly now. The ignored requests do not
+cause infinite loop in the `run', if the affecting packets are
+not removed from the spool directory. The `QUIT' packet (forced
+quit) packet now has the highest priority. The `QUIT' packet is
+written back to the spool directory, if the `run' program works
+in unmanaged mode.
+
+capexec, libdropcaps.so
+-----------------------
+Fixes for the 2.6.* Linux kernel.
+
+serve, team
+-----------
+A new global configuration variable `disable_failed_test_view'
+is added to the `serve.cfg' configuration file. If this variable
+is set to 1, the failed test number is not shown on the
+participant's personal page. This variable works only for ACM
+and MOSCOW contests.
+
+serve-control, super-serve
+--------------------------
+Editing of the new global configuration variable
+`disable_failed_test_view' of the `serve.cfg' file is
+supported.
+
 Version 2.1.45 (20060121)
 =========================
 

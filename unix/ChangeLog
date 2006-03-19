@@ -1,3 +1,14 @@
+2006-02-25  Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.c: copyright notice is updated;
+	(scan_dir_add_ignored) new function to add a file name to the list
+	  of ignored files;
+	(scan_dir) the list of ignored files is supported.
+
+2005-11-25  Alexander Chernov  <cher@ispras.ru>
+
+	* full_archive.c: "errlog.h" is included.
+
 2005-11-25  Alexander Chernov  <cher@ispras.ru>
 
 	* fileutl.c: "errlog.h" is included.
