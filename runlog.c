@@ -1143,7 +1143,7 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
     f = 1;
   }
   if ((mask&RUN_ENTRY_SHA1) && memcmp(te.sha1,in->sha1,sizeof(te.sha1))) {
-    memcmp(te.sha1, in->sha1, sizeof(te.sha1));
+    memcpy(te.sha1, in->sha1, sizeof(te.sha1));
     f = 1;
   }
   if ((mask & RUN_ENTRY_USER) && te.team != in->team) {
