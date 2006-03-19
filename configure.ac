@@ -351,11 +351,15 @@ fi
 dnl compiler warning checking
 saved_CC="${CC}"
 AC_MSG_CHECKING([for annoying gcc warnings])
-CC="${CC} -Werror"
+CC="${CC} -Wall -Werror"
 AC_COMPILE_IFELSE([[
+#include <string.h>
+#include <stdio.h>
 int main(void)
 {
   unsigned char *str = "zzz";
+  int v = strlen(str);
+  printf("%d\n", v);
   return 0;
 }
 ]],[
