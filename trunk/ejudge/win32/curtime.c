@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,9 +17,17 @@
 
 #include "curtime.h"
 
+#include <time.h>
+#include <windows.h>
+
 void
 get_current_time(int *p_sec, int *p_usec)
 {
-  if (p_sec) *p_sec = 0;
-  if (p_usec) *p_usec = 0;
+  time_t t1;
+  SYSTEMTIME t2;
+
+  time(&t1);
+  GetSystemTime(&t2);
+  if (p_sec) *p_sec = t1;
+  if (p_usec) *p_usec = t2.wMilliseconds * 1000;
 }
