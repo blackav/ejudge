@@ -1,3 +1,210 @@
+2006-03-19  Alexander Chernov  <cher@ispras.ru>
+
+	* super_html_3.c: (super_html_edit_global_parameters) editing of
+	  `disable_failed_test_view' is supported;
+	(super_html_global_param) `disable_failed_test_view' is supported.
+
+	* super_proto.h:
+	SSERV_CMD_GLOB_CHANGE_DISABLE_FAILED_TEST_VIEW is added.
+
+	* super_actions.h:
+	SUPER_ACTION_GLOB_CHANGE_DISABLE_FAILED_TEST_VIEW added.
+
+	* super-serve.c:
+	(cmd_set_value) SSERV_CMD_GLOB_CHANGE_DISABLE_FAILED_TEST_VIEW
+	  is handled.
+
+	* serve-control.c:
+	SUPER_ACTION_GLOB_CHANGE_DISABLE_FAILED_TEST_VIEW is handled.
+
+	* runlog.c:
+	(run_set_entry) an stupid unnoticed bug (memcmp instead of memcpy)
+	  is fixed.
+
+	* run.c: (prepare_checker_comment) a GCC warning is fixed.
+
+	* prepare_out.c:
+	(prepare_unparse_global) `disable_failed_test_view' is handled.
+
+	* prepare_dflt.h: DFLT_G_DISABLE_FAILED_TEST_VIEW is added.
+
+	* prepare.h:
+	(struct section_global_data) `disable_failed_test_view' is added.
+
+	* prepare.c:
+	`disable_failed_test_view' global configuration variable is added;
+	(global_init_func) `disable_failed_test_view' is initialized;
+	(set_defaults) `disable_failed_test_view' is handled;
+	(prepare_set_global_defaults) `disable_failed_test_view' is handled;
+	(prepare_new_global_section) `disable_failed_test_view' is handled.
+
+	* master.c: (action_issue_warning) a GCC warning is fixed.
+
+	* html.c: (write_html_run_status) global configuration variable
+	  `disable_failed_test_view' is supported;
+	(write_user_problems_summary) the same as above.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* configure.ac: checking for annoying gcc warnings is improved.
+
+2006-03-18  Alexander Chernov  <cher@ispras.ru>
+
+	* parsecfg.c: copyright notice is updated;
+	(sarray_unparse) function is moved to parsecfg_2.c;
+	(sarray_unparse_2) the same as above.
+
+	* files.make: full_archive.c is made arch-dependant;
+	parsecfg_2.c is added.
+
+	* Makefile.win32.in: many additions
+
+	* Makefile.unix.in: (libcommon.a) $(ARCH)/full_archive.o is added.
+
+	* parsecfg_2.c: initial revision
+
+2006-03-17  Alexander Chernov  <cher@ispras.ru>
+
+	* configure.ac: added check for zlib and ncurses
+
+2006-03-03  Alexander Chernov  <cher@ispras.ru>
+
+	* INSTALL, INSTALL.RUS, cher-configure: *** empty log message ***
+
+2006-02-27  Alexander Chernov  <cher@ispras.ru>
+
+	* master_html.c:
+	(write_xml_testing_report) incorrect handling of `error' field
+	  is fixed.
+
+2006-02-25  Alexander Chernov  <cher@ispras.ru>
+
+	* run.c:
+	(do_loop) the ignored QUIT packet is written back to the spool
+	  directory.
+
+	* prepare_out.c:
+	(prepare_unparse_unhandled_global) support for new variables
+	  `skip_full_testing', `skip_accept_testing' is added.
+
+	* prepare.h: (struct section_global_data) fields `skip_full_testing',
+	  `skip_accept_testing' are added.
+
+	* prepare.c:
+	global variables `skip_full_testing', `skip_accept_testing' are
+	added.
+
+	* fileutl.h: copyright notice is updated;
+	(scan_dir_add_ignored) new function prototype is added.
+
+	* run.c: copyright notice is updated;
+	(do_loop) the ignored files are added to the list of ignored files.
+
+2006-02-20  Alexander Chernov  <cher@ispras.ru>
+
+	* TODO, INSTALL, INSTALL.RUS: *** empty log message ***
+
+2006-02-13  Alexander Chernov  <cher@ispras.ru>
+
+	* client_actions.h: copyright notice is updated;
+	new actions added: ACTION_FULL_REJUDGE_DISPLAYED_1,
+	  ACTION_FULL_REJUDGE_DISPLAYED_2.
+
+	* filter_eval.c: copyright notice is updated;
+	(is_latest) a new function, which checks whether the given run
+	  is the latest run for the specified user/problem pair;
+	(is_afterok) a new function, which checks whether there is
+	  a previous OK run for the specified user/problem pair;
+	(do_eval) "latest", "curlatest", "afterok", "curafterok"
+	  predicates are supported.
+
+	* filter_expr.y: copyright notice is updated;
+	new predicates are supported: "latest", "curlatest", "afterok",
+	  "curafterok".
+
+	* filter_scan.lex: copyright notice is updated;
+	new tokens added: "latest", "curlatest", "afterok", "curafterok".
+
+	* html.c:
+	(write_user_problems_summary) in olympiad accepting mode only
+	  information about accepted/not accepted status is displayed
+	  even if the full judging information is available;
+	(new_write_user_runs) the same as above;
+	(do_write_kirov_standings) score calculation in the olympiad
+	  mode is changed: only the latest run is considered;
+	(write_xml_team_accepting_report) a new function, shows only
+	  accepted/not accepted information and the related test
+	  information in the judge protocol to the user in the
+	  olympiad accepting mode;
+	(new_write_user_report_view) `write_xml_team_accepting_report'
+	  is called in the olympiad accepting mode;
+	(write_team_page) call of `new_write_user_runs' is updated;
+
+	* html.h: (new_write_user_runs) `accepting_mode' parameter is added;
+	(new_write_user_report_view) `accepting_mode' parameter is added.
+
+	* master.c: copyright notice is updated;
+	(confirm_rejudge_displayed) new parameters `cur_action', `next_action'
+	  are added, so "Full rejudge displayed runs" is handled;
+	(action_rejudge_displayed) new parameter `cmd' is added;
+	(main) call of `confirm_rejudge_displayed' is updated;
+	  call of `action_rejudge_displayed' is updated;
+	  actions ACTION_FULL_REJUDGE_DISPLAYED_1,
+	  ACTION_FULL_REJUDGE_DISPLAYED_2 are handled.
+
+	* master_html.c:
+	(write_priv_all_runs) "Full rejudge displayed runs" button is added;
+	(write_priv_standings) `accepting_mode' is always passed as 0
+	  to `do_write_kirov_standings'.
+
+	* protocol.h: SRV_CMD_FULL_REJUDGE_BY_MASK command is added.
+
+	* serve.c:
+	(cmd_view) only acceptance tests can be viewed in olympiad accepting
+	  mode if full judge protocol viewing is enabled;
+	  `accepting_mode' flag is passed to `new_write_user_report_view';
+	(struct compile_run_extra) `priority_adjustment' field is added;
+	(queue_compile_request) `priority_adjustment' parameter is added;
+	(cmd_priv_submit_run) call of `queue_compile_request' is updated;
+	(do_submit_run) call of `queue_compile_request' is updated;
+	(cmd_rejudge_by_mask) `SRV_CMD_FULL_REJUDGE_BY_MASK' is handled;
+	  priority is adjusted by 10 in this case;
+	  call of `do_rejudge_by_mask' is updated;
+	(rejudge_run) `priority_adjustment' parameter is added;
+	  call of `queue_compile_request' is updated;
+	(cmd_edit_run) call of `rejudge_run' is updated;
+	(read_compile_packet) field `priority_adjustment' of the
+	  `struct compile_run_extra' is used;
+	(do_rejudge_all) call of `rejudge_run' is updated;
+	(do_judge_suspended) call of `rejudge_run' is updated;
+	(do_rejudge_problem) call of `rejudge_run' is updated;
+	(do_rejudge_by_mask) `priority_adjustment' parameter is added;
+	  call of `rejudge_run' is updated.
+
+	* super_html_2.c:
+	(super_html_set_contest_var) compilation warning is fixed.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2006-02-07  Alexander Chernov  <cher@ispras.ru>
+
+	* slice-userlist.c: copyright notice is updated;
+	(main) the version banner is printed to the stderr instead of stdout.
+
+2006-02-06  Alexander Chernov  <cher@ispras.ru>
+
+	* super_html_2.c:
+	(super_html_set_contest_var) a newly created access node is linked
+	  to the XML tree. This fixes a crash when an access rule is edited
+	  twice in a row.
+
+	* serve.c:
+	(cmd_view) SRV_CMD_VIEW_TEST_* check permission themselves, so
+	  need_priv_check is set to 0.
+
+	* configure.ac: copyright notice is updated;
+	--with-g++ is renamed to --with-gpp.
+
 2006-01-21  Alexander Chernov  <cher@ispras.ru>
 
 	* clntutil.c:

@@ -1,3 +1,9 @@
+2006-02-13  Alexander Chernov  <cher@ispras.ru>
+
+	* rejudge_by_mask.c: copyright notice is updated;
+	(serve_clnt_rejudge_by_mask) check for valid value of `cmd'
+	  is removed.
+
 2005-12-02  Alexander Chernov  <cher@ispras.ru>
 
 	* submit_run_2.c: initial revision
