@@ -241,6 +241,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "disable_submit_after_ok", global->disable_submit_after_ok);
   if (global->ignore_compile_errors != DFLT_G_IGNORE_COMPILE_ERRORS)
     unparse_bool(f, "ignore_compile_errors", global->ignore_compile_errors);
+  if (global->disable_failed_test_view > 0)
+    unparse_bool(f,"disable_failed_test_view",global->disable_failed_test_view);
   if (global->ignore_duplicated_runs != DFLT_G_IGNORE_DUPLICATED_RUNS)
     unparse_bool(f, "ignore_duplicated_runs", global->ignore_duplicated_runs);
   if (global->show_deadline != DFLT_G_SHOW_DEADLINE)
