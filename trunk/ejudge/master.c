@@ -1399,7 +1399,7 @@ action_issue_warning(void)
       || user_id <= 0 || user_id > 100000) goto invalid_operation;
 
   if (!(txt = cgi_param("warn_text"))) goto invalid_operation;
-  for (s = txt; *s && isspace(*s); *s++);
+  for (s = txt; *s && isspace(*s); s++);
   if (!*s) goto invalid_operation;
   buf = (unsigned char*) alloca(strlen(txt) + 1);
   for (s = txt, p = buf; *s; s++)
