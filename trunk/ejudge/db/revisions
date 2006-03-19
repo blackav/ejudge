@@ -2595,3 +2595,16 @@ win32/cr_serialize.c 1 4 121109
 win32/curtime.c 1 2 72544
 win32/timestamp.c 1 3 215601
 win32/full_archive.c 1 2 464286
+prepare.h 1 84 2382600
+prepare_dflt.h 1 4 404316
+super_actions.h 1 24 1530892
+super_proto.h 1 25 1511154
+master.c 1 74 7132120
+run.c 1 86 5135534
+serve-control.c 1 26 10331798
+super-serve.c 1 37 10844280
+html.c 1 78 12287584
+prepare.c 1 111 11443968
+prepare_out.c 1 23 5222763
+runlog.c 1 47 4555793
+super_html_3.c 1 28 19460170
