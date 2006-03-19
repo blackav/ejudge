@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -15,6 +15,8 @@
  * Lesser General Public License for more details.
  */
 
+#include "settings.h"
+
 #include "fileutl.h"
 #include "pathutl.h"
 #include "errlog.h"
@@ -25,6 +27,7 @@
 
 #include <stdio.h>
 #include <windows.h>
+#include <malloc.h>
 
 void
 get_uniq_prefix(char *prefix)
@@ -32,10 +35,55 @@ get_uniq_prefix(char *prefix)
   sprintf(prefix, "%lu_%s_", GetCurrentProcessId(), os_NodeName());
 }
 
+struct ignored_items
+{
+  unsigned char *dir;
+  size_t a, u;
+  unsigned char **items;
+};
+static struct ignored_items *ign;
+static size_t ign_a, ign_u;
+
 void
 scan_dir_add_ignored(const unsigned char *dir, const unsigned char *filename)
 {
+  int i;
+  struct ignored_items *cur_ign = 0;
+
+  if (!dir || !*dir) return;
+  for (i = 0; i < ign_u; i++)
+    if (!strcmp(dir, ign[i].dir))
+      break;
+  if (i == ign_u) {
+    if (ign_u == ign_a) {
+      if (!ign_a) ign_a = 4;
+      ign_a *= 2;
+      XREALLOC(ign, ign_a);
+    }
+    memset(&ign[ign_u], 0, sizeof(ign[0]));
+    ign[ign_u++].dir = xstrdup(dir);
+  }
+  cur_ign = &ign[i];
+
+  if (!filename || !*filename) return;
+  for (i = 0; i < cur_ign->u; i++)
+    if (!strcmp(filename, cur_ign->items[i]))
+      return;
+
+  if (cur_ign->u == cur_ign->a) {
+    if (!cur_ign->a) cur_ign->a = 8;
+    cur_ign->a *= 2;
+    XREALLOC(cur_ign->items, cur_ign->a);
+  }
+  cur_ign->items[cur_ign->u++] = xstrdup(filename);
 }
+
+struct q_dir_entry
+{
+  unsigned char *name;
+  signed char    prio;
+  unsigned char  ign;
+};
 
 /* scans 'dir' directory and returns the filename found */
 int
@@ -45,7 +93,19 @@ scan_dir(char const *partial_path, char *found_item)
   path_t          dir_path;
   HANDLE          sh;
   WIN32_FIND_DATA result;
-  int             b;
+  int             b, i, got_quit = 0, prio, found = 0, j;
+  struct ignored_items *cur_ign = 0;
+  unsigned char *del_map = 0;
+  unsigned char *items[32];
+
+  for (i = 0; i < ign_u; i++)
+    if (!strcmp(partial_path, ign[i].dir))
+      break;
+  if (i < ign_u) cur_ign = &ign[i];
+
+  if (cur_ign && cur_ign->u > 0) {
+    XALLOCAZ(del_map, cur_ign->u);
+  }
 
   pathcpy(dir_path, partial_path);
   pathcat(dir_path, "\\dir");
@@ -60,18 +120,74 @@ scan_dir(char const *partial_path, char *found_item)
   }
 
   while ((b = FindNextFile(sh, &result))) {
-    if (strcmp(result.cFileName, ".") && strcmp(result.cFileName, ".."))
-      break;
+    if (!strcmp(result.cFileName, ".") || !strcmp(result.cFileName, ".."))
+      continue;
+
+	if (cur_ign) {
+      for (i = 0; i < cur_ign->u; i++)
+        if (!strcmp(cur_ign->items[i], result.cFileName))
+          break;
+      if (i < cur_ign->u) {
+        del_map[i] = 1;
+        continue;
+      }
+    }
+
+    if (!strcmp("QUIT", result.cFileName)) {
+      got_quit = 1;
+      continue;
+    }
+
+    if (strlen(result.cFileName) != SERVE_PACKET_NAME_SIZE - 1) {
+      prio = 0;
+    } else if (result.cFileName[0] >= '0' && result.cFileName[0] <= '9') {
+      prio = -16 + (result.cFileName[0] - '0');
+    } else if (result.cFileName[0] >= 'A' && result.cFileName[0] <= 'V') {
+      prio = -6 + (result.cFileName[0] - 'A');
+    } else {
+      prio = 0;
+    }
+    if (prio < -16) prio = -16;
+    if (prio > 15) prio = 15;
+    prio += 16;
+    if (items[prio]) continue;
+
+    items[prio] = (unsigned char*) alloca(strlen(result.cFileName) + 1);
+    strcpy(items[prio], result.cFileName);
+    found++;
   }
-  if (!b) {
-    FindClose(sh);
-    return 0;
+  FindClose(sh);
+
+  // cleanup ignored files
+  if (cur_ign) {
+    for (j = 0; j < cur_ign->u && del_map[j]; j++);
+    for (i = j; i < cur_ign->u; i++) {
+      if (del_map[i]) {
+        cur_ign->items[j++] = cur_ign->items[i];
+      } else {
+        xfree(cur_ign->items[i]);
+      }
+    }
+    cur_ign->u = j;
   }
 
-  pathcpy(found_item, result.cFileName);
-  write_log(0, LOG_INFO, "found '%s'", found_item);
-  FindClose(sh);
-  return 1;
+  if (got_quit) {
+    pathcpy(found_item, "QUIT");
+    info("scan_dir: found QUIT packet");
+    return 1;
+  }
+
+  if (!found) return 0;
+
+  for (i = 0; i < 32; i++) {
+    if (items[i]) {
+      pathcpy(found_item, items[i]);
+      info("scan_dir: found '%s' (priority %d)", found_item, i - 16);
+      return 1;
+    }
+  }
+  err("scan_dir: found == %d, but no items found!!!", found);
+  return 0;
 }
 
 int
