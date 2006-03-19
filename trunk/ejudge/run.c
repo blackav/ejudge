@@ -172,7 +172,7 @@ prepare_checker_comment(const unsigned char *str)
   unsigned char *wstr = alloca(len + 1), *p;
 
   strcpy(wstr, str);
-  for (p = wstr; *p; *p++)
+  for (p = wstr; *p; p++)
     if (*p < ' ') *p = ' ';
   for (--p; p >= wstr && *p == ' '; *p-- = 0);
   if (p - wstr > 64) {
