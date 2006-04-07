@@ -2669,6 +2669,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CLEAR_CHECKER_ENV:
   case SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ:
   case SSERV_CMD_PROB_CLEAR_LANG_TIME_ADJ:
+  case SSERV_CMD_PROB_CHANGE_TEST_SETS:
+  case SSERV_CMD_PROB_CLEAR_TEST_SETS:
   case SSERV_CMD_PROB_CHANGE_START_DATE:
   case SSERV_CMD_PROB_CLEAR_START_DATE:
   case SSERV_CMD_PROB_CHANGE_DEADLINE:
@@ -3159,6 +3161,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CLEAR_CHECKER_ENV] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_LANG_TIME_ADJ] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_LANG_TIME_ADJ] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_TEST_SETS] = { cmd_set_value },
+  [SSERV_CMD_PROB_CLEAR_TEST_SETS] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_START_DATE] = { cmd_set_value },
   [SSERV_CMD_PROB_CLEAR_START_DATE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_DEADLINE] = { cmd_set_value },
