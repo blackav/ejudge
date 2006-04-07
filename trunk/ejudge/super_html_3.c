@@ -3106,6 +3106,7 @@ static struct std_checker_info std_checkers[] =
   { "cmp_unsigned_int_seq", "compare two sequences of unsigned ints (32 bit)" },
   { "cmp_unsigned_long_long", "compare two unsigned long longs (64 bit)" },
   { "cmp_unsigned_long_long_seq", "compare two sequences of unsigned long longs (64 bit)" },
+  { "cmp_huge_int", "compare two arbitrarily long ints" },
   { "cmp_double", "compare two doubles (EPS env. var is required)" },
   { "cmp_double_seq", "compare two sequences of doubles (EPS is required)" },
   { "cmp_long_double", "compare two long doubles (EPS is required)" },
@@ -4013,24 +4014,26 @@ super_html_print_problem(FILE *f,
                           session_id, form_row_attrs[row ^= 1],
                           self_url, extra_args, prob_hidden_vars);
 
-    //PROBLEM_PARAM(run_penalty, "d"),
-    extra_msg = "";
-    if (prob->run_penalty == -1) {
-      if (prob->abstract) {
-        extra_msg = "<i>(Undefined)</i>";
-      } else {
-        prepare_set_prob_value(PREPARE_FIELD_PROB_RUN_PENALTY,
-                               &tmp_prob, sup_prob, sstate->global);
-        snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
-                 tmp_prob.run_penalty);
-        extra_msg = msg_buf;
+    if (sstate->global->score_system_val == SCORE_KIROV) {
+      //PROBLEM_PARAM(run_penalty, "d"),
+      extra_msg = "";
+      if (prob->run_penalty == -1) {
+        if (prob->abstract) {
+          extra_msg = "<i>(Undefined)</i>";
+        } else {
+          prepare_set_prob_value(PREPARE_FIELD_PROB_RUN_PENALTY,
+                                 &tmp_prob, sup_prob, sstate->global);
+          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
+                   tmp_prob.run_penalty);
+          extra_msg = msg_buf;
+        }
       }
+      print_int_editing_row(f, "Penalty for a submission:",
+                            prob->run_penalty, extra_msg,
+                            SUPER_ACTION_PROB_CHANGE_RUN_PENALTY,
+                            session_id, form_row_attrs[row ^= 1],
+                            self_url, extra_args, prob_hidden_vars);
     }
-    print_int_editing_row(f, "Penalty for a submission:",
-                          prob->run_penalty, extra_msg,
-                          SUPER_ACTION_PROB_CHANGE_RUN_PENALTY,
-                          session_id, form_row_attrs[row ^= 1],
-                          self_url, extra_args, prob_hidden_vars);
 
     //PROBLEM_PARAM(disqualified_penalty, "d"),
     extra_msg = "";
@@ -4068,6 +4071,27 @@ super_html_print_problem(FILE *f,
                              0,
                              session_id, form_row_attrs[row ^= 1],
                              self_url, extra_args, prob_hidden_vars);
+  }
+
+  if (sstate->global
+      && (sstate->global->score_system_val == SCORE_KIROV
+          || sstate->global->score_system_val == SCORE_OLYMPIAD)
+      && !prob->abstract
+      && show_adv) {
+    if (!prob->test_sets || !prob->test_sets[0]) {
+      extra_msg = "(not set)";
+      checker_env = xstrdup("");
+    } else {
+      extra_msg = "";
+      checker_env = sarray_unparse_2(prob->test_sets);
+    }
+    print_string_editing_row_3(f, "Specially scored test sets:", checker_env,
+                               SUPER_ACTION_PROB_CHANGE_TEST_SETS,
+                               SUPER_ACTION_PROB_CLEAR_TEST_SETS,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+    xfree(checker_env);
   }
 
   //PROBLEM_PARAM(score_bonus, "s"),
@@ -4897,6 +4921,18 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CLEAR_LANG_TIME_ADJ:
     sarray_free(prob->lang_time_adj);
     prob->lang_time_adj = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_TEST_SETS:
+    if (sarray_parse_2(param2, &tmp_env) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sarray_free(prob->test_sets);
+    prob->test_sets = tmp_env;
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_TEST_SETS:
+    sarray_free(prob->test_sets);
+    prob->test_sets = 0;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_START_DATE:
@@ -6122,7 +6158,8 @@ recompile_checker(FILE *f, const unsigned char *checker_path)
 {
   struct stat stbuf1, stbuf2;
   path_t checker_src;
-  int need_recompile = 0;
+  path_t checker_obj;
+  int need_recompile = 0, retcode = 0;
   path_t cmd;
   path_t check_dir;
   path_t filename;
@@ -6146,12 +6183,14 @@ recompile_checker(FILE *f, const unsigned char *checker_path)
     lang_ind = i;
   }
   if (lang_ind < 0) {
-    fprintf(f, "Error: no source file for a checker\n");
-    return -1;
+    fprintf(f, "Warning: no source file or unsupported language for a checker\n");
+    return 0;
   }
 
   snprintf(checker_src, sizeof(checker_src), "%s%s", checker_path,
            supported_suffixes[lang_ind]);
+  // FIXME: make configurable object file suffix
+  snprintf(checker_obj, sizeof(checker_obj), "%s.o", checker_path);
   if (stat(checker_path, &stbuf1) < 0) {
     fprintf(f, "Warning: checker %s does not exist\n", checker_path);
     if (stat(checker_src, &stbuf2) < 0) {
@@ -6168,7 +6207,6 @@ recompile_checker(FILE *f, const unsigned char *checker_path)
   }
   if (!need_recompile) return 0;
 
-  /* Fixme: we need configurable compiler paths */
   os_rDirName(checker_path, check_dir, sizeof(check_dir));
   os_rGetBasename(checker_path, filename, sizeof(filename));
   snprintf(filename2, sizeof(filename2), "%s%s", filename,
@@ -6214,9 +6252,18 @@ recompile_checker(FILE *f, const unsigned char *checker_path)
     abort();
   }
 
+  // remove old executable and object file
+  unlink(checker_obj);
+  unlink(checker_path);
+
   fprintf(f, "Info: using command line %s\n", cmd);
-  if (invoke_compile_process(f, check_dir, cmd) < 0) return -1;
-  if (stat(checker_path, &stbuf1)) {
+  if ((retcode = invoke_compile_process(f, check_dir, cmd)) < 0) {
+    fprintf(f, "Error: failed to start the compiler\n");
+    return -1;
+  } else if (retcode > 0) {
+    fprintf(f, "Error: compiler exit code %d\n", retcode);
+    return -1;
+  } if (stat(checker_path, &stbuf1)) {
     fprintf(f, "Error: checker is not created by the compiler\n");
     return -1;
   } else {
@@ -6296,8 +6343,10 @@ check_test_score(FILE *flog, int ntests, int test_score, int full_score,
     sum += scores[i];
 
   if (sum > full_score) {
-    fprintf(flog, "Error: summ of all test scores (%d) is greater then full_score (%d)\n", sum, full_score);
+    fprintf(flog, "Error: summ of all test scores (%d) is greater than full_score (%d)\n", sum, full_score);
     return -1;
+  } else if (sum < full_score) {
+    fprintf(flog, "Warning: summ of all test scores (%d) is less than full_score (%d)\n", sum, full_score);
   }
 
   return 0;
@@ -6567,15 +6616,15 @@ super_html_check_tests(FILE *f,
       }
     }
 
-    if (tmp_prob.standard_checker[0]) continue;
-
-    if (prob->variant_num <= 0) {
-      if (recompile_checker(flog, checker_path) < 0) goto check_failed;
-    } else {
-      for (variant = 1; variant <= prob->variant_num; variant++) {
-        snprintf(v_checker_path, sizeof(v_checker_path), "%s-%d",
-                 checker_path, variant);
-        if (recompile_checker(flog, v_checker_path) < 0) goto check_failed;
+    if (!tmp_prob.standard_checker[0]) {
+      if (prob->variant_num <= 0) {
+        if (recompile_checker(flog, checker_path) < 0) goto check_failed;
+      } else {
+        for (variant = 1; variant <= prob->variant_num; variant++) {
+          snprintf(v_checker_path, sizeof(v_checker_path), "%s-%d",
+                   checker_path, variant);
+          if (recompile_checker(flog, v_checker_path) < 0) goto check_failed;
+        }
       }
     }
 
