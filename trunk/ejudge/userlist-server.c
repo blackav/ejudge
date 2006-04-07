@@ -3740,6 +3740,12 @@ cmd_remove_member(struct client_state *p, int pkt_len,
   u = userlist->user_map[p->user_id];
   ASSERT(u);
 
+  if (u->read_only) {
+    err("%s -> user cannot be modified", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
   if (data->role_id < 0 || data->role_id >= CONTEST_LAST_MEMBER) {
     err("%s -> invalid role", logbuf);
     send_reply(p, -ULS_ERR_BAD_MEMBER);
