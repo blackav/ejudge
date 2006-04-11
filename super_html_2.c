@@ -990,10 +990,11 @@ super_html_commit_contest(FILE *f,
   path_t diff_cmdline;
   unsigned char *diff_str = 0, *vcs_str = 0;
   int vcs_add_flag = 0, serve_vcs_add_flag = 0;
-  int need_variant_map = 0, vmap_vcs_add_flag = 0;
+  int need_variant_map = 0, vmap_vcs_add_flag = 0, uid;
   char *vmap_txt = 0;
   size_t vmap_size = 0;
   FILE *vmap_f = 0;
+  struct opcap_list_item *capp;
 
   if (!cnts) {
     return super_html_report_error(f, session_id, self_url, extra_args,
@@ -1369,6 +1370,31 @@ super_html_commit_contest(FILE *f,
     xfree(vcs_str); vcs_str = 0;
   }
 
+  // FIXME: register and make invisible all the privileged users
+  if (cnts && cnts->caps_node) {
+    capp = (struct opcap_list_item*) cnts->caps_node->first_down;
+
+    for (; capp; capp = (struct opcap_list_item*) capp->b.right) {
+      if ((i = userlist_clnt_lookup_user(us_conn, capp->login, &uid, NULL)) != ULS_LOGIN_OK) {
+        fprintf(flog, "Error: cannot find user \"%s\": %s\n", capp->login,
+                userlist_strerror(-i));
+        continue;
+      }
+      if ((i = userlist_clnt_register_contest(us_conn,ULS_PRIV_REGISTER_CONTEST,
+                                              uid, cnts->id)) < 0
+          || (i = userlist_clnt_change_registration(us_conn, uid, cnts->id,
+                                                    USERLIST_REG_OK, 0, 0)) < 0
+          || (i = userlist_clnt_change_registration(us_conn,uid,cnts->id,-1, 1,
+                                                    USERLIST_UC_INVISIBLE))<0) {
+        fprintf(flog, "Error: failed to register user %s (%d) for contest %d: %s\n", capp->login, uid, cnts->id, userlist_strerror(-i));
+        continue;
+      }
+      fprintf(flog, "user %s (%d) is registered for contest %d\n",
+              capp->login, uid, cnts->id);
+    }
+  }
+
+  /*
   if ((i = userlist_clnt_register_contest(us_conn, ULS_PRIV_REGISTER_CONTEST,
                                           user_id, cnts->id)) < 0
       || (i = userlist_clnt_change_registration(us_conn, user_id, cnts->id,
@@ -1379,6 +1405,7 @@ super_html_commit_contest(FILE *f,
     fprintf(flog, "user %s (%d) is registered for contest %d\n",
             login, user_id, cnts->id);
   }
+  */
 
   // start serve and create all the necessary dirs
   snprintf(var_path, sizeof(var_path), "%s/var", cnts->root_dir);
