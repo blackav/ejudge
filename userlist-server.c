@@ -6127,6 +6127,96 @@ cmd_user_op(struct client_state *p,
   send_reply(p, ULS_OK);
 }
 
+static void
+cmd_lookup_user(struct client_state *p,
+                int pkt_len,
+                struct userlist_pk_do_login *data)
+{
+  struct userlist_pk_login_ok *out;
+  size_t l, out_size, login_len, name_len;
+  unsigned char logbuf[1024];
+  unsigned char *login_ptr, *passwd_ptr, *name_ptr;
+  struct userlist_user *u = 0;
+  userlist_login_hash_t login_hash;
+  int i;
+
+  if (pkt_len < sizeof(*data)) {
+    CONN_BAD("packet length is too small: %d, must be >= %zu",
+             pkt_len, sizeof(*data));
+    return;
+  }
+  login_ptr = data->data;
+  if ((l = strlen(login_ptr)) != data->login_length) {
+    CONN_BAD("login length mismatch: %zu instead of %d", l, data->login_length);
+    return;
+  }
+  passwd_ptr = login_ptr + data->login_length + 1;
+  if ((l = strlen(passwd_ptr)) != data->password_length) {
+    CONN_BAD("password length mismatch: %zu instead of %d",
+             l, data->password_length);
+    return;
+  }
+  if (pkt_len != (l = sizeof(*data)+data->login_length+data->password_length)) {
+    CONN_BAD("packet length mismatch: %zu instead of %d", l, pkt_len);
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf), "LOOKUP_USER: %s", data->data);
+
+  if (p->user_id < 0) {
+    err("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+  if (is_db_capable(p, OPCAP_LIST_ALL_USERS, logbuf)) return;
+
+  if (data->login_length <= 0) {
+    err("%s -> EMPTY LOGIN", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+  if (userlist->login_hash_table) {
+    login_hash = userlist_login_hash(login_ptr);
+    i = login_hash % userlist->login_hash_size;
+    while (1) {
+      if (!(u = userlist->login_hash_table[i])) break;
+      if (u->login_hash == login_hash && !strcmp(u->login, login_ptr))
+        break;
+      i = (i + userlist->login_hash_step) % userlist->login_hash_size;
+    }
+  } else {
+    for (i = 1; i < userlist->user_map_size; i++) {
+      if (!(u = userlist->user_map[i])) continue;
+      if (!strcmp(u->login, login_ptr)) break;
+    }
+    if (i >= userlist->user_map_size) u = 0;
+  }
+
+  if (!u) {
+    err("%s -> NO SUCH USER", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+
+  login_len = strlen(u->login);
+  name_len = 0;
+  if (u->name) name_len = strlen(u->name);
+  out_size = sizeof(*out) + login_len + name_len;
+  out = (struct userlist_pk_login_ok*) alloca(out_size);
+  memset(out, 0, out_size);
+  login_ptr = out->data;
+  name_ptr = login_ptr + login_len + 1;
+
+  out->reply_id = ULS_LOGIN_OK;
+  out->user_id = u->id;
+  out->login_len = login_len;
+  out->name_len = name_len;
+  strcpy(login_ptr, u->login);
+  strcpy(name_ptr, u->name);
+  enqueue_reply_to_client(p, out_size, out);
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW]            cmd_register_new,
@@ -6170,6 +6260,7 @@ static void (*cmd_table[])() =
   [ULS_COPY_TO_TEAM]            cmd_user_op,
   [ULS_COPY_TO_REGISTER]        cmd_user_op,
   [ULS_FIX_PASSWORD]            cmd_user_op,
+  [ULS_LOOKUP_USER]             cmd_lookup_user,
 
   [ULS_LAST_CMD] 0
 };
