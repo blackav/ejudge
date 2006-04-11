@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1586,7 +1586,7 @@ main(int argc, char *argv[])
     printf("<li><a href=\"#clar\">%s</a>\n", _("Send a message to judges"));
   if (!server_clars_disabled && !server_clients_suspended)
     printf("<li><a href=\"#clarstat\">%s</a>\n", _("Messages from judges"));
-  if (!server_clients_suspended && !cur_contest->disable_team_password) {
+  if (!server_clients_suspended /*&& !cur_contest->disable_team_password*/) {
     printf("<li><a href=\"#chgpasswd\">%s</a>\n", _("Change password"));
   }
 #if CONF_HAS_LIBINTL - 0 == 1
@@ -1598,7 +1598,8 @@ main(int argc, char *argv[])
     printf("<li><a href=\"%s\" target=_blank>%s</a>\n",
            cur_contest->standings_url, _("Team standings"));
   }
-  if (!server_is_virtual && cur_contest->problems_url && server_start_time) {
+  if (server_always_show_problems ||
+      (!server_is_virtual && cur_contest->problems_url && server_start_time)) {
     printf("<li><a href=\"%s\" target=_blank>%s</a>\n",
            cur_contest->problems_url, _("Problems"));
   }
