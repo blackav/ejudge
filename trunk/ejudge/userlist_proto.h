@@ -4,7 +4,7 @@
 #ifndef __USERLIST_PROTO_H__
 #define __USERLIST_PROTO_H__
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -65,6 +65,7 @@ enum
     ULS_COPY_TO_TEAM,
     ULS_COPY_TO_REGISTER,
     ULS_FIX_PASSWORD,
+    ULS_LOOKUP_USER,
 
     ULS_LAST_CMD
   };
