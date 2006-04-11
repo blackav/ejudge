@@ -4,7 +4,7 @@
 #ifndef __USERLIST_CLNT_H__
 #define __USERLIST_CLNT_H__
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -73,6 +73,12 @@ userlist_clnt_team_login(struct userlist_clnt *clnt,
                          ej_cookie_t *p_cookie,
                          int *p_locale_id,
                          unsigned char **p_name);
+
+int
+userlist_clnt_lookup_user(struct userlist_clnt *clnt,
+                          unsigned char const *login,
+                          int *p_user_id,
+                          unsigned char **p_name);
 
 int
 userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
