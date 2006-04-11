@@ -2899,8 +2899,26 @@ super_html_edit_permission(FILE *f,
                         "action=%d", SUPER_ACTION_EDIT_CURRENT_CONTEST));
   html_submit_button(f, SUPER_ACTION_CNTS_SAVE_PERMISSIONS, "Save");
   fprintf(f, "</td></tr></table>\n");
-
   fprintf(f, "</form>\n");
+
+  // predefined permission sets
+  fprintf(f, "<h2>Predefined permission sets</h2>\n");
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  snprintf(hbuf, sizeof(hbuf), "%d", num);
+  html_hidden_var(f, "num", hbuf);
+  fprintf(f, "<table border=\"0\"><tr><td>");
+  fprintf(f, "<select name=\"param\">");
+  fprintf(f, "<option value=\"0\"></option>"
+          "<option value=\"1\">Observer</option>"
+          "<option value=\"2\">Judge</option>"
+          "<option value=\"3\">Full control</option>"
+          "</select></td><td>");
+  fprintf(f, "</select>");
+
+  html_submit_button(f, SUPER_ACTION_CNTS_SET_PREDEF_PERMISSIONS, "Set permissions");
+  fprintf(f, "</td></tr></table>");
+  fprintf(f, "</form>\n");
+
   return 0;
 }
 
