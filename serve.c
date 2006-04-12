@@ -387,6 +387,7 @@ update_status_file(int force_flag)
   status.continuation_enabled = global->enable_continue;
   status.printing_enabled = global->enable_printing;
   status.printing_suspended = printing_suspended;
+  status.always_show_problems = global->always_show_problems;
   if (status.start_time && status.duration && global->board_fog_time > 0
       && !status.is_virtual) {
     status.freeze_time = status.start_time + status.duration - global->board_fog_time;
