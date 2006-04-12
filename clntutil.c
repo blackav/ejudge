@@ -76,6 +76,7 @@ int    server_olympiad_judging_mode;
 int    server_continuation_enabled;
 int    server_printing_enabled;
 int    server_printing_suspended;
+int    server_always_show_problems;
 
 time_t client_cur_time;
 
@@ -345,6 +346,7 @@ client_check_server_status(char const *charset, char const *path, int lag,
   server_printing_enabled = status_v2.printing_enabled;
   server_printing_suspended = status_v2.printing_suspended;
   server_finish_time = status_v2.finish_time;
+  server_always_show_problems = status_v2.always_show_problems;
 
   if (lag > 0) {
     if (client_cur_time>=server_cur_time
