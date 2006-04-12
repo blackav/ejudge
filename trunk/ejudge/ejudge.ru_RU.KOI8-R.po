@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-03-25 12:19+0300\n"
+"POT-Creation-Date: 2006-04-09 08:55+0400\n"
 "PO-Revision-Date: 2006-01-21 14:29+0300\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -23,7 +23,7 @@ msgstr "Поле \"Электронный адрес\" содержит недопустимые символы"
 msgid "\"Login\" field contains invalid characters"
 msgstr "Поле \"Регистрационное имя\" содержит недопустимые символы"
 
-#: master.c:2564 misctext.c:308 misctext.c:310 serve.c:2767 team.c:937
+#: master.c:2564 misctext.c:308 misctext.c:310 serve.c:2768 team.c:937
 msgid "(no subject)"
 msgstr "(без темы)"
 
@@ -223,7 +223,7 @@ msgstr "<u>--- Ошибки ---</u>\n"
 msgid "Accepted for testing"
 msgstr "Принято на проверку"
 
-#: clntutil.c:245
+#: clntutil.c:246
 msgid "Access denied"
 msgstr "В доступе отказано"
 
@@ -343,15 +343,15 @@ msgstr "Невозможно удалить участника"
 msgid "Change"
 msgstr "Изменить"
 
-#: clntutil.c:494
+#: clntutil.c:496
 msgid "Change duration"
 msgstr "Изменить длительность"
 
-#: register.c:1016 register.c:1017 team.c:1594 team.c:1642 team.c:1654
+#: register.c:1016 register.c:1017 team.c:1594 team.c:1643 team.c:1655
 msgid "Change language"
 msgstr "Сменить язык"
 
-#: team.c:1590 team.c:1632
+#: team.c:1590 team.c:1633
 msgid "Change password"
 msgstr "Сменить пароль"
 
@@ -363,7 +363,7 @@ msgstr "Изменить результат"
 msgid "Change the password"
 msgstr "Сменить пароль"
 
-#: register.c:1006 register.c:2265 team.c:1635 team.c:1657
+#: register.c:1006 register.c:2265 team.c:1636 team.c:1658
 msgid "Change!"
 msgstr "Изменить!"
 
@@ -403,7 +403,7 @@ msgstr "Сбросить пароли участников!"
 msgid "Clear this entry"
 msgstr "Очистить эту запись"
 
-#: clntutil.c:441
+#: clntutil.c:443
 msgid "Client time"
 msgstr "Время клиента"
 
@@ -471,7 +471,7 @@ msgstr "ID"
 msgid "Contest is closed"
 msgstr "Турнир закрыт"
 
-#: clntutil.c:448
+#: clntutil.c:450
 msgid "Contest is not started"
 msgstr "Турнир не начался"
 
@@ -483,7 +483,7 @@ msgstr "Название турнира"
 msgid "Contest registrations"
 msgstr "Регистрация на турниры"
 
-#: clntutil.c:454 html.c:4529
+#: clntutil.c:456 html.c:4529
 msgid "Contest start time"
 msgstr "Время начала турнира"
 
@@ -507,7 +507,7 @@ msgstr "Основной участник"
 msgid "Contestants"
 msgstr "Основные участники"
 
-#: clntutil.c:461
+#: clntutil.c:463
 msgid "Continue"
 msgstr "Продолжить"
 
@@ -564,7 +564,7 @@ msgstr "База состояния"
 msgid "Dump users database"
 msgstr "База пользователей"
 
-#: clntutil.c:490 html.c:4526 master_html.c:2303
+#: clntutil.c:492 html.c:4526 master_html.c:2303
 msgid "Duration"
 msgstr "Продолжительность"
 
@@ -585,7 +585,7 @@ msgstr "Редактировать"
 msgid "Edit personal data"
 msgstr "Редактировать<br>личные данные"
 
-#: clntutil.c:528 html.c:4539
+#: clntutil.c:530 html.c:4539
 msgid "Elapsed time"
 msgstr "Прошедшее время"
 
@@ -593,11 +593,11 @@ msgstr "Прошедшее время"
 msgid "Empty"
 msgstr "не заполнено"
 
-#: clntutil.c:509 clntutil.c:514
+#: clntutil.c:511 clntutil.c:516
 msgid "End time"
 msgstr "Время окончания турнира"
 
-#: register.c:1019 team.c:659 team.c:1655
+#: register.c:1019 team.c:659 team.c:1656
 msgid "English"
 msgstr "Английский"
 
@@ -904,7 +904,7 @@ msgstr ""
 "В следующей строке введите имя, под которым Вы будете отображаться в таблице "
 "результатов, в списке зарегистрированных участников и т. д."
 
-#: clntutil.c:363
+#: clntutil.c:365
 msgid "Incompatible server"
 msgstr "Несовместимый сервер"
 
@@ -1191,7 +1191,7 @@ msgstr "НЕТ."
 msgid "Name"
 msgstr "Имя"
 
-#: team.c:1634
+#: team.c:1635
 msgid "New password"
 msgstr "Новый пароль"
 
@@ -1264,7 +1264,7 @@ msgstr "Число предупреждений"
 msgid "Not registered"
 msgstr "Не зарегистрированы"
 
-#: clntutil.c:470
+#: clntutil.c:472
 msgid "Not set"
 msgstr "Не установлено"
 
@@ -1305,7 +1305,7 @@ msgstr "Должность"
 msgid "Occupation (En)"
 msgstr "Должность (Англ.)"
 
-#: register.c:2261 team.c:1633
+#: register.c:2261 team.c:1634
 msgid "Old password"
 msgstr "Старый пароль"
 
@@ -1346,7 +1346,7 @@ msgstr "Прочее"
 msgid "Page"
 msgstr "Страница"
 
-#: register.c:3119 team.c:1670 users.c:795
+#: register.c:3119 team.c:1671 users.c:795
 msgid "Page generation time"
 msgstr "Время генерации страницы"
 
@@ -1362,11 +1362,11 @@ msgstr "Неполное решение"
 msgid "Participant"
 msgstr "Участник"
 
-#: clntutil.c:406
+#: clntutil.c:408
 msgid "Participants' solutions are being accepted"
 msgstr "Решения участников принимаются на проверку"
 
-#: clntutil.c:430
+#: clntutil.c:432
 msgid "Participants' solutions are being judged"
 msgstr "Решения участников проверяются"
 
@@ -1426,7 +1426,7 @@ msgstr "Телефон"
 msgid "Place"
 msgstr "Место"
 
-#: clntutil.c:475
+#: clntutil.c:477
 msgid "Planned start time"
 msgstr "Планируемое время начала турнира"
 
@@ -1474,7 +1474,7 @@ msgstr "Нажмите на кнопку \"Сохранить\" для сохранения изменений на сервере."
 msgid "Print"
 msgstr "Распечатать"
 
-#: clntutil.c:420
+#: clntutil.c:422
 msgid "Print requests are suspended"
 msgstr "Обработка запросов на печать приостановлена"
 
@@ -1495,7 +1495,7 @@ msgstr "Задача"
 msgid "Problem status summary"
 msgstr "Итог по задачам"
 
-#: team.c:1603
+#: team.c:1604
 msgid "Problems"
 msgstr "Задачи"
 
@@ -1610,7 +1610,7 @@ msgstr "Пересудить!"
 msgid "Reload server"
 msgstr "Перезапустить сервер"
 
-#: clntutil.c:536 html.c:4542
+#: clntutil.c:538 html.c:4542
 msgid "Remaining time"
 msgstr "Остающееся время"
 
@@ -1626,7 +1626,7 @@ msgstr "Удалить участника"
 msgid "Report view"
 msgstr "Просмотр протокола"
 
-#: clntutil.c:480
+#: clntutil.c:482
 msgid "Reschedule"
 msgstr "Назначить время"
 
@@ -1663,7 +1663,7 @@ msgstr "Разрешить печать решений"
 msgid "Resume testing"
 msgstr "Разрешить проверку решений"
 
-#: team.c:1634
+#: team.c:1635
 msgid "Retype new password"
 msgstr "Пароль ещё раз"
 
@@ -1687,7 +1687,7 @@ msgstr "Выполняется..."
 msgid "Runs being processed"
 msgstr "Обрабатываемые посылки"
 
-#: register.c:1020 team.c:660 team.c:1656
+#: register.c:1020 team.c:660 team.c:1657
 msgid "Russian"
 msgstr "Русский"
 
@@ -1695,7 +1695,7 @@ msgstr "Русский"
 msgid "Save"
 msgstr "Сохранить"
 
-#: clntutil.c:504
+#: clntutil.c:506
 msgid "Scheduled end time"
 msgstr "Запланированное время окончания"
 
@@ -1770,7 +1770,7 @@ msgstr "Отосланные решения"
 msgid "Serial No"
 msgstr "NN"
 
-#: clntutil.c:364
+#: clntutil.c:366
 msgid "Server configuration error."
 msgstr "Ошибка конфигурации сервера."
 
@@ -1778,7 +1778,7 @@ msgstr "Ошибка конфигурации сервера."
 msgid "Server error"
 msgstr "Ошибка сервера"
 
-#: clntutil.c:369 master.c:357 master.c:420 master.c:423 serve-control.c:447
+#: clntutil.c:371 master.c:357 master.c:420 master.c:423 serve-control.c:447
 #: serve-control.c:460 team.c:680 team.c:1425 team.c:1429
 msgid "Server is down"
 msgstr "Сервер не работает"
@@ -1787,23 +1787,23 @@ msgstr "Сервер не работает"
 msgid "Server is down."
 msgstr "Сервер не работает."
 
-#: clntutil.c:370
+#: clntutil.c:372
 msgid "Server is down. Please, come later."
 msgstr "Сервер не работает. Пожалуйста, приходите позже."
 
-#: clntutil.c:394
+#: clntutil.c:396
 msgid "Server status"
 msgstr "Состояние сервера"
 
-#: clntutil.c:436 html.c:4520
+#: clntutil.c:438 html.c:4520
 msgid "Server time"
 msgstr "Время на сервере"
 
-#: clntutil.c:255
+#: clntutil.c:256
 msgid "Service is not available"
 msgstr "Сервис недоступен"
 
-#: clntutil.c:256
+#: clntutil.c:257
 msgid "Service is not available. Please, come later."
 msgstr "Сервис недоступен. Пожалуйста, приходите позже."
 
@@ -1878,11 +1878,11 @@ msgstr "Сжать журнал"
 msgid "Standings"
 msgstr "Положение команд"
 
-#: clntutil.c:521
+#: clntutil.c:523
 msgid "Standings freeze time"
 msgstr "Время заморозки таблицы результатов"
 
-#: clntutil.c:449
+#: clntutil.c:451
 msgid "Start"
 msgstr "Начать"
 
@@ -1897,7 +1897,7 @@ msgstr "Начать виртуальный турнир"
 msgid "Status"
 msgstr "Статус"
 
-#: clntutil.c:458
+#: clntutil.c:460
 msgid "Stop"
 msgstr "Остановить"
 
@@ -1967,7 +1967,7 @@ msgstr "Участник команды удалён"
 msgid "Team name"
 msgstr "Название команды"
 
-#: clntutil.c:413
+#: clntutil.c:415
 msgid "Team requests are suspended"
 msgstr "Обработка запросов участников приостановлена"
 
@@ -1979,7 +1979,7 @@ msgstr "Положение участников"
 msgid "Test input"
 msgstr "Входные данные"
 
-#: clntutil.c:417
+#: clntutil.c:419
 msgid "Testing of team's submits is suspended"
 msgstr "Проверка решений участников приостановлена"
 
@@ -1992,19 +1992,19 @@ msgstr "Пройдено тестов"
 msgid "The contest is closed."
 msgstr "Турнир закрыт."
 
-#: clntutil.c:402
+#: clntutil.c:404
 msgid "The contest is in progress"
 msgstr "Турнир идёт"
 
-#: clntutil.c:400
+#: clntutil.c:402
 msgid "The contest is in progress (standings are frozen)"
 msgstr "Турнир идёт (текущее положение команд не отображается)"
 
-#: clntutil.c:409 html.c:1383 html.c:2419 html.c:3209
+#: clntutil.c:411 html.c:1383 html.c:2419 html.c:3209
 msgid "The contest is not started"
 msgstr "Турнир не начался"
 
-#: clntutil.c:397
+#: clntutil.c:399
 msgid "The contest is over"
 msgstr "Турнир закончился"
 
@@ -2016,7 +2016,7 @@ msgstr "Следующие посылки будут пересужены"
 msgid "The form contains error(s)"
 msgstr "Анкета заполнена неправильно"
 
-#: team.c:1578 team.c:1610
+#: team.c:1578 team.c:1611
 msgid "The last command completion status"
 msgstr "Статус выполнения последнего запроса"
 
@@ -2148,7 +2148,7 @@ msgstr ""
 msgid "Unknown: %d"
 msgstr "Unknown: %d"
 
-#: clntutil.c:488 html.c:4524
+#: clntutil.c:490 html.c:4524
 #, c-format
 msgid "Unlimited"
 msgstr "Не ограничена"
@@ -2359,7 +2359,7 @@ msgstr ""
 msgid "You do not have permissions to use this service"
 msgstr "У Вас нет прав использовать данный сервис"
 
-#: clntutil.c:246
+#: clntutil.c:247
 msgid "You do not have permissions to use this service."
 msgstr "У Вас нет прав использовать данный сервис."
 
@@ -2582,7 +2582,7 @@ msgstr "достигнуто максимальное количество"
 msgid "message subject is too long"
 msgstr "слишком длинная тема сообщения"
 
-#: register.c:3121 team.c:1672 users.c:797
+#: register.c:3121 team.c:1673 users.c:797
 msgid "msec"
 msgstr "мс"
 
