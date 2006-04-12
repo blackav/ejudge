@@ -115,6 +115,7 @@ struct section_global_data
   int    priority_adjustment;   /* priority adjustment for the contest */
   int    ignore_success_time;   /* for ACM standings: do not count success time */
   int    disable_failed_test_view; /* do not show the failed test number */
+  int    always_show_problems;  /* show "Problems" link before contest start */
 
   puc_t name[256];              /* name of the contest */
   path_t root_dir;
