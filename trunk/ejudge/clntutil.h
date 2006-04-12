@@ -43,6 +43,7 @@ extern int    server_olympiad_judging_mode;
 extern int    server_continuation_enabled;
 extern int    server_printing_enabled;
 extern int    server_printing_suspended;
+extern int    server_always_show_problems;
 
 extern time_t client_cur_time;
 
