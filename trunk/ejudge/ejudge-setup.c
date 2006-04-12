@@ -3604,6 +3604,11 @@ generate_install_script(FILE *f)
   gen_check_retcode(f, config_contest1_home_dir);
   gen_cmd_run(f, "chown -R %s:%s \"%s\"",
               config_system_uid, config_system_gid, config_contest1_home_dir);
+
+  fprintf(f, "# Do probe run of the contest server to create dirs\n");
+  gen_cmd_run(f, "su - -c 'cd \"%s\"; %s -i conf/serve.cfg' %s",
+              config_contest1_home_dir, config_ejudge_serve_path,
+              config_system_uid);
 }
 
 static void
