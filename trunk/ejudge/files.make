@@ -34,6 +34,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/login.c\
  userlist_clnt/logout.c\
  userlist_clnt/lookup_cookie.c\
+ userlist_clnt/lookup_user.c\
  userlist_clnt/map_contest.c\
  userlist_clnt/open.c\
  userlist_clnt/pass_fd.c\
