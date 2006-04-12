@@ -3,7 +3,7 @@
 #ifndef __PREPARE_DFLT_H__
 #define __PREPARE_DFLT_H__
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005,2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -104,6 +104,7 @@
 #define DFLT_G_TEAM_ENABLE_REP_VIEW 0
 #define DFLT_G_TEAM_ENABLE_CE_VIEW 0
 #define DFLT_G_TEAM_SHOW_JUDGE_REPORT 0
+#define DFLT_G_ALWAYS_SHOW_PROBLEMS 0
 #define DFLT_G_REPORT_ERROR_CODE 0
 #define DFLT_G_DISABLE_CLARS 0
 #define DFLT_G_DISABLE_TEAM_CLARS 0
