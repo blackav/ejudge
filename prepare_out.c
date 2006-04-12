@@ -253,6 +253,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     unparse_bool(f, "prune_empty_users", global->prune_empty_users);
   if (global->enable_full_archive != DFLT_G_ENABLE_FULL_ARCHIVE)
     unparse_bool(f, "enable_full_archive", global->enable_full_archive);
+  if (global->always_show_problems != DFLT_G_ALWAYS_SHOW_PROBLEMS)
+    unparse_bool(f, "always_show_problems", global->always_show_problems);
   fprintf(f, "\n");
 
   if (global->test_dir[0] && strcmp(global->test_dir, DFLT_G_TEST_DIR))
