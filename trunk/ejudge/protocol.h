@@ -70,7 +70,7 @@ struct prot_serve_status_v2
   unsigned char continuation_enabled;
   unsigned char printing_enabled;
   unsigned char printing_suspended;
-  unsigned char _pad1[1];
+  unsigned char always_show_problems;
   ej_time_t finish_time;
   ej_time_t stat_reported_before;
   ej_time_t stat_report_time;
