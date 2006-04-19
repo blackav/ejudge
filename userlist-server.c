@@ -165,6 +165,9 @@ static int interrupt_signaled;
 static int daemon_mode = 0;
 static int forced_mode = 0;
 
+static int server_start_time = 0;
+static int server_finish_time = 0;
+
 /* the map from system uids into the local uids */
 static int *system_uid_map;
 static size_t system_uid_map_size;
@@ -627,6 +630,7 @@ enqueue_reply_to_client(struct client_state *p,
   p->write_len = msg_length + 4;
 }
 
+static void report_uptime(time_t t1, time_t t2);
 static void
 graceful_exit(void)
 {
@@ -643,6 +647,8 @@ graceful_exit(void)
       detach_contest_extra(contest_extras[i]);
     }
   }
+  server_finish_time = time(0);
+  report_uptime(server_start_time, server_finish_time);
   exit(0);
 }
 static void
@@ -851,6 +857,156 @@ allocate_new_user(void)
   userlist->user_map[i] = u;
   u->id = i;
   return u;
+}
+
+static void
+cmd_register_new_2(struct client_state *p,
+                   int pkt_len,
+                   struct userlist_pk_register_new * data)
+{
+  struct userlist_user * user, *tmpu;
+  unsigned char * login;
+  unsigned char * email;
+  int login_len, email_len, errcode, exp_pkt_len;
+  struct userlist_passwd *pwd;
+  unsigned char passwd_buf[64];
+  struct contest_desc *cnts = 0;
+  userlist_login_hash_t login_hash = 0;
+  int i;
+  unsigned char logbuf[1024];
+  struct userlist_pk_xml_data *out = 0;
+  size_t out_size = 0, passwd_len;
+  time_t current_time = time(0);
+
+  // validate packet
+  login = data->data;
+  login_len = strlen(login);
+  if (login_len != data->login_length) {
+    CONN_BAD("login length mismatch: %d, %d", login_len, data->login_length);
+    return;
+  }
+  email = data->data + data->login_length + 1;
+  email_len = strlen(email);
+  if (email_len != data->email_length) {
+    CONN_BAD("email length mismatch: %d, %d", email_len, data->email_length);
+    return;
+  }
+  exp_pkt_len = sizeof(*data) + login_len + email_len;
+  if (pkt_len != exp_pkt_len) {
+    CONN_BAD("packet length mismatch: %d, %d", pkt_len, exp_pkt_len);
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf), "NEW_USER_2: %s, %s, %s, %d",
+           unparse_ip(data->origin_ip), login, email, data->contest_id);
+
+  if (data->contest_id <= 0) {
+    err("%s -> contest_id unspecified", logbuf);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (!cnts->simple_registration) {
+    err("%s -> simple registration is not enabled", logbuf);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;    
+  }
+  if (cnts->closed) {
+    err("%s -> contest is closed", logbuf);
+    send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
+    return;        
+  }
+  if (cnts->reg_deadline && current_time > cnts->reg_deadline){
+    err("%s -> registration deadline", logbuf);
+    send_reply(p, -ULS_ERR_DEADLINE);
+    return;
+  }
+  if (!contests_check_register_ip_2(cnts, data->origin_ip, data->ssl)) {
+    err("%s -> rejected IP", logbuf);
+    send_reply(p, -ULS_ERR_IP_NOT_ALLOWED);
+    return;
+  }
+
+  if (userlist->login_hash_table) {
+    login_hash = userlist_login_hash(login);
+    i = login_hash % userlist->login_hash_size;
+    while ((user = userlist->login_hash_table[i])
+           && (user->login_hash != login_hash
+               || strcmp(user->login, login) != 0)) {
+      i = (i + userlist->login_hash_step) % userlist->login_hash_size;
+    }
+    if (user) {
+      send_reply(p, -ULS_ERR_LOGIN_USED);
+      err("%s -> login already exists", logbuf);
+      return;
+    }
+  } else {
+    user = (struct userlist_user*) userlist->b.first_down;
+    while (user) {
+      if (!strcmp(user->login,login)) {
+        //Login already exists
+        send_reply(p, -ULS_ERR_LOGIN_USED);
+        err("%s -> login already exists", logbuf);
+        return;
+      }
+      user = (struct userlist_user*) user->b.right;
+    }
+  }
+
+  ASSERT(!user);
+  user = allocate_new_user();
+
+  user->login = calloc(1,data->login_length+1);
+  strcpy(user->login,login);
+  user->email = calloc(1,data->email_length+1);
+  strcpy(user->email,email);
+  user->name = xstrdup("");
+  user->default_use_cookies = -1;
+  user->login_hash = login_hash;
+
+  if (userlist->login_hash_table) {
+    if (userlist->login_cur_fill >= userlist->login_thresh) {
+      if (userlist_build_login_hash(userlist) < 0) {
+        // FIXME: handle gracefully?
+        SWERR(("userlist_build_login_hash failed unexpectedly"));
+      }
+    }
+    i = login_hash % userlist->login_hash_size;
+    while ((tmpu = userlist->login_hash_table[i])) {
+      if (tmpu->login_hash == login_hash && !strcmp(tmpu->login, login)) {
+        // FIXME: handle gracefully?
+        SWERR(("Adding non-unique login???"));
+      }
+      i = (i + userlist->login_hash_step) % userlist->login_hash_size;
+    }
+    userlist->login_hash_table[i] = user;
+    userlist->login_cur_fill++;
+  }
+
+  generate_random_password(8, passwd_buf);
+  pwd = (struct userlist_passwd*) userlist_node_alloc(USERLIST_T_PASSWORD);
+  user->register_passwd = pwd;
+  xml_link_node_last(&user->b, &pwd->b);
+  pwd->method = USERLIST_PWD_PLAIN;
+  pwd->b.text = xstrdup(passwd_buf);
+  passwd_len = strlen(passwd_buf);
+
+  out_size = sizeof(*out) + passwd_len;
+  out = (struct userlist_pk_xml_data*) alloca(out_size);
+  memset(out, 0, out_size);
+  out->reply_id = ULS_PASSWORD;
+  out->info_len = passwd_len;
+  memcpy(out->data, passwd_buf, passwd_len + 1);
+  enqueue_reply_to_client(p, out_size, out);
+  info("%s -> ok, %d", logbuf, user->id);
+
+  user->registration_time = cur_time;
+  dirty = 1;
+  flush_interval /= 2;
 }
 
 static void
@@ -6261,6 +6417,7 @@ static void (*cmd_table[])() =
   [ULS_COPY_TO_REGISTER]        cmd_user_op,
   [ULS_FIX_PASSWORD]            cmd_user_op,
   [ULS_LOOKUP_USER]             cmd_lookup_user,
+  [ULS_REGISTER_NEW_2]          cmd_register_new_2,
 
   [ULS_LAST_CMD] 0
 };
@@ -6871,6 +7028,31 @@ do_work(void)
   return 0;
 }
 
+static void
+report_uptime(time_t t1, time_t t2)
+{
+  struct tm *ptm;
+  unsigned char buf1[128], buf2[128];
+  time_t dt = t2 - t1;
+  int up_days, up_hours, up_mins, up_secs;
+
+  ptm = localtime(&t1);
+  snprintf(buf1, sizeof(buf1), "%04d/%02d/%02d %02d:%02d:%02d",
+           ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
+           ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
+  ptm = localtime(&t2);
+  snprintf(buf2, sizeof(buf2), "%04d/%02d/%02d %02d:%02d:%02d",
+           ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
+           ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
+  info("server started: %s, stopped: %s", buf1, buf2);
+
+  up_days = dt / (24 * 60 * 60); dt %= 24 * 60 * 60;
+  up_hours = dt / (60 * 60); dt %= 60 * 60;
+  up_mins = dt / 60; up_secs = dt % 60;
+  info("server uptime: %d day(s), %d hour(s), %d min(s), %d sec(s)",
+       up_days, up_hours, up_mins, up_secs);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -6969,11 +7151,15 @@ main(int argc, char *argv[])
     if (setsid() < 0) return 1;
   }
 
+  server_start_time = time(0);
   code = do_work();
 
   if (socket_name) unlink(socket_name);
   if (listen_socket >= 0) close(listen_socket);
   userlist_cfg_free(config);
+  server_finish_time = time(0);
+  report_uptime(server_start_time, server_finish_time);
+
   return code;
 }
 
