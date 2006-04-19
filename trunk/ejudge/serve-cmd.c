@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -666,6 +666,40 @@ handle_submit_run(const unsigned char *cmd,
   return 0;
 }
 
+/*
+ * argv[0] - session_id_file
+ * argv[1] - run_id
+ */
+static int
+handle_team_dump(const unsigned char *cmd,
+                 int srv_cmd, int argc, char *argv[])
+{
+  int n, r, run_id;
+
+  if (parse_ip_flags(&argc, argv)) return 1;
+
+  if (argc < 2) return too_few_params(cmd);
+  if (argc > 2) return too_many_params(cmd);
+
+  if (!argv[1] || sscanf(argv[1], "%d%n", &run_id, &n) != 1
+      || argv[1][n] || run_id < 0) {
+    err("invalid run_id");
+    return 1;
+  }
+
+  user_authentificate(argv[0]);
+  open_server();
+
+  r = serve_clnt_show_item(serve_socket_fd, 1, srv_cmd,
+                           user_id, contest_id, local_ip, run_id);
+
+  if (r < 0) {
+    err("server error: %s", protocol_strerror(-r));
+    return 1;
+  }
+  return 0;
+}
+
 static volatile int was_interrupt = 0;
 static volatile int was_alarm = 0;
 
@@ -822,6 +856,9 @@ static struct cmdinfo cmds[] =
   { "get-contest-name", handle_userlist_server_param, ULS_GET_CONTEST_NAME },
   { "get-contest-type", handle_serve_get_param, SRV_CMD_GET_CONTEST_TYPE },
   { "team-submit-run", handle_submit_run, 0 },
+  { "team-dump-source", handle_team_dump, SRV_CMD_DUMP_SOURCE },
+  { "team-dump-clar", handle_team_dump, SRV_CMD_DUMP_CLAR },
+  { "team-run-status", handle_team_dump, SRV_CMD_RUN_STATUS },
 
   { 0, 0 },
 };
