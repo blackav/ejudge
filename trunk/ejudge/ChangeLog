@@ -1,3 +1,243 @@
+2006-04-19  Alexander Chernov  <cher@ispras.ru>
+
+	* files.make: userlist_clnt/register_new_2.c is added.
+
+	* html.c:
+	(calc_kirov_score) new parameter `format' is added. If this parameter
+	  is 0, HTML is generated, if the parameter is 1, the plain text
+	  is generated;
+	  bug in calculation of the score bonus is fixed;
+	(write_html_run_status) call of `calc_kirov_score' is updated;
+	(write_text_run_status) new function, which generates the run
+	  status string in the plain text format;
+	(write_user_problems_summary) hidden runs are not counted as
+	  previously successful runs;
+	  call of `calc_kirov_score' is updated;
+	(new_write_user_clar) new parameter `format' is added. If this
+	  parameter is 0, HTML is generated, if the parameter is 1, the plain
+	  text is generated;
+	(do_write_kirov_standings) call of `calc_kirov_score' is updated;
+	(do_write_moscow_standings) `acm_run_penalty' is used for penalty
+	  calculation;
+	(do_write_standings) `acm_run_penalty' is used for penalty calculation;
+	(new_write_user_source_view) new parameter `format' is added. If this
+	  parameter is 0, HTML is generated, if the parameter is 1, the plain
+	  text is generated;
+	(write_user_run_status) new function to write a run status in the
+	  plain text.
+
+	* html.h: (new_write_user_clar) new parameter `format' is added;
+	(new_write_user_source_view) the same as above;
+	(calc_kirov_score) the same as above;
+	(write_user_run_status) new function prototype.
+
+	* master_html.c:
+	(print_raw_record) call of `calc_kirov_score' is updated.
+
+	* prepare.c: acm_run_penalty problem configuration variable is added;
+	(prepare_problem_init_func) `acm_run_penalty' is initialized;
+	(set_defaults) `acm_run_penalty' is handled;
+	(prepare_set_problem_defaults) `acm_run_penalty' is handled;
+	(prepare_set_prob_value) `acm_run_penalty' is handled.
+
+	* prepare.h:
+	(struct section_problem_data) `acm_run_penalty' field is added.
+
+	* prepare_dflt.h: default problem score is set to 50;
+	default value for acm_run_penalty is 20.
+
+	* prepare_out.c:
+	(prepare_unparse_prob) `acm_run_penalty' is supported.
+
+	* protocol.h: new commands: SRV_CMD_DUMP_SOURCE, SRV_CMD_DUMP_CLAR,
+	  SRV_CMD_RUN_STATUS.
+
+	* register.c: copyright notice is updated;
+	"Set-Cookie" is no longer generated to the output;
+	(display_user_registered_page_2) new function for simplified
+	  new user registration;
+	(action_register_new_user) simplified contest registration is
+	  supported.
+
+	* serve-cmd.c: copyright notice is updated;
+	(handle_team_dump) new function to handle `team-dump-source',
+	  `team-dump-clar', `team-run-status' requests.
+
+	* serve-control.c:
+	actions handled: SUPER_ACTION_CNTS_CHANGE_SIMPLE_REGISTRATION,
+	  SUPER_ACTION_PROB_CHANGE_ACM_RUN_PENALTY.
+
+	* serve.c:
+	(cmd_team_show_item) SRV_CMD_DUMP_CLAR, SRV_CMD_DUMP_SOURCE,
+	  SRV_CMD_RUN_STATUS commands are handled.
+
+	* super-serve.c:
+	new commands SSERV_CMD_CNTS_CHANGE_SIMPLE_REGISTRATION,
+	  SSERV_CMD_PROB_CHANGE_ACM_RUN_PENALTY are handled.
+
+	* super_actions.h:
+	new actions: SUPER_ACTION_CNTS_CHANGE_SIMPLE_REGISTRATION,
+	  SUPER_ACTION_PROB_CHANGE_ACM_RUN_PENALTY.
+
+	* super_html.c:
+	(super_html_edit_contest_page) editing of `simple_registration'
+	  is supported.
+
+	* super_html_2.c:
+	(super_html_set_contest_var) setting of `simple_registration'
+	  is supported.
+
+	* super_html_3.c:
+	(super_html_print_problem) editing of `acm_run_penalty' is supported;
+	(super_html_prob_param) setting of `acm_run_penalty' is supported.
+
+	* super_proto.h:
+	new commands: SSERV_CMD_CNTS_CHANGE_SIMPLE_REGISTRATION,
+	  SSERV_CMD_PROB_CHANGE_ACM_RUN_PENALTY.
+
+	* userlist-server.c:
+	(cmd_register_new_2) new function to perform simplified new
+	  user creation;
+	(report_uptime) new function to report the server uptime.
+
+	* userlist_clnt.h:
+	(userlist_clnt_register_new_2) new function prototype is added.
+
+	* userlist_proto.h: new command ULS_REGISTER_NEW_2 is added;
+	new reply ULS_PASSWORD is added.
+
+	* ejudge-setup.c: copyright notice is updated;
+	(generate_userlist_xml) <team_password> is generated as well as
+	  <password>.
+
+	* contests.h: `simple_registration' attribute is added.
+
+	* contests.c:
+	(parse_contest) `simple_registration' attribute is supported;
+	(contests_write_header) `simple_registration' attribute is supported.
+
+2006-04-12  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+	* ejudge-setup.c:
+	(generate_install_script) test run of the `serve' is added to the
+	  install script.
+
+	* clntutil.h: `server_always_show_problems' global variable is added.
+
+	* clntutil.c:
+	(client_check_server_status) `always_show_problems' field
+	  is handled.
+
+	* files.make: `userlist_clnt/lookup_user.c' is added.
+
+	* prepare.c:
+	global configuration variable `always_show_problems' is added.
+
+	* prepare.h:
+	(struct section_global_data) `always_show_problems' field is added.
+
+	* prepare_dflt.h: copyright notice is updated;
+	default value for `always_show_problems' is added.
+
+	* prepare_out.c:
+	(prepare_unparse_global) `always_show_problems' is handled.
+
+	* protocol.h:
+	(struct prot_serve_status_v2) `always_show_problems' field is added.
+
+	* serve-control.c:
+	(action_perform_permission_op) added support for predefined
+	  permission sets;
+	new actions SUPER_ACTION_CNTS_SET_PREDEF_PERMISSIONS,
+	  SUPER_ACTION_GLOB_CHANGE_ALWAYS_SHOW_PROBLEMS are handled.
+
+	* serve.c:
+	(update_status_file) `always_show_problems' is written to the
+	  status file.
+
+	* super-serve.c:
+	SSERV_CMD_GLOB_CHANGE_ALWAYS_SHOW_PROBLEMS command is handled.
+
+	* super_actions.h:
+	new actions: SUPER_ACTION_CNTS_SET_PREDEF_PERMISSIONS,
+	  SUPER_ACTION_GLOB_CHANGE_ALWAYS_SHOW_PROBLEMS.
+
+	* super_html.c:
+	(super_html_edit_permission) form for editing predefined permission
+	  sets is added.
+
+	* super_html_2.c:
+	(super_html_commit_contest) all privileged users are registered
+	  for the contest and make invisible.
+
+	* super_html_3.c:
+	(super_html_edit_global_parameters) editing of `always_show_problems'
+	  is supported;
+	(super_html_global_param) editing of `always_show_problems'
+	  is supported.
+
+	* super_proto.h:
+	new commands added: SSERV_CMD_CNTS_SET_PREDEF_PERMISSIONS,
+	  SSERV_CMD_GLOB_CHANGE_ALWAYS_SHOW_PROBLEMS.
+
+	* team.c: copyright notice is updated;
+	(main) `server_always_show_problems' configuration variable is
+	  supported.
+
+	* userlist-server.c:
+	(cmd_lookup_user) new function to handle ULS_LOOKUP_USER request.
+
+	* userlist_clnt.h: copyright notice is updated;
+	(userlist_clnt_lookup_user) new function prototype is added.
+
+	* userlist_proto.h: copyright notice is updated;
+	ULS_LOOKUP_USER command is added.
+
+2006-04-07  Alexander Chernov  <cher@ispras.ru>
+
+	* prepare_out.c:
+	(prepare_unparse_prob) `test_sets' variable is supported;
+	(prepare_unparse_unhandled_prob) `test_sets' is removed.
+
+	* serve-control.c: new actions: SUPER_ACTION_PROB_CHANGE_TEST_SETS,
+	  SUPER_ACTION_PROB_CLEAR_TEST_SETS are handled.
+
+	* super-serve.c: new commands: SSERV_CMD_PROB_CHANGE_TEST_SETS,
+	  SSERV_CMD_PROB_CLEAR_TEST_SETS are handled.
+
+	* super_actions.h:
+	new actions added: SUPER_ACTION_PROB_CHANGE_TEST_SETS,
+	  SUPER_ACTION_PROB_CLEAR_TEST_SETS.
+
+	* super_html_3.c:
+	added support for the new standard checker `cmp_huge_int';
+	(super_html_print_problem) `run_penalty' editing is available only
+	  for KIROV contests;
+	  editing of `test_sets' is supported;
+	(super_html_prob_param) changing of `test_sets' is supported;
+	(recompile_checker) checkers without source code are supported:
+	  only a warning is printed;
+	  the checker object file and executable are removed before
+	  compilation;
+	  more verbose diagnostics about compilation process is added;
+	(check_test_score) warning is printed, if the sum of test scores is
+	  less than the full score;
+	(super_html_check_tests) test scores are checked even in the case of
+	  the standard checker.
+
+	* super_proto.h: new commands: SSERV_CMD_PROB_CHANGE_TEST_SETS,
+	  SSERV_CMD_PROB_CLEAR_TEST_SETS.
+
+	* userlist-server.c:
+	(cmd_remove_member) a member cannot be removed, if the user is
+	  marked `read-only'.
+
+2006-03-27  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
 2006-03-19  Alexander Chernov  <cher@ispras.ru>
 
 	* super_html_3.c: (super_html_edit_global_parameters) editing of

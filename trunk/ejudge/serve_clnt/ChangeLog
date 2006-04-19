@@ -1,3 +1,9 @@
+2006-04-19  Alexander Chernov  <cher@ispras.ru>
+
+	* show_item.c: copyright notice is updated;
+	(serve_clnt_show_item) check for a correct command code is commeted
+	  out.
+
 2006-02-13  Alexander Chernov  <cher@ispras.ru>
 
 	* rejudge_by_mask.c: copyright notice is updated;
