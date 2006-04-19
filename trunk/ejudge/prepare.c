@@ -303,6 +303,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(full_score, "d"),
   PROBLEM_PARAM(test_score, "d"),
   PROBLEM_PARAM(run_penalty, "d"),
+  PROBLEM_PARAM(acm_run_penalty, "d"),
   PROBLEM_PARAM(disqualified_penalty, "d"),
   PROBLEM_PARAM(use_corr, "d"),
   PROBLEM_PARAM(use_info, "d"),
@@ -595,6 +596,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->info_sfx[0] = 1;
   p->tgz_sfx[0] = 1;
   p->run_penalty = -1;
+  p->acm_run_penalty = -1;
   p->disqualified_penalty = -1;
   p->checker_real_time_limit = -1;
   p->variant_num = -1;
@@ -2195,6 +2197,8 @@ set_defaults(int mode)
                            probs[i], aprob, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_RUN_PENALTY,
                            probs[i], aprob, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_ACM_RUN_PENALTY,
+                           probs[i], aprob, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_DISQUALIFIED_PENALTY,
                            probs[i], aprob, global);
 
@@ -3664,6 +3668,7 @@ prepare_set_problem_defaults(struct section_problem_data *prob,
   if (prob->variable_full_score < 0)
     prob->variable_full_score = DFLT_P_VARIABLE_FULL_SCORE;
   if (prob->run_penalty < 0) prob->run_penalty = DFLT_P_RUN_PENALTY;
+  if (prob->acm_run_penalty < 0) prob->acm_run_penalty = DFLT_P_ACM_RUN_PENALTY;
   if (prob->disqualified_penalty < 0) prob->disqualified_penalty = prob->run_penalty;
   if (prob->use_corr < 0) prob->use_corr = 0;
   if (prob->use_info < 0) prob->use_info = 0;
@@ -4137,6 +4142,12 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
   case PREPARE_FIELD_PROB_RUN_PENALTY:
     if (out->run_penalty == -1 && abstr) out->run_penalty = abstr->run_penalty;
     if (out->run_penalty == -1) out->run_penalty = DFLT_P_RUN_PENALTY;
+    break;
+
+  case PREPARE_FIELD_PROB_ACM_RUN_PENALTY:
+    if (out->acm_run_penalty == -1 && abstr)
+      out->acm_run_penalty = abstr->acm_run_penalty;
+    if (out->acm_run_penalty == -1) out->acm_run_penalty = DFLT_P_ACM_RUN_PENALTY;
     break;
 
   case PREPARE_FIELD_PROB_DISQUALIFIED_PENALTY:
