@@ -107,6 +107,7 @@ enum
     CONTEST_A_CLOSED,
     CONTEST_A_INVISIBLE,
     CONTEST_A_SSL,
+    CONTEST_A_SIMPLE_REGISTRATION,
 
     CONTEST_LAST_ATTN
   };
@@ -211,6 +212,7 @@ struct contest_desc
   unsigned char clean_users;
   unsigned char closed;
   unsigned char invisible;
+  unsigned char simple_registration;
 
   time_t         reg_deadline;
   unsigned char *name;
