@@ -43,6 +43,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/recv_packet.c\
  userlist_clnt/register_contest.c\
  userlist_clnt/register_new.c\
+ userlist_clnt/register_new_2.c\
  userlist_clnt/remove_member.c\
  userlist_clnt/send_packet.c\
  userlist_clnt/set_info.c\
