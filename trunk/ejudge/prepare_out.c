@@ -983,6 +983,11 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
           || !prob->abstract)
         fprintf(f, "run_penalty = %d\n", prob->run_penalty);
     }
+    if (prob->acm_run_penalty >= 0) {
+      if ((prob->abstract && prob->acm_run_penalty != DFLT_P_ACM_RUN_PENALTY)
+          || !prob->abstract)
+        fprintf(f, "acm_run_penalty = %d\n", prob->acm_run_penalty);
+    }
     if (prob->disqualified_penalty >= 0) {
       // FIXME: better condition
       if ((prob->abstract && prob->disqualified_penalty != prob->run_penalty)
