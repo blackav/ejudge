@@ -47,6 +47,17 @@ userlist_clnt_register_new(struct userlist_clnt *clnt,
                            unsigned char const *email);
 
 int
+userlist_clnt_register_new_2(struct userlist_clnt *clnt,
+                             ej_ip_t origin_ip,
+                             int ssl,
+                             int contest_id,
+                             int locale_id,
+                             int use_cookies,
+                             unsigned char const *login,
+                             unsigned char const *email,
+                             unsigned char **p_passwd);
+
+int
 userlist_clnt_login(struct userlist_clnt *clnt,
                     ej_ip_t origin_ip,
                     int ssl,
