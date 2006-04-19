@@ -368,6 +368,7 @@ struct section_problem_data
   int    variable_full_score;   /* is the full score is variable */
   int    test_score;            /* score for one test */
   int    run_penalty;           /* penalty for one run */
+  int    acm_run_penalty;       /* penalty for one run for ACM contests */
   int    disqualified_penalty;  /* penalty for one disqualified run */
   int    use_corr;              /* whether the correct answers defined */
   int    use_info;              /* whether use the info files */
@@ -595,6 +596,7 @@ enum
   PREPARE_FIELD_PROB_FULL_SCORE,
   PREPARE_FIELD_PROB_TEST_SCORE,
   PREPARE_FIELD_PROB_RUN_PENALTY,
+  PREPARE_FIELD_PROB_ACM_RUN_PENALTY,
   PREPARE_FIELD_PROB_DISQUALIFIED_PENALTY,
   PREPARE_FIELD_PROB_VARIABLE_FULL_SCORE,
   PREPARE_FIELD_PROB_TESTS_TO_ACCEPT,
