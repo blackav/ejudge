@@ -2185,6 +2185,14 @@ super_html_edit_contest_page(FILE *f,
   fprintf(f, "</td></tr></form>\n");
 
   html_start_form(f, 1, session_id, self_url, hidden_vars);
+  fprintf(f, "<tr%s><td>Enable simple registration (no email)?</td><td>",
+          form_row_attrs[row ^= 1]);
+  html_boolean_select(f, cnts->simple_registration, "param", 0, 0);
+  fprintf(f, "</td><td>");
+  html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_SIMPLE_REGISTRATION, "Change");
+  fprintf(f, "</td></tr></form>\n");
+
+  html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>Manage the contest server?</td><td>",
           form_row_attrs[row ^= 1]);
   html_boolean_select(f, cnts->managed, "param", 0, 0);
