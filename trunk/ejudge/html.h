@@ -40,8 +40,9 @@ void new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
                           unsigned char const *hidden_vars,
                           unsigned char const *extra_args);
 
-int new_write_user_clar(FILE *, int, int);
-int new_write_user_source_view(FILE *, int, int);
+int new_write_user_clar(FILE *, int, int, int);
+int new_write_user_source_view(FILE *, int, int, int);
+int write_user_run_status(FILE *, int, int, int, int);
 int new_write_user_report_view(FILE *f, int uid, int rid,
                                int accepting_mode,
                                ej_cookie_t sid,
@@ -184,7 +185,8 @@ int calc_kirov_score(unsigned char *outbuf, size_t outsize,
                      int attempts,
                      int disq_attempts,
                      int prev_successes,
-                     int *p_date_penalty);
+                     int *p_date_penalty,
+                     int format);
 void write_html_run_status(FILE *f, struct run_entry *pe,
                            int priv_level, int attempts,
                            int disq_attempts, int prev_successes);
