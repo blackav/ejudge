@@ -4048,6 +4048,29 @@ super_html_print_problem(FILE *f,
                             self_url, extra_args, prob_hidden_vars);
     }
 
+    if ((sstate->global->score_system_val == SCORE_ACM
+         || sstate->global->score_system_val == SCORE_MOSCOW)
+        && show_adv) {
+      //PROBLEM_PARAM(acm_run_penalty, "d"),
+      extra_msg = "";
+      if (prob->acm_run_penalty == -1) {
+        if (prob->abstract) {
+          extra_msg = "<i>(Undefined)</i>";
+        } else {
+          prepare_set_prob_value(PREPARE_FIELD_PROB_ACM_RUN_PENALTY,
+                                 &tmp_prob, sup_prob, sstate->global);
+          snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - %d)</i>",
+                   tmp_prob.acm_run_penalty);
+          extra_msg = msg_buf;
+        }
+      }
+      print_int_editing_row(f, "Penalty for a submission (minutes):",
+                            prob->acm_run_penalty, extra_msg,
+                            SUPER_ACTION_PROB_CHANGE_ACM_RUN_PENALTY,
+                            session_id, form_row_attrs[row ^= 1],
+                            self_url, extra_args, prob_hidden_vars);
+    }
+
     //PROBLEM_PARAM(disqualified_penalty, "d"),
     extra_msg = "";
     if (prob->disqualified_penalty == -1) {
@@ -4709,6 +4732,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_RUN_PENALTY:
     p_int = &prob->run_penalty;
+    goto handle_int_1;
+
+  case SSERV_CMD_PROB_CHANGE_ACM_RUN_PENALTY:
+    p_int = &prob->acm_run_penalty;
     goto handle_int_1;
 
   case SSERV_CMD_PROB_CHANGE_DISQUALIFIED_PENALTY:
