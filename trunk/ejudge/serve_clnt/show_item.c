@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -48,11 +48,13 @@ serve_clnt_show_item(int sock_fd, int out_fd, int cmd,
   void *void_in = 0;
 
   if (sock_fd < 0) return -SRV_ERR_NOT_CONNECTED;
+  /*
   if (cmd != SRV_CMD_SHOW_CLAR
       && cmd != SRV_CMD_SHOW_SOURCE
       && cmd != SRV_CMD_VIRTUAL_STANDINGS
       && cmd != SRV_CMD_SHOW_REPORT)
     return -SRV_ERR_PROTOCOL;
+  */
 
   if (pipe(pipe_fd) < 0) {
     err("serve_clnt_show_item: pipe() failed: %s", os_ErrorMsg());
