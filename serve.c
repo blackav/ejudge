@@ -1912,7 +1912,7 @@ cmd_team_show_item(struct client_state *p, int len,
   char *html_ptr = 0;
   size_t html_len = 0;
   struct client_state *q;
-  int r;
+  int r, accepting_mode;
 
   if (get_peer_local_user(p) < 0) return;
 
@@ -1920,13 +1920,23 @@ cmd_team_show_item(struct client_state *p, int len,
     new_bad_packet(p, "cmd_team_show_item: bad packet length: %d", len);
     return;
   }
+  /*
   if (pkt->b.id != SRV_CMD_SHOW_CLAR
       && pkt->b.id != SRV_CMD_SHOW_REPORT
       && pkt->b.id != SRV_CMD_VIRTUAL_STANDINGS
-      && pkt->b.id != SRV_CMD_SHOW_SOURCE) {
+      && pkt->b.id != SRV_CMD_SHOW_SOURCE
+      && pkt->b.id != SRV_CMD_DUMP_SOURCE
+      && pkt->b.id != SRV_CMD_DUMP_CLAR
+      && pkt->b.id != SRV_CMD_RUN_STATUS) {
     new_bad_packet(p, "cmd_team_show_item: bad command: %d", pkt->b.id);
     return;
   }
+  */
+
+  accepting_mode = 0;
+  if (global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
+    accepting_mode = 1;
+
   info("%d: team_show_item: %d, %d, %d, %d, %d", p->id, pkt->b.id,
        pkt->user_id, pkt->contest_id, pkt->locale_id, pkt->item_id);
   if (p->client_fds[0] < 0 || p->client_fds[1] < 0) {
@@ -1958,14 +1968,23 @@ cmd_team_show_item(struct client_state *p, int len,
   l10n_setlocale(pkt->locale_id);
   switch (pkt->b.id) {
   case SRV_CMD_SHOW_CLAR:
-    r = new_write_user_clar(f, pkt->user_id, pkt->item_id);
+    r = new_write_user_clar(f, pkt->user_id, pkt->item_id, 0);
+    break;
+  case SRV_CMD_DUMP_CLAR:
+    r = new_write_user_clar(f, pkt->user_id, pkt->item_id, 1);
     break;
   case SRV_CMD_SHOW_SOURCE:
-    r = new_write_user_source_view(f, pkt->user_id, pkt->item_id);
+    r = new_write_user_source_view(f, pkt->user_id, pkt->item_id, 0);
+    break;
+  case SRV_CMD_DUMP_SOURCE:
+    r = new_write_user_source_view(f, pkt->user_id, pkt->item_id, 1);
     break;
   case SRV_CMD_VIRTUAL_STANDINGS:
     if (!global->virtual) r = -SRV_ERR_ONLY_VIRTUAL;
     else r = write_virtual_standings(f, pkt->user_id);
+    break;
+  case SRV_CMD_RUN_STATUS:
+    r = write_user_run_status(f, pkt->user_id, pkt->item_id, accepting_mode, 1);
     break;
   default:
     abort();
@@ -5283,6 +5302,9 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_GET_CONTEST_TYPE] { cmd_get_param },
   [SRV_CMD_SUBMIT_RUN_2] { cmd_user_submit_run_2 },
   [SRV_CMD_FULL_REJUDGE_BY_MASK] { cmd_rejudge_by_mask },
+  [SRV_CMD_DUMP_SOURCE] { cmd_team_show_item },
+  [SRV_CMD_DUMP_CLAR] { cmd_team_show_item },
+  [SRV_CMD_RUN_STATUS] { cmd_team_show_item },
 };
 
 static void
