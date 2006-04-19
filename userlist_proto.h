@@ -66,6 +66,7 @@ enum
     ULS_COPY_TO_REGISTER,
     ULS_FIX_PASSWORD,
     ULS_LOOKUP_USER,
+    ULS_REGISTER_NEW_2,
 
     ULS_LAST_CMD
   };
@@ -80,6 +81,7 @@ enum
     ULS_CONTEST_MAPPED,
     ULS_UID,
     ULS_UID_2,
+    ULS_PASSWORD,
   };
 
 /* various error codes */
