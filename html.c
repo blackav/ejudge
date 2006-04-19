@@ -70,6 +70,7 @@ sf_fopen(char const *path, char const *flags)
   return NULL;
 }
 
+/* format: 0 - HTML, 1 - plain text */
 int
 calc_kirov_score(unsigned char *outbuf,
                  size_t outsize,
@@ -78,7 +79,8 @@ calc_kirov_score(unsigned char *outbuf,
                  int attempts,
                  int disq_attempts,
                  int prev_successes,
-                 int *p_date_penalty)
+                 int *p_date_penalty,
+                 int format)
 {
   int score, init_score, dpi, date_penalty = 0, score_mult = 1, score_bonus = 0;
 
@@ -101,7 +103,7 @@ calc_kirov_score(unsigned char *outbuf,
   if (p_date_penalty) *p_date_penalty = date_penalty;
 
   // count the bonus depending on the number of previous successes
-  if (pr->score_bonus_total > 0) {
+  if (pe->status == RUN_OK && pr->score_bonus_total > 0) {
     if (prev_successes >= 0 && prev_successes < pr->score_bonus_total)
       score_bonus = pr->score_bonus_val[prev_successes];
   }
@@ -164,12 +166,20 @@ calc_kirov_score(unsigned char *outbuf,
 
     if (score_mult > 1 || run_penalty_str[0] || date_penalty_str[0]
         || score_adj_str[0] || disq_penalty_str[0] || score_bonus_str[0]) {
-      snprintf(final_score_str, sizeof(final_score_str),
-               "<b>%d</b>=", score);
+      if (format == 0) {
+        snprintf(final_score_str, sizeof(final_score_str),
+                 "<b>%d</b>=", score);
+      } else {
+        snprintf(final_score_str, sizeof(final_score_str), "%d=", score);
+      }
     } else {
       init_score_str[0] = 0;
-      snprintf(final_score_str, sizeof(final_score_str),
-               "<b>%d</b>", score);
+      if (format == 0) {
+        snprintf(final_score_str, sizeof(final_score_str),
+                 "<b>%d</b>", score);
+      } else {
+        snprintf(final_score_str, sizeof(final_score_str), "%d", score);
+      }
     }
 
     snprintf(outbuf, outsize, "%s%s%s%s%s%s%s",
@@ -262,8 +272,83 @@ write_html_run_status(FILE *f, struct run_entry *pe,
     fprintf(f, "<td>%s</td>", _("N/A"));
   } else {
     calc_kirov_score(score_str, sizeof(score_str), pe, pr, attempts,
-                     disq_attempts, prev_successes, 0);
+                     disq_attempts, prev_successes, 0, 0);
     fprintf(f, "<td>%s</td>", score_str);
+  }
+}
+
+void
+write_text_run_status(FILE *f, struct run_entry *pe,
+                      int priv_level, int attempts, int disq_attempts,
+                      int prev_successes)
+{
+  unsigned char status_str[64], score_str[64];
+  struct section_problem_data *pr = 0;
+  int need_extra_col = 0;
+
+  if (pe->problem > 0 && pe->problem <= max_prob) pr = probs[pe->problem];
+  run_status_to_str_short(status_str, sizeof(status_str), pe->status);
+  fprintf(f, "%s;", status_str);
+
+  if (global->score_system_val == SCORE_KIROV
+      || global->score_system_val == SCORE_OLYMPIAD
+      || global->score_system_val == SCORE_MOSCOW)
+    need_extra_col = 1;
+
+  if (pe->status >= RUN_PSEUDO_FIRST && pe->status <= RUN_PSEUDO_LAST) {
+    return;
+  } else if (pe->status > RUN_MAX_STATUS) {
+    return;
+  }
+
+  switch (pe->status) {
+  case RUN_CHECK_FAILED:
+    if (priv_level > 0) break;
+  case RUN_ACCEPTED:
+  case RUN_IGNORED:
+  case RUN_DISQUALIFIED:
+  case RUN_PENDING:
+  case RUN_COMPILE_ERR:
+    return;
+  }
+
+  if (global->score_system_val == SCORE_ACM) {
+    if (pe->status == RUN_OK || pe->test <= 0
+        || global->disable_failed_test_view > 0) {
+      fprintf(f, ";");
+    } else {
+      fprintf(f, "%d;", pe->test);
+    }
+    return;
+  }
+
+  if (global->score_system_val == SCORE_MOSCOW) {
+    if (pe->status == RUN_OK || pe->test <= 0
+        || global->disable_failed_test_view > 0) {
+      fprintf(f, ";");
+    } else {
+      fprintf(f, "%d;", pe->test);
+    }
+    if (pe->status == RUN_OK) {
+      fprintf(f, "%d;", pe->score);
+    } else {
+      fprintf(f, "%d;", pe->score);
+    }
+    return;
+  }
+
+  if (pe->test <= 0) {
+    fprintf(f, ";");
+  } else {
+    fprintf(f, "%d;", pe->test - 1);
+  }
+
+  if (pe->score < 0 || !pr) {
+    fprintf(f, ";");
+  } else {
+    calc_kirov_score(score_str, sizeof(score_str), pe, pr, attempts,
+                     disq_attempts, prev_successes, 0, 1);
+    fprintf(f, "%s;", score_str);
   }
 }
 
@@ -317,6 +402,9 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
 
     if (re.team <= 0 || re.team >= total_teams) continue;
     if (re.team != user_id) {
+      if (re.is_hidden) continue;
+      if (teamdb_get_flags(re.team) & (TEAM_INVISIBLE | TEAM_BANNED))
+        continue;
       if (re.status == RUN_OK) {
         if (!user_flag[re.team * (max_prob + 1) + re.problem]) {
           prev_successes[re.problem]++;
@@ -370,7 +458,7 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
       case RUN_OK:
         solved_flag[re.problem] = 1;
         best_run[re.problem] = run_id;
-        cur_score = calc_kirov_score(0, 0, &re, cur_prob, 0, 0, 0, 0);
+        cur_score = calc_kirov_score(0, 0, &re, cur_prob, 0, 0, 0, 0, 0);
         //if (cur_score > best_score[re.problem])
         best_score[re.problem] = cur_score;
         break;
@@ -389,7 +477,7 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
         solved_flag[re.problem] = 0;
         best_run[re.problem] = run_id;
         attempts[re.problem]++;
-        cur_score = calc_kirov_score(0, 0, &re, cur_prob, 0, 0, 0, 0);
+        cur_score = calc_kirov_score(0, 0, &re, cur_prob, 0, 0, 0, 0, 0);
         //if (cur_score > best_score[re.problem])
         best_score[re.problem] = cur_score;
         break;
@@ -421,7 +509,7 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
         cur_score = calc_kirov_score(0, 0, &re, cur_prob,
                                      attempts[re.problem],
                                      disqualified[re.problem],
-                                     prev_successes[re.problem], 0);
+                                     prev_successes[re.problem], 0, 0);
 
         if (cur_score >= best_score[re.problem]) {
           best_score[re.problem] = cur_score;
@@ -453,7 +541,7 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
         cur_score = calc_kirov_score(0, 0, &re, cur_prob,
                                      attempts[re.problem],
                                      disqualified[re.problem],
-                                     prev_successes[re.problem], 0);
+                                     prev_successes[re.problem], 0, 0);
 
         attempts[re.problem]++;
         if (cur_score >= best_score[re.problem]) {
@@ -1011,8 +1099,9 @@ new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
   fputs("</table>\n", f);
 }
 
+/* format == 0 - HTML, 1 - plain text */
 int
-new_write_user_clar(FILE *f, int uid, int cid)
+new_write_user_clar(FILE *f, int uid, int cid, int format)
 {
   time_t start_time, time;
   size_t size;
@@ -1063,39 +1152,59 @@ new_write_user_clar(FILE *f, int uid, int cid)
   atxt_len = html_armored_strlen(csrc);
   atxt = alloca(atxt_len + 4);
   html_armor_string(csrc, atxt);
-  xfree(csrc);
 
   if (!start_time) time = start_time;
   if (time < start_time) time = start_time;
   duration_str(show_astr_time, time, start_time, dur_str, 0);
 
-  fprintf(f, "<%s>%s #%d</%s>\n", cur_contest->team_head_style,
-          _("Message"), cid, cur_contest->team_head_style);
-  fprintf(f, "<table border=\"0\">\n");
-  fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Number"), cid);
-  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Time"), dur_str);
-  fprintf(f, "<tr><td>%s:</td><td>%zu</td></tr>\n", _("Size"), size);
-  fprintf(f, "<tr><td>%s:</td>", _("Sender"));
-  if (!from) {
-    fprintf(f, "<td><b>%s</b></td>", _("judges"));
+  if (format == 1) {
+    fprintf(f, "Clar-Id: %d\n", cid);
+    fprintf(f, "Date: %s\n", dur_str);
+    fprintf(f, "Size: %zu\n", size);
+    if (!from) {
+      fprintf(f, "From: judges\n");
+    } else {
+      fprintf(f, "From: %s\n", teamdb_get_name(from));
+    }
+    if (!to && !from) {
+      fprintf(f, "To: all\n");
+    } else if (!to) {
+      fprintf(f, "To: judges\n");
+    } else {
+      fprintf(f, "To: %s\n", teamdb_get_name(to));
+    }
+    //fprintf(f, "Subject: %s\n", psubj);
+    fprintf(f, "%s\n", csrc);
   } else {
-    fprintf(f, "<td>%s</td>", teamdb_get_name(from));
+    fprintf(f, "<%s>%s #%d</%s>\n", cur_contest->team_head_style,
+            _("Message"), cid, cur_contest->team_head_style);
+    fprintf(f, "<table border=\"0\">\n");
+    fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Number"), cid);
+    fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Time"), dur_str);
+    fprintf(f, "<tr><td>%s:</td><td>%zu</td></tr>\n", _("Size"), size);
+    fprintf(f, "<tr><td>%s:</td>", _("Sender"));
+    if (!from) {
+      fprintf(f, "<td><b>%s</b></td>", _("judges"));
+    } else {
+      fprintf(f, "<td>%s</td>", teamdb_get_name(from));
+    }
+    fprintf(f, "</tr>\n<tr><td>%s:</td>", _("To"));
+    if (!to && !from) {
+      fprintf(f, "<td><b>%s</b></td>", _("all"));
+    } else if (!to) {
+      fprintf(f, "<td><b>%s</b></td>", _("judges"));
+    } else {
+      fprintf(f, "<td>%s</td>", teamdb_get_name(to));
+    }
+    fprintf(f, "</tr>\n");
+    fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"), asubj);
+    fprintf(f, "</table>\n");
+    fprintf(f, "<hr><pre>");
+    fprintf(f, "%s", atxt);
+    fprintf(f, "</pre>");
   }
-  fprintf(f, "</tr>\n<tr><td>%s:</td>", _("To"));
-  if (!to && !from) {
-    fprintf(f, "<td><b>%s</b></td>", _("all"));
-  } else if (!to) {
-    fprintf(f, "<td><b>%s</b></td>", _("judges"));
-  } else {
-    fprintf(f, "<td>%s</td>", teamdb_get_name(to));
-  }
-  fprintf(f, "</tr>\n");
-  fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"), asubj);
-  fprintf(f, "</table>\n");
-  fprintf(f, "<hr><pre>");
-  fprintf(f, "%s", atxt);
-  fprintf(f, "</pre>");
 
+  xfree(csrc);
   return 0;
 }
 
@@ -1622,7 +1731,7 @@ do_write_kirov_standings(FILE *f,
         score = calc_kirov_score(0, 0, pe, p, att_num[up_ind],
                                  disq_num[up_ind],
                                  full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
-                                 0);
+                                 0, 0);
         if (score > prob_score[up_ind]) {
           prob_score[up_ind] = score;
           if (!p->stand_hide_time) sol_time[up_ind] = pe->timestamp;
@@ -1640,7 +1749,7 @@ do_write_kirov_standings(FILE *f,
       } else if (pe->status == RUN_PARTIAL) {
         if (!full_sol[up_ind]) sol_att[up_ind]++;
         score = calc_kirov_score(0, 0, pe, p, att_num[up_ind],
-                                 disq_num[up_ind], RUN_TOO_MANY, 0);
+                                 disq_num[up_ind], RUN_TOO_MANY, 0, 0);
         if (score > prob_score[up_ind]) prob_score[up_ind] = score;
         att_num[up_ind]++;
         if (!full_sol[up_ind]) tot_att[pind]++;
@@ -2608,9 +2717,10 @@ do_write_moscow_standings(FILE *f,
   /* calculate the total penalty and the total score */
   for (u = 0; u < u_tot; u++)
     for (p = 0; p < p_tot; p++) {
+      const struct section_problem_data *prob = probs[p_ind[p]];
       u_score[u] += up_score[(u << row_sh) + p];
       if (!global->ignore_success_time) u_pen[u] += up_pen[(u << row_sh) + p];
-      u_pen[u] += 20 * up_att[(u << row_sh) + p];
+      u_pen[u] += prob->acm_run_penalty * up_att[(u << row_sh) + p];
     }
 
   /* sort the users in descending order by score and ascending order by penalty */
@@ -3314,7 +3424,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       if (calc[up_ind] > 0) continue;
 
       last_success_run = k;
-      t_pen[tt] += 20 * - calc[up_ind];
+      t_pen[tt] += probs[pe->problem]->acm_run_penalty * - calc[up_ind];
       calc[up_ind] = 1 - calc[up_ind];
       t_prob[tt]++;
       succ_att[pp]++;
@@ -3844,8 +3954,9 @@ write_public_log(char const *stat_dir, char const *name,
   return;
 }
 
+/* format: 0 - HTML, 1 - Plain text */
 int
-new_write_user_source_view(FILE *f, int uid, int rid)
+new_write_user_source_view(FILE *f, int uid, int rid, int format)
 {
   path_t  src_path;
   int html_len, src_flags;
@@ -3875,13 +3986,105 @@ new_write_user_source_view(FILE *f, int uid, int rid)
     return -SRV_ERR_SYSTEM_ERROR;
   }
 
-  html_len = html_armored_memlen(src, src_len);
-  html = alloca(html_len + 16);
-  html_armor_text(src, src_len, html);
-  html[html_len] = 0;
-  xfree(src);
+  if (format == 0) {
+    html_len = html_armored_memlen(src, src_len);
+    html = alloca(html_len + 16);
+    html_armor_text(src, src_len, html);
+    html[html_len] = 0;
+    fprintf(f, "<pre>%s</pre>", html);
+  } else {
+    fwrite(src, 1, src_len, f);
+  }
 
-  fprintf(f, "<pre>%s</pre>", html);
+  xfree(src);
+  return 0;
+}
+
+/* format: 0 - HTML, 1 - Plain text */
+int
+write_user_run_status(FILE *f, int uid, int rid, int accepting_mode, int format)
+{
+  struct run_entry re;
+  int attempts = 0, disq_attempts = 0;
+  int prev_successes = RUN_TOO_MANY;
+  struct section_problem_data *cur_prob = 0;
+  unsigned char *run_kind_str = "", *prob_str = "???", *lang_str = "???";
+  time_t run_time, start_time;
+  unsigned char dur_str[64];
+
+  if (rid < 0 || rid >= run_get_total()) {
+    err("invalid run_id: %d", rid);
+    return -SRV_ERR_BAD_RUN_ID;
+  }
+  run_get_entry(rid, &re);
+  if (re.status == RUN_VIRTUAL_START || re.status == RUN_VIRTUAL_STOP
+      || re.status == RUN_EMPTY) {
+    err("this run is not viewable by a user");
+    return -SRV_ERR_BAD_RUN_ID;
+  }
+  if (uid != re.team) {
+    err("user ids does not match");
+    return -SRV_ERR_ACCESS_DENIED;
+  }
+
+  if (global->virtual) {
+    start_time = run_get_virtual_start_time(rid);
+  } else {
+    start_time = run_get_start_time();
+  }
+
+  if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    if (re.status == RUN_OK || re.status == RUN_PARTIAL)
+      re.status = RUN_ACCEPTED;
+  }
+
+  attempts = 0; disq_attempts = 0;
+  if (global->score_system_val == SCORE_KIROV && !re.is_hidden)
+    run_get_attempts(rid, &attempts, &disq_attempts,
+                     global->ignore_compile_errors);
+
+  if (re.problem > 0 && re.problem <= max_prob) cur_prob = probs[re.problem];
+
+  prev_successes = RUN_TOO_MANY;
+  if (global->score_system_val == SCORE_KIROV
+      && re.status == RUN_OK
+      && !re.is_hidden
+      && cur_prob && cur_prob->score_bonus_total > 0) {
+    if ((prev_successes = run_get_prev_successes(rid)) < 0)
+      prev_successes = RUN_TOO_MANY;
+  }
+
+  if (re.is_imported) run_kind_str = "I";
+  if (re.is_hidden) run_kind_str = "H";
+
+  run_time = re.timestamp;
+  if (!start_time) run_time = start_time;
+  if (start_time > run_time) run_time = start_time;
+  duration_str(global->show_astr_time, run_time, start_time, dur_str, 0);
+
+  prob_str = "???";
+  if (probs[re.problem]) {
+    if (probs[re.problem]->variant_num > 0) {
+      int variant = re.variant;
+      if (!variant) variant = find_variant(re.team, re.problem);
+      prob_str = alloca(strlen(probs[re.problem]->short_name) + 10);
+      if (variant > 0) {
+        sprintf(prob_str, "%s-%d", probs[re.problem]->short_name, variant);
+      } else {
+        sprintf(prob_str, "%s-?", probs[re.problem]->short_name);
+      }
+    } else {
+      prob_str = probs[re.problem]->short_name;
+    }
+  }
+  lang_str = "???";
+  if (langs[re.language]) lang_str = langs[re.language]->short_name;
+
+  fprintf(f, "%d;%s;%s;%u;%s;%s;", rid, run_kind_str, dur_str, re.size,
+          prob_str, lang_str);
+  write_text_run_status(f, &re, 0, attempts, disq_attempts, prev_successes);
+  fprintf(f, "\n");
+
   return 0;
 }
 
