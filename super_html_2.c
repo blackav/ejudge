@@ -278,6 +278,9 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   case SSERV_CMD_CNTS_CHANGE_TEAM_PASSWD:
     p_bool = &cnts->disable_team_password;
     break;
+  case SSERV_CMD_CNTS_CHANGE_SIMPLE_REGISTRATION:
+    p_bool = &cnts->simple_registration;
+    break;
   case SSERV_CMD_CNTS_CHANGE_MANAGED:
     p_bool = &cnts->managed;
     break;
