@@ -1,6 +1,118 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
+Version 2.1.47 (20060419)
+=========================
+
+contest.xml
+-----------
+A new attribute `simple_registration' is added to the <contest>
+element. If this attribute is set to the "yes" value, a simple
+new user registration scheme is used for this contest. When a
+new user account is being created for this contest by a
+`register' CGI program, the e-mail step is omitted, the new user
+password is shown immediately, so the user may proceed to the
+next stage of the registration immediately.
+
+super-serve, serve-control
+--------------------------
+Editing of the new `simple_registration' attribute of the
+`contest.xml' file is supported.
+
+Editing of the new `always_show_problems' global configuration
+variable of the `serve.cfg' configuration file is supported.
+
+Users, which have privilege bits set in the contest
+configuration file are registered and made invisible in this
+contest automatically.
+
+When user capabilities are edited, 3 predefined set of
+capabilities are available: "Observer", "Judge", "Master".
+
+serve, team
+-----------
+New global configuration variable `always_show_problems' is
+added to the `serve.cfg' configuration file. If this variable is
+set 1, the link to the problem statements is available to the
+participants in the `team' CGI program before the contest starts.
+
+New problem configuration variable `acm_run_penalty' is added to
+the `serve.cfg' configuration file. This variable is active only
+in ACM and MOSCOW contests and allows changing of the failed
+submission penalty. The standard value of this penalty for all
+ACM contests is 20 minutes, and this is the default value for
+`acm_run_penalty' configuration variable. For example, it is
+possible to define the `acm_run_penalty' to 0 to disable
+submission penalty at all. The `acm_run_penalty' variable may be
+defined in the abstract problem and will be properly inherited
+in the concrete problems.
+
+register
+--------
+A simplified contest registration scheme is supported, if the
+`simple_registration' attribute is set for the contest.
+
+serve
+-----
+Several bugs in the problem summary table generation for the
+KIROV contests are fixed.
+
+ejudge-setup
+------------
+The command to start `serve' in the probe mode for the contest 1
+is added to the end of the generated setup script.
+
+super-serve, serve-control
+--------------------------
+Editing of the `test_sets' configuration variable is supported.
+
+New standard checker `cmp_huge_int' is supported.
+
+Several bugs in the "Check contest settings" command are fixed.
+
+Editing of the `always_show_problems' global configuration
+variable is supported.
+
+Editing of the `acm_run_penalty' problem configuration variable
+is supported.
+
+userlist-server
+---------------
+A team member cannot be removed, if the team is marked as
+read-only.
+
+libchecker
+----------
+New functions `checker_in_eoln', `checker_team_eoln',
+`checker_corr_eoln' are added. These functions check that the
+corresponding input file contains the End-Of-Line character
+(possibly after spaces) at the current position. All whitespace
+characters and the \n itself is removed from the stream.
+
+New standard checker `cmp_huge_int' is added. The checker
+compares a number in the output file with the number in the
+correct answer file. The maximal length of numbers is 1Mb.
+Whitespace characters before the number, `+' sign, and the
+leading zeros are ignored.
+
+serve-cmd
+---------
+New commands team-dump-source, team-dump-clar,
+team-run-status are added.
+serve-cmd CONTEST-ID team-dump-source SESSION-FILE RUN-ID
+        Outputs to the standard output the source code for
+        submit RUN-ID. Viewing of the source code must be
+        enabled for the contest, also the user must be the
+        author of this submit.
+serve-cmd CONTEST-ID team-run-status SESSION-FILE RUN-ID
+        Outputs to the standard output the status of the submit
+        RUN-ID. The user must be the author of this submit.
+serve-cmd CONTEST-ID team-dump-clar SESSION-FILE CLAR-ID
+        Outputs to the standard output the text of the
+        clarification request CLAR-ID. The user must have
+        permission to view this message.
+
+
 Version 2.1.46 (20060319)
 =========================
 

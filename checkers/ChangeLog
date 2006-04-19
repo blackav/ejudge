@@ -1,3 +1,11 @@
+2006-04-07  Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in:
+	new files added: corr_eoln.c  in_eoln.c  team_eoln.c  cmp_huge_int.c
+
+	* cmp_huge_int.c, corr_eoln.c, in_eoln.c, team_eoln.c:
+	initial revision
+
 2005-12-16  Alexander Chernov  <cher@ispras.ru>
 
 	* read_file_by_line_f.c: copyright notice is updated;
