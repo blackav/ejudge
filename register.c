@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2001-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -87,6 +87,7 @@ enum
     ACTION_ADD_NEW_GUEST,
     ACTION_REMOVE_MEMBER,
     ACTION_REDISPLAY_EDIT_REGISTRATION_DATA,
+    STATE_USER_REGISTERED_2,
 
     ACTION_LAST_ACTION
   };
@@ -1955,7 +1956,7 @@ display_initial_page(void)
   if (client_locale_id == -1) client_locale_id = 0;
   //l10n_setlocale(client_locale_id);
 
-  printf("Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
+  //printf("Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
   client_put_header(stdout, header_txt, 0, config->charset, 1,
                     client_locale_id, "%s", _("Log into the system"));
 
@@ -2031,7 +2032,7 @@ display_login_page(void)
   if (client_locale_id == -1) client_locale_id = 0;
   //l10n_setlocale(client_locale_id);
 
-  printf("Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
+  //printf("Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
   client_put_header(stdout, header_txt, 0, config->charset, 1,
                     client_locale_id,
                     "%s", _("Log into the system"));
@@ -2098,7 +2099,7 @@ display_register_new_user_page(void)
   }
   fix_string(user_email, email_accept_chars, '?');
 
-  printf("Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
+  //printf("Set-cookie: ID=0; expires=Thu, 01-Jan-70 00:00:01 GMT\n");
   client_put_header(stdout, header_txt, 0, config->charset, 1,
                     client_locale_id, "%s", _("Register a new user"));
 
@@ -2197,6 +2198,75 @@ display_user_registered_page(void)
            "the first time no later, than in 24 hours after the initial "
            "user registration, or the registration is void."),
          par_style, user_email, url, par_style);
+}
+
+static void
+display_user_registered_page_2(void)
+{
+  unsigned char *txt1, *txt2, *txt3;
+  struct contest_desc *cnts = 0;
+
+  if (user_contest_id <= 0 || contests_get(user_contest_id, &cnts) < 0
+      || !cnts || !cnts->simple_registration) {
+    // permission denied
+    client_put_header(stdout, header_txt, 0, config->charset, 1,
+                      client_locale_id, "%s", _("Permission denied"));
+    printf("<h1>You don't fool me!</h1>\n");
+    client_put_footer(stdout, footer_txt);
+    exit(0);
+  }
+
+  if (client_locale_id == -1) client_locale_id = 0;
+  //l10n_setlocale(client_locale_id);
+
+  if (!(user_login = cgi_param("login"))) {
+    user_login = xstrdup("");
+  }
+  txt1 = html_armor_string_dup(user_login);
+  fix_string(user_login, login_accept_chars, '?');
+  if (!(user_email = cgi_param("email"))) {
+    user_email = xstrdup("");
+  }
+  txt2 = html_armor_string_dup(user_email);
+  fix_string(user_email, email_accept_chars, '?');
+  if (!(user_password = cgi_param("password"))) {
+    user_password = xstrdup("");
+  }
+  txt3 = html_armor_string_dup(user_password);
+
+  client_put_header(stdout, header_txt, 0, config->charset, 1,
+                    client_locale_id,"%s", _("Step 1 of registration is complete"));
+
+  printf(_("<p%s>New user account is created successfully. "
+           "An initial password is generated automatically, "
+           "you will be able to change it later.\n"
+           "<p%s>The new account is as follows:\n"), par_style, par_style);
+  printf("<table border=\"0\">\n"
+         "<tr><td>%s</td><td><tt>%s</tt></td></tr>\n"
+         "<tr><td>%s</td><td><tt>%s</tt></td></tr>\n"
+         "<tr><td>%s</td><td><tt>%s</tt></td></tr>\n"
+         "</table>\n", _("Login"), txt1, _("E-mail"), txt2,
+         _("Password"), txt3);
+
+  printf(_("<p%s>Remember or write down the password!."), par_style);
+
+  printf(_("<p%s>Press the &quot;Next&quot; button to continue registration."),
+         par_style);
+
+  printf("<form method=\"POST\" action=\"%s\" "
+         "ENCTYPE=\"application/x-www-form-urlencoded\">\n",
+         self_url);
+  printf("<input type=\"hidden\" name=\"contest_id\" value=\"%d\">\n",
+         user_contest_id);
+  printf("<input type=\"hidden\" name=\"locale_id\" value=\"%d\">\n",
+         client_locale_id);
+  printf("<input type=\"hidden\" name=\"login\" value=\"%s\">\n",
+         user_login);
+  printf("<input type=\"hidden\" name=\"password\" value=\"%s\">\n",
+         user_password);
+  printf("<p%s><input type=\"submit\" name=\"action_%d\" value=\"%s\">",
+         par_style, ACTION_LOGIN, _("Next"));
+  printf("</form>");
 }
 
 static void
@@ -2511,6 +2581,9 @@ action_register_new_user(void)
 {
   int errcode;
   unsigned char s1[128], url[512];
+  struct contest_desc *cnts = 0;
+
+  if (user_contest_id > 0) contests_get(user_contest_id, &cnts);
 
   if (client_locale_id == -1) client_locale_id = 0;
   //l10n_setlocale(client_locale_id);
@@ -2544,6 +2617,18 @@ action_register_new_user(void)
     }
     if (!server_conn) {
       error("%s", _("Connection to the server is broken."));
+    } else if (cnts && cnts->simple_registration) {
+      errcode = userlist_clnt_register_new_2(server_conn, user_ip,
+                                             ssl_flag,
+                                             user_contest_id,
+                                             client_locale_id,
+                                             1 /* usecookies */,
+                                             user_login, user_email,
+                                             &user_password);
+      if (errcode == ULS_PASSWORD) errcode = 0;
+      if (errcode) {
+        error("%s", gettext(userlist_strerror(-errcode)));
+      }
     } else {
       errcode = userlist_clnt_register_new(server_conn, user_ip,
                                            ssl_flag,
@@ -2564,13 +2649,20 @@ action_register_new_user(void)
 
   if (!error_log) {
     /* registration is successful */
-    *s1 = 0;
-    if (user_contest_id > 0) {
-      snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
+    if (cnts && cnts->simple_registration) {
+      url_armor_string(s1, sizeof(s1), user_password);
+      snprintf(url, sizeof(url), "%s?action=%d&login=%s&email=%s&password=%s&locale_id=%d&contest_id=%d",
+               self_url, STATE_USER_REGISTERED_2, user_login, user_email,
+               s1, client_locale_id, user_contest_id);
+    } else {
+      *s1 = 0;
+      if (user_contest_id > 0) {
+        snprintf(s1, sizeof(s1), "&contest_id=%d", user_contest_id);
+      }
+      snprintf(url, sizeof(url),"%s?action=%d&login=%s&email=%s&locale_id=%d%s",
+               self_url, STATE_USER_REGISTERED, user_login, user_email,
+               client_locale_id, s1);
     }
-    snprintf(url, sizeof(url), "%s?action=%d&login=%s&email=%s&locale_id=%d%s",
-             self_url, STATE_USER_REGISTERED, user_login, user_email,
-             client_locale_id, s1);
     client_put_refresh_header(config->charset, url, 0,
                               "%s", _("New user is registered"));
     exit(0);
@@ -3073,6 +3165,9 @@ main(int argc, char const *argv[])
     break;
   case STATE_USER_REGISTERED:
     display_user_registered_page();
+    break;
+  case STATE_USER_REGISTERED_2:
+    display_user_registered_page_2();
     break;
   case STATE_MAIN_PAGE:
     display_main_page();
