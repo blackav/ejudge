@@ -131,9 +131,10 @@
 
 #define DFLT_P_INPUT_FILE         "input"
 #define DFLT_P_OUTPUT_FILE        "output"
-#define DFLT_P_FULL_SCORE         25
+#define DFLT_P_FULL_SCORE         50
 #define DFLT_P_TEST_SCORE         1
 #define DFLT_P_RUN_PENALTY        1
+#define DFLT_P_ACM_RUN_PENALTY    20
 #define DFLT_P_VARIABLE_FULL_SCORE 0
 #define DFLT_P_HIDDEN             0
 #define DFLT_P_BINARY_INPUT       0
