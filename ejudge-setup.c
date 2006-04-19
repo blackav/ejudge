@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2911,6 +2911,8 @@ generate_userlist_xml(FILE *f)
   fprintf(f, "  <user id=\"%s\" never_clean=\"yes\" registered=\"%s\" last_login=\"%s\">\n", config_user_id, date_buf, date_buf);
   fprintf(f, "    <login public=\"no\">%s</login>\n", config_login);
   fprintf(f, "    <password method=\"sha1\">%s</password>\n",
+          config_password_sha1);
+  fprintf(f, "    <team_password method=\"sha1\">%s</team_password>\n",
           config_password_sha1);
   fprintf(f, "    <name>%s</name>\n", config_name);
   fprintf(f, "    <email public=\"no\">%s</email>\n", config_email);
