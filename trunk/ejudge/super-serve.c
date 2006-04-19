@@ -2509,6 +2509,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_CNTS_CHANGE_NAME_EN:
   case SSERV_CMD_CNTS_CHANGE_AUTOREGISTER:
   case SSERV_CMD_CNTS_CHANGE_TEAM_PASSWD:
+  case SSERV_CMD_CNTS_CHANGE_SIMPLE_REGISTRATION:
   case SSERV_CMD_CNTS_CHANGE_MANAGED:
   case SSERV_CMD_CNTS_CHANGE_RUN_MANAGED:
   case SSERV_CMD_CNTS_CHANGE_CLEAN_USERS:
@@ -2623,6 +2624,7 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_PROB_CHANGE_FULL_SCORE:
   case SSERV_CMD_PROB_CHANGE_TEST_SCORE:
   case SSERV_CMD_PROB_CHANGE_RUN_PENALTY:
+  case SSERV_CMD_PROB_CHANGE_ACM_RUN_PENALTY:
   case SSERV_CMD_PROB_CHANGE_DISQUALIFIED_PENALTY:
   case SSERV_CMD_PROB_CHANGE_VARIABLE_FULL_SCORE:
   case SSERV_CMD_PROB_CHANGE_TEST_SCORE_LIST:
@@ -2986,6 +2988,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CHANGE_NAME_EN] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_AUTOREGISTER] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_TEAM_PASSWD] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_SIMPLE_REGISTRATION] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_MANAGED] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_RUN_MANAGED] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_CLEAN_USERS] = { cmd_set_value },
@@ -3116,6 +3119,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_FULL_SCORE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TEST_SCORE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_RUN_PENALTY] = { cmd_set_value },
+  [SSERV_CMD_PROB_CHANGE_ACM_RUN_PENALTY] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_DISQUALIFIED_PENALTY] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_VARIABLE_FULL_SCORE] = { cmd_set_value },
   [SSERV_CMD_PROB_CHANGE_TEST_SCORE_LIST] = { cmd_set_value },
