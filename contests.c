@@ -125,6 +125,7 @@ static char const * const attn_map[] =
   "closed",
   "invisible",
   "ssl",
+  "simple_registration",
 
   0
 };
@@ -776,6 +777,14 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
         return -1;
       }
       cnts->disable_team_password = x;
+      break;
+    case CONTEST_A_SIMPLE_REGISTRATION:
+      x = parse_bool(a->text);
+      if (x < 0 || x > 1) {
+        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
+        return -1;
+      }
+      cnts->simple_registration = x;
       break;
     case CONTEST_A_CLOSED:
       x = parse_bool(a->text);
@@ -1530,6 +1539,10 @@ contests_write_header(FILE *f, const struct contest_desc *cnts)
   if (!cnts->clean_users) {
     fprintf(f, "\n         %s=\"%s\"",
             attn_map[CONTEST_A_CLEAN_USERS], "no");
+  }
+  if (cnts->simple_registration) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attn_map[CONTEST_A_SIMPLE_REGISTRATION], "yes");
   }
 
   if (cnts->closed) {
