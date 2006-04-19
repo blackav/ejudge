@@ -411,7 +411,7 @@ print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
         }
 
         score = calc_kirov_score(0, 0, pe, pp, attempts, disq_attempts,
-                                 prev_successes, &date_penalty);
+                                 prev_successes, &date_penalty, 0);
         if (pp->score_multiplier >= 1) mult = pp->score_multiplier;
         snprintf((fields[RAW_RUN_SCORE] = alloca(BSIZE)), BSIZE, "%d", score);
         snprintf((fields[RAW_RUN_BASE_SCORE] = alloca(BSIZE)), BSIZE,
