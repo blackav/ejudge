@@ -715,8 +715,8 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
     fprintf(f, "<td>%s</td>", s);
     xfree(s);
     if (best_run[prob_id] < 0) {
-      if ((global->score_system_val == SCORE_KIROV && !accepting_mode)
-          || global->score_system_val == SCORE_OLYMPIAD
+      if (global->score_system_val == SCORE_KIROV
+          || (global->score_system_val == SCORE_OLYMPIAD && !accepting_mode)
           || global->score_system_val == SCORE_MOSCOW) {
         fprintf(f, "<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n");
       } else {
@@ -846,6 +846,7 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
   struct run_entry re;
   const unsigned char *run_kind_str = 0;
   struct section_problem_data *cur_prob;
+  struct section_language_data *lang = 0;
 
   if (global->virtual) {
     start_time = run_get_virtual_start_time(uid);
@@ -890,6 +891,9 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
       continue;
     if (re.team != uid) continue;
     showed++;
+
+    if (re.language > 0 && re.language <= max_lang && langs[re.language])
+      lang = langs[re.language];
 
     if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       if (re.status == RUN_OK || re.status == RUN_PARTIAL)
@@ -951,9 +955,16 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
 
     if (global->team_enable_src_view) {
       fprintf(f, "<td>");
-      fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid,
-                                           self_url, extra_args,
-                                           "source_%d=1", i), _("View"));
+      if (lang && lang->binary) {
+        fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid,
+                                             self_url, extra_args,
+                                             "source_%d=1&binary=1", i),
+                _("View"));
+      } else {
+        fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid,
+                                             self_url, extra_args,
+                                             "source_%d=1", i), _("View"));
+      }
       fprintf(f, "</td>");
     }
     if (global->team_enable_rep_view) {
@@ -3954,7 +3965,7 @@ write_public_log(char const *stat_dir, char const *name,
   return;
 }
 
-/* format: 0 - HTML, 1 - Plain text */
+/* format: 0 - HTML, 1 - Plain text, 2 - HTML with header */
 int
 new_write_user_source_view(FILE *f, int uid, int rid, int format)
 {
@@ -3963,6 +3974,7 @@ new_write_user_source_view(FILE *f, int uid, int rid, int format)
   size_t src_len = 0;
   char   *src = 0, *html = 0;
   struct run_entry re;
+  struct section_language_data *lang = 0;
 
   if (!global->team_enable_src_view) {
     err("viewing user source is disabled");
@@ -3992,7 +4004,20 @@ new_write_user_source_view(FILE *f, int uid, int rid, int format)
     html_armor_text(src, src_len, html);
     html[html_len] = 0;
     fprintf(f, "<pre>%s</pre>", html);
-  } else {
+  } else if (format == 1) {
+    fwrite(src, 1, src_len, f);
+  } else if (format == 2) {
+    if (re.language > 0 && re.language < max_lang && langs[re.language])
+      lang = langs[re.language];
+    if (lang->content_type) {
+      fprintf(f, "Content-type: %s\n", lang->content_type);
+    } else if (lang->binary) {
+      fprintf(f, "Content-type: application/octet-stream\n\n");
+    } else {
+      fprintf(f, "Content-type: text/plain\n");
+    }
+    fprintf(f, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
+            rid, lang->src_sfx);
     fwrite(src, 1, src_len, f);
   }
 
