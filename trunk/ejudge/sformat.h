@@ -3,7 +3,7 @@
 #ifndef __SFORMAT_H__
 #define __SFORMAT_H__
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -31,6 +31,9 @@ struct sformat_extra_data
 {
   int locale_id;
   unsigned char *url;
+  unsigned char *server_name;
+  unsigned char *server_name_en;
+  unsigned char *str1;
 };
 
 int sformat_message(char *, size_t, char const *,
