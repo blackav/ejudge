@@ -2424,6 +2424,7 @@ cmd_simple_top_command(struct client_state *p, int len,
 
   case SSERV_CMD_CNTS_CLEAR_NAME:
   case SSERV_CMD_CNTS_CLEAR_NAME_EN:
+  case SSERV_CMD_CNTS_CLEAR_MAIN_URL:
   case SSERV_CMD_CNTS_CLEAR_DEADLINE:
   case SSERV_CMD_CNTS_CLEAR_USERS_HEADER:
   case SSERV_CMD_CNTS_CLEAR_USERS_FOOTER:
@@ -2507,9 +2508,11 @@ cmd_set_value(struct client_state *p, int len,
   switch (pkt->b.id) {
   case SSERV_CMD_CNTS_CHANGE_NAME:
   case SSERV_CMD_CNTS_CHANGE_NAME_EN:
+  case SSERV_CMD_CNTS_CHANGE_MAIN_URL:
   case SSERV_CMD_CNTS_CHANGE_AUTOREGISTER:
   case SSERV_CMD_CNTS_CHANGE_TEAM_PASSWD:
   case SSERV_CMD_CNTS_CHANGE_SIMPLE_REGISTRATION:
+  case SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL:
   case SSERV_CMD_CNTS_CHANGE_MANAGED:
   case SSERV_CMD_CNTS_CHANGE_RUN_MANAGED:
   case SSERV_CMD_CNTS_CHANGE_CLEAN_USERS:
@@ -2587,6 +2590,9 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_LANG_CLEAR_LONG_NAME:
   case SSERV_CMD_LANG_CHANGE_DISABLE_AUTO_TESTING:
   case SSERV_CMD_LANG_CHANGE_DISABLE_TESTING:
+  case SSERV_CMD_LANG_CHANGE_BINARY:
+  case SSERV_CMD_LANG_CHANGE_CONTENT_TYPE:
+  case SSERV_CMD_LANG_CLEAR_CONTENT_TYPE:
   case SSERV_CMD_LANG_CHANGE_OPTS:
   case SSERV_CMD_LANG_CLEAR_OPTS:
     r = super_html_lang_cmd(sstate, pkt->b.id, pkt->param1, param2_ptr,
@@ -2951,6 +2957,7 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE] = { cmd_main_page },
   [SSERV_CMD_CNTS_CLEAR_NAME] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_NAME_EN] = { cmd_simple_top_command },
+  [SSERV_CMD_CNTS_CLEAR_MAIN_URL] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_DEADLINE] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_USERS_HEADER] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_USERS_FOOTER] = { cmd_simple_top_command },
@@ -2986,9 +2993,11 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CLEAR_CONF_DIR] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CHANGE_NAME] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_NAME_EN] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_MAIN_URL] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_AUTOREGISTER] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_TEAM_PASSWD] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_SIMPLE_REGISTRATION] = { cmd_set_value },
+  [SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_MANAGED] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_RUN_MANAGED] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_CLEAN_USERS] = { cmd_set_value },
@@ -3085,8 +3094,11 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_LANG_CHANGE_DISABLED] = { cmd_set_value },
   [SSERV_CMD_LANG_CHANGE_LONG_NAME] = { cmd_set_value },
   [SSERV_CMD_LANG_CLEAR_LONG_NAME] = { cmd_set_value },
+  [SSERV_CMD_LANG_CHANGE_CONTENT_TYPE] = { cmd_set_value },
+  [SSERV_CMD_LANG_CLEAR_CONTENT_TYPE] = { cmd_set_value },
   [SSERV_CMD_LANG_CHANGE_DISABLE_AUTO_TESTING] = { cmd_set_value },
   [SSERV_CMD_LANG_CHANGE_DISABLE_TESTING] = { cmd_set_value },
+  [SSERV_CMD_LANG_CHANGE_BINARY] = { cmd_set_value },
   [SSERV_CMD_LANG_CHANGE_OPTS] = { cmd_set_value },
   [SSERV_CMD_LANG_CLEAR_OPTS] = { cmd_set_value },
 
