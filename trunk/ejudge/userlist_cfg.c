@@ -39,6 +39,9 @@ enum
     TG_EMAIL_PROGRAM,
     TG_REGISTER_URL,
     TG_REGISTER_EMAIL,
+    TG_SERVER_NAME,
+    TG_SERVER_NAME_EN,
+    TG_SERVER_MAIN_URL,
     TG_USER_MAP,
     TG_MAP,
     TG_CAPS,
@@ -89,6 +92,9 @@ static char const * const tag_map[] =
   "email_program",
   "register_url",
   "register_email",
+  "server_name",
+  "server_name_en",
+  "server_main_url",
   "user_map",
   "map",
   "caps",
@@ -146,6 +152,9 @@ tree_alloc_func(int tag)
   case TG_EMAIL_PROGRAM:
   case TG_REGISTER_EMAIL:
   case TG_REGISTER_URL:
+  case TG_SERVER_NAME:
+  case TG_SERVER_NAME_EN:
+  case TG_SERVER_MAIN_URL:
   case TG_USER_MAP:
   case TG_CAPS:
   case TG_SERVE_PATH:
@@ -447,6 +456,15 @@ userlist_cfg_parse(char const *path)
       break;
     case TG_REGISTER_EMAIL:
       if (handle_final_tag(path, p, &cfg->register_email) < 0) goto failed;
+      break;
+    case TG_SERVER_NAME:
+      if (handle_final_tag(path, p, &cfg->server_name) < 0) goto failed;
+      break;
+    case TG_SERVER_NAME_EN:
+      if (handle_final_tag(path, p, &cfg->server_name_en) < 0) goto failed;
+      break;
+    case TG_SERVER_MAIN_URL:
+      if (handle_final_tag(path, p, &cfg->server_main_url) < 0) goto failed;
       break;
     case TG_SERVE_PATH:
       if (handle_final_tag(path, p, &cfg->serve_path) < 0) goto failed;
