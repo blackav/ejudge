@@ -1087,29 +1087,48 @@ request_source_if_asked(void)
 {
   char *s;
   int   n, run_id, r;
+  int   is_binary = 0;
+  int   cmd = SRV_CMD_SHOW_SOURCE;
 
   if (!(s = cgi_nname("source_", 7))) return;
   if (sscanf(s, "source_%d%n", &run_id, &n) != 1
       || (s[n] && s[n] != '.'))
     return;
   if (run_id < 0 || run_id >= server_total_runs) return;
+  if (cgi_param("binary")) is_binary = 1;
 
-  client_put_header(stdout, header_txt, 0, global->charset, 1,
-                    client_locale_id, _("Source view"));
-  print_nav_buttons(_("Main page"), 0, 0);
-  printf("<hr>");
-  fflush(stdout);
+  if (is_binary) cmd = SRV_CMD_DUMP_SOURCE_2;
+  if (!is_binary) {
+    client_put_header(stdout, header_txt, 0, global->charset, 1,
+                      client_locale_id, _("Source view"));
+    print_nav_buttons(_("Main page"), 0, 0);
+    printf("<hr>");
+    fflush(stdout);
+  }
   open_serve();
-  r = serve_clnt_show_item(serve_socket_fd, 1, SRV_CMD_SHOW_SOURCE,
+  r = serve_clnt_show_item(serve_socket_fd, 1, cmd,
                            client_team_id, global->contest_id,
                            client_locale_id, run_id);
   if (r < 0) {
+    if (is_binary) {
+      client_put_header(stdout, header_txt, 0, global->charset, 1,
+                        client_locale_id, _("Source view"));
+      print_nav_buttons(_("Main page"), 0, 0);
+      printf("<hr>");
+    }
     printf("<p%s><pre><font color=\"red\">%s</font></pre></p>\n",
            par_style, gettext(protocol_strerror(-r)));
+    if (is_binary) {
+      printf("<hr>");
+      print_nav_buttons(_("Main page"), 0, 0);
+      client_put_footer(stdout, footer_txt);
+    }
   }
-  printf("<hr>");
-  print_nav_buttons(_("Main page"), 0, 0);
-  client_put_footer(stdout, footer_txt);
+  if (!is_binary) {
+    printf("<hr>");
+    print_nav_buttons(_("Main page"), 0, 0);
+    client_put_footer(stdout, footer_txt);
+  }
   exit(0);
 }
 
