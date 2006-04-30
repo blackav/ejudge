@@ -374,6 +374,7 @@ static struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(src_sfx, "s"),
   LANGUAGE_PARAM(exe_sfx, "s"),
   LANGUAGE_PARAM(cmd, "s"),
+  LANGUAGE_PARAM(content_type, "s"),
 
   LANGUAGE_PARAM(disable_auto_testing, "d"),
   LANGUAGE_PARAM(disable_testing, "d"),
