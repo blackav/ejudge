@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2001-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -116,9 +116,14 @@
  *     c - grade
  *     C - number
  *  C - contest data
+ *   Cn - name
+ *   CN - name_en
  *  V - variable data
  *   Vl - locale_id
  *   Vu - url
+ *   V1 - str1
+ *   Vn - server_name
+ *   VN - server_name_en
  */
 
 int
@@ -155,6 +160,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
   int need_int_format = 0;
   int int_format_value = 0;
   int is_invalid = 0;
+  int locale_dependant = 0;
 
   char   *sbuf = (char*) alloca(16);
   char   *psbuf;
@@ -179,6 +185,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
     need_int_format = 0;
     int_format_value = 0;
     is_invalid = 0;
+    locale_dependant = 0;
 
     if (*pf != '%') {
       tbuf[0] = *pf;
@@ -211,6 +218,9 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           center_align = 1;
           right_align = 0;
           put_zeros = 0;
+          break;
+        case 'L':
+          locale_dependant = 1;
           break;
         case '0':
           put_zeros = 1;
@@ -727,7 +737,8 @@ sformat_message(char *buf, size_t maxsize, char const *format,
       case 'C':
         pf++;
         switch (*pf) {
-          // FIXME: list of `C' formats here
+        case 'n': case 'N':
+          break;
         case 0:
           is_invalid = 1;
           break;
@@ -739,7 +750,20 @@ sformat_message(char *buf, size_t maxsize, char const *format,
         if (!is_invalid && !cnts_data) is_invalid = 1;
         if (!is_invalid) {
           switch (*pf) {
-          // FIXME: list of `C' formats here
+          case 'n':
+            if (!locale_dependant) {
+              papp = cnts_data->name;
+              break;
+            }
+          case 'N':
+            if (!locale_dependant) {
+              papp = cnts_data->name_en;
+              break;
+            }
+            papp = 0;
+            if (extra_data && !extra_data->locale_id) papp = cnts_data->name_en;
+            if (!papp) papp = cnts_data->name;
+            break;
           default:
             abort();
           }
@@ -750,11 +774,16 @@ sformat_message(char *buf, size_t maxsize, char const *format,
         /*
          *   Vl - locale_id
          *   Vu - url
+         *   V1 - str1
+         *   Vn - server_name
+         *   VN - server_name_en
          */
         pf++;
         switch (*pf) {
         case 'l':
         case 'u':
+        case '1':
+        case 'n': case 'N':
           break;
         case 0:
           is_invalid = 1;
@@ -773,6 +802,28 @@ sformat_message(char *buf, size_t maxsize, char const *format,
             break;
           case 'u':
             papp = extra_data->url;
+            if (!papp) papp = "";
+            break;
+          case '1':
+            papp = extra_data->str1;
+            if (!papp) papp = "";
+            break;
+          case 'n':
+            if (!locale_dependant) {
+              papp = extra_data->server_name;
+              if (!papp) papp = "";
+              break;
+            }
+          case 'N':
+            if (!locale_dependant) {
+              papp = extra_data->server_name_en;
+              if (!papp) papp = "";
+              break;
+            }
+            papp = 0;
+            if (extra_data && !extra_data->locale_id)
+              papp = extra_data->server_name_en;
+            if (!papp) papp = extra_data->server_name;
             if (!papp) papp = "";
             break;
           default:
