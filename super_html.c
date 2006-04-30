@@ -712,6 +712,9 @@ super_html_contest_page(FILE *f,
     fprintf(f, "<tr><td>Contest name (en):</td><td>%s</td></tr>\n", str);
     xfree(str);
   }
+  if (cnts->main_url) {
+    fprintf(f, "<tr><td>Contest main URL:</td><td><tt><a href=\"%s\" target=\"_blank\">%s</a></tt></td></tr>\n", cnts->main_url, cnts->main_url);
+  }
 
   // report judge URL
   if (opcaps_check(caps, OPCAP_JUDGE_LOGIN) >= 0 && judge_url[0]
@@ -2080,6 +2083,15 @@ super_html_edit_contest_page(FILE *f,
                            self_url,
                            extra_args,
                            hidden_vars);
+  print_string_editing_row(f, "Main URL:", cnts->main_url,
+                           SUPER_ACTION_CNTS_CHANGE_MAIN_URL,
+                           SUPER_ACTION_CNTS_CLEAR_MAIN_URL,
+                           0,
+                           session_id,
+                           form_row_attrs[row ^= 1],
+                           self_url,
+                           extra_args,
+                           hidden_vars);
 
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Registration settings</b></td></tr>", head_row_attr);
   row = 1;
@@ -2191,6 +2203,16 @@ super_html_edit_contest_page(FILE *f,
   fprintf(f, "</td><td>");
   html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_SIMPLE_REGISTRATION, "Change");
   fprintf(f, "</td></tr></form>\n");
+
+  if (cnts->simple_registration) {
+    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    fprintf(f, "<tr%s><td>Send e-mail with password anyway?</td><td>",
+            form_row_attrs[row ^= 1]);
+    html_boolean_select(f, cnts->send_passwd_email, "param", 0, 0);
+    fprintf(f, "</td><td>");
+    html_submit_button(f, SUPER_ACTION_CNTS_CHANGE_SEND_PASSWD_EMAIL, "Change");
+    fprintf(f, "</td></tr></form>\n");
+  }
 
   html_start_form(f, 1, session_id, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>Manage the contest server?</td><td>",
