@@ -761,14 +761,15 @@ prepare_unparse_lang(FILE *f, const struct section_language_data *lang,
   */
   if (lang->disabled)
     unparse_bool(f, "disabled", lang->disabled);
-  /*
   if (lang->binary)
     unparse_bool(f, "binary", lang->binary);
-  */
   if (lang->disable_auto_testing)
     unparse_bool(f, "disable_auto_testing", lang->disable_auto_testing);
   if (lang->disable_testing)
     unparse_bool(f, "disable_testing", lang->disable_testing);
+  if (lang->content_type[0]) {
+    fprintf(f, "content_type = \"%s\"\n", c_armor(&sbuf, lang->content_type));
+  }
 
   if (lang->compiler_env) {
     for (i = 0; lang->compiler_env[i]; i++) {
@@ -795,7 +796,6 @@ prepare_unparse_lang(FILE *f, const struct section_language_data *lang,
 /*
  * Unhandled language variables:
  *
-  LANGUAGE_PARAM(binary, "d"),
   LANGUAGE_PARAM(priority_adjustment, "d"),
   LANGUAGE_PARAM(key, "s"),
   LANGUAGE_PARAM(compile_real_time_limit, "d"),
@@ -805,9 +805,6 @@ prepare_unparse_unhandled_lang(FILE *f, const struct section_language_data *lang
 {
   struct str_buf sbuf = { 0, 0};
 
-  //LANGUAGE_PARAM(binary, "d"),
-  if (lang->binary)
-    unparse_bool(f, "binary", lang->binary);
   //LANGUAGE_PARAM(priority_adjustment, "d"),
   if (lang->priority_adjustment)
     fprintf(f, "priority_adjustment = %d\n", lang->priority_adjustment);
