@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -388,6 +388,8 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
     s = userlist_unparse_bool(u->read_only); break;
   case USERLIST_NN_NEVER_CLEAN:
     s = userlist_unparse_bool(u->never_clean); break;
+  case USERLIST_NN_SIMPLE_REGISTRATION:
+    s = userlist_unparse_bool(u->simple_registration); break;
   case USERLIST_NN_TIMESTAMPS: break;    /* !!! */
   case USERLIST_NN_REG_TIME:
     s = userlist_unparse_date(u->registration_time, convert_null); break;
@@ -531,6 +533,8 @@ userlist_set_user_field_str(struct userlist_list *lst,
     iptr = &u->read_only; goto do_bool_fields;
   case USERLIST_NN_NEVER_CLEAN:
     iptr = &u->never_clean; goto do_bool_fields;
+  case USERLIST_NN_SIMPLE_REGISTRATION:
+    iptr = &u->simple_registration; goto do_bool_fields;
   do_bool_fields:
     new_ival = userlist_parse_bool(field_val);
     if (new_ival < 0 || new_ival > 1) return -1;
@@ -655,6 +659,8 @@ userlist_delete_user_field(struct userlist_user *u, int field_id)
     iptr = &u->read_only; goto do_flags_delete;
   case USERLIST_NN_NEVER_CLEAN:
     iptr = &u->never_clean; goto do_flags_delete;
+  case USERLIST_NN_SIMPLE_REGISTRATION:
+    iptr = &u->simple_registration; goto do_flags_delete;
   do_flags_delete:
     retval = !(*iptr == 0);
     *iptr = 0;
