@@ -460,6 +460,7 @@ struct section_language_data
   puc_t arch[32];               /* language architecture */
   puc_t src_sfx[32];            /* source file suffix */
   puc_t exe_sfx[32];            /* executable file suffix */
+  puc_t content_type[128];      /* Content-type: header for downloads */
   path_t cmd;                   /* compile command */
 
   int disable_auto_testing;     /* do not test this language automatically */
