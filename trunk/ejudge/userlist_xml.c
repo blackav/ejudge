@@ -123,6 +123,7 @@ static char const * const attn_map[] =
   "never_clean",
   "privileged",
   "date",
+  "simple_registration",
 
   0
 };
@@ -902,6 +903,10 @@ do_parse_user(char const *path, struct userlist_user *usr)
       if (parse_bool(path, a->line, a->column, a->text,
                      &usr->never_clean) < 0) return -1;
       break;
+    case USERLIST_A_SIMPLE_REGISTRATION:
+      if (parse_bool(path, a->line, a->column, a->text,
+                     &usr->simple_registration) < 0) return -1;
+      break;
     default:
       return invalid_attn(path, a);
     }
@@ -1466,6 +1471,10 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   if (p->never_clean && mode != USERLIST_MODE_STAND) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_NEVER_CLEAN],
             unparse_bool(p->never_clean));
+  }
+  if (p->simple_registration && mode != USERLIST_MODE_STAND) {
+    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_SIMPLE_REGISTRATION],
+            unparse_bool(p->simple_registration));
   }
   if (p->registration_time && mode == USERLIST_MODE_ALL) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_REGISTERED],
