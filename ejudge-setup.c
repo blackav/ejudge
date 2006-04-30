@@ -108,6 +108,9 @@ static int config_charset_modified;
 static unsigned char config_sendmail[PATH_MAX];
 static unsigned char config_reg_email[256];
 static unsigned char config_reg_url[256];
+static unsigned char config_server_name[256];
+static unsigned char config_server_name_en[256];
+static unsigned char config_server_main_url[256];
 static unsigned char config_serialization_key[64];
 static unsigned char config_system_uid[256];
 static unsigned char config_system_gid[256];
@@ -183,6 +186,9 @@ enum
   SET_LINE_SENDMAIL,
   SET_LINE_REG_EMAIL,
   SET_LINE_REG_URL,
+  SET_LINE_SERVER_NAME,
+  SET_LINE_SERVER_NAME_EN,
+  SET_LINE_SERVER_MAIN_URL,
   SET_LINE_SER_KEY,
   SET_LINE_SYSTEM_UID,
   SET_LINE_SYSTEM_GID,
@@ -1327,6 +1333,18 @@ static const struct path_edit_item set_edit_items[] =
   {
     "`register' URL", 0, config_reg_url, sizeof(config_reg_url),
   },
+  [SET_LINE_SERVER_NAME] =
+  {
+    "Server description", 0, config_server_name, sizeof(config_server_name),
+  },
+  [SET_LINE_SERVER_NAME_EN] =
+  {
+    "Server description (En)", 0, config_server_name_en, sizeof(config_server_name_en),
+  },
+  [SET_LINE_SERVER_MAIN_URL] =
+  {
+    "Server main URL", 0, config_server_main_url, sizeof(config_server_main_url),
+  },
   [SET_LINE_SER_KEY] =
   {
     "Serialization key", 0, config_serialization_key,
@@ -1399,6 +1417,25 @@ initialize_setting_var(int idx)
                system_hostname);
     }
     break;
+  case SET_LINE_SERVER_NAME:
+    snprintf(config_server_name, sizeof(config_server_name),
+             "Novyi server turnirov");
+    break;
+  case SET_LINE_SERVER_NAME_EN:
+    snprintf(config_server_name_en, sizeof(config_server_name_en),
+             "New contest server");
+    break;
+  case SET_LINE_SERVER_MAIN_URL:
+    if (system_domainname[0]) {
+      snprintf(config_server_main_url, sizeof(config_server_main_url),
+               "http://%s.%s",
+               system_hostname, system_domainname);
+    } else {
+      snprintf(config_server_main_url, sizeof(config_server_main_url),
+               "http://%s",
+               system_hostname);
+    }
+    break;
   case SET_LINE_SER_KEY:
     snprintf(config_serialization_key, sizeof(config_serialization_key),
              "%d", DEFAULT_SERIALIZATION_KEY);
@@ -1450,6 +1487,9 @@ is_valid_setting_var(int idx)
   case SET_LINE_REG_EMAIL:
   case SET_LINE_REG_URL:
   case SET_LINE_SER_KEY:
+  case SET_LINE_SERVER_NAME:
+  case SET_LINE_SERVER_NAME_EN:
+  case SET_LINE_SERVER_MAIN_URL:
   case SET_LINE_SYSTEM_UID:
   case SET_LINE_SYSTEM_GID:
     if (set_edit_items[idx].buf[0]) return 1;
@@ -1513,6 +1553,9 @@ do_settings_menu(int *p_cur_item)
     case SET_LINE_REG_URL:
     case SET_LINE_SENDMAIL:
     case SET_LINE_SER_KEY:
+    case SET_LINE_SERVER_NAME:
+    case SET_LINE_SERVER_NAME_EN:
+    case SET_LINE_SERVER_MAIN_URL:
     case SET_LINE_SYSTEM_UID:
     case SET_LINE_SYSTEM_GID:
     case SET_LINE_WORKDISK_FLAG:
@@ -3051,6 +3094,17 @@ generate_ejudge_xml(FILE *f)
   fprintf(f, "  <email_program>%s</email_program>\n", config_sendmail);
   fprintf(f, "  <register_url>%s</register_url>\n", config_reg_url);
   fprintf(f, "  <register_email>%s</register_email>\n", config_reg_email);
+  if (config_server_name && *config_server_name) {
+    fprintf(f, "  <server_name>%s</server_name>\n", config_server_name);
+  }
+  if (config_server_name_en && *config_server_name_en) {
+    fprintf(f, "  <server_name_en>%s</server_name_en>\n",
+            config_server_name_en);
+  }
+  if (config_server_main_url && *config_server_main_url) {
+    fprintf(f, "  <server_main_url>%s</server_main_url>\n",
+            config_server_main_url);
+  }
   fprintf(f,
           "  <user_map>\n"
           "    <map system_user=\"%s\" ejudge_user=\"%s\"/>\n"
