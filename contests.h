@@ -39,6 +39,7 @@ enum
     CONTEST_FIELD,
     CONTEST_NAME,
     CONTEST_NAME_EN,
+    CONTEST_MAIN_URL,
     CONTEST_CONTESTANTS,
     CONTEST_RESERVES,
     CONTEST_COACHES,
@@ -108,6 +109,7 @@ enum
     CONTEST_A_INVISIBLE,
     CONTEST_A_SSL,
     CONTEST_A_SIMPLE_REGISTRATION,
+    CONTEST_A_SEND_PASSWD_EMAIL,
 
     CONTEST_LAST_ATTN
   };
@@ -213,10 +215,12 @@ struct contest_desc
   unsigned char closed;
   unsigned char invisible;
   unsigned char simple_registration;
+  unsigned char send_passwd_email;
 
   time_t         reg_deadline;
   unsigned char *name;
   unsigned char *name_en;
+  unsigned char *main_url;
   unsigned char *users_header_file;
   unsigned char *users_footer_file;
   unsigned char *register_header_file;
