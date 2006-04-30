@@ -147,6 +147,7 @@ enum
     USERLIST_A_NEVER_CLEAN,
     USERLIST_A_PRIVILEGED,
     USERLIST_A_DATE,
+    USERLIST_A_SIMPLE_REGISTRATION,
 
     USERLIST_LAST_ATTN,
   };
@@ -167,36 +168,37 @@ enum
     USERLIST_NN_USE_COOKIES,    /* 10 */
     USERLIST_NN_READ_ONLY,      /* 11 */
     USERLIST_NN_NEVER_CLEAN,    /* 12 */
-    USERLIST_NN_TIMESTAMPS,     /* 13 */
-    USERLIST_NN_REG_TIME,       /* 14 */
-    USERLIST_NN_LOGIN_TIME,     /* 15 */
-    USERLIST_NN_ACCESS_TIME,    /* 16 */
-    USERLIST_NN_CHANGE_TIME,    /* 17 */
-    USERLIST_NN_PWD_CHANGE_TIME, /* 18 */
-    USERLIST_NN_MINOR_CHANGE_TIME, /* 19 */
+    USERLIST_NN_SIMPLE_REGISTRATION, /* 13 */
+    USERLIST_NN_TIMESTAMPS,     /* 14 */
+    USERLIST_NN_REG_TIME,       /* 15 */
+    USERLIST_NN_LOGIN_TIME,     /* 16 */
+    USERLIST_NN_ACCESS_TIME,    /* 17 */
+    USERLIST_NN_CHANGE_TIME,    /* 18 */
+    USERLIST_NN_PWD_CHANGE_TIME, /* 19 */
+    USERLIST_NN_MINOR_CHANGE_TIME, /* 20 */
     USERLIST_NN_TIMESTAMP_LAST = USERLIST_NN_MINOR_CHANGE_TIME,
-    USERLIST_NN_PASSWORDS,      /* 20 */
-    USERLIST_NN_REG_PASSWORD,   /* 21 */
-    USERLIST_NN_TEAM_PASSWORD,  /* 22 */
-    USERLIST_NN_GENERAL_INFO,   /* 23 */
-    USERLIST_NN_INST,           /* 24 */
-    USERLIST_NN_INST_EN,        /* 25 */
-    USERLIST_NN_INSTSHORT,      /* 26 */
-    USERLIST_NN_INSTSHORT_EN,   /* 27 */
-    USERLIST_NN_FAC,            /* 28 */
-    USERLIST_NN_FAC_EN,         /* 29 */
-    USERLIST_NN_FACSHORT,       /* 30 */
-    USERLIST_NN_FACSHORT_EN,    /* 31 */
-    USERLIST_NN_HOMEPAGE,       /* 32 */
-    USERLIST_NN_PHONE,          /* 33 */
-    USERLIST_NN_CITY,           /* 34 */
-    USERLIST_NN_CITY_EN,        /* 35 */
-    USERLIST_NN_COUNTRY,        /* 36 */
-    USERLIST_NN_COUNTRY_EN,     /* 37 */
-    USERLIST_NN_LOCATION,       /* 38 */
-    USERLIST_NN_SPELLING,       /* 39 */
-    USERLIST_NN_PRINTER_NAME,   /* 40 */
-    USERLIST_NN_LANGUAGES,      /* 41 */
+    USERLIST_NN_PASSWORDS,      /* 21 */
+    USERLIST_NN_REG_PASSWORD,   /* 22 */
+    USERLIST_NN_TEAM_PASSWORD,  /* 23 */
+    USERLIST_NN_GENERAL_INFO,   /* 24 */
+    USERLIST_NN_INST,           /* 25 */
+    USERLIST_NN_INST_EN,        /* 26 */
+    USERLIST_NN_INSTSHORT,      /* 27 */
+    USERLIST_NN_INSTSHORT_EN,   /* 28 */
+    USERLIST_NN_FAC,            /* 29 */
+    USERLIST_NN_FAC_EN,         /* 30 */
+    USERLIST_NN_FACSHORT,       /* 31 */
+    USERLIST_NN_FACSHORT_EN,    /* 32 */
+    USERLIST_NN_HOMEPAGE,       /* 33 */
+    USERLIST_NN_PHONE,          /* 34 */
+    USERLIST_NN_CITY,           /* 35 */
+    USERLIST_NN_CITY_EN,        /* 36 */
+    USERLIST_NN_COUNTRY,        /* 37 */
+    USERLIST_NN_COUNTRY_EN,     /* 38 */
+    USERLIST_NN_LOCATION,       /* 39 */
+    USERLIST_NN_SPELLING,       /* 40 */
+    USERLIST_NN_PRINTER_NAME,   /* 41 */
+    USERLIST_NN_LANGUAGES,      /* 42 */
     USERLIST_NN_LAST = USERLIST_NN_LANGUAGES,
 
     USERLIST_NM_SERIAL = 0,              /* 0 */
@@ -312,6 +314,7 @@ struct userlist_user
   int default_use_cookies;
   int read_only;
   int never_clean;
+  int simple_registration;
 
   unsigned char *login;
   unsigned char *name;
