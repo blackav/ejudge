@@ -3,7 +3,7 @@
 #ifndef __SETTINGS_H__
 #define __SETTINGS_H__
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@
 #define SERVE_PACKET_NAME_SIZE 13
 
 /* maximal number of simultaneously supported languages */
-#define MAX_LANGUAGE 31
+#define MAX_LANGUAGE 100
 
 /* maximal number of simultaneously supported problems */
 #define MAX_PROBLEM  100
