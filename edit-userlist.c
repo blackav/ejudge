@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1200,6 +1200,7 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NN_USE_COOKIES]       { "Use cookies?", 1, 1 },
   [USERLIST_NN_READ_ONLY]         { "Read-only?", 1, 1 },
   [USERLIST_NN_NEVER_CLEAN]       { "Never clean?", 1, 1 },
+  [USERLIST_NN_SIMPLE_REGISTRATION] { "Simple registered?", 1, 1 },
   [USERLIST_NN_TIMESTAMPS]        { "*Timestamps*", 0, 0 },
   [USERLIST_NN_REG_TIME]          { "Reg time", 1, 1 },
   [USERLIST_NN_LOGIN_TIME]        { "Login time", 1, 1 },
@@ -1540,6 +1541,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
         case USERLIST_NN_USE_COOKIES:
         case USERLIST_NN_READ_ONLY:
         case USERLIST_NN_NEVER_CLEAN:
+        case USERLIST_NN_SIMPLE_REGISTRATION:
           help_str = "Enter-toggle D-reset C-contest A-new member Q-quit";
           break;
         case USERLIST_NN_REG_TIME:
@@ -1902,6 +1904,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
         case USERLIST_NN_USE_COOKIES:
         case USERLIST_NN_READ_ONLY:
         case USERLIST_NN_NEVER_CLEAN:
+        case USERLIST_NN_SIMPLE_REGISTRATION:
           edit_buf[0] = 0;
           userlist_get_user_field_str(edit_buf, sizeof(edit_buf),
                                       u, info[cur_i].field, 0);
