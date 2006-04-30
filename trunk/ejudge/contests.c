@@ -56,6 +56,7 @@ static char const * const tag_map[] =
   "field",
   "name",
   "name_en",
+  "main_url",
   "contestants",
   "reserves",
   "coaches",
@@ -126,6 +127,7 @@ static char const * const attn_map[] =
   "invisible",
   "ssl",
   "simple_registration",
+  "send_passwd_email",
 
   0
 };
@@ -144,6 +146,7 @@ static size_t const tag_sizes[CONTEST_LAST_TAG] =
   sizeof(struct contest_field), /* CONTEST_FIELD */
   0,                            /* CONTEST_NAME */
   0,                            /* CONTEST_NAME_EN */
+  0,                            /* CONTEST_MAIN_URL */
   sizeof(struct contest_member), /* CONTEST_CONTESTANTS */
   sizeof(struct contest_member), /* CONTEST_RESERVES */
   sizeof(struct contest_member), /* CONTEST_COACHES */
@@ -225,6 +228,7 @@ node_free(struct xml_tree *t)
       struct contest_desc *cnts = (struct contest_desc*) t;
       xfree(cnts->name);
       xfree(cnts->name_en);
+      xfree(cnts->main_url);
       xfree(cnts->users_header_file);
       xfree(cnts->users_footer_file);
       xfree(cnts->register_header_file);
@@ -786,6 +790,14 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
       }
       cnts->simple_registration = x;
       break;
+    case CONTEST_A_SEND_PASSWD_EMAIL:
+      x = parse_bool(a->text);
+      if (x < 0 || x > 1) {
+        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
+        return -1;
+      }
+      cnts->send_passwd_email = x;
+      break;
     case CONTEST_A_CLOSED:
       x = parse_bool(a->text);
       if (x < 0 || x > 1) {
@@ -822,6 +834,9 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
       break;
     case CONTEST_NAME_EN:
       if (handle_final_tag(path, t, &cnts->name_en) < 0) return -1;
+      break;
+    case CONTEST_MAIN_URL:
+      if (handle_final_tag(path, t, &cnts->main_url) < 0) return -1;
       break;
     case CONTEST_USERS_HEADER_FILE:
       if (handle_final_tag(path, t, &cnts->users_header_file) < 0) return -1;
@@ -1544,6 +1559,10 @@ contests_write_header(FILE *f, const struct contest_desc *cnts)
     fprintf(f, "\n         %s=\"%s\"",
             attn_map[CONTEST_A_SIMPLE_REGISTRATION], "yes");
   }
+  if (cnts->send_passwd_email) {
+    fprintf(f, "\n         %s=\"%s\"",
+            attn_map[CONTEST_A_SEND_PASSWD_EMAIL], "yes");
+  }
 
   if (cnts->closed) {
     fprintf(f, "\n         %s=\"%s\"",
@@ -1645,6 +1664,7 @@ contests_unparse(FILE *f,
 
   unparse_text(f, CONTEST_NAME, cnts->name);
   unparse_text(f, CONTEST_NAME_EN, cnts->name_en);
+  unparse_text(f, CONTEST_MAIN_URL, cnts->main_url);
   unparse_text(f, CONTEST_ROOT_DIR, cnts->root_dir);
   unparse_text(f, CONTEST_CONF_DIR, cnts->conf_dir);
   if (cnts->reg_deadline) {
