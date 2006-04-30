@@ -46,6 +46,9 @@ struct userlist_cfg
   unsigned char *email_program;
   unsigned char *register_url;
   unsigned char *register_email;
+  unsigned char *server_name;
+  unsigned char *server_name_en;
+  unsigned char *server_main_url;
   unsigned char *admin_email;
   unsigned char *l10n_dir;
   unsigned char *serve_path;
