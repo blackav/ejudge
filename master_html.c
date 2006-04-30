@@ -2961,8 +2961,14 @@ write_raw_source(FILE *f, const unsigned char *self_url, int run_id)
     return -SRV_ERR_SYSTEM_ERROR;
 
   if (self_url && *self_url) {
-    if (langs[info.language]->binary) {
+    if (langs[info.language]->content_type) {
+      fprintf(f, "Content-type: %s\n", langs[info.language]->content_type);
+      fprintf(f, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
+              run_id, langs[info.language]->src_sfx);
+    } else if (langs[info.language]->binary) {
       fprintf(f, "Content-type: application/octet-stream\n\n");
+      fprintf(f, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
+              run_id, langs[info.language]->src_sfx);
     } else {
       fprintf(f, "Content-type: text/plain\n");
       fprintf(f, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
