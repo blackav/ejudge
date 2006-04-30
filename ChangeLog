@@ -1,3 +1,159 @@
+2006-04-30  Alexander Chernov  <cher@ispras.ru>
+
+	* contests.c:
+	new element <main_url> and new attribute "send_passwd_email"
+	  are supported.
+
+	* contests.h: (struct contest_desc) new fields `send_passwd_email',
+	  `main_url' are added.
+
+	* edit-userlist.c: copyright notice is updated;
+	editing of "simple_registration' attribute is supported.
+
+	* ejudge-setup.c:
+	(initialize_setting_var) <server_name>, <server_name_en>,
+	  <server_main_url> are initialized to some reasonable values;
+	(is_valid_setting_var) <server_name>, <server_name_en>,
+	  <server_main_url> elements are supported;
+	(do_settings_menu) the same as above;
+	(generate_ejudge_xml) the same as above.
+
+	* html.c:
+	(write_user_problems_summary) minor fix in column generation;
+	(new_write_user_runs) if the language is marked as `binary' and
+	  source viewing is enabled, the "binary" option is set for
+	  source viewing;
+	(new_write_user_source_view) viewing of binary files is
+	  implemented.
+
+	* master_html.c:
+	(write_raw_source) "Content-Disposition" header is generated
+	  correctly in all cases.
+
+	* prepare.c:
+	new language configuration variable `content_type' is added.
+
+	* prepare.h:
+	(struct section_language_data) `content_type' field is added.
+
+	* prepare_out.c:
+	(prepare_unparse_lang) `binary' and `content_type' variables
+	  are handled;
+	(prepare_unparse_unhandled_lang) `binary' is removed since handled
+	  properly.
+
+	* protocol.h: new command SRV_CMD_DUMP_SOURCE_2 is added.
+
+	* serve-control.c: new actions handled:
+	  SUPER_ACTION_CNTS_CHANGE_MAIN_URL,
+	  SUPER_ACTION_CNTS_CHANGE_SEND_PASSWD_EMAIL,
+	  SUPER_ACTION_CNTS_CLEAR_MAIN_URL,
+	  SUPER_ACTION_LANG_CHANGE_CONTENT_TYPE,
+	  SUPER_ACTION_LANG_CLEAR_CONTENT_TYPE,
+	  SUPER_ACTION_LANG_CHANGE_BINARY.
+
+	* serve.c: SRV_CMD_DUMP_SOURCE_2 command is handled.
+
+	* sformat.c: copyright notice is updated;
+	(sformat_message) new format conversion flag `L' is supported:
+	  take a field based on the locale value;
+	  new format specifications:
+	    Cn - contest name
+	    CN - contest name_en
+	    V1 - variable data str1
+	    Vn - variable data server_name
+	    VN - variable data server_name_en.
+
+	* sformat.h: copyright notice is updated;
+	(struct sformat_extra_data) new fields added:
+	  `server_name', `server_name_en', `str1'.
+
+	* super-serve.c: new commands are handled:
+	  SSERV_CMD_CNTS_CLEAR_MAIN_URL,
+	  SSERV_CMD_CNTS_CHANGE_MAIN_URL,
+	  SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL,
+	  SSERV_CMD_LANG_CHANGE_CONTENT_TYPE,
+	  SSERV_CMD_LANG_CLEAR_CONTENT_TYPE,
+	  SSERV_CMD_LANG_CHANGE_BINARY.
+
+	* super_actions.h: new actions added:
+	  SUPER_ACTION_CNTS_CHANGE_MAIN_URL,
+	  SUPER_ACTION_CNTS_CLEAR_MAIN_URL,
+	  SUPER_ACTION_CNTS_CHANGE_SEND_PASSWD_EMAIL,
+	  SUPER_ACTION_LANG_CHANGE_BINARY,
+	  SUPER_ACTION_LANG_CHANGE_CONTENT_TYPE,
+	  SUPER_ACTION_LANG_CLEAR_CONTENT_TYPE.
+
+	* super_html.c: (super_html_contest_page) contest main URL is shown;
+	(super_html_edit_contest_page) editing of `main_url' element is
+	  supported;
+	  editing of `simple_registration' attribute is supported.
+
+	* super_html_2.c:
+	(super_html_clear_variable) clearing of `main_url' is supported;
+	(super_html_set_contest_var) changing of `main_url',
+	  `send_passwd_email' is supported.
+
+	* super_html_3.c:
+	(super_html_edit_languages) `binary', `content_type' language
+	  configuration variables are editable;
+	(super_html_lang_cmd) `binary' and `content_type' variable values
+	  are initally copied from the compilation server;
+	  changing value of `binary' and `content_type' variables is
+	  supported;
+	(super_html_print_problem) `acm_run_penalty' generation is moved to
+	  its proper place.
+
+	* settings.h: copyright notice is updated;
+	MAX_LANGUAGE is set to 100.
+
+	* super_proto.h: new protocol commands are added:
+	  SSERV_CMD_CNTS_CLEAR_MAIN_URL,
+	  SSERV_CMD_CNTS_CHANGE_MAIN_URL,
+	  SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL,
+	  SSERV_CMD_LANG_CHANGE_BINARY,
+	  SSERV_CMD_LANG_CHANGE_CONTENT_TYPE,
+	  SSERV_CMD_LANG_CLEAR_CONTENT_TYPE.
+
+	* team.c: (request_source_if_asked) viewing of binary submissions is
+	  implemented correctly.
+
+	* userlist-server.c: "job_packet.h" is included;
+	<pwd.h> is included;
+	(get_email_sender) new function to generate the "From" field
+	  value;
+	(cmd_register_new_2) `simple_registration' field of the newly
+	  created user is set to 1;
+	  `send_passwd_email' contest attribute is supported;
+	  notification email sending is implemented;
+	(cmd_register_new) the email template is changed.
+
+	* userlist.c: copyright notice is updated;
+	(userlist_get_user_field_str) `simple_registration' field is supported;
+	(userlist_set_user_field_str) the same as above;
+	(userlist_delete_user_field) the same as above.
+
+	* userlist.h: "simple_registration" attribute is added;
+	(struct userlist_user) `simple_registration' field is added.
+
+	* userlist_cfg.c:
+	new elements <server_name>, <server_name_en>, <server_main_url>
+	  are supported.
+
+	* userlist_cfg.h:
+	(struct userlist_cfg) new fields `server_name', `server_name_en',
+	  `server_main_url' are added.
+
+	* userlist_xml.c:
+	(do_parse_user) "simple_registration" attribute is supported;
+	(unparse_user) "simple_registration" attribute is supported.
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
+2006-04-19  Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge.ru_RU.KOI8-R.po: *** empty log message ***
+
 2006-04-19  Alexander Chernov  <cher@ispras.ru>
 
 	* files.make: userlist_clnt/register_new_2.c is added.

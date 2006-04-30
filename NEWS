@@ -1,6 +1,108 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
+Version 2.1.48 (20060430)
+=========================
+
+contest.xml
+-----------
+A new <main_url> element is added. This element allows
+specifying the main page URL for the contest. The element is
+used in the initial registration e-mail letter, sent when a new
+user has been registered. Example of use:
+<main_url>http://acm.univ.ru/contests/acm2006</main_url>
+
+A new "send_passwd_email" attribute is added to the <contest>
+element. If this attribute is set to "yes" value, the initial
+registration e-mail letter is sent to the user even if the
+simplified registration is enabled.
+
+ejudge.xml
+----------
+New elements <server_name>, <server_name_en>, <server_main_url>
+are added. The <server_name> element allows specifying the
+description of this server, where the ejudge system is
+installed, for example:
+<server_name>Сервер турниров университета</server_name>
+
+The <server_name_en> element allows specifying the description
+of the server in English. This element is used, when the English
+language is choosen during registration. For example:
+<server_name_en>The university contest server</server_name_an>
+
+The <server_main_url> element allows specifying the main server
+URL for the current ejudge installation. For example:
+<server_main_url>http://acm.univ.ru/contests</server_main_url>
+
+These elements are used when an e-mail with user's registration
+data is sent to user after registration of a new user. The
+elements are used in case, when no contest is specified during
+registration. If the contest is specified, the contest.xml's
+elements are used instead.
+
+userlist-server
+---------------
+The standard templates for e-mail messages, sent upon successful
+registration are changed. The new templates use the elements
+<server_name>, <server_name_en>, <server_main_url> of the 
+ejudge.xml configuration file and the elements <name>,
+<name_en>, <main_url> of the contest.xml configuration file.
+
+The "send_passwd_email" attribute of the contest.xml file is
+supported.
+
+userlist-server, edit-userlist
+------------------------------
+A new field `simple_registration' is added to the user
+database. This field is set to "yes", if the user was registered
+using the simplified registration procedure. The value of this
+field may be changed using the `edit-userlist' program by the
+administrator.
+
+super-serve, serve-control
+--------------------------
+Editing of the <main_url> element and the "send_passwd_email"
+attribute of the contest.xml file is supported.
+
+team, serve
+-----------
+The binary files are shown correctly by the "View source" command.
+
+serve
+-----
+A new `content_type' configuration variable is added to the
+language section of the `serve.cfg' configuration file. If this
+variable is set, the specified HTTP content type will be used
+when the "Download source" command of the CGI programs `master'
+or `judge', or when the "View source" command of the CGI program
+`team' is executed. This configuration variable is useful for
+languages with binary "sources". For example, if the "Microsoft
+Word" language is enabled, the content type for this language
+may be set as follows:
+content_type = "application/msword"
+
+The file name is set correctly for the downloaded sources even
+the language is binary.
+
+serve, compile
+--------------
+The maximal number of simultaneously supported programming
+languages is increased to 100.
+
+super-serve, serve-control
+--------------------------
+Editing of the `binary' and `content_type' language
+configuration variables of the `serve.cfg' file is supported.
+
+A bug which prevented editing of the `acm_run_penalty' field is
+fixed.
+
+ejudge-setup
+------------
+Editing of the initial values of the elements <server_name>,
+<server_name_en>, <server_main_url> of the `ejudge.xml'
+configuration file is supported.
+
 Version 2.1.47 (20060419)
 =========================
 
