@@ -33,6 +33,7 @@
 #include "tsc.h"
 #include "sformat.h"
 #include "fileutl.h"
+#include "job_packet.h"
 
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
@@ -55,6 +56,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <zlib.h>
+#include <pwd.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -859,6 +861,19 @@ allocate_new_user(void)
   return u;
 }
 
+static unsigned char *
+get_email_sender(struct contest_desc *cnts)
+{
+  int sysuid;
+  struct passwd *ppwd;
+
+  if (cnts && cnts->register_email) return cnts->register_email;
+  if (config && config->register_email) return config->register_email;
+  sysuid = getuid();
+  ppwd = getpwuid(sysuid);
+  return ppwd->pw_name;
+}
+
 static void
 cmd_register_new_2(struct client_state *p,
                    int pkt_len,
@@ -967,6 +982,7 @@ cmd_register_new_2(struct client_state *p,
   user->name = xstrdup("");
   user->default_use_cookies = -1;
   user->login_hash = login_hash;
+  user->simple_registration = 1;
 
   if (userlist->login_hash_table) {
     if (userlist->login_cur_fill >= userlist->login_thresh) {
@@ -1007,6 +1023,127 @@ cmd_register_new_2(struct client_state *p,
   user->registration_time = cur_time;
   dirty = 1;
   flush_interval /= 2;
+
+  if (!cnts->send_passwd_email) return;
+
+  // send a notification email anyway
+  {
+    struct sformat_extra_data sformat_data;
+    unsigned char urlbuf[1024];
+    unsigned char email_tmpl_path[PATH_MAX];
+    unsigned char email_tmpl_path2[PATH_MAX];
+    char *email_tmpl = 0;
+    size_t email_tmpl_size = 0, buf_size = 0;
+    unsigned char contest_url[1024];
+    unsigned char *buf = 0;
+    unsigned char *originator_email;
+    unsigned char contest_str[256];
+    unsigned char locale_str[256];
+    unsigned char *url_str = 0;
+    unsigned char *mail_args[7];
+
+    // prepare the file path for the email template
+    memset(&sformat_data, 0, sizeof(sformat_data));
+    sformat_data.locale_id = data->locale_id;
+    sformat_data.url = urlbuf;
+    if (cnts->register_email_file) {
+      sformat_message(email_tmpl_path, sizeof(email_tmpl_path),
+                      cnts->register_email_file,
+                      0, 0, 0, 0, 0, user, cnts, &sformat_data);
+      if (generic_read_file(&email_tmpl, 0, &email_tmpl_size, 0,
+                            "", email_tmpl_path, "") < 0) {
+        sformat_data.locale_id = 0;
+        sformat_message(email_tmpl_path2, sizeof(email_tmpl_path2),
+                        cnts->register_email_file,
+                        0, 0, 0, 0, 0, user, cnts, &sformat_data);
+        if (strcmp(email_tmpl_path, email_tmpl_path2) != 0) {
+          strcpy(email_tmpl_path, email_tmpl_path2);
+          if (generic_read_file(&email_tmpl, 0, &email_tmpl_size, 0,
+                                "", email_tmpl_path, "") < 0) {
+            email_tmpl = 0;
+            email_tmpl_size = 0;
+          }
+        } else {
+          email_tmpl = 0;
+          email_tmpl_size = 0;
+        }
+      }
+    }
+
+    originator_email = get_email_sender(cnts);
+
+    contest_str[0] = 0;
+    if (data->contest_id > 0) {
+      snprintf(contest_str, sizeof(contest_str), "&contest_id=%d",
+               data->contest_id);
+    }
+    locale_str[0] = 0;
+    if (data->locale_id >= 0) {
+      snprintf(locale_str, sizeof(locale_str), "&locale_id=%d",
+               data->locale_id);
+    }
+    if (cnts && cnts->register_url) {
+      url_str = cnts->register_url;
+    } else if (config->register_url) {
+      url_str = config->register_url;
+    } else {
+      url_str = "http://localhost/cgi-bin/register";
+    }
+    snprintf(urlbuf, sizeof(urlbuf), "%s?action=%d&login=%s%s%s",
+             url_str, 3, login, contest_str, locale_str);
+
+    l10n_setlocale(data->locale_id);
+
+    sformat_data.server_name = config->server_name;
+    sformat_data.server_name_en = config->server_name_en;
+    sformat_data.str1 = contest_url;
+
+    contest_url[0] = 0;
+    if (cnts->main_url) {
+      snprintf(contest_url, sizeof(contest_url), " (%s)", cnts->main_url);
+    }
+
+    if (!email_tmpl) {
+      email_tmpl =
+        _("Hello,\n"
+          "\n"
+          "Somebody (probably you) has registered a new account\n"
+          "to participate in contest \"%LCn\"%V1\n"
+          "using this e-mail address (%Ue).\n"
+          "\n"
+          "Registration has completed successfully. This message\n"
+          "contains your login and password for your convenience.\n"
+          "\n"
+          "login:    %Ul\n"
+          "password: %Uz\n"
+          "URL:      %Vu\n"
+          "\n"
+          "Regards,\n"
+          "The ejudge contest administration system (www.ejudge.ru)\n");
+      email_tmpl = xstrdup(email_tmpl);
+      email_tmpl_size = strlen(email_tmpl);
+    }
+
+    buf_size = email_tmpl_size * 2;
+    if (buf_size < 2048) buf_size = 2048;
+    buf = (char*) xmalloc(buf_size);
+    sformat_message(buf, buf_size, email_tmpl,
+                    0, 0, 0, 0, 0, user, cnts, &sformat_data);
+
+    mail_args[0] = "mail";
+    mail_args[1] = "";
+    mail_args[2] = _("You have been registered");
+    mail_args[3] = originator_email;
+    mail_args[4] = email;
+    mail_args[5] = buf;
+    mail_args[6] = 0;
+    send_job_packet(NULL, mail_args);
+
+    xfree(buf);
+    xfree(email_tmpl);
+
+    l10n_setlocale(0);
+  }
 }
 
 static void
@@ -1018,7 +1155,7 @@ cmd_register_new(struct client_state *p,
   char * buf;
   unsigned char * login;
   unsigned char * email;
-  unsigned char urlbuf[1024], *urlptr = urlbuf;
+  unsigned char urlbuf[1024];
   int login_len, email_len, errcode, exp_pkt_len;
   struct userlist_passwd *pwd;
   unsigned char passwd_buf[64];
@@ -1032,6 +1169,10 @@ cmd_register_new(struct client_state *p,
   struct sformat_extra_data sformat_data;
   char *email_tmpl = 0;
   size_t email_tmpl_size = 0, buf_size = 0;
+  unsigned char contest_str[256];
+  unsigned char locale_str[256];
+  unsigned char *url_str = 0;
+  unsigned char contest_url[256];
 
   // validate packet
   login = data->data;
@@ -1062,29 +1203,27 @@ cmd_register_new(struct client_state *p,
       return;
     }
   }
-  if (cnts && cnts->register_email) {
-    originator_email = cnts->register_email;
-  } else if (config->register_email) {
-    originator_email = config->register_email;
-  } else {
-    originator_email = "team@contest.cmc.msu.ru";
-  }
-
-  if (cnts && cnts->register_url) {
-    urlptr += sprintf(urlptr, "%s", cnts->register_url);
-  } else if (config->register_url) {
-    urlptr += sprintf(urlptr, "%s", config->register_url);
-  } else {
-    urlptr += sprintf(urlptr, "%s",
-                      "http://contest.cmc.msu.ru/cgi-bin/register");
-  }
-  urlptr += sprintf(urlptr, "?action=%d&login=%s", 3, login);
+  originator_email = get_email_sender(cnts);
+ 
+  contest_str[0] = 0;
   if (data->contest_id > 0) {
-    urlptr += sprintf(urlptr, "&contest_id=%d", data->contest_id);
+    snprintf(contest_str, sizeof(contest_str), "&contest_id=%d",
+             data->contest_id);
   }
+  locale_str[0] = 0;
   if (data->locale_id >= 0) {
-    urlptr += sprintf(urlptr, "&locale_id=%d", data->locale_id);
+    snprintf(locale_str, sizeof(locale_str), "&locale_id=%d",
+             data->locale_id);
   }
+  if (cnts && cnts->register_url) {
+    url_str = cnts->register_url;
+  } else if (config->register_url) {
+    url_str = config->register_url;
+  } else {
+    url_str = "http://localhost/cgi-bin/register";
+  }
+  snprintf(urlbuf, sizeof(urlbuf), "%s?action=%d&login=%s%s%s",
+           url_str, 3, login, contest_str, locale_str);
 
   if (userlist->login_hash_table) {
     login_hash = userlist_login_hash(login);
@@ -1153,6 +1292,10 @@ cmd_register_new(struct client_state *p,
   memset(&sformat_data, 0, sizeof(sformat_data));
   sformat_data.locale_id = data->locale_id;
   sformat_data.url = urlbuf;
+  sformat_data.server_name = config->server_name;
+  sformat_data.server_name_en = config->server_name_en;
+  sformat_data.str1 = contest_url;
+
   if (cnts && cnts->register_email_file) {
     sformat_message(email_tmpl_path, sizeof(email_tmpl_path),
                     cnts->register_email_file,
@@ -1179,25 +1322,56 @@ cmd_register_new(struct client_state *p,
 
   l10n_setlocale(data->locale_id);
   if (!email_tmpl) {
-    email_tmpl =
-      _("Hello,\n"
-        "\n"
-        "Somebody (probably you) have specified this e-mail address (%Ue)\n"
-        "when registering an account on the Moscow Programming Contests\n"
-        "Server.\n"
-        "\n"
-        "To confirm registration, you should enter the provided login\n"
-        "and password on the login page of the server at the\n"
-        "following url: %Vu.\n"
-        "\n"
-        "Note, that if you do not do this in 24 hours from the moment\n"
-        "of sending this letter, registration will be void.\n"
-        "\n"
-        "login:    %Ul\n"
-        "password: %Uz\n"
-        "\n"
-        "Regards,\n"
-        "The ejudge contest administration system\n");
+    if (cnts) {
+      contest_url[0] = 0;
+      if (cnts->main_url) {
+        snprintf(contest_url, sizeof(contest_url), " (%s)", cnts->main_url);
+      }
+
+      email_tmpl =
+        _("Hello,\n"
+          "\n"
+          "Somebody (probably you) have specified this e-mail address (%Ue)\n"
+          "when registering an account to participate in %LCn%V1.\n"
+          "\n"
+          "To confirm registration, you should enter the provided login\n"
+          "and password on the login page of the server at the\n"
+          "following url: %Vu.\n"
+          "\n"
+          "Note, that if you do not do this in 24 hours from the moment\n"
+          "of sending this letter, registration will be void.\n"
+          "\n"
+          "login:    %Ul\n"
+          "password: %Uz\n"
+          "\n"
+          "Regards,\n"
+          "The ejudge contest administration system (www.ejudge.ru)\n");
+    } else {
+      contest_url[0] = 0;
+      if (config->server_main_url) {
+        snprintf(contest_url, sizeof(contest_url), " (%s)",
+                 config->server_main_url);
+      }
+
+      email_tmpl =
+        _("Hello,\n"
+          "\n"
+          "Somebody (probably you) have specified this e-mail address (%Ue)\n"
+          "when registering an account on the %LVn%V1.\n"
+          "\n"
+          "To confirm registration, you should enter the provided login\n"
+          "and password on the login page of the server at the\n"
+          "following url: %Vu.\n"
+          "\n"
+          "Note, that if you do not do this in 24 hours from the moment\n"
+          "of sending this letter, registration will be void.\n"
+          "\n"
+          "login:    %Ul\n"
+          "password: %Uz\n"
+          "\n"
+          "Regards,\n"
+          "The ejudge contest administration system (www.ejudge.ru)\n");
+    }
     email_tmpl = xstrdup(email_tmpl);
     email_tmpl_size = strlen(email_tmpl);
   }
