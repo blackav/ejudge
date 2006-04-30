@@ -1979,6 +1979,9 @@ cmd_team_show_item(struct client_state *p, int len,
   case SRV_CMD_DUMP_SOURCE:
     r = new_write_user_source_view(f, pkt->user_id, pkt->item_id, 1);
     break;
+  case SRV_CMD_DUMP_SOURCE_2:
+    r = new_write_user_source_view(f, pkt->user_id, pkt->item_id, 2);
+    break;
   case SRV_CMD_VIRTUAL_STANDINGS:
     if (!global->virtual) r = -SRV_ERR_ONLY_VIRTUAL;
     else r = write_virtual_standings(f, pkt->user_id);
@@ -5305,6 +5308,7 @@ static const struct packet_handler packet_handlers[SRV_CMD_LAST] =
   [SRV_CMD_DUMP_SOURCE] { cmd_team_show_item },
   [SRV_CMD_DUMP_CLAR] { cmd_team_show_item },
   [SRV_CMD_RUN_STATUS] { cmd_team_show_item },
+  [SRV_CMD_DUMP_SOURCE_2] { cmd_team_show_item },
 };
 
 static void
