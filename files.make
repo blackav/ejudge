@@ -198,6 +198,7 @@ CFILES=\
  compile.c\
  edit-userlist.c\
  ejudge-setup.c\
+ execute.c\
  master.c\
  register.c\
  run.c\
