@@ -980,11 +980,6 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
           || !prob->abstract)
         fprintf(f, "run_penalty = %d\n", prob->run_penalty);
     }
-    if (prob->acm_run_penalty >= 0) {
-      if ((prob->abstract && prob->acm_run_penalty != DFLT_P_ACM_RUN_PENALTY)
-          || !prob->abstract)
-        fprintf(f, "acm_run_penalty = %d\n", prob->acm_run_penalty);
-    }
     if (prob->disqualified_penalty >= 0) {
       // FIXME: better condition
       if ((prob->abstract && prob->disqualified_penalty != prob->run_penalty)
@@ -995,6 +990,13 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
       fprintf(f, "test_score_list = \"%s\"\n", c_armor(&sbuf, prob->test_score_list));
     if (prob->score_bonus[0])
       fprintf(f, "score_bonus = \"%s\"\n", c_armor(&sbuf, prob->score_bonus));
+  }
+  if (score_system_val == SCORE_MOSCOW || score_system_val == SCORE_ACM) {
+    if (prob->acm_run_penalty >= 0) {
+      if ((prob->abstract && prob->acm_run_penalty != DFLT_P_ACM_RUN_PENALTY)
+          || !prob->abstract)
+        fprintf(f, "acm_run_penalty = %d\n", prob->acm_run_penalty);
+    }
   }
   if (score_system_val == SCORE_MOSCOW) {
     if (prob->full_score >= 0) {
