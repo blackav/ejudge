@@ -11,3 +11,4 @@ ejudge-install.sh ejudge-config ejudge-config.v
 NEWS-*
 NEWS.RUS-*
 job-server job-server-cmd
+execute
