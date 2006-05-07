@@ -475,7 +475,7 @@ fi
 dnl Check new reuse features
 if [[ x"${ac_cv_has_reuse}" = x1 ]]
 then
-  AC_CHECK_FUNCS([task_SetMaxTimeMillis task_GetRealTime task_IsMemoryLimit task_EnableMemoryLimitError])
+  AC_CHECK_FUNCS([task_SetMaxTimeMillis task_GetRealTime task_IsMemoryLimit task_EnableMemoryLimitError task_EnableSecureExec task_SetQuietFlag task_GetErrorMessage])
 fi
 
 ac_cv_version_detected=
