@@ -4,4 +4,4 @@ cmp_file cmp_file_nospace cmp_bytes cmp_huge_int
 cmp_double cmp_long_double
 cmp_double_seq cmp_long_double_seq
 cmp_int_seq cmp_unsigned_int_seq cmp_long_long_seq cmp_unsigned_long_long_seq
-Makefile
+Makefile Makefile.in
