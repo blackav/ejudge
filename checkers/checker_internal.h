@@ -3,7 +3,7 @@
 
 /* $Id$ */
 
-/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,10 @@ extern "C" {
 #else
 #define CHECKER_char_t unsigned char
 #endif /* __cplusplus */
+
+#if defined _MSC_VER || defined __MINGW32__
+#undef NEED_TGZ
+#endif
 
 #include <stdio.h>
 #include <assert.h>
@@ -72,17 +76,31 @@ extern CHECKER_char_t *dir_out_path;
 
 void checker_do_init(int, char **, int, int, int);
 
+#ifdef __GNUC__
+#define LIBCHECKER_ATTRIB(x) __attribute__(x)
+#else
+#define LIBCHECKER_ATTRIB(x)
+#endif
+
+#ifdef __GNUC__
+typedef long long libchecker_i64_t;
+typedef unsigned long long libchecker_u64_t;
+#else
+typedef __int64 libchecker_i64_t;
+typedef unsigned __int64 libchecker_u64_t;
+#endif
+
 void fatal(int code, char const *format, ...)
-     __attribute__ ((noreturn, format(printf, 2, 3)));
+	 LIBCHECKER_ATTRIB((noreturn, format(printf, 2, 3)));
 void fatal_CF(char const *format, ...)
-     __attribute__ ((noreturn, format(printf, 1, 2)));
+     LIBCHECKER_ATTRIB((noreturn, format(printf, 1, 2)));
 void fatal_PE(char const *format, ...)
-     __attribute__ ((noreturn, format(printf, 1, 2)));
+     LIBCHECKER_ATTRIB((noreturn, format(printf, 1, 2)));
 void fatal_WA(char const *format, ...)
-     __attribute__ ((noreturn, format(printf, 1, 2)));
+     LIBCHECKER_ATTRIB((noreturn, format(printf, 1, 2)));
 void fatal_read(int streamno, char const *format, ...)
-  __attribute__ ((noreturn, format(printf, 2, 3)));
-void checker_OK(void) __attribute__((noreturn));
+     LIBCHECKER_ATTRIB((noreturn, format(printf, 2, 3)));
+void checker_OK(void) LIBCHECKER_ATTRIB((noreturn));
 
 void *xmalloc(size_t size);
 void *xcalloc(size_t nmemb, size_t size);
@@ -110,36 +128,36 @@ void checker_team_eof(void);
 int  checker_read_int(int, const CHECKER_char_t *, int, int *);
 int  checker_read_unsigned_int(int, const CHECKER_char_t *, int,
                                unsigned int *);
-int  checker_read_long_long(int, const CHECKER_char_t *, int, long long *);
+int  checker_read_long_long(int, const CHECKER_char_t *, int, libchecker_i64_t *);
 int  checker_read_unsigned_long_long(int, const CHECKER_char_t *, int,
-                                     unsigned long long *);
+                                     libchecker_u64_t *);
 int  checker_read_double(int, const CHECKER_char_t *, int, double *);
 int  checker_read_long_double(int, const CHECKER_char_t *, int, long double *);
 
 int  checker_read_in_int(const CHECKER_char_t *, int, int *);
 int  checker_read_in_unsigned_int(const CHECKER_char_t *, int,
                                   unsigned int *);
-int  checker_read_in_long_long(const CHECKER_char_t *, int, long long *);
+int  checker_read_in_long_long(const CHECKER_char_t *, int, libchecker_i64_t *);
 int  checker_read_in_unsigned_long_long(const CHECKER_char_t *, int,
-                                        unsigned long long *);
+										libchecker_u64_t *);
 int  checker_read_in_double(const CHECKER_char_t *, int, double *);
 int  checker_read_in_long_double(const CHECKER_char_t *, int, long double *);
 
 int  checker_read_team_int(const CHECKER_char_t *, int, int *);
 int  checker_read_team_unsigned_int(const CHECKER_char_t *, int,
                                     unsigned int *);
-int  checker_read_team_long_long(const CHECKER_char_t *, int, long long *);
+int  checker_read_team_long_long(const CHECKER_char_t *, int, libchecker_i64_t *);
 int  checker_read_team_unsigned_long_long(const CHECKER_char_t *, int,
-                                          unsigned long long *);
+										  libchecker_u64_t *);
 int  checker_read_team_double(const CHECKER_char_t *, int, double *);
 int  checker_read_team_long_double(const CHECKER_char_t *, int, long double *);
 
 int  checker_read_corr_int(const CHECKER_char_t *, int, int *);
 int  checker_read_corr_unsigned_int(const CHECKER_char_t *, int,
                                     unsigned int *);
-int  checker_read_corr_long_long(const CHECKER_char_t *, int, long long *);
+int  checker_read_corr_long_long(const CHECKER_char_t *, int, libchecker_i64_t *);
 int  checker_read_corr_unsigned_long_long(const CHECKER_char_t *, int,
-                                          unsigned long long *);
+										  libchecker_u64_t *);
 int  checker_read_corr_double(const CHECKER_char_t *, int, double *);
 int  checker_read_corr_long_double(const CHECKER_char_t *, int, long double *);
 
