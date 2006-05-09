@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,18 +16,23 @@
  */
 
 #include "checker_internal.h"
+
+#ifndef _MSC_VER
 #include <dirent.h>
+#endif
 
 FILE *f_in;
 FILE *f_team;
 FILE *f_corr;
 FILE *f_arr[3];
 
+#ifndef _MSC_VER
 DIR *dir_in;
 DIR *dir_out;
 
 unsigned char *dir_in_path;
 unsigned char *dir_out_path;
+#endif
 
 const unsigned char * const f_arr_names[3] =
 {
