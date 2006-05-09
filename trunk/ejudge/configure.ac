@@ -1276,9 +1276,13 @@ if [[ x"${ac_cv_ejudge_arch}" = xwin32 ]]
 then
   rm -f Makefile.in
   cp -p Makefile.win32.in Makefile.in
+  rm -f checkers/Makefile.in
+  cp -p checkers/Makefile.win32.in checkers/Makefile.in
 else
   rm -f Makefile.in
   cp -p Makefile.unix.in Makefile.in
+  rm -f checkers/Makefile.in
+  cp -p checkers/Makefile.unix.in checkers/Makefile.in
 fi
 
 AC_SUBST(ac_cv_ejudge_arch)
