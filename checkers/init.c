@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -60,6 +60,7 @@ checker_do_init(int argc, char **argv, int corr_flag, int info_flag,
                (*testinfo_strerror_func)(errcode));
   }
 
+#if !defined __MINGW32__
   if (tgz_flag) {
     if (!(dir_in = opendir(argv[arg_ind])))
       fatal_CF("Cannot open input directory '%s'", argv[arg_ind]);
@@ -70,6 +71,7 @@ checker_do_init(int argc, char **argv, int corr_flag, int info_flag,
     dir_out_path = xstrdup(argv[arg_ind]);
     arg_ind++;
   }
+#endif
 }
 
 /*
