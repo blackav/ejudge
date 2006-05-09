@@ -20,7 +20,6 @@ datadir=@datadir@
 includedir=@includedir@
 libdir=@libdir@
 libexecdir=@libexecdir@
-cgibindir=@cgibindir@
 
 ifdef RELEASE
 CDEBUGFLAGS=-O2 -s -Wall -DNDEBUG -DRELEASE
@@ -59,13 +58,13 @@ install : all
 	mkdir -p "${DESTDIR}${libdir}"
 	install -m 644 libchecker.a checker.lib checker.dll "${DESTDIR}${libdir}"
 libchecker.a checker.dll checker.def : ${OFILES}
-	${CC} -shared $^ -Wl,--output-def,checker.def,--out-implib,libchecker.a -o checker.dll
+	${CC} -mno-cygwin -shared $^ -Wl,--output-def,checker.def,--out-implib,libchecker.a -o checker.dll
 
 checker.lib : checker.def checker.dll
-        lib /machine:i386 /def:checker.def
+	lib /machine:i386 /def:checker.def
 
-eq_%.o : eq_%.c checker_internal.h
-	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
+init.o : init.c checker_internal.h testinfo.h
+
 %.o : %.c checker_internal.h
 	${CC} ${CFLAGS} -c $< -o $@
 
@@ -74,7 +73,7 @@ testinfo.o: testinfo.c testinfo.h
 testinfo.h: ../testinfo.h
 	cp -p ../testinfo.h .
 testinfo.c: ../testinfo.c
-	cp -p ../testinfo.c
+	cp -p ../testinfo.c .
 
 cmp_%.exe : cmp_%.c checker.h checker_internal.h libchecker.a
 	${CC} ${CFLAGS} ${LDFLAGS} -L. $< -o $@ -lchecker -lm
