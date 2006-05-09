@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,10 @@
  */
 
 #include "checker_internal.h"
+
+#if defined __MINGW32__
+#include <malloc.h>
+#endif
 
 int
 checker_read_buf(int ind,
