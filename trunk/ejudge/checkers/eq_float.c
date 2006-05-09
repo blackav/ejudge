@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005,2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,38 @@
 int
 checker_eq_float(float v1, float v2, float eps)
 {
+#if defined __MINGW32__
+#define checker_is_nan(x) (((x) & 0x7f800000) == 0x7f80000 && ((x) & 0x007fffff) != 0)
+#define checker_is_inf(x) (((x) & 0x7f800000) == 0x7f80000 && ((x) & 0x007fffff) == 0)
+  int vv1 = *(int*) &v1;
+  int vv2 = *(int*) &v2;
+  int p1, p2, p;
+
+  if (checker_is_nan(vv1) && checker_is_nan(vv2)) return 1;
+  if (checker_is_nan(vv1) || checker_is_nan(vv2)) return 0;
+  if (checker_is_inf(vv1) && checker_is_inf(vv2)) {
+    if ((vv1 ^ vv2) < 0) return 0;
+    return 1;
+  }
+  if (checker_is_inf(vv1) || checker_is_inf(vv2)) return 0;
+  if (fabs(v1) <= 1.0 && fabs(v2) <= 1.0) {
+    if (fabs(v1 - v2) <= 2*eps) return 1;
+    return 0;
+  }
+  if (!v1 || !v2) return 0;
+  if ((vv1 ^ vv2) < 0) return 0;
+  vv1 &= ~0x80000000;
+  vv2 &= ~0x80000000;
+  p = p1 = vv1 & 0x7f800000;
+  if (p > (p2 = vv2 & 0x7f800000)) p = p2;
+  if (abs(p1 - p2) > 0x00800000) return 0;
+  vv1 -= (p - 0x3f800000);
+  vv2 -= (p - 0x3f800000);
+  v1 = *(float*) &vv1;
+  v2 = *(float*) &vv2;
+  if (fabs(v1 - v2) <= 2*eps) return 1;
+  return 0;
+#else
   float m1, m2;
   int e1, e2, em;
 
@@ -46,4 +78,5 @@ checker_eq_float(float v1, float v2, float eps)
   m2 = ldexpf(m2, e2);
   if (fabsf(m1 - m2) <= 2*eps) return 1;
   return 0;
+#endif
 }
