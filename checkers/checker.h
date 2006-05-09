@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -44,6 +44,11 @@ extern int (*testinfo_parse_func)(const CHECK_char_t*,struct testinfo_struct*);
 extern const CHECK_char_t *(*testinfo_strerror_func)(int);
 #endif /* NEED_INFO */
 
+#ifndef NEED_TGZ
+#define NEED_TGZ 0
+#endif
+
+#if !defined NEED_MAIN || NEED_MAIN != 0
 extern int checker_main(int, char **);
 int
 main(int argc, char **argv)
@@ -56,3 +61,4 @@ main(int argc, char **argv)
   checker_do_init(argc, argv, NEED_CORR, NEED_INFO, NEED_TGZ);
   return checker_main(argc, argv);
 }
+#endif
