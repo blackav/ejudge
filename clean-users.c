@@ -273,7 +273,7 @@ main(int argc, char **argv)
       info("contest %d found %d clarlog entries", i, total_clars);
       printf("contest %d clar statistics: %d total\n", i, total_clars);
       for (j = 0; j < total_clars; j++) {
-        if (clar_get_record(j,0,&clar_size,0,&clar_from,&clar_to,0,0,0) < 0) {
+        if (clar_get_record(j,0,&clar_size,0,&clar_from,&clar_to,0,0,0,0) < 0) {
           err("contest %d failed to read clar %d", i, j);
         } else {
           if (clar_from != 0 && clar_from == clar_to) {
