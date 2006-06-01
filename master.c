@@ -2544,8 +2544,8 @@ view_clar_if_asked()
 static void
 send_msg_if_asked(void)
 {
-  unsigned char const *subj, *text, *dest_id_str, *dest_login;
-  int dest_id = -1, x, n = 0, r;
+  unsigned char const *subj, *text, *dest_id_str, *dest_login, *hide_flag_str;
+  int dest_id = -1, x, n = 0, r, hide_flag = 0;
 
   if (!cgi_param("msg_send")) return;
 
@@ -2555,6 +2555,10 @@ send_msg_if_asked(void)
       && sscanf(dest_id_str, "%d%n", &x, &n) == 1
       && !dest_id_str[n])
     dest_id = x;
+  if ((hide_flag_str = cgi_param("msg_hide_flag"))
+      && sscanf(hide_flag_str, "%d%n", &x, &n) == 1
+      && !hide_flag_str[n] && x == 1)
+    hide_flag = 1;
   dest_login = cgi_param("msg_dest_login");
   if (!subj) subj = "";
   if (!dest_login || !*dest_login) dest_login = "all";
@@ -2565,7 +2569,7 @@ send_msg_if_asked(void)
 
   open_serve();
   r = serve_clnt_message(serve_socket_fd, SRV_CMD_PRIV_MSG,
-                         dest_id, -1, dest_login,
+                         dest_id, -1, hide_flag, dest_login,
                          subj, text);
   operation_status_page(r, 0, -1);
 }
@@ -2608,7 +2612,7 @@ send_reply_if_asked(void)
 
   open_serve();
   r = serve_clnt_message(serve_socket_fd, SRV_CMD_PRIV_REPLY,
-                         dest_uid, ref, 0, 0, txt);
+                         dest_uid, ref, 0, 0, 0, txt);
   operation_status_page(r, 0, -1);
 }
 
@@ -3387,6 +3391,9 @@ main(int argc, char *argv[])
            "<td><input type=\"text\" size=\"64\" name=\"msg_subj\"></td>"
            "</tr>\n",
            _("Subject"));
+    if (server_start_time <= 0) {
+      printf("<tr><td>Do not show before the contest starts?</td><td><select name=\"msg_hide_flag\"><option value=\"0\">NO</option><option value=\"1\">YES</option></select></td></tr>\n");
+    }
     printf("</table>\n");
     printf("<p><textarea name=\"msg_text\" rows=\"20\" cols=\"60\">"
            "</textarea></p>");
