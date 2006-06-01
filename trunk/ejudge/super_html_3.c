@@ -3276,7 +3276,7 @@ super_html_print_problem(FILE *f,
   struct section_global_data *global = sstate->global;
   time_t tmp_date;
   unsigned char hbuf[1024];
-  int row = 1;
+  int row = 1, output_only_flag = 0;
 
   if (is_abstract) {
     prob = sstate->aprobs[num];
@@ -3379,6 +3379,23 @@ super_html_print_problem(FILE *f,
     xfree(s);
   }
 
+  //PROBLEM_PARAM(output_only, "d"),
+  extra_msg = 0;
+  output_only_flag = prob->output_only;
+  if (!prob->abstract) {
+    prepare_set_prob_value(PREPARE_FIELD_PROB_OUTPUT_ONLY,
+                           &tmp_prob, sup_prob, sstate->global);
+    snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob.output_only?"Yes":"No");
+    extra_msg = msg_buf;
+    output_only_flag = tmp_prob.output_only;
+  }
+  if (output_only_flag < 0) output_only_flag = 0;
+  print_boolean_3_select_row(f, "Output-only problem", prob->output_only,
+                             SUPER_ACTION_PROB_CHANGE_OUTPUT_ONLY,
+                             extra_msg,
+                             session_id, form_row_attrs[row ^= 1],
+                             self_url, extra_args, prob_hidden_vars);
+
   //PROBLEM_PARAM(use_stdin, "d"),
   extra_msg = 0;
   if (!prob->abstract) {
@@ -3387,11 +3404,13 @@ super_html_print_problem(FILE *f,
     snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob.use_stdin?"Yes":"No");
     extra_msg = msg_buf;
   }
-  print_boolean_3_select_row(f, "Use standard input", prob->use_stdin,
-                             SUPER_ACTION_PROB_CHANGE_USE_STDIN,
-                             extra_msg,
-                             session_id, form_row_attrs[row ^= 1],
-                             self_url, extra_args, prob_hidden_vars);
+  if (!output_only_flag) {
+    print_boolean_3_select_row(f, "Use standard input", prob->use_stdin,
+                               SUPER_ACTION_PROB_CHANGE_USE_STDIN,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+  }
 
   //PROBLEM_PARAM(input_file, "s"),
   extra_msg = 0;
@@ -3407,7 +3426,7 @@ super_html_print_problem(FILE *f,
       extra_msg = msg_buf;
     }
   }
-  if (extra_msg) {
+  if (!output_only_flag && extra_msg) {
     print_string_editing_row_2(f, "Input file name:", prob->input_file,
                                SUPER_ACTION_PROB_CHANGE_INPUT_FILE,
                                SUPER_ACTION_PROB_CLEAR_INPUT_FILE,
@@ -3425,11 +3444,13 @@ super_html_print_problem(FILE *f,
     snprintf(msg_buf, sizeof(msg_buf), "Default (%s)", tmp_prob.use_stdout?"Yes":"No");
     extra_msg = msg_buf;
   }
-  print_boolean_3_select_row(f, "Use standard output", prob->use_stdout,
-                             SUPER_ACTION_PROB_CHANGE_USE_STDOUT,
-                             extra_msg,
-                             session_id, form_row_attrs[row ^= 1],
-                             self_url, extra_args, prob_hidden_vars);
+  if (!output_only_flag) {
+    print_boolean_3_select_row(f, "Use standard output", prob->use_stdout,
+                               SUPER_ACTION_PROB_CHANGE_USE_STDOUT,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+  }
 
   //PROBLEM_PARAM(output_file, "s"),
   extra_msg = 0;
@@ -3445,7 +3466,7 @@ super_html_print_problem(FILE *f,
       extra_msg = msg_buf;
     }
   }
-  if (extra_msg) {
+  if (!output_only_flag && extra_msg) {
     print_string_editing_row_2(f, "Output file name:", prob->output_file,
                                SUPER_ACTION_PROB_CHANGE_OUTPUT_FILE,
                                SUPER_ACTION_PROB_CLEAR_OUTPUT_FILE,
@@ -3749,11 +3770,13 @@ super_html_print_problem(FILE *f,
       extra_msg = msg_buf;
     } else if (!prob->time_limit) extra_msg = "<i>(Unlimited)</i>";
   }
-  print_int_editing_row(f, "Processor time limit (sec):",
-                        prob->time_limit, extra_msg,
-                        SUPER_ACTION_PROB_CHANGE_TIME_LIMIT,
-                        session_id, form_row_attrs[row ^= 1],
-                        self_url, extra_args, prob_hidden_vars);
+  if (!output_only_flag) {
+    print_int_editing_row(f, "Processor time limit (sec):",
+                          prob->time_limit, extra_msg,
+                          SUPER_ACTION_PROB_CHANGE_TIME_LIMIT,
+                          session_id, form_row_attrs[row ^= 1],
+                          self_url, extra_args, prob_hidden_vars);
+  }
 
   //PROBLEM_PARAM(time_limit_millis, "d"),
   extra_msg = "";
@@ -3772,11 +3795,13 @@ super_html_print_problem(FILE *f,
       extra_msg = msg_buf;
     } else if (!prob->time_limit_millis) extra_msg = "<i>(Unlimited)</i>";
   }
-  print_int_editing_row(f, "Processor time limit (ms, ovverides prev. limit):",
-                        prob->time_limit_millis, extra_msg,
-                        SUPER_ACTION_PROB_CHANGE_TIME_LIMIT_MILLIS,
-                        session_id, form_row_attrs[row ^= 1],
-                        self_url, extra_args, prob_hidden_vars);
+  if (!output_only_flag) {
+    print_int_editing_row(f, "Processor time limit (ms, ovverides prev. limit):",
+                          prob->time_limit_millis, extra_msg,
+                          SUPER_ACTION_PROB_CHANGE_TIME_LIMIT_MILLIS,
+                          session_id, form_row_attrs[row ^= 1],
+                          self_url, extra_args, prob_hidden_vars);
+  }
 
   //PROBLEM_PARAM(real_time_limit, "d"),
   extra_msg = "";
@@ -3795,11 +3820,13 @@ super_html_print_problem(FILE *f,
       extra_msg = msg_buf;
     } else if (!prob->real_time_limit) extra_msg = "<i>(Unlimited)</i>";
   }
-  print_int_editing_row(f, "Real time limit (sec):",
-                        prob->real_time_limit, extra_msg,
-                        SUPER_ACTION_PROB_CHANGE_REAL_TIME_LIMIT,
-                        session_id, form_row_attrs[row ^= 1],
-                        self_url, extra_args, prob_hidden_vars);
+  if (!output_only_flag) {
+    print_int_editing_row(f, "Real time limit (sec):",
+                          prob->real_time_limit, extra_msg,
+                          SUPER_ACTION_PROB_CHANGE_REAL_TIME_LIMIT,
+                          session_id, form_row_attrs[row ^= 1],
+                          self_url, extra_args, prob_hidden_vars);
+  }
 
   //PROBLEM_PARAM(max_vm_size, "d"),
   extra_msg = "";
@@ -3825,15 +3852,17 @@ super_html_print_problem(FILE *f,
   } else {
     size_t_to_size(num_buf, sizeof(num_buf), tmp_prob.max_vm_size);
   }
-  html_start_form(f, 1, session_id, self_url, prob_hidden_vars);
-  fprintf(f, "<tr%s><td>%s</td><td>", form_row_attrs[row ^= 1],
-          "Maximum virtual memory size:");
-  html_edit_text_form(f, 0, 0, "param", num_buf);
-  fprintf(f, "%s</td><td>", extra_msg);
-  html_submit_button(f, SUPER_ACTION_PROB_CHANGE_MAX_VM_SIZE, "Change");
-  fprintf(f, "</td></tr></form>\n");
+  if (!output_only_flag) {
+    html_start_form(f, 1, session_id, self_url, prob_hidden_vars);
+    fprintf(f, "<tr%s><td>%s</td><td>", form_row_attrs[row ^= 1],
+            "Maximum virtual memory size:");
+    html_edit_text_form(f, 0, 0, "param", num_buf);
+    fprintf(f, "%s</td><td>", extra_msg);
+    html_submit_button(f, SUPER_ACTION_PROB_CHANGE_MAX_VM_SIZE, "Change");
+    fprintf(f, "</td></tr></form>\n");
+  }
 
-  if (show_adv) {
+  if (!output_only_flag && show_adv) {
     //PROBLEM_PARAM(max_stack_size, "d"),
     extra_msg = "";
     if (prob->abstract) {
@@ -3982,7 +4011,7 @@ super_html_print_problem(FILE *f,
                                  self_url, extra_args, prob_hidden_vars);
     }
 
-    if (tmp_prob.disable_testing == 1) {
+    if (!output_only_flag && tmp_prob.disable_testing == 1) {
       //PROBLEM_PARAM(enable_compilation, "d"),
       extra_msg = "Undefined";
       tmp_prob.enable_compilation = prob->enable_compilation;
@@ -4204,11 +4233,13 @@ super_html_print_problem(FILE *f,
         extra_msg = msg_buf;
       }
     }
-    print_int_editing_row(f, "Number of accept tests:",
-                          prob->tests_to_accept, extra_msg,
-                          SUPER_ACTION_PROB_CHANGE_TESTS_TO_ACCEPT,
-                          session_id, form_row_attrs[row ^= 1],
-                          self_url, extra_args, prob_hidden_vars);
+    if (!output_only_flag) {
+      print_int_editing_row(f, "Number of accept tests:",
+                            prob->tests_to_accept, extra_msg,
+                            SUPER_ACTION_PROB_CHANGE_TESTS_TO_ACCEPT,
+                            session_id, form_row_attrs[row ^= 1],
+                            self_url, extra_args, prob_hidden_vars);
+    }
 
     if (show_adv) {
       //PROBLEM_PARAM(accept_partial, "d"),
@@ -4220,12 +4251,14 @@ super_html_print_problem(FILE *f,
                  tmp_prob.accept_partial?"Yes":"No");
         extra_msg = msg_buf;
       }
-      print_boolean_3_select_row(f, "Accept for testing solutions that do not pass all accept tests:",
-                                 prob->accept_partial,
-                                 SUPER_ACTION_PROB_CHANGE_ACCEPT_PARTIAL,
-                                 extra_msg,
-                                 session_id, form_row_attrs[row ^= 1],
-                                 self_url, extra_args, prob_hidden_vars);
+      if (!output_only_flag) {
+        print_boolean_3_select_row(f, "Accept for testing solutions that do not pass all accept tests:",
+                                   prob->accept_partial,
+                                   SUPER_ACTION_PROB_CHANGE_ACCEPT_PARTIAL,
+                                   extra_msg,
+                                   session_id, form_row_attrs[row ^= 1],
+                                   self_url, extra_args, prob_hidden_vars);
+      }
     }
   }
 
@@ -4302,7 +4335,7 @@ super_html_print_problem(FILE *f,
   }
 
   //PROBLEM_PARAM(lang_time_adj, "x"),
-  if (!prob->abstract && show_adv) {
+  if (!prob->abstract && !output_only_flag && show_adv) {
     if (!prob->lang_time_adj || !prob->lang_time_adj[0]) {
       extra_msg = "(not set)";
       checker_env = xstrdup("");
@@ -4529,6 +4562,7 @@ super_html_prob_cmd(struct sid_state *sstate, int cmd,
     sstate->aprob_u++;
     snprintf(prob->short_name, sizeof(prob->short_name), "%s", param2);
     prob->abstract = 1;
+    prob->output_only = 0;
     prob->use_stdin = 1;
     prob->use_stdout = 1;
     prob->binary_input = DFLT_P_BINARY_INPUT;
@@ -4687,6 +4721,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
       snprintf(prob->super, sizeof(prob->super), "%s", sstate->aprobs[val]->short_name);
     }
     return 0;
+
+  case SSERV_CMD_PROB_CHANGE_OUTPUT_ONLY:
+    p_int = &prob->output_only;
+    goto handle_boolean_1;
     
   case SSERV_CMD_PROB_CHANGE_USE_STDIN:
     p_int = &prob->use_stdin;
@@ -6511,6 +6549,7 @@ super_html_check_tests(FILE *f,
     }
 
     prepare_copy_problem(&tmp_prob, prob);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_OUTPUT_ONLY, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_BINARY_INPUT, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_DIR, &tmp_prob, abstr, 0);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_CORR, &tmp_prob, abstr, global);
@@ -6579,6 +6618,10 @@ super_html_check_tests(FILE *f,
       total_tests--;
       if (!total_tests) {
         fprintf(flog, "Error: no tests defined for the problem\n");
+        goto check_failed;
+      }
+      if (tmp_prob.output_only && total_tests != 1) {
+        fprintf(flog, "Error: output-only problem must have only one test\n");
         goto check_failed;
       }
       fprintf(flog, "Info: assuming, that there are %d tests for this problem\n",
@@ -6652,6 +6695,10 @@ super_html_check_tests(FILE *f,
         total_tests--;
         if (!total_tests) {
           fprintf(flog, "Error: no tests defined for the problem\n");
+          goto check_failed;
+        }
+        if (tmp_prob.output_only && total_tests != 1) {
+          fprintf(flog, "Error: output-only problem must have only one test\n");
           goto check_failed;
         }
         if (variant == 1) {
