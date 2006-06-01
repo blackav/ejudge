@@ -291,6 +291,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(id, "d"),
   PROBLEM_PARAM(tester_id, "d"),
   PROBLEM_PARAM(abstract, "d"),
+  PROBLEM_PARAM(output_only, "d"),
   PROBLEM_PARAM(use_stdin, "d"),
   PROBLEM_PARAM(use_stdout, "d"),
   PROBLEM_PARAM(binary_input, "d"),
@@ -578,6 +579,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
 {
   struct section_problem_data *p = (struct section_problem_data*) gp;
 
+  p->output_only = -1;
   p->use_stdin = -1;
   p->use_stdout = -1;
   p->binary_input = -1;
@@ -2205,6 +2207,8 @@ set_defaults(int mode)
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_HIDDEN,
                            probs[i], aprob, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_OUTPUT_ONLY,
+                           probs[i], aprob, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDIN,
                            probs[i], aprob, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDOUT,
@@ -3658,6 +3662,7 @@ prepare_set_problem_defaults(struct section_problem_data *prob,
 {
   if (!prob->abstract) return;
 
+  if (prob->output_only < 0) prob->output_only = 0;
   if (prob->use_stdin < 0) prob->use_stdin = 0;
   if (prob->use_stdout < 0) prob->use_stdout = 0;
   if (prob->binary_input < 0) prob->binary_input = DFLT_P_BINARY_INPUT;
@@ -4039,6 +4044,11 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
                        const struct section_global_data *global)
 {
   switch (field) {
+  case PREPARE_FIELD_PROB_OUTPUT_ONLY:
+    if (out->output_only == -1 && abstr) out->output_only = abstr->output_only;
+    if (out->output_only == -1) out->output_only = 0;
+    break;
+
   case PREPARE_FIELD_PROB_USE_STDIN:
     if (out->use_stdin == -1 && abstr) out->use_stdin = abstr->use_stdin;
     if (out->use_stdin == -1) out->use_stdin = 0;
