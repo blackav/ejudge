@@ -2027,6 +2027,7 @@ struct compile_run_extra
 
 static int queue_compile_request(unsigned char const *str, int len,
                                  int run_id, int lang_id, int locale_id,
+                                 int output_only,
                                  unsigned char const *sfx,
                                  char **, int accepting_mode,
                                  int priority_adjustment);
@@ -2224,6 +2225,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
   if (queue_compile_request(pkt->data, pkt->run_len, run_id,
                             langs[pkt->lang_id]->compile_id,
                             pkt->locale_id,
+                            probs[pkt->prob_id]->output_only,
                             langs[pkt->lang_id]->src_sfx,
                             langs[pkt->lang_id]->compiler_env, -1, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
@@ -2557,6 +2559,7 @@ do_submit_run(struct client_state *p,
 
   if (queue_compile_request(run_bytes, run_size, run_id,
                             cur_lang->compile_id, locale_id,
+                            cur_prob->output_only,
                             cur_lang->src_sfx,
                             cur_lang->compiler_env, -1, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
@@ -4879,7 +4882,7 @@ generate_packet_name(int run_id, int prio, unsigned char buf[PACKET_NAME_SIZE])
 static unsigned short compile_request_id;
 static int
 queue_compile_request(unsigned char const *str, int len,
-                      int run_id, int lang_id, int locale_id,
+                      int run_id, int lang_id, int locale_id, int output_only,
                       unsigned char const *sfx,
                       char **compiler_env,
                       int accepting_mode,
@@ -4906,6 +4909,7 @@ queue_compile_request(unsigned char const *str, int len,
   cp.run_id = run_id;
   cp.lang_id = lang_id;
   cp.locale_id = locale_id;
+  cp.output_only = output_only;
   get_current_time(&cp.ts1, &cp.ts1_us);
   cp.run_block_len = sizeof(rx);
   cp.run_block = &rx;
@@ -4970,6 +4974,10 @@ rejudge_run(int run_id, struct client_state *p, int force_full_rejudge,
     err("rejudge_run: bad language: %d", re.language);
     return;
   }
+  if (re.problem <= 0 || re.problem > max_prob || !probs[re.problem]) {
+    err("rejudge_run: bad problem: %d", re.problem);
+    return;
+  }
 
   if (force_full_rejudge && global->score_system_val == SCORE_OLYMPIAD
       && !olympiad_judging_mode) {
@@ -4978,6 +4986,7 @@ rejudge_run(int run_id, struct client_state *p, int force_full_rejudge,
 
   queue_compile_request(0, -1, run_id,
                         langs[re.language]->compile_id, re.locale_id,
+                        probs[re.problem]->output_only,
                         langs[re.language]->src_sfx,
                         langs[re.language]->compiler_env,
                         accepting_mode, priority_adjustment);
