@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -180,48 +180,55 @@ do_loop(void)
       goto report_internal_error;
     }
 
-    info("Starting: %s %s %s", langs[req->lang_id]->cmd, src_name, exe_name);
-    tsk = task_New();
-    task_AddArg(tsk, langs[req->lang_id]->cmd);
-    task_AddArg(tsk, src_name);
-    task_AddArg(tsk, exe_name);
-    task_SetPathAsArg0(tsk);
-    if (req->env_num > 0) {
-      for (i = 0; i < req->env_num; i++)
-        task_PutEnv(tsk, req->env_vars[i]);
-    }
-    task_SetWorkingDir(tsk, global->compile_work_dir);
-    task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_REWRITE, 0777);
-    task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
-    task_SetRedir(tsk, 2, TSR_DUP, 1);
-    if (langs[req->lang_id]->compile_real_time_limit > 0) {
-      task_SetMaxRealTime(tsk, langs[req->lang_id]->compile_real_time_limit);
-    }
-    if (cr_serialize_lock() < 0) {
-      // FIXME: propose reasonable recovery?
-      return -1;
-    }
-    task_Start(tsk);
-    task_Wait(tsk);
-    if (cr_serialize_unlock() < 0) {
-      // FIXME: propose reasonable recovery?
-      return -1;
-    }
-
-    if (task_IsTimeout(tsk)) {
-      err("Compilation process timed out");
-      snprintf(msgbuf, sizeof(msgbuf), "compilation process timed out\n");
-      goto report_internal_error;
-    }
-
-    if (task_IsAbnormal(tsk)) {
-      info("Compilation failed");
-      ce_flag = 1;
-      rpl.status = RUN_COMPILE_ERR;
-    } else {
-      info("Compilation sucessful");
+    if (req->output_only) {
+      // copy src_path -> exe_path
+      generic_copy_file(0, NULL, src_path, NULL, 0, NULL, exe_path, NULL);
       ce_flag = 0;
       rpl.status = RUN_OK;
+    } else {
+      info("Starting: %s %s %s", langs[req->lang_id]->cmd, src_name, exe_name);
+      tsk = task_New();
+      task_AddArg(tsk, langs[req->lang_id]->cmd);
+      task_AddArg(tsk, src_name);
+      task_AddArg(tsk, exe_name);
+      task_SetPathAsArg0(tsk);
+      if (req->env_num > 0) {
+        for (i = 0; i < req->env_num; i++)
+          task_PutEnv(tsk, req->env_vars[i]);
+      }
+      task_SetWorkingDir(tsk, global->compile_work_dir);
+      task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_REWRITE, 0777);
+      task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
+      task_SetRedir(tsk, 2, TSR_DUP, 1);
+      if (langs[req->lang_id]->compile_real_time_limit > 0) {
+        task_SetMaxRealTime(tsk, langs[req->lang_id]->compile_real_time_limit);
+      }
+      if (cr_serialize_lock() < 0) {
+        // FIXME: propose reasonable recovery?
+        return -1;
+      }
+      task_Start(tsk);
+      task_Wait(tsk);
+      if (cr_serialize_unlock() < 0) {
+        // FIXME: propose reasonable recovery?
+        return -1;
+      }
+
+      if (task_IsTimeout(tsk)) {
+        err("Compilation process timed out");
+        snprintf(msgbuf, sizeof(msgbuf), "compilation process timed out\n");
+        goto report_internal_error;
+      }
+
+      if (task_IsAbnormal(tsk)) {
+        info("Compilation failed");
+        ce_flag = 1;
+        rpl.status = RUN_COMPILE_ERR;
+      } else {
+        info("Compilation sucessful");
+        ce_flag = 0;
+        rpl.status = RUN_OK;
+      }
     }
 
     get_current_time(&rpl.ts3, &rpl.ts3_us);
