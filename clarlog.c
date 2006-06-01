@@ -67,7 +67,8 @@ struct clar_entry_v1
   int j_from;                   /* 4 */
   unsigned int flags;           /* 4 */
   unsigned char ip6_flag;       /* 1 */
-  unsigned char _pad1[3];       /* 3 */
+  unsigned char hide_flag;      /* 1 */
+  unsigned char _pad1[2];       /* 2 */
   union
   {
     ej_ip_t ip;
@@ -356,6 +357,7 @@ clar_add_record(time_t         time,
                 int            to,
                 int            flags,
                 int            j_from,
+                int            hide_flag,
                 char const    *subj)
 {
   int i;
@@ -388,6 +390,7 @@ clar_add_record(time_t         time,
   clars.v[i].to = to;
   clars.v[i].flags = flags;
   clars.v[i].j_from = j_from;
+  clars.v[i].hide_flag = hide_flag;
   clars.v[i].a.ip = r_ip;
   base64_decode_str(subj, clars.v[i].subj, 0);
   if (clar_flush_entry(i) < 0) return -1;
@@ -403,6 +406,7 @@ clar_get_record(int id,
                 int           *pto,
                 int           *pflags,
                 int           *pj_from,
+                int           *p_hide_flag,
                 char          *subj)
 {
   if (id < 0 || id >= clars.u) ERR_R("bad id: %d", id);
@@ -416,6 +420,7 @@ clar_get_record(int id,
   if (pto)     *pto     = clars.v[id].to;
   if (pflags)  *pflags  = clars.v[id].flags;
   if (pj_from) *pj_from = clars.v[id].j_from;
+  if (p_hide_flag) *p_hide_flag = clars.v[id].hide_flag;
   if (subj)               base64_encode_str(clars.v[id].subj, subj);
   return 0;
 }
