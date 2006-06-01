@@ -3,7 +3,7 @@
 #ifndef __COMPILE_PACKET_PRIV_H__
 #define __COMPILE_PACKET_PRIV_H__
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005,2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,7 @@ struct compile_request_bin_packet
   rint32_t run_id;              /* the run id [0..999999] */
   rint32_t lang_id;             /* the language [1..max_lang] */
   rint32_t locale_id;           /* the locale identifier */
+  rint32_t output_only;         /* the problem is output only */
   rint32_t ts1;                 /* the time, when comp. request was queued */
   rint32_t ts1_us;              /* the microsecond component */
   rint32_t run_block_len;       /* the length of the run block */
