@@ -484,7 +484,7 @@ run_tests(struct section_tester_data *tst,
   unsigned char arch_entry_name[64];
   full_archive_t far = 0;
   unsigned char *additional_comment = 0;
-  int jj;
+  int jj, tmpfd;
 
 #ifdef HAVE_TERMIOS_H
   struct termios term_attrs;
@@ -536,7 +536,7 @@ run_tests(struct section_tester_data *tst,
   cur_test = 1;
 
   /* at this point the executable is copied into the working dir */
-  if (tst->prepare_cmd[0]) {
+  if (!prb->output_only && tst->prepare_cmd[0]) {
     info("starting: %s %s", tst->prepare_cmd, new_name);
     tsk = task_New();
     task_AddArg(tsk, tst->prepare_cmd);
@@ -670,125 +670,132 @@ run_tests(struct section_tester_data *tst,
     pathmake(error_path, tst->check_dir, "/", tst->error_file, 0);
     pathmake(check_out_path, global->run_work_dir, "/", "checkout", 0);
 
-    /* run the tested program */
-    tsk = task_New();
-    if (tst->start_cmd[0]) {
-      info("starting: %s %s", tst->start_cmd, arg0_path);
-      task_AddArg(tsk, tst->start_cmd);
+    if (prb->output_only) {
+      /* output-only problem */
+      // copy exe_path -> output_path
+      generic_copy_file(0, NULL, exe_path, "", 0, NULL, output_path, "");
     } else {
-      info("starting: %s", arg0_path);
-    }
-    //task_AddArg(tsk, exe_path);
-    task_AddArg(tsk, arg0_path);
-    if (prb->use_info && tstinfo.cmd_argc >= 1) {
-      task_pnAddArgs(tsk, tstinfo.cmd_argc, (char**) tstinfo.cmd_argv);
-    }
-    task_SetPathAsArg0(tsk);
-    task_SetWorkingDir(tsk, prog_working_dir);
-    if (!tst->no_redirect || managed_mode_flag) {
-      if (prb->use_stdin) {
-        task_SetRedir(tsk, 0, TSR_FILE, input_path, TSK_READ);
+      /* run the tested program */
+      tsk = task_New();
+      if (tst->start_cmd[0]) {
+        info("starting: %s %s", tst->start_cmd, arg0_path);
+        task_AddArg(tsk, tst->start_cmd);
       } else {
-        task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
+        info("starting: %s", arg0_path);
       }
-      if (prb->use_stdout) {
-        task_SetRedir(tsk, 1, TSR_FILE, output_path, TSK_REWRITE, TSK_FULL_RW);
-      } else {
-        task_SetRedir(tsk, 1, TSR_FILE, "/dev/null", TSK_WRITE, TSK_FULL_RW);
+      //task_AddArg(tsk, exe_path);
+      task_AddArg(tsk, arg0_path);
+      if (prb->use_info && tstinfo.cmd_argc >= 1) {
+        task_pnAddArgs(tsk, tstinfo.cmd_argc, (char**) tstinfo.cmd_argv);
+      }
+      task_SetPathAsArg0(tsk);
+      task_SetWorkingDir(tsk, prog_working_dir);
+      if (!tst->no_redirect || managed_mode_flag) {
+        if (prb->use_stdin) {
+          task_SetRedir(tsk, 0, TSR_FILE, input_path, TSK_READ);
+        } else {
+          task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
+        }
+        if (prb->use_stdout) {
+          task_SetRedir(tsk, 1, TSR_FILE, output_path, TSK_REWRITE,TSK_FULL_RW);
+        } else {
+          task_SetRedir(tsk, 1, TSR_FILE, "/dev/null", TSK_WRITE, TSK_FULL_RW);
+          // create empty output file
+          {
+            tmpfd = open(output_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+            if (tmpfd >= 0) close(tmpfd);
+          }
+        }
+        task_SetRedir(tsk, 2, TSR_FILE, error_path, TSK_REWRITE, TSK_FULL_RW);
+      }  else {
         // create empty output file
         {
-          int fd = open(output_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
-          if (fd >= 0) close(fd);
+          tmpfd = open(output_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+          if (tmpfd >= 0) close(tmpfd);
         }
       }
-      task_SetRedir(tsk, 2, TSR_FILE, error_path, TSK_REWRITE, TSK_FULL_RW);
-    }  else {
-      // create empty output file
-      {
-        int fd = open(output_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
-        if (fd >= 0) close(fd);
-      }
-    }
 
-    if (tst->clear_env) task_ClearEnv(tsk);
-    if (tst->start_env) {
-      for (jj = 0; tst->start_env[jj]; jj++) {
-        if (!strcmp(tst->start_env[jj], "EJUDGE_PREFIX_DIR")) {
-          task_PutEnv(tsk, ejudge_prefix_dir_env);
-        } else {
-          task_PutEnv(tsk, tst->start_env[jj]);
+      if (tst->clear_env) task_ClearEnv(tsk);
+      if (tst->start_env) {
+        for (jj = 0; tst->start_env[jj]; jj++) {
+          if (!strcmp(tst->start_env[jj], "EJUDGE_PREFIX_DIR")) {
+            task_PutEnv(tsk, ejudge_prefix_dir_env);
+          } else {
+            task_PutEnv(tsk, tst->start_env[jj]);
+          }
         }
       }
-    }
-    if (prb->time_limit_millis > 0) {
+      if (prb->time_limit_millis > 0) {
 #if defined HAVE_TASK_SETMAXTIMEMILLIS
-      time_limit_value = prb->time_limit_millis;
-      if (tst->time_limit_adjustment > 0)
-        time_limit_value += tst->time_limit_adjustment * 1000;
-      if (req_pkt->time_limit_adj > 0)
-        time_limit_value += req_pkt->time_limit_adj * 1000;
-      task_SetMaxTimeMillis(tsk, time_limit_value);
+        time_limit_value = prb->time_limit_millis;
+        if (tst->time_limit_adjustment > 0)
+          time_limit_value += tst->time_limit_adjustment * 1000;
+        if (req_pkt->time_limit_adj > 0)
+          time_limit_value += req_pkt->time_limit_adj * 1000;
+        task_SetMaxTimeMillis(tsk, time_limit_value);
 #else
-      time_limit_value = (prb->time_limit_millis + 999) / 1000;;
-      if (tst->time_limit_adjustment > 0)
-        time_limit_value += tst->time_limit_adjustment;
-      if (req_pkt->time_limit_adj > 0)
-        time_limit_value += req_pkt->time_limit_adj;
-      task_SetMaxTime(tsk, time_limit_value);
+        time_limit_value = (prb->time_limit_millis + 999) / 1000;;
+        if (tst->time_limit_adjustment > 0)
+          time_limit_value += tst->time_limit_adjustment;
+        if (req_pkt->time_limit_adj > 0)
+          time_limit_value += req_pkt->time_limit_adj;
+        task_SetMaxTime(tsk, time_limit_value);
 #endif
-    } else if (prb->time_limit > 0) {
-      time_limit_value = prb->time_limit;
-      if (tst->time_limit_adjustment > 0)
-        time_limit_value += tst->time_limit_adjustment;
-      if (req_pkt->time_limit_adj > 0)
-        time_limit_value += req_pkt->time_limit_adj;
-      task_SetMaxTime(tsk, time_limit_value);
+      } else if (prb->time_limit > 0) {
+        time_limit_value = prb->time_limit;
+        if (tst->time_limit_adjustment > 0)
+          time_limit_value += tst->time_limit_adjustment;
+        if (req_pkt->time_limit_adj > 0)
+          time_limit_value += req_pkt->time_limit_adj;
+        task_SetMaxTime(tsk, time_limit_value);
     }
-    if (prb->real_time_limit>0) task_SetMaxRealTime(tsk,prb->real_time_limit);
-    if (tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
-    if (tst->no_core_dump) task_DisableCoreDump(tsk);
-    // debugging
+      if (prb->real_time_limit>0) task_SetMaxRealTime(tsk,prb->real_time_limit);
+      if (tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
+      if (tst->no_core_dump) task_DisableCoreDump(tsk);
+      // debugging
 #if 0
-    if (tst->max_vm_size == -1L)
-      fprintf(stderr,">>max_vm_size == -1\n");
-    else
-      fprintf(stderr, ">>max_vm_size == %zu\n", tst->max_vm_size);
-    if (tst->max_stack_size == -1L)
-      fprintf(stderr, ">>max_stack_size == -1\n");
-    else
-      fprintf(stderr, ">>max_stack_size == %zu\n", tst->max_stack_size);
+      if (tst->max_vm_size == -1L)
+        fprintf(stderr,">>max_vm_size == -1\n");
+      else
+        fprintf(stderr, ">>max_vm_size == %zu\n", tst->max_vm_size);
+      if (tst->max_stack_size == -1L)
+        fprintf(stderr, ">>max_stack_size == -1\n");
+      else
+        fprintf(stderr, ">>max_stack_size == %zu\n", tst->max_stack_size);
 #endif
-    if (tst->max_stack_size && tst->max_stack_size != -1L)
-      task_SetStackSize(tsk, tst->max_stack_size);
-    if (tst->max_data_size && tst->max_data_size != -1L)
-      task_SetDataSize(tsk, tst->max_data_size);
-    if (tst->max_vm_size && tst->max_vm_size != -1L)
-      task_SetVMSize(tsk, tst->max_vm_size);
+      if (tst->max_stack_size && tst->max_stack_size != -1L)
+        task_SetStackSize(tsk, tst->max_stack_size);
+      if (tst->max_data_size && tst->max_data_size != -1L)
+        task_SetDataSize(tsk, tst->max_data_size);
+      if (tst->max_vm_size && tst->max_vm_size != -1L)
+        task_SetVMSize(tsk, tst->max_vm_size);
 #if defined HAVE_TASK_ENABLEMEMORYLIMITERROR
-    if (tst->enable_memory_limit_error && req_pkt->memory_limit) {
-      task_EnableMemoryLimitError(tsk);
-    }
+      if (tst->enable_memory_limit_error && req_pkt->memory_limit) {
+        task_EnableMemoryLimitError(tsk);
+      }
 #endif
 
 #ifdef HAVE_TERMIOS_H
-    memset(&term_attrs, 0, sizeof(term_attrs));
-    if (tst->no_redirect && isatty(0) && !managed_mode_flag) {
-      /* we need to save terminal state since if the program
-       * is killed with SIGKILL, the terminal left in random state
-       */
-      if (tcgetattr(0, &term_attrs) < 0) {
-        err("tcgetattr failed: %s", os_ErrorMsg());
+      memset(&term_attrs, 0, sizeof(term_attrs));
+      if (tst->no_redirect && isatty(0) && !managed_mode_flag) {
+        /* we need to save terminal state since if the program
+         * is killed with SIGKILL, the terminal left in random state
+         */
+        if (tcgetattr(0, &term_attrs) < 0) {
+          err("tcgetattr failed: %s", os_ErrorMsg());
+        }
       }
-    }
 #endif
 
-    if (task_Start(tsk) < 0) {
-      /* failed to start task */
-      status = RUN_CHECK_FAILED;
-      tests[cur_test].code = task_ErrorCode(tsk, 0, 0);
-      task_Delete(tsk); tsk = 0;
-      total_failed_tests++;
-    } else {
+      if (task_Start(tsk) < 0) {
+        /* failed to start task */
+        status = RUN_CHECK_FAILED;
+        tests[cur_test].code = task_ErrorCode(tsk, 0, 0);
+        task_Delete(tsk); tsk = 0;
+        total_failed_tests++;
+        goto done_this_test;
+      }
+
       /* task hopefully started */
       task_Wait(tsk);
 
@@ -803,264 +810,271 @@ run_tests(struct section_tester_data *tst,
           err("tcsetattr failed: %s", os_ErrorMsg());
       }
 #endif
+    } /* if (!prb->output_only) */
 
-      /* set normal permissions for the working directory */
-      make_writable(tst->check_dir);
-      /* make the output file readable */
-      if (chmod(output_path, 0600) < 0) {
-        err("chmod failed: %s", os_ErrorMsg());
-      }
+    /* set normal permissions for the working directory */
+    make_writable(tst->check_dir);
+    /* make the output file readable */
+    if (chmod(output_path, 0600) < 0) {
+      err("chmod failed: %s", os_ErrorMsg());
+    }
 
-      /* fill test report structure */
+    /* fill test report structure */
+    if (tsk) {
       tests[cur_test].times = task_GetRunningTime(tsk);
 #if defined HAVE_TASK_GETREALTIME
       tests[cur_test].real_time = task_GetRealTime(tsk);
 #endif
-      if (req_pkt->full_archive) {
-        filehash_get(test_src, tests[cur_test].input_digest);
-        tests[cur_test].has_input_digest = 1;
-      } else {
-        file_size = generic_file_size(0, test_src, 0);
-        if (file_size >= 0) {
-          tests[cur_test].input_size = file_size;
-          if (global->max_file_length > 0
-              && file_size <= global->max_file_length) {
-            generic_read_file(&tests[cur_test].input, 0, 0, 0,
-                              0, test_src, "");
-          }
-        }
-      }
-      file_size = generic_file_size(0, output_path, 0);
+    }
+    if (req_pkt->full_archive) {
+      filehash_get(test_src, tests[cur_test].input_digest);
+      tests[cur_test].has_input_digest = 1;
+    } else {
+      file_size = generic_file_size(0, test_src, 0);
       if (file_size >= 0) {
-        tests[cur_test].output_size = file_size;
-        if (global->max_file_length > 0 && !req_pkt->full_archive
+        tests[cur_test].input_size = file_size;
+        if (global->max_file_length > 0
             && file_size <= global->max_file_length) {
-          generic_read_file(&tests[cur_test].output, 0, 0, 0,
-                            0, output_path, "");
+          generic_read_file(&tests[cur_test].input, 0, 0, 0,
+                            0, test_src, "");
         }
-        if (far) {
-          snprintf(arch_entry_name, sizeof(arch_entry_name),
-                   "%06d.o", cur_test);
-          //info("appending program output to archive");
-          full_archive_append_file(far, arch_entry_name, 0, output_path);
-        }
-      }
-      file_size = generic_file_size(0, error_path, 0);
-      if (file_size >= 0) {
-        tests[cur_test].error_size = file_size;
-        if (global->max_file_length > 0 && !req_pkt->full_archive
-            && file_size <= global->max_file_length) {
-          generic_read_file(&tests[cur_test].error, 0, 0, 0,
-                            0, error_path, "");
-        }
-        if (far) {
-          snprintf(arch_entry_name, sizeof(arch_entry_name),
-                   "%06d.e", cur_test);
-          //info("appending program error stream to archive");
-          full_archive_append_file(far, arch_entry_name, 0, error_path);
-        }
-      }
-      if (prb->use_info) {
-        size_t cmd_args_len = 0;
-        int i;
-        unsigned char *args = 0, *s;
-
-        if (req_pkt->full_archive) {
-          filehash_get(info_src, tests[cur_test].info_digest);
-          tests[cur_test].has_info_digest = 1;
-        }
-
-        for (i = 0; i < tstinfo.cmd_argc; i++) {
-          cmd_args_len += 16;
-          if (tstinfo.cmd_argv[i]) {
-            cmd_args_len += strlen(tstinfo.cmd_argv[i]);
-          }
-        }
-        if (cmd_args_len > 0) {
-          s = args = (unsigned char *) xmalloc(cmd_args_len + 16);
-          for (i = 0; i < tstinfo.cmd_argc; i++) {
-            if (tstinfo.cmd_argv[i]) {
-              s += sprintf(s, "[%3d]: >%s<\n", i + 1, tstinfo.cmd_argv[i]);
-            } else {
-              s += sprintf(s, "[%3d]: NULL\n", i + 1);
-            }
-          }
-        }
-        tests[cur_test].args = args;
-        if (tstinfo.comment) {
-          tests[cur_test].comment = xstrdup(tstinfo.comment);
-        }
-        if (tstinfo.team_comment) {
-          tests[cur_test].team_comment = xstrdup(tstinfo.team_comment);
-        }
-      }
-
-      task_Log(tsk, 0, LOG_INFO);
-
-#if defined HAVE_TASK_ISMEMORYLIMIT
-      if (tst->enable_memory_limit_error && req_pkt->memory_limit
-          && task_IsMemoryLimit(tsk)) {
-        failed_test = cur_test;
-        status = RUN_MEM_LIMIT_ERR;
-        total_failed_tests++;
-        task_Delete(tsk); tsk = 0;
-      } else
-#endif
-      if (task_IsTimeout(tsk)) {
-        failed_test = cur_test;
-        status = RUN_TIME_LIMIT_ERR;
-        total_failed_tests++;
-        task_Delete(tsk); tsk = 0;
-      } else if ((error_code[0] && ec != 0)
-                 || (!error_code[0] && task_IsAbnormal(tsk))) {
-        /* runtime error */
-        if (error_code[0]) {
-          tests[cur_test].code = ec;
-        } else {
-          if (task_Status(tsk) == TSK_SIGNALED) {
-            tests[cur_test].code = 256; /* FIXME: magic */
-            tests[cur_test].termsig = task_TermSignal(tsk);
-          } else {
-            tests[cur_test].code = task_ExitCode(tsk);
-          }
-        }
-        failed_test = cur_test;
-        status = RUN_RUN_TIME_ERR;
-        total_failed_tests++;
-        task_Delete(tsk); tsk = 0;
-
-      } else {
-        task_Delete(tsk); tsk = 0;
-
-        if (prb->variant_num > 0 && !tst->standard_checker_used) {
-          var_check_cmd = (unsigned char*) alloca(sizeof(path_t));
-          snprintf(var_check_cmd, sizeof(path_t),
-                   "%s-%d", tst->check_cmd, cur_variant);
-        } else {
-          var_check_cmd = tst->check_cmd;
-        }
-
-        /* now start checker */
-        /* checker <input data> <output result> <corr answer> <info file> */
-        info("starting checker: %s %s %s", var_check_cmd, test_src,
-             prb->output_file);
-
-        tsk = task_New();
-        task_AddArg(tsk, var_check_cmd);
-        task_AddArg(tsk, test_src);
-        task_AddArg(tsk, prb->output_file);
-        if (prb->use_corr && prb->corr_dir[0]) {
-          pathmake3(corr_path, var_corr_dir, "/", corr_base, NULL);
-          task_AddArg(tsk, corr_path);
-          if (req_pkt->full_archive) {
-            filehash_get(corr_path, tests[cur_test].correct_digest);
-            tests[cur_test].has_correct_digest = 1;
-          } else {
-            file_size = generic_file_size(0, corr_path, 0);
-            if (file_size >= 0) {
-              tests[cur_test].correct_size = file_size;
-              if (global->max_file_length > 0
-                  && file_size <= global->max_file_length) {
-                generic_read_file(&tests[cur_test].correct, 0, 0, 0,
-                                  0, corr_path, "");
-              }
-            }
-          }
-        }
-        if (prb->use_info) {
-          task_AddArg(tsk, info_src);
-        }
-        if (prb->use_tgz) {
-          task_AddArg(tsk, tgz_src_dir);
-          task_AddArg(tsk, prog_working_dir);
-        }
-        task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
-        task_SetRedir(tsk, 1, TSR_FILE, check_out_path,
-                      TSK_REWRITE, TSK_FULL_RW);
-        task_SetRedir(tsk, 2, TSR_DUP, 1);
-        task_SetWorkingDir(tsk, tst->check_dir);
-        task_SetPathAsArg0(tsk);
-        if (prb->checker_real_time_limit > 0) {
-          task_SetMaxRealTime(tsk, prb->checker_real_time_limit);
-        }
-        if (prb->checker_env) {
-          for (jj = 0; prb->checker_env[jj]; jj++)
-            task_PutEnv(tsk, prb->checker_env[jj]);
-        }
-        if (tst->checker_env) {
-          for (jj = 0; tst->checker_env[jj]; jj++)
-            task_PutEnv(tsk, tst->checker_env[jj]);
-        }
-
-        task_Start(tsk);
-        task_Wait(tsk);
-        if (task_IsTimeout(tsk)) {
-          append_msg_to_log(check_out_path, "checker timeout");
-          err("checker timeout");
-        } else {
-          task_Log(tsk, 0, LOG_INFO);
-          if (task_Status(tsk) == TSK_SIGNALED) {
-            jj = task_TermSignal(tsk);
-            append_msg_to_log(check_out_path,
-                              "checker terminated with signal %d (%s)",
-                              jj, os_GetSignalString(jj));
-          } else {
-            jj = task_ExitCode(tsk);
-            if (jj != RUN_OK && jj != RUN_PRESENTATION_ERR
-                && jj != RUN_WRONG_ANSWER_ERR) {
-              append_msg_to_log(check_out_path,
-                                "checker exited with code %d", jj);
-            }
-          }
-        }
-
-        file_size = generic_file_size(0, check_out_path, 0);
-        if (file_size >= 0) {
-          tests[cur_test].chk_out_size = file_size;
-          if (!req_pkt->full_archive) {
-            generic_read_file(&tests[cur_test].chk_out, 0, 0, 0, 0, check_out_path, "");
-          }
-          if (far) {
-            snprintf(arch_entry_name, sizeof(arch_entry_name),
-                     "%06d.c", cur_test);
-            //info("appending checker output to archive");
-            full_archive_append_file(far, arch_entry_name, 0, check_out_path);
-          }
-        }
-
-        /* analyze error codes */
-        if (task_IsTimeout(tsk)) {
-          status = RUN_CHECK_FAILED;
-          failed_test = cur_test;
-        } else if (task_Status(tsk) == TSK_SIGNALED) {
-          /* crashed */
-          status = RUN_CHECK_FAILED;
-          failed_test = cur_test;
-        } else if (task_Status(tsk) == TSK_EXITED) {
-          status = task_ExitCode(tsk);
-          switch (status) {
-          case RUN_OK:
-          case RUN_PRESENTATION_ERR:
-          case RUN_WRONG_ANSWER_ERR:
-          case RUN_CHECK_FAILED:
-            /* this might be expected from the checker */
-            break;
-          default:
-            status = RUN_CHECK_FAILED;
-            break;
-          }
-          if (status > 0) { 
-            failed_test = cur_test;
-            total_failed_tests++;
-          }
-        } else {
-          /* something strange */
-          status = RUN_CHECK_FAILED;
-          failed_test = cur_test;
-        }
-        task_Delete(tsk); tsk = 0;
       }
     }
+    file_size = generic_file_size(0, output_path, 0);
+    if (file_size >= 0) {
+      tests[cur_test].output_size = file_size;
+      if (global->max_file_length > 0 && !req_pkt->full_archive
+          && file_size <= global->max_file_length) {
+        generic_read_file(&tests[cur_test].output, 0, 0, 0,
+                          0, output_path, "");
+      }
+      if (far) {
+        snprintf(arch_entry_name, sizeof(arch_entry_name),
+                 "%06d.o", cur_test);
+        //info("appending program output to archive");
+        full_archive_append_file(far, arch_entry_name, 0, output_path);
+      }
+    }
+    file_size = generic_file_size(0, error_path, 0);
+    if (file_size >= 0) {
+      tests[cur_test].error_size = file_size;
+      if (global->max_file_length > 0 && !req_pkt->full_archive
+          && file_size <= global->max_file_length) {
+        generic_read_file(&tests[cur_test].error, 0, 0, 0,
+                          0, error_path, "");
+      }
+      if (far) {
+        snprintf(arch_entry_name, sizeof(arch_entry_name),
+                 "%06d.e", cur_test);
+        //info("appending program error stream to archive");
+        full_archive_append_file(far, arch_entry_name, 0, error_path);
+      }
+    }
+    if (prb->use_info) {
+      size_t cmd_args_len = 0;
+      int i;
+      unsigned char *args = 0, *s;
+
+      if (req_pkt->full_archive) {
+        filehash_get(info_src, tests[cur_test].info_digest);
+        tests[cur_test].has_info_digest = 1;
+      }
+
+      for (i = 0; i < tstinfo.cmd_argc; i++) {
+        cmd_args_len += 16;
+        if (tstinfo.cmd_argv[i]) {
+          cmd_args_len += strlen(tstinfo.cmd_argv[i]);
+        }
+      }
+      if (cmd_args_len > 0) {
+        s = args = (unsigned char *) xmalloc(cmd_args_len + 16);
+        for (i = 0; i < tstinfo.cmd_argc; i++) {
+          if (tstinfo.cmd_argv[i]) {
+            s += sprintf(s, "[%3d]: >%s<\n", i + 1, tstinfo.cmd_argv[i]);
+          } else {
+            s += sprintf(s, "[%3d]: NULL\n", i + 1);
+          }
+        }
+      }
+      tests[cur_test].args = args;
+      if (tstinfo.comment) {
+        tests[cur_test].comment = xstrdup(tstinfo.comment);
+      }
+      if (tstinfo.team_comment) {
+        tests[cur_test].team_comment = xstrdup(tstinfo.team_comment);
+      }
+    }
+
+    if (tsk) task_Log(tsk, 0, LOG_INFO);
+
+#if defined HAVE_TASK_ISMEMORYLIMIT
+    if (tsk && tst->enable_memory_limit_error && req_pkt->memory_limit
+        && task_IsMemoryLimit(tsk)) {
+      failed_test = cur_test;
+      status = RUN_MEM_LIMIT_ERR;
+      total_failed_tests++;
+      task_Delete(tsk); tsk = 0;
+      goto done_this_test;
+    }
+#endif
+
+    if (tsk && task_IsTimeout(tsk)) {
+      failed_test = cur_test;
+      status = RUN_TIME_LIMIT_ERR;
+      total_failed_tests++;
+      task_Delete(tsk); tsk = 0;
+      goto done_this_test;
+    }
+
+    if (tsk && ((error_code[0] && ec != 0)
+                || (!error_code[0] && task_IsAbnormal(tsk)))) {
+      /* runtime error */
+      if (error_code[0]) {
+        tests[cur_test].code = ec;
+      } else {
+        if (task_Status(tsk) == TSK_SIGNALED) {
+          tests[cur_test].code = 256; /* FIXME: magic */
+          tests[cur_test].termsig = task_TermSignal(tsk);
+        } else {
+          tests[cur_test].code = task_ExitCode(tsk);
+        }
+      }
+      failed_test = cur_test;
+      status = RUN_RUN_TIME_ERR;
+      total_failed_tests++;
+      task_Delete(tsk); tsk = 0;
+      goto done_this_test;
+    }
+
+    task_Delete(tsk); tsk = 0;
+
+    if (prb->variant_num > 0 && !tst->standard_checker_used) {
+      var_check_cmd = (unsigned char*) alloca(sizeof(path_t));
+      snprintf(var_check_cmd, sizeof(path_t),
+               "%s-%d", tst->check_cmd, cur_variant);
+    } else {
+      var_check_cmd = tst->check_cmd;
+    }
+
+    /* now start checker */
+    /* checker <input data> <output result> <corr answer> <info file> */
+    info("starting checker: %s %s %s", var_check_cmd, test_src,
+         prb->output_file);
+
+    tsk = task_New();
+    task_AddArg(tsk, var_check_cmd);
+    task_AddArg(tsk, test_src);
+    task_AddArg(tsk, prb->output_file);
+    if (prb->use_corr && prb->corr_dir[0]) {
+      pathmake3(corr_path, var_corr_dir, "/", corr_base, NULL);
+      task_AddArg(tsk, corr_path);
+      if (req_pkt->full_archive) {
+        filehash_get(corr_path, tests[cur_test].correct_digest);
+        tests[cur_test].has_correct_digest = 1;
+      } else {
+        file_size = generic_file_size(0, corr_path, 0);
+        if (file_size >= 0) {
+          tests[cur_test].correct_size = file_size;
+          if (global->max_file_length > 0
+              && file_size <= global->max_file_length) {
+            generic_read_file(&tests[cur_test].correct, 0, 0, 0,
+                              0, corr_path, "");
+          }
+        }
+      }
+    }
+    if (prb->use_info) {
+      task_AddArg(tsk, info_src);
+    }
+    if (prb->use_tgz) {
+      task_AddArg(tsk, tgz_src_dir);
+      task_AddArg(tsk, prog_working_dir);
+    }
+    task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
+    task_SetRedir(tsk, 1, TSR_FILE, check_out_path,
+                  TSK_REWRITE, TSK_FULL_RW);
+    task_SetRedir(tsk, 2, TSR_DUP, 1);
+    task_SetWorkingDir(tsk, tst->check_dir);
+    task_SetPathAsArg0(tsk);
+    if (prb->checker_real_time_limit > 0) {
+      task_SetMaxRealTime(tsk, prb->checker_real_time_limit);
+    }
+    if (prb->checker_env) {
+      for (jj = 0; prb->checker_env[jj]; jj++)
+        task_PutEnv(tsk, prb->checker_env[jj]);
+    }
+    if (tst->checker_env) {
+      for (jj = 0; tst->checker_env[jj]; jj++)
+        task_PutEnv(tsk, tst->checker_env[jj]);
+    }
+
+    task_Start(tsk);
+    task_Wait(tsk);
+    if (task_IsTimeout(tsk)) {
+      append_msg_to_log(check_out_path, "checker timeout");
+      err("checker timeout");
+    } else {
+      task_Log(tsk, 0, LOG_INFO);
+      if (task_Status(tsk) == TSK_SIGNALED) {
+        jj = task_TermSignal(tsk);
+        append_msg_to_log(check_out_path,
+                          "checker terminated with signal %d (%s)",
+                          jj, os_GetSignalString(jj));
+      } else {
+        jj = task_ExitCode(tsk);
+        if (jj != RUN_OK && jj != RUN_PRESENTATION_ERR
+            && jj != RUN_WRONG_ANSWER_ERR) {
+          append_msg_to_log(check_out_path,
+                            "checker exited with code %d", jj);
+        }
+      }
+    }
+
+    file_size = generic_file_size(0, check_out_path, 0);
+    if (file_size >= 0) {
+      tests[cur_test].chk_out_size = file_size;
+      if (!req_pkt->full_archive) {
+        generic_read_file(&tests[cur_test].chk_out, 0, 0, 0, 0, check_out_path, "");
+      }
+      if (far) {
+        snprintf(arch_entry_name, sizeof(arch_entry_name),
+                 "%06d.c", cur_test);
+        //info("appending checker output to archive");
+        full_archive_append_file(far, arch_entry_name, 0, check_out_path);
+      }
+    }
+
+    /* analyze error codes */
+    if (task_IsTimeout(tsk)) {
+      status = RUN_CHECK_FAILED;
+      failed_test = cur_test;
+    } else if (task_Status(tsk) == TSK_SIGNALED) {
+      /* crashed */
+      status = RUN_CHECK_FAILED;
+      failed_test = cur_test;
+    } else if (task_Status(tsk) == TSK_EXITED) {
+      status = task_ExitCode(tsk);
+      switch (status) {
+      case RUN_OK:
+      case RUN_PRESENTATION_ERR:
+      case RUN_WRONG_ANSWER_ERR:
+      case RUN_CHECK_FAILED:
+        /* this might be expected from the checker */
+        break;
+      default:
+        status = RUN_CHECK_FAILED;
+        break;
+      }
+      if (status > 0) { 
+        failed_test = cur_test;
+        total_failed_tests++;
+      }
+    } else {
+      /* something strange */
+      status = RUN_CHECK_FAILED;
+      failed_test = cur_test;
+    }
+    task_Delete(tsk); tsk = 0;
 
   done_this_test:
     if (prb->use_info) {
@@ -1730,6 +1744,11 @@ check_config(void)
         err("'%s' does not contain any tests", prb->test_dir);
         return -1;
       }
+      if (prb->output_only && n1 != 1) {
+        err("`%s' must have only one test (as output-only problem)",
+            prb->short_name);
+        return -1;
+      }
       info("found %d tests for problem %s", n1, prb->short_name);
       if (n1 < prb->tests_to_accept) {
         err("%d tests required for problem acceptance!", prb->tests_to_accept);
@@ -1793,6 +1812,11 @@ check_config(void)
           return -1;
         if (!j) {
           err("'%s' does not contain any tests", var_test_dir);
+          return -1;
+        }
+        if (prb->output_only && n1 != 1) {
+          err("`%s', variant %d must have only one test (as output-only problem)",
+              prb->short_name, j);
           return -1;
         }
         if (n1 < 0) n1 = j;
