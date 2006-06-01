@@ -4,7 +4,7 @@
 #ifndef __SERVE_CLNT_H__
 #define __SERVE_CLNT_H__
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -139,6 +139,7 @@ int serve_clnt_message(int sock_fd,
                        int cmd,
                        int dest_user_id,
                        int ref_clar_id,
+                       int hide_flag,
                        unsigned char const *dest_login,
                        unsigned char const *subj,
                        unsigned char const *text);
