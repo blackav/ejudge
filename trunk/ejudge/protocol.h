@@ -310,6 +310,7 @@ struct prot_serve_pkt_submit_clar
   int ssl;
   int dest_user_id;
   int ref_clar_id;
+  int hide_flag;
   int dest_login_len;
   int subj_len;
   int text_len;
