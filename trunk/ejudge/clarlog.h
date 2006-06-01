@@ -37,6 +37,7 @@ int clar_add_record(time_t         time,
                     int            to,
                     int            flags,
                     int            j_from,
+                    int            hide_flag,
                     char const    *subj);
 int clar_get_record(int            id,
                     time_t        *ptime,
@@ -46,6 +47,7 @@ int clar_get_record(int            id,
                     int           *pto,
                     int           *pflags,
                     int           *pj_from,
+                    int           *p_hide_flag,
                     char          *subj);
 int clar_update_flags(int id, int flags);
 int clar_get_total(void);
