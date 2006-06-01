@@ -863,6 +863,9 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     fprintf(f, "long_name = \"%s\"\n", c_armor(&sbuf, prob->long_name));
   }
 
+  if ((prob->abstract && prob->output_only == 1)
+      || (!prob->abstract && prob->output_only >= 0))
+    unparse_bool(f, "output_only", prob->output_only);
   if ((prob->abstract && prob->use_stdin == 1)
       || (!prob->abstract && prob->use_stdin >= 0))
     unparse_bool(f, "use_stdin", prob->use_stdin);
@@ -1514,6 +1517,8 @@ prepare_unparse_testers(FILE *f,
       abstr = aprobs[j];
     }
     prepare_copy_problem(&tmp_prob, probs[i]);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_OUTPUT_ONLY,
+                           &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDIN,
                            &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDOUT,
@@ -1526,7 +1531,7 @@ prepare_unparse_testers(FILE *f,
                            &tmp_prob, abstr, global);
     vm_sizes[i] = tmp_prob.max_vm_size;
     stack_sizes[i] = tmp_prob.max_stack_size;
-    file_ios[i] = !tmp_prob.use_stdin || !tmp_prob.use_stdout;
+    file_ios[i] = !tmp_prob.output_only && (!tmp_prob.use_stdin || !tmp_prob.use_stdout);
   }
 
   // collect memory and stack limits for the default tester
