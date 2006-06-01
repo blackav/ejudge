@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@ serve_clnt_message(int sock_fd,
                    int cmd,
                    int dest_user_id,
                    int ref_clar_id,
+                   int hide_flag,
                    unsigned char const *dest_login,
                    unsigned char const *subj,
                    unsigned char const *text)
@@ -60,6 +61,7 @@ serve_clnt_message(int sock_fd,
   out->b.magic = PROT_SERVE_PACKET_MAGIC;
   out->dest_user_id = dest_user_id;
   out->ref_clar_id = ref_clar_id;
+  out->hide_flag = hide_flag;
   out->dest_login_len = dest_login_len;
   out->subj_len = subj_len;
   out->text_len = text_len;
