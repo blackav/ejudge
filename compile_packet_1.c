@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005,2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -94,10 +94,15 @@ compile_request_packet_read(size_t in_size, const void *in_data,
     errcode = 10;
     goto failed_badly;
   }
+  pout->output_only = cvt_bin_to_host(pin->output_only);
+  if (pout->output_only < 0 || pout->output_only > 1) {
+    errcode = 11;
+    goto failed_badly;
+  }
   pout->ts1 = cvt_bin_to_host(pin->ts1);
   pout->ts1_us = cvt_bin_to_host(pin->ts1_us);
   if (pout->ts1_us < 0 || pout->ts1_us > 999999) {
-    errcode = 11;
+    errcode = 12;
     goto failed_badly;
   }
 
@@ -109,11 +114,11 @@ compile_request_packet_read(size_t in_size, const void *in_data,
 
   pout->run_block_len = cvt_bin_to_host(pin->run_block_len);
   if (pout->run_block_len < 0 || pout->run_block_len > MAX_RUN_BLOCK_LEN) {
-    errcode = 12;
+    errcode = 13;
     goto failed_badly;
   }
   if (pin_ptr + pout->run_block_len > end_ptr) {
-    errcode = 13;
+    errcode = 14;
     goto failed_badly;
   }
   if (pout->run_block_len > 0) {
@@ -124,11 +129,11 @@ compile_request_packet_read(size_t in_size, const void *in_data,
 
   pout->env_num = cvt_bin_to_host(pin->env_num);
   if (pout->env_num < 0 || pout->env_num > MAX_ENV_NUM) {
-    errcode = 14;
+    errcode = 15;
     goto failed_badly;
   }
   if (pin_ptr + pout->env_num * sizeof(rint32_t) > end_ptr) {
-    errcode = 15;
+    errcode = 16;
     goto failed_badly;
   }
   if (pout->env_num > 0) {
@@ -138,7 +143,7 @@ compile_request_packet_read(size_t in_size, const void *in_data,
     for (i = 0; i < pout->env_num; i++) {
       str_lens[i] = cvt_bin_to_host(str_lens[i]);
       if (str_lens[i] < 0 || str_lens[i] > MAX_ENV_LEN) {
-        errcode = 16;
+        errcode = 17;
         goto failed_badly;
       }
       pout->env_vars[i] = xmalloc(str_lens[i] + 1);
@@ -147,7 +152,7 @@ compile_request_packet_read(size_t in_size, const void *in_data,
 
     for (i = 0; i < pout->env_num; i++) {
       if (pin_ptr + str_lens[i] > end_ptr) {
-        errcode = 17;
+        errcode = 18;
         goto failed_badly;
       }
       memcpy(pout->env_vars[i], pin_ptr, str_lens[i]);
@@ -159,7 +164,7 @@ compile_request_packet_read(size_t in_size, const void *in_data,
   // align the address at the 16-byte boundary
   pkt_bin_align_addr(pin_ptr, in_data);
   if (pin_ptr != end_ptr) {
-    errcode = 18;
+    errcode = 19;
     goto failed_badly;
   }
 
