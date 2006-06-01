@@ -3,7 +3,7 @@
 #ifndef __COMPILE_PACKET_H__
 #define __COMPILE_PACKET_H__
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005,2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,7 @@ struct compile_request_packet
   int run_id;
   int lang_id;
   int locale_id;
+  int output_only;
   int ts1;
   int ts1_us;
   int run_block_len;
