@@ -1013,15 +1013,16 @@ team_clar_flags(int user_id, int clar_id, int flags, int from, int to)
 }
 
 static int
-count_unread_clars(int user_id)
+count_unread_clars(int user_id, time_t start_time)
 {
-  int i, total = 0, from, to;
+  int i, total = 0, from, to, hide_flag;
 
   for (i = clar_get_total() - 1; i >= 0; i--) {
-    if (clar_get_record(i, 0, 0, 0, &from, &to, 0, 0, 0) < 0)
+    if (clar_get_record(i, 0, 0, 0, &from, &to, 0, 0, &hide_flag, 0) < 0)
       continue;
     if (to > 0 && to != user_id) continue;
     if (!to && from > 0) continue;
+    if (start_time <= 0 && hide_flag) continue;
     if (from != user_id && !team_extra_get_clar_status(user_id, i))
       total++;
   }
@@ -1036,7 +1037,7 @@ new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
                      unsigned char const *extra_args)
 {
   int showed, i, clars_to_show;
-  int from, to, flags, n;
+  int from, to, flags, n, hide_flag;
   size_t size;
   time_t start_time, time;
   int show_astr_time = 0;
@@ -1049,6 +1050,8 @@ new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
   unsigned char href[128];
 
   start_time = run_get_start_time();
+  if (global->virtual)
+    start_time = run_get_virtual_start_time(uid);
   clars_to_show = 15;
   if (show_flags) clars_to_show = 100000;
   show_astr_time = global->show_astr_time;
@@ -1065,10 +1068,11 @@ new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
        showed < clars_to_show && i >= 0;
        i--) {
     if (clar_get_record(i, &time, &size,
-                        0, &from, &to, &flags, 0, subj) < 0)
+                        0, &from, &to, &flags, 0, &hide_flag, subj) < 0)
       continue;
     if (from > 0 && from != uid) continue;
     if (to > 0 && to != uid) continue;
+    if (start_time <= 0 && hide_flag) continue;
     showed++;
 
     base64_decode_str(subj, psubj, 0);
@@ -1125,7 +1129,7 @@ new_write_user_clar(FILE *f, int uid, int cid, int format)
   char cname[64];
   char *csrc = 0;
   size_t csize = 0;
-  int show_astr_time;
+  int show_astr_time, hide_flag;
 
   if (global->disable_clars) {
     err("clarifications are disabled");
@@ -1139,12 +1143,15 @@ new_write_user_clar(FILE *f, int uid, int cid, int format)
   show_astr_time = global->show_astr_time;
   if (global->virtual) show_astr_time = 1;
   start_time = run_get_start_time();
+  if (global->virtual)
+    start_time = run_get_virtual_start_time(uid);
   if (clar_get_record(cid, &time, &size, NULL,
-                      &from, &to, NULL, NULL, subj) < 0) {
+                      &from, &to, NULL, NULL, &hide_flag, subj) < 0) {
     return -SRV_ERR_BAD_CLAR_ID;
   }
   if (from > 0 && from != uid) return -SRV_ERR_ACCESS_DENIED;
   if (to > 0 && to != uid) return -SRV_ERR_ACCESS_DENIED;
+  if (start_time <= 0 && hide_flag) return -SRV_ERR_ACCESS_DENIED;
 
   if (from != uid) {
     team_extra_set_clar_status(uid, cid);
@@ -4787,7 +4794,7 @@ write_team_page(FILE *f, int user_id,
   }
 
   if (!global->disable_clars || !global->disable_team_clars){
-    unread_clars = count_unread_clars(user_id);
+    unread_clars = count_unread_clars(user_id, server_start);
     if (unread_clars > 0) {
       fprintf(f, _("<hr><big><b>You have %d unread message(s)!</b></big>\n"),
               unread_clars);
