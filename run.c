@@ -43,6 +43,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -103,6 +104,7 @@ struct testinfo
   unsigned char *args;          /* command-line arguments */
   unsigned char *comment;       /* judge's comment */
   unsigned char *team_comment;  /* team's comment */
+  int            checker_score;
 };
 
 int total_tests;
@@ -432,6 +434,53 @@ append_msg_to_log(const unsigned char *path, char *format, ...)
 }
 
 static int
+read_checker_score(const unsigned char *path,
+                   const unsigned char *log_path,
+                   int max_score,
+                   int *p_score)
+{
+  char *score_buf = 0;
+  size_t score_buf_size = 0;
+  int x, n, r;
+
+  r = generic_read_file(&score_buf, 0, &score_buf_size, 0,
+                        0, path, "");
+  if (r < 0) {
+    append_msg_to_log(log_path, "Cannot read checker score output");
+    return -1;
+  }
+  if (strlen(score_buf) != score_buf_size) {
+    append_msg_to_log(log_path, "Checker score output is binary");
+    xfree(score_buf);
+    return -1;
+  }
+
+  while (score_buf_size > 0 && isspace(score_buf[score_buf_size - 1]))
+    score_buf[--score_buf_size] = 0;
+  if (!score_buf_size) {
+    append_msg_to_log(log_path, "Checker score output is empty");
+    xfree(score_buf);
+    return -1;
+  }
+
+  if (sscanf(score_buf, "%d%n", &x, &n) != 1 || score_buf[n]) {
+    append_msg_to_log(log_path, "Checker score output (%s) is invalid",
+                      score_buf);
+    xfree(score_buf);
+    return -1;
+  }
+  if (x < 0 || x > max_score) {
+    append_msg_to_log(log_path, "Checker score (%d) is invalid", x);
+    xfree(score_buf);
+    return -1;
+  }
+
+  *p_score = x;
+  xfree(score_buf);
+  return 0;
+}
+
+static int
 run_tests(struct section_tester_data *tst,
           struct run_request_packet *req_pkt,
           struct run_reply_packet *reply_pkt,
@@ -462,6 +511,7 @@ run_tests(struct section_tester_data *tst,
   path_t output_path;
   path_t error_path;
   path_t check_out_path;
+  path_t score_out_path;
   path_t error_code;
   path_t prog_working_dir;
   int    score = 0;
@@ -484,7 +534,7 @@ run_tests(struct section_tester_data *tst,
   unsigned char arch_entry_name[64];
   full_archive_t far = 0;
   unsigned char *additional_comment = 0;
-  int jj, tmpfd;
+  int jj, tmpfd, test_max_score, force_check_failed;
 
 #ifdef HAVE_TERMIOS_H
   struct termios term_attrs;
@@ -669,6 +719,7 @@ run_tests(struct section_tester_data *tst,
     pathmake(output_path, tst->check_dir, "/", prb->output_file, 0);
     pathmake(error_path, tst->check_dir, "/", tst->error_file, 0);
     pathmake(check_out_path, global->run_work_dir, "/", "checkout", 0);
+    pathmake(score_out_path, global->run_work_dir, "/", "scoreout", 0);
 
     if (prb->output_only) {
       /* output-only problem */
@@ -991,9 +1042,16 @@ run_tests(struct section_tester_data *tst,
       task_AddArg(tsk, prog_working_dir);
     }
     task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
-    task_SetRedir(tsk, 1, TSR_FILE, check_out_path,
-                  TSK_REWRITE, TSK_FULL_RW);
-    task_SetRedir(tsk, 2, TSR_DUP, 1);
+    if (prb->scoring_checker > 0) {
+      task_SetRedir(tsk, 1, TSR_FILE, score_out_path,
+                    TSK_REWRITE, TSK_FULL_RW);
+      task_SetRedir(tsk, 2, TSR_FILE, check_out_path,
+                    TSK_REWRITE, TSK_FULL_RW);
+    } else {
+      task_SetRedir(tsk, 1, TSR_FILE, check_out_path,
+                    TSK_REWRITE, TSK_FULL_RW);
+      task_SetRedir(tsk, 2, TSR_DUP, 1);
+    }
     task_SetWorkingDir(tsk, tst->check_dir);
     task_SetPathAsArg0(tsk);
     if (prb->checker_real_time_limit > 0) {
@@ -1030,6 +1088,32 @@ run_tests(struct section_tester_data *tst,
       }
     }
 
+    force_check_failed = 0;
+    if (prb->scoring_checker && !task_IsTimeout(tsk)
+        && task_Status(tsk) == TSK_EXITED
+        && task_ExitCode(tsk) == RUN_WRONG_ANSWER_ERR) {
+      switch (score_system_val) {
+      case SCORE_KIROV:
+      case SCORE_OLYMPIAD:
+        test_max_score = prb->tscores[cur_test];
+        break;
+      case SCORE_MOSCOW:
+        test_max_score = prb->full_score - 1;
+        break;
+      case SCORE_ACM:
+        test_max_score = 0;
+        break;
+      default:
+        abort();
+      }
+      if (read_checker_score(score_out_path,
+                             check_out_path,
+                             test_max_score,
+                             &tests[cur_test].checker_score) < 0) {
+        force_check_failed = 1;
+      }
+    }
+
     file_size = generic_file_size(0, check_out_path, 0);
     if (file_size >= 0) {
       tests[cur_test].chk_out_size = file_size;
@@ -1045,7 +1129,10 @@ run_tests(struct section_tester_data *tst,
     }
 
     /* analyze error codes */
-    if (task_IsTimeout(tsk)) {
+    if (force_check_failed) {
+      status = RUN_CHECK_FAILED;
+      failed_test = cur_test;
+    } else if (task_IsTimeout(tsk)) {
       status = RUN_CHECK_FAILED;
       failed_test = cur_test;
     } else if (task_Status(tsk) == TSK_SIGNALED) {
@@ -1057,9 +1144,10 @@ run_tests(struct section_tester_data *tst,
       switch (status) {
       case RUN_OK:
       case RUN_PRESENTATION_ERR:
-      case RUN_WRONG_ANSWER_ERR:
       case RUN_CHECK_FAILED:
         /* this might be expected from the checker */
+        break;
+      case RUN_WRONG_ANSWER_ERR:
         break;
       default:
         status = RUN_CHECK_FAILED;
@@ -1125,6 +1213,9 @@ run_tests(struct section_tester_data *tst,
       if (tests[jj].status == RUN_OK) {
         score += prb->tscores[jj];
         tests[jj].score = prb->tscores[jj];
+      } else if (prb->scoring_checker
+                 && tests[jj].status == RUN_WRONG_ANSWER_ERR) {
+        score += tests[jj].checker_score;
       }
       if (tests[jj].status == RUN_CHECK_FAILED) {
         retcode = RUN_CHECK_FAILED;
@@ -1219,8 +1310,12 @@ run_tests(struct section_tester_data *tst,
         int s;
 
         ASSERT(failed_test <= prb->ntests && failed_test > 0);
-        for (s = 0; failed_test > prb->x_score_tests[s]; s++);
-        reply_pkt->score = s;
+        if (prb->scoring_checker) {
+          reply_pkt->score = tests[failed_test].checker_score;
+        } else {
+          for (s = 0; failed_test > prb->x_score_tests[s]; s++);
+          reply_pkt->score = s;
+        }
       }
     }
     get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
@@ -1895,19 +1990,21 @@ check_config(void)
         err("problem %s: problem full_score is not set", prb->short_name);
         return -1;
       }
-      if (!(prb->x_score_tests = prepare_parse_score_tests(prb->score_tests,
-                                                           prb->full_score))) {
-        err("problem %s: parsing of score_tests failed", prb->short_name);
-        return -1;
-      }
-      prb->x_score_tests[prb->full_score - 1] = n1;
       prb->ntests = n1;
-      if (prb->full_score > 1
-          && prb->x_score_tests[prb->full_score - 2] >= n1) {
-        err("problem %s: score_tests[%d] >= score_tests[%d]",
-            prb->short_name,
-            prb->full_score - 2, prb->full_score - 1);
-        return -1;
+      if (!prb->scoring_checker) {
+        if (!(prb->x_score_tests = prepare_parse_score_tests(prb->score_tests,
+                                                             prb->full_score))){
+          err("problem %s: parsing of score_tests failed", prb->short_name);
+          return -1;
+        }
+        prb->x_score_tests[prb->full_score - 1] = n1 + 1;
+        if (prb->full_score > 1
+            && prb->x_score_tests[prb->full_score - 2] > n1 + 1) {
+          err("problem %s: score_tests[%d] > score_tests[%d]",
+              prb->short_name,
+              prb->full_score - 2, prb->full_score - 1);
+          return -1;
+        }
       }
     } else if (prb->test_score >= 0 && global->score_system_val != SCORE_ACM) {
       int score_summ = 0;
