@@ -1036,6 +1036,7 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   do_xstr(f, &sbuf, "checker_env", prob->checker_env);
   do_xstr(f, &sbuf, "lang_time_adj", prob->lang_time_adj);
   do_xstr(f, &sbuf, "test_sets", prob->test_sets);
+  do_xstr(f, &sbuf, "disable_language", prob->disable_language);
 
   if (!prob->abstract && prob->variant_num > 0) {
     fprintf(f, "variant_num = %d\n", prob->variant_num);
@@ -1079,7 +1080,6 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   PROBLEM_PARAM(spelling, "s"),
   PROBLEM_PARAM(score_multiplier, "d"),
   PROBLEM_PARAM(date_penalty, "x"),
-  PROBLEM_PARAM(disable_language, "x"),
   PROBLEM_PARAM(tgz_pat, "s"),
   PROBLEM_PARAM(personal_deadline, "x"),
   PROBLEM_PARAM(skip_testing, "d"),
@@ -1128,8 +1128,6 @@ prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
     fprintf(f, "score_multiplier = %d\n", prob->score_multiplier);
   //PROBLEM_PARAM(date_penalty, "x"),
   do_xstr(f, &sbuf, "date_penalty", prob->date_penalty);
-  //PROBLEM_PARAM(disable_language, "x"),
-  do_xstr(f, &sbuf, "disable_language", prob->disable_language);
   //PROBLEM_PARAM(personal_deadline, "x"),
   do_xstr(f, &sbuf, "personal_deadline", prob->personal_deadline);
 
