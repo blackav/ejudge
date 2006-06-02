@@ -4334,6 +4334,24 @@ super_html_print_problem(FILE *f,
     xfree(checker_env);
   }
 
+  //PROBLEM_PARAM(scoring_checker, "d")
+  if (show_adv) {
+    extra_msg = 0;
+    if (!prob->abstract) {
+      prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER,
+                             &tmp_prob, sup_prob, sstate->global);
+      snprintf(msg_buf, sizeof(msg_buf), "Default (%s)",
+               tmp_prob.scoring_checker?"Yes":"No");
+      extra_msg = msg_buf;
+    }
+    print_boolean_3_select_row(f, "Checker calculates score",
+                               prob->scoring_checker,
+                               SUPER_ACTION_PROB_CHANGE_SCORING_CHECKER,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+  }
+
   //PROBLEM_PARAM(lang_time_adj, "x"),
   if (!prob->abstract && !output_only_flag && show_adv) {
     if (!prob->lang_time_adj || !prob->lang_time_adj[0]) {
@@ -4563,6 +4581,7 @@ super_html_prob_cmd(struct sid_state *sstate, int cmd,
     snprintf(prob->short_name, sizeof(prob->short_name), "%s", param2);
     prob->abstract = 1;
     prob->output_only = 0;
+    prob->scoring_checker = 0;
     prob->use_stdin = 1;
     prob->use_stdout = 1;
     prob->binary_input = DFLT_P_BINARY_INPUT;
@@ -4724,6 +4743,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_OUTPUT_ONLY:
     p_int = &prob->output_only;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_SCORING_CHECKER:
+    p_int = &prob->scoring_checker;
     goto handle_boolean_1;
     
   case SSERV_CMD_PROB_CHANGE_USE_STDIN:
@@ -6550,6 +6573,7 @@ super_html_check_tests(FILE *f,
 
     prepare_copy_problem(&tmp_prob, prob);
     prepare_set_prob_value(PREPARE_FIELD_PROB_OUTPUT_ONLY, &tmp_prob, abstr, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_BINARY_INPUT, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_DIR, &tmp_prob, abstr, 0);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_CORR, &tmp_prob, abstr, global);
