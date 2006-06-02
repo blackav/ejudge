@@ -4370,6 +4370,30 @@ super_html_print_problem(FILE *f,
     xfree(checker_env);
   }
 
+  //PROBLEM_PARAM(disable_language, "x"),
+  if (!prob->abstract && show_adv) {
+    if (!prob->disable_language || !prob->disable_language[0]) {
+      extra_msg = "(not set)";
+      checker_env = xstrdup("");
+    } else {
+      extra_msg = "";
+      checker_env = sarray_unparse_2(prob->disable_language);
+    }
+    print_string_editing_row_3(f, "Disabled languages:", checker_env,
+                               SUPER_ACTION_PROB_CHANGE_DISABLE_LANGUAGE,
+                               SUPER_ACTION_PROB_CLEAR_DISABLE_LANGUAGE,
+                               extra_msg,
+                               session_id, form_row_attrs[row ^= 1],
+                               self_url, extra_args, prob_hidden_vars);
+    xfree(checker_env);
+
+
+  }
+
+
+
+
+
   //PROBLEM_PARAM(variant_num, "d"),
   if (!prob->abstract && show_adv) {
     extra_msg = "";
@@ -5058,6 +5082,18 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CLEAR_LANG_TIME_ADJ:
     sarray_free(prob->lang_time_adj);
     prob->lang_time_adj = 0;
+    return 0;
+
+  case SSERV_CMD_PROB_CHANGE_DISABLE_LANGUAGE:
+    if (sarray_parse(param2, &tmp_env) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sarray_free(prob->disable_language);
+    prob->disable_language = tmp_env;
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_DISABLE_LANGUAGE:
+    sarray_free(prob->disable_language);
+    prob->disable_language = 0;
     return 0;
 
   case SSERV_CMD_PROB_CHANGE_TEST_SETS:
