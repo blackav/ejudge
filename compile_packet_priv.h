@@ -37,7 +37,7 @@ struct compile_request_bin_packet
   rint32_t ts1_us;              /* the microsecond component */
   rint32_t run_block_len;       /* the length of the run block */
   rint32_t env_num;             /* the number of env. variables */
-  unsigned char pad[20];        /* padding to 64 boundary */
+  unsigned char pad[16];        /* padding to 64 boundary */
   /* run_block (aligned to 16 byte boundary) */
   /* env variable length array (aligned to 16-byte address boundary) */
   /* env variable strings (aligned to 16-byte boundary) */
