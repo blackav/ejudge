@@ -292,6 +292,7 @@ static struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(tester_id, "d"),
   PROBLEM_PARAM(abstract, "d"),
   PROBLEM_PARAM(output_only, "d"),
+  PROBLEM_PARAM(scoring_checker, "d"),  
   PROBLEM_PARAM(use_stdin, "d"),
   PROBLEM_PARAM(use_stdout, "d"),
   PROBLEM_PARAM(binary_input, "d"),
@@ -580,6 +581,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   struct section_problem_data *p = (struct section_problem_data*) gp;
 
   p->output_only = -1;
+  p->scoring_checker = -1;
   p->use_stdin = -1;
   p->use_stdout = -1;
   p->binary_input = -1;
@@ -923,8 +925,8 @@ prepare_parse_score_tests(const unsigned char *str,
     sscanf(p, "%d%n", &s, &n);
     ps[i] = s;
     p += n;
-    if (i > 0 && ps[i] <= ps[i - 1]) {
-      err("score_tests[%d] <= score_tests[%d]", i + 1, i);
+    if (i > 0 && ps[i] < ps[i - 1]) {
+      err("score_tests[%d] < score_tests[%d]", i + 1, i);
       xfree(ps);
       return 0;
     }
@@ -2208,6 +2210,8 @@ set_defaults(int mode)
     prepare_set_prob_value(PREPARE_FIELD_PROB_HIDDEN,
                            probs[i], aprob, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_OUTPUT_ONLY,
+                           probs[i], aprob, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER,
                            probs[i], aprob, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDIN,
                            probs[i], aprob, global);
@@ -3663,6 +3667,7 @@ prepare_set_problem_defaults(struct section_problem_data *prob,
   if (!prob->abstract) return;
 
   if (prob->output_only < 0) prob->output_only = 0;
+  if (prob->scoring_checker < 0) prob->scoring_checker = 0;
   if (prob->use_stdin < 0) prob->use_stdin = 0;
   if (prob->use_stdout < 0) prob->use_stdout = 0;
   if (prob->binary_input < 0) prob->binary_input = DFLT_P_BINARY_INPUT;
@@ -4047,6 +4052,11 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
   case PREPARE_FIELD_PROB_OUTPUT_ONLY:
     if (out->output_only == -1 && abstr) out->output_only = abstr->output_only;
     if (out->output_only == -1) out->output_only = 0;
+    break;
+
+  case PREPARE_FIELD_PROB_SCORING_CHECKER:
+    if (out->scoring_checker == -1 && abstr) out->scoring_checker = abstr->scoring_checker;
+    if (out->scoring_checker == -1) out->scoring_checker = 0;
     break;
 
   case PREPARE_FIELD_PROB_USE_STDIN:
