@@ -356,6 +356,7 @@ struct section_problem_data
   int    tester_id;
   int    abstract;              /* is this abstract problem specification */
   int    output_only;           /* 1, if this problem is output only */
+  int    scoring_checker;       /* 1, if the checker calculates test score */
   int    use_stdin;             /* 1, if solution uses stdin for input */
   int    use_stdout;            /* 1, if solution uses stdout for output */
   int    binary_input;          /* input data for problem is binary */
@@ -583,6 +584,7 @@ enum
   PREPARE_FIELD_ZERO,
 
   PREPARE_FIELD_PROB_OUTPUT_ONLY,
+  PREPARE_FIELD_PROB_SCORING_CHECKER,
   PREPARE_FIELD_PROB_USE_STDIN,
   PREPARE_FIELD_PROB_USE_STDOUT,
   PREPARE_FIELD_PROB_BINARY_INPUT,
