@@ -866,6 +866,9 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   if ((prob->abstract && prob->output_only == 1)
       || (!prob->abstract && prob->output_only >= 0))
     unparse_bool(f, "output_only", prob->output_only);
+  if ((prob->abstract && prob->scoring_checker == 1)
+      || (!prob->abstract && prob->scoring_checker >= 0))
+    unparse_bool(f, "scoring_checker", prob->scoring_checker);
   if ((prob->abstract && prob->use_stdin == 1)
       || (!prob->abstract && prob->use_stdin >= 0))
     unparse_bool(f, "use_stdin", prob->use_stdin);
@@ -1518,6 +1521,8 @@ prepare_unparse_testers(FILE *f,
     }
     prepare_copy_problem(&tmp_prob, probs[i]);
     prepare_set_prob_value(PREPARE_FIELD_PROB_OUTPUT_ONLY,
+                           &tmp_prob, abstr, global);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER,
                            &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDIN,
                            &tmp_prob, abstr, global);
