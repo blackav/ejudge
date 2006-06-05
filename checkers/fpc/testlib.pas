@@ -2,6 +2,7 @@
 {Copyright (c) Антон Суханов}
 
 {Версия 1.0 для ejudge}
+{ $Id$ }
 
 {Дата последнего изменения: 30/03/97}
 {Добавлен новый тип результата: "частично верно" (30/03/97)}
@@ -121,7 +122,7 @@ var RESFILE: Text;
     begin
        if ResultName = '' then {если не создается файл с рез-том}
        begin
-          {TextColor (color);} write (msg); {TextColor (LightGray);}
+          {TextColor (color);} write (erroutput, msg); {TextColor (LightGray);}
        end;
     end;
 
@@ -181,7 +182,7 @@ begin
    end;
 
    Scr ({LightGray,} ' ' + msg + ' ');
-   writeln;
+   writeln(erroutput);
 
    if Res = _Fail then HALT (6);
 
