@@ -184,7 +184,7 @@ var
     begin
        if resultname = '' then { if no result file }
        begin
-          textcolor(color); write(msg); textcolor(LIGHTGRAY);
+          textcolor(color); write(erroutput, msg); textcolor(LIGHTGRAY);
        end;
     end;
 
@@ -251,7 +251,7 @@ begin
     end;
 
     scr(LIGHTGRAY, msg);
-    writeln;
+    writeln(erroutput);
 
     if res = _FAIL then HALT(ord(res));
 
