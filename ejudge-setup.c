@@ -2854,6 +2854,15 @@ generate_compile_cfg(FILE *f)
           "%sarch = \"msil\"\n"
           "%s\n",
           cmt, cmt, cmt, cmt, version, cmt, cmt, cmt, cmt, cmt);
+
+  fprintf(f,
+          "[language]\n"
+          "id = 21\n"
+          "short_name = \"txt\"\n"
+          "long_name = \"Plain text\"\n"
+          "src_sfx = \".txt\"\n"
+          "cmd = \"txt\"\n"
+          "\n");
 }
 
 static void
