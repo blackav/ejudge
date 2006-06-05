@@ -742,12 +742,12 @@ run_tests(struct section_tester_data *tst,
       task_SetPathAsArg0(tsk);
       task_SetWorkingDir(tsk, prog_working_dir);
       if (!tst->no_redirect || managed_mode_flag) {
-        if (prb->use_stdin) {
+        if (prb->use_stdin && !tst->no_redirect) {
           task_SetRedir(tsk, 0, TSR_FILE, input_path, TSK_READ);
         } else {
           task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
         }
-        if (prb->use_stdout) {
+        if (prb->use_stdout && !tst->no_redirect) {
           task_SetRedir(tsk, 1, TSR_FILE, output_path, TSK_REWRITE,TSK_FULL_RW);
         } else {
           task_SetRedir(tsk, 1, TSR_FILE, "/dev/null", TSK_WRITE, TSK_FULL_RW);
