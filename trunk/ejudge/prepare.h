@@ -289,6 +289,9 @@ struct section_global_data
   int plog_update_time;
   path_t plog_symlink_dir;
 
+  int internal_xml_update_time;
+  int external_xml_update_time;
+
   // fun
   int extended_sound;
   int disable_sound;
