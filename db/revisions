@@ -2739,3 +2739,15 @@ prepare_out.c 1 31 5293580
 super_html_3.c 1 35 20111189
 run.c 1 89 5396037
 ejudge-setup.c 1 23 9293030
+prepare.h 1 90 2427472
+runlog.h 1 37 501672
+super_actions.h 1 32 1587962
+super_proto.h 1 33 1567172
+serve.c 1 120 15362194
+serve-control.c 1 34 10671289
+super-serve.c 1 45 10986514
+prepare.c 1 117 11589172
+prepare_out.c 1 32 5316656
+runlog.c 1 48 4559203
+runlog_xml.c 1 16 1672490
+super_html_3.c 1 36 20205036
