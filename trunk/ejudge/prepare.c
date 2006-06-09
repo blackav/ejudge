@@ -194,6 +194,9 @@ static struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(plog_update_time, "d"),
   GLOBAL_PARAM(plog_symlink_dir, "s"),
 
+  GLOBAL_PARAM(external_xml_update_time, "d"),
+  GLOBAL_PARAM(internal_xml_update_time, "d"),
+
   // standings table attributes
   GLOBAL_PARAM(stand_extra_format, "s"),
   GLOBAL_PARAM(stand_extra_legend, "s"),
