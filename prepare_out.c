@@ -347,6 +347,10 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     if (global->plog_update_time != DFLT_G_PLOG_UPDATE_TIME)
       fprintf(f, "plog_update_time = %d\n", global->plog_update_time);
   }
+  if (global->external_xml_update_time > 0)
+    fprintf(f, "external_xml_update_time = %d\n", global->external_xml_update_time);
+  if (global->internal_xml_update_time > 0)
+    fprintf(f, "internal_xml_update_time = %d\n", global->internal_xml_update_time);
   fprintf(f, "\n");
 
   if (global->stand_success_attr[0])
