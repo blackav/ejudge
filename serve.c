@@ -355,6 +355,69 @@ update_public_log_file(void)
   l10n_setlocale(0);
 }
 
+static void
+do_update_xml_log(char const *name, int external_mode)
+{
+  struct run_header rhead;
+  int rtotal;
+  const struct run_entry *rentries;
+  path_t path1;
+  path_t path2;
+  FILE *fout;
+
+  run_get_header(&rhead);
+  rtotal = run_get_total();
+  rentries = run_get_entries_ptr();
+
+  snprintf(path1, sizeof(path1), "%s/in/%s.tmp", global->status_dir, name);
+  snprintf(path2, sizeof(path2), "%s/dir/%s", global->status_dir, name);
+
+  if (!(fout = fopen(path1, "w"))) {
+    err("update_xml_log: cannot open %s", path1);
+    return;
+  }
+  unparse_runlog_xml(fout, &rhead, rtotal, rentries, external_mode,
+                     current_time);
+  if (ferror(fout)) {
+    err("update_xml_log: write error");
+    fclose(fout);
+    unlink(path1);
+    return;
+  }
+  if (fclose(fout) < 0) {
+    err("update_xml_log: write error");
+    unlink(path1);
+    return;
+  }
+  if (rename(path1, path2) < 0) {
+    err("update_xml_log: rename %s -> %s failed", path1, path2);
+    unlink(path1);
+    return;
+  }
+}
+
+static void
+update_external_xml_log(void)
+{
+  static time_t last_update = 0;
+
+  if (!global->external_xml_update_time) return;
+  if (current_time < last_update + global->external_xml_update_time) return;
+  last_update = current_time;
+  do_update_xml_log("external.xml", 1);
+}
+
+static void
+update_internal_xml_log(void)
+{
+  static time_t last_update = 0;
+
+  if (!global->internal_xml_update_time) return;
+  if (current_time < last_update + global->internal_xml_update_time) return;
+  last_update = current_time;
+  do_update_xml_log("internal.xml", 0);
+}
+
 static int
 update_status_file(int force_flag)
 {
@@ -1503,7 +1566,7 @@ cmd_view(struct client_state *p, int len,
     if (self_url_ptr && *self_url_ptr) {
       fprintf(f, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
     }
-    if (run_write_xml(f, 0) < 0) r = -SRV_ERR_TRY_AGAIN;
+    if (run_write_xml(f, 0, current_time) < 0) r = -SRV_ERR_TRY_AGAIN;
     break;
 
   case SRV_CMD_DUMP_PROBLEMS:
@@ -1543,7 +1606,7 @@ cmd_view(struct client_state *p, int len,
     if (self_url_ptr && *self_url_ptr) {
       fprintf(f, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
     }
-    if (run_write_xml(f, 1) < 0) r = -SRV_ERR_TRY_AGAIN;
+    if (run_write_xml(f, 1, current_time) < 0) r = -SRV_ERR_TRY_AGAIN;
     break;
 
   case SRV_CMD_DUMP_STANDINGS:
@@ -6186,6 +6249,8 @@ do_loop(void)
 
     /* update public log */
     update_public_log_file();
+    update_external_xml_log();
+    update_internal_xml_log();
 
     if (initialize_mode) {
       interrupt_signaled = 1;
