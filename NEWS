@@ -1,6 +1,12 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
+Version 2.2.0 (20060609)
+========================
+No changes from 2.1.49. From this moment on the 2.2 branch only
+bugs will be fixed. All new features will go to the 2.3 branch,
+which became version 3.0.
+
 Version 2.1.49 (20060609)
 =========================
 
