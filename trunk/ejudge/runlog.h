@@ -174,9 +174,9 @@ int run_clear_entry(int run_id);
 int run_squeeze_log(void);
 void run_clear_variables(void);
 
-int run_write_xml(FILE *f, int);
-int unparse_runlog_xml(FILE *, struct run_header*, size_t, struct run_entry*,
-                       int);
+int run_write_xml(FILE *f, int, time_t);
+int unparse_runlog_xml(FILE *, const struct run_header*, size_t,
+                       const struct run_entry*, int, time_t);
 int parse_runlog_xml(const unsigned char *, struct run_header *,
                      size_t *, struct run_entry **);
 void runlog_import_xml(FILE *flog, int flags, const unsigned char *in_xml);
