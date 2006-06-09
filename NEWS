@@ -1,6 +1,177 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
+Version 2.1.49 (20060609)
+=========================
+
+Add support for a new "programming language" - plain text files
+(txt). This "language" allows submitting an ordinary text files
+(for example, for output-only problems). The result of
+"compilation" of a text file is a script, which works like
+`false' command (i.e. does nothing and returns exit code 1). For
+fine tuning of available languages for each problem the
+`disable_language' language configuration variable may be used.
+
+serve
+-----
+Additional information about contest times is output to the
+XML run log files. The contest name is also output to the
+external XML run log file.
+
+Automatic generation of the XML run logs is supported for both
+the internal and external run log formats. The interval of
+automatic XML run log generation may be specified in the
+`serve.cfg' configuration file. The new
+`external_xml_update_time' global configuration variable allows
+specifying the external XML run log generation interval in
+seconds, and the `internal_xml_update_time' global configuration
+variable allows specifying the internal XML run log generation
+interval in seconds. The files have paths as follows:
+<contest_home>/var/status/dir/external.xml
+<contest_home>/var/status/dir/internal.xml
+
+super-serve, serve-control
+--------------------------
+Editing of the global configuration variables
+`external_xml_update_time' É `internal_xml_update_time' is
+supported.
+
+testlib
+-------
+The message text, which is written by the `quit' procedure is
+directed to the standard error stream (ErrOutput). This is
+useful for scoring checkers.
+
+run
+---
+A bug is fixed, which caused solutions for DOS compilers not
+working in the standard stream redirection mode, when the `run'
+program is managed by the `super-serve' program.
+
+serve
+-----
+A new kind of checkers - "scoring checkers" is supported. In
+this kind of problems the score for the problem (or the score
+for each test) is scored by the checker. Usually, the checker
+gives its YES/NO verdict for each test, and the score is
+specified in the problem settings. Now "scoring checker" may
+score the test to arbitrary score ranging from 0 to maximal
+score for this test.
+
+The "scoring checker" mode is activated by the `scoring_checker'
+new problem configuration variable. If this variable is set to
+1, the problem/test score is evaluated by the checker.
+
+In the KIROV/OLYMPIAD contests the "scoring checker" scores each
+test individually, and the total score of a submit is equal to
+the sum of scores for each test. In the MOSCOW contests the
+problem score is equal to the score of the first failed test in
+the test sequence (so, probably, the problem should have one
+test).
+
+A "scoring checker" should work as follows. The checker exit
+code means as usually the checking result:
+0       OK
+4       PE
+5       WA
+All other exit codes are treated as "Check failed" condition.
+
+If the verdict is OK, the test/problem is scored to the full
+score (in case of MOSCOW contest, testing proceeds to the next
+test).
+If the verdict is PE, the test/problem is scored to 0.
+If the verdict is WA, the standard output of the checker must
+contain the only integer number: score for this test/problem.
+If the standard output contains something else, than one integer
+number and whitespace, this is treated as "Check failed"
+condition. The number in the output file must be >= 0 and less
+than the maximal score for the problem or test. In case of other
+number the "Check failed" error is reported.
+
+run
+---
+Problems with scoring checkers are supported.
+
+super-serve, serve-control
+--------------------------
+Editing of the `scoring_checker' problem configuration variable
+is supported.
+
+Editing of the `disable_language' problem configuration variable
+is supported.
+
+run
+---
+"Score leaps" are supported for MOSCOW contests, i.e. some score
+value may never be used for a problem. For example, some problem
+has 10 tests, the maximum score is 2, and the solution is either
+scored as 2 (all tests passed) or as 0 (otherwise), so score 1
+is missing for the problem. In this case the `score_tests'
+variable for this problem should be set as follows:
+score_tests = "11"
+This means, that the solution, which passed 10 tests should be
+scored as 1, but such solution is (implicitly) scored as 2, so
+the maximal score is chosen.
+So the sequence of the test numbers forms nondecreasing sequence
+(several consequent test numbers may be the same, in this case
+the maximum score is chosen).
+
+serve
+-----
+"Output-only" problems are supported, i.e. the problems where
+the solution to the problem is the answer rather than the
+problem source code. A new language configuration variable
+`output_only' is added. This variable may be used even in
+abstract problems and is properly inherited. The default value
+is 0. If the variable is set to 1, the problem is considered as
+an "output-only" problem. For "output-only" problems the
+"compilation" and "run" stages are performed anyway, but
+they operate quite differently (see below). For "output-only"
+problems the "txt" (Plain text) language should be used.
+
+compile
+-------
+"Output-only" problems are supported. In case of "output-only"
+problem the "compilation" means copying the source file (the
+answer file, actually) into the compilation result file. The
+source language settings are ignored, since the compiler is not
+started.
+
+run
+---
+"Output-only" problems are supported. The "output-only" problem
+must have the only test. The "execution" of an "output-only"
+problem solution is copying of the "executable" (the answer
+file, actually) to the output file. The output file is then
+checked by the problem checker as usually.
+
+super-serve, serve-control
+--------------------------
+Editing of the `output_only' problem configuration variable is
+supported.
+
+serve, master, judge
+--------------------
+When a message from judge is being composed before the contest
+starts, the judge or administrator may specify, that this
+message will be available to the participants only after the
+contest start.
+
+execute
+-------
+This is a new program for execution of the program being checked
+from the command line. The `execute' program supports all kinds
+of limitations (by time, by memory, by available operations),
+which are supported by the ejudge.
+
+libchecker
+----------
+The library is ported to the Win32 platform (using the gcc
+compiler from the Cygwin). However, the library does not depend
+on Cygwin libraries and the resulting .DLL and .LIB files may be
+used by any Windows compiler. For the Cygwin and MinGW32
+platforms the .a library is provided as well.
+
 Version 2.1.48 (20060430)
 =========================
 
