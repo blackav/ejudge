@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,8 @@
 #include "prepare.h"
 #include "prepare_vars.h"
 #include "misctext.h"
+#include "contests.h"
+#include "xml_utils.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -53,6 +55,7 @@ enum
   RUNLOG_T_PROBLEM,
   RUNLOG_T_LANGUAGES,
   RUNLOG_T_LANGUAGE,
+  RUNLOG_T_NAME,
 
   RUNLOG_LAST_TAG,
 };
@@ -79,6 +82,11 @@ enum
   RUNLOG_A_READONLY,
   RUNLOG_A_NSEC,
   RUNLOG_A_SCORE_ADJ,
+  RUNLOG_A_CONTEST_ID,
+  RUNLOG_A_DURATION,
+  RUNLOG_A_START_TIME,
+  RUNLOG_A_STOP_TIME,
+  RUNLOG_A_CURRENT_TIME,
 
   RUNLOG_LAST_ATTR,
 };
@@ -94,6 +102,7 @@ static const char * const elem_map[] =
   [RUNLOG_T_PROBLEM] "problem",
   [RUNLOG_T_LANGUAGES] "languages",
   [RUNLOG_T_LANGUAGE] "language",
+  [RUNLOG_T_NAME]   "name",
 };
 static const char * const attr_map[] =
 {
@@ -118,6 +127,11 @@ static const char * const attr_map[] =
   [RUNLOG_A_READONLY]  "readonly",
   [RUNLOG_A_NSEC]      "nsec",
   [RUNLOG_A_SCORE_ADJ] "score_adj",
+  [RUNLOG_A_CONTEST_ID] "contest_id",
+  [RUNLOG_A_DURATION]  "duration",
+  [RUNLOG_A_START_TIME] "start_time",
+  [RUNLOG_A_STOP_TIME] "stop_time",
+  [RUNLOG_A_CURRENT_TIME] "current_time",
 };
 static size_t const elem_sizes[RUNLOG_LAST_TAG] =
 {
@@ -464,11 +478,13 @@ process_runlog_element(struct xml_tree *xt, struct xml_tree **ptruns)
         xt->line, xt->column, elem_map[RUNLOG_T_RUNLOG]);
     return -1;
   }
+  /*
   if (xt->first) {
     err("%d:%d: element <%s> cannot have attributes",
         xt->line, xt->column, elem_map[RUNLOG_T_RUNLOG]);
     return -1;
   }
+  */
 
   for (tt = xt->first_down; tt; tt = tt->right) {
     if (tt->tag != RUNLOG_T_RUNS) continue;
@@ -590,13 +606,14 @@ unparse_sha1(const ruint32_t *psha1)
 
 int
 unparse_runlog_xml(FILE *f,
-                   struct run_header *phead,
+                   const struct run_header *phead,
                    size_t nelems,
-                   struct run_entry *entries,
-                   int external_mode)
+                   const struct run_entry *entries,
+                   int external_mode,
+                   time_t current_time)
 {
   int i, flags;
-  struct run_entry *pp;
+  const struct run_entry *pp;
   time_t ts;
   int max_user_id;
   unsigned char *astr1, *astr2, *val1, *val2;
@@ -608,9 +625,34 @@ unparse_runlog_xml(FILE *f,
   astr2 = alloca(asize2);
 
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n", EJUDGE_CHARSET);
-  fprintf(f, "<%s>\n", elem_map[RUNLOG_T_RUNLOG]);
+  fprintf(f, "<%s", elem_map[RUNLOG_T_RUNLOG]);
+  fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_CONTEST_ID], cur_contest->id);
+  if (phead->duration > 0) {
+    fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_DURATION], phead->duration);
+  }
+  if (phead->start_time > 0) {
+    fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_START_TIME],
+            xml_unparse_date(phead->start_time));
+  }
+  if (phead->stop_time > 0) {
+    fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_STOP_TIME],
+            xml_unparse_date(phead->stop_time));
+  }
+  if (current_time > 0) {
+    fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_CURRENT_TIME],
+            xml_unparse_date(current_time));
+  }
+  fprintf(f, ">\n");
   if (external_mode) {
-    fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_USERS]);
+    val1 = cur_contest->name;
+    if (val1 && html_armor_needed(val1, &alen1)) {
+      while (alen1 >= asize1) asize1 *= 2;
+      astr1 = alloca(asize1);
+      html_armor_string(val1, astr1);
+      val1 = astr1;
+    }
+    fprintf(f, "  <%s>%s</%s>\n", elem_map[RUNLOG_T_NAME],
+            val1, elem_map[RUNLOG_T_NAME]);
     max_user_id = teamdb_get_max_team_id();
     for (i = 1; i <= max_user_id; i++) {
       if (teamdb_lookup(i) <= 0) continue;
