@@ -1195,6 +1195,32 @@ super_html_edit_global_parameters(FILE *f,
                                extra_args,
                                hidden_vars);
     }
+
+    //GLOBAL_PARAM(external_xml_update_time, "d"),
+    snprintf(hbuf, sizeof(hbuf), "%d", global->external_xml_update_time);
+    print_string_editing_row(f, "External XML log update interval (sec):",
+                             hbuf,
+                             SUPER_ACTION_GLOB_CHANGE_EXTERNAL_XML_UPDATE_TIME,
+                             0,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+
+    //GLOBAL_PARAM(internal_xml_update_time, "d"),
+    snprintf(hbuf, sizeof(hbuf), "%d", global->internal_xml_update_time);
+    print_string_editing_row(f, "Internal XML log update interval (sec):",
+                             hbuf,
+                             SUPER_ACTION_GLOB_CHANGE_INTERNAL_XML_UPDATE_TIME,
+                             0,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
   }
 
   html_start_form(f, 1, session_id, self_url, hidden_vars);
@@ -2200,6 +2226,13 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_PLOG_UPDATE_TIME:
     p_int = &global->plog_update_time;
+    goto handle_int;
+
+  case SSERV_CMD_GLOB_CHANGE_EXTERNAL_XML_UPDATE_TIME:
+    p_int = &global->external_xml_update_time;
+    goto handle_int;
+  case SSERV_CMD_GLOB_CHANGE_INTERNAL_XML_UPDATE_TIME:
+    p_int = &global->internal_xml_update_time;
     goto handle_int;
 
   case SSERV_CMD_GLOB_CHANGE_STAND_TABLE_ATTR:
