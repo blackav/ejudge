@@ -1,9 +1,13 @@
-2006-02-25  Alexander Chernov  <cher@ispras.ru>
+2006-02-25 (r2914) Alexander Chernov  <cher@ispras.ru>
 
-	* libdropcaps.c: copyright notice is updated;
+	* libdropcaps.c:
+	copyright notice is updated;
 	(init) updated for kernel 2.6.*.
 
-	* capexec.c: copyright notice is updated;
+2006-02-25 (r2913) Alexander Chernov  <cher@ispras.ru>
+
+	* capexec.c:
+	copyright notice is updated;
 	(main) updated for kernel 2.6.*.
 
 2005-11-02  Alexander Chernov  <cher@ispras.ru>

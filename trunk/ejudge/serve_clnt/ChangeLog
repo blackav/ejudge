@@ -1,6 +1,14 @@
-2006-04-19  Alexander Chernov  <cher@ispras.ru>
+2006-06-01 (r3078) Alexander Chernov  <cher@ispras.ru>
 
-	* show_item.c: copyright notice is updated;
+	* message.c:
+	copyright notice is updated;
+	(serve_clnt_message) `hide_flag' parameter is added and then
+	  passed to the server.
+
+2006-04-19 (r3001) Alexander Chernov  <cher@ispras.ru>
+
+	* show_item.c:
+	copyright notice is updated;
 	(serve_clnt_show_item) check for a correct command code is commeted
 	  out.
 
