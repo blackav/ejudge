@@ -1,6 +1,7 @@
-2006-02-25  Alexander Chernov  <cher@ispras.ru>
+2006-02-25 (r2923) Alexander Chernov  <cher@ispras.ru>
 
-	* fileutl.c: copyright notice is updated;
+	* fileutl.c:
+	copyright notice is updated;
 	(scan_dir_add_ignored) new function to add a file name to the list
 	  of ignored files;
 	(scan_dir) the list of ignored files is supported.

@@ -1,6 +1,22 @@
-2005-11-16  Alexander Chernov  <cher@ispras.ru>
+2006-06-05 (r3128) Alexander Chernov  <cher@ispras.ru>
 
-	* dcc.in: compiler flags are not set by default.
+	* .cvsignore:
+	*** empty log message ***
+
+2006-06-05 (r3127) Alexander Chernov  <cher@ispras.ru>
+
+	* txt.in, txt-version.in:
+	initial revision
+
+2006-06-05 (r3124) Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in:
+	support for txt, txt-version scripts added.
+
+2005-11-16 (r2729) Alexander Chernov  <cher@ispras.ru>
+
+	* dcc.in:
+	compiler flags are not set by default.
 
 2005-10-24  Alexander Chernov  <cher@ispras.ru>
 

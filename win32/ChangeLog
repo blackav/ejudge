@@ -1,26 +1,42 @@
-2006-03-19  Alexander Chernov  <cher@ispras.ru>
+2006-03-19 (r2941) Alexander Chernov  <cher@ispras.ru>
 
-	* timestamp.c: copyright notice is updated;
+	* timestamp.c:
+	copyright notice is updated;
 	functionality is implemented.
 
-	* full_archive.c: <windows.h>, <zlib.h> are included;
+2006-03-19 (r2940) Alexander Chernov  <cher@ispras.ru>
+
+	* full_archive.c:
+	<windows.h>, <zlib.h> are included;
 	(full_archive_open_write) implemented;
 	(full_archive_close) implemented;
 	(full_archive_append_file) implemented.
 
-	* fileutl.c: copyright notice is updated;
+2006-03-19 (r2939) Alexander Chernov  <cher@ispras.ru>
+
+	* fileutl.c:
+	copyright notice is updated;
 	"settings.h" is included;
 	<malloc.h> is include for `alloca';
 	(scan_dir_add_ignored) implemeted;
 	(scan_dir) packet priority and ignored items are supported.
 
-	* curtime.c: copyright notice is updated;
+2006-03-19 (r2938) Alexander Chernov  <cher@ispras.ru>
+
+	* curtime.c:
+	copyright notice is updated;
 	<time.h>, <windows.h> are included;
 	(get_current_time) basically implemented.
 
-	* cr_serialize.c: copyright notice is updated;
+2006-03-19 (r2937) Alexander Chernov  <cher@ispras.ru>
 
-	* cpu.c: copyright notice is updated;
+	* cr_serialize.c:
+	copyright notice is updated;
+
+2006-03-19 (r2936) Alexander Chernov  <cher@ispras.ru>
+
+	* cpu.c:
+	copyright notice is updated;
 	"errlog.h" is included;
 	(cpu_get_bogomips) reports "not implemented" error and returns -1.
 

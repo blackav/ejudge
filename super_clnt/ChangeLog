@@ -1,6 +1,6 @@
-2005-11-25  Alexander Chernov  <cher@ispras.ru>
+2005-11-25 (r2773) Alexander Chernov  <cher@ispras.ru>
 
-	* create_contest.c, do_pass_fd.c, main_page.c, open.c, recv_packet.c, send_packet.c, set_param.c, simple_cmd.c:
+	* set_param.c, simple_cmd.c, main_page.c, send_packet.c, do_pass_fd.c, open.c, create_contest.c, recv_packet.c:
 	Copyright notice is updated;
 	"pathutl.h" is replaced with "errlog.h".
 

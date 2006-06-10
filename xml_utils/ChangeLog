@@ -1,6 +1,6 @@
-2005-11-25  Alexander Chernov  <cher@ispras.ru>
+2005-11-25 (r2769) Alexander Chernov  <cher@ispras.ru>
 
-	* parse_date.c, parse_int.c, parse_int_attr.c, parse_ip.c, parse_ip_mask.c, xml_err.c, xml_err_a.c:
+	* parse_ip_mask.c, parse_int_attr.c, parse_ip.c, parse_int.c, parse_date.c, xml_err.c, xml_err_a.c:
 	Copyright notice is updated;
 	"pathutl.h" is replaced with "errlog.h"
 
