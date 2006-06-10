@@ -1,3 +1,13 @@
+2006-06-10 (r3156) Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.unix.in:
+	Transition from CVS to SVN.
+
+2006-06-10 (r3155) Alexander Chernov  <cher@ispras.ru>
+
+	* VERSION:
+	Version is 2.3.
+
 2006-06-09 (r3144) Alexander Chernov  <cher@ispras.ru>
 
 	* VERSION:
