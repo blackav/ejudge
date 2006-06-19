@@ -103,6 +103,7 @@ capexec.o: capexec.c
 libdropcaps.so : libdropcaps.o
 	${LD} -shared ${LDFLAGS} $^ -o $@ -lcap ${LDLIBS}
 libdropcaps.o : libdropcaps.c
+	${CC} ${CFLAGS} -DPIC -fPIC -c libdropcaps.c -o libdropcaps.o
 
 dosrun3: dosrun3.o
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS}
