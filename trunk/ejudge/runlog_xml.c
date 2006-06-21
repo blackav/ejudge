@@ -653,6 +653,7 @@ unparse_runlog_xml(FILE *f,
     }
     fprintf(f, "  <%s>%s</%s>\n", elem_map[RUNLOG_T_NAME],
             val1, elem_map[RUNLOG_T_NAME]);
+    fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_USERS]);
     max_user_id = teamdb_get_max_team_id();
     for (i = 1; i <= max_user_id; i++) {
       if (teamdb_lookup(i) <= 0) continue;
