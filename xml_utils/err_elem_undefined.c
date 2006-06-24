@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,14 +19,15 @@
 #include "pathutl.h"
 #include "expat_iface.h"
 
-void
+int
 xml_err_elem_undefined(const struct xml_tree *p, int tag)
 {
   xml_err(p, "element <%s> is not defined in <%s>",
           xml_err_elem_names[tag], xml_err_elem_names[p->tag]);
+  return -1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")

@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,13 +19,14 @@
 #include "pathutl.h"
 #include "expat_iface.h"
 
-void
+int
 xml_err_top_level(const struct xml_tree *tree, int elem)
 {
   xml_err(tree, "top-level element must be <%s>", xml_err_elem_names[elem]);
+  return -1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")

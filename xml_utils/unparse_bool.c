@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,24 +16,17 @@
  */
 
 #include "xml_utils.h"
-#include "pathutl.h"
-#include "expat_iface.h"
 
-int
-xml_err_elem_not_allowed(const struct xml_tree *p)
+const unsigned char *
+xml_unparse_bool(int b)
 {
-  if (p->up) {
-    xml_err(p, "element <%s> is not allowed in <%s>",
-            xml_err_elem_names[p->tag], xml_err_elem_names[p->up->tag]);
-  } else {
-    xml_err(p, "element <%s> is not allowed", xml_err_elem_names[p->tag]);
-  }
-  return -1;
+  if (b) return "yes";
+  return "no";
 }
 
 /*
  * Local variables:
  *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
+ *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */

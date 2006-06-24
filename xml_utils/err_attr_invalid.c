@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,13 +21,14 @@
 
 #include <stdarg.h>
 
-void
+int
 xml_err_attr_invalid(const struct xml_attn *a)
 {
   xml_err_a(a,"attribute \"%s\" value is invalid", xml_err_elem_names[a->tag]);
+  return -1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")

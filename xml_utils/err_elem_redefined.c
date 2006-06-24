@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 #include "pathutl.h"
 #include "expat_iface.h"
 
-void
+int
 xml_err_elem_redefined(const struct xml_tree *p)
 {
   if (!p->up) {
@@ -28,9 +28,10 @@ xml_err_elem_redefined(const struct xml_tree *p)
     xml_err(p, "element <%s> already defined in <%s>",
             xml_err_elem_names[p->tag], xml_err_elem_names[p->up->tag]);
   }
+  return -1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
