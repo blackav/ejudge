@@ -172,6 +172,8 @@ COMMON_CFILES=\
  xml_utils/err_attr_invalid.c\
  xml_utils/err_attr_not_allowed.c\
  xml_utils/err_attr_undefined.c\
+ xml_utils/err_elem_empty.c\
+ xml_utils/err_elem_invalid.c\
  xml_utils/err_elem_not_allowed.c\
  xml_utils/err_elem_redefined.c\
  xml_utils/err_elem_undefined.c\
@@ -184,6 +186,7 @@ COMMON_CFILES=\
  xml_utils/parse_int_attr.c\
  xml_utils/parse_ip.c\
  xml_utils/parse_ip_mask.c\
+ xml_utils/unparse_bool.c\
  xml_utils/unparse_date.c\
  xml_utils/unparse_ip.c\
  xml_utils/unparse_ip_mask.c\

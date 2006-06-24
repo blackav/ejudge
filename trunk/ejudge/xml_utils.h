@@ -4,7 +4,7 @@
 #ifndef __XML_UTILS_H__
 #define __XML_UTILS_H__
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -40,6 +40,7 @@ void xml_unparse_text(FILE *f, const unsigned char *tag_name,
                       unsigned char const *value,
                       unsigned char const *indent);
 
+const unsigned char *xml_unparse_bool(int b);
 const unsigned char *xml_unparse_ip(ej_ip_t ip);
 const unsigned char *xml_unparse_date(time_t d);
 const unsigned char *xml_unparse_ip_mask(ej_ip_t addr, ej_ip_t mask);
@@ -52,16 +53,18 @@ void xml_err(const struct xml_tree *pos, const char *format, ...)
      __attribute__((format (printf, 2, 3)));
 void xml_err_a(const struct xml_attn *pos, const char *format, ...)
      __attribute__((format (printf, 2, 3)));
-void xml_err_attrs(const struct xml_tree *p);
-void xml_err_nested_elems(const struct xml_tree *p);
-void xml_err_attr_not_allowed(const struct xml_tree *tree,
-                              const struct xml_attn *attr);
-void xml_err_elem_not_allowed(const struct xml_tree *tree);
-void xml_err_elem_redefined(const struct xml_tree *tree);
-void xml_err_top_level(const struct xml_tree *tree, int elem);
-void xml_err_attr_invalid(const struct xml_attn *a);
-void xml_err_elem_undefined(const struct xml_tree *p, int elem);
-void xml_err_attr_undefined(const struct xml_tree *p, int attr);
+int xml_err_attrs(const struct xml_tree *p);
+int xml_err_nested_elems(const struct xml_tree *p);
+int xml_err_attr_not_allowed(const struct xml_tree *tree,
+                             const struct xml_attn *attr);
+int xml_err_elem_not_allowed(const struct xml_tree *tree);
+int xml_err_elem_redefined(const struct xml_tree *tree);
+int xml_err_top_level(const struct xml_tree *tree, int elem);
+int xml_err_attr_invalid(const struct xml_attn *a);
+int xml_err_elem_undefined(const struct xml_tree *p, int elem);
+int xml_err_attr_undefined(const struct xml_tree *p, int attr);
+int xml_err_elem_invalid(const struct xml_tree *p);
+int xml_err_elem_empty(const struct xml_tree *p);
 
 int xml_leaf_elem(struct xml_tree *tree, /* ->text may be modified */
                   unsigned char **value_addr,
@@ -74,7 +77,7 @@ int xml_parse_int_attr(struct xml_attn *attr, int *value_ptr);
 
 #endif /* __XML_UTILS_H__ */
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "DIR")
