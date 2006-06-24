@@ -3033,3 +3033,17 @@ filter_scan.lex 2906 0 578485
 NEWS.RUS 3144 0 33420933
 NEWS 3144 0 19944424
 runlog_xml.c 3159 0 1676150
+xml_utils.h 3162 0 283902
+userlist_xml.c 3162 0 3576227
+xml_utils/err_attrs.c 3161 0 80450
+xml_utils/err_attr_invalid.c 3161 0 83343
+xml_utils/err_attr_not_allowed.c 3161 0 90629
+xml_utils/err_attr_undefined.c 3161 0 86017
+xml_utils/err_elem_empty.c 3161 0 79697
+xml_utils/err_elem_invalid.c 3161 0 81067
+xml_utils/err_elem_not_allowed.c 3161 0 94188
+xml_utils/err_elem_redefined.c 3161 0 93985
+xml_utils/err_elem_undefined.c 3161 0 85327
+xml_utils/err_nested_elems.c 3161 0 82361
+xml_utils/err_top_level.c 3161 0 81945
+xml_utils/unparse_bool.c 3161 0 70258
