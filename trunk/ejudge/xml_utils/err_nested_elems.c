@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,11 +19,12 @@
 #include "pathutl.h"
 #include "expat_iface.h"
 
-void
+int
 xml_err_nested_elems(const struct xml_tree *p)
 {
   xml_err(p, "nested elements are not allowed in <%s>",
           xml_err_elem_names[p->tag]);
+  return -1;
 }
 
 /**
