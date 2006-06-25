@@ -1394,7 +1394,8 @@ read_user_info_from_server(void)
 
   error_log = 0;
   if ((errcode = userlist_clnt_get_info(server_conn, ULS_GET_USER_INFO,
-                                        user_id, &user_info_xml)) < 0) {
+                                        user_id, user_contest_id,
+                                        &user_info_xml)) < 0) {
     error("%s", gettext(userlist_strerror(-errcode)));
   }
   if (!error_log && !(u = userlist_parse_user_str(user_info_xml))) {
@@ -2923,7 +2924,7 @@ action_remove_member(void)
     goto failed;
   }
 
-  errcode = userlist_clnt_remove_member(server_conn, user_id,
+  errcode = userlist_clnt_remove_member(server_conn, user_id, user_contest_id,
                                         role, pers, serial);
   if (errcode < 0) {
     error("%s", gettext(userlist_strerror(-errcode)));
@@ -3223,7 +3224,7 @@ main(int argc, char const *argv[])
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")

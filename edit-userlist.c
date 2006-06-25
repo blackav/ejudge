@@ -1336,8 +1336,8 @@ member_menu_string(struct userlist_member *m, int f, unsigned char *out)
 }
 
 static int
-display_user(unsigned char const *upper, int user_id, int start_item,
-             int *p_needs_reload)
+display_user(unsigned char const *upper, int user_id, int contest_id,
+             int start_item, int *p_needs_reload)
 {
   int r, tot_items = 0;
   unsigned char *xml_text = 0;
@@ -1362,7 +1362,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
   char const *help_str = "";
 
   r = userlist_clnt_get_info(server_conn, ULS_PRIV_GET_USER_INFO,
-                             user_id, &xml_text);
+                             user_id, contest_id, &xml_text);
   if (r < 0) {
     vis_err("Cannot get user information: %s", userlist_strerror(-r));
     return -1;
@@ -1772,7 +1772,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
         }
       }
       if (r != 1) goto menu_continue;
-      r = userlist_clnt_delete_field(server_conn, u->id,
+      r = userlist_clnt_delete_field(server_conn, u->id, contest_id,
                                      info[cur_i].role,
                                      info[cur_i].pers,
                                      info[cur_i].field);
@@ -1796,7 +1796,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
       r = display_role_menu(LINES / 2, 0);
       if (r < 0 || r >= CONTEST_LAST_MEMBER) goto menu_continue;
 
-      r = userlist_clnt_add_field(server_conn, &u->id, r, -1, -1);
+      r = userlist_clnt_add_field(server_conn, &u->id, contest_id, r, -1, -1);
       if (r < 0) {
         vis_err("Add failed: %s", userlist_strerror(-r));
         goto menu_continue;
@@ -1919,7 +1919,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
             vis_err("Invalid field value");
             goto menu_continue;
           }
-          r = userlist_clnt_edit_field(server_conn, u->id, -1, 0,
+          r = userlist_clnt_edit_field(server_conn, u->id, contest_id, -1, 0,
                                        info[cur_i].field, edit_buf);
           if (r < 0) {
             vis_err("Server error: %s", userlist_strerror(-r));
@@ -1951,7 +1951,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
           vis_err("Invalid field value");
           goto menu_continue;
         }
-        r = userlist_clnt_edit_field(server_conn, u->id, -1, 0,
+        r = userlist_clnt_edit_field(server_conn, u->id, contest_id, -1, 0,
                                      info[cur_i].field, edit_buf);
         if (r < 0) {
           vis_err("Server error: %s", userlist_strerror(-r));
@@ -1993,7 +1993,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
             vis_err("Invalid field value");
             goto menu_continue;
           }
-          r = userlist_clnt_edit_field(server_conn, u->id,
+          r = userlist_clnt_edit_field(server_conn, u->id, contest_id,
                                        info[cur_i].role, info[cur_i].pers,
                                        info[cur_i].field, edit_buf);
           if (r < 0) {
@@ -2020,7 +2020,7 @@ display_user(unsigned char const *upper, int user_id, int start_item,
             vis_err("Invalid field value");
             goto menu_continue;
           }
-          r = userlist_clnt_edit_field(server_conn, u->id,
+          r = userlist_clnt_edit_field(server_conn, u->id, contest_id,
                                        info[cur_i].role, info[cur_i].pers,
                                        info[cur_i].field, edit_buf);
           if (r < 0) {
@@ -2836,7 +2836,7 @@ display_registered_users(unsigned char const *upper,
       i = item_index(current_item(menu));
       r = 0;
       while (r >= 0) {
-        r = display_user(current_level, uu[i]->id, r, 0);
+        r = display_user(current_level, uu[i]->id, contest_id, r, 0);
       }
       c = 'q';
       retcode = i;
@@ -2918,13 +2918,13 @@ display_registered_users(unsigned char const *upper,
         i = item_index(current_item(menu));
         switch (field_op) {
         case 1:                 /* clear field */
-          r = userlist_clnt_delete_field(server_conn, uu[i]->id,
+          r = userlist_clnt_delete_field(server_conn, uu[i]->id, contest_id,
                                          -1, 0, field_code);
           break;
         case 2:                 /* set field */
           snprintf(edit_buf, sizeof(edit_buf), "%d", 1);
-          r = userlist_clnt_edit_field(server_conn, uu[i]->id, -1, 0,
-                                       field_code, edit_buf);
+          r = userlist_clnt_edit_field(server_conn, uu[i]->id, contest_id,
+                                       -1, 0, field_code, edit_buf);
           break;
         case 3:
           r = userlist_clnt_register_contest(server_conn, ULS_FIX_PASSWORD,
@@ -2940,13 +2940,13 @@ display_registered_users(unsigned char const *upper,
           if (!sel_users.mask[i]) continue;
           switch (field_op) {
           case 1:               /* clear field */
-            r = userlist_clnt_delete_field(server_conn, uu[i]->id,
+            r = userlist_clnt_delete_field(server_conn, uu[i]->id, contest_id,
                                            -1, 0, field_code);
             break;
           case 2:               /* set field */
             snprintf(edit_buf, sizeof(edit_buf), "%d", 1);
-            r = userlist_clnt_edit_field(server_conn, uu[i]->id, -1, 0,
-                                         field_code, edit_buf);
+            r = userlist_clnt_edit_field(server_conn, uu[i]->id, contest_id,
+                                         -1, 0, field_code, edit_buf);
           case 3:
             r = userlist_clnt_register_contest(server_conn, ULS_FIX_PASSWORD,
                                                uu[i]->id, 0);
@@ -3296,7 +3296,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
   if (!nusers) {
     j = okcancel("No users in database. Add new user?");
     if (j != 1) return -1;
-    j = userlist_clnt_add_field(server_conn, 0, -1, -1, -1);
+    j = userlist_clnt_add_field(server_conn, 0, 0, -1, -1, -1);
     if (j < 0) {
       vis_err("Add failed: %s", userlist_strerror(-j));
       return -1;
@@ -3474,7 +3474,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
       i = item_index(current_item(menu));
       j = okcancel("REMOVE USER %d (%s)?", uu[i]->id, uu[i]->login);
       if (j != 1) goto menu_continue;
-      j = userlist_clnt_delete_field(server_conn, uu[i]->id, -2, 0, 0);
+      j = userlist_clnt_delete_field(server_conn, uu[i]->id, 0, -2, 0, 0);
       if (j < 0) {
         vis_err("Remove failed: %s", userlist_strerror(-j));
         goto menu_continue;
@@ -3488,7 +3488,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
     if (c == 'a' && !only_choose) {
       j = okcancel("Add new user?");
       if (j != 1) goto menu_continue;
-      j = userlist_clnt_add_field(server_conn, 0, -1, -1, -1);
+      j = userlist_clnt_add_field(server_conn, 0, 0, -1, -1, -1);
       if (j < 0) {
         vis_err("Add failed: %s", userlist_strerror(-j));
         goto menu_continue;
@@ -3587,36 +3587,36 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
 
       for (i = first_num; i <= last_num; i++) {
         user_id = -1;
-        j = userlist_clnt_add_field(server_conn, &user_id, -1, -1, -1);
+        j = userlist_clnt_add_field(server_conn, &user_id, 0, -1, -1, -1);
         if (j < 0) {
           vis_err("Adding failed: %s", userlist_strerror(-j));
           goto menu_continue;
         }
         snprintf(valbuf, sizeof(valbuf), templ_buf, i);
-        j = userlist_clnt_edit_field(server_conn, user_id, -1, 0,
+        j = userlist_clnt_edit_field(server_conn, user_id, 0, -1, 0,
                                      USERLIST_NN_LOGIN, valbuf);
         if (j < 0) {
           vis_err("Setting login failed: %s", userlist_strerror(-j));
           goto menu_continue;
         }
-        j = userlist_clnt_edit_field(server_conn, user_id, -1, 0,
+        j = userlist_clnt_edit_field(server_conn, user_id, contest_num, -1, 0,
                                      USERLIST_NN_NAME, valbuf);
         if (j < 0) {
           vis_err("Setting name failed: %s", userlist_strerror(-j));
           goto menu_continue;
         }
         snprintf(valbuf, sizeof(valbuf), "N/A");
-        j = userlist_clnt_edit_field(server_conn, user_id, -1, 0,
+        j = userlist_clnt_edit_field(server_conn, user_id, 0, -1, 0,
                                      USERLIST_NN_EMAIL, valbuf);
         if (j < 0) {
-          vis_err("Setting name failed: %s", userlist_strerror(-j));
+          vis_err("Setting e-mail failed: %s", userlist_strerror(-j));
           goto menu_continue;
         }
         snprintf(valbuf, sizeof(valbuf), passwd_buf, i);
-        j = userlist_clnt_edit_field(server_conn, user_id, -1, 0,
+        j = userlist_clnt_edit_field(server_conn, user_id, 0, -1, 0,
                                      USERLIST_NN_REG_PASSWORD, valbuf);
         if (j < 0) {
-          vis_err("Setting name failed: %s", userlist_strerror(-j));
+          vis_err("Setting reg. password failed: %s", userlist_strerror(-j));
           goto menu_continue;
         }
         j = userlist_clnt_register_contest(server_conn, ULS_PRIV_REGISTER_CONTEST,
@@ -3761,7 +3761,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
       j = 0;
       needs_reload = 0;
       while (j >= 0) {
-        j = display_user(current_level, uu[i]->id, j, &needs_reload);
+        j = display_user(current_level, uu[i]->id, 0, j, &needs_reload);
       }
       if (needs_reload) {
         // save the current user and redraw the screen
