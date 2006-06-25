@@ -1,3 +1,160 @@
+2006-06-25 (r3173) Alexander Chernov  <cher@ispras.ru>
+
+	* files.make: NEWS, NEWS.RUS are removed.
+
+2006-06-25 (r3171) Alexander Chernov  <cher@ispras.ru>
+
+	* files.make: xml_utils/parse_bool.c is added.
+
+	* userlist.c: "xml_utils.h" is included;
+	(userlist_parse_date) removed, `xml_parse_date' is used instead;
+	(userlist_unparse_bool) removed, `xml_unparse_bool' is used instead;
+	(userlist_unparse_date) return type is "const"-qualified now;
+	(userlist_parse_bool) removed, `xml_parse_bool' is used instead;
+	(userlist_get_user_field_str) `xml_unparse_bool' is used instead of
+	  `userlist_unparse_bool';
+	(userlist_set_user_field_str) `xml_parse_bool' is used instead of
+	  `userlist_parse_bool'.
+
+	* userlist.h:
+	(userlist_parse_date) removed;
+	(userlist_parse_bool) removed;
+	(userlist_unparse_ip) removed;
+	(userlist_unparse_bool) removed;
+	(userlist_unparse_date) "const" added to the return type.
+
+	* edit-userlist.c: "xml_utils.h" is included;
+	(display_user) `xml_parse_bool' is used instead of
+	  `userlist_parse_bool';
+	  `xml_unparse_bool' is used instead of `userlist_unparse_bool'.
+
+	* xml_utils.h:
+	(xml_parse_bool) prototype is added.
+
+2006-06-25 (r3168) Alexander Chernov  <cher@ispras.ru>
+
+	* userlist.c:
+	(userlist_get_user_field_str) support for `cnts_read_only' field
+	  is implemented;
+	(userlist_set_user_field_str) the same as above;
+	(userlist_delete_user_field) the same as above.
+
+	* userlist.h:
+	<cntsinfos>, <cntsinfo> elements are added;
+	"cnts_read_only" attribute is added;
+	USERLIST_NN_CNTS_READ_ONLY is added;
+	(struct userlist_cntsinfo) new structure to store contest-specific
+	  user information;
+	(struct userlist_user) new field `cnts_read_only';
+	  new fields `cntsinfo_a', `cntsinfo';
+	  fields are reordered.
+
+	* edit-userlist.c:
+	support for editing `cnts_read_only' field is implemented.
+
+	* userlist_xml.c:
+	(do_parse_user) "cnts_read_only" attribute is supported;
+	(unparse_user) "cnts_read_only" attribute is supported.
+
+2006-06-25 (r3166) Alexander Chernov  <cher@ispras.ru>
+
+	* clean_users.c:
+	(main) call of `userlist_clnt_delete_field' is updated.
+
+	* register.c:
+	(read_user_info_from_server) call of `userlist_clnt_get_info'
+	  is updated;
+	(action_remove_member) call of `userlist_clnt_remove_member'
+	  is updated.
+
+	* userlist_proto.h:
+	(struct userlist_pk_get_user_info) field `contest_id' is added;
+	(struct userlist_pk_remove_member) field `contest_id' is added;
+	(struct userlist_pk_edit_field) field `contest_id' is added.
+
+	* edit_userlist.c:
+	(display_user) `contest_id' parameter is added;
+	  `contest_id' is passed to all used userlist_clnt_* functions;
+	(display_registered_users) `contest_id' is passed to all used
+	  userlist_clnt_* functions;
+	  call of `display_user' is updated;
+	(do_display_user_menu) 0 is passed as the `contest_id' to all
+	  used userlist_clnt_* functions.
+
+	* userlist_clnt.h:
+	(userlist_clnt_get_info) `contest_id' parameter is added;
+	(userlist_clnt_remove_member) `contest_id' parameter is added;
+	(userlist_clnt_edit_field) `contest_id' parameter is added;
+	(userlist_clnt_delete_field) `contest_id' parameter is added;
+	(userlist_clnt_add_field)  `contest_id' parameter is added.
+
+2006-06-24 (r3162) Alexander Chernov  <cher@ispras.ru>
+
+	* files.make: new files are added:
+	  xml_utils/err_elem_empty.c,  xml_utils/err_elem_invalid.c,
+	   xml_utils/unparse_bool.c.
+
+	* xml_utils.h: copyright notice is updated;
+	(xml_unparse_bool) new function prototype;
+	(xml_err_elem_empty) new function prototype;
+	(xml_err_elem_invalid) new function prototype;
+	(xml_err_attrs) return type is changed to `int';
+	(xml_err_nested_elems) return type is changed to `int';
+	(xml_err_attr_not_allowed) return type is changed to `int';
+	(xml_err_elem_not_allowed) return type is changed to `int';
+	(xml_err_elem_redefined) return type is changed to `int';
+	(xml_err_top_level) return type is changed to `int';
+	(xml_err_attr_invalid) return type is changed to `int';
+	(xml_err_elem_undefined) return type is changed to `int';
+	(xml_err_attr_undefined) return type is changed to `int'.
+
+	* userlist_xml.h: "xml_utils.h" is included;
+	support for <cntsinfos> and <cntsinfo> element is added
+	  to parse tables;
+	(parse_int) function removed, xml_parse_int is used instead;
+	(parse_ip) function is removed, xml_parse_ip is used;
+	(parse_date) function is removed, xml_parse_date is used;
+	(parse_bool) function is removed, xml_attr_bool is used instead;
+	(invalid_tag) function is removed, xml_err_elem_not_allowed is used;
+	(invalid_tag_value) function is removed, xml_err_elem_invalid is used;
+	(duplicated_tag) function is removed, xml_err_elem_redefined is used;
+	(undefined_tag) removed, xml_err_elem_undefined is used instead;
+	(empty_tag) removed, xml_err_elem_empty is used instead;
+	(nested_tag) removed, xml_err_nested_elems is used instead;
+	(no_text) removed, xml_err_elem_empty is used;
+	(no_attr) removed, xml_err_attrs is used;
+	(invalid_attn) removed, xml_err_attr_not_allowed is used;
+	(invalid_attn_value) removed, xml_err_attr_invalid is used;
+	(duplicated_attn) removed;
+	(undefined_attn) removed, xml_err_attr_undefined is used;
+	(handle_final_tag) removed, xml_leaf_elem is used;
+	(parse_passwd) updates according to function renamings described
+	  above;
+	(parse_cookies) the same as above;
+	(parse_members) the same as above;
+	(parse_contest) the same as above;
+	(do_parse_user) the same as above;
+	(do_parse_userlist) the same as above;
+	(userlist_parse_user_str) the global variables for `xml_err_*'
+	  functions are set up before parsing;
+	(userlist_parse_contests_str) the same as above;
+	(userlist_parse) the same as above;
+	(userlist_parse_str) the same as above;
+	(unparse_date) removed, xml_unparse_date is used instead;
+	(unparse_bool) removed, xml_unparse_bool is used;
+	(userlist_unparse_ip) removed, xml_unparse_ip is used;
+	(unparse_final_tag) removed, xml_unparse_text is used;
+	(unparse_member) updates according to function renamings as
+	  described above;
+	(unparse_cookies) the same as above;
+	(unparse_user_short) the same as above;
+	(unparse_user) the same as above.
+
+2006-06-21 (r3159) Alexander Chernov  <cher@ispras.ru>
+
+	* runlog_xml.c:
+	(unparse_runlog_xml) missing <users> element is printed.
+
 2006-06-10 (r3156) Alexander Chernov  <cher@ispras.ru>
 
 	* Makefile.unix.in:
