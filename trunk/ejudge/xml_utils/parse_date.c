@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -62,13 +62,13 @@ xml_parse_date(unsigned char const *path, int line, int column,
  failed:
   if (path) {
     err("%s:%d:%d: invalid date", path, line, column);
-  } else {
+  } else if (line > 0) {
     err("%d:%d: invalid date", line, column);
   }
   return -1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
