@@ -505,7 +505,6 @@ authentificate(void)
   open_userlist_server();
   r = userlist_clnt_priv_login(userlist_conn, client_ip, ssl_flag, global->contest_id,
                                0, /* locale_id */
-                               1,
                                priv_level, client_login, client_password,
                                &client_user_id,
                                &client_sid,

@@ -2623,7 +2623,6 @@ action_register_new_user(void)
                                              ssl_flag,
                                              user_contest_id,
                                              client_locale_id,
-                                             1 /* usecookies */,
                                              user_login, user_email,
                                              &user_password);
       if (errcode == ULS_PASSWORD) errcode = 0;
@@ -2635,7 +2634,6 @@ action_register_new_user(void)
                                            ssl_flag,
                                            user_contest_id,
                                            client_locale_id,
-                                           1 /* usecookies */,
                                            user_login, user_email);
       if (errcode == ULS_ERR_EMAIL_FAILED) {
         error("%s", _("The server was unable to send a registration e-mail\n"
@@ -2717,7 +2715,6 @@ action_login(void)
 
   errcode = userlist_clnt_login(server_conn, user_ip, ssl_flag, user_contest_id,
                                 client_locale_id,
-                                1 /* usecookies */,
                                 user_login, user_password,
                                 &new_user_id, &new_cookie, &new_name,
                                 &new_locale_id);

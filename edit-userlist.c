@@ -1198,7 +1198,6 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NN_IS_LOCKED]         { "Locked?", 1, 1 },
   [USERLIST_NN_SHOW_LOGIN]        { "Show login?", 1, 1 },
   [USERLIST_NN_SHOW_EMAIL]        { "Show email?", 1, 1 },
-  [USERLIST_NN_USE_COOKIES]       { "Use cookies?", 1, 1 },
   [USERLIST_NN_READ_ONLY]         { "Read-only?", 1, 1 },
   [USERLIST_NN_CNTS_READ_ONLY]    { "One contest Read-only?", 1, 1 },
   [USERLIST_NN_NEVER_CLEAN]       { "Never clean?", 1, 1 },
@@ -1540,7 +1539,6 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
         case USERLIST_NN_IS_LOCKED:
         case USERLIST_NN_SHOW_LOGIN:
         case USERLIST_NN_SHOW_EMAIL:
-        case USERLIST_NN_USE_COOKIES:
         case USERLIST_NN_READ_ONLY:
         case USERLIST_NN_CNTS_READ_ONLY:
         case USERLIST_NN_NEVER_CLEAN:
@@ -1904,7 +1902,6 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
         case USERLIST_NN_IS_LOCKED:
         case USERLIST_NN_SHOW_LOGIN:
         case USERLIST_NN_SHOW_EMAIL:
-        case USERLIST_NN_USE_COOKIES:
         case USERLIST_NN_READ_ONLY:
         case USERLIST_NN_CNTS_READ_ONLY:
         case USERLIST_NN_NEVER_CLEAN:
