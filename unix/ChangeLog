@@ -1,4 +1,9 @@
-2006-02-25 (r2923) Alexander Chernov  <cher@ispras.ru>
+2006-06-10 (r3156) Alexander Chernov  <cher@ispras.ru>
+
+	* ChangeLog:
+	Transition from CVS to SVN.
+
+2006-02-25  Alexander Chernov  <cher@ispras.ru>
 
 	* fileutl.c:
 	copyright notice is updated;

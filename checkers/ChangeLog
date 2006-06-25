@@ -1,90 +1,63 @@
-2006-06-05 (r3123) Alexander Chernov  <cher@ispras.ru>
+2006-06-10 (r3156) Alexander Chernov  <cher@ispras.ru>
+
+	* ChangeLog:
+	Transition from CVS to SVN.
+
+2006-06-05  Alexander Chernov  <cher@ispras.ru>
 
 	* delphi/testlib.pas:
-	*** empty log message ***
-
-2006-06-05 (r3121) Alexander Chernov  <cher@ispras.ru>
+	the diagnostic output is written to stderr instead of stdout.
 
 	* fpc/testlib.pas:
 	the diagnostic output is written to stderr instead of stdout.
 
-2006-05-09 (r3076) Alexander Chernov  <cher@ispras.ru>
+2006-05-09  Alexander Chernov  <cher@ispras.ru>
 
 	* vars.c:
 	copyright notice is updated;
 	fix for compilation under Win32 (MinGW).
 
-2006-05-09 (r3075) Alexander Chernov  <cher@ispras.ru>
-
 	* read_buf.c:
 	copyright notice is updated;
 	(checker_read_buf) fix for compilation under Win32 (MinGW).
-
-2006-05-09 (r3074) Alexander Chernov  <cher@ispras.ru>
 
 	* init.c:
 	copyright notice is updated;
 	(checker_do_init) fix for compilation under Win32 (MinGW).
 
-2006-05-09 (r3073) Alexander Chernov  <cher@ispras.ru>
-
 	* eq_long_double.c:
 	copyright notice is updated;
 	(checker_eq_long_double) Win32 (MinGW) version is implemented.
-
-2006-05-09 (r3072) Alexander Chernov  <cher@ispras.ru>
 
 	* eq_float.c:
 	copyright notice is updated;
 	(checker_eq_float) Win32 (MinGW) version is implemented.
 
-2006-05-09 (r3071) Alexander Chernov  <cher@ispras.ru>
-
 	* eq_double.c:
 	copyright notice is updated;
 	(checker_eq_double) Win32 (MinGW) version is implemented.
 
-2006-05-09 (r3070) Alexander Chernov  <cher@ispras.ru>
-
 	* checker_internal.h:
 	fixes for compilation under win32.
-
-2006-05-09 (r3069) Alexander Chernov  <cher@ispras.ru>
 
 	* checker.h:
 	(main) function is included only if NEED_MAIN is not set to 0.
 
-2006-05-09 (r3068) Alexander Chernov  <cher@ispras.ru>
-
 	* Makefile.win32.in:
 	fixes for win32 compilation under Cygwin (mno-cygwin).
-
-2006-05-09 (r3067) Alexander Chernov  <cher@ispras.ru>
 
 	* Makefile.unix.in:
 	file lists are moved to files.make.
 
-2006-05-09 (r3066) Alexander Chernov  <cher@ispras.ru>
-
-	* .cvsignore:
-	*** empty log message ***
-
-2006-05-07 (r3064) Alexander Chernov  <cher@ispras.ru>
+2006-05-07  Alexander Chernov  <cher@ispras.ru>
 
 	* Makefile.win32.in, files.make:
 	initial revision
 
-2006-04-07 (r2963) Alexander Chernov  <cher@ispras.ru>
-
-	* .cvsignore:
-	*** empty log message ***
-
-2006-04-07 (r2962) Alexander Chernov  <cher@ispras.ru>
+2006-04-07  Alexander Chernov  <cher@ispras.ru>
 
 	* Makefile.unix.in:
 	new files added: corr_eoln.c  in_eoln.c  team_eoln.c  cmp_huge_int.c
-
-2006-04-07 (r2961) Alexander Chernov  <cher@ispras.ru>
 
 	* corr_eoln.c, in_eoln.c, team_eoln.c, cmp_huge_int.c:
 	initial revision

@@ -1,18 +1,21 @@
-2006-03-19 (r2941) Alexander Chernov  <cher@ispras.ru>
+2006-06-10 (r3156) Alexander Chernov  <cher@ispras.ru>
+
+	* ChangeLog:
+	Transition from CVS to SVN.
+
+2006-03-19  Alexander Chernov  <cher@ispras.ru>
 
 	* timestamp.c:
 	copyright notice is updated;
 	functionality is implemented.
 
-2006-03-19 (r2940) Alexander Chernov  <cher@ispras.ru>
+2006-03-19  Alexander Chernov  <cher@ispras.ru>
 
 	* full_archive.c:
 	<windows.h>, <zlib.h> are included;
 	(full_archive_open_write) implemented;
 	(full_archive_close) implemented;
 	(full_archive_append_file) implemented.
-
-2006-03-19 (r2939) Alexander Chernov  <cher@ispras.ru>
 
 	* fileutl.c:
 	copyright notice is updated;
@@ -21,19 +24,13 @@
 	(scan_dir_add_ignored) implemeted;
 	(scan_dir) packet priority and ignored items are supported.
 
-2006-03-19 (r2938) Alexander Chernov  <cher@ispras.ru>
-
 	* curtime.c:
 	copyright notice is updated;
 	<time.h>, <windows.h> are included;
 	(get_current_time) basically implemented.
 
-2006-03-19 (r2937) Alexander Chernov  <cher@ispras.ru>
-
 	* cr_serialize.c:
 	copyright notice is updated;
-
-2006-03-19 (r2936) Alexander Chernov  <cher@ispras.ru>
 
 	* cpu.c:
 	copyright notice is updated;

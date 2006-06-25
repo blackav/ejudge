@@ -1,11 +1,16 @@
-2006-06-01 (r3078) Alexander Chernov  <cher@ispras.ru>
+2006-06-10 (r3156) Alexander Chernov  <cher@ispras.ru>
+
+	* ChangeLog:
+	Transition from CVS to SVN.
+
+2006-06-01  Alexander Chernov  <cher@ispras.ru>
 
 	* message.c:
 	copyright notice is updated;
 	(serve_clnt_message) `hide_flag' parameter is added and then
 	  passed to the server.
 
-2006-04-19 (r3001) Alexander Chernov  <cher@ispras.ru>
+2006-04-19  Alexander Chernov  <cher@ispras.ru>
 
 	* show_item.c:
 	copyright notice is updated;
