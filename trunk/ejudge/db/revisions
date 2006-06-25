@@ -3047,3 +3047,12 @@ xml_utils/err_elem_undefined.c 3161 0 85327
 xml_utils/err_nested_elems.c 3161 0 82361
 xml_utils/err_top_level.c 3161 0 81945
 xml_utils/unparse_bool.c 3161 0 70258
+userlist_clnt.h 3166 0 725270
+clean-users.c 3166 0 1000445
+edit-userlist.c 3166 0 8792446
+register.c 3166 0 8205477
+userlist_clnt/add_field.c 3164 0 168753
+userlist_clnt/delete_field.c 3164 0 132272
+userlist_clnt/edit_field.c 3164 0 150200
+userlist_clnt/get_info.c 3164 0 158770
+userlist_clnt/remove_member.c 3164 0 133163
