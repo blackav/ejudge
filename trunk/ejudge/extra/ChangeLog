@@ -3,13 +3,18 @@
 	* Makefile.in:
 	libdropcaps.so is compiled with -fPIC option.
 
-2006-02-25 (r2914) Alexander Chernov  <cher@ispras.ru>
+2006-06-10 (r3156) Alexander Chernov  <cher@ispras.ru>
+
+	* ChangeLog:
+	Transition from CVS to SVN.
+
+2006-02-25  Alexander Chernov  <cher@ispras.ru>
 
 	* libdropcaps.c:
 	copyright notice is updated;
 	(init) updated for kernel 2.6.*.
 
-2006-02-25 (r2913) Alexander Chernov  <cher@ispras.ru>
+2006-02-25  Alexander Chernov  <cher@ispras.ru>
 
 	* capexec.c:
 	copyright notice is updated;

@@ -1,4 +1,9 @@
-2005-11-25 (r2773) Alexander Chernov  <cher@ispras.ru>
+2006-06-10 (r3156) Alexander Chernov  <cher@ispras.ru>
+
+	* ChangeLog:
+	Transition from CVS to SVN.
+
+2005-11-25  Alexander Chernov  <cher@ispras.ru>
 
 	* set_param.c, simple_cmd.c, main_page.c, send_packet.c, do_pass_fd.c, open.c, create_contest.c, recv_packet.c:
 	Copyright notice is updated;

@@ -20,12 +20,17 @@
 	(userlist_clnt_remove_member) `contest_id' parameter is added;
 	  `contest_id' is passed to the server.
 
-2006-04-17 (r2996) Alexander Chernov  <cher@ispras.ru>
+2006-06-10 (r3156) Alexander Chernov  <cher@ispras.ru>
+
+	* ChangeLog:
+	Transition from CVS to SVN.
+
+2006-04-17  Alexander Chernov  <cher@ispras.ru>
 
 	* register_new_2.c:
-	*** empty log message ***
+	initial revision.
 
-2006-04-10 (r2972) Alexander Chernov  <cher@ispras.ru>
+2006-04-10  Alexander Chernov  <cher@ispras.ru>
 
 	* lookup_user.c:
 	initial revision

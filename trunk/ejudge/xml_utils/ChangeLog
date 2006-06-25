@@ -41,7 +41,12 @@
 
 	* unparse_bool.c: initial revision.
 
-2005-11-25 (r2769) Alexander Chernov  <cher@ispras.ru>
+2006-06-10 (r3156) Alexander Chernov  <cher@ispras.ru>
+
+	* ChangeLog:
+	Transition from CVS to SVN.
+
+2005-11-25  Alexander Chernov  <cher@ispras.ru>
 
 	* parse_ip_mask.c, parse_int_attr.c, parse_ip.c, parse_int.c, parse_date.c, xml_err.c, xml_err_a.c:
 	Copyright notice is updated;
