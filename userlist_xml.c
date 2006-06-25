@@ -127,6 +127,7 @@ static char const * const attn_map[] =
   "privileged",
   "date",
   "simple_registration",
+  "cnts_read_only",
 
   0
 };
@@ -743,6 +744,9 @@ do_parse_user(char const *path, struct userlist_user *usr)
     case USERLIST_A_READ_ONLY:
       if (xml_attr_bool(a, &usr->read_only) < 0) return -1;
       break;
+    case USERLIST_A_CNTS_READ_ONLY:
+      if (xml_attr_bool(a, &usr->cnts_read_only) < 0) return -1;
+      break;
     case USERLIST_A_NEVER_CLEAN:
       if (xml_attr_bool(a, &usr->never_clean) < 0) return -1;
       break;
@@ -1282,6 +1286,10 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   if (p->read_only && mode != USERLIST_MODE_STAND) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_READ_ONLY],
             xml_unparse_bool(p->read_only));
+  }
+  if (p->cnts_read_only && mode != USERLIST_MODE_STAND) {
+    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_CNTS_READ_ONLY],
+            xml_unparse_bool(p->cnts_read_only));
   }
   if (p->never_clean && mode != USERLIST_MODE_STAND) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_NEVER_CLEAN],
