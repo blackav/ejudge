@@ -1199,6 +1199,7 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NN_SHOW_EMAIL]        { "Show email?", 1, 1 },
   [USERLIST_NN_USE_COOKIES]       { "Use cookies?", 1, 1 },
   [USERLIST_NN_READ_ONLY]         { "Read-only?", 1, 1 },
+  [USERLIST_NN_CNTS_READ_ONLY]    { "One contest Read-only?", 1, 1 },
   [USERLIST_NN_NEVER_CLEAN]       { "Never clean?", 1, 1 },
   [USERLIST_NN_SIMPLE_REGISTRATION] { "Simple registered?", 1, 1 },
   [USERLIST_NN_TIMESTAMPS]        { "*Timestamps*", 0, 0 },
@@ -1540,6 +1541,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
         case USERLIST_NN_SHOW_EMAIL:
         case USERLIST_NN_USE_COOKIES:
         case USERLIST_NN_READ_ONLY:
+        case USERLIST_NN_CNTS_READ_ONLY:
         case USERLIST_NN_NEVER_CLEAN:
         case USERLIST_NN_SIMPLE_REGISTRATION:
           help_str = "Enter-toggle D-reset C-contest A-new member Q-quit";
@@ -1903,6 +1905,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
         case USERLIST_NN_SHOW_EMAIL:
         case USERLIST_NN_USE_COOKIES:
         case USERLIST_NN_READ_ONLY:
+        case USERLIST_NN_CNTS_READ_ONLY:
         case USERLIST_NN_NEVER_CLEAN:
         case USERLIST_NN_SIMPLE_REGISTRATION:
           edit_buf[0] = 0;
@@ -2260,6 +2263,7 @@ static const unsigned char * const field_names[] =
 {
   "Do nothing",
   "Read-only flag",
+  "One contest read-only flag",
   "Never clean flag",
   "Location field",
   "Team password field",
@@ -2269,6 +2273,7 @@ static const unsigned char * const field_keys[] =
 {
   "QqêÊ",
   "RrëË",
+  "EeõÕ",
   "CcóÓ",
   "LläÄ",
   "PpúÚ",
@@ -2278,6 +2283,7 @@ static const int field_codes[] =
 {
   0,
   USERLIST_NN_READ_ONLY,
+  USERLIST_NN_CNTS_READ_ONLY,
   USERLIST_NN_NEVER_CLEAN,
   USERLIST_NN_LOCATION,
   USERLIST_NN_TEAM_PASSWORD,
@@ -2906,7 +2912,7 @@ display_registered_users(unsigned char const *upper,
                               "Field operation");
       if (field_op <= 0) continue;
       if (field_op != 3) {
-        i = generic_menu(10, -1, -1, -1, 0, (field_op == 2)?3:5, -1, -1,
+        i = generic_menu(10, -1, -1, -1, 0, (field_op == 2)?4:6, -1, -1,
                          field_names, field_keys,
                          "Enter-select ^G-cancel Q,R,C,L-select option",
                          "Field");

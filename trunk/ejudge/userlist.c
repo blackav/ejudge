@@ -386,6 +386,8 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
     s = userlist_unparse_bool(u->default_use_cookies); break;
   case USERLIST_NN_READ_ONLY:
     s = userlist_unparse_bool(u->read_only); break;
+  case USERLIST_NN_CNTS_READ_ONLY:
+    s = userlist_unparse_bool(u->cnts_read_only); break;
   case USERLIST_NN_NEVER_CLEAN:
     s = userlist_unparse_bool(u->never_clean); break;
   case USERLIST_NN_SIMPLE_REGISTRATION:
@@ -531,6 +533,8 @@ userlist_set_user_field_str(struct userlist_list *lst,
     iptr = &u->default_use_cookies; goto do_bool_fields;
   case USERLIST_NN_READ_ONLY:
     iptr = &u->read_only; goto do_bool_fields;
+  case USERLIST_NN_CNTS_READ_ONLY:
+    iptr = &u->cnts_read_only; goto do_bool_fields;
   case USERLIST_NN_NEVER_CLEAN:
     iptr = &u->never_clean; goto do_bool_fields;
   case USERLIST_NN_SIMPLE_REGISTRATION:
@@ -657,6 +661,8 @@ userlist_delete_user_field(struct userlist_user *u, int field_id)
     iptr = &u->default_use_cookies; goto do_flags_delete;
   case USERLIST_NN_READ_ONLY:
     iptr = &u->read_only; goto do_flags_delete;
+  case USERLIST_NN_CNTS_READ_ONLY:
+    iptr = &u->cnts_read_only; goto do_flags_delete;
   case USERLIST_NN_NEVER_CLEAN:
     iptr = &u->never_clean; goto do_flags_delete;
   case USERLIST_NN_SIMPLE_REGISTRATION:
@@ -1042,10 +1048,9 @@ userlist_cookie_hash_del(struct userlist_list *p, struct userlist_cookie *ck)
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
-
