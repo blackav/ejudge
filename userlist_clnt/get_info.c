@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,9 @@
 int
 userlist_clnt_get_info(struct userlist_clnt *clnt,
                        int cmd,
-                       int uid, unsigned char **p_info)
+                       int uid,
+                       int contest_id,
+                       unsigned char **p_info)
 {
   struct userlist_pk_get_user_info out_pkt;
   struct userlist_pk_xml_data *in_pkt = 0;
@@ -37,6 +39,7 @@ userlist_clnt_get_info(struct userlist_clnt *clnt,
   memset(&out_pkt, 0, sizeof(out_pkt));
   out_pkt.request_id = cmd;
   out_pkt.user_id = uid;
+  out_pkt.contest_id = contest_id;
   if ((r = userlist_clnt_send_packet(clnt, sizeof(out_pkt), &out_pkt)) < 0)
     return r;
   if ((r = userlist_clnt_recv_packet(clnt, &in_size, (void*) &in_pkt)) < 0)
@@ -58,7 +61,7 @@ userlist_clnt_get_info(struct userlist_clnt *clnt,
   return ULS_XML_DATA;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
