@@ -166,6 +166,7 @@ COMMON_CFILES=\
  varsubst.c\
  vcs.c\
  xml_utils/attr_bool.c\
+ xml_utils/attr_date.c\
  xml_utils/elem_ip_mask.c\
  xml_utils/empty_text.c\
  xml_utils/err_attrs.c\
