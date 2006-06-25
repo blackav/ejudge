@@ -3060,3 +3060,9 @@ userlist.h 3168 0 1017131
 edit-userlist.c 3168 0 8792450
 userlist.c 3168 0 2388187
 userlist_xml.c 3168 0 3600219
+userlist.h 3171 0 1017705
+xml_utils.h 3171 0 293712
+edit-userlist.c 3171 0 8793857
+userlist.c 3171 0 2390731
+xml_utils/parse_bool.c 3170 0 111891
+xml_utils/parse_date.c 3170 0 159923
