@@ -1,3 +1,46 @@
+2006-06-25 (r3170) Alexander Chernov  <cher@ispras.ru>
+
+	* parse_date.c: copyright notice is updated;
+	(xml_parse_date) error is reported via `err' only if
+	  path != NULL or line > 0.
+
+	* parse_bool.c: initial revision.
+
+2006-06-24 (r3161) Alexander Chernov  <cher@ispras.ru>
+
+	* err_elem_redefined.c: copyright notice is updated;
+	(xml_err_elem_redefined) return type is `int', always returns -1.
+
+	* err_top_level.c: copyright notice is updated;
+	(xml_err_top_level) return type is `int', always returns -1.
+
+	* err_attr_undefined.c: copyright notice is updated;
+	(xml_err_attr_undefined) return type is `int', always returns -1.
+
+	* err_attrs.c: copyright notice is updated;
+	(xml_err_attrs) return type is `int', always returns -1.
+
+	* err_attr_not_allowed.c: copyright notice is updated;
+	(xml_err_attr_not_allowed) return type is `int', always returns -1.
+
+	* err_elem_undefined.c: copyright notice is updated;
+	(xml_err_elem_undefined) return type is `int', always returns -1.
+
+	* err_nested_elems.c: copyright notice is updated;
+	(xml_err_nested_elems) return type is `int', always returns -1.
+
+	* err_elem_not_allowed.c: copyright notice is updated;
+	(xml_err_elem_not_allowed) return type is `int', always returns -1.
+
+	* err_attr_invalid.c: copyright notice is updated;
+	(xml_err_attr_invalid) return type is `int', always returns -1.
+
+	* err_elem_invalid.c: initial revision.
+
+	* err_elem_empty.c: initial revision.
+
+	* unparse_bool.c: initial revision.
+
 2005-11-25 (r2769) Alexander Chernov  <cher@ispras.ru>
 
 	* parse_ip_mask.c, parse_int_attr.c, parse_ip.c, parse_int.c, parse_date.c, xml_err.c, xml_err_a.c:

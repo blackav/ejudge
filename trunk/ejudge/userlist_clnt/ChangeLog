@@ -1,3 +1,25 @@
+2006-06-25 (r3164) Alexander Chernov  <cher@ispras.ru>
+
+	* edit_field.c: copyright notice is updated;
+	(userlist_clnt_edit_field) `contest_id' parameter is added;
+	  `contest_id' is passed to the server.
+
+	* get_info.c: copyright notice is updated;
+	(userlist_clnt_get_info) `contest_id' parameter is added;
+	  `contest_id' is passed to the server.
+
+	* add_field.c: copyright notice is updated;
+	(userlist_clnt_add_field) `contest_id' parameter is added;
+	  `contest_id' is passed to the server.
+
+	* delete_field.c: copyright notice is updated;
+	(userlist_clnt_delete_field) `contest_id' parameter is added;
+	  `contest_id' is passed to the server.
+
+	* remove_member.c: copyright notice is updated;
+	(userlist_clnt_remove_member) `contest_id' parameter is added;
+	  `contest_id' is passed to the server.
+
 2006-04-17 (r2996) Alexander Chernov  <cher@ispras.ru>
 
 	* register_new_2.c:

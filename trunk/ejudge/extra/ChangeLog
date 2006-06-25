@@ -1,3 +1,8 @@
+2006-06-19 (r3158) Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.in:
+	libdropcaps.so is compiled with -fPIC option.
+
 2006-02-25 (r2914) Alexander Chernov  <cher@ispras.ru>
 
 	* libdropcaps.c:
