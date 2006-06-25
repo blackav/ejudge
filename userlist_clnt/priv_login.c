@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,6 @@ userlist_clnt_priv_login(struct userlist_clnt *clnt,
                          int ssl,
                          int contest_id,
                          int locale_id,
-                         int use_cookies,
                          int priv_level,
                          unsigned char const *login,
                          unsigned char const *passwd,
@@ -54,7 +53,6 @@ userlist_clnt_priv_login(struct userlist_clnt *clnt,
   out->ssl = ssl;
   out->contest_id = contest_id;
   out->locale_id = locale_id;
-  out->use_cookies = use_cookies;
   out->priv_level = priv_level;
   out->login_length = login_len;
   out->password_length = passwd_len;
@@ -102,7 +100,7 @@ userlist_clnt_priv_login(struct userlist_clnt *clnt,
   return r;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
