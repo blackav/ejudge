@@ -35,6 +35,8 @@ int xml_parse_int(unsigned char const *path, int line, int column,
 int xml_parse_ip_mask(const unsigned char *path, int line, int column,
                       const unsigned char *s,
                       ej_ip_t *p_ip, ej_ip_t *p_mask);
+int xml_parse_bool(unsigned char const *path, int line, int column,
+                   unsigned char const *s, int *pv);
 
 void xml_unparse_text(FILE *f, const unsigned char *tag_name,
                       unsigned char const *value,

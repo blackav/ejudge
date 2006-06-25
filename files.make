@@ -181,6 +181,7 @@ COMMON_CFILES=\
  xml_utils/err_top_level.c\
  xml_utils/err_variables.c\
  xml_utils/leaf_elem.c\
+ xml_utils/parse_bool.c\
  xml_utils/parse_date.c\
  xml_utils/parse_int.c\
  xml_utils/parse_int_attr.c\

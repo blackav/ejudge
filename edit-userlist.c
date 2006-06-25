@@ -23,6 +23,7 @@
 #include "contests.h"
 #include "userlist.h"
 #include "userlist_cfg.h"
+#include "xml_utils.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/logger.h>
@@ -1911,11 +1912,11 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
           edit_buf[0] = 0;
           userlist_get_user_field_str(edit_buf, sizeof(edit_buf),
                                       u, info[cur_i].field, 0);
-          r = userlist_parse_bool(edit_buf);
+          r = xml_parse_bool(0, 0, 0, edit_buf, 0);
           r = yesno(r, "New value for \"%s\"",
                     user_descs[info[cur_i].field].name);
           if (r < 0 || r > 1) goto menu_continue;
-          snprintf(edit_buf, sizeof(edit_buf), "%s", userlist_unparse_bool(r));
+          snprintf(edit_buf, sizeof(edit_buf), "%s", xml_unparse_bool(r));
           r = userlist_set_user_field_str(0, u, info[cur_i].field, edit_buf);
           if (!r) goto menu_continue;
           if (r < 0) {
