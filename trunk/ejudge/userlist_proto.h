@@ -142,7 +142,6 @@ struct userlist_pk_register_new
   int           ssl;
   int           contest_id;
   signed char   locale_id;
-  signed char   use_cookies;
   unsigned char login_length;
   unsigned char email_length;
   unsigned char data[2];
@@ -155,7 +154,6 @@ struct userlist_pk_do_login
   int           ssl;
   int           contest_id;
   signed char   locale_id;
-  signed char   use_cookies;
   unsigned char priv_level;
   unsigned char login_length;
   unsigned char password_length;

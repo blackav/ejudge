@@ -720,7 +720,6 @@ authentificate(void)
   r = userlist_clnt_priv_login(userlist_conn, user_ip, ssl_flag,
                                0, /* contest_id */
                                0, /* locale_id */
-                               1, /* session_id is enabled */
                                PRIV_LEVEL_ADMIN,
                                user_login,
                                user_password,

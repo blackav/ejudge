@@ -980,7 +980,6 @@ cmd_register_new_2(struct client_state *p,
   user->email = calloc(1,data->email_length+1);
   strcpy(user->email,email);
   user->name = xstrdup("");
-  user->default_use_cookies = -1;
   user->login_hash = login_hash;
   user->simple_registration = 1;
 
@@ -1259,7 +1258,6 @@ cmd_register_new(struct client_state *p,
   user->email = calloc(1,data->email_length+1);
   strcpy(user->email,email);
   user->name = xstrdup("");
-  user->default_use_cookies = -1;
   user->login_hash = login_hash;
 
   if (userlist->login_hash_table) {
@@ -1688,28 +1686,17 @@ cmd_do_login(struct client_state *p,
     + strlen(user->name) + 1 + strlen(user->login) + 1;
   answer = alloca(ans_len);
 
-  if (data->use_cookies == -1) {
-    data->use_cookies = user->default_use_cookies;
-  }
-  if (data->use_cookies == -1) {
-    data->use_cookies = DEFAULT_SERVER_USE_COOKIES;
-  }
-  if (data->use_cookies) {        
-    cookie = create_cookie(user);
-    cookie->user = user;
-    cookie->locale_id = data->locale_id;
-    cookie->ip = data->origin_ip;
-    cookie->contest_id = data->contest_id;
-    cookie->expire = time(0)+24*60*60;
-    answer->reply_id = ULS_LOGIN_COOKIE;
-    cookie->cookie = generate_random_unique_cookie();
-    answer->cookie = cookie->cookie;
-    userlist_cookie_hash_add(userlist, cookie);
-    dirty = 1;
-  } else {
-    answer->reply_id = ULS_LOGIN_OK;
-    answer->cookie = 0;
-  }
+  cookie = create_cookie(user);
+  cookie->user = user;
+  cookie->locale_id = data->locale_id;
+  cookie->ip = data->origin_ip;
+  cookie->contest_id = data->contest_id;
+  cookie->expire = time(0)+24*60*60;
+  answer->reply_id = ULS_LOGIN_COOKIE;
+  cookie->cookie = generate_random_unique_cookie();
+  answer->cookie = cookie->cookie;
+  userlist_cookie_hash_add(userlist, cookie);
+  dirty = 1;
 
   answer->user_id = user->id;
   answer->contest_id = data->contest_id;
@@ -1767,9 +1754,9 @@ cmd_team_login(struct client_state *p, int pkt_len,
   }
 
   snprintf(logbuf, sizeof(logbuf),
-           "TEAM_LOGIN: %s, %d, %s, %d, %d, %d",
+           "TEAM_LOGIN: %s, %d, %s, %d, %d",
            unparse_ip(data->origin_ip), data->ssl, login_ptr, data->contest_id,
-           data->locale_id, data->use_cookies);
+           data->locale_id);
 
   if (p->user_id >= 0) {
     err("%s -> already authentificated", logbuf);
@@ -1870,30 +1857,19 @@ cmd_team_login(struct client_state *p, int pkt_len,
   memset(out, 0, out_size);
   login_ptr = out->data;
   name_ptr = login_ptr + login_len + 1;
-  if (data->use_cookies == -1) {
-    data->use_cookies = u->default_use_cookies;
-  }
-  if (data->use_cookies == -1) {
-    // FIXME: system default
-    data->use_cookies = 0;
-  }
   if (data->locale_id == -1) {
     data->locale_id = 0;
   }
-  if (data->use_cookies) {
-    cookie = create_cookie(u);
-    cookie->user = u;
-    cookie->ip = data->origin_ip;
-    cookie->cookie = generate_random_unique_cookie();
-    cookie->expire = cur_time + 60 * 60 * 24;
-    cookie->contest_id = data->contest_id;
-    cookie->locale_id = data->locale_id;
-    userlist_cookie_hash_add(userlist, cookie);
-    out->cookie = cookie->cookie;
-    out->reply_id = ULS_LOGIN_COOKIE;
-  } else {
-    out->reply_id = ULS_LOGIN_OK;
-  }
+  cookie = create_cookie(u);
+  cookie->user = u;
+  cookie->ip = data->origin_ip;
+  cookie->cookie = generate_random_unique_cookie();
+  cookie->expire = cur_time + 60 * 60 * 24;
+  cookie->contest_id = data->contest_id;
+  cookie->locale_id = data->locale_id;
+  userlist_cookie_hash_add(userlist, cookie);
+  out->cookie = cookie->cookie;
+  out->reply_id = ULS_LOGIN_COOKIE;
   out->user_id = u->id;
   out->contest_id = data->contest_id;
   out->locale_id = data->locale_id;
@@ -1955,9 +1931,9 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   }
 
   snprintf(logbuf, sizeof(logbuf),
-           "PRIV_LOGIN: %s, %d, %s, %d, %d, %d",
+           "PRIV_LOGIN: %s, %d, %s, %d, %d",
            unparse_ip(data->origin_ip), data->ssl, login_ptr, data->contest_id,
-           data->locale_id, data->use_cookies);
+           data->locale_id);
 
   if (p->user_id >= 0) {
     err("%s -> already authentificated", logbuf);
@@ -2083,31 +2059,20 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   memset(out, 0, out_size);
   login_ptr = out->data;
   name_ptr = login_ptr + login_len + 1;
-  if (data->use_cookies == -1) {
-    data->use_cookies = u->default_use_cookies;
-  }
-  if (data->use_cookies == -1) {
-    // FIXME: system default
-    data->use_cookies = 0;
-  }
   if (data->locale_id == -1) {
     data->locale_id = 0;
   }
-  if (data->use_cookies) {
-    cookie = create_cookie(u);
-    cookie->user = u;
-    cookie->ip = data->origin_ip;
-    cookie->cookie = generate_random_unique_cookie();
-    cookie->expire = cur_time + 60 * 60 * 24;
-    cookie->contest_id = data->contest_id;
-    cookie->locale_id = data->locale_id;
-    cookie->priv_level = data->priv_level;
-    userlist_cookie_hash_add(userlist, cookie);
-    out->cookie = cookie->cookie;
-    out->reply_id = ULS_LOGIN_COOKIE;
-  } else {
-    out->reply_id = ULS_LOGIN_OK;
-  }
+  cookie = create_cookie(u);
+  cookie->user = u;
+  cookie->ip = data->origin_ip;
+  cookie->cookie = generate_random_unique_cookie();
+  cookie->expire = cur_time + 60 * 60 * 24;
+  cookie->contest_id = data->contest_id;
+  cookie->locale_id = data->locale_id;
+  cookie->priv_level = data->priv_level;
+  userlist_cookie_hash_add(userlist, cookie);
+  out->cookie = cookie->cookie;
+  out->reply_id = ULS_LOGIN_COOKIE;
   out->user_id = u->id;
   out->contest_id = data->contest_id;
   out->locale_id = data->locale_id;
@@ -7337,7 +7302,7 @@ main(int argc, char *argv[])
   return code;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "XML_Parser" "XML_Char" "XML_Encoding" "va_list" "gzFile")

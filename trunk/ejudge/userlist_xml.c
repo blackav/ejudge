@@ -692,7 +692,6 @@ do_parse_user(char const *path, struct userlist_user *usr)
 
   xfree(usr->b.text); usr->b.text = 0;
 
-  usr->default_use_cookies = -1;
   usr->id = -1;
   for (a = usr->b.first; a; a = a->next) {
     switch (a->tag) {
@@ -739,7 +738,7 @@ do_parse_user(char const *path, struct userlist_user *usr)
       if (xml_attr_bool(a, &usr->is_locked) < 0) return -1;
       break;
     case USERLIST_A_USE_COOKIES:
-      if (xml_attr_bool(a, &usr->default_use_cookies) < 0) return -1;
+      // ignored for compatibility
       break;
     case USERLIST_A_READ_ONLY:
       if (xml_attr_bool(a, &usr->read_only) < 0) return -1;
@@ -1263,10 +1262,6 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   if (!p) return;
   fprintf(f, "  <%s %s=\"%d\"", tag_map[USERLIST_T_USER],
           attn_map[USERLIST_A_ID], p->id);
-  if (p->default_use_cookies >= 0 && mode != USERLIST_MODE_STAND) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_USE_COOKIES],
-            xml_unparse_bool(p->default_use_cookies));
-  }
   if (p->is_privileged) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_PRIVILEGED],
             xml_unparse_bool(p->is_privileged));

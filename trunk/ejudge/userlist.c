@@ -324,8 +324,6 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
     s = xml_unparse_bool(u->show_login); break;
   case USERLIST_NN_SHOW_EMAIL:
     s = xml_unparse_bool(u->show_email); break;
-  case USERLIST_NN_USE_COOKIES:
-    s = xml_unparse_bool(u->default_use_cookies); break;
   case USERLIST_NN_READ_ONLY:
     s = xml_unparse_bool(u->read_only); break;
   case USERLIST_NN_CNTS_READ_ONLY:
@@ -471,8 +469,6 @@ userlist_set_user_field_str(struct userlist_list *lst,
     iptr = &u->show_login; goto do_bool_fields;
   case USERLIST_NN_SHOW_EMAIL:
     iptr = &u->show_email; goto do_bool_fields;
-  case USERLIST_NN_USE_COOKIES:
-    iptr = &u->default_use_cookies; goto do_bool_fields;
   case USERLIST_NN_READ_ONLY:
     iptr = &u->read_only; goto do_bool_fields;
   case USERLIST_NN_CNTS_READ_ONLY:
@@ -599,8 +595,6 @@ userlist_delete_user_field(struct userlist_user *u, int field_id)
     iptr = &u->show_login; goto do_flags_delete;
   case USERLIST_NN_SHOW_EMAIL:
     iptr = &u->show_email; goto do_flags_delete;
-  case USERLIST_NN_USE_COOKIES:
-    iptr = &u->default_use_cookies; goto do_flags_delete;
   case USERLIST_NN_READ_ONLY:
     iptr = &u->read_only; goto do_flags_delete;
   case USERLIST_NN_CNTS_READ_ONLY:
