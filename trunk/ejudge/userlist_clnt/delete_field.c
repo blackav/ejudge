@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 int
 userlist_clnt_delete_field(struct userlist_clnt *clnt,
                            int user_id,
+                           int contest_id,
                            int role,
                            int pers,
                            int field)
@@ -34,6 +35,7 @@ userlist_clnt_delete_field(struct userlist_clnt *clnt,
   memset(out, 0, out_size);
   out->request_id = ULS_DELETE_FIELD;
   out->user_id = user_id;
+  out->contest_id = contest_id;
   out->role = role;
   out->pers = pers;
   out->field = field;
@@ -49,7 +51,7 @@ userlist_clnt_delete_field(struct userlist_clnt *clnt,
   return r;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

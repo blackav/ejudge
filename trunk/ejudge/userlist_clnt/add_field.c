@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 int
 userlist_clnt_add_field(struct userlist_clnt *clnt,
                         int *p_user_id,
+                        int contest_id,
                         int role,
                         int pers,
                         int field)
@@ -37,6 +38,7 @@ userlist_clnt_add_field(struct userlist_clnt *clnt,
   out->request_id = ULS_ADD_FIELD;
   if (!p_user_id) out->user_id = -1;
   else out->user_id = *p_user_id;
+  out->contest_id = contest_id;
   out->role = role;
   out->pers = pers;
   out->field = field;
@@ -68,7 +70,7 @@ userlist_clnt_add_field(struct userlist_clnt *clnt,
   return r;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

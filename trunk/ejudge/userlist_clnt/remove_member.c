@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,8 @@
 
 int
 userlist_clnt_remove_member(struct userlist_clnt *clnt,
-		            int user_id, int role_id, int pers_id,
+		            int user_id, int contest_id,
+                            int role_id, int pers_id,
 			    int serial)
 {
   struct userlist_pk_remove_member *out = 0;
@@ -32,6 +33,7 @@ userlist_clnt_remove_member(struct userlist_clnt *clnt,
   if (!out) return -ULS_ERR_OUT_OF_MEM;
   out->request_id = ULS_REMOVE_MEMBER;
   out->user_id = user_id;
+  out->contest_id = contest_id;
   out->role_id = role_id;
   out->pers_id = pers_id;
   out->serial = serial;
@@ -47,7 +49,7 @@ userlist_clnt_remove_member(struct userlist_clnt *clnt,
   return r;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
