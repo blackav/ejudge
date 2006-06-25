@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,6 @@ userlist_clnt_register_new(struct userlist_clnt *clnt,
                            int ssl,
                            int contest_id,
                            int locale_id,
-                           int use_cookies,
                            unsigned char const *login,
                            unsigned char const *email)
 {
@@ -42,7 +41,6 @@ userlist_clnt_register_new(struct userlist_clnt *clnt,
   data->ssl = ssl;
   data->contest_id = contest_id;
   data->locale_id = locale_id;
-  data->use_cookies = use_cookies;
   data->login_length = strlen(login);
   data->email_length = strlen(email);
   strcpy(data->data,login);
@@ -55,7 +53,7 @@ userlist_clnt_register_new(struct userlist_clnt *clnt,
   return res;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

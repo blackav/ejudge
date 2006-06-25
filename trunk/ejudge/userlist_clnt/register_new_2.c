@@ -23,7 +23,6 @@ userlist_clnt_register_new_2(struct userlist_clnt *clnt,
                              int ssl,
                              int contest_id,
                              int locale_id,
-                             int use_cookies,
                              unsigned char const *login,
                              unsigned char const *email,
                              unsigned char **p_passwd)
@@ -45,7 +44,6 @@ userlist_clnt_register_new_2(struct userlist_clnt *clnt,
   data->ssl = ssl;
   data->contest_id = contest_id;
   data->locale_id = locale_id;
-  data->use_cookies = use_cookies;
   data->login_length = strlen(login);
   data->email_length = strlen(email);
   strcpy(data->data,login);
@@ -75,7 +73,7 @@ userlist_clnt_register_new_2(struct userlist_clnt *clnt,
   return -ULS_ERR_PROTOCOL;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
