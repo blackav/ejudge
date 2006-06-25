@@ -394,7 +394,7 @@ main(int argc, char **argv)
     }
     if (reply) continue;
 
-    r = userlist_clnt_delete_field(server_conn, i, -2, 0, 0);
+    r = userlist_clnt_delete_field(server_conn, i, 0, -2, 0, 0);
     if (r < 0) {
       err("Remove failed: %s", userlist_strerror(-j));
     }
@@ -403,7 +403,7 @@ main(int argc, char **argv)
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")

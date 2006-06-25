@@ -184,7 +184,8 @@ struct userlist_pk_do_logout
 struct userlist_pk_get_user_info
 {
   short         request_id;
-  int           user_id;       /* which user_info we want */
+  int           user_id;
+  int           contest_id;
 };
 
 struct userlist_pk_set_user_info
@@ -217,6 +218,7 @@ struct userlist_pk_remove_member
 {
   short request_id;
   int   user_id;
+  int   contest_id;
   int   role_id;
   int   pers_id;
   int   serial;
@@ -256,6 +258,7 @@ struct userlist_pk_edit_field
 {
   short request_id;
   int   user_id;
+  int   contest_id;
   int   role;
   int   pers;
   int   field;

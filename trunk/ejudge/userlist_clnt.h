@@ -117,7 +117,7 @@ userlist_clnt_team_cookie(struct userlist_clnt *clnt,
 
 int
 userlist_clnt_get_info(struct userlist_clnt *clnt, int cmd,
-                       int uid, unsigned char **p_info);
+                       int uid, int contest_id, unsigned char **p_info);
 int
 userlist_clnt_get_param(struct userlist_clnt *clnt,
                         int cmd, int contest_id, unsigned char **p_info);
@@ -144,7 +144,8 @@ userlist_clnt_register_contest(struct userlist_clnt *clnt,
                                int contest_id);
 int
 userlist_clnt_remove_member(struct userlist_clnt *clnt,
-		            int user_id, int role_id, int pers_id,
+		            int user_id, int contest_id,
+                            int role_id, int pers_id,
 			    int serial);
 
 int
@@ -198,6 +199,7 @@ userlist_clnt_change_registration(struct userlist_clnt *clnt,
 int
 userlist_clnt_edit_field(struct userlist_clnt *clnt,
                          int user_id,
+                         int contest_id,
                          int role,
                          int pers,
                          int field,
@@ -206,6 +208,7 @@ userlist_clnt_edit_field(struct userlist_clnt *clnt,
 int
 userlist_clnt_delete_field(struct userlist_clnt *clnt,
                            int user_id,
+                           int contest_id,
                            int role,
                            int pers,
                            int field);
@@ -213,6 +216,7 @@ userlist_clnt_delete_field(struct userlist_clnt *clnt,
 int
 userlist_clnt_add_field(struct userlist_clnt *clnt,
                         int *p_user_id,
+                        int contest_id,
                         int role,
                         int pers,
                         int field);
