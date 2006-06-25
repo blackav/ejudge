@@ -3056,3 +3056,7 @@ userlist_clnt/delete_field.c 3164 0 132272
 userlist_clnt/edit_field.c 3164 0 150200
 userlist_clnt/get_info.c 3164 0 158770
 userlist_clnt/remove_member.c 3164 0 133163
+userlist.h 3168 0 1017131
+edit-userlist.c 3168 0 8792450
+userlist.c 3168 0 2388187
+userlist_xml.c 3168 0 3600219
