@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-06-25 01:09+0400\n"
+"POT-Creation-Date: 2006-06-25 12:19+0400\n"
 "PO-Revision-Date: 2006-06-01 12:09+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -264,11 +264,11 @@ msgstr "Форма добавления новой посылки"
 msgid "Additional test information"
 msgstr "Доп. инф. о тесте"
 
-#: edit-userlist.c:49 register.c:303 userlist-server.c:190
+#: edit-userlist.c:50 register.c:303 userlist-server.c:190
 msgid "Advisor"
 msgstr "Руководитель команды"
 
-#: edit-userlist.c:57 register.c:311 userlist-server.c:198
+#: edit-userlist.c:58 register.c:311 userlist-server.c:198
 msgid "Advisors"
 msgstr "Руководители"
 
@@ -432,11 +432,11 @@ msgstr "Очистить эту запись"
 msgid "Client time"
 msgstr "Время клиента"
 
-#: edit-userlist.c:48 register.c:302 userlist-server.c:189
+#: edit-userlist.c:49 register.c:302 userlist-server.c:189
 msgid "Coach"
 msgstr "Тренер"
 
-#: edit-userlist.c:56 register.c:310 userlist-server.c:197
+#: edit-userlist.c:57 register.c:310 userlist-server.c:197
 msgid "Coaches"
 msgstr "Тренеры"
 
@@ -524,11 +524,11 @@ msgstr "Время окончания турнира"
 msgid "Contest time"
 msgstr "Продолжительность турнира"
 
-#: edit-userlist.c:46 register.c:300 userlist-server.c:187
+#: edit-userlist.c:47 register.c:300 userlist-server.c:187
 msgid "Contestant"
 msgstr "Основной участник"
 
-#: edit-userlist.c:54 register.c:308 userlist-server.c:195
+#: edit-userlist.c:55 register.c:308 userlist-server.c:195
 msgid "Contestants"
 msgstr "Основные участники"
 
@@ -614,7 +614,7 @@ msgstr "Редактировать<br>личные данные"
 msgid "Elapsed time"
 msgstr "Прошедшее время"
 
-#: edit-userlist.c:62
+#: edit-userlist.c:63
 msgid "Empty"
 msgstr "не заполнено"
 
@@ -829,11 +829,11 @@ msgstr "Группа (класс)"
 msgid "Group (En)"
 msgstr "Группа (класс) (Англ.)"
 
-#: edit-userlist.c:50 register.c:304 userlist-server.c:191
+#: edit-userlist.c:51 register.c:304 userlist-server.c:191
 msgid "Guest"
 msgstr "Гость"
 
-#: edit-userlist.c:58 register.c:312 userlist-server.c:199
+#: edit-userlist.c:59 register.c:312 userlist-server.c:199
 msgid "Guests"
 msgstr "Гости"
 
@@ -1182,7 +1182,7 @@ msgstr "Выйти из системы"
 msgid "Long name"
 msgstr "Название задачи"
 
-#: edit-userlist.c:65 register.c:319 userlist.c:83 userlist-server.c:206
+#: edit-userlist.c:66 register.c:319 userlist.c:84 userlist-server.c:206
 msgid "Magistrant"
 msgstr "Студент магистратуры"
 
@@ -1441,7 +1441,7 @@ msgstr "Операция успешно выполнена"
 msgid "Originator IP"
 msgstr "IP-адрес отправителя"
 
-#: edit-userlist.c:70 register.c:324 userlist.c:88 userlist-server.c:211
+#: edit-userlist.c:71 register.c:324 userlist.c:89 userlist-server.c:211
 msgid "Other"
 msgstr "Прочее"
 
@@ -1516,7 +1516,7 @@ msgstr ""
 msgid "Personal page of %s"
 msgstr "Личная страница для %s"
 
-#: edit-userlist.c:66 register.c:320 userlist.c:84 userlist-server.c:207
+#: edit-userlist.c:67 register.c:320 userlist.c:85 userlist-server.c:207
 msgid "PhD student"
 msgstr "Аспирант"
 
@@ -1602,7 +1602,7 @@ msgstr "Итог по задачам"
 msgid "Problems"
 msgstr "Задачи"
 
-#: edit-userlist.c:68 register.c:322 userlist.c:86 userlist-server.c:209
+#: edit-userlist.c:69 register.c:322 userlist.c:87 userlist-server.c:209
 msgid "Professor"
 msgstr "Преподаватель вуза"
 
@@ -1733,11 +1733,11 @@ msgstr "Просмотр протокола"
 msgid "Reschedule"
 msgstr "Назначить время"
 
-#: edit-userlist.c:47 register.c:301 userlist-server.c:188
+#: edit-userlist.c:48 register.c:301 userlist-server.c:188
 msgid "Reserve"
 msgstr "Запасной участник"
 
-#: edit-userlist.c:55 register.c:309 userlist-server.c:196
+#: edit-userlist.c:56 register.c:309 userlist-server.c:196
 msgid "Reserves"
 msgstr "Запасные участники"
 
@@ -1802,15 +1802,15 @@ msgstr "Сохранить"
 msgid "Scheduled end time"
 msgstr "Запланированное время окончания"
 
-#: edit-userlist.c:63 register.c:317 userlist.c:81 userlist-server.c:204
+#: edit-userlist.c:64 register.c:317 userlist.c:82 userlist-server.c:204
 msgid "School student"
 msgstr "Школьник"
 
-#: edit-userlist.c:67 register.c:321 userlist.c:85 userlist-server.c:208
+#: edit-userlist.c:68 register.c:321 userlist.c:86 userlist-server.c:208
 msgid "School teacher"
 msgstr "Школьный учитель"
 
-#: edit-userlist.c:69 register.c:323 userlist.c:87 userlist-server.c:210
+#: edit-userlist.c:70 register.c:323 userlist.c:88 userlist-server.c:210
 msgid "Scientist"
 msgstr "Научный сотрудник"
 
@@ -2012,7 +2012,7 @@ msgstr "Остановить"
 msgid "Stop virtual contest"
 msgstr "Закончить виртуальный турнир"
 
-#: edit-userlist.c:64 register.c:318 userlist.c:82 userlist-server.c:205
+#: edit-userlist.c:65 register.c:318 userlist.c:83 userlist-server.c:205
 msgid "Student"
 msgstr "Студент"
 

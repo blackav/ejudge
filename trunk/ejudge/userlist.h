@@ -462,12 +462,8 @@ unsigned char const *userlist_tag_to_str(int t);
 
 void userlist_unparse_contests(struct userlist_user *p, FILE *f);
 struct xml_tree *userlist_parse_contests_str(unsigned char const *str);
-int userlist_parse_date(unsigned char const *s, time_t *pd);
-int userlist_parse_bool(unsigned char const *str);
-unsigned char *userlist_unparse_ip(ej_ip_t ip);
 
-unsigned char const *userlist_unparse_bool(int b);
-unsigned char *userlist_unparse_date(time_t d, int show_null);
+const unsigned char *userlist_unparse_date(time_t d, int show_null);
 int userlist_get_member_field_str(unsigned char *buf, size_t len,
                                   struct userlist_member *m, int field_id,
                                   int convert_null);

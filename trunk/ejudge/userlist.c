@@ -20,6 +20,7 @@
 #include "pathutl.h"
 #include "errlog.h"
 #include "tsc.h"
+#include "xml_utils.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -94,75 +95,16 @@ userlist_member_status_str(int status)
   return member_status_string[status];
 }
 
-int
-userlist_parse_date(unsigned char const *s, time_t *pd)
-{
-  int year, month, day, hour, min, sec, n;
-  time_t t;
-  struct tm tt;
-
-  memset(&tt, 0, sizeof(tt));
-  tt.tm_isdst = -1;
-  if (!s) goto failed;
-  if (sscanf(s, "%d/%d/%d %d:%d:%d %n", &year, &month, &day, &hour,
-             &min, &sec, &n) != 6) goto failed;
-  if (s[n]) goto failed;
-  if (year < 1900 || year > 2100 || month < 1 || month > 12
-      || day < 1 || day > 31 || hour < 0 || hour >= 24
-      || min < 0 || min >= 60 || sec < 0 || sec >= 60) goto failed;
-  tt.tm_sec = sec;
-  tt.tm_min = min;
-  tt.tm_hour = hour;
-  tt.tm_mday = day;
-  tt.tm_mon = month - 1;
-  tt.tm_year = year - 1900;
-  if ((t = mktime(&tt)) == (time_t) -1) goto failed;
-  *pd = t;
-  return 0;
-
- failed:
-  return -1;
-}
-
-unsigned char const *
-userlist_unparse_bool(int b)
-{
-  if (b) return "yes";
-  return "no";
-}
-
-unsigned char *
+const unsigned char *
 userlist_unparse_date(time_t d, int show_null)
 {
   static unsigned char buf[64];
-  struct tm *ptm;
 
   if (!d) {
     strcpy(buf, "<Not set>");
     return buf;
   }
-  ptm = localtime(&d);
-  snprintf(buf, sizeof(buf), "%d/%02d/%02d %02d:%02d:%02d",
-           ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
-           ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
-  return buf;
-}
-
-int
-userlist_parse_bool(unsigned char const *str)
-{
-  if (!str) return -1;
-  if (!strcasecmp(str, "true")
-      || !strcasecmp(str, "yes")
-      || !strcasecmp(str, "1"))
-    return 1;
-  
-  if (!strcasecmp(str, "false")
-      || !strcasecmp(str, "no")
-      || !strcasecmp(str, "0"))
-    return 0;
-
-  return -1;
+  return xml_unparse_date(d);
 }
 
 int
@@ -371,27 +313,27 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
   case USERLIST_NN_EMAIL: s = u->email; break;
   case USERLIST_NN_NAME: s = u->name; break;
   case USERLIST_NN_IS_PRIVILEGED:
-    s = userlist_unparse_bool(u->is_privileged); break;
+    s = xml_unparse_bool(u->is_privileged); break;
   case USERLIST_NN_IS_INVISIBLE:
-    s = userlist_unparse_bool(u->is_invisible); break;
+    s = xml_unparse_bool(u->is_invisible); break;
   case USERLIST_NN_IS_BANNED:
-    s = userlist_unparse_bool(u->is_banned); break;
+    s = xml_unparse_bool(u->is_banned); break;
   case USERLIST_NN_IS_LOCKED:
-    s = userlist_unparse_bool(u->is_locked); break;
+    s = xml_unparse_bool(u->is_locked); break;
   case USERLIST_NN_SHOW_LOGIN:
-    s = userlist_unparse_bool(u->show_login); break;
+    s = xml_unparse_bool(u->show_login); break;
   case USERLIST_NN_SHOW_EMAIL:
-    s = userlist_unparse_bool(u->show_email); break;
+    s = xml_unparse_bool(u->show_email); break;
   case USERLIST_NN_USE_COOKIES:
-    s = userlist_unparse_bool(u->default_use_cookies); break;
+    s = xml_unparse_bool(u->default_use_cookies); break;
   case USERLIST_NN_READ_ONLY:
-    s = userlist_unparse_bool(u->read_only); break;
+    s = xml_unparse_bool(u->read_only); break;
   case USERLIST_NN_CNTS_READ_ONLY:
-    s = userlist_unparse_bool(u->cnts_read_only); break;
+    s = xml_unparse_bool(u->cnts_read_only); break;
   case USERLIST_NN_NEVER_CLEAN:
-    s = userlist_unparse_bool(u->never_clean); break;
+    s = xml_unparse_bool(u->never_clean); break;
   case USERLIST_NN_SIMPLE_REGISTRATION:
-    s = userlist_unparse_bool(u->simple_registration); break;
+    s = xml_unparse_bool(u->simple_registration); break;
   case USERLIST_NN_TIMESTAMPS: break;    /* !!! */
   case USERLIST_NN_REG_TIME:
     s = userlist_unparse_date(u->registration_time, convert_null); break;
@@ -540,7 +482,7 @@ userlist_set_user_field_str(struct userlist_list *lst,
   case USERLIST_NN_SIMPLE_REGISTRATION:
     iptr = &u->simple_registration; goto do_bool_fields;
   do_bool_fields:
-    new_ival = userlist_parse_bool(field_val);
+    new_ival = xml_parse_bool(0, 0, 0, field_val, 0);
     if (new_ival < 0 || new_ival > 1) return -1;
     if (new_ival == *iptr) break;
     *iptr = new_ival;
