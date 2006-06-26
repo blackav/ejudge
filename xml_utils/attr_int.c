@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #include "expat_iface.h"
 
 int
-xml_parse_int_attr(struct xml_attn *a, int *pval)
+xml_attr_int(struct xml_attn *a, int *pval)
 {
   int x = 0, n = 0;
 
@@ -36,7 +36,7 @@ xml_parse_int_attr(struct xml_attn *a, int *pval)
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
