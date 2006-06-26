@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -332,7 +332,7 @@ teamdb_get_name(int teamid)
     err("teamdb_get_login: bad id: %d", teamid);
     return 0;
   }
-  name = users->user_map[teamid]->name;
+  name = users->user_map[teamid]->i.name;
   if (!name) name = "";
   return name;
 }
@@ -409,7 +409,7 @@ teamdb_export_team(int tid, struct teamdb_export *pdata)
   uu = users->user_map[tid];
   u_login = uu->login;
   if (!u_login) u_login = "";
-  u_name = uu->name;
+  u_name = uu->i.name;
   if (!u_name) u_name = "";
   u_flags = u_contests[tid]->flags;
 
@@ -558,7 +558,7 @@ teamdb_get_user_status_map(int *p_size, int **p_map)
   return 1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

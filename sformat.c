@@ -441,73 +441,73 @@ sformat_message(char *buf, size_t maxsize, char const *format,
             break;
           case 'c':
             papp = "";
-            if (team_data->user && team_data->user->city)
-              papp = team_data->user->city;
+            if (team_data->user && team_data->user->i.city)
+              papp = team_data->user->i.city;
             break;
           case 'C':
             papp = "";
-            if (team_data->user && team_data->user->city_en)
-              papp = team_data->user->city_en;
+            if (team_data->user && team_data->user->i.city_en)
+              papp = team_data->user->i.city_en;
             break;
           case 'o':
             papp = "";
-            if (team_data->user && team_data->user->country)
-              papp = team_data->user->country;
+            if (team_data->user && team_data->user->i.country)
+              papp = team_data->user->i.country;
             break;
           case 'O':
             papp = "";
-            if (team_data->user && team_data->user->country_en)
-              papp = team_data->user->country_en;
+            if (team_data->user && team_data->user->i.country_en)
+              papp = team_data->user->i.country_en;
             break;
           case 't':
             papp = "";
-            if (team_data->user && team_data->user->instshort)
-              papp = team_data->user->instshort;
+            if (team_data->user && team_data->user->i.instshort)
+              papp = team_data->user->i.instshort;
             break;
           case 'T':
             papp = "";
-            if (team_data->user && team_data->user->instshort_en)
-              papp = team_data->user->instshort_en;
+            if (team_data->user && team_data->user->i.instshort_en)
+              papp = team_data->user->i.instshort_en;
             break;
           case 'u':
             papp = "";
-            if (team_data->user && team_data->user->inst)
-              papp = team_data->user->inst;
+            if (team_data->user && team_data->user->i.inst)
+              papp = team_data->user->i.inst;
             break;
           case 'U':
             papp = "";
-            if (team_data->user && team_data->user->inst_en)
-              papp = team_data->user->inst_en;
+            if (team_data->user && team_data->user->i.inst_en)
+              papp = team_data->user->i.inst_en;
             break;
           case 'f':
             papp = "";
-            if (team_data->user && team_data->user->facshort)
-              papp = team_data->user->facshort;
+            if (team_data->user && team_data->user->i.facshort)
+              papp = team_data->user->i.facshort;
             break;
           case 'F':
             papp = "";
-            if (team_data->user && team_data->user->facshort_en)
-              papp = team_data->user->facshort_en;
+            if (team_data->user && team_data->user->i.facshort_en)
+              papp = team_data->user->i.facshort_en;
             break;
           case 'd':
             papp = "";
-            if (team_data->user && team_data->user->fac)
-              papp = team_data->user->fac;
+            if (team_data->user && team_data->user->i.fac)
+              papp = team_data->user->i.fac;
             break;
           case 'D':
             papp = "";
-            if (team_data->user && team_data->user->fac_en)
-              papp = team_data->user->fac_en;
+            if (team_data->user && team_data->user->i.fac_en)
+              papp = team_data->user->i.fac_en;
             break;
           case 'L':
             papp = "";
-            if (team_data->user && team_data->user->location)
-              papp = team_data->user->location;
+            if (team_data->user && team_data->user->i.location)
+              papp = team_data->user->i.location;
             break;
           case 'p':
             papp = "";
-            if (team_data->user && team_data->user->printer_name)
-              papp = team_data->user->printer_name;
+            if (team_data->user && team_data->user->i.printer_name)
+              papp = team_data->user->i.printer_name;
             break;
           case '1':
             papp = "";
@@ -619,7 +619,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           if (is_invalid) break;
           pf++;
 
-          if (!user_data || !(pm = user_data->members[idx])) {
+          if (!user_data || !(pm = user_data->i.members[idx])) {
             papp = "";
             break;
           }
@@ -690,7 +690,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           int_format_value = user_data->id;
           break;
         case 'n':
-          papp = user_data->name;
+          papp = user_data->i.name;
           if (!papp) papp = "";
           break;
         case 'l':
@@ -707,27 +707,27 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           if (!papp) papp = "";
           break;
         case 'Z':
-          if (user_data->team_passwd)
-            papp = user_data->team_passwd->b.text;
+          if (user_data->i.team_passwd)
+            papp = user_data->i.team_passwd->b.text;
           if (!papp) papp = "";
           break;
-        case 'c': papp = user_data->city; break;
-        case 'C': papp = user_data->city_en; break;
-        case 'o': papp = user_data->country; break;
-        case 'O': papp = user_data->country_en; break;
-        case 't': papp = user_data->instshort; break;
-        case 'T': papp = user_data->instshort_en; break;
-        case 'u': papp = user_data->inst; break;
-        case 'U': papp = user_data->inst_en; break;
-        case 'f': papp = user_data->facshort; break;
-        case 'F': papp = user_data->facshort_en; break;
-        case 'd': papp = user_data->fac; break;
-        case 'D': papp = user_data->fac_en; break;
-        case 'L': papp = user_data->location; break;
-        case 'p': papp = user_data->printer_name; break;
-        case 'h': papp = user_data->homepage; break;
-        case 'H': papp = user_data->phone; break;
-        case 'P': papp = user_data->languages; break;
+        case 'c': papp = user_data->i.city; break;
+        case 'C': papp = user_data->i.city_en; break;
+        case 'o': papp = user_data->i.country; break;
+        case 'O': papp = user_data->i.country_en; break;
+        case 't': papp = user_data->i.instshort; break;
+        case 'T': papp = user_data->i.instshort_en; break;
+        case 'u': papp = user_data->i.inst; break;
+        case 'U': papp = user_data->i.inst_en; break;
+        case 'f': papp = user_data->i.facshort; break;
+        case 'F': papp = user_data->i.facshort_en; break;
+        case 'd': papp = user_data->i.fac; break;
+        case 'D': papp = user_data->i.fac_en; break;
+        case 'L': papp = user_data->i.location; break;
+        case 'p': papp = user_data->i.printer_name; break;
+        case 'h': papp = user_data->i.homepage; break;
+        case 'H': papp = user_data->i.phone; break;
+        case 'P': papp = user_data->i.languages; break;
         default:
           abort();
         }
@@ -960,7 +960,7 @@ sformat_message(char *buf, size_t maxsize, char const *format,
   return used;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

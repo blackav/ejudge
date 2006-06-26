@@ -227,25 +227,25 @@ node_free(struct xml_tree *t)
     {
       struct userlist_user *p = (struct userlist_user*) t;
       xfree(p->login);
-      xfree(p->name);
+      xfree(p->i.name);
       xfree(p->email);
-      xfree(p->inst);
-      xfree(p->inst_en);
-      xfree(p->instshort);
-      xfree(p->instshort_en);
-      xfree(p->fac);
-      xfree(p->fac_en);
-      xfree(p->facshort);
-      xfree(p->facshort_en);
-      xfree(p->homepage);
-      xfree(p->city);
-      xfree(p->city_en);
-      xfree(p->country);
-      xfree(p->country_en);
-      xfree(p->location);
-      xfree(p->spelling);
-      xfree(p->printer_name);
-      xfree(p->languages);
+      xfree(p->i.inst);
+      xfree(p->i.inst_en);
+      xfree(p->i.instshort);
+      xfree(p->i.instshort_en);
+      xfree(p->i.fac);
+      xfree(p->i.fac_en);
+      xfree(p->i.facshort);
+      xfree(p->i.facshort_en);
+      xfree(p->i.homepage);
+      xfree(p->i.city);
+      xfree(p->i.city_en);
+      xfree(p->i.country);
+      xfree(p->i.country_en);
+      xfree(p->i.location);
+      xfree(p->i.spelling);
+      xfree(p->i.printer_name);
+      xfree(p->i.languages);
       xfree(p->extra1);
       xfree(p->cntsinfo);
     }
@@ -288,24 +288,24 @@ node_free(struct xml_tree *t)
   case USERLIST_T_CNTSINFO:
     {
       struct userlist_cntsinfo *p = (struct userlist_cntsinfo*) t;
-      xfree(p->name);
-      xfree(p->inst);
-      xfree(p->inst_en);
-      xfree(p->instshort);
-      xfree(p->instshort_en);
-      xfree(p->fac);
-      xfree(p->fac_en);
-      xfree(p->facshort);
-      xfree(p->facshort_en);
-      xfree(p->homepage);
-      xfree(p->city);
-      xfree(p->city_en);
-      xfree(p->country);
-      xfree(p->country_en);
-      xfree(p->location);
-      xfree(p->spelling);
-      xfree(p->printer_name);
-      xfree(p->languages);
+      xfree(p->i.name);
+      xfree(p->i.inst);
+      xfree(p->i.inst_en);
+      xfree(p->i.instshort);
+      xfree(p->i.instshort_en);
+      xfree(p->i.fac);
+      xfree(p->i.fac_en);
+      xfree(p->i.facshort);
+      xfree(p->i.facshort_en);
+      xfree(p->i.homepage);
+      xfree(p->i.city);
+      xfree(p->i.city_en);
+      xfree(p->i.country);
+      xfree(p->i.country_en);
+      xfree(p->i.location);
+      xfree(p->i.spelling);
+      xfree(p->i.printer_name);
+      xfree(p->i.languages);
     }
     break;
   }
@@ -717,18 +717,18 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
       }
       break;
     case USERLIST_A_CNTS_READ_ONLY:
-      if (xml_attr_bool(a, &ui->cnts_read_only) < 0) return -1;
+      if (xml_attr_bool(a, &ui->i.cnts_read_only) < 0) return -1;
       break;
     case USERLIST_A_LAST_CHANGE:
-      pt = &ui->last_change_time;
+      pt = &ui->i.last_change_time;
     parse_date_attr:
       if (xml_attr_date(a, pt) < 0) return -1;
       break;
     case USERLIST_A_LAST_ACCESS:
-      pt = &ui->last_access_time;
+      pt = &ui->i.last_access_time;
       goto parse_date_attr;
     case USERLIST_A_LAST_PWDCHANGE:
-      pt = &ui->last_pwdchange_time;
+      pt = &ui->i.last_pwdchange_time;
       goto parse_date_attr;
     default:
       return xml_err_attr_not_allowed(node, a);
@@ -742,81 +742,81 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
   for (p = node->first_down; p; p = p->right) {
     switch(p->tag) {
     case USERLIST_T_NAME:
-      puc = &ui->name;
+      puc = &ui->i.name;
     parse_leaf_elem:
       if (xml_leaf_elem(p, puc, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_TEAM_PASSWORD:
-      if (ui->team_passwd) return xml_err_elem_redefined(p);
-      if (!(ui->team_passwd = parse_passwd(path, p))) return -1;
+      if (ui->i.team_passwd) return xml_err_elem_redefined(p);
+      if (!(ui->i.team_passwd = parse_passwd(path, p))) return -1;
       break;
     case USERLIST_T_INST:
-      puc = &ui->inst;
+      puc = &ui->i.inst;
       goto parse_leaf_elem;
     case USERLIST_T_INST_EN:
-      puc = &ui->inst_en;
+      puc = &ui->i.inst_en;
       goto parse_leaf_elem;
     case USERLIST_T_INSTSHORT:
-      puc = &ui->instshort;
+      puc = &ui->i.instshort;
       goto parse_leaf_elem;
     case USERLIST_T_INSTSHORT_EN:
-      puc = &ui->instshort_en;
+      puc = &ui->i.instshort_en;
       goto parse_leaf_elem;
     case USERLIST_T_FAC:
-      puc = &ui->fac;
+      puc = &ui->i.fac;
       goto parse_leaf_elem;
     case USERLIST_T_FAC_EN:
-      puc = &ui->fac_en;
+      puc = &ui->i.fac_en;
       goto parse_leaf_elem;
     case USERLIST_T_FACSHORT:
-      puc = &ui->facshort;
+      puc = &ui->i.facshort;
       goto parse_leaf_elem;
     case USERLIST_T_FACSHORT_EN:
-      puc = &ui->facshort_en;
+      puc = &ui->i.facshort_en;
       goto parse_leaf_elem;
     case USERLIST_T_HOMEPAGE:
-      puc = &ui->homepage;
+      puc = &ui->i.homepage;
       goto parse_leaf_elem;
     case USERLIST_T_CITY:
-      puc = &ui->city;
+      puc = &ui->i.city;
       goto parse_leaf_elem;
     case USERLIST_T_CITY_EN:
-      puc = &ui->city_en;
+      puc = &ui->i.city_en;
       goto parse_leaf_elem;
     case USERLIST_T_COUNTRY:
-      puc = &ui->country;
+      puc = &ui->i.country;
       goto parse_leaf_elem;
     case USERLIST_T_COUNTRY_EN:
-      puc = &ui->country_en;
+      puc = &ui->i.country_en;
       goto parse_leaf_elem;
     case USERLIST_T_LOCATION:
-      puc = &ui->location;
+      puc = &ui->i.location;
       goto parse_leaf_elem;
     case USERLIST_T_SPELLING:
-      puc = &ui->spelling;
+      puc = &ui->i.spelling;
       goto parse_leaf_elem;
     case USERLIST_T_PRINTER_NAME:
-      puc = &ui->printer_name;
+      puc = &ui->i.printer_name;
       goto parse_leaf_elem;
     case USERLIST_T_LANGUAGES:
-      puc = &ui->languages;
+      puc = &ui->i.languages;
       goto parse_leaf_elem;
     case USERLIST_T_PHONE:
-      puc = &ui->phone;
+      puc = &ui->i.phone;
       goto parse_leaf_elem;
     case USERLIST_T_CONTESTANTS:
     case USERLIST_T_RESERVES:
     case USERLIST_T_COACHES:
     case USERLIST_T_ADVISORS:
     case USERLIST_T_GUESTS:
-      if (parse_members(path, p, ui->members) < 0) return -1;
+      if (parse_members(path, p, ui->i.members) < 0) return -1;
       break;
     default:
       return xml_err_elem_not_allowed(p);
     }
   }
 
-  if (!ui->name) ui->name = xstrdup("");
+  if (!ui->i.name) ui->i.name = xstrdup("");
 
   /* install this element to cntsinfo references */
   if (ui->contest_id >= usr->cntsinfo_a) {
@@ -916,7 +916,7 @@ do_parse_user(char const *path, struct userlist_user *usr)
       if (xml_attr_bool(a, &usr->read_only) < 0) return -1;
       break;
     case USERLIST_A_CNTS_READ_ONLY:
-      if (xml_attr_bool(a, &usr->cnts_read_only) < 0) return -1;
+      if (xml_attr_bool(a, &usr->i.cnts_read_only) < 0) return -1;
       break;
     case USERLIST_A_NEVER_CLEAN:
       if (xml_attr_bool(a, &usr->never_clean) < 0) return -1;
@@ -945,16 +945,16 @@ do_parse_user(char const *path, struct userlist_user *usr)
       usr->login = t->text; t->text = 0;
       break;
     case USERLIST_T_NAME:
-      if (xml_leaf_elem(t, &usr->name, 1, 1) < 0) return -1;
-      if (!usr->name) usr->name = xstrdup("");
+      if (xml_leaf_elem(t, &usr->i.name, 1, 1) < 0) return -1;
+      if (!usr->i.name) usr->i.name = xstrdup("");
       break;
     case USERLIST_T_PASSWORD:
       if (usr->register_passwd) return xml_err_elem_redefined(t);
       if (!(usr->register_passwd = parse_passwd(path, t))) return -1;
       break;
     case USERLIST_T_TEAM_PASSWORD:
-      if (usr->team_passwd) return xml_err_elem_redefined(t);
-      if (!(usr->team_passwd = parse_passwd(path, t))) return -1;
+      if (usr->i.team_passwd) return xml_err_elem_redefined(t);
+      if (!(usr->i.team_passwd = parse_passwd(path, t))) return -1;
       break;
     case USERLIST_T_EMAIL:
       if (usr->email) return xml_err_elem_redefined(t);
@@ -973,61 +973,61 @@ do_parse_user(char const *path, struct userlist_user *usr)
       if (parse_cookies(path, t, usr) < 0) return -1;
       break;
     case USERLIST_T_INST:
-      if (xml_leaf_elem(t, &usr->inst, 1, 1) < 0) return -1;
+      if (xml_leaf_elem(t, &usr->i.inst, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_INST_EN:
-      if (xml_leaf_elem(t, &usr->inst_en, 1, 1) < 0) return -1;
+      if (xml_leaf_elem(t, &usr->i.inst_en, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_INSTSHORT:
-      if (xml_leaf_elem(t, &usr->instshort, 1, 1) < 0) return -1;
+      if (xml_leaf_elem(t, &usr->i.instshort, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_INSTSHORT_EN:
-      if (xml_leaf_elem(t, &usr->instshort_en, 1, 1) < 0) return -1;
+      if (xml_leaf_elem(t, &usr->i.instshort_en, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_FAC:
-      if (xml_leaf_elem(t, &usr->fac, 1, 1) < 0) return -1;
+      if (xml_leaf_elem(t, &usr->i.fac, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_FAC_EN:
-      if (xml_leaf_elem(t, &usr->fac_en, 1, 1) < 0) return -1;
+      if (xml_leaf_elem(t, &usr->i.fac_en, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_FACSHORT:
-      if (xml_leaf_elem(t, &usr->facshort, 1, 1) < 0) return -1;
+      if (xml_leaf_elem(t, &usr->i.facshort, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_FACSHORT_EN:
-      if (xml_leaf_elem(t, &usr->facshort_en, 1, 1) < 0) return -1;
+      if (xml_leaf_elem(t, &usr->i.facshort_en, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_CITY:
-      if (xml_leaf_elem(t, &usr->city, 1, 1) < 0) return -1;
+      if (xml_leaf_elem(t, &usr->i.city, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_CITY_EN:
-      if (xml_leaf_elem(t, &usr->city_en, 1, 1) < 0) return -1;
+      if (xml_leaf_elem(t, &usr->i.city_en, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_COUNTRY:
-      if (xml_leaf_elem(t, &usr->country, 1, 1) < 0) return -1;
+      if (xml_leaf_elem(t, &usr->i.country, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_COUNTRY_EN:
-      if (xml_leaf_elem(t, &usr->country_en, 1, 1) < 0) return -1;
+      if (xml_leaf_elem(t, &usr->i.country_en, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_LOCATION:
-      if (xml_leaf_elem(t, &usr->location, 1, 1) < 0) return -1;
+      if (xml_leaf_elem(t, &usr->i.location, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_SPELLING:
-      if (xml_leaf_elem(t, &usr->spelling, 1, 1) < 0) return -1;
+      if (xml_leaf_elem(t, &usr->i.spelling, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_PRINTER_NAME:
-      if (xml_leaf_elem(t, &usr->printer_name, 1, 1) < 0) return -1;
+      if (xml_leaf_elem(t, &usr->i.printer_name, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_LANGUAGES:
-      if (xml_leaf_elem(t, &usr->languages, 1, 1) < 0) return -1;
+      if (xml_leaf_elem(t, &usr->i.languages, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_EXTRA1:
       if (xml_leaf_elem(t, &usr->extra1, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_PHONE:
-      if (xml_leaf_elem(t, &usr->phone, 1, 1) < 0) return -1;
+      if (xml_leaf_elem(t, &usr->i.phone, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_HOMEPAGE:
-      if (xml_leaf_elem(t, &usr->homepage, 1, 1) < 0) return -1;
+      if (xml_leaf_elem(t, &usr->i.homepage, 1, 1) < 0) return -1;
       break;
     case USERLIST_T_CONTESTS:
       if (parse_contest(path, t, usr) < 0) return -1;
@@ -1037,7 +1037,7 @@ do_parse_user(char const *path, struct userlist_user *usr)
     case USERLIST_T_COACHES:
     case USERLIST_T_ADVISORS:
     case USERLIST_T_GUESTS:
-      if (parse_members(path, t, usr->members) < 0) return -1;
+      if (parse_members(path, t, usr->i.members) < 0) return -1;
       break;
     case USERLIST_T_CNTSINFOS:
       if (parse_cntsinfos(path, t, usr) < 0) return -1;
@@ -1052,8 +1052,8 @@ do_parse_user(char const *path, struct userlist_user *usr)
   if (!usr->passwd)
     return xml_err_elem_undefined(&usr->b, USERLIST_T_PASSWORD);
   */
-  if (!usr->name)
-    usr->name = xstrdup("");
+  if (!usr->i.name)
+    usr->i.name = xstrdup("");
   return 0;
 }
 
@@ -1426,56 +1426,56 @@ unparse_cntsinfo(struct userlist_cntsinfo *p, FILE *f)
   fprintf(f, "    <%s %s=\"%d\"",
           tag_map[USERLIST_T_CNTSINFO], attn_map[USERLIST_A_CONTEST_ID],
           p->contest_id);
-  if (p->cnts_read_only) {
+  if (p->i.cnts_read_only) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_CNTS_READ_ONLY],
-            xml_unparse_bool(p->cnts_read_only));
+            xml_unparse_bool(p->i.cnts_read_only));
   }
-  if (p->last_change_time > 0) {
+  if (p->i.last_change_time > 0) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_CHANGE],
-            xml_unparse_date(p->last_change_time));
+            xml_unparse_date(p->i.last_change_time));
   }
-  if (p->last_access_time > 0) {
+  if (p->i.last_access_time > 0) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_ACCESS],
-            xml_unparse_date(p->last_access_time));
+            xml_unparse_date(p->i.last_access_time));
   }
-  if (p->last_pwdchange_time > 0) {
+  if (p->i.last_pwdchange_time > 0) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_PWDCHANGE],
-            xml_unparse_date(p->last_pwdchange_time));
+            xml_unparse_date(p->i.last_pwdchange_time));
   }
   fprintf(f, ">\n");
 
-  if (p->name && *p->name) {
-    xml_unparse_text(f, tag_map[USERLIST_T_NAME], p->name, sp1);
+  if (p->i.name && *p->i.name) {
+    xml_unparse_text(f, tag_map[USERLIST_T_NAME], p->i.name, sp1);
   }
 
-  if (p->team_passwd) {
+  if (p->i.team_passwd) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
              attn_map[USERLIST_A_METHOD],
-             unparse_passwd_method(p->team_passwd->method));
+             unparse_passwd_method(p->i.team_passwd->method));
     unparse_attributed_elem(f, USERLIST_T_TEAM_PASSWORD,
-                            p->team_passwd->b.text, attr_str, sp1);
+                            p->i.team_passwd->b.text, attr_str, sp1);
   }
 
-  xml_unparse_text(f, tag_map[USERLIST_T_INST], p->inst, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_INST_EN], p->inst_en, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_INSTSHORT], p->instshort, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_INSTSHORT_EN], p->instshort_en, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_FAC], p->fac, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_FAC_EN], p->fac_en, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_FACSHORT], p->facshort, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_FACSHORT_EN], p->facshort_en, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_HOMEPAGE], p->homepage, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_PHONE], p->phone, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_CITY], p->city, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_CITY_EN], p->city_en, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_COUNTRY], p->country, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_COUNTRY_EN], p->country_en, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_LOCATION], p->location, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_SPELLING], p->spelling, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_PRINTER_NAME], p->printer_name, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_LANGUAGES], p->languages, sp1);
+  xml_unparse_text(f, tag_map[USERLIST_T_INST], p->i.inst, sp1);
+  xml_unparse_text(f, tag_map[USERLIST_T_INST_EN], p->i.inst_en, sp1);
+  xml_unparse_text(f, tag_map[USERLIST_T_INSTSHORT], p->i.instshort, sp1);
+  xml_unparse_text(f, tag_map[USERLIST_T_INSTSHORT_EN], p->i.instshort_en, sp1);
+  xml_unparse_text(f, tag_map[USERLIST_T_FAC], p->i.fac, sp1);
+  xml_unparse_text(f, tag_map[USERLIST_T_FAC_EN], p->i.fac_en, sp1);
+  xml_unparse_text(f, tag_map[USERLIST_T_FACSHORT], p->i.facshort, sp1);
+  xml_unparse_text(f, tag_map[USERLIST_T_FACSHORT_EN], p->i.facshort_en, sp1);
+  xml_unparse_text(f, tag_map[USERLIST_T_HOMEPAGE], p->i.homepage, sp1);
+  xml_unparse_text(f, tag_map[USERLIST_T_PHONE], p->i.phone, sp1);
+  xml_unparse_text(f, tag_map[USERLIST_T_CITY], p->i.city, sp1);
+  xml_unparse_text(f, tag_map[USERLIST_T_CITY_EN], p->i.city_en, sp1);
+  xml_unparse_text(f, tag_map[USERLIST_T_COUNTRY], p->i.country, sp1);
+  xml_unparse_text(f, tag_map[USERLIST_T_COUNTRY_EN], p->i.country_en, sp1);
+  xml_unparse_text(f, tag_map[USERLIST_T_LOCATION], p->i.location, sp1);
+  xml_unparse_text(f, tag_map[USERLIST_T_SPELLING], p->i.spelling, sp1);
+  xml_unparse_text(f, tag_map[USERLIST_T_PRINTER_NAME], p->i.printer_name, sp1);
+  xml_unparse_text(f, tag_map[USERLIST_T_LANGUAGES], p->i.languages, sp1);
 
-  unparse_members(p->members, f);
+  unparse_members(p->i.members, f);
 
   fprintf(f, "    </%s>\n", tag_map[USERLIST_T_CNTSINFO]);
 }
@@ -1491,9 +1491,9 @@ unparse_user_short(struct userlist_user *p, FILE *f, int contest_id)
 
   if (p->cntsinfo && contest_id > 0 && contest_id < p->cntsinfo_a
       && p->cntsinfo[contest_id]) {
-    name_str = p->cntsinfo[contest_id]->name;
+    name_str = p->cntsinfo[contest_id]->i.name;
   }
-  if (!name_str) name_str = p->name;
+  if (!name_str) name_str = p->i.name;
 
   if (contest_id) {
     if (!p->contests) return;
@@ -1563,7 +1563,7 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   /* cnts_read_only is contest-specific */
   if (mode != USERLIST_MODE_STAND) {
     unparse_bool_attr(f, USERLIST_A_CNTS_READ_ONLY,
-                      cinfo?cinfo->cnts_read_only:p->cnts_read_only);
+                      cinfo?cinfo->i.cnts_read_only:p->i.cnts_read_only);
   }
   if (p->never_clean && mode != USERLIST_MODE_STAND) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_NEVER_CLEAN],
@@ -1584,17 +1584,17 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   /* last_access_time is contest-specific */
   if (mode == USERLIST_MODE_ALL) {
     unparse_date_attr(f, USERLIST_A_LAST_ACCESS,
-                      cinfo?cinfo->last_access_time:p->last_access_time);
+                      cinfo?cinfo->i.last_access_time:p->i.last_access_time);
   }
   /* last_change_time is contest-specific */
   if (mode == USERLIST_MODE_ALL) {
     unparse_date_attr(f, USERLIST_A_LAST_CHANGE,
-                      cinfo?cinfo->last_change_time:p->last_change_time);
+                      cinfo?cinfo->i.last_change_time:p->i.last_change_time);
   }
   /* last_pwdchange_time is contest-specific */
   if (mode == USERLIST_MODE_ALL) {
     unparse_date_attr(f, USERLIST_A_LAST_PWDCHANGE,
-                      cinfo?cinfo->last_pwdchange_time:p->last_pwdchange_time);
+                      cinfo?cinfo->i.last_pwdchange_time:p->i.last_pwdchange_time);
   }
   if (p->last_minor_change_time && mode == USERLIST_MODE_ALL) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_MINOR_CHANGE],
@@ -1613,15 +1613,15 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
     unparse_attributed_elem(f, USERLIST_T_PASSWORD, p->register_passwd->b.text,
                             attr_str, "    ");
   }
-  if (p->team_passwd && mode == USERLIST_MODE_ALL) {
+  if (p->i.team_passwd && mode == USERLIST_MODE_ALL) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
              attn_map[USERLIST_A_METHOD],
-             unparse_passwd_method(p->team_passwd->method));
+             unparse_passwd_method(p->i.team_passwd->method));
     unparse_attributed_elem(f, USERLIST_T_TEAM_PASSWORD,
-                            p->team_passwd->b.text, attr_str, "    ");
+                            p->i.team_passwd->b.text, attr_str, "    ");
   }
-  if (p->name && *p->name) {
-    xml_unparse_text(f, tag_map[USERLIST_T_NAME], p->name, "    ");
+  if (p->i.name && *p->i.name) {
+    xml_unparse_text(f, tag_map[USERLIST_T_NAME], p->i.name, "    ");
   }
   if (p->email) { // && mode != USERLIST_MODE_STAND) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
@@ -1633,28 +1633,28 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   }
   unparse_contests(p->contests, f, USERLIST_MODE_STAND, contest_id);
 
-  xml_unparse_text(f, tag_map[USERLIST_T_INST], p->inst, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_INST_EN], p->inst_en, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_INSTSHORT], p->instshort, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_INSTSHORT_EN], p->instshort_en, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_FAC], p->fac, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_FAC_EN], p->fac_en, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_FACSHORT], p->facshort, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_FACSHORT_EN], p->facshort_en, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_HOMEPAGE], p->homepage, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_PHONE], p->phone, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_CITY], p->city, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_CITY_EN], p->city_en, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_COUNTRY], p->country, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_COUNTRY_EN], p->country_en, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_LOCATION], p->location, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_SPELLING], p->spelling, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_PRINTER_NAME], p->printer_name, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_LANGUAGES], p->languages, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_INST], p->i.inst, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_INST_EN], p->i.inst_en, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_INSTSHORT], p->i.instshort, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_INSTSHORT_EN], p->i.instshort_en, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_FAC], p->i.fac, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_FAC_EN], p->i.fac_en, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_FACSHORT], p->i.facshort, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_FACSHORT_EN], p->i.facshort_en, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_HOMEPAGE], p->i.homepage, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_PHONE], p->i.phone, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_CITY], p->i.city, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_CITY_EN], p->i.city_en, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_COUNTRY], p->i.country, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_COUNTRY_EN], p->i.country_en, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_LOCATION], p->i.location, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_SPELLING], p->i.spelling, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_PRINTER_NAME], p->i.printer_name, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_LANGUAGES], p->i.languages, "    ");
 
   if (mode == USERLIST_MODE_STAND) {
     // generate some information about the first participant
-    struct userlist_members **pmemb = p->members;
+    struct userlist_members **pmemb = p->i.members;
 
     if (pmemb && pmemb[USERLIST_MB_CONTESTANT]
         && pmemb[USERLIST_MB_CONTESTANT]->total > 0
@@ -1669,7 +1669,7 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   }
 
   if (mode != USERLIST_MODE_STAND) {
-    unparse_members(p->members, f);
+    unparse_members(p->i.members, f);
   }
 
   if (contest_id < 0 && p->cntsinfo) {

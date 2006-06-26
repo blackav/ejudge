@@ -372,7 +372,7 @@ main(int argc, char **argv)
     while (!force_flag) {
       printf("Remove user %d,%s,%s? ", i,
              userlist->user_map[i]->login,
-             userlist->user_map[i]->name);
+             userlist->user_map[i]->i.name);
       if (!fgets(reply_buf, sizeof(reply_buf), stdin)) {
         err("cannot read input from the standard input");
         return 1;

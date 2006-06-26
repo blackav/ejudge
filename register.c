@@ -1417,37 +1417,37 @@ read_user_info_from_server(void)
   user_show_login = 0;
   user_read_only = u->read_only;
   user_email = u->email;
-  user_name = u->name;
-  user_homepage = u->homepage;
-  user_phone = u->phone;
-  user_inst = u->inst;
-  user_inst_en = u->inst_en;
-  user_instshort = u->instshort;
-  user_instshort_en = u->instshort_en;
-  user_fac = u->fac;
-  user_fac_en = u->fac_en;
-  user_facshort = u->facshort;
-  user_facshort_en = u->facshort_en;
-  user_city = u->city;
-  user_city_en = u->city_en;
-  user_country = u->country;
-  user_country_en = u->country_en;
-  user_languages = u->languages;
+  user_name = u->i.name;
+  user_homepage = u->i.homepage;
+  user_phone = u->i.phone;
+  user_inst = u->i.inst;
+  user_inst_en = u->i.inst_en;
+  user_instshort = u->i.instshort;
+  user_instshort_en = u->i.instshort_en;
+  user_fac = u->i.fac;
+  user_fac_en = u->i.fac_en;
+  user_facshort = u->i.facshort;
+  user_facshort_en = u->i.facshort_en;
+  user_city = u->i.city;
+  user_city_en = u->i.city_en;
+  user_country = u->i.country;
+  user_country_en = u->i.country_en;
+  user_languages = u->i.languages;
 
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
     if (member_max[role] <= 0) continue;
-    if (!u->members[role]) {
+    if (!u->i.members[role]) {
       if (member_cur[role] < member_init[role]) {
         member_cur[role] = member_init[role];
       }
       continue;
     }
-    member_cur[role] = u->members[role]->total;
+    member_cur[role] = u->i.members[role]->total;
     if (member_cur[role] < 0) member_cur[role] = 0;
     if (member_cur[role] > member_max[role])
       member_cur[role] = member_max[role];
     for (pers = 0; pers < member_cur[role]; pers++) {
-      m = u->members[role]->members[pers];
+      m = u->i.members[role]->members[pers];
       if (!m) continue;
 
       buf[0] = 0;
