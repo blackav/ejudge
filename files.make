@@ -167,6 +167,7 @@ COMMON_CFILES=\
  vcs.c\
  xml_utils/attr_bool.c\
  xml_utils/attr_date.c\
+ xml_utils/attr_int.c\
  xml_utils/elem_ip_mask.c\
  xml_utils/empty_text.c\
  xml_utils/err_attrs.c\
@@ -185,7 +186,6 @@ COMMON_CFILES=\
  xml_utils/parse_bool.c\
  xml_utils/parse_date.c\
  xml_utils/parse_int.c\
- xml_utils/parse_int_attr.c\
  xml_utils/parse_ip.c\
  xml_utils/parse_ip_mask.c\
  xml_utils/unparse_bool.c\
