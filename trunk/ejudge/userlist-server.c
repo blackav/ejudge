@@ -979,7 +979,7 @@ cmd_register_new_2(struct client_state *p,
   strcpy(user->login,login);
   user->email = calloc(1,data->email_length+1);
   strcpy(user->email,email);
-  user->name = xstrdup("");
+  user->i.name = xstrdup("");
   user->login_hash = login_hash;
   user->simple_registration = 1;
 
@@ -1257,7 +1257,7 @@ cmd_register_new(struct client_state *p,
   strcpy(user->login,login);
   user->email = calloc(1,data->email_length+1);
   strcpy(user->email,email);
-  user->name = xstrdup("");
+  user->i.name = xstrdup("");
   user->login_hash = login_hash;
 
   if (userlist->login_hash_table) {
@@ -1683,7 +1683,7 @@ cmd_do_login(struct client_state *p,
 
   //Login and password correct
   ans_len = sizeof(struct userlist_pk_login_ok)
-    + strlen(user->name) + 1 + strlen(user->login) + 1;
+    + strlen(user->i.name) + 1 + strlen(user->login) + 1;
   answer = alloca(ans_len);
 
   cookie = create_cookie(user);
@@ -1702,9 +1702,9 @@ cmd_do_login(struct client_state *p,
   answer->contest_id = data->contest_id;
   answer->login_len = strlen(user->login);
   name = answer->data + answer->login_len + 1;
-  answer->name_len = strlen(user->name);
+  answer->name_len = strlen(user->i.name);
   strcpy(answer->data, user->login);
-  strcpy(name, user->name);
+  strcpy(name, user->i.name);
   enqueue_reply_to_client(p,ans_len,answer);
 
   user->last_login_time = cur_time;
@@ -1821,12 +1821,12 @@ cmd_team_login(struct client_state *p, int pkt_len,
       return;
     }
   } else {
-    if (!u->team_passwd) {
+    if (!u->i.team_passwd) {
       err("%s -> EMPTY PASSWORD", logbuf);
       send_reply(p, -ULS_ERR_INVALID_PASSWORD);
       return;
     }
-    if(passwd_check(&pwdint, u->team_passwd) < 0){
+    if(passwd_check(&pwdint, u->i.team_passwd) < 0){
       err("%s -> WRONG PASSWORD", logbuf);
       send_reply(p, -ULS_ERR_INVALID_PASSWORD);
       return;
@@ -1851,7 +1851,7 @@ cmd_team_login(struct client_state *p, int pkt_len,
   }
 
   login_len = strlen(u->login);
-  name_len = strlen(u->name);
+  name_len = strlen(u->i.name);
   out_size = sizeof(*out) + login_len + name_len + 2;
   out = alloca(out_size);
   memset(out, 0, out_size);
@@ -1876,7 +1876,7 @@ cmd_team_login(struct client_state *p, int pkt_len,
   out->login_len = login_len;
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
-  strcpy(name_ptr, u->name);
+  strcpy(name_ptr, u->i.name);
   
   p->user_id = u->id;
   p->ip = data->origin_ip;
@@ -2053,7 +2053,7 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   }
 
   login_len = strlen(u->login);
-  name_len = strlen(u->name);
+  name_len = strlen(u->i.name);
   out_size = sizeof(*out) + login_len + name_len;
   out = alloca(out_size);
   memset(out, 0, out_size);
@@ -2080,7 +2080,7 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   out->login_len = login_len;
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
-  strcpy(name_ptr, u->name);
+  strcpy(name_ptr, u->i.name);
   
   p->user_id = u->id;
   p->priv_level = data->priv_level;
@@ -2172,7 +2172,7 @@ cmd_check_cookie(struct client_state *p,
   }
 
   anslen = sizeof(struct userlist_pk_login_ok)
-    + strlen(user->name) + 1 + strlen(user->login) + 1;
+    + strlen(user->i.name) + 1 + strlen(user->login) + 1;
   answer = alloca(anslen);
   memset(answer, 0, anslen);
   if (data->locale_id != -1) {
@@ -2191,10 +2191,10 @@ cmd_check_cookie(struct client_state *p,
   answer->contest_id = cookie->contest_id;
   answer->login_len = strlen(user->login);
   name_beg = answer->data + answer->login_len + 1;
-  answer->name_len = strlen(user->name);
+  answer->name_len = strlen(user->i.name);
   answer->cookie = cookie->cookie;
   strcpy(answer->data, user->login);
-  strcpy(name_beg, user->name);
+  strcpy(name_beg, user->i.name);
   enqueue_reply_to_client(p,anslen,answer);
   user->last_login_time = cur_time;
   dirty = 1;
@@ -2368,7 +2368,7 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   }
 
   login_len = strlen(u->login);
-  name_len = strlen(u->name);
+  name_len = strlen(u->i.name);
   out_size = sizeof(*out) + login_len + name_len + 2;
   out = alloca(out_size);
   memset(out, 0, out_size);
@@ -2383,7 +2383,7 @@ cmd_team_check_cookie(struct client_state *p, int pkt_len,
   out->login_len = login_len;
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
-  strcpy(name_ptr, u->name);
+  strcpy(name_ptr, u->i.name);
   
   p->user_id = u->id;
   p->ip = data->origin_ip;
@@ -2578,7 +2578,7 @@ cmd_priv_check_cookie(struct client_state *p,
   }
 
   login_len = strlen(u->login);
-  name_len = strlen(u->name);
+  name_len = strlen(u->i.name);
   out_size = sizeof(*out) + login_len + name_len;
   out = alloca(out_size);
   memset(out, 0, out_size);
@@ -2593,7 +2593,7 @@ cmd_priv_check_cookie(struct client_state *p,
   out->name_len = name_len;
   out->priv_level = data->priv_level;
   strcpy(login_ptr, u->login);
-  strcpy(name_ptr, u->name);
+  strcpy(name_ptr, u->i.name);
   
   p->user_id = u->id;
   p->priv_level = out->priv_level;
@@ -3031,8 +3031,8 @@ find_member_by_serial(struct userlist_user *u, int serial,
   struct userlist_member *m;
 
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
-    if (!u->members[role]) continue;
-    ms = u->members[role];
+    if (!u->i.members[role]) continue;
+    ms = u->i.members[role];
     for (i = 0; i < ms->total; i++) {
       if (!ms->members[i]) continue;
       m = ms->members[i];
@@ -3055,7 +3055,7 @@ unlink_member(struct userlist_user *u, int role, int pers)
 
   ASSERT(u);
   ASSERT(role >= 0 && role < CONTEST_LAST_MEMBER);
-  ms = u->members[role];
+  ms = u->i.members[role];
   ASSERT(ms);
   ASSERT(pers >= 0 && pers < ms->total);
   m = ms->members[pers];
@@ -3073,7 +3073,7 @@ unlink_member(struct userlist_user *u, int role, int pers)
   if (ms->total) return m;
 
   // we now remove list structure
-  u->members[role] = 0;
+  u->i.members[role] = 0;
   xml_unlink_node(&ms->b);
   userlist_free(&ms->b);
   return m;
@@ -3086,10 +3086,10 @@ link_member(struct userlist_user *u, int role, struct userlist_member *m)
 
   ASSERT(u);
   ASSERT(role >= 0 && role < CONTEST_LAST_MEMBER);
-  ms = u->members[role];
+  ms = u->i.members[role];
   if (!ms) {
     ms = (struct userlist_members *) userlist_node_alloc(role + USERLIST_T_CONTESTANTS);
-    u->members[role] = ms;
+    u->i.members[role] = ms;
     xml_link_node_last(&u->b, &ms->b);
   }
   if (ms->total == ms->allocd) {
@@ -3174,9 +3174,9 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
   }
 
   // update the user's fields
-  if (needs_name_update(old_u->name, new_u->name)) {
-    xfree(old_u->name);
-    old_u->name = xstrdup(new_u->name);
+  if (needs_name_update(old_u->i.name, new_u->i.name)) {
+    xfree(old_u->i.name);
+    old_u->i.name = xstrdup(new_u->i.name);
     if (!daemon_mode) info("%d: name updated", p->id);
     updated = 1;
 
@@ -3193,87 +3193,87 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
       }
     }
   }
-  if (needs_update(old_u->homepage, new_u->homepage)) {
-    xfree(old_u->homepage);
-    old_u->homepage = xstrdup(new_u->homepage);
+  if (needs_update(old_u->i.homepage, new_u->i.homepage)) {
+    xfree(old_u->i.homepage);
+    old_u->i.homepage = xstrdup(new_u->i.homepage);
     if (!daemon_mode) info("%d: homepage updated", p->id);
     updated = 1;
   }
-  if (needs_update(old_u->phone, new_u->phone)) {
-    xfree(old_u->phone);
-    old_u->phone = xstrdup(new_u->phone);
+  if (needs_update(old_u->i.phone, new_u->i.phone)) {
+    xfree(old_u->i.phone);
+    old_u->i.phone = xstrdup(new_u->i.phone);
     if (!daemon_mode) info("%d: phone updated", p->id);
     updated = 1;
   }
-  if (needs_update(old_u->inst, new_u->inst)) {
-    xfree(old_u->inst);
-    old_u->inst = xstrdup(new_u->inst);
+  if (needs_update(old_u->i.inst, new_u->i.inst)) {
+    xfree(old_u->i.inst);
+    old_u->i.inst = xstrdup(new_u->i.inst);
     if (!daemon_mode) info("%d: inst updated", p->id);
     updated = 1;
   }
-  if (needs_update(old_u->inst_en, new_u->inst_en)) {
-    xfree(old_u->inst_en);
-    old_u->inst_en = xstrdup(new_u->inst_en);
+  if (needs_update(old_u->i.inst_en, new_u->i.inst_en)) {
+    xfree(old_u->i.inst_en);
+    old_u->i.inst_en = xstrdup(new_u->i.inst_en);
     if (!daemon_mode) info("%d: inst_en updated", p->id);
     updated = 1;
   }
-  if (needs_update(old_u->instshort, new_u->instshort)) {
-    xfree(old_u->instshort);
-    old_u->instshort = xstrdup(new_u->instshort);
+  if (needs_update(old_u->i.instshort, new_u->i.instshort)) {
+    xfree(old_u->i.instshort);
+    old_u->i.instshort = xstrdup(new_u->i.instshort);
     if (!daemon_mode) info("%d: instshort updated", p->id);
     updated = 1;
   }
-  if (needs_update(old_u->instshort_en, new_u->instshort_en)) {
-    xfree(old_u->instshort_en);
-    old_u->instshort_en = xstrdup(new_u->instshort_en);
+  if (needs_update(old_u->i.instshort_en, new_u->i.instshort_en)) {
+    xfree(old_u->i.instshort_en);
+    old_u->i.instshort_en = xstrdup(new_u->i.instshort_en);
     if (!daemon_mode) info("%d: instshort_en updated", p->id);
     updated = 1;
   }
-  if (needs_update(old_u->fac, new_u->fac)) {
-    xfree(old_u->fac);
-    old_u->fac = xstrdup(new_u->fac);
+  if (needs_update(old_u->i.fac, new_u->i.fac)) {
+    xfree(old_u->i.fac);
+    old_u->i.fac = xstrdup(new_u->i.fac);
     if (!daemon_mode) info("%d: fac updated", p->id);
     updated = 1;
   }
-  if (needs_update(old_u->fac_en, new_u->fac_en)) {
-    xfree(old_u->fac_en);
-    old_u->fac_en = xstrdup(new_u->fac_en);
+  if (needs_update(old_u->i.fac_en, new_u->i.fac_en)) {
+    xfree(old_u->i.fac_en);
+    old_u->i.fac_en = xstrdup(new_u->i.fac_en);
     if (!daemon_mode) info("%d: fac_en updated", p->id);
     updated = 1;
   }
-  if (needs_update(old_u->facshort, new_u->facshort)) {
-    xfree(old_u->facshort);
-    old_u->facshort = xstrdup(new_u->facshort);
+  if (needs_update(old_u->i.facshort, new_u->i.facshort)) {
+    xfree(old_u->i.facshort);
+    old_u->i.facshort = xstrdup(new_u->i.facshort);
     if (!daemon_mode) info("%d: facshort updated", p->id);
     updated = 1;
   }
-  if (needs_update(old_u->facshort_en, new_u->facshort_en)) {
-    xfree(old_u->facshort_en);
-    old_u->facshort_en = xstrdup(new_u->facshort_en);
+  if (needs_update(old_u->i.facshort_en, new_u->i.facshort_en)) {
+    xfree(old_u->i.facshort_en);
+    old_u->i.facshort_en = xstrdup(new_u->i.facshort_en);
     if (!daemon_mode) info("%d: facshort_en updated", p->id);
     updated = 1;
   }
-  if (needs_update(old_u->city, new_u->city)) {
-    xfree(old_u->city);
-    old_u->city = xstrdup(new_u->city);
+  if (needs_update(old_u->i.city, new_u->i.city)) {
+    xfree(old_u->i.city);
+    old_u->i.city = xstrdup(new_u->i.city);
     if (!daemon_mode) info("%d: city updated", p->id);
     updated = 1;
   }
-  if (needs_update(old_u->city_en, new_u->city_en)) {
-    xfree(old_u->city_en);
-    old_u->city_en = xstrdup(new_u->city_en);
+  if (needs_update(old_u->i.city_en, new_u->i.city_en)) {
+    xfree(old_u->i.city_en);
+    old_u->i.city_en = xstrdup(new_u->i.city_en);
     if (!daemon_mode) info("%d: city_en updated", p->id);
     updated = 1;
   }
-  if (needs_update(old_u->country, new_u->country)) {
-    xfree(old_u->country);
-    old_u->country = xstrdup(new_u->country);
+  if (needs_update(old_u->i.country, new_u->i.country)) {
+    xfree(old_u->i.country);
+    old_u->i.country = xstrdup(new_u->i.country);
     if (!daemon_mode) info("%d: country updated", p->id);
     updated = 1;
   }
-  if (needs_update(old_u->country_en, new_u->country_en)) {
-    xfree(old_u->country_en);
-    old_u->country_en = xstrdup(new_u->country_en);
+  if (needs_update(old_u->i.country_en, new_u->i.country_en)) {
+    xfree(old_u->i.country_en);
+    old_u->i.country_en = xstrdup(new_u->i.country_en);
     if (!daemon_mode) info("%d: country_en updated", p->id);
     updated = 1;
   }
@@ -3291,9 +3291,9 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
     updated = 1;
   }
   */
-  if (needs_update(old_u->languages, new_u->languages)) {
-    xfree(old_u->languages);
-    old_u->languages = xstrdup(new_u->languages);
+  if (needs_update(old_u->i.languages, new_u->i.languages)) {
+    xfree(old_u->i.languages);
+    old_u->i.languages = xstrdup(new_u->i.languages);
     if (!daemon_mode) info("%d: languages updated", p->id);
     updated = 1;
   }
@@ -3301,7 +3301,7 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
   // move members
  restart_movement:
   for (old_role = 0; old_role < CONTEST_LAST_MEMBER; old_role++) {
-    old_ms = old_u->members[old_role];
+    old_ms = old_u->i.members[old_role];
     role_str = userlist_tag_to_str(old_role + USERLIST_T_CONTESTANTS);
     if (!old_ms) continue;
     for (old_pers = 0; old_pers < old_ms->total; old_pers++) {
@@ -3329,7 +3329,7 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
   // update members
   for (old_role = 0; old_role < CONTEST_LAST_MEMBER; old_role++) {
     role_str = userlist_tag_to_str(old_role + USERLIST_T_CONTESTANTS);
-    old_ms = old_u->members[old_role];
+    old_ms = old_u->i.members[old_role];
     if (!old_ms) continue;
     for (old_pers = 0; old_pers < old_ms->total; old_pers++) {
       old_m = old_ms->members[old_pers];
@@ -3511,7 +3511,7 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
  restart_inserting:
   for (new_role = 0; new_role < CONTEST_LAST_MEMBER; new_role++) {
     role_str = userlist_tag_to_str(new_role + USERLIST_T_CONTESTANTS);
-    new_ms = new_u->members[new_role];
+    new_ms = new_u->i.members[new_role];
     if (!new_ms) continue;
     for (new_pers = 0; new_pers < new_ms->total; new_pers++) {
       new_m = new_ms->members[new_pers];
@@ -3539,8 +3539,8 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
         userlist_free(&new_m->b);
         goto restart_inserting;
       }
-      if (old_u->members[new_role]
-          && old_u->members[new_role]->total >= max_count) {
+      if (old_u->i.members[new_role]
+          && old_u->i.members[new_role]->total >= max_count) {
         err("%s -> too many members for role %s", msg, role_str);
         old_m = unlink_member(new_u, new_role, new_pers);
         ASSERT(old_m == new_m);
@@ -3788,8 +3788,8 @@ cmd_team_set_passwd(struct client_state *p, int pkt_len,
   }
 
   // verify the existing password
-  if (u->team_passwd) {
-    if (passwd_check(&oldint, u->team_passwd) < 0) {
+  if (u->i.team_passwd) {
+    if (passwd_check(&oldint, u->i.team_passwd) < 0) {
       err("%s -> OLD team password does not match", logbuf);
       if (passwd_check(&oldint, u->register_passwd) < 0) {
         err("%s -> OLD registration password does not match", logbuf);
@@ -3806,16 +3806,16 @@ cmd_team_set_passwd(struct client_state *p, int pkt_len,
   }
 
   // if team passwd entry does not exist, create it
-  if (!u->team_passwd) {
+  if (!u->i.team_passwd) {
     struct userlist_passwd *tt;
     tt=(struct userlist_passwd*)userlist_node_alloc(USERLIST_T_TEAM_PASSWORD);
-    u->team_passwd = tt;
+    u->i.team_passwd = tt;
     xml_link_node_last(&u->b, &tt->b);
   } else {
-    xfree(u->team_passwd->b.text);
+    xfree(u->i.team_passwd->b.text);
   }
-  u->team_passwd->b.text = xstrdup(newint.pwds[USERLIST_PWD_SHA1]);
-  u->team_passwd->method = USERLIST_PWD_SHA1;
+  u->i.team_passwd->b.text = xstrdup(newint.pwds[USERLIST_PWD_SHA1]);
+  u->i.team_passwd->method = USERLIST_PWD_SHA1;
   remove_all_user_cookies(u);
 
   u->last_pwdchange_time = cur_time;
@@ -4046,7 +4046,7 @@ cmd_remove_member(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_BAD_MEMBER);
     return;
   }
-  ms = u->members[data->role_id];
+  ms = u->i.members[data->role_id];
   if (!ms) {
     err("%s -> no members with that role", logbuf);
     send_reply(p, -ULS_ERR_BAD_MEMBER);
@@ -4164,7 +4164,7 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
     l10n_setlocale(locale_id);
     fprintf(f, "<%s>%s: %s</%s>\n",
             d->users_head_style,
-            _("Detailed information for user (team)"), u->name,
+            _("Detailed information for user (team)"), u->i.name,
             d->users_head_style);
     fprintf(f, "<h3>%s</h3>\n", _("General information"));
     fprintf(f, "<table>\n");
@@ -4181,18 +4181,18 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
               _("E-mail"), d->users_verb_style, u->email, u->email);
     }
     fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
-            d->users_verb_style, _("Name"), d->users_verb_style, u->name);
+            d->users_verb_style, _("Name"), d->users_verb_style, u->i.name);
     notset = _("<i>Not set</i>");
     if (!d || d->fields[CONTEST_F_HOMEPAGE]) {
-      if (!u->homepage) {
+      if (!u->i.homepage) {
         snprintf(buf, sizeof(buf), "%s", notset);
       } else {
-        if (!strncasecmp(u->homepage, "http://", 7)) {
+        if (!strncasecmp(u->i.homepage, "http://", 7)) {
           snprintf(buf, sizeof(buf), "<a href=\"%s\">%s</a>",
-                   u->homepage, u->homepage);
+                   u->i.homepage, u->i.homepage);
         } else {
           snprintf(buf, sizeof(buf), "<a href=\"http://%s\">%s</a>",
-                   u->homepage, u->homepage);
+                   u->i.homepage, u->i.homepage);
         }
       }
       fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
@@ -4202,62 +4202,62 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
     if (!d || d->fields[CONTEST_F_INST]) {
       fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
               d->users_verb_style, _("Institution"),
-              d->users_verb_style, u->inst?u->inst:notset);
+              d->users_verb_style, u->i.inst?u->i.inst:notset);
     }
     if (!d || d->fields[CONTEST_F_INST_EN]) {
       fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
               d->users_verb_style, _("Institution (En)"),
-              d->users_verb_style, u->inst_en?u->inst_en:notset);
+              d->users_verb_style, u->i.inst_en?u->i.inst_en:notset);
     }
     if (!d || d->fields[CONTEST_F_INSTSHORT]) {
       fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
               d->users_verb_style, _("Institution (short)"),
-              d->users_verb_style, u->instshort?u->instshort:notset);
+              d->users_verb_style, u->i.instshort?u->i.instshort:notset);
     }
     if (!d || d->fields[CONTEST_F_INSTSHORT_EN]) {
       fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
               d->users_verb_style, _("Institution (short) (En)"),
-              d->users_verb_style, u->instshort_en?u->instshort_en:notset);
+              d->users_verb_style, u->i.instshort_en?u->i.instshort_en:notset);
     }
     if (!d || d->fields[CONTEST_F_FAC]) {
       fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
               d->users_verb_style, _("Faculty"),
-              d->users_verb_style, u->fac?u->fac:notset);
+              d->users_verb_style, u->i.fac?u->i.fac:notset);
     }
     if (!d || d->fields[CONTEST_F_FAC_EN]) {
       fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
               d->users_verb_style, _("Faculty (En)"),
-              d->users_verb_style, u->fac_en?u->fac_en:notset);
+              d->users_verb_style, u->i.fac_en?u->i.fac_en:notset);
     }
     if (!d || d->fields[CONTEST_F_FACSHORT]) {
       fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
               d->users_verb_style, _("Faculty (short)"),
-              d->users_verb_style, u->facshort?u->facshort:notset);
+              d->users_verb_style, u->i.facshort?u->i.facshort:notset);
     }
     if (!d || d->fields[CONTEST_F_FACSHORT_EN]) {
       fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
               d->users_verb_style, _("Faculty (short) (En)"),
-              d->users_verb_style, u->facshort_en?u->facshort_en:notset);
+              d->users_verb_style, u->i.facshort_en?u->i.facshort_en:notset);
     }
     if (!d || d->fields[CONTEST_F_CITY]) {
       fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
               d->users_verb_style, _("City"),
-              d->users_verb_style, u->city?u->city:notset);
+              d->users_verb_style, u->i.city?u->i.city:notset);
     }
     if (!d || d->fields[CONTEST_F_CITY_EN]) {
       fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
               d->users_verb_style, _("City (En)"),
-              d->users_verb_style, u->city_en?u->city_en:notset);
+              d->users_verb_style, u->i.city_en?u->i.city_en:notset);
     }
     if (!d || d->fields[CONTEST_F_COUNTRY]) {
       fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
               d->users_verb_style, _("Country"),
-              d->users_verb_style, u->country?u->country:notset);
+              d->users_verb_style, u->i.country?u->i.country:notset);
     }
     if (!d || d->fields[CONTEST_F_COUNTRY_EN]) {
       fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
               d->users_verb_style, _("Country (En)"),
-              d->users_verb_style, u->country_en?u->country_en:notset);
+              d->users_verb_style, u->i.country_en?u->i.country_en:notset);
     }
     /* Location is never shown
     if (!d || d->fields[CONTEST_F_LOCATION]) {
@@ -4269,7 +4269,7 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
     if (!d || d->fields[CONTEST_F_LANGUAGES]) {
       fprintf(f, "<tr><td%s>%s:</td><td%s>%s</td></tr>\n",
               d->users_verb_style, _("Prog. languages"),
-              d->users_verb_style, u->languages?u->languages:notset);
+              d->users_verb_style, u->i.languages?u->i.languages:notset);
     }
 
     fprintf(f, "</table>\n");
@@ -4278,13 +4278,13 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
       if (d && !d->members[role]) continue;
       if (d && d->members[role] && d->members[role]->max_count <= 0)
         continue;
-      if (!u->members[role] || !u->members[role]->total)
+      if (!u->i.members[role] || !u->i.members[role]->total)
         continue;
       fprintf(f, "<h3>%s</h3>\n", gettext(member_string_pl[role]));
-      for (pers = 0; pers < u->members[role]->total; pers++) {
+      for (pers = 0; pers < u->i.members[role]->total; pers++) {
         if (d && d->members[role] && pers >= d->members[role]->max_count)
           break;
-        m = u->members[role]->members[pers];
+        m = u->i.members[role]->members[pers];
         if (!m) continue;
         fprintf(f, "<h3>%s %d</h3>\n", gettext(member_string[role]),
                 pers + 1);
@@ -4544,7 +4544,7 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
     } else {
       // FIXME: do html armoring?
       fprintf(f, "<td%s>%d</td>", d->users_table_style, us[i]->id);
-      s = us[i]->name;
+      s = us[i]->i.name;
       if (!s) {
         fprintf(f, "<td%s>&nbsp;</td>", d->users_table_style);
       } else if (!url) {
@@ -4557,20 +4557,20 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
         fprintf(f, "\">%s</a></td>", s);
       }
       if (!locale_id) {
-        s = us[i]->instshort_en;
-        if (!s) s = us[i]->instshort;
+        s = us[i]->i.instshort_en;
+        if (!s) s = us[i]->i.instshort;
       } else {
-        s = us[i]->instshort;
-        if (!s) s = us[i]->instshort_en;
+        s = us[i]->i.instshort;
+        if (!s) s = us[i]->i.instshort_en;
       }
       if (!s) s = "&nbsp;";
       fprintf(f, "<td%s>%s</td>", d->users_table_style, s);
       if (!locale_id) {
-        s = us[i]->facshort_en;
-        if (!s) s = us[i]->facshort;
+        s = us[i]->i.facshort_en;
+        if (!s) s = us[i]->i.facshort;
       } else {
-        s = us[i]->facshort;
-        if (!s) s = us[i]->facshort_en;
+        s = us[i]->i.facshort;
+        if (!s) s = us[i]->i.facshort_en;
       }
       if (!s) s = "&nbsp;";
       fprintf(f, "<td%s>%s</td>", d->users_table_style, s);
@@ -4623,12 +4623,12 @@ do_dump_database(FILE *f, int contest_id, struct contest_desc *d, int html_flag)
 
     pers_tot = 0;
     for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
-      if (!u->members[role]) continue;
-      for (pers = 0; pers < u->members[role]->total; pers++) {
+      if (!u->i.members[role]) continue;
+      for (pers = 0; pers < u->i.members[role]->total; pers++) {
         unsigned char nbuf[32] = { 0 };
         unsigned char *lptr = nbuf;
 
-        if (!(m = u->members[role]->members[pers])) continue;
+        if (!(m = u->i.members[role]->members[pers])) continue;
         if (role == CONTEST_M_CONTESTANT || role == CONTEST_M_RESERVE) {
           snprintf(nbuf, sizeof(nbuf), "%d", m->grade);
           lptr = nbuf;
@@ -4638,22 +4638,22 @@ do_dump_database(FILE *f, int contest_id, struct contest_desc *d, int html_flag)
 
         pers_tot++;
         fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%d;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
-                u->id, u->login, u->name, u->email,
-                u->inst?u->inst:notset,
-                u->inst_en?u->inst_en:notset,
-                u->instshort?u->instshort:notset,
-                u->instshort_en?u->instshort_en:notset,
-                u->fac?u->fac:notset,
-                u->fac_en?u->fac_en:notset,
-                u->facshort?u->facshort:notset,
-                u->facshort_en?u->facshort_en:notset,
-                u->city?u->city:notset,
-                u->city_en?u->city_en:notset,
-                u->country?u->country:notset,
-                u->country_en?u->country_en:notset,
-                u->location?u->location:notset,
-                u->printer_name?u->printer_name:notset,
-                u->languages?u->languages:notset,
+                u->id, u->login, u->i.name, u->email,
+                u->i.inst?u->i.inst:notset,
+                u->i.inst_en?u->i.inst_en:notset,
+                u->i.instshort?u->i.instshort:notset,
+                u->i.instshort_en?u->i.instshort_en:notset,
+                u->i.fac?u->i.fac:notset,
+                u->i.fac_en?u->i.fac_en:notset,
+                u->i.facshort?u->i.facshort:notset,
+                u->i.facshort_en?u->i.facshort_en:notset,
+                u->i.city?u->i.city:notset,
+                u->i.city_en?u->i.city_en:notset,
+                u->i.country?u->i.country:notset,
+                u->i.country_en?u->i.country_en:notset,
+                u->i.location?u->i.location:notset,
+                u->i.printer_name?u->i.printer_name:notset,
+                u->i.languages?u->i.languages:notset,
                 statstr, invstr, banstr,
                 m->serial,
                 gettext(member_string[role]),
@@ -4669,22 +4669,22 @@ do_dump_database(FILE *f, int contest_id, struct contest_desc *d, int html_flag)
     }
     if (!pers_tot) {
       fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
-              u->id, u->login, u->name, u->email,
-              u->inst?u->inst:notset,
-              u->inst_en?u->inst_en:notset,
-              u->instshort?u->instshort:notset,
-              u->instshort_en?u->instshort_en:notset,
-              u->fac?u->fac:notset,
-              u->fac_en?u->fac_en:notset,
-              u->facshort?u->facshort:notset,
-              u->facshort_en?u->facshort_en:notset,
-              u->city?u->city:notset,
-              u->city_en?u->city_en:notset,
-              u->country?u->country:notset,
-              u->country_en?u->country_en:notset,
-              u->location?u->location:notset,
-              u->printer_name?u->printer_name:notset,
-              u->languages?u->languages:notset,
+              u->id, u->login, u->i.name, u->email,
+              u->i.inst?u->i.inst:notset,
+              u->i.inst_en?u->i.inst_en:notset,
+              u->i.instshort?u->i.instshort:notset,
+              u->i.instshort_en?u->i.instshort_en:notset,
+              u->i.fac?u->i.fac:notset,
+              u->i.fac_en?u->i.fac_en:notset,
+              u->i.facshort?u->i.facshort:notset,
+              u->i.facshort_en?u->i.facshort_en:notset,
+              u->i.city?u->i.city:notset,
+              u->i.city_en?u->i.city_en:notset,
+              u->i.country?u->i.country:notset,
+              u->i.country_en?u->i.country_en:notset,
+              u->i.location?u->i.location:notset,
+              u->i.printer_name?u->i.printer_name:notset,
+              u->i.languages?u->i.languages:notset,
               statstr, invstr, banstr,
               "", "", "", "", "", "", "");
     }
@@ -4709,22 +4709,22 @@ do_dump_whole_database(FILE *f, int contest_id, struct contest_desc *d,
     if (!(u = userlist->user_map[i])) continue;
 
     fprintf(f, ";%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
-            u->id, u->login, u->name, u->email,
-            u->inst?u->inst:notset,
-            u->inst_en?u->inst_en:notset,
-            u->instshort?u->instshort:notset,
-            u->instshort_en?u->instshort_en:notset,
-            u->fac?u->fac:notset,
-            u->fac_en?u->fac_en:notset,
-            u->facshort?u->facshort:notset,
-            u->facshort_en?u->facshort_en:notset,
-            u->city?u->city:notset,
-            u->city_en?u->city_en:notset,
-            u->country?u->country:notset,
-            u->country_en?u->country_en:notset,
-            u->location?u->location:notset,
-            u->printer_name?u->printer_name:notset,
-            u->languages?u->languages:notset);
+            u->id, u->login, u->i.name, u->email,
+            u->i.inst?u->i.inst:notset,
+            u->i.inst_en?u->i.inst_en:notset,
+            u->i.instshort?u->i.instshort:notset,
+            u->i.instshort_en?u->i.instshort_en:notset,
+            u->i.fac?u->i.fac:notset,
+            u->i.fac_en?u->i.fac_en:notset,
+            u->i.facshort?u->i.facshort:notset,
+            u->i.facshort_en?u->i.facshort_en:notset,
+            u->i.city?u->i.city:notset,
+            u->i.city_en?u->i.city_en:notset,
+            u->i.country?u->i.country:notset,
+            u->i.country_en?u->i.country_en:notset,
+            u->i.location?u->i.location:notset,
+            u->i.printer_name?u->i.printer_name:notset,
+            u->i.languages?u->i.languages:notset);
     }
 }
 
@@ -5060,7 +5060,7 @@ cmd_admin_process(struct client_state *p, int pkt_len,
 
   login = u->login;
   if (!login) login = "";
-  name = u->name;
+  name = u->i.name;
   if (!name || !*name) name = u->login;
   login_len = strlen(login);
   name_len = strlen(name);
@@ -5131,7 +5131,7 @@ do_generate_passwd(int contest_id, FILE *log)
   // html table header
     fprintf(log, "<tr><td><b>User ID</b></td><td><b>User Login</b></td><td><b>User Name</b></td><td><b>New User Login Password</b></td><td><b>Location</b></td></tr>\n");
     fprintf(log, "<tr><td>%d</td><td>%s</td><td>%s</td><td><tt>%s</tt></td><td><tt>%s</tt></td></tr>\n",
-            u->id, u->login, u->name, buf, u->location?(char*)u->location:"N/A");
+            u->id, u->login, u->i.name, buf, u->i.location?(char*)u->i.location:"N/A");
   }
   fprintf(log, "</table>\n");
 
@@ -5239,10 +5239,10 @@ do_generate_team_passwd(int contest_id, FILE *log)
       userlist_free(t);
       u->cookies = 0;
     }
-    if (!(p = u->team_passwd)) {
+    if (!(p = u->i.team_passwd)) {
       p=(struct userlist_passwd*)userlist_node_alloc(USERLIST_T_TEAM_PASSWORD);
       xml_link_node_last(&u->b, &p->b);
-      u->team_passwd = p;
+      u->i.team_passwd = p;
     }
     if (p->b.text) {
       xfree(p->b.text);
@@ -5256,7 +5256,7 @@ do_generate_team_passwd(int contest_id, FILE *log)
   // html table header
     fprintf(log, "<tr><td><b>User ID</b></td><td><b>User Login</b></td><td><b>User Name</b></td><td><b>New User Password</b></td><td><b>Location</b></td></tr>\n");
     fprintf(log, "<tr><td>%d</td><td>%s</td><td>%s</td><td><tt>%s</tt></td><td><tt>%s</tt></td></tr>\n",
-            u->id, u->login, u->name, buf, u->location?(char*)u->location:"N/A");
+            u->id, u->login, u->i.name, buf, u->i.location?(char*)u->i.location:"N/A");
   }
   fprintf(log, "</table>\n");
 
@@ -5359,12 +5359,12 @@ do_clear_team_passwords(int contest_id)
       userlist_free(t);
       u->cookies = 0;
     }
-    if ((p = u->team_passwd)) {
+    if ((p = u->i.team_passwd)) {
       if (!daemon_mode)
         info("removed team password for %d (%s)", u->id, u->login);
       xml_unlink_node((struct xml_tree*) p);
       userlist_free((struct xml_tree*) p);
-      u->team_passwd = 0;
+      u->i.team_passwd = 0;
     }
   }
 
@@ -5734,13 +5734,13 @@ cmd_delete_field(struct client_state *p, int pkt_len,
   } // done with (data->role == -1)
 
   // other roles: contestants, reserves, advisors, coaches, guests
-  if (!u->members[data->role]
-      || data->pers < 0 || data->pers >= u->members[data->role]->total) {
+  if (!u->i.members[data->role]
+      || data->pers < 0 || data->pers >= u->i.members[data->role]->total) {
     err("%s -> invalid pers", logbuf);
     send_reply(p, -ULS_ERR_BAD_MEMBER);
     return;
   }
-  m = u->members[data->role]->members[data->pers];
+  m = u->i.members[data->role]->members[data->pers];
   if (!m) {
     err("%s -> invalid pers", logbuf);
     send_reply(p, -ULS_ERR_BAD_MEMBER);
@@ -5898,13 +5898,13 @@ cmd_edit_field(struct client_state *p, int pkt_len,
       return;
     }
   } else {
-    if (!u->members[data->role]
-        || data->pers < 0 || data->pers >= u->members[data->role]->total) {
+    if (!u->i.members[data->role]
+        || data->pers < 0 || data->pers >= u->i.members[data->role]->total) {
       err("%s -> invalid pers", logbuf);
       send_reply(p, -ULS_ERR_BAD_MEMBER);
       return;
     }
-    m = u->members[data->role]->members[data->pers];
+    m = u->i.members[data->role]->members[data->pers];
     if (!m) {
       err("%s -> invalid pers", logbuf);
       send_reply(p, -ULS_ERR_BAD_MEMBER);
@@ -6200,7 +6200,7 @@ cmd_get_uid_by_pid_2(struct client_state *p, int pkt_len,
 
   login = u->login;
   if (!login) login = "";
-  name = u->name;
+  name = u->i.name;
   if (!name || !*name) name = u->login;
   login_len = strlen(login);
   name_len = strlen(name);
@@ -6346,11 +6346,11 @@ cmd_user_op(struct client_state *p,
 
   case ULS_RANDOM_TEAM_PASSWD:
   case ULS_COPY_TO_TEAM:
-    ppwd = &u->team_passwd;
+    ppwd = &u->i.team_passwd;
     break;
 
   case ULS_FIX_PASSWORD:
-    if (!u->team_passwd) goto _OK;
+    if (!u->i.team_passwd) goto _OK;
     ppwd = &u->register_passwd;
     break;
 
@@ -6363,7 +6363,7 @@ cmd_user_op(struct client_state *p,
   switch (data->request_id) {
   case ULS_COPY_TO_REGISTER:
   case ULS_FIX_PASSWORD:
-    ppwd2 = &u->team_passwd;
+    ppwd2 = &u->i.team_passwd;
     break;
   case ULS_COPY_TO_TEAM:
     ppwd2 = &u->register_passwd;
@@ -6496,7 +6496,7 @@ cmd_lookup_user(struct client_state *p,
 
   login_len = strlen(u->login);
   name_len = 0;
-  if (u->name) name_len = strlen(u->name);
+  if (u->i.name) name_len = strlen(u->i.name);
   out_size = sizeof(*out) + login_len + name_len;
   out = (struct userlist_pk_login_ok*) alloca(out_size);
   memset(out, 0, out_size);
@@ -6508,7 +6508,7 @@ cmd_lookup_user(struct client_state *p,
   out->login_len = login_len;
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
-  strcpy(name_ptr, u->name);
+  strcpy(name_ptr, u->i.name);
   enqueue_reply_to_client(p, out_size, out);
 }
 

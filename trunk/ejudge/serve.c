@@ -4621,11 +4621,11 @@ read_compile_packet(const unsigned char *compile_status_dir,
    * characters in spellings nor about spelling length
    */
   teamdb_export_team(re.team, &te);
-  if (te.user && te.user->spelling && te.user->spelling[0]) {
-    run_pkt->user_spelling = te.user->spelling;
+  if (te.user && te.user->i.spelling && te.user->i.spelling[0]) {
+    run_pkt->user_spelling = te.user->i.spelling;
   }
-  if (!run_pkt->user_spelling && te.user && te.user->name && te.user->name[0]) {
-    run_pkt->user_spelling = te.user->name;
+  if (!run_pkt->user_spelling && te.user && te.user->i.name && te.user->i.name[0]) {
+    run_pkt->user_spelling = te.user->i.name;
   }
   if (!run_pkt->user_spelling && te.login && te.user->login && te.user->login[0]) {
     run_pkt->user_spelling = te.user->login;
@@ -6371,10 +6371,9 @@ main(int argc, char *argv[])
   return code;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "fd_set" "tpTask")
  * End:
  */
-

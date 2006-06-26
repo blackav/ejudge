@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -85,8 +85,8 @@ print_banner_page(const unsigned char *banner_path, int run_id,
   }
   fprintf(f, "Language:         %s\n",
           (langs[info.language])?((char*)langs[info.language]->short_name):"");
-  if (teaminfo.user && teaminfo.user->location) {
-    fprintf(f, "Location:         %s\n", teaminfo.user->location);
+  if (teaminfo.user && teaminfo.user->i.location) {
+    fprintf(f, "Location:         %s\n", teaminfo.user->i.location);
   }
   fprintf(f, "Status:           %s\n", run_status_str(info.status, 0, 0));
   fclose(f);
@@ -146,8 +146,8 @@ do_print_run(int run_id, int is_privileged, int user_id)
   if (!is_privileged) {
     if (teamdb_export_team(info.team, &teaminfo) < 0)
       return -1;
-    if (teaminfo.user && teaminfo.user->printer_name)
-      printer_name = teaminfo.user->printer_name;
+    if (teaminfo.user && teaminfo.user->i.printer_name)
+      printer_name = teaminfo.user->i.printer_name;
   }
 
   banner_path = (unsigned char*) alloca(strlen(global->print_work_dir) + 64);
@@ -266,7 +266,7 @@ team_print_run(int run_id, int user_id)
   return do_print_run(run_id, 0, user_id);
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "tpTask")

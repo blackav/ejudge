@@ -311,7 +311,7 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
     return snprintf(buf, len, "%d", u->id);
   case USERLIST_NN_LOGIN: s = u->login; break;
   case USERLIST_NN_EMAIL: s = u->email; break;
-  case USERLIST_NN_NAME: s = u->name; break;
+  case USERLIST_NN_NAME: s = u->i.name; break;
   case USERLIST_NN_IS_PRIVILEGED:
     s = xml_unparse_bool(u->is_privileged); break;
   case USERLIST_NN_IS_INVISIBLE:
@@ -327,7 +327,7 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
   case USERLIST_NN_READ_ONLY:
     s = xml_unparse_bool(u->read_only); break;
   case USERLIST_NN_CNTS_READ_ONLY:
-    s = xml_unparse_bool(u->cnts_read_only); break;
+    s = xml_unparse_bool(u->i.cnts_read_only); break;
   case USERLIST_NN_NEVER_CLEAN:
     s = xml_unparse_bool(u->never_clean); break;
   case USERLIST_NN_SIMPLE_REGISTRATION:
@@ -350,27 +350,27 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
     if (u->register_passwd) s = u->register_passwd->b.text;
     break;
   case USERLIST_NN_TEAM_PASSWORD:
-    if (u->team_passwd) s = u->team_passwd->b.text;
+    if (u->i.team_passwd) s = u->i.team_passwd->b.text;
     break;
   case USERLIST_NN_GENERAL_INFO: break;  /* !!! */
-  case USERLIST_NN_INST: s = u->inst; break;
-  case USERLIST_NN_INST_EN: s = u->inst_en; break;
-  case USERLIST_NN_INSTSHORT: s = u->instshort; break;
-  case USERLIST_NN_INSTSHORT_EN: s = u->instshort_en; break;
-  case USERLIST_NN_FAC: s = u->fac; break;
-  case USERLIST_NN_FAC_EN: s = u->fac_en; break;
-  case USERLIST_NN_FACSHORT: s = u->facshort; break;
-  case USERLIST_NN_FACSHORT_EN: s = u->facshort_en; break;
-  case USERLIST_NN_HOMEPAGE: s = u->homepage; break;
-  case USERLIST_NN_PHONE: s = u->phone; break;
-  case USERLIST_NN_CITY: s = u->city; break;
-  case USERLIST_NN_CITY_EN: s = u->city_en; break;
-  case USERLIST_NN_COUNTRY: s = u->country; break;
-  case USERLIST_NN_COUNTRY_EN: s = u->country_en; break;
-  case USERLIST_NN_LOCATION: s = u->location; break;
-  case USERLIST_NN_SPELLING: s = u->spelling; break;
-  case USERLIST_NN_PRINTER_NAME: s = u->printer_name; break;
-  case USERLIST_NN_LANGUAGES: s = u->languages; break;
+  case USERLIST_NN_INST: s = u->i.inst; break;
+  case USERLIST_NN_INST_EN: s = u->i.inst_en; break;
+  case USERLIST_NN_INSTSHORT: s = u->i.instshort; break;
+  case USERLIST_NN_INSTSHORT_EN: s = u->i.instshort_en; break;
+  case USERLIST_NN_FAC: s = u->i.fac; break;
+  case USERLIST_NN_FAC_EN: s = u->i.fac_en; break;
+  case USERLIST_NN_FACSHORT: s = u->i.facshort; break;
+  case USERLIST_NN_FACSHORT_EN: s = u->i.facshort_en; break;
+  case USERLIST_NN_HOMEPAGE: s = u->i.homepage; break;
+  case USERLIST_NN_PHONE: s = u->i.phone; break;
+  case USERLIST_NN_CITY: s = u->i.city; break;
+  case USERLIST_NN_CITY_EN: s = u->i.city_en; break;
+  case USERLIST_NN_COUNTRY: s = u->i.country; break;
+  case USERLIST_NN_COUNTRY_EN: s = u->i.country_en; break;
+  case USERLIST_NN_LOCATION: s = u->i.location; break;
+  case USERLIST_NN_SPELLING: s = u->i.spelling; break;
+  case USERLIST_NN_PRINTER_NAME: s = u->i.printer_name; break;
+  case USERLIST_NN_LANGUAGES: s = u->i.languages; break;
   }
   if (!s) {
     if (convert_null) s = "<NULL>";
@@ -449,7 +449,7 @@ userlist_set_user_field_str(struct userlist_list *lst,
     if (!*field_val) return -1;
     sptr = &u->email; goto do_text_fields;
   case USERLIST_NN_NAME:
-    sptr = &u->name;
+    sptr = &u->i.name;
   do_text_fields:
     if (*sptr && !strcmp(*sptr, field_val)) break;
     xfree(*sptr);
@@ -472,7 +472,7 @@ userlist_set_user_field_str(struct userlist_list *lst,
   case USERLIST_NN_READ_ONLY:
     iptr = &u->read_only; goto do_bool_fields;
   case USERLIST_NN_CNTS_READ_ONLY:
-    iptr = &u->cnts_read_only; goto do_bool_fields;
+    iptr = &u->i.cnts_read_only; goto do_bool_fields;
   case USERLIST_NN_NEVER_CLEAN:
     iptr = &u->never_clean; goto do_bool_fields;
   case USERLIST_NN_SIMPLE_REGISTRATION:
@@ -501,56 +501,56 @@ userlist_set_user_field_str(struct userlist_list *lst,
     break;
 
   case USERLIST_NN_TEAM_PASSWORD:
-    if (!u->team_passwd) {
-      u->team_passwd = (struct userlist_passwd*) userlist_node_alloc(USERLIST_T_TEAM_PASSWORD);
-      xml_link_node_last(&u->b, &u->team_passwd->b);
-      u->team_passwd->b.text = xstrdup("");
-      u->team_passwd->method = USERLIST_PWD_PLAIN;
+    if (!u->i.team_passwd) {
+      u->i.team_passwd = (struct userlist_passwd*) userlist_node_alloc(USERLIST_T_TEAM_PASSWORD);
+      xml_link_node_last(&u->b, &u->i.team_passwd->b);
+      u->i.team_passwd->b.text = xstrdup("");
+      u->i.team_passwd->method = USERLIST_PWD_PLAIN;
       updated = 1;
     }
-    if (!strcmp(u->team_passwd->b.text, field_val)) break;
-    xfree(u->team_passwd->b.text);
-    u->team_passwd->b.text = xstrdup(field_val);
-    u->team_passwd->method = USERLIST_PWD_PLAIN;
+    if (!strcmp(u->i.team_passwd->b.text, field_val)) break;
+    xfree(u->i.team_passwd->b.text);
+    u->i.team_passwd->b.text = xstrdup(field_val);
+    u->i.team_passwd->method = USERLIST_PWD_PLAIN;
     updated = 1;
     break;
 
   case USERLIST_NN_INST:
-    sptr = &u->inst; goto do_text_fields;
+    sptr = &u->i.inst; goto do_text_fields;
   case USERLIST_NN_INST_EN:
-    sptr = &u->inst_en; goto do_text_fields;
+    sptr = &u->i.inst_en; goto do_text_fields;
   case USERLIST_NN_INSTSHORT:
-    sptr = &u->instshort; goto do_text_fields;
+    sptr = &u->i.instshort; goto do_text_fields;
   case USERLIST_NN_INSTSHORT_EN:
-    sptr = &u->instshort_en; goto do_text_fields;
+    sptr = &u->i.instshort_en; goto do_text_fields;
   case USERLIST_NN_FAC:
-    sptr = &u->fac; goto do_text_fields;
+    sptr = &u->i.fac; goto do_text_fields;
   case USERLIST_NN_FAC_EN:
-    sptr = &u->fac_en; goto do_text_fields;
+    sptr = &u->i.fac_en; goto do_text_fields;
   case USERLIST_NN_FACSHORT:
-    sptr = &u->facshort; goto do_text_fields;
+    sptr = &u->i.facshort; goto do_text_fields;
   case USERLIST_NN_FACSHORT_EN:
-    sptr = &u->facshort_en; goto do_text_fields;
+    sptr = &u->i.facshort_en; goto do_text_fields;
   case USERLIST_NN_HOMEPAGE:
-    sptr = &u->homepage; goto do_text_fields;
+    sptr = &u->i.homepage; goto do_text_fields;
   case USERLIST_NN_PHONE:
-    sptr = &u->phone; goto do_text_fields;
+    sptr = &u->i.phone; goto do_text_fields;
   case USERLIST_NN_CITY:
-    sptr = &u->city; goto do_text_fields;
+    sptr = &u->i.city; goto do_text_fields;
   case USERLIST_NN_CITY_EN:
-    sptr = &u->city_en; goto do_text_fields;
+    sptr = &u->i.city_en; goto do_text_fields;
   case USERLIST_NN_COUNTRY:
-    sptr = &u->country; goto do_text_fields;
+    sptr = &u->i.country; goto do_text_fields;
   case USERLIST_NN_COUNTRY_EN:
-    sptr = &u->country_en; goto do_text_fields;
+    sptr = &u->i.country_en; goto do_text_fields;
   case USERLIST_NN_LOCATION:
-    sptr = &u->location; goto do_text_fields;
+    sptr = &u->i.location; goto do_text_fields;
   case USERLIST_NN_SPELLING:
-    sptr = &u->spelling; goto do_text_fields;
+    sptr = &u->i.spelling; goto do_text_fields;
   case USERLIST_NN_PRINTER_NAME:
-    sptr = &u->printer_name; goto do_text_fields;
+    sptr = &u->i.printer_name; goto do_text_fields;
   case USERLIST_NN_LANGUAGES:
-    sptr = &u->languages; goto do_text_fields;
+    sptr = &u->i.languages; goto do_text_fields;
 
   case USERLIST_NN_ID:
   case USERLIST_NN_TIMESTAMPS:
@@ -578,7 +578,7 @@ userlist_delete_user_field(struct userlist_user *u, int field_id)
 
   switch (field_id) {
   case USERLIST_NN_NAME:
-    sptr = &u->name;
+    sptr = &u->i.name;
     if (*sptr && **sptr) retval = 1;
     xfree(*sptr); *sptr = xstrdup("");
     break;
@@ -598,7 +598,7 @@ userlist_delete_user_field(struct userlist_user *u, int field_id)
   case USERLIST_NN_READ_ONLY:
     iptr = &u->read_only; goto do_flags_delete;
   case USERLIST_NN_CNTS_READ_ONLY:
-    iptr = &u->cnts_read_only; goto do_flags_delete;
+    iptr = &u->i.cnts_read_only; goto do_flags_delete;
   case USERLIST_NN_NEVER_CLEAN:
     iptr = &u->never_clean; goto do_flags_delete;
   case USERLIST_NN_SIMPLE_REGISTRATION:
@@ -619,49 +619,49 @@ userlist_delete_user_field(struct userlist_user *u, int field_id)
 #endif
 
   case USERLIST_NN_TEAM_PASSWORD:
-    if (!u->team_passwd) break;
-    xml_unlink_node(&u->team_passwd->b);
-    userlist_free(&u->team_passwd->b);
-    u->team_passwd = 0;
+    if (!u->i.team_passwd) break;
+    xml_unlink_node(&u->i.team_passwd->b);
+    userlist_free(&u->i.team_passwd->b);
+    u->i.team_passwd = 0;
     retval = 1;
     break;
 
   case USERLIST_NN_INST:
-    sptr = &u->inst; goto do_string_delete;
+    sptr = &u->i.inst; goto do_string_delete;
   case USERLIST_NN_INST_EN:
-    sptr = &u->inst_en; goto do_string_delete;
+    sptr = &u->i.inst_en; goto do_string_delete;
   case USERLIST_NN_INSTSHORT:
-    sptr = &u->instshort; goto do_string_delete;
+    sptr = &u->i.instshort; goto do_string_delete;
   case USERLIST_NN_INSTSHORT_EN:
-    sptr = &u->instshort_en; goto do_string_delete;
+    sptr = &u->i.instshort_en; goto do_string_delete;
   case USERLIST_NN_FAC:
-    sptr = &u->fac; goto do_string_delete;
+    sptr = &u->i.fac; goto do_string_delete;
   case USERLIST_NN_FAC_EN:
-    sptr = &u->fac_en; goto do_string_delete;
+    sptr = &u->i.fac_en; goto do_string_delete;
   case USERLIST_NN_FACSHORT:
-    sptr = &u->facshort; goto do_string_delete;
+    sptr = &u->i.facshort; goto do_string_delete;
   case USERLIST_NN_FACSHORT_EN:
-    sptr = &u->facshort_en; goto do_string_delete;
+    sptr = &u->i.facshort_en; goto do_string_delete;
   case USERLIST_NN_HOMEPAGE:
-    sptr = &u->homepage; goto do_string_delete;
+    sptr = &u->i.homepage; goto do_string_delete;
   case USERLIST_NN_PHONE:
-    sptr = &u->phone; goto do_string_delete;
+    sptr = &u->i.phone; goto do_string_delete;
   case USERLIST_NN_CITY:
-    sptr = &u->city; goto do_string_delete;
+    sptr = &u->i.city; goto do_string_delete;
   case USERLIST_NN_CITY_EN:
-    sptr = &u->city_en; goto do_string_delete;
+    sptr = &u->i.city_en; goto do_string_delete;
   case USERLIST_NN_COUNTRY:
-    sptr = &u->country; goto do_string_delete;
+    sptr = &u->i.country; goto do_string_delete;
   case USERLIST_NN_COUNTRY_EN:
-    sptr = &u->country_en; goto do_string_delete;
+    sptr = &u->i.country_en; goto do_string_delete;
   case USERLIST_NN_LOCATION:
-    sptr = &u->location; goto do_string_delete;
+    sptr = &u->i.location; goto do_string_delete;
   case USERLIST_NN_SPELLING:
-    sptr = &u->spelling; goto do_string_delete;
+    sptr = &u->i.spelling; goto do_string_delete;
   case USERLIST_NN_PRINTER_NAME:
-    sptr = &u->printer_name; goto do_string_delete;
+    sptr = &u->i.printer_name; goto do_string_delete;
   case USERLIST_NN_LANGUAGES:
-    sptr = &u->languages; goto do_string_delete;
+    sptr = &u->i.languages; goto do_string_delete;
   do_string_delete:
     retval = !(*sptr == 0);
     xfree(*sptr); *sptr = 0;

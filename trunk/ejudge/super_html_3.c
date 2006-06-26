@@ -7255,13 +7255,13 @@ super_html_update_variant_map(FILE *flog, int contest_id,
         break;
     if (i < vmap->u) {
       vmap->v[i].user_id = uid;
-      if (vmap->v[i].name && user->name) {
-        if (strcmp(vmap->v[i].name, user->name)) {
+      if (vmap->v[i].name && user->i.name) {
+        if (strcmp(vmap->v[i].name, user->i.name)) {
           xfree(vmap->v[i].name);
-          vmap->v[i].name = xstrdup(user->name);
+          vmap->v[i].name = xstrdup(user->i.name);
         }
-      } else if (user->name) {
-        vmap->v[i].name = xstrdup(user->name);
+      } else if (user->i.name) {
+        vmap->v[i].name = xstrdup(user->i.name);
       } else {
         xfree(vmap->v[i].name);
         vmap->v[i].name = 0;
@@ -7278,7 +7278,7 @@ super_html_update_variant_map(FILE *flog, int contest_id,
     vmap->v[vmap->u].user_id = uid;
     vmap->v[vmap->u].var_num = vmap->prob_rev_map_size;
     vmap->v[vmap->u].name = 0;
-    if (user->name) vmap->v[vmap->u].name = xstrdup(user->name);
+    if (user->i.name) vmap->v[vmap->u].name = xstrdup(user->i.name);
     XCALLOC(vmap->v[vmap->u].variants, vmap->prob_rev_map_size);
     vmap->u++;
   }
@@ -7515,7 +7515,7 @@ super_html_variant_param(struct sid_state *sstate, int cmd,
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")

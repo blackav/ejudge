@@ -302,11 +302,8 @@ struct userlist_passwd
   int method;
 };
 
-struct userlist_cntsinfo
+struct userlist_user_info
 {
-  struct xml_tree b;
-
-  int contest_id;
   int cnts_read_only;
 
   unsigned char *name;
@@ -334,6 +331,14 @@ struct userlist_cntsinfo
   time_t last_change_time;
   time_t last_access_time;
   time_t last_pwdchange_time;
+};
+
+struct userlist_cntsinfo
+{
+  struct xml_tree b;
+
+  int contest_id;
+  struct userlist_user_info i;
 };
 
 struct userlist_user
@@ -364,11 +369,11 @@ struct userlist_user
 
   time_t registration_time;
   time_t last_login_time;
+  time_t last_minor_change_time;
 
   time_t last_change_time;
   time_t last_access_time;
   time_t last_pwdchange_time;
-  time_t last_minor_change_time;
 
   /* the contest-specific information */
   int cntsinfo_a;
@@ -378,32 +383,7 @@ struct userlist_user
   /* also these fields are returned when contest_id is provided for
    * user requests
    */
-
-  unsigned char *name;
-  struct userlist_passwd *team_passwd;
-
-  int cnts_read_only;
-
-  unsigned char *inst;
-  unsigned char *inst_en;
-  unsigned char *instshort;
-  unsigned char *instshort_en;
-  unsigned char *fac;
-  unsigned char *fac_en;
-  unsigned char *facshort;
-  unsigned char *facshort_en;
-  unsigned char *homepage;
-  unsigned char *city;
-  unsigned char *city_en;
-  unsigned char *country;
-  unsigned char *country_en;
-  unsigned char *location;
-  unsigned char *spelling;
-  unsigned char *printer_name;
-  unsigned char *languages;
-  unsigned char *phone;
-
-  struct userlist_members *members[USERLIST_MB_LAST];
+  struct userlist_user_info i;
 };
 
 struct userlist_list
