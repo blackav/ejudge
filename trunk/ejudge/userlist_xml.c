@@ -708,7 +708,7 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
   for (a = node->first; a; a = a->next) {
     switch (a->tag) {
     case USERLIST_A_CONTEST_ID:
-      if (xml_parse_int_attr(a, &ui->contest_id) < 0) return -1;
+      if (xml_attr_int(a, &ui->contest_id) < 0) return -1;
       if (ui->contest_id <= 0 || ui->contest_id > MAX_CONTEST_ID)
         return xml_err_attr_invalid(a);
       if (ui->contest_id < usr->cntsinfo_a && usr->cntsinfo[ui->contest_id]) {

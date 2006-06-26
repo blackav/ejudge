@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -228,7 +228,7 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
   for (a = t->first; a; a = a->next) {
     switch (a->tag) {
     case TR_A_NUM:
-      if (xml_parse_int_attr(a, &x) < 0) goto failure;
+      if (xml_attr_int(a, &x) < 0) goto failure;
       if (x <= 0 || x > r->run_tests) {
         xml_err_attr_invalid(a);
         goto failure;
@@ -244,7 +244,7 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       p->status = x;
       break;
     case TR_A_TIME:
-      if (xml_parse_int_attr(a, &x) < 0) goto failure;
+      if (xml_attr_int(a, &x) < 0) goto failure;
       if (x < 0) {
         xml_err_attr_invalid(a);
         goto failure;
@@ -252,7 +252,7 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       p->time = x;
       break;
     case TR_A_REAL_TIME:
-      if (xml_parse_int_attr(a, &x) < 0) goto failure;
+      if (xml_attr_int(a, &x) < 0) goto failure;
       if (x < 0) {
         xml_err_attr_invalid(a);
         goto failure;
@@ -260,7 +260,7 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       p->real_time = x;
       break;
     case TR_A_EXIT_CODE:
-      if (xml_parse_int_attr(a, &x) < 0) goto failure;
+      if (xml_attr_int(a, &x) < 0) goto failure;
       if (x < 0 || x > 255) {
         xml_err_attr_invalid(a);
         goto failure;
@@ -268,7 +268,7 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       p->exit_code = x;
       break;
     case TR_A_TERM_SIGNAL:
-      if (xml_parse_int_attr(a, &x) < 0) goto failure;
+      if (xml_attr_int(a, &x) < 0) goto failure;
       if (x <= 0 || x > 255) {
         xml_err_attr_invalid(a);
         goto failure;
@@ -276,7 +276,7 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       p->term_signal = x;
       break;
     case TR_A_NOMINAL_SCORE:
-      if (xml_parse_int_attr(a, &x) < 0) goto failure;
+      if (xml_attr_int(a, &x) < 0) goto failure;
       if (x < 0 || x > 100000) {
         xml_err_attr_invalid(a);
         goto failure;
@@ -284,7 +284,7 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       p->nominal_score = x;
       break;
     case TR_A_SCORE:
-      if (xml_parse_int_attr(a, &x) < 0) goto failure;
+      if (xml_attr_int(a, &x) < 0) goto failure;
       if (x < 0 || x > 100000) {
         xml_err_attr_invalid(a);
         goto failure;
@@ -452,7 +452,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
   for (a = t->first; a; a = a->next) {
     switch (a->tag) {
     case TR_A_RUN_ID:
-      if (xml_parse_int_attr(a, &x) < 0) return -1;
+      if (xml_attr_int(a, &x) < 0) return -1;
       if (x < 0 || x > 999999) {
         xml_err_attr_invalid(a);
         return -1;
@@ -461,7 +461,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       break;
 
     case TR_A_JUDGE_ID:
-      if (xml_parse_int_attr(a, &x) < 0) return -1;
+      if (xml_attr_int(a, &x) < 0) return -1;
       if (x < 0 || x > 65535) {
         xml_err_attr_invalid(a);
         return -1;
@@ -501,7 +501,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       break;
 
     case TR_A_RUN_TESTS:
-      if (xml_parse_int_attr(a, &x) < 0) return -1;
+      if (xml_attr_int(a, &x) < 0) return -1;
       if (x < 0 || x > 255) {
         xml_err_attr_invalid(a);
         return -1;
@@ -510,7 +510,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       break;
 
     case TR_A_VARIANT:
-      if (xml_parse_int_attr(a, &x) < 0) return -1;
+      if (xml_attr_int(a, &x) < 0) return -1;
       if (x < 0 || x > 127) {
         xml_err_attr_invalid(a);
         return -1;
@@ -524,7 +524,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       break;
 
     case TR_A_FAILED_TEST:
-      if (xml_parse_int_attr(a, &x) < 0) return -1;
+      if (xml_attr_int(a, &x) < 0) return -1;
       if (x <= 0 || x > 255) {
         xml_err_attr_invalid(a);
         return -1;
@@ -534,7 +534,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       break;
 
     case TR_A_TESTS_PASSED:
-      if (xml_parse_int_attr(a, &x) < 0) return -1;
+      if (xml_attr_int(a, &x) < 0) return -1;
       if (x < 0 || x > 255) {
         xml_err_attr_invalid(a);
         return -1;
@@ -544,7 +544,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       break;
 
     case TR_A_SCORE:
-      if (xml_parse_int_attr(a, &x) < 0) return -1;
+      if (xml_attr_int(a, &x) < 0) return -1;
       if (x < 0 || x > 100000) {
         xml_err_attr_invalid(a);
         return -1;
@@ -554,7 +554,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       break;
 
     case TR_A_MAX_SCORE:
-      if (xml_parse_int_attr(a, &x) < 0) return -1;
+      if (xml_attr_int(a, &x) < 0) return -1;
       if (x < 0 || x > 100000) {
         xml_err_attr_invalid(a);
         return -1;
@@ -729,7 +729,7 @@ testing_report_free(testing_report_xml_t r)
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
