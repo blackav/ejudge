@@ -1017,8 +1017,6 @@ master.c 1 47 6237048
 html.c 1 44 4596438
 master_html.c 1 19 5284361
 prepare.c 1 60 7341186
-NEWS.RUS 1 3 3052680
-NEWS 1 3 1702021
 prepare.h 1 42 1357866
 team_extra.h 1 1 106586
 serve.c 1 59 8789209
@@ -1069,8 +1067,6 @@ team.c 1 38 4271799
 prepare.h 1 45 1385905
 prepare.c 1 64 7493686
 printing.c 1 3 572436
-NEWS.RUS 1 4 4388141
-NEWS 1 4 2486094
 cgi.h 1 7 98292
 client_actions.h 1 17 185893
 clntutil.h 1 19 224935
@@ -1102,8 +1098,6 @@ userlist.c 1 9 2347749
 userlist_xml.c 1 16 3784024
 serve_clnt/submit_run.c 1 3 202038
 serve_clnt/view.c 1 8 323985
-NEWS.RUS 1 5 5582027
-NEWS 1 5 3216840
 serve_clnt/upload_report.c 1 1 187406
 client_actions.h 1 18 187650
 html.h 1 20 412205
@@ -1117,8 +1111,6 @@ master_html.c 1 22 5655061
 prepare.c 1 66 7635808
 serve_clnt/view.c 1 9 328091
 clean-users.c 1 3 965421
-NEWS.RUS 1 6 6274754
-NEWS 1 6 3598662
 settings.h 1 1 96075
 serve.c 1 64 9606528
 team.c 1 40 4210398
@@ -1153,8 +1145,6 @@ master_html.c 1 24 5785224
 prepare.c 1 68 7922450
 protocol.c 1 11 228027
 serve_clnt/rejudge_by_mask.c 1 1 175861
-NEWS.RUS 1 7 7602820
-NEWS 1 7 4352563
 clean-users.c 1 4 989822
 compile.c 1 22 786337
 edit-userlist.c 1 11 6792878
@@ -1248,10 +1238,6 @@ register.c 1 31 7677448
 team.c 1 44 4390140
 users.c 1 14 1714616
 ejudge-setup.c 1 2 8560966
-NEWS.RUS 1 8 9528577
-NEWS 1 8 5515991
-NEWS.RUS 1 9 9528559
-NEWS 1 9 5515973
 userlist_clnt/add_field.c 1 3 125613
 userlist_clnt/admin_process.c 1 3 109237
 userlist_clnt/change_registration.c 1 3 141632
@@ -1337,8 +1323,6 @@ serve_clnt/upload_report.c 1 3 189001
 serve_clnt/view.c 1 11 329461
 filter_scan.lex 1 12 519668
 expat_iface.c 1 7 1507397
-NEWS.RUS 1 10 9817634
-NEWS 1 10 5733481
 sha.h 1 3 291334
 clean-users.c 1 6 990730
 edit-userlist.c 1 14 6793411
@@ -1403,10 +1387,6 @@ userlist_cfg.h 1 11 171127
 ejudge-setup.c 1 4 8637300
 userlist_cfg.c 1 16 1235813
 prepare.c 1 79 8861367
-NEWS.RUS 1 11 11712731
-NEWS 1 11 6975681
-NEWS.RUS 1 12 11712705
-NEWS 1 12 6975659
 contests.h 1 20 520407
 prepare.h 1 59 1599017
 userlist.h 1 19 952808
@@ -1426,8 +1406,6 @@ html.c 1 53 5404796
 prepare.c 1 80 8919049
 sformat.c 1 13 953399
 prepare.c 1 81 8928890
-NEWS.RUS 1 13 12765018
-NEWS 1 13 7643310
 xml_utils.h 1 1 123291
 xml_utils/parse_date.c 1 1 157717
 xml_utils/parse_int.c 1 1 96252
@@ -1549,8 +1527,6 @@ super_html.c 1 2 3677310
 super_proto.c 1 2 139920
 unix/fileutl.c 1 20 2580870
 run.c 1 61 4349788
-NEWS.RUS 1 14 16987172
-NEWS 1 14 10152030
 prepare_serve.h 1 1 95411
 prepare_serve.c 1 1 332369
 client_actions.h 1 23 205018
@@ -1598,8 +1574,6 @@ master_html.c 1 31 7672413
 misctext.c 1 12 613550
 prepare.c 1 84 8685339
 userlist_xml.c 1 23 3894247
-NEWS.RUS 1 15 18725915
-NEWS 1 15 11152385
 fileutl.h 1 13 176305
 run.c 1 63 4627044
 win32/fileutl.c 1 7 1258400
@@ -1687,8 +1661,6 @@ run_packet_7.c 1 1 106663
 edit-userlist.c 1 21 7327051
 html.c 1 58 6497970
 super-serve.c 1 10 4737961
-NEWS.RUS 1 16 20345485
-NEWS 1 16 12148599
 html.h 1 28 573042
 ejudge-setup.c 1 7 8875871
 html.c 1 59 6635700
@@ -1716,8 +1688,6 @@ unix/fileutl.c 1 22 2836645
 prepare.h 1 64 1727322
 serve.c 1 90 12832731
 prepare.c 1 88 9024130
-NEWS.RUS 1 17 21195716
-NEWS 1 17 12640097
 runlog.h 1 32 486204
 run_packet.h 1 3 304813
 run_packet_priv.h 1 4 281201
@@ -1803,8 +1773,6 @@ userlist.c 1 15 2424452
 userlist_xml.c 1 25 3954702
 xml_utils/parse_date.c 1 2 159480
 master_html.c 1 40 8732075
-NEWS.RUS 1 18 21911443
-NEWS 1 18 13057621
 digest_io.h 1 1 95896
 filehash.h 1 1 72145
 sha.h 1 4 291436
@@ -1998,8 +1966,6 @@ userlist_clnt/team_login.c 1 6 256920
 edit-userlist.c 1 24 7818411
 ejudge-setup.c 1 15 9069847
 prepare_out.c 1 4 4629224
-NEWS.RUS 1 20 24075854
-NEWS 1 20 14387108
 vcs.h 1 1 68909
 unix/ej_process.c 1 1 185842
 win32/ej_process.c 1 1 80555
@@ -2022,8 +1988,6 @@ super_html.c 1 8 9149283
 super_html_2.c 1 5 3294422
 super_html_3.c 1 6 15679824
 copyright.c 1 6 170342
-NEWS.RUS 1 21 24381930
-NEWS 1 21 14565574
 win32/cpu.c 1 1 68383
 cpu.h 1 1 59802
 unix/cpu.c 1 1 124287
@@ -2049,8 +2013,6 @@ super_html_3.c 1 7 15807735
 ejudge-setup.c 1 17 9080491
 super_html_2.c 1 7 3713767
 super_html_2.c 1 8 3713393
-NEWS.RUS 1 22 24722899
-NEWS 1 22 14767655
 parsecfg.h 1 13 218427
 super_actions.h 1 9 1355782
 super_proto.h 1 10 1348342
@@ -2087,8 +2049,6 @@ prepare_out.c 1 8 4959156
 super_html.c 1 11 9189150
 super_html_2.c 1 10 3882061
 super_html_3.c 1 11 17839512
-NEWS.RUS 1 23 25257950
-NEWS 1 23 15090146
 contests.h 1 26 703660
 super_actions.h 1 12 1388663
 super_html.h 1 9 1250309
@@ -2370,8 +2330,6 @@ html.c 1 70 11459848
 super_html.c 1 16 9669438
 super_html_3.c 1 21 19205275
 html.c 1 71 11461851
-NEWS.RUS 1 24 28766328
-NEWS 1 24 17230648
 html.c 1 72 11462293
 super_html_3.c 1 22 19205459
 protocol.h 1 40 763515
@@ -2490,8 +2448,6 @@ serve-cmd.c 1 15 1872372
 userlist-server.c 1 70 15770856
 edit-userlist.c 1 31 8746074
 userlist-server.c 1 71 15760226
-NEWS.RUS 1 25 29603859
-NEWS 1 25 17706822
 run.c 1 83 5095159
 prepare_out.c 1 19 5174592
 prepare.h 1 81 2365012
@@ -2558,8 +2514,6 @@ master_html.c 1 55 9804721
 master_html.c 1 56 9799631
 userlist-server.c 1 73 15769848
 clntutil.c 1 41 1400902
-NEWS.RUS 1 26 30626922
-NEWS 1 26 18272948
 serve.c 1 113 14994787
 slice-userlist.c 1 3 245177
 super_html_2.c 1 19 4110486
@@ -2608,8 +2562,6 @@ prepare.c 1 111 11443968
 prepare_out.c 1 23 5222763
 runlog.c 1 47 4555793
 super_html_3.c 1 28 19460170
-NEWS.RUS 1 27 31244481
-NEWS 1 27 18637215
 super_actions.h 1 25 1536437
 super_proto.h 1 26 1516251
 serve-control.c 1 27 10360198
@@ -2662,8 +2614,6 @@ super_html.c 1 21 9889536
 super_html_2.c 1 22 4211624
 super_html_3.c 1 31 19726346
 serve_clnt/show_item.c 1 7 247878
-NEWS.RUS 1 28 31866285
-NEWS 1 28 19000258
 contests.h 1 32 752603
 prepare.h 1 87 2404439
 protocol.h 1 47 813654
@@ -2692,8 +2642,6 @@ super_html_3.c 1 32 19819530
 userlist.c 1 20 2475768
 userlist_cfg.c 1 20 1410828
 userlist_xml.c 1 30 3916510
-NEWS.RUS 1 29 32377392
-NEWS 1 29 19339704
 execute.c 1 1 791408
 prepare_out.c 1 28 5253478
 clarlog.h 1 10 135796
@@ -2751,10 +2699,6 @@ prepare_out.c 1 32 5316656
 runlog.c 1 48 4559203
 runlog_xml.c 1 16 1672490
 super_html_3.c 1 36 20205036
-NEWS.RUS 1 30 33385302
-NEWS 1 30 19928734
-NEWS.RUS 1 31 33421328
-NEWS 1 31 19944819
 archive_paths.h 2040 0 122514
 base64.h 2693 0 75408
 cgi.h 1332 0 97934
@@ -3030,8 +2974,6 @@ userlist_clnt/team_login.c 2624 0 256065
 userlist_clnt/team_set_passwd.c 2559 0 170465
 filter_expr.y 2907 0 2031999
 filter_scan.lex 2906 0 578485
-NEWS.RUS 3144 0 33420933
-NEWS 3144 0 19944424
 runlog_xml.c 3159 0 1676150
 xml_utils.h 3162 0 283902
 userlist_xml.c 3162 0 3576227
@@ -3082,3 +3024,5 @@ userlist_clnt/priv_login.c 3176 0 267954
 userlist_clnt/register_new.c 3176 0 149510
 userlist_clnt/register_new_2.c 3176 0 204661
 userlist_clnt/team_login.c 3176 0 250580
+xml_utils.h 3180 0 299491
+xml_utils/attr_date.c 3179 0 92549
