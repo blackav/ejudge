@@ -21,6 +21,7 @@
 #include "errlog.h"
 #include "tsc.h"
 #include "xml_utils.h"
+#include "ej_limits.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -301,17 +302,21 @@ userlist_set_member_field_str(struct userlist_member *m, int field_id,
 
 int
 userlist_get_user_field_str(unsigned char *buf, size_t len,
-                            struct userlist_user *u, int field_id,
+                            struct userlist_user *u,
+                            struct userlist_user_info *ui,
+                            int field_id,
                             int convert_null)
 {
   unsigned char const *s = 0;
+
+  if (!ui) ui = &u->i;
 
   switch (field_id) {
   case USERLIST_NN_ID:
     return snprintf(buf, len, "%d", u->id);
   case USERLIST_NN_LOGIN: s = u->login; break;
   case USERLIST_NN_EMAIL: s = u->email; break;
-  case USERLIST_NN_NAME: s = u->i.name; break;
+  case USERLIST_NN_NAME: s = ui->name; break;
   case USERLIST_NN_IS_PRIVILEGED:
     s = xml_unparse_bool(u->is_privileged); break;
   case USERLIST_NN_IS_INVISIBLE:
@@ -327,7 +332,7 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
   case USERLIST_NN_READ_ONLY:
     s = xml_unparse_bool(u->read_only); break;
   case USERLIST_NN_CNTS_READ_ONLY:
-    s = xml_unparse_bool(u->i.cnts_read_only); break;
+    s = xml_unparse_bool(ui->cnts_read_only); break;
   case USERLIST_NN_NEVER_CLEAN:
     s = xml_unparse_bool(u->never_clean); break;
   case USERLIST_NN_SIMPLE_REGISTRATION:
@@ -350,27 +355,27 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
     if (u->register_passwd) s = u->register_passwd->b.text;
     break;
   case USERLIST_NN_TEAM_PASSWORD:
-    if (u->i.team_passwd) s = u->i.team_passwd->b.text;
+    if (ui->team_passwd) s = ui->team_passwd->b.text;
     break;
   case USERLIST_NN_GENERAL_INFO: break;  /* !!! */
-  case USERLIST_NN_INST: s = u->i.inst; break;
-  case USERLIST_NN_INST_EN: s = u->i.inst_en; break;
-  case USERLIST_NN_INSTSHORT: s = u->i.instshort; break;
-  case USERLIST_NN_INSTSHORT_EN: s = u->i.instshort_en; break;
-  case USERLIST_NN_FAC: s = u->i.fac; break;
-  case USERLIST_NN_FAC_EN: s = u->i.fac_en; break;
-  case USERLIST_NN_FACSHORT: s = u->i.facshort; break;
-  case USERLIST_NN_FACSHORT_EN: s = u->i.facshort_en; break;
-  case USERLIST_NN_HOMEPAGE: s = u->i.homepage; break;
-  case USERLIST_NN_PHONE: s = u->i.phone; break;
-  case USERLIST_NN_CITY: s = u->i.city; break;
-  case USERLIST_NN_CITY_EN: s = u->i.city_en; break;
-  case USERLIST_NN_COUNTRY: s = u->i.country; break;
-  case USERLIST_NN_COUNTRY_EN: s = u->i.country_en; break;
-  case USERLIST_NN_LOCATION: s = u->i.location; break;
-  case USERLIST_NN_SPELLING: s = u->i.spelling; break;
-  case USERLIST_NN_PRINTER_NAME: s = u->i.printer_name; break;
-  case USERLIST_NN_LANGUAGES: s = u->i.languages; break;
+  case USERLIST_NN_INST: s = ui->inst; break;
+  case USERLIST_NN_INST_EN: s = ui->inst_en; break;
+  case USERLIST_NN_INSTSHORT: s = ui->instshort; break;
+  case USERLIST_NN_INSTSHORT_EN: s = ui->instshort_en; break;
+  case USERLIST_NN_FAC: s = ui->fac; break;
+  case USERLIST_NN_FAC_EN: s = ui->fac_en; break;
+  case USERLIST_NN_FACSHORT: s = ui->facshort; break;
+  case USERLIST_NN_FACSHORT_EN: s = ui->facshort_en; break;
+  case USERLIST_NN_HOMEPAGE: s = ui->homepage; break;
+  case USERLIST_NN_PHONE: s = ui->phone; break;
+  case USERLIST_NN_CITY: s = ui->city; break;
+  case USERLIST_NN_CITY_EN: s = ui->city_en; break;
+  case USERLIST_NN_COUNTRY: s = ui->country; break;
+  case USERLIST_NN_COUNTRY_EN: s = ui->country_en; break;
+  case USERLIST_NN_LOCATION: s = ui->location; break;
+  case USERLIST_NN_SPELLING: s = ui->spelling; break;
+  case USERLIST_NN_PRINTER_NAME: s = ui->printer_name; break;
+  case USERLIST_NN_LANGUAGES: s = ui->languages; break;
   }
   if (!s) {
     if (convert_null) s = "<NULL>";
@@ -381,7 +386,9 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
 
 int
 userlist_set_user_field_str(struct userlist_list *lst,
-                            struct userlist_user *u, int field_id,
+                            struct userlist_user *u,
+                            struct userlist_user_info *ui,
+                            int field_id,
                             unsigned char const *field_val)
 {
   int updated = 0;
@@ -392,6 +399,7 @@ userlist_set_user_field_str(struct userlist_list *lst,
   struct userlist_user *tmpu;
 
   if (!field_val) field_val = "";
+  if (!ui) ui = &u->i;
 
   switch (field_id) {
   case USERLIST_NN_LOGIN:
@@ -449,7 +457,7 @@ userlist_set_user_field_str(struct userlist_list *lst,
     if (!*field_val) return -1;
     sptr = &u->email; goto do_text_fields;
   case USERLIST_NN_NAME:
-    sptr = &u->i.name;
+    sptr = &ui->name;
   do_text_fields:
     if (*sptr && !strcmp(*sptr, field_val)) break;
     xfree(*sptr);
@@ -472,7 +480,7 @@ userlist_set_user_field_str(struct userlist_list *lst,
   case USERLIST_NN_READ_ONLY:
     iptr = &u->read_only; goto do_bool_fields;
   case USERLIST_NN_CNTS_READ_ONLY:
-    iptr = &u->i.cnts_read_only; goto do_bool_fields;
+    iptr = &ui->cnts_read_only; goto do_bool_fields;
   case USERLIST_NN_NEVER_CLEAN:
     iptr = &u->never_clean; goto do_bool_fields;
   case USERLIST_NN_SIMPLE_REGISTRATION:
@@ -501,56 +509,56 @@ userlist_set_user_field_str(struct userlist_list *lst,
     break;
 
   case USERLIST_NN_TEAM_PASSWORD:
-    if (!u->i.team_passwd) {
-      u->i.team_passwd = (struct userlist_passwd*) userlist_node_alloc(USERLIST_T_TEAM_PASSWORD);
-      xml_link_node_last(&u->b, &u->i.team_passwd->b);
-      u->i.team_passwd->b.text = xstrdup("");
-      u->i.team_passwd->method = USERLIST_PWD_PLAIN;
+    if (!ui->team_passwd) {
+      ui->team_passwd = (struct userlist_passwd*) userlist_node_alloc(USERLIST_T_TEAM_PASSWORD);
+      xml_link_node_last(&u->b, &ui->team_passwd->b);
+      ui->team_passwd->b.text = xstrdup("");
+      ui->team_passwd->method = USERLIST_PWD_PLAIN;
       updated = 1;
     }
-    if (!strcmp(u->i.team_passwd->b.text, field_val)) break;
-    xfree(u->i.team_passwd->b.text);
-    u->i.team_passwd->b.text = xstrdup(field_val);
-    u->i.team_passwd->method = USERLIST_PWD_PLAIN;
+    if (!strcmp(ui->team_passwd->b.text, field_val)) break;
+    xfree(ui->team_passwd->b.text);
+    ui->team_passwd->b.text = xstrdup(field_val);
+    ui->team_passwd->method = USERLIST_PWD_PLAIN;
     updated = 1;
     break;
 
   case USERLIST_NN_INST:
-    sptr = &u->i.inst; goto do_text_fields;
+    sptr = &ui->inst; goto do_text_fields;
   case USERLIST_NN_INST_EN:
-    sptr = &u->i.inst_en; goto do_text_fields;
+    sptr = &ui->inst_en; goto do_text_fields;
   case USERLIST_NN_INSTSHORT:
-    sptr = &u->i.instshort; goto do_text_fields;
+    sptr = &ui->instshort; goto do_text_fields;
   case USERLIST_NN_INSTSHORT_EN:
-    sptr = &u->i.instshort_en; goto do_text_fields;
+    sptr = &ui->instshort_en; goto do_text_fields;
   case USERLIST_NN_FAC:
-    sptr = &u->i.fac; goto do_text_fields;
+    sptr = &ui->fac; goto do_text_fields;
   case USERLIST_NN_FAC_EN:
-    sptr = &u->i.fac_en; goto do_text_fields;
+    sptr = &ui->fac_en; goto do_text_fields;
   case USERLIST_NN_FACSHORT:
-    sptr = &u->i.facshort; goto do_text_fields;
+    sptr = &ui->facshort; goto do_text_fields;
   case USERLIST_NN_FACSHORT_EN:
-    sptr = &u->i.facshort_en; goto do_text_fields;
+    sptr = &ui->facshort_en; goto do_text_fields;
   case USERLIST_NN_HOMEPAGE:
-    sptr = &u->i.homepage; goto do_text_fields;
+    sptr = &ui->homepage; goto do_text_fields;
   case USERLIST_NN_PHONE:
-    sptr = &u->i.phone; goto do_text_fields;
+    sptr = &ui->phone; goto do_text_fields;
   case USERLIST_NN_CITY:
-    sptr = &u->i.city; goto do_text_fields;
+    sptr = &ui->city; goto do_text_fields;
   case USERLIST_NN_CITY_EN:
-    sptr = &u->i.city_en; goto do_text_fields;
+    sptr = &ui->city_en; goto do_text_fields;
   case USERLIST_NN_COUNTRY:
-    sptr = &u->i.country; goto do_text_fields;
+    sptr = &ui->country; goto do_text_fields;
   case USERLIST_NN_COUNTRY_EN:
-    sptr = &u->i.country_en; goto do_text_fields;
+    sptr = &ui->country_en; goto do_text_fields;
   case USERLIST_NN_LOCATION:
-    sptr = &u->i.location; goto do_text_fields;
+    sptr = &ui->location; goto do_text_fields;
   case USERLIST_NN_SPELLING:
-    sptr = &u->i.spelling; goto do_text_fields;
+    sptr = &ui->spelling; goto do_text_fields;
   case USERLIST_NN_PRINTER_NAME:
-    sptr = &u->i.printer_name; goto do_text_fields;
+    sptr = &ui->printer_name; goto do_text_fields;
   case USERLIST_NN_LANGUAGES:
-    sptr = &u->i.languages; goto do_text_fields;
+    sptr = &ui->languages; goto do_text_fields;
 
   case USERLIST_NN_ID:
   case USERLIST_NN_TIMESTAMPS:
@@ -569,16 +577,20 @@ userlist_set_user_field_str(struct userlist_list *lst,
 }
 
 int
-userlist_delete_user_field(struct userlist_user *u, int field_id)
+userlist_delete_user_field(struct userlist_user *u,
+                           struct userlist_user_info *ui,
+                           int field_id)
 {
   time_t *tptr;
   int *iptr;
   unsigned char **sptr;
   int retval = -1;
 
+  if (!ui) ui = &u->i;
+
   switch (field_id) {
   case USERLIST_NN_NAME:
-    sptr = &u->i.name;
+    sptr = &ui->name;
     if (*sptr && **sptr) retval = 1;
     xfree(*sptr); *sptr = xstrdup("");
     break;
@@ -598,7 +610,7 @@ userlist_delete_user_field(struct userlist_user *u, int field_id)
   case USERLIST_NN_READ_ONLY:
     iptr = &u->read_only; goto do_flags_delete;
   case USERLIST_NN_CNTS_READ_ONLY:
-    iptr = &u->i.cnts_read_only; goto do_flags_delete;
+    iptr = &ui->cnts_read_only; goto do_flags_delete;
   case USERLIST_NN_NEVER_CLEAN:
     iptr = &u->never_clean; goto do_flags_delete;
   case USERLIST_NN_SIMPLE_REGISTRATION:
@@ -619,49 +631,49 @@ userlist_delete_user_field(struct userlist_user *u, int field_id)
 #endif
 
   case USERLIST_NN_TEAM_PASSWORD:
-    if (!u->i.team_passwd) break;
-    xml_unlink_node(&u->i.team_passwd->b);
-    userlist_free(&u->i.team_passwd->b);
-    u->i.team_passwd = 0;
+    if (!ui->team_passwd) break;
+    xml_unlink_node(&ui->team_passwd->b);
+    userlist_free(&ui->team_passwd->b);
+    ui->team_passwd = 0;
     retval = 1;
     break;
 
   case USERLIST_NN_INST:
-    sptr = &u->i.inst; goto do_string_delete;
+    sptr = &ui->inst; goto do_string_delete;
   case USERLIST_NN_INST_EN:
-    sptr = &u->i.inst_en; goto do_string_delete;
+    sptr = &ui->inst_en; goto do_string_delete;
   case USERLIST_NN_INSTSHORT:
-    sptr = &u->i.instshort; goto do_string_delete;
+    sptr = &ui->instshort; goto do_string_delete;
   case USERLIST_NN_INSTSHORT_EN:
-    sptr = &u->i.instshort_en; goto do_string_delete;
+    sptr = &ui->instshort_en; goto do_string_delete;
   case USERLIST_NN_FAC:
-    sptr = &u->i.fac; goto do_string_delete;
+    sptr = &ui->fac; goto do_string_delete;
   case USERLIST_NN_FAC_EN:
-    sptr = &u->i.fac_en; goto do_string_delete;
+    sptr = &ui->fac_en; goto do_string_delete;
   case USERLIST_NN_FACSHORT:
-    sptr = &u->i.facshort; goto do_string_delete;
+    sptr = &ui->facshort; goto do_string_delete;
   case USERLIST_NN_FACSHORT_EN:
-    sptr = &u->i.facshort_en; goto do_string_delete;
+    sptr = &ui->facshort_en; goto do_string_delete;
   case USERLIST_NN_HOMEPAGE:
-    sptr = &u->i.homepage; goto do_string_delete;
+    sptr = &ui->homepage; goto do_string_delete;
   case USERLIST_NN_PHONE:
-    sptr = &u->i.phone; goto do_string_delete;
+    sptr = &ui->phone; goto do_string_delete;
   case USERLIST_NN_CITY:
-    sptr = &u->i.city; goto do_string_delete;
+    sptr = &ui->city; goto do_string_delete;
   case USERLIST_NN_CITY_EN:
-    sptr = &u->i.city_en; goto do_string_delete;
+    sptr = &ui->city_en; goto do_string_delete;
   case USERLIST_NN_COUNTRY:
-    sptr = &u->i.country; goto do_string_delete;
+    sptr = &ui->country; goto do_string_delete;
   case USERLIST_NN_COUNTRY_EN:
-    sptr = &u->i.country_en; goto do_string_delete;
+    sptr = &ui->country_en; goto do_string_delete;
   case USERLIST_NN_LOCATION:
-    sptr = &u->i.location; goto do_string_delete;
+    sptr = &ui->location; goto do_string_delete;
   case USERLIST_NN_SPELLING:
-    sptr = &u->i.spelling; goto do_string_delete;
+    sptr = &ui->spelling; goto do_string_delete;
   case USERLIST_NN_PRINTER_NAME:
-    sptr = &u->i.printer_name; goto do_string_delete;
+    sptr = &ui->printer_name; goto do_string_delete;
   case USERLIST_NN_LANGUAGES:
-    sptr = &u->i.languages; goto do_string_delete;
+    sptr = &ui->languages; goto do_string_delete;
   do_string_delete:
     retval = !(*sptr == 0);
     xfree(*sptr); *sptr = 0;
@@ -982,6 +994,219 @@ userlist_cookie_hash_del(struct userlist_list *p, struct userlist_cookie *ck)
 
   p->cookie_cur_fill--;
   return 0;
+}
+
+void
+userlist_expand_cntsinfo(struct userlist_user *u, int contest_id)
+{
+  int new_size;
+  struct userlist_cntsinfo **new_arr;
+
+  if (contest_id < u->cntsinfo_a) return;
+
+  if (!(new_size = u->cntsinfo_a)) new_size = 32;
+  while (contest_id >= new_size) new_size *= 2;
+  XCALLOC(new_arr, new_size);
+  if (u->cntsinfo_a > 0) {
+    memcpy(new_arr, u->cntsinfo, u->cntsinfo_a * sizeof(new_arr[0]));
+  }
+  xfree(u->cntsinfo);
+  u->cntsinfo_a = new_size;
+  u->cntsinfo = new_arr;
+}
+
+/*
+ * if the source string is NULL, also NULL is returned, as opposed
+ * to the `xstrdup', which returns "" in case of NULL.
+ */
+static unsigned char *
+copy_field(const unsigned char *s)
+{
+  if (!s) return 0;
+  return xstrdup(s);
+}
+
+struct userlist_member *
+userlist_clone_member(struct userlist_member *src, int *p_serial,
+                      time_t current_time)
+{
+  struct userlist_member *dst;
+
+  if (!src) return 0;
+  ASSERT(src->b.tag == USERLIST_T_MEMBER);
+
+  dst = (struct userlist_member*) userlist_node_alloc(USERLIST_T_MEMBER);
+
+  dst->serial = (*p_serial)++;
+  dst->status = src->status;
+  dst->grade = src->grade;
+
+  dst->firstname = copy_field(src->firstname);
+  dst->firstname_en = copy_field(src->firstname_en);
+  dst->middlename = copy_field(src->middlename);
+  dst->middlename_en = copy_field(src->middlename_en);
+  dst->surname = copy_field(src->surname);
+  dst->surname_en = copy_field(src->surname_en);
+  dst->group = copy_field(src->group);
+  dst->group_en = copy_field(src->group_en);
+  dst->email = copy_field(src->email);
+  dst->homepage = copy_field(src->homepage);
+  dst->phone = copy_field(src->phone);
+  dst->occupation = copy_field(src->occupation);
+  dst->occupation_en = copy_field(src->occupation_en);
+  dst->inst = copy_field(src->inst);
+  dst->inst_en = copy_field(src->inst_en);
+  dst->instshort = copy_field(src->instshort);
+  dst->instshort_en = copy_field(src->instshort_en);
+  dst->fac = copy_field(src->fac);
+  dst->fac_en = copy_field(src->fac_en);
+  dst->facshort = copy_field(src->facshort);
+  dst->facshort_en = copy_field(src->facshort_en);
+
+  dst->create_time = current_time;
+  dst->last_change_time = current_time;
+  dst->last_access_time = 0;
+  src->last_access_time = current_time;
+
+  return dst;
+}
+
+struct userlist_cntsinfo *
+userlist_clone_user_info(struct userlist_user *u, int contest_id,
+                         int *p_serial, time_t current_time)
+{
+  struct xml_tree *p;
+  struct userlist_cntsinfo *ci;
+  struct userlist_passwd *tp;
+  struct userlist_members *mm, *ms;
+  int mt, i, sz;
+
+  if (contest_id <= 0 || contest_id > MAX_CONTEST_ID) return 0;
+  if (!u) return 0;
+  if (u->cntsinfo && contest_id < u->cntsinfo_a && u->cntsinfo[contest_id])
+    return u->cntsinfo[contest_id];
+
+  // ok, needs clone
+  // 1. find <cntsinfos> element in the list of childs
+  for (p = u->b.first_down; p && p->tag != USERLIST_T_CNTSINFOS; p = p->right);
+  if (!p) {
+    // <cntsinfos> not found, create a new one
+    p = userlist_node_alloc(USERLIST_T_CNTSINFOS);
+    xml_link_node_last(&u->b, p);
+  }
+
+  ci = (struct userlist_cntsinfo*) userlist_node_alloc(USERLIST_T_CNTSINFO);
+  xml_link_node_last(p, &ci->b);
+
+  ci->contest_id = contest_id;
+
+  // NOTE: should we reset the cnts_read_only flag?
+  ci->i.cnts_read_only = u->i.cnts_read_only;
+
+  ci->i.name = xstrdup(u->i.name);
+
+  ci->i.inst = copy_field(u->i.inst);
+  ci->i.inst_en = copy_field(u->i.inst_en);
+  ci->i.instshort = copy_field(u->i.instshort);
+  ci->i.instshort_en = copy_field(u->i.instshort_en);
+  ci->i.fac = copy_field(u->i.fac);
+  ci->i.fac_en = copy_field(u->i.fac_en);
+  ci->i.facshort = copy_field(u->i.facshort);
+  ci->i.facshort_en = copy_field(u->i.facshort_en);
+  ci->i.homepage = copy_field(u->i.homepage);
+  ci->i.city = copy_field(u->i.city);
+  ci->i.city_en = copy_field(u->i.city_en);
+  ci->i.country = copy_field(u->i.country);
+  ci->i.country_en = copy_field(u->i.country_en);
+  ci->i.location = copy_field(u->i.location);
+  ci->i.spelling = copy_field(u->i.spelling);
+  ci->i.printer_name = copy_field(u->i.printer_name);
+  ci->i.languages = copy_field(u->i.languages);
+  ci->i.phone = copy_field(u->i.phone);
+
+  ci->i.create_time = current_time;
+  ci->i.last_change_time = current_time;
+  ci->i.last_access_time = 0;
+  ci->i.last_pwdchange_time = u->i.last_pwdchange_time;
+  u->i.last_access_time = current_time;
+
+  if (u->i.team_passwd) {
+    tp = (struct userlist_passwd*) userlist_node_alloc(USERLIST_T_TEAM_PASSWORD);
+    ci->i.team_passwd = tp;
+    xml_link_node_last(&ci->b, &tp->b);
+    tp->b.text = xstrdup(u->i.team_passwd->b.text);
+    tp->method = u->i.team_passwd->method;
+  }
+
+  for (mt = 0; mt < USERLIST_MB_LAST; mt++) {
+    if (!u->i.members[mt]) continue;
+    ms = u->i.members[mt];
+    mm = (struct userlist_members*) userlist_node_alloc(USERLIST_T_CONTESTANTS);
+    mm->role = mt;
+    ci->i.members[mt] = mm;
+    xml_link_node_last(&ci->b, &mm->b);
+
+    sz = 1;
+    while (sz < ms->total) sz *= 2;
+    mm->allocd = sz;
+    mm->total = ms->total;
+    XCALLOC(mm->members, sz);
+    for (i = 0; i < ms->total; i++) {
+      mm->members[i] = userlist_clone_member(ms->members[i], p_serial,
+                                             current_time);
+      xml_link_node_last(&mm->b, &mm->members[i]->b);
+    }
+  }
+
+  userlist_expand_cntsinfo(u, contest_id);
+  u->cntsinfo[contest_id] = ci;
+
+  return ci;
+}
+
+struct userlist_cntsinfo *
+userlist_new_cntsinfo(struct userlist_user *u, int contest_id,
+                      time_t current_time)
+{
+  struct xml_tree *p;
+  struct userlist_cntsinfo *ci;
+
+  ASSERT(contest_id > 0 && contest_id <= MAX_CONTEST_ID);
+  ASSERT(u);
+
+  if (u->cntsinfo && contest_id < u->cntsinfo_a && u->cntsinfo[contest_id])
+    return u->cntsinfo[contest_id];
+
+  // ok, needs clone
+  // 1. find <cntsinfos> element in the list of childs
+  for (p = u->b.first_down; p && p->tag != USERLIST_T_CNTSINFOS; p = p->right);
+  if (!p) {
+    // <cntsinfos> not found, create a new one
+    p = userlist_node_alloc(USERLIST_T_CNTSINFOS);
+    xml_link_node_last(&u->b, p);
+  }
+
+  ci = (struct userlist_cntsinfo*) userlist_node_alloc(USERLIST_T_CNTSINFO);
+  xml_link_node_last(p, &ci->b);
+  userlist_expand_cntsinfo(u, contest_id);
+  u->cntsinfo[contest_id] = ci;
+
+  ci->contest_id = contest_id;
+  ci->i.create_time = current_time;
+  ci->i.last_change_time = current_time;
+
+  return ci;
+}
+
+struct userlist_user_info *
+userlist_get_user_info(struct userlist_user *u, int contest_id)
+{
+  ASSERT(u);
+
+  if (contest_id > 0 && contest_id < u->cntsinfo_a
+      && u->cntsinfo[contest_id])
+    return &u->cntsinfo[contest_id]->i;
+  return &u->i;
 }
 
 /*

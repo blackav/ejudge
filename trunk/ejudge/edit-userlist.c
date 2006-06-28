@@ -1319,7 +1319,7 @@ user_menu_string(struct userlist_user *u, int f, unsigned char *out)
   if (!user_descs[f].has_value) {
     snprintf(out, 78, "%s", user_descs[f].name);
   } else {
-    userlist_get_user_field_str(buf, sizeof(buf), u, f, 1);
+    userlist_get_user_field_str(buf, sizeof(buf), u, 0, f, 1);
     snprintf(out, 78, "%-16.16s:%-60.60s", user_descs[f].name, buf);
   }
 }
@@ -1908,13 +1908,13 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
         case USERLIST_NN_SIMPLE_REGISTRATION:
           edit_buf[0] = 0;
           userlist_get_user_field_str(edit_buf, sizeof(edit_buf),
-                                      u, info[cur_i].field, 0);
+                                      u, 0, info[cur_i].field, 0);
           r = xml_parse_bool(0, 0, 0, edit_buf, 0);
           r = yesno(r, "New value for \"%s\"",
                     user_descs[info[cur_i].field].name);
           if (r < 0 || r > 1) goto menu_continue;
           snprintf(edit_buf, sizeof(edit_buf), "%s", xml_unparse_bool(r));
-          r = userlist_set_user_field_str(0, u, info[cur_i].field, edit_buf);
+          r = userlist_set_user_field_str(0, u, 0, info[cur_i].field, edit_buf);
           if (!r) goto menu_continue;
           if (r < 0) {
             vis_err("Invalid field value");
@@ -1939,14 +1939,14 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
         }
 
         userlist_get_user_field_str(edit_buf, sizeof(edit_buf),
-                                    u, info[cur_i].field, 0);
+                                    u, 0, info[cur_i].field, 0);
         snprintf(edit_header, sizeof(edit_header),
                  "%s",
                  user_descs[info[cur_i].field].name);
         r = edit_string(cur_line, COLS, edit_header,
                         edit_buf, sizeof(edit_buf) - 1);
         if (r < 0) goto menu_continue;
-        r = userlist_set_user_field_str(0, u, info[cur_i].field, edit_buf);
+        r = userlist_set_user_field_str(0, u, 0, info[cur_i].field, edit_buf);
         if (!r) goto menu_continue;
         if (r < 0) {
           vis_err("Invalid field value");
