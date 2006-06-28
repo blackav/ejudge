@@ -260,6 +260,10 @@ struct userlist_member
   unsigned char *facshort;
   unsigned char *facshort_en;
   unsigned char *phone;
+
+  time_t create_time;
+  time_t last_change_time;
+  time_t last_access_time;
 };
 
 struct userlist_members
@@ -328,6 +332,7 @@ struct userlist_user_info
   unsigned char *phone;
   struct userlist_members *members[USERLIST_MB_LAST];
 
+  time_t create_time;
   time_t last_change_time;
   time_t last_access_time;
   time_t last_pwdchange_time;
@@ -425,7 +430,8 @@ struct userlist_list *userlist_parse(char const *path);
 struct userlist_list *userlist_parse_str(unsigned char const *str);
 struct userlist_user *userlist_parse_user_str(char const *str);
 void userlist_unparse(struct userlist_list *p, FILE *f);
-void userlist_unparse_user(struct userlist_user *p, FILE *f, int mode);
+void userlist_unparse_user(struct userlist_user *p, FILE *f, int mode,
+                           int contest_id);
 void userlist_unparse_short(struct userlist_list *p, FILE *f, int contest_id);
 void userlist_unparse_for_standings(struct userlist_list *, FILE *, int);
 
@@ -449,12 +455,18 @@ int userlist_set_member_field_str(struct userlist_member *m, int field_id,
                                   unsigned char const *field_val);
 int userlist_delete_member_field(struct userlist_member *m, int field_id);
 int userlist_get_user_field_str(unsigned char *buf, size_t len,
-                                struct userlist_user *u, int field_id,
+                                struct userlist_user *u,
+                                struct userlist_user_info *ui,
+                                int field_id,
                                 int convert_null);
 int userlist_set_user_field_str(struct userlist_list *lst,
-                                struct userlist_user *u, int field_id,
+                                struct userlist_user *u,
+                                struct userlist_user_info *ui,
+                                int field_id,
                                 unsigned char const *field_val);
-int userlist_delete_user_field(struct userlist_user *u, int field_id);
+int userlist_delete_user_field(struct userlist_user *u,
+                               struct userlist_user_info *ui,
+                               int field_id);
 
 userlist_login_hash_t userlist_login_hash(const unsigned char *p);
 int userlist_build_login_hash(struct userlist_list *p);
@@ -462,5 +474,22 @@ int userlist_build_cookie_hash(struct userlist_list *p);
 
 int userlist_cookie_hash_add(struct userlist_list *, struct userlist_cookie *);
 int userlist_cookie_hash_del(struct userlist_list *, struct userlist_cookie *);
+
+void userlist_expand_cntsinfo(struct userlist_user *u, int contest_id);
+
+struct userlist_member *
+userlist_clone_member(struct userlist_member *src,
+                      int *p_serial,
+                      time_t current_time);
+struct userlist_cntsinfo *
+userlist_clone_user_info(struct userlist_user *u,
+                         int contest_id,
+                         int *p_serial,
+                         time_t current_time);
+struct userlist_cntsinfo *
+userlist_new_cntsinfo(struct userlist_user *u, int contest_id,
+                      time_t current_time);
+struct userlist_user_info *
+userlist_get_user_info(struct userlist_user *u, int contest_id);
 
 #endif /* __USERLIST_H__ */

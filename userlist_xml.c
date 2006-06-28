@@ -694,8 +694,6 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
   struct xml_tree *p;
   time_t *pt;
   unsigned char **puc;
-  int new_size;
-  struct userlist_cntsinfo **new_arr;
 
   ASSERT(node);
   ASSERT(node->tag == USERLIST_T_CNTSINFO);
@@ -818,18 +816,7 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
 
   if (!ui->i.name) ui->i.name = xstrdup("");
 
-  /* install this element to cntsinfo references */
-  if (ui->contest_id >= usr->cntsinfo_a) {
-    if (!(new_size = usr->cntsinfo_a)) new_size = 32;
-    while (ui->contest_id >= new_size) new_size *= 2;
-    XCALLOC(new_arr, new_size);
-    if (usr->cntsinfo_a > 0) {
-      memcpy(new_arr, usr->cntsinfo, usr->cntsinfo_a * sizeof(new_arr[0]));
-    }
-    xfree(usr->cntsinfo);
-    usr->cntsinfo_a = new_size;
-    usr->cntsinfo = new_arr;
-  }
+  userlist_expand_cntsinfo(usr, ui->contest_id);
   usr->cntsinfo[ui->contest_id] = ui;
 
   return 0;
@@ -1485,15 +1472,16 @@ static void
 unparse_user_short(struct userlist_user *p, FILE *f, int contest_id)
 {
   struct userlist_contest *uc = 0;
-  const unsigned char *name_str = 0;
+  struct userlist_user_info *ui;
 
   if (!p) return;
 
   if (p->cntsinfo && contest_id > 0 && contest_id < p->cntsinfo_a
       && p->cntsinfo[contest_id]) {
-    name_str = p->cntsinfo[contest_id]->i.name;
+    ui = &p->cntsinfo[contest_id]->i;
+  } else {
+    ui = &p->i;
   }
-  if (!name_str) name_str = p->i.name;
 
   if (contest_id) {
     if (!p->contests) return;
@@ -1506,8 +1494,8 @@ unparse_user_short(struct userlist_user *p, FILE *f, int contest_id)
   fprintf(f, "  <%s %s=\"%d\">", tag_map[USERLIST_T_USER],
           attn_map[USERLIST_A_ID], p->id);
   xml_unparse_text(f, tag_map[USERLIST_T_LOGIN], p->login, "    ");
-  if (name_str && *name_str) {
-    xml_unparse_text(f, tag_map[USERLIST_T_NAME], name_str, "    ");
+  if (ui->name && *ui->name) {
+    xml_unparse_text(f, tag_map[USERLIST_T_NAME], ui->name, "    ");
   }
   xml_unparse_text(f, tag_map[USERLIST_T_EMAIL], p->email, "    ");
   if (uc) {
@@ -1531,76 +1519,47 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
 {
   unsigned char attr_str[128];
   int i, cnt;
-  struct userlist_cntsinfo *cinfo = 0;
+  struct userlist_user_info *ui;
 
   if (!p) return;
 
-  if (contest_id > 0 && p->cntsinfo && contest_id < p->cntsinfo_a)
-    cinfo = p->cntsinfo[contest_id];
+  if (contest_id > 0 && p->cntsinfo && contest_id < p->cntsinfo_a) {
+    ui = &p->cntsinfo[contest_id]->i;
+  } else {
+    ui = &p->i;
+  }
 
   fprintf(f, "  <%s %s=\"%d\"", tag_map[USERLIST_T_USER],
           attn_map[USERLIST_A_ID], p->id);
-  if (p->is_privileged) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_PRIVILEGED],
-            xml_unparse_bool(p->is_privileged));
+  unparse_bool_attr(f, USERLIST_A_PRIVILEGED, p->is_privileged);
+  if (mode == USERLIST_MODE_ALL) {
+    unparse_bool_attr(f, USERLIST_A_INVISIBLE, p->is_invisible);
+    unparse_bool_attr(f, USERLIST_A_BANNED, p->is_banned);
+    unparse_bool_attr(f, USERLIST_A_LOCKED, p->is_locked);
   }
-  if (p->is_invisible && mode == USERLIST_MODE_ALL) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_INVISIBLE],
-            xml_unparse_bool(p->is_invisible));
-  }
-  if (p->is_banned && mode == USERLIST_MODE_ALL) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_BANNED],
-            xml_unparse_bool(p->is_banned));
-  }
-  if (p->is_locked && mode == USERLIST_MODE_ALL) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LOCKED],
-            xml_unparse_bool(p->is_locked));
-  }
-  if (p->read_only && mode != USERLIST_MODE_STAND) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_READ_ONLY],
-            xml_unparse_bool(p->read_only));
-  }
-  /* cnts_read_only is contest-specific */
   if (mode != USERLIST_MODE_STAND) {
-    unparse_bool_attr(f, USERLIST_A_CNTS_READ_ONLY,
-                      cinfo?cinfo->i.cnts_read_only:p->i.cnts_read_only);
+    unparse_bool_attr(f, USERLIST_A_READ_ONLY, p->read_only);
+    unparse_bool_attr(f, USERLIST_A_NEVER_CLEAN, p->never_clean);
+    unparse_bool_attr(f, USERLIST_A_SIMPLE_REGISTRATION,p->simple_registration);
+
+    /* cnts_read_only is contest-specific */
+    unparse_bool_attr(f, USERLIST_A_CNTS_READ_ONLY, ui->cnts_read_only);
   }
-  if (p->never_clean && mode != USERLIST_MODE_STAND) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_NEVER_CLEAN],
-            xml_unparse_bool(p->never_clean));
-  }
-  if (p->simple_registration && mode != USERLIST_MODE_STAND) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_SIMPLE_REGISTRATION],
-            xml_unparse_bool(p->simple_registration));
-  }
-  if (p->registration_time && mode == USERLIST_MODE_ALL) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_REGISTERED],
-            xml_unparse_date(p->registration_time));
-  }
-  if (p->last_login_time && mode == USERLIST_MODE_ALL) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_LOGIN],
-            xml_unparse_date(p->last_login_time));
-  }
-  /* last_access_time is contest-specific */
   if (mode == USERLIST_MODE_ALL) {
-    unparse_date_attr(f, USERLIST_A_LAST_ACCESS,
-                      cinfo?cinfo->i.last_access_time:p->i.last_access_time);
-  }
-  /* last_change_time is contest-specific */
-  if (mode == USERLIST_MODE_ALL) {
-    unparse_date_attr(f, USERLIST_A_LAST_CHANGE,
-                      cinfo?cinfo->i.last_change_time:p->i.last_change_time);
-  }
-  /* last_pwdchange_time is contest-specific */
-  if (mode == USERLIST_MODE_ALL) {
-    unparse_date_attr(f, USERLIST_A_LAST_PWDCHANGE,
-                      cinfo?cinfo->i.last_pwdchange_time:p->i.last_pwdchange_time);
-  }
-  if (p->last_minor_change_time && mode == USERLIST_MODE_ALL) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_MINOR_CHANGE],
-            xml_unparse_date(p->last_minor_change_time));
+    unparse_date_attr(f, USERLIST_A_REGISTERED, p->registration_time);
+    unparse_date_attr(f, USERLIST_A_LAST_LOGIN, p->last_login_time);
+    unparse_date_attr(f, USERLIST_A_LAST_MINOR_CHANGE,
+                      p->last_minor_change_time);
+
+    /* last_access_time is contest-specific */
+    unparse_date_attr(f, USERLIST_A_LAST_ACCESS, ui->last_access_time);
+    /* last_change_time is contest-specific */
+    unparse_date_attr(f, USERLIST_A_LAST_CHANGE, ui->last_change_time);
+    /* last_pwdchange_time is contest-specific */
+    unparse_date_attr(f, USERLIST_A_LAST_PWDCHANGE, ui->last_pwdchange_time);
   }
   fputs(">\n", f);
+
   if (p->login) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
              attn_map[USERLIST_A_PUBLIC], xml_unparse_bool(p->show_login));
@@ -1613,15 +1572,15 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
     unparse_attributed_elem(f, USERLIST_T_PASSWORD, p->register_passwd->b.text,
                             attr_str, "    ");
   }
-  if (p->i.team_passwd && mode == USERLIST_MODE_ALL) {
+  if (ui->team_passwd && mode == USERLIST_MODE_ALL) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
              attn_map[USERLIST_A_METHOD],
-             unparse_passwd_method(p->i.team_passwd->method));
+             unparse_passwd_method(ui->team_passwd->method));
     unparse_attributed_elem(f, USERLIST_T_TEAM_PASSWORD,
-                            p->i.team_passwd->b.text, attr_str, "    ");
+                            ui->team_passwd->b.text, attr_str, "    ");
   }
-  if (p->i.name && *p->i.name) {
-    xml_unparse_text(f, tag_map[USERLIST_T_NAME], p->i.name, "    ");
+  if (ui->name && *ui->name) {
+    xml_unparse_text(f, tag_map[USERLIST_T_NAME], ui->name, "    ");
   }
   if (p->email) { // && mode != USERLIST_MODE_STAND) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
@@ -1633,28 +1592,28 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   }
   unparse_contests(p->contests, f, USERLIST_MODE_STAND, contest_id);
 
-  xml_unparse_text(f, tag_map[USERLIST_T_INST], p->i.inst, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_INST_EN], p->i.inst_en, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_INSTSHORT], p->i.instshort, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_INSTSHORT_EN], p->i.instshort_en, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_FAC], p->i.fac, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_FAC_EN], p->i.fac_en, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_FACSHORT], p->i.facshort, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_FACSHORT_EN], p->i.facshort_en, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_HOMEPAGE], p->i.homepage, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_PHONE], p->i.phone, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_CITY], p->i.city, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_CITY_EN], p->i.city_en, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_COUNTRY], p->i.country, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_COUNTRY_EN], p->i.country_en, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_LOCATION], p->i.location, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_SPELLING], p->i.spelling, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_PRINTER_NAME], p->i.printer_name, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_LANGUAGES], p->i.languages, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_INST], ui->inst, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_INST_EN], ui->inst_en, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_INSTSHORT], ui->instshort, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_INSTSHORT_EN],ui->instshort_en,"    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_FAC], ui->fac, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_FAC_EN], ui->fac_en, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_FACSHORT], ui->facshort, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_FACSHORT_EN], ui->facshort_en, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_HOMEPAGE], ui->homepage, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_PHONE], ui->phone, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_CITY], ui->city, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_CITY_EN], ui->city_en, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_COUNTRY], ui->country, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_COUNTRY_EN], ui->country_en, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_LOCATION], ui->location, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_SPELLING], ui->spelling, "    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_PRINTER_NAME],ui->printer_name,"    ");
+  xml_unparse_text(f, tag_map[USERLIST_T_LANGUAGES], ui->languages, "    ");
 
   if (mode == USERLIST_MODE_STAND) {
     // generate some information about the first participant
-    struct userlist_members **pmemb = p->i.members;
+    struct userlist_members **pmemb = ui->members;
 
     if (pmemb && pmemb[USERLIST_MB_CONTESTANT]
         && pmemb[USERLIST_MB_CONTESTANT]->total > 0
@@ -1669,7 +1628,7 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   }
 
   if (mode != USERLIST_MODE_STAND) {
-    unparse_members(p->i.members, f);
+    unparse_members(ui->members, f);
   }
 
   if (contest_id < 0 && p->cntsinfo) {
@@ -1694,13 +1653,14 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
  *     userlist_unparse_user(user, f, USERLIST_MODE_ALL);
  */
 void
-userlist_unparse_user(struct userlist_user *p, FILE *f, int mode)
+userlist_unparse_user(struct userlist_user *p, FILE *f, int mode,
+                      int contest_id)
 {
   if (!p) return;
 
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n",
           EJUDGE_CHARSET);
-  unparse_user(p, f, mode, 0);
+  unparse_user(p, f, mode, contest_id);
 }
 
 /*
