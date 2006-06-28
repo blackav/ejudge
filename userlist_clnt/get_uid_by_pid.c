@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@ userlist_clnt_get_uid_by_pid(struct userlist_clnt *clnt,
                              int system_uid,
                              int system_gid,
                              int system_pid,
+                             int contest_id,
                              int *p_uid,
                              int *p_priv_level,
                              ej_cookie_t *p_cookie,
@@ -40,6 +41,7 @@ userlist_clnt_get_uid_by_pid(struct userlist_clnt *clnt,
   out->system_uid = system_uid;
   out->system_gid = system_gid;
   out->system_pid = system_pid;
+  out->contest_id = contest_id;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
   if ((r = userlist_clnt_recv_packet(clnt, &in_size, (void*) &in)) < 0)
     return r;
@@ -65,7 +67,7 @@ userlist_clnt_get_uid_by_pid(struct userlist_clnt *clnt,
   return ULS_UID;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
