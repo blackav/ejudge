@@ -501,6 +501,7 @@ teamdb_set_archive_time(int uid, time_t time)
 
 int
 teamdb_get_uid_by_pid(int system_uid, int system_gid, int system_pid,
+                      int contest_id,
                       int *p_uid, int *p_priv_level,
                       ej_cookie_t *p_cookie,
                       ej_ip_t *p_ip, int *p_ssl)
@@ -509,7 +510,7 @@ teamdb_get_uid_by_pid(int system_uid, int system_gid, int system_pid,
 
   if (open_connection() < 0) return -1;
   r = userlist_clnt_get_uid_by_pid(server_conn, system_uid, system_gid,
-                                   system_pid, p_uid,
+                                   system_pid, contest_id, p_uid,
                                    p_priv_level, p_cookie, p_ip, p_ssl);
   if (r < 0) return -1;
   return r;

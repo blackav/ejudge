@@ -1555,7 +1555,7 @@ get_peer_local_user(struct client_state *p)
   if (open_connection() < 0) return -SSERV_ERR_USERLIST_DOWN;
 
   r = userlist_clnt_get_uid_by_pid_2(userlist_clnt, p->peer_uid,
-                                     p->peer_gid, p->peer_pid,
+                                     p->peer_gid, p->peer_pid, 0,
                                      &uid, &priv_level, &cookie, &ip, &ssl,
                                      &login, &name);
   if (r < 0) {
@@ -4112,7 +4112,7 @@ main(int argc, char **argv)
   return retcode;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
