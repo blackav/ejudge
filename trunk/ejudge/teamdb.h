@@ -3,7 +3,7 @@
 #ifndef __TEAMDB_H__
 #define __TEAMDB_H__
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -65,6 +65,7 @@ int    teamdb_set_archive_time(int uid, time_t time);
 int teamdb_get_uid_by_pid(int system_uid,
                           int system_gid,
                           int system_pid,
+                          int contest_id,
                           int *p_uid,
                           int *p_priv_level,
                           ej_cookie_t *p_cookie,

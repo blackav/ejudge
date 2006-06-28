@@ -270,6 +270,7 @@ struct userlist_pk_get_uid_by_pid
   int   system_uid;
   int   system_gid;
   int   system_pid;
+  int   contest_id;
 };
 
 struct userlist_pk_dump_database

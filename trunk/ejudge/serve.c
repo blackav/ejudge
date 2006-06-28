@@ -703,6 +703,7 @@ get_peer_local_user(struct client_state *p)
 
   if (p->user_id >= 0) return p->user_id;
   r = teamdb_get_uid_by_pid(p->peer_uid, p->peer_gid, p->peer_pid,
+                            global->contest_id,
                             &user_id, &priv_level, &cookie, &ip, &ssl);
   if (r < 0) {
     // FIXME: what else can we do?
