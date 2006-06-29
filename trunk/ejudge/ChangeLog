@@ -1,3 +1,240 @@
+2006-06-29 (r3188) Alexander Chernov  <cher@ispras.ru>
+
+	* userlist.h:
+	attributes "create", "copied_from" are added;
+	USERLIST_NN_CREATE_TIME is added;
+	USERLIST_NM_COPIED_FROM is added;
+	(struct userlist_member) `copied_from' field is added.
+
+	* edit-userlist.c:
+	editing of `create_time' field of `struct userlist_cntsinfo'
+	is implemented;
+	editing of `copied_from' field of `struct userlist_member'
+	is implemented.
+
+	* userlist.c:
+	(userlist_get_member_field_str) `copied_from' field is supported;
+	(userlist_delete_member_field) the same as above;
+	(userlist_set_member_field_str) the same is above;
+	(userlist_get_user_field_str) `create_time' field is supported;
+	(userlist_delete_user_field) the same as above;
+	(userlist_clone_member) `copied_from' is filled from `serial'
+	  of the source `struct userlist_member'.
+
+	* userlist-server.c:
+	(find_member_by_serial) `copied_from' is used for search as well
+	  as `serial';
+	(cmd_edit_field) `userlist_clone_user_info' is called.
+
+	* userlist_xml.c:
+	(parse_members) "copied_from", "create", "last_change",
+	  "last_access" attributes are supported;
+	(parse_cntsinfo) "create" attribute is supported;
+	(unparse_member) "copied_from", "create", "last_change",
+	  "last_access" attributes are supported;
+	(unparse_cntsinfo) "create" attribute is supported;
+	(unparse_user) check that cntsinfo exists is fixed.
+
+2006-06-28 (r3187) Alexander Chernov  <cher@ispras.ru>
+
+	* userlist.h:
+	(struct userlist_member) new fields `create_time', `last_change_time',
+	  `last_access_time' are added;
+	(struct userlist_user_info) new field `create_time' is added;
+	(userlist_unparse_user) `contest_id' parameter is added;
+	(userlist_get_user_field_str) `ui' parameter is added;
+	(userlist_set_user_field_str) `ui' parameter is added;
+	(userlist_delete_user_field) `ui' parameter is added;
+	(userlist_expand_cntsinfo) new function prototype;
+	(userlist_clone_member) new function prototype;
+	(userlist_clone_user_info) new function prototype;
+	(userlist_new_cntsinfo) new function prototype;
+	(userlist_get_user_info) new function prototype.
+
+	* userlist.c: "ej_limits.h" is included;
+	(userlist_get_user_field_str) new parameter `ui' is added to pass
+	  the contest-specific user information pointer;
+	  support for contest-specific user information is implemented;
+	(userlist_set_user_field_str) new parameter `ui' is added;
+	  support for contest-specific user information is implemented;
+	(userlist_delete_user_field) new parameter `ui' is added;
+	  support for contest-specific user information is implemented;
+	(userlist_expand_cntsinfo) new function;
+	(copy_field) new static function;
+	(userlist_clone_member) new function;
+	(userlist_clone_user_info) new function;
+	(userlist_new_cntsinfo) new function;
+	(userlist_get_user_info) new function.
+
+	* edit-userlist.c:
+	(user_menu_string) call of `userlist_get_user_field_str' is updated;
+	(display_user) call of `userlist_set_user_field_str' is updated.
+
+	* userlist-server.c:
+	support for contest-specific user information is basically
+	  implemented.
+
+	* userlist_xml.c:
+	(parse_cntsinfo) `userlist_expand_cntsinfo' is used;
+	(unparse_user_short) support for contest-specific user info is
+	  implemented;
+	(unparse_user) support for contest-specific user info is implemented;
+	(userlist_unparse_user) `contest_id' parameter is added.
+
+	* sformat.c:
+	(sformat_message) support for contest-specific user info is
+	  implemented.
+
+2006-06-28 (r3186) Alexander Chernov  <cher@ispras.ru>
+
+	* userlist_proto.h:
+	(struct userlist_pk_get_uid_by_pid) field `contest_id' is added.
+
+	* userlist_clnt.h:
+	(userlist_clnt_get_uid_by_pid) parameter `contest_id' is added;
+	(userlist_clnt_get_uid_by_pid_2) parameter `contest_id' is added.
+
+	* teamdb.h: copyright notice is updated;
+	(teamdb_get_uid_by_pid) parameter `contest_id' is added.
+
+	* super-serve.c:
+	(get_peer_local_user) call of `userlist_clnt_get_uid_by_pid_2'
+	  is updated.
+
+	* teamdb.c:
+	(teamdb_get_uid_by_pid) parameter `contest_id' is added;
+	  `contest_id' is passed to `userlist_clnt_get_uid_by_pid'.
+
+	* serve.c:
+	(get_peer_local_user) call of `teamdb_get_uid_by_pid' is updated.
+
+2006-06-26 (r3184) Alexander Chernov  <cher@ispras.ru>
+
+	* userlist.h:
+	(struct userlist_user_info) new structure, which contains all the
+	  contest-specific fields of the user information;
+	(struct userlist_cntsinfo) new field `i' for contest-specific
+	  information;
+	(struct userlist_user) all contest-specific information is moved
+	  to field `i' of type `struct userlist_user_info',
+	  basically, this means, that all the contest-specific fields
+	  should be accessing using `i' field name, for example:
+	  location -> i.location.
+
+	* clean_users.c, register.c, serve.c, userlist.c, super_html_3.c, edit-userlist.c, userlist-server.c, userlist_xml.c, sformat.c:
+	names of contest-specific fields are changed:
+	  name -> i.name,
+	  team_passwd -> i.team_passwd,
+	  members -> i.members,
+	  inst -> i.inst,
+	  etc (see the comment above for userlist.h).
+
+	* printing.c, teamdb.c:
+	copyright notice is updated;
+	names of contest-specific fields are changed:
+	  name -> i.name,
+	  team_passwd -> i.team_passwd,
+	  members -> i.members,
+	  inst -> i.inst,
+	  etc (see the comment above for userlist.h).
+
+2006-06-26 (r3183) Alexander Chernov  <cher@ispras.ru>
+
+	* files.make: `parse_int_attr.c' is renamed to `attr_int.c'.
+
+	* testing_report_xml.c: copyright notice is updated;
+	(parse_test) calls of `xml_parse_int_attr' are updated to calls
+	  of `xml_attr_int';
+	(parse_testing_report) the same as above.
+
+	* userlist_xml.c:
+	(parse_cntsinfo) calls of `xml_parse_int_attr' are updated to calls
+	  of `xml_attr_int'.
+
+	* xml_utils.h:
+	(xml_attr_int) renamed from `xml_parse_int_attr'.
+
+2006-06-26 (r3181) Alexander Chernov  <cher@ispras.ru>
+
+	* userlist_xml.c: "ej_limits.h" is included;
+	(parse_members) the 3rd argument type is changed for more
+	  generality;
+	(parse_cntsinfo) new function;
+	(parse_cntsinfos) new function;
+	(do_parse_user) call of `parse_members' is updated;
+	  handling of <cntsinfos> element is added;
+	(unparse_bool_attr) new function;
+	(unparse_date_attr) new function;
+	(unparse_cntsinfo) new function;
+	(unparse_user_short) support for contest-specific info is added;
+	(unparse_user) partial support for contest-specific info is
+	  implemented;
+	(userlist_unparse) call of `unparse_user' is changed.
+
+2006-06-25 (r3180) Alexander Chernov  <cher@ispras.ru>
+
+	* files.make: xml_utils/attr_date.c is added.
+
+	* xml_utils.h:
+	(xml_attr_date) prototype is added.
+
+2006-06-25 (r3177) Alexander Chernov  <cher@ispras.ru>
+
+	* userlist.h:
+	USERLIST_NN_USE_COOKIES is removed;
+	(struct userlist_user) `default_use_cookies' field is removed.
+
+	* userlist_clnt.h:
+	(userlist_clnt_register_new) `use_cookies' parameter is removed;
+	(userlist_clnt_register_new_2) `use_cookies' parameter is removed;
+	(userlist_clnt_login) `use_cookies' parameter is removed;
+	(userlist_clnt_team_login) `use_cookies' parameter is removed;
+	(userlist_clnt_priv_login) `use_cookies' parameter is removed.
+
+	* userlist_proto.h:
+	(struct userlist_pk_register_new) `use_cookies' field is removed;
+	(struct userlist_pk_do_login) `use_cookies' field is removed.
+
+	* userlist.c:
+	(userlist_get_user_field_str) operation with `default_use_cookies'
+	  field is removed;
+	(userlist_set_user_field_str) the same as above;
+	(userlist_delete_user_field) the same as above.
+
+	* register.c:
+	(action_register_new_user) calls of `userlist_clnt_register_new',
+	  `userlist_clnt_register_new' are updated;
+	(action_login) call of `userlist_clnt_login' is updated.
+
+	* master.c:
+	(authentificate) call of `userlist_clnt_priv_login' is updated;
+
+	* team.c:
+	(authentificate) call of `userlist_clnt_team_login' is updated.
+
+	* serve-cmd.c:
+	(handle_login) call of `userlist_clnt_priv_login' is updated;
+	(handle_team_login) call of `userlist_clnt_login' is updated.
+
+	* edit-userlist.c:
+	support for `default_use_cookies' field is removed.
+
+	* userlist-server.c:
+	(cmd_register_new_2) `default_use_cookies' field is removed;
+	(cmd_register_new) `default_use_cookies' field is removed;
+	(cmd_do_login) `default_use_cookies', `use_cookies' fields are removed;
+	(cmd_team_login) the same as above;
+	(cmd_priv_login) the same as above.
+
+	* userlist_xml.c:
+	(do_parse_user) `default_use_cookies' field is removed;
+	  "use_cookies" attribute is supported for compatibility, but its
+	  value is ignored;
+	(unparse_user) `default_use_cookies' field is removed.
+
+	* serve-control.c:
+	(authentificate) call of `userlist_clnt_priv_login' is updated.
+
 2006-06-25 (r3173) Alexander Chernov  <cher@ispras.ru>
 
 	* files.make: NEWS, NEWS.RUS are removed.
