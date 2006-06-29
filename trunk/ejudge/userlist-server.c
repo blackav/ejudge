@@ -3068,7 +3068,8 @@ find_member_by_serial(struct userlist_user_info *ui, int serial,
     for (i = 0; i < ms->total; i++) {
       if (!ms->members[i]) continue;
       m = ms->members[i];
-      if (serial == m->serial) {
+      if (serial == m->serial
+          || (m->copied_from > 0 && serial == m->copied_from)) {
         if (p_role) *p_role = role;
         if (p_i) *p_i = i;
         return m;
@@ -5986,11 +5987,8 @@ cmd_edit_field(struct client_state *p, int pkt_len,
   }
 
   if (data->contest_id > 0) {
-    userlist_expand_cntsinfo(u, data->contest_id);
-    if (!u->cntsinfo[data->contest_id]) {
-      // FIXME: copy the default contest-specific info to new cntsinfo
-      abort();
-    }
+    userlist_clone_user_info(u, data->contest_id,
+                             &userlist->member_serial, time(0));
     ui = &u->cntsinfo[data->contest_id]->i;
   } else {
     ui = &u->i;

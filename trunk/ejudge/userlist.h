@@ -150,6 +150,8 @@ enum
     USERLIST_A_DATE,
     USERLIST_A_SIMPLE_REGISTRATION,
     USERLIST_A_CNTS_READ_ONLY,
+    USERLIST_A_CREATE,
+    USERLIST_A_COPIED_FROM,
 
     USERLIST_LAST_ATTN,
   };
@@ -174,59 +176,61 @@ enum
     USERLIST_NN_TIMESTAMPS,     /* 14 */
     USERLIST_NN_REG_TIME,       /* 15 */
     USERLIST_NN_LOGIN_TIME,     /* 16 */
-    USERLIST_NN_ACCESS_TIME,    /* 17 */
-    USERLIST_NN_CHANGE_TIME,    /* 18 */
-    USERLIST_NN_PWD_CHANGE_TIME, /* 19 */
-    USERLIST_NN_MINOR_CHANGE_TIME, /* 20 */
+    USERLIST_NN_CREATE_TIME,    /* 17 */
+    USERLIST_NN_ACCESS_TIME,    /* 18 */
+    USERLIST_NN_CHANGE_TIME,    /* 19 */
+    USERLIST_NN_PWD_CHANGE_TIME, /* 20 */
+    USERLIST_NN_MINOR_CHANGE_TIME, /* 21 */
     USERLIST_NN_TIMESTAMP_LAST = USERLIST_NN_MINOR_CHANGE_TIME,
-    USERLIST_NN_PASSWORDS,      /* 21 */
-    USERLIST_NN_REG_PASSWORD,   /* 22 */
-    USERLIST_NN_TEAM_PASSWORD,  /* 23 */
-    USERLIST_NN_GENERAL_INFO,   /* 24 */
-    USERLIST_NN_INST,           /* 25 */
-    USERLIST_NN_INST_EN,        /* 26 */
-    USERLIST_NN_INSTSHORT,      /* 27 */
-    USERLIST_NN_INSTSHORT_EN,   /* 28 */
-    USERLIST_NN_FAC,            /* 29 */
-    USERLIST_NN_FAC_EN,         /* 30 */
-    USERLIST_NN_FACSHORT,       /* 31 */
-    USERLIST_NN_FACSHORT_EN,    /* 32 */
-    USERLIST_NN_HOMEPAGE,       /* 33 */
-    USERLIST_NN_PHONE,          /* 34 */
-    USERLIST_NN_CITY,           /* 35 */
-    USERLIST_NN_CITY_EN,        /* 36 */
-    USERLIST_NN_COUNTRY,        /* 37 */
-    USERLIST_NN_COUNTRY_EN,     /* 38 */
-    USERLIST_NN_LOCATION,       /* 39 */
-    USERLIST_NN_SPELLING,       /* 40 */
-    USERLIST_NN_PRINTER_NAME,   /* 41 */
-    USERLIST_NN_LANGUAGES,      /* 42 */
+    USERLIST_NN_PASSWORDS,      /* 22 */
+    USERLIST_NN_REG_PASSWORD,   /* 23 */
+    USERLIST_NN_TEAM_PASSWORD,  /* 24 */
+    USERLIST_NN_GENERAL_INFO,   /* 25 */
+    USERLIST_NN_INST,           /* 26 */
+    USERLIST_NN_INST_EN,        /* 27 */
+    USERLIST_NN_INSTSHORT,      /* 28 */
+    USERLIST_NN_INSTSHORT_EN,   /* 29 */
+    USERLIST_NN_FAC,            /* 30 */
+    USERLIST_NN_FAC_EN,         /* 31 */
+    USERLIST_NN_FACSHORT,       /* 32 */
+    USERLIST_NN_FACSHORT_EN,    /* 33 */
+    USERLIST_NN_HOMEPAGE,       /* 34 */
+    USERLIST_NN_PHONE,          /* 35 */
+    USERLIST_NN_CITY,           /* 36 */
+    USERLIST_NN_CITY_EN,        /* 37 */
+    USERLIST_NN_COUNTRY,        /* 38 */
+    USERLIST_NN_COUNTRY_EN,     /* 39 */
+    USERLIST_NN_LOCATION,       /* 40 */
+    USERLIST_NN_SPELLING,       /* 41 */
+    USERLIST_NN_PRINTER_NAME,   /* 42 */
+    USERLIST_NN_LANGUAGES,      /* 43 */
     USERLIST_NN_LAST = USERLIST_NN_LANGUAGES,
 
     USERLIST_NM_SERIAL = 0,              /* 0 */
-    USERLIST_NM_FIRSTNAME,               /* 1 */
-    USERLIST_NM_FIRSTNAME_EN,            /* 2 */
-    USERLIST_NM_MIDDLENAME,              /* 3 */
-    USERLIST_NM_MIDDLENAME_EN,           /* 4 */
-    USERLIST_NM_SURNAME,                 /* 5 */
-    USERLIST_NM_SURNAME_EN,              /* 6 */
-    USERLIST_NM_STATUS,                  /* 7 */
-    USERLIST_NM_GRADE,                   /* 8 */
-    USERLIST_NM_GROUP,                   /* 9 */
-    USERLIST_NM_GROUP_EN,                /* 10 */
-    USERLIST_NM_OCCUPATION,              /* 11 */
-    USERLIST_NM_OCCUPATION_EN,           /* 12 */
-    USERLIST_NM_EMAIL,                   /* 13 */
-    USERLIST_NM_HOMEPAGE,                /* 14 */
-    USERLIST_NM_PHONE,                   /* 15 */
-    USERLIST_NM_INST,                    /* 16 */
-    USERLIST_NM_INST_EN,                 /* 17 */
-    USERLIST_NM_INSTSHORT,               /* 18 */
-    USERLIST_NM_INSTSHORT_EN,            /* 19 */
-    USERLIST_NM_FAC,                     /* 20 */
-    USERLIST_NM_FAC_EN,                  /* 21 */
-    USERLIST_NM_FACSHORT,                /* 22 */
-    USERLIST_NM_FACSHORT_EN,             /* 23 */
+    USERLIST_NM_COPIED_FROM,             /* 1 */
+    USERLIST_NM_FIRSTNAME,               /* 2 */
+    USERLIST_NM_FIRSTNAME_EN,            /* 3 */
+    USERLIST_NM_MIDDLENAME,              /* 4 */
+    USERLIST_NM_MIDDLENAME_EN,           /* 5 */
+    USERLIST_NM_SURNAME,                 /* 6 */
+    USERLIST_NM_SURNAME_EN,              /* 7 */
+    USERLIST_NM_STATUS,                  /* 8 */
+    USERLIST_NM_GRADE,                   /* 9 */
+    USERLIST_NM_GROUP,                   /* 10 */
+    USERLIST_NM_GROUP_EN,                /* 11 */
+    USERLIST_NM_OCCUPATION,              /* 12 */
+    USERLIST_NM_OCCUPATION_EN,           /* 13 */
+    USERLIST_NM_EMAIL,                   /* 14 */
+    USERLIST_NM_HOMEPAGE,                /* 15 */
+    USERLIST_NM_PHONE,                   /* 16 */
+    USERLIST_NM_INST,                    /* 17 */
+    USERLIST_NM_INST_EN,                 /* 18 */
+    USERLIST_NM_INSTSHORT,               /* 19 */
+    USERLIST_NM_INSTSHORT_EN,            /* 20 */
+    USERLIST_NM_FAC,                     /* 21 */
+    USERLIST_NM_FAC_EN,                  /* 22 */
+    USERLIST_NM_FACSHORT,                /* 23 */
+    USERLIST_NM_FACSHORT_EN,             /* 24 */
     USERLIST_NM_LAST = USERLIST_NM_FACSHORT_EN,
   };
 
@@ -237,6 +241,7 @@ struct userlist_member
   struct xml_tree b;
 
   int serial;
+  int copied_from;
   int status;
   int grade;
   unsigned char *firstname;
