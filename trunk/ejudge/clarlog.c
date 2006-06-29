@@ -182,7 +182,7 @@ create_new_clar_log(int flags)
     return -1;
   }
   if (wsz != sizeof(header)) {
-    err("clar_log: short write: %d instead of %d", wsz, sizeof(header));
+    err("clar_log: short write: %d instead of %zu", wsz, sizeof(header));
     return -1;
   }
   return 0;
@@ -494,7 +494,7 @@ clar_clear_variables(void)
   clar_fd = -1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
