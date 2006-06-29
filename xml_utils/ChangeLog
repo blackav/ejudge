@@ -1,3 +1,16 @@
+2006-06-26 (r3182) Alexander Chernov  <cher@ispras.ru>
+
+	* parse_int_attr.c: file is renamed to `attr_int.c'.
+
+	* attr_int.c: file is renamed from `parse_int_attr.c';
+	  copyright notice is updated;
+	(xml_attr_int) renamed from `xml_parse_int_attr'.
+
+2006-06-25 (r3179) Alexander Chernov  <cher@ispras.ru>
+
+	* attr_date.c:
+	initial revision
+
 2006-06-25 (r3170) Alexander Chernov  <cher@ispras.ru>
 
 	* parse_date.c: copyright notice is updated;
