@@ -1,3 +1,14 @@
+2006-06-29 (r3191) Alexander Chernov  <cher@ispras.ru>
+
+	* clarlog.c:
+	(create_new_clar_log) minor 64-bit warning is fixed.
+
+2006-06-29 (r3190) Alexander Chernov  <cher@ispras.ru>
+
+	* configure: although this file is generated from `configure.ac'
+	  by autoconf, it is put under version control to ease using
+	  of the current SVN copy of the ejudge.
+
 2006-06-29 (r3188) Alexander Chernov  <cher@ispras.ru>
 
 	* userlist.h:
