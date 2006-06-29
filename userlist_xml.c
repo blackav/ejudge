@@ -129,6 +129,8 @@ static char const * const attn_map[] =
   "date",
   "simple_registration",
   "cnts_read_only",
+  "create",
+  "copied_from",
 
   0
 };
@@ -475,9 +477,26 @@ parse_members(char const *path, struct xml_tree *q,
     for (a = t->first; a; a = a->next) {
       switch (a->tag) {
       case USERLIST_A_SERIAL:
-        if (xml_parse_int(path, a->line, a->column, a->text, &mb->serial) < 0)
+        if (xml_attr_int(a, &mb->serial) < 0)
           return xml_err_attr_invalid(a);
         if (mb->serial <= 0) return xml_err_attr_invalid(a);
+        break;
+      case USERLIST_A_COPIED_FROM:
+        if (xml_attr_int(a, &mb->copied_from) < 0)
+          return xml_err_attr_invalid(a);
+        if (mb->copied_from < 0) mb->copied_from = 0;
+        break;
+      case USERLIST_A_CREATE:
+        if (xml_attr_date(a, &mb->create_time) < 0)
+          return xml_err_attr_invalid(a);
+        break;
+      case USERLIST_A_LAST_CHANGE:
+        if (xml_attr_date(a, &mb->last_change_time) < 0)
+          return xml_err_attr_invalid(a);
+        break;
+      case USERLIST_A_LAST_ACCESS:
+        if (xml_attr_date(a, &mb->last_access_time) < 0)
+          return xml_err_attr_invalid(a);
         break;
       default:
         return xml_err_attr_not_allowed(t, a);
@@ -727,6 +746,9 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
       goto parse_date_attr;
     case USERLIST_A_LAST_PWDCHANGE:
       pt = &ui->i.last_pwdchange_time;
+      goto parse_date_attr;
+    case USERLIST_A_CREATE:
+      pt = &ui->i.create_time;
       goto parse_date_attr;
     default:
       return xml_err_attr_not_allowed(node, a);
@@ -1288,8 +1310,23 @@ unparse_member(struct userlist_member *p, FILE *f)
 
   if (!p) return;
   ASSERT(p->b.tag == USERLIST_T_MEMBER);
-  fprintf(f, "      <%s %s=\"%d\">\n", tag_map[USERLIST_T_MEMBER],
+  fprintf(f, "      <%s %s=\"%d\"", tag_map[USERLIST_T_MEMBER],
           attn_map[USERLIST_A_SERIAL], p->serial);
+  if (p->copied_from > 0)
+    fprintf(f, " %s=\"%d\"", attn_map[USERLIST_A_COPIED_FROM], p->copied_from);
+  if (p->create_time > 0) {
+    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_CREATE],
+            xml_unparse_date(p->create_time));
+  }
+  if (p->last_change_time > 0) {
+    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_CHANGE],
+            xml_unparse_date(p->last_change_time));
+  }
+  if (p->last_access_time > 0) {
+    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_ACCESS],
+            xml_unparse_date(p->last_access_time));
+  }
+  fprintf(f, ">\n");
   xml_unparse_text(f, tag_map[USERLIST_T_FIRSTNAME], p->firstname, ind);
   xml_unparse_text(f, tag_map[USERLIST_T_FIRSTNAME_EN], p->firstname_en, ind);
   xml_unparse_text(f, tag_map[USERLIST_T_MIDDLENAME], p->middlename, ind);
@@ -1417,6 +1454,10 @@ unparse_cntsinfo(struct userlist_cntsinfo *p, FILE *f)
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_CNTS_READ_ONLY],
             xml_unparse_bool(p->i.cnts_read_only));
   }
+  if (p->i.create_time > 0) {
+    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_CREATE],
+            xml_unparse_date(p->i.create_time));
+  }
   if (p->i.last_change_time > 0) {
     fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_CHANGE],
             xml_unparse_date(p->i.last_change_time));
@@ -1523,7 +1564,8 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
 
   if (!p) return;
 
-  if (contest_id > 0 && p->cntsinfo && contest_id < p->cntsinfo_a) {
+  if (contest_id > 0 && p->cntsinfo && contest_id < p->cntsinfo_a
+      && p->cntsinfo[contest_id]) {
     ui = &p->cntsinfo[contest_id]->i;
   } else {
     ui = &p->i;

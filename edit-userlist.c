@@ -1205,6 +1205,7 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NN_TIMESTAMPS]        { "*Timestamps*", 0, 0 },
   [USERLIST_NN_REG_TIME]          { "Reg time", 1, 1 },
   [USERLIST_NN_LOGIN_TIME]        { "Login time", 1, 1 },
+  [USERLIST_NN_CREATE_TIME]       { "User info create time", 1, 1 },
   [USERLIST_NN_ACCESS_TIME]       { "Access time", 1, 1 },
   [USERLIST_NN_CHANGE_TIME]       { "Change time", 1, 1 },
   [USERLIST_NN_PWD_CHANGE_TIME]   { "Pwd time", 1, 1 },
@@ -1235,6 +1236,7 @@ static const struct user_field_desc user_descs[] =
 static const struct user_field_desc member_descs[] =
 {
   [USERLIST_NM_SERIAL]     { "Serial", 1, 1 },
+  [USERLIST_NM_COPIED_FROM]{ "Copied from", 1, 1 },
   [USERLIST_NM_FIRSTNAME]  { "Firstname", 1, 1 },
   [USERLIST_NM_FIRSTNAME_EN] { "Firstname (En)", 1, 1 },
   [USERLIST_NM_MIDDLENAME] { "Middlename", 1, 1 },
@@ -1547,6 +1549,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
           break;
         case USERLIST_NN_REG_TIME:
         case USERLIST_NN_LOGIN_TIME:
+        case USERLIST_NN_CREATE_TIME:
         case USERLIST_NN_ACCESS_TIME:
         case USERLIST_NN_CHANGE_TIME:
         case USERLIST_NN_PWD_CHANGE_TIME:
@@ -1931,6 +1934,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
 
         case USERLIST_NN_REG_TIME:
         case USERLIST_NN_LOGIN_TIME:
+        case USERLIST_NN_CREATE_TIME:
         case USERLIST_NN_ACCESS_TIME:
         case USERLIST_NN_CHANGE_TIME:
         case USERLIST_NN_PWD_CHANGE_TIME:
@@ -1980,6 +1984,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
 
         m = (struct userlist_member*) refs[cur_i];
         if (info[cur_i].field == USERLIST_NM_SERIAL) goto menu_continue;
+        if (info[cur_i].field == USERLIST_NM_COPIED_FROM) goto menu_continue;
         if (info[cur_i].field == USERLIST_NM_STATUS) {
           int new_status;
           

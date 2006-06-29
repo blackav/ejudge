@@ -118,6 +118,11 @@ userlist_get_member_field_str(unsigned char *buf, size_t len,
   switch (field_id) {
   case USERLIST_NM_SERIAL:
     return snprintf(buf, len, "%d", m->serial);
+  case USERLIST_NM_COPIED_FROM:
+    if (m->copied_from <= 0)
+      return snprintf(buf, len, "<Not set>");
+    else
+      return snprintf(buf, len, "%d", m->copied_from);
   case USERLIST_NM_GRADE:
     return snprintf(buf, len, "%d", m->grade);
   case USERLIST_NM_STATUS:
@@ -162,6 +167,10 @@ userlist_delete_member_field(struct userlist_member *m, int field_id)
   case USERLIST_NM_GRADE:
     if (!m->grade) return 0;
     m->grade = 0;
+    return 1;
+  case USERLIST_NM_COPIED_FROM:
+    if (!m->copied_from) return 0;
+    m->copied_from = 0;
     return 1;
   case USERLIST_NM_STATUS:
     if (!m->status) return 0;
@@ -232,6 +241,7 @@ userlist_set_member_field_str(struct userlist_member *m, int field_id,
 
   switch (field_id) {
   case USERLIST_NM_SERIAL:
+  case USERLIST_NM_COPIED_FROM:
     return -1;
   case USERLIST_NM_GRADE:
     if (!field_val) {
@@ -342,6 +352,8 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
     s = userlist_unparse_date(u->registration_time, convert_null); break;
   case USERLIST_NN_LOGIN_TIME:
     s = userlist_unparse_date(u->last_login_time, convert_null); break;
+  case USERLIST_NN_CREATE_TIME:
+    s = userlist_unparse_date(ui->create_time, convert_null); break;
   case USERLIST_NN_ACCESS_TIME:
     s = userlist_unparse_date(u->last_access_time, convert_null); break;
   case USERLIST_NN_CHANGE_TIME:
@@ -564,6 +576,7 @@ userlist_set_user_field_str(struct userlist_list *lst,
   case USERLIST_NN_TIMESTAMPS:
   case USERLIST_NN_REG_TIME:
   case USERLIST_NN_LOGIN_TIME:
+  case USERLIST_NN_CREATE_TIME:
   case USERLIST_NN_ACCESS_TIME:
   case USERLIST_NN_CHANGE_TIME:
   case USERLIST_NN_PWD_CHANGE_TIME:
@@ -683,6 +696,8 @@ userlist_delete_user_field(struct userlist_user *u,
     tptr = &u->registration_time; goto do_timestamp_delete;
   case USERLIST_NN_LOGIN_TIME:
     tptr = &u->last_login_time; goto do_timestamp_delete;
+  case USERLIST_NN_CREATE_TIME:
+    tptr = &ui->create_time; goto do_timestamp_delete;
   case USERLIST_NN_ACCESS_TIME:
     tptr = &u->last_access_time; goto do_timestamp_delete;
   case USERLIST_NN_CHANGE_TIME:
@@ -1038,6 +1053,7 @@ userlist_clone_member(struct userlist_member *src, int *p_serial,
   dst = (struct userlist_member*) userlist_node_alloc(USERLIST_T_MEMBER);
 
   dst->serial = (*p_serial)++;
+  dst->copied_from = src->serial;
   dst->status = src->status;
   dst->grade = src->grade;
 
