@@ -1,3 +1,23 @@
+2006-07-01 (r3195) Alexander Chernov  <cher@ispras.ru>
+
+	* prepare.c:
+	(parse_version_string) added support for SVN snapshots.
+
+	* userlist-server.c:
+	(find_member_by_serial) parameter `copied_from' is added and is
+	  used for finding a member;
+	(do_set_user_info) `cnts_read_only' field is supported;
+	  fixed situation, when a member's serial from the client does not
+	  match the member's serial of the server because of the
+	  contest-specific user information is cloned;
+	(cmd_remove_member) `cnts_read_only' field is supported;
+	  member serial mismatch situation (see above) is fixed.
+
+2006-06-30 (r3193) Alexander Chernov  <cher@ispras.ru>
+
+	* prepare.c:
+	(parse_version_string) a temporary hack for SVN snapshots.
+
 2006-06-29 (r3191) Alexander Chernov  <cher@ispras.ru>
 
 	* clarlog.c:
