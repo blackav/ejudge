@@ -3034,7 +3034,7 @@ int
 parse_version_string(int *pmajor, int *pminor, int *ppatch, int *pbuild)
 {
   const unsigned char *p = compile_version;
-  int n;
+  int n, x;
 
   if (sscanf(p, "%d.%dpre%d #%d%n", pmajor, pminor, ppatch, pbuild, &n) == 4
       && !p[n]) {
@@ -3043,8 +3043,10 @@ parse_version_string(int *pmajor, int *pminor, int *ppatch, int *pbuild)
              && !p[n]) {
     *ppatch = -*ppatch;
     *pbuild = 0;
-  } else if (sscanf(p, "%d.%d.%d+", pmajor, pminor, ppatch) == 3) {
-    *pbuild = 0;
+  } else if (sscanf(p, "%d.%d.%d+ (SVN r%d) #%d%n", pmajor, pminor, ppatch,
+                    pbuild, &x, &n) == 5 && !p[n]) {
+  } else if (sscanf(p, "%d.%d.%d+ (SVN r%d)%n", pmajor, pminor, ppatch,
+                    pbuild, &n) == 4 && !p[n]) {
   } else if (sscanf(p, "%d.%d.%d #%d%n", pmajor, pminor, ppatch, pbuild, &n)==4
              && !p[n]) {
   } else if (sscanf(p, "%d.%d.%d%n", pmajor, pminor, ppatch, &n) == 3

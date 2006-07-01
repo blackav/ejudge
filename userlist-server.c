@@ -3056,6 +3056,7 @@ cmd_get_user_contests(struct client_state *p,
 
 static struct userlist_member *
 find_member_by_serial(struct userlist_user_info *ui, int serial,
+                      int copied_from,
                       int *p_role, int *p_i)
 {
   int role, i;
@@ -3069,7 +3070,9 @@ find_member_by_serial(struct userlist_user_info *ui, int serial,
       if (!ms->members[i]) continue;
       m = ms->members[i];
       if (serial == m->serial
-          || (m->copied_from > 0 && serial == m->copied_from)) {
+          || (m->copied_from > 0 && serial == m->copied_from)
+          || (m->copied_from > 0 && copied_from > 0 && copied_from == m->copied_from)
+          || (copied_from > 0 && copied_from == m->serial)) {
         if (p_role) *p_role = role;
         if (p_i) *p_i = i;
         return m;
@@ -3221,6 +3224,13 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
     link_node = &old_u->cntsinfo[data->contest_id]->b;
   }
 
+  if (ui->cnts_read_only) {
+    err("%s -> user cannot be modified", msg);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    userlist_free(&new_u->b);
+    return;
+  }
+
   // update the user's fields
   if (needs_name_update(ui->name, new_u->i.name)) {
     xfree(ui->name);
@@ -3356,7 +3366,7 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
       old_m = old_ms->members[old_pers];
       if (!old_m) continue;
       ASSERT(old_m->serial > 0);
-      new_m = find_member_by_serial(ui, old_m->serial,
+      new_m = find_member_by_serial(&new_u->i, old_m->serial, old_m->copied_from,
                                     &new_role, &new_pers);
       if (new_m && old_role != new_role) {
         // move to another role
@@ -3383,11 +3393,11 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
       old_m = old_ms->members[old_pers];
       if (!old_m) continue;
       ASSERT(old_m->serial > 0);
-      new_m = find_member_by_serial(ui, old_m->serial,
+      new_m = find_member_by_serial(&new_u->i, old_m->serial, old_m->copied_from,
                                     &new_role, &new_pers);
       if (!new_m) continue;
       ASSERT(new_role == old_role);
-      ASSERT(new_m->serial == old_m->serial);
+      //ASSERT(new_m->serial == old_m->serial);
 
       if (new_m->status && old_m->status != new_m->status) {
         old_m->status = new_m->status;
@@ -3550,7 +3560,7 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
       }
 
       // unlink the new member out of the way
-      new_m = unlink_member(ui, new_role, new_pers);
+      new_m = unlink_member(&new_u->i, new_role, new_pers);
       userlist_free(&new_m->b);
     }
   }
@@ -3568,7 +3578,7 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
         err("%s -> new member in %s has serial number %d",
             msg, role_str, new_m->serial);
         old_m = unlink_member(ui, new_role, new_pers);
-        ASSERT(old_m == new_m);
+        //ASSERT(old_m == new_m);
         userlist_free(&new_m->b);
         goto restart_inserting;
       }
@@ -3598,8 +3608,8 @@ do_set_user_info(struct client_state *p, struct contest_desc *cnts,
       if (!daemon_mode)
         info("%s -> new member to role %s inserted", msg, role_str);
       updated = 1;
-      old_m = unlink_member(ui, new_role, new_pers);
-      ASSERT(old_m == new_m);
+      old_m = unlink_member(&new_u->i, new_role, new_pers);
+      //ASSERT(old_m == new_m);
       old_m->serial = userlist->member_serial++;
       link_member(ui, link_node, new_role, new_m);
       goto restart_inserting;
@@ -4115,6 +4125,12 @@ cmd_remove_member(struct client_state *p, int pkt_len,
     ui = &u->i;
   }
 
+  if (ui->cnts_read_only) {
+    err("%s -> user cannot be modified", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
   ms = ui->members[data->role_id];
   if (!ms) {
     err("%s -> no members with that role", logbuf);
@@ -4127,7 +4143,8 @@ cmd_remove_member(struct client_state *p, int pkt_len,
     return;
   }
   m = ms->members[data->pers_id];
-  if (!m || m->serial != data->serial) {
+  if (!m || (m->serial != data->serial
+             && (m->copied_from <= 0 || m->copied_from != data->serial))) {
     err("%s -> invalid person", logbuf);
     send_reply(p, -ULS_ERR_BAD_MEMBER);
     return;
