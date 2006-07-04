@@ -1,2 +1,0 @@
-Makefile
-capexec dosrun2 bpcemu2 dosrun3 *.o bccemu bppemu qbemu
