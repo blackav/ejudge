@@ -1,6 +1,40 @@
 -*- mode: text; mode: auto-fill -*-
 $Id$
 
+Version 2.3.1 (r3198) (20060705)
+================================
+The user database structure is changed. Now the majority of
+user info fields are contest-specific. For example, the `name'
+field (the user name) may be different for the same user (more
+precisely, for the same login) in different contests. In the
+previous versions all the user information fields are
+contest-independent, so change of the `name' field for one
+contest automatically changed the `name' of the user in all
+other contests, even had finished long ago.
+
+For backward compatibility with the accumulated user database
+the existing information about users are considered as specific
+to the special "default contest" (which has the indentifier as
+0). This information is used, when no contest-specific
+information is available for a particular contest. However, as
+soon as an existing user (or an administrator) changes
+information about the user in the contest, a copy of user
+information fields is created and made contest-specific for this
+contest, so only the data for the contest is changed, but the
+default data is left intact.
+
+Only `login', `e_mail' and `password' user-settable fields are
+contest-independent. All other user-editable fields are
+contest-specific.
+
+The `read_only' field now means that the user information
+cannot be changed for any contest, except the registration
+password, which can still be changed.
+
+A new `cnts_read_only' field is added, which means that the user
+information cannot be changed by the user for the particular
+contest, but the team password can still be changed.
+
 Version 2.2.0 (20060609)
 ========================
 No changes from 2.1.49. From this moment on the 2.2 branch only
