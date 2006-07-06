@@ -79,34 +79,20 @@ static const char * const attr_map[] =
   [TE_A_DATE]      "date",
   [TE_A_LAST_ATTR] 0,
 };
-static const size_t elem_sizes[TE_T_LAST_TAG];
-static const size_t attr_sizes[TE_A_LAST_ATTR];
 
-static void *
-elem_alloc(int tag)
+static struct xml_parse_spec team_extra_parse_spec =
 {
-  size_t sz;
-  ASSERT(tag >= 1 && tag < TE_T_LAST_TAG);
-  if (!(sz = elem_sizes[tag])) sz = sizeof(struct xml_tree);
-  return xcalloc(1, sz);
-}
-static void *
-attr_alloc(int tag)
-{
-  size_t sz;
-
-  ASSERT(tag >= 1 && tag < TE_A_LAST_ATTR);
-  if (!(sz = attr_sizes[tag])) sz = sizeof(struct xml_attr);
-  return xcalloc(1, sz);
-}
-static void
-elem_free(struct xml_tree *t)
-{
-}
-static void
-attr_free(struct xml_attr *a)
-{
-}
+  .elem_map = elem_map,
+  .attr_map = attr_map,
+  .elem_sizes = NULL,
+  .attr_sizes = NULL,
+  .default_elem = 0,
+  .default_attr = 0,
+  .elem_alloc = NULL,
+  .attr_alloc = NULL,
+  .elem_free = NULL,
+  .attr_free = NULL,
+};
 
 static int
 check_empty_text(struct xml_tree *xt)
@@ -362,7 +348,7 @@ team_extra_parse_xml(const unsigned char *path, struct team_extra **pte)
   struct xml_attr *a = 0;
   int user_id = -1, x, n, v_flag = 0, w_flag = 0, s_flag = 0;
 
-  t = xml_build_tree(path, elem_map, attr_map, elem_alloc, attr_alloc);
+  t = xml_build_tree(path, &team_extra_parse_spec);
   if (!t) return -1;
   XCALLOC(te, 1);
   if (t->tag != TE_T_TEAM_EXTRA) {
@@ -425,11 +411,11 @@ team_extra_parse_xml(const unsigned char *path, struct team_extra **pte)
   }
 
   if (pte) *pte = te;
-  xml_tree_free(t, elem_free, attr_free);
+  xml_tree_free(t, &team_extra_parse_spec);
   return 0;
 
  cleanup:
-  if (t) xml_tree_free(t, elem_free, attr_free);
+  if (t) xml_tree_free(t, &team_extra_parse_spec);
   if (te && te->clar_map) xfree(te->clar_map);
   if (te) xfree(te);
   return -1;

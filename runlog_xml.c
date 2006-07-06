@@ -103,6 +103,8 @@ static const char * const elem_map[] =
   [RUNLOG_T_LANGUAGES] "languages",
   [RUNLOG_T_LANGUAGE] "language",
   [RUNLOG_T_NAME]   "name",
+
+  [RUNLOG_LAST_TAG] 0,
 };
 static const char * const attr_map[] =
 {
@@ -132,43 +134,27 @@ static const char * const attr_map[] =
   [RUNLOG_A_START_TIME] "start_time",
   [RUNLOG_A_STOP_TIME] "stop_time",
   [RUNLOG_A_CURRENT_TIME] "current_time",
+
+  [RUNLOG_LAST_ATTR] 0,
 };
 static size_t const elem_sizes[RUNLOG_LAST_TAG] =
 {
   [RUNLOG_T_RUN] sizeof(struct run_element),
 };
-static size_t const attr_sizes[RUNLOG_LAST_ATTR] =
+
+static struct xml_parse_spec runlog_parse_spec =
 {
+  .elem_map = elem_map,
+  .attr_map = attr_map,
+  .elem_sizes = elem_sizes,
+  .attr_sizes = NULL,
+  .default_elem = 0,
+  .default_attr = 0,
+  .elem_alloc = NULL,
+  .attr_alloc = NULL,
+  .elem_free = NULL,
+  .attr_free = NULL,
 };
-
-static void *
-node_alloc(int tag)
-{
-  size_t sz;
-  ASSERT(tag >= 1 && tag < RUNLOG_LAST_TAG);
-  if (!(sz = elem_sizes[tag])) sz = sizeof(struct xml_tree);
-  return xcalloc(1, sz);
-}
-
-static void *
-attr_alloc(int tag)
-{
-  size_t sz;
-
-  ASSERT(tag >= 1 && tag < RUNLOG_LAST_ATTR);
-  if (!(sz = attr_sizes[tag])) sz = sizeof(struct xml_attr);
-  return xcalloc(1, sz);
-}
-
-static void
-node_free(struct xml_tree *t)
-{
-}
-
-static void
-attr_free(struct xml_attr *a)
-{
-}
 
 static int
 check_empty_text(struct xml_tree *xt)
@@ -566,18 +552,18 @@ parse_runlog_xml(const unsigned char *str,
   struct xml_tree *xt = 0;
   struct xml_tree *truns = 0;
 
-  xt = xml_build_tree_str(str, elem_map, attr_map, node_alloc, attr_alloc);
+  xt = xml_build_tree_str(str, &runlog_parse_spec);
   memset(phead, 0, sizeof(*phead));
   if (!xt) return -1;
   if (process_runlog_element(xt, &truns) < 0) {
-    xml_tree_free(xt, node_free, attr_free);
+    xml_tree_free(xt, &runlog_parse_spec);
     return -1;
   }
   if (collect_runlog(truns, psize, pentries) < 0) {
-    xml_tree_free(xt, node_free, attr_free);
+    xml_tree_free(xt, &runlog_parse_spec);
     return -1;
   }
-  xml_tree_free(xt, node_free, attr_free);
+  xml_tree_free(xt, &runlog_parse_spec);
   return 0;
 }
 

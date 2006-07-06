@@ -100,6 +100,7 @@ enum
     TG_SOCKET_PATH,
     TG_CONTESTS_DIR,
     TG_L10N_DIR,
+    TG_LAST_TAG,
   };
 enum
   {
@@ -112,6 +113,7 @@ enum
     AT_ALLOW,
     AT_DENY,
     AT_ID,
+    AT_LAST_ATTR,
   };
 
 struct ip_node
@@ -358,7 +360,7 @@ static int member_max[CONTEST_LAST_MEMBER];
 static int member_init[CONTEST_LAST_MEMBER];
 static int member_cur[CONTEST_LAST_MEMBER];
 
-static char const * const tag_map[] =
+static char const * const elem_map[] =
 {
   0,
   "register_config",
@@ -387,27 +389,26 @@ static char const * const attr_map[] =
   0
 };
 
-static void *
-node_alloc(int tag)
+static const size_t elem_sizes[TG_LAST_TAG] =
 {
-  switch (tag) {
-  case TG_CONFIG: return xcalloc(1, sizeof(struct config_node));
-  case TG_ACCESS: return xcalloc(1, sizeof(struct access_node));
-  case TG_IP: return xcalloc(1, sizeof(struct ip_node));
-  case TG_SOCKET_PATH: return xcalloc(1, sizeof(struct xml_tree));
-  case TG_CONTESTS_DIR: return xcalloc(1, sizeof(struct xml_tree));
-  case TG_L10N_DIR: return xcalloc(1, sizeof(struct xml_tree));
-    //    return xcalloc(1, sizeof(struct xml_tree));
-  default:
-    SWERR(("unhandled tag: %d", tag));
-  }
-  return 0;
-}
-static void *
-attr_alloc(int tag)
+  [TG_CONFIG] = sizeof(struct config_node),
+  [TG_ACCESS] = sizeof(struct access_node),
+  [TG_IP] = sizeof(struct ip_node),
+};
+
+static struct xml_parse_spec register_config_parse_spec =
 {
-  return xcalloc(1, sizeof(struct xml_attr));
-}
+  .elem_map = elem_map,
+  .attr_map = attr_map,
+  .elem_sizes = elem_sizes,
+  .attr_sizes = NULL,
+  .default_elem = 0,
+  .default_attr = 0,
+  .elem_alloc = NULL,
+  .attr_alloc = NULL,
+  .elem_free = NULL,
+  .attr_free = NULL,
+};
 
 static int
 err_dupl_elem(char const *path, struct xml_tree *t)
@@ -487,10 +488,9 @@ parse_config(char const *path, const unsigned char *default_config)
   int n;
 
   if (default_config) {
-    tree = xml_build_tree_str(default_config,
-                              tag_map, attr_map, node_alloc, attr_alloc);
+    tree = xml_build_tree_str(default_config, &register_config_parse_spec);
   } else {
-    tree = xml_build_tree(path, tag_map, attr_map, node_alloc, attr_alloc);
+    tree = xml_build_tree(path, &register_config_parse_spec);
   }
   if (!tree) goto failed;
   if (tree->tag != TG_CONFIG) {
@@ -577,7 +577,7 @@ parse_config(char const *path, const unsigned char *default_config)
       for (p2 = p->first_down; p2; p2 = p2->right) {
         if (p2->tag != TG_IP) {
           err("%s:%d:%d: tag <%s> is invalid here",
-              path, p2->line, p2->column, tag_map[p2->tag]);
+              path, p2->line, p2->column, elem_map[p2->tag]);
           goto failed;
         }
         ip = (struct ip_node*) p2;

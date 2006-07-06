@@ -70,6 +70,8 @@ enum
     TG_JOB_SERVER_LOG,
     TG_JOB_SERVER_SPOOL,
     TG_JOB_SERVER_WORK,
+
+    TG_LAST_TAG,
   };
 enum
   {
@@ -80,9 +82,11 @@ enum
     AT_LOCAL_USER,
     AT_LOGIN,
     AT_EJUDGE_USER,
+
+    AT_LAST_TAG,
   };
 
-static char const * const tag_map[] =
+static char const * const elem_map[] =
 {
   0,
   "config",
@@ -123,6 +127,7 @@ static char const * const tag_map[] =
   "job_server_log",
   "job_server_spool",
   "job_server_work",
+
   0
 };
 
@@ -140,103 +145,67 @@ static char const * const attr_map[] =
   0
 };
 
-static void *
-tree_alloc_func(int tag)
+static size_t elem_sizes[TG_LAST_TAG] =
 {
-  switch (tag) {
-  case TG_CONFIG:
-    return xcalloc(1, sizeof(struct userlist_cfg));
-  case TG_SOCKET_PATH:
-  case TG_USERDB_FILE:
-  case TG_CONTESTS_DIR:
-  case TG_EMAIL_PROGRAM:
-  case TG_REGISTER_EMAIL:
-  case TG_REGISTER_URL:
-  case TG_SERVER_NAME:
-  case TG_SERVER_NAME_EN:
-  case TG_SERVER_MAIN_URL:
-  case TG_USER_MAP:
-  case TG_CAPS:
-  case TG_SERVE_PATH:
-  case TG_L10N_DIR:
-  case TG_RUN_PATH:
-  case TG_CHARSET:
-  case TG_CONFIG_DIR:
-  case TG_CONTESTS_HOME_DIR:
-  case TG_FULL_CGI_DATA_DIR:
-  case TG_COMPILE_HOME_DIR:
-  case TG_TESTING_WORK_DIR:
-  case TG_SCRIPT_DIR:
-  case TG_SERIALIZATION_KEY:
-  case TG_ADMIN_EMAIL:
-  case TG_USERLIST_LOG:
-  case TG_VAR_DIR:
-  case TG_SUPER_SERVE_LOG:
-  case TG_COMPILE_LOG:
-  case TG_SUPER_SERVE_SOCKET:
-  case TG_SUPER_SERVE_USER:
-  case TG_SUPER_SERVE_GROUP:
-  case TG_USERLIST_USER:
-  case TG_USERLIST_GROUP:
-  case TG_JOB_SERVER_LOG:
-  case TG_JOB_SERVER_SPOOL:
-  case TG_JOB_SERVER_WORK:
-    return xcalloc(1, sizeof(struct xml_tree));
-  case TG_MAP:
-    return xcalloc(1, sizeof(struct userlist_cfg_user_map));
-  case TG_CAP:
-    return xcalloc(1, sizeof(struct opcap_list_item));
-  default:
-    SWERR(("unhandled tag: %d", tag));
-  }
-}
+  [TG_CONFIG] = sizeof(struct userlist_cfg),
+  [TG_MAP] = sizeof(struct userlist_cfg_user_map),
+  [TG_CAP] = sizeof(struct opcap_list_item),
+};
 
-static void *
-attr_alloc_func(int tag)
+static struct xml_parse_spec ejudge_config_parse_spec =
 {
-  return xcalloc(1, sizeof(struct xml_attr));
-}
+  .elem_map = elem_map,
+  .attr_map = attr_map,
+  .elem_sizes = elem_sizes,
+  .attr_sizes = NULL,
+  .default_elem = 0,
+  .default_attr = 0,
+  .elem_alloc = NULL,
+  .attr_alloc = NULL,
+  .elem_free = NULL,
+  .attr_free = NULL,
+};
 
 static int
 err_dupl_elem(char const *path, struct xml_tree *t)
 {
   err("%s:%d:%d: element <%s> may appear only once", path, t->line, t->column,
-      tag_map[t->tag]);
+      elem_map[t->tag]);
   return -1;
 }
 static int
 err_text_not_allowed(char const *path, struct xml_tree *t)
 {
   err("%s:%d:%d: text is not allowed for element <%s>",
-      path, t->line, t->column, tag_map[t->tag]);
+      path, t->line, t->column, elem_map[t->tag]);
   return -1;
 }
 static int
 err_attr_not_allowed(char const *path, struct xml_tree *t)
 {
   err("%s:%d:%d: attributes are not allowed for element <%s>",
-      path, t->line, t->column, tag_map[t->tag]);
+      path, t->line, t->column, elem_map[t->tag]);
   return -1;
 }
 static int
 err_empty_elem(char const *path, struct xml_tree *t)
 {
   err("%s:%d:%d: element <%s> is empty",
-      path, t->line, t->column, tag_map[t->tag]);
+      path, t->line, t->column, elem_map[t->tag]);
   return -1;
 }
 static int
 err_nested_not_allowed(char const *path, struct xml_tree *t)
 {
   err("%s:%d:%d: nested elements are not allowed for element <%s>",
-      path, t->line, t->column, tag_map[t->tag]);
+      path, t->line, t->column, elem_map[t->tag]);
   return -1;
 }
 static int
 err_invalid_elem(char const *path, struct xml_tree *tag)
 {
   err("%s:%d:%d: element <%s> is invalid here", path, tag->line, tag->column,
-      tag_map[tag->tag]);
+      elem_map[tag->tag]);
   return -1;
 }
 static int
@@ -403,8 +372,7 @@ userlist_cfg_parse(char const *path)
   struct xml_attr *a;
   unsigned char pathbuf[PATH_MAX];
 
-  tree = xml_build_tree(path, tag_map, attr_map, tree_alloc_func,
-                        attr_alloc_func);
+  tree = xml_build_tree(path, &ejudge_config_parse_spec);
   if (!tree) return 0;
   if (tree->tag != TG_CONFIG) {
     err("%s: %d: top-level tag must be <config>", path, tree->line);
@@ -508,14 +476,14 @@ userlist_cfg_parse(char const *path)
 
         if (cfg->serialization_key) {
           err("%s:%d:%d: element <%s> already defined",
-              path, p->line, p->column, tag_map[p->tag]);
+              path, p->line, p->column, elem_map[p->tag]);
           goto failed;
         }
         if (!p->text || !p->text[0]
             || sscanf(p->text, "%d%n", &k, &n) != 1 || p->text[n]
             || k <= 0 || k >= 32768) {
           err("%s:%d:%d: element <%s> value is invalid",
-              path, p->line, p->column, tag_map[p->tag]);
+              path, p->line, p->column, elem_map[p->tag]);
           goto failed;
         }
         cfg->serialization_key = k;
@@ -562,7 +530,7 @@ userlist_cfg_parse(char const *path)
       break;
     default:
       err("%s:%d:%d: element <%s> is invalid here",
-          path, p->line, p->column, tag_map[p->tag]);
+          path, p->line, p->column, elem_map[p->tag]);
       break;
     }
   }
@@ -661,7 +629,7 @@ userlist_cfg_parse(char const *path)
 struct userlist_cfg *
 userlist_cfg_free(struct userlist_cfg *cfg)
 {
-  xml_tree_free((struct xml_tree*) cfg, 0, 0);
+  xml_tree_free((struct xml_tree*) cfg, &ejudge_config_parse_spec);
   return 0;
 }
 
@@ -688,7 +656,7 @@ userlist_cfg_unparse(struct userlist_cfg *cfg, FILE *f)
 {
   if (!cfg) return;
 
-  xml_unparse_tree(stdout, (struct xml_tree*) cfg, tag_map, 0, 0, 0,
+  xml_unparse_tree(stdout, (struct xml_tree*) cfg, elem_map, 0, 0, 0,
                    fmt_func);
 }
 
