@@ -1,5 +1,5 @@
 /* -*- mode: c -*- */
-/* $Id*/
+/* $Id$ */
 
 /* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
 
