@@ -55,6 +55,9 @@
 /* whether kernel patch is ok */
 #undef CONF_HAS_LIBCAP
 
+/* whether MySQL is detected */
+#undef CONF_HAS_MYSQL
+
 /* terminal controlling facilities */
 #undef HAVE_TERMIOS_H
 

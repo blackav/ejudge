@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP REUSE_CONF_SCRIPT XGETTEXT MSGMERGE MSGFMT ac_cv_prog_uudecode ac_cv_ejudge_arch ac_cv_exe_suffix ac_cv_expat_root ac_cv_expat_include_opt ac_cv_expat_lib_opt ac_cv_reuse_root ac_cv_reuse_config ac_cv_reuse_include_opt ac_cv_reuse_lib_opt ac_cv_libcap_root ac_cv_libcap_include_opt ac_cv_libcap_lib_opt ac_cv_cgi_suffix ac_cv_static ac_cv_cgi_conf_dir ac_cv_no_kernel ac_cv_no_rpath ac_cv_nls ac_cv_gcc_wno_pointer_sign cgibindir ac_cv_contest_gcc ac_cv_contest_gcc_dir ac_cv_contest_gpp ac_cv_contest_gpp_dir ac_cv_contest_fpc ac_cv_contest_fpc_dir ac_cv_contest_gpc ac_cv_contest_gpc_dir ac_cv_contest_dcc ac_cv_contest_dcc_dir ac_cv_contest_g77 ac_cv_contest_g77_dir ac_cv_contest_gcj ac_cv_contest_gcj_dir ac_cv_contest_gprolog ac_cv_contest_gprolog_dir ac_cv_contest_yabasic_path ac_cv_contest_mzscheme_path ac_cv_contest_perl_path ac_cv_contest_python_path ac_cv_festival_home ac_cv_contest_javac ac_cv_contest_java ac_cv_contest_java_dir ac_cv_contest_java_version ac_cv_contest_mcs ac_cv_contest_mono ac_cv_contest_mono_dir ac_cv_contest_mbas LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP REUSE_CONF_SCRIPT XGETTEXT MSGMERGE MSGFMT ac_cv_prog_uudecode ac_cv_ejudge_arch ac_cv_exe_suffix ac_cv_expat_root ac_cv_expat_include_opt ac_cv_expat_lib_opt ac_cv_reuse_root ac_cv_reuse_config ac_cv_reuse_include_opt ac_cv_reuse_lib_opt ac_cv_libcap_root ac_cv_libcap_include_opt ac_cv_libcap_lib_opt ac_cv_mysql_root ac_cv_mysql_include_opt ac_cv_mysql_lib_opt ac_cv_mysql_libs ac_cv_cgi_suffix ac_cv_static ac_cv_cgi_conf_dir ac_cv_no_kernel ac_cv_no_rpath ac_cv_nls ac_cv_gcc_wno_pointer_sign cgibindir ac_cv_contest_gcc ac_cv_contest_gcc_dir ac_cv_contest_gpp ac_cv_contest_gpp_dir ac_cv_contest_fpc ac_cv_contest_fpc_dir ac_cv_contest_gpc ac_cv_contest_gpc_dir ac_cv_contest_dcc ac_cv_contest_dcc_dir ac_cv_contest_g77 ac_cv_contest_g77_dir ac_cv_contest_gcj ac_cv_contest_gcj_dir ac_cv_contest_gprolog ac_cv_contest_gprolog_dir ac_cv_contest_yabasic_path ac_cv_contest_mzscheme_path ac_cv_contest_perl_path ac_cv_contest_python_path ac_cv_festival_home ac_cv_contest_javac ac_cv_contest_java ac_cv_contest_java_dir ac_cv_contest_java_version ac_cv_contest_mcs ac_cv_contest_mono ac_cv_contest_mono_dir ac_cv_contest_mbas LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -879,6 +879,7 @@ Optional Packages:
                           [EXPAT-DIR/include]
   --with-expat-lib-dir    specify non-standard location of -lexpat
                           [EXPAT-DIR/lib]
+  --with-mysql=MYSQL-DIR  specify the path to the mysql installation directory
   --with-reuse=REUSE-DIR  specify the path to reuse library
   --with-reuse-include-dir
                           specify the location of reuse include directories
@@ -3822,6 +3823,13 @@ if test "${with_expat_lib_dir+set}" = set; then
 fi;
 
 
+# Check whether --with-mysql or --without-mysql was given.
+if test "${with_mysql+set}" = set; then
+  withval="$with_mysql"
+  ac_cv_mysql_root="$withval"
+fi;
+
+
 # Check whether --with-reuse or --without-reuse was given.
 if test "${with_reuse+set}" = set; then
   withval="$with_reuse"
@@ -5309,6 +5317,244 @@ ac_cv_no_kernel=1
 else
 ac_cv_no_kernel=
 fi
+
+
+ac_cv_has_mysql=1
+if [ x"${ac_cv_mysql_root}" = xno ]
+then
+ac_cv_has_mysql=
+fi
+
+if [ x"${ac_cv_mysql_root}" = xyes ]
+then
+ac_cv_mysql_root=
+fi
+
+if [ x"${ac_cv_has_mysql}" = x1 ]
+then
+  if [ x"${ac_cv_mysql_root}" = x ]
+  then
+    mysqlconfig="mysql_config"
+  else
+    mysqlconfig="${ac_cv_mysql_root}/bin/mysql_config"
+  fi
+  echo "$as_me:$LINENO: checking for mysql library" >&5
+echo $ECHO_N "checking for mysql library... $ECHO_C" >&6
+  mysqlversion=`"${mysqlconfig}" --version 2>/dev/null`
+  if [ $? != 0 -o x"${mysqlversion}" = x ]
+  then
+    echo "$as_me:$LINENO: result: none" >&5
+echo "${ECHO_T}none" >&6
+    ac_cv_has_mysql=
+  else
+    echo "$as_me:$LINENO: result: version \"${mysqlversion}\"" >&5
+echo "${ECHO_T}version \"${mysqlversion}\"" >&6
+  fi
+fi
+
+if [ x"${ac_cv_has_mysql}" = x1 ]
+then
+  echo "$as_me:$LINENO: checking for mysql compilation flags " >&5
+echo $ECHO_N "checking for mysql compilation flags ... $ECHO_C" >&6
+
+  ac_cv_mysql_include_opt=`"${mysqlconfig}" --cflags 2>/dev/null`
+  if [ $? != 0 ]
+  then
+    ac_cv_has_mysql=
+  fi
+
+  tmp_libs=`"${mysqlconfig}" --libs 2>/dev/null`
+  if [ $? != 0 ]
+  then
+    ac_cv_has_mysql=
+  fi
+
+  if [ x"${ac_cv_has_mysql}" = x1 ]
+  then
+    for xx in ${tmp_libs}
+    do
+      case "$xx" in
+        -L*)
+          [ x"${ac_cv_mysql_lib_opt}" != x ] && ac_cv_mysql_lib_opt="${ac_cv_mysql_lib_opt} "
+          tmp_rpath=`echo "$xx" | sed s+-L+-Wl,-rpath,+`
+          ac_cv_mysql_lib_opt="${ac_cv_mysql_lib_opt}${xx} ${tmp_rpath}"
+          ;;
+        -l*)
+          [ x"${ac_cv_mysql_libs}" != x ] && ac_cv_mysql_libs="${ac_cv_mysql_libs} "
+          ac_cv_mysql_libs="${ac_cv_mysql_libs}${xx}"
+          ;;
+        *)
+          [ x"${ac_cv_mysql_lib_opt}" != x ] && ac_cv_mysql_lib_opt="${ac_cv_mysql_lib_opt} "
+          ac_cv_mysql_lib_opt="${ac_cv_mysql_lib_opt}${xx}"
+          ;;
+      esac
+    done
+  fi
+
+  if [ x"${ac_cv_has_mysql}" = x1 ]
+  then
+    echo "$as_me:$LINENO: result: ok" >&5
+echo "${ECHO_T}ok" >&6
+  else
+    echo "$as_me:$LINENO: result: failed" >&5
+echo "${ECHO_T}failed" >&6
+  fi
+fi
+
+saved_CFLAGS="${CFLAGS}"
+saved_CPPFLAGS="${CPPFLAGS}"
+saved_LDFLAGS="${LDFLAGS}"
+saved_LIBS="${LIBS}"
+CFLAGS="${CFLAGS} ${ac_cv_mysql_include_opt}"
+CPPFLAGS="${CPPFLAGS} ${ac_cv_mysql_include_opt}"
+LDFLAGS="${LDFLAGS} ${ac_cv_mysql_lib_opt}"
+LIBS="${ac_cv_mysql_libs} ${LIBS}"
+
+if [ x"${ac_cv_has_mysql}" = x1 ]
+then
+  echo "$as_me:$LINENO: checking for mysql.h" >&5
+echo $ECHO_N "checking for mysql.h... $ECHO_C" >&6
+if test "${ac_cv_header_mysql_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <signal.h>
+#include <errno.h>
+
+
+#include <mysql.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_header_mysql_h=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_header_mysql_h=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_mysql_h" >&5
+echo "${ECHO_T}$ac_cv_header_mysql_h" >&6
+if test $ac_cv_header_mysql_h = yes; then
+  ac_cv_has_mysql=1
+else
+  ac_cv_has_mysql=""
+fi
+
+
+fi
+
+if [ x"${ac_cv_has_mysql}" = x1 ]
+then
+  echo "$as_me:$LINENO: checking for mysql_real_connect in -lmysqlclient" >&5
+echo $ECHO_N "checking for mysql_real_connect in -lmysqlclient... $ECHO_C" >&6
+if test "${ac_cv_lib_mysqlclient_mysql_real_connect+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmysqlclient  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char mysql_real_connect ();
+int
+main ()
+{
+mysql_real_connect ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_mysqlclient_mysql_real_connect=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_mysqlclient_mysql_real_connect=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_mysqlclient_mysql_real_connect" >&5
+echo "${ECHO_T}$ac_cv_lib_mysqlclient_mysql_real_connect" >&6
+if test $ac_cv_lib_mysqlclient_mysql_real_connect = yes; then
+  ac_cv_has_mysql=1
+else
+  ac_cv_has_mysql=""
+fi
+
+fi
+
+
+CFLAGS="${saved_CFLAGS}"
+CPPFLAGS="${saved_CPPFLAGS}"
+LDFLAGS="${saved_LDFLAGS}"
+LIBS="${saved_LIBS}"
 
 saved_CC="${CC}"
 echo "$as_me:$LINENO: checking for annoying gcc warnings" >&5
@@ -8143,6 +8389,10 @@ fi
 
 
 
+
+
+
+
 if [ x"${ac_cv_nls}" = x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]
 then
   cat >>confdefs.h <<\_ACEOF
@@ -8155,6 +8405,14 @@ if [ x"${ac_cv_no_kernel}" != x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]
 then
   cat >>confdefs.h <<\_ACEOF
 #define CONF_HAS_LIBCAP 1
+_ACEOF
+
+fi
+
+if [ x"${ac_cv_has_mysql}" = x1 ]
+then
+  cat >>confdefs.h <<\_ACEOF
+#define CONF_HAS_MYSQL 1
 _ACEOF
 
 fi
@@ -9054,6 +9312,10 @@ s,@ac_cv_reuse_lib_opt@,$ac_cv_reuse_lib_opt,;t t
 s,@ac_cv_libcap_root@,$ac_cv_libcap_root,;t t
 s,@ac_cv_libcap_include_opt@,$ac_cv_libcap_include_opt,;t t
 s,@ac_cv_libcap_lib_opt@,$ac_cv_libcap_lib_opt,;t t
+s,@ac_cv_mysql_root@,$ac_cv_mysql_root,;t t
+s,@ac_cv_mysql_include_opt@,$ac_cv_mysql_include_opt,;t t
+s,@ac_cv_mysql_lib_opt@,$ac_cv_mysql_lib_opt,;t t
+s,@ac_cv_mysql_libs@,$ac_cv_mysql_libs,;t t
 s,@ac_cv_cgi_suffix@,$ac_cv_cgi_suffix,;t t
 s,@ac_cv_static@,$ac_cv_static,;t t
 s,@ac_cv_cgi_conf_dir@,$ac_cv_cgi_conf_dir,;t t
