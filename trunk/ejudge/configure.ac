@@ -32,6 +32,8 @@ AC_ARG_WITH([expat], AC_HELP_STRING([--with-expat=EXPAT-DIR],[specify non-standa
 AC_ARG_WITH([expat-include-dir],AC_HELP_STRING([--with-expat-include-dir],[specify non-standard location of <expat.h> [[EXPAT-DIR/include]]]),[ac_cv_expat_include_dir=$withval])
 AC_ARG_WITH([expat-lib-dir],AC_HELP_STRING([--with-expat-lib-dir],[specify non-standard location of -lexpat [[EXPAT-DIR/lib]]]),[ac_cv_expat_lib_dir=$withval])
 
+AC_ARG_WITH([mysql], AC_HELP_STRING([--with-mysql=MYSQL-DIR],[specify the path to the mysql installation directory]),[ac_cv_mysql_root="$withval"])
+
 AC_ARG_WITH([reuse], AC_HELP_STRING([--with-reuse=REUSE-DIR],[specify the path to reuse library]),[ac_cv_reuse_root=$withval])
 AC_ARG_WITH([reuse-include-dir],AC_HELP_STRING([--with-reuse-include-dir],[specify the location of reuse include directories [[REUSE-DIR/include]]]),[ac_cv_reuse_include_dir=$withval])
 AC_ARG_WITH([reuse-lib-dir],AC_HELP_STRING([--with-reuse-lib-dir],[specify the location of reuse library directories [[REUSE-DIR/lib]]]),[ac_cv_reuse_lib_dir=$withval])
@@ -347,6 +349,122 @@ ac_cv_no_kernel=1
 else
 ac_cv_no_kernel=
 fi
+
+dnl MySQL checking stuff
+
+ac_cv_has_mysql=1
+if [[ x"${ac_cv_mysql_root}" = xno ]]
+then
+ac_cv_has_mysql=
+fi
+
+if [[ x"${ac_cv_mysql_root}" = xyes ]]
+then
+ac_cv_mysql_root=
+fi
+
+if [[ x"${ac_cv_has_mysql}" = x1 ]]
+then
+  if [[ x"${ac_cv_mysql_root}" = x ]]
+  then
+    mysqlconfig="mysql_config"
+  else
+    mysqlconfig="${ac_cv_mysql_root}/bin/mysql_config"
+  fi
+  AC_MSG_CHECKING([for mysql library])
+  mysqlversion=`"${mysqlconfig}" --version 2>/dev/null`
+  if [[ $? != 0 -o x"${mysqlversion}" = x ]]
+  then
+    AC_MSG_RESULT([none])
+    ac_cv_has_mysql=
+  else
+    AC_MSG_RESULT([version "${mysqlversion}"])
+  fi
+fi
+
+if [[ x"${ac_cv_has_mysql}" = x1 ]]
+then
+  AC_MSG_CHECKING([for mysql compilation flags ])
+
+  ac_cv_mysql_include_opt=`"${mysqlconfig}" --cflags 2>/dev/null`
+  if [[ $? != 0 ]]
+  then
+    ac_cv_has_mysql=
+  fi
+
+  tmp_libs=`"${mysqlconfig}" --libs 2>/dev/null`
+  if [[ $? != 0 ]]
+  then
+    ac_cv_has_mysql=
+  fi
+  dnl split --libs output into library paths, adding -rpath specs
+
+  if [[ x"${ac_cv_has_mysql}" = x1 ]]
+  then
+    for xx in ${tmp_libs}
+    do
+      case "$xx" in
+        -L*)
+          [[ x"${ac_cv_mysql_lib_opt}" != x ]] && ac_cv_mysql_lib_opt="${ac_cv_mysql_lib_opt} "
+          tmp_rpath=`echo "$xx" | sed s+-L+-Wl,-rpath,+`
+          ac_cv_mysql_lib_opt="${ac_cv_mysql_lib_opt}${xx} ${tmp_rpath}"
+          ;;
+        -l*)
+          [[ x"${ac_cv_mysql_libs}" != x ]] && ac_cv_mysql_libs="${ac_cv_mysql_libs} "
+          ac_cv_mysql_libs="${ac_cv_mysql_libs}${xx}"
+          ;;
+        *)
+          [[ x"${ac_cv_mysql_lib_opt}" != x ]] && ac_cv_mysql_lib_opt="${ac_cv_mysql_lib_opt} "
+          ac_cv_mysql_lib_opt="${ac_cv_mysql_lib_opt}${xx}"
+          ;;
+      esac
+    done
+  fi
+
+  if [[ x"${ac_cv_has_mysql}" = x1 ]]
+  then
+    AC_MSG_RESULT([ok])
+  else
+    AC_MSG_RESULT([failed])
+  fi
+fi
+
+saved_CFLAGS="${CFLAGS}"
+saved_CPPFLAGS="${CPPFLAGS}"
+saved_LDFLAGS="${LDFLAGS}"
+saved_LIBS="${LIBS}"
+CFLAGS="${CFLAGS} ${ac_cv_mysql_include_opt}"
+CPPFLAGS="${CPPFLAGS} ${ac_cv_mysql_include_opt}"
+LDFLAGS="${LDFLAGS} ${ac_cv_mysql_lib_opt}"
+LIBS="${ac_cv_mysql_libs} ${LIBS}"
+
+if [[ x"${ac_cv_has_mysql}" = x1 ]]
+then
+  AC_CHECK_HEADER([mysql.h],
+                [ac_cv_has_mysql=1],
+                [ac_cv_has_mysql=""],
+[
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <signal.h>
+#include <errno.h>
+])
+fi
+
+if [[ x"${ac_cv_has_mysql}" = x1 ]]
+then
+  AC_CHECK_LIB([mysqlclient], [mysql_real_connect],
+               [ac_cv_has_mysql=1],
+               [ac_cv_has_mysql=""])
+fi
+
+
+CFLAGS="${saved_CFLAGS}"
+CPPFLAGS="${saved_CPPFLAGS}"
+LDFLAGS="${saved_LDFLAGS}"
+LIBS="${saved_LIBS}"
 
 dnl compiler warning checking
 saved_CC="${CC}"
@@ -1297,6 +1415,10 @@ AC_SUBST(ac_cv_reuse_lib_opt)
 AC_SUBST(ac_cv_libcap_root)
 AC_SUBST(ac_cv_libcap_include_opt)
 AC_SUBST(ac_cv_libcap_lib_opt)
+AC_SUBST(ac_cv_mysql_root)
+AC_SUBST(ac_cv_mysql_include_opt)
+AC_SUBST(ac_cv_mysql_lib_opt)
+AC_SUBST(ac_cv_mysql_libs)
 AC_SUBST(ac_cv_cgi_suffix)
 AC_SUBST(ac_cv_static)
 AC_SUBST(ac_cv_cgi_conf_dir)
@@ -1347,6 +1469,11 @@ fi
 if [[ x"${ac_cv_no_kernel}" != x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
 then
   AC_DEFINE(CONF_HAS_LIBCAP,1)
+fi
+
+if [[ x"${ac_cv_has_mysql}" = x1 ]]
+then
+  AC_DEFINE(CONF_HAS_MYSQL,1)
 fi
 
 AC_DEFINE_UNQUOTED(CGI_PROG_SUFFIX,"$ac_cv_cgi_suffix")
