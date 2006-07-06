@@ -1,0 +1,42 @@
+# -*- Makefile -*-
+# $Id$
+# @configure_input@
+
+# Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
+
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2 of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+bindir=@bindir@
+datadir=@datadir@
+includedir=@includedir@
+libdir=@libdir@
+libexecdir=@libexecdir@
+cgibindir=@cgibindir@
+
+REUSE_DIR=@ac_cv_reuse_root@
+REUSE_CONF=@ac_cv_reuse_config@
+REUSE_INCL_OPT=@ac_cv_reuse_include_opt@
+REUSE_LIB_OPT=@ac_cv_reuse_lib_opt@
+
+MYSQL_DIR=@ac_cv_mysql_root@
+MYSQL_INCL_OPT=@ac_cv_mysql_include_opt@
+MYSQL_LIB_OPT=@ac_cv_mysql_lib_opt@
+MYSQL_LIBS=@ac_cv_mysql_libs@
+
+all :
+
+install :
+
+clean :
+
+distclean :
