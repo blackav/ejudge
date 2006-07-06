@@ -1,3 +1,23 @@
+2006-07-06 (r3203) Alexander Chernov  <cher@ispras.ru>
+
+	* configure.ac: generation of plugins/mysql-userlist/Makefile is added.
+
+	* Makefile.unix.in: handling of plugins/mysql-userlist dir is added.
+
+2006-07-06 (r3201) Alexander Chernov  <cher@ispras.ru>
+
+	* configure.ac: check for MySQL is added;
+	new option --with-mysql=MYSQL-DIR is added.
+
+	* cher-configure: added --with-mysql=/usr/local/pkg/mysql.
+
+	* config.h.in: added CONF_HAS_MYSQL macro.
+
+2006-07-06 (r3200) Alexander Chernov  <cher@ispras.ru>
+
+	* plugins:
+	initial revision
+
 2006-07-01 (r3195) Alexander Chernov  <cher@ispras.ru>
 
 	* prepare.c:
