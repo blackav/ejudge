@@ -24,7 +24,7 @@
 #include <time.h>
 
 struct xml_tree;
-struct xml_attn;
+struct xml_attr;
 
 int xml_parse_ip(unsigned char const *path, int line, int column,
                  unsigned char const *s, ej_ip_t *pip);
@@ -53,16 +53,16 @@ extern const char * const *xml_err_attr_names;
 
 void xml_err(const struct xml_tree *pos, const char *format, ...)
      __attribute__((format (printf, 2, 3)));
-void xml_err_a(const struct xml_attn *pos, const char *format, ...)
+void xml_err_a(const struct xml_attr *pos, const char *format, ...)
      __attribute__((format (printf, 2, 3)));
 int xml_err_attrs(const struct xml_tree *p);
 int xml_err_nested_elems(const struct xml_tree *p);
 int xml_err_attr_not_allowed(const struct xml_tree *tree,
-                             const struct xml_attn *attr);
+                             const struct xml_attr *attr);
 int xml_err_elem_not_allowed(const struct xml_tree *tree);
 int xml_err_elem_redefined(const struct xml_tree *tree);
 int xml_err_top_level(const struct xml_tree *tree, int elem);
-int xml_err_attr_invalid(const struct xml_attn *a);
+int xml_err_attr_invalid(const struct xml_attr *a);
 int xml_err_elem_undefined(const struct xml_tree *p, int elem);
 int xml_err_attr_undefined(const struct xml_tree *p, int attr);
 int xml_err_elem_invalid(const struct xml_tree *p);
@@ -73,9 +73,9 @@ int xml_leaf_elem(struct xml_tree *tree, /* ->text may be modified */
                   int move_flag, int empty_allowed_flag);
 int xml_empty_text(struct xml_tree *tree);
 
-int xml_attr_bool(struct xml_attn *attr, int *value_ptr);
-int xml_attr_int(struct xml_attn *attr, int *value_ptr);
-int xml_attr_date(struct xml_attn *attr, time_t *value_ptr);
+int xml_attr_bool(struct xml_attr *attr, int *value_ptr);
+int xml_attr_int(struct xml_attr *attr, int *value_ptr);
+int xml_attr_date(struct xml_attr *attr, time_t *value_ptr);
 int xml_elem_ip_mask(struct xml_tree *tree,
                      unsigned int *addr_ptr, unsigned int *mask_ptr);
 

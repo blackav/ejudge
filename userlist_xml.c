@@ -97,7 +97,7 @@ static char const * const tag_map[] =
 
   0
 };
-static char const * const attn_map[] =
+static char const * const attr_map[] =
 {
   0,
   "name",
@@ -209,11 +209,6 @@ userlist_node_alloc(int tag)
   t->tag = tag;
   return t;
 }
-static void *
-attn_alloc(int tag)
-{
-  return xcalloc(1, sizeof(struct xml_attn));
-}
 static void
 node_free(struct xml_tree *t)
 {
@@ -313,7 +308,7 @@ node_free(struct xml_tree *t)
   }
 }
 static void
-attn_free(struct xml_attn *a)
+attr_free(struct xml_attr *a)
 {
 }
 
@@ -334,7 +329,7 @@ static struct userlist_passwd *
 parse_passwd(char const *path, struct xml_tree *t)
 {
   struct userlist_passwd *pwd;
-  struct xml_attn *a;
+  struct xml_attr *a;
 
   ASSERT(t->tag == USERLIST_T_PASSWORD || t->tag == USERLIST_T_TEAM_PASSWORD);
   pwd = (struct userlist_passwd*) t;
@@ -383,7 +378,7 @@ parse_cookies(char const *path, struct xml_tree *cookies,
               struct userlist_user *usr)
 {
   struct xml_tree *t;
-  struct xml_attn *a;
+  struct xml_attr *a;
   struct userlist_cookie *c;
 
   if (cookies->first) return xml_err_attrs(cookies);
@@ -454,7 +449,7 @@ parse_members(char const *path, struct xml_tree *q,
   struct userlist_members *mbs = (struct userlist_members*) q;
   struct userlist_member *mb;
   struct xml_tree *p;
-  struct xml_attn *a;
+  struct xml_attr *a;
   int role, i;
 
   if (q->tag < USERLIST_T_CONTESTANTS || q->tag > USERLIST_T_GUESTS)
@@ -634,7 +629,7 @@ parse_contest(char const *path, struct xml_tree *t,
 {
   struct xml_tree *p;
   struct userlist_contest *reg;
-  struct xml_attn *a;
+  struct xml_attr *a;
   int tmp;
 
   ASSERT(t->tag == USERLIST_T_CONTESTS);
@@ -709,7 +704,7 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
                struct userlist_user *usr)
 {
   struct userlist_cntsinfo *ui;
-  struct xml_attn *a;
+  struct xml_attr *a;
   struct xml_tree *p;
   time_t *pt;
   unsigned char **puc;
@@ -868,7 +863,7 @@ parse_cntsinfos(const char *path, struct xml_tree *node,
 static int
 do_parse_user(char const *path, struct userlist_user *usr)
 {
-  struct xml_attn *a;
+  struct xml_attr *a;
   struct xml_tree *t;
 
   xfree(usr->b.text); usr->b.text = 0;
@@ -1069,7 +1064,7 @@ do_parse_user(char const *path, struct userlist_user *usr)
 static int
 do_parse_userlist(char const *path, struct userlist_list *lst)
 {
-  struct xml_attn *a;
+  struct xml_attr *a;
   struct xml_tree *t;
   struct userlist_user *u;
   int map_size;
@@ -1134,9 +1129,9 @@ userlist_parse_user_str(char const *str)
 
   xml_err_path = 0;
   xml_err_elem_names = tag_map;
-  xml_err_attr_names = attn_map;
+  xml_err_attr_names = attr_map;
 
-  tree = xml_build_tree_str(str, tag_map, attn_map, node_alloc, attn_alloc);
+  tree = xml_build_tree_str(str, tag_map, attr_map, node_alloc, NULL);
   if (!tree) goto failed;
   if (tree->tag != USERLIST_T_USER) {
     err("top-level tag must be <user>");
@@ -1147,7 +1142,7 @@ userlist_parse_user_str(char const *str)
   return user;
 
  failed:
-  if (tree) xml_tree_free(tree, node_free, attn_free);
+  if (tree) xml_tree_free(tree, node_free, attr_free);
   return 0;
 }
 
@@ -1158,17 +1153,17 @@ userlist_parse_contests_str(unsigned char const *str)
 
   xml_err_path = 0;
   xml_err_elem_names = tag_map;
-  xml_err_attr_names = attn_map;
+  xml_err_attr_names = attr_map;
 
-  tree = xml_build_tree_str(str, tag_map, attn_map, node_alloc, attn_alloc);
+  tree = xml_build_tree_str(str, tag_map, attr_map, node_alloc, NULL);
   if (!tree) return 0;
   if (tree->tag != USERLIST_T_CONTESTS) {
     err("top-level tag must be <contests>");
-    xml_tree_free(tree, node_free, attn_free);
+    xml_tree_free(tree, node_free, attr_free);
     return 0;
   }
   if (parse_contest("", tree, 0) < 0) {
-    xml_tree_free(tree, node_free, attn_free);
+    xml_tree_free(tree, node_free, attr_free);
     return 0;
   }
   return tree;
@@ -1182,9 +1177,9 @@ userlist_parse(char const *path)
 
   xml_err_path = path;
   xml_err_elem_names = tag_map;
-  xml_err_attr_names = attn_map;
+  xml_err_attr_names = attr_map;
 
-  tree = xml_build_tree(path, tag_map, attn_map, node_alloc, attn_alloc);
+  tree = xml_build_tree(path, tag_map, attr_map, node_alloc, NULL);
   if (!tree) goto failed;
   if (tree->tag != USERLIST_T_USERLIST) {
     err("%s:%d:%d: top-level tag must be <userlist>",
@@ -1196,7 +1191,7 @@ userlist_parse(char const *path)
   return lst;
 
  failed:
-  if (tree) xml_tree_free(tree, node_free, attn_free);
+  if (tree) xml_tree_free(tree, node_free, attr_free);
   return 0;
 }
 
@@ -1208,9 +1203,9 @@ userlist_parse_str(unsigned char const *str)
 
   xml_err_path = 0;
   xml_err_elem_names = tag_map;
-  xml_err_attr_names = attn_map;
+  xml_err_attr_names = attr_map;
 
-  tree = xml_build_tree_str(str, tag_map, attn_map, node_alloc, attn_alloc);
+  tree = xml_build_tree_str(str, tag_map, attr_map, node_alloc, NULL);
   if (!tree) goto failed;
   if (tree->tag != USERLIST_T_USERLIST) {
     err("%s:%d:%d: top-level tag must be <userlist>",
@@ -1222,14 +1217,14 @@ userlist_parse_str(unsigned char const *str)
   return lst;
 
  failed:
-  if (tree) xml_tree_free(tree, node_free, attn_free);
+  if (tree) xml_tree_free(tree, node_free, attr_free);
   return 0;
 }
 
 void *
 userlist_free(struct xml_tree *p)
 {
-  if (p) xml_tree_free(p, node_free, attn_free);
+  if (p) xml_tree_free(p, node_free, attr_free);
   return 0;
 }
 
@@ -1274,7 +1269,7 @@ static void
 unparse_bool_attr(FILE *f, int attr, int val)
 {
   if (val) {
-    fprintf(f, " %s=\"%s\"", attn_map[attr], xml_unparse_bool(val));
+    fprintf(f, " %s=\"%s\"", attr_map[attr], xml_unparse_bool(val));
   }
 }
 
@@ -1282,7 +1277,7 @@ static void
 unparse_date_attr(FILE *f, int attr, time_t val)
 {
   if (val > 0) {
-    fprintf(f, " %s=\"%s\"", attn_map[attr], xml_unparse_date(val));
+    fprintf(f, " %s=\"%s\"", attr_map[attr], xml_unparse_date(val));
   }
 }
 
@@ -1311,19 +1306,19 @@ unparse_member(struct userlist_member *p, FILE *f)
   if (!p) return;
   ASSERT(p->b.tag == USERLIST_T_MEMBER);
   fprintf(f, "      <%s %s=\"%d\"", tag_map[USERLIST_T_MEMBER],
-          attn_map[USERLIST_A_SERIAL], p->serial);
+          attr_map[USERLIST_A_SERIAL], p->serial);
   if (p->copied_from > 0)
-    fprintf(f, " %s=\"%d\"", attn_map[USERLIST_A_COPIED_FROM], p->copied_from);
+    fprintf(f, " %s=\"%d\"", attr_map[USERLIST_A_COPIED_FROM], p->copied_from);
   if (p->create_time > 0) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_CREATE],
+    fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_CREATE],
             xml_unparse_date(p->create_time));
   }
   if (p->last_change_time > 0) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_CHANGE],
+    fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_LAST_CHANGE],
             xml_unparse_date(p->last_change_time));
   }
   if (p->last_access_time > 0) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_ACCESS],
+    fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_LAST_ACCESS],
             xml_unparse_date(p->last_access_time));
   }
   fprintf(f, ">\n");
@@ -1385,16 +1380,16 @@ unparse_cookies(struct xml_tree *p, FILE *f)
     c = (struct userlist_cookie*) p;
     fprintf(f, "      <%s %s=\"%s\" %s=\"%llx\" %s=\"%s\" %s=\"%s\"",
             tag_map[USERLIST_T_COOKIE],
-            attn_map[USERLIST_A_IP], xml_unparse_ip(c->ip),
-            attn_map[USERLIST_A_VALUE], c->cookie,
-            attn_map[USERLIST_A_EXPIRE], xml_unparse_date(c->expire),
-            attn_map[USERLIST_A_PRIV_LEVEL],
+            attr_map[USERLIST_A_IP], xml_unparse_ip(c->ip),
+            attr_map[USERLIST_A_VALUE], c->cookie,
+            attr_map[USERLIST_A_EXPIRE], xml_unparse_date(c->expire),
+            attr_map[USERLIST_A_PRIV_LEVEL],
             protocol_priv_level_str(c->priv_level));
     if (c->locale_id >= 0) {
-      fprintf(f, " %s=\"%d\"", attn_map[USERLIST_A_LOCALE_ID], c->locale_id);
+      fprintf(f, " %s=\"%d\"", attr_map[USERLIST_A_LOCALE_ID], c->locale_id);
     }
     if (c->contest_id > 0) {
-      fprintf(f, " %s=\"%d\"", attn_map[USERLIST_A_CONTEST_ID], c->contest_id);
+      fprintf(f, " %s=\"%d\"", attr_map[USERLIST_A_CONTEST_ID], c->contest_id);
     }
     fputs("/>\n", f);
   }
@@ -1407,19 +1402,19 @@ unparse_contest(struct userlist_contest const *cc, FILE *f,
   if (!cc) return;
   fprintf(f, "%s<%s %s=\"%d\" %s=\"%s\"",
           indent, tag_map[USERLIST_T_CONTEST],
-          attn_map[USERLIST_A_ID], cc->id,
-          attn_map[USERLIST_A_STATUS], unparse_reg_status(cc->status));
+          attr_map[USERLIST_A_ID], cc->id,
+          attr_map[USERLIST_A_STATUS], unparse_reg_status(cc->status));
   if ((cc->flags & USERLIST_UC_BANNED)) {
-    fprintf(f, " %s=\"yes\"", attn_map[USERLIST_A_BANNED]);
+    fprintf(f, " %s=\"yes\"", attr_map[USERLIST_A_BANNED]);
   }
   if ((cc->flags & USERLIST_UC_INVISIBLE)) {
-    fprintf(f, " %s=\"yes\"", attn_map[USERLIST_A_INVISIBLE]);
+    fprintf(f, " %s=\"yes\"", attr_map[USERLIST_A_INVISIBLE]);
   }
   if ((cc->flags & USERLIST_UC_LOCKED)) {
-    fprintf(f, " %s=\"yes\"", attn_map[USERLIST_A_LOCKED]);
+    fprintf(f, " %s=\"yes\"", attr_map[USERLIST_A_LOCKED]);
   }
   if (cc->date) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_DATE],
+    fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_DATE],
             xml_unparse_date(cc->date));
   }
   fprintf(f, "/>\n");
@@ -1448,26 +1443,26 @@ unparse_cntsinfo(struct userlist_cntsinfo *p, FILE *f)
 
   if (!p) return;
   fprintf(f, "    <%s %s=\"%d\"",
-          tag_map[USERLIST_T_CNTSINFO], attn_map[USERLIST_A_CONTEST_ID],
+          tag_map[USERLIST_T_CNTSINFO], attr_map[USERLIST_A_CONTEST_ID],
           p->contest_id);
   if (p->i.cnts_read_only) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_CNTS_READ_ONLY],
+    fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_CNTS_READ_ONLY],
             xml_unparse_bool(p->i.cnts_read_only));
   }
   if (p->i.create_time > 0) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_CREATE],
+    fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_CREATE],
             xml_unparse_date(p->i.create_time));
   }
   if (p->i.last_change_time > 0) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_CHANGE],
+    fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_LAST_CHANGE],
             xml_unparse_date(p->i.last_change_time));
   }
   if (p->i.last_access_time > 0) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_ACCESS],
+    fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_LAST_ACCESS],
             xml_unparse_date(p->i.last_access_time));
   }
   if (p->i.last_pwdchange_time > 0) {
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_LAST_PWDCHANGE],
+    fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_LAST_PWDCHANGE],
             xml_unparse_date(p->i.last_pwdchange_time));
   }
   fprintf(f, ">\n");
@@ -1478,7 +1473,7 @@ unparse_cntsinfo(struct userlist_cntsinfo *p, FILE *f)
 
   if (p->i.team_passwd) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
-             attn_map[USERLIST_A_METHOD],
+             attr_map[USERLIST_A_METHOD],
              unparse_passwd_method(p->i.team_passwd->method));
     unparse_attributed_elem(f, USERLIST_T_TEAM_PASSWORD,
                             p->i.team_passwd->b.text, attr_str, sp1);
@@ -1533,7 +1528,7 @@ unparse_user_short(struct userlist_user *p, FILE *f, int contest_id)
     if (!uc) return;
   }
   fprintf(f, "  <%s %s=\"%d\">", tag_map[USERLIST_T_USER],
-          attn_map[USERLIST_A_ID], p->id);
+          attr_map[USERLIST_A_ID], p->id);
   xml_unparse_text(f, tag_map[USERLIST_T_LOGIN], p->login, "    ");
   if (ui->name && *ui->name) {
     xml_unparse_text(f, tag_map[USERLIST_T_NAME], ui->name, "    ");
@@ -1572,7 +1567,7 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   }
 
   fprintf(f, "  <%s %s=\"%d\"", tag_map[USERLIST_T_USER],
-          attn_map[USERLIST_A_ID], p->id);
+          attr_map[USERLIST_A_ID], p->id);
   unparse_bool_attr(f, USERLIST_A_PRIVILEGED, p->is_privileged);
   if (mode == USERLIST_MODE_ALL) {
     unparse_bool_attr(f, USERLIST_A_INVISIBLE, p->is_invisible);
@@ -1604,19 +1599,19 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
 
   if (p->login) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
-             attn_map[USERLIST_A_PUBLIC], xml_unparse_bool(p->show_login));
+             attr_map[USERLIST_A_PUBLIC], xml_unparse_bool(p->show_login));
     unparse_attributed_elem(f, USERLIST_T_LOGIN, p->login, attr_str, "    ");
   }
   if (p->register_passwd && mode == USERLIST_MODE_ALL) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
-             attn_map[USERLIST_A_METHOD],
+             attr_map[USERLIST_A_METHOD],
              unparse_passwd_method(p->register_passwd->method));
     unparse_attributed_elem(f, USERLIST_T_PASSWORD, p->register_passwd->b.text,
                             attr_str, "    ");
   }
   if (ui->team_passwd && mode == USERLIST_MODE_ALL) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
-             attn_map[USERLIST_A_METHOD],
+             attr_map[USERLIST_A_METHOD],
              unparse_passwd_method(ui->team_passwd->method));
     unparse_attributed_elem(f, USERLIST_T_TEAM_PASSWORD,
                             ui->team_passwd->b.text, attr_str, "    ");
@@ -1626,7 +1621,7 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   }
   if (p->email) { // && mode != USERLIST_MODE_STAND) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
-             attn_map[USERLIST_A_PUBLIC], xml_unparse_bool(p->show_email));
+             attr_map[USERLIST_A_PUBLIC], xml_unparse_bool(p->show_email));
     unparse_attributed_elem(f, USERLIST_T_EMAIL, p->email, attr_str, "    ");
   }
   if (mode == USERLIST_MODE_ALL) {
@@ -1742,10 +1737,10 @@ userlist_unparse(struct userlist_list *p, FILE *f)
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n", 
           EJUDGE_CHARSET);
   fprintf(f, "<%s %s=\"%d\"", tag_map[USERLIST_T_USERLIST],
-          attn_map[USERLIST_A_MEMBER_SERIAL], p->member_serial);
+          attr_map[USERLIST_A_MEMBER_SERIAL], p->member_serial);
   
   if (p->name && *p->name)
-    fprintf(f, " %s=\"%s\"", attn_map[USERLIST_A_NAME], p->name);
+    fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_NAME], p->name);
   fputs(">\n", f);
   for (i = 1; i < p->user_map_size; i++)
     unparse_user(p->user_map[i], f, 0, -1);

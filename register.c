@@ -370,7 +370,7 @@ static char const * const tag_map[] =
 
   0
 };
-static char const * const attn_map[] =
+static char const * const attr_map[] =
 {
   0,
 
@@ -404,51 +404,51 @@ node_alloc(int tag)
   return 0;
 }
 static void *
-attn_alloc(int tag)
+attr_alloc(int tag)
 {
-  return xcalloc(1, sizeof(struct xml_attn));
+  return xcalloc(1, sizeof(struct xml_attr));
 }
 
 static int
 err_dupl_elem(char const *path, struct xml_tree *t)
 {
   err("%s:%d:%d: element <%s> may appear only once", path, t->line, t->column,
-      attn_map[t->tag]);
+      attr_map[t->tag]);
   return -1;
 }
 static int
 err_attr_not_allowed(char const *path, struct xml_tree *t)
 {
   err("%s:%d:%d: attributes are not allowed for element <%s>",
-      path, t->line, t->column, attn_map[t->tag]);
+      path, t->line, t->column, attr_map[t->tag]);
   return -1;
 }
 static int
 err_empty_elem(char const *path, struct xml_tree *t)
 {
   err("%s:%d:%d: element <%s> is empty",
-      path, t->line, t->column, attn_map[t->tag]);
+      path, t->line, t->column, attr_map[t->tag]);
   return -1;
 }
 static int
 err_nested_not_allowed(char const *path, struct xml_tree *t)
 {
   err("%s:%d:%d: nested elements are not allowed for element <%s>",
-      path, t->line, t->column, attn_map[t->tag]);
+      path, t->line, t->column, attr_map[t->tag]);
   return -1;
 }
 static int
 err_invalid_elem(char const *path, struct xml_tree *tag)
 {
   err("%s:%d:%d: element <%s> is invalid here", path, tag->line, tag->column,
-      attn_map[tag->tag]);
+      attr_map[tag->tag]);
   return -1;
 }
 static int
-err_invalid_attn(char const *path, struct xml_attn *a)
+err_invalid_attr(char const *path, struct xml_attr *a)
 {
   err("%s:%d:%d: attribute \"%s\" is invalid here", path, a->line, a->column,
-      attn_map[a->tag]);
+      attr_map[a->tag]);
   return -1;
 }
 
@@ -481,16 +481,16 @@ parse_config(char const *path, const unsigned char *default_config)
 {
   struct xml_tree *tree = 0, *p, *p2;
   struct config_node *cfg = 0;
-  struct xml_attn *a;
+  struct xml_attr *a;
   struct ip_node *ip;
   unsigned int b1, b2, b3, b4;
   int n;
 
   if (default_config) {
     tree = xml_build_tree_str(default_config,
-                              tag_map, attn_map, node_alloc, attn_alloc);
+                              tag_map, attr_map, node_alloc, attr_alloc);
   } else {
-    tree = xml_build_tree(path, tag_map, attn_map, node_alloc, attn_alloc);
+    tree = xml_build_tree(path, tag_map, attr_map, node_alloc, attr_alloc);
   }
   if (!tree) goto failed;
   if (tree->tag != TG_CONFIG) {
@@ -529,7 +529,7 @@ parse_config(char const *path, const unsigned char *default_config)
       /* FIXME: check charset for validity */
       break;
     default:
-      err_invalid_attn(path, a);
+      err_invalid_attr(path, a);
       goto failed;
     }
   }
@@ -568,7 +568,7 @@ parse_config(char const *path, const unsigned char *default_config)
           }
           break;
         default:
-          err_invalid_attn(path, a);
+          err_invalid_attr(path, a);
           goto failed;
         }
       }
@@ -585,7 +585,7 @@ parse_config(char const *path, const unsigned char *default_config)
         for (a = ip->b.first; a; a = a->next) {
           if (a->tag != AT_ALLOW && a->tag != AT_DENY) {
             err("%s:%d:%d: attribute \"%s\" is invalid here",
-                path, a->line, a->column, attn_map[a->tag]);
+                path, a->line, a->column, attr_map[a->tag]);
             goto failed;
           }
           if (ip->allow != -1) {

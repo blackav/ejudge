@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2001-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -81,7 +81,7 @@ enum
     AT_DENY,
     AT_ID,
 
-    TG_LAST_ATTN
+    TG_LAST_ATTR
   };
 
 struct ip_node
@@ -120,7 +120,7 @@ static char const * const elem_map[] =
 
   0
 };
-static char const * const attn_map[] =
+static char const * const attr_map[] =
 {
   0,
 
@@ -161,9 +161,9 @@ elem_alloc(int tag)
   return xcalloc(1, sz);
 }
 static void *
-attn_alloc(int tag)
+attr_alloc(int tag)
 {
-  return xcalloc(1, sizeof(struct xml_attn));
+  return xcalloc(1, sizeof(struct xml_attr));
 }
 
 static int
@@ -202,10 +202,10 @@ err_invalid_elem(char const *path, struct xml_tree *tag)
   return -1;
 }
 static int
-err_invalid_attn(char const *path, struct xml_attn *a)
+err_invalid_attr(char const *path, struct xml_attr *a)
 {
   err("%s:%d:%d: attribute \"%s\" is invalid here", path, a->line, a->column,
-      attn_map[a->tag]);
+      attr_map[a->tag]);
   return -1;
 }
 
@@ -237,16 +237,16 @@ parse_config(char const *path, const unsigned char *default_config)
 {
   struct xml_tree *tree = 0, *p, *p2;
   struct config_node *cfg = 0;
-  struct xml_attn *a;
+  struct xml_attr *a;
   struct ip_node *ip;
   unsigned int b1, b2, b3, b4;
   int n;
 
   if (default_config) {
     tree = xml_build_tree_str(default_config,
-                              elem_map, attn_map, elem_alloc, attn_alloc);
+                              elem_map, attr_map, elem_alloc, attr_alloc);
   } else {
-    tree = xml_build_tree(path, elem_map, attn_map, elem_alloc, attn_alloc);
+    tree = xml_build_tree(path, elem_map, attr_map, elem_alloc, attr_alloc);
   }
 
   if (!tree) goto failed;
@@ -286,7 +286,7 @@ parse_config(char const *path, const unsigned char *default_config)
       /* FIXME: check charset for validity */
       break;
     default:
-      err_invalid_attn(path, a);
+      err_invalid_attr(path, a);
       goto failed;
     }
   }
@@ -326,7 +326,7 @@ parse_config(char const *path, const unsigned char *default_config)
           }
           break;
         default:
-          err_invalid_attn(path, a);
+          err_invalid_attr(path, a);
           goto failed;
         }
       }
@@ -341,7 +341,7 @@ parse_config(char const *path, const unsigned char *default_config)
         ip->allow = -1;
         for (a = ip->b.first; a; a = a->next) {
           if (a->tag != AT_ALLOW && a->tag != AT_DENY) {
-            err_invalid_attn(path, a);
+            err_invalid_attr(path, a);
             goto failed;
           }
           if (ip->allow != -1) {
@@ -806,7 +806,7 @@ main(int argc, char const *argv[])
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")

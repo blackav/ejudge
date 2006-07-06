@@ -126,7 +126,7 @@ static char const * const tag_map[] =
   0
 };
 
-static char const * const attn_map[] =
+static char const * const attr_map[] =
 {
   0,
   "enable_l10n",
@@ -192,9 +192,9 @@ tree_alloc_func(int tag)
 }
 
 static void *
-attn_alloc_func(int tag)
+attr_alloc_func(int tag)
 {
-  return xcalloc(1, sizeof(struct xml_attn));
+  return xcalloc(1, sizeof(struct xml_attr));
 }
 
 static int
@@ -240,10 +240,10 @@ err_invalid_elem(char const *path, struct xml_tree *tag)
   return -1;
 }
 static int
-err_invalid_attn(char const *path, struct xml_attn *a)
+err_invalid_attr(char const *path, struct xml_attr *a)
 {
   err("%s:%d:%d: attribute \"%s\" is invalid here", path, a->line, a->column,
-      attn_map[a->tag]);
+      attr_map[a->tag]);
   return -1;
 }
 
@@ -274,7 +274,7 @@ static struct xml_tree *
 parse_user_map(char const *path, struct xml_tree *p)
 {
   struct xml_tree *q;
-  struct xml_attn *a;
+  struct xml_attr *a;
   struct userlist_cfg_user_map *m;
 
   ASSERT(p);
@@ -318,13 +318,13 @@ parse_user_map(char const *path, struct xml_tree *p)
       case AT_EJUDGE_USER:
         if (m->local_user_str) {
           err("%s:%d:%d: attribute %s already defined", path, a->line,
-              a->column, attn_map[a->tag]);
+              a->column, attr_map[a->tag]);
           return 0;
         }
         m->local_user_str = a->text; a->text = 0;
         break;
       default:
-        err_invalid_attn(path, a);
+        err_invalid_attr(path, a);
         return 0;
       }
     }
@@ -400,11 +400,11 @@ userlist_cfg_parse(char const *path)
 {
   struct xml_tree *tree = 0, *p;
   struct userlist_cfg *cfg = 0;
-  struct xml_attn *a;
+  struct xml_attr *a;
   unsigned char pathbuf[PATH_MAX];
 
-  tree = xml_build_tree(path, tag_map, attn_map, tree_alloc_func,
-                        attn_alloc_func);
+  tree = xml_build_tree(path, tag_map, attr_map, tree_alloc_func,
+                        attr_alloc_func);
   if (!tree) return 0;
   if (tree->tag != TG_CONFIG) {
     err("%s: %d: top-level tag must be <config>", path, tree->line);
@@ -421,7 +421,7 @@ userlist_cfg_parse(char const *path)
     case AT_L10N:
       if (cfg->l10n != -1) {
         err("%s:%d:%d: attribute \"%s\" already defined",
-            path, a->line, a->column, attn_map[a->tag]);
+            path, a->line, a->column, attr_map[a->tag]);
         goto failed;
       }
       if ((cfg->l10n = parse_bool(a->text)) < 0) {
@@ -432,7 +432,7 @@ userlist_cfg_parse(char const *path)
       break;
     default:
       err("%s:%d:%d: attribute \"%s\" is not allowed here",
-          path, a->line, a->column, attn_map[a->tag]);
+          path, a->line, a->column, attr_map[a->tag]);
       goto failed;
     }
   }
@@ -692,7 +692,7 @@ userlist_cfg_unparse(struct userlist_cfg *cfg, FILE *f)
                    fmt_func);
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "XML_Parser" "XML_Char" "XML_Encoding")

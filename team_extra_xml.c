@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -96,7 +96,7 @@ attr_alloc(int tag)
   size_t sz;
 
   ASSERT(tag >= 1 && tag < TE_A_LAST_ATTR);
-  if (!(sz = attr_sizes[tag])) sz = sizeof(struct xml_attn);
+  if (!(sz = attr_sizes[tag])) sz = sizeof(struct xml_attr);
   return xcalloc(1, sz);
 }
 static void
@@ -104,7 +104,7 @@ elem_free(struct xml_tree *t)
 {
 }
 static void
-attr_free(struct xml_attn *a)
+attr_free(struct xml_attr *a)
 {
 }
 
@@ -194,7 +194,7 @@ static int
 parse_warnings(struct xml_tree *t, struct team_extra *te, int *pw_flag)
 {
   struct xml_tree *wt, *tt;
-  struct xml_attn *a;
+  struct xml_attr *a;
   struct team_warning *cur_warn;
   unsigned char **ptxt;
   int x;
@@ -359,7 +359,7 @@ team_extra_parse_xml(const unsigned char *path, struct team_extra **pte)
 {
   struct xml_tree *t = 0, *t2 = 0;
   struct team_extra *te = 0;
-  struct xml_attn *a = 0;
+  struct xml_attr *a = 0;
   int user_id = -1, x, n, v_flag = 0, w_flag = 0, s_flag = 0;
 
   t = xml_build_tree(path, elem_map, attr_map, elem_alloc, attr_alloc);
@@ -479,7 +479,7 @@ team_extra_unparse_xml(FILE *f, struct team_extra *te)
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

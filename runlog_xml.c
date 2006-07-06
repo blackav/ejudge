@@ -156,7 +156,7 @@ attr_alloc(int tag)
   size_t sz;
 
   ASSERT(tag >= 1 && tag < RUNLOG_LAST_ATTR);
-  if (!(sz = attr_sizes[tag])) sz = sizeof(struct xml_attn);
+  if (!(sz = attr_sizes[tag])) sz = sizeof(struct xml_attr);
   return xcalloc(1, sz);
 }
 
@@ -166,7 +166,7 @@ node_free(struct xml_tree *t)
 }
 
 static void
-attr_free(struct xml_attn *a)
+attr_free(struct xml_attr *a)
 {
 }
 
@@ -261,7 +261,7 @@ static int
 process_run_elements(struct xml_tree *xt)
 {
   struct run_element *xr;
-  struct xml_attn *xa;
+  struct xml_attr *xa;
   int iv, n;
   time_t tv;
   int lv;
@@ -788,7 +788,7 @@ unparse_runlog_xml(FILE *f,
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "DIR")
