@@ -41,7 +41,7 @@
 #define MAX_CONTEST_ID 1000
 #define CONTEST_CHECK_TIME 5
 
-static char const * const tag_map[] =
+static char const * const elem_map[] =
 {
   0,
   "contests",
@@ -131,91 +131,26 @@ static char const * const attr_map[] =
 
   0
 };
-static size_t const tag_sizes[CONTEST_LAST_TAG] =
+static size_t const elem_sizes[CONTEST_LAST_TAG] =
 {
-  0,
-  sizeof(struct contest_list),  /* CONTEST_CONTESTS */
-  sizeof(struct contest_desc),  /* CONTEST_CONTEST */
-  sizeof(struct contest_access), /* CONTEST_REGISTER_ACCESS */
-  sizeof(struct contest_access), /* CONTEST_USERS_ACCESS */
-  sizeof(struct contest_access), /* CONTEST_MASTER_ACCESS */
-  sizeof(struct contest_access), /* CONTEST_JUDGE_ACCESS */
-  sizeof(struct contest_access), /* CONTEST_TEAM_ACCESS */
-  sizeof(struct contest_access), /* CONTEST_SERVE_CONTROL_ACCESS */
-  sizeof(struct contest_ip),    /* CONTEST_IP */
-  sizeof(struct contest_field), /* CONTEST_FIELD */
-  0,                            /* CONTEST_NAME */
-  0,                            /* CONTEST_NAME_EN */
-  0,                            /* CONTEST_MAIN_URL */
-  sizeof(struct contest_member), /* CONTEST_CONTESTANTS */
-  sizeof(struct contest_member), /* CONTEST_RESERVES */
-  sizeof(struct contest_member), /* CONTEST_COACHES */
-  sizeof(struct contest_member), /* CONTEST_ADVISORS */
-  sizeof(struct contest_member), /* CONTEST_GUESTS */
-  0,                            /* CONTEST_USERS_HEADER_FILE */
-  0,                            /* CONTEST_USERS_FOOTER_FILE */
-  0,                            /* CONTEST_REGISTER_EMAIL */
-  0,                            /* CONTEST_REGISTER_URL */
-  0,                            /* CONTEST_TEAM_URL */
-  0,                            /* CONTEST_REGISTRATION_DEADLINE */
-  sizeof(struct opcap_list_item), /* CONTEST_CAP */
-  0,                            /* CONTEST_CAPS */
-  0,                            /* CONTEST_ROOT_DIR */
-  0,                            /* CONTEST_STANDINGS_URL */
-  0,                            /* CONTEST_PROBLEMS_URL */
-  0,                            /* CONTEST_CLIENT_FLAGS */
-  0,                            /* CONTEST_SERVE_USER */
-  0,                            /* CONTEST_SERVE_GROUP */
-  0,                            /* REGISTER_HEADER_FILE */
-  0,                            /* REGISTER_FOOTER_FILE */
-  0,                            /* TEAM_HEADER_FILE */
-  0,                            /* TEAM_FOOTER_FILE */
-  0,                            /* USERS_HEAD_STYLE */
-  0,                            /* USERS_PAR_STYLE */
-  0,                            /* USERS_TABLE_STYLE */
-  0,                            /* USERS_VERB_STYLE */
-  0,                            /* USERS_TABLE_FORMAT */
-  0,                            /* USERS_TABLE_FORMAT_EN */
-  0,                            /* USERS_TABLE_LEGEND */
-  0,                            /* USERS_TABLE_LEGEND_EN */
-  0,                            /* REGISTER_HEAD_STYLE */
-  0,                            /* REGISTER_PAR_STYLE */
-  0,                            /* REGISTER_TABLE_STYLE */
-  0,                            /* TEAM_HEAD_STYLE */
-  0,                            /* TEAM_PAR_STYLE */
-  0,                            /* CONF_DIR */
-  0,                            /* RUN_USER */
-  0,                            /* RUN_GROUP */
-  0,                            /* REGISTER_EMAIL_FILE */
-  0,                            /* USER_NAME_COMMENT */
-  0,                            /* ALLOWED_LANGUAGES */
-  0,                            /* CF_NOTIFY_EMAIL */
-  0,                            /* CLAR_NOTIFY_EMAIL */
-  0,                            /* DAILY_STAT_EMAIL */
-};
-static size_t const attr_sizes[CONTEST_LAST_ATTR] =
-{
-  0,
-  sizeof(struct xml_attr),
+  [CONTEST_CONTESTS] = sizeof(struct contest_list),
+  [CONTEST_CONTEST] = sizeof(struct contest_desc),
+  [CONTEST_REGISTER_ACCESS] = sizeof(struct contest_access),
+  [CONTEST_USERS_ACCESS] = sizeof(struct contest_access),
+  [CONTEST_MASTER_ACCESS] = sizeof(struct contest_access),
+  [CONTEST_JUDGE_ACCESS] = sizeof(struct contest_access),
+  [CONTEST_TEAM_ACCESS] = sizeof(struct contest_access),
+  [CONTEST_SERVE_CONTROL_ACCESS] = sizeof(struct contest_access),
+  [CONTEST_IP] = sizeof(struct contest_ip),
+  [CONTEST_FIELD] = sizeof(struct contest_field),
+  [CONTEST_CONTESTANTS] = sizeof(struct contest_member),
+  [CONTEST_RESERVES] = sizeof(struct contest_member),
+  [CONTEST_COACHES] = sizeof(struct contest_member),
+  [CONTEST_ADVISORS] = sizeof(struct contest_member),
+  [CONTEST_GUESTS] = sizeof(struct contest_member),
+  [CONTEST_CAP] = sizeof(struct opcap_list_item),
 };
 
-static void *
-node_alloc(int tag)
-{
-  size_t sz;
-  ASSERT(tag >= 1 && tag < CONTEST_LAST_TAG);
-  if (!(sz = tag_sizes[tag])) sz = sizeof(struct xml_tree);
-  return xcalloc(1, sz);
-}
-static void *
-attr_alloc(int tag)
-{
-  size_t sz;
-
-  ASSERT(tag >= 1 && tag < CONTEST_LAST_ATTR);
-  if (!(sz = attr_sizes[tag])) sz = sizeof(struct xml_attr);
-  return xcalloc(1, sz);
-}
 static void
 node_free(struct xml_tree *t)
 {
@@ -275,10 +210,20 @@ node_free(struct xml_tree *t)
     break;
   }
 }
-static void
-attr_free(struct xml_attr *a)
+
+static struct xml_parse_spec contests_parse_spec =
 {
-}
+  .elem_map = elem_map,
+  .attr_map = attr_map,
+  .elem_sizes = elem_sizes,
+  .attr_sizes = NULL,
+  .default_elem = 0,
+  .default_attr = 0,
+  .elem_alloc = NULL,
+  .attr_alloc = NULL,
+  .elem_free = node_free,
+  .attr_free = NULL,
+};
 
 static char const * const field_map[] =
 {
@@ -405,7 +350,7 @@ parse_access(struct contest_access *acc, char const *path)
   for (t = acc->b.first_down; t; t = t->right) {
     if (t->tag != CONTEST_IP) {
       err("%s:%d:%d: tag <%s> is invalid here",
-          path, t->line, t->column, tag_map[t->tag]);
+          path, t->line, t->column, elem_map[t->tag]);
       return -1;
     }
     if (t->first_down) {
@@ -500,12 +445,12 @@ parse_member(struct contest_member *mb, char const *path)
   for (t = mb->b.first_down; t; t = t->right) {
     if (t->tag != CONTEST_FIELD) {
       err("%s:%d:%d: tag <%s> is invalid here",
-          path, t->line, t->column, tag_map[t->tag]);
+          path, t->line, t->column, elem_map[t->tag]);
       return -1;
     }
     if (t->text && *t->text) {
       err("%s:%d:%d: tag <%s> cannot contain text",
-          path, t->line, t->column, tag_map[t->tag]);
+          path, t->line, t->column, elem_map[t->tag]);
       return -1;
     }
     if (t->first_down) {
@@ -565,22 +510,22 @@ handle_final_tag(char const *path, struct xml_tree *t, unsigned char **ps)
 {
   if (*ps) {
     err("%s:%d:%d: duplicated element <%s>",
-        path, t->line, t->column, tag_map[t->tag]);
+        path, t->line, t->column, elem_map[t->tag]);
     return -1;
   }
   if (!t->text || !*t->text) {
     err("%s:%d:%d: empty element <%s>", path, t->line, t->column,
-        tag_map[t->tag]);
+        elem_map[t->tag]);
     return -1;
   }
   if (t->first_down) {
     err("%s:%d:%d: element <%s> cannot contain nested elements",
-        path, t->line, t->column, tag_map[t->tag]);
+        path, t->line, t->column, elem_map[t->tag]);
     return -1;
   }
   if (t->first) {
     err("%s:%d:%d: element <%s> cannot have attributes",
-        path, t->line, t->column, tag_map[t->tag]);
+        path, t->line, t->column, elem_map[t->tag]);
     return -1;
   }
   *ps = t->text; t->text = 0;
@@ -952,12 +897,12 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
     case CONTEST_CLIENT_FLAGS:
       if (t->first_down) {
         err("%s:%d:%d: element <%s> cannot contain nested elements",
-            path, t->line, t->column, tag_map[t->tag]);
+            path, t->line, t->column, elem_map[t->tag]);
         return -1;
       }
       if (t->first) {
         err("%s:%d:%d: element <%s> cannot have attributes",
-            path, t->line, t->column, tag_map[t->tag]);
+            path, t->line, t->column, elem_map[t->tag]);
         return -1;
       }
       if (parse_client_flags(path, cnts, t) < 0) return -1;
@@ -996,7 +941,7 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
     process_members:
       if (cnts->members[mb_id]) {
         err("%s:%d:%d: tag <%s> redefined",
-            path, t->line, t->column, tag_map[t->tag]);
+            path, t->line, t->column, elem_map[t->tag]);
         return -1;
       }
       if (parse_member((struct contest_member*) t, path) < 0)
@@ -1093,7 +1038,7 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
 
     default:
       err("%s:%d:%d: tag <%s> is invalid here",
-          path, t->line, t->column, tag_map[t->tag]);
+          path, t->line, t->column, elem_map[t->tag]);
       return -1;
     }
   }
@@ -1166,7 +1111,7 @@ parse_one_contest_xml(char const *path, int number, int no_subst_flag)
   struct xml_tree *tree = 0;
   struct contest_desc *d = 0;
 
-  tree = xml_build_tree(path, tag_map, attr_map, node_alloc, attr_alloc);
+  tree = xml_build_tree(path, &contests_parse_spec);
   if (!tree) goto failed;
   if (tree->tag != CONTEST_CONTEST) {
     err("%s:%d:%d: top-level tag must be <contest>",
@@ -1178,7 +1123,7 @@ parse_one_contest_xml(char const *path, int number, int no_subst_flag)
   return d;
 
  failed:
-  if (tree) xml_tree_free(tree, node_free, attr_free);
+  if (tree) xml_tree_free(tree, &contests_parse_spec);
   return 0;
 }
 
@@ -1206,7 +1151,7 @@ contests_load(int number, struct contest_desc **p_cnts)
 struct xml_tree *
 contests_new_node(int tag)
 {
-  struct xml_tree *p = node_alloc(tag);
+  struct xml_tree *p = xml_elem_alloc(tag, elem_sizes);
   p->tag = tag;
   return p;
 }
@@ -1358,14 +1303,14 @@ struct contest_desc *
 contests_free(struct contest_desc *cnts)
 {
   if (!cnts) return 0;
-  xml_tree_free((struct xml_tree *) cnts, node_free, attr_free);
+  xml_tree_free((struct xml_tree *) cnts, &contests_parse_spec);
   return 0;
 }
 
 void
 contests_free_2(struct xml_tree *t)
 {
-  if (t) xml_tree_free(t, node_free, attr_free);
+  if (t) xml_tree_free(t, &contests_parse_spec);
 }
 
 int
@@ -1541,7 +1486,7 @@ void
 contests_write_header(FILE *f, const struct contest_desc *cnts)
 {
   fprintf(f,
-          "<%s %s=\"%d\"", tag_map[CONTEST_CONTEST],
+          "<%s %s=\"%d\"", elem_map[CONTEST_CONTEST],
           attr_map[CONTEST_A_ID], cnts->id);
   if (cnts->autoregister) {
     fprintf(f, "\n         %s=\"%s\"",
@@ -1592,11 +1537,11 @@ unparse_access(FILE *f, const struct contest_access *acc, int tag)
   if (!acc) return;
   if (!acc->default_is_allow && !acc->b.first_down) return;
   if (!acc->b.first_down) {
-    fprintf(f, "  <%s default=\"%s\"/>\n", tag_map[tag],
+    fprintf(f, "  <%s default=\"%s\"/>\n", elem_map[tag],
             acc->default_is_allow?"allow":"deny");
     return;
   }
-  fprintf(f, "  <%s default=\"%s\">\n", tag_map[tag],
+  fprintf(f, "  <%s default=\"%s\">\n", elem_map[tag],
           acc->default_is_allow?"allow":"deny");
   for (ip = (typeof(ip)) acc->b.first_down; ip;
        ip = (typeof(ip)) ip->b.right) {
@@ -1605,12 +1550,12 @@ unparse_access(FILE *f, const struct contest_access *acc, int tag)
       snprintf(ssl_str, sizeof(ssl_str), " %s=\"%s\"",
                attr_map[CONTEST_A_SSL], ip->ssl?"yes":"no");
     fprintf(f, "    <%s %s=\"%s\"%s>%s</%s>\n",
-            tag_map[CONTEST_IP], attr_map[CONTEST_A_ALLOW],
+            elem_map[CONTEST_IP], attr_map[CONTEST_A_ALLOW],
             ip->allow?"yes":"no", ssl_str,
             xml_unparse_ip_mask(ip->addr, ip->mask),
-            tag_map[CONTEST_IP]);
+            elem_map[CONTEST_IP]);
   }
-  fprintf(f, "  </%s>\n", tag_map[tag]);
+  fprintf(f, "  </%s>\n", elem_map[tag]);
 }
 static void
 unparse_fields(FILE *f, const struct contest_member *memb, int tag)
@@ -1618,7 +1563,7 @@ unparse_fields(FILE *f, const struct contest_member *memb, int tag)
   int i;
 
   if (!memb) return;
-  fprintf(f, "  <%s", tag_map[tag]);
+  fprintf(f, "  <%s", elem_map[tag]);
   if (memb->min_count >= 0)
     fprintf(f, " %s=\"%d\"", attr_map[CONTEST_A_MIN], memb->min_count);
   if (memb->max_count >= 0)
@@ -1629,11 +1574,11 @@ unparse_fields(FILE *f, const struct contest_member *memb, int tag)
   for (i = 1; i < CONTEST_LAST_MEMBER_FIELD; i++) {
     if (!memb->fields[i]) continue;
     fprintf(f, "    <%s %s=\"%s\" %s=\"%s\"/>\n",
-            tag_map[CONTEST_FIELD], attr_map[CONTEST_A_ID], member_field_map[i],
+            elem_map[CONTEST_FIELD], attr_map[CONTEST_A_ID], member_field_map[i],
             attr_map[CONTEST_A_MANDATORY],
             memb->fields[i]->mandatory?"yes":"no");
   }
-  fprintf(f, "  </%s>\n", tag_map[tag]);
+  fprintf(f, "  </%s>\n", elem_map[tag]);
 }
 
 static void
@@ -1648,7 +1593,7 @@ unparse_text(FILE *f, int tag, const unsigned char *txt)
     html_armor_string(txt, arm_txt);
     txt = arm_txt;
   }
-  fprintf(f, "  <%s>%s</%s>\n", tag_map[tag], txt, tag_map[tag]);
+  fprintf(f, "  <%s>%s</%s>\n", elem_map[tag], txt, elem_map[tag]);
 }
 
 void
@@ -1668,9 +1613,9 @@ contests_unparse(FILE *f,
   unparse_text(f, CONTEST_ROOT_DIR, cnts->root_dir);
   unparse_text(f, CONTEST_CONF_DIR, cnts->conf_dir);
   if (cnts->reg_deadline) {
-    fprintf(f, "  <%s>%s</%s>\n", tag_map[CONTEST_REGISTRATION_DEADLINE],
+    fprintf(f, "  <%s>%s</%s>\n", elem_map[CONTEST_REGISTRATION_DEADLINE],
             xml_unparse_date(cnts->reg_deadline),
-            tag_map[CONTEST_REGISTRATION_DEADLINE]);
+            elem_map[CONTEST_REGISTRATION_DEADLINE]);
   }
   unparse_text(f, CONTEST_REGISTER_EMAIL, cnts->register_email);
   unparse_text(f, CONTEST_REGISTER_URL, cnts->register_url);
@@ -1687,23 +1632,23 @@ contests_unparse(FILE *f,
   unparse_access(f, cnts->serve_control_access, CONTEST_SERVE_CONTROL_ACCESS);
 
   if (cnts->caps_node) {
-    fprintf(f, "  <%s>\n", tag_map[CONTEST_CAPS]);
+    fprintf(f, "  <%s>\n", elem_map[CONTEST_CAPS]);
     for (cap = cnts->capabilities.first; cap;
          cap = (typeof(cap)) cap->b.right) {
       fprintf(f, "    <%s %s = \"%s\">\n",
-              tag_map[CONTEST_CAP], attr_map[CONTEST_A_LOGIN], cap->login);
+              elem_map[CONTEST_CAP], attr_map[CONTEST_A_LOGIN], cap->login);
       s = opcaps_unparse(6, 60, cap->caps);
       fprintf(f, "%s", s);
       xfree(s);
-      fprintf(f, "    </%s>\n", tag_map[CONTEST_CAP]);
+      fprintf(f, "    </%s>\n", elem_map[CONTEST_CAP]);
     }
-    fprintf(f, "  </%s>\n", tag_map[CONTEST_CAPS]);
+    fprintf(f, "  </%s>\n", elem_map[CONTEST_CAPS]);
   }
 
   for (i = 1; i < CONTEST_LAST_FIELD; i++) {
     if (!cnts->fields[i]) continue;
     fprintf(f, "  <%s %s=\"%s\" %s=\"%s\"/>\n",
-            tag_map[CONTEST_FIELD], attr_map[CONTEST_A_ID],
+            elem_map[CONTEST_FIELD], attr_map[CONTEST_A_ID],
             field_map[i], attr_map[CONTEST_A_MANDATORY],
             cnts->fields[i]->mandatory?"yes":"no");
   }
@@ -1747,16 +1692,16 @@ contests_unparse(FILE *f,
   unparse_text(f, CONTEST_DAILY_STAT_EMAIL, cnts->daily_stat_email);
 
   if (cnts->client_ignore_time_skew || cnts->client_disable_team) {
-    fprintf(f, "  <%s>\n", tag_map[CONTEST_CLIENT_FLAGS]);
+    fprintf(f, "  <%s>\n", elem_map[CONTEST_CLIENT_FLAGS]);
     if (cnts->client_ignore_time_skew)
       fprintf(f, "    IGNORE_TIME_SKEW,\n");
     if (cnts->client_disable_team)
       fprintf(f, "    DISABLE_TEAM,\n");
     if (cnts->disable_member_delete)
       fprintf(f, "    DISABLE_MEMBER_DELETE,\n");
-    fprintf(f, "  </%s>\n", tag_map[CONTEST_CLIENT_FLAGS]);
+    fprintf(f, "  </%s>\n", elem_map[CONTEST_CLIENT_FLAGS]);
   }
-  fprintf(f, "</%s>", tag_map[CONTEST_CONTEST]);
+  fprintf(f, "</%s>", elem_map[CONTEST_CONTEST]);
 }
 
 int

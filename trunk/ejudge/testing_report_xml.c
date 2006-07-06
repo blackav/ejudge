@@ -152,34 +152,20 @@ static const char * const attr_map[] =
 
   [TR_A_LAST_ATTR] = 0,
 };
-static const size_t elem_sizes[TR_T_LAST_TAG];
-static const size_t attr_sizes[TR_A_LAST_ATTR];
 
-static void *
-elem_alloc(int tag)
+static struct xml_parse_spec testing_report_parse_spec =
 {
-  size_t sz;
-  ASSERT(tag >= 1 && tag < TR_T_LAST_TAG);
-  if (!(sz = elem_sizes[tag])) sz = sizeof(struct xml_tree);
-  return xcalloc(1, sz);
-}
-static void *
-attr_alloc(int tag)
-{
-  size_t sz;
-
-  ASSERT(tag >= 1 && tag < TR_A_LAST_ATTR);
-  if (!(sz = attr_sizes[tag])) sz = sizeof(struct xml_attr);
-  return xcalloc(1, sz);
-}
-static void
-elem_free(struct xml_tree *t)
-{
-}
-static void
-attr_free(struct xml_attr *a)
-{
-}
+  .elem_map = elem_map,
+  .attr_map = attr_map,
+  .elem_sizes = NULL,
+  .attr_sizes = NULL,
+  .default_elem = 0,
+  .default_attr = 0,
+  .elem_alloc = NULL,
+  .attr_alloc = NULL,
+  .elem_free = NULL,
+  .attr_free = NULL,
+};
 
 static int
 parse_scoring(const unsigned char *str, int *px)
@@ -671,7 +657,7 @@ testing_report_parse_xml(const unsigned char *str)
   struct xml_tree *t = 0;
   testing_report_xml_t r = 0;
 
-  t = xml_build_tree_str(str, elem_map, attr_map, elem_alloc, attr_alloc);
+  t = xml_build_tree_str(str, &testing_report_parse_spec);
   if (!t) goto failure;
 
   xml_err_path = "<string>";
@@ -680,12 +666,12 @@ testing_report_parse_xml(const unsigned char *str)
 
   XCALLOC(r, 1);
   if (parse_testing_report(t, r) < 0) goto failure;
-  xml_tree_free(t, elem_free, attr_free);
+  xml_tree_free(t, &testing_report_parse_spec);
   return r;
 
  failure:
   testing_report_free(r);
-  if (t) xml_tree_free(t, elem_free, attr_free);
+  if (t) xml_tree_free(t, &testing_report_parse_spec);
   return 0;
 }
 

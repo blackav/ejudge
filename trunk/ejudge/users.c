@@ -67,7 +67,7 @@ enum
     TG_CONTESTS_DIR,
     TG_L10N_DIR,
 
-    TG_LAST_ELEM
+    TG_LAST_TAG
   };
 enum
   {
@@ -137,34 +137,26 @@ static char const * const attr_map[] =
   0
 };
 
-static size_t const elem_sizes[TG_LAST_ELEM] =
+static size_t const elem_sizes[TG_LAST_TAG] =
 {
-  0,
-  sizeof(struct config_node),
-  sizeof(struct access_node),
-  sizeof(struct ip_node),
-  sizeof(struct xml_tree),
-  sizeof(struct xml_tree),
-  sizeof(struct xml_tree),
+  [TG_CONFIG] = sizeof(struct config_node),
+  [TG_ACCESS] = sizeof(struct access_node),
+  [TG_IP] = sizeof(struct ip_node),
 };
 
-static void *
-elem_alloc(int tag)
+static struct xml_parse_spec users_config_parse_spec =
 {
-  size_t sz;
-
-  ASSERT(tag > 0 && tag < TG_LAST_ELEM);
-  sz = elem_sizes[tag];
-  if (!sz) {
-    SWERR(("xml tree has zero size for elem %d (%s)", tag, elem_map[tag]));
-  }
-  return xcalloc(1, sz);
-}
-static void *
-attr_alloc(int tag)
-{
-  return xcalloc(1, sizeof(struct xml_attr));
-}
+  .elem_map = elem_map,
+  .attr_map = attr_map,
+  .elem_sizes = elem_sizes,
+  .attr_sizes = NULL,
+  .default_elem = 0,
+  .default_attr = 0,
+  .elem_alloc = NULL,
+  .attr_alloc = NULL,
+  .elem_free = NULL,
+  .attr_free = NULL,
+};
 
 static int
 err_dupl_elem(char const *path, struct xml_tree *t)
@@ -243,10 +235,9 @@ parse_config(char const *path, const unsigned char *default_config)
   int n;
 
   if (default_config) {
-    tree = xml_build_tree_str(default_config,
-                              elem_map, attr_map, elem_alloc, attr_alloc);
+    tree = xml_build_tree_str(default_config, &users_config_parse_spec);
   } else {
-    tree = xml_build_tree(path, elem_map, attr_map, elem_alloc, attr_alloc);
+    tree = xml_build_tree(path, &users_config_parse_spec);
   }
 
   if (!tree) goto failed;

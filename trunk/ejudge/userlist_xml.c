@@ -41,7 +41,7 @@
 #define EJUDGE_CHARSET EJUDGE_INTERNAL_CHARSET
 #endif /* EJUDGE_CHARSET */
 
-static char const * const tag_map[] =
+static char const * const elem_map[] =
 {
   0,
   "userlist",
@@ -134,83 +134,31 @@ static char const * const attr_map[] =
 
   0
 };
-static size_t const tag_sizes[USERLIST_LAST_TAG] =
+static size_t const elem_sizes[USERLIST_LAST_TAG] =
 {
-  0,
-  sizeof(struct userlist_list), /* USERLIST */
-  sizeof(struct userlist_user), /* USER */
-  sizeof(struct xml_tree),      /* LOGIN */
-  sizeof(struct xml_tree),      /* NAME */
-  sizeof(struct xml_tree),      /* INST */
-  sizeof(struct xml_tree),      /* INST_EN */
-  sizeof(struct xml_tree),      /* INSTSHORT */
-  sizeof(struct xml_tree),      /* INSTSHORT_EN */
-  sizeof(struct xml_tree),      /* FAC */
-  sizeof(struct xml_tree),      /* FAC_EN */
-  sizeof(struct xml_tree),      /* FACSHORT */
-  sizeof(struct xml_tree),      /* FACSHORT_EN */
-  sizeof(struct userlist_passwd), /* PASSWORD */
-  sizeof(struct xml_tree),      /* EMAIL */
-  sizeof(struct xml_tree),      /* HOMEPAGE */
-  sizeof(struct xml_tree),      /* PHONE */
-  sizeof(struct userlist_member), /* MEMBER */
-  sizeof(struct xml_tree),      /* SURNAME */
-  sizeof(struct xml_tree),      /* SURNAME_EN */
-  sizeof(struct xml_tree),      /* MIDDLENAME */
-  sizeof(struct xml_tree),      /* MIDDLENAME_EN */
-  sizeof(struct xml_tree),      /* GRADE */
-  sizeof(struct xml_tree),      /* GROUP */
-  sizeof(struct xml_tree),      /* GROUP_EN */
-  sizeof(struct xml_tree),      /* COOKIES */
-  sizeof(struct userlist_cookie), /* COOKIE */
-  sizeof(struct xml_tree),      /* CONTESTS */
-  sizeof(struct userlist_contest), /* CONTEST */
-  sizeof(struct xml_tree),      /* STATUS */
-  sizeof(struct xml_tree),      /* OCCUPATION */
-  sizeof(struct xml_tree),      /* OCCUPATION_EN */
-  sizeof(struct userlist_members), /* CONTESTANTS */
-  sizeof(struct userlist_members), /* RESERVES */
-  sizeof(struct userlist_members), /* COACHES */
-  sizeof(struct userlist_members), /* ADVISORS */
-  sizeof(struct userlist_members), /* GUESTS */
-  sizeof(struct xml_tree),      /* FIRSTNAME */
-  sizeof(struct xml_tree),      /* FIRSTNAME_EN */
-  sizeof(struct userlist_passwd), /* TEAM_PASSWORD */
-  sizeof(struct xml_tree),      /* CITY */
-  sizeof(struct xml_tree),      /* CITY_EN */
-  sizeof(struct xml_tree),      /* COUNTRY */
-  sizeof(struct xml_tree),      /* COUNTRY_EN */
-  sizeof(struct xml_tree),      /* LOCATION */
-  sizeof(struct xml_tree),      /* SPELLING */
-  sizeof(struct xml_tree),      /* PRINTER_NAME */
-  sizeof(struct xml_tree),      /* LANGUAGES */
-  sizeof(struct xml_tree),      /* EXTRA1 */
-  sizeof(struct xml_tree),      /* CNTSINFOS */
-  sizeof(struct userlist_cntsinfo), /* CNTSINFO */
+  [USERLIST_T_USERLIST] = sizeof(struct userlist_list),
+  [USERLIST_T_USER] = sizeof(struct userlist_user),
+  [USERLIST_T_PASSWORD] = sizeof(struct userlist_passwd),
+  [USERLIST_T_MEMBER] = sizeof(struct userlist_member),
+  [USERLIST_T_COOKIE] = sizeof(struct userlist_cookie),
+  [USERLIST_T_CONTEST] = sizeof(struct userlist_contest),
+  [USERLIST_T_CONTESTANTS] = sizeof(struct userlist_members),
+  [USERLIST_T_RESERVES] = sizeof(struct userlist_members),
+  [USERLIST_T_COACHES] = sizeof(struct userlist_members),
+  [USERLIST_T_ADVISORS] = sizeof(struct userlist_members),
+  [USERLIST_T_GUESTS] = sizeof(struct userlist_members),
+  [USERLIST_T_TEAM_PASSWORD] = sizeof(struct userlist_passwd),
+  [USERLIST_T_CNTSINFO] = sizeof(struct userlist_cntsinfo),
 };
 
-static void *
-node_alloc(int tag)
-{
-  size_t sz;
-
-  ASSERT(tag >= 1 && tag < USERLIST_LAST_TAG);
-  sz = tag_sizes[tag];
-  if (!sz) { fprintf(stderr, "%d (%s)!\n", tag, tag_map[tag]); }
-  ASSERT(sz);
-  //if (!sz) sz = sizeof(struct xml_tree);
-  return xcalloc(1, sz);
-}
 struct xml_tree *
 userlist_node_alloc(int tag)
 {
-  struct xml_tree *t;
-  t = node_alloc(tag);
-  t->tag = tag;
-  return t;
+  return xml_elem_alloc(tag, elem_sizes);
 }
+
 static void
-node_free(struct xml_tree *t)
+elem_free(struct xml_tree *t)
 {
   switch (t->tag) {
   case USERLIST_T_USERLIST:
@@ -307,10 +255,20 @@ node_free(struct xml_tree *t)
     break;
   }
 }
-static void
-attr_free(struct xml_attr *a)
+
+static struct xml_parse_spec userlist_parse_spec =
 {
-}
+  .elem_map = elem_map,
+  .attr_map = attr_map,
+  .elem_sizes = elem_sizes,
+  .attr_sizes = NULL,
+  .default_elem = 0,
+  .default_attr = 0,
+  .elem_alloc = NULL,
+  .attr_alloc = NULL,
+  .elem_free = elem_free,
+  .attr_free = NULL,
+};
 
 static int
 parse_priv_level(char const *path, int l, int c, char const *str)
@@ -1128,10 +1086,10 @@ userlist_parse_user_str(char const *str)
   struct userlist_user *user = 0;
 
   xml_err_path = 0;
-  xml_err_elem_names = tag_map;
+  xml_err_elem_names = elem_map;
   xml_err_attr_names = attr_map;
 
-  tree = xml_build_tree_str(str, tag_map, attr_map, node_alloc, NULL);
+  tree = xml_build_tree_str(str, &userlist_parse_spec);
   if (!tree) goto failed;
   if (tree->tag != USERLIST_T_USER) {
     err("top-level tag must be <user>");
@@ -1142,7 +1100,7 @@ userlist_parse_user_str(char const *str)
   return user;
 
  failed:
-  if (tree) xml_tree_free(tree, node_free, attr_free);
+  if (tree) xml_tree_free(tree, &userlist_parse_spec);
   return 0;
 }
 
@@ -1152,18 +1110,18 @@ userlist_parse_contests_str(unsigned char const *str)
   struct xml_tree *tree = 0;
 
   xml_err_path = 0;
-  xml_err_elem_names = tag_map;
+  xml_err_elem_names = elem_map;
   xml_err_attr_names = attr_map;
 
-  tree = xml_build_tree_str(str, tag_map, attr_map, node_alloc, NULL);
+  tree = xml_build_tree_str(str, &userlist_parse_spec);
   if (!tree) return 0;
   if (tree->tag != USERLIST_T_CONTESTS) {
     err("top-level tag must be <contests>");
-    xml_tree_free(tree, node_free, attr_free);
+    xml_tree_free(tree, &userlist_parse_spec);
     return 0;
   }
   if (parse_contest("", tree, 0) < 0) {
-    xml_tree_free(tree, node_free, attr_free);
+    xml_tree_free(tree, &userlist_parse_spec);
     return 0;
   }
   return tree;
@@ -1176,10 +1134,10 @@ userlist_parse(char const *path)
   struct userlist_list *lst = 0;
 
   xml_err_path = path;
-  xml_err_elem_names = tag_map;
+  xml_err_elem_names = elem_map;
   xml_err_attr_names = attr_map;
 
-  tree = xml_build_tree(path, tag_map, attr_map, node_alloc, NULL);
+  tree = xml_build_tree(path, &userlist_parse_spec);
   if (!tree) goto failed;
   if (tree->tag != USERLIST_T_USERLIST) {
     err("%s:%d:%d: top-level tag must be <userlist>",
@@ -1191,7 +1149,7 @@ userlist_parse(char const *path)
   return lst;
 
  failed:
-  if (tree) xml_tree_free(tree, node_free, attr_free);
+  if (tree) xml_tree_free(tree, &userlist_parse_spec);
   return 0;
 }
 
@@ -1202,10 +1160,10 @@ userlist_parse_str(unsigned char const *str)
   struct userlist_list *lst = 0;
 
   xml_err_path = 0;
-  xml_err_elem_names = tag_map;
+  xml_err_elem_names = elem_map;
   xml_err_attr_names = attr_map;
 
-  tree = xml_build_tree_str(str, tag_map, attr_map, node_alloc, NULL);
+  tree = xml_build_tree_str(str, &userlist_parse_spec);
   if (!tree) goto failed;
   if (tree->tag != USERLIST_T_USERLIST) {
     err("%s:%d:%d: top-level tag must be <userlist>",
@@ -1217,14 +1175,14 @@ userlist_parse_str(unsigned char const *str)
   return lst;
 
  failed:
-  if (tree) xml_tree_free(tree, node_free, attr_free);
+  if (tree) xml_tree_free(tree, &userlist_parse_spec);
   return 0;
 }
 
 void *
 userlist_free(struct xml_tree *p)
 {
-  if (p) xml_tree_free(p, node_free, attr_free);
+  if (p) xml_tree_free(p, &userlist_parse_spec);
   return 0;
 }
 
@@ -1295,7 +1253,7 @@ unparse_attributed_elem(FILE *f, int t, unsigned char const *val,
     html_armor_string(val, astr);
     val = astr;
   }
-  fprintf(f, "%s<%s%s>%s</%s>\n", ind, tag_map[t], attr_str, val, tag_map[t]);
+  fprintf(f, "%s<%s%s>%s</%s>\n", ind, elem_map[t], attr_str, val, elem_map[t]);
 }
 
 static void
@@ -1305,7 +1263,7 @@ unparse_member(struct userlist_member *p, FILE *f)
 
   if (!p) return;
   ASSERT(p->b.tag == USERLIST_T_MEMBER);
-  fprintf(f, "      <%s %s=\"%d\"", tag_map[USERLIST_T_MEMBER],
+  fprintf(f, "      <%s %s=\"%d\"", elem_map[USERLIST_T_MEMBER],
           attr_map[USERLIST_A_SERIAL], p->serial);
   if (p->copied_from > 0)
     fprintf(f, " %s=\"%d\"", attr_map[USERLIST_A_COPIED_FROM], p->copied_from);
@@ -1322,35 +1280,35 @@ unparse_member(struct userlist_member *p, FILE *f)
             xml_unparse_date(p->last_access_time));
   }
   fprintf(f, ">\n");
-  xml_unparse_text(f, tag_map[USERLIST_T_FIRSTNAME], p->firstname, ind);
-  xml_unparse_text(f, tag_map[USERLIST_T_FIRSTNAME_EN], p->firstname_en, ind);
-  xml_unparse_text(f, tag_map[USERLIST_T_MIDDLENAME], p->middlename, ind);
-  xml_unparse_text(f, tag_map[USERLIST_T_MIDDLENAME_EN], p->middlename_en, ind);
-  xml_unparse_text(f, tag_map[USERLIST_T_SURNAME], p->surname, ind);
-  xml_unparse_text(f, tag_map[USERLIST_T_SURNAME_EN], p->surname_en, ind);
+  xml_unparse_text(f, elem_map[USERLIST_T_FIRSTNAME], p->firstname, ind);
+  xml_unparse_text(f, elem_map[USERLIST_T_FIRSTNAME_EN], p->firstname_en, ind);
+  xml_unparse_text(f, elem_map[USERLIST_T_MIDDLENAME], p->middlename, ind);
+  xml_unparse_text(f, elem_map[USERLIST_T_MIDDLENAME_EN], p->middlename_en, ind);
+  xml_unparse_text(f, elem_map[USERLIST_T_SURNAME], p->surname, ind);
+  xml_unparse_text(f, elem_map[USERLIST_T_SURNAME_EN], p->surname_en, ind);
   if (p->status) {
-    xml_unparse_text(f, tag_map[USERLIST_T_STATUS], unparse_member_status(p->status),
+    xml_unparse_text(f, elem_map[USERLIST_T_STATUS], unparse_member_status(p->status),
                       ind);
   }
   if (p->grade) {
     fprintf(f, "        <%s>%d</%s>\n",
-            tag_map[USERLIST_T_GRADE], p->grade, tag_map[USERLIST_T_GRADE]);
+            elem_map[USERLIST_T_GRADE], p->grade, elem_map[USERLIST_T_GRADE]);
   }
-  xml_unparse_text(f, tag_map[USERLIST_T_GROUP], p->group, ind);
-  xml_unparse_text(f, tag_map[USERLIST_T_GROUP_EN], p->group_en, ind);
-  xml_unparse_text(f, tag_map[USERLIST_T_OCCUPATION], p->occupation, ind);
-  xml_unparse_text(f, tag_map[USERLIST_T_OCCUPATION_EN], p->occupation_en, ind);
-  xml_unparse_text(f, tag_map[USERLIST_T_HOMEPAGE], p->homepage, ind);
-  xml_unparse_text(f, tag_map[USERLIST_T_PHONE], p->phone, ind);
-  xml_unparse_text(f, tag_map[USERLIST_T_INST], p->inst, ind);
-  xml_unparse_text(f, tag_map[USERLIST_T_INST_EN], p->inst_en, ind);
-  xml_unparse_text(f, tag_map[USERLIST_T_INSTSHORT], p->instshort, ind);
-  xml_unparse_text(f, tag_map[USERLIST_T_INSTSHORT_EN], p->instshort_en, ind);
-  xml_unparse_text(f, tag_map[USERLIST_T_FAC], p->fac, ind);
-  xml_unparse_text(f, tag_map[USERLIST_T_FAC_EN], p->fac_en, ind);
-  xml_unparse_text(f, tag_map[USERLIST_T_FACSHORT], p->facshort, ind);  
-  xml_unparse_text(f, tag_map[USERLIST_T_FACSHORT_EN], p->facshort_en, ind);  
-  fprintf(f, "      </%s>\n", tag_map[USERLIST_T_MEMBER]);
+  xml_unparse_text(f, elem_map[USERLIST_T_GROUP], p->group, ind);
+  xml_unparse_text(f, elem_map[USERLIST_T_GROUP_EN], p->group_en, ind);
+  xml_unparse_text(f, elem_map[USERLIST_T_OCCUPATION], p->occupation, ind);
+  xml_unparse_text(f, elem_map[USERLIST_T_OCCUPATION_EN], p->occupation_en, ind);
+  xml_unparse_text(f, elem_map[USERLIST_T_HOMEPAGE], p->homepage, ind);
+  xml_unparse_text(f, elem_map[USERLIST_T_PHONE], p->phone, ind);
+  xml_unparse_text(f, elem_map[USERLIST_T_INST], p->inst, ind);
+  xml_unparse_text(f, elem_map[USERLIST_T_INST_EN], p->inst_en, ind);
+  xml_unparse_text(f, elem_map[USERLIST_T_INSTSHORT], p->instshort, ind);
+  xml_unparse_text(f, elem_map[USERLIST_T_INSTSHORT_EN], p->instshort_en, ind);
+  xml_unparse_text(f, elem_map[USERLIST_T_FAC], p->fac, ind);
+  xml_unparse_text(f, elem_map[USERLIST_T_FAC_EN], p->fac_en, ind);
+  xml_unparse_text(f, elem_map[USERLIST_T_FACSHORT], p->facshort, ind);  
+  xml_unparse_text(f, elem_map[USERLIST_T_FACSHORT_EN], p->facshort_en, ind);  
+  fprintf(f, "      </%s>\n", elem_map[USERLIST_T_MEMBER]);
 }
 static void
 unparse_members(struct userlist_members **p, FILE *f)
@@ -1360,11 +1318,11 @@ unparse_members(struct userlist_members **p, FILE *f)
   if (!p) return;
   for (i = 0; i < USERLIST_MB_LAST; i++) {
     if (!p[i]) continue;
-    fprintf(f, "    <%s>\n", tag_map[USERLIST_T_CONTESTANTS + i]);
+    fprintf(f, "    <%s>\n", elem_map[USERLIST_T_CONTESTANTS + i]);
     for (j = 0; j < p[i]->total; j++) {
       unparse_member((struct userlist_member*) p[i]->members[j], f);
     }
-    fprintf(f, "    </%s>\n", tag_map[USERLIST_T_CONTESTANTS + i]);
+    fprintf(f, "    </%s>\n", elem_map[USERLIST_T_CONTESTANTS + i]);
   }
 }
 static void
@@ -1374,12 +1332,12 @@ unparse_cookies(struct xml_tree *p, FILE *f)
 
   if (!p) return;
   ASSERT(p->tag == USERLIST_T_COOKIES);
-  fprintf(f, "    <%s>\n", tag_map[USERLIST_T_COOKIES]);
+  fprintf(f, "    <%s>\n", elem_map[USERLIST_T_COOKIES]);
   for (p = p->first_down; p; p = p->right) {
     ASSERT(p->tag == USERLIST_T_COOKIE);
     c = (struct userlist_cookie*) p;
     fprintf(f, "      <%s %s=\"%s\" %s=\"%llx\" %s=\"%s\" %s=\"%s\"",
-            tag_map[USERLIST_T_COOKIE],
+            elem_map[USERLIST_T_COOKIE],
             attr_map[USERLIST_A_IP], xml_unparse_ip(c->ip),
             attr_map[USERLIST_A_VALUE], c->cookie,
             attr_map[USERLIST_A_EXPIRE], xml_unparse_date(c->expire),
@@ -1393,7 +1351,7 @@ unparse_cookies(struct xml_tree *p, FILE *f)
     }
     fputs("/>\n", f);
   }
-  fprintf(f, "    </%s>\n", tag_map[USERLIST_T_COOKIES]);
+  fprintf(f, "    </%s>\n", elem_map[USERLIST_T_COOKIES]);
 }
 static void
 unparse_contest(struct userlist_contest const *cc, FILE *f,
@@ -1401,7 +1359,7 @@ unparse_contest(struct userlist_contest const *cc, FILE *f,
 {
   if (!cc) return;
   fprintf(f, "%s<%s %s=\"%d\" %s=\"%s\"",
-          indent, tag_map[USERLIST_T_CONTEST],
+          indent, elem_map[USERLIST_T_CONTEST],
           attr_map[USERLIST_A_ID], cc->id,
           attr_map[USERLIST_A_STATUS], unparse_reg_status(cc->status));
   if ((cc->flags & USERLIST_UC_BANNED)) {
@@ -1424,7 +1382,7 @@ unparse_contests(struct xml_tree *p, FILE *f, int mode, int contest_id)
 {
   if (!p) return;
   ASSERT(p->tag == USERLIST_T_CONTESTS);
-  fprintf(f, "    <%s>\n", tag_map[USERLIST_T_CONTESTS]);
+  fprintf(f, "    <%s>\n", elem_map[USERLIST_T_CONTESTS]);
   for (p = p->first_down; p; p = p->right) {
     ASSERT(p->tag == USERLIST_T_CONTEST);
     if (mode == USERLIST_MODE_STAND && contest_id > 0
@@ -1432,7 +1390,7 @@ unparse_contests(struct xml_tree *p, FILE *f, int mode, int contest_id)
       continue;
     unparse_contest((struct userlist_contest*) p, f, "      ");
   }
-  fprintf(f, "    </%s>\n", tag_map[USERLIST_T_CONTESTS]);
+  fprintf(f, "    </%s>\n", elem_map[USERLIST_T_CONTESTS]);
 }
 
 static void
@@ -1443,7 +1401,7 @@ unparse_cntsinfo(struct userlist_cntsinfo *p, FILE *f)
 
   if (!p) return;
   fprintf(f, "    <%s %s=\"%d\"",
-          tag_map[USERLIST_T_CNTSINFO], attr_map[USERLIST_A_CONTEST_ID],
+          elem_map[USERLIST_T_CNTSINFO], attr_map[USERLIST_A_CONTEST_ID],
           p->contest_id);
   if (p->i.cnts_read_only) {
     fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_CNTS_READ_ONLY],
@@ -1468,7 +1426,7 @@ unparse_cntsinfo(struct userlist_cntsinfo *p, FILE *f)
   fprintf(f, ">\n");
 
   if (p->i.name && *p->i.name) {
-    xml_unparse_text(f, tag_map[USERLIST_T_NAME], p->i.name, sp1);
+    xml_unparse_text(f, elem_map[USERLIST_T_NAME], p->i.name, sp1);
   }
 
   if (p->i.team_passwd) {
@@ -1479,28 +1437,28 @@ unparse_cntsinfo(struct userlist_cntsinfo *p, FILE *f)
                             p->i.team_passwd->b.text, attr_str, sp1);
   }
 
-  xml_unparse_text(f, tag_map[USERLIST_T_INST], p->i.inst, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_INST_EN], p->i.inst_en, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_INSTSHORT], p->i.instshort, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_INSTSHORT_EN], p->i.instshort_en, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_FAC], p->i.fac, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_FAC_EN], p->i.fac_en, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_FACSHORT], p->i.facshort, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_FACSHORT_EN], p->i.facshort_en, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_HOMEPAGE], p->i.homepage, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_PHONE], p->i.phone, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_CITY], p->i.city, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_CITY_EN], p->i.city_en, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_COUNTRY], p->i.country, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_COUNTRY_EN], p->i.country_en, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_LOCATION], p->i.location, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_SPELLING], p->i.spelling, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_PRINTER_NAME], p->i.printer_name, sp1);
-  xml_unparse_text(f, tag_map[USERLIST_T_LANGUAGES], p->i.languages, sp1);
+  xml_unparse_text(f, elem_map[USERLIST_T_INST], p->i.inst, sp1);
+  xml_unparse_text(f, elem_map[USERLIST_T_INST_EN], p->i.inst_en, sp1);
+  xml_unparse_text(f, elem_map[USERLIST_T_INSTSHORT], p->i.instshort, sp1);
+  xml_unparse_text(f, elem_map[USERLIST_T_INSTSHORT_EN], p->i.instshort_en, sp1);
+  xml_unparse_text(f, elem_map[USERLIST_T_FAC], p->i.fac, sp1);
+  xml_unparse_text(f, elem_map[USERLIST_T_FAC_EN], p->i.fac_en, sp1);
+  xml_unparse_text(f, elem_map[USERLIST_T_FACSHORT], p->i.facshort, sp1);
+  xml_unparse_text(f, elem_map[USERLIST_T_FACSHORT_EN], p->i.facshort_en, sp1);
+  xml_unparse_text(f, elem_map[USERLIST_T_HOMEPAGE], p->i.homepage, sp1);
+  xml_unparse_text(f, elem_map[USERLIST_T_PHONE], p->i.phone, sp1);
+  xml_unparse_text(f, elem_map[USERLIST_T_CITY], p->i.city, sp1);
+  xml_unparse_text(f, elem_map[USERLIST_T_CITY_EN], p->i.city_en, sp1);
+  xml_unparse_text(f, elem_map[USERLIST_T_COUNTRY], p->i.country, sp1);
+  xml_unparse_text(f, elem_map[USERLIST_T_COUNTRY_EN], p->i.country_en, sp1);
+  xml_unparse_text(f, elem_map[USERLIST_T_LOCATION], p->i.location, sp1);
+  xml_unparse_text(f, elem_map[USERLIST_T_SPELLING], p->i.spelling, sp1);
+  xml_unparse_text(f, elem_map[USERLIST_T_PRINTER_NAME], p->i.printer_name, sp1);
+  xml_unparse_text(f, elem_map[USERLIST_T_LANGUAGES], p->i.languages, sp1);
 
   unparse_members(p->i.members, f);
 
-  fprintf(f, "    </%s>\n", tag_map[USERLIST_T_CNTSINFO]);
+  fprintf(f, "    </%s>\n", elem_map[USERLIST_T_CNTSINFO]);
 }
 
 /* called from `userlist_unparse_short' */
@@ -1527,19 +1485,19 @@ unparse_user_short(struct userlist_user *p, FILE *f, int contest_id)
     }
     if (!uc) return;
   }
-  fprintf(f, "  <%s %s=\"%d\">", tag_map[USERLIST_T_USER],
+  fprintf(f, "  <%s %s=\"%d\">", elem_map[USERLIST_T_USER],
           attr_map[USERLIST_A_ID], p->id);
-  xml_unparse_text(f, tag_map[USERLIST_T_LOGIN], p->login, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_LOGIN], p->login, "    ");
   if (ui->name && *ui->name) {
-    xml_unparse_text(f, tag_map[USERLIST_T_NAME], ui->name, "    ");
+    xml_unparse_text(f, elem_map[USERLIST_T_NAME], ui->name, "    ");
   }
-  xml_unparse_text(f, tag_map[USERLIST_T_EMAIL], p->email, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_EMAIL], p->email, "    ");
   if (uc) {
-    fprintf(f, "    <%s>\n", tag_map[USERLIST_T_CONTESTS]);
+    fprintf(f, "    <%s>\n", elem_map[USERLIST_T_CONTESTS]);
     unparse_contest(uc, f, "      ");
-    fprintf(f, "    </%s>\n", tag_map[USERLIST_T_CONTESTS]);
+    fprintf(f, "    </%s>\n", elem_map[USERLIST_T_CONTESTS]);
   }
-  fprintf(f, "  </%s>\n", tag_map[USERLIST_T_USER]);
+  fprintf(f, "  </%s>\n", elem_map[USERLIST_T_USER]);
 }
 
 /* called from `userlist_unparse_user', `userlist_unparse',
@@ -1566,7 +1524,7 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
     ui = &p->i;
   }
 
-  fprintf(f, "  <%s %s=\"%d\"", tag_map[USERLIST_T_USER],
+  fprintf(f, "  <%s %s=\"%d\"", elem_map[USERLIST_T_USER],
           attr_map[USERLIST_A_ID], p->id);
   unparse_bool_attr(f, USERLIST_A_PRIVILEGED, p->is_privileged);
   if (mode == USERLIST_MODE_ALL) {
@@ -1617,7 +1575,7 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
                             ui->team_passwd->b.text, attr_str, "    ");
   }
   if (ui->name && *ui->name) {
-    xml_unparse_text(f, tag_map[USERLIST_T_NAME], ui->name, "    ");
+    xml_unparse_text(f, elem_map[USERLIST_T_NAME], ui->name, "    ");
   }
   if (p->email) { // && mode != USERLIST_MODE_STAND) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
@@ -1629,24 +1587,24 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   }
   unparse_contests(p->contests, f, USERLIST_MODE_STAND, contest_id);
 
-  xml_unparse_text(f, tag_map[USERLIST_T_INST], ui->inst, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_INST_EN], ui->inst_en, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_INSTSHORT], ui->instshort, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_INSTSHORT_EN],ui->instshort_en,"    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_FAC], ui->fac, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_FAC_EN], ui->fac_en, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_FACSHORT], ui->facshort, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_FACSHORT_EN], ui->facshort_en, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_HOMEPAGE], ui->homepage, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_PHONE], ui->phone, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_CITY], ui->city, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_CITY_EN], ui->city_en, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_COUNTRY], ui->country, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_COUNTRY_EN], ui->country_en, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_LOCATION], ui->location, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_SPELLING], ui->spelling, "    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_PRINTER_NAME],ui->printer_name,"    ");
-  xml_unparse_text(f, tag_map[USERLIST_T_LANGUAGES], ui->languages, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_INST], ui->inst, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_INST_EN], ui->inst_en, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_INSTSHORT], ui->instshort, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_INSTSHORT_EN],ui->instshort_en,"    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_FAC], ui->fac, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_FAC_EN], ui->fac_en, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_FACSHORT], ui->facshort, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_FACSHORT_EN], ui->facshort_en, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_HOMEPAGE], ui->homepage, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_PHONE], ui->phone, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_CITY], ui->city, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_CITY_EN], ui->city_en, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_COUNTRY], ui->country, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_COUNTRY_EN], ui->country_en, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_LOCATION], ui->location, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_SPELLING], ui->spelling, "    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_PRINTER_NAME],ui->printer_name,"    ");
+  xml_unparse_text(f, elem_map[USERLIST_T_LANGUAGES], ui->languages, "    ");
 
   if (mode == USERLIST_MODE_STAND) {
     // generate some information about the first participant
@@ -1658,9 +1616,9 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
         && pmemb[USERLIST_MB_CONTESTANT]->members[0]
         && pmemb[USERLIST_MB_CONTESTANT]->members[0]->grade > 0) {
       fprintf(f, "    <%s>%d</%s>\n",
-              tag_map[USERLIST_T_EXTRA1],
+              elem_map[USERLIST_T_EXTRA1],
               pmemb[USERLIST_MB_CONTESTANT]->members[0]->grade,
-              tag_map[USERLIST_T_EXTRA1]);
+              elem_map[USERLIST_T_EXTRA1]);
     }
   }
 
@@ -1672,13 +1630,13 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
     for (cnt = 0, i = 0; i < p->cntsinfo_a; i++)
       if (p->cntsinfo[i])
         cnt++;
-    fprintf(f, "    <%s>\n", tag_map[USERLIST_T_CNTSINFOS]);
+    fprintf(f, "    <%s>\n", elem_map[USERLIST_T_CNTSINFOS]);
     for (i = 0; i < p->cntsinfo_a; i++)
       unparse_cntsinfo(p->cntsinfo[i], f);
-    fprintf(f, "    </%s>\n", tag_map[USERLIST_T_CNTSINFOS]);
+    fprintf(f, "    </%s>\n", elem_map[USERLIST_T_CNTSINFOS]);
   }
 
-  fprintf(f, "  </%s>\n", tag_map[USERLIST_T_USER]);
+  fprintf(f, "  </%s>\n", elem_map[USERLIST_T_USER]);
 }
 
 /*
@@ -1712,8 +1670,8 @@ userlist_unparse_contests(struct userlist_user *p, FILE *f)
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n",
           EJUDGE_CHARSET);
   if (!p->contests) {
-    fprintf(f, "<%s></%s>\n", tag_map[USERLIST_T_CONTESTS],
-            tag_map[USERLIST_T_CONTESTS]);
+    fprintf(f, "<%s></%s>\n", elem_map[USERLIST_T_CONTESTS],
+            elem_map[USERLIST_T_CONTESTS]);
   } else {
     unparse_contests(p->contests, f, 0, 0);
   }
@@ -1736,7 +1694,7 @@ userlist_unparse(struct userlist_list *p, FILE *f)
 
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n", 
           EJUDGE_CHARSET);
-  fprintf(f, "<%s %s=\"%d\"", tag_map[USERLIST_T_USERLIST],
+  fprintf(f, "<%s %s=\"%d\"", elem_map[USERLIST_T_USERLIST],
           attr_map[USERLIST_A_MEMBER_SERIAL], p->member_serial);
   
   if (p->name && *p->name)
@@ -1744,7 +1702,7 @@ userlist_unparse(struct userlist_list *p, FILE *f)
   fputs(">\n", f);
   for (i = 1; i < p->user_map_size; i++)
     unparse_user(p->user_map[i], f, 0, -1);
-  fprintf(f, "</%s>\n", tag_map[USERLIST_T_USERLIST]);
+  fprintf(f, "</%s>\n", elem_map[USERLIST_T_USERLIST]);
 }
 
 /*
@@ -1764,10 +1722,10 @@ userlist_unparse_short(struct userlist_list *p, FILE *f, int contest_id)
 
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n",
           EJUDGE_CHARSET);
-  fprintf(f, "<%s>", tag_map[USERLIST_T_USERLIST]);
+  fprintf(f, "<%s>", elem_map[USERLIST_T_USERLIST]);
   for (i = 1; i < p->user_map_size; i++)
     unparse_user_short(p->user_map[i], f, contest_id);
-  fprintf(f, "</%s>\n", tag_map[USERLIST_T_USERLIST]);
+  fprintf(f, "</%s>\n", elem_map[USERLIST_T_USERLIST]);
 }
 
 /*
@@ -1788,7 +1746,7 @@ userlist_unparse_for_standings(struct userlist_list *p,
 
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n",
           EJUDGE_CHARSET);
-  fprintf(f, "<%s>", tag_map[USERLIST_T_USERLIST]);
+  fprintf(f, "<%s>", elem_map[USERLIST_T_USERLIST]);
 
   for (i = 1; i < p->user_map_size; i++) {
     uu = p->user_map[i];
@@ -1805,14 +1763,14 @@ userlist_unparse_for_standings(struct userlist_list *p,
 
     unparse_user(uu, f, USERLIST_MODE_STAND, contest_id);
   }
-  fprintf(f, "</%s>\n", tag_map[USERLIST_T_USERLIST]);
+  fprintf(f, "</%s>\n", elem_map[USERLIST_T_USERLIST]);
 }
 
 unsigned char const *
 userlist_tag_to_str(int t)
 {
   ASSERT(t > 0 && t < USERLIST_LAST_TAG);
-  return tag_map[t];
+  return elem_map[t];
 }
 
 /*

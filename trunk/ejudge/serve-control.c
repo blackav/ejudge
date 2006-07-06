@@ -132,26 +132,26 @@ static const char * const attr_map[] =
   "ssl",
   0,
 };
-static size_t elem_size[TG_LAST_TAG] =
+static size_t elem_sizes[TG_LAST_TAG] =
 {
   [TG_CONFIG] sizeof(struct config_node),
   [TG_SERVE_CONTROL_ACCESS] sizeof(struct access_node),
   [TG_IP] sizeof(struct ip_node),
 };
-static void *
-elem_alloc(int tag)
-{
-  size_t sz = sizeof(struct xml_tree);
 
-  ASSERT(tag > 0 && tag < TG_LAST_TAG);
-  if (elem_size[tag]) sz = elem_size[tag];
-  return xcalloc(1, sz);
-}
-static void *
-attr_alloc(int tag)
+static struct xml_parse_spec serve_control_config_parse_spec =
 {
-  return xcalloc(1, sizeof(struct xml_attr));
-}
+  .elem_map = elem_map,
+  .attr_map = attr_map,
+  .elem_sizes = elem_sizes,
+  .attr_sizes = NULL,
+  .default_elem = 0,
+  .default_attr = 0,
+  .elem_alloc = NULL,
+  .attr_alloc = NULL,
+  .elem_free = NULL,
+  .attr_free = NULL,
+};
 
 static struct config_node *
 parse_config(const unsigned char *path, const unsigned char *default_config)
@@ -163,10 +163,9 @@ parse_config(const unsigned char *path, const unsigned char *default_config)
   unsigned char **leaf_elem_addr = 0;
 
   if (default_config) {
-    tree = xml_build_tree_str(default_config, elem_map, attr_map,
-                              elem_alloc, attr_alloc);
+    tree = xml_build_tree_str(default_config, &serve_control_config_parse_spec);
   } else {
-    tree = xml_build_tree(path, elem_map, attr_map, elem_alloc, attr_alloc);
+    tree = xml_build_tree(path, &serve_control_config_parse_spec);
   }
   if (!tree) goto failed;
 
