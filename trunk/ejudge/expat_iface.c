@@ -309,6 +309,7 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
   int itag = 0, iattr = 0;
   struct xml_tree *new_node, *parent_node;
   struct xml_attr *new_attr;
+  int generic_flag;
 
   /* it is safe to preserve the tag in the UTF-8 encoding, since
    * all the correct tags are in Latin-1.
@@ -320,8 +321,10 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
     return;
   }
 
+  generic_flag = 0;
   if (!pd->spec->elem_map) {
     itag = pd->spec->default_elem;
+    generic_flag = 1;
     if (itag <= 0) {
       err("unknown tag <%s> at line %d, skipping",
           cur_tag, XML_GetCurrentLineNumber(p));
@@ -334,6 +337,7 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
         break;
     if (!pd->spec->elem_map[itag]) {
       itag = pd->spec->default_elem;
+      generic_flag = 1;
       if (itag <= 0) {
         err("unknown tag <%s> at line %d, skipping",
             cur_tag, XML_GetCurrentLineNumber(p));
@@ -343,7 +347,9 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
     }
   }
 
-  if (pd->spec->elem_alloc)
+  if (generic_flag)
+    new_node = (struct xml_tree*) xcalloc(1, sizeof(struct xml_tree) + sizeof(char*));
+  else if (pd->spec->elem_alloc)
     new_node = (struct xml_tree*) (*pd->spec->elem_alloc)(itag);
   else
     new_node = xml_elem_alloc(itag, pd->spec->elem_sizes);
@@ -351,6 +357,9 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
   new_node->tag = itag;
   new_node->line = XML_GetCurrentLineNumber(p);
   new_node->column = XML_GetCurrentColumnNumber(p);
+  if (generic_flag) {
+    new_node->name[0] = xstrdup(cur_tag);
+  }
   if (pd->tag_stack) {
     parent_node = pd->tag_stack->tree;
     new_node->up = parent_node;
@@ -370,8 +379,10 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
     cur_attr = (const unsigned char*) atts[0];
     cur_val = convert_utf8_to_local_heap(pd->conv_hnd, atts[1]);
 
+    generic_flag = 0;
     if (!pd->spec->attr_map) {
       iattr = pd->spec->default_attr;
+      generic_flag = 1;
       if (iattr <= 0) {
         err("unknown attribute <%s> at line %d",
             cur_attr, XML_GetCurrentLineNumber(p));
@@ -386,6 +397,7 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
           break;
       if (!pd->spec->attr_map[iattr]) {
         iattr = pd->spec->default_attr;
+        generic_flag = 1;
         if (iattr <= 0) {
           err("unknown attribute <%s> at line %d",
               cur_attr, XML_GetCurrentLineNumber(p));
@@ -397,7 +409,9 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
       }
     }
 
-    if (pd->spec->attr_alloc)
+    if (generic_flag)
+      new_attr = (struct xml_attr*) xcalloc(1, sizeof(struct xml_attr) + sizeof(char*));
+    else if (pd->spec->attr_alloc)
       new_attr = (struct xml_attr*) (*pd->spec->attr_alloc)(iattr);
     else
       new_attr = xml_attr_alloc(iattr, pd->spec->attr_sizes);
@@ -406,6 +420,9 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
     new_attr->text = cur_val;
     new_attr->line = XML_GetCurrentLineNumber(p);
     new_attr->column = XML_GetCurrentColumnNumber(p);
+    if (generic_flag) {
+      new_attr->name[0] = xstrdup(cur_attr);
+    }
     if (!new_node->first) {
       new_node->first = new_node->last = new_attr;
     } else {
@@ -690,10 +707,14 @@ xml_tree_free(struct xml_tree *tree, const struct xml_parse_spec *spec)
   }
   for (a = tree->first; a; a = b) {
     b = a->next;
+    if (spec && spec->default_attr > 0 && spec->default_attr == a->tag)
+      xfree(a->name[0]);
     if (spec && spec->attr_free) (*spec->attr_free)(a);
     xfree(a->text);
     xfree(a);
   }
+  if (spec && spec->default_elem > 0 && spec->default_elem == tree->tag)
+    xfree(tree->name[0]);
   if (spec && spec->elem_free) (*spec->elem_free)(tree);
   xfree(tree->text);
   xfree(tree);
