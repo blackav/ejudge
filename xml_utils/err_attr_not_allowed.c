@@ -23,7 +23,7 @@
 
 int
 xml_err_attr_not_allowed(const struct xml_tree *p,
-                         const struct xml_attn *a)
+                         const struct xml_attr *a)
 {
   xml_err(p, "attribute \"%s\" is not allowed in <%s>",
           xml_err_attr_names[a->tag], xml_err_elem_names[p->tag]);

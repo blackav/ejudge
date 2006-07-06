@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 #include <string.h>
 
 int
-xml_attr_bool(struct xml_attn *attr, int *value_ptr)
+xml_attr_bool(struct xml_attr *attr, int *value_ptr)
 {
   if (!attr->text) goto invalid_value;
   if (!strcasecmp(attr->text, "true")
@@ -42,7 +42,7 @@ xml_attr_bool(struct xml_attn *attr, int *value_ptr)
   return -1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

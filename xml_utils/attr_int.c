@@ -20,7 +20,7 @@
 #include "expat_iface.h"
 
 int
-xml_attr_int(struct xml_attn *a, int *pval)
+xml_attr_int(struct xml_attr *a, int *pval)
 {
   int x = 0, n = 0;
 
