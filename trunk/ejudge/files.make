@@ -298,6 +298,7 @@ HFILES=\
  tex_dom.h\
  timestamp.h\
  tsc.h\
+ uldb_plugin.h\
  userlist.h\
  userlist_cfg.h\
  userlist_clnt.h\
@@ -310,4 +311,5 @@ HFILES=\
 
 OTHERFILES=\
  filter_expr.y\
- filter_scan.lex
+ filter_scan.lex\
+ plugins/mysql-userlist/uldb_mysql.c

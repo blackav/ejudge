@@ -169,7 +169,7 @@ attr_alloc(int tag)
   size_t sz;
 
   ASSERT(tag >= 1 && tag < TR_A_LAST_ATTR);
-  if (!(sz = attr_sizes[tag])) sz = sizeof(struct xml_attn);
+  if (!(sz = attr_sizes[tag])) sz = sizeof(struct xml_attr);
   return xcalloc(1, sz);
 }
 static void
@@ -177,7 +177,7 @@ elem_free(struct xml_tree *t)
 {
 }
 static void
-attr_free(struct xml_attn *a)
+attr_free(struct xml_attr *a)
 {
 }
 
@@ -205,7 +205,7 @@ static int
 parse_test(struct xml_tree *t, testing_report_xml_t r)
 {
   struct testing_report_test *p = 0, *q = 0;
-  struct xml_attn *a;
+  struct xml_attr *a;
   struct xml_tree *t2;
   int x;
 
@@ -424,10 +424,10 @@ parse_tests(struct xml_tree *t, testing_report_xml_t r)
 static int
 parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
 {
-  struct xml_attn *a;
+  struct xml_attr *a;
   int x, was_tests = 0;
-  struct xml_attn *a_failed_test = 0, *a_tests_passed = 0, *a_score = 0;
-  struct xml_attn *a_max_score = 0;
+  struct xml_attr *a_failed_test = 0, *a_tests_passed = 0, *a_score = 0;
+  struct xml_attr *a_max_score = 0;
   struct xml_tree *t2;
 
   if (t->tag != TR_T_TESTING_REPORT) {

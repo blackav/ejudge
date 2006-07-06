@@ -150,14 +150,14 @@ elem_alloc(int tag)
 static void *
 attr_alloc(int tag)
 {
-  return xcalloc(1, sizeof(struct xml_attn));
+  return xcalloc(1, sizeof(struct xml_attr));
 }
 
 static struct config_node *
 parse_config(const unsigned char *path, const unsigned char *default_config)
 {
   struct xml_tree *tree = 0, *t1, *t2;
-  struct xml_attn *attr;
+  struct xml_attr *attr;
   struct config_node *cfg = 0;
   struct ip_node *pip;
   unsigned char **leaf_elem_addr = 0;
@@ -2975,7 +2975,7 @@ main(int argc, char *argv[])
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
