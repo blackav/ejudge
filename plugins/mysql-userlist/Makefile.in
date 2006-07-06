@@ -2,7 +2,7 @@
 # $Id$
 # @configure_input@
 
-# Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
+# Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,10 @@ datadir=@datadir@
 includedir=@includedir@
 libdir=@libdir@
 libexecdir=@libexecdir@
-cgibindir=@cgibindir@
+
+EXPAT_DIR=@ac_cv_expat_root@
+EXPAT_INCL_OPT=@ac_cv_expat_include_opt@
+EXPAT_LIB_OPT=@ac_cv_expat_lib_opt@
 
 REUSE_DIR=@ac_cv_reuse_root@
 REUSE_CONF=@ac_cv_reuse_config@
@@ -33,10 +36,20 @@ MYSQL_INCL_OPT=@ac_cv_mysql_include_opt@
 MYSQL_LIB_OPT=@ac_cv_mysql_lib_opt@
 MYSQL_LIBS=@ac_cv_mysql_libs@
 
-all :
+WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@
 
-install :
+ifdef RELEASE
+CDEBUGFLAGS=-O2 -s -Wall -DNDEBUG -DRELEASE
+else
+CDEBUGFLAGS=-g -Wall
+endif
+ifdef STATIC
+CDEBUGFLAGS += -static
+endif
+CEXTRAFLAGS=
+LDEXTRAFLAGS=
+EXTRALIBS=
+CCOMPFLAGS=-D_GNU_SOURCE
+LDCOMPFLAGS=
 
-clean :
-
-distclean :
+include main.make
