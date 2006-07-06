@@ -21,7 +21,7 @@
 #include <string.h>
 
 int
-xml_attr_date(struct xml_attn *attr, time_t *value_ptr)
+xml_attr_date(struct xml_attr *attr, time_t *value_ptr)
 {
   if (!attr->text) goto invalid_value;
   if (xml_parse_date(xml_err_path, attr->line, attr->column,

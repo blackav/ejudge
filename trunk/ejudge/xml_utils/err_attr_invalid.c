@@ -22,7 +22,7 @@
 #include <stdarg.h>
 
 int
-xml_err_attr_invalid(const struct xml_attn *a)
+xml_err_attr_invalid(const struct xml_attr *a)
 {
   xml_err_a(a,"attribute \"%s\" value is invalid", xml_err_elem_names[a->tag]);
   return -1;

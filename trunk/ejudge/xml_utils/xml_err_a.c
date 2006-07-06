@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 #include <stdarg.h>
 
 void
-xml_err_a(const struct xml_attn *pos, const char *format, ...)
+xml_err_a(const struct xml_attr *pos, const char *format, ...)
 {
   unsigned char buf[1024];
   va_list args;
@@ -42,7 +42,7 @@ xml_err_a(const struct xml_attn *pos, const char *format, ...)
   }
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
