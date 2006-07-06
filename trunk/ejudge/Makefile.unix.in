@@ -149,6 +149,7 @@ subdirs_all:
 	$(MAKE) -C extra DESTDIR="${DESTDIR}" all
 	$(MAKE) -C checkers DESTDIR="${DESTDIR}" all
 	$(MAKE) -C scripts DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" all
 
 extra_progs:
 	$(MAKE) -C extra DESTDIR="${DESTDIR}" all
@@ -169,6 +170,7 @@ install: local_install
 	$(MAKE) -C extra DESTDIR="${DESTDIR}" install
 	$(MAKE) -C checkers DESTDIR="${DESTDIR}" install
 	$(MAKE) -C scripts DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" all
 
 compile$(EXESFX) : $(C_OBJECTS)
 	$(LD) $(LDFLAGS) $(C_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
@@ -233,6 +235,7 @@ local_clean:
 clean: local_clean
 	$(MAKE) -C extra clean
 	$(MAKE) -C checkers clean
+	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" all
 
 local_distclean :
 	rm -rf autom4te.cache config.log config.status Makefile config.h ejudge-config.v TAGS Makefile.in
@@ -240,6 +243,7 @@ distclean : clean local_distclean
 	$(MAKE) -C extra distclean
 	$(MAKE) -C checkers distclean
 	$(MAKE) -C scripts distclean
+	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" all
 
 pristine : distclean
 	rm -f configure
@@ -275,6 +279,7 @@ prjutils/cdeps.o: prjutils/cdeps.c
 log: mkChangeLog2
 	L=`./mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ./mkChangeLog2 --user-map=AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/ --strip-prefix=/trunk/ejudge/ --ignore-subdirs
 	for i in win32 unix serve_clnt userlist_clnt checkers extra scripts super_clnt xml_utils; do cd $$i; L=`../mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ../mkChangeLog2 --user-map=../AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/$$i/ --strip-prefix=/trunk/ejudge/$$i/; cd ..; done
+	for i in plugins/mysql-userlist; do cd $$i; L=`../../mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ../../mkChangeLog2 --user-map=../../AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/$$i/ --strip-prefix=/trunk/ejudge/$$i/; cd ../..; done
 
 # localization stuff
 ifdef ENABLE_NLS
