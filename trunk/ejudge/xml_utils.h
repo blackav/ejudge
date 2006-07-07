@@ -74,6 +74,7 @@ int xml_leaf_elem(struct xml_tree *tree, /* ->text may be modified */
 int xml_empty_text(struct xml_tree *tree);
 
 int xml_attr_bool(struct xml_attr *attr, int *value_ptr);
+int xml_attr_bool_byte(struct xml_attr *attr, unsigned char *value_ptr);
 int xml_attr_int(struct xml_attr *attr, int *value_ptr);
 int xml_attr_date(struct xml_attr *attr, time_t *value_ptr);
 int xml_elem_ip_mask(struct xml_tree *tree,
