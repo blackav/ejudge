@@ -20,6 +20,7 @@
 #include "userlist_cfg.h"
 #include "expat_iface.h"
 #include "errlog.h"
+#include "xml_utils.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -166,79 +167,6 @@ static struct xml_parse_spec ejudge_config_parse_spec =
   .attr_free = NULL,
 };
 
-static int
-err_dupl_elem(char const *path, struct xml_tree *t)
-{
-  err("%s:%d:%d: element <%s> may appear only once", path, t->line, t->column,
-      elem_map[t->tag]);
-  return -1;
-}
-static int
-err_text_not_allowed(char const *path, struct xml_tree *t)
-{
-  err("%s:%d:%d: text is not allowed for element <%s>",
-      path, t->line, t->column, elem_map[t->tag]);
-  return -1;
-}
-static int
-err_attr_not_allowed(char const *path, struct xml_tree *t)
-{
-  err("%s:%d:%d: attributes are not allowed for element <%s>",
-      path, t->line, t->column, elem_map[t->tag]);
-  return -1;
-}
-static int
-err_empty_elem(char const *path, struct xml_tree *t)
-{
-  err("%s:%d:%d: element <%s> is empty",
-      path, t->line, t->column, elem_map[t->tag]);
-  return -1;
-}
-static int
-err_nested_not_allowed(char const *path, struct xml_tree *t)
-{
-  err("%s:%d:%d: nested elements are not allowed for element <%s>",
-      path, t->line, t->column, elem_map[t->tag]);
-  return -1;
-}
-static int
-err_invalid_elem(char const *path, struct xml_tree *tag)
-{
-  err("%s:%d:%d: element <%s> is invalid here", path, tag->line, tag->column,
-      elem_map[tag->tag]);
-  return -1;
-}
-static int
-err_invalid_attr(char const *path, struct xml_attr *a)
-{
-  err("%s:%d:%d: attribute \"%s\" is invalid here", path, a->line, a->column,
-      attr_map[a->tag]);
-  return -1;
-}
-
-static int
-handle_final_tag(char const *path, struct xml_tree *t, unsigned char **ps)
-{
-  if (*ps) return err_dupl_elem(path, t);
-  if (!t->text || !*t->text) return err_empty_elem(path, t);
-  if (t->first_down) return err_nested_not_allowed(path, t);
-  if (t->first) return err_attr_not_allowed(path, t);
-  *ps = t->text; t->text = 0;
-  return 0;
-}
-static int
-parse_bool(char const *str)
-{
-  if (!str) return -1;
-  if (!strcasecmp(str, "true")
-      || !strcasecmp(str, "yes")
-      || !strcasecmp(str, "1")) return 1;
-  if (!strcasecmp(str, "false")
-      || !strcasecmp(str, "no")
-      || !strcasecmp(str, "0")) return 0;
-  return -1;
-}
-
 static struct xml_tree *
 parse_user_map(char const *path, struct xml_tree *p)
 {
@@ -250,20 +178,17 @@ parse_user_map(char const *path, struct xml_tree *p)
   ASSERT(p->tag == TG_USER_MAP);
   xfree(p->text); p->text = 0;
   if (p->first) {
-    err_attr_not_allowed(path, p);
+    xml_err_attrs(p);
     return 0;
   }
   for (q = p->first_down; q; q = q->right) {
     if (q->tag != TG_MAP) {
-      err_invalid_elem(path, q);
+      xml_err_elem_not_allowed(q);
       return 0;
     }
-    if (q->text && *q->text) {
-      err_text_not_allowed(path, q);
-      return 0;
-    }
+    if (xml_empty_text(q)) return 0;
     if (q->first_down) {
-      err_nested_not_allowed(path, q);
+      xml_err_nested_elems(q);
       return 0;
     }
     m = (struct userlist_cfg_user_map*) q;
@@ -285,15 +210,10 @@ parse_user_map(char const *path, struct xml_tree *p)
         break;
       case AT_LOCAL_USER:
       case AT_EJUDGE_USER:
-        if (m->local_user_str) {
-          err("%s:%d:%d: attribute %s already defined", path, a->line,
-              a->column, attr_map[a->tag]);
-          return 0;
-        }
         m->local_user_str = a->text; a->text = 0;
         break;
       default:
-        err_invalid_attr(path, a);
+        xml_err_attr_not_allowed(q, a);
         return 0;
       }
     }
@@ -311,58 +231,69 @@ parse_capabilities(unsigned char const *path,
 
   ASSERT(ct->tag == TG_CAPS);
 
-  if (cfg->capabilities.first) {
-    err("%s:%d:%d: element <caps> already defined",
-        path, ct->line, ct->column);
-    return -1;
-  }
+  if (cfg->capabilities.first) return xml_err_elem_redefined(ct);
 
   xfree(ct->text); ct->text = 0;
-  if (ct->first) {
-    err("%s:%d:%d: element <caps> cannot have attributes",
-        path, ct->line, ct->column);
-    return -1;
-  }
+  if (ct->first) return xml_err_attrs(ct);
   p = ct->first_down;
   if (!p) return 0;
   cfg->capabilities.first = (struct opcap_list_item*) p;
 
   for (; p; p = p->right) {
-    if (p->tag != TG_CAP) {
-      err("%s:%d:%d: element <cap> expected", path, p->line, p->column);
-      return -1;
-    }
+    if (p->tag != TG_CAP) return xml_err_elem_not_allowed(p);
     pp = (struct opcap_list_item*) p;
 
-    if (!p->first) {
-      err("%s:%d:%d: element <cap> must have attribute",
-          path, p->line, p->column);
-      return -1;
-    }
-    if (p->first->next) {
-      err("%s:%d:%d: element <cap> must have only one attribute",
-          path, p->line, p->column);
-      return -1;
-    }
-    if (p->first->tag != AT_LOGIN) {
-      err("%s:%d:%d: \"login\" attribute expected",
-          path, p->line, p->column);
-      return -1;
-    }
+    if (!p->first) return xml_err_elem_invalid(p);
+    if (p->first->next) return xml_err_elem_invalid(p);
+    if (p->first->tag != AT_LOGIN)
+      return xml_err_attr_not_allowed(p, p->first);
     pp->login = p->first->text;
-    if (!pp->login || !*pp->login) {
-      err("%s:%d:%d: \"login\" cannot be empty",
-          path, p->line, p->column);
-      return -1;
-    }
+    if (xml_empty_text(p) < 0) return -1;
     if (opcaps_parse(p->text, &pp->caps) < 0) {
-      err("%s:%d:%d: invalid capabilities",
-          path, p->line, p->column);
+      xml_err(p, "invalid capabilities");
       return -1;
     }
   }
   return 0;
 }
+
+#define CONFIG_OFFSET(f) XOFFSET(struct userlist_cfg, f)
+
+static const size_t cfg_final_offsets[TG_LAST_TAG] =
+{
+  [TG_USERDB_FILE] = CONFIG_OFFSET(db_path),
+  [TG_SOCKET_PATH] = CONFIG_OFFSET(socket_path),
+  [TG_CONTESTS_DIR] = CONFIG_OFFSET(contests_dir),
+  [TG_EMAIL_PROGRAM] = CONFIG_OFFSET(email_program),
+  [TG_REGISTER_URL] = CONFIG_OFFSET(register_url),
+  [TG_REGISTER_EMAIL] = CONFIG_OFFSET(register_email),
+  [TG_SERVER_NAME] = CONFIG_OFFSET(server_name),
+  [TG_SERVER_NAME_EN] = CONFIG_OFFSET(server_name_en),
+  [TG_SERVER_MAIN_URL] = CONFIG_OFFSET(server_main_url),
+  [TG_SERVE_PATH] = CONFIG_OFFSET(serve_path),
+  [TG_L10N_DIR] = CONFIG_OFFSET(l10n_dir),
+  [TG_RUN_PATH] = CONFIG_OFFSET(run_path),
+  [TG_CHARSET] = CONFIG_OFFSET(charset),
+  [TG_CONFIG_DIR] = CONFIG_OFFSET(config_dir),
+  [TG_CONTESTS_HOME_DIR] = CONFIG_OFFSET(contests_home_dir),
+  [TG_FULL_CGI_DATA_DIR] = CONFIG_OFFSET(full_cgi_data_dir),
+  [TG_COMPILE_HOME_DIR] = CONFIG_OFFSET(compile_home_dir),
+  [TG_TESTING_WORK_DIR] = CONFIG_OFFSET(testing_work_dir),
+  [TG_SCRIPT_DIR] = CONFIG_OFFSET(script_dir),
+  [TG_ADMIN_EMAIL] = CONFIG_OFFSET(admin_email),
+  [TG_USERLIST_LOG] = CONFIG_OFFSET(userlist_log),
+  [TG_VAR_DIR] = CONFIG_OFFSET(var_dir),
+  [TG_SUPER_SERVE_LOG] = CONFIG_OFFSET(super_serve_log),
+  [TG_COMPILE_LOG] = CONFIG_OFFSET(compile_log),
+  [TG_SUPER_SERVE_SOCKET] = CONFIG_OFFSET(super_serve_socket),
+  [TG_SUPER_SERVE_USER] = CONFIG_OFFSET(super_serve_user),
+  [TG_SUPER_SERVE_GROUP] = CONFIG_OFFSET(super_serve_group),
+  [TG_USERLIST_USER] = CONFIG_OFFSET(userlist_user),
+  [TG_USERLIST_GROUP] = CONFIG_OFFSET(userlist_group),
+  [TG_JOB_SERVER_LOG] = CONFIG_OFFSET(job_server_log),
+  [TG_JOB_SERVER_SPOOL] = CONFIG_OFFSET(job_server_spool),
+  [TG_JOB_SERVER_WORK] = CONFIG_OFFSET(job_server_work),
+};
 
 struct userlist_cfg *
 userlist_cfg_parse(char const *path)
@@ -371,11 +302,16 @@ userlist_cfg_parse(char const *path)
   struct userlist_cfg *cfg = 0;
   struct xml_attr *a;
   unsigned char pathbuf[PATH_MAX];
+  unsigned char **p_str;
+
+  xml_err_path = path;
+  xml_err_elem_names = elem_map;
+  xml_err_attr_names = attr_map;
 
   tree = xml_build_tree(path, &ejudge_config_parse_spec);
   if (!tree) return 0;
   if (tree->tag != TG_CONFIG) {
-    err("%s: %d: top-level tag must be <config>", path, tree->line);
+    xml_err_top_level(tree, TG_CONFIG);
     goto failed;
   }
   cfg = (struct userlist_cfg *) tree;
@@ -387,83 +323,22 @@ userlist_cfg_parse(char const *path)
     case AT_ENABLE_L10N:
     case AT_DISABLE_L10N:
     case AT_L10N:
-      if (cfg->l10n != -1) {
-        err("%s:%d:%d: attribute \"%s\" already defined",
-            path, a->line, a->column, attr_map[a->tag]);
-        goto failed;
-      }
-      if ((cfg->l10n = parse_bool(a->text)) < 0) {
-        err("%s:%d:%d: invalid boolean value", path, a->line, a->column);
-        goto failed;
-      }
+      if (xml_attr_bool(a, &cfg->l10n) < 0) goto failed;
       if (a->tag == AT_DISABLE_L10N) cfg->l10n = !cfg->l10n;
       break;
     default:
-      err("%s:%d:%d: attribute \"%s\" is not allowed here",
-          path, a->line, a->column, attr_map[a->tag]);
+      xml_err_attr_not_allowed(&cfg->b, a);
       goto failed;
     }
   }
 
   for (p = cfg->b.first_down; p; p = p->right) {
+    if (cfg_final_offsets[p->tag] > 0) {
+      p_str = XPDEREF(unsigned char *, cfg, cfg_final_offsets[p->tag]);
+      if (xml_leaf_elem(p, p_str, 1, 0) < 0) goto failed;
+      continue;
+    }
     switch (p->tag) {
-    case TG_USERDB_FILE:
-      if (handle_final_tag(path, p, &cfg->db_path) < 0) goto failed;
-      break;
-    case TG_SOCKET_PATH:
-      if (handle_final_tag(path, p, &cfg->socket_path) < 0) goto failed;
-      break;
-    case TG_CONTESTS_DIR:
-      if (handle_final_tag(path, p, &cfg->contests_dir) < 0) goto failed;
-      break;
-    case TG_EMAIL_PROGRAM:
-      if (handle_final_tag(path, p, &cfg->email_program) < 0) goto failed;
-      break;
-    case TG_REGISTER_URL:
-      if (handle_final_tag(path, p, &cfg->register_url) < 0) goto failed;
-      break;
-    case TG_REGISTER_EMAIL:
-      if (handle_final_tag(path, p, &cfg->register_email) < 0) goto failed;
-      break;
-    case TG_SERVER_NAME:
-      if (handle_final_tag(path, p, &cfg->server_name) < 0) goto failed;
-      break;
-    case TG_SERVER_NAME_EN:
-      if (handle_final_tag(path, p, &cfg->server_name_en) < 0) goto failed;
-      break;
-    case TG_SERVER_MAIN_URL:
-      if (handle_final_tag(path, p, &cfg->server_main_url) < 0) goto failed;
-      break;
-    case TG_SERVE_PATH:
-      if (handle_final_tag(path, p, &cfg->serve_path) < 0) goto failed;
-      break;
-    case TG_RUN_PATH:
-      if (handle_final_tag(path, p, &cfg->run_path) < 0) goto failed;
-      break;
-    case TG_L10N_DIR:
-      if (handle_final_tag(path, p, &cfg->l10n_dir) < 0) goto failed;
-      break;
-    case TG_CHARSET:
-      if (handle_final_tag(path, p, &cfg->charset) < 0) goto failed;
-      break;
-    case TG_CONFIG_DIR:
-      if (handle_final_tag(path, p, &cfg->config_dir) < 0) goto failed;
-      break;
-    case TG_CONTESTS_HOME_DIR:
-      if (handle_final_tag(path, p, &cfg->contests_home_dir) < 0) goto failed;
-      break;
-    case TG_FULL_CGI_DATA_DIR:
-      if (handle_final_tag(path, p, &cfg->full_cgi_data_dir) < 0) goto failed;
-      break;
-    case TG_COMPILE_HOME_DIR:
-      if (handle_final_tag(path, p, &cfg->compile_home_dir) < 0) goto failed;
-      break;
-    case TG_TESTING_WORK_DIR:
-      if (handle_final_tag(path, p, &cfg->testing_work_dir) < 0) goto failed;
-      break;
-    case TG_SCRIPT_DIR:
-      if (handle_final_tag(path, p, &cfg->script_dir) < 0) goto failed;
-      break;
     case TG_USER_MAP:
       if (!(cfg->user_map = parse_user_map(path, p))) goto failed;
       break;
@@ -475,62 +350,20 @@ userlist_cfg_parse(char const *path)
         int k, n;
 
         if (cfg->serialization_key) {
-          err("%s:%d:%d: element <%s> already defined",
-              path, p->line, p->column, elem_map[p->tag]);
+          xml_err_elem_redefined(p);
           goto failed;
         }
         if (!p->text || !p->text[0]
             || sscanf(p->text, "%d%n", &k, &n) != 1 || p->text[n]
             || k <= 0 || k >= 32768) {
-          err("%s:%d:%d: element <%s> value is invalid",
-              path, p->line, p->column, elem_map[p->tag]);
+          xml_err_elem_invalid(p);
           goto failed;
         }
         cfg->serialization_key = k;
       }
       break;
-    case TG_ADMIN_EMAIL:
-      if (handle_final_tag(path, p, &cfg->admin_email) < 0) goto failed;
-      break;
-    case TG_USERLIST_LOG:
-      if (handle_final_tag(path, p, &cfg->userlist_log) < 0) goto failed;
-      break;
-    case TG_VAR_DIR:
-      if (handle_final_tag(path, p, &cfg->var_dir) < 0) goto failed;
-      break;
-    case TG_SUPER_SERVE_LOG:
-      if (handle_final_tag(path, p, &cfg->super_serve_log) < 0) goto failed;
-      break;
-    case TG_COMPILE_LOG:
-      if (handle_final_tag(path, p, &cfg->compile_log) < 0) goto failed;
-      break;
-    case TG_SUPER_SERVE_SOCKET:
-      if (handle_final_tag(path, p, &cfg->super_serve_socket) < 0) goto failed;
-      break;
-    case TG_SUPER_SERVE_USER:
-      if (handle_final_tag(path, p, &cfg->super_serve_user) < 0) goto failed;
-      break;
-    case TG_SUPER_SERVE_GROUP:
-      if (handle_final_tag(path, p, &cfg->super_serve_group) < 0) goto failed;
-      break;
-    case TG_USERLIST_USER:
-      if (handle_final_tag(path, p, &cfg->userlist_user) < 0) goto failed;
-      break;
-    case TG_USERLIST_GROUP:
-      if (handle_final_tag(path, p, &cfg->userlist_group) < 0) goto failed;
-      break;
-    case TG_JOB_SERVER_LOG:
-      if (handle_final_tag(path, p, &cfg->job_server_log) < 0) goto failed;
-      break;
-    case TG_JOB_SERVER_SPOOL:
-      if (handle_final_tag(path, p, &cfg->job_server_spool) < 0) goto failed;
-      break;
-    case TG_JOB_SERVER_WORK:
-      if (handle_final_tag(path, p, &cfg->job_server_work) < 0) goto failed;
-      break;
     default:
-      err("%s:%d:%d: element <%s> is invalid here",
-          path, p->line, p->column, elem_map[p->tag]);
+      xml_err_elem_not_allowed(p);
       break;
     }
   }
@@ -545,7 +378,7 @@ userlist_cfg_parse(char const *path)
 #endif
 
   if (!cfg->db_path) {
-    err("%s: element <file> is not defined", path);
+    xml_err_elem_undefined(&cfg->b, TG_USERDB_FILE);
     goto failed;
   }
 #if defined EJUDGE_SOCKET_PATH
@@ -554,7 +387,7 @@ userlist_cfg_parse(char const *path)
   }
 #endif /* EJUDGE_SOCKET_PATH */
   if (!cfg->socket_path) {
-    err("%s: element <socket> is not defined", path);
+    xml_err_elem_undefined(&cfg->b, TG_SOCKET_PATH);
     goto failed;
   }
 #if defined EJUDGE_SUPER_SERVE_SOCKET
@@ -568,19 +401,19 @@ userlist_cfg_parse(char const *path)
   }
 #endif /* EJUDGE_CONTESTS_DIR */
   if (!cfg->contests_dir) {
-    err("%s: element <contests_dir> is not defined", path);
+    xml_err_elem_undefined(&cfg->b, TG_CONTESTS_DIR);
     goto failed;
   }
   if (!cfg->email_program) {
-    err("%s: element <email_program> is not defined", path);
+    xml_err_elem_undefined(&cfg->b, TG_EMAIL_PROGRAM);
     goto failed;
   }
   if (!cfg->register_url) {
-    err("%s: element <register_url> is not defined", path);
+    xml_err_elem_undefined(&cfg->b, TG_REGISTER_URL);
     goto failed;
   }
   if (!cfg->register_email) {
-    err("%s: element <register_email> is not defined", path);
+    xml_err_elem_undefined(&cfg->b, TG_REGISTER_EMAIL);
     goto failed;
   }
 

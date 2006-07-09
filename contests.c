@@ -22,6 +22,7 @@
 #include "xml_utils.h"
 #include "misctext.h"
 #include "fileutl.h"
+#include "xml_utils.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -278,49 +279,6 @@ static char const * const member_field_map[] =
 };
 
 static int
-parse_date(unsigned char const *s, time_t *pd)
-{
-  int year, month, day, hour, min, sec, n;
-  time_t t;
-  struct tm tt;
-
-  memset(&tt, 0, sizeof(tt));
-  tt.tm_isdst = -1;
-  if (!s) goto failed;
-  if (sscanf(s, "%d/%d/%d %d:%d:%d %n", &year, &month, &day, &hour,
-             &min, &sec, &n) != 6) goto failed;
-  if (s[n]) goto failed;
-  if (year < 1900 || year > 2100 || month < 1 || month > 12
-      || day < 1 || day > 31 || hour < 0 || hour >= 24
-      || min < 0 || min >= 60 || sec < 0 || sec >= 60) goto failed;
-  tt.tm_sec = sec;
-  tt.tm_min = min;
-  tt.tm_hour = hour;
-  tt.tm_mday = day;
-  tt.tm_mon = month - 1;
-  tt.tm_year = year - 1900;
-  if ((t = mktime(&tt)) == (time_t) -1) goto failed;
-  *pd = t;
-  return 0;
-
- failed:
-  return -1;
-}
-
-static int
-parse_bool(char const *str)
-{
-  if (!str) return -1;
-  if (!strcasecmp(str, "true")
-      || !strcasecmp(str, "yes")
-      || !strcasecmp(str, "1")) return 1;
-  if (!strcasecmp(str, "false")
-      || !strcasecmp(str, "no")
-      || !strcasecmp(str, "0")) return 0;
-  return -1;
-}
-
-static int
 parse_access(struct contest_access *acc, char const *path)
 {
   struct xml_attr *a;
@@ -335,28 +293,18 @@ parse_access(struct contest_access *acc, char const *path)
       } else if (!strcasecmp(a->text, "deny")) {
         acc->default_is_allow = 0;
       } else {
-        err("%s:%d:%d: invalid value for attribute", path, a->line, a->column);
-        return -1;
+        return xml_err_attr_invalid(a);
       }
       xfree(a->text); a->text = 0;
       break;
     default:
-      err("%s:%d:%d: attribute \"%s\" is invalid here",
-          path, a->line, a->column, attr_map[a->tag]);
-      return -1;
+      return xml_err_attr_not_allowed(&acc->b, a);
     }
   }
 
   for (t = acc->b.first_down; t; t = t->right) {
-    if (t->tag != CONTEST_IP) {
-      err("%s:%d:%d: tag <%s> is invalid here",
-          path, t->line, t->column, elem_map[t->tag]);
-      return -1;
-    }
-    if (t->first_down) {
-      err("%s:%d:%d: nested tags are not allowed", path, t->line, t->column);
-      return -1;
-    }
+    if (t->tag != CONTEST_IP) return xml_err_elem_not_allowed(t);
+    if (t->first_down) return xml_err_nested_elems(t);
 
     ip = (struct contest_ip*) t;
     ip->allow = -1;
@@ -370,27 +318,18 @@ parse_access(struct contest_access *acc, char const *path)
         } else if (!strcasecmp(a->text, "any")) {
           ip->ssl = -1;
         } else {
-          xml_err_attr_invalid(a);
-          return -1;
+          return xml_err_attr_invalid(a);
         }
         xfree(a->text); a->text = 0;
         continue;
       }
-      if (a->tag != CONTEST_A_ALLOW && a->tag != CONTEST_A_DENY) {
-        err("%s:%d:%d: attribute \"%s\" is invalid here",
-            path, a->line, a->column, attr_map[a->tag]);
-        return -1;
-      }
+      if (a->tag != CONTEST_A_ALLOW && a->tag != CONTEST_A_DENY)
+        return xml_err_attr_not_allowed(&ip->b, a);
       if (ip->allow != -1) {
-        err("%s:%d:%d: attribute \"allow\" already defined",
-            path, a->line, a->column);
+        xml_err_a(a, "attribute \"allow\" already defined");
         return -1;
       }
-      if ((ip->allow = parse_bool(a->text)) < 0) {
-        err("%s:%d:%d invalid boolean value",
-            path, a->line, a->column);
-        return -1;
-      }
+      if (xml_attr_bool(a, &ip->allow) < 0) return -1;
       if (a->tag == CONTEST_A_DENY) ip->allow = !ip->allow;
       xfree(a->text); a->text = 0;
     }
@@ -423,10 +362,8 @@ parse_member(struct contest_member *mb, char const *path)
     case CONTEST_A_MAX:
     case CONTEST_A_INITIAL:
       if (!a->text || sscanf(a->text, "%d %n", &i, &n) != 1
-          || a->text[n] || i < 0 || i > 100) {
-        err("%s:%d:%d: invalid value", path, a->line, a->column);
-        return -1;
-      }
+          || a->text[n] || i < 0 || i > 100)
+        return xml_err_attr_invalid(a);
       switch (a->tag) {
       case CONTEST_A_MIN:     mb->min_count = i;  break;
       case CONTEST_A_MAX:     mb->max_count = i;  break;
@@ -435,29 +372,15 @@ parse_member(struct contest_member *mb, char const *path)
       xfree(a->text); a->text = 0;
       break;
     default:
-      err("%s:%d:%d: attribute \"%s\" is invalid here",
-          path, a->line, a->column, attr_map[a->tag]);
-      return -1;
+      return xml_err_attr_not_allowed(&mb->b, a);
     }
   }
 
   xfree(mb->b.text); mb->b.text = 0;
   for (t = mb->b.first_down; t; t = t->right) {
-    if (t->tag != CONTEST_FIELD) {
-      err("%s:%d:%d: tag <%s> is invalid here",
-          path, t->line, t->column, elem_map[t->tag]);
-      return -1;
-    }
-    if (t->text && *t->text) {
-      err("%s:%d:%d: tag <%s> cannot contain text",
-          path, t->line, t->column, elem_map[t->tag]);
-      return -1;
-    }
-    if (t->first_down) {
-      err("%s:%d:%d: nested tags are not allowed",
-          path, t->line, t->column);
-      return -1;
-    }
+    if (t->tag != CONTEST_FIELD) return xml_err_elem_not_allowed(t);
+    if (t->text && *t->text) return xml_err_elem_empty(t);
+    if (t->first_down) return xml_err_nested_elems(t);
     pf = (struct contest_field*) t;
 
     pf->mandatory = -1;
@@ -469,13 +392,11 @@ parse_member(struct contest_member *mb, char const *path)
           if (!strcmp(a->text, member_field_map[i])) break;
         }
         if (i >= CONTEST_LAST_MEMBER_FIELD) {
-          err("%s:%d:%d: invalid field id \"%s\"",
-              path, a->line, a->column, a->text);
+          xml_err_a(a, "invalid field id \"%s\"", a->text);
           return -1;
         }
         if (mb->fields[i]) {
-          err("%s:%d:%d: field \"%s\" already defined",
-              path, a->line, a->column, a->text);
+          xml_err_a(a, "field \"%s\" already defined", a->text);
           return -1;
         }
         mb->fields[i] = pf;
@@ -483,21 +404,14 @@ parse_member(struct contest_member *mb, char const *path)
       case CONTEST_A_MANDATORY:
       case CONTEST_A_OPTIONAL:
         if (pf->mandatory != -1) {
-          err("%s:%d:%d: attribute \"mandatory\" already defined",
-              path, a->line, a->column);
+          xml_err_a(a, "attribute \"mandatory\" already defined");
           return -1;
         }
-        if ((pf->mandatory = parse_bool(a->text)) < 0) {
-          err("%s:%d:%d: invalid boolean value",
-              path, a->line, a->column);
-          return -1;
-        }
+        if (xml_attr_bool(a, &pf->mandatory) < 0) return -1;
         if (a->tag == CONTEST_A_OPTIONAL) pf->mandatory = !pf->mandatory;
         break;
       default:
-        err("%s:%d:%d: attribute \"%s\" is invalid here",
-            path, a->line, a->column, attr_map[a->tag]);
-        return -1;
+        return xml_err_attr_not_allowed(t, a);
       }
     }
     if (pf->mandatory == -1) pf->mandatory = 0;
@@ -542,62 +456,33 @@ parse_capabilities(unsigned char const *path,
 
   ASSERT(ct->tag == CONTEST_CAPS);
 
-  if (cnts->capabilities.first) {
-    err("%s:%d:%d: element <caps> already defined",
-        path, ct->line, ct->column);
-    return -1;
-  }
+  if (cnts->capabilities.first) return xml_err_elem_redefined(ct);
 
   cnts->caps_node = ct;
   xfree(ct->text); ct->text = 0;
-  if (ct->first) {
-    err("%s:%d:%d: element <caps> cannot have attributes",
-        path, ct->line, ct->column);
-    return -1;
-  }
+  if (ct->first) return xml_err_attrs(ct);
   p = ct->first_down;
   if (!p) return 0;
   cnts->capabilities.first = (struct opcap_list_item*) p;
 
   for (; p; p = p->right) {
-    if (p->tag != CONTEST_CAP) {
-      err("%s:%d:%d: element <cap> expected", path, p->line, p->column);
-      return -1;
-    }
+    if (p->tag != CONTEST_CAP) return xml_err_elem_not_allowed(p);
     pp = (struct opcap_list_item*) p;
 
-    if (!p->first) {
-      err("%s:%d:%d: element <cap> must have attribute",
-          path, p->line, p->column);
-      return -1;
-    }
-    if (p->first->next) {
-      err("%s:%d:%d: element <cap> must have only one attribute",
-          path, p->line, p->column);
-      return -1;
-    }
-    if (p->first->tag != CONTEST_A_LOGIN) {
-      err("%s:%d:%d: \"login\" attribute expected",
-          path, p->line, p->column);
-      return -1;
-    }
+    if (!p->first) return xml_err_attr_undefined(p, CONTEST_A_LOGIN);
+    if (p->first->next) return xml_err_attr_not_allowed(p, p->first->next);
+    if (p->first->tag != CONTEST_A_LOGIN)
+      return xml_err_attr_undefined(p, CONTEST_A_LOGIN);
     pp->login = p->first->text; p->first->text = 0;
-    if (!pp->login || !*pp->login) {
-      err("%s:%d:%d: \"login\" cannot be empty",
-          path, p->line, p->column);
-      return -1;
-    }
+    if (!pp->login || !*pp->login) return xml_err_attr_invalid(p->first);
     for (qq = cnts->capabilities.first; qq != pp;
          qq = (struct opcap_list_item*) qq->b.right) {
       if (!strcmp(pp->login, qq->login)) {
-        err("%s:%d:%d: duplicated login", path, p->line, p->column);
+        xml_err(p, "duplicated login");
+        return -1;
       }
     }
-    if (opcaps_parse(p->text, &pp->caps) < 0) {
-      err("%s:%d:%d: invalid capabilities",
-          path, p->line, p->column);
-      return -1;
-    }
+    if (opcaps_parse(p->text, &pp->caps) < 0) return xml_err_elem_invalid(p);
     xfree(p->text); p->text = 0;
   }
   return 0;
@@ -642,8 +527,7 @@ parse_client_flags(unsigned char const *path, struct contest_desc *cnts,
     } else if (!strcmp(str3, "DISABLE_MEMBER_DELETE")) {
       cnts->disable_member_delete = 1;
     } else {
-      err("%s:%d:%d: unknown flag '%s'", path, xt->line, xt->column, str3);
-      return -1;
+      return xml_err_elem_invalid(xt);
     }
   }
 
@@ -664,6 +548,74 @@ process_conf_file_path(struct contest_desc *cnts, unsigned char **pstr)
   *pstr = str;
 }
 
+#define CONTEST_DESC_OFFSET(f) XOFFSET(struct contest_desc, f)
+
+static const size_t contest_final_offsets[CONTEST_LAST_TAG] =
+{
+  [CONTEST_NAME] = CONTEST_DESC_OFFSET(name),
+  [CONTEST_NAME_EN] = CONTEST_DESC_OFFSET(name_en),
+  [CONTEST_MAIN_URL] = CONTEST_DESC_OFFSET(main_url),
+  [CONTEST_USERS_HEADER_FILE] = CONTEST_DESC_OFFSET(users_header_file),
+  [CONTEST_USERS_FOOTER_FILE] = CONTEST_DESC_OFFSET(users_footer_file),
+  [CONTEST_REGISTER_EMAIL] = CONTEST_DESC_OFFSET(register_email),
+  [CONTEST_REGISTER_URL] = CONTEST_DESC_OFFSET(register_url),
+  [CONTEST_TEAM_URL] = CONTEST_DESC_OFFSET(team_url),
+  [CONTEST_ROOT_DIR] = CONTEST_DESC_OFFSET(root_dir),
+  [CONTEST_STANDINGS_URL] = CONTEST_DESC_OFFSET(standings_url),
+  [CONTEST_PROBLEMS_URL] = CONTEST_DESC_OFFSET(problems_url),
+  [CONTEST_SERVE_USER] = CONTEST_DESC_OFFSET(serve_user),
+  [CONTEST_SERVE_GROUP] = CONTEST_DESC_OFFSET(serve_group),
+  [CONTEST_REGISTER_HEADER_FILE] = CONTEST_DESC_OFFSET(register_header_file),
+  [CONTEST_REGISTER_FOOTER_FILE] = CONTEST_DESC_OFFSET(register_footer_file),
+  [CONTEST_TEAM_HEADER_FILE] = CONTEST_DESC_OFFSET(team_header_file),
+  [CONTEST_TEAM_FOOTER_FILE] = CONTEST_DESC_OFFSET(team_footer_file),
+  [CONTEST_USERS_HEAD_STYLE] = CONTEST_DESC_OFFSET(users_head_style),
+  [CONTEST_USERS_PAR_STYLE] = CONTEST_DESC_OFFSET(users_par_style),
+  [CONTEST_USERS_TABLE_STYLE] = CONTEST_DESC_OFFSET(users_table_style),
+  [CONTEST_USERS_VERB_STYLE] = CONTEST_DESC_OFFSET(users_verb_style),
+  [CONTEST_USERS_TABLE_FORMAT] = CONTEST_DESC_OFFSET(users_table_format),
+  [CONTEST_USERS_TABLE_FORMAT_EN] = CONTEST_DESC_OFFSET(users_table_format_en),
+  [CONTEST_USERS_TABLE_LEGEND] = CONTEST_DESC_OFFSET(users_table_legend),
+  [CONTEST_USERS_TABLE_LEGEND_EN] = CONTEST_DESC_OFFSET(users_table_legend_en),
+  [CONTEST_REGISTER_HEAD_STYLE] = CONTEST_DESC_OFFSET(register_head_style),
+  [CONTEST_REGISTER_PAR_STYLE] = CONTEST_DESC_OFFSET(register_par_style),
+  [CONTEST_REGISTER_TABLE_STYLE] = CONTEST_DESC_OFFSET(register_table_style),
+  [CONTEST_TEAM_HEAD_STYLE] = CONTEST_DESC_OFFSET(team_head_style),
+  [CONTEST_TEAM_PAR_STYLE] = CONTEST_DESC_OFFSET(team_par_style),
+  [CONTEST_CONF_DIR] = CONTEST_DESC_OFFSET(conf_dir),
+  [CONTEST_RUN_USER] = CONTEST_DESC_OFFSET(run_user),
+  [CONTEST_RUN_GROUP] = CONTEST_DESC_OFFSET(run_group),
+  [CONTEST_REGISTER_EMAIL_FILE] = CONTEST_DESC_OFFSET(register_email_file),
+  [CONTEST_USER_NAME_COMMENT] = CONTEST_DESC_OFFSET(user_name_comment),
+  [CONTEST_ALLOWED_LANGUAGES] = CONTEST_DESC_OFFSET(allowed_languages),
+  [CONTEST_CF_NOTIFY_EMAIL] = CONTEST_DESC_OFFSET(cf_notify_email),
+  [CONTEST_CLAR_NOTIFY_EMAIL] = CONTEST_DESC_OFFSET(clar_notify_email),
+  [CONTEST_DAILY_STAT_EMAIL] = CONTEST_DESC_OFFSET(daily_stat_email),
+};
+
+static const size_t contest_access_offsets[CONTEST_LAST_TAG] =
+{
+  [CONTEST_REGISTER_ACCESS] = CONTEST_DESC_OFFSET(register_access),
+  [CONTEST_USERS_ACCESS] = CONTEST_DESC_OFFSET(users_access),
+  [CONTEST_MASTER_ACCESS] = CONTEST_DESC_OFFSET(master_access),
+  [CONTEST_JUDGE_ACCESS] = CONTEST_DESC_OFFSET(judge_access),
+  [CONTEST_TEAM_ACCESS] = CONTEST_DESC_OFFSET(team_access),
+  [CONTEST_SERVE_CONTROL_ACCESS] = CONTEST_DESC_OFFSET(serve_control_access),
+};
+
+static const size_t contest_bool_attr_offsets[CONTEST_LAST_ATTR] =
+{
+  [CONTEST_A_AUTOREGISTER] = CONTEST_DESC_OFFSET(autoregister),
+  [CONTEST_A_DISABLE_TEAM_PASSWORD] =CONTEST_DESC_OFFSET(disable_team_password),
+  [CONTEST_A_MANAGED] = CONTEST_DESC_OFFSET(managed),
+  [CONTEST_A_CLEAN_USERS] = CONTEST_DESC_OFFSET(clean_users),
+  [CONTEST_A_RUN_MANAGED] = CONTEST_DESC_OFFSET(run_managed),
+  [CONTEST_A_CLOSED] = CONTEST_DESC_OFFSET(closed),
+  [CONTEST_A_INVISIBLE] = CONTEST_DESC_OFFSET(invisible),
+  [CONTEST_A_SIMPLE_REGISTRATION] = CONTEST_DESC_OFFSET(simple_registration),
+  [CONTEST_A_SEND_PASSWD_EMAIL] = CONTEST_DESC_OFFSET(send_passwd_email),
+};
+
 static int
 parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
 {
@@ -673,238 +625,51 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
   unsigned char *reg_deadline_str = 0;
   struct contest_access **pacc;
   unsigned char pathbuf[PATH_MAX];
+  unsigned char *p_field;
+  unsigned char **p_str;
 
   cnts->clean_users = 1;
 
   for (a = cnts->b.first; a; a = a->next) {
+    if (contest_bool_attr_offsets[a->tag] > 0) {
+      // boolean fields
+      p_field = XPDEREF(unsigned char, cnts, contest_bool_attr_offsets[a->tag]);
+      if (xml_attr_bool_byte(a, p_field) < 0) return -1;
+      continue;
+    }
+
     switch (a->tag) {
     case CONTEST_A_ID:
       x = n = 0;
       if (sscanf(a->text, "%d %n", &x, &n) != 1 || a->text[n]
-          || x <= 0 || x > MAX_CONTEST_ID) {
-        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
-        return -1;
-      }
+          || x <= 0 || x > MAX_CONTEST_ID) return xml_err_attr_invalid(a);
       cnts->id = x;
       break;
-    case CONTEST_A_AUTOREGISTER:
-      x = parse_bool(a->text);
-      if (x < 0 || x > 1) {
-        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
-        return -1;
-      }
-      cnts->autoregister = x;
-      break;
-    case CONTEST_A_MANAGED:
-      x = parse_bool(a->text);
-      if (x < 0 || x > 1) {
-        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
-        return -1;
-      }
-      cnts->managed = x;
-      break;
-    case CONTEST_A_RUN_MANAGED:
-      x = parse_bool(a->text);
-      if (x < 0 || x > 1) {
-        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
-        return -1;
-      }
-      cnts->run_managed = x;
-      break;
-    case CONTEST_A_CLEAN_USERS:
-      x = parse_bool(a->text);
-      if (x < 0 || x > 1) {
-        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
-        return -1;
-      }
-      cnts->clean_users = x;
-      break;
-    case CONTEST_A_DISABLE_TEAM_PASSWORD:
-      x = parse_bool(a->text);
-      if (x < 0 || x > 1) {
-        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
-        return -1;
-      }
-      cnts->disable_team_password = x;
-      break;
-    case CONTEST_A_SIMPLE_REGISTRATION:
-      x = parse_bool(a->text);
-      if (x < 0 || x > 1) {
-        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
-        return -1;
-      }
-      cnts->simple_registration = x;
-      break;
-    case CONTEST_A_SEND_PASSWD_EMAIL:
-      x = parse_bool(a->text);
-      if (x < 0 || x > 1) {
-        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
-        return -1;
-      }
-      cnts->send_passwd_email = x;
-      break;
-    case CONTEST_A_CLOSED:
-      x = parse_bool(a->text);
-      if (x < 0 || x > 1) {
-        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
-        return -1;
-      }
-      cnts->closed = x;
-      break;
-    case CONTEST_A_INVISIBLE:
-      x = parse_bool(a->text);
-      if (x < 0 || x > 1) {
-        err("%s:%d:%d: attribute value is invalid", path, a->line, a->column);
-        return -1;
-      }
-      cnts->invisible = x;
-      break;
     default:
-      err("%s:%d:%d: attribute \"%s\" is invalid here",
-          path, a->line, a->column, attr_map[a->tag]);
-      return -1;
+      return xml_err_attr_not_allowed(&cnts->b, a);
     }
   }
 
-  if (!cnts->id) {
-    err("%s:%d:%d: contest id is not defined",
-        path, cnts->b.line, cnts->b.column);
-    return -1;
-  }
+  if (!cnts->id) return xml_err_attr_undefined(&cnts->b, CONTEST_A_ID);
 
   for (t = cnts->b.first_down; t; t = t->right) {
+    if (contest_final_offsets[t->tag] > 0) {
+      p_str = XPDEREF(unsigned char *, cnts, contest_final_offsets[t->tag]);
+      if (xml_leaf_elem(t, p_str, 1, 0) < 0) return -1;
+      continue;
+    }
+    if (contest_access_offsets[t->tag] > 0) {
+      pacc=XPDEREF(struct contest_access*,cnts,contest_access_offsets[t->tag]);
+      if (*pacc) return xml_err_elem_redefined(t);
+      *pacc = (struct contest_access*) t;
+      if (parse_access(*pacc, path) < 0) return -1;
+      continue;
+    }
+
     switch(t->tag) {
-    case CONTEST_NAME:
-      if (handle_final_tag(path, t, &cnts->name) < 0) return -1;
-      break;
-    case CONTEST_NAME_EN:
-      if (handle_final_tag(path, t, &cnts->name_en) < 0) return -1;
-      break;
-    case CONTEST_MAIN_URL:
-      if (handle_final_tag(path, t, &cnts->main_url) < 0) return -1;
-      break;
-    case CONTEST_USERS_HEADER_FILE:
-      if (handle_final_tag(path, t, &cnts->users_header_file) < 0) return -1;
-      break;
-    case CONTEST_USERS_FOOTER_FILE:
-      if (handle_final_tag(path, t, &cnts->users_footer_file) < 0) return -1;
-      break;
-    case CONTEST_REGISTER_HEADER_FILE:
-      if (handle_final_tag(path, t, &cnts->register_header_file)<0) return -1;
-      break;
-    case CONTEST_REGISTER_FOOTER_FILE:
-      if (handle_final_tag(path, t, &cnts->register_footer_file)<0) return -1;
-      break;
-    case CONTEST_TEAM_HEADER_FILE:
-      if (handle_final_tag(path, t, &cnts->team_header_file) < 0) return -1;
-      break;
-    case CONTEST_TEAM_FOOTER_FILE:
-      if (handle_final_tag(path, t, &cnts->team_footer_file) < 0) return -1;
-      break;
-    case CONTEST_USERS_HEAD_STYLE:
-      if (handle_final_tag(path, t, &cnts->users_head_style) < 0) return -1;
-      break;
-    case CONTEST_USERS_PAR_STYLE:
-      if (handle_final_tag(path, t, &cnts->users_par_style) < 0) return -1;
-      break;
-    case CONTEST_USERS_TABLE_STYLE:
-      if (handle_final_tag(path, t, &cnts->users_table_style) < 0) return -1;
-      break;
-    case CONTEST_USERS_VERB_STYLE:
-      if (handle_final_tag(path, t, &cnts->users_verb_style) < 0) return -1;
-      break;
-    case CONTEST_USERS_TABLE_FORMAT:
-      if (handle_final_tag(path, t, &cnts->users_table_format) < 0) return -1;
-      break;
-    case CONTEST_USERS_TABLE_FORMAT_EN:
-      if (handle_final_tag(path, t, &cnts->users_table_format_en) < 0)return -1;
-      break;
-    case CONTEST_USERS_TABLE_LEGEND:
-      if (handle_final_tag(path, t, &cnts->users_table_legend) < 0) return -1;
-      break;
-    case CONTEST_USERS_TABLE_LEGEND_EN:
-      if (handle_final_tag(path, t, &cnts->users_table_legend_en) < 0)return -1;
-      break;
-    case CONTEST_REGISTER_HEAD_STYLE:
-      if (handle_final_tag(path, t, &cnts->register_head_style) < 0) return -1;
-      break;
-    case CONTEST_REGISTER_PAR_STYLE:
-      if (handle_final_tag(path, t, &cnts->register_par_style) < 0) return -1;
-      break;
-    case CONTEST_REGISTER_TABLE_STYLE:
-      if (handle_final_tag(path, t, &cnts->register_table_style)< 0) return -1;
-      break;
-    case CONTEST_TEAM_HEAD_STYLE:
-      if (handle_final_tag(path, t, &cnts->team_head_style) < 0) return -1;
-      break;
-    case CONTEST_TEAM_PAR_STYLE:
-      if (handle_final_tag(path, t, &cnts->team_par_style) < 0) return -1;
-      break;
-    case CONTEST_REGISTER_EMAIL:
-      if (handle_final_tag(path, t, &cnts->register_email) < 0) return -1;
-      break;
-    case CONTEST_REGISTER_URL:
-      if (handle_final_tag(path, t, &cnts->register_url) < 0) return -1;
-      break;
-    case CONTEST_TEAM_URL:
-      if (handle_final_tag(path, t, &cnts->team_url) < 0) return -1;
-      break;
-    case CONTEST_ROOT_DIR:
-      if (handle_final_tag(path, t, &cnts->root_dir) < 0) return -1;
-      break;
-    case CONTEST_CONF_DIR:
-      if (handle_final_tag(path, t, &cnts->conf_dir) < 0) return -1;
-      break;
-    case CONTEST_STANDINGS_URL:
-      if (handle_final_tag(path, t, &cnts->standings_url) < 0) return -1;
-      break;
-    case CONTEST_PROBLEMS_URL:
-      if (handle_final_tag(path, t, &cnts->problems_url) < 0) return -1;
-      break;
-    case CONTEST_SERVE_USER:
-      if (handle_final_tag(path, t, &cnts->serve_user) < 0) return -1;
-      break;
-    case CONTEST_SERVE_GROUP:
-      if (handle_final_tag(path, t, &cnts->serve_group) < 0) return -1;
-      break;
-    case CONTEST_RUN_USER:
-      if (handle_final_tag(path, t, &cnts->run_user) < 0) return -1;
-      break;
-    case CONTEST_RUN_GROUP:
-      if (handle_final_tag(path, t, &cnts->run_group) < 0) return -1;
-      break;
-    case CONTEST_REGISTER_EMAIL_FILE:
-      if (handle_final_tag(path, t, &cnts->register_email_file) < 0) return -1;
-      break;
-
-    case CONTEST_USER_NAME_COMMENT:
-      if (handle_final_tag(path, t, &cnts->user_name_comment) < 0) return -1;
-      break;
-    case CONTEST_ALLOWED_LANGUAGES:
-      if (handle_final_tag(path, t, &cnts->allowed_languages) < 0) return -1;
-      break;
-
-    case CONTEST_CF_NOTIFY_EMAIL:
-      if (handle_final_tag(path, t, &cnts->cf_notify_email) < 0) return -1;
-      break;
-    case CONTEST_CLAR_NOTIFY_EMAIL:
-      if (handle_final_tag(path, t, &cnts->clar_notify_email) < 0) return -1;
-      break;
-    case CONTEST_DAILY_STAT_EMAIL:
-      if (handle_final_tag(path, t, &cnts->daily_stat_email) < 0) return -1;
-      break;
-
     case CONTEST_CLIENT_FLAGS:
-      if (t->first_down) {
-        err("%s:%d:%d: element <%s> cannot contain nested elements",
-            path, t->line, t->column, elem_map[t->tag]);
-        return -1;
-      }
-      if (t->first) {
-        err("%s:%d:%d: element <%s> cannot have attributes",
-            path, t->line, t->column, elem_map[t->tag]);
-        return -1;
-      }
+      if (t->first_down) return xml_err_nested_elems(t);
+      if (t->first) return xml_err_attrs(t);
       if (parse_client_flags(path, cnts, t) < 0) return -1;
       break;
     case CONTEST_REGISTRATION_DEADLINE:
@@ -913,10 +678,9 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
         return -1;
       }
       t->text = reg_deadline_str;
-      if (parse_date(reg_deadline_str, &cnts->reg_deadline) < 0) {
-        err("%s:%d:%d: invalid date", path, t->line, t->column);
+      if (xml_parse_date(path, t->line, t->column,
+                         reg_deadline_str, &cnts->reg_deadline) < 0)
         return -1;
-      }
       break;
 
     case CONTEST_CAPS:
@@ -939,53 +703,15 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
       mb_id = CONTEST_M_GUEST;
 
     process_members:
-      if (cnts->members[mb_id]) {
-        err("%s:%d:%d: tag <%s> redefined",
-            path, t->line, t->column, elem_map[t->tag]);
-        return -1;
-      }
+      if (cnts->members[mb_id]) return xml_err_elem_redefined(t);
       if (parse_member((struct contest_member*) t, path) < 0)
         return -1;
       cnts->members[mb_id] = (struct contest_member*) t;
       break;
 
-    case CONTEST_REGISTER_ACCESS:
-      pacc = &cnts->register_access;
-      goto process_access;
-    case CONTEST_USERS_ACCESS:
-      pacc = &cnts->users_access;
-      goto process_access;
-    case CONTEST_MASTER_ACCESS:
-      pacc = &cnts->master_access;
-      goto process_access;
-    case CONTEST_JUDGE_ACCESS:
-      pacc = &cnts->judge_access;
-      goto process_access;
-    case CONTEST_TEAM_ACCESS:
-      pacc = &cnts->team_access;
-      goto process_access;
-    case CONTEST_SERVE_CONTROL_ACCESS:
-      pacc = &cnts->serve_control_access;
-    process_access:
-      if (*pacc) {
-        err("%s:%d:%d: contest access is already defined",
-            path, t->line, t->column);
-        return -1;
-      }
-      *pacc = (struct contest_access*) t;
-      if (parse_access(*pacc, path) < 0) return -1;
-      break;
-
     case CONTEST_FIELD:
-      if (t->first_down) {
-        err("%s:%d:%d: nested tags are not allowed", path, t->line, t->column);
-        return -1;
-      }
-      if (t->text && t->text[0]) {
-        err("%s:%d:%d: <field> tag cannot contain text",
-            path, t->line, t->column);
-        return -1;
-      }
+      if (t->first_down) return xml_err_nested_elems(t);
+      if (xml_empty_text(t) < 0) return -1;
       xfree(t->text);
       t->text = 0;
       {
@@ -1001,13 +727,11 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
               if (!strcmp(a->text, field_map[i])) break;
             }
             if (i >= CONTEST_LAST_FIELD) {
-              err("%s:%d:%d: invalid field id \"%s\"",
-                  path, a->line, a->column, a->text);
+              xml_err_a(a, "invalid field id \"%s\"", a->text);
               return -1;
             }
             if (cnts->fields[i]) {
-              err("%s:%d:%d: field \"%s\" already defined",
-                  path, a->line, a->column, a->text);
+              xml_err_a(a, "field \"%s\" already defined", a->text);
               return -1;
             }
             cnts->fields[i] = pf;
@@ -1015,21 +739,14 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
           case CONTEST_A_MANDATORY:
           case CONTEST_A_OPTIONAL:
             if (pf->mandatory != -1) {
-              err("%s:%d:%d: attribute \"mandatory\" already defined",
-                  path, a->line, a->column);
+              xml_err_a(a, "attribute \"mandatory\" already defined");
               return -1;
             }
-            if ((pf->mandatory = parse_bool(a->text)) < 0) {
-              err("%s:%d:%d: invalid boolean value",
-                  path, a->line, a->column);
-              return -1;
-            }
+            if (xml_attr_bool(a, &pf->mandatory) < 0) return -1;
             if (a->tag == CONTEST_A_OPTIONAL) pf->mandatory = !pf->mandatory;
             break;
           default:
-            err("%s:%d:%d: attribute \"%s\" is invalid here",
-                path, a->line, a->column, attr_map[a->tag]);
-            return -1;
+            return xml_err_attr_not_allowed(t, a);
           }
         }
         if (pf->mandatory == -1) pf->mandatory = 0;
@@ -1037,22 +754,15 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
       break;
 
     default:
-      err("%s:%d:%d: tag <%s> is invalid here",
-          path, t->line, t->column, elem_map[t->tag]);
-      return -1;
+      return xml_err_elem_not_allowed(t);
     }
   }
   xfree(cnts->b.text); cnts->b.text = 0;
 
-  if (!cnts->name) {
-    err("%s:%d:%d: contest name is not defined",
-        path, cnts->b.line, cnts->b.column);
-    return -1;
-  }
+  if (!cnts->name) return xml_err_elem_undefined(&cnts->b, CONTEST_NAME);
 
   if (cnts->root_dir && !os_IsAbsolutePath(cnts->root_dir)) {
-    err("%s:%d:%d: <root_dir> must be absolute path",
-        path, cnts->b.line, cnts->b.column);
+    xml_err(&cnts->b, "<root_dir> must be absolute path");
     return -1;
   }
 
@@ -1066,8 +776,7 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
       cnts->conf_dir = xstrdup(pathbuf);
     } else if (!cnts->root_dir && cnts->conf_dir
                && !os_IsAbsolutePath(cnts->conf_dir)) {
-      err("%s:%d:%d: <conf_dir> must be absolute path",
-          path, cnts->b.line, cnts->b.column);
+      xml_err(&cnts->b, "<conf_dir> must be absolute path");
       return -1;
     }
 
@@ -1111,11 +820,14 @@ parse_one_contest_xml(char const *path, int number, int no_subst_flag)
   struct xml_tree *tree = 0;
   struct contest_desc *d = 0;
 
+  xml_err_path = path;
+  xml_err_elem_names = elem_map;
+  xml_err_attr_names = attr_map;
+
   tree = xml_build_tree(path, &contests_parse_spec);
   if (!tree) goto failed;
   if (tree->tag != CONTEST_CONTEST) {
-    err("%s:%d:%d: top-level tag must be <contest>",
-        path, tree->line, tree->column);
+    xml_err_top_level(tree, CONTEST_CONTEST);
     goto failed;
   }
   d = (struct contest_desc *) tree;
