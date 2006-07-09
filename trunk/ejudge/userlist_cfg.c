@@ -248,7 +248,7 @@ parse_capabilities(unsigned char const *path,
     if (p->first->tag != AT_LOGIN)
       return xml_err_attr_not_allowed(p, p->first);
     pp->login = p->first->text;
-    if (xml_empty_text(p) < 0) return -1;
+    //if (xml_empty_text(p) < 0) return -1;
     if (opcaps_parse(p->text, &pp->caps) < 0) {
       xml_err(p, "invalid capabilities");
       return -1;

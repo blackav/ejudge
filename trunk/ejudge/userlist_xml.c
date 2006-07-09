@@ -270,17 +270,114 @@ static struct xml_parse_spec userlist_parse_spec =
   .attr_free = NULL,
 };
 
-static int
-parse_priv_level(char const *path, int l, int c, char const *str)
+void
+userlist_free_attrs(struct xml_tree *t)
 {
-  if (str) {
-    if (!strcasecmp(str, "user")) return PRIV_LEVEL_USER;
-    if (!strcasecmp(str, "judge")) return PRIV_LEVEL_JUDGE;
-    if (!strcasecmp(str, "administrator")) return PRIV_LEVEL_ADMIN;
-    if (!strcasecmp(str, "admin")) return PRIV_LEVEL_ADMIN;
-  }
-  err("%s:%d:%d: invalid priv_level value", path, l, c);
+  xml_tree_free_attrs(t, &userlist_parse_spec);
+}
+
+struct string_to_int_tbl
+{
+  const unsigned char *str;
+  int val;
+};
+
+static int
+string_to_enum(const unsigned char *str, const struct string_to_int_tbl *tbl)
+{
+  int i;
+
+  if (!str) return -1;
+  for (i = 0; tbl[i].str; i++)
+    if (!strcasecmp(str, tbl[i].str))
+      return tbl[i].val;
   return -1;
+}
+
+static int
+parse_priv_level_attr(struct xml_attr *a, int *p_val)
+{
+  int v;
+
+  static struct string_to_int_tbl priv_level_tbl[] =
+  {
+    { "user", PRIV_LEVEL_USER },
+    { "judge", PRIV_LEVEL_JUDGE },
+    { "administrator", PRIV_LEVEL_ADMIN },
+    { "admin", PRIV_LEVEL_ADMIN },
+
+    { 0, 0 },
+  };
+
+  if ((v = string_to_enum(a->text, priv_level_tbl)) < 0)
+    return xml_err_attr_invalid(a);
+  *p_val = v;
+  return v;
+}
+
+static int
+parse_password_method_attr(struct xml_attr *a, int *p_val)
+{
+  int v;
+
+  static struct string_to_int_tbl password_method_tbl[] =
+  {
+    { "plain", USERLIST_PWD_PLAIN },
+    { "base64", USERLIST_PWD_BASE64 },
+    { "sha1", USERLIST_PWD_SHA1 },
+
+    { 0, 0 },
+  };
+
+  if ((v = string_to_enum(a->text, password_method_tbl)) < 0)
+    return xml_err_attr_invalid(a);
+  *p_val = v;
+  return v;
+}
+
+static int
+parse_reg_status_attr(struct xml_attr *a, int *p_val)
+{
+  int v;
+
+  static struct string_to_int_tbl reg_status_tbl[] =
+  {
+    { "ok", USERLIST_REG_OK },
+    { "pending", USERLIST_REG_PENDING },
+    { "rejected", USERLIST_REG_REJECTED },
+
+    { 0, 0 },
+  };
+
+  if ((v = string_to_enum(a->text, reg_status_tbl)) < 0)
+    return xml_err_attr_invalid(a);
+  *p_val = v;
+  return v;
+}
+
+static int
+parse_contestant_status_elem(struct xml_tree *p, int *p_val)
+{
+  int v;
+
+  static struct string_to_int_tbl contestant_status_tbl[] =
+  {
+    { "schoolchild", USERLIST_ST_SCHOOL },
+    { "student", USERLIST_ST_STUDENT },
+    { "magistrant", USERLIST_ST_MAG },
+    { "phdstudent", USERLIST_ST_ASP },
+    { "teacher", USERLIST_ST_TEACHER },
+    { "professor", USERLIST_ST_PROF },
+    { "scientist", USERLIST_ST_SCIENTIST },
+    { "other", USERLIST_ST_OTHER },
+
+    { 0, 0 },
+  };
+
+  if ((v = string_to_enum(p->text, contestant_status_tbl)) < 0)
+    return xml_err_elem_invalid(p);
+  *p_val = v;
+  return v;
 }
 
 static struct userlist_passwd *
@@ -297,36 +394,15 @@ parse_passwd(char const *path, struct xml_tree *t)
     return 0;
   }
   if (!t->text) t->text = xstrdup("");
-  /*
-  if (!t->text || !*t->text) {
-    xml_err_elem_empty(t);
-    return 0;
-  }
-  */
 
   for (a = t->first; a; a = a->next) {
     if (a->tag != USERLIST_A_METHOD) {
       xml_err_attr_not_allowed(t, a);
       return 0;
     }
-    if (!strcasecmp(a->text, "plain")) {
-      pwd->method = USERLIST_PWD_PLAIN;
-    } else if (!strcasecmp(a->text, "base64")) {
-      pwd->method = USERLIST_PWD_BASE64;
-    } else if (!strcasecmp(a->text, "sha1")) {
-      pwd->method = USERLIST_PWD_SHA1;
-    } else {
-      err("%s:%d:%d: invalid password method", path, a->line, a->column);
-      return 0;
-    }
-    /*
-    if (pwd->method != USERLIST_PWD_PLAIN) {
-      err("%s:%d:%d: this password method not yet supported",
-          path, a->line, a->column);
-      return 0;
-    }
-    */
+    if (parse_password_method_attr(a, &pwd->method) < 0) return 0;
   }
+  userlist_free_attrs(t);
   if (!*t->text) pwd->method = USERLIST_PWD_PLAIN;
   return pwd;
 }
@@ -340,7 +416,7 @@ parse_cookies(char const *path, struct xml_tree *cookies,
   struct userlist_cookie *c;
 
   if (cookies->first) return xml_err_attrs(cookies);
-  xfree(cookies->text); cookies->text = 0;
+  if (xml_empty_text(cookies) < 0) return -1;
   for (t = cookies->first_down; t; t = t->right) {
     if (t->tag != USERLIST_T_COOKIE) return xml_err_elem_not_allowed(t);
     c = (struct userlist_cookie*) t;
@@ -385,19 +461,46 @@ parse_cookies(char const *path, struct xml_tree *cookies,
           return xml_err_attr_invalid(a);
         break;
       case USERLIST_A_PRIV_LEVEL:
-        c->priv_level = parse_priv_level(path, a->line, a->column, a->text);
-        if (c->priv_level < 0 || c->priv_level > PRIV_LEVEL_ADMIN) return -1;
+        if (parse_priv_level_attr(a, &c->priv_level) < 0) return -1;
         break;
       default:
         return xml_err_attr_not_allowed(t, a);
       }
     }
+    userlist_free_attrs(t);
     if (!c->ip) return xml_err_attr_undefined(t, USERLIST_A_IP);
     if (!c->cookie) return xml_err_attr_undefined(t, USERLIST_A_VALUE);
     if (!c->expire) return xml_err_attr_undefined(t, USERLIST_A_EXPIRE);
   }
   return 0;
 }
+
+#define MEMBER_OFFSET(f) XOFFSET(struct userlist_member, f)
+
+static const size_t leaf_member_offsets[USERLIST_LAST_TAG] =
+{
+  [USERLIST_T_INST] = MEMBER_OFFSET(inst),
+  [USERLIST_T_INST_EN] = MEMBER_OFFSET(inst_en),
+  [USERLIST_T_INSTSHORT] = MEMBER_OFFSET(instshort),
+  [USERLIST_T_INSTSHORT_EN] = MEMBER_OFFSET(instshort_en),
+  [USERLIST_T_FAC] = MEMBER_OFFSET(fac),
+  [USERLIST_T_FAC_EN] = MEMBER_OFFSET(fac_en),
+  [USERLIST_T_FACSHORT] = MEMBER_OFFSET(facshort),
+  [USERLIST_T_FACSHORT_EN] = MEMBER_OFFSET(facshort_en),
+  [USERLIST_T_EMAIL] = MEMBER_OFFSET(email),
+  [USERLIST_T_HOMEPAGE] = MEMBER_OFFSET(homepage),
+  [USERLIST_T_PHONE] = MEMBER_OFFSET(phone),
+  [USERLIST_T_SURNAME] = MEMBER_OFFSET(surname),
+  [USERLIST_T_SURNAME_EN] = MEMBER_OFFSET(surname_en),
+  [USERLIST_T_MIDDLENAME] = MEMBER_OFFSET(middlename),
+  [USERLIST_T_MIDDLENAME_EN] = MEMBER_OFFSET(middlename_en),
+  [USERLIST_T_GROUP] = MEMBER_OFFSET(group),
+  [USERLIST_T_GROUP_EN] = MEMBER_OFFSET(group_en),
+  [USERLIST_T_OCCUPATION] = MEMBER_OFFSET(occupation),
+  [USERLIST_T_OCCUPATION_EN] = MEMBER_OFFSET(occupation_en),
+  [USERLIST_T_FIRSTNAME] = MEMBER_OFFSET(firstname),
+  [USERLIST_T_FIRSTNAME_EN] = MEMBER_OFFSET(firstname_en),
+};
 
 static int
 parse_members(char const *path, struct xml_tree *q,
@@ -406,8 +509,9 @@ parse_members(char const *path, struct xml_tree *q,
   struct xml_tree *t;
   struct userlist_members *mbs = (struct userlist_members*) q;
   struct userlist_member *mb;
-  struct xml_tree *p;
+  struct xml_tree *p, *saved_next;
   struct xml_attr *a;
+  unsigned char **p_str;
   int role, i;
 
   if (q->tag < USERLIST_T_CONTESTANTS || q->tag > USERLIST_T_GUESTS)
@@ -455,99 +559,28 @@ parse_members(char const *path, struct xml_tree *q,
         return xml_err_attr_not_allowed(t, a);
       }
     }
+    userlist_free_attrs(t);
 
-    for (p = t->first_down; p; p = p->right) {
+    for (p = t->first_down; p; p = saved_next) {
+      saved_next = p->right;
+
+      if (leaf_member_offsets[p->tag] > 0) {
+        p_str = XPDEREF(unsigned char *, mb, leaf_member_offsets[p->tag]);
+        if (xml_leaf_elem(p, p_str, 1, 1) < 0) return -1;
+        xml_unlink_node(p);
+        userlist_free(p);
+        continue;
+      }
+
       switch (p->tag) {
-      case USERLIST_T_FIRSTNAME:
-        if (xml_leaf_elem(p, &mb->firstname, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_FIRSTNAME_EN:
-        if (xml_leaf_elem(p, &mb->firstname_en, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_SURNAME:
-        if (xml_leaf_elem(p, &mb->surname, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_SURNAME_EN:
-        if (xml_leaf_elem(p, &mb->surname_en, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_MIDDLENAME:
-        if (xml_leaf_elem(p, &mb->middlename, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_MIDDLENAME_EN:
-        if (xml_leaf_elem(p, &mb->middlename_en, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_EMAIL:
-        if (xml_leaf_elem(p, &mb->email, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_PHONE:
-        if (xml_leaf_elem(p, &mb->phone, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_HOMEPAGE:
-        if (xml_leaf_elem(p, &mb->homepage, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_OCCUPATION:
-        if (xml_leaf_elem(p, &mb->occupation, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_OCCUPATION_EN:
-        if (xml_leaf_elem(p, &mb->occupation_en, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_INST:
-        if (xml_leaf_elem(p, &mb->inst, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_INST_EN:
-        if (xml_leaf_elem(p, &mb->inst_en, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_INSTSHORT:
-        if (xml_leaf_elem(p, &mb->instshort, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_INSTSHORT_EN:
-        if (xml_leaf_elem(p, &mb->instshort_en, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_FAC:
-        if (xml_leaf_elem(p, &mb->fac, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_FAC_EN:
-        if (xml_leaf_elem(p, &mb->fac_en, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_FACSHORT:
-        if (xml_leaf_elem(p, &mb->facshort, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_FACSHORT_EN:
-        if (xml_leaf_elem(p, &mb->facshort_en, 1, 1) < 0) return -1;
-        break;
       case USERLIST_T_STATUS:
         if (mb->status) return xml_err_elem_redefined(p);
         if (p->first) return xml_err_attrs(p);
         if (p->first_down) return xml_err_nested_elems(p);
-        if (!p->text || !*p->text) break;
-        if (p->text) {
-          if (!strcasecmp(p->text, "schoolchild")) {
-            mb->status = USERLIST_ST_SCHOOL;
-            break;
-          } else if (!strcasecmp(p->text, "student")) {
-            mb->status = USERLIST_ST_STUDENT;
-            break;
-          } else if (!strcasecmp(p->text, "magistrant")) {
-            mb->status = USERLIST_ST_MAG;
-            break;
-          } else if (!strcasecmp(p->text, "phdstudent")) {
-            mb->status = USERLIST_ST_ASP;
-            break;
-          } else if (!strcasecmp(p->text, "teacher")) {
-            mb->status = USERLIST_ST_TEACHER;
-            break;
-          } else if (!strcasecmp(p->text, "professor")) {
-            mb->status = USERLIST_ST_PROF;
-            break;
-          } else if (!strcasecmp(p->text, "scientist")) {
-            mb->status = USERLIST_ST_SCIENTIST;
-            break;
-          } else if (!strcasecmp(p->text, "other")) {
-            mb->status = USERLIST_ST_OTHER;
-            break;
-          }
-        }
-        return xml_err_elem_invalid(p);
+        if (parse_contestant_status_elem(p, &mb->status) < 0) return -1;
+        xml_unlink_node(p);
+        userlist_free(p);
+        break;
       case USERLIST_T_GRADE:
         if (mb->grade) return xml_err_elem_redefined(p);
         if (p->first) return xml_err_attrs(p);
@@ -557,12 +590,8 @@ parse_members(char const *path, struct xml_tree *q,
           return xml_err_elem_invalid(p);
         if (mb->grade < 0 || mb->grade >= 100000)
           return xml_err_elem_invalid(p);
-        break;
-      case USERLIST_T_GROUP:
-        if (xml_leaf_elem(p, &mb->group, 1, 1) < 0) return -1;
-        break;
-      case USERLIST_T_GROUP_EN:
-        if (xml_leaf_elem(p, &mb->group_en, 1, 1) < 0) return -1;
+        xml_unlink_node(p);
+        userlist_free(p);
         break;
       default:
         return xml_err_elem_not_allowed(p);
@@ -615,19 +644,8 @@ parse_contest(char const *path, struct xml_tree *t,
         if (reg->id <= 0) return xml_err_attr_invalid(a);
         break;
       case USERLIST_A_STATUS:
-        if (a->text) {
-          if (!strcasecmp(a->text, "ok")) {
-            reg->status = USERLIST_REG_OK;
-            break;
-          } else if (!strcasecmp(a->text, "pending")) {
-            reg->status = USERLIST_REG_PENDING;
-            break;
-          } else if (!strcasecmp(a->text, "rejected")) {
-            reg->status = USERLIST_REG_REJECTED;
-            break;
-          }
-        }
-        return xml_err_attr_invalid(a);
+        if (parse_reg_status_attr(a, &reg->status) < 0) return -1;
+        break;
       case USERLIST_A_BANNED:
         if (xml_attr_bool(a, &tmp) < 0) return -1;
         if (tmp) reg->flags |= USERLIST_UC_BANNED;
@@ -648,6 +666,7 @@ parse_contest(char const *path, struct xml_tree *t,
         return xml_err_attr_not_allowed(p, a);
       }
     }
+    userlist_free_attrs(p);
     if (reg->id == -1)
       return xml_err_attr_undefined(p, USERLIST_A_ID);
     if (reg->status == -1)
@@ -657,15 +676,40 @@ parse_contest(char const *path, struct xml_tree *t,
   return 0;
 }
 
+#define INFO_OFFSET(f) XOFFSET(struct userlist_user_info, f)
+
+static const size_t leaf_info_offsets[USERLIST_LAST_TAG] =
+{
+  [USERLIST_T_NAME] = INFO_OFFSET(name),
+  [USERLIST_T_INST] = INFO_OFFSET(inst),
+  [USERLIST_T_INST_EN] = INFO_OFFSET(inst_en),
+  [USERLIST_T_INSTSHORT] = INFO_OFFSET(instshort),
+  [USERLIST_T_INSTSHORT_EN] = INFO_OFFSET(instshort_en),
+  [USERLIST_T_FAC] = INFO_OFFSET(fac),
+  [USERLIST_T_FAC_EN] = INFO_OFFSET(fac_en),
+  [USERLIST_T_FACSHORT] = INFO_OFFSET(facshort),
+  [USERLIST_T_FACSHORT_EN] = INFO_OFFSET(facshort_en),
+  [USERLIST_T_HOMEPAGE] = INFO_OFFSET(homepage),
+  [USERLIST_T_PHONE] = INFO_OFFSET(phone),
+  [USERLIST_T_CITY] = INFO_OFFSET(city),
+  [USERLIST_T_CITY_EN] = INFO_OFFSET(city_en),
+  [USERLIST_T_COUNTRY] = INFO_OFFSET(country),
+  [USERLIST_T_COUNTRY_EN] = INFO_OFFSET(country_en),
+  [USERLIST_T_LOCATION] = INFO_OFFSET(location),
+  [USERLIST_T_SPELLING] = INFO_OFFSET(spelling),
+  [USERLIST_T_PRINTER_NAME] = INFO_OFFSET(printer_name),
+  [USERLIST_T_LANGUAGES] = INFO_OFFSET(languages),
+};
+
 static int
 parse_cntsinfo(const char *path, struct xml_tree *node,
                struct userlist_user *usr)
 {
   struct userlist_cntsinfo *ui;
   struct xml_attr *a;
-  struct xml_tree *p;
+  struct xml_tree *p, *saved_next;
   time_t *pt;
-  unsigned char **puc;
+  unsigned char **p_str;
 
   ASSERT(node);
   ASSERT(node->tag == USERLIST_T_CNTSINFO);
@@ -707,76 +751,28 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
       return xml_err_attr_not_allowed(node, a);
     }
   }
+  userlist_free_attrs(node);
 
   if (ui->contest_id <= 0)
     return xml_err_attr_undefined(node, USERLIST_A_CONTEST_ID);
 
   /* parse elements */
-  for (p = node->first_down; p; p = p->right) {
+  for (p = node->first_down; p; p = saved_next) {
+    saved_next = p->right;
+
+    if (leaf_info_offsets[p->tag] > 0) {
+      p_str = XPDEREF(unsigned char *, &ui->i, leaf_info_offsets[p->tag]);
+      if (xml_leaf_elem(p, p_str, 1, 1) < 0) return -1;
+      xml_unlink_node(p);
+      userlist_free(p);
+      continue;
+    }
+
     switch(p->tag) {
-    case USERLIST_T_NAME:
-      puc = &ui->i.name;
-    parse_leaf_elem:
-      if (xml_leaf_elem(p, puc, 1, 1) < 0) return -1;
-      break;
     case USERLIST_T_TEAM_PASSWORD:
       if (ui->i.team_passwd) return xml_err_elem_redefined(p);
       if (!(ui->i.team_passwd = parse_passwd(path, p))) return -1;
       break;
-    case USERLIST_T_INST:
-      puc = &ui->i.inst;
-      goto parse_leaf_elem;
-    case USERLIST_T_INST_EN:
-      puc = &ui->i.inst_en;
-      goto parse_leaf_elem;
-    case USERLIST_T_INSTSHORT:
-      puc = &ui->i.instshort;
-      goto parse_leaf_elem;
-    case USERLIST_T_INSTSHORT_EN:
-      puc = &ui->i.instshort_en;
-      goto parse_leaf_elem;
-    case USERLIST_T_FAC:
-      puc = &ui->i.fac;
-      goto parse_leaf_elem;
-    case USERLIST_T_FAC_EN:
-      puc = &ui->i.fac_en;
-      goto parse_leaf_elem;
-    case USERLIST_T_FACSHORT:
-      puc = &ui->i.facshort;
-      goto parse_leaf_elem;
-    case USERLIST_T_FACSHORT_EN:
-      puc = &ui->i.facshort_en;
-      goto parse_leaf_elem;
-    case USERLIST_T_HOMEPAGE:
-      puc = &ui->i.homepage;
-      goto parse_leaf_elem;
-    case USERLIST_T_CITY:
-      puc = &ui->i.city;
-      goto parse_leaf_elem;
-    case USERLIST_T_CITY_EN:
-      puc = &ui->i.city_en;
-      goto parse_leaf_elem;
-    case USERLIST_T_COUNTRY:
-      puc = &ui->i.country;
-      goto parse_leaf_elem;
-    case USERLIST_T_COUNTRY_EN:
-      puc = &ui->i.country_en;
-      goto parse_leaf_elem;
-    case USERLIST_T_LOCATION:
-      puc = &ui->i.location;
-      goto parse_leaf_elem;
-    case USERLIST_T_SPELLING:
-      puc = &ui->i.spelling;
-      goto parse_leaf_elem;
-    case USERLIST_T_PRINTER_NAME:
-      puc = &ui->i.printer_name;
-      goto parse_leaf_elem;
-    case USERLIST_T_LANGUAGES:
-      puc = &ui->i.languages;
-      goto parse_leaf_elem;
-    case USERLIST_T_PHONE:
-      puc = &ui->i.phone;
-      goto parse_leaf_elem;
     case USERLIST_T_CONTESTANTS:
     case USERLIST_T_RESERVES:
     case USERLIST_T_COACHES:
@@ -822,7 +818,8 @@ static int
 do_parse_user(char const *path, struct userlist_user *usr)
 {
   struct xml_attr *a;
-  struct xml_tree *t;
+  struct xml_tree *t, *saved_next;
+  unsigned char **p_str;
 
   xfree(usr->b.text); usr->b.text = 0;
 
@@ -890,10 +887,21 @@ do_parse_user(char const *path, struct userlist_user *usr)
       return xml_err_attr_not_allowed(&usr->b, a);
     }
   }
+  userlist_free_attrs(&usr->b);
   if (usr->id == -1)
     return xml_err_attr_undefined(&usr->b, USERLIST_A_ID);
 
-  for (t = usr->b.first_down; t; t = t->right) {
+  for (t = usr->b.first_down; t; t = saved_next) {
+    saved_next = t->right;
+
+    if (leaf_info_offsets[t->tag] > 0) {
+      p_str = XPDEREF(unsigned char *, &usr->i, leaf_info_offsets[t->tag]);
+      if (xml_leaf_elem(t, p_str, 1, 1) < 0) return -1;
+      xml_unlink_node(t);
+      userlist_free(t);
+      continue;
+    }
+
     switch (t->tag) {
     case USERLIST_T_LOGIN:
       if (usr->login) return xml_err_elem_redefined(t);
@@ -905,10 +913,8 @@ do_parse_user(char const *path, struct userlist_user *usr)
         if (xml_attr_bool(a, &usr->show_login) < 0) return -1;
       }
       usr->login = t->text; t->text = 0;
-      break;
-    case USERLIST_T_NAME:
-      if (xml_leaf_elem(t, &usr->i.name, 1, 1) < 0) return -1;
-      if (!usr->i.name) usr->i.name = xstrdup("");
+      xml_unlink_node(t);
+      userlist_free(t);
       break;
     case USERLIST_T_PASSWORD:
       if (usr->register_passwd) return xml_err_elem_redefined(t);
@@ -928,68 +934,18 @@ do_parse_user(char const *path, struct userlist_user *usr)
         if (xml_attr_bool(a, &usr->show_email) < 0) return -1;
       }
       usr->email = t->text; t->text = 0;
+      xml_unlink_node(t);
+      userlist_free(t);
       break;
     case USERLIST_T_COOKIES:
       if (usr->cookies) return xml_err_elem_redefined(t);
       usr->cookies = t;
       if (parse_cookies(path, t, usr) < 0) return -1;
       break;
-    case USERLIST_T_INST:
-      if (xml_leaf_elem(t, &usr->i.inst, 1, 1) < 0) return -1;
-      break;
-    case USERLIST_T_INST_EN:
-      if (xml_leaf_elem(t, &usr->i.inst_en, 1, 1) < 0) return -1;
-      break;
-    case USERLIST_T_INSTSHORT:
-      if (xml_leaf_elem(t, &usr->i.instshort, 1, 1) < 0) return -1;
-      break;
-    case USERLIST_T_INSTSHORT_EN:
-      if (xml_leaf_elem(t, &usr->i.instshort_en, 1, 1) < 0) return -1;
-      break;
-    case USERLIST_T_FAC:
-      if (xml_leaf_elem(t, &usr->i.fac, 1, 1) < 0) return -1;
-      break;
-    case USERLIST_T_FAC_EN:
-      if (xml_leaf_elem(t, &usr->i.fac_en, 1, 1) < 0) return -1;
-      break;
-    case USERLIST_T_FACSHORT:
-      if (xml_leaf_elem(t, &usr->i.facshort, 1, 1) < 0) return -1;
-      break;
-    case USERLIST_T_FACSHORT_EN:
-      if (xml_leaf_elem(t, &usr->i.facshort_en, 1, 1) < 0) return -1;
-      break;
-    case USERLIST_T_CITY:
-      if (xml_leaf_elem(t, &usr->i.city, 1, 1) < 0) return -1;
-      break;
-    case USERLIST_T_CITY_EN:
-      if (xml_leaf_elem(t, &usr->i.city_en, 1, 1) < 0) return -1;
-      break;
-    case USERLIST_T_COUNTRY:
-      if (xml_leaf_elem(t, &usr->i.country, 1, 1) < 0) return -1;
-      break;
-    case USERLIST_T_COUNTRY_EN:
-      if (xml_leaf_elem(t, &usr->i.country_en, 1, 1) < 0) return -1;
-      break;
-    case USERLIST_T_LOCATION:
-      if (xml_leaf_elem(t, &usr->i.location, 1, 1) < 0) return -1;
-      break;
-    case USERLIST_T_SPELLING:
-      if (xml_leaf_elem(t, &usr->i.spelling, 1, 1) < 0) return -1;
-      break;
-    case USERLIST_T_PRINTER_NAME:
-      if (xml_leaf_elem(t, &usr->i.printer_name, 1, 1) < 0) return -1;
-      break;
-    case USERLIST_T_LANGUAGES:
-      if (xml_leaf_elem(t, &usr->i.languages, 1, 1) < 0) return -1;
-      break;
     case USERLIST_T_EXTRA1:
       if (xml_leaf_elem(t, &usr->extra1, 1, 1) < 0) return -1;
-      break;
-    case USERLIST_T_PHONE:
-      if (xml_leaf_elem(t, &usr->i.phone, 1, 1) < 0) return -1;
-      break;
-    case USERLIST_T_HOMEPAGE:
-      if (xml_leaf_elem(t, &usr->i.homepage, 1, 1) < 0) return -1;
+      xml_unlink_node(t);
+      userlist_free(t);
       break;
     case USERLIST_T_CONTESTS:
       if (parse_contest(path, t, usr) < 0) return -1;
@@ -1049,6 +1005,7 @@ do_parse_userlist(char const *path, struct userlist_list *lst)
   }
   xfree(lst->b.text); lst->b.text = 0;
   if (!lst->member_serial) lst->member_serial = 1;
+  userlist_free_attrs(&lst->b);
 
   for (t = lst->b.first_down; t; t = t->right) {
     if (t->tag != USERLIST_T_USER)
@@ -1069,8 +1026,7 @@ do_parse_userlist(char const *path, struct userlist_list *lst)
   for (u = (struct userlist_user*) lst->b.first_down; u;
        u = (struct userlist_user*) u->b.right) {
     if (lst->user_map[u->id]) {
-      err("%s:%d:%d: duplicated user id %d", path, u->b.line, u->b.column,
-          u->id);
+      xml_err(&u->b, "duplicated user id %d", u->id);
       return -1;
     }
     lst->user_map[u->id] = u;
@@ -1092,7 +1048,7 @@ userlist_parse_user_str(char const *str)
   tree = xml_build_tree_str(str, &userlist_parse_spec);
   if (!tree) goto failed;
   if (tree->tag != USERLIST_T_USER) {
-    err("top-level tag must be <user>");
+    xml_err_top_level(tree, USERLIST_T_USER);
     goto failed;
   }
   user = (struct userlist_user*) tree;
@@ -1116,7 +1072,7 @@ userlist_parse_contests_str(unsigned char const *str)
   tree = xml_build_tree_str(str, &userlist_parse_spec);
   if (!tree) return 0;
   if (tree->tag != USERLIST_T_CONTESTS) {
-    err("top-level tag must be <contests>");
+    xml_err_top_level(tree, USERLIST_T_CONTESTS);
     xml_tree_free(tree, &userlist_parse_spec);
     return 0;
   }
@@ -1140,8 +1096,7 @@ userlist_parse(char const *path)
   tree = xml_build_tree(path, &userlist_parse_spec);
   if (!tree) goto failed;
   if (tree->tag != USERLIST_T_USERLIST) {
-    err("%s:%d:%d: top-level tag must be <userlist>",
-        path, tree->line, tree->column);
+    xml_err_top_level(tree, USERLIST_T_USERLIST);
     goto failed;
   }
   lst = (struct userlist_list *) tree;
@@ -1166,8 +1121,7 @@ userlist_parse_str(unsigned char const *str)
   tree = xml_build_tree_str(str, &userlist_parse_spec);
   if (!tree) goto failed;
   if (tree->tag != USERLIST_T_USERLIST) {
-    err("%s:%d:%d: top-level tag must be <userlist>",
-        "", tree->line, tree->column);
+    xml_err_top_level(tree, USERLIST_T_USERLIST);
     goto failed;
   }
   lst = (struct userlist_list *) tree;
@@ -1260,6 +1214,8 @@ static void
 unparse_member(struct userlist_member *p, FILE *f)
 {
   unsigned char const *ind = "        ";
+  int i;
+  unsigned char **p_str;
 
   if (!p) return;
   ASSERT(p->b.tag == USERLIST_T_MEMBER);
@@ -1280,12 +1236,14 @@ unparse_member(struct userlist_member *p, FILE *f)
             xml_unparse_date(p->last_access_time));
   }
   fprintf(f, ">\n");
-  xml_unparse_text(f, elem_map[USERLIST_T_FIRSTNAME], p->firstname, ind);
-  xml_unparse_text(f, elem_map[USERLIST_T_FIRSTNAME_EN], p->firstname_en, ind);
-  xml_unparse_text(f, elem_map[USERLIST_T_MIDDLENAME], p->middlename, ind);
-  xml_unparse_text(f, elem_map[USERLIST_T_MIDDLENAME_EN], p->middlename_en, ind);
-  xml_unparse_text(f, elem_map[USERLIST_T_SURNAME], p->surname, ind);
-  xml_unparse_text(f, elem_map[USERLIST_T_SURNAME_EN], p->surname_en, ind);
+
+  for (i = 1; i < USERLIST_LAST_TAG; i++) {
+    if (leaf_member_offsets[i] > 0) {
+      p_str = XPDEREF(unsigned char *, p, leaf_member_offsets[i]);
+      xml_unparse_text(f, elem_map[i], *p_str, ind);
+    }
+  }
+
   if (p->status) {
     xml_unparse_text(f, elem_map[USERLIST_T_STATUS], unparse_member_status(p->status),
                       ind);
@@ -1294,20 +1252,6 @@ unparse_member(struct userlist_member *p, FILE *f)
     fprintf(f, "        <%s>%d</%s>\n",
             elem_map[USERLIST_T_GRADE], p->grade, elem_map[USERLIST_T_GRADE]);
   }
-  xml_unparse_text(f, elem_map[USERLIST_T_GROUP], p->group, ind);
-  xml_unparse_text(f, elem_map[USERLIST_T_GROUP_EN], p->group_en, ind);
-  xml_unparse_text(f, elem_map[USERLIST_T_OCCUPATION], p->occupation, ind);
-  xml_unparse_text(f, elem_map[USERLIST_T_OCCUPATION_EN], p->occupation_en, ind);
-  xml_unparse_text(f, elem_map[USERLIST_T_HOMEPAGE], p->homepage, ind);
-  xml_unparse_text(f, elem_map[USERLIST_T_PHONE], p->phone, ind);
-  xml_unparse_text(f, elem_map[USERLIST_T_INST], p->inst, ind);
-  xml_unparse_text(f, elem_map[USERLIST_T_INST_EN], p->inst_en, ind);
-  xml_unparse_text(f, elem_map[USERLIST_T_INSTSHORT], p->instshort, ind);
-  xml_unparse_text(f, elem_map[USERLIST_T_INSTSHORT_EN], p->instshort_en, ind);
-  xml_unparse_text(f, elem_map[USERLIST_T_FAC], p->fac, ind);
-  xml_unparse_text(f, elem_map[USERLIST_T_FAC_EN], p->fac_en, ind);
-  xml_unparse_text(f, elem_map[USERLIST_T_FACSHORT], p->facshort, ind);  
-  xml_unparse_text(f, elem_map[USERLIST_T_FACSHORT_EN], p->facshort_en, ind);  
   fprintf(f, "      </%s>\n", elem_map[USERLIST_T_MEMBER]);
 }
 static void
@@ -1398,6 +1342,8 @@ unparse_cntsinfo(struct userlist_cntsinfo *p, FILE *f)
 {
   unsigned char attr_str[256];
   const unsigned char *sp1 = "      ";
+  int i;
+  unsigned char **p_str;
 
   if (!p) return;
   fprintf(f, "    <%s %s=\"%d\"",
@@ -1425,8 +1371,11 @@ unparse_cntsinfo(struct userlist_cntsinfo *p, FILE *f)
   }
   fprintf(f, ">\n");
 
-  if (p->i.name && *p->i.name) {
-    xml_unparse_text(f, elem_map[USERLIST_T_NAME], p->i.name, sp1);
+  for (i = 1; i < USERLIST_LAST_TAG; i++) {
+    if (leaf_info_offsets[i] > 0) {
+      p_str = XPDEREF(unsigned char *, &p->i, leaf_info_offsets[i]);
+      xml_unparse_text(f, elem_map[i], *p_str, sp1);
+    }
   }
 
   if (p->i.team_passwd) {
@@ -1436,25 +1385,6 @@ unparse_cntsinfo(struct userlist_cntsinfo *p, FILE *f)
     unparse_attributed_elem(f, USERLIST_T_TEAM_PASSWORD,
                             p->i.team_passwd->b.text, attr_str, sp1);
   }
-
-  xml_unparse_text(f, elem_map[USERLIST_T_INST], p->i.inst, sp1);
-  xml_unparse_text(f, elem_map[USERLIST_T_INST_EN], p->i.inst_en, sp1);
-  xml_unparse_text(f, elem_map[USERLIST_T_INSTSHORT], p->i.instshort, sp1);
-  xml_unparse_text(f, elem_map[USERLIST_T_INSTSHORT_EN], p->i.instshort_en, sp1);
-  xml_unparse_text(f, elem_map[USERLIST_T_FAC], p->i.fac, sp1);
-  xml_unparse_text(f, elem_map[USERLIST_T_FAC_EN], p->i.fac_en, sp1);
-  xml_unparse_text(f, elem_map[USERLIST_T_FACSHORT], p->i.facshort, sp1);
-  xml_unparse_text(f, elem_map[USERLIST_T_FACSHORT_EN], p->i.facshort_en, sp1);
-  xml_unparse_text(f, elem_map[USERLIST_T_HOMEPAGE], p->i.homepage, sp1);
-  xml_unparse_text(f, elem_map[USERLIST_T_PHONE], p->i.phone, sp1);
-  xml_unparse_text(f, elem_map[USERLIST_T_CITY], p->i.city, sp1);
-  xml_unparse_text(f, elem_map[USERLIST_T_CITY_EN], p->i.city_en, sp1);
-  xml_unparse_text(f, elem_map[USERLIST_T_COUNTRY], p->i.country, sp1);
-  xml_unparse_text(f, elem_map[USERLIST_T_COUNTRY_EN], p->i.country_en, sp1);
-  xml_unparse_text(f, elem_map[USERLIST_T_LOCATION], p->i.location, sp1);
-  xml_unparse_text(f, elem_map[USERLIST_T_SPELLING], p->i.spelling, sp1);
-  xml_unparse_text(f, elem_map[USERLIST_T_PRINTER_NAME], p->i.printer_name, sp1);
-  xml_unparse_text(f, elem_map[USERLIST_T_LANGUAGES], p->i.languages, sp1);
 
   unparse_members(p->i.members, f);
 
