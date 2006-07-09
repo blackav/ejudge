@@ -68,6 +68,8 @@ xml_build_tree_file(FILE *f, const struct xml_parse_spec *spec);
 
 struct xml_tree *
 xml_tree_free(struct xml_tree *tree, const struct xml_parse_spec *spec);
+void xml_tree_free_attrs(struct xml_tree *tree,
+                         const struct xml_parse_spec *spec);
 
 void
 xml_unparse_tree(FILE *out,

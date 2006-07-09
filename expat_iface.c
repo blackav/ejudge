@@ -695,16 +695,13 @@ xml_build_tree_file(FILE *f, const struct xml_parse_spec *spec)
   return 0;
 }
 
-struct xml_tree *
-xml_tree_free(struct xml_tree *tree, const struct xml_parse_spec *spec)
+void
+xml_tree_free_attrs(struct xml_tree *tree,
+                    const struct xml_parse_spec *spec)
 {
-  struct xml_tree *d, *t;
   struct xml_attr *a, *b;
 
-  for (d = tree->first_down; d; d = t) {
-    t = d->right;
-    xml_tree_free(d, spec);
-  }
+  if (!tree) return;
   for (a = tree->first; a; a = b) {
     b = a->next;
     if (spec && spec->default_attr > 0 && spec->default_attr == a->tag)
@@ -713,6 +710,19 @@ xml_tree_free(struct xml_tree *tree, const struct xml_parse_spec *spec)
     xfree(a->text);
     xfree(a);
   }
+  tree->first = tree->last = NULL;
+}
+
+struct xml_tree *
+xml_tree_free(struct xml_tree *tree, const struct xml_parse_spec *spec)
+{
+  struct xml_tree *d, *t;
+
+  for (d = tree->first_down; d; d = t) {
+    t = d->right;
+    xml_tree_free(d, spec);
+  }
+  xml_tree_free_attrs(tree, spec);
   if (spec && spec->default_elem > 0 && spec->default_elem == tree->tag)
     xfree(tree->name[0]);
   if (spec && spec->elem_free) (*spec->elem_free)(tree);
