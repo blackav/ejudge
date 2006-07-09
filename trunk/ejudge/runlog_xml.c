@@ -157,37 +157,6 @@ static struct xml_parse_spec runlog_parse_spec =
 };
 
 static int
-check_empty_text(struct xml_tree *xt)
-{
-  const unsigned char *s;
-
-  if (!xt) return 0;
-  if (!xt->text) return 0;
-  s = xt->text;
-  while (*s && isspace(*s)) s++;
-  if (!*s) return 0;
-  xfree(xt->text);
-  xt->text = 0;
-  return -1;
-}
-
-static int
-parse_ip(const unsigned char *str, ej_ip_t *pip)
-{
-  int b1, b2, b3, b4;
-  int n = 0;
-
-  if (sscanf(str, "%d.%d.%d.%d %n", &b1, &b2, &b3, &b4, &n) != 4
-      || str[n]
-      || b1 < 0 || b1 > 255
-      || b2 < 0 || b2 > 255
-      || b3 < 0 || b3 > 255
-      || b4 < 0 || b4 > 255) return -1;
-  *pip = (b1 << 24) | (b2 << 16) | (b3 << 8) | b4;
-  return 0;
-}
-
-static int
 parse_sha1(const unsigned char *str, ruint32_t *psha1)
 {
   const unsigned char *s = str;
@@ -229,21 +198,6 @@ parse_status(const unsigned char *str)
 }
 
 static int
-parse_bool(const unsigned char *str)
-{
-  if (!str) return -1;
-  if (!strcasecmp(str, "true")
-      || !strcasecmp(str, "yes")
-      || !strcasecmp(str, "1"))
-    return 1;
-  if (!strcasecmp(str, "false")
-      || !strcasecmp(str, "no")
-      || !strcasecmp(str, "0"))
-    return 0;
-  return -1;
-}
-
-static int
 process_run_elements(struct xml_tree *xt)
 {
   struct run_element *xr;
@@ -254,21 +208,9 @@ process_run_elements(struct xml_tree *xt)
   size_t sv;
 
   while (xt) {
-    if (xt->tag != RUNLOG_T_RUN) {
-      err("%d:%d: element <%s> expected",
-          xt->line, xt->column, elem_map[RUNLOG_T_RUN]);
-      return -1;
-    }
-    if (check_empty_text(xt) < 0) {
-      err("%d:%d: element <%s> cannot contain text",
-          xt->line, xt->column, elem_map[RUNLOG_T_RUN]);
-      return -1;
-    }
-    if (xt->first_down) {
-      err("%d:%d: element <%s> cannot contain nested elements",
-          xt->line, xt->column, elem_map[RUNLOG_T_RUN]);
-      return -1;
-    }
+    if (xt->tag != RUNLOG_T_RUN) return xml_err_top_level(xt, RUNLOG_T_RUN);
+    if (xml_empty_text(xt) < 0) return -1;
+    if (xt->first_down) return xml_err_nested_elems(xt);
     xr = (struct run_element*) xt;
 
     /* set default values */
@@ -300,8 +242,8 @@ process_run_elements(struct xml_tree *xt)
         xr->r.size = sv;
         break;
       case RUNLOG_A_IP:
-        if (!xa->text) goto empty_attr_value;
-        if (parse_ip(xa->text, &xr->r.ip) < 0) goto invalid_attr_value;
+        if (xml_parse_ip("<string>", xa->line, xa->column,
+                         xa->text, &xr->r.ip) < 0) return -1;
         break;
       case RUNLOG_A_SHA1:
         if (!xa->text) goto empty_attr_value;
@@ -377,14 +319,11 @@ process_run_elements(struct xml_tree *xt)
         xr->r.test = iv;
         break;
       case RUNLOG_A_AUTHORITATIVE:
-        if (!xa->text) goto empty_attr_value;
-        if ((iv = parse_bool(xa->text)) < 0) goto invalid_attr_value;
+        if (xml_attr_bool(xa, &iv) < 0) return -1;
         xr->r.is_imported = !iv;
         break;
       case RUNLOG_A_READONLY:
-        if (!xa->text) goto empty_attr_value;
-        if ((iv = parse_bool(xa->text)) < 0) goto invalid_attr_value;
-        xr->r.is_readonly = iv;
+        if (xml_attr_bool_byte(xa, &xr->r.is_readonly) < 0) return -1;
         break;
       case RUNLOG_A_NSEC:
         if (!xa->text) goto empty_attr_value;
@@ -395,56 +334,30 @@ process_run_elements(struct xml_tree *xt)
         xr->r.nsec = lv;
         break;
       default:
-        err("%d:%d: invalid attribute \"%s\" in element <%s>",
-            xt->line, xt->column, attr_map[xa->tag],
-            elem_map[RUNLOG_T_RUN]);
-        return -1;
+        return xml_err_attr_not_allowed(xt, xa);
       }
     }
 
-    if (xr->r.submission < 0) {
-      err("%d:%d: attribute \"%s\" must be defined",
-          xt->line, xt->column, attr_map[RUNLOG_A_RUN_ID]);
-      return -1;
-    }
-    if (xr->r.timestamp == (time_t) -1) {
-      err("%d:%d: attribute \"%s\" must be defined",
-          xt->line, xt->column, attr_map[RUNLOG_A_TIME]);
-      return -1;
-    }
-    if (!xr->r.team) {
-      err("%d:%d: attribute \"%s\" must be defined",
-          xt->line, xt->column, attr_map[RUNLOG_A_USER_ID]);
-      return -1;
-    }
-    if (!xr->r.problem) {
-      err("%d:%d: attribute \"%s\" must be defined",
-          xt->line, xt->column, attr_map[RUNLOG_A_PROB_ID]);
-      return -1;
-    }
-    if (!xr->r.language) {
-      err("%d:%d: attribute \"%s\" must be defined",
-          xt->line, xt->column, attr_map[RUNLOG_A_LANG_ID]);
-      return -1;
-    }
-    if (xr->r.status == 255) {
-      err("%d:%d: attribute \"%s\" must be defined",
-          xt->line, xt->column, attr_map[RUNLOG_A_STATUS]);
-      return -1;
-    }
+    if (xr->r.submission < 0)
+      return xml_err_attr_undefined(xt, RUNLOG_A_RUN_ID);
+    if (xr->r.timestamp == (time_t) -1)
+      return xml_err_attr_undefined(xt, RUNLOG_A_TIME);
+    if (!xr->r.team)
+      return xml_err_attr_undefined(xt, RUNLOG_A_USER_ID);
+    if (!xr->r.problem)
+      return xml_err_attr_undefined(xt, RUNLOG_A_PROB_ID);
+    if (!xr->r.language)
+      return xml_err_attr_undefined(xt, RUNLOG_A_LANG_ID);
+    if (xr->r.status == 255)
+      return xml_err_attr_undefined(xt, RUNLOG_A_STATUS);
 
     xt = xt->right;
   }
   return 0;
 
  empty_attr_value:
-  err("%d:%d: attribute \"%s\" value is empty",
-      xa->line, xa->column, attr_map[xa->tag]);
-  return -1;
  invalid_attr_value:
-  err("%d:%d: attribute \"%s\" value is invalid",
-      xa->line, xa->column, attr_map[xa->tag]);
-  return -1;
+  return xml_err_attr_invalid(xa);
 }
 
 static int
@@ -454,16 +367,9 @@ process_runlog_element(struct xml_tree *xt, struct xml_tree **ptruns)
   struct xml_tree *truns = 0;
 
   if (ptruns) *ptruns = 0;
-  if (xt->tag != RUNLOG_T_RUNLOG) {
-    err("%d:%d: top-level element must be <%s>",
-        xt->line, xt->column, elem_map[RUNLOG_T_RUNLOG]);
-    return -1;
-  }
-  if (check_empty_text(xt) < 0) {
-    err("%d:%d: element <%s> cannot contain text",
-        xt->line, xt->column, elem_map[RUNLOG_T_RUNLOG]);
-    return -1;
-  }
+  if (xt->tag != RUNLOG_T_RUNLOG)
+    return xml_err_top_level(xt, RUNLOG_T_RUNLOG);
+  if (xml_empty_text(xt) < 0) return -1;
   /*
   if (xt->first) {
     err("%d:%d: element <%s> cannot have attributes",
@@ -474,23 +380,11 @@ process_runlog_element(struct xml_tree *xt, struct xml_tree **ptruns)
 
   for (tt = xt->first_down; tt; tt = tt->right) {
     if (tt->tag != RUNLOG_T_RUNS) continue;
-    if (truns) {
-      err("%d:%d: duplicated element <%s>",
-          xt->line, xt->column, elem_map[RUNLOG_T_RUNS]);
-      return -1;
-    }
+    if (truns) return xml_err_elem_redefined(xt);
     truns = tt;
   }
-  if (!truns) {
-    err("%d:%d: element <%s> is missing",
-        xt->line, xt->column, elem_map[RUNLOG_T_RUNS]);
-    return -1;
-  }
-  if (check_empty_text(truns) < 0) {
-    err("%d:%d: element <%s> cannot contain text",
-        truns->line, truns->column, elem_map[RUNLOG_T_RUNS]);
-    return -1;
-  }
+  if (!truns) return xml_err_elem_undefined(xt, RUNLOG_T_RUNS);
+  if (xml_empty_text(truns) < 0) return -1;
   truns = truns->first_down;
 
   if (process_run_elements(truns) < 0)
@@ -528,7 +422,7 @@ collect_runlog(struct xml_tree *xt, size_t *psize,
     j = xr->r.submission;
     ASSERT(j >= 0 && j <= max_run_id);
     if (ee[j].status != RUN_EMPTY) {
-      err("%d:%d: duplicated run_id %d", xx->line, xx->column, j);
+      xml_err(xx, "duplicated run_id %d", j);
       return -1;
     }
     memcpy(&ee[j], &xr->r, sizeof(ee[0]));
@@ -551,6 +445,10 @@ parse_runlog_xml(const unsigned char *str,
 {
   struct xml_tree *xt = 0;
   struct xml_tree *truns = 0;
+
+  xml_err_path = "<string>";
+  xml_err_elem_names = elem_map;
+  xml_err_attr_names = attr_map;
 
   xt = xml_build_tree_str(str, &runlog_parse_spec);
   memset(phead, 0, sizeof(*phead));

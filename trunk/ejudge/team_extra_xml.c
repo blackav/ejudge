@@ -95,40 +95,16 @@ static struct xml_parse_spec team_extra_parse_spec =
 };
 
 static int
-check_empty_text(struct xml_tree *xt)
-{
-  const unsigned char *s;
-
-  if (!xt) return 0;
-  if (!xt->text) return 0;
-  s = xt->text;
-  while (*s && isspace(*s)) s++;
-  if (!*s) return 0;
-  return -1;
-}
-
-static int
 parse_viewed_clars(struct xml_tree *t, struct team_extra *te, int *pv_flag)
 {
   int n, x, max_x, r;
   unsigned char *s;
 
-  if (*pv_flag) {
-    err("%d:%d: duplicated element <%s>", t->line, t->column,elem_map[t->tag]);
-    return -1;
-  }
+  if (*pv_flag) return xml_err_elem_redefined(t);
   *pv_flag = 1;
 
-  if (t->first) {
-    err("%d:%d: element <%s> do not have attributes",
-        t->line, t->column, elem_map[t->tag]);
-    return -1;
-  }
-  if (t->first_down) {
-    err("%d:%d: element <%s> do not have nested elements",
-        t->line, t->column, elem_map[t->tag]);
-    return -1;
-  }
+  if (t->first) return xml_err_attrs(t);
+  if (t->first_down) return xml_err_nested_elems(t);
   if (!t->text) t->text = xstrdup("");
 
   max_x = -1;
@@ -137,11 +113,8 @@ parse_viewed_clars(struct xml_tree *t, struct team_extra *te, int *pv_flag)
     x = n = 0;
     r = sscanf(s, "%d%n", &x, &n);
     if (r == EOF) break;
-    if (r != 1 || x < 0 || x > CLARLOG_MAX_CLAR_ID) {
-      err("%d:%d: value of element <%s> is invalid",
-          t->line, t->column, elem_map[t->tag]);
-      return -1;
-    }
+    if (r != 1 || x < 0 || x > CLARLOG_MAX_CLAR_ID)
+      return xml_err_elem_invalid(t);
     s += n;
     if (x > max_x) max_x = x;
   }
@@ -158,8 +131,7 @@ parse_viewed_clars(struct xml_tree *t, struct team_extra *te, int *pv_flag)
     s += n;
     ASSERT(x >= 0 && x < te->clar_map_size);
     if (te->clar_map[x / BPE] & (1UL << x % BPE)) {
-      err("%d:%d: duplicated clar %d in element <%s>",
-          t->line, t->column, x, elem_map[t->tag]);
+      xml_err(t, "duplicated clar %d in element <%s>", x, elem_map[t->tag]);
       return -1;
     }
     te->clar_map[x / BPE] |= (1UL << x % BPE);
@@ -185,10 +157,7 @@ parse_warnings(struct xml_tree *t, struct team_extra *te, int *pw_flag)
   unsigned char **ptxt;
   int x;
 
-  if (*pw_flag) {
-    err("%d:%d: duplicated element <%s>", t->line, t->column,elem_map[t->tag]);
-    return -1;
-  }
+  if (*pw_flag) return xml_err_elem_redefined(t);
   *pw_flag = 1;
 
   if (!te->warn_a) {
@@ -196,28 +165,12 @@ parse_warnings(struct xml_tree *t, struct team_extra *te, int *pw_flag)
     XCALLOC(te->warns, te->warn_a);
   }
 
-  if (t->first) {
-    err("%d:%d: element <%s> do not have attributes",
-        t->line, t->column, elem_map[t->tag]);
-    return -1;
-  }
-  if (check_empty_text(t) < 0) {
-    err("%d:%d: element <%s> must not have text",
-        t->line, t->column, elem_map[t->tag]);
-    return -1;
-  }
+  if (t->first) return xml_err_attrs(t);
+  if (xml_empty_text(t) < 0) return -1;
 
   for (wt = t->first_down; wt; wt = wt->right) {
-    if (wt->tag != TE_T_WARNING) {
-      err("%d:%d: element <%s> is invalid in element <%s>",
-          wt->line, wt->column, elem_map[wt->tag], elem_map[t->tag]);
-      return -1;
-    }
-    if (check_empty_text(wt) < 0) {
-      err("%d:%d: element <%s> must not have text",
-          wt->line, wt->column, elem_map[wt->tag]);
-      return -1;
-    }
+    if (wt->tag != TE_T_WARNING) return xml_err_elem_not_allowed(wt);
+    if (xml_empty_text(wt) < 0) return -1;
 
     if (te->warn_u == te->warn_a) {
       te->warn_a *= 2;
@@ -231,11 +184,8 @@ parse_warnings(struct xml_tree *t, struct team_extra *te, int *pw_flag)
       switch (a->tag) {
       case TE_A_ISSUER_ID:
         if (xml_parse_int(0, a->line, a->column, a->text, &x) < 0) return -1;
-        if (x <= 0 || x > RUNLOG_MAX_TEAM_ID) {
-          err("%d:%d: value of attribute \"%s\" is invalid",
-              a->line, a->column, attr_map[a->tag]);
-          return -1;
-        }
+        if (x <= 0 || x > RUNLOG_MAX_TEAM_ID) 
+          return xml_err_attr_invalid(a);
         cur_warn->issuer_id = x;
         break;
       case TE_A_ISSUER_IP:
@@ -247,27 +197,16 @@ parse_warnings(struct xml_tree *t, struct team_extra *te, int *pw_flag)
                            &cur_warn->date) < 0) return -1;
         break;
       default:
-        err("%d:%d: attribute \"%s\" is invalid in element <%s>",
-            a->line, a->column, attr_map[a->tag], elem_map[wt->tag]);
-        return -1;
+        return xml_err_attr_not_allowed(wt, a);
       }
     }
 
-    if (!cur_warn->issuer_id) {
-      err("%d:%d: attribute \"%s\" is not specified",
-          wt->line, wt->column, attr_map[TE_A_ISSUER_ID]);
-      return -1;
-    }
-    if (!cur_warn->issuer_ip) {
-      err("%d:%d: attribute \"%s\" is not specified",
-          wt->line, wt->column, attr_map[TE_A_ISSUER_IP]);
-      return -1;
-    }
-    if (!cur_warn->date) {
-      err("%d:%d: attribute \"%s\" is not specified",
-          wt->line, wt->column, attr_map[TE_A_DATE]);
-      return -1;
-    }
+    if (!cur_warn->issuer_id)
+      return xml_err_attr_undefined(wt, TE_A_ISSUER_ID);
+    if (!cur_warn->issuer_ip)
+      return xml_err_attr_undefined(wt, TE_A_ISSUER_IP);
+    if (!cur_warn->date)
+      return xml_err_attr_undefined(wt, TE_A_DATE);
 
     for (tt = wt->first_down; tt; tt = tt->right) {
       switch (tt->tag) {
@@ -278,28 +217,14 @@ parse_warnings(struct xml_tree *t, struct team_extra *te, int *pw_flag)
         case TE_T_TEXT:    ptxt = &cur_warn->text;    break;
         case TE_T_COMMENT: ptxt = &cur_warn->comment; break;
         }
-        if (tt->first) {
-          err("%d:%d: element <%s> cannot have attributes",
-              tt->line, tt->column, elem_map[tt->tag]);
-          return -1;
-        }
-        if (tt->first_down) {
-          err("%d:%d: element <%s> cannot have nested elements",
-              tt->line, tt->column, elem_map[tt->tag]);
-          return -1;
-        }
-        if (*ptxt) {
-          err("%d:%d: element <%s> cannot be used several times",
-              tt->line, tt->column, elem_map[tt->tag]);
-          return -1;
-        }
+        if (tt->first) return xml_err_attrs(tt);
+        if (tt->first_down) return xml_err_nested_elems(tt);
+        if (*ptxt) return xml_err_elem_redefined(tt);
         *ptxt = tt->text;
         tt->text = 0;
         break;
       default:
-        err("%d:%d: element <%s> is invalid in element <%s>",
-            tt->line, tt->column, elem_map[tt->tag], elem_map[wt->tag]);
-        return -1;
+        return xml_err_elem_not_allowed(tt);
       }
     }
 
@@ -313,30 +238,15 @@ parse_warnings(struct xml_tree *t, struct team_extra *te, int *pw_flag)
 int
 parse_status(struct xml_tree *t, struct team_extra *te, int *ps_flag)
 {
-  if (*ps_flag) {
-    err("%d:%d: duplicated element <%s>", t->line, t->column,elem_map[t->tag]);
-    return -1;
-  }
+  if (*ps_flag) return xml_err_elem_redefined(t);
   *ps_flag = 1;
 
-  if (t->first) {
-    err("%d:%d: element <%s> do not have attributes",
-        t->line, t->column, elem_map[t->tag]);
-    return -1;
-  }
-  if (t->first_down) {
-    err("%d:%d: element <%s> cannot have nested elements",
-        t->line, t->column, elem_map[t->tag]);
-    return -1;
-  }
+  if (t->first) return xml_err_attrs(t);
+  if (t->first_down) return xml_err_nested_elems(t);
   if (!t->text) t->text = xstrdup("");
   if (xml_parse_int(0, t->line, t->column, t->text, &te->status) < 0)
     return -1;
-  if (te->status < 0) {
-    err("%d:%d: invalid value of element <%s>",
-        t->line, t->column, elem_map[t->tag]);
-    return -1;
-  }
+  if (te->status < 0) return xml_err_elem_invalid(t);
   return 0;
 }
 
@@ -348,46 +258,37 @@ team_extra_parse_xml(const unsigned char *path, struct team_extra **pte)
   struct xml_attr *a = 0;
   int user_id = -1, x, n, v_flag = 0, w_flag = 0, s_flag = 0;
 
+  xml_err_path = path;
+  xml_err_elem_names = elem_map;
+  xml_err_attr_names = attr_map;
+
   t = xml_build_tree(path, &team_extra_parse_spec);
   if (!t) return -1;
   XCALLOC(te, 1);
   if (t->tag != TE_T_TEAM_EXTRA) {
-    err("%d:%d: top-level element must be <%s>",
-        t->line, t->column, elem_map[TE_T_TEAM_EXTRA]);
+    xml_err_top_level(t, TE_T_TEAM_EXTRA);
     goto cleanup;
   }
-  if (check_empty_text(t) < 0) {
-    err("%d:%d: element <%s> cannot contain text",
-        t->line, t->column, elem_map[TE_T_TEAM_EXTRA]);
-    goto cleanup;
-  }
+  if (xml_empty_text(t) < 0) goto cleanup;
   for (a = t->first; a; a = a->next) {
     switch (a->tag) {
     case TE_A_USER_ID:
-      if (user_id != -1) {
-        err("%d:%d: duplicated attribute \"%s\"",
-            a->line, a->column, attr_map[a->tag]);
-        goto cleanup;
-      }
       if (!a->text) a->text = xstrdup("");
       x = n = 0;
       if (sscanf(a->text, "%d%n", &x, &n) != 1 || a->text[n]
           || x <= 0 || x > RUNLOG_MAX_TEAM_ID) {
-        err("%d:%d: value of attribute \"%s\" is invalid",
-            a->line, a->column, attr_map[a->tag]);
+        xml_err_attr_invalid(a);
         goto cleanup;
       }
       user_id = x;
       break;
     default:
-      err("%d:%d: attribute \"%s\" is invalid in element <%s>",
-          a->line, a->column, attr_map[a->tag], elem_map[TE_T_TEAM_EXTRA]);
+      xml_err_attr_not_allowed(t, a);
       goto cleanup;
     }
   }
   if (user_id == -1) {
-    err("%d:%d: attribute \"%s\" must be specified",
-        t->line, t->column, attr_map[TE_A_USER_ID]);
+    xml_err_attr_undefined(t, TE_A_USER_ID);
     goto cleanup;
   }
   te->user_id = user_id;
@@ -404,8 +305,7 @@ team_extra_parse_xml(const unsigned char *path, struct team_extra **pte)
       if (parse_status(t2, te, &s_flag) < 0) goto cleanup;
       break;
     default:
-      err("%d:%d: element <%s> is invalid in element <%s>",
-          t2->line, t2->column, elem_map[t2->tag], elem_map[t->tag]);
+      xml_err_elem_not_allowed(t2);
       goto cleanup;
     }
   }

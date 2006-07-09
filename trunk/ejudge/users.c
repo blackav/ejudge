@@ -30,6 +30,7 @@
 #include "misctext.h"
 #include "fileutl.h"
 #include "l10n.h"
+#include "xml_utils.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -158,72 +159,6 @@ static struct xml_parse_spec users_config_parse_spec =
   .attr_free = NULL,
 };
 
-static int
-err_dupl_elem(char const *path, struct xml_tree *t)
-{
-  err("%s:%d:%d: element <%s> may appear only once", path, t->line, t->column,
-      elem_map[t->tag]);
-  return -1;
-}
-static int
-err_attr_not_allowed(char const *path, struct xml_tree *t)
-{
-  err("%s:%d:%d: attributes are not allowed for element <%s>",
-      path, t->line, t->column, elem_map[t->tag]);
-  return -1;
-}
-static int
-err_empty_elem(char const *path, struct xml_tree *t)
-{
-  err("%s:%d:%d: element <%s> is empty",
-      path, t->line, t->column, elem_map[t->tag]);
-  return -1;
-}
-static int
-err_nested_not_allowed(char const *path, struct xml_tree *t)
-{
-  err("%s:%d:%d: nested elements are not allowed for element <%s>",
-      path, t->line, t->column, elem_map[t->tag]);
-  return -1;
-}
-static int
-err_invalid_elem(char const *path, struct xml_tree *tag)
-{
-  err("%s:%d:%d: element <%s> is invalid here", path, tag->line, tag->column,
-      elem_map[tag->tag]);
-  return -1;
-}
-static int
-err_invalid_attr(char const *path, struct xml_attr *a)
-{
-  err("%s:%d:%d: attribute \"%s\" is invalid here", path, a->line, a->column,
-      attr_map[a->tag]);
-  return -1;
-}
-
-static int
-handle_final_tag(char const *path, struct xml_tree *t, unsigned char **ps)
-{
-  if (*ps) return err_dupl_elem(path, t);
-  if (!t->text || !*t->text) return err_empty_elem(path, t);
-  if (t->first_down) return err_nested_not_allowed(path, t);
-  if (t->first) return err_attr_not_allowed(path, t);
-  *ps = t->text; t->text = 0;
-  return 0;
-}
-
-static int
-parse_bool(char const *str)
-{
-  if (!str) return -1;
-  if (!strcasecmp(str, "true")
-      || !strcasecmp(str, "yes")
-      || !strcasecmp(str, "1")) return 1;
-  if (!strcasecmp(str, "false")
-      || !strcasecmp(str, "no")
-      || !strcasecmp(str, "0")) return 0;
-  return -1;
-}
 static struct config_node *
 parse_config(char const *path, const unsigned char *default_config)
 {
@@ -231,8 +166,10 @@ parse_config(char const *path, const unsigned char *default_config)
   struct config_node *cfg = 0;
   struct xml_attr *a;
   struct ip_node *ip;
-  unsigned int b1, b2, b3, b4;
-  int n;
+
+  xml_err_path = path;
+  xml_err_elem_names = elem_map;
+  xml_err_attr_names = attr_map;
 
   if (default_config) {
     tree = xml_build_tree_str(default_config, &users_config_parse_spec);
@@ -242,7 +179,7 @@ parse_config(char const *path, const unsigned char *default_config)
 
   if (!tree) goto failed;
   if (tree->tag != TG_CONFIG) {
-    err("%s: %d: top-level tag must be <users_config>", path, tree->line);
+    xml_err_top_level(tree, TG_CONFIG);
     goto failed;
   }
   cfg = (struct config_node*) tree;
@@ -256,28 +193,18 @@ parse_config(char const *path, const unsigned char *default_config)
     case AT_ENABLE_L10N:
     case AT_L10N:
     case AT_DISABLE_L10N:
-      if (cfg->l10n != -1) {
-        err("%s:%d: attribute \"l10n\" already defined", path, a->line);
-        goto failed;
-      }
-      if ((cfg->l10n = parse_bool(a->text)) < 0) {
-        err("%s:%d: invalid boolean value", path, a->line);
-        goto failed;
-      }
+      if (xml_attr_bool(a, &cfg->l10n) < 0) goto failed;
       if (a->tag == AT_DISABLE_L10N) cfg->l10n = !cfg->l10n;
       break;
     case AT_SHOW_GENERATION_TIME:
-      if ((cfg->show_generation_time = parse_bool(a->text)) < 0) {
-        err("%s:%d: invalid boolean value", path, a->line);
-        goto failed;
-      }
+      if (xml_attr_bool(a, &cfg->show_generation_time) < 0) goto failed;
       break;
     case AT_CHARSET:
       cfg->charset = a->text;
       /* FIXME: check charset for validity */
       break;
     default:
-      err_invalid_attr(path, a);
+      xml_err_attr_not_allowed(&cfg->b, a);
       goto failed;
     }
   }
@@ -286,19 +213,19 @@ parse_config(char const *path, const unsigned char *default_config)
   for (p = cfg->b.first_down; p; p = p->right) {
     switch (p->tag) {
     case TG_SOCKET_PATH:
-      if (handle_final_tag(path, p, &cfg->socket_path) < 0) goto failed;
+      if (xml_leaf_elem(p, &cfg->socket_path, 1, 0) < 0) goto failed;
       break;
     case TG_CONTESTS_DIR:
-      if (handle_final_tag(path, p, &cfg->contests_dir) < 0) goto failed;
+      if (xml_leaf_elem(p, &cfg->contests_dir, 1, 0) < 0) goto failed;
       break;
 
     case TG_L10N_DIR:
-      if (handle_final_tag(path, p, &cfg->l10n_dir) < 0) goto failed;
+      if (xml_leaf_elem(p, &cfg->l10n_dir, 1, 0) < 0) goto failed;
       break;
 
     case TG_ACCESS:
       if (cfg->access) {
-        err("%s:%d: <access> tag may be defined only once", path, p->line);
+        xml_err_elem_redefined(p);
         goto failed;
       }
       cfg->access = (struct access_node*) p;
@@ -312,12 +239,12 @@ parse_config(char const *path, const unsigned char *default_config)
           } else if (!strcasecmp(a->text, "deny")) {
             cfg->access->default_is_allow = 0;
           } else {
-            err("%s:%d: invalid value for attribute", path, a->line);
+            xml_err_attr_invalid(a);
             goto failed;
           }
           break;
         default:
-          err_invalid_attr(path, a);
+          xml_err_attr_not_allowed(p, a);
           goto failed;
         }
       }
@@ -325,57 +252,28 @@ parse_config(char const *path, const unsigned char *default_config)
       /* now check the list of ip addresses */
       for (p2 = p->first_down; p2; p2 = p2->right) {
         if (p2->tag != TG_IP) {
-          err_invalid_elem(path, p2);
+          xml_err_elem_not_allowed(p2);
           goto failed;
         }
         ip = (struct ip_node*) p2;
         ip->allow = -1;
         for (a = ip->b.first; a; a = a->next) {
           if (a->tag != AT_ALLOW && a->tag != AT_DENY) {
-            err_invalid_attr(path, a);
+            xml_err_attr_not_allowed(&ip->b, a);
             goto failed;
           }
-          if (ip->allow != -1) {
-            err("%s:%d:%d: attribute \"allow\" already defined",
-                path, a->line, a->column);
-            goto failed;
-          }
-          if ((ip->allow = parse_bool(a->text)) < 0) {
-            err("%s:%d:%d invalid boolean value",
-                path, a->line, a->column);
-            goto failed;
-          }
+          if (xml_attr_bool(a, &ip->allow) < 0) goto failed;
           if (a->tag == AT_DENY) ip->allow = !ip->allow;
         }
         if (ip->allow == -1) ip->allow = 0;
 
-        n = 0;
-        if (sscanf(ip->b.text, "%u.%u.%u.%u %n", &b1, &b2, &b3, &b4, &n) == 4
-            && !ip->b.text[n]
-            && b1 <= 255 && b2 <= 255 && b3 <= 255 && b4 <= 255) {
-          ip->addr = b1 << 24 | b2 << 16 | b3 << 8 | b4;
-          ip->mask = 0xFFFFFFFF;
-        } else if (sscanf(ip->b.text, "%u.%u.%u. %n", &b1, &b2, &b3, &n) == 3
-                   && !ip->b.text[n] && b1 <= 255 && b2 <= 255 && b3 <= 255) {
-          ip->addr = b1 << 24 | b2 << 16 | b3 << 8;
-          ip->mask = 0xFFFFFF00;
-        } else if (sscanf(ip->b.text, "%u.%u. %n", &b1, &b2, &n) == 2
-                   && !ip->b.text[n] && b1 <= 255 && b2 <= 255) {
-          ip->addr = b1 << 24 | b2 << 16;
-          ip->mask = 0xFFFF0000;
-        } else if (sscanf(ip->b.text, "%u. %n", &b1, &n) == 1
-                   && !ip->b.text[n] && b1 <= 255) {
-          ip->addr = b1 << 24;
-          ip->mask = 0xFF000000;
-        } else {
-          err("%s:%d:%d: invalid IP-address",
-              path, ip->b.line, ip->b.column);
+        if (xml_parse_ip_mask(path, ip->b.line, ip->b.column, ip->b.text,
+                              &ip->addr, &ip->mask) < 0)
           goto failed;
-        }
       }
       break;
     default:
-      err_invalid_elem(path, p);
+      xml_err_elem_not_allowed(p);
       goto failed;
     }
   }
@@ -398,7 +296,7 @@ parse_config(char const *path, const unsigned char *default_config)
   }
 #endif /* EJUDGE_SOCKET_PATH */
   if (!cfg->socket_path) {
-    err("%s: <socket_path> tag must be specified", path);
+    xml_err_elem_undefined(&cfg->b, TG_SOCKET_PATH);
     goto failed;
   }
 #if defined EJUDGE_CONTESTS_DIR
@@ -407,7 +305,7 @@ parse_config(char const *path, const unsigned char *default_config)
   }
 #endif /* EJUDGE_CONTESTS_DIR */
   if (!cfg->contests_dir) {
-    err("%s: <contests_path> tag must be specified", path);
+    xml_err_elem_undefined(&cfg->b, TG_CONTESTS_DIR);
     goto failed;
   }
 
