@@ -1,3 +1,11 @@
+2006-07-06 (r3205) Alexander Chernov  <cher@ispras.ru>
+
+	* main.make: initial revision.
+
+	* uldb_mysql.c: initial revision.
+
+	* Makefile.in: actual compilation commands are moved to main.make.
+
 2006-07-06 (r3202) Alexander Chernov  <cher@ispras.ru>
 
 	* Makefile.in: initial revision.
