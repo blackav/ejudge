@@ -1,3 +1,17 @@
+2006-07-07 (r3212) Alexander Chernov  <cher@ispras.ru>
+
+	* attr_bool_byte.c:
+	initial revision
+
+2006-07-06 (r3207) Alexander Chernov  <cher@ispras.ru>
+
+	* attr_date.c, err_attr_not_allowed.c, err_attr_invalid.c, attr_int.c:
+	`struct xml_attn' -> `struct xml_attr'.
+
+	* xml_err_a.c, attr_bool.c:
+	copyright notice is updated;
+	`struct xml_attn' -> `struct xml_attr'.
+
 2006-06-26 (r3182) Alexander Chernov  <cher@ispras.ru>
 
 	* parse_int_attr.c: file is renamed to `attr_int.c'.

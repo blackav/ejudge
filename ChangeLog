@@ -1,3 +1,203 @@
+2006-07-09 (r3215) Alexander Chernov  <cher@ispras.ru>
+
+	* expat_iface.h:
+	(xml_tree_free_attrs) new function prototype.
+
+	* userlist_cfg.c:
+	(parse_capabilities) bug is fixed.
+
+	* userlist_xml.c:
+	(userlist_free_attrs) new function to free the attribute lists;
+	(string_to_enum) new function to convert the string value to
+	  enumeration;
+	(parse_priv_level_attr) new function;
+	(parse_password_method_attr) new function;
+	(parse_reg_status_attr) new function;
+	(parse_contestant_status_elem) new function;
+	(parse_passwd) `parse_password_method_attr' is used;
+	  the attribute memory is freed after;
+	(parse_cookies) the attributes memory is freed;
+	  `parse_priv_level_attr' is used;
+	(parse_members) the code is simplified by using an offset table
+	  for leaf elements;
+	  `parse_contestant_status_elem' is used;
+	  unnesessary memory is freed;
+	(parse_contest) `parse_reg_status_attr' is used;
+	  unnesessary memory is freed;
+	(parse_cntsinfo) the code is simplified by using an offset table
+	  for leaf elements;
+	  unnesessary memory is freed;
+	(do_parse_user) the code is simplified by using an offset table
+	  for leaf elements;
+	  unnesessary memory is freed;
+	(unparse_member) the offset table is used;
+	(unparse_cntsinfo) the offset table is used.
+
+	* expat_iface.c:
+	(xml_tree_free_attrs) new function;
+	(xml_tree_free) `xml_tree_free_attrs' is used.
+
+2006-07-09 (r3214) Alexander Chernov  <cher@ispras.ru>
+
+	* files.make: xml_utils/attr_bool_byte.c is added.
+
+	* register.c: "xml_utils.h" is included;
+	XML parsing uses functions from "xml_utils.h" instead of static
+	functions in the module, which are removed;
+	(err_dupl_elem) removed;
+	(err_attr_not_allowed) removed;
+	(err_empty_elem) removed;
+	(err_nested_not_allowed) removed;
+	(err_invalid_elem) removed;
+	(handle_final_tag) removed;
+	(parse_bool) removed;
+	(parse_config) XML parsing is updated;
+	(unparse_bool) removed;
+	(do_make_user_xml) XML unparsing is updated.
+
+	* users.c: "xml_utils.h" is included;
+	XML parsing uses functions from "xml_utils.h" instead of static
+	functions in the module, which are removed;
+	(err_dupl_elem) removed;
+	(err_attr_not_allowed) removed;
+	(err_empty_elem) removed;
+	(err_nested_not_allowed) removed;
+	(err_invalid_elem) removed;
+	(handle_final_tag) removed;
+	(parse_bool) removed;
+	(parse_config) XML parsing is updated.
+
+	* team_extra_xml.c:
+	XML parsing is cleaned up;
+	(check_empty_text) removed;
+	(parse_viewed_clars) XML parsing is updated;
+	(parse_warnings) XML parsing updated;
+	(team_extra_parse_xml) XML parsing is updated.
+
+	* contests.c: "xml_utils.h" is included;
+	XML parsing uses functions from "xml_utils.h" instead of static
+	functions in the module, which are removed;
+	(parse_date) removed;
+	(parse_bool) removed;
+	(parse_access) XML parsing is updated;
+	(parse_member) XML parsing is updated;
+	(parse_capabilities) XML parsing is updated;
+	(parse_client_flags) XML parsing is updated;
+	(parse_contest) the code is simplified due to use of offset tables
+	  instead of switch.
+
+	* userlist_cfg.c: "xml_utils.h" is included;
+	XML parsing uses functions from "xml_utils.h" instead of static
+	functions in the module, which are removed;
+	(err_dupl_elem) removed;
+	(err_text_not_allowed) removed;
+	(err_attr_not_allowed) removed;
+	(err_empty_elem) removed;
+	(err_nested_not_allowed) removed;
+	(err_invalid_elem) removed;
+	(err_invalid_attr) removed;
+	(handle_final_tag) removed;
+	(parse_bool) removed;
+	(parse_user_map) XML parsing is updated;
+	(parse_capabilities) XML parsing is updated;
+	(userlist_cfg_parse) XML parsing is updated;
+	  the code is simplified due to use of offset tables instead of
+	  switch.
+
+	* runlog_xml.c:
+	XML parsing uses functions from "xml_utils.h" instead of static
+	functions in the module, which are removed;
+	(check_empty_text) removed;
+	(parse_ip) removed;
+	(parse_bool) removed;
+	(process_run_elements) XML parsing (mostly error reporting)
+	  is updated;
+	(process_runlog_element) XML error reporting is updated;
+	(parse_runlog_xml) XML parsing is updated.
+
+2006-07-07 (r3213) Alexander Chernov  <cher@ispras.ru>
+
+	* xml_utils.h:
+	(xml_attr_bool_byte) new function prototype.
+
+2006-07-06 (r3211) Alexander Chernov  <cher@ispras.ru>
+
+	* expat_iface.c:
+	(start_hnd) support for generic XML tree building is implemented;
+	(xml_tree_free) support for freeing generic XML elements is
+	  implemented.
+
+2006-07-06 (r3210) Alexander Chernov  <cher@ispras.ru>
+
+	* expat_iface.h:
+	(struct xml_attr) the structure size is decreasing by changing
+	  `tag' and `column' field types from `int' to `unsigned short';
+	  the structure size on ia32 decreased from 24 to 20 bytes;
+	  field `name' is added for future generic XML tree building;
+	(struct xml_tree) the structure size is decreasing by changing
+	  `tag' and `column' field types from `int' to `unsigned short';
+	  the structure size on ia32 decreased from 44 to 40 bytes;
+	  field `name' is added for future generic XML tree building;
+	(struct xml_parse_spec) a new structure to pass all necessary
+	  for XML parsing tables and function pointers in it instead of
+	  passing them as parameters;
+	(xml_build_tree) `spec' parameter is passed instead of
+	  `tag_map', `attr_map', `tag_alloc', `attr_alloc' parameters;
+	(xml_build_tree_str) the same as above;
+	(xml_build_tree_file) new function, which parses XML from a
+	  specified `FILE *' stream;
+	(xml_tree_free) `spec' parameter is passed instead of
+	  `tag_free', `attr_free' parameters;
+	(xml_elem_alloc) new function prototype;
+	(xml_attr_alloc) new function prototype.
+
+	* expat_iface.c:
+	(struct parser_data) field `spec' is added - the reference to the
+	  parsing specification - instead of `tag_map', `attr_map',
+	  `alloc_tag_func', `alloc_attr_func' fields;
+	(start_hnd) `spec' is used instead of old fields, also support
+	  for generic XML tree build is partially implemented;
+	(generic_elem_alloc) renamed from `generic_tag_alloc',
+	  also `sizes' parameter is added, which is the array of element
+	  sizes;
+	(generic_attr_alloc) `sizes' parameter is added;
+	(xml_elem_alloc) new function, which is a wrapper for
+	  `generic_elem_alloc';
+	(xml_attr_alloc) new function, which is a wrapper for
+	  `generic_attr_alloc';
+	(xml_build_tree) `spec' parameter is passed instead of
+	  `tag_map', `attr_map', `tag_alloc', `attr_alloc' parameters;
+	(xml_build_tree_str) the same as above;
+	(xml_build_tree_file) new function, which parses XML from a
+	  specified `FILE *' stream;
+	(xml_tree_free) `spec' parameter is passed instead of
+	  `tag_free', `attr_free' parameters.
+
+	* register.c, users.c, serve-control.c:
+	configuration parsing is updated according to the new
+	XML parsing interface.
+
+	* team_extra_xml.c, contests.c, testing_report_xml.c, userlist_cfg.c, userlist_xml.c, runlog_xml.c:
+	XML parsing is updated according to the new interface.
+
+2006-07-06 (r3209) Alexander Chernov  <cher@ispras.ru>
+
+	* register.c, contests.c, userlist_cfg.c, userlist_xml.c, serve-control.c, expat_iface.c, expat_iface.h, xml_utils.h, runlog_xml.c:
+	`struct xml_attn' -> `struct xml_attr'.
+
+	* users.c, team_extra_xml.c:
+	copyright notice is updated;
+	`struct xml_attn' -> `struct xml_attr'.
+
+	* contests.h: CONTEST_LAST_ATTN -> CONTEST_LAST_ATTR.
+
+	* files.make: uldb_plugin.h is added;
+	plugins/mysql-userlist/uldb_mysql.c is added.
+
+2006-07-06 (r3206) Alexander Chernov  <cher@ispras.ru>
+
+	* uldb_plugin.h: initial revision.
+
 2006-07-06 (r3203) Alexander Chernov  <cher@ispras.ru>
 
 	* configure.ac: generation of plugins/mysql-userlist/Makefile is added.
