@@ -6389,7 +6389,20 @@ recompile_checker(FILE *f, const unsigned char *checker_path)
     lang_ind = i;
   }
   if (lang_ind < 0) {
-    fprintf(f, "Warning: no source file or unsupported language for a checker\n");
+    if (stat(checker_path, &stbuf1) < 0) {
+      fprintf(f, "Error: checker %s does not exist and cannot be compiled\n",
+              checker_path);
+      return -1;
+    }
+    if (!S_ISREG(stbuf1.st_mode)) {
+      fprintf(f, "Error: checker %s is not a regular file\n", checker_path);
+      return -1;
+    }
+    if (access(checker_path, X_OK) < 0) {
+      fprintf(f, "Error: checker %s is not executable\n", checker_path);
+      return -1;
+    }
+    fprintf(f, "Warning: no source file or unsupported language for checker %s\n", checker_path);
     return 0;
   }
 

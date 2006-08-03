@@ -5991,11 +5991,11 @@ create_symlinks(void)
         os_normalize_path(dst_path);
         if (unlink(dst_path) < 0 && errno != ENOENT) {
           err("unlink %s failed: %s", dst_path, os_ErrorMsg());
-          return -1;
+          //return -1;
         }
         if (symlink(src_path, dst_path) < 0) {
           err("symlink %s->%s failed: %s", dst_path, src_path, os_ErrorMsg());
-          return -1;
+          //return -1;
         }
       }
     } else {
@@ -6007,11 +6007,11 @@ create_symlinks(void)
       os_normalize_path(dst_path);
       if (unlink(dst_path) < 0 && errno != ENOENT) {
         err("unlink %s failed: %s", dst_path, os_ErrorMsg());
-        return -1;
+        //return -1;
       }
       if (symlink(src_path, dst_path) < 0) {
         err("symlink %s->%s failed: %s", dst_path, src_path, os_ErrorMsg());
-        return -1;
+        //return -1;
       }
     }
   }
@@ -6025,11 +6025,11 @@ create_symlinks(void)
     os_normalize_path(dst_path);
     if (unlink(dst_path) < 0 && errno != ENOENT) {
       err("unlink %s failed: %s", dst_path, os_ErrorMsg());
-      return -1;
+      //return -1;
     }
     if (symlink(src_path, dst_path) < 0) {
       err("symlink %s->%s failed: %s", dst_path, src_path, os_ErrorMsg());
-      return -1;
+      //return -1;
     }
   }
   if (global->plog_symlink_dir[0] && global->htdocs_dir[0]
@@ -6042,11 +6042,11 @@ create_symlinks(void)
     os_normalize_path(dst_path);
     if (unlink(dst_path) < 0 && errno != ENOENT) {
       err("unlink %s failed: %s", dst_path, os_ErrorMsg());
-      return -1;
+      //return -1;
     }
     if (symlink(src_path, dst_path) < 0) {
       err("symlink %s->%s failed: %s", dst_path, src_path, os_ErrorMsg());
-      return -1;
+      //return -1;
     }
   }
   return 0;
@@ -6327,6 +6327,9 @@ main(int argc, char *argv[])
     err("sorry, will not run as the root");
     return 1;
   }
+
+  // initialize the current time to avoid some asserts
+  current_time = time(0);
 
   if (prepare(argv[i], p_flags, PREPARE_SERVE, cpp_opts,
               (cmdline_socket_fd >= 0)) < 0) return 1;
