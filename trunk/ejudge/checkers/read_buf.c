@@ -21,6 +21,8 @@
 #include <malloc.h>
 #endif
 
+enum { BUFSIZE = 1048576 };
+
 int
 checker_read_buf(int ind,
                  const unsigned char *name,
@@ -33,7 +35,7 @@ checker_read_buf(int ind,
   size_t format_len, read_len;
   int r;
 
-  if (!buf_size || buf_size >= 100000)
+  if (!buf_size || buf_size > BUFSIZE)
     fatal_CF("checker_read_buf: invalid buf_size %zu", buf_size);
 
   local_buf = (unsigned char*) alloca(buf_size + 1);
