@@ -30,8 +30,10 @@ all : uldb_mysql.so
 install :
 
 clean :
+	-rm -f *.so *.o deps.make
 
-distclean :
+distclean : clean
+	-rm -f Makefile
 
 deps.make : $(CFILES) $(HFILES)
 	../../cdeps -v ULDB_MYSQL_OFILES -I ../.. -g -c '$$(CC) $$(CFLAGS) -DPIC -fPIC' $(ULDB_MYSQL_CFILES) > deps.make
