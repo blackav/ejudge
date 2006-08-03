@@ -170,7 +170,7 @@ install: local_install
 	$(MAKE) -C extra DESTDIR="${DESTDIR}" install
 	$(MAKE) -C checkers DESTDIR="${DESTDIR}" install
 	$(MAKE) -C scripts DESTDIR="${DESTDIR}" install
-	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" install
 
 compile$(EXESFX) : $(C_OBJECTS)
 	$(LD) $(LDFLAGS) $(C_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
@@ -235,7 +235,7 @@ local_clean:
 clean: local_clean
 	$(MAKE) -C extra clean
 	$(MAKE) -C checkers clean
-	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" clean
 
 local_distclean :
 	rm -rf autom4te.cache config.log config.status Makefile config.h ejudge-config.v TAGS Makefile.in
@@ -243,7 +243,7 @@ distclean : clean local_distclean
 	$(MAKE) -C extra distclean
 	$(MAKE) -C checkers distclean
 	$(MAKE) -C scripts distclean
-	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" distclean
 
 pristine : distclean
 	rm -f configure
