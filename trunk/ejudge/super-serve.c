@@ -921,6 +921,8 @@ acquire_contest_resources(struct contest_desc *cnts,
   if (stat(var_path, &stbuf) < 0) {
     start_serve(extra, 0, 1);
   }
+  // still make an attempt to create var directory
+  mkdir(var_path, 0777);
   if (stat(var_path, &stbuf) < 0) {
     startup_err("var directory %s does not exist", var_path);
     goto done;
