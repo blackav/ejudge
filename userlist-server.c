@@ -19,7 +19,7 @@
 #include "settings.h"
 #include "ej_types.h"
 
-#include "userlist_cfg.h"
+#include "ejudge_cfg.h"
 #include "userlist.h"
 #include "pathutl.h"
 #include "errlog.h"
@@ -142,7 +142,7 @@ struct client_state
   struct contest_extra *cnts_extra;
 };
 
-static struct userlist_cfg *config;
+static struct ejudge_cfg *config;
 static int listen_socket = -1;
 static int urandom_fd = -1;
 static char *socket_name;
@@ -476,7 +476,7 @@ static void
 build_system_uid_map(struct xml_tree *xml_user_map)
 {
   struct xml_tree *um;
-  struct userlist_cfg_user_map *m;
+  struct ejudge_cfg_user_map *m;
   int max_system_uid = -1, i;
   userlist_login_hash_t m_hash;
   struct userlist_user *tmpu;
@@ -484,7 +484,7 @@ build_system_uid_map(struct xml_tree *xml_user_map)
 
   if (!xml_user_map || !xml_user_map->first_down) return;
   for (um = xml_user_map->first_down; um; um = um->right) {
-    m = (struct userlist_cfg_user_map*) um;
+    m = (struct ejudge_cfg_user_map*) um;
     if (m->system_uid < 0) continue;
     if (m->system_uid > max_system_uid)
       max_system_uid = m->system_uid;
@@ -496,7 +496,7 @@ build_system_uid_map(struct xml_tree *xml_user_map)
   for (i = 0; i < system_uid_map_size; i++)
     system_uid_map[i] = -1;
   for (um = xml_user_map->first_down; um; um = um->right) {
-    m = (struct userlist_cfg_user_map*) um;
+    m = (struct ejudge_cfg_user_map*) um;
     if (m->system_uid < 0) continue;
     if (userlist->login_hash_table) {
       m_hash = userlist_login_hash(m->local_user_str);
@@ -5101,7 +5101,7 @@ static void
 cmd_admin_process(struct client_state *p, int pkt_len,
                   struct userlist_packet *data)
 {
-  struct userlist_cfg_user_map *um = 0;
+  struct ejudge_cfg_user_map *um = 0;
   struct xml_tree *ut = 0;
   int i;
   unsigned char logbuf[1024];
@@ -5126,7 +5126,7 @@ cmd_admin_process(struct client_state *p, int pkt_len,
 
   if (config->user_map) {
     for (ut = config->user_map->first_down; ut; ut = ut->right) {
-      um = (struct userlist_cfg_user_map*) ut;
+      um = (struct ejudge_cfg_user_map*) ut;
       if (um->system_uid == p->peer_uid) break;
     }
   }
@@ -7426,7 +7426,7 @@ main(int argc, char *argv[])
 
   if (tsc_init() < 0) return 1;
   program_name = argv[0];
-  config = userlist_cfg_parse(ejudge_xml_path);
+  config = ejudge_cfg_parse(ejudge_xml_path);
   if (!config) return 1;
   if (!config->contests_dir) {
     err("<contests_dir> tag is not set!");
@@ -7483,7 +7483,7 @@ main(int argc, char *argv[])
 
   if (socket_name) unlink(socket_name);
   if (listen_socket >= 0) close(listen_socket);
-  userlist_cfg_free(config);
+  ejudge_cfg_free(config);
   server_finish_time = time(0);
   report_uptime(server_start_time, server_finish_time);
 

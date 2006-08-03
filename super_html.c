@@ -27,7 +27,7 @@
 #include "mischtml.h"
 #include "opcaps.h"
 #include "protocol.h"
-#include "userlist_cfg.h"
+#include "ejudge_cfg.h"
 #include "pathutl.h"
 #include "errlog.h"
 #include "fileutl.h"
@@ -182,7 +182,7 @@ get_run_management_status(struct contest_desc *cnts,
 
 /* a piece of dirty hacks */
 static unsigned char *
-logged_contest_get(struct userlist_cfg *config, int contest_id)
+logged_contest_get(struct ejudge_cfg *config, int contest_id)
 {
   unsigned char *dir_name = 0;
   unsigned char *s, *outbuf;
@@ -290,7 +290,7 @@ super_html_main_page(FILE *f,
                      ej_ip_t ip_address,
                      int ssl,
                      unsigned int flags,
-                     struct userlist_cfg *config,
+                     struct ejudge_cfg *config,
                      struct sid_state *sstate,
                      const unsigned char *self_url,
                      const unsigned char *hidden_vars,
@@ -619,7 +619,7 @@ super_html_contest_page(FILE *f,
                         ej_cookie_t session_id,
                         ej_ip_t ip_address,
                         int ssl,
-                        struct userlist_cfg *config,
+                        struct ejudge_cfg *config,
                         const unsigned char *self_url,
                         const unsigned char *hidden_vars,
                         const unsigned char *extra_args)
@@ -1142,7 +1142,7 @@ super_html_log_page(FILE *f,
                     ej_cookie_t session_id,
                     ej_ip_t ip_address,
                     int ssl,
-                    struct userlist_cfg *config,
+                    struct ejudge_cfg *config,
                     const unsigned char *self_url,
                     const unsigned char *hidden_vars,
                     const unsigned char *extra_args)
@@ -1706,7 +1706,7 @@ super_html_create_contest(FILE *f,
                           const unsigned char *login,
                           ej_cookie_t session_id,
                           ej_ip_t ip_address,
-                          struct userlist_cfg *config,
+                          struct ejudge_cfg *config,
                           struct sid_state *sstate,
                           const unsigned char *self_url,
                           const unsigned char *hidden_vars,
@@ -2038,7 +2038,7 @@ super_html_edit_contest_page(FILE *f,
                              const unsigned char *login,
                              ej_cookie_t session_id,
                              ej_ip_t ip_address,
-                             struct userlist_cfg *config,
+                             struct ejudge_cfg *config,
                              struct sid_state *sstate,
                              const unsigned char *self_url,
                              const unsigned char *hidden_vars,
@@ -2690,7 +2690,7 @@ super_html_edit_access_rules(FILE *f,
                              const unsigned char *login,
                              ej_cookie_t session_id,
                              ej_ip_t ip_address,
-                             struct userlist_cfg *config,
+                             struct ejudge_cfg *config,
                              struct sid_state *sstate,
                              int cmd,
                              const unsigned char *self_url,
@@ -2878,7 +2878,7 @@ super_html_edit_permission(FILE *f,
                            const unsigned char *login,
                            ej_cookie_t session_id,
                            ej_ip_t ip_address,
-                           struct userlist_cfg *config,
+                           struct ejudge_cfg *config,
                            struct sid_state *sstate,
                            int num,
                            const unsigned char *self_url,
@@ -2973,7 +2973,7 @@ super_html_edit_form_fields(FILE *f,
                             const unsigned char *login,
                             ej_cookie_t session_id,
                             ej_ip_t ip_address,
-                            struct userlist_cfg *config,
+                            struct ejudge_cfg *config,
                             struct sid_state *sstate,
                             int cmd,
                             const unsigned char *self_url,
@@ -3132,7 +3132,7 @@ super_html_edit_template_file(FILE *f,
                               const unsigned char *login,
                               ej_cookie_t session_id,
                               ej_ip_t ip_address,
-                              struct userlist_cfg *config,
+                              struct ejudge_cfg *config,
                               struct sid_state *sstate,
                               int cmd,
                               const unsigned char *self_url,
@@ -3440,7 +3440,7 @@ super_html_edit_template_file(FILE *f,
 
 void
 super_html_load_serve_cfg(const struct contest_desc *cnts,
-                          const struct userlist_cfg *config,
+                          const struct ejudge_cfg *config,
                           struct sid_state *sstate)
 {
   path_t serve_cfg_path;
@@ -3483,7 +3483,7 @@ super_html_create_contest_2(FILE *f,
                             const unsigned char *ss_login,
                             ej_cookie_t session_id,
                             ej_ip_t ip_address,
-                            struct userlist_cfg *config,
+                            struct ejudge_cfg *config,
                             struct sid_state *sstate,
                             int num_mode,
                             int templ_mode,

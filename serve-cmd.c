@@ -18,7 +18,7 @@
 #include "config.h"
 #include "settings.h"
 
-#include "userlist_cfg.h"
+#include "ejudge_cfg.h"
 #include "pathutl.h"
 #include "errlog.h"
 #include "contests.h"
@@ -45,7 +45,7 @@ static const unsigned char *program_path;
 static const unsigned char *program_name;
 static const unsigned char *ejudge_xml_path;
 static const unsigned char *contest_root_dir;
-static struct userlist_cfg *config;
+static struct ejudge_cfg *config;
 static int contest_id;
 static struct contest_desc *cnts;
 static userlist_clnt_t userlist_conn;
@@ -903,7 +903,7 @@ main(int argc, char *argv[])
     return 1;
   }
 
-  config = userlist_cfg_parse(ejudge_xml_path);
+  config = ejudge_cfg_parse(ejudge_xml_path);
   if (!config) return 1;
   if (!config->contests_dir) {
     err("<contests_dir> tag is not set!");

@@ -28,7 +28,7 @@
 #include "teamdb.h"
 #include "prepare_serve.h"
 #include "prepare_dflt.h"
-#include "userlist_cfg.h"
+#include "ejudge_cfg.h"
 #include "cpu.h"
 #include "errlog.h"
 
@@ -3750,7 +3750,7 @@ prepare_set_problem_defaults(struct section_problem_data *prob,
 
 struct section_global_data *
 prepare_new_global_section(int contest_id, const unsigned char *root_dir,
-                           const struct userlist_cfg *config)
+                           const struct ejudge_cfg *config)
 {
   struct section_global_data *global;
 

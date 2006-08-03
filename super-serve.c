@@ -19,7 +19,7 @@
 #include "ej_types.h"
 
 #include "version.h"
-#include "userlist_cfg.h"
+#include "ejudge_cfg.h"
 #include "contests.h"
 #include "pathutl.h"
 #include "errlog.h"
@@ -106,7 +106,7 @@ static int daemon_mode;
 static int autonomous_mode;
 static int forced_mode;
 
-static struct userlist_cfg *config;
+static struct ejudge_cfg *config;
 static int self_uid;
 static int self_gid;
 static int self_group_num;
@@ -4067,7 +4067,7 @@ main(int argc, char **argv)
     return 1;
   }
 
-  config = userlist_cfg_parse(ejudge_xml_path);
+  config = ejudge_cfg_parse(ejudge_xml_path);
   if (!config) return 1;
   if (!config->contests_dir) {
     err("<contests_dir> tag is not set!");

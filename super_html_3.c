@@ -24,7 +24,7 @@
 #include "mischtml.h"
 #include "prepare.h"
 #include "super_actions.h"
-#include "userlist_cfg.h"
+#include "ejudge_cfg.h"
 #include "super_proto.h"
 #include "fileutl.h"
 #include "prepare_dflt.h"
@@ -457,7 +457,7 @@ super_html_edit_global_parameters(FILE *f,
                                   const unsigned char *login,
                                   ej_cookie_t session_id,
                                   ej_ip_t ip_address,
-                                  struct userlist_cfg *config,
+                                  struct ejudge_cfg *config,
                                   struct sid_state *sstate,
                                   const unsigned char *self_url,
                                   const unsigned char *hidden_vars,
@@ -1845,7 +1845,7 @@ super_html_edit_global_parameters(FILE *f,
 
 int
 super_html_global_param(struct sid_state *sstate, int cmd,
-                        const struct userlist_cfg *config,
+                        const struct ejudge_cfg *config,
                         int param1, const unsigned char *param2,
                         int param3, int param4)
 {
@@ -2603,7 +2603,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 }
 
 static int
-load_cs_languages(const struct userlist_cfg *config,
+load_cs_languages(const struct ejudge_cfg *config,
                   struct sid_state *sstate,
                   int check_version_flag)
 {
@@ -2699,7 +2699,7 @@ super_html_edit_languages(FILE *f,
                           const unsigned char *login,
                           ej_cookie_t session_id,
                           ej_ip_t ip_address,
-                          const struct userlist_cfg *config,
+                          const struct ejudge_cfg *config,
                           struct sid_state *sstate,
                           const unsigned char *self_url,
                           const unsigned char *hidden_vars,
@@ -4491,7 +4491,7 @@ super_html_edit_problems(FILE *f,
                          const unsigned char *login,
                          ej_cookie_t session_id,
                          ej_ip_t ip_address,
-                         const struct userlist_cfg *config,
+                         const struct ejudge_cfg *config,
                          struct sid_state *sstate,
                          const unsigned char *self_url,
                          const unsigned char *hidden_vars,
@@ -5172,7 +5172,7 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
 static void
 unparse_serve_cfg(FILE *f,
-                  const struct userlist_cfg *config,
+                  const struct ejudge_cfg *config,
                   const struct sid_state *sstate)
 {
   struct section_global_data *global = sstate->global;
@@ -5241,7 +5241,7 @@ int
 super_html_serve_unparse_and_save(const unsigned char *path,
                                   const unsigned char *tmp_path,
                                   const struct sid_state *sstate,
-                                  const struct userlist_cfg *config,
+                                  const struct ejudge_cfg *config,
                                   const unsigned char *header,
                                   const unsigned char *footer,
                                   const unsigned char *audit)
@@ -5295,7 +5295,7 @@ super_html_view_new_serve_cfg(FILE *f,
                               const unsigned char *login,
                               ej_cookie_t session_id,
                               ej_ip_t ip_address,
-                              const struct userlist_cfg *config,
+                              const struct ejudge_cfg *config,
                               struct sid_state *sstate,
                               const unsigned char *self_url,
                               const unsigned char *hidden_vars,
@@ -5439,7 +5439,7 @@ do_load_file(const unsigned char *conf_path, const unsigned char *file)
 int
 super_html_read_serve(FILE *flog,
                       const unsigned char *path,
-                      const struct userlist_cfg *config,
+                      const struct ejudge_cfg *config,
                       const struct contest_desc *cnts,
                       struct sid_state *sstate)
 {
@@ -6578,7 +6578,7 @@ super_html_check_tests(FILE *f,
                        const unsigned char *login,
                        ej_cookie_t session_id,
                        ej_ip_t ip_address,
-                       struct userlist_cfg *config,
+                       struct ejudge_cfg *config,
                        struct sid_state *sstate,
                        const unsigned char *self_url,
                        const unsigned char *hidden_vars,
@@ -7315,7 +7315,7 @@ super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
                          ej_ip_t ip_address,
                          int ssl_flag,
                          struct userlist_clnt *userlist_conn,
-                         const struct userlist_cfg *config,
+                         const struct ejudge_cfg *config,
                          struct sid_state *sstate,
                          const unsigned char *self_url,
                          const unsigned char *hidden_vars,

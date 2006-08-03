@@ -6,7 +6,7 @@
 #include "config.h"
 
 #include "version.h"
-#include "userlist_cfg.h"
+#include "ejudge_cfg.h"
 #include "userlist.h"
 
 #include <reuse/xalloc.h>
@@ -21,7 +21,7 @@ static unsigned char *iset = 0;
 static unsigned char *cfg_path = 0;
 static unsigned char *progname = 0;
 
-static struct userlist_cfg  *config;
+static struct ejudge_cfg  *config;
 static struct userlist_list *userlist;
 
 static void
@@ -101,7 +101,7 @@ main(int argc, char *argv[])
 
   fprintf(stderr, "slice-userlist %s, compiled %s\n",
           compile_version, compile_date);
-  config = userlist_cfg_parse(cfg_path);
+  config = ejudge_cfg_parse(cfg_path);
   if (!config) return 1;
 
   userlist = userlist_parse(config->db_path);

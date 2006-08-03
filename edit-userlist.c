@@ -22,7 +22,7 @@
 #include "userlist_proto.h"
 #include "contests.h"
 #include "userlist.h"
-#include "userlist_cfg.h"
+#include "ejudge_cfg.h"
 #include "xml_utils.h"
 
 #include <reuse/osdeps.h>
@@ -103,7 +103,7 @@ enum
 #endif
 
 static struct userlist_clnt *server_conn;
-static struct userlist_cfg *config;
+static struct ejudge_cfg *config;
 static WINDOW *root_window;
 
 static int
@@ -3958,7 +3958,7 @@ main(int argc, char **argv)
   ejudge_xml_path = argv[1];
 #endif
 
-  if (!(config = userlist_cfg_parse(ejudge_xml_path))) {
+  if (!(config = ejudge_cfg_parse(ejudge_xml_path))) {
     fprintf(stderr, "%s: cannot parse configuration file\n", argv[0]);
     return 1;
   }

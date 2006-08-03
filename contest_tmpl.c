@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2005-2006 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 #include "version.h"
 
 #include "contests.h"
-#include "userlist_cfg.h"
+#include "ejudge_cfg.h"
 #include "expat_iface.h"
 #include "super_html.h"
 #include "super-serve.h"
@@ -52,7 +52,7 @@ contest_tmpl_new(int contest_id,
                  const unsigned char *login,
                  const unsigned char *self_url,
                  const unsigned char *ss_login,
-                 const struct userlist_cfg *ejudge_config)
+                 const struct ejudge_cfg *ejudge_config)
 {
   struct contest_desc *cnts;
   unsigned char root_dir_buf[4096];

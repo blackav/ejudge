@@ -18,7 +18,7 @@
 #include "config.h"
 
 #include "version.h"
-#include "userlist_cfg.h"
+#include "ejudge_cfg.h"
 #include "userlist.h"
 #include "contests.h"
 #include "pathutl.h"
@@ -35,7 +35,7 @@
 #include <limits.h>
 #include <ctype.h>
 
-static struct userlist_cfg  *config;
+static struct ejudge_cfg  *config;
 static struct userlist_list *userlist;
 
 struct vcntslist
@@ -122,7 +122,7 @@ main(int argc, char **argv)
 
   info("clean-users %s, compiled %s", compile_version, compile_date);
 
-  config = userlist_cfg_parse(cfg_path);
+  config = ejudge_cfg_parse(cfg_path);
   if (!config) return 1;
   if (!config->contests_dir) {
     err("<contests_dir> tag is not set!");
