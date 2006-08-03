@@ -27,7 +27,7 @@
 #include "mischtml.h"
 #include "opcaps.h"
 #include "protocol.h"
-#include "userlist_cfg.h"
+#include "ejudge_cfg.h"
 #include "pathutl.h"
 #include "fileutl.h"
 #include "xml_utils.h"
@@ -866,7 +866,7 @@ super_html_serve_probe_run(FILE *f,
                            ej_cookie_t session_id,
                            ej_ip_t ip_address,
                            int ssl,
-                           struct userlist_cfg *config,
+                           struct ejudge_cfg *config,
                            const unsigned char *self_url,
                            const unsigned char *hidden_vars,
                            const unsigned char *extra_args)
@@ -933,7 +933,7 @@ super_html_commit_contest(FILE *f,
                           const unsigned char *login,
                           ej_cookie_t session_id,
                           ej_ip_t ip_address,
-                          struct userlist_cfg *config,
+                          struct ejudge_cfg *config,
                           struct userlist_clnt *us_conn,
                           struct sid_state *sstate,
                           int cmd,

@@ -562,8 +562,8 @@ void print_configuration(FILE *);
 int prepare_tester_refinement(struct section_tester_data *, int, int);
 int create_tester_dirs(struct section_tester_data *);
 
-struct userlist_cfg;
-struct section_global_data *prepare_new_global_section(int contest_id, const unsigned char *root_dir, const struct userlist_cfg *config);
+struct ejudge_cfg;
+struct section_global_data *prepare_new_global_section(int contest_id, const unsigned char *root_dir, const struct ejudge_cfg *config);
 struct generic_section_config * prepare_parse_config_file(const unsigned char *path,
                                                           int *p_cond_count);
 void prepare_set_global_defaults(struct section_global_data *global);

@@ -21,7 +21,7 @@
 #include "version.h"
 
 #include "errlog.h"
-#include "userlist_cfg.h"
+#include "ejudge_cfg.h"
 #include "pathutl.h"
 #include "fileutl.h"
 
@@ -38,7 +38,7 @@
 #include <sys/wait.h>
 #include <time.h>
 
-static struct userlist_cfg *config;
+static struct ejudge_cfg *config;
 static path_t job_server_log_path;
 static path_t job_server_spool_path;
 static path_t job_server_work_path;
@@ -573,7 +573,7 @@ main(int argc, char *argv[])
     return 1;
   }
 
-  config = userlist_cfg_parse(ejudge_xml_path);
+  config = ejudge_cfg_parse(ejudge_xml_path);
   if (!config) return 1;
   if (prepare_config_vars() < 0) return 1;
   prepare_sinals();

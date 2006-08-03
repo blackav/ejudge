@@ -1,12 +1,24 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+
+/*
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
 
 #include "config.h"
 
 #include "version.h"
-#include "userlist_cfg.h"
+#include "ejudge_cfg.h"
 #include "userlist.h"
 
 #include <reuse/xalloc.h>
@@ -21,7 +33,7 @@ static unsigned char *iset = 0;
 static unsigned char *cfg_path = 0;
 static unsigned char *progname = 0;
 
-static struct userlist_cfg  *config;
+static struct ejudge_cfg  *config;
 static struct userlist_list *userlist;
 
 static void
@@ -101,7 +113,7 @@ main(int argc, char *argv[])
 
   fprintf(stderr, "collect-emails %s, compiled %s\n",
           compile_version, compile_date);
-  config = userlist_cfg_parse(cfg_path);
+  config = ejudge_cfg_parse(cfg_path);
   if (!config) return 1;
 
   userlist = userlist_parse(config->db_path);

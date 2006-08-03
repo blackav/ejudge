@@ -160,7 +160,7 @@ COMMON_CFILES=\
  tex_dom_render.c\
  tsc.c\
  userlist.c\
- userlist_cfg.c\
+ ejudge_cfg.c\
  userlist_proto.c\
  userlist_xml.c\
  varsubst.c\
@@ -301,7 +301,7 @@ HFILES=\
  tsc.h\
  uldb_plugin.h\
  userlist.h\
- userlist_cfg.h\
+ ejudge_cfg.h\
  userlist_clnt.h\
  varsubst.h\
  vcs.h\
