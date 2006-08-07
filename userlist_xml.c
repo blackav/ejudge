@@ -1042,8 +1042,7 @@ userlist_parse_user_str(char const *str)
   struct userlist_user *user = 0;
 
   xml_err_path = 0;
-  xml_err_elem_names = elem_map;
-  xml_err_attr_names = attr_map;
+  xml_err_spec = &userlist_parse_spec;
 
   tree = xml_build_tree_str(str, &userlist_parse_spec);
   if (!tree) goto failed;
@@ -1066,8 +1065,7 @@ userlist_parse_contests_str(unsigned char const *str)
   struct xml_tree *tree = 0;
 
   xml_err_path = 0;
-  xml_err_elem_names = elem_map;
-  xml_err_attr_names = attr_map;
+  xml_err_spec = &userlist_parse_spec;
 
   tree = xml_build_tree_str(str, &userlist_parse_spec);
   if (!tree) return 0;
@@ -1090,8 +1088,7 @@ userlist_parse(char const *path)
   struct userlist_list *lst = 0;
 
   xml_err_path = path;
-  xml_err_elem_names = elem_map;
-  xml_err_attr_names = attr_map;
+  xml_err_spec = &userlist_parse_spec;
 
   tree = xml_build_tree(path, &userlist_parse_spec);
   if (!tree) goto failed;
@@ -1115,8 +1112,7 @@ userlist_parse_str(unsigned char const *str)
   struct userlist_list *lst = 0;
 
   xml_err_path = 0;
-  xml_err_elem_names = elem_map;
-  xml_err_attr_names = attr_map;
+  xml_err_spec = &userlist_parse_spec;
 
   tree = xml_build_tree_str(str, &userlist_parse_spec);
   if (!tree) goto failed;

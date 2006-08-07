@@ -25,6 +25,7 @@
 
 struct xml_tree;
 struct xml_attr;
+struct xml_parse_spec;
 
 int xml_parse_ip(unsigned char const *path, int line, int column,
                  unsigned char const *s, ej_ip_t *pip);
@@ -48,8 +49,10 @@ const unsigned char *xml_unparse_date(time_t d);
 const unsigned char *xml_unparse_ip_mask(ej_ip_t addr, ej_ip_t mask);
 
 extern const unsigned char *xml_err_path;
-extern const char * const *xml_err_elem_names;
-extern const char * const *xml_err_attr_names;
+extern const struct xml_parse_spec *xml_err_spec;
+
+const unsigned char * xml_err_get_elem_name(const struct xml_tree *p);
+const unsigned char * xml_err_get_attr_name(const struct xml_attr *a);
 
 void xml_err(const struct xml_tree *pos, const char *format, ...)
      __attribute__((format (printf, 2, 3)));
@@ -62,9 +65,12 @@ int xml_err_attr_not_allowed(const struct xml_tree *tree,
 int xml_err_elem_not_allowed(const struct xml_tree *tree);
 int xml_err_elem_redefined(const struct xml_tree *tree);
 int xml_err_top_level(const struct xml_tree *tree, int elem);
+int xml_err_top_level_s(const struct xml_tree *, const unsigned char *);
 int xml_err_attr_invalid(const struct xml_attr *a);
 int xml_err_elem_undefined(const struct xml_tree *p, int elem);
+int xml_err_elem_undefined_s(const struct xml_tree *p, const unsigned char *);
 int xml_err_attr_undefined(const struct xml_tree *p, int attr);
+int xml_err_attr_undefined_s(const struct xml_tree *p, const unsigned char *);
 int xml_err_elem_invalid(const struct xml_tree *p);
 int xml_err_elem_empty(const struct xml_tree *p);
 

@@ -170,8 +170,7 @@ parse_config(const unsigned char *path, const unsigned char *default_config)
   if (!tree) goto failed;
 
   xml_err_path = path;
-  xml_err_elem_names = elem_map;
-  xml_err_attr_names = attr_map;
+  xml_err_spec = &serve_control_config_parse_spec;
 
   if (tree->tag != TG_CONFIG) {
     xml_err_top_level(tree, TG_CONFIG);

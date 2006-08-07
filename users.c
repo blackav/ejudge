@@ -168,8 +168,7 @@ parse_config(char const *path, const unsigned char *default_config)
   struct ip_node *ip;
 
   xml_err_path = path;
-  xml_err_elem_names = elem_map;
-  xml_err_attr_names = attr_map;
+  xml_err_spec = &users_config_parse_spec;
 
   if (default_config) {
     tree = xml_build_tree_str(default_config, &users_config_parse_spec);

@@ -661,8 +661,7 @@ testing_report_parse_xml(const unsigned char *str)
   if (!t) goto failure;
 
   xml_err_path = "<string>";
-  xml_err_elem_names = elem_map;
-  xml_err_attr_names = attr_map;
+  xml_err_spec = &testing_report_parse_spec;
 
   XCALLOC(r, 1);
   if (parse_testing_report(t, r) < 0) goto failure;

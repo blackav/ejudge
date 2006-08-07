@@ -821,8 +821,7 @@ parse_one_contest_xml(char const *path, int number, int no_subst_flag)
   struct contest_desc *d = 0;
 
   xml_err_path = path;
-  xml_err_elem_names = elem_map;
-  xml_err_attr_names = attr_map;
+  xml_err_spec = &contests_parse_spec;
 
   tree = xml_build_tree(path, &contests_parse_spec);
   if (!tree) goto failed;
