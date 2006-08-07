@@ -56,7 +56,6 @@ userlist_clnt_login(struct userlist_clnt *clnt,
   answer = void_answer;
   if ((answer->reply_id == ULS_LOGIN_OK)||
       (answer->reply_id == ULS_LOGIN_COOKIE)) {
-
     *p_user_id = answer->user_id;
     *p_cookie = answer->cookie;
     *p_locale_id = answer->locale_id;
