@@ -447,8 +447,7 @@ parse_runlog_xml(const unsigned char *str,
   struct xml_tree *truns = 0;
 
   xml_err_path = "<string>";
-  xml_err_elem_names = elem_map;
-  xml_err_attr_names = attr_map;
+  xml_err_spec = &runlog_parse_spec;
 
   xt = xml_build_tree_str(str, &runlog_parse_spec);
   memset(phead, 0, sizeof(*phead));

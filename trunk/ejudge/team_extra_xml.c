@@ -259,8 +259,7 @@ team_extra_parse_xml(const unsigned char *path, struct team_extra **pte)
   int user_id = -1, x, n, v_flag = 0, w_flag = 0, s_flag = 0;
 
   xml_err_path = path;
-  xml_err_elem_names = elem_map;
-  xml_err_attr_names = attr_map;
+  xml_err_spec = &team_extra_parse_spec;
 
   t = xml_build_tree(path, &team_extra_parse_spec);
   if (!t) return -1;

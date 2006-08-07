@@ -127,6 +127,7 @@ COMMON_CFILES=\
  parsecfg.c\
  parsecfg_2.c\
  pathutl.c\
+ plugin.c\
  prepare.c\
  prepare_out.c\
  prepare_serve.c\
@@ -175,13 +176,18 @@ COMMON_CFILES=\
  xml_utils/err_attr_invalid.c\
  xml_utils/err_attr_not_allowed.c\
  xml_utils/err_attr_undefined.c\
+ xml_utils/err_attr_undefined_s.c\
  xml_utils/err_elem_empty.c\
  xml_utils/err_elem_invalid.c\
  xml_utils/err_elem_not_allowed.c\
  xml_utils/err_elem_redefined.c\
  xml_utils/err_elem_undefined.c\
+ xml_utils/err_elem_undefined_s.c\
+ xml_utils/err_get_attr_name.c\
+ xml_utils/err_get_elem_name.c\
  xml_utils/err_nested_elems.c\
  xml_utils/err_top_level.c\
+ xml_utils/err_top_level_s.c\
  xml_utils/err_variables.c\
  xml_utils/leaf_elem.c\
  xml_utils/parse_bool.c\
@@ -254,6 +260,7 @@ HFILES=\
  curtime.h\
  diff.h\
  digest_io.h\
+ ejudge_plugin.h\
  ej_limits.h\
  ej_process.h\
  ej_types.h\
