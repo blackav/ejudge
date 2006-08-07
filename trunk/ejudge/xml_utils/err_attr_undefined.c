@@ -22,8 +22,13 @@
 int
 xml_err_attr_undefined(const struct xml_tree *p, int attr)
 {
-  xml_err(p, "attribute \"%s\" is not defined in <%s>",
-          xml_err_attr_names[attr], xml_err_elem_names[p->tag]);
+  if (xml_err_spec && xml_err_spec->elem_map && xml_err_spec->attr_map) {
+    xml_err(p, "attribute \"%s\" is not defined in <%s>",
+            xml_err_spec->attr_map[attr],
+            xml_err_get_elem_name(p));
+  } else {
+    xml_err(p, "attribute is not defined");
+  }
   return -1;
 }
 

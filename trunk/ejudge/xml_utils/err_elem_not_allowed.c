@@ -22,11 +22,15 @@
 int
 xml_err_elem_not_allowed(const struct xml_tree *p)
 {
-  if (p->up) {
-    xml_err(p, "element <%s> is not allowed in <%s>",
-            xml_err_elem_names[p->tag], xml_err_elem_names[p->up->tag]);
+  if (xml_err_spec && xml_err_spec->elem_map) {
+    if (p->up) {
+      xml_err(p, "element <%s> is not allowed in <%s>",
+              xml_err_get_elem_name(p), xml_err_get_elem_name(p->up));
+    } else {
+      xml_err(p, "element <%s> is not allowed", xml_err_get_elem_name(p));
+    }
   } else {
-    xml_err(p, "element <%s> is not allowed", xml_err_elem_names[p->tag]);
+    xml_err(p, "element is not allowed");
   }
   return -1;
 }

@@ -24,7 +24,11 @@
 int
 xml_err_attr_invalid(const struct xml_attr *a)
 {
-  xml_err_a(a,"attribute \"%s\" value is invalid", xml_err_elem_names[a->tag]);
+  if (xml_err_spec && xml_err_spec->attr_map) {
+    xml_err_a(a,"attribute \"%s\" value is invalid", xml_err_get_attr_name(a));
+  } else {
+    xml_err_a(a,"attribute value is invalid");
+  }
   return -1;
 }
 
