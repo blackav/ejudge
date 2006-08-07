@@ -50,6 +50,8 @@ struct parser_data
 {
   int nest;
   int skipping;
+  int verbatim;
+  int verbatim_nest;
   int skip_stop;
   struct tag_list *tag_stack;
   int err_cntr;
@@ -320,9 +322,15 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
     pd->nest++;
     return;
   }
+  if (pd->verbatim) {
+    pd->verbatim_nest++;
+  }
 
   generic_flag = 0;
-  if (!pd->spec->elem_map) {
+  if (pd->verbatim) {
+    itag = pd->spec->default_elem;
+    generic_flag = 1;
+  } else if (!pd->spec->elem_map) {
     itag = pd->spec->default_elem;
     generic_flag = 1;
     if (itag <= 0) {
@@ -380,7 +388,10 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
     cur_val = convert_utf8_to_local_heap(pd->conv_hnd, atts[1]);
 
     generic_flag = 0;
-    if (!pd->spec->attr_map) {
+    if (pd->verbatim) {
+      iattr = pd->spec->default_attr;
+      generic_flag = 1;
+    } else if (!pd->spec->attr_map) {
       iattr = pd->spec->default_attr;
       generic_flag = 1;
       if (iattr <= 0) {
@@ -439,6 +450,11 @@ start_hnd(void *data, const XML_Char *name, const XML_Char **atts)
   tl->tree = new_node;
   pd->tag_stack = tl;
   pd->nest++;
+
+  if (pd->spec->verbatim_flags && pd->spec->verbatim_flags[itag]) {
+    pd->verbatim = 1;
+    pd->verbatim_nest = 0;
+  }
   return;
 
  start_skipping:
@@ -469,6 +485,10 @@ end_hnd(void *data, const XML_Char *name)
   tl->tree->text = convert_utf8_to_local_heap(pd->conv_hnd, tl->str);
   free(tl->str); tl->str = 0;
   free(tl);
+
+  if (pd->verbatim && !pd->verbatim_nest) {
+    pd->verbatim = 0;
+  }
 }
 
 static void
