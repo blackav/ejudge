@@ -22,7 +22,12 @@
 int
 xml_err_top_level(const struct xml_tree *tree, int elem)
 {
-  xml_err(tree, "top-level element must be <%s>", xml_err_elem_names[elem]);
+  if (xml_err_spec && xml_err_spec->elem_map) {
+    xml_err(tree, "top-level element must be <%s>",
+            xml_err_spec->elem_map[elem]);
+  } else {
+    xml_err(tree, "invalid top-level element");
+  }
   return -1;
 }
 

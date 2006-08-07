@@ -22,8 +22,12 @@
 int
 xml_err_elem_undefined(const struct xml_tree *p, int tag)
 {
-  xml_err(p, "element <%s> is not defined in <%s>",
-          xml_err_elem_names[tag], xml_err_elem_names[p->tag]);
+  if (xml_err_spec && xml_err_spec->elem_map) {
+    xml_err(p, "element <%s> is not defined in <%s>",
+            xml_err_spec->elem_map[tag], xml_err_get_elem_name(p));
+  } else {
+    xml_err(p, "element is not defined");
+  }
   return -1;
 }
 

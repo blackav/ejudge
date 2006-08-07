@@ -22,7 +22,11 @@
 int
 xml_err_elem_empty(const struct xml_tree *p)
 {
-  xml_err(p, "element <%s> is empty", xml_err_elem_names[p->tag]);
+  if (xml_err_spec && xml_err_spec->elem_map) {
+    xml_err(p, "element <%s> is empty", xml_err_get_elem_name(p));
+  } else {
+    xml_err(p, "element is empty");
+  }
   return -1;
 }
 

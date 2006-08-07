@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,12 +16,12 @@
  */
 
 #include "xml_utils.h"
+#include "expat_iface.h"
 
 const unsigned char *xml_err_path;
-const char * const *xml_err_elem_names;
-const char * const *xml_err_attr_names;
+const struct xml_parse_spec *xml_err_spec;
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")

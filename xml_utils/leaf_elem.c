@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,11 @@ xml_leaf_elem(struct xml_tree *tree, unsigned char **value_addr, int move_flag,
     return -1;
   }
   if (!tree->text || (!empty_allowed_flag && !tree->text[0])) {
-    xml_err(tree, "element <%s> is empty", xml_err_elem_names[tree->tag]);
+    if (xml_err_spec && xml_err_spec->elem_map) {
+      xml_err(tree, "element <%s> is empty", xml_err_get_elem_name(tree));
+    } else {
+      xml_err(tree, "element is empty");
+    }
     return -1;
   }
   if (*value_addr) {
@@ -44,7 +48,7 @@ xml_leaf_elem(struct xml_tree *tree, unsigned char **value_addr, int move_flag,
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")

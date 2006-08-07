@@ -22,12 +22,16 @@
 int
 xml_err_nested_elems(const struct xml_tree *p)
 {
-  xml_err(p, "nested elements are not allowed in <%s>",
-          xml_err_elem_names[p->tag]);
+  if (xml_err_spec && xml_err_spec->elem_map) {
+    xml_err(p, "nested elements are not allowed in <%s>",
+            xml_err_get_elem_name(p));
+  } else {
+    xml_err(p, "nested elements are not allowed");
+  }
   return -1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")

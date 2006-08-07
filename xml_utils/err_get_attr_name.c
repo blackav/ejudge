@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,31 +16,22 @@
  */
 
 #include "xml_utils.h"
-#include "pathutl.h"
 #include "expat_iface.h"
 
-#include <reuse/xalloc.h>
-
-#include <ctype.h>
-
-int
-xml_empty_text(struct xml_tree *tree)
+const unsigned char *
+xml_err_get_attr_name(const struct xml_attr *a)
 {
-  unsigned char *p;
+  if (xml_err_spec && xml_err_spec->attr_map) {
+    if (xml_err_spec->default_attr > 0
+        && xml_err_spec->default_attr == a->tag)
+      return a->name[0];
+    return xml_err_spec->attr_map[a->tag];
+  } else {
+    static unsigned char buf[32];
 
-  if (!tree->text) return 0;
-  for (p = tree->text; *p && isspace(*p); p++);
-  if (*p) {
-    if (xml_err_spec && xml_err_spec->elem_map) {
-      xml_err(tree, "text is not allowed in <%s>", xml_err_get_elem_name(tree));
-    } else {
-      xml_err(tree, "text is not allowed");
-    }
-    return -1;
+    snprintf(buf, sizeof(buf), "attr %d", a->tag);
+    return buf;
   }
-  xfree(tree->text);
-  tree->text = 0;
-  return 0;
 }
 
 /*

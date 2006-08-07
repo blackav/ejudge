@@ -25,8 +25,12 @@ int
 xml_err_attr_not_allowed(const struct xml_tree *p,
                          const struct xml_attr *a)
 {
-  xml_err(p, "attribute \"%s\" is not allowed in <%s>",
-          xml_err_attr_names[a->tag], xml_err_elem_names[p->tag]);
+  if (xml_err_spec && xml_err_spec->elem_map && xml_err_spec->attr_map) {
+    xml_err(p, "attribute \"%s\" is not allowed in <%s>",
+            xml_err_get_attr_name(a), xml_err_get_elem_name(p));
+  } else {
+    xml_err(p, "attribute is not allowed");
+  }
   return -1;
 }
 

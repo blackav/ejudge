@@ -22,11 +22,15 @@
 int
 xml_err_elem_redefined(const struct xml_tree *p)
 {
-  if (!p->up) {
-    xml_err(p, "element <%s> already defined", xml_err_elem_names[p->tag]);
+  if (xml_err_spec && xml_err_spec->elem_map) {
+    if (!p->up) {
+      xml_err(p, "element <%s> already defined", xml_err_get_elem_name(p));
+    } else {
+      xml_err(p, "element <%s> already defined in <%s>",
+              xml_err_get_elem_name(p), xml_err_get_elem_name(p->up));
+    }
   } else {
-    xml_err(p, "element <%s> already defined in <%s>",
-            xml_err_elem_names[p->tag], xml_err_elem_names[p->up->tag]);
+    xml_err(p, "element already defined");
   }
   return -1;
 }
