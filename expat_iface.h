@@ -57,6 +57,7 @@ struct xml_parse_spec
   void * (*attr_alloc)(int);
   void (*elem_free)(struct xml_tree *);
   void (*attr_free)(struct xml_attr *);
+  unsigned char const *verbatim_flags;
 };
 
 struct xml_tree *
