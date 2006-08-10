@@ -314,6 +314,7 @@ struct userlist_passwd
 struct userlist_user_info
 {
   int cnts_read_only;
+  int filled;
 
   unsigned char *name;
   struct userlist_passwd *team_passwd;

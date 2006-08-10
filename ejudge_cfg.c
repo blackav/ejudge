@@ -30,6 +30,7 @@
 #include <string.h>
 #include <pwd.h>
 #include <limits.h>
+#include <ctype.h>
 
 enum
   {
@@ -57,6 +58,7 @@ enum
     TG_COMPILE_HOME_DIR,
     TG_TESTING_WORK_DIR,
     TG_SCRIPT_DIR,
+    TG_PLUGIN_DIR,
     TG_SERIALIZATION_KEY,
     TG_ADMIN_EMAIL,
     TG_USERLIST_LOG,
@@ -71,6 +73,12 @@ enum
     TG_JOB_SERVER_LOG,
     TG_JOB_SERVER_SPOOL,
     TG_JOB_SERVER_WORK,
+    TG_PLUGINS,
+    TG_PLUGIN,
+    TG_PATH,
+
+    TG__BARRIER,
+    TG__DEFAULT,
 
     TG_LAST_TAG,
   };
@@ -83,6 +91,13 @@ enum
     AT_LOCAL_USER,
     AT_LOGIN,
     AT_EJUDGE_USER,
+    AT_NAME,
+    AT_TYPE,
+    AT_LOAD,
+    AT_DEFAULT,
+
+    AT__BARRIER,
+    AT__DEFAULT,
 
     AT_LAST_TAG,
   };
@@ -114,6 +129,7 @@ static char const * const elem_map[] =
   "compile_home_dir",
   "testing_work_dir",
   "script_dir",
+  "plugin_dir",
   "serialization_key",
   "admin_email",
   "userlist_log",
@@ -128,6 +144,11 @@ static char const * const elem_map[] =
   "job_server_log",
   "job_server_spool",
   "job_server_work",
+  "plugins",
+  "plugin",
+  "path",
+  0,
+  "_default",
 
   0
 };
@@ -142,6 +163,12 @@ static char const * const attr_map[] =
   "local_user",
   "login",
   "ejudge_user",
+  "name",
+  "type",
+  "load",
+  "default",
+  0,
+  "_default",
 
   0
 };
@@ -151,6 +178,12 @@ static size_t elem_sizes[TG_LAST_TAG] =
   [TG_CONFIG] = sizeof(struct ejudge_cfg),
   [TG_MAP] = sizeof(struct ejudge_cfg_user_map),
   [TG_CAP] = sizeof(struct opcap_list_item),
+  [TG_PLUGIN] = sizeof(struct ejudge_plugin),
+};
+
+static const unsigned char verbatim_flags[] =
+{
+  [TG_PLUGIN] = 1,
 };
 
 static struct xml_parse_spec ejudge_config_parse_spec =
@@ -159,12 +192,13 @@ static struct xml_parse_spec ejudge_config_parse_spec =
   .attr_map = attr_map,
   .elem_sizes = elem_sizes,
   .attr_sizes = NULL,
-  .default_elem = 0,
-  .default_attr = 0,
+  .default_elem = TG__DEFAULT,
+  .default_attr = AT__DEFAULT,
   .elem_alloc = NULL,
   .attr_alloc = NULL,
   .elem_free = NULL,
   .attr_free = NULL,
+  .verbatim_flags = verbatim_flags,
 };
 
 static struct xml_tree *
@@ -222,9 +256,7 @@ parse_user_map(char const *path, struct xml_tree *p)
 }
 
 static int
-parse_capabilities(unsigned char const *path,
-                   struct ejudge_cfg *cfg,
-                   struct xml_tree *ct)
+parse_capabilities(struct ejudge_cfg *cfg, struct xml_tree *ct)
 {
   struct xml_tree *p;
   struct opcap_list_item *pp;
@@ -257,6 +289,66 @@ parse_capabilities(unsigned char const *path,
   return 0;
 }
 
+static int
+parse_plugins(struct ejudge_cfg *cfg, struct xml_tree *tree)
+{
+  struct xml_tree *p, *q;
+  struct ejudge_plugin *plg;
+  struct xml_attr *a;
+
+  if (!tree) return 0;
+  if (tree->tag != TG_PLUGINS) return xml_err_elem_not_allowed(tree);
+  if (xml_empty_text(tree) < 0) return -1;
+  if (tree->first) return xml_err_attrs(tree);
+    
+  for (p = tree->first_down; p; p = p->right) {
+    if (p->tag != TG_PLUGIN) return xml_err_elem_not_allowed(p);
+    if (xml_empty_text(p) < 0) return -1;
+    plg = (struct ejudge_plugin*) p;
+
+    for (a = p->first; a; a = a->next) {
+      switch (a->tag) {
+      case AT_NAME:
+        plg->name = a->text;
+        a->text = 0;
+        break;
+      case AT_TYPE:
+        plg->type = a->text;
+        a->text = 0;
+        break;
+      case AT_LOAD:
+        if (xml_attr_bool(a, &plg->load_flag) < 0) return -1;
+        break;
+      case AT_DEFAULT:
+        if (xml_attr_bool(a, &plg->default_flag) < 0) return -1;
+        break;
+      default:
+        return xml_err_attr_not_allowed(p, a);
+      }
+    }
+    xml_tree_free_attrs(p, &ejudge_config_parse_spec);
+    if (!plg->name) return xml_err_attr_undefined(p, AT_NAME);
+    if (!plg->type) return xml_err_attr_undefined(p, AT_TYPE);
+
+    for (q = p->first_down; q; q = q->right) {
+      ASSERT(q->tag == TG__DEFAULT);
+      if (!strcmp(q->name[0], "config")) {
+        if (plg->data) return xml_err_elem_redefined(q);
+        plg->data = q;
+      } else if (!strcmp(q->name[0], "path")) {
+        if (xml_leaf_elem(q, &plg->path, 1, 0) < 0) return -1;
+      } else {
+        return xml_err_elem_not_allowed(q);
+      }
+    }
+
+    if (!plg->data) return xml_err_elem_undefined(p, TG_CONFIG);
+  }
+  cfg->plugin_list = tree->first_down;
+
+  return 0;
+}
+
 #define CONFIG_OFFSET(f) XOFFSET(struct ejudge_cfg, f)
 
 static const size_t cfg_final_offsets[TG_LAST_TAG] =
@@ -280,6 +372,7 @@ static const size_t cfg_final_offsets[TG_LAST_TAG] =
   [TG_COMPILE_HOME_DIR] = CONFIG_OFFSET(compile_home_dir),
   [TG_TESTING_WORK_DIR] = CONFIG_OFFSET(testing_work_dir),
   [TG_SCRIPT_DIR] = CONFIG_OFFSET(script_dir),
+  [TG_PLUGIN_DIR] = CONFIG_OFFSET(plugin_dir),
   [TG_ADMIN_EMAIL] = CONFIG_OFFSET(admin_email),
   [TG_USERLIST_LOG] = CONFIG_OFFSET(userlist_log),
   [TG_VAR_DIR] = CONFIG_OFFSET(var_dir),
@@ -305,8 +398,7 @@ ejudge_cfg_parse(char const *path)
   unsigned char **p_str;
 
   xml_err_path = path;
-  xml_err_elem_names = elem_map;
-  xml_err_attr_names = attr_map;
+  xml_err_spec = &ejudge_config_parse_spec;
 
   tree = xml_build_tree(path, &ejudge_config_parse_spec);
   if (!tree) return 0;
@@ -343,7 +435,7 @@ ejudge_cfg_parse(char const *path)
       if (!(cfg->user_map = parse_user_map(path, p))) goto failed;
       break;
     case TG_CAPS:
-      if (parse_capabilities(path, cfg, p) < 0) goto failed;
+      if (parse_capabilities(cfg, p) < 0) goto failed;
       break;
     case TG_SERIALIZATION_KEY:
       {
@@ -361,6 +453,9 @@ ejudge_cfg_parse(char const *path)
         }
         cfg->serialization_key = k;
       }
+      break;
+    case TG_PLUGINS:
+      if (parse_plugins(cfg, p) < 0) goto failed;
       break;
     default:
       xml_err_elem_not_allowed(p);
@@ -451,6 +546,15 @@ ejudge_cfg_parse(char const *path)
   }
 #endif /* EJUDGE_RUN_PATH */
 
+  if (!cfg->plugin_dir && cfg->script_dir) {
+    cfg->plugin_dir = xstrdup(cfg->script_dir);
+  }
+#if defined EJUDGE_SCRIPT_DIR
+  if (!cfg->plugin_dir) {
+    cfg->plugin_dir = xstrdup(EJUDGE_SCRIPT_DIR);
+  }
+#endif /* EJUDGE_SCRIPT_DIR */
+
   //ejudge_cfg_unparse(cfg, stdout);
   return cfg;
 
@@ -491,6 +595,79 @@ ejudge_cfg_unparse(struct ejudge_cfg *cfg, FILE *f)
 
   xml_unparse_tree(stdout, (struct xml_tree*) cfg, elem_map, 0, 0, 0,
                    fmt_func);
+}
+
+static void
+unparse_default_tree(struct xml_tree *t, FILE *f, int offset)
+{
+  struct xml_tree *p;
+  struct xml_attr *a;
+  unsigned char *ostr;
+  const unsigned char *s;
+
+  if (!t) return;
+  ASSERT(t->tag == TG__DEFAULT);
+
+  ostr = alloca(offset + 1);
+  memset(ostr, ' ', offset);
+  ostr[offset] = 0;
+
+  if ((s = t->text)) {
+    for (; *s; s++)
+      if (!isspace(*s))
+        break;
+    if (!*s) {
+      xfree(t->text);
+      t->text = 0;
+    }
+  }
+
+  fprintf(f, "%s<%s", ostr, t->name[0]);
+  for (a = t->first; a; a = a->next) {
+    ASSERT(a->tag == AT__DEFAULT);
+    // FIXME: do XML armoring
+    fprintf(f, " %s=\"%s\"", a->name[0], a->text);
+  }
+  if (t->first_down) {
+    fprintf(f, ">\n");
+    for (p = t->first_down; p; p = p->right) {
+      unparse_default_tree(p, f, offset + 2);
+    }
+    fprintf(f, "%s</%s>\n", ostr, t->name[0]);
+  } else if (t->text) {
+    fprintf(f, ">%s</%s>\n", t->text, t->name[0]);
+  } else {
+    fprintf(f, "/>\n");
+  }
+}
+
+void
+ejudge_cfg_unparse_plugins(struct ejudge_cfg *cfg, FILE *f)
+{
+  struct xml_tree *p;
+  struct ejudge_plugin *plg;
+
+  if (!cfg || !cfg->plugin_list) return;
+  fprintf(f, "<%s>\n", elem_map[TG_PLUGINS]);
+  for (p = cfg->plugin_list; p; p = p->right) {
+    plg = (struct ejudge_plugin*) p;
+    fprintf(f, "  <%s %s=\"%s\" %s=\"%s\"",
+            elem_map[TG_PLUGIN],
+            attr_map[AT_TYPE], plg->type,
+            attr_map[AT_NAME], plg->name);
+    if (plg->load_flag) {
+      fprintf(f, " %s=\"%s\"",
+              attr_map[AT_LOAD], xml_unparse_bool(plg->load_flag));
+    }
+    if (plg->default_flag) {
+      fprintf(f, " %s=\"%s\"",
+              attr_map[AT_DEFAULT], xml_unparse_bool(plg->default_flag));
+    }
+    fprintf(f, ">\n");
+    unparse_default_tree(plg->data, f, 4);
+    fprintf(f, "  </%s>\n", elem_map[TG_PLUGIN]);
+  }
+  fprintf(f, "</%s>\n", elem_map[TG_PLUGINS]);
 }
 
 /*

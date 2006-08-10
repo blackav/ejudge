@@ -272,31 +272,6 @@ encoding_hnd(void *data, const XML_Char *name, XML_Encoding *info)
 
   iconv_close(conv_hnd);
   return 1;
-
-#if 0
-  XML_Parser p = (XML_Parser) data;
-  int i, o;
-  unsigned char cb, cu1, cu2;
-  iconv_t conv_hnd;
-  unsigned char in_buf[16], out_buf[16];
-  unsigned char *p_in_buf, *p_out_buf;
-
-  tab = nls_lookup_table(name);
-  if (tab) {
-    for (i = 0; i < 256; i++) {
-      cb = i;
-      tab->char2uni(&cb, &o, &cu1, &cu2);
-      info->map[i] = (cu2 << 8) | cu1;
-    }
-    info->data = 0;
-    info->convert = 0;
-    info->release = 0;
-    return 1;
-  }
-
-  // unsupported encoding
-  return 0;
-#endif
 }
 
 static void
@@ -486,7 +461,7 @@ end_hnd(void *data, const XML_Char *name)
   free(tl->str); tl->str = 0;
   free(tl);
 
-  if (pd->verbatim && !pd->verbatim_nest) {
+  if (pd->verbatim && pd->verbatim_nest < 0) {
     pd->verbatim = 0;
   }
 }

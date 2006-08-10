@@ -23,6 +23,18 @@
 
 #include <stdio.h>
 
+struct ejudge_plugin
+{
+  struct xml_tree b;
+
+  unsigned char *name;
+  unsigned char *type;
+  int load_flag;
+  int default_flag;
+  unsigned char *path;
+  struct xml_tree *data;
+};
+
 struct ejudge_cfg_user_map
 {
   struct xml_tree b;
@@ -60,6 +72,7 @@ struct ejudge_cfg
   unsigned char *compile_home_dir;
   unsigned char *testing_work_dir;
   unsigned char *script_dir;
+  unsigned char *plugin_dir;
   unsigned char *var_dir;
   unsigned char *userlist_log;
   unsigned char *super_serve_log;
@@ -75,10 +88,13 @@ struct ejudge_cfg
   struct xml_tree *user_map;
 
   opcaplist_t capabilities;
+
+  struct xml_tree *plugin_list;
 };
 
 struct ejudge_cfg *ejudge_cfg_parse(char const *);
 struct ejudge_cfg *ejudge_cfg_free(struct ejudge_cfg *);
 void ejudge_cfg_unparse(struct ejudge_cfg *, FILE *);
+void ejudge_cfg_unparse_plugins(struct ejudge_cfg *cfg, FILE *f);
 
 #endif /* __EJUDGE_CFG_H__ */
