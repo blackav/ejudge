@@ -732,20 +732,25 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
       break;
     case USERLIST_A_CNTS_READ_ONLY:
       if (xml_attr_bool(a, &ui->i.cnts_read_only) < 0) return -1;
+      ui->i.filled = 1;
       break;
     case USERLIST_A_LAST_CHANGE:
       pt = &ui->i.last_change_time;
+      ui->i.filled = 1;
     parse_date_attr:
       if (xml_attr_date(a, pt) < 0) return -1;
       break;
     case USERLIST_A_LAST_ACCESS:
       pt = &ui->i.last_access_time;
+      ui->i.filled = 1;
       goto parse_date_attr;
     case USERLIST_A_LAST_PWDCHANGE:
       pt = &ui->i.last_pwdchange_time;
+      ui->i.filled = 1;
       goto parse_date_attr;
     case USERLIST_A_CREATE:
       pt = &ui->i.create_time;
+      ui->i.filled = 1;
       goto parse_date_attr;
     default:
       return xml_err_attr_not_allowed(node, a);
@@ -763,6 +768,7 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
     if (leaf_info_offsets[p->tag] > 0) {
       p_str = XPDEREF(unsigned char *, &ui->i, leaf_info_offsets[p->tag]);
       if (xml_leaf_elem(p, p_str, 1, 1) < 0) return -1;
+      ui->i.filled = 1;
       xml_unlink_node(p);
       userlist_free(p);
       continue;
@@ -772,6 +778,7 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
     case USERLIST_T_TEAM_PASSWORD:
       if (ui->i.team_passwd) return xml_err_elem_redefined(p);
       if (!(ui->i.team_passwd = parse_passwd(path, p))) return -1;
+      ui->i.filled = 1;
       break;
     case USERLIST_T_CONTESTANTS:
     case USERLIST_T_RESERVES:
@@ -779,6 +786,7 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
     case USERLIST_T_ADVISORS:
     case USERLIST_T_GUESTS:
       if (parse_members(path, p, ui->i.members) < 0) return -1;
+      ui->i.filled = 1;
       break;
     default:
       return xml_err_elem_not_allowed(p);
@@ -876,6 +884,7 @@ do_parse_user(char const *path, struct userlist_user *usr)
       break;
     case USERLIST_A_CNTS_READ_ONLY:
       if (xml_attr_bool(a, &usr->i.cnts_read_only) < 0) return -1;
+      usr->i.filled = 1;
       break;
     case USERLIST_A_NEVER_CLEAN:
       if (xml_attr_bool(a, &usr->never_clean) < 0) return -1;
@@ -897,6 +906,7 @@ do_parse_user(char const *path, struct userlist_user *usr)
     if (leaf_info_offsets[t->tag] > 0) {
       p_str = XPDEREF(unsigned char *, &usr->i, leaf_info_offsets[t->tag]);
       if (xml_leaf_elem(t, p_str, 1, 1) < 0) return -1;
+      usr->i.filled = 1;
       xml_unlink_node(t);
       userlist_free(t);
       continue;
@@ -923,6 +933,7 @@ do_parse_user(char const *path, struct userlist_user *usr)
     case USERLIST_T_TEAM_PASSWORD:
       if (usr->i.team_passwd) return xml_err_elem_redefined(t);
       if (!(usr->i.team_passwd = parse_passwd(path, t))) return -1;
+      usr->i.filled = 1;
       break;
     case USERLIST_T_EMAIL:
       if (usr->email) return xml_err_elem_redefined(t);
@@ -956,6 +967,7 @@ do_parse_user(char const *path, struct userlist_user *usr)
     case USERLIST_T_ADVISORS:
     case USERLIST_T_GUESTS:
       if (parse_members(path, t, usr->i.members) < 0) return -1;
+      usr->i.filled = 1;
       break;
     case USERLIST_T_CNTSINFOS:
       if (parse_cntsinfos(path, t, usr) < 0) return -1;
