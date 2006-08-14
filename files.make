@@ -133,6 +133,7 @@ COMMON_CFILES=\
  prepare_serve.c\
  printing.c\
  protocol.c\
+ random.c\
  runlog.c\
  runlog_import.c\
  runlog_xml.c\
@@ -162,6 +163,7 @@ COMMON_CFILES=\
  tsc.c\
  userlist.c\
  ejudge_cfg.c\
+ uldb_plugin_xml.c\
  userlist_proto.c\
  userlist_xml.c\
  varsubst.c\
@@ -287,6 +289,7 @@ HFILES=\
  prepare_serve.h\
  printing.h\
  protocol.h\
+ random.h\
  runlog.h\
  run_packet.h\
  run_packet_priv.h\
