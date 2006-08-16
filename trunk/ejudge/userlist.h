@@ -152,6 +152,7 @@ enum
     USERLIST_A_CNTS_READ_ONLY,
     USERLIST_A_CREATE,
     USERLIST_A_COPIED_FROM,
+    USERLIST_A_SSL,
 
     USERLIST_LAST_ATTN,
   };
@@ -285,8 +286,9 @@ struct userlist_cookie
 {
   struct xml_tree b;
 
-  struct userlist_user *user;
+  int user_id;
   ej_ip_t ip;
+  int ssl;
   ej_cookie_t cookie;
   time_t expire;
   int contest_id;

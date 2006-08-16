@@ -131,6 +131,7 @@ static char const * const attr_map[] =
   "cnts_read_only",
   "create",
   "copied_from",
+  "ssl",
 
   0
 };
@@ -154,7 +155,9 @@ static size_t const elem_sizes[USERLIST_LAST_TAG] =
 struct xml_tree *
 userlist_node_alloc(int tag)
 {
-  return xml_elem_alloc(tag, elem_sizes);
+  struct xml_tree *p = xml_elem_alloc(tag, elem_sizes);
+  p->tag = tag;
+  return p;
 }
 
 static void
@@ -424,7 +427,7 @@ parse_cookies(char const *path, struct xml_tree *cookies,
     if (t->first_down) return xml_err_nested_elems(t);
     c->contest_id = -1;
     c->locale_id = -1;
-    c->user = usr;
+    c->user_id = usr->id;
     for (a = t->first; a; a = a->next) {
       switch (a->tag) {
       case USERLIST_A_IP:
@@ -443,6 +446,9 @@ parse_cookies(char const *path, struct xml_tree *cookies,
           }
           c->cookie = val;
         }
+        break;
+      case USERLIST_A_SSL:
+        if (xml_attr_bool(a, &c->ssl) < 0) return -1;
         break;
       case USERLIST_A_EXPIRE:
         if (xml_parse_date(path, a->line, a->column, a->text, &c->expire) < 0)
@@ -1295,6 +1301,10 @@ unparse_cookies(struct xml_tree *p, FILE *f)
             attr_map[USERLIST_A_EXPIRE], xml_unparse_date(c->expire),
             attr_map[USERLIST_A_PRIV_LEVEL],
             protocol_priv_level_str(c->priv_level));
+    if (c->ssl > 0) {
+      fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_SSL],
+              xml_unparse_bool(c->ssl));
+    }
     if (c->locale_id >= 0) {
       fprintf(f, " %s=\"%d\"", attr_map[USERLIST_A_LOCALE_ID], c->locale_id);
     }
