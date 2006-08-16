@@ -858,8 +858,8 @@ userlist_build_cookie_hash(struct userlist_list *p)
     ck = (struct userlist_cookie*) u->cookies->first_down;
     while (ck) {
       ASSERT(ck->b.tag == USERLIST_T_COOKIE);
-      ASSERT(ck->user);
-      ASSERT(ck->user == u);
+      ASSERT(ck->user_id > 0);
+      ASSERT(ck->user_id == u->id);
       ASSERT(ck->cookie);
       cookie_count++;
       ck = (struct userlist_cookie*) ck->b.right;
@@ -888,7 +888,7 @@ userlist_build_cookie_hash(struct userlist_list *p)
       while (p->cookie_hash_table[j]) {
         if (ck->cookie == p->cookie_hash_table[j]->cookie) {
           err("duplicated cookie value %016llx (uids=%d,%d)",
-              ck->cookie, u->id, p->cookie_hash_table[j]->user->id);
+              ck->cookie, u->id, p->cookie_hash_table[j]->user_id);
           goto cleanup;
         }
         collision_count++;
@@ -930,7 +930,7 @@ userlist_cookie_hash_add(struct userlist_list *p, struct userlist_cookie *ck)
   ASSERT(ck);
   ASSERT(ck->b.tag == USERLIST_T_COOKIE);
   ASSERT(ck->cookie);
-  ASSERT(ck->user);
+  ASSERT(ck->user_id > 0);
 
   if (p->cookie_cur_fill >= p->cookie_thresh) {
     if (userlist_build_cookie_hash(p) < 0) {
@@ -943,7 +943,7 @@ userlist_cookie_hash_add(struct userlist_list *p, struct userlist_cookie *ck)
     if (p->cookie_hash_table[i] == ck) return 0;
     if (p->cookie_hash_table[i]->cookie == ck->cookie) {
       err("duplicated cookie value %016llx (uids=%d,%d)",
-          ck->cookie, ck->user->id, p->cookie_hash_table[i]->user->id);
+          ck->cookie, ck->user_id, p->cookie_hash_table[i]->user_id);
       return -1;
     }
     i = (i + p->cookie_hash_step) % p->cookie_hash_size;
@@ -966,7 +966,7 @@ userlist_cookie_hash_del(struct userlist_list *p, struct userlist_cookie *ck)
   ASSERT(ck);
   ASSERT(ck->b.tag == USERLIST_T_COOKIE);
   ASSERT(ck->cookie);
-  ASSERT(ck->user);
+  ASSERT(ck->user_id > 0);
 
   i = ck->cookie % p->cookie_hash_size;
   j = -1;
