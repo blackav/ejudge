@@ -21,8 +21,7 @@ int
 userlist_clnt_edit_field(struct userlist_clnt *clnt,
                          int user_id,
                          int contest_id,
-                         int role,
-                         int pers,
+                         int serial,
                          int field,
                          unsigned char const *value)
 {
@@ -40,8 +39,7 @@ userlist_clnt_edit_field(struct userlist_clnt *clnt,
   out->request_id = ULS_EDIT_FIELD;
   out->user_id = user_id;
   out->contest_id = contest_id;
-  out->role = role;
-  out->pers = pers;
+  out->serial = serial;
   out->field = field;
   out->value_len = value_len;
   strcpy(out->data, value);
