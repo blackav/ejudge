@@ -1,7 +1,12 @@
-CREATE TABLE logins
+CREATE TABLE %sconfig
+       (config_key VARCHAR(64) NOT NULL PRIMARY KEY,
+       config_val VARCHAR(64)
+       );
+
+CREATE TABLE %slogins
        (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
        login VARCHAR(64) NOT NULL UNIQUE KEY,
-       email VARCHAR(128) NOT NULL,
+       email VARCHAR(128),
        pwdmethod TINYINT NOT NULL DEFAULT 0,
        password VARCHAR(64),
        privileged TINYINT NOT NULL DEFAULT 0,
@@ -17,7 +22,7 @@ CREATE TABLE logins
        changetime TIMESTAMP DEFAULT 0
        );
 
-CREATE TABLE cookies
+CREATE TABLE %scookies
        (val BIGINT UNSIGNED NOT NULL PRIMARY KEY,
        user_id INT NOT NULL,
        priv_level TINYINT NOT NULL DEFAULT 0,
@@ -25,11 +30,12 @@ CREATE TABLE cookies
        locale_id TINYINT NOT NULL DEFAULT 0,
        contest_id INT UNSIGNED NOT NULL,
        ip VARCHAR(64) NOT NULL,
+       ssl TINYINT NOT NULL DEFAULT 0,
        expire DATETIME NOT NULL,
        FOREIGN KEY (user_id) REFERENCES logins (id)
        );
 
-CREATE TABLE cntsregs
+CREATE TABLE %scntsregs
        (user_id INT UNSIGNED NOT NULL,
        contest_id INT UNSIGNED NOT NULL,
        status TINYINT NOT NULL DEFAULT 0,
@@ -42,7 +48,7 @@ CREATE TABLE cntsregs
        FOREIGN KEY (user_id) REFERENCES logins (id)
        );
 
-CREATE TABLE users
+CREATE TABLE %susers
        (user_id INT UNSIGNED NOT NULL,
        contest_id INT UNSIGNED NOT NULL,
        cnts_read_only TINYINT NOT NULL DEFAULT 0,
@@ -71,10 +77,10 @@ CREATE TABLE users
        printer VARCHAR (256),
        languages VARCHAR (256),
        PRIMARY KEY (user_id, contest_id),
-       FOREIGN KEY (user_id) REFERENCES logins (id),
+       FOREIGN KEY (user_id) REFERENCES logins (id)
        );
 
-CREATE TABLE participants
+CREATE TABLE %sparticipants
        (
        serial INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
        user_id INT UNSIGNED NOT NULL,
@@ -107,3 +113,5 @@ CREATE TABLE participants
        facshort_en VARCHAR(256),
        FOREIGN KEY (user_id) REFERENCES logins (id)
        );
+
+INSERT INTO %sconfig VALUES ('version', '1');

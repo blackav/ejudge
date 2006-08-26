@@ -25,7 +25,7 @@ CFLAGS = -I. -I../.. $(MYSQL_INCL_OPT) $(REUSE_INCL_OPT) $(EXPAT_INCL_OPT) $(CDE
 LDFLAGS = $(MYSQL_LIB_OPT) $(REUSE_LIB_OPT) $(EXPAT_LIB_OPT) $(CDEBUGFLAGS) $(LDCOMPFLAGS) $(LDEXTRAFLAGS)
 LDLIBS = $(EXTRALIBS) $(MYSQL_LIBS) -lreuse -lexpat -lm
 
-all : uldb_mysql.so
+all : plugin_uldb_mysql.so
 
 install :
 
@@ -40,6 +40,6 @@ deps.make : $(CFILES) $(HFILES)
 
 include deps.make
 
-uldb_mysql.so : $(ULDB_MYSQL_OFILES)
+plugin_uldb_mysql.so : $(ULDB_MYSQL_OFILES)
 	$(LD) -shared $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
