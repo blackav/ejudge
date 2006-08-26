@@ -21,8 +21,7 @@ int
 userlist_clnt_add_field(struct userlist_clnt *clnt,
                         int *p_user_id,
                         int contest_id,
-                        int role,
-                        int pers,
+                        int serial,
                         int field)
 {
   struct userlist_pk_edit_field *out = 0;
@@ -39,8 +38,7 @@ userlist_clnt_add_field(struct userlist_clnt *clnt,
   if (!p_user_id) out->user_id = -1;
   else out->user_id = *p_user_id;
   out->contest_id = contest_id;
-  out->role = role;
-  out->pers = pers;
+  out->serial = serial;
   out->field = field;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
   if ((r = userlist_clnt_recv_packet(clnt, &in_size, &void_in)) < 0)

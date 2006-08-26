@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,30 +18,38 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_delete_field(struct userlist_clnt *clnt,
-                           int user_id,
-                           int contest_id,
-                           int serial,
-                           int field,
-                           ej_cookie_t cookie)
+userlist_clnt_create_user(struct userlist_clnt *clnt, int *p_user_id)
 {
   struct userlist_pk_edit_field *out = 0;
   struct userlist_packet *in = 0;
   int r;
   size_t out_size, in_size = 0;
+  struct userlist_pk_login_ok *uin = 0;
+  void *void_in = 0;
 
   out_size = sizeof(*out);
   out = alloca(out_size);
   memset(out, 0, out_size);
-  out->request_id = ULS_DELETE_FIELD;
-  out->user_id = user_id;
-  out->contest_id = contest_id;
-  out->serial = serial;
-  out->field = field;
-  out->cookie = cookie;
+  out->request_id = ULS_CREATE_USER;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
-  if ((r = userlist_clnt_recv_packet(clnt, &in_size, (void*) &in)) < 0)
+  if ((r = userlist_clnt_recv_packet(clnt, &in_size, &void_in)) < 0)
     return r;
+  in = (struct userlist_packet *) void_in;
+  if (in_size < sizeof(*in)) {
+    xfree(in);
+    return -ULS_ERR_PROTOCOL;
+  }
+  if (in->id == ULS_LOGIN_OK) {
+    uin = (struct userlist_pk_login_ok*) in;
+    if (in_size != sizeof(*uin)) {
+      xfree(in);
+      return -ULS_ERR_PROTOCOL;
+    }
+    if (p_user_id) *p_user_id = uin->user_id;
+    xfree(in);
+    return ULS_LOGIN_OK;
+  }
+
   if (in_size != sizeof(*in)) {
     xfree(in);
     return -ULS_ERR_PROTOCOL;
