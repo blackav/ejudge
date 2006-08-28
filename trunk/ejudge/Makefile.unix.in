@@ -197,7 +197,7 @@ register${CGI_PROG_SUFFIX}: ${REG_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 userlist-server: ${UL_OBJECTS}
-	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
+	${LD} ${LDFLAGS} $^ -Wl,-E -o $@ ${LDLIBS} -ldl ${EXPAT_LIB}
 
 job-server: ${JS_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
@@ -232,7 +232,9 @@ execute : ${EX_OBJECTS}
 local_clean:
 	-rm -f *.o *~ *.a $(TARGETS) revinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 serve_clnt/*.o userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c master master${CGI_PROG_SUFFIX} team team${CGI_PROG_SUFFIX} register register${CGI_PROG_SUFFIX} users users${CGI_PROG_SUFFIX} ejudge-config serve-control serve-control${CGI_PROG_SUFFIX} serve-cmd prjutils/*.o
 	-rm -rf locale
-clean: local_clean
+clean: subdir_clean local_clean
+
+subdir_clean:
 	$(MAKE) -C extra clean
 	$(MAKE) -C checkers clean
 	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" clean
