@@ -1,3 +1,15 @@
+2006-08-26 (r3236) Alexander Chernov  <cher@ispras.ru>
+
+	* edit_field.c: `role', `pers' parameters are removed,
+	  `serial' parameter is added.
+
+	* add_field.c: the same as above.
+
+	* delete_field.c: `role', `pers' parameters are removed,
+	  `serial', `cookie' parameters are added.
+
+	* create_user.c, create_member.c: initial revision.
+
 2006-06-28 (r3185) Alexander Chernov  <cher@ispras.ru>
 
 	* get_uid_by_pid.c: copyright notice is updated;

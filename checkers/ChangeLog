@@ -1,3 +1,8 @@
+2006-08-03 (r3217) Alexander Chernov  <cher@ispras.ru>
+
+	* read_buf.c:
+	(checker_read_buf) buffer size is increased to 1Mb.
+
 2006-06-10 (r3156) Alexander Chernov  <cher@ispras.ru>
 
 	* ChangeLog:
