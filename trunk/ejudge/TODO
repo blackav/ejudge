@@ -14,6 +14,16 @@ None known.
 Minor enhancements
 ==================
 
+o Support SIGHUP signal in userlist-server, compile, job-server,
+  super-serve. 
+o Do not show buttons in master/judge, which are not applicable
+  to the current contest, or if the user has no enough
+  permissions.
+o Enhanced creation of new contests from an existing contest.
+  During creation it should be possible to specify whether users
+  should be copied, whether problems should be copied, and allow
+  possibility to specify substitutions in the new configuration
+  files.
 o Passing of the run packets via the super-serve proxy, if the contest
   works in managed mode. This means, that if the `serve' program
   started by the `super-serve', it could be reasonable to pass the

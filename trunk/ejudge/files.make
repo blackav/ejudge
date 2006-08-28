@@ -19,6 +19,8 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/change_registration.c\
  userlist_clnt/clear_team_passwords.c\
  userlist_clnt/close.c\
+ userlist_clnt/create_member.c\
+ userlist_clnt/create_user.c\
  userlist_clnt/delete_field.c\
  userlist_clnt/do_pass_fd.c\
  userlist_clnt/dump_database.c\

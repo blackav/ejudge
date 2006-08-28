@@ -41,6 +41,18 @@
 #include <errno.h>
 #include <regex.h>
 
+/* special psedofields which are used for user info list markup */
+enum
+{
+  USERLIST_PSEUDO_FIRST = 500,
+  USERLIST_PSEUDO_PASSWORDS = USERLIST_PSEUDO_FIRST,
+  USERLIST_PSEUDO_GENERAL_INFO,
+  USERLIST_PSEUDO_FLAGS,
+  USERLIST_PSEUDO_TIMESTAMPS,
+
+  USERLIST_PSEUDO_LAST,
+};
+
 #define _(x) x
 static char const * const member_string[] =
 {
@@ -1188,55 +1200,55 @@ struct user_field_desc
 };
 static const struct user_field_desc user_descs[] =
 {
-  [USERLIST_NN_ID]                { "Id", 1, 0 },
-  [USERLIST_NN_LOGIN]             { "Login", 1, 1 },
-  [USERLIST_NN_EMAIL]             { "E-mail", 1, 1 },
-  [USERLIST_NN_NAME]              { "Name", 1, 1 },
-  [USERLIST_NN_IS_PRIVILEGED]     { "Privileged?", 1, 1 },
-  [USERLIST_NN_IS_INVISIBLE]      { "Invisible?", 1, 1 },
-  [USERLIST_NN_IS_BANNED]         { "Banned?", 1, 1 },
-  [USERLIST_NN_IS_LOCKED]         { "Locked?", 1, 1 },
-  [USERLIST_NN_SHOW_LOGIN]        { "Show login?", 1, 1 },
-  [USERLIST_NN_SHOW_EMAIL]        { "Show email?", 1, 1 },
-  [USERLIST_NN_READ_ONLY]         { "Read-only?", 1, 1 },
-  [USERLIST_NN_CNTS_READ_ONLY]    { "One contest Read-only?", 1, 1 },
-  [USERLIST_NN_NEVER_CLEAN]       { "Never clean?", 1, 1 },
-  [USERLIST_NN_SIMPLE_REGISTRATION] { "Simple registered?", 1, 1 },
-  [USERLIST_NN_TIMESTAMPS]        { "*Timestamps*", 0, 0 },
-  [USERLIST_NN_REG_TIME]          { "Reg time", 1, 1 },
-  [USERLIST_NN_LOGIN_TIME]        { "Login time", 1, 1 },
-  [USERLIST_NN_CREATE_TIME]       { "User info create time", 1, 1 },
-  [USERLIST_NN_ACCESS_TIME]       { "Access time", 1, 1 },
-  [USERLIST_NN_CHANGE_TIME]       { "Change time", 1, 1 },
-  [USERLIST_NN_PWD_CHANGE_TIME]   { "Pwd time", 1, 1 },
-  [USERLIST_NN_MINOR_CHANGE_TIME] { "Minor time", 1, 1 },
-  [USERLIST_NN_PASSWORDS]         { "*Passwords*", 0, 0 },
-  [USERLIST_NN_REG_PASSWORD]      { "Reg password", 1, 1 },
-  [USERLIST_NN_TEAM_PASSWORD]     { "Team password", 1, 1 },
-  [USERLIST_NN_GENERAL_INFO]      { "*General info*", 0, 0 },
-  [USERLIST_NN_INST]              { "Institution", 1, 1 },
-  [USERLIST_NN_INST_EN]           { "Institution (En)", 1, 1 },
-  [USERLIST_NN_INSTSHORT]         { "Inst. (short)", 1, 1 },
-  [USERLIST_NN_INSTSHORT_EN]      { "Inst. (short) (En)", 1, 1 },
-  [USERLIST_NN_FAC]               { "Faculty", 1, 1 },
-  [USERLIST_NN_FAC_EN]            { "Faculty (En)", 1, 1 },
-  [USERLIST_NN_FACSHORT]          { "Fac. (short)", 1, 1 },
-  [USERLIST_NN_FACSHORT_EN]       { "Fac. (short) (En)", 1, 1 },
-  [USERLIST_NN_HOMEPAGE]          { "Homepage", 1, 1 },
-  [USERLIST_NN_PHONE]             { "Phone", 1, 1 },
-  [USERLIST_NN_CITY]              { "City", 1, 1 },
-  [USERLIST_NN_CITY_EN]           { "City (En)", 1, 1 },
-  [USERLIST_NN_COUNTRY]           { "Country", 1, 1 },
-  [USERLIST_NN_COUNTRY_EN]        { "Country (En)", 1, 1 },
-  [USERLIST_NN_LOCATION]          { "Location", 1, 1 },
-  [USERLIST_NN_SPELLING]          { "Spelling", 1, 1 },
-  [USERLIST_NN_PRINTER_NAME]      { "Printer name", 1, 1 },
-  [USERLIST_NN_LANGUAGES]         { "Prog. languages", 1, 1 },
+  [USERLIST_NN_ID] = { "Id", 1, 0 },
+  [USERLIST_NN_IS_PRIVILEGED] = { "Privileged?", 1, 1 },
+  [USERLIST_NN_IS_INVISIBLE] = { "Invisible?", 1, 1 },
+  [USERLIST_NN_IS_BANNED] = { "Banned?", 1, 1 },
+  [USERLIST_NN_IS_LOCKED] = { "Locked?", 1, 1 },
+  [USERLIST_NN_SHOW_LOGIN] = { "Show login?", 1, 1 },
+  [USERLIST_NN_SHOW_EMAIL] = { "Show email?", 1, 1 },
+  [USERLIST_NN_READ_ONLY] = { "Read-only?", 1, 1 },
+  [USERLIST_NN_NEVER_CLEAN] = { "Never clean?", 1, 1 },
+  [USERLIST_NN_SIMPLE_REGISTRATION] = { "Simple registered?", 1, 1 },
+  [USERLIST_NN_LOGIN] = { "Login", 1, 1 },
+  [USERLIST_NN_EMAIL] = { "E-mail", 1, 1 },
+  [USERLIST_NN_PASSWD] = { "Reg password", 1, 1 },
+  [USERLIST_NN_REGISTRATION_TIME] = { "Reg time", 1, 1 },
+  [USERLIST_NN_LAST_LOGIN_TIME] = { "Login time", 1, 1 },
+  [USERLIST_NN_LAST_CHANGE_TIME] = { "Change time", 1, 1 },
+  [USERLIST_NN_LAST_PWDCHANGE_TIME] = { "Reg. pwd time", 1, 1 },
+  [USERLIST_NC_CNTS_READ_ONLY] = { "One contest Read-only?", 1, 1 },
+  [USERLIST_NC_NAME] = { "Name", 1, 1 },
+  [USERLIST_NC_TEAM_PASSWD] = { "Team password", 1, 1 },
+  [USERLIST_NC_INST] = { "Institution", 1, 1 },
+  [USERLIST_NC_INST_EN] = { "Institution (En)", 1, 1 },
+  [USERLIST_NC_INSTSHORT] = { "Inst. (short)", 1, 1 },
+  [USERLIST_NC_INSTSHORT_EN] = { "Inst. (short) (En)", 1, 1 },
+  [USERLIST_NC_FAC] = { "Faculty", 1, 1 },
+  [USERLIST_NC_FAC_EN] = { "Faculty (En)", 1, 1 },
+  [USERLIST_NC_FACSHORT] = { "Fac. (short)", 1, 1 },
+  [USERLIST_NC_FACSHORT_EN] = { "Fac. (short) (En)", 1, 1 },
+  [USERLIST_NC_HOMEPAGE] = { "Homepage", 1, 1 },
+  [USERLIST_NC_CITY] = { "City", 1, 1 },
+  [USERLIST_NC_CITY_EN] = { "City (En)", 1, 1 },
+  [USERLIST_NC_COUNTRY] = { "Country", 1, 1 },
+  [USERLIST_NC_COUNTRY_EN] = { "Country (En)", 1, 1 },
+  [USERLIST_NC_LOCATION] = { "Location", 1, 1 },
+  [USERLIST_NC_SPELLING] = { "Spelling", 1, 1 },
+  [USERLIST_NC_PRINTER_NAME] = { "Printer name", 1, 1 },
+  [USERLIST_NC_LANGUAGES] = { "Prog. languages", 1, 1 },
+  [USERLIST_NC_PHONE] = { "Phone", 1, 1 },
+  [USERLIST_NC_CREATE_TIME] = { "User info create time", 1, 1 },
+  [USERLIST_NC_LAST_CHANGE_TIME] = { "User info change time", 1, 1 },
+  [USERLIST_NC_LAST_PWDCHANGE_TIME] = { "Team passwd change time", 1, 1},
+  [USERLIST_PSEUDO_PASSWORDS] = { "*Passwords*", 0, 0 },
+  [USERLIST_PSEUDO_GENERAL_INFO] = { "*General info*", 0, 0 },
+  [USERLIST_PSEUDO_FLAGS] = { "*Flags*", 0, 0 },
+  [USERLIST_PSEUDO_TIMESTAMPS] = { "*Timestamps*", 0, 0 },
 };
 static const struct user_field_desc member_descs[] =
 {
   [USERLIST_NM_SERIAL]     { "Serial", 1, 1 },
-  [USERLIST_NM_COPIED_FROM]{ "Copied from", 1, 1 },
   [USERLIST_NM_FIRSTNAME]  { "Firstname", 1, 1 },
   [USERLIST_NM_FIRSTNAME_EN] { "Firstname (En)", 1, 1 },
   [USERLIST_NM_MIDDLENAME] { "Middlename", 1, 1 },
@@ -1260,6 +1272,8 @@ static const struct user_field_desc member_descs[] =
   [USERLIST_NM_FAC_EN]     { "Faculty (En)", 1, 1 },
   [USERLIST_NM_FACSHORT]   { "Fac. (short)", 1, 1 },
   [USERLIST_NM_FACSHORT_EN] { "Fac. (short) (En)", 1, 1 },
+  [USERLIST_NM_CREATE_TIME] { "Create time", 1, 1 },
+  [USERLIST_NM_LAST_CHANGE_TIME] { "Change time", 1, 1 },
 };
 
 static unsigned char *
@@ -1313,15 +1327,42 @@ struct field_ref
   int field;
 };
 
+static int
+get_user_field(unsigned char *buf, size_t size,
+               const struct userlist_user *u, int field, int convert_null)
+{
+  if (field >= USERLIST_NN_FIRST && field < USERLIST_NN_LAST) {
+    return userlist_get_user_field_str(buf, size, u, field, convert_null);
+  } else if (field >= USERLIST_NC_FIRST && field < USERLIST_NC_LAST) {
+    return userlist_get_user_info_field_str(buf,size,&u->i,field,convert_null);
+  } else {
+    abort();
+  }
+}
+
+static int
+set_user_field(struct userlist_user *u, int field, const unsigned char *value)
+{
+  if (field >= USERLIST_NN_FIRST && field < USERLIST_NN_LAST) {
+    return userlist_set_user_field_str(u, field, value);
+  } else if (field >= USERLIST_NC_FIRST && field < USERLIST_NC_LAST) {
+    return userlist_set_user_info_field_str(&u->i, field, value);
+  } else {
+    abort();
+  }
+}
+
 static void
 user_menu_string(struct userlist_user *u, int f, unsigned char *out)
 {
   unsigned char buf[128];
 
-  if (!user_descs[f].has_value) {
+  if (f >= USERLIST_PSEUDO_FIRST && f < USERLIST_PSEUDO_LAST) {
+    snprintf(out, 78, "%s", user_descs[f].name);
+  } else if (!user_descs[f].has_value) {
     snprintf(out, 78, "%s", user_descs[f].name);
   } else {
-    userlist_get_user_field_str(buf, sizeof(buf), u, 0, f, 1);
+    get_user_field(buf, sizeof(buf), u, f, 1);
     snprintf(out, 78, "%-16.16s:%-60.60s", user_descs[f].name, buf);
   }
 }
@@ -1337,6 +1378,57 @@ member_menu_string(struct userlist_member *m, int f, unsigned char *out)
     snprintf(out, 78, "%-16.16s:%-60.60s", member_descs[f].name, buf);
   }
 }
+
+// order of general and contest-specific fields in the list
+static int field_order[] =
+{
+  USERLIST_NN_ID,
+  USERLIST_NN_LOGIN,
+  USERLIST_NN_EMAIL,
+  USERLIST_NC_NAME,
+  USERLIST_PSEUDO_PASSWORDS,
+  USERLIST_NN_PASSWD,
+  USERLIST_NC_TEAM_PASSWD,
+  USERLIST_PSEUDO_GENERAL_INFO,
+  USERLIST_NC_INST,
+  USERLIST_NC_INST_EN,
+  USERLIST_NC_INSTSHORT,
+  USERLIST_NC_INSTSHORT_EN,
+  USERLIST_NC_FAC,
+  USERLIST_NC_FAC_EN,
+  USERLIST_NC_FACSHORT,
+  USERLIST_NC_FACSHORT_EN,
+  USERLIST_NC_HOMEPAGE,
+  USERLIST_NC_CITY,
+  USERLIST_NC_CITY_EN,
+  USERLIST_NC_COUNTRY,
+  USERLIST_NC_COUNTRY_EN,
+  USERLIST_NC_LOCATION,
+  USERLIST_NC_SPELLING,
+  USERLIST_NC_PRINTER_NAME,
+  USERLIST_NC_LANGUAGES,
+  USERLIST_NC_PHONE,
+  USERLIST_PSEUDO_FLAGS,
+  USERLIST_NN_READ_ONLY,
+  USERLIST_NC_CNTS_READ_ONLY,
+  USERLIST_NN_SIMPLE_REGISTRATION,
+  USERLIST_NN_NEVER_CLEAN,
+  USERLIST_NN_IS_PRIVILEGED,
+  USERLIST_NN_IS_INVISIBLE,
+  USERLIST_NN_IS_BANNED,
+  USERLIST_NN_IS_LOCKED,
+  USERLIST_NN_SHOW_LOGIN,
+  USERLIST_NN_SHOW_EMAIL,
+  USERLIST_PSEUDO_TIMESTAMPS,
+  USERLIST_NN_REGISTRATION_TIME,
+  USERLIST_NN_LAST_LOGIN_TIME,
+  USERLIST_NN_LAST_CHANGE_TIME,
+  USERLIST_NN_LAST_PWDCHANGE_TIME,
+  USERLIST_NC_CREATE_TIME,
+  USERLIST_NC_LAST_CHANGE_TIME,
+  USERLIST_NC_LAST_PWDCHANGE_TIME,
+};
+#define field_order_size (sizeof(field_order)/sizeof(field_order[0]))
 
 static int
 display_user(unsigned char const *upper, int user_id, int contest_id,
@@ -1378,7 +1470,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
   snprintf(current_level, COLS + 1, "%s->%s %d", upper, "User", u->id);
 
   // count how much menu items we need
-  tot_items = USERLIST_NN_LAST + 1;
+  tot_items = field_order_size + 1;
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
     if (!u->i.members[role] || !u->i.members[role]->total) continue;
     tot_items += 1 + (USERLIST_NM_LAST + 2) * u->i.members[role]->total;
@@ -1398,11 +1490,11 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
   }
 
   j = 0;
-  for (i = 0; i <= USERLIST_NN_LAST; i++) {
+  for (i = 0; i < field_order_size; i++) {
     info[j].role = -1;
     info[j].pers = 0;
-    info[j].field = i;
-    user_menu_string(u, i, descs[j++]);
+    info[j].field = field_order[i];
+    user_menu_string(u, field_order[i], descs[j++]);
   }
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
     if (!u->i.members[role] || !u->i.members[role]->total) continue;
@@ -1501,38 +1593,39 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
       if (info[i].role == -1 && info[i].pers == 0) {
         switch (info[i].field) {
         case USERLIST_NN_ID:
-        case USERLIST_NN_TIMESTAMPS:
-        case USERLIST_NN_PASSWORDS:
-        case USERLIST_NN_GENERAL_INFO:
+        case USERLIST_PSEUDO_FLAGS:
+        case USERLIST_PSEUDO_TIMESTAMPS:
+        case USERLIST_PSEUDO_PASSWORDS:
+        case USERLIST_PSEUDO_GENERAL_INFO:
           help_str = "C-contest A-new member Q-quit";
           break;
         case USERLIST_NN_LOGIN:
         case USERLIST_NN_EMAIL:
           help_str = "Enter-edit C-contest A-new member Q-quit";
           break;
-        case USERLIST_NN_NAME:
-        case USERLIST_NN_INST:
-        case USERLIST_NN_INST_EN:
-        case USERLIST_NN_INSTSHORT:
-        case USERLIST_NN_INSTSHORT_EN:
-        case USERLIST_NN_FAC:
-        case USERLIST_NN_FAC_EN:
-        case USERLIST_NN_FACSHORT:
-        case USERLIST_NN_FACSHORT_EN:
-        case USERLIST_NN_HOMEPAGE:
-        case USERLIST_NN_PHONE:
-        case USERLIST_NN_CITY:
-        case USERLIST_NN_CITY_EN:
-        case USERLIST_NN_COUNTRY:
-        case USERLIST_NN_COUNTRY_EN:
-        case USERLIST_NN_LOCATION:
-        case USERLIST_NN_SPELLING:
-        case USERLIST_NN_PRINTER_NAME:
-        case USERLIST_NN_LANGUAGES:
+        case USERLIST_NC_NAME:
+        case USERLIST_NC_INST:
+        case USERLIST_NC_INST_EN:
+        case USERLIST_NC_INSTSHORT:
+        case USERLIST_NC_INSTSHORT_EN:
+        case USERLIST_NC_FAC:
+        case USERLIST_NC_FAC_EN:
+        case USERLIST_NC_FACSHORT:
+        case USERLIST_NC_FACSHORT_EN:
+        case USERLIST_NC_HOMEPAGE:
+        case USERLIST_NC_PHONE:
+        case USERLIST_NC_CITY:
+        case USERLIST_NC_CITY_EN:
+        case USERLIST_NC_COUNTRY:
+        case USERLIST_NC_COUNTRY_EN:
+        case USERLIST_NC_LOCATION:
+        case USERLIST_NC_SPELLING:
+        case USERLIST_NC_PRINTER_NAME:
+        case USERLIST_NC_LANGUAGES:
           help_str = "Enter-edit D-clear C-contest A-new member Q-quit";
           break;
-        case USERLIST_NN_REG_PASSWORD:
-        case USERLIST_NN_TEAM_PASSWORD:
+        case USERLIST_NN_PASSWD:
+        case USERLIST_NC_TEAM_PASSWD:
           help_str = "Enter-edit D-clear O-random Y-copy C-contest A-new member Q-quit";
           break;
         case USERLIST_NN_IS_PRIVILEGED:
@@ -1542,18 +1635,18 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
         case USERLIST_NN_SHOW_LOGIN:
         case USERLIST_NN_SHOW_EMAIL:
         case USERLIST_NN_READ_ONLY:
-        case USERLIST_NN_CNTS_READ_ONLY:
+        case USERLIST_NC_CNTS_READ_ONLY:
         case USERLIST_NN_NEVER_CLEAN:
         case USERLIST_NN_SIMPLE_REGISTRATION:
           help_str = "Enter-toggle D-reset C-contest A-new member Q-quit";
           break;
-        case USERLIST_NN_REG_TIME:
-        case USERLIST_NN_LOGIN_TIME:
-        case USERLIST_NN_CREATE_TIME:
-        case USERLIST_NN_ACCESS_TIME:
-        case USERLIST_NN_CHANGE_TIME:
-        case USERLIST_NN_PWD_CHANGE_TIME:
-        case USERLIST_NN_MINOR_CHANGE_TIME:
+        case USERLIST_NN_REGISTRATION_TIME:
+        case USERLIST_NN_LAST_LOGIN_TIME:
+        case USERLIST_NN_LAST_CHANGE_TIME:
+        case USERLIST_NN_LAST_PWDCHANGE_TIME:
+        case USERLIST_NC_CREATE_TIME:
+        case USERLIST_NC_LAST_CHANGE_TIME:
+        case USERLIST_NC_LAST_PWDCHANGE_TIME:
           help_str = "D-clear C-contest A-new member Q-quit";
           break;
         default:
@@ -1786,7 +1879,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
       }
 
       if (info[cur_i].role == -1 && info[cur_i].pers == 0) {
-        if (info[cur_i].field == USERLIST_NN_NAME) {
+        if (info[cur_i].field == USERLIST_NC_NAME) {
           if (p_needs_reload) *p_needs_reload = 1;
         }
       }
@@ -1800,7 +1893,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
       r = display_role_menu(LINES / 2, 0);
       if (r < 0 || r >= CONTEST_LAST_MEMBER) goto menu_continue;
 
-      r = userlist_clnt_add_field(server_conn, &u->id, contest_id, r, -1, -1);
+      r = userlist_clnt_create_member(server_conn, u->id, contest_id, r);
       if (r < 0) {
         vis_err("Add failed: %s", userlist_strerror(-r));
         goto menu_continue;
@@ -1842,15 +1935,15 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
       if (cur_i < 0 || cur_i >= tot_items) continue;
       if (info[cur_i].role != -1) goto menu_continue;
       if (info[cur_i].pers != 0) goto menu_continue;
-      if (info[cur_i].field != USERLIST_NN_REG_PASSWORD
-          && info[cur_i].field != USERLIST_NN_TEAM_PASSWORD)
+      if (info[cur_i].field != USERLIST_NN_PASSWD
+          && info[cur_i].field != USERLIST_NC_TEAM_PASSWD)
         goto menu_continue;
       if (!user_descs[info[cur_i].field].is_editable
           || !user_descs[info[cur_i].field].has_value)
         goto menu_continue;
 
       switch (info[cur_i].field) {
-      case USERLIST_NN_REG_PASSWORD:
+      case USERLIST_NN_PASSWD:
         if (c == 'o') {
           msg_txt = "Assign a random registration password?";
           cmd = ULS_RANDOM_PASSWD;
@@ -1859,7 +1952,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
           cmd = ULS_COPY_TO_TEAM;
         }
         break;
-      case USERLIST_NN_TEAM_PASSWORD:
+      case USERLIST_NC_TEAM_PASSWD:
         if (c == 'o') {
           msg_txt = "Assign a random team password?";
           cmd = ULS_RANDOM_TEAM_PASSWD;
@@ -1906,24 +1999,23 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
         case USERLIST_NN_SHOW_LOGIN:
         case USERLIST_NN_SHOW_EMAIL:
         case USERLIST_NN_READ_ONLY:
-        case USERLIST_NN_CNTS_READ_ONLY:
+        case USERLIST_NC_CNTS_READ_ONLY:
         case USERLIST_NN_NEVER_CLEAN:
         case USERLIST_NN_SIMPLE_REGISTRATION:
           edit_buf[0] = 0;
-          userlist_get_user_field_str(edit_buf, sizeof(edit_buf),
-                                      u, 0, info[cur_i].field, 0);
+          get_user_field(edit_buf, sizeof(edit_buf), u, info[cur_i].field, 0);
           r = xml_parse_bool(0, 0, 0, edit_buf, 0);
           r = yesno(r, "New value for \"%s\"",
                     user_descs[info[cur_i].field].name);
           if (r < 0 || r > 1) goto menu_continue;
           snprintf(edit_buf, sizeof(edit_buf), "%s", xml_unparse_bool(r));
-          r = userlist_set_user_field_str(0, u, 0, info[cur_i].field, edit_buf);
+          r = set_user_field(u, info[cur_i].field, edit_buf);
           if (!r) goto menu_continue;
           if (r < 0) {
             vis_err("Invalid field value");
             goto menu_continue;
           }
-          r = userlist_clnt_edit_field(server_conn, u->id, contest_id, -1, 0,
+          r = userlist_clnt_edit_field(server_conn, u->id, contest_id, 0,
                                        info[cur_i].field, edit_buf);
           if (r < 0) {
             vis_err("Server error: %s", userlist_strerror(-r));
@@ -1932,31 +2024,30 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
           user_menu_string(u, info[cur_i].field, descs[cur_i]);
           goto menu_continue;
 
-        case USERLIST_NN_REG_TIME:
-        case USERLIST_NN_LOGIN_TIME:
-        case USERLIST_NN_CREATE_TIME:
-        case USERLIST_NN_ACCESS_TIME:
-        case USERLIST_NN_CHANGE_TIME:
-        case USERLIST_NN_PWD_CHANGE_TIME:
-        case USERLIST_NN_MINOR_CHANGE_TIME:
+        case USERLIST_NN_REGISTRATION_TIME:
+        case USERLIST_NN_LAST_LOGIN_TIME:
+        case USERLIST_NN_LAST_CHANGE_TIME:
+        case USERLIST_NN_LAST_PWDCHANGE_TIME:
+        case USERLIST_NC_CREATE_TIME:
+        case USERLIST_NC_LAST_CHANGE_TIME:
+        case USERLIST_NC_LAST_PWDCHANGE_TIME:
           goto menu_continue;
         }
 
-        userlist_get_user_field_str(edit_buf, sizeof(edit_buf),
-                                    u, 0, info[cur_i].field, 0);
+        get_user_field(edit_buf, sizeof(edit_buf), u, info[cur_i].field, 0);
         snprintf(edit_header, sizeof(edit_header),
                  "%s",
                  user_descs[info[cur_i].field].name);
         r = edit_string(cur_line, COLS, edit_header,
                         edit_buf, sizeof(edit_buf) - 1);
         if (r < 0) goto menu_continue;
-        r = userlist_set_user_field_str(0, u, 0, info[cur_i].field, edit_buf);
+        r = set_user_field(u, info[cur_i].field, edit_buf);
         if (!r) goto menu_continue;
         if (r < 0) {
           vis_err("Invalid field value");
           goto menu_continue;
         }
-        r = userlist_clnt_edit_field(server_conn, u->id, contest_id, -1, 0,
+        r = userlist_clnt_edit_field(server_conn, u->id, contest_id, 0,
                                      info[cur_i].field, edit_buf);
         if (r < 0) {
           vis_err("Server error: %s", userlist_strerror(-r));
@@ -1964,7 +2055,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
         }
         user_menu_string(u, info[cur_i].field, descs[cur_i]);
         if (info[cur_i].field == USERLIST_NN_LOGIN
-            || info[cur_i].field == USERLIST_NN_NAME
+            || info[cur_i].field == USERLIST_NC_NAME
             || info[cur_i].field == USERLIST_NN_EMAIL) {
           if (p_needs_reload) *p_needs_reload = 1;
         }
@@ -1984,7 +2075,6 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
 
         m = (struct userlist_member*) refs[cur_i];
         if (info[cur_i].field == USERLIST_NM_SERIAL) goto menu_continue;
-        if (info[cur_i].field == USERLIST_NM_COPIED_FROM) goto menu_continue;
         if (info[cur_i].field == USERLIST_NM_STATUS) {
           int new_status;
           
@@ -2000,8 +2090,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
             goto menu_continue;
           }
           r = userlist_clnt_edit_field(server_conn, u->id, contest_id,
-                                       info[cur_i].role, info[cur_i].pers,
-                                       info[cur_i].field, edit_buf);
+                                       m->serial, info[cur_i].field, edit_buf);
           if (r < 0) {
             vis_err("Server error: %s", userlist_strerror(-r));
             goto menu_continue;
@@ -2027,8 +2116,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
             goto menu_continue;
           }
           r = userlist_clnt_edit_field(server_conn, u->id, contest_id,
-                                       info[cur_i].role, info[cur_i].pers,
-                                       info[cur_i].field, edit_buf);
+                                       m->serial, info[cur_i].field, edit_buf);
           if (r < 0) {
             vis_err("Server error: %s", userlist_strerror(-r));
             goto menu_continue;
@@ -2286,10 +2374,10 @@ static const int field_codes[] =
 {
   0,
   USERLIST_NN_READ_ONLY,
-  USERLIST_NN_CNTS_READ_ONLY,
+  USERLIST_NC_CNTS_READ_ONLY,
   USERLIST_NN_NEVER_CLEAN,
-  USERLIST_NN_LOCATION,
-  USERLIST_NN_TEAM_PASSWORD,
+  USERLIST_NC_LOCATION,
+  USERLIST_NC_TEAM_PASSWD,
   0,
 };
 
@@ -2933,7 +3021,7 @@ display_registered_users(unsigned char const *upper,
         case 2:                 /* set field */
           snprintf(edit_buf, sizeof(edit_buf), "%d", 1);
           r = userlist_clnt_edit_field(server_conn, uu[i]->id, contest_id,
-                                       -1, 0, field_code, edit_buf);
+                                       0, field_code, edit_buf);
           break;
         case 3:
           r = userlist_clnt_register_contest(server_conn, ULS_FIX_PASSWORD,
@@ -2955,7 +3043,7 @@ display_registered_users(unsigned char const *upper,
           case 2:               /* set field */
             snprintf(edit_buf, sizeof(edit_buf), "%d", 1);
             r = userlist_clnt_edit_field(server_conn, uu[i]->id, contest_id,
-                                         -1, 0, field_code, edit_buf);
+                                         0, field_code, edit_buf);
           case 3:
             r = userlist_clnt_register_contest(server_conn, ULS_FIX_PASSWORD,
                                                uu[i]->id, 0);
@@ -3305,7 +3393,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
   if (!nusers) {
     j = okcancel("No users in database. Add new user?");
     if (j != 1) return -1;
-    j = userlist_clnt_add_field(server_conn, 0, 0, -1, -1, -1);
+    j = userlist_clnt_create_user(server_conn, 0);
     if (j < 0) {
       vis_err("Add failed: %s", userlist_strerror(-j));
       return -1;
@@ -3497,7 +3585,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
     if (c == 'a' && !only_choose) {
       j = okcancel("Add new user?");
       if (j != 1) goto menu_continue;
-      j = userlist_clnt_add_field(server_conn, 0, 0, -1, -1, -1);
+      j = userlist_clnt_create_user(server_conn, 0);
       if (j < 0) {
         vis_err("Add failed: %s", userlist_strerror(-j));
         goto menu_continue;
@@ -3596,34 +3684,34 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
 
       for (i = first_num; i <= last_num; i++) {
         user_id = -1;
-        j = userlist_clnt_add_field(server_conn, &user_id, 0, -1, -1, -1);
+        j = userlist_clnt_create_user(server_conn, &user_id);
         if (j < 0) {
           vis_err("Adding failed: %s", userlist_strerror(-j));
           goto menu_continue;
         }
         snprintf(valbuf, sizeof(valbuf), templ_buf, i);
-        j = userlist_clnt_edit_field(server_conn, user_id, 0, -1, 0,
+        j = userlist_clnt_edit_field(server_conn, user_id, 0, 0,
                                      USERLIST_NN_LOGIN, valbuf);
         if (j < 0) {
           vis_err("Setting login failed: %s", userlist_strerror(-j));
           goto menu_continue;
         }
-        j = userlist_clnt_edit_field(server_conn, user_id, contest_num, -1, 0,
-                                     USERLIST_NN_NAME, valbuf);
+        j = userlist_clnt_edit_field(server_conn, user_id, contest_num, 0,
+                                     USERLIST_NC_NAME, valbuf);
         if (j < 0) {
           vis_err("Setting name failed: %s", userlist_strerror(-j));
           goto menu_continue;
         }
         snprintf(valbuf, sizeof(valbuf), "N/A");
-        j = userlist_clnt_edit_field(server_conn, user_id, 0, -1, 0,
+        j = userlist_clnt_edit_field(server_conn, user_id, 0, 0,
                                      USERLIST_NN_EMAIL, valbuf);
         if (j < 0) {
           vis_err("Setting e-mail failed: %s", userlist_strerror(-j));
           goto menu_continue;
         }
         snprintf(valbuf, sizeof(valbuf), passwd_buf, i);
-        j = userlist_clnt_edit_field(server_conn, user_id, 0, -1, 0,
-                                     USERLIST_NN_REG_PASSWORD, valbuf);
+        j = userlist_clnt_edit_field(server_conn, user_id, 0, 0,
+                                     USERLIST_NN_PASSWD, valbuf);
         if (j < 0) {
           vis_err("Setting reg. password failed: %s", userlist_strerror(-j));
           goto menu_continue;

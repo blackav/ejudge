@@ -29,9 +29,11 @@ struct ejudge_plugin_iface
   int version;                  /* the version of the interface */
   const unsigned char *type;    /* type of the plugin */
   const unsigned char *name;    /* name of the plugin */
-  struct ejudge_plugin_iface *next;
-  void *handle;
-  void *data;                   /* plugin-specific data */
 };
+
+int plugin_set_directory(const unsigned char *dir);
+struct ejudge_plugin_iface *
+plugin_load(const unsigned char *path,
+            const unsigned char *type, const unsigned char *name);
 
 #endif /* __EJUDGE_PLUGIN_H__ */

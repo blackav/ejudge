@@ -139,7 +139,6 @@ static size_t const elem_sizes[USERLIST_LAST_TAG] =
 {
   [USERLIST_T_USERLIST] = sizeof(struct userlist_list),
   [USERLIST_T_USER] = sizeof(struct userlist_user),
-  [USERLIST_T_PASSWORD] = sizeof(struct userlist_passwd),
   [USERLIST_T_MEMBER] = sizeof(struct userlist_member),
   [USERLIST_T_COOKIE] = sizeof(struct userlist_cookie),
   [USERLIST_T_CONTEST] = sizeof(struct userlist_contest),
@@ -148,7 +147,6 @@ static size_t const elem_sizes[USERLIST_LAST_TAG] =
   [USERLIST_T_COACHES] = sizeof(struct userlist_members),
   [USERLIST_T_ADVISORS] = sizeof(struct userlist_members),
   [USERLIST_T_GUESTS] = sizeof(struct userlist_members),
-  [USERLIST_T_TEAM_PASSWORD] = sizeof(struct userlist_passwd),
   [USERLIST_T_CNTSINFO] = sizeof(struct userlist_cntsinfo),
 };
 
@@ -383,31 +381,30 @@ parse_contestant_status_elem(struct xml_tree *p, int *p_val)
   return v;
 }
 
-static struct userlist_passwd *
-parse_passwd(char const *path, struct xml_tree *t)
+static int
+parse_passwd(struct xml_tree *t, unsigned char **p_pwd, int *p_method)
 {
-  struct userlist_passwd *pwd;
   struct xml_attr *a;
 
   ASSERT(t->tag == USERLIST_T_PASSWORD || t->tag == USERLIST_T_TEAM_PASSWORD);
-  pwd = (struct userlist_passwd*) t;
 
   if (t->first_down) {
     xml_err_nested_elems(t);
-    return 0;
+    return -1;
   }
   if (!t->text) t->text = xstrdup("");
 
   for (a = t->first; a; a = a->next) {
     if (a->tag != USERLIST_A_METHOD) {
       xml_err_attr_not_allowed(t, a);
-      return 0;
+      return -1;
     }
-    if (parse_password_method_attr(a, &pwd->method) < 0) return 0;
+    if (parse_password_method_attr(a, p_method) < 0) return -1;
   }
   userlist_free_attrs(t);
-  if (!*t->text) pwd->method = USERLIST_PWD_PLAIN;
-  return pwd;
+  if (!*t->text) *p_method = USERLIST_PWD_PLAIN;
+  *p_pwd = t->text; t->text = 0;
+  return 0;
 }
 
 static int
@@ -783,7 +780,8 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
     switch(p->tag) {
     case USERLIST_T_TEAM_PASSWORD:
       if (ui->i.team_passwd) return xml_err_elem_redefined(p);
-      if (!(ui->i.team_passwd = parse_passwd(path, p))) return -1;
+      if (parse_passwd(p, &ui->i.team_passwd, &ui->i.team_passwd_method) < 0)
+        return -1;
       ui->i.filled = 1;
       break;
     case USERLIST_T_CONTESTANTS:
@@ -933,12 +931,14 @@ do_parse_user(char const *path, struct userlist_user *usr)
       userlist_free(t);
       break;
     case USERLIST_T_PASSWORD:
-      if (usr->register_passwd) return xml_err_elem_redefined(t);
-      if (!(usr->register_passwd = parse_passwd(path, t))) return -1;
+      if (usr->passwd) return xml_err_elem_redefined(t);
+      if (parse_passwd(t, &usr->passwd, &usr->passwd_method) < 0)
+        return -1;
       break;
     case USERLIST_T_TEAM_PASSWORD:
       if (usr->i.team_passwd) return xml_err_elem_redefined(t);
-      if (!(usr->i.team_passwd = parse_passwd(path, t))) return -1;
+      if (parse_passwd(t, &usr->i.team_passwd, &usr->i.team_passwd_method) < 0)
+        return -1;
       usr->i.filled = 1;
       break;
     case USERLIST_T_EMAIL:
@@ -1225,7 +1225,7 @@ unparse_attributed_elem(FILE *f, int t, unsigned char const *val,
 }
 
 static void
-unparse_member(struct userlist_member *p, FILE *f)
+unparse_member(const struct userlist_member *p, FILE *f)
 {
   unsigned char const *ind = "        ";
   int i;
@@ -1269,7 +1269,7 @@ unparse_member(struct userlist_member *p, FILE *f)
   fprintf(f, "      </%s>\n", elem_map[USERLIST_T_MEMBER]);
 }
 static void
-unparse_members(struct userlist_members **p, FILE *f)
+unparse_members(const struct userlist_members **p, FILE *f)
 {
   int i, j;
 
@@ -1284,7 +1284,7 @@ unparse_members(struct userlist_members **p, FILE *f)
   }
 }
 static void
-unparse_cookies(struct xml_tree *p, FILE *f)
+unparse_cookies(const struct xml_tree *p, FILE *f)
 {
   struct userlist_cookie *c;
 
@@ -1315,9 +1315,9 @@ unparse_cookies(struct xml_tree *p, FILE *f)
   }
   fprintf(f, "    </%s>\n", elem_map[USERLIST_T_COOKIES]);
 }
-static void
-unparse_contest(struct userlist_contest const *cc, FILE *f,
-                unsigned char const *indent)
+void
+userlist_unparse_contest(const struct userlist_contest *cc, FILE *f,
+                         unsigned char const *indent)
 {
   if (!cc) return;
   fprintf(f, "%s<%s %s=\"%d\" %s=\"%s\"",
@@ -1340,7 +1340,7 @@ unparse_contest(struct userlist_contest const *cc, FILE *f,
   fprintf(f, "/>\n");
 }
 static void
-unparse_contests(struct xml_tree *p, FILE *f, int mode, int contest_id)
+unparse_contests(const struct xml_tree *p, FILE *f, int mode, int contest_id)
 {
   if (!p) return;
   ASSERT(p->tag == USERLIST_T_CONTESTS);
@@ -1350,13 +1350,13 @@ unparse_contests(struct xml_tree *p, FILE *f, int mode, int contest_id)
     if (mode == USERLIST_MODE_STAND && contest_id > 0
         && ((struct userlist_contest*) p)->id != contest_id)
       continue;
-    unparse_contest((struct userlist_contest*) p, f, "      ");
+    userlist_unparse_contest((struct userlist_contest*) p, f, "      ");
   }
   fprintf(f, "    </%s>\n", elem_map[USERLIST_T_CONTESTS]);
 }
 
 static void
-unparse_cntsinfo(struct userlist_cntsinfo *p, FILE *f)
+unparse_cntsinfo(const struct userlist_cntsinfo *p, FILE *f)
 {
   unsigned char attr_str[256];
   const unsigned char *sp1 = "      ";
@@ -1399,22 +1399,23 @@ unparse_cntsinfo(struct userlist_cntsinfo *p, FILE *f)
   if (p->i.team_passwd) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
              attr_map[USERLIST_A_METHOD],
-             unparse_passwd_method(p->i.team_passwd->method));
+             unparse_passwd_method(p->i.team_passwd_method));
     unparse_attributed_elem(f, USERLIST_T_TEAM_PASSWORD,
-                            p->i.team_passwd->b.text, attr_str, sp1);
+                            p->i.team_passwd, attr_str, sp1);
   }
 
-  unparse_members(p->i.members, f);
+  unparse_members((const struct userlist_members**) p->i.members, f);
 
   fprintf(f, "    </%s>\n", elem_map[USERLIST_T_CNTSINFO]);
 }
 
 /* called from `userlist_unparse_short' */
-static void
-unparse_user_short(struct userlist_user *p, FILE *f, int contest_id)
+void
+userlist_unparse_user_short(const struct userlist_user *p, FILE *f,
+                            int contest_id)
 {
-  struct userlist_contest *uc = 0;
-  struct userlist_user_info *ui;
+  const struct userlist_contest *uc = 0;
+  const struct userlist_user_info *ui;
 
   if (!p) return;
 
@@ -1442,7 +1443,7 @@ unparse_user_short(struct userlist_user *p, FILE *f, int contest_id)
   xml_unparse_text(f, elem_map[USERLIST_T_EMAIL], p->email, "    ");
   if (uc) {
     fprintf(f, "    <%s>\n", elem_map[USERLIST_T_CONTESTS]);
-    unparse_contest(uc, f, "      ");
+    userlist_unparse_contest(uc, f, "      ");
     fprintf(f, "    </%s>\n", elem_map[USERLIST_T_CONTESTS]);
   }
   fprintf(f, "  </%s>\n", elem_map[USERLIST_T_USER]);
@@ -1456,12 +1457,12 @@ unparse_user_short(struct userlist_user *p, FILE *f, int contest_id)
  contest_id >0    - print the specific information (if exist),
                     or print the default information
 */
-static void
-unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
+void
+userlist_real_unparse_user(const struct userlist_user *p, FILE *f, int mode, int contest_id)
 {
   unsigned char attr_str[128];
   int i, cnt;
-  struct userlist_user_info *ui;
+  const struct userlist_user_info *ui;
 
   if (!p) return;
 
@@ -1508,19 +1509,18 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
              attr_map[USERLIST_A_PUBLIC], xml_unparse_bool(p->show_login));
     unparse_attributed_elem(f, USERLIST_T_LOGIN, p->login, attr_str, "    ");
   }
-  if (p->register_passwd && mode == USERLIST_MODE_ALL) {
+  if (p->passwd && mode == USERLIST_MODE_ALL) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
              attr_map[USERLIST_A_METHOD],
-             unparse_passwd_method(p->register_passwd->method));
-    unparse_attributed_elem(f, USERLIST_T_PASSWORD, p->register_passwd->b.text,
-                            attr_str, "    ");
+             unparse_passwd_method(p->passwd_method));
+    unparse_attributed_elem(f, USERLIST_T_PASSWORD, p->passwd,attr_str, "    ");
   }
   if (ui->team_passwd && mode == USERLIST_MODE_ALL) {
     snprintf(attr_str, sizeof(attr_str), " %s=\"%s\"",
              attr_map[USERLIST_A_METHOD],
-             unparse_passwd_method(ui->team_passwd->method));
+             unparse_passwd_method(ui->team_passwd_method));
     unparse_attributed_elem(f, USERLIST_T_TEAM_PASSWORD,
-                            ui->team_passwd->b.text, attr_str, "    ");
+                            ui->team_passwd, attr_str, "    ");
   }
   if (ui->name && *ui->name) {
     xml_unparse_text(f, elem_map[USERLIST_T_NAME], ui->name, "    ");
@@ -1571,7 +1571,7 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
   }
 
   if (mode != USERLIST_MODE_STAND) {
-    unparse_members(ui->members, f);
+    unparse_members((const struct userlist_members**)ui->members, f);
   }
 
   if (contest_id < 0 && p->cntsinfo) {
@@ -1596,14 +1596,14 @@ unparse_user(struct userlist_user *p, FILE *f, int mode, int contest_id)
  *     userlist_unparse_user(user, f, USERLIST_MODE_ALL);
  */
 void
-userlist_unparse_user(struct userlist_user *p, FILE *f, int mode,
+userlist_unparse_user(const struct userlist_user *p, FILE *f, int mode,
                       int contest_id)
 {
   if (!p) return;
 
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n",
           EJUDGE_CHARSET);
-  unparse_user(p, f, mode, contest_id);
+  userlist_real_unparse_user(p, f, mode, contest_id);
 }
 
 /*
@@ -1623,6 +1623,19 @@ userlist_unparse_contests(struct userlist_user *p, FILE *f)
   } else {
     unparse_contests(p->contests, f, 0, 0);
   }
+}
+
+void
+userlist_write_contests_xml_header(FILE *f)
+{
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n", EJUDGE_CHARSET);
+  fprintf(f, "<%s>\n", elem_map[USERLIST_T_CONTESTS]);
+}
+
+void
+userlist_write_contests_xml_footer(FILE *f)
+{
+  fprintf(f, "</%s>\n", elem_map[USERLIST_T_CONTESTS]);
 }
 
 /*
@@ -1649,7 +1662,7 @@ userlist_unparse(struct userlist_list *p, FILE *f)
     fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_NAME], p->name);
   fputs(">\n", f);
   for (i = 1; i < p->user_map_size; i++)
-    unparse_user(p->user_map[i], f, 0, -1);
+    userlist_real_unparse_user(p->user_map[i], f, 0, -1);
   fprintf(f, "</%s>\n", elem_map[USERLIST_T_USERLIST]);
 }
 
@@ -1672,7 +1685,21 @@ userlist_unparse_short(struct userlist_list *p, FILE *f, int contest_id)
           EJUDGE_CHARSET);
   fprintf(f, "<%s>", elem_map[USERLIST_T_USERLIST]);
   for (i = 1; i < p->user_map_size; i++)
-    unparse_user_short(p->user_map[i], f, contest_id);
+    userlist_unparse_user_short(p->user_map[i], f, contest_id);
+  fprintf(f, "</%s>\n", elem_map[USERLIST_T_USERLIST]);
+}
+
+void
+userlist_write_xml_header(FILE *f)
+{
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n",
+          EJUDGE_CHARSET);
+  fprintf(f, "<%s>", elem_map[USERLIST_T_USERLIST]);
+}
+
+void
+userlist_write_xml_footer(FILE *f)
+{
   fprintf(f, "</%s>\n", elem_map[USERLIST_T_USERLIST]);
 }
 
@@ -1709,7 +1736,7 @@ userlist_unparse_for_standings(struct userlist_list *p,
       if (uc->status != USERLIST_REG_OK) continue;
     }
 
-    unparse_user(uu, f, USERLIST_MODE_STAND, contest_id);
+    userlist_real_unparse_user(uu, f, USERLIST_MODE_STAND, contest_id);
   }
   fprintf(f, "</%s>\n", elem_map[USERLIST_T_USERLIST]);
 }
