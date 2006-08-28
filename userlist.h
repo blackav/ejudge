@@ -160,79 +160,99 @@ enum
 // this is for field editing
 enum
   {
-    USERLIST_NN_ID,             /* 0 */
-    USERLIST_NN_LOGIN,          /* 1 */
-    USERLIST_NN_EMAIL,          /* 2 */
-    USERLIST_NN_NAME,           /* 3 */
-    USERLIST_NN_IS_PRIVILEGED,  /* 4 */
-    USERLIST_NN_IS_INVISIBLE,   /* 5 */
-    USERLIST_NN_IS_BANNED,      /* 6 */
-    USERLIST_NN_IS_LOCKED,      /* 7 */
-    USERLIST_NN_SHOW_LOGIN,     /* 8 */
-    USERLIST_NN_SHOW_EMAIL,     /* 9 */
-    USERLIST_NN_READ_ONLY,      /* 10 */
-    USERLIST_NN_CNTS_READ_ONLY, /* 11 */
-    USERLIST_NN_NEVER_CLEAN,    /* 12 */
-    USERLIST_NN_SIMPLE_REGISTRATION, /* 13 */
-    USERLIST_NN_TIMESTAMPS,     /* 14 */
-    USERLIST_NN_REG_TIME,       /* 15 */
-    USERLIST_NN_LOGIN_TIME,     /* 16 */
-    USERLIST_NN_CREATE_TIME,    /* 17 */
-    USERLIST_NN_ACCESS_TIME,    /* 18 */
-    USERLIST_NN_CHANGE_TIME,    /* 19 */
-    USERLIST_NN_PWD_CHANGE_TIME, /* 20 */
-    USERLIST_NN_MINOR_CHANGE_TIME, /* 21 */
-    USERLIST_NN_TIMESTAMP_LAST = USERLIST_NN_MINOR_CHANGE_TIME,
-    USERLIST_NN_PASSWORDS,      /* 22 */
-    USERLIST_NN_REG_PASSWORD,   /* 23 */
-    USERLIST_NN_TEAM_PASSWORD,  /* 24 */
-    USERLIST_NN_GENERAL_INFO,   /* 25 */
-    USERLIST_NN_INST,           /* 26 */
-    USERLIST_NN_INST_EN,        /* 27 */
-    USERLIST_NN_INSTSHORT,      /* 28 */
-    USERLIST_NN_INSTSHORT_EN,   /* 29 */
-    USERLIST_NN_FAC,            /* 30 */
-    USERLIST_NN_FAC_EN,         /* 31 */
-    USERLIST_NN_FACSHORT,       /* 32 */
-    USERLIST_NN_FACSHORT_EN,    /* 33 */
-    USERLIST_NN_HOMEPAGE,       /* 34 */
-    USERLIST_NN_PHONE,          /* 35 */
-    USERLIST_NN_CITY,           /* 36 */
-    USERLIST_NN_CITY_EN,        /* 37 */
-    USERLIST_NN_COUNTRY,        /* 38 */
-    USERLIST_NN_COUNTRY_EN,     /* 39 */
-    USERLIST_NN_LOCATION,       /* 40 */
-    USERLIST_NN_SPELLING,       /* 41 */
-    USERLIST_NN_PRINTER_NAME,   /* 42 */
-    USERLIST_NN_LANGUAGES,      /* 43 */
-    USERLIST_NN_LAST = USERLIST_NN_LANGUAGES,
+    /* general user info fields */
+    /* 0 */
+    USERLIST_NN_FIRST, USERLIST_NN_ID = USERLIST_NN_FIRST,
+    USERLIST_NN_IS_PRIVILEGED,
+    USERLIST_NN_IS_INVISIBLE,
+    USERLIST_NN_IS_BANNED,
+    USERLIST_NN_IS_LOCKED,
+    /* 5 */
+    USERLIST_NN_SHOW_LOGIN,
+    USERLIST_NN_SHOW_EMAIL,
+    USERLIST_NN_READ_ONLY,
+    USERLIST_NN_NEVER_CLEAN,
+    USERLIST_NN_SIMPLE_REGISTRATION,
+    /* 10 */
+    USERLIST_NN_LOGIN,
+    USERLIST_NN_EMAIL,
+    USERLIST_NN_PASSWD,
+    USERLIST_NN_REGISTRATION_TIME,
+    USERLIST_NN_LAST_LOGIN_TIME,
+    /* 15 */
+    USERLIST_NN_LAST_CHANGE_TIME,
+    USERLIST_NN_LAST_PWDCHANGE_TIME,
 
-    USERLIST_NM_SERIAL = 0,              /* 0 */
-    USERLIST_NM_COPIED_FROM,             /* 1 */
-    USERLIST_NM_FIRSTNAME,               /* 2 */
-    USERLIST_NM_FIRSTNAME_EN,            /* 3 */
-    USERLIST_NM_MIDDLENAME,              /* 4 */
-    USERLIST_NM_MIDDLENAME_EN,           /* 5 */
-    USERLIST_NM_SURNAME,                 /* 6 */
-    USERLIST_NM_SURNAME_EN,              /* 7 */
-    USERLIST_NM_STATUS,                  /* 8 */
-    USERLIST_NM_GRADE,                   /* 9 */
-    USERLIST_NM_GROUP,                   /* 10 */
-    USERLIST_NM_GROUP_EN,                /* 11 */
-    USERLIST_NM_OCCUPATION,              /* 12 */
-    USERLIST_NM_OCCUPATION_EN,           /* 13 */
-    USERLIST_NM_EMAIL,                   /* 14 */
-    USERLIST_NM_HOMEPAGE,                /* 15 */
-    USERLIST_NM_PHONE,                   /* 16 */
-    USERLIST_NM_INST,                    /* 17 */
-    USERLIST_NM_INST_EN,                 /* 18 */
-    USERLIST_NM_INSTSHORT,               /* 19 */
-    USERLIST_NM_INSTSHORT_EN,            /* 20 */
-    USERLIST_NM_FAC,                     /* 21 */
-    USERLIST_NM_FAC_EN,                  /* 22 */
-    USERLIST_NM_FACSHORT,                /* 23 */
-    USERLIST_NM_FACSHORT_EN,             /* 24 */
-    USERLIST_NM_LAST = USERLIST_NM_FACSHORT_EN,
+    USERLIST_NN_LAST,
+
+    /* contest-specific user info fields */
+    /* 100 */
+    USERLIST_NC_FIRST = 100, USERLIST_NC_CNTS_READ_ONLY = USERLIST_NC_FIRST,
+    USERLIST_NC_NAME,
+    USERLIST_NC_TEAM_PASSWD,
+    USERLIST_NC_INST,
+    USERLIST_NC_INST_EN,
+    /* 105 */
+    USERLIST_NC_INSTSHORT,
+    USERLIST_NC_INSTSHORT_EN,
+    USERLIST_NC_FAC,
+    USERLIST_NC_FAC_EN,
+    USERLIST_NC_FACSHORT,
+    /* 110 */
+    USERLIST_NC_FACSHORT_EN,
+    USERLIST_NC_HOMEPAGE,
+    USERLIST_NC_CITY,
+    USERLIST_NC_CITY_EN,
+    USERLIST_NC_COUNTRY,
+    /* 115 */
+    USERLIST_NC_COUNTRY_EN,
+    USERLIST_NC_LOCATION,
+    USERLIST_NC_SPELLING,
+    USERLIST_NC_PRINTER_NAME,
+    USERLIST_NC_LANGUAGES,
+    /* 120 */
+    USERLIST_NC_PHONE,
+    USERLIST_NC_CREATE_TIME,
+    USERLIST_NC_LAST_CHANGE_TIME,
+    USERLIST_NC_LAST_PWDCHANGE_TIME,
+
+    USERLIST_NC_LAST,
+
+    /* user member info fields */
+    /* 200 */
+    USERLIST_NM_FIRST = 200, USERLIST_NM_SERIAL = USERLIST_NM_FIRST,
+    USERLIST_NM_STATUS,
+    USERLIST_NM_GRADE,
+    USERLIST_NM_FIRSTNAME,
+    USERLIST_NM_FIRSTNAME_EN,
+    /* 205 */
+    USERLIST_NM_MIDDLENAME,
+    USERLIST_NM_MIDDLENAME_EN,
+    USERLIST_NM_SURNAME,
+    USERLIST_NM_SURNAME_EN,
+    USERLIST_NM_GROUP,
+    /* 210 */
+    USERLIST_NM_GROUP_EN,
+    USERLIST_NM_EMAIL,
+    USERLIST_NM_HOMEPAGE,
+    USERLIST_NM_OCCUPATION,
+    USERLIST_NM_OCCUPATION_EN,
+    /* 215 */
+    USERLIST_NM_INST,
+    USERLIST_NM_INST_EN,
+    USERLIST_NM_INSTSHORT,
+    USERLIST_NM_INSTSHORT_EN,
+    USERLIST_NM_FAC,
+    /* 220 */
+    USERLIST_NM_FAC_EN,
+    USERLIST_NM_FACSHORT,
+    USERLIST_NM_FACSHORT_EN,
+    USERLIST_NM_PHONE,
+    USERLIST_NM_CREATE_TIME,
+    /* 225 */
+    USERLIST_NM_LAST_CHANGE_TIME,
+
+    USERLIST_NM_LAST,
   };
 
 typedef unsigned long userlist_login_hash_t;
@@ -306,20 +326,17 @@ struct userlist_contest
   time_t date;
 };
 
-struct userlist_passwd
-{
-  struct xml_tree b;
-
-  int method;
-};
-
 struct userlist_user_info
 {
   int cnts_read_only;
   int filled;
 
   unsigned char *name;
-  struct userlist_passwd *team_passwd;
+
+  // team password
+  int team_passwd_method;
+  unsigned char *team_passwd;
+
   unsigned char *inst;
   unsigned char *inst_en;
   unsigned char *instshort;
@@ -374,7 +391,10 @@ struct userlist_user
 
   userlist_login_hash_t login_hash;
 
-  struct userlist_passwd *register_passwd;
+  // registration password
+  int passwd_method;
+  unsigned char *passwd;
+
   struct xml_tree *cookies;
   struct xml_tree *contests;
 
@@ -438,10 +458,14 @@ struct userlist_list *userlist_parse(char const *path);
 struct userlist_list *userlist_parse_str(unsigned char const *str);
 struct userlist_user *userlist_parse_user_str(char const *str);
 void userlist_unparse(struct userlist_list *p, FILE *f);
-void userlist_unparse_user(struct userlist_user *p, FILE *f, int mode,
+void userlist_unparse_user(const struct userlist_user *p, FILE *f, int mode,
                            int contest_id);
+void userlist_real_unparse_user(const struct userlist_user *p, FILE *f,
+                                int mode, int contest_id);
 void userlist_unparse_short(struct userlist_list *p, FILE *f, int contest_id);
 void userlist_unparse_for_standings(struct userlist_list *, FILE *, int);
+void userlist_unparse_user_short(const struct userlist_user *p, FILE *f,
+                                 int contest_id);
 
 unsigned char const *userlist_unparse_reg_status(int s);
 unsigned char const *userlist_member_status_str(int status);
@@ -453,35 +477,71 @@ struct xml_tree *userlist_node_alloc(int tag);
 unsigned char const *userlist_tag_to_str(int t);
 
 void userlist_unparse_contests(struct userlist_user *p, FILE *f);
+void userlist_unparse_contest(const struct userlist_contest *cc, FILE *f,
+                              unsigned char const *indent);
 struct xml_tree *userlist_parse_contests_str(unsigned char const *str);
 
 const unsigned char *userlist_unparse_date(time_t d, int show_null);
+
+// member structure operations
+void *userlist_get_member_field_ptr(const struct userlist_member *ptr,
+                                    int field_id);
+int userlist_is_empty_member_field(const struct userlist_member *m,
+                                   int field_id);
+int userlist_is_equal_member_field(const struct userlist_member *m,
+                                   int field_id,
+                                   const unsigned char *value);
 int userlist_get_member_field_str(unsigned char *buf, size_t len,
-                                  struct userlist_member *m, int field_id,
+                                  const struct userlist_member *m,
+                                  int field_id,
                                   int convert_null);
-int userlist_set_member_field_str(struct userlist_member *m, int field_id,
+int userlist_set_member_field_str(struct userlist_member *m,
+                                  int field_id,
                                   unsigned char const *field_val);
 int userlist_delete_member_field(struct userlist_member *m, int field_id);
+
+// user_info structure operations
+void *userlist_get_user_info_field_ptr(const struct userlist_user_info *ptr,
+                                       int field_id);
+int userlist_is_empty_user_info_field(const struct userlist_user_info *ui,
+                                      int field_id);
+int userlist_is_equal_user_info_field(const struct userlist_user_info *ui,
+                                      int field_id,
+                                      const unsigned char *value);
+int userlist_get_user_info_field_str(unsigned char *buf, size_t len,
+                                     const struct userlist_user_info *ui,
+                                     int field_id,
+                                     int convert_null);
+int userlist_set_user_info_field_str(struct userlist_user_info *ui,
+                                     int field_id,
+                                     unsigned char const *field_val);
+int userlist_delete_user_info_field(struct userlist_user_info *ui,
+                                    int field_id);
+
+// user structure operations
+void *userlist_get_user_field_ptr(const struct userlist_user *ptr,
+                                  int field_id);
+int userlist_is_empty_user_field(const struct userlist_user *u,
+                                 int field_id);
+int userlist_is_equal_user_field(const struct userlist_user *u,
+                                 int field_id,
+                                 const unsigned char *value);
 int userlist_get_user_field_str(unsigned char *buf, size_t len,
-                                struct userlist_user *u,
-                                struct userlist_user_info *ui,
+                                const struct userlist_user *u,
                                 int field_id,
                                 int convert_null);
-int userlist_set_user_field_str(struct userlist_list *lst,
-                                struct userlist_user *u,
-                                struct userlist_user_info *ui,
+int userlist_set_user_field_str(struct userlist_user *u,
                                 int field_id,
                                 unsigned char const *field_val);
 int userlist_delete_user_field(struct userlist_user *u,
-                               struct userlist_user_info *ui,
                                int field_id);
 
 userlist_login_hash_t userlist_login_hash(const unsigned char *p);
 int userlist_build_login_hash(struct userlist_list *p);
 int userlist_build_cookie_hash(struct userlist_list *p);
 
-int userlist_cookie_hash_add(struct userlist_list *, struct userlist_cookie *);
-int userlist_cookie_hash_del(struct userlist_list *, struct userlist_cookie *);
+int userlist_cookie_hash_add(struct userlist_list *, const struct userlist_cookie *);
+int userlist_cookie_hash_del(struct userlist_list *, const struct userlist_cookie *);
 
 void userlist_expand_cntsinfo(struct userlist_user *u, int contest_id);
 
@@ -493,11 +553,24 @@ struct userlist_cntsinfo *
 userlist_clone_user_info(struct userlist_user *u,
                          int contest_id,
                          int *p_serial,
-                         time_t current_time);
+                         time_t current_time,
+                         int *p_cloned_flag);
 struct userlist_cntsinfo *
 userlist_new_cntsinfo(struct userlist_user *u, int contest_id,
                       time_t current_time);
+const struct userlist_user_info *
+userlist_get_user_info(const struct userlist_user *u, int contest_id);
 struct userlist_user_info *
-userlist_get_user_info(struct userlist_user *u, int contest_id);
+userlist_get_user_info_nc(struct userlist_user *u, int contest_id);
+const struct userlist_contest *
+userlist_get_user_contest(const struct userlist_user *u, int contest_id);
+struct userlist_member *
+userlist_get_member_nc(struct userlist_user_info *, int, int *, int *);
+void userlist_clear_copied_from(struct userlist_user_info *ui);
+
+void userlist_write_xml_header(FILE *f);
+void userlist_write_xml_footer(FILE *f);
+void userlist_write_contests_xml_header(FILE *f);
+void userlist_write_contests_xml_footer(FILE *f);
 
 #endif /* __USERLIST_H__ */

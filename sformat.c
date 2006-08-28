@@ -713,13 +713,11 @@ sformat_message(char *buf, size_t maxsize, char const *format,
           if (!papp) papp = "";
           break;
         case 'z':
-          if (user_data->register_passwd)
-            papp = user_data->register_passwd->b.text;
+          papp = user_data->passwd;
           if (!papp) papp = "";
           break;
         case 'Z':
-          if (ui->team_passwd)
-            papp = ui->team_passwd->b.text;
+          papp = ui->team_passwd;
           if (!papp) papp = "";
           break;
         case 'c': papp = ui->city; break;

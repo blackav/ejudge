@@ -108,619 +108,872 @@ userlist_unparse_date(time_t d, int show_null)
   return xml_unparse_date(d);
 }
 
+#define MEMBER_OFFSET(f) XOFFSET(struct userlist_member, f)
+static int member_field_offsets[] =
+{
+  [USERLIST_NM_SERIAL] = MEMBER_OFFSET(serial),
+  [USERLIST_NM_STATUS] = MEMBER_OFFSET(status),
+  [USERLIST_NM_GRADE] = MEMBER_OFFSET(grade),
+  [USERLIST_NM_FIRSTNAME] = MEMBER_OFFSET(firstname),
+  [USERLIST_NM_FIRSTNAME_EN] = MEMBER_OFFSET(firstname_en),
+  [USERLIST_NM_MIDDLENAME] = MEMBER_OFFSET(middlename),
+  [USERLIST_NM_MIDDLENAME_EN] = MEMBER_OFFSET(middlename_en),
+  [USERLIST_NM_SURNAME] = MEMBER_OFFSET(surname),
+  [USERLIST_NM_SURNAME_EN] = MEMBER_OFFSET(surname_en),
+  [USERLIST_NM_GROUP] = MEMBER_OFFSET(group),
+  [USERLIST_NM_GROUP_EN] = MEMBER_OFFSET(group_en),
+  [USERLIST_NM_EMAIL] = MEMBER_OFFSET(email),
+  [USERLIST_NM_HOMEPAGE] = MEMBER_OFFSET(homepage),
+  [USERLIST_NM_OCCUPATION] = MEMBER_OFFSET(occupation),
+  [USERLIST_NM_OCCUPATION_EN] = MEMBER_OFFSET(occupation_en),
+  [USERLIST_NM_INST] = MEMBER_OFFSET(inst),
+  [USERLIST_NM_INST_EN] = MEMBER_OFFSET(inst_en),
+  [USERLIST_NM_INSTSHORT] = MEMBER_OFFSET(instshort),
+  [USERLIST_NM_INSTSHORT_EN] = MEMBER_OFFSET(instshort_en),
+  [USERLIST_NM_FAC] = MEMBER_OFFSET(fac),
+  [USERLIST_NM_FAC_EN] = MEMBER_OFFSET(fac_en),
+  [USERLIST_NM_FACSHORT] = MEMBER_OFFSET(facshort),
+  [USERLIST_NM_FACSHORT_EN] = MEMBER_OFFSET(facshort_en),
+  [USERLIST_NM_PHONE] = MEMBER_OFFSET(phone),
+  [USERLIST_NM_CREATE_TIME] = MEMBER_OFFSET(create_time),
+  [USERLIST_NM_LAST_CHANGE_TIME] = MEMBER_OFFSET(last_change_time),
+};
+
+void *
+userlist_get_member_field_ptr(const struct userlist_member *ptr, int code)
+{
+  ASSERT(ptr);
+  ASSERT(code >= USERLIST_NM_FIRST && code < USERLIST_NM_LAST);
+  return XPDEREF(void, ptr, member_field_offsets[code]);
+}
+
+/* type of handling */
+static int member_field_types[] =
+{
+  [USERLIST_NM_SERIAL] = USERLIST_NM_SERIAL,
+  [USERLIST_NM_STATUS] = USERLIST_NM_STATUS,
+  [USERLIST_NM_GRADE] = USERLIST_NM_GRADE,
+  [USERLIST_NM_FIRSTNAME] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_FIRSTNAME_EN] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_MIDDLENAME] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_MIDDLENAME_EN] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_SURNAME] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_SURNAME_EN] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_GROUP] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_GROUP_EN] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_EMAIL] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_HOMEPAGE] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_OCCUPATION] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_OCCUPATION_EN] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_INST] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_INST_EN] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_INSTSHORT] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_INSTSHORT_EN] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_FAC] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_FAC_EN] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_FACSHORT] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_FACSHORT_EN] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_PHONE] = USERLIST_NM_FIRSTNAME,
+  [USERLIST_NM_CREATE_TIME] = USERLIST_NM_CREATE_TIME,
+  [USERLIST_NM_LAST_CHANGE_TIME] = USERLIST_NM_CREATE_TIME,
+};
+
+/*
+  case USERLIST_NM_SERIAL:
+  case USERLIST_NM_STATUS:
+  case USERLIST_NM_GRADE:
+  case USERLIST_NM_FIRSTNAME:
+  case USERLIST_NM_CREATE_TIME:
+*/
+
+int
+userlist_is_empty_member_field(const struct userlist_member *m, int field_id)
+{
+  const int *p_int;
+  const unsigned char **p_str;
+
+  ASSERT(m);
+  ASSERT(field_id >= USERLIST_NM_FIRST && field_id < USERLIST_NM_LAST);
+
+  switch (member_field_types[field_id]) {
+  case USERLIST_NM_SERIAL:
+    return 0;
+  case USERLIST_NM_STATUS:
+  case USERLIST_NM_GRADE:
+    p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
+    return (*p_int == 0);
+  case USERLIST_NM_FIRSTNAME:
+    p_str = (const unsigned char**) userlist_get_member_field_ptr(m, field_id);
+    return (*p_str == 0);
+  case USERLIST_NM_CREATE_TIME:
+    return 0;
+  default:
+    abort();
+  }
+}
+
+int
+userlist_is_equal_member_field(const struct userlist_member *m, int field_id,
+                               const unsigned char *value)
+{
+  unsigned char buf[64];
+  const int *p_int;
+  const unsigned char **p_str;
+  const time_t *p_time;
+
+  ASSERT(m);
+  ASSERT(field_id >= USERLIST_NM_FIRST && field_id < USERLIST_NM_LAST);
+  switch (member_field_types[field_id]) {
+  case USERLIST_NM_SERIAL:
+  case USERLIST_NM_STATUS:
+  case USERLIST_NM_GRADE:
+    p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
+    if (!value && !*p_int) return 1;
+    if (!value) return 0;
+    snprintf(buf, sizeof(buf), "%d", *p_int);
+    return (strcmp(buf, value) == 0);
+  case USERLIST_NM_FIRSTNAME:
+    p_str = (const unsigned char**) userlist_get_member_field_ptr(m, field_id);
+    if (!value && !*p_str) return 1;
+    if (!value || !*p_str) return 0;
+    return (strcmp(value, *p_str) == 0);
+  case USERLIST_NM_CREATE_TIME:
+    p_time = (const time_t*) userlist_get_member_field_ptr(m, field_id);
+    if ((!value || !*value) && *p_time == 0) return 1;
+    if (!value || !*value) return 0;
+    return (strcmp(xml_unparse_date(*p_time), value) == 0);
+  default:
+    abort();
+  }
+}
+
 int
 userlist_get_member_field_str(unsigned char *buf, size_t len,
-                              struct userlist_member *m, int field_id,
+                              const struct userlist_member *m, int field_id,
                               int convert_null)
 {
-  unsigned char *s = 0;
+  const int *p_int;
+  const unsigned char **p_str;
+  const time_t *p_time;
+  const unsigned char *s;
 
-  switch (field_id) {
+  ASSERT(m);
+  ASSERT(field_id >= USERLIST_NM_FIRST && field_id < USERLIST_NM_LAST);
+  switch (member_field_types[field_id]) {
   case USERLIST_NM_SERIAL:
-    return snprintf(buf, len, "%d", m->serial);
-  case USERLIST_NM_COPIED_FROM:
-    if (m->copied_from <= 0)
-      return snprintf(buf, len, "<Not set>");
-    else
-      return snprintf(buf, len, "%d", m->copied_from);
   case USERLIST_NM_GRADE:
-    return snprintf(buf, len, "%d", m->grade);
+    p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
+    return snprintf(buf, len, "%d", *p_int);
   case USERLIST_NM_STATUS:
-    return snprintf(buf, len, "%s", userlist_member_status_str(m->status));
-  case USERLIST_NM_FIRSTNAME:  s = m->firstname;  break;
-  case USERLIST_NM_FIRSTNAME_EN: s = m->firstname_en; break;
-  case USERLIST_NM_MIDDLENAME: s = m->middlename; break;
-  case USERLIST_NM_MIDDLENAME_EN: s = m->middlename_en; break;
-  case USERLIST_NM_SURNAME:    s = m->surname;    break;
-  case USERLIST_NM_SURNAME_EN: s = m->surname_en; break;
-  case USERLIST_NM_GROUP:      s = m->group;      break;
-  case USERLIST_NM_GROUP_EN:   s = m->group_en;   break;
-  case USERLIST_NM_OCCUPATION: s = m->occupation; break;
-  case USERLIST_NM_OCCUPATION_EN: s = m->occupation_en; break;
-  case USERLIST_NM_EMAIL:      s = m->email;      break;
-  case USERLIST_NM_HOMEPAGE:   s = m->homepage;   break;
-  case USERLIST_NM_PHONE:      s = m->phone;      break;
-  case USERLIST_NM_INST:       s = m->inst;       break;
-  case USERLIST_NM_INST_EN:    s = m->inst_en;    break;
-  case USERLIST_NM_INSTSHORT:  s = m->instshort;  break;
-  case USERLIST_NM_INSTSHORT_EN: s = m->instshort_en; break;
-  case USERLIST_NM_FAC:        s = m->fac;        break;
-  case USERLIST_NM_FAC_EN:     s = m->fac_en;     break;
-  case USERLIST_NM_FACSHORT:   s = m->facshort;   break;
-  case USERLIST_NM_FACSHORT_EN: s = m->facshort_en; break;
+    p_int = (const int*) userlist_get_member_field_ptr(m, field_id);
+    return snprintf(buf, len, "%s", userlist_member_status_str(*p_int));
+  case USERLIST_NM_FIRSTNAME:
+    p_str = (const unsigned char**) userlist_get_member_field_ptr(m, field_id);
+    s = *p_str;
+    if (!s) {
+      if (convert_null) s = "<NULL>";
+      else s = "";
+    }
+    return snprintf(buf, len, "%s", s);
+  case USERLIST_NM_CREATE_TIME:
+    p_time = (const time_t*) userlist_get_member_field_ptr(m, field_id);
+    return snprintf(buf, len, "%s", userlist_unparse_date(*p_time, 0));    
   default:
-    SWERR(("unhandled field_id: %d", field_id));
+    abort();
   }
-  if (!s) {
-    if (convert_null) s = "<NULL>";
-    else s = "";
-  }
-  return snprintf(buf, len, "%s", s);
 }
 
 int
 userlist_delete_member_field(struct userlist_member *m, int field_id)
 {
-  unsigned char **ps = 0;
+  int *p_int;
+  unsigned char **p_str;
+  time_t *p_time;
 
-  switch (field_id) {
-  case USERLIST_NM_GRADE:
-    if (!m->grade) return 0;
-    m->grade = 0;
-    return 1;
-  case USERLIST_NM_COPIED_FROM:
-    if (!m->copied_from) return 0;
-    m->copied_from = 0;
-    return 1;
+  ASSERT(m);
+  ASSERT(field_id >= USERLIST_NM_FIRST && field_id < USERLIST_NM_LAST);
+  switch (member_field_types[field_id]) {
+  case USERLIST_NM_SERIAL:
+    return -1;
   case USERLIST_NM_STATUS:
-    if (!m->status) return 0;
-    m->status = 0;
+  case USERLIST_NM_GRADE:
+    p_int = (int*) userlist_get_member_field_ptr(m, field_id);
+    if (!*p_int) return 0;
+    *p_int = 0;
     return 1;
   case USERLIST_NM_FIRSTNAME:
-    ps = &m->firstname; goto do_text_field;
-  case USERLIST_NM_FIRSTNAME_EN:
-    ps = &m->firstname_en; goto do_text_field;
-  case USERLIST_NM_MIDDLENAME:
-    ps = &m->middlename; goto do_text_field;
-  case USERLIST_NM_MIDDLENAME_EN:
-    ps = &m->middlename_en; goto do_text_field;
-  case USERLIST_NM_SURNAME:
-    ps = &m->surname; goto do_text_field;
-  case USERLIST_NM_SURNAME_EN:
-    ps = &m->surname_en; goto do_text_field;
-  case USERLIST_NM_GROUP:
-    ps = &m->group; goto do_text_field;
-  case USERLIST_NM_GROUP_EN:
-    ps = &m->group_en; goto do_text_field;
-  case USERLIST_NM_OCCUPATION:
-    ps = &m->occupation; goto do_text_field;
-  case USERLIST_NM_OCCUPATION_EN:
-    ps = &m->occupation_en; goto do_text_field;
-  case USERLIST_NM_EMAIL:
-    ps = &m->email; goto do_text_field;
-  case USERLIST_NM_HOMEPAGE:
-    ps = &m->homepage; goto do_text_field;
-  case USERLIST_NM_PHONE:
-    ps = &m->phone; goto do_text_field;
-  case USERLIST_NM_INST:
-    ps = &m->inst; goto do_text_field;
-  case USERLIST_NM_INST_EN:
-    ps = &m->inst_en; goto do_text_field;
-  case USERLIST_NM_INSTSHORT:
-    ps = &m->instshort; goto do_text_field;
-  case USERLIST_NM_INSTSHORT_EN:
-    ps = &m->instshort_en; goto do_text_field;
-  case USERLIST_NM_FAC:
-    ps = &m->fac; goto do_text_field;
-  case USERLIST_NM_FAC_EN:
-    ps = &m->fac_en; goto do_text_field;
-  case USERLIST_NM_FACSHORT:
-    ps = &m->facshort; goto do_text_field;
-  case USERLIST_NM_FACSHORT_EN:
-    ps = &m->facshort_en; goto do_text_field;
-  do_text_field:
-    if (!*ps) return 0;
-    xfree(*ps);
-    *ps = 0;
+    p_str = (unsigned char**) userlist_get_member_field_ptr(m, field_id);
+    if (!*p_str) return 0;
+    xfree(*p_str); *p_str = 0;
     return 1;
-
-  case USERLIST_NM_SERIAL:
+  case USERLIST_NM_CREATE_TIME:
+    p_time = (time_t*) userlist_get_member_field_ptr(m, field_id);
+    if (!*p_time) return 0;
+    *p_time = 0;
+    return 1;
   default:
-    return -1;
+    abort();
   }
-  return -1;
 }
 
 int
 userlist_set_member_field_str(struct userlist_member *m, int field_id,
                               unsigned char const *field_val)
 {
-  unsigned char **ps = 0;
+  int *p_int;
+  unsigned char **p_str;
+  time_t *p_time;
   int x, n;
-  int updated = 0;
+  time_t newt;
 
-  switch (field_id) {
+  ASSERT(m);
+  ASSERT(field_id >= USERLIST_NM_FIRST && field_id < USERLIST_NM_LAST);
+  switch (member_field_types[field_id]) {
   case USERLIST_NM_SERIAL:
-  case USERLIST_NM_COPIED_FROM:
     return -1;
-  case USERLIST_NM_GRADE:
-    if (!field_val) {
-      x = 0;
-    } else {
-      if (sscanf(field_val, "%d %n", &x, &n) != 1 || field_val[n]
-          || x < 0 || x >= 20) {
-        return -1;
-      }
-    }
-    if (x != m->grade) {
-      m->grade = x;
-      updated = 1;
-    }
-    return updated;
   case USERLIST_NM_STATUS:
+    p_int = (int*) userlist_get_member_field_ptr(m, field_id);
+    x = 0;
+    if (field_val &&
+        (sscanf(field_val, "%d%n", &x, &n) != 1 || field_val[n]
+         || x < 0 || x >= USERLIST_ST_LAST))
+      return -1;
+    if (x == *p_int) return 0;
+    *p_int = x;
+    return 1;
+  case USERLIST_NM_GRADE:
+    p_int = (int*) userlist_get_member_field_ptr(m, field_id);
+    x = 0;
+    if (field_val &&
+        (sscanf(field_val, "%d%n", &x, &n) != 1 || field_val[n]
+         || x < 0 || x >= 100))
+      return -1;
+    if (x == *p_int) return 0;
+    *p_int = x;
+    return 1;
+  case USERLIST_NM_FIRSTNAME:
+    p_str = (unsigned char**) userlist_get_member_field_ptr(m, field_id);
+    if (!*p_str && !field_val) return 0;
     if (!field_val) {
-      x = 0;
-    } else {
-      if (sscanf(field_val, "%d %n", &x, &n) != 1 || field_val[n]
-          || x < 0 || x >= USERLIST_ST_LAST) {
-        return -1;
-      }
+      xfree(*p_str); *p_str = 0;
+      return 1;
     }
-    if (x != m->status) {
-      m->status = x;
-      updated = 1;
+    if (!*p_str) {
+      *p_str = xstrdup(field_val);
+      return 1;
     }
-    return updated;
-  case USERLIST_NM_FIRSTNAME:  ps = &m->firstname;  break;
-  case USERLIST_NM_FIRSTNAME_EN: ps = &m->firstname_en; break;
-  case USERLIST_NM_MIDDLENAME: ps = &m->middlename; break;
-  case USERLIST_NM_MIDDLENAME_EN: ps = &m->middlename_en; break;
-  case USERLIST_NM_SURNAME:    ps = &m->surname;    break;
-  case USERLIST_NM_SURNAME_EN: ps = &m->surname_en; break;
-  case USERLIST_NM_GROUP:      ps = &m->group;      break;
-  case USERLIST_NM_GROUP_EN:   ps = &m->group_en;   break;
-  case USERLIST_NM_OCCUPATION: ps = &m->occupation; break;
-  case USERLIST_NM_OCCUPATION_EN: ps = &m->occupation_en; break;
-  case USERLIST_NM_EMAIL:      ps = &m->email;      break;
-  case USERLIST_NM_HOMEPAGE:   ps = &m->homepage;   break;
-  case USERLIST_NM_PHONE:      ps = &m->phone;      break;
-  case USERLIST_NM_INST:       ps = &m->inst;       break;
-  case USERLIST_NM_INST_EN:    ps = &m->inst_en;    break;
-  case USERLIST_NM_INSTSHORT:  ps = &m->instshort;  break;
-  case USERLIST_NM_INSTSHORT_EN: ps = &m->instshort_en; break;
-  case USERLIST_NM_FAC:        ps = &m->fac;        break;
-  case USERLIST_NM_FAC_EN:     ps = &m->fac_en;     break;
-  case USERLIST_NM_FACSHORT:   ps = &m->facshort;   break;
-  case USERLIST_NM_FACSHORT_EN: ps = &m->facshort_en; break;
+    if (!strcmp(*p_str, field_val)) return 0;
+    xfree(*p_str);
+    *p_str = xstrdup(field_val);
+    return 1;
+  case USERLIST_NM_CREATE_TIME:
+    p_time = (time_t*) userlist_get_member_field_ptr(m, field_id);
+    if (!*p_time && !field_val) return 0;
+    if (!field_val) {
+      *p_time = 0;
+      return 1;
+    }
+    if (xml_parse_date(0, 0, 0, field_val, &newt) < 0) return -1;
+    if (*p_time == newt) return 0;
+    *p_time = newt;
+    return 1;
   default:
-    SWERR(("unhandled field_id: %d", field_id));
+    abort();
   }
-  if (!ps) return -1;
-  if (!*ps && field_val) {
-    *ps = xstrdup(field_val);
-    updated = 1;
-  } else if (*ps && !field_val) { 
-    xfree(*ps); *ps = 0;
-    updated = 1;
-  } else if (*ps && field_val && strcmp(*ps, field_val) != 0) {
-    xfree(*ps); *ps = 0;
-    *ps = xstrdup(field_val);
-    updated = 1;
+}
+
+#define USER_INFO_OFFSET(f) XOFFSET(struct userlist_user_info, f)
+static int user_info_field_offsets[] =
+{
+  [USERLIST_NC_CNTS_READ_ONLY] = USER_INFO_OFFSET(cnts_read_only),
+  [USERLIST_NC_NAME] = USER_INFO_OFFSET(name),
+  [USERLIST_NC_TEAM_PASSWD] = USER_INFO_OFFSET(team_passwd),
+  [USERLIST_NC_INST] = USER_INFO_OFFSET(inst),
+  [USERLIST_NC_INST_EN] = USER_INFO_OFFSET(inst_en),
+  [USERLIST_NC_INSTSHORT] = USER_INFO_OFFSET(instshort),
+  [USERLIST_NC_INSTSHORT_EN] = USER_INFO_OFFSET(instshort_en),
+  [USERLIST_NC_FAC] = USER_INFO_OFFSET(fac),
+  [USERLIST_NC_FAC_EN] = USER_INFO_OFFSET(fac_en),
+  [USERLIST_NC_FACSHORT] = USER_INFO_OFFSET(facshort),
+  [USERLIST_NC_FACSHORT_EN] = USER_INFO_OFFSET(facshort_en),
+  [USERLIST_NC_HOMEPAGE] = USER_INFO_OFFSET(homepage),
+  [USERLIST_NC_CITY] = USER_INFO_OFFSET(city),
+  [USERLIST_NC_CITY_EN] = USER_INFO_OFFSET(city_en),
+  [USERLIST_NC_COUNTRY] = USER_INFO_OFFSET(country),
+  [USERLIST_NC_COUNTRY_EN] = USER_INFO_OFFSET(country_en),
+  [USERLIST_NC_LOCATION] = USER_INFO_OFFSET(location),
+  [USERLIST_NC_SPELLING] = USER_INFO_OFFSET(spelling),
+  [USERLIST_NC_PRINTER_NAME] = USER_INFO_OFFSET(printer_name),
+  [USERLIST_NC_LANGUAGES] = USER_INFO_OFFSET(languages),
+  [USERLIST_NC_PHONE] = USER_INFO_OFFSET(phone),
+  [USERLIST_NC_CREATE_TIME] = USER_INFO_OFFSET(create_time),
+  [USERLIST_NC_LAST_CHANGE_TIME] = USER_INFO_OFFSET(last_change_time),
+  [USERLIST_NC_LAST_PWDCHANGE_TIME] = USER_INFO_OFFSET(last_pwdchange_time),
+};
+
+void *
+userlist_get_user_info_field_ptr(const struct userlist_user_info *ptr, int code)
+{
+  ASSERT(ptr);
+  ASSERT(code >= USERLIST_NC_FIRST && code < USERLIST_NC_LAST);
+  return XPDEREF(void, ptr, user_info_field_offsets[code]);
+}
+
+static int user_info_field_types[] =
+{
+  [USERLIST_NC_CNTS_READ_ONLY] = USERLIST_NC_CNTS_READ_ONLY,
+  [USERLIST_NC_NAME] = USERLIST_NC_NAME,
+  [USERLIST_NC_TEAM_PASSWD] = USERLIST_NC_TEAM_PASSWD,
+  [USERLIST_NC_INST] = USERLIST_NC_INST,
+  [USERLIST_NC_INST_EN] = USERLIST_NC_INST,
+  [USERLIST_NC_INSTSHORT] = USERLIST_NC_INST,
+  [USERLIST_NC_INSTSHORT_EN] = USERLIST_NC_INST,
+  [USERLIST_NC_FAC] = USERLIST_NC_INST,
+  [USERLIST_NC_FAC_EN] = USERLIST_NC_INST,
+  [USERLIST_NC_FACSHORT] = USERLIST_NC_INST,
+  [USERLIST_NC_FACSHORT_EN] = USERLIST_NC_INST,
+  [USERLIST_NC_HOMEPAGE] = USERLIST_NC_INST,
+  [USERLIST_NC_CITY] = USERLIST_NC_INST,
+  [USERLIST_NC_CITY_EN] = USERLIST_NC_INST,
+  [USERLIST_NC_COUNTRY] = USERLIST_NC_INST,
+  [USERLIST_NC_COUNTRY_EN] = USERLIST_NC_INST,
+  [USERLIST_NC_LOCATION] = USERLIST_NC_INST,
+  [USERLIST_NC_SPELLING] = USERLIST_NC_INST,
+  [USERLIST_NC_PRINTER_NAME] = USERLIST_NC_INST,
+  [USERLIST_NC_LANGUAGES] = USERLIST_NC_INST,
+  [USERLIST_NC_PHONE] = USERLIST_NC_INST,
+  [USERLIST_NC_CREATE_TIME] = USERLIST_NC_CREATE_TIME,
+  [USERLIST_NC_LAST_CHANGE_TIME] = USERLIST_NC_CREATE_TIME,
+  [USERLIST_NC_LAST_PWDCHANGE_TIME] = USERLIST_NC_CREATE_TIME,
+};
+
+int
+userlist_is_empty_user_info_field(const struct userlist_user_info *ui,
+                                  int field_id)
+{
+  const int *p_int;
+  const unsigned char **p_str;
+  const time_t *p_time;
+
+  ASSERT(ui);
+  ASSERT(field_id >= USERLIST_NC_FIRST && field_id < USERLIST_NC_LAST);
+
+  switch (user_info_field_types[field_id]) {
+  case USERLIST_NC_CNTS_READ_ONLY:
+    p_int = (const int*) userlist_get_user_info_field_ptr(ui, field_id);
+    return (*p_int == 0);
+  case USERLIST_NC_NAME:
+    p_str=(const unsigned char**)userlist_get_user_info_field_ptr(ui, field_id);
+    return (*p_str == 0 || **p_str == 0);
+  case USERLIST_NC_TEAM_PASSWD:
+    return (ui->team_passwd == 0);
+  case USERLIST_NC_INST:
+    p_str=(const unsigned char**)userlist_get_user_info_field_ptr(ui, field_id);
+    return (*p_str == 0);
+  case USERLIST_NC_CREATE_TIME:
+    p_time = (const time_t*) userlist_get_user_info_field_ptr(ui, field_id);
+    return (*p_time == 0);
+  default:
+    abort();
   }
-  return updated;
+}
+
+int
+userlist_is_equal_user_info_field(const struct userlist_user_info *ui,
+                                  int field_id,
+                                  const unsigned char *value)
+{
+  const int *p_int;
+  const unsigned char **p_str;
+  const time_t *p_time;
+  unsigned char buf[64];
+
+  ASSERT(ui);
+  ASSERT(field_id >= USERLIST_NC_FIRST && field_id < USERLIST_NC_LAST);
+
+  switch (user_info_field_types[field_id]) {
+  case USERLIST_NC_CNTS_READ_ONLY:
+    p_int = (const int*) userlist_get_user_info_field_ptr(ui, field_id);
+    if (!value && !*p_int) return 1;
+    if (!value) return 0;
+    snprintf(buf, sizeof(buf), "%d", *p_int);
+    return (strcmp(buf, value) == 0);
+  case USERLIST_NC_NAME:
+    p_str=(const unsigned char**)userlist_get_user_info_field_ptr(ui, field_id);
+    if ((!value || !*value) && (!*p_str || !**p_str)) return 1;
+    if ((!value || !*value) || (!*p_str || !**p_str)) return 0;
+    return (strcmp(*p_str, value) == 0);
+  case USERLIST_NC_TEAM_PASSWD:
+    if (!value && !ui->team_passwd) return 1;
+    if (!value || !ui->team_passwd) return 0;
+    if (ui->team_passwd_method != USERLIST_PWD_PLAIN) return 0;
+    return (strcmp(ui->team_passwd, value) == 0);
+  case USERLIST_NC_INST:
+    p_str=(const unsigned char**)userlist_get_user_info_field_ptr(ui, field_id);
+    if (!value && !*p_str) return 1;
+    if (!value || !*p_str) return 0;
+    return (strcmp(*p_str, value) == 0);
+  case USERLIST_NC_CREATE_TIME:
+    p_time = (const time_t*) userlist_get_user_info_field_ptr(ui, field_id);
+    if (!value && !*p_time) return 1;
+    if (!value) return 0;
+    return (strcmp(xml_unparse_date(*p_time), value) == 0);
+  default:
+    abort();
+  }
+}
+
+int
+userlist_get_user_info_field_str(unsigned char *buf, size_t len,
+                                 const struct userlist_user_info *ui,
+                                 int field_id,
+                                 int convert_null)
+{
+  const int *p_int;
+  const unsigned char **p_str;
+  const time_t *p_time;
+  const unsigned char *s;
+
+  ASSERT(ui);
+  ASSERT(field_id >= USERLIST_NC_FIRST && field_id < USERLIST_NC_LAST);
+
+  switch (user_info_field_types[field_id]) {
+  case USERLIST_NC_CNTS_READ_ONLY:
+    p_int = (const int*) userlist_get_user_info_field_ptr(ui, field_id);
+    return snprintf(buf, len, "%d", *p_int);
+  case USERLIST_NC_NAME:
+    p_str=(const unsigned char**)userlist_get_user_info_field_ptr(ui, field_id);
+    s = ui->team_passwd;
+    if (!s) s = "";
+    return snprintf(buf, len, "%s", s);
+  case USERLIST_NC_TEAM_PASSWD:
+    s = ui->team_passwd;
+    if (!s) {
+      if (convert_null) s = "<NULL>";
+      else s = "";
+    }
+    return snprintf(buf, len, "%s", s);
+  case USERLIST_NC_INST:
+    p_str=(const unsigned char**)userlist_get_user_info_field_ptr(ui, field_id);
+    s = *p_str;
+    if (!s) {
+      if (convert_null) s = "<NULL>";
+      else s = "";
+    }
+    return snprintf(buf, len, "%s", s);
+  case USERLIST_NC_CREATE_TIME:
+    p_time = (const time_t*) userlist_get_user_info_field_ptr(ui, field_id);
+    return snprintf(buf, len, "%s", userlist_unparse_date(*p_time, 0));    
+  default:
+    abort();
+  }
+}
+
+int
+userlist_set_user_info_field_str(struct userlist_user_info *ui,
+                                 int field_id,
+                                 unsigned char const *field_val)
+{
+  int *p_int;
+  unsigned char **p_str;
+  time_t *p_time;
+  int x, n;
+  time_t newt;
+
+  ASSERT(ui);
+  ASSERT(field_id >= USERLIST_NC_FIRST && field_id < USERLIST_NC_LAST);
+
+  if (!field_val) return userlist_delete_user_info_field(ui, field_id);
+
+  switch (user_info_field_types[field_id]) {
+  case USERLIST_NC_CNTS_READ_ONLY:
+    p_int = (int*) userlist_get_user_info_field_ptr(ui, field_id);
+    if (sscanf(field_val, "%d%n", &x, &n) != 1 || field_val[n]
+        || x < 0 || x > 1)
+      return -1;
+    if (*p_int == x) return 0;
+    *p_int = x;
+    return 1;
+  case USERLIST_NC_NAME:
+    p_str = (unsigned char**) userlist_get_user_info_field_ptr(ui, field_id);
+    if ((!*p_str || !**p_str) && !*field_val) return 0;
+    if (!*p_str || !**p_str) {
+      xfree(*p_str);
+      *p_str = xstrdup(field_val);
+      return 1;
+    }
+    if (!strcmp(*p_str, field_val)) return 0;
+    xfree(*p_str);
+    *p_str = xstrdup(field_val);
+    return 1;
+  case USERLIST_NC_TEAM_PASSWD:
+    if (!ui->team_passwd) {
+      ui->team_passwd = xstrdup(field_val);
+      ui->team_passwd_method = USERLIST_PWD_PLAIN;
+      return 1;
+    }
+    if (ui->team_passwd_method == USERLIST_PWD_PLAIN
+        && !strcmp(ui->team_passwd, field_val))
+      return 0;
+    xfree(ui->team_passwd);
+    ui->team_passwd = xstrdup(field_val);
+    ui->team_passwd_method = USERLIST_PWD_PLAIN;
+    return 1;
+  case USERLIST_NC_INST:
+    p_str = (unsigned char**) userlist_get_user_info_field_ptr(ui, field_id);
+    if (!*p_str) {
+      *p_str = xstrdup(field_val);
+      return 1;
+    }
+    if (!strcmp(*p_str, field_val)) return 0;
+    xfree(*p_str);
+    *p_str = xstrdup(field_val);
+    return 1;
+  case USERLIST_NC_CREATE_TIME:
+    p_time = (time_t*) userlist_get_user_info_field_ptr(ui, field_id);
+    if (xml_parse_date(0, 0, 0, field_val, &newt) < 0) return -1;
+    if (newt == *p_time) return 0;
+    *p_time = newt;
+    return 1;
+  default:
+    abort();
+  }
+}
+
+int
+userlist_delete_user_info_field(struct userlist_user_info *ui,
+                                int field_id)
+{
+  int *p_int;
+  unsigned char **p_str;
+  time_t *p_time;
+
+  ASSERT(ui);
+  ASSERT(field_id >= USERLIST_NC_FIRST && field_id < USERLIST_NC_LAST);
+
+  switch (user_info_field_types[field_id]) {
+  case USERLIST_NC_CNTS_READ_ONLY:
+    p_int = (int*) userlist_get_user_info_field_ptr(ui, field_id);
+    if (!*p_int) return 0;
+    *p_int = 0;
+    return 1;
+  case USERLIST_NC_NAME:
+    p_str = (unsigned char**) userlist_get_user_info_field_ptr(ui, field_id);
+    if (!*p_str || !**p_str) return 0;
+    xfree(*p_str);
+    *p_str = xstrdup("");
+    return 1;
+  case USERLIST_NC_TEAM_PASSWD:
+    if (!ui->team_passwd) return 0;
+    xfree(ui->team_passwd);
+    ui->team_passwd = 0;
+    ui->team_passwd_method = USERLIST_PWD_PLAIN;
+    return 1;
+  case USERLIST_NC_INST:
+    p_str = (unsigned char**) userlist_get_user_info_field_ptr(ui, field_id);
+    if (!*p_str) return 0;
+    xfree(*p_str);
+    *p_str = 0;
+    return 1;
+  case USERLIST_NC_CREATE_TIME:
+    p_time = (time_t*) userlist_get_user_info_field_ptr(ui, field_id);
+    if (!*p_time) return 0;
+    *p_time = 0;
+    return 1;
+  default:
+    abort();
+  }
+}
+
+#define USER_OFFSET(f) XOFFSET(struct userlist_user, f)
+static int user_field_offsets[] =
+{
+  [USERLIST_NN_ID] = USER_OFFSET(id),
+  [USERLIST_NN_IS_PRIVILEGED] = USER_OFFSET(is_privileged),
+  [USERLIST_NN_IS_INVISIBLE] = USER_OFFSET(is_invisible),
+  [USERLIST_NN_IS_BANNED] = USER_OFFSET(is_banned),
+  [USERLIST_NN_IS_LOCKED] = USER_OFFSET(is_locked),
+  [USERLIST_NN_SHOW_LOGIN] = USER_OFFSET(show_login),
+  [USERLIST_NN_SHOW_EMAIL] = USER_OFFSET(show_email),
+  [USERLIST_NN_READ_ONLY] = USER_OFFSET(read_only),
+  [USERLIST_NN_NEVER_CLEAN] = USER_OFFSET(never_clean),
+  [USERLIST_NN_SIMPLE_REGISTRATION] = USER_OFFSET(simple_registration),
+  [USERLIST_NN_LOGIN] = USER_OFFSET(login),
+  [USERLIST_NN_EMAIL] = USER_OFFSET(email),
+  [USERLIST_NN_PASSWD] = USER_OFFSET(passwd),
+  [USERLIST_NN_REGISTRATION_TIME] = USER_OFFSET(registration_time),
+  [USERLIST_NN_LAST_LOGIN_TIME] = USER_OFFSET(last_login_time),
+  [USERLIST_NN_LAST_CHANGE_TIME] = USER_OFFSET(last_change_time),
+  [USERLIST_NN_LAST_PWDCHANGE_TIME] = USER_OFFSET(last_pwdchange_time),
+};
+
+void *
+userlist_get_user_field_ptr(const struct userlist_user *ptr, int code)
+{
+  ASSERT(ptr);
+  ASSERT(code >= USERLIST_NN_FIRST && code < USERLIST_NN_LAST);
+  return XPDEREF(void, ptr, user_field_offsets[code]);
+}
+
+static int user_field_types[] =
+{
+  [USERLIST_NN_ID] = USERLIST_NN_ID,
+  [USERLIST_NN_IS_PRIVILEGED] = USERLIST_NN_IS_PRIVILEGED,
+  [USERLIST_NN_IS_INVISIBLE] = USERLIST_NN_IS_INVISIBLE,
+  [USERLIST_NN_IS_BANNED] = USERLIST_NN_IS_INVISIBLE,
+  [USERLIST_NN_IS_LOCKED] = USERLIST_NN_IS_INVISIBLE,
+  [USERLIST_NN_SHOW_LOGIN] = USERLIST_NN_IS_INVISIBLE,
+  [USERLIST_NN_SHOW_EMAIL] = USERLIST_NN_IS_INVISIBLE,
+  [USERLIST_NN_READ_ONLY] = USERLIST_NN_IS_INVISIBLE,
+  [USERLIST_NN_NEVER_CLEAN] = USERLIST_NN_IS_INVISIBLE,
+  [USERLIST_NN_SIMPLE_REGISTRATION] = USERLIST_NN_IS_INVISIBLE,
+  [USERLIST_NN_LOGIN] = USERLIST_NN_LOGIN,
+  [USERLIST_NN_EMAIL] = USERLIST_NN_EMAIL,
+  [USERLIST_NN_PASSWD] = USERLIST_NN_PASSWD,
+  [USERLIST_NN_REGISTRATION_TIME] = USERLIST_NN_REGISTRATION_TIME,
+  [USERLIST_NN_LAST_LOGIN_TIME] = USERLIST_NN_REGISTRATION_TIME,
+  [USERLIST_NN_LAST_CHANGE_TIME] = USERLIST_NN_REGISTRATION_TIME,
+  [USERLIST_NN_LAST_PWDCHANGE_TIME] = USERLIST_NN_REGISTRATION_TIME,
+};
+
+int
+userlist_is_empty_user_field(const struct userlist_user *u, int field_id)
+{
+  const int *p_int;
+  const unsigned char **p_str;
+  const time_t *p_time;
+
+  ASSERT(u);
+  ASSERT(field_id >= USERLIST_NN_FIRST && field_id < USERLIST_NN_LAST);
+
+  switch (user_field_types[field_id]) {
+    // individual fields
+  case USERLIST_NN_ID:
+  case USERLIST_NN_LOGIN:
+    return 0;
+  case USERLIST_NN_IS_PRIVILEGED:
+    return (u->is_privileged == 0);
+  case USERLIST_NN_PASSWD:
+    return (u->passwd == 0);
+    // mass fields
+  case USERLIST_NN_IS_INVISIBLE:
+    p_int = (const int*) userlist_get_user_field_ptr(u, field_id);
+    return (*p_int == 0);
+  case USERLIST_NN_EMAIL:
+    p_str = (const unsigned char **) userlist_get_user_field_ptr(u, field_id);
+    return (*p_str == 0);
+  case USERLIST_NN_REGISTRATION_TIME:
+    p_time = (const time_t *) userlist_get_user_field_ptr(u, field_id);
+    return (*p_time == 0);
+  default:
+    abort();
+  }
+}
+
+int
+userlist_is_equal_user_field(const struct userlist_user *u,
+                             int field_id,
+                             const unsigned char *field_val)
+{
+  const int *p_int;
+  const unsigned char **p_str;
+  const time_t *p_time;
+  int x, n;
+  time_t newt;
+
+  ASSERT(u);
+  ASSERT(field_id >= USERLIST_NN_FIRST && field_id < USERLIST_NN_LAST);
+
+  switch (user_field_types[field_id]) {
+    // individual fields
+  case USERLIST_NN_ID:
+    if (sscanf(field_val, "%d%n", &x, &n) != 1 || field_val[n] || x <= 0)
+      return 0;
+    return (u->id == x);
+  case USERLIST_NN_IS_PRIVILEGED:
+    if (sscanf(field_val, "%d%n", &x, &n) != 1 || field_val[n]
+        || x < 0 || x > 1)
+      return 0;
+    return (u->is_privileged == x);
+  case USERLIST_NN_LOGIN:
+    if ((!u->login || !*u->login) && (!field_val || !*field_val)) return 1;
+    if ((!u->login || !*u->login) || (!field_val || !*field_val)) return 0;
+    return (strcmp(u->login, field_val) == 0);
+  case USERLIST_NN_PASSWD:
+    if (!u->passwd && !field_val) return 1;
+    if (!u->passwd || !field_val) return 0;
+    if (u->passwd_method != USERLIST_PWD_PLAIN) return 0;
+    return (strcmp(u->passwd, field_val) == 0);
+    // mass fields
+  case USERLIST_NN_IS_INVISIBLE:
+    p_int = (const int*) userlist_get_user_field_ptr(u, field_id);
+    if (sscanf(field_val, "%d%n", &x, &n) != 1 || field_val[n]
+        || x < 0 || x > 1)
+      return 0;
+    return (*p_int == x);
+  case USERLIST_NN_EMAIL:
+    p_str = (const unsigned char **) userlist_get_user_field_ptr(u, field_id);
+    if (!*p_str && !field_val) return 1;
+    if (!*p_str || !field_val) return 1;
+    return (strcmp(*p_str, field_val) == 0);
+  case USERLIST_NN_REGISTRATION_TIME:
+    p_time = (const time_t *) userlist_get_user_field_ptr(u, field_id);
+    if (!*p_time && !field_val) return 1;
+    if (!field_val) return 0;
+    if (xml_parse_date(0, 0, 0, field_val, &newt) < 0) return 0;
+    return (*p_time == newt);
+  default:
+    abort();
+  }
 }
 
 int
 userlist_get_user_field_str(unsigned char *buf, size_t len,
-                            struct userlist_user *u,
-                            struct userlist_user_info *ui,
+                            const struct userlist_user *u,
                             int field_id,
                             int convert_null)
 {
-  unsigned char const *s = 0;
+  const int *p_int;
+  const unsigned char **p_str;
+  const time_t *p_time;
+  const unsigned char *s;
 
-  if (!ui) ui = &u->i;
+  ASSERT(u);
+  ASSERT(field_id >= USERLIST_NN_FIRST && field_id < USERLIST_NN_LAST);
 
-  switch (field_id) {
+  switch (user_field_types[field_id]) {
+    // individual fields
   case USERLIST_NN_ID:
     return snprintf(buf, len, "%d", u->id);
-  case USERLIST_NN_LOGIN: s = u->login; break;
-  case USERLIST_NN_EMAIL: s = u->email; break;
-  case USERLIST_NN_NAME: s = ui->name; break;
   case USERLIST_NN_IS_PRIVILEGED:
-    s = xml_unparse_bool(u->is_privileged); break;
+    return snprintf(buf, len, "%d", u->is_privileged);
+    // mass fields
   case USERLIST_NN_IS_INVISIBLE:
-    s = xml_unparse_bool(u->is_invisible); break;
-  case USERLIST_NN_IS_BANNED:
-    s = xml_unparse_bool(u->is_banned); break;
-  case USERLIST_NN_IS_LOCKED:
-    s = xml_unparse_bool(u->is_locked); break;
-  case USERLIST_NN_SHOW_LOGIN:
-    s = xml_unparse_bool(u->show_login); break;
-  case USERLIST_NN_SHOW_EMAIL:
-    s = xml_unparse_bool(u->show_email); break;
-  case USERLIST_NN_READ_ONLY:
-    s = xml_unparse_bool(u->read_only); break;
-  case USERLIST_NN_CNTS_READ_ONLY:
-    s = xml_unparse_bool(ui->cnts_read_only); break;
-  case USERLIST_NN_NEVER_CLEAN:
-    s = xml_unparse_bool(u->never_clean); break;
-  case USERLIST_NN_SIMPLE_REGISTRATION:
-    s = xml_unparse_bool(u->simple_registration); break;
-  case USERLIST_NN_TIMESTAMPS: break;    /* !!! */
-  case USERLIST_NN_REG_TIME:
-    s = userlist_unparse_date(u->registration_time, convert_null); break;
-  case USERLIST_NN_LOGIN_TIME:
-    s = userlist_unparse_date(u->last_login_time, convert_null); break;
-  case USERLIST_NN_CREATE_TIME:
-    s = userlist_unparse_date(ui->create_time, convert_null); break;
-  case USERLIST_NN_ACCESS_TIME:
-    s = userlist_unparse_date(u->last_access_time, convert_null); break;
-  case USERLIST_NN_CHANGE_TIME:
-    s = userlist_unparse_date(u->last_change_time, convert_null); break;
-  case USERLIST_NN_PWD_CHANGE_TIME:
-    s = userlist_unparse_date(u->last_pwdchange_time, convert_null); break;
-  case USERLIST_NN_MINOR_CHANGE_TIME:
-    s = userlist_unparse_date(u->last_minor_change_time, convert_null);break;
-  case USERLIST_NN_PASSWORDS: break;     /* !!! */
-  case USERLIST_NN_REG_PASSWORD:
-    if (u->register_passwd) s = u->register_passwd->b.text;
-    break;
-  case USERLIST_NN_TEAM_PASSWORD:
-    if (ui->team_passwd) s = ui->team_passwd->b.text;
-    break;
-  case USERLIST_NN_GENERAL_INFO: break;  /* !!! */
-  case USERLIST_NN_INST: s = ui->inst; break;
-  case USERLIST_NN_INST_EN: s = ui->inst_en; break;
-  case USERLIST_NN_INSTSHORT: s = ui->instshort; break;
-  case USERLIST_NN_INSTSHORT_EN: s = ui->instshort_en; break;
-  case USERLIST_NN_FAC: s = ui->fac; break;
-  case USERLIST_NN_FAC_EN: s = ui->fac_en; break;
-  case USERLIST_NN_FACSHORT: s = ui->facshort; break;
-  case USERLIST_NN_FACSHORT_EN: s = ui->facshort_en; break;
-  case USERLIST_NN_HOMEPAGE: s = ui->homepage; break;
-  case USERLIST_NN_PHONE: s = ui->phone; break;
-  case USERLIST_NN_CITY: s = ui->city; break;
-  case USERLIST_NN_CITY_EN: s = ui->city_en; break;
-  case USERLIST_NN_COUNTRY: s = ui->country; break;
-  case USERLIST_NN_COUNTRY_EN: s = ui->country_en; break;
-  case USERLIST_NN_LOCATION: s = ui->location; break;
-  case USERLIST_NN_SPELLING: s = ui->spelling; break;
-  case USERLIST_NN_PRINTER_NAME: s = ui->printer_name; break;
-  case USERLIST_NN_LANGUAGES: s = ui->languages; break;
+    p_int = (const int*) userlist_get_user_field_ptr(u, field_id);
+    return snprintf(buf, len, "%d", *p_int);
+  case USERLIST_NN_LOGIN:
+  case USERLIST_NN_PASSWD:
+  case USERLIST_NN_EMAIL:
+    p_str = (const unsigned char **) userlist_get_user_field_ptr(u, field_id);
+    s = *p_str;
+    if (!s) {
+      if (convert_null) s = "<NULL>";
+      else s = "";
+    }
+    return snprintf(buf, len, "%s", s);
+  case USERLIST_NN_REGISTRATION_TIME:
+    p_time = (const time_t *) userlist_get_user_field_ptr(u, field_id);
+    return snprintf(buf, len, "%s", userlist_unparse_date(*p_time, 0));    
+  default:
+    abort();
   }
-  if (!s) {
-    if (convert_null) s = "<NULL>";
-    else s = "";
-  }
-  return snprintf(buf, len, "%s", s);
 }
 
 int
-userlist_set_user_field_str(struct userlist_list *lst,
-                            struct userlist_user *u,
-                            struct userlist_user_info *ui,
+userlist_set_user_field_str(struct userlist_user *u,
                             int field_id,
                             unsigned char const *field_val)
 {
-  int updated = 0;
-  int *iptr;
-  int new_ival, i;
-  unsigned char **sptr, *old_login;
-  userlist_login_hash_t login_hash;
-  struct userlist_user *tmpu;
+  int *p_int;
+  unsigned char **p_str;
+  time_t *p_time;
+  int x, n;
+  time_t newt;
 
-  if (!field_val) field_val = "";
-  if (!ui) ui = &u->i;
+  ASSERT(u);
+  ASSERT(field_id >= USERLIST_NN_FIRST && field_id < USERLIST_NN_LAST);
 
-  switch (field_id) {
-  case USERLIST_NN_LOGIN:
-    if (!*field_val) return -1;
-    if (!lst) {
-      sptr = &u->login;
-      goto do_text_fields;
-    }
+  if (!field_val) return userlist_delete_user_field(u, field_id);
 
-    ASSERT(u->login);
-    if (!strcmp(u->login, field_val)) break;
-
-    /*
-      We cannot simply change `login' field, as it is
-      a primary key. We have to ensure its uniqueness.
-     */
-    if (lst->login_hash_table) {
-      login_hash = userlist_login_hash(field_val);
-      i = login_hash % lst->login_hash_size;
-      while (1) {
-        if (!(tmpu = lst->login_hash_table[i])) break;
-        if (tmpu != u && tmpu->login_hash == login_hash
-            && !strcmp(tmpu->login, field_val)) break;
-        i = (i + lst->login_hash_step) % lst->login_hash_size;
-      }
-      if (lst->login_hash_table[i]) {
-        /* new login is not unique */
-        return -1;
-      }
-    } else {
-      for (i = 1; i < lst->user_map_size; i++) {
-        if (!lst->user_map[i]) continue;
-        if (lst->user_map[i] == u) continue;
-        if (!strcmp(field_val, lst->user_map[i]->login)) break;
-      }
-      if (i < lst->user_map_size) {
-        /* new login is not unique */
-        return -1;
-      }
-    }
-
-    /* new login is unique */
-    old_login = u->login;
-    u->login = xstrdup(field_val);
-
-    /* This is dump, however it will work */
-    if (userlist_build_login_hash(lst) < 0) {
-      SWERR(("userlist_build_login_hash failed unexpectedly"));
-    }
-
-    xfree(old_login);
-    updated = 1;
-    break;
-  case USERLIST_NN_EMAIL:
-    if (!*field_val) return -1;
-    sptr = &u->email; goto do_text_fields;
-  case USERLIST_NN_NAME:
-    sptr = &ui->name;
-  do_text_fields:
-    if (*sptr && !strcmp(*sptr, field_val)) break;
-    xfree(*sptr);
-    *sptr = xstrdup(field_val);
-    updated = 1;
-    break;
-
-  case USERLIST_NN_IS_PRIVILEGED:
-    iptr = &u->is_privileged; goto do_bool_fields;
-  case USERLIST_NN_IS_INVISIBLE:
-    iptr = &u->is_invisible; goto do_bool_fields;
-  case USERLIST_NN_IS_BANNED:
-    iptr = &u->is_banned; goto do_bool_fields;
-  case USERLIST_NN_IS_LOCKED:
-    iptr = &u->is_locked; goto do_bool_fields;
-  case USERLIST_NN_SHOW_LOGIN:
-    iptr = &u->show_login; goto do_bool_fields;
-  case USERLIST_NN_SHOW_EMAIL:
-    iptr = &u->show_email; goto do_bool_fields;
-  case USERLIST_NN_READ_ONLY:
-    iptr = &u->read_only; goto do_bool_fields;
-  case USERLIST_NN_CNTS_READ_ONLY:
-    iptr = &ui->cnts_read_only; goto do_bool_fields;
-  case USERLIST_NN_NEVER_CLEAN:
-    iptr = &u->never_clean; goto do_bool_fields;
-  case USERLIST_NN_SIMPLE_REGISTRATION:
-    iptr = &u->simple_registration; goto do_bool_fields;
-  do_bool_fields:
-    new_ival = xml_parse_bool(0, 0, 0, field_val, 0);
-    if (new_ival < 0 || new_ival > 1) return -1;
-    if (new_ival == *iptr) break;
-    *iptr = new_ival;
-    updated = 1;
-    break;
-
-  case USERLIST_NN_REG_PASSWORD:
-    if (!u->register_passwd) {
-      u->register_passwd = (struct userlist_passwd*) userlist_node_alloc(USERLIST_T_PASSWORD);
-      xml_link_node_last(&u->b, &u->register_passwd->b);
-      u->register_passwd->b.text = xstrdup("");
-      u->register_passwd->method = USERLIST_PWD_PLAIN;
-      updated = 1;
-    }
-    if (!strcmp(u->register_passwd->b.text, field_val)) break;
-    xfree(u->register_passwd->b.text);
-    u->register_passwd->b.text = xstrdup(field_val);
-    u->register_passwd->method = USERLIST_PWD_PLAIN;
-    updated = 1;
-    break;
-
-  case USERLIST_NN_TEAM_PASSWORD:
-    if (!ui->team_passwd) {
-      ui->team_passwd = (struct userlist_passwd*) userlist_node_alloc(USERLIST_T_TEAM_PASSWORD);
-      xml_link_node_last(&u->b, &ui->team_passwd->b);
-      ui->team_passwd->b.text = xstrdup("");
-      ui->team_passwd->method = USERLIST_PWD_PLAIN;
-      updated = 1;
-    }
-    if (!strcmp(ui->team_passwd->b.text, field_val)) break;
-    xfree(ui->team_passwd->b.text);
-    ui->team_passwd->b.text = xstrdup(field_val);
-    ui->team_passwd->method = USERLIST_PWD_PLAIN;
-    updated = 1;
-    break;
-
-  case USERLIST_NN_INST:
-    sptr = &ui->inst; goto do_text_fields;
-  case USERLIST_NN_INST_EN:
-    sptr = &ui->inst_en; goto do_text_fields;
-  case USERLIST_NN_INSTSHORT:
-    sptr = &ui->instshort; goto do_text_fields;
-  case USERLIST_NN_INSTSHORT_EN:
-    sptr = &ui->instshort_en; goto do_text_fields;
-  case USERLIST_NN_FAC:
-    sptr = &ui->fac; goto do_text_fields;
-  case USERLIST_NN_FAC_EN:
-    sptr = &ui->fac_en; goto do_text_fields;
-  case USERLIST_NN_FACSHORT:
-    sptr = &ui->facshort; goto do_text_fields;
-  case USERLIST_NN_FACSHORT_EN:
-    sptr = &ui->facshort_en; goto do_text_fields;
-  case USERLIST_NN_HOMEPAGE:
-    sptr = &ui->homepage; goto do_text_fields;
-  case USERLIST_NN_PHONE:
-    sptr = &ui->phone; goto do_text_fields;
-  case USERLIST_NN_CITY:
-    sptr = &ui->city; goto do_text_fields;
-  case USERLIST_NN_CITY_EN:
-    sptr = &ui->city_en; goto do_text_fields;
-  case USERLIST_NN_COUNTRY:
-    sptr = &ui->country; goto do_text_fields;
-  case USERLIST_NN_COUNTRY_EN:
-    sptr = &ui->country_en; goto do_text_fields;
-  case USERLIST_NN_LOCATION:
-    sptr = &ui->location; goto do_text_fields;
-  case USERLIST_NN_SPELLING:
-    sptr = &ui->spelling; goto do_text_fields;
-  case USERLIST_NN_PRINTER_NAME:
-    sptr = &ui->printer_name; goto do_text_fields;
-  case USERLIST_NN_LANGUAGES:
-    sptr = &ui->languages; goto do_text_fields;
-
+  switch (user_field_types[field_id]) {
+    // individual fields
   case USERLIST_NN_ID:
-  case USERLIST_NN_TIMESTAMPS:
-  case USERLIST_NN_REG_TIME:
-  case USERLIST_NN_LOGIN_TIME:
-  case USERLIST_NN_CREATE_TIME:
-  case USERLIST_NN_ACCESS_TIME:
-  case USERLIST_NN_CHANGE_TIME:
-  case USERLIST_NN_PWD_CHANGE_TIME:
-  case USERLIST_NN_MINOR_CHANGE_TIME:
-  case USERLIST_NN_PASSWORDS:
-  case USERLIST_NN_GENERAL_INFO:
-  default:
     return -1;
+  case USERLIST_NN_PASSWD:
+    if (!u->passwd) {
+      u->passwd = xstrdup(field_val);
+      u->passwd_method = USERLIST_PWD_PLAIN;
+      return 1;
+    }
+    if (u->passwd_method == USERLIST_PWD_PLAIN
+        && !strcmp(u->passwd, field_val))
+      return 0;
+    xfree(u->passwd);
+    u->passwd = xstrdup(field_val);
+    u->passwd_method = USERLIST_PWD_PLAIN;
+    return 1;
+    // mass fields
+  case USERLIST_NN_IS_INVISIBLE:
+  case USERLIST_NN_IS_PRIVILEGED:
+    p_int = (int*) userlist_get_user_field_ptr(u, field_id);
+    if (sscanf(field_val, "%d%n", &x, &n) != 1 || field_val[n]
+        || n < 0 || n > 1)
+      return -1;
+    if (*p_int == x) return 0;
+    *p_int = x;
+    return 1;
+  case USERLIST_NN_LOGIN:
+  case USERLIST_NN_EMAIL:
+    p_str = (unsigned char **) userlist_get_user_field_ptr(u, field_id);
+    if (!*p_str) {
+      *p_str = xstrdup(field_val);
+      return 1;
+    }
+    if (!strcmp(*p_str, field_val)) return 0;
+    xfree(*p_str);
+    *p_str = xstrdup(field_val);
+    return 1;
+  case USERLIST_NN_REGISTRATION_TIME:
+    p_time = (time_t *) userlist_get_user_field_ptr(u, field_id);
+    if (xml_parse_date(0, 0, 0, field_val, &newt) < 0) return 0;
+    if (*p_time == newt) return 0;
+    *p_time = newt;
+    return 1;
+  default:
+    abort();
   }
-  return updated;
 }
 
 int
-userlist_delete_user_field(struct userlist_user *u,
-                           struct userlist_user_info *ui,
-                           int field_id)
+userlist_delete_user_field(struct userlist_user *u, int field_id)
 {
-  time_t *tptr;
-  int *iptr;
-  unsigned char **sptr;
-  int retval = -1;
+  int *p_int;
+  unsigned char **p_str;
+  time_t *p_time;
 
-  if (!ui) ui = &u->i;
+  ASSERT(u);
+  ASSERT(field_id >= USERLIST_NN_FIRST && field_id < USERLIST_NN_LAST);
 
-  switch (field_id) {
-  case USERLIST_NN_NAME:
-    sptr = &ui->name;
-    if (*sptr && **sptr) retval = 1;
-    xfree(*sptr); *sptr = xstrdup("");
-    break;
-
-  case USERLIST_NN_IS_PRIVILEGED:
-    iptr = &u->is_privileged; goto do_flags_delete;
-  case USERLIST_NN_IS_INVISIBLE:
-    iptr = &u->is_invisible; goto do_flags_delete;
-  case USERLIST_NN_IS_BANNED:
-    iptr = &u->is_banned; goto do_flags_delete;
-  case USERLIST_NN_IS_LOCKED:
-    iptr = &u->is_locked; goto do_flags_delete;
-  case USERLIST_NN_SHOW_LOGIN:
-    iptr = &u->show_login; goto do_flags_delete;
-  case USERLIST_NN_SHOW_EMAIL:
-    iptr = &u->show_email; goto do_flags_delete;
-  case USERLIST_NN_READ_ONLY:
-    iptr = &u->read_only; goto do_flags_delete;
-  case USERLIST_NN_CNTS_READ_ONLY:
-    iptr = &ui->cnts_read_only; goto do_flags_delete;
-  case USERLIST_NN_NEVER_CLEAN:
-    iptr = &u->never_clean; goto do_flags_delete;
-  case USERLIST_NN_SIMPLE_REGISTRATION:
-    iptr = &u->simple_registration; goto do_flags_delete;
-  do_flags_delete:
-    retval = !(*iptr == 0);
-    *iptr = 0;
-    break;
-
-  case USERLIST_NN_REG_PASSWORD:
-    return -1;
-#if 0
-    if (!u->register_passwd) break;
-    if (!u->register_passwd->b.text || !*u->register_passwd->b.text) break;
-    xfree(u->register_passwd->b.text);
-    u->register_passwd->b.text = xstrdup("");
-    break;
-#endif
-
-  case USERLIST_NN_TEAM_PASSWORD:
-    if (!ui->team_passwd) break;
-    xml_unlink_node(&ui->team_passwd->b);
-    userlist_free(&ui->team_passwd->b);
-    ui->team_passwd = 0;
-    retval = 1;
-    break;
-
-  case USERLIST_NN_INST:
-    sptr = &ui->inst; goto do_string_delete;
-  case USERLIST_NN_INST_EN:
-    sptr = &ui->inst_en; goto do_string_delete;
-  case USERLIST_NN_INSTSHORT:
-    sptr = &ui->instshort; goto do_string_delete;
-  case USERLIST_NN_INSTSHORT_EN:
-    sptr = &ui->instshort_en; goto do_string_delete;
-  case USERLIST_NN_FAC:
-    sptr = &ui->fac; goto do_string_delete;
-  case USERLIST_NN_FAC_EN:
-    sptr = &ui->fac_en; goto do_string_delete;
-  case USERLIST_NN_FACSHORT:
-    sptr = &ui->facshort; goto do_string_delete;
-  case USERLIST_NN_FACSHORT_EN:
-    sptr = &ui->facshort_en; goto do_string_delete;
-  case USERLIST_NN_HOMEPAGE:
-    sptr = &ui->homepage; goto do_string_delete;
-  case USERLIST_NN_PHONE:
-    sptr = &ui->phone; goto do_string_delete;
-  case USERLIST_NN_CITY:
-    sptr = &ui->city; goto do_string_delete;
-  case USERLIST_NN_CITY_EN:
-    sptr = &ui->city_en; goto do_string_delete;
-  case USERLIST_NN_COUNTRY:
-    sptr = &ui->country; goto do_string_delete;
-  case USERLIST_NN_COUNTRY_EN:
-    sptr = &ui->country_en; goto do_string_delete;
-  case USERLIST_NN_LOCATION:
-    sptr = &ui->location; goto do_string_delete;
-  case USERLIST_NN_SPELLING:
-    sptr = &ui->spelling; goto do_string_delete;
-  case USERLIST_NN_PRINTER_NAME:
-    sptr = &ui->printer_name; goto do_string_delete;
-  case USERLIST_NN_LANGUAGES:
-    sptr = &ui->languages; goto do_string_delete;
-  do_string_delete:
-    retval = !(*sptr == 0);
-    xfree(*sptr); *sptr = 0;
-    break;
-
-  case USERLIST_NN_REG_TIME:
-    tptr = &u->registration_time; goto do_timestamp_delete;
-  case USERLIST_NN_LOGIN_TIME:
-    tptr = &u->last_login_time; goto do_timestamp_delete;
-  case USERLIST_NN_CREATE_TIME:
-    tptr = &ui->create_time; goto do_timestamp_delete;
-  case USERLIST_NN_ACCESS_TIME:
-    tptr = &u->last_access_time; goto do_timestamp_delete;
-  case USERLIST_NN_CHANGE_TIME:
-    tptr = &u->last_change_time; goto do_timestamp_delete;
-  case USERLIST_NN_PWD_CHANGE_TIME:
-    tptr = &u->last_pwdchange_time; goto do_timestamp_delete;
-  case USERLIST_NN_MINOR_CHANGE_TIME:
-    tptr = &u->last_minor_change_time;
-  do_timestamp_delete:
-    retval = !(*tptr == 0);
-    *tptr = 0;
-    break;
-
+  switch (user_field_types[field_id]) {
+    // individual fields
   case USERLIST_NN_ID:
+  case USERLIST_NN_IS_PRIVILEGED:
   case USERLIST_NN_LOGIN:
-  case USERLIST_NN_EMAIL:
-  case USERLIST_NN_TIMESTAMPS:
-  case USERLIST_NN_PASSWORDS:
-  case USERLIST_NN_GENERAL_INFO:
-  default:
     return -1;
+  case USERLIST_NN_PASSWD:
+    if (!u->passwd) return 0;
+    xfree(u->passwd); u->passwd = 0;
+    u->passwd_method = USERLIST_PWD_PLAIN;
+    return 1;
+    // mass fields
+  case USERLIST_NN_IS_INVISIBLE:
+    p_int = (int*) userlist_get_user_field_ptr(u, field_id);
+    if (!*p_int) return 0;
+    *p_int = 0;
+    return 1;
+  case USERLIST_NN_EMAIL:
+    p_str = (unsigned char **) userlist_get_user_field_ptr(u, field_id);
+    if (!*p_str) return 0;
+    xfree(*p_str); *p_str = 0;
+    return 1;
+  case USERLIST_NN_REGISTRATION_TIME:
+    p_time = (time_t *) userlist_get_user_field_ptr(u, field_id);
+    if (!*p_time) return 0;
+    *p_time = 0;
+    return 1;
+  default:
+    abort();
   }
-  return retval;
 }
 
 static const unsigned char id_hash_map[256] =
@@ -921,7 +1174,8 @@ userlist_build_cookie_hash(struct userlist_list *p)
 }
 
 int
-userlist_cookie_hash_add(struct userlist_list *p, struct userlist_cookie *ck)
+userlist_cookie_hash_add(struct userlist_list *p,
+                         const struct userlist_cookie *ck)
 {
   int i;
 
@@ -948,13 +1202,14 @@ userlist_cookie_hash_add(struct userlist_list *p, struct userlist_cookie *ck)
     }
     i = (i + p->cookie_hash_step) % p->cookie_hash_size;
   }
-  p->cookie_hash_table[i] = ck;
+  p->cookie_hash_table[i] = (struct userlist_cookie*) ck;
   p->cookie_cur_fill++;
   return 0;
 }
 
 int
-userlist_cookie_hash_del(struct userlist_list *p, struct userlist_cookie *ck)
+userlist_cookie_hash_del(struct userlist_list *p,
+                         const struct userlist_cookie *ck)
 {
   int i;
   int rehash_count = 0;
@@ -1089,14 +1344,15 @@ userlist_clone_member(struct userlist_member *src, int *p_serial,
 
 struct userlist_cntsinfo *
 userlist_clone_user_info(struct userlist_user *u, int contest_id,
-                         int *p_serial, time_t current_time)
+                         int *p_serial, time_t current_time,
+                         int *p_cloned_flag)
 {
   struct xml_tree *p;
   struct userlist_cntsinfo *ci;
-  struct userlist_passwd *tp;
   struct userlist_members *mm, *ms;
   int mt, i, sz;
 
+  if (p_cloned_flag) *p_cloned_flag = 0;
   if (contest_id <= 0 || contest_id > MAX_CONTEST_ID) return 0;
   if (!u) return 0;
   if (u->cntsinfo && contest_id < u->cntsinfo_a && u->cntsinfo[contest_id])
@@ -1147,11 +1403,8 @@ userlist_clone_user_info(struct userlist_user *u, int contest_id,
   u->i.last_access_time = current_time;
 
   if (u->i.team_passwd) {
-    tp = (struct userlist_passwd*) userlist_node_alloc(USERLIST_T_TEAM_PASSWORD);
-    ci->i.team_passwd = tp;
-    xml_link_node_last(&ci->b, &tp->b);
-    tp->b.text = xstrdup(u->i.team_passwd->b.text);
-    tp->method = u->i.team_passwd->method;
+    ci->i.team_passwd = xstrdup(u->i.team_passwd);
+    ci->i.team_passwd_method = u->i.team_passwd_method;
   }
 
   for (mt = 0; mt < USERLIST_MB_LAST; mt++) {
@@ -1177,6 +1430,7 @@ userlist_clone_user_info(struct userlist_user *u, int contest_id,
   userlist_expand_cntsinfo(u, contest_id);
   u->cntsinfo[contest_id] = ci;
 
+  if (p_cloned_flag) *p_cloned_flag = 1;
   return ci;
 }
 
@@ -1214,8 +1468,8 @@ userlist_new_cntsinfo(struct userlist_user *u, int contest_id,
   return ci;
 }
 
-struct userlist_user_info *
-userlist_get_user_info(struct userlist_user *u, int contest_id)
+const struct userlist_user_info *
+userlist_get_user_info(const struct userlist_user *u, int contest_id)
 {
   ASSERT(u);
 
@@ -1223,6 +1477,72 @@ userlist_get_user_info(struct userlist_user *u, int contest_id)
       && u->cntsinfo[contest_id])
     return &u->cntsinfo[contest_id]->i;
   return &u->i;
+}
+
+struct userlist_user_info *
+userlist_get_user_info_nc(struct userlist_user *u, int contest_id)
+{
+  ASSERT(u);
+
+  if (contest_id > 0 && contest_id < u->cntsinfo_a
+      && u->cntsinfo[contest_id])
+    return &u->cntsinfo[contest_id]->i;
+  return &u->i;
+}
+
+const struct userlist_contest *
+userlist_get_user_contest(const struct userlist_user *u, int contest_id)
+{
+  const struct xml_tree *t;
+  const struct userlist_contest *c;
+
+  if (!u || !u->contests) return 0;
+  for (t = u->contests->first_down; t; t = t->right) {
+    c = (const struct userlist_contest*) t;
+    if (c->id == contest_id) return c;
+  }
+  return 0;
+}
+
+struct userlist_member *
+userlist_get_member_nc(struct userlist_user_info *ui, int serial,
+                       int *p_role, int *p_num)
+{
+  int i, j;
+  struct userlist_members *mm;
+  struct userlist_member *m;
+
+  if (!ui) return 0;
+  if (serial <= 0) return 0;
+  for (i = 0; i < USERLIST_MB_LAST; i++) {
+    if (!(mm = ui->members[i])) continue;
+    for (j = 0; j < mm->total; j++) {
+      m = mm->members[j];
+      if (m->serial == serial || m->copied_from == serial) {
+        if (p_role) *p_role = i;
+        if (p_num) *p_num = j;
+        return m;
+      }
+    }
+  }
+  return 0;
+}
+
+void
+userlist_clear_copied_from(struct userlist_user_info *ui)
+{
+  int i, j;
+  struct userlist_members *mm;
+  struct userlist_member *m;
+
+  if (!ui) return;
+  for (i = 0; i < USERLIST_MB_LAST; i++) {
+    if (!(mm = ui->members[i])) continue;
+    for (j = 0; j < mm->total; j++) {
+      m = mm->members[j];
+      m->copied_from = 0;
+    }
+  }
 }
 
 /*

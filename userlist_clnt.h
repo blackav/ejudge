@@ -196,8 +196,7 @@ int
 userlist_clnt_edit_field(struct userlist_clnt *clnt,
                          int user_id,
                          int contest_id,
-                         int role,
-                         int pers,
+                         int serial,
                          int field,
                          unsigned char const *value);
 
@@ -205,17 +204,22 @@ int
 userlist_clnt_delete_field(struct userlist_clnt *clnt,
                            int user_id,
                            int contest_id,
-                           int role,
-                           int pers,
-                           int field);
+                           int serial,
+                           int field,
+                           ej_cookie_t cookie);
 
+/*
 int
 userlist_clnt_add_field(struct userlist_clnt *clnt,
                         int *p_user_id,
                         int contest_id,
-                        int role,
-                        int pers,
+                        int serial,
                         int field);
+*/
+
+int userlist_clnt_create_user(struct userlist_clnt *clnt, int *p_user_id);
+int userlist_clnt_create_member(struct userlist_clnt *clnt, int user_id,
+                                int contest_id, int role);
 
 int userlist_clnt_get_uid_by_pid(struct userlist_clnt *clnt,
                                  int system_uid,

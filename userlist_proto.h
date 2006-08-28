@@ -67,6 +67,11 @@ enum
     ULS_FIX_PASSWORD,
     ULS_LOOKUP_USER,
     ULS_REGISTER_NEW_2,
+    ULS_DELETE_USER,
+    ULS_DELETE_COOKIE,
+    ULS_DELETE_USER_INFO,
+    ULS_CREATE_USER,
+    ULS_CREATE_MEMBER,
 
     ULS_LAST_CMD
   };
@@ -82,6 +87,7 @@ enum
     ULS_UID,
     ULS_UID_2,
     ULS_PASSWORD,
+    ULS_CLONED,
   };
 
 /* various error codes */
@@ -116,6 +122,7 @@ enum
     ULS_ERR_DEADLINE,
     ULS_ERR_DISCONNECT,
     ULS_ERR_EMAIL_FAILED,
+    ULS_ERR_UNSPECIFIED_ERROR,
 
     ULS_ERR_LAST
   };
@@ -257,9 +264,9 @@ struct userlist_pk_edit_field
   short request_id;
   int   user_id;
   int   contest_id;
-  int   role;
-  int   pers;
+  int   serial;
   int   field;
+  ej_cookie_t cookie;
   int   value_len;
   unsigned char data[1];
 };
