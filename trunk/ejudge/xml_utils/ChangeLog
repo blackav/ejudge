@@ -1,3 +1,25 @@
+2006-08-07 (r3226) Alexander Chernov  <cher@ispras.ru>
+
+	* err_get_attr_name.c, err_get_elem_name.c, err_top_level_s.c, err_attr_undefined_s.c, err_elem_undefined_s.c:
+	initial revision.
+
+	* err_variables.c:
+	copyright notice is updated;
+	"expat_iface.h" is included;
+	`xml_err_elem_names', `xml_err_attr_names' are removed;
+	`xml_err_spec' is added.
+
+	* err_attr_undefined.c, err_attrs.c, err_elem_empty.c, err_attr_not_allowed.c, err_elem_undefined.c, err_nested_elems.c, err_elem_not_allowed.c, err_attr_invalid.c, err_elem_redefined.c, err_elem_invalid.c, err_top_level.c:
+	`xml_err_spec' variable is used instead of `xml_err_elem_names' and
+	  `xml_err_attr_names';
+	default element and attribute tags are supported.
+
+	* leaf_elem.c, empty_text.c:
+	copyright notice is updated;
+	`xml_err_spec' variable is used instead of `xml_err_elem_names' and
+	  `xml_err_attr_names';
+	default element and attribute tags are supported.
+
 2006-07-07 (r3212) Alexander Chernov  <cher@ispras.ru>
 
 	* attr_bool_byte.c:

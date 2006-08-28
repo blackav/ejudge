@@ -1,3 +1,299 @@
+2006-08-28 (r3238) Alexander Chernov  <cher@ispras.ru>
+
+	* files.make: new files are added: userlist_clnt/create_member.c,
+	  userlist_clnt/create_user.c.
+
+	* userlist.h:
+	  field constants are reorganized according to the changes in the
+	  `userlist_user' structure;
+	(struct userlist_passwd) removed;
+	(struct userlist_user_info) old field `team_passwd' is replaced with
+	  `team_passwd_method' and `team_passwd';
+	(struct userlist_user) old field `register_passwd' is replaced with
+	  `passwd_method' and `passwd';
+	(userlist_unparse_user) parameter `p' is now const pointer;
+	(userlist_real_unparse_user) new function;
+	(userlist_unparse_user_short) new function;
+	(userlist_unparse_contest) new function;
+	(userlist_get_member_field_ptr) new function;
+	(userlist_is_empty_member_field) new function;
+	(userlist_is_equal_member_field) new function;
+	(userlist_get_member_field_str) parameter `m' is now const pointer;
+	(userlist_get_user_info_field_ptr) new function;
+	(userlist_is_empty_user_info_field) new function;
+	(userlist_is_equal_user_info_field) new function;
+	(userlist_get_user_info_field_str) new function;
+	(userlist_set_user_info_field_str) new function;
+	(userlist_delete_user_info_field) new function;
+	(userlist_get_user_field_ptr) new function;
+	(userlist_is_empty_user_field) new function;
+	(userlist_is_equal_user_field) new function;
+	(userlist_get_user_field_str) `u' parameter is now const pointer;
+	  `ui' parameter is removed;
+	(userlist_set_user_field_str) `lst' parameter is removed;
+	  `ui' parameter is removed;
+	(userlist_delete_user_field) `ui' parameter is removed;
+	(userlist_cookie_hash_add) `ck' parameter is `const';
+	(userlist_cookie_hash_del) `ck' parameter is `const';
+	(userlist_clone_user_info) `p_cloned_flag' parameter is added;
+	(userlist_get_user_info) `u' is const poiter, so the const pointer
+	  is returned;
+	(userlist_get_user_info_nc) a special version with non-constant
+	  pointer `u';
+	(userlist_get_user_contest) new function;
+	(userlist_get_member_nc) new function;
+	(userlist_clear_copied_from) new function;
+	(userlist_write_xml_header) new function;
+	(userlist_write_xml_footer) new function;
+	(userlist_write_contests_xml_header) new function;
+	(userlist_write_contests_xml_footer) new function.
+
+	* userlist.c:
+	  file is almost reimplemented;
+	(userlist_get_member_field_ptr) new function;
+	(userlist_is_empty_member_field) new function;
+	(userlist_is_equal_member_field) new function;
+	(userlist_get_user_info_field_ptr) new function;
+	(userlist_is_empty_user_info_field) new function;
+	(userlist_is_equal_user_info_field) new function;
+	(userlist_get_user_info_field_str) new function;
+	(userlist_set_user_info_field_str) new function;
+	(userlist_delete_user_info_field) new function;
+	(userlist_get_user_field_ptr) new function;
+	(userlist_is_empty_user_field) new function;
+	(userlist_is_equal_user_field) new function;
+	(userlist_cookie_hash_add) `ck' parameter is `const';
+	(userlist_cookie_hash_del) `ck' parameter is `const';
+	(userlist_clone_user_info) `p_cloned_flag' parameter is added;
+	  new layout of the password storage is used;
+	(userlist_get_user_info) `u' is const poiter, so the const pointer
+	  is returned;
+	(userlist_get_user_info_nc) a special version with non-constant
+	  pointer `u';
+	(userlist_get_user_contest) new function;
+	(userlist_get_member_nc) new function;
+	(userlist_clear_copied_from) new function.
+
+	* userlist_proto.h:
+	  new commands: ULS_DELETE_USER, ULS_DELETE_COOKIE,
+	  ULS_DELETE_USER_INFO, ULS_CREATE_USER,  ULS_CREATE_MEMBER;
+	  new return code: ULS_CLONED;
+	  new error code: ULS_ERR_UNSPECIFIED_ERROR;
+	(struct userlist_pk_edit_field) `role', `pers' fields are removed;
+	  `serial', `cookie' fields are added.
+
+	* userlist_clnt.h:
+	(userlist_clnt_edit_field) `role', `pers' parameters are removed;
+	  `serial' parameter is added;
+	(userlist_clnt_delete_field) `role', `pers' parameters are removed;
+	  `serial', `cookie' parameters are added;
+	(userlist_clnt_add_field) commented out;
+	(userlist_clnt_create_user) new function;
+	(userlist_clnt_create_member) new function.
+
+	* userlist_xml.c:
+	(parse_passwd) changed according to the new layout of passwords;
+	(parse_cntsinfo) use of `parse_passwd' is updated;
+	(do_parse_user) use of `parse_passwd' is updated;
+	(unparse_member) parameter `p' is now const pointer;
+	(unparse_members) first parameter is now const pointer;
+	(unparse_cookies) parameter `p' is now const pointer;
+	(userlist_unparse_contest) new name for `unparse_contest';
+	(unparse_contests) parameter `p' is now const pointer;
+	  `userlist_unparse_contest' is called instead of `unparse_contest';
+	(unparse_cntsinfo) parameter `p' is now const pointer;
+	  unparsing of the team password is updated;
+	(userlist_unparse_user_short) new name for `unparse_user_short';
+	  parameter `p' is now const pointer;
+	  `userlist_unparse_contest' is called instead of `unparse_contest';
+	(userlist_real_unparse_user) new name for `unparse_user';
+	  parameter `p' is now const pointer;
+	  handling of the registration password is updated;
+	(userlist_unparse_user) parameter `p' is now const pointer;
+	  `userlist_real_unparse_user' is called instead of `unparse_user';
+	(userlist_write_contests_xml_header) new function;
+	(userlist_write_contests_xml_footer) new function;
+	(userlist_write_xml_header) new function;
+	(userlist_write_xml_footer) new function.
+
+	* userlist_proto.c: copyright notice is updated;
+	  message for ULS_ERR_UNSPECIFIED_ERROR is added.
+
+	* userlist-server.c: almost completely reimplemented for better
+	  separation and abstration of the data storage layer.
+
+	* edit-userlist.c: correction according to the changes in the
+	  communication protocol.
+
+	* sformat.c:
+	(sformat_message) updated according to the changes in the
+	  team and registration password storage layout.
+
+	* ejudge_plugin.h: in progress.
+
+	* uldb_plugin.h: mostly implemented.
+
+	* plugin.c: basic plugin handling stuff is implemeted.
+
+	* uldb_plugin_xml.c: all stuff is basically implemeted.
+
+2006-08-16 (r3235) Alexander Chernov  <cher@ispras.ru>
+
+	* userlist.h:
+	(struct userlist_cookie) `user' is replaced with `user_id' field;
+	  `ssl' field is added.
+
+	* userlist.c:
+	(userlist_build_cookie_hash) `user_id' is handled instead of `user';
+	(userlist_cookie_hash_add) the same as above;
+	(userlist_cookie_hash_del) the same as above.
+
+	* userlist_xml.c:
+	(userlist_node_alloc) the node tag is filled;
+	(parse_cookies) `user_id' is handled instead of `user';
+	  `ssl' field is handled;
+	(unparse_cookies) `ssl' field is handled.
+
+2006-08-14 (r3234) Alexander Chernov  <cher@ispras.ru>
+
+	* userlist_xml.c:
+	`filled' field of the (userlist_user_info) is filled up during parsing.
+
+2006-08-14 (r3233) Alexander Chernov  <cher@ispras.ru>
+
+	* random.c, random.h: initial revision.
+
+	* files.make: random.[ch], uldb_plugin_xml.c are added.
+
+2006-08-11 (r3232) Alexander Chernov  <cher@ispras.ru>
+
+	* uldb_plugin_xml.c:
+	initial revision
+
+2006-08-10 (r3230) Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge_cfg.h:
+	(struct ejudge_plugin) new structure for generic plugin configuration;
+	(struct ejudge_cfg) field `plugin_dir' is added;
+	  field `plugin_list' is added;
+	(ejudge_cfg_unparse_plugins) new function is added.
+
+	* ejudge_cfg.c:
+	<ctype.h> is included;
+	elements <plugin_dir>, <plugins>, <plugin>, <path> are supported;
+	attributes "name", "type", "load", "default" are supported;
+	elements starting from <plugin> are parsed verbatim;
+	(parse_capabilities) `path' parameter is removed;
+	(parse_plugins) new function;
+	(ejudge_cfg_parse) `xml_err_spec' is used instead of
+	  `xml_err_elem_names', `xml_err_attr_names';
+	(unparse_default_tree) new function to unparse the verbatim XML tree;
+	(ejudge_cfg_unparse_plugins) new function.
+
+	* userlist.h:
+	(struct userlist_user_info) field `filled' is added.
+
+	* expat_iface.c:
+	(end_hnd) bug in handling verbatim tree is fixed.
+
+2006-08-07 (r3228) Alexander Chernov  <cher@ispras.ru>
+
+	* expat_iface.h:
+	(struct xml_parse_spec) `verbatim_flags' field is added to allow
+	  specifying the elements, which subtree should be parsed in the
+	  verbatim mode.
+
+	* expat_iface.c:
+	(start_hnd) verbatim mode of parsing is supported;
+	(end_hnd) the same.
+
+2006-08-07 (r3227) Alexander Chernov  <cher@ispras.ru>
+
+	* xml_utils.h:
+	`xml_err_elem_names', `xml_err_attr_names' are removed;
+	`xml_err_spec' is added;
+	(xml_err_get_elem_name) new function prototype;
+	(xml_err_get_attr_name) new function prototype;
+	(xml_err_top_level_s) new function prototype;
+	(xml_err_elem_undefined_s) new function prototype;
+	(xml_err_attr_undefined_s) new function prototype.
+
+	* files.make:
+	new files added: plugin.c, ejudge_plugin.h;
+	xml_utils/err_attr_undefined_s.c, xml_utils/err_elem_undefined_s.c,
+	xml_utils/err_top_level_s.c,
+	xml_utils/err_get_elem_name.c, xml_utils/err_get_attr_name.c.
+
+	* userlist_xml.c:
+	(userlist_parse_user_str) initialization of `xml_err_elem_names' and
+	  `xml_err_attr_names' is replaced with initialization of
+	  `xml_err_spec';
+	(userlist_parse_contests_str) the same as above;
+	(userlist_parse) the same as above;
+	(userlist_parse_str) the same as above.
+
+	* contests.c:
+	(parse_one_contest_xml) initialization of `xml_err_elem_names' and
+	  `xml_err_attr_names' is replaced with initialization of
+	  `xml_err_spec'.
+
+	* testing_report_xml.c:
+	(testing_report_parse_xml) initialization of `xml_err_elem_names' and
+	  `xml_err_attr_names' is replaced with initialization of
+	  `xml_err_spec'.
+
+	* team_extra_xml.c:
+	(team_extra_parse_xml) initialization of `xml_err_elem_names' and
+	  `xml_err_attr_names' is replaced with initialization of
+	  `xml_err_spec'.
+
+	* serve-control.c, users.c, register.c:
+	(parse_config) initialization of `xml_err_elem_names' and
+	  `xml_err_attr_names' is replaced with initialization of
+	  `xml_err_spec'.
+
+	* runlog_xml.c:
+	(parse_runlog_xml) initialization of `xml_err_elem_names' and
+	  `xml_err_attr_names' is replaced with initialization of
+	  `xml_err_spec'.
+
+2006-08-04 (r3225) Alexander Chernov  <cher@ispras.ru>
+
+	* plugin.c, ejudge_plugin.h:
+	initial revision
+
+2006-08-03 (r3224) Alexander Chernov  <cher@ispras.ru>
+
+	* contest_tmpl.c, userlist-server.c, job-server.c, super-serve.c, clean-users.c, super_html.c, serve-cmd.c, super_html.h, files.make, edit-userlist.c, collect-emails.c, prepare.c, super_html_2.c, prepare.h, super_html_3.c, slice-userlist.c:
+	files renamed: userlist_cfg.[ch] -> ejudge_cfg.[ch];
+	also structures and functions with prefix `userlist_cfg' are
+	renamed to `ejudge_cfg'.
+
+2006-08-03 (r3223) Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.unix.in: rules for plugins/mysql_userlist are fixed.
+
+2006-08-03 (r3221) Alexander Chernov  <cher@ispras.ru>
+
+	* ejudge_cfg.h: renamed from userlist_cfg.h.
+
+	* ejudge_cfg.c: renamed from userlist_cfg.c.
+
+2006-08-03 (r3218) Alexander Chernov  <cher@ispras.ru>
+
+	* super_serve.c:
+	(acquire_contest_resources) `var' directory is created regardless of
+	  `serve' exit status;
+	* serve.c:
+	(create_symlinks) error during creation of symlinks is reported, but
+	  ignored;
+	(main) `current_time' variable is initialized early to avoid
+	  failed assertions;
+
+	* super_html_3.c:
+	(recompile_checker) error is reported, when no executable checker exist
+	  and it cannot be recompiled.
+
 2006-07-09 (r3215) Alexander Chernov  <cher@ispras.ru>
 
 	* expat_iface.h:
