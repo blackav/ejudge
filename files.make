@@ -14,14 +14,15 @@
 # Lesser General Public License for more details.
 
 USERLIST_CLNT_CFILES=\
- userlist_clnt/add_field.c\
  userlist_clnt/admin_process.c\
  userlist_clnt/change_registration.c\
  userlist_clnt/clear_team_passwords.c\
  userlist_clnt/close.c\
  userlist_clnt/create_member.c\
  userlist_clnt/create_user.c\
+ userlist_clnt/delete_cookie.c\
  userlist_clnt/delete_field.c\
+ userlist_clnt/delete_info.c\
  userlist_clnt/do_pass_fd.c\
  userlist_clnt/dump_database.c\
  userlist_clnt/edit_field.c\
@@ -46,7 +47,6 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/register_contest.c\
  userlist_clnt/register_new.c\
  userlist_clnt/register_new_2.c\
- userlist_clnt/remove_member.c\
  userlist_clnt/send_packet.c\
  userlist_clnt/set_info.c\
  userlist_clnt/set_passwd.c\

@@ -1431,10 +1431,19 @@ static int field_order[] =
 #define field_order_size (sizeof(field_order)/sizeof(field_order[0]))
 
 static int
-display_user(unsigned char const *upper, int user_id, int contest_id,
-             int start_item, int *p_needs_reload)
+is_valid_user_field(int f)
 {
-  int r, tot_items = 0;
+  if (f < 0) return 0;
+  if (f >= USERLIST_NC_LAST) return 0;
+  if (f >= USERLIST_NN_LAST && f < USERLIST_NC_FIRST) return 0;
+  return 1;
+}
+
+static int
+do_display_user(unsigned char const *upper, int user_id, int contest_id,
+                int *p_start_item, int *p_needs_reload)
+{
+  int r, tot_items = 0, first_row;
   unsigned char *xml_text = 0;
   struct userlist_user *u = 0;
   int retcode = -1, i, j, role, pers;
@@ -1455,6 +1464,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
   unsigned char edit_header[512];
   int new_status;
   char const *help_str = "";
+  ej_cookie_t cookie_val;
 
   r = userlist_clnt_get_info(server_conn, ULS_PRIV_GET_USER_INFO,
                              user_id, contest_id, &xml_text);
@@ -1467,13 +1477,14 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
     return -1;
   }
 
-  snprintf(current_level, COLS + 1, "%s->%s %d", upper, "User", u->id);
+  snprintf(current_level, COLS + 1, "%s->%s %d, %s %d", upper, "User", u->id,
+           "Contest", contest_id);
 
   // count how much menu items we need
-  tot_items = field_order_size + 1;
+  tot_items = field_order_size;
   for (role = 0; role < CONTEST_LAST_MEMBER; role++) {
     if (!u->i.members[role] || !u->i.members[role]->total) continue;
-    tot_items += 1 + (USERLIST_NM_LAST + 2) * u->i.members[role]->total;
+    tot_items += 1 + (USERLIST_NM_LAST - USERLIST_NM_FIRST + 1) * u->i.members[role]->total;
   }
   if ((r = userlist_user_count_contests(u)) > 0) {
     tot_items += r + 1;
@@ -1482,9 +1493,9 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
     tot_items += r + 1;
   }
 
-  XALLOCAZ(descs, tot_items);
-  XALLOCAZ(refs, tot_items);
-  XALLOCAZ(info, tot_items);
+  XALLOCAZ(descs, tot_items + 1);
+  XALLOCAZ(refs, tot_items + 1);
+  XALLOCAZ(info, tot_items + 1);
   for (i = 0; i < tot_items; i++) {
     XALLOCAZ(descs[i], 80);
   }
@@ -1512,7 +1523,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
       refs[j] = m;
       snprintf(descs[j++], 78, "*%s %d*", member_string[role], pers + 1);
 
-      for (i = 0; i <= USERLIST_NM_LAST; i++) {
+      for (i = USERLIST_NM_FIRST; i < USERLIST_NM_LAST; i++) {
         info[j].role = role;
         info[j].pers = pers;
         info[j].field = i;
@@ -1576,9 +1587,13 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
   mvwprintw(stdscr, 0, 0, "%s", current_level);
   wclrtoeol(stdscr);
   set_menu_format(menu, LINES - 4, 0);
-  if (start_item < 0) start_item = 0;
-  if (start_item >= tot_items) start_item = tot_items - 1;
-  set_current_item(menu, items[start_item]);
+  if (*p_start_item < 0) *p_start_item = 0;
+  if (*p_start_item >= tot_items) *p_start_item = tot_items - 1;
+  first_row = *p_start_item - (LINES - 4) / 2;
+  if (first_row + LINES - 4 > tot_items) first_row = tot_items - (LINES - 4);
+  if (first_row < 0) first_row = 0;
+  set_top_row(menu, first_row);
+  set_current_item(menu, items[*p_start_item]);
 
   while (1) {
     show_panel(out_pan);
@@ -1806,6 +1821,8 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
       }
       get_contest_str(descs[cur_i], 78, reg);
     }
+
+    /* delete field */
     if (c == 'd') {
       cur_i = item_index(current_item(menu));
       if (cur_i < 0 || cur_i >= tot_items) continue;
@@ -1817,13 +1834,28 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
       if (info[cur_i].role == -1) {
         if (info[cur_i].pers < 0) goto menu_continue;
         if (info[cur_i].pers == 0) {
-          if (info[cur_i].field < 0 || info[cur_i].field > USERLIST_NN_LAST)
-            goto menu_continue;
+          if (!is_valid_user_field(info[cur_i].field)) goto menu_continue;
           if (info[cur_i].field == USERLIST_NN_ID) goto menu_continue;
           if (info[cur_i].field == USERLIST_NN_LOGIN) goto menu_continue;
           if (info[cur_i].field == USERLIST_NN_EMAIL) goto menu_continue;
           r = okcancel("Clear field %s?",
                        user_descs[info[cur_i].field].name);
+          if (r != 1) goto menu_continue;
+          r = userlist_clnt_delete_field(server_conn, u->id, contest_id, 0,
+                                         info[cur_i].field);
+          if (r < 0) {
+            vis_err("Delete failed: %s", userlist_strerror(-r));
+            goto menu_continue;
+          }
+
+          if (info[cur_i].field == USERLIST_NC_NAME) {
+            if (p_needs_reload) *p_needs_reload = 1;
+          }
+
+          *p_start_item = cur_i;
+          retcode = 0;
+          c = 'q';
+          goto menu_continue;
         } else if (info[cur_i].pers == 1) {
           // registration
           if (info[cur_i].field < 0) goto menu_continue;
@@ -1836,6 +1868,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
             vis_err("Delete failed: %s", userlist_strerror(-r));
             goto menu_continue;
           }
+          *p_start_item = 0;
           retcode = 0;
           c = 'q';
           goto menu_continue;
@@ -1843,10 +1876,23 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
           // cookies
           if (info[cur_i].field == -1) {
             r = okcancel("Delete all cookies?");
+            cookie_val = 0;
           } else {
             cookie = (struct userlist_cookie*) refs[cur_i];
             r = okcancel("Delete cookie %016llx?", cookie->cookie);
+            cookie_val = cookie->cookie;
           }
+          if (r != 1) goto menu_continue;
+          r = userlist_clnt_delete_cookie(server_conn, u->id, contest_id,
+                                          cookie_val);
+          if (r < 0) {
+            vis_err("Delete failed: %s", userlist_strerror(-r));
+            goto menu_continue;
+          }
+          *p_start_item = 0;
+          retcode = 0;
+          c = 'q';
+          goto menu_continue;
         }
       }
       if (info[cur_i].role >= 0) {
@@ -1861,34 +1907,42 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
           r = okcancel("DELETE MEMBER %s_%d?",
                        member_string[info[cur_i].role],
                        info[cur_i].pers + 1);
+          if (r != 1) goto menu_continue;
+          r = userlist_clnt_delete_info(server_conn, ULS_PRIV_DELETE_MEMBER,
+                                        u->id, contest_id, m->serial);
+          if (r < 0) {
+            vis_err("Delete failed: %s", userlist_strerror(-r));
+            goto menu_continue;
+          }
+
+          *p_start_item = 0;
+          retcode = 0;
+          c = 'q';
+          goto menu_continue;
         } else {
           r = okcancel("Reset field %s_%d::%s?",
                        member_string[info[cur_i].role],
                        info[cur_i].pers + 1,
                        member_descs[info[cur_i].field].name);
+          if (r != 1) goto menu_continue;
+          r = userlist_clnt_delete_field(server_conn, u->id, contest_id,
+                                         m->serial, info[cur_i].field);
+          if (r < 0) {
+            vis_err("Delete failed: %s", userlist_strerror(-r));
+            goto menu_continue;
+          }
+
+          *p_start_item = cur_i;
+          retcode = 0;
+          c = 'q';
+          goto menu_continue;
         }
       }
-      if (r != 1) goto menu_continue;
-      r = userlist_clnt_delete_field(server_conn, u->id, contest_id,
-                                     info[cur_i].role,
-                                     info[cur_i].pers,
-                                     info[cur_i].field);
-      if (r < 0) {
-        vis_err("Delete failed: %s", userlist_strerror(-r));
-        goto menu_continue;
-      }
-
-      if (info[cur_i].role == -1 && info[cur_i].pers == 0) {
-        if (info[cur_i].field == USERLIST_NC_NAME) {
-          if (p_needs_reload) *p_needs_reload = 1;
-        }
-      }
-
-      retcode = 0;
-      c = 'q';
-      goto menu_continue;
+      // should never get here?
+      abort();
     }
 
+    /* add member */
     if (c == 'a') {
       r = display_role_menu(LINES / 2, 0);
       if (r < 0 || r >= CONTEST_LAST_MEMBER) goto menu_continue;
@@ -1901,6 +1955,8 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
 
       retcode = 0;
       c = 'q';
+      // FIXME: calculate starting position of the new member
+      *p_start_item = 0;
       goto menu_continue;
     }
 
@@ -1923,6 +1979,8 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
       }
       retcode = 0;
       c = 'q';
+      // FIXME: calculate the position of the new contest
+      *p_start_item = 0;
       goto menu_continue;
     }
 
@@ -1973,6 +2031,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
       }
       retcode = 0;
       c = 'q';
+      *p_start_item = cur_i;
       goto menu_continue;
     }
 
@@ -1984,9 +2043,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
       if (info[cur_i].role < -1) goto menu_continue;
       if (info[cur_i].role == -1) {
         if (info[cur_i].pers != 0) goto menu_continue;
-        if (info[cur_i].field < 0
-            || info[cur_i].field > USERLIST_NN_LAST)
-          goto menu_continue;
+        if (!is_valid_user_field(info[cur_i].field)) goto menu_continue;
         if (!user_descs[info[cur_i].field].is_editable
             || !user_descs[info[cur_i].field].has_value)
           goto menu_continue;
@@ -2008,7 +2065,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
           r = yesno(r, "New value for \"%s\"",
                     user_descs[info[cur_i].field].name);
           if (r < 0 || r > 1) goto menu_continue;
-          snprintf(edit_buf, sizeof(edit_buf), "%s", xml_unparse_bool(r));
+          snprintf(edit_buf, sizeof(edit_buf), "%d", r);
           r = set_user_field(u, info[cur_i].field, edit_buf);
           if (!r) goto menu_continue;
           if (r < 0) {
@@ -2021,9 +2078,13 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
             vis_err("Server error: %s", userlist_strerror(-r));
             goto menu_continue;
           }
-          user_menu_string(u, info[cur_i].field, descs[cur_i]);
+          //user_menu_string(u, info[cur_i].field, descs[cur_i]);
+          retcode = 0;
+          c = 'q';
+          *p_start_item = cur_i;
           goto menu_continue;
 
+          /*
         case USERLIST_NN_REGISTRATION_TIME:
         case USERLIST_NN_LAST_LOGIN_TIME:
         case USERLIST_NN_LAST_CHANGE_TIME:
@@ -2032,6 +2093,7 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
         case USERLIST_NC_LAST_CHANGE_TIME:
         case USERLIST_NC_LAST_PWDCHANGE_TIME:
           goto menu_continue;
+          */
         }
 
         get_user_field(edit_buf, sizeof(edit_buf), u, info[cur_i].field, 0);
@@ -2053,12 +2115,15 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
           vis_err("Server error: %s", userlist_strerror(-r));
           goto menu_continue;
         }
-        user_menu_string(u, info[cur_i].field, descs[cur_i]);
+        //user_menu_string(u, info[cur_i].field, descs[cur_i]);
         if (info[cur_i].field == USERLIST_NN_LOGIN
             || info[cur_i].field == USERLIST_NC_NAME
             || info[cur_i].field == USERLIST_NN_EMAIL) {
           if (p_needs_reload) *p_needs_reload = 1;
         }
+        retcode = 0;
+        c = 'q';
+        *p_start_item = cur_i;
         goto menu_continue;
       }
       if (info[cur_i].role >= 0) {
@@ -2095,7 +2160,10 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
             vis_err("Server error: %s", userlist_strerror(-r));
             goto menu_continue;
           }
-          member_menu_string(m, info[cur_i].field, descs[cur_i]);
+          //member_menu_string(m, info[cur_i].field, descs[cur_i]);
+          retcode = 0;
+          c = 'q';
+          *p_start_item = cur_i;
           goto menu_continue;
         }
         if (info[cur_i].field >= 0) {
@@ -2121,7 +2189,10 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
             vis_err("Server error: %s", userlist_strerror(-r));
             goto menu_continue;
           }
-          member_menu_string(m, info[cur_i].field, descs[cur_i]);
+          //member_menu_string(m, info[cur_i].field, descs[cur_i]);
+          retcode = 0;
+          c = 'q';
+          *p_start_item = cur_i;
           goto menu_continue;
         }
       }        
@@ -2146,6 +2217,17 @@ display_user(unsigned char const *upper, int user_id, int contest_id,
   }
   return retcode;
 }
+
+static int
+display_user(unsigned char const *upper, int user_id, int contest_id)
+{
+  int start_item = 0, r = 0, needs_reload = 0;
+  while (r >= 0) {
+    r = do_display_user(upper, user_id, contest_id, &start_item, &needs_reload);
+  }
+  return needs_reload;
+}
+
 
 static unsigned char const * search_regex_kind_full[] =
 {
@@ -2932,9 +3014,7 @@ display_registered_users(unsigned char const *upper,
     } else if (c == '\n') {
       i = item_index(current_item(menu));
       r = 0;
-      while (r >= 0) {
-        r = display_user(current_level, uu[i]->id, contest_id, r, 0);
-      }
+      display_user(current_level, uu[i]->id, contest_id);
       c = 'q';
       retcode = i;
     } else if (c == 'a') {
@@ -3016,7 +3096,7 @@ display_registered_users(unsigned char const *upper,
         switch (field_op) {
         case 1:                 /* clear field */
           r = userlist_clnt_delete_field(server_conn, uu[i]->id, contest_id,
-                                         -1, 0, field_code);
+                                         0, field_code);
           break;
         case 2:                 /* set field */
           snprintf(edit_buf, sizeof(edit_buf), "%d", 1);
@@ -3038,7 +3118,7 @@ display_registered_users(unsigned char const *upper,
           switch (field_op) {
           case 1:               /* clear field */
             r = userlist_clnt_delete_field(server_conn, uu[i]->id, contest_id,
-                                           -1, 0, field_code);
+                                           0, field_code);
             break;
           case 2:               /* set field */
             snprintf(edit_buf, sizeof(edit_buf), "%d", 1);
@@ -3364,7 +3444,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
   int c, cmd;
   unsigned char current_level[512];
   int retval = -1;
-  int needs_reload = 0, first_row;
+  int first_row;
   int loc_start_item;
 
   snprintf(current_level, sizeof(current_level),
@@ -3571,7 +3651,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
       i = item_index(current_item(menu));
       j = okcancel("REMOVE USER %d (%s)?", uu[i]->id, uu[i]->login);
       if (j != 1) goto menu_continue;
-      j = userlist_clnt_delete_field(server_conn, uu[i]->id, 0, -2, 0, 0);
+      j = userlist_clnt_delete_info(server_conn, ULS_DELETE_USER, uu[i]->id, 0, 0);
       if (j < 0) {
         vis_err("Remove failed: %s", userlist_strerror(-j));
         goto menu_continue;
@@ -3856,11 +3936,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
     if (c == '\n' && !only_choose) {
       i = item_index(current_item(menu));
       j = 0;
-      needs_reload = 0;
-      while (j >= 0) {
-        j = display_user(current_level, uu[i]->id, 0, j, &needs_reload);
-      }
-      if (needs_reload) {
+      if (display_user(current_level, uu[i]->id, 0)) {
         // save the current user and redraw the screen
         *p_start_item = uu[i]->id;
         retval = -2;

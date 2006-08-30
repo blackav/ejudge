@@ -32,7 +32,7 @@ enum
     ULS_SET_PASSWD,
     ULS_GET_USER_CONTESTS,
     ULS_REGISTER_CONTEST,
-    ULS_REMOVE_MEMBER,
+    ULS_DELETE_MEMBER,
     ULS_PASS_FD,
     ULS_LIST_USERS,
     ULS_MAP_CONTEST,
@@ -72,6 +72,7 @@ enum
     ULS_DELETE_USER_INFO,
     ULS_CREATE_USER,
     ULS_CREATE_MEMBER,
+    ULS_PRIV_DELETE_MEMBER,
 
     ULS_LAST_CMD
   };
@@ -219,13 +220,11 @@ struct userlist_pk_register_contest
   int   contest_id;
 };
 
-struct userlist_pk_remove_member
+struct userlist_pk_delete_info
 {
   short request_id;
   int   user_id;
   int   contest_id;
-  int   role_id;
-  int   pers_id;
   int   serial;
 };
 
