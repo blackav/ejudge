@@ -139,7 +139,7 @@ BINTARGETS = compile serve run userlist-server job-server job-server-cmd edit-us
 CGITARGETS = master${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX} users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX}
 TARGETS = ${BINTARGETS} ${CGITARGETS}
 
-all: local_all subdirs_all mo
+all: local_all subdirs_all mo libnew_serve_clnt.a
 local_all: $(TARGETS) ejudge-config
 
 release:
@@ -322,6 +322,9 @@ libsuper_clnt.a : $(SUPER_CLNT_CFILES:.c=.o)
 	ar rcv $@ $^
 
 libuserlist_clnt.a: $(USERLIST_CLNT_CFILES:.c=.o)
+	ar rcv $@ $^
+
+libnew_serve_clnt.a: $(NEW_SERVE_CLNT_CFILES:.c=.o)
 	ar rcv $@ $^
 
 deps.make: cdeps ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c 
