@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -77,7 +77,7 @@ userlist_clnt_team_login(struct userlist_clnt *clnt,
     r = -ULS_ERR_PROTOCOL;
     goto cleanup;
   }
-  if (in_size != sizeof(*in) + in->login_len + in->name_len + 2) {
+  if (in_size != sizeof(*in) + in->login_len + in->name_len) {
     r = -ULS_ERR_PROTOCOL;
     goto cleanup;
   }
