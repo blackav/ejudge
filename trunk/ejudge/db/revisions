@@ -489,3 +489,16 @@ userlist_clnt/create_user.c 3236 0 147719
 userlist_clnt/delete_field.c 3236 0 134267
 userlist_clnt/edit_field.c 3236 0 147551
 plugins/mysql-userlist/uldb_mysql.c 3237 0 2020811
+uldb_plugin.h 3245 0 652707
+userlist.h 3245 0 1257718
+userlist_clnt.h 3245 0 729023
+clean-users.c 3245 0 1000687
+edit-userlist.c 3245 0 9168448
+register.c 3245 0 7929822
+userlist-server.c 3245 0 15987651
+userlist.c 3245 0 3752095
+uldb_plugin_xml.c 3245 0 5567727
+userlist_xml.c 3245 0 4082293
+userlist_clnt/delete_cookie.c 3242 0 126983
+userlist_clnt/delete_field.c 3242 0 129546
+userlist_clnt/delete_info.c 3243 0 124868
