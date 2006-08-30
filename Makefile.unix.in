@@ -2,7 +2,7 @@
 # $Id$
 # @configure_input@
 
-# Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
+# Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -280,7 +280,7 @@ prjutils/cdeps.o: prjutils/cdeps.c
 
 log: mkChangeLog2
 	L=`./mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ./mkChangeLog2 --user-map=AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/ --strip-prefix=/trunk/ejudge/ --ignore-subdirs
-	for i in win32 unix serve_clnt userlist_clnt checkers extra scripts super_clnt xml_utils; do cd $$i; L=`../mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ../mkChangeLog2 --user-map=../AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/$$i/ --strip-prefix=/trunk/ejudge/$$i/; cd ..; done
+	for i in win32 unix serve_clnt userlist_clnt checkers extra scripts super_clnt xml_utils new_serve_clnt; do cd $$i; L=`../mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ../mkChangeLog2 --user-map=../AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/$$i/ --strip-prefix=/trunk/ejudge/$$i/; cd ..; done
 	for i in plugins/mysql-userlist; do cd $$i; L=`../../mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ../../mkChangeLog2 --user-map=../../AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/$$i/ --strip-prefix=/trunk/ejudge/$$i/; cd ../..; done
 
 # localization stuff
