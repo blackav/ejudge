@@ -4003,8 +4003,8 @@ do_list_users(FILE *f, int contest_id, struct contest_desc *d,
   memset(&sformat_extra, 0, sizeof(sformat_extra));
   sformat_extra.locale_id = locale_id;
 
-  for (; iter->has_next(iter); iter->next(iter)) {
-    fprintf(f, "<tr><td%s>%d</td>", d->users_table_style, i + 1);
+  for (i = 1; iter->has_next(iter); iter->next(iter), i++) {
+    fprintf(f, "<tr><td%s>%d</td>", d->users_table_style, i);
 
     u = (const struct userlist_user*) iter->get(iter);
     ui = userlist_get_user_info(u, contest_id);
