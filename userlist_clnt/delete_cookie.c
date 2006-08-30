@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,11 +18,10 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_delete_field(struct userlist_clnt *clnt,
-                           int user_id,
-                           int contest_id,
-                           int serial,
-                           int field)
+userlist_clnt_delete_cookie(struct userlist_clnt *clnt,
+                            int user_id,
+                            int contest_id,
+                            ej_cookie_t cookie)
 {
   struct userlist_pk_edit_field *out = 0;
   struct userlist_packet *in = 0;
@@ -32,11 +31,10 @@ userlist_clnt_delete_field(struct userlist_clnt *clnt,
   out_size = sizeof(*out);
   out = alloca(out_size);
   memset(out, 0, out_size);
-  out->request_id = ULS_DELETE_FIELD;
+  out->request_id = ULS_DELETE_COOKIE;
   out->user_id = user_id;
   out->contest_id = contest_id;
-  out->serial = serial;
-  out->field = field;
+  out->cookie = cookie;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
   if ((r = userlist_clnt_recv_packet(clnt, &in_size, (void*) &in)) < 0)
     return r;
