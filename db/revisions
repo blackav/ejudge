@@ -497,3 +497,5 @@ userlist_xml.c 3245 0 4082293
 userlist_clnt/delete_cookie.c 3242 0 126983
 userlist_clnt/delete_field.c 3242 0 129546
 userlist_clnt/delete_info.c 3243 0 124868
+userlist-server.c 3248 0 15988036
+uldb_plugin_xml.c 3248 0 5569085
