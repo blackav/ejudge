@@ -503,3 +503,12 @@ new_serve_clnt/new_serve_clnt_priv.h 3251 0 67354
 userlist_clnt/team_login.c 3252 0 250381
 new_serve_clnt.h 3255 0 100614
 new_serve_proto.h 3255 0 121317
+new_serve_clnt/close.c 3251 0 75368
+new_serve_clnt/open.c 3251 0 276003
+new_serve_clnt/pass_fd.c 3251 0 188888
+new_serve_clnt/recv_packet.c 3251 0 218884
+new_serve_clnt/send_packet.c 3251 0 172080
+new_serve_clnt.h 3259 0 116244
+new_serve_proto.h 3259 0 137084
+serve_clnt/master_page.c 3258 0 390800
+new_serve_clnt/http_request.c 3257 0 434166

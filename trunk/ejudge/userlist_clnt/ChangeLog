@@ -1,3 +1,33 @@
+2006-08-30 (r3252) Alexander Chernov  <cher@ispras.ru>
+
+	* team_login.c: copyright notice is slightly updated;
+	(userlist_clnt_team_login) bug: incorrect calculation of incoming
+	  packet.
+
+2006-08-30 (r3244) Alexander Chernov  <cher@ispras.ru>
+
+	* add_field.c: removed.
+
+2006-08-30 (r3243) Alexander Chernov  <cher@ispras.ru>
+
+	* delete_info.c: renamed from `delete_member.c'.
+
+	* delete_member.c: renamed to `delete_info.c'.
+
+2006-08-30 (r3242) Alexander Chernov  <cher@ispras.ru>
+
+	* delete_member.c: renamed from remove_member.c;
+	(userlist_clnt_delete_info) renamed from `userlist_clnt_remove_member';
+	  `role_id', `pers_id' parameters are removed;
+	  `cmd' parameter is added.
+
+	* delete_field.c:
+	(userlist_clnt_delete_field) `cookie' parameter is removed.
+
+	* delete_cookie.c: initial revision, copied from `delete_member.c'.
+
+	* remove_member.c: renamed to delete_member.c.
+
 2006-08-26 (r3236) Alexander Chernov  <cher@ispras.ru>
 
 	* edit_field.c: `role', `pers' parameters are removed,
