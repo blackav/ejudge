@@ -31,4 +31,9 @@ int new_serve_clnt_recv_packet(new_serve_conn_t, size_t *, void **);
 int new_serve_clnt_pass_fd(new_serve_conn_t, int, const int *);
 int new_serve_clnt_close(new_serve_conn_t);
 
+int new_serve_http_request(new_serve_conn_t, int out_fd,
+                           char *args[], char *environ[],
+                           int nparams, size_t param_sizes[],
+                           char *params[]);
+
 #endif /* __NEW_SERVE_CLNT_H__ */

@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # $Id$
 
-# Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+# Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -92,6 +92,7 @@ SUPER_CLNT_CFILES=\
 
 NEW_SERVE_CLNT_CFILES=\
  new_serve_clnt/close.c\
+ new_serve_clnt/http_request.c\
  new_serve_clnt/open.c\
  new_serve_clnt/pass_fd.c\
  new_serve_clnt/recv_packet.c\
@@ -253,7 +254,8 @@ CFILES=\
  ${COMMON_CFILES}\
  ${SERVE_CLNT_CFILES}\
  ${SUPER_CLNT_CFILES}\
- ${USERLIST_CLNT_CFILES}
+ ${USERLIST_CLNT_CFILES}\
+ ${NEW_SERVE_CLNT_CFILES}
 
 HFILES=\
  archive_paths.h\

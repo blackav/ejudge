@@ -33,6 +33,7 @@ struct new_serve_prot_packet
 enum
 {
   NEW_SRV_CMD_PASS_FD = 1,
+  NEW_SRV_CMD_HTTP_REQUEST,
 
   NEW_SRV_CMD_LAST,
 };
@@ -60,8 +61,17 @@ enum
   NEW_SRV_ERR_PACKET_TOO_BIG,
   NEW_SRV_ERR_PACKET_TOO_SMALL,
   NEW_SRV_ERR_PROTOCOL_ERROR,
+  NEW_SRV_ERR_PARAM_OUT_OF_RANGE,
 
   NEW_SRV_ERR_LAST,
+};
+
+struct new_serve_prot_http_request
+{
+  struct new_serve_prot_packet b;
+  int arg_num;
+  int env_num;
+  int param_num;
 };
 
 const unsigned char *new_serve_proto_strerror(int n);
