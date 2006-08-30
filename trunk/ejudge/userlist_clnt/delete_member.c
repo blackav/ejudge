@@ -18,12 +18,10 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_remove_member(struct userlist_clnt *clnt,
-		            int user_id, int contest_id,
-                            int role_id, int pers_id,
-			    int serial)
+userlist_clnt_delete_info(struct userlist_clnt *clnt, int cmd,
+                          int user_id, int contest_id, int serial)
 {
-  struct userlist_pk_remove_member *out = 0;
+  struct userlist_pk_delete_info *out = 0;
   struct userlist_packet *in = 0;
   int r;
   size_t out_size, in_size = 0;
@@ -31,11 +29,9 @@ userlist_clnt_remove_member(struct userlist_clnt *clnt,
   out_size = sizeof(*out);
   out = alloca(out_size);
   if (!out) return -ULS_ERR_OUT_OF_MEM;
-  out->request_id = ULS_REMOVE_MEMBER;
+  out->request_id = cmd;
   out->user_id = user_id;
   out->contest_id = contest_id;
-  out->role_id = role_id;
-  out->pers_id = pers_id;
   out->serial = serial;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
   if ((r = userlist_clnt_recv_packet(clnt, &in_size, (void*) &in)) < 0)
