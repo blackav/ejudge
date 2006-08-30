@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -104,7 +104,7 @@ serve_clnt_master_page(int sock_fd,
   memcpy(extra_args_ptr, extra_args, extra_args_len);
 
   if (pipe(pipe_fd) < 0) {
-    err("serve_clnt_team_page: pipe() failed: %s", os_ErrorMsg());
+    err("serve_clnt_master_page: pipe() failed: %s", os_ErrorMsg());
     return -SRV_ERR_SYSTEM_ERROR;
   }
   pass_fd[0] = out_fd;
@@ -133,18 +133,18 @@ serve_clnt_master_page(int sock_fd,
   if (in->id != SRV_RPL_OK) {
     close(pipe_fd[0]);
     xfree(in);
-    err("serve_clnt_submit_run: unexpected reply: %d", in->id);
+    err("serve_clnt_master_page: unexpected reply: %d", in->id);
     return -SRV_ERR_PROTOCOL;
   }
   xfree(in);
   r = read(pipe_fd[0], &c, 1);
   if (r < 0) {
-    err("serve_clnt_list_runs: read() failed: %s", os_ErrorMsg());
+    err("serve_clnt_master_page: read() failed: %s", os_ErrorMsg());
     close(pipe_fd[0]);
     return -SRV_ERR_READ_FROM_SERVER;
   }
   if (r > 0) {
-    err("serve_clnt_list_runs: data in wait pipe");
+    err("serve_clnt_master_page: data in wait pipe");
     close(pipe_fd[0]);
     return -SRV_ERR_PROTOCOL;
   }
@@ -152,7 +152,7 @@ serve_clnt_master_page(int sock_fd,
   return SRV_RPL_OK;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
