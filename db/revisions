@@ -499,3 +499,5 @@ userlist_clnt/delete_field.c 3242 0 129546
 userlist_clnt/delete_info.c 3243 0 124868
 userlist-server.c 3248 0 15988036
 uldb_plugin_xml.c 3248 0 5569085
+new_serve_clnt/new_serve_clnt_priv.h 3251 0 67354
+userlist_clnt/team_login.c 3252 0 250381
