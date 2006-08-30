@@ -1,3 +1,139 @@
+2006-08-30 (r3259) Alexander Chernov  <cher@ejudge.ru>
+
+	* files.make: copyright notice email is changed;
+	  `new_serve_clnt/http_request.c' is added;
+	  ${NEW_SERVE_CLNT_CFILES} added to the list of C files.
+
+	* Makefile.unix.in: copyright notice email is changed;
+	  `log' rule is updated for `new_serve_clnt' directory.
+
+	* new_serve_clnt.h:
+	(new_serve_http_request) new function prototype.
+
+	* new_serve_proto.h:
+	new request: NEW_SRV_CMD_HTTP_REQUEST;
+	new error code: NEW_SRV_ERR_PARAM_OUT_OF_RANGE;
+	(struct new_serve_prot_http_request) new structure for the new request.
+
+2006-08-30 (r3253) Alexander Chernov  <cher@ispras.ru>
+
+	* files.make: files from `new_serve_clnt' subdir are added.
+
+	* cher-configure: FreePascal version is upgraded to 2.0.4.
+
+	* Makefile.unix.in: rule for `libnew_serve_clnt.a' is added.
+
+	* new_serve_clnt.h: initial revision.
+
+	* new_serve_proto.h: initial revision.
+
+2006-08-30 (r3248) Alexander Chernov  <cher@ispras.ru>
+
+	* uldb_plugin_xml.c:
+	(register_contest_func) bug: `p_c' was not filled on the main return
+	  branch.
+
+	* userlist-server.c:
+	(do_list_users) bug: the user counter variable `i' was not
+	  initialized.
+
+	* unicorn-configure:
+	FreePascal compiler upgraded to 2.0.4;
+	`--with-mysql' option is added.
+
+2006-08-30 (r3245) Alexander Chernov  <cher@ispras.ru>
+
+	* files.make:
+	removed: userlist_clnt/add_field.c, userlist_clnt/remove_member.c;
+	added: userlist_clnt/delete_cookie.c, userlist_clnt/delete_info.c.
+
+	* userlist.h:
+	new attribute constants added: USERLIST_A_LAST_INFO_PWDCHANGE,
+	  USERLIST_A_LAST_INFO_CHANGE.
+
+	* userlist_proto.h:
+	`ULS_REMOVE_MEMBER' is renamed to `ULS_DELETE_MEMBER';
+	`ULS_PRIV_DELETE_MEMBER' is added;
+	(struct userlist_pk_delete_info) renamed from
+	  `struct userlist_pk_remove_member';
+	  fields `role_id', `pers_id' are removed.
+
+	* userlist_clnt.h:
+	(userlist_clnt_delete_info) renamed from
+	  `userlist_clnt_remove_member';
+	(userlist_clnt_add_field) completely removed;
+	(userlist_clnt_delete_cookie) new function prototype.
+
+	* uldb_plugin.h:
+	(struct uldb_plugin_iface::remove_member) `role', `num' parameters
+	  are removed.
+
+	* userlist_xml.c:
+	new attributes "last_info_pwdchange" and "last_info_change" are
+	  handled.
+
+	* userlist.c:
+	(userlist_unparse_date) `show_null' parameter is renamed to
+	  `convert_null', which is supported properly;
+	(userlist_get_member_field_str) `convert_null' is passed to
+	  `userlist_unparse_date';
+	(userlist_get_user_info_field_str) `convert_null' is passed to
+	  `userlist_unparse_date';
+	  bug in hanling `name' field is fixed;
+	  `convert_null' is used for boolean values unparsing;
+	(userlist_get_user_field_str) `convert_null' is used for boolean values
+	  unparsing;
+	  `convert_null' is passed to `userlist_unparse_date';
+	(userlist_clone_user_info) `last_change_time' is copied instead of
+	  being reset to the current time.
+
+	* userlist-server.c:
+	(default_remove_member) two parameters are removed;
+	(cmd_delete_member) renamed from `cmd_remove_member';
+	  use of `default_remove_member' is updated;
+	(cmd_delete_user) `data' now has `struct userlist_pk_delete_info'
+	  type;
+	(cmd_priv_delete_member) new function to handle the correspoding
+	  request;
+	(cmd_delete_user_info) `data' how has `struct userlist_pk_delete_info'
+	  type.
+
+	* clean-users.c:
+	(main) `userlist_clnt_delete_info' replaced
+	  `userlist_clnt_delete_field'.
+
+	* register.c:
+	(action_remove_member) `userlist_clnt_delete_info' replaced
+	  `userlist_clnt_remove_member'.
+
+	* edit-userlist.c:
+	(is_valid_user_field) new function;
+	(do_display_user) this function is renamed from `display_user';
+	  many changes according to the protocol change;
+	(display_user) this new function is a wrapper for `do_display_user';
+	(display_registered_users) use of `display_user' is updated;
+	  use of `userlist_clnt_delete_field' is updated;
+	(do_display_user_menu) `userlist_clnt_delete_info' is used instead of
+	  `userlist_clnt_delete_field';
+	  use of `display_user' is updated.
+
+	* uldb_plugin_xml.c:
+	(remove_member_func) `role', `num' parameters are removed;
+	(clear_user_field_func) `last_pwdchange_time' is updated in case
+	  of password change;
+	(clear_user_info_field_func) `last_pwdchange_time' is updated in
+	  case of password change;
+	(set_user_field_func) `last_pwdchange_time' is updated in case
+	  of password change;
+	(set_user_info_field_func) `last_pwdchange_time' is updated in
+	  case of password change;
+	(set_user_xml_func) call of `remove_member_func' is updated.
+
+2006-08-28 (r3241) Alexander Chernov  <cher@ispras.ru>
+
+	* Makefile.unix.in:
+	fixes for plugins
+
 2006-08-28 (r3238) Alexander Chernov  <cher@ispras.ru>
 
 	* files.make: new files are added: userlist_clnt/create_member.c,

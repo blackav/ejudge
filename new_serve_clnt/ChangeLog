@@ -1,0 +1,10 @@
+2006-08-30 (r3257) Alexander Chernov  <cher@ejudge.ru>
+
+	* http_request.c:
+	initial revision
+
+2006-08-30 (r3251) Alexander Chernov  <cher@ejudge.ru>
+
+	* pass_fd.c, send_packet.c, open.c, new_serve_clnt_priv.h, close.c, recv_packet.c:
+	initial revision
+

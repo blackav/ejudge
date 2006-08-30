@@ -1,3 +1,9 @@
+2006-08-30 (r3258) Alexander Chernov  <cher@ejudge.ru>
+
+	* master_page.c:
+	(master_page.c) copyright notice is updated;
+	  minor error messaging changes.
+
 2006-06-10 (r3156) Alexander Chernov  <cher@ispras.ru>
 
 	* ChangeLog:
