@@ -501,3 +501,5 @@ userlist-server.c 3248 0 15988036
 uldb_plugin_xml.c 3248 0 5569085
 new_serve_clnt/new_serve_clnt_priv.h 3251 0 67354
 userlist_clnt/team_login.c 3252 0 250381
+new_serve_clnt.h 3255 0 100614
+new_serve_proto.h 3255 0 121317
