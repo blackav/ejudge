@@ -394,7 +394,7 @@ main(int argc, char **argv)
     }
     if (reply) continue;
 
-    r = userlist_clnt_delete_field(server_conn, i, 0, -2, 0, 0);
+    r = userlist_clnt_delete_info(server_conn, ULS_DELETE_USER, i, 0, 0);
     if (r < 0) {
       err("Remove failed: %s", userlist_strerror(-j));
     }

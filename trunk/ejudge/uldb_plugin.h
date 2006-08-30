@@ -144,7 +144,7 @@ struct uldb_plugin_iface
   // register a user for contest
   int (*register_contest)(void *, int, int, int, time_t, const struct userlist_contest**);
   // remove a particular member from a user
-  int (*remove_member)(void *, int, int, int, int, int, time_t, int *);
+  int (*remove_member)(void *, int, int, int, time_t, int *);
   // check if the user is read-only
   int (*is_read_only)(void *, int, int);
   // get the user iterator for HTML user info requests

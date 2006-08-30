@@ -97,11 +97,11 @@ userlist_member_status_str(int status)
 }
 
 const unsigned char *
-userlist_unparse_date(time_t d, int show_null)
+userlist_unparse_date(time_t d, int convert_null)
 {
   static unsigned char buf[64];
 
-  if (!d) {
+  if (!d && convert_null) {
     strcpy(buf, "<Not set>");
     return buf;
   }
@@ -277,7 +277,7 @@ userlist_get_member_field_str(unsigned char *buf, size_t len,
     return snprintf(buf, len, "%s", s);
   case USERLIST_NM_CREATE_TIME:
     p_time = (const time_t*) userlist_get_member_field_ptr(m, field_id);
-    return snprintf(buf, len, "%s", userlist_unparse_date(*p_time, 0));    
+    return snprintf(buf, len, "%s", userlist_unparse_date(*p_time, convert_null));    
   default:
     abort();
   }
@@ -540,10 +540,11 @@ userlist_get_user_info_field_str(unsigned char *buf, size_t len,
   switch (user_info_field_types[field_id]) {
   case USERLIST_NC_CNTS_READ_ONLY:
     p_int = (const int*) userlist_get_user_info_field_ptr(ui, field_id);
+    if (convert_null) return snprintf(buf, len, "%s", xml_unparse_bool(*p_int));
     return snprintf(buf, len, "%d", *p_int);
   case USERLIST_NC_NAME:
     p_str=(const unsigned char**)userlist_get_user_info_field_ptr(ui, field_id);
-    s = ui->team_passwd;
+    s = *p_str;
     if (!s) s = "";
     return snprintf(buf, len, "%s", s);
   case USERLIST_NC_TEAM_PASSWD:
@@ -563,7 +564,7 @@ userlist_get_user_info_field_str(unsigned char *buf, size_t len,
     return snprintf(buf, len, "%s", s);
   case USERLIST_NC_CREATE_TIME:
     p_time = (const time_t*) userlist_get_user_info_field_ptr(ui, field_id);
-    return snprintf(buf, len, "%s", userlist_unparse_date(*p_time, 0));    
+    return snprintf(buf, len, "%s", userlist_unparse_date(*p_time, convert_null));    
   default:
     abort();
   }
@@ -846,10 +847,14 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
   case USERLIST_NN_ID:
     return snprintf(buf, len, "%d", u->id);
   case USERLIST_NN_IS_PRIVILEGED:
+    if (convert_null)
+      return snprintf(buf, len, "%s", xml_unparse_bool(u->is_privileged));
     return snprintf(buf, len, "%d", u->is_privileged);
     // mass fields
   case USERLIST_NN_IS_INVISIBLE:
     p_int = (const int*) userlist_get_user_field_ptr(u, field_id);
+    if (convert_null)
+      return snprintf(buf, len, "%s", xml_unparse_bool(*p_int));
     return snprintf(buf, len, "%d", *p_int);
   case USERLIST_NN_LOGIN:
   case USERLIST_NN_PASSWD:
@@ -863,7 +868,7 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
     return snprintf(buf, len, "%s", s);
   case USERLIST_NN_REGISTRATION_TIME:
     p_time = (const time_t *) userlist_get_user_field_ptr(u, field_id);
-    return snprintf(buf, len, "%s", userlist_unparse_date(*p_time, 0));    
+    return snprintf(buf, len, "%s", userlist_unparse_date(*p_time, convert_null));    
   default:
     abort();
   }
@@ -1397,7 +1402,7 @@ userlist_clone_user_info(struct userlist_user *u, int contest_id,
   ci->i.phone = copy_field(u->i.phone);
 
   ci->i.create_time = current_time;
-  ci->i.last_change_time = current_time;
+  ci->i.last_change_time = u->i.last_change_time;
   ci->i.last_access_time = 0;
   ci->i.last_pwdchange_time = u->i.last_pwdchange_time;
   u->i.last_access_time = current_time;

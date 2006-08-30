@@ -2809,8 +2809,8 @@ action_remove_member(void)
     goto failed;
   }
 
-  errcode = userlist_clnt_remove_member(server_conn, user_id, user_contest_id,
-                                        role, pers, serial);
+  errcode = userlist_clnt_delete_info(server_conn, ULS_DELETE_MEMBER,
+                                      user_id, user_contest_id, serial);
   if (errcode < 0) {
     error("%s", gettext(userlist_strerror(-errcode)));
     goto failed;

@@ -139,10 +139,8 @@ userlist_clnt_register_contest(struct userlist_clnt *clnt,
                                int user_id,
                                int contest_id);
 int
-userlist_clnt_remove_member(struct userlist_clnt *clnt,
-		            int user_id, int contest_id,
-                            int role_id, int pers_id,
-			    int serial);
+userlist_clnt_delete_info(struct userlist_clnt *clnt, int cmd,
+                          int user_id, int contest_id, int serial);
 
 int
 userlist_clnt_pass_fd(struct userlist_clnt *clnt,
@@ -205,17 +203,12 @@ userlist_clnt_delete_field(struct userlist_clnt *clnt,
                            int user_id,
                            int contest_id,
                            int serial,
-                           int field,
-                           ej_cookie_t cookie);
-
-/*
+                           int field);
 int
-userlist_clnt_add_field(struct userlist_clnt *clnt,
-                        int *p_user_id,
-                        int contest_id,
-                        int serial,
-                        int field);
-*/
+userlist_clnt_delete_cookie(struct userlist_clnt *clnt,
+                            int user_id,
+                            int contest_id,
+                            ej_cookie_t cookie);
 
 int userlist_clnt_create_user(struct userlist_clnt *clnt, int *p_user_id);
 int userlist_clnt_create_member(struct userlist_clnt *clnt, int user_id,

@@ -85,7 +85,7 @@ static int check_user_func(void *, int);
 static int set_reg_passwd_func(void *, int, int, const unsigned char *, time_t);
 static int set_team_passwd_func(void *, int, int, int, const unsigned char *, time_t, int *);
 static int register_contest_func(void *, int, int, int, time_t, const struct userlist_contest **);
-static int remove_member_func(void *, int, int, int, int, int, time_t, int *);
+static int remove_member_func(void *, int, int, int, time_t, int *);
 static int is_read_only_func(void *, int, int);
 static ptr_iterator_t get_info_list_iterator_func(void *, int, unsigned int);
 static int clear_team_passwd_func(void *, int, int, int *);
@@ -1313,8 +1313,7 @@ register_contest_func(void *data,
 
 static int
 remove_member_func(void *data, int user_id, int contest_id,
-                   int serial, int role, int num, time_t cur_time,
-                   int *p_cloned_flag)
+                   int serial, time_t cur_time, int *p_cloned_flag)
 {
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
   struct userlist_list *ul = state->userlist;
@@ -1323,7 +1322,7 @@ remove_member_func(void *data, int user_id, int contest_id,
   struct userlist_cntsinfo *ci;
   struct userlist_members *mm;
   struct userlist_member *m;
-  int i;
+  int i, role, num;
 
   if (user_id <= 0 || user_id >= ul->user_map_size
       || !(u = ul->user_map[user_id])) {
@@ -1344,18 +1343,16 @@ remove_member_func(void *data, int user_id, int contest_id,
     its serial is storied in copied_from field.
    */
 
-  if (role < 0) {
-    // find a member by serial
-    for (role = 0; role < USERLIST_MB_LAST; role++) {
-      if (!(mm = ui->members[role])) continue;
-      for (num = 0; num < mm->total; num++) {
-        m = mm->members[num];
-        if (m->serial == serial || m->copied_from == serial) break;
-      }
-      if (num < mm->total) break;
+  // find a member by serial
+  for (role = 0; role < USERLIST_MB_LAST; role++) {
+    if (!(mm = ui->members[role])) continue;
+    for (num = 0; num < mm->total; num++) {
+      m = mm->members[num];
+      if (m->serial == serial || m->copied_from == serial) break;
     }
-    if (role == USERLIST_MB_LAST) return -1;
+    if (num < mm->total) break;
   }
+  if (role == USERLIST_MB_LAST) return -1;
 
   if (role < 0 || role >= USERLIST_MB_LAST) return -1;
   if (!(mm = ui->members[role])) return -1;
@@ -1646,7 +1643,8 @@ clear_user_field_func(void *data, int user_id, int field_id, time_t cur_time)
   if (userlist_is_empty_user_field(u, field_id)) return 0;
 
   if ((r = userlist_delete_user_field(u, field_id)) == 1) {
-    u->last_change_time = cur_time;
+    if (field_id == USERLIST_NN_PASSWD) u->last_pwdchange_time = cur_time;
+    else u->last_change_time = cur_time;
     state->dirty = 1;
     state->flush_interval /= 2;
   }
@@ -1681,7 +1679,8 @@ clear_user_info_field_func(void *data, int user_id, int contest_id,
   }
 
   if ((r = userlist_delete_user_info_field(ui, field_id)) == 1) {
-    ui->last_change_time = cur_time;
+    if (field_id == USERLIST_NC_TEAM_PASSWD) ui->last_pwdchange_time = cur_time;
+    else ui->last_change_time = cur_time;
     state->dirty = 1;
     state->flush_interval /= 2;
   }
@@ -1760,7 +1759,8 @@ set_user_field_func(void *data,
 
   if ((r = userlist_set_user_field_str(u, field_id, value)) > 0) {
     if (field_id == USERLIST_NN_LOGIN) userlist_build_login_hash(ul);
-    u->last_change_time = cur_time;
+    if (field_id == USERLIST_NN_PASSWD) u->last_pwdchange_time = cur_time;
+    else u->last_change_time = cur_time;
     state->dirty = 1;
     state->flush_interval /= 2;
   }
@@ -1800,7 +1800,8 @@ set_user_info_field_func(void *data,
   }
 
   if ((r = userlist_set_user_info_field_str(ui, field_id, value)) == 1) {
-    ui->last_change_time = cur_time;
+    if (field_id == USERLIST_NC_TEAM_PASSWD) ui->last_pwdchange_time = cur_time;
+    else ui->last_change_time = cur_time;
     state->dirty = 1;
     state->flush_interval /= 2;
   }
@@ -2265,7 +2266,7 @@ set_user_xml_func(void *data,
     if (orole >= CONTEST_LAST_MEMBER) break;
     // remove `om'
     ASSERT(om);
-    if (remove_member_func(data, user_id, contest_id, om->serial, -1, 0,
+    if (remove_member_func(data, user_id, contest_id, om->serial,
                            cur_time, 0) < 0) {
       err("set_user_xml: %d, %d: remove_member_func failed",
           user_id, contest_id);

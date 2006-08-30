@@ -375,7 +375,7 @@ link_client_state(struct client_state *p)
 #define default_set_reg_passwd(a, b, c, d) uldb_default->iface->set_reg_passwd(uldb_default->data, a, b, c, d)
 #define default_set_team_passwd(a, b, c, d, e, f) uldb_default->iface->set_team_passwd(uldb_default->data, a, b, c, d, e, f)
 #define default_register_contest(a, b, c, d, e) uldb_default->iface->register_contest(uldb_default->data, a, b, c, d, e)
-#define default_remove_member(a, b, c, d, e, f, g) uldb_default->iface->remove_member(uldb_default->data, a, b, c, d, e, f, g)
+#define default_remove_member(a, b, c, d, e) uldb_default->iface->remove_member(uldb_default->data, a, b, c, d, e)
 #define default_is_read_only(a, b) uldb_default->iface->is_read_only(uldb_default->data, a, b)
 #define default_get_info_list_iterator(a, b) uldb_default->iface->get_info_list_iterator(uldb_default->data, a, b)
 #define default_clear_team_passwd(a, b, c) uldb_default->iface->clear_team_passwd(uldb_default->data, a, b, c)
@@ -3531,8 +3531,8 @@ cmd_priv_register_contest(struct client_state *p, int pkt_len,
 }
 
 static void
-cmd_remove_member(struct client_state *p, int pkt_len,
-                  struct userlist_pk_remove_member *data)
+cmd_delete_member(struct client_state *p, int pkt_len,
+                  struct userlist_pk_delete_info *data)
 {
   unsigned char logbuf[1024];
   struct contest_desc *cnts;
@@ -3543,8 +3543,8 @@ cmd_remove_member(struct client_state *p, int pkt_len,
     return;
   }
 
-  snprintf(logbuf, sizeof(logbuf), "REMOVE_MEMBER: %d, %d, %d, %d",
-           data->user_id, data->role_id, data->pers_id, data->serial);
+  snprintf(logbuf, sizeof(logbuf), "DELETE_MEMBER: %d, %d, %d",
+           data->user_id, data->contest_id, data->serial);
 
   if (p->user_id <= 0) {
     err("%s -> not authentificated", logbuf);
@@ -3579,8 +3579,7 @@ cmd_remove_member(struct client_state *p, int pkt_len,
   }
 
   if (default_remove_member(data->user_id, data->contest_id,
-                            data->serial, data->role_id,
-                            data->pers_id, cur_time, &cloned_flag) < 0) {
+                            data->serial, cur_time, &cloned_flag) < 0) {
     err("%s -> unspecified error", logbuf);
     return send_reply(p, -ULS_ERR_UNSPECIFIED_ERROR);
   }
@@ -4998,7 +4997,7 @@ check_editing_caps(int conn_user_id, int req_user_id,
 
 static void
 cmd_delete_user(struct client_state *p, int pkt_len,
-                struct userlist_pk_edit_field *data)
+                struct userlist_pk_delete_info *data)
 {
   unsigned char logbuf[1024];
   const struct userlist_user *u;
@@ -5028,6 +5027,57 @@ cmd_delete_user(struct client_state *p, int pkt_len,
 
   send_reply(p, ULS_OK);
   info("%s -> OK", logbuf);
+}
+
+static void
+cmd_priv_delete_member(struct client_state *p, int pkt_len,
+                       struct userlist_pk_delete_info *data)
+{
+  unsigned char logbuf[1024];
+  const struct userlist_user *u;
+  struct contest_desc *cnts;
+  int r, reply_code = ULS_OK, cloned_flag = 0;
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+
+  if (contests_get(data->contest_id, &cnts) < 0) {
+    err("%s -> invalid contest_id: %d", logbuf, data->contest_id);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf), "PRIV_DELETE_MEMBER: %d, %d, %d, %d",
+           p->user_id, data->user_id, data->contest_id, data->serial);
+
+  if (default_check_user(data->user_id) < 0) {
+    err("%s -> invalid user", logbuf);
+    send_reply(p, -ULS_ERR_BAD_UID);
+    return;
+  }
+  default_get_user_info_1(data->user_id, &u);
+
+  if (check_editing_caps(p->user_id, data->user_id, u, data->contest_id) < 0) {
+    err("%s -> no capability to edit user", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  r = default_remove_member(data->user_id, data->contest_id, data->serial,
+                            cur_time, &cloned_flag);
+  if (r < 0) {
+    err("%s -> member removal failed", logbuf);
+    send_reply(p, -ULS_ERR_CANNOT_DELETE);
+    return;
+  }
+  if (r == 1) {
+    update_userlist_table(data->contest_id);
+  }
+  if (cloned_flag) reply_code = ULS_CLONED;
+  send_reply(p, reply_code);
+  info("%s -> OK, %d", logbuf, reply_code);
 }
 
 static void
@@ -5081,7 +5131,7 @@ cmd_delete_cookie(struct client_state *p, int pkt_len,
 
 static void
 cmd_delete_user_info(struct client_state *p, int pkt_len,
-                     struct userlist_pk_edit_field *data)
+                     struct userlist_pk_delete_info *data)
 {
   unsigned char logbuf[1024];
   const struct userlist_user *u;
@@ -5743,7 +5793,7 @@ static void (*cmd_table[])() =
   [ULS_SET_PASSWD]              cmd_set_passwd,
   [ULS_GET_USER_CONTESTS]       cmd_get_user_contests,
   [ULS_REGISTER_CONTEST]        cmd_register_contest,
-  [ULS_REMOVE_MEMBER]           cmd_remove_member,
+  [ULS_DELETE_MEMBER]           cmd_delete_member,
   [ULS_PASS_FD]                 cmd_pass_fd,
   [ULS_LIST_USERS]              cmd_list_users,
   [ULS_MAP_CONTEST]             cmd_map_contest,
@@ -5782,6 +5832,7 @@ static void (*cmd_table[])() =
   [ULS_DELETE_USER_INFO]        cmd_delete_user_info,
   [ULS_CREATE_USER]             cmd_create_user,
   [ULS_CREATE_MEMBER]           cmd_create_member,
+  [ULS_PRIV_DELETE_MEMBER]      cmd_priv_delete_member,
 
   [ULS_LAST_CMD] 0
 };
