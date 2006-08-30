@@ -1307,6 +1307,7 @@ register_contest_func(void *data,
 
   state->dirty = 1;
   state->flush_interval /= 2;
+  if (p_c) *p_c = c;
 
   return 1;
 }
