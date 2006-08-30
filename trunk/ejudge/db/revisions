@@ -233,7 +233,6 @@ super_clnt/recv_packet.c 2773 0 248817
 super_clnt/send_packet.c 2773 0 168572
 super_clnt/set_param.c 2773 0 171738
 super_clnt/simple_cmd.c 2773 0 134731
-userlist_clnt/add_field.c 2585 0 163677
 userlist_clnt/admin_process.c 2188 0 186827
 userlist_clnt/change_registration.c 2584 0 141834
 userlist_clnt/clear_team_passwords.c 1030 0 120689
@@ -263,7 +262,6 @@ userlist_clnt/recv_packet.c 2770 0 168032
 userlist_clnt/register_contest.c 2567 0 131744
 userlist_clnt/register_new.c 2627 0 155136
 userlist_clnt/register_new_2.c 2996 0 210353
-userlist_clnt/remove_member.c 2565 0 127953
 userlist_clnt/send_packet.c 2770 0 170276
 userlist_clnt/set_info.c 2564 0 139166
 userlist_clnt/set_passwd.c 2560 0 172896
@@ -291,11 +289,9 @@ userlist_clnt.h 3166 0 725270
 clean-users.c 3166 0 1000445
 edit-userlist.c 3166 0 8792446
 register.c 3166 0 8205477
-userlist_clnt/add_field.c 3164 0 168753
 userlist_clnt/delete_field.c 3164 0 132272
 userlist_clnt/edit_field.c 3164 0 150200
 userlist_clnt/get_info.c 3164 0 158770
-userlist_clnt/remove_member.c 3164 0 133163
 userlist.h 3168 0 1017131
 edit-userlist.c 3168 0 8792450
 userlist.c 3168 0 2388187
@@ -483,7 +479,6 @@ userlist.c 3238 0 3724372
 uldb_plugin_xml.c 3238 0 5544523
 userlist_proto.c 3238 0 170488
 userlist_xml.c 3238 0 4032883
-userlist_clnt/add_field.c 3236 0 166136
 userlist_clnt/create_member.c 3236 0 134844
 userlist_clnt/create_user.c 3236 0 147719
 userlist_clnt/delete_field.c 3236 0 134267
