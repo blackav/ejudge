@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -521,6 +521,20 @@ cgi_get_nth_param(int n, unsigned char **p_name, unsigned char **p_value)
   if (p_value) *p_value = params[n].value;
 }
 
+void
+cgi_get_nth_param_bin(int n, unsigned char **p_name,
+                      size_t *p_size, unsigned char **p_value)
+{
+  if (n < 0 || n >= param_u) {
+    if (p_name) *p_name = 0;
+    if (p_value) *p_value = 0;
+    return;
+  }
+  if (p_name) *p_name = params[n].name;
+  if (p_size) *p_size = params[n].size;
+  if (p_value) *p_value = params[n].value;
+}
+
 /**
  * NAME:    cgi_print_param
  * PURPOSE: debugging: print all the parameters to the standard output
@@ -537,7 +551,7 @@ cgi_print_param(void)
   return;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

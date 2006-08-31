@@ -224,6 +224,8 @@ CFILES=\
  ejudge-setup.c\
  execute.c\
  master.c\
+ new-client.c\
+ new-server.c\
  register.c\
  run.c\
  serve.c\

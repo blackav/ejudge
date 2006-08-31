@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -237,8 +237,8 @@ run_process(char * const *args, const char *stdin_buf)
   sigset_t chldmask, wmask, prevmask;
   fd_set rset, wset, *prset, *pwset;
   struct timeval tout;
-  const char *outbuf;
-  int outbuf_len, pstat, retval = -1;
+  const char *outbuf = 0;
+  int outbuf_len = 0, pstat, retval = -1;
   char *inbuf = 0;
   size_t inbuf_len = 0;
   FILE *in = 0;

@@ -37,6 +37,9 @@
 /* the default path to the super-server control socket */
 #undef EJUDGE_SUPER_SERVE_SOCKET
 
+/* the default path to the new-server control socket */
+#undef EJUDGE_NEW_SERVER_SOCKET
+
 /* the path to the ejudge configuration directory */
 #undef EJUDGE_CONF_DIR
 

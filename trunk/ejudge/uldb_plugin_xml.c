@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -628,7 +628,7 @@ get_cookie_func(void *data,
 {
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
   struct userlist_list *ul = state->userlist;
-  struct userlist_cookie *c;
+  struct userlist_cookie *c = 0;
   int i, user_id;
   struct userlist_user *u;
   struct xml_tree *t;
@@ -1323,7 +1323,7 @@ remove_member_func(void *data, int user_id, int contest_id,
   struct userlist_cntsinfo *ci;
   struct userlist_members *mm;
   struct userlist_member *m;
-  int i, role, num;
+  int i, role, num = -1;
 
   if (user_id <= 0 || user_id >= ul->user_map_size
       || !(u = ul->user_map[user_id])) {
