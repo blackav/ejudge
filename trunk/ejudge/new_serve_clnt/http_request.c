@@ -32,15 +32,18 @@ enum
 };
 
 int
-new_serve_http_request(new_serve_conn_t conn, int out_fd,
-                       char *args[],
-                       char *envs[],
-                       int param_num,
-                       size_t param_sizes_in[],
-                       char *params[])
+new_serve_clnt_http_request(new_serve_conn_t conn,
+                            int out_fd,
+                            unsigned char *args[],
+                            unsigned char *envs[],
+                            int param_num,
+                            unsigned char *param_names[],
+                            size_t param_sizes_in[],
+                            unsigned char *params[])
 {
   int arg_num = 0, env_num = 0, i;
   ej_size_t *arg_sizes = 0, *env_sizes = 0, *param_sizes = 0;
+  ej_size_t *param_name_sizes = 0;
   ej_size_t t;
   struct new_serve_prot_http_request *out = 0;
   size_t out_size;
@@ -66,7 +69,7 @@ new_serve_http_request(new_serve_conn_t conn, int out_fd,
   out_size = (out_size + 15) & ~15;
   out_size += arg_num * sizeof(ej_size_t);
   out_size += env_num * sizeof(ej_size_t);
-  out_size += param_num * sizeof(ej_size_t);
+  out_size += 2 * param_num * sizeof(ej_size_t);
 
   if (arg_num > 0) {
     XALLOCAZ(arg_sizes, arg_num);
@@ -87,8 +90,12 @@ new_serve_http_request(new_serve_conn_t conn, int out_fd,
   }
 
   if (param_num > 0) {
+    XALLOCAZ(param_name_sizes, param_num);
     XALLOCAZ(param_sizes, param_num);
     for (i = 0; i < param_num; i++) {
+      param_name_sizes[i] = t = strlen(param_names[i]);
+      if (t < 0 || t > MAX_PARAM_SIZE) goto failed;
+      out_size += t + 1;
       param_sizes[i] = t = param_sizes_in[i];
       if (t < 0 || t > MAX_PARAM_SIZE) goto failed;
       out_size += t + 1;
@@ -118,6 +125,7 @@ new_serve_http_request(new_serve_conn_t conn, int out_fd,
     bptr += env_num * sizeof(env_sizes[0]);
   }
   if (param_num > 0) {
+    memcpy((void*) bptr, param_name_sizes, param_num * sizeof(ej_size_t));
     memcpy((void*) bptr, param_sizes, param_num * sizeof(param_sizes[0]));
     bptr += param_num * sizeof(param_sizes[0]);
   }
@@ -130,6 +138,8 @@ new_serve_http_request(new_serve_conn_t conn, int out_fd,
     bptr += env_sizes[i] + 1;
   }
   for (i = 0; i < param_num; i++) {
+    memcpy((void*) bptr, param_names[i], param_name_sizes[i]);
+    bptr += param_name_sizes[i] + 1;
     memcpy((void*) bptr, params[i], param_sizes[i]);
     bptr += param_sizes[i] + 1;
   }
