@@ -512,3 +512,11 @@ new_serve_clnt.h 3259 0 116244
 new_serve_proto.h 3259 0 137084
 serve_clnt/master_page.c 3258 0 390800
 new_serve_clnt/http_request.c 3257 0 434166
+cgi.h 3262 0 104848
+new_serve_clnt.h 3262 0 125620
+new-client.c 3262 0 249721
+new-server.c 3262 0 71176
+userlist-server.c 3262 0 15991156
+cgi.c 3262 0 1046283
+uldb_plugin_xml.c 3262 0 5569452
+new_serve_clnt/http_request.c 3261 0 474581
