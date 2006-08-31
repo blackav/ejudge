@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -872,6 +872,7 @@ cmd_register_new_2(struct client_state *p,
   }
 
   generate_random_password(8, passwd_buf);
+  passwd_len = strlen(passwd_buf);
   user_id = default_new_user(login, email, passwd_buf, 1);
 
   out_size = sizeof(*out) + passwd_len;
