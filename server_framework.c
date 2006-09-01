@@ -21,7 +21,7 @@
 
 #include "errlog.h"
 #include "server_framework.h"
-#include "new_serve_proto.h"
+#include "new_server_proto.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -372,7 +372,7 @@ static void
 cmd_pass_fd(struct server_framework_state *state,
             struct client_state *p,
             size_t len,
-            const struct new_serve_prot_packet *pkt)
+            const struct new_server_prot_packet *pkt)
 {
   if (len != sizeof(*pkt))
     return nsf_err_bad_packet_length(state, p, len, sizeof(*pkt));
@@ -390,16 +390,16 @@ static void
 handle_control_command(struct server_framework_state *state,
                        struct client_state *p)
 {
-  struct new_serve_prot_packet *pkt;
+  struct new_server_prot_packet *pkt;
 
   if (p->read_len < sizeof(*pkt)) {
     err("%d: packet length is too small: %d", p->id, p->read_len);
     p->state = STATE_DISCONNECT;
     return;
   }
-  pkt = (struct new_serve_prot_packet*) p->read_buf;
+  pkt = (struct new_server_prot_packet*) p->read_buf;
 
-  if (pkt->magic != NEW_SERVE_PROT_PACKET_MAGIC) {
+  if (pkt->magic != NEW_SERVER_PROT_PACKET_MAGIC) {
     err("%d: invalid magic value: %04x", p->id, pkt->magic);
     p->state = STATE_DISCONNECT;
     return;

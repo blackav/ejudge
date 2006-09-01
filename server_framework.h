@@ -57,7 +57,7 @@ struct client_state
 };
 
 struct server_framework_state;
-struct new_serve_prot_packet;
+struct new_server_prot_packet;
 
 struct server_framework_params
 {
@@ -73,7 +73,7 @@ struct server_framework_params
   void (*handle_packet)(struct server_framework_state *,
                         struct client_state *,
                         size_t,
-                        const struct new_serve_prot_packet *,
+                        const struct new_server_prot_packet *,
                         void *);
   void (*cleanup_client)(struct server_framework_state *,
                          struct client_state *,

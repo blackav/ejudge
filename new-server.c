@@ -22,7 +22,7 @@
 
 #include "errlog.h"
 #include "server_framework.h"
-#include "new_serve_proto.h"
+#include "new_server_proto.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,7 +32,7 @@ static void startup_error(const char *, ...) __attribute__((noreturn,format(prin
 static void handle_packet_func(struct server_framework_state *,
                                struct client_state *,
                                size_t,
-                               const struct new_serve_prot_packet *,
+                               const struct new_server_prot_packet *,
                                void *);
 
 static struct server_framework_params params =
@@ -66,7 +66,7 @@ startup_error(const char *format, ...)
 typedef void handler_t(struct server_framework_state *state,
                        struct client_state *p,
                        size_t pkt_size,
-                       const struct new_serve_prot_packet *pkt,
+                       const struct new_server_prot_packet *pkt,
                        void *user_data);
 
 static handler_t *handlers[NEW_SRV_CMD_LAST] =
@@ -77,7 +77,7 @@ static void
 handle_packet_func(struct server_framework_state *state,
                    struct client_state *p,
                    size_t pkt_size,
-                   const struct new_serve_prot_packet *pkt,
+                   const struct new_server_prot_packet *pkt,
                    void *user_data)
 {
   if (pkt->id <= 1 || pkt->id >= NEW_SRV_CMD_LAST || !handlers[pkt->id])
