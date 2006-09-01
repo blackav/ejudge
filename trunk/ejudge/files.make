@@ -132,6 +132,7 @@ COMMON_CFILES=\
  l10n.c\
  master_html.c\
  misctext.c\
+ new_server_html.c\
  ncurses_utils.c\
  opcaps.c\
  parsecfg.c\
@@ -294,6 +295,7 @@ HFILES=\
  mischtml.h\
  misctext.h\
  ncurses_utils.h\
+ new-server.h\
  opcaps.h\
  parsecfg.h\
  pathutl.h\

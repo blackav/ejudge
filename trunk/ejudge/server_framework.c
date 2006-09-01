@@ -67,12 +67,59 @@ struct server_framework_state
 
   int socket_fd;
   sigset_t orig_mask, work_mask, block_mask;
+  int client_id;
 
   struct client_state *clients_first;
   struct client_state *clients_last;
 
   void *user_data;
 };
+
+static struct client_state *
+client_state_new(struct server_framework_state *state, int fd)
+{
+  struct client_state *p;
+
+  fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+
+  if (state->params->alloc_state)
+    p = state->params->alloc_state(state);
+  else {
+    XCALLOC(p, 1);
+  }
+
+  p->id = state->client_id++;
+  p->fd = fd;
+  p->client_fds[0] = -1;
+  p->client_fds[1] = -1;
+  p->state = STATE_READ_CREDS;
+
+  if (!state->clients_first) {
+    state->clients_first = state->clients_last = p;
+  } else {
+    p->next = state->clients_first;
+    state->clients_first->prev = p;
+    state->clients_first = p;
+  }
+  return p;
+}
+
+void
+nsf_new_autoclose(struct server_framework_state *state,
+                  struct client_state *p, void *write_buf,
+                  size_t write_len)
+{
+  struct client_state *q;
+
+  q = client_state_new(state, p->client_fds[0]);
+  q->client_fds[1] = p->client_fds[1];
+  q->write_buf = write_buf;
+  q->write_len = write_len;
+  q->state = STATE_WRITECLOSE;
+
+  p->client_fds[0] = -1;
+  p->client_fds[1] = -1;
+}
 
 static void
 client_state_delete(struct server_framework_state *state,
@@ -105,11 +152,11 @@ client_state_delete(struct server_framework_state *state,
   xfree(p->write_buf);
 
   if (state->params->cleanup_client)
-    state->params->cleanup_client(state, p, state->user_data);
+    state->params->cleanup_client(state, p);
 
   memset(p, -1, sizeof(*p));
   if (state->params->free_memory)
-    state->params->free_memory(state, p, state->user_data);
+    state->params->free_memory(state, p);
   else
     xfree(p);
 }
@@ -352,11 +399,76 @@ write_to_control_connection(struct client_state *p)
   }
 }
 
+static void
+accept_new_connection(struct server_framework_state *state)
+{
+  struct sockaddr_un addr;
+  int fd, addrlen, val;
+
+  memset(&addr, 0, sizeof(addr));
+  addrlen = sizeof(addr);
+  if ((fd = accept(state->socket_fd, (struct sockaddr*) &addr, &addrlen))<0){
+    err("accept failed: %s", os_ErrorMsg());
+    return;
+  }
+
+  val = 1;
+  if (setsockopt(fd, SOL_SOCKET, SO_PASSCRED, &val, sizeof(val)) < 0) {
+    err("setsockopt() failed: %s", os_ErrorMsg());
+    close(fd);
+    return;
+  }
+
+  client_state_new(state, fd);
+}
+
+void
+nsf_enqueue_reply(struct server_framework_state *state,
+                  struct client_state *p, size_t len, void const *msg)
+{
+  ASSERT(!p->write_len);
+
+  p->write_len = len + sizeof(len);
+  p->write_buf = xmalloc(p->write_len);
+  memcpy(p->write_buf, &len, sizeof(len));
+  memcpy(p->write_buf + sizeof(len), msg, len);
+  p->written = 0;
+  p->state = STATE_WRITE;
+}
+
+void
+nsf_send_reply(struct server_framework_state *state,
+               struct client_state *p, int answer)
+{
+  struct new_server_prot_packet pkt;
+
+  memset(&pkt, 0, sizeof(pkt));
+  pkt.id = answer;
+  pkt.magic = NEW_SERVER_PROT_PACKET_MAGIC;
+  nsf_enqueue_reply(state, p, sizeof(pkt), &pkt);
+}
+
+void
+nsf_err_protocol_error(struct server_framework_state *state,
+                       struct client_state *p)
+{
+  err("%d: protocol error", p->id);
+  nsf_send_reply(state, p, NEW_SRV_ERR_PROTOCOL_ERROR);
+}
+
 void
 nsf_err_bad_packet_length(struct server_framework_state *state,
                           struct client_state *p, size_t len, size_t exp_len)
 {
   err("%d: bad packet length: %zu, expected %zu", p->id, len, exp_len);
+  p->state = STATE_DISCONNECT;
+}
+
+void
+nsf_err_packet_too_small(struct server_framework_state *state,
+                         struct client_state *p, size_t len, size_t min_len)
+{
+  err("%d: packet is too small: %zu, minimum %zu", p->id, len, min_len);
   p->state = STATE_DISCONNECT;
 }
 
@@ -413,7 +525,7 @@ handle_control_command(struct server_framework_state *state,
 
   if (pkt->id == 1) cmd_pass_fd(state, p, p->read_len, pkt);
   if (state->params->handle_packet)
-    state->params->handle_packet(state, p, p->read_len, pkt, state->user_data);
+    state->params->handle_packet(state, p, p->read_len, pkt);
 
   if (p->state == STATE_READ_READY) p->state = STATE_READ_LEN;
   if (p->read_buf) xfree(p->read_buf);
@@ -473,6 +585,11 @@ nsf_main_loop(struct server_framework_state *state)
     // FIXME: check for signal events
 
     if (n <= 0) continue;
+
+      // check for new control connections
+    if (state->socket_fd >= 0 && FD_ISSET(state->socket_fd, &rset)) {
+      accept_new_connection(state);
+    }
 
     // read from/write to control sockets
     for (cur_clnt = state->clients_first; cur_clnt; cur_clnt = cur_clnt->next) {
@@ -608,6 +725,7 @@ nsf_init(struct server_framework_params *params, void *data)
   XCALLOC(state, 1);
   state->params = params;
   state->user_data = data;
+  state->client_id = 1;
   return state;
 }
 

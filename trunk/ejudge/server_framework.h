@@ -73,12 +73,11 @@ struct server_framework_params
   void (*handle_packet)(struct server_framework_state *,
                         struct client_state *,
                         size_t,
-                        const struct new_server_prot_packet *,
-                        void *);
+                        const struct new_server_prot_packet *);
+  struct client_state *(*alloc_state)(struct server_framework_state *);
   void (*cleanup_client)(struct server_framework_state *,
-                         struct client_state *,
-                         void *);
-  void (*free_memory)(struct server_framework_state *, void *, void *);
+                         struct client_state *);
+  void (*free_memory)(struct server_framework_state *, void *);
 };
 
 struct server_framework_state *nsf_init(struct server_framework_params *params, void *data);
@@ -87,9 +86,21 @@ void nsf_cleanup(struct server_framework_state *state);
 
 void nsf_main_loop(struct server_framework_state *state);
 
+void nsf_enqueue_reply(struct server_framework_state *state,
+                       struct client_state *p, size_t len, void const *msg);
+void nsf_send_reply(struct server_framework_state *state,
+                    struct client_state *p, int answer);
+void nsf_new_autoclose(struct server_framework_state *state,
+                       struct client_state *p, void *write_buf,
+                       size_t write_len);
+
 void nsf_err_bad_packet_length(struct server_framework_state *,
                                struct client_state *, size_t, size_t);
 void nsf_err_invalid_command(struct server_framework_state *,
                              struct client_state *, int);
+void nsf_err_packet_too_small(struct server_framework_state *,
+                              struct client_state *, size_t, size_t);
+void nsf_err_protocol_error(struct server_framework_state *,
+                            struct client_state *);
 
 #endif /* __SERVER_FRAMEWORK_H__ */
