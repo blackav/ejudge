@@ -155,6 +155,7 @@ COMMON_CFILES=\
  run_packet_6.c\
  run_packet_7.c\
  send_job_packet.c\
+ server_framework.c\
  sformat.c\
  super_html.c\
  super_html_2.c\
@@ -306,6 +307,7 @@ HFILES=\
  runlog.h\
  run_packet.h\
  run_packet_priv.h\
+ server_framework.h\
  serve_clnt.h\
  settings.h\
  sformat.h\
