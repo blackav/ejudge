@@ -454,6 +454,9 @@ nsf_err_protocol_error(struct server_framework_state *state,
 {
   err("%d: protocol error", p->id);
   nsf_send_reply(state, p, NEW_SRV_ERR_PROTOCOL_ERROR);
+  if (p->client_fds[0] >= 0) close(p->client_fds[0]);
+  if (p->client_fds[1] >= 0) close(p->client_fds[1]);
+  p->client_fds[0] = p->client_fds[1] = -1;
 }
 
 void
@@ -524,7 +527,7 @@ handle_control_command(struct server_framework_state *state,
   }
 
   if (pkt->id == 1) cmd_pass_fd(state, p, p->read_len, pkt);
-  if (state->params->handle_packet)
+  else if (state->params->handle_packet)
     state->params->handle_packet(state, p, p->read_len, pkt);
 
   if (p->state == STATE_READ_READY) p->state = STATE_READ_LEN;
@@ -583,6 +586,7 @@ nsf_main_loop(struct server_framework_state *state)
     }
 
     // FIXME: check for signal events
+    if (sigint_flag) break;
 
     if (n <= 0) continue;
 

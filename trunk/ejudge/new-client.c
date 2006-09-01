@@ -31,7 +31,7 @@
 
 #include <stdio.h>
 
-static const unsigned char *socket_path = "/tmp/new-serve-socket";
+static const unsigned char *socket_path = "/tmp/new-server-socket";
 
 static void
 initialize(int argc, char *argv[])
