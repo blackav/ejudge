@@ -18,6 +18,8 @@
  * GNU General Public License for more details.
  */
 
+#include <unistd.h>
+
 enum
 {
   STATE_READ_CREDS,
@@ -54,18 +56,40 @@ struct client_state
   unsigned char *write_buf;
 };
 
+struct server_framework_state;
+struct new_serve_prot_packet;
+
 struct server_framework_params
 {
   int daemon_mode_flag;
   int force_socket_flag;
   unsigned char *program_name;
   unsigned char *socket_path;
+  unsigned char *log_path;
 
   void *user_data;
 
   void (*startup_error)(const char *, ...);
+  void (*handle_packet)(struct server_framework_state *,
+                        struct client_state *,
+                        size_t,
+                        const struct new_serve_prot_packet *,
+                        void *);
+  void (*cleanup_client)(struct server_framework_state *,
+                         struct client_state *,
+                         void *);
+  void (*free_memory)(struct server_framework_state *, void *, void *);
 };
 
-struct server_framework_state;
+struct server_framework_state *nsf_init(struct server_framework_params *params, void *data);
+int  nsf_prepare(struct server_framework_state *state);
+void nsf_cleanup(struct server_framework_state *state);
+
+void nsf_main_loop(struct server_framework_state *state);
+
+void nsf_err_bad_packet_length(struct server_framework_state *,
+                               struct client_state *, size_t, size_t);
+void nsf_err_invalid_command(struct server_framework_state *,
+                             struct client_state *, int);
 
 #endif /* __SERVER_FRAMEWORK_H__ */

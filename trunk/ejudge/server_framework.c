@@ -21,6 +21,7 @@
 
 #include "errlog.h"
 #include "server_framework.h"
+#include "new_serve_proto.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -29,6 +30,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <sys/types.h>
+#include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -68,7 +70,49 @@ struct server_framework_state
 
   struct client_state *clients_first;
   struct client_state *clients_last;
+
+  void *user_data;
 };
+
+static void
+client_state_delete(struct server_framework_state *state,
+                    struct client_state *p)
+{
+  if (!p) return;
+
+  if (p->next && p->prev) {
+    // middle element
+    p->prev->next = p->next;
+    p->next->prev = p->prev;
+  } else if (p->next) {
+    // the first element
+    state->clients_first = p->next;
+    p->next->prev = 0;
+  } else if (p->prev) {
+    // the last element
+    state->clients_last = p->prev;
+    p->prev->next = 0;
+  } else {
+    // the only element
+    state->clients_first = state->clients_last = 0;
+  }
+
+  fcntl(p->fd, F_SETFL, fcntl(p->fd, F_GETFL) & ~O_NONBLOCK);
+  if (p->fd >= 0) close(p->fd);
+  if (p->client_fds[0] >= 0) close(p->client_fds[0]);
+  if (p->client_fds[1] >= 0) close(p->client_fds[1]);
+  xfree(p->read_buf);
+  xfree(p->write_buf);
+
+  if (state->params->cleanup_client)
+    state->params->cleanup_client(state, p, state->user_data);
+
+  memset(p, -1, sizeof(*p));
+  if (state->params->free_memory)
+    state->params->free_memory(state, p, state->user_data);
+  else
+    xfree(p);
+}
 
 static void
 read_from_control_connection(struct client_state *p)
@@ -309,7 +353,77 @@ write_to_control_connection(struct client_state *p)
 }
 
 void
-server_framework_main_loop(struct server_framework_state *state)
+nsf_err_bad_packet_length(struct server_framework_state *state,
+                          struct client_state *p, size_t len, size_t exp_len)
+{
+  err("%d: bad packet length: %zu, expected %zu", p->id, len, exp_len);
+  p->state = STATE_DISCONNECT;
+}
+
+void
+nsf_err_invalid_command(struct server_framework_state *state,
+                        struct client_state *p, int id)
+{
+  err("%d: invalid protocol command: %d", p->id, id);
+  p->state = STATE_DISCONNECT;
+}
+
+static void
+cmd_pass_fd(struct server_framework_state *state,
+            struct client_state *p,
+            size_t len,
+            const struct new_serve_prot_packet *pkt)
+{
+  if (len != sizeof(*pkt))
+    return nsf_err_bad_packet_length(state, p, len, sizeof(*pkt));
+
+  if (p->client_fds[0] >= 0 || p->client_fds[1] >= 0) {
+    err("%d: cannot stack unprocessed client descriptors", p->id);
+    p->state = STATE_DISCONNECT;
+    return;
+  }
+
+  p->state = STATE_READ_FDS;
+}
+
+static void
+handle_control_command(struct server_framework_state *state,
+                       struct client_state *p)
+{
+  struct new_serve_prot_packet *pkt;
+
+  if (p->read_len < sizeof(*pkt)) {
+    err("%d: packet length is too small: %d", p->id, p->read_len);
+    p->state = STATE_DISCONNECT;
+    return;
+  }
+  pkt = (struct new_serve_prot_packet*) p->read_buf;
+
+  if (pkt->magic != NEW_SERVE_PROT_PACKET_MAGIC) {
+    err("%d: invalid magic value: %04x", p->id, pkt->magic);
+    p->state = STATE_DISCONNECT;
+    return;
+  }
+
+  if (pkt->id <= 0) {
+    err("%d: invalid protocol command: %d", p->id, pkt->id);
+    p->state = STATE_DISCONNECT;
+    return;
+  }
+
+  if (pkt->id == 1) cmd_pass_fd(state, p, p->read_len, pkt);
+  if (state->params->handle_packet)
+    state->params->handle_packet(state, p, p->read_len, pkt, state->user_data);
+
+  if (p->state == STATE_READ_READY) p->state = STATE_READ_LEN;
+  if (p->read_buf) xfree(p->read_buf);
+  p->read_buf = 0;
+  p->expected_len = 0;
+  p->read_len = 0;
+}
+
+void
+nsf_main_loop(struct server_framework_state *state)
 {
   struct client_state *cur_clnt;
   struct timeval timeout;
@@ -378,13 +492,38 @@ server_framework_main_loop(struct server_framework_state *state)
       }
     }
 
+    // execute ready commands from control connections
+    for (cur_clnt = state->clients_first; cur_clnt; cur_clnt = cur_clnt->next) {
+      if (cur_clnt->state == STATE_READ_READY) {
+        handle_control_command(state, cur_clnt);
+        ASSERT(cur_clnt->state != STATE_READ_READY);
+      }
+    }
+
+    // disconnect file descriptors marked for disconnection
+    for (cur_clnt = state->clients_first; cur_clnt; ) {
+      if (cur_clnt->state == STATE_DISCONNECT) {
+        struct client_state *tmp = cur_clnt->next;
+        client_state_delete(state, cur_clnt);
+        cur_clnt = tmp;
+      } else {
+        cur_clnt = cur_clnt->next;
+      }
+    }
   }
 }
 
-void
-server_framework_prepare(struct server_framework_state *state)
+int
+nsf_prepare(struct server_framework_state *state)
 {
   struct sockaddr_un addr;
+  struct sigaction act;
+  int log_fd, pid;
+  unsigned char *log_path;
+
+  if (getuid() == 0) {
+    state->params->startup_error("sorry, will not run as the root");
+  }
 
   if (state->params->force_socket_flag) {
     errno = 0;
@@ -418,25 +557,58 @@ server_framework_prepare(struct server_framework_state *state)
   sigdelset(&state->work_mask, SIGHUP);
   sigdelset(&state->work_mask, SIGCHLD);
 
-  // FIXME: go daemon
+  memset(&act, 0, sizeof(act));
+  act.sa_handler = sighup_handler;
+  sigfillset(&act.sa_mask);
+  sigaction(SIGHUP, &act, 0);
+
+  act.sa_handler = sigint_handler;
+  sigaction(SIGINT, &act, 0);
+  sigaction(SIGTERM, &act, 0);
+
+  act.sa_handler = sigchld_handler;
+  sigaction(SIGCHLD, &act, 0);
+
+  if (state->params->daemon_mode_flag) {
+    log_path = state->params->log_path;
+    if (!log_path) log_path = "/dev/null";
+    if ((log_fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND, 0600)) < 0) {
+      err("cannot open log file %s", log_path);
+      goto cleanup;
+    }
+    close(0);
+    if (open("/dev/null", O_RDONLY) < 0) return -1;
+    close(1);
+    if (open("/dev/null", O_WRONLY) < 0) return -1;
+    close(2); dup(log_fd); close(log_fd);
+    if ((pid = fork()) < 0) return -1;
+    if (pid > 0) _exit(0);
+    if (setsid() < 0) return -1;
+  }
+
+  return 0;
+
+ cleanup:
+  unlink(state->params->socket_path);
+  return -1;
 }
 
 void
-server_framework_cleanup(struct server_framework_state *state)
+nsf_cleanup(struct server_framework_state *state)
 {
   if (state->socket_fd >= 0) close(state->socket_fd);
   unlink(state->params->socket_path);
 }
 
 struct server_framework_state *
-server_framework_init(struct server_framework_params *params,
-                      void *data)
+nsf_init(struct server_framework_params *params, void *data)
 {
-  sighup_handler(1);
-  sigint_handler(1);
-  sigchld_handler(1);
+  struct server_framework_state *state;
 
-  return 0;
+  XCALLOC(state, 1);
+  state->params = params;
+  state->user_data = data;
+  return state;
 }
 
 /*
