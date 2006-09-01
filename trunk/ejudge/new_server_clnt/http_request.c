@@ -66,7 +66,6 @@ new_server_clnt_http_request(new_server_conn_t conn,
   if (param_num < 0 || param_num > MAX_PARAM_NUM) goto failed;
 
   out_size = sizeof(*out);
-  out_size = (out_size + 15) & ~15;
   out_size += arg_num * sizeof(ej_size_t);
   out_size += env_num * sizeof(ej_size_t);
   out_size += 2 * param_num * sizeof(ej_size_t);
@@ -105,7 +104,6 @@ new_server_clnt_http_request(new_server_conn_t conn,
   if (out_size < 0 || out_size > MAX_PARAM_SIZE)
     return -NEW_SRV_ERR_PARAM_OUT_OF_RANGE;
 
-  out_size = (out_size + 15) & ~15;
   out = (struct new_server_prot_http_request*) xcalloc(out_size, 1);
   out->b.magic = NEW_SERVER_PROT_PACKET_MAGIC;
   out->b.id = NEW_SRV_CMD_HTTP_REQUEST;
@@ -115,7 +113,6 @@ new_server_clnt_http_request(new_server_conn_t conn,
 
   bptr = (unsigned long) out;
   bptr += sizeof(*out);
-  bptr = (bptr + 15) & ~15;
   if (arg_num > 0) {
     memcpy((void*) bptr, arg_sizes, arg_num * sizeof(arg_sizes[0]));
     bptr += arg_num * sizeof(arg_sizes[0]);
@@ -126,6 +123,7 @@ new_server_clnt_http_request(new_server_conn_t conn,
   }
   if (param_num > 0) {
     memcpy((void*) bptr, param_name_sizes, param_num * sizeof(ej_size_t));
+    bptr += param_num * sizeof(param_sizes[0]);
     memcpy((void*) bptr, param_sizes, param_num * sizeof(param_sizes[0]));
     bptr += param_num * sizeof(param_sizes[0]);
   }
