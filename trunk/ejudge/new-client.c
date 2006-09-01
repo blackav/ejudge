@@ -19,8 +19,8 @@
 #include "settings.h"
 #include "ej_types.h"
 
-#include "new_serve_proto.h"
-#include "new_serve_clnt.h"
+#include "new_server_proto.h"
+#include "new_server_clnt.h"
 #include "pathutl.h"
 #include "cgi.h"
 #include "clntutil.h"
@@ -81,14 +81,14 @@ extern unsigned char **environ;
 int
 main(int argc, char *argv[])
 {
-  new_serve_conn_t conn = 0;
+  new_server_conn_t conn = 0;
   int r, param_num, i;
   unsigned char **param_names, **params;
   size_t *param_sizes;
 
   initialize(argc, argv);
 
-  if ((r = new_serve_clnt_open(socket_path, &conn)) < 0) {
+  if ((r = new_server_clnt_open(socket_path, &conn)) < 0) {
     err("new-client: cannot connect to the server: %d", -r);
     client_not_configured(0, "cannot connect to the server", 0);
   }
@@ -101,9 +101,9 @@ main(int argc, char *argv[])
     cgi_get_nth_param_bin(i, &param_names[i], &param_sizes[i], &params[i]);
   }
 
-  r = new_serve_clnt_http_request(conn, 1, (unsigned char**) argv, environ,
-                                  param_num, param_names,
-                                  param_sizes, params);
+  r = new_server_clnt_http_request(conn, 1, (unsigned char**) argv, environ,
+                                   param_num, param_names,
+                                   param_sizes, params);
   if (r < 0) {
     err("new-client: http_request failed: %d", -r);
     client_not_configured(0, "request failed", 0);

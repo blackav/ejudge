@@ -1,8 +1,8 @@
 /* -*- c -*- */
 /* $Id$ */
 
-#ifndef __NEW_SERVE_PROTO_H__
-#define __NEW_SERVE_PROTO_H__
+#ifndef __NEW_SERVER_PROTO_H__
+#define __NEW_SERVER_PROTO_H__
 
 /* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
 
@@ -22,8 +22,8 @@
 
 #include <time.h>
 
-#define NEW_SERVE_PROT_PACKET_MAGIC (0xe352)
-struct new_serve_prot_packet
+#define NEW_SERVER_PROT_PACKET_MAGIC (0xe352)
+struct new_server_prot_packet
 {
   unsigned short magic;
   short id;
@@ -66,14 +66,14 @@ enum
   NEW_SRV_ERR_LAST,
 };
 
-struct new_serve_prot_http_request
+struct new_server_prot_http_request
 {
-  struct new_serve_prot_packet b;
+  struct new_server_prot_packet b;
   int arg_num;
   int env_num;
   int param_num;
 };
 
-const unsigned char *new_serve_proto_strerror(int n);
+const unsigned char *new_server_proto_strerror(int n);
 
-#endif /* __NEW_SERVE_PROTO_H__ */
+#endif /* __NEW_SERVER_PROTO_H__ */

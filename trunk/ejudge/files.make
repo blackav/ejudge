@@ -90,13 +90,13 @@ SUPER_CLNT_CFILES=\
  super_clnt/set_param.c\
  super_clnt/simple_cmd.c
 
-NEW_SERVE_CLNT_CFILES=\
- new_serve_clnt/close.c\
- new_serve_clnt/http_request.c\
- new_serve_clnt/open.c\
- new_serve_clnt/pass_fd.c\
- new_serve_clnt/recv_packet.c\
- new_serve_clnt/send_packet.c
+NEW_SERVER_CLNT_CFILES=\
+ new_server_clnt/close.c\
+ new_server_clnt/http_request.c\
+ new_server_clnt/open.c\
+ new_server_clnt/pass_fd.c\
+ new_server_clnt/recv_packet.c\
+ new_server_clnt/send_packet.c
 
 COMMON_CFILES=\
  archive_paths.c\
@@ -258,7 +258,7 @@ CFILES=\
  ${SERVE_CLNT_CFILES}\
  ${SUPER_CLNT_CFILES}\
  ${USERLIST_CLNT_CFILES}\
- ${NEW_SERVE_CLNT_CFILES}
+ ${NEW_SERVER_CLNT_CFILES}
 
 HFILES=\
  archive_paths.h\
@@ -333,9 +333,9 @@ HFILES=\
  version.h\
  unix/unix_fileutl.h\
  userlist_clnt/private.h\
- new_serve_clnt.h\
- new_serve_proto.h\
- new_serve_clnt/new_serve_clnt_priv.h\
+ new_server_clnt.h\
+ new_server_proto.h\
+ new_server_clnt/new_server_clnt_priv.h\
  xml_utils.h
 
 OTHERFILES=\

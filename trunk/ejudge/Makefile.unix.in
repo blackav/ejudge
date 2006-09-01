@@ -136,7 +136,7 @@ EX_CFILES = execute.c version.c
 EX_OBJECTS = ${EX_CFILES:.c=.o}
 
 NC_CFILES=new-client.c version.c
-NC_OBJECTS=$(NC_CFILES:.c=.o) libcommon.a libnew_serve_clnt.a
+NC_OBJECTS=$(NC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a
 
 NS_CFILES=new-server.c version.c
 NS_OBJECTS=$(NS_CFILES:.c=.o) libcommon.a libuserlist_clnt.a
@@ -292,7 +292,7 @@ prjutils/cdeps.o: prjutils/cdeps.c
 
 log: mkChangeLog2
 	L=`./mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ./mkChangeLog2 --user-map=AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/ --strip-prefix=/trunk/ejudge/ --ignore-subdirs
-	for i in win32 unix serve_clnt userlist_clnt checkers extra scripts super_clnt xml_utils new_serve_clnt; do cd $$i; L=`../mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ../mkChangeLog2 --user-map=../AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/$$i/ --strip-prefix=/trunk/ejudge/$$i/; cd ..; done
+	for i in win32 unix serve_clnt userlist_clnt checkers extra scripts super_clnt xml_utils new_server_clnt; do cd $$i; L=`../mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ../mkChangeLog2 --user-map=../AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/$$i/ --strip-prefix=/trunk/ejudge/$$i/; cd ..; done
 	for i in plugins/mysql-userlist; do cd $$i; L=`../../mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ../../mkChangeLog2 --user-map=../../AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/$$i/ --strip-prefix=/trunk/ejudge/$$i/; cd ../..; done
 
 # localization stuff
@@ -336,7 +336,7 @@ libsuper_clnt.a : $(SUPER_CLNT_CFILES:.c=.o)
 libuserlist_clnt.a: $(USERLIST_CLNT_CFILES:.c=.o)
 	ar rcv $@ $^
 
-libnew_serve_clnt.a: $(NEW_SERVE_CLNT_CFILES:.c=.o)
+libnew_server_clnt.a: $(NEW_SERVER_CLNT_CFILES:.c=.o)
 	ar rcv $@ $^
 
 deps.make: cdeps ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c 
