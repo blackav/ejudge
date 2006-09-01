@@ -16,8 +16,8 @@
  */
 
 #include "ej_types.h"
-#include "new_serve_clnt/new_serve_clnt_priv.h"
-#include "new_serve_proto.h"
+#include "new_server_clnt/new_server_clnt_priv.h"
+#include "new_server_proto.h"
 #include "errlog.h"
 
 #include <reuse/xalloc.h>
@@ -32,27 +32,27 @@ enum
 };
 
 int
-new_serve_clnt_http_request(new_serve_conn_t conn,
-                            int out_fd,
-                            unsigned char *args[],
-                            unsigned char *envs[],
-                            int param_num,
-                            unsigned char *param_names[],
-                            size_t param_sizes_in[],
-                            unsigned char *params[])
+new_server_clnt_http_request(new_server_conn_t conn,
+                             int out_fd,
+                             unsigned char *args[],
+                             unsigned char *envs[],
+                             int param_num,
+                             unsigned char *param_names[],
+                             size_t param_sizes_in[],
+                             unsigned char *params[])
 {
   int arg_num = 0, env_num = 0, i;
   ej_size_t *arg_sizes = 0, *env_sizes = 0, *param_sizes = 0;
   ej_size_t *param_name_sizes = 0;
   ej_size_t t;
-  struct new_serve_prot_http_request *out = 0;
+  struct new_server_prot_http_request *out = 0;
   size_t out_size;
   unsigned long bptr;// hope,that that's enough for pointer
   int pipe_fd[2] = { -1, -1 }, pass_fd[2];
   int errcode = -NEW_SRV_ERR_PARAM_OUT_OF_RANGE, r;
   void *void_in = 0;
   size_t in_size = 0;
-  struct new_serve_prot_packet *in;
+  struct new_server_prot_packet *in;
   char c;
 
   if (args) {
@@ -106,8 +106,8 @@ new_serve_clnt_http_request(new_serve_conn_t conn,
     return -NEW_SRV_ERR_PARAM_OUT_OF_RANGE;
 
   out_size = (out_size + 15) & ~15;
-  out = (struct new_serve_prot_http_request*) xcalloc(out_size, 1);
-  out->b.magic = NEW_SERVE_PROT_PACKET_MAGIC;
+  out = (struct new_server_prot_http_request*) xcalloc(out_size, 1);
+  out->b.magic = NEW_SERVER_PROT_PACKET_MAGIC;
   out->b.id = NEW_SRV_CMD_HTTP_REQUEST;
   out->arg_num = arg_num;
   out->env_num = env_num;
@@ -145,26 +145,26 @@ new_serve_clnt_http_request(new_serve_conn_t conn,
   }
 
   if (pipe(pipe_fd) < 0) {
-    err("new_serve_clnt_http_request: pipe() failed: %s", os_ErrorMsg());
+    err("new_server_clnt_http_request: pipe() failed: %s", os_ErrorMsg());
     errcode = -NEW_SRV_ERR_SYSTEM_ERROR;
     goto failed;
   }
   pass_fd[0] = out_fd;
   pass_fd[1] = pipe_fd[1];
-  if ((errcode = new_serve_clnt_pass_fd(conn, 2, pass_fd)) < 0) goto failed;
+  if ((errcode = new_server_clnt_pass_fd(conn, 2, pass_fd)) < 0) goto failed;
   close(pipe_fd[1]); pipe_fd[1] = -1;
-  if ((errcode = new_serve_clnt_send_packet(conn, out_size, out)) < 0)
+  if ((errcode = new_server_clnt_send_packet(conn, out_size, out)) < 0)
     goto failed;
-  if ((errcode = new_serve_clnt_recv_packet(conn, &in_size, &void_in)) < 0)
+  if ((errcode = new_server_clnt_recv_packet(conn, &in_size, &void_in)) < 0)
     goto failed;
   errcode = -NEW_SRV_ERR_PROTOCOL_ERROR;
   if (in_size != sizeof(*in)) {
-    err("new_serve_clnt_http_request: packet size mismatch");
+    err("new_server_clnt_http_request: packet size mismatch");
     goto failed;
   }
-  in = (struct new_serve_prot_packet*) void_in;
-  if (in->magic != NEW_SERVE_PROT_PACKET_MAGIC) {
-    err("new_serve_clnt_http_request: packet magic mismatch");
+  in = (struct new_server_prot_packet*) void_in;
+  if (in->magic != NEW_SERVER_PROT_PACKET_MAGIC) {
+    err("new_server_clnt_http_request: packet magic mismatch");
     goto failed;
   }
   errcode = in->id;
@@ -173,12 +173,12 @@ new_serve_clnt_http_request(new_serve_conn_t conn,
   // wait for the server to complete page generation
   r = read(pipe_fd[0], &c, 1);
   if (r < 0) {
-    err("new_serve_clnt_http_request: read() failed: %s", os_ErrorMsg());
+    err("new_server_clnt_http_request: read() failed: %s", os_ErrorMsg());
     errcode = -NEW_SRV_ERR_READ_ERROR;
     goto failed;
   }
   if (r > 0) {
-    err("new_serve_clnt_http_request: data in wait pipe");
+    err("new_server_clnt_http_request: data in wait pipe");
     goto failed;
   }
   errcode = NEW_SRV_RPL_OK;

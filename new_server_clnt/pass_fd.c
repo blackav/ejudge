@@ -15,8 +15,8 @@
  * GNU General Public License for more details.
  */
 
-#include "new_serve_clnt/new_serve_clnt_priv.h"
-#include "new_serve_proto.h"
+#include "new_server_clnt/new_server_clnt_priv.h"
+#include "new_server_proto.h"
 #include "errlog.h"
 
 #include <reuse/osdeps.h>
@@ -26,9 +26,9 @@
 #include <sys/socket.h>
 
 int
-new_serve_clnt_pass_fd(new_serve_conn_t conn, int fds_num, const int *fds)
+new_server_clnt_pass_fd(new_server_conn_t conn, int fds_num, const int *fds)
 {
-  struct new_serve_prot_packet *out = 0;
+  struct new_server_prot_packet *out = 0;
   int out_size = 0;
   int r;
 
@@ -44,8 +44,8 @@ new_serve_clnt_pass_fd(new_serve_conn_t conn, int fds_num, const int *fds)
   out_size = sizeof(*out);
   out = alloca(out_size);
   out->id = NEW_SRV_CMD_PASS_FD;
-  out->magic = NEW_SERVE_PROT_PACKET_MAGIC;
-  if ((r = new_serve_clnt_send_packet(conn, out_size, out)) < 0) return r;
+  out->magic = NEW_SERVER_PROT_PACKET_MAGIC;
+  if ((r = new_server_clnt_send_packet(conn, out_size, out)) < 0) return r;
 
   memset(&msg, 0, sizeof(msg));
   msg.msg_control = msgbuf;
@@ -65,11 +65,11 @@ new_serve_clnt_pass_fd(new_serve_conn_t conn, int fds_num, const int *fds)
   val = 0;
   ret = sendmsg(conn->fd, &msg, 0);
   if (ret < 0) {
-    err("new_serve_clnt_pass_fd: sendmsg() failed: %s", os_ErrorMsg());
+    err("new_server_clnt_pass_fd: sendmsg() failed: %s", os_ErrorMsg());
     return -NEW_SRV_ERR_WRITE_ERROR;
   }
   if (ret != 4) {
-    err("new_serve_clnt_pass_fd: sendmsg() short write: %d bytes", ret);
+    err("new_server_clnt_pass_fd: sendmsg() short write: %d bytes", ret);
     return -NEW_SRV_ERR_WRITE_ERROR;
   }
   return 0;

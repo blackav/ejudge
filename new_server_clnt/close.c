@@ -15,11 +15,11 @@
  * GNU General Public License for more details.
  */
 
-#include "new_serve_clnt/new_serve_clnt_priv.h"
-#include "new_serve_proto.h"
+#include "new_server_clnt/new_server_clnt_priv.h"
+#include "new_server_proto.h"
 
 int
-new_serve_clnt_close(new_serve_conn_t conn)
+new_server_clnt_close(new_server_conn_t conn)
 {
   // FIXME: do action
   return 0;
