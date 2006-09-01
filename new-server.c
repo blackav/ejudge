@@ -42,7 +42,7 @@
 #include <sys/select.h>
 #include <time.h>
 
-struct server_framework_params
+static struct server_framework_params params =
 {
 };
 
@@ -57,7 +57,7 @@ startup_error(const char *format, ...)
   vsnprintf(buf, sizeof(buf), format, args);
   va_end(args);
 
-  fprintf(stderr, "%s: %s\n", program_name, buf);
+  fprintf(stderr, "%s: %s\n", params.program_name, buf);
   exit(1);
 }
 
@@ -67,13 +67,13 @@ main(int argc, char *argv[])
 {
   int i;
 
-  program_name = argv[0];
+  params.program_name = argv[0];
   for (i = 1; i < argc; ) {
     if (!strcmp(argv[i], "-D")) {
-      daemon_mode = 1;
+      params.daemon_mode_flag = 1;
       i++;
     } else if (!strcmp(argv[i], "-f")) {
-      forced_mode = 1;
+      params.force_socket_flag = 1;
       i++;
     } else if (!strcmp(argv[i], "--")) {
       i++;
@@ -89,9 +89,11 @@ main(int argc, char *argv[])
     startup_error("sorry, will not run as the root");
   }
 
+  /*
   prepare();
   do_work();
   cleanup();
+  */
 
   return 0;
 }
