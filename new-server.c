@@ -22,31 +22,33 @@
 
 #include "errlog.h"
 #include "server_framework.h"
+#include "new_serve_proto.h"
 
-#include <reuse/osdeps.h>
-#include <reuse/xalloc.h>
-#include <reuse/logger.h>
-
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <stdarg.h>
-#include <signal.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <errno.h>
-#include <sys/select.h>
-#include <time.h>
+
+static void startup_error(const char *, ...) __attribute__((noreturn,format(printf, 1, 2)));
+static void handle_packet_func(struct server_framework_state *,
+                               struct client_state *,
+                               size_t,
+                               const struct new_serve_prot_packet *,
+                               void *);
 
 static struct server_framework_params params =
 {
+  .daemon_mode_flag = 0,
+  .force_socket_flag = 0,
+  .program_name = 0,
+  .socket_path = "/tmp/new-server-socket",
+  .log_path = "/tmp/new-server-log",
+  .user_data = 0,
+  .startup_error = startup_error,
+  .handle_packet = handle_packet_func,
 };
 
-static void startup_error(const char *, ...) __attribute__((noreturn,format(printf, 1, 2)));
+static struct server_framework_state *state = 0;
+
 static void
 startup_error(const char *format, ...)
 {
@@ -61,6 +63,27 @@ startup_error(const char *format, ...)
   exit(1);
 }
 
+typedef void handler_t(struct server_framework_state *state,
+                       struct client_state *p,
+                       size_t pkt_size,
+                       const struct new_serve_prot_packet *pkt,
+                       void *user_data);
+
+static handler_t *handlers[NEW_SRV_CMD_LAST] =
+{
+};
+
+static void
+handle_packet_func(struct server_framework_state *state,
+                   struct client_state *p,
+                   size_t pkt_size,
+                   const struct new_serve_prot_packet *pkt,
+                   void *user_data)
+{
+  if (pkt->id <= 1 || pkt->id >= NEW_SRV_CMD_LAST || !handlers[pkt->id])
+    return nsf_err_invalid_command(state, p, pkt->id);
+
+}
 
 int
 main(int argc, char *argv[])
@@ -85,15 +108,11 @@ main(int argc, char *argv[])
   }
 
   info("new-server %s, compiled %s", compile_version, compile_date);
-  if (getuid() == 0) {
-    startup_error("sorry, will not run as the root");
-  }
 
-  /*
-  prepare();
-  do_work();
-  cleanup();
-  */
+  if (!(state = nsf_init(&params, 0))) return 1;
+  if (nsf_prepare(state) < 0) return 1;
+  nsf_main_loop(state);
+  nsf_cleanup(state);
 
   return 0;
 }
