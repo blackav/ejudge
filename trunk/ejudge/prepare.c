@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1459,6 +1459,7 @@ set_defaults(int mode)
   int i, j, si;
   char *ish;
   char *sish;
+  void *vptr;
 
   size_t tmp_len = 0;
   int r;
@@ -1898,7 +1899,8 @@ set_defaults(int mode)
     if (global->stand_header_file[0]) {
       pathmake2(global->stand_header_file, global->conf_dir, "/",
                 global->stand_header_file, 0);
-      r = generic_read_file((char**) &global->stand_header_txt, 0, &tmp_len, 0,
+      vptr = &global->stand_header_txt;
+      r = generic_read_file(vptr, 0, &tmp_len, 0,
                             0, global->stand_header_file, "");
       if (r < 0) return -1;
     }
@@ -1906,7 +1908,8 @@ set_defaults(int mode)
     if (global->stand_footer_file[0]) {
       pathmake2(global->stand_footer_file, global->conf_dir, "/",
                 global->stand_footer_file, 0);
-      r = generic_read_file((char**) &global->stand_footer_txt, 0, &tmp_len, 0,
+      vptr = &global->stand_footer_txt;
+      r = generic_read_file(vptr, 0, &tmp_len, 0,
                             0, global->stand_footer_file, "");
       if (r < 0) return -1;
     }
@@ -1915,14 +1918,16 @@ set_defaults(int mode)
       if (global->stand2_header_file[0]) {
         pathmake2(global->stand2_header_file, global->conf_dir, "/",
                   global->stand2_header_file, 0);
-        r = generic_read_file((char**) &global->stand2_header_txt, 0, &tmp_len,
+        vptr = &global->stand2_header_txt;
+        r = generic_read_file(vptr, 0, &tmp_len,
                               0, 0, global->stand2_header_file, "");
         if (r < 0) return -1;
       }
       if (global->stand2_footer_file[0]) {
         pathmake2(global->stand2_footer_file, global->conf_dir, "/",
                   global->stand2_footer_file, 0);
-        r = generic_read_file((char**) &global->stand2_footer_txt, 0, &tmp_len,
+        vptr = &global->stand2_footer_txt;
+        r = generic_read_file(vptr, 0, &tmp_len,
                               0, 0, global->stand2_footer_file, "");
         if (r < 0) return -1;
       } 
@@ -1932,14 +1937,16 @@ set_defaults(int mode)
       if (global->plog_header_file[0]) {
         pathmake2(global->plog_header_file, global->conf_dir, "/",
                   global->plog_header_file, 0);
-        r = generic_read_file((char**) &global->plog_header_txt, 0, &tmp_len,
+        vptr = &global->plog_header_txt;
+        r = generic_read_file(vptr, 0, &tmp_len,
                               0, 0, global->plog_header_file, "");
         if (r < 0) return -1;
       }
       if (global->plog_footer_file[0]) {
         pathmake2(global->plog_footer_file, global->conf_dir, "/",
                   global->plog_footer_file, 0);
-        r = generic_read_file((char**) &global->plog_footer_txt, 0, &tmp_len,
+        vptr = &global->plog_footer_txt;
+        r = generic_read_file(vptr, 0, &tmp_len,
                               0, 0, global->plog_footer_file, "");
         if (r < 0) return -1;
       }

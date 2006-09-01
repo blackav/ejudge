@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -60,7 +60,7 @@ static const signed char armored_html_len_table[256] =
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 };
 
-static char const * const armored_html_translate_table[256] =
+static unsigned char const * const armored_html_translate_table[256] =
 {
   "?","?","?","?","?","?","?","?","?",0,0,"?","?",0,"?","?",
   "?","?","?","?","?","?","?","?","?","?","?","?","?","?","?","?",
@@ -83,7 +83,7 @@ static char const * const armored_html_translate_table[256] =
 const unsigned char * const *
 html_get_armor_table(void)
 {
-  return (const unsigned char * const *) armored_html_translate_table;
+  return armored_html_translate_table;
 }
 
 int
@@ -128,7 +128,7 @@ html_armor_text(char const *str, int size, char *out)
 {
   unsigned char const *p = (unsigned char const *) str;
   char *s = out;
-  char const *t;
+  unsigned char const *t;
   int i = size;
 
   for (; i > 0; p++, i--) {
