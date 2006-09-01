@@ -23,6 +23,7 @@
 #include "errlog.h"
 #include "server_framework.h"
 #include "new_server_proto.h"
+#include "new-server.h"
 
 #include <reuse/xalloc.h>
 
@@ -84,10 +85,12 @@ cmd_http_request(struct server_framework_state *state,
   const unsigned char ** envs;
   const unsigned char ** param_names;
   const unsigned char ** params;
+  size_t *my_param_sizes;
   int i;
   char *out_txt = 0;
   size_t out_size = 0;
   FILE *out_f = 0;
+  struct http_request_info hr;
 
   if (pkt_size < sizeof(*pkt))
     return nsf_err_packet_too_small(state, p, pkt_size, sizeof(*pkt));
@@ -101,7 +104,6 @@ cmd_http_request(struct server_framework_state *state,
     return nsf_err_protocol_error(state, p);
 
   in_size = sizeof(*pkt);
-  in_size = (in_size + 15) & ~15;
   in_size += pkt->arg_num * sizeof(ej_size_t);
   in_size += pkt->env_num * sizeof(ej_size_t);
   in_size += pkt->param_num * 2 * sizeof(ej_size_t);
@@ -112,10 +114,10 @@ cmd_http_request(struct server_framework_state *state,
   XALLOCAZ(envs, pkt->env_num);
   XALLOCAZ(param_names, pkt->param_num);
   XALLOCAZ(params, pkt->param_num);
+  XALLOCAZ(my_param_sizes, pkt->param_num);
 
   bptr = (unsigned long) pkt;
-  bptr += sizeof(pkt);
-  bptr = (bptr + 15) * sizeof(ej_size_t);
+  bptr += sizeof(*pkt);
   arg_sizes = (const ej_size_t *) bptr;
   bptr += pkt->arg_num * sizeof(ej_size_t);
   env_sizes = (const ej_size_t *) bptr;
@@ -141,7 +143,6 @@ cmd_http_request(struct server_framework_state *state,
     in_size += param_name_sizes[i] + 1;
     in_size += param_sizes[i] + 1;
   }
-  in_size = (in_size + 15) & ~15;
   if (pkt_size != in_size)
     return nsf_err_bad_packet_length(state, p, pkt_size, in_size);
 
@@ -163,11 +164,23 @@ cmd_http_request(struct server_framework_state *state,
     if (strlen(param_names[i]) != param_name_sizes[i])
       return nsf_err_protocol_error(state, p);
     params[i] = (const unsigned char *) bptr;
+    my_param_sizes[i] = param_sizes[i];
     bptr += param_sizes[i] + 1;
   }
 
+  memset(&hr, 0, sizeof(hr));
+  hr.arg_num = pkt->arg_num;
+  hr.args = args;
+  hr.env_num = pkt->env_num;
+  hr.envs = envs;
+  hr.param_num = pkt->param_num;
+  hr.param_names = param_names;
+  hr.param_sizes = my_param_sizes;
+  hr.params = params;
+
   // ok, generate HTML
   out_f = open_memstream(&out_txt, &out_size);
+  new_server_handle_http_request(state, p, out_f, &hr);
   fclose(out_f); out_f = 0;
 
   nsf_new_autoclose(state, p, out_txt, out_size);
