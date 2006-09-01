@@ -432,6 +432,10 @@ struct server_framework_state *
 server_framework_init(struct server_framework_params *params,
                       void *data)
 {
+  sighup_handler(1);
+  sigint_handler(1);
+  sigchld_handler(1);
+
   return 0;
 }
 
