@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-08-31 19:48+0400\n"
+"POT-Creation-Date: 2006-09-02 00:55+0400\n"
 "PO-Revision-Date: 2006-08-26 18:43+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -479,7 +479,7 @@ msgstr "Подтвердить распечатывание"
 msgid "Connection to the server is broken."
 msgstr "Нет связи с сервером."
 
-#: html.c:1294 html.c:1336 users.c:657
+#: html.c:1294 html.c:1336 new_server_html.c:257 users.c:657
 msgid "Contest"
 msgstr "Турнир"
 
@@ -1099,7 +1099,7 @@ msgid "Judge's report"
 msgstr "Судейский протокол"
 
 #: html.c:864 html.c:3891 html.c:4895 master_html.c:698 master_html.c:1001
-#: master_html.c:1459 master_html.c:1784
+#: master_html.c:1459 master_html.c:1784 new_server_html.c:271
 msgid "Language"
 msgstr "Язык"
 
@@ -1151,9 +1151,9 @@ msgstr "Войти в систему"
 msgid "Log out"
 msgstr "Выйти из системы"
 
-#: master.c:301 master.c:347 register.c:1671 register.c:1893 register.c:1964
-#: register.c:2043 register.c:2137 serve-control.c:522 team.c:647
-#: userlist-server.c:3685
+#: master.c:301 master.c:347 new_server_html.c:243 register.c:1671
+#: register.c:1893 register.c:1964 register.c:2043 register.c:2137
+#: serve-control.c:522 team.c:647 userlist-server.c:3685
 msgid "Login"
 msgstr "Регистрационное имя (login)"
 
@@ -1468,8 +1468,8 @@ msgstr "Решения участников принимаются на проверку"
 msgid "Participants' solutions are being judged"
 msgstr "Решения участников проверяются"
 
-#: master.c:301 master.c:347 register.c:1896 register.c:1967 register.c:2138
-#: serve-control.c:522 team.c:647
+#: master.c:301 master.c:347 new_server_html.c:250 register.c:1896
+#: register.c:1967 register.c:2138 serve-control.c:522 team.c:647
 msgid "Password"
 msgstr "Пароль"
 
@@ -1765,6 +1765,11 @@ msgstr "Разрешить проверку решений"
 msgid "Retype new password"
 msgstr "Пароль ещё раз"
 
+#: new_server_html.c:268
+#, fuzzy
+msgid "Role"
+msgstr "Re"
+
 #: register.c:2777
 msgid "Role/person parameters are not defined."
 msgstr "Параметры роли/члена не определены."
@@ -2032,8 +2037,8 @@ msgstr "Время попытки"
 msgid "Submissions"
 msgstr "Посылки"
 
-#: master.c:301 master.c:347 master_html.c:1846 register.c:1899
-#: register.c:1970 serve-control.c:522 team.c:668
+#: master.c:301 master.c:347 master_html.c:1846 new_server_html.c:274
+#: register.c:1899 register.c:1970 serve-control.c:522 team.c:668
 msgid "Submit"
 msgstr "Отослать"
 
