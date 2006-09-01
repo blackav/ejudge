@@ -15,8 +15,8 @@
  * GNU General Public License for more details.
  */
 
-#include "new_serve_clnt/new_serve_clnt_priv.h"
-#include "new_serve_proto.h"
+#include "new_server_clnt/new_server_clnt_priv.h"
+#include "new_server_proto.h"
 #include "errlog.h"
 
 #include <reuse/integral.h>
@@ -26,7 +26,7 @@
 #include <sys/uio.h>
 
 int
-new_serve_clnt_send_packet(new_serve_conn_t conn, size_t size, void const *buf)
+new_server_clnt_send_packet(new_server_conn_t conn, size_t size, void const *buf)
 {
   const unsigned char *b;
   int w, n;
@@ -37,7 +37,7 @@ new_serve_clnt_send_packet(new_serve_conn_t conn, size_t size, void const *buf)
 
   /* -1073741824 is 0xc0000000 or 0xffffffffc0000000 */
   if ((size & -1073741824L)) {
-    err("new_serve_clnt_send_packet: packet length exceeds 1GiB");
+    err("new_server_clnt_send_packet: packet length exceeds 1GiB");
     return -NEW_SRV_ERR_PACKET_TOO_BIG;
   }
   size32 = (ruint32_t) size;
@@ -74,7 +74,7 @@ new_serve_clnt_send_packet(new_serve_conn_t conn, size_t size, void const *buf)
   return 0;
 
  write_error:
-  err("new_serve_clnt_send_packet: write() failed: %s", os_ErrorMsg());
+  err("new_server_clnt_send_packet: write() failed: %s", os_ErrorMsg());
   return -NEW_SRV_ERR_WRITE_ERROR;
 }
 

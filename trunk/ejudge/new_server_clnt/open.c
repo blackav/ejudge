@@ -15,8 +15,8 @@
  * GNU General Public License for more details.
  */
 
-#include "new_serve_clnt/new_serve_clnt_priv.h"
-#include "new_serve_proto.h"
+#include "new_server_clnt/new_server_clnt_priv.h"
+#include "new_server_proto.h"
 #include "errlog.h"
 
 #include <reuse/xalloc.h>
@@ -29,7 +29,7 @@
 #include <sys/un.h>
 
 int
-new_serve_clnt_open(const unsigned char *socketpath, new_serve_conn_t *p_conn)
+new_server_clnt_open(const unsigned char *socketpath, new_server_conn_t *p_conn)
 {
   int fd = -1;
   int max_path_buf;
@@ -42,7 +42,7 @@ new_serve_clnt_open(const unsigned char *socketpath, new_serve_conn_t *p_conn)
   struct cmsghdr *pmsg;
   struct iovec send_vec[1];
   int code = -1;
-  new_serve_conn_t new_conn = 0;
+  new_server_conn_t new_conn = 0;
 
   signal(SIGPIPE, SIG_IGN);
 
@@ -50,20 +50,20 @@ new_serve_clnt_open(const unsigned char *socketpath, new_serve_conn_t *p_conn)
   max_path_buf = sizeof(struct sockaddr_un) - 
     XOFFSET(struct sockaddr_un, sun_path);
   if (strlen(socketpath) >= max_path_buf) {
-    err("new_serve_clnt_open: socket path length is too long (%zu)",
+    err("new_server_clnt_open: socket path length is too long (%zu)",
         strlen(socketpath));
     return -NEW_SRV_ERR_BAD_SOCKET_NAME;
   }
 
   if ((fd = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
-    err("new_serve_clnt_open: socket() failed: %s", os_ErrorMsg());
+    err("new_server_clnt_open: socket() failed: %s", os_ErrorMsg());
     code = -NEW_SRV_ERR_SYSTEM_ERROR;
     goto failure;
   }
 
   val = 1;
   if (setsockopt(fd, SOL_SOCKET, SO_PASSCRED, &val, sizeof(val)) < 0) {
-    err("new_serve_clnt_open: setsockopt() failed: %s", os_ErrorMsg());
+    err("new_server_clnt_open: setsockopt() failed: %s", os_ErrorMsg());
     code = -NEW_SRV_ERR_SYSTEM_ERROR;
     goto failure;
   }
@@ -72,7 +72,7 @@ new_serve_clnt_open(const unsigned char *socketpath, new_serve_conn_t *p_conn)
   addr.sun_family = AF_UNIX;
   strncpy(addr.sun_path, socketpath, max_path_buf - 1);
   if (connect(fd, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
-    err("new_serve_clnt_open: connect() failed: %s", os_ErrorMsg());
+    err("new_server_clnt_open: connect() failed: %s", os_ErrorMsg());
     code = -NEW_SRV_ERR_CONNECT_FAILED;
     goto failure;
   }
@@ -96,12 +96,12 @@ new_serve_clnt_open(const unsigned char *socketpath, new_serve_conn_t *p_conn)
   val = 0;
   ret = sendmsg(fd, &msg, 0);
   if (ret < 0) {
-    err("new_serve_clnt_open: sendmsg() failed: %s", os_ErrorMsg());
+    err("new_server_clnt_open: sendmsg() failed: %s", os_ErrorMsg());
     code = -NEW_SRV_ERR_WRITE_ERROR;
     goto failure;
   }
   if (ret != 4) {
-    err("new_serve_clnt_open: sendmsg() short write: %d bytes", ret);
+    err("new_server_clnt_open: sendmsg() short write: %d bytes", ret);
     code = -NEW_SRV_ERR_WRITE_ERROR;
     goto failure;
   }

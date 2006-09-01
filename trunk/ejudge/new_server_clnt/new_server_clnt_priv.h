@@ -1,8 +1,8 @@
 /* -*- c -*- */
 /* $Id$ */
 
-#ifndef __NEW_SERVE_CLNT_PRIV_H__
-#define __NEW_SERVE_CLNT_PRIV_H__
+#ifndef __NEW_SERVER_CLNT_PRIV_H__
+#define __NEW_SERVER_CLNT_PRIV_H__
 
 /* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
 
@@ -18,11 +18,11 @@
  * GNU General Public License for more details.
  */
 
-#include "new_serve_clnt.h"
+#include "new_server_clnt.h"
 
-struct new_serve_conn
+struct new_server_conn
 {
   int fd;
 };
 
-#endif /* __NEW_SERVE_CLNT_PRIV_H__ */
+#endif /* __NEW_SERVER_CLNT_PRIV_H__ */
