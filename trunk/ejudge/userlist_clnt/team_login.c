@@ -19,6 +19,7 @@
 
 int
 userlist_clnt_team_login(struct userlist_clnt *clnt,
+                         int cmd,
                          ej_ip_t origin_ip,
                          int ssl,
                          int contest_id,
@@ -46,7 +47,7 @@ userlist_clnt_team_login(struct userlist_clnt *clnt,
   memset(out, 0, out_size);
   login_ptr = out->data;
   passwd_ptr = login_ptr + login_len + 1;
-  out->request_id = ULS_TEAM_LOGIN;
+  out->request_id = cmd;
   out->origin_ip = origin_ip;
   out->ssl = ssl;
   out->contest_id = contest_id;

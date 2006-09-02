@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,7 @@
 
 int
 userlist_clnt_login(struct userlist_clnt *clnt,
+                    int cmd,
                     ej_ip_t origin_ip,
                     int ssl,
                     int contest_id,
@@ -41,7 +42,7 @@ userlist_clnt_login(struct userlist_clnt *clnt,
   len = sizeof(struct userlist_pk_do_login) + strlen(login) + strlen(passwd);
   data = alloca(len);
   memset(data, 0, len);
-  data->request_id = ULS_DO_LOGIN;
+  data->request_id = cmd;
   data->origin_ip = origin_ip;
   data->ssl = ssl;
   data->contest_id = contest_id;
