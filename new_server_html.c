@@ -24,6 +24,12 @@
 #include "xml_utils.h"
 #include "misctext.h"
 #include "copyright.h"
+#include "userlist_clnt.h"
+#include "ejudge_cfg.h"
+#include "errlog.h"
+#include "userlist_proto.h"
+#include "contests.h"
+#include "nsdb_plugin.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -42,14 +48,7 @@
 
 enum
 {
-  USER_ROLE_CONTESTANT,
-  USER_ROLE_OBSERVER,
-  USER_ROLE_JUDGE,
-  USER_ROLE_CHIEF_JUDGE,
-  USER_ROLE_COORDINATOR,
-  USER_ROLE_ADMIN,
-
-  USER_ROLE_LAST,
+  NEW_SRV_ACTION_LOGIN_PAGE = 1,
 };
 
 static const unsigned char*
@@ -82,6 +81,68 @@ ns_cgi_param(const struct http_request_info *phr, const unsigned char *param,
   if (strlen(phr->params[i]) != phr->param_sizes[i]) return -1;
   *p_value = phr->params[i];
   return 1;
+}
+
+static const unsigned char *
+ns_cgi_nname(const struct http_request_info *phr,
+             const unsigned char *prefix, size_t pflen)
+{
+  int i;
+
+  if (!prefix || !pflen) return 0;
+  for (i = 0; i < phr->param_num; i++)
+    if (!strncmp(phr->param_names[i], prefix, pflen))
+      return phr->param_names[i];
+  return 0;
+}
+
+static void
+close_ul_connection(struct server_framework_state *state)
+{
+  if (!ul_conn) return;
+
+  nsf_remove_watch(state, userlist_clnt_get_fd(ul_conn));
+  ul_conn = userlist_clnt_close(ul_conn);
+}
+
+static void
+ul_conn_callback(struct server_framework_state *state,
+                 struct server_framework_watch *pw,
+                 int events)
+{
+  info("userlist-server fd ready: disconnect?");
+  close_ul_connection(state);
+}
+
+static int
+open_ul_connection(struct server_framework_state *state)
+{
+  struct server_framework_watch w;
+  int r;
+
+  if (ul_conn) return 0;
+
+  if (!(ul_conn = userlist_clnt_open(config->socket_path))) {
+    err("open_ul_connection: connect to server failed");
+    return -1;
+  }
+
+  memset(&w, 0, sizeof(w));
+  w.fd = userlist_clnt_get_fd(ul_conn);
+  w.mode = NSF_READ;
+  w.callback = ul_conn_callback;
+  nsf_add_watch(state, &w);
+
+  xfree(ul_login); ul_login = 0;
+  if ((r = userlist_clnt_admin_process(ul_conn, &ul_uid, &ul_login, 0)) < 0) {
+    err("open_connection: cannot became an admin process: %s",
+        userlist_strerror(-r));
+    close_ul_connection(state);
+    return -1;
+  }
+
+  info("running as %s (%d)", ul_login, ul_uid);
+  return 0;
 }
 
 static unsigned char default_header_template[] =
@@ -282,14 +343,84 @@ privileged_page_login(struct server_framework_state *state,
                       FILE *fout,
                       struct http_request_info *phr)
 {
-  const unsigned char *login;
-  int r;
+  const unsigned char *login, *password, *s;
+  int r, n;
+  struct contest_desc *cnts = 0;
+  opcap_t caps;
 
   if ((r = ns_cgi_param(phr, "login", &login)) < 0) {
     // FIXME: generate an error page
     abort();
   }
-  if (!r) return privileged_page_login_page(state, p, fout, phr);
+  if (!r || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
+    return privileged_page_login_page(state, p, fout, phr);
+
+  if ((r = ns_cgi_param(phr, "password", &password)) <= 0) {
+    // FIXME: generate an error page
+    abort();
+  }
+  if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts) {
+    // FIXME: generate an error page
+    abort();
+  }
+  phr->role = USER_ROLE_OBSERVER;
+  if (ns_cgi_param(phr, "role", &s) > 0) {
+    if (sscanf(s, "%d%n", &r, &n) == 1 && !s[n]
+        && r >= USER_ROLE_CONTESTANT && r < USER_ROLE_LAST)
+      phr->role = r;
+  }
+  if (phr->role == USER_ROLE_CONTESTANT) {
+    // FIXME: go to the unprvileged login
+    abort();
+  }
+
+  // analyze IP limitations
+  if (phr->role == USER_ROLE_ADMIN) {
+    // as for the master program
+    if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag)) {
+      // FIXME: generate an error page
+      abort();
+    }
+  } else {
+    // as for judge program
+    if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag)) {
+      // FIXME: generate an error page
+      abort();
+    }
+  }
+
+  if (open_ul_connection(state) < 0) { 
+    // FIXME: generate an error page
+    abort();
+  }
+  if (userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_USER,
+                               phr->ip, phr->ssl_flag, phr->contest_id,
+                               phr->locale_id, 0, phr->role, login, password,
+                               &phr->user_id, &phr->session_id, 0, 0,
+                               &phr->name) < 0) {
+    // FIXME: generate an error page
+    abort();
+  }
+  phr->login = xstrdup(login);
+
+  // analyze permissions
+  if (phr->role == USER_ROLE_ADMIN) {
+    // as for the master program
+    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
+        || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0) {
+      // FIXME: generate an error page
+      abort();
+    }
+  } else {
+    // user privileges checked locally
+    if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0) {
+      // FIXME: generate an error page
+      abort();
+    }
+  }
+
+  // TODO: store a cookie
+  // TODO: generate an autorefresh login successful page
 }
 
 static void
@@ -298,7 +429,8 @@ privileged_page(struct server_framework_state *state,
                 FILE *fout,
                 struct http_request_info *phr)
 {
-  if (!phr->session_id) return privileged_page_login(state, p, fout, phr);
+  if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
+    return privileged_page_login(state, p, fout, phr);
 }
 
 void
@@ -376,6 +508,24 @@ new_server_handle_http_request(struct server_framework_state *state,
         || phr->locale_id <= 0) {
       // FIXME: generate an error page
       abort();
+    }
+  }
+
+  // parse the action
+  if ((s = ns_cgi_nname(phr, "action_", 7))) {
+    if (sscanf(s, "action_%d%n", &phr->action, &n) != 1 || s[n]
+        || phr->action <= 0) {
+      // FIXME: generate an error page
+      abort();
+    }
+  } else if ((r = ns_cgi_param(phr, "action", &s)) < 0) {
+    // FIXME: generate an error page
+    abort();    
+  } else if (r > 0) {
+    if (sscanf(s, "%d%n", &phr->action, &n) != 1 || s[n]
+        || phr->action <= 0) {
+      // FIXME: generate an error page
+      abort();    
     }
   }
 

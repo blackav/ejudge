@@ -94,6 +94,24 @@ void nsf_new_autoclose(struct server_framework_state *state,
                        struct client_state *p, void *write_buf,
                        size_t write_len);
 
+enum
+{
+  NSF_READ = 1, NSF_WRITE = 2, NSF_RW = 3
+};
+struct server_framework_watch
+{
+  int fd;
+  int mode;
+  void (*callback)(struct server_framework_state *, 
+                   struct server_framework_watch *,
+                   int event);
+  void *user;
+};
+
+int nsf_add_watch(struct server_framework_state *,
+                  struct server_framework_watch*);
+int nsf_remove_watch(struct server_framework_state *, int);
+
 void nsf_err_bad_packet_length(struct server_framework_state *,
                                struct client_state *, size_t, size_t);
 void nsf_err_invalid_command(struct server_framework_state *,

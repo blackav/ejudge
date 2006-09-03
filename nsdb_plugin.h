@@ -45,6 +45,9 @@ struct nsdb_plugin_iface
   int (*check)(void *);
   // initialize the data
   int (*create)(void *);
+
+  // check whether the user may login using the given role
+  int (*check_role)(void *, int, int, int);
 };
 
 /* default plugin: compiled into new-server */
