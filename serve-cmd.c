@@ -223,7 +223,7 @@ handle_login(const unsigned char *cmd,
 
   r = userlist_clnt_priv_login(userlist_conn, ULS_PRIV_LOGIN,
                                local_ip, ssl_flag, contest_id,
-                               0, PRIV_LEVEL_ADMIN,
+                               0, PRIV_LEVEL_ADMIN, 0,
                                argv[1], argv[2],
                                &user_id, &session_id, 0, 0, &user_name);
   if (r < 0) {

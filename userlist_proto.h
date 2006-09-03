@@ -164,6 +164,7 @@ struct userlist_pk_do_login
   int           contest_id;
   signed char   locale_id;
   unsigned char priv_level;
+  int           role;
   unsigned char login_length;
   unsigned char password_length;
   unsigned char data[2];

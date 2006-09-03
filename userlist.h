@@ -4,7 +4,7 @@
 #ifndef __USERLIST_H__
 #define __USERLIST_H__
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -155,6 +155,7 @@ enum
     USERLIST_A_SSL,
     USERLIST_A_LAST_INFO_PWDCHANGE,
     USERLIST_A_LAST_INFO_CHANGE,
+    USERLIST_A_ROLE,
 
     USERLIST_LAST_ATTN,
   };
@@ -316,6 +317,7 @@ struct userlist_cookie
   int contest_id;
   int locale_id;
   int priv_level;
+  int role;
 };
 
 struct userlist_contest

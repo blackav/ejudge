@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -134,6 +134,7 @@ static char const * const attr_map[] =
   "ssl",
   "last_info_pwdchange",
   "last_info_change",
+  "role",
 
   0
 };
@@ -467,6 +468,10 @@ parse_cookies(char const *path, struct xml_tree *cookies,
         break;
       case USERLIST_A_PRIV_LEVEL:
         if (parse_priv_level_attr(a, &c->priv_level) < 0) return -1;
+        break;
+      case USERLIST_A_ROLE:
+        if (xml_attr_int(a, &c->role) < 0) return -1;
+        if (c->role < 0) return -1;
         break;
       default:
         return xml_err_attr_not_allowed(t, a);
@@ -1322,6 +1327,9 @@ unparse_cookies(const struct xml_tree *p, FILE *f)
     }
     if (c->contest_id > 0) {
       fprintf(f, " %s=\"%d\"", attr_map[USERLIST_A_CONTEST_ID], c->contest_id);
+    }
+    if (c->role > 0) {
+      fprintf(f, " %s=\"%d\"", attr_map[USERLIST_A_ROLE], c->role);
     }
     fputs("/>\n", f);
   }

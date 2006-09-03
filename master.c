@@ -506,7 +506,7 @@ authentificate(void)
   r = userlist_clnt_priv_login(userlist_conn, ULS_PRIV_LOGIN,
                                client_ip, ssl_flag, global->contest_id,
                                0, /* locale_id */
-                               priv_level, client_login, client_password,
+                               priv_level, 0, client_login, client_password,
                                &client_user_id,
                                &client_sid,
                                0, /* p_locale_id */

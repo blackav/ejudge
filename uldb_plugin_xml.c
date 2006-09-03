@@ -57,7 +57,7 @@ static int remove_user_func(void *, int);
 static int get_cookie_func(void *, ej_cookie_t,
                            const struct userlist_cookie **);
 static int new_cookie_func(void *, int, ej_ip_t, int, ej_cookie_t, time_t,
-                           int, int, int, const struct userlist_cookie **);
+                           int, int, int, int, const struct userlist_cookie **);
 static int remove_cookie_func(void *data, const struct userlist_cookie *c);
 static int remove_user_cookies_func(void *, int);
 static int remove_expired_cookies_func(void *, time_t);
@@ -669,6 +669,7 @@ new_cookie_func(void *data,
                 int contest_id,
                 int locale_id,
                 int priv_level,
+                int role,
                 const struct userlist_cookie **p_cookie)
 {
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
@@ -708,6 +709,7 @@ new_cookie_func(void *data,
   c->contest_id = contest_id;
   c->locale_id = locale_id;
   c->priv_level = priv_level;
+  c->role = role;
   xml_link_node_last(cs, &c->b);
   userlist_cookie_hash_add(ul, c);
 
