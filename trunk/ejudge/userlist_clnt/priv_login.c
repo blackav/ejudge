@@ -25,6 +25,7 @@ userlist_clnt_priv_login(struct userlist_clnt *clnt,
                          int contest_id,
                          int locale_id,
                          int priv_level,
+                         int role,
                          unsigned char const *login,
                          unsigned char const *passwd,
                          int *p_user_id,
@@ -55,6 +56,7 @@ userlist_clnt_priv_login(struct userlist_clnt *clnt,
   out->contest_id = contest_id;
   out->locale_id = locale_id;
   out->priv_level = priv_level;
+  out->role = role;
   out->login_length = login_len;
   out->password_length = passwd_len;
   strcpy(login_ptr, login);
