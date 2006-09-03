@@ -91,6 +91,20 @@ userlist_clnt_lookup_user(struct userlist_clnt *clnt,
                           unsigned char **p_name);
 
 int
+userlist_clnt_get_cookie(struct userlist_clnt *clnt,
+                         ej_ip_t origin_ip,
+                         int ssl,
+                         int contest_id,
+                         ej_cookie_t cookie,
+                         int *p_user_id,
+                         int *p_contest_id,
+                         int *p_locale_id,
+                         int *p_priv_level,
+                         int *p_role,
+                         unsigned char **p_login,
+                         unsigned char **p_name);
+
+int
 userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
                             ej_ip_t origin_ip,
                             int ssl,
