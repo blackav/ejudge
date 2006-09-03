@@ -4,7 +4,7 @@
 #ifndef __USERLIST_PROTO_H__
 #define __USERLIST_PROTO_H__
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -73,6 +73,7 @@ enum
     ULS_CREATE_USER,
     ULS_CREATE_MEMBER,
     ULS_PRIV_DELETE_MEMBER,
+    ULS_PRIV_CHECK_USER,
 
     ULS_LAST_CMD
   };

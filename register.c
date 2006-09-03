@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2001-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2601,7 +2601,8 @@ action_login(void)
     return;
   }
 
-  errcode = userlist_clnt_login(server_conn, user_ip, ssl_flag, user_contest_id,
+  errcode = userlist_clnt_login(server_conn, ULS_DO_LOGIN,
+                                user_ip, ssl_flag, user_contest_id,
                                 client_locale_id,
                                 user_login, user_password,
                                 &new_user_id, &new_cookie, &new_name,

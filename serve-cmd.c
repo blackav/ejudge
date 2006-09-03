@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -221,7 +221,8 @@ handle_login(const unsigned char *cmd,
   if (argc < 3) return too_few_params(cmd);
   if (argc > 3) return too_many_params(cmd);
 
-  r = userlist_clnt_priv_login(userlist_conn, local_ip, ssl_flag, contest_id,
+  r = userlist_clnt_priv_login(userlist_conn, ULS_PRIV_LOGIN,
+                               local_ip, ssl_flag, contest_id,
                                0, PRIV_LEVEL_ADMIN,
                                argv[1], argv[2],
                                &user_id, &session_id, 0, 0, &user_name);
@@ -264,7 +265,8 @@ handle_team_login(const unsigned char *cmd,
   if (argc < 3) return too_few_params(cmd);
   if (argc > 3) return too_many_params(cmd);
 
-  r = userlist_clnt_login(userlist_conn, local_ip, ssl_flag, contest_id,
+  r = userlist_clnt_login(userlist_conn, ULS_DO_LOGIN,
+                          local_ip, ssl_flag, contest_id,
                           0, argv[1], argv[2],
                           &user_id, &session_id, &user_name, &locale_id);
   if (r < 0) {

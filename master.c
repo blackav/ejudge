@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -503,7 +503,8 @@ authentificate(void)
   }
 
   open_userlist_server();
-  r = userlist_clnt_priv_login(userlist_conn, client_ip, ssl_flag, global->contest_id,
+  r = userlist_clnt_priv_login(userlist_conn, ULS_PRIV_LOGIN,
+                               client_ip, ssl_flag, global->contest_id,
                                0, /* locale_id */
                                priv_level, client_login, client_password,
                                &client_user_id,

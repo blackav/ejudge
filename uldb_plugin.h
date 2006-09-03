@@ -4,7 +4,7 @@
 #ifndef __ULDB_PLUGIN_H__
 #define __ULDB_PLUGIN_H__
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 
 #include "ejudge_plugin.h"
 #include "ej_types.h"
+#include "iterators.h"
 
 struct xml_tree;
 struct xml_parse_spec;
@@ -28,26 +29,6 @@ struct userlist_user;
 struct userlist_cookie;
 struct userlist_user_info;
 struct userlist_contest;
-
-struct int_iterator;
-typedef struct int_iterator *int_iterator_t;
-struct int_iterator
-{
-  int (*has_next)(int_iterator_t);
-  int (*get)(int_iterator_t);
-  void (*next)(int_iterator_t);
-  void (*destroy)(int_iterator_t);
-};
-
-struct ptr_iterator;
-typedef struct ptr_iterator *ptr_iterator_t;
-struct ptr_iterator
-{
-  int (*has_next)(ptr_iterator_t);
-  const void *(*get)(ptr_iterator_t);
-  void (*next)(ptr_iterator_t);
-  void (*destroy)(ptr_iterator_t);
-};
 
 /* version of the plugin interface structure */
 #define ULDB_PLUGIN_IFACE_VERSION 1
@@ -60,7 +41,7 @@ struct uldb_plugin_iface
   // initialize the plugin
   void *(*init)(const struct ejudge_cfg*);
   // parse the configuration settings
-  int (*parse)(const struct ejudge_cfg *, struct xml_tree *, void *);
+  int (*parse)(void *, const struct ejudge_cfg *, struct xml_tree *);
   // open the database
   int (*open)(void *);
   // close the database flushing all the data, if necessary

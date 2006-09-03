@@ -28,6 +28,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/edit_field.c\
  userlist_clnt/generate_team_passwd.c\
  userlist_clnt/get_contests.c\
+ userlist_clnt/get_fd.c\
  userlist_clnt/get_info.c\
  userlist_clnt/get_param.c\
  userlist_clnt/get_uid_by_pid.c\
@@ -120,6 +121,7 @@ COMMON_CFILES=\
  digest_4.c\
  digest_5.c\
  dos2unix_str.c\
+ ejudge_cfg.c\
  errlog.c\
  expat_iface.c\
  filehash.c\
@@ -134,6 +136,7 @@ COMMON_CFILES=\
  misctext.c\
  new_server_html.c\
  ncurses_utils.c\
+ nsdb_plugin_files.c\
  opcaps.c\
  parsecfg.c\
  parsecfg_2.c\
@@ -173,9 +176,8 @@ COMMON_CFILES=\
  tex_dom_doc.c\
  tex_dom_render.c\
  tsc.c\
- userlist.c\
- ejudge_cfg.c\
  uldb_plugin_xml.c\
+ userlist.c\
  userlist_proto.c\
  userlist_xml.c\
  varsubst.c\
@@ -277,6 +279,7 @@ HFILES=\
  curtime.h\
  diff.h\
  digest_io.h\
+ ejudge_cfg.h\
  ejudge_plugin.h\
  ej_limits.h\
  ej_process.h\
@@ -290,12 +293,14 @@ HFILES=\
  full_archive.h\
  html.h\
  interrupt.h\
+ iterators.h\
  job_packet.h\
  l10n.h\
  mischtml.h\
  misctext.h\
  ncurses_utils.h\
  new-server.h\
+ nsdb_plugin.h\
  opcaps.h\
  parsecfg.h\
  pathutl.h\
@@ -328,7 +333,6 @@ HFILES=\
  tsc.h\
  uldb_plugin.h\
  userlist.h\
- ejudge_cfg.h\
  userlist_clnt.h\
  varsubst.h\
  vcs.h\
