@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -37,7 +37,7 @@
 #include <ctype.h>
 
 static void *init_func(const struct ejudge_cfg *);
-static int parse_func(const struct ejudge_cfg *,struct xml_tree *, void *);
+static int parse_func(void *, const struct ejudge_cfg *,struct xml_tree *);
 static int open_func(void *data);
 static int close_func(void *data);
 static int check_func(void *data);
@@ -98,7 +98,7 @@ init_func(const struct ejudge_cfg *config)
 }
 
 static int
-parse_func(const struct ejudge_cfg *config, struct xml_tree *tree, void *data)
+parse_func(void *data, const struct ejudge_cfg *config, struct xml_tree *tree)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct xml_tree *p;
