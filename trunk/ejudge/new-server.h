@@ -44,6 +44,10 @@ struct http_request_info
   int contest_id;
   int locale_id;
   int role;
+  int action;
+  int user_id;
+  unsigned char *login;
+  unsigned char *name;
 };
 
 void
@@ -51,5 +55,26 @@ new_server_handle_http_request(struct server_framework_state *state,
                                struct client_state *p,
                                FILE *out,
                                struct http_request_info *phr);
+
+struct ejudge_cfg;
+struct userlist_clnt;
+extern struct ejudge_cfg *config;
+extern struct userlist_clnt *ul_conn;
+extern int ul_uid;
+extern unsigned char *ul_login;
+
+enum
+{
+  USER_ROLE_CONTESTANT,
+  USER_ROLE_OBSERVER,
+  USER_ROLE_JUDGE,
+  USER_ROLE_CHIEF_JUDGE,
+  USER_ROLE_COORDINATOR,
+  USER_ROLE_ADMIN,
+
+  USER_ROLE_LAST,
+};
+
+int nsdb_check_role(int user_id, int contest_id, int role);
 
 #endif /* __NEW_SERVER_H__ */

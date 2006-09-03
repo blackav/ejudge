@@ -61,6 +61,13 @@ sigchld_handler(int signo)
   sigchld_flag = 1;
 }
 
+struct watchlist
+{
+  struct watchlist *next, *prev;
+  int pending_removal;
+  struct server_framework_watch w;
+};
+
 struct server_framework_state
 {
   struct server_framework_params *params;
@@ -71,6 +78,8 @@ struct server_framework_state
 
   struct client_state *clients_first;
   struct client_state *clients_last;
+
+  struct watchlist *w_first, *w_last;
 
   void *user_data;
 };
@@ -159,6 +168,64 @@ client_state_delete(struct server_framework_state *state,
     state->params->free_memory(state, p);
   else
     xfree(p);
+}
+
+int
+nsf_add_watch(struct server_framework_state *state,
+              struct server_framework_watch *w)
+{
+  struct watchlist *p;
+
+  for (p = state->w_first; p; p = p->next) {
+    if (!p->pending_removal && p->w.fd == w->fd)
+      return -1;
+  }
+
+  XCALLOC(p, 1);
+  p->w = *w;
+  if (!state->w_last) {
+    state->w_first = state->w_last = p;
+  } else {
+    p->prev = state->w_last;
+    state->w_last->next = p;
+    state->w_last = p;
+  }
+  return 0;
+}
+int
+nsf_remove_watch(struct server_framework_state *state, int fd)
+{
+  struct watchlist *p;
+
+  for (p = state->w_first; p; p = p->next) {
+    if (!p->pending_removal && p->w.fd == fd) {
+      p->pending_removal = 1;
+      return 1;
+    }
+  }
+  return 0;
+}
+void
+remove_pending_watches(struct server_framework_state *state)
+{
+  struct watchlist *p, *q;
+
+  for (p = state->w_first; p; p = q) {
+    q = p->next;
+    if (p->pending_removal) {
+      if (p->prev) {
+        p->prev->next = p->next;
+      } else {
+        state->w_first = p->next;
+      }
+      if (p->next) {
+        p->next->prev = p->prev;
+      } else {
+        state->w_last = p->prev;
+      }
+      xfree(p);
+    }
+  }
 }
 
 static void
@@ -544,6 +611,8 @@ nsf_main_loop(struct server_framework_state *state)
   struct timeval timeout;
   int fd_max, n, errcode;
   fd_set rset, wset;
+  struct watchlist *pw;
+  int mode;
 
   while (1) {
     fd_max = -1;
@@ -563,6 +632,19 @@ nsf_main_loop(struct server_framework_state *state)
                  && cur_clnt->state <= STATE_READ_DATA) {
         FD_SET(cur_clnt->fd, &rset);
         if (cur_clnt->fd > fd_max) fd_max = cur_clnt->fd;
+      }
+    }
+
+    remove_pending_watches(state);
+    for (pw = state->w_first; pw; pw = pw->next) {
+      if (pw->pending_removal || pw->w.fd < 0) continue;
+      if ((pw->w.mode & NSF_READ)) {
+        FD_SET(pw->w.fd, &rset);
+        if (pw->w.fd > fd_max) fd_max = pw->w.fd;
+      }
+      if ((pw->w.mode & NSF_WRITE)) {
+        FD_SET(pw->w.fd, &wset);
+        if (pw->w.fd > fd_max) fd_max = pw->w.fd;
       }
     }
 
@@ -590,7 +672,19 @@ nsf_main_loop(struct server_framework_state *state)
 
     if (n <= 0) continue;
 
-      // check for new control connections
+    // process watches
+    for (pw = state->w_first; pw; pw = pw->next) {
+      if (pw->pending_removal || pw->w.fd < 0) continue;
+      mode = 0;
+      if ((pw->w.mode & NSF_READ) && FD_ISSET(pw->w.fd, &rset))
+        mode |= NSF_READ;
+      if ((pw->w.mode & NSF_WRITE) && FD_ISSET(pw->w.fd, &wset))
+        mode |= NSF_WRITE;
+      if (mode) pw->w.callback(state, &pw->w, mode);
+    }
+    remove_pending_watches(state);
+
+    // check for new control connections
     if (state->socket_fd >= 0 && FD_ISSET(state->socket_fd, &rset)) {
       accept_new_connection(state);
     }
