@@ -5901,6 +5901,97 @@ cmd_lookup_user(struct client_state *p,
   enqueue_reply_to_client(p, out_size, out);
 }
 
+static void
+cmd_get_cookie(struct client_state *p,
+               int pkt_len,
+               struct userlist_pk_check_cookie *data)
+{
+  const struct userlist_user *u = 0;
+  const struct userlist_cookie *cookie = 0;
+  struct userlist_pk_login_ok *out;
+  const struct userlist_contest *c = 0;
+  const struct userlist_user_info *ui = 0;
+  size_t login_len, name_len, out_size;
+  unsigned char *login_ptr, *name_ptr;
+  time_t current_time = time(0);
+  ej_tsc_t tsc1, tsc2;
+  unsigned char logbuf[1024];
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf),
+           "GET_COOKIE: %s, %d, %d, %llx",
+           xml_unparse_ip(data->origin_ip), data->ssl, data->contest_id, data->cookie);
+
+  if (p->user_id < 0) {
+    err("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+  if (is_db_capable(p, OPCAP_LIST_ALL_USERS, logbuf)) return;
+  if (!data->origin_ip) {
+    err("%s -> origin_ip is not set", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+
+  rdtscll(tsc1);
+  if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie) {
+    err("%s -> no such cookie", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  rdtscll(tsc2);
+  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+
+  default_get_user_info_3(cookie->user_id, data->contest_id, &u, &ui, &c);
+
+  if (cookie->ip != data->origin_ip) {
+    err("%s -> IP address mismatch", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  if (cookie->contest_id != data->contest_id) {
+    err("%s -> contest mismatch", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  if (current_time > cookie->expire) {
+    err("%s -> cookie expired", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+
+  login_len = strlen(u->login);
+  name_len = strlen(u->i.name);
+  out_size = sizeof(*out) + login_len + name_len;
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  login_ptr = out->data;
+  name_ptr = login_ptr + login_len + 1;
+  out->cookie = cookie->cookie;
+  out->reply_id = ULS_LOGIN_COOKIE;
+  out->user_id = u->id;
+  out->contest_id = cookie->contest_id;
+  out->locale_id = cookie->locale_id;
+  out->login_len = login_len;
+  out->name_len = name_len;
+  out->priv_level = cookie->priv_level;
+  out->role = cookie->role;
+  strcpy(login_ptr, u->login);
+  strcpy(name_ptr, u->i.name);
+  
+  enqueue_reply_to_client(p, out_size, out);
+
+  if (!daemon_mode) {
+    CONN_INFO("%s -> OK, %d, %s, %llu us", logbuf, u->id, u->login, tsc2);
+  }
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW]            cmd_register_new,
@@ -5953,6 +6044,7 @@ static void (*cmd_table[])() =
   [ULS_CREATE_MEMBER]           cmd_create_member,
   [ULS_PRIV_DELETE_MEMBER]      cmd_priv_delete_member,
   [ULS_PRIV_CHECK_USER]         cmd_priv_check_user,
+  [ULS_GET_COOKIE]              cmd_get_cookie,
 
   [ULS_LAST_CMD] 0
 };

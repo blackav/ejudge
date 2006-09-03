@@ -74,6 +74,7 @@ enum
     ULS_CREATE_MEMBER,
     ULS_PRIV_DELETE_MEMBER,
     ULS_PRIV_CHECK_USER,
+    ULS_GET_COOKIE,
 
     ULS_LAST_CMD
   };
@@ -297,6 +298,7 @@ struct userlist_pk_login_ok
   int                contest_id;
   signed char        locale_id;
   unsigned char      priv_level;
+  int                role;
   unsigned char      login_len;
   unsigned char      name_len;
   char               data[2];
