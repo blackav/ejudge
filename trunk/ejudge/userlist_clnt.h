@@ -4,7 +4,7 @@
 #ifndef __USERLIST_CLNT_H__
 #define __USERLIST_CLNT_H__
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,6 +27,7 @@ typedef struct userlist_clnt *userlist_clnt_t;
 
 userlist_clnt_t userlist_clnt_open(char const *);
 userlist_clnt_t userlist_clnt_close(userlist_clnt_t);
+long userlist_clnt_get_fd(userlist_clnt_t);
 
 int userlist_clnt_send_packet(struct userlist_clnt *clnt,
                               size_t size, void const *buf);
@@ -57,6 +58,7 @@ userlist_clnt_register_new_2(struct userlist_clnt *clnt,
 
 int
 userlist_clnt_login(struct userlist_clnt *clnt,
+                    int cmd,
                     ej_ip_t origin_ip,
                     int ssl,
                     int contest_id,
@@ -70,6 +72,7 @@ userlist_clnt_login(struct userlist_clnt *clnt,
 
 int
 userlist_clnt_team_login(struct userlist_clnt *clnt,
+                         int cmd,
                          ej_ip_t origin_ip,
                          int ssl,
                          int contest_id,
@@ -239,6 +242,7 @@ int userlist_clnt_get_uid_by_pid_2(struct userlist_clnt *clnt,
                                    unsigned char **p_name);
 
 int userlist_clnt_priv_login(struct userlist_clnt *clnt,
+                             int cmd,
                              ej_ip_t origin_ip,
                              int ssl,
                              int contest_id,

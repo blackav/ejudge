@@ -38,7 +38,7 @@
 #define DEFAULT_BACKUP_INTERVAL (24*60*60)
 
 static void *init_func(const struct ejudge_cfg *);
-static int parse_func(const struct ejudge_cfg *,struct xml_tree *, void *);
+static int parse_func(void *, const struct ejudge_cfg *,struct xml_tree *);
 static int open_func(void *);
 static int close_func(void *);
 static int check_func(void *);
@@ -235,7 +235,7 @@ init_func(const struct ejudge_cfg *ej_cfg)
 }
 
 static int
-parse_func(const struct ejudge_cfg *ej_cfg,struct xml_tree *t, void *data)
+parse_func(void *data, const struct ejudge_cfg *ej_cfg,struct xml_tree *t)
 {
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
 

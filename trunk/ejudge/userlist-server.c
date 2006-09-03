@@ -1493,7 +1493,7 @@ cmd_team_login(struct client_state *p, int pkt_len,
 
 static void
 cmd_priv_login(struct client_state *p, int pkt_len,
-                    struct userlist_pk_do_login *data)
+               struct userlist_pk_do_login *data)
 {
   unsigned char *login_ptr, *passwd_ptr, *name_ptr;
   struct contest_desc *cnts = 0;
@@ -1631,6 +1631,124 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   if (opcaps_check(caps, priv_level) < 0) {
     err("%s -> NOT PRIVILEGED", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  login_len = strlen(u->login);
+  name_len = strlen(u->i.name);
+  out_size = sizeof(*out) + login_len + name_len;
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  login_ptr = out->data;
+  name_ptr = login_ptr + login_len + 1;
+  if (data->locale_id == -1) {
+    data->locale_id = 0;
+  }
+
+  if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0,
+                         data->contest_id, data->locale_id,
+                         data->priv_level, &cookie) < 0) {
+    err("%s -> cookie creation failed", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  out->cookie = cookie->cookie;
+  out->reply_id = ULS_LOGIN_COOKIE;
+  out->user_id = u->id;
+  out->contest_id = data->contest_id;
+  out->locale_id = data->locale_id;
+  out->priv_level = data->priv_level;
+  out->login_len = login_len;
+  out->name_len = name_len;
+  strcpy(login_ptr, u->login);
+  strcpy(name_ptr, u->i.name);
+  
+  p->user_id = u->id;
+  p->priv_level = data->priv_level;
+  p->cookie = out->cookie;
+  p->ip = data->origin_ip;
+  p->ssl = data->ssl;
+  enqueue_reply_to_client(p, out_size, out);
+  default_touch_login_time(u->id, cur_time);
+  if (daemon_mode) {
+    info("%s -> OK, %d, %llx", logbuf, u->id, out->cookie);
+  } else {
+    info("%s -> %d,%s,%llx, time = %llu us", logbuf,
+         u->id, u->login,out->cookie, tsc2);
+  }
+}
+
+static void
+cmd_priv_check_user(struct client_state *p, int pkt_len,
+                    struct userlist_pk_do_login *data)
+{
+  unsigned char *login_ptr, *passwd_ptr, *name_ptr;
+    struct passwd_internal pwdint;
+  const struct userlist_user *u = 0;
+  const struct userlist_contest *c = 0;
+  struct userlist_pk_login_ok *out = 0;
+  int login_len, name_len;
+  size_t out_size = 0;
+  const struct userlist_cookie *cookie;
+  ej_tsc_t tsc1, tsc2;
+  unsigned char logbuf[1024];
+  int user_id;
+  const struct userlist_user_info *ui;
+
+  if (pkt_len < sizeof(*data)) {
+    CONN_BAD("packet length too small: %d", pkt_len);
+    return;
+  }
+  login_ptr = data->data;
+  if (strlen(login_ptr) != data->login_length) {
+    CONN_BAD("login length mismatch");
+    return;
+  }
+  passwd_ptr = login_ptr + data->login_length + 1;
+  if (strlen(passwd_ptr) != data->password_length) {
+    CONN_BAD("password length mismatch");
+    return;
+  }
+  if (pkt_len != sizeof(*data) + data->login_length + data->password_length) {
+    CONN_BAD("packet length mismatch");
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf),
+           "PRIV_CHECK_USER: %s, %d, %s, %d, %d",
+           xml_unparse_ip(data->origin_ip), data->ssl, login_ptr,
+           data->contest_id, data->locale_id);
+
+  if (passwd_convert_to_internal(passwd_ptr, &pwdint) < 0) {
+    err("%s -> invalid password", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+
+  rdtscll(tsc1);
+  if ((user_id = default_get_user_by_login(login_ptr)) <= 0) {
+    err("%s -> WRONG LOGIN", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+  default_get_user_info_3(user_id, data->contest_id, &u, &ui, &c);
+  rdtscll(tsc2);
+  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+
+  if (!u) {
+    err("%s -> WRONG LOGIN", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+  if (!u->passwd) {
+    err("%s -> EMPTY PASSWORD", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  if (passwd_check(&pwdint, u->passwd, u->passwd_method) < 0) {
+    err("%s -> WRONG PASSWORD", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
     return;
   }
 
@@ -5834,6 +5952,7 @@ static void (*cmd_table[])() =
   [ULS_CREATE_USER]             cmd_create_user,
   [ULS_CREATE_MEMBER]           cmd_create_member,
   [ULS_PRIV_DELETE_MEMBER]      cmd_priv_delete_member,
+  [ULS_PRIV_CHECK_USER]         cmd_priv_check_user,
 
   [ULS_LAST_CMD] 0
 };
@@ -6391,7 +6510,7 @@ load_plugins(void)
       err("plugin initialization failed");
       return 1;
     }
-    if (uldb_iface->parse(config, plg->data, plugin_data) < 0) {
+    if (uldb_iface->parse(plugin_data, config, plg->data) < 0) {
       err("plugin failed to parse its configuration");
       return 1;
     }
