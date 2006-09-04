@@ -58,7 +58,7 @@ int max_prob;
 int max_tester;
 
 /* new userlist-server interaction */
-struct contest_desc *cur_contest;
+const struct contest_desc *cur_contest;
 
 static struct section_problem_data  *abstr_probs[MAX_PROBLEM + 1];
 static struct section_tester_data   *abstr_testers[MAX_TESTER + 1];

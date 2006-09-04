@@ -662,7 +662,7 @@ initialize(int argc, char const *argv[])
   path_t cfgname2;
   int namelen, cgi_contest_id, name_contest_id, name_ok, errcode = 0;
   char *s = getenv("SCRIPT_FILENAME");
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
   const unsigned char *default_config_str = 0;
 
   pathcpy(fullname, argv[0]);
@@ -925,7 +925,7 @@ print_choose_language_button(int hr_flag, int no_submit_flag,
 static int
 check_contest_eligibility(int id)
 {
-  struct contest_desc *d = 0;
+  const struct contest_desc *d = 0;
 
   if (contests_get(id, &d) < 0 || !d) return 0;
   if (d->closed) return 0;
@@ -968,7 +968,7 @@ regstatus_str(int status)
 }
 
 static void
-prepare_var_table(struct contest_desc *cnts)
+prepare_var_table(const struct contest_desc *cnts)
 {
   int i, j;
 
@@ -1514,7 +1514,7 @@ map_user_languages(const unsigned char *user_langs, int **pmap)
 static void
 display_edit_registration_data_page(void)
 {
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
   int errcode, role, pers, i, user_show_all = 0, j;
   unsigned char *user_name_arm;
   unsigned char *cnts_name_arm, *cnts_name_loc;
@@ -2093,7 +2093,7 @@ static void
 display_user_registered_page_2(void)
 {
   unsigned char *txt1, *txt2, *txt3;
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
 
   if (user_contest_id <= 0 || contests_get(user_contest_id, &cnts) < 0
       || !cnts || !cnts->simple_registration) {
@@ -2165,7 +2165,7 @@ display_main_page(void)
   unsigned char *act_name, *armored_str, *xml_text;
   struct xml_tree *regs, *reg;
   struct userlist_contest *regx;
-  struct contest_desc *cnts;
+  const struct contest_desc *cnts;
   unsigned char s1[64], url[512];
   int cnts_total = 0, cnts_used = 0;
   int *cnts_ids = 0;
@@ -2470,7 +2470,7 @@ action_register_new_user(void)
 {
   int errcode;
   unsigned char s1[128], url[512];
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
 
   if (user_contest_id > 0) contests_get(user_contest_id, &cnts);
 
@@ -2740,7 +2740,7 @@ action_remove_member(void)
   unsigned char ser_var_name[64];
   unsigned char *ser_var = 0;
   unsigned char s1[64], url[512];
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
 
   if (!authentificate()) return;
   ASSERT(server_conn);
@@ -2840,7 +2840,7 @@ action_register_for_contest(void)
   int user_show_all = 0, errcode = 0, role, pers, i, n;
   unsigned char *user_xml_text = 0;
   unsigned char s1[64], url[512];
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
   unsigned char *par_name, *par_value, *arm_value;
   int arm_len;
 

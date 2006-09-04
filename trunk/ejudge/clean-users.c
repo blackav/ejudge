@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -72,7 +72,7 @@ main(int argc, char **argv)
   int user_total, i, max_user_id, j = 0, r;
   int contest_max_ind, errcode;
   unsigned char *contest_map;
-  struct contest_desc *cnts;
+  const struct contest_desc *cnts;
   unsigned char runlog_path[PATH_MAX];
   unsigned char clarlog_path[PATH_MAX];
   int total_runs, total_clars;

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005,2006 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2005,2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -191,15 +191,15 @@ swap_tree_nodes(struct xml_tree *first)
 }
 
 static struct contest_access **
-get_contest_access_by_num(struct contest_desc *cnts, int num)
+get_contest_access_by_num(const struct contest_desc *cnts, int num)
 {
   switch (num) {
-  case 0: return &cnts->register_access;
-  case 1: return &cnts->users_access;
-  case 2: return &cnts->master_access;
-  case 3: return &cnts->judge_access;
-  case 4: return &cnts->team_access;
-  case 5: return &cnts->serve_control_access;
+  case 0: return (struct contest_access **) &cnts->register_access;
+  case 1: return (struct contest_access **) &cnts->users_access;
+  case 2: return (struct contest_access **) &cnts->master_access;
+  case 3: return (struct contest_access **) &cnts->judge_access;
+  case 4: return (struct contest_access **) &cnts->team_access;
+  case 5: return (struct contest_access **) &cnts->serve_control_access;
   default:
     return 0;
   }
@@ -260,7 +260,7 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   struct opcap_list_item *cap_node;
   struct contest_field *fld_node;
   struct contest_member *memb;
-  struct contest_desc *src_cnts = 0;
+  const struct contest_desc *src_cnts = 0;
 
   if (!cnts) {
     return -SSERV_ERR_CONTEST_NOT_EDITED;
@@ -872,7 +872,7 @@ super_html_serve_probe_run(FILE *f,
                            const unsigned char *extra_args)
 {
   int errcode;
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
   struct contest_extra *extra = 0;
   unsigned char *serve_buf = 0, *s = 0;
   opcap_t caps;
@@ -1496,7 +1496,7 @@ super_html_commit_contest(FILE *f,
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")

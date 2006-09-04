@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1302,7 +1302,7 @@ static int
 get_contest_str(unsigned char *buf, size_t len,
                 const struct userlist_contest *reg)
 {
-  struct contest_desc *d = 0;
+  const struct contest_desc *d = 0;
   const unsigned char *s = 0;
 
   if (contests_get(reg->id, &d) >= 0 && d) {
@@ -2512,7 +2512,7 @@ display_registered_users(unsigned char const *upper,
   int c, cmd, cur_line, new_status;
   int first_row;
   int retcode = -1, errcode;
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
   unsigned char edit_buf[512];
 
   if ((errcode = contests_get(contest_id, &cnts)) < 0) {
@@ -3172,7 +3172,7 @@ static int
 display_contests_menu(unsigned char *upper, int only_choose)
 {
   int ncnts = 0, i, j;
-  struct contest_desc *cc;
+  const struct contest_desc *cc;
   unsigned char **descs;
   unsigned char buf[128];
   ITEM **items;

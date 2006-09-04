@@ -4,7 +4,7 @@
 #ifndef __CONTESTS_H__
 #define __CONTESTS_H__
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -85,6 +85,8 @@ enum
     CONTEST_CF_NOTIFY_EMAIL,
     CONTEST_CLAR_NOTIFY_EMAIL,
     CONTEST_DAILY_STAT_EMAIL,
+    CONTEST_PRIV_HEADER_FILE,
+    CONTEST_PRIV_FOOTER_FILE,
 
     CONTEST_LAST_TAG
   };
@@ -227,6 +229,8 @@ struct contest_desc
   unsigned char *register_footer_file;
   unsigned char *team_header_file;
   unsigned char *team_footer_file;
+  unsigned char *priv_header_file;
+  unsigned char *priv_footer_file;
   unsigned char *register_email;
   unsigned char *register_url;
   unsigned char *team_url;
@@ -303,13 +307,13 @@ enum
 int contests_set_directory(unsigned char const *);
 int contests_make_path(unsigned char *buf, size_t sz, int num);
 int contests_get_list(unsigned char **);
-int contests_get(int, struct contest_desc **);
+int contests_get(int, const struct contest_desc **);
 int contests_load(int number, struct contest_desc **p_cnts);
 struct contest_desc *contests_free(struct contest_desc *cnts);
 void contests_free_2(struct xml_tree *t);
 struct xml_tree *contests_new_node(int tag);
 
-unsigned char *contests_strerror(int);
+const unsigned char *contests_strerror(int);
 
 /* if the contest has disappeared, use old copy */
 int contests_lock(int);
@@ -317,17 +321,17 @@ int contests_unlock(int);
 
 int contests_check_ip(int, int, ej_ip_t, int);
 int contests_check_register_ip(int, ej_ip_t, int);
-int contests_check_register_ip_2(struct contest_desc *, ej_ip_t, int);
+int contests_check_register_ip_2(const struct contest_desc *, ej_ip_t, int);
 int contests_check_users_ip(int, ej_ip_t, int);
-int contests_check_users_ip_2(struct contest_desc *, ej_ip_t, int);
+int contests_check_users_ip_2(const struct contest_desc *, ej_ip_t, int);
 int contests_check_master_ip(int, ej_ip_t, int);
-int contests_check_master_ip_2(struct contest_desc *, ej_ip_t, int);
+int contests_check_master_ip_2(const struct contest_desc *, ej_ip_t, int);
 int contests_check_judge_ip(int, ej_ip_t, int);
-int contests_check_judge_ip_2(struct contest_desc *, ej_ip_t, int);
+int contests_check_judge_ip_2(const struct contest_desc *, ej_ip_t, int);
 int contests_check_team_ip(int, ej_ip_t, int);
-int contests_check_team_ip_2(struct contest_desc *, ej_ip_t, int);
+int contests_check_team_ip_2(const struct contest_desc *, ej_ip_t, int);
 int contests_check_serve_control_ip(int num, ej_ip_t ip, int ssl);
-int contests_check_serve_control_ip_2(struct contest_desc *, ej_ip_t, int);
+int contests_check_serve_control_ip_2(const struct contest_desc *, ej_ip_t, int);
 
 void contests_set_load_callback(void (*f)(const struct contest_desc *));
 void contests_set_unload_callback(void (*f)(const struct contest_desc *));

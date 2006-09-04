@@ -149,7 +149,7 @@ global_init_func(struct generic_section_config *gp)
 }
 
 /* new userlist-server related variables */
-static struct contest_desc *cur_contest;
+static const struct contest_desc *cur_contest;
 static struct userlist_clnt *userlist_conn;
 static ej_ip_t client_ip;
 static int serve_socket_fd = -1;
@@ -3420,7 +3420,7 @@ main(int argc, char *argv[])
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")

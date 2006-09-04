@@ -3,7 +3,7 @@
 #ifndef __SUPER_SERVE_H__
 #define __SUPER_SERVE_H__
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -156,7 +156,8 @@ struct sid_state
 };
 
 void super_serve_clear_edited_contest(struct sid_state *sstate);
-int super_serve_start_serve_test_mode(struct contest_desc *cnts, unsigned char **p_log,
+int super_serve_start_serve_test_mode(const struct contest_desc *cnts,
+                                      unsigned char **p_log,
                                       int pass_socket);
 
 #endif /* __SUPER_SERVE_H__ */
