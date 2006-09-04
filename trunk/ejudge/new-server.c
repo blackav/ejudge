@@ -28,6 +28,7 @@
 #include "contests.h"
 #include "ejudge_plugin.h"
 #include "nsdb_plugin.h"
+#include "l10n.h"
 
 #include <reuse/xalloc.h>
 
@@ -371,6 +372,7 @@ main(int argc, char *argv[])
   config = ejudge_cfg_parse(ejudge_xml_path);
   if (!config) return 1;
   if (contests_set_directory(config->contests_dir) < 0) return 1;
+  l10n_prepare(config->l10n, config->l10n_dir);
 
   info("new-server %s, compiled %s", compile_version, compile_date);
 

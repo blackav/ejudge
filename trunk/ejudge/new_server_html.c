@@ -18,6 +18,7 @@
 #include "config.h"
 #include "settings.h"
 #include "ej_types.h"
+#include "ej_limits.h"
 
 #include "new-server.h"
 #include "pathutl.h"
@@ -30,14 +31,21 @@
 #include "userlist_proto.h"
 #include "contests.h"
 #include "nsdb_plugin.h"
+#include "l10n.h"
+#include "fileutl.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
+#include <reuse/logger.h>
 
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -45,11 +53,98 @@
 #else
 #define _(x) x
 #endif
+#define __(x) x
 
 enum
 {
   NEW_SRV_ACTION_LOGIN_PAGE = 1,
 };
+
+struct watched_file
+{
+  unsigned char *path;
+  time_t last_check;
+  time_t last_mtime;
+  size_t size;
+  unsigned char *text;
+};
+struct contest_extra
+{
+  struct watched_file header;
+  struct watched_file footer;
+};
+static struct contest_extra **extras = 0;
+static size_t extra_a = 0;
+
+static struct contest_extra *
+get_contest_extra(int contest_id)
+{
+  size_t new_extra_a = 0;
+  struct contest_extra **new_extras = 0, *p;
+
+  ASSERT(contest_id > 0 && contest_id <= MAX_CONTEST_ID);
+
+  if (contest_id >= extra_a) {
+    if (!(new_extra_a = extra_a)) new_extra_a = 8;
+    while (contest_id >= new_extra_a) new_extra_a *= 2;
+    XCALLOC(new_extras, new_extra_a);
+    if (extra_a > 0) memcpy(new_extras, extras, extra_a * sizeof(extras[0]));
+    xfree(extras);
+    extra_a = new_extra_a;
+    extras = new_extras;
+  }
+  if (!(p = extras[contest_id])) {
+    XCALLOC(p, 1);
+    extras[contest_id] = p;
+  }
+  return p;
+}
+
+static void
+update_watched_file(struct watched_file *pw, const unsigned char *path,
+                    time_t cur_time)
+{
+  struct stat stb;
+  char *tmpc = 0;
+
+  if (!path) {
+    if (!pw->path) return;
+    xfree(pw->path);
+    xfree(pw->text);
+    memset(pw, 0, sizeof(*pw));
+    return;
+  }
+
+  if (!cur_time) cur_time = time(0);
+  if (pw->path && strcmp(path, pw->path) != 0) {
+    xfree(pw->path);
+    xfree(pw->text);
+    memset(pw, 0, sizeof(*pw));
+  }
+  if (!pw->path) {
+    pw->path = xstrdup(path);
+    pw->last_check = cur_time;
+    if (stat(pw->path, &stb) < 0) return;
+    pw->last_mtime = stb.st_mtime;
+    generic_read_file(&tmpc, 0, &pw->size, 0, 0, pw->path, "");
+    pw->text = tmpc;
+    return;
+  }
+  if (pw->last_check + 10 > cur_time) return;
+  if (stat(pw->path, &stb) < 0) {
+    xfree(pw->text); pw->text = 0;
+    pw->size = 0;
+    pw->last_check = cur_time;
+    return;
+  }
+  if (pw->last_mtime == stb.st_mtime) return;
+  pw->last_mtime = stb.st_mtime;
+  pw->last_check = cur_time;
+  xfree(pw->text); pw->text = 0;
+  pw->size = 0;
+  generic_read_file(&tmpc, 0, &pw->size, 0, 0, pw->path, "");
+  pw->text = tmpc;  
+}
 
 static const unsigned char*
 ns_getenv(const struct http_request_info *phr, const unsigned char *var)
@@ -223,30 +318,6 @@ html_put_header(FILE *out, unsigned char const *template,
 }
 
 static void
-html_locale_select(FILE *fout, int locale_id)
-{
-  static const unsigned char *locales[] =
-  {
-    "English",
-    "Russian",
-
-    0
-  };
-  int i;
-  const unsigned char *ss;
-
-  if (locale_id < 0 || locale_id > 1) locale_id = 0;
-  fprintf(fout, "<select name=\"locale_id\">");
-  for (i = 0; locales[i]; i++) {
-    ss = "";
-    if (i == locale_id) ss = " selected=\"1\"";
-    fprintf(fout, "<option value=\"%d\"%s>%s</option>",
-            i, ss, gettext(locales[i]));
-  }
-  fprintf(fout, "</select>\n");
-}
-
-static void
 html_put_footer(FILE *out, unsigned char const *template)
 {
   if (!template) template = default_footer_template;
@@ -330,12 +401,42 @@ privileged_page_login_page(struct server_framework_state *state,
   html_role_select(fout, phr->role);
   fprintf(fout, "</td></tr>\n");
   fprintf(fout, "<tr><td>%s:</td><td>", _("Language"));
-  html_locale_select(fout, phr->locale_id);
+  l10n_html_locale_select(fout, phr->locale_id);
   fprintf(fout, "</td></tr>\n");
   fprintf(fout, "<tr><td>&nbsp;</td><td><input type=\"submit\" value=\"%s\"></td></tr>\n", _("Submit"));
   fprintf(fout, "</table></form>\n");
   html_put_footer(fout, 0);
 }
+
+static void
+html_err_permission_denied(struct server_framework_state *state,
+                           FILE *fout,
+                           struct http_request_info *phr,
+                           int priv_mode)
+{
+  struct contest_desc *cnts = 0;
+  struct contest_extra *extra = 0;
+  const unsigned char *header = 0, *footer = 0;
+  time_t cur_time;
+
+  if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
+  if (cnts) extra = get_contest_extra(phr->contest_id);
+  if (extra && !priv_mode) {
+    cur_time = time(0);
+    update_watched_file(&extra->header, cnts->team_header_file, cur_time);
+    update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
+    header = extra->header.text;
+    footer = extra->footer.text;
+  }
+  l10n_setlocale(phr->locale_id);
+  html_put_header(fout, header, 0, 0, phr->locale_id, _("Permission denied"));
+  printf("<p>%s</p>",
+         "Permission denied. You have typed invalid login, invalid password,"
+         " or do not have enough privileges.");
+  html_put_footer(fout, footer);
+  l10n_setlocale(0);
+}
+
 
 static void
 privileged_page_login(struct server_framework_state *state,
@@ -378,8 +479,7 @@ privileged_page_login(struct server_framework_state *state,
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
     if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag)) {
-      // FIXME: generate an error page
-      abort();
+      return html_err_permission_denied(state, fout, phr, 1);
     }
   } else {
     // as for judge program
