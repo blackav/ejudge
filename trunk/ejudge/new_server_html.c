@@ -72,6 +72,8 @@ struct contest_extra
 {
   struct watched_file header;
   struct watched_file footer;
+  struct watched_file priv_header;
+  struct watched_file priv_footer;
 };
 static struct contest_extra **extras = 0;
 static size_t extra_a = 0;
@@ -417,26 +419,152 @@ html_err_permission_denied(struct server_framework_state *state,
   const struct contest_desc *cnts = 0;
   struct contest_extra *extra = 0;
   const unsigned char *header = 0, *footer = 0;
-  time_t cur_time;
+  time_t cur_time = time(0);
+  unsigned char *s;
 
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = get_contest_extra(phr->contest_id);
   if (extra && !priv_mode) {
-    cur_time = time(0);
     update_watched_file(&extra->header, cnts->team_header_file, cur_time);
     update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
     header = extra->header.text;
     footer = extra->footer.text;
+  } else if (extra && priv_mode) {
+    update_watched_file(&extra->priv_header, cnts->priv_header_file, cur_time);
+    update_watched_file(&extra->priv_footer, cnts->priv_footer_file, cur_time);
+    header = extra->priv_header.text;
+    footer = extra->priv_footer.text;
   }
   l10n_setlocale(phr->locale_id);
   html_put_header(fout, header, 0, 0, phr->locale_id, _("Permission denied"));
-  printf("<p>%s</p>",
-         "Permission denied. You have typed invalid login, invalid password,"
-         " or do not have enough privileges.");
+  fprintf(fout, "<p>%s</p>\n",
+          _("Permission denied. The possible reasons are as follows."));
+  fprintf(fout, "<ul>\n");
+  s = html_armor_string_dup(phr->login);
+  fprintf(fout, _("<li>You have typed an invalid login (<tt>%s</tt>).</li>\n"),
+          s);
+  xfree(s);
+  fprintf(fout, _("<li>You have typed an invalid password.</li>\n"));
+  if (!priv_mode) {
+    if (cnts) {
+      s = html_armor_string_dup(cnts->name);
+      fprintf(fout, _("<li>You are not registered for contest %s.</li>\n"), s);
+      xfree(s);
+    } else {
+      fprintf(fout, _("<li>You are not registered for contest %d.</li>\n"),
+              phr->contest_id);
+    }
+    fprintf(fout, _("<li>Your registration was not confirmed.</li>\n"));
+    fprintf(fout, _("<li>You were banned by the administrator.</li>\n"));
+    fprintf(fout, _("<li>Your IP-address (<tt>%s</tt>) or protocol (<tt>%s</tt>) is banned for participation.</li>"), xml_unparse_ip(phr->ip),
+            phr->ssl_flag?"https":"http");
+    fprintf(fout, _("<li>The contest is closed for participation.</li>\n"));
+  } else {
+    fprintf(fout, _("<li>Your IP-address (<tt>%s</tt>) or protocol (<tt>%s</tt>) is banned for participation.</li>"), xml_unparse_ip(phr->ip),
+            phr->ssl_flag?"https":"http");
+    fprintf(fout, _("<li>You do not have permissions to login using the specified role.</li>"));
+  }
+  fprintf(fout, "</ul>\n");
+  fprintf(fout, _("<p>Note, that the exact reason is not reported due to security reasons.</p>"));
   html_put_footer(fout, footer);
   l10n_setlocale(0);
 }
 
+static void
+html_err_invalid_param(struct server_framework_state *state,
+                       FILE *fout,
+                       struct http_request_info *phr,
+                       int priv_mode)
+{
+  const struct contest_desc *cnts = 0;
+  struct contest_extra *extra = 0;
+  const unsigned char *header = 0, *footer = 0;
+  time_t cur_time = time(0);
+
+  if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
+  if (cnts) extra = get_contest_extra(phr->contest_id);
+  if (extra && !priv_mode) {
+    update_watched_file(&extra->header, cnts->team_header_file, cur_time);
+    update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
+    header = extra->header.text;
+    footer = extra->footer.text;
+  } else if (extra && priv_mode) {
+    update_watched_file(&extra->priv_header, cnts->priv_header_file, cur_time);
+    update_watched_file(&extra->priv_footer, cnts->priv_footer_file, cur_time);
+    header = extra->priv_header.text;
+    footer = extra->priv_footer.text;
+  }
+  l10n_setlocale(phr->locale_id);
+  html_put_header(fout, header, 0, 0, phr->locale_id, _("Invalid parameter"));
+  fprintf(fout, "<p>%s</p>\n",
+          _("A request parameter is invalid. Please, contact the site administrator."));
+  html_put_footer(fout, footer);
+  l10n_setlocale(0);
+}
+
+static void
+html_err_userlist_server_down(struct server_framework_state *state,
+                              FILE *fout,
+                              struct http_request_info *phr,
+                              int priv_mode)
+{
+  const struct contest_desc *cnts = 0;
+  struct contest_extra *extra = 0;
+  const unsigned char *header = 0, *footer = 0;
+  time_t cur_time = time(0);
+
+  if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
+  if (cnts) extra = get_contest_extra(phr->contest_id);
+  if (extra && !priv_mode) {
+    update_watched_file(&extra->header, cnts->team_header_file, cur_time);
+    update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
+    header = extra->header.text;
+    footer = extra->footer.text;
+  } else if (extra && priv_mode) {
+    update_watched_file(&extra->priv_header, cnts->priv_header_file, cur_time);
+    update_watched_file(&extra->priv_footer, cnts->priv_footer_file, cur_time);
+    header = extra->priv_header.text;
+    footer = extra->priv_footer.text;
+  }
+  l10n_setlocale(phr->locale_id);
+  html_put_header(fout, header, 0, 0, phr->locale_id, _("User database server is down"));
+  fprintf(fout, "<p>%s</p>\n",
+          _("The user database server is currently not available. Please, retry the request later."));
+  html_put_footer(fout, footer);
+  l10n_setlocale(0);
+}
+
+static void
+html_err_internal_error(struct server_framework_state *state,
+                        FILE *fout,
+                        struct http_request_info *phr,
+                        int priv_mode)
+{
+  const struct contest_desc *cnts = 0;
+  struct contest_extra *extra = 0;
+  const unsigned char *header = 0, *footer = 0;
+  time_t cur_time = time(0);
+
+  if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
+  if (cnts) extra = get_contest_extra(phr->contest_id);
+  if (extra && !priv_mode) {
+    update_watched_file(&extra->header, cnts->team_header_file, cur_time);
+    update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
+    header = extra->header.text;
+    footer = extra->footer.text;
+  } else if (extra && priv_mode) {
+    update_watched_file(&extra->priv_header, cnts->priv_header_file, cur_time);
+    update_watched_file(&extra->priv_footer, cnts->priv_footer_file, cur_time);
+    header = extra->priv_header.text;
+    footer = extra->priv_footer.text;
+  }
+  l10n_setlocale(phr->locale_id);
+  html_put_header(fout, header, 0, 0, phr->locale_id, _("Internal error"));
+  fprintf(fout, "<p>%s</p>\n",
+          _("Your request has caused an internal server error. Please, report it as a bug."));
+  html_put_footer(fout, footer);
+  l10n_setlocale(0);
+}
 
 static void
 privileged_page_login(struct server_framework_state *state,
@@ -449,21 +577,16 @@ privileged_page_login(struct server_framework_state *state,
   const struct contest_desc *cnts = 0;
   opcap_t caps;
 
-  if ((r = ns_cgi_param(phr, "login", &login)) < 0) {
-    // FIXME: generate an error page
-    abort();
-  }
+  if ((r = ns_cgi_param(phr, "login", &login)) < 0)
+    return html_err_invalid_param(state, fout, phr, 1);
   if (!r || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return privileged_page_login_page(state, p, fout, phr);
 
-  if ((r = ns_cgi_param(phr, "password", &password)) <= 0) {
-    // FIXME: generate an error page
-    abort();
-  }
-  if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts) {
-    // FIXME: generate an error page
-    abort();
-  }
+  if ((r = ns_cgi_param(phr, "password", &password)) <= 0)
+    return html_err_invalid_param(state, fout, phr, 1);
+  if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts)
+    return html_err_invalid_param(state, fout, phr, 1);
+
   phr->role = USER_ROLE_OBSERVER;
   if (ns_cgi_param(phr, "role", &s) > 0) {
     if (sscanf(s, "%d%n", &r, &n) == 1 && !s[n]
@@ -478,28 +601,35 @@ privileged_page_login(struct server_framework_state *state,
   // analyze IP limitations
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
-    if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag)) {
+    if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag))
       return html_err_permission_denied(state, fout, phr, 1);
-    }
   } else {
     // as for judge program
-    if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag)) {
-      // FIXME: generate an error page
-      abort();
-    }
+    if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+      return html_err_permission_denied(state, fout, phr, 1);
   }
 
-  if (open_ul_connection(state) < 0) { 
-    // FIXME: generate an error page
-    abort();
-  }
-  if (userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_USER,
-                               phr->ip, phr->ssl_flag, phr->contest_id,
-                               phr->locale_id, 0, phr->role, login, password,
-                               &phr->user_id, &phr->session_id, 0, 0,
-                               &phr->name) < 0) {
-    // FIXME: generate an error page
-    abort();
+  if (open_ul_connection(state) < 0)
+    return html_err_userlist_server_down(state, fout, phr, 1);
+  if ((r = userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_USER,
+                                    phr->ip, phr->ssl_flag, phr->contest_id,
+                                    phr->locale_id, 0, phr->role, login,
+                                    password, &phr->user_id, &phr->session_id,
+                                    0, 0, &phr->name)) < 0) {
+    switch (-r) {
+    case ULS_ERR_INVALID_LOGIN:
+    case ULS_ERR_INVALID_PASSWORD:
+    case ULS_ERR_BAD_CONTEST_ID:
+    case ULS_ERR_IP_NOT_ALLOWED:
+    case ULS_ERR_NO_PERMS:
+    case ULS_ERR_NOT_REGISTERED:
+    case ULS_ERR_CANNOT_PARTICIPATE:
+      return html_err_permission_denied(state, fout, phr, 1);
+    case ULS_ERR_DISCONNECT:
+      return html_err_userlist_server_down(state, fout, phr, 1);
+    default:
+      return html_err_internal_error(state, fout, phr, 1);
+    }
   }
   phr->login = xstrdup(login);
 
@@ -507,16 +637,12 @@ privileged_page_login(struct server_framework_state *state,
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
     if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
-        || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0) {
-      // FIXME: generate an error page
-      abort();
-    }
+        || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0)
+      return html_err_permission_denied(state, fout, phr, 1);
   } else {
     // user privileges checked locally
-    if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0) {
-      // FIXME: generate an error page
-      abort();
-    }
+    if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0)
+      return html_err_permission_denied(state, fout, phr, 1);
   }
 
   // TODO: store a cookie
@@ -562,80 +688,58 @@ new_server_handle_http_request(struct server_framework_state *state,
   phr->self_url = self_url;
 
   // parse the client IP address
-  if (!(remote_addr = ns_getenv(phr, "REMOTE_ADDR"))) {
-    // FIXME: generate an error page
-    abort();
-  }
+  if (!(remote_addr = ns_getenv(phr, "REMOTE_ADDR")))
+    return html_err_invalid_param(state, fout, phr, 0);
   if (!strcmp(remote_addr, "::1")) remote_addr = "127.0.0.1";
-  if (xml_parse_ip(0, 0, 0, remote_addr, &phr->ip) < 0) {
-    // FIXME: generate an error page
-    abort();
-  }
+  if (xml_parse_ip(0, 0, 0, remote_addr, &phr->ip) < 0)
+    return html_err_invalid_param(state, fout, phr, 0);
 
   // parse the contest_id
-  if ((r = ns_cgi_param(phr, "contest_id", &s)) < 0) {
-    // FIXME: generate an error page
-    abort();
-  }
+  if ((r = ns_cgi_param(phr, "contest_id", &s)) < 0)
+    return html_err_invalid_param(state, fout, phr, 0);
   if (r > 0) {
     if (sscanf(s, "%d%n", &phr->contest_id, &n) != 1
-        || s[n] || phr->contest_id <= 0) {
-      // FIXME: generate an error page
-      abort();
-    }
+        || s[n] || phr->contest_id <= 0)
+      return html_err_invalid_param(state, fout, phr, 0);
   }
 
   // parse the session_id
-  if ((r = ns_cgi_param(phr, "SID", &s)) < 0) {
-    // FIXME: generate an error page
-    abort();
-  }
+  if ((r = ns_cgi_param(phr, "SID", &s)) < 0)
+    return html_err_invalid_param(state, fout, phr, 0);
   if (r > 0) {
     if (sscanf(s, "%llx%n", &phr->session_id, &n) != 1
-        || s[n] || !phr->session_id) {
-      // FIXME: generate an error page
-      abort();
-    }
+        || s[n] || !phr->session_id)
+      return html_err_invalid_param(state, fout, phr, 0);
   }
 
   // parse the locale_id
-  if ((r = ns_cgi_param(phr, "locale_id", &s)) < 0) {
-    // FIXME: generate an error page
-    abort();    
-  }
+  if ((r = ns_cgi_param(phr, "locale_id", &s)) < 0)
+    return html_err_invalid_param(state, fout, phr, 0);
   if (r > 0) {
     if (sscanf(s, "%d%n", &phr->locale_id, &n) != 1 || s[n]
-        || phr->locale_id <= 0) {
-      // FIXME: generate an error page
-      abort();
-    }
+        || phr->locale_id <= 0)
+    return html_err_invalid_param(state, fout, phr, 0);
   }
 
   // parse the action
   if ((s = ns_cgi_nname(phr, "action_", 7))) {
     if (sscanf(s, "action_%d%n", &phr->action, &n) != 1 || s[n]
-        || phr->action <= 0) {
-      // FIXME: generate an error page
-      abort();
-    }
+        || phr->action <= 0)
+    return html_err_invalid_param(state, fout, phr, 0);
   } else if ((r = ns_cgi_param(phr, "action", &s)) < 0) {
-    // FIXME: generate an error page
-    abort();    
+    return html_err_invalid_param(state, fout, phr, 0);
   } else if (r > 0) {
     if (sscanf(s, "%d%n", &phr->action, &n) != 1 || s[n]
-        || phr->action <= 0) {
-      // FIXME: generate an error page
-      abort();    
-    }
+        || phr->action <= 0)
+      return html_err_invalid_param(state, fout, phr, 0);
   }
 
   // check how we've been called
   script_filename = ns_getenv(phr, "SCRIPT_FILENAME");
   if (!script_filename && phr->arg_num > 0) script_filename = phr->args[0];
-  if (!script_filename) {
-    // FIXME: generate a error page
-    abort();
-  }
+  if (!script_filename)
+    return html_err_invalid_param(state, fout, phr, 0);
+
   os_rGetLastname(script_filename, last_name, sizeof(last_name));
   // FIXME: call either non-privileged, or privileged page generator
 
