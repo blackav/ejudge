@@ -3,7 +3,7 @@
 #ifndef __SUPER_HTML_H__
 #define __SUPER_HTML_H__
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -257,10 +257,12 @@ int super_html_open_contest(struct contest_desc *cnts, int user_id,
 int super_html_close_contest(struct contest_desc *cnts, int user_id,
                              const unsigned char *user_login, ej_ip_t ip);
 
-int super_html_make_invisible_contest(struct contest_desc *cnts, int user_id,
+int super_html_make_invisible_contest(struct contest_desc *cnts,
+                                      int user_id,
                                       const unsigned char *user_login,
                                       ej_ip_t ip);
-int super_html_make_visible_contest(struct contest_desc *cnts, int user_id,
+int super_html_make_visible_contest(struct contest_desc *cnts,
+                                    int user_id,
                                     const unsigned char *user_login,
                                     ej_ip_t ip);
 

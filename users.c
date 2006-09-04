@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2001-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2001-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -564,7 +564,7 @@ int
 main(int argc, char const *argv[])
 {
   struct timeval begin_time, end_time;
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
   int r;
   char *header_txt = 0;
   size_t header_len = 0;

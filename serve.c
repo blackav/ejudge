@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -516,7 +516,7 @@ load_status_file(void)
 static int
 check_cnts_caps(int user_id, int bit)
 {
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
   opcap_t caps;
   int errcode = 0;
   unsigned char const *login = 0;
@@ -537,7 +537,7 @@ check_cnts_caps(int user_id, int bit)
 static int
 get_cnts_caps(int user_id, opcap_t *out_caps)
 {
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
   opcap_t caps;
   int errcode = 0;
   unsigned char const *login = 0;
@@ -2758,7 +2758,7 @@ cmd_user_submit_run_2(struct client_state *p, int len,
 }
 
 static unsigned char *
-get_email_sender(struct contest_desc *cnts)
+get_email_sender(const struct contest_desc *cnts)
 {
   int sysuid;
   struct passwd *ppwd;
@@ -2778,7 +2778,7 @@ cmd_team_submit_clar(struct client_state *p, int len,
   path_t clar_name;
   unsigned char *full_txt = 0;
   time_t start_time, stop_time;
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
 
   unsigned char subj[CLAR_MAX_SUBJ_TXT_LEN + 16];
   unsigned char bsubj[CLAR_MAX_SUBJ_LEN + 16];
@@ -4321,7 +4321,7 @@ cmd_edit_user(struct client_state *p, int len,
 static void
 mail_check_failed(int run_id)
 {
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
   unsigned char esubj[1024];
   unsigned char *originator = 0;
   FILE *fmsg = 0;
@@ -5819,7 +5819,7 @@ generate_statistics_email(time_t from_time, time_t to_time)
   char *etxt = 0, *ftxt = 0;
   size_t elen = 0, flen = 0;
   FILE *eout = 0, *fout = 0;
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
   unsigned char *mail_args[7];
   unsigned char *originator;
   struct tm tm1;
@@ -5874,7 +5874,7 @@ static void
 check_stat_generation(int force_flag)
 {
   static time_t last_check_time = 0;
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
   struct tm *ptm;
   time_t thisday, nextday;
 

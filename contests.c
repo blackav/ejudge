@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -103,6 +103,8 @@ static char const * const elem_map[] =
   "cf_notify_email",
   "clar_notify_email",
   "daily_stat_email",
+  "priv_header_file",
+  "priv_footer_file",
 
   0
 };
@@ -201,6 +203,8 @@ node_free(struct xml_tree *t)
       xfree(cnts->cf_notify_email);
       xfree(cnts->clar_notify_email);
       xfree(cnts->daily_stat_email);
+      xfree(cnts->priv_header_file);
+      xfree(cnts->priv_footer_file);
     }
     break;
   case CONTEST_CAP:
@@ -591,6 +595,8 @@ static const size_t contest_final_offsets[CONTEST_LAST_TAG] =
   [CONTEST_CF_NOTIFY_EMAIL] = CONTEST_DESC_OFFSET(cf_notify_email),
   [CONTEST_CLAR_NOTIFY_EMAIL] = CONTEST_DESC_OFFSET(clar_notify_email),
   [CONTEST_DAILY_STAT_EMAIL] = CONTEST_DESC_OFFSET(daily_stat_email),
+  [CONTEST_PRIV_HEADER_FILE] = CONTEST_DESC_OFFSET(priv_header_file),
+  [CONTEST_PRIV_FOOTER_FILE] = CONTEST_DESC_OFFSET(priv_footer_file),
 };
 
 static const size_t contest_access_offsets[CONTEST_LAST_TAG] =
@@ -787,6 +793,8 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
     process_conf_file_path(cnts, &cnts->team_header_file);
     process_conf_file_path(cnts, &cnts->team_footer_file);
     process_conf_file_path(cnts, &cnts->register_email_file);
+    process_conf_file_path(cnts, &cnts->priv_header_file);
+    process_conf_file_path(cnts, &cnts->priv_footer_file);
 
     if (!cnts->users_head_style) {
       cnts->users_head_style = xstrdup("h2");
@@ -887,7 +895,7 @@ do_check_ip(struct contest_access *acc, ej_ip_t ip, int ssl)
 int
 contests_check_ip(int num, int field, ej_ip_t ip, int ssl)
 {
-  struct contest_desc *d = 0;
+  const struct contest_desc *d = 0;
   struct contest_access *acc = 0;
   int e;
 
@@ -915,7 +923,7 @@ contests_check_register_ip(int num, ej_ip_t ip, int ssl)
   return contests_check_ip(num, CONTEST_REGISTER_ACCESS, ip, ssl);
 }
 int
-contests_check_register_ip_2(struct contest_desc *cnts, ej_ip_t ip, int ssl)
+contests_check_register_ip_2(const struct contest_desc *cnts, ej_ip_t ip, int ssl)
 {
   return do_check_ip(cnts->register_access, ip, ssl);
 }
@@ -925,7 +933,7 @@ contests_check_users_ip(int num, ej_ip_t ip, int ssl)
   return contests_check_ip(num, CONTEST_USERS_ACCESS, ip, ssl);
 }
 int
-contests_check_users_ip_2(struct contest_desc *cnts, ej_ip_t ip, int ssl)
+contests_check_users_ip_2(const struct contest_desc *cnts, ej_ip_t ip, int ssl)
 {
   return do_check_ip(cnts->users_access, ip, ssl);
 }
@@ -935,7 +943,7 @@ contests_check_master_ip(int num, ej_ip_t ip, int ssl)
   return contests_check_ip(num, CONTEST_MASTER_ACCESS, ip, ssl);
 }
 int
-contests_check_master_ip_2(struct contest_desc *cnts, ej_ip_t ip, int ssl)
+contests_check_master_ip_2(const struct contest_desc *cnts, ej_ip_t ip, int ssl)
 {
   return do_check_ip(cnts->master_access, ip, ssl);
 }
@@ -945,7 +953,7 @@ contests_check_judge_ip(int num, ej_ip_t ip, int ssl)
   return contests_check_ip(num, CONTEST_JUDGE_ACCESS, ip, ssl);
 }
 int
-contests_check_judge_ip_2(struct contest_desc *cnts, ej_ip_t ip, int ssl)
+contests_check_judge_ip_2(const struct contest_desc *cnts, ej_ip_t ip, int ssl)
 {
   return do_check_ip(cnts->judge_access, ip, ssl);
 }
@@ -955,7 +963,7 @@ contests_check_team_ip(int num, ej_ip_t ip, int ssl)
   return contests_check_ip(num, CONTEST_TEAM_ACCESS, ip, ssl);
 }
 int
-contests_check_team_ip_2(struct contest_desc *cnts, ej_ip_t ip, int ssl)
+contests_check_team_ip_2(const struct contest_desc *cnts, ej_ip_t ip, int ssl)
 {
   return do_check_ip(cnts->team_access, ip, ssl);
 }
@@ -965,7 +973,7 @@ contests_check_serve_control_ip(int num, ej_ip_t ip, int ssl)
   return contests_check_ip(num, CONTEST_SERVE_CONTROL_ACCESS, ip, ssl);
 }
 int
-contests_check_serve_control_ip_2(struct contest_desc *cnts, ej_ip_t ip, int ssl)
+contests_check_serve_control_ip_2(const struct contest_desc *cnts, ej_ip_t ip, int ssl)
 {
   return do_check_ip(cnts->serve_control_access, ip, ssl);
 }
@@ -1088,7 +1096,7 @@ contests_get_list(unsigned char **p_map)
 }
 
 int
-contests_get(int number, struct contest_desc **p_desc)
+contests_get(int number, const struct contest_desc **p_desc)
 {
   unsigned char c_path[1024];
   struct stat sb;
@@ -1185,12 +1193,12 @@ static unsigned char const * const contests_errors[] =
   [CONTEST_ERR_LAST] "unknown error"
 };
 
-unsigned char *
+const unsigned char *
 contests_strerror(int e)
 {
   if (e < 0) e = -e;
   if (e > CONTEST_ERR_LAST) e = CONTEST_ERR_LAST;
-  return (unsigned char *) contests_errors[e];
+  return (const unsigned char *) contests_errors[e];
 }
 
 void
@@ -1376,6 +1384,8 @@ contests_unparse(FILE *f,
   unparse_text(f, CONTEST_REGISTER_FOOTER_FILE, cnts->register_footer_file);
   unparse_text(f, CONTEST_TEAM_HEADER_FILE, cnts->team_header_file);
   unparse_text(f, CONTEST_TEAM_FOOTER_FILE, cnts->team_footer_file);
+  unparse_text(f, CONTEST_PRIV_HEADER_FILE, cnts->priv_header_file);
+  unparse_text(f, CONTEST_PRIV_FOOTER_FILE, cnts->priv_footer_file);
 
   unparse_text(f, CONTEST_USERS_HEAD_STYLE, cnts->users_head_style);
   unparse_text(f, CONTEST_USERS_PAR_STYLE, cnts->users_par_style);

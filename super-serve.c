@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -344,7 +344,7 @@ startup_err(const char *format, ...)
 }
 
 static void
-prepare_serve_serving(struct contest_desc *cnts,
+prepare_serve_serving(const struct contest_desc *cnts,
                       struct contest_extra *extra,
                       int do_serve_manage)
 {
@@ -407,7 +407,7 @@ prepare_serve_serving(struct contest_desc *cnts,
 }
 
 static void
-prepare_run_serving(struct contest_desc *cnts,
+prepare_run_serving(const struct contest_desc *cnts,
                     struct contest_extra *extra,
                     int do_run_manage)
 {
@@ -495,7 +495,8 @@ check_user_identity(const unsigned char *prog_name,
 static void close_all_client_sockets(void);
 
 int
-super_serve_start_serve_test_mode(struct contest_desc *cnts, unsigned char **p_log,
+super_serve_start_serve_test_mode(const struct contest_desc *cnts,
+                                  unsigned char **p_log,
                                   int pass_socket)
 {
   FILE *flog = 0;
@@ -839,7 +840,7 @@ start_serve(struct contest_extra *cur,
  * do_{serve,run}_manage may be -1 (use the default value), 0 or 1
  */
 static void
-acquire_contest_resources(struct contest_desc *cnts,
+acquire_contest_resources(const struct contest_desc *cnts,
                           int do_serve_manage,
                           int do_run_manage)
 {
@@ -994,7 +995,7 @@ acquire_resources(void)
 {
   unsigned char *contest_map = 0;
   int contest_max_ind = 0, errcode, i;
-  struct contest_desc *cnts;
+  const struct contest_desc *cnts;
 
   info("scanning available contests...");
   contest_max_ind = contests_get_list(&contest_map);
@@ -1016,7 +1017,7 @@ acquire_resources(void)
 }
 
 static void
-release_contest_resources(struct contest_desc *cnts)
+release_contest_resources(const struct contest_desc *cnts)
 {
   struct contest_extra *extra;
   int status = 0, out_pid;
@@ -1789,7 +1790,8 @@ cmd_main_page(struct client_state *p, int len,
   struct client_state *q;
   opcap_t caps;
   int capbit = 0;
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
+  struct contest_desc *rw_cnts = 0;
   struct sid_state *sstate = 0;
 
   if (len < sizeof(*pkt)) return error_packet_too_short(p, len, sizeof(*pkt));
@@ -2033,21 +2035,21 @@ cmd_main_page(struct client_state *p, int len,
                                      self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SSERV_CMD_EDIT_CONTEST_XML:
-    if ((r = contests_load(pkt->contest_id, &cnts)) < 0 || !cnts) {
+    if ((r = contests_load(pkt->contest_id, &rw_cnts)) < 0 || !rw_cnts) {
       return send_reply(p, -SSERV_ERR_INVALID_CONTEST);
     }
-    sstate->edited_cnts = cnts;
-    super_html_load_serve_cfg(cnts, config, sstate);
+    sstate->edited_cnts = rw_cnts;
+    super_html_load_serve_cfg(rw_cnts, config, sstate);
     r = super_html_edit_contest_page(f, p->priv_level, p->user_id, p->login,
                                      p->cookie, p->ip, config, sstate,
                                      self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     break;
   case SSERV_CMD_CHECK_TESTS:
-    if ((r = contests_load(pkt->contest_id, &cnts)) < 0 || !cnts) {
+    if ((r = contests_load(pkt->contest_id, &rw_cnts)) < 0 || !rw_cnts) {
       return send_reply(p, -SSERV_ERR_INVALID_CONTEST);
     }
-    sstate->edited_cnts = cnts;
-    super_html_load_serve_cfg(cnts, config, sstate);
+    sstate->edited_cnts = rw_cnts;
+    super_html_load_serve_cfg(rw_cnts, config, sstate);
     r = super_html_check_tests(f, p->priv_level, p->user_id, p->login,
                                p->cookie, p->ip, config, sstate,
                                self_url_ptr, hidden_vars_ptr, extra_args_ptr);
@@ -2228,7 +2230,7 @@ cmd_create_contest(struct client_state *p, int len,
   send_reply(p, SSERV_RPL_OK);
 }
 
-static int contest_mngmt_cmd(struct contest_desc *cnts,
+static int contest_mngmt_cmd(const struct contest_desc *cnts,
                              int cmd,
                              int user_id,
                              const unsigned char *user_login);
@@ -2237,7 +2239,8 @@ cmd_simple_command(struct client_state *p, int len,
                    struct prot_super_pkt_simple_cmd *pkt)
 {
   int r;
-  struct contest_desc *cnts;
+  const struct contest_desc *cnts;
+  struct contest_desc *rw_cnts;
   opcap_t caps;
 
   if (sizeof(*pkt) != len)
@@ -2262,16 +2265,27 @@ cmd_simple_command(struct client_state *p, int len,
 
   switch (pkt->b.id) {
   case SSERV_CMD_OPEN_CONTEST:
-    r = super_html_open_contest(cnts, p->user_id, p->login, p->ip);
+  case SSERV_CMD_CLOSE_CONTEST:
+  case SSERV_CMD_INVISIBLE_CONTEST:
+  case SSERV_CMD_VISIBLE_CONTEST:
+    if (contests_load(pkt->contest_id, &rw_cnts) < 0 || !rw_cnts) {
+      return send_reply(p, -SSERV_ERR_INVALID_CONTEST);
+    }
+    break;
+  }
+
+  switch (pkt->b.id) {
+  case SSERV_CMD_OPEN_CONTEST:
+    r = super_html_open_contest(rw_cnts, p->user_id, p->login, p->ip);
     break;
   case SSERV_CMD_CLOSE_CONTEST:
-    r = super_html_close_contest(cnts, p->user_id, p->login, p->ip);
+    r = super_html_close_contest(rw_cnts, p->user_id, p->login, p->ip);
     break;
   case SSERV_CMD_INVISIBLE_CONTEST:
-    r = super_html_make_invisible_contest(cnts, p->user_id, p->login, p->ip);
+    r = super_html_make_invisible_contest(rw_cnts, p->user_id, p->login, p->ip);
     break;
   case SSERV_CMD_VISIBLE_CONTEST:
-    r = super_html_make_visible_contest(cnts, p->user_id, p->login, p->ip);
+    r = super_html_make_visible_contest(rw_cnts, p->user_id, p->login, p->ip);
     break;
   case SSERV_CMD_SERVE_LOG_TRUNC:
   case SSERV_CMD_SERVE_LOG_DEV_NULL:
@@ -3421,7 +3435,7 @@ handle_control_command(struct client_state *p)
 }
 
 static int
-contest_mngmt_cmd(struct contest_desc *cnts,
+contest_mngmt_cmd(const struct contest_desc *cnts,
                   int cmd,
                   int user_id,
                   const unsigned char *user_login)

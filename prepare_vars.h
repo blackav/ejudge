@@ -3,7 +3,7 @@
 #ifndef __PREPARE_VARS_H__
 #define __PREPARE_VARS_H__
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,6 +36,6 @@ extern int max_lang;
 extern int max_prob;
 
 /* userlist-server interaction */
-extern struct contest_desc *cur_contest;
+extern const struct contest_desc *cur_contest;
 
 #endif /* __PREPARE_VARS_H__ */

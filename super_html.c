@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -128,7 +128,7 @@ enum
   MNG_STAT_LAST = MNG_STAT_WAITING,
 };
 static int
-get_serve_management_status(struct contest_desc *cnts,
+get_serve_management_status(const struct contest_desc *cnts,
                             struct contest_extra *extra)
 {
   if (!cnts->managed && (!extra || !extra->serve_used)) {
@@ -154,7 +154,7 @@ get_serve_management_status(struct contest_desc *cnts,
   }
 }
 static int
-get_run_management_status(struct contest_desc *cnts,
+get_run_management_status(const struct contest_desc *cnts,
                           struct contest_extra *extra)
 {
   if (!cnts->run_managed && (!extra || !extra->run_used)) {
@@ -188,7 +188,7 @@ logged_contest_get(struct ejudge_cfg *config, int contest_id)
   unsigned char *s, *outbuf;
   unsigned char tmplog_path[1024];
   int serial = 0, tmplog_fd, saved_log_fd, errcode, sz, r;
-  struct contest_desc *cnts;
+  const struct contest_desc *cnts;
   struct stat logstat;
 
   // get the directory to create a temporary file
@@ -299,7 +299,7 @@ super_html_main_page(FILE *f,
   unsigned char *contests_map = 0;
   int contest_max_id, contest_id, errcode;
   unsigned char *html_name;
-  struct contest_desc *cnts;
+  const struct contest_desc *cnts;
   struct contest_extra *extra = 0;
   unsigned char hbuf[1024];
   opcap_t caps;
@@ -633,7 +633,7 @@ super_html_contest_page(FILE *f,
   unsigned char log_file_path[1024];
   int prog_pat_len, self_url_len;
   int errcode, refcount;
-  struct contest_desc *cnts;
+  const struct contest_desc *cnts;
   struct contest_extra *extra;
   opcap_t caps;
   unsigned char *str;
@@ -1148,7 +1148,7 @@ super_html_log_page(FILE *f,
                     const unsigned char *extra_args)
 {
   int errcode, refresh_action;
-  struct contest_desc *cnts;
+  const struct contest_desc *cnts;
   opcap_t caps;
   unsigned char log_file_path[1024];
   const unsigned char *progname;
@@ -1715,7 +1715,7 @@ super_html_create_contest(FILE *f,
   int contest_max_id = 0;
   unsigned char *contests_map = 0;
   int recomm_id = 1, cnts_id;
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
   unsigned char *cnts_name = 0;
 
   contest_max_id = contests_get_list(&contests_map);
@@ -2707,7 +2707,7 @@ super_html_edit_access_rules(FILE *f,
   unsigned char hbuf[1024];
   unsigned char *contests_map = 0;
   int contest_max_id, cnts_id;
-  struct contest_desc *tmp_cnts = 0;
+  const struct contest_desc *tmp_cnts = 0;
   unsigned char *cnts_name = 0;
   int row = 1;
 
@@ -3496,7 +3496,7 @@ super_html_create_contest_2(FILE *f,
   unsigned char *contests_map = 0;
   int contests_num;
   int errcode = 0;
-  struct contest_desc *templ_cnts = 0;
+  const struct contest_desc *templ_cnts = 0;
 
   if (sstate->edited_cnts) {
     errcode = -SSERV_ERR_CONTEST_EDITED;
@@ -3559,7 +3559,7 @@ super_html_create_contest_2(FILE *f,
   return errcode;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")

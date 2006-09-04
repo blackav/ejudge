@@ -414,7 +414,7 @@ html_err_permission_denied(struct server_framework_state *state,
                            struct http_request_info *phr,
                            int priv_mode)
 {
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
   struct contest_extra *extra = 0;
   const unsigned char *header = 0, *footer = 0;
   time_t cur_time;
@@ -446,7 +446,7 @@ privileged_page_login(struct server_framework_state *state,
 {
   const unsigned char *login, *password, *s;
   int r, n;
-  struct contest_desc *cnts = 0;
+  const struct contest_desc *cnts = 0;
   opcap_t caps;
 
   if ((r = ns_cgi_param(phr, "login", &login)) < 0) {

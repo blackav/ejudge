@@ -47,7 +47,7 @@ static const unsigned char *ejudge_xml_path;
 static const unsigned char *contest_root_dir;
 static struct ejudge_cfg *config;
 static int contest_id;
-static struct contest_desc *cnts;
+static const struct contest_desc *cnts;
 static userlist_clnt_t userlist_conn;
 static unsigned char serve_socket_path[PATH_MAX];
 static int serve_socket_fd = -1;
@@ -976,7 +976,7 @@ main(int argc, char *argv[])
   return 1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
