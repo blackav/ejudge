@@ -80,6 +80,8 @@ super_html_clear_variable(struct sid_state *sstate, int cmd)
   case SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER: p_str = &cnts->register_footer_file; break;
   case SSERV_CMD_CNTS_CLEAR_TEAM_HEADER: p_str = &cnts->team_header_file; break;
   case SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER: p_str = &cnts->team_footer_file; break;
+  case SSERV_CMD_CNTS_CLEAR_PRIV_HEADER: p_str = &cnts->priv_header_file; break;
+  case SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER: p_str = &cnts->priv_footer_file; break;
   case SSERV_CMD_CNTS_CLEAR_USERS_HEAD_STYLE: p_str = &cnts->users_head_style; break;
   case SSERV_CMD_CNTS_CLEAR_USERS_PAR_STYLE: p_str = &cnts->users_par_style; break;
   case SSERV_CMD_CNTS_CLEAR_USERS_TABLE_STYLE: p_str = &cnts->users_table_style; break;
@@ -123,6 +125,12 @@ super_html_clear_variable(struct sid_state *sstate, int cmd)
     break;
   case SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER_TEXT:
     p_str = &sstate->team_footer_text;
+    break;
+  case SSERV_CMD_CNTS_CLEAR_PRIV_HEADER_TEXT:
+    p_str = &sstate->priv_header_text;
+    break;
+  case SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER_TEXT:
+    p_str = &sstate->priv_footer_text;
     break;
   case SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE_TEXT:
     p_str = &sstate->register_email_text;
@@ -333,6 +341,12 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   case SSERV_CMD_CNTS_CHANGE_TEAM_FOOTER:
     p_str = &cnts->team_footer_file;
     break;
+  case SSERV_CMD_CNTS_CHANGE_PRIV_HEADER:
+    p_str = &cnts->priv_header_file;
+    break;
+  case SSERV_CMD_CNTS_CHANGE_PRIV_FOOTER:
+    p_str = &cnts->priv_footer_file;
+    break;
   case SSERV_CMD_CNTS_CHANGE_USERS_HEAD_STYLE:
     p_str = &cnts->users_head_style;
     break;
@@ -429,6 +443,12 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
     break;
   case SSERV_CMD_CNTS_SAVE_TEAM_FOOTER:
     p_str_d2u = &sstate->team_footer_text;
+    break;
+  case SSERV_CMD_CNTS_SAVE_PRIV_HEADER:
+    p_str_d2u = &sstate->priv_header_text;
+    break;
+  case SSERV_CMD_CNTS_SAVE_PRIV_FOOTER:
+    p_str_d2u = &sstate->priv_footer_text;
     break;
   case SSERV_CMD_CNTS_SAVE_REGISTER_EMAIL_FILE:
     p_str_d2u = &sstate->register_email_text;
@@ -975,6 +995,10 @@ super_html_commit_contest(FILE *f,
   path_t team_header_path_2 = { 0 };
   path_t team_footer_path = { 0 };
   path_t team_footer_path_2 = { 0 };
+  path_t priv_header_path = { 0 };
+  path_t priv_header_path_2 = { 0 };
+  path_t priv_footer_path = { 0 };
+  path_t priv_footer_path_2 = { 0 };
   path_t register_email_path = { 0 };
   path_t register_email_path_2 = { 0 };
   path_t contest_start_cmd_path = { 0 };
@@ -1172,7 +1196,21 @@ super_html_commit_contest(FILE *f,
                             team_footer_path, team_footer_path_2)) < 0)
     goto failed;
 
-  /* 9. Save the register_email_file as temporary file */
+  /* 9. Save the priv_header_file as temporary file */
+  if ((thf = save_conf_file(flog, "privileged HTML header file",
+                            cnts->priv_header_file, sstate->priv_header_text,
+                            conf_path,
+                            priv_header_path, priv_header_path_2)) < 0)
+    goto failed;
+
+  /* 10. Save the priv_footer_file as temporary file */
+  if ((tff = save_conf_file(flog, "privileged HTML footer file",
+                            cnts->priv_footer_file, sstate->priv_footer_text,
+                            conf_path,
+                            priv_footer_path, priv_footer_path_2)) < 0)
+    goto failed;
+
+  /* 11. Save the register_email_file as temporary file */
   if ((ref = save_conf_file(flog, "registration e-mail template",
                             cnts->register_email_file, sstate->register_email_text,
                             conf_path,
@@ -1346,6 +1384,8 @@ super_html_commit_contest(FILE *f,
   rename_files(flog, rff, register_footer_path, register_footer_path_2);
   rename_files(flog, thf, team_header_path, team_header_path_2);
   rename_files(flog, tff, team_footer_path, team_footer_path_2);
+  rename_files(flog, thf, priv_header_path, priv_header_path_2);
+  rename_files(flog, tff, priv_footer_path, priv_footer_path_2);
   rename_files(flog, ref, register_email_path, register_email_path_2);
   rename_files(flog, csf, contest_start_cmd_path, contest_start_cmd_path_2);
   if (csf) chmod(contest_start_cmd_path, 0755);
@@ -1471,6 +1511,8 @@ super_html_commit_contest(FILE *f,
   if (register_footer_path_2[0]) unlink(register_footer_path_2);
   if (team_header_path_2[0]) unlink(team_header_path_2);
   if (team_footer_path_2[0]) unlink(team_footer_path_2);
+  if (priv_header_path_2[0]) unlink(priv_header_path_2);
+  if (priv_footer_path_2[0]) unlink(priv_footer_path_2);
   if (register_email_path_2[0]) unlink(register_email_path_2);
   if (contest_start_cmd_path_2[0]) unlink(contest_start_cmd_path_2);
   if (stand_header_path_2[0]) unlink(stand_header_path_2);
