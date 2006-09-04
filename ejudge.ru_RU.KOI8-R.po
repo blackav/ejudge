@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-03 23:26+0400\n"
+"POT-Creation-Date: 2006-09-04 18:22+0400\n"
 "PO-Revision-Date: 2006-08-26 18:43+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -58,6 +58,44 @@ msgstr "<i>Командная строка слишком длинна</i>\n"
 
 msgid "<i>Not set</i>"
 msgstr "<i>Не установлено</i>"
+
+#, fuzzy, c-format
+msgid "<li>The contest is closed for participation.</li>\n"
+msgstr "Турнир закрыт."
+
+#, fuzzy, c-format
+msgid "<li>You are not registered for contest %d.</li>\n"
+msgstr "Вы не зарегистрированы на этот турнир."
+
+#, fuzzy, c-format
+msgid "<li>You are not registered for contest %s.</li>\n"
+msgstr "Вы не зарегистрированы на этот турнир."
+
+#, fuzzy, c-format
+msgid "<li>You do not have permissions to login using the specified role.</li>"
+msgstr "У Вас нет прав использовать данный сервис."
+
+#, c-format
+msgid "<li>You have typed an invalid login (<tt>%s</tt>).</li>\n"
+msgstr ""
+
+#, c-format
+msgid "<li>You have typed an invalid password.</li>\n"
+msgstr ""
+
+#, c-format
+msgid "<li>You were banned by the administrator.</li>\n"
+msgstr ""
+
+#, c-format
+msgid ""
+"<li>Your IP-address (<tt>%s</tt>) or protocol (<tt>%s</tt>) is banned for "
+"participation.</li>"
+msgstr ""
+
+#, c-format
+msgid "<li>Your registration was not confirmed.</li>\n"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -178,6 +216,11 @@ msgid "<p%s>The minimal number of %s is %d.</p>\n"
 msgstr "<p%s>Минимальное количество %s - %d.</p>\n"
 
 #, c-format
+msgid ""
+"<p>Note, that the exact reason is not reported due to security reasons.</p>"
+msgstr ""
+
+#, c-format
 msgid "<u>--- Checker output ---</u>\n"
 msgstr "<u>--- Вывод проверяющей программы ---</u>\n"
 
@@ -200,6 +243,9 @@ msgstr "<u>--- Результат работы программы ---</u>\n"
 #, c-format
 msgid "<u>--- Stderr ---</u>\n"
 msgstr "<u>--- Ошибки ---</u>\n"
+
+msgid "A request parameter is invalid. Please, contact the site administrator."
+msgstr ""
 
 msgid "Accepted for testing"
 msgstr "Принято на проверку"
@@ -818,6 +864,10 @@ msgstr "Учебное заведение (сокр.)"
 msgid "Institution (short) (En)"
 msgstr "Учебное заведение (сокр.) (Англ.)"
 
+#, fuzzy
+msgid "Internal error"
+msgstr "Фатальная ошибка"
+
 msgid "Internal error: insufficient memory."
 msgstr "Внутренняя ошибка: недостаточно памяти."
 
@@ -841,6 +891,10 @@ msgstr "Неверная спецификация языка программирования"
 
 msgid "Invalid login"
 msgstr "Неверное регистрационное имя"
+
+#, fuzzy
+msgid "Invalid parameter"
+msgstr "Неверные параметры"
 
 msgid "Invalid parameters"
 msgstr "Неверные параметры"
@@ -1160,6 +1214,9 @@ msgstr "Ожидает проверки"
 
 msgid "Permission denied"
 msgstr "В доступе отказано"
+
+msgid "Permission denied. The possible reasons are as follows."
+msgstr ""
 
 msgid ""
 "Permission denied. You have typed invalid login, invalid password, invalid "
@@ -1659,6 +1716,11 @@ msgid "The submission cannot be sent. The contest is over."
 msgstr "Решение не может быть послано. Турнир окончен."
 
 msgid ""
+"The user database server is currently not available. Please, retry the "
+"request later."
+msgstr ""
+
+msgid ""
 "This program is configured incorrectly and cannot perform normal operation. "
 "Please contact the site (or contest) administrator."
 msgstr ""
@@ -1764,6 +1826,10 @@ msgstr "Рег. имя"
 
 msgid "User Name"
 msgstr "Имя участника"
+
+#, fuzzy
+msgid "User database server is down"
+msgstr "Сервер не работает"
 
 msgid "User login"
 msgstr "Рег. имя команды"
@@ -1909,6 +1975,10 @@ msgstr "Вы НЕ можете редактировать Ваши личные данные."
 
 msgid "You may register for this contest."
 msgstr "Вы можете зарегистрироваться на этот турнир."
+
+msgid ""
+"Your request has caused an internal server error. Please, report it as a bug."
+msgstr ""
 
 msgid "access denied"
 msgstr "в доступе отказано"
