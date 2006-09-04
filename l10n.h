@@ -3,7 +3,7 @@
 #ifndef __L10N_H__
 #define __L10N_H__
 
-/* Copyright (C) 2003 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,8 +16,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+
+#include <stdio.h>
+
 void l10n_prepare(int l10n_flag, unsigned char const *l10n_dir);
 void l10n_setlocale(int locale_id);
+void l10n_html_locale_select(FILE *fout, int locale_id);
 
 #endif /* __L10N_H__ */
 /**

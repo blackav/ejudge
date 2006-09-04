@@ -306,7 +306,7 @@ ejudge.ru_RU.KOI8-R.po: $(CFILES) ejudge.po
 	${MSGMERGE} -U $@ ejudge.po
 
 ejudge.po: $(CFILES)
-	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -s -o $@ *.c
+	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c
 
 ru_all:
 	-mkdir -p locale/ru_RU.KOI8-R/LC_MESSAGES
