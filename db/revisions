@@ -587,3 +587,7 @@ new-server.c 3289 0 992135
 new_server_html.c 3289 0 1160633
 nsdb_plugin_files.c 3289 0 730303
 server_framework.c 3289 0 1716116
+l10n.h 3291 0 76582
+new-server.c 3291 0 997448
+l10n.c 3291 0 193494
+new_server_html.c 3291 0 1390787
