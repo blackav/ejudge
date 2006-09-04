@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005-2006 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2005-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -207,6 +207,8 @@ load_header_files(struct sid_state *sstate, struct contest_desc *cnts)
   sstate->users_footer_text = do_load_file(conf_path, cnts->users_footer_file);
   sstate->team_header_text = do_load_file(conf_path, cnts->team_header_file);
   sstate->team_footer_text = do_load_file(conf_path, cnts->team_footer_file);
+  sstate->priv_header_text = do_load_file(conf_path, cnts->priv_header_file);
+  sstate->priv_footer_text = do_load_file(conf_path, cnts->priv_footer_file);
   sstate->register_email_text = do_load_file(conf_path, cnts->register_email_file);
 }
 
@@ -245,6 +247,8 @@ contest_tmpl_clone(struct sid_state *sstate,
   subst_param(&cnts->register_footer_file, 6, substs_from, substs_to);
   subst_param(&cnts->team_header_file, 6, substs_from, substs_to);
   subst_param(&cnts->team_footer_file, 6, substs_from, substs_to);
+  subst_param(&cnts->priv_header_file, 6, substs_from, substs_to);
+  subst_param(&cnts->priv_footer_file, 6, substs_from, substs_to);
   subst_param(&cnts->register_email, 6, substs_from, substs_to);
   subst_param(&cnts->register_url, 6, substs_from, substs_to);
   subst_param(&cnts->team_url, 6, substs_from, substs_to);
@@ -284,7 +288,7 @@ contest_tmpl_clone(struct sid_state *sstate,
   return cnts;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")

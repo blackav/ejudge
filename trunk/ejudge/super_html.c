@@ -2424,6 +2424,26 @@ super_html_edit_contest_page(FILE *f,
                              self_url,
                              extra_args,
                              hidden_vars);
+    print_string_editing_row(f, "HTML header file for privileged CGI-programs:",
+                             cnts->priv_header_file,
+                             SUPER_ACTION_CNTS_CHANGE_PRIV_HEADER,
+                             SUPER_ACTION_CNTS_CLEAR_PRIV_HEADER,
+                             SUPER_ACTION_CNTS_EDIT_PRIV_HEADER,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+    print_string_editing_row(f, "HTML footer file for privileged CGI-programs:",
+                             cnts->priv_footer_file,
+                             SUPER_ACTION_CNTS_CHANGE_PRIV_FOOTER,
+                             SUPER_ACTION_CNTS_CLEAR_PRIV_FOOTER,
+                             SUPER_ACTION_CNTS_EDIT_PRIV_FOOTER,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
   }
 
   html_start_form(f, 1, session_id, self_url, hidden_vars);
@@ -3335,6 +3355,34 @@ super_html_edit_template_file(FILE *f,
     commit_action = SUPER_ACTION_CNTS_SAVE_TEAM_FOOTER;
     reread_action = SUPER_ACTION_CNTS_READ_TEAM_FOOTER;
     clear_action = SUPER_ACTION_CNTS_CLEAR_TEAM_FOOTER_TEXT;
+    back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
+    help_txt = template_help_1;
+    break;
+  case SSERV_CMD_CNTS_EDIT_PRIV_HEADER:
+    if (!cnts) {
+      failure_text = "no current contest";
+      goto failure;
+    }
+    file_path1 = cnts->priv_header_file;
+    param_expl = "privileged HTML header file";
+    p_str = &sstate->priv_header_text;
+    commit_action = SUPER_ACTION_CNTS_SAVE_PRIV_HEADER;
+    reread_action = SUPER_ACTION_CNTS_READ_PRIV_HEADER;
+    clear_action = SUPER_ACTION_CNTS_CLEAR_PRIV_HEADER_TEXT;
+    back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
+    help_txt = template_help_1;
+    break;
+  case SSERV_CMD_CNTS_EDIT_PRIV_FOOTER:
+    if (!cnts) {
+      failure_text = "no current contest";
+      goto failure;
+    }
+    file_path1 = cnts->priv_footer_file;
+    param_expl = "privileged HTML footer file";
+    p_str = &sstate->priv_footer_text;
+    commit_action = SUPER_ACTION_CNTS_SAVE_PRIV_FOOTER;
+    reread_action = SUPER_ACTION_CNTS_READ_PRIV_FOOTER;
+    clear_action = SUPER_ACTION_CNTS_CLEAR_PRIV_FOOTER_TEXT;
     back_action = SUPER_ACTION_EDIT_CURRENT_CONTEST;
     help_txt = template_help_1;
     break;
