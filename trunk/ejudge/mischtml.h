@@ -3,7 +3,7 @@
 #ifndef __MISCHTML_H__
 #define __MISCHTML_H__
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,7 @@ unsigned char *html_hyperref(unsigned char *buf, size_t size,
                              const unsigned char *extra_args,
                              const unsigned char *format, ...);
 
-void html_start_form(FILE *f, int mode, ej_cookie_t sid,
+void html_start_form(FILE *f, int mode,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars);
 

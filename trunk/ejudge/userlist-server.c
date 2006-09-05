@@ -5989,7 +5989,8 @@ cmd_get_cookie(struct client_state *p,
   enqueue_reply_to_client(p, out_size, out);
 
   if (!daemon_mode) {
-    CONN_INFO("%s -> OK, %d, %s, %llu us", logbuf, u->id, u->login, tsc2);
+    CONN_INFO("%s -> OK, %d, %s, %d, %llu us", logbuf, u->id, u->login,
+              out->contest_id, tsc2);
   }
 }
 

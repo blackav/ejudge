@@ -214,6 +214,7 @@ cmd_http_request(struct server_framework_state *state,
 
   xfree(hr.login);
   xfree(hr.name);
+  xfree(hr.name_arm);
   nsf_new_autoclose(state, p, out_txt, out_size);
   info("HTTP_REQUEST -> OK, %zu", out_size);
   nsf_send_reply(state, p, NEW_SRV_RPL_OK);
