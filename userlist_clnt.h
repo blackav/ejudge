@@ -94,7 +94,6 @@ int
 userlist_clnt_get_cookie(struct userlist_clnt *clnt,
                          ej_ip_t origin_ip,
                          int ssl,
-                         int contest_id,
                          ej_cookie_t cookie,
                          int *p_user_id,
                          int *p_contest_id,

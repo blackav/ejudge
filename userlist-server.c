@@ -5924,8 +5924,8 @@ cmd_get_cookie(struct client_state *p,
   }
 
   snprintf(logbuf, sizeof(logbuf),
-           "GET_COOKIE: %s, %d, %d, %llx",
-           xml_unparse_ip(data->origin_ip), data->ssl, data->contest_id, data->cookie);
+           "GET_COOKIE: %s, %d, %llx",
+           xml_unparse_ip(data->origin_ip), data->ssl, data->cookie);
 
   if (p->user_id < 0) {
     err("%s -> not authentificated", logbuf);
@@ -5949,15 +5949,15 @@ cmd_get_cookie(struct client_state *p,
   rdtscll(tsc2);
   tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
 
-  default_get_user_info_3(cookie->user_id, data->contest_id, &u, &ui, &c);
+  default_get_user_info_3(cookie->user_id, cookie->contest_id, &u, &ui, &c);
 
   if (cookie->ip != data->origin_ip) {
     err("%s -> IP address mismatch", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
-  if (cookie->contest_id != data->contest_id) {
-    err("%s -> contest mismatch", logbuf);
+  if (cookie->ssl != data->ssl) {
+    err("%s -> protocol mismatch", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
@@ -6567,7 +6567,7 @@ load_plugins(void)
     err("cannot initialize XML database plugin");
     return -1;
   }
-  if (uldb_plugin_xml.parse(config, 0, plugin_data) < 0) {
+  if (uldb_plugin_xml.parse(plugin_data, config, 0) < 0) {
     err("cannot initialize XML database plugin");
     return -1;
   }
