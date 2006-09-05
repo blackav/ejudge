@@ -715,6 +715,11 @@ privileged_page(struct server_framework_state *state,
                 struct http_request_info *phr)
 {
   int r;
+  opcap_t caps;
+  const struct contest_desc *cnts = 0;
+  struct contest_extra *extra = 0;
+  time_t cur_time = time(0);
+  const unsigned char *header = 0, *footer = 0;
 
   if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return privileged_page_login(state, p, fout, phr);
@@ -723,9 +728,9 @@ privileged_page(struct server_framework_state *state,
   if (open_ul_connection(state) < 0)
     return html_err_userlist_server_down(state, fout, phr, 1);
   if ((r = userlist_clnt_get_cookie(ul_conn, phr->ip, phr->ssl_flag,
-                                    phr->contest_id, phr->session_id,
+                                    phr->session_id,
                                     &phr->user_id, 0, &phr->locale_id,
-                                    0, &phr->role, &phr->login,
+                                    &phr->contest_id, &phr->role, &phr->login,
                                     &phr->name)) < 0) {
     switch (-r) {
     case ULS_ERR_NO_COOKIE:
@@ -737,6 +742,46 @@ privileged_page(struct server_framework_state *state,
     }
   }
 
+  if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
+    return html_err_permission_denied(state, fout, phr, 1);
+  extra = get_contest_extra(phr->contest_id);
+  ASSERT(extra);
+
+  // analyze IP limitations
+  if (phr->role == USER_ROLE_ADMIN) {
+    // as for the master program
+    if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+      return html_err_permission_denied(state, fout, phr, 1);
+  } else {
+    // as for judge program
+    if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+      return html_err_permission_denied(state, fout, phr, 1);
+  }
+
+  // analyze permissions
+  if (phr->role <= 0 || phr->role >= USER_ROLE_LAST)
+    return html_err_permission_denied(state, fout, phr, 1);
+  if (phr->role == USER_ROLE_ADMIN) {
+    // as for the master program
+    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
+        || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0)
+      return html_err_permission_denied(state, fout, phr, 1);
+  } else {
+    // user privileges checked locally
+    if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0)
+      return html_err_permission_denied(state, fout, phr, 1);
+  }
+
+  update_watched_file(&extra->priv_header, cnts->priv_header_file, cur_time);
+  update_watched_file(&extra->priv_footer, cnts->priv_footer_file, cur_time);
+  header = extra->priv_header.text;
+  footer = extra->priv_footer.text;
+
+  l10n_setlocale(phr->locale_id);
+  html_put_header(fout, header, 0, 0, phr->locale_id, _("OK"));
+  fprintf(fout, "<h1>OK</h1>\n");
+  html_put_footer(fout, footer);
+  l10n_setlocale(0);
 }
 
 void
