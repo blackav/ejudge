@@ -44,8 +44,8 @@ userlist_clnt_get_cookie(struct userlist_clnt *clnt,
   out = alloca(out_size);
   memset(out, 0, out_size);
   out->request_id = ULS_GET_COOKIE;
-  out->origin_ip = 0;
-  out->ssl = 0;
+  out->origin_ip = origin_ip;
+  out->ssl = ssl;
   out->contest_id = 0;
   out->cookie = cookie;
   out->locale_id = 0;
