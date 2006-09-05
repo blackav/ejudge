@@ -135,6 +135,8 @@ static char const * const attr_map[] =
   "last_info_pwdchange",
   "last_info_change",
   "role",
+  "cnts_last_login",
+  "info_create",
 
   0
 };
@@ -760,8 +762,13 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
       pt = &ui->i.last_pwdchange_time;
       ui->i.filled = 1;
       goto parse_date_attr;
+    case USERLIST_A_INFO_CREATE:
     case USERLIST_A_CREATE:
       pt = &ui->i.create_time;
+      ui->i.filled = 1;
+      goto parse_date_attr;
+    case USERLIST_A_CNTS_LAST_LOGIN:
+      pt = &ui->i.last_login_time;
       ui->i.filled = 1;
       goto parse_date_attr;
     default:
@@ -861,6 +868,10 @@ do_parse_user(char const *path, struct userlist_user *usr)
       if (xml_parse_date(path, a->line, a->column, a->text,
                      &usr->last_login_time) < 0) return -1;
       break;
+    case USERLIST_A_CNTS_LAST_LOGIN:
+      if (xml_parse_date(path, a->line, a->column, a->text,
+                     &usr->i.last_login_time) < 0) return -1;
+      break;
     case USERLIST_A_LAST_ACCESS:
       if (xml_parse_date(path, a->line, a->column, a->text,
                      &usr->last_access_time) < 0) return -1;
@@ -884,6 +895,10 @@ do_parse_user(char const *path, struct userlist_user *usr)
     case USERLIST_A_LAST_MINOR_CHANGE:
       if (xml_parse_date(path, a->line, a->column, a->text,
                      &usr->last_minor_change_time) < 0) return -1;
+      break;
+    case USERLIST_A_INFO_CREATE:
+      if (xml_parse_date(path, a->line, a->column, a->text,
+                         &usr->i.create_time) < 0) return -1;
       break;
     case USERLIST_A_PRIVILEGED:
       if (xml_attr_bool(a, &usr->is_privileged) < 0) return -1;
@@ -1392,8 +1407,12 @@ unparse_cntsinfo(const struct userlist_cntsinfo *p, FILE *f)
             xml_unparse_bool(p->i.cnts_read_only));
   }
   if (p->i.create_time > 0) {
-    fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_CREATE],
+    fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_INFO_CREATE],
             xml_unparse_date(p->i.create_time));
+  }
+  if (p->i.last_login_time > 0) {
+    fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_CNTS_LAST_LOGIN],
+            xml_unparse_date(p->i.last_login_time));
   }
   if (p->i.last_change_time > 0) {
     fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_LAST_INFO_CHANGE],
@@ -1520,7 +1539,9 @@ userlist_real_unparse_user(const struct userlist_user *p, FILE *f, int mode, int
     /* last_access_time is contest-specific */
     unparse_date_attr(f, USERLIST_A_LAST_ACCESS, ui->last_access_time);
     /* last_change_time is contest-specific */
+    unparse_date_attr(f, USERLIST_A_INFO_CREATE, ui->create_time);
     unparse_date_attr(f, USERLIST_A_LAST_INFO_CHANGE, ui->last_change_time);
+    unparse_date_attr(f, USERLIST_A_CNTS_LAST_LOGIN, ui->last_login_time);
     /* last_pwdchange_time is contest-specific */
     unparse_date_attr(f, USERLIST_A_LAST_INFO_PWDCHANGE, ui->last_pwdchange_time);
   }

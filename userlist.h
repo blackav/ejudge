@@ -156,6 +156,8 @@ enum
     USERLIST_A_LAST_INFO_PWDCHANGE,
     USERLIST_A_LAST_INFO_CHANGE,
     USERLIST_A_ROLE,
+    USERLIST_A_CNTS_LAST_LOGIN,
+    USERLIST_A_INFO_CREATE,
 
     USERLIST_LAST_ATTN,
   };
@@ -216,6 +218,7 @@ enum
     /* 120 */
     USERLIST_NC_PHONE,
     USERLIST_NC_CREATE_TIME,
+    USERLIST_NC_LAST_LOGIN_TIME,
     USERLIST_NC_LAST_CHANGE_TIME,
     USERLIST_NC_LAST_PWDCHANGE_TIME,
 
@@ -362,6 +365,7 @@ struct userlist_user_info
   struct userlist_members *members[USERLIST_MB_LAST];
 
   time_t create_time;
+  time_t last_login_time;
   time_t last_change_time;
   time_t last_access_time;
   time_t last_pwdchange_time;

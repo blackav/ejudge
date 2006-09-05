@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -177,14 +177,6 @@ static int member_field_types[] =
   [USERLIST_NM_CREATE_TIME] = USERLIST_NM_CREATE_TIME,
   [USERLIST_NM_LAST_CHANGE_TIME] = USERLIST_NM_CREATE_TIME,
 };
-
-/*
-  case USERLIST_NM_SERIAL:
-  case USERLIST_NM_STATUS:
-  case USERLIST_NM_GRADE:
-  case USERLIST_NM_FIRSTNAME:
-  case USERLIST_NM_CREATE_TIME:
-*/
 
 int
 userlist_is_empty_member_field(const struct userlist_member *m, int field_id)
@@ -407,6 +399,7 @@ static int user_info_field_offsets[] =
   [USERLIST_NC_LANGUAGES] = USER_INFO_OFFSET(languages),
   [USERLIST_NC_PHONE] = USER_INFO_OFFSET(phone),
   [USERLIST_NC_CREATE_TIME] = USER_INFO_OFFSET(create_time),
+  [USERLIST_NC_LAST_LOGIN_TIME] = USER_INFO_OFFSET(last_login_time),
   [USERLIST_NC_LAST_CHANGE_TIME] = USER_INFO_OFFSET(last_change_time),
   [USERLIST_NC_LAST_PWDCHANGE_TIME] = USER_INFO_OFFSET(last_pwdchange_time),
 };
@@ -443,6 +436,7 @@ static int user_info_field_types[] =
   [USERLIST_NC_LANGUAGES] = USERLIST_NC_INST,
   [USERLIST_NC_PHONE] = USERLIST_NC_INST,
   [USERLIST_NC_CREATE_TIME] = USERLIST_NC_CREATE_TIME,
+  [USERLIST_NC_LAST_LOGIN_TIME] = USERLIST_NC_CREATE_TIME,
   [USERLIST_NC_LAST_CHANGE_TIME] = USERLIST_NC_CREATE_TIME,
   [USERLIST_NC_LAST_PWDCHANGE_TIME] = USERLIST_NC_CREATE_TIME,
 };

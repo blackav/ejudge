@@ -1031,8 +1031,11 @@ priv_view_users_page(struct server_framework_state *state,
     } else {
       fprintf(fout, "<td>&nbsp;</td>");
     }
-    // FIXME: this information is not yet available
-    fprintf(fout, "<td>&nbsp;</td>");
+    if (u->i.last_login_time > 0) {
+      fprintf(fout, "<td>%s</td>", xml_unparse_date(u->i.last_login_time));
+    } else {
+      fprintf(fout, "<td>&nbsp;</td>");
+    }
     fprintf(fout, "<td><input type=\"checkbox\" name=\"user_%d\"></td>", uid);
     fprintf(fout, "</tr>\n");
   }
