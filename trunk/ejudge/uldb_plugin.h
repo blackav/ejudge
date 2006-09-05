@@ -97,7 +97,7 @@ struct uldb_plugin_iface
   // get the login and basic contest-specific user info
   int (*get_user_info_2)(void *, int, int, const struct userlist_user **, const struct userlist_user_info **);
   // set the login time
-  int (*touch_login_time)(void *, int, time_t);
+  int (*touch_login_time)(void *, int, int, time_t);
   // get the login, basic contest-specific user info, and registration
   int (*get_user_info_3)(void *, int, int, const struct userlist_user **, const struct userlist_user_info **, const struct userlist_contest **);
   // change the contest_id for the cookie

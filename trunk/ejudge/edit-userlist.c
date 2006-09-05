@@ -1239,6 +1239,7 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NC_LANGUAGES] = { "Prog. languages", 1, 1 },
   [USERLIST_NC_PHONE] = { "Phone", 1, 1 },
   [USERLIST_NC_CREATE_TIME] = { "User info create time", 1, 1 },
+  [USERLIST_NC_LAST_LOGIN_TIME] = { "Contest last login", 1, 1 },
   [USERLIST_NC_LAST_CHANGE_TIME] = { "User info change time", 1, 1 },
   [USERLIST_NC_LAST_PWDCHANGE_TIME] = { "Team passwd change time", 1, 1},
   [USERLIST_PSEUDO_PASSWORDS] = { "*Passwords*", 0, 0 },
@@ -1425,6 +1426,7 @@ static int field_order[] =
   USERLIST_NN_LAST_CHANGE_TIME,
   USERLIST_NN_LAST_PWDCHANGE_TIME,
   USERLIST_NC_CREATE_TIME,
+  USERLIST_NC_LAST_LOGIN_TIME,
   USERLIST_NC_LAST_CHANGE_TIME,
   USERLIST_NC_LAST_PWDCHANGE_TIME,
 };
@@ -1660,6 +1662,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         case USERLIST_NN_LAST_CHANGE_TIME:
         case USERLIST_NN_LAST_PWDCHANGE_TIME:
         case USERLIST_NC_CREATE_TIME:
+        case USERLIST_NC_LAST_LOGIN_TIME:
         case USERLIST_NC_LAST_CHANGE_TIME:
         case USERLIST_NC_LAST_PWDCHANGE_TIME:
           help_str = "D-clear C-contest A-new member Q-quit";

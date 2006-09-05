@@ -67,7 +67,7 @@ static int get_user_info_1_func(void *, int, const struct userlist_user **);
 static int get_user_info_2_func(void *, int, int,
                                 const struct userlist_user **,
                                 const struct userlist_user_info **);
-static int touch_login_time_func(void *, int, time_t);
+static int touch_login_time_func(void *, int, int, time_t);
 static int get_user_info_3_func(void *, int, int,
                                 const struct userlist_user **,
                                 const struct userlist_user_info **,
@@ -909,11 +909,12 @@ get_user_info_2_func(void *data, int user_id, int contest_id,
 }
 
 static int
-touch_login_time_func(void *data, int user_id, time_t cur_time)
+touch_login_time_func(void *data, int user_id, int contest_id, time_t cur_time)
 {
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
   struct userlist_list *ul = state->userlist;
   struct userlist_user *u;
+  struct userlist_cntsinfo *ci;
 
   if (user_id <= 0 || user_id >= ul->user_map_size
       || !(u = ul->user_map[user_id])) {
@@ -921,6 +922,11 @@ touch_login_time_func(void *data, int user_id, time_t cur_time)
   }
   if (cur_time <= 0) cur_time = time(0);
   u->last_login_time = cur_time;
+  if (contest_id > 0) {
+    ci = userlist_clone_user_info(u, contest_id, &ul->member_serial, cur_time,
+                                  0);
+    if (ci) ci->i.last_login_time = cur_time;
+  }
   state->dirty = 1;
   return 0;
 }

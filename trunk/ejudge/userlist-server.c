@@ -362,7 +362,7 @@ link_client_state(struct client_state *p)
 #define default_remove_expired_users(a) uldb_default->iface->remove_expired_users(uldb_default->data, a)
 #define default_get_user_info_1(a, b) uldb_default->iface->get_user_info_1(uldb_default->data, a, b)
 #define default_get_user_info_2(a, b, c, d) uldb_default->iface->get_user_info_2(uldb_default->data, a, b, c, d)
-#define default_touch_login_time(a, b) uldb_default->iface->touch_login_time(uldb_default->data, a, b)
+#define default_touch_login_time(a, b, c) uldb_default->iface->touch_login_time(uldb_default->data, a, b, c)
 #define default_get_user_info_3(a, b, c, d, e) uldb_default->iface->get_user_info_3(uldb_default->data, a, b, c, d, e)
 #define default_set_cookie_contest(a, b) uldb_default->iface->set_cookie_contest(uldb_default->data, a, b)
 #define default_set_cookie_locale(a, b) uldb_default->iface->set_cookie_locale(uldb_default->data, a, b)
@@ -1328,7 +1328,7 @@ cmd_do_login(struct client_state *p,
   strcpy(name, ui->name);
   enqueue_reply_to_client(p,ans_len,answer);
 
-  default_touch_login_time(user_id, cur_time);
+  default_touch_login_time(user_id, 0, cur_time);
   p->user_id = u->id;
   p->ip = data->origin_ip;
   p->ssl = data->ssl;
@@ -1482,7 +1482,7 @@ cmd_team_login(struct client_state *p, int pkt_len,
   p->ssl = data->ssl;
   p->cookie = out->cookie;
   enqueue_reply_to_client(p, out_size, out);
-  default_touch_login_time(user_id, cur_time);
+  default_touch_login_time(user_id, data->contest_id, cur_time);
   if (daemon_mode) {
     info("%s -> OK, %d, %llx", logbuf, u->id, out->cookie);
   } else {
@@ -1670,7 +1670,7 @@ cmd_priv_login(struct client_state *p, int pkt_len,
   p->ip = data->origin_ip;
   p->ssl = data->ssl;
   enqueue_reply_to_client(p, out_size, out);
-  default_touch_login_time(u->id, cur_time);
+  default_touch_login_time(u->id, 0, cur_time);
   if (daemon_mode) {
     info("%s -> OK, %d, %llx", logbuf, u->id, out->cookie);
   } else {
@@ -1788,7 +1788,7 @@ cmd_priv_check_user(struct client_state *p, int pkt_len,
   p->ip = data->origin_ip;
   p->ssl = data->ssl;
   enqueue_reply_to_client(p, out_size, out);
-  default_touch_login_time(u->id, cur_time);
+  default_touch_login_time(u->id, 0, cur_time);
   if (daemon_mode) {
     info("%s -> OK, %d, %llx", logbuf, u->id, out->cookie);
   } else {
@@ -5514,7 +5514,7 @@ cmd_create_user(struct client_state *p, int pkt_len,
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
   }
-  default_touch_login_time(user_id, cur_time);
+  default_touch_login_time(user_id, 0, cur_time);
 
   info("%s -> new user %d", logbuf, user_id);
   memset(&out, 0, sizeof(out));
