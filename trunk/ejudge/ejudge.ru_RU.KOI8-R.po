@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-05 08:52+0400\n"
+"POT-Creation-Date: 2006-09-06 00:06+0400\n"
 "PO-Revision-Date: 2006-08-26 18:43+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -283,6 +283,10 @@ msgstr "Форма добавления новой посылки"
 msgid "Additional test information"
 msgstr "Доп. инф. о тесте"
 
+#, fuzzy
+msgid "Administrator"
+msgstr "Руководитель команды"
+
 msgid "Advisor"
 msgstr "Руководитель команды"
 
@@ -385,6 +389,10 @@ msgstr "Проверить состояние регистрации"
 msgid "Checker output"
 msgstr "Вывод проверяющей программы"
 
+#, fuzzy
+msgid "Chief judge"
+msgstr "Да, проверить!"
+
 msgid "Choose language"
 msgstr "Выбрать язык"
 
@@ -397,8 +405,28 @@ msgstr "Город (Англ.)"
 msgid "Clar ID"
 msgstr "Номер сообщения"
 
+#, fuzzy
+msgid "Clear BANNED"
+msgstr "Номер сообщения"
+
+msgid "Clear INVISIBLE"
+msgstr ""
+
+#, fuzzy
+msgid "Clear LOCKED"
+msgstr "Номер сообщения"
+
 msgid "Clear team passwords!"
 msgstr "Сбросить пароли участников!"
+
+msgid "Clear the BANNED flag for the selected users"
+msgstr ""
+
+msgid "Clear the INVISIBLE flag for the selected users"
+msgstr ""
+
+msgid "Clear the LOCKED flag for the selected users"
+msgstr ""
 
 msgid "Clear this entry"
 msgstr "Очистить эту запись"
@@ -483,6 +511,9 @@ msgstr "Основные участники"
 
 msgid "Continue"
 msgstr "Продолжить"
+
+msgid "Coordinator"
+msgstr ""
 
 msgid "Correct output"
 msgstr "Правильный ответ"
@@ -945,6 +976,10 @@ msgstr "Невидимый?"
 msgid "Issue warning"
 msgstr "Выдать предупреждение"
 
+#, fuzzy
+msgid "Judge"
+msgstr "судьи"
+
 msgid "Judge suspended runs"
 msgstr "Проверить отложенные посылки"
 
@@ -1036,6 +1071,24 @@ msgstr "Обязательное поле \"%s\" не заполнено."
 #, c-format
 msgid "Mandatory field \"%s.%d.%s\" is empty."
 msgstr "Обязательное поле \"%s.%d.%s\" не заполнено."
+
+msgid "Mark BANNED"
+msgstr ""
+
+msgid "Mark INVISIBLE"
+msgstr ""
+
+msgid "Mark LOCKED"
+msgstr ""
+
+msgid "Mark OK"
+msgstr ""
+
+msgid "Mark PENDING"
+msgstr ""
+
+msgid "Mark REJECTED"
+msgstr ""
 
 msgid "Member information"
 msgstr "Информация об участниках"
@@ -1164,6 +1217,10 @@ msgstr "Число предупреждений"
 msgid "OK"
 msgstr "OK"
 
+#, fuzzy
+msgid "Observer"
+msgstr "Запасной участник"
+
 msgid "Occupation"
 msgstr "Должность"
 
@@ -1182,6 +1239,10 @@ msgstr "Старый пароль имеет слишком большую длину"
 #, c-format
 msgid "Only %d members \"%s\" are specified instead of minimum %d."
 msgstr "Только %d участников \"%s\" указаны вместо минимальных %d."
+
+#, fuzzy
+msgid "Operation competed with errors"
+msgstr "Операция успешно выполнена"
 
 msgid "Operation completed successfully"
 msgstr "Операция успешно выполнена"
@@ -1411,6 +1472,13 @@ msgstr "Снять блокировку"
 msgid "Remove member"
 msgstr "Удалить участника"
 
+#, fuzzy
+msgid "Remove registrations"
+msgstr "Регистрация на турниры"
+
+msgid "Remove the selected users from the list"
+msgstr ""
+
 msgid "Report view"
 msgstr "Просмотр протокола"
 
@@ -1559,6 +1627,24 @@ msgstr "Включить режим проверки"
 
 msgid "Set status"
 msgstr "Установить статус"
+
+msgid "Set the BANNED flag for the selected users"
+msgstr ""
+
+msgid "Set the INVISIBLE flag for the selected users"
+msgstr ""
+
+msgid "Set the LOCKED flag for the selected users"
+msgstr ""
+
+msgid "Set the registration status of the selected users to OK"
+msgstr ""
+
+msgid "Set the registration status of the selected users to PENDING"
+msgstr ""
+
+msgid "Set the registration status of the selected users to REJECTED"
+msgstr ""
 
 msgid "Short name"
 msgstr "ID Задачи"
@@ -1867,6 +1953,10 @@ msgstr "Регистрация пользователя завершена"
 
 msgid "User's report"
 msgstr "Пользовательский протокол"
+
+#, fuzzy
+msgid "Users page"
+msgstr "Имя участника"
 
 msgid "Variant"
 msgstr "Вариант"
