@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2005-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,7 @@ static const unsigned char * const form_methods[] =
 };
 
 void
-html_start_form(FILE *f, int mode, ej_cookie_t sid,
+html_start_form(FILE *f, int mode,
                 unsigned char const *self_url,
                 unsigned char const *hidden_vars)
 {
@@ -37,7 +37,7 @@ html_start_form(FILE *f, int mode, ej_cookie_t sid,
   fprintf(f, "<%s\"%s\">%s", form_methods[mode], self_url, hidden_vars);
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")

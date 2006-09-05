@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005,2006 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2005,2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -184,7 +184,7 @@ print_string_editing_row(FILE *f,
 {
   unsigned char hbuf[1024];
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>%s</td><td>", row_attr, title);
   html_edit_text_form(f, 0, 0, "param", value);
   fprintf(f, "</td><td>");
@@ -213,7 +213,7 @@ print_string_editing_row_2(FILE *f,
                            const unsigned char *hidden_vars)
 {
   if (!extra_msg) extra_msg = "";
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>%s</td><td>", row_attr, title);
   html_edit_text_form(f, 0, 0, "param", value);
   fprintf(f, "%s</td><td>", extra_msg);
@@ -238,7 +238,7 @@ print_string_editing_row_3(FILE *f,
                            const unsigned char *hidden_vars)
 {
   if (!extra_msg) extra_msg = "";
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>%s</td><td>", row_attr, title);
   html_edit_text_form_1(f, 0, 0, "param", value);
   fprintf(f, "%s</td><td>", extra_msg);
@@ -265,7 +265,7 @@ print_int_editing_row(FILE *f,
 
   if (!extra_text) extra_text = "";
   snprintf(vbuf, sizeof(vbuf), "%d", value);
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>%s</td><td>", row_attr, title);
   html_edit_text_form(f, 0, 0, "param", vbuf);
   fprintf(f, "%s</td><td>", extra_text);
@@ -285,7 +285,7 @@ print_boolean_select_row(FILE *f,
                          const unsigned char *hidden_vars)
 
 {
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>%s</td><td>", row_attr, title);
   html_boolean_select(f, value, "param", 0, 0);
   fprintf(f, "</td><td>");
@@ -516,7 +516,7 @@ super_html_edit_global_parameters(FILE *f,
   fprintf(f, "<table border=\"0\">\n");
 
   //GLOBAL_PARAM(contest_time, "d"),
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>Contest time (HH:MM):</td>", form_row_attrs[row ^= 1]);
   if (!global->contest_time) {
     fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"0\" size=\"8\"><i>(Unlimited)</i></td><td>");
@@ -530,7 +530,7 @@ super_html_edit_global_parameters(FILE *f,
 
   if (!global->contest_time) {
     //GLOBAL_PARAM(contest_finish_time, "s"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Contest end time:</td><td>",
             form_row_attrs[row ^= 1]);
     html_date_select(f, global->contest_finish_time_d);
@@ -546,7 +546,7 @@ super_html_edit_global_parameters(FILE *f,
   if (global->virtual) {
     ASSERT(global->score_system_val == SCORE_ACM);
   }
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>Scoring system:</td><td>", form_row_attrs[row ^= 1]);
   param = global->score_system_val;
   if (global->virtual) param = 3;
@@ -557,7 +557,7 @@ super_html_edit_global_parameters(FILE *f,
 
   //GLOBAL_PARAM(board_fog_time, "d"),
   //GLOBAL_PARAM(board_unfog_time, "d"),
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>Standings freeze time (HH:MM) before finish:</td>"
           , form_row_attrs[row ^= 1]);
   if (!global->board_fog_time) {
@@ -570,7 +570,7 @@ super_html_edit_global_parameters(FILE *f,
   }
   fprintf(f, "</td></tr></form>\n");
   if (global->board_fog_time) {
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Standings unfreeze time (HH:MM) after finish:</td>",
             form_row_attrs[row ^= 1]);
     fprintf(f, "<td><input type=\"text\" name=\"param\" value=\"%d:%02d\" size=\"8\"></td><td>", global->board_unfog_time / 60, global->board_unfog_time % 60);
@@ -579,7 +579,7 @@ super_html_edit_global_parameters(FILE *f,
   }
 
   //use standard compilation server?
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>Use the default compilation server:</td><td>",
           form_row_attrs[row ^= 1]);
   html_boolean_select(f, !sstate->disable_compilation_server, "param", 0, 0);
@@ -608,7 +608,7 @@ super_html_edit_global_parameters(FILE *f,
   } else {
     param = 0;
   }
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>Standings language:</td><td>",
           form_row_attrs[row ^= 1]);
   html_select(f, param, "param", standings_languages);
@@ -616,7 +616,7 @@ super_html_edit_global_parameters(FILE *f,
   html_submit_button(f, SUPER_ACTION_GLOB_CHANGE_STAND_LOCALE, "Change");
   fprintf(f, "</td></tr></form>\n");
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Contestant's capabilities</b>", head_row_attr);
   row = 1;
   if (sstate->show_global_1) {
@@ -628,7 +628,7 @@ super_html_edit_global_parameters(FILE *f,
 
   if (sstate->show_global_1) {
     //GLOBAL_PARAM(team_enable_src_view, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Contestant may view submitted source code:</td><td>",
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->team_enable_src_view, "param", 0, 0);
@@ -639,7 +639,7 @@ super_html_edit_global_parameters(FILE *f,
     //GLOBAL_PARAM(disable_failed_test_view, "d"),
     if (global->score_system_val == SCORE_ACM
         || global->score_system_val == SCORE_MOSCOW) {
-      html_start_form(f, 1, session_id, self_url, hidden_vars);
+      html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Participants cannot view failed test number:</td><td>", form_row_attrs[row ^= 1]);
       html_boolean_select(f, global->disable_failed_test_view, "param", 0, 0);
       fprintf(f, "</td><td>");
@@ -648,7 +648,7 @@ super_html_edit_global_parameters(FILE *f,
     }
 
     //GLOBAL_PARAM(team_enable_rep_view, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Contestant may view testing protocol:</td><td>",
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->team_enable_rep_view, "param", 0, 0);
@@ -658,7 +658,7 @@ super_html_edit_global_parameters(FILE *f,
 
     //GLOBAL_PARAM(team_enable_ce_view, "d"),
     if (!global->team_enable_rep_view) {
-      html_start_form(f, 1, session_id, self_url, hidden_vars);
+      html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Contestant may view compilation errors:</td><td>",
               form_row_attrs[row ^= 1]);
       html_boolean_select(f, global->team_enable_ce_view, "param", 0, 0);
@@ -669,7 +669,7 @@ super_html_edit_global_parameters(FILE *f,
 
     //GLOBAL_PARAM(team_show_judge_report, "d"),
     if (global->team_enable_rep_view) {
-      html_start_form(f, 1, session_id, self_url, hidden_vars);
+      html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Contestant may view FULL (judge's) testing protocol:</td><td>", form_row_attrs[row ^= 1]);
       html_boolean_select(f, global->team_show_judge_report, "param", 0, 0);
       fprintf(f, "</td><td>");
@@ -679,7 +679,7 @@ super_html_edit_global_parameters(FILE *f,
 
     //GLOBAL_PARAM(report_error_code, "d"),
     if (global->team_enable_rep_view && !global->team_show_judge_report) {
-      html_start_form(f, 1, session_id, self_url, hidden_vars);
+      html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Process exit code is shown in testing report:</td><td>", form_row_attrs[row ^= 1]);
       html_boolean_select(f, global->report_error_code, "param", 0, 0);
       fprintf(f, "</td><td>");
@@ -688,7 +688,7 @@ super_html_edit_global_parameters(FILE *f,
     }
     
     //GLOBAL_PARAM(disable_clars, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Clarification requests are disabled completely:</td><td>", form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->disable_clars, "param", 0, 0);
     fprintf(f, "</td><td>");
@@ -697,7 +697,7 @@ super_html_edit_global_parameters(FILE *f,
     
     //GLOBAL_PARAM(disable_team_clars, "d"),
     if (!global->disable_clars) {
-      html_start_form(f, 1, session_id, self_url, hidden_vars);
+      html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Contestant cannot write clarification request:</td><td>", form_row_attrs[row ^= 1]);
       html_boolean_select(f, global->disable_team_clars, "param", 0, 0);
       fprintf(f, "</td><td>");
@@ -706,7 +706,7 @@ super_html_edit_global_parameters(FILE *f,
     }
 
     //GLOBAL_PARAM(disable_submit_after_ok, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Disable submit of already solved problems:</td><td>",
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->disable_submit_after_ok, "param", 0, 0);
@@ -715,7 +715,7 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "</td></tr></form>\n");
 
     //GLOBAL_PARAM(ignore_compile_errors, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Compilation errors are not counted as failed runs:</td><td>", form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->ignore_compile_errors, "param", 0, 0);
     fprintf(f, "</td><td>");
@@ -723,7 +723,7 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "</td></tr></form>\n");
 
     //GLOBAL_PARAM(ignore_duplicated_runs, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Identical submits of one contestant are ignored:</td><td>", form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->ignore_duplicated_runs, "param", 0, 0);
     fprintf(f, "</td><td>");
@@ -732,7 +732,7 @@ super_html_edit_global_parameters(FILE *f,
 
     //GLOBAL_PARAM(show_deadline, "d"),
     if (!global->contest_time) {
-      html_start_form(f, 1, session_id, self_url, hidden_vars);
+      html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Show submit deadline in problem selection menu:</td><td>", form_row_attrs[row ^= 1]);
       html_boolean_select(f, global->show_deadline, "param", 0, 0);
       fprintf(f, "</td><td>");
@@ -741,7 +741,7 @@ super_html_edit_global_parameters(FILE *f,
     }
     
     //GLOBAL_PARAM(enable_printing, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Contestant may print his submit:</td><td>",
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->enable_printing, "param", 0, 0);
@@ -750,7 +750,7 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "</td></tr></form>\n");
     
     //GLOBAL_PARAM(prune_empty_users, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Do not show contestants, which did not make any submit, in standings:</td><td>", form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->prune_empty_users, "param", 0, 0);
     fprintf(f, "</td><td>");
@@ -758,7 +758,7 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "</td></tr></form>\n");
 
     //GLOBAL_PARAM(enable_full_archive, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Store full contestant's program output in the archive:</td><td>", form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->enable_full_archive, "param", 0, 0);
     fprintf(f, "</td><td>");
@@ -766,7 +766,7 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "</td></tr></form>\n");
 
     //GLOBAL_PARAM(always_show_problems, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Contestant may view Problems link before start:</td><td>",
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->always_show_problems, "param", 0, 0);
@@ -775,7 +775,7 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "</td></tr></form>\n");
   }
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Files and directories</b>", head_row_attr);
   row = 1;
   if (sstate->show_global_2) {
@@ -853,7 +853,7 @@ super_html_edit_global_parameters(FILE *f,
                              hidden_vars);
   }
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Contestant's quotas</b>", head_row_attr);
   row = 1;
   if (sstate->show_global_3) {
@@ -956,7 +956,7 @@ super_html_edit_global_parameters(FILE *f,
     }
   }
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Standings files and URLs:</b>", head_row_attr);
   row = 1;
   if (sstate->show_global_4) {
@@ -1055,7 +1055,7 @@ super_html_edit_global_parameters(FILE *f,
                              hidden_vars);
 
     //GLOBAL_PARAM(stand_ignore_after, "s"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Ignore submissions after:</td><td>",
             form_row_attrs[row ^= 1]);
     html_date_select(f, global->stand_ignore_after_d);
@@ -1066,7 +1066,7 @@ super_html_edit_global_parameters(FILE *f,
 
 
     // whether supplementary standings are enabled?
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Enable supplementary standings table:</td><td>",
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, sstate->enable_stand2, "param", 0, 0);
@@ -1125,7 +1125,7 @@ super_html_edit_global_parameters(FILE *f,
     }
 
     // whether public submission log is enabled?
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Enable public submission log:</td><td>",
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, sstate->enable_plog, "param", 0, 0);
@@ -1223,7 +1223,7 @@ super_html_edit_global_parameters(FILE *f,
                              hidden_vars);
   }
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Standings table attributes</b>", head_row_attr);
   row = 1;
   if (sstate->show_global_5) {
@@ -1351,7 +1351,7 @@ super_html_edit_global_parameters(FILE *f,
     }
 
     //GLOBAL_PARAM(stand_show_ok_time, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Show success time in standings:</td><td>",
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->stand_show_ok_time, "param", 0, 0);
@@ -1362,7 +1362,7 @@ super_html_edit_global_parameters(FILE *f,
     //GLOBAL_PARAM(stand_show_att_num, "d"),
     if (global->score_system_val == SCORE_KIROV
         || global->score_system_val == SCORE_OLYMPIAD) {
-      html_start_form(f, 1, session_id, self_url, hidden_vars);
+      html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Show number of attempts in standings:</td><td>",
               form_row_attrs[row ^= 1]);
       html_boolean_select(f, global->stand_show_att_num, "param", 0, 0);
@@ -1374,7 +1374,7 @@ super_html_edit_global_parameters(FILE *f,
     //GLOBAL_PARAM(stand_sort_by_solved, "d"),
     if (global->score_system_val == SCORE_KIROV
         || global->score_system_val == SCORE_OLYMPIAD) {
-      html_start_form(f, 1, session_id, self_url, hidden_vars);
+      html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Sort participants by the solved problems first:</td><td>", form_row_attrs[row ^= 1]);
       html_boolean_select(f, global->stand_sort_by_solved, "param", 0, 0);
       fprintf(f, "</td><td>");
@@ -1385,7 +1385,7 @@ super_html_edit_global_parameters(FILE *f,
     //GLOBAL_PARAM(ignore_success_time, "d"),
     if (global->score_system_val == SCORE_ACM
         || global->score_system_val == SCORE_MOSCOW) {
-      html_start_form(f, 1, session_id, self_url, hidden_vars);
+      html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Ignore success time in penalty calculation:</td><td>", form_row_attrs[row ^= 1]);
       html_boolean_select(f, global->ignore_success_time, "param", 0, 0);
       fprintf(f, "</td><td>");
@@ -1482,7 +1482,7 @@ super_html_edit_global_parameters(FILE *f,
     }
     
     //enable "Extra" column
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Show \"Extra information\" column:</td><td>", form_row_attrs[row ^= 1]);
     html_boolean_select(f, sstate->enable_extra_col, "param", 0, 0);
     fprintf(f, "</td><td>");
@@ -1528,7 +1528,7 @@ super_html_edit_global_parameters(FILE *f,
     }
 
     //GLOBAL_PARAM(stand_show_warn_number, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Show \"Warnings\" column:</td><td>",
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->stand_show_warn_number, "param", 0, 0);
@@ -1605,7 +1605,7 @@ super_html_edit_global_parameters(FILE *f,
     }
   }
 
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Advanced settings</b>", head_row_attr);
   row = 1;
   if (sstate->show_global_6) {
@@ -1643,7 +1643,7 @@ super_html_edit_global_parameters(FILE *f,
                              hidden_vars);
 
     //GLOBAL_PARAM(autoupdate_standings, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Update standings automatically (except freeze time):</td><td>", form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->autoupdate_standings, "param", 0, 0);
     fprintf(f, "</td><td>");
@@ -1651,7 +1651,7 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "</td></tr></form>\n");
 
     //GLOBAL_PARAM(rounding_mode, "s"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Seconds to minutes rounding mode:</td><td>",
             form_row_attrs[row ^= 1]);
     html_select(f, global->rounding_mode_val, "param", rounding_modes);
@@ -1697,7 +1697,7 @@ super_html_edit_global_parameters(FILE *f,
                              hidden_vars);
 
     //GLOBAL_PARAM(disable_testing, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Disable any testing of submissions:</td><td>",
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->disable_testing, "param", 0, 0);
@@ -1707,7 +1707,7 @@ super_html_edit_global_parameters(FILE *f,
 
     if (!global->disable_testing) {
       //GLOBAL_PARAM(disable_auto_testing, "d"),
-      html_start_form(f, 1, session_id, self_url, hidden_vars);
+      html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f, "<tr%s><td>Disable automatic testing of submissions:</td><td>", form_row_attrs[row ^= 1]);
       html_boolean_select(f, global->disable_auto_testing, "param", 0, 0);
       fprintf(f, "</td><td>");
@@ -1729,7 +1729,7 @@ super_html_edit_global_parameters(FILE *f,
                              hidden_vars);
 
     //GLOBAL_PARAM(show_astr_time, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Show astronomic time instead of relative time:</td><td>", form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->show_astr_time, "param", 0, 0);
     fprintf(f, "</td><td>");
@@ -1737,7 +1737,7 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "</td></tr></form>\n");
 
     //GLOBAL_PARAM(enable_continue, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Enable contest continuation:</td><td>",
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->enable_continue, "param", 0, 0);
@@ -1746,7 +1746,7 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "</td></tr></form>\n");
 
     //GLOBAL_PARAM(enable_report_upload, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Enable testing protocol upload:</td><td>",
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->enable_report_upload, "param", 0, 0);
@@ -1755,7 +1755,7 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "</td></tr></form>\n");
 
     //GLOBAL_PARAM(enable_runlog_merge, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Enable run database importing and merging:</td><td>",
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->enable_runlog_merge, "param", 0, 0);
@@ -1764,7 +1764,7 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "</td></tr></form>\n");
 
     //GLOBAL_PARAM(enable_l10n, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Enable message translation:</td><td>",
             form_row_attrs[row ^= 1]);
     html_boolean_select(f, global->enable_l10n, "param", 0, 0);
@@ -1785,7 +1785,7 @@ super_html_edit_global_parameters(FILE *f,
                              hidden_vars);
 
     //GLOBAL_PARAM(team_download_time, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>Team archive download interval (HH:MM:SS):</td>",
             form_row_attrs[row ^= 1]);
     if (!global->team_download_time) {
@@ -1802,7 +1802,7 @@ super_html_edit_global_parameters(FILE *f,
     fprintf(f, "</td></tr></form>\n");
 
     //GLOBAL_PARAM(cpu_bogomips, "d"),
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td>CPU speed (BogoMIPS):</td>",
             form_row_attrs[row ^= 1]);
     if (global->cpu_bogomips <= 0) {
@@ -1816,7 +1816,7 @@ super_html_edit_global_parameters(FILE *f,
   }
 
   if (global->unhandled_vars) {
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Uneditable parameters</b>", head_row_attr);
     row = 1;
     if (sstate->show_global_7) {
@@ -2774,7 +2774,7 @@ super_html_edit_languages(FILE *f,
     if (lang) {
       td_attr = " bgcolor=\"#ddffdd\"";
     }
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     snprintf(buf, sizeof(buf), "%d", i);
     html_hidden_var(f, "lang_id", buf);
     s = html_armor_string_dup(lang_name);
@@ -2918,7 +2918,7 @@ super_html_edit_languages(FILE *f,
 
   // update compiler versions
   fprintf(f, "<table><tr><td>");
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   html_submit_button(f, SUPER_ACTION_LANG_UPDATE_VERSIONS, "Update versions");
   fprintf(f, "</form></td></tr></table>\n");
 
@@ -3157,7 +3157,7 @@ print_boolean_3_select_row(FILE *f,
                            const unsigned char *hidden_vars)
 
 {
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>%s</td><td>", row_attr, title);
   if (undef_str) {
     html_boolean_3_select(f, value, "param", undef_str, 0, 0);
@@ -3210,7 +3210,7 @@ print_std_checker_row(FILE *f,
   unsigned char *s;
 
   if (prob->abstract) return;
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>%s</td><td>", row_attr, "Standard checker:");
   fprintf(f, "<select name=\"param\">");
   for (i = 0; std_checkers[i].name; i++) {
@@ -3327,7 +3327,7 @@ super_html_print_problem(FILE *f,
            hidden_vars, is_abstract?-num:num);
   prepare_copy_problem(&tmp_prob, prob);
 
-  html_start_form(f, 1, session_id, self_url, prob_hidden_vars);
+  html_start_form(f, 1, self_url, prob_hidden_vars);
   if (is_abstract) {
     snprintf(name_buf, sizeof(name_buf), "%s", prob->short_name);
   } else {
@@ -3391,7 +3391,7 @@ super_html_print_problem(FILE *f,
       sel_num = i + 1;
       if (sel_num > sstate->aprob_u) sel_num = 0;
     }
-    html_start_form(f, 1, session_id, self_url, prob_hidden_vars);
+    html_start_form(f, 1, self_url, prob_hidden_vars);
     fprintf(f, "<tr%s><td>Base abstract problem:</td><td>",
             form_row_attrs[row ^= 1]);
     fprintf(f, "<select name=\"param\">"
@@ -3886,7 +3886,7 @@ super_html_print_problem(FILE *f,
     size_t_to_size(num_buf, sizeof(num_buf), tmp_prob.max_vm_size);
   }
   if (!output_only_flag) {
-    html_start_form(f, 1, session_id, self_url, prob_hidden_vars);
+    html_start_form(f, 1, self_url, prob_hidden_vars);
     fprintf(f, "<tr%s><td>%s</td><td>", form_row_attrs[row ^= 1],
             "Maximum virtual memory size:");
     html_edit_text_form(f, 0, 0, "param", num_buf);
@@ -3920,7 +3920,7 @@ super_html_print_problem(FILE *f,
     } else {
       num_to_size(num_buf, sizeof(num_buf), tmp_prob.max_stack_size);
     }
-    html_start_form(f, 1, session_id, self_url, prob_hidden_vars);
+    html_start_form(f, 1, self_url, prob_hidden_vars);
     fprintf(f, "<tr%s><td>%s</td><td>",
             form_row_attrs[row ^= 1], "Maximum stack size:");
     html_edit_text_form(f, 0, 0, "param", num_buf);
@@ -4436,7 +4436,7 @@ super_html_print_problem(FILE *f,
     }
 
     snprintf(num_buf, sizeof(num_buf), "%d", prob->variant_num);
-    html_start_form(f, 1, session_id, self_url, prob_hidden_vars);
+    html_start_form(f, 1, self_url, prob_hidden_vars);
     fprintf(f, "<tr%s><td>%s</td><td>", form_row_attrs[row ^= 1],
             "Number of variants:");
     html_edit_text_form(f, 0, 0, "param", num_buf);
@@ -4452,7 +4452,7 @@ super_html_print_problem(FILE *f,
 
   //PROBLEM_PARAM(start_date, "s"),
   if (!prob->abstract && show_adv && !global->contest_time) {
-    html_start_form(f, 1, session_id, self_url, prob_hidden_vars);
+    html_start_form(f, 1, self_url, prob_hidden_vars);
     if (!prob->start_date[0] || xml_parse_date(0,0,0,prob->start_date,&tmp_date) < 0)
       tmp_date = 0;
     fprintf(f, "<tr%s><td>Accept start date:</td><td>",
@@ -4465,7 +4465,7 @@ super_html_print_problem(FILE *f,
   }
   //PROBLEM_PARAM(deadline, "s"),
   if (!prob->abstract && show_adv && !global->contest_time) {
-    html_start_form(f, 1, session_id, self_url, prob_hidden_vars);
+    html_start_form(f, 1, self_url, prob_hidden_vars);
     if (!prob->deadline[0] || xml_parse_date(0, 0, 0, prob->deadline, &tmp_date) < 0)
       tmp_date = 0;
     fprintf(f, "<tr%s><td>Accept deadline:</td><td>", form_row_attrs[row ^= 1]);
@@ -4522,7 +4522,7 @@ super_html_edit_problems(FILE *f,
 
   // add new abstract problem
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Add new abstract problem</b></td></tr>\n", prob_row_attr);
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>Name:</td><td>", form_row_attrs[0]);
   html_edit_text_form(f, 0, 0, "prob_name", "");
   fprintf(f, "</td><td>");
@@ -4540,7 +4540,7 @@ super_html_edit_problems(FILE *f,
 
   // add new concrete problem
   fprintf(f, "<tr%s><td colspan=\"3\" align=\"center\"><b>Add new problem</b></td></tr>\n", prob_row_attr);
-  html_start_form(f, 1, session_id, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, hidden_vars);
   fprintf(f, "<tr%s><td>Id (optional):</td><td>", form_row_attrs[0]);
   html_edit_text_form(f, 0, 0, "prob_id", "");
   fprintf(f, "</td><td>");
@@ -7427,7 +7427,7 @@ super_html_edit_variants(FILE *f, int cmd, int priv_level, int user_id,
 
   for (i = 0; i < vmap->u; i++) {
     snprintf(buf, sizeof(buf), "%d", i);
-    html_start_form(f, 1, session_id, self_url, hidden_vars);
+    html_start_form(f, 1, self_url, hidden_vars);
     html_hidden_var(f, "row", buf);
     if (vmap->v[i].user_id > 0)
       snprintf(buf, sizeof(buf), "%d", vmap->v[i].user_id);

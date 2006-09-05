@@ -48,6 +48,8 @@ struct http_request_info
   int user_id;
   unsigned char *login;
   unsigned char *name;
+  unsigned char *name_arm;
+  const unsigned char *hidden_vars;
 };
 
 void
