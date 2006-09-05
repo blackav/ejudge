@@ -58,6 +58,7 @@
 enum
 {
   NEW_SRV_ACTION_LOGIN_PAGE = 1,
+  NEW_SRV_ACTION_MAIN_PAGE,
 };
 
 struct watched_file
@@ -362,6 +363,25 @@ html_start_form(FILE *fout, const unsigned char *url)
 }
 
 static void
+html_refresh_page(struct server_framework_state *state,
+                  FILE *fout,
+                  struct http_request_info *phr,
+                  int new_action)
+{
+  unsigned char url[1024];
+
+  if (new_action > 0) {
+    snprintf(url, sizeof(url), "%s?SID=%016llx&action=%d",
+             phr->self_url, phr->session_id, new_action);
+  } else {
+    snprintf(url, sizeof(url), "%s?SID=%016llx",
+             phr->self_url, phr->session_id);
+  }
+
+  fprintf(stdout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>%s</title></head><body><h1>%s</h1><p>If autorefresh does not work, follow <a href=\"%s\">this</a> link.</p></body></html>\n", EJUDGE_CHARSET, EJUDGE_CHARSET, 1, url, "Operation successful", "Operation successful", url);
+}
+
+static void
 privileged_page_login_page(struct server_framework_state *state,
                            struct client_state *p,
                            FILE *fout,
@@ -567,6 +587,45 @@ html_err_internal_error(struct server_framework_state *state,
 }
 
 static void
+html_err_invalid_session(struct server_framework_state *state,
+                         FILE *fout,
+                         struct http_request_info *phr,
+                         int priv_mode)
+{
+  const struct contest_desc *cnts = 0;
+  struct contest_extra *extra = 0;
+  const unsigned char *header = 0, *footer = 0;
+  time_t cur_time = time(0);
+
+  if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
+  if (cnts) extra = get_contest_extra(phr->contest_id);
+  if (extra && !priv_mode) {
+    update_watched_file(&extra->header, cnts->team_header_file, cur_time);
+    update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
+    header = extra->header.text;
+    footer = extra->footer.text;
+  } else if (extra && priv_mode) {
+    update_watched_file(&extra->priv_header, cnts->priv_header_file, cur_time);
+    update_watched_file(&extra->priv_footer, cnts->priv_footer_file, cur_time);
+    header = extra->priv_header.text;
+    footer = extra->priv_footer.text;
+  }
+  l10n_setlocale(phr->locale_id);
+  html_put_header(fout, header, 0, 0, phr->locale_id, _("Invalid session"));
+  fprintf(fout, "<p>%s</p>\n",
+          _("Invalid session identifier. The possible reasons are as follows."));
+  fprintf(fout, "<ul>\n");
+  fprintf(fout, _("<li>The specified session does not exist.</li>"));
+  fprintf(fout, _("<li>The specified has expired.</li>\n"));
+  fprintf(fout, _("<li>The session was created from a different IP-address or protocol, that yours (%s,%s).</li>\n"), xml_unparse_ip(phr->ip), phr->ssl_flag?"https":"http");;
+  fprintf(fout, _("<li>The session was removed by an administrator.</li>"));
+  fprintf(fout, "</ul>\n");
+  fprintf(fout, _("<p>Note, that the exact reason is not reported due to security reasons.</p>"));
+  html_put_footer(fout, footer);
+  l10n_setlocale(0);
+}
+
+static void
 privileged_page_login(struct server_framework_state *state,
                       struct client_state *p,
                       FILE *fout,
@@ -646,7 +705,7 @@ privileged_page_login(struct server_framework_state *state,
   }
 
   // TODO: store a cookie
-  // TODO: generate an autorefresh login successful page
+  html_refresh_page(state, fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
 }
 
 static void
@@ -655,8 +714,29 @@ privileged_page(struct server_framework_state *state,
                 FILE *fout,
                 struct http_request_info *phr)
 {
+  int r;
+
   if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return privileged_page_login(state, p, fout, phr);
+
+  // validate cookie
+  if (open_ul_connection(state) < 0)
+    return html_err_userlist_server_down(state, fout, phr, 1);
+  if ((r = userlist_clnt_get_cookie(ul_conn, phr->ip, phr->ssl_flag,
+                                    phr->contest_id, phr->session_id,
+                                    &phr->user_id, 0, &phr->locale_id,
+                                    0, &phr->role, &phr->login,
+                                    &phr->name)) < 0) {
+    switch (-r) {
+    case ULS_ERR_NO_COOKIE:
+      return html_err_invalid_session(state, fout, phr, 1);
+    case ULS_ERR_DISCONNECT:
+      return html_err_userlist_server_down(state, fout, phr, 1);
+    default:
+      return html_err_internal_error(state, fout, phr, 1);
+    }
+  }
+
 }
 
 void
