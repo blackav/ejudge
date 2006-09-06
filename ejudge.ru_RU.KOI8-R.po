@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-06 00:06+0400\n"
+"POT-Creation-Date: 2006-09-06 11:24+0400\n"
 "PO-Revision-Date: 2006-08-26 18:43+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -271,6 +271,30 @@ msgstr "Принято на проверку"
 msgid "Access denied"
 msgstr "В доступе отказано"
 
+msgid "Add CHIEF JUDGE"
+msgstr ""
+
+msgid "Add COORDINATOR"
+msgstr ""
+
+msgid "Add JUDGE"
+msgstr ""
+
+msgid "Add OBSERVER"
+msgstr ""
+
+msgid "Add a new user specifying his/her User Id"
+msgstr ""
+
+msgid "Add a new user specifying his/her login"
+msgstr ""
+
+msgid "Add by ID"
+msgstr ""
+
+msgid "Add by login"
+msgstr ""
+
 msgid "Add new member"
 msgstr "Добавить нового члена команды"
 
@@ -279,6 +303,22 @@ msgstr "Добавить новую посылку"
 
 msgid "Add new run form"
 msgstr "Форма добавления новой посылки"
+
+#, fuzzy
+msgid "Add new user"
+msgstr "Добавить новую посылку"
+
+msgid "Add the CHIEF JUDGE role to the selected users"
+msgstr ""
+
+msgid "Add the COORDINATOR role to the selected users"
+msgstr ""
+
+msgid "Add the JUDGE role to the selected users"
+msgstr ""
+
+msgid "Add the OBSERVER role to the selected users"
+msgstr ""
 
 msgid "Additional test information"
 msgstr "Доп. инф. о тесте"
@@ -529,6 +569,18 @@ msgstr "Виртуальное положение участников"
 
 msgid "Default language"
 msgstr "Язык по умолчанию"
+
+msgid "Del CHIEF JUDGE"
+msgstr ""
+
+msgid "Del COORDINATOR"
+msgstr ""
+
+msgid "Del JUDGE"
+msgstr ""
+
+msgid "Del OBSERVER"
+msgstr ""
 
 msgid "Detailed information about participant"
 msgstr "Подробная информация об участнике"
@@ -1370,6 +1422,10 @@ msgstr "Обработка запросов на печать приостановлена"
 msgid "Print sources"
 msgstr "Распечатать исходный текст"
 
+#, fuzzy
+msgid "Privileged users page"
+msgstr "Привилегированный?"
+
 msgid "Privileged?"
 msgstr "Привилегированный?"
 
@@ -1466,6 +1522,10 @@ msgstr "Перезапустить сервер"
 msgid "Remaining time"
 msgstr "Остающееся время"
 
+#, fuzzy
+msgid "Remove"
+msgstr "Снять блокировку"
+
 msgid "Remove ban"
 msgstr "Снять блокировку"
 
@@ -1476,7 +1536,23 @@ msgstr "Удалить участника"
 msgid "Remove registrations"
 msgstr "Регистрация на турниры"
 
+msgid "Remove the CHIEF JUDGE role from the selected users"
+msgstr ""
+
+msgid "Remove the COORDINATOR role from the selected users"
+msgstr ""
+
+msgid "Remove the JUDGE role from the selected users"
+msgstr ""
+
+msgid "Remove the OBSERVER role from the selected users"
+msgstr ""
+
 msgid "Remove the selected users from the list"
+msgstr ""
+
+msgid ""
+"Remove the selected users from the list (ADMINISTRATORs cannot be removed)"
 msgstr ""
 
 msgid "Report view"

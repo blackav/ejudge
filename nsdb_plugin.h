@@ -48,6 +48,16 @@ struct nsdb_plugin_iface
 
   // check whether the user may login using the given role
   int (*check_role)(void *, int, int, int);
+  // get the priv_table contest user id iterator
+  int_iterator_t (*get_contest_user_id_iterator)(void *, int);
+  // get the role_mask by the iterator
+  int (*get_priv_role_mask_by_iter)(void *, int_iterator_t, unsigned int *);
+  // add the specified role to the user
+  int (*add_role)(void *, int, int, int);
+  // remove the specified role from the user
+  int (*del_role)(void *, int, int, int);
+  // remove the user completely
+  int (*priv_remove_user)(void *, int, int);
 };
 
 /* default plugin: compiled into new-server */

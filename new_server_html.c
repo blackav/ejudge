@@ -72,6 +72,22 @@ enum
   NEW_SRV_ACTION_USERS_CLEAR_BANNED,
   NEW_SRV_ACTION_USERS_SET_LOCKED,
   NEW_SRV_ACTION_USERS_CLEAR_LOCKED,
+  NEW_SRV_ACTION_USERS_ADD_BY_LOGIN,
+  NEW_SRV_ACTION_USERS_ADD_BY_USER_ID,
+  NEW_SRV_ACTION_PRIV_USERS_VIEW,
+  NEW_SRV_ACTION_PRIV_USERS_REMOVE,
+  NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER,
+  NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER,
+  NEW_SRV_ACTION_PRIV_USERS_ADD_JUDGE,
+  NEW_SRV_ACTION_PRIV_USERS_DEL_JUDGE,
+  NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_JUDGE,
+  NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_JUDGE,
+  NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR,
+  NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR,
+  NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN,
+  NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID,
+
+  NEW_SRV_ACTION_LAST,
 };
 
 struct watched_file
@@ -371,14 +387,18 @@ unparse_role(int role)
 }
 
 static void
-html_role_select(FILE *fout, int role)
+html_role_select(FILE *fout, int role, int allow_admin,
+                 const unsigned char *var_name)
 {
   int i;
   const unsigned char *ss;
+  int last_role = USER_ROLE_ADMIN;
 
-  if (role <= 0 || role >= USER_ROLE_LAST) role = USER_ROLE_OBSERVER;
-  fprintf(fout, "<select name=\"role\">");
-  for (i = 1; role_strs[i]; i++) {
+  if (!var_name) var_name = "role";
+  if (!allow_admin) last_role = USER_ROLE_COORDINATOR;
+  if (role <= 0 || role > last_role) role = USER_ROLE_OBSERVER;
+  fprintf(fout, "<select name=\"%s\">", var_name);
+  for (i = 1; i <= last_role; i++) {
     ss = "";
     if (i == role) ss = " selected=\"1\"";
     fprintf(fout, "<option value=\"%d\"%s>%s</option>",
@@ -453,7 +473,7 @@ privileged_page_login_page(struct server_framework_state *state,
       phr->role = r;
   }
   fprintf(fout, "<tr><td>%s:</td><td>", _("Role"));
-  html_role_select(fout, phr->role);
+  html_role_select(fout, phr->role, 1, 0);
   fprintf(fout, "</td></tr>\n");
   fprintf(fout, "<tr><td>%s:</td><td>", _("Language"));
   l10n_html_locale_select(fout, phr->locale_id);
@@ -950,6 +970,311 @@ priv_registration_operation(struct server_framework_state *state,
   xfree(log_txt);
 }
 
+static void
+priv_add_user_by_user_id(struct server_framework_state *state,
+                         struct client_state *p,
+                         FILE *fout,
+                         struct http_request_info *phr,
+                         const struct contest_desc *cnts,
+                         struct contest_extra *extra)
+{
+  const unsigned char *s;
+  int x, n, r;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  FILE *log_f = 0;
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if ((r = ns_cgi_param(phr, "add_user_id", &s)) < 0 || !s
+      || sscanf(s, "%d%n", &x, &n) != 1 || s[n] || x <= 0) {
+    fprintf(log_f, "Invalid user Id");
+    goto done;
+  }
+
+  if (open_ul_connection(state) < 0) {
+    html_err_userlist_server_down(state, p, fout, phr, 1);
+    goto cleanup;
+  }
+  
+  r = userlist_clnt_register_contest(ul_conn, ULS_PRIV_REGISTER_CONTEST,
+                                     x, phr->contest_id);
+  if (r < 0) {
+    fprintf(log_f, "Registration failed: %s", userlist_strerror(-r));
+    goto done;
+  }
+
+ done:
+  fclose(log_f); log_f = 0;
+  if (!log_txt || !*log_txt) {
+    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_VIEW_USERS);
+  } else {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+                           NEW_SRV_ACTION_VIEW_USERS);
+  }
+
+ cleanup:
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+}
+
+static void
+priv_add_user_by_login(struct server_framework_state *state,
+                       struct client_state *p,
+                       FILE *fout,
+                       struct http_request_info *phr,
+                       const struct contest_desc *cnts,
+                       struct contest_extra *extra)
+{
+  const unsigned char *s;
+  int r, user_id;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  FILE *log_f = 0;
+  unsigned char *ss;
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if ((r = ns_cgi_param(phr, "add_login", &s)) < 0 || !s) {
+    fprintf(log_f, "Invalid User Login");
+    goto done;
+  }
+  if (open_ul_connection(state) < 0) {
+    html_err_userlist_server_down(state, p, fout, phr, 1);
+    goto cleanup;
+  }
+  if ((r = userlist_clnt_lookup_user(ul_conn, s, &user_id, 0)) < 0) {
+    ss = html_armor_string_dup(s);
+    fprintf(log_f, "User <tt>%s</tt> does not exist", ss);
+    xfree(ss);
+    goto done;
+  }
+  if ((r = userlist_clnt_register_contest(ul_conn, ULS_PRIV_REGISTER_CONTEST,
+                                          user_id, phr->contest_id)) < 0) {
+    fprintf(log_f, "Registration failed: %s", userlist_strerror(-r));
+    goto done;
+  }
+
+ done:
+  fclose(log_f); log_f = 0;
+  if (!log_txt || !*log_txt) {
+    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_VIEW_USERS);
+  } else {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+                           NEW_SRV_ACTION_VIEW_USERS);
+  }
+
+ cleanup:
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+}
+
+static void
+priv_priv_user_operation(struct server_framework_state *state,
+                         struct client_state *p,
+                         FILE *fout,
+                         struct http_request_info *phr,
+                         const struct contest_desc *cnts,
+                         struct contest_extra *extra)
+{
+  int i, x, n, role;
+  intarray_t uset;
+  const unsigned char *s;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  FILE *log_f = 0;
+
+  // extract the selected set of users
+  memset(&uset, 0, sizeof(uset));
+  for (i = 0; i < phr->param_num; i++) {
+    if (strncmp(phr->param_names[i], "user_", 5) != 0) continue;
+    if (sscanf((s = phr->param_names[i] + 5), "%d%n", &x, &n) != 1
+        || s[n] || x <= 0) {
+      html_err_invalid_param(state, p, fout, phr, 1,
+                             "invalid parameter name %s", phr->param_names[i]);
+      goto cleanup;
+    }
+    XEXPAND2(uset);
+    uset.v[uset.u++] = x;
+  }
+
+  // FIXME: probably we need to sort user_ids and remove duplicates
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER:
+  case NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER:
+    role = USER_ROLE_OBSERVER;
+    break;
+  case NEW_SRV_ACTION_PRIV_USERS_ADD_JUDGE:
+  case NEW_SRV_ACTION_PRIV_USERS_DEL_JUDGE:
+    role = USER_ROLE_JUDGE;
+    break;
+  case NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_JUDGE:
+  case NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_JUDGE:
+    role = USER_ROLE_CHIEF_JUDGE;
+    break;
+  case NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR:
+  case NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR:
+    role = USER_ROLE_COORDINATOR;
+    break;
+  }
+
+  for (i = 0; i < uset.u; i++) {
+    switch (phr->action) {
+    case NEW_SRV_ACTION_PRIV_USERS_REMOVE:
+      if (nsdb_priv_remove_user(uset.v[i], phr->contest_id) < 0) {
+        fprintf(log_f, "Remove (%d,%d) failed\n", uset.v[i], phr->contest_id);
+      }
+      break;
+
+    case NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER:
+    case NEW_SRV_ACTION_PRIV_USERS_ADD_JUDGE:
+    case NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_JUDGE:
+    case NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR:
+      if (nsdb_add_role(uset.v[i], phr->contest_id, role) < 0) {
+        fprintf(log_f, "add_role (%d,%d,%d) failed\n",
+                uset.v[i], phr->contest_id, role);
+      }
+      break;
+
+    case NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER:
+    case NEW_SRV_ACTION_PRIV_USERS_DEL_JUDGE:
+    case NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_JUDGE:
+    case NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR:
+      if (nsdb_del_role(uset.v[i], phr->contest_id, role) < 0) {
+        fprintf(log_f, "del_role (%d,%d,%d) failed\n",
+                uset.v[i], phr->contest_id, role);
+      }
+      break;
+
+    default:
+      html_err_invalid_param(state, p, fout, phr, 1,
+                             "invalid action %d", phr->action);
+      goto cleanup;
+    }
+  }
+
+  fclose(log_f); log_f = 0;
+
+  if (!log_txt || !*log_txt) {
+    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_PRIV_USERS_VIEW);
+  } else {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+                           NEW_SRV_ACTION_PRIV_USERS_VIEW);
+  }
+
+ cleanup:
+  xfree(uset.v);
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+}
+
+static void
+priv_add_priv_user_by_user_id(struct server_framework_state *state,
+                              struct client_state *p,
+                              FILE *fout,
+                              struct http_request_info *phr,
+                              const struct contest_desc *cnts,
+                              struct contest_extra *extra)
+{
+  const unsigned char *s;
+  int user_id, n, r, add_role;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  FILE *log_f = 0;
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if ((r = ns_cgi_param(phr, "add_user_id", &s)) < 0 || !s
+      || sscanf(s, "%d%n", &user_id, &n) != 1 || s[n] || user_id <= 0) {
+    fprintf(log_f, "Invalid user Id");
+    goto done;
+  }
+  if ((r = ns_cgi_param(phr, "add_role_2", &s)) < 0 || !s
+      || sscanf(s, "%d%n", &add_role, &n) != 1 || s[n]
+      || add_role < USER_ROLE_OBSERVER || add_role > USER_ROLE_COORDINATOR) {
+    fprintf(log_f, "Invalid User Role");
+    goto done;
+  }
+
+  if (nsdb_add_role(user_id, phr->contest_id, add_role) < 0) {
+    fprintf(log_f, "Adding role (%d,%d,%d) failed", user_id, phr->contest_id,
+            add_role);
+    goto done;
+  }
+
+ done:
+  fclose(log_f); log_f = 0;
+  if (!log_txt || !*log_txt) {
+    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_PRIV_USERS_VIEW);
+  } else {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+                           NEW_SRV_ACTION_PRIV_USERS_VIEW);
+  }
+
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+}
+
+static void
+priv_add_priv_user_by_login(struct server_framework_state *state,
+                            struct client_state *p,
+                            FILE *fout,
+                            struct http_request_info *phr,
+                            const struct contest_desc *cnts,
+                            struct contest_extra *extra)
+{
+  const unsigned char *s, *login;
+  int r, user_id, add_role, n;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  FILE *log_f = 0;
+  unsigned char *ss;
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if ((r = ns_cgi_param(phr, "add_login", &login)) < 0 || !s) {
+    fprintf(log_f, "Invalid User Login");
+    goto done;
+  }
+  if ((r = ns_cgi_param(phr, "add_role_1", &s)) < 0 || !s
+      || sscanf(s, "%d%n", &add_role, &n) != 1 || s[n]
+      || add_role < USER_ROLE_OBSERVER || add_role > USER_ROLE_COORDINATOR) {
+    fprintf(log_f, "Invalid User Role");
+    goto done;
+  }
+  if (open_ul_connection(state) < 0) {
+    html_err_userlist_server_down(state, p, fout, phr, 1);
+    goto cleanup;
+  }
+  if ((r = userlist_clnt_lookup_user(ul_conn, login, &user_id, 0)) < 0) {
+    ss = html_armor_string_dup(s);
+    fprintf(log_f, "User <tt>%s</tt> does not exist", ss);
+    xfree(ss);
+    goto done;
+  }
+  if (nsdb_add_role(user_id, phr->contest_id, add_role) < 0) {
+    fprintf(log_f, "Adding role (%d,%d,%d) failed", user_id, phr->contest_id,
+            add_role);
+    goto done;
+  }
+
+ done:
+  fclose(log_f); log_f = 0;
+  if (!log_txt || !*log_txt) {
+    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_PRIV_USERS_VIEW);
+  } else {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+                           NEW_SRV_ACTION_PRIV_USERS_VIEW);
+  }
+
+ cleanup:
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+}
+
 static const unsigned char * const form_row_attrs[]=
 {
   " bgcolor=\"#d0d0d0\"",
@@ -1045,16 +1370,22 @@ priv_view_users_page(struct server_framework_state *state,
 
   fprintf(fout, "<table>\n");
   fprintf(fout, "<tr><td><a href=\"%s\">Back</a></td><td>Return to the main page</td></tr>\n", html_url(url, sizeof(url), phr, 0));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</tr></tr>\n", NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS, _("Remove registrations"), _("Remove the selected users from the list"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</tr></tr>\n", NEW_SRV_ACTION_USERS_SET_PENDING, _("Mark PENDING"), _("Set the registration status of the selected users to PENDING"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</tr></tr>\n", NEW_SRV_ACTION_USERS_SET_OK, _("Mark OK"), _("Set the registration status of the selected users to OK"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</tr></tr>\n", NEW_SRV_ACTION_USERS_SET_REJECTED, _("Mark REJECTED"), _("Set the registration status of the selected users to REJECTED"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</tr></tr>\n", NEW_SRV_ACTION_USERS_SET_INVISIBLE, _("Mark INVISIBLE"), _("Set the INVISIBLE flag for the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</tr></tr>\n", NEW_SRV_ACTION_USERS_CLEAR_INVISIBLE, _("Clear INVISIBLE"), _("Clear the INVISIBLE flag for the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</tr></tr>\n", NEW_SRV_ACTION_USERS_SET_BANNED, _("Mark BANNED"), _("Set the BANNED flag for the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</tr></tr>\n", NEW_SRV_ACTION_USERS_CLEAR_BANNED, _("Clear BANNED"), _("Clear the BANNED flag for the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</tr></tr>\n", NEW_SRV_ACTION_USERS_SET_LOCKED, _("Mark LOCKED"), _("Set the LOCKED flag for the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</tr></tr>\n", NEW_SRV_ACTION_USERS_CLEAR_LOCKED, _("Clear LOCKED"), _("Clear the LOCKED flag for the selected users"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS, _("Remove registrations"), _("Remove the selected users from the list"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_PENDING, _("Mark PENDING"), _("Set the registration status of the selected users to PENDING"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_OK, _("Mark OK"), _("Set the registration status of the selected users to OK"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_REJECTED, _("Mark REJECTED"), _("Set the registration status of the selected users to REJECTED"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_INVISIBLE, _("Mark INVISIBLE"), _("Set the INVISIBLE flag for the selected users"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_CLEAR_INVISIBLE, _("Clear INVISIBLE"), _("Clear the INVISIBLE flag for the selected users"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_BANNED, _("Mark BANNED"), _("Set the BANNED flag for the selected users"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_CLEAR_BANNED, _("Clear BANNED"), _("Clear the BANNED flag for the selected users"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_LOCKED, _("Mark LOCKED"), _("Set the LOCKED flag for the selected users"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_CLEAR_LOCKED, _("Clear LOCKED"), _("Clear the LOCKED flag for the selected users"));
+  fprintf(fout, "</table>\n");
+
+  fprintf(fout, "<h2>%s</h2>\n", _("Add new user"));
+  fprintf(fout, "<table>\n");
+  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_login\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_ADD_BY_LOGIN, _("Add by login"), _("Add a new user specifying his/her login"));
+  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_user_id\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_ADD_BY_USER_ID, _("Add by ID"), _("Add a new user specifying his/her User Id"));
   fprintf(fout, "</table>\n");
 
   fprintf(fout, "</form>\n");
@@ -1063,6 +1394,181 @@ priv_view_users_page(struct server_framework_state *state,
   l10n_setlocale(0);
 
   if (users) userlist_free(&users->b);
+}
+
+struct priv_user_info
+{
+  int user_id;
+  unsigned char *login;
+  unsigned char *name;
+  unsigned int role_mask;
+};
+static int
+priv_user_info_sort_func(const void *v1, const void *v2)
+{
+  const struct priv_user_info *p1 = *(const struct priv_user_info**) v1;
+  const struct priv_user_info *p2 = *(const struct priv_user_info**) v2;
+
+  if (v1 == v2) return 0;
+  ASSERT(p1 != p2);
+  if (p1->user_id < p2->user_id) return -1;
+  if (p1->user_id > p2->user_id) return 1;
+  abort();
+}
+
+static void
+priv_view_priv_users_page(struct server_framework_state *state,
+                          struct client_state *p,
+                          FILE *fout,
+                          struct http_request_info *phr,
+                          const struct contest_desc *cnts,
+                          struct contest_extra *extra)
+{
+  struct ptrarray_t
+  {
+    int a, u;
+    struct priv_user_info **v;
+  };
+  struct ptrarray_t users;
+  struct opcap_list_item *op;
+  int user_id, i;
+  unsigned char *name = 0, *login = 0, *s;
+  struct priv_user_info *pp;
+  int_iterator_t iter;
+  unsigned int role_mask;
+  int row = 1, cnt, r;
+  unsigned char url[1024];
+
+  XMEMZERO(&users, 1);
+
+  if (open_ul_connection(state) < 0) {
+    html_err_userlist_server_down(state, p, fout, phr, 1);
+    goto cleanup;
+  }
+
+  // collect all information about allowed MASTER logins
+  for (op = cnts->capabilities.first; op;
+       op = (struct opcap_list_item*) op->b.right) {
+    if (opcaps_check(op->caps, OPCAP_MASTER_LOGIN) < 0) continue;
+    if (userlist_clnt_lookup_user(ul_conn, op->login, &user_id, &name) < 0)
+      continue;
+    for (i = 0; i < users.u; i++)
+      if (users.v[i]->user_id == user_id)
+        break;
+    if (i < users.u) {
+      xfree(name);
+      continue;
+    }
+    XEXPAND2(users);
+    XCALLOC(users.v[users.u], 1);
+    pp = users.v[users.u++];
+    pp->user_id = user_id;
+    pp->login = xstrdup(op->login);
+    pp->name = name;
+    pp->role_mask |= (1 << USER_ROLE_ADMIN);
+  }
+
+  // collect information about other roles
+  for (iter = nsdb_get_contest_user_id_iterator(phr->contest_id);
+       iter->has_next(iter);
+       iter->next(iter)) {
+    user_id = iter->get(iter);
+    if (nsdb_get_priv_role_mask_by_iter(iter, &role_mask) < 0) continue;
+    if (userlist_clnt_lookup_user_id(ul_conn, user_id, phr->contest_id,
+                                     &login, &name) < 0)
+      continue;
+    for (i = 0; i < users.u; i++)
+      if (users.v[i]->user_id == user_id)
+        break;
+    if (i < users.u) {
+      xfree(login);
+      xfree(name);
+      users.v[i]->role_mask |= role_mask;
+      continue;
+    }
+    XEXPAND2(users);
+    XCALLOC(users.v[users.u], 1);
+    pp = users.v[users.u++];
+    pp->user_id = user_id;
+    pp->login = login;
+    pp->name = name;
+    pp->role_mask |= role_mask;
+  }
+  iter->destroy(iter); iter = 0;
+
+  qsort(users.v, users.u, sizeof(users.v[0]), priv_user_info_sort_func);
+
+  l10n_setlocale(phr->locale_id);
+  html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                  "%s [%s, %s]: %s", unparse_role(phr->role),
+                  phr->name_arm, extra->contest_arm, _("Privileged users page"));
+
+  fprintf(fout, "<h2>Privileged users</h2>");
+
+  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+  fprintf(fout, "<table><tr><th>NN</th><th>Id</th><th>Login</th><th>Name</th><th>Roles</th><th>Select</th></tr>\n");
+  for (i = 0; i < users.u; i++) {
+    fprintf(fout, "<tr%s><td>%d</td>", form_row_attrs[row ^= 1], i + 1);
+    fprintf(fout, "<td>%d</td>", users.v[i]->user_id);
+    s = html_armor_string_dup(users.v[i]->login);
+    fprintf(fout, "<td>%s</td>", s);
+    xfree(s);
+    s = html_armor_string_dup(users.v[i]->name);
+    fprintf(fout, "<td>%s</td>", s);
+    xfree(s);
+    if ((role_mask = users.v[i]->role_mask)) {
+      fprintf(fout, "<td>");
+      for (cnt = 0, r = USER_ROLE_OBSERVER; r <= USER_ROLE_ADMIN; r++)
+        if ((role_mask & (1 << r)))
+          fprintf(fout, "%s%s", cnt++?",":"", unparse_role(r));
+      fprintf(fout, "</td>");
+    } else {
+      fprintf(fout, "<td>&nbsp;</td>");
+    }
+    fprintf(fout, "<td><input type=\"checkbox\" name=\"user_%d\"></td>",
+            users.v[i]->user_id);
+    fprintf(fout, "</tr>\n");
+  }
+  fprintf(fout, "</table>\n");
+
+  fprintf(fout, "<h2>Available actions</h2>\n");
+
+  fprintf(fout, "<table>\n");
+  fprintf(fout, "<tr><td><a href=\"%s\">Back</a></td><td>Return to the main page</td></tr>\n", html_url(url, sizeof(url), phr, 0));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_REMOVE, _("Remove"), _("Remove the selected users from the list (ADMINISTRATORs cannot be removed)"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER, _("Add OBSERVER"), _("Add the OBSERVER role to the selected users"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER, _("Del OBSERVER"), _("Remove the OBSERVER role from the selected users"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_JUDGE, _("Add JUDGE"), _("Add the JUDGE role to the selected users"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_JUDGE, _("Del JUDGE"), _("Remove the JUDGE role from the selected users"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_JUDGE, _("Add CHIEF JUDGE"), _("Add the CHIEF JUDGE role to the selected users"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_JUDGE, _("Del CHIEF JUDGE"), _("Remove the CHIEF JUDGE role from the selected users"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR, _("Add COORDINATOR"), _("Add the COORDINATOR role to the selected users"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR, _("Del COORDINATOR"), _("Remove the COORDINATOR role from the selected users"));
+  fprintf(fout, "</table>\n");
+
+  fprintf(fout, "<h2>%s</h2>\n", _("Add new user"));
+  fprintf(fout, "<table>\n");
+  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_login\"></td><td>");
+  html_role_select(fout, USER_ROLE_OBSERVER, 0, "add_role_1");
+  fprintf(fout, "</td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN, _("Add by login"), _("Add a new user specifying his/her login"));
+  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_user_id\"></td><td>");
+  html_role_select(fout, USER_ROLE_OBSERVER, 0, "add_role_2");
+  fprintf(fout, "</td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID, _("Add by ID"), _("Add a new user specifying his/her User Id"));
+  fprintf(fout, "</table>\n");
+
+  html_put_footer(fout, extra->footer_txt);
+  l10n_setlocale(0);
+
+ cleanup:
+  for (i = 0; i < users.u; i++) {
+    if (users.v[i]) {
+      xfree(users.v[i]->login);
+      xfree(users.v[i]->name);
+    }
+    xfree(users.v[i]);
+  }
+  xfree(users.v);
+  if (iter) iter->destroy(iter);
 }
 
 static void
@@ -1079,12 +1585,50 @@ priv_main_page(struct server_framework_state *state,
   html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
                   "%s [%s, %s]: %s", unparse_role(phr->role),
                   phr->name_arm, extra->contest_arm, _("Main page"));
-  fprintf(fout, "<ul>\n"
-          "<li><a href=\"%s\">View regular users</a></li>\n"
-          "</ul>\n", html_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USERS));
+  fprintf(fout, "<ul>\n");
+  fprintf(fout, "<li><a href=\"%s\">View regular users</a></li>\n",
+          html_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USERS));
+  fprintf(fout, "<li><a href=\"%s\">View privileged users</a></li>\n",
+          html_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_PRIV_USERS_VIEW));
+  fprintf(fout, "</ul>\n");
   html_put_footer(fout, extra->footer_txt);
   l10n_setlocale(0);
 }
+
+static void (*actions_table[])(struct server_framework_state *state,
+                               struct client_state *p,
+                               FILE *fout,
+                               struct http_request_info *phr,
+                               const struct contest_desc *cnts,
+                               struct contest_extra *extra) =
+{
+  [NEW_SRV_ACTION_VIEW_USERS] = priv_view_users_page,
+  [NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_SET_PENDING] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_SET_OK] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_SET_REJECTED] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_SET_INVISIBLE] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_CLEAR_INVISIBLE] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_SET_BANNED] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_CLEAR_BANNED] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_SET_LOCKED] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_CLEAR_LOCKED] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_ADD_BY_LOGIN] = priv_add_user_by_login,
+  [NEW_SRV_ACTION_USERS_ADD_BY_USER_ID] = priv_add_user_by_user_id,
+  [NEW_SRV_ACTION_PRIV_USERS_VIEW] = priv_view_priv_users_page,
+  [NEW_SRV_ACTION_PRIV_USERS_REMOVE] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_JUDGE] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_DEL_JUDGE] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_JUDGE] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_JUDGE] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN] = priv_add_priv_user_by_login,
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID] = priv_add_priv_user_by_user_id,
+};
+
 
 static void
 privileged_page(struct server_framework_state *state,
@@ -1182,23 +1726,10 @@ privileged_page(struct server_framework_state *state,
            phr->session_id);
   phr->hidden_vars = hid_buf;
 
-  switch (phr->action) {
-  case NEW_SRV_ACTION_VIEW_USERS:
-    priv_view_users_page(state, p, fout, phr, cnts, extra);
-    break;
-  case NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS:
-  case NEW_SRV_ACTION_USERS_SET_PENDING:
-  case NEW_SRV_ACTION_USERS_SET_OK:
-  case NEW_SRV_ACTION_USERS_SET_REJECTED:
-  case NEW_SRV_ACTION_USERS_SET_INVISIBLE:
-  case NEW_SRV_ACTION_USERS_CLEAR_INVISIBLE:
-  case NEW_SRV_ACTION_USERS_SET_BANNED:
-  case NEW_SRV_ACTION_USERS_CLEAR_BANNED:
-  case NEW_SRV_ACTION_USERS_SET_LOCKED:
-  case NEW_SRV_ACTION_USERS_CLEAR_LOCKED:
-    priv_registration_operation(state, p, fout, phr, cnts, extra);
-    break;
-  default:
+  if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
+      && actions_table[phr->action]) {
+    actions_table[phr->action](state, p, fout, phr, cnts, extra);
+  } else {
     priv_main_page(state, p, fout, phr, cnts, extra);
   }
 }

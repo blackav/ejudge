@@ -40,6 +40,11 @@ static int close_func(void *data);
 static int check_func(void *data);
 static int create_func(void *data);
 static int check_role_func(void *, int, int, int);
+static int_iterator_t get_contest_user_id_iterator_func(void *, int);
+static int get_priv_role_mask_by_iter(void *, int_iterator_t, unsigned int*);
+static int add_role_func(void *, int, int, int);
+static int del_role_func(void *, int, int, int);
+static int priv_remove_user_func(void *, int, int);
 
 struct nsdb_plugin_iface nsdb_plugin_files =
 {
@@ -60,6 +65,11 @@ struct nsdb_plugin_iface nsdb_plugin_files =
   create_func,
 
   check_role_func,
+  get_contest_user_id_iterator_func,
+  get_priv_role_mask_by_iter,
+  add_role_func,
+  del_role_func,
+  priv_remove_user_func,
 };
 
 struct user_priv_header
@@ -67,6 +77,7 @@ struct user_priv_header
   unsigned char signature[12];
   unsigned char byte_order;
   unsigned char version;
+  char pad[2];
 };
 struct user_priv_entry
 {
@@ -348,6 +359,162 @@ check_role_func(void *data, int user_id, int contest_id, int role)
       return -1;
     }
   return -1;
+}
+
+struct contest_user_id_iterator
+{
+  struct int_iterator b;
+
+  struct nsdb_files_state *state;
+  int contest_id;
+  int cur_idx;
+};
+
+static int
+contest_user_id_iterator_has_next(int_iterator_t data)
+{
+  struct contest_user_id_iterator *iter = (struct contest_user_id_iterator*) data;
+  struct user_priv_table *ppriv = &iter->state->user_priv;
+  while (iter->cur_idx < ppriv->u && iter->contest_id != ppriv->v[iter->cur_idx].contest_id) iter->cur_idx++;
+  return (iter->cur_idx < ppriv->u);
+}
+static int
+contest_user_id_iterator_get(int_iterator_t data)
+{
+  struct contest_user_id_iterator *iter = (struct contest_user_id_iterator*) data;
+  struct user_priv_table *ppriv = &iter->state->user_priv;
+  while (iter->cur_idx < ppriv->u && iter->contest_id != ppriv->v[iter->cur_idx].contest_id) iter->cur_idx++;
+  ASSERT(iter->cur_idx < ppriv->u);
+  return ppriv->v[iter->cur_idx].user_id;
+}
+static void
+contest_user_id_iterator_next(int_iterator_t data)
+{
+  struct contest_user_id_iterator *iter = (struct contest_user_id_iterator*) data;
+  struct user_priv_table *ppriv = &iter->state->user_priv;
+  if (iter->cur_idx < ppriv->u) iter->cur_idx++;
+  while (iter->cur_idx < ppriv->u && iter->contest_id != ppriv->v[iter->cur_idx].contest_id) iter->cur_idx++;
+}
+static void
+contest_user_id_iterator_destroy(int_iterator_t data)
+{
+  struct contest_user_id_iterator *iter = (struct contest_user_id_iterator*) data;
+  xfree(iter);
+}
+
+static struct int_iterator contest_user_id_iterator_funcs =
+{
+  contest_user_id_iterator_has_next,
+  contest_user_id_iterator_get,
+  contest_user_id_iterator_next,
+  contest_user_id_iterator_destroy,
+};
+static int_iterator_t
+get_contest_user_id_iterator_func(void *data, int contest_id)
+{
+  struct nsdb_files_state *state = (struct nsdb_files_state*) data;
+  struct contest_user_id_iterator *iter;
+
+  XCALLOC(iter, 1);
+  iter->b = contest_user_id_iterator_funcs;
+  iter->state = state;
+  iter->contest_id = contest_id;
+  iter->cur_idx = 0;
+  return (int_iterator_t) iter;
+}
+
+static int
+get_priv_role_mask_by_iter(void *data, int_iterator_t g_iter,
+                           unsigned int *p_mask)
+{
+  struct contest_user_id_iterator *iter = (struct contest_user_id_iterator*) g_iter;
+  struct user_priv_table *ppriv = &iter->state->user_priv;
+
+  if (iter->cur_idx >= ppriv->u) return -1;
+  if (p_mask) *p_mask = ppriv->v[iter->cur_idx].priv_bits;
+  return 0;
+}
+
+static int
+add_role_func(void *data, int user_id, int contest_id, int role)
+{
+  struct nsdb_files_state *state = (struct nsdb_files_state*) data;
+  struct user_priv_table *ppriv = &state->user_priv;
+  int i;
+  unsigned int bit;
+
+  if (user_id <= 0) return -1;
+  if (contest_id <= 0) return -1;
+  if (role < USER_ROLE_OBSERVER || role > USER_ROLE_COORDINATOR) return -1;
+  bit = (1 << role);
+
+  for (i = 0; i < ppriv->u; i++) {
+    if (ppriv->v[i].user_id == user_id && ppriv->v[i].contest_id == contest_id)
+      break;
+  }
+  if (i >= ppriv->u) {
+    if (!ppriv->a) ppriv->a = 8;
+    ppriv->v = xrealloc(ppriv->v, sizeof(ppriv->v[0]) * (ppriv->a *= 2));
+    ppriv->data_dirty = 1;
+    memset(&ppriv->v[i], 0, sizeof(ppriv->v[i]));
+    ppriv->v[i].user_id = user_id;
+    ppriv->v[i].contest_id = contest_id;
+    ppriv->u++;
+  }
+  if (!(ppriv->v[i].priv_bits & bit)) {
+    ppriv->v[i].priv_bits |= bit;
+    ppriv->data_dirty = 1;
+    return 1;
+  }
+  return 0;
+}
+
+static int
+del_role_func(void *data, int user_id, int contest_id, int role)
+{
+  struct nsdb_files_state *state = (struct nsdb_files_state*) data;
+  struct user_priv_table *ppriv = &state->user_priv;
+  unsigned int bit;
+  int i;
+
+  if (user_id <= 0) return -1;
+  if (contest_id <= 0) return -1;
+  if (role < USER_ROLE_OBSERVER || role > USER_ROLE_COORDINATOR) return -1;
+  bit = (1 << role);
+
+  for (i = 0; i < ppriv->u; i++) {
+    if (ppriv->v[i].user_id == user_id && ppriv->v[i].contest_id == contest_id)
+      break;
+  }
+  if (i >= ppriv->u) return -1;
+  if ((ppriv->v[i].priv_bits & bit)) {
+    ppriv->v[i].priv_bits &= ~bit;
+    ppriv->data_dirty = 1;
+    return 1;
+  }
+  return 0;
+}
+
+static int
+priv_remove_user_func(void *data, int user_id, int contest_id)
+{
+  struct nsdb_files_state *state = (struct nsdb_files_state*) data;
+  struct user_priv_table *ppriv = &state->user_priv;
+  int i, j;
+
+  if (user_id <= 0) return -1;
+  if (contest_id <= 0) return -1;
+  for (i = 0; i < ppriv->u; i++) {
+    if (ppriv->v[i].user_id == user_id && ppriv->v[i].contest_id == contest_id)
+      break;
+  }
+  if (i >= ppriv->u) return 0;
+
+  for (j = i + 1; j < ppriv->u; j++)
+    ppriv->v[j - 1] = ppriv->v[j];
+  ppriv->u--;
+  ppriv->data_dirty = 1;
+  return 1;
 }
 
 /*

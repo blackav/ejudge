@@ -79,6 +79,32 @@ nsdb_check_role(int user_id, int contest_id, int role)
 {
   return nsdb_default->iface->check_role(nsdb_default->data, user_id, contest_id, role);
 }
+int_iterator_t
+nsdb_get_contest_user_id_iterator(int contest_id)
+{
+  return nsdb_default->iface->get_contest_user_id_iterator(nsdb_default->data, contest_id);
+}
+int
+nsdb_get_priv_role_mask_by_iter(int_iterator_t iter, unsigned int *p_mask)
+{
+  return nsdb_default->iface->get_priv_role_mask_by_iter(nsdb_default->data, iter, p_mask);
+}
+int
+nsdb_add_role(int user_id, int contest_id, int role)
+{
+  return nsdb_default->iface->add_role(nsdb_default->data, user_id, contest_id, role);
+}
+int
+nsdb_del_role(int user_id, int contest_id, int role)
+{
+  return nsdb_default->iface->del_role(nsdb_default->data, user_id, contest_id, role);
+}
+int
+nsdb_priv_remove_user(int user_id, int contest_id)
+{
+  return nsdb_default->iface->priv_remove_user(nsdb_default->data, user_id, contest_id);
+}
+
 
 static void
 startup_error(const char *format, ...)
@@ -406,6 +432,7 @@ main(int argc, char *argv[])
   if (nsf_prepare(state) < 0) return 1;
   nsf_main_loop(state);
   nsf_cleanup(state);
+  nsdb_default->iface->close(nsdb_default->data);
 
   return 0;
 }
