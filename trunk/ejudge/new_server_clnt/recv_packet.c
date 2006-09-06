@@ -29,7 +29,7 @@ new_server_clnt_recv_packet(new_server_conn_t conn, size_t *p_size, void **p_dat
 {
   unsigned char len_buf[4], *b, *bb = 0;
   int r, n;
-  size_t sz;
+  ej_size_t sz;
   int code = 0;
   struct new_server_prot_packet *pkt;
 
@@ -57,7 +57,7 @@ new_server_clnt_recv_packet(new_server_conn_t conn, size_t *p_size, void **p_dat
   memcpy(&sz, len_buf, 4);
 
   if (sz <= 0 || sz >= 256 * 1024) {
-    err("server_cnlt_recv_packet: invalid packet length %zd", sz);
+    err("server_cnlt_recv_packet: invalid packet length %u", sz);
     code = -NEW_SRV_ERR_PACKET_TOO_BIG;
     goto io_error;
   }
@@ -81,7 +81,7 @@ new_server_clnt_recv_packet(new_server_conn_t conn, size_t *p_size, void **p_dat
   }
 
   if (sz < sizeof(struct new_server_prot_packet)) {
-    err("new_server_clnt_recv_packet: packet is too small: %zu", sz);
+    err("new_server_clnt_recv_packet: packet is too small: %u", sz);
     code = -NEW_SRV_ERR_PACKET_TOO_SMALL;
     goto io_error;
   }
