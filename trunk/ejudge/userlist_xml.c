@@ -1473,8 +1473,13 @@ userlist_unparse_user_short(const struct userlist_user *p, FILE *f,
     }
     if (!uc) return;
   }
-  fprintf(f, "  <%s %s=\"%d\">", elem_map[USERLIST_T_USER],
+  fprintf(f, "  <%s %s=\"%d\"", elem_map[USERLIST_T_USER],
           attr_map[USERLIST_A_ID], p->id);
+  if (ui->last_login_time > 0) {
+    fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_CNTS_LAST_LOGIN],
+            xml_unparse_date(ui->last_login_time));
+  }
+  fprintf(f, ">");
   xml_unparse_text(f, elem_map[USERLIST_T_LOGIN], p->login, "    ");
   if (ui->name && *ui->name) {
     xml_unparse_text(f, elem_map[USERLIST_T_NAME], ui->name, "    ");
