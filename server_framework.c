@@ -491,7 +491,7 @@ accept_new_connection(struct server_framework_state *state)
 
 void
 nsf_enqueue_reply(struct server_framework_state *state,
-                  struct client_state *p, size_t len, void const *msg)
+                  struct client_state *p, ej_size_t len, void const *msg)
 {
   ASSERT(!p->write_len);
 

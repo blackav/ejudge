@@ -753,10 +753,10 @@ privileged_page_login(struct server_framework_state *state,
 
   if ((r = ns_cgi_param(phr, "login", &login)) < 0)
     return html_err_invalid_param(state, p, fout, phr, 1, "cannot parse login");
-  phr->login = xstrdup(login);
   if (!r || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return privileged_page_login_page(state, p, fout, phr);
 
+  phr->login = xstrdup(login);
   if ((r = ns_cgi_param(phr, "password", &password)) <= 0)
     return html_err_invalid_param(state, p, fout, phr, 1,
                                   "cannot parse password");
@@ -1709,7 +1709,7 @@ privileged_page(struct server_framework_state *state,
   extra->header_txt = extra->priv_header.text;
   extra->footer_txt = extra->priv_footer.text;
 
-  if (phr->name) {
+  if (phr->name && *phr->name) {
     phr->name_arm = html_armor_string_dup(phr->name);
   } else {
     phr->name_arm = html_armor_string_dup(phr->login);
