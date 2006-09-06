@@ -1720,6 +1720,19 @@ cmd_priv_check_user(struct client_state *p, int pkt_len,
            xml_unparse_ip(data->origin_ip), data->ssl, login_ptr,
            data->contest_id, data->locale_id, data->role);
 
+  if (p->user_id < 0) {
+    err("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+  if (is_db_capable(p, OPCAP_LIST_ALL_USERS, logbuf)) return;
+  if (!data->origin_ip) {
+    err("%s -> origin_ip is not set", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+
   if (passwd_convert_to_internal(passwd_ptr, &pwdint) < 0) {
     err("%s -> invalid password", logbuf);
     send_reply(p, -ULS_ERR_INVALID_PASSWORD);
@@ -1782,11 +1795,6 @@ cmd_priv_check_user(struct client_state *p, int pkt_len,
   strcpy(login_ptr, u->login);
   strcpy(name_ptr, u->i.name);
   
-  p->user_id = u->id;
-  p->priv_level = data->priv_level;
-  p->cookie = out->cookie;
-  p->ip = data->origin_ip;
-  p->ssl = data->ssl;
   enqueue_reply_to_client(p, out_size, out);
   default_touch_login_time(u->id, 0, cur_time);
   if (daemon_mode) {

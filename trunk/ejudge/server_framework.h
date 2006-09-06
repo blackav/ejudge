@@ -87,7 +87,7 @@ void nsf_cleanup(struct server_framework_state *state);
 void nsf_main_loop(struct server_framework_state *state);
 
 void nsf_enqueue_reply(struct server_framework_state *state,
-                       struct client_state *p, size_t len, void const *msg);
+                       struct client_state *p, ej_size_t len, void const *msg);
 void nsf_send_reply(struct server_framework_state *state,
                     struct client_state *p, int answer);
 void nsf_new_autoclose(struct server_framework_state *state,
