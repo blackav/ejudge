@@ -644,3 +644,11 @@ new_server_html.c 3304 0 3674101
 uldb_plugin_xml.c 3304 0 5591594
 userlist.c 3304 0 3751157
 userlist_xml.c 3304 0 4161897
+new-server.h 3307 0 198663
+nsdb_plugin.h 3307 0 175522
+userlist_clnt.h 3307 0 785619
+new-server.c 3307 0 1077049
+userlist-server.c 3307 0 16638791
+new_server_html.c 3307 0 5248040
+nsdb_plugin_files.c 3307 0 1165680
+userlist_clnt/lookup_user_id.c 3306 0 178336
