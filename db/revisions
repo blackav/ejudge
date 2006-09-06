@@ -657,3 +657,4 @@ userlist-server.c 3310 0 16653886
 new_server_html.c 3310 0 5249078
 server_framework.c 3310 0 1716409
 new_server_clnt/recv_packet.c 3309 0 220760
+userlist_xml.c 3312 0 4175241
