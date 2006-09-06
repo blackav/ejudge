@@ -5903,6 +5903,61 @@ cmd_lookup_user(struct client_state *p,
 }
 
 static void
+cmd_lookup_user_id(struct client_state *p,
+                   int pkt_len,
+                   struct userlist_pk_get_user_info *data)
+{
+  struct userlist_pk_login_ok *out;
+  size_t out_size, login_len, name_len;
+  unsigned char logbuf[1024];
+  unsigned char *login_ptr, *name_ptr;
+  const struct userlist_user *u = 0;
+  const struct userlist_user_info *ui;
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("packet length is too small: %d, must be >= %zu",
+             pkt_len, sizeof(*data));
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf), "LOOKUP_USER_ID: %d, %d", data->user_id,
+           data->contest_id);
+
+  if (p->user_id < 0) {
+    err("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+  if (is_db_capable(p, OPCAP_LIST_ALL_USERS, logbuf)) return;
+
+  
+  if (default_get_user_info_2(data->user_id, data->contest_id, &u, &ui) < 0
+      || !u || !ui) {
+    err("%s -> NO SUCH USER", logbuf);
+    send_reply(p, -ULS_ERR_BAD_UID);
+    return;
+  }
+
+  login_len = strlen(u->login);
+  name_len = 0;
+  if (ui->name) name_len = strlen(ui->name);
+  out_size = sizeof(*out) + login_len + name_len;
+  out = (struct userlist_pk_login_ok*) alloca(out_size);
+  memset(out, 0, out_size);
+  login_ptr = out->data;
+  name_ptr = login_ptr + login_len + 1;
+
+  out->reply_id = ULS_LOGIN_OK;
+  out->user_id = u->id;
+  out->login_len = login_len;
+  out->name_len = name_len;
+  strcpy(login_ptr, u->login);
+  strcpy(name_ptr, ui->name);
+  enqueue_reply_to_client(p, out_size, out);
+}
+
+static void
 cmd_get_cookie(struct client_state *p,
                int pkt_len,
                struct userlist_pk_check_cookie *data)
@@ -6047,6 +6102,7 @@ static void (*cmd_table[])() =
   [ULS_PRIV_DELETE_MEMBER]      cmd_priv_delete_member,
   [ULS_PRIV_CHECK_USER]         cmd_priv_check_user,
   [ULS_GET_COOKIE]              cmd_get_cookie,
+  [ULS_LOOKUP_USER_ID]          cmd_lookup_user_id,
 
   [ULS_LAST_CMD] 0
 };

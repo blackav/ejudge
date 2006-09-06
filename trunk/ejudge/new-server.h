@@ -20,6 +20,7 @@
 
 #include "ej_types.h"
 #include "server_framework.h"
+#include "iterators.h"
 
 #include <stdio.h>
 
@@ -78,5 +79,10 @@ enum
 };
 
 int nsdb_check_role(int user_id, int contest_id, int role);
+int_iterator_t nsdb_get_contest_user_id_iterator(int contest_id);
+int nsdb_get_priv_role_mask_by_iter(int_iterator_t iter, unsigned int *p_mask);
+int nsdb_add_role(int user_id, int contest_id, int role);
+int nsdb_del_role(int user_id, int contest_id, int role);
+int nsdb_priv_remove_user(int user_id, int contest_id);
 
 #endif /* __NEW_SERVER_H__ */
