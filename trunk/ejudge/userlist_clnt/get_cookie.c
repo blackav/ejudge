@@ -19,6 +19,7 @@
 
 int
 userlist_clnt_get_cookie(struct userlist_clnt *clnt,
+                         int cmd,
                          ej_ip_t origin_ip,
                          int ssl,
                          ej_cookie_t cookie,
@@ -43,7 +44,7 @@ userlist_clnt_get_cookie(struct userlist_clnt *clnt,
   out_size = sizeof(*out);
   out = alloca(out_size);
   memset(out, 0, out_size);
-  out->request_id = ULS_GET_COOKIE;
+  out->request_id = cmd;
   out->origin_ip = origin_ip;
   out->ssl = ssl;
   out->contest_id = 0;
