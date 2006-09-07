@@ -380,7 +380,7 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
     start_time = run_get_start_time();
   }
   total_runs = run_get_total();
-  total_teams = teamdb_get_max_team_id() + 1;
+  total_teams = teamdb_get_max_team_id(teamdb_state) + 1;
 
   XALLOCA(best_run, max_prob + 1);
   memset(best_run, -1, sizeof(best_run[0]) * (max_prob + 1));
@@ -403,7 +403,8 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
     if (re.team <= 0 || re.team >= total_teams) continue;
     if (re.team != user_id) {
       if (re.is_hidden) continue;
-      if (teamdb_get_flags(re.team) & (TEAM_INVISIBLE | TEAM_BANNED))
+      if (teamdb_get_flags(teamdb_state,
+                           re.team) & (TEAM_INVISIBLE | TEAM_BANNED))
         continue;
       if (re.status == RUN_OK) {
         if (!user_flag[re.team * (max_prob + 1) + re.problem]) {
@@ -1096,14 +1097,14 @@ new_write_user_clars(FILE *f, int uid,
     if (!from) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_login(from));
+      fprintf(f, "<td>%s</td>", teamdb_get_login(teamdb_state, from));
     }
     if (!to && !from) {
       fprintf(f, "<td><b>%s</b></td>", _("all"));
     } else if (!to) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_login(to));
+      fprintf(f, "<td>%s</td>", teamdb_get_login(teamdb_state, to));
     }
     fprintf(f, "<td>%s</td>", asubj);
     fprintf(f, "<td>");
@@ -1184,14 +1185,14 @@ new_write_user_clar(FILE *f, int uid, int cid, int format)
     if (!from) {
       fprintf(f, "From: judges\n");
     } else {
-      fprintf(f, "From: %s\n", teamdb_get_name(from));
+      fprintf(f, "From: %s\n", teamdb_get_name(teamdb_state, from));
     }
     if (!to && !from) {
       fprintf(f, "To: all\n");
     } else if (!to) {
       fprintf(f, "To: judges\n");
     } else {
-      fprintf(f, "To: %s\n", teamdb_get_name(to));
+      fprintf(f, "To: %s\n", teamdb_get_name(teamdb_state, to));
     }
     //fprintf(f, "Subject: %s\n", psubj);
     fprintf(f, "%s\n", csrc);
@@ -1206,7 +1207,7 @@ new_write_user_clar(FILE *f, int uid, int cid, int format)
     if (!from) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_name(from));
+      fprintf(f, "<td>%s</td>", teamdb_get_name(teamdb_state, from));
     }
     fprintf(f, "</tr>\n<tr><td>%s:</td>", _("To"));
     if (!to && !from) {
@@ -1214,7 +1215,7 @@ new_write_user_clar(FILE *f, int uid, int cid, int format)
     } else if (!to) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_name(to));
+      fprintf(f, "<td>%s</td>", teamdb_get_name(teamdb_state, to));
     }
     fprintf(f, "</tr>\n");
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"), asubj);
@@ -1534,7 +1535,7 @@ do_write_kirov_standings(FILE *f,
 
   /* prune participants, which did not send any solution */
   /* t_runs - 1, if the participant should remain */
-  t_max = teamdb_get_max_team_id() + 1;
+  t_max = teamdb_get_max_team_id(teamdb_state) + 1;
   t_runs = alloca(t_max);
   if (global->prune_empty_users) {
     memset(t_runs, 0, t_max);
@@ -1559,8 +1560,9 @@ do_write_kirov_standings(FILE *f,
   XALLOCAZ(t_rev, t_max);
   for (i = 1, t_tot = 0; i < t_max; i++) {
     t_rev[i] = -1;
-    if (!teamdb_lookup(i)) continue;
-    if ((teamdb_get_flags(i) & (TEAM_INVISIBLE | TEAM_BANNED))) continue;
+    if (!teamdb_lookup(teamdb_state, i)) continue;
+    if ((teamdb_get_flags(teamdb_state, 
+                          i) & (TEAM_INVISIBLE | TEAM_BANNED))) continue;
     if (!t_runs[i]) continue;
     t_rev[i] = t_tot;
     t_ind[t_tot++] = i;
@@ -2003,12 +2005,14 @@ do_write_kirov_standings(FILE *f,
         fprintf(f, "<p%s>%s: %s, ",
                 global->stand_success_attr, _("Last success"), dur_str);
         if (global->team_info_url[0]) {
-          teamdb_export_team(runs[last_success_run].team, &u_info);
+          teamdb_export_team(teamdb_state, runs[last_success_run].team,
+                             &u_info);
           sformat_message(dur_str, sizeof(dur_str), global->team_info_url,
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        fprintf(f, "%s", teamdb_get_name(runs[last_success_run].team));
+        fprintf(f, "%s", teamdb_get_name(teamdb_state,
+                                         runs[last_success_run].team));
         if (global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -2034,12 +2038,13 @@ do_write_kirov_standings(FILE *f,
         fprintf(f, "<p%s>%s: %s, ",
                 global->stand_success_attr, _("Last submit"), dur_str);
         if (global->team_info_url[0]) {
-          teamdb_export_team(runs[last_submit_run].team, &u_info);
+          teamdb_export_team(teamdb_state, runs[last_submit_run].team, &u_info);
           sformat_message(dur_str, sizeof(dur_str), global->team_info_url,
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        fprintf(f, "%s", teamdb_get_name(runs[last_submit_run].team));
+        fprintf(f, "%s", teamdb_get_name(teamdb_state,
+                                         runs[last_submit_run].team));
         if (global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -2115,7 +2120,7 @@ do_write_kirov_standings(FILE *f,
     t = t_sort[i];
 
     if (global->team_info_url[0] || global->stand_extra_format[0]) {
-      teamdb_export_team(t_ind[t], &u_info);
+      teamdb_export_team(teamdb_state, t_ind[t], &u_info);
     } else {
       memset(&u_info, 0, sizeof(u_info));
     }
@@ -2149,7 +2154,7 @@ do_write_kirov_standings(FILE *f,
                       NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
       fprintf(f, "<a href=\"%s\">", dur_str);
     }
-    fprintf(f, "%s", teamdb_get_name(t_ind[t]));
+    fprintf(f, "%s", teamdb_get_name(teamdb_state, t_ind[t]));
     if (global->team_info_url[0]) {
       fprintf(f, "</a>");
     }
@@ -2560,7 +2565,7 @@ do_write_moscow_standings(FILE *f,
   r_tot = run_get_total();
   runs = run_get_entries_ptr();
 
-  u_max = teamdb_get_max_team_id() + 1;
+  u_max = teamdb_get_max_team_id(teamdb_state) + 1;
   u_runs = (unsigned char*) alloca(u_max);
   if (global->prune_empty_users) {
     memset(u_runs, 0, u_max);
@@ -2578,8 +2583,9 @@ do_write_moscow_standings(FILE *f,
   XALLOCA(u_rev, u_max);
   memset(u_rev, -1, u_max * sizeof(u_rev[0]));
   for (i = 1, u_tot = 0; i < u_max; i++)
-    if (teamdb_lookup(i) > 0
-        && !(teamdb_get_flags(i) & (TEAM_INVISIBLE | TEAM_BANNED))
+    if (teamdb_lookup(teamdb_state, i) > 0
+        && !(teamdb_get_flags(teamdb_state,
+                              i) & (TEAM_INVISIBLE | TEAM_BANNED))
         && u_runs[i]) {
       u_rev[i] = u_tot;
       u_ind[u_tot] = i;
@@ -2906,12 +2912,14 @@ do_write_moscow_standings(FILE *f,
         fprintf(f, "<p%s>%s: %s, ",
                 global->stand_success_attr, _("Last success"), strbuf);
         if (global->team_info_url[0]) {
-          teamdb_export_team(runs[last_success_run].team, &u_info);
+          teamdb_export_team(teamdb_state, runs[last_success_run].team,
+                             &u_info);
           sformat_message(strbuf, sizeof(strbuf), global->team_info_url,
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        fprintf(f, "%s", teamdb_get_name(runs[last_success_run].team));
+        fprintf(f, "%s", teamdb_get_name(teamdb_state,
+                                         runs[last_success_run].team));
         if (global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -2941,12 +2949,13 @@ do_write_moscow_standings(FILE *f,
         fprintf(f, "<p%s>%s: %s, ",
                 global->stand_success_attr, _("Last submit"), strbuf);
         if (global->team_info_url[0]) {
-          teamdb_export_team(runs[last_submit_run].team, &u_info);
+          teamdb_export_team(teamdb_state, runs[last_submit_run].team, &u_info);
           sformat_message(strbuf, sizeof(strbuf), global->team_info_url,
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        fprintf(f, "%s", teamdb_get_name(runs[last_submit_run].team));
+        fprintf(f, "%s", teamdb_get_name(teamdb_state,
+                                         runs[last_submit_run].team));
         if (global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -3014,7 +3023,7 @@ do_write_moscow_standings(FILE *f,
     u = u_sort[i];
 
     if (global->team_info_url[0] || global->stand_extra_format[0]) {
-      teamdb_export_team(u_ind[u], &u_info);
+      teamdb_export_team(teamdb_state, u_ind[u], &u_info);
     } else {
       memset(&u_info, 0, sizeof(u_info));
     }
@@ -3045,7 +3054,7 @@ do_write_moscow_standings(FILE *f,
                       NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
       fprintf(f, "<a href=\"%s\">", strbuf);
     }
-    fprintf(f, "%s", teamdb_get_name(u_ind[u]));
+    fprintf(f, "%s", teamdb_get_name(teamdb_state, u_ind[u]));
     if (global->team_info_url[0]) {
       fprintf(f, "</a>");
     }
@@ -3352,7 +3361,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   runs = alloca(r_tot * sizeof(runs[0]));
   run_get_all_entries(runs);
 
-  t_max = teamdb_get_max_team_id() + 1;
+  t_max = teamdb_get_max_team_id(teamdb_state) + 1;
   t_runs = alloca(t_max);
   if (global->prune_empty_users) {
     memset(t_runs, 0, t_max);
@@ -3371,8 +3380,9 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   XALLOCAZ(t_rev, t_max);
   for (i = 1, t_tot = 0; i < t_max; i++) {
     t_rev[i] = -1;
-    if (!teamdb_lookup(i)) continue;
-    if ((teamdb_get_flags(i) & (TEAM_INVISIBLE | TEAM_BANNED))) continue;
+    if (!teamdb_lookup(teamdb_state, i)) continue;
+    if ((teamdb_get_flags(teamdb_state,
+                          i) & (TEAM_INVISIBLE | TEAM_BANNED))) continue;
     if (!t_runs[i]) continue;
     t_rev[i] = t_tot;
     t_ind[t_tot++] = i;
@@ -3559,12 +3569,13 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       fprintf(f, "<p%s>%s: %s, ",
               global->stand_success_attr, _("Last success"), dur_buf);
       if (global->team_info_url[0]) {
-        teamdb_export_team(runs[last_success_run].team, &ttt);
+        teamdb_export_team(teamdb_state, runs[last_success_run].team, &ttt);
         sformat_message(dur_buf, sizeof(dur_buf), global->team_info_url,
                         NULL, NULL, NULL, NULL, &ttt, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_buf);      
       }
-      fprintf(f, "%s", teamdb_get_name(runs[last_success_run].team));
+      fprintf(f, "%s", teamdb_get_name(teamdb_state,
+                                       runs[last_success_run].team));
       if (global->team_info_url[0]) {
         fprintf(f, "</a>");
       }
@@ -3664,7 +3675,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       fputs("</td>", f);
       fprintf(f, "<td%s>", global->stand_team_attr);
       if (global->team_info_url[0] || global->stand_extra_format[0]) {
-        teamdb_export_team(t_ind[t], &ttt);
+        teamdb_export_team(teamdb_state, t_ind[t], &ttt);
       } else {
         memset(&ttt, 0, sizeof(ttt));
       }
@@ -3673,7 +3684,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
                         NULL, NULL, NULL, NULL, &ttt, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", url_str);      
       }
-      fprintf(f, "%s", teamdb_get_name(t_ind[t]));
+      fprintf(f, "%s", teamdb_get_name(teamdb_state, t_ind[t]));
       if (global->team_info_url[0]) {
         fprintf(f, "</a>");
       }
@@ -3926,7 +3937,7 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
     fputs("<tr>", f);
     fprintf(f, "<td>%d</td>", i);
     fprintf(f, "<td>%s</td>", durstr);
-    fprintf(f, "<td>%s</td>", teamdb_get_name(pe->team));
+    fprintf(f, "<td>%s</td>", teamdb_get_name(teamdb_state, pe->team));
     if (probs[pe->problem]) {
       if (probs[pe->problem]->variant_num > 0) {
         int variant = pe->variant;
@@ -4719,7 +4730,7 @@ write_team_page(FILE *f, int user_id,
   struct team_warning *cur_warn;
   time_t user_deadline;
   int user_penalty;
-  unsigned char *user_login = teamdb_get_login(user_id);
+  unsigned char *user_login = teamdb_get_login(teamdb_state, user_id);
   struct pers_dead_info *pdinfo;
   unsigned char *accepted_flag = 0;
 
@@ -5033,8 +5044,9 @@ write_virtual_standings(FILE *f, int user_id)
   unsigned char *user_name, *astr;
   size_t alen;
 
-  user_name = teamdb_get_name(user_id);
-  if (!user_name || !*user_name) user_name = teamdb_get_login(user_id);
+  user_name = teamdb_get_name(teamdb_state, user_id);
+  if (!user_name || !*user_name) user_name = teamdb_get_login(teamdb_state,
+                                                              user_id);
   if (!user_name) user_name = "";
   alen = html_armored_strlen(user_name);
   astr = alloca(alen + 16);

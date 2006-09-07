@@ -39,8 +39,8 @@ find_variant(int user_id, int prob_id)
   if (probs[prob_id]->variant_num <= 0) return 0;
   if (!pmap->prob_map[prob_id]) return 0;
 
-  teamdb_refresh();
-  new_vint = teamdb_get_vintage();
+  teamdb_refresh(teamdb_state);
+  new_vint = teamdb_get_vintage(teamdb_state);
   if (new_vint != pmap->vintage || !pmap->user_map_size || !pmap->user_map) {
     info("find_variant: new vintage: %d, old: %d, updating variant map",
          new_vint, pmap->vintage);
@@ -48,11 +48,11 @@ find_variant(int user_id, int prob_id)
     pmap->user_map_size = 0;
     pmap->user_map = 0;
 
-    pmap->user_map_size = teamdb_get_max_team_id() + 1;
+    pmap->user_map_size = teamdb_get_max_team_id(teamdb_state) + 1;
     XCALLOC(pmap->user_map, pmap->user_map_size);
 
     for (i = 0; i < pmap->u; i++) {
-      pmap->v[i].user_id = teamdb_lookup_login(pmap->v[i].login);
+      pmap->v[i].user_id = teamdb_lookup_login(teamdb_state, pmap->v[i].login);
       if (pmap->v[i].user_id < 0) pmap->v[i].user_id = 0;
       if (!pmap->v[i].user_id) continue;
       if (pmap->v[i].user_id >= pmap->user_map_size) continue;
@@ -75,7 +75,7 @@ find_user_priority_adjustment(int user_id)
   int new_vint, i;
 
   if (!pinfo) return 0;
-  new_vint = teamdb_get_vintage();
+  new_vint = teamdb_get_vintage(teamdb_state);
   if (!pmap || new_vint != pmap->vintage) {
     if (!pmap) {
       XCALLOC(pmap, 1);
@@ -83,11 +83,11 @@ find_user_priority_adjustment(int user_id)
     }
     xfree(pmap->user_map);
 
-    pmap->user_map_size = teamdb_get_max_team_id() + 1;
+    pmap->user_map_size = teamdb_get_max_team_id(teamdb_state) + 1;
     XCALLOC(pmap->user_map, pmap->user_map_size);
 
     for (i = 0; pinfo[i].login; i++) {
-      pinfo[i].id = teamdb_lookup_login(pinfo[i].login);
+      pinfo[i].id = teamdb_lookup_login(teamdb_state, pinfo[i].login);
       if (pinfo[i].id <= 0 || pinfo[i].id >= pmap->user_map_size) {
         pinfo[i].id = 0;
         continue;

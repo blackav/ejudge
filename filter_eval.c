@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -230,7 +230,7 @@ do_eval(struct filter_env *env,
       if (!user_id) {
         res->v.s = envdup(env, "");
       } else {
-        res->v.s = envdup(env, teamdb_get_login(user_id));
+        res->v.s = envdup(env, teamdb_get_login(env->teamdb_state, user_id));
       }
       break;
     case TOK_LANG:
@@ -295,7 +295,7 @@ do_eval(struct filter_env *env,
       user_id = env->rentries[r1.v.i].team;
       if (!user_id) {
         res->v.b = 0;
-      } else if ((flags = teamdb_get_flags(user_id)) < 0) {
+      } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
         res->v.b = 0;
       } else if ((flags & TEAM_INVISIBLE)) {
         res->v.b = 1;
@@ -309,7 +309,7 @@ do_eval(struct filter_env *env,
       user_id = env->rentries[r1.v.i].team;
       if (!user_id) {
         res->v.b = 0;
-      } else if ((flags = teamdb_get_flags(user_id)) < 0) {
+      } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
         res->v.b = 0;
       } else if ((flags & TEAM_BANNED)) {
         res->v.b = 1;
@@ -323,7 +323,7 @@ do_eval(struct filter_env *env,
       user_id = env->rentries[r1.v.i].team;
       if (!user_id) {
         res->v.b = 0;
-      } else if ((flags = teamdb_get_flags(user_id)) < 0) {
+      } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
         res->v.b = 0;
       } else if ((flags & TEAM_LOCKED)) {
         res->v.b = 1;
@@ -409,7 +409,7 @@ do_eval(struct filter_env *env,
     if (!env->cur->team) {
       res->v.s = envdup(env, "");
     } else {
-      res->v.s = envdup(env, teamdb_get_login(env->cur->team));
+      res->v.s = envdup(env, teamdb_get_login(env->teamdb_state, env->cur->team));
     }
     break;
   case TOK_CURLANG:
@@ -470,7 +470,7 @@ do_eval(struct filter_env *env,
     user_id = env->cur->team;
     if (!user_id) {
       res->v.b = 0;
-    } else if ((flags = teamdb_get_flags(user_id)) < 0) {
+    } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
       res->v.b = 0;
     } else if ((flags & TEAM_INVISIBLE)) {
       res->v.b = 1;
@@ -484,7 +484,7 @@ do_eval(struct filter_env *env,
     user_id = env->cur->team;
     if (!user_id) {
       res->v.b = 0;
-    } else if ((flags = teamdb_get_flags(user_id)) < 0) {
+    } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
       res->v.b = 0;
     } else if ((flags & TEAM_BANNED)) {
       res->v.b = 1;
@@ -498,7 +498,7 @@ do_eval(struct filter_env *env,
     user_id = env->cur->team;
     if (!user_id) {
       res->v.b = 0;
-    } else if ((flags = teamdb_get_flags(user_id)) < 0) {
+    } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
       res->v.b = 0;
     } else if ((flags & TEAM_LOCKED)) {
       res->v.b = 1;
@@ -574,7 +574,7 @@ filter_tree_bool_eval(struct filter_env *env,
   return res->v.b;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "jmp_buf")

@@ -4,7 +4,7 @@
 #ifndef __FILTER_EVAL_H__
 #define __FILTER_EVAL_H__
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,9 +21,11 @@
 #include "prepare.h"
 #include "runlog.h"
 #include "filter_tree.h"
+#include "teamdb.h"
 
 struct filter_env
 {
+  teamdb_state_t teamdb_state;
   struct filter_tree_mem *mem;
   int maxlang;
   struct section_language_data **langs;

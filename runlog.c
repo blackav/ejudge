@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -62,6 +62,7 @@ static struct run_entry  *runs;
 static int                run_u;
 static int                run_a;
 static int                run_fd = -1;
+static teamdb_state_t     teamdb_state;
 
 enum
   {
@@ -91,6 +92,12 @@ struct user_flags_info_s
 };
 static struct user_flags_info_s user_flags = { -1, 0 };
 static int update_user_flags(void);
+
+void
+run_init(teamdb_state_t ts)
+{
+  teamdb_state = ts;
+}
 
 static int
 run_read_record(char *buf, int size)
@@ -406,7 +413,7 @@ run_open(const char *path, int flags, time_t init_duration)
   int           oflags = 0;
   int           i;
 
-  teamdb_register_update_hook(teamdb_update_callback, 0);
+  teamdb_register_update_hook(teamdb_state, teamdb_update_callback, 0);
   if (runs) {
     xfree(runs); runs = 0; run_u = run_a = 0;
   }
@@ -1607,7 +1614,8 @@ run_write_xml(FILE *f, int export_mode, time_t current_time)
   }
   */
 
-  unparse_runlog_xml(f, &head, run_u, runs, export_mode, current_time);
+  unparse_runlog_xml(teamdb_state, f, &head, run_u, runs, export_mode,
+                     current_time);
   return 0;
 }
 
@@ -2233,13 +2241,13 @@ update_user_flags(void)
   int *map = 0;
 
   if (user_flags.nuser >= 0) return 0;
-  if (teamdb_get_user_status_map(&size, &map) < 0) return -1;
+  if (teamdb_get_user_status_map(teamdb_state, &size, &map) < 0) return -1;
   user_flags.nuser = size;
   user_flags.flags = map;
   return 1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")

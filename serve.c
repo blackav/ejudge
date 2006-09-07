@@ -140,6 +140,7 @@ static int cmdline_socket_fd = -1;
 static time_t last_activity_time = 0;
 
 clarlog_state_t clarlog_state;
+teamdb_state_t teamdb_state;
 
 static struct client_state *
 client_new_state(int fd)
@@ -378,8 +379,8 @@ do_update_xml_log(char const *name, int external_mode)
     err("update_xml_log: cannot open %s", path1);
     return;
   }
-  unparse_runlog_xml(fout, &rhead, rtotal, rentries, external_mode,
-                     current_time);
+  unparse_runlog_xml(teamdb_state, fout, &rhead, rtotal, rentries,
+                     external_mode, current_time);
   if (ferror(fout)) {
     err("update_xml_log: write error");
     fclose(fout);
@@ -528,7 +529,7 @@ check_cnts_caps(int user_id, int bit)
         contests_strerror(-errcode));
     return 0;
   }
-  login = teamdb_get_login(user_id);
+  login = teamdb_get_login(teamdb_state, user_id);
   if (!login || !*login) return 0;
 
   if (opcaps_find(&cnts->capabilities, login, &caps) < 0) return 0;
@@ -549,7 +550,7 @@ get_cnts_caps(int user_id, opcap_t *out_caps)
         contests_strerror(-errcode));
     return -1;
   }
-  login = teamdb_get_login(user_id);
+  login = teamdb_get_login(teamdb_state, user_id);
   if (!login || !*login) return -1;
 
   if (opcaps_find(&cnts->capabilities, login, &caps) < 0) return -1;
@@ -704,7 +705,7 @@ get_peer_local_user(struct client_state *p)
   int r;
 
   if (p->user_id >= 0) return p->user_id;
-  r = teamdb_get_uid_by_pid(p->peer_uid, p->peer_gid, p->peer_pid,
+  r = teamdb_get_uid_by_pid(teamdb_state, p->peer_uid, p->peer_gid, p->peer_pid,
                             global->contest_id,
                             &user_id, &priv_level, &cookie, &ip, &ssl);
   if (r < 0) {
@@ -713,7 +714,7 @@ get_peer_local_user(struct client_state *p)
     client_disconnect(p, 0);
     return -1;
   }
-  if (r >= 0 && !teamdb_lookup(user_id)) {
+  if (r >= 0 && !teamdb_lookup(teamdb_state, user_id)) {
     err("%d: no local information about user %d", p->id, user_id);
     client_disconnect(p, 0);
     return -1;
@@ -782,7 +783,7 @@ append_audit_log(int run_id, struct client_state *p, const char *format, ...)
     fprintf(f, "From: SYSTEM\n");
   } else if (p->user_id <= 0) {
     fprintf(f, "From: unauthentificated user\n");
-  } else if (!(login = teamdb_get_login(p->user_id))) {
+  } else if (!(login = teamdb_get_login(teamdb_state, p->user_id))) {
     fprintf(f, "From: user %d (login unknown)\n", p->user_id);
   } else {
     fprintf(f, "From: %s (uid %d)\n", login, p->user_id);
@@ -818,7 +819,7 @@ cmd_team_get_archive(struct client_state *p, int len,
     err("%d: operation is not supported", p->id);
     return;
   }
-  if (!teamdb_lookup(pkt->user_id)) {
+  if (!teamdb_lookup(teamdb_state, pkt->user_id)) {
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     err("%d: bad user id", p->id);
     return;
@@ -834,7 +835,7 @@ cmd_team_get_archive(struct client_state *p, int len,
     return;
   }
 
-  last_time = teamdb_get_archive_time(pkt->user_id);
+  last_time = teamdb_get_archive_time(teamdb_state, pkt->user_id);
   if (last_time + global->team_download_time > current_time) {
     new_send_reply(p, -SRV_ERR_DOWNLOAD_TOO_OFTEN);
     err("%d: download is too often", p->id);
@@ -867,7 +868,7 @@ cmd_team_get_archive(struct client_state *p, int len,
   token = remove_queue_add(current_time + global->team_download_time / 2,
                            1, fullpath);
 
-  teamdb_set_archive_time(pkt->user_id, current_time);
+  teamdb_set_archive_time(teamdb_state, pkt->user_id, current_time);
   path_len = strlen(fullpath);
   out_size = sizeof(*out) + path_len;
   out = alloca(out_size);
@@ -1231,7 +1232,7 @@ cmd_priv_standings(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_PROTOCOL);
     return;
   }
-  if (!teamdb_lookup(pkt->user_id)) {
+  if (!teamdb_lookup(teamdb_state, pkt->user_id)) {
     err("%d: user_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
@@ -1781,7 +1782,7 @@ cmd_import_xml_runs(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  runlog_import_xml(f, pkt->token, pkt->data);
+  runlog_import_xml(teamdb_state, f, pkt->token, pkt->data);
   fclose(f);
 
   if (!html_ptr) {
@@ -1867,14 +1868,14 @@ cmd_message(struct client_state *p, int len,
       if (!strcasecmp(dest_login_ptr, "all")) {
         dest_uid = 0;
       } else {
-        dest_uid = teamdb_lookup_login(dest_login_ptr);
+        dest_uid = teamdb_lookup_login(teamdb_state, dest_login_ptr);
         if (dest_uid <= 0) {
           err("%d: nonexistant login <%s>", p->id, dest_login_ptr);
           new_send_reply(p, -SRV_ERR_BAD_USER_ID);
           return;
         }
       }
-    } else if (dest_uid != 0 && !teamdb_lookup(dest_uid)) {
+    } else if (dest_uid != 0 && !teamdb_lookup(teamdb_state, dest_uid)) {
       err("%d: nonexistant user id %d", p->id, dest_uid);
       new_send_reply(p, -SRV_ERR_BAD_USER_ID);
       return;
@@ -2014,7 +2015,7 @@ cmd_team_show_item(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_PROTOCOL);
     return;
   }
-  if (!teamdb_lookup(pkt->user_id)) {
+  if (!teamdb_lookup(teamdb_state, pkt->user_id)) {
     err("%d: user_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
@@ -2176,7 +2177,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
     return;
   }
-  if (!teamdb_lookup(pkt->user_id)) {
+  if (!teamdb_lookup(teamdb_state, pkt->user_id)) {
     err("%d: user_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
@@ -2341,7 +2342,7 @@ cmd_upload_report(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
     return;
   }
-  if (!teamdb_lookup(pkt->user_id)) {
+  if (!teamdb_lookup(teamdb_state, pkt->user_id)) {
     err("%d: user_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
@@ -2469,7 +2470,7 @@ do_submit_run(struct client_state *p,
   }
 
   /* check for user validity */
-  if (!teamdb_lookup(user_id)) {
+  if (!teamdb_lookup(teamdb_state, user_id)) {
     err("%d: user_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
@@ -2479,7 +2480,7 @@ do_submit_run(struct client_state *p,
     err("%d: pkt->user_id != p->user_id", p->id);
     return;
   }
-  if (teamdb_get_flags(user_id) & (TEAM_BANNED | TEAM_LOCKED)) {
+  if (teamdb_get_flags(teamdb_state, user_id) & (TEAM_BANNED | TEAM_LOCKED)) {
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     err("%d: user %d cannot submit runs", p->id, user_id);
     return;
@@ -2522,7 +2523,7 @@ do_submit_run(struct client_state *p,
   }
   // personal deadline
   if (cur_prob->pd_total > 0) {
-    login = teamdb_get_login(user_id);
+    login = teamdb_get_login(teamdb_state, user_id);
     for (i = 0; i < cur_prob->pd_total; i++) {
       if (!strcmp(login, cur_prob->pd_infos[i].login)) {
         user_deadline = cur_prob->pd_infos[i].deadline;
@@ -2814,7 +2815,7 @@ cmd_team_submit_clar(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
     return;
   }
-  if (!teamdb_lookup(pkt->user_id)) {
+  if (!teamdb_lookup(teamdb_state, pkt->user_id)) {
     err("%d: user_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
@@ -2904,9 +2905,9 @@ cmd_team_submit_clar(struct client_state *p, int len,
     snprintf(esubj, sizeof(esubj),
              "New clar request in contest %d",
              global->contest_id);
-    user_name = teamdb_get_name(pkt->user_id);
+    user_name = teamdb_get_name(teamdb_state, pkt->user_id);
     if (!user_name || !*user_name)
-      user_name = teamdb_get_login(pkt->user_id);
+      user_name = teamdb_get_login(teamdb_state, pkt->user_id);
     originator = get_email_sender(cnts);
     fmsg = open_memstream(&ftxt, &flen);
     fprintf(fmsg, "Hello,\n\nNew clarification request is received\n"
@@ -3783,7 +3784,7 @@ cmd_edit_run(struct client_state *p, int len,
 
   memset(&run, 0, sizeof(run));
   if ((pkt->mask & PROT_SERVE_RUN_UID_SET)) {
-    if (teamdb_lookup(pkt->user_id) != 1) {
+    if (teamdb_lookup(teamdb_state, pkt->user_id) != 1) {
       err("%d: invalid user_id %d", p->id, pkt->user_id);
       new_send_reply(p, -SRV_ERR_BAD_USER_ID);
       return;
@@ -3792,7 +3793,7 @@ cmd_edit_run(struct client_state *p, int len,
     run_flags |= RUN_ENTRY_USER;
   }
   if ((pkt->mask & PROT_SERVE_RUN_LOGIN_SET)) {
-    if ((run.team = teamdb_lookup_login(user_login_ptr)) <= 0) {
+    if ((run.team = teamdb_lookup_login(teamdb_state, user_login_ptr)) <= 0) {
       err("%d: invalid login <%s>", p->id, user_login_ptr);
       new_send_reply(p, -SRV_ERR_BAD_USER_ID);
       return;
@@ -4022,13 +4023,13 @@ cmd_new_run(struct client_state *p, int len,
     err("%d: new_run: both uid and login are set", p->id);
     goto protocol_error;
   } else if ((pkt->mask & PROT_SERVE_RUN_UID_SET)) {
-    if (teamdb_lookup(pkt->user_id) != 1) {
+    if (teamdb_lookup(teamdb_state, pkt->user_id) != 1) {
       err("%d: invalid user_id %d", p->id, pkt->user_id);
       new_send_reply(p, -SRV_ERR_BAD_USER_ID);
       return;
     }
   } else if ((pkt->mask & PROT_SERVE_RUN_LOGIN_SET)) {
-    if ((pkt->user_id = teamdb_lookup_login(user_login_ptr)) <= 0) {
+    if ((pkt->user_id = teamdb_lookup_login(teamdb_state, user_login_ptr)) <= 0) {
       err("%d: invalid login <%s>", p->id, user_login_ptr);
       new_send_reply(p, -SRV_ERR_BAD_USER_ID);
       return;
@@ -4260,7 +4261,7 @@ cmd_edit_user(struct client_state *p, int len,
         p->id, len, expected_pkt_size);
     goto protocol_error;
   }
-  if (!teamdb_lookup(pkt->user_id)) {
+  if (!teamdb_lookup(teamdb_state, pkt->user_id)) {
     err("%d: cmd_edit_user: user_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
@@ -4508,7 +4509,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
     snprintf(errmsg, sizeof(errmsg), "invalid language %d\n", re.language);
     goto report_check_failed;
   }
-  if (!(team_name = teamdb_get_name(re.team))) {
+  if (!(team_name = teamdb_get_name(teamdb_state, re.team))) {
     snprintf(errmsg, sizeof(errmsg), "invalid team %d\n", re.team);
     goto report_check_failed;
   }
@@ -4623,7 +4624,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
   /* in new binary packet format we don't care about neither "special"
    * characters in spellings nor about spelling length
    */
-  teamdb_export_team(re.team, &te);
+  teamdb_export_team(teamdb_state, re.team, &te);
   if (te.user && te.user->i.spelling && te.user->i.spelling[0]) {
     run_pkt->user_spelling = te.user->i.spelling;
   }
@@ -5088,7 +5089,7 @@ do_rejudge_all(struct client_state *p)
     // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
     // considering only the last run for the given problem and
     // the given participant
-    int total_ids = teamdb_get_max_team_id() + 1;
+    int total_ids = teamdb_get_max_team_id(teamdb_state) + 1;
     int total_probs = max_prob + 1;
     int size = total_ids * total_probs;
     int idx;
@@ -5176,7 +5177,7 @@ do_rejudge_problem(int prob_id, struct client_state *p)
       && olympiad_judging_mode) {
     // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
     // considering only the last run for the given participant
-    int total_ids = teamdb_get_max_team_id() + 1;
+    int total_ids = teamdb_get_max_team_id(teamdb_state) + 1;
     unsigned char *flag;
 
     if (total_ids <= 0) return;
@@ -5231,7 +5232,7 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask, struct client_state *p,
     // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
     // considering only the last run for the given problem and
     // the given participant
-    int total_ids = teamdb_get_max_team_id() + 1;
+    int total_ids = teamdb_get_max_team_id(teamdb_state) + 1;
     int total_probs = max_prob + 1;
     int size = total_ids * total_probs;
     int idx;
@@ -5975,7 +5976,8 @@ create_symlinks(void)
   if (global->stand_symlink_dir[0] && global->htdocs_dir[0]) {
     if (global->users_on_page > 0) {
       // FIXME: check, that standings_file_name depends on page number
-      npages = (teamdb_get_total_teams() + global->users_on_page - 1)
+      npages = (teamdb_get_total_teams(teamdb_state)
+                + global->users_on_page - 1)
         / global->users_on_page;
       for (pgn = 0; pgn < npages; pgn++) {
         if (!pgn) {
@@ -6158,7 +6160,7 @@ do_loop(void)
   if (create_socket() < 0) return -1;
 
   // we need the number of users to create correct the number of symlinks
-  teamdb_refresh();
+  teamdb_refresh(teamdb_state);
   if (create_symlinks() < 0) return -1;
 
   current_time = time(0);
@@ -6195,7 +6197,7 @@ do_loop(void)
     }
 
     /* refresh user database */
-    teamdb_refresh();
+    teamdb_refresh(teamdb_state);
 
     /* check items pending for removal */
     check_remove_queue();
@@ -6348,8 +6350,11 @@ main(int argc, char *argv[])
     err("contest_id is not defined");
     return 1;
   }
-  if (teamdb_open_client(global->socket_path, global->contest_id) < 0)
+  teamdb_state = teamdb_init();
+  if (teamdb_open_client(teamdb_state, global->socket_path,
+                         global->contest_id) < 0)
     return 1;
+  run_init(teamdb_state);
   if (run_open(global->run_log_file, 0, global->contest_time) < 0) return 1;
   if (global->virtual && global->score_system_val != SCORE_ACM) {
     err("invalid score system for virtual contest");

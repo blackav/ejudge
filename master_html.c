@@ -338,8 +338,8 @@ print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
     snprintf((fields[RAW_RUN_NSEC] = alloca(BSIZE)), BSIZE, "%d", pe->nsec);
     fields[RAW_RUN_IP] = run_unparse_ip(pe->ip);
     snprintf((fields[RAW_RUN_USER_ID] = alloca(BSIZE)), BSIZE, "%d", pe->team);
-    fields[RAW_RUN_USER_LOGIN] = teamdb_get_login(pe->team);
-    fields[RAW_RUN_USER_NAME] = teamdb_get_name(pe->team);
+    fields[RAW_RUN_USER_LOGIN] = teamdb_get_login(teamdb_state, pe->team);
+    fields[RAW_RUN_USER_NAME] = teamdb_get_name(teamdb_state, pe->team);
 
     if (pe->status != RUN_VIRTUAL_START && pe->status != RUN_VIRTUAL_STOP) {
       run_time = pe->timestamp;
@@ -532,6 +532,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
 
   if (!u->error_msgs) {
     memset(&env, 0, sizeof(env));
+    env.teamdb_state = teamdb_state;
     env.mem = filter_tree_new();
     env.maxlang = max_lang;
     env.langs = langs;
@@ -765,7 +766,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
         fprintf(f, "<td>&nbsp;</td>");
         fprintf(f, "<td>%s</td>", run_unparse_ip(pe->ip));
         fprintf(f, "<td>%d</td>", pe->team);
-        fprintf(f, "<td>%s</td>", teamdb_get_name(pe->team));
+        fprintf(f, "<td>%s</td>", teamdb_get_name(teamdb_state, pe->team));
         fprintf(f, "<td>&nbsp;</td>");
         fprintf(f, "<td>&nbsp;</td>");
         fprintf(f, "<td><b>%s</b></td>", statstr);
@@ -843,7 +844,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
       fprintf(f, "<td>%u</td>", pe->size);
       fprintf(f, "<td>%s</td>", run_unparse_ip(pe->ip));
       fprintf(f, "<td>%d</td>", pe->team);
-      fprintf(f, "<td>%s</td>", teamdb_get_name(pe->team));
+      fprintf(f, "<td>%s</td>", teamdb_get_name(teamdb_state, pe->team));
       if (pe->problem > 0 && pe->problem <= max_prob && probs[pe->problem]) {
         struct section_problem_data *cur_prob = probs[pe->problem];
         int variant = 0;
@@ -1163,16 +1164,16 @@ write_all_clars(FILE *f, struct user_filter_info *u,
         fprintf(f, "<td><b>%s</b></td>", _("judges"));
       else
         fprintf(f, "<td><b>%s</b> (%s)</td>", _("judges"),
-                teamdb_get_name(j_from));
+                teamdb_get_name(teamdb_state, j_from));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_name(from));
+      fprintf(f, "<td>%s</td>", teamdb_get_name(teamdb_state, from));
     }
     if (!to && !from) {
       fprintf(f, "<td><b>%s</b></td>", _("all"));
     } else if (!to) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_name(to));
+      fprintf(f, "<td>%s</td>", teamdb_get_name(teamdb_state, to));
     }
     fprintf(f, "<td>%s</td>", asubj);
     fprintf(f, "<td>%s%s</a></td>",
@@ -1380,17 +1381,17 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   }
   fprintf(f, "</tr>\n");
   fprintf(f, "<tr><td>%s:</td><td>%s</td>",
-          _("User login"), teamdb_get_login(info.team));
+          _("User login"), teamdb_get_login(teamdb_state, info.team));
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
-    fprintf(f, "<td><input type=\"text\" name=\"run_user_login\" value=\"%s\" size=\"20\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", teamdb_get_login(info.team), ACTION_RUN_CHANGE_USER_LOGIN, _("Change"));
+    fprintf(f, "<td><input type=\"text\" name=\"run_user_login\" value=\"%s\" size=\"20\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", teamdb_get_login(teamdb_state, info.team), ACTION_RUN_CHANGE_USER_LOGIN, _("Change"));
   } else {
     fprintf(f, "%s", nbsp);
   }
   fprintf(f, "</tr>\n");
   fprintf(f, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
-          _("User name"), teamdb_get_name(info.team), nbsp);
+          _("User name"), teamdb_get_name(teamdb_state, info.team), nbsp);
 
   ps1 = ""; ps2 = "";
   snprintf(filtbuf1, sizeof(filtbuf1), "prob == \"%s\"", 
@@ -2316,9 +2317,9 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     else
       fprintf(f, "<td><b>%s</b> (%s)</td>", _("judges"),
-              teamdb_get_name(j_from));
+              teamdb_get_name(teamdb_state, j_from));
   } else {
-    fprintf(f, "<td>%s (%d)</td>", teamdb_get_name(from), from);
+    fprintf(f, "<td>%s (%d)</td>", teamdb_get_name(teamdb_state, from), from);
   }
   fprintf(f, "</tr>\n<tr><td>%s:</td>", _("To"));
   if (!to && !from) {
@@ -2326,7 +2327,7 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
   } else if (!to) {
     fprintf(f, "<td><b>%s</b></td>", _("judges"));
   } else {
-    fprintf(f, "<td>%s (%d)</td>", teamdb_get_name(to), to);
+    fprintf(f, "<td>%s (%d)</td>", teamdb_get_name(teamdb_state, to), to);
   }
   fprintf(f, "</tr>\n");
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"), html_subj);
@@ -2386,8 +2387,8 @@ write_priv_users(FILE *f, int user_id, int priv_level,
   unsigned char filtbuf1[512], filtbuf2[512], filtbuf3[512], *ps1, *ps2;
   struct team_extra *t_extra;
 
-  tot_teams = teamdb_get_total_teams();
-  max_team = teamdb_get_max_team_id();
+  tot_teams = teamdb_get_total_teams(teamdb_state);
+  max_team = teamdb_get_max_team_id(teamdb_state);
 
   print_nav_buttons(f, 0, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), 0, _("Refresh"), 0, 0, 0, 0);
@@ -2417,8 +2418,8 @@ write_priv_users(FILE *f, int user_id, int priv_level,
   fprintf(f, "<th>%s</th><th>&nbsp;</th></tr>\n", _("No. of warns"));
 
   for (i = 1; i <= max_team; i++) {
-    if (!teamdb_lookup(i)) continue;
-    teamdb_export_team(i, &info);
+    if (!teamdb_lookup(teamdb_state, i)) continue;
+    teamdb_export_team(teamdb_state, i, &info);
     t_extra = team_extra_get_entry(i);
 
     run_get_team_usage(i, &runs_num, &runs_total);
@@ -2441,7 +2442,7 @@ write_priv_users(FILE *f, int user_id, int priv_level,
     ps1 = filtbuf3; ps2 = "</a>";
     fprintf(f, "<td>%s%d%s</td>", ps1, i, ps2);
 
-    txt_login = teamdb_get_login(i);
+    txt_login = teamdb_get_login(teamdb_state, i);
     html_login_len = html_armored_strlen(txt_login);
     html_login = alloca(html_login_len + 16);
     html_armor_string(txt_login, html_login);
@@ -2457,7 +2458,7 @@ write_priv_users(FILE *f, int user_id, int priv_level,
     }
     fprintf(f, "</td>");
 
-    txt_name = teamdb_get_name(i);
+    txt_name = teamdb_get_name(teamdb_state, i);
     html_name_len = html_armored_strlen(txt_name);
     html_name = alloca(html_name_len + 16);
     html_armor_string(txt_name, html_name);
@@ -2472,7 +2473,7 @@ write_priv_users(FILE *f, int user_id, int priv_level,
 
     fprintf(f, "<td>%s</td>", html_name);
 
-    flags = teamdb_get_flags(i);
+    flags = teamdb_get_flags(teamdb_state, i);
     team_modes[0] = 0;
     if ((flags & TEAM_BANNED)) {
       strcpy(team_modes, "banned");
@@ -2575,17 +2576,17 @@ write_priv_user(FILE *f, int user_id, int priv_level,
                     _("Main page"), 0, _("View teams"), 0, 0, 0, 0);
   fprintf(f, "<hr/>\n");
 
-  if (!teamdb_lookup(view_user_id)) {
+  if (!teamdb_lookup(teamdb_state, view_user_id)) {
     fprintf(f, "<big>Invalid user id</big>\n");
     return 0;
   }
 
-  teamdb_export_team(view_user_id, &info);
+  teamdb_export_team(teamdb_state, view_user_id, &info);
   t_extra = team_extra_get_entry(view_user_id);
   run_get_team_usage(view_user_id, &runs_num, &runs_total);
   clar_get_team_usage(clarlog_state, view_user_id, &clars_num, &clars_total);
   pages_total = run_get_total_pages(view_user_id);
-  flags = teamdb_get_flags(view_user_id);
+  flags = teamdb_get_flags(teamdb_state, view_user_id);
 
   // table has 4 columns
   fprintf(f, "<table>\n");
@@ -2596,12 +2597,12 @@ write_priv_user(FILE *f, int user_id, int priv_level,
 
   // user login
   fprintf(f, "<tr><td>%s:</td>", _("User Login"));
-  xml_unparse_text(f, "td", teamdb_get_login(view_user_id), "");
+  xml_unparse_text(f, "td", teamdb_get_login(teamdb_state, view_user_id), "");
   fprintf(f, "<td>&nbsp;</td><td>&nbsp</td></tr>\n");
 
   // user name
   fprintf(f, "<tr><td>%s:</td>", _("User Name"));
-  xml_unparse_text(f, "td", teamdb_get_name(view_user_id), "");
+  xml_unparse_text(f, "td", teamdb_get_name(teamdb_state, view_user_id), "");
   fprintf(f, "<td>&nbsp;</td><td>&nbsp</td></tr>\n");
 
   fprintf(f,"<tr><td>%s:</td><td>%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
@@ -2763,7 +2764,7 @@ write_priv_user(FILE *f, int user_id, int priv_level,
     fprintf(f, "<h2>Warnings</h2>\n");
     for (i = 0; i < t_extra->warn_u; i++) {
       if (!(cur_warn = t_extra->warns[i])) continue;
-      fprintf(f, "<h3>Warning %d: issued: %s, issued by: %s (%d), issued from: %s</h3>", i + 1, xml_unparse_date(cur_warn->date), teamdb_get_login(cur_warn->issuer_id), cur_warn->issuer_id, xml_unparse_ip(cur_warn->issuer_ip));
+      fprintf(f, "<h3>Warning %d: issued: %s, issued by: %s (%d), issued from: %s</h3>", i + 1, xml_unparse_date(cur_warn->date), teamdb_get_login(teamdb_state, cur_warn->issuer_id), cur_warn->issuer_id, xml_unparse_ip(cur_warn->issuer_ip));
       fprintf(f, "<p>User explanation:\n");
       xml_unparse_text(f, "pre", cur_warn->text, "");
       fprintf(f, "<p>Judge's comment:\n");
@@ -2886,17 +2887,17 @@ write_runs_dump(FILE *f, const unsigned char *url,
     fprintf(f, ";");
 
     fprintf(f, "%d;", re.team);
-    if (!(s = teamdb_get_login(re.team))) {
+    if (!(s = teamdb_get_login(teamdb_state, re.team))) {
       fprintf(f, "!INVALID TEAM!;");
     } else {
       fprintf(f, "%s;", s);
     }
-    if (!(s = teamdb_get_name(re.team))) {
+    if (!(s = teamdb_get_name(teamdb_state, re.team))) {
       fprintf(f, "!INVALID TEAM!;");
     } else {
       fprintf(f, "%s;", s);
     }
-    j = teamdb_get_flags(re.team);
+    j = teamdb_get_flags(teamdb_state, re.team);
     s = "";
     if ((j & TEAM_INVISIBLE)) s = "I";
     fprintf(f, "%s;", s);
@@ -3377,13 +3378,14 @@ generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
    * u_ind[0..u_tot-1] - index array:   team_idx -> team_id
    * u_rev[0..u_max-1] - reverse index: team_id -> team_idx
    */
-  u_max = teamdb_get_max_team_id() + 1;
+  u_max = teamdb_get_max_team_id(teamdb_state) + 1;
   XALLOCAZ(u_ind, u_max);
   XALLOCAZ(u_rev, u_max);
   XALLOCAZ(u_reg, u_max);
   for (i = 1, u_tot = 0; i < u_max; i++) {
     u_rev[i] = -1;
-    if (teamdb_lookup(i) && teamdb_export_team(i, &uinfo) >= 0) {
+    if (teamdb_lookup(teamdb_state, i)
+        && teamdb_export_team(teamdb_state, i, &uinfo) >= 0) {
       if (is_registered_today(uinfo.user, from_time, to_time)) {
         total_reg++;
         u_reg[u_tot] = 1;
@@ -3601,8 +3603,8 @@ generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
     for (i = 0; i < u_tot; i++) {
       if (!u_reg[i]) continue;
       u = u_ind[i];
-      if (!(login = teamdb_get_login(u))) login = "";
-      if (!(name = teamdb_get_name(u))) name = "";
+      if (!(login = teamdb_get_login(teamdb_state, u))) login = "";
+      if (!(name = teamdb_get_name(teamdb_state, u))) name = "";
       fprintf(f, "  %-6d %-15.15s %-30.30s\n", u, login, name);
     }
     fprintf(f, "\n");
@@ -3701,8 +3703,8 @@ generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
       if (!u_total[j]) break;
 
       u = u_ind[j];
-      name = teamdb_get_name(u);
-      if (!name) name = teamdb_get_login(u);
+      name = teamdb_get_name(teamdb_state, u);
+      if (!name) name = teamdb_get_login(teamdb_state, u);
       if (!name) name = "";
 
       fprintf(f, "%-7d %-24.24s %-7d %-7d %-7d %d/%d/%d %d/%d/%d/%d/%d/%d\n",
