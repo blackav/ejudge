@@ -1054,7 +1054,7 @@ write_all_clars(FILE *f, struct user_filter_info *u,
   fprintf(f, "<hr><h2>%s</h2>\n", _("Messages"));
 
   start = run_get_start_time();
-  total = clar_get_total();
+  total = clar_get_total(clarlog_state);
   if (!mode_clar) mode_clar = u->prev_mode_clar;
   if (!first_clar) first_clar = u->prev_first_clar;
   if (!last_clar) last_clar = u->prev_last_clar;
@@ -1137,8 +1137,8 @@ write_all_clars(FILE *f, struct user_filter_info *u,
   for (j = 0; j < list_tot; j++) {
     i = list_idx[j];
 
-    clar_get_record(i, &time, &size, ip, &from, &to, &flags, &j_from,
-                    &hide_flag, subj);
+    clar_get_record(clarlog_state, i, &time, &size, ip, &from, &to, &flags,
+                    &j_from, &hide_flag, subj);
     if (mode_clar != 1 && (from <= 0 || flags >= 2)) continue; 
 
     base64_decode_str(subj, psubj, 0);
@@ -1153,7 +1153,8 @@ write_all_clars(FILE *f, struct user_filter_info *u,
     fprintf(f, "<tr>");
     if (hide_flag) fprintf(f, "<td>%d#</td>", i);
     else fprintf(f, "<td>%d</td>", i);
-    fprintf(f, "<td>%s</td>", clar_flags_html(flags, from, to, 0, 0));
+    fprintf(f, "<td>%s</td>", clar_flags_html(clarlog_state, flags, from, to,
+                                              0, 0));
     fprintf(f, "<td>%s</td>", durstr);
     fprintf(f, "<td>%s</td>", ip);
     fprintf(f, "<td>%zu</td>", size);
@@ -2283,11 +2284,12 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
   unsigned char name_buf[64];
   char *tmp_txt_msg = 0;
 
-  if (clar_id < 0 || clar_id >= clar_get_total()) return -SRV_ERR_BAD_CLAR_ID;
+  if (clar_id < 0 || clar_id >= clar_get_total(clarlog_state))
+    return -SRV_ERR_BAD_CLAR_ID;
 
   start_time = run_get_start_time();
-  clar_get_record(clar_id, &clar_time, &size, ip, &from, &to, &flags,
-                  &j_from, &hide_flag, b64_subj);
+  clar_get_record(clarlog_state, clar_id, &clar_time, &size, ip, &from, &to,
+                  &flags, &j_from, &hide_flag, b64_subj);
   txt_subj_len = base64_decode_str(b64_subj, txt_subj, 0);
   html_subj_len = html_armored_strlen(txt_subj);
   html_subj = alloca(html_subj_len);
@@ -2299,7 +2301,7 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
   if (hide_flag)
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Available only after contest start"), hide_flag?_("YES"):_("NO"));
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Flags"),
-          clar_flags_html(flags, from, to, 0, 0));
+          clar_flags_html(clarlog_state, flags, from, to, 0, 0));
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
           _("Time"), duration_str(1, clar_time, 0, 0, 0));
   if (!global->virtual) {
@@ -2420,7 +2422,7 @@ write_priv_users(FILE *f, int user_id, int priv_level,
     t_extra = team_extra_get_entry(i);
 
     run_get_team_usage(i, &runs_num, &runs_total);
-    clar_get_team_usage(i, &clars_num, &clars_total);
+    clar_get_team_usage(clarlog_state, i, &clars_num, &clars_total);
     /*
     if (priv_level == PRIV_LEVEL_ADMIN) {
       html_start_form(f, 1, sid, self_url, hidden_vars, extra_args);
@@ -2581,7 +2583,7 @@ write_priv_user(FILE *f, int user_id, int priv_level,
   teamdb_export_team(view_user_id, &info);
   t_extra = team_extra_get_entry(view_user_id);
   run_get_team_usage(view_user_id, &runs_num, &runs_total);
-  clar_get_team_usage(view_user_id, &clars_num, &clars_total);
+  clar_get_team_usage(clarlog_state, view_user_id, &clars_num, &clars_total);
   pages_total = run_get_total_pages(view_user_id);
   flags = teamdb_get_flags(view_user_id);
 
@@ -3581,9 +3583,9 @@ generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
     }
   }
 
-  clar_total = clar_get_total();
+  clar_total = clar_get_total(clarlog_state);
   for (i = 0; i < clar_total; i++) {
-    if (clar_get_record(i, &clar_time, NULL, NULL,
+    if (clar_get_record(clarlog_state, i, &clar_time, NULL, NULL,
                         &clar_from, &clar_to, &clar_flags, NULL, NULL,NULL) < 0)
       continue;
     if (clar_time >= to_time) break;

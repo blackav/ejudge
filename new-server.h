@@ -23,6 +23,16 @@
 #include "iterators.h"
 
 #include <stdio.h>
+#include <time.h>
+
+// a structure to store some persistent information
+struct session_info
+{
+  struct session_info *next;
+  struct session_info *prev;
+  ej_cookie_t session_id;
+  time_t expire_time;
+};
 
 struct http_request_info
 {
@@ -51,6 +61,7 @@ struct http_request_info
   unsigned char *name;
   unsigned char *name_arm;
   const unsigned char *hidden_vars;
+  struct session_info *session_extra;
 };
 
 void
@@ -92,5 +103,8 @@ new_server_html_err_internal_error(struct server_framework_state *state,
                                    struct http_request_info *phr,
                                    int priv_mode,
                                    const char *format, ...);
+
+struct session_info *
+new_server_get_session(ej_cookie_t session_id, time_t cur_time);
 
 #endif /* __NEW_SERVER_H__ */

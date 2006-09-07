@@ -380,10 +380,10 @@ html_put_header(FILE *out, unsigned char const *template,
 }
 
 static void
-html_put_footer(FILE *out, unsigned char const *template)
+html_put_footer(FILE *out, unsigned char const *template, int locale_id)
 {
   if (!template) template = default_footer_template;
-  process_template(out, template, 0, 0, 0, get_copyright(), 0);
+  process_template(out, template, 0, 0, 0, get_copyright(locale_id), 0);
 }
 
 static const unsigned char *role_strs[] =
@@ -465,6 +465,7 @@ privileged_page_login_page(struct server_framework_state *state,
   unsigned char *as;
   int r, n;
 
+  l10n_setlocale(phr->locale_id);
   html_put_header(fout, 0, 0, 0, phr->locale_id, "Login page");
   html_start_form(fout, 1, phr->self_url, "");
   fprintf(fout, "<table>\n");
@@ -501,7 +502,8 @@ privileged_page_login_page(struct server_framework_state *state,
   fprintf(fout, "</td></tr>\n");
   fprintf(fout, "<tr><td>&nbsp;</td><td><input type=\"submit\" value=\"%s\"></td></tr>\n", _("Submit"));
   fprintf(fout, "</table></form>\n");
-  html_put_footer(fout, 0);
+  html_put_footer(fout, 0, phr->locale_id);
+  l10n_setlocale(0);
 }
 
 static void
@@ -572,7 +574,7 @@ html_err_permission_denied(struct server_framework_state *state,
   }
   fprintf(fout, "</ul>\n");
   fprintf(fout, _("<p>Note, that the exact reason is not reported due to security reasons.</p>"));
-  html_put_footer(fout, footer);
+  html_put_footer(fout, footer, phr->locale_id);
   l10n_setlocale(0);
 }
 
@@ -617,7 +619,7 @@ html_err_invalid_param(struct server_framework_state *state,
   html_put_header(fout, header, 0, 0, phr->locale_id, _("Invalid parameter"));
   fprintf(fout, "<p>%s</p>\n",
           _("A request parameter is invalid. Please, contact the site administrator."));
-  html_put_footer(fout, footer);
+  html_put_footer(fout, footer, phr->locale_id);
   l10n_setlocale(0);
 }
 
@@ -658,7 +660,7 @@ html_err_service_not_available(struct server_framework_state *state,
                   _("Service not available"));
   fprintf(fout, "<p>%s</p>\n",
           _("Service that you requested is not available."));
-  html_put_footer(fout, footer);
+  html_put_footer(fout, footer, phr->locale_id);
   l10n_setlocale(0);
 }
 
@@ -695,7 +697,7 @@ html_err_userlist_server_down(struct server_framework_state *state,
   html_put_header(fout, header, 0, 0, phr->locale_id, _("User database server is down"));
   fprintf(fout, "<p>%s</p>\n",
           _("The user database server is currently not available. Please, retry the request later."));
-  html_put_footer(fout, footer);
+  html_put_footer(fout, footer, phr->locale_id);
   l10n_setlocale(0);
 }
 
@@ -740,7 +742,7 @@ new_server_html_err_internal_error(struct server_framework_state *state,
   html_put_header(fout, header, 0, 0, phr->locale_id, _("Internal error"));
   fprintf(fout, "<p>%s</p>\n",
           _("Your request has caused an internal server error. Please, report it as a bug."));
-  html_put_footer(fout, footer);
+  html_put_footer(fout, footer, phr->locale_id);
   l10n_setlocale(0);
 }
 
@@ -792,7 +794,7 @@ html_err_invalid_session(struct server_framework_state *state,
   fprintf(fout, _("<li>The session was removed by an administrator.</li>"));
   fprintf(fout, "</ul>\n");
   fprintf(fout, _("<p>Note, that the exact reason is not reported due to security reasons.</p>"));
-  html_put_footer(fout, footer);
+  html_put_footer(fout, footer, phr->locale_id);
   l10n_setlocale(0);
 }
 
@@ -818,7 +820,7 @@ html_error_status_page(struct server_framework_state *state,
   xfree(s);
   fprintf(fout, "<hr><a href=\"%s\">Back</a>\n",
           html_url(url, sizeof(url), phr, back_action));
-  html_put_footer(fout, extra->footer_txt);
+  html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
 }
                        
@@ -860,12 +862,12 @@ privileged_page_login(struct server_framework_state *state,
     // as for the master program
     if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag))
       return html_err_permission_denied(state, p, fout, phr, 1,
-                                        "IP %s://%s is not allowed for MASTER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+                                        "%s://%s is not allowed for MASTER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   } else {
     // as for judge program
     if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag))
       return html_err_permission_denied(state, p, fout, phr, 1,
-                                        "IP %s://%s is not allowed for MASTER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+                                        "%s://%s is not allowed for MASTER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   }
 
   if (open_ul_connection(state) < 0)
@@ -909,7 +911,7 @@ privileged_page_login(struct server_framework_state *state,
                                         "user %s has no permission to login as role %d for contest %d", phr->login, phr->role, phr->contest_id);
   }
 
-  // TODO: store a cookie
+  new_server_get_session(phr->session_id, 0);
   html_refresh_page(state, fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
 }
 
@@ -1470,7 +1472,7 @@ priv_view_users_page(struct server_framework_state *state,
 
   fprintf(fout, "</form>\n");
 
-  html_put_footer(fout, extra->footer_txt);
+  html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
 
   if (users) userlist_free(&users->b);
@@ -1636,7 +1638,7 @@ priv_view_priv_users_page(struct server_framework_state *state,
   fprintf(fout, "</td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID, _("Add by ID"), _("Add a new user specifying his/her User Id"));
   fprintf(fout, "</table>\n");
 
-  html_put_footer(fout, extra->footer_txt);
+  html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
 
  cleanup:
@@ -1671,7 +1673,7 @@ priv_main_page(struct server_framework_state *state,
   fprintf(fout, "<li><a href=\"%s\">View privileged users</a></li>\n",
           html_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_PRIV_USERS_VIEW));
   fprintf(fout, "</ul>\n");
-  html_put_footer(fout, extra->footer_txt);
+  html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
 }
 
@@ -1762,12 +1764,12 @@ privileged_page(struct server_framework_state *state,
     // as for the master program
     if (!contests_check_master_ip(phr->contest_id, phr->ip, phr->ssl_flag))
       return html_err_permission_denied(state, p, fout, phr, 1,
-                                        "IP %s://%s is not allowed for MASTER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+                                        "%s://%s is not allowed for MASTER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   } else {
     // as for judge program
     if (!contests_check_judge_ip(phr->contest_id, phr->ip, phr->ssl_flag))
       return html_err_permission_denied(state, p, fout, phr, 1,
-                                        "IP %s://%s is not allowed for MASTER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+                                        "%s://%s is not allowed for MASTER for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
   }
 
   // analyze permissions
@@ -1808,6 +1810,7 @@ privileged_page(struct server_framework_state *state,
            "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
            phr->session_id);
   phr->hidden_vars = hid_buf;
+  phr->session_extra = new_server_get_session(phr->session_id, cur_time);
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && actions_table[phr->action]) {
@@ -1890,7 +1893,7 @@ unprivileged_page_login_page(struct server_framework_state *state,
   fprintf(fout, "<input type=\"submit\" value=\"%s\">\n", _("Submit"));
   fprintf(fout, "</form></div>\n");
   fprintf(fout, "<div class=\"search_actions\"><a href=\"\">%s</a>&nbsp;&nbsp;<a href=\"\">%s</a></div>", _("Registration"), _("Forgot the password?"));
-  html_put_footer(fout, extra->footer_txt);
+  html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
 }
 
@@ -1955,7 +1958,7 @@ unprivileged_page_login(struct server_framework_state *state,
     }
   }
 
-  // TODO: store a cookie
+  new_server_get_session(phr->session_id, 0);
   html_refresh_page(state, fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
 }
 
@@ -1971,7 +1974,7 @@ user_main_page(struct server_framework_state *state,
   html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
                   "%s [%s]: %s",
                   phr->name_arm, extra->contest_arm, _("Main page"));
-  html_put_footer(fout, extra->footer_txt);
+  html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
 }
 
@@ -2056,6 +2059,7 @@ unprivileged_page(struct server_framework_state *state,
            "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
            phr->session_id);
   phr->hidden_vars = hid_buf;
+  phr->session_extra = new_server_get_session(phr->session_id, cur_time);
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && user_actions_table[phr->action]) {

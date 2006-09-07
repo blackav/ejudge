@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -84,18 +84,21 @@ struct clar_array
   struct clar_entry_v1 *v;
 };
 
-static struct clar_header_v1 header;
-static struct clar_array     clars;
-static int                   clar_fd = -1;
+struct clarlog_state
+{
+  struct clar_header_v1 header;
+  struct clar_array clars;
+  int clar_fd;
+};
 
 #define ERR_R(t, args...) do { do_err_r(__FUNCTION__, t , ##args); return -1; } while (0)
 
 static int
-clar_read_record_v0(char *buf, int size)
+clar_read_record_v0(clarlog_state_t state, char *buf, int size)
 {
   int rsz, i;
 
-  if ((rsz = sf_read(clar_fd, buf, size, "clar")) < 0) return rsz;
+  if ((rsz = sf_read(state->clar_fd, buf, size, "clar")) < 0) return rsz;
   if (rsz != size) ERR_R("short read: %d", rsz);
 
   for (i = 0; i < size - 1; i++) {
@@ -107,7 +110,7 @@ clar_read_record_v0(char *buf, int size)
 }
 
 static int
-clar_read_entry(int n)
+clar_read_entry(clarlog_state_t state, int n)
 {
   char buf[CLAR_RECORD_SIZE + 16];
   char b2[CLAR_RECORD_SIZE + 16];
@@ -119,23 +122,24 @@ clar_read_entry(int n)
   ej_ip_t r_ip;
 
   memset(buf, 0, sizeof(buf));
-  memset(&clars.v[n], 0, sizeof(clars.v[0]));
-  if (clar_read_record_v0(buf, CLAR_RECORD_SIZE) < 0) return -1;
+  memset(&state->clars.v[n], 0, sizeof(state->clars.v[0]));
+  if (clar_read_record_v0(state, buf, CLAR_RECORD_SIZE) < 0) return -1;
 
   r = sscanf(buf, "%d %d %u %d %d %d %s %s %n",
-             &clars.v[n].id, &r_time, &r_size,
-             &clars.v[n].from,
-             &clars.v[n].to, &clars.v[n].flags,
+             &state->clars.v[n].id, &r_time, &r_size,
+             &state->clars.v[n].from,
+             &state->clars.v[n].to, &state->clars.v[n].flags,
              b2, b3, &k);
   if (r != 8) ERR_R("[%d]: sscanf returned %d", n, r);
   if (buf[k] != 0) ERR_R("[%d]: excess data", n);
 
   /* do sanity checking */
-  clars.v[n].size = r_size;
-  clars.v[n].time = r_time;
-  if (clars.v[n].id != n) ERR_R("[%d]: bad id: %d", n, clars.v[n].id);
-  if (clars.v[n].size == 0 || clars.v[n].size >= 10000)
-    ERR_R("[%d]: bad size: %d", n, clars.v[n].size);
+  state->clars.v[n].size = r_size;
+  state->clars.v[n].time = r_time;
+  if (state->clars.v[n].id != n) ERR_R("[%d]: bad id: %d", n,
+                                       state->clars.v[n].id);
+  if (state->clars.v[n].size == 0 || state->clars.v[n].size >= 10000)
+    ERR_R("[%d]: bad size: %d", n, state->clars.v[n].size);
   // FIXME: how to check consistency?
   /*
   if (clars.v[n].from && !teamdb_lookup(clars.v[n].from))
@@ -143,70 +147,74 @@ clar_read_entry(int n)
   if (clars.v[n].to && !teamdb_lookup(clars.v[n].to))
     ERR_R("[%d]: bad to: %d", n, clars.v[n].to);
   */
-  if (clars.v[n].flags < 0 || clars.v[n].flags > 255)
-    ERR_R("[%d]: bad flags: %d", n, clars.v[n].flags);
+  if (state->clars.v[n].flags < 0 || state->clars.v[n].flags > 255)
+    ERR_R("[%d]: bad flags: %d", n, state->clars.v[n].flags);
   if (strlen(b2) > IP_STRING_SIZE) ERR_R("[%d]: ip is too long", n);
   if (strlen(b3) > SUBJ_STRING_SIZE) ERR_R("[%d]: subj is too long", n);
   if (xml_parse_ip(0, n + 1, 0, b2, &r_ip) < 0) ERR_R("[%d]: ip is invalid", n);
-  clars.v[n].a.ip = r_ip;
-  base64_decode_str(b3, clars.v[n].subj, 0);
+  state->clars.v[n].a.ip = r_ip;
+  base64_decode_str(b3, state->clars.v[n].subj, 0);
   return 0;
 }
 
 static int
-create_new_clar_log(int flags)
+create_new_clar_log(clarlog_state_t state, int flags)
 {
   int wsz;
 
-  memset(&header, 0, sizeof(header));
-  strncpy(header.signature, signature_v1, sizeof(header.signature));
-  header.version = 1;
+  memset(&state->header, 0, sizeof(state->header));
+  strncpy(state->header.signature, signature_v1,
+          sizeof(state->header.signature));
+  state->header.version = 1;
 
-  if (clars.v) {
-    xfree(clars.v); clars.v = 0; clars.u = clars.a = 0;
+  if (state->clars.v) {
+    xfree(state->clars.v);
+    state->clars.v = 0;
+    state->clars.u = state->clars.a = 0;
   }
-  clars.a = 128;
-  XCALLOC(clars.v, clars.a);
+  state->clars.a = 128;
+  XCALLOC(state->clars.v, state->clars.a);
 
   if (flags == CLAR_LOG_READONLY) return 0;
 
-  if (ftruncate(clar_fd, 0) < 0) {
+  if (ftruncate(state->clar_fd, 0) < 0) {
     err("clar_log: ftruncate() failed: %s", os_ErrorMsg());
     return -1;
   }
-  if (sf_lseek(clar_fd, 0, SEEK_SET, "clar") == (off_t) -1)
+  if (sf_lseek(state->clar_fd, 0, SEEK_SET, "clar") == (off_t) -1)
     return -1;
-  wsz = write(clar_fd, &header, sizeof(header));
+  wsz = write(state->clar_fd, &state->header, sizeof(state->header));
   if (wsz <= 0) {
     err("clar_log: write() failed: %s", os_ErrorMsg());
     return -1;
   }
-  if (wsz != sizeof(header)) {
-    err("clar_log: short write: %d instead of %zu", wsz, sizeof(header));
+  if (wsz != sizeof(state->header)) {
+    err("clar_log: short write: %d instead of %zu", wsz, sizeof(state->header));
     return -1;
   }
   return 0;
 }
 
 static int
-write_all_clarlog(void)
+write_all_clarlog(clarlog_state_t state)
 {
   int wsz, bsz;
   const unsigned char *buf;
 
-  if (sf_lseek(clar_fd, 0, SEEK_SET, "clar_write") < 0) return -1;
+  if (sf_lseek(state->clar_fd, 0, SEEK_SET, "clar_write") < 0) return -1;
 
-  if ((wsz = sf_write(clar_fd, &header, sizeof(header), "clar_write")) < 0)
+  if ((wsz = sf_write(state->clar_fd, &state->header, sizeof(state->header),
+                      "clar_write")) < 0)
     return -1;
-  if (wsz != sizeof(header)) {
+  if (wsz != sizeof(state->header)) {
     err("clar_write: short write: %d", wsz);
     return -1;
   }
 
-  buf = (const unsigned char*) clars.v;
-  bsz = sizeof(clars.v[0]) * clars.u;
+  buf = (const unsigned char*) state->clars.v;
+  bsz = sizeof(state->clars.v[0]) * state->clars.u;
   while (bsz > 0) {
-    if ((wsz = sf_write(clar_fd, buf, bsz, "clar_write")) <= 0)
+    if ((wsz = sf_write(state->clar_fd, buf, bsz, "clar_write")) <= 0)
       return -1;
     buf += wsz;
     bsz -= wsz;
@@ -215,7 +223,7 @@ write_all_clarlog(void)
 }
 
 static int
-convert_log_from_version_0(int flags, off_t length,
+convert_log_from_version_0(clarlog_state_t state, int flags, off_t length,
                            const unsigned char *path)
 {
   path_t v0_path;
@@ -226,68 +234,74 @@ convert_log_from_version_0(int flags, off_t length,
     return -1;
   }
 
-  clars.u = length / CLAR_RECORD_SIZE;
-  clars.a = 128;
-  while (clars.u > clars.a) clars.a *= 2;
-  XCALLOC(clars.v, clars.a);
-  for (i = 0; i < clars.u; i++) {
-    if (clar_read_entry(i) < 0) return -1;
+  state->clars.u = length / CLAR_RECORD_SIZE;
+  state->clars.a = 128;
+  while (state->clars.u > state->clars.a) state->clars.a *= 2;
+  XCALLOC(state->clars.v, state->clars.a);
+  for (i = 0; i < state->clars.u; i++) {
+    if (clar_read_entry(state, i) < 0) return -1;
   }
 
   info("clar log version 0 successfully read");
 
-  memset(&header, 0, sizeof(header));
-  strncpy(header.signature, signature_v1, sizeof(header.signature));
-  header.version = 1;
+  memset(&state->header, 0, sizeof(state->header));
+  strncpy(state->header.signature, signature_v1,
+          sizeof(state->header.signature));
+  state->header.version = 1;
 
   if (flags == CLAR_LOG_READONLY) return 0;
 
-  close(clar_fd); clar_fd = -1;
+  close(state->clar_fd); state->clar_fd = -1;
   snprintf(v0_path, sizeof(v0_path), "%s.v0", path);
   if (rename(path, v0_path) < 0) {
     err("rename() failed: %s", os_ErrorMsg());
     return -1;
   }
 
-  if ((clar_fd = sf_open(path, O_RDWR|O_CREAT|O_TRUNC, 0666)) < 0) return -1;
+  if ((state->clar_fd = sf_open(path, O_RDWR|O_CREAT|O_TRUNC, 0666)) < 0)
+    return -1;
 
-  return write_all_clarlog();
+  return write_all_clarlog(state);
 }
 
 static int
-read_clar_file_header(off_t length)
+read_clar_file_header(clarlog_state_t state, off_t length)
 {
   int rsz = 0;
 
   if (length < sizeof(struct clar_header_v1)) return 0;
-  if ((length - sizeof(struct clar_header_v1)) % sizeof(struct clar_entry_v1) != 0) return 0;
-  if (sf_lseek(clar_fd, 0, SEEK_SET, "clar_open") < 0) return -1;
-  if ((rsz = sf_read(clar_fd, &header, sizeof(header), "clar_open")) < 0)
+  if ((length - sizeof(struct clar_header_v1))
+      % sizeof(struct clar_entry_v1) != 0) return 0;
+  if (sf_lseek(state->clar_fd, 0, SEEK_SET, "clar_open") < 0) return -1;
+  if ((rsz = sf_read(state->clar_fd, &state->header, sizeof(state->header),
+                     "clar_open")) < 0)
     return -1;
-  if (rsz != sizeof(header)) return -1;
-  if (strcmp(header.signature, signature_v1)) return 0;
-  if (header.endianness > 1) return 0;
-  return header.version;
+  if (rsz != sizeof(state->header)) return -1;
+  if (strcmp(state->header.signature, signature_v1)) return 0;
+  if (state->header.endianness > 1) return 0;
+  return state->header.version;
 }
 
 static int
-read_clar_file(off_t length)
+read_clar_file(clarlog_state_t state, off_t length)
 {
   unsigned char *buf;
   int bsz, rsz;
 
-  clars.u = (length - sizeof(struct clar_header_v1)) / sizeof(struct clar_entry_v1);
-  clars.a = 128;
-  while (clars.a < clars.u) clars.a *= 2;
-  XCALLOC(clars.v, clars.a);
+  state->clars.u = (length - sizeof(struct clar_header_v1))
+    / sizeof(struct clar_entry_v1);
+  state->clars.a = 128;
+  while (state->clars.a < state->clars.u) state->clars.a *= 2;
+  XCALLOC(state->clars.v, state->clars.a);
 
-  if (sf_lseek(clar_fd, sizeof(struct clar_header_v1), SEEK_SET, "clar_read")<0)
+  if (sf_lseek(state->clar_fd, sizeof(struct clar_header_v1), SEEK_SET,
+               "clar_read")<0)
     return -1;
 
-  buf = (unsigned char*) clars.v;
-  bsz = sizeof(clars.v[0]) * clars.u;
+  buf = (unsigned char*) state->clars.v;
+  bsz = sizeof(state->clars.v[0]) * state->clars.u;
   while (bsz > 0) {
-    if ((rsz = sf_read(clar_fd, buf, bsz, "clar_read")) < 0) return -1;
+    if ((rsz = sf_read(state->clar_fd, buf, bsz, "clar_read")) < 0) return -1;
     if (!rsz) {
       err("clar_read: unexpected EOF");
       return -1;
@@ -297,60 +311,76 @@ read_clar_file(off_t length)
   return 0;
 }
 
+clarlog_state_t
+clar_init(void)
+{
+  clarlog_state_t p;
+
+  XCALLOC(p, 1);
+  p->clar_fd = -1;
+  return p;
+}
+
 int
-clar_open(char const *path, int flags)
+clar_open(clarlog_state_t state, char const *path, int flags)
 {
   int version;
   struct stat stb;
 
   info("clar_open: opening database %s", path);
-  if (clars.v) {
-    xfree(clars.v); clars.v = 0; clars.u = clars.a = 0;
+  if (state->clars.v) {
+    xfree(state->clars.v);
+    state->clars.v = 0;
+    state->clars.u = state->clars.a = 0;
   }
-  if (clar_fd >= 0) {
-    close(clar_fd); clar_fd = -1;
+  if (state->clar_fd >= 0) {
+    close(state->clar_fd); state->clar_fd = -1;
   }
   if (flags == CLAR_LOG_READONLY) {
-    if ((clar_fd = sf_open(path, O_RDONLY, 0)) < 0) return -1;
+    if ((state->clar_fd = sf_open(path, O_RDONLY, 0)) < 0) return -1;
   } else {
-    if ((clar_fd = sf_open(path, O_RDWR | O_CREAT, 0666)) < 0) return -1;
+    if ((state->clar_fd = sf_open(path, O_RDWR | O_CREAT, 0666)) < 0) return -1;
   }
 
-  if (fstat(clar_fd, &stb) < 0) {
+  if (fstat(state->clar_fd, &stb) < 0) {
     err("fstat() failed: %s", os_ErrorMsg());
-    close(clar_fd); clar_fd = -1;
+    close(state->clar_fd); state->clar_fd = -1;
     return -1;
   }
   if (!stb.st_size) {
-    return create_new_clar_log(flags);
+    return create_new_clar_log(state, flags);
   }
-  if ((version = read_clar_file_header(stb.st_size)) < 0)
+  if ((version = read_clar_file_header(state, stb.st_size)) < 0)
     return -1;
   if (!version) {
-    return convert_log_from_version_0(flags, stb.st_size, path);
+    return convert_log_from_version_0(state, flags, stb.st_size, path);
   }
   if (version > 1) {
     err("clar_log: cannot handle clar log file of version %d", version);
     return -1;
   }
-  return read_clar_file(stb.st_size);
+  return read_clar_file(state, stb.st_size);
 }
 
 static int
-clar_flush_entry(int num)
+clar_flush_entry(clarlog_state_t state, int num)
 {
   int wsz;
 
-  if (sf_lseek(clar_fd, sizeof(struct clar_entry_v1) * num + sizeof(struct clar_header_v1), SEEK_SET, "clar_flush_entry") < 0)
+  if (sf_lseek(state->clar_fd,
+               sizeof(struct clar_entry_v1) * num
+               + sizeof(struct clar_header_v1),
+               SEEK_SET, "clar_flush_entry") < 0)
     return -1;
 
-  if ((wsz = sf_write(clar_fd, &clars.v[num], sizeof(clars.v[0]), "clar_flush_entry")) < 0) return -1;
-  if (wsz != sizeof(clars.v[0])) ERR_R("short write: %d", wsz);
+  if ((wsz = sf_write(state->clar_fd, &state->clars.v[num], sizeof(state->clars.v[0]), "clar_flush_entry")) < 0) return -1;
+  if (wsz != sizeof(state->clars.v[0])) ERR_R("short write: %d", wsz);
   return 0;
 }
 
 int
-clar_add_record(time_t         time,
+clar_add_record(clarlog_state_t state,
+                time_t         time,
                 size_t         size,
                 char const    *ip,
                 int            from,
@@ -375,30 +405,31 @@ clar_add_record(time_t         time,
   if (strlen(ip) > IP_STRING_SIZE) ERR_R("bad ip size: %d", strlen(ip));
   if (xml_parse_ip(0, 0, 0, ip, &r_ip) < 0) ERR_R("bad IP");
 
-  if (clars.u >= clars.a) {
-    if (!(clars.a *= 2)) clars.a = 128;
-    clars.v = xrealloc(clars.v, clars.a * sizeof(clars.v[0]));
-    info("clar_add_record: array extended: %d", clars.a);
+  if (state->clars.u >= state->clars.a) {
+    if (!(state->clars.a *= 2)) state->clars.a = 128;
+    state->clars.v = xrealloc(state->clars.v, state->clars.a * sizeof(state->clars.v[0]));
+    info("clar_add_record: array extended: %d", state->clars.a);
   }
-  i = clars.u++;
+  i = state->clars.u++;
 
-  memset(&clars.v[i], 0, sizeof(clars.v[0]));
-  clars.v[i].id = i;
-  clars.v[i].time = time;
-  clars.v[i].size = size;
-  clars.v[i].from = from;
-  clars.v[i].to = to;
-  clars.v[i].flags = flags;
-  clars.v[i].j_from = j_from;
-  clars.v[i].hide_flag = hide_flag;
-  clars.v[i].a.ip = r_ip;
-  base64_decode_str(subj, clars.v[i].subj, 0);
-  if (clar_flush_entry(i) < 0) return -1;
+  memset(&state->clars.v[i], 0, sizeof(state->clars.v[0]));
+  state->clars.v[i].id = i;
+  state->clars.v[i].time = time;
+  state->clars.v[i].size = size;
+  state->clars.v[i].from = from;
+  state->clars.v[i].to = to;
+  state->clars.v[i].flags = flags;
+  state->clars.v[i].j_from = j_from;
+  state->clars.v[i].hide_flag = hide_flag;
+  state->clars.v[i].a.ip = r_ip;
+  base64_decode_str(subj, state->clars.v[i].subj, 0);
+  if (clar_flush_entry(state, i) < 0) return -1;
   return i;
 }
 
 int
-clar_get_record(int id,
+clar_get_record(clarlog_state_t state,
+                int id,
                 time_t        *ptime,
                 size_t        *psize,
                 char          *ip,
@@ -409,51 +440,51 @@ clar_get_record(int id,
                 int           *p_hide_flag,
                 char          *subj)
 {
-  if (id < 0 || id >= clars.u) ERR_R("bad id: %d", id);
-  if (clars.v[id].id != id)
-    ERR_R("id mismatch: %d, %d", id, clars.v[id].id);
+  if (id < 0 || id >= state->clars.u) ERR_R("bad id: %d", id);
+  if (state->clars.v[id].id != id)
+    ERR_R("id mismatch: %d, %d", id, state->clars.v[id].id);
 
-  if (ptime)   *ptime   = clars.v[id].time;
-  if (psize)   *psize   = clars.v[id].size;
-  if (ip)                 strcpy(ip, xml_unparse_ip(clars.v[id].a.ip));
-  if (pfrom)   *pfrom   = clars.v[id].from;
-  if (pto)     *pto     = clars.v[id].to;
-  if (pflags)  *pflags  = clars.v[id].flags;
-  if (pj_from) *pj_from = clars.v[id].j_from;
-  if (p_hide_flag) *p_hide_flag = clars.v[id].hide_flag;
-  if (subj)               base64_encode_str(clars.v[id].subj, subj);
+  if (ptime)   *ptime   = state->clars.v[id].time;
+  if (psize)   *psize   = state->clars.v[id].size;
+  if (ip)                 strcpy(ip, xml_unparse_ip(state->clars.v[id].a.ip));
+  if (pfrom)   *pfrom   = state->clars.v[id].from;
+  if (pto)     *pto     = state->clars.v[id].to;
+  if (pflags)  *pflags  = state->clars.v[id].flags;
+  if (pj_from) *pj_from = state->clars.v[id].j_from;
+  if (p_hide_flag) *p_hide_flag = state->clars.v[id].hide_flag;
+  if (subj)               base64_encode_str(state->clars.v[id].subj, subj);
   return 0;
 }
 
 int
-clar_update_flags(int id, int flags)
+clar_update_flags(clarlog_state_t state, int id, int flags)
 {
-  if (id < 0 || id >= clars.u) ERR_R("bad id: %d", id);
-  if (clars.v[id].id != id)
-    ERR_R("id mismatch: %d, %d", id, clars.v[id].id);
+  if (id < 0 || id >= state->clars.u) ERR_R("bad id: %d", id);
+  if (state->clars.v[id].id != id)
+    ERR_R("id mismatch: %d, %d", id, state->clars.v[id].id);
   if (flags < 0 || flags > 255) ERR_R("bad flags: %d", flags);
 
-  clars.v[id].flags = flags;
-  if (clar_flush_entry(id) < 0) return -1;
+  state->clars.v[id].flags = flags;
+  if (clar_flush_entry(state, id) < 0) return -1;
   return 0;
 }
 
 int
-clar_get_total(void)
+clar_get_total(clarlog_state_t state)
 {
-  return clars.u;
+  return state->clars.u;
 }
 
 void
-clar_get_team_usage(int from, int *pn, size_t *ps)
+clar_get_team_usage(clarlog_state_t state, int from, int *pn, size_t *ps)
 {
   int i;
   size_t total = 0;
   int n = 0;
 
-  for (i = 0; i < clars.u; i++)
-    if (clars.v[i].from == from) {
-      total += clars.v[i].size;
+  for (i = 0; i < state->clars.u; i++)
+    if (state->clars.v[i].from == from) {
+      total += state->clars.v[i].size;
       n++;
     }
   if (pn) *pn = n;
@@ -461,7 +492,8 @@ clar_get_team_usage(int from, int *pn, size_t *ps)
 }
 
 char *
-clar_flags_html(int flags, int from, int to, char *buf, int len)
+clar_flags_html(clarlog_state_t state, int flags, int from, int to, char *buf,
+                int len)
 {
   char *s = "";
 
@@ -479,19 +511,19 @@ clar_flags_html(int flags, int from, int to, char *buf, int len)
 }
 
 void
-clar_reset(void)
+clar_reset(clarlog_state_t state)
 {
-  create_new_clar_log(0);
+  create_new_clar_log(state, 0);
 }
 
 void
-clar_clear_variables(void)
+clar_clear_variables(clarlog_state_t state)
 {
-  if (clars.v) xfree(clars.v);
-  clars.v = 0;
-  clars.u = clars.a = 0;
-  if (clar_fd >= 0) close(clar_fd);
-  clar_fd = -1;
+  if (state->clars.v) xfree(state->clars.v);
+  state->clars.v = 0;
+  state->clars.u = state->clars.a = 0;
+  if (state->clar_fd >= 0) close(state->clar_fd);
+  state->clar_fd = -1;
 }
 
 /*
