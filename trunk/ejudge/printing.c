@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -51,7 +51,7 @@ print_banner_page(const unsigned char *banner_path, int run_id,
       || info.status == RUN_EMPTY) {
     return -1;
   }
-  if (teamdb_export_team(info.team, &teaminfo) < 0)
+  if (teamdb_export_team(teamdb_state, info.team, &teaminfo) < 0)
     return -1;
   start_time = run_get_start_time();
 
@@ -73,8 +73,10 @@ print_banner_page(const unsigned char *banner_path, int run_id,
     fprintf(f, "\n");
   }
   fprintf(f, "User ID:          %d\n", info.team);
-  fprintf(f, "User login:       %s\n", teamdb_get_login(info.team));
-  fprintf(f, "User name:        %s\n", teamdb_get_name(info.team));
+  fprintf(f, "User login:       %s\n", teamdb_get_login(teamdb_state,
+                                                        info.team));
+  fprintf(f, "User name:        %s\n", teamdb_get_name(teamdb_state,
+                                                       info.team));
   fprintf(f, "Problem:          %s\n", probs[info.problem]->short_name);
   if (probs[info.problem]->variant_num > 0) {
     variant = info.variant;
@@ -144,7 +146,7 @@ do_print_run(int run_id, int is_privileged, int user_id)
   }
 
   if (!is_privileged) {
-    if (teamdb_export_team(info.team, &teaminfo) < 0)
+    if (teamdb_export_team(teamdb_state, info.team, &teaminfo) < 0)
       return -1;
     if (teaminfo.user && teaminfo.user->i.printer_name)
       printer_name = teaminfo.user->i.printer_name;

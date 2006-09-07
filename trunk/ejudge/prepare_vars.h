@@ -24,6 +24,7 @@ struct section_problem_data;
 struct section_tester_data;
 struct contest_desc;
 struct clarlog_state;
+struct teamdb_state;
 
 extern struct generic_section_config *config;
 extern struct section_global_data    *global;
@@ -41,5 +42,8 @@ extern const struct contest_desc *cur_contest;
 
 /* clarlog internal state */
 extern struct clarlog_state *clarlog_state;
+
+/* teamdb internal state */
+extern struct teamdb_state *teamdb_state;
 
 #endif /* __PREPARE_VARS_H__ */

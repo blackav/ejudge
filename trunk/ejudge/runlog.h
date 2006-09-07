@@ -3,7 +3,7 @@
 #ifndef __RUNLOG_H__
 #define __RUNLOG_H__
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -59,6 +59,9 @@ enum
 };
 
 enum { RUN_LOG_CREATE = 1, RUN_LOG_READONLY = 2 };
+
+struct teamdb_state;
+void run_init(struct teamdb_state *);
 
 int run_open(const char *path, int flags, time_t init_duration);
 int run_add_record(time_t         timestamp,
@@ -175,11 +178,12 @@ int run_squeeze_log(void);
 void run_clear_variables(void);
 
 int run_write_xml(FILE *f, int, time_t);
-int unparse_runlog_xml(FILE *, const struct run_header*, size_t,
-                       const struct run_entry*, int, time_t);
+int unparse_runlog_xml(struct teamdb_state *, FILE *, const struct run_header*,
+                       size_t, const struct run_entry*, int, time_t);
 int parse_runlog_xml(const unsigned char *, struct run_header *,
                      size_t *, struct run_entry **);
-void runlog_import_xml(FILE *flog, int flags, const unsigned char *in_xml);
+void runlog_import_xml(struct teamdb_state *, FILE *flog, int flags,
+                       const unsigned char *in_xml);
 
 int run_backup(const unsigned char *path);
 int run_set_runlog(int total_entries, struct run_entry *entries);

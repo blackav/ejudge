@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -488,7 +488,7 @@ unparse_sha1(const ruint32_t *psha1)
 }
 
 int
-unparse_runlog_xml(FILE *f,
+unparse_runlog_xml(teamdb_state_t teamdb_state, FILE *f,
                    const struct run_header *phead,
                    size_t nelems,
                    const struct run_entry *entries,
@@ -537,12 +537,12 @@ unparse_runlog_xml(FILE *f,
     fprintf(f, "  <%s>%s</%s>\n", elem_map[RUNLOG_T_NAME],
             val1, elem_map[RUNLOG_T_NAME]);
     fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_USERS]);
-    max_user_id = teamdb_get_max_team_id();
+    max_user_id = teamdb_get_max_team_id(teamdb_state);
     for (i = 1; i <= max_user_id; i++) {
-      if (teamdb_lookup(i) <= 0) continue;
-      if ((flags = teamdb_get_flags(i)) < 0) continue;
+      if (teamdb_lookup(teamdb_state, i) <= 0) continue;
+      if ((flags = teamdb_get_flags(teamdb_state, i)) < 0) continue;
       if ((flags & (TEAM_BANNED | TEAM_INVISIBLE))) continue;
-      val1 = teamdb_get_name(i);
+      val1 = teamdb_get_name(teamdb_state, i);
       if (html_armor_needed(val1, &alen1)) {
         while (alen1 >= asize1) asize1 *= 2;
         astr1 = alloca(asize1);
@@ -618,7 +618,7 @@ unparse_runlog_xml(FILE *f,
     case RUN_REJUDGE:
       continue;
     }
-    flags = teamdb_get_flags(pp->team);
+    flags = teamdb_get_flags(teamdb_state, pp->team);
     if (external_mode && (flags & (TEAM_BANNED | TEAM_INVISIBLE)))
       continue;
     fprintf(f, "    <%s", elem_map[RUNLOG_T_RUN]);

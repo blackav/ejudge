@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -65,7 +65,8 @@ rename_archive_files(FILE *flog, int num, int *map)
 }
 
 void
-runlog_import_xml(FILE *hlog, int flags, const unsigned char *in_xml)
+runlog_import_xml(teamdb_state_t teamdb_state,
+                  FILE *hlog, int flags, const unsigned char *in_xml)
 {
   size_t armor_len, flog_len = 0;
   unsigned char *armor_str;
@@ -236,7 +237,7 @@ runlog_import_xml(FILE *hlog, int flags, const unsigned char *in_xml)
     prev_time = in_entries[i].timestamp;
     prev_nsec = in_entries[i].nsec;
     prev_i = i;
-    if (!teamdb_lookup(in_entries[i].team)) {
+    if (!teamdb_lookup(teamdb_state, in_entries[i].team)) {
       fprintf(flog, "Run %d team %d is not known\n", i, in_entries[i].team);
       goto done;
     }
@@ -648,7 +649,7 @@ runlog_import_xml(FILE *hlog, int flags, const unsigned char *in_xml)
   xfree(cur_entries);
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "DIR")
