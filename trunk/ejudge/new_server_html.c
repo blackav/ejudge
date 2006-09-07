@@ -112,6 +112,11 @@ struct contest_extra
 static struct contest_extra **extras = 0;
 static size_t extra_a = 0;
 
+static void unprivileged_page_login(struct server_framework_state *state,
+                                    struct client_state *p,
+                                    FILE *fout,
+                                    struct http_request_info *phr);
+
 static struct contest_extra *
 get_contest_extra(int contest_id)
 {
@@ -289,6 +294,22 @@ static unsigned char default_header_template[] =
 "<body><h1>%H</h1>\n";
 static unsigned char default_footer_template[] =
 "<hr>%R</body></html>\n";
+
+static unsigned char fancy_header[] =
+"<html><head><meta charset=\"%C\">"
+"<link rel=\"stylesheet\" href=\"/ejudge/unpriv.css\" type=\"text/css\">"
+"<title>%H</title></head>"
+"<body topmargin=\"0\" leftmargin=\"0\" bottommargin=\"0\" scroll=\"auto\" valign=\"top\">"
+"<div id=\"container\"><div id=\"left-block\">"
+"<img src=\"/ejudge/logo.gif\" align=\"left\" height=\"100\"></div>"
+"<div id=\"center-block\">"
+"<div class=\"main\">%H</div><div class=\"search_actions\">&nbsp;</div>\n";
+static unsigned char fancy_footer[] =
+"</div>"
+"<div id=\"footer\">%R</div>"
+"</div>"
+"</BODY>"
+"</HTML>";
 
 static void
 process_template(FILE *out,
@@ -517,6 +538,10 @@ html_err_permission_denied(struct server_framework_state *state,
     header = extra->priv_header.text;
     footer = extra->priv_footer.text;
   }
+  if (!priv_mode) {
+    if (!header) header = fancy_header;
+    if (!footer) footer = fancy_footer;
+  }
   l10n_setlocale(phr->locale_id);
   html_put_header(fout, header, 0, 0, phr->locale_id, _("Permission denied"));
   fprintf(fout, "<p>%s</p>\n",
@@ -584,10 +609,55 @@ html_err_invalid_param(struct server_framework_state *state,
     header = extra->priv_header.text;
     footer = extra->priv_footer.text;
   }
+  if (!priv_mode) {
+    if (!header) header = fancy_header;
+    if (!footer) footer = fancy_footer;
+  }
   l10n_setlocale(phr->locale_id);
   html_put_header(fout, header, 0, 0, phr->locale_id, _("Invalid parameter"));
   fprintf(fout, "<p>%s</p>\n",
           _("A request parameter is invalid. Please, contact the site administrator."));
+  html_put_footer(fout, footer);
+  l10n_setlocale(0);
+}
+
+static void
+html_err_service_not_available(struct server_framework_state *state,
+                               struct client_state *p,
+                               FILE *fout,
+                               struct http_request_info *phr,
+                               const char *format, ...)
+{
+  const struct contest_desc *cnts = 0;
+  struct contest_extra *extra = 0;
+  const unsigned char *header = 0, *footer = 0;
+  time_t cur_time = time(0);
+  unsigned char buf[1024];
+  va_list args;
+
+  va_start(args, format);
+  vsnprintf(buf, sizeof(buf), format, args);
+  va_end(args);
+  err("%d: service not available: %s", p->id, buf);
+
+  if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
+  if (cnts) extra = get_contest_extra(phr->contest_id);
+  if (extra) {
+    update_watched_file(&extra->header, cnts->team_header_file, cur_time);
+    update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
+    header = extra->header.text;
+    footer = extra->footer.text;
+  }
+
+  // try fancy headers
+  if (!header) header = fancy_header;
+  if (!footer) footer = fancy_footer;
+
+  l10n_setlocale(phr->locale_id);
+  html_put_header(fout, header, 0, 0, phr->locale_id,
+                  _("Service not available"));
+  fprintf(fout, "<p>%s</p>\n",
+          _("Service that you requested is not available."));
   html_put_footer(fout, footer);
   l10n_setlocale(0);
 }
@@ -617,6 +687,10 @@ html_err_userlist_server_down(struct server_framework_state *state,
     header = extra->priv_header.text;
     footer = extra->priv_footer.text;
   }
+  if (!priv_mode) {
+    if (!header) header = fancy_header;
+    if (!footer) footer = fancy_footer;
+  }
   l10n_setlocale(phr->locale_id);
   html_put_header(fout, header, 0, 0, phr->locale_id, _("User database server is down"));
   fprintf(fout, "<p>%s</p>\n",
@@ -625,13 +699,13 @@ html_err_userlist_server_down(struct server_framework_state *state,
   l10n_setlocale(0);
 }
 
-static void
-html_err_internal_error(struct server_framework_state *state,
-                        struct client_state *p,
-                        FILE *fout,
-                        struct http_request_info *phr,
-                        int priv_mode,
-                        const char *format, ...)
+void
+new_server_html_err_internal_error(struct server_framework_state *state,
+                                   struct client_state *p,
+                                   FILE *fout,
+                                   struct http_request_info *phr,
+                                   int priv_mode,
+                                   const char *format, ...)
 {
   const struct contest_desc *cnts = 0;
   struct contest_extra *extra = 0;
@@ -657,6 +731,10 @@ html_err_internal_error(struct server_framework_state *state,
     update_watched_file(&extra->priv_footer, cnts->priv_footer_file, cur_time);
     header = extra->priv_header.text;
     footer = extra->priv_footer.text;
+  }
+  if (!priv_mode) {
+    if (!header) header = fancy_header;
+    if (!footer) footer = fancy_footer;
   }
   l10n_setlocale(phr->locale_id);
   html_put_header(fout, header, 0, 0, phr->locale_id, _("Internal error"));
@@ -698,6 +776,10 @@ html_err_invalid_session(struct server_framework_state *state,
     update_watched_file(&extra->priv_footer, cnts->priv_footer_file, cur_time);
     header = extra->priv_header.text;
     footer = extra->priv_footer.text;
+  }
+  if (!priv_mode) {
+    if (!header) header = fancy_header;
+    if (!footer) footer = fancy_footer;
   }
   l10n_setlocale(phr->locale_id);
   html_put_header(fout, header, 0, 0, phr->locale_id, _("Invalid session"));
@@ -770,10 +852,8 @@ privileged_page_login(struct server_framework_state *state,
         && r >= USER_ROLE_CONTESTANT && r < USER_ROLE_LAST)
       phr->role = r;
   }
-  if (phr->role == USER_ROLE_CONTESTANT) {
-    // FIXME: go to the unprvileged login
-    abort();
-  }
+  if (phr->role == USER_ROLE_CONTESTANT)
+    return unprivileged_page_login(state, p, fout, phr);
 
   // analyze IP limitations
   if (phr->role == USER_ROLE_ADMIN) {
@@ -809,9 +889,9 @@ privileged_page_login(struct server_framework_state *state,
     case ULS_ERR_DISCONNECT:
       return html_err_userlist_server_down(state, p, fout, phr, 1);
     default:
-      return html_err_internal_error(state, p, fout, phr, 1,
-                                     "priv_login failed: %s",
-                                     userlist_strerror(-r));
+      return new_server_html_err_internal_error(state, p, fout, phr, 1,
+                                                "priv_login failed: %s",
+                                                userlist_strerror(-r));
     }
   }
 
@@ -1303,14 +1383,14 @@ priv_view_users_page(struct server_framework_state *state,
     return html_err_userlist_server_down(state, p, fout, phr, 1);
   if ((r = userlist_clnt_list_all_users(ul_conn, ULS_LIST_ALL_USERS,
                                         phr->contest_id, &xml_text)) < 0)
-    return html_err_internal_error(state, p, fout, phr, 1,
-                                   "list_all_users failed: %s",
-                                   userlist_strerror(-r));
+    return new_server_html_err_internal_error(state, p, fout, phr, 1,
+                                              "list_all_users failed: %s",
+                                              userlist_strerror(-r));
   users = userlist_parse_str(xml_text);
   xfree(xml_text); xml_text = 0;
   if (!users)
-    return html_err_internal_error(state, p, fout, phr, 1,
-                                   "XML parsing failed");
+    return new_server_html_err_internal_error(state, p, fout, phr, 1,
+                                              "XML parsing failed");
 
   l10n_setlocale(phr->locale_id);
   html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
@@ -1595,12 +1675,14 @@ priv_main_page(struct server_framework_state *state,
   l10n_setlocale(0);
 }
 
-static void (*actions_table[])(struct server_framework_state *state,
-                               struct client_state *p,
-                               FILE *fout,
-                               struct http_request_info *phr,
-                               const struct contest_desc *cnts,
-                               struct contest_extra *extra) =
+typedef void (*action_handler_t)(struct server_framework_state *state,
+                                 struct client_state *p,
+                                 FILE *fout,
+                                 struct http_request_info *phr,
+                                 const struct contest_desc *cnts,
+                                 struct contest_extra *extra);
+
+static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_VIEW_USERS] = priv_view_users_page,
   [NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS] = priv_registration_operation,
@@ -1649,7 +1731,8 @@ privileged_page(struct server_framework_state *state,
   // validate cookie
   if (open_ul_connection(state) < 0)
     return html_err_userlist_server_down(state, p, fout, phr, 1);
-  if ((r = userlist_clnt_get_cookie(ul_conn, phr->ip, phr->ssl_flag,
+  if ((r = userlist_clnt_get_cookie(ul_conn, ULS_PRIV_GET_COOKIE,
+                                    phr->ip, phr->ssl_flag,
                                     phr->session_id,
                                     &phr->user_id, &phr->contest_id,
                                     &phr->locale_id, 0, &phr->role,
@@ -1662,9 +1745,9 @@ privileged_page(struct server_framework_state *state,
     case ULS_ERR_DISCONNECT:
       return html_err_userlist_server_down(state, p, fout, phr, 1);
     default:
-      return html_err_internal_error(state, p, fout, phr, 1,
-                                     "priv_login failed: %s",
-                                     userlist_strerror(-r));
+      return new_server_html_err_internal_error(state, p, fout, phr, 1,
+                                                "priv_login failed: %s",
+                                                userlist_strerror(-r));
     }
   }
 
@@ -1731,6 +1814,254 @@ privileged_page(struct server_framework_state *state,
     actions_table[phr->action](state, p, fout, phr, cnts, extra);
   } else {
     priv_main_page(state, p, fout, phr, cnts, extra);
+  }
+}
+
+void
+unprivileged_page_login_page(struct server_framework_state *state,
+                             struct client_state *p,
+                             FILE *fout,
+                             struct http_request_info *phr)
+{
+  const struct contest_desc *cnts = 0;
+  struct contest_extra *extra = 0;
+  time_t cur_time;
+  const unsigned char *s;
+  unsigned char *as;
+
+  if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
+    return html_err_service_not_available(state, p, fout, phr,
+                                          "contest_id is invalid");
+  if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+    return html_err_service_not_available(state, p, fout, phr,
+                                        "%s://%s is not allowed for TEAM for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+  if (cnts->closed)
+    return html_err_service_not_available(state, p, fout, phr,
+                                          "contest %d is closed");
+  if (cnts->client_disable_team)
+    return html_err_service_not_available(state, p, fout, phr,
+                                          "contest %d team is disabled");
+
+  extra = get_contest_extra(phr->contest_id);
+  ASSERT(extra);
+
+  cur_time = time(0);
+  update_watched_file(&extra->header, cnts->team_header_file, cur_time);
+  update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
+  extra->header_txt = extra->header.text;
+  extra->footer_txt = extra->footer.text;
+  if (!extra->header_txt) extra->header_txt = fancy_header;
+  if (!extra->footer_txt) extra->footer_txt = fancy_footer;
+
+  if (extra->contest_arm) xfree(extra->contest_arm);
+  if (phr->locale_id == 0 && cnts->name_en) {
+    extra->contest_arm = html_armor_string_dup(cnts->name_en);
+  } else {
+    extra->contest_arm = html_armor_string_dup(cnts->name);
+  }
+
+  l10n_setlocale(phr->locale_id);
+  html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                  _("User login [%s]"), extra->contest_arm);
+
+
+  html_start_form(fout, 1, phr->self_url, "");
+  fprintf(fout, "<div class=\"login_actions\">\n");
+  fprintf(fout, "<input type=\"hidden\" name=\"contest_id\" value=\"%d\">",
+          phr->contest_id);
+  fprintf(fout, "<input type=\"hidden\" name=\"role\" value=\"0\">");
+  fprintf(fout, "%s:&nbsp;<input type=\"text\" size=\"8\" name=\"login\"", _("login"));
+  if (ns_cgi_param(phr, "login", &s) > 0) {
+    as = html_armor_string_dup(s);
+    fprintf(fout, " value=\"%s\"", as);
+    xfree(as);
+  }
+  fprintf(fout, ">&nbsp;&nbsp;\n");
+  fprintf(fout, "%s:&nbsp;<input type=\"password\" size=\"8\" name=\"password\"", _("password"));
+  if (ns_cgi_param(phr, "password", &s) > 0) {
+    as = html_armor_string_dup(s);
+    fprintf(fout, " value=\"%s\"", as);
+    xfree(as);
+  }
+  fprintf(fout, ">&nbsp;&nbsp;\n");
+  fprintf(fout, "%s:&nbsp;", _("language"));
+  l10n_html_locale_select(fout, phr->locale_id);
+  fprintf(fout, "&nbsp;&nbsp;\n");
+  fprintf(fout, "<input type=\"submit\" value=\"%s\">\n", _("Submit"));
+  fprintf(fout, "</form></div>\n");
+  fprintf(fout, "<div class=\"search_actions\"><a href=\"\">%s</a>&nbsp;&nbsp;<a href=\"\">%s</a></div>", _("Registration"), _("Forgot the password?"));
+  html_put_footer(fout, extra->footer_txt);
+  l10n_setlocale(0);
+}
+
+static void
+unprivileged_page_login(struct server_framework_state *state,
+                        struct client_state *p,
+                        FILE *fout,
+                        struct http_request_info *phr)
+{
+  const unsigned char *login = 0;
+  const unsigned char *password = 0;
+  int r;
+  const struct contest_desc *cnts = 0;
+
+  if ((r = ns_cgi_param(phr, "login", &login)) < 0)
+    return html_err_invalid_param(state, p, fout, phr, 0, "cannot parse login");
+  if (!r || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
+    return unprivileged_page_login_page(state, p, fout, phr);
+
+  phr->login = xstrdup(login);
+  if ((r = ns_cgi_param(phr, "password", &password)) <= 0)
+    return html_err_invalid_param(state, p, fout, phr, 0,
+                                  "cannot parse password");
+  if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts)
+    return html_err_invalid_param(state, p, fout, phr, 0,
+                                  "invalid contest_id");
+  if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+    return html_err_permission_denied(state, p, fout, phr, 0,
+                                      "%s://%s is not allowed for TEAM for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+  if (cnts->closed)
+    return html_err_service_not_available(state, p, fout, phr,
+                                          "contest %d is closed");
+  if (cnts->client_disable_team)
+    return html_err_service_not_available(state, p, fout, phr,
+                                          "contest %d team is disabled");
+
+  if (open_ul_connection(state) < 0)
+    return html_err_userlist_server_down(state, p, fout, phr, 0);
+
+  if ((r = userlist_clnt_team_login(ul_conn, ULS_CHECK_USER,
+                                    phr->ip, phr->ssl_flag, phr->contest_id,
+                                    phr->locale_id, login, password,
+                                    &phr->user_id, &phr->session_id,
+                                    0, &phr->name)) < 0) {
+    switch (-r) {
+    case ULS_ERR_INVALID_LOGIN:
+    case ULS_ERR_INVALID_PASSWORD:
+    case ULS_ERR_BAD_CONTEST_ID:
+    case ULS_ERR_IP_NOT_ALLOWED:
+    case ULS_ERR_NO_PERMS:
+    case ULS_ERR_NOT_REGISTERED:
+    case ULS_ERR_CANNOT_PARTICIPATE:
+      return html_err_permission_denied(state, p, fout, phr, 0,
+                                        "team_login failed: %s",
+                                        userlist_strerror(-r));
+    case ULS_ERR_DISCONNECT:
+      return html_err_userlist_server_down(state, p, fout, phr, 0);
+    default:
+      return new_server_html_err_internal_error(state, p, fout, phr, 0,
+                                                "team_login failed: %s",
+                                                userlist_strerror(-r));
+    }
+  }
+
+  // TODO: store a cookie
+  html_refresh_page(state, fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
+}
+
+static void
+user_main_page(struct server_framework_state *state,
+               struct client_state *p,
+               FILE *fout,
+               struct http_request_info *phr,
+               const struct contest_desc *cnts,
+               struct contest_extra *extra)
+{
+  l10n_setlocale(phr->locale_id);
+  html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                  "%s [%s]: %s",
+                  phr->name_arm, extra->contest_arm, _("Main page"));
+  html_put_footer(fout, extra->footer_txt);
+  l10n_setlocale(0);
+}
+
+static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
+{
+};
+
+static void
+unprivileged_page(struct server_framework_state *state,
+                  struct client_state *p,
+                  FILE *fout,
+                  struct http_request_info *phr)
+{
+  int r;
+  const struct contest_desc *cnts = 0;
+  struct contest_extra *extra = 0;
+  time_t cur_time = time(0);
+  unsigned char hid_buf[1024];
+
+  if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
+    return unprivileged_page_login(state, p, fout, phr);
+
+  // validate cookie
+  if (open_ul_connection(state) < 0)
+    return html_err_userlist_server_down(state, p, fout, phr, 0);
+  if ((r = userlist_clnt_get_cookie(ul_conn, ULS_GET_COOKIE,
+                                    phr->ip, phr->ssl_flag,
+                                    phr->session_id,
+                                    &phr->user_id, &phr->contest_id,
+                                    &phr->locale_id, 0, &phr->role,
+                                    &phr->login, &phr->name)) < 0) {
+    switch (-r) {
+    case ULS_ERR_NO_COOKIE:
+      return html_err_invalid_session(state, p, fout, phr, 0,
+                                     "get_cookie failed: %s",
+                                     userlist_strerror(-r));
+    case ULS_ERR_DISCONNECT:
+      return html_err_userlist_server_down(state, p, fout, phr, 0);
+    default:
+      return new_server_html_err_internal_error(state, p, fout, phr, 0,
+                                                "get_cookie failed: %s",
+                                                userlist_strerror(-r));
+    }
+  }
+
+  if (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
+    return html_err_permission_denied(state, p, fout, phr, 1,
+                                      "invalid contest_id %d", phr->contest_id);
+  extra = get_contest_extra(phr->contest_id);
+  ASSERT(extra);
+
+  if (!contests_check_team_ip(phr->contest_id, phr->ip, phr->ssl_flag))
+    return html_err_permission_denied(state, p, fout, phr, 0,
+                                      "%s://%s is not allowed for TEAM for contest %d", ssl_flag_str[phr->ssl_flag], xml_unparse_ip(phr->ip), phr->contest_id);
+  if (cnts->closed)
+    return html_err_service_not_available(state, p, fout, phr,
+                                          "contest %d is closed");
+  if (cnts->client_disable_team)
+    return html_err_service_not_available(state, p, fout, phr,
+                                          "contest %d team is disabled");
+
+  update_watched_file(&extra->header, cnts->team_header_file, cur_time);
+  update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
+  extra->header_txt = extra->header.text;
+  extra->footer_txt = extra->footer.text;
+  //if (!extra->header_txt) extra->header_txt = fancy_header;
+  //if (!extra->footer_txt) extra->footer_txt = fancy_footer;
+
+  if (phr->name && *phr->name) {
+    phr->name_arm = html_armor_string_dup(phr->name);
+  } else {
+    phr->name_arm = html_armor_string_dup(phr->login);
+  }
+  if (extra->contest_arm) xfree(extra->contest_arm);
+  if (phr->locale_id == 0 && cnts->name_en) {
+    extra->contest_arm = html_armor_string_dup(cnts->name_en);
+  } else {
+    extra->contest_arm = html_armor_string_dup(cnts->name);
+  }
+
+  snprintf(hid_buf, sizeof(hid_buf),
+           "<input type=\"hidden\" name=\"SID\" value=\"%016llx\">",
+           phr->session_id);
+  phr->hidden_vars = hid_buf;
+
+  if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
+      && user_actions_table[phr->action]) {
+    user_actions_table[phr->action](state, p, fout, phr, cnts, extra);
+  } else {
+    user_main_page(state, p, fout, phr, cnts, extra);
   }
 }
 
@@ -1828,9 +2159,10 @@ new_server_handle_http_request(struct server_framework_state *state,
                                   "cannot get script filename");
 
   os_rGetLastname(script_filename, last_name, sizeof(last_name));
-  // FIXME: call either non-privileged, or privileged page generator
-
-  privileged_page(state, p, fout, phr);
+  if (!strcmp(last_name, "priv-client"))
+    privileged_page(state, p, fout, phr);
+  else
+    unprivileged_page(state, p, fout, phr);
 }
 
 /*

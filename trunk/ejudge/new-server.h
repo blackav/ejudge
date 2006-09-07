@@ -85,4 +85,12 @@ int nsdb_add_role(int user_id, int contest_id, int role);
 int nsdb_del_role(int user_id, int contest_id, int role);
 int nsdb_priv_remove_user(int user_id, int contest_id);
 
+void
+new_server_html_err_internal_error(struct server_framework_state *state,
+                                   struct client_state *p,
+                                   FILE *fout,
+                                   struct http_request_info *phr,
+                                   int priv_mode,
+                                   const char *format, ...);
+
 #endif /* __NEW_SERVER_H__ */

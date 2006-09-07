@@ -1,14 +1,14 @@
 # -*- mode: po; coding: koi8-r -*-
 # ejudge messages catalog
 # $Id$
-# Copyright (C) 2002-2006 Alexander Chernov <cher@unicorn.cmc.msu.ru>
+# Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-06 11:24+0400\n"
-"PO-Revision-Date: 2006-08-26 18:43+0400\n"
+"POT-Creation-Date: 2006-09-07 12:31+0400\n"
+"PO-Revision-Date: 2006-09-07 12:36+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -59,67 +59,71 @@ msgstr "<i>Командная строка слишком длинна</i>\n"
 msgid "<i>Not set</i>"
 msgstr "<i>Не установлено</i>"
 
-#, fuzzy, c-format
+#, c-format
 msgid "<li>The contest is closed for participation.</li>\n"
-msgstr "Турнир закрыт."
+msgstr "<li>Турнир закрыт для участия.</li>\n"
 
 #, c-format
 msgid ""
 "<li>The session was created from a different IP-address or protocol, that "
 "yours (%s,%s).</li>\n"
 msgstr ""
+"<li>Сессия была создана с другого адреса или по другому протоколу, чем те, "
+"которые Вы используете в данный момент (%s,%s).</li>\n"
 
 #, c-format
 msgid "<li>The session was removed by an administrator.</li>"
-msgstr ""
+msgstr "<li>Сессия была удалена администратором системы.</li>"
 
 #, c-format
 msgid "<li>The specified has expired.</li>\n"
-msgstr ""
+msgstr "<li>Время действия сессии истекло.<li>\n"
 
 #, c-format
 msgid "<li>The specified session does not exist.</li>"
-msgstr ""
+msgstr "<li>Указанная сессия не существует.</li>"
 
-#, fuzzy, c-format
+#, c-format
 msgid "<li>You are not registered for contest %d.</li>\n"
-msgstr "Вы не зарегистрированы на этот турнир."
+msgstr "<li>Вы не зарегистрированы на турнир %d.</li>\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "<li>You are not registered for contest %s.</li>\n"
-msgstr "Вы не зарегистрированы на этот турнир."
+msgstr "<li>Вы не зарегистрированы на турнир %s.</li>\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "<li>You do not have permissions to login using the specified role.</li>"
-msgstr "У Вас нет прав использовать данный сервис."
+msgstr "<li>У Вас нет прав работать в указанной роли.</li>"
 
 #, c-format
 msgid "<li>You have typed an invalid login (<tt>%s</tt>).</li>\n"
-msgstr ""
+msgstr "<li>Вы ввели неправильное регистрационное имя (<tt>%s</tt>).</li>\n"
 
 #, c-format
 msgid "<li>You have typed an invalid password.</li>\n"
-msgstr ""
+msgstr "<li>Вы неправильно набрали пароль.</li>\n"
 
 #, c-format
 msgid "<li>You were banned by the administrator.</li>\n"
-msgstr ""
+msgstr "<li>Ваше участие заблокировано администратором системы.</li>\n"
 
 #, c-format
 msgid ""
 "<li>Your IP-address (<tt>%s</tt>) or protocol (<tt>%s</tt>) is banned for "
 "participation.</li>"
 msgstr ""
+"<li>Ваш IP-адрес (<tt>%s</tt>) или протокол (<tt>%s</tt>) закрыт для участия."
+"</li>"
 
 #, c-format
 msgid "<li>Your registration was not confirmed.</li>\n"
-msgstr ""
+msgstr "<li>Ваша регистрация на турнир не подтверждена.</li>\n"
 
 #, c-format
 msgid ""
 "<p class=\"ejudge_copyright\">This is <a href=\"%s\"><b>ejudge</b></a> "
 "contest administration system, version %s, compiled %s.</p>\n"
-"<p class=\"ejudge_copyright\">This program is copyright (C) 2000-2006 "
+"<p class=\"ejudge_copyright\">This program is copyright &copy; 2000-2006 "
 "Alexander Chernov.</p>\n"
 "<p class=\"ejudge_copyright\">This program is free software; you can "
 "redistribute it and/or modify it under the terms of the <a href=\"http://www."
@@ -127,17 +131,13 @@ msgid ""
 "published by the <a href=\"http://www.fsf.org\">Free Software Foundation</"
 "a>; either version 2 of the License, or (at your option) any later version.</"
 "p>\n"
+"<p class=\"ejudge_copyright\">Visual design and web-interface &copy; 2006 <a "
+"href=\"%s\">Toto Lasvik</a>."
 msgstr ""
-"<p class=\"ejudge_copyright\">Это - система администрирования турниров <a "
-"href=\"%s\"><b>ejudge</b></a>, версия %s, дата компиляции %s.\n"
-"<p class=\"ejudge_copyright\">Авторские права на программу: (C) 2000-2006 "
-"Александр Чернов.\n"
-"<p class=\"ejudge_copyright\">Данная программа является свободным ПО. Вы "
-"можете распространять и/или модифицировать её в соответствии с <a href="
-"\"http://www.fsf.org/licenses/licenses.html#GPL\">Общей Лицензией GNU</a> "
-"(GNU General Public License), опубликованной <a href=\"http://www.fsf.org"
-"\">Фондом свободного ПО</a> (Free Software Foundation), либо версии 2 "
-"Лицензии, либо (по Вашему желанию) любой последующей версии.\n"
+"<p class=\"ejudge_copyright\">Это - система администрирования турниров <a href=\"%s\"><b>ejudge</b></a>, версия %s, дата компиляции %s.\n"
+"<p class=\"ejudge_copyright\">Авторские права на программу: &copy; 2000-2006 Александр Чернов.\n"
+"<p class=\"ejudge_copyright\">Данная программа является свободным ПО. Вы можете распространять и/или модифицировать её в соответствии с <a href=\"http://www.fsf.org/licenses/licenses.html#GPL\">Общей Лицензией GNU</a> (GNU General Public License), опубликованной <a href=\"http://www.fsf.org\">Фондом свободного ПО</a> (Free Software Foundation), либо версии 2 Лицензии, либо (по Вашему желанию) любой последующей версии.\n"
+"<p class=\"ejudge_copyright\">Веб-дизайн и AJAX-интерфейс &copy; 2006 <a href=\"%s\">Toto Lasvik</a>."
 
 #, c-format
 msgid ""
@@ -237,6 +237,8 @@ msgstr "<p%s>Минимальное количество %s - %d.</p>\n"
 msgid ""
 "<p>Note, that the exact reason is not reported due to security reasons.</p>"
 msgstr ""
+"<p>Обратите внимание, что точная причина ошибки не сообщается по "
+"соображениям безопасности.</p>"
 
 #, c-format
 msgid "<u>--- Checker output ---</u>\n"
@@ -264,6 +266,7 @@ msgstr "<u>--- Ошибки ---</u>\n"
 
 msgid "A request parameter is invalid. Please, contact the site administrator."
 msgstr ""
+"Неверный параметр запроса. Пожалуйста, обратитесь к администратору сайта."
 
 msgid "Accepted for testing"
 msgstr "Принято на проверку"
@@ -272,28 +275,28 @@ msgid "Access denied"
 msgstr "В доступе отказано"
 
 msgid "Add CHIEF JUDGE"
-msgstr ""
+msgstr "Добавить роль ГЛАВНОГО СУДЬИ"
 
 msgid "Add COORDINATOR"
-msgstr ""
+msgstr "Добавить роль КООРДИНАТОРА"
 
 msgid "Add JUDGE"
-msgstr ""
+msgstr "Добавить роль СУДЬИ"
 
 msgid "Add OBSERVER"
-msgstr ""
+msgstr "Добавить роль НАБЛЮДАТЕЛЯ"
 
 msgid "Add a new user specifying his/her User Id"
-msgstr ""
+msgstr "Добавить нового пользователя, задавая его User Id"
 
 msgid "Add a new user specifying his/her login"
-msgstr ""
+msgstr "Добавить нового пользователя, задавая его регистрационное имя"
 
 msgid "Add by ID"
-msgstr ""
+msgstr "Добавить по ID"
 
 msgid "Add by login"
-msgstr ""
+msgstr "Добавить по LOGIN"
 
 msgid "Add new member"
 msgstr "Добавить нового члена команды"
@@ -304,28 +307,26 @@ msgstr "Добавить новую посылку"
 msgid "Add new run form"
 msgstr "Форма добавления новой посылки"
 
-#, fuzzy
 msgid "Add new user"
-msgstr "Добавить новую посылку"
+msgstr "Добавить нового пользователя"
 
 msgid "Add the CHIEF JUDGE role to the selected users"
-msgstr ""
+msgstr "Разрешить работу в роли ГЛАВНОГО СУДЬИ отмеченным пользователям"
 
 msgid "Add the COORDINATOR role to the selected users"
-msgstr ""
+msgstr "Разрешить работу в роли КООРДИНАТОРА отмеченным пользователям"
 
 msgid "Add the JUDGE role to the selected users"
-msgstr ""
+msgstr "Разрешить работу в роли СУДЬИ отмеченным пользователям"
 
 msgid "Add the OBSERVER role to the selected users"
-msgstr ""
+msgstr "Разрешить работу в роли НАБЛЮДАТЕЛЯ отмеченным пользователям"
 
 msgid "Additional test information"
 msgstr "Доп. инф. о тесте"
 
-#, fuzzy
 msgid "Administrator"
-msgstr "Руководитель команды"
+msgstr "Администратор"
 
 msgid "Advisor"
 msgstr "Руководитель команды"
@@ -429,9 +430,8 @@ msgstr "Проверить состояние регистрации"
 msgid "Checker output"
 msgstr "Вывод проверяющей программы"
 
-#, fuzzy
 msgid "Chief judge"
-msgstr "Да, проверить!"
+msgstr "Главный судья"
 
 msgid "Choose language"
 msgstr "Выбрать язык"
@@ -445,28 +445,26 @@ msgstr "Город (Англ.)"
 msgid "Clar ID"
 msgstr "Номер сообщения"
 
-#, fuzzy
 msgid "Clear BANNED"
-msgstr "Номер сообщения"
+msgstr "Сбросить флаг BANNED"
 
 msgid "Clear INVISIBLE"
-msgstr ""
+msgstr "Сбросить флаг НЕВИДИМОСТИ"
 
-#, fuzzy
 msgid "Clear LOCKED"
-msgstr "Номер сообщения"
+msgstr "Сбросить флаг LOCKED"
 
 msgid "Clear team passwords!"
 msgstr "Сбросить пароли участников!"
 
 msgid "Clear the BANNED flag for the selected users"
-msgstr ""
+msgstr "Сбросить флаг БЛОКИРОВКИ у отмеченных пользователей"
 
 msgid "Clear the INVISIBLE flag for the selected users"
-msgstr ""
+msgstr "Сбросить флаг НЕВИДИМОСТИ у отмеченных пользователей"
 
 msgid "Clear the LOCKED flag for the selected users"
-msgstr ""
+msgstr "Сбросить еще один флаг"
 
 msgid "Clear this entry"
 msgstr "Очистить эту запись"
@@ -553,7 +551,7 @@ msgid "Continue"
 msgstr "Продолжить"
 
 msgid "Coordinator"
-msgstr ""
+msgstr "Координатор"
 
 msgid "Correct output"
 msgstr "Правильный ответ"
@@ -571,16 +569,16 @@ msgid "Default language"
 msgstr "Язык по умолчанию"
 
 msgid "Del CHIEF JUDGE"
-msgstr ""
+msgstr "Удалить роль ГЛАВНОГО СУДЬИ"
 
 msgid "Del COORDINATOR"
-msgstr ""
+msgstr "Удалить роль КООРДИНАТОРА"
 
 msgid "Del JUDGE"
-msgstr ""
+msgstr "Удалить роль СУДЬИ"
 
 msgid "Del OBSERVER"
-msgstr ""
+msgstr "Удалить роль НАБЛЮДАТЕЛЯ"
 
 msgid "Detailed information about participant"
 msgstr "Подробная информация об участнике"
@@ -760,6 +758,9 @@ msgstr "Для зарегистрированных пользователей"
 msgid "For schools, liceums, etc, please, specify its number."
 msgstr ""
 "Для школ, лицеев и пр. укажите, пожалуйста, номер. Например, школа 1234."
+
+msgid "Forgot the password?"
+msgstr "Забыли пароль?"
 
 msgid "From"
 msgstr "От"
@@ -965,9 +966,8 @@ msgstr "Учебное заведение (сокр.)"
 msgid "Institution (short) (En)"
 msgstr "Учебное заведение (сокр.) (Англ.)"
 
-#, fuzzy
 msgid "Internal error"
-msgstr "Фатальная ошибка"
+msgstr "Внутренняя ошибка"
 
 msgid "Internal error: insufficient memory."
 msgstr "Внутренняя ошибка: недостаточно памяти."
@@ -993,9 +993,8 @@ msgstr "Неверная спецификация языка программирования"
 msgid "Invalid login"
 msgstr "Неверное регистрационное имя"
 
-#, fuzzy
 msgid "Invalid parameter"
-msgstr "Неверные параметры"
+msgstr "Неверные параметр"
 
 msgid "Invalid parameters"
 msgstr "Неверные параметры"
@@ -1015,12 +1014,13 @@ msgstr "Неверный номер посылки"
 msgid "Invalid serial number."
 msgstr "Неверный уникальный номер."
 
-#, fuzzy
 msgid "Invalid session"
-msgstr "Неверный участник."
+msgstr "Неверный идентификатор сессии."
 
 msgid "Invalid session identifier. The possible reasons are as follows."
 msgstr ""
+"Неверный идентификатор сессии. Возможные причины этой ошибки перечислены "
+"ниже."
 
 msgid "Invisible?"
 msgstr "Невидимый?"
@@ -1028,9 +1028,8 @@ msgstr "Невидимый?"
 msgid "Issue warning"
 msgstr "Выдать предупреждение"
 
-#, fuzzy
 msgid "Judge"
-msgstr "судьи"
+msgstr "Судья"
 
 msgid "Judge suspended runs"
 msgstr "Проверить отложенные посылки"
@@ -1125,22 +1124,22 @@ msgid "Mandatory field \"%s.%d.%s\" is empty."
 msgstr "Обязательное поле \"%s.%d.%s\" не заполнено."
 
 msgid "Mark BANNED"
-msgstr ""
+msgstr "Установить флаг ЗАБЛОКИРОВАННОСТИ"
 
 msgid "Mark INVISIBLE"
-msgstr ""
+msgstr "Установить флаг НЕВИДИМОСТИ"
 
 msgid "Mark LOCKED"
-msgstr ""
+msgstr "Установить еще один флаг"
 
 msgid "Mark OK"
-msgstr ""
+msgstr "Разрешить участие"
 
 msgid "Mark PENDING"
-msgstr ""
+msgstr "Поставить на ожидание"
 
 msgid "Mark REJECTED"
-msgstr ""
+msgstr "Отказать в участии"
 
 msgid "Member information"
 msgstr "Информация об участниках"
@@ -1269,9 +1268,8 @@ msgstr "Число предупреждений"
 msgid "OK"
 msgstr "OK"
 
-#, fuzzy
 msgid "Observer"
-msgstr "Запасной участник"
+msgstr "Наблюдатель"
 
 msgid "Occupation"
 msgstr "Должность"
@@ -1292,9 +1290,8 @@ msgstr "Старый пароль имеет слишком большую длину"
 msgid "Only %d members \"%s\" are specified instead of minimum %d."
 msgstr "Только %d участников \"%s\" указаны вместо минимальных %d."
 
-#, fuzzy
 msgid "Operation competed with errors"
-msgstr "Операция успешно выполнена"
+msgstr "Операция завершилась с ошибками"
 
 msgid "Operation completed successfully"
 msgstr "Операция успешно выполнена"
@@ -1354,7 +1351,7 @@ msgid "Permission denied"
 msgstr "В доступе отказано"
 
 msgid "Permission denied. The possible reasons are as follows."
-msgstr ""
+msgstr "В доступе отказано. Возможные причины этой ошибки перечислены ниже."
 
 msgid ""
 "Permission denied. You have typed invalid login, invalid password, invalid "
@@ -1422,9 +1419,8 @@ msgstr "Обработка запросов на печать приостановлена"
 msgid "Print sources"
 msgstr "Распечатать исходный текст"
 
-#, fuzzy
 msgid "Privileged users page"
-msgstr "Привилегированный?"
+msgstr "Список привилегированных пользователей"
 
 msgid "Privileged?"
 msgstr "Привилегированный?"
@@ -1492,6 +1488,9 @@ msgstr "Зарегистрироваться"
 msgid "Register a new user"
 msgstr "Зарегистрировать нового пользователя"
 
+msgid "Registration"
+msgstr "Регистрация"
+
 msgid "Registration failed"
 msgstr "Регистрация не удалась"
 
@@ -1522,9 +1521,8 @@ msgstr "Перезапустить сервер"
 msgid "Remaining time"
 msgstr "Остающееся время"
 
-#, fuzzy
 msgid "Remove"
-msgstr "Снять блокировку"
+msgstr "Удалить"
 
 msgid "Remove ban"
 msgstr "Снять блокировку"
@@ -1532,28 +1530,29 @@ msgstr "Снять блокировку"
 msgid "Remove member"
 msgstr "Удалить участника"
 
-#, fuzzy
 msgid "Remove registrations"
-msgstr "Регистрация на турниры"
+msgstr "Удалить регистрации"
 
 msgid "Remove the CHIEF JUDGE role from the selected users"
-msgstr ""
+msgstr "Запретить работу в роли ГЛАВНОГО СУДЬИ отмеченным пользователям"
 
 msgid "Remove the COORDINATOR role from the selected users"
-msgstr ""
+msgstr "Запретить работу в роли КООРДИНАТОРА отмеченным пользователям"
 
 msgid "Remove the JUDGE role from the selected users"
-msgstr ""
+msgstr "Запретить работу в роли СУДЬИ отмеченным пользователям"
 
 msgid "Remove the OBSERVER role from the selected users"
-msgstr ""
+msgstr "Запретить работу в роли НАБЛЮДАТЕЛЯ отмеченным пользователям"
 
 msgid "Remove the selected users from the list"
-msgstr ""
+msgstr "Удалить отмеченных пользователей"
 
 msgid ""
 "Remove the selected users from the list (ADMINISTRATORs cannot be removed)"
 msgstr ""
+"Удалить отмеченных пользователей из списка (АДМИНИСТРАТОРЫ не могут быть "
+"удалены)"
 
 msgid "Report view"
 msgstr "Просмотр протокола"
@@ -1588,9 +1587,8 @@ msgstr "Разрешить проверку решений"
 msgid "Retype new password"
 msgstr "Пароль ещё раз"
 
-#, fuzzy
 msgid "Role"
-msgstr "Re"
+msgstr "Роль"
 
 msgid "Role/person parameters are not defined."
 msgstr "Параметры роли/члена не определены."
@@ -1695,6 +1693,12 @@ msgstr "Сервис недоступен"
 msgid "Service is not available. Please, come later."
 msgstr "Сервис недоступен. Пожалуйста, приходите позже."
 
+msgid "Service not available"
+msgstr "Сервис недоступен"
+
+msgid "Service that you requested is not available."
+msgstr "Запрошенный Вами сервис недоступен."
+
 msgid "Set accepting mode"
 msgstr "Включить режим приёма решений"
 
@@ -1705,22 +1709,22 @@ msgid "Set status"
 msgstr "Установить статус"
 
 msgid "Set the BANNED flag for the selected users"
-msgstr ""
+msgstr "Установить флаг ЗАБЛОКИРОВАННОСТИ для отмеченных пользователей"
 
 msgid "Set the INVISIBLE flag for the selected users"
-msgstr ""
+msgstr "Установить флаг НЕВИДИМОСТИ для отмеченных пользователей"
 
 msgid "Set the LOCKED flag for the selected users"
-msgstr ""
+msgstr "Установить флаг LOCKED для отмеченных пользователей"
 
 msgid "Set the registration status of the selected users to OK"
-msgstr ""
+msgstr "Установить статус регистрации в OK, то есть разрешить участие"
 
 msgid "Set the registration status of the selected users to PENDING"
-msgstr ""
+msgstr "Установить статус регистрации в PENDING, то есть отложить решение"
 
 msgid "Set the registration status of the selected users to REJECTED"
-msgstr ""
+msgstr "Установить статус регистрации в REJECTED, то есть отказать в участии"
 
 msgid "Short name"
 msgstr "ID Задачи"
@@ -1906,6 +1910,8 @@ msgid ""
 "The user database server is currently not available. Please, retry the "
 "request later."
 msgstr ""
+"Сервер базы данных пользователей в настоящий момент недоступен. Попробуйте "
+"повторить запрос позднее."
 
 msgid ""
 "This program is configured incorrectly and cannot perform normal operation. "
@@ -2014,12 +2020,15 @@ msgstr "Рег. имя"
 msgid "User Name"
 msgstr "Имя участника"
 
-#, fuzzy
 msgid "User database server is down"
-msgstr "Сервер не работает"
+msgstr "Сервер базы пользователей недоступен"
 
 msgid "User login"
 msgstr "Рег. имя команды"
+
+#, c-format
+msgid "User login [%s]"
+msgstr "Вход пользователя [%s]"
 
 msgid "User name"
 msgstr "Имя участника"
@@ -2030,9 +2039,8 @@ msgstr "Регистрация пользователя завершена"
 msgid "User's report"
 msgstr "Пользовательский протокол"
 
-#, fuzzy
 msgid "Users page"
-msgstr "Имя участника"
+msgstr "Список участников"
 
 msgid "Variant"
 msgstr "Вариант"
@@ -2170,6 +2178,8 @@ msgstr "Вы можете зарегистрироваться на этот турнир."
 msgid ""
 "Your request has caused an internal server error. Please, report it as a bug."
 msgstr ""
+"Ваш запрос вызвал внутреннюю ошибку сервера. Пожалуйста, сообщите об этом "
+"как об ошибке."
 
 msgid "access denied"
 msgstr "в доступе отказано"
@@ -2300,8 +2310,14 @@ msgstr "неверный идентификатор пользователя"
 msgid "judges"
 msgstr "судьи"
 
+msgid "language"
+msgstr "язык"
+
 msgid "last 15"
 msgstr "последние 15"
+
+msgid "login"
+msgstr "регистрационное имя (login)"
 
 msgid "login already used"
 msgstr "регистрационное имя занято"
@@ -2365,6 +2381,9 @@ msgstr "получение пакета завершилось неудачно"
 
 msgid "packet sending failed"
 msgstr "посылка пакета завершилась неудачно"
+
+msgid "password"
+msgstr "пароль"
 
 msgid "peer closed connection"
 msgstr "сервер оборвал соединение"

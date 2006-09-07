@@ -1492,6 +1492,165 @@ cmd_team_login(struct client_state *p, int pkt_len,
 }
 
 static void
+cmd_check_user(struct client_state *p, int pkt_len,
+               struct userlist_pk_do_login *data)
+{
+  unsigned char *login_ptr, *passwd_ptr, *name_ptr;
+  const struct userlist_user *u = 0;
+  struct passwd_internal pwdint;
+  const struct contest_desc *cnts = 0;
+  const struct userlist_contest *c = 0;
+  struct userlist_pk_login_ok *out = 0;
+  const struct userlist_cookie *cookie;
+  int out_size = 0, login_len, name_len;
+  int errcode;
+  ej_tsc_t tsc1, tsc2;
+  unsigned char logbuf[1024];
+  const struct userlist_user_info *ui;
+  int user_id;
+
+  if (pkt_len < sizeof(*data)) {
+    CONN_BAD("packet length is too small: %d", pkt_len);
+    return;
+  }
+  login_ptr = data->data;
+  if (strlen(login_ptr) != data->login_length) {
+    CONN_BAD("login length mismatch");
+    return;
+  }
+  passwd_ptr = login_ptr + data->login_length + 1;
+  if (strlen(passwd_ptr) != data->password_length) {
+    CONN_BAD("password length mismatch");
+    return;
+  }
+  if (pkt_len != sizeof(*data)+data->login_length+data->password_length) {
+    CONN_BAD("packet length mismatch");
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf),
+           "TEAM_CHECK_USER: %s, %d, %s, %d, %d",
+           xml_unparse_ip(data->origin_ip), data->ssl, login_ptr,
+           data->contest_id, data->locale_id);
+
+  if (p->user_id < 0) {
+    err("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+  if (is_db_capable(p, OPCAP_LIST_ALL_USERS, logbuf)) return;
+  if (!data->origin_ip) {
+    err("%s -> origin_ip is not set", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+
+  if (passwd_convert_to_internal(passwd_ptr, &pwdint) < 0) {
+    err("%s -> invalid password", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+  if (!contests_check_team_ip(data->contest_id, data->origin_ip, data->ssl)) {
+    err("%s -> IP is not allowed", logbuf);
+    send_reply(p, -ULS_ERR_IP_NOT_ALLOWED);
+    return;
+  }
+  if (cnts->client_disable_team) {
+    err("%s -> team logins are disabled", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+
+  rdtscll(tsc1);
+  if ((user_id = default_get_user_by_login(login_ptr)) <= 0) {
+    err("%s -> WRONG USER", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_LOGIN);
+    return;
+  }
+  default_get_user_info_3(user_id, data->contest_id, &u, &ui, &c);
+  rdtscll(tsc2);
+  tsc2 = (tsc2 - tsc1) * 1000000 / cpu_frequency;
+
+  if (cnts->disable_team_password) {
+    if (!u->passwd) {
+      err("%s -> EMPTY PASSWORD", logbuf);
+      send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+      return;
+    }
+    if(passwd_check(&pwdint, u->passwd, u->passwd_method) < 0){
+      err("%s -> WRONG PASSWORD", logbuf);
+      send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+      return;
+    }
+  } else {
+    if (!ui->team_passwd) {
+      err("%s -> EMPTY PASSWORD", logbuf);
+      send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+      return;
+    }
+    if(passwd_check(&pwdint, ui->team_passwd, ui->team_passwd_method) < 0){
+      err("%s -> WRONG PASSWORD", logbuf);
+      send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+      return;
+    }
+  }
+  if (!c) {
+    err("%s -> NOT REGISTERED", logbuf);
+    send_reply(p, -ULS_ERR_NOT_REGISTERED);
+    return;
+  }
+  if (c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
+      || (c->flags & USERLIST_UC_LOCKED)) {
+    err("%s -> NOT ALLOWED", logbuf);
+    send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
+    return;
+  }
+
+  login_len = strlen(u->login);
+  name_len = strlen(ui->name);
+  out_size = sizeof(*out) + login_len + name_len;
+  out = alloca(out_size);
+  memset(out, 0, out_size);
+  login_ptr = out->data;
+  name_ptr = login_ptr + login_len + 1;
+  if (data->locale_id == -1) {
+    data->locale_id = 0;
+  }
+  if (default_new_cookie(u->id, data->origin_ip, data->ssl, 0, 0,
+                         data->contest_id, data->locale_id,
+                         PRIV_LEVEL_USER, 0, &cookie) < 0) {
+    err("%s -> cookie creation failed", logbuf);
+    send_reply(p, -ULS_ERR_OUT_OF_MEM);
+    return;
+  }
+
+  out->cookie = cookie->cookie;
+  out->reply_id = ULS_LOGIN_COOKIE;
+  out->user_id = u->id;
+  out->contest_id = data->contest_id;
+  out->locale_id = data->locale_id;
+  out->login_len = login_len;
+  out->name_len = name_len;
+  strcpy(login_ptr, u->login);
+  strcpy(name_ptr, ui->name);
+  
+  enqueue_reply_to_client(p, out_size, out);
+  default_touch_login_time(user_id, data->contest_id, cur_time);
+  if (daemon_mode) {
+    info("%s -> OK, %d, %llx", logbuf, u->id, out->cookie);
+  } else {
+    info("%s -> %d,%s,%llx, time = %llu us",
+         logbuf, u->id, u->login,out->cookie,tsc2);
+  }
+}
+
+static void
 cmd_priv_login(struct client_state *p, int pkt_len,
                struct userlist_pk_do_login *data)
 {
@@ -6029,6 +6188,14 @@ cmd_get_cookie(struct client_state *p,
     send_reply(p, -ULS_ERR_NO_COOKIE);
     return;
   }
+  if (data->request_id == ULS_GET_COOKIE) {
+    if (!c || c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
+        || (c->flags & USERLIST_UC_LOCKED)) {
+      err("%s -> NOT ALLOWED", logbuf);
+      send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
+      return;
+    }
+  }
 
   login_len = strlen(u->login);
   name_len = strlen(u->i.name);
@@ -6109,8 +6276,10 @@ static void (*cmd_table[])() =
   [ULS_CREATE_MEMBER]           cmd_create_member,
   [ULS_PRIV_DELETE_MEMBER]      cmd_priv_delete_member,
   [ULS_PRIV_CHECK_USER]         cmd_priv_check_user,
-  [ULS_GET_COOKIE]              cmd_get_cookie,
+  [ULS_PRIV_GET_COOKIE]         cmd_get_cookie,
   [ULS_LOOKUP_USER_ID]          cmd_lookup_user_id,
+  [ULS_CHECK_USER]              cmd_check_user,
+  [ULS_GET_COOKIE]              cmd_get_cookie,
 
   [ULS_LAST_CMD] 0
 };
