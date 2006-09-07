@@ -665,3 +665,16 @@ userlist-server.c 3315 0 17059922
 copyright.c 3315 0 181873
 new_server_html.c 3315 0 6295706
 userlist_clnt/get_cookie.c 3314 0 226361
+clarlog.h 3317 0 162894
+copyright.h 3317 0 67026
+new-server.h 3317 0 252288
+prepare_vars.h 3317 0 120816
+clean-users.c 3317 0 1013645
+new-server.c 3317 0 1232108
+serve.c 3317 0 15398871
+clarlog.c 3317 0 1151703
+clntutil.c 3317 0 1410341
+copyright.c 3317 0 194005
+html.c 3317 0 12882868
+master_html.c 3317 0 9903584
+new_server_html.c 3317 0 6339038
