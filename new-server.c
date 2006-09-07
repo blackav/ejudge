@@ -238,6 +238,16 @@ cmd_http_request(struct server_framework_state *state,
   new_server_handle_http_request(state, p, out_f, &hr);
   fclose(out_f); out_f = 0;
 
+  // stub, if empty output is generated
+  if (!out_txt || !*out_txt) {
+    out_f = open_memstream(&out_txt, &out_size);
+
+
+    new_server_html_err_internal_error(state, p, out_f, &hr, 0,
+                                       "empty output generated");
+    fclose(out_f); out_f = 0;
+  }
+
   xfree(hr.login);
   xfree(hr.name);
   xfree(hr.name_arm);

@@ -98,6 +98,7 @@ userlist_clnt_lookup_user_id(struct userlist_clnt *clnt,
 
 int
 userlist_clnt_get_cookie(struct userlist_clnt *clnt,
+                         int cmd,
                          ej_ip_t origin_ip,
                          int ssl,
                          ej_cookie_t cookie,
