@@ -139,6 +139,8 @@ static int                  client_serial_id = 1;
 static int cmdline_socket_fd = -1;
 static time_t last_activity_time = 0;
 
+clarlog_state_t clarlog_state;
+
 static struct client_state *
 client_new_state(int fd)
 {
@@ -438,7 +440,7 @@ update_status_file(int force_flag)
   status.duration = t3;
   status.stop_time = t4;
   status.total_runs = run_get_total();
-  status.total_clars = clar_get_total();
+  status.total_clars = clar_get_total(clarlog_state);
   status.clars_disabled = global->disable_clars;
   status.team_clars_disabled = global->disable_team_clars;
   status.score_system = global->score_system_val;
@@ -575,7 +577,7 @@ check_clar_qouta(int teamid, unsigned int size)
   size_t total;
 
   if (size > global->max_clar_size) return -1;
-  clar_get_team_usage(teamid, &num, &total);
+  clar_get_team_usage(clarlog_state, teamid, &num, &total);
   if (num > global->max_clar_num || total + size > global->max_clar_total)
     return -1;
   return 0;
@@ -1490,10 +1492,10 @@ cmd_view(struct client_state *p, int len,
     if (p->priv_level == PRIV_LEVEL_JUDGE) {
       int flags = 1;
 
-      clar_get_record(pkt->item, 0, 0, 0, 0, 0, &flags, 0, 0, 0);
+      clar_get_record(clarlog_state, pkt->item, 0, 0, 0, 0, 0, &flags, 0, 0, 0);
       if (!flags) {
         flags = 1;
-        clar_update_flags(pkt->item, flags);
+        clar_update_flags(clarlog_state, pkt->item, flags);
       }
     }
     break;
@@ -1887,7 +1889,7 @@ cmd_message(struct client_state *p, int len,
     base64_encode_str(txt_subj_short, b64_subj_short);
     msg = alloca(pkt->subj_len + pkt->text_len + 32);
     msg_len = sprintf(msg, "Subject: %s\n\n%s", subj_ptr, text_ptr);
-    clar_id = clar_add_record(current_time, msg_len,
+    clar_id = clar_add_record(clarlog_state, current_time, msg_len,
                               run_unparse_ip(p->ip),
                               0, dest_uid, 0, p->user_id,
                               hide_flag, b64_subj_short);
@@ -1924,7 +1926,7 @@ cmd_message(struct client_state *p, int len,
     // subj_ptr, dest_login_ptr to be ignored
     // if dest_user_id == 0, the reply is sent to all
     // ref_clar_id to be processed
-    if (clar_get_record(pkt->ref_clar_id, 0, 0, 0, &dest_uid, 0, 0,0,0,0) < 0) {
+    if (clar_get_record(clarlog_state, pkt->ref_clar_id, 0, 0, 0, &dest_uid, 0, 0,0,0,0) < 0) {
       err("%d: invalid ref_clar_id %d", p->id, pkt->ref_clar_id);
       new_send_reply(p, -SRV_ERR_BAD_CLAR_ID);
       return;
@@ -1947,7 +1949,7 @@ cmd_message(struct client_state *p, int len,
     msg = alloca(pkt->text_len + quoted_len + new_subj_len + 64);
     msg_len = sprintf(msg, "%s%s\n%s", new_subj, quoted_ptr, text_ptr);
     if (!pkt->dest_user_id) dest_uid = 0;
-    clar_id = clar_add_record(current_time, msg_len,
+    clar_id = clar_add_record(clarlog_state, current_time, msg_len,
                               run_unparse_ip(p->ip), 0, dest_uid, 0,
                               p->user_id, hide_flag, b64_subj_short);
     if (clar_id < 0) {
@@ -1960,7 +1962,7 @@ cmd_message(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
     }
-    clar_update_flags(pkt->ref_clar_id, 2);
+    clar_update_flags(clarlog_state, pkt->ref_clar_id, 2);
     xfree(orig_txt);
     info("%d: cmd_message: ok %d %zu", p->id, clar_id, msg_len);
     new_send_reply(p, SRV_RPL_OK);
@@ -2875,7 +2877,7 @@ cmd_team_submit_clar(struct client_state *p, int len,
     return;
   }
 
-  if ((clar_id = clar_add_record(current_time, full_len,
+  if ((clar_id = clar_add_record(clarlog_state, current_time, full_len,
                                  run_unparse_ip(pkt->ip),
                                  pkt->user_id, 0, 0, 0, 0, bsubj)) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
@@ -3376,7 +3378,7 @@ cmd_priv_command_0(struct client_state *p, int len,
     run_reset(global->contest_time);
     contest_duration = global->contest_time;
     run_set_duration(contest_duration);
-    clar_reset();
+    clar_reset(clarlog_state);
     /* clear all submissions and clarifications */
     if (global->clar_archive_dir[0])
       clear_directory(global->clar_archive_dir);
@@ -6353,7 +6355,8 @@ main(int argc, char *argv[])
     err("invalid score system for virtual contest");
     return 1;
   }
-  if (clar_open(global->clar_log_file, 0) < 0) return 1;
+  clarlog_state = clar_init();
+  if (clar_open(clarlog_state, global->clar_log_file, 0) < 0) return 1;
   load_status_file();
   build_compile_dirs();
   build_run_dirs();

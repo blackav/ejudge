@@ -3,7 +3,7 @@
 #ifndef __CLARLOG_H__
 #define __CLARLOG_H__
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,8 +29,13 @@ enum
     CLAR_LOG_READONLY = 1,
   };
 
-int clar_open(char const *path, int flags);
-int clar_add_record(time_t         time,
+struct clarlog_state;
+typedef struct clarlog_state *clarlog_state_t;
+
+clarlog_state_t clar_init(void);
+int clar_open(clarlog_state_t state, char const *path, int flags);
+int clar_add_record(clarlog_state_t state,
+                    time_t         time,
                     size_t         size,
                     char const    *ip,
                     int            from,
@@ -39,7 +44,8 @@ int clar_add_record(time_t         time,
                     int            j_from,
                     int            hide_flag,
                     char const    *subj);
-int clar_get_record(int            id,
+int clar_get_record(clarlog_state_t state,
+                    int            id,
                     time_t        *ptime,
                     size_t        *psize,
                     char          *ip,
@@ -49,12 +55,12 @@ int clar_get_record(int            id,
                     int           *pj_from,
                     int           *p_hide_flag,
                     char          *subj);
-int clar_update_flags(int id, int flags);
-int clar_get_total(void);
+int clar_update_flags(clarlog_state_t state, int id, int flags);
+int clar_get_total(clarlog_state_t state);
 
-void clar_get_team_usage(int, int *, size_t *);
-char *clar_flags_html(int, int, int, char *, int);
-void clar_reset(void);
-void clar_clear_variables(void);
+void clar_get_team_usage(clarlog_state_t, int, int *, size_t *);
+char *clar_flags_html(clarlog_state_t, int, int, int, char *, int);
+void clar_reset(clarlog_state_t);
+void clar_clear_variables(clarlog_state_t);
 
 #endif /* __CLARLOG_H__ */

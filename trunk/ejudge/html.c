@@ -1002,14 +1002,15 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
 }
 
 static unsigned char *
-team_clar_flags(int user_id, int clar_id, int flags, int from, int to)
+team_clar_flags(int user_id, int clar_id, int flags,
+                int from, int to)
 {
   if (from != user_id) {
     if (!team_extra_get_clar_status(user_id, clar_id)) return "N";
     else return "&nbsp;";
   }
   if (!flags) return "U";
-  return clar_flags_html(flags, from, to, 0, 0);
+  return clar_flags_html(clarlog_state, flags, from, to, 0, 0);
 }
 
 static int
@@ -1017,8 +1018,8 @@ count_unread_clars(int user_id, time_t start_time)
 {
   int i, total = 0, from, to, hide_flag;
 
-  for (i = clar_get_total() - 1; i >= 0; i--) {
-    if (clar_get_record(i, 0, 0, 0, &from, &to, 0, 0, &hide_flag, 0) < 0)
+  for (i = clar_get_total(clarlog_state) - 1; i >= 0; i--) {
+    if (clar_get_record(clarlog_state, i, 0, 0, 0, &from, &to, 0, 0, &hide_flag, 0) < 0)
       continue;
     if (to > 0 && to != user_id) continue;
     if (!to && from > 0) continue;
@@ -1030,7 +1031,8 @@ count_unread_clars(int user_id, time_t start_time)
 }
 
 void
-new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
+new_write_user_clars(FILE *f, int uid,
+                     unsigned int show_flags,
                      ej_cookie_t sid,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars,
@@ -1064,10 +1066,10 @@ new_write_user_clars(FILE *f, int uid, unsigned int show_flags,
           "<th>%s</th><th>%s</th></tr>\n",
           _("Clar ID"), _("Flags"), _("Time"), _("Size"), _("From"),
           _("To"), _("Subject"), _("View"));
-  for (showed = 0, i = clar_get_total() - 1;
+  for (showed = 0, i = clar_get_total(clarlog_state) - 1;
        showed < clars_to_show && i >= 0;
        i--) {
-    if (clar_get_record(i, &time, &size,
+    if (clar_get_record(clarlog_state, i, &time, &size,
                         0, &from, &to, &flags, 0, &hide_flag, subj) < 0)
       continue;
     if (from > 0 && from != uid) continue;
@@ -1135,7 +1137,7 @@ new_write_user_clar(FILE *f, int uid, int cid, int format)
     err("clarifications are disabled");
     return -SRV_ERR_CLARS_DISABLED;
   }
-  if (cid < 0 || cid >= clar_get_total()) {
+  if (cid < 0 || cid >= clar_get_total(clarlog_state)) {
     err("invalid clar_id %d", cid);
     return -SRV_ERR_BAD_CLAR_ID;
   }
@@ -1145,7 +1147,7 @@ new_write_user_clar(FILE *f, int uid, int cid, int format)
   start_time = run_get_start_time();
   if (global->virtual)
     start_time = run_get_virtual_start_time(uid);
-  if (clar_get_record(cid, &time, &size, NULL,
+  if (clar_get_record(clarlog_state, cid, &time, &size, NULL,
                       &from, &to, NULL, NULL, &hide_flag, subj) < 0) {
     return -SRV_ERR_BAD_CLAR_ID;
   }
@@ -1511,7 +1513,7 @@ do_write_kirov_standings(FILE *f,
             head_style);
     if (!client_flag) {
       if (footer_str) {
-        process_template(f, footer_str, 0, 0, 0, get_copyright());
+        process_template(f, footer_str, 0, 0, 0, get_copyright(0));
       } else {
         fprintf(f, "</body></html>");
       }
@@ -2226,7 +2228,7 @@ do_write_kirov_standings(FILE *f,
 
       if (!client_flag) {
         if (footer_str) {
-          process_template(f, footer_str, 0, 0, 0, get_copyright());
+          process_template(f, footer_str, 0, 0, 0, get_copyright(0));
         } else {
           fputs("</body></html>", f);
         }
@@ -2316,7 +2318,7 @@ do_write_kirov_standings(FILE *f,
                              pr_attrs, pc_attrs);
 
     if (footer_str) {
-      process_template(f, footer_str, 0, 0, 0, get_copyright());
+      process_template(f, footer_str, 0, 0, 0, get_copyright(0));
     } else {
       fputs("</body></html>", f);
     }
@@ -2547,7 +2549,7 @@ do_write_moscow_standings(FILE *f,
             head_style);
     if (!client_flag) {
       if (footer_str) {
-        process_template(f, footer_str, 0, 0, 0, get_copyright());
+        process_template(f, footer_str, 0, 0, 0, get_copyright(0));
       } else {
         fprintf(f, "</body></html>");
       }
@@ -3130,7 +3132,7 @@ do_write_moscow_standings(FILE *f,
                                 pgrefs, pg_n1, pg_n2, pg_sc1, pg_sc2,
                                 pg_pen1, pg_pen2, pr_attrs, pc_attrs);
         if (footer_str) {
-          process_template(f, footer_str, 0, 0, 0, get_copyright());
+          process_template(f, footer_str, 0, 0, 0, get_copyright(0));
         } else {
           fputs("</body></html>", f);
         }
@@ -3208,7 +3210,7 @@ do_write_moscow_standings(FILE *f,
                               pg_pen1, pg_pen2, pr_attrs, pc_attrs);
     }
     if (footer_str) {
-      process_template(f, footer_str, 0, 0, 0, get_copyright());
+      process_template(f, footer_str, 0, 0, 0, get_copyright(0));
     } else {
       fputs("</body></html>", f);
     }
@@ -3338,7 +3340,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
             head_style);
     if (!client_flag) {
       if (footer_str) {
-        process_template(f, footer_str, 0, 0, 0, get_copyright());
+        process_template(f, footer_str, 0, 0, 0, get_copyright(0));
       } else {
         fprintf(f, "</body></html>");
       }
@@ -3801,7 +3803,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     fputs("</table>\n", f);
     if (!client_flag) {
       if (footer_str) {
-        process_template(f, footer_str, 0, 0, 0, get_copyright());
+        process_template(f, footer_str, 0, 0, 0, get_copyright(0));
       } else {
         fputs("</body></html>", f);
       } 

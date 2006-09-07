@@ -169,7 +169,7 @@ void
 client_put_footer(FILE *out, unsigned char const *template)
 {
   if (!template) template = default_footer_template;
-  process_template(out, template, 0, 0, 0, get_copyright(), 0);
+  process_template(out, template, 0, 0, 0, get_copyright(0), 0);
 }
 
 int

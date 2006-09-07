@@ -62,6 +62,8 @@ struct userlist_clnt *ul_conn;
 int ul_uid;
 unsigned char *ul_login;
 
+struct session_info *session_first, *session_last;
+
 // plugin information
 struct nsdb_loaded_plugin
 {
@@ -105,6 +107,84 @@ nsdb_priv_remove_user(int user_id, int contest_id)
   return nsdb_default->iface->priv_remove_user(nsdb_default->data, user_id, contest_id);
 }
 
+struct session_info *
+new_server_get_session(ej_cookie_t session_id, time_t cur_time)
+{
+  struct session_info *p;
+
+  if (!cur_time) cur_time = time(0);
+  for (p = session_first; p; p = p->next) {
+    if (p->session_id == session_id) break;
+  }
+  if (!p) {
+    XCALLOC(p, 1);
+    p->session_id = session_id;
+    p->expire_time = cur_time + 60*60*24;
+    if (session_first) {
+      session_first->prev = p;
+      p->next = session_first;
+      session_first = p;
+    } else {
+      session_first = session_last = p;
+    }
+  } else if (p != session_first) {
+    // move the session to the head of the list
+    p->prev->next = p->next;
+    if (!p->next) {
+      session_last = p->prev;
+    } else {
+      p->next->prev = p->prev;
+    }
+    p->prev = 0;
+    session_first->prev = p;
+    p->next = session_first;
+    session_first = p;
+  }
+  return p;
+}
+
+static void
+do_remove_session(struct session_info *p)
+{
+  if (!p) return;
+
+  if (!p->prev) {
+    session_first = p->next;
+  } else {
+    p->prev->next = p->next;
+  }
+  if (!p->next) {
+    session_last = p->prev;
+  } else {
+    p->next->prev = p->prev;
+  }
+  // cleanup p
+  xfree(p);
+}
+
+void
+new_server_remove_session(ej_cookie_t session_id)
+{
+  struct session_info *p;
+
+  for (p = session_first; p; p = p->next) {
+    if (p->session_id == session_id) break;
+  }
+  do_remove_session(p);
+}
+
+void
+new_server_remove_expired_sessions(time_t cur_time)
+{
+  struct session_info *p, *q;
+
+  if (!cur_time) cur_time = time(0);
+  for (p = session_first; p; p = q) {
+    q = p->next;
+    if (p->expire_time < cur_time)
+      do_remove_session(p);
+  }
+}
 
 static void
 startup_error(const char *format, ...)

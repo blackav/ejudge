@@ -45,15 +45,18 @@ make_copyright(unsigned char *buf, size_t size)
 }
 
 static unsigned char *copyright_str = 0;
+static int copyright_locale = 0;
 unsigned char *
-get_copyright(void)
+get_copyright(int locale_id)
 {
-  if (!copyright_str) {
+  if (!copyright_str || locale_id != copyright_locale) {
     unsigned char buf[1024];
 
     buf[0] = 0;
     make_copyright(buf, sizeof(buf));
+    xfree(copyright_str);
     copyright_str = xstrdup(buf);
+    copyright_locale = locale_id;
   }
   return copyright_str;
 }
