@@ -78,6 +78,8 @@ enum
     ULS_LOOKUP_USER_ID,
     ULS_CHECK_USER,
     ULS_GET_COOKIE,
+    ULS_ADD_NOTIFY,
+    ULS_DEL_NOTIFY,
 
     ULS_LAST_CMD
   };
@@ -94,6 +96,7 @@ enum
     ULS_UID_2,
     ULS_PASSWORD,
     ULS_CLONED,
+    ULS_NOTIFICATION,
   };
 
 /* various error codes */
@@ -342,6 +345,12 @@ struct userlist_pk_uid_2
   int name_len;
   ej_cookie_t cookie;
   unsigned char data[2];
+};
+
+struct userlist_pk_notification
+{
+  short reply_id;
+  int contest_id;
 };
 
 #endif /* __USERLIST_PROTO_H__ */

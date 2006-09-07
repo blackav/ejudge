@@ -303,4 +303,7 @@ int userlist_clnt_dump_database(struct userlist_clnt *clnt, int cmd,
 int userlist_clnt_clear_team_passwords(struct userlist_clnt *clnt,
                                        int contest_id);
 
+int userlist_clnt_notify(struct userlist_clnt *clnt, int cmd, int contest_id);
+int userlist_clnt_read_notification(struct userlist_clnt *clnt, int *p_contest_id);
+
 #endif /* __USERLIST_CLNT_H__ */
