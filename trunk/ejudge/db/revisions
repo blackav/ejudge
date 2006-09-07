@@ -658,3 +658,10 @@ new_server_html.c 3310 0 5249078
 server_framework.c 3310 0 1716409
 new_server_clnt/recv_packet.c 3309 0 220760
 userlist_xml.c 3312 0 4175241
+new-server.h 3315 0 221682
+userlist_clnt.h 3315 0 787140
+new-server.c 3315 0 1099180
+userlist-server.c 3315 0 17059922
+copyright.c 3315 0 181873
+new_server_html.c 3315 0 6295706
+userlist_clnt/get_cookie.c 3314 0 226361
