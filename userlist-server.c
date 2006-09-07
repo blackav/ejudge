@@ -91,6 +91,23 @@ enum
     STATE_AUTOCLOSE,
   };
 
+/* information about a connections, which observe changes */
+struct client_state;
+struct new_contest_extra;
+struct observer_info
+{
+  // next and previous element in the contest_extra's list
+  struct observer_info *cnts_next, *cnts_prev;
+  // next and previous element in the client_state's list
+  struct observer_info *clnt_next, *clnt_prev;
+  // the client, which observes
+  struct client_state *client;
+  // the contest, which is observed
+  struct new_contest_extra *contest;
+  // the event flag
+  int changed;
+};
+
 struct contest_extra
 {
   int nref;
@@ -98,6 +115,13 @@ struct contest_extra
   key_t shm_key;
   int shm_id;
   struct userlist_table *tbl;
+};
+
+/* new extra information about contest */
+struct new_contest_extra
+{
+  int id;
+  struct observer_info *o_first, *o_last; /* list of observers */
 };
 
 struct client_state
@@ -139,6 +163,10 @@ struct client_state
 
   // attached contest exchange info
   struct contest_extra *cnts_extra;
+
+  /* list of contests, which are observed */
+  struct observer_info *o_first, *o_last;
+  int o_count;                  /* counter of triggered observers */
 };
 
 static struct ejudge_cfg *config;
@@ -150,6 +178,10 @@ static int serial_id = 1;
 static unsigned char *program_name;
 static struct contest_extra **contest_extras;
 static int contest_extras_size;
+
+// sometimes these will replace `contest_extras'
+static struct new_contest_extra **new_contest_extras;
+static size_t new_contest_extras_size;
 
 static time_t cur_time;
 static time_t last_cookie_check;
@@ -315,8 +347,124 @@ detach_contest_extra(struct contest_extra *ex)
   return 0;
 }
 
+static struct new_contest_extra *
+new_contest_extra_get(int contest_id)
+{
+  size_t new_size = 0;
+  struct new_contest_extra **new_ptr = 0, *p;
+
+  ASSERT(contest_id > 0);
+  if (contest_id >= new_contest_extras_size) {
+    if (!(new_size = new_contest_extras_size)) new_size = 32;
+    while (contest_id >= new_size) new_size *= 2;
+    XCALLOC(new_ptr, new_size);
+    if (new_contest_extras_size > 0)
+      memcpy(new_ptr, new_contest_extras,
+             new_contest_extras_size * sizeof(new_ptr[0]));
+    xfree(new_contest_extras);
+    new_contest_extras_size = new_size;
+    new_contest_extras = new_ptr;
+  }
+  if (!(p = new_contest_extras[contest_id])) {
+    XCALLOC(p, 1);
+    p->id = contest_id;
+    new_contest_extras[contest_id] = p;
+  }
+  return new_contest_extras[contest_id];
+}
+
+static struct new_contest_extra *
+new_contest_extra_try(int contest_id)
+{
+  ASSERT(contest_id > 0);
+  if (contest_id >= new_contest_extras_size) return 0;
+  return new_contest_extras[contest_id];
+}
+
 static void
-update_userlist_table(int cnts_id)
+add_observer(struct client_state *client, int contest_id)
+{
+  struct observer_info *p;
+  struct new_contest_extra *contest;
+
+  // check, that the contest is already observed
+  for (p = client->o_first; p; p = p->clnt_next)
+    if (p->contest->id == contest_id)
+      return;
+
+  contest = new_contest_extra_get(contest_id);
+  XCALLOC(p, 1);
+  p->client = client;
+  p->contest = contest;
+
+  p->clnt_next = client->o_first;
+  if (client->o_first) {
+    client->o_first->clnt_prev = p;
+  } else {
+    client->o_last = p;
+  }
+  client->o_first = p;
+
+  p->cnts_next = contest->o_first;
+  if (contest->o_first) {
+    contest->o_first->cnts_prev = p;
+  } else {
+    contest->o_last = p;
+  }
+  contest->o_first = p;
+}
+
+static void
+remove_observer(struct observer_info *p)
+{
+  struct new_contest_extra *contest;
+  struct client_state *client;
+
+  if (!p) return;
+  contest = p->contest;
+  client = p->client;
+
+  // remove from contest list
+  if (p->cnts_next) {
+    p->cnts_next->cnts_prev = p->cnts_prev;
+  } else {
+    contest->o_last = p->cnts_prev;
+  }
+  if (p->cnts_prev) {
+    p->cnts_prev->cnts_next = p->cnts_next;
+  } else {
+    contest->o_first = p->cnts_next;
+  }
+
+  // remove from client list
+  if (p->clnt_next) {
+    p->clnt_next->clnt_prev = p->clnt_prev;
+  } else {
+    client->o_last = p->clnt_prev;
+  }
+  if (p->clnt_prev) {
+    p->clnt_prev->clnt_next = p->clnt_next;
+  } else {
+    client->o_first = p->clnt_next;
+  }
+
+  if (p->changed) client->o_count--;
+  memset(p, 0, sizeof(*p));
+  xfree(p);
+}
+
+static void
+remove_observer_2(struct client_state *client, int contest_id)
+{
+  struct observer_info *p;
+
+  for (p = client->o_first; p; p = p->clnt_next)
+    if (p->contest->id == contest_id)
+      return remove_observer(p);
+}
+
+static void
+old_update_userlist_table(int cnts_id)
 {
   struct userlist_table *ntb;
   struct contest_extra *ex;
@@ -328,6 +476,28 @@ update_userlist_table(int cnts_id)
   ntb = ex->tbl;
   if (!ntb) return;
   ntb->vintage++;
+}
+
+static void
+new_update_userlist_table(int cnts_id)
+{
+  struct new_contest_extra *ne;
+  struct observer_info *p;
+
+  if (!(ne = new_contest_extra_try(cnts_id))) return;
+  for (p = ne->o_first; p; p = p->cnts_next) {
+    if (!p->changed) {
+      p->changed = 1;
+      p->client->o_count++;
+    }
+  }
+}
+
+static void
+update_userlist_table(int cnts_id)
+{
+  old_update_userlist_table(cnts_id);
+  new_update_userlist_table(cnts_id);
 }
 
 static void
@@ -547,6 +717,7 @@ static void
 disconnect_client(struct client_state *p)
 {
   ASSERT(p);
+  struct observer_info *o, *oo;
 
   // return the descriptor to the blocking mode
   fcntl(p->fd, F_SETFL, fcntl(p->fd, F_GETFL) & ~O_NONBLOCK);
@@ -567,6 +738,11 @@ disconnect_client(struct client_state *p)
     p->next->prev = p->prev;
   } else {
     last_client = p->prev;
+  }
+
+  for (o = p->o_first; o; o = oo) {
+    oo = o->clnt_next;
+    remove_observer(o);
   }
 
   memset(p, 0, sizeof(*p));
@@ -6224,6 +6400,44 @@ cmd_get_cookie(struct client_state *p,
   }
 }
 
+static void
+cmd_observer_cmd(struct client_state *p,
+                 int pkt_len,
+                 struct userlist_pk_map_contest *data)
+{
+  unsigned char logbuf[1024];
+  const struct contest_desc *cnts = 0;
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf), "OBSERVER: %d, %d, %d",
+           p->id, data->request_id, data->contest_id);
+
+  if (contests_get(data->contest_id, &cnts) < 0 || !cnts) {
+    err("%s -> invalid contest_id: %d", logbuf, data->contest_id);
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
+
+  switch (data->request_id) {
+  case ULS_ADD_NOTIFY:
+    add_observer(p, data->contest_id);
+    break;
+  case ULS_DEL_NOTIFY:
+    remove_observer_2(p, data->contest_id);
+    break;
+  default:
+    abort();
+  }
+
+  info("%s -> OK", logbuf);
+  send_reply(p, ULS_OK);
+  return;
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW]            cmd_register_new,
@@ -6280,6 +6494,8 @@ static void (*cmd_table[])() =
   [ULS_LOOKUP_USER_ID]          cmd_lookup_user_id,
   [ULS_CHECK_USER]              cmd_check_user,
   [ULS_GET_COOKIE]              cmd_get_cookie,
+  [ULS_ADD_NOTIFY]              cmd_observer_cmd,
+  [ULS_DEL_NOTIFY]              cmd_observer_cmd,
 
   [ULS_LAST_CMD] 0
 };
@@ -6300,6 +6516,34 @@ process_packet(struct client_state *p, int pkt_len, unsigned char *data)
     return;
   }
   (*cmd_table[packet->id])(p, pkt_len, data);
+}
+
+static void
+check_observers(void)
+{
+  struct client_state *p;
+  struct observer_info *o;
+  struct userlist_pk_notification out;
+
+  for (p = first_client; p; p = p->next) {
+    if (p->write_len > 0
+        || p->state != STATE_READ_DATA
+        || p->read_state != 0
+        || p->o_count <= 0) continue;
+    for (o = p->o_first; o; o = o->clnt_next)
+      if (o->changed)
+        break;
+    if (!o) {
+      p->o_count = 0;
+      continue;
+    }
+    memset(&out, 0, sizeof(out));
+    out.reply_id = ULS_NOTIFICATION;
+    out.contest_id = o->contest->id;
+    enqueue_reply_to_client(p, sizeof(out), &out);
+    o->changed = 0;
+    p->o_count--;
+  }
 }
 
 static int
@@ -6396,6 +6640,8 @@ do_work(void)
       disconnect_client(p);
     }
     */
+    /* check, that there exist outstanding observer events */
+    check_observers();
 
     FD_ZERO(&rset);
     FD_ZERO(&wset);
