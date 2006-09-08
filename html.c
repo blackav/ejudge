@@ -1007,7 +1007,8 @@ team_clar_flags(int user_id, int clar_id, int flags,
                 int from, int to)
 {
   if (from != user_id) {
-    if (!team_extra_get_clar_status(user_id, clar_id)) return "N";
+    if (!team_extra_get_clar_status(team_extra_state, user_id, clar_id))
+      return "N";
     else return "&nbsp;";
   }
   if (!flags) return "U";
@@ -1025,7 +1026,8 @@ count_unread_clars(int user_id, time_t start_time)
     if (to > 0 && to != user_id) continue;
     if (!to && from > 0) continue;
     if (start_time <= 0 && hide_flag) continue;
-    if (from != user_id && !team_extra_get_clar_status(user_id, i))
+    if (from != user_id && !team_extra_get_clar_status(team_extra_state,
+                                                       user_id, i))
       total++;
   }
   return total;
@@ -1157,7 +1159,7 @@ new_write_user_clar(FILE *f, int uid, int cid, int format)
   if (start_time <= 0 && hide_flag) return -SRV_ERR_ACCESS_DENIED;
 
   if (from != uid) {
-    team_extra_set_clar_status(uid, cid);
+    team_extra_set_clar_status(team_extra_state, uid, cid);
   }
 
   sprintf(cname, "%06d", cid);
@@ -1453,7 +1455,7 @@ do_write_kirov_standings(FILE *f,
   struct teamdb_export u_info;
   struct run_entry *runs;
   int ttot_att, ttot_succ, perc, t;
-  struct team_extra *t_extra;
+  const struct team_extra *t_extra;
   const unsigned char *row_attr = 0;
   int users_per_page, total_pages, current_page, user_on_page, dur_len;
   unsigned char **pgrefs = 0;
@@ -2127,7 +2129,7 @@ do_write_kirov_standings(FILE *f,
     if (global->stand_show_contestant_status
         || global->stand_show_warn_number
         || global->contestant_status_row_attr) {
-      t_extra = team_extra_get_entry(t_ind[t]);
+      t_extra = team_extra_get_entry(team_extra_state, t_ind[t]);
     } else {
       t_extra = 0;
     }
@@ -2477,7 +2479,7 @@ do_write_moscow_standings(FILE *f,
   int last_success_run = -1;
   int last_submit_run = -1;
   struct teamdb_export u_info;
-  struct team_extra *u_extra;
+  const struct team_extra *u_extra;
   path_t stand_tmp;             /* temporary file path */
   path_t stand_path;            /* final path for a standings page */
   unsigned char *row_attr;
@@ -3031,7 +3033,7 @@ do_write_moscow_standings(FILE *f,
     if (global->stand_show_contestant_status
         || global->stand_show_warn_number
         || global->contestant_status_row_attr)
-      u_extra = team_extra_get_entry(u_ind[u]);
+      u_extra = team_extra_get_entry(team_extra_state, u_ind[u]);
     /* FIXME: consider virtual and real users */
     if (prev_prob != u_score[u]) {
       prev_prob = u_score[u];
@@ -3292,7 +3294,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   time_t last_success_time = 0;
   time_t last_success_start = 0;
   int *tot_att, *succ_att;
-  struct team_extra *t_extra;
+  const struct team_extra *t_extra;
   unsigned char *r0_attr = "", *rT_attr = "", *table_attr;
   unsigned char *r_attrs[2][2] = {{"", ""}, {"", ""}};
   int row_sh, row_sz, up_ind, attr_num;
@@ -3637,7 +3639,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       if (global->stand_show_contestant_status
           || global->stand_show_warn_number
           || global->contestant_status_row_attr) {
-        t_extra = team_extra_get_entry(t_ind[t]);
+        t_extra = team_extra_get_entry(team_extra_state, t_ind[t]);
       } else {
         t_extra = 0;
       }
@@ -4726,8 +4728,8 @@ write_team_page(FILE *f, int user_id,
   time_t current_time = time(0);
   unsigned char *prob_str;
   int unread_clars = 0;
-  struct team_extra *t_extra;
-  struct team_warning *cur_warn;
+  const struct team_extra *t_extra;
+  const struct team_warning *cur_warn;
   time_t user_deadline;
   int user_penalty;
   unsigned char *user_login = teamdb_get_login(teamdb_state, user_id);
@@ -4814,7 +4816,7 @@ write_team_page(FILE *f, int user_id,
     }
   }
 
-  t_extra = team_extra_get_entry(user_id);
+  t_extra = team_extra_get_entry(team_extra_state, user_id);
   if (t_extra && t_extra->warn_u > 0) {
     fprintf(f, "<hr><%s>%s (%s %d)</%s>\n", cur_contest->team_head_style,
             _("Warnings"), _("total"), t_extra->warn_u,
