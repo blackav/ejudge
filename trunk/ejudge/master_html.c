@@ -148,7 +148,7 @@ print_nav_buttons(FILE *f, int run_id,
 }
 
 static void
-parse_error_func(unsigned char const *format, ...)
+parse_error_func(void *data, unsigned char const *format, ...)
 {
   va_list args;
   unsigned char buf[1024];
@@ -500,8 +500,9 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
 
     u->prev_filter_expr = xstrdup(filter_expr);
     u->tree_mem = filter_tree_new();
-    filter_expr_set_string(filter_expr, u->tree_mem, parse_error_func);
-    filter_expr_init_parser(u->tree_mem, parse_error_func);
+    filter_expr_set_string(filter_expr, u->tree_mem, parse_error_func,
+                           &serve_state);
+    filter_expr_init_parser(u->tree_mem, parse_error_func, &serve_state);
     i = filter_expr_parse();
     if (i + filter_expr_nerrs == 0 && filter_expr_lval &&
         filter_expr_lval->type == FILTER_TYPE_BOOL) {
@@ -511,9 +512,9 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
       // parsing failed
       if (i + filter_expr_nerrs == 0 && filter_expr_lval &&
           filter_expr_lval->type != FILTER_TYPE_BOOL) {
-        parse_error_func("bool expression expected");
+        parse_error_func(&serve_state, "bool expression expected");
       } else {
-        parse_error_func("filter expression parsing failed");
+        parse_error_func(&serve_state, "filter expression parsing failed");
       }
       /* In the error case we print the diagnostics, new filter expression
        * form (incl. "Reset filter") button.
@@ -557,7 +558,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
       if (u->prev_tree) {
         r = filter_tree_bool_eval(&env, u->prev_tree);
         if (r < 0) {
-          parse_error_func("run %d: %s", i, filter_strerror(-r));
+          parse_error_func(&serve_state, "run %d: %s", i, filter_strerror(-r));
           continue;
         }
         if (!r) continue;

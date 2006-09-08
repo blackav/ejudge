@@ -4,7 +4,7 @@
 #ifndef __FILTER_TREE_H__
 #define __FILTER_TREE_H__
 
-/* Copyright (C) 2002,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -123,11 +123,13 @@ void filter_tree_print(struct filter_tree *p, FILE *out,
 int filter_expr_lex(void);
 void filter_expr_set_string(unsigned char const *str,
                             struct filter_tree_mem *mem,
-                            void (*errfunc)(unsigned char const *, ...));
+                            void (*errfunc)(void *,unsigned char const *, ...),
+                            void *);
 int filter_expr_parse(void);
 void filter_tree_stats(struct filter_tree_mem *mem, FILE *);
 void filter_expr_init_parser(struct filter_tree_mem *mem,
-                             void (*errfunc)(unsigned char const *, ...));
+                             void (*errfunc)(void *,unsigned char const *, ...),
+                             void *);
 
 unsigned char const *filter_tree_type_to_str(int type);
 unsigned char const *filter_tree_kind_to_str(int kind);
