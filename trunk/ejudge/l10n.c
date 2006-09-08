@@ -31,7 +31,7 @@
 static int l10n_flag = 0;
 #endif /* CONF_HAS_LIBINTL */
 
-static const unsigned char *locales[] =
+static const unsigned char * const locales[] =
 {
   "English",
   "Russian",

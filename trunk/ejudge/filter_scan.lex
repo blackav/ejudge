@@ -1,7 +1,7 @@
 /* -*- mode: fundamental -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,18 +30,20 @@
 
 extern int filter_expr_nerrs;
 
-static unsigned char *scan_buf;
-static size_t scan_len;
-static size_t scan_read;
-static void (*scan_err)(unsigned char const *, ...);
+/* NOTE: scanner uses lost of static variables during its operation,
+ *       so, it should be used with care.
+ */
+static unsigned char *filter_scan_buf;
+static size_t filter_scan_len;
+static size_t filter_scan_read;
+static void (*filter_scan_err)(unsigned char const *, ...);
+static struct filter_tree_mem *filter_scan_tree_mem;
 
-static struct filter_tree_mem *tree_mem;
+#define TT(t,y) filter_expr_lval = filter_tree_new_node(filter_scan_tree_mem, t, y, 0, 0); return t
+#define T(t) filter_expr_lval = filter_tree_new_node(filter_scan_tree_mem, t, 0, 0, 0); return t
+#define TR(r) filter_expr_lval = filter_tree_new_result(filter_scan_tree_mem, r); return TOK_RESULT_L
 
-#define TT(t,y) filter_expr_lval = filter_tree_new_node(tree_mem, t, y, 0, 0); return t
-#define T(t) filter_expr_lval = filter_tree_new_node(tree_mem, t, 0, 0, 0); return t
-#define TR(r) filter_expr_lval = filter_tree_new_result(tree_mem, r); return TOK_RESULT_L
-
-#define YY_INPUT(buf,result,max_size) do { if (scan_read >= scan_len) result = YY_NULL; else if (scan_len - scan_read > max_size) { memcpy(buf, scan_buf + scan_read, max_size); scan_read += max_size; result = max_size; } else { memcpy(buf, scan_buf + scan_read, scan_len - scan_read); result = scan_len - scan_read; scan_read = scan_len; } } while (0)
+#define YY_INPUT(buf,result,max_size) do { if (filter_scan_read >= filter_scan_len) result = YY_NULL; else if (filter_scan_len - filter_scan_read > max_size) { memcpy(buf, filter_scan_buf + filter_scan_read, max_size); filter_scan_read += max_size; result = max_size; } else { memcpy(buf, filter_scan_buf + filter_scan_read, filter_scan_len - filter_scan_read); result = filter_scan_len - filter_scan_read; filter_scan_read = filter_scan_len; } } while (0)
 
 static void handle_int(void);
 
@@ -141,8 +143,8 @@ lett    [A-Za-z_]
 "hash_t" { TT(TOK_HASH_T, FILTER_TYPE_HASH); }
 "ip_t" { TT(TOK_IP_T, FILTER_TYPE_IP); }
 
-"true" { filter_expr_lval = filter_tree_new_bool(tree_mem, 1); return TOK_BOOL_L; }
-"false" { filter_expr_lval = filter_tree_new_bool(tree_mem, 0); return TOK_BOOL_L; }
+"true" { filter_expr_lval = filter_tree_new_bool(filter_scan_tree_mem, 1); return TOK_BOOL_L; }
+"false" { filter_expr_lval = filter_tree_new_bool(filter_scan_tree_mem, 0); return TOK_BOOL_L; }
 
 "OK" { TR(RUN_OK); }
 "CE" { TR(RUN_COMPILE_ERR); }
@@ -174,10 +176,10 @@ lett    [A-Za-z_]
 {ws}+ {}
 
 \"[^\"]*\" |
-\'[^\']*\' { filter_expr_lval = filter_tree_new_buf(tree_mem, yytext + 1, yyleng - 2); return TOK_STRING_L; }
+\'[^\']*\' { filter_expr_lval = filter_tree_new_buf(filter_scan_tree_mem, yytext + 1, yyleng - 2); return TOK_STRING_L; }
 
-{lett}+ { (*scan_err)("invalid keyword `%.*s'", yyleng, yytext); }
-[\040-\377] { (*scan_err)("invalid character `%c'", *yytext); }
+{lett}+ { (*filter_scan_err)("invalid keyword `%.*s'", yyleng, yytext); }
+[\040-\377] { (*filter_scan_err)("invalid character `%c'", *yytext); }
 
 %%
 
@@ -195,10 +197,10 @@ handle_int(void)
   val = strtol(buf, &tmpeptr, 0);
   eptr = tmpeptr;
   if (errno) {
-    (*scan_err)("value is out of range");
+    (*filter_scan_err)("value is out of range");
     val = 0;
   }
-  filter_expr_lval = filter_tree_new_int(tree_mem, val);
+  filter_expr_lval = filter_tree_new_int(filter_scan_tree_mem, val);
 }
 
 static void
@@ -222,17 +224,17 @@ filter_expr_set_string(unsigned char const *str,
 
   yyrestart(0);
   BEGIN(INITIAL);
-  scan_buf = (unsigned char*) str;
-  scan_len = strlen(str);
-  scan_read = 0;
-  scan_err = errfnc;
-  tree_mem = mem;
-  if (!scan_err) {
-    scan_err = local_err_func;
+  filter_scan_buf = (unsigned char*) str;
+  filter_scan_len = strlen(str);
+  filter_scan_read = 0;
+  filter_scan_err = errfnc;
+  filter_scan_tree_mem = mem;
+  if (!filter_scan_err) {
+    filter_scan_err = local_err_func;
   }
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")

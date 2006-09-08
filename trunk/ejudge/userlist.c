@@ -1006,7 +1006,7 @@ userlist_login_hash(const unsigned char *p)
   return hash;
 }
 
-static int primes[] =
+static const int primes[] =
 {
   4099,
   8209,

@@ -3,7 +3,7 @@
 #ifndef __PARSECFG_H__
 #define __PARSECFG_H__
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,9 +36,9 @@ struct config_parse_info
 
 struct config_section_info
 {
-  char                     *name;
+  const char               *name;
   unsigned long             size;
-  struct config_parse_info *info;
+  const struct config_parse_info *info;
   int                      *pcounter;
   void (*init_func)(struct generic_section_config *);
   void (*free_func)(struct generic_section_config *);
@@ -74,7 +74,7 @@ typedef struct cfg_cond_var
 
 struct generic_section_config *parse_param(char const *path,
                                            FILE *f,
-                                           struct config_section_info *,
+                                           const struct config_section_info *,
                                            int quiet_flag,
                                            int nvar,
                                            cfg_cond_var_t *pvar,

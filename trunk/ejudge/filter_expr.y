@@ -1,7 +1,7 @@
 /* -*- mode: fundamental; coding: koi8-r -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,21 +27,19 @@
 #include <stdarg.h>
 #include <limits.h>
 
-static struct filter_tree_mem *tree_mem;
-
 /* for local use */
 typedef struct filter_tree *tree_t;
-#define MKINT(i) filter_tree_new_int(tree_mem, i)
-#define MKSTRING(s) filter_tree_new_string(tree_mem, s)
-#define MKSTRING2(s) filter_tree_new_string2(tree_mem, s)
-#define MKBOOL(b) filter_tree_new_bool(tree_mem, b)
-#define MKDUR(u) filter_tree_new_dur(tree_mem, u)
-#define MKTIME(a) filter_tree_new_time(tree_mem, a)
-#define MKSIZE(z) filter_tree_new_size(tree_mem, z)
-#define MKRESULT(r) filter_tree_new_result(tree_mem, r)
-#define MKHASH(h) filter_tree_new_hash(tree_mem, h)
-#define MKIP(p) filter_tree_new_ip(tree_mem, p)
-#define MKCOPY(c) filter_tree_dup(tree_mem, c)
+#define MKINT(i) filter_tree_new_int(filter_expr_tree_mem, i)
+#define MKSTRING(s) filter_tree_new_string(filter_expr_tree_mem, s)
+#define MKSTRING2(s) filter_tree_new_string2(filter_expr_tree_mem, s)
+#define MKBOOL(b) filter_tree_new_bool(filter_expr_tree_mem, b)
+#define MKDUR(u) filter_tree_new_dur(filter_expr_tree_mem, u)
+#define MKTIME(a) filter_tree_new_time(filter_expr_tree_mem, a)
+#define MKSIZE(z) filter_tree_new_size(filter_expr_tree_mem, z)
+#define MKRESULT(r) filter_tree_new_result(filter_expr_tree_mem, r)
+#define MKHASH(h) filter_tree_new_hash(filter_expr_tree_mem, h)
+#define MKIP(p) filter_tree_new_ip(filter_expr_tree_mem, p)
+#define MKCOPY(c) filter_tree_dup(filter_expr_tree_mem, c)
 
 static tree_t check_int(tree_t p);
 static tree_t check_bool(tree_t p);
@@ -73,7 +71,12 @@ static tree_t do_sub(tree_t, tree_t, tree_t);
 static void yyerror(unsigned char const *);
 static void do_error(unsigned char const *format, ...);
 
-static void (*parse_err)(unsigned char const *, ...);
+/*
+ * FIXME: filter_expr parser uses lots of static variables internally,
+ *        so, it should be used with care!
+ */
+static struct filter_tree_mem *filter_expr_tree_mem;
+static void (*filter_expr_parse_err)(unsigned char const *, ...);
 
 #define YYSTYPE struct filter_tree *
 #define YYERROR_VERBOSE
@@ -331,7 +334,7 @@ check_int(tree_t p)
 {
   ASSERT(p);
   if (p->type != FILTER_TYPE_INT) {
-    (*parse_err)("`int' expression expected");
+    (*filter_expr_parse_err)("`int' expression expected");
     yynerrs++;
     return MKINT(0);
   }
@@ -342,7 +345,7 @@ check_bool(tree_t p)
 {
   ASSERT(p);
   if (p->type != FILTER_TYPE_BOOL) {
-    (*parse_err)("`bool' expression expected");
+    (*filter_expr_parse_err)("`bool' expression expected");
     yynerrs++;
     return MKBOOL(0);
   }
@@ -364,8 +367,8 @@ do_un_minus(tree_t op, tree_t p)
     tree_t res = MKINT(0);
     int n;
 
-    n = filter_tree_eval_node(tree_mem, TOK_UN_MINUS, res, p, 0);
-    if (n < 0) (*parse_err)("%s", filter_strerror(-n));
+    n = filter_tree_eval_node(filter_expr_tree_mem, TOK_UN_MINUS, res, p, 0);
+    if (n < 0) (*filter_expr_parse_err)("%s", filter_strerror(-n));
     return res;
   }
   op->kind = TOK_UN_MINUS;
@@ -382,8 +385,8 @@ do_un_bitnot(tree_t op, tree_t p)
     tree_t res = MKINT(0);
     int n;
 
-    n = filter_tree_eval_node(tree_mem, '~', res, p, 0);
-    if (n < 0) (*parse_err)("%s", filter_strerror(-n));
+    n = filter_tree_eval_node(filter_expr_tree_mem, '~', res, p, 0);
+    if (n < 0) (*filter_expr_parse_err)("%s", filter_strerror(-n));
     return res;
   }
   op->kind = '~';
@@ -400,8 +403,8 @@ do_un_lognot(tree_t op, tree_t p)
     tree_t res = MKBOOL(0);
     int n;
 
-    n = filter_tree_eval_node(tree_mem, '!', res, p, 0);
-    if (n < 0) (*parse_err)("%s", filter_strerror(-n));
+    n = filter_tree_eval_node(filter_expr_tree_mem, '!', res, p, 0);
+    if (n < 0) (*filter_expr_parse_err)("%s", filter_strerror(-n));
     return res;
   }
   op->kind = '!';
@@ -451,8 +454,8 @@ do_sub(tree_t op, tree_t p1, tree_t p2)
     struct filter_tree *res = MKINT(0);
     int r;
 
-    r = filter_tree_eval_node(tree_mem, '-', res, p1, p2);
-    if (r < 0) (*parse_err)("%s", filter_strerror(-r));
+    r = filter_tree_eval_node(filter_expr_tree_mem, '-', res, p1, p2);
+    if (r < 0) (*filter_expr_parse_err)("%s", filter_strerror(-r));
     return res;
   }
 
@@ -461,7 +464,7 @@ do_sub(tree_t op, tree_t p1, tree_t p2)
   return op;
 
  undefined_op:
-  (*parse_err)("operation -(%s,%s) is not defined",
+  (*filter_expr_parse_err)("operation -(%s,%s) is not defined",
            filter_tree_type_to_str(p1->type),
            filter_tree_type_to_str(p2->type));
   return MKINT(0);
@@ -507,8 +510,8 @@ do_add(tree_t op, tree_t p1, tree_t p2)
     struct filter_tree *res = MKINT(0);
     int r;
 
-    r = filter_tree_eval_node(tree_mem, '+', res, p1, p2);
-    if (r < 0) (*parse_err)("%s", filter_strerror(-r));
+    r = filter_tree_eval_node(filter_expr_tree_mem, '+', res, p1, p2);
+    if (r < 0) (*filter_expr_parse_err)("%s", filter_strerror(-r));
     return res;
   }
 
@@ -517,7 +520,7 @@ do_add(tree_t op, tree_t p1, tree_t p2)
   return op;
 
  undefined_op:
-  (*parse_err)("operation +(%s,%s) is not defined",
+  (*filter_expr_parse_err)("operation +(%s,%s) is not defined",
            filter_tree_type_to_str(p1->type),
            filter_tree_type_to_str(p2->type));
   return MKINT(0);
@@ -563,7 +566,7 @@ do_bitop(tree_t op, tree_t p1, tree_t p2)
   ASSERT(p2);
 
   if (p1->type != FILTER_TYPE_INT || p2->type != FILTER_TYPE_INT) {
-    (*parse_err)("operation is not defined");
+    (*filter_expr_parse_err)("operation is not defined");
     return MKINT(0);
   }
 
@@ -571,8 +574,8 @@ do_bitop(tree_t op, tree_t p1, tree_t p2)
     struct filter_tree *res = MKINT(0);
     int r;
 
-    r = filter_tree_eval_node(tree_mem, op->kind, res, p1, p2);
-    if (r < 0) (*parse_err)("%s", filter_strerror(-r));
+    r = filter_tree_eval_node(filter_expr_tree_mem, op->kind, res, p1, p2);
+    if (r < 0) (*filter_expr_parse_err)("%s", filter_strerror(-r));
     return res;
   }
 
@@ -590,7 +593,7 @@ do_equality(tree_t op, tree_t p1, tree_t p2)
   ASSERT(p2);
 
   if (p1->type != p2->type) {
-    (*parse_err)("type mismatch");
+    (*filter_expr_parse_err)("type mismatch");
     return MKBOOL(0);
   }
 
@@ -598,8 +601,8 @@ do_equality(tree_t op, tree_t p1, tree_t p2)
     struct filter_tree *res = MKINT(0);
     int r;
 
-    r = filter_tree_eval_node(tree_mem, op->kind, res, p1, p2);
-    if (r < 0) (*parse_err)("%s", filter_strerror(-r));
+    r = filter_tree_eval_node(filter_expr_tree_mem, op->kind, res, p1, p2);
+    if (r < 0) (*filter_expr_parse_err)("%s", filter_strerror(-r));
     return res;
   }
 
@@ -618,11 +621,11 @@ do_relation(tree_t op, tree_t p1, tree_t p2)
 
   if (p1->type == FILTER_TYPE_HASH || p1->type == FILTER_TYPE_RESULT
       || p1->type == FILTER_TYPE_IP) {
-    (*parse_err)("operation is undefined for this type");
+    (*filter_expr_parse_err)("operation is undefined for this type");
     return MKBOOL(0);
   }
   if (p1->type != p2->type) {
-    (*parse_err)("type mismatch");
+    (*filter_expr_parse_err)("type mismatch");
     return MKBOOL(0);
   }
 
@@ -630,8 +633,8 @@ do_relation(tree_t op, tree_t p1, tree_t p2)
     struct filter_tree *res = MKINT(0);
     int r;
 
-    r = filter_tree_eval_node(tree_mem, op->kind, res, p1, p2);
-    if (r < 0) (*parse_err)("%s", filter_strerror(-r));
+    r = filter_tree_eval_node(filter_expr_tree_mem, op->kind, res, p1, p2);
+    if (r < 0) (*filter_expr_parse_err)("%s", filter_strerror(-r));
     return res;
   }
 
@@ -650,13 +653,13 @@ do_divmod(tree_t op, tree_t p1, tree_t p2)
 
   if (p1->type != FILTER_TYPE_INT && p1->type != FILTER_TYPE_DUR
       && p1->type != FILTER_TYPE_SIZE) {
-    (*parse_err)("%c is undefined for type %s", op->kind,
+    (*filter_expr_parse_err)("%c is undefined for type %s", op->kind,
              filter_tree_type_to_str(p1->type));
     return MKINT(0);
   }
   if (p2->type != FILTER_TYPE_INT && p2->type != FILTER_TYPE_DUR
       && p2->type != FILTER_TYPE_SIZE) {
-    (*parse_err)("%c is undefined for type %s", op->kind,
+    (*filter_expr_parse_err)("%c is undefined for type %s", op->kind,
              filter_tree_type_to_str(p2->type));
     return MKINT(0);
   }
@@ -671,7 +674,7 @@ do_divmod(tree_t op, tree_t p1, tree_t p2)
   } else if (p1->type == FILTER_TYPE_DUR && p2->type == FILTER_TYPE_INT) {
     op->type = FILTER_TYPE_DUR;
   } else {
-    (*parse_err)("invalid arguments of %c", op->kind);
+    (*filter_expr_parse_err)("invalid arguments of %c", op->kind);
     return MKINT(0);
   }
 
@@ -679,8 +682,8 @@ do_divmod(tree_t op, tree_t p1, tree_t p2)
     struct filter_tree *res = MKINT(0);
     int r;
 
-    r = filter_tree_eval_node(tree_mem, op->kind, res, p1, p2);
-    if (r < 0) (*parse_err)("%s", filter_strerror(-r));
+    r = filter_tree_eval_node(filter_expr_tree_mem, op->kind, res, p1, p2);
+    if (r < 0) (*filter_expr_parse_err)("%s", filter_strerror(-r));
     return res;
   }
 
@@ -698,13 +701,13 @@ do_multiply(tree_t op, tree_t p1, tree_t p2)
 
   if (p1->type != FILTER_TYPE_INT && p1->type != FILTER_TYPE_DUR
       && p1->type != FILTER_TYPE_SIZE) {
-    (*parse_err)("* is undefined for type %s",
+    (*filter_expr_parse_err)("* is undefined for type %s",
              filter_tree_type_to_str(p1->type));
     return MKINT(0);
   }
   if (p2->type != FILTER_TYPE_INT && p2->type != FILTER_TYPE_DUR
       && p2->type != FILTER_TYPE_SIZE) {
-    (*parse_err)("* is undefined for type %s",
+    (*filter_expr_parse_err)("* is undefined for type %s",
              filter_tree_type_to_str(p2->type));
     return MKINT(0);
   }
@@ -715,7 +718,7 @@ do_multiply(tree_t op, tree_t p1, tree_t p2)
     p2 = tmp;
   } else if (p2->type == FILTER_TYPE_INT) {
   } else {
-    (*parse_err)("one argument of * must be of type int");
+    (*filter_expr_parse_err)("one argument of * must be of type int");
     return MKINT(0);
   }
 
@@ -723,8 +726,8 @@ do_multiply(tree_t op, tree_t p1, tree_t p2)
     struct filter_tree *res = MKINT(0);
     int r;
 
-    r = filter_tree_eval_node(tree_mem, '*', res, p1, p2);
-    if (r < 0) (*parse_err)("%s", filter_strerror(-r));
+    r = filter_tree_eval_node(filter_expr_tree_mem, '*', res, p1, p2);
+    if (r < 0) (*filter_expr_parse_err)("%s", filter_strerror(-r));
     return res;
   }
 
@@ -745,8 +748,8 @@ do_int_cast(tree_t q, tree_t p)
     struct filter_tree res;
     int r;
 
-    if ((r = filter_tree_eval_node(tree_mem, TOK_INT, &res, p, 0)) < 0) {
-      (*parse_err)("%s", filter_strerror(-r));
+    if ((r = filter_tree_eval_node(filter_expr_tree_mem, TOK_INT, &res, p, 0)) < 0) {
+      (*filter_expr_parse_err)("%s", filter_strerror(-r));
       return MKINT(0);
     }
     return MKINT(res.v.b);
@@ -769,8 +772,8 @@ do_bool_cast(tree_t q, tree_t p)
     struct filter_tree res;
     int r;
 
-    if ((r = filter_tree_eval_node(tree_mem, TOK_BOOL, &res, p, 0)) < 0) {
-      (*parse_err)("%s", filter_strerror(-r));
+    if ((r = filter_tree_eval_node(filter_expr_tree_mem, TOK_BOOL, &res, p, 0)) < 0) {
+      (*filter_expr_parse_err)("%s", filter_strerror(-r));
       return MKBOOL(0);
     }
     return MKBOOL(res.v.b);
@@ -792,8 +795,8 @@ do_string_cast(tree_t q, tree_t p)
     struct filter_tree res;
     int r;
 
-    if ((r = filter_tree_eval_node(tree_mem, TOK_STRING, &res, p, 0)) < 0) {
-      (*parse_err)("%s", filter_strerror(-r));
+    if ((r = filter_tree_eval_node(filter_expr_tree_mem, TOK_STRING, &res, p, 0)) < 0) {
+      (*filter_expr_parse_err)("%s", filter_strerror(-r));
       return MKSTRING("");
     }
     return MKSTRING2(res.v.s);
@@ -816,15 +819,15 @@ do_dur_cast(tree_t q, tree_t p)
   if (p->kind == TOK_INT_L || p->kind == TOK_STRING_L) {
     struct filter_tree res;
 
-    if ((r = filter_tree_eval_node(tree_mem, TOK_DUR_T, &res, p, 0)) < 0) {
-      (*parse_err)("%s", filter_strerror(-r));
+    if ((r = filter_tree_eval_node(filter_expr_tree_mem, TOK_DUR_T, &res, p, 0)) < 0) {
+      (*filter_expr_parse_err)("%s", filter_strerror(-r));
       return MKDUR(0);
     }
     return MKDUR(res.v.u);
   }
   if (p->type != FILTER_TYPE_INT
       && p->type != FILTER_TYPE_STRING) {
-    (*parse_err)("expression of type %s cannot be converted to dur_t",
+    (*filter_expr_parse_err)("expression of type %s cannot be converted to dur_t",
              filter_tree_type_to_str(p->type));
     return MKDUR(0);
   }
@@ -845,15 +848,15 @@ do_time_cast(tree_t q, tree_t p)
   if (p->kind == TOK_INT_L || p->kind == TOK_STRING_L) {
     struct filter_tree res;
 
-    if ((r = filter_tree_eval_node(tree_mem, TOK_TIME_T, &res, p, 0)) < 0) {
-      (*parse_err)("%s", filter_strerror(-r));
+    if ((r = filter_tree_eval_node(filter_expr_tree_mem, TOK_TIME_T, &res, p, 0)) < 0) {
+      (*filter_expr_parse_err)("%s", filter_strerror(-r));
       return MKTIME(0);
     }
     return MKTIME(res.v.a);
   }
   if (p->type != FILTER_TYPE_INT
       && p->type != FILTER_TYPE_STRING) {
-    (*parse_err)("expression of type %s cannot be converted to time_t",
+    (*filter_expr_parse_err)("expression of type %s cannot be converted to time_t",
              filter_tree_type_to_str(p->type));
     return MKTIME(0);
   }
@@ -874,14 +877,14 @@ do_size_cast(tree_t q, tree_t p)
   if (p->kind == TOK_STRING_L || p->kind == TOK_INT_L) {
     struct filter_tree res;
 
-    if ((r = filter_tree_eval_node(tree_mem, TOK_SIZE_T, &res, p, 0)) < 0) {
-      (*parse_err)("%s", filter_strerror(-r));
+    if ((r = filter_tree_eval_node(filter_expr_tree_mem, TOK_SIZE_T, &res, p, 0)) < 0) {
+      (*filter_expr_parse_err)("%s", filter_strerror(-r));
       return MKSIZE(0);
     }
     return MKSIZE(res.v.z);
   }
   if (p->type != FILTER_TYPE_STRING && p->type != FILTER_TYPE_INT) {
-    (*parse_err)("expression of type %s cannot be converted to size_t",
+    (*filter_expr_parse_err)("expression of type %s cannot be converted to size_t",
              filter_tree_type_to_str(p->type));
     return MKSIZE(0);
   }
@@ -902,14 +905,14 @@ do_result_cast(tree_t q, tree_t p)
   if (p->kind == TOK_STRING_L || p->kind == TOK_INT_L) {
     struct filter_tree res;
 
-    if ((r = filter_tree_eval_node(tree_mem, TOK_RESULT_T, &res, p, 0)) < 0) {
-      (*parse_err)("%s", filter_strerror(-r));
+    if ((r = filter_tree_eval_node(filter_expr_tree_mem, TOK_RESULT_T, &res, p, 0)) < 0) {
+      (*filter_expr_parse_err)("%s", filter_strerror(-r));
       return MKRESULT(0);
     }
     return MKRESULT(res.v.r);
   }
   if (p->type != FILTER_TYPE_STRING && p->type != FILTER_TYPE_INT) {
-    (*parse_err)("expression of type %s cannot be converted to result_t",
+    (*filter_expr_parse_err)("expression of type %s cannot be converted to result_t",
              filter_tree_type_to_str(p->type));
     return MKRESULT(0);
   }
@@ -930,14 +933,14 @@ do_hash_cast(tree_t q, tree_t p)
   if (p->kind == TOK_STRING_L) {
     struct filter_tree res;
 
-    if ((r = filter_tree_eval_node(tree_mem, TOK_HASH_T, &res, p, 0)) < 0) {
-      (*parse_err)("%s", filter_strerror(-r));
+    if ((r = filter_tree_eval_node(filter_expr_tree_mem, TOK_HASH_T, &res, p, 0)) < 0) {
+      (*filter_expr_parse_err)("%s", filter_strerror(-r));
       return MKHASH(0);
     }
     return MKHASH(res.v.h);
   }
   if (p->type != FILTER_TYPE_STRING) {
-    (*parse_err)("expression of type %s cannot be converted to hash_t",
+    (*filter_expr_parse_err)("expression of type %s cannot be converted to hash_t",
              filter_tree_type_to_str(p->type));
     return MKHASH(0);
   }
@@ -958,14 +961,14 @@ do_ip_cast(tree_t q, tree_t p)
   if (p->kind == TOK_STRING_L || p->kind == TOK_INT_L) {
     struct filter_tree res;
 
-    if ((r = filter_tree_eval_node(tree_mem, TOK_IP_T, &res, p, 0)) < 0) {
-      (*parse_err)("%s", filter_strerror(-r));
+    if ((r = filter_tree_eval_node(filter_expr_tree_mem, TOK_IP_T, &res, p, 0)) < 0) {
+      (*filter_expr_parse_err)("%s", filter_strerror(-r));
       return MKIP(0);
     }
     return MKIP(res.v.p);
   }
   if (p->type != FILTER_TYPE_STRING && p->type != FILTER_TYPE_INT) {
-    (*parse_err)("expression of type %s cannot be converted to ip_t",
+    (*filter_expr_parse_err)("expression of type %s cannot be converted to ip_t",
              filter_tree_type_to_str(p->type));
     return MKIP(0);
   }
@@ -978,20 +981,20 @@ do_ip_cast(tree_t q, tree_t p)
 static void
 yyerror(unsigned char const *msg)
 {
-  (*parse_err)("%s", msg);
+  (*filter_expr_parse_err)("%s", msg);
 }
 
 void
 filter_expr_init_parser(struct filter_tree_mem *mem,
                         void (*errfunc)(unsigned char const *, ...))
 {
-  tree_mem = mem;
-  parse_err = errfunc;
-  if (!parse_err) parse_err = do_error;
+  filter_expr_tree_mem = mem;
+  filter_expr_parse_err = errfunc;
+  if (!filter_expr_parse_err) filter_expr_parse_err = do_error;
   //yydebug = 1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "jmp_buf")
