@@ -36,8 +36,9 @@ extern int filter_expr_nerrs;
 static unsigned char *filter_scan_buf;
 static size_t filter_scan_len;
 static size_t filter_scan_read;
-static void (*filter_scan_err)(unsigned char const *, ...);
+static void (*filter_scan_err)(void *, unsigned char const *, ...);
 static struct filter_tree_mem *filter_scan_tree_mem;
+static void *filter_scan_user_data;
 
 #define TT(t,y) filter_expr_lval = filter_tree_new_node(filter_scan_tree_mem, t, y, 0, 0); return t
 #define T(t) filter_expr_lval = filter_tree_new_node(filter_scan_tree_mem, t, 0, 0, 0); return t
@@ -178,8 +179,8 @@ lett    [A-Za-z_]
 \"[^\"]*\" |
 \'[^\']*\' { filter_expr_lval = filter_tree_new_buf(filter_scan_tree_mem, yytext + 1, yyleng - 2); return TOK_STRING_L; }
 
-{lett}+ { (*filter_scan_err)("invalid keyword `%.*s'", yyleng, yytext); }
-[\040-\377] { (*filter_scan_err)("invalid character `%c'", *yytext); }
+{lett}+ { (*filter_scan_err)(filter_scan_user_data, "invalid keyword `%.*s'", yyleng, yytext); }
+[\040-\377] { (*filter_scan_err)(filter_scan_user_data, "invalid character `%c'", *yytext); }
 
 %%
 
@@ -197,14 +198,14 @@ handle_int(void)
   val = strtol(buf, &tmpeptr, 0);
   eptr = tmpeptr;
   if (errno) {
-    (*filter_scan_err)("value is out of range");
+    (*filter_scan_err)(filter_scan_user_data, "value is out of range");
     val = 0;
   }
   filter_expr_lval = filter_tree_new_int(filter_scan_tree_mem, val);
 }
 
 static void
-local_err_func(unsigned char const *format, ...)
+local_err_func(void *data, unsigned char const *format, ...)
 {
   va_list args;
 
@@ -218,7 +219,8 @@ local_err_func(unsigned char const *format, ...)
 void
 filter_expr_set_string(unsigned char const *str,
                        struct filter_tree_mem *mem,
-                       void (*errfnc)(unsigned char const *, ...))
+                       void (*errfnc)(void *, unsigned char const *, ...),
+                       void *user_data)
 {
   (void) &yyunput;
 
@@ -229,6 +231,7 @@ filter_expr_set_string(unsigned char const *str,
   filter_scan_read = 0;
   filter_scan_err = errfnc;
   filter_scan_tree_mem = mem;
+  filter_scan_user_data = user_data;
   if (!filter_scan_err) {
     filter_scan_err = local_err_func;
   }
