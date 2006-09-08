@@ -72,7 +72,7 @@ static int max_abstr_tester;
 #define GLOBAL_SIZE(x)     XFSIZE(struct section_global_data, x)
 #define GLOBAL_PARAM(x, t) { #x, t, GLOBAL_OFFSET(x), GLOBAL_SIZE(x) }
 #define GLOBAL_ALIAS(a, x, t) { #a, t, GLOBAL_OFFSET(x), GLOBAL_SIZE(x) }
-static struct config_parse_info section_global_params[] =
+static const struct config_parse_info section_global_params[] =
 {
   GLOBAL_PARAM(name, "s"),
   GLOBAL_PARAM(sleep_time, "d"),
@@ -289,7 +289,7 @@ static struct config_parse_info section_global_params[] =
 #define PROBLEM_OFFSET(x)   XOFFSET(struct section_problem_data, x)
 #define PROBLEM_SIZE(x)     XFSIZE(struct section_problem_data, x)
 #define PROBLEM_PARAM(x, t) { #x, t, PROBLEM_OFFSET(x), PROBLEM_SIZE(x) }
-static struct config_parse_info section_problem_params[] =
+static const struct config_parse_info section_problem_params[] =
 {
   PROBLEM_PARAM(id, "d"),
   PROBLEM_PARAM(tester_id, "d"),
@@ -365,7 +365,7 @@ static struct config_parse_info section_problem_params[] =
 #define LANGUAGE_OFFSET(x)   XOFFSET(struct section_language_data, x)
 #define LANGUAGE_SIZE(x)     XFSIZE(struct section_language_data, x)
 #define LANGUAGE_PARAM(x, t) { #x, t, LANGUAGE_OFFSET(x), LANGUAGE_SIZE(x) }
-static struct config_parse_info section_language_params[] =
+static const struct config_parse_info section_language_params[] =
 {
   LANGUAGE_PARAM(id, "d"),
   LANGUAGE_PARAM(compile_id, "d"),
@@ -394,7 +394,7 @@ static struct config_parse_info section_language_params[] =
 #define TESTER_OFFSET(x) XOFFSET(struct section_tester_data, x)
 #define TESTER_SIZE(x)   XFSIZE(struct section_tester_data, x)
 #define TESTER_PARAM(x, t) { #x, t, TESTER_OFFSET(x), TESTER_SIZE(x) }
-static struct config_parse_info section_tester_params[] =
+static const struct config_parse_info section_tester_params[] =
 {
   TESTER_PARAM(id, "d"),
   TESTER_PARAM(name, "s"),
@@ -444,7 +444,7 @@ static void tester_init_func(struct generic_section_config *);
 static void global_init_func(struct generic_section_config *);
 static void language_init_func(struct generic_section_config *);
 
-static struct config_section_info params[] =
+static const struct config_section_info params[] =
 {
   { "global", sizeof(struct section_global_data), section_global_params,
     0, global_init_func, prepare_global_free_func },
@@ -699,7 +699,7 @@ struct inheritance_info
 };
 
 int
-inherit_fields(struct inheritance_info *iinfo,
+inherit_fields(const struct inheritance_info *iinfo,
                void *obj, char *name, int stot, void **sups,
                char *(*get_name_func)(void const *))
 {
@@ -778,7 +778,7 @@ static void inh_copy_path(void *dst, void *src)
 }
 
 #define TESTER_INH(f,d,c) {TESTER_OFFSET(f),#f,inh_isdef_##d,inh_copy_##c }
-static struct inheritance_info tester_inheritance_info[] =
+static const struct inheritance_info tester_inheritance_info[] =
 {
   TESTER_INH(arch, path, path),
   TESTER_INH(key, path, path),
@@ -3398,7 +3398,7 @@ create_tester_dirs(struct section_tester_data *tst)
 void print_global(FILE *o)
 {
   int i;
-  struct config_parse_info *pp;
+  const struct config_parse_info *pp;
 
   for (i = 0; section_global_params[i].name; i++) {
     pp = &section_global_params[i];
@@ -3416,7 +3416,7 @@ void print_global(FILE *o)
 void print_problem(FILE *o, struct section_problem_data *p)
 {
   int i;
-  struct config_parse_info *pp;
+  const struct config_parse_info *pp;
 
   fprintf(o, "[problem]\n");
   for (i = 0;; i++) {
@@ -3448,7 +3448,7 @@ void print_all_problems(FILE *o)
 void print_language(FILE *o, struct section_language_data *l)
 {
   int i;
-  struct config_parse_info *pp;
+  const struct config_parse_info *pp;
 
   fprintf(o, "[language]\n");
   for (i = 0;; i++) {

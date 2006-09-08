@@ -2203,11 +2203,12 @@ run_is_report_available(int status)
     OK CE RT TL PE WA CF PT AC IG DQ PD ML SE RU CD CG AV RJ EM VS VT
    for now we use a dumb linear search :-(
  */
-static struct str_to_status_data
+struct str_to_status_data
 {
   unsigned char str[4];
   int value;
-} str_to_status_table[] =
+};
+static const struct str_to_status_data str_to_status_table[] =
 {
   { "OK", RUN_OK },
   { "CE", RUN_COMPILE_ERR },
