@@ -38,6 +38,7 @@
 static struct ejudge_cfg  *config;
 static struct userlist_list *userlist;
 static clarlog_state_t clarlog_state;
+static runlog_state_t runlog_state;
 
 struct vcntslist
 {
@@ -138,6 +139,7 @@ main(int argc, char **argv)
   if (!userlist) return 1;
 
   clarlog_state = clar_init();
+  runlog_state = run_init(0);// FIXME: need to pass teamdb_state
 
   user_total = 0;
   max_user_id = -1;
@@ -183,14 +185,14 @@ main(int argc, char **argv)
     snprintf(clarlog_path, sizeof(clarlog_path),
              "%s/var/clar.log", cnts->root_dir);
 
-    if (run_open(runlog_path, RUN_LOG_READONLY, 0) < 0) {
+    if (run_open(runlog_state, runlog_path, RUN_LOG_READONLY, 0) < 0) {
       err("contest %d cannot open runlog '%s'", i, runlog_path);
-    } else if (!(total_runs = run_get_total())) {
+    } else if (!(total_runs = run_get_total(runlog_state))) {
       info("contest %d runlog is empty", i);
     } else {
       // runlog opened OK
       run_entries = xcalloc(total_runs, sizeof(run_entries[0]));
-      run_get_all_entries(run_entries);
+      run_get_all_entries(runlog_state, run_entries);
       info("contest %d found %d runlog entries", i, total_runs);
 
       reg_events = empty_entries = virt_events = temp_events = inv_events = 0;
@@ -264,7 +266,7 @@ main(int argc, char **argv)
       }
       printf("contest %d run statistics: %d regular, %d virtual, %d empty, %d transient, %d invalid\n", i, reg_events, virt_events, empty_entries, temp_events, inv_events);
 
-      run_clear_variables();
+      run_clear_variables(runlog_state);
       xfree(run_entries);
     }
 

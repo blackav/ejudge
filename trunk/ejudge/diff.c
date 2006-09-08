@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -57,11 +57,11 @@ compare_runs(FILE *fout, int run_id1, int run_id2)
   }
 
   // check the first run
-  if (run_id1 < 0 || run_id1 >= run_get_total()) {
+  if (run_id1 < 0 || run_id1 >= run_get_total(runlog_state)) {
     errcode = -SRV_ERR_BAD_RUN_ID;
     goto cleanup;
   }
-  run_get_entry(run_id1, &info1);
+  run_get_entry(runlog_state, run_id1, &info1);
   if (info1.status >= RUN_PSEUDO_FIRST && info1.status <= RUN_PSEUDO_LAST) {
     errcode = -SRV_ERR_BAD_RUN_ID;
     goto cleanup;
@@ -73,11 +73,11 @@ compare_runs(FILE *fout, int run_id1, int run_id2)
   }
 
   // check the second run
-  if (run_id2 < 0 || run_id2 >= run_get_total()) {
+  if (run_id2 < 0 || run_id2 >= run_get_total(runlog_state)) {
     errcode = -SRV_ERR_BAD_RUN_ID;
     goto cleanup;
   }
-  run_get_entry(run_id2, &info2);
+  run_get_entry(runlog_state, run_id2, &info2);
   if (info2.status >= RUN_PSEUDO_FIRST && info2.status <= RUN_PSEUDO_LAST) {
     errcode = -SRV_ERR_BAD_RUN_ID;
     goto cleanup;
@@ -153,7 +153,7 @@ compare_runs(FILE *fout, int run_id1, int run_id2)
   return errcode;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "tpTask")

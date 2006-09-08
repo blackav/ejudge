@@ -65,7 +65,7 @@ rename_archive_files(FILE *flog, int num, int *map)
 }
 
 void
-runlog_import_xml(teamdb_state_t teamdb_state,
+runlog_import_xml(teamdb_state_t teamdb_state, runlog_state_t runlog_state,
                   FILE *hlog, int flags, const unsigned char *in_xml)
 {
   size_t armor_len, flog_len = 0;
@@ -96,12 +96,12 @@ runlog_import_xml(teamdb_state_t teamdb_state,
   memset(&in_header, 0, sizeof(in_header));
   memset(&cur_header, 0, sizeof(cur_header));
 
-  cur_entries_num = run_get_total();
+  cur_entries_num = run_get_total(runlog_state);
   if (cur_entries_num > 0) {
     XCALLOC(cur_entries, cur_entries_num);
   }
-  run_get_header(&cur_header);
-  run_get_all_entries(cur_entries);
+  run_get_header(runlog_state, &cur_header);
+  run_get_all_entries(runlog_state, cur_entries);
 
   if (!cur_header.start_time) {
     fprintf(flog, "Contest is not yet started\n");
@@ -452,7 +452,7 @@ runlog_import_xml(teamdb_state_t teamdb_state,
       if (r) {
         update_flag++;
       }
-      run_set_entry(i, RUN_ENTRY_ALL, pa);
+      run_set_entry(runlog_state, i, RUN_ENTRY_ALL, pa);
     }
     fprintf(flog, "%d entries updated\n", update_flag);
     goto done;
@@ -623,8 +623,8 @@ runlog_import_xml(teamdb_state_t teamdb_state,
   fprintf(flog, "Sanity check done\n");
 
   fprintf(flog, "Saving the new runlog\n");
-  run_backup(global->run_log_file);
-  run_set_runlog(out_entries_num, out_entries);
+  run_backup(runlog_state, global->run_log_file);
+  run_set_runlog(runlog_state, out_entries_num, out_entries);
   fprintf(flog, "Renaming archive files\n");
   for (i = 0; i < cur_entries_num; i++)
     if (cur_entries[i].is_imported)

@@ -375,11 +375,11 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
   int act_status;
 
   if (global->virtual) {
-    start_time = run_get_virtual_start_time(user_id);
+    start_time = run_get_virtual_start_time(runlog_state, user_id);
   } else {
-    start_time = run_get_start_time();
+    start_time = run_get_start_time(runlog_state);
   }
-  total_runs = run_get_total();
+  total_runs = run_get_total(runlog_state);
   total_teams = teamdb_get_max_team_id(teamdb_state) + 1;
 
   XALLOCA(best_run, max_prob + 1);
@@ -393,7 +393,7 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
   XALLOCAZ(user_flag, (max_prob + 1) * total_teams);
 
   for (run_id = 0; run_id < total_runs; run_id++) {
-    if (run_get_entry(run_id, &re) < 0) continue;
+    if (run_get_entry(runlog_state, run_id, &re) < 0) continue;
     if (re.status > RUN_MAX_STATUS) continue;
 
     cur_prob = 0;
@@ -726,7 +726,7 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
       continue;
     }
 
-    run_get_entry(best_run[prob_id], &re);
+    run_get_entry(runlog_state, best_run[prob_id], &re);
     act_status = re.status;
     if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       if (act_status == RUN_OK || act_status == RUN_PARTIAL)
@@ -850,9 +850,9 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
   struct section_language_data *lang = 0;
 
   if (global->virtual) {
-    start_time = run_get_virtual_start_time(uid);
+    start_time = run_get_virtual_start_time(runlog_state, uid);
   } else {
-    start_time = run_get_start_time();
+    start_time = run_get_start_time(runlog_state);
   }
   runs_to_show = 15;
   if (show_flags) runs_to_show = 100000;
@@ -883,10 +883,10 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
 
   fprintf(f, "</tr>\n");
 
-  for (showed = 0, i = run_get_total() - 1;
+  for (showed = 0, i = run_get_total(runlog_state) - 1;
        i >= 0 && showed < runs_to_show;
        i--) {
-    if (run_get_entry(i, &re) < 0) continue;
+    if (run_get_entry(runlog_state, i, &re) < 0) continue;
     if (re.status == RUN_VIRTUAL_START || re.status == RUN_VIRTUAL_STOP
         || re.status == RUN_EMPTY)
       continue;
@@ -903,7 +903,7 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
 
     attempts = 0; disq_attempts = 0;
     if (global->score_system_val == SCORE_KIROV && !re.is_hidden)
-      run_get_attempts(i, &attempts, &disq_attempts,
+      run_get_attempts(runlog_state, i, &attempts, &disq_attempts,
                        global->ignore_compile_errors);
 
     cur_prob = 0;
@@ -914,7 +914,7 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
         && re.status == RUN_OK
         && !re.is_hidden
         && cur_prob && cur_prob->score_bonus_total > 0) {
-      if ((prev_successes = run_get_prev_successes(i)) < 0)
+      if ((prev_successes = run_get_prev_successes(runlog_state, i)) < 0)
         prev_successes = RUN_TOO_MANY;
     }
 
@@ -1054,9 +1054,9 @@ new_write_user_clars(FILE *f, int uid,
   int   asubj_len = 0; /* html armored subj len */
   unsigned char href[128];
 
-  start_time = run_get_start_time();
+  start_time = run_get_start_time(runlog_state);
   if (global->virtual)
-    start_time = run_get_virtual_start_time(uid);
+    start_time = run_get_virtual_start_time(runlog_state, uid);
   clars_to_show = 15;
   if (show_flags) clars_to_show = 100000;
   show_astr_time = global->show_astr_time;
@@ -1147,9 +1147,9 @@ new_write_user_clar(FILE *f, int uid, int cid, int format)
 
   show_astr_time = global->show_astr_time;
   if (global->virtual) show_astr_time = 1;
-  start_time = run_get_start_time();
+  start_time = run_get_start_time(runlog_state);
   if (global->virtual)
-    start_time = run_get_virtual_start_time(uid);
+    start_time = run_get_virtual_start_time(runlog_state, uid);
   if (clar_get_record(clarlog_state, cid, &time, &size, NULL,
                       &from, &to, NULL, NULL, &hide_flag, subj) < 0) {
     return -SRV_ERR_BAD_CLAR_ID;
@@ -1278,11 +1278,11 @@ write_standings_header(FILE *f, int client_flag,
   unsigned char dur_str[64];
   int show_astr_time;
 
-  start_time = run_get_start_time();
-  stop_time = run_get_stop_time();
+  start_time = run_get_start_time(runlog_state);
+  stop_time = run_get_stop_time(runlog_state);
   if (global->virtual && user_id > 0) {
-    start_time = run_get_virtual_start_time(user_id);
-    stop_time = run_get_virtual_stop_time(user_id, 0);
+    start_time = run_get_virtual_start_time(runlog_state, user_id);
+    stop_time = run_get_virtual_stop_time(runlog_state, user_id, 0);
   }
 
   if (!start_time) {
@@ -1505,8 +1505,8 @@ do_write_kirov_standings(FILE *f,
     pc_attrs[i] = global->stand_page_col_attr[i];
 
   /* Check that the contest is started */
-  start_time = run_get_start_time();
-  stop_time = run_get_stop_time();
+  start_time = run_get_start_time(runlog_state);
+  stop_time = run_get_stop_time(runlog_state);
   cur_time = time(0);
 
   if (!start_time || cur_time < start_time) {
@@ -1531,9 +1531,9 @@ do_write_kirov_standings(FILE *f,
   /* The contest is started, so we can collect scores */
 
   /* download all runs in the whole */
-  r_tot = run_get_total();
+  r_tot = run_get_total(runlog_state);
   runs = alloca(r_tot * sizeof(runs[0]));
-  run_get_all_entries(runs);
+  run_get_all_entries(runlog_state, runs);
 
   /* prune participants, which did not send any solution */
   /* t_runs - 1, if the participant should remain */
@@ -2532,12 +2532,12 @@ do_write_moscow_standings(FILE *f,
     pc_attrs[i] = global->stand_page_col_attr[i];
 
   cur_time = time(0);
-  last_submit_start = last_success_start = start_time = run_get_start_time();
-  stop_time = run_get_stop_time();
-  contest_dur = run_get_duration();
+  last_submit_start = last_success_start = start_time = run_get_start_time(runlog_state);
+  stop_time = run_get_stop_time(runlog_state);
+  contest_dur = run_get_duration(runlog_state);
   if (start_time && global->virtual && user_id > 0) {
-    start_time = run_get_virtual_start_time(user_id);
-    stop_time = run_get_virtual_stop_time(user_id, 0);
+    start_time = run_get_virtual_start_time(runlog_state, user_id);
+    stop_time = run_get_virtual_stop_time(runlog_state, user_id, 0);
   }
   if (start_time && !stop_time && cur_time >= start_time + contest_dur) {
     stop_time = start_time + contest_dur;
@@ -2564,8 +2564,8 @@ do_write_moscow_standings(FILE *f,
     return;
   }
 
-  r_tot = run_get_total();
-  runs = run_get_entries_ptr();
+  r_tot = run_get_total(runlog_state);
+  runs = run_get_entries_ptr(runlog_state);
 
   u_max = teamdb_get_max_team_id(teamdb_state) + 1;
   u_runs = (unsigned char*) alloca(u_max);
@@ -2670,7 +2670,7 @@ do_write_moscow_standings(FILE *f,
     ustart = start_time;
     if (global->virtual) {
       // filter "future" virtual runs
-      ustart = run_get_virtual_start_time(pe->team);
+      ustart = run_get_virtual_start_time(runlog_state, pe->team);
       if (run_time < ustart) run_time = ustart;
       udur = run_time - ustart;
       if (udur > contest_dur) udur = contest_dur;
@@ -3327,12 +3327,12 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   }
 
   cur_time = time(0);
-  start_time = run_get_start_time();
-  stop_time = run_get_stop_time();
-  contest_dur = run_get_duration();
+  start_time = run_get_start_time(runlog_state);
+  stop_time = run_get_stop_time(runlog_state);
+  contest_dur = run_get_duration(runlog_state);
   if (start_time && global->virtual && user_id > 0) {
-    start_time = run_get_virtual_start_time(user_id);
-    stop_time = run_get_virtual_stop_time(user_id, 0);
+    start_time = run_get_virtual_start_time(runlog_state, user_id);
+    stop_time = run_get_virtual_stop_time(runlog_state, user_id, 0);
   }
   if (start_time && !stop_time && cur_time >= start_time + contest_dur) {
     stop_time = start_time + contest_dur;
@@ -3359,9 +3359,9 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     return;
   }
 
-  r_tot = run_get_total();
+  r_tot = run_get_total(runlog_state);
   runs = alloca(r_tot * sizeof(runs[0]));
-  run_get_all_entries(runs);
+  run_get_all_entries(runlog_state, runs);
 
   t_max = teamdb_get_max_team_id(teamdb_state) + 1;
   t_runs = alloca(t_max);
@@ -3430,7 +3430,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     if (pe->is_hidden) continue;
     if (global->virtual) {
       // filter "future" virtual runs
-      tstart = run_get_virtual_start_time(pe->team);
+      tstart = run_get_virtual_start_time(runlog_state, pe->team);
       ASSERT(run_time >= tstart);
       tdur = run_time - tstart;
       ASSERT(tdur <= contest_dur);
@@ -3656,7 +3656,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
           global->stand_self_row_attr[0]) {
         bgcolor_ptr = global->stand_self_row_attr;
       } else if (global->virtual) {
-        int vstat = run_get_virtual_status(t_ind[t]);
+        int vstat = run_get_virtual_status(runlog_state, t_ind[t]);
         if (vstat == 1 && global->stand_r_row_attr[0]) {
           bgcolor_ptr = global->stand_r_row_attr;
         } else if (vstat == 2 && global->stand_v_row_attr[0]) {
@@ -3867,10 +3867,10 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
   struct run_entry *runs, *pe;
   struct section_problem_data *cur_prob;
 
-  start = run_get_start_time();
-  total = run_get_total();
+  start = run_get_start_time(runlog_state);
+  total = run_get_total(runlog_state);
   runs = alloca(total * sizeof(runs[0]));
-  run_get_all_entries(runs);
+  run_get_all_entries(runlog_state, runs);
 
   switch (global->score_system_val) {
   case SCORE_ACM:
@@ -3923,10 +3923,10 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
 
     time = pe->timestamp;
     if (global->score_system_val == SCORE_KIROV) {
-      run_get_attempts(i, &attempts, &disq_attempts,
+      run_get_attempts(runlog_state, i, &attempts, &disq_attempts,
                        global->ignore_compile_errors);
       if (pe->status == RUN_OK && cur_prob && cur_prob->score_bonus_total > 0){
-        prev_successes = run_get_prev_successes(i);
+        prev_successes = run_get_prev_successes(runlog_state, i);
         if (prev_successes < 0) prev_successes = RUN_TOO_MANY;
       }
     }
@@ -4002,11 +4002,11 @@ new_write_user_source_view(FILE *f, int uid, int rid, int format)
     err("viewing user source is disabled");
     return -SRV_ERR_SOURCE_DISABLED;
   }
-  if (rid < 0 || rid >= run_get_total()) {
+  if (rid < 0 || rid >= run_get_total(runlog_state)) {
     err("invalid run_id: %d", rid);
     return -SRV_ERR_BAD_RUN_ID;
   }
-  run_get_entry(rid, &re);
+  run_get_entry(runlog_state, rid, &re);
   if (uid != re.team) {
     err("user ids does not match");
     return -SRV_ERR_ACCESS_DENIED;
@@ -4059,11 +4059,11 @@ write_user_run_status(FILE *f, int uid, int rid, int accepting_mode, int format)
   time_t run_time, start_time;
   unsigned char dur_str[64];
 
-  if (rid < 0 || rid >= run_get_total()) {
+  if (rid < 0 || rid >= run_get_total(runlog_state)) {
     err("invalid run_id: %d", rid);
     return -SRV_ERR_BAD_RUN_ID;
   }
-  run_get_entry(rid, &re);
+  run_get_entry(runlog_state, rid, &re);
   if (re.status == RUN_VIRTUAL_START || re.status == RUN_VIRTUAL_STOP
       || re.status == RUN_EMPTY) {
     err("this run is not viewable by a user");
@@ -4075,9 +4075,9 @@ write_user_run_status(FILE *f, int uid, int rid, int accepting_mode, int format)
   }
 
   if (global->virtual) {
-    start_time = run_get_virtual_start_time(rid);
+    start_time = run_get_virtual_start_time(runlog_state, rid);
   } else {
-    start_time = run_get_start_time();
+    start_time = run_get_start_time(runlog_state);
   }
 
   if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
@@ -4087,7 +4087,7 @@ write_user_run_status(FILE *f, int uid, int rid, int accepting_mode, int format)
 
   attempts = 0; disq_attempts = 0;
   if (global->score_system_val == SCORE_KIROV && !re.is_hidden)
-    run_get_attempts(rid, &attempts, &disq_attempts,
+    run_get_attempts(runlog_state, rid, &attempts, &disq_attempts,
                      global->ignore_compile_errors);
 
   if (re.problem > 0 && re.problem <= max_prob) cur_prob = probs[re.problem];
@@ -4097,7 +4097,7 @@ write_user_run_status(FILE *f, int uid, int rid, int accepting_mode, int format)
       && re.status == RUN_OK
       && !re.is_hidden
       && cur_prob && cur_prob->score_bonus_total > 0) {
-    if ((prev_successes = run_get_prev_successes(rid)) < 0)
+    if ((prev_successes = run_get_prev_successes(runlog_state, rid)) < 0)
       prev_successes = RUN_TOO_MANY;
   }
 
@@ -4587,11 +4587,11 @@ new_write_user_report_view(FILE *f, int uid, int rid,
   struct run_entry re;
   struct section_problem_data *prb = 0;
 
-  if (rid < 0 || rid >= run_get_total()) {
+  if (rid < 0 || rid >= run_get_total(runlog_state)) {
     err("invalid run_id: %d", rid);
     return -SRV_ERR_BAD_RUN_ID;
   }
-  if (run_get_entry(rid, &re) < 0) {
+  if (run_get_entry(runlog_state, rid, &re) < 0) {
     return -SRV_ERR_BAD_RUN_ID;
   }
   if (re.problem <= 0 || re.problem > max_prob || !(prb = probs[re.problem])) {
@@ -4747,9 +4747,9 @@ write_team_page(FILE *f, int user_id,
 
     global_server_start = server_start;
     global_server_end = server_end;
-    server_start = run_get_virtual_start_time(user_id);
-    server_end = run_get_virtual_stop_time(user_id, 0);
-    dur = run_get_duration();
+    server_start = run_get_virtual_start_time(runlog_state, user_id);
+    server_end = run_get_virtual_stop_time(runlog_state, user_id, 0);
+    dur = run_get_duration(runlog_state);
     if (server_start && !server_end && dur > 0) {
       if (server_start + dur < current_time) {
         server_end = server_start + dur;

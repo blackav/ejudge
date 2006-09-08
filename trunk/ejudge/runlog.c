@@ -57,13 +57,6 @@
 #define RUNLOG_MAX_PROB_ID 100000
 #define RUNLOG_MAX_SCORE   100000
 
-static struct run_header  head;
-static struct run_entry  *runs;
-static int                run_u;
-static int                run_a;
-static int                run_fd = -1;
-static teamdb_state_t     teamdb_state;
-
 enum
   {
     V_REAL_USER = 1,
@@ -78,34 +71,49 @@ struct user_entry
   int stop_time;
 };
 
-/* index for users */
-static int ut_size;
-static struct user_entry **ut_table;
-
-static void build_indices(void);
-static struct user_entry *get_user_entry(int user_id);
-
 struct user_flags_info_s
 {
   int nuser;
   int *flags;
 };
-static struct user_flags_info_s user_flags = { -1, 0 };
-static int update_user_flags(void);
 
-void
+struct runlog_state
+{
+  struct run_header  head;
+  struct run_entry  *runs;
+  int                run_u;
+  int                run_a;
+  int                run_fd;
+  teamdb_state_t     teamdb_state;
+  int ut_size;
+  struct user_entry **ut_table;
+  struct user_flags_info_s user_flags;
+};
+
+static int update_user_flags(runlog_state_t state);
+static void build_indices(runlog_state_t state);
+static struct user_entry *get_user_entry(runlog_state_t state, int user_id);
+
+runlog_state_t
 run_init(teamdb_state_t ts)
 {
-  teamdb_state = ts;
+  runlog_state_t p;
+
+  XCALLOC(p, 1);
+  p->teamdb_state = ts;
+  p->run_fd = -1;
+  p->user_flags.nuser = -1;
+
+  return p;
 }
 
 static int
-run_read_record(char *buf, int size)
+run_read_record(runlog_state_t state, char *buf, int size)
 {
   int  rsz;
   int  i;
 
-  if ((rsz = sf_read(run_fd, buf, size, "run")) < 0) return -1;
+  if ((rsz = sf_read(state->run_fd, buf, size, "run")) < 0) return -1;
   if (rsz != size) ERR_R("short read: %d", rsz);
   for (i = 0; i < size - 1; i++) {
     if (buf[i] >= 0 && buf[i] < ' ') break;
@@ -116,55 +124,56 @@ run_read_record(char *buf, int size)
 }
 
 static int
-run_read_header(void)
+run_read_header(runlog_state_t state)
 {
   char buf[RUN_HEADER_SIZE + 16];
   int  n, r;
 
   memset(buf, 0, sizeof(buf));
-  if (run_read_record(buf, RUN_HEADER_SIZE) < 0) return -1;
+  if (run_read_record(state, buf, RUN_HEADER_SIZE) < 0) return -1;
   r = sscanf(buf, " %u %u %u %u %n",
-             &head.start_time,
-             &head.sched_time,
-             &head.duration,
-             &head.stop_time, &n);
+             &state->head.start_time,
+             &state->head.sched_time,
+             &state->head.duration,
+             &state->head.stop_time, &n);
   if (r != 4) ERR_R("sscanf returned %d", r);
   if (buf[n] != 0) ERR_R("excess data: %d", n);
   return 0;
 }
 
 static int
-run_read_entry(int n)
+run_read_entry(runlog_state_t state, int n)
 {
   char buf[RUN_RECORD_SIZE + 16];
   char tip[RUN_RECORD_SIZE + 16];
   int  k, r;
 
   memset(buf, 0, sizeof(buf));
-  if (run_read_record(buf, RUN_RECORD_SIZE) < 0) return -1;
+  if (run_read_record(state, buf, RUN_RECORD_SIZE) < 0) return -1;
   r = sscanf(buf, " %d %d %u %hhu %d %hhu %d %hhu %hhu %d %s %n",
-             &runs[n].timestamp, &runs[n].submission, &runs[n].size,
-             &runs[n].locale_id,
-             &runs[n].team, &runs[n].language, &runs[n].problem,
-             &runs[n].status, &runs[n].test, &runs[n].score, tip, &k);
+             &state->runs[n].timestamp, &state->runs[n].submission,
+             &state->runs[n].size, &state->runs[n].locale_id,
+             &state->runs[n].team, &state->runs[n].language,
+             &state->runs[n].problem, &state->runs[n].status,
+             &state->runs[n].test, &state->runs[n].score, tip, &k);
   if (r != 11) ERR_R("[%d]: sscanf returned %d", n, r);
   if (buf[k] != 0) ERR_R("[%d]: excess data", n);
   if (strlen(tip) > RUN_MAX_IP_LEN) ERR_R("[%d]: ip is to long", n);
-  runs[n].ip = run_parse_ip(tip);
-  if (runs[n].ip == (ej_ip_t) -1) ERR_R("[%d]: cannot parse IP");
+  state->runs[n].ip = run_parse_ip(tip);
+  if (state->runs[n].ip == (ej_ip_t) -1) ERR_R("[%d]: cannot parse IP");
   return 0;
 }
 
 static int
-is_runlog_version_0(void)
+is_runlog_version_0(runlog_state_t state)
 {
   unsigned char buf[RUN_HEADER_SIZE + 16];
   int r, n;
   time_t v1, v2, v3, v4;
 
   memset(buf, 0, sizeof(buf));
-  if (sf_lseek(run_fd, 0, SEEK_SET, "run") == (off_t) -1) return -1;
-  if ((r = sf_read(run_fd, buf, RUN_HEADER_SIZE, "run")) < 0) return -1;
+  if (sf_lseek(state->run_fd, 0, SEEK_SET, "run") == (off_t) -1) return -1;
+  if ((r = sf_read(state->run_fd, buf, RUN_HEADER_SIZE, "run")) < 0) return -1;
   if (r != RUN_HEADER_SIZE) return 0;
   if (buf[r - 1] != '\n') {
     //fprintf(stderr, "record improperly terminated\n");
@@ -185,7 +194,7 @@ is_runlog_version_0(void)
 }
 
 static int
-read_runlog_version_0(void)
+read_runlog_version_0(runlog_state_t state)
 {
   off_t filesize;
   int i;
@@ -193,43 +202,44 @@ read_runlog_version_0(void)
   info("reading runs log version 0");
 
   /* calculate the size of the file */
-  if ((filesize = sf_lseek(run_fd, 0, SEEK_END, "run")) == (off_t) -1)
+  if ((filesize = sf_lseek(state->run_fd, 0, SEEK_END, "run")) == (off_t) -1)
     return -1;
-  if (sf_lseek(run_fd, 0, SEEK_SET, "run") == (off_t) -1) return -1;
+  if (sf_lseek(state->run_fd, 0, SEEK_SET, "run") == (off_t) -1) return -1;
 
   info("runs file size: %lu", filesize);
   if (filesize == 0) {
     /* runs file is empty */
-    XMEMZERO(&head, 1);
-    run_u = 0;
+    XMEMZERO(&state->head, 1);
+    state->run_u = 0;
     return 0;
   }
 
   if ((filesize - RUN_HEADER_SIZE) % RUN_RECORD_SIZE != 0)
     ERR_C("bad runs file size: remainder %d", (filesize - RUN_HEADER_SIZE) % RUN_RECORD_SIZE);
 
-  run_u = (filesize - RUN_HEADER_SIZE) / RUN_RECORD_SIZE;
-  run_a = 128;
-  while (run_u > run_a) run_a *= 2;
-  XCALLOC(runs, run_a);
+  state->run_u = (filesize - RUN_HEADER_SIZE) / RUN_RECORD_SIZE;
+  state->run_a = 128;
+  while (state->run_u > state->run_a) state->run_a *= 2;
+  XCALLOC(state->runs, state->run_a);
 
-  if (run_read_header() < 0) goto _cleanup;
-  for (i = 0; i < run_u; i++) {
-    if (run_read_entry(i) < 0) goto _cleanup;
+  if (run_read_header(state) < 0) goto _cleanup;
+  for (i = 0; i < state->run_u; i++) {
+    if (run_read_entry(state, i) < 0) goto _cleanup;
   }
-  if (runlog_check(0, &head, run_u, runs) < 0) goto _cleanup;
-  build_indices();
+  if (runlog_check(0, &state->head, state->run_u, state->runs) < 0)
+    goto _cleanup;
+  build_indices(state);
 
   return 0;
 
  _cleanup:
-  XMEMZERO(&head, 1);
-  if (runs) {
-    xfree(runs); runs = 0; run_u = run_a = 0;
+  XMEMZERO(&state->head, 1);
+  if (state->runs) {
+    xfree(state->runs); state->runs = 0; state->run_u = state->run_a = 0;
   }
-  if (run_fd >= 0) {
-    close(run_fd);
-    run_fd = -1;
+  if (state->run_fd >= 0) {
+    close(state->run_fd);
+    state->run_fd = -1;
   }
   return -1;
 }
@@ -302,51 +312,53 @@ do_read(int fd, void *buf, size_t size)
 }
 
 static int
-write_full_runlog_current_version(const char *path)
+write_full_runlog_current_version(runlog_state_t state, const char *path)
 {
   int run_fd;
 
   if ((run_fd = sf_open(path, O_RDWR | O_CREAT | O_TRUNC, 0666)) < 0)
     return -1;
 
-  head.version = 1;
-  if (do_write(run_fd, &head, sizeof(head)) < 0) return -1;
-  if (run_u > 0) {
-    if (do_write(run_fd, runs, sizeof(runs[0]) * run_u) < 0) return -1;
+  state->head.version = 1;
+  if (do_write(run_fd, &state->head, sizeof(state->head)) < 0) return -1;
+  if (state->run_u > 0) {
+    if (do_write(run_fd, state->runs, sizeof(state->runs[0]) * state->run_u) < 0) return -1;
   }
 
   return run_fd;
 }
 
 int
-run_set_runlog(int total_entries, struct run_entry *entries)
+run_set_runlog(runlog_state_t state,
+               int total_entries, struct run_entry *entries)
 {
-  if (runlog_check(0, &head, total_entries, entries) < 0)
+  if (runlog_check(0, &state->head, total_entries, entries) < 0)
     return -1;
 
-  if (total_entries > run_a) {
-    if (!run_a) run_a = 128;
-    xfree(runs);
-    while (total_entries > run_a) run_a *= 2;
-    runs = xcalloc(run_a, sizeof(runs[0]));
+  if (total_entries > state->run_a) {
+    if (!state->run_a) state->run_a = 128;
+    xfree(state->runs);
+    while (total_entries > state->run_a) state->run_a *= 2;
+    state->runs = xcalloc(state->run_a, sizeof(state->runs[0]));
   } else {
-    memset(runs, 0, run_a * sizeof(runs[0]));
+    memset(state->runs, 0, state->run_a * sizeof(state->runs[0]));
   }
-  run_u = total_entries;
-  if (run_u > 0) {
-    memcpy(runs, entries, run_u * sizeof(runs[0]));
+  state->run_u = total_entries;
+  if (state->run_u > 0) {
+    memcpy(state->runs, entries, state->run_u * sizeof(state->runs[0]));
   }
-  sf_lseek(run_fd, sizeof(struct run_header), SEEK_SET, "run");
-  do_write(run_fd, runs, sizeof(runs[0]) * run_u);
-  ftruncate(run_fd, sizeof(runs[0]) * run_u + sizeof(struct run_header));
-  build_indices();
+  sf_lseek(state->run_fd, sizeof(struct run_header), SEEK_SET, "run");
+  do_write(state->run_fd, state->runs, sizeof(state->runs[0]) * state->run_u);
+  ftruncate(state->run_fd,
+            sizeof(state->runs[0]) * state->run_u + sizeof(struct run_header));
+  build_indices(state);
   return 0;
 }
 
-static int run_flush_header(void);
+static int run_flush_header(runlog_state_t state);
 
 static int
-read_runlog(time_t init_duration)
+read_runlog(runlog_state_t state, time_t init_duration)
 {
   off_t filesize;
   int rem;
@@ -355,52 +367,52 @@ read_runlog(time_t init_duration)
   info("reading runs log (binary)");
 
   /* calculate the size of the file */
-  if ((filesize = sf_lseek(run_fd, 0, SEEK_END, "run")) == (off_t) -1)
+  if ((filesize = sf_lseek(state->run_fd, 0, SEEK_END, "run")) == (off_t) -1)
     return -1;
-  if (sf_lseek(run_fd, 0, SEEK_SET, "run") == (off_t) -1) return -1;
+  if (sf_lseek(state->run_fd, 0, SEEK_SET, "run") == (off_t) -1) return -1;
 
   info("runs file size: %ld", filesize);
   if (filesize == 0) {
     /* runs file is empty */
-    XMEMZERO(&head, 1);
-    head.version = 1;
-    head.duration = init_duration;
-    run_u = 0;
-    run_flush_header();
+    XMEMZERO(&state->head, 1);
+    state->head.version = 1;
+    state->head.duration = init_duration;
+    state->run_u = 0;
+    run_flush_header(state);
     return 0;
   }
 
   // read header
-  if (do_read(run_fd, &head, sizeof(head)) < 0) return -1;
-  info("run log version %d", head.version);
-  if (head.version != 1) {
-    err("unsupported run log version %d", head.version);
+  if (do_read(state->run_fd, &state->head, sizeof(state->head)) < 0) return -1;
+  info("run log version %d", state->head.version);
+  if (state->head.version != 1) {
+    err("unsupported run log version %d", state->head.version);
     return -1;
   }
 
   rem = (filesize - sizeof(struct run_header)) % sizeof(struct run_entry);
   if (rem != 0) ERR_C("bad runs file size: remainder %d", rem);
 
-  run_u = (filesize - sizeof(struct run_header)) / sizeof(struct run_entry);
-  run_a = 128;
-  while (run_u > run_a) run_a *= 2;
-  XCALLOC(runs, run_a);
-  if (run_u > 0) {
-    if (do_read(run_fd, runs, sizeof(runs[0]) * run_u) < 0) return -1;
+  state->run_u = (filesize - sizeof(struct run_header)) / sizeof(struct run_entry);
+  state->run_a = 128;
+  while (state->run_u > state->run_a) state->run_a *= 2;
+  XCALLOC(state->runs, state->run_a);
+  if (state->run_u > 0) {
+    if (do_read(state->run_fd, state->runs, sizeof(state->runs[0]) * state->run_u) < 0) return -1;
   }
-  if ((r = runlog_check(0, &head, run_u, runs)) < 0) return -1;
-  if (r > 0) runlog_flush();
-  build_indices();
+  if ((r = runlog_check(0, &state->head, state->run_u, state->runs)) < 0) return -1;
+  if (r > 0) runlog_flush(state);
+  build_indices(state);
   return 0;
 
  _cleanup:
-  XMEMZERO(&head, 1);
-  if (runs) {
-    xfree(runs); runs = 0; run_u = run_a = 0;
+  XMEMZERO(&state->head, 1);
+  if (state->runs) {
+    xfree(state->runs); state->runs = 0; state->run_u = state->run_a = 0;
   }
-  if (run_fd >= 0) {
-    close(run_fd);
-    run_fd = -1;
+  if (state->run_fd >= 0) {
+    close(state->run_fd);
+    state->run_fd = -1;
   }
   return -1;
 }
@@ -408,18 +420,20 @@ read_runlog(time_t init_duration)
 static void teamdb_update_callback(void *);
 
 int
-run_open(const char *path, int flags, time_t init_duration)
+run_open(runlog_state_t state, const char *path, int flags,
+         time_t init_duration)
 {
   int           oflags = 0;
   int           i;
 
-  teamdb_register_update_hook(teamdb_state, teamdb_update_callback, 0);
-  if (runs) {
-    xfree(runs); runs = 0; run_u = run_a = 0;
+  teamdb_register_update_hook(state->teamdb_state, teamdb_update_callback,
+                              state);
+  if (state->runs) {
+    xfree(state->runs); state->runs = 0; state->run_u = state->run_a = 0;
   }
-  if (run_fd >= 0) {
-    close(run_fd);
-    run_fd = -1;
+  if (state->run_fd >= 0) {
+    close(state->run_fd);
+    state->run_fd = -1;
   }
   if (flags == RUN_LOG_READONLY) {
     oflags = O_RDONLY;
@@ -428,24 +442,24 @@ run_open(const char *path, int flags, time_t init_duration)
   } else {
     oflags = O_RDWR | O_CREAT;
   }
-  if ((run_fd = sf_open(path, oflags, 0666)) < 0) return -1;
+  if ((state->run_fd = sf_open(path, oflags, 0666)) < 0) return -1;
 
-  if ((i = is_runlog_version_0()) < 0) return -1;
+  if ((i = is_runlog_version_0(state)) < 0) return -1;
   else if (i) {
-    if (read_runlog_version_0() < 0) return -1;
+    if (read_runlog_version_0(state) < 0) return -1;
     if (flags != RUN_LOG_READONLY) {
       if (save_runlog_backup(path) < 0) return -1;
-      close(run_fd);
-      if ((run_fd = write_full_runlog_current_version(path)) < 0) return -1;
+      close(state->run_fd);
+      if ((state->run_fd = write_full_runlog_current_version(state, path)) < 0) return -1;
     }
   } else {
-    if (read_runlog(init_duration) < 0) return -1;
+    if (read_runlog(state, init_duration) < 0) return -1;
   }
   return 0;
 }
 
 int
-run_backup(const unsigned char *path)
+run_backup(runlog_state_t state, const unsigned char *path)
 {
   unsigned char *newlog;
   int i = 1, r;
@@ -456,79 +470,79 @@ run_backup(const unsigned char *path)
   do {
     sprintf(newlog, "%s.%d", path, i++);
   } while (stat(newlog, &sb) >= 0);
-  r = write_full_runlog_current_version(newlog);
+  r = write_full_runlog_current_version(state, newlog);
   if (r < 0) return r;
   close(r);
   return 0;
 }
 
 static int
-run_flush_entry(int num)
+run_flush_entry(runlog_state_t state, int num)
 {
-  if (run_fd < 0) ERR_R("invalid descriptor %d", run_fd);
-  if (num < 0 || num >= run_u) ERR_R("invalid entry number %d", num);
-  if (sf_lseek(run_fd, sizeof(head) + sizeof(runs[0]) * num,
+  if (state->run_fd < 0) ERR_R("invalid descriptor %d", state->run_fd);
+  if (num < 0 || num >= state->run_u) ERR_R("invalid entry number %d", num);
+  if (sf_lseek(state->run_fd, sizeof(state->head) + sizeof(state->runs[0]) * num,
                SEEK_SET, "run") == (off_t) -1) return -1;
-  if (do_write(run_fd, &runs[num], sizeof(runs[0])) < 0) return -1;
+  if (do_write(state->run_fd, &state->runs[num], sizeof(state->runs[0])) < 0) return -1;
   return 0;
 }
 
 int
-runlog_flush(void)
+runlog_flush(runlog_state_t state)
 {
-  if (run_fd < 0) ERR_R("invalid descriptor %d", run_fd);
-  if (sf_lseek(run_fd, sizeof(head), SEEK_SET, "run") == (off_t) -1) return -1;
-  if (do_write(run_fd, runs, run_u * sizeof(runs[0])) < 0) return -1;
+  if (state->run_fd < 0) ERR_R("invalid descriptor %d", state->run_fd);
+  if (sf_lseek(state->run_fd, sizeof(state->head), SEEK_SET, "run") == (off_t) -1) return -1;
+  if (do_write(state->run_fd, state->runs, state->run_u * sizeof(state->runs[0])) < 0) return -1;
   return 0;
 }
 
 static int
-append_record(time_t t, int uid, int nsec)
+append_record(runlog_state_t state, time_t t, int uid, int nsec)
 {
   int i, j, k;
 
-  ASSERT(run_u <= run_a);
-  if (run_u == run_a) {
-    if (!(run_a *= 2)) run_a = 128;
-    runs = xrealloc(runs, run_a * sizeof(runs[0]));
-    memset(&runs[run_u], 0, (run_a - run_u) * sizeof(runs[0]));
-    info("append_record: array extended: %d", run_a);
+  ASSERT(state->run_u <= state->run_a);
+  if (state->run_u == state->run_a) {
+    if (!(state->run_a *= 2)) state->run_a = 128;
+    state->runs = xrealloc(state->runs, state->run_a * sizeof(state->runs[0]));
+    memset(&state->runs[state->run_u], 0, (state->run_a - state->run_u) * sizeof(state->runs[0]));
+    info("append_record: array extended: %d", state->run_a);
   }
 
   while (1) {
-    if (run_u > 0) {
-      if (runs[run_u - 1].timestamp > t) break;
-      if (runs[run_u - 1].timestamp == t) {
-        if (runs[run_u - 1].nsec > nsec) break;
-        if (runs[run_u - 1].nsec == nsec) {
-          if (runs[run_u - 1].team > uid) break;
+    if (state->run_u > 0) {
+      if (state->runs[state->run_u - 1].timestamp > t) break;
+      if (state->runs[state->run_u - 1].timestamp == t) {
+        if (state->runs[state->run_u - 1].nsec > nsec) break;
+        if (state->runs[state->run_u - 1].nsec == nsec) {
+          if (state->runs[state->run_u - 1].team > uid) break;
         }
       }
     }
 
     /* it is safe to insert a record at the end */
-    memset(&runs[run_u], 0, sizeof(runs[0]));
-    runs[run_u].submission = run_u;
-    runs[run_u].status = RUN_EMPTY;
-    runs[run_u].timestamp = t;
-    runs[run_u].nsec = nsec;
-    return run_u++;
+    memset(&state->runs[state->run_u], 0, sizeof(state->runs[0]));
+    state->runs[state->run_u].submission = state->run_u;
+    state->runs[state->run_u].status = RUN_EMPTY;
+    state->runs[state->run_u].timestamp = t;
+    state->runs[state->run_u].nsec = nsec;
+    return state->run_u++;
   }
 
-  i = 0, j = run_u - 1;
+  i = 0, j = state->run_u - 1;
   while (i < j) {
     k = (i + j) / 2;
-    if (runs[k].timestamp > t
-        || (runs[k].timestamp == t && runs[k].nsec > nsec)
-        || (runs[k].timestamp == t && runs[k].nsec == nsec
-            && runs[k].team > uid)) {
+    if (state->runs[k].timestamp > t
+        || (state->runs[k].timestamp == t && state->runs[k].nsec > nsec)
+        || (state->runs[k].timestamp == t && state->runs[k].nsec == nsec
+            && state->runs[k].team > uid)) {
       j = k;
     } else {
       i = k + 1;
     }
   }
   ASSERT(i == j);
-  ASSERT(i < run_u);
+  ASSERT(i < state->run_u);
   ASSERT(i >= 0);
 
   /* So we going to insert a run at position i.
@@ -540,35 +554,36 @@ append_record(time_t t, int uid, int nsec)
    * the run_id's when it is possible to receive compile or run response
    * packets.
    */
-  for (j = i; j < run_u; j++)
-    if (runs[j].status >= RUN_TRANSIENT_FIRST
-        && runs[j].status <= RUN_TRANSIENT_LAST)
+  for (j = i; j < state->run_u; j++)
+    if (state->runs[j].status >= RUN_TRANSIENT_FIRST
+        && state->runs[j].status <= RUN_TRANSIENT_LAST)
       break;
-  if (j < run_u) {
+  if (j < state->run_u) {
     err("append_record: cannot safely insert a run at position %d", i);
     err("append_record: the run %d is transient!", j);
     return -1;
   }
 
-  memmove(&runs[i + 1], &runs[i], (run_u - i) * sizeof(runs[0]));
-  run_u++;
-  for (j = i + 1; j < run_u; j++)
-    runs[j].submission = j;
+  memmove(&state->runs[i + 1], &state->runs[i], (state->run_u - i) * sizeof(state->runs[0]));
+  state->run_u++;
+  for (j = i + 1; j < state->run_u; j++)
+    state->runs[j].submission = j;
 
-  memset(&runs[i], 0, sizeof(runs[0]));
-  runs[i].submission = i;
-  runs[i].status = RUN_EMPTY;
-  runs[i].timestamp = t;
-  runs[i].nsec = nsec;
-  if (sf_lseek(run_fd, sizeof(head) + i * sizeof(runs[0]), SEEK_SET,
+  memset(&state->runs[i], 0, sizeof(state->runs[0]));
+  state->runs[i].submission = i;
+  state->runs[i].status = RUN_EMPTY;
+  state->runs[i].timestamp = t;
+  state->runs[i].nsec = nsec;
+  if (sf_lseek(state->run_fd, sizeof(state->head) + i * sizeof(state->runs[0]), SEEK_SET,
                "run") == (off_t) -1) return -1;
-  if (do_write(run_fd, &runs[i], (run_u - i) * sizeof(runs[0])) < 0)
+  if (do_write(state->run_fd, &state->runs[i], (state->run_u - i) * sizeof(state->runs[0])) < 0)
     return -1;
   return i;
 }
 
 int
-run_add_record(time_t         timestamp,
+run_add_record(runlog_state_t state,
+               time_t         timestamp,
                int            nsec,
                size_t         size,
                ruint32_t      sha1[5],
@@ -589,11 +604,11 @@ run_add_record(time_t         timestamp,
     return -1;
   }
   if (!is_hidden) {
-    if (!head.start_time) {
+    if (!state->head.start_time) {
       err("run_add_record: contest is not yet started");
       return -1;
     }
-    if (timestamp < head.start_time) {
+    if (timestamp < state->head.start_time) {
       err("run_add_record: timestamp < start_time");
       return -1;
     }
@@ -629,7 +644,7 @@ run_add_record(time_t         timestamp,
   }
 
   if (!is_hidden) {
-    ue = get_user_entry(team);
+    ue = get_user_entry(state, team);
     if (ue->status == V_VIRTUAL_USER) {
       if (!ue->start_time) {
         err("run_add_record: virtual contest not started");
@@ -640,16 +655,16 @@ run_add_record(time_t         timestamp,
         return -1;
       }
       stop_time = ue->stop_time;
-      if (!stop_time && head.duration)
-        stop_time = ue->start_time + head.duration;
+      if (!stop_time && state->head.duration)
+        stop_time = ue->start_time + state->head.duration;
       if (stop_time && timestamp > stop_time) {
         err("run_add_record: timestamp > virtual stop time");
         return -1;
       }
     } else {
-      stop_time = head.stop_time;
-      if (!stop_time && head.duration)
-        stop_time = head.start_time + head.duration;
+      stop_time = state->head.stop_time;
+      if (!stop_time && state->head.duration)
+        stop_time = state->head.start_time + state->head.duration;
       if (stop_time && timestamp > stop_time) {
         err("run_add_record: timestamp overrun");
         return -1;
@@ -658,60 +673,61 @@ run_add_record(time_t         timestamp,
     }
   }
 
-  if ((i = append_record(timestamp, team, nsec)) < 0) return -1;
-  runs[i].size = size;
-  runs[i].locale_id = locale_id;
-  runs[i].team = team;
-  runs[i].language = language;
-  runs[i].problem = problem;
-  runs[i].status = 99;
-  runs[i].test = 0;
-  runs[i].score = -1;
-  runs[i].ip = ip;
-  runs[i].variant = variant;
-  runs[i].is_hidden = is_hidden;
+  if ((i = append_record(state, timestamp, team, nsec)) < 0) return -1;
+  state->runs[i].size = size;
+  state->runs[i].locale_id = locale_id;
+  state->runs[i].team = team;
+  state->runs[i].language = language;
+  state->runs[i].problem = problem;
+  state->runs[i].status = 99;
+  state->runs[i].test = 0;
+  state->runs[i].score = -1;
+  state->runs[i].ip = ip;
+  state->runs[i].variant = variant;
+  state->runs[i].is_hidden = is_hidden;
   if (sha1) {
-    memcpy(runs[i].sha1, sha1, sizeof(runs[i].sha1));
+    memcpy(state->runs[i].sha1, sha1, sizeof(state->runs[i].sha1));
   }
-  if (run_flush_entry(i) < 0) return -1;
+  if (run_flush_entry(state, i) < 0) return -1;
   return i;
 }
 
 int
-run_undo_add_record(int run_id)
+run_undo_add_record(runlog_state_t state, int run_id)
 {
-  if (run_id < 0 || run_id >= run_u) {
+  if (run_id < 0 || run_id >= state->run_u) {
     err("run_undo_add_record: invalid run_id");
     return -1;
   }
-  if (run_id == run_u - 1) {
-    run_u--;
-    memset(&runs[run_u], 0, sizeof(runs[0]));
-    if (ftruncate(run_fd, sizeof(head) + sizeof(runs[0]) * run_u) < 0) {
+  if (run_id == state->run_u - 1) {
+    state->run_u--;
+    memset(&state->runs[state->run_u], 0, sizeof(state->runs[0]));
+    if (ftruncate(state->run_fd, sizeof(state->head) + sizeof(state->runs[0]) * state->run_u) < 0) {
       err("run_undo_add_record: ftruncate failed: %s", os_ErrorMsg());
       return -1;
     }
     return 0;
   }
   // clear run
-  memset(&runs[run_id], 0, sizeof(runs[0]));
-  runs[run_id].submission = run_id;
-  runs[run_id].status = RUN_EMPTY;
+  memset(&state->runs[run_id], 0, sizeof(state->runs[0]));
+  state->runs[run_id].submission = run_id;
+  state->runs[run_id].status = RUN_EMPTY;
   return 0;
 }
 
 static int
-run_flush_header(void)
+run_flush_header(runlog_state_t state)
 {
-  if (sf_lseek(run_fd, 0, SEEK_SET, "run") == (off_t) -1) return -1;
-  if (do_write(run_fd, &head, sizeof(head)) < 0) return -1;
+  if (sf_lseek(state->run_fd, 0, SEEK_SET, "run") == (off_t) -1) return -1;
+  if (do_write(state->run_fd, &state->head, sizeof(state->head)) < 0) return -1;
   return 0;
 }
 
 int
-run_change_status(int runid, int newstatus, int newtest, int newscore, int judge_id)
+run_change_status(runlog_state_t state, int runid, int newstatus,
+                  int newtest, int newscore, int judge_id)
 {
-  if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
+  if (runid < 0 || runid >= state->run_u) ERR_R("bad runid: %d", runid);
   if (newstatus < 0 || newstatus > 255) ERR_R("bad newstatus: %d", newstatus);
   if (newtest < -1 || newtest > 127) ERR_R("bad newtest: %d", newtest);
   if (newscore < -1 || newscore > RUNLOG_MAX_SCORE)
@@ -722,106 +738,107 @@ run_change_status(int runid, int newstatus, int newtest, int newscore, int judge
     ERR_R("virtual status cannot be changed that way");
   if (newstatus == RUN_EMPTY)
     ERR_R("EMPTY status cannot be set this way");
-  if (runs[runid].status == RUN_VIRTUAL_START
-      || runs[runid].status == RUN_VIRTUAL_STOP
-      || runs[runid].status == RUN_EMPTY)
+  if (state->runs[runid].status == RUN_VIRTUAL_START
+      || state->runs[runid].status == RUN_VIRTUAL_STOP
+      || state->runs[runid].status == RUN_EMPTY)
     ERR_R("this entry cannot be changed");
 
-  if (runs[runid].is_readonly)
+  if (state->runs[runid].is_readonly)
     ERR_R("this entry is read-only");
 
-  runs[runid].status = newstatus;
-  runs[runid].test = newtest;
-  runs[runid].score = newscore;
-  runs[runid].judge_id = judge_id;
-  run_flush_entry(runid);
+  state->runs[runid].status = newstatus;
+  state->runs[runid].test = newtest;
+  state->runs[runid].score = newscore;
+  state->runs[runid].judge_id = judge_id;
+  run_flush_entry(state, runid);
   return 0;
 }
 
 int
-run_get_status(int runid)
+run_get_status(runlog_state_t state, int runid)
 {
-  if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
-  return runs[runid].status;
+  if (runid < 0 || runid >= state->run_u) ERR_R("bad runid: %d", runid);
+  return state->runs[runid].status;
 }
 
 int
-run_start_contest(time_t start_time)
+run_start_contest(runlog_state_t state, time_t start_time)
 {
-  if (head.start_time) ERR_R("Contest already started");
-  head.start_time = start_time;
-  head.sched_time = 0;
-  return run_flush_header();
+  if (state->head.start_time) ERR_R("Contest already started");
+  state->head.start_time = start_time;
+  state->head.sched_time = 0;
+  return run_flush_header(state);
 }
 
 int
-run_stop_contest(time_t stop_time)
+run_stop_contest(runlog_state_t state, time_t stop_time)
 {
-  head.stop_time = stop_time;
-  return run_flush_header();
+  state->head.stop_time = stop_time;
+  return run_flush_header(state);
 }
 
 int
-run_set_duration(time_t dur)
+run_set_duration(runlog_state_t state, time_t dur)
 {
-  head.duration = dur;
-  return run_flush_header();
+  state->head.duration = dur;
+  return run_flush_header(state);
 }
 
 int
-run_sched_contest(time_t sched)
+run_sched_contest(runlog_state_t state, time_t sched)
 {
-  head.sched_time = sched;
-  return run_flush_header();
+  state->head.sched_time = sched;
+  return run_flush_header(state);
 }
 
 time_t
-run_get_start_time(void)
+run_get_start_time(runlog_state_t state)
 {
-  return head.start_time;
+  return state->head.start_time;
 }
 
 time_t
-run_get_stop_time(void)
+run_get_stop_time(runlog_state_t state)
 {
-  return head.stop_time;
+  return state->head.stop_time;
 }
 
 time_t
-run_get_duration(void)
+run_get_duration(runlog_state_t state)
 {
-  return head.duration;
+  return state->head.duration;
 }
 
 void
-run_get_times(time_t *start, time_t *sched, time_t *dur, time_t *stop)
+run_get_times(runlog_state_t state, 
+              time_t *start, time_t *sched, time_t *dur, time_t *stop)
 {
-  if (start) *start = head.start_time;
-  if (sched) *sched = head.sched_time;
-  if (dur)   *dur   = head.duration;
-  if (stop)  *stop  = head.stop_time;
+  if (start) *start = state->head.start_time;
+  if (sched) *sched = state->head.sched_time;
+  if (dur)   *dur   = state->head.duration;
+  if (stop)  *stop  = state->head.stop_time;
 }
 
 int
-run_get_total(void)
+run_get_total(runlog_state_t state)
 {
-  return run_u;
+  return state->run_u;
 }
 
 void
-run_get_team_usage(int teamid, int *pn, size_t *ps)
+run_get_team_usage(runlog_state_t state, int teamid, int *pn, size_t *ps)
 {
   int i;
   int n = 0;
   size_t sz = 0;
 
-  for (i = 0; i < run_u; i++) {
-    if (runs[i].status == RUN_VIRTUAL_START
-        || runs[i].status == RUN_VIRTUAL_STOP
-        || runs[i].status == RUN_EMPTY)
+  for (i = 0; i < state->run_u; i++) {
+    if (state->runs[i].status == RUN_VIRTUAL_START
+        || state->runs[i].status == RUN_VIRTUAL_STOP
+        || state->runs[i].status == RUN_EMPTY)
       continue;
-    if (runs[i].team == teamid) {
-      sz += runs[i].size;
+    if (state->runs[i].team == teamid) {
+      sz += state->runs[i].size;
       n++;
     }
   }
@@ -831,25 +848,25 @@ run_get_team_usage(int teamid, int *pn, size_t *ps)
 
 /* FIXME: VERY DUMB */
 int
-run_get_attempts(int runid, int *pattempts,
+run_get_attempts(runlog_state_t state, int runid, int *pattempts,
                  int *pdisqattempts, int skip_ce_flag)
 {
   int i, n = 0, m = 0;
 
   *pattempts = 0;
-  if (runid < 0 || runid >= run_u) ERR_R("bad runid: %d", runid);
+  if (runid < 0 || runid >= state->run_u) ERR_R("bad runid: %d", runid);
 
   for (i = 0; i < runid; i++) {
-    if (runs[i].status == RUN_VIRTUAL_START
-        || runs[i].status == RUN_VIRTUAL_STOP
-        || runs[i].status == RUN_EMPTY)
+    if (state->runs[i].status == RUN_VIRTUAL_START
+        || state->runs[i].status == RUN_VIRTUAL_STOP
+        || state->runs[i].status == RUN_EMPTY)
       continue;
-    if (runs[i].team != runs[runid].team) continue;
-    if (runs[i].problem != runs[runid].problem) continue;
-    if (runs[i].status == RUN_COMPILE_ERR && skip_ce_flag) continue;
-    if (runs[i].status == RUN_IGNORED) continue;
-    if (runs[i].is_hidden) continue;
-    if (runs[i].status == RUN_DISQUALIFIED) {
+    if (state->runs[i].team != state->runs[runid].team) continue;
+    if (state->runs[i].problem != state->runs[runid].problem) continue;
+    if (state->runs[i].status == RUN_COMPILE_ERR && skip_ce_flag) continue;
+    if (state->runs[i].status == RUN_IGNORED) continue;
+    if (state->runs[i].is_hidden) continue;
+    if (state->runs[i].status == RUN_DISQUALIFIED) {
       m++;
     } else {
       n++;
@@ -869,37 +886,37 @@ run_get_attempts(int runid, int *pattempts,
  *          RUN_TOO_MANY (100000), if invisible or banned user or run
  */
 int
-run_get_prev_successes(int run_id)
+run_get_prev_successes(runlog_state_t state, int run_id)
 {
   int user_id, successes = 0, i, cur_uid;
   unsigned char *has_success = 0;
 
-  if (run_id < 0 || run_id >= run_u) ERR_R("bad runid: %d", run_id);
-  if (runs[run_id].status != RUN_OK) ERR_R("runid %d is not OK", run_id);
+  if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
+  if (state->runs[run_id].status != RUN_OK) ERR_R("runid %d is not OK", run_id);
 
   // invisible run
-  if (runs[run_id].is_hidden) return RUN_TOO_MANY;
+  if (state->runs[run_id].is_hidden) return RUN_TOO_MANY;
 
-  if (update_user_flags() < 0) return -1;
+  if (update_user_flags(state) < 0) return -1;
 
   // invalid, banned or invisible user
-  user_id = runs[run_id].team;
-  if (user_id <= 0 || user_id >= user_flags.nuser
-      || user_flags.flags[user_id] < 0
-      || (user_flags.flags[user_id] & TEAM_BANNED)
-      || (user_flags.flags[user_id] & TEAM_INVISIBLE))
+  user_id = state->runs[run_id].team;
+  if (user_id <= 0 || user_id >= state->user_flags.nuser
+      || state->user_flags.flags[user_id] < 0
+      || (state->user_flags.flags[user_id] & TEAM_BANNED)
+      || (state->user_flags.flags[user_id] & TEAM_INVISIBLE))
     return RUN_TOO_MANY;
 
-  XALLOCAZ(has_success, user_flags.nuser);
+  XALLOCAZ(has_success, state->user_flags.nuser);
   for (i = 0; i < run_id; i++) {
-    if (runs[i].status != RUN_OK) continue;
-    if (runs[i].is_hidden) continue;
-    if (runs[i].problem != runs[run_id].problem) continue;
-    cur_uid = runs[i].team;
-    if (cur_uid <= 0 || cur_uid >= user_flags.nuser
-        || user_flags.flags[cur_uid] < 0
-        || (user_flags.flags[cur_uid] & TEAM_BANNED)
-        || (user_flags.flags[cur_uid] & TEAM_INVISIBLE))
+    if (state->runs[i].status != RUN_OK) continue;
+    if (state->runs[i].is_hidden) continue;
+    if (state->runs[i].problem != state->runs[run_id].problem) continue;
+    cur_uid = state->runs[i].team;
+    if (cur_uid <= 0 || cur_uid >= state->user_flags.nuser
+        || state->user_flags.flags[cur_uid] < 0
+        || (state->user_flags.flags[cur_uid] & TEAM_BANNED)
+        || (state->user_flags.flags[cur_uid] & TEAM_INVISIBLE))
       continue;
     if (cur_uid == user_id) {
       // the user already had OK before
@@ -953,7 +970,8 @@ run_status_str(int status, char *out, int len)
 }
 
 int
-run_get_fog_period(time_t cur_time, int fog_time, int unfog_time)
+run_get_fog_period(runlog_state_t state, time_t cur_time, int fog_time,
+                   int unfog_time)
 {
   time_t estimated_stop;
   time_t fog_start;
@@ -962,19 +980,19 @@ run_get_fog_period(time_t cur_time, int fog_time, int unfog_time)
   ASSERT(fog_time >= 0);
   ASSERT(unfog_time >= 0);
 
-  if (!head.start_time) return -1;
-  if (!fog_time || !head.duration) return 0;
+  if (!state->head.start_time) return -1;
+  if (!fog_time || !state->head.duration) return 0;
 
-  ASSERT(cur_time >= head.start_time);
-  if (head.stop_time) {
-    ASSERT(head.stop_time >= head.start_time);
-    ASSERT(cur_time >= head.stop_time);
-    if (cur_time > head.stop_time + unfog_time) return 2;
+  ASSERT(cur_time >= state->head.start_time);
+  if (state->head.stop_time) {
+    ASSERT(state->head.stop_time >= state->head.start_time);
+    ASSERT(cur_time >= state->head.stop_time);
+    if (cur_time > state->head.stop_time + unfog_time) return 2;
     return 1;
   } else {
-    estimated_stop = head.start_time + head.duration;
+    estimated_stop = state->head.start_time + state->head.duration;
     //ASSERT(cur_time <= estimated_stop);
-    if (fog_time > head.duration) fog_time = head.duration;
+    if (fog_time > state->head.duration) fog_time = state->head.duration;
     fog_start = estimated_stop - fog_time;
     if (cur_time >= fog_start) return 1;
     return 0;
@@ -982,28 +1000,28 @@ run_get_fog_period(time_t cur_time, int fog_time, int unfog_time)
 }
 
 int
-run_reset(time_t new_duration)
+run_reset(runlog_state_t state, time_t new_duration)
 {
   int i;
 
-  run_u = 0;
-  if (run_a > 0) {
-    memset(runs, 0, sizeof(runs[0]) * run_a);
+  state->run_u = 0;
+  if (state->run_a > 0) {
+    memset(state->runs, 0, sizeof(state->runs[0]) * state->run_a);
   }
-  for (i = 0; i < ut_size; i++)
-    xfree(ut_table[i]);
-  xfree(ut_table);
-  ut_table = 0;
-  ut_size = 0;
-  memset(&head, 0, sizeof(head));
-  head.version = 1;
-  head.duration = new_duration;
+  for (i = 0; i < state->ut_size; i++)
+    xfree(state->ut_table[i]);
+  xfree(state->ut_table);
+  state->ut_table = 0;
+  state->ut_size = 0;
+  memset(&state->head, 0, sizeof(state->head));
+  state->head.version = 1;
+  state->head.duration = new_duration;
 
-  if (ftruncate(run_fd, 0) < 0) {
+  if (ftruncate(state->run_fd, 0) < 0) {
     err("ftruncate failed: %s", os_ErrorMsg());
     return -1;
   }
-  run_flush_header();
+  run_flush_header(state);
   return 0;
 }
 
@@ -1033,15 +1051,15 @@ run_parse_ip(unsigned char const *buf)
 }
 
 int
-run_check_duplicate(int run_id)
+run_check_duplicate(runlog_state_t state, int run_id)
 {
   int i;
   struct run_entry *p, *q;
 
-  if (run_id < 0 || run_id >= run_u) ERR_R("bad runid: %d", run_id);
-  p = &runs[run_id];
+  if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
+  p = &state->runs[run_id];
   for (i = run_id - 1; i >= 0; i--) {
-    q = &runs[i];
+    q = &state->runs[i];
     if (q->status == RUN_EMPTY || q->status == RUN_VIRTUAL_START
         || q->status == RUN_VIRTUAL_STOP)
       continue;
@@ -1061,38 +1079,39 @@ run_check_duplicate(int run_id)
   }
   if (i < 0) return 0;
   p->status = RUN_IGNORED;
-  if (run_flush_entry(run_id) < 0) return -1;
+  if (run_flush_entry(state, run_id) < 0) return -1;
   return i + 1;
 }
 
 void
-run_get_header(struct run_header *out)
+run_get_header(runlog_state_t state, struct run_header *out)
 {
-  memcpy(out, &head, sizeof(head));
+  memcpy(out, &state->head, sizeof(state->head));
 }
 
 void
-run_get_all_entries(struct run_entry *out)
+run_get_all_entries(runlog_state_t state, struct run_entry *out)
 {
-  memcpy(out, runs, sizeof(out[0]) * run_u);
+  memcpy(out, state->runs, sizeof(out[0]) * state->run_u);
 }
 
 const struct run_entry *
-run_get_entries_ptr(void)
+run_get_entries_ptr(runlog_state_t state)
 {
-  return runs;
+  return state->runs;
 }
 
 int
-run_get_entry(int run_id, struct run_entry *out)
+run_get_entry(runlog_state_t state, int run_id, struct run_entry *out)
 {
-  if (run_id < 0 || run_id >= run_u) ERR_R("bad runid: %d", run_id);
-  memcpy(out, &runs[run_id], sizeof(*out));
+  if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
+  memcpy(out, &state->runs[run_id], sizeof(*out));
   return 0;
 }
 
 int
-run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
+run_set_entry(runlog_state_t state, int run_id, unsigned int mask,
+              const struct run_entry *in)
 {
   struct run_entry *out;
   struct run_entry te;
@@ -1101,12 +1120,12 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
   time_t stop_time;
 
   ASSERT(in);
-  if (run_id < 0 || run_id >= run_u) ERR_R("bad runid: %d", run_id);
-  out = &runs[run_id];
+  if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
+  out = &state->runs[run_id];
   ASSERT(out->submission == run_id);
 
-  ASSERT(head.start_time >= 0);
-  if (!out->is_hidden && !head.start_time) {
+  ASSERT(state->head.start_time >= 0);
+  if (!out->is_hidden && !state->head.start_time) {
     err("run_set_entry: %d: the contest is not started", run_id);
     return -1;
   }
@@ -1220,12 +1239,12 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
   }
 
   if (!te.is_hidden) {
-    ue = get_user_entry(te.team);
+    ue = get_user_entry(state, te.team);
     if (ue->status == V_VIRTUAL_USER) {
       ASSERT(ue->start_time > 0);
       stop_time = ue->stop_time;
-      if (!stop_time && head.duration > 0)
-        stop_time = ue->start_time + head.duration;
+      if (!stop_time && state->head.duration > 0)
+        stop_time = ue->start_time + state->head.duration;
       if (te.timestamp < ue->start_time) {
         err("run_set_entry: %d: timestamp < virtual start_time", run_id);
         return -1;
@@ -1235,10 +1254,10 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
         return -1;
       }
     } else {
-      stop_time = head.stop_time;
-      if (!stop_time && head.duration > 0)
-        stop_time = head.start_time + head.duration;
-      if (te.timestamp < head.start_time) {
+      stop_time = state->head.stop_time;
+      if (!stop_time && state->head.duration > 0)
+        stop_time = state->head.start_time + state->head.duration;
+      if (te.timestamp < state->head.start_time) {
         err("run_set_entry: %d: timestamp < start_time", run_id);
         return -1;
       }
@@ -1297,80 +1316,81 @@ run_set_entry(int run_id, unsigned int mask, const struct run_entry *in)
 
   memcpy(out, &te, sizeof(*out));
   if (!te.is_hidden && !ue->status) ue->status = V_REAL_USER;
-  if (f && run_flush_entry(run_id) < 0) return -1;
+  if (f && run_flush_entry(state, run_id) < 0) return -1;
   return 0;
 }
 
 static struct user_entry *
-get_user_entry(int user_id)
+get_user_entry(runlog_state_t state, int user_id)
 {
   ASSERT(user_id > 0);
 
-  if (user_id >= ut_size) {
+  if (user_id >= state->ut_size) {
     struct user_entry **new_ut_table = 0;
-    int new_ut_size = ut_size;
+    int new_ut_size = state->ut_size;
 
     if (!new_ut_size) new_ut_size = 16;
     while (new_ut_size <= user_id)
       new_ut_size *= 2;
     new_ut_table = xcalloc(new_ut_size, sizeof(new_ut_table[0]));
-    if (ut_size > 0) {
-      memcpy(new_ut_table, ut_table, ut_size * sizeof(ut_table[0]));
+    if (state->ut_size > 0) {
+      memcpy(new_ut_table, state->ut_table, state->ut_size * sizeof(state->ut_table[0]));
     }
-    ut_size = new_ut_size;
-    xfree(ut_table);
-    ut_table = new_ut_table;
-    info("runlog: ut_table is extended to %d", ut_size);
+    state->ut_size = new_ut_size;
+    xfree(state->ut_table);
+    state->ut_table = new_ut_table;
+    info("runlog: ut_table is extended to %d", state->ut_size);
   }
 
-  if (!ut_table[user_id]) {
-    ut_table[user_id] = xcalloc(1, sizeof(ut_table[user_id][0]));
+  if (!state->ut_table[user_id]) {
+    state->ut_table[user_id] = xcalloc(1, sizeof(state->ut_table[user_id][0]));
   }
-  return ut_table[user_id];
+  return state->ut_table[user_id];
 }
 
 time_t
-run_get_virtual_start_time(int user_id)
+run_get_virtual_start_time(runlog_state_t state, int user_id)
 {
-  struct user_entry *pvt = get_user_entry(user_id);
-  if (pvt->status == V_REAL_USER) return head.start_time;
+  struct user_entry *pvt = get_user_entry(state, user_id);
+  if (pvt->status == V_REAL_USER) return state->head.start_time;
   return pvt->start_time;
 }
 
 time_t
-run_get_virtual_stop_time(int user_id, time_t cur_time)
+run_get_virtual_stop_time(runlog_state_t state, int user_id, time_t cur_time)
 {
-  struct user_entry *pvt = get_user_entry(user_id);
+  struct user_entry *pvt = get_user_entry(state, user_id);
   if (!pvt->start_time) return 0;
   if (!cur_time) return pvt->stop_time;
-  if (pvt->status == V_REAL_USER) return head.stop_time;
+  if (pvt->status == V_REAL_USER) return state->head.stop_time;
   if (pvt->status != V_VIRTUAL_USER) return 0;
-  if (head.duration || pvt->stop_time) return pvt->stop_time;
-  if (pvt->start_time + head.duration < cur_time) {
-    pvt->stop_time = pvt->start_time + head.duration;
+  if (state->head.duration || pvt->stop_time) return pvt->stop_time;
+  if (pvt->start_time + state->head.duration < cur_time) {
+    pvt->stop_time = pvt->start_time + state->head.duration;
   }
   return pvt->stop_time;
 }
 
 int
-run_get_virtual_status(int user_id)
+run_get_virtual_status(runlog_state_t state, int user_id)
 {
-  struct user_entry *pvt = get_user_entry(user_id);
+  struct user_entry *pvt = get_user_entry(state, user_id);
   return pvt->status;
 }
 
 int
-run_virtual_start(int user_id, time_t t, ej_ip_t ip, int nsec)
+run_virtual_start(runlog_state_t state, int user_id, time_t t, ej_ip_t ip,
+                  int nsec)
 {
-  struct user_entry *pvt = get_user_entry(user_id);
+  struct user_entry *pvt = get_user_entry(state, user_id);
   int i;
 
-  if (!head.start_time) {
+  if (!state->head.start_time) {
     err("run_virtual_start: the contest is not started");
     return -1;
   }
-  ASSERT(head.start_time > 0);
-  if (t < head.start_time) {
+  ASSERT(state->head.start_time > 0);
+  if (t < state->head.start_time) {
     err("run_virtual_start: timestamp < start_time");
     return -1;
   }
@@ -1386,29 +1406,30 @@ run_virtual_start(int user_id, time_t t, ej_ip_t ip, int nsec)
     err("run_virtual_start: nsec field value %d is invalid", nsec);
     return -1;
   }
-  if ((i = append_record(t, user_id, nsec)) < 0) return -1;
-  runs[i].team = user_id;
-  runs[i].ip = ip;
-  runs[i].status = RUN_VIRTUAL_START;
+  if ((i = append_record(state, t, user_id, nsec)) < 0) return -1;
+  state->runs[i].team = user_id;
+  state->runs[i].ip = ip;
+  state->runs[i].status = RUN_VIRTUAL_START;
   pvt->start_time = t;
   pvt->status = V_VIRTUAL_USER;
-  if (run_flush_entry(i) < 0) return -1;
+  if (run_flush_entry(state, i) < 0) return -1;
   return i;
 }
 
 int
-run_virtual_stop(int user_id, time_t t, ej_ip_t ip, int nsec)
+run_virtual_stop(runlog_state_t state, int user_id, time_t t, ej_ip_t ip,
+                 int nsec)
 {
-  struct user_entry *pvt = get_user_entry(user_id);
+  struct user_entry *pvt = get_user_entry(state, user_id);
   int i;
   time_t exp_stop_time = 0;
 
-  if (!head.start_time) {
+  if (!state->head.start_time) {
     err("run_virtual_stop: the contest is not started");
     return -1;
   }
-  ASSERT(head.start_time > 0);
-  if (t < head.start_time) {
+  ASSERT(state->head.start_time > 0);
+  if (t < state->head.start_time) {
     err("run_virtual_stop: timestamp < start_time");
     return -1;
   }
@@ -1421,7 +1442,7 @@ run_virtual_stop(int user_id, time_t t, ej_ip_t ip, int nsec)
     err("run_virtual_stop: virtual contest for %d already stopped", user_id);
     return -1;
   }
-  if (head.duration > 0) exp_stop_time = pvt->start_time + head.duration;
+  if (state->head.duration > 0) exp_stop_time = pvt->start_time + state->head.duration;
   if (t > exp_stop_time) {
     err("run_virtual_stop: the virtual time ended");
     return -1;
@@ -1431,107 +1452,107 @@ run_virtual_stop(int user_id, time_t t, ej_ip_t ip, int nsec)
     return -1;
   }
 
-  if ((i = append_record(t, user_id, nsec)) < 0) return -1;
-  runs[i].team = user_id;
-  runs[i].ip = ip;
-  runs[i].status = RUN_VIRTUAL_STOP;
+  if ((i = append_record(state, t, user_id, nsec)) < 0) return -1;
+  state->runs[i].team = user_id;
+  state->runs[i].ip = ip;
+  state->runs[i].status = RUN_VIRTUAL_STOP;
   pvt->stop_time = t;
-  if (run_flush_entry(i) < 0) return -1;
+  if (run_flush_entry(state, i) < 0) return -1;
   return i;
 }
 
 int
-run_is_readonly(int run_id)
+run_is_readonly(runlog_state_t state, int run_id)
 {
-  if (run_id < 0 || run_id >= run_u) return 1;
-  return runs[run_id].is_readonly;
+  if (run_id < 0 || run_id >= state->run_u) return 1;
+  return state->runs[run_id].is_readonly;
 }
 
 int
-run_clear_entry(int run_id)
+run_clear_entry(runlog_state_t state, int run_id)
 {
   struct user_entry *ue;
   int i;
 
-  if (run_id < 0 || run_id >= run_u) ERR_R("bad runid: %d", run_id);
-  if (runs[run_id].is_readonly) ERR_R("run %d is readonly", run_id);
-  switch (runs[run_id].status) {
+  if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
+  if (state->runs[run_id].is_readonly) ERR_R("run %d is readonly", run_id);
+  switch (state->runs[run_id].status) {
   case RUN_EMPTY:
-    memset(&runs[run_id], 0, sizeof(runs[run_id]));
-    runs[run_id].status = RUN_EMPTY;
-    runs[run_id].submission = run_id;
+    memset(&state->runs[run_id], 0, sizeof(state->runs[run_id]));
+    state->runs[run_id].status = RUN_EMPTY;
+    state->runs[run_id].submission = run_id;
     break;
   case RUN_VIRTUAL_STOP:
     /* VSTOP events can safely be cleared */ 
-    ue = get_user_entry(runs[run_id].team);
+    ue = get_user_entry(state, state->runs[run_id].team);
     ASSERT(ue->status == V_VIRTUAL_USER);
     ASSERT(ue->start_time > 0);
     ue->stop_time = 0;
-    memset(&runs[run_id], 0, sizeof(runs[run_id]));
-    runs[run_id].status = RUN_EMPTY;
-    runs[run_id].submission = run_id;
+    memset(&state->runs[run_id], 0, sizeof(state->runs[run_id]));
+    state->runs[run_id].status = RUN_EMPTY;
+    state->runs[run_id].submission = run_id;
     break;
   case RUN_VIRTUAL_START:
     /* VSTART event must be the only event of this team */
-    for (i = 0; i < run_u; i++) {
+    for (i = 0; i < state->run_u; i++) {
       if (i == run_id) continue;
-      if (runs[i].status == RUN_EMPTY) continue;
-      if (runs[i].team == runs[run_id].team) break;
+      if (state->runs[i].status == RUN_EMPTY) continue;
+      if (state->runs[i].team == state->runs[run_id].team) break;
     }
-    if (i < run_u) {
+    if (i < state->run_u) {
       err("run_clear_entry: VSTART must be the only record for a team");
       return -1;
     }
-    ue = get_user_entry(runs[run_id].team);
+    ue = get_user_entry(state, state->runs[run_id].team);
     ASSERT(ue->status == V_VIRTUAL_USER);
-    ASSERT(ue->start_time == runs[run_id].timestamp);
+    ASSERT(ue->start_time == state->runs[run_id].timestamp);
     ASSERT(!ue->stop_time);
     ue->status = 0;
     ue->start_time = 0;
-    memset(&runs[run_id], 0, sizeof(runs[run_id]));
-    runs[run_id].status = RUN_EMPTY;
-    runs[run_id].submission = run_id;
+    memset(&state->runs[run_id], 0, sizeof(state->runs[run_id]));
+    state->runs[run_id].status = RUN_EMPTY;
+    state->runs[run_id].submission = run_id;
     break;
   default:
     /* maybe update indices */
-    memset(&runs[run_id], 0, sizeof(runs[run_id]));
-    runs[run_id].status = RUN_EMPTY;
-    runs[run_id].submission = run_id;
+    memset(&state->runs[run_id], 0, sizeof(state->runs[run_id]));
+    state->runs[run_id].status = RUN_EMPTY;
+    state->runs[run_id].submission = run_id;
     break;
   }
-  return run_flush_entry(run_id);
+  return run_flush_entry(state, run_id);
 }
 
 int
-run_squeeze_log(void)
+run_squeeze_log(runlog_state_t state)
 {
   int i, j, retval, first_moved = -1, w;
   unsigned char *ptr;
   size_t tot;
 
-  for (i = 0, j = 0; i < run_u; i++) {
-    if (runs[i].status == RUN_EMPTY) continue;
+  for (i = 0, j = 0; i < state->run_u; i++) {
+    if (state->runs[i].status == RUN_EMPTY) continue;
     if (i != j) {
       if (first_moved < 0) first_moved = j;
-      memcpy(&runs[j], &runs[i], sizeof(runs[j]));
-      runs[j].submission = j;
+      memcpy(&state->runs[j], &state->runs[i], sizeof(state->runs[j]));
+      state->runs[j].submission = j;
     }
     j++;
   }
-  if  (run_u == j) {
+  if  (state->run_u == j) {
     // no runs were removed
     ASSERT(first_moved == -1);
     return 0;
   }
 
-  retval = run_u - j;
-  run_u = j;
-  if (run_u < run_a) {
-    memset(&runs[run_u], 0, (run_a - run_u) * sizeof(runs[0]));
+  retval = state->run_u - j;
+  state->run_u = j;
+  if (state->run_u < state->run_a) {
+    memset(&state->runs[state->run_u], 0, (state->run_a - state->run_u) * sizeof(state->runs[0]));
   }
 
   // update log on disk
-  if (ftruncate(run_fd, sizeof(head) + run_u * sizeof(runs[0])) < 0) {
+  if (ftruncate(state->run_fd, sizeof(state->head) + state->run_u * sizeof(state->runs[0])) < 0) {
     err("run_squeeze_log: ftruncate failed: %s", os_ErrorMsg());
     return -1;
   }
@@ -1539,14 +1560,14 @@ run_squeeze_log(void)
     // no entries were moved because the only entries empty were the last
     return retval;
   }
-  ASSERT(first_moved >= 0 && first_moved < run_u);
-  if (sf_lseek(run_fd, sizeof(head) + first_moved * sizeof(runs[0]),
+  ASSERT(first_moved >= 0 && first_moved < state->run_u);
+  if (sf_lseek(state->run_fd, sizeof(state->head) + first_moved * sizeof(state->runs[0]),
                SEEK_SET, "run") == (off_t) -1)
     return -1;
-  tot = (run_u - first_moved) * sizeof(runs[0]);
-  ptr = (unsigned char *) &runs[first_moved];
+  tot = (state->run_u - first_moved) * sizeof(state->runs[0]);
+  ptr = (unsigned char *) &state->runs[first_moved];
   while (tot > 0) {
-    w = write(run_fd, ptr, tot);
+    w = write(state->run_fd, ptr, tot);
     if (w <= 0) {
       err("run_squeeze_log: write error: %s", os_ErrorMsg());
       return -1;
@@ -1558,32 +1579,33 @@ run_squeeze_log(void)
 }
 
 void
-run_clear_variables(void)
+run_clear_variables(runlog_state_t state)
 {
   int i;
 
-  memset(&head, 0, sizeof(head));
-  if (runs) xfree(runs);
-  runs = 0;
-  run_u = run_a = 0;
-  if (run_fd >= 0) close(run_fd);
-  run_fd = -1;
-  if (ut_table) {
-    for (i = 0; i < ut_size; i++) {
-      if (ut_table[i]) xfree(ut_table[i]);
-      ut_table[i] = 0;
+  memset(&state->head, 0, sizeof(state->head));
+  if (state->runs) xfree(state->runs);
+  state->runs = 0;
+  state->run_u = state->run_a = 0;
+  if (state->run_fd >= 0) close(state->run_fd);
+  state->run_fd = -1;
+  if (state->ut_table) {
+    for (i = 0; i < state->ut_size; i++) {
+      if (state->ut_table[i]) xfree(state->ut_table[i]);
+      state->ut_table[i] = 0;
     }
-    xfree(ut_table);
+    xfree(state->ut_table);
   }
-  ut_table = 0;
+  state->ut_table = 0;
 }
 
 int
-run_write_xml(FILE *f, int export_mode, time_t current_time)
+run_write_xml(runlog_state_t state, FILE *f, int export_mode,
+              time_t current_time)
 {
   //int i;
 
-  if (!head.start_time) {
+  if (!state->head.start_time) {
     err("Contest is not yet started");
     return -1;
   }
@@ -1614,8 +1636,8 @@ run_write_xml(FILE *f, int export_mode, time_t current_time)
   }
   */
 
-  unparse_runlog_xml(teamdb_state, f, &head, run_u, runs, export_mode,
-                     current_time);
+  unparse_runlog_xml(state->teamdb_state, f, &state->head, state->run_u,
+                     state->runs, export_mode, current_time);
   return 0;
 }
 
@@ -1975,55 +1997,55 @@ runlog_check(FILE *ferr,
 }
 
 static void
-build_indices(void)
+build_indices(runlog_state_t state)
 {
   int i;
   int max_team_id = -1;
   struct user_entry *ue;
 
-  if (ut_table) {
-    for (i = 0; i < ut_size; i++)
-      xfree(ut_table[i]);
-    xfree(ut_table);
-    ut_table = 0;
+  if (state->ut_table) {
+    for (i = 0; i < state->ut_size; i++)
+      xfree(state->ut_table[i]);
+    xfree(state->ut_table);
+    state->ut_table = 0;
   }
-  ut_size = 0;
-  ut_table = 0;
+  state->ut_size = 0;
+  state->ut_table = 0;
 
   /* assume, that the runlog is consistent
    * scan the whole runlog and build various indices
    */
-  for (i = 0; i < run_u; i++) {
-    if (runs[i].status == RUN_EMPTY) continue;
-    ASSERT(runs[i].team > 0);
-    if (runs[i].team > max_team_id) max_team_id = runs[i].team;
+  for (i = 0; i < state->run_u; i++) {
+    if (state->runs[i].status == RUN_EMPTY) continue;
+    ASSERT(state->runs[i].team > 0);
+    if (state->runs[i].team > max_team_id) max_team_id = state->runs[i].team;
   }
   if (max_team_id <= 0) return;
 
-  ut_size = 128;
-  while (ut_size <= max_team_id)
-    ut_size *= 2;
+  state->ut_size = 128;
+  while (state->ut_size <= max_team_id)
+    state->ut_size *= 2;
 
-  XCALLOC(ut_table, ut_size);
-  for (i = 0; i < run_u; i++) {
-    if (runs[i].is_hidden) continue;
-    switch (runs[i].status) {
+  XCALLOC(state->ut_table, state->ut_size);
+  for (i = 0; i < state->run_u; i++) {
+    if (state->runs[i].is_hidden) continue;
+    switch (state->runs[i].status) {
     case RUN_EMPTY:
       break;
     case RUN_VIRTUAL_START:
-      ue = get_user_entry(runs[i].team);
+      ue = get_user_entry(state, state->runs[i].team);
       ASSERT(!ue->status);
       ue->status = V_VIRTUAL_USER;
-      ue->start_time = runs[i].timestamp;
+      ue->start_time = state->runs[i].timestamp;
       break;
     case RUN_VIRTUAL_STOP:
-      ue = get_user_entry(runs[i].team);
+      ue = get_user_entry(state, state->runs[i].team);
       ASSERT(ue->status == V_VIRTUAL_USER);
       ASSERT(ue->start_time > 0);
-      ue->stop_time = runs[i].timestamp;
+      ue->stop_time = state->runs[i].timestamp;
       break;
     default:
-      ue = get_user_entry(runs[i].team);
+      ue = get_user_entry(state, state->runs[i].team);
       if (!ue->status) ue->status = V_REAL_USER;
       break;
     }
@@ -2031,65 +2053,65 @@ build_indices(void)
 }
 
 int
-run_get_pages(int run_id)
+run_get_pages(runlog_state_t state, int run_id)
 {
-  if (run_id < 0 || run_id >= run_u) ERR_R("bad runid: %d", run_id);
-  return runs[run_id].pages;
+  if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
+  return state->runs[run_id].pages;
 }
 
 int
-run_set_pages(int run_id, int pages)
+run_set_pages(runlog_state_t state, int run_id, int pages)
 {
-  if (run_id < 0 || run_id >= run_u) ERR_R("bad runid: %d", run_id);
+  if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
   if (pages < 0 || pages > 255) ERR_R("bad pages: %d", pages);
-  runs[run_id].pages = pages;
-  run_flush_entry(run_id);
+  state->runs[run_id].pages = pages;
+  run_flush_entry(state, run_id);
   return 0;
 }
 
 int
-run_get_total_pages(int user_id)
+run_get_total_pages(runlog_state_t state, int user_id)
 {
   int i, total = 0;
 
   if (user_id <= 0 || user_id > 100000) ERR_R("bad user_id: %d", user_id);
-  for (i = 0; i < run_u; i++) {
-    if (runs[i].status == RUN_VIRTUAL_START || runs[i].status == RUN_VIRTUAL_STOP
-        || runs[i].status == RUN_EMPTY) continue;
-    if (runs[i].team != user_id) continue;
-    total += runs[i].pages;
+  for (i = 0; i < state->run_u; i++) {
+    if (state->runs[i].status == RUN_VIRTUAL_START || state->runs[i].status == RUN_VIRTUAL_STOP
+        || state->runs[i].status == RUN_EMPTY) continue;
+    if (state->runs[i].team != user_id) continue;
+    total += state->runs[i].pages;
   }
   return total;
 }
 
 int
-run_find(int first_run, int last_run,
+run_find(runlog_state_t state, int first_run, int last_run,
          int team_id, int prob_id, int lang_id)
 {
   int i;
 
-  if (!run_u) return -1;
+  if (!state->run_u) return -1;
 
-  if (first_run < 0) first_run = run_u + first_run;
+  if (first_run < 0) first_run = state->run_u + first_run;
   if (first_run < 0) first_run = 0;
-  if (first_run >= run_u) first_run = run_u - 1;
+  if (first_run >= state->run_u) first_run = state->run_u - 1;
 
-  if (last_run < 0) last_run = run_u + last_run;
+  if (last_run < 0) last_run = state->run_u + last_run;
   if (last_run < 0) last_run = 0;
-  if (last_run >= run_u) last_run = run_u - 1;
+  if (last_run >= state->run_u) last_run = state->run_u - 1;
 
   if (first_run <= last_run) {
     for (i = first_run; i <= last_run; i++) {
-      if (team_id && team_id != runs[i].team) continue;
-      if (prob_id && prob_id != runs[i].problem) continue;
-      if (lang_id && lang_id != runs[i].language) continue;
+      if (team_id && team_id != state->runs[i].team) continue;
+      if (prob_id && prob_id != state->runs[i].problem) continue;
+      if (lang_id && lang_id != state->runs[i].language) continue;
       return i;
     }
   } else {
     for (i = first_run; i >= last_run; i--) {
-      if (team_id && team_id != runs[i].team) continue;
-      if (prob_id && prob_id != runs[i].problem) continue;
-      if (lang_id && lang_id != runs[i].language) continue;
+      if (team_id && team_id != state->runs[i].team) continue;
+      if (prob_id && prob_id != state->runs[i].problem) continue;
+      if (lang_id && lang_id != state->runs[i].language) continue;
       return i;
     }
   }
@@ -2229,21 +2251,23 @@ static void
 teamdb_update_callback(void *user_ptr)
 {
   // invalidate user_flags
-  xfree(user_flags.flags);
-  memset(&user_flags, 0, sizeof(user_flags));
-  user_flags.nuser = -1;
+  runlog_state_t state = (runlog_state_t) user_ptr;
+  xfree(state->user_flags.flags);
+  memset(&state->user_flags, 0, sizeof(state->user_flags));
+  state->user_flags.nuser = -1;
 }
 
 static int
-update_user_flags(void)
+update_user_flags(runlog_state_t state)
 {
   int size = 0;
   int *map = 0;
 
-  if (user_flags.nuser >= 0) return 0;
-  if (teamdb_get_user_status_map(teamdb_state, &size, &map) < 0) return -1;
-  user_flags.nuser = size;
-  user_flags.flags = map;
+  if (state->user_flags.nuser >= 0) return 0;
+  if (teamdb_get_user_status_map(state->teamdb_state, &size, &map) < 0)
+    return -1;
+  state->user_flags.nuser = size;
+  state->user_flags.flags = map;
   return 1;
 }
 
