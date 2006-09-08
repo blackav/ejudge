@@ -4,7 +4,7 @@
 #ifndef __TEAM_EXTRA_H__
 #define __TEAM_EXTRA_H__
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -48,26 +48,35 @@ struct team_extra
   int status;
 };
 
+struct team_extra_state;
+typedef struct team_extra_state *team_extra_state_t;
+
+team_extra_state_t team_extra_init(const unsigned char *);
 int team_extra_parse_xml(const unsigned char *path, struct team_extra **pte);
 int team_extra_unparse_xml(FILE *f, struct team_extra *te);
 
-void team_extra_flush(void);
+void team_extra_flush(team_extra_state_t state);
 
-int team_extra_get_clar_status(int user_id, int clar_id);
-int team_extra_set_clar_status(int user_id, int clar_id);
+int team_extra_get_clar_status(team_extra_state_t state,
+                               int user_id, int clar_id);
+int team_extra_set_clar_status(team_extra_state_t, int user_id, int clar_id);
 
-struct team_extra* team_extra_get_entry(int user_id);
+const struct team_extra* team_extra_get_entry(team_extra_state_t state,
+                                              int user_id);
 
-int team_extra_append_warning(int user_id,
+int team_extra_append_warning(team_extra_state_t state,
+                              int user_id,
                               int issuer_id,
                               ej_ip_t issuer_ip,
                               time_t issue_date,
                               const unsigned char *txt,
                               const unsigned char *cmt);
 
+int team_extra_set_status(team_extra_state_t state, int user_id, int status);
+
 #endif /* __TEAM_EXTRA_H__ */
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "DIR")

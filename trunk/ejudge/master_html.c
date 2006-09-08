@@ -2385,7 +2385,7 @@ write_priv_users(FILE *f, int user_id, int priv_level,
   struct teamdb_export info;
   unsigned char team_modes[128];
   unsigned char filtbuf1[512], filtbuf2[512], filtbuf3[512], *ps1, *ps2;
-  struct team_extra *t_extra;
+  const struct team_extra *t_extra;
 
   tot_teams = teamdb_get_total_teams(teamdb_state);
   max_team = teamdb_get_max_team_id(teamdb_state);
@@ -2420,7 +2420,7 @@ write_priv_users(FILE *f, int user_id, int priv_level,
   for (i = 1; i <= max_team; i++) {
     if (!teamdb_lookup(teamdb_state, i)) continue;
     teamdb_export_team(teamdb_state, i, &info);
-    t_extra = team_extra_get_entry(i);
+    t_extra = team_extra_get_entry(team_extra_state, i);
 
     run_get_team_usage(i, &runs_num, &runs_total);
     clar_get_team_usage(clarlog_state, i, &clars_num, &clars_total);
@@ -2565,12 +2565,12 @@ write_priv_user(FILE *f, int user_id, int priv_level,
                 const opcap_t *pcaps)
 {
   struct teamdb_export info;
-  struct team_extra *t_extra;
+  const struct team_extra *t_extra;
   size_t runs_total = 0, clars_total = 0, pages_total = 0;
   int runs_num = 0, clars_num = 0;
   int allowed_edit = 0;
   int flags, needed_cap, init_value, i;
-  struct team_warning *cur_warn;
+  const struct team_warning *cur_warn;
 
   print_nav_buttons(f, 0, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), 0, _("View teams"), 0, 0, 0, 0);
@@ -2582,7 +2582,7 @@ write_priv_user(FILE *f, int user_id, int priv_level,
   }
 
   teamdb_export_team(teamdb_state, view_user_id, &info);
-  t_extra = team_extra_get_entry(view_user_id);
+  t_extra = team_extra_get_entry(team_extra_state, view_user_id);
   run_get_team_usage(view_user_id, &runs_num, &runs_total);
   clar_get_team_usage(clarlog_state, view_user_id, &clars_num, &clars_total);
   pages_total = run_get_total_pages(view_user_id);

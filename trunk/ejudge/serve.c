@@ -141,6 +141,7 @@ static time_t last_activity_time = 0;
 
 clarlog_state_t clarlog_state;
 teamdb_state_t teamdb_state;
+team_extra_state_t team_extra_state;
 
 static struct client_state *
 client_new_state(int fd)
@@ -4231,7 +4232,7 @@ cmd_edit_user(struct client_state *p, int len,
               struct prot_serve_pkt_user_info *pkt)
 {
   size_t expected_pkt_size, actual_txt_len, actual_cmt_len;
-  struct team_extra *t_extra;
+  const struct team_extra *t_extra;
   const unsigned char *txt_ptr, *cmt_ptr;
 
   if (get_peer_local_user(p) < 0) return;
@@ -4279,7 +4280,7 @@ cmd_edit_user(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_NO_PERMS);
       return;
     }
-    if (!(t_extra = team_extra_get_entry(pkt->user_id))) {
+    if (!(t_extra = team_extra_get_entry(team_extra_state, pkt->user_id))) {
       err("%d: cannot get team extra information for %d", p->id, pkt->user_id);
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
@@ -4289,9 +4290,8 @@ cmd_edit_user(struct client_state *p, int len,
       new_send_reply(p, SRV_RPL_OK);
       return;
     }
-    t_extra->status = pkt->status;
-    t_extra->is_dirty = 1;
-    team_extra_flush();
+    team_extra_set_status(team_extra_state, pkt->user_id, pkt->status);
+    team_extra_flush(team_extra_state);
     break;
   case SRV_CMD_ISSUE_WARNING:
     if (!check_cnts_caps(p->user_id, OPCAP_EDIT_REG)) {
@@ -4299,13 +4299,13 @@ cmd_edit_user(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_NO_PERMS);
       return;
     }
-    if (team_extra_append_warning(pkt->user_id, p->user_id,
+    if (team_extra_append_warning(team_extra_state, pkt->user_id, p->user_id,
                                   p->ip, current_time, txt_ptr, cmt_ptr) < 0) {
       err("%d: warning append failed", p->id);
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
     }
-    team_extra_flush();
+    team_extra_flush(team_extra_state);
     break;
   default:
     err("%d: cmd_edit_user: unexpected command %d", p->id, pkt->b.id);
@@ -6351,6 +6351,7 @@ main(int argc, char *argv[])
     return 1;
   }
   teamdb_state = teamdb_init();
+  team_extra_state = team_extra_init(global->team_extra_dir);
   if (teamdb_open_client(teamdb_state, global->socket_path,
                          global->contest_id) < 0)
     return 1;
@@ -6368,7 +6369,7 @@ main(int argc, char *argv[])
   i = do_loop();
   check_stat_generation(1);
   update_status_file(1);
-  team_extra_flush();
+  team_extra_flush(team_extra_state);
   if (i < 0) i = 1;
   if (socket_name && cmdline_socket_fd < 0) {
     unlink(socket_name);
