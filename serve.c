@@ -23,7 +23,6 @@
 #include "parsecfg.h"
 #include "teamdb.h"
 #include "prepare.h"
-#include "prepare_vars.h"
 #include "html.h"
 #include "clarlog.h"
 #include "protocol.h"
@@ -39,6 +38,7 @@
 #include "curtime.h"
 #include "xml_utils.h"
 #include "job_packet.h"
+#include "serve_state.h"
 
 #include "misctext.h"
 #include "base64.h"
@@ -138,11 +138,7 @@ static int                  client_serial_id = 1;
 
 static int cmdline_socket_fd = -1;
 static time_t last_activity_time = 0;
-
-clarlog_state_t clarlog_state;
-teamdb_state_t teamdb_state;
-team_extra_state_t team_extra_state;
-runlog_state_t runlog_state;
+struct serve_state serve_state;
 
 static struct client_state *
 client_new_state(int fd)
@@ -277,52 +273,52 @@ update_standings_file(int force_flag)
   int p = 0;
   int accepting_mode = 0;
 
-  run_get_times(runlog_state, &start_time, 0, &duration, &stop_time);
+  run_get_times(serve_state.runlog_state, &start_time, 0, &duration, &stop_time);
 
   while (1) {
-    if (global->virtual) break;
+    if (serve_state.global->virtual) break;
     if (force_flag) break;
-    if (!global->autoupdate_standings) return;
+    if (!serve_state.global->autoupdate_standings) return;
     if (!duration) break;
-    if (!global->board_fog_time) break;
+    if (!serve_state.global->board_fog_time) break;
 
     ASSERT(current_time >= start_time);
-    ASSERT(global->board_fog_time >= 0);
-    ASSERT(global->board_unfog_time >= 0);
+    ASSERT(serve_state.global->board_fog_time >= 0);
+    ASSERT(serve_state.global->board_unfog_time >= 0);
     
-    p = run_get_fog_period(runlog_state, current_time, global->board_fog_time,
-                           global->board_unfog_time);
+    p = run_get_fog_period(serve_state.runlog_state, current_time, serve_state.global->board_fog_time,
+                           serve_state.global->board_unfog_time);
     if (p == 1) return;
     break;
   }
 
-  if (!global->virtual) {
-    p = run_get_fog_period(runlog_state, current_time, global->board_fog_time,
-                           global->board_unfog_time);
+  if (!serve_state.global->virtual) {
+    p = run_get_fog_period(serve_state.runlog_state, current_time, serve_state.global->board_fog_time,
+                           serve_state.global->board_unfog_time);
   }
-  l10n_setlocale(global->standings_locale_id);
-  if (global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
+  l10n_setlocale(serve_state.global->standings_locale_id);
+  if (serve_state.global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
     accepting_mode = 1;
-  write_standings(global->status_dir, global->standings_file_name,
-                  global->users_on_page,
-                  global->stand_header_txt, global->stand_footer_txt,
+  write_standings(serve_state.global->status_dir, serve_state.global->standings_file_name,
+                  serve_state.global->users_on_page,
+                  serve_state.global->stand_header_txt, serve_state.global->stand_footer_txt,
                   accepting_mode);
-  if (global->stand2_file_name[0]) {
-    write_standings(global->status_dir, global->stand2_file_name, 0,
-                    global->stand2_header_txt, global->stand2_footer_txt,
+  if (serve_state.global->stand2_file_name[0]) {
+    write_standings(serve_state.global->status_dir, serve_state.global->stand2_file_name, 0,
+                    serve_state.global->stand2_header_txt, serve_state.global->stand2_footer_txt,
                     accepting_mode);
   }
   l10n_setlocale(0);
-  if (global->virtual) return;
+  if (serve_state.global->virtual) return;
   switch (p) {
   case 0:
-    global->start_standings_updated = 1;
+    serve_state.global->start_standings_updated = 1;
     break;
   case 1:
-    global->fog_standings_updated = 1;
+    serve_state.global->fog_standings_updated = 1;
     break;
   case 2:
-    global->unfog_standings_updated = 1;
+    serve_state.global->unfog_standings_updated = 1;
     break;
   }
 }
@@ -334,28 +330,28 @@ update_public_log_file(void)
   time_t start_time, stop_time, duration;
   int p;
 
-  if (!global->plog_update_time) return;
-  if (current_time < last_update + global->plog_update_time) return;
+  if (!serve_state.global->plog_update_time) return;
+  if (current_time < last_update + serve_state.global->plog_update_time) return;
 
-  run_get_times(runlog_state, &start_time, 0, &duration, &stop_time);
+  run_get_times(serve_state.runlog_state, &start_time, 0, &duration, &stop_time);
 
   while (1) {
     if (!duration) break;
-    if (!global->board_fog_time) break;
+    if (!serve_state.global->board_fog_time) break;
 
     ASSERT(current_time >= start_time);
-    ASSERT(global->board_fog_time >= 0);
-    ASSERT(global->board_unfog_time >= 0);
+    ASSERT(serve_state.global->board_fog_time >= 0);
+    ASSERT(serve_state.global->board_unfog_time >= 0);
     
-    p = run_get_fog_period(runlog_state, current_time, global->board_fog_time,
-                           global->board_unfog_time);
+    p = run_get_fog_period(serve_state.runlog_state, current_time, serve_state.global->board_fog_time,
+                           serve_state.global->board_unfog_time);
     if (p == 1) return;
     break;
   }
 
-  l10n_setlocale(global->standings_locale_id);
-  write_public_log(global->status_dir, global->plog_file_name,
-                   global->plog_header_txt, global->plog_footer_txt);
+  l10n_setlocale(serve_state.global->standings_locale_id);
+  write_public_log(serve_state.global->status_dir, serve_state.global->plog_file_name,
+                   serve_state.global->plog_header_txt, serve_state.global->plog_footer_txt);
   last_update = current_time;
   l10n_setlocale(0);
 }
@@ -370,18 +366,18 @@ do_update_xml_log(char const *name, int external_mode)
   path_t path2;
   FILE *fout;
 
-  run_get_header(runlog_state, &rhead);
-  rtotal = run_get_total(runlog_state);
-  rentries = run_get_entries_ptr(runlog_state);
+  run_get_header(serve_state.runlog_state, &rhead);
+  rtotal = run_get_total(serve_state.runlog_state);
+  rentries = run_get_entries_ptr(serve_state.runlog_state);
 
-  snprintf(path1, sizeof(path1), "%s/in/%s.tmp", global->status_dir, name);
-  snprintf(path2, sizeof(path2), "%s/dir/%s", global->status_dir, name);
+  snprintf(path1, sizeof(path1), "%s/in/%s.tmp", serve_state.global->status_dir, name);
+  snprintf(path2, sizeof(path2), "%s/dir/%s", serve_state.global->status_dir, name);
 
   if (!(fout = fopen(path1, "w"))) {
     err("update_xml_log: cannot open %s", path1);
     return;
   }
-  unparse_runlog_xml(teamdb_state, fout, &rhead, rtotal, rentries,
+  unparse_runlog_xml(serve_state.teamdb_state, fout, &rhead, rtotal, rentries,
                      external_mode, current_time);
   if (ferror(fout)) {
     err("update_xml_log: write error");
@@ -406,8 +402,8 @@ update_external_xml_log(void)
 {
   static time_t last_update = 0;
 
-  if (!global->external_xml_update_time) return;
-  if (current_time < last_update + global->external_xml_update_time) return;
+  if (!serve_state.global->external_xml_update_time) return;
+  if (current_time < last_update + serve_state.global->external_xml_update_time) return;
   last_update = current_time;
   do_update_xml_log("external.xml", 1);
 }
@@ -417,8 +413,8 @@ update_internal_xml_log(void)
 {
   static time_t last_update = 0;
 
-  if (!global->internal_xml_update_time) return;
-  if (current_time < last_update + global->internal_xml_update_time) return;
+  if (!serve_state.global->internal_xml_update_time) return;
+  if (current_time < last_update + serve_state.global->internal_xml_update_time) return;
   last_update = current_time;
   do_update_xml_log("internal.xml", 0);
 }
@@ -437,40 +433,40 @@ update_status_file(int force_flag)
   status.magic = PROT_SERVE_STATUS_MAGIC_V2;
 
   status.cur_time = current_time;
-  run_get_times(runlog_state, &t1, &t2, &t3, &t4);
+  run_get_times(serve_state.runlog_state, &t1, &t2, &t3, &t4);
   status.start_time = t1;
   status.sched_time = t2;
   status.duration = t3;
   status.stop_time = t4;
-  status.total_runs = run_get_total(runlog_state);
-  status.total_clars = clar_get_total(clarlog_state);
-  status.clars_disabled = global->disable_clars;
-  status.team_clars_disabled = global->disable_team_clars;
-  status.score_system = global->score_system_val;
+  status.total_runs = run_get_total(serve_state.runlog_state);
+  status.total_clars = clar_get_total(serve_state.clarlog_state);
+  status.clars_disabled = serve_state.global->disable_clars;
+  status.team_clars_disabled = serve_state.global->disable_team_clars;
+  status.score_system = serve_state.global->score_system_val;
   status.clients_suspended = clients_suspended;
   status.testing_suspended = testing_suspended;
-  status.download_interval = global->team_download_time / 60;
-  status.is_virtual = global->virtual;
+  status.download_interval = serve_state.global->team_download_time / 60;
+  status.is_virtual = serve_state.global->virtual;
   status.olympiad_judging_mode = olympiad_judging_mode;
-  status.continuation_enabled = global->enable_continue;
-  status.printing_enabled = global->enable_printing;
+  status.continuation_enabled = serve_state.global->enable_continue;
+  status.printing_enabled = serve_state.global->enable_printing;
   status.printing_suspended = printing_suspended;
-  status.always_show_problems = global->always_show_problems;
-  if (status.start_time && status.duration && global->board_fog_time > 0
+  status.always_show_problems = serve_state.global->always_show_problems;
+  if (status.start_time && status.duration && serve_state.global->board_fog_time > 0
       && !status.is_virtual) {
-    status.freeze_time = status.start_time + status.duration - global->board_fog_time;
+    status.freeze_time = status.start_time + status.duration - serve_state.global->board_fog_time;
     if (status.freeze_time < status.start_time) {
       status.freeze_time = status.start_time;
     }
   }
-  if (!status.duration && global->contest_finish_time_d)
-    status.finish_time = global->contest_finish_time_d;
+  if (!status.duration && serve_state.global->contest_finish_time_d)
+    status.finish_time = serve_state.global->contest_finish_time_d;
   //if (status.duration) status.continuation_enabled = 0;
 
-  if (!global->virtual) {
-    p = run_get_fog_period(runlog_state, current_time,
-                           global->board_fog_time, global->board_unfog_time);
-    if (p == 1 && global->autoupdate_standings) {
+  if (!serve_state.global->virtual) {
+    p = run_get_fog_period(serve_state.runlog_state, current_time,
+                           serve_state.global->board_fog_time, serve_state.global->board_unfog_time);
+    if (p == 1 && serve_state.global->autoupdate_standings) {
       status.standings_frozen = 1;
     }
   }
@@ -479,7 +475,7 @@ update_status_file(int force_flag)
   status.stat_report_time = stat_report_time;
 
   generic_write_file((char*) &status, sizeof(status), SAFE,
-                     global->status_dir, "status", "");
+                     serve_state.global->status_dir, "status", "");
   prev_status_update = current_time;
   return 1;
 }
@@ -491,7 +487,7 @@ load_status_file(void)
   size_t stat_len = 0;
   char *ptr = 0;
 
-  if (generic_read_file(&ptr, 0, &stat_len, 0, global->status_dir,
+  if (generic_read_file(&ptr, 0, &stat_len, 0, serve_state.global->status_dir,
                         "dir/status", "") < 0) return;
   if (stat_len != sizeof(status)) {
     info("load_status_file: length %zu does not match %zu",
@@ -526,12 +522,12 @@ check_cnts_caps(int user_id, int bit)
   int errcode = 0;
   unsigned char const *login = 0;
 
-  if ((errcode = contests_get(global->contest_id, &cnts)) < 0) {
-    err("contests_get(%d): %s", global->contest_id,
+  if ((errcode = contests_get(serve_state.global->contest_id, &cnts)) < 0) {
+    err("contests_get(%d): %s", serve_state.global->contest_id,
         contests_strerror(-errcode));
     return 0;
   }
-  login = teamdb_get_login(teamdb_state, user_id);
+  login = teamdb_get_login(serve_state.teamdb_state, user_id);
   if (!login || !*login) return 0;
 
   if (opcaps_find(&cnts->capabilities, login, &caps) < 0) return 0;
@@ -547,12 +543,12 @@ get_cnts_caps(int user_id, opcap_t *out_caps)
   int errcode = 0;
   unsigned char const *login = 0;
 
-  if ((errcode = contests_get(global->contest_id, &cnts)) < 0) {
-    err("contests_get(%d): %s", global->contest_id,
+  if ((errcode = contests_get(serve_state.global->contest_id, &cnts)) < 0) {
+    err("contests_get(%d): %s", serve_state.global->contest_id,
         contests_strerror(-errcode));
     return -1;
   }
-  login = teamdb_get_login(teamdb_state, user_id);
+  login = teamdb_get_login(serve_state.teamdb_state, user_id);
   if (!login || !*login) return -1;
 
   if (opcaps_find(&cnts->capabilities, login, &caps) < 0) return -1;
@@ -566,9 +562,9 @@ check_team_quota(int teamid, unsigned int size)
   int num;
   size_t total;
 
-  if (size > global->max_run_size) return -1;
-  run_get_team_usage(runlog_state, teamid, &num, &total);
-  if (num > global->max_run_num || total + size > global->max_run_total)
+  if (size > serve_state.global->max_run_size) return -1;
+  run_get_team_usage(serve_state.runlog_state, teamid, &num, &total);
+  if (num > serve_state.global->max_run_num || total + size > serve_state.global->max_run_total)
     return -1;
   return 0;
 }
@@ -579,9 +575,9 @@ check_clar_qouta(int teamid, unsigned int size)
   int num;
   size_t total;
 
-  if (size > global->max_clar_size) return -1;
-  clar_get_team_usage(clarlog_state, teamid, &num, &total);
-  if (num > global->max_clar_num || total + size > global->max_clar_total)
+  if (size > serve_state.global->max_clar_size) return -1;
+  clar_get_team_usage(serve_state.clarlog_state, teamid, &num, &total);
+  if (num > serve_state.global->max_clar_num || total + size > serve_state.global->max_clar_total)
     return -1;
   return 0;
 }
@@ -590,7 +586,7 @@ check_clar_qouta(int teamid, unsigned int size)
 static int
 is_valid_status(int status, int mode)
 {
-  if (global->score_system_val == SCORE_OLYMPIAD) {
+  if (serve_state.global->score_system_val == SCORE_OLYMPIAD) {
     switch (status) {
     case RUN_OK:
     case RUN_PARTIAL:
@@ -614,7 +610,7 @@ is_valid_status(int status, int mode)
     default:
       return 0;
     }
-  } else if (global->score_system_val == SCORE_KIROV) {
+  } else if (serve_state.global->score_system_val == SCORE_KIROV) {
     switch (status) {
     case RUN_OK:
     case RUN_PARTIAL:
@@ -707,8 +703,8 @@ get_peer_local_user(struct client_state *p)
   int r;
 
   if (p->user_id >= 0) return p->user_id;
-  r = teamdb_get_uid_by_pid(teamdb_state, p->peer_uid, p->peer_gid, p->peer_pid,
-                            global->contest_id,
+  r = teamdb_get_uid_by_pid(serve_state.teamdb_state, p->peer_uid, p->peer_gid, p->peer_pid,
+                            serve_state.global->contest_id,
                             &user_id, &priv_level, &cookie, &ip, &ssl);
   if (r < 0) {
     // FIXME: what else can we do?
@@ -716,7 +712,7 @@ get_peer_local_user(struct client_state *p)
     client_disconnect(p, 0);
     return -1;
   }
-  if (r >= 0 && !teamdb_lookup(teamdb_state, user_id)) {
+  if (r >= 0 && !teamdb_lookup(serve_state.teamdb_state, user_id)) {
     err("%d: no local information about user %d", p->id, user_id);
     client_disconnect(p, 0);
     return -1;
@@ -776,8 +772,8 @@ append_audit_log(int run_id, struct client_state *p, const char *format, ...)
            ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
 
   archive_make_write_path(audit_path, sizeof(audit_path),
-                          global->audit_log_dir, run_id, 0, 0);
-  if (archive_dir_prepare(global->audit_log_dir, run_id, 0, 1) < 0) return;
+                          serve_state.global->audit_log_dir, run_id, 0, 0);
+  if (archive_dir_prepare(serve_state.global->audit_log_dir, run_id, 0, 1) < 0) return;
   if (!(f = fopen(audit_path, "a"))) return;
 
   fprintf(f, "Date: %s\n", tbuf);
@@ -785,7 +781,7 @@ append_audit_log(int run_id, struct client_state *p, const char *format, ...)
     fprintf(f, "From: SYSTEM\n");
   } else if (p->user_id <= 0) {
     fprintf(f, "From: unauthentificated user\n");
-  } else if (!(login = teamdb_get_login(teamdb_state, p->user_id))) {
+  } else if (!(login = teamdb_get_login(serve_state.teamdb_state, p->user_id))) {
     fprintf(f, "From: user %d (login unknown)\n", p->user_id);
   } else {
     fprintf(f, "From: %s (uid %d)\n", login, p->user_id);
@@ -816,17 +812,17 @@ cmd_team_get_archive(struct client_state *p, int len,
   }
   info("%d: team_get_archive: %d, %d, %d", p->id,
        pkt->user_id, pkt->contest_id, pkt->locale_id);
-  if (global->contest_id <= 0) {
+  if (serve_state.global->contest_id <= 0) {
     new_send_reply(p, -SRV_ERR_NOT_SUPPORTED);
     err("%d: operation is not supported", p->id);
     return;
   }
-  if (!teamdb_lookup(teamdb_state, pkt->user_id)) {
+  if (!teamdb_lookup(serve_state.teamdb_state, pkt->user_id)) {
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     err("%d: bad user id", p->id);
     return;
   }
-  if (pkt->contest_id != global->contest_id) {
+  if (pkt->contest_id != serve_state.global->contest_id) {
     new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
     err("%d: contest_id does not match", p->id);
     return;
@@ -837,40 +833,40 @@ cmd_team_get_archive(struct client_state *p, int len,
     return;
   }
 
-  last_time = teamdb_get_archive_time(teamdb_state, pkt->user_id);
-  if (last_time + global->team_download_time > current_time) {
+  last_time = teamdb_get_archive_time(serve_state.teamdb_state, pkt->user_id);
+  if (last_time + serve_state.global->team_download_time > current_time) {
     new_send_reply(p, -SRV_ERR_DOWNLOAD_TOO_OFTEN);
     err("%d: download is too often", p->id);
     return;
   }
 
   snprintf(dirname, sizeof(dirname), "runs_%d_%d",
-           global->contest_id, pkt->user_id);
-  snprintf(fullpath, sizeof(fullpath), "%s/%s", global->var_dir, dirname);
+           serve_state.global->contest_id, pkt->user_id);
+  snprintf(fullpath, sizeof(fullpath), "%s/%s", serve_state.global->var_dir, dirname);
   if (mkdir(fullpath, 0755) < 0) {
     new_send_reply(p, -SRV_ERR_TRY_AGAIN);
     err("%d: cannot create new directory %s", p->id, fullpath);
     return;
   }
-  total_runs = run_get_total(runlog_state);
+  total_runs = run_get_total(serve_state.runlog_state);
   for (r = 0; r < total_runs; r++) {
-    if (run_get_entry(runlog_state, r, &re) < 0) continue;
+    if (run_get_entry(serve_state.runlog_state, r, &re) < 0) continue;
     if (re.team != pkt->user_id) continue;
     arch_flag = archive_make_read_path(origpath, sizeof(origpath),
-                                       global->run_archive_dir, r, 0, 0);
+                                       serve_state.global->run_archive_dir, r, 0, 0);
     if (arch_flag < 0) continue;
     snprintf(linkpath, sizeof(linkpath), "%s/%s_%06d%s%s",
-             fullpath, probs[re.problem]->short_name, r,
-             langs[re.language]->src_sfx,
+             fullpath, serve_state.probs[re.problem]->short_name, r,
+             serve_state.langs[re.language]->src_sfx,
              ((arch_flag & GZIP))?".gz":"");
     if (link(origpath, linkpath) < 0) {
       err("link %s->%s failed: %s", linkpath, origpath, os_ErrorMsg());
     }
   }
-  token = remove_queue_add(current_time + global->team_download_time / 2,
+  token = remove_queue_add(current_time + serve_state.global->team_download_time / 2,
                            1, fullpath);
 
-  teamdb_set_archive_time(teamdb_state, pkt->user_id, current_time);
+  teamdb_set_archive_time(serve_state.teamdb_state, pkt->user_id, current_time);
   path_len = strlen(fullpath);
   out_size = sizeof(*out) + path_len;
   out = alloca(out_size);
@@ -935,7 +931,7 @@ cmd_team_page(struct client_state *p, int len,
     return;
   }
   l10n_setlocale(pkt->locale_id);
-  if (global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
+  if (serve_state.global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
     accepting_mode = 1;
   write_team_page(f, p->user_id, printing_suspended,
                   p->cookie, (pkt->flags & 1), (pkt->flags & 2) >> 1,
@@ -1014,12 +1010,12 @@ cmd_get_param(struct client_state *p, int len,
   }
   switch (pkt->id) {
   case SRV_CMD_GET_CONTEST_TYPE:
-    if (global->score_system_val < SCORE_ACM ||
-        global->score_system_val >= SCORE_TOTAL) {
+    if (serve_state.global->score_system_val < SCORE_ACM ||
+        serve_state.global->score_system_val >= SCORE_TOTAL) {
       // FIXME:!!!
       abort();
     }
-    fprintf(f, "%s", contest_types[global->score_system_val]);
+    fprintf(f, "%s", contest_types[serve_state.global->score_system_val]);
     break;
   default:
     abort();
@@ -1056,7 +1052,7 @@ cmd_master_page(struct client_state *p, int len,
 
   if (get_peer_local_user(p) < 0) return;
 
-  if (global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
+  if (serve_state.global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
     accepting_mode = 1;
 
   if (len < sizeof(*pkt)) {
@@ -1103,7 +1099,7 @@ cmd_master_page(struct client_state *p, int len,
     return;
   }
   */
-  if (pkt->contest_id != global->contest_id) {
+  if (pkt->contest_id != serve_state.global->contest_id) {
     err("%d: contest_id does not match", p->id);
     new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
     return;
@@ -1234,12 +1230,12 @@ cmd_priv_standings(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_PROTOCOL);
     return;
   }
-  if (!teamdb_lookup(teamdb_state, pkt->user_id)) {
+  if (!teamdb_lookup(serve_state.teamdb_state, pkt->user_id)) {
     err("%d: user_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
   }
-  if (pkt->contest_id != global->contest_id) {
+  if (pkt->contest_id != serve_state.global->contest_id) {
     err("%d: contest_id does not match", p->id);
     new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
     return;
@@ -1272,7 +1268,7 @@ cmd_priv_standings(struct client_state *p, int len,
     return;
   }
   /* l10n_setlocale(pkt->locale_id); */
-  if (global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
+  if (serve_state.global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
     accepting_mode = 1;
   write_priv_standings(f, p->cookie,
                        self_url_ptr, hidden_vars_ptr, extra_args_ptr,
@@ -1304,8 +1300,8 @@ dump_problems(FILE *f)
   int i;
   struct section_problem_data *prob;
 
-  for (i = 0; i <= max_prob; i++) {
-    if (!(prob = probs[i])) continue;
+  for (i = 0; i <= serve_state.max_prob; i++) {
+    if (!(prob = serve_state.probs[i])) continue;
     fprintf(f, "%d;%s;%s\n", prob->id, prob->short_name, prob->long_name);
   }
   return 0;
@@ -1327,7 +1323,7 @@ cmd_view(struct client_state *p, int len,
 
   if (get_peer_local_user(p) < 0) return;
 
-  if (global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
+  if (serve_state.global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
     accepting_mode = 1;
 
   if (len < sizeof(*pkt)) {
@@ -1495,10 +1491,10 @@ cmd_view(struct client_state *p, int len,
     if (p->priv_level == PRIV_LEVEL_JUDGE) {
       int flags = 1;
 
-      clar_get_record(clarlog_state, pkt->item, 0, 0, 0, 0, 0, &flags, 0, 0, 0);
+      clar_get_record(serve_state.clarlog_state, pkt->item, 0, 0, 0, 0, 0, &flags, 0, 0, 0);
       if (!flags) {
         flags = 1;
-        clar_update_flags(clarlog_state, pkt->item, flags);
+        clar_update_flags(serve_state.clarlog_state, pkt->item, flags);
       }
     }
     break;
@@ -1552,7 +1548,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    write_runs_dump(f, self_url_ptr, global->charset);
+    write_runs_dump(f, self_url_ptr, serve_state.global->charset);
     break;
 
   case SRV_CMD_WRITE_XML_RUNS:
@@ -1572,7 +1568,7 @@ cmd_view(struct client_state *p, int len,
     if (self_url_ptr && *self_url_ptr) {
       fprintf(f, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
     }
-    if (run_write_xml(runlog_state, f, 0, current_time) < 0)
+    if (run_write_xml(serve_state.runlog_state, f, 0, current_time) < 0)
       r = -SRV_ERR_TRY_AGAIN;
     break;
 
@@ -1613,7 +1609,7 @@ cmd_view(struct client_state *p, int len,
     if (self_url_ptr && *self_url_ptr) {
       fprintf(f, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
     }
-    if (run_write_xml(runlog_state, f, 1, current_time) < 0)
+    if (run_write_xml(serve_state.runlog_state, f, 1, current_time) < 0)
       r = -SRV_ERR_TRY_AGAIN;
     break;
 
@@ -1632,10 +1628,10 @@ cmd_view(struct client_state *p, int len,
     }
 
     if (self_url_ptr && *self_url_ptr) {
-      fprintf(f, "Content-type: text/plain; charset=%s\n\n", global->charset);
+      fprintf(f, "Content-type: text/plain; charset=%s\n\n", serve_state.global->charset);
     }
 
-    write_raw_standings(f, global->charset);
+    write_raw_standings(f, serve_state.global->charset);
     break;
 
   case SRV_CMD_VIEW_TEST_INPUT:
@@ -1648,20 +1644,20 @@ cmd_view(struct client_state *p, int len,
      * or team_show_judge_report is on, and the user is the author
      */
     if (!p->priv_level) {
-      if (!global->team_show_judge_report) {
+      if (!serve_state.global->team_show_judge_report) {
         err("%d: user %d attempted to view judge report", p->id, p->user_id);
         r = -SRV_ERR_NO_PERMS;
         break;
       }
-      if (run_get_entry(runlog_state, pkt->item, &re) < 0
+      if (run_get_entry(serve_state.runlog_state, pkt->item, &re) < 0
           || re.team != p->user_id) {
         err("%d: user %d tries to view another's runs", p->id, p->user_id);
         r = -SRV_ERR_NO_PERMS;
         break;
       }
-      if (global->score_system_val==SCORE_OLYMPIAD && !olympiad_judging_mode) {
-        if (re.problem <= 0 || re.problem > max_prob
-            || !(prob = probs[re.problem])) {
+      if (serve_state.global->score_system_val==SCORE_OLYMPIAD && !olympiad_judging_mode) {
+        if (re.problem <= 0 || re.problem > serve_state.max_prob
+            || !(prob = serve_state.probs[re.problem])) {
           err("%d: invalid problem %d", p->id, re.problem);
           r = -SRV_ERR_BAD_PROB_ID;
           break;
@@ -1695,7 +1691,7 @@ cmd_view(struct client_state *p, int len,
 
   case SRV_CMD_SHOW_REPORT:
     // this is unprivileged command
-    if (run_get_entry(runlog_state, pkt->item, &re) < 0
+    if (run_get_entry(serve_state.runlog_state, pkt->item, &re) < 0
         || re.team != p->user_id) {
       err("%d: user %d tries to view another's runs", p->id, p->user_id);
       r = -SRV_ERR_NO_PERMS;
@@ -1776,7 +1772,7 @@ cmd_import_xml_runs(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     return;
   }
-  if (!global->enable_runlog_merge) {
+  if (!serve_state.global->enable_runlog_merge) {
     err("%d: runlog merging is disabled", p->id);
     new_send_reply(p, -SRV_ERR_NOT_SUPPORTED);
     return;
@@ -1788,7 +1784,7 @@ cmd_import_xml_runs(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  runlog_import_xml(teamdb_state, runlog_state, f, pkt->token, pkt->data);
+  runlog_import_xml(serve_state.teamdb_state, serve_state.runlog_state, f, pkt->token, pkt->data);
   fclose(f);
 
   if (!html_ptr) {
@@ -1874,14 +1870,14 @@ cmd_message(struct client_state *p, int len,
       if (!strcasecmp(dest_login_ptr, "all")) {
         dest_uid = 0;
       } else {
-        dest_uid = teamdb_lookup_login(teamdb_state, dest_login_ptr);
+        dest_uid = teamdb_lookup_login(serve_state.teamdb_state, dest_login_ptr);
         if (dest_uid <= 0) {
           err("%d: nonexistant login <%s>", p->id, dest_login_ptr);
           new_send_reply(p, -SRV_ERR_BAD_USER_ID);
           return;
         }
       }
-    } else if (dest_uid != 0 && !teamdb_lookup(teamdb_state, dest_uid)) {
+    } else if (dest_uid != 0 && !teamdb_lookup(serve_state.teamdb_state, dest_uid)) {
       err("%d: nonexistant user id %d", p->id, dest_uid);
       new_send_reply(p, -SRV_ERR_BAD_USER_ID);
       return;
@@ -1896,7 +1892,7 @@ cmd_message(struct client_state *p, int len,
     base64_encode_str(txt_subj_short, b64_subj_short);
     msg = alloca(pkt->subj_len + pkt->text_len + 32);
     msg_len = sprintf(msg, "Subject: %s\n\n%s", subj_ptr, text_ptr);
-    clar_id = clar_add_record(clarlog_state, current_time, msg_len,
+    clar_id = clar_add_record(serve_state.clarlog_state, current_time, msg_len,
                               run_unparse_ip(p->ip),
                               0, dest_uid, 0, p->user_id,
                               hide_flag, b64_subj_short);
@@ -1906,7 +1902,7 @@ cmd_message(struct client_state *p, int len,
       return;
     }
     snprintf(clar_name, sizeof(clar_name), "%06d", clar_id);
-    if (generic_write_file(msg, msg_len, 0, global->clar_archive_dir,
+    if (generic_write_file(msg, msg_len, 0, serve_state.global->clar_archive_dir,
                            clar_name, "") < 0) {
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
@@ -1933,7 +1929,7 @@ cmd_message(struct client_state *p, int len,
     // subj_ptr, dest_login_ptr to be ignored
     // if dest_user_id == 0, the reply is sent to all
     // ref_clar_id to be processed
-    if (clar_get_record(clarlog_state, pkt->ref_clar_id, 0, 0, 0, &dest_uid, 0, 0,0,0,0) < 0) {
+    if (clar_get_record(serve_state.clarlog_state, pkt->ref_clar_id, 0, 0, 0, &dest_uid, 0, 0,0,0,0) < 0) {
       err("%d: invalid ref_clar_id %d", p->id, pkt->ref_clar_id);
       new_send_reply(p, -SRV_ERR_BAD_CLAR_ID);
       return;
@@ -1942,7 +1938,7 @@ cmd_message(struct client_state *p, int len,
     orig_txt = 0;
     orig_txt_len = 0;
     if (generic_read_file(&orig_txt, 0, &orig_txt_len, 0,
-                          global->clar_archive_dir, orig_clar_name, "") < 0) {
+                          serve_state.global->clar_archive_dir, orig_clar_name, "") < 0) {
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
     }
@@ -1956,7 +1952,7 @@ cmd_message(struct client_state *p, int len,
     msg = alloca(pkt->text_len + quoted_len + new_subj_len + 64);
     msg_len = sprintf(msg, "%s%s\n%s", new_subj, quoted_ptr, text_ptr);
     if (!pkt->dest_user_id) dest_uid = 0;
-    clar_id = clar_add_record(clarlog_state, current_time, msg_len,
+    clar_id = clar_add_record(serve_state.clarlog_state, current_time, msg_len,
                               run_unparse_ip(p->ip), 0, dest_uid, 0,
                               p->user_id, hide_flag, b64_subj_short);
     if (clar_id < 0) {
@@ -1964,12 +1960,12 @@ cmd_message(struct client_state *p, int len,
       return;
     }
     snprintf(clar_name, sizeof(clar_name), "%06d", clar_id);
-    if (generic_write_file(msg, msg_len, 0, global->clar_archive_dir,
+    if (generic_write_file(msg, msg_len, 0, serve_state.global->clar_archive_dir,
                            clar_name, "") < 0) {
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
     }
-    clar_update_flags(clarlog_state, pkt->ref_clar_id, 2);
+    clar_update_flags(serve_state.clarlog_state, pkt->ref_clar_id, 2);
     xfree(orig_txt);
     info("%d: cmd_message: ok %d %zu", p->id, clar_id, msg_len);
     new_send_reply(p, SRV_RPL_OK);
@@ -2011,7 +2007,7 @@ cmd_team_show_item(struct client_state *p, int len,
   */
 
   accepting_mode = 0;
-  if (global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
+  if (serve_state.global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
     accepting_mode = 1;
 
   info("%d: team_show_item: %d, %d, %d, %d, %d", p->id, pkt->b.id,
@@ -2021,12 +2017,12 @@ cmd_team_show_item(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_PROTOCOL);
     return;
   }
-  if (!teamdb_lookup(teamdb_state, pkt->user_id)) {
+  if (!teamdb_lookup(serve_state.teamdb_state, pkt->user_id)) {
     err("%d: user_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
   }
-  if (pkt->contest_id != global->contest_id) {
+  if (pkt->contest_id != serve_state.global->contest_id) {
     err("%d: contest_id does not match", p->id);
     new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
     return;
@@ -2060,7 +2056,7 @@ cmd_team_show_item(struct client_state *p, int len,
     r = new_write_user_source_view(f, pkt->user_id, pkt->item_id, 2);
     break;
   case SRV_CMD_VIRTUAL_STANDINGS:
-    if (!global->virtual) r = -SRV_ERR_ONLY_VIRTUAL;
+    if (!serve_state.global->virtual) r = -SRV_ERR_ONLY_VIRTUAL;
     else r = write_virtual_standings(f, pkt->user_id);
     break;
   case SRV_CMD_RUN_STATUS:
@@ -2108,33 +2104,33 @@ static int queue_compile_request(unsigned char const *str, int len,
 static void
 move_files_to_insert_run(int run_id)
 {
-  int total = run_get_total(runlog_state);
+  int total = run_get_total(serve_state.runlog_state);
   int i, s;
 
   if (run_id >= total - 1) return;
   for (i = total - 1; i >= run_id; i--) {
-    archive_remove(global->run_archive_dir, i + 1, 0);
-    archive_remove(global->xml_report_archive_dir, i + 1, 0);
-    archive_remove(global->report_archive_dir, i + 1, 0);
-    if (global->team_enable_rep_view) {
-      archive_remove(global->team_report_archive_dir, i + 1, 0);
+    archive_remove(serve_state.global->run_archive_dir, i + 1, 0);
+    archive_remove(serve_state.global->xml_report_archive_dir, i + 1, 0);
+    archive_remove(serve_state.global->report_archive_dir, i + 1, 0);
+    if (serve_state.global->team_enable_rep_view) {
+      archive_remove(serve_state.global->team_report_archive_dir, i + 1, 0);
     }
-    if (global->enable_full_archive) {
-      archive_remove(global->full_archive_dir, i + 1, 0);
+    if (serve_state.global->enable_full_archive) {
+      archive_remove(serve_state.global->full_archive_dir, i + 1, 0);
     }
-    archive_remove(global->audit_log_dir, i + 1, 0);
-    s = run_get_status(runlog_state, i);
+    archive_remove(serve_state.global->audit_log_dir, i + 1, 0);
+    s = run_get_status(serve_state.runlog_state, i);
     if (s >= RUN_PSEUDO_FIRST && s <= RUN_PSEUDO_LAST) continue;
-    archive_rename(global->run_archive_dir, 0, i, 0, i + 1, 0, 0);
-    archive_rename(global->xml_report_archive_dir, 0, i, 0, i + 1, 0, 0);
-    archive_rename(global->report_archive_dir, 0, i, 0, i + 1, 0, 0);
-    if (global->team_enable_rep_view) {
-      archive_rename(global->team_report_archive_dir, 0, i, 0, i + 1, 0, 0);
+    archive_rename(serve_state.global->run_archive_dir, 0, i, 0, i + 1, 0, 0);
+    archive_rename(serve_state.global->xml_report_archive_dir, 0, i, 0, i + 1, 0, 0);
+    archive_rename(serve_state.global->report_archive_dir, 0, i, 0, i + 1, 0, 0);
+    if (serve_state.global->team_enable_rep_view) {
+      archive_rename(serve_state.global->team_report_archive_dir, 0, i, 0, i + 1, 0, 0);
     }
-    if (global->enable_full_archive) {
-      archive_rename(global->full_archive_dir, 0, i, 0, i + 1, 0, 0);
+    if (serve_state.global->enable_full_archive) {
+      archive_rename(serve_state.global->full_archive_dir, 0, i, 0, i + 1, 0, 0);
     }
-    archive_rename(global->audit_log_dir, 0, i, 0, i + 1, 0, 0);
+    archive_rename(serve_state.global->audit_log_dir, 0, i, 0, i + 1, 0, 0);
   }
 
   /* FIXME: add audit information for all the renamed runs */
@@ -2155,12 +2151,12 @@ cmd_priv_submit_run(struct client_state *p, int len,
     new_bad_packet(p, "priv_submit_run: packet is too small: %d", len);
     return;
   }
-  if (pkt->lang_id < 1 || pkt->lang_id > max_lang || !langs[pkt->lang_id]) {
+  if (pkt->lang_id < 1 || pkt->lang_id > serve_state.max_lang || !serve_state.langs[pkt->lang_id]) {
     err("%d: lang_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_LANG_ID);
     return;
   }
-  if (!langs[pkt->lang_id]->binary && pkt->run_len != strlen(pkt->data)) {
+  if (!serve_state.langs[pkt->lang_id]->binary && pkt->run_len != strlen(pkt->data)) {
     err("%d: data format error: binary file?", p->id);
     new_send_reply(p, -SRV_ERR_DATA_FORMAT);
     return;
@@ -2178,12 +2174,12 @@ cmd_priv_submit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
   }
-  if (pkt->contest_id != global->contest_id) {
+  if (pkt->contest_id != serve_state.global->contest_id) {
     err("%d: contest_id does not match", p->id);
     new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
     return;
   }
-  if (!teamdb_lookup(teamdb_state, pkt->user_id)) {
+  if (!teamdb_lookup(serve_state.teamdb_state, pkt->user_id)) {
     err("%d: user_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
@@ -2198,13 +2194,13 @@ cmd_priv_submit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     return;
   }
-  if (pkt->prob_id < 1 || pkt->prob_id > max_prob || !probs[pkt->prob_id]) {
+  if (pkt->prob_id < 1 || pkt->prob_id > serve_state.max_prob || !serve_state.probs[pkt->prob_id]) {
     err("%d: prob_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
     return;
   }
-  if (probs[pkt->prob_id]->variant_num > 0) {
-    if (pkt->variant < 0 || pkt->variant > probs[pkt->prob_id]->variant_num) {
+  if (serve_state.probs[pkt->prob_id]->variant_num > 0) {
+    if (pkt->variant < 0 || pkt->variant > serve_state.probs[pkt->prob_id]->variant_num) {
       err("%d: invalid variant", p->id);
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
       return;
@@ -2225,9 +2221,9 @@ cmd_priv_submit_run(struct client_state *p, int len,
 
   start_time = contest_start_time;
   stop_time = contest_stop_time;
-  if (global->virtual) {
-    start_time = run_get_virtual_start_time(runlog_state, p->user_id);
-    stop_time = run_get_virtual_stop_time(runlog_state, p->user_id,
+  if (serve_state.global->virtual) {
+    start_time = run_get_virtual_start_time(serve_state.runlog_state, p->user_id);
+    stop_time = run_get_virtual_stop_time(serve_state.runlog_state, p->user_id,
                                           current_time);
   }
   /*
@@ -2244,7 +2240,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
   */
   sha_buffer(pkt->data, pkt->run_len, shaval);
   gettimeofday(&precise_time, 0);
-  if ((run_id = run_add_record(runlog_state, precise_time.tv_sec,
+  if ((run_id = run_add_record(serve_state.runlog_state, precise_time.tv_sec,
                                precise_time.tv_usec * 1000,
                                pkt->run_len,
                                shaval,
@@ -2260,13 +2256,13 @@ cmd_priv_submit_run(struct client_state *p, int len,
   move_files_to_insert_run(run_id);
 
   arch_flags = archive_make_write_path(run_arch, sizeof(run_arch),
-                                       global->run_archive_dir, run_id,
+                                       serve_state.global->run_archive_dir, run_id,
                                        pkt->run_len, 0);
   if (arch_flags < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  if (archive_dir_prepare(global->run_archive_dir, run_id, 0, 0) < 0) {
+  if (archive_dir_prepare(serve_state.global->run_archive_dir, run_id, 0, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -2278,30 +2274,30 @@ cmd_priv_submit_run(struct client_state *p, int len,
 
   if (testing_suspended) {
     info("%d: testing is suspended", p->id);
-    run_change_status(runlog_state, run_id, RUN_PENDING, 0, -1, 0);
+    run_change_status(serve_state.runlog_state, run_id, RUN_PENDING, 0, -1, 0);
     append_audit_log(run_id, p, "Command: priv_submit\nStatus: pending\nRun-id: %d\n  Testing is suspended by the contest administrator\n", run_id);
     new_send_reply(p, SRV_RPL_OK);
     return;
   }
 
-  if (probs[pkt->prob_id]->disable_auto_testing
-      || (probs[pkt->prob_id]->disable_testing
-          && probs[pkt->prob_id]->enable_compilation <= 0)
-      || langs[pkt->lang_id]->disable_auto_testing
-      || langs[pkt->lang_id]->disable_testing) {
+  if (serve_state.probs[pkt->prob_id]->disable_auto_testing
+      || (serve_state.probs[pkt->prob_id]->disable_testing
+          && serve_state.probs[pkt->prob_id]->enable_compilation <= 0)
+      || serve_state.langs[pkt->lang_id]->disable_auto_testing
+      || serve_state.langs[pkt->lang_id]->disable_testing) {
     info("%d: priv_submit_run: auto testing disabled", p->id);
-    run_change_status(runlog_state, run_id, RUN_PENDING, 0, -1, 0);
+    run_change_status(serve_state.runlog_state, run_id, RUN_PENDING, 0, -1, 0);
     append_audit_log(run_id, p, "Command: priv_submit\nStatus: pending\nRun-id: %d\n  Testing is disabled for this language or problem\n", run_id);
     new_send_reply(p, SRV_RPL_OK);
     return;
   }
 
   if (queue_compile_request(pkt->data, pkt->run_len, run_id,
-                            langs[pkt->lang_id]->compile_id,
+                            serve_state.langs[pkt->lang_id]->compile_id,
                             pkt->locale_id,
-                            probs[pkt->prob_id]->output_only,
-                            langs[pkt->lang_id]->src_sfx,
-                            langs[pkt->lang_id]->compiler_env, -1, 0) < 0) {
+                            serve_state.probs[pkt->prob_id]->output_only,
+                            serve_state.langs[pkt->lang_id]->src_sfx,
+                            serve_state.langs[pkt->lang_id]->compiler_env, -1, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -2333,7 +2329,7 @@ cmd_upload_report(struct client_state *p, int len,
        p->id, pkt->user_id, pkt->contest_id, pkt->run_id,
        pkt->report_size);
 
-  if (!global->enable_report_upload) {
+  if (!serve_state.global->enable_report_upload) {
     err("%d: report uploading is disabled", p->id);
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     return;
@@ -2344,12 +2340,12 @@ cmd_upload_report(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
   }
-  if (pkt->contest_id != global->contest_id) {
+  if (pkt->contest_id != serve_state.global->contest_id) {
     err("%d: contest_id does not match", p->id);
     new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
     return;
   }
-  if (!teamdb_lookup(teamdb_state, pkt->user_id)) {
+  if (!teamdb_lookup(serve_state.teamdb_state, pkt->user_id)) {
     err("%d: user_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
@@ -2365,18 +2361,18 @@ cmd_upload_report(struct client_state *p, int len,
     return;
   }
 
-  if (pkt->run_id < 0 || pkt->run_id >= run_get_total(runlog_state)) {
+  if (pkt->run_id < 0 || pkt->run_id >= run_get_total(serve_state.runlog_state)) {
     err("%d: invalid run_id %d", p->id, pkt->run_id);
     new_send_reply(p, -SRV_ERR_BAD_RUN_ID);
     return;
   }
 
-  if (!global->team_enable_rep_view || (pkt->flags & 1)) {
-    archive_remove(global->xml_report_archive_dir, pkt->run_id, 0);
+  if (!serve_state.global->team_enable_rep_view || (pkt->flags & 1)) {
+    archive_remove(serve_state.global->xml_report_archive_dir, pkt->run_id, 0);
     wflags = archive_make_write_path(wpath, sizeof(wpath),
-                                     global->report_archive_dir,
+                                     serve_state.global->report_archive_dir,
                                      pkt->run_id, pkt->report_size, 0);
-    if (archive_dir_prepare(global->report_archive_dir, pkt->run_id, 0, 0) < 0) {
+    if (archive_dir_prepare(serve_state.global->report_archive_dir, pkt->run_id, 0, 0) < 0) {
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
     }
@@ -2388,12 +2384,12 @@ cmd_upload_report(struct client_state *p, int len,
     t1 = "  Judge's report uploaded\n";
   }
 
-  if (global->team_enable_rep_view && (pkt->flags & 2)) {
-    archive_remove(global->xml_report_archive_dir, pkt->run_id, 0);
+  if (serve_state.global->team_enable_rep_view && (pkt->flags & 2)) {
+    archive_remove(serve_state.global->xml_report_archive_dir, pkt->run_id, 0);
     wflags = archive_make_write_path(wpath, sizeof(wpath),
-                                     global->team_report_archive_dir,
+                                     serve_state.global->team_report_archive_dir,
                                      pkt->run_id, pkt->report_size, 0);
-    if (archive_dir_prepare(global->team_report_archive_dir,pkt->run_id,0,0)< 0){
+    if (archive_dir_prepare(serve_state.global->team_report_archive_dir,pkt->run_id,0,0)< 0){
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
     }
@@ -2423,7 +2419,7 @@ cmd_team_print(struct client_state *p, int len,
     return;
   }
 
-  if (!global->enable_printing || printing_suspended) {
+  if (!serve_state.global->enable_printing || printing_suspended) {
     err("%d: printing request is denied", p->id);
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     return;
@@ -2470,14 +2466,14 @@ do_submit_run(struct client_state *p,
        variant, cur_prob->short_name, cur_lang->short_name);
 
   /* sanity check for contest validity */
-  if (contest_id != global->contest_id) {
+  if (contest_id != serve_state.global->contest_id) {
     err("%d: contest_id does not match", p->id);
     new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
     return;
   }
 
   /* check for user validity */
-  if (!teamdb_lookup(teamdb_state, user_id)) {
+  if (!teamdb_lookup(serve_state.teamdb_state, user_id)) {
     err("%d: user_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
@@ -2487,7 +2483,7 @@ do_submit_run(struct client_state *p,
     err("%d: pkt->user_id != p->user_id", p->id);
     return;
   }
-  if (teamdb_get_flags(teamdb_state, user_id) & (TEAM_BANNED | TEAM_LOCKED)) {
+  if (teamdb_get_flags(serve_state.teamdb_state, user_id) & (TEAM_BANNED | TEAM_LOCKED)) {
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     err("%d: user %d cannot submit runs", p->id, user_id);
     return;
@@ -2524,13 +2520,13 @@ do_submit_run(struct client_state *p,
   /* check for start/stop times and deadlines */
   start_time = contest_start_time;
   stop_time = contest_stop_time;
-  if (global->virtual) {
-    start_time = run_get_virtual_start_time(runlog_state, user_id);
-    stop_time = run_get_virtual_stop_time(runlog_state, user_id, current_time);
+  if (serve_state.global->virtual) {
+    start_time = run_get_virtual_start_time(serve_state.runlog_state, user_id);
+    stop_time = run_get_virtual_stop_time(serve_state.runlog_state, user_id, current_time);
   }
   // personal deadline
   if (cur_prob->pd_total > 0) {
-    login = teamdb_get_login(teamdb_state, user_id);
+    login = teamdb_get_login(serve_state.teamdb_state, user_id);
     for (i = 0; i < cur_prob->pd_total; i++) {
       if (!strcmp(login, cur_prob->pd_infos[i].login)) {
         user_deadline = cur_prob->pd_infos[i].deadline;
@@ -2570,7 +2566,7 @@ do_submit_run(struct client_state *p,
 
   sha_buffer(run_bytes, run_size, shaval);
   gettimeofday(&precise_time, 0);
-  if ((run_id = run_add_record(runlog_state, precise_time.tv_sec,
+  if ((run_id = run_add_record(serve_state.runlog_state, precise_time.tv_sec,
                                precise_time.tv_usec * 1000,
                                run_size,
                                shaval,
@@ -2585,27 +2581,27 @@ do_submit_run(struct client_state *p,
   move_files_to_insert_run(run_id);
 
   arch_flags = archive_make_write_path(run_arch, sizeof(run_arch),
-                                       global->run_archive_dir, run_id,
+                                       serve_state.global->run_archive_dir, run_id,
                                        run_size, 0);
   if (arch_flags < 0) {
-    run_undo_add_record(runlog_state, run_id);
+    run_undo_add_record(serve_state.runlog_state, run_id);
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  if (archive_dir_prepare(global->run_archive_dir, run_id, 0, 0) < 0) {
-    run_undo_add_record(runlog_state, run_id);
+  if (archive_dir_prepare(serve_state.global->run_archive_dir, run_id, 0, 0) < 0) {
+    run_undo_add_record(serve_state.runlog_state, run_id);
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
   if (generic_write_file(run_bytes, run_size, arch_flags, 0, run_arch, "") < 0) {
-    run_undo_add_record(runlog_state, run_id);
+    run_undo_add_record(serve_state.runlog_state, run_id);
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
 
-  if (global->ignore_duplicated_runs) {
-    if ((r = run_check_duplicate(runlog_state, run_id)) < 0) {
-      run_undo_add_record(runlog_state, run_id);
+  if (serve_state.global->ignore_duplicated_runs) {
+    if ((r = run_check_duplicate(serve_state.runlog_state, run_id)) < 0) {
+      run_undo_add_record(serve_state.runlog_state, run_id);
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
     } else if (r) {
@@ -2617,7 +2613,7 @@ do_submit_run(struct client_state *p,
 
   if (testing_suspended) {
     info("%d: testing is suspended", p->id);
-    run_change_status(runlog_state, run_id, RUN_PENDING, 0, -1, 0);
+    run_change_status(serve_state.runlog_state, run_id, RUN_PENDING, 0, -1, 0);
     append_audit_log(run_id, p, "Command: submit\nStatus: pending\nRun-id: %d\n  Testing is suspended by the contest administrator\n", run_id);
     goto success;
   }
@@ -2626,7 +2622,7 @@ do_submit_run(struct client_state *p,
       || (cur_prob->disable_testing && cur_prob->enable_compilation <= 0)
       || cur_lang->disable_auto_testing || cur_lang->disable_testing) {
     info("%d: %s: auto testing disabled", p->id, proc_name);
-    run_change_status(runlog_state, run_id, RUN_PENDING, 0, -1, 0);
+    run_change_status(serve_state.runlog_state, run_id, RUN_PENDING, 0, -1, 0);
     append_audit_log(run_id, p, "Command: submit\nStatus: pending\nRun-id: %d\n  Testing disabled for this problem or language\n", run_id);
     goto success;
   }
@@ -2664,13 +2660,13 @@ cmd_team_submit_run(struct client_state *p, int len,
     new_bad_packet(p, "team_submit_run: packet is too small: %d", len);
     return;
   }
-  if (pkt->lang_id < 1 || pkt->lang_id > max_lang || !langs[pkt->lang_id]
-      || langs[pkt->lang_id]->disabled) {
+  if (pkt->lang_id < 1 || pkt->lang_id > serve_state.max_lang || !serve_state.langs[pkt->lang_id]
+      || serve_state.langs[pkt->lang_id]->disabled) {
     err("%d: lang_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_LANG_ID);
     return;
   }
-  if (!langs[pkt->lang_id]->binary && pkt->run_len != strlen(pkt->data)) {
+  if (!serve_state.langs[pkt->lang_id]->binary && pkt->run_len != strlen(pkt->data)) {
     err("%d: data format error: binary file?", p->id);
     new_send_reply(p, -SRV_ERR_DATA_FORMAT);
     return;
@@ -2679,14 +2675,14 @@ cmd_team_submit_run(struct client_state *p, int len,
     new_bad_packet(p, "team_submit_run: packet length does not match");
     return;
   }
-  if (pkt->prob_id < 1 || pkt->prob_id > max_prob || !probs[pkt->prob_id]) {
+  if (pkt->prob_id < 1 || pkt->prob_id > serve_state.max_prob || !serve_state.probs[pkt->prob_id]) {
     err("%d: prob_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
     return;
   }
 
   do_submit_run(p, "team_submit_run", 0, 0,
-                probs[pkt->prob_id], langs[pkt->lang_id],
+                serve_state.probs[pkt->prob_id], serve_state.langs[pkt->lang_id],
                 pkt->user_id, pkt->contest_id, pkt->locale_id, pkt->variant,
                 p->ip, p->ssl, pkt->run_len, pkt->data);
   return;
@@ -2731,24 +2727,24 @@ cmd_user_submit_run_2(struct client_state *p, int len,
     return;
   }
 
-  for (prob_id = 1; prob_id <= max_prob; prob_id++)
-    if (probs[prob_id] && !strcmp(probs[prob_id]->short_name, prob_ptr))
+  for (prob_id = 1; prob_id <= serve_state.max_prob; prob_id++)
+    if (serve_state.probs[prob_id] && !strcmp(serve_state.probs[prob_id]->short_name, prob_ptr))
       break;
-  if (prob_id > max_prob) {
+  if (prob_id > serve_state.max_prob) {
     err("%d: prob_name `%s' is invalid", p->id, prob_ptr);
     new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
     return;
   }
-  cur_prob = probs[prob_id];
-  for (lang_id = 1; lang_id <= max_lang; lang_id++)
-    if (langs[lang_id] && !strcmp(langs[lang_id]->short_name, lang_ptr))
+  cur_prob = serve_state.probs[prob_id];
+  for (lang_id = 1; lang_id <= serve_state.max_lang; lang_id++)
+    if (serve_state.langs[lang_id] && !strcmp(serve_state.langs[lang_id]->short_name, lang_ptr))
       break;
-  if (lang_id > max_lang) {
+  if (lang_id > serve_state.max_lang) {
     err("%d: lang_name `%s' is invalid", p->id, lang_ptr);
     new_send_reply(p, -SRV_ERR_BAD_LANG_ID);
     return;
   }
-  cur_lang = langs[lang_id];
+  cur_lang = serve_state.langs[lang_id];
 
   if (cur_lang->disabled) {
     err("%d: language %d is disabled", p->id, lang_id);
@@ -2817,12 +2813,12 @@ cmd_team_submit_clar(struct client_state *p, int len,
   info("%d: team_submit_clar: %d, %d, %d",
        p->id, pkt->user_id, pkt->contest_id, pkt->locale_id);
 
-  if (pkt->contest_id != global->contest_id) {
+  if (pkt->contest_id != serve_state.global->contest_id) {
     err("%d: contest_id does not match", p->id);
     new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
     return;
   }
-  if (!teamdb_lookup(teamdb_state, pkt->user_id)) {
+  if (!teamdb_lookup(serve_state.teamdb_state, pkt->user_id)) {
     err("%d: user_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
@@ -2832,7 +2828,7 @@ cmd_team_submit_clar(struct client_state *p, int len,
     err("%d: pkt->user_id != p->user_id", p->id);
     return;
   }
-  if (global->disable_clars || global->disable_team_clars) {
+  if (serve_state.global->disable_clars || serve_state.global->disable_team_clars) {
     err("%d: clarifications are disabled", p->id);
     new_send_reply(p, -SRV_ERR_CLARS_DISABLED);
     return;
@@ -2845,9 +2841,9 @@ cmd_team_submit_clar(struct client_state *p, int len,
   }
   start_time = contest_start_time;
   stop_time = contest_stop_time;
-  if (global->virtual) {
-    start_time = run_get_virtual_start_time(runlog_state, p->user_id);
-    stop_time = run_get_virtual_stop_time(runlog_state, p->user_id,
+  if (serve_state.global->virtual) {
+    start_time = run_get_virtual_start_time(serve_state.runlog_state, p->user_id);
+    stop_time = run_get_virtual_stop_time(serve_state.runlog_state, p->user_id,
                                           current_time);
   }
   if (!start_time) {
@@ -2886,7 +2882,7 @@ cmd_team_submit_clar(struct client_state *p, int len,
     return;
   }
 
-  if ((clar_id = clar_add_record(clarlog_state, current_time, full_len,
+  if ((clar_id = clar_add_record(serve_state.clarlog_state, current_time, full_len,
                                  run_unparse_ip(pkt->ip),
                                  pkt->user_id, 0, 0, 0, 0, bsubj)) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
@@ -2894,13 +2890,13 @@ cmd_team_submit_clar(struct client_state *p, int len,
   }
   sprintf(clar_name, "%06d", clar_id);
   if (generic_write_file(full_txt, full_len, 0,
-                         global->clar_archive_dir, clar_name, "") < 0) {
+                         serve_state.global->clar_archive_dir, clar_name, "") < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
 
   // send an e-mail
-  if (contests_get(global->contest_id, &cnts) >= 0
+  if (contests_get(serve_state.global->contest_id, &cnts) >= 0
       && cnts && cnts->clar_notify_email) {
     unsigned char esubj[1024];
     FILE *fmsg = 0;
@@ -2912,10 +2908,10 @@ cmd_team_submit_clar(struct client_state *p, int len,
 
     snprintf(esubj, sizeof(esubj),
              "New clar request in contest %d",
-             global->contest_id);
-    user_name = teamdb_get_name(teamdb_state, pkt->user_id);
+             serve_state.global->contest_id);
+    user_name = teamdb_get_name(serve_state.teamdb_state, pkt->user_id);
     if (!user_name || !*user_name)
-      user_name = teamdb_get_login(teamdb_state, pkt->user_id);
+      user_name = teamdb_get_login(serve_state.teamdb_state, pkt->user_id);
     originator = get_email_sender(cnts);
     fmsg = open_memstream(&ftxt, &flen);
     fprintf(fmsg, "Hello,\n\nNew clarification request is received\n"
@@ -2925,7 +2921,7 @@ cmd_team_submit_clar(struct client_state *p, int len,
             "%s\n\n-\n"
             "Regards,\n"
             "the ejudge contest management system\n",
-            global->contest_id, cnts->name,
+            serve_state.global->contest_id, cnts->name,
             pkt->user_id, user_name,
             subj_ptr, text_ptr);
     fclose(fmsg); fmsg = 0;
@@ -2960,7 +2956,7 @@ cmd_command_0(struct client_state *p, int len,
   }
 
   info("%d: command_0: %d", p->id, pkt->b.id);
-  if (!global->virtual) {
+  if (!serve_state.global->virtual) {
     err("%d: command allowed only in virtual contest mode", p->id);
     new_send_reply(p, -SRV_ERR_ONLY_VIRTUAL);
     return;
@@ -2973,14 +2969,14 @@ cmd_command_0(struct client_state *p, int len,
 
   switch (pkt->b.id) {
   case SRV_CMD_VIRTUAL_START:
-    start_time = run_get_virtual_start_time(runlog_state, p->user_id);
+    start_time = run_get_virtual_start_time(serve_state.runlog_state, p->user_id);
     if (start_time) {
       err("%d: virtual contest for %d already started", p->id, p->user_id);
       new_send_reply(p, -SRV_ERR_CONTEST_STARTED);
       return;
     }
     gettimeofday(&precise_time, 0);
-    run_id = run_virtual_start(runlog_state, p->user_id, precise_time.tv_sec,
+    run_id = run_virtual_start(serve_state.runlog_state, p->user_id, precise_time.tv_sec,
                                p->ip, precise_time.tv_usec * 1000);
     if (run_id < 0) return;
     move_files_to_insert_run(run_id);
@@ -2988,13 +2984,13 @@ cmd_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_VIRTUAL_STOP:
-    start_time = run_get_virtual_start_time(runlog_state, p->user_id);
+    start_time = run_get_virtual_start_time(serve_state.runlog_state, p->user_id);
     if (!start_time) {
       err("%d: virtual contest for %d is not started", p->id, p->user_id);
       new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
       return;
     }
-    stop_time = run_get_virtual_stop_time(runlog_state, p->user_id,
+    stop_time = run_get_virtual_stop_time(serve_state.runlog_state, p->user_id,
                                           current_time);
     if (stop_time) {
       err("%d: virtual contest for %d already stopped", p->id, p->user_id);
@@ -3002,7 +2998,7 @@ cmd_command_0(struct client_state *p, int len,
       return;
     }
     gettimeofday(&precise_time, 0);
-    run_id = run_virtual_stop(runlog_state, p->user_id, precise_time.tv_sec,
+    run_id = run_virtual_stop(serve_state.runlog_state, p->user_id, precise_time.tv_sec,
                               p->ip, precise_time.tv_usec * 1000);
     if (run_id < 0) return;
     move_files_to_insert_run(run_id);
@@ -3034,9 +3030,9 @@ cmd_reset_filter(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
   }
-  if (pkt->contest_id != global->contest_id) {
+  if (pkt->contest_id != serve_state.global->contest_id) {
     err("%d: contest_ids do not match: %d, %d", p->id,
-        global->contest_id, pkt->contest_id);
+        serve_state.global->contest_id, pkt->contest_id);
     new_send_reply(p, -SRV_ERR_BAD_CONTEST_ID);
     return;
   }
@@ -3111,36 +3107,36 @@ do_squeeze_runs(void)
 {
   int i, j, tot;
 
-  tot = run_get_total(runlog_state);
+  tot = run_get_total(serve_state.runlog_state);
   for (i = 0, j = 0; i < tot; i++) {
-    if (run_get_status(runlog_state, i) == RUN_EMPTY) continue;
+    if (run_get_status(serve_state.runlog_state, i) == RUN_EMPTY) continue;
     if (i != j) {
-      archive_rename(global->run_archive_dir, 0, i, 0, j, 0, 0);
-      archive_rename(global->xml_report_archive_dir, 0, i, 0, j, 0, 1);
-      archive_rename(global->report_archive_dir, 0, i, 0, j, 0, 1);
-      if (global->team_enable_rep_view) {
-        archive_rename(global->team_report_archive_dir, 0, i, 0, j, 0, 0);
+      archive_rename(serve_state.global->run_archive_dir, 0, i, 0, j, 0, 0);
+      archive_rename(serve_state.global->xml_report_archive_dir, 0, i, 0, j, 0, 1);
+      archive_rename(serve_state.global->report_archive_dir, 0, i, 0, j, 0, 1);
+      if (serve_state.global->team_enable_rep_view) {
+        archive_rename(serve_state.global->team_report_archive_dir, 0, i, 0, j, 0, 0);
       }
-      if (global->enable_full_archive) {
-        archive_rename(global->full_archive_dir, 0, i, 0, j, 0, 0);
+      if (serve_state.global->enable_full_archive) {
+        archive_rename(serve_state.global->full_archive_dir, 0, i, 0, j, 0, 0);
       }
-      archive_rename(global->audit_log_dir, 0, i, 0, j, 0, 1);
+      archive_rename(serve_state.global->audit_log_dir, 0, i, 0, j, 0, 1);
     }
     j++;
   }
   for (; j < tot; j++) {
-    archive_remove(global->run_archive_dir, j, 0);
-    archive_remove(global->xml_report_archive_dir, j, 0);
-    archive_remove(global->report_archive_dir, j, 0);
-    if (global->team_enable_rep_view) {
-      archive_remove(global->team_report_archive_dir, j, 0);
+    archive_remove(serve_state.global->run_archive_dir, j, 0);
+    archive_remove(serve_state.global->xml_report_archive_dir, j, 0);
+    archive_remove(serve_state.global->report_archive_dir, j, 0);
+    if (serve_state.global->team_enable_rep_view) {
+      archive_remove(serve_state.global->team_report_archive_dir, j, 0);
     }
-    if (global->enable_full_archive) {
-      archive_remove(global->full_archive_dir, j, 0);
+    if (serve_state.global->enable_full_archive) {
+      archive_remove(serve_state.global->full_archive_dir, j, 0);
     }
-    archive_remove(global->audit_log_dir, j, 0);
+    archive_remove(serve_state.global->audit_log_dir, j, 0);
   }
-  run_squeeze_log(runlog_state);
+  run_squeeze_log(serve_state.runlog_state);
 
   /* FIXME: add an audit record for each renumbered run */
 }
@@ -3177,7 +3173,7 @@ cmd_rejudge_by_mask(struct client_state *p, int len,
     return;
   }
 
-  if (global->score_system_val == SCORE_OLYMPIAD &&
+  if (serve_state.global->score_system_val == SCORE_OLYMPIAD &&
       !olympiad_judging_mode && pkt->b.id == SRV_CMD_FULL_REJUDGE_BY_MASK) {
     force_full = 1;
     priority_adjustment = 10;
@@ -3193,9 +3189,9 @@ do_start_cmd(void)
 {
   tpTask tsk = 0;
 
-  if (!global->contest_start_cmd[0]) return;
+  if (!serve_state.global->contest_start_cmd[0]) return;
   if (!(tsk = task_New())) return;
-  task_AddArg(tsk, global->contest_start_cmd);
+  task_AddArg(tsk, serve_state.global->contest_start_cmd);
   task_SetPathAsArg0(tsk);
   if (task_Start(tsk) < 0) {
     task_Delete(tsk);
@@ -3212,7 +3208,7 @@ send_run_quit_command(void)
   size_t pkt_size = 0;
 
   run_request_packet_quit(&pkt_size, &pkt_buf);
-  generic_write_file(pkt_buf, pkt_size, SAFE, global->run_queue_dir, "QUIT", "");
+  generic_write_file(pkt_buf, pkt_size, SAFE, serve_state.global->run_queue_dir, "QUIT", "");
   xfree(pkt_buf);
 }
 
@@ -3317,7 +3313,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
 
-    if (global->score_system_val != SCORE_OLYMPIAD) {
+    if (serve_state.global->score_system_val != SCORE_OLYMPIAD) {
       new_send_reply(p, -SRV_ERR_NOT_SUPPORTED);
       return;
     }
@@ -3339,7 +3335,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
 
-    if (global->score_system_val != SCORE_OLYMPIAD) {
+    if (serve_state.global->score_system_val != SCORE_OLYMPIAD) {
       new_send_reply(p, -SRV_ERR_NOT_SUPPORTED);
       return;
     }
@@ -3385,27 +3381,27 @@ cmd_priv_command_0(struct client_state *p, int len,
 
     /* FIXME: we need to reset all the components (compile, serve) as well */
     /* reset run log */
-    run_reset(runlog_state, global->contest_time);
-    contest_duration = global->contest_time;
-    run_set_duration(runlog_state, contest_duration);
-    clar_reset(clarlog_state);
+    run_reset(serve_state.runlog_state, serve_state.global->contest_time);
+    contest_duration = serve_state.global->contest_time;
+    run_set_duration(serve_state.runlog_state, contest_duration);
+    clar_reset(serve_state.clarlog_state);
     /* clear all submissions and clarifications */
-    if (global->clar_archive_dir[0])
-      clear_directory(global->clar_archive_dir);
-    if (global->xml_report_archive_dir[0])
-      clear_directory(global->xml_report_archive_dir);
-    if (global->report_archive_dir[0])
-      clear_directory(global->report_archive_dir);
-    if (global->run_archive_dir[0])
-      clear_directory(global->run_archive_dir);
-    if (global->team_report_archive_dir[0])
-      clear_directory(global->team_report_archive_dir);
-    if (global->full_archive_dir[0])
-      clear_directory(global->full_archive_dir);
-    if (global->audit_log_dir[0])
-      clear_directory(global->audit_log_dir);
-    if (global->team_extra_dir[0])
-      clear_directory(global->team_extra_dir);
+    if (serve_state.global->clar_archive_dir[0])
+      clear_directory(serve_state.global->clar_archive_dir);
+    if (serve_state.global->xml_report_archive_dir[0])
+      clear_directory(serve_state.global->xml_report_archive_dir);
+    if (serve_state.global->report_archive_dir[0])
+      clear_directory(serve_state.global->report_archive_dir);
+    if (serve_state.global->run_archive_dir[0])
+      clear_directory(serve_state.global->run_archive_dir);
+    if (serve_state.global->team_report_archive_dir[0])
+      clear_directory(serve_state.global->team_report_archive_dir);
+    if (serve_state.global->full_archive_dir[0])
+      clear_directory(serve_state.global->full_archive_dir);
+    if (serve_state.global->audit_log_dir[0])
+      clear_directory(serve_state.global->audit_log_dir);
+    if (serve_state.global->team_extra_dir[0])
+      clear_directory(serve_state.global->team_extra_dir);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_START:
@@ -3426,7 +3422,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_CONTEST_STARTED);
       return;
     }
-    run_start_contest(runlog_state, current_time);
+    run_start_contest(serve_state.runlog_state, current_time);
     do_start_cmd();
     contest_start_time = current_time;
     info("contest started: %lu", current_time);
@@ -3451,7 +3447,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_CONTEST_NOT_STARTED);
       return;
     }
-    run_stop_contest(runlog_state, current_time);
+    run_stop_contest(serve_state.runlog_state, current_time);
     contest_stop_time = current_time;
     info("contest stopped: %lu", current_time);
     update_status_file(1);
@@ -3487,7 +3483,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
 
-    if (pkt->v.i < 1 || pkt->v.i > max_prob || !probs[pkt->v.i]) {
+    if (pkt->v.i < 1 || pkt->v.i > serve_state.max_prob || !serve_state.probs[pkt->v.i]) {
       err("%d: invalid problem id %d", p->id, pkt->v.i);
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
       return;
@@ -3513,7 +3509,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_CONTEST_STARTED);
       return;
     }
-    run_sched_contest(runlog_state, pkt->v.t);
+    run_sched_contest(serve_state.runlog_state, pkt->v.t);
     contest_sched_time = pkt->v.t;
     info("%d: contest scheduled: %lu", p->id, pkt->v.t);
     update_standings_file(0);
@@ -3528,7 +3524,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
 
-    if (contest_stop_time && !global->enable_continue) {
+    if (contest_stop_time && !serve_state.global->enable_continue) {
       err("%d: contest already finished", p->id);
       new_send_reply(p, -SRV_ERR_CONTEST_FINISHED);
       return;
@@ -3540,7 +3536,7 @@ cmd_priv_command_0(struct client_state *p, int len,
     }
     if (!pkt->v.t) {
       contest_duration = 0;
-      run_set_duration(runlog_state, contest_duration);
+      run_set_duration(serve_state.runlog_state, contest_duration);
       info("contest duration set to infinite time");
       update_standings_file(0);
       update_status_file(1);
@@ -3567,7 +3563,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
     contest_duration = pkt->v.t * 60;
-    run_set_duration(runlog_state, contest_duration);
+    run_set_duration(serve_state.runlog_state, contest_duration);
     info("contest duration reset to %ld", pkt->v.t);
     update_standings_file(0);
     update_status_file(1);
@@ -3593,17 +3589,17 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
 
-    if (pkt->v.i < 0 || pkt->v.i >= run_get_total(runlog_state)) {
+    if (pkt->v.i < 0 || pkt->v.i >= run_get_total(serve_state.runlog_state)) {
       err("%d: invalid run id %d", p->id, pkt->v.i);
       new_send_reply(p, -SRV_ERR_BAD_RUN_ID);
       return;
     }
-    if (run_is_readonly(runlog_state, pkt->v.i)) {
+    if (run_is_readonly(serve_state.runlog_state, pkt->v.i)) {
       err("%d: run %d is readonly", p->id, pkt->v.i);
       new_send_reply(p, -SRV_ERR_READONLY_RUN);
       return;
     }
-    if (run_clear_entry(runlog_state, pkt->v.i) < 0) {
+    if (run_clear_entry(serve_state.runlog_state, pkt->v.i) < 0) {
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
     }
@@ -3619,7 +3615,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
 
-    if (pkt->v.i < 0 || pkt->v.i >= run_get_total(runlog_state)) {
+    if (pkt->v.i < 0 || pkt->v.i >= run_get_total(serve_state.runlog_state)) {
       err("%d: invalid run id %d", p->id, pkt->v.i);
       new_send_reply(p, -SRV_ERR_BAD_RUN_ID);
       return;
@@ -3642,7 +3638,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
 
-    if (!global->enable_continue) {
+    if (!serve_state.global->enable_continue) {
       err("%d: contest cannot be continued", p->id);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
       return;
@@ -3663,7 +3659,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
     contest_stop_time = 0;
-    run_stop_contest(runlog_state, 0);
+    run_stop_contest(serve_state.runlog_state, 0);
     update_status_file(1);
     new_send_reply(p, SRV_RPL_OK);
     return;
@@ -3763,7 +3759,7 @@ cmd_edit_run(struct client_state *p, int len,
     new_bad_packet(p, "edit_run: packet length mismatch");
     return;
   }
-  if (run_get_entry(runlog_state, pkt->run_id, &cur_run) < 0) {
+  if (run_get_entry(serve_state.runlog_state, pkt->run_id, &cur_run) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -3779,7 +3775,7 @@ cmd_edit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     return;
   }
-  if (pkt->run_id < 0 || pkt->run_id >= run_get_total(runlog_state)) {
+  if (pkt->run_id < 0 || pkt->run_id >= run_get_total(serve_state.runlog_state)) {
     err("%d: invalid run_id", p->id);
     new_send_reply(p, -SRV_ERR_BAD_RUN_ID);
     return;
@@ -3793,7 +3789,7 @@ cmd_edit_run(struct client_state *p, int len,
 
   memset(&run, 0, sizeof(run));
   if ((pkt->mask & PROT_SERVE_RUN_UID_SET)) {
-    if (teamdb_lookup(teamdb_state, pkt->user_id) != 1) {
+    if (teamdb_lookup(serve_state.teamdb_state, pkt->user_id) != 1) {
       err("%d: invalid user_id %d", p->id, pkt->user_id);
       new_send_reply(p, -SRV_ERR_BAD_USER_ID);
       return;
@@ -3802,7 +3798,7 @@ cmd_edit_run(struct client_state *p, int len,
     run_flags |= RUN_ENTRY_USER;
   }
   if ((pkt->mask & PROT_SERVE_RUN_LOGIN_SET)) {
-    if ((run.team = teamdb_lookup_login(teamdb_state, user_login_ptr)) <= 0) {
+    if ((run.team = teamdb_lookup_login(serve_state.teamdb_state, user_login_ptr)) <= 0) {
       err("%d: invalid login <%s>", p->id, user_login_ptr);
       new_send_reply(p, -SRV_ERR_BAD_USER_ID);
       return;
@@ -3810,7 +3806,7 @@ cmd_edit_run(struct client_state *p, int len,
     run_flags |= RUN_ENTRY_USER;
   }
   if ((pkt->mask & PROT_SERVE_RUN_PROB_SET)) {
-    if (pkt->prob_id <= 0 || pkt->prob_id > max_prob || !probs[pkt->prob_id]) {
+    if (pkt->prob_id <= 0 || pkt->prob_id > serve_state.max_prob || !serve_state.probs[pkt->prob_id]) {
       err("%d: invalid problem %d", p->id, pkt->prob_id);
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
       return;
@@ -3819,7 +3815,7 @@ cmd_edit_run(struct client_state *p, int len,
     run_flags |= RUN_ENTRY_PROB;
   }
   if ((pkt->mask & PROT_SERVE_RUN_LANG_SET)) {
-    if (pkt->lang_id <= 0 || pkt->lang_id > max_lang || !langs[pkt->lang_id]) {
+    if (pkt->lang_id <= 0 || pkt->lang_id > serve_state.max_lang || !serve_state.langs[pkt->lang_id]) {
       err("%d: invalid language %d", p->id, pkt->lang_id);
       new_send_reply(p, -SRV_ERR_BAD_LANG_ID);
       return;
@@ -3859,17 +3855,17 @@ cmd_edit_run(struct client_state *p, int len,
     if ((run_flags & RUN_ENTRY_PROB)) {
       prob_id = run.problem;
     }
-    if (prob_id <= 0 || prob_id > max_prob || !probs[prob_id]) {
+    if (prob_id <= 0 || prob_id > serve_state.max_prob || !serve_state.probs[prob_id]) {
       err("%d: invalid problem id %d", p->id, prob_id);
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
       return;
     }
-    if (probs[prob_id]->variant_num <= 0) {
+    if (serve_state.probs[prob_id]->variant_num <= 0) {
       err("%d: problem %d has no variants", p->id, prob_id);
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
       return;
     }
-    if (pkt->variant < 0 || pkt->variant > probs[prob_id]->variant_num) {
+    if (pkt->variant < 0 || pkt->variant > serve_state.probs[prob_id]->variant_num) {
       err("%d: invalid variant %d for problem %d", p->id,pkt->variant,prob_id);
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
       return;
@@ -3883,8 +3879,8 @@ cmd_edit_run(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_PROTOCOL);
       return;
     }
-    if (global->score_system_val == SCORE_OLYMPIAD
-        || global->score_system_val == SCORE_KIROV) {
+    if (serve_state.global->score_system_val == SCORE_OLYMPIAD
+        || serve_state.global->score_system_val == SCORE_KIROV) {
       pkt->tests++;
     }
     if (pkt->tests == -1) pkt->tests = 0;
@@ -3898,9 +3894,9 @@ cmd_edit_run(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_PROTOCOL);
       return;
     }
-    if (global->score_system_val != SCORE_OLYMPIAD
-        && global->score_system_val != SCORE_KIROV
-        && global->score_system_val != SCORE_MOSCOW) {
+    if (serve_state.global->score_system_val != SCORE_OLYMPIAD
+        && serve_state.global->score_system_val != SCORE_KIROV
+        && serve_state.global->score_system_val != SCORE_MOSCOW) {
       err("%d: score cannot be set in the current scoring system", p->id);
       new_send_reply(p, -SRV_ERR_PROTOCOL);
       return;
@@ -3914,9 +3910,9 @@ cmd_edit_run(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_PROTOCOL);
       return;
     }
-    if (global->score_system_val != SCORE_OLYMPIAD
-        && global->score_system_val != SCORE_KIROV
-        && global->score_system_val != SCORE_MOSCOW) {
+    if (serve_state.global->score_system_val != SCORE_OLYMPIAD
+        && serve_state.global->score_system_val != SCORE_KIROV
+        && serve_state.global->score_system_val != SCORE_MOSCOW) {
       err("%d: score_adj cannot be set in the current scoring system", p->id);
       new_send_reply(p, -SRV_ERR_PROTOCOL);
       return;
@@ -3963,7 +3959,7 @@ cmd_edit_run(struct client_state *p, int len,
     }
   }
 
-  if (run_set_entry(runlog_state, pkt->run_id, run_flags, &run) < 0) {
+  if (run_set_entry(serve_state.runlog_state, pkt->run_id, run_flags, &run) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -4032,13 +4028,13 @@ cmd_new_run(struct client_state *p, int len,
     err("%d: new_run: both uid and login are set", p->id);
     goto protocol_error;
   } else if ((pkt->mask & PROT_SERVE_RUN_UID_SET)) {
-    if (teamdb_lookup(teamdb_state, pkt->user_id) != 1) {
+    if (teamdb_lookup(serve_state.teamdb_state, pkt->user_id) != 1) {
       err("%d: invalid user_id %d", p->id, pkt->user_id);
       new_send_reply(p, -SRV_ERR_BAD_USER_ID);
       return;
     }
   } else if ((pkt->mask & PROT_SERVE_RUN_LOGIN_SET)) {
-    if ((pkt->user_id = teamdb_lookup_login(teamdb_state, user_login_ptr)) <= 0) {
+    if ((pkt->user_id = teamdb_lookup_login(serve_state.teamdb_state, user_login_ptr)) <= 0) {
       err("%d: invalid login <%s>", p->id, user_login_ptr);
       new_send_reply(p, -SRV_ERR_BAD_USER_ID);
       return;
@@ -4050,7 +4046,7 @@ cmd_new_run(struct client_state *p, int len,
   }
 
   if ((pkt->mask & PROT_SERVE_RUN_PROB_SET)) {
-    if (pkt->prob_id <= 0 || pkt->prob_id > max_prob || !probs[pkt->prob_id]) {
+    if (pkt->prob_id <= 0 || pkt->prob_id > serve_state.max_prob || !serve_state.probs[pkt->prob_id]) {
       err("%d: new_run: invalid problem %d", p->id, pkt->prob_id);
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
       return;
@@ -4062,7 +4058,7 @@ cmd_new_run(struct client_state *p, int len,
   }
 
   if ((pkt->mask & PROT_SERVE_RUN_LANG_SET)) {
-    if (pkt->lang_id <= 0 || pkt->lang_id > max_lang || !langs[pkt->lang_id]) {
+    if (pkt->lang_id <= 0 || pkt->lang_id > serve_state.max_lang || !serve_state.langs[pkt->lang_id]) {
       err("%d: new_run: invalid language %d", p->id, pkt->lang_id);
       new_send_reply(p, -SRV_ERR_BAD_LANG_ID);
       return;
@@ -4073,7 +4069,7 @@ cmd_new_run(struct client_state *p, int len,
     return;
   }
 
-  if (!langs[pkt->lang_id]->binary) {
+  if (!serve_state.langs[pkt->lang_id]->binary) {
     if (pkt->run_src_len != run_src_len) {
       err("%d: new_run: source length mismatch (%d != %d)",
           p->id, run_src_len, pkt->run_src_len);
@@ -4096,12 +4092,12 @@ cmd_new_run(struct client_state *p, int len,
   }
 
   if ((pkt->mask & PROT_SERVE_RUN_VARIANT_SET)) {
-    if (probs[pkt->prob_id]->variant_num <= 0) {
+    if (serve_state.probs[pkt->prob_id]->variant_num <= 0) {
       err("%d: new_run: problem %d has no variants", p->id, pkt->prob_id);
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
       return;
     }
-    if (pkt->variant < 0 || pkt->variant > probs[pkt->prob_id]->variant_num) {
+    if (pkt->variant < 0 || pkt->variant > serve_state.probs[pkt->prob_id]->variant_num) {
       err("%d: new_run: invalid variant %d for problem %d",
           p->id, pkt->variant, pkt->prob_id);
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
@@ -4135,8 +4131,8 @@ cmd_new_run(struct client_state *p, int len,
       err("%d: new_run: new test value %d is out of range", p->id, pkt->tests);
       goto protocol_error;
     }
-    if (global->score_system_val == SCORE_OLYMPIAD
-        || global->score_system_val == SCORE_KIROV) {
+    if (serve_state.global->score_system_val == SCORE_OLYMPIAD
+        || serve_state.global->score_system_val == SCORE_KIROV) {
       pkt->tests++;
     }
     if (pkt->tests == -1) pkt->tests = 0;
@@ -4150,9 +4146,9 @@ cmd_new_run(struct client_state *p, int len,
           pkt->score);
       goto protocol_error;
     }
-    if (global->score_system_val != SCORE_OLYMPIAD
-        && global->score_system_val != SCORE_KIROV
-        && global->score_system_val != SCORE_MOSCOW) {
+    if (serve_state.global->score_system_val != SCORE_OLYMPIAD
+        && serve_state.global->score_system_val != SCORE_KIROV
+        && serve_state.global->score_system_val != SCORE_MOSCOW) {
       err("%d: new_run: score cannot be set in the current scoring system",
           p->id);
       goto protocol_error;
@@ -4183,7 +4179,7 @@ cmd_new_run(struct client_state *p, int len,
   sha_buffer(run_src_ptr, run_src_len, shaval);
   gettimeofday(&precise_time, 0);
   locale_id = 0;
-  if ((run_id = run_add_record(runlog_state,
+  if ((run_id = run_add_record(serve_state.runlog_state,
                                precise_time.tv_sec,
                                precise_time.tv_usec * 1000,
                                run_src_len,
@@ -4200,13 +4196,13 @@ cmd_new_run(struct client_state *p, int len,
   move_files_to_insert_run(run_id);
 
   arch_flags = archive_make_write_path(run_arch, sizeof(run_arch),
-                                       global->run_archive_dir, run_id,
+                                       serve_state.global->run_archive_dir, run_id,
                                        pkt->run_src_len, 0);
   if (arch_flags < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  if (archive_dir_prepare(global->run_archive_dir, run_id, 0, 0) < 0) {
+  if (archive_dir_prepare(serve_state.global->run_archive_dir, run_id, 0, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -4216,7 +4212,7 @@ cmd_new_run(struct client_state *p, int len,
     return;
   }
 
-  if (run_set_entry(runlog_state, run_id, new_run_flags, &new_run) < 0) {
+  if (run_set_entry(serve_state.runlog_state, run_id, new_run_flags, &new_run) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -4271,7 +4267,7 @@ cmd_edit_user(struct client_state *p, int len,
         p->id, len, expected_pkt_size);
     goto protocol_error;
   }
-  if (!teamdb_lookup(teamdb_state, pkt->user_id)) {
+  if (!teamdb_lookup(serve_state.teamdb_state, pkt->user_id)) {
     err("%d: cmd_edit_user: user_id is invalid", p->id);
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
@@ -4279,7 +4275,7 @@ cmd_edit_user(struct client_state *p, int len,
 
   switch (pkt->b.id) {
   case SRV_CMD_SET_TEAM_STATUS:
-    if (pkt->status < 0 || pkt->status >= global->contestant_status_num) {
+    if (pkt->status < 0 || pkt->status >= serve_state.global->contestant_status_num) {
       err("%d: cmd_edit_user: bad status %d", p->id, pkt->status);
       new_send_reply(p, -SRV_ERR_BAD_STATUS);
       return;
@@ -4289,7 +4285,7 @@ cmd_edit_user(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_NO_PERMS);
       return;
     }
-    if (!(t_extra = team_extra_get_entry(team_extra_state, pkt->user_id))) {
+    if (!(t_extra = team_extra_get_entry(serve_state.team_extra_state, pkt->user_id))) {
       err("%d: cannot get team extra information for %d", p->id, pkt->user_id);
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
@@ -4299,8 +4295,8 @@ cmd_edit_user(struct client_state *p, int len,
       new_send_reply(p, SRV_RPL_OK);
       return;
     }
-    team_extra_set_status(team_extra_state, pkt->user_id, pkt->status);
-    team_extra_flush(team_extra_state);
+    team_extra_set_status(serve_state.team_extra_state, pkt->user_id, pkt->status);
+    team_extra_flush(serve_state.team_extra_state);
     break;
   case SRV_CMD_ISSUE_WARNING:
     if (!check_cnts_caps(p->user_id, OPCAP_EDIT_REG)) {
@@ -4308,13 +4304,13 @@ cmd_edit_user(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_NO_PERMS);
       return;
     }
-    if (team_extra_append_warning(team_extra_state, pkt->user_id, p->user_id,
+    if (team_extra_append_warning(serve_state.team_extra_state, pkt->user_id, p->user_id,
                                   p->ip, current_time, txt_ptr, cmt_ptr) < 0) {
       err("%d: warning append failed", p->id);
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
     }
-    team_extra_flush(team_extra_state);
+    team_extra_flush(serve_state.team_extra_state);
     break;
   default:
     err("%d: cmd_edit_user: unexpected command %d", p->id, pkt->b.id);
@@ -4341,11 +4337,11 @@ mail_check_failed(int run_id)
   size_t flen = 0;
   unsigned char *mail_args[7];
 
-  if (contests_get(global->contest_id, &cnts) < 0 || !cnts
+  if (contests_get(serve_state.global->contest_id, &cnts) < 0 || !cnts
       || !cnts->cf_notify_email) return;
 
   snprintf(esubj, sizeof(esubj),
-           "Check failed in contest %d", global->contest_id);
+           "Check failed in contest %d", serve_state.global->contest_id);
   originator = get_email_sender(cnts);
 
   fmsg = open_memstream(&ftxt, &flen);
@@ -4354,7 +4350,7 @@ mail_check_failed(int run_id)
           "Run Id: %d\n\n-\n"
           "Regards,\n"
           "the ejudge contest management system\n",
-          global->contest_id, cnts->name, run_id);
+          serve_state.global->contest_id, cnts->name, run_id);
   fclose(fmsg); fmsg = 0;
   mail_args[0] = "mail";
   mail_args[1] = "";
@@ -4410,11 +4406,11 @@ read_compile_packet(const unsigned char *compile_status_dir,
     /* we can't do any reasonable recovery, just drop the packet */
     goto non_fatal_error;
   }
-  if (comp_pkt->contest_id != global->contest_id) {
+  if (comp_pkt->contest_id != serve_state.global->contest_id) {
     err("read_compile_packet: mismatched contest_id %d", comp_pkt->contest_id);
     goto non_fatal_error;
   }
-  if (run_get_entry(runlog_state, comp_pkt->run_id, &re) < 0) {
+  if (run_get_entry(serve_state.runlog_state, comp_pkt->run_id, &re) < 0) {
     err("read_compile_packet: invalid run_id %d", comp_pkt->run_id);
     goto non_fatal_error;
   }
@@ -4437,22 +4433,22 @@ read_compile_packet(const unsigned char *compile_status_dir,
     }
 
     rep_flags = archive_make_write_path(rep_path, sizeof(rep_path),
-                                        global->xml_report_archive_dir,comp_pkt->run_id,
+                                        serve_state.global->xml_report_archive_dir,comp_pkt->run_id,
                                         report_size, 0);
     if (rep_flags < 0) {
       snprintf(errmsg, sizeof(errmsg), "archive_make_write_path: %s, %d, %ld failed\n",
-               global->xml_report_archive_dir, comp_pkt->run_id, report_size);
+               serve_state.global->xml_report_archive_dir, comp_pkt->run_id, report_size);
       goto report_check_failed;
     }
   }
   /*
-  if (comp_pkt->status == RUN_COMPILE_ERR && global->team_enable_rep_view) {
+  if (comp_pkt->status == RUN_COMPILE_ERR && serve_state.global->team_enable_rep_view) {
     team_flags = archive_make_write_path(team_path, sizeof(team_path),
-                                         global->team_report_archive_dir,
+                                         serve_state.global->team_report_archive_dir,
                                          comp_pkt->run_id, report_size, 0);
     if (team_flags < 0) {
       snprintf(errmsg, sizeof(errmsg),"archive_make_write_path: %s, %d, %ld failed\n",
-               global->team_report_archive_dir, comp_pkt->run_id, report_size);
+               serve_state.global->team_report_archive_dir, comp_pkt->run_id, report_size);
       goto report_check_failed;
     }
   }
@@ -4460,10 +4456,10 @@ read_compile_packet(const unsigned char *compile_status_dir,
 
   if (comp_pkt->status == RUN_CHECK_FAILED) {
     /* if status change fails, we cannot do reasonable recovery */
-    if (run_change_status(runlog_state, comp_pkt->run_id, RUN_CHECK_FAILED, 0,
+    if (run_change_status(serve_state.runlog_state, comp_pkt->run_id, RUN_CHECK_FAILED, 0,
                           -1, 0) < 0)
       goto non_fatal_error;
-    if (archive_dir_prepare(global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0)
+    if (archive_dir_prepare(serve_state.global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0)
       goto non_fatal_error;
     if (generic_copy_file(REMOVE, compile_report_dir, pname, "",
                           rep_flags, 0, rep_path, "") < 0) {
@@ -4477,15 +4473,15 @@ read_compile_packet(const unsigned char *compile_status_dir,
 
   if (comp_pkt->status == RUN_COMPILE_ERR) {
     /* if status change fails, we cannot do reasonable recovery */
-    if (run_change_status(runlog_state, comp_pkt->run_id, RUN_COMPILE_ERR, 0,
+    if (run_change_status(serve_state.runlog_state, comp_pkt->run_id, RUN_COMPILE_ERR, 0,
                           -1, 0) < 0)
       goto non_fatal_error;
 
     /*
-    if (global->team_enable_rep_view) {
-      if (archive_dir_prepare(global->team_report_archive_dir,comp_pkt->run_id,0,0)<0) {
+    if (serve_state.global->team_enable_rep_view) {
+      if (archive_dir_prepare(serve_state.global->team_report_archive_dir,comp_pkt->run_id,0,0)<0) {
         snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
-                 global->team_report_archive_dir, comp_pkt->run_id);
+                 serve_state.global->team_report_archive_dir, comp_pkt->run_id);
         goto report_check_failed;
       }
       if (generic_copy_file(0, compile_report_dir, pname, "",
@@ -4496,9 +4492,9 @@ read_compile_packet(const unsigned char *compile_status_dir,
       }
     }
     */
-    if (archive_dir_prepare(global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0) {
+    if (archive_dir_prepare(serve_state.global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0) {
       snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
-               global->xml_report_archive_dir, comp_pkt->run_id);
+               serve_state.global->xml_report_archive_dir, comp_pkt->run_id);
       goto report_check_failed;
     }
     if (generic_copy_file(REMOVE, compile_report_dir, pname, "",
@@ -4512,20 +4508,20 @@ read_compile_packet(const unsigned char *compile_status_dir,
   }
 
   /* check run parameters */
-  if (re.problem < 1 || re.problem > max_prob || !(prob = probs[re.problem])) {
+  if (re.problem < 1 || re.problem > serve_state.max_prob || !(prob = serve_state.probs[re.problem])) {
     snprintf(errmsg, sizeof(errmsg), "invalid problem %d\n", re.problem);
     goto report_check_failed;
   }
-  if (re.language < 1 || re.language > max_lang || !(lang = langs[re.language])) {
+  if (re.language < 1 || re.language > serve_state.max_lang || !(lang = serve_state.langs[re.language])) {
     snprintf(errmsg, sizeof(errmsg), "invalid language %d\n", re.language);
     goto report_check_failed;
   }
-  if (!(team_name = teamdb_get_name(teamdb_state, re.team))) {
+  if (!(team_name = teamdb_get_name(serve_state.teamdb_state, re.team))) {
     snprintf(errmsg, sizeof(errmsg), "invalid team %d\n", re.team);
     goto report_check_failed;
   }
   if (prob->disable_testing && prob->enable_compilation > 0) {
-    if (run_change_status(runlog_state, comp_pkt->run_id, RUN_ACCEPTED, 0, -1,
+    if (run_change_status(serve_state.runlog_state, comp_pkt->run_id, RUN_ACCEPTED, 0, -1,
                           comp_pkt->judge_id) < 0)
       goto non_fatal_error;
     goto success;
@@ -4538,7 +4534,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
     goto report_check_failed;
   }
 
-  if (run_change_status(runlog_state, comp_pkt->run_id, RUN_COMPILED, 0, -1,
+  if (run_change_status(serve_state.runlog_state, comp_pkt->run_id, RUN_COMPILED, 0, -1,
                         comp_pkt->judge_id) < 0)
     goto non_fatal_error;
 
@@ -4548,7 +4544,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
 
   /* find appropriate checker */
   cn = find_tester(re.problem, lang->arch);
-  if (cn < 1 || cn > max_tester || !testers[cn]) {
+  if (cn < 1 || cn > serve_state.max_tester || !serve_state.testers[cn]) {
     snprintf(errmsg, sizeof(errmsg), "no appropriate checker for <%s>, <%s>\n",
              prob->short_name, lang->arch);
     goto report_check_failed;
@@ -4569,7 +4565,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
   prio += lang->priority_adjustment;
   prio += prob->priority_adjustment;
   prio += find_user_priority_adjustment(re.team);
-  prio += testers[cn]->priority_adjustment;
+  prio += serve_state.testers[cn]->priority_adjustment;
   prio += comp_extra->priority_adjustment;
 
   /* generate a packet name */
@@ -4581,9 +4577,9 @@ read_compile_packet(const unsigned char *compile_status_dir,
 
   /* copy the executable into the testers's queue */
   if (generic_copy_file(REMOVE, compile_report_dir, exe_in_name, "",
-                        0, global->run_exe_dir, exe_out_name, "") < 0) {
+                        0, serve_state.global->run_exe_dir, exe_out_name, "") < 0) {
     snprintf(errmsg, sizeof(errmsg), "generic_copy_file: %s, %s, %s, %s failed\n",
-             compile_report_dir, exe_in_name, global->run_exe_dir,
+             compile_report_dir, exe_in_name, serve_state.global->run_exe_dir,
              exe_out_name);
     goto report_check_failed;
   }
@@ -4592,17 +4588,17 @@ read_compile_packet(const unsigned char *compile_status_dir,
   XALLOCAZ(run_pkt, 1);
 
   run_pkt->judge_id = comp_pkt->judge_id;
-  run_pkt->contest_id = global->contest_id;
+  run_pkt->contest_id = serve_state.global->contest_id;
   run_pkt->run_id = comp_pkt->run_id;
   run_pkt->problem_id = prob->tester_id;
   run_pkt->accepting_mode = comp_extra->accepting_mode;
-  run_pkt->scoring_system = global->score_system_val;
+  run_pkt->scoring_system = serve_state.global->score_system_val;
   run_pkt->variant = variant;
   run_pkt->accept_partial = prob->accept_partial;
   run_pkt->user_id = re.team;
-  run_pkt->disable_sound = global->disable_sound;
-  run_pkt->full_archive = global->enable_full_archive;
-  run_pkt->memory_limit = global->enable_memory_limit_error;
+  run_pkt->disable_sound = serve_state.global->disable_sound;
+  run_pkt->full_archive = serve_state.global->enable_full_archive;
+  run_pkt->memory_limit = serve_state.global->enable_memory_limit_error;
   run_pkt->ts1 = comp_pkt->ts1;
   run_pkt->ts1_us = comp_pkt->ts1_us;
   run_pkt->ts2 = comp_pkt->ts2;
@@ -4636,7 +4632,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
   /* in new binary packet format we don't care about neither "special"
    * characters in spellings nor about spelling length
    */
-  teamdb_export_team(teamdb_state, re.team, &te);
+  teamdb_export_team(serve_state.teamdb_state, re.team, &te);
   if (te.user && te.user->i.spelling && te.user->i.spelling[0]) {
     run_pkt->user_spelling = te.user->i.spelling;
   }
@@ -4663,13 +4659,13 @@ read_compile_packet(const unsigned char *compile_status_dir,
   }
 
   if (generic_write_file(run_pkt_out, run_pkt_out_size, SAFE,
-                         global->run_queue_dir, pkt_base, "") < 0) {
+                         serve_state.global->run_queue_dir, pkt_base, "") < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
   }
 
   /* update status */
-  if (run_change_status(runlog_state, comp_pkt->run_id, RUN_RUNNING, 0, -1,
+  if (run_change_status(serve_state.runlog_state, comp_pkt->run_id, RUN_RUNNING, 0, -1,
                         comp_pkt->judge_id) < 0)
     goto non_fatal_error;
 
@@ -4683,14 +4679,14 @@ read_compile_packet(const unsigned char *compile_status_dir,
   mail_check_failed(comp_pkt->run_id);
 
   /* this is error recover, so if error happens again, we cannot do anything */
-  if (run_change_status(runlog_state, comp_pkt->run_id, RUN_CHECK_FAILED, 0,
+  if (run_change_status(serve_state.runlog_state, comp_pkt->run_id, RUN_CHECK_FAILED, 0,
                         -1, 0) < 0)
     goto non_fatal_error;
   report_size = strlen(errmsg);
   rep_flags = archive_make_write_path(rep_path, sizeof(rep_path),
-                                      global->xml_report_archive_dir, comp_pkt->run_id,
+                                      serve_state.global->xml_report_archive_dir, comp_pkt->run_id,
                                       report_size, 0);
-  if (archive_dir_prepare(global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0)
+  if (archive_dir_prepare(serve_state.global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0)
     goto non_fatal_error;
   /* error code is ignored */
   generic_write_file(errmsg, report_size, rep_flags, 0, rep_path, 0);
@@ -4767,12 +4763,12 @@ read_run_packet(const unsigned char *run_status_dir,
     goto failed;
   xfree(reply_buf), reply_buf = 0;
 
-  if (reply_pkt->contest_id != global->contest_id) {
+  if (reply_pkt->contest_id != serve_state.global->contest_id) {
     err("read_run_packet: contest_id mismatch: %d in packet",
         reply_pkt->contest_id);
     goto failed;
   }
-  if (run_get_entry(runlog_state, reply_pkt->run_id, &re) < 0) {
+  if (run_get_entry(serve_state.runlog_state, reply_pkt->run_id, &re) < 0) {
     err("read_run_packet: invalid run_id: %d", reply_pkt->run_id);
     goto failed;
   }
@@ -4788,61 +4784,61 @@ read_run_packet(const unsigned char *run_status_dir,
 
   if (!is_valid_status(reply_pkt->status, 2)) goto bad_packet_error;
 
-  if (global->score_system_val == SCORE_OLYMPIAD) {
-    if (re.problem < 1 || re.problem > max_prob || !probs[re.problem])
+  if (serve_state.global->score_system_val == SCORE_OLYMPIAD) {
+    if (re.problem < 1 || re.problem > serve_state.max_prob || !serve_state.probs[re.problem])
       goto bad_packet_error;
-  } else if (global->score_system_val == SCORE_KIROV) {
+  } else if (serve_state.global->score_system_val == SCORE_KIROV) {
     /*
     if (status != RUN_PARTIAL && status != RUN_OK
         && status != RUN_CHECK_FAILED) goto bad_packet_error;
     */
-    if (re.problem < 1 || re.problem > max_prob || !probs[re.problem])
+    if (re.problem < 1 || re.problem > serve_state.max_prob || !serve_state.probs[re.problem])
       goto bad_packet_error;
-    if (reply_pkt->score < 0 || reply_pkt->score>probs[re.problem]->full_score)
+    if (reply_pkt->score < 0 || reply_pkt->score>serve_state.probs[re.problem]->full_score)
       goto bad_packet_error;
     /*
-    for (n = 0; n < probs[re.problem]->dp_total; n++)
-      if (re.timestamp < probs[re.problem]->dp_infos[n].deadline)
+    for (n = 0; n < serve_state.probs[re.problem]->dp_total; n++)
+      if (re.timestamp < serve_state.probs[re.problem]->dp_infos[n].deadline)
         break;
-    if (n < probs[re.problem]->dp_total) {
-      score += probs[re.problem]->dp_infos[n].penalty;
-      if (score > probs[re.problem]->full_score)
-        score = probs[re.problem]->full_score;
+    if (n < serve_state.probs[re.problem]->dp_total) {
+      score += serve_state.probs[re.problem]->dp_infos[n].penalty;
+      if (score > serve_state.probs[re.problem]->full_score)
+        score = serve_state.probs[re.problem]->full_score;
       if (score < 0) score = 0;
     }
     */
-  } else if (global->score_system_val == SCORE_MOSCOW) {
-    if (re.problem < 1 || re.problem > max_prob || !probs[re.problem])
+  } else if (serve_state.global->score_system_val == SCORE_MOSCOW) {
+    if (re.problem < 1 || re.problem > serve_state.max_prob || !serve_state.probs[re.problem])
       goto bad_packet_error;
-    if (reply_pkt->score < 0 || reply_pkt->score>probs[re.problem]->full_score)
+    if (reply_pkt->score < 0 || reply_pkt->score>serve_state.probs[re.problem]->full_score)
       goto bad_packet_error;
   } else {
     reply_pkt->score = -1;
   }
   if (reply_pkt->status == RUN_CHECK_FAILED)
     mail_check_failed(reply_pkt->run_id);
-  if (run_change_status(runlog_state, reply_pkt->run_id, reply_pkt->status,
+  if (run_change_status(serve_state.runlog_state, reply_pkt->run_id, reply_pkt->status,
                         reply_pkt->failed_test,
                         reply_pkt->score, 0) < 0) return -1;
   update_standings_file(0);
   rep_size = generic_file_size(run_report_dir, pname, "");
   if (rep_size < 0) return -1;
   rep_flags = archive_make_write_path(rep_path, sizeof(rep_path),
-                                      global->xml_report_archive_dir,
+                                      serve_state.global->xml_report_archive_dir,
                                       reply_pkt->run_id,
                                       rep_size, 0);
-  if (archive_dir_prepare(global->xml_report_archive_dir, reply_pkt->run_id, 0, 0) < 0)
+  if (archive_dir_prepare(serve_state.global->xml_report_archive_dir, reply_pkt->run_id, 0, 0) < 0)
     return -1;
   if (generic_copy_file(REMOVE, run_report_dir, pname, "",
                         rep_flags, 0, rep_path, "") < 0)
     return -1;
   /*
-  if (global->team_enable_rep_view) {
+  if (serve_state.global->team_enable_rep_view) {
     team_size = generic_file_size(run_team_report_dir, pname, "");
     team_flags = archive_make_write_path(team_path, sizeof(team_path),
-                                         global->team_report_archive_dir,
+                                         serve_state.global->team_report_archive_dir,
                                          reply_pkt->run_id, team_size, 0);
-    if (archive_dir_prepare(global->team_report_archive_dir,
+    if (archive_dir_prepare(serve_state.global->team_report_archive_dir,
                             reply_pkt->run_id, 0, 0) < 0)
       return -1;
     if (generic_copy_file(REMOVE, run_team_report_dir, pname, "",
@@ -4850,11 +4846,11 @@ read_run_packet(const unsigned char *run_status_dir,
       return -1;
   }
   */
-  if (global->enable_full_archive) {
+  if (serve_state.global->enable_full_archive) {
     full_flags = archive_make_write_path(full_path, sizeof(full_path),
-                                         global->full_archive_dir,
+                                         serve_state.global->full_archive_dir,
                                          reply_pkt->run_id, 0, 0);
-    if (archive_dir_prepare(global->full_archive_dir, reply_pkt->run_id, 0, 0) < 0)
+    if (archive_dir_prepare(serve_state.global->full_archive_dir, reply_pkt->run_id, 0, 0) < 0)
       return -1;
     if (generic_copy_file(REMOVE, run_full_archive_dir, pname, "",
                           0, 0, full_path, "") < 0)
@@ -4979,14 +4975,14 @@ queue_compile_request(unsigned char const *str, int len,
 
   if (accepting_mode == -1) {
     accepting_mode = 0;
-    if (global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode) {
+    if (serve_state.global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode) {
       accepting_mode = 1;
     }
   }
 
   memset(&cp, 0, sizeof(cp));
   cp.judge_id = compile_request_id++;
-  cp.contest_id = global->contest_id;
+  cp.contest_id = serve_state.global->contest_id;
   cp.run_id = run_id;
   cp.lang_id = lang_id;
   cp.locale_id = locale_id;
@@ -5012,24 +5008,24 @@ queue_compile_request(unsigned char const *str, int len,
   if (len == -1) {
     // copy from archive
     arch_flags = archive_make_read_path(run_arch, sizeof(run_arch),
-                                        global->run_archive_dir, run_id, 0,0);
+                                        serve_state.global->run_archive_dir, run_id, 0,0);
     if (arch_flags < 0) return -1;
     if (generic_copy_file(arch_flags, 0, run_arch, "",
-                          0, global->compile_src_dir, pkt_name, sfx) < 0)
+                          0, serve_state.global->compile_src_dir, pkt_name, sfx) < 0)
       goto failed;
   } else {
     // write from memory
     if (generic_write_file(str, len, 0,
-                           global->compile_src_dir, pkt_name, sfx) < 0)
+                           serve_state.global->compile_src_dir, pkt_name, sfx) < 0)
       goto failed;
   }
 
   if (generic_write_file(pkt_buf, pkt_len, SAFE,
-                         global->compile_queue_dir, pkt_name, "") < 0) {
+                         serve_state.global->compile_queue_dir, pkt_name, "") < 0) {
     goto failed;
   }
 
-  if (run_change_status(runlog_state, run_id, RUN_COMPILING, 0, -1,
+  if (run_change_status(serve_state.runlog_state, run_id, RUN_COMPILING, 0, -1,
                         cp.judge_id) < 0) {
     goto failed;
   }
@@ -5049,28 +5045,28 @@ rejudge_run(int run_id, struct client_state *p, int force_full_rejudge,
   struct run_entry re;
   int accepting_mode = -1;
 
-  if (run_get_entry(runlog_state, run_id, &re) < 0) return;
+  if (run_get_entry(serve_state.runlog_state, run_id, &re) < 0) return;
   if (re.is_imported) return;
   if (re.is_readonly) return;
-  if (re.language <= 0 || re.language > max_lang || !langs[re.language]) {
+  if (re.language <= 0 || re.language > serve_state.max_lang || !serve_state.langs[re.language]) {
     err("rejudge_run: bad language: %d", re.language);
     return;
   }
-  if (re.problem <= 0 || re.problem > max_prob || !probs[re.problem]) {
+  if (re.problem <= 0 || re.problem > serve_state.max_prob || !serve_state.probs[re.problem]) {
     err("rejudge_run: bad problem: %d", re.problem);
     return;
   }
 
-  if (force_full_rejudge && global->score_system_val == SCORE_OLYMPIAD
+  if (force_full_rejudge && serve_state.global->score_system_val == SCORE_OLYMPIAD
       && !olympiad_judging_mode) {
     accepting_mode = 0;
   }
 
   queue_compile_request(0, -1, run_id,
-                        langs[re.language]->compile_id, re.locale_id,
-                        probs[re.problem]->output_only,
-                        langs[re.language]->src_sfx,
-                        langs[re.language]->compiler_env,
+                        serve_state.langs[re.language]->compile_id, re.locale_id,
+                        serve_state.probs[re.problem]->output_only,
+                        serve_state.langs[re.language]->src_sfx,
+                        serve_state.langs[re.language]->compiler_env,
                         accepting_mode, priority_adjustment);
 
   append_audit_log(run_id, p, "Command: Rejudge");
@@ -5082,9 +5078,9 @@ count_transient_runs(void)
   int total_runs, r, counter = 0;
   struct run_entry re;
 
-  total_runs = run_get_total(runlog_state);
+  total_runs = run_get_total(serve_state.runlog_state);
   for (r = 0; r < total_runs; r++) {
-    if (run_get_entry(runlog_state, r, &re) < 0) continue;
+    if (run_get_entry(serve_state.runlog_state, r, &re) < 0) continue;
     if (re.status >= RUN_TRANSIENT_FIRST && re.status <= RUN_TRANSIENT_LAST)
       counter++;
   }
@@ -5097,15 +5093,15 @@ do_rejudge_all(struct client_state *p)
   int total_runs, r;
   struct run_entry re;
 
-  total_runs = run_get_total(runlog_state);
+  total_runs = run_get_total(serve_state.runlog_state);
 
-  if (global->score_system_val == SCORE_OLYMPIAD
+  if (serve_state.global->score_system_val == SCORE_OLYMPIAD
       && olympiad_judging_mode) {
     // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
     // considering only the last run for the given problem and
     // the given participant
-    int total_ids = teamdb_get_max_team_id(teamdb_state) + 1;
-    int total_probs = max_prob + 1;
+    int total_ids = teamdb_get_max_team_id(serve_state.teamdb_state) + 1;
+    int total_probs = serve_state.max_prob + 1;
     int size = total_ids * total_probs;
     int idx;
     unsigned char *flag;
@@ -5114,7 +5110,7 @@ do_rejudge_all(struct client_state *p)
     flag = (unsigned char *) alloca(size);
     memset(flag, 0, size);
     for (r = total_runs - 1; r >= 0; r--) {
-      if (run_get_entry(runlog_state, r, &re) < 0) continue;
+      if (run_get_entry(serve_state.runlog_state, r, &re) < 0) continue;
       if (re.status != RUN_OK && re.status != RUN_PARTIAL
           && re.status != RUN_ACCEPTED) continue;
       if (re.is_imported) continue;
@@ -5124,8 +5120,8 @@ do_rejudge_all(struct client_state *p)
         continue;
       }
       if (re.is_readonly) continue;
-      if (!probs[re.problem] || probs[re.problem]->disable_testing) continue;
-      if (!langs[re.language] || langs[re.language]->disable_testing) continue;
+      if (!serve_state.probs[re.problem] || serve_state.probs[re.problem]->disable_testing) continue;
+      if (!serve_state.langs[re.language] || serve_state.langs[re.language]->disable_testing) continue;
       idx = re.team * total_probs + re.problem;
       if (flag[idx]) continue;
       flag[idx] = 1;
@@ -5135,14 +5131,14 @@ do_rejudge_all(struct client_state *p)
   }
 
   for (r = 0; r < total_runs; r++) {
-    if (run_get_entry(runlog_state, r, &re) >= 0
+    if (run_get_entry(serve_state.runlog_state, r, &re) >= 0
         && re.status <= RUN_MAX_STATUS
         && re.status != RUN_IGNORED
         && re.status != RUN_DISQUALIFIED
-        && re.problem >= 1 && re.problem <= max_prob
-        && probs[re.problem]
-        && !probs[re.problem]->disable_testing
-        && !langs[re.language]->disable_testing
+        && re.problem >= 1 && re.problem <= serve_state.max_prob
+        && serve_state.probs[re.problem]
+        && !serve_state.probs[re.problem]->disable_testing
+        && !serve_state.langs[re.language]->disable_testing
         && !re.is_readonly
         && !re.is_imported) {
       rejudge_run(r, p, 0, 0);
@@ -5156,23 +5152,23 @@ do_judge_suspended(struct client_state *p)
   int total_runs, r;
   struct run_entry re;
 
-  total_runs = run_get_total(runlog_state);
+  total_runs = run_get_total(serve_state.runlog_state);
 
-  if (global->score_system_val == SCORE_OLYMPIAD && olympiad_judging_mode)
+  if (serve_state.global->score_system_val == SCORE_OLYMPIAD && olympiad_judging_mode)
     return;
 
   for (r = 0; r < total_runs; r++) {
-    if (run_get_entry(runlog_state, r, &re) >= 0
+    if (run_get_entry(serve_state.runlog_state, r, &re) >= 0
         && re.status == RUN_PENDING
         && !re.is_imported
         && re.problem > 0
-        && re.problem <= max_prob
-        && probs[re.problem]
+        && re.problem <= serve_state.max_prob
+        && serve_state.probs[re.problem]
         && !re.is_readonly
-        && !probs[re.problem]->disable_testing
-        && !probs[re.problem]->disable_auto_testing
-        && !langs[re.language]->disable_testing
-        && !langs[re.language]->disable_auto_testing) {
+        && !serve_state.probs[re.problem]->disable_testing
+        && !serve_state.probs[re.problem]->disable_auto_testing
+        && !serve_state.langs[re.language]->disable_testing
+        && !serve_state.langs[re.language]->disable_auto_testing) {
       rejudge_run(r, p, 0, 0);
     }
   }
@@ -5184,22 +5180,22 @@ do_rejudge_problem(int prob_id, struct client_state *p)
   int total_runs, r;
   struct run_entry re;
 
-  if (prob_id <= 0 || prob_id > max_prob || !probs[prob_id]
-      || probs[prob_id]->disable_testing) return;
-  total_runs = run_get_total(runlog_state);
+  if (prob_id <= 0 || prob_id > serve_state.max_prob || !serve_state.probs[prob_id]
+      || serve_state.probs[prob_id]->disable_testing) return;
+  total_runs = run_get_total(serve_state.runlog_state);
 
-  if (global->score_system_val == SCORE_OLYMPIAD
+  if (serve_state.global->score_system_val == SCORE_OLYMPIAD
       && olympiad_judging_mode) {
     // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
     // considering only the last run for the given participant
-    int total_ids = teamdb_get_max_team_id(teamdb_state) + 1;
+    int total_ids = teamdb_get_max_team_id(serve_state.teamdb_state) + 1;
     unsigned char *flag;
 
     if (total_ids <= 0) return;
     flag = (unsigned char *) alloca(total_ids);
     memset(flag, 0, total_ids);
     for (r = total_runs - 1; r >= 0; r--) {
-      if (run_get_entry(runlog_state, r, &re) < 0) continue;
+      if (run_get_entry(serve_state.runlog_state, r, &re) < 0) continue;
       if (re.status != RUN_OK && re.status != RUN_PARTIAL
           && re.status != RUN_ACCEPTED) continue;
       if (re.problem != prob_id) continue;
@@ -5207,7 +5203,7 @@ do_rejudge_problem(int prob_id, struct client_state *p)
       if (re.is_readonly) continue;
       if (re.team <= 0 || re.team >= total_ids) continue;
       if (flag[re.team]) continue;
-      if (!langs[re.language] || langs[re.language]->disable_testing) continue;
+      if (!serve_state.langs[re.language] || serve_state.langs[re.language]->disable_testing) continue;
       flag[re.team] = 1;
       rejudge_run(r, p, 0, 0);
     }
@@ -5215,7 +5211,7 @@ do_rejudge_problem(int prob_id, struct client_state *p)
   }
 
   for (r = 0; r < total_runs; r++) {
-    if (run_get_entry(runlog_state, r, &re) >= 0
+    if (run_get_entry(serve_state.runlog_state, r, &re) >= 0
         && re.problem == prob_id && re.status <= RUN_MAX_STATUS
         && !re.is_readonly
         && re.status != RUN_IGNORED
@@ -5237,18 +5233,18 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask, struct client_state *p,
 
   ASSERT(mask_size > 0);
 
-  total_runs = run_get_total(runlog_state);
+  total_runs = run_get_total(serve_state.runlog_state);
   if (total_runs > mask_size * BITS_PER_LONG) {
     total_runs = mask_size * BITS_PER_LONG;
   }
 
-  if (global->score_system_val == SCORE_OLYMPIAD
+  if (serve_state.global->score_system_val == SCORE_OLYMPIAD
       && olympiad_judging_mode) {
     // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
     // considering only the last run for the given problem and
     // the given participant
-    int total_ids = teamdb_get_max_team_id(teamdb_state) + 1;
-    int total_probs = max_prob + 1;
+    int total_ids = teamdb_get_max_team_id(serve_state.teamdb_state) + 1;
+    int total_probs = serve_state.max_prob + 1;
     int size = total_ids * total_probs;
     int idx;
     unsigned char *flag;
@@ -5257,7 +5253,7 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask, struct client_state *p,
     flag = (unsigned char *) alloca(size);
     memset(flag, 0, size);
     for (r = total_runs - 1; r >= 0; r--) {
-      if (run_get_entry(runlog_state, r, &re) < 0) continue;
+      if (run_get_entry(serve_state.runlog_state, r, &re) < 0) continue;
       if (re.status != RUN_OK && re.status != RUN_PARTIAL
           && re.status != RUN_ACCEPTED) continue;
       if (re.is_imported) continue;
@@ -5267,8 +5263,8 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask, struct client_state *p,
         continue;
       }
       if (re.is_readonly) continue;
-      if (!probs[re.problem] || probs[re.problem]->disable_testing) continue;
-      if (!langs[re.language]|| langs[re.language]->disable_testing) continue;
+      if (!serve_state.probs[re.problem] || serve_state.probs[re.problem]->disable_testing) continue;
+      if (!serve_state.langs[re.language]|| serve_state.langs[re.language]->disable_testing) continue;
       if (!(mask[r / BITS_PER_LONG] & (1 << (r % BITS_PER_LONG)))) continue;
       idx = re.team * total_probs + re.problem;
       if (flag[idx]) continue;
@@ -5279,14 +5275,14 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask, struct client_state *p,
   }
 
   for (r = 0; r < total_runs; r++) {
-    if (run_get_entry(runlog_state, r, &re) >= 0
+    if (run_get_entry(serve_state.runlog_state, r, &re) >= 0
         && re.status <= RUN_MAX_STATUS
         && re.status != RUN_IGNORED
         && re.status != RUN_DISQUALIFIED
-        && re.problem >= 1 && re.problem <= max_prob
-        && probs[re.problem]
-        && !probs[re.problem]->disable_testing
-        && !langs[re.language]->disable_testing
+        && re.problem >= 1 && re.problem <= serve_state.max_prob
+        && serve_state.probs[re.problem]
+        && !serve_state.probs[re.problem]->disable_testing
+        && !serve_state.langs[re.language]->disable_testing
         && !re.is_readonly
         && !re.is_imported
         && (mask[r / BITS_PER_LONG] & (1 << (r % BITS_PER_LONG)))) {
@@ -5445,18 +5441,18 @@ create_socket(void)
     err("socket() failed :%s", os_ErrorMsg());
     return -1;
   }
-  if (forced_mode) unlink(global->serve_socket);
+  if (forced_mode) unlink(serve_state.global->serve_socket);
   memset(&addr, 0, sizeof(addr));
   addr.sun_family = AF_UNIX;
-  strncpy(addr.sun_path, global->serve_socket, 108);
+  strncpy(addr.sun_path, serve_state.global->serve_socket, 108);
   addr.sun_path[107] = 0;
   if (bind(socket_fd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
     err("bind() failed: %s", os_ErrorMsg());
     return -1;
   }
-  socket_name = global->serve_socket;
+  socket_name = serve_state.global->serve_socket;
 
-  if (chmod(global->serve_socket, 0777) < 0) {
+  if (chmod(serve_state.global->serve_socket, 0777) < 0) {
     err("chmod() failed: %s", os_ErrorMsg());
     return -1;
   }
@@ -5478,7 +5474,7 @@ check_sockets(int may_wait_flag)
   struct sockaddr_un addr;
 
   if (may_wait_flag && socket_fd < 0) {
-    os_Sleep(global->serve_sleep_time);
+    os_Sleep(serve_state.global->serve_sleep_time);
     return 1;
   }
 
@@ -5507,8 +5503,8 @@ check_sockets(int may_wait_flag)
   }
 
   if (may_wait_flag) {
-    timeout.tv_sec = global->serve_sleep_time / 1000;
-    timeout.tv_usec = (global->serve_sleep_time % 1000) * 1000;
+    timeout.tv_sec = serve_state.global->serve_sleep_time / 1000;
+    timeout.tv_usec = (serve_state.global->serve_sleep_time % 1000) * 1000;
   } else {
     timeout.tv_sec = 0;
     timeout.tv_usec = 0;
@@ -5842,13 +5838,13 @@ generate_statistics_email(time_t from_time, time_t to_time)
   unsigned char *originator;
   struct tm tm1;
 
-  if (contests_get(global->contest_id, &cnts) < 0 || !cnts) return;
+  if (contests_get(serve_state.global->contest_id, &cnts) < 0 || !cnts) return;
 
   ptm = localtime(&from_time);
   snprintf(esubj, sizeof(esubj),
            "Daily statistics for %04d/%02d/%02d, contest %d",
            ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
-           global->contest_id);
+           serve_state.global->contest_id);
 
   eout = open_memstream(&etxt, &elen);
   generate_daily_statistics(eout, from_time, to_time);
@@ -5870,7 +5866,7 @@ generate_statistics_email(time_t from_time, time_t to_time)
           "-\n"
           "Regards,\n"
           "the ejudge contest management system\n",
-          global->contest_id, cnts->name,
+          serve_state.global->contest_id, cnts->name,
           tm1.tm_year + 1900, tm1.tm_mon + 1, tm1.tm_mday,
           etxt);
   fclose(fout); fout = 0;
@@ -5900,7 +5896,7 @@ check_stat_generation(int force_flag)
       && last_check_time + 600 > current_time)
     return;
   last_check_time = current_time;
-  if (contests_get(global->contest_id, &cnts) < 0 || !cnts) return;
+  if (contests_get(serve_state.global->contest_id, &cnts) < 0 || !cnts) return;
   if (!cnts->daily_stat_email) return;
 
   if (!stat_reported_before) {
@@ -5988,24 +5984,24 @@ create_symlinks(void)
   path_t stand_file;
   int npages, pgn;
 
-  if (global->stand_symlink_dir[0] && global->htdocs_dir[0]) {
-    if (global->users_on_page > 0) {
+  if (serve_state.global->stand_symlink_dir[0] && serve_state.global->htdocs_dir[0]) {
+    if (serve_state.global->users_on_page > 0) {
       // FIXME: check, that standings_file_name depends on page number
-      npages = (teamdb_get_total_teams(teamdb_state)
-                + global->users_on_page - 1)
-        / global->users_on_page;
+      npages = (teamdb_get_total_teams(serve_state.teamdb_state)
+                + serve_state.global->users_on_page - 1)
+        / serve_state.global->users_on_page;
       for (pgn = 0; pgn < npages; pgn++) {
         if (!pgn) {
-          snprintf(stand_file, sizeof(stand_file), global->standings_file_name,
+          snprintf(stand_file, sizeof(stand_file), serve_state.global->standings_file_name,
                    pgn + 1);
         } else {
-          snprintf(stand_file, sizeof(stand_file), global->stand_file_name_2,
+          snprintf(stand_file, sizeof(stand_file), serve_state.global->stand_file_name_2,
                    pgn + 1);
         }
         snprintf(src_path, sizeof(src_path), "%s/dir/%s",
-                 global->status_dir, stand_file);
+                 serve_state.global->status_dir, stand_file);
         snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
-                 global->htdocs_dir, global->stand_symlink_dir,
+                 serve_state.global->htdocs_dir, serve_state.global->stand_symlink_dir,
                  stand_file);
         os_normalize_path(dst_path);
         if (unlink(dst_path) < 0 && errno != ENOENT) {
@@ -6019,10 +6015,10 @@ create_symlinks(void)
       }
     } else {
       snprintf(src_path, sizeof(src_path), "%s/dir/%s",
-               global->status_dir, global->standings_file_name);
+               serve_state.global->status_dir, serve_state.global->standings_file_name);
       snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
-               global->htdocs_dir, global->stand_symlink_dir,
-               global->standings_file_name);
+               serve_state.global->htdocs_dir, serve_state.global->stand_symlink_dir,
+               serve_state.global->standings_file_name);
       os_normalize_path(dst_path);
       if (unlink(dst_path) < 0 && errno != ENOENT) {
         err("unlink %s failed: %s", dst_path, os_ErrorMsg());
@@ -6034,13 +6030,13 @@ create_symlinks(void)
       }
     }
   }
-  if (global->stand2_symlink_dir[0] && global->htdocs_dir[0]
-      && global->stand2_file_name[0]) {
+  if (serve_state.global->stand2_symlink_dir[0] && serve_state.global->htdocs_dir[0]
+      && serve_state.global->stand2_file_name[0]) {
     snprintf(src_path, sizeof(src_path), "%s/dir/%s",
-             global->status_dir, global->stand2_file_name);
+             serve_state.global->status_dir, serve_state.global->stand2_file_name);
     snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
-             global->htdocs_dir, global->stand2_symlink_dir,
-             global->stand2_file_name);
+             serve_state.global->htdocs_dir, serve_state.global->stand2_symlink_dir,
+             serve_state.global->stand2_file_name);
     os_normalize_path(dst_path);
     if (unlink(dst_path) < 0 && errno != ENOENT) {
       err("unlink %s failed: %s", dst_path, os_ErrorMsg());
@@ -6051,13 +6047,13 @@ create_symlinks(void)
       //return -1;
     }
   }
-  if (global->plog_symlink_dir[0] && global->htdocs_dir[0]
-      && global->plog_file_name[0] && global->plog_update_time > 0) {
+  if (serve_state.global->plog_symlink_dir[0] && serve_state.global->htdocs_dir[0]
+      && serve_state.global->plog_file_name[0] && serve_state.global->plog_update_time > 0) {
     snprintf(src_path, sizeof(src_path), "%s/dir/%s",
-             global->status_dir, global->plog_file_name);
+             serve_state.global->status_dir, serve_state.global->plog_file_name);
     snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
-             global->htdocs_dir, global->plog_symlink_dir,
-             global->plog_file_name);
+             serve_state.global->htdocs_dir, serve_state.global->plog_symlink_dir,
+             serve_state.global->plog_file_name);
     os_normalize_path(dst_path);
     if (unlink(dst_path) < 0 && errno != ENOENT) {
       err("unlink %s failed: %s", dst_path, os_ErrorMsg());
@@ -6106,9 +6102,9 @@ build_compile_dirs(void)
 {
   int i;
 
-  for (i = 1; i <= max_lang; i++) {
-    if (!langs[i]) continue;
-    do_build_compile_dirs(langs[i]->compile_status_dir, langs[i]->compile_report_dir);
+  for (i = 1; i <= serve_state.max_lang; i++) {
+    if (!serve_state.langs[i]) continue;
+    do_build_compile_dirs(serve_state.langs[i]->compile_status_dir, serve_state.langs[i]->compile_report_dir);
   }
 }
 
@@ -6153,12 +6149,12 @@ build_run_dirs(void)
 {
   int i;
 
-  for (i = 1; i <= max_tester; i++) {
-    if (!testers[i]) continue;
-    do_build_run_dirs(testers[i]->run_status_dir,
-                      testers[i]->run_report_dir,
-                      testers[i]->run_team_report_dir,
-                      testers[i]->run_full_archive_dir);
+  for (i = 1; i <= serve_state.max_tester; i++) {
+    if (!serve_state.testers[i]) continue;
+    do_build_run_dirs(serve_state.testers[i]->run_status_dir,
+                      serve_state.testers[i]->run_report_dir,
+                      serve_state.testers[i]->run_team_report_dir,
+                      serve_state.testers[i]->run_full_archive_dir);
   }
 }
 
@@ -6175,26 +6171,26 @@ do_loop(void)
   if (create_socket() < 0) return -1;
 
   // we need the number of users to create correct the number of symlinks
-  teamdb_refresh(teamdb_state);
+  teamdb_refresh(serve_state.teamdb_state);
   if (create_symlinks() < 0) return -1;
 
   current_time = time(0);
   last_activity_time = current_time;
 
-  if (!global->virtual) {
-    p = run_get_fog_period(runlog_state, time(0), global->board_fog_time,
-                           global->board_unfog_time);
+  if (!serve_state.global->virtual) {
+    p = run_get_fog_period(serve_state.runlog_state, time(0), serve_state.global->board_fog_time,
+                           serve_state.global->board_unfog_time);
     if (p == 1) {
-      global->fog_standings_updated = 1;
+      serve_state.global->fog_standings_updated = 1;
     }
   }
   update_standings_file(0);
 
-  run_get_times(runlog_state, &contest_start_time, &contest_sched_time,
+  run_get_times(serve_state.runlog_state, &contest_start_time, &contest_sched_time,
                 &contest_duration, &contest_stop_time);
   if (!contest_duration == -1) {
-    contest_duration = global->contest_time;
-    run_set_duration(runlog_state, contest_duration);
+    contest_duration = serve_state.global->contest_time;
+    run_set_duration(serve_state.runlog_state, contest_duration);
   }
 
   while (1) {
@@ -6205,14 +6201,14 @@ do_loop(void)
       info("Interrupt signaled");
       return 0;
     }
-    if (cmdline_socket_fd >= 0 && global->inactivity_timeout > 0
-        && current_time > last_activity_time + global->inactivity_timeout) {
-      info("no activity for %d seconds, exiting", global->inactivity_timeout);
+    if (cmdline_socket_fd >= 0 && serve_state.global->inactivity_timeout > 0
+        && current_time > last_activity_time + serve_state.global->inactivity_timeout) {
+      info("no activity for %d seconds, exiting", serve_state.global->inactivity_timeout);
       return 0;
     }
 
     /* refresh user database */
-    teamdb_refresh(teamdb_state);
+    teamdb_refresh(serve_state.teamdb_state);
 
     /* check items pending for removal */
     check_remove_queue();
@@ -6221,26 +6217,26 @@ do_loop(void)
     check_stat_generation(0);
 
     /* check stop and start times */
-    if (!global->virtual) {
+    if (!serve_state.global->virtual) {
       if (contest_start_time && !contest_stop_time && !contest_duration
-          && global->contest_finish_time_d > 0
-          && current_time >= global->contest_finish_time_d) {
+          && serve_state.global->contest_finish_time_d > 0
+          && current_time >= serve_state.global->contest_finish_time_d) {
         /* the contest is over! */
         info("CONTEST OVER");
-        run_stop_contest(runlog_state, global->contest_finish_time_d);
-        contest_stop_time = global->contest_finish_time_d;
+        run_stop_contest(serve_state.runlog_state, serve_state.global->contest_finish_time_d);
+        contest_stop_time = serve_state.global->contest_finish_time_d;
       } else if (contest_start_time && !contest_stop_time && contest_duration) {
         if (current_time >= contest_start_time + contest_duration) {
           /* the contest is over! */
           info("CONTEST OVER");
-          run_stop_contest(runlog_state, contest_start_time + contest_duration);
+          run_stop_contest(serve_state.runlog_state, contest_start_time + contest_duration);
           contest_stop_time = contest_start_time + contest_duration;
         }
       } else if (contest_sched_time && !contest_start_time) {
         if (current_time >= contest_sched_time) {
           /* it's time to start! */
           info("CONTEST STARTED");
-          run_start_contest(runlog_state, contest_sched_time);
+          run_start_contest(serve_state.runlog_state, contest_sched_time);
           do_start_cmd();
           contest_start_time = contest_sched_time;
         }
@@ -6253,16 +6249,16 @@ do_loop(void)
     logger_set_level(-1, 0);
 
     /* automatically update standings in certain situations */
-    if (!global->virtual) {
-      p = run_get_fog_period(runlog_state, time(0),
-                             global->board_fog_time, global->board_unfog_time);
-      if (p == 0 && !global->start_standings_updated) {
+    if (!serve_state.global->virtual) {
+      p = run_get_fog_period(serve_state.runlog_state, time(0),
+                             serve_state.global->board_fog_time, serve_state.global->board_unfog_time);
+      if (p == 0 && !serve_state.global->start_standings_updated) {
         update_standings_file(0);
-      } else if (global->autoupdate_standings
-                 && p == 1 && !global->fog_standings_updated) {
+      } else if (serve_state.global->autoupdate_standings
+                 && p == 1 && !serve_state.global->fog_standings_updated) {
         update_standings_file(1);
-      } else if (global->autoupdate_standings
-                 && p == 2 && !global->unfog_standings_updated) {
+      } else if (serve_state.global->autoupdate_standings
+                 && p == 2 && !serve_state.global->unfog_standings_updated) {
         update_standings_file(0);
       }
     }
@@ -6354,38 +6350,38 @@ main(int argc, char *argv[])
               (cmdline_socket_fd >= 0)) < 0) return 1;
   if (prepare_serve_defaults() < 0) return 1;
 
-  l10n_prepare(global->enable_l10n, global->l10n_dir);
+  l10n_prepare(serve_state.global->enable_l10n, serve_state.global->l10n_dir);
 
   if (T_flag) {
     print_configuration(stdout);
     return 0;
   }
   if (create_dirs(PREPARE_SERVE) < 0) return 1;
-  if (global->contest_id <= 0) {
+  if (serve_state.global->contest_id <= 0) {
     err("contest_id is not defined");
     return 1;
   }
-  teamdb_state = teamdb_init();
-  team_extra_state = team_extra_init(global->team_extra_dir);
-  if (teamdb_open_client(teamdb_state, global->socket_path,
-                         global->contest_id) < 0)
+  serve_state.teamdb_state = teamdb_init();
+  serve_state.team_extra_state = team_extra_init(serve_state.global->team_extra_dir);
+  if (teamdb_open_client(serve_state.teamdb_state, serve_state.global->socket_path,
+                         serve_state.global->contest_id) < 0)
     return 1;
-  runlog_state = run_init(teamdb_state);
-  if (run_open(runlog_state, global->run_log_file, 0,
-               global->contest_time) < 0) return 1;
-  if (global->virtual && global->score_system_val != SCORE_ACM) {
+  serve_state.runlog_state = run_init(serve_state.teamdb_state);
+  if (run_open(serve_state.runlog_state, serve_state.global->run_log_file, 0,
+               serve_state.global->contest_time) < 0) return 1;
+  if (serve_state.global->virtual && serve_state.global->score_system_val != SCORE_ACM) {
     err("invalid score system for virtual contest");
     return 1;
   }
-  clarlog_state = clar_init();
-  if (clar_open(clarlog_state, global->clar_log_file, 0) < 0) return 1;
+  serve_state.clarlog_state = clar_init();
+  if (clar_open(serve_state.clarlog_state, serve_state.global->clar_log_file, 0) < 0) return 1;
   load_status_file();
   build_compile_dirs();
   build_run_dirs();
   i = do_loop();
   check_stat_generation(1);
   update_status_file(1);
-  team_extra_flush(team_extra_state);
+  team_extra_flush(serve_state.team_extra_state);
   if (i < 0) i = 1;
   if (socket_name && cmdline_socket_fd < 0) {
     unlink(socket_name);

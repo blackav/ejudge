@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,10 +20,10 @@
 
 #include "archive_paths.h"
 #include "prepare.h"
-#include "prepare_vars.h"
 #include "fileutl.h"
 #include "pathutl.h"
 #include "errlog.h"
+#include "serve_state.h"
 
 #include <reuse/logger.h>
 #include <reuse/osdeps.h>
@@ -65,7 +65,7 @@ archive_dir_prepare(const unsigned char *base_dir, int serial,
   int i;
 
   ASSERT(base_dir);
-  if (!global->use_dir_hierarchy) return 0;
+  if (!serve_state.global->use_dir_hierarchy) return 0;
 
   if (strlen(base_dir) + 32 >= sizeof(path)) {
     err("archive_dir_prepare: `%s' is too long", base_dir);
@@ -152,14 +152,14 @@ archive_make_read_path(unsigned char *path, size_t size,
   ASSERT(serial >= 0 && serial <= EJ_MAX_RUN_ID);
   if (!name_prefix) name_prefix = "";
 
-  if (global->use_dir_hierarchy) {
+  if (serve_state.global->use_dir_hierarchy) {
     if (strlen(base_dir) + 32 >= size) {
       err("archive_make_read_path: `%s' is too long", base_dir);
       return -1;
     }
     pp = path + make_hier_path(path, size, base_dir, serial);
     if (gzip_preferred) {
-      if (global->use_gzip) {
+      if (serve_state.global->use_gzip) {
         sprintf(pp, "/%s%06d.gz", name_prefix, serial);
         if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return GZIP;
       }
@@ -168,7 +168,7 @@ archive_make_read_path(unsigned char *path, size_t size,
     } else {
       sprintf(pp, "/%s%06d", name_prefix, serial);
       if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return 0;
-      if (global->use_gzip) {
+      if (serve_state.global->use_gzip) {
         sprintf(pp, "/%s%06d.gz", name_prefix, serial);
         if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return GZIP;
       }
@@ -176,7 +176,7 @@ archive_make_read_path(unsigned char *path, size_t size,
   }
 
   if (gzip_preferred) {
-    if (global->use_gzip) {
+    if (serve_state.global->use_gzip) {
       snprintf(path, size, "%s/%s%06d.gz", base_dir, name_prefix, serial);
       if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return GZIP;
     }
@@ -185,7 +185,7 @@ archive_make_read_path(unsigned char *path, size_t size,
   } else {
     snprintf(path, size, "%s/%s%06d", base_dir, name_prefix, serial);
     if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return 0;
-    if (global->use_gzip) {
+    if (serve_state.global->use_gzip) {
       snprintf(path, size, "%s/%s%06d.gz", base_dir, name_prefix, serial);
       if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return GZIP;
     }
@@ -210,16 +210,16 @@ archive_make_write_path(unsigned char *path, size_t size,
     return -1;
   }
 
-  if (global->use_dir_hierarchy) {
+  if (serve_state.global->use_dir_hierarchy) {
     pp = path + make_hier_path(path, size, base_dir, serial);
-    if (global->use_gzip && file_size > global->min_gzip_size) {
+    if (serve_state.global->use_gzip && file_size > serve_state.global->min_gzip_size) {
       sprintf(pp, "/%s%06d.gz", name_prefix, serial);
       return GZIP;
     }
     sprintf(pp, "/%s%06d", name_prefix, serial);
     return 0;
   } else {
-    if (global->use_gzip && file_size > global->min_gzip_size) {
+    if (serve_state.global->use_gzip && file_size > serve_state.global->min_gzip_size) {
       snprintf(path, size, "%s/%s%06d.gz", base_dir, name_prefix, serial);
       return GZIP;
     }
@@ -243,16 +243,16 @@ archive_make_move_path(unsigned char *path, size_t size,
     return -1;
   }
 
-  if (global->use_dir_hierarchy) {
+  if (serve_state.global->use_dir_hierarchy) {
     pp = path + make_hier_path(path, size, base_dir, serial);
-    if (global->use_gzip && (flags & GZIP)) {
+    if (serve_state.global->use_gzip && (flags & GZIP)) {
       sprintf(pp, "/%s%06d.gz", name_prefix, serial);
       return GZIP;
     }
     sprintf(pp, "/%s%06d", name_prefix, serial);
     return 0;
   } else {
-    if (global->use_gzip && (flags & GZIP)) {
+    if (serve_state.global->use_gzip && (flags & GZIP)) {
       snprintf(path, size, "%s/%s%06d.gz", base_dir, name_prefix, serial);
       return GZIP;
     }
@@ -306,7 +306,7 @@ archive_remove(const unsigned char *base_dir, int serial,
   plen = strlen(base_dir) + strlen(name_prefix) + 128;
   path = (unsigned char *) alloca(plen);
 
-  if (global->use_dir_hierarchy) {
+  if (serve_state.global->use_dir_hierarchy) {
     pp = path + make_hier_path(path, plen, base_dir, serial);
     pp += sprintf(pp, "/%s%06d", name_prefix, serial);
     unlink(path);
@@ -322,7 +322,7 @@ archive_remove(const unsigned char *base_dir, int serial,
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

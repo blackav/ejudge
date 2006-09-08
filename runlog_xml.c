@@ -24,10 +24,10 @@
 #include "errlog.h"
 #include "teamdb.h"
 #include "prepare.h"
-#include "prepare_vars.h"
 #include "misctext.h"
 #include "contests.h"
 #include "xml_utils.h"
+#include "serve_state.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -509,7 +509,7 @@ unparse_runlog_xml(teamdb_state_t teamdb_state, FILE *f,
 
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n", EJUDGE_CHARSET);
   fprintf(f, "<%s", elem_map[RUNLOG_T_RUNLOG]);
-  fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_CONTEST_ID], cur_contest->id);
+  fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_CONTEST_ID], serve_state.cur_contest->id);
   if (phead->duration > 0) {
     fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_DURATION], phead->duration);
   }
@@ -527,7 +527,7 @@ unparse_runlog_xml(teamdb_state_t teamdb_state, FILE *f,
   }
   fprintf(f, ">\n");
   if (external_mode) {
-    val1 = cur_contest->name;
+    val1 = serve_state.cur_contest->name;
     if (val1 && html_armor_needed(val1, &alen1)) {
       while (alen1 >= asize1) asize1 *= 2;
       astr1 = alloca(asize1);
@@ -556,10 +556,10 @@ unparse_runlog_xml(teamdb_state_t teamdb_state, FILE *f,
     fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_USERS]);
 
     fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_PROBLEMS]);
-    for (i = 1; i <= max_prob; i++) {
-      if (!probs[i]) continue;
-      val1 = probs[i]->short_name;
-      val2 = probs[i]->long_name;
+    for (i = 1; i <= serve_state.max_prob; i++) {
+      if (!serve_state.probs[i]) continue;
+      val1 = serve_state.probs[i]->short_name;
+      val2 = serve_state.probs[i]->long_name;
       if (html_armor_needed(val1, &alen1)) {
         while (alen1 >= asize1) asize1 *= 2;
         astr1 = alloca(asize1);
@@ -582,10 +582,10 @@ unparse_runlog_xml(teamdb_state_t teamdb_state, FILE *f,
     fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_PROBLEMS]);
 
     fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_LANGUAGES]);
-    for (i = 1; i <= max_lang; i++) {
-      if (!langs[i]) continue;
-      val1 = langs[i]->short_name;
-      val2 = langs[i]->long_name;
+    for (i = 1; i <= serve_state.max_lang; i++) {
+      if (!serve_state.langs[i]) continue;
+      val1 = serve_state.langs[i]->short_name;
+      val2 = serve_state.langs[i]->long_name;
       if (html_armor_needed(val1, &alen1)) {
         while (alen1 >= asize1) asize1 *= 2;
         astr1 = alloca(asize1);

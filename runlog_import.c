@@ -18,9 +18,9 @@
 #include "runlog.h"
 #include "misctext.h"
 #include "prepare.h"
-#include "prepare_vars.h"
 #include "teamdb.h"
 #include "archive_paths.h"
+#include "serve_state.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -36,31 +36,31 @@ rename_archive_files(FILE *flog, int num, int *map)
   for (i = 0; i < num; i++) {
     if (map[i] < 0) continue;
     if (map[i] == i) continue;
-    archive_rename(global->run_archive_dir, flog, i, "", i, "_", 0);
-    archive_rename(global->xml_report_archive_dir, flog, i, "", i, "_", 1);
-    archive_rename(global->report_archive_dir, flog, i, "", i, "_", 1);
-    if (global->team_enable_rep_view) {
-      archive_rename(global->team_report_archive_dir, flog, i, "", i, "_", 0);
+    archive_rename(serve_state.global->run_archive_dir, flog, i, "", i, "_", 0);
+    archive_rename(serve_state.global->xml_report_archive_dir, flog, i, "", i, "_", 1);
+    archive_rename(serve_state.global->report_archive_dir, flog, i, "", i, "_", 1);
+    if (serve_state.global->team_enable_rep_view) {
+      archive_rename(serve_state.global->team_report_archive_dir, flog, i, "", i, "_", 0);
     }
-    if (global->enable_full_archive) {
-      archive_rename(global->full_archive_dir, flog, i, "", i, "_", 0);
+    if (serve_state.global->enable_full_archive) {
+      archive_rename(serve_state.global->full_archive_dir, flog, i, "", i, "_", 0);
     }
-    archive_rename(global->audit_log_dir, flog, i, "", i, "_", 0);
+    archive_rename(serve_state.global->audit_log_dir, flog, i, "", i, "_", 0);
   }
 
   for (i = 0; i < num; i++) {
     if (map[i] < 0) continue;
     if (map[i] == i) continue;
-    archive_rename(global->run_archive_dir, flog, i, "_", map[i], "", 0);
-    archive_rename(global->xml_report_archive_dir, flog, i, "_", map[i], "", 1);
-    archive_rename(global->report_archive_dir, flog, i, "_", map[i], "", 1);
-    if (global->team_enable_rep_view) {
-      archive_rename(global->team_report_archive_dir,flog,i, "_",map[i],"",0);
+    archive_rename(serve_state.global->run_archive_dir, flog, i, "_", map[i], "", 0);
+    archive_rename(serve_state.global->xml_report_archive_dir, flog, i, "_", map[i], "", 1);
+    archive_rename(serve_state.global->report_archive_dir, flog, i, "_", map[i], "", 1);
+    if (serve_state.global->team_enable_rep_view) {
+      archive_rename(serve_state.global->team_report_archive_dir,flog,i, "_",map[i],"",0);
     }
-    if (global->enable_full_archive) {
-      archive_rename(global->full_archive_dir,flog,i, "_",map[i],"",0);
+    if (serve_state.global->enable_full_archive) {
+      archive_rename(serve_state.global->full_archive_dir,flog,i, "_",map[i],"",0);
     }
-    archive_rename(global->audit_log_dir,flog,i, "_",map[i],"",0);
+    archive_rename(serve_state.global->audit_log_dir,flog,i, "_",map[i],"",0);
   }
 }
 
@@ -242,12 +242,12 @@ runlog_import_xml(teamdb_state_t teamdb_state, runlog_state_t runlog_state,
       goto done;
     }
     r = in_entries[i].problem;
-    if (r <= 0 || r > max_prob || !probs[r]) {
+    if (r <= 0 || r > serve_state.max_prob || !serve_state.probs[r]) {
       fprintf(flog, "Run %d problem %d is not known\n", i, r);
       goto done;
     }
     r = in_entries[i].language;
-    if (r <= 0 || r > max_lang || !langs[r]) {
+    if (r <= 0 || r > serve_state.max_lang || !serve_state.langs[r]) {
       fprintf(flog, "Run %d problem %d is not known\n", i, r);
       goto done;
     }
@@ -623,7 +623,7 @@ runlog_import_xml(teamdb_state_t teamdb_state, runlog_state_t runlog_state,
   fprintf(flog, "Sanity check done\n");
 
   fprintf(flog, "Saving the new runlog\n");
-  run_backup(runlog_state, global->run_log_file);
+  run_backup(runlog_state, serve_state.global->run_log_file);
   run_set_runlog(runlog_state, out_entries_num, out_entries);
   fprintf(flog, "Renaming archive files\n");
   for (i = 0; i < cur_entries_num; i++)

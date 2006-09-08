@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,6 @@
  */
 
 #include "prepare.h"
-#include "prepare_vars.h"
 #include "pathutl.h"
 #include "errlog.h"
 #include "parsecfg.h"
@@ -31,6 +30,7 @@
 #include "runlog.h"
 #include "compile_packet.h"
 #include "curtime.h"
+#include "serve_state.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -46,6 +46,8 @@
 #include <signal.h>
 #include <errno.h>
 #include <unistd.h>
+
+struct serve_state serve_state;
 
 static int
 do_loop(void)
@@ -81,7 +83,7 @@ do_loop(void)
     // terminate if signaled
     if (interrupt_get_status()) break;
 
-    r = scan_dir(global->compile_queue_dir, pkt_name);
+    r = scan_dir(serve_state.global->compile_queue_dir, pkt_name);
 
     if (r < 0) {
       switch (-r) {
@@ -101,7 +103,7 @@ do_loop(void)
 
     if (!r) {
       interrupt_enable();
-      os_Sleep(global->sleep_time);
+      os_Sleep(serve_state.global->sleep_time);
       interrupt_disable();
       continue;
     }
@@ -109,7 +111,7 @@ do_loop(void)
     pkt_ptr = 0;
     pkt_len = 0;
     r = generic_read_file(&pkt_ptr, 0, &pkt_len,
-                          SAFE | REMOVE, global->compile_queue_dir,
+                          SAFE | REMOVE, serve_state.global->compile_queue_dir,
                           pkt_name, "");
     if (r == 0) continue;
     if (r < 0 || !pkt_ptr) {
@@ -140,9 +142,9 @@ do_loop(void)
 
     /* prepare paths useful to report messages to the serve */
     snprintf(report_dir, sizeof(report_dir),
-             "%s/%06d/report", global->compile_dir, rpl.contest_id);
+             "%s/%06d/report", serve_state.global->compile_dir, rpl.contest_id);
     snprintf(status_dir, sizeof(status_dir),
-             "%s/%06d/status", global->compile_dir, rpl.contest_id);
+             "%s/%06d/status", serve_state.global->compile_dir, rpl.contest_id);
     snprintf(run_name, sizeof(run_name), "%06d", rpl.run_id);
     pathmake(log_out, report_dir, "/", run_name, NULL);
 
@@ -156,19 +158,19 @@ do_loop(void)
       goto report_internal_error;
     }
     
-    pathmake(src_name, run_name, langs[req->lang_id]->src_sfx, NULL);
-    pathmake(exe_name, run_name, langs[req->lang_id]->exe_sfx, NULL);
+    pathmake(src_name, run_name, serve_state.langs[req->lang_id]->src_sfx, NULL);
+    pathmake(exe_name, run_name, serve_state.langs[req->lang_id]->exe_sfx, NULL);
 
-    pathmake(src_path, global->compile_work_dir, "/", src_name, NULL);
-    pathmake(exe_path, global->compile_work_dir, "/", exe_name, NULL);
-    pathmake(log_path, global->compile_work_dir, "/", "log", NULL);
+    pathmake(src_path, serve_state.global->compile_work_dir, "/", src_name, NULL);
+    pathmake(exe_path, serve_state.global->compile_work_dir, "/", exe_name, NULL);
+    pathmake(log_path, serve_state.global->compile_work_dir, "/", "log", NULL);
     /* the resulting executable file */
     pathmake(exe_out, report_dir, "/", exe_name, NULL);
 
     /* move the source file into the working dir */
-    r = generic_copy_file(REMOVE, global->compile_src_dir, pkt_name,
-                          langs[req->lang_id]->src_sfx,
-                          0, global->compile_work_dir, src_name, "");
+    r = generic_copy_file(REMOVE, serve_state.global->compile_src_dir, pkt_name,
+                          serve_state.langs[req->lang_id]->src_sfx,
+                          0, serve_state.global->compile_work_dir, src_name, "");
     if (!r) {
       snprintf(msgbuf, sizeof(msgbuf), "the source file is missing\n");
       err("the source file is missing");
@@ -186,9 +188,9 @@ do_loop(void)
       ce_flag = 0;
       rpl.status = RUN_OK;
     } else {
-      info("Starting: %s %s %s", langs[req->lang_id]->cmd, src_name, exe_name);
+      info("Starting: %s %s %s", serve_state.langs[req->lang_id]->cmd, src_name, exe_name);
       tsk = task_New();
-      task_AddArg(tsk, langs[req->lang_id]->cmd);
+      task_AddArg(tsk, serve_state.langs[req->lang_id]->cmd);
       task_AddArg(tsk, src_name);
       task_AddArg(tsk, exe_name);
       task_SetPathAsArg0(tsk);
@@ -196,12 +198,12 @@ do_loop(void)
         for (i = 0; i < req->env_num; i++)
           task_PutEnv(tsk, req->env_vars[i]);
       }
-      task_SetWorkingDir(tsk, global->compile_work_dir);
+      task_SetWorkingDir(tsk, serve_state.global->compile_work_dir);
       task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_REWRITE, 0777);
       task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_WRITE);
       task_SetRedir(tsk, 2, TSR_DUP, 1);
-      if (langs[req->lang_id]->compile_real_time_limit > 0) {
-        task_SetMaxRealTime(tsk, langs[req->lang_id]->compile_real_time_limit);
+      if (serve_state.langs[req->lang_id]->compile_real_time_limit > 0) {
+        task_SetMaxRealTime(tsk, serve_state.langs[req->lang_id]->compile_real_time_limit);
       }
       if (cr_serialize_lock() < 0) {
         // FIXME: propose reasonable recovery?
@@ -265,7 +267,7 @@ do_loop(void)
 
   cleanup_and_continue:;
     task_Delete(tsk); tsk = 0;
-    clear_directory(global->compile_work_dir);
+    clear_directory(serve_state.global->compile_work_dir);
     xfree(rpl_pkt); rpl_pkt = 0;
     req = compile_request_packet_free(req);
   } /* while (1) */
@@ -278,15 +280,15 @@ filter_languages(char *key)
 {
   int i, total = 0;
 
-  for (i = 1; i <= max_lang; i++) {
-    if (!langs[i]) continue;
-    if (strcmp(langs[i]->key, key)) {
-      langs[i] = 0;
+  for (i = 1; i <= serve_state.max_lang; i++) {
+    if (!serve_state.langs[i]) continue;
+    if (strcmp(serve_state.langs[i]->key, key)) {
+      serve_state.langs[i] = 0;
     }
   }
 
-  for (i = 1; i <= max_lang; i++) {
-    total += langs[i] != 0;
+  for (i = 1; i <= serve_state.max_lang; i++) {
+    total += serve_state.langs[i] != 0;
   }
   if (!total) {
     err("No languages after filter %s", key);
@@ -301,14 +303,14 @@ check_config(void)
   int i;
   int total = 0;
 
-  if (check_writable_spool(global->compile_queue_dir, SPOOL_OUT) < 0)
+  if (check_writable_spool(serve_state.global->compile_queue_dir, SPOOL_OUT) < 0)
     return -1;
-  for (i = 1; i <= max_lang; i++) {
-    if (!langs[i]) continue;
+  for (i = 1; i <= serve_state.max_lang; i++) {
+    if (!serve_state.langs[i]) continue;
 
     /* script must exist and be executable */
     total++;
-    if (check_executable(langs[i]->cmd) < 0) return -1;
+    if (check_executable(serve_state.langs[i]->cmd) < 0) return -1;
   }
 
   if (!total) {
@@ -373,7 +375,7 @@ main(int argc, char *argv[])
   return code;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "tpTask")

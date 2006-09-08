@@ -310,7 +310,6 @@ HFILES=\
  pathutl.h\
  prepare.h\
  prepare_dflt.h\
- prepare_vars.h\
  prepare_serve.h\
  printing.h\
  protocol.h\
@@ -320,6 +319,7 @@ HFILES=\
  run_packet_priv.h\
  server_framework.h\
  serve_clnt.h\
+ serve_state.h\
  settings.h\
  sformat.h\
  super_actions.h\

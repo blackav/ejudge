@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,6 @@
 #include "config.h"
 
 #include "prepare.h"
-#include "prepare_vars.h"
 #include "runlog.h"
 #include "cr_serialize.h"
 #include "testinfo.h"
@@ -28,6 +27,7 @@
 #include "full_archive.h"
 #include "digest_io.h"
 #include "filehash.h"
+#include "serve_state.h"
 
 #include "fileutl.h"
 #include "errlog.h"
@@ -75,6 +75,7 @@
 
 static int managed_mode_flag = 0;
 static time_t last_activity_time;
+struct serve_state serve_state;
 
 struct testinfo
 {
@@ -116,12 +117,12 @@ filter_testers(char *key)
 {
   int i, total = 0;
 
-  for (i = 1; i <= max_tester; i++) {
-    if (key && strcmp(testers[i]->key, key)) {
-      testers[i] = 0;
+  for (i = 1; i <= serve_state.max_tester; i++) {
+    if (key && strcmp(serve_state.testers[i]->key, key)) {
+      serve_state.testers[i] = 0;
       continue;
     }
-    if (testers[i]) total++;
+    if (serve_state.testers[i]) total++;
   }
 
   return 0;
@@ -133,7 +134,7 @@ html_print_by_line(FILE *f, unsigned char const *s, size_t size)
   const unsigned char *p = s;
   const unsigned char * const * trans_table;
 
-  if (global->max_file_length > 0 && size > global->max_file_length) {
+  if (serve_state.global->max_file_length > 0 && size > serve_state.global->max_file_length) {
     fprintf(f, "(%s, %s = %zu)\n",
             "file is too long", "size", size);
     return;
@@ -148,7 +149,7 @@ html_print_by_line(FILE *f, unsigned char const *s, size_t size)
 
   while (*s) {
     while (*s && *s != '\r' && *s != '\n') s++;
-    if (global->max_line_length > 0 && s - p > global->max_line_length) {
+    if (serve_state.global->max_line_length > 0 && s - p > serve_state.global->max_line_length) {
       fprintf(f, "(%s, %s = %td)\n",
               "line is too long", "size", s - p);
     } else {
@@ -330,12 +331,12 @@ generate_xml_report(struct run_request_packet *req_pkt,
     if (tests[i].chk_out_size >= 0 && req_pkt->full_archive) {
       fprintf(f, " checker-output-available=\"yes\"");
     }
-    if (tests[i].args && strlen(tests[i].args) >= global->max_cmd_length) {
+    if (tests[i].args && strlen(tests[i].args) >= serve_state.global->max_cmd_length) {
       fprintf(f, " args-too-long=\"yes\"");
     }
     fprintf(f, " >\n");
 
-    if (tests[i].args && strlen(tests[i].args) < global->max_cmd_length) {
+    if (tests[i].args && strlen(tests[i].args) < serve_state.global->max_cmd_length) {
       msg = html_armor_string_dup(tests[i].args);
       fprintf(f, "      <args>%s</args>\n", msg);
       xfree(msg);
@@ -541,9 +542,9 @@ run_tests(struct section_tester_data *tst,
 #endif
 
   ASSERT(tst->problem > 0);
-  ASSERT(tst->problem <= max_prob);
-  ASSERT(probs[tst->problem]);
-  prb = probs[tst->problem];
+  ASSERT(tst->problem <= serve_state.max_prob);
+  ASSERT(serve_state.probs[tst->problem]);
+  prb = serve_state.probs[tst->problem];
 
 #ifdef EJUDGE_PREFIX_DIR
   snprintf(ejudge_prefix_dir_env, sizeof(ejudge_prefix_dir_env),
@@ -574,10 +575,10 @@ run_tests(struct section_tester_data *tst,
     }
   }
 
-  pathmake(report_path, global->run_work_dir, "/", "report", NULL);
+  pathmake(report_path, serve_state.global->run_work_dir, "/", "report", NULL);
   full_report_path[0] = 0;
   if (req_pkt->full_archive) {
-    pathmake(full_report_path, global->run_work_dir, "/", "full_output", NULL);
+    pathmake(full_report_path, serve_state.global->run_work_dir, "/", "full_output", NULL);
     far = full_archive_open_write(full_report_path);
   }
 
@@ -592,7 +593,7 @@ run_tests(struct section_tester_data *tst,
     task_AddArg(tsk, tst->prepare_cmd);
     task_AddArg(tsk, new_name);
     task_SetPathAsArg0(tsk);
-    task_SetWorkingDir(tsk, global->run_work_dir);
+    task_SetWorkingDir(tsk, serve_state.global->run_work_dir);
     task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ, 0);
     task_SetRedir(tsk, 1, TSR_FILE, report_path, TSK_REWRITE, TSK_FULL_RW);
     task_SetRedir(tsk, 2, TSR_DUP, 1);
@@ -676,7 +677,7 @@ run_tests(struct section_tester_data *tst,
     clear_directory(tst->check_dir);
 
     /* copy the executable */
-    generic_copy_file(0, global->run_work_dir, new_name, "",
+    generic_copy_file(0, serve_state.global->run_work_dir, new_name, "",
                       0, tst->check_dir, new_name, "");
     make_executable(exe_path);
 
@@ -718,8 +719,8 @@ run_tests(struct section_tester_data *tst,
     pathmake(input_path, tst->check_dir, "/", prb->input_file, 0);
     pathmake(output_path, tst->check_dir, "/", prb->output_file, 0);
     pathmake(error_path, tst->check_dir, "/", tst->error_file, 0);
-    pathmake(check_out_path, global->run_work_dir, "/", "checkout", 0);
-    pathmake(score_out_path, global->run_work_dir, "/", "scoreout", 0);
+    pathmake(check_out_path, serve_state.global->run_work_dir, "/", "checkout", 0);
+    pathmake(score_out_path, serve_state.global->run_work_dir, "/", "scoreout", 0);
 
     if (prb->output_only) {
       /* output-only problem */
@@ -884,8 +885,8 @@ run_tests(struct section_tester_data *tst,
       file_size = generic_file_size(0, test_src, 0);
       if (file_size >= 0) {
         tests[cur_test].input_size = file_size;
-        if (global->max_file_length > 0
-            && file_size <= global->max_file_length) {
+        if (serve_state.global->max_file_length > 0
+            && file_size <= serve_state.global->max_file_length) {
           generic_read_file(&tests[cur_test].input, 0, 0, 0,
                             0, test_src, "");
         }
@@ -894,8 +895,8 @@ run_tests(struct section_tester_data *tst,
     file_size = generic_file_size(0, output_path, 0);
     if (file_size >= 0) {
       tests[cur_test].output_size = file_size;
-      if (global->max_file_length > 0 && !req_pkt->full_archive
-          && file_size <= global->max_file_length) {
+      if (serve_state.global->max_file_length > 0 && !req_pkt->full_archive
+          && file_size <= serve_state.global->max_file_length) {
         generic_read_file(&tests[cur_test].output, 0, 0, 0,
                           0, output_path, "");
       }
@@ -909,8 +910,8 @@ run_tests(struct section_tester_data *tst,
     file_size = generic_file_size(0, error_path, 0);
     if (file_size >= 0) {
       tests[cur_test].error_size = file_size;
-      if (global->max_file_length > 0 && !req_pkt->full_archive
-          && file_size <= global->max_file_length) {
+      if (serve_state.global->max_file_length > 0 && !req_pkt->full_archive
+          && file_size <= serve_state.global->max_file_length) {
         generic_read_file(&tests[cur_test].error, 0, 0, 0,
                           0, error_path, "");
       }
@@ -1026,8 +1027,8 @@ run_tests(struct section_tester_data *tst,
         file_size = generic_file_size(0, corr_path, 0);
         if (file_size >= 0) {
           tests[cur_test].correct_size = file_size;
-          if (global->max_file_length > 0
-              && file_size <= global->max_file_length) {
+          if (serve_state.global->max_file_length > 0
+              && file_size <= serve_state.global->max_file_length) {
             generic_read_file(&tests[cur_test].correct, 0, 0, 0,
                               0, corr_path, "");
           }
@@ -1279,7 +1280,7 @@ run_tests(struct section_tester_data *tst,
     reply_pkt->score = score;
     get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
 
-    if (global->sound_player[0] && global->extended_sound && !req_pkt->disable_sound) {
+    if (serve_state.global->sound_player[0] && serve_state.global->extended_sound && !req_pkt->disable_sound) {
       unsigned char b1[64], b2[64], b3[64];
 
       snprintf(b1, sizeof(b1), "%d", retcode);
@@ -1287,7 +1288,7 @@ run_tests(struct section_tester_data *tst,
       snprintf(b3, sizeof(b3), "%d", score);
 
       tsk = task_New();
-      task_AddArg(tsk, global->sound_player);
+      task_AddArg(tsk, serve_state.global->sound_player);
       task_AddArg(tsk, b1);
       task_AddArg(tsk, b2);
       task_AddArg(tsk, user_spelling);
@@ -1320,14 +1321,14 @@ run_tests(struct section_tester_data *tst,
     }
     get_current_time(&reply_pkt->ts6, &reply_pkt->ts6_us);
 
-    if (global->sound_player[0] && global->extended_sound && !req_pkt->disable_sound) {
+    if (serve_state.global->sound_player[0] && serve_state.global->extended_sound && !req_pkt->disable_sound) {
       unsigned char b1[64], b2[64];
 
       snprintf(b1, sizeof(b1), "%d", status);
       snprintf(b2, sizeof(b2), "%d", failed_test);
 
       tsk = task_New();
-      task_AddArg(tsk, global->sound_player);
+      task_AddArg(tsk, serve_state.global->sound_player);
       task_AddArg(tsk, b1);
       task_AddArg(tsk, b2);
       task_AddArg(tsk, user_spelling);
@@ -1337,22 +1338,22 @@ run_tests(struct section_tester_data *tst,
       task_Wait(tsk);
       task_Delete(tsk);
       tsk = 0;
-    } else if (global->sound_player[0] && !req_pkt->disable_sound) {
+    } else if (serve_state.global->sound_player[0] && !req_pkt->disable_sound) {
       // play funny sound
       sound = 0;
       switch (status) {
-      case RUN_TIME_LIMIT_ERR:   sound = global->timelimit_sound;    break;
-      case RUN_RUN_TIME_ERR:     sound = global->runtime_sound;      break;
-      case RUN_CHECK_FAILED:     sound = global->internal_sound;     break;
-      case RUN_PRESENTATION_ERR: sound = global->presentation_sound; break;
-      case RUN_WRONG_ANSWER_ERR: sound = global->wrong_sound;        break;
-      case RUN_OK:               sound = global->accept_sound;       break;
+      case RUN_TIME_LIMIT_ERR:   sound = serve_state.global->timelimit_sound;    break;
+      case RUN_RUN_TIME_ERR:     sound = serve_state.global->runtime_sound;      break;
+      case RUN_CHECK_FAILED:     sound = serve_state.global->internal_sound;     break;
+      case RUN_PRESENTATION_ERR: sound = serve_state.global->presentation_sound; break;
+      case RUN_WRONG_ANSWER_ERR: sound = serve_state.global->wrong_sound;        break;
+      case RUN_OK:               sound = serve_state.global->accept_sound;       break;
       }
       if (sound && !*sound) sound = 0;
 
       if (sound) {
         tsk = task_New();
-        task_AddArg(tsk, global->sound_player);
+        task_AddArg(tsk, serve_state.global->sound_player);
         task_AddArg(tsk, sound);
         task_SetPathAsArg0(tsk);
         task_Start(tsk);
@@ -1443,19 +1444,19 @@ do_loop(void)
     // terminate, if signaled
     if (interrupt_get_status()) break;
 
-    r = scan_dir(global->run_queue_dir, pkt_name);
+    r = scan_dir(serve_state.global->run_queue_dir, pkt_name);
     if (r < 0) return -1;
     if (!r) {
       if (got_quit_packet && managed_mode_flag) {
         return 0;
       }
-      if (managed_mode_flag && global->inactivity_timeout > 0 &&
-          last_activity_time + global->inactivity_timeout < time(0)) {
-        info("no activity for %d seconds, exiting",global->inactivity_timeout);
+      if (managed_mode_flag && serve_state.global->inactivity_timeout > 0 &&
+          last_activity_time + serve_state.global->inactivity_timeout < time(0)) {
+        info("no activity for %d seconds, exiting",serve_state.global->inactivity_timeout);
         return 0;
       }
       interrupt_enable();
-      os_Sleep(global->sleep_time);
+      os_Sleep(serve_state.global->sleep_time);
       interrupt_disable();
       continue;
     }
@@ -1467,7 +1468,7 @@ do_loop(void)
     req_buf_size = 0;
 
     r = generic_read_file(&req_buf, 0, &req_buf_size, SAFE | REMOVE,
-                          global->run_queue_dir, pkt_name, "");
+                          serve_state.global->run_queue_dir, pkt_name, "");
     if (r == 0) continue;
     if (r < 0) return -1;
 
@@ -1482,29 +1483,29 @@ do_loop(void)
     }
     if (req_pkt->contest_id == -1) {
       r = generic_write_file(req_buf, req_buf_size, SAFE,
-                             global->run_queue_dir, pkt_name, "");
+                             serve_state.global->run_queue_dir, pkt_name, "");
       if (r < 0) return -1;
       info("force quit packet is ignored in unmanaged mode");
-      scan_dir_add_ignored(global->run_queue_dir, pkt_name);
+      scan_dir_add_ignored(serve_state.global->run_queue_dir, pkt_name);
       continue;
     }
 
-    if (req_pkt->problem_id > max_prob || !probs[req_pkt->problem_id]) {
+    if (req_pkt->problem_id > serve_state.max_prob || !serve_state.probs[req_pkt->problem_id]) {
       snprintf(errmsg, sizeof(errmsg),
                "problem %d is unknown to the run program\n",
                req_pkt->problem_id);
       goto report_check_failed_and_continue;
     }
-    cur_prob = probs[req_pkt->problem_id];
+    cur_prob = serve_state.probs[req_pkt->problem_id];
 
     /* if we are asked to do full testing, but don't want */
-    if ((global->skip_full_testing > 0 && !req_pkt->accepting_mode)
-        || (global->skip_accept_testing > 0 && req_pkt->accepting_mode)) {
+    if ((serve_state.global->skip_full_testing > 0 && !req_pkt->accepting_mode)
+        || (serve_state.global->skip_accept_testing > 0 && req_pkt->accepting_mode)) {
       r = generic_write_file(req_buf, req_buf_size, SAFE,
-                             global->run_queue_dir, pkt_name, "");
+                             serve_state.global->run_queue_dir, pkt_name, "");
       if (r < 0) return -1;
       info("skipping problem %s", cur_prob->short_name);
-      scan_dir_add_ignored(global->run_queue_dir, pkt_name);
+      scan_dir_add_ignored(serve_state.global->run_queue_dir, pkt_name);
       continue;
     }
 
@@ -1513,10 +1514,10 @@ do_loop(void)
      */
     if (cur_prob->skip_testing > 0) {
       r = generic_write_file(req_buf, req_buf_size, SAFE,
-                             global->run_queue_dir, pkt_name, "");
+                             serve_state.global->run_queue_dir, pkt_name, "");
       if (r < 0) return -1;
       info("skipping problem %s", cur_prob->short_name);
-      scan_dir_add_ignored(global->run_queue_dir, pkt_name);
+      scan_dir_add_ignored(serve_state.global->run_queue_dir, pkt_name);
       continue;
     }
 
@@ -1541,17 +1542,17 @@ do_loop(void)
     }
 
     info("fount tester %d for pair %d,%s", tester_id,req_pkt->problem_id,req_pkt->arch);
-    tst = testers[tester_id];
+    tst = serve_state.testers[tester_id];
 
     /* if this tester is marked as "skip_testing" put the
      * packet back to the spool directory
      */
     if (tst->skip_testing > 0) {
       r = generic_write_file(req_buf, req_buf_size, SAFE,
-                             global->run_queue_dir, pkt_name, "");
+                             serve_state.global->run_queue_dir, pkt_name, "");
       if (r < 0) return -1;
       info("skipping tester <%s,%s>", cur_prob->short_name, tst->arch);
-      scan_dir_add_ignored(global->run_queue_dir, pkt_name);
+      scan_dir_add_ignored(serve_state.global->run_queue_dir, pkt_name);
       continue;
     }
 
@@ -1566,12 +1567,12 @@ do_loop(void)
     snprintf(run_base, sizeof(run_base), "%06d", req_pkt->run_id);
     snprintf(exe_name, sizeof(exe_name), "%s%s", run_base, req_pkt->exe_sfx);
 
-    r = generic_copy_file(REMOVE, global->run_exe_dir, exe_pkt_name, "",
-                          0, global->run_work_dir, exe_name, "");
+    r = generic_copy_file(REMOVE, serve_state.global->run_exe_dir, exe_pkt_name, "",
+                          0, serve_state.global->run_work_dir, exe_name, "");
     if (r <= 0) {
       snprintf(errmsg, sizeof(errmsg),
                "failed to copy executable file %s/%s\n",
-               global->run_exe_dir, exe_pkt_name);
+               serve_state.global->run_exe_dir, exe_pkt_name);
       goto report_check_failed_and_continue;
     }
 
@@ -1610,11 +1611,11 @@ do_loop(void)
     }
 
     snprintf(full_report_dir, sizeof(full_report_dir),
-             "%s/%06d/report", global->run_dir, req_pkt->contest_id);
+             "%s/%06d/report", serve_state.global->run_dir, req_pkt->contest_id);
     snprintf(full_status_dir, sizeof(full_status_dir),
-             "%s/%06d/status", global->run_dir, req_pkt->contest_id);
+             "%s/%06d/status", serve_state.global->run_dir, req_pkt->contest_id);
     snprintf(full_full_dir, sizeof(full_full_dir),
-             "%s/%06d/output", global->run_dir, req_pkt->contest_id);
+             "%s/%06d/output", serve_state.global->run_dir, req_pkt->contest_id);
              
     if (generic_copy_file(0, NULL, report_path, "",
                           0, full_report_dir, run_base, "") < 0)
@@ -1642,7 +1643,7 @@ do_loop(void)
     }
     xfree(reply_pkt_buf);
     reply_pkt_buf = 0;
-    clear_directory(global->run_work_dir);
+    clear_directory(serve_state.global->run_work_dir);
     last_activity_time = time(0);
     continue;
 
@@ -1681,7 +1682,7 @@ do_loop(void)
       err("error writing check failed packet");
     }
 
-    clear_directory(global->run_work_dir);
+    clear_directory(serve_state.global->run_work_dir);
   }
 
   return 0;
@@ -1726,39 +1727,39 @@ process_default_testers(void)
 
   struct section_tester_data tn; //temporary entry
 
-  prob_flags = (unsigned char *) alloca(max_prob + 1);
+  prob_flags = (unsigned char *) alloca(serve_state.max_prob + 1);
 
   /* scan all the 'any' testers */
-  for (i = 1; i <= max_tester; i++) {
-    tp = testers[i];
+  for (i = 1; i <= serve_state.max_tester; i++) {
+    tp = serve_state.testers[i];
     if (!tp || !tp->any) continue;
 
     // check architecture uniqueness
-    for (j = 1; j <= max_tester; j++) {
-      tq = testers[j];
+    for (j = 1; j <= serve_state.max_tester; j++) {
+      tq = serve_state.testers[j];
       if (i == j || !tq || !tq->any) continue;
-      if (strcmp(testers[j]->arch, tp->arch) != 0) continue;
+      if (strcmp(serve_state.testers[j]->arch, tp->arch) != 0) continue;
       err("default testers %d and %d has the same architecture '%s'",
           i, j, tp->arch);
       return -1;
     }
 
     // mark the problems with explicit testers for this architecture
-    memset(prob_flags, 0, max_prob + 1);
-    for (j = 1; j <= max_tester; j++) {
-      tq = testers[j];
+    memset(prob_flags, 0, serve_state.max_prob + 1);
+    for (j = 1; j <= serve_state.max_tester; j++) {
+      tq = serve_state.testers[j];
       if (!tq || tq->any) continue;
       if (strcmp(tp->arch, tq->arch) != 0) continue;
 
       // tq is specific tester with the same architecture
-      ASSERT(tq->problem > 0 && tq->problem <= max_prob);
-      ASSERT(probs[tq->problem]);
+      ASSERT(tq->problem > 0 && tq->problem <= serve_state.max_prob);
+      ASSERT(serve_state.probs[tq->problem]);
       prob_flags[tq->problem] = 1;
     }
 
     // scan all problems, which have no default tester
-    for (k = 1; k <= max_prob; k++) {
-      ts = probs[k];
+    for (k = 1; k <= serve_state.max_prob; k++) {
+      ts = serve_state.probs[k];
       if (!ts || prob_flags[k]) continue;
       if (ts->disable_testing) continue;
 
@@ -1806,25 +1807,25 @@ check_config(void)
   unsigned char *var_check_cmd = 0;
 
   /* check spooler dirs */
-  if (check_writable_spool(global->run_queue_dir, SPOOL_OUT) < 0) return -1;
-  if (check_writable_dir(global->run_exe_dir) < 0) return -1;
+  if (check_writable_spool(serve_state.global->run_queue_dir, SPOOL_OUT) < 0) return -1;
+  if (check_writable_dir(serve_state.global->run_exe_dir) < 0) return -1;
 
   /* check working dirs */
-  if (make_writable(global->run_work_dir) < 0) return -1;
-  if (check_writable_dir(global->run_work_dir) < 0) return -1;
+  if (make_writable(serve_state.global->run_work_dir) < 0) return -1;
+  if (check_writable_dir(serve_state.global->run_work_dir) < 0) return -1;
 
-  for (i = 1; i <= max_prob; i++) {
-    prb = probs[i];
+  for (i = 1; i <= serve_state.max_prob; i++) {
+    prb = serve_state.probs[i];
     if (!prb) continue;
     if (prb->disable_testing) continue;
 
     // check if there exists a tester for this problem
-    for (j = 1; j <= max_tester; j++) {
-      if (!testers[j]) continue;
-      if (testers[j]->any) break;
-      if (testers[j]->problem == i) break;
+    for (j = 1; j <= serve_state.max_tester; j++) {
+      if (!serve_state.testers[j]) continue;
+      if (serve_state.testers[j]->any) break;
+      if (serve_state.testers[j]->problem == i) break;
     }
-    if (j > max_tester) {
+    if (j > serve_state.max_tester) {
       // no checker for the problem :-(
       info("no checker found for problem %d", i);
       continue;
@@ -1985,7 +1986,7 @@ check_config(void)
     }
 
     ASSERT(prb->test_score >= 0);
-    if (global->score_system_val == SCORE_MOSCOW) {
+    if (serve_state.global->score_system_val == SCORE_MOSCOW) {
       if (prb->full_score <= 0) {
         err("problem %s: problem full_score is not set", prb->short_name);
         return -1;
@@ -2006,7 +2007,7 @@ check_config(void)
           return -1;
         }
       }
-    } else if (prb->test_score >= 0 && global->score_system_val != SCORE_ACM) {
+    } else if (prb->test_score >= 0 && serve_state.global->score_system_val != SCORE_ACM) {
       int score_summ = 0;
 
       prb->ntests = n1;
@@ -2082,34 +2083,34 @@ check_config(void)
     }
   }
 
-  for (i = 1; i <= max_tester; i++) {
-    if (!testers[i]) continue;
-    if (testers[i]->any) continue;
-    prb = probs[testers[i]->problem];
+  for (i = 1; i <= serve_state.max_tester; i++) {
+    if (!serve_state.testers[i]) continue;
+    if (serve_state.testers[i]->any) continue;
+    prb = serve_state.probs[serve_state.testers[i]->problem];
     total++;
 
-    if (prb->variant_num > 0 && !testers[i]->standard_checker_used) {
+    if (prb->variant_num > 0 && !serve_state.testers[i]->standard_checker_used) {
       if (!var_check_cmd)
         var_check_cmd = (unsigned char*) alloca(sizeof(path_t));
       for (n = 1; n <= prb->variant_num; n++) {
         snprintf(var_check_cmd, sizeof(path_t),
-                 "%s-%d", testers[i]->check_cmd, n);
+                 "%s-%d", serve_state.testers[i]->check_cmd, n);
         if (check_executable(var_check_cmd) < 0) return -1;
       }
     } else {
-      if (check_executable(testers[i]->check_cmd) < 0) return -1;
+      if (check_executable(serve_state.testers[i]->check_cmd) < 0) return -1;
     }
 
     /* check working dirs */
-    if (make_writable(testers[i]->check_dir) < 0) return -1;
-    if (check_writable_dir(testers[i]->check_dir) < 0) return -1;
-    if (testers[i]->prepare_cmd[0]
-        && check_executable(testers[i]->prepare_cmd) < 0) return -1;
-    if (testers[i]->start_cmd[0]
-        && check_executable(testers[i]->start_cmd) < 0) return -1;
+    if (make_writable(serve_state.testers[i]->check_dir) < 0) return -1;
+    if (check_writable_dir(serve_state.testers[i]->check_dir) < 0) return -1;
+    if (serve_state.testers[i]->prepare_cmd[0]
+        && check_executable(serve_state.testers[i]->prepare_cmd) < 0) return -1;
+    if (serve_state.testers[i]->start_cmd[0]
+        && check_executable(serve_state.testers[i]->start_cmd) < 0) return -1;
   }
 
-  info("checking default testers...");
+  info("checking default serve_state.testers...");
   if ((i = process_default_testers()) < 0) return -1;
   info("checking default testers done");
   total += i;
@@ -2121,8 +2122,8 @@ check_config(void)
 
 #if CONF_HAS_LIBINTL - 0 == 1
   // bind message catalogs, if specified
-  if (global->enable_l10n && global->l10n_dir[0]) {
-    bindtextdomain("ejudge", global->l10n_dir);
+  if (serve_state.global->enable_l10n && serve_state.global->l10n_dir[0]) {
+    bindtextdomain("ejudge", serve_state.global->l10n_dir);
     textdomain("ejudge");
   }
 #endif
@@ -2185,7 +2186,7 @@ main(int argc, char *argv[])
   return code;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "tTask")

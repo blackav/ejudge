@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005,2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005,2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,8 +23,8 @@
 #include "pathutl.h"
 #include "errlog.h"
 #include "prepare.h"
-#include "prepare_vars.h"
 #include "runlog.h"
+#include "serve_state.h"
 
 #include <reuse/integral.h>
 #include <reuse/logger.h>
@@ -85,7 +85,7 @@ compile_request_packet_read(size_t in_size, const void *in_data,
     goto failed_badly;
   }
   pout->lang_id = cvt_bin_to_host(pin->lang_id);
-  if (pout->lang_id < 0 || pout->lang_id > max_lang || !langs[pout->lang_id]) {
+  if (pout->lang_id < 0 || pout->lang_id > serve_state.max_lang || !serve_state.langs[pout->lang_id]) {
     errcode = 9;
     goto failed_badly;
   }
@@ -207,7 +207,7 @@ compile_request_packet_read(size_t in_size, const void *in_data,
   return -1;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
