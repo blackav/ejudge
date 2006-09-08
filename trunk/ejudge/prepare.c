@@ -46,12 +46,6 @@
 #include <malloc.h>
 #endif
 
-static struct section_problem_data  *abstr_probs[MAX_PROBLEM + 1];
-static struct section_tester_data   *abstr_testers[MAX_TESTER + 1];
-
-static int max_abstr_prob;
-static int max_abstr_tester;
-
 #define XFSIZE(t, x) (sizeof(((t*) 0)->x))
 
 #define GLOBAL_OFFSET(x)   XOFFSET(struct section_global_data, x)
@@ -421,10 +415,6 @@ static const struct config_parse_info section_tester_params[] =
   { 0, 0, 0, 0 }
 };
 
-static int problem_counter;
-static int language_counter;
-static int tester_counter;
-
 void prepare_problem_init_func(struct generic_section_config *);
 static void tester_init_func(struct generic_section_config *);
 static void global_init_func(struct generic_section_config *);
@@ -435,11 +425,11 @@ static const struct config_section_info params[] =
   { "global", sizeof(struct section_global_data), section_global_params,
     0, global_init_func, prepare_global_free_func },
   { "problem", sizeof(struct section_problem_data), section_problem_params,
-    &problem_counter, prepare_problem_init_func, prepare_problem_free_func },
+    0, prepare_problem_init_func, prepare_problem_free_func },
   { "language",sizeof(struct section_language_data),section_language_params,
-    &language_counter, language_init_func, prepare_language_free_func },
+    0, language_init_func, prepare_language_free_func },
   { "tester", sizeof(struct section_tester_data), section_tester_params,
-    &tester_counter, tester_init_func, prepare_tester_free_func },
+    0, tester_init_func, prepare_tester_free_func },
   { NULL, 0, NULL }
 };
 
@@ -794,7 +784,7 @@ static const struct inheritance_info tester_inheritance_info[] =
 static int
 process_abstract_tester(int i)
 {
-  struct section_tester_data *atp = abstr_testers[i], *katp;
+  struct section_tester_data *atp = serve_state.abstr_testers[i], *katp;
   struct section_tester_data **sups;
   char ***envs;
   char *ish;
@@ -835,12 +825,12 @@ process_abstract_tester(int i)
 
   for (j = 0; j < stot; j++) {
     katp = 0;
-    for (k = 0; k < max_abstr_tester; k++) {
-      katp = abstr_testers[k];
+    for (k = 0; k < serve_state.max_abstr_tester; k++) {
+      katp = serve_state.abstr_testers[k];
       if (!katp || !katp->name[0]) continue;
       if (!strcmp(atp->super[j], katp->name)) break;
     }
-    if (k >= max_abstr_tester || !katp) {
+    if (k >= serve_state.max_abstr_tester || !katp) {
       err("abstract tester %s not found", atp->super[j]);
       return -1;
     }
@@ -2118,21 +2108,21 @@ set_defaults(int mode)
     }
   }
 
-  for (i = 0; i < max_abstr_prob && mode != PREPARE_COMPILE; i++) {
-    if (!abstr_probs[i]->short_name[0]) {
+  for (i = 0; i < serve_state.max_abstr_prob && mode != PREPARE_COMPILE; i++) {
+    if (!serve_state.abstr_probs[i]->short_name[0]) {
       err("abstract problem must define problem short name");
       return -1;
     }
-    ish = abstr_probs[i]->short_name;
-    if (abstr_probs[i]->id) {
+    ish = serve_state.abstr_probs[i]->short_name;
+    if (serve_state.abstr_probs[i]->id) {
       err("abstract problem %s must not define problem id", ish);
       return -1;
     }
-    if (abstr_probs[i]->long_name[0]) {
+    if (serve_state.abstr_probs[i]->long_name[0]) {
       err("abstract problem %s must not define problem long name", ish);
       return -1;
     }
-    if (abstr_probs[i]->super[0]) {
+    if (serve_state.abstr_probs[i]->super[0]) {
       err("abstract problem %s cannot have a superproblem", ish);
       return -1;
     }
@@ -2144,14 +2134,14 @@ set_defaults(int mode)
     sish = 0;
     aprob = 0;
     if (serve_state.probs[i]->super[0]) {
-      for (si = 0; si < max_abstr_prob; si++)
-        if (!strcmp(abstr_probs[si]->short_name, serve_state.probs[i]->super))
+      for (si = 0; si < serve_state.max_abstr_prob; si++)
+        if (!strcmp(serve_state.abstr_probs[si]->short_name, serve_state.probs[i]->super))
           break;
-      if (si >= max_abstr_prob) {
+      if (si >= serve_state.max_abstr_prob) {
         err("abstract problem `%s' is not defined", serve_state.probs[i]->super);
         return -1;
       }
-      aprob = abstr_probs[si];
+      aprob = serve_state.abstr_probs[si];
       sish = aprob->short_name;
     }
     if (!serve_state.probs[i]->short_name[0] && serve_state.global->auto_short_problem_name) {
@@ -2244,16 +2234,16 @@ set_defaults(int mode)
                            serve_state.probs[i], aprob, serve_state.global);
 
     if (serve_state.probs[i]->priority_adjustment == -1000 && si != -1 &&
-        abstr_probs[si]->priority_adjustment != -1000) {
-      serve_state.probs[i]->priority_adjustment = abstr_probs[si]->priority_adjustment;
+        serve_state.abstr_probs[si]->priority_adjustment != -1000) {
+      serve_state.probs[i]->priority_adjustment = serve_state.abstr_probs[si]->priority_adjustment;
     }
     if (serve_state.probs[i]->priority_adjustment == -1000) {
       serve_state.probs[i]->priority_adjustment = 0;
     }
 
     if (!serve_state.probs[i]->score_multiplier && si != -1 &&
-        abstr_probs[si]->score_multiplier >= 1) {
-      serve_state.probs[i]->score_multiplier = abstr_probs[si]->score_multiplier;
+        serve_state.abstr_probs[si]->score_multiplier >= 1) {
+      serve_state.probs[i]->score_multiplier = serve_state.abstr_probs[si]->score_multiplier;
     }
 
     if (mode == PREPARE_SERVE) {
@@ -2285,11 +2275,11 @@ set_defaults(int mode)
                                    &serve_state.probs[i]->dp_total,
                                    &serve_state.probs[i]->dp_infos) < 0) return -1;
 
-      if (si != -1 && abstr_probs[si]->disable_language) {
-        serve_state.probs[i]->disable_language = sarray_merge_pf(abstr_probs[si]->disable_language, serve_state.probs[i]->disable_language);
+      if (si != -1 && serve_state.abstr_probs[si]->disable_language) {
+        serve_state.probs[i]->disable_language = sarray_merge_pf(serve_state.abstr_probs[si]->disable_language, serve_state.probs[i]->disable_language);
       }
-      if (si != -1 && abstr_probs[si]->checker_env) {
-        serve_state.probs[i]->checker_env = sarray_merge_pf(abstr_probs[si]->checker_env,
+      if (si != -1 && serve_state.abstr_probs[si]->checker_env) {
+        serve_state.probs[i]->checker_env = sarray_merge_pf(serve_state.abstr_probs[si]->checker_env,
                                                 serve_state.probs[i]->checker_env);
       }
       if (serve_state.probs[i]->checker_env) {
@@ -2314,9 +2304,9 @@ set_defaults(int mode)
 
     if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
       if (!serve_state.probs[i]->test_dir[0] && si != -1
-          && abstr_probs[si]->test_dir[0]) {
+          && serve_state.abstr_probs[si]->test_dir[0]) {
         sformat_message(serve_state.probs[i]->test_dir, PATH_MAX,
-                        abstr_probs[si]->test_dir,
+                        serve_state.abstr_probs[si]->test_dir,
                         NULL, serve_state.probs[i], NULL, NULL, NULL, 0, 0, 0);
         info("problem.%s.test_dir taken from problem.%s ('%s')",
              ish, sish, serve_state.probs[i]->test_dir);
@@ -2330,9 +2320,9 @@ set_defaults(int mode)
            ish, serve_state.probs[i]->test_dir);
 
       if (!serve_state.probs[i]->corr_dir[0] && si != -1
-          && abstr_probs[si]->corr_dir[0]) {
+          && serve_state.abstr_probs[si]->corr_dir[0]) {
         sformat_message(serve_state.probs[i]->corr_dir, PATH_MAX,
-                        abstr_probs[si]->corr_dir,
+                        serve_state.abstr_probs[si]->corr_dir,
                         NULL, serve_state.probs[i], NULL, NULL, NULL, 0, 0, 0);
         info("problem.%s.corr_dir taken from problem.%s ('%s')",
              ish, sish, serve_state.probs[i]->corr_dir);
@@ -2346,9 +2336,9 @@ set_defaults(int mode)
                              serve_state.probs[i], aprob, serve_state.global);
 
       if (!serve_state.probs[i]->info_dir[0] && si != -1 && serve_state.probs[i]->use_info
-          && abstr_probs[si]->info_dir[0]) {
+          && serve_state.abstr_probs[si]->info_dir[0]) {
         sformat_message(serve_state.probs[i]->info_dir, PATH_MAX,
-                        abstr_probs[si]->info_dir,
+                        serve_state.abstr_probs[si]->info_dir,
                         NULL, serve_state.probs[i], NULL, NULL, NULL, 0, 0, 0);
         info("problem.%s.info_dir taken from problem.%s ('%s')",
              ish, sish, serve_state.probs[i]->info_dir);
@@ -2363,8 +2353,8 @@ set_defaults(int mode)
       }
 
       if (serve_state.probs[i]->use_tgz == -1 && si != -1
-          && abstr_probs[si]->use_tgz != -1) {
-        serve_state.probs[i]->use_tgz = abstr_probs[si]->use_tgz;
+          && serve_state.abstr_probs[si]->use_tgz != -1) {
+        serve_state.probs[i]->use_tgz = serve_state.abstr_probs[si]->use_tgz;
         info("problem.%s.use_tgz taken from problem.%s (%d)",
              ish, sish, serve_state.probs[i]->use_tgz);
       }
@@ -2373,9 +2363,9 @@ set_defaults(int mode)
       }
 
       if (!serve_state.probs[i]->tgz_dir[0] && si != -1 && serve_state.probs[i]->use_tgz
-          && abstr_probs[si]->tgz_dir[0]) {
+          && serve_state.abstr_probs[si]->tgz_dir[0]) {
         sformat_message(serve_state.probs[i]->tgz_dir, PATH_MAX,
-                        abstr_probs[si]->tgz_dir,
+                        serve_state.abstr_probs[si]->tgz_dir,
                         NULL, serve_state.probs[i], NULL, NULL, NULL, 0, 0, 0);
         info("problem.%s.tgz_dir taken from problem.%s ('%s')",
              ish, sish, serve_state.probs[i]->tgz_dir);
@@ -2392,9 +2382,9 @@ set_defaults(int mode)
 
     if (mode == PREPARE_RUN) {
       if (!serve_state.probs[i]->input_file[0] && si != -1
-          && abstr_probs[si]->input_file[0]) {
+          && serve_state.abstr_probs[si]->input_file[0]) {
         sformat_message(serve_state.probs[i]->input_file, PATH_MAX,
-                        abstr_probs[si]->input_file,
+                        serve_state.abstr_probs[si]->input_file,
                         NULL, serve_state.probs[i], NULL, NULL, NULL, 0, 0, 0);
         info("problem.%s.input_file inherited from problem.%s ('%s')",
              ish, sish, serve_state.probs[i]->input_file);
@@ -2405,9 +2395,9 @@ set_defaults(int mode)
                  "%s", DFLT_P_INPUT_FILE);
       }
       if (!serve_state.probs[i]->output_file[0] && si != -1
-          && abstr_probs[si]->output_file[0]) {
+          && serve_state.abstr_probs[si]->output_file[0]) {
         sformat_message(serve_state.probs[i]->output_file, PATH_MAX,
-                        abstr_probs[si]->output_file,
+                        serve_state.abstr_probs[si]->output_file,
                         NULL, serve_state.probs[i], NULL, NULL, NULL, 0, 0, 0);
         info("problem.%s.output_file inherited from problem.%s ('%s')",
              ish, sish, serve_state.probs[i]->output_file);
@@ -2419,8 +2409,8 @@ set_defaults(int mode)
       }
 
       if (serve_state.probs[i]->variant_num == -1 && si != -1
-          && abstr_probs[si]->variant_num != -1) {
-        serve_state.probs[i]->variant_num = abstr_probs[si]->variant_num;
+          && serve_state.abstr_probs[si]->variant_num != -1) {
+        serve_state.probs[i]->variant_num = serve_state.abstr_probs[si]->variant_num;
         info("problem.%s.variant_num inherited from problem.%s (%d)",
              ish, sish, serve_state.probs[i]->variant_num);
       }
@@ -2444,7 +2434,7 @@ set_defaults(int mode)
   }
 
   if (mode == PREPARE_SERVE || mode == PREPARE_RUN) {
-    for (i = 0; i < max_abstr_tester; i++) {
+    for (i = 0; i < serve_state.max_abstr_tester; i++) {
       if (process_abstract_tester(i) < 0) return -1;
     }
   }
@@ -2485,12 +2475,12 @@ set_defaults(int mode)
           err("concrete tester may inherit only one abstract tester");
           return -1;
         }
-        for (si = 0; si < max_abstr_tester; si++) {
-          atp = abstr_testers[si];
+        for (si = 0; si < serve_state.max_abstr_tester; si++) {
+          atp = serve_state.abstr_testers[si];
           if (!strcmp(atp->name, tp->super[0]))
             break;
         }
-        if (si >= max_abstr_tester) {
+        if (si >= serve_state.max_abstr_tester) {
           err("abstract tester %s not found", tp->super[0]);
           return -1;
         }
@@ -2808,11 +2798,11 @@ collect_sections(int mode)
     } else if (!strcmp(p->name, "problem") && mode != PREPARE_COMPILE) {
       q = (struct section_problem_data*) p;
       if (q->abstract) {
-        if (max_abstr_prob > MAX_PROBLEM) {
+        if (serve_state.max_abstr_prob > MAX_PROBLEM) {
           err("too many abstract problems");
           return -1;
         }
-        abstr_probs[max_abstr_prob++] = q;
+        serve_state.abstr_probs[serve_state.max_abstr_prob++] = q;
       } else {
         if (!q->id) info("assigned problem id = %d", (q->id=last_prob + 1));
         if (q->id <= 0 || q->id > MAX_PROBLEM) {
@@ -2831,11 +2821,11 @@ collect_sections(int mode)
     } else if (!strcmp(p->name, "tester") && mode != PREPARE_COMPILE) {
       t = (struct section_tester_data *) p;
       if (t->abstract) {
-        if (max_abstr_tester > MAX_TESTER) {
+        if (serve_state.max_abstr_tester > MAX_TESTER) {
           err("too many abstract tester");
           return -1;
         }
-        abstr_testers[max_abstr_tester++] = t;
+        serve_state.abstr_testers[serve_state.max_abstr_tester++] = t;
       } else {
         if (!t->id)
           info("assigned tester id = %d",(t->id = last_tester + 1));
@@ -3135,11 +3125,11 @@ prepare_tester_refinement(struct section_tester_data *out,
       return -1;
     }
 
-    for (si = 0; si < max_abstr_tester; si++) {
-      atp = abstr_testers[si];
+    for (si = 0; si < serve_state.max_abstr_tester; si++) {
+      atp = serve_state.abstr_testers[si];
       if (!strcmp(atp->name, tp->super[0])) break;
     }
-    if (si >= max_abstr_tester) {
+    if (si >= serve_state.max_abstr_tester) {
       err("abstract tester '%s' not found", tp->super[0]);
       return -1;
     }
@@ -3429,8 +3419,8 @@ void print_all_problems(FILE *o)
 {
   int i;
 
-  for (i = 0; i < max_abstr_prob; i++)
-    print_problem(o, abstr_probs[i]);
+  for (i = 0; i < serve_state.max_abstr_prob; i++)
+    print_problem(o, serve_state.abstr_probs[i]);
   for (i = 1; i <= serve_state.max_prob; i++) {
     if (!serve_state.probs[i]) continue;
     print_problem(o, serve_state.probs[i]);
@@ -3520,12 +3510,12 @@ void print_all_testers(FILE *o)
   int i;
 
   /*
-  fprintf(stderr, "====%d, %d, %u\n", max_abstr_tester, serve_state.max_tester,
+  fprintf(stderr, "====%d, %d, %u\n", serve_state.max_abstr_tester, serve_state.max_tester,
           sizeof(struct section_tester_data));
   */
 
-  for (i = 0; i < max_abstr_tester; i++)
-    print_tester(o, abstr_testers[i]);
+  for (i = 0; i < serve_state.max_abstr_tester; i++)
+    print_tester(o, serve_state.abstr_testers[i]);
   for (i = 1; i <= serve_state.max_tester; i++) {
     if (!serve_state.testers[i]) continue;
     print_tester(o, serve_state.testers[i]);

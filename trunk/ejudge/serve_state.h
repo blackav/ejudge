@@ -28,6 +28,8 @@ struct contest_desc;
 struct clarlog_state;
 struct teamdb_state;
 struct team_extra_state;
+struct user_state_info;
+struct user_filter_info;
 
 struct serve_state
 {
@@ -56,6 +58,17 @@ struct serve_state
 
   /* runlog internal state */
   struct runlog_state *runlog_state;
+
+  /* for master_html to store the filter expressions */
+  int users_a;
+  struct user_state_info **users;
+  struct user_filter_info *cur_user;
+
+  /* for prepare to store the abstract entities */
+  struct section_problem_data  *abstr_probs[MAX_PROBLEM + 1];
+  struct section_tester_data   *abstr_testers[MAX_TESTER + 1];
+  int max_abstr_prob;
+  int max_abstr_tester;
 };
 
 // for now...

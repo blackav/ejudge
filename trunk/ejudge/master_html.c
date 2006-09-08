@@ -83,10 +83,6 @@ struct user_state_info
   struct user_filter_info *first_filter;
 };
 
-static int users_a;
-static struct user_state_info **users;
-static struct user_filter_info *cur_user;
-
 static void
 print_nav_buttons(FILE *f, int run_id,
                   ej_cookie_t sid,
@@ -153,12 +149,13 @@ parse_error_func(void *data, unsigned char const *format, ...)
   va_list args;
   unsigned char buf[1024];
   int l;
+  struct serve_state *state = (struct serve_state*) data;
 
   va_start(args, format);
   l = vsnprintf(buf, sizeof(buf) - 24, format, args);
   va_end(args);
   strcpy(buf + l, "\n");
-  cur_user->error_msgs = xstrmerge1(cur_user->error_msgs, buf);
+  state->cur_user->error_msgs = xstrmerge1(state->cur_user->error_msgs, buf);
   filter_expr_nerrs++;
 }
 
@@ -1198,35 +1195,35 @@ allocate_user_info(int user_id, ej_cookie_t session_id)
   ASSERT(user_id >= 0 && user_id < 32768);
   ASSERT(session_id);
 
-  if (user_id >= users_a) {
-    int new_users_a = users_a;
+  if (user_id >= serve_state.users_a) {
+    int new_users_a = serve_state.users_a;
     struct user_state_info **new_users;
 
     if (!new_users_a) new_users_a = 64;
     while (new_users_a <= user_id) new_users_a *= 2;
     new_users = xcalloc(new_users_a, sizeof(new_users[0]));
-    if (users_a > 0)
-      memcpy(new_users, users, users_a * sizeof(users[0]));
-    xfree(users);
-    users_a = new_users_a;
-    users = new_users;
-    info("allocate_user_info: new size %d", users_a);
+    if (serve_state.users_a > 0)
+      memcpy(new_users, serve_state.users, serve_state.users_a * sizeof(serve_state.users[0]));
+    xfree(serve_state.users);
+    serve_state.users_a = new_users_a;
+    serve_state.users = new_users;
+    info("allocate_user_info: new size %d", serve_state.users_a);
   }
-  if (!users[user_id]) {
-    users[user_id] = xcalloc(1, sizeof(*users[user_id]));
+  if (!serve_state.users[user_id]) {
+    serve_state.users[user_id] = xcalloc(1, sizeof(*serve_state.users[user_id]));
   }
 
-  for (p = users[user_id]->first_filter; p; p = p->next) {
+  for (p = serve_state.users[user_id]->first_filter; p; p = p->next) {
     if (p->session_id == session_id) break;
   }
   if (!p) {
     XCALLOC(p, 1);
-    p->next = users[user_id]->first_filter;
+    p->next = serve_state.users[user_id]->first_filter;
     p->session_id = session_id;
-    users[user_id]->first_filter = p;
+    serve_state.users[user_id]->first_filter = p;
   }
 
-  cur_user = p;
+  serve_state.cur_user = p;
   return p;
 }
 
