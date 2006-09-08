@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,8 +17,8 @@
 
 #include "cr_serialize.h"
 #include "prepare.h"
-#include "prepare_vars.h"
 #include "errlog.h"
+#include "serve_state.h"
 
 #include <reuse/osdeps.h>
 
@@ -34,10 +34,10 @@ cr_serialize_init(void)
 {
   int saved_errno;
 
-  if (!global->cr_serialization_key) return 0;
+  if (!serve_state.global->cr_serialization_key) return 0;
   if (semid >= 0) return 0;
 
-  semid = semget(global->cr_serialization_key, 1, IPC_CREAT | IPC_EXCL | 0666);
+  semid = semget(serve_state.global->cr_serialization_key, 1, IPC_CREAT | IPC_EXCL | 0666);
   if (semid < 0) {
     if (errno != EEXIST) {
       saved_errno = errno;
@@ -45,7 +45,7 @@ cr_serialize_init(void)
       errno = saved_errno;
       return -saved_errno;
     }
-    semid = semget(global->cr_serialization_key, 1, 0);
+    semid = semget(serve_state.global->cr_serialization_key, 1, 0);
     if (semid < 0) {
       saved_errno = errno;
       err("cr_serialize_init: semget() failed: %s", os_ErrorMsg());
@@ -71,7 +71,7 @@ cr_serialize_lock(void)
   struct sembuf ops[1] = {{ 0, -1, SEM_UNDO }};
   struct sembuf ops_nowait[1] = {{ 0, -1, SEM_UNDO | IPC_NOWAIT }};
 
-  if (!global->cr_serialization_key) return 0;
+  if (!serve_state.global->cr_serialization_key) return 0;
 
   while (1) {
     if (semop(semid, ops_nowait, 1) >= 0) return 0;
@@ -104,7 +104,7 @@ cr_serialize_unlock(void)
   struct sembuf ops[1] = {{ 0, 1, SEM_UNDO }};
   int saved_errno;
 
-  if (!global->cr_serialization_key) return 0;
+  if (!serve_state.global->cr_serialization_key) return 0;
 
   if (semop(semid, ops, 1) < 0) {
     saved_errno = errno;
@@ -115,7 +115,7 @@ cr_serialize_unlock(void)
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
