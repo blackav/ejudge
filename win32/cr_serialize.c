@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,6 @@
 
 #include "cr_serialize.h"
 #include "prepare.h"
-#include "prepare_vars.h"
 
 #include <windows.h>
 
@@ -53,7 +52,7 @@ cr_serialize_unlock(void)
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "HANDLE")
