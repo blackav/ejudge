@@ -20,7 +20,6 @@
 #include "filter_tree.h"
 #include "filter_eval.h"
 #include "prepare.h"
-#include "prepare_vars.h"
 #include "protocol.h"
 #include "misctext.h"
 #include "mischtml.h"
@@ -41,6 +40,7 @@
 #include "filehash.h"
 #include "digest_io.h"
 #include "errlog.h"
+#include "serve_state.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/logger.h>
@@ -131,7 +131,7 @@ print_nav_buttons(FILE *f, int run_id,
                           extra_args, "report_%d=1", run_id),
             t6);
   }
-  if (global->team_enable_rep_view && t7) {
+  if (serve_state.global->team_enable_rep_view && t7) {
     fprintf(f, "<td>%s%s</a></td>",
             html_hyperref(hbuf, sizeof(hbuf), sid, self_url,
                           extra_args, "report_%d=1&t=1", run_id),
@@ -250,14 +250,14 @@ write_change_status_dialog(FILE *f, unsigned char const *var_name,
   if (!var_name) var_name = "status";
 
   // various sets of valid run statuses
-  if (global->score_system_val == SCORE_KIROV) {
+  if (serve_state.global->score_system_val == SCORE_KIROV) {
     if (disable_rejudge_flag) cur_status_list = kirov_no_rejudge_status_list;
     else cur_status_list = kirov_status_list;
-  } else if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+  } else if (serve_state.global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
     // OLYMPIAD in accepting mode
     if (disable_rejudge_flag) cur_status_list = olymp_accepting_no_rejudge_status_list;
     else cur_status_list = olymp_accepting_status_list;
-  } else if (global->score_system_val == SCORE_OLYMPIAD) {
+  } else if (serve_state.global->score_system_val == SCORE_OLYMPIAD) {
     // OLYMPIAD in judging mode
     if (disable_rejudge_flag) cur_status_list = olymp_judging_no_rejudge_status_list;
     cur_status_list = olymp_judging_status_list;
@@ -338,8 +338,8 @@ print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
     snprintf((fields[RAW_RUN_NSEC] = alloca(BSIZE)), BSIZE, "%d", pe->nsec);
     fields[RAW_RUN_IP] = run_unparse_ip(pe->ip);
     snprintf((fields[RAW_RUN_USER_ID] = alloca(BSIZE)), BSIZE, "%d", pe->team);
-    fields[RAW_RUN_USER_LOGIN] = teamdb_get_login(teamdb_state, pe->team);
-    fields[RAW_RUN_USER_NAME] = teamdb_get_name(teamdb_state, pe->team);
+    fields[RAW_RUN_USER_LOGIN] = teamdb_get_login(serve_state.teamdb_state, pe->team);
+    fields[RAW_RUN_USER_NAME] = teamdb_get_name(serve_state.teamdb_state, pe->team);
 
     if (pe->status != RUN_VIRTUAL_START && pe->status != RUN_VIRTUAL_STOP) {
       run_time = pe->timestamp;
@@ -358,8 +358,8 @@ print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
       for (i = 0; i < 20; i++, sha_out += 2, sha_in++)
         sprintf(sha_out, "%02x", *sha_in);
 
-      if (pe->problem > 0 && pe->problem <= max_prob) pp = probs[pe->problem];
-      if (pe->language> 0 && pe->language<= max_lang) pl = langs[pe->language];
+      if (pe->problem > 0 && pe->problem <= serve_state.max_prob) pp = serve_state.probs[pe->problem];
+      if (pe->language> 0 && pe->language<= serve_state.max_lang) pl = serve_state.langs[pe->language];
 
       if (pp) {
         fields[RAW_RUN_PROBLEM] = pp->short_name;
@@ -387,7 +387,7 @@ print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
 
       switch (pe->status) {
       case RUN_OK:
-        if (global->score_system_val == SCORE_ACM) break;
+        if (serve_state.global->score_system_val == SCORE_ACM) break;
         // FALLTHROUGH
       case RUN_COMPILE_ERR:
       case RUN_RUN_TIME_ERR:
@@ -398,7 +398,7 @@ print_raw_record(FILE *f, int run_id, struct run_entry *pe, time_t start_time,
       case RUN_PARTIAL:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
-        if (global->score_system_val == SCORE_ACM) {
+        if (serve_state.global->score_system_val == SCORE_ACM) {
           if (pe->test > 0) {
             snprintf((fields[RAW_RUN_PASSED] = alloca(BSIZE)), BSIZE,
                      "%d", pe->test);
@@ -532,17 +532,17 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
 
   if (!u->error_msgs) {
     memset(&env, 0, sizeof(env));
-    env.teamdb_state = teamdb_state;
+    env.teamdb_state = serve_state.teamdb_state;
     env.mem = filter_tree_new();
-    env.maxlang = max_lang;
-    env.langs = langs;
-    env.maxprob = max_prob;
-    env.probs = probs;
-    env.rtotal = run_get_total(runlog_state);
-    run_get_header(runlog_state, &env.rhead);
+    env.maxlang = serve_state.max_lang;
+    env.langs = serve_state.langs;
+    env.maxprob = serve_state.max_prob;
+    env.probs = serve_state.probs;
+    env.rtotal = run_get_total(serve_state.runlog_state);
+    run_get_header(serve_state.runlog_state, &env.rhead);
     env.rentries = alloca(env.rtotal * sizeof(env.rentries[0]));
     env.cur_time = time(0);
-    run_get_all_entries(runlog_state, env.rentries);
+    run_get_all_entries(serve_state.runlog_state, env.rentries);
 
     match_idx = alloca((env.rtotal + 1) * sizeof(match_idx[0]));
     memset(match_idx, 0, (env.rtotal + 1) * sizeof(match_idx[0]));
@@ -670,7 +670,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
   }
 
   if (!u->error_msgs) {
-    switch (global->score_system_val) {
+    switch (serve_state.global->score_system_val) {
     case SCORE_ACM:
       str1 = _("Failed test");
       break;
@@ -734,9 +734,9 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
         fprintf(f, "<td>&nbsp;</td>");
         fprintf(f, "<td><b>%s</b></td>", statstr);
         fprintf(f, "<td>&nbsp;</td>");
-        if (global->score_system_val == SCORE_KIROV
-            || global->score_system_val == SCORE_OLYMPIAD
-            || global->score_system_val == SCORE_MOSCOW) {
+        if (serve_state.global->score_system_val == SCORE_KIROV
+            || serve_state.global->score_system_val == SCORE_OLYMPIAD
+            || serve_state.global->score_system_val == SCORE_MOSCOW) {
           fprintf(f, "<td>&nbsp;</td>");
         }
         fprintf(f, "<td>&nbsp;</td>");
@@ -766,14 +766,14 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
         fprintf(f, "<td>&nbsp;</td>");
         fprintf(f, "<td>%s</td>", run_unparse_ip(pe->ip));
         fprintf(f, "<td>%d</td>", pe->team);
-        fprintf(f, "<td>%s</td>", teamdb_get_name(teamdb_state, pe->team));
+        fprintf(f, "<td>%s</td>", teamdb_get_name(serve_state.teamdb_state, pe->team));
         fprintf(f, "<td>&nbsp;</td>");
         fprintf(f, "<td>&nbsp;</td>");
         fprintf(f, "<td><b>%s</b></td>", statstr);
         fprintf(f, "<td>&nbsp;</td>");
-        if (global->score_system_val == SCORE_KIROV
-            || global->score_system_val == SCORE_OLYMPIAD
-            || global->score_system_val == SCORE_MOSCOW) {
+        if (serve_state.global->score_system_val == SCORE_KIROV
+            || serve_state.global->score_system_val == SCORE_OLYMPIAD
+            || serve_state.global->score_system_val == SCORE_MOSCOW) {
           fprintf(f, "<td>&nbsp;</td>");
         }
         fprintf(f, "<td>&nbsp;</td>");
@@ -797,17 +797,17 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
       }
 
       prev_successes = RUN_TOO_MANY;
-      if (global->score_system_val == SCORE_KIROV && pe->status == RUN_OK
-          && pe->problem > 0 && pe->problem <= max_prob && !pe->is_hidden
-          && probs[pe->problem] && probs[pe->problem]->score_bonus_total > 0) {
-        if ((prev_successes = run_get_prev_successes(runlog_state, rid)) < 0)
+      if (serve_state.global->score_system_val == SCORE_KIROV && pe->status == RUN_OK
+          && pe->problem > 0 && pe->problem <= serve_state.max_prob && !pe->is_hidden
+          && serve_state.probs[pe->problem] && serve_state.probs[pe->problem]->score_bonus_total > 0) {
+        if ((prev_successes = run_get_prev_successes(serve_state.runlog_state, rid)) < 0)
           prev_successes = RUN_TOO_MANY;
       }
 
       attempts = 0; disq_attempts = 0;
-      if (global->score_system_val == SCORE_KIROV && !pe->is_hidden) {
-        run_get_attempts(runlog_state, rid, &attempts, &disq_attempts,
-                         global->ignore_compile_errors);
+      if (serve_state.global->score_system_val == SCORE_KIROV && !pe->is_hidden) {
+        run_get_attempts(serve_state.runlog_state, rid, &attempts, &disq_attempts,
+                         serve_state.global->ignore_compile_errors);
       }
       run_time = pe->timestamp;
       imported_str = "";
@@ -820,12 +820,12 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
         imported_str = "#";
       }
       start_time = env.rhead.start_time;
-      if (global->virtual) {
-        start_time = run_get_virtual_start_time(runlog_state, pe->team);
+      if (serve_state.global->virtual) {
+        start_time = run_get_virtual_start_time(serve_state.runlog_state, pe->team);
       }
       if (!start_time) run_time = 0;
       if (start_time > run_time) run_time = start_time;
-      duration_str(global->show_astr_time, run_time, start_time,
+      duration_str(serve_state.global->show_astr_time, run_time, start_time,
                    durstr, 0);
       run_status_str(pe->status, statstr, 0);
 
@@ -844,9 +844,9 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
       fprintf(f, "<td>%u</td>", pe->size);
       fprintf(f, "<td>%s</td>", run_unparse_ip(pe->ip));
       fprintf(f, "<td>%d</td>", pe->team);
-      fprintf(f, "<td>%s</td>", teamdb_get_name(teamdb_state, pe->team));
-      if (pe->problem > 0 && pe->problem <= max_prob && probs[pe->problem]) {
-        struct section_problem_data *cur_prob = probs[pe->problem];
+      fprintf(f, "<td>%s</td>", teamdb_get_name(serve_state.teamdb_state, pe->team));
+      if (pe->problem > 0 && pe->problem <= serve_state.max_prob && serve_state.probs[pe->problem]) {
+        struct section_problem_data *cur_prob = serve_state.probs[pe->problem];
         int variant = 0;
         if (cur_prob->variant_num > 0) {
           variant = pe->variant;
@@ -865,9 +865,9 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
         sprintf(prob_str, "??? - %d", pe->problem);
       }
       fprintf(f, "<td>%s</td>", prob_str);
-      if (pe->language > 0 && pe->language <= max_lang
-          && langs[pe->language]) {
-        fprintf(f, "<td>%s</td>", langs[pe->language]->short_name);
+      if (pe->language > 0 && pe->language <= serve_state.max_lang
+          && serve_state.langs[pe->language]) {
+        fprintf(f, "<td>%s</td>", serve_state.langs[pe->language]->short_name);
       } else {
         fprintf(f, "<td>??? - %d</td>", pe->language);
       }
@@ -935,7 +935,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
             ACTION_REJUDGE_DISPLAYED_1, _("Rejudge displayed runs"));
     fprintf(f, "</form></td><td>\n");
 
-    if (global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    if (serve_state.global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f,"<input type=\"hidden\" name=\"run_mask_size\" value=\"%d\">\n",
               displayed_size);
@@ -959,10 +959,10 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "%s: <select name=\"problem\"><option value=\"\">\n",
             _("Rejudge problem"));
-    for (i = 1; i <= max_prob; i++)
-      if (probs[i]) {
+    for (i = 1; i <= serve_state.max_prob; i++)
+      if (serve_state.probs[i]) {
         fprintf(f, "<option value=\"%d\">%s - %s\n",
-                probs[i]->id, probs[i]->short_name, probs[i]->long_name);
+                serve_state.probs[i]->id, serve_state.probs[i]->short_name, serve_state.probs[i]->long_name);
       }
     fprintf(f, "</select>\n");
     fprintf(f, "<input type=\"submit\" name=\"action_%d\" value=\"%s\">",
@@ -970,7 +970,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
     fprintf(f, "</form></p>\n");
   }
 
-  if (priv_level == PRIV_LEVEL_ADMIN && global->enable_runlog_merge) {
+  if (priv_level == PRIV_LEVEL_ADMIN && serve_state.global->enable_runlog_merge) {
     html_start_form(f, 2, self_url, hidden_vars);
     fprintf(f, "<table border=\"0\"><tr><td>%s: </td>\n",
             _("Import and merge XML runs log"));
@@ -985,26 +985,26 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
   fprintf(f, "<table>\n");
   fprintf(f, "<tr><td>%s:</td><td>", _("Problem"));
   fprintf(f, "<select name=\"problem\"><option value=\"\">\n");
-  for (i = 1; i <= max_prob; i++) {
-    if (!probs[i]) continue;
-    if (probs[i]->variant_num > 0) {
-      for (j = 1; j <= probs[i]->variant_num; j++) {
+  for (i = 1; i <= serve_state.max_prob; i++) {
+    if (!serve_state.probs[i]) continue;
+    if (serve_state.probs[i]->variant_num > 0) {
+      for (j = 1; j <= serve_state.probs[i]->variant_num; j++) {
         fprintf(f, "<option value=\"%d,%d\">%s-%d - %s\n",
-                i, j, probs[i]->short_name, j, probs[i]->long_name);
+                i, j, serve_state.probs[i]->short_name, j, serve_state.probs[i]->long_name);
       }
     } else {
       fprintf(f, "<option value=\"%d\">%s - %s\n",
-              i, probs[i]->short_name, probs[i]->long_name);
+              i, serve_state.probs[i]->short_name, serve_state.probs[i]->long_name);
     }
   }
   fprintf(f, "</select>\n");
   fprintf(f, "</td></tr>\n");
   fprintf(f, "<tr><td>%s:</td><td>", _("Language"));
   fprintf(f, "<select name=\"language\"><option value=\"\">\n");
-  for (i = 1; i <= max_lang; i++) {
-    if (!langs[i]) continue;
+  for (i = 1; i <= serve_state.max_lang; i++) {
+    if (!serve_state.langs[i]) continue;
     fprintf(f, "<option value=\"%d\">%s - %s\n",
-            i, langs[i]->short_name, langs[i]->long_name);
+            i, serve_state.langs[i]->short_name, serve_state.langs[i]->long_name);
   }
   fprintf(f, "</select>\n");
   fprintf(f, "</td></tr>\n");
@@ -1054,8 +1054,8 @@ write_all_clars(FILE *f, struct user_filter_info *u,
 
   fprintf(f, "<hr><h2>%s</h2>\n", _("Messages"));
 
-  start = run_get_start_time(runlog_state);
-  total = clar_get_total(clarlog_state);
+  start = run_get_start_time(serve_state.runlog_state);
+  total = clar_get_total(serve_state.clarlog_state);
   if (!mode_clar) mode_clar = u->prev_mode_clar;
   if (!first_clar) first_clar = u->prev_first_clar;
   if (!last_clar) last_clar = u->prev_last_clar;
@@ -1066,8 +1066,8 @@ write_all_clars(FILE *f, struct user_filter_info *u,
   u->prev_mode_clar = mode_clar;
   u->prev_first_clar = first_clar;
   u->prev_last_clar = last_clar;
-  show_astr_time = global->show_astr_time;
-  if (global->virtual) show_astr_time = 1;
+  show_astr_time = serve_state.global->show_astr_time;
+  if (serve_state.global->virtual) show_astr_time = 1;
 
   if (!first_clar && !last_clar) {
     first_clar = -1;
@@ -1138,7 +1138,7 @@ write_all_clars(FILE *f, struct user_filter_info *u,
   for (j = 0; j < list_tot; j++) {
     i = list_idx[j];
 
-    clar_get_record(clarlog_state, i, &time, &size, ip, &from, &to, &flags,
+    clar_get_record(serve_state.clarlog_state, i, &time, &size, ip, &from, &to, &flags,
                     &j_from, &hide_flag, subj);
     if (mode_clar != 1 && (from <= 0 || flags >= 2)) continue; 
 
@@ -1154,7 +1154,7 @@ write_all_clars(FILE *f, struct user_filter_info *u,
     fprintf(f, "<tr>");
     if (hide_flag) fprintf(f, "<td>%d#</td>", i);
     else fprintf(f, "<td>%d</td>", i);
-    fprintf(f, "<td>%s</td>", clar_flags_html(clarlog_state, flags, from, to,
+    fprintf(f, "<td>%s</td>", clar_flags_html(serve_state.clarlog_state, flags, from, to,
                                               0, 0));
     fprintf(f, "<td>%s</td>", durstr);
     fprintf(f, "<td>%s</td>", ip);
@@ -1164,16 +1164,16 @@ write_all_clars(FILE *f, struct user_filter_info *u,
         fprintf(f, "<td><b>%s</b></td>", _("judges"));
       else
         fprintf(f, "<td><b>%s</b> (%s)</td>", _("judges"),
-                teamdb_get_name(teamdb_state, j_from));
+                teamdb_get_name(serve_state.teamdb_state, j_from));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_name(teamdb_state, from));
+      fprintf(f, "<td>%s</td>", teamdb_get_name(serve_state.teamdb_state, from));
     }
     if (!to && !from) {
       fprintf(f, "<td><b>%s</b></td>", _("all"));
     } else if (!to) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_name(teamdb_state, to));
+      fprintf(f, "<td>%s</td>", teamdb_get_name(serve_state.teamdb_state, to));
     }
     fprintf(f, "<td>%s</td>", asubj);
     fprintf(f, "<td>%s%s</a></td>",
@@ -1262,10 +1262,10 @@ write_priv_standings(FILE *f, ej_cookie_t sid,
   print_nav_buttons(f, 0, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), _("Refresh"), 0, 0, 0, 0, 0);
 
-  if (global->score_system_val == SCORE_KIROV
-      || global->score_system_val == SCORE_OLYMPIAD)
+  if (serve_state.global->score_system_val == SCORE_KIROV
+      || serve_state.global->score_system_val == SCORE_OLYMPIAD)
     do_write_kirov_standings(f, 0, 1, 0, 0, 0, 0 /*accepting_mode*/);
-  else if (global->score_system_val == SCORE_MOSCOW)
+  else if (serve_state.global->score_system_val == SCORE_MOSCOW)
     do_write_moscow_standings(f, 0, 1, 0, 0, 0, 0, 0);
   else
     do_write_standings(f, 1, 0, 0, 0, 0, 0);
@@ -1300,13 +1300,13 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   unsigned char filtbuf3[512];
   unsigned char *ps1, *ps2;
 
-  if (run_id < 0 || run_id >= run_get_total(runlog_state))
+  if (run_id < 0 || run_id >= run_get_total(serve_state.runlog_state))
     return -SRV_ERR_BAD_RUN_ID;
-  run_get_entry(runlog_state, run_id, &info);
+  run_get_entry(serve_state.runlog_state, run_id, &info);
 
   src_flags = archive_make_read_path(src_path, sizeof(src_path),
-                                     global->run_archive_dir, run_id, 0, 1);
-  start_time = run_get_start_time(runlog_state);
+                                     serve_state.global->run_archive_dir, run_id, 0, 1);
+  start_time = run_get_start_time(serve_state.runlog_state);
   if (info.timestamp < start_time) info.timestamp = start_time;
 
   fprintf(f, "<h2>%s %d</h2>\n",
@@ -1382,36 +1382,36 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   }
   fprintf(f, "</tr>\n");
   fprintf(f, "<tr><td>%s:</td><td>%s</td>",
-          _("User login"), teamdb_get_login(teamdb_state, info.team));
+          _("User login"), teamdb_get_login(serve_state.teamdb_state, info.team));
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
-    fprintf(f, "<td><input type=\"text\" name=\"run_user_login\" value=\"%s\" size=\"20\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", teamdb_get_login(teamdb_state, info.team), ACTION_RUN_CHANGE_USER_LOGIN, _("Change"));
+    fprintf(f, "<td><input type=\"text\" name=\"run_user_login\" value=\"%s\" size=\"20\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>", teamdb_get_login(serve_state.teamdb_state, info.team), ACTION_RUN_CHANGE_USER_LOGIN, _("Change"));
   } else {
     fprintf(f, "%s", nbsp);
   }
   fprintf(f, "</tr>\n");
   fprintf(f, "<tr><td>%s:</td><td>%s</td>%s</tr>\n",
-          _("User name"), teamdb_get_name(teamdb_state, info.team), nbsp);
+          _("User name"), teamdb_get_name(serve_state.teamdb_state, info.team), nbsp);
 
   ps1 = ""; ps2 = "";
   snprintf(filtbuf1, sizeof(filtbuf1), "prob == \"%s\"", 
-           probs[info.problem]->short_name);
+           serve_state.probs[info.problem]->short_name);
   url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
   html_hyperref(filtbuf3, sizeof(filtbuf3), sid, self_url,
                 extra_args, "filter_expr=%s&filter_view=View",
                 filtbuf2);
   ps1 = filtbuf3; ps2 = "</a>";
   fprintf(f, "<tr><td>%s:</td><td>%s%s%s</td>",
-          _("Problem"), ps1, probs[info.problem]->short_name, ps2);
+          _("Problem"), ps1, serve_state.probs[info.problem]->short_name, ps2);
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
     fprintf(f, "<td><select name=\"problem\"><option value=\"\">\n");
-    for (i = 1; i <= max_prob; i++)
-      if (probs[i]) {
+    for (i = 1; i <= serve_state.max_prob; i++)
+      if (serve_state.probs[i]) {
         fprintf(f, "<option value=\"%d\">%s - %s\n",
-                probs[i]->id, probs[i]->short_name, probs[i]->long_name);
+                serve_state.probs[i]->id, serve_state.probs[i]->short_name, serve_state.probs[i]->long_name);
       }
     fprintf(f, "</select></td>\n");
     fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>\n", ACTION_RUN_CHANGE_PROB, _("Change"));
@@ -1419,14 +1419,14 @@ write_priv_source(FILE *f, int user_id, int priv_level,
     fprintf(f, "%s", nbsp);
   }
   fprintf(f, "</tr>\n");
-  if (probs[info.problem]->variant_num > 0) {
+  if (serve_state.probs[info.problem]->variant_num > 0) {
     variant = info.variant;
     if (!variant) {
       variant = find_variant(info.team, info.problem);
     }
     ps1 = ""; ps2 = "";
     snprintf(filtbuf1, sizeof(filtbuf1), "prob == \"%s\" && variant == %d", 
-             probs[info.problem]->short_name, variant);
+             serve_state.probs[info.problem]->short_name, variant);
     url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
     html_hyperref(filtbuf3, sizeof(filtbuf3), sid, self_url,
                   extra_args, "filter_expr=%s&filter_view=View",
@@ -1449,9 +1449,9 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   }
 
   ps1 = ""; ps2 = "";
-  if (langs[info.language]) {
+  if (serve_state.langs[info.language]) {
     snprintf(filtbuf1, sizeof(filtbuf1), "lang == \"%s\"", 
-             langs[info.language]->short_name);
+             serve_state.langs[info.language]->short_name);
     url_armor_string(filtbuf2, sizeof(filtbuf2), filtbuf1);
     html_hyperref(filtbuf3, sizeof(filtbuf3), sid, self_url,
                   extra_args, "filter_expr=%s&filter_view=View",
@@ -1460,16 +1460,16 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   }
   fprintf(f, "<tr><td>%s:</td><td>%s%s%s</td>",
           _("Language"), ps1,
-          (langs[info.language])?((char*)langs[info.language]->short_name):"",
+          (serve_state.langs[info.language])?((char*)serve_state.langs[info.language]->short_name):"",
           ps2);
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
     fprintf(f, "<td><select name=\"language\"><option value=\"\">\n");
-    for (i = 1; i <= max_lang; i++)
-      if (langs[i]) {
+    for (i = 1; i <= serve_state.max_lang; i++)
+      if (serve_state.langs[i]) {
         fprintf(f, "<option value=\"%d\">%s - %s\n",
-                langs[i]->id, langs[i]->short_name, langs[i]->long_name);
+                serve_state.langs[i]->id, serve_state.langs[i]->short_name, serve_state.langs[i]->long_name);
       }
     fprintf(f, "</select></td>\n");
     fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>\n", ACTION_RUN_CHANGE_LANG, _("Change"));
@@ -1542,8 +1542,8 @@ write_priv_source(FILE *f, int user_id, int priv_level,
     fprintf(f, "%s", nbsp);
   }
   fprintf(f, "</tr>\n");
-  if (global->score_system_val == SCORE_KIROV
-      || global->score_system_val == SCORE_OLYMPIAD) {
+  if (serve_state.global->score_system_val == SCORE_KIROV
+      || serve_state.global->score_system_val == SCORE_OLYMPIAD) {
     if (info.test <= 0) {
       snprintf(numbuf, sizeof(numbuf), "N/A");
       info.test = 0;
@@ -1586,7 +1586,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
       fprintf(f, "%s", nbsp);
     }
     fprintf(f, "</tr>\n");
-  } else if (global->score_system_val == SCORE_MOSCOW) {
+  } else if (serve_state.global->score_system_val == SCORE_MOSCOW) {
     if (info.test <= 0) {
       snprintf(numbuf, sizeof(numbuf), "N/A");
       info.test = 0;
@@ -1682,7 +1682,7 @@ write_priv_source(FILE *f, int user_id, int priv_level,
 
   filtbuf1[0] = 0;
   if (run_id > 0) {
-    run_id2 = run_find(runlog_state, run_id - 1, 0, info.team, info.problem,
+    run_id2 = run_find(serve_state.runlog_state, run_id - 1, 0, info.team, info.problem,
                        info.language);
     if (run_id2 >= 0) {
       snprintf(filtbuf1, sizeof(filtbuf1), "%d", run_id2);
@@ -1694,12 +1694,12 @@ write_priv_source(FILE *f, int user_id, int priv_level,
           _("Compare this run with run"), filtbuf1,
           ACTION_COMPARE_RUNS, _("Compare"));
 
-  if (global->enable_report_upload) {
+  if (serve_state.global->enable_report_upload) {
     html_start_form(f, 2, self_url, hidden_vars);
     fprintf(f, "<p>%s: ", _("Upload judging protocol"));
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
     fprintf(f, "<input type=\"file\" name=\"file\">");
-    if (global->team_enable_rep_view) {
+    if (serve_state.global->team_enable_rep_view) {
       fprintf(f, "<input type=\"checkbox\" %s%s>%s",
               "name=\"judge_report\"", "checked=\"yes\"",
               _("Judge's report"));
@@ -1716,8 +1716,8 @@ write_priv_source(FILE *f, int user_id, int priv_level,
                     _("Main page"), 0, 0, 0, _("Refresh"), _("View report"),
                     _("View team report"));
   fprintf(f, "<hr>\n");
-  if (info.language > 0 && info.language <= max_lang
-      && langs[info.language] && langs[info.language]->binary) {
+  if (info.language > 0 && info.language <= serve_state.max_lang
+      && serve_state.langs[info.language] && serve_state.langs[info.language]->binary) {
     fprintf(f, "<p>The submission is binary and thus is not shown.</p>\n");
   } else if (!info.is_imported) {
     if (src_flags < 0 || generic_read_file(&src_text, 0, &src_len, src_flags, 0, src_path, "") < 0) {
@@ -1773,10 +1773,10 @@ write_new_run_form(FILE *f, int user_id, int priv_level,
 
   fprintf(f, "<tr><td>%s:</td>", _("Problem"));
   fprintf(f, "<td><select name=\"problem\"><option value=\"\">\n");
-  for (i = 1; i <= max_prob; i++)
-    if (probs[i]) {
+  for (i = 1; i <= serve_state.max_prob; i++)
+    if (serve_state.probs[i]) {
       fprintf(f, "<option value=\"%d\">%s - %s\n",
-              probs[i]->id, probs[i]->short_name, probs[i]->long_name);
+              serve_state.probs[i]->id, serve_state.probs[i]->short_name, serve_state.probs[i]->long_name);
     }
   fprintf(f, "</select></td>\n");
   fprintf(f, "</tr>\n");
@@ -1787,10 +1787,10 @@ write_new_run_form(FILE *f, int user_id, int priv_level,
 
   fprintf(f, "<tr><td>%s:</td>", _("Language"));
   fprintf(f, "<td><select name=\"language\"><option value=\"\">\n");
-  for (i = 1; i <= max_lang; i++)
-    if (langs[i]) {
+  for (i = 1; i <= serve_state.max_lang; i++)
+    if (serve_state.langs[i]) {
       fprintf(f, "<option value=\"%d\">%s - %s\n",
-              langs[i]->id, langs[i]->short_name, langs[i]->long_name);
+              serve_state.langs[i]->id, serve_state.langs[i]->short_name, serve_state.langs[i]->long_name);
     }
   fprintf(f, "</select></td>\n");
   fprintf(f, "</tr>\n");
@@ -1820,8 +1820,8 @@ write_new_run_form(FILE *f, int user_id, int priv_level,
   write_change_status_dialog(f, 0, 0, 0);
   fprintf(f, "</tr>\n");
 
-  if (global->score_system_val == SCORE_KIROV
-      || global->score_system_val == SCORE_OLYMPIAD) {
+  if (serve_state.global->score_system_val == SCORE_KIROV
+      || serve_state.global->score_system_val == SCORE_OLYMPIAD) {
     fprintf(f, "<tr><td>%s:</td>", _("Tests passed"));
     fprintf(f, "<td><input type=\"text\" name=\"tests\" size=\"10\"></td>");
     fprintf(f, "</tr>\n");
@@ -1829,7 +1829,7 @@ write_new_run_form(FILE *f, int user_id, int priv_level,
     fprintf(f, "<tr><td>%s:</td>", _("Score gained"));
     fprintf(f, "<td><input type=\"text\" name=\"score\" size=\"10\"></td>");
     fprintf(f, "</tr>\n");
-  } else if (global->score_system_val == SCORE_MOSCOW) {
+  } else if (serve_state.global->score_system_val == SCORE_MOSCOW) {
     fprintf(f, "<tr><td>%s:</td>", _("Failed test"));
     fprintf(f, "<td><input type=\"text\" name=\"tests\" size=\"10\"></td>");
     fprintf(f, "</tr>\n");
@@ -2204,22 +2204,22 @@ write_priv_report(FILE *f, int user_id, int priv_level,
   int rep_flag, content_type;
   const unsigned char *t6 = _("Refresh");
   const unsigned char *t7 = _("View team report");
-  const unsigned char *report_dir = global->report_archive_dir;
+  const unsigned char *report_dir = serve_state.global->report_archive_dir;
   const unsigned char *start_ptr = 0;
   struct run_entry re;
 
-  if (team_report_flag && global->team_enable_rep_view) {
+  if (team_report_flag && serve_state.global->team_enable_rep_view) {
     t7 = t6;
     t6 = _("View report");
-    report_dir = global->team_report_archive_dir;
-    if (global->team_show_judge_report) {
-      report_dir = global->report_archive_dir;
+    report_dir = serve_state.global->team_report_archive_dir;
+    if (serve_state.global->team_show_judge_report) {
+      report_dir = serve_state.global->report_archive_dir;
     }
   }
 
-  if (run_id < 0 || run_id >= run_get_total(runlog_state))
+  if (run_id < 0 || run_id >= run_get_total(serve_state.runlog_state))
     return -SRV_ERR_BAD_RUN_ID;
-  if (run_get_entry(runlog_state, run_id, &re) < 0) return -SRV_ERR_BAD_RUN_ID;
+  if (run_get_entry(serve_state.runlog_state, run_id, &re) < 0) return -SRV_ERR_BAD_RUN_ID;
   if (!run_is_report_available(re.status)) return -SRV_ERR_REPORT_NOT_AVAILABLE;
 
   print_nav_buttons(f, run_id, sid, self_url, hidden_vars, extra_args,
@@ -2227,7 +2227,7 @@ write_priv_report(FILE *f, int user_id, int priv_level,
   fprintf(f, "<hr>\n");
 
   rep_flag = archive_make_read_path(rep_path, sizeof(rep_path),
-                                    global->xml_report_archive_dir, run_id, 0, 1);
+                                    serve_state.global->xml_report_archive_dir, run_id, 0, 1);
   if (rep_flag >= 0) {
     if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0)
       return -SRV_ERR_SYSTEM_ERROR;
@@ -2288,11 +2288,11 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
   unsigned char name_buf[64];
   char *tmp_txt_msg = 0;
 
-  if (clar_id < 0 || clar_id >= clar_get_total(clarlog_state))
+  if (clar_id < 0 || clar_id >= clar_get_total(serve_state.clarlog_state))
     return -SRV_ERR_BAD_CLAR_ID;
 
-  start_time = run_get_start_time(runlog_state);
-  clar_get_record(clarlog_state, clar_id, &clar_time, &size, ip, &from, &to,
+  start_time = run_get_start_time(serve_state.runlog_state);
+  clar_get_record(serve_state.clarlog_state, clar_id, &clar_time, &size, ip, &from, &to,
                   &flags, &j_from, &hide_flag, b64_subj);
   txt_subj_len = base64_decode_str(b64_subj, txt_subj, 0);
   html_subj_len = html_armored_strlen(txt_subj);
@@ -2305,10 +2305,10 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
   if (hide_flag)
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Available only after contest start"), hide_flag?_("YES"):_("NO"));
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Flags"),
-          clar_flags_html(clarlog_state, flags, from, to, 0, 0));
+          clar_flags_html(serve_state.clarlog_state, flags, from, to, 0, 0));
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
           _("Time"), duration_str(1, clar_time, 0, 0, 0));
-  if (!global->virtual) {
+  if (!serve_state.global->virtual) {
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n",
             _("Duration"), duration_str(0, clar_time, start_time, 0, 0));
   }
@@ -2320,9 +2320,9 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     else
       fprintf(f, "<td><b>%s</b> (%s)</td>", _("judges"),
-              teamdb_get_name(teamdb_state, j_from));
+              teamdb_get_name(serve_state.teamdb_state, j_from));
   } else {
-    fprintf(f, "<td>%s (%d)</td>", teamdb_get_name(teamdb_state, from), from);
+    fprintf(f, "<td>%s (%d)</td>", teamdb_get_name(serve_state.teamdb_state, from), from);
   }
   fprintf(f, "</tr>\n<tr><td>%s:</td>", _("To"));
   if (!to && !from) {
@@ -2330,7 +2330,7 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
   } else if (!to) {
     fprintf(f, "<td><b>%s</b></td>", _("judges"));
   } else {
-    fprintf(f, "<td>%s (%d)</td>", teamdb_get_name(teamdb_state, to), to);
+    fprintf(f, "<td>%s (%d)</td>", teamdb_get_name(serve_state.teamdb_state, to), to);
   }
   fprintf(f, "</tr>\n");
   fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"), html_subj);
@@ -2341,7 +2341,7 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
 
   snprintf(name_buf, sizeof(name_buf), "%06d", clar_id);
   if (generic_read_file(&tmp_txt_msg, 0, &txt_msg_len, 0,
-                        global->clar_archive_dir, name_buf, "") < 0) {
+                        serve_state.global->clar_archive_dir, name_buf, "") < 0) {
     fprintf(f, "<big><font color=\"red\">Cannot read message text!</font></big>\n");
   } else {
     txt_msg = tmp_txt_msg;
@@ -2390,8 +2390,8 @@ write_priv_users(FILE *f, int user_id, int priv_level,
   unsigned char filtbuf1[512], filtbuf2[512], filtbuf3[512], *ps1, *ps2;
   const struct team_extra *t_extra;
 
-  tot_teams = teamdb_get_total_teams(teamdb_state);
-  max_team = teamdb_get_max_team_id(teamdb_state);
+  tot_teams = teamdb_get_total_teams(serve_state.teamdb_state);
+  max_team = teamdb_get_max_team_id(serve_state.teamdb_state);
 
   print_nav_buttons(f, 0, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), 0, _("Refresh"), 0, 0, 0, 0);
@@ -2415,18 +2415,18 @@ write_priv_users(FILE *f, int user_id, int priv_level,
           _("Flags"),
           _("No. of runs"), _("Size of runs"),
           _("No. of clars"), _("Size of clars"));
-  if (global->contestant_status_num > 0) {
+  if (serve_state.global->contestant_status_num > 0) {
     fprintf(f, "<th>%s</th>", _("Status"));
   }
   fprintf(f, "<th>%s</th><th>&nbsp;</th></tr>\n", _("No. of warns"));
 
   for (i = 1; i <= max_team; i++) {
-    if (!teamdb_lookup(teamdb_state, i)) continue;
-    teamdb_export_team(teamdb_state, i, &info);
-    t_extra = team_extra_get_entry(team_extra_state, i);
+    if (!teamdb_lookup(serve_state.teamdb_state, i)) continue;
+    teamdb_export_team(serve_state.teamdb_state, i, &info);
+    t_extra = team_extra_get_entry(serve_state.team_extra_state, i);
 
-    run_get_team_usage(runlog_state, i, &runs_num, &runs_total);
-    clar_get_team_usage(clarlog_state, i, &clars_num, &clars_total);
+    run_get_team_usage(serve_state.runlog_state, i, &runs_num, &runs_total);
+    clar_get_team_usage(serve_state.clarlog_state, i, &clars_num, &clars_total);
     /*
     if (priv_level == PRIV_LEVEL_ADMIN) {
       html_start_form(f, 1, sid, self_url, hidden_vars, extra_args);
@@ -2445,23 +2445,23 @@ write_priv_users(FILE *f, int user_id, int priv_level,
     ps1 = filtbuf3; ps2 = "</a>";
     fprintf(f, "<td>%s%d%s</td>", ps1, i, ps2);
 
-    txt_login = teamdb_get_login(teamdb_state, i);
+    txt_login = teamdb_get_login(serve_state.teamdb_state, i);
     html_login_len = html_armored_strlen(txt_login);
     html_login = alloca(html_login_len + 16);
     html_armor_string(txt_login, html_login);
     fprintf(f, "<td>");
-    if (global->team_info_url[0]) {
-      sformat_message(href_buf, sizeof(href_buf), global->team_info_url,
+    if (serve_state.global->team_info_url[0]) {
+      sformat_message(href_buf, sizeof(href_buf), serve_state.global->team_info_url,
                       NULL, NULL, NULL, NULL, &info, 0, 0, 0);
       fprintf(f, "<a href=\"%s\">", href_buf);
     }
     fprintf(f, "%s", html_login);
-    if (global->team_info_url[0]) {
+    if (serve_state.global->team_info_url[0]) {
       fprintf(f, "</a>");
     }
     fprintf(f, "</td>");
 
-    txt_name = teamdb_get_name(teamdb_state, i);
+    txt_name = teamdb_get_name(serve_state.teamdb_state, i);
     html_name_len = html_armored_strlen(txt_name);
     html_name = alloca(html_name_len + 16);
     html_armor_string(txt_name, html_name);
@@ -2476,7 +2476,7 @@ write_priv_users(FILE *f, int user_id, int priv_level,
 
     fprintf(f, "<td>%s</td>", html_name);
 
-    flags = teamdb_get_flags(teamdb_state, i);
+    flags = teamdb_get_flags(serve_state.teamdb_state, i);
     team_modes[0] = 0;
     if ((flags & TEAM_BANNED)) {
       strcpy(team_modes, "banned");
@@ -2502,16 +2502,16 @@ write_priv_users(FILE *f, int user_id, int priv_level,
             runs_num, runs_total, clars_num, clars_total);
 
     if (t_extra) {
-      if (global->contestant_status_num > 0) {
-        if (t_extra->status < 0 || t_extra->status >= global->contestant_status_num) {
+      if (serve_state.global->contestant_status_num > 0) {
+        if (t_extra->status < 0 || t_extra->status >= serve_state.global->contestant_status_num) {
           fprintf(f, "<td>%d - ??? </td>", t_extra->status);
         } else {
-          fprintf(f, "<td>%d - %s</td>", t_extra->status, global->contestant_status_legend[t_extra->status]);
+          fprintf(f, "<td>%d - %s</td>", t_extra->status, serve_state.global->contestant_status_legend[t_extra->status]);
         }
       }
       fprintf(f, "<td>%d</td>", t_extra->warn_u);
     } else {
-      if (global->contestant_status_num > 0) {
+      if (serve_state.global->contestant_status_num > 0) {
         fprintf(f, "<td>&nbsp;</td>");
       }
       fprintf(f, "<td>&nbsp;</td>");
@@ -2579,17 +2579,17 @@ write_priv_user(FILE *f, int user_id, int priv_level,
                     _("Main page"), 0, _("View teams"), 0, 0, 0, 0);
   fprintf(f, "<hr/>\n");
 
-  if (!teamdb_lookup(teamdb_state, view_user_id)) {
+  if (!teamdb_lookup(serve_state.teamdb_state, view_user_id)) {
     fprintf(f, "<big>Invalid user id</big>\n");
     return 0;
   }
 
-  teamdb_export_team(teamdb_state, view_user_id, &info);
-  t_extra = team_extra_get_entry(team_extra_state, view_user_id);
-  run_get_team_usage(runlog_state, view_user_id, &runs_num, &runs_total);
-  clar_get_team_usage(clarlog_state, view_user_id, &clars_num, &clars_total);
-  pages_total = run_get_total_pages(runlog_state, view_user_id);
-  flags = teamdb_get_flags(teamdb_state, view_user_id);
+  teamdb_export_team(serve_state.teamdb_state, view_user_id, &info);
+  t_extra = team_extra_get_entry(serve_state.team_extra_state, view_user_id);
+  run_get_team_usage(serve_state.runlog_state, view_user_id, &runs_num, &runs_total);
+  clar_get_team_usage(serve_state.clarlog_state, view_user_id, &clars_num, &clars_total);
+  pages_total = run_get_total_pages(serve_state.runlog_state, view_user_id);
+  flags = teamdb_get_flags(serve_state.teamdb_state, view_user_id);
 
   // table has 4 columns
   fprintf(f, "<table>\n");
@@ -2600,12 +2600,12 @@ write_priv_user(FILE *f, int user_id, int priv_level,
 
   // user login
   fprintf(f, "<tr><td>%s:</td>", _("User Login"));
-  xml_unparse_text(f, "td", teamdb_get_login(teamdb_state, view_user_id), "");
+  xml_unparse_text(f, "td", teamdb_get_login(serve_state.teamdb_state, view_user_id), "");
   fprintf(f, "<td>&nbsp;</td><td>&nbsp</td></tr>\n");
 
   // user name
   fprintf(f, "<tr><td>%s:</td>", _("User Name"));
-  xml_unparse_text(f, "td", teamdb_get_name(teamdb_state, view_user_id), "");
+  xml_unparse_text(f, "td", teamdb_get_name(serve_state.teamdb_state, view_user_id), "");
   fprintf(f, "<td>&nbsp;</td><td>&nbsp</td></tr>\n");
 
   fprintf(f,"<tr><td>%s:</td><td>%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
@@ -2713,7 +2713,7 @@ write_priv_user(FILE *f, int user_id, int priv_level,
   fprintf(f,"<tr><td>%s:</td><td>%zu</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
           _("Number of printed pages"), pages_total);
 
-  if (global->contestant_status_num > 0) {
+  if (serve_state.global->contestant_status_num > 0) {
     // contestant status is editable when OPCAP_EDIT_REG is set
     allowed_edit = 0;
     if (opcaps_check(*pcaps, OPCAP_EDIT_REG) >= 0) allowed_edit = 1;
@@ -2726,19 +2726,19 @@ write_priv_user(FILE *f, int user_id, int priv_level,
     init_value = 0;
     if (!t_extra) {
       fprintf(f, "N/A");
-    } else if (t_extra->status < 0 || t_extra->status >= global->contestant_status_num) {
+    } else if (t_extra->status < 0 || t_extra->status >= serve_state.global->contestant_status_num) {
       fprintf(f, "%d - ???", t_extra->status);
     } else {
-      fprintf(f, "%d - %s", t_extra->status, global->contestant_status_legend[t_extra->status]);
+      fprintf(f, "%d - %s", t_extra->status, serve_state.global->contestant_status_legend[t_extra->status]);
       init_value = t_extra->status;
     }
     fprintf(f, "</td>");
     if (allowed_edit) {
       fprintf(f, "<td><select name=\"status\">\n");
-      for (i = 0; i < global->contestant_status_num; i++) {
+      for (i = 0; i < serve_state.global->contestant_status_num; i++) {
         fprintf(f, "<option value=\"%d\"", i);
         if (i == init_value) fprintf(f, " selected=\"1\"");
-        fprintf(f, ">%d - %s\n", i, global->contestant_status_legend[i]);
+        fprintf(f, ">%d - %s\n", i, serve_state.global->contestant_status_legend[i]);
       }
       fprintf(f, "</select></td>\n");
       fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td>\n", ACTION_CHANGE_CONTESTANT_STATUS, _("Set status"));
@@ -2767,7 +2767,7 @@ write_priv_user(FILE *f, int user_id, int priv_level,
     fprintf(f, "<h2>Warnings</h2>\n");
     for (i = 0; i < t_extra->warn_u; i++) {
       if (!(cur_warn = t_extra->warns[i])) continue;
-      fprintf(f, "<h3>Warning %d: issued: %s, issued by: %s (%d), issued from: %s</h3>", i + 1, xml_unparse_date(cur_warn->date), teamdb_get_login(teamdb_state, cur_warn->issuer_id), cur_warn->issuer_id, xml_unparse_ip(cur_warn->issuer_ip));
+      fprintf(f, "<h3>Warning %d: issued: %s, issued by: %s (%d), issued from: %s</h3>", i + 1, xml_unparse_date(cur_warn->date), teamdb_get_login(serve_state.teamdb_state, cur_warn->issuer_id), cur_warn->issuer_id, xml_unparse_ip(cur_warn->issuer_ip));
       fprintf(f, "<p>User explanation:\n");
       xml_unparse_text(f, "pre", cur_warn->text, "");
       fprintf(f, "<p>Judge's comment:\n");
@@ -2837,10 +2837,10 @@ write_runs_dump(FILE *f, const unsigned char *url,
     fprintf(f, "Content-type: text/plain; charset=%s\n\n", charset);
   }
 
-  total_runs = run_get_total(runlog_state);
-  start_time = run_get_start_time(runlog_state);
+  total_runs = run_get_total(serve_state.runlog_state);
+  start_time = run_get_start_time(serve_state.runlog_state);
   for (i = 0; i < total_runs; i++) {
-    if (run_get_entry(runlog_state, i, &re) < 0) {
+    if (run_get_entry(serve_state.runlog_state, i, &re) < 0) {
       fprintf(f, "%d;Cannot read entry!\n", i);
       continue;
     }
@@ -2866,8 +2866,8 @@ write_runs_dump(FILE *f, const unsigned char *url,
             pts->tm_hour,
             pts->tm_min,
             pts->tm_sec);
-    if (global->virtual) {
-      start_time = run_get_virtual_start_time(runlog_state, re.team);
+    if (serve_state.global->virtual) {
+      start_time = run_get_virtual_start_time(serve_state.runlog_state, re.team);
     }
 
     dur = re.timestamp - start_time;
@@ -2890,17 +2890,17 @@ write_runs_dump(FILE *f, const unsigned char *url,
     fprintf(f, ";");
 
     fprintf(f, "%d;", re.team);
-    if (!(s = teamdb_get_login(teamdb_state, re.team))) {
+    if (!(s = teamdb_get_login(serve_state.teamdb_state, re.team))) {
       fprintf(f, "!INVALID TEAM!;");
     } else {
       fprintf(f, "%s;", s);
     }
-    if (!(s = teamdb_get_name(teamdb_state, re.team))) {
+    if (!(s = teamdb_get_name(serve_state.teamdb_state, re.team))) {
       fprintf(f, "!INVALID TEAM!;");
     } else {
       fprintf(f, "%s;", s);
     }
-    j = teamdb_get_flags(teamdb_state, re.team);
+    j = teamdb_get_flags(serve_state.teamdb_state, re.team);
     s = "";
     if ((j & TEAM_INVISIBLE)) s = "I";
     fprintf(f, "%s;", s);
@@ -2911,16 +2911,16 @@ write_runs_dump(FILE *f, const unsigned char *url,
     if ((j & TEAM_LOCKED)) s = "L";
     fprintf(f, "%s;", s);
 
-    if (re.problem > 0 && re.problem <= max_prob
-        && probs[re.problem] && probs[re.problem]->short_name) {
-      fprintf(f, "%s;", probs[re.problem]->short_name);
+    if (re.problem > 0 && re.problem <= serve_state.max_prob
+        && serve_state.probs[re.problem] && serve_state.probs[re.problem]->short_name) {
+      fprintf(f, "%s;", serve_state.probs[re.problem]->short_name);
     } else {
       fprintf(f, "!INVALID PROBLEM %d!;", re.problem);
     }
 
-    if (re.language > 0 && re.language <= max_lang
-        && langs[re.language] && langs[re.language]->short_name) {
-      fprintf(f, "%s;", langs[re.language]->short_name);
+    if (re.language > 0 && re.language <= serve_state.max_lang
+        && serve_state.langs[re.language] && serve_state.langs[re.language]->short_name) {
+      fprintf(f, "%s;", serve_state.langs[re.language]->short_name);
     } else {
       fprintf(f, "!INVALID LANGUAGE %d!;", re.language);
     }
@@ -2941,10 +2941,10 @@ write_runs_dump(FILE *f, const unsigned char *url,
 void
 write_raw_standings(FILE *f, unsigned char const *charset)
 {
-  if (global->score_system_val == SCORE_KIROV
-      || global->score_system_val == SCORE_OLYMPIAD)
+  if (serve_state.global->score_system_val == SCORE_KIROV
+      || serve_state.global->score_system_val == SCORE_OLYMPIAD)
     do_write_kirov_standings(f, 0, 1, 0, 0, 1, 0);
-  else if (global->score_system_val == SCORE_MOSCOW)
+  else if (serve_state.global->score_system_val == SCORE_MOSCOW)
     do_write_moscow_standings(f, 0, 1, 0, 0, 0, 1, 0);
   else
     do_write_standings(f, 1, 0, 0, 0, 1, 0);
@@ -2959,31 +2959,31 @@ write_raw_source(FILE *f, const unsigned char *self_url, int run_id)
   size_t src_len = 0;
   struct run_entry info;
 
-  if (run_id < 0 || run_id >= run_get_total(runlog_state))
+  if (run_id < 0 || run_id >= run_get_total(serve_state.runlog_state))
     return -SRV_ERR_BAD_RUN_ID;
-  run_get_entry(runlog_state, run_id, &info);
-  if (info.language <= 0 || info.language > max_lang
-      || !langs[info.language]) return -SRV_ERR_BAD_LANG_ID;
+  run_get_entry(serve_state.runlog_state, run_id, &info);
+  if (info.language <= 0 || info.language > serve_state.max_lang
+      || !serve_state.langs[info.language]) return -SRV_ERR_BAD_LANG_ID;
 
   src_flags = archive_make_read_path(src_path, sizeof(src_path),
-                                     global->run_archive_dir, run_id, 0, 1);
+                                     serve_state.global->run_archive_dir, run_id, 0, 1);
   if (src_flags < 0) return -SRV_ERR_FILE_NOT_EXIST;
   if (generic_read_file(&src_text, 0, &src_len, src_flags, 0, src_path, "")<0)
     return -SRV_ERR_SYSTEM_ERROR;
 
   if (self_url && *self_url) {
-    if (langs[info.language]->content_type) {
-      fprintf(f, "Content-type: %s\n", langs[info.language]->content_type);
+    if (serve_state.langs[info.language]->content_type) {
+      fprintf(f, "Content-type: %s\n", serve_state.langs[info.language]->content_type);
       fprintf(f, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
-              run_id, langs[info.language]->src_sfx);
-    } else if (langs[info.language]->binary) {
+              run_id, serve_state.langs[info.language]->src_sfx);
+    } else if (serve_state.langs[info.language]->binary) {
       fprintf(f, "Content-type: application/octet-stream\n\n");
       fprintf(f, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
-              run_id, langs[info.language]->src_sfx);
+              run_id, serve_state.langs[info.language]->src_sfx);
     } else {
       fprintf(f, "Content-type: text/plain\n");
       fprintf(f, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
-              run_id, langs[info.language]->src_sfx);
+              run_id, serve_state.langs[info.language]->src_sfx);
     }
   }
 
@@ -3000,20 +3000,20 @@ write_raw_report(FILE *f, const unsigned char *self_url, int run_id,
   char *src_text = 0;
   size_t src_len = 0;
   struct run_entry info;
-  const unsigned char *report_dir = global->report_archive_dir;
+  const unsigned char *report_dir = serve_state.global->report_archive_dir;
 
-  if (team_report_flag && global->team_enable_rep_view) {
-    report_dir = global->team_report_archive_dir;
-    if (global->team_show_judge_report) {
-      report_dir = global->report_archive_dir;
+  if (team_report_flag && serve_state.global->team_enable_rep_view) {
+    report_dir = serve_state.global->team_report_archive_dir;
+    if (serve_state.global->team_show_judge_report) {
+      report_dir = serve_state.global->report_archive_dir;
     }
   }
 
-  if (run_id < 0 || run_id >= run_get_total(runlog_state))
+  if (run_id < 0 || run_id >= run_get_total(serve_state.runlog_state))
     return -SRV_ERR_BAD_RUN_ID;
-  run_get_entry(runlog_state, run_id, &info);
-  if (info.language <= 0 || info.language > max_lang
-      || !langs[info.language]) return -SRV_ERR_BAD_LANG_ID;
+  run_get_entry(serve_state.runlog_state, run_id, &info);
+  if (info.language <= 0 || info.language > serve_state.max_lang
+      || !serve_state.langs[info.language]) return -SRV_ERR_BAD_LANG_ID;
 
   src_flags = archive_make_read_path(src_path, sizeof(src_path),
                                      report_dir, run_id, 0, 1);
@@ -3058,7 +3058,7 @@ write_tests(FILE *f, int cmd, int run_id, int test_num)
   unsigned char cur_digest[32];
   int good_digest_flag = 1;
 
-  if (run_id < 0 || run_id >= run_get_total(runlog_state)) {
+  if (run_id < 0 || run_id >= run_get_total(serve_state.runlog_state)) {
     errcode = SRV_ERR_BAD_RUN_ID;
     goto failure;
   }
@@ -3068,10 +3068,10 @@ write_tests(FILE *f, int cmd, int run_id, int test_num)
   }
 
   if ((rep_flag = archive_make_read_path(rep_path, sizeof(rep_path),
-                                         global->xml_report_archive_dir, run_id,
+                                         serve_state.global->xml_report_archive_dir, run_id,
                                          0, 1)) < 0
       && (rep_flag = archive_make_read_path(rep_path, sizeof(rep_path),
-                                            global->report_archive_dir, run_id,
+                                            serve_state.global->report_archive_dir, run_id,
                                             0, 1)) < 0) {
     errcode = SRV_ERR_FILE_NOT_EXIST;
     goto failure;
@@ -3097,11 +3097,11 @@ write_tests(FILE *f, int cmd, int run_id, int test_num)
 
   if (cmd == SRV_CMD_VIEW_TEST_ANSWER || cmd == SRV_CMD_VIEW_TEST_INPUT
       || cmd == SRV_CMD_VIEW_TEST_INFO) {
-    if (run_get_entry(runlog_state, run_id, &re) < 0) {
+    if (run_get_entry(serve_state.runlog_state, run_id, &re) < 0) {
       errcode = SRV_ERR_SYSTEM_ERROR;
       goto failure;
     }
-    if (re.problem <= 0 || re.problem > max_prob || !(prb = probs[re.problem])) {
+    if (re.problem <= 0 || re.problem > serve_state.max_prob || !(prb = serve_state.probs[re.problem])) {
       errcode = SRV_ERR_BAD_PROB_ID;
       goto failure;
     }
@@ -3214,7 +3214,7 @@ write_tests(FILE *f, int cmd, int run_id, int test_num)
     }
 
     rep_flag = archive_make_read_path(arch_path, sizeof(arch_path),
-                                      global->full_archive_dir, run_id, 0, 0);
+                                      serve_state.global->full_archive_dir, run_id, 0, 0);
     if (rep_flag < 0) {
       errcode = SRV_ERR_SYSTEM_ERROR;
       goto failure;
@@ -3278,13 +3278,13 @@ write_audit_log(FILE *f, int run_id)
   char *audit_text = 0;
   size_t audit_text_size = 0;
 
-  if (run_id < 0 || run_id >= run_get_total(runlog_state)) {
+  if (run_id < 0 || run_id >= run_get_total(serve_state.runlog_state)) {
     errcode = SRV_ERR_BAD_RUN_ID;
     goto failure;
   }
 
   if ((rep_flag = archive_make_read_path(audit_log_path, sizeof(audit_log_path),
-                                         global->audit_log_dir, run_id, 0, 0)) < 0) {
+                                         serve_state.global->audit_log_dir, run_id, 0, 0)) < 0) {
     goto empty_log;
   }
 
@@ -3326,7 +3326,7 @@ is_registered_today(struct userlist_user *user, time_t from_time,
   if (!user || !user->contests) return 0;
   uc = (struct userlist_contest*) user->contests->first_down;
   while (uc) {
-    if (uc->id == global->contest_id
+    if (uc->id == serve_state.global->contest_id
         && uc->date >= from_time
         && uc->date < to_time)
       return 1;
@@ -3383,14 +3383,14 @@ generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
    * u_ind[0..u_tot-1] - index array:   team_idx -> team_id
    * u_rev[0..u_max-1] - reverse index: team_id -> team_idx
    */
-  u_max = teamdb_get_max_team_id(teamdb_state) + 1;
+  u_max = teamdb_get_max_team_id(serve_state.teamdb_state) + 1;
   XALLOCAZ(u_ind, u_max);
   XALLOCAZ(u_rev, u_max);
   XALLOCAZ(u_reg, u_max);
   for (i = 1, u_tot = 0; i < u_max; i++) {
     u_rev[i] = -1;
-    if (teamdb_lookup(teamdb_state, i)
-        && teamdb_export_team(teamdb_state, i, &uinfo) >= 0) {
+    if (teamdb_lookup(serve_state.teamdb_state, i)
+        && teamdb_export_team(serve_state.teamdb_state, i, &uinfo) >= 0) {
       if (is_registered_today(uinfo.user, from_time, to_time)) {
         total_reg++;
         u_reg[u_tot] = 1;
@@ -3405,19 +3405,19 @@ generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
    * p_ind[0..p_tot-1] - index array:   prob_idx -> prob_id
    * p_rev[0..p_max-1] - reverse index: prob_id -> prob_idx
    */
-  p_max = max_prob + 1;
+  p_max = serve_state.max_prob + 1;
   XALLOCAZ(p_ind, p_max);
   XALLOCAZ(p_rev, p_max);
   for (i = 1, p_tot = 0; i < p_max; i++) {
     p_rev[i] = -1;
-    if (probs[i]) {
+    if (serve_state.probs[i]) {
       p_rev[i] = p_tot;
       p_ind[p_tot++] = i;
     }
   }
 
-  r_tot = run_get_total(runlog_state);
-  runs = run_get_entries_ptr(runlog_state);
+  r_tot = run_get_total(serve_state.runlog_state);
+  runs = run_get_entries_ptr(serve_state.runlog_state);
 
   if (!u_tot || !p_tot || !r_tot) return;
 
@@ -3441,9 +3441,9 @@ generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
   XALLOCAZ(u_ce, u_tot);
   XALLOCA(u_sort, u_tot);
 
-  XALLOCAZ(l_total, max_lang + 1);
-  XALLOCAZ(l_ok, max_lang + 1);
-  XALLOCAZ(l_ce, max_lang + 1);
+  XALLOCAZ(l_total, serve_state.max_lang + 1);
+  XALLOCAZ(l_ok, serve_state.max_lang + 1);
+  XALLOCAZ(l_ce, serve_state.max_lang + 1);
 
   XALLOCAZ(p_total, p_tot);
   XALLOCAZ(p_ok, p_tot);
@@ -3502,8 +3502,8 @@ generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
       total_afterok++;
       continue;
     }
-    if (rcur->language <= 0 || rcur->language > max_lang
-        || !langs[rcur->language]) {
+    if (rcur->language <= 0 || rcur->language > serve_state.max_lang
+        || !serve_state.langs[rcur->language]) {
       fprintf(f, "error: run %d has invalid lang_id %d\n",
               i, rcur->language);
       total_errors++;
@@ -3590,9 +3590,9 @@ generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
     }
   }
 
-  clar_total = clar_get_total(clarlog_state);
+  clar_total = clar_get_total(serve_state.clarlog_state);
   for (i = 0; i < clar_total; i++) {
-    if (clar_get_record(clarlog_state, i, &clar_time, NULL, NULL,
+    if (clar_get_record(serve_state.clarlog_state, i, &clar_time, NULL, NULL,
                         &clar_from, &clar_to, &clar_flags, NULL, NULL,NULL) < 0)
       continue;
     if (clar_time >= to_time) break;
@@ -3608,8 +3608,8 @@ generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
     for (i = 0; i < u_tot; i++) {
       if (!u_reg[i]) continue;
       u = u_ind[i];
-      if (!(login = teamdb_get_login(teamdb_state, u))) login = "";
-      if (!(name = teamdb_get_name(teamdb_state, u))) name = "";
+      if (!(login = teamdb_get_login(serve_state.teamdb_state, u))) login = "";
+      if (!(name = teamdb_get_name(serve_state.teamdb_state, u))) name = "";
       fprintf(f, "  %-6d %-15.15s %-30.30s\n", u, login, name);
     }
     fprintf(f, "\n");
@@ -3666,7 +3666,7 @@ generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
     for (i = 0; i < p_tot; i++) {
       p = p_ind[i];
       snprintf(probname, sizeof(probname), "%s: %s",
-               probs[p]->short_name, probs[p]->long_name);
+               serve_state.probs[p]->short_name, serve_state.probs[p]->long_name);
       fprintf(f, "%-40.40s %-7d %-7d\n", probname, p_total[i], p_ok[i]);
     }
     fprintf(f, "\n");
@@ -3675,10 +3675,11 @@ generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
   if (total_runs > 0) {
     fprintf(f, "%-40.40s %-7.7s %-7.7s %-7.7s\n",
             "Problem", "Total", "CE", "Success");
-    for (i = 1; i <= max_lang; i++) {
-      if (!langs[i]) continue;
+    for (i = 1; i <= serve_state.max_lang; i++) {
+      if (!serve_state.langs[i]) continue;
       snprintf(langname, sizeof(langname), "%s - %s",
-               langs[i]->short_name, langs[i]->long_name);
+               serve_state.langs[i]->short_name,
+               serve_state.langs[i]->long_name);
       fprintf(f, "%-40.40s %-7d %-7d %-7d\n",
               langname, l_total[i], l_ce[i], l_ok[i]);
     }
@@ -3708,8 +3709,8 @@ generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
       if (!u_total[j]) break;
 
       u = u_ind[j];
-      name = teamdb_get_name(teamdb_state, u);
-      if (!name) name = teamdb_get_login(teamdb_state, u);
+      name = teamdb_get_name(serve_state.teamdb_state, u);
+      if (!name) name = teamdb_get_login(serve_state.teamdb_state, u);
       if (!name) name = "";
 
       fprintf(f, "%-7d %-24.24s %-7d %-7d %-7d %d/%d/%d %d/%d/%d/%d/%d/%d\n",

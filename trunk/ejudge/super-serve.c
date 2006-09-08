@@ -30,6 +30,7 @@
 #include "super-serve.h"
 #include "super_html.h"
 #include "prepare.h"
+#include "serve_state.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/osdeps.h>
@@ -125,6 +126,8 @@ static int cur_client_id = 0;
 static sigset_t original_mask;
 static int userlist_uid = 0;
 static unsigned char *userlist_login = 0;
+
+struct serve_state serve_state;
 
 static struct client_state *
 client_state_new(int fd)

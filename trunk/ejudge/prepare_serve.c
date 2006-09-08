@@ -18,13 +18,13 @@
 #include "config.h"
 
 #include "prepare.h"
-#include "prepare_vars.h"
 #include "settings.h"
 #include "varsubst.h"
 #include "version.h"
 #include "prepare_serve.h"
 #include "teamdb.h"
 #include "errlog.h"
+#include "serve_state.h"
 
 #include <reuse/xalloc.h>
 
@@ -32,15 +32,15 @@ int
 find_variant(int user_id, int prob_id)
 {
   int i, new_vint;
-  struct variant_map *pmap = global->variant_map;
+  struct variant_map *pmap = serve_state.global->variant_map;
 
   if (!pmap) return 0;
-  if (prob_id <= 0 || prob_id > max_prob || !probs[prob_id]) return 0;
-  if (probs[prob_id]->variant_num <= 0) return 0;
+  if (prob_id <= 0 || prob_id > serve_state.max_prob || !serve_state.probs[prob_id]) return 0;
+  if (serve_state.probs[prob_id]->variant_num <= 0) return 0;
   if (!pmap->prob_map[prob_id]) return 0;
 
-  teamdb_refresh(teamdb_state);
-  new_vint = teamdb_get_vintage(teamdb_state);
+  teamdb_refresh(serve_state.teamdb_state);
+  new_vint = teamdb_get_vintage(serve_state.teamdb_state);
   if (new_vint != pmap->vintage || !pmap->user_map_size || !pmap->user_map) {
     info("find_variant: new vintage: %d, old: %d, updating variant map",
          new_vint, pmap->vintage);
@@ -48,11 +48,11 @@ find_variant(int user_id, int prob_id)
     pmap->user_map_size = 0;
     pmap->user_map = 0;
 
-    pmap->user_map_size = teamdb_get_max_team_id(teamdb_state) + 1;
+    pmap->user_map_size = teamdb_get_max_team_id(serve_state.teamdb_state) + 1;
     XCALLOC(pmap->user_map, pmap->user_map_size);
 
     for (i = 0; i < pmap->u; i++) {
-      pmap->v[i].user_id = teamdb_lookup_login(teamdb_state, pmap->v[i].login);
+      pmap->v[i].user_id = teamdb_lookup_login(serve_state.teamdb_state, pmap->v[i].login);
       if (pmap->v[i].user_id < 0) pmap->v[i].user_id = 0;
       if (!pmap->v[i].user_id) continue;
       if (pmap->v[i].user_id >= pmap->user_map_size) continue;
@@ -70,24 +70,24 @@ find_variant(int user_id, int prob_id)
 int
 find_user_priority_adjustment(int user_id)
 {
-  struct user_adjustment_map *pmap = global->user_adjustment_map;
-  struct user_adjustment_info *pinfo = global->user_adjustment_info;
+  struct user_adjustment_map *pmap = serve_state.global->user_adjustment_map;
+  struct user_adjustment_info *pinfo = serve_state.global->user_adjustment_info;
   int new_vint, i;
 
   if (!pinfo) return 0;
-  new_vint = teamdb_get_vintage(teamdb_state);
+  new_vint = teamdb_get_vintage(serve_state.teamdb_state);
   if (!pmap || new_vint != pmap->vintage) {
     if (!pmap) {
       XCALLOC(pmap, 1);
-      global->user_adjustment_map = pmap;
+      serve_state.global->user_adjustment_map = pmap;
     }
     xfree(pmap->user_map);
 
-    pmap->user_map_size = teamdb_get_max_team_id(teamdb_state) + 1;
+    pmap->user_map_size = teamdb_get_max_team_id(serve_state.teamdb_state) + 1;
     XCALLOC(pmap->user_map, pmap->user_map_size);
 
     for (i = 0; pinfo[i].login; i++) {
-      pinfo[i].id = teamdb_lookup_login(teamdb_state, pinfo[i].login);
+      pinfo[i].id = teamdb_lookup_login(serve_state.teamdb_state, pinfo[i].login);
       if (pinfo[i].id <= 0 || pinfo[i].id >= pmap->user_map_size) {
         pinfo[i].id = 0;
         continue;
@@ -110,26 +110,26 @@ prepare_serve_defaults(void)
   int i;
 
 #if defined EJUDGE_CONTESTS_DIR
-  if (!global->contests_dir[0]) {
-    snprintf(global->contests_dir, sizeof(global->contests_dir),
+  if (!serve_state.global->contests_dir[0]) {
+    snprintf(serve_state.global->contests_dir, sizeof(serve_state.global->contests_dir),
              "%s", EJUDGE_CONTESTS_DIR);
   }
 #endif /* EJUDGE_CONTESTS_DIR */
-  if (!global->contests_dir[0]) {
+  if (!serve_state.global->contests_dir[0]) {
     err("global.contests_dir must be set");
     return -1;
   }
-  if ((i = contests_set_directory(global->contests_dir)) < 0) {
-    err("invalid contests directory '%s': %s", global->contests_dir,
+  if ((i = contests_set_directory(serve_state.global->contests_dir)) < 0) {
+    err("invalid contests directory '%s': %s", serve_state.global->contests_dir,
         contests_strerror(-i));
     return -1;
   }
-  if ((i = contests_get(global->contest_id, &cur_contest)) < 0) {
+  if ((i = contests_get(serve_state.global->contest_id, &serve_state.cur_contest)) < 0) {
     err("cannot load contest information: %s",
         contests_strerror(-i));
     return -1;
   }
-  snprintf(global->name, sizeof(global->name), "%s", cur_contest->name);
+  snprintf(serve_state.global->name, sizeof(serve_state.global->name), "%s", serve_state.cur_contest->name);
   return 0;
 }
 

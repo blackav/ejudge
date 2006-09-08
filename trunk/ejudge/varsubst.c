@@ -1,7 +1,7 @@
 /* -*- c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,8 +16,8 @@
  */
 
 #include "varsubst.h"
-#include "prepare_vars.h"
 #include "errlog.h"
+#include "serve_state.h"
 
 #include <reuse/xalloc.h>
 
@@ -46,7 +46,7 @@ get_var_value(const unsigned char *varname,
         varname, global_vars[i].type);
     return 0;
   }
-  valstr = XPDEREF(unsigned char, global, global_vars[i].offset);
+  valstr = XPDEREF(unsigned char, serve_state.global, global_vars[i].offset);
   return valstr;
 }
 
@@ -125,7 +125,7 @@ varsubst_heap(unsigned char *in_str,
   return out_str;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

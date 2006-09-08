@@ -27,6 +27,7 @@
 #include "clarlog.h"
 #include "userlist_clnt.h"
 #include "userlist_proto.h"
+#include "serve_state.h"
 
 #include <reuse/xalloc.h>
 #include <reuse/osdeps.h>
@@ -39,6 +40,7 @@ static struct ejudge_cfg  *config;
 static struct userlist_list *userlist;
 static clarlog_state_t clarlog_state;
 static runlog_state_t runlog_state;
+struct serve_state serve_state;
 
 struct vcntslist
 {
