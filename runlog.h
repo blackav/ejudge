@@ -61,10 +61,15 @@ enum
 enum { RUN_LOG_CREATE = 1, RUN_LOG_READONLY = 2 };
 
 struct teamdb_state;
-void run_init(struct teamdb_state *);
+struct runlog_state;
+typedef struct runlog_state *runlog_state_t;
 
-int run_open(const char *path, int flags, time_t init_duration);
-int run_add_record(time_t         timestamp,
+runlog_state_t run_init(struct teamdb_state *);
+
+int run_open(runlog_state_t state, const char *path, int flags,
+             time_t init_duration);
+int run_add_record(runlog_state_t state,
+                   time_t         timestamp,
                    int            nsec,
                    size_t         size,
                    ruint32_t      sha1[5],
@@ -75,33 +80,33 @@ int run_add_record(time_t         timestamp,
                    int            language,
                    int            variant,
                    int            is_hidden);
-int run_start_contest(time_t);
-time_t run_get_start_time(void);
-int run_change_status(int runid, int newstatus, int newtest, int newscore,
-                      int judge_id);
-int run_get_status(int runid);
-void run_get_times(time_t *, time_t *, time_t *, time_t *);
-int  run_set_duration(time_t);
+int run_start_contest(runlog_state_t, time_t);
+time_t run_get_start_time(runlog_state_t);
+int run_change_status(runlog_state_t state, int runid, int newstatus,
+                      int newtest, int newscore, int judge_id);
+int run_get_status(runlog_state_t state, int runid);
+void run_get_times(runlog_state_t, time_t *, time_t *, time_t *, time_t *);
+int  run_set_duration(runlog_state_t, time_t);
 
-time_t run_get_stop_time(void);
-int    run_stop_contest(time_t);
-int    run_sched_contest(time_t);
-int    run_get_total(void);
+time_t run_get_stop_time(runlog_state_t);
+int    run_stop_contest(runlog_state_t, time_t);
+int    run_sched_contest(runlog_state_t, time_t);
+int    run_get_total(runlog_state_t);
 
-time_t run_get_duration(void);
+time_t run_get_duration(runlog_state_t);
 
-void run_get_team_usage(int, int *, size_t*);
-int  run_get_attempts(int, int *, int *, int);
+void run_get_team_usage(runlog_state_t, int, int *, size_t*);
+int  run_get_attempts(runlog_state_t, int, int *, int *, int);
 char *run_status_str(int, char *, int);
 
-int run_get_fog_period(time_t, int, int);
-int run_reset(time_t);
-int runlog_flush(void);
+int run_get_fog_period(runlog_state_t, time_t, int, int);
+int run_reset(runlog_state_t, time_t);
+int runlog_flush(runlog_state_t);
 
 unsigned char *run_unparse_ip(ej_ip_t ip);
 ej_ip_t run_parse_ip(unsigned char const *buf);
 
-int run_check_duplicate(int run_id);
+int run_check_duplicate(runlog_state_t, int run_id);
 
 struct run_header
 {
@@ -160,43 +165,46 @@ struct run_entry
   rint32_t       nsec;          /* nanosecond component of timestamp */
 };
 
-void run_get_header(struct run_header *out);
-void run_get_all_entries(struct run_entry *out);
-int run_get_entry(int run_id, struct run_entry *out);
-int run_set_entry(int run_id, unsigned int mask, struct run_entry const *in);
-int run_is_readonly(int run_id);
-const struct run_entry *run_get_entries_ptr(void);
+void run_get_header(runlog_state_t, struct run_header *out);
+void run_get_all_entries(runlog_state_t, struct run_entry *out);
+int run_get_entry(runlog_state_t, int run_id, struct run_entry *out);
+int run_set_entry(runlog_state_t, int run_id, unsigned int mask,
+                  struct run_entry const *in);
+int run_is_readonly(runlog_state_t, int run_id);
+const struct run_entry *run_get_entries_ptr(runlog_state_t);
 
-time_t run_get_virtual_start_time(int user_id);
-time_t run_get_virtual_stop_time(int user_id, time_t cur_time);
-int run_get_virtual_status(int user_id);
-int run_virtual_start(int user_id, time_t, ej_ip_t, int);
-int run_virtual_stop(int user_id, time_t, ej_ip_t, int);
+time_t run_get_virtual_start_time(runlog_state_t, int user_id);
+time_t run_get_virtual_stop_time(runlog_state_t, int user_id, time_t cur_time);
+int run_get_virtual_status(runlog_state_t, int user_id);
+int run_virtual_start(runlog_state_t, int user_id, time_t, ej_ip_t, int);
+int run_virtual_stop(runlog_state_t, int user_id, time_t, ej_ip_t, int);
 
-int run_clear_entry(int run_id);
-int run_squeeze_log(void);
-void run_clear_variables(void);
+int run_clear_entry(runlog_state_t, int run_id);
+int run_squeeze_log(runlog_state_t);
+void run_clear_variables(runlog_state_t);
 
-int run_write_xml(FILE *f, int, time_t);
+int run_write_xml(runlog_state_t, FILE *f, int, time_t);
 int unparse_runlog_xml(struct teamdb_state *, FILE *, const struct run_header*,
                        size_t, const struct run_entry*, int, time_t);
 int parse_runlog_xml(const unsigned char *, struct run_header *,
                      size_t *, struct run_entry **);
-void runlog_import_xml(struct teamdb_state *, FILE *flog, int flags,
+void runlog_import_xml(struct teamdb_state *, struct runlog_state *,
+                       FILE *flog, int flags,
                        const unsigned char *in_xml);
 
-int run_backup(const unsigned char *path);
-int run_set_runlog(int total_entries, struct run_entry *entries);
+int run_backup(runlog_state_t, const unsigned char *path);
+int run_set_runlog(runlog_state_t, int total_entries,
+                   struct run_entry *entries);
 
 int runlog_check(FILE *, struct run_header *, size_t, struct run_entry *);
 
-int run_get_pages(int run_id);
-int run_set_pages(int run_id, int pages);
-int run_get_total_pages(int run_id);
+int run_get_pages(runlog_state_t, int run_id);
+int run_set_pages(runlog_state_t, int run_id, int pages);
+int run_get_total_pages(runlog_state_t, int run_id);
 
-int run_find(int first_run, int last_run,
+int run_find(runlog_state_t, int first_run, int last_run,
              int team_id, int prob_id, int lang_id);
-int run_undo_add_record(int run_id);
+int run_undo_add_record(runlog_state_t, int run_id);
 int run_is_failed_attempt(int status);
 int run_is_valid_test_status(int status);
 int run_is_team_report_available(int status);
@@ -206,6 +214,6 @@ int run_status_to_str_short(unsigned char *buf, size_t size, int val);
 int run_str_short_to_status(const unsigned char *str, int *pr);
 
 #define RUN_TOO_MANY 100000
-int run_get_prev_successes(int run_id);
+int run_get_prev_successes(runlog_state_t, int run_id);
 
 #endif /* __RUNLOG_H__ */

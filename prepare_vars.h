@@ -50,4 +50,7 @@ extern struct teamdb_state *teamdb_state;
 /* team_extra internal state */
 extern struct team_extra_state *team_extra_state;
 
+/* runlog internal state */
+extern struct runlog_state *runlog_state;
+
 #endif /* __PREPARE_VARS_H__ */

@@ -44,8 +44,8 @@ print_banner_page(const unsigned char *banner_path, int run_id,
   int i, variant;
   struct teamdb_export teaminfo;
 
-  if (run_id < 0 || run_id >= run_get_total()) goto cleanup;
-  run_get_entry(run_id, &info);
+  if (run_id < 0 || run_id >= run_get_total(runlog_state)) goto cleanup;
+  run_get_entry(runlog_state, run_id, &info);
   if (info.status == RUN_VIRTUAL_START
       || info.status == RUN_VIRTUAL_STOP
       || info.status == RUN_EMPTY) {
@@ -53,7 +53,7 @@ print_banner_page(const unsigned char *banner_path, int run_id,
   }
   if (teamdb_export_team(teamdb_state, info.team, &teaminfo) < 0)
     return -1;
-  start_time = run_get_start_time();
+  start_time = run_get_start_time(runlog_state);
 
   if (!(f = fopen(banner_path, "w"))) goto cleanup;
   fprintf(f, "\n\n\n\n\n\n\n\n\n\n");
@@ -119,11 +119,11 @@ do_print_run(int run_id, int is_privileged, int user_id)
   struct teamdb_export teaminfo;
   unsigned char *printer_name = 0;
 
-  if (run_id < 0 || run_id >= run_get_total()) {
+  if (run_id < 0 || run_id >= run_get_total(runlog_state)) {
     errcode = -SRV_ERR_BAD_RUN_ID;
     goto cleanup;
   }
-  run_get_entry(run_id, &info);
+  run_get_entry(runlog_state, run_id, &info);
   if (info.status == RUN_VIRTUAL_START
       || info.status == RUN_VIRTUAL_STOP
       || info.status == RUN_EMPTY) {
@@ -218,11 +218,11 @@ do_print_run(int run_id, int is_privileged, int user_id)
   if (pages_num <= 0) goto cleanup;
 
   if (!is_privileged) {
-    if (pages_num + run_get_total_pages(info.team) > global->team_page_quota) {
+    if (pages_num + run_get_total_pages(runlog_state, info.team) > global->team_page_quota) {
       errcode = -SRV_ERR_PAGES_QUOTA;
       goto cleanup;
     }
-    run_set_pages(run_id, pages_num);
+    run_set_pages(runlog_state, run_id, pages_num);
   }
 
   if (!(tsk = task_New())) goto cleanup;

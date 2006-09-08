@@ -538,11 +538,11 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
     env.langs = langs;
     env.maxprob = max_prob;
     env.probs = probs;
-    env.rtotal = run_get_total();
-    run_get_header(&env.rhead);
+    env.rtotal = run_get_total(runlog_state);
+    run_get_header(runlog_state, &env.rhead);
     env.rentries = alloca(env.rtotal * sizeof(env.rentries[0]));
     env.cur_time = time(0);
-    run_get_all_entries(env.rentries);
+    run_get_all_entries(runlog_state, env.rentries);
 
     match_idx = alloca((env.rtotal + 1) * sizeof(match_idx[0]));
     memset(match_idx, 0, (env.rtotal + 1) * sizeof(match_idx[0]));
@@ -800,13 +800,13 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
       if (global->score_system_val == SCORE_KIROV && pe->status == RUN_OK
           && pe->problem > 0 && pe->problem <= max_prob && !pe->is_hidden
           && probs[pe->problem] && probs[pe->problem]->score_bonus_total > 0) {
-        if ((prev_successes = run_get_prev_successes(rid)) < 0)
+        if ((prev_successes = run_get_prev_successes(runlog_state, rid)) < 0)
           prev_successes = RUN_TOO_MANY;
       }
 
       attempts = 0; disq_attempts = 0;
       if (global->score_system_val == SCORE_KIROV && !pe->is_hidden) {
-        run_get_attempts(rid, &attempts, &disq_attempts,
+        run_get_attempts(runlog_state, rid, &attempts, &disq_attempts,
                          global->ignore_compile_errors);
       }
       run_time = pe->timestamp;
@@ -821,7 +821,7 @@ write_priv_all_runs(FILE *f, int user_id, struct user_filter_info *u,
       }
       start_time = env.rhead.start_time;
       if (global->virtual) {
-        start_time = run_get_virtual_start_time(pe->team);
+        start_time = run_get_virtual_start_time(runlog_state, pe->team);
       }
       if (!start_time) run_time = 0;
       if (start_time > run_time) run_time = start_time;
@@ -1054,7 +1054,7 @@ write_all_clars(FILE *f, struct user_filter_info *u,
 
   fprintf(f, "<hr><h2>%s</h2>\n", _("Messages"));
 
-  start = run_get_start_time();
+  start = run_get_start_time(runlog_state);
   total = clar_get_total(clarlog_state);
   if (!mode_clar) mode_clar = u->prev_mode_clar;
   if (!first_clar) first_clar = u->prev_first_clar;
@@ -1300,12 +1300,13 @@ write_priv_source(FILE *f, int user_id, int priv_level,
   unsigned char filtbuf3[512];
   unsigned char *ps1, *ps2;
 
-  if (run_id < 0 || run_id >= run_get_total()) return -SRV_ERR_BAD_RUN_ID;
-  run_get_entry(run_id, &info);
+  if (run_id < 0 || run_id >= run_get_total(runlog_state))
+    return -SRV_ERR_BAD_RUN_ID;
+  run_get_entry(runlog_state, run_id, &info);
 
   src_flags = archive_make_read_path(src_path, sizeof(src_path),
                                      global->run_archive_dir, run_id, 0, 1);
-  start_time = run_get_start_time();
+  start_time = run_get_start_time(runlog_state);
   if (info.timestamp < start_time) info.timestamp = start_time;
 
   fprintf(f, "<h2>%s %d</h2>\n",
@@ -1681,7 +1682,8 @@ write_priv_source(FILE *f, int user_id, int priv_level,
 
   filtbuf1[0] = 0;
   if (run_id > 0) {
-    run_id2 = run_find(run_id - 1, 0, info.team, info.problem, info.language);
+    run_id2 = run_find(runlog_state, run_id - 1, 0, info.team, info.problem,
+                       info.language);
     if (run_id2 >= 0) {
       snprintf(filtbuf1, sizeof(filtbuf1), "%d", run_id2);
     }
@@ -2215,8 +2217,9 @@ write_priv_report(FILE *f, int user_id, int priv_level,
     }
   }
 
-  if (run_id < 0 || run_id >= run_get_total()) return -SRV_ERR_BAD_RUN_ID;
-  if (run_get_entry(run_id, &re) < 0) return -SRV_ERR_BAD_RUN_ID;
+  if (run_id < 0 || run_id >= run_get_total(runlog_state))
+    return -SRV_ERR_BAD_RUN_ID;
+  if (run_get_entry(runlog_state, run_id, &re) < 0) return -SRV_ERR_BAD_RUN_ID;
   if (!run_is_report_available(re.status)) return -SRV_ERR_REPORT_NOT_AVAILABLE;
 
   print_nav_buttons(f, run_id, sid, self_url, hidden_vars, extra_args,
@@ -2288,7 +2291,7 @@ write_priv_clar(FILE *f, int user_id, int priv_level,
   if (clar_id < 0 || clar_id >= clar_get_total(clarlog_state))
     return -SRV_ERR_BAD_CLAR_ID;
 
-  start_time = run_get_start_time();
+  start_time = run_get_start_time(runlog_state);
   clar_get_record(clarlog_state, clar_id, &clar_time, &size, ip, &from, &to,
                   &flags, &j_from, &hide_flag, b64_subj);
   txt_subj_len = base64_decode_str(b64_subj, txt_subj, 0);
@@ -2422,7 +2425,7 @@ write_priv_users(FILE *f, int user_id, int priv_level,
     teamdb_export_team(teamdb_state, i, &info);
     t_extra = team_extra_get_entry(team_extra_state, i);
 
-    run_get_team_usage(i, &runs_num, &runs_total);
+    run_get_team_usage(runlog_state, i, &runs_num, &runs_total);
     clar_get_team_usage(clarlog_state, i, &clars_num, &clars_total);
     /*
     if (priv_level == PRIV_LEVEL_ADMIN) {
@@ -2583,9 +2586,9 @@ write_priv_user(FILE *f, int user_id, int priv_level,
 
   teamdb_export_team(teamdb_state, view_user_id, &info);
   t_extra = team_extra_get_entry(team_extra_state, view_user_id);
-  run_get_team_usage(view_user_id, &runs_num, &runs_total);
+  run_get_team_usage(runlog_state, view_user_id, &runs_num, &runs_total);
   clar_get_team_usage(clarlog_state, view_user_id, &clars_num, &clars_total);
-  pages_total = run_get_total_pages(view_user_id);
+  pages_total = run_get_total_pages(runlog_state, view_user_id);
   flags = teamdb_get_flags(teamdb_state, view_user_id);
 
   // table has 4 columns
@@ -2834,10 +2837,10 @@ write_runs_dump(FILE *f, const unsigned char *url,
     fprintf(f, "Content-type: text/plain; charset=%s\n\n", charset);
   }
 
-  total_runs = run_get_total();
-  start_time = run_get_start_time();
+  total_runs = run_get_total(runlog_state);
+  start_time = run_get_start_time(runlog_state);
   for (i = 0; i < total_runs; i++) {
-    if (run_get_entry(i, &re) < 0) {
+    if (run_get_entry(runlog_state, i, &re) < 0) {
       fprintf(f, "%d;Cannot read entry!\n", i);
       continue;
     }
@@ -2864,7 +2867,7 @@ write_runs_dump(FILE *f, const unsigned char *url,
             pts->tm_min,
             pts->tm_sec);
     if (global->virtual) {
-      start_time = run_get_virtual_start_time(re.team);
+      start_time = run_get_virtual_start_time(runlog_state, re.team);
     }
 
     dur = re.timestamp - start_time;
@@ -2956,8 +2959,9 @@ write_raw_source(FILE *f, const unsigned char *self_url, int run_id)
   size_t src_len = 0;
   struct run_entry info;
 
-  if (run_id < 0 || run_id >= run_get_total()) return -SRV_ERR_BAD_RUN_ID;
-  run_get_entry(run_id, &info);
+  if (run_id < 0 || run_id >= run_get_total(runlog_state))
+    return -SRV_ERR_BAD_RUN_ID;
+  run_get_entry(runlog_state, run_id, &info);
   if (info.language <= 0 || info.language > max_lang
       || !langs[info.language]) return -SRV_ERR_BAD_LANG_ID;
 
@@ -3005,8 +3009,9 @@ write_raw_report(FILE *f, const unsigned char *self_url, int run_id,
     }
   }
 
-  if (run_id < 0 || run_id >= run_get_total()) return -SRV_ERR_BAD_RUN_ID;
-  run_get_entry(run_id, &info);
+  if (run_id < 0 || run_id >= run_get_total(runlog_state))
+    return -SRV_ERR_BAD_RUN_ID;
+  run_get_entry(runlog_state, run_id, &info);
   if (info.language <= 0 || info.language > max_lang
       || !langs[info.language]) return -SRV_ERR_BAD_LANG_ID;
 
@@ -3053,7 +3058,7 @@ write_tests(FILE *f, int cmd, int run_id, int test_num)
   unsigned char cur_digest[32];
   int good_digest_flag = 1;
 
-  if (run_id < 0 || run_id >= run_get_total()) {
+  if (run_id < 0 || run_id >= run_get_total(runlog_state)) {
     errcode = SRV_ERR_BAD_RUN_ID;
     goto failure;
   }
@@ -3092,7 +3097,7 @@ write_tests(FILE *f, int cmd, int run_id, int test_num)
 
   if (cmd == SRV_CMD_VIEW_TEST_ANSWER || cmd == SRV_CMD_VIEW_TEST_INPUT
       || cmd == SRV_CMD_VIEW_TEST_INFO) {
-    if (run_get_entry(run_id, &re) < 0) {
+    if (run_get_entry(runlog_state, run_id, &re) < 0) {
       errcode = SRV_ERR_SYSTEM_ERROR;
       goto failure;
     }
@@ -3273,7 +3278,7 @@ write_audit_log(FILE *f, int run_id)
   char *audit_text = 0;
   size_t audit_text_size = 0;
 
-  if (run_id < 0 || run_id >= run_get_total()) {
+  if (run_id < 0 || run_id >= run_get_total(runlog_state)) {
     errcode = SRV_ERR_BAD_RUN_ID;
     goto failure;
   }
@@ -3411,8 +3416,8 @@ generate_daily_statistics(FILE *f, time_t from_time, time_t to_time)
     }
   }
 
-  r_tot = run_get_total();
-  runs = run_get_entries_ptr();
+  r_tot = run_get_total(runlog_state);
+  runs = run_get_entries_ptr(runlog_state);
 
   if (!u_tot || !p_tot || !r_tot) return;
 
