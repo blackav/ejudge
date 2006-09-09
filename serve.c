@@ -703,9 +703,9 @@ get_peer_local_user(struct client_state *p)
   int r;
 
   if (p->user_id >= 0) return p->user_id;
-  r = teamdb_get_uid_by_pid(serve_state.teamdb_state, p->peer_uid, p->peer_gid, p->peer_pid,
-                            serve_state.global->contest_id,
-                            &user_id, &priv_level, &cookie, &ip, &ssl);
+  r = teamdb_get_uid_by_pid(serve_state.teamdb_state, p->peer_uid, p->peer_gid,
+                            p->peer_pid, &user_id, &priv_level, &cookie, &ip,
+                            &ssl);
   if (r < 0) {
     // FIXME: what else can we do?
     err("%d: cannot get local user_id", p->id);
