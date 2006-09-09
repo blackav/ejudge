@@ -56,7 +56,7 @@ struct update_hook
   void *user_ptr;
 };
 
-struct teamdb_state
+struct old_db_state
 {
   unsigned char *server_path;
   time_t server_last_open_time;
@@ -65,6 +65,15 @@ struct teamdb_state
   struct userlist_table local_users;
   int shm_id;
   key_t shm_key;
+};
+
+struct teamdb_state
+{
+  const struct teamdb_db_callbacks *callbacks;
+  int need_update;
+  int pseudo_vintage;
+
+  struct old_db_state old;
 
   struct userlist_list *users;
   int total_participants;
@@ -85,7 +94,7 @@ teamdb_init(void)
   teamdb_state_t state;
 
   XCALLOC(state, 1);
-  state->shm_id = -1;
+  state->old.shm_id = -1;
   return state;
 }
 
@@ -125,35 +134,35 @@ call_update_hooks(teamdb_state_t state)
 }
 
 static int
-open_connection(teamdb_state_t state)
+open_connection(struct old_db_state *old_db, int contest_id)
 {
   int r;
   time_t cur_time;
 
-  if (state->server_conn) return 0;
+  if (old_db->server_conn) return 0;
   cur_time = time(0);
-  if (cur_time - state->server_last_open_time <= 1) return -1;
-  state->server_last_open_time = cur_time;
-  if (!(state->server_conn = userlist_clnt_open(state->server_path))) {
+  if (cur_time - old_db->server_last_open_time <= 1) return -1;
+  old_db->server_last_open_time = cur_time;
+  if (!(old_db->server_conn = userlist_clnt_open(old_db->server_path))) {
     err("teamdb_open_client: connect to server failed");
     return -1;
   }
-  if ((r = userlist_clnt_admin_process(state->server_conn, 0, 0, 0)) < 0) {
+  if ((r = userlist_clnt_admin_process(old_db->server_conn, 0, 0, 0)) < 0) {
     err("teamdb_open_client: cannot became an admin process: %s",
         userlist_strerror(-r));
     return -1;
   }
-  if ((r = userlist_clnt_map_contest(state->server_conn, state->contest_id,
-                                     0, &state->shm_key)) < 0) {
+  if ((r = userlist_clnt_map_contest(old_db->server_conn, contest_id,
+                                     0, &old_db->shm_key)) < 0) {
     err("teamdb_open_client: cannot map contest: %s", userlist_strerror(-r));
     return -1;
   }
-  if ((state->shm_id = shmget(state->shm_key, 0, 0)) < 0) {
+  if ((old_db->shm_id = shmget(old_db->shm_key, 0, 0)) < 0) {
     err("teamdb_open_client: cannot obtain a shared memory: %s",
         os_ErrorMsg());
     return -1;
   }
-  if ((long) (state->server_users = shmat(state->shm_id, 0, SHM_RDONLY)) == -1) {
+  if ((long)(old_db->server_users = shmat(old_db->shm_id, 0, SHM_RDONLY))==-1) {
     err("teamdb_open_client: cannot attach shared memory: %s",
         os_ErrorMsg());
     return -1;
@@ -162,22 +171,22 @@ open_connection(teamdb_state_t state)
 }
 
 static void
-close_connection(teamdb_state_t state)
+close_connection(struct old_db_state *old_db)
 {
-  if (state->server_conn) {
-    userlist_clnt_close(state->server_conn);
-    state->server_conn = 0;
+  if (old_db->server_conn) {
+    userlist_clnt_close(old_db->server_conn);
+    old_db->server_conn = 0;
   }
-  if (state->server_users) {
-    shmdt(state->server_users);
-    state->server_users = 0;
+  if (old_db->server_users) {
+    shmdt(old_db->server_users);
+    old_db->server_users = 0;
   }
-  if (state->shm_id >= 0) {
-    shmctl(state->shm_id, IPC_RMID, 0);
-    state->shm_id = -1;
+  if (old_db->shm_id >= 0) {
+    shmctl(old_db->shm_id, IPC_RMID, 0);
+    old_db->shm_id = -1;
   }
-  if (state->shm_key > 0) {
-    state->shm_key = 0;
+  if (old_db->shm_key > 0) {
+    old_db->shm_key = 0;
   }
 }
 
@@ -191,37 +200,59 @@ teamdb_refresh(teamdb_state_t state)
   struct userlist_user *uu;
   struct userlist_contest *uc;
 
-  if (open_connection(state) < 0) return -1;
+  if (state->callbacks) {
+    if (!state->need_update) return 0;
+    r = state->callbacks->list_all_users(state->callbacks->user_data,
+                                         state->contest_id, &xml_text);
+    if (r < 0) {
+      err("teamdb_refresh: cannot load userlist: %s", userlist_strerror(-r));
+      return -1;
+    }
+    new_users = userlist_parse_str(xml_text);
+    if (!new_users) {
+      err("teamdb_refresh: XML parse error");
+      xfree(xml_text);
+      return -1;
+    }
+    state->need_update = 0;
+    state->pseudo_vintage++;
+  } else {
+    if (open_connection(&state->old, state->contest_id) < 0) return -1;
 
-  if (state->server_users && state->server_users->vintage != 0xffffffff
-      && state->local_users.vintage && state->local_users.vintage != 0xffffffff
-      && state->server_users->vintage == state->local_users.vintage) return 0;
+    if (state->old.server_users
+        && state->old.server_users->vintage != 0xffffffff
+        && state->old.local_users.vintage
+        && state->old.local_users.vintage != 0xffffffff
+        && state->old.server_users->vintage == state->old.local_users.vintage)
+      return 0;
 
-  prev_vintage = state->local_users.vintage;
+    prev_vintage = state->old.local_users.vintage;
 
-  /* this should be an atomic copy */
-  state->local_users.vintage = state->server_users->vintage;
+    /* this should be an atomic copy */
+    state->old.local_users.vintage = state->old.server_users->vintage;
 
-  /* There is a possibility, that vintage will be incremented
-   * in this time window. However, this may only cause harmless
-   * userlist reload.
-   */
+    /* There is a possibility, that vintage will be incremented
+     * in this time window. However, this may only cause harmless
+     * userlist reload.
+     */
 
-  r = userlist_clnt_list_all_users(state->server_conn, ULS_LIST_STANDINGS_USERS,
-                                   state->contest_id, &xml_text);
-  if (r < 0) {
-    /* Don't try hard. Just proceed with the current copy. */
-    state->local_users.vintage = prev_vintage;
-    err("teamdb_refresh: cannot load userlist: %s", userlist_strerror(-r));
-    close_connection(state);
-    return -1;
-  }
-  new_users = userlist_parse_str(xml_text);
-  if (!new_users) {
-    state->local_users.vintage = prev_vintage;
-    err("teamdb_refresh: XML parse error");
-    close_connection(state);
-    return -1;
+    r = userlist_clnt_list_all_users(state->old.server_conn,
+                                     ULS_LIST_STANDINGS_USERS,
+                                     state->contest_id, &xml_text);
+    if (r < 0) {
+      /* Don't try hard. Just proceed with the current copy. */
+      state->old.local_users.vintage = prev_vintage;
+      err("teamdb_refresh: cannot load userlist: %s", userlist_strerror(-r));
+      close_connection(&state->old);
+      return -1;
+    }
+    new_users = userlist_parse_str(xml_text);
+    if (!new_users) {
+      state->old.local_users.vintage = prev_vintage;
+      err("teamdb_refresh: XML parse error");
+      close_connection(&state->old);
+      return -1;
+    }
   }
 
   //fprintf(stderr, ">>%s\n", xml_text);
@@ -266,21 +297,40 @@ teamdb_refresh(teamdb_state_t state)
   }
   ASSERT(j <= state->total_participants);
   if (j < state->total_participants) {
-    err("teamdb_refresh: registered %d, passed %d", j, state->total_participants);
+    err("teamdb_refresh: registered %d, passed %d", j,
+        state->total_participants);
   }
 
   info("teamdb_refresh: updated: %d users, %d max user, XML size = %zu",
-       state->total_participants, state->users->user_map_size - 1, strlen(xml_text));
+       state->total_participants, state->users->user_map_size - 1,
+       strlen(xml_text));
   state->extra_out_of_sync = 1;
   call_update_hooks(state);
   return 1;
+}
+
+void
+teamdb_set_update_flag(teamdb_state_t state)
+{
+  state->need_update = 1;
 }
 
 int
 teamdb_get_vintage(teamdb_state_t state)
 {
   if (teamdb_refresh(state) < 0) return 0;
-  return state->local_users.vintage;
+  if (state->callbacks) return state->pseudo_vintage;
+  return state->old.local_users.vintage;
+}
+
+int
+teamdb_set_callbacks(teamdb_state_t state,
+                     const struct teamdb_db_callbacks *callbacks,
+                     int contest_id)
+{
+  state->callbacks = callbacks;
+  state->contest_id = contest_id;
+  return 0;
 }
 
 int
@@ -288,8 +338,9 @@ teamdb_open_client(teamdb_state_t state, unsigned char const *socket_path,
                    int id)
 {
   state->contest_id = id;
-  state->server_path = xstrdup(socket_path);
-  if (open_connection(state) < 0) return -1;
+  state->old.server_path = xstrdup(socket_path);
+  state->callbacks = 0;
+  if (open_connection(&state->old, state->contest_id) < 0) return -1;
   if (teamdb_refresh(state) < 0) return -1;
   return 0;
 }
@@ -393,25 +444,6 @@ teamdb_get_total_teams(teamdb_state_t state)
 }
 
 int
-teamdb_toggle_flags(teamdb_state_t state, int user_id, int contest_id,
-                    unsigned int flags)
-{
-  int r;
-
-  if (open_connection(state) < 0) return -1;
-  if (!teamdb_lookup_client(state, user_id)) {
-    err("teamdb_export_team: bad id: %d", user_id);
-    return -1;
-  }
-  r = userlist_clnt_change_registration(state->server_conn, user_id, contest_id,
-                                        -1, 3, flags);
-  if (r < 0) return -1;
-  // force userdb reload
-  state->local_users.vintage = 0;
-  return r;
-}
-
-int
 teamdb_export_team(teamdb_state_t state, int tid, struct teamdb_export *pdata)
 {
   struct userlist_user *uu;
@@ -442,24 +474,6 @@ teamdb_export_team(teamdb_state_t state, int tid, struct teamdb_export *pdata)
   strncpy(pdata->login, u_login, TEAMDB_LOGIN_LEN - 1);
   strncpy(pdata->name, u_name, TEAMDB_NAME_LEN - 1);
   pdata->user = uu;
-  return 0;
-}
-
-int
-teamdb_dump_database(teamdb_state_t state, int fd)
-{
-  int r;
-
-  if (open_connection(state) < 0) {
-    close(fd);
-    return -1;
-  }
-  r = userlist_clnt_dump_database(state->server_conn, ULS_DUMP_DATABASE, state->contest_id, fd, 1);
-  if (r < 0) {
-    close(fd);
-    return -1;
-  }
-  close(fd);
   return 0;
 }
 
@@ -519,17 +533,21 @@ teamdb_set_archive_time(teamdb_state_t state, int uid, time_t time)
 
 int
 teamdb_get_uid_by_pid(teamdb_state_t state, int system_uid, int system_gid,
-                      int system_pid, int contest_id,
+                      int system_pid,
                       int *p_uid, int *p_priv_level,
                       ej_cookie_t *p_cookie,
                       ej_ip_t *p_ip, int *p_ssl)
 {
   int r;
 
-  if (open_connection(state) < 0) return -1;
-  r = userlist_clnt_get_uid_by_pid(state->server_conn, system_uid, system_gid,
-                                   system_pid, contest_id, p_uid,
-                                   p_priv_level, p_cookie, p_ip, p_ssl);
+  if (state->callbacks) {
+    err("teamdb_get_uid_by_pid: function cannot be called in callback mode");
+    abort();
+  }
+  if (open_connection(&state->old, state->contest_id) < 0) return -1;
+  r = userlist_clnt_get_uid_by_pid(state->old.server_conn, system_uid,
+                                   system_gid, system_pid, state->contest_id,
+                                   p_uid, p_priv_level, p_cookie, p_ip, p_ssl);
   if (r < 0) return -1;
   return r;
 }
@@ -575,6 +593,35 @@ teamdb_get_user_status_map(teamdb_state_t state, int *p_size, int **p_map)
   *p_size = map_size;
   *p_map = map;
   return 1;
+}
+
+teamdb_state_t
+teamdb_destroy(teamdb_state_t state)
+{
+  int i;
+  struct update_hook *p, *q;
+
+  if (!state) return 0;
+
+  if (!state->callbacks) {
+    close_connection(&state->old);
+    xfree(state->old.server_path);
+  }
+
+  if (state->users) userlist_free((struct xml_tree*) state->users);
+  xfree(state->participants);
+  xfree(state->u_contests);
+  for (i = 0; i < state->extra_num; i++)
+    xfree(state->extra_info[i]);
+  xfree(state->extra_info);
+  for (p = state->first_update_hook; p; p = q) {
+    q = p->next;
+    xfree(p);
+  }
+
+  memset(state, 0, sizeof(*state));
+  xfree(state);
+  return 0;
 }
 
 /*

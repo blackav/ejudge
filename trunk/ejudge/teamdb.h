@@ -27,10 +27,22 @@ enum { TEAM_BANNED = 1, TEAM_INVISIBLE = 2, TEAM_LOCKED = 4 };
 struct teamdb_state;
 typedef struct teamdb_state *teamdb_state_t;
 
+struct teamdb_db_callbacks
+{
+  void *user_data;
+  int (*list_all_users)(void *, int, unsigned char **);
+};
+
 teamdb_state_t teamdb_init(void);
+teamdb_state_t teamdb_destroy(teamdb_state_t);
+
 int teamdb_open_client(teamdb_state_t state,
                        unsigned char const *socket_path, int contest_id);
+int teamdb_set_callbacks(teamdb_state_t state,
+                         const struct teamdb_db_callbacks *callbacks,
+                         int contest_id);
 int teamdb_refresh(teamdb_state_t);
+void teamdb_set_update_flag(teamdb_state_t state);
 
 int teamdb_lookup(teamdb_state_t, int);
 int teamdb_lookup_login(teamdb_state_t, char const *);
@@ -41,11 +53,6 @@ int   teamdb_get_max_team_id(teamdb_state_t);
 int   teamdb_get_flags(teamdb_state_t, int);
 int   teamdb_get_total_teams(teamdb_state_t);
 int   teamdb_get_vintage(teamdb_state_t);
-
-int teamdb_dump_database(teamdb_state_t, int fd);
-
-int teamdb_toggle_flags(teamdb_state_t,
-                        int user_id, int contest_id, unsigned int flags);
 
 /* this is export data structure */
 enum {
@@ -72,7 +79,6 @@ int teamdb_get_uid_by_pid(teamdb_state_t,
                           int system_uid,
                           int system_gid,
                           int system_pid,
-                          int contest_id,
                           int *p_uid,
                           int *p_priv_level,
                           ej_cookie_t *p_cookie,
