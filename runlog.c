@@ -107,6 +107,26 @@ run_init(teamdb_state_t ts)
   return p;
 }
 
+runlog_state_t
+run_destroy(runlog_state_t state)
+{
+  int i;
+  struct user_entry *ue;
+
+  xfree(state->runs);
+  if (state->run_fd >= 0) close(state->run_fd);
+  for (i = 0; i < state->ut_size; i++) {
+    if (!(ue = state->ut_table[i])) continue;
+    xfree(ue);
+  }
+  xfree(state->ut_table);
+  xfree(state->user_flags.flags);
+
+  memset(state, 0, sizeof(*state));
+  xfree(state);
+  return 0;
+}
+
 static int
 run_read_record(runlog_state_t state, char *buf, int size)
 {

@@ -70,6 +70,32 @@ team_extra_init(const unsigned char *team_extra_dir)
   return p;
 }
 
+team_extra_state_t
+team_extra_destroy(team_extra_state_t state)
+{
+  int i, j;
+  struct team_extra *te;
+  struct team_warning *tw;
+
+  xfree(state->team_extra_dir);
+  for (i = 0; i < state->team_map_size; i++) {
+    if (!(te = state->team_map[i])) continue;
+    for (j = 0; j < te->warn_u; j++) {
+      if (!(tw = te->warns[j])) continue;
+      xfree(tw->text);
+      xfree(tw->comment);
+      xfree(tw);
+    }
+    xfree(te->warns);
+    xfree(te->clar_map);
+    xfree(te);
+  }
+  xfree(state->team_map);
+  memset(state, 0, sizeof(*state));
+  xfree(state);
+  return 0;
+}
+
 static int
 make_read_path(team_extra_state_t state, unsigned char *path, size_t size,
                int user_id)

@@ -66,6 +66,7 @@ struct runlog_state;
 typedef struct runlog_state *runlog_state_t;
 
 runlog_state_t run_init(struct teamdb_state *);
+runlog_state_t run_destroy(runlog_state_t);
 
 int run_open(runlog_state_t state, const char *path, int flags,
              time_t init_duration);
