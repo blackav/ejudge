@@ -138,7 +138,7 @@ static int                  client_serial_id = 1;
 
 static int cmdline_socket_fd = -1;
 static time_t last_activity_time = 0;
-struct serve_state serve_state;
+static struct serve_state serve_state;
 
 static struct client_state *
 client_new_state(int fd)
@@ -299,12 +299,12 @@ update_standings_file(int force_flag)
   l10n_setlocale(serve_state.global->standings_locale_id);
   if (serve_state.global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
     accepting_mode = 1;
-  write_standings(serve_state.global->status_dir, serve_state.global->standings_file_name,
+  write_standings(&serve_state, serve_state.global->status_dir, serve_state.global->standings_file_name,
                   serve_state.global->users_on_page,
                   serve_state.global->stand_header_txt, serve_state.global->stand_footer_txt,
                   accepting_mode);
   if (serve_state.global->stand2_file_name[0]) {
-    write_standings(serve_state.global->status_dir, serve_state.global->stand2_file_name, 0,
+    write_standings(&serve_state, serve_state.global->status_dir, serve_state.global->stand2_file_name, 0,
                     serve_state.global->stand2_header_txt, serve_state.global->stand2_footer_txt,
                     accepting_mode);
   }
@@ -350,7 +350,7 @@ update_public_log_file(void)
   }
 
   l10n_setlocale(serve_state.global->standings_locale_id);
-  write_public_log(serve_state.global->status_dir, serve_state.global->plog_file_name,
+  write_public_log(&serve_state, serve_state.global->status_dir, serve_state.global->plog_file_name,
                    serve_state.global->plog_header_txt, serve_state.global->plog_footer_txt);
   last_update = current_time;
   l10n_setlocale(0);
@@ -377,7 +377,7 @@ do_update_xml_log(char const *name, int external_mode)
     err("update_xml_log: cannot open %s", path1);
     return;
   }
-  unparse_runlog_xml(serve_state.teamdb_state, fout, &rhead, rtotal, rentries,
+  unparse_runlog_xml(&serve_state, fout, &rhead, rtotal, rentries,
                      external_mode, current_time);
   if (ferror(fout)) {
     err("update_xml_log: write error");
@@ -771,9 +771,9 @@ append_audit_log(int run_id, struct client_state *p, const char *format, ...)
            ltm->tm_year + 1900, ltm->tm_mon + 1, ltm->tm_mday,
            ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
 
-  archive_make_write_path(audit_path, sizeof(audit_path),
+  archive_make_write_path(&serve_state, audit_path, sizeof(audit_path),
                           serve_state.global->audit_log_dir, run_id, 0, 0);
-  if (archive_dir_prepare(serve_state.global->audit_log_dir, run_id, 0, 1) < 0) return;
+  if (archive_dir_prepare(&serve_state, serve_state.global->audit_log_dir, run_id, 0, 1) < 0) return;
   if (!(f = fopen(audit_path, "a"))) return;
 
   fprintf(f, "Date: %s\n", tbuf);
@@ -852,7 +852,7 @@ cmd_team_get_archive(struct client_state *p, int len,
   for (r = 0; r < total_runs; r++) {
     if (run_get_entry(serve_state.runlog_state, r, &re) < 0) continue;
     if (re.team != pkt->user_id) continue;
-    arch_flag = archive_make_read_path(origpath, sizeof(origpath),
+    arch_flag = archive_make_read_path(&serve_state, origpath, sizeof(origpath),
                                        serve_state.global->run_archive_dir, r, 0, 0);
     if (arch_flag < 0) continue;
     snprintf(linkpath, sizeof(linkpath), "%s/%s_%06d%s%s",
@@ -933,7 +933,7 @@ cmd_team_page(struct client_state *p, int len,
   l10n_setlocale(pkt->locale_id);
   if (serve_state.global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
     accepting_mode = 1;
-  write_team_page(f, p->user_id, printing_suspended,
+  write_team_page(&serve_state, f, p->user_id, printing_suspended,
                   p->cookie, (pkt->flags & 1), (pkt->flags & 2) >> 1,
                   self_url_ptr, hidden_vars_ptr, extra_args_ptr,
                   contest_start_time, contest_stop_time, accepting_mode);
@@ -1135,7 +1135,7 @@ cmd_master_page(struct client_state *p, int len,
 
   if (pkt->b.id == SRV_CMD_MASTER_PAGE) {
     /* l10n_setlocale(pkt->locale_id); */
-    write_master_page(f, p->user_id, pkt->priv_level,
+    write_master_page(&serve_state, f, p->user_id, pkt->priv_level,
                       p->cookie,
                       pkt->first_run, pkt->last_run,
                       pkt->mode_clar, pkt->first_clar, pkt->last_clar,
@@ -1145,7 +1145,7 @@ cmd_master_page(struct client_state *p, int len,
     /* l10n_setlocale(0); */
   } else {
     /* SRV_CMD_DUMP_MASTER_RUNS */
-    r = write_priv_all_runs(f, p->user_id, 0, pkt->priv_level,
+    r = write_priv_all_runs(&serve_state, f, p->user_id, 0, pkt->priv_level,
                             p->cookie,
                             pkt->first_run, pkt->last_run,
                             accepting_mode,
@@ -1270,7 +1270,7 @@ cmd_priv_standings(struct client_state *p, int len,
   /* l10n_setlocale(pkt->locale_id); */
   if (serve_state.global->score_system_val == SCORE_OLYMPIAD && !olympiad_judging_mode)
     accepting_mode = 1;
-  write_priv_standings(f, p->cookie,
+  write_priv_standings(&serve_state, f, p->cookie,
                        self_url_ptr, hidden_vars_ptr, extra_args_ptr,
                        accepting_mode);
   /* l10n_setlocale(0); */
@@ -1387,7 +1387,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    r = write_priv_source(f, p->user_id, p->priv_level, p->cookie,
+    r = write_priv_source(&serve_state, f, p->user_id, p->priv_level, p->cookie,
                           accepting_mode, self_url_ptr, hidden_vars_ptr,
                           extra_args_ptr, pkt->item, &caps);
     break;
@@ -1405,7 +1405,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    r = write_new_run_form(f, p->user_id, p->priv_level, p->cookie,
+    r = write_new_run_form(&serve_state, f, p->user_id, p->priv_level, p->cookie,
                            self_url_ptr, hidden_vars_ptr,
                            extra_args_ptr, pkt->item, &caps);
     break;
@@ -1421,7 +1421,7 @@ cmd_view(struct client_state *p, int len,
       r = -SRV_ERR_NO_PERMS;
       break;
     }
-    r = write_raw_source(f, self_url_ptr, pkt->item);
+    r = write_raw_source(&serve_state, f, self_url_ptr, pkt->item);
     break;
   case SRV_CMD_PRIV_DOWNLOAD_REPORT:
   case SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT:
@@ -1436,7 +1436,7 @@ cmd_view(struct client_state *p, int len,
       r = -SRV_ERR_NO_PERMS;
       break;
     }
-    r = write_raw_report(f, self_url_ptr, pkt->item,
+    r = write_raw_report(&serve_state, f, self_url_ptr, pkt->item,
                          pkt->b.id==SRV_CMD_PRIV_DOWNLOAD_TEAM_REPORT?1:0);
     break;
   case SRV_CMD_COMPARE_RUNS:
@@ -1451,7 +1451,7 @@ cmd_view(struct client_state *p, int len,
       r = -SRV_ERR_NO_PERMS;
       break;
     }
-    r = compare_runs(f, pkt->item, pkt->item2);
+    r = compare_runs(&serve_state, f, pkt->item, pkt->item2);
     break;
   case SRV_CMD_VIEW_REPORT:
     if (!p->priv_level) {
@@ -1467,7 +1467,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    r = write_priv_report(f, p->user_id, p->priv_level, p->cookie, (int) pkt->flags,
+    r = write_priv_report(&serve_state, f, p->user_id, p->priv_level, p->cookie, (int) pkt->flags,
                           self_url_ptr, hidden_vars_ptr, extra_args_ptr,
                           pkt->item, &caps);
     break;
@@ -1485,7 +1485,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    r = write_priv_clar(f, p->user_id, p->priv_level, p->cookie,
+    r = write_priv_clar(&serve_state, f, p->user_id, p->priv_level, p->cookie,
                         self_url_ptr, hidden_vars_ptr, extra_args_ptr,
                         pkt->item, &caps);
     if (p->priv_level == PRIV_LEVEL_JUDGE) {
@@ -1512,7 +1512,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    r = write_priv_users(f, p->user_id, p->priv_level, p->cookie,
+    r = write_priv_users(&serve_state, f, p->user_id, p->priv_level, p->cookie,
                          self_url_ptr, hidden_vars_ptr, extra_args_ptr, &caps);
     break;
 
@@ -1529,7 +1529,7 @@ cmd_view(struct client_state *p, int len,
       r = -SRV_ERR_NO_PERMS;
       break;
     }
-    r = write_priv_user(f, p->user_id, p->priv_level, p->cookie,
+    r = write_priv_user(&serve_state, f, p->user_id, p->priv_level, p->cookie,
                         self_url_ptr, hidden_vars_ptr, extra_args_ptr,
                         pkt->item, &caps);
     break;
@@ -1548,7 +1548,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    write_runs_dump(f, self_url_ptr, serve_state.global->charset);
+    write_runs_dump(&serve_state, f, self_url_ptr, serve_state.global->charset);
     break;
 
   case SRV_CMD_WRITE_XML_RUNS:
@@ -1631,7 +1631,7 @@ cmd_view(struct client_state *p, int len,
       fprintf(f, "Content-type: text/plain; charset=%s\n\n", serve_state.global->charset);
     }
 
-    write_raw_standings(f, serve_state.global->charset);
+    write_raw_standings(&serve_state, f, serve_state.global->charset);
     break;
 
   case SRV_CMD_VIEW_TEST_INPUT:
@@ -1676,7 +1676,7 @@ cmd_view(struct client_state *p, int len,
         break;
       }
     }
-    r = write_tests(f, pkt->b.id, pkt->item, pkt->item2);
+    r = write_tests(&serve_state, f, pkt->b.id, pkt->item, pkt->item2);
     break;
 
   case SRV_CMD_VIEW_AUDIT_LOG:
@@ -1686,7 +1686,7 @@ cmd_view(struct client_state *p, int len,
       r = -SRV_ERR_NO_PERMS;
       break;
     }
-    r = write_audit_log(f, pkt->item);
+    r = write_audit_log(&serve_state, f, pkt->item);
     break;
 
   case SRV_CMD_SHOW_REPORT:
@@ -1698,7 +1698,7 @@ cmd_view(struct client_state *p, int len,
       break;
     }
     l10n_setlocale(pkt->item2);
-    r = new_write_user_report_view(f, p->user_id, pkt->item,
+    r = new_write_user_report_view(&serve_state, f, p->user_id, pkt->item,
                                    accepting_mode, p->cookie,
                                    self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     l10n_setlocale(0);
@@ -1784,7 +1784,7 @@ cmd_import_xml_runs(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  runlog_import_xml(serve_state.teamdb_state, serve_state.runlog_state, f, pkt->token, pkt->data);
+  runlog_import_xml(&serve_state, serve_state.runlog_state, f, pkt->token, pkt->data);
   fclose(f);
 
   if (!html_ptr) {
@@ -2041,26 +2041,26 @@ cmd_team_show_item(struct client_state *p, int len,
   l10n_setlocale(pkt->locale_id);
   switch (pkt->b.id) {
   case SRV_CMD_SHOW_CLAR:
-    r = new_write_user_clar(f, pkt->user_id, pkt->item_id, 0);
+    r = new_write_user_clar(&serve_state, f, pkt->user_id, pkt->item_id, 0);
     break;
   case SRV_CMD_DUMP_CLAR:
-    r = new_write_user_clar(f, pkt->user_id, pkt->item_id, 1);
+    r = new_write_user_clar(&serve_state, f, pkt->user_id, pkt->item_id, 1);
     break;
   case SRV_CMD_SHOW_SOURCE:
-    r = new_write_user_source_view(f, pkt->user_id, pkt->item_id, 0);
+    r = new_write_user_source_view(&serve_state, f, pkt->user_id, pkt->item_id, 0);
     break;
   case SRV_CMD_DUMP_SOURCE:
-    r = new_write_user_source_view(f, pkt->user_id, pkt->item_id, 1);
+    r = new_write_user_source_view(&serve_state, f, pkt->user_id, pkt->item_id, 1);
     break;
   case SRV_CMD_DUMP_SOURCE_2:
-    r = new_write_user_source_view(f, pkt->user_id, pkt->item_id, 2);
+    r = new_write_user_source_view(&serve_state, f, pkt->user_id, pkt->item_id, 2);
     break;
   case SRV_CMD_VIRTUAL_STANDINGS:
     if (!serve_state.global->virtual) r = -SRV_ERR_ONLY_VIRTUAL;
-    else r = write_virtual_standings(f, pkt->user_id);
+    else r = write_virtual_standings(&serve_state, f, pkt->user_id);
     break;
   case SRV_CMD_RUN_STATUS:
-    r = write_user_run_status(f, pkt->user_id, pkt->item_id, accepting_mode, 1);
+    r = write_user_run_status(&serve_state, f, pkt->user_id, pkt->item_id, accepting_mode, 1);
     break;
   default:
     abort();
@@ -2109,28 +2109,28 @@ move_files_to_insert_run(int run_id)
 
   if (run_id >= total - 1) return;
   for (i = total - 1; i >= run_id; i--) {
-    archive_remove(serve_state.global->run_archive_dir, i + 1, 0);
-    archive_remove(serve_state.global->xml_report_archive_dir, i + 1, 0);
-    archive_remove(serve_state.global->report_archive_dir, i + 1, 0);
+    archive_remove(&serve_state, serve_state.global->run_archive_dir, i + 1, 0);
+    archive_remove(&serve_state, serve_state.global->xml_report_archive_dir, i + 1, 0);
+    archive_remove(&serve_state, serve_state.global->report_archive_dir, i + 1, 0);
     if (serve_state.global->team_enable_rep_view) {
-      archive_remove(serve_state.global->team_report_archive_dir, i + 1, 0);
+      archive_remove(&serve_state, serve_state.global->team_report_archive_dir, i + 1, 0);
     }
     if (serve_state.global->enable_full_archive) {
-      archive_remove(serve_state.global->full_archive_dir, i + 1, 0);
+      archive_remove(&serve_state, serve_state.global->full_archive_dir, i + 1, 0);
     }
-    archive_remove(serve_state.global->audit_log_dir, i + 1, 0);
+    archive_remove(&serve_state, serve_state.global->audit_log_dir, i + 1, 0);
     s = run_get_status(serve_state.runlog_state, i);
     if (s >= RUN_PSEUDO_FIRST && s <= RUN_PSEUDO_LAST) continue;
-    archive_rename(serve_state.global->run_archive_dir, 0, i, 0, i + 1, 0, 0);
-    archive_rename(serve_state.global->xml_report_archive_dir, 0, i, 0, i + 1, 0, 0);
-    archive_rename(serve_state.global->report_archive_dir, 0, i, 0, i + 1, 0, 0);
+    archive_rename(&serve_state, serve_state.global->run_archive_dir, 0, i, 0, i + 1, 0, 0);
+    archive_rename(&serve_state, serve_state.global->xml_report_archive_dir, 0, i, 0, i + 1, 0, 0);
+    archive_rename(&serve_state, serve_state.global->report_archive_dir, 0, i, 0, i + 1, 0, 0);
     if (serve_state.global->team_enable_rep_view) {
-      archive_rename(serve_state.global->team_report_archive_dir, 0, i, 0, i + 1, 0, 0);
+      archive_rename(&serve_state, serve_state.global->team_report_archive_dir, 0, i, 0, i + 1, 0, 0);
     }
     if (serve_state.global->enable_full_archive) {
-      archive_rename(serve_state.global->full_archive_dir, 0, i, 0, i + 1, 0, 0);
+      archive_rename(&serve_state, serve_state.global->full_archive_dir, 0, i, 0, i + 1, 0, 0);
     }
-    archive_rename(serve_state.global->audit_log_dir, 0, i, 0, i + 1, 0, 0);
+    archive_rename(&serve_state, serve_state.global->audit_log_dir, 0, i, 0, i + 1, 0, 0);
   }
 
   /* FIXME: add audit information for all the renamed runs */
@@ -2205,7 +2205,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
       return;
     }
-    if (!pkt->variant) pkt->variant = find_variant(pkt->user_id, pkt->prob_id);
+    if (!pkt->variant) pkt->variant = find_variant(&serve_state, pkt->user_id, pkt->prob_id);
     if (!pkt->variant) {
       err("%d: variant is not known", p->id);
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
@@ -2255,14 +2255,14 @@ cmd_priv_submit_run(struct client_state *p, int len,
   }
   move_files_to_insert_run(run_id);
 
-  arch_flags = archive_make_write_path(run_arch, sizeof(run_arch),
-                                       serve_state.global->run_archive_dir, run_id,
-                                       pkt->run_len, 0);
+  arch_flags = archive_make_write_path(&serve_state, run_arch, sizeof(run_arch),
+                                       serve_state.global->run_archive_dir,
+                                       run_id, pkt->run_len, 0);
   if (arch_flags < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  if (archive_dir_prepare(serve_state.global->run_archive_dir, run_id, 0, 0) < 0) {
+  if (archive_dir_prepare(&serve_state, serve_state.global->run_archive_dir, run_id, 0, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -2368,11 +2368,11 @@ cmd_upload_report(struct client_state *p, int len,
   }
 
   if (!serve_state.global->team_enable_rep_view || (pkt->flags & 1)) {
-    archive_remove(serve_state.global->xml_report_archive_dir, pkt->run_id, 0);
-    wflags = archive_make_write_path(wpath, sizeof(wpath),
+    archive_remove(&serve_state, serve_state.global->xml_report_archive_dir, pkt->run_id, 0);
+    wflags = archive_make_write_path(&serve_state, wpath, sizeof(wpath),
                                      serve_state.global->report_archive_dir,
                                      pkt->run_id, pkt->report_size, 0);
-    if (archive_dir_prepare(serve_state.global->report_archive_dir, pkt->run_id, 0, 0) < 0) {
+    if (archive_dir_prepare(&serve_state, serve_state.global->report_archive_dir, pkt->run_id, 0, 0) < 0) {
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
     }
@@ -2385,11 +2385,11 @@ cmd_upload_report(struct client_state *p, int len,
   }
 
   if (serve_state.global->team_enable_rep_view && (pkt->flags & 2)) {
-    archive_remove(serve_state.global->xml_report_archive_dir, pkt->run_id, 0);
-    wflags = archive_make_write_path(wpath, sizeof(wpath),
+    archive_remove(&serve_state, serve_state.global->xml_report_archive_dir, pkt->run_id, 0);
+    wflags = archive_make_write_path(&serve_state, wpath, sizeof(wpath),
                                      serve_state.global->team_report_archive_dir,
                                      pkt->run_id, pkt->report_size, 0);
-    if (archive_dir_prepare(serve_state.global->team_report_archive_dir,pkt->run_id,0,0)< 0){
+    if (archive_dir_prepare(&serve_state, serve_state.global->team_report_archive_dir,pkt->run_id,0,0)< 0){
       new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
       return;
     }
@@ -2425,7 +2425,7 @@ cmd_team_print(struct client_state *p, int len,
     return;
   }
 
-  res = team_print_run(pkt->v.i, p->user_id);
+  res = team_print_run(&serve_state, pkt->v.i, p->user_id);
   if (res < 0) {
     new_send_reply(p, res);
     return;
@@ -2510,7 +2510,7 @@ do_submit_run(struct client_state *p,
     return;
   }
   if (cur_prob->variant_num > 0) {
-    if (!find_variant(user_id, cur_prob->id)) {
+    if (!find_variant(&serve_state, user_id, cur_prob->id)) {
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
       err("%d: cannot get variant", p->id);
       return;
@@ -2580,7 +2580,7 @@ do_submit_run(struct client_state *p,
   }
   move_files_to_insert_run(run_id);
 
-  arch_flags = archive_make_write_path(run_arch, sizeof(run_arch),
+  arch_flags = archive_make_write_path(&serve_state, run_arch, sizeof(run_arch),
                                        serve_state.global->run_archive_dir, run_id,
                                        run_size, 0);
   if (arch_flags < 0) {
@@ -2588,7 +2588,7 @@ do_submit_run(struct client_state *p,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  if (archive_dir_prepare(serve_state.global->run_archive_dir, run_id, 0, 0) < 0) {
+  if (archive_dir_prepare(&serve_state, serve_state.global->run_archive_dir, run_id, 0, 0) < 0) {
     run_undo_add_record(serve_state.runlog_state, run_id);
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
@@ -3049,10 +3049,10 @@ cmd_reset_filter(struct client_state *p, int len,
 
   switch (pkt->b.id) {
   case SRV_CMD_RESET_FILTER:
-    html_reset_filter(p->user_id, pkt->session_id);
+    html_reset_filter(&serve_state, p->user_id, pkt->session_id);
     break;
   case SRV_CMD_RESET_CLAR_FILTER:
-    html_reset_clar_filter(p->user_id, pkt->session_id);
+    html_reset_clar_filter(&serve_state, p->user_id, pkt->session_id);
     break;
   }
 
@@ -3111,30 +3111,30 @@ do_squeeze_runs(void)
   for (i = 0, j = 0; i < tot; i++) {
     if (run_get_status(serve_state.runlog_state, i) == RUN_EMPTY) continue;
     if (i != j) {
-      archive_rename(serve_state.global->run_archive_dir, 0, i, 0, j, 0, 0);
-      archive_rename(serve_state.global->xml_report_archive_dir, 0, i, 0, j, 0, 1);
-      archive_rename(serve_state.global->report_archive_dir, 0, i, 0, j, 0, 1);
+      archive_rename(&serve_state, serve_state.global->run_archive_dir, 0, i, 0, j, 0, 0);
+      archive_rename(&serve_state, serve_state.global->xml_report_archive_dir, 0, i, 0, j, 0, 1);
+      archive_rename(&serve_state, serve_state.global->report_archive_dir, 0, i, 0, j, 0, 1);
       if (serve_state.global->team_enable_rep_view) {
-        archive_rename(serve_state.global->team_report_archive_dir, 0, i, 0, j, 0, 0);
+        archive_rename(&serve_state, serve_state.global->team_report_archive_dir, 0, i, 0, j, 0, 0);
       }
       if (serve_state.global->enable_full_archive) {
-        archive_rename(serve_state.global->full_archive_dir, 0, i, 0, j, 0, 0);
+        archive_rename(&serve_state, serve_state.global->full_archive_dir, 0, i, 0, j, 0, 0);
       }
-      archive_rename(serve_state.global->audit_log_dir, 0, i, 0, j, 0, 1);
+      archive_rename(&serve_state, serve_state.global->audit_log_dir, 0, i, 0, j, 0, 1);
     }
     j++;
   }
   for (; j < tot; j++) {
-    archive_remove(serve_state.global->run_archive_dir, j, 0);
-    archive_remove(serve_state.global->xml_report_archive_dir, j, 0);
-    archive_remove(serve_state.global->report_archive_dir, j, 0);
+    archive_remove(&serve_state, serve_state.global->run_archive_dir, j, 0);
+    archive_remove(&serve_state, serve_state.global->xml_report_archive_dir, j, 0);
+    archive_remove(&serve_state, serve_state.global->report_archive_dir, j, 0);
     if (serve_state.global->team_enable_rep_view) {
-      archive_remove(serve_state.global->team_report_archive_dir, j, 0);
+      archive_remove(&serve_state, serve_state.global->team_report_archive_dir, j, 0);
     }
     if (serve_state.global->enable_full_archive) {
-      archive_remove(serve_state.global->full_archive_dir, j, 0);
+      archive_remove(&serve_state, serve_state.global->full_archive_dir, j, 0);
     }
-    archive_remove(serve_state.global->audit_log_dir, j, 0);
+    archive_remove(&serve_state, serve_state.global->audit_log_dir, j, 0);
   }
   run_squeeze_log(serve_state.runlog_state);
 
@@ -3621,7 +3621,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
 
-    res = priv_print_run(pkt->v.i, p->user_id);
+    res = priv_print_run(&serve_state, pkt->v.i, p->user_id);
     if (res < 0) {
       new_send_reply(p, res);
       return;
@@ -4195,14 +4195,15 @@ cmd_new_run(struct client_state *p, int len,
   }
   move_files_to_insert_run(run_id);
 
-  arch_flags = archive_make_write_path(run_arch, sizeof(run_arch),
-                                       serve_state.global->run_archive_dir, run_id,
-                                       pkt->run_src_len, 0);
+  arch_flags = archive_make_write_path(&serve_state, run_arch, sizeof(run_arch),
+                                       serve_state.global->run_archive_dir,
+                                       run_id, pkt->run_src_len, 0);
   if (arch_flags < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  if (archive_dir_prepare(serve_state.global->run_archive_dir, run_id, 0, 0) < 0) {
+  if (archive_dir_prepare(&serve_state, serve_state.global->run_archive_dir,
+                          run_id, 0, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -4432,7 +4433,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
       goto report_check_failed;
     }
 
-    rep_flags = archive_make_write_path(rep_path, sizeof(rep_path),
+    rep_flags = archive_make_write_path(&serve_state, rep_path, sizeof(rep_path),
                                         serve_state.global->xml_report_archive_dir,comp_pkt->run_id,
                                         report_size, 0);
     if (rep_flags < 0) {
@@ -4459,7 +4460,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
     if (run_change_status(serve_state.runlog_state, comp_pkt->run_id, RUN_CHECK_FAILED, 0,
                           -1, 0) < 0)
       goto non_fatal_error;
-    if (archive_dir_prepare(serve_state.global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0)
+    if (archive_dir_prepare(&serve_state, serve_state.global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0)
       goto non_fatal_error;
     if (generic_copy_file(REMOVE, compile_report_dir, pname, "",
                           rep_flags, 0, rep_path, "") < 0) {
@@ -4492,7 +4493,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
       }
     }
     */
-    if (archive_dir_prepare(serve_state.global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0) {
+    if (archive_dir_prepare(&serve_state, serve_state.global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0) {
       snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
                serve_state.global->xml_report_archive_dir, comp_pkt->run_id);
       goto report_check_failed;
@@ -4543,7 +4544,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
    */
 
   /* find appropriate checker */
-  cn = find_tester(re.problem, lang->arch);
+  cn = find_tester(&serve_state, re.problem, lang->arch);
   if (cn < 1 || cn > serve_state.max_tester || !serve_state.testers[cn]) {
     snprintf(errmsg, sizeof(errmsg), "no appropriate checker for <%s>, <%s>\n",
              prob->short_name, lang->arch);
@@ -4552,7 +4553,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
 
   if (prob->variant_num > 0) {
     variant = re.variant;
-    if (!variant) variant = find_variant(re.team, re.problem);
+    if (!variant) variant = find_variant(&serve_state, re.team, re.problem);
     if (!variant) {
       snprintf(errmsg, sizeof(errmsg), "no appropriate variant for <%s>, <%s>\n",
                team_name, prob->short_name);
@@ -4564,7 +4565,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
   prio = 0;
   prio += lang->priority_adjustment;
   prio += prob->priority_adjustment;
-  prio += find_user_priority_adjustment(re.team);
+  prio += find_user_priority_adjustment(&serve_state, re.team);
   prio += serve_state.testers[cn]->priority_adjustment;
   prio += comp_extra->priority_adjustment;
 
@@ -4683,10 +4684,10 @@ read_compile_packet(const unsigned char *compile_status_dir,
                         -1, 0) < 0)
     goto non_fatal_error;
   report_size = strlen(errmsg);
-  rep_flags = archive_make_write_path(rep_path, sizeof(rep_path),
+  rep_flags = archive_make_write_path(&serve_state, rep_path, sizeof(rep_path),
                                       serve_state.global->xml_report_archive_dir, comp_pkt->run_id,
                                       report_size, 0);
-  if (archive_dir_prepare(serve_state.global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0)
+  if (archive_dir_prepare(&serve_state, serve_state.global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0)
     goto non_fatal_error;
   /* error code is ignored */
   generic_write_file(errmsg, report_size, rep_flags, 0, rep_path, 0);
@@ -4823,11 +4824,11 @@ read_run_packet(const unsigned char *run_status_dir,
   update_standings_file(0);
   rep_size = generic_file_size(run_report_dir, pname, "");
   if (rep_size < 0) return -1;
-  rep_flags = archive_make_write_path(rep_path, sizeof(rep_path),
+  rep_flags = archive_make_write_path(&serve_state, rep_path, sizeof(rep_path),
                                       serve_state.global->xml_report_archive_dir,
                                       reply_pkt->run_id,
                                       rep_size, 0);
-  if (archive_dir_prepare(serve_state.global->xml_report_archive_dir, reply_pkt->run_id, 0, 0) < 0)
+  if (archive_dir_prepare(&serve_state, serve_state.global->xml_report_archive_dir, reply_pkt->run_id, 0, 0) < 0)
     return -1;
   if (generic_copy_file(REMOVE, run_report_dir, pname, "",
                         rep_flags, 0, rep_path, "") < 0)
@@ -4847,10 +4848,10 @@ read_run_packet(const unsigned char *run_status_dir,
   }
   */
   if (serve_state.global->enable_full_archive) {
-    full_flags = archive_make_write_path(full_path, sizeof(full_path),
+    full_flags = archive_make_write_path(&serve_state, full_path, sizeof(full_path),
                                          serve_state.global->full_archive_dir,
                                          reply_pkt->run_id, 0, 0);
-    if (archive_dir_prepare(serve_state.global->full_archive_dir, reply_pkt->run_id, 0, 0) < 0)
+    if (archive_dir_prepare(&serve_state, serve_state.global->full_archive_dir, reply_pkt->run_id, 0, 0) < 0)
       return -1;
     if (generic_copy_file(REMOVE, run_full_archive_dir, pname, "",
                           0, 0, full_path, "") < 0)
@@ -5007,7 +5008,7 @@ queue_compile_request(unsigned char const *str, int len,
 
   if (len == -1) {
     // copy from archive
-    arch_flags = archive_make_read_path(run_arch, sizeof(run_arch),
+    arch_flags = archive_make_read_path(&serve_state, run_arch, sizeof(run_arch),
                                         serve_state.global->run_archive_dir, run_id, 0,0);
     if (arch_flags < 0) return -1;
     if (generic_copy_file(arch_flags, 0, run_arch, "",
@@ -5847,7 +5848,7 @@ generate_statistics_email(time_t from_time, time_t to_time)
            serve_state.global->contest_id);
 
   eout = open_memstream(&etxt, &elen);
-  generate_daily_statistics(eout, from_time, to_time);
+  generate_daily_statistics(&serve_state, eout, from_time, to_time);
   fclose(eout); eout = 0;
   if (!etxt || !*etxt) {
     xfree(etxt);
@@ -6346,17 +6347,17 @@ main(int argc, char *argv[])
   // initialize the current time to avoid some asserts
   current_time = time(0);
 
-  if (prepare(argv[i], p_flags, PREPARE_SERVE, cpp_opts,
+  if (prepare(&serve_state, argv[i], p_flags, PREPARE_SERVE, cpp_opts,
               (cmdline_socket_fd >= 0)) < 0) return 1;
-  if (prepare_serve_defaults() < 0) return 1;
+  if (prepare_serve_defaults(&serve_state) < 0) return 1;
 
   l10n_prepare(serve_state.global->enable_l10n, serve_state.global->l10n_dir);
 
   if (T_flag) {
-    print_configuration(stdout);
+    print_configuration(&serve_state, stdout);
     return 0;
   }
-  if (create_dirs(PREPARE_SERVE) < 0) return 1;
+  if (create_dirs(&serve_state, PREPARE_SERVE) < 0) return 1;
   if (serve_state.global->contest_id <= 0) {
     err("contest_id is not defined");
     return 1;

@@ -434,20 +434,20 @@ static const struct config_section_info params[] =
 };
 
 int
-find_tester(int problem, char const *arch)
+find_tester(const serve_state_t state,int problem, char const *arch)
 {
   int i;
 
-  for (i = 1; i <= serve_state.max_tester; i++) {
-    if (!serve_state.testers[i]) continue;
-    if (serve_state.testers[i]->any) continue;
-    if (problem == serve_state.testers[i]->problem
-        && !strcmp(arch, serve_state.testers[i]->arch))
+  for (i = 1; i <= state->max_tester; i++) {
+    if (!state->testers[i]) continue;
+    if (state->testers[i]->any) continue;
+    if (problem == state->testers[i]->problem
+        && !strcmp(arch, state->testers[i]->arch))
       return i;
   }
-  for (i = 1; i <= serve_state.max_tester; i++) {
-    if (!serve_state.testers[i]) continue;
-    if (serve_state.testers[i]->any && !strcmp(arch, serve_state.testers[i]->arch))
+  for (i = 1; i <= state->max_tester; i++) {
+    if (!state->testers[i]) continue;
+    if (state->testers[i]->any && !strcmp(arch, state->testers[i]->arch))
       return i;
   }
   
@@ -782,9 +782,9 @@ static const struct inheritance_info tester_inheritance_info[] =
 };
 
 static int
-process_abstract_tester(int i)
+process_abstract_tester(serve_state_t state, int i)
 {
-  struct section_tester_data *atp = serve_state.abstr_testers[i], *katp;
+  struct section_tester_data *atp = state->abstr_testers[i], *katp;
   struct section_tester_data **sups;
   char ***envs;
   char *ish;
@@ -825,12 +825,12 @@ process_abstract_tester(int i)
 
   for (j = 0; j < stot; j++) {
     katp = 0;
-    for (k = 0; k < serve_state.max_abstr_tester; k++) {
-      katp = serve_state.abstr_testers[k];
+    for (k = 0; k < state->max_abstr_tester; k++) {
+      katp = state->abstr_testers[k];
       if (!katp || !katp->name[0]) continue;
       if (!strcmp(atp->super[j], katp->name)) break;
     }
-    if (k >= serve_state.max_abstr_tester || !katp) {
+    if (k >= state->max_abstr_tester || !katp) {
       err("abstract tester %s not found", atp->super[j]);
       return -1;
     }
@@ -1200,7 +1200,7 @@ prepare_free_variant_map(struct variant_map *p)
 }
 
 static struct variant_map *
-parse_variant_map(const unsigned char *path)
+parse_variant_map(serve_state_t state, const unsigned char *path)
 {
   unsigned char buf[1200];
   unsigned char login_buf[sizeof(buf)];
@@ -1210,11 +1210,11 @@ parse_variant_map(const unsigned char *path)
   struct variant_map *pmap;
 
   XCALLOC(pmap, 1);
-  XCALLOC(pmap->prob_map, serve_state.max_prob + 1);
-  XCALLOC(pmap->prob_rev_map, serve_state.max_prob + 1);
+  XCALLOC(pmap->prob_map, state->max_prob + 1);
+  XCALLOC(pmap->prob_rev_map, state->max_prob + 1);
   pmap->var_prob_num = 0;
-  for (i = 1; i <= serve_state.max_prob; i++) {
-    if (!serve_state.probs[i] || serve_state.probs[i]->variant_num <= 0) continue;
+  for (i = 1; i <= state->max_prob; i++) {
+    if (!state->probs[i] || state->probs[i]->variant_num <= 0) continue;
     pmap->prob_map[i] = ++pmap->var_prob_num;
     pmap->prob_rev_map[pmap->var_prob_num] = i;
   }
@@ -1274,17 +1274,17 @@ parse_variant_map(const unsigned char *path)
 
     for (j = 1; j <= pmap->var_prob_num; j++) {
       i = pmap->prob_rev_map[j];
-      ASSERT(i > 0 && i <= serve_state.max_prob);
-      ASSERT(serve_state.probs[i]);
-      ASSERT(serve_state.probs[i]->variant_num > 0);
+      ASSERT(i > 0 && i <= state->max_prob);
+      ASSERT(state->probs[i]);
+      ASSERT(state->probs[i]->variant_num > 0);
       if (sscanf(p, "%d%n", &v, &n) != 1) {
         err("Cannot read variant for team %s and problem %s",
-            login_buf, serve_state.probs[i]->short_name);
+            login_buf, state->probs[i]->short_name);
         return 0;
       }
-      if (v < 0 || v > serve_state.probs[i]->variant_num) {
+      if (v < 0 || v > state->probs[i]->variant_num) {
         err("Invalid variant %d for team %s and problem %s",
-            v, login_buf, serve_state.probs[i]->short_name);
+            v, login_buf, state->probs[i]->short_name);
         return 0;
       }
       p += n;
@@ -1304,7 +1304,7 @@ parse_variant_map(const unsigned char *path)
     fprintf(stderr, "%s: ", pmap->v[i].login);
     for (j = 1; j <= pmap->var_prob_num; j++)
       fprintf(stderr, "%s(%d) ",
-              serve_state.probs[pmap->prob_rev_map[j]]->short_name,
+              state->probs[pmap->prob_rev_map[j]]->short_name,
               pmap->v[i].variants[j]);
     fprintf(stderr, "\n");
   }
@@ -1401,20 +1401,20 @@ parse_score_bonus(const unsigned char *str, int *p_total, int **p_values)
 }
 
 static void
-make_stand_file_name_2(void)
+make_stand_file_name_2(serve_state_t state)
 {
   path_t b1, b2;
-  unsigned char *s = serve_state.global->standings_file_name;
+  unsigned char *s = state->global->standings_file_name;
   int i;
 
-  if (serve_state.global->users_on_page <= 0) return;
+  if (state->global->users_on_page <= 0) return;
   i = strlen(s);
   ASSERT(i > 0);
 
   snprintf(b1, sizeof(b1), s, 1);
   snprintf(b2, sizeof(b2), s, 2);
   if (strcmp(b1, b2) != 0) {
-    snprintf(serve_state.global->stand_file_name_2, sizeof(serve_state.global->stand_file_name_2),
+    snprintf(state->global->stand_file_name_2, sizeof(state->global->stand_file_name_2),
              "%s", s);
     return;
   }
@@ -1422,12 +1422,12 @@ make_stand_file_name_2(void)
   i--;
   while (i >= 0 && s[i] != '.' && s[i] != '/') i--;
   if (i < 0 || s[i] == '/') i++;
-  snprintf(serve_state.global->stand_file_name_2, sizeof(serve_state.global->stand_file_name_2),
+  snprintf(state->global->stand_file_name_2, sizeof(state->global->stand_file_name_2),
            "%.*s%s%s", i, s, "%d", s + i);
 }
 
 static int
-set_defaults(int mode)
+set_defaults(serve_state_t state, int mode)
 {
   struct generic_section_config *p;
   struct section_problem_data *aprob;
@@ -1441,128 +1441,128 @@ set_defaults(int mode)
   int r;
 
   /* find global section */
-  for (p = serve_state.config; p; p = p->next)
+  for (p = state->config; p; p = p->next)
     if (!p->name[0] || !strcmp(p->name, "global"))
       break;
   if (!p) {
     err("Global configuration settings not found");
     return -1;
   }
-  serve_state.global = (struct section_global_data*) p;
+  state->global = (struct section_global_data*) p;
 
   /* userlist-server interaction */
   if (mode == PREPARE_SERVE) {
 #if defined EJUDGE_SOCKET_PATH
-    if (!serve_state.global->socket_path[0]) {
-      snprintf(serve_state.global->socket_path, sizeof(serve_state.global->socket_path),
+    if (!state->global->socket_path[0]) {
+      snprintf(state->global->socket_path, sizeof(state->global->socket_path),
                "%s", EJUDGE_SOCKET_PATH);
     }
 #endif /* EJUDGE_SOCKET_PATH */
-    if (!serve_state.global->socket_path[0]) {
+    if (!state->global->socket_path[0]) {
       err("global.socket_path must be set");
       return -1;
     }
   }
 
   /* directory poll intervals */
-  if (serve_state.global->sleep_time < 0 || serve_state.global->sleep_time > 10000) {
+  if (state->global->sleep_time < 0 || state->global->sleep_time > 10000) {
     err("Invalid global.sleep_time value");
     return -1;
   }
   if (mode == PREPARE_SERVE) {
-    if (serve_state.global->serve_sleep_time < 0 || serve_state.global->serve_sleep_time > 10000) {
+    if (state->global->serve_sleep_time < 0 || state->global->serve_sleep_time > 10000) {
       err("Invalid global.serve_sleep_time value");
       return -1;
     }
   }
-  if (!serve_state.global->sleep_time && !serve_state.global->serve_sleep_time) {
+  if (!state->global->sleep_time && !state->global->serve_sleep_time) {
     info("global.sleep_time set to %d", DFLT_G_SLEEP_TIME);
-    serve_state.global->sleep_time = DFLT_G_SLEEP_TIME;
+    state->global->sleep_time = DFLT_G_SLEEP_TIME;
     if (mode == PREPARE_SERVE) {
       info("global.serve_sleep_time set to %d", DFLT_G_SERVE_SLEEP_TIME);
-      serve_state.global->serve_sleep_time = DFLT_G_SERVE_SLEEP_TIME;
+      state->global->serve_sleep_time = DFLT_G_SERVE_SLEEP_TIME;
     }
-  } else if (!serve_state.global->sleep_time) {
+  } else if (!state->global->sleep_time) {
     info("global.sleep_time set to %d", DFLT_G_SLEEP_TIME);
-    serve_state.global->sleep_time = DFLT_G_SLEEP_TIME;
-  } else if (mode == PREPARE_SERVE && !serve_state.global->serve_sleep_time) {
+    state->global->sleep_time = DFLT_G_SLEEP_TIME;
+  } else if (mode == PREPARE_SERVE && !state->global->serve_sleep_time) {
     info("global.serve_sleep_time set to global.sleep_time");
-    serve_state.global->serve_sleep_time = serve_state.global->sleep_time;
+    state->global->serve_sleep_time = state->global->sleep_time;
   }
 
-  if (serve_state.global->team_enable_src_view == -1)
-    serve_state.global->team_enable_src_view = DFLT_G_TEAM_ENABLE_SRC_VIEW;
-  if (serve_state.global->team_enable_rep_view == -1)
-    serve_state.global->team_enable_rep_view = DFLT_G_TEAM_ENABLE_REP_VIEW;
-  if (serve_state.global->team_enable_ce_view == -1)
-    serve_state.global->team_enable_ce_view = DFLT_G_TEAM_ENABLE_CE_VIEW;
-  if (serve_state.global->team_show_judge_report == -1)
-    serve_state.global->team_show_judge_report = DFLT_G_TEAM_SHOW_JUDGE_REPORT;
-  if (serve_state.global->report_error_code == -1)
-    serve_state.global->report_error_code = DFLT_G_REPORT_ERROR_CODE;
-  if (serve_state.global->disable_clars == -1)
-    serve_state.global->disable_clars = DFLT_G_DISABLE_CLARS;
-  if (serve_state.global->disable_team_clars == -1)
-    serve_state.global->disable_team_clars = DFLT_G_DISABLE_TEAM_CLARS;
-  if (serve_state.global->ignore_compile_errors == -1)
-    serve_state.global->ignore_compile_errors = DFLT_G_IGNORE_COMPILE_ERRORS;
-  if (serve_state.global->disable_failed_test_view == -1)
-    serve_state.global->disable_failed_test_view = DFLT_G_DISABLE_FAILED_TEST_VIEW;
-  if (serve_state.global->ignore_duplicated_runs == -1)
-    serve_state.global->ignore_duplicated_runs = DFLT_G_IGNORE_DUPLICATED_RUNS;
-  if (serve_state.global->show_deadline == -1)
-    serve_state.global->show_deadline = DFLT_G_SHOW_DEADLINE;
-  if (serve_state.global->enable_printing == -1)
-    serve_state.global->enable_printing = DFLT_G_ENABLE_PRINTING;
-  if (serve_state.global->prune_empty_users == -1)
-    serve_state.global->prune_empty_users = DFLT_G_PRUNE_EMPTY_USERS;
-  if (serve_state.global->enable_full_archive == -1)
-    serve_state.global->enable_full_archive = DFLT_G_ENABLE_FULL_ARCHIVE;
-  if (serve_state.global->always_show_problems == -1)
-    serve_state.global->always_show_problems = DFLT_G_ALWAYS_SHOW_PROBLEMS;
-  if (serve_state.global->stand_show_ok_time == -1)
-    serve_state.global->stand_show_ok_time = DFLT_G_STAND_SHOW_OK_TIME;
-  if (serve_state.global->stand_show_warn_number == -1)
-    serve_state.global->stand_show_warn_number = DFLT_G_STAND_SHOW_WARN_NUMBER;
-  if (serve_state.global->autoupdate_standings == -1)
-    serve_state.global->autoupdate_standings = DFLT_G_AUTOUPDATE_STANDINGS;
-  if (serve_state.global->disable_auto_testing == -1)
-    serve_state.global->disable_auto_testing = DFLT_G_DISABLE_AUTO_TESTING;
-  if (serve_state.global->disable_testing == -1)
-    serve_state.global->disable_testing = DFLT_G_DISABLE_TESTING;
-  if (serve_state.global->show_astr_time == -1)
-    serve_state.global->show_astr_time = DFLT_G_SHOW_ASTR_TIME;
-  if (serve_state.global->enable_report_upload == -1)
-    serve_state.global->enable_report_upload = DFLT_G_ENABLE_REPORT_UPLOAD;
-  if (serve_state.global->enable_runlog_merge == -1)
-    serve_state.global->enable_runlog_merge = DFLT_G_ENABLE_RUNLOG_MERGE;
-  if (serve_state.global->ignore_success_time == -1)
-    serve_state.global->ignore_success_time = DFLT_G_IGNORE_SUCCESS_TIME;
-  if (serve_state.global->secure_run == -1)
-    serve_state.global->secure_run = DFLT_G_SECURE_RUN;
-  if (serve_state.global->enable_memory_limit_error == -1)
-    serve_state.global->enable_memory_limit_error = DFLT_G_ENABLE_MEMORY_LIMIT_ERROR;
+  if (state->global->team_enable_src_view == -1)
+    state->global->team_enable_src_view = DFLT_G_TEAM_ENABLE_SRC_VIEW;
+  if (state->global->team_enable_rep_view == -1)
+    state->global->team_enable_rep_view = DFLT_G_TEAM_ENABLE_REP_VIEW;
+  if (state->global->team_enable_ce_view == -1)
+    state->global->team_enable_ce_view = DFLT_G_TEAM_ENABLE_CE_VIEW;
+  if (state->global->team_show_judge_report == -1)
+    state->global->team_show_judge_report = DFLT_G_TEAM_SHOW_JUDGE_REPORT;
+  if (state->global->report_error_code == -1)
+    state->global->report_error_code = DFLT_G_REPORT_ERROR_CODE;
+  if (state->global->disable_clars == -1)
+    state->global->disable_clars = DFLT_G_DISABLE_CLARS;
+  if (state->global->disable_team_clars == -1)
+    state->global->disable_team_clars = DFLT_G_DISABLE_TEAM_CLARS;
+  if (state->global->ignore_compile_errors == -1)
+    state->global->ignore_compile_errors = DFLT_G_IGNORE_COMPILE_ERRORS;
+  if (state->global->disable_failed_test_view == -1)
+    state->global->disable_failed_test_view = DFLT_G_DISABLE_FAILED_TEST_VIEW;
+  if (state->global->ignore_duplicated_runs == -1)
+    state->global->ignore_duplicated_runs = DFLT_G_IGNORE_DUPLICATED_RUNS;
+  if (state->global->show_deadline == -1)
+    state->global->show_deadline = DFLT_G_SHOW_DEADLINE;
+  if (state->global->enable_printing == -1)
+    state->global->enable_printing = DFLT_G_ENABLE_PRINTING;
+  if (state->global->prune_empty_users == -1)
+    state->global->prune_empty_users = DFLT_G_PRUNE_EMPTY_USERS;
+  if (state->global->enable_full_archive == -1)
+    state->global->enable_full_archive = DFLT_G_ENABLE_FULL_ARCHIVE;
+  if (state->global->always_show_problems == -1)
+    state->global->always_show_problems = DFLT_G_ALWAYS_SHOW_PROBLEMS;
+  if (state->global->stand_show_ok_time == -1)
+    state->global->stand_show_ok_time = DFLT_G_STAND_SHOW_OK_TIME;
+  if (state->global->stand_show_warn_number == -1)
+    state->global->stand_show_warn_number = DFLT_G_STAND_SHOW_WARN_NUMBER;
+  if (state->global->autoupdate_standings == -1)
+    state->global->autoupdate_standings = DFLT_G_AUTOUPDATE_STANDINGS;
+  if (state->global->disable_auto_testing == -1)
+    state->global->disable_auto_testing = DFLT_G_DISABLE_AUTO_TESTING;
+  if (state->global->disable_testing == -1)
+    state->global->disable_testing = DFLT_G_DISABLE_TESTING;
+  if (state->global->show_astr_time == -1)
+    state->global->show_astr_time = DFLT_G_SHOW_ASTR_TIME;
+  if (state->global->enable_report_upload == -1)
+    state->global->enable_report_upload = DFLT_G_ENABLE_REPORT_UPLOAD;
+  if (state->global->enable_runlog_merge == -1)
+    state->global->enable_runlog_merge = DFLT_G_ENABLE_RUNLOG_MERGE;
+  if (state->global->ignore_success_time == -1)
+    state->global->ignore_success_time = DFLT_G_IGNORE_SUCCESS_TIME;
+  if (state->global->secure_run == -1)
+    state->global->secure_run = DFLT_G_SECURE_RUN;
+  if (state->global->enable_memory_limit_error == -1)
+    state->global->enable_memory_limit_error = DFLT_G_ENABLE_MEMORY_LIMIT_ERROR;
 
 #if defined EJUDGE_HTTPD_HTDOCS_DIR
-  if (!serve_state.global->htdocs_dir[0]) {
-    snprintf(serve_state.global->htdocs_dir, sizeof(serve_state.global->htdocs_dir),
+  if (!state->global->htdocs_dir[0]) {
+    snprintf(state->global->htdocs_dir, sizeof(state->global->htdocs_dir),
              "%s", EJUDGE_HTTPD_HTDOCS_DIR);
   }
 #endif
 
-  if (serve_state.global->stand_ignore_after[0] &&
-      parse_date(serve_state.global->stand_ignore_after, &serve_state.global->stand_ignore_after_d) < 0) {
+  if (state->global->stand_ignore_after[0] &&
+      parse_date(state->global->stand_ignore_after, &state->global->stand_ignore_after_d) < 0) {
     err("cannot parse stand_ignore_after parameter");
     return -1;
   }
-  if (serve_state.global->contest_finish_time[0] &&
-      parse_date(serve_state.global->contest_finish_time,
-                 &serve_state.global->contest_finish_time_d) < 0) {
+  if (state->global->contest_finish_time[0] &&
+      parse_date(state->global->contest_finish_time,
+                 &state->global->contest_finish_time_d) < 0) {
     err("cannot parse contest_finish_time parameter");
     return -1;
   }
 
-#define GLOBAL_INIT_NUM_FIELD(f,v) do { if (!serve_state.global->f) { info("global.%s set to %d", #f, v); serve_state.global->f = v; } } while (0)
+#define GLOBAL_INIT_NUM_FIELD(f,v) do { if (!state->global->f) { info("global.%s set to %d", #f, v); state->global->f = v; } } while (0)
   /* limits (serve) */
   if (mode == PREPARE_SERVE) {
     GLOBAL_INIT_NUM_FIELD(max_run_size, DFLT_G_MAX_RUN_SIZE);
@@ -1574,78 +1574,78 @@ set_defaults(int mode)
   }
 
   /* timings */
-  if (serve_state.global->board_fog_time < 0) {
+  if (state->global->board_fog_time < 0) {
     info("global.board_fog_time set to %d", DFLT_G_BOARD_FOG_TIME);
-    serve_state.global->board_fog_time = DFLT_G_BOARD_FOG_TIME;
+    state->global->board_fog_time = DFLT_G_BOARD_FOG_TIME;
   }
-  serve_state.global->board_fog_time *= 60;
-  if (serve_state.global->board_unfog_time == -1) {
+  state->global->board_fog_time *= 60;
+  if (state->global->board_unfog_time == -1) {
     info("global.board_unfog_time set to %d", DFLT_G_BOARD_UNFOG_TIME);
-    serve_state.global->board_unfog_time = DFLT_G_BOARD_UNFOG_TIME;
+    state->global->board_unfog_time = DFLT_G_BOARD_UNFOG_TIME;
   }
-  serve_state.global->board_unfog_time *= 60;
-  if (serve_state.global->contest_time < -1) {
-    err("bad value of global.contest_time: %d", serve_state.global->contest_time);
+  state->global->board_unfog_time *= 60;
+  if (state->global->contest_time < -1) {
+    err("bad value of global.contest_time: %d", state->global->contest_time);
     return -1;
   }
-  if (serve_state.global->contest_time == -1) {
+  if (state->global->contest_time == -1) {
     info("global.contest_time set to %d", DFLT_G_CONTEST_TIME);
-    serve_state.global->contest_time = DFLT_G_CONTEST_TIME;
+    state->global->contest_time = DFLT_G_CONTEST_TIME;
   }
-  serve_state.global->contest_time *= 60;
+  state->global->contest_time *= 60;
 
   if (mode == PREPARE_SERVE || mode == PREPARE_RUN) {
-    if (serve_state.global->inactivity_timeout == -1) {
+    if (state->global->inactivity_timeout == -1) {
       info("global.inactivity_timeout set to %d", DFLT_G_INACTIVITY_TIMEOUT);
-      serve_state.global->inactivity_timeout = DFLT_G_INACTIVITY_TIMEOUT;
+      state->global->inactivity_timeout = DFLT_G_INACTIVITY_TIMEOUT;
     }
   }
 
-  if (!serve_state.global->root_dir[0]) {
+  if (!state->global->root_dir[0]) {
     err("global.root_dir must be set!");
     return -1;
   }
 
   /* root_dir, conf_dir, var_dir */
-  if (!serve_state.global->root_dir[0] && !serve_state.global->var_dir[0] && !serve_state.global->conf_dir[0]) {
+  if (!state->global->root_dir[0] && !state->global->var_dir[0] && !state->global->conf_dir[0]) {
     info("global.root_dir set to %s", DFLT_G_ROOT_DIR);
     info("global.conf_dir set to %s", DFLT_G_CONF_DIR);
     info("global.var_dir set to %s", DFLT_G_VAR_DIR);
-    snprintf(serve_state.global->root_dir, sizeof(serve_state.global->root_dir),
+    snprintf(state->global->root_dir, sizeof(state->global->root_dir),
              "%s", DFLT_G_ROOT_DIR);
-    path_init(serve_state.global->conf_dir, serve_state.global->root_dir, DFLT_G_CONF_DIR);
-    path_init(serve_state.global->var_dir, serve_state.global->root_dir, DFLT_G_VAR_DIR);
-  } else if (serve_state.global->root_dir[0]) {
-    if (!serve_state.global->conf_dir[0]) {
+    path_init(state->global->conf_dir, state->global->root_dir, DFLT_G_CONF_DIR);
+    path_init(state->global->var_dir, state->global->root_dir, DFLT_G_VAR_DIR);
+  } else if (state->global->root_dir[0]) {
+    if (!state->global->conf_dir[0]) {
       info("global.conf_dir set to %s", DFLT_G_CONF_DIR);
     }
-    if (!serve_state.global->var_dir[0]) {
+    if (!state->global->var_dir[0]) {
       info("global.var_dir set to %s", DFLT_G_VAR_DIR);
     }
-    path_init(serve_state.global->conf_dir, serve_state.global->root_dir, DFLT_G_CONF_DIR);
-    path_init(serve_state.global->var_dir, serve_state.global->root_dir, DFLT_G_VAR_DIR);
-  } else if (!serve_state.global->var_dir[0]) {
+    path_init(state->global->conf_dir, state->global->root_dir, DFLT_G_CONF_DIR);
+    path_init(state->global->var_dir, state->global->root_dir, DFLT_G_VAR_DIR);
+  } else if (!state->global->var_dir[0]) {
     err("global.var_dir must be set!");
     return -1;
-  } else if (!serve_state.global->conf_dir[0]) {
+  } else if (!state->global->conf_dir[0]) {
     err("global.conf_dir must be set!");
     return -1;
   }
 
   /* CONFIGURATION FILES DEFAULTS */
-#define GLOBAL_INIT_FIELD(f,d,c) do { if (!serve_state.global->f[0]) { info("global." #f " set to %s", d); snprintf(serve_state.global->f, sizeof(serve_state.global->f), "%s", d); } pathmake2(serve_state.global->f,serve_state.global->c, "/", serve_state.global->f, NULL); } while (0)
+#define GLOBAL_INIT_FIELD(f,d,c) do { if (!state->global->f[0]) { info("global." #f " set to %s", d); snprintf(state->global->f, sizeof(state->global->f), "%s", d); } pathmake2(state->global->f,state->global->c, "/", state->global->f, NULL); } while (0)
 
 #if defined EJUDGE_SCRIPT_DIR
-  if (!serve_state.global->script_dir[0]) {
-    snprintf(serve_state.global->script_dir, sizeof(serve_state.global->script_dir), "%s",
+  if (!state->global->script_dir[0]) {
+    snprintf(state->global->script_dir, sizeof(state->global->script_dir), "%s",
              EJUDGE_SCRIPT_DIR);
-    info("global.script_dir is set to %s", serve_state.global->script_dir);
+    info("global.script_dir is set to %s", state->global->script_dir);
   }
-  if (!serve_state.global->ejudge_checkers_dir[0]) {
-    snprintf(serve_state.global->ejudge_checkers_dir, sizeof(serve_state.global->ejudge_checkers_dir),
+  if (!state->global->ejudge_checkers_dir[0]) {
+    snprintf(state->global->ejudge_checkers_dir, sizeof(state->global->ejudge_checkers_dir),
              "%s", EJUDGE_SCRIPT_DIR);
     info("global.ejudge_checkers_dir is set to %s",
-         serve_state.global->ejudge_checkers_dir);
+         state->global->ejudge_checkers_dir);
   }
 #endif /* EJUDGE_SCRIPT_DIR */
 
@@ -1661,15 +1661,15 @@ set_defaults(int mode)
   }
 
   if (mode != PREPARE_COMPILE) {
-    if (!serve_state.global->info_sfx[0]) {
-      snprintf(serve_state.global->info_sfx, sizeof(serve_state.global->info_sfx),
+    if (!state->global->info_sfx[0]) {
+      snprintf(state->global->info_sfx, sizeof(state->global->info_sfx),
                "%s", DFLT_G_INFO_SFX);
-      info("global.info_sfx set to %s", serve_state.global->info_sfx);
+      info("global.info_sfx set to %s", state->global->info_sfx);
     }
-    if (!serve_state.global->tgz_sfx[0]) {
-      snprintf(serve_state.global->tgz_sfx, sizeof(serve_state.global->tgz_sfx),
+    if (!state->global->tgz_sfx[0]) {
+      snprintf(state->global->tgz_sfx, sizeof(state->global->tgz_sfx),
                "%s", DFLT_G_TGZ_SFX);
-      info("global.tgz_sfx set to %s", serve_state.global->tgz_sfx);
+      info("global.tgz_sfx set to %s", state->global->tgz_sfx);
     }
   }
 
@@ -1688,50 +1688,50 @@ set_defaults(int mode)
 
     GLOBAL_INIT_FIELD(status_dir, DFLT_G_STATUS_DIR, var_dir);
     GLOBAL_INIT_FIELD(serve_socket, DFLT_G_SERVE_SOCKET, var_dir);
-    if (serve_state.global->variant_map_file) {
+    if (state->global->variant_map_file) {
       GLOBAL_INIT_FIELD(variant_map_file, "", conf_dir);
     }
   }
 
   if (mode == PREPARE_COMPILE || mode == PREPARE_SERVE) {
     GLOBAL_INIT_FIELD(compile_dir, DFLT_G_COMPILE_DIR, var_dir);
-    pathmake(serve_state.global->compile_queue_dir, serve_state.global->compile_dir, "/",
+    pathmake(state->global->compile_queue_dir, state->global->compile_dir, "/",
              DFLT_G_COMPILE_QUEUE_DIR, 0);
-    info("global.compile_queue_dir is %s", serve_state.global->compile_queue_dir);
-    pathmake(serve_state.global->compile_src_dir, serve_state.global->compile_dir, "/",
+    info("global.compile_queue_dir is %s", state->global->compile_queue_dir);
+    pathmake(state->global->compile_src_dir, state->global->compile_dir, "/",
              DFLT_G_COMPILE_SRC_DIR, 0);
-    info("global.compile_src_dir is %s", serve_state.global->compile_src_dir);
+    info("global.compile_src_dir is %s", state->global->compile_src_dir);
   }
 
   if (mode == PREPARE_SERVE) {
     /* compile_out_dir is no longer parametrized, also it uses compile_dir */
-    snprintf(serve_state.global->compile_out_dir, sizeof(serve_state.global->compile_out_dir),
-             "%s/%06d", serve_state.global->compile_dir, serve_state.global->contest_id);
-    info("global.compile_out_dir is %s", serve_state.global->compile_out_dir);
-    pathmake(serve_state.global->compile_status_dir, serve_state.global->compile_out_dir, "/",
+    snprintf(state->global->compile_out_dir, sizeof(state->global->compile_out_dir),
+             "%s/%06d", state->global->compile_dir, state->global->contest_id);
+    info("global.compile_out_dir is %s", state->global->compile_out_dir);
+    pathmake(state->global->compile_status_dir, state->global->compile_out_dir, "/",
              DFLT_G_COMPILE_STATUS_DIR, 0);
-    info("global.compile_status_dir is %s", serve_state.global->compile_status_dir);
-    pathmake(serve_state.global->compile_report_dir, serve_state.global->compile_out_dir, "/",
+    info("global.compile_status_dir is %s", state->global->compile_status_dir);
+    pathmake(state->global->compile_report_dir, state->global->compile_out_dir, "/",
              DFLT_G_COMPILE_REPORT_DIR, 0);
-    info("global.compile_report_dir is %s", serve_state.global->compile_report_dir);
+    info("global.compile_report_dir is %s", state->global->compile_report_dir);
   }
 
   GLOBAL_INIT_FIELD(work_dir, DFLT_G_WORK_DIR, var_dir);
   GLOBAL_INIT_FIELD(print_work_dir, DFLT_G_PRINT_WORK_DIR, work_dir);
   GLOBAL_INIT_FIELD(diff_work_dir, DFLT_G_DIFF_WORK_DIR, work_dir);
 
-  if (!serve_state.global->a2ps_path[0]) {
-    strcpy(serve_state.global->a2ps_path, DFLT_G_A2PS_PATH);
+  if (!state->global->a2ps_path[0]) {
+    strcpy(state->global->a2ps_path, DFLT_G_A2PS_PATH);
   }
-  if (!serve_state.global->lpr_path[0]) {
-    strcpy(serve_state.global->lpr_path, DFLT_G_LPR_PATH);
+  if (!state->global->lpr_path[0]) {
+    strcpy(state->global->lpr_path, DFLT_G_LPR_PATH);
   }
-  if (!serve_state.global->diff_path[0]) {
-    strcpy(serve_state.global->diff_path, DFLT_G_DIFF_PATH);
+  if (!state->global->diff_path[0]) {
+    strcpy(state->global->diff_path, DFLT_G_DIFF_PATH);
   }
 
-  if (serve_state.global->team_page_quota < 0) {
-    serve_state.global->team_page_quota = DFLT_G_TEAM_PAGE_QUOTA;
+  if (state->global->team_page_quota < 0) {
+    state->global->team_page_quota = DFLT_G_TEAM_PAGE_QUOTA;
   }
 
   if (mode == PREPARE_COMPILE) {
@@ -1740,32 +1740,32 @@ set_defaults(int mode)
 
   if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
     GLOBAL_INIT_FIELD(run_dir, DFLT_G_RUN_DIR, var_dir);
-    pathmake(serve_state.global->run_queue_dir, serve_state.global->run_dir, "/",
+    pathmake(state->global->run_queue_dir, state->global->run_dir, "/",
              DFLT_G_RUN_QUEUE_DIR, 0);
-    info("global.run_queue_dir is %s", serve_state.global->run_queue_dir);
-    pathmake(serve_state.global->run_exe_dir, serve_state.global->run_dir, "/",
+    info("global.run_queue_dir is %s", state->global->run_queue_dir);
+    pathmake(state->global->run_exe_dir, state->global->run_dir, "/",
              DFLT_G_RUN_EXE_DIR, 0);
-    info("global.run_exe_dir is %s", serve_state.global->run_exe_dir);
+    info("global.run_exe_dir is %s", state->global->run_exe_dir);
   }
   if (mode == PREPARE_SERVE) {
-    snprintf(serve_state.global->run_out_dir, sizeof(serve_state.global->run_out_dir),
-             "%s/%06d", serve_state.global->run_dir, serve_state.global->contest_id);
-    info("global.run_out_dir is %s", serve_state.global->run_out_dir);
-    pathmake(serve_state.global->run_status_dir, serve_state.global->run_out_dir, "/",
+    snprintf(state->global->run_out_dir, sizeof(state->global->run_out_dir),
+             "%s/%06d", state->global->run_dir, state->global->contest_id);
+    info("global.run_out_dir is %s", state->global->run_out_dir);
+    pathmake(state->global->run_status_dir, state->global->run_out_dir, "/",
              DFLT_G_RUN_STATUS_DIR, 0);
-    info("global.run_status_dir is %s", serve_state.global->run_status_dir);
-    pathmake(serve_state.global->run_report_dir, serve_state.global->run_out_dir, "/",
+    info("global.run_status_dir is %s", state->global->run_status_dir);
+    pathmake(state->global->run_report_dir, state->global->run_out_dir, "/",
              DFLT_G_RUN_REPORT_DIR, 0);
-    info("global.run_report_dir is %s", serve_state.global->run_report_dir);
-    if (serve_state.global->team_enable_rep_view) {
-      pathmake(serve_state.global->run_team_report_dir, serve_state.global->run_out_dir, "/",
+    info("global.run_report_dir is %s", state->global->run_report_dir);
+    if (state->global->team_enable_rep_view) {
+      pathmake(state->global->run_team_report_dir, state->global->run_out_dir, "/",
                DFLT_G_RUN_TEAM_REPORT_DIR, 0);
-      info("global.run_team_report_dir is %s", serve_state.global->run_team_report_dir);
+      info("global.run_team_report_dir is %s", state->global->run_team_report_dir);
     }
-    if (serve_state.global->enable_full_archive) {
-      pathmake(serve_state.global->run_full_archive_dir, serve_state.global->run_out_dir, "/",
+    if (state->global->enable_full_archive) {
+      pathmake(state->global->run_full_archive_dir, state->global->run_out_dir, "/",
                DFLT_G_RUN_FULL_ARCHIVE_DIR, 0);
-      info("global.run_full_archive_dir is %s", serve_state.global->run_full_archive_dir);
+      info("global.run_full_archive_dir is %s", state->global->run_full_archive_dir);
     }
   }
 
@@ -1777,691 +1777,691 @@ set_defaults(int mode)
   /* score_system must be either "acm", either "kirov"
    * "acm" is the default
    */
-  if (!serve_state.global->score_system[0]) {
-    serve_state.global->score_system_val = SCORE_ACM;
-  } else if (!strcasecmp(serve_state.global->score_system, "acm")) {
-    serve_state.global->score_system_val = SCORE_ACM;
-  } else if (!strcasecmp(serve_state.global->score_system, "kirov")) {
-    serve_state.global->score_system_val = SCORE_KIROV;
-  } else if (!strcasecmp(serve_state.global->score_system, "olympiad")) {
-    serve_state.global->score_system_val = SCORE_OLYMPIAD;
-  } else if (!strcasecmp(serve_state.global->score_system, "moscow")) {
-    serve_state.global->score_system_val = SCORE_MOSCOW;
+  if (!state->global->score_system[0]) {
+    state->global->score_system_val = SCORE_ACM;
+  } else if (!strcasecmp(state->global->score_system, "acm")) {
+    state->global->score_system_val = SCORE_ACM;
+  } else if (!strcasecmp(state->global->score_system, "kirov")) {
+    state->global->score_system_val = SCORE_KIROV;
+  } else if (!strcasecmp(state->global->score_system, "olympiad")) {
+    state->global->score_system_val = SCORE_OLYMPIAD;
+  } else if (!strcasecmp(state->global->score_system, "moscow")) {
+    state->global->score_system_val = SCORE_MOSCOW;
   } else {
-    err("Invalid scoring system: %s", serve_state.global->score_system);
+    err("Invalid scoring system: %s", state->global->score_system);
     return -1;
   }
 
   /*
    * Seconds rounding mode.
    */
-  if (!serve_state.global->rounding_mode[0]) {
-    serve_state.global->rounding_mode_val = SEC_CEIL;
-  } else if (!strcmp(serve_state.global->rounding_mode, "ceil")) {
-    serve_state.global->rounding_mode_val = SEC_CEIL;
-  } else if (!strcmp(serve_state.global->rounding_mode, "floor")) {
-    serve_state.global->rounding_mode_val = SEC_FLOOR;
-  } else if (!strcmp(serve_state.global->rounding_mode, "round")) {
-    serve_state.global->rounding_mode_val = SEC_ROUND;
+  if (!state->global->rounding_mode[0]) {
+    state->global->rounding_mode_val = SEC_CEIL;
+  } else if (!strcmp(state->global->rounding_mode, "ceil")) {
+    state->global->rounding_mode_val = SEC_CEIL;
+  } else if (!strcmp(state->global->rounding_mode, "floor")) {
+    state->global->rounding_mode_val = SEC_FLOOR;
+  } else if (!strcmp(state->global->rounding_mode, "round")) {
+    state->global->rounding_mode_val = SEC_ROUND;
   } else {
-    err("Invalid rounding mode: %s", serve_state.global->rounding_mode);
+    err("Invalid rounding mode: %s", state->global->rounding_mode);
     return -1;
   }
 
-  if (serve_state.global->enable_continue == -1) serve_state.global->enable_continue = DFLT_G_ENABLE_CONTINUE;
-  if (serve_state.global->html_report == -1) serve_state.global->html_report = 1;
-  if (serve_state.global->xml_report == -1) serve_state.global->xml_report = 0;
-  if (serve_state.global->xml_report) serve_state.global->html_report = 0;
+  if (state->global->enable_continue == -1) state->global->enable_continue = DFLT_G_ENABLE_CONTINUE;
+  if (state->global->html_report == -1) state->global->html_report = 1;
+  if (state->global->xml_report == -1) state->global->xml_report = 0;
+  if (state->global->xml_report) state->global->html_report = 0;
 
-  if (serve_state.global->tests_to_accept == -1) {
-    serve_state.global->tests_to_accept = DFLT_G_TESTS_TO_ACCEPT;
+  if (state->global->tests_to_accept == -1) {
+    state->global->tests_to_accept = DFLT_G_TESTS_TO_ACCEPT;
   }
 
   if (mode == PREPARE_COMPILE) {
-    if (serve_state.global->compile_real_time_limit == -1) {
-      serve_state.global->compile_real_time_limit = DFLT_G_COMPILE_REAL_TIME_LIMIT;
+    if (state->global->compile_real_time_limit == -1) {
+      state->global->compile_real_time_limit = DFLT_G_COMPILE_REAL_TIME_LIMIT;
       info("global.compile_real_time_limit set to %d",
-           serve_state.global->compile_real_time_limit);
+           state->global->compile_real_time_limit);
     }
   }
 
   if (mode == PREPARE_RUN) {
-    if (serve_state.global->checker_real_time_limit == -1) {
-      serve_state.global->checker_real_time_limit = DFLT_G_CHECKER_REAL_TIME_LIMIT;
+    if (state->global->checker_real_time_limit == -1) {
+      state->global->checker_real_time_limit = DFLT_G_CHECKER_REAL_TIME_LIMIT;
       info("global.checker_real_time_limit set to %d",
-           serve_state.global->checker_real_time_limit);
+           state->global->checker_real_time_limit);
     }
   }
 
   if (mode == PREPARE_SERVE) {
-    if (!serve_state.global->charset[0]) {
-      snprintf(serve_state.global->charset, sizeof(serve_state.global->charset),
+    if (!state->global->charset[0]) {
+      snprintf(state->global->charset, sizeof(state->global->charset),
                "%s", DFLT_G_CHARSET);
-      info("global.charset set to %s", serve_state.global->charset);
+      info("global.charset set to %s", state->global->charset);
     }
     /*
-    if (!(serve_state.global->charset_ptr = nls_lookup_table(serve_state.global->charset))) {
-      err("global.charset `%s' is invalid", serve_state.global->charset);
+    if (!(state->global->charset_ptr = nls_lookup_table(state->global->charset))) {
+      err("global.charset `%s' is invalid", state->global->charset);
       return -1;
     }
     */
     /*
-    if (!serve_state.global->standings_charset[0]) {
-      snprintf(serve_state.global->standings_charset, sizeof(serve_state.global->standings_charset),
-               "%s", serve_state.global->charset);
-      info("global.standings_charset set to %s", serve_state.global->standings_charset);
+    if (!state->global->standings_charset[0]) {
+      snprintf(state->global->standings_charset, sizeof(state->global->standings_charset),
+               "%s", state->global->charset);
+      info("global.standings_charset set to %s", state->global->standings_charset);
     }
-    if (!(serve_state.global->standings_charset_ptr = nls_lookup_table(serve_state.global->standings_charset))) {
-      err("global.standings_charset `%s' is invalid", serve_state.global->standings_charset);
+    if (!(state->global->standings_charset_ptr = nls_lookup_table(state->global->standings_charset))) {
+      err("global.standings_charset `%s' is invalid", state->global->standings_charset);
       return -1;
     }
     */
-    if (!serve_state.global->standings_file_name[0]) {
-      snprintf(serve_state.global->standings_file_name,sizeof(serve_state.global->standings_file_name),
+    if (!state->global->standings_file_name[0]) {
+      snprintf(state->global->standings_file_name,sizeof(state->global->standings_file_name),
                "%s", DFLT_G_STANDINGS_FILE_NAME);
     }
-    make_stand_file_name_2();
+    make_stand_file_name_2(state);
 
-    if (serve_state.global->contest_start_cmd[0]) {
-      pathmake2(serve_state.global->contest_start_cmd, serve_state.global->conf_dir, "/",
-                serve_state.global->contest_start_cmd, 0);
-      if (check_executable(serve_state.global->contest_start_cmd) < 0) {
+    if (state->global->contest_start_cmd[0]) {
+      pathmake2(state->global->contest_start_cmd, state->global->conf_dir, "/",
+                state->global->contest_start_cmd, 0);
+      if (check_executable(state->global->contest_start_cmd) < 0) {
         err("contest start command %s is not executable or does not exist",
-            serve_state.global->contest_start_cmd);
+            state->global->contest_start_cmd);
         return -1;
       }
     }
 
-    if (serve_state.global->stand_header_file[0]) {
-      pathmake2(serve_state.global->stand_header_file, serve_state.global->conf_dir, "/",
-                serve_state.global->stand_header_file, 0);
-      vptr = &serve_state.global->stand_header_txt;
+    if (state->global->stand_header_file[0]) {
+      pathmake2(state->global->stand_header_file, state->global->conf_dir, "/",
+                state->global->stand_header_file, 0);
+      vptr = &state->global->stand_header_txt;
       r = generic_read_file(vptr, 0, &tmp_len, 0,
-                            0, serve_state.global->stand_header_file, "");
+                            0, state->global->stand_header_file, "");
       if (r < 0) return -1;
     }
 
-    if (serve_state.global->stand_footer_file[0]) {
-      pathmake2(serve_state.global->stand_footer_file, serve_state.global->conf_dir, "/",
-                serve_state.global->stand_footer_file, 0);
-      vptr = &serve_state.global->stand_footer_txt;
+    if (state->global->stand_footer_file[0]) {
+      pathmake2(state->global->stand_footer_file, state->global->conf_dir, "/",
+                state->global->stand_footer_file, 0);
+      vptr = &state->global->stand_footer_txt;
       r = generic_read_file(vptr, 0, &tmp_len, 0,
-                            0, serve_state.global->stand_footer_file, "");
+                            0, state->global->stand_footer_file, "");
       if (r < 0) return -1;
     }
 
-    if (serve_state.global->stand2_file_name[0]) {
-      if (serve_state.global->stand2_header_file[0]) {
-        pathmake2(serve_state.global->stand2_header_file, serve_state.global->conf_dir, "/",
-                  serve_state.global->stand2_header_file, 0);
-        vptr = &serve_state.global->stand2_header_txt;
+    if (state->global->stand2_file_name[0]) {
+      if (state->global->stand2_header_file[0]) {
+        pathmake2(state->global->stand2_header_file, state->global->conf_dir, "/",
+                  state->global->stand2_header_file, 0);
+        vptr = &state->global->stand2_header_txt;
         r = generic_read_file(vptr, 0, &tmp_len,
-                              0, 0, serve_state.global->stand2_header_file, "");
+                              0, 0, state->global->stand2_header_file, "");
         if (r < 0) return -1;
       }
-      if (serve_state.global->stand2_footer_file[0]) {
-        pathmake2(serve_state.global->stand2_footer_file, serve_state.global->conf_dir, "/",
-                  serve_state.global->stand2_footer_file, 0);
-        vptr = &serve_state.global->stand2_footer_txt;
+      if (state->global->stand2_footer_file[0]) {
+        pathmake2(state->global->stand2_footer_file, state->global->conf_dir, "/",
+                  state->global->stand2_footer_file, 0);
+        vptr = &state->global->stand2_footer_txt;
         r = generic_read_file(vptr, 0, &tmp_len,
-                              0, 0, serve_state.global->stand2_footer_file, "");
+                              0, 0, state->global->stand2_footer_file, "");
         if (r < 0) return -1;
       } 
     }
 
-    if (serve_state.global->plog_file_name[0]) {
-      if (serve_state.global->plog_header_file[0]) {
-        pathmake2(serve_state.global->plog_header_file, serve_state.global->conf_dir, "/",
-                  serve_state.global->plog_header_file, 0);
-        vptr = &serve_state.global->plog_header_txt;
+    if (state->global->plog_file_name[0]) {
+      if (state->global->plog_header_file[0]) {
+        pathmake2(state->global->plog_header_file, state->global->conf_dir, "/",
+                  state->global->plog_header_file, 0);
+        vptr = &state->global->plog_header_txt;
         r = generic_read_file(vptr, 0, &tmp_len,
-                              0, 0, serve_state.global->plog_header_file, "");
+                              0, 0, state->global->plog_header_file, "");
         if (r < 0) return -1;
       }
-      if (serve_state.global->plog_footer_file[0]) {
-        pathmake2(serve_state.global->plog_footer_file, serve_state.global->conf_dir, "/",
-                  serve_state.global->plog_footer_file, 0);
-        vptr = &serve_state.global->plog_footer_txt;
+      if (state->global->plog_footer_file[0]) {
+        pathmake2(state->global->plog_footer_file, state->global->conf_dir, "/",
+                  state->global->plog_footer_file, 0);
+        vptr = &state->global->plog_footer_txt;
         r = generic_read_file(vptr, 0, &tmp_len,
-                              0, 0, serve_state.global->plog_footer_file, "");
+                              0, 0, state->global->plog_footer_file, "");
         if (r < 0) return -1;
       }
-      if (!serve_state.global->plog_update_time) {
-        serve_state.global->plog_update_time = DFLT_G_PLOG_UPDATE_TIME;
+      if (!state->global->plog_update_time) {
+        state->global->plog_update_time = DFLT_G_PLOG_UPDATE_TIME;
       }
     } else {
-      serve_state.global->plog_update_time = 0;
+      state->global->plog_update_time = 0;
     }
 
-    if (serve_state.global->use_gzip < 0 || serve_state.global->use_gzip > 1) {
-      serve_state.global->use_gzip = DFLT_G_USE_GZIP;
+    if (state->global->use_gzip < 0 || state->global->use_gzip > 1) {
+      state->global->use_gzip = DFLT_G_USE_GZIP;
     }
-    if (serve_state.global->use_dir_hierarchy < 0 || serve_state.global->use_dir_hierarchy > 1) {
-      serve_state.global->use_dir_hierarchy = DFLT_G_USE_DIR_HIERARCHY;
+    if (state->global->use_dir_hierarchy < 0 || state->global->use_dir_hierarchy > 1) {
+      state->global->use_dir_hierarchy = DFLT_G_USE_DIR_HIERARCHY;
     }
-    if (serve_state.global->min_gzip_size < 0) {
-      serve_state.global->min_gzip_size = DFLT_G_MIN_GZIP_SIZE;
+    if (state->global->min_gzip_size < 0) {
+      state->global->min_gzip_size = DFLT_G_MIN_GZIP_SIZE;
     }
   }
 
 #if CONF_HAS_LIBINTL - 0 == 1
-  if (serve_state.global->enable_l10n < 0) serve_state.global->enable_l10n = 1;
+  if (state->global->enable_l10n < 0) state->global->enable_l10n = 1;
 #if defined EJUDGE_LOCALE_DIR
-  if (serve_state.global->enable_l10n && !serve_state.global->l10n_dir[0]) {
-    strcpy(serve_state.global->l10n_dir, EJUDGE_LOCALE_DIR);
+  if (state->global->enable_l10n && !state->global->l10n_dir[0]) {
+    strcpy(state->global->l10n_dir, EJUDGE_LOCALE_DIR);
   }
 #endif /* EJUDGE_LOCALE_DIR */
-  if (serve_state.global->enable_l10n && !serve_state.global->l10n_dir[0]) {
-    serve_state.global->enable_l10n = 0;
+  if (state->global->enable_l10n && !state->global->l10n_dir[0]) {
+    state->global->enable_l10n = 0;
   }
 #else
-  serve_state.global->enable_l10n = 0;
+  state->global->enable_l10n = 0;
 #endif /* CONF_HAS_LIBINTL */
 
 #if CONF_HAS_LIBINTL - 0 == 1
-  if (mode == PREPARE_SERVE && serve_state.global->enable_l10n) {
+  if (mode == PREPARE_SERVE && state->global->enable_l10n) {
     /* convert locale string into locale id */
-    if (!strcmp(serve_state.global->standings_locale, "ru_RU.KOI8-R")
-        || !strcmp(serve_state.global->standings_locale, "ru")) {
-      serve_state.global->standings_locale_id = 1;
+    if (!strcmp(state->global->standings_locale, "ru_RU.KOI8-R")
+        || !strcmp(state->global->standings_locale, "ru")) {
+      state->global->standings_locale_id = 1;
     } else {
-      serve_state.global->standings_locale_id = 0;
+      state->global->standings_locale_id = 0;
     }
-    info("standings_locale_id is %d", serve_state.global->standings_locale_id);
+    info("standings_locale_id is %d", state->global->standings_locale_id);
   }
 #endif /* CONF_HAS_LIBINTL */
 
-  if (serve_state.global->team_download_time == -1) {
-    serve_state.global->team_download_time = DFLT_G_TEAM_DOWNLOAD_TIME;
+  if (state->global->team_download_time == -1) {
+    state->global->team_download_time = DFLT_G_TEAM_DOWNLOAD_TIME;
   }
-  serve_state.global->team_download_time *= 60;
+  state->global->team_download_time *= 60;
 
   /* only run needs these parameters */
   if (mode == PREPARE_RUN) {
-    if (!serve_state.global->max_file_length) {
-      serve_state.global->max_file_length = DFLT_G_MAX_FILE_LENGTH;
-      info("global.max_file_length set to %d", serve_state.global->max_file_length);
+    if (!state->global->max_file_length) {
+      state->global->max_file_length = DFLT_G_MAX_FILE_LENGTH;
+      info("global.max_file_length set to %d", state->global->max_file_length);
     }
-    if (!serve_state.global->max_line_length) {
-      serve_state.global->max_line_length = DFLT_G_MAX_LINE_LENGTH;
-      info("global.max_line_length set to %d", serve_state.global->max_line_length);
+    if (!state->global->max_line_length) {
+      state->global->max_line_length = DFLT_G_MAX_LINE_LENGTH;
+      info("global.max_line_length set to %d", state->global->max_line_length);
     }
-    if (!serve_state.global->max_cmd_length) {
-      serve_state.global->max_cmd_length = DFLT_G_MAX_CMD_LENGTH;
-      info("global.max_cmd_length set to %d", serve_state.global->max_cmd_length);
+    if (!state->global->max_cmd_length) {
+      state->global->max_cmd_length = DFLT_G_MAX_CMD_LENGTH;
+      info("global.max_cmd_length set to %d", state->global->max_cmd_length);
     }
 
-    if (serve_state.global->sound_player[0]) {
+    if (state->global->sound_player[0]) {
       char *tmps;
 
-      tmps = varsubst_heap(serve_state.global->sound_player, 0,
+      tmps = varsubst_heap(state, state->global->sound_player, 0,
                            section_global_params, section_problem_params,
                            section_language_params, section_tester_params);
-      if (tmps != serve_state.global->sound_player) {
-        snprintf(serve_state.global->sound_player, sizeof(serve_state.global->sound_player),"%s",tmps);
+      if (tmps != state->global->sound_player) {
+        snprintf(state->global->sound_player, sizeof(state->global->sound_player),"%s",tmps);
         xfree(tmps);
       }
     }
   }
 
-  if (mode == PREPARE_SERVE && serve_state.global->user_priority_adjustments) {
-    serve_state.global->user_adjustment_info = parse_user_adjustment(serve_state.global->user_priority_adjustments);
-    if (!serve_state.global->user_adjustment_info) return -1;
+  if (mode == PREPARE_SERVE && state->global->user_priority_adjustments) {
+    state->global->user_adjustment_info = parse_user_adjustment(state->global->user_priority_adjustments);
+    if (!state->global->user_adjustment_info) return -1;
   }
 
   if (mode == PREPARE_SERVE) {
-    if (serve_state.global->contestant_status_num<0 || serve_state.global->contestant_status_num>100) {
+    if (state->global->contestant_status_num<0 || state->global->contestant_status_num>100) {
       err("global.contestant_status_num is invalid");
       return -1;
     }
   }
-  if (mode == PREPARE_SERVE && serve_state.global->contestant_status_num > 0) {
+  if (mode == PREPARE_SERVE && state->global->contestant_status_num > 0) {
     // there must be exact number of legend entries
-    if (!serve_state.global->contestant_status_legend) {
+    if (!state->global->contestant_status_legend) {
       err("global.contestant_status_legend is not set");
       return -1;
     }
-    for (i = 0; serve_state.global->contestant_status_legend[i]; i++);
-    if (i != serve_state.global->contestant_status_num) {
+    for (i = 0; state->global->contestant_status_legend[i]; i++);
+    if (i != state->global->contestant_status_num) {
       err("global.contestant_status_legend has different number of entries, than global.contestant_status_num");
       return -1;
     }
-    if (serve_state.global->contestant_status_row_attr) {
-      for (i = 0; serve_state.global->contestant_status_row_attr[i]; i++);
-      if (i != serve_state.global->contestant_status_num) {
+    if (state->global->contestant_status_row_attr) {
+      for (i = 0; state->global->contestant_status_row_attr[i]; i++);
+      if (i != state->global->contestant_status_num) {
         err("global.contestant_status_row_attr has different number of entries, than global.contestant_status_num");
         return -1;
       }
     }
   }
 
-  for (i = 1; i <= serve_state.max_lang && mode != PREPARE_RUN; i++) {
-    if (!serve_state.langs[i]) continue;
-    if (!serve_state.langs[i]->short_name[0]) {
+  for (i = 1; i <= state->max_lang && mode != PREPARE_RUN; i++) {
+    if (!state->langs[i]) continue;
+    if (!state->langs[i]->short_name[0]) {
       info("language.%d.short_name set to \"lang%d\"", i, i);
-      sprintf(serve_state.langs[i]->short_name, "lang%d", i);
+      sprintf(state->langs[i]->short_name, "lang%d", i);
     }
-    if (!serve_state.langs[i]->long_name[0]) {
+    if (!state->langs[i]->long_name[0]) {
       info("language.%d.long_name set to \"Language %d\"", i, i);
-      sprintf(serve_state.langs[i]->long_name, "Language %d", i);
+      sprintf(state->langs[i]->long_name, "Language %d", i);
     }
     
     if (mode == PREPARE_SERVE) {
-      if (!serve_state.langs[i]->compile_dir[0]) {
+      if (!state->langs[i]->compile_dir[0]) {
         // use the global compile queue settings
-        pathcpy(serve_state.langs[i]->compile_dir, serve_state.global->compile_dir);
-        pathcpy(serve_state.langs[i]->compile_queue_dir, serve_state.global->compile_queue_dir);
-        pathcpy(serve_state.langs[i]->compile_src_dir, serve_state.global->compile_src_dir);
-        pathcpy(serve_state.langs[i]->compile_out_dir, serve_state.global->compile_out_dir);
-        pathcpy(serve_state.langs[i]->compile_status_dir, serve_state.global->compile_status_dir);
-        pathcpy(serve_state.langs[i]->compile_report_dir, serve_state.global->compile_report_dir);
+        pathcpy(state->langs[i]->compile_dir, state->global->compile_dir);
+        pathcpy(state->langs[i]->compile_queue_dir, state->global->compile_queue_dir);
+        pathcpy(state->langs[i]->compile_src_dir, state->global->compile_src_dir);
+        pathcpy(state->langs[i]->compile_out_dir, state->global->compile_out_dir);
+        pathcpy(state->langs[i]->compile_status_dir, state->global->compile_status_dir);
+        pathcpy(state->langs[i]->compile_report_dir, state->global->compile_report_dir);
       } else {
         // prepare language-specific compile queue settings
-        pathmake(serve_state.langs[i]->compile_queue_dir, serve_state.langs[i]->compile_dir, "/",
+        pathmake(state->langs[i]->compile_queue_dir, state->langs[i]->compile_dir, "/",
                  DFLT_G_COMPILE_QUEUE_DIR, 0);
         info("language.%d.compile_queue_dir is %s",
-             i, serve_state.langs[i]->compile_queue_dir);
-        pathmake(serve_state.langs[i]->compile_src_dir, serve_state.langs[i]->compile_dir, "/",
+             i, state->langs[i]->compile_queue_dir);
+        pathmake(state->langs[i]->compile_src_dir, state->langs[i]->compile_dir, "/",
                  DFLT_G_COMPILE_SRC_DIR, 0);
         info("language.%d.compile_src_dir is %s",
-             i, serve_state.langs[i]->compile_src_dir);
-        snprintf(serve_state.langs[i]->compile_out_dir, sizeof(serve_state.langs[i]->compile_out_dir),
-                 "%s/%06d", serve_state.langs[i]->compile_dir, serve_state.global->contest_id);
-        info("language.%d.compile_out_dir is %s", i, serve_state.langs[i]->compile_out_dir);
-        pathmake(serve_state.langs[i]->compile_status_dir, serve_state.langs[i]->compile_out_dir, "/",
+             i, state->langs[i]->compile_src_dir);
+        snprintf(state->langs[i]->compile_out_dir, sizeof(state->langs[i]->compile_out_dir),
+                 "%s/%06d", state->langs[i]->compile_dir, state->global->contest_id);
+        info("language.%d.compile_out_dir is %s", i, state->langs[i]->compile_out_dir);
+        pathmake(state->langs[i]->compile_status_dir, state->langs[i]->compile_out_dir, "/",
                  DFLT_G_COMPILE_STATUS_DIR, 0);
-        info("language.%d.compile_status_dir is %s", i, serve_state.langs[i]->compile_status_dir);
-        pathmake(serve_state.langs[i]->compile_report_dir, serve_state.langs[i]->compile_out_dir, "/",
+        info("language.%d.compile_status_dir is %s", i, state->langs[i]->compile_status_dir);
+        pathmake(state->langs[i]->compile_report_dir, state->langs[i]->compile_out_dir, "/",
                  DFLT_G_COMPILE_REPORT_DIR, 0);
-        info("language.%d.compile_report_dir is %s", i, serve_state.langs[i]->compile_report_dir);
+        info("language.%d.compile_report_dir is %s", i, state->langs[i]->compile_report_dir);
       }
     }
 
-    if (!serve_state.langs[i]->src_sfx[0]) {
+    if (!state->langs[i]->src_sfx[0]) {
       err("language.%d.src_sfx must be set", i);
       return -1;
     }
 
     if (mode == PREPARE_COMPILE) {
-      if (!serve_state.langs[i]->cmd[0]) {
+      if (!state->langs[i]->cmd[0]) {
         err("language.%d.cmd must be set", i);
         return -1;
       }
-      pathmake4(serve_state.langs[i]->cmd,serve_state.global->script_dir, "/", serve_state.langs[i]->cmd, NULL);
-      info("language.%d.cmd is %s", i, serve_state.langs[i]->cmd);
-      if (serve_state.langs[i]->compile_real_time_limit == -1) {
-        serve_state.langs[i]->compile_real_time_limit = serve_state.global->compile_real_time_limit;
-        info("language.%d.compile_real_time_limit is inherited from global (%d)", i, serve_state.langs[i]->compile_real_time_limit);
+      pathmake4(state->langs[i]->cmd,state->global->script_dir, "/", state->langs[i]->cmd, NULL);
+      info("language.%d.cmd is %s", i, state->langs[i]->cmd);
+      if (state->langs[i]->compile_real_time_limit == -1) {
+        state->langs[i]->compile_real_time_limit = state->global->compile_real_time_limit;
+        info("language.%d.compile_real_time_limit is inherited from global (%d)", i, state->langs[i]->compile_real_time_limit);
       }
-      ASSERT(serve_state.langs[i]->compile_real_time_limit >= 0);
+      ASSERT(state->langs[i]->compile_real_time_limit >= 0);
     }
 
-    if (serve_state.langs[i]->compiler_env) {
-      for (j = 0; serve_state.langs[i]->compiler_env[j]; j++) {
-        serve_state.langs[i]->compiler_env[j] = varsubst_heap(serve_state.langs[i]->compiler_env[j], 1,
+    if (state->langs[i]->compiler_env) {
+      for (j = 0; state->langs[i]->compiler_env[j]; j++) {
+        state->langs[i]->compiler_env[j] = varsubst_heap(state, state->langs[i]->compiler_env[j], 1,
                                                   section_global_params,
                                                   section_problem_params,
                                                   section_language_params,
                                                   section_tester_params);
-        if (!serve_state.langs[i]->compiler_env[j]) return -1;
+        if (!state->langs[i]->compiler_env[j]) return -1;
       }
     }
   }
 
-  for (i = 0; i < serve_state.max_abstr_prob && mode != PREPARE_COMPILE; i++) {
-    if (!serve_state.abstr_probs[i]->short_name[0]) {
+  for (i = 0; i < state->max_abstr_prob && mode != PREPARE_COMPILE; i++) {
+    if (!state->abstr_probs[i]->short_name[0]) {
       err("abstract problem must define problem short name");
       return -1;
     }
-    ish = serve_state.abstr_probs[i]->short_name;
-    if (serve_state.abstr_probs[i]->id) {
+    ish = state->abstr_probs[i]->short_name;
+    if (state->abstr_probs[i]->id) {
       err("abstract problem %s must not define problem id", ish);
       return -1;
     }
-    if (serve_state.abstr_probs[i]->long_name[0]) {
+    if (state->abstr_probs[i]->long_name[0]) {
       err("abstract problem %s must not define problem long name", ish);
       return -1;
     }
-    if (serve_state.abstr_probs[i]->super[0]) {
+    if (state->abstr_probs[i]->super[0]) {
       err("abstract problem %s cannot have a superproblem", ish);
       return -1;
     }
   }
 
-  for (i = 1; i <= serve_state.max_prob && mode != PREPARE_COMPILE; i++) {
-    if (!serve_state.probs[i]) continue;
+  for (i = 1; i <= state->max_prob && mode != PREPARE_COMPILE; i++) {
+    if (!state->probs[i]) continue;
     si = -1;
     sish = 0;
     aprob = 0;
-    if (serve_state.probs[i]->super[0]) {
-      for (si = 0; si < serve_state.max_abstr_prob; si++)
-        if (!strcmp(serve_state.abstr_probs[si]->short_name, serve_state.probs[i]->super))
+    if (state->probs[i]->super[0]) {
+      for (si = 0; si < state->max_abstr_prob; si++)
+        if (!strcmp(state->abstr_probs[si]->short_name, state->probs[i]->super))
           break;
-      if (si >= serve_state.max_abstr_prob) {
-        err("abstract problem `%s' is not defined", serve_state.probs[i]->super);
+      if (si >= state->max_abstr_prob) {
+        err("abstract problem `%s' is not defined", state->probs[i]->super);
         return -1;
       }
-      aprob = serve_state.abstr_probs[si];
+      aprob = state->abstr_probs[si];
       sish = aprob->short_name;
     }
-    if (!serve_state.probs[i]->short_name[0] && serve_state.global->auto_short_problem_name) {
-      snprintf(serve_state.probs[i]->short_name, sizeof(serve_state.probs[i]->short_name),
-               "%06d", serve_state.probs[i]->id);
-      info("problem %d short name is set to %s", i, serve_state.probs[i]->short_name);
+    if (!state->probs[i]->short_name[0] && state->global->auto_short_problem_name) {
+      snprintf(state->probs[i]->short_name, sizeof(state->probs[i]->short_name),
+               "%06d", state->probs[i]->id);
+      info("problem %d short name is set to %s", i, state->probs[i]->short_name);
     }
-    if (!serve_state.probs[i]->short_name[0]) {
+    if (!state->probs[i]->short_name[0]) {
       err("problem %d short name must be set", i);
       return -1;
     }
-    ish = serve_state.probs[i]->short_name;
-    if (!serve_state.probs[i]->long_name[0]) {
+    ish = state->probs[i]->short_name;
+    if (!state->probs[i]->long_name[0]) {
       info("problem.%s.long_name set to \"Problem %s\"", ish, ish);
-      sprintf(serve_state.probs[i]->long_name, "Problem %s", ish);
+      sprintf(state->probs[i]->long_name, "Problem %s", ish);
     }
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEAM_ENABLE_REP_VIEW,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEAM_ENABLE_CE_VIEW,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEAM_SHOW_JUDGE_REPORT,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_TESTS_TO_ACCEPT,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_ACCEPT_PARTIAL,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_AUTO_TESTING,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_DISABLE_TESTING,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_ENABLE_COMPILATION,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_SKIP_TESTING,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_FULL_SCORE,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_VARIABLE_FULL_SCORE,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_SCORE,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_RUN_PENALTY,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_ACM_RUN_PENALTY,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_DISQUALIFIED_PENALTY,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_HIDDEN,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_OUTPUT_ONLY,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDIN,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDOUT,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_BINARY_INPUT,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TIME_LIMIT,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TIME_LIMIT_MILLIS,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_REAL_TIME_LIMIT,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_SFX,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_CORR_SFX,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_INFO_SFX,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TGZ_SFX,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_PAT,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_CORR_PAT,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_INFO_PAT,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TGZ_PAT,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_CHECK_CMD,
-                           serve_state.probs[i], aprob, serve_state.global);
+                           state->probs[i], aprob, state->global);
 
-    if (serve_state.probs[i]->priority_adjustment == -1000 && si != -1 &&
-        serve_state.abstr_probs[si]->priority_adjustment != -1000) {
-      serve_state.probs[i]->priority_adjustment = serve_state.abstr_probs[si]->priority_adjustment;
+    if (state->probs[i]->priority_adjustment == -1000 && si != -1 &&
+        state->abstr_probs[si]->priority_adjustment != -1000) {
+      state->probs[i]->priority_adjustment = state->abstr_probs[si]->priority_adjustment;
     }
-    if (serve_state.probs[i]->priority_adjustment == -1000) {
-      serve_state.probs[i]->priority_adjustment = 0;
+    if (state->probs[i]->priority_adjustment == -1000) {
+      state->probs[i]->priority_adjustment = 0;
     }
 
-    if (!serve_state.probs[i]->score_multiplier && si != -1 &&
-        serve_state.abstr_probs[si]->score_multiplier >= 1) {
-      serve_state.probs[i]->score_multiplier = serve_state.abstr_probs[si]->score_multiplier;
+    if (!state->probs[i]->score_multiplier && si != -1 &&
+        state->abstr_probs[si]->score_multiplier >= 1) {
+      state->probs[i]->score_multiplier = state->abstr_probs[si]->score_multiplier;
     }
 
     if (mode == PREPARE_SERVE) {
-      if (serve_state.probs[i]->deadline[0]) {
-        if (parse_date(serve_state.probs[i]->deadline, &serve_state.probs[i]->t_deadline) < 0) {
+      if (state->probs[i]->deadline[0]) {
+        if (parse_date(state->probs[i]->deadline, &state->probs[i]->t_deadline) < 0) {
           err("invalid deadline specified for problem `%s'",
-              serve_state.probs[i]->short_name);
+              state->probs[i]->short_name);
           return -1;
         }
-        info("problem.%s.deadline is %ld", ish, serve_state.probs[i]->t_deadline);
+        info("problem.%s.deadline is %ld", ish, state->probs[i]->t_deadline);
       }
-      if (serve_state.probs[i]->personal_deadline) {
-        if (parse_personal_deadlines(serve_state.probs[i]->personal_deadline,
-                                     &serve_state.probs[i]->pd_total,
-                                     &serve_state.probs[i]->pd_infos) < 0) {
+      if (state->probs[i]->personal_deadline) {
+        if (parse_personal_deadlines(state->probs[i]->personal_deadline,
+                                     &state->probs[i]->pd_total,
+                                     &state->probs[i]->pd_infos) < 0) {
           return -1;
         }
       }
-      if (serve_state.probs[i]->start_date[0]) {
-        if (parse_date(serve_state.probs[i]->start_date, &serve_state.probs[i]->t_start_date) < 0) {
+      if (state->probs[i]->start_date[0]) {
+        if (parse_date(state->probs[i]->start_date, &state->probs[i]->t_start_date) < 0) {
           err("invalid start_date specified for problem `%s'",
-              serve_state.probs[i]->short_name);
+              state->probs[i]->short_name);
           return -1;
         }
-        info("problem.%s.start_date is %ld", ish, serve_state.probs[i]->t_start_date);
+        info("problem.%s.start_date is %ld", ish, state->probs[i]->t_start_date);
       }
 
-      if (parse_deadline_penalties(serve_state.probs[i]->date_penalty,
-                                   &serve_state.probs[i]->dp_total,
-                                   &serve_state.probs[i]->dp_infos) < 0) return -1;
+      if (parse_deadline_penalties(state->probs[i]->date_penalty,
+                                   &state->probs[i]->dp_total,
+                                   &state->probs[i]->dp_infos) < 0) return -1;
 
-      if (si != -1 && serve_state.abstr_probs[si]->disable_language) {
-        serve_state.probs[i]->disable_language = sarray_merge_pf(serve_state.abstr_probs[si]->disable_language, serve_state.probs[i]->disable_language);
+      if (si != -1 && state->abstr_probs[si]->disable_language) {
+        state->probs[i]->disable_language = sarray_merge_pf(state->abstr_probs[si]->disable_language, state->probs[i]->disable_language);
       }
-      if (si != -1 && serve_state.abstr_probs[si]->checker_env) {
-        serve_state.probs[i]->checker_env = sarray_merge_pf(serve_state.abstr_probs[si]->checker_env,
-                                                serve_state.probs[i]->checker_env);
+      if (si != -1 && state->abstr_probs[si]->checker_env) {
+        state->probs[i]->checker_env = sarray_merge_pf(state->abstr_probs[si]->checker_env,
+                                                state->probs[i]->checker_env);
       }
-      if (serve_state.probs[i]->checker_env) {
-        for (j = 0; serve_state.probs[i]->checker_env[j]; j++) {
-          serve_state.probs[i]->checker_env[j] = varsubst_heap(serve_state.probs[i]->checker_env[j], 1,
+      if (state->probs[i]->checker_env) {
+        for (j = 0; state->probs[i]->checker_env[j]; j++) {
+          state->probs[i]->checker_env[j] = varsubst_heap(state, state->probs[i]->checker_env[j], 1,
                                                    section_global_params,
                                                    section_problem_params,
                                                    section_language_params,
                                                    section_tester_params);
-          if (!serve_state.probs[i]->checker_env[j]) return -1;
+          if (!state->probs[i]->checker_env[j]) return -1;
         }
       }
 
       /* score bonus */
       prepare_set_prob_value(PREPARE_FIELD_PROB_SCORE_BONUS,
-                             serve_state.probs[i], aprob, serve_state.global);
-      if (serve_state.probs[i]->score_bonus[0]) {
-        if (parse_score_bonus(serve_state.probs[i]->score_bonus, &serve_state.probs[i]->score_bonus_total,
-                              &serve_state.probs[i]->score_bonus_val) < 0) return -1;
+                             state->probs[i], aprob, state->global);
+      if (state->probs[i]->score_bonus[0]) {
+        if (parse_score_bonus(state->probs[i]->score_bonus, &state->probs[i]->score_bonus_total,
+                              &state->probs[i]->score_bonus_val) < 0) return -1;
       }
     }
 
     if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
-      if (!serve_state.probs[i]->test_dir[0] && si != -1
-          && serve_state.abstr_probs[si]->test_dir[0]) {
-        sformat_message(serve_state.probs[i]->test_dir, PATH_MAX,
-                        serve_state.abstr_probs[si]->test_dir,
-                        NULL, serve_state.probs[i], NULL, NULL, NULL, 0, 0, 0);
+      if (!state->probs[i]->test_dir[0] && si != -1
+          && state->abstr_probs[si]->test_dir[0]) {
+        sformat_message(state->probs[i]->test_dir, PATH_MAX,
+                        state->abstr_probs[si]->test_dir,
+                        NULL, state->probs[i], NULL, NULL, NULL, 0, 0, 0);
         info("problem.%s.test_dir taken from problem.%s ('%s')",
-             ish, sish, serve_state.probs[i]->test_dir);
+             ish, sish, state->probs[i]->test_dir);
       }
-      if (!serve_state.probs[i]->test_dir[0]) {
-        info("problem.%s.test_dir set to %s", ish, serve_state.probs[i]->short_name);
-        pathcpy(serve_state.probs[i]->test_dir, serve_state.probs[i]->short_name);
+      if (!state->probs[i]->test_dir[0]) {
+        info("problem.%s.test_dir set to %s", ish, state->probs[i]->short_name);
+        pathcpy(state->probs[i]->test_dir, state->probs[i]->short_name);
       }
-      path_add_dir(serve_state.probs[i]->test_dir, serve_state.global->test_dir);
+      path_add_dir(state->probs[i]->test_dir, state->global->test_dir);
       info("problem.%s.test_dir is '%s'", 
-           ish, serve_state.probs[i]->test_dir);
+           ish, state->probs[i]->test_dir);
 
-      if (!serve_state.probs[i]->corr_dir[0] && si != -1
-          && serve_state.abstr_probs[si]->corr_dir[0]) {
-        sformat_message(serve_state.probs[i]->corr_dir, PATH_MAX,
-                        serve_state.abstr_probs[si]->corr_dir,
-                        NULL, serve_state.probs[i], NULL, NULL, NULL, 0, 0, 0);
+      if (!state->probs[i]->corr_dir[0] && si != -1
+          && state->abstr_probs[si]->corr_dir[0]) {
+        sformat_message(state->probs[i]->corr_dir, PATH_MAX,
+                        state->abstr_probs[si]->corr_dir,
+                        NULL, state->probs[i], NULL, NULL, NULL, 0, 0, 0);
         info("problem.%s.corr_dir taken from problem.%s ('%s')",
-             ish, sish, serve_state.probs[i]->corr_dir);
+             ish, sish, state->probs[i]->corr_dir);
       }
-      if (serve_state.probs[i]->corr_dir[0]) {
-        path_add_dir(serve_state.probs[i]->corr_dir, serve_state.global->corr_dir);
-        info("problem.%s.corr_dir is '%s'", ish, serve_state.probs[i]->corr_dir);
+      if (state->probs[i]->corr_dir[0]) {
+        path_add_dir(state->probs[i]->corr_dir, state->global->corr_dir);
+        info("problem.%s.corr_dir is '%s'", ish, state->probs[i]->corr_dir);
       }
 
       prepare_set_prob_value(PREPARE_FIELD_PROB_USE_INFO,
-                             serve_state.probs[i], aprob, serve_state.global);
+                             state->probs[i], aprob, state->global);
 
-      if (!serve_state.probs[i]->info_dir[0] && si != -1 && serve_state.probs[i]->use_info
-          && serve_state.abstr_probs[si]->info_dir[0]) {
-        sformat_message(serve_state.probs[i]->info_dir, PATH_MAX,
-                        serve_state.abstr_probs[si]->info_dir,
-                        NULL, serve_state.probs[i], NULL, NULL, NULL, 0, 0, 0);
+      if (!state->probs[i]->info_dir[0] && si != -1 && state->probs[i]->use_info
+          && state->abstr_probs[si]->info_dir[0]) {
+        sformat_message(state->probs[i]->info_dir, PATH_MAX,
+                        state->abstr_probs[si]->info_dir,
+                        NULL, state->probs[i], NULL, NULL, NULL, 0, 0, 0);
         info("problem.%s.info_dir taken from problem.%s ('%s')",
-             ish, sish, serve_state.probs[i]->info_dir);
+             ish, sish, state->probs[i]->info_dir);
       }
-      if (!serve_state.probs[i]->info_dir[0] && serve_state.probs[i]->use_info) {
-        pathcpy(serve_state.probs[i]->info_dir, serve_state.probs[i]->short_name);
-        info("problem.%s.info_dir is set to '%s'", ish, serve_state.probs[i]->info_dir);
+      if (!state->probs[i]->info_dir[0] && state->probs[i]->use_info) {
+        pathcpy(state->probs[i]->info_dir, state->probs[i]->short_name);
+        info("problem.%s.info_dir is set to '%s'", ish, state->probs[i]->info_dir);
       }
-      if (serve_state.probs[i]->use_info) {
-        path_add_dir(serve_state.probs[i]->info_dir, serve_state.global->info_dir);
-        info("problem.%s.info_dir is '%s'", ish, serve_state.probs[i]->info_dir);
+      if (state->probs[i]->use_info) {
+        path_add_dir(state->probs[i]->info_dir, state->global->info_dir);
+        info("problem.%s.info_dir is '%s'", ish, state->probs[i]->info_dir);
       }
 
-      if (serve_state.probs[i]->use_tgz == -1 && si != -1
-          && serve_state.abstr_probs[si]->use_tgz != -1) {
-        serve_state.probs[i]->use_tgz = serve_state.abstr_probs[si]->use_tgz;
+      if (state->probs[i]->use_tgz == -1 && si != -1
+          && state->abstr_probs[si]->use_tgz != -1) {
+        state->probs[i]->use_tgz = state->abstr_probs[si]->use_tgz;
         info("problem.%s.use_tgz taken from problem.%s (%d)",
-             ish, sish, serve_state.probs[i]->use_tgz);
+             ish, sish, state->probs[i]->use_tgz);
       }
-      if (serve_state.probs[i]->use_tgz == -1) {
-        serve_state.probs[i]->use_tgz = 0;
+      if (state->probs[i]->use_tgz == -1) {
+        state->probs[i]->use_tgz = 0;
       }
 
-      if (!serve_state.probs[i]->tgz_dir[0] && si != -1 && serve_state.probs[i]->use_tgz
-          && serve_state.abstr_probs[si]->tgz_dir[0]) {
-        sformat_message(serve_state.probs[i]->tgz_dir, PATH_MAX,
-                        serve_state.abstr_probs[si]->tgz_dir,
-                        NULL, serve_state.probs[i], NULL, NULL, NULL, 0, 0, 0);
+      if (!state->probs[i]->tgz_dir[0] && si != -1 && state->probs[i]->use_tgz
+          && state->abstr_probs[si]->tgz_dir[0]) {
+        sformat_message(state->probs[i]->tgz_dir, PATH_MAX,
+                        state->abstr_probs[si]->tgz_dir,
+                        NULL, state->probs[i], NULL, NULL, NULL, 0, 0, 0);
         info("problem.%s.tgz_dir taken from problem.%s ('%s')",
-             ish, sish, serve_state.probs[i]->tgz_dir);
+             ish, sish, state->probs[i]->tgz_dir);
       }
-      if (!serve_state.probs[i]->tgz_dir[0] && serve_state.probs[i]->use_tgz) {
-        pathcpy(serve_state.probs[i]->tgz_dir, serve_state.probs[i]->short_name);
-        info("problem.%s.tgz_dir is set to '%s'", ish, serve_state.probs[i]->tgz_dir);
+      if (!state->probs[i]->tgz_dir[0] && state->probs[i]->use_tgz) {
+        pathcpy(state->probs[i]->tgz_dir, state->probs[i]->short_name);
+        info("problem.%s.tgz_dir is set to '%s'", ish, state->probs[i]->tgz_dir);
       }
-      if (serve_state.probs[i]->use_tgz) {
-        path_add_dir(serve_state.probs[i]->tgz_dir, serve_state.global->tgz_dir);
-        info("problem.%s.tgz_dir is '%s'", ish, serve_state.probs[i]->tgz_dir);
+      if (state->probs[i]->use_tgz) {
+        path_add_dir(state->probs[i]->tgz_dir, state->global->tgz_dir);
+        info("problem.%s.tgz_dir is '%s'", ish, state->probs[i]->tgz_dir);
       }
     }
 
     if (mode == PREPARE_RUN) {
-      if (!serve_state.probs[i]->input_file[0] && si != -1
-          && serve_state.abstr_probs[si]->input_file[0]) {
-        sformat_message(serve_state.probs[i]->input_file, PATH_MAX,
-                        serve_state.abstr_probs[si]->input_file,
-                        NULL, serve_state.probs[i], NULL, NULL, NULL, 0, 0, 0);
+      if (!state->probs[i]->input_file[0] && si != -1
+          && state->abstr_probs[si]->input_file[0]) {
+        sformat_message(state->probs[i]->input_file, PATH_MAX,
+                        state->abstr_probs[si]->input_file,
+                        NULL, state->probs[i], NULL, NULL, NULL, 0, 0, 0);
         info("problem.%s.input_file inherited from problem.%s ('%s')",
-             ish, sish, serve_state.probs[i]->input_file);
+             ish, sish, state->probs[i]->input_file);
       }
-      if (!serve_state.probs[i]->input_file[0]) {
+      if (!state->probs[i]->input_file[0]) {
         info("problem.%s.input_file set to %s", ish, DFLT_P_INPUT_FILE);
-        snprintf(serve_state.probs[i]->input_file, sizeof(serve_state.probs[i]->input_file),
+        snprintf(state->probs[i]->input_file, sizeof(state->probs[i]->input_file),
                  "%s", DFLT_P_INPUT_FILE);
       }
-      if (!serve_state.probs[i]->output_file[0] && si != -1
-          && serve_state.abstr_probs[si]->output_file[0]) {
-        sformat_message(serve_state.probs[i]->output_file, PATH_MAX,
-                        serve_state.abstr_probs[si]->output_file,
-                        NULL, serve_state.probs[i], NULL, NULL, NULL, 0, 0, 0);
+      if (!state->probs[i]->output_file[0] && si != -1
+          && state->abstr_probs[si]->output_file[0]) {
+        sformat_message(state->probs[i]->output_file, PATH_MAX,
+                        state->abstr_probs[si]->output_file,
+                        NULL, state->probs[i], NULL, NULL, NULL, 0, 0, 0);
         info("problem.%s.output_file inherited from problem.%s ('%s')",
-             ish, sish, serve_state.probs[i]->output_file);
+             ish, sish, state->probs[i]->output_file);
       }
-      if (!serve_state.probs[i]->output_file[0]) {
+      if (!state->probs[i]->output_file[0]) {
         info("problem.%s.output_file set to %s", ish, DFLT_P_OUTPUT_FILE);
-        snprintf(serve_state.probs[i]->output_file, sizeof(serve_state.probs[i]->output_file),
+        snprintf(state->probs[i]->output_file, sizeof(state->probs[i]->output_file),
                  "%s", DFLT_P_OUTPUT_FILE);
       }
 
-      if (serve_state.probs[i]->variant_num == -1 && si != -1
-          && serve_state.abstr_probs[si]->variant_num != -1) {
-        serve_state.probs[i]->variant_num = serve_state.abstr_probs[si]->variant_num;
+      if (state->probs[i]->variant_num == -1 && si != -1
+          && state->abstr_probs[si]->variant_num != -1) {
+        state->probs[i]->variant_num = state->abstr_probs[si]->variant_num;
         info("problem.%s.variant_num inherited from problem.%s (%d)",
-             ish, sish, serve_state.probs[i]->variant_num);
+             ish, sish, state->probs[i]->variant_num);
       }
-      if (serve_state.probs[i]->variant_num == -1) {
-        serve_state.probs[i]->variant_num = 0;
+      if (state->probs[i]->variant_num == -1) {
+        state->probs[i]->variant_num = 0;
       }
 
       prepare_set_prob_value(PREPARE_FIELD_PROB_USE_CORR,
-                             serve_state.probs[i], aprob, serve_state.global);
+                             state->probs[i], aprob, state->global);
 
       prepare_set_prob_value(PREPARE_FIELD_PROB_CHECKER_REAL_TIME_LIMIT,
-                             serve_state.probs[i], aprob, serve_state.global);
+                             state->probs[i], aprob, state->global);
     }
 
-    if (serve_state.probs[i]->test_sets) {
-      if (parse_testsets(serve_state.probs[i]->test_sets,
-                         &serve_state.probs[i]->ts_total,
-                         &serve_state.probs[i]->ts_infos) < 0)
+    if (state->probs[i]->test_sets) {
+      if (parse_testsets(state->probs[i]->test_sets,
+                         &state->probs[i]->ts_total,
+                         &state->probs[i]->ts_infos) < 0)
         return -1;
     }
   }
 
   if (mode == PREPARE_SERVE || mode == PREPARE_RUN) {
-    for (i = 0; i < serve_state.max_abstr_tester; i++) {
-      if (process_abstract_tester(i) < 0) return -1;
+    for (i = 0; i < state->max_abstr_tester; i++) {
+      if (process_abstract_tester(state, i) < 0) return -1;
     }
   }
 
   if (mode == PREPARE_SERVE) {
     int var_prob_num = 0;
 
-    for (i = 0; i <= serve_state.max_prob; i++)
-      if (serve_state.probs[i] && serve_state.probs[i]->variant_num > 0) var_prob_num++;
+    for (i = 0; i <= state->max_prob; i++)
+      if (state->probs[i] && state->probs[i]->variant_num > 0) var_prob_num++;
     if (var_prob_num > 0) {
-      if (!serve_state.global->variant_map_file[0]) {
+      if (!state->global->variant_map_file[0]) {
         err("There are variant problems, but no variant file name");
         return -1;
       }
-      serve_state.global->variant_map = parse_variant_map(serve_state.global->variant_map_file);
-      if (!serve_state.global->variant_map) return -1;
+      state->global->variant_map = parse_variant_map(state, state->global->variant_map_file);
+      if (!state->global->variant_map) return -1;
     }
   }
 
-#define TESTER_INIT_FIELD(f,d,c) do { if (!serve_state.testers[i]->f[0]) { info("tester.%d.%s set to %s", i, #f, d); pathcat(serve_state.testers[i]->f, d); } path_add_dir(serve_state.testers[i]->f, serve_state.testers[i]->c); } while(0)
+#define TESTER_INIT_FIELD(f,d,c) do { if (!state->testers[i]->f[0]) { info("tester.%d.%s set to %s", i, #f, d); pathcat(state->testers[i]->f, d); } path_add_dir(state->testers[i]->f, state->testers[i]->c); } while(0)
   if (mode == PREPARE_SERVE || mode == PREPARE_RUN) {
-    for (i = 1; i <= serve_state.max_tester; i++) {
+    for (i = 1; i <= state->max_tester; i++) {
       struct section_tester_data *tp = 0;
       struct section_tester_data *atp = 0;
 
-      if (!serve_state.testers[i]) continue;
-      tp = serve_state.testers[i];
+      if (!state->testers[i]) continue;
+      tp = state->testers[i];
 
       /* we hardly can do any reasonable in this case */
       if (tp->any && mode == PREPARE_RUN) {
@@ -2475,12 +2475,12 @@ set_defaults(int mode)
           err("concrete tester may inherit only one abstract tester");
           return -1;
         }
-        for (si = 0; si < serve_state.max_abstr_tester; si++) {
-          atp = serve_state.abstr_testers[si];
+        for (si = 0; si < state->max_abstr_tester; si++) {
+          atp = state->abstr_testers[si];
           if (!strcmp(atp->name, tp->super[0]))
             break;
         }
-        if (si >= serve_state.max_abstr_tester) {
+        if (si >= state->max_abstr_tester) {
           err("abstract tester %s not found", tp->super[0]);
           return -1;
         }
@@ -2499,52 +2499,52 @@ set_defaults(int mode)
              i, sish, tp->key);
       }
 
-      if (!serve_state.testers[i]->name[0]) {
-        sprintf(serve_state.testers[i]->name, "tst_%d", serve_state.testers[i]->id);
-        if (serve_state.testers[i]->arch[0]) {
-          sprintf(serve_state.testers[i]->name + strlen(serve_state.testers[i]->name),
-                  "_%s", serve_state.testers[i]->arch);
+      if (!state->testers[i]->name[0]) {
+        sprintf(state->testers[i]->name, "tst_%d", state->testers[i]->id);
+        if (state->testers[i]->arch[0]) {
+          sprintf(state->testers[i]->name + strlen(state->testers[i]->name),
+                  "_%s", state->testers[i]->arch);
         }
-        info("tester.%d.name set to \"%s\"", i, serve_state.testers[i]->name);
+        info("tester.%d.name set to \"%s\"", i, state->testers[i]->name);
       }
 
       if (mode == PREPARE_RUN) {
         if (!tp->check_dir[0] && atp && atp->check_dir[0]) {
           sformat_message(tp->check_dir, PATH_MAX, atp->check_dir,
-                          serve_state.global, serve_state.probs[tp->problem], NULL,
+                          state->global, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
           info("tester.%d.check_dir inherited from tester.%s ('%s')",
                i, sish, tp->check_dir);
         }
         if (!tp->check_dir[0]) {
           info("tester.%d.check_dir inherited from global ('%s')",
-               i, serve_state.global->run_check_dir);
-          pathcpy(tp->check_dir, serve_state.global->run_check_dir);
+               i, state->global->run_check_dir);
+          pathcpy(tp->check_dir, state->global->run_check_dir);
         }
       }
 
       if (mode == PREPARE_SERVE) {
         if (!tp->run_dir[0] && atp && atp->run_dir[0]) {
           sformat_message(tp->run_dir, PATH_MAX, atp->run_dir,
-                          serve_state.global, serve_state.probs[tp->problem], NULL,
+                          state->global, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
           info("tester.%d.run_dir inherited from tester.%s ('%s')",
                i, sish, tp->run_dir);
         }
         if (!tp->run_dir[0]) {
           info("tester.%d.run_dir inherited from global ('%s')",
-               i, serve_state.global->run_dir);
-          pathcpy(tp->run_dir, serve_state.global->run_dir);
-          pathcpy(tp->run_queue_dir, serve_state.global->run_queue_dir);
-          pathcpy(tp->run_exe_dir, serve_state.global->run_exe_dir);
-          pathcpy(tp->run_out_dir, serve_state.global->run_out_dir);
-          pathcpy(tp->run_status_dir, serve_state.global->run_status_dir);
-          pathcpy(tp->run_report_dir, serve_state.global->run_report_dir);
-          if (serve_state.global->team_enable_rep_view) {
-            pathcpy(tp->run_team_report_dir, serve_state.global->run_team_report_dir);
+               i, state->global->run_dir);
+          pathcpy(tp->run_dir, state->global->run_dir);
+          pathcpy(tp->run_queue_dir, state->global->run_queue_dir);
+          pathcpy(tp->run_exe_dir, state->global->run_exe_dir);
+          pathcpy(tp->run_out_dir, state->global->run_out_dir);
+          pathcpy(tp->run_status_dir, state->global->run_status_dir);
+          pathcpy(tp->run_report_dir, state->global->run_report_dir);
+          if (state->global->team_enable_rep_view) {
+            pathcpy(tp->run_team_report_dir, state->global->run_team_report_dir);
           }
-          if (serve_state.global->enable_full_archive) {
-            pathcpy(tp->run_full_archive_dir, serve_state.global->run_full_archive_dir);
+          if (state->global->enable_full_archive) {
+            pathcpy(tp->run_full_archive_dir, state->global->run_full_archive_dir);
           }
         } else {
           pathmake(tp->run_queue_dir, tp->run_dir, "/",
@@ -2554,7 +2554,7 @@ set_defaults(int mode)
                    DFLT_G_RUN_EXE_DIR, 0);
           info("tester.%d.run_exe_dir is %s", i, tp->run_exe_dir);
           snprintf(tp->run_out_dir, sizeof(tp->run_out_dir), "%s/%06d",
-                   tp->run_dir, serve_state.global->contest_id);
+                   tp->run_dir, state->global->contest_id);
           info("tester.%d.run_out_dir is %s", i, tp->run_out_dir);
           pathmake(tp->run_status_dir, tp->run_out_dir, "/",
                    DFLT_G_RUN_STATUS_DIR, 0);
@@ -2562,12 +2562,12 @@ set_defaults(int mode)
           pathmake(tp->run_report_dir, tp->run_out_dir, "/",
                    DFLT_G_RUN_REPORT_DIR, 0);
           info("tester.%d.run_report_dir is %s", i, tp->run_report_dir);
-          if (serve_state.global->team_enable_rep_view) {
+          if (state->global->team_enable_rep_view) {
             pathmake(tp->run_team_report_dir, tp->run_out_dir, "/",
                      DFLT_G_RUN_TEAM_REPORT_DIR, 0);
             info("tester.%d.run_team_report_dir is %s", i, tp->run_team_report_dir);
           }
-          if (serve_state.global->enable_full_archive) {
+          if (state->global->enable_full_archive) {
             pathmake(tp->run_full_archive_dir, tp->run_out_dir, "/",
                      DFLT_G_RUN_FULL_ARCHIVE_DIR, 0);
             info("tester.%d.run_full_archive_dir is %s", i, tp->run_full_archive_dir);
@@ -2657,7 +2657,7 @@ set_defaults(int mode)
       }
       if (!tp->errorcode_file[0] && atp && atp->errorcode_file) {
         sformat_message(tp->errorcode_file, PATH_MAX, atp->errorcode_file,
-                        serve_state.global, serve_state.probs[tp->problem], NULL,
+                        state->global, state->probs[tp->problem], NULL,
                         tp, NULL, 0, 0, 0);
         info("tester.%d.errorcode_file inherited from tester.%s ('%s')",
              i, sish, tp->errorcode_file);        
@@ -2668,7 +2668,7 @@ set_defaults(int mode)
       }
       if (tp->start_env) {
         for (j = 0; tp->start_env[j]; j++) {
-          tp->start_env[j] = varsubst_heap(tp->start_env[j], 1,
+          tp->start_env[j] = varsubst_heap(state, tp->start_env[j], 1,
                                            section_global_params,
                                            section_problem_params,
                                            section_language_params,
@@ -2681,7 +2681,7 @@ set_defaults(int mode)
       }
       if (tp->checker_env) {
         for (j = 0; tp->checker_env[j]; j++) {
-          tp->checker_env[j] = varsubst_heap(tp->checker_env[j], 1,
+          tp->checker_env[j] = varsubst_heap(state, tp->checker_env[j], 1,
                                              section_global_params,
                                              section_problem_params,
                                              section_language_params,
@@ -2693,58 +2693,58 @@ set_defaults(int mode)
       if (mode == PREPARE_RUN) {
         if (!tp->error_file[0] && atp && atp->error_file[0]) {
           sformat_message(tp->error_file, PATH_MAX, atp->error_file,
-                          serve_state.global, serve_state.probs[tp->problem], NULL,
+                          state->global, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
           info("tester.%d.error_file inherited from tester.%s ('%s')",
                i, sish, tp->error_file);        
         }
-        if (!serve_state.testers[i]->error_file[0]) {
+        if (!state->testers[i]->error_file[0]) {
           info("tester.%d.error_file set to %s", i, DFLT_T_ERROR_FILE);
-          snprintf(serve_state.testers[i]->error_file, sizeof(serve_state.testers[i]->error_file),
+          snprintf(state->testers[i]->error_file, sizeof(state->testers[i]->error_file),
                    "%s", DFLT_T_ERROR_FILE);
         }
-        if (!tp->check_cmd[0] && serve_state.probs[tp->problem]->standard_checker[0]) {
-          strcpy(tp->check_cmd, serve_state.probs[tp->problem]->standard_checker);
-          pathmake4(tp->check_cmd, serve_state.global->ejudge_checkers_dir,
+        if (!tp->check_cmd[0] && state->probs[tp->problem]->standard_checker[0]) {
+          strcpy(tp->check_cmd, state->probs[tp->problem]->standard_checker);
+          pathmake4(tp->check_cmd, state->global->ejudge_checkers_dir,
                     "/", tp->check_cmd, 0);
           tp->standard_checker_used = 1;
         }
         if (!tp->check_cmd[0] && atp && atp->check_cmd[0]) {
           sformat_message(tp->check_cmd, PATH_MAX, atp->check_cmd,
-                          serve_state.global, serve_state.probs[tp->problem], NULL,
+                          state->global, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
           info("tester.%d.check_cmd inherited from tester.%s ('%s')",
                i, sish, tp->check_cmd);        
         }
-        if (!tp->check_cmd[0] && serve_state.probs[tp->problem]->check_cmd[0]) {
-          strcpy(tp->check_cmd, serve_state.probs[tp->problem]->check_cmd);
+        if (!tp->check_cmd[0] && state->probs[tp->problem]->check_cmd[0]) {
+          strcpy(tp->check_cmd, state->probs[tp->problem]->check_cmd);
         }
-        if (!serve_state.testers[i]->check_cmd[0]) {
+        if (!state->testers[i]->check_cmd[0]) {
           err("tester.%d.check_cmd must be set", i);
           return -1;
         }
-        pathmake4(serve_state.testers[i]->check_cmd, serve_state.global->checker_dir, "/",
-                  serve_state.testers[i]->check_cmd, 0);
+        pathmake4(state->testers[i]->check_cmd, state->global->checker_dir, "/",
+                  state->testers[i]->check_cmd, 0);
         if (!tp->start_cmd[0] && atp && atp->start_cmd[0]) {
           sformat_message(tp->start_cmd, PATH_MAX, atp->start_cmd,
-                          serve_state.global, serve_state.probs[tp->problem], NULL,
+                          state->global, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
           info("tester.%d.start_cmd inherited from tester.%s ('%s')",
                i, sish, tp->start_cmd);        
         }
-        if (serve_state.testers[i]->start_cmd[0]) {
-          pathmake4(serve_state.testers[i]->start_cmd, serve_state.global->script_dir, "/",
-                    serve_state.testers[i]->start_cmd, 0);
+        if (state->testers[i]->start_cmd[0]) {
+          pathmake4(state->testers[i]->start_cmd, state->global->script_dir, "/",
+                    state->testers[i]->start_cmd, 0);
         }
         if (!tp->prepare_cmd[0] && atp && atp->prepare_cmd[0]) {
           sformat_message(tp->prepare_cmd, PATH_MAX, atp->prepare_cmd,
-                          serve_state.global, serve_state.probs[tp->problem], NULL,
+                          state->global, state->probs[tp->problem], NULL,
                           tp, NULL, 0, 0, 0);
           info("tester.%d.prepare_cmd inherited from tester.%s ('%s')",
                i, sish, tp->prepare_cmd);        
         }
         if (tp->prepare_cmd[0]) {
-          pathmake4(tp->prepare_cmd, serve_state.global->script_dir, "/",
+          pathmake4(tp->prepare_cmd, state->global->script_dir, "/",
                     tp->prepare_cmd, 0);
         }
       }
@@ -2753,12 +2753,12 @@ set_defaults(int mode)
 
   if (mode == PREPARE_SERVE) {
     /* check language/checker pairs */
-    for (i = 1; i <= serve_state.max_lang; i++) {
-      if (!serve_state.langs[i]) continue;
-      for (j = 1; j <= serve_state.max_prob; j++) {
-        if (!serve_state.probs[j]) continue;
-        if (!find_tester(j, serve_state.langs[i]->arch)) {
-          err("no tester for pair: %d, %s", j, serve_state.langs[i]->arch);
+    for (i = 1; i <= state->max_lang; i++) {
+      if (!state->langs[i]) continue;
+      for (j = 1; j <= state->max_prob; j++) {
+        if (!state->probs[j]) continue;
+        if (!find_tester(state, j, state->langs[i]->arch)) {
+          err("no tester for pair: %d, %s", j, state->langs[i]->arch);
           return -1;
         }
       }
@@ -2769,7 +2769,7 @@ set_defaults(int mode)
 }
 
 static int
-collect_sections(int mode)
+collect_sections(serve_state_t state, int mode)
 {
   struct generic_section_config *p;
   struct section_language_data  *l;
@@ -2777,9 +2777,9 @@ collect_sections(int mode)
   struct section_tester_data    *t;
   int last_lang = 0, last_prob = 0, last_tester = 0;
 
-  serve_state.max_lang = serve_state.max_prob = serve_state.max_tester = 0;
+  state->max_lang = state->max_prob = state->max_tester = 0;
 
-  for (p = serve_state.config; p; p = p->next) {
+  for (p = state->config; p; p = p->next) {
     if (!strcmp(p->name, "language") && mode != PREPARE_RUN) {
       l = (struct section_language_data*) p;
       if (!l->id) info("assigned language id = %d", (l->id = last_lang + 1));
@@ -2787,45 +2787,45 @@ collect_sections(int mode)
         err("language id %d is out of range", l->id);
         return -1;
       }
-      if (serve_state.langs[l->id]) {
+      if (state->langs[l->id]) {
         err("duplicated language id %d", l->id);
         return -1;
       }
-      serve_state.langs[l->id] = l;
-      if (l->id > serve_state.max_lang) serve_state.max_lang = l->id;
+      state->langs[l->id] = l;
+      if (l->id > state->max_lang) state->max_lang = l->id;
       last_lang = l->id;
       if (!l->compile_id) l->compile_id = l->id;
     } else if (!strcmp(p->name, "problem") && mode != PREPARE_COMPILE) {
       q = (struct section_problem_data*) p;
       if (q->abstract) {
-        if (serve_state.max_abstr_prob > MAX_PROBLEM) {
+        if (state->max_abstr_prob > MAX_PROBLEM) {
           err("too many abstract problems");
           return -1;
         }
-        serve_state.abstr_probs[serve_state.max_abstr_prob++] = q;
+        state->abstr_probs[state->max_abstr_prob++] = q;
       } else {
         if (!q->id) info("assigned problem id = %d", (q->id=last_prob + 1));
         if (q->id <= 0 || q->id > MAX_PROBLEM) {
           err("problem id %d is out of range", q->id);
           return -1;
         }
-        if (serve_state.probs[q->id]) {
+        if (state->probs[q->id]) {
           err("duplicated problem id %d", q->id);
           return -1;
         }
-        serve_state.probs[q->id] = q;
-        if (q->id > serve_state.max_prob) serve_state.max_prob = q->id;
+        state->probs[q->id] = q;
+        if (q->id > state->max_prob) state->max_prob = q->id;
         last_prob = q->id;
         if (!q->tester_id) q->tester_id = q->id;
       }
     } else if (!strcmp(p->name, "tester") && mode != PREPARE_COMPILE) {
       t = (struct section_tester_data *) p;
       if (t->abstract) {
-        if (serve_state.max_abstr_tester > MAX_TESTER) {
+        if (state->max_abstr_tester > MAX_TESTER) {
           err("too many abstract tester");
           return -1;
         }
-        serve_state.abstr_testers[serve_state.max_abstr_tester++] = t;
+        state->abstr_testers[state->max_abstr_tester++] = t;
       } else {
         if (!t->id)
           info("assigned tester id = %d",(t->id = last_tester + 1));
@@ -2833,7 +2833,7 @@ collect_sections(int mode)
           err("tester id %d is out of range", t->id);
           return -1;
         }
-        if (serve_state.testers[t->id]) {
+        if (state->testers[t->id]) {
           err("duplicated tester id %d", t->id);
           return -1;
         }
@@ -2841,12 +2841,12 @@ collect_sections(int mode)
           int j;
           // default tester
           // its allowed to have only one for a given architecture
-          for (j = 1; j <= serve_state.max_tester; j++) {
-            if (!serve_state.testers[j] || j == t->id) continue;
-            if (serve_state.testers[j]->any == 1 && !strcmp(serve_state.testers[j]->arch, t->arch))
+          for (j = 1; j <= state->max_tester; j++) {
+            if (!state->testers[j] || j == t->id) continue;
+            if (state->testers[j]->any == 1 && !strcmp(state->testers[j]->arch, t->arch))
               break;
           }
-          if (j <= serve_state.max_tester) {
+          if (j <= state->max_tester) {
             err("duplicated default tester for architecture '%s'", t->arch);
             return -1;
           }
@@ -2859,18 +2859,18 @@ collect_sections(int mode)
             err("only one of problem id and problem name must be specified");
             return -1;
           }
-          if (t->problem && !serve_state.probs[t->problem]) {
+          if (t->problem && !state->probs[t->problem]) {
             err("no problem %d for tester %d", t->problem, t->id);
             return -1;
           }
           if (t->problem_name[0]) {
             int j;
             
-            for (j = 1; j <= serve_state.max_prob; j++) {
-              if (serve_state.probs[j] && !strcmp(serve_state.probs[j]->short_name, t->problem_name))
+            for (j = 1; j <= state->max_prob; j++) {
+              if (state->probs[j] && !strcmp(state->probs[j]->short_name, t->problem_name))
                 break;
             }
-            if (j > serve_state.max_prob) {
+            if (j > state->max_prob) {
               err("no problem %s for tester %d", t->problem_name, t->id);
               return -1;
             }
@@ -2879,8 +2879,8 @@ collect_sections(int mode)
             t->problem = j;
           }
         }
-        serve_state.testers[t->id] = t;
-        if (t->id > serve_state.max_tester) serve_state.max_tester = t->id;
+        state->testers[t->id] = t;
+        if (t->id > state->max_tester) state->max_tester = t->id;
         last_tester = t->id;
       }
     }
@@ -2889,123 +2889,123 @@ collect_sections(int mode)
 }
 
 int
-create_dirs(int mode)
+create_dirs(serve_state_t state, int mode)
 {
   int i;
 
   if (mode == PREPARE_SERVE) {
-    if (serve_state.global->root_dir[0] && make_dir(serve_state.global->root_dir, 0) < 0) return -1;
-    if (make_dir(serve_state.global->var_dir, 0) < 0) return -1;
+    if (state->global->root_dir[0] && make_dir(state->global->root_dir, 0) < 0) return -1;
+    if (make_dir(state->global->var_dir, 0) < 0) return -1;
 
     /* COMPILE writes its response here */
-    if (make_dir(serve_state.global->compile_dir, 0) < 0) return -1;
-    if (make_all_dir(serve_state.global->compile_queue_dir, 0777) < 0) return -1;
-    if (make_dir(serve_state.global->compile_src_dir, 0) < 0) return -1;
+    if (make_dir(state->global->compile_dir, 0) < 0) return -1;
+    if (make_all_dir(state->global->compile_queue_dir, 0777) < 0) return -1;
+    if (make_dir(state->global->compile_src_dir, 0) < 0) return -1;
     // remove possible symlink from previous versions
     // the return code is intentionally ignored
-    remove(serve_state.global->compile_out_dir);
-    if (make_dir(serve_state.global->compile_out_dir, 0) < 0) return -1;
-    if (make_all_dir(serve_state.global->compile_status_dir, 0) < 0) return -1;
-    if (make_dir(serve_state.global->compile_report_dir, 0) < 0) return -1;
+    remove(state->global->compile_out_dir);
+    if (make_dir(state->global->compile_out_dir, 0) < 0) return -1;
+    if (make_all_dir(state->global->compile_status_dir, 0) < 0) return -1;
+    if (make_dir(state->global->compile_report_dir, 0) < 0) return -1;
 
     /* RUN writes its response here */
-    if (make_dir(serve_state.global->run_dir, 0) < 0) return -1;
-    if (make_all_dir(serve_state.global->run_queue_dir, 0) < 0) return -1;
-    if (make_dir(serve_state.global->run_exe_dir, 0) < 0) return -1;
-    remove(serve_state.global->run_out_dir);
-    if (make_dir(serve_state.global->run_out_dir, 0) < 0) return -1;
-    if (make_all_dir(serve_state.global->run_status_dir, 0777) < 0) return -1;
-    if (make_dir(serve_state.global->run_report_dir, 0777) < 0) return -1;
-    if (serve_state.global->team_enable_rep_view) {
-      if (make_dir(serve_state.global->run_team_report_dir, 0777) < 0) return -1;
+    if (make_dir(state->global->run_dir, 0) < 0) return -1;
+    if (make_all_dir(state->global->run_queue_dir, 0) < 0) return -1;
+    if (make_dir(state->global->run_exe_dir, 0) < 0) return -1;
+    remove(state->global->run_out_dir);
+    if (make_dir(state->global->run_out_dir, 0) < 0) return -1;
+    if (make_all_dir(state->global->run_status_dir, 0777) < 0) return -1;
+    if (make_dir(state->global->run_report_dir, 0777) < 0) return -1;
+    if (state->global->team_enable_rep_view) {
+      if (make_dir(state->global->run_team_report_dir, 0777) < 0) return -1;
     }
-    if (serve_state.global->enable_full_archive) {
-      if (make_dir(serve_state.global->run_full_archive_dir, 0777) < 0) return -1;
+    if (state->global->enable_full_archive) {
+      if (make_dir(state->global->run_full_archive_dir, 0777) < 0) return -1;
     }
 
     /* SERVE's status directory */
-    if (make_all_dir(serve_state.global->status_dir, 0) < 0) return -1;
+    if (make_all_dir(state->global->status_dir, 0) < 0) return -1;
 
     /* working directory (if somebody needs it) */
-    if (make_dir(serve_state.global->work_dir, 0) < 0) return -1;
-    if (make_dir(serve_state.global->print_work_dir, 0) < 0) return -1;
-    if (make_dir(serve_state.global->diff_work_dir, 0) < 0) return -1;
+    if (make_dir(state->global->work_dir, 0) < 0) return -1;
+    if (make_dir(state->global->print_work_dir, 0) < 0) return -1;
+    if (make_dir(state->global->diff_work_dir, 0) < 0) return -1;
 
     /* SERVE's archive directories */
-    if (make_dir(serve_state.global->archive_dir, 0) < 0) return -1;
-    if (make_dir(serve_state.global->clar_archive_dir, 0) < 0) return -1;
-    if (make_dir(serve_state.global->run_archive_dir, 0) < 0) return -1;
-    if (make_dir(serve_state.global->xml_report_archive_dir, 0) < 0) return -1;
-    if (make_dir(serve_state.global->report_archive_dir, 0) < 0) return -1;
-    if (make_dir(serve_state.global->audit_log_dir, 0777) < 0) return -1;
-    if (serve_state.global->team_enable_rep_view) {
-      if (make_dir(serve_state.global->team_report_archive_dir, 0) < 0) return -1;
+    if (make_dir(state->global->archive_dir, 0) < 0) return -1;
+    if (make_dir(state->global->clar_archive_dir, 0) < 0) return -1;
+    if (make_dir(state->global->run_archive_dir, 0) < 0) return -1;
+    if (make_dir(state->global->xml_report_archive_dir, 0) < 0) return -1;
+    if (make_dir(state->global->report_archive_dir, 0) < 0) return -1;
+    if (make_dir(state->global->audit_log_dir, 0777) < 0) return -1;
+    if (state->global->team_enable_rep_view) {
+      if (make_dir(state->global->team_report_archive_dir, 0) < 0) return -1;
     }
-    if (serve_state.global->enable_full_archive) {
-      if (make_dir(serve_state.global->full_archive_dir, 0) < 0) return -1;
+    if (state->global->enable_full_archive) {
+      if (make_dir(state->global->full_archive_dir, 0) < 0) return -1;
     }
-    if (make_dir(serve_state.global->team_extra_dir, 0) < 0) return -1;
+    if (make_dir(state->global->team_extra_dir, 0) < 0) return -1;
   } else if (mode == PREPARE_COMPILE) {
-    if (serve_state.global->root_dir[0] && make_dir(serve_state.global->root_dir, 0) < 0) return -1;
-    if (make_dir(serve_state.global->var_dir, 0) < 0) return -1;
+    if (state->global->root_dir[0] && make_dir(state->global->root_dir, 0) < 0) return -1;
+    if (make_dir(state->global->var_dir, 0) < 0) return -1;
 
     /* COMPILE reads its commands from here */
-    if (make_dir(serve_state.global->compile_dir, 0) < 0) return -1;
-    if (make_all_dir(serve_state.global->compile_queue_dir, 0777) < 0) return -1;
-    if (make_dir(serve_state.global->compile_src_dir, 0) < 0) return -1;
+    if (make_dir(state->global->compile_dir, 0) < 0) return -1;
+    if (make_all_dir(state->global->compile_queue_dir, 0777) < 0) return -1;
+    if (make_dir(state->global->compile_src_dir, 0) < 0) return -1;
 
     /* working directory (if somebody needs it) */
-    if (make_dir(serve_state.global->work_dir, 0) < 0) return -1;
-    if (make_dir(serve_state.global->compile_work_dir, 0) < 0) return -1;
+    if (make_dir(state->global->work_dir, 0) < 0) return -1;
+    if (make_dir(state->global->compile_work_dir, 0) < 0) return -1;
   } else if (mode == PREPARE_RUN) {
-    if (serve_state.global->root_dir[0] && make_dir(serve_state.global->root_dir, 0) < 0) return -1;
-    if (make_dir(serve_state.global->var_dir, 0) < 0) return -1;
+    if (state->global->root_dir[0] && make_dir(state->global->root_dir, 0) < 0) return -1;
+    if (make_dir(state->global->var_dir, 0) < 0) return -1;
 
     /* RUN reads its commands from here */
-    if (make_dir(serve_state.global->run_dir, 0) < 0) return -1;
-    if (make_all_dir(serve_state.global->run_queue_dir, 0777) < 0) return -1;
-    if (make_dir(serve_state.global->run_exe_dir, 0) < 0) return -1;
+    if (make_dir(state->global->run_dir, 0) < 0) return -1;
+    if (make_all_dir(state->global->run_queue_dir, 0777) < 0) return -1;
+    if (make_dir(state->global->run_exe_dir, 0) < 0) return -1;
 
-    if (make_dir(serve_state.global->work_dir, 0) < 0) return -1;
-    if (make_dir(serve_state.global->run_work_dir, 0) < 0) return -1;
-    if (make_dir(serve_state.global->run_check_dir, 0) < 0) return -1;
+    if (make_dir(state->global->work_dir, 0) < 0) return -1;
+    if (make_dir(state->global->run_work_dir, 0) < 0) return -1;
+    if (make_dir(state->global->run_check_dir, 0) < 0) return -1;
   }
 
-  for (i = 1; i <= serve_state.max_lang; i++) {
-    if (!serve_state.langs[i]) continue;
+  for (i = 1; i <= state->max_lang; i++) {
+    if (!state->langs[i]) continue;
     if (mode == PREPARE_SERVE) {
-      if (make_dir(serve_state.langs[i]->compile_dir, 0) < 0) return -1;
-      if (make_all_dir(serve_state.langs[i]->compile_queue_dir, 0777) < 0) return -1;
-      if (make_dir(serve_state.langs[i]->compile_src_dir, 0) < 0) return -1;
+      if (make_dir(state->langs[i]->compile_dir, 0) < 0) return -1;
+      if (make_all_dir(state->langs[i]->compile_queue_dir, 0777) < 0) return -1;
+      if (make_dir(state->langs[i]->compile_src_dir, 0) < 0) return -1;
       // remove possible symlink from previous versions
       // the return code is intentionally ignored
-      remove(serve_state.langs[i]->compile_out_dir);
-      if (make_dir(serve_state.langs[i]->compile_out_dir, 0) < 0) return -1;
-      if (make_all_dir(serve_state.langs[i]->compile_status_dir, 0) < 0) return -1;
-      if (make_dir(serve_state.langs[i]->compile_report_dir, 0) < 0) return -1;
+      remove(state->langs[i]->compile_out_dir);
+      if (make_dir(state->langs[i]->compile_out_dir, 0) < 0) return -1;
+      if (make_all_dir(state->langs[i]->compile_status_dir, 0) < 0) return -1;
+      if (make_dir(state->langs[i]->compile_report_dir, 0) < 0) return -1;
     }
   }
 
-  for (i = 1; i <= serve_state.max_tester; i++) {
-    if (!serve_state.testers[i]) continue;
+  for (i = 1; i <= state->max_tester; i++) {
+    if (!state->testers[i]) continue;
     if (mode == PREPARE_SERVE) {
-      if (make_dir(serve_state.testers[i]->run_dir, 0) < 0) return -1;
-      if (make_all_dir(serve_state.testers[i]->run_queue_dir, 0777) < 0) return -1;
-      if (make_dir(serve_state.testers[i]->run_exe_dir, 0) < 0) return -1;
-      remove(serve_state.testers[i]->run_out_dir);
-      if (make_dir(serve_state.testers[i]->run_out_dir, 0) < 0) return -1;
-      if (make_all_dir(serve_state.testers[i]->run_status_dir, 0) < 0) return -1;
-      if (make_dir(serve_state.testers[i]->run_report_dir, 0) < 0) return -1;
-      if (serve_state.global->team_enable_rep_view) {
-        if (make_dir(serve_state.testers[i]->run_team_report_dir, 0) < 0) return -1;
+      if (make_dir(state->testers[i]->run_dir, 0) < 0) return -1;
+      if (make_all_dir(state->testers[i]->run_queue_dir, 0777) < 0) return -1;
+      if (make_dir(state->testers[i]->run_exe_dir, 0) < 0) return -1;
+      remove(state->testers[i]->run_out_dir);
+      if (make_dir(state->testers[i]->run_out_dir, 0) < 0) return -1;
+      if (make_all_dir(state->testers[i]->run_status_dir, 0) < 0) return -1;
+      if (make_dir(state->testers[i]->run_report_dir, 0) < 0) return -1;
+      if (state->global->team_enable_rep_view) {
+        if (make_dir(state->testers[i]->run_team_report_dir, 0) < 0) return -1;
       }
-      if (serve_state.global->enable_full_archive) {
-        if (make_dir(serve_state.testers[i]->run_full_archive_dir, 0) < 0) return -1;
+      if (state->global->enable_full_archive) {
+        if (make_dir(state->testers[i]->run_full_archive_dir, 0) < 0) return -1;
       }
     }
     if (mode == PREPARE_RUN) {
-      if (serve_state.testers[i]->any) continue;
-      if (make_dir(serve_state.testers[i]->check_dir, 0) < 0) return -1;
+      if (state->testers[i]->any) continue;
+      if (make_dir(state->testers[i]->check_dir, 0) < 0) return -1;
     }
   }
 
@@ -3045,8 +3045,8 @@ parse_version_string(int *pmajor, int *pminor, int *ppatch, int *pbuild)
 }
 
 int
-prepare(char const *config_file, int flags, int mode, char const *opts,
-        int managed_flag)
+prepare(serve_state_t state, char const *config_file, int flags,
+        int mode, char const *opts, int managed_flag)
 {
   cfg_cond_var_t *cond_vars;
   int ncond_var;
@@ -3079,29 +3079,29 @@ prepare(char const *config_file, int flags, int mode, char const *opts,
   cond_vars[6].val.tag = PARSECFG_T_LONG;
   cond_vars[6].val.l.val = managed_flag;
 
-  serve_state.config = parse_param(config_file, 0, params, 1, ncond_var, cond_vars, 0);
-  if (!serve_state.config) return -1;
+  state->config = parse_param(config_file, 0, params, 1, ncond_var, cond_vars, 0);
+  if (!state->config) return -1;
   write_log(0, LOG_INFO, "Configuration file parsed ok");
-  if (collect_sections(mode) < 0) return -1;
+  if (collect_sections(state, mode) < 0) return -1;
 
-  if (!serve_state.max_lang && mode != PREPARE_RUN) {
+  if (!state->max_lang && mode != PREPARE_RUN) {
     err("no languages specified");
     return -1;
   }
-  if (!serve_state.max_prob && mode != PREPARE_COMPILE) {
+  if (!state->max_prob && mode != PREPARE_COMPILE) {
     err("no problems specified");
     return -1;
   }
-  if (!serve_state.max_tester && mode != PREPARE_COMPILE) {
+  if (!state->max_tester && mode != PREPARE_COMPILE) {
     err("no testers specified");
     return -1;
   }
-  if (set_defaults(mode) < 0) return -1;
+  if (set_defaults(state, mode) < 0) return -1;
   return 0;
 }
 
 int
-prepare_tester_refinement(struct section_tester_data *out,
+prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
                           int def_tst_id, int prob_id)
 {
   struct section_tester_data *tp, *atp = 0;
@@ -3110,10 +3110,10 @@ prepare_tester_refinement(struct section_tester_data *out,
   unsigned char *sish = 0;
 
   ASSERT(out);
-  ASSERT(def_tst_id > 0 && def_tst_id <= serve_state.max_tester);
-  ASSERT(prob_id > 0 && prob_id <= serve_state.max_prob);
-  tp = serve_state.testers[def_tst_id];
-  prb = serve_state.probs[prob_id];
+  ASSERT(def_tst_id > 0 && def_tst_id <= state->max_tester);
+  ASSERT(prob_id > 0 && prob_id <= state->max_prob);
+  tp = state->testers[def_tst_id];
+  prb = state->probs[prob_id];
   ASSERT(tp);
   ASSERT(tp->any);
   ASSERT(prb);
@@ -3125,11 +3125,11 @@ prepare_tester_refinement(struct section_tester_data *out,
       return -1;
     }
 
-    for (si = 0; si < serve_state.max_abstr_tester; si++) {
-      atp = serve_state.abstr_testers[si];
+    for (si = 0; si < state->max_abstr_tester; si++) {
+      atp = state->abstr_testers[si];
       if (!strcmp(atp->name, tp->super[0])) break;
     }
-    if (si >= serve_state.max_abstr_tester) {
+    if (si >= state->max_abstr_tester) {
       err("abstract tester '%s' not found", tp->super[0]);
       return -1;
     }
@@ -3166,11 +3166,11 @@ prepare_tester_refinement(struct section_tester_data *out,
   strcpy(out->check_dir, tp->check_dir);
   if (!out->check_dir[0] && atp && atp->check_dir[0]) {
     sformat_message(out->check_dir, sizeof(out->check_dir),
-                    atp->check_dir, serve_state.global,
+                    atp->check_dir, state->global,
                     prb, NULL, out, NULL, 0, 0, 0);
   }
   if (!out->check_dir[0]) {
-    pathcpy(out->check_dir, serve_state.global->run_check_dir);
+    pathcpy(out->check_dir, state->global->run_check_dir);
   }
 
   /* copy no_core_dump */
@@ -3273,7 +3273,7 @@ prepare_tester_refinement(struct section_tester_data *out,
   }
   if (out->start_env) {
     for (j = 0; out->start_env[j]; j++) {
-      out->start_env[j] = varsubst_heap(out->start_env[j], 1,
+      out->start_env[j] = varsubst_heap(state, out->start_env[j], 1,
                                         section_global_params,
                                         section_problem_params,
                                         section_language_params,
@@ -3289,7 +3289,7 @@ prepare_tester_refinement(struct section_tester_data *out,
   }
   if (out->checker_env) {
     for (j = 0; out->checker_env[j]; j++) {
-      out->checker_env[j] = varsubst_heap(out->checker_env[j], 1,
+      out->checker_env[j] = varsubst_heap(state, out->checker_env[j], 1,
                                           section_global_params,
                                           section_problem_params,
                                           section_language_params,
@@ -3302,7 +3302,7 @@ prepare_tester_refinement(struct section_tester_data *out,
   strcpy(out->errorcode_file, tp->errorcode_file);
   if (!out->errorcode_file[0] && atp && atp->errorcode_file[0]) {
     sformat_message(out->errorcode_file, sizeof(out->errorcode_file),
-                    atp->errorcode_file, serve_state.global, prb, NULL,
+                    atp->errorcode_file, state->global, prb, NULL,
                     out, NULL, 0, 0, 0);
   }
 
@@ -3310,7 +3310,7 @@ prepare_tester_refinement(struct section_tester_data *out,
   strcpy(out->error_file, tp->error_file);
   if (!out->error_file[0] && atp && atp->error_file[0]) {
     sformat_message(out->error_file, sizeof(out->error_file),
-                    atp->error_file, serve_state. global, prb, NULL, out,
+                    atp->error_file, state-> global, prb, NULL, out,
                     NULL, 0, 0, 0);
   }
   if (!out->error_file[0]) {
@@ -3321,13 +3321,13 @@ prepare_tester_refinement(struct section_tester_data *out,
   /* copy check_cmd */
   if (prb->standard_checker[0]) {
     strcpy(out->check_cmd, prb->standard_checker);
-    pathmake4(out->check_cmd,serve_state.global->ejudge_checkers_dir,"/",out->check_cmd,0);
+    pathmake4(out->check_cmd,state->global->ejudge_checkers_dir,"/",out->check_cmd,0);
     out->standard_checker_used = 1;
   } else {
     strcpy(out->check_cmd, tp->check_cmd);
     if (!out->check_cmd[0] && atp && atp->check_cmd[0]) {
       sformat_message(out->check_cmd, sizeof(out->check_cmd),
-                      atp->check_cmd, serve_state.global, prb, NULL, out,
+                      atp->check_cmd, state->global, prb, NULL, out,
                       NULL, 0, 0, 0);
     }
     if (!out->check_cmd[0] && prb->check_cmd[0])
@@ -3337,29 +3337,29 @@ prepare_tester_refinement(struct section_tester_data *out,
           out->arch);
       return -1;
     }
-    pathmake4(out->check_cmd, serve_state.global->checker_dir, "/", out->check_cmd, 0);
+    pathmake4(out->check_cmd, state->global->checker_dir, "/", out->check_cmd, 0);
   }
 
   /* copy start_cmd */
   strcpy(out->start_cmd, tp->start_cmd);
   if (!out->start_cmd[0] && atp && atp->start_cmd[0]) {
     sformat_message(out->start_cmd, sizeof(out->start_cmd),
-                    atp->start_cmd, serve_state.global, prb, NULL, out, NULL,
+                    atp->start_cmd, state->global, prb, NULL, out, NULL,
                     0, 0, 0);
   }
   if (out->start_cmd[0]) {
-    pathmake4(out->start_cmd, serve_state.global->script_dir, "/", out->start_cmd, 0);
+    pathmake4(out->start_cmd, state->global->script_dir, "/", out->start_cmd, 0);
   }
 
   /* copy prepare_cmd */
   strcpy(out->prepare_cmd, tp->prepare_cmd);
   if (!out->prepare_cmd[0] && atp && atp->prepare_cmd[0]) {
     sformat_message(out->prepare_cmd, sizeof(out->prepare_cmd),
-                    atp->prepare_cmd, serve_state.global, prb, NULL, out,
+                    atp->prepare_cmd, state->global, prb, NULL, out,
                     NULL, 0, 0, 0);
   }
   if (out->prepare_cmd[0]) {
-    pathmake4(out->prepare_cmd, serve_state.global->script_dir, "/", out->prepare_cmd, 0);
+    pathmake4(out->prepare_cmd, state->global->script_dir, "/", out->prepare_cmd, 0);
   }
 
   // for debug
@@ -3377,7 +3377,7 @@ create_tester_dirs(struct section_tester_data *tst)
   return 0;
 }
 
-void print_global(FILE *o)
+void print_global(serve_state_t state, FILE *o)
 {
   int i;
   const struct config_parse_info *pp;
@@ -3385,10 +3385,10 @@ void print_global(FILE *o)
   for (i = 0; section_global_params[i].name; i++) {
     pp = &section_global_params[i];
     if (!strcmp(pp->type, "s")) {
-      char *pc = XPDEREF(char,serve_state.global, pp->offset);
+      char *pc = XPDEREF(char, state->global, pp->offset);
       fprintf(o, "%s = \"%s\"\n", pp->name, pc);
     } else if (!strcmp(pp->type, "d")) {
-      int *pi = XPDEREF(int, serve_state.global, pp->offset);
+      int *pi = XPDEREF(int, state->global, pp->offset);
       fprintf(o, "%s = %d\n", pp->name, *pi);
     }
   }
@@ -3415,15 +3415,15 @@ void print_problem(FILE *o, struct section_problem_data *p)
   }
   fprintf(o, "\n");
 }
-void print_all_problems(FILE *o)
+void print_all_problems(serve_state_t state, FILE *o)
 {
   int i;
 
-  for (i = 0; i < serve_state.max_abstr_prob; i++)
-    print_problem(o, serve_state.abstr_probs[i]);
-  for (i = 1; i <= serve_state.max_prob; i++) {
-    if (!serve_state.probs[i]) continue;
-    print_problem(o, serve_state.probs[i]);
+  for (i = 0; i < state->max_abstr_prob; i++)
+    print_problem(o, state->abstr_probs[i]);
+  for (i = 1; i <= state->max_prob; i++) {
+    if (!state->probs[i]) continue;
+    print_problem(o, state->probs[i]);
   }
 }
 
@@ -3446,13 +3446,13 @@ void print_language(FILE *o, struct section_language_data *l)
   }
   fprintf(o, "\n");
 }
-void print_all_languages(FILE *o)
+void print_all_languages(serve_state_t state, FILE *o)
 {
   int i;
 
-  for (i = 1; i <= serve_state.max_lang; i++) {
-    if (!serve_state.langs[i]) continue;
-    print_language(o, serve_state.langs[i]);
+  for (i = 1; i <= state->max_lang; i++) {
+    if (!state->langs[i]) continue;
+    print_language(o, state->langs[i]);
   }
 }
 
@@ -3505,31 +3505,31 @@ void print_tester(FILE *o, struct section_tester_data *t)
   }
   fprintf(o, "\n");
 }
-void print_all_testers(FILE *o)
+void print_all_testers(serve_state_t state, FILE *o)
 {
   int i;
 
   /*
-  fprintf(stderr, "====%d, %d, %u\n", serve_state.max_abstr_tester, serve_state.max_tester,
+  fprintf(stderr, "====%d, %d, %u\n", state->max_abstr_tester, state->max_tester,
           sizeof(struct section_tester_data));
   */
 
-  for (i = 0; i < serve_state.max_abstr_tester; i++)
-    print_tester(o, serve_state.abstr_testers[i]);
-  for (i = 1; i <= serve_state.max_tester; i++) {
-    if (!serve_state.testers[i]) continue;
-    print_tester(o, serve_state.testers[i]);
+  for (i = 0; i < state->max_abstr_tester; i++)
+    print_tester(o, state->abstr_testers[i]);
+  for (i = 1; i <= state->max_tester; i++) {
+    if (!state->testers[i]) continue;
+    print_tester(o, state->testers[i]);
   }
 
   fflush(o);
 }
 
-void print_configuration(FILE *o)
+void print_configuration(serve_state_t state, FILE *o)
 {
-  print_global(o);
-  print_all_problems(o);
-  print_all_languages(o);
-  print_all_testers(o);
+  print_global(state, o);
+  print_all_problems(state, o);
+  print_all_languages(state, o);
+  print_all_testers(state, o);
 }
 
 void
@@ -4427,9 +4427,9 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       strcpy(out->score_bonus, abstr->score_bonus);
     }
     /*
-    if (serve_state.probs[i]->score_bonus[0]) {
-        if (parse_score_bonus(serve_state.probs[i]->score_bonus, &serve_state.probs[i]->score_bonus_total,
-                              &serve_state.probs[i]->score_bonus_val) < 0) return -1;
+    if (state->probs[i]->score_bonus[0]) {
+        if (parse_score_bonus(state->probs[i]->score_bonus, &state->probs[i]->score_bonus_total,
+                              &state->probs[i]->score_bonus_val) < 0) return -1;
       }
     */
     break;

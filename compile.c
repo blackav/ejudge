@@ -75,7 +75,7 @@ do_loop(void)
   void *rpl_pkt = 0;
   size_t rpl_size = 0;
 
-  if (cr_serialize_init() < 0) return -1;
+  if (cr_serialize_init(&serve_state) < 0) return -1;
   interrupt_init();
   interrupt_disable();
 
@@ -120,7 +120,7 @@ do_loop(void)
       continue;
     }
 
-    r = compile_request_packet_read(pkt_len, pkt_ptr, &req);
+    r = compile_request_packet_read(&serve_state, pkt_len, pkt_ptr, &req);
     xfree(pkt_ptr); pkt_ptr = 0;
     if (r < 0) {
       /*
@@ -205,13 +205,13 @@ do_loop(void)
       if (serve_state.langs[req->lang_id]->compile_real_time_limit > 0) {
         task_SetMaxRealTime(tsk, serve_state.langs[req->lang_id]->compile_real_time_limit);
       }
-      if (cr_serialize_lock() < 0) {
+      if (cr_serialize_lock(&serve_state) < 0) {
         // FIXME: propose reasonable recovery?
         return -1;
       }
       task_Start(tsk);
       task_Wait(tsk);
-      if (cr_serialize_unlock() < 0) {
+      if (cr_serialize_unlock(&serve_state) < 0) {
         // FIXME: propose reasonable recovery?
         return -1;
       }
@@ -354,14 +354,15 @@ main(int argc, char *argv[])
   }
 #endif
 
-  if (prepare(argv[i], prepare_flags, PREPARE_COMPILE, cpp_opts, 0) < 0)
+  if (prepare(&serve_state, argv[i], prepare_flags, PREPARE_COMPILE,
+              cpp_opts, 0) < 0)
     return 1;
   if (T_flag) {
-    print_configuration(stdout);
+    print_configuration(&serve_state, stdout);
     return 0;
   }
   if (key && filter_languages(key) < 0) return 1;
-  if (create_dirs(PREPARE_COMPILE) < 0) return 1;
+  if (create_dirs(&serve_state, PREPARE_COMPILE) < 0) return 1;
   if (check_config() < 0) return 1;
   if (do_loop() < 0) return 1;
 

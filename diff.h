@@ -4,7 +4,7 @@
 #ifndef __DIFF_H__
 #define __DIFF_H__
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004,2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,8 +18,10 @@
  * GNU General Public License for more details.
  */
 
+#include "serve_state.h"
+
 #include <stdio.h>
 
-int compare_runs(FILE *fout, int run_id1, int run_id2);
+int compare_runs(const serve_state_t, FILE *fout, int run_id1, int run_id2);
 
 #endif /* __DIFF_H__ */

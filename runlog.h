@@ -18,6 +18,7 @@
  */
 
 #include "ej_types.h"
+#include "serve_state.h"
 
 #include <time.h>
 #include <string.h>
@@ -184,11 +185,11 @@ int run_squeeze_log(runlog_state_t);
 void run_clear_variables(runlog_state_t);
 
 int run_write_xml(runlog_state_t, FILE *f, int, time_t);
-int unparse_runlog_xml(struct teamdb_state *, FILE *, const struct run_header*,
+int unparse_runlog_xml(serve_state_t, FILE *, const struct run_header*,
                        size_t, const struct run_entry*, int, time_t);
 int parse_runlog_xml(const unsigned char *, struct run_header *,
                      size_t *, struct run_entry **);
-void runlog_import_xml(struct teamdb_state *, struct runlog_state *,
+void runlog_import_xml(serve_state_t, struct runlog_state *,
                        FILE *flog, int flags,
                        const unsigned char *in_xml);
 

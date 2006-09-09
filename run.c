@@ -1432,7 +1432,7 @@ do_loop(void)
 
   memset(&tn, 0, sizeof(tn));
 
-  if (cr_serialize_init() < 0) return -1;
+  if (cr_serialize_init(&serve_state) < 0) return -1;
   interrupt_init();
   interrupt_disable();
 
@@ -1534,7 +1534,8 @@ do_loop(void)
                req_pkt->problem_id);
       goto report_check_failed_and_continue;
     }
-    if (!(tester_id = find_tester(req_pkt->problem_id, req_pkt->arch))) {
+    if (!(tester_id = find_tester(&serve_state, req_pkt->problem_id,
+                                  req_pkt->arch))) {
       snprintf(errmsg, sizeof(errmsg),
                "no tester found for %d, %s\n",
                req_pkt->problem_id, req_pkt->arch);
@@ -1558,7 +1559,8 @@ do_loop(void)
 
     if (tst->any) {
       info("tester %d is a default tester", tester_id);
-      r = prepare_tester_refinement(&tn, tester_id, req_pkt->problem_id);
+      r = prepare_tester_refinement(&serve_state, &tn, tester_id,
+                                    req_pkt->problem_id);
       ASSERT(r >= 0);
       tst = &tn;
     }
@@ -1594,17 +1596,17 @@ do_loop(void)
     reply_pkt.ts4_us = req_pkt->ts4_us;
     get_current_time(&reply_pkt.ts5, &reply_pkt.ts5_us);
 
-    if (cr_serialize_lock() < 0) return -1;
+    if (cr_serialize_lock(&serve_state) < 0) return -1;
     if (run_tests(tst, req_pkt, &reply_pkt,
                   req_pkt->scoring_system, req_pkt->accepting_mode,
                   req_pkt->accept_partial, req_pkt->variant,
                   exe_name, run_base,
                   report_path, full_report_path,
                   req_pkt->user_spelling, req_pkt->prob_spelling) < 0) {
-      cr_serialize_unlock();
+      cr_serialize_unlock(&serve_state);
       return -1;
     }
-    if (cr_serialize_unlock() < 0) return -1;
+    if (cr_serialize_unlock(&serve_state) < 0) return -1;
 
     if (tst == &tn) {
       sarray_free(tst->start_env);
@@ -1767,7 +1769,7 @@ process_default_testers(void)
       // k is the problem number
       // ts - pointer to the problem which should be handled by the
       // default tester
-      if (prepare_tester_refinement(&tn, i, k) < 0) return -1;
+      if (prepare_tester_refinement(&serve_state, &tn, i, k) < 0) return -1;
       if (create_tester_dirs(&tn) < 0) return -1;
 
       if (ts->variant_num > 0 && !tn.standard_checker_used) {
@@ -2166,14 +2168,15 @@ main(int argc, char *argv[])
   }
 #endif
 
-  if (prepare(argv[i], p_flags, PREPARE_RUN, cpp_opts, managed_mode_flag) < 0)
+  if (prepare(&serve_state, argv[i], p_flags, PREPARE_RUN,
+              cpp_opts, managed_mode_flag) < 0)
     return 1;
   if (T_flag) {
-    print_configuration(stdout);
+    print_configuration(&serve_state, stdout);
     return 0;
   }
   if (filter_testers(key) < 0) return 1;
-  if (create_dirs(PREPARE_RUN) < 0) return 1;
+  if (create_dirs(&serve_state, PREPARE_RUN) < 0) return 1;
   if (check_config() < 0) return 1;
   if (do_loop() < 0) return 1;
   return 0;

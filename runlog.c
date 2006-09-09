@@ -1636,7 +1636,8 @@ run_write_xml(runlog_state_t state, FILE *f, int export_mode,
   }
   */
 
-  unparse_runlog_xml(state->teamdb_state, f, &state->head, state->run_u,
+  // !!!!!!!!!!!!!!
+  unparse_runlog_xml(0, f, &state->head, state->run_u,
                      state->runs, export_mode, current_time);
   return 0;
 }

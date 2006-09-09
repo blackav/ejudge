@@ -34,7 +34,8 @@
 #include <string.h>
 
 int
-compile_request_packet_read(size_t in_size, const void *in_data,
+compile_request_packet_read(const serve_state_t state,
+                            size_t in_size, const void *in_data,
                             struct compile_request_packet **p_out_data)
 {
   const struct compile_request_bin_packet *pin = in_data;
@@ -85,7 +86,8 @@ compile_request_packet_read(size_t in_size, const void *in_data,
     goto failed_badly;
   }
   pout->lang_id = cvt_bin_to_host(pin->lang_id);
-  if (pout->lang_id < 0 || pout->lang_id > serve_state.max_lang || !serve_state.langs[pout->lang_id]) {
+  if (pout->lang_id < 0 || pout->lang_id > state->max_lang
+      || !state->langs[pout->lang_id]) {
     errcode = 9;
     goto failed_badly;
   }

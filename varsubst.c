@@ -24,7 +24,8 @@
 #include <string.h>
 
 const unsigned char *
-get_var_value(const unsigned char *varname,
+get_var_value(const serve_state_t state,
+              const unsigned char *varname,
               const struct config_parse_info *global_vars,
               const struct config_parse_info *problem_vars,
               const struct config_parse_info *language_vars,
@@ -46,12 +47,13 @@ get_var_value(const unsigned char *varname,
         varname, global_vars[i].type);
     return 0;
   }
-  valstr = XPDEREF(unsigned char, serve_state.global, global_vars[i].offset);
+  valstr = XPDEREF(unsigned char, state->global, global_vars[i].offset);
   return valstr;
 }
 
 unsigned char *
-varsubst_heap(unsigned char *in_str,
+varsubst_heap(const serve_state_t state,
+              unsigned char *in_str,
               int free_flag,
               const struct config_parse_info *global_vars,
               const struct config_parse_info *problem_vars,
@@ -88,7 +90,7 @@ varsubst_heap(unsigned char *in_str,
     }
     memcpy(var_name, p1 + 2, p2 - p1 - 2);
     var_name[p2 - p1 - 2] = 0;
-    var_value = get_var_value(var_name, global_vars, problem_vars,
+    var_value = get_var_value(state, var_name, global_vars, problem_vars,
                               language_vars, tester_vars);
     if (!var_value) {
       if (free_flag) xfree(in_str);
