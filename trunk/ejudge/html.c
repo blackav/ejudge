@@ -191,7 +191,7 @@ calc_kirov_score(unsigned char *outbuf,
 }
 
 void
-write_html_run_status(FILE *f, struct run_entry *pe,
+write_html_run_status(const serve_state_t state, FILE *f, struct run_entry *pe,
                       int priv_level, int attempts, int disq_attempts,
                       int prev_successes)
 {
@@ -199,13 +199,14 @@ write_html_run_status(FILE *f, struct run_entry *pe,
   struct section_problem_data *pr = 0;
   int need_extra_col = 0;
 
-  if (pe->problem > 0 && pe->problem <= serve_state.max_prob) pr = serve_state.probs[pe->problem];
+  if (pe->problem > 0 && pe->problem <= state->max_prob)
+    pr = state->probs[pe->problem];
   run_status_str(pe->status, status_str, 0);
   fprintf(f, "<td>%s</td>", status_str);
 
-  if (serve_state.global->score_system_val == SCORE_KIROV
-      || serve_state.global->score_system_val == SCORE_OLYMPIAD
-      || serve_state.global->score_system_val == SCORE_MOSCOW)
+  if (state->global->score_system_val == SCORE_KIROV
+      || state->global->score_system_val == SCORE_OLYMPIAD
+      || state->global->score_system_val == SCORE_MOSCOW)
     need_extra_col = 1;
 
   if (pe->status >= RUN_PSEUDO_FIRST && pe->status <= RUN_PSEUDO_LAST) {
@@ -237,9 +238,9 @@ write_html_run_status(FILE *f, struct run_entry *pe,
     return;
   }
 
-  if (serve_state.global->score_system_val == SCORE_ACM) {
+  if (state->global->score_system_val == SCORE_ACM) {
     if (pe->status == RUN_OK || pe->test <= 0
-        || serve_state.global->disable_failed_test_view > 0) {
+        || state->global->disable_failed_test_view > 0) {
       fprintf(f, "<td>%s</td>", _("N/A"));
     } else {
       fprintf(f, "<td>%d</td>", pe->test);
@@ -247,9 +248,9 @@ write_html_run_status(FILE *f, struct run_entry *pe,
     return;
   }
 
-  if (serve_state.global->score_system_val == SCORE_MOSCOW) {
+  if (state->global->score_system_val == SCORE_MOSCOW) {
     if (pe->status == RUN_OK || pe->test <= 0
-        || serve_state.global->disable_failed_test_view > 0) {
+        || state->global->disable_failed_test_view > 0) {
       fprintf(f, "<td>%s</td>", _("N/A"));
     } else {
       fprintf(f, "<td>%d</td>", pe->test);
@@ -278,7 +279,7 @@ write_html_run_status(FILE *f, struct run_entry *pe,
 }
 
 void
-write_text_run_status(FILE *f, struct run_entry *pe,
+write_text_run_status(const serve_state_t state, FILE *f, struct run_entry *pe,
                       int priv_level, int attempts, int disq_attempts,
                       int prev_successes)
 {
@@ -286,13 +287,14 @@ write_text_run_status(FILE *f, struct run_entry *pe,
   struct section_problem_data *pr = 0;
   int need_extra_col = 0;
 
-  if (pe->problem > 0 && pe->problem <= serve_state.max_prob) pr = serve_state.probs[pe->problem];
+  if (pe->problem > 0 && pe->problem <= state->max_prob)
+    pr = state->probs[pe->problem];
   run_status_to_str_short(status_str, sizeof(status_str), pe->status);
   fprintf(f, "%s;", status_str);
 
-  if (serve_state.global->score_system_val == SCORE_KIROV
-      || serve_state.global->score_system_val == SCORE_OLYMPIAD
-      || serve_state.global->score_system_val == SCORE_MOSCOW)
+  if (state->global->score_system_val == SCORE_KIROV
+      || state->global->score_system_val == SCORE_OLYMPIAD
+      || state->global->score_system_val == SCORE_MOSCOW)
     need_extra_col = 1;
 
   if (pe->status >= RUN_PSEUDO_FIRST && pe->status <= RUN_PSEUDO_LAST) {
@@ -312,9 +314,9 @@ write_text_run_status(FILE *f, struct run_entry *pe,
     return;
   }
 
-  if (serve_state.global->score_system_val == SCORE_ACM) {
+  if (state->global->score_system_val == SCORE_ACM) {
     if (pe->status == RUN_OK || pe->test <= 0
-        || serve_state.global->disable_failed_test_view > 0) {
+        || state->global->disable_failed_test_view > 0) {
       fprintf(f, ";");
     } else {
       fprintf(f, "%d;", pe->test);
@@ -322,9 +324,9 @@ write_text_run_status(FILE *f, struct run_entry *pe,
     return;
   }
 
-  if (serve_state.global->score_system_val == SCORE_MOSCOW) {
+  if (state->global->score_system_val == SCORE_MOSCOW) {
     if (pe->status == RUN_OK || pe->test <= 0
-        || serve_state.global->disable_failed_test_view > 0) {
+        || state->global->disable_failed_test_view > 0) {
       fprintf(f, ";");
     } else {
       fprintf(f, "%d;", pe->test);
@@ -353,7 +355,8 @@ write_text_run_status(FILE *f, struct run_entry *pe,
 }
 
 static void
-write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
+write_user_problems_summary(const serve_state_t state,
+                            FILE *f, int user_id, int accepting_mode,
                             unsigned char *solved_flag)
 {
   time_t start_time;
@@ -374,48 +377,48 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
   time_t current_time = time(0);
   int act_status;
 
-  if (serve_state.global->virtual) {
-    start_time = run_get_virtual_start_time(serve_state.runlog_state, user_id);
+  if (state->global->virtual) {
+    start_time = run_get_virtual_start_time(state->runlog_state, user_id);
   } else {
-    start_time = run_get_start_time(serve_state.runlog_state);
+    start_time = run_get_start_time(state->runlog_state);
   }
-  total_runs = run_get_total(serve_state.runlog_state);
-  total_teams = teamdb_get_max_team_id(serve_state.teamdb_state) + 1;
+  total_runs = run_get_total(state->runlog_state);
+  total_teams = teamdb_get_max_team_id(state->teamdb_state) + 1;
 
-  XALLOCA(best_run, serve_state.max_prob + 1);
-  memset(best_run, -1, sizeof(best_run[0]) * (serve_state.max_prob + 1));
-  XALLOCAZ(accepted_flag, serve_state.max_prob + 1);
-  XALLOCAZ(pending_flag, serve_state.max_prob + 1);
-  XALLOCAZ(attempts, serve_state.max_prob + 1);
-  XALLOCAZ(disqualified, serve_state.max_prob + 1);
-  XALLOCAZ(best_score, serve_state.max_prob + 1);
-  XALLOCAZ(prev_successes, serve_state.max_prob + 1);
-  XALLOCAZ(user_flag, (serve_state.max_prob + 1) * total_teams);
+  XALLOCA(best_run, state->max_prob + 1);
+  memset(best_run, -1, sizeof(best_run[0]) * (state->max_prob + 1));
+  XALLOCAZ(accepted_flag, state->max_prob + 1);
+  XALLOCAZ(pending_flag, state->max_prob + 1);
+  XALLOCAZ(attempts, state->max_prob + 1);
+  XALLOCAZ(disqualified, state->max_prob + 1);
+  XALLOCAZ(best_score, state->max_prob + 1);
+  XALLOCAZ(prev_successes, state->max_prob + 1);
+  XALLOCAZ(user_flag, (state->max_prob + 1) * total_teams);
 
   for (run_id = 0; run_id < total_runs; run_id++) {
-    if (run_get_entry(serve_state.runlog_state, run_id, &re) < 0) continue;
+    if (run_get_entry(state->runlog_state, run_id, &re) < 0) continue;
     if (re.status > RUN_MAX_STATUS) continue;
 
     cur_prob = 0;
-    if (re.problem > 0 && re.problem <= serve_state.max_prob) cur_prob = serve_state.probs[re.problem];
+    if (re.problem > 0 && re.problem <= state->max_prob) cur_prob = state->probs[re.problem];
     if (!cur_prob) continue;
 
     if (re.team <= 0 || re.team >= total_teams) continue;
     if (re.team != user_id) {
       if (re.is_hidden) continue;
-      if (teamdb_get_flags(serve_state.teamdb_state,
+      if (teamdb_get_flags(state->teamdb_state,
                            re.team) & (TEAM_INVISIBLE | TEAM_BANNED))
         continue;
       if (re.status == RUN_OK) {
-        if (!user_flag[re.team * (serve_state.max_prob + 1) + re.problem]) {
+        if (!user_flag[re.team * (state->max_prob + 1) + re.problem]) {
           prev_successes[re.problem]++;
         }
-        user_flag[re.team * (serve_state.max_prob + 1) + re.problem] = 1;
+        user_flag[re.team * (state->max_prob + 1) + re.problem] = 1;
       }
       continue;
     }
 
-    if (serve_state.global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       // OLYMPIAD contest in accepting mode
       switch (re.status) {
       case RUN_OK:
@@ -451,7 +454,7 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
       default:
         abort();
       }
-    } else if (serve_state.global->score_system_val == SCORE_OLYMPIAD) {
+    } else if (state->global->score_system_val == SCORE_OLYMPIAD) {
       // OLYMPIAD contest in judging mode
       //if (solved_flag[re.problem]) continue;
 
@@ -500,7 +503,7 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
       default:
         abort();
       }
-    } else if (serve_state.global->score_system_val == SCORE_KIROV) {
+    } else if (state->global->score_system_val == SCORE_KIROV) {
       // KIROV contest
       if (solved_flag[re.problem]) continue;
 
@@ -519,7 +522,7 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
         break;
 
       case RUN_COMPILE_ERR:
-        if (!serve_state.global->ignore_compile_errors) {
+        if (!state->global->ignore_compile_errors) {
           attempts[re.problem]++;
           cur_score = 0;
           if (cur_score >= best_score[re.problem]) {
@@ -570,7 +573,7 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
       default:
         abort();
       }
-    } else if (serve_state.global->score_system_val == SCORE_MOSCOW) {
+    } else if (state->global->score_system_val == SCORE_MOSCOW) {
       if (solved_flag[re.problem]) continue;
 
       switch (re.status) {
@@ -585,7 +588,7 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
         break;
 
       case RUN_COMPILE_ERR:
-        if (!serve_state.global->ignore_compile_errors) {
+        if (!state->global->ignore_compile_errors) {
           attempts[re.problem]++;
           cur_score = 0;
           if (cur_score >= best_score[re.problem]
@@ -637,7 +640,7 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
         break;
 
       case RUN_COMPILE_ERR:
-        if (!serve_state.global->ignore_compile_errors) {
+        if (!state->global->ignore_compile_errors) {
           attempts[re.problem]++;
           best_run[re.problem] = run_id;
         }
@@ -678,13 +681,13 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
           _("Short name"),
           _("Long name"),
           _("Status"));
-  if (serve_state.global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+  if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
     fprintf(f, "<th>%s</th>", _("Tests passed"));
-  } else if ((serve_state.global->score_system_val == SCORE_OLYMPIAD && !accepting_mode)
-      || serve_state.global->score_system_val == SCORE_KIROV) {
+  } else if ((state->global->score_system_val == SCORE_OLYMPIAD && !accepting_mode)
+      || state->global->score_system_val == SCORE_KIROV) {
     fprintf(f, "<th>%s</th>", _("Tests passed"));
     fprintf(f, "<th>%s</th>", _("Score"));
-  } else if (serve_state.global->score_system_val == SCORE_MOSCOW) {
+  } else if (state->global->score_system_val == SCORE_MOSCOW) {
     fprintf(f, "<th>%s</th>", _("Failed test"));
     fprintf(f, "<th>%s</th>", _("Score"));
   } else {
@@ -692,8 +695,8 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
   }
   fprintf(f, "<th>%s</th></tr>\n", _("Run ID"));
 
-  for (prob_id = 1; prob_id <= serve_state.max_prob; prob_id++) {
-    if (!(cur_prob = serve_state.probs[prob_id])) continue;
+  for (prob_id = 1; prob_id <= state->max_prob; prob_id++) {
+    if (!(cur_prob = state->probs[prob_id])) continue;
     if (cur_prob->t_start_date && current_time < cur_prob->t_start_date)
       continue;
     s = "";
@@ -703,8 +706,8 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
       s = " bgcolor=\"#ffdddd\"";
     fprintf(f, "<tr%s>", s);
     fprintf(f, "<td>");
-    if (serve_state.global->prob_info_url[0]) {
-      sformat_message(url_buf, sizeof(url_buf), serve_state.global->prob_info_url,
+    if (state->global->prob_info_url[0]) {
+      sformat_message(url_buf, sizeof(url_buf), state->global->prob_info_url,
                       NULL, cur_prob, NULL, NULL, NULL, 0, 0, 0);
       fprintf(f, "<a href=\"%s\" target=\"_blank\">", url_buf);
     }
@@ -716,9 +719,9 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
     fprintf(f, "<td>%s</td>", s);
     xfree(s);
     if (best_run[prob_id] < 0) {
-      if (serve_state.global->score_system_val == SCORE_KIROV
-          || (serve_state.global->score_system_val == SCORE_OLYMPIAD && !accepting_mode)
-          || serve_state.global->score_system_val == SCORE_MOSCOW) {
+      if (state->global->score_system_val == SCORE_KIROV
+          || (state->global->score_system_val == SCORE_OLYMPIAD && !accepting_mode)
+          || state->global->score_system_val == SCORE_MOSCOW) {
         fprintf(f, "<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n");
       } else {
         fprintf(f, "<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n");
@@ -726,16 +729,16 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
       continue;
     }
 
-    run_get_entry(serve_state.runlog_state, best_run[prob_id], &re);
+    run_get_entry(state->runlog_state, best_run[prob_id], &re);
     act_status = re.status;
-    if (serve_state.global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       if (act_status == RUN_OK || act_status == RUN_PARTIAL)
         act_status = RUN_ACCEPTED;
     }
     run_status_str(act_status, status_str, 0);
     fprintf(f, "<td>%s</td>", status_str);
 
-    if (serve_state.global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       switch (act_status) {
       case RUN_RUN_TIME_ERR:
       case RUN_TIME_LIMIT_ERR:
@@ -749,7 +752,7 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
         fprintf(f, "<td>&nbsp;</td>");
         break;
       }
-    } else if (serve_state.global->score_system_val == SCORE_OLYMPIAD) {
+    } else if (state->global->score_system_val == SCORE_OLYMPIAD) {
       total_score += best_score[prob_id];
       switch (re.status) {
       case RUN_OK:
@@ -760,7 +763,7 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
         fprintf(f, "<td>&nbsp;</td><td>&nbsp;</td>");
         break;
       }
-    } else if (serve_state.global->score_system_val == SCORE_KIROV) {
+    } else if (state->global->score_system_val == SCORE_KIROV) {
       total_score += best_score[prob_id];
       switch (re.status) {
       case RUN_OK:
@@ -771,7 +774,7 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
         fprintf(f, "<td>&nbsp;</td><td>&nbsp;</td>");
         break;
       }
-    } else if (serve_state.global->score_system_val == SCORE_MOSCOW) {
+    } else if (state->global->score_system_val == SCORE_MOSCOW) {
       total_score += best_score[prob_id];
       switch (re.status) {
       case RUN_OK:
@@ -783,7 +786,7 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
       case RUN_WRONG_ANSWER_ERR:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
-        if (serve_state.global->disable_failed_test_view > 0) {
+        if (state->global->disable_failed_test_view > 0) {
           fprintf(f, "<td>&nbsp;</td>");
         } else {
           fprintf(f, "<td>%d</td>", re.test);
@@ -803,7 +806,7 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
       case RUN_WRONG_ANSWER_ERR:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
-        if (serve_state.global->disable_failed_test_view > 0) {
+        if (state->global->disable_failed_test_view > 0) {
           fprintf(f, "<td>&nbsp;</td>");
         } else {
           fprintf(f, "<td>%d</td>", re.test);
@@ -820,16 +823,16 @@ write_user_problems_summary(FILE *f, int user_id, int accepting_mode,
 
   fprintf(f, "</table>\n");
 
-  if ((serve_state.global->score_system_val == SCORE_OLYMPIAD && !accepting_mode)
-      || serve_state.global->score_system_val == SCORE_KIROV
-      || serve_state.global->score_system_val == SCORE_MOSCOW) {
+  if ((state->global->score_system_val == SCORE_OLYMPIAD && !accepting_mode)
+      || state->global->score_system_val == SCORE_KIROV
+      || state->global->score_system_val == SCORE_MOSCOW) {
     fprintf(f, "<p><big>%s: %d</big></p>\n", _("Total score"), total_score);
   }
 }
 
 void
-new_write_user_runs(FILE *f, int uid, int printing_suspended,
-                    int accepting_mode,
+new_write_user_runs(const serve_state_t state, FILE *f, int uid,
+                    int printing_suspended, int accepting_mode,
                     unsigned int show_flags,
                     ej_cookie_t sid,
                     unsigned char const *self_url,
@@ -849,10 +852,10 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
   struct section_problem_data *cur_prob;
   struct section_language_data *lang = 0;
 
-  if (serve_state.global->virtual) {
-    start_time = run_get_virtual_start_time(serve_state.runlog_state, uid);
+  if (state->global->virtual) {
+    start_time = run_get_virtual_start_time(state->runlog_state, uid);
   } else {
-    start_time = run_get_start_time(serve_state.runlog_state);
+    start_time = run_get_start_time(state->runlog_state);
   }
   runs_to_show = 15;
   if (show_flags) runs_to_show = 100000;
@@ -864,57 +867,57 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
           _("Run ID"), _("Time"), _("Size"), _("Problem"),
           _("Language"), _("Result"));
 
-  if (serve_state.global->score_system_val == SCORE_KIROV
-      || serve_state.global->score_system_val == SCORE_OLYMPIAD) {
+  if (state->global->score_system_val == SCORE_KIROV
+      || state->global->score_system_val == SCORE_OLYMPIAD) {
     fprintf(f, "<th>%s</th>", _("Tests passed"));
     fprintf(f, "<th>%s</th>", _("Score"));
-  } else if (serve_state.global->score_system_val == SCORE_MOSCOW) {
+  } else if (state->global->score_system_val == SCORE_MOSCOW) {
     fprintf(f, "<th>%s</th><th>%s</th>", _("Failed test"), _("Score"));
   } else {
     fprintf(f, "<th>%s</th>", _("Failed test"));
   }
 
-  if (serve_state.global->team_enable_src_view)
+  if (state->global->team_enable_src_view)
     fprintf(f, "<th>%s</th>", _("View source"));
-  if (serve_state.global->team_enable_rep_view || serve_state.global->team_enable_ce_view)
+  if (state->global->team_enable_rep_view || state->global->team_enable_ce_view)
     fprintf(f, "<th>%s</th>", _("View report"));
-  if (serve_state.global->enable_printing && !printing_suspended)
+  if (state->global->enable_printing && !printing_suspended)
     fprintf(f, "<th>%s</th>", _("Print sources"));
 
   fprintf(f, "</tr>\n");
 
-  for (showed = 0, i = run_get_total(serve_state.runlog_state) - 1;
+  for (showed = 0, i = run_get_total(state->runlog_state) - 1;
        i >= 0 && showed < runs_to_show;
        i--) {
-    if (run_get_entry(serve_state.runlog_state, i, &re) < 0) continue;
+    if (run_get_entry(state->runlog_state, i, &re) < 0) continue;
     if (re.status == RUN_VIRTUAL_START || re.status == RUN_VIRTUAL_STOP
         || re.status == RUN_EMPTY)
       continue;
     if (re.team != uid) continue;
     showed++;
 
-    if (re.language > 0 && re.language <= serve_state.max_lang && serve_state.langs[re.language])
-      lang = serve_state.langs[re.language];
+    if (re.language > 0 && re.language <= state->max_lang && state->langs[re.language])
+      lang = state->langs[re.language];
 
-    if (serve_state.global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       if (re.status == RUN_OK || re.status == RUN_PARTIAL)
         re.status = RUN_ACCEPTED;
     }
 
     attempts = 0; disq_attempts = 0;
-    if (serve_state.global->score_system_val == SCORE_KIROV && !re.is_hidden)
-      run_get_attempts(serve_state.runlog_state, i, &attempts, &disq_attempts,
-                       serve_state.global->ignore_compile_errors);
+    if (state->global->score_system_val == SCORE_KIROV && !re.is_hidden)
+      run_get_attempts(state->runlog_state, i, &attempts, &disq_attempts,
+                       state->global->ignore_compile_errors);
 
     cur_prob = 0;
-    if (re.problem > 0 && re.problem <= serve_state.max_prob) cur_prob = serve_state.probs[re.problem];
+    if (re.problem > 0 && re.problem <= state->max_prob) cur_prob = state->probs[re.problem];
 
     prev_successes = RUN_TOO_MANY;
-    if (serve_state.global->score_system_val == SCORE_KIROV
+    if (state->global->score_system_val == SCORE_KIROV
         && re.status == RUN_OK
         && !re.is_hidden
         && cur_prob && cur_prob->score_bonus_total > 0) {
-      if ((prev_successes = run_get_prev_successes(serve_state.runlog_state, i)) < 0)
+      if ((prev_successes = run_get_prev_successes(state->runlog_state, i)) < 0)
         prev_successes = RUN_TOO_MANY;
     }
 
@@ -925,25 +928,25 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
     time = re.timestamp;
     if (!start_time) time = start_time;
     if (start_time > time) time = start_time;
-    duration_str(serve_state.global->show_astr_time, time, start_time, dur_str, 0);
+    duration_str(state->global->show_astr_time, time, start_time, dur_str, 0);
     run_status_str(re.status, stat_str, 0);
     prob_str = "???";
-    if (serve_state.probs[re.problem]) {
-      if (serve_state.probs[re.problem]->variant_num > 0) {
+    if (state->probs[re.problem]) {
+      if (state->probs[re.problem]->variant_num > 0) {
         int variant = re.variant;
-        if (!variant) variant = find_variant(re.team, re.problem);
-        prob_str = alloca(strlen(serve_state.probs[re.problem]->short_name) + 10);
+        if (!variant) variant = find_variant(state, re.team, re.problem);
+        prob_str = alloca(strlen(state->probs[re.problem]->short_name) + 10);
         if (variant > 0) {
-          sprintf(prob_str, "%s-%d", serve_state.probs[re.problem]->short_name, variant);
+          sprintf(prob_str, "%s-%d", state->probs[re.problem]->short_name, variant);
         } else {
-          sprintf(prob_str, "%s-?", serve_state.probs[re.problem]->short_name);
+          sprintf(prob_str, "%s-?", state->probs[re.problem]->short_name);
         }
       } else {
-        prob_str = serve_state.probs[re.problem]->short_name;
+        prob_str = state->probs[re.problem]->short_name;
       }
     }
     lang_str = "???";
-    if (serve_state.langs[re.language]) lang_str = serve_state.langs[re.language]->short_name;
+    if (state->langs[re.language]) lang_str = state->langs[re.language]->short_name;
 
     fprintf(f, "<tr>\n");
     fprintf(f, "<td>%d%s</td>", i, run_kind_str);
@@ -952,9 +955,10 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
     fprintf(f, "<td>%s</td>", prob_str);
     fprintf(f, "<td>%s</td>", lang_str);
 
-    write_html_run_status(f, &re, 0, attempts, disq_attempts, prev_successes);
+    write_html_run_status(state, f, &re, 0, attempts, disq_attempts,
+                          prev_successes);
 
-    if (serve_state.global->team_enable_src_view) {
+    if (state->global->team_enable_src_view) {
       fprintf(f, "<td>");
       if (lang && lang->binary) {
         fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid,
@@ -968,7 +972,7 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
       }
       fprintf(f, "</td>");
     }
-    if (serve_state.global->team_enable_rep_view) {
+    if (state->global->team_enable_rep_view) {
       fprintf(f, "<td>");
       if (re.status == RUN_CHECK_FAILED || re.status == RUN_IGNORED
           || re.status == RUN_PENDING || re.status > RUN_MAX_STATUS) {
@@ -977,7 +981,7 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
         fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid, self_url, extra_args, "report_%d=1", i), _("View"));
       }
       fprintf(f, "</td>");
-    } else if (serve_state.global->team_enable_ce_view) {
+    } else if (state->global->team_enable_ce_view) {
       fprintf(f, "<td>");
       if (re.status != RUN_COMPILE_ERR) {
         fprintf(f, "N/A");
@@ -987,7 +991,7 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
       fprintf(f, "</td>");
     }
 
-    if (serve_state.global->enable_printing && !printing_suspended) {
+    if (state->global->enable_printing && !printing_suspended) {
       fprintf(f, "<td>");
       if (re.pages > 0) {
         fprintf(f, "N/A");
@@ -1003,30 +1007,30 @@ new_write_user_runs(FILE *f, int uid, int printing_suspended,
 }
 
 static unsigned char *
-team_clar_flags(int user_id, int clar_id, int flags,
+team_clar_flags(const serve_state_t state, int user_id, int clar_id, int flags,
                 int from, int to)
 {
   if (from != user_id) {
-    if (!team_extra_get_clar_status(serve_state.team_extra_state, user_id, clar_id))
+    if (!team_extra_get_clar_status(state->team_extra_state, user_id, clar_id))
       return "N";
     else return "&nbsp;";
   }
   if (!flags) return "U";
-  return clar_flags_html(serve_state.clarlog_state, flags, from, to, 0, 0);
+  return clar_flags_html(state->clarlog_state, flags, from, to, 0, 0);
 }
 
 static int
-count_unread_clars(int user_id, time_t start_time)
+count_unread_clars(const serve_state_t state, int user_id, time_t start_time)
 {
   int i, total = 0, from, to, hide_flag;
 
-  for (i = clar_get_total(serve_state.clarlog_state) - 1; i >= 0; i--) {
-    if (clar_get_record(serve_state.clarlog_state, i, 0, 0, 0, &from, &to, 0, 0, &hide_flag, 0) < 0)
+  for (i = clar_get_total(state->clarlog_state) - 1; i >= 0; i--) {
+    if (clar_get_record(state->clarlog_state, i, 0, 0, 0, &from, &to, 0, 0, &hide_flag, 0) < 0)
       continue;
     if (to > 0 && to != user_id) continue;
     if (!to && from > 0) continue;
     if (start_time <= 0 && hide_flag) continue;
-    if (from != user_id && !team_extra_get_clar_status(serve_state.team_extra_state,
+    if (from != user_id && !team_extra_get_clar_status(state->team_extra_state,
                                                        user_id, i))
       total++;
   }
@@ -1034,7 +1038,7 @@ count_unread_clars(int user_id, time_t start_time)
 }
 
 void
-new_write_user_clars(FILE *f, int uid,
+new_write_user_clars(const serve_state_t state, FILE *f, int uid,
                      unsigned int show_flags,
                      ej_cookie_t sid,
                      unsigned char const *self_url,
@@ -1054,13 +1058,13 @@ new_write_user_clars(FILE *f, int uid,
   int   asubj_len = 0; /* html armored subj len */
   unsigned char href[128];
 
-  start_time = run_get_start_time(serve_state.runlog_state);
-  if (serve_state.global->virtual)
-    start_time = run_get_virtual_start_time(serve_state.runlog_state, uid);
+  start_time = run_get_start_time(state->runlog_state);
+  if (state->global->virtual)
+    start_time = run_get_virtual_start_time(state->runlog_state, uid);
   clars_to_show = 15;
   if (show_flags) clars_to_show = 100000;
-  show_astr_time = serve_state.global->show_astr_time;
-  if (serve_state.global->virtual) show_astr_time = 1;
+  show_astr_time = state->global->show_astr_time;
+  if (state->global->virtual) show_astr_time = 1;
 
   /* write clars statistics for the last 15 in the reverse order */
   fprintf(f,"<table border=\"1\"><tr><th>%s</th><th>%s</th><th>%s</th>"
@@ -1069,10 +1073,10 @@ new_write_user_clars(FILE *f, int uid,
           "<th>%s</th><th>%s</th></tr>\n",
           _("Clar ID"), _("Flags"), _("Time"), _("Size"), _("From"),
           _("To"), _("Subject"), _("View"));
-  for (showed = 0, i = clar_get_total(serve_state.clarlog_state) - 1;
+  for (showed = 0, i = clar_get_total(state->clarlog_state) - 1;
        showed < clars_to_show && i >= 0;
        i--) {
-    if (clar_get_record(serve_state.clarlog_state, i, &time, &size,
+    if (clar_get_record(state->clarlog_state, i, &time, &size,
                         0, &from, &to, &flags, 0, &hide_flag, subj) < 0)
       continue;
     if (from > 0 && from != uid) continue;
@@ -1093,20 +1097,20 @@ new_write_user_clars(FILE *f, int uid,
 
     fputs("<tr>", f);
     fprintf(f, "<td>%d</td>", i);
-    fprintf(f, "<td>%s</td>", team_clar_flags(uid, i, flags, from, to));
+    fprintf(f, "<td>%s</td>", team_clar_flags(state, uid, i, flags, from, to));
     fprintf(f, "<td>%s</td>", dur_str);
     fprintf(f, "<td>%zu</td>", size);
     if (!from) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_login(serve_state.teamdb_state, from));
+      fprintf(f, "<td>%s</td>", teamdb_get_login(state->teamdb_state, from));
     }
     if (!to && !from) {
       fprintf(f, "<td><b>%s</b></td>", _("all"));
     } else if (!to) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_login(serve_state.teamdb_state, to));
+      fprintf(f, "<td>%s</td>", teamdb_get_login(state->teamdb_state, to));
     }
     fprintf(f, "<td>%s</td>", asubj);
     fprintf(f, "<td>");
@@ -1121,7 +1125,8 @@ new_write_user_clars(FILE *f, int uid,
 
 /* format == 0 - HTML, 1 - plain text */
 int
-new_write_user_clar(FILE *f, int uid, int cid, int format)
+new_write_user_clar(const serve_state_t state, FILE *f, int uid, int cid,
+                    int format)
 {
   time_t start_time, time;
   size_t size;
@@ -1136,21 +1141,21 @@ new_write_user_clar(FILE *f, int uid, int cid, int format)
   size_t csize = 0;
   int show_astr_time, hide_flag;
 
-  if (serve_state.global->disable_clars) {
+  if (state->global->disable_clars) {
     err("clarifications are disabled");
     return -SRV_ERR_CLARS_DISABLED;
   }
-  if (cid < 0 || cid >= clar_get_total(serve_state.clarlog_state)) {
+  if (cid < 0 || cid >= clar_get_total(state->clarlog_state)) {
     err("invalid clar_id %d", cid);
     return -SRV_ERR_BAD_CLAR_ID;
   }
 
-  show_astr_time = serve_state.global->show_astr_time;
-  if (serve_state.global->virtual) show_astr_time = 1;
-  start_time = run_get_start_time(serve_state.runlog_state);
-  if (serve_state.global->virtual)
-    start_time = run_get_virtual_start_time(serve_state.runlog_state, uid);
-  if (clar_get_record(serve_state.clarlog_state, cid, &time, &size, NULL,
+  show_astr_time = state->global->show_astr_time;
+  if (state->global->virtual) show_astr_time = 1;
+  start_time = run_get_start_time(state->runlog_state);
+  if (state->global->virtual)
+    start_time = run_get_virtual_start_time(state->runlog_state, uid);
+  if (clar_get_record(state->clarlog_state, cid, &time, &size, NULL,
                       &from, &to, NULL, NULL, &hide_flag, subj) < 0) {
     return -SRV_ERR_BAD_CLAR_ID;
   }
@@ -1159,12 +1164,12 @@ new_write_user_clar(FILE *f, int uid, int cid, int format)
   if (start_time <= 0 && hide_flag) return -SRV_ERR_ACCESS_DENIED;
 
   if (from != uid) {
-    team_extra_set_clar_status(serve_state.team_extra_state, uid, cid);
+    team_extra_set_clar_status(state->team_extra_state, uid, cid);
   }
 
   sprintf(cname, "%06d", cid);
   if (generic_read_file(&csrc, 0, &csize, 0,
-                        serve_state.global->clar_archive_dir, cname, "") < 0) {
+                        state->global->clar_archive_dir, cname, "") < 0) {
     return -SRV_ERR_SYSTEM_ERROR;
   }
 
@@ -1187,20 +1192,20 @@ new_write_user_clar(FILE *f, int uid, int cid, int format)
     if (!from) {
       fprintf(f, "From: judges\n");
     } else {
-      fprintf(f, "From: %s\n", teamdb_get_name(serve_state.teamdb_state, from));
+      fprintf(f, "From: %s\n", teamdb_get_name(state->teamdb_state, from));
     }
     if (!to && !from) {
       fprintf(f, "To: all\n");
     } else if (!to) {
       fprintf(f, "To: judges\n");
     } else {
-      fprintf(f, "To: %s\n", teamdb_get_name(serve_state.teamdb_state, to));
+      fprintf(f, "To: %s\n", teamdb_get_name(state->teamdb_state, to));
     }
     //fprintf(f, "Subject: %s\n", psubj);
     fprintf(f, "%s\n", csrc);
   } else {
-    fprintf(f, "<%s>%s #%d</%s>\n", serve_state.cur_contest->team_head_style,
-            _("Message"), cid, serve_state.cur_contest->team_head_style);
+    fprintf(f, "<%s>%s #%d</%s>\n", state->cur_contest->team_head_style,
+            _("Message"), cid, state->cur_contest->team_head_style);
     fprintf(f, "<table border=\"0\">\n");
     fprintf(f, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Number"), cid);
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Time"), dur_str);
@@ -1209,7 +1214,7 @@ new_write_user_clar(FILE *f, int uid, int cid, int format)
     if (!from) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_name(serve_state.teamdb_state, from));
+      fprintf(f, "<td>%s</td>", teamdb_get_name(state->teamdb_state, from));
     }
     fprintf(f, "</tr>\n<tr><td>%s:</td>", _("To"));
     if (!to && !from) {
@@ -1217,7 +1222,7 @@ new_write_user_clar(FILE *f, int uid, int cid, int format)
     } else if (!to) {
       fprintf(f, "<td><b>%s</b></td>", _("judges"));
     } else {
-      fprintf(f, "<td>%s</td>", teamdb_get_name(serve_state.teamdb_state, to));
+      fprintf(f, "<td>%s</td>", teamdb_get_name(state->teamdb_state, to));
     }
     fprintf(f, "</tr>\n");
     fprintf(f, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"), asubj);
@@ -1268,7 +1273,7 @@ process_template(FILE *out,
 }
 
 void
-write_standings_header(FILE *f, int client_flag,
+write_standings_header(const serve_state_t state, FILE *f, int client_flag,
                        int user_id,
                        unsigned char const *header_str,
                        unsigned char const *user_name)
@@ -1278,25 +1283,25 @@ write_standings_header(FILE *f, int client_flag,
   unsigned char dur_str[64];
   int show_astr_time;
 
-  start_time = run_get_start_time(serve_state.runlog_state);
-  stop_time = run_get_stop_time(serve_state.runlog_state);
-  if (serve_state.global->virtual && user_id > 0) {
-    start_time = run_get_virtual_start_time(serve_state.runlog_state, user_id);
-    stop_time = run_get_virtual_stop_time(serve_state.runlog_state, user_id, 0);
+  start_time = run_get_start_time(state->runlog_state);
+  stop_time = run_get_stop_time(state->runlog_state);
+  if (state->global->virtual && user_id > 0) {
+    start_time = run_get_virtual_start_time(state->runlog_state, user_id);
+    stop_time = run_get_virtual_stop_time(state->runlog_state, user_id, 0);
   }
 
   if (!start_time) {
     if (user_name) {
-      if (serve_state.global->name[0] && !client_flag) {
+      if (state->global->name[0] && !client_flag) {
         sprintf(header, "%s - &quot;%s&quot; - %s",
-                user_name, serve_state.global->name, _("team standings"));
+                user_name, state->global->name, _("team standings"));
       } else {
         sprintf(header, "%s - %s", user_name, _("Team standings"));
       }
     } else {
-      if (serve_state.global->name[0] && !client_flag) {
+      if (state->global->name[0] && !client_flag) {
         sprintf(header, "%s &quot;%s&quot; - %s",
-                _("Contest"), serve_state.global->name, _("team standings"));
+                _("Contest"), state->global->name, _("team standings"));
       } else {
         sprintf(header, "%s", _("Team standings"));
       }
@@ -1304,15 +1309,15 @@ write_standings_header(FILE *f, int client_flag,
 
     if (!client_flag) {
       if (header_str) {
-        process_template(f, header_str, 0, serve_state.global->charset, header, 0);
+        process_template(f, header_str, 0, state->global->charset, header, 0);
       } else {
         fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>\n",
-                serve_state.global->charset,
+                state->global->charset,
                 header, header);
       }
     } else {
-      fprintf(f, "<%s>%s</%s>\n", serve_state.cur_contest->team_head_style,
-              header, serve_state.cur_contest->team_head_style);
+      fprintf(f, "<%s>%s</%s>\n", state->cur_contest->team_head_style,
+              header, state->cur_contest->team_head_style);
     }
     return;
   }
@@ -1320,25 +1325,25 @@ write_standings_header(FILE *f, int client_flag,
   cur_time = time(0);
   if (start_time > cur_time) cur_time = start_time;
   if (stop_time && cur_time > stop_time) cur_time = stop_time;
-  show_astr_time = serve_state.global->show_astr_time;
-  if (serve_state.global->virtual && !user_id) {
+  show_astr_time = state->global->show_astr_time;
+  if (state->global->virtual && !user_id) {
     show_astr_time = 1;
     cur_time = time(0);
   }
   duration_str(show_astr_time, cur_time, start_time, dur_str, 0);
 
   if (user_name) {
-    if (serve_state.global->name[0] && !client_flag) {
+    if (state->global->name[0] && !client_flag) {
       sprintf(header, "%s  - &quot;%s&quot; - %s [%s]",
-              user_name, serve_state.global->name, _("team standings"), dur_str);
+              user_name, state->global->name, _("team standings"), dur_str);
     } else {
       sprintf(header, "%s - %s [%s]",
               user_name, _("Team standings"), dur_str);
     }
   } else {
-    if (serve_state.global->name[0] && !client_flag) {
+    if (state->global->name[0] && !client_flag) {
       sprintf(header, "%s &quot;%s&quot; - %s [%s]",
-              _("Contest"), serve_state.global->name, _("team standings"), dur_str);
+              _("Contest"), state->global->name, _("team standings"), dur_str);
     } else {
       sprintf(header, "%s [%s]", _("Team standings"), dur_str);
     }
@@ -1346,20 +1351,21 @@ write_standings_header(FILE *f, int client_flag,
 
   if (!client_flag) {
     if (header_str) {
-      process_template(f, header_str, 0, serve_state.global->charset, header, 0);
+      process_template(f, header_str, 0, state->global->charset, header, 0);
     } else {
       fprintf(f, "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><title>%s</title></head><body><h1>%s</h1>",
-              serve_state.global->charset,
+              state->global->charset,
               header, header);
     }
   } else {
-    fprintf(f, "<%s>%s</%s>\n", serve_state.cur_contest->team_head_style,
-            header, serve_state.cur_contest->team_head_style);
+    fprintf(f, "<%s>%s</%s>\n", state->cur_contest->team_head_style,
+            header, state->cur_contest->team_head_style);
   }
 }
 
 static void
-write_kirov_page_table(FILE *f, int total_pages, int current_page,
+write_kirov_page_table(const serve_state_t state, 
+                       FILE *f, int total_pages, int current_page,
                        unsigned char **pgrefs,
                        int *u_sort, int *u_full, int *u_score,
                        int *pg_n1, int *pg_n2,
@@ -1368,7 +1374,7 @@ write_kirov_page_table(FILE *f, int total_pages, int current_page,
   int j;
 
   fprintf(f, "<table%s>\n<tr%s><td%s>&nbsp;</td>",
-          serve_state.global->stand_page_table_attr, row_attrs[0], col_attrs[0]);
+          state->global->stand_page_table_attr, row_attrs[0], col_attrs[0]);
   for (j = 0; j < total_pages; j++)
     if (current_page != j + 1)
       fprintf(f, "<td%s><a href=\"%s\">%d</a></td>",
@@ -1418,7 +1424,7 @@ write_kirov_page_table(FILE *f, int total_pages, int current_page,
 
 
 void
-do_write_kirov_standings(FILE *f,
+do_write_kirov_standings(const serve_state_t state, FILE *f,
                          const unsigned char *stand_dir,
                          int client_flag,
                          const unsigned char *header_str,
@@ -1473,45 +1479,46 @@ do_write_kirov_standings(FILE *f,
   int prev_prob = -1, row_ind = 0, group_ind = 1;
   int total_trans = 0;
 
-  if (client_flag) head_style = serve_state.cur_contest->team_head_style;
+  if (client_flag) head_style = state->cur_contest->team_head_style;
   else head_style = "h2";
 
-  if (!serve_state.global->stand_table_attr[0] && !serve_state.global->stand_row_attr) {
+  if (!state->global->stand_table_attr[0] && !state->global->stand_row_attr) {
     table_attr = " border=\"1\"";
   } else {
-    table_attr = serve_state.global->stand_table_attr;
+    table_attr = state->global->stand_table_attr;
   }
 
-  attr_num = sarray_len(serve_state.global->stand_row_attr);
+  attr_num = sarray_len(state->global->stand_row_attr);
   i = 0;
   if (attr_num >= 5) {
-    r0_attr = serve_state.global->stand_row_attr[i++];
-    r_attrs[0][0] = serve_state.global->stand_row_attr[i++];
-    r_attrs[0][1] = serve_state.global->stand_row_attr[i++];
-    r_attrs[1][0] = serve_state.global->stand_row_attr[i++];
-    r_attrs[1][1] = serve_state.global->stand_row_attr[i++];
+    r0_attr = state->global->stand_row_attr[i++];
+    r_attrs[0][0] = state->global->stand_row_attr[i++];
+    r_attrs[0][1] = state->global->stand_row_attr[i++];
+    r_attrs[1][0] = state->global->stand_row_attr[i++];
+    r_attrs[1][1] = state->global->stand_row_attr[i++];
     attr_num -= 5;
   }
   if (attr_num >= 1) {
-    rT_attr = serve_state.global->stand_row_attr[i++];
+    rT_attr = state->global->stand_row_attr[i++];
     attr_num -= 1;
   }
 
-  attr_num = sarray_len(serve_state.global->stand_page_row_attr);
+  attr_num = sarray_len(state->global->stand_page_row_attr);
   for (i = 0; i < 4 && i < attr_num; i++)
-    pr_attrs[i] = serve_state.global->stand_page_row_attr[i];
-  attr_num = sarray_len(serve_state.global->stand_page_col_attr);
+    pr_attrs[i] = state->global->stand_page_row_attr[i];
+  attr_num = sarray_len(state->global->stand_page_col_attr);
   for (i = 0; i < 2 && i < attr_num; i++)
-    pc_attrs[i] = serve_state.global->stand_page_col_attr[i];
+    pc_attrs[i] = state->global->stand_page_col_attr[i];
 
   /* Check that the contest is started */
-  start_time = run_get_start_time(serve_state.runlog_state);
-  stop_time = run_get_stop_time(serve_state.runlog_state);
+  start_time = run_get_start_time(state->runlog_state);
+  stop_time = run_get_stop_time(state->runlog_state);
   cur_time = time(0);
 
   if (!start_time || cur_time < start_time) {
     if (raw_flag) goto cleanup;
-    if (!client_flag) write_standings_header(f, client_flag, 0, header_str, 0);    
+    if (!client_flag) 
+      write_standings_header(state, f, client_flag, 0, header_str, 0);    
     fprintf(f, "<%s>%s</%s>", head_style, _("The contest is not started"),
             head_style);
     if (!client_flag) {
@@ -1531,15 +1538,15 @@ do_write_kirov_standings(FILE *f,
   /* The contest is started, so we can collect scores */
 
   /* download all runs in the whole */
-  r_tot = run_get_total(serve_state.runlog_state);
+  r_tot = run_get_total(state->runlog_state);
   runs = alloca(r_tot * sizeof(runs[0]));
-  run_get_all_entries(serve_state.runlog_state, runs);
+  run_get_all_entries(state->runlog_state, runs);
 
   /* prune participants, which did not send any solution */
   /* t_runs - 1, if the participant should remain */
-  t_max = teamdb_get_max_team_id(serve_state.teamdb_state) + 1;
+  t_max = teamdb_get_max_team_id(state->teamdb_state) + 1;
   t_runs = alloca(t_max);
-  if (serve_state.global->prune_empty_users) {
+  if (state->global->prune_empty_users) {
     memset(t_runs, 0, t_max);
     for (k = 0; k < r_tot; k++) {
       if (runs[k].status == RUN_EMPTY || runs[k].status == RUN_VIRTUAL_START
@@ -1562,8 +1569,8 @@ do_write_kirov_standings(FILE *f,
   XALLOCAZ(t_rev, t_max);
   for (i = 1, t_tot = 0; i < t_max; i++) {
     t_rev[i] = -1;
-    if (!teamdb_lookup(serve_state.teamdb_state, i)) continue;
-    if ((teamdb_get_flags(serve_state.teamdb_state, 
+    if (!teamdb_lookup(state->teamdb_state, i)) continue;
+    if ((teamdb_get_flags(state->teamdb_state, 
                           i) & (TEAM_INVISIBLE | TEAM_BANNED))) continue;
     if (!t_runs[i]) continue;
     t_rev[i] = t_tot;
@@ -1576,12 +1583,12 @@ do_write_kirov_standings(FILE *f,
    * p_ind[0..p_tot-1] - index array:   prob_idx -> prob_id
    * p_rev[0..p_max-1] - reverse index: prob_id -> prob_idx
    */
-  p_max = serve_state.max_prob + 1;
+  p_max = state->max_prob + 1;
   XALLOCAZ(p_ind, p_max);
   XALLOCAZ(p_rev, p_max);
   for (i = 1, p_tot = 0; i < p_max; i++) {
     p_rev[i] = -1;
-    if (!serve_state.probs[i] || serve_state.probs[i]->hidden) continue;
+    if (!state->probs[i] || state->probs[i]->hidden) continue;
     p_rev[i] = p_tot;
     p_ind[p_tot++] = i;
   }
@@ -1635,12 +1642,12 @@ do_write_kirov_standings(FILE *f,
     if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP
         || pe->status == RUN_EMPTY) continue;
     if (pe->team <= 0 || pe->team >= t_max) continue;
-    if (pe->problem <= 0 || pe->problem > serve_state.max_prob) continue;
+    if (pe->problem <= 0 || pe->problem > state->max_prob) continue;
     if (pe->is_hidden) continue;
     tind = t_rev[pe->team];
     pind = p_rev[pe->problem];
     up_ind = (tind << row_sh) + pind;
-    p = serve_state.probs[pe->problem];
+    p = state->probs[pe->problem];
     if (!p || tind < 0 || pind < 0 || p->hidden) continue;
 
     // ignore future runs when not in privileged mode
@@ -1649,14 +1656,14 @@ do_write_kirov_standings(FILE *f,
       if (run_time < start_time) run_time = start_time;
       if (stop_time && run_time > stop_time) run_time = stop_time;
       if (run_time - start_time > cur_duration) continue;
-      if (serve_state.global->stand_ignore_after_d > 0
-          && pe->timestamp >= serve_state.global->stand_ignore_after_d)
+      if (state->global->stand_ignore_after_d > 0
+          && pe->timestamp >= state->global->stand_ignore_after_d)
         continue;
     }
 
     run_score = pe->score;
     run_tests = pe->test - 1;
-    if (serve_state.global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       if (run_score < 0) run_score = 0;
       if (run_tests < 0) run_tests = 0;
       switch (pe->status) {
@@ -1704,7 +1711,7 @@ do_write_kirov_standings(FILE *f,
       default:
         break;
       }
-    } else if (serve_state.global->score_system_val == SCORE_OLYMPIAD) {
+    } else if (state->global->score_system_val == SCORE_OLYMPIAD) {
       run_score += pe->score_adj;
       if (run_score < 0) run_score = 0;
       switch (pe->status) {
@@ -1778,7 +1785,7 @@ do_write_kirov_standings(FILE *f,
         att_num[up_ind]++;
         if (!full_sol[up_ind]) tot_att[pind]++;
         last_submit_run = k;
-      } else if (pe->status==RUN_COMPILE_ERR&&!serve_state.global->ignore_compile_errors) {
+      } else if (pe->status==RUN_COMPILE_ERR&&!state->global->ignore_compile_errors) {
         if (!full_sol[up_ind]) sol_att[up_ind]++;
         att_num[up_ind]++;
         if (!full_sol[up_ind]) tot_att[pind]++;
@@ -1852,7 +1859,7 @@ do_write_kirov_standings(FILE *f,
         }
         i = j;
       }
-    } else if (serve_state.global->stand_sort_by_solved) {
+    } else if (state->global->stand_sort_by_solved) {
       /* sort by the number of solved problems, then by the score */
       XALLOCA(t_sort, t_tot);
       XALLOCA(t_sort2, t_tot);
@@ -1922,15 +1929,15 @@ do_write_kirov_standings(FILE *f,
   total_pages = 1;
   current_page = 0;
   user_on_page = 0;
-  if (!client_flag && serve_state.global->users_on_page > 0) {
-    users_per_page = serve_state.global->users_on_page;
+  if (!client_flag && state->global->users_on_page > 0) {
+    users_per_page = state->global->users_on_page;
     total_pages = (t_tot + users_per_page - 1) / users_per_page;
     XALLOCA(pgrefs, total_pages);
-    dur_len = snprintf(dur_str, sizeof(dur_str), serve_state.global->standings_file_name, 1);
+    dur_len = snprintf(dur_str, sizeof(dur_str), state->global->standings_file_name, 1);
     pgrefs[0] = alloca(dur_len + 1);
     strcpy(pgrefs[0], dur_str);
     for (j = 2; j <= total_pages; j++) {
-      dur_len = snprintf(dur_str, sizeof(dur_str), serve_state.global->stand_file_name_2, j);
+      dur_len = snprintf(dur_str, sizeof(dur_str), state->global->stand_file_name_2, j);
       pgrefs[j - 1] = alloca(dur_len + 1);
       strcpy(pgrefs[j - 1], dur_str);
     }
@@ -1945,135 +1952,137 @@ do_write_kirov_standings(FILE *f,
 
   // no teams registered at all
   if (!t_tot) {
-    if (!client_flag) write_standings_header(f, client_flag, 0, header_str, 0);
+    if (!client_flag)
+      write_standings_header(state, f, client_flag, 0, header_str, 0);
     /* print table header */
     fprintf(f, "<table%s><tr%s><th%s>%s</th><th%s>%s</th>",
             table_attr, r0_attr,
-            serve_state.global->stand_place_attr, _("Place"),
-            serve_state.global->stand_team_attr, _("User "));
-    if (serve_state.global->stand_extra_format[0]) {
-      if (serve_state.global->stand_extra_legend[0])
-        fprintf(f, "<th%s>%s</th>", serve_state.global->stand_extra_attr,
-                serve_state.global->stand_extra_legend);
+            state->global->stand_place_attr, _("Place"),
+            state->global->stand_team_attr, _("User "));
+    if (state->global->stand_extra_format[0]) {
+      if (state->global->stand_extra_legend[0])
+        fprintf(f, "<th%s>%s</th>", state->global->stand_extra_attr,
+                state->global->stand_extra_legend);
       else
-        fprintf(f, "<th%s>%s</th>", serve_state.global->stand_extra_attr,
+        fprintf(f, "<th%s>%s</th>", state->global->stand_extra_attr,
                 _("Extra info"));
     }
-    if (serve_state.global->stand_show_contestant_status
-        && serve_state.global->contestant_status_num > 0) {
-      fprintf(f, "<th%s>%s</th>", serve_state.global->stand_contestant_status_attr,
+    if (state->global->stand_show_contestant_status
+        && state->global->contestant_status_num > 0) {
+      fprintf(f, "<th%s>%s</th>", state->global->stand_contestant_status_attr,
               _("Status"));
     }
-    if (serve_state.global->stand_show_warn_number) {
-      fprintf(f, "<th%s>%s</th>", serve_state.global->stand_warn_number_attr,
+    if (state->global->stand_show_warn_number) {
+      fprintf(f, "<th%s>%s</th>", state->global->stand_warn_number_attr,
               _("Warnings"));
     }
     for (j = 0; j < p_tot; j++) {
-      fprintf(f, "<th%s>", serve_state.global->stand_prob_attr);
-      if (serve_state.global->prob_info_url[0]) {
-        sformat_message(dur_str, sizeof(dur_str), serve_state.global->prob_info_url,
-                        NULL, serve_state.probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
+      fprintf(f, "<th%s>", state->global->stand_prob_attr);
+      if (state->global->prob_info_url[0]) {
+        sformat_message(dur_str, sizeof(dur_str), state->global->prob_info_url,
+                        NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_str);
       }
-      fprintf(f, "%s", serve_state.probs[p_ind[j]]->short_name);
-      if (serve_state.global->prob_info_url[0]) {
+      fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
+      if (state->global->prob_info_url[0]) {
         fprintf(f, "</a>");
       }
       fprintf(f, "</th>");
     }
     fprintf(f, "<th%s>%s</th><th%s>%s</th></tr>\n",
-            serve_state.global->stand_solved_attr, _("Solved<br>problems"),
-            serve_state.global->stand_score_attr, _("Score"));
+            state->global->stand_solved_attr, _("Solved<br>problems"),
+            state->global->stand_score_attr, _("Score"));
   }
 
   for (i = 0; i < t_tot; i++, user_on_page = (user_on_page + 1) % users_per_page) {
     if (!user_on_page) {
       current_page++;
       if (!f) {
-        snprintf(stand_name, sizeof(stand_name), serve_state.global->stand_file_name_2,
+        snprintf(stand_name, sizeof(stand_name), state->global->stand_file_name_2,
                  current_page);
         snprintf(stand_tmp, sizeof(stand_path), "%s/in/%s.tmp", stand_dir, stand_name);
         snprintf(stand_path, sizeof(stand_path), "%s/dir/%s", stand_dir, stand_name);
         if (!(f = sf_fopen(stand_tmp, "w"))) goto cleanup;
       }
-      if (!client_flag) write_standings_header(f, client_flag, 0, header_str, 0);
+      if (!client_flag)
+        write_standings_header(state, f, client_flag, 0, header_str, 0);
 
       /* print "Last success" information */
       if (last_success_run >= 0) {
-        duration_str(serve_state.global->show_astr_time,
+        duration_str(state->global->show_astr_time,
                      runs[last_success_run].timestamp, start_time,
                      dur_str, sizeof(dur_str));
 
         fprintf(f, "<p%s>%s: %s, ",
-                serve_state.global->stand_success_attr, _("Last success"), dur_str);
-        if (serve_state.global->team_info_url[0]) {
-          teamdb_export_team(serve_state.teamdb_state, runs[last_success_run].team,
+                state->global->stand_success_attr, _("Last success"), dur_str);
+        if (state->global->team_info_url[0]) {
+          teamdb_export_team(state->teamdb_state, runs[last_success_run].team,
                              &u_info);
-          sformat_message(dur_str, sizeof(dur_str), serve_state.global->team_info_url,
+          sformat_message(dur_str, sizeof(dur_str), state->global->team_info_url,
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        fprintf(f, "%s", teamdb_get_name(serve_state.teamdb_state,
+        fprintf(f, "%s", teamdb_get_name(state->teamdb_state,
                                          runs[last_success_run].team));
-        if (serve_state.global->team_info_url[0]) {
+        if (state->global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
         fprintf(f, ", ");
 
-        if (serve_state.global->prob_info_url[0]) {
-          sformat_message(dur_str, sizeof(dur_str), serve_state.global->prob_info_url,
-                          NULL, serve_state.probs[runs[last_success_run].problem],
+        if (state->global->prob_info_url[0]) {
+          sformat_message(dur_str, sizeof(dur_str), state->global->prob_info_url,
+                          NULL, state->probs[runs[last_success_run].problem],
                           NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        fprintf(f, "%s", serve_state.probs[runs[last_success_run].problem]->short_name);
-        if (serve_state.global->prob_info_url[0]) {
+        fprintf(f, "%s", state->probs[runs[last_success_run].problem]->short_name);
+        if (state->global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
         fprintf(f, ".</p>\n");
       }
       /* print "Last submit" information */
       if (last_submit_run >= 0) {
-        duration_str(serve_state.global->show_astr_time,
+        duration_str(state->global->show_astr_time,
                      runs[last_submit_run].timestamp, start_time,
                      dur_str, sizeof(dur_str));
         fprintf(f, "<p%s>%s: %s, ",
-                serve_state.global->stand_success_attr, _("Last submit"), dur_str);
-        if (serve_state.global->team_info_url[0]) {
-          teamdb_export_team(serve_state.teamdb_state, runs[last_submit_run].team, &u_info);
-          sformat_message(dur_str, sizeof(dur_str), serve_state.global->team_info_url,
+                state->global->stand_success_attr, _("Last submit"), dur_str);
+        if (state->global->team_info_url[0]) {
+          teamdb_export_team(state->teamdb_state, runs[last_submit_run].team, &u_info);
+          sformat_message(dur_str, sizeof(dur_str), state->global->team_info_url,
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        fprintf(f, "%s", teamdb_get_name(serve_state.teamdb_state,
+        fprintf(f, "%s", teamdb_get_name(state->teamdb_state,
                                          runs[last_submit_run].team));
-        if (serve_state.global->team_info_url[0]) {
+        if (state->global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
         fprintf(f, ", ");
 
-        if (serve_state.global->prob_info_url[0]) {
-          sformat_message(dur_str, sizeof(dur_str), serve_state.global->prob_info_url,
-                          NULL, serve_state.probs[runs[last_submit_run].problem],
+        if (state->global->prob_info_url[0]) {
+          sformat_message(dur_str, sizeof(dur_str), state->global->prob_info_url,
+                          NULL, state->probs[runs[last_submit_run].problem],
                           NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        fprintf(f, "%s", serve_state.probs[runs[last_submit_run].problem]->short_name);
-        if (serve_state.global->prob_info_url[0]) {
+        fprintf(f, "%s", state->probs[runs[last_submit_run].problem]->short_name);
+        if (state->global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
         fprintf(f, ".</p>\n");
       }
       if (total_trans) {
         fprintf(f, "<p%s>%s: %d</p>",
-                serve_state.global->stand_success_attr, _("Runs being processed"), total_trans);
+                state->global->stand_success_attr, _("Runs being processed"), total_trans);
       }
 
       if (total_pages > 1) {
         fprintf(f, _("<p%s>Page %d of %d.</p>\n"),
-                serve_state.global->stand_page_cur_attr, current_page, total_pages);
+                state->global->stand_page_cur_attr, current_page, total_pages);
 
-        write_kirov_page_table(f, total_pages, current_page, pgrefs,
+        write_kirov_page_table(state, f, total_pages, current_page, pgrefs,
                                t_sort, tot_full, tot_score, pg_n1, pg_n2,
                                pr_attrs, pc_attrs);
       }
@@ -2081,55 +2090,55 @@ do_write_kirov_standings(FILE *f,
       /* print table header */
       fprintf(f, "<table%s><tr%s><th%s>%s</th><th%s>%s</th>",
               table_attr, r0_attr,
-              serve_state.global->stand_place_attr, _("Place"),
-              serve_state.global->stand_team_attr, _("User "));
-      if (serve_state.global->stand_extra_format[0]) {
-        if (serve_state.global->stand_extra_legend[0])
-          fprintf(f, "<th%s>%s</th>", serve_state.global->stand_extra_attr,
-                  serve_state.global->stand_extra_legend);
+              state->global->stand_place_attr, _("Place"),
+              state->global->stand_team_attr, _("User "));
+      if (state->global->stand_extra_format[0]) {
+        if (state->global->stand_extra_legend[0])
+          fprintf(f, "<th%s>%s</th>", state->global->stand_extra_attr,
+                  state->global->stand_extra_legend);
         else
-          fprintf(f, "<th%s>%s</th>", serve_state.global->stand_extra_attr,
+          fprintf(f, "<th%s>%s</th>", state->global->stand_extra_attr,
                   _("Extra info"));
       }
-      if (serve_state.global->stand_show_contestant_status
-          && serve_state.global->contestant_status_num > 0) {
-        fprintf(f, "<th%s>%s</th>", serve_state.global->stand_contestant_status_attr,
+      if (state->global->stand_show_contestant_status
+          && state->global->contestant_status_num > 0) {
+        fprintf(f, "<th%s>%s</th>", state->global->stand_contestant_status_attr,
                 _("Status"));
       }
-      if (serve_state.global->stand_show_warn_number) {
-        fprintf(f, "<th%s>%s</th>", serve_state.global->stand_warn_number_attr,
+      if (state->global->stand_show_warn_number) {
+        fprintf(f, "<th%s>%s</th>", state->global->stand_warn_number_attr,
                 _("Warnings"));
       }
       for (j = 0; j < p_tot; j++) {
-        fprintf(f, "<th%s>", serve_state.global->stand_prob_attr);
-        if (serve_state.global->prob_info_url[0]) {
-          sformat_message(dur_str, sizeof(dur_str), serve_state.global->prob_info_url,
-                          NULL, serve_state.probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
+        fprintf(f, "<th%s>", state->global->stand_prob_attr);
+        if (state->global->prob_info_url[0]) {
+          sformat_message(dur_str, sizeof(dur_str), state->global->prob_info_url,
+                          NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        fprintf(f, "%s", serve_state.probs[p_ind[j]]->short_name);
-        if (serve_state.global->prob_info_url[0]) {
+        fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
+        if (state->global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
         fprintf(f, "</th>");
       }
       fprintf(f, "<th%s>%s</th><th%s>%s</th></tr>\n",
-              serve_state.global->stand_solved_attr, _("Solved<br>problems"),
-              serve_state.global->stand_score_attr, _("Score"));
+              state->global->stand_solved_attr, _("Solved<br>problems"),
+              state->global->stand_score_attr, _("Score"));
     }
 
     /* print page contents */
     t = t_sort[i];
 
-    if (serve_state.global->team_info_url[0] || serve_state.global->stand_extra_format[0]) {
-      teamdb_export_team(serve_state.teamdb_state, t_ind[t], &u_info);
+    if (state->global->team_info_url[0] || state->global->stand_extra_format[0]) {
+      teamdb_export_team(state->teamdb_state, t_ind[t], &u_info);
     } else {
       memset(&u_info, 0, sizeof(u_info));
     }
-    if (serve_state.global->stand_show_contestant_status
-        || serve_state.global->stand_show_warn_number
-        || serve_state.global->contestant_status_row_attr) {
-      t_extra = team_extra_get_entry(serve_state.team_extra_state, t_ind[t]);
+    if (state->global->stand_show_contestant_status
+        || state->global->stand_show_warn_number
+        || state->global->contestant_status_row_attr) {
+      t_extra = team_extra_get_entry(state->team_extra_state, t_ind[t]);
     } else {
       t_extra = 0;
     }
@@ -2141,95 +2150,95 @@ do_write_kirov_standings(FILE *f,
       row_ind ^= 1;
     }
     row_attr = r_attrs[group_ind][row_ind];
-    if (serve_state.global->contestant_status_row_attr
+    if (state->global->contestant_status_row_attr
         && t_extra && t_extra->status >= 0
-        && t_extra->status < serve_state.global->contestant_status_num) {
-      row_attr = serve_state.global->contestant_status_row_attr[t_extra->status];
+        && t_extra->status < state->global->contestant_status_num) {
+      row_attr = state->global->contestant_status_row_attr[t_extra->status];
     }
-    fprintf(f, "<tr%s><td%s>", row_attr, serve_state.global->stand_place_attr);
+    fprintf(f, "<tr%s><td%s>", row_attr, state->global->stand_place_attr);
     if (t_n1[i] == t_n2[i]) fprintf(f, "%d", t_n1[i] + 1);
     else fprintf(f, "%d-%d", t_n1[i] + 1, t_n2[i] + 1);
     fputs("</td>", f);
-    fprintf(f, "<td%s>", serve_state.global->stand_team_attr);
-    if (serve_state.global->team_info_url[0]) {
-      sformat_message(dur_str, sizeof(dur_str), serve_state.global->team_info_url,
+    fprintf(f, "<td%s>", state->global->stand_team_attr);
+    if (state->global->team_info_url[0]) {
+      sformat_message(dur_str, sizeof(dur_str), state->global->team_info_url,
                       NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
       fprintf(f, "<a href=\"%s\">", dur_str);
     }
-    fprintf(f, "%s", teamdb_get_name(serve_state.teamdb_state, t_ind[t]));
-    if (serve_state.global->team_info_url[0]) {
+    fprintf(f, "%s", teamdb_get_name(state->teamdb_state, t_ind[t]));
+    if (state->global->team_info_url[0]) {
       fprintf(f, "</a>");
     }
     fprintf(f, "</td>");
-    if (serve_state.global->stand_extra_format[0]) {
-      sformat_message(dur_str, sizeof(dur_str), serve_state.global->stand_extra_format,
+    if (state->global->stand_extra_format[0]) {
+      sformat_message(dur_str, sizeof(dur_str), state->global->stand_extra_format,
                       NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
-      fprintf(f, "<td%s>%s</td>", serve_state.global->stand_extra_attr, dur_str);
+      fprintf(f, "<td%s>%s</td>", state->global->stand_extra_attr, dur_str);
     }
-    if (serve_state.global->stand_show_contestant_status
-        && serve_state.global->contestant_status_num > 0) {
+    if (state->global->stand_show_contestant_status
+        && state->global->contestant_status_num > 0) {
       if (t_extra && t_extra->status >= 0
-          && t_extra->status < serve_state.global->contestant_status_num) {
-        fprintf(f, "<td%s>%s</td>", serve_state.global->stand_contestant_status_attr,
-                serve_state.global->contestant_status_legend[t_extra->status]);
+          && t_extra->status < state->global->contestant_status_num) {
+        fprintf(f, "<td%s>%s</td>", state->global->stand_contestant_status_attr,
+                state->global->contestant_status_legend[t_extra->status]);
       } else {
-        fprintf(f, "<td%s>?</td>", serve_state.global->stand_contestant_status_attr);
+        fprintf(f, "<td%s>?</td>", state->global->stand_contestant_status_attr);
       }
     }
-    if (serve_state.global->stand_show_warn_number) {
+    if (state->global->stand_show_warn_number) {
       if (t_extra && t_extra->warn_u > 0) {
-        fprintf(f, "<td%s>%d</td>", serve_state.global->stand_warn_number_attr,
+        fprintf(f, "<td%s>%d</td>", state->global->stand_warn_number_attr,
                 t_extra->warn_u);
       } else {
-        fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_warn_number_attr);
+        fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_warn_number_attr);
       }
     }
     for (j = 0; j < p_tot; j++) {
       up_ind = (t << row_sh) + j;
-      row_attr = serve_state.global->stand_prob_attr;
-      if (trans_num[up_ind] && serve_state.global->stand_trans_attr[0])
-        row_attr = serve_state.global->stand_trans_attr;
+      row_attr = state->global->stand_prob_attr;
+      if (trans_num[up_ind] && state->global->stand_trans_attr[0])
+        row_attr = state->global->stand_trans_attr;
       if (!att_num[up_ind]) {
         fprintf(f, "<td%s>&nbsp;</td>", row_attr);
       } else if (full_sol[up_ind]) {
         att_buf[0] = 0;
-        if (serve_state.global->stand_show_att_num) {
+        if (state->global->stand_show_att_num) {
           snprintf(att_buf, sizeof(att_buf), " (%d)", sol_att[up_ind]);
         }
-        if (serve_state.global->stand_show_ok_time && sol_time[up_ind] > 0) {
-          duration_str(serve_state.global->show_astr_time, sol_time[up_ind], start_time,
+        if (state->global->stand_show_ok_time && sol_time[up_ind] > 0) {
+          duration_str(state->global->show_astr_time, sol_time[up_ind], start_time,
                        dur_str, 0);
           fprintf(f, "<td%s><b>%d</b>%s<div%s>%s</div></td>",
                   row_attr, prob_score[up_ind], att_buf,
-                  serve_state.global->stand_time_attr, dur_str);
+                  state->global->stand_time_attr, dur_str);
         } else {
           fprintf(f, "<td%s><b>%d</b>%s</td>", row_attr, 
                   prob_score[up_ind], att_buf);
         }
       } else {
         att_buf[0] = 0;
-        if (serve_state.global->stand_show_att_num) {
+        if (state->global->stand_show_att_num) {
           snprintf(att_buf, sizeof(att_buf), " (%d)", sol_att[up_ind]);
         }
-        if (serve_state.global->stand_show_ok_time && sol_time[up_ind] > 0) {
-          duration_str(serve_state.global->show_astr_time, sol_time[up_ind],
+        if (state->global->stand_show_ok_time && sol_time[up_ind] > 0) {
+          duration_str(state->global->show_astr_time, sol_time[up_ind],
                        start_time, dur_str, 0);
           fprintf(f, "<td%s>%d%s<div%s>%s</div></td>",
                   row_attr, prob_score[up_ind], att_buf,
-                  serve_state.global->stand_time_attr, dur_str);
+                  state->global->stand_time_attr, dur_str);
         } else {
           fprintf(f, "<td%s>%d%s</td>", row_attr, prob_score[up_ind], att_buf);
         }
       }
     }
     fprintf(f, "<td%s>%d</td><td%s>%d</td></tr>\n",
-            serve_state.global->stand_solved_attr, tot_full[t],
-            serve_state.global->stand_score_attr, tot_score[t]);
+            state->global->stand_solved_attr, tot_full[t],
+            state->global->stand_score_attr, tot_score[t]);
 
     if (user_on_page == users_per_page - 1 && current_page != total_pages) {
       fputs("</table>\n", f);
 
-      write_kirov_page_table(f, total_pages, current_page, pgrefs,
+      write_kirov_page_table(state, f, total_pages, current_page, pgrefs,
                              t_sort, tot_full, tot_score, pg_n1, pg_n2,
                              pr_attrs, pc_attrs);
 
@@ -2250,77 +2259,77 @@ do_write_kirov_standings(FILE *f,
 
   // print row of total
   fprintf(f, "<tr%s>", rT_attr);
-  fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_place_attr);
-  fprintf(f, "<td%s>%s:</td>", serve_state.global->stand_team_attr, _("Total"));
-  if (serve_state.global->stand_extra_format[0]) {
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_extra_attr);
+  fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_place_attr);
+  fprintf(f, "<td%s>%s:</td>", state->global->stand_team_attr, _("Total"));
+  if (state->global->stand_extra_format[0]) {
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_extra_attr);
   }
-  if (serve_state.global->stand_show_contestant_status
-      && serve_state.global->contestant_status_num > 0) {
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_contestant_status_attr);
+  if (state->global->stand_show_contestant_status
+      && state->global->contestant_status_num > 0) {
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_contestant_status_attr);
   }
-  if (serve_state.global->stand_show_warn_number) {
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_warn_number_attr);
+  if (state->global->stand_show_warn_number) {
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_warn_number_attr);
   }
   for (j = 0, ttot_att = 0; j < p_tot; j++) {
-    fprintf(f, "<td%s>%d</td>", serve_state.global->stand_prob_attr, tot_att[j]);
+    fprintf(f, "<td%s>%d</td>", state->global->stand_prob_attr, tot_att[j]);
     ttot_att += tot_att[j];
   }
   fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>\n",
-          serve_state.global->stand_solved_attr, ttot_att, serve_state.global->stand_penalty_attr);
+          state->global->stand_solved_attr, ttot_att, state->global->stand_penalty_attr);
   // print row of success
   fprintf(f, "<tr%s>", rT_attr);
-  fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_place_attr);
-  fprintf(f, "<td%s>%s:</td>", serve_state.global->stand_team_attr, _("Success"));
-  if (serve_state.global->stand_extra_format[0]) {
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_extra_attr);
+  fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_place_attr);
+  fprintf(f, "<td%s>%s:</td>", state->global->stand_team_attr, _("Success"));
+  if (state->global->stand_extra_format[0]) {
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_extra_attr);
   }
-  if (serve_state.global->stand_show_contestant_status
-      && serve_state.global->contestant_status_num > 0) {
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_contestant_status_attr);
+  if (state->global->stand_show_contestant_status
+      && state->global->contestant_status_num > 0) {
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_contestant_status_attr);
   }
-  if (serve_state.global->stand_show_warn_number) {
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_warn_number_attr);
+  if (state->global->stand_show_warn_number) {
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_warn_number_attr);
   }
   for (j = 0, ttot_succ = 0; j < p_tot; j++) {
-    fprintf(f, "<td%s>%d</td>", serve_state.global->stand_prob_attr, succ_att[j]);
+    fprintf(f, "<td%s>%d</td>", state->global->stand_prob_attr, succ_att[j]);
     ttot_succ += succ_att[j];
   }
   fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>\n",
-          serve_state.global->stand_solved_attr, ttot_succ, serve_state.global->stand_penalty_attr);
+          state->global->stand_solved_attr, ttot_succ, state->global->stand_penalty_attr);
   // print row of percentage
   fprintf(f, "<tr%s>", rT_attr);
-  fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_place_attr);
-  fprintf(f, "<td%s>%%:</td>", serve_state.global->stand_team_attr);
-  if (serve_state.global->stand_extra_format[0]) {
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_extra_attr);
+  fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_place_attr);
+  fprintf(f, "<td%s>%%:</td>", state->global->stand_team_attr);
+  if (state->global->stand_extra_format[0]) {
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_extra_attr);
   }
-  if (serve_state.global->stand_show_contestant_status
-      && serve_state.global->contestant_status_num > 0) {
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_contestant_status_attr);
+  if (state->global->stand_show_contestant_status
+      && state->global->contestant_status_num > 0) {
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_contestant_status_attr);
   }
-  if (serve_state.global->stand_show_warn_number) {
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_warn_number_attr);
+  if (state->global->stand_show_warn_number) {
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_warn_number_attr);
   }
   for (j = 0; j < p_tot; j++) {
     perc = 0;
     if (tot_att[j] > 0) {
       perc = (int) ((double) succ_att[j] / tot_att[j] * 100.0 + 0.5);
     }
-    fprintf(f, "<td%s>%d%%</td>", serve_state.global->stand_prob_attr, perc);
+    fprintf(f, "<td%s>%d%%</td>", state->global->stand_prob_attr, perc);
   }
   perc = 0;
   if (ttot_att > 0) {
     perc = (int) ((double) ttot_succ / ttot_att * 100.0 + 0.5);
   }
   fprintf(f, "<td%s>%d%%</td><td%s>&nbsp;</td></tr>\n",
-          serve_state.global->stand_solved_attr, perc, serve_state.global->stand_penalty_attr);
+          state->global->stand_solved_attr, perc, state->global->stand_penalty_attr);
 
   fputs("</table>\n", f);
 
   if (!client_flag) {
     if (total_pages > 1)
-      write_kirov_page_table(f, total_pages, current_page, pgrefs,
+      write_kirov_page_table(state, f, total_pages, current_page, pgrefs,
                              t_sort, tot_full, tot_score, pg_n1, pg_n2,
                              pr_attrs, pc_attrs);
 
@@ -2346,9 +2355,9 @@ do_write_kirov_standings(FILE *f,
 }
 
 static int
-sec_to_min(int secs)
+sec_to_min(const serve_state_t state, int secs)
 {
-  switch (serve_state.global->rounding_mode_val) {
+  switch (state->global->rounding_mode_val) {
   case SEC_CEIL:
     return (secs + 59) / 60;
   case SEC_FLOOR:
@@ -2360,7 +2369,8 @@ sec_to_min(int secs)
 }
 
 static void
-write_moscow_page_table(FILE *f, int total_pages, int current_page,
+write_moscow_page_table(const serve_state_t state, 
+                        FILE *f, int total_pages, int current_page,
                         unsigned char **pgrefs,
                         int *pg_n1, int *pg_n2,
                         int *pg_sc1, int *pg_sc2,
@@ -2370,7 +2380,7 @@ write_moscow_page_table(FILE *f, int total_pages, int current_page,
   int j;
 
   fprintf(f, "<table%s>\n<tr%s><td%s>%s</td>",
-          serve_state.global->stand_page_table_attr, pr_attrs[0], pc_attrs[0], _("Page"));
+          state->global->stand_page_table_attr, pr_attrs[0], pc_attrs[0], _("Page"));
   for (j = 1; j <= total_pages; j++)
     if (current_page != j)
       fprintf(f, "<td%s><b><a href=\"%s\">%d</a></b></td>",
@@ -2409,7 +2419,7 @@ write_moscow_page_table(FILE *f, int total_pages, int current_page,
 }
 
 void
-do_write_moscow_standings(FILE *f,
+do_write_moscow_standings(const serve_state_t state, FILE *f,
                           const unsigned char *stand_dir,
                           int client_flag,
                           int user_id,
@@ -2500,44 +2510,44 @@ do_write_moscow_standings(FILE *f,
   unsigned char *up_trans = 0;  /* whether there exist transient runs */
   unsigned char *up_cf = 0;     /* whether there exist "Check failed" messages */
   
-  if (client_flag) head_style = serve_state.cur_contest->team_head_style;
+  if (client_flag) head_style = state->cur_contest->team_head_style;
   else head_style = "h2";
 
-  if (!serve_state.global->stand_table_attr[0] && !serve_state.global->stand_row_attr) {
+  if (!state->global->stand_table_attr[0] && !state->global->stand_row_attr) {
     table_attr = " border=\"1\"";
   } else {
-    table_attr = serve_state.global->stand_table_attr;
+    table_attr = state->global->stand_table_attr;
   }
 
-  attr_num = sarray_len(serve_state.global->stand_row_attr);
+  attr_num = sarray_len(state->global->stand_row_attr);
   i = 0;
   if (attr_num >= 5) {
-    r0_attr = serve_state.global->stand_row_attr[i++];
-    r_attrs[0][0] = serve_state.global->stand_row_attr[i++];
-    r_attrs[0][1] = serve_state.global->stand_row_attr[i++];
-    r_attrs[1][0] = serve_state.global->stand_row_attr[i++];
-    r_attrs[1][1] = serve_state.global->stand_row_attr[i++];
+    r0_attr = state->global->stand_row_attr[i++];
+    r_attrs[0][0] = state->global->stand_row_attr[i++];
+    r_attrs[0][1] = state->global->stand_row_attr[i++];
+    r_attrs[1][0] = state->global->stand_row_attr[i++];
+    r_attrs[1][1] = state->global->stand_row_attr[i++];
     attr_num -= 5;
   }
   if (attr_num >= 1) {
-    rT_attr = serve_state.global->stand_row_attr[i++];
+    rT_attr = state->global->stand_row_attr[i++];
     attr_num -= 1;
   }
 
-  attr_num = sarray_len(serve_state.global->stand_page_row_attr);
+  attr_num = sarray_len(state->global->stand_page_row_attr);
   for (i = 0; i < 4 && i < attr_num; i++)
-    pr_attrs[i] = serve_state.global->stand_page_row_attr[i];
-  attr_num = sarray_len(serve_state.global->stand_page_col_attr);
+    pr_attrs[i] = state->global->stand_page_row_attr[i];
+  attr_num = sarray_len(state->global->stand_page_col_attr);
   for (i = 0; i < 2 && i < attr_num; i++)
-    pc_attrs[i] = serve_state.global->stand_page_col_attr[i];
+    pc_attrs[i] = state->global->stand_page_col_attr[i];
 
   cur_time = time(0);
-  last_submit_start = last_success_start = start_time = run_get_start_time(serve_state.runlog_state);
-  stop_time = run_get_stop_time(serve_state.runlog_state);
-  contest_dur = run_get_duration(serve_state.runlog_state);
-  if (start_time && serve_state.global->virtual && user_id > 0) {
-    start_time = run_get_virtual_start_time(serve_state.runlog_state, user_id);
-    stop_time = run_get_virtual_stop_time(serve_state.runlog_state, user_id, 0);
+  last_submit_start = last_success_start = start_time = run_get_start_time(state->runlog_state);
+  stop_time = run_get_stop_time(state->runlog_state);
+  contest_dur = run_get_duration(state->runlog_state);
+  if (start_time && state->global->virtual && user_id > 0) {
+    start_time = run_get_virtual_start_time(state->runlog_state, user_id);
+    stop_time = run_get_virtual_stop_time(state->runlog_state, user_id, 0);
   }
   if (start_time && !stop_time && cur_time >= start_time + contest_dur) {
     stop_time = start_time + contest_dur;
@@ -2551,7 +2561,8 @@ do_write_moscow_standings(FILE *f,
   current_dur = cur_time - start_time;
   if (!start_time) {
     if (raw_flag) return;
-    write_standings_header(f, client_flag, user_id, header_str, user_name);
+    write_standings_header(state, f, client_flag, user_id, header_str,
+                           user_name);
     fprintf(f, "<%s>%s</%s>", head_style, _("The contest is not started"),
             head_style);
     if (!client_flag) {
@@ -2564,12 +2575,12 @@ do_write_moscow_standings(FILE *f,
     return;
   }
 
-  r_tot = run_get_total(serve_state.runlog_state);
-  runs = run_get_entries_ptr(serve_state.runlog_state);
+  r_tot = run_get_total(state->runlog_state);
+  runs = run_get_entries_ptr(state->runlog_state);
 
-  u_max = teamdb_get_max_team_id(serve_state.teamdb_state) + 1;
+  u_max = teamdb_get_max_team_id(state->teamdb_state) + 1;
   u_runs = (unsigned char*) alloca(u_max);
-  if (serve_state.global->prune_empty_users) {
+  if (state->global->prune_empty_users) {
     memset(u_runs, 0, u_max);
     for (i = 0; i < r_tot; i++)
       if (runs[i].status != RUN_EMPTY
@@ -2585,8 +2596,8 @@ do_write_moscow_standings(FILE *f,
   XALLOCA(u_rev, u_max);
   memset(u_rev, -1, u_max * sizeof(u_rev[0]));
   for (i = 1, u_tot = 0; i < u_max; i++)
-    if (teamdb_lookup(serve_state.teamdb_state, i) > 0
-        && !(teamdb_get_flags(serve_state.teamdb_state,
+    if (teamdb_lookup(state->teamdb_state, i) > 0
+        && !(teamdb_get_flags(state->teamdb_state,
                               i) & (TEAM_INVISIBLE | TEAM_BANNED))
         && u_runs[i]) {
       u_rev[i] = u_tot;
@@ -2600,12 +2611,12 @@ do_write_moscow_standings(FILE *f,
     u_sort[i] = i;
 
   /* make problems index */
-  p_max = serve_state.max_prob + 1;
+  p_max = state->max_prob + 1;
   XALLOCA(p_ind, p_max);
   XALLOCA(p_rev, p_max);
   memset(p_rev, -1, p_max * sizeof(p_rev[0]));
   for (i = 1, p_tot = 0; i < p_max; i++)
-    if (serve_state.probs[i] && !serve_state.probs[i]->hidden) {
+    if (state->probs[i] && !state->probs[i]->hidden) {
       p_rev[i] = p_tot;
       p_ind[p_tot] = i;
       p_tot++;
@@ -2653,9 +2664,9 @@ do_write_moscow_standings(FILE *f,
     if (pe->status > RUN_MAX_STATUS && pe->status < RUN_TRANSIENT_FIRST) continue;
     if (pe->status > RUN_TRANSIENT_LAST) continue;
     if (pe->team <= 0 || pe->team >= u_max || (u = u_rev[pe->team]) < 0) continue;
-    if (pe->problem <= 0 || pe->problem > serve_state.max_prob) continue;
+    if (pe->problem <= 0 || pe->problem > state->max_prob) continue;
     if ((p = p_rev[pe->problem]) < 0) continue;
-    prob = serve_state.probs[pe->problem];
+    prob = state->probs[pe->problem];
     up_ind = (u << row_sh) + p;
 
     if (up_solved[up_ind]) continue;
@@ -2668,9 +2679,9 @@ do_write_moscow_standings(FILE *f,
       continue;
     }
     ustart = start_time;
-    if (serve_state.global->virtual) {
+    if (state->global->virtual) {
       // filter "future" virtual runs
-      ustart = run_get_virtual_start_time(serve_state.runlog_state, pe->team);
+      ustart = run_get_virtual_start_time(state->runlog_state, pe->team);
       if (run_time < ustart) run_time = ustart;
       udur = run_time - ustart;
       if (udur > contest_dur) udur = contest_dur;
@@ -2680,8 +2691,8 @@ do_write_moscow_standings(FILE *f,
       if (run_time < start_time) run_time = start_time;
       udur = run_time - start_time;
       if (current_dur > 0 && udur > current_dur) continue;
-      if (serve_state.global->stand_ignore_after_d > 0
-          && pe->timestamp >= serve_state.global->stand_ignore_after_d)
+      if (state->global->stand_ignore_after_d > 0
+          && pe->timestamp >= state->global->stand_ignore_after_d)
         continue;
     } else {
       if (run_time < start_time) run_time = start_time;
@@ -2691,14 +2702,14 @@ do_write_moscow_standings(FILE *f,
     if (pe->status == RUN_OK) {
       up_solved[up_ind] = 1;
       up_att[up_ind] = up_totatt[up_ind];
-      up_pen[up_ind] = sec_to_min(udur);
+      up_pen[up_ind] = sec_to_min(state, udur);
       up_time[up_ind] = run_time;
       up_totatt[up_ind]++;
       up_score[up_ind] = prob->full_score;
       if (prob->variable_full_score) up_score[up_ind] = pe->score;
       p_att[p]++;
       p_succ[p]++;
-      if (!serve_state.global->virtual) {
+      if (!state->global->virtual) {
         last_success_run = i;
         last_success_time = pe->timestamp;
         last_success_start = ustart;
@@ -2711,22 +2722,22 @@ do_write_moscow_standings(FILE *f,
     } else if (run_is_failed_attempt(pe->status)) {
       if (pe->score > up_score[up_ind]) {
         up_att[up_ind] = up_totatt[up_ind];
-        up_pen[up_ind] = sec_to_min(udur);
+        up_pen[up_ind] = sec_to_min(state, udur);
         up_time[up_ind] = run_time;
         up_score[up_ind] = pe->score;
       }
       up_totatt[up_ind]++;
       p_att[p]++;
-      if (!serve_state.global->virtual) {
+      if (!state->global->virtual) {
         last_submit_run = i;
         last_submit_time = pe->timestamp;
         last_submit_start = ustart;
         last_submit_dur = udur;
       }
-    } else if (pe->status == RUN_COMPILE_ERR && !serve_state.global->ignore_compile_errors) {
+    } else if (pe->status == RUN_COMPILE_ERR && !state->global->ignore_compile_errors) {
       up_totatt[up_ind]++;
       p_att[p]++;
-      if (!serve_state.global->virtual) {
+      if (!state->global->virtual) {
         last_submit_run = i;
         last_submit_time = pe->timestamp;
         last_submit_start = ustart;
@@ -2745,9 +2756,9 @@ do_write_moscow_standings(FILE *f,
   /* calculate the total penalty and the total score */
   for (u = 0; u < u_tot; u++)
     for (p = 0; p < p_tot; p++) {
-      const struct section_problem_data *prob = serve_state.probs[p_ind[p]];
+      const struct section_problem_data *prob = state->probs[p_ind[p]];
       u_score[u] += up_score[(u << row_sh) + p];
-      if (!serve_state.global->ignore_success_time) u_pen[u] += up_pen[(u << row_sh) + p];
+      if (!state->global->ignore_success_time) u_pen[u] += up_pen[(u << row_sh) + p];
       u_pen[u] += prob->acm_run_penalty * up_att[(u << row_sh) + p];
     }
 
@@ -2819,8 +2830,8 @@ do_write_moscow_standings(FILE *f,
   total_pages = 1;
   current_page = 0;
   user_on_page = 0;
-  if (!client_flag && !user_id && serve_state.global->users_on_page > 0) {
-    users_per_page = serve_state.global->users_on_page;
+  if (!client_flag && !user_id && state->global->users_on_page > 0) {
+    users_per_page = state->global->users_on_page;
     total_pages = (u_tot + users_per_page - 1) / users_per_page;
     XALLOCA(pgrefs, total_pages);
     XALLOCA(pg_n1, total_pages);
@@ -2830,11 +2841,11 @@ do_write_moscow_standings(FILE *f,
     XALLOCA(pg_pen1, total_pages);
     XALLOCA(pg_pen2, total_pages);
 
-    strbuflen = snprintf(strbuf, sizeof(strbuf), serve_state.global->standings_file_name, 1);
+    strbuflen = snprintf(strbuf, sizeof(strbuf), state->global->standings_file_name, 1);
     pgrefs[0] = (unsigned char*) alloca(strbuflen + 1);
     strcpy(pgrefs[0], strbuf);
     for (j = 1; j < total_pages; j++) {
-      strbuflen = snprintf(strbuf, sizeof(strbuf), serve_state.global->stand_file_name_2, j + 1);
+      strbuflen = snprintf(strbuf, sizeof(strbuf), state->global->stand_file_name_2, j + 1);
       pgrefs[j] = (unsigned char*) alloca(strbuflen + 1);
       strcpy(pgrefs[j], strbuf);
     }
@@ -2853,41 +2864,42 @@ do_write_moscow_standings(FILE *f,
   }
 
   if (!u_tot) {
-    write_standings_header(f, client_flag, user_id, header_str, user_name);
+    write_standings_header(state, f, client_flag, user_id, header_str,
+                           user_name);
     /* print the table header */
     fprintf(f, "<table%s><tr%s><th%s>%s</th><th%s>%s</th>",
             table_attr, r0_attr,
-            serve_state.global->stand_place_attr, _("Place"),
-            serve_state.global->stand_team_attr, _("Participant"));
-    if (serve_state.global->stand_extra_format[0]) {
-      if (serve_state.global->stand_extra_legend[0])
-        fprintf(f, "<th%s>%s</th>", serve_state.global->stand_extra_attr,
-                serve_state.global->stand_extra_legend);
+            state->global->stand_place_attr, _("Place"),
+            state->global->stand_team_attr, _("Participant"));
+    if (state->global->stand_extra_format[0]) {
+      if (state->global->stand_extra_legend[0])
+        fprintf(f, "<th%s>%s</th>", state->global->stand_extra_attr,
+                state->global->stand_extra_legend);
       else
-        fprintf(f, "<th%s>%s</th>", serve_state.global->stand_extra_attr,
+        fprintf(f, "<th%s>%s</th>", state->global->stand_extra_attr,
                 _("Extra info"));
     }
-    if (serve_state.global->stand_show_contestant_status && serve_state.global->contestant_status_num > 0)
-      fprintf(f, "<th%s>%s</th>", serve_state.global->stand_contestant_status_attr,
+    if (state->global->stand_show_contestant_status && state->global->contestant_status_num > 0)
+      fprintf(f, "<th%s>%s</th>", state->global->stand_contestant_status_attr,
               _("Status"));
-    if (serve_state.global->stand_show_warn_number)
-      fprintf(f, "<th%s>%s</th>", serve_state.global->stand_warn_number_attr,
+    if (state->global->stand_show_warn_number)
+      fprintf(f, "<th%s>%s</th>", state->global->stand_warn_number_attr,
               _("Warnings"));
     for (j = 0; j < p_tot; j++) {
-      fprintf(f, "<th%s>", serve_state.global->stand_prob_attr);
-      if (serve_state.global->prob_info_url[0]) {
-        sformat_message(strbuf, sizeof(strbuf), serve_state.global->prob_info_url,
-                        NULL, serve_state.probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
+      fprintf(f, "<th%s>", state->global->stand_prob_attr);
+      if (state->global->prob_info_url[0]) {
+        sformat_message(strbuf, sizeof(strbuf), state->global->prob_info_url,
+                        NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", strbuf);
       }
-      fprintf(f, "%s", serve_state.probs[p_ind[j]]->short_name);
-      if (serve_state.global->prob_info_url[0])
+      fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
+      if (state->global->prob_info_url[0])
         fprintf(f, "</a>");
       fprintf(f, "</th>");
     }
     fprintf(f, "<th%s>%s</th><th%s>%s</th></tr>\n",
-            serve_state.global->stand_score_attr, _("Score"),
-            serve_state.global->stand_penalty_attr, _("Penalty"));
+            state->global->stand_score_attr, _("Score"),
+            state->global->stand_penalty_attr, _("Penalty"));
   }
 
   for (i = 0; i < u_tot; i++, user_on_page = (user_on_page + 1) % users_per_page) {
@@ -2901,76 +2913,77 @@ do_write_moscow_standings(FILE *f,
         if (!(f = sf_fopen(stand_tmp, "w"))) return;
       }
       if (!client_flag)
-        write_standings_header(f, client_flag, user_id, header_str, user_name);
+        write_standings_header(state, f, client_flag, user_id, header_str,
+                               user_name);
       /* print "Last success" information */
       if (last_success_run >= 0) {
-        if (serve_state.global->virtual && !user_id) {
+        if (state->global->virtual && !user_id) {
           duration_str(1, last_success_time, last_success_start,
                        strbuf, sizeof(strbuf));
         } else {
-          duration_str(serve_state.global->show_astr_time, last_success_time, last_success_start,
+          duration_str(state->global->show_astr_time, last_success_time, last_success_start,
                        strbuf, sizeof(strbuf));
         }
         fprintf(f, "<p%s>%s: %s, ",
-                serve_state.global->stand_success_attr, _("Last success"), strbuf);
-        if (serve_state.global->team_info_url[0]) {
-          teamdb_export_team(serve_state.teamdb_state, runs[last_success_run].team,
+                state->global->stand_success_attr, _("Last success"), strbuf);
+        if (state->global->team_info_url[0]) {
+          teamdb_export_team(state->teamdb_state, runs[last_success_run].team,
                              &u_info);
-          sformat_message(strbuf, sizeof(strbuf), serve_state.global->team_info_url,
+          sformat_message(strbuf, sizeof(strbuf), state->global->team_info_url,
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        fprintf(f, "%s", teamdb_get_name(serve_state.teamdb_state,
+        fprintf(f, "%s", teamdb_get_name(state->teamdb_state,
                                          runs[last_success_run].team));
-        if (serve_state.global->team_info_url[0]) {
+        if (state->global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
         fprintf(f, ", ");
 
-        if (serve_state.global->prob_info_url[0]) {
-          sformat_message(strbuf, sizeof(strbuf), serve_state.global->prob_info_url,
-                          NULL, serve_state.probs[runs[last_success_run].problem],
+        if (state->global->prob_info_url[0]) {
+          sformat_message(strbuf, sizeof(strbuf), state->global->prob_info_url,
+                          NULL, state->probs[runs[last_success_run].problem],
                           NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        fprintf(f, "%s", serve_state.probs[runs[last_success_run].problem]->short_name);
-        if (serve_state.global->prob_info_url[0]) {
+        fprintf(f, "%s", state->probs[runs[last_success_run].problem]->short_name);
+        if (state->global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
         fprintf(f, ".</p>\n");
       }
       /* print "Last submit" information */
       if (last_submit_run >= 0) {
-        if (serve_state.global->virtual && !user_id) {
+        if (state->global->virtual && !user_id) {
           duration_str(1, last_submit_time, last_submit_start,
                        strbuf, sizeof(strbuf));
         } else {
-          duration_str(serve_state.global->show_astr_time, last_submit_time, last_submit_start,
+          duration_str(state->global->show_astr_time, last_submit_time, last_submit_start,
                        strbuf, sizeof(strbuf));
         }
         fprintf(f, "<p%s>%s: %s, ",
-                serve_state.global->stand_success_attr, _("Last submit"), strbuf);
-        if (serve_state.global->team_info_url[0]) {
-          teamdb_export_team(serve_state.teamdb_state, runs[last_submit_run].team, &u_info);
-          sformat_message(strbuf, sizeof(strbuf), serve_state.global->team_info_url,
+                state->global->stand_success_attr, _("Last submit"), strbuf);
+        if (state->global->team_info_url[0]) {
+          teamdb_export_team(state->teamdb_state, runs[last_submit_run].team, &u_info);
+          sformat_message(strbuf, sizeof(strbuf), state->global->team_info_url,
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        fprintf(f, "%s", teamdb_get_name(serve_state.teamdb_state,
+        fprintf(f, "%s", teamdb_get_name(state->teamdb_state,
                                          runs[last_submit_run].team));
-        if (serve_state.global->team_info_url[0]) {
+        if (state->global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
         fprintf(f, ", ");
 
-        if (serve_state.global->prob_info_url[0]) {
-          sformat_message(strbuf, sizeof(strbuf), serve_state.global->prob_info_url,
-                          NULL, serve_state.probs[runs[last_submit_run].problem],
+        if (state->global->prob_info_url[0]) {
+          sformat_message(strbuf, sizeof(strbuf), state->global->prob_info_url,
+                          NULL, state->probs[runs[last_submit_run].problem],
                           NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        fprintf(f, "%s", serve_state.probs[runs[last_submit_run].problem]->short_name);
-        if (serve_state.global->prob_info_url[0]) {
+        fprintf(f, "%s", state->probs[runs[last_submit_run].problem]->short_name);
+        if (state->global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
         fprintf(f, ".</p>\n");
@@ -2978,9 +2991,9 @@ do_write_moscow_standings(FILE *f,
       /* print page number information and references */
       if (total_pages > 1) {
         fprintf(f, _("<p%s>Page %d of %d.</p>\n"),
-                serve_state.global->stand_page_cur_attr, current_page, total_pages);
+                state->global->stand_page_cur_attr, current_page, total_pages);
 
-        write_moscow_page_table(f, total_pages, current_page,
+        write_moscow_page_table(state, f, total_pages, current_page,
                                 pgrefs, pg_n1, pg_n2, pg_sc1, pg_sc2,
                                 pg_pen1, pg_pen2, pr_attrs, pc_attrs);
       }
@@ -2988,52 +3001,52 @@ do_write_moscow_standings(FILE *f,
       /* print the table header */
       fprintf(f, "<table%s><tr%s><th%s>%s</th><th%s>%s</th>",
               table_attr, r0_attr,
-              serve_state.global->stand_place_attr, _("Place"),
-              serve_state.global->stand_team_attr, _("User "));
-      if (serve_state.global->stand_extra_format[0]) {
-        if (serve_state.global->stand_extra_legend[0])
-          fprintf(f, "<th%s>%s</th>", serve_state.global->stand_extra_attr,
-                  serve_state.global->stand_extra_legend);
+              state->global->stand_place_attr, _("Place"),
+              state->global->stand_team_attr, _("User "));
+      if (state->global->stand_extra_format[0]) {
+        if (state->global->stand_extra_legend[0])
+          fprintf(f, "<th%s>%s</th>", state->global->stand_extra_attr,
+                  state->global->stand_extra_legend);
         else
-          fprintf(f, "<th%s>%s</th>", serve_state.global->stand_extra_attr,
+          fprintf(f, "<th%s>%s</th>", state->global->stand_extra_attr,
                   _("Extra info"));
       }
-      if (serve_state.global->stand_show_contestant_status && serve_state.global->contestant_status_num > 0)
-        fprintf(f, "<th%s>%s</th>", serve_state.global->stand_contestant_status_attr,
+      if (state->global->stand_show_contestant_status && state->global->contestant_status_num > 0)
+        fprintf(f, "<th%s>%s</th>", state->global->stand_contestant_status_attr,
                 _("Status"));
-      if (serve_state.global->stand_show_warn_number)
-        fprintf(f, "<th%s>%s</th>", serve_state.global->stand_warn_number_attr,
+      if (state->global->stand_show_warn_number)
+        fprintf(f, "<th%s>%s</th>", state->global->stand_warn_number_attr,
                 _("Warnings"));
       for (j = 0; j < p_tot; j++) {
-        fprintf(f, "<th%s>", serve_state.global->stand_prob_attr);
-        if (serve_state.global->prob_info_url[0]) {
-          sformat_message(strbuf, sizeof(strbuf), serve_state.global->prob_info_url,
-                          NULL, serve_state.probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
+        fprintf(f, "<th%s>", state->global->stand_prob_attr);
+        if (state->global->prob_info_url[0]) {
+          sformat_message(strbuf, sizeof(strbuf), state->global->prob_info_url,
+                          NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        fprintf(f, "%s", serve_state.probs[p_ind[j]]->short_name);
-        if (serve_state.global->prob_info_url[0])
+        fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
+        if (state->global->prob_info_url[0])
           fprintf(f, "</a>");
         fprintf(f, "</th>");
       }
       fprintf(f, "<th%s>%s</th><th%s>%s</th></tr>\n",
-              serve_state.global->stand_score_attr, _("Score"),
-              serve_state.global->stand_penalty_attr, _("Penalty"));
+              state->global->stand_score_attr, _("Score"),
+              state->global->stand_penalty_attr, _("Penalty"));
     }
 
     // print the standings row
     u = u_sort[i];
 
-    if (serve_state.global->team_info_url[0] || serve_state.global->stand_extra_format[0]) {
-      teamdb_export_team(serve_state.teamdb_state, u_ind[u], &u_info);
+    if (state->global->team_info_url[0] || state->global->stand_extra_format[0]) {
+      teamdb_export_team(state->teamdb_state, u_ind[u], &u_info);
     } else {
       memset(&u_info, 0, sizeof(u_info));
     }
     u_extra = 0;
-    if (serve_state.global->stand_show_contestant_status
-        || serve_state.global->stand_show_warn_number
-        || serve_state.global->contestant_status_row_attr)
-      u_extra = team_extra_get_entry(serve_state.team_extra_state, u_ind[u]);
+    if (state->global->stand_show_contestant_status
+        || state->global->stand_show_warn_number
+        || state->global->contestant_status_row_attr)
+      u_extra = team_extra_get_entry(state->team_extra_state, u_ind[u]);
     /* FIXME: consider virtual and real users */
     if (prev_prob != u_score[u]) {
       prev_prob = u_score[u];
@@ -3043,88 +3056,88 @@ do_write_moscow_standings(FILE *f,
       row_ind ^= 1;
     }
     row_attr = r_attrs[group_ind][row_ind];
-    if (serve_state.global->contestant_status_row_attr
+    if (state->global->contestant_status_row_attr
         && u_extra && u_extra->status >= 0
-        && u_extra->status < serve_state.global->contestant_status_num)
-      row_attr = serve_state.global->contestant_status_row_attr[u_extra->status];
-    fprintf(f, "<tr%s><td%s>", row_attr, serve_state.global->stand_place_attr);
+        && u_extra->status < state->global->contestant_status_num)
+      row_attr = state->global->contestant_status_row_attr[u_extra->status];
+    fprintf(f, "<tr%s><td%s>", row_attr, state->global->stand_place_attr);
     if (u_n1[i] == u_n2[i]) fprintf(f, "%d", u_n1[i] + 1);
     else fprintf(f, "%d-%d", u_n1[i] + 1, u_n2[i] + 1);
-    fprintf(f, "</td><td%s>", serve_state.global->stand_team_attr);
-    if (serve_state.global->team_info_url[0]) {
-      sformat_message(strbuf, sizeof(strbuf), serve_state.global->team_info_url,
+    fprintf(f, "</td><td%s>", state->global->stand_team_attr);
+    if (state->global->team_info_url[0]) {
+      sformat_message(strbuf, sizeof(strbuf), state->global->team_info_url,
                       NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
       fprintf(f, "<a href=\"%s\">", strbuf);
     }
-    fprintf(f, "%s", teamdb_get_name(serve_state.teamdb_state, u_ind[u]));
-    if (serve_state.global->team_info_url[0]) {
+    fprintf(f, "%s", teamdb_get_name(state->teamdb_state, u_ind[u]));
+    if (state->global->team_info_url[0]) {
       fprintf(f, "</a>");
     }
     fprintf(f, "</td>");
-    if (serve_state.global->stand_extra_format[0]) {
-      sformat_message(strbuf, sizeof(strbuf), serve_state.global->stand_extra_format,
+    if (state->global->stand_extra_format[0]) {
+      sformat_message(strbuf, sizeof(strbuf), state->global->stand_extra_format,
                       NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
-      fprintf(f, "<td%s>%s</td>", serve_state.global->stand_extra_attr, strbuf);
+      fprintf(f, "<td%s>%s</td>", state->global->stand_extra_attr, strbuf);
     }
-    if (serve_state.global->stand_show_contestant_status
-        && serve_state.global->contestant_status_num > 0) {
+    if (state->global->stand_show_contestant_status
+        && state->global->contestant_status_num > 0) {
       if (u_extra && u_extra->status >= 0
-          && u_extra->status < serve_state.global->contestant_status_num) {
-        fprintf(f, "<td%s>%s</td>", serve_state.global->stand_contestant_status_attr,
-                serve_state.global->contestant_status_legend[u_extra->status]);
+          && u_extra->status < state->global->contestant_status_num) {
+        fprintf(f, "<td%s>%s</td>", state->global->stand_contestant_status_attr,
+                state->global->contestant_status_legend[u_extra->status]);
       } else {
-        fprintf(f, "<td%s>?</td>", serve_state.global->stand_contestant_status_attr);
+        fprintf(f, "<td%s>?</td>", state->global->stand_contestant_status_attr);
       }
     }
-    if (serve_state.global->stand_show_warn_number) {
+    if (state->global->stand_show_warn_number) {
       if (u_extra && u_extra->warn_u > 0) {
-        fprintf(f, "<td%s>%d</td>", serve_state.global->stand_warn_number_attr,
+        fprintf(f, "<td%s>%d</td>", state->global->stand_warn_number_attr,
                 u_extra->warn_u);
       } else {
-        fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_warn_number_attr);
+        fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_warn_number_attr);
       }
     }
 
     for (j = 0; j < p_tot; j++) {
       up_ind = (u << row_sh) + j;
 
-      row_attr = serve_state.global->stand_prob_attr;
-      if (up_trans[up_ind] && serve_state.global->stand_trans_attr[0])
-        row_attr = serve_state.global->stand_trans_attr;
-      if (up_cf[up_ind] && serve_state.global->stand_fail_attr[0])
-        row_attr = serve_state.global->stand_fail_attr;
+      row_attr = state->global->stand_prob_attr;
+      if (up_trans[up_ind] && state->global->stand_trans_attr[0])
+        row_attr = state->global->stand_trans_attr;
+      if (up_cf[up_ind] && state->global->stand_fail_attr[0])
+        row_attr = state->global->stand_fail_attr;
       fprintf(f, "<td%s>", row_attr);
 
       if (!up_totatt[up_ind]) {
         fprintf(f, "&nbsp;");
       } else if (up_solved[up_ind]) {
-        if (serve_state.global->stand_show_ok_time && up_time[up_ind] > 0) {
-          if (serve_state.global->show_astr_time) {
+        if (state->global->stand_show_ok_time && up_time[up_ind] > 0) {
+          if (state->global->show_astr_time) {
             duration_str(1, up_time[up_ind], start_time, strbuf, 0);
           } else {
             snprintf(strbuf, sizeof(strbuf), "%d:%02d",
                      up_pen[up_ind] / 60, up_pen[up_ind] % 60);
           }
           fprintf(f, "<b>%d</b> <div%s>(%d,%s)</div>",
-                  up_score[up_ind], serve_state.global->stand_time_attr,
+                  up_score[up_ind], state->global->stand_time_attr,
                   up_att[up_ind] + 1, strbuf);
         } else
           fprintf(f, "<b>%d</b> <div%s>(%d)</div>", up_score[up_ind],
-                  serve_state.global->stand_time_attr, up_att[up_ind] + 1);
+                  state->global->stand_time_attr, up_att[up_ind] + 1);
       } else if (up_score[up_ind] > 0) {
-        if (serve_state.global->stand_show_ok_time && up_time[up_ind] > 0) {
-          if (serve_state.global->show_astr_time) {
+        if (state->global->stand_show_ok_time && up_time[up_ind] > 0) {
+          if (state->global->show_astr_time) {
             duration_str(1, up_time[up_ind], start_time, strbuf, 0);
           } else {
             snprintf(strbuf, sizeof(strbuf), "%d:%02d",
                      up_pen[up_ind] / 60, up_pen[up_ind] % 60);
           }
           fprintf(f, "%d <div%s>(%d,%s)</div> -%d",
-                  up_score[up_ind], serve_state.global->stand_time_attr, up_att[up_ind] + 1,
+                  up_score[up_ind], state->global->stand_time_attr, up_att[up_ind] + 1,
                   strbuf, up_totatt[up_ind]);
         } else
           fprintf(f, "%d <div%s>(%d)</div> -%d",
-                  up_score[up_ind], serve_state.global->stand_time_attr, up_att[up_ind] + 1,
+                  up_score[up_ind], state->global->stand_time_attr, up_att[up_ind] + 1,
                   up_totatt[up_ind]);
       } else
         fprintf(f, "0 -%d", up_totatt[up_ind]);
@@ -3133,13 +3146,13 @@ do_write_moscow_standings(FILE *f,
     }
 
     fprintf(f, "<td%s>%d</td><td%s>%d</td></tr>\n",
-            serve_state.global->stand_score_attr, u_score[u],
-            serve_state.global->stand_penalty_attr, u_pen[u]);
+            state->global->stand_score_attr, u_score[u],
+            state->global->stand_penalty_attr, u_pen[u]);
 
     if (user_on_page == users_per_page - 1 && current_page != total_pages) {
       fputs("</table>\n", f);
       if (!client_flag) {
-        write_moscow_page_table(f, total_pages, current_page,
+        write_moscow_page_table(state, f, total_pages, current_page,
                                 pgrefs, pg_n1, pg_n2, pg_sc1, pg_sc2,
                                 pg_pen1, pg_pen2, pr_attrs, pc_attrs);
         if (footer_str) {
@@ -3157,66 +3170,66 @@ do_write_moscow_standings(FILE *f,
   }
 
   fprintf(f, "<tr%s><td%s>&nbsp;</td><td%s>%s:</td>", rT_attr,
-          serve_state.global->stand_place_attr, serve_state.global->stand_team_attr, _("Total"));
-  if (serve_state.global->stand_extra_format[0])
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_extra_attr);
-  if (serve_state.global->stand_show_contestant_status
-      && serve_state.global->contestant_status_num > 0)
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_contestant_status_attr);
-  if (serve_state.global->stand_show_warn_number)
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_warn_number_attr);
+          state->global->stand_place_attr, state->global->stand_team_attr, _("Total"));
+  if (state->global->stand_extra_format[0])
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_extra_attr);
+  if (state->global->stand_show_contestant_status
+      && state->global->contestant_status_num > 0)
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_contestant_status_attr);
+  if (state->global->stand_show_warn_number)
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_warn_number_attr);
   for (j = 0, all_att = 0; j < p_tot; j++) {
-    fprintf(f, "<td%s>%d</td>", serve_state.global->stand_prob_attr, p_att[j]);
+    fprintf(f, "<td%s>%d</td>", state->global->stand_prob_attr, p_att[j]);
     all_att += p_att[j];
   }
   fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>\n",
-          serve_state.global->stand_solved_attr, all_att, serve_state.global->stand_penalty_attr);
+          state->global->stand_solved_attr, all_att, state->global->stand_penalty_attr);
 
   fprintf(f, "<tr%s><td%s>&nbsp;</td><td%s>%s:</td>", rT_attr,
-          serve_state.global->stand_place_attr, serve_state.global->stand_team_attr, _("Success"));
-  if (serve_state.global->stand_extra_format[0])
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_extra_attr);
-  if (serve_state.global->stand_show_contestant_status
-      && serve_state.global->contestant_status_num > 0)
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_contestant_status_attr);
-  if (serve_state.global->stand_show_warn_number)
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_warn_number_attr);
+          state->global->stand_place_attr, state->global->stand_team_attr, _("Success"));
+  if (state->global->stand_extra_format[0])
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_extra_attr);
+  if (state->global->stand_show_contestant_status
+      && state->global->contestant_status_num > 0)
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_contestant_status_attr);
+  if (state->global->stand_show_warn_number)
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_warn_number_attr);
   for (j = 0, all_succ = 0; j < p_tot; j++) {
-    fprintf(f, "<td%s>%d</td>", serve_state.global->stand_prob_attr, p_succ[j]);
+    fprintf(f, "<td%s>%d</td>", state->global->stand_prob_attr, p_succ[j]);
     all_succ += p_succ[j];
   }
   fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>\n",
-          serve_state.global->stand_solved_attr, all_succ, serve_state.global->stand_penalty_attr);
+          state->global->stand_solved_attr, all_succ, state->global->stand_penalty_attr);
 
   fprintf(f, "<tr%s><td%s>&nbsp;</td><td%s>%%:</td>", rT_attr,
-          serve_state.global->stand_place_attr, serve_state.global->stand_team_attr);
-  if (serve_state.global->stand_extra_format[0])
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_extra_attr);
-  if (serve_state.global->stand_show_contestant_status
-      && serve_state.global->contestant_status_num > 0)
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_contestant_status_attr);
-  if (serve_state.global->stand_show_warn_number)
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_warn_number_attr);
+          state->global->stand_place_attr, state->global->stand_team_attr);
+  if (state->global->stand_extra_format[0])
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_extra_attr);
+  if (state->global->stand_show_contestant_status
+      && state->global->contestant_status_num > 0)
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_contestant_status_attr);
+  if (state->global->stand_show_warn_number)
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_warn_number_attr);
   for (j = 0; j < p_tot; j++) {
     if (!p_att[j])
-      fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_prob_attr);
+      fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_prob_attr);
     else
-      fprintf(f, "<td%s>%d%%</td>", serve_state.global->stand_prob_attr,
+      fprintf(f, "<td%s>%d%%</td>", state->global->stand_prob_attr,
               (int)(p_succ[j] * 100.0 / p_att[j] + 0.5));
   }
   if (!all_att)
     fprintf(f, "<td%s>&nbsp;</td><td%s>&nbsp;</td></tr>\n",
-            serve_state.global->stand_solved_attr, serve_state.global->stand_penalty_attr);
+            state->global->stand_solved_attr, state->global->stand_penalty_attr);
   else
     fprintf(f, "<td%s>%d%%</td><td%s>&nbsp;</td></tr>\n",
-            serve_state.global->stand_solved_attr,
+            state->global->stand_solved_attr,
             (int)(all_succ * 100.0 / all_att + 0.5),
-            serve_state.global->stand_penalty_attr);
+            state->global->stand_penalty_attr);
   
   fputs("</table>\n", f);
   if (!client_flag) {
     if (total_pages > 1) {
-      write_moscow_page_table(f, total_pages, current_page,
+      write_moscow_page_table(state, f, total_pages, current_page,
                               pgrefs, pg_n1, pg_n2, pg_sc1, pg_sc2,
                               pg_pen1, pg_pen2, pr_attrs, pc_attrs);
     }
@@ -3246,7 +3259,8 @@ do_write_moscow_standings(FILE *f,
  * ACM-style standings
  */
 void
-do_write_standings(FILE *f, int client_flag, int user_id,
+do_write_standings(const serve_state_t state, FILE *f,
+                   int client_flag, int user_id,
                    const unsigned char *header_str,
                    unsigned char const *footer_str, int raw_flag,
                    const unsigned char *user_name)
@@ -3300,39 +3314,39 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   int row_sh, row_sz, up_ind, attr_num;
   int prev_prob = -1, row_ind = 0, group_ind = 1;
 
-  write_standings_header(f, client_flag, user_id, header_str, user_name);
+  write_standings_header(state, f, client_flag, user_id, header_str, user_name);
 
-  if (client_flag) head_style = serve_state.cur_contest->team_head_style;
+  if (client_flag) head_style = state->cur_contest->team_head_style;
   else head_style = "h2";
 
-  if (!serve_state.global->stand_table_attr[0] && !serve_state.global->stand_row_attr) {
+  if (!state->global->stand_table_attr[0] && !state->global->stand_row_attr) {
     table_attr = " border=\"1\"";
   } else {
-    table_attr = serve_state.global->stand_table_attr;
+    table_attr = state->global->stand_table_attr;
   }
 
-  attr_num = sarray_len(serve_state.global->stand_row_attr);
+  attr_num = sarray_len(state->global->stand_row_attr);
   i = 0;
   if (attr_num >= 5) {
-    r0_attr = serve_state.global->stand_row_attr[i++];
-    r_attrs[0][0] = serve_state.global->stand_row_attr[i++];
-    r_attrs[0][1] = serve_state.global->stand_row_attr[i++];
-    r_attrs[1][0] = serve_state.global->stand_row_attr[i++];
-    r_attrs[1][1] = serve_state.global->stand_row_attr[i++];
+    r0_attr = state->global->stand_row_attr[i++];
+    r_attrs[0][0] = state->global->stand_row_attr[i++];
+    r_attrs[0][1] = state->global->stand_row_attr[i++];
+    r_attrs[1][0] = state->global->stand_row_attr[i++];
+    r_attrs[1][1] = state->global->stand_row_attr[i++];
     attr_num -= 5;
   }
   if (attr_num >= 1) {
-    rT_attr = serve_state.global->stand_row_attr[i++];
+    rT_attr = state->global->stand_row_attr[i++];
     attr_num -= 1;
   }
 
   cur_time = time(0);
-  start_time = run_get_start_time(serve_state.runlog_state);
-  stop_time = run_get_stop_time(serve_state.runlog_state);
-  contest_dur = run_get_duration(serve_state.runlog_state);
-  if (start_time && serve_state.global->virtual && user_id > 0) {
-    start_time = run_get_virtual_start_time(serve_state.runlog_state, user_id);
-    stop_time = run_get_virtual_stop_time(serve_state.runlog_state, user_id, 0);
+  start_time = run_get_start_time(state->runlog_state);
+  stop_time = run_get_stop_time(state->runlog_state);
+  contest_dur = run_get_duration(state->runlog_state);
+  if (start_time && state->global->virtual && user_id > 0) {
+    start_time = run_get_virtual_start_time(state->runlog_state, user_id);
+    stop_time = run_get_virtual_stop_time(state->runlog_state, user_id, 0);
   }
   if (start_time && !stop_time && cur_time >= start_time + contest_dur) {
     stop_time = start_time + contest_dur;
@@ -3359,13 +3373,13 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     return;
   }
 
-  r_tot = run_get_total(serve_state.runlog_state);
+  r_tot = run_get_total(state->runlog_state);
   runs = alloca(r_tot * sizeof(runs[0]));
-  run_get_all_entries(serve_state.runlog_state, runs);
+  run_get_all_entries(state->runlog_state, runs);
 
-  t_max = teamdb_get_max_team_id(serve_state.teamdb_state) + 1;
+  t_max = teamdb_get_max_team_id(state->teamdb_state) + 1;
   t_runs = alloca(t_max);
-  if (serve_state.global->prune_empty_users) {
+  if (state->global->prune_empty_users) {
     memset(t_runs, 0, t_max);
     for (k = 0; k < r_tot; k++) {
       if (runs[k].status == RUN_EMPTY) continue;
@@ -3382,8 +3396,8 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   XALLOCAZ(t_rev, t_max);
   for (i = 1, t_tot = 0; i < t_max; i++) {
     t_rev[i] = -1;
-    if (!teamdb_lookup(serve_state.teamdb_state, i)) continue;
-    if ((teamdb_get_flags(serve_state.teamdb_state,
+    if (!teamdb_lookup(state->teamdb_state, i)) continue;
+    if ((teamdb_get_flags(state->teamdb_state,
                           i) & (TEAM_INVISIBLE | TEAM_BANNED))) continue;
     if (!t_runs[i]) continue;
     t_rev[i] = t_tot;
@@ -3395,12 +3409,12 @@ do_write_standings(FILE *f, int client_flag, int user_id,
   XALLOCA(t_n2, t_tot);
 
   /* make problem index */
-  p_max = serve_state.max_prob + 1;
+  p_max = state->max_prob + 1;
   XALLOCAZ(p_ind, p_max);
   XALLOCAZ(p_rev, p_max);
   for (i = 1, p_tot = 0; i < p_max; i++) {
     p_rev[i] = -1;
-    if (!serve_state.probs[i] || serve_state.probs[i]->hidden) continue;
+    if (!state->probs[i] || state->probs[i]->hidden) continue;
     p_rev[i] = p_tot;
     p_ind[p_tot++] = i;
   }
@@ -3424,13 +3438,13 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP
         || pe->status == RUN_EMPTY) continue;
     if (pe->team <= 0 || pe->team >= t_max || t_rev[pe->team] < 0) continue;
-    if (pe->problem <= 0 || pe->problem > serve_state.max_prob || p_rev[pe->problem] < 0)
+    if (pe->problem <= 0 || pe->problem > state->max_prob || p_rev[pe->problem] < 0)
       continue;
-    if (!serve_state.probs[pe->problem] || serve_state.probs[pe->problem]->hidden) continue;
+    if (!state->probs[pe->problem] || state->probs[pe->problem]->hidden) continue;
     if (pe->is_hidden) continue;
-    if (serve_state.global->virtual) {
+    if (state->global->virtual) {
       // filter "future" virtual runs
-      tstart = run_get_virtual_start_time(serve_state.runlog_state, pe->team);
+      tstart = run_get_virtual_start_time(state->runlog_state, pe->team);
       ASSERT(run_time >= tstart);
       tdur = run_time - tstart;
       ASSERT(tdur <= contest_dur);
@@ -3442,8 +3456,8 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       if (client_flag != 1 || user_id) {
         if (run_time < start_time) run_time = start_time;
         if (current_dur > 0 && run_time - start_time > current_dur) continue;
-        if (serve_state.global->stand_ignore_after_d > 0
-            && pe->timestamp >= serve_state.global->stand_ignore_after_d)
+        if (state->global->stand_ignore_after_d > 0
+            && pe->timestamp >= state->global->stand_ignore_after_d)
           continue;
       }
     }
@@ -3456,24 +3470,24 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       if (calc[up_ind] > 0) continue;
 
       last_success_run = k;
-      t_pen[tt] += serve_state.probs[pe->problem]->acm_run_penalty * - calc[up_ind];
+      t_pen[tt] += state->probs[pe->problem]->acm_run_penalty * - calc[up_ind];
       calc[up_ind] = 1 - calc[up_ind];
       t_prob[tt]++;
       succ_att[pp]++;
       tot_att[pp]++;
-      if (serve_state.global->virtual) {
-        ok_time[up_ind] = sec_to_min(tdur);
-        if (!serve_state.global->ignore_success_time) t_pen[tt] += ok_time[up_ind];
+      if (state->global->virtual) {
+        ok_time[up_ind] = sec_to_min(state, tdur);
+        if (!state->global->ignore_success_time) t_pen[tt] += ok_time[up_ind];
         last_success_time = run_time;
         last_success_start = tstart;
       } else {
         if (run_time < start_time) run_time = start_time;
-        ok_time[up_ind] = sec_to_min(run_time - start_time);
-        if (!serve_state.global->ignore_success_time) t_pen[tt] += ok_time[up_ind];
+        ok_time[up_ind] = sec_to_min(state, run_time - start_time);
+        if (!state->global->ignore_success_time) t_pen[tt] += ok_time[up_ind];
         last_success_time = run_time;
         last_success_start = start_time;
       }
-    } else if (pe->status==RUN_COMPILE_ERR && !serve_state.global->ignore_compile_errors) {
+    } else if (pe->status==RUN_COMPILE_ERR && !state->global->ignore_compile_errors) {
       if (calc[up_ind] <= 0) {
         calc[up_ind]--;
         tot_att[pp]++;
@@ -3561,7 +3575,7 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     if (last_success_run >= 0) {
       unsigned char dur_buf[128];
 
-      if (serve_state.global->virtual && !user_id) {
+      if (state->global->virtual && !user_id) {
         duration_str(1, last_success_time, last_success_start,
                      dur_buf, sizeof(dur_buf));
       } else {
@@ -3569,27 +3583,27 @@ do_write_standings(FILE *f, int client_flag, int user_id,
                      dur_buf, sizeof(dur_buf));
       }
       fprintf(f, "<p%s>%s: %s, ",
-              serve_state.global->stand_success_attr, _("Last success"), dur_buf);
-      if (serve_state.global->team_info_url[0]) {
-        teamdb_export_team(serve_state.teamdb_state, runs[last_success_run].team, &ttt);
-        sformat_message(dur_buf, sizeof(dur_buf), serve_state.global->team_info_url,
+              state->global->stand_success_attr, _("Last success"), dur_buf);
+      if (state->global->team_info_url[0]) {
+        teamdb_export_team(state->teamdb_state, runs[last_success_run].team, &ttt);
+        sformat_message(dur_buf, sizeof(dur_buf), state->global->team_info_url,
                         NULL, NULL, NULL, NULL, &ttt, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_buf);      
       }
-      fprintf(f, "%s", teamdb_get_name(serve_state.teamdb_state,
+      fprintf(f, "%s", teamdb_get_name(state->teamdb_state,
                                        runs[last_success_run].team));
-      if (serve_state.global->team_info_url[0]) {
+      if (state->global->team_info_url[0]) {
         fprintf(f, "</a>");
       }
       fprintf(f, ", ");
-      if (serve_state.global->prob_info_url[0]) {
-        sformat_message(dur_buf, sizeof(dur_buf), serve_state.global->prob_info_url,
-                        NULL, serve_state.probs[runs[last_success_run].problem],
+      if (state->global->prob_info_url[0]) {
+        sformat_message(dur_buf, sizeof(dur_buf), state->global->prob_info_url,
+                        NULL, state->probs[runs[last_success_run].problem],
                         NULL, NULL, NULL, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_buf);
       }
-      fprintf(f, "%s", serve_state.probs[runs[last_success_run].problem]->short_name);
-      if (serve_state.global->prob_info_url[0]) {
+      fprintf(f, "%s", state->probs[runs[last_success_run].problem]->short_name);
+      if (state->global->prob_info_url[0]) {
         fprintf(f, "</a>");
       }
       fprintf(f, ".</p>\n");
@@ -3597,49 +3611,49 @@ do_write_standings(FILE *f, int client_flag, int user_id,
     /* print table header */
     fprintf(f, "<table%s><tr%s><th%s>%s</th><th%s>%s</th>",
             table_attr, r0_attr,
-            serve_state.global->stand_place_attr, _("Place"),
-            serve_state.global->stand_team_attr, _("User "));
-    if (serve_state.global->stand_extra_format[0]) {
-      if (serve_state.global->stand_extra_legend[0])
-        fprintf(f, "<th%s>%s</th>", serve_state.global->stand_extra_attr,
-                serve_state.global->stand_extra_legend);
+            state->global->stand_place_attr, _("Place"),
+            state->global->stand_team_attr, _("User "));
+    if (state->global->stand_extra_format[0]) {
+      if (state->global->stand_extra_legend[0])
+        fprintf(f, "<th%s>%s</th>", state->global->stand_extra_attr,
+                state->global->stand_extra_legend);
       else
-        fprintf(f, "<th%s>%s</th>", serve_state.global->stand_extra_attr,
+        fprintf(f, "<th%s>%s</th>", state->global->stand_extra_attr,
                 _("Extra info"));
     }
-    if (serve_state.global->stand_show_contestant_status
-        && serve_state.global->contestant_status_num > 0) {
-      fprintf(f, "<th%s>%s</th>", serve_state.global->stand_contestant_status_attr,
+    if (state->global->stand_show_contestant_status
+        && state->global->contestant_status_num > 0) {
+      fprintf(f, "<th%s>%s</th>", state->global->stand_contestant_status_attr,
               _("Status"));
     }
-    if (serve_state.global->stand_show_warn_number) {
-      fprintf(f, "<th%s>%s</th>", serve_state.global->stand_warn_number_attr,
+    if (state->global->stand_show_warn_number) {
+      fprintf(f, "<th%s>%s</th>", state->global->stand_warn_number_attr,
               _("Warnings"));
     }
     for (j = 0; j < p_tot; j++) {
-      fprintf(f, "<th%s>", serve_state.global->stand_prob_attr);
-      if (serve_state.global->prob_info_url[0]) {
-        sformat_message(url_str, sizeof(url_str), serve_state.global->prob_info_url,
-                        NULL, serve_state.probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
+      fprintf(f, "<th%s>", state->global->stand_prob_attr);
+      if (state->global->prob_info_url[0]) {
+        sformat_message(url_str, sizeof(url_str), state->global->prob_info_url,
+                        NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", url_str);
       }
-      fprintf(f, "%s", serve_state.probs[p_ind[j]]->short_name);
-      if (serve_state.global->prob_info_url[0]) {
+      fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
+      if (state->global->prob_info_url[0]) {
         fprintf(f, "</a>");
       }
       fprintf(f, "</th>");
     }
     fprintf(f, "<th%s>%s</th><th%s>%s</th></tr>\n",
-            serve_state.global->stand_solved_attr, _("Total"),
-            serve_state.global->stand_penalty_attr, _("Penalty"));
+            state->global->stand_solved_attr, _("Total"),
+            state->global->stand_penalty_attr, _("Penalty"));
 
     for (i = 0; i < t_tot; i++) {
       t = t_sort[i];
 
-      if (serve_state.global->stand_show_contestant_status
-          || serve_state.global->stand_show_warn_number
-          || serve_state.global->contestant_status_row_attr) {
-        t_extra = team_extra_get_entry(serve_state.team_extra_state, t_ind[t]);
+      if (state->global->stand_show_contestant_status
+          || state->global->stand_show_warn_number
+          || state->global->contestant_status_row_attr) {
+        t_extra = team_extra_get_entry(state->team_extra_state, t_ind[t]);
       } else {
         t_extra = 0;
       }
@@ -3653,86 +3667,86 @@ do_write_standings(FILE *f, int client_flag, int user_id,
       }
       bgcolor_ptr = r_attrs[group_ind][row_ind];
       if (user_id > 0 && user_id == t_ind[t] &&
-          serve_state.global->stand_self_row_attr[0]) {
-        bgcolor_ptr = serve_state.global->stand_self_row_attr;
-      } else if (serve_state.global->virtual) {
-        int vstat = run_get_virtual_status(serve_state.runlog_state, t_ind[t]);
-        if (vstat == 1 && serve_state.global->stand_r_row_attr[0]) {
-          bgcolor_ptr = serve_state.global->stand_r_row_attr;
-        } else if (vstat == 2 && serve_state.global->stand_v_row_attr[0]) {
-          bgcolor_ptr = serve_state.global->stand_v_row_attr;
-        } else if (!vstat && serve_state.global->stand_u_row_attr[0]) {
-          bgcolor_ptr = serve_state.global->stand_u_row_attr;
+          state->global->stand_self_row_attr[0]) {
+        bgcolor_ptr = state->global->stand_self_row_attr;
+      } else if (state->global->virtual) {
+        int vstat = run_get_virtual_status(state->runlog_state, t_ind[t]);
+        if (vstat == 1 && state->global->stand_r_row_attr[0]) {
+          bgcolor_ptr = state->global->stand_r_row_attr;
+        } else if (vstat == 2 && state->global->stand_v_row_attr[0]) {
+          bgcolor_ptr = state->global->stand_v_row_attr;
+        } else if (!vstat && state->global->stand_u_row_attr[0]) {
+          bgcolor_ptr = state->global->stand_u_row_attr;
         }
       }
       if (!bgcolor_ptr
-          && serve_state.global->contestant_status_row_attr
+          && state->global->contestant_status_row_attr
           && t_extra && t_extra->status >= 0
-          && t_extra->status < serve_state.global->contestant_status_num) {
-        bgcolor_ptr = serve_state.global->contestant_status_row_attr[t_extra->status];
+          && t_extra->status < state->global->contestant_status_num) {
+        bgcolor_ptr = state->global->contestant_status_row_attr[t_extra->status];
       }
-      fprintf(f, "<tr%s><td%s>", bgcolor_ptr, serve_state.global->stand_place_attr);
+      fprintf(f, "<tr%s><td%s>", bgcolor_ptr, state->global->stand_place_attr);
       if (t_n1[i] == t_n2[i]) fprintf(f, "%d", t_n1[i] + 1);
       else fprintf(f, "%d-%d", t_n1[i] + 1, t_n2[i] + 1);
       fputs("</td>", f);
-      fprintf(f, "<td%s>", serve_state.global->stand_team_attr);
-      if (serve_state.global->team_info_url[0] || serve_state.global->stand_extra_format[0]) {
-        teamdb_export_team(serve_state.teamdb_state, t_ind[t], &ttt);
+      fprintf(f, "<td%s>", state->global->stand_team_attr);
+      if (state->global->team_info_url[0] || state->global->stand_extra_format[0]) {
+        teamdb_export_team(state->teamdb_state, t_ind[t], &ttt);
       } else {
         memset(&ttt, 0, sizeof(ttt));
       }
-      if (serve_state.global->team_info_url[0]) {
-        sformat_message(url_str, sizeof(url_str), serve_state.global->team_info_url,
+      if (state->global->team_info_url[0]) {
+        sformat_message(url_str, sizeof(url_str), state->global->team_info_url,
                         NULL, NULL, NULL, NULL, &ttt, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", url_str);      
       }
-      fprintf(f, "%s", teamdb_get_name(serve_state.teamdb_state, t_ind[t]));
-      if (serve_state.global->team_info_url[0]) {
+      fprintf(f, "%s", teamdb_get_name(state->teamdb_state, t_ind[t]));
+      if (state->global->team_info_url[0]) {
         fprintf(f, "</a>");
       }
       fprintf(f, "</td>");
-      if (serve_state.global->stand_extra_format[0]) {
-        sformat_message(url_str, sizeof(url_str), serve_state.global->stand_extra_format,
+      if (state->global->stand_extra_format[0]) {
+        sformat_message(url_str, sizeof(url_str), state->global->stand_extra_format,
                         NULL, NULL, NULL, NULL, &ttt, 0, 0, 0);
-        fprintf(f, "<td%s>%s</td>", serve_state.global->stand_extra_attr, url_str);
+        fprintf(f, "<td%s>%s</td>", state->global->stand_extra_attr, url_str);
       }
-      if (serve_state.global->stand_show_contestant_status
-          && serve_state.global->contestant_status_num > 0) {
+      if (state->global->stand_show_contestant_status
+          && state->global->contestant_status_num > 0) {
         if (t_extra && t_extra->status >= 0
-            && t_extra->status < serve_state.global->contestant_status_num) {
-          fprintf(f, "<td%s>%s</td>", serve_state.global->stand_contestant_status_attr,
-                  serve_state.global->contestant_status_legend[t_extra->status]);
+            && t_extra->status < state->global->contestant_status_num) {
+          fprintf(f, "<td%s>%s</td>", state->global->stand_contestant_status_attr,
+                  state->global->contestant_status_legend[t_extra->status]);
         } else {
-          fprintf(f, "<td%s>?</td>", serve_state.global->stand_contestant_status_attr);
+          fprintf(f, "<td%s>?</td>", state->global->stand_contestant_status_attr);
         }
       }
-      if (serve_state.global->stand_show_warn_number) {
+      if (state->global->stand_show_warn_number) {
         if (t_extra && t_extra->warn_u > 0) {
-          fprintf(f, "<td%s>%d</td>", serve_state.global->stand_warn_number_attr,
+          fprintf(f, "<td%s>%d</td>", state->global->stand_warn_number_attr,
                   t_extra->warn_u);
         } else {
-          fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_warn_number_attr);
+          fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_warn_number_attr);
         }
       }
       for (j = 0; j < p_tot; j++) {
         up_ind = (t << row_sh) + j;
-        fprintf(f, "<td%s>", serve_state.global->stand_prob_attr);
+        fprintf(f, "<td%s>", state->global->stand_prob_attr);
         if (calc[up_ind] < 0) {
           fprintf(f, "%d", calc[up_ind]);
         } else if (calc[up_ind] == 1) {
-          if (serve_state.global->ignore_success_time || !serve_state.global->stand_show_ok_time) {
+          if (state->global->ignore_success_time || !state->global->stand_show_ok_time) {
             fprintf(f, "+");
           } else {
             fprintf(f, "+ <div%s>(%ld:%02ld)</div>",
-                    serve_state.global->stand_time_attr,
+                    state->global->stand_time_attr,
                     ok_time[up_ind] / 60, ok_time[up_ind] % 60);
           }
         } else if (calc[up_ind] > 0) {
-          if (serve_state.global->ignore_success_time || !serve_state.global->stand_show_ok_time) {
+          if (state->global->ignore_success_time || !state->global->stand_show_ok_time) {
             fprintf(f, "+%d", calc[up_ind] - 1);
           } else {
             fprintf(f, "+%d <div%s>(%ld:%02ld)</div>", calc[up_ind] - 1,
-                    serve_state.global->stand_time_attr,
+                    state->global->stand_time_attr,
                     ok_time[up_ind] / 60, ok_time[up_ind] % 60);
           }
         } else {
@@ -3741,77 +3755,77 @@ do_write_standings(FILE *f, int client_flag, int user_id,
         fputs("</td>", f);
       }
       fprintf(f, "<td%s>%d</td><td%s>%d</td></tr>\n",
-              serve_state.global->stand_solved_attr, t_prob[t],
-              serve_state.global->stand_penalty_attr, t_pen[t]);
+              state->global->stand_solved_attr, t_prob[t],
+              state->global->stand_penalty_attr, t_pen[t]);
     }
 
     // print row of total
     fprintf(f, "<tr%s>", rT_attr);
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_place_attr);
-    fprintf(f, "<td%s>Total:</td>", serve_state.global->stand_team_attr);
-    if (serve_state.global->stand_extra_format[0]) {
-      fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_extra_attr);
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_place_attr);
+    fprintf(f, "<td%s>Total:</td>", state->global->stand_team_attr);
+    if (state->global->stand_extra_format[0]) {
+      fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_extra_attr);
     }
-    if (serve_state.global->stand_show_contestant_status
-        && serve_state.global->contestant_status_num > 0) {
-      fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_contestant_status_attr);
+    if (state->global->stand_show_contestant_status
+        && state->global->contestant_status_num > 0) {
+      fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_contestant_status_attr);
     }
-    if (serve_state.global->stand_show_warn_number) {
-      fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_warn_number_attr);
+    if (state->global->stand_show_warn_number) {
+      fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_warn_number_attr);
     }
     for (j = 0, ttot_att = 0; j < p_tot; j++) {
-      fprintf(f, "<td%s>%d</td>", serve_state.global->stand_prob_attr, tot_att[j]);
+      fprintf(f, "<td%s>%d</td>", state->global->stand_prob_attr, tot_att[j]);
       ttot_att += tot_att[j];
     }
     fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>\n",
-            serve_state.global->stand_solved_attr, ttot_att, serve_state.global->stand_penalty_attr);
+            state->global->stand_solved_attr, ttot_att, state->global->stand_penalty_attr);
     // print row of success
     fprintf(f, "<tr%s>", rT_attr);
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_place_attr);
-    fprintf(f, "<td%s>Success:</td>", serve_state.global->stand_team_attr);
-    if (serve_state.global->stand_extra_format[0]) {
-      fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_extra_attr);
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_place_attr);
+    fprintf(f, "<td%s>Success:</td>", state->global->stand_team_attr);
+    if (state->global->stand_extra_format[0]) {
+      fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_extra_attr);
     }
-    if (serve_state.global->stand_show_contestant_status
-        && serve_state.global->contestant_status_num > 0) {
-      fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_contestant_status_attr);
+    if (state->global->stand_show_contestant_status
+        && state->global->contestant_status_num > 0) {
+      fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_contestant_status_attr);
     }
-    if (serve_state.global->stand_show_warn_number) {
-      fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_warn_number_attr);
+    if (state->global->stand_show_warn_number) {
+      fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_warn_number_attr);
     }
     for (j = 0, ttot_succ = 0; j < p_tot; j++) {
-      fprintf(f, "<td%s>%d</td>", serve_state.global->stand_prob_attr, succ_att[j]);
+      fprintf(f, "<td%s>%d</td>", state->global->stand_prob_attr, succ_att[j]);
       ttot_succ += succ_att[j];
     }
     fprintf(f, "<td%s>%d</td><td%s>&nbsp;</td></tr>\n",
-            serve_state.global->stand_solved_attr, ttot_succ, serve_state.global->stand_penalty_attr);
+            state->global->stand_solved_attr, ttot_succ, state->global->stand_penalty_attr);
     // print row of percentage
     fprintf(f, "<tr%s>", rT_attr);
-    fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_place_attr);
-    fprintf(f, "<td%s>%%:</td>", serve_state.global->stand_team_attr);
-    if (serve_state.global->stand_extra_format[0]) {
-      fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_extra_attr);
+    fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_place_attr);
+    fprintf(f, "<td%s>%%:</td>", state->global->stand_team_attr);
+    if (state->global->stand_extra_format[0]) {
+      fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_extra_attr);
     }
-    if (serve_state.global->stand_show_contestant_status
-        && serve_state.global->contestant_status_num > 0) {
-      fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_contestant_status_attr);
+    if (state->global->stand_show_contestant_status
+        && state->global->contestant_status_num > 0) {
+      fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_contestant_status_attr);
     }
-    if (serve_state.global->stand_show_warn_number) {
-      fprintf(f, "<td%s>&nbsp;</td>", serve_state.global->stand_warn_number_attr);
+    if (state->global->stand_show_warn_number) {
+      fprintf(f, "<td%s>&nbsp;</td>", state->global->stand_warn_number_attr);
     }
     for (j = 0; j < p_tot; j++) {
       perc = 0;
       if (tot_att[j] > 0) {
         perc = (int) ((double) succ_att[j] / tot_att[j] * 100.0 + 0.5);
       }
-      fprintf(f, "<td%s>%d%%</td>", serve_state.global->stand_prob_attr, perc);
+      fprintf(f, "<td%s>%d%%</td>", state->global->stand_prob_attr, perc);
     }
     perc = 0;
     if (ttot_att > 0) {
       perc = (int) ((double) ttot_succ / ttot_att * 100.0 + 0.5);
     }
     fprintf(f, "<td%s>%d%%</td><td%s>&nbsp;</td></tr>\n",
-            serve_state.global->stand_solved_attr, perc, serve_state.global->stand_penalty_attr);
+            state->global->stand_solved_attr, perc, state->global->stand_penalty_attr);
     
     fputs("</table>\n", f);
     if (!client_flag) {
@@ -3828,7 +3842,8 @@ do_write_standings(FILE *f, int client_flag, int user_id,
 }
 
 void
-write_standings(char const *stat_dir, char const *name, int users_on_page,
+write_standings(const serve_state_t state,
+                char const *stat_dir, char const *name, int users_on_page,
                 char const *header_str, char const *footer_str,
                 int accepting_mode)
 {
@@ -3839,13 +3854,13 @@ write_standings(char const *stat_dir, char const *name, int users_on_page,
   sprintf(tbuf, "XXX_%lu%d", time(0), getpid());
   pathmake(tpath, stat_dir, "/", tbuf, 0);
   if (!(f = sf_fopen(tpath, "w"))) return;
-  if (serve_state.global->score_system_val == SCORE_KIROV
-      || serve_state.global->score_system_val == SCORE_OLYMPIAD)
-    do_write_kirov_standings(f, stat_dir, 0, header_str, footer_str, 0, accepting_mode);
-  else if (serve_state.global->score_system_val == SCORE_MOSCOW)
-    do_write_moscow_standings(f, stat_dir, 0, 0, header_str, footer_str, 0, 0);
+  if (state->global->score_system_val == SCORE_KIROV
+      || state->global->score_system_val == SCORE_OLYMPIAD)
+    do_write_kirov_standings(state, f, stat_dir, 0, header_str, footer_str, 0, accepting_mode);
+  else if (state->global->score_system_val == SCORE_MOSCOW)
+    do_write_moscow_standings(state, f, stat_dir, 0, 0, header_str, footer_str, 0, 0);
   else
-    do_write_standings(f, 0, 0, header_str, footer_str, 0, 0);
+    do_write_standings(state, f, 0, 0, header_str, footer_str, 0, 0);
   fclose(f);
   generic_copy_file(REMOVE, stat_dir, tbuf, "",
                     SAFE, stat_dir, name, "");
@@ -3853,7 +3868,8 @@ write_standings(char const *stat_dir, char const *name, int users_on_page,
 }
 
 static void
-do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
+do_write_public_log(const serve_state_t state, FILE *f, char const *header_str,
+                    char const *footer_str)
 {
   int total;
   int i;
@@ -3867,12 +3883,12 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
   struct run_entry *runs, *pe;
   struct section_problem_data *cur_prob;
 
-  start = run_get_start_time(serve_state.runlog_state);
-  total = run_get_total(serve_state.runlog_state);
+  start = run_get_start_time(state->runlog_state);
+  total = run_get_total(state->runlog_state);
   runs = alloca(total * sizeof(runs[0]));
-  run_get_all_entries(serve_state.runlog_state, runs);
+  run_get_all_entries(state->runlog_state, runs);
 
-  switch (serve_state.global->score_system_val) {
+  switch (state->global->score_system_val) {
   case SCORE_ACM:
     str1 = _("Failed test");
     break;
@@ -3895,7 +3911,7 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
   }
 
   /* header */
-  fprintf(f, "<p%s>%s: %d</p>\n", serve_state.cur_contest->team_par_style,
+  fprintf(f, "<p%s>%s: %d</p>\n", state->cur_contest->team_par_style,
           _("Total submissions"), total);
   fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th>"
           "<th>%s</th>"
@@ -3914,51 +3930,52 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
     if (pe->is_hidden) continue;
 
     cur_prob = 0;
-    if (pe->problem > 0 && pe->problem <= serve_state.max_prob)
-      cur_prob = serve_state.probs[pe->problem];
+    if (pe->problem > 0 && pe->problem <= state->max_prob)
+      cur_prob = state->probs[pe->problem];
 
     attempts = 0;
     disq_attempts = 0;
     prev_successes = RUN_TOO_MANY;
 
     time = pe->timestamp;
-    if (serve_state.global->score_system_val == SCORE_KIROV) {
-      run_get_attempts(serve_state.runlog_state, i, &attempts, &disq_attempts,
-                       serve_state.global->ignore_compile_errors);
+    if (state->global->score_system_val == SCORE_KIROV) {
+      run_get_attempts(state->runlog_state, i, &attempts, &disq_attempts,
+                       state->global->ignore_compile_errors);
       if (pe->status == RUN_OK && cur_prob && cur_prob->score_bonus_total > 0){
-        prev_successes = run_get_prev_successes(serve_state.runlog_state, i);
+        prev_successes = run_get_prev_successes(state->runlog_state, i);
         if (prev_successes < 0) prev_successes = RUN_TOO_MANY;
       }
     }
 
     if (!start) time = start;
     if (start > time) time = start;
-    duration_str(serve_state.global->show_astr_time, time, start, durstr, 0);
+    duration_str(state->global->show_astr_time, time, start, durstr, 0);
     run_status_str(pe->status, statstr, 0);
 
     fputs("<tr>", f);
     fprintf(f, "<td>%d</td>", i);
     fprintf(f, "<td>%s</td>", durstr);
-    fprintf(f, "<td>%s</td>", teamdb_get_name(serve_state.teamdb_state, pe->team));
-    if (serve_state.probs[pe->problem]) {
-      if (serve_state.probs[pe->problem]->variant_num > 0) {
+    fprintf(f, "<td>%s</td>", teamdb_get_name(state->teamdb_state, pe->team));
+    if (state->probs[pe->problem]) {
+      if (state->probs[pe->problem]->variant_num > 0) {
         int variant = pe->variant;
-        if (!variant) variant = find_variant(pe->team, pe->problem);
+        if (!variant) variant = find_variant(state, pe->team, pe->problem);
         if (variant > 0) {
-          fprintf(f, "<td>%s-%d</td>", serve_state.probs[pe->problem]->short_name,variant);
+          fprintf(f, "<td>%s-%d</td>", state->probs[pe->problem]->short_name,variant);
         } else {
-          fprintf(f, "<td>%s-?</td>", serve_state.probs[pe->problem]->short_name);
+          fprintf(f, "<td>%s-?</td>", state->probs[pe->problem]->short_name);
         }
       } else {
-        fprintf(f, "<td>%s</td>", serve_state.probs[pe->problem]->short_name);
+        fprintf(f, "<td>%s</td>", state->probs[pe->problem]->short_name);
       }
     }
     else fprintf(f, "<td>??? - %d</td>", pe->problem);
-    if (serve_state.langs[pe->language])
-      fprintf(f, "<td>%s</td>", serve_state.langs[pe->language]->short_name);
+    if (state->langs[pe->language])
+      fprintf(f, "<td>%s</td>", state->langs[pe->language]->short_name);
     else fprintf(f, "<td>??? - %d</td>", pe->language);
 
-    write_html_run_status(f, pe, 0, attempts, disq_attempts, prev_successes);
+    write_html_run_status(state, f, pe, 0, attempts, disq_attempts,
+                          prev_successes);
 
     fputs("</tr>\n", f);
   }
@@ -3970,8 +3987,9 @@ do_write_public_log(FILE *f, char const *header_str, char const *footer_str)
 }
 
 void
-write_public_log(char const *stat_dir, char const *name,
-                 char const *header_str, char const *footer_str)
+write_public_log(const serve_state_t state, char const *stat_dir,
+                 char const *name, char const *header_str,
+                 char const *footer_str)
 {
   char    tbuf[64];
   path_t  tpath;
@@ -3980,7 +3998,7 @@ write_public_log(char const *stat_dir, char const *name,
   sprintf(tbuf, "XXX_%lu%d", time(0), getpid());
   pathmake(tpath, stat_dir, "/", tbuf, 0);
   if (!(f = sf_fopen(tpath, "w"))) return;
-  do_write_public_log(f, header_str, footer_str);
+  do_write_public_log(state, f, header_str, footer_str);
   fclose(f);
   generic_copy_file(REMOVE, stat_dir, tbuf, "",
                     SAFE, stat_dir, name, "");
@@ -3989,7 +4007,8 @@ write_public_log(char const *stat_dir, char const *name,
 
 /* format: 0 - HTML, 1 - Plain text, 2 - HTML with header */
 int
-new_write_user_source_view(FILE *f, int uid, int rid, int format)
+new_write_user_source_view(const serve_state_t state, 
+                           FILE *f, int uid, int rid, int format)
 {
   path_t  src_path;
   int html_len, src_flags;
@@ -3998,22 +4017,23 @@ new_write_user_source_view(FILE *f, int uid, int rid, int format)
   struct run_entry re;
   struct section_language_data *lang = 0;
 
-  if (!serve_state.global->team_enable_src_view) {
+  if (!state->global->team_enable_src_view) {
     err("viewing user source is disabled");
     return -SRV_ERR_SOURCE_DISABLED;
   }
-  if (rid < 0 || rid >= run_get_total(serve_state.runlog_state)) {
+  if (rid < 0 || rid >= run_get_total(state->runlog_state)) {
     err("invalid run_id: %d", rid);
     return -SRV_ERR_BAD_RUN_ID;
   }
-  run_get_entry(serve_state.runlog_state, rid, &re);
+  run_get_entry(state->runlog_state, rid, &re);
   if (uid != re.team) {
     err("user ids does not match");
     return -SRV_ERR_ACCESS_DENIED;
   }
 
-  if ((src_flags=archive_make_read_path(src_path, sizeof(src_path),
-                                        serve_state.global->run_archive_dir,rid,0,1))<0){
+  if ((src_flags=archive_make_read_path(state, src_path, sizeof(src_path),
+                                        state->global->run_archive_dir,
+                                        rid, 0, 1))<0){
     return -SRV_ERR_FILE_NOT_EXIST;
   }
   if (generic_read_file(&src, 0, &src_len, src_flags, 0, src_path, "") < 0) {
@@ -4029,8 +4049,8 @@ new_write_user_source_view(FILE *f, int uid, int rid, int format)
   } else if (format == 1) {
     fwrite(src, 1, src_len, f);
   } else if (format == 2) {
-    if (re.language > 0 && re.language < serve_state.max_lang && serve_state.langs[re.language])
-      lang = serve_state.langs[re.language];
+    if (re.language > 0 && re.language < state->max_lang && state->langs[re.language])
+      lang = state->langs[re.language];
     if (lang->content_type) {
       fprintf(f, "Content-type: %s\n", lang->content_type);
     } else if (lang->binary) {
@@ -4049,7 +4069,8 @@ new_write_user_source_view(FILE *f, int uid, int rid, int format)
 
 /* format: 0 - HTML, 1 - Plain text */
 int
-write_user_run_status(FILE *f, int uid, int rid, int accepting_mode, int format)
+write_user_run_status(const serve_state_t state, FILE *f, int uid, int rid,
+                      int accepting_mode, int format)
 {
   struct run_entry re;
   int attempts = 0, disq_attempts = 0;
@@ -4059,11 +4080,11 @@ write_user_run_status(FILE *f, int uid, int rid, int accepting_mode, int format)
   time_t run_time, start_time;
   unsigned char dur_str[64];
 
-  if (rid < 0 || rid >= run_get_total(serve_state.runlog_state)) {
+  if (rid < 0 || rid >= run_get_total(state->runlog_state)) {
     err("invalid run_id: %d", rid);
     return -SRV_ERR_BAD_RUN_ID;
   }
-  run_get_entry(serve_state.runlog_state, rid, &re);
+  run_get_entry(state->runlog_state, rid, &re);
   if (re.status == RUN_VIRTUAL_START || re.status == RUN_VIRTUAL_STOP
       || re.status == RUN_EMPTY) {
     err("this run is not viewable by a user");
@@ -4074,30 +4095,30 @@ write_user_run_status(FILE *f, int uid, int rid, int accepting_mode, int format)
     return -SRV_ERR_ACCESS_DENIED;
   }
 
-  if (serve_state.global->virtual) {
-    start_time = run_get_virtual_start_time(serve_state.runlog_state, rid);
+  if (state->global->virtual) {
+    start_time = run_get_virtual_start_time(state->runlog_state, rid);
   } else {
-    start_time = run_get_start_time(serve_state.runlog_state);
+    start_time = run_get_start_time(state->runlog_state);
   }
 
-  if (serve_state.global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+  if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
     if (re.status == RUN_OK || re.status == RUN_PARTIAL)
       re.status = RUN_ACCEPTED;
   }
 
   attempts = 0; disq_attempts = 0;
-  if (serve_state.global->score_system_val == SCORE_KIROV && !re.is_hidden)
-    run_get_attempts(serve_state.runlog_state, rid, &attempts, &disq_attempts,
-                     serve_state.global->ignore_compile_errors);
+  if (state->global->score_system_val == SCORE_KIROV && !re.is_hidden)
+    run_get_attempts(state->runlog_state, rid, &attempts, &disq_attempts,
+                     state->global->ignore_compile_errors);
 
-  if (re.problem > 0 && re.problem <= serve_state.max_prob) cur_prob = serve_state.probs[re.problem];
+  if (re.problem > 0 && re.problem <= state->max_prob) cur_prob = state->probs[re.problem];
 
   prev_successes = RUN_TOO_MANY;
-  if (serve_state.global->score_system_val == SCORE_KIROV
+  if (state->global->score_system_val == SCORE_KIROV
       && re.status == RUN_OK
       && !re.is_hidden
       && cur_prob && cur_prob->score_bonus_total > 0) {
-    if ((prev_successes = run_get_prev_successes(serve_state.runlog_state, rid)) < 0)
+    if ((prev_successes = run_get_prev_successes(state->runlog_state, rid)) < 0)
       prev_successes = RUN_TOO_MANY;
   }
 
@@ -4107,36 +4128,38 @@ write_user_run_status(FILE *f, int uid, int rid, int accepting_mode, int format)
   run_time = re.timestamp;
   if (!start_time) run_time = start_time;
   if (start_time > run_time) run_time = start_time;
-  duration_str(serve_state.global->show_astr_time, run_time, start_time, dur_str, 0);
+  duration_str(state->global->show_astr_time, run_time, start_time, dur_str, 0);
 
   prob_str = "???";
-  if (serve_state.probs[re.problem]) {
-    if (serve_state.probs[re.problem]->variant_num > 0) {
+  if (state->probs[re.problem]) {
+    if (state->probs[re.problem]->variant_num > 0) {
       int variant = re.variant;
-      if (!variant) variant = find_variant(re.team, re.problem);
-      prob_str = alloca(strlen(serve_state.probs[re.problem]->short_name) + 10);
+      if (!variant) variant = find_variant(state, re.team, re.problem);
+      prob_str = alloca(strlen(state->probs[re.problem]->short_name) + 10);
       if (variant > 0) {
-        sprintf(prob_str, "%s-%d", serve_state.probs[re.problem]->short_name, variant);
+        sprintf(prob_str, "%s-%d", state->probs[re.problem]->short_name, variant);
       } else {
-        sprintf(prob_str, "%s-?", serve_state.probs[re.problem]->short_name);
+        sprintf(prob_str, "%s-?", state->probs[re.problem]->short_name);
       }
     } else {
-      prob_str = serve_state.probs[re.problem]->short_name;
+      prob_str = state->probs[re.problem]->short_name;
     }
   }
   lang_str = "???";
-  if (serve_state.langs[re.language]) lang_str = serve_state.langs[re.language]->short_name;
+  if (state->langs[re.language]) lang_str = state->langs[re.language]->short_name;
 
   fprintf(f, "%d;%s;%s;%u;%s;%s;", rid, run_kind_str, dur_str, re.size,
           prob_str, lang_str);
-  write_text_run_status(f, &re, 0, attempts, disq_attempts, prev_successes);
+  write_text_run_status(state, f, &re, 0, attempts, disq_attempts,
+                        prev_successes);
   fprintf(f, "\n");
 
   return 0;
 }
 
 int
-write_xml_team_testing_report(FILE *f, const unsigned char *txt)
+write_xml_team_testing_report(const serve_state_t state, FILE *f,
+                              const unsigned char *txt)
 {
   testing_report_xml_t r = 0;
   struct testing_report_test *t;
@@ -4184,7 +4207,7 @@ write_xml_team_testing_report(FILE *f, const unsigned char *txt)
     if (t->team_comment) {
       need_comment = 1;
     }
-    if (serve_state.global->report_error_code && t->status == RUN_RUN_TIME_ERR) {
+    if (state->global->report_error_code && t->status == RUN_RUN_TIME_ERR) {
       need_info = 1;
     }
   }
@@ -4226,7 +4249,7 @@ write_xml_team_testing_report(FILE *f, const unsigned char *txt)
     }
     if (need_info) {
       fprintf(f, "<td>");
-      if (t->status == RUN_RUN_TIME_ERR && serve_state.global->report_error_code) {
+      if (t->status == RUN_RUN_TIME_ERR && state->global->report_error_code) {
         if (t->term_signal >= 0) {
           fprintf(f, "%s %d (%s)", _("Signal"), t->term_signal,
                   os_GetSignalString(t->term_signal));
@@ -4571,7 +4594,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
 }
 
 int
-new_write_user_report_view(FILE *f, int uid, int rid,
+new_write_user_report_view(const serve_state_t state, FILE *f, int uid, int rid,
                            int accepting_mode,
                            ej_cookie_t sid,
                            const unsigned char *self_url,
@@ -4587,14 +4610,14 @@ new_write_user_report_view(FILE *f, int uid, int rid,
   struct run_entry re;
   struct section_problem_data *prb = 0;
 
-  if (rid < 0 || rid >= run_get_total(serve_state.runlog_state)) {
+  if (rid < 0 || rid >= run_get_total(state->runlog_state)) {
     err("invalid run_id: %d", rid);
     return -SRV_ERR_BAD_RUN_ID;
   }
-  if (run_get_entry(serve_state.runlog_state, rid, &re) < 0) {
+  if (run_get_entry(state->runlog_state, rid, &re) < 0) {
     return -SRV_ERR_BAD_RUN_ID;
   }
-  if (re.problem <= 0 || re.problem > serve_state.max_prob || !(prb = serve_state.probs[re.problem])) {
+  if (re.problem <= 0 || re.problem > state->max_prob || !(prb = state->probs[re.problem])) {
     err("get_record returned bad prob_id %d", re.problem);
     return -SRV_ERR_BAD_PROB_ID;
   }
@@ -4611,8 +4634,9 @@ new_write_user_report_view(FILE *f, int uid, int rid,
     return -SRV_ERR_REPORT_NOT_AVAILABLE;
   }
 
-  report_flags = archive_make_read_path(report_path, sizeof(report_path),
-                                        serve_state.global->xml_report_archive_dir, rid, 0, 1);
+  report_flags = archive_make_read_path(state, report_path, sizeof(report_path),
+                                        state->global->xml_report_archive_dir,
+                                        rid, 0, 1);
   if (report_flags >= 0) {
     if (generic_read_file(&report, 0, &report_len, report_flags,
                           0, report_path, "") < 0) {
@@ -4623,12 +4647,13 @@ new_write_user_report_view(FILE *f, int uid, int rid,
       return -SRV_ERR_REPORT_NOT_AVAILABLE;
   } else {
     if (prb->team_enable_ce_view && re.status == RUN_COMPILE_ERR)
-      archive_dir = serve_state.global->report_archive_dir;
+      archive_dir = state->global->report_archive_dir;
     else if (prb->team_show_judge_report)
-      archive_dir = serve_state.global->report_archive_dir;
+      archive_dir = state->global->report_archive_dir;
     else
-      archive_dir = serve_state.global->team_report_archive_dir;
-    report_flags = archive_make_read_path(report_path, sizeof(report_path),
+      archive_dir = state->global->team_report_archive_dir;
+    report_flags = archive_make_read_path(state, report_path,
+                                          sizeof(report_path),
                                           archive_dir, rid, 0, 1);
     if (report_flags < 0) return -SRV_ERR_FILE_NOT_EXIST;
     if (generic_read_file(&report, 0, &report_len, report_flags,
@@ -4650,13 +4675,13 @@ new_write_user_report_view(FILE *f, int uid, int rid,
     fprintf(f, "%s", start_ptr);
     break;
   case CONTENT_TYPE_XML:
-    if (serve_state.global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       write_xml_team_accepting_report(f, start_ptr, rid, &re, prb,
                                       sid, self_url, extra_args);
     } else if (prb->team_show_judge_report) {
       write_xml_testing_report(f, start_ptr, sid, self_url, extra_args);
     } else {
-      write_xml_team_testing_report(f, start_ptr);
+      write_xml_team_testing_report(state, f, start_ptr);
     }
     break;
   default:
@@ -4669,7 +4694,8 @@ new_write_user_report_view(FILE *f, int uid, int rid,
 }
 
 static void
-print_nav_buttons(FILE *f,
+print_nav_buttons(const serve_state_t state,
+                  FILE *f,
                   ej_cookie_t sid,
                   unsigned char const *self_url,
                   unsigned char const *hidden_vars,
@@ -4688,7 +4714,7 @@ print_nav_buttons(FILE *f,
   fprintf(f, "%s",
           html_hyperref(hbuf, sizeof(hbuf), sid, self_url, extra_args, 0));
   fprintf(f, "%s</a></td><td>", t1);
-  if (serve_state.global->virtual) {
+  if (state->global->virtual) {
     fprintf(f, "%s",
             html_hyperref(hbuf, sizeof(hbuf), sid, self_url,
                           extra_args, "action=%d", ACTION_STANDINGS));
@@ -4711,7 +4737,7 @@ time_to_str(unsigned char *buf, time_t time)
 }
 
 void
-write_team_page(FILE *f, int user_id,
+write_team_page(const serve_state_t state, FILE *f, int user_id,
                 int printing_suspended,
                 ej_cookie_t sid,
                 int all_runs, int all_clars,
@@ -4732,13 +4758,13 @@ write_team_page(FILE *f, int user_id,
   const struct team_warning *cur_warn;
   time_t user_deadline;
   int user_penalty;
-  unsigned char *user_login = teamdb_get_login(serve_state.teamdb_state, user_id);
+  unsigned char *user_login = teamdb_get_login(state->teamdb_state, user_id);
   struct pers_dead_info *pdinfo;
   unsigned char *accepted_flag = 0;
 
-  XALLOCAZ(accepted_flag, serve_state.max_prob + 1);
+  XALLOCAZ(accepted_flag, state->max_prob + 1);
 
-  if (serve_state.global->virtual) {
+  if (state->global->virtual) {
     time_t dur;
     unsigned char tbuf[64];
     unsigned char *ststr;
@@ -4747,9 +4773,9 @@ write_team_page(FILE *f, int user_id,
 
     global_server_start = server_start;
     global_server_end = server_end;
-    server_start = run_get_virtual_start_time(serve_state.runlog_state, user_id);
-    server_end = run_get_virtual_stop_time(serve_state.runlog_state, user_id, 0);
-    dur = run_get_duration(serve_state.runlog_state);
+    server_start = run_get_virtual_start_time(state->runlog_state, user_id);
+    server_end = run_get_virtual_stop_time(state->runlog_state, user_id, 0);
+    dur = run_get_duration(state->runlog_state);
     if (server_start && !server_end && dur > 0) {
       if (server_start + dur < current_time) {
         server_end = server_start + dur;
@@ -4804,23 +4830,23 @@ write_team_page(FILE *f, int user_id,
               ACTION_STOP_VIRTUAL, _("Stop virtual contest"));
       fprintf(f, "</form>\n");
     }
-    print_nav_buttons(f, sid, self_url, hidden_vars, extra_args,
+    print_nav_buttons(state, f, sid, self_url, hidden_vars, extra_args,
                       0, 0, 0);
   }
 
-  if (!serve_state.global->disable_clars || !serve_state.global->disable_team_clars){
-    unread_clars = count_unread_clars(user_id, server_start);
+  if (!state->global->disable_clars || !state->global->disable_team_clars){
+    unread_clars = count_unread_clars(state, user_id, server_start);
     if (unread_clars > 0) {
       fprintf(f, _("<hr><big><b>You have %d unread message(s)!</b></big>\n"),
               unread_clars);
     }
   }
 
-  t_extra = team_extra_get_entry(serve_state.team_extra_state, user_id);
+  t_extra = team_extra_get_entry(state->team_extra_state, user_id);
   if (t_extra && t_extra->warn_u > 0) {
-    fprintf(f, "<hr><%s>%s (%s %d)</%s>\n", serve_state.cur_contest->team_head_style,
+    fprintf(f, "<hr><%s>%s (%s %d)</%s>\n", state->cur_contest->team_head_style,
             _("Warnings"), _("total"), t_extra->warn_u,
-            serve_state.cur_contest->team_head_style);
+            state->cur_contest->team_head_style);
     for (i = 0; i < t_extra->warn_u; i++) {
       if (!(cur_warn = t_extra->warns[i])) continue;
       fprintf(f, "<p><big><b>%s %d: %s: %s.</b></big>\n",
@@ -4834,50 +4860,51 @@ write_team_page(FILE *f, int user_id,
 
   if (server_start) {
     fprintf(f, "<hr><a name=\"probstat\"></a><%s>%s</%s>\n",
-            serve_state.cur_contest->team_head_style,
+            state->cur_contest->team_head_style,
             _("Problem status summary"),
-            serve_state.cur_contest->team_head_style);
-    if (serve_state.cur_contest->problems_url) {
+            state->cur_contest->team_head_style);
+    if (state->cur_contest->problems_url) {
       fprintf(f, "<p><a href=\"%s\" target=\"_blank\">%s</a></p>\n",
-              serve_state.cur_contest->problems_url, _("All problems"));
+              state->cur_contest->problems_url, _("All problems"));
     }
-    write_user_problems_summary(f, user_id, accepting_mode, accepted_flag);
+    write_user_problems_summary(state, f, user_id,
+                                accepting_mode, accepted_flag);
   }
 
   if (server_start && !server_end) {
     fprintf(f, "<hr><a name=\"submit\"></a><%s>%s</%s>\n",
-            serve_state.cur_contest->team_head_style, _("Send a submission"),
-            serve_state.cur_contest->team_head_style);
+            state->cur_contest->team_head_style, _("Send a submission"),
+            state->cur_contest->team_head_style);
     html_start_form(f, 2, self_url, hidden_vars);
     fprintf(f, "<table>\n");
     fprintf(f, "<tr><td>%s:</td><td>", _("Problem"));
     fprintf(f, "<select name=\"problem\"><option value=\"\">\n");
-    for (i = 1; i <= serve_state.max_prob; i++)
-      if (serve_state.probs[i]) {
-        if (serve_state.global->disable_submit_after_ok > 0 && accepted_flag[i]) continue;
+    for (i = 1; i <= state->max_prob; i++)
+      if (state->probs[i]) {
+        if (state->global->disable_submit_after_ok > 0 && accepted_flag[i]) continue;
         user_deadline = 0;
         user_penalty = 0;
-        for (pdi = 0, pdinfo = serve_state.probs[i]->pd_infos;
-             pdi < serve_state.probs[i]->pd_total;
+        for (pdi = 0, pdinfo = state->probs[i]->pd_infos;
+             pdi < state->probs[i]->pd_total;
              pdi++, pdinfo++) {
           if (!strcmp(user_login, pdinfo->login)) {
             user_deadline = pdinfo->deadline;
             break;
           }
         }
-        if (!user_deadline) user_deadline = serve_state.probs[i]->t_deadline;
+        if (!user_deadline) user_deadline = state->probs[i]->t_deadline;
         if (user_deadline && current_time >= user_deadline) continue;
-        if (serve_state.probs[i]->t_start_date && current_time < serve_state.probs[i]->t_start_date)
+        if (state->probs[i]->t_start_date && current_time < state->probs[i]->t_start_date)
           continue;
 
-        for (dpi = 0; dpi < serve_state.probs[i]->dp_total; dpi++)
-          if (current_time < serve_state.probs[i]->dp_infos[dpi].deadline)
+        for (dpi = 0; dpi < state->probs[i]->dp_total; dpi++)
+          if (current_time < state->probs[i]->dp_infos[dpi].deadline)
             break;
-        if (dpi < serve_state.probs[i]->dp_total)
-          user_penalty = serve_state.probs[i]->dp_infos[dpi].penalty;
+        if (dpi < state->probs[i]->dp_total)
+          user_penalty = state->probs[i]->dp_infos[dpi].penalty;
 
         dl_time_str[0] = 0;
-        if (user_deadline && serve_state.global->show_deadline) {
+        if (user_deadline && state->global->show_deadline) {
           dl_time = localtime(&user_deadline);
           snprintf(dl_time_str, sizeof(dl_time_str),
                    " (%04d/%02d/%02d %02d:%02d:%02d)",
@@ -4886,34 +4913,34 @@ write_team_page(FILE *f, int user_id,
                    dl_time->tm_min, dl_time->tm_sec);
         }
         pd_time_str[0] = 0;
-        if (user_penalty && serve_state.global->show_deadline) {
+        if (user_penalty && state->global->show_deadline) {
           snprintf(pd_time_str, sizeof(pd_time_str), " [%d]", user_penalty);
         }
 
-        if (serve_state.probs[i]->variant_num > 0) {
-          int variant = find_variant(user_id, i);
-          prob_str = alloca(strlen(serve_state.probs[i]->short_name) + 10);
+        if (state->probs[i]->variant_num > 0) {
+          int variant = find_variant(state, user_id, i);
+          prob_str = alloca(strlen(state->probs[i]->short_name) + 10);
           if (variant > 0) {
-            sprintf(prob_str, "%s-%d", serve_state.probs[i]->short_name, variant);
+            sprintf(prob_str, "%s-%d", state->probs[i]->short_name, variant);
           } else {
-            sprintf(prob_str, "%s-?", serve_state.probs[i]->short_name);
+            sprintf(prob_str, "%s-?", state->probs[i]->short_name);
           }
         } else {
-          prob_str = serve_state.probs[i]->short_name;
+          prob_str = state->probs[i]->short_name;
         }
         fprintf(f, "<option value=\"%d\">%s - %s%s%s\n",
-                serve_state.probs[i]->id, prob_str, serve_state.probs[i]->long_name,
+                state->probs[i]->id, prob_str, state->probs[i]->long_name,
                 pd_time_str, dl_time_str);
       }
     fprintf(f, "</select>\n");
     fprintf(f, "</td></tr>\n");
     fprintf(f, "<tr><td>%s:</td><td>", _("Language"));
     fprintf(f, "<select name=\"language\"><option value=\"\">\n");
-    for (i = 1; i <= serve_state.max_lang; i++)
-      if (serve_state.langs[i] && !serve_state.langs[i]->disabled) {
+    for (i = 1; i <= state->max_lang; i++)
+      if (state->langs[i] && !state->langs[i]->disabled) {
         fprintf(f, "<option value=\"%d\">%s - %s\n",
-                serve_state.langs[i]->id, serve_state.langs[i]->short_name,
-                serve_state.langs[i]->long_name);
+                state->langs[i]->id, state->langs[i]->short_name,
+                state->langs[i]->long_name);
       }
     fprintf(f, "</select>\n");
     fprintf(f, "</td></tr>\n");
@@ -4923,68 +4950,70 @@ write_team_page(FILE *f, int user_id,
             "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>",
             _("File"), _("Send!"), ACTION_SUBMIT_RUN, _("Send!"));
     fprintf(f, "</table></form>\n");
-    print_nav_buttons(f, sid, self_url, hidden_vars, extra_args, 0, 0, 0);
+    print_nav_buttons(state, f, sid, self_url, hidden_vars, extra_args,
+                      0, 0, 0);
   }
 
   if (server_start) {
     fprintf(f, "<hr><a name=\"runstat\"></a><%s>%s (%s)</%s>\n",
-            serve_state.cur_contest->team_head_style,
+            state->cur_contest->team_head_style,
             _("Sent submissions"),
             all_runs?_("all"):_("last 15"),
-            serve_state.cur_contest->team_head_style);
-    new_write_user_runs(f, user_id, printing_suspended, accepting_mode,
+            state->cur_contest->team_head_style);
+    new_write_user_runs(state, f, user_id, printing_suspended, accepting_mode,
                         all_runs,
                         sid, self_url, hidden_vars, extra_args);
 
     fprintf(f, "<p%s>%s%s</a></p>",
-            serve_state.cur_contest->team_par_style,
+            state->cur_contest->team_par_style,
             html_hyperref(hbuf, sizeof(hbuf), sid, self_url, extra_args, "all_runs=1"),
             _("View all"));
 
-    print_nav_buttons(f, sid, self_url, hidden_vars, extra_args, 0, 0, 0);
-    if (serve_state.global->team_download_time > 0) {
-      fprintf(f, "<p%s>", serve_state.cur_contest->team_par_style);
+    print_nav_buttons(state, f, sid, self_url, hidden_vars, extra_args,
+                      0, 0, 0);
+    if (state->global->team_download_time > 0) {
+      fprintf(f, "<p%s>", state->cur_contest->team_par_style);
       html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f,
               "<input type=\"submit\" name=\"archive\" value=\"%s\"></form>\n",
               _("Download your submits"));
-      fprintf(f, _("<p%s><b>Note,</b> if downloads are allowed, you may download your runs once per %d minutes. The archive is in <tt>.tar.gz</tt> (<tt>.tgz</tt>) format.</p>\n"), serve_state.cur_contest->team_par_style, serve_state.global->team_download_time / 60);
+      fprintf(f, _("<p%s><b>Note,</b> if downloads are allowed, you may download your runs once per %d minutes. The archive is in <tt>.tar.gz</tt> (<tt>.tgz</tt>) format.</p>\n"), state->cur_contest->team_par_style, state->global->team_download_time / 60);
     }
   }
 
-  if (!serve_state.global->disable_clars && !serve_state.global->disable_team_clars
+  if (!state->global->disable_clars && !state->global->disable_team_clars
       && server_start && !server_end) {
     fprintf(f, "<hr><a name=\"clar\"></a><%s>%s</%s>\n",
-            serve_state.cur_contest->team_head_style, _("Send a message to judges"),
-            serve_state.cur_contest->team_head_style);
+            state->cur_contest->team_head_style, _("Send a message to judges"),
+            state->cur_contest->team_head_style);
     html_start_form(f, 2, self_url, hidden_vars);
     fprintf(f, "<table><tr><td>%s:</td><td>", _("Problem"));
     fprintf(f, "<select name=\"problem\"><option value=\"\">\n");
-    for (i = 1; i <= serve_state.max_prob; i++)
-      if (serve_state.probs[i]) {
+    for (i = 1; i <= state->max_prob; i++)
+      if (state->probs[i]) {
         user_deadline = 0;
         user_penalty = 0;
-        for (pdi = 0, pdinfo = serve_state.probs[i]->pd_infos;
-             pdi < serve_state.probs[i]->pd_total;
+        for (pdi = 0, pdinfo = state->probs[i]->pd_infos;
+             pdi < state->probs[i]->pd_total;
              pdi++, pdinfo++) {
           if (!strcmp(user_login, pdinfo->login)) {
             user_deadline = pdinfo->deadline;
             break;
           }
         }
-        if (!user_deadline) user_deadline = serve_state.probs[i]->t_deadline;
+        if (!user_deadline) user_deadline = state->probs[i]->t_deadline;
         if (user_deadline && current_time >= user_deadline) continue;
-        if (serve_state.probs[i]->t_start_date && current_time < serve_state.probs[i]->t_start_date)
+        if (state->probs[i]->t_start_date && current_time < state->probs[i]->t_start_date)
           continue;
 
-        for (dpi = 0; dpi < serve_state.probs[i]->dp_total; dpi++)
-          if (current_time < serve_state.probs[i]->dp_infos[dpi].deadline)
+        for (dpi = 0; dpi < state->probs[i]->dp_total; dpi++)
+          if (current_time < state->probs[i]->dp_infos[dpi].deadline)
             break;
-        if (dpi < serve_state.probs[i]->dp_total)
-          user_penalty = serve_state.probs[i]->dp_infos[dpi].penalty;
+        if (dpi < state->probs[i]->dp_total)
+          user_penalty = state->probs[i]->dp_infos[dpi].penalty;
 
         dl_time_str[0] = 0;
-        if (user_deadline && serve_state.global->show_deadline) {
+        if (user_deadline && state->global->show_deadline) {
           dl_time = localtime(&user_deadline);
           snprintf(dl_time_str, sizeof(dl_time_str),
                    " (%04d/%02d/%02d %02d:%02d:%02d)",
@@ -4993,24 +5022,24 @@ write_team_page(FILE *f, int user_id,
                    dl_time->tm_min, dl_time->tm_sec);
         }
         pd_time_str[0] = 0;
-        if (user_penalty && serve_state.global->show_deadline) {
+        if (user_penalty && state->global->show_deadline) {
           snprintf(pd_time_str, sizeof(pd_time_str), " [%d]", user_penalty);
         }
 
-        if (serve_state.probs[i]->variant_num > 0) {
-          int variant = find_variant(user_id, i);
-          prob_str = alloca(strlen(serve_state.probs[i]->short_name) + 10);
+        if (state->probs[i]->variant_num > 0) {
+          int variant = find_variant(state, user_id, i);
+          prob_str = alloca(strlen(state->probs[i]->short_name) + 10);
           if (variant > 0) {
-            sprintf(prob_str, "%s-%d", serve_state.probs[i]->short_name, variant);
+            sprintf(prob_str, "%s-%d", state->probs[i]->short_name, variant);
           } else {
-            sprintf(prob_str, "%s-?", serve_state.probs[i]->short_name);
+            sprintf(prob_str, "%s-?", state->probs[i]->short_name);
           }
         } else {
-          prob_str = serve_state.probs[i]->short_name;
+          prob_str = state->probs[i]->short_name;
         }
         fprintf(f, "<option value=\"%s\">%s - %s%s%s\n",
-                serve_state.probs[i]->short_name,
-                prob_str, serve_state.probs[i]->long_name, pd_time_str, dl_time_str);
+                state->probs[i]->short_name,
+                prob_str, state->probs[i]->long_name, pd_time_str, dl_time_str);
       }
     fprintf(f, "</select>\n");
     fprintf(f, "<tr><td>%s:</td>"
@@ -5019,42 +5048,43 @@ write_team_page(FILE *f, int user_id,
             "<tr><td colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n"
             "</table></form>\n",
             _("Subject"), ACTION_SUBMIT_CLAR, _("Send!"));
-    print_nav_buttons(f, sid, self_url, hidden_vars, extra_args, 0, 0, 0);
+    print_nav_buttons(state, f, sid, self_url, hidden_vars, extra_args,
+                      0, 0, 0);
   }
 
-  if (!serve_state.global->disable_clars) {
+  if (!state->global->disable_clars) {
     fprintf(f, "<hr><a name=\"clarstat\"></a><%s>%s (%s)</%s>\n",
-            serve_state.cur_contest->team_head_style, _("Messages"),
-            all_clars?_("all"):_("last 15"), serve_state.cur_contest->team_head_style);
+            state->cur_contest->team_head_style, _("Messages"),
+            all_clars?_("all"):_("last 15"), state->cur_contest->team_head_style);
 
-    new_write_user_clars(f, user_id, all_clars, sid,
+    new_write_user_clars(state, f, user_id, all_clars, sid,
                          self_url, hidden_vars, extra_args);
 
     fprintf(f, "<p%s>%s%s</a></p>",
-            serve_state.cur_contest->team_par_style,
+            state->cur_contest->team_par_style,
             html_hyperref(hbuf, sizeof(hbuf), sid, self_url,
                           extra_args, "all_clars=1"),
             _("View all"));
 
-    print_nav_buttons(f, sid, self_url, hidden_vars, extra_args,
+    print_nav_buttons(state, f, sid, self_url, hidden_vars, extra_args,
                       0, 0, 0);
   }
 }
 
 int
-write_virtual_standings(FILE *f, int user_id)
+write_virtual_standings(const serve_state_t state, FILE *f, int user_id)
 {
   unsigned char *user_name, *astr;
   size_t alen;
 
-  user_name = teamdb_get_name(serve_state.teamdb_state, user_id);
-  if (!user_name || !*user_name) user_name = teamdb_get_login(serve_state.teamdb_state,
+  user_name = teamdb_get_name(state->teamdb_state, user_id);
+  if (!user_name || !*user_name) user_name = teamdb_get_login(state->teamdb_state,
                                                               user_id);
   if (!user_name) user_name = "";
   alen = html_armored_strlen(user_name);
   astr = alloca(alen + 16);
   html_armor_string(user_name, astr);
-  do_write_standings(f, 1, user_id, 0, 0, 0, astr);
+  do_write_standings(state, f, 1, user_id, 0, 0, 0, astr);
   return 0;
 }
 

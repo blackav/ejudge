@@ -3,7 +3,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
 #include "pathutl.h"
 #include "contests.h"
 #include "parsecfg.h"
+#include "serve_state.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -539,27 +540,28 @@ struct section_tester_data
 
 #undef puc_t
 
-int prepare(char const *, int flags, int mode, char const *opts,
+int prepare(serve_state_t, char const *, int flags, int mode, char const *opts,
             int managed_flag);
-int create_dirs(int mode);
-int prepare_serve_defaults(void);
+int create_dirs(serve_state_t, int mode);
+int prepare_serve_defaults(serve_state_t);
 
-int find_tester(int, char const *);
-int find_variant(int, int);
-int find_user_priority_adjustment(int user_id);
+int find_tester(const serve_state_t, int, char const *);
+int find_variant(const serve_state_t, int, int);
+int find_user_priority_adjustment(const serve_state_t, int user_id);
 
 void print_problem(FILE *, struct section_problem_data *);
 void print_language(FILE *, struct section_language_data *);
 void print_tester(FILE *, struct section_tester_data *);
 
-void print_global(FILE *);
-void print_all_problems(FILE *);
-void print_all_languages(FILE *);
-void print_all_testers(FILE *);
+void print_global(serve_state_t, FILE *);
+void print_all_problems(serve_state_t, FILE *);
+void print_all_languages(serve_state_t, FILE *);
+void print_all_testers(serve_state_t, FILE *);
 
-void print_configuration(FILE *);
+void print_configuration(serve_state_t, FILE *);
 
-int prepare_tester_refinement(struct section_tester_data *, int, int);
+int prepare_tester_refinement(serve_state_t, struct section_tester_data *,
+                              int, int);
 int create_tester_dirs(struct section_tester_data *);
 
 struct ejudge_cfg;

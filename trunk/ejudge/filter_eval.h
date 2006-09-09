@@ -22,10 +22,12 @@
 #include "runlog.h"
 #include "filter_tree.h"
 #include "teamdb.h"
+#include "serve_state.h"
 
 struct filter_env
 {
   teamdb_state_t teamdb_state;
+  serve_state_t serve_state;
   struct filter_tree_mem *mem;
   int maxlang;
   struct section_language_data **langs;

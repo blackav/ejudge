@@ -488,7 +488,7 @@ unparse_sha1(const ruint32_t *psha1)
 }
 
 int
-unparse_runlog_xml(teamdb_state_t teamdb_state, FILE *f,
+unparse_runlog_xml(serve_state_t state, FILE *f,
                    const struct run_header *phead,
                    size_t nelems,
                    const struct run_entry *entries,
@@ -509,7 +509,7 @@ unparse_runlog_xml(teamdb_state_t teamdb_state, FILE *f,
 
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n", EJUDGE_CHARSET);
   fprintf(f, "<%s", elem_map[RUNLOG_T_RUNLOG]);
-  fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_CONTEST_ID], serve_state.cur_contest->id);
+  fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_CONTEST_ID], state->cur_contest->id);
   if (phead->duration > 0) {
     fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_DURATION], phead->duration);
   }
@@ -527,7 +527,7 @@ unparse_runlog_xml(teamdb_state_t teamdb_state, FILE *f,
   }
   fprintf(f, ">\n");
   if (external_mode) {
-    val1 = serve_state.cur_contest->name;
+    val1 = state->cur_contest->name;
     if (val1 && html_armor_needed(val1, &alen1)) {
       while (alen1 >= asize1) asize1 *= 2;
       astr1 = alloca(asize1);
@@ -537,12 +537,12 @@ unparse_runlog_xml(teamdb_state_t teamdb_state, FILE *f,
     fprintf(f, "  <%s>%s</%s>\n", elem_map[RUNLOG_T_NAME],
             val1, elem_map[RUNLOG_T_NAME]);
     fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_USERS]);
-    max_user_id = teamdb_get_max_team_id(teamdb_state);
+    max_user_id = teamdb_get_max_team_id(state->teamdb_state);
     for (i = 1; i <= max_user_id; i++) {
-      if (teamdb_lookup(teamdb_state, i) <= 0) continue;
-      if ((flags = teamdb_get_flags(teamdb_state, i)) < 0) continue;
+      if (teamdb_lookup(state->teamdb_state, i) <= 0) continue;
+      if ((flags = teamdb_get_flags(state->teamdb_state, i)) < 0) continue;
       if ((flags & (TEAM_BANNED | TEAM_INVISIBLE))) continue;
-      val1 = teamdb_get_name(teamdb_state, i);
+      val1 = teamdb_get_name(state->teamdb_state, i);
       if (html_armor_needed(val1, &alen1)) {
         while (alen1 >= asize1) asize1 *= 2;
         astr1 = alloca(asize1);
@@ -556,10 +556,10 @@ unparse_runlog_xml(teamdb_state_t teamdb_state, FILE *f,
     fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_USERS]);
 
     fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_PROBLEMS]);
-    for (i = 1; i <= serve_state.max_prob; i++) {
-      if (!serve_state.probs[i]) continue;
-      val1 = serve_state.probs[i]->short_name;
-      val2 = serve_state.probs[i]->long_name;
+    for (i = 1; i <= state->max_prob; i++) {
+      if (!state->probs[i]) continue;
+      val1 = state->probs[i]->short_name;
+      val2 = state->probs[i]->long_name;
       if (html_armor_needed(val1, &alen1)) {
         while (alen1 >= asize1) asize1 *= 2;
         astr1 = alloca(asize1);
@@ -582,10 +582,10 @@ unparse_runlog_xml(teamdb_state_t teamdb_state, FILE *f,
     fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_PROBLEMS]);
 
     fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_LANGUAGES]);
-    for (i = 1; i <= serve_state.max_lang; i++) {
-      if (!serve_state.langs[i]) continue;
-      val1 = serve_state.langs[i]->short_name;
-      val2 = serve_state.langs[i]->long_name;
+    for (i = 1; i <= state->max_lang; i++) {
+      if (!state->langs[i]) continue;
+      val1 = state->langs[i]->short_name;
+      val2 = state->langs[i]->long_name;
       if (html_armor_needed(val1, &alen1)) {
         while (alen1 >= asize1) asize1 *= 2;
         astr1 = alloca(asize1);
@@ -618,7 +618,7 @@ unparse_runlog_xml(teamdb_state_t teamdb_state, FILE *f,
     case RUN_REJUDGE:
       continue;
     }
-    flags = teamdb_get_flags(teamdb_state, pp->team);
+    flags = teamdb_get_flags(state->teamdb_state, pp->team);
     if (external_mode && (flags & (TEAM_BANNED | TEAM_INVISIBLE)))
       continue;
     fprintf(f, "    <%s", elem_map[RUNLOG_T_RUN]);

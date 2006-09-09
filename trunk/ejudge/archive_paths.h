@@ -3,7 +3,7 @@
 #ifndef __ARCHIVE_PATHS_H__
 #define __ARCHIVE_PATHS_H__
 
-/* Copyright (C) 2003-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,24 +17,27 @@
  * GNU General Public License for more details.
  */
 
+#include "serve_state.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
-int archive_dir_prepare(const unsigned char *, int, const unsigned char *, int);
-int archive_make_read_path(unsigned char *, size_t,
+int archive_dir_prepare(const serve_state_t,
+                        const unsigned char *, int, const unsigned char *, int);
+int archive_make_read_path(const serve_state_t, unsigned char *, size_t,
                            const unsigned char *, int,
                            const unsigned char *, int);
-int archive_make_write_path(unsigned char *, size_t,
+int archive_make_write_path(const serve_state_t, unsigned char *, size_t,
                             const unsigned char *, int,
                             size_t, const unsigned char *);
-int archive_make_move_path(unsigned char *, size_t,
+int archive_make_move_path(const serve_state_t, unsigned char *, size_t,
                            const unsigned char *, int,
                            int, const unsigned char *);
 
-int archive_rename(const unsigned char *, FILE *,
+int archive_rename(const serve_state_t, const unsigned char *, FILE *,
                    int, const unsigned char *,
                    int, const unsigned char *, int);
-int archive_remove(const unsigned char *, int, const unsigned char *);
-
+int archive_remove(const serve_state_t,
+                   const unsigned char *, int, const unsigned char *);
 
 #endif /* __ARCHIVE_PATHS_H__ */

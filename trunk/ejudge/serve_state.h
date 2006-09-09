@@ -70,8 +70,9 @@ struct serve_state
   int max_abstr_prob;
   int max_abstr_tester;
 };
+typedef struct serve_state *serve_state_t;
 
 // for now...
-extern struct serve_state serve_state;
+//extern struct serve_state serve_state;
 
 #endif /* __SERVE_STATE_H__ */
