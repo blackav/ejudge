@@ -19,6 +19,7 @@
 #include "prepare.h"
 #include "errlog.h"
 #include "serve_state.h"
+#include "serve_state.h"
 
 #include <reuse/osdeps.h>
 
@@ -30,14 +31,14 @@
 static int semid = -1;
 
 int
-cr_serialize_init(void)
+cr_serialize_init(const serve_state_t state)
 {
   int saved_errno;
 
-  if (!serve_state.global->cr_serialization_key) return 0;
+  if (!state->global->cr_serialization_key) return 0;
   if (semid >= 0) return 0;
 
-  semid = semget(serve_state.global->cr_serialization_key, 1, IPC_CREAT | IPC_EXCL | 0666);
+  semid = semget(state->global->cr_serialization_key, 1, IPC_CREAT | IPC_EXCL | 0666);
   if (semid < 0) {
     if (errno != EEXIST) {
       saved_errno = errno;
@@ -45,7 +46,7 @@ cr_serialize_init(void)
       errno = saved_errno;
       return -saved_errno;
     }
-    semid = semget(serve_state.global->cr_serialization_key, 1, 0);
+    semid = semget(state->global->cr_serialization_key, 1, 0);
     if (semid < 0) {
       saved_errno = errno;
       err("cr_serialize_init: semget() failed: %s", os_ErrorMsg());
@@ -65,13 +66,13 @@ cr_serialize_init(void)
 }
 
 int
-cr_serialize_lock(void)
+cr_serialize_lock(const serve_state_t state)
 {
   int saved_errno;
   struct sembuf ops[1] = {{ 0, -1, SEM_UNDO }};
   struct sembuf ops_nowait[1] = {{ 0, -1, SEM_UNDO | IPC_NOWAIT }};
 
-  if (!serve_state.global->cr_serialization_key) return 0;
+  if (!state->global->cr_serialization_key) return 0;
 
   while (1) {
     if (semop(semid, ops_nowait, 1) >= 0) return 0;
@@ -99,12 +100,12 @@ cr_serialize_lock(void)
 }
 
 int
-cr_serialize_unlock(void)
+cr_serialize_unlock(const serve_state_t state)
 {
   struct sembuf ops[1] = {{ 0, 1, SEM_UNDO }};
   int saved_errno;
 
-  if (!serve_state.global->cr_serialization_key) return 0;
+  if (!state->global->cr_serialization_key) return 0;
 
   if (semop(semid, ops, 1) < 0) {
     saved_errno = errno;
