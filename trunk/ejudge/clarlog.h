@@ -33,6 +33,7 @@ struct clarlog_state;
 typedef struct clarlog_state *clarlog_state_t;
 
 clarlog_state_t clar_init(void);
+clarlog_state_t clar_destroy(clarlog_state_t state);
 int clar_open(clarlog_state_t state, char const *path, int flags);
 int clar_add_record(clarlog_state_t state,
                     time_t         time,

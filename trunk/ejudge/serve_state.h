@@ -72,7 +72,4 @@ struct serve_state
 };
 typedef struct serve_state *serve_state_t;
 
-// for now...
-//extern struct serve_state serve_state;
-
 #endif /* __SERVE_STATE_H__ */
