@@ -153,26 +153,26 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
   prev_i = -1;
   for (i = 0; i < cur_entries_num; i++) {
     if (cur_entries[i].status == RUN_EMPTY) continue;
-    if (cur_entries[i].timestamp < 0) {
+    if (cur_entries[i].time < 0) {
       fprintf(flog, "Run %d time is negative\n", i);
       goto done;
     }
-    if (cur_entries[i].timestamp < prev_time ||
-        (cur_entries[i].timestamp == prev_time
+    if (cur_entries[i].time < prev_time ||
+        (cur_entries[i].time == prev_time
          && cur_entries[i].nsec < prev_nsec)) {
       fprintf(flog, "Run %d time is less than previous run time\n", i);
       goto done;
     }
     if (prev_i >= 0
-        && cur_entries[prev_i].timestamp == cur_entries[i].timestamp
+        && cur_entries[prev_i].time == cur_entries[i].time
         && cur_entries[prev_i].nsec == cur_entries[i].nsec
-        && cur_entries[prev_i].team == cur_entries[i].team
-        && cur_entries[prev_i].language == cur_entries[i].language
-        && cur_entries[prev_i].problem == cur_entries[i].problem) {
+        && cur_entries[prev_i].user_id == cur_entries[i].user_id
+        && cur_entries[prev_i].lang_id == cur_entries[i].lang_id
+        && cur_entries[prev_i].prob_id == cur_entries[i].prob_id) {
       fprintf(flog, "Run %d seems like a duplicate of the previuos run\n", i);
       goto done;
     }
-    prev_time = cur_entries[i].timestamp;
+    prev_time = cur_entries[i].time;
     prev_nsec = cur_entries[i].nsec;
     prev_i = i;
   }
@@ -187,8 +187,8 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
 
   fprintf(flog, "Scanning new entries\n");
   for (i = 0; i < in_entries_num; i++) {
-    if (in_entries[i].submission != i) {
-      fprintf(flog, "Run %d has run_id %d\n", i, in_entries[i].submission);
+    if (in_entries[i].run_id != i) {
+      fprintf(flog, "Run %d has run_id %d\n", i, in_entries[i].run_id);
       goto done;
     }
     if (in_entries[i].is_hidden) {
@@ -227,38 +227,38 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
   for (i = 0; i < in_entries_num; i++) {
     if (in_entries[i].status == RUN_EMPTY) continue;
     ASSERT(in_entries[i].status <= RUN_MAX_STATUS);
-    if (in_entries[i].timestamp < 0) {
+    if (in_entries[i].time < 0) {
       fprintf(flog, "Run %d time is negative\n", i);
       goto done;
     }
-    if (in_entries[i].timestamp < prev_time ||
-        (in_entries[i].timestamp == prev_time
+    if (in_entries[i].time < prev_time ||
+        (in_entries[i].time == prev_time
          && in_entries[i].nsec < prev_nsec)) {
       fprintf(flog, "Run %d time is less than previous run time\n", i);
       goto done;
     }
     if (prev_i >= 0
-        && in_entries[prev_i].timestamp == in_entries[i].timestamp
+        && in_entries[prev_i].time == in_entries[i].time
         && in_entries[prev_i].nsec == in_entries[i].nsec
-        && in_entries[prev_i].team == in_entries[i].team
-        && in_entries[prev_i].language == in_entries[i].language
-        && in_entries[prev_i].problem == in_entries[i].problem) {
+        && in_entries[prev_i].user_id == in_entries[i].user_id
+        && in_entries[prev_i].lang_id == in_entries[i].lang_id
+        && in_entries[prev_i].prob_id == in_entries[i].prob_id) {
       fprintf(flog, "Run %d seems like a duplicate of the previuos run\n", i);
       goto done;
     }
-    prev_time = in_entries[i].timestamp;
+    prev_time = in_entries[i].time;
     prev_nsec = in_entries[i].nsec;
     prev_i = i;
-    if (!teamdb_lookup(state->teamdb_state, in_entries[i].team)) {
-      fprintf(flog, "Run %d team %d is not known\n", i, in_entries[i].team);
+    if (!teamdb_lookup(state->teamdb_state, in_entries[i].user_id)) {
+      fprintf(flog, "Run %d team %d is not known\n", i, in_entries[i].user_id);
       goto done;
     }
-    r = in_entries[i].problem;
+    r = in_entries[i].prob_id;
     if (r <= 0 || r > state->max_prob || !state->probs[r]) {
       fprintf(flog, "Run %d problem %d is not known\n", i, r);
       goto done;
     }
-    r = in_entries[i].language;
+    r = in_entries[i].lang_id;
     if (r <= 0 || r > state->max_lang || !state->langs[r]) {
       fprintf(flog, "Run %d problem %d is not known\n", i, r);
       goto done;
@@ -299,16 +299,16 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
         i++;
         continue;
       }
-      cur_time = cur_entries[i].timestamp - cur_header.start_time;
+      cur_time = cur_entries[i].time - cur_header.start_time;
       if (cur_time < 0) cur_time = 0;
       if (in_entries[j].status == RUN_EMPTY) {
         j++;
         continue;
       }
-      if (cur_time == in_entries[j].timestamp
+      if (cur_time == in_entries[j].time
           && cur_entries[i].nsec == in_entries[j].nsec) break;
-      if (cur_time < in_entries[j].timestamp
-          || (cur_time == in_entries[j].timestamp
+      if (cur_time < in_entries[j].time
+          || (cur_time == in_entries[j].time
               && cur_entries[i].nsec < in_entries[j].nsec))
         i++;
       else
@@ -320,15 +320,15 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
     k = j;
     for (; k < in_entries_num; k++) {
       if (in_entries[k].status == RUN_EMPTY) continue;
-      if (in_entries[k].timestamp != cur_time) break;
+      if (in_entries[k].time != cur_time) break;
       if (in_entries[k].nsec != cur_entries[i].nsec) break;
       if (new_cur_map[k] >= 0) continue;
-      if (cur_entries[i].team != in_entries[k].team) continue;
-      if (cur_entries[i].problem != in_entries[k].problem) continue;
-      if (cur_entries[i].language != in_entries[k].language) continue;
+      if (cur_entries[i].user_id != in_entries[k].user_id) continue;
+      if (cur_entries[i].prob_id != in_entries[k].prob_id) continue;
+      if (cur_entries[i].lang_id != in_entries[k].lang_id) continue;
       break;
     }
-    if (k < in_entries_num && in_entries[k].timestamp == cur_time
+    if (k < in_entries_num && in_entries[k].time == cur_time
         && in_entries[k].nsec == cur_entries[i].nsec) {
       /* establish correspondence */
       ASSERT(cur_new_map[i] == -1);
@@ -363,7 +363,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
         fprintf(flog, "Local run %d, imported %d: `size' does not match\n",
                 i, j);
       }
-      if (pa->ip != pb->ip) {
+      if (pa->a.ip != pb->a.ip) {
         fprintf(flog, "Local run %d, imported %d: `ip' does not match\n",
                 i, j);
       }
@@ -429,8 +429,8 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
         pa->size = pb->size;
         r = 1;
       }
-      if (pa->ip != pb->ip) {
-        pa->ip = pb->ip;
+      if (pa->a.ip != pb->a.ip) {
+        pa->a.ip = pb->a.ip;
         r = 1;
       }
       if (memcmp(pa->sha1, pb->sha1, sizeof(pa->sha1)) != 0) {
@@ -486,7 +486,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
   /* fix time in the imported runs */
   for (j = 0; j < in_entries_num; j++) {
     if (in_entries[j].status == RUN_EMPTY) continue;
-    in_entries[j].timestamp += cur_header.start_time;
+    in_entries[j].time += cur_header.start_time;
   }
 
   fprintf(flog, "Doing sanity check of the new runlog\n");
@@ -507,23 +507,23 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
       j++;
       continue;
     }
-    if (cur_entries[i].timestamp < in_entries[j].timestamp
-        || (cur_entries[i].timestamp == in_entries[j].timestamp
+    if (cur_entries[i].time < in_entries[j].time
+        || (cur_entries[i].time == in_entries[j].time
             && cur_entries[i].nsec < in_entries[j].nsec)) {
       ASSERT(cur_new_map[i] == -1);
       memcpy(&out_entries[cur_out], &cur_entries[i], sizeof(out_entries[0]));
-      out_entries[cur_out].submission = cur_out;
+      out_entries[cur_out].run_id = cur_out;
       cur_merged_map[i] = cur_out;
       i++;
       cur_out++;
       continue;
     }
-    if (cur_entries[i].timestamp > in_entries[j].timestamp
-        || (cur_entries[i].timestamp == in_entries[j].timestamp
+    if (cur_entries[i].time > in_entries[j].time
+        || (cur_entries[i].time == in_entries[j].time
             && cur_entries[i].nsec > in_entries[j].nsec)) {
       ASSERT(new_cur_map[j] == -1);
       memcpy(&out_entries[cur_out], &in_entries[j], sizeof(out_entries[0]));
-      out_entries[cur_out].submission = cur_out;
+      out_entries[cur_out].run_id = cur_out;
       out_entries[cur_out].is_imported = 1;
       new_merged_map[j] = cur_out;
       j++;
@@ -535,12 +535,12 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
     /* detect entries with the same timestamp */
     for (i2 = i; i2 < cur_entries_num; i2++) {
       if (cur_entries[i2].status == RUN_EMPTY) continue;
-      if (cur_entries[i2].timestamp != cur_entries[i].timestamp
+      if (cur_entries[i2].time != cur_entries[i].time
           || cur_entries[i2].nsec != cur_entries[i].nsec) break;
     }
     for (j2 = j; j2 < in_entries_num; j2++) {
       if (in_entries[j2].status == RUN_EMPTY) continue;
-      if (in_entries[j2].timestamp != in_entries[j].timestamp
+      if (in_entries[j2].time != in_entries[j].time
           || in_entries[j2].nsec != in_entries[j].nsec) break;
     }
     while (1) {
@@ -548,8 +548,8 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
       for (i3 = i; i3 < i2; i3++) {
         if (cur_entries[i3].status == RUN_EMPTY) continue;
         if (cur_used_flag[i3]) continue;
-        if (cur_entries[i3].team < min_team_id) {
-          min_team_id = cur_entries[i3].team;
+        if (cur_entries[i3].user_id < min_team_id) {
+          min_team_id = cur_entries[i3].user_id;
           min_i = i3;
           min_j = -1;
         }
@@ -557,8 +557,8 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
       for (j3 = j; j3 < j2; j3++) {
         if (in_entries[j3].status == RUN_EMPTY) continue;
         if (in_used_flag[j3]) continue;
-        if (in_entries[j3].team < min_team_id) {
-          min_team_id = in_entries[j3].team;
+        if (in_entries[j3].user_id < min_team_id) {
+          min_team_id = in_entries[j3].user_id;
           min_i = -1;
           min_j = j3;
         }
@@ -573,7 +573,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
 		  min_i, min_j);
           memcpy(&out_entries[cur_out], &in_entries[min_j],
                  sizeof(out_entries[0]));
-          out_entries[cur_out].submission = cur_out;
+          out_entries[cur_out].run_id = cur_out;
           out_entries[cur_out].is_imported = 1;
           new_merged_map[min_j] = cur_out;
           in_used_flag[min_j] = 1;
@@ -584,7 +584,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
           /* copying from the current log */
           memcpy(&out_entries[cur_out], &cur_entries[min_i],
                  sizeof(out_entries[0]));
-          out_entries[cur_out].submission = cur_out;
+          out_entries[cur_out].run_id = cur_out;
           cur_merged_map[min_i] = cur_out;
           cur_used_flag[min_i] = 1;
           if (min_j != -1) {
@@ -598,7 +598,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
         ASSERT(new_cur_map[min_j] == -1);
         memcpy(&out_entries[cur_out], &in_entries[min_j],
                sizeof(out_entries[0]));
-        out_entries[cur_out].submission = cur_out;
+        out_entries[cur_out].run_id = cur_out;
         out_entries[cur_out].is_imported = 1;
         new_merged_map[min_j] = cur_out;
         in_used_flag[min_j] = 1;
@@ -613,7 +613,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
     if (cur_entries[i].status == RUN_EMPTY) continue;
     ASSERT(cur_new_map[i] == -1);
     memcpy(&out_entries[cur_out], &cur_entries[i], sizeof(out_entries[0]));
-    out_entries[cur_out].submission = cur_out;
+    out_entries[cur_out].run_id = cur_out;
     cur_merged_map[i] = cur_out;
     cur_out++;
   }
@@ -621,7 +621,7 @@ runlog_import_xml(serve_state_t state, runlog_state_t runlog_state,
     if (in_entries[j].status == RUN_EMPTY) continue;
     ASSERT(new_cur_map[j] == -1);
     memcpy(&out_entries[cur_out], &in_entries[j], sizeof(out_entries[0]));
-    out_entries[cur_out].submission = cur_out;
+    out_entries[cur_out].run_id = cur_out;
     out_entries[cur_out].is_imported = 1;
     new_merged_map[j] = cur_out;
     cur_out++;

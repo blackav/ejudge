@@ -217,35 +217,35 @@ main(int argc, char **argv)
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
           reg_events++;
-          if (cur_entry->team <= 0 || cur_entry->team > max_user_id
-              || !userlist->user_map[cur_entry->team]) {
+          if (cur_entry->user_id <= 0 || cur_entry->user_id > max_user_id
+              || !userlist->user_map[cur_entry->user_id]) {
             err("contest %d runid %d invalid user_id %d",
-                i, j, cur_entry->team);
+                i, j, cur_entry->user_id);
           } else {
-            user_stat[cur_entry->team].run_num++;
-            user_stat[cur_entry->team].run_size += cur_entry->size;
+            user_stat[cur_entry->user_id].run_num++;
+            user_stat[cur_entry->user_id].run_size += cur_entry->size;
           }
           break;
 
         case RUN_VIRTUAL_START:
         case RUN_VIRTUAL_STOP:
           virt_events++;
-          if (cur_entry->team <= 0 || cur_entry->team > max_user_id
-              || !userlist->user_map[cur_entry->team]) {
+          if (cur_entry->user_id <= 0 || cur_entry->user_id > max_user_id
+              || !userlist->user_map[cur_entry->user_id]) {
             err("contest %d runid %d invalid user_id %d",
-                i, j, cur_entry->team);
+                i, j, cur_entry->user_id);
           } else {
-            user_stat[cur_entry->team].virt_events++;
+            user_stat[cur_entry->user_id].virt_events++;
           }
-          for (cntsp = user_stat[cur_entry->team].virt_contests;
+          for (cntsp = user_stat[cur_entry->user_id].virt_contests;
                cntsp; cntsp = cntsp->next) {
             if (cntsp->contest_id == i) break;
           }
           if (!cntsp) {
             cntsp = (struct vcntslist*) xcalloc(1, sizeof(*cntsp));
             cntsp->contest_id = i;
-            cntsp->next = user_stat[cur_entry->team].virt_contests;
-            user_stat[cur_entry->team].virt_contests = cntsp;
+            cntsp->next = user_stat[cur_entry->user_id].virt_contests;
+            user_stat[cur_entry->user_id].virt_contests = cntsp;
           }
           break;
 

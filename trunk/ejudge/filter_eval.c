@@ -55,8 +55,8 @@ is_latest(struct filter_env *env, int rid)
   }
   for (r = rid + 1; r < env->rtotal; r++) {
     if (env->rentries[r].status > RUN_MAX_STATUS) continue;
-    if (env->rentries[rid].team != env->rentries[r].team
-        || env->rentries[rid].problem != env->rentries[r].problem)
+    if (env->rentries[rid].user_id != env->rentries[r].user_id
+        || env->rentries[rid].prob_id != env->rentries[r].prob_id)
       continue;
     switch (env->rentries[r].status) {
     case RUN_OK:
@@ -80,8 +80,8 @@ is_afterok(struct filter_env *env, int rid)
     return 0;
   for (r = rid - 1; r >= 0; r--) {
     if (env->rentries[r].status != RUN_OK) continue;
-    if (env->rentries[rid].team != env->rentries[r].team
-        || env->rentries[rid].problem != env->rentries[r].problem)
+    if (env->rentries[rid].user_id != env->rentries[r].user_id
+        || env->rentries[rid].prob_id != env->rentries[r].prob_id)
       continue;
     return 1;
   }
@@ -186,12 +186,12 @@ do_eval(struct filter_env *env,
     case TOK_TIME:
       res->kind = TOK_TIME_L;
       res->type = FILTER_TYPE_TIME;
-      res->v.a = env->rentries[r1.v.i].timestamp;
+      res->v.a = env->rentries[r1.v.i].time;
       break;
     case TOK_DUR:
       res->kind = TOK_DUR_L;
       res->type = FILTER_TYPE_DUR;
-      res->v.u = env->rentries[r1.v.i].timestamp - env->rhead.start_time;
+      res->v.u = env->rentries[r1.v.i].time - env->rhead.start_time;
       break;
     case TOK_SIZE:
       res->kind = TOK_SIZE_L;
@@ -206,12 +206,12 @@ do_eval(struct filter_env *env,
     case TOK_IP:
       res->kind = TOK_IP_L;
       res->type = FILTER_TYPE_IP;
-      res->v.p = env->rentries[r1.v.i].ip;
+      res->v.p = env->rentries[r1.v.i].a.ip;
       break;
     case TOK_PROB:
       res->kind = TOK_STRING_L;
       res->type = FILTER_TYPE_STRING;
-      prob_id = env->rentries[r1.v.i].problem;
+      prob_id = env->rentries[r1.v.i].prob_id;
       if (!prob_id || !env->probs[prob_id]) {
         res->v.s = envdup(env, "");
       } else {
@@ -221,12 +221,12 @@ do_eval(struct filter_env *env,
     case TOK_UID:
       res->kind = TOK_INT_L;
       res->type = FILTER_TYPE_INT;
-      res->v.i = env->rentries[r1.v.i].team;
+      res->v.i = env->rentries[r1.v.i].user_id;
       break;
     case TOK_LOGIN:
       res->kind = TOK_STRING_L;
       res->type = FILTER_TYPE_STRING;
-      user_id = env->rentries[r1.v.i].team;
+      user_id = env->rentries[r1.v.i].user_id;
       if (!user_id) {
         res->v.s = envdup(env, "");
       } else {
@@ -236,7 +236,7 @@ do_eval(struct filter_env *env,
     case TOK_LANG:
       res->kind = TOK_STRING_L;
       res->type = FILTER_TYPE_STRING;
-      lang_id = env->rentries[r1.v.i].language;
+      lang_id = env->rentries[r1.v.i].lang_id;
       if (!lang_id || !env->langs[lang_id]) {
         res->v.s = envdup(env, "");
       } else {
@@ -278,8 +278,8 @@ do_eval(struct filter_env *env,
       res->type = FILTER_TYPE_INT;
       c = env->rentries[r1.v.i].variant;
       if (!c) {
-        c = find_variant(env->serve_state, env->rentries[r1.v.i].team,
-                         env->rentries[r1.v.i].problem);
+        c = find_variant(env->serve_state, env->rentries[r1.v.i].user_id,
+                         env->rentries[r1.v.i].prob_id);
       }
       res->v.i = c;
       break;
@@ -292,7 +292,7 @@ do_eval(struct filter_env *env,
     case TOK_USERINVISIBLE:
       res->kind = TOK_BOOL_L;
       res->type = FILTER_TYPE_BOOL;
-      user_id = env->rentries[r1.v.i].team;
+      user_id = env->rentries[r1.v.i].user_id;
       if (!user_id) {
         res->v.b = 0;
       } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
@@ -306,7 +306,7 @@ do_eval(struct filter_env *env,
     case TOK_USERBANNED:
       res->kind = TOK_BOOL_L;
       res->type = FILTER_TYPE_BOOL;
-      user_id = env->rentries[r1.v.i].team;
+      user_id = env->rentries[r1.v.i].user_id;
       if (!user_id) {
         res->v.b = 0;
       } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
@@ -320,7 +320,7 @@ do_eval(struct filter_env *env,
     case TOK_USERLOCKED:
       res->kind = TOK_BOOL_L;
       res->type = FILTER_TYPE_BOOL;
-      user_id = env->rentries[r1.v.i].team;
+      user_id = env->rentries[r1.v.i].user_id;
       if (!user_id) {
         res->v.b = 0;
       } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
@@ -367,12 +367,12 @@ do_eval(struct filter_env *env,
   case TOK_CURTIME:
     res->kind = TOK_TIME_L;
     res->type = FILTER_TYPE_TIME;
-    res->v.a = env->cur->timestamp;
+    res->v.a = env->cur->time;
     break;
   case TOK_CURDUR:
     res->kind = TOK_DUR_L;
     res->type = FILTER_TYPE_DUR;
-    res->v.u = env->cur->timestamp - env->rhead.start_time;
+    res->v.u = env->cur->time - env->rhead.start_time;
     break;
   case TOK_CURSIZE:
     res->kind = TOK_SIZE_L;
@@ -387,38 +387,38 @@ do_eval(struct filter_env *env,
   case TOK_CURIP:
     res->kind = TOK_IP_L;
     res->type = FILTER_TYPE_IP;
-    res->v.p = env->cur->ip;
+    res->v.p = env->cur->a.ip;
     break;
   case TOK_CURPROB:
     res->kind = TOK_STRING_L;
     res->type = FILTER_TYPE_STRING;
-    if (!env->cur->problem || !env->probs[env->cur->problem]) {
+    if (!env->cur->prob_id || !env->probs[env->cur->prob_id]) {
       res->v.s = envdup(env, "");
     } else {
-      res->v.s = envdup(env, env->probs[env->cur->problem]->short_name);
+      res->v.s = envdup(env, env->probs[env->cur->prob_id]->short_name);
     }
     break;
   case TOK_CURUID:
     res->kind = TOK_INT_L;
     res->type = FILTER_TYPE_INT;
-    res->v.i = env->cur->team;
+    res->v.i = env->cur->user_id;
     break;
   case TOK_CURLOGIN:
     res->kind = TOK_STRING_L;
     res->type = FILTER_TYPE_STRING;
-    if (!env->cur->team) {
+    if (!env->cur->user_id) {
       res->v.s = envdup(env, "");
     } else {
-      res->v.s = envdup(env, teamdb_get_login(env->teamdb_state, env->cur->team));
+      res->v.s = envdup(env, teamdb_get_login(env->teamdb_state, env->cur->user_id));
     }
     break;
   case TOK_CURLANG:
     res->kind = TOK_STRING_L;
     res->type = FILTER_TYPE_STRING;
-    if (!env->cur->language || !env->langs[env->cur->language]) {
+    if (!env->cur->lang_id || !env->langs[env->cur->lang_id]) {
       res->v.s = envdup(env, "");
     } else {
-      res->v.s = envdup(env, env->langs[env->cur->language]->short_name);
+      res->v.s = envdup(env, env->langs[env->cur->lang_id]->short_name);
     }
     break;
   case TOK_CURRESULT:
@@ -455,8 +455,8 @@ do_eval(struct filter_env *env,
     res->kind = TOK_INT_L;
     res->type = FILTER_TYPE_INT;
     c = env->cur->variant;
-    if (!c) c = find_variant(env->serve_state, env->cur->team,
-                             env->cur->problem);
+    if (!c) c = find_variant(env->serve_state, env->cur->user_id,
+                             env->cur->prob_id);
     res->v.i = c;
     break;
   case TOK_CURRAWVARIANT:
@@ -468,7 +468,7 @@ do_eval(struct filter_env *env,
   case TOK_CURUSERINVISIBLE:
     res->kind = TOK_BOOL_L;
     res->type = FILTER_TYPE_BOOL;
-    user_id = env->cur->team;
+    user_id = env->cur->user_id;
     if (!user_id) {
       res->v.b = 0;
     } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
@@ -482,7 +482,7 @@ do_eval(struct filter_env *env,
   case TOK_CURUSERBANNED:
     res->kind = TOK_BOOL_L;
     res->type = FILTER_TYPE_BOOL;
-    user_id = env->cur->team;
+    user_id = env->cur->user_id;
     if (!user_id) {
       res->v.b = 0;
     } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
@@ -496,7 +496,7 @@ do_eval(struct filter_env *env,
   case TOK_CURUSERLOCKED:
     res->kind = TOK_BOOL_L;
     res->type = FILTER_TYPE_BOOL;
-    user_id = env->cur->team;
+    user_id = env->cur->user_id;
     if (!user_id) {
       res->v.b = 0;
     } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
@@ -510,12 +510,12 @@ do_eval(struct filter_env *env,
   case TOK_CURLATEST:
     res->kind = TOK_BOOL_L;
     res->type = FILTER_TYPE_BOOL;
-    res->v.b = is_latest(env, env->cur->submission);
+    res->v.b = is_latest(env, env->cur->run_id);
     break;
   case TOK_CURAFTEROK:
     res->kind = TOK_BOOL_L;
     res->type = FILTER_TYPE_BOOL;
-    res->v.b = is_afterok(env, env->cur->submission);
+    res->v.b = is_afterok(env, env->cur->run_id);
     break;
 
   case TOK_NOW:

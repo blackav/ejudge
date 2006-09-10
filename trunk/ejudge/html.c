@@ -95,7 +95,7 @@ calc_kirov_score(unsigned char *outbuf,
 
   // get date_penalty
   for (dpi = 0; dpi < pr->dp_total; dpi++)
-    if (pe->timestamp < pr->dp_infos[dpi].deadline)
+    if (pe->time < pr->dp_infos[dpi].deadline)
       break;
   if (dpi < pr->dp_total) {
     date_penalty = pr->dp_infos[dpi].penalty;
@@ -199,8 +199,8 @@ write_html_run_status(const serve_state_t state, FILE *f, struct run_entry *pe,
   struct section_problem_data *pr = 0;
   int need_extra_col = 0;
 
-  if (pe->problem > 0 && pe->problem <= state->max_prob)
-    pr = state->probs[pe->problem];
+  if (pe->prob_id > 0 && pe->prob_id <= state->max_prob)
+    pr = state->probs[pe->prob_id];
   run_status_str(pe->status, status_str, 0);
   fprintf(f, "<td>%s</td>", status_str);
 
@@ -287,8 +287,8 @@ write_text_run_status(const serve_state_t state, FILE *f, struct run_entry *pe,
   struct section_problem_data *pr = 0;
   int need_extra_col = 0;
 
-  if (pe->problem > 0 && pe->problem <= state->max_prob)
-    pr = state->probs[pe->problem];
+  if (pe->prob_id > 0 && pe->prob_id <= state->max_prob)
+    pr = state->probs[pe->prob_id];
   run_status_to_str_short(status_str, sizeof(status_str), pe->status);
   fprintf(f, "%s;", status_str);
 
@@ -400,20 +400,21 @@ write_user_problems_summary(const serve_state_t state,
     if (re.status > RUN_MAX_STATUS) continue;
 
     cur_prob = 0;
-    if (re.problem > 0 && re.problem <= state->max_prob) cur_prob = state->probs[re.problem];
+    if (re.prob_id > 0 && re.prob_id <= state->max_prob)
+      cur_prob = state->probs[re.prob_id];
     if (!cur_prob) continue;
 
-    if (re.team <= 0 || re.team >= total_teams) continue;
-    if (re.team != user_id) {
+    if (re.user_id <= 0 || re.user_id >= total_teams) continue;
+    if (re.user_id != user_id) {
       if (re.is_hidden) continue;
       if (teamdb_get_flags(state->teamdb_state,
-                           re.team) & (TEAM_INVISIBLE | TEAM_BANNED))
+                           re.user_id) & (TEAM_INVISIBLE | TEAM_BANNED))
         continue;
       if (re.status == RUN_OK) {
-        if (!user_flag[re.team * (state->max_prob + 1) + re.problem]) {
-          prev_successes[re.problem]++;
+        if (!user_flag[re.user_id * (state->max_prob + 1) + re.prob_id]) {
+          prev_successes[re.prob_id]++;
         }
-        user_flag[re.team * (state->max_prob + 1) + re.problem] = 1;
+        user_flag[re.user_id * (state->max_prob + 1) + re.prob_id] = 1;
       }
       continue;
     }
@@ -424,8 +425,8 @@ write_user_problems_summary(const serve_state_t state,
       case RUN_OK:
       case RUN_PARTIAL:
       case RUN_ACCEPTED:
-        accepted_flag[re.problem] = 1;
-        best_run[re.problem] = run_id;
+        accepted_flag[re.prob_id] = 1;
+        best_run[re.prob_id] = run_id;
         break;
 
       case RUN_COMPILE_ERR:
@@ -436,8 +437,8 @@ write_user_problems_summary(const serve_state_t state,
       case RUN_CHECK_FAILED:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
-        if (!accepted_flag[re.problem]) {
-          best_run[re.problem] = run_id;
+        if (!accepted_flag[re.prob_id]) {
+          best_run[re.prob_id] = run_id;
         }
         break;
 
@@ -446,9 +447,9 @@ write_user_problems_summary(const serve_state_t state,
         break;
 
       case RUN_PENDING:
-        pending_flag[re.problem] = 1;
-        attempts[re.problem]++;
-        if (best_run[re.problem] < 0) best_run[re.problem] = run_id;
+        pending_flag[re.prob_id] = 1;
+        attempts[re.prob_id]++;
+        if (best_run[re.prob_id] < 0) best_run[re.prob_id] = run_id;
         break;
 
       default:
@@ -456,15 +457,15 @@ write_user_problems_summary(const serve_state_t state,
       }
     } else if (state->global->score_system_val == SCORE_OLYMPIAD) {
       // OLYMPIAD contest in judging mode
-      //if (solved_flag[re.problem]) continue;
+      //if (solved_flag[re.prob_id]) continue;
 
       switch (re.status) {
       case RUN_OK:
-        solved_flag[re.problem] = 1;
-        best_run[re.problem] = run_id;
+        solved_flag[re.prob_id] = 1;
+        best_run[re.prob_id] = run_id;
         cur_score = calc_kirov_score(0, 0, &re, cur_prob, 0, 0, 0, 0, 0);
-        //if (cur_score > best_score[re.problem])
-        best_score[re.problem] = cur_score;
+        //if (cur_score > best_score[re.prob_id])
+        best_score[re.prob_id] = cur_score;
         break;
 
       case RUN_COMPILE_ERR:
@@ -478,12 +479,12 @@ write_user_problems_summary(const serve_state_t state,
         break;
 
       case RUN_PARTIAL:
-        solved_flag[re.problem] = 0;
-        best_run[re.problem] = run_id;
-        attempts[re.problem]++;
+        solved_flag[re.prob_id] = 0;
+        best_run[re.prob_id] = run_id;
+        attempts[re.prob_id]++;
         cur_score = calc_kirov_score(0, 0, &re, cur_prob, 0, 0, 0, 0, 0);
-        //if (cur_score > best_score[re.problem])
-        best_score[re.problem] = cur_score;
+        //if (cur_score > best_score[re.prob_id])
+        best_score[re.prob_id] = cur_score;
         break;
 
       case RUN_ACCEPTED:
@@ -496,8 +497,8 @@ write_user_problems_summary(const serve_state_t state,
         break;
 
       case RUN_PENDING:
-        pending_flag[re.problem] = 1;
-        if (best_run[re.problem] < 0) best_run[re.problem] = run_id;
+        pending_flag[re.prob_id] = 1;
+        if (best_run[re.prob_id] < 0) best_run[re.prob_id] = run_id;
         break;
 
       default:
@@ -505,29 +506,29 @@ write_user_problems_summary(const serve_state_t state,
       }
     } else if (state->global->score_system_val == SCORE_KIROV) {
       // KIROV contest
-      if (solved_flag[re.problem]) continue;
+      if (solved_flag[re.prob_id]) continue;
 
       switch (re.status) {
       case RUN_OK:
-        solved_flag[re.problem] = 1;
+        solved_flag[re.prob_id] = 1;
         cur_score = calc_kirov_score(0, 0, &re, cur_prob,
-                                     attempts[re.problem],
-                                     disqualified[re.problem],
-                                     prev_successes[re.problem], 0, 0);
+                                     attempts[re.prob_id],
+                                     disqualified[re.prob_id],
+                                     prev_successes[re.prob_id], 0, 0);
 
-        if (cur_score >= best_score[re.problem]) {
-          best_score[re.problem] = cur_score;
-          best_run[re.problem] = run_id;
+        if (cur_score >= best_score[re.prob_id]) {
+          best_score[re.prob_id] = cur_score;
+          best_run[re.prob_id] = run_id;
         }
         break;
 
       case RUN_COMPILE_ERR:
         if (!state->global->ignore_compile_errors) {
-          attempts[re.problem]++;
+          attempts[re.prob_id]++;
           cur_score = 0;
-          if (cur_score >= best_score[re.problem]) {
-            best_score[re.problem] = cur_score;
-            best_run[re.problem] = run_id;
+          if (cur_score >= best_score[re.prob_id]) {
+            best_score[re.prob_id] = cur_score;
+            best_run[re.prob_id] = run_id;
           }
         }
         break;
@@ -543,14 +544,14 @@ write_user_problems_summary(const serve_state_t state,
 
       case RUN_PARTIAL:
         cur_score = calc_kirov_score(0, 0, &re, cur_prob,
-                                     attempts[re.problem],
-                                     disqualified[re.problem],
-                                     prev_successes[re.problem], 0, 0);
+                                     attempts[re.prob_id],
+                                     disqualified[re.prob_id],
+                                     prev_successes[re.prob_id], 0, 0);
 
-        attempts[re.problem]++;
-        if (cur_score >= best_score[re.problem]) {
-          best_score[re.problem] = cur_score;
-          best_run[re.problem] = run_id;
+        attempts[re.prob_id]++;
+        if (cur_score >= best_score[re.prob_id]) {
+          best_score[re.prob_id] = cur_score;
+          best_run[re.prob_id] = run_id;
         }
         break;
 
@@ -561,40 +562,40 @@ write_user_problems_summary(const serve_state_t state,
         break;
 
       case RUN_DISQUALIFIED:
-        disqualified[re.problem]++;
+        disqualified[re.prob_id]++;
         break;
 
       case RUN_PENDING:
-        pending_flag[re.problem] = 1;
-        attempts[re.problem]++;
-        if (best_run[re.problem] < 0) best_run[re.problem] = run_id;
+        pending_flag[re.prob_id] = 1;
+        attempts[re.prob_id]++;
+        if (best_run[re.prob_id] < 0) best_run[re.prob_id] = run_id;
         break;
 
       default:
         abort();
       }
     } else if (state->global->score_system_val == SCORE_MOSCOW) {
-      if (solved_flag[re.problem]) continue;
+      if (solved_flag[re.prob_id]) continue;
 
       switch (re.status) {
       case RUN_OK:
-        solved_flag[re.problem] = 1;
-        best_run[re.problem] = run_id;
+        solved_flag[re.prob_id] = 1;
+        best_run[re.prob_id] = run_id;
         cur_score = cur_prob->full_score;
-        if (cur_score >= best_score[re.problem]) {
-          best_score[re.problem] = cur_score;
-          best_run[re.problem] = run_id;
+        if (cur_score >= best_score[re.prob_id]) {
+          best_score[re.prob_id] = cur_score;
+          best_run[re.prob_id] = run_id;
         }
         break;
 
       case RUN_COMPILE_ERR:
         if (!state->global->ignore_compile_errors) {
-          attempts[re.problem]++;
+          attempts[re.prob_id]++;
           cur_score = 0;
-          if (cur_score >= best_score[re.problem]
-              || best_run[re.problem] < 0) {
-            best_score[re.problem] = cur_score;
-            best_run[re.problem] = run_id;
+          if (cur_score >= best_score[re.prob_id]
+              || best_run[re.prob_id] < 0) {
+            best_score[re.prob_id] = cur_score;
+            best_run[re.prob_id] = run_id;
           }
         }
         break;
@@ -605,12 +606,12 @@ write_user_problems_summary(const serve_state_t state,
       case RUN_CHECK_FAILED:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
-        attempts[re.problem]++;
+        attempts[re.prob_id]++;
         cur_score = re.score;
-        if (cur_score >= best_score[re.problem]
-            || best_run[re.problem] < 0) {
-          best_score[re.problem] = cur_score;
-          best_run[re.problem] = run_id;
+        if (cur_score >= best_score[re.prob_id]
+            || best_run[re.prob_id] < 0) {
+          best_score[re.prob_id] = cur_score;
+          best_run[re.prob_id] = run_id;
         }
         break;
 
@@ -621,9 +622,9 @@ write_user_problems_summary(const serve_state_t state,
         break;
 
       case RUN_PENDING:
-        pending_flag[re.problem] = 1;
-        attempts[re.problem]++;
-        if (best_run[re.problem] < 0) best_run[re.problem] = run_id;
+        pending_flag[re.prob_id] = 1;
+        attempts[re.prob_id]++;
+        if (best_run[re.prob_id] < 0) best_run[re.prob_id] = run_id;
         break;
 
       default:
@@ -631,18 +632,18 @@ write_user_problems_summary(const serve_state_t state,
       }
     } else {
       // ACM contest
-      if (solved_flag[re.problem]) continue;
+      if (solved_flag[re.prob_id]) continue;
 
       switch (re.status) {
       case RUN_OK:
-        solved_flag[re.problem] = 1;
-        best_run[re.problem] = run_id;
+        solved_flag[re.prob_id] = 1;
+        best_run[re.prob_id] = run_id;
         break;
 
       case RUN_COMPILE_ERR:
         if (!state->global->ignore_compile_errors) {
-          attempts[re.problem]++;
-          best_run[re.problem] = run_id;
+          attempts[re.prob_id]++;
+          best_run[re.prob_id] = run_id;
         }
         break;
       case RUN_RUN_TIME_ERR:
@@ -652,8 +653,8 @@ write_user_problems_summary(const serve_state_t state,
       case RUN_CHECK_FAILED:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
-        attempts[re.problem]++;
-        best_run[re.problem] = run_id;
+        attempts[re.prob_id]++;
+        best_run[re.prob_id] = run_id;
         break;
 
       case RUN_PARTIAL:
@@ -663,9 +664,9 @@ write_user_problems_summary(const serve_state_t state,
         break;
 
       case RUN_PENDING:
-        pending_flag[re.problem] = 1;
-        attempts[re.problem]++;
-        if (best_run[re.problem] < 0) best_run[re.problem] = run_id;
+        pending_flag[re.prob_id] = 1;
+        attempts[re.prob_id]++;
+        if (best_run[re.prob_id] < 0) best_run[re.prob_id] = run_id;
         break;
 
       default:
@@ -893,11 +894,11 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
     if (re.status == RUN_VIRTUAL_START || re.status == RUN_VIRTUAL_STOP
         || re.status == RUN_EMPTY)
       continue;
-    if (re.team != uid) continue;
+    if (re.user_id != uid) continue;
     showed++;
 
-    if (re.language > 0 && re.language <= state->max_lang && state->langs[re.language])
-      lang = state->langs[re.language];
+    if (re.lang_id > 0 && re.lang_id <= state->max_lang && state->langs[re.lang_id])
+      lang = state->langs[re.lang_id];
 
     if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
       if (re.status == RUN_OK || re.status == RUN_PARTIAL)
@@ -910,7 +911,7 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
                        state->global->ignore_compile_errors);
 
     cur_prob = 0;
-    if (re.problem > 0 && re.problem <= state->max_prob) cur_prob = state->probs[re.problem];
+    if (re.prob_id > 0 && re.prob_id <= state->max_prob) cur_prob = state->probs[re.prob_id];
 
     prev_successes = RUN_TOO_MANY;
     if (state->global->score_system_val == SCORE_KIROV
@@ -925,28 +926,28 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
     if (re.is_imported) run_kind_str = "*";
     if (re.is_hidden) run_kind_str = "#";
 
-    time = re.timestamp;
+    time = re.time;
     if (!start_time) time = start_time;
     if (start_time > time) time = start_time;
     duration_str(state->global->show_astr_time, time, start_time, dur_str, 0);
     run_status_str(re.status, stat_str, 0);
     prob_str = "???";
-    if (state->probs[re.problem]) {
-      if (state->probs[re.problem]->variant_num > 0) {
+    if (state->probs[re.prob_id]) {
+      if (state->probs[re.prob_id]->variant_num > 0) {
         int variant = re.variant;
-        if (!variant) variant = find_variant(state, re.team, re.problem);
-        prob_str = alloca(strlen(state->probs[re.problem]->short_name) + 10);
+        if (!variant) variant = find_variant(state, re.user_id, re.prob_id);
+        prob_str = alloca(strlen(state->probs[re.prob_id]->short_name) + 10);
         if (variant > 0) {
-          sprintf(prob_str, "%s-%d", state->probs[re.problem]->short_name, variant);
+          sprintf(prob_str, "%s-%d", state->probs[re.prob_id]->short_name, variant);
         } else {
-          sprintf(prob_str, "%s-?", state->probs[re.problem]->short_name);
+          sprintf(prob_str, "%s-?", state->probs[re.prob_id]->short_name);
         }
       } else {
-        prob_str = state->probs[re.problem]->short_name;
+        prob_str = state->probs[re.prob_id]->short_name;
       }
     }
     lang_str = "???";
-    if (state->langs[re.language]) lang_str = state->langs[re.language]->short_name;
+    if (state->langs[re.lang_id]) lang_str = state->langs[re.lang_id]->short_name;
 
     fprintf(f, "<tr>\n");
     fprintf(f, "<td>%d%s</td>", i, run_kind_str);
@@ -1552,8 +1553,8 @@ do_write_kirov_standings(const serve_state_t state, FILE *f,
       if (runs[k].status == RUN_EMPTY || runs[k].status == RUN_VIRTUAL_START
           || runs[k].status == RUN_VIRTUAL_STOP) continue;
       if (runs[k].is_hidden) continue;
-      if(runs[k].team <= 0 && runs[k].team >= t_max) continue;
-      t_runs[runs[k].team] = 1;
+      if(runs[k].user_id <= 0 && runs[k].user_id >= t_max) continue;
+      t_runs[runs[k].user_id] = 1;
     }
   } else {
     memset(t_runs, 1, t_max);
@@ -1641,23 +1642,23 @@ do_write_kirov_standings(const serve_state_t state, FILE *f,
 
     if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP
         || pe->status == RUN_EMPTY) continue;
-    if (pe->team <= 0 || pe->team >= t_max) continue;
-    if (pe->problem <= 0 || pe->problem > state->max_prob) continue;
+    if (pe->user_id <= 0 || pe->user_id >= t_max) continue;
+    if (pe->prob_id <= 0 || pe->prob_id > state->max_prob) continue;
     if (pe->is_hidden) continue;
-    tind = t_rev[pe->team];
-    pind = p_rev[pe->problem];
+    tind = t_rev[pe->user_id];
+    pind = p_rev[pe->prob_id];
     up_ind = (tind << row_sh) + pind;
-    p = state->probs[pe->problem];
+    p = state->probs[pe->prob_id];
     if (!p || tind < 0 || pind < 0 || p->hidden) continue;
 
     // ignore future runs when not in privileged mode
     if (!client_flag) {
-      run_time = pe->timestamp;
+      run_time = pe->time;
       if (run_time < start_time) run_time = start_time;
       if (stop_time && run_time > stop_time) run_time = stop_time;
       if (run_time - start_time > cur_duration) continue;
       if (state->global->stand_ignore_after_d > 0
-          && pe->timestamp >= state->global->stand_ignore_after_d)
+          && pe->time >= state->global->stand_ignore_after_d)
         continue;
     }
 
@@ -1765,10 +1766,10 @@ do_write_kirov_standings(const serve_state_t state, FILE *f,
                                  0, 0);
         if (score > prob_score[up_ind]) {
           prob_score[up_ind] = score;
-          if (!p->stand_hide_time) sol_time[up_ind] = pe->timestamp;
+          if (!p->stand_hide_time) sol_time[up_ind] = pe->time;
         }
         if (!sol_time[up_ind] && !p->stand_hide_time)
-          sol_time[up_ind] = pe->timestamp;
+          sol_time[up_ind] = pe->time;
         if (!full_sol[up_ind]) {
           succ_att[pind]++;
           tot_att[pind]++;
@@ -2010,20 +2011,20 @@ do_write_kirov_standings(const serve_state_t state, FILE *f,
       /* print "Last success" information */
       if (last_success_run >= 0) {
         duration_str(state->global->show_astr_time,
-                     runs[last_success_run].timestamp, start_time,
+                     runs[last_success_run].time, start_time,
                      dur_str, sizeof(dur_str));
 
         fprintf(f, "<p%s>%s: %s, ",
                 state->global->stand_success_attr, _("Last success"), dur_str);
         if (state->global->team_info_url[0]) {
-          teamdb_export_team(state->teamdb_state, runs[last_success_run].team,
+          teamdb_export_team(state->teamdb_state, runs[last_success_run].user_id,
                              &u_info);
           sformat_message(dur_str, sizeof(dur_str), state->global->team_info_url,
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
         fprintf(f, "%s", teamdb_get_name(state->teamdb_state,
-                                         runs[last_success_run].team));
+                                         runs[last_success_run].user_id));
         if (state->global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -2031,11 +2032,11 @@ do_write_kirov_standings(const serve_state_t state, FILE *f,
 
         if (state->global->prob_info_url[0]) {
           sformat_message(dur_str, sizeof(dur_str), state->global->prob_info_url,
-                          NULL, state->probs[runs[last_success_run].problem],
+                          NULL, state->probs[runs[last_success_run].prob_id],
                           NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        fprintf(f, "%s", state->probs[runs[last_success_run].problem]->short_name);
+        fprintf(f, "%s", state->probs[runs[last_success_run].prob_id]->short_name);
         if (state->global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -2044,18 +2045,18 @@ do_write_kirov_standings(const serve_state_t state, FILE *f,
       /* print "Last submit" information */
       if (last_submit_run >= 0) {
         duration_str(state->global->show_astr_time,
-                     runs[last_submit_run].timestamp, start_time,
+                     runs[last_submit_run].time, start_time,
                      dur_str, sizeof(dur_str));
         fprintf(f, "<p%s>%s: %s, ",
                 state->global->stand_success_attr, _("Last submit"), dur_str);
         if (state->global->team_info_url[0]) {
-          teamdb_export_team(state->teamdb_state, runs[last_submit_run].team, &u_info);
+          teamdb_export_team(state->teamdb_state, runs[last_submit_run].user_id, &u_info);
           sformat_message(dur_str, sizeof(dur_str), state->global->team_info_url,
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
         fprintf(f, "%s", teamdb_get_name(state->teamdb_state,
-                                         runs[last_submit_run].team));
+                                         runs[last_submit_run].user_id));
         if (state->global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -2063,11 +2064,11 @@ do_write_kirov_standings(const serve_state_t state, FILE *f,
 
         if (state->global->prob_info_url[0]) {
           sformat_message(dur_str, sizeof(dur_str), state->global->prob_info_url,
-                          NULL, state->probs[runs[last_submit_run].problem],
+                          NULL, state->probs[runs[last_submit_run].prob_id],
                           NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        fprintf(f, "%s", state->probs[runs[last_submit_run].problem]->short_name);
+        fprintf(f, "%s", state->probs[runs[last_submit_run].prob_id]->short_name);
         if (state->global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -2584,9 +2585,9 @@ do_write_moscow_standings(const serve_state_t state, FILE *f,
     memset(u_runs, 0, u_max);
     for (i = 0; i < r_tot; i++)
       if (runs[i].status != RUN_EMPTY
-          && runs[i].team > 0 && runs[i].team < u_max
+          && runs[i].user_id > 0 && runs[i].user_id < u_max
           && !runs[i].is_hidden)
-        u_runs[runs[i].team] = 1;
+        u_runs[runs[i].user_id] = 1;
   } else {
     memset(u_runs, 1, u_max);
   }
@@ -2656,17 +2657,17 @@ do_write_moscow_standings(const serve_state_t state, FILE *f,
 
   for (i = 0; i < r_tot; i++) {
     const struct run_entry *pe = &runs[i];
-    time_t run_time = pe->timestamp;
+    time_t run_time = pe->time;
     const struct section_problem_data *prob;
     int up_ind;
 
     if (pe->is_hidden) continue;
     if (pe->status > RUN_MAX_STATUS && pe->status < RUN_TRANSIENT_FIRST) continue;
     if (pe->status > RUN_TRANSIENT_LAST) continue;
-    if (pe->team <= 0 || pe->team >= u_max || (u = u_rev[pe->team]) < 0) continue;
-    if (pe->problem <= 0 || pe->problem > state->max_prob) continue;
-    if ((p = p_rev[pe->problem]) < 0) continue;
-    prob = state->probs[pe->problem];
+    if (pe->user_id <= 0 || pe->user_id >= u_max || (u = u_rev[pe->user_id]) < 0) continue;
+    if (pe->prob_id <= 0 || pe->prob_id > state->max_prob) continue;
+    if ((p = p_rev[pe->prob_id]) < 0) continue;
+    prob = state->probs[pe->prob_id];
     up_ind = (u << row_sh) + p;
 
     if (up_solved[up_ind]) continue;
@@ -2681,7 +2682,7 @@ do_write_moscow_standings(const serve_state_t state, FILE *f,
     ustart = start_time;
     if (state->global->virtual) {
       // filter "future" virtual runs
-      ustart = run_get_virtual_start_time(state->runlog_state, pe->team);
+      ustart = run_get_virtual_start_time(state->runlog_state, pe->user_id);
       if (run_time < ustart) run_time = ustart;
       udur = run_time - ustart;
       if (udur > contest_dur) udur = contest_dur;
@@ -2692,7 +2693,7 @@ do_write_moscow_standings(const serve_state_t state, FILE *f,
       udur = run_time - start_time;
       if (current_dur > 0 && udur > current_dur) continue;
       if (state->global->stand_ignore_after_d > 0
-          && pe->timestamp >= state->global->stand_ignore_after_d)
+          && pe->time >= state->global->stand_ignore_after_d)
         continue;
     } else {
       if (run_time < start_time) run_time = start_time;
@@ -2711,11 +2712,11 @@ do_write_moscow_standings(const serve_state_t state, FILE *f,
       p_succ[p]++;
       if (!state->global->virtual) {
         last_success_run = i;
-        last_success_time = pe->timestamp;
+        last_success_time = pe->time;
         last_success_start = ustart;
         last_success_dur = udur;
         last_submit_run = i;
-        last_submit_time = pe->timestamp;
+        last_submit_time = pe->time;
         last_submit_start = ustart;
         last_submit_dur = udur;
       }
@@ -2730,7 +2731,7 @@ do_write_moscow_standings(const serve_state_t state, FILE *f,
       p_att[p]++;
       if (!state->global->virtual) {
         last_submit_run = i;
-        last_submit_time = pe->timestamp;
+        last_submit_time = pe->time;
         last_submit_start = ustart;
         last_submit_dur = udur;
       }
@@ -2739,7 +2740,7 @@ do_write_moscow_standings(const serve_state_t state, FILE *f,
       p_att[p]++;
       if (!state->global->virtual) {
         last_submit_run = i;
-        last_submit_time = pe->timestamp;
+        last_submit_time = pe->time;
         last_submit_start = ustart;
         last_submit_dur = udur;
       }
@@ -2927,14 +2928,14 @@ do_write_moscow_standings(const serve_state_t state, FILE *f,
         fprintf(f, "<p%s>%s: %s, ",
                 state->global->stand_success_attr, _("Last success"), strbuf);
         if (state->global->team_info_url[0]) {
-          teamdb_export_team(state->teamdb_state, runs[last_success_run].team,
+          teamdb_export_team(state->teamdb_state, runs[last_success_run].user_id,
                              &u_info);
           sformat_message(strbuf, sizeof(strbuf), state->global->team_info_url,
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
         fprintf(f, "%s", teamdb_get_name(state->teamdb_state,
-                                         runs[last_success_run].team));
+                                         runs[last_success_run].user_id));
         if (state->global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -2942,11 +2943,11 @@ do_write_moscow_standings(const serve_state_t state, FILE *f,
 
         if (state->global->prob_info_url[0]) {
           sformat_message(strbuf, sizeof(strbuf), state->global->prob_info_url,
-                          NULL, state->probs[runs[last_success_run].problem],
+                          NULL, state->probs[runs[last_success_run].prob_id],
                           NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        fprintf(f, "%s", state->probs[runs[last_success_run].problem]->short_name);
+        fprintf(f, "%s", state->probs[runs[last_success_run].prob_id]->short_name);
         if (state->global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -2964,13 +2965,13 @@ do_write_moscow_standings(const serve_state_t state, FILE *f,
         fprintf(f, "<p%s>%s: %s, ",
                 state->global->stand_success_attr, _("Last submit"), strbuf);
         if (state->global->team_info_url[0]) {
-          teamdb_export_team(state->teamdb_state, runs[last_submit_run].team, &u_info);
+          teamdb_export_team(state->teamdb_state, runs[last_submit_run].user_id, &u_info);
           sformat_message(strbuf, sizeof(strbuf), state->global->team_info_url,
                           NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
         fprintf(f, "%s", teamdb_get_name(state->teamdb_state,
-                                         runs[last_submit_run].team));
+                                         runs[last_submit_run].user_id));
         if (state->global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -2978,11 +2979,11 @@ do_write_moscow_standings(const serve_state_t state, FILE *f,
 
         if (state->global->prob_info_url[0]) {
           sformat_message(strbuf, sizeof(strbuf), state->global->prob_info_url,
-                          NULL, state->probs[runs[last_submit_run].problem],
+                          NULL, state->probs[runs[last_submit_run].prob_id],
                           NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        fprintf(f, "%s", state->probs[runs[last_submit_run].problem]->short_name);
+        fprintf(f, "%s", state->probs[runs[last_submit_run].prob_id]->short_name);
         if (state->global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
@@ -3383,9 +3384,9 @@ do_write_standings(const serve_state_t state, FILE *f,
     memset(t_runs, 0, t_max);
     for (k = 0; k < r_tot; k++) {
       if (runs[k].status == RUN_EMPTY) continue;
-      if (runs[k].team <= 0 || runs[k].team >= t_max) continue;
+      if (runs[k].user_id <= 0 || runs[k].user_id >= t_max) continue;
       if (runs[k].is_hidden) continue;
-      t_runs[runs[k].team] = 1;
+      t_runs[runs[k].user_id] = 1;
     }
   } else {
     memset(t_runs, 1, t_max);
@@ -3434,17 +3435,17 @@ do_write_standings(const serve_state_t state, FILE *f,
   /* now scan runs log */
   for (k = 0; k < r_tot; k++) {
     pe = &runs[k];
-    run_time = pe->timestamp;
+    run_time = pe->time;
     if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP
         || pe->status == RUN_EMPTY) continue;
-    if (pe->team <= 0 || pe->team >= t_max || t_rev[pe->team] < 0) continue;
-    if (pe->problem <= 0 || pe->problem > state->max_prob || p_rev[pe->problem] < 0)
+    if (pe->user_id <= 0 || pe->user_id >= t_max || t_rev[pe->user_id] < 0) continue;
+    if (pe->prob_id <= 0 || pe->prob_id > state->max_prob || p_rev[pe->prob_id] < 0)
       continue;
-    if (!state->probs[pe->problem] || state->probs[pe->problem]->hidden) continue;
+    if (!state->probs[pe->prob_id] || state->probs[pe->prob_id]->hidden) continue;
     if (pe->is_hidden) continue;
     if (state->global->virtual) {
       // filter "future" virtual runs
-      tstart = run_get_virtual_start_time(state->runlog_state, pe->team);
+      tstart = run_get_virtual_start_time(state->runlog_state, pe->user_id);
       ASSERT(run_time >= tstart);
       tdur = run_time - tstart;
       ASSERT(tdur <= contest_dur);
@@ -3457,12 +3458,12 @@ do_write_standings(const serve_state_t state, FILE *f,
         if (run_time < start_time) run_time = start_time;
         if (current_dur > 0 && run_time - start_time > current_dur) continue;
         if (state->global->stand_ignore_after_d > 0
-            && pe->timestamp >= state->global->stand_ignore_after_d)
+            && pe->time >= state->global->stand_ignore_after_d)
           continue;
       }
     }
-    tt = t_rev[pe->team];
-    pp = p_rev[pe->problem];
+    tt = t_rev[pe->user_id];
+    pp = p_rev[pe->prob_id];
     up_ind = (tt << row_sh) + pp;
 
     if (pe->status == RUN_OK) {
@@ -3470,7 +3471,7 @@ do_write_standings(const serve_state_t state, FILE *f,
       if (calc[up_ind] > 0) continue;
 
       last_success_run = k;
-      t_pen[tt] += state->probs[pe->problem]->acm_run_penalty * - calc[up_ind];
+      t_pen[tt] += state->probs[pe->prob_id]->acm_run_penalty * - calc[up_ind];
       calc[up_ind] = 1 - calc[up_ind];
       t_prob[tt]++;
       succ_att[pp]++;
@@ -3585,24 +3586,24 @@ do_write_standings(const serve_state_t state, FILE *f,
       fprintf(f, "<p%s>%s: %s, ",
               state->global->stand_success_attr, _("Last success"), dur_buf);
       if (state->global->team_info_url[0]) {
-        teamdb_export_team(state->teamdb_state, runs[last_success_run].team, &ttt);
+        teamdb_export_team(state->teamdb_state, runs[last_success_run].user_id, &ttt);
         sformat_message(dur_buf, sizeof(dur_buf), state->global->team_info_url,
                         NULL, NULL, NULL, NULL, &ttt, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_buf);      
       }
       fprintf(f, "%s", teamdb_get_name(state->teamdb_state,
-                                       runs[last_success_run].team));
+                                       runs[last_success_run].user_id));
       if (state->global->team_info_url[0]) {
         fprintf(f, "</a>");
       }
       fprintf(f, ", ");
       if (state->global->prob_info_url[0]) {
         sformat_message(dur_buf, sizeof(dur_buf), state->global->prob_info_url,
-                        NULL, state->probs[runs[last_success_run].problem],
+                        NULL, state->probs[runs[last_success_run].prob_id],
                         NULL, NULL, NULL, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_buf);
       }
-      fprintf(f, "%s", state->probs[runs[last_success_run].problem]->short_name);
+      fprintf(f, "%s", state->probs[runs[last_success_run].prob_id]->short_name);
       if (state->global->prob_info_url[0]) {
         fprintf(f, "</a>");
       }
@@ -3930,14 +3931,14 @@ do_write_public_log(const serve_state_t state, FILE *f, char const *header_str,
     if (pe->is_hidden) continue;
 
     cur_prob = 0;
-    if (pe->problem > 0 && pe->problem <= state->max_prob)
-      cur_prob = state->probs[pe->problem];
+    if (pe->prob_id > 0 && pe->prob_id <= state->max_prob)
+      cur_prob = state->probs[pe->prob_id];
 
     attempts = 0;
     disq_attempts = 0;
     prev_successes = RUN_TOO_MANY;
 
-    time = pe->timestamp;
+    time = pe->time;
     if (state->global->score_system_val == SCORE_KIROV) {
       run_get_attempts(state->runlog_state, i, &attempts, &disq_attempts,
                        state->global->ignore_compile_errors);
@@ -3955,24 +3956,24 @@ do_write_public_log(const serve_state_t state, FILE *f, char const *header_str,
     fputs("<tr>", f);
     fprintf(f, "<td>%d</td>", i);
     fprintf(f, "<td>%s</td>", durstr);
-    fprintf(f, "<td>%s</td>", teamdb_get_name(state->teamdb_state, pe->team));
-    if (state->probs[pe->problem]) {
-      if (state->probs[pe->problem]->variant_num > 0) {
+    fprintf(f, "<td>%s</td>", teamdb_get_name(state->teamdb_state,pe->user_id));
+    if (state->probs[pe->prob_id]) {
+      if (state->probs[pe->prob_id]->variant_num > 0) {
         int variant = pe->variant;
-        if (!variant) variant = find_variant(state, pe->team, pe->problem);
+        if (!variant) variant = find_variant(state, pe->user_id, pe->prob_id);
         if (variant > 0) {
-          fprintf(f, "<td>%s-%d</td>", state->probs[pe->problem]->short_name,variant);
+          fprintf(f, "<td>%s-%d</td>", state->probs[pe->prob_id]->short_name,variant);
         } else {
-          fprintf(f, "<td>%s-?</td>", state->probs[pe->problem]->short_name);
+          fprintf(f, "<td>%s-?</td>", state->probs[pe->prob_id]->short_name);
         }
       } else {
-        fprintf(f, "<td>%s</td>", state->probs[pe->problem]->short_name);
+        fprintf(f, "<td>%s</td>", state->probs[pe->prob_id]->short_name);
       }
     }
-    else fprintf(f, "<td>??? - %d</td>", pe->problem);
-    if (state->langs[pe->language])
-      fprintf(f, "<td>%s</td>", state->langs[pe->language]->short_name);
-    else fprintf(f, "<td>??? - %d</td>", pe->language);
+    else fprintf(f, "<td>??? - %d</td>", pe->prob_id);
+    if (state->langs[pe->lang_id])
+      fprintf(f, "<td>%s</td>", state->langs[pe->lang_id]->short_name);
+    else fprintf(f, "<td>??? - %d</td>", pe->lang_id);
 
     write_html_run_status(state, f, pe, 0, attempts, disq_attempts,
                           prev_successes);
@@ -4026,7 +4027,7 @@ new_write_user_source_view(const serve_state_t state,
     return -SRV_ERR_BAD_RUN_ID;
   }
   run_get_entry(state->runlog_state, rid, &re);
-  if (uid != re.team) {
+  if (uid != re.user_id) {
     err("user ids does not match");
     return -SRV_ERR_ACCESS_DENIED;
   }
@@ -4049,8 +4050,8 @@ new_write_user_source_view(const serve_state_t state,
   } else if (format == 1) {
     fwrite(src, 1, src_len, f);
   } else if (format == 2) {
-    if (re.language > 0 && re.language < state->max_lang && state->langs[re.language])
-      lang = state->langs[re.language];
+    if (re.lang_id > 0 && re.lang_id < state->max_lang && state->langs[re.lang_id])
+      lang = state->langs[re.lang_id];
     if (lang->content_type) {
       fprintf(f, "Content-type: %s\n", lang->content_type);
     } else if (lang->binary) {
@@ -4090,7 +4091,7 @@ write_user_run_status(const serve_state_t state, FILE *f, int uid, int rid,
     err("this run is not viewable by a user");
     return -SRV_ERR_BAD_RUN_ID;
   }
-  if (uid != re.team) {
+  if (uid != re.user_id) {
     err("user ids does not match");
     return -SRV_ERR_ACCESS_DENIED;
   }
@@ -4111,7 +4112,7 @@ write_user_run_status(const serve_state_t state, FILE *f, int uid, int rid,
     run_get_attempts(state->runlog_state, rid, &attempts, &disq_attempts,
                      state->global->ignore_compile_errors);
 
-  if (re.problem > 0 && re.problem <= state->max_prob) cur_prob = state->probs[re.problem];
+  if (re.prob_id > 0 && re.prob_id <= state->max_prob) cur_prob = state->probs[re.prob_id];
 
   prev_successes = RUN_TOO_MANY;
   if (state->global->score_system_val == SCORE_KIROV
@@ -4125,28 +4126,28 @@ write_user_run_status(const serve_state_t state, FILE *f, int uid, int rid,
   if (re.is_imported) run_kind_str = "I";
   if (re.is_hidden) run_kind_str = "H";
 
-  run_time = re.timestamp;
+  run_time = re.time;
   if (!start_time) run_time = start_time;
   if (start_time > run_time) run_time = start_time;
   duration_str(state->global->show_astr_time, run_time, start_time, dur_str, 0);
 
   prob_str = "???";
-  if (state->probs[re.problem]) {
-    if (state->probs[re.problem]->variant_num > 0) {
+  if (state->probs[re.prob_id]) {
+    if (state->probs[re.prob_id]->variant_num > 0) {
       int variant = re.variant;
-      if (!variant) variant = find_variant(state, re.team, re.problem);
-      prob_str = alloca(strlen(state->probs[re.problem]->short_name) + 10);
+      if (!variant) variant = find_variant(state, re.user_id, re.prob_id);
+      prob_str = alloca(strlen(state->probs[re.prob_id]->short_name) + 10);
       if (variant > 0) {
-        sprintf(prob_str, "%s-%d", state->probs[re.problem]->short_name, variant);
+        sprintf(prob_str, "%s-%d", state->probs[re.prob_id]->short_name, variant);
       } else {
-        sprintf(prob_str, "%s-?", state->probs[re.problem]->short_name);
+        sprintf(prob_str, "%s-?", state->probs[re.prob_id]->short_name);
       }
     } else {
-      prob_str = state->probs[re.problem]->short_name;
+      prob_str = state->probs[re.prob_id]->short_name;
     }
   }
   lang_str = "???";
-  if (state->langs[re.language]) lang_str = state->langs[re.language]->short_name;
+  if (state->langs[re.lang_id]) lang_str = state->langs[re.lang_id]->short_name;
 
   fprintf(f, "%d;%s;%s;%u;%s;%s;", rid, run_kind_str, dur_str, re.size,
           prob_str, lang_str);
@@ -4617,11 +4618,11 @@ new_write_user_report_view(const serve_state_t state, FILE *f, int uid, int rid,
   if (run_get_entry(state->runlog_state, rid, &re) < 0) {
     return -SRV_ERR_BAD_RUN_ID;
   }
-  if (re.problem <= 0 || re.problem > state->max_prob || !(prb = state->probs[re.problem])) {
-    err("get_record returned bad prob_id %d", re.problem);
+  if (re.prob_id <= 0 || re.prob_id > state->max_prob || !(prb = state->probs[re.prob_id])) {
+    err("get_record returned bad prob_id %d", re.prob_id);
     return -SRV_ERR_BAD_PROB_ID;
   }
-  if (uid != re.team) {
+  if (uid != re.user_id) {
     err("user ids does not match");
     return -SRV_ERR_ACCESS_DENIED;
   }

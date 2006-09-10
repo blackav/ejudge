@@ -66,8 +66,8 @@ compare_runs(const serve_state_t state, FILE *fout, int run_id1, int run_id2)
     errcode = -SRV_ERR_BAD_RUN_ID;
     goto cleanup;
   }
-  if (info1.language <= 0 || info1.language > state->max_lang
-      || !state->langs[info1.language] || state->langs[info1.language]->binary) {
+  if (info1.lang_id <= 0 || info1.lang_id > state->max_lang
+      || !state->langs[info1.lang_id] || state->langs[info1.lang_id]->binary) {
     errcode = -SRV_ERR_BAD_RUN_ID;
     goto cleanup;
   }
@@ -82,8 +82,8 @@ compare_runs(const serve_state_t state, FILE *fout, int run_id1, int run_id2)
     errcode = -SRV_ERR_BAD_RUN_ID;
     goto cleanup;
   }
-  if (info2.language <= 0 || info2.language > state->max_lang
-      || !state->langs[info2.language] || state->langs[info2.language]->binary) {
+  if (info2.lang_id <= 0 || info2.lang_id > state->max_lang
+      || !state->langs[info2.lang_id] || state->langs[info2.lang_id]->binary) {
     errcode = -SRV_ERR_BAD_RUN_ID;
     goto cleanup;
   }

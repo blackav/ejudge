@@ -52,6 +52,40 @@
 #define RUN_RECORD_SIZE 105
 #define RUN_HEADER_SIZE 105
 
+struct run_header_v1
+{
+  int    version;
+  ej_time_t start_time;
+  ej_time_t sched_time;
+  ej_time_t duration;
+  ej_time_t stop_time;
+  unsigned char pad[44];
+};
+
+struct run_entry_v1
+{
+  rint32_t       submission;
+  ej_time_t      timestamp;
+  ej_size_t      size;
+  ej_ip_t        ip;
+  ruint32_t      sha1[5];
+  rint32_t       team;
+  rint32_t       problem;
+  rint32_t       score;
+  signed char    locale_id;
+  unsigned char  language;
+  unsigned char  status;
+  signed char    test;
+  unsigned char  is_imported;
+  unsigned char  variant;
+  unsigned char  is_hidden;
+  unsigned char  is_readonly;
+  unsigned char  pages;
+  signed char    score_adj;     /* manual score adjustment */
+  unsigned short judge_id;      /* judge required identifier */
+  rint32_t       nsec;          /* nanosecond component of timestamp */
+};
+
 #define RUNLOG_MAX_SIZE    (1024 * 1024)
 #define RUNLOG_MAX_TEAM_ID 100000
 #define RUNLOG_MAX_PROB_ID 100000
@@ -128,7 +162,7 @@ run_destroy(runlog_state_t state)
 }
 
 static int
-run_read_record(runlog_state_t state, char *buf, int size)
+run_read_record_v0(runlog_state_t state, char *buf, int size)
 {
   int  rsz;
   int  i;
@@ -144,14 +178,14 @@ run_read_record(runlog_state_t state, char *buf, int size)
 }
 
 static int
-run_read_header(runlog_state_t state)
+run_read_header_v0(runlog_state_t state)
 {
   char buf[RUN_HEADER_SIZE + 16];
   int  n, r;
 
   memset(buf, 0, sizeof(buf));
-  if (run_read_record(state, buf, RUN_HEADER_SIZE) < 0) return -1;
-  r = sscanf(buf, " %u %u %u %u %n",
+  if (run_read_record_v0(state, buf, RUN_HEADER_SIZE) < 0) return -1;
+  r = sscanf(buf, " %lld %lld %lld %lld %n",
              &state->head.start_time,
              &state->head.sched_time,
              &state->head.duration,
@@ -162,25 +196,25 @@ run_read_header(runlog_state_t state)
 }
 
 static int
-run_read_entry(runlog_state_t state, int n)
+run_read_entry_v0(runlog_state_t state, int n)
 {
   char buf[RUN_RECORD_SIZE + 16];
   char tip[RUN_RECORD_SIZE + 16];
   int  k, r;
 
   memset(buf, 0, sizeof(buf));
-  if (run_read_record(state, buf, RUN_RECORD_SIZE) < 0) return -1;
-  r = sscanf(buf, " %d %d %u %hhu %d %hhu %d %hhu %hhu %d %s %n",
-             &state->runs[n].timestamp, &state->runs[n].submission,
+  if (run_read_record_v0(state, buf, RUN_RECORD_SIZE) < 0) return -1;
+  r = sscanf(buf, " %lld %d %u %hd %d %d %d %hhu %d %d %s %n",
+             &state->runs[n].time, &state->runs[n].run_id,
              &state->runs[n].size, &state->runs[n].locale_id,
-             &state->runs[n].team, &state->runs[n].language,
-             &state->runs[n].problem, &state->runs[n].status,
+             &state->runs[n].user_id, &state->runs[n].lang_id,
+             &state->runs[n].prob_id, &state->runs[n].status,
              &state->runs[n].test, &state->runs[n].score, tip, &k);
   if (r != 11) ERR_R("[%d]: sscanf returned %d", n, r);
   if (buf[k] != 0) ERR_R("[%d]: excess data", n);
   if (strlen(tip) > RUN_MAX_IP_LEN) ERR_R("[%d]: ip is to long", n);
-  state->runs[n].ip = run_parse_ip(tip);
-  if (state->runs[n].ip == (ej_ip_t) -1) ERR_R("[%d]: cannot parse IP");
+  state->runs[n].a.ip = run_parse_ip(tip);
+  if (state->runs[n].a.ip == (ej_ip_t) -1) ERR_R("[%d]: cannot parse IP");
   return 0;
 }
 
@@ -242,9 +276,9 @@ read_runlog_version_0(runlog_state_t state)
   while (state->run_u > state->run_a) state->run_a *= 2;
   XCALLOC(state->runs, state->run_a);
 
-  if (run_read_header(state) < 0) goto _cleanup;
+  if (run_read_header_v0(state) < 0) goto _cleanup;
   for (i = 0; i < state->run_u; i++) {
-    if (run_read_entry(state, i) < 0) goto _cleanup;
+    if (run_read_entry_v0(state, i) < 0) goto _cleanup;
   }
   if (runlog_check(0, &state->head, state->run_u, state->runs) < 0)
     goto _cleanup;
@@ -265,14 +299,35 @@ read_runlog_version_0(runlog_state_t state)
 }
 
 static int
-save_runlog_backup(const unsigned char *path)
+is_runlog_version_1(runlog_state_t state)
+{
+  struct run_header_v1 header_v1;
+  struct stat stbuf;
+  int r;
+
+  memset(&header_v1, 0, sizeof(header_v1));
+  if (sf_lseek(state->run_fd, 0, SEEK_SET, "run") == (off_t) -1) return -1;
+  if ((r = sf_read(state->run_fd, &header_v1, sizeof(header_v1), "run")) < 0)
+    return -1;
+  if (r != sizeof(header_v1)) return 0;
+  if (header_v1.version != 1) return 0;
+  if (fstat(state->run_fd, &stbuf) < 0) return -1;
+  if (stbuf.st_size < sizeof(header_v1)) return 0;
+  stbuf.st_size -= sizeof(header_v1);
+  if (stbuf.st_size % sizeof(struct run_entry_v1) != 0) return 0;
+  return 1;
+}
+
+static int
+save_runlog_backup(const unsigned char *path, const unsigned char *suffix)
 {
   unsigned char *back;
   size_t len;
+  if (!suffix) suffix = ".bak";
 
   len = strlen(path);
   back = alloca(len + 16);
-  sprintf(back, "%s.bak", path);
+  sprintf(back, "%s%s", path, suffix);
   if (rename(path, back) < 0) {
     err("save_runlog_backup: rename failed: %s", os_ErrorMsg());
     return -1;
@@ -332,6 +387,100 @@ do_read(int fd, void *buf, size_t size)
 }
 
 static int
+read_runlog_version_1(runlog_state_t state)
+{
+  int rem;
+  int r;
+  struct stat stbuf;
+  struct run_header_v1 header_v1;
+  int run_v1_u, i;
+  struct run_entry_v1 *runs_v1;
+  struct run_entry_v1 *po;
+  struct run_entry    *pn;
+
+  info("reading runs log version 1 (binary)");
+
+  /* calculate the size of the file */
+  if (fstat(state->run_fd, &stbuf) < 0) {
+    err("read_runlog_version_1: fstat() failed: %s", os_ErrorMsg());
+    return -1;
+  }
+  if (sf_lseek(state->run_fd, 0, SEEK_SET, "run") == (off_t) -1) return -1;
+  if (stbuf.st_size < sizeof (header_v1)) {
+    err("read_runlog_version_1: file is too small");
+    return -1;
+  }
+
+  // read header
+  if (do_read(state->run_fd, &header_v1, sizeof(header_v1)) < 0) return -1;
+  info("run log version %d", header_v1.version);
+  if (header_v1.version != 1) {
+    err("unsupported run log version %d", state->head.version);
+    return -1;
+  }
+
+  stbuf.st_size -= sizeof(header_v1);
+  if (stbuf.st_size % sizeof(struct run_entry_v1) != 0) {
+    err("bad runs file size: remainder %d", rem);
+    return -1;
+  }
+  run_v1_u = stbuf.st_size / sizeof(struct run_entry_v1);
+  if (run_v1_u > 0) {
+    XCALLOC(runs_v1, run_v1_u);
+    if (do_read(state->run_fd, runs_v1, sizeof(runs_v1[0]) * run_v1_u) < 0)
+      return -1;
+  }
+
+  // assign the header
+  memset(&state->head, 0, sizeof(state->head));
+  state->head.version = 2;
+  state->head.byte_order = 0;
+  state->head.start_time = header_v1.start_time;
+  state->head.sched_time = header_v1.sched_time;
+  state->head.duration = header_v1.duration;
+  state->head.stop_time = header_v1.stop_time;
+
+  // copy version 1 runlog to version 2 runlog
+  state->run_a = 128;
+  state->run_u = run_v1_u;
+  while (run_v1_u > state->run_a) state->run_a *= 2;
+  XCALLOC(state->runs, state->run_a);
+
+  for (i = 0; i < state->run_u; i++) {
+    po = &runs_v1[i];
+    pn = &state->runs[i];
+
+    pn->run_id = po->submission;
+    pn->time = po->timestamp;
+    pn->size = po->size;
+    pn->a.ip = po->ip;
+    memcpy(&pn->sha1, &po->sha1, sizeof(pn->sha1));
+    pn->user_id = po->team;
+    pn->prob_id = po->problem;
+    pn->score = po->score;
+    pn->locale_id = po->locale_id;
+    pn->lang_id = po->language;
+    pn->status = po->status;
+    pn->test = po->test;
+    pn->is_imported = po->is_imported;
+    pn->variant = po->variant;
+    pn->is_hidden = po->is_hidden;
+    pn->is_readonly = po->is_readonly;
+    pn->pages = po->pages;
+    pn->score_adj = po->score_adj;
+    pn->judge_id = po->judge_id;
+    pn->nsec = po->nsec;
+  }
+
+  xfree(runs_v1);
+  if ((r = runlog_check(0, &state->head, state->run_u,
+                        state->runs)) < 0) return -1;
+
+  build_indices(state);
+  return 0;
+}
+
+static int
 write_full_runlog_current_version(runlog_state_t state, const char *path)
 {
   int run_fd;
@@ -339,7 +488,7 @@ write_full_runlog_current_version(runlog_state_t state, const char *path)
   if ((run_fd = sf_open(path, O_RDWR | O_CREAT | O_TRUNC, 0666)) < 0)
     return -1;
 
-  state->head.version = 1;
+  state->head.version = 2;
   if (do_write(run_fd, &state->head, sizeof(state->head)) < 0) return -1;
   if (state->run_u > 0) {
     if (do_write(run_fd, state->runs, sizeof(state->runs[0]) * state->run_u) < 0) return -1;
@@ -395,7 +544,7 @@ read_runlog(runlog_state_t state, time_t init_duration)
   if (filesize == 0) {
     /* runs file is empty */
     XMEMZERO(&state->head, 1);
-    state->head.version = 1;
+    state->head.version = 2;
     state->head.duration = init_duration;
     state->run_u = 0;
     run_flush_header(state);
@@ -405,7 +554,7 @@ read_runlog(runlog_state_t state, time_t init_duration)
   // read header
   if (do_read(state->run_fd, &state->head, sizeof(state->head)) < 0) return -1;
   info("run log version %d", state->head.version);
-  if (state->head.version != 1) {
+  if (state->head.version != 2) {
     err("unsupported run log version %d", state->head.version);
     return -1;
   }
@@ -468,9 +617,19 @@ run_open(runlog_state_t state, const char *path, int flags,
   else if (i) {
     if (read_runlog_version_0(state) < 0) return -1;
     if (flags != RUN_LOG_READONLY) {
-      if (save_runlog_backup(path) < 0) return -1;
+      if (save_runlog_backup(path, 0) < 0) return -1;
       close(state->run_fd);
-      if ((state->run_fd = write_full_runlog_current_version(state, path)) < 0) return -1;
+      if ((state->run_fd = write_full_runlog_current_version(state, path)) < 0)
+        return -1;
+    }
+  } else if ((i = is_runlog_version_1(state)) < 0) return -1;
+  else if (i) {
+    if (read_runlog_version_1(state) < 0) return -1;
+    if (flags != RUN_LOG_READONLY) {
+      if (save_runlog_backup(path, ".v1") < 0) return -1;
+      close(state->run_fd);
+      if ((state->run_fd = write_full_runlog_current_version(state, path)) < 0)
+        return -1;
     }
   } else {
     if (read_runlog(state, init_duration) < 0) return -1;
@@ -531,20 +690,20 @@ append_record(runlog_state_t state, time_t t, int uid, int nsec)
 
   while (1) {
     if (state->run_u > 0) {
-      if (state->runs[state->run_u - 1].timestamp > t) break;
-      if (state->runs[state->run_u - 1].timestamp == t) {
+      if (state->runs[state->run_u - 1].time > t) break;
+      if (state->runs[state->run_u - 1].time == t) {
         if (state->runs[state->run_u - 1].nsec > nsec) break;
         if (state->runs[state->run_u - 1].nsec == nsec) {
-          if (state->runs[state->run_u - 1].team > uid) break;
+          if (state->runs[state->run_u - 1].user_id > uid) break;
         }
       }
     }
 
     /* it is safe to insert a record at the end */
     memset(&state->runs[state->run_u], 0, sizeof(state->runs[0]));
-    state->runs[state->run_u].submission = state->run_u;
+    state->runs[state->run_u].run_id = state->run_u;
     state->runs[state->run_u].status = RUN_EMPTY;
-    state->runs[state->run_u].timestamp = t;
+    state->runs[state->run_u].time = t;
     state->runs[state->run_u].nsec = nsec;
     return state->run_u++;
   }
@@ -552,10 +711,10 @@ append_record(runlog_state_t state, time_t t, int uid, int nsec)
   i = 0, j = state->run_u - 1;
   while (i < j) {
     k = (i + j) / 2;
-    if (state->runs[k].timestamp > t
-        || (state->runs[k].timestamp == t && state->runs[k].nsec > nsec)
-        || (state->runs[k].timestamp == t && state->runs[k].nsec == nsec
-            && state->runs[k].team > uid)) {
+    if (state->runs[k].time > t
+        || (state->runs[k].time == t && state->runs[k].nsec > nsec)
+        || (state->runs[k].time == t && state->runs[k].nsec == nsec
+            && state->runs[k].user_id > uid)) {
       j = k;
     } else {
       i = k + 1;
@@ -587,12 +746,12 @@ append_record(runlog_state_t state, time_t t, int uid, int nsec)
   memmove(&state->runs[i + 1], &state->runs[i], (state->run_u - i) * sizeof(state->runs[0]));
   state->run_u++;
   for (j = i + 1; j < state->run_u; j++)
-    state->runs[j].submission = j;
+    state->runs[j].run_id = j;
 
   memset(&state->runs[i], 0, sizeof(state->runs[0]));
-  state->runs[i].submission = i;
+  state->runs[i].run_id = i;
   state->runs[i].status = RUN_EMPTY;
-  state->runs[i].timestamp = t;
+  state->runs[i].time = t;
   state->runs[i].nsec = nsec;
   if (sf_lseek(state->run_fd, sizeof(state->head) + i * sizeof(state->runs[0]), SEEK_SET,
                "run") == (off_t) -1) return -1;
@@ -696,13 +855,13 @@ run_add_record(runlog_state_t state,
   if ((i = append_record(state, timestamp, team, nsec)) < 0) return -1;
   state->runs[i].size = size;
   state->runs[i].locale_id = locale_id;
-  state->runs[i].team = team;
-  state->runs[i].language = language;
-  state->runs[i].problem = problem;
+  state->runs[i].user_id = team;
+  state->runs[i].lang_id = language;
+  state->runs[i].prob_id = problem;
   state->runs[i].status = 99;
   state->runs[i].test = 0;
   state->runs[i].score = -1;
-  state->runs[i].ip = ip;
+  state->runs[i].a.ip = ip;
   state->runs[i].variant = variant;
   state->runs[i].is_hidden = is_hidden;
   if (sha1) {
@@ -730,7 +889,7 @@ run_undo_add_record(runlog_state_t state, int run_id)
   }
   // clear run
   memset(&state->runs[run_id], 0, sizeof(state->runs[0]));
-  state->runs[run_id].submission = run_id;
+  state->runs[run_id].run_id = run_id;
   state->runs[run_id].status = RUN_EMPTY;
   return 0;
 }
@@ -857,7 +1016,7 @@ run_get_team_usage(runlog_state_t state, int teamid, int *pn, size_t *ps)
         || state->runs[i].status == RUN_VIRTUAL_STOP
         || state->runs[i].status == RUN_EMPTY)
       continue;
-    if (state->runs[i].team == teamid) {
+    if (state->runs[i].user_id == teamid) {
       sz += state->runs[i].size;
       n++;
     }
@@ -881,8 +1040,8 @@ run_get_attempts(runlog_state_t state, int runid, int *pattempts,
         || state->runs[i].status == RUN_VIRTUAL_STOP
         || state->runs[i].status == RUN_EMPTY)
       continue;
-    if (state->runs[i].team != state->runs[runid].team) continue;
-    if (state->runs[i].problem != state->runs[runid].problem) continue;
+    if (state->runs[i].user_id != state->runs[runid].user_id) continue;
+    if (state->runs[i].prob_id != state->runs[runid].prob_id) continue;
     if (state->runs[i].status == RUN_COMPILE_ERR && skip_ce_flag) continue;
     if (state->runs[i].status == RUN_IGNORED) continue;
     if (state->runs[i].is_hidden) continue;
@@ -920,7 +1079,7 @@ run_get_prev_successes(runlog_state_t state, int run_id)
   if (update_user_flags(state) < 0) return -1;
 
   // invalid, banned or invisible user
-  user_id = state->runs[run_id].team;
+  user_id = state->runs[run_id].user_id;
   if (user_id <= 0 || user_id >= state->user_flags.nuser
       || state->user_flags.flags[user_id] < 0
       || (state->user_flags.flags[user_id] & TEAM_BANNED)
@@ -931,8 +1090,8 @@ run_get_prev_successes(runlog_state_t state, int run_id)
   for (i = 0; i < run_id; i++) {
     if (state->runs[i].status != RUN_OK) continue;
     if (state->runs[i].is_hidden) continue;
-    if (state->runs[i].problem != state->runs[run_id].problem) continue;
-    cur_uid = state->runs[i].team;
+    if (state->runs[i].prob_id != state->runs[run_id].prob_id) continue;
+    cur_uid = state->runs[i].user_id;
     if (cur_uid <= 0 || cur_uid >= state->user_flags.nuser
         || state->user_flags.flags[cur_uid] < 0
         || (state->user_flags.flags[cur_uid] & TEAM_BANNED)
@@ -1034,7 +1193,7 @@ run_reset(runlog_state_t state, time_t new_duration)
   state->ut_table = 0;
   state->ut_size = 0;
   memset(&state->head, 0, sizeof(state->head));
-  state->head.version = 1;
+  state->head.version = 2;
   state->head.duration = new_duration;
 
   if (ftruncate(state->run_fd, 0) < 0) {
@@ -1084,15 +1243,15 @@ run_check_duplicate(runlog_state_t state, int run_id)
         || q->status == RUN_VIRTUAL_STOP)
       continue;
     if (p->size == q->size
-        && p->ip == q->ip
+        && p->a.ip == q->a.ip
         && p->sha1[0] == q->sha1[0]
         && p->sha1[1] == q->sha1[1]
         && p->sha1[2] == q->sha1[2]
         && p->sha1[3] == q->sha1[3]
         && p->sha1[4] == q->sha1[4]
-        && p->team == q->team
-        && p->problem == q->problem
-        && p->language == q->language
+        && p->user_id == q->user_id
+        && p->prob_id == q->prob_id
+        && p->lang_id == q->lang_id
         && p->variant == q->variant) {
       break;
     }
@@ -1142,7 +1301,7 @@ run_set_entry(runlog_state_t state, int run_id, unsigned int mask,
   ASSERT(in);
   if (run_id < 0 || run_id >= state->run_u) ERR_R("bad runid: %d", run_id);
   out = &state->runs[run_id];
-  ASSERT(out->submission == run_id);
+  ASSERT(out->run_id == run_id);
 
   ASSERT(state->head.start_time >= 0);
   if (!out->is_hidden && !state->head.start_time) {
@@ -1172,8 +1331,8 @@ run_set_entry(runlog_state_t state, int run_id, unsigned int mask,
     te.status = in->status;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_TIME) && te.timestamp != in->timestamp) {
-    te.timestamp = in->timestamp;
+  if ((mask & RUN_ENTRY_TIME) && te.time != in->time) {
+    te.time = in->time;
     f = 1;
   }
   if ((mask & RUN_ENTRY_NSEC) && te.nsec != in->nsec) {
@@ -1184,24 +1343,24 @@ run_set_entry(runlog_state_t state, int run_id, unsigned int mask,
     te.size = in->size;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_IP) && te.ip != in->ip) {
-    te.ip = in->ip;
+  if ((mask & RUN_ENTRY_IP) && te.a.ip != in->a.ip) {
+    te.a.ip = in->a.ip;
     f = 1;
   }
   if ((mask&RUN_ENTRY_SHA1) && memcmp(te.sha1,in->sha1,sizeof(te.sha1))) {
     memcpy(te.sha1, in->sha1, sizeof(te.sha1));
     f = 1;
   }
-  if ((mask & RUN_ENTRY_USER) && te.team != in->team) {
-    te.team = in->team;
+  if ((mask & RUN_ENTRY_USER) && te.user_id != in->user_id) {
+    te.user_id = in->user_id;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_PROB) && te.problem != in->problem) {
-    te.problem = in->problem;
+  if ((mask & RUN_ENTRY_PROB) && te.prob_id != in->prob_id) {
+    te.prob_id = in->prob_id;
     f = 1;
   }
-  if ((mask & RUN_ENTRY_LANG) && te.language != in->language) {
-    te.language = in->language;
+  if ((mask & RUN_ENTRY_LANG) && te.lang_id != in->lang_id) {
+    te.lang_id = in->lang_id;
     f = 1;
   }
   if ((mask & RUN_ENTRY_LOCALE) && te.locale_id != in->locale_id) {
@@ -1253,23 +1412,23 @@ run_set_entry(runlog_state_t state, int run_id, unsigned int mask,
     err("run_set_entry: %d: invalid status %d", run_id, te.status);
     return -1;
   }
-  if (te.team <= 0 || te.team > RUNLOG_MAX_TEAM_ID) {
-    err("run_set_entry: %d: invalid team %d", run_id, te.team);
+  if (te.user_id <= 0 || te.user_id > RUNLOG_MAX_TEAM_ID) {
+    err("run_set_entry: %d: invalid team %d", run_id, te.user_id);
     return -1;
   }
 
   if (!te.is_hidden) {
-    ue = get_user_entry(state, te.team);
+    ue = get_user_entry(state, te.user_id);
     if (ue->status == V_VIRTUAL_USER) {
       ASSERT(ue->start_time > 0);
       stop_time = ue->stop_time;
       if (!stop_time && state->head.duration > 0)
         stop_time = ue->start_time + state->head.duration;
-      if (te.timestamp < ue->start_time) {
+      if (te.time < ue->start_time) {
         err("run_set_entry: %d: timestamp < virtual start_time", run_id);
         return -1;
       }
-      if (stop_time && te.timestamp > stop_time) {
+      if (stop_time && te.time > stop_time) {
         err("run_set_entry: %d: timestamp > virtual stop_time", run_id);
         return -1;
       }
@@ -1277,11 +1436,11 @@ run_set_entry(runlog_state_t state, int run_id, unsigned int mask,
       stop_time = state->head.stop_time;
       if (!stop_time && state->head.duration > 0)
         stop_time = state->head.start_time + state->head.duration;
-      if (te.timestamp < state->head.start_time) {
+      if (te.time < state->head.start_time) {
         err("run_set_entry: %d: timestamp < start_time", run_id);
         return -1;
       }
-      if (stop_time && te.timestamp > stop_time) {
+      if (stop_time && te.time > stop_time) {
         err("run_set_entry: %d: timestamp > stop_time", run_id);
         return -1;
       }
@@ -1292,8 +1451,8 @@ run_set_entry(runlog_state_t state, int run_id, unsigned int mask,
     err("run_set_entry: %d: size %u is invalid", run_id, te.size);
     return -1;
   }
-  if (te.problem <= 0 || te.problem > RUNLOG_MAX_PROB_ID) {
-    err("run_set_entry: %d: problem %d is invalid", run_id, te.problem);
+  if (te.prob_id <= 0 || te.prob_id > RUNLOG_MAX_PROB_ID) {
+    err("run_set_entry: %d: problem %d is invalid", run_id, te.prob_id);
     return -1;
   }
   if (te.score < -1 || te.score > RUNLOG_MAX_SCORE) {
@@ -1304,8 +1463,8 @@ run_set_entry(runlog_state_t state, int run_id, unsigned int mask,
     err("run_set_entry: %d: locale_id %d is invalid", run_id, te.locale_id);
     return -1;
   }
-  if (te.language <= 0 || te.language >= 255) {
-    err("run_set_entry: %d: language %d is invalid", run_id, te.language);
+  if (te.lang_id <= 0 || te.lang_id >= 255) {
+    err("run_set_entry: %d: language %d is invalid", run_id, te.lang_id);
     return -1;
   }
   if (te.test < -1) {
@@ -1427,8 +1586,8 @@ run_virtual_start(runlog_state_t state, int user_id, time_t t, ej_ip_t ip,
     return -1;
   }
   if ((i = append_record(state, t, user_id, nsec)) < 0) return -1;
-  state->runs[i].team = user_id;
-  state->runs[i].ip = ip;
+  state->runs[i].user_id = user_id;
+  state->runs[i].a.ip = ip;
   state->runs[i].status = RUN_VIRTUAL_START;
   pvt->start_time = t;
   pvt->status = V_VIRTUAL_USER;
@@ -1473,8 +1632,8 @@ run_virtual_stop(runlog_state_t state, int user_id, time_t t, ej_ip_t ip,
   }
 
   if ((i = append_record(state, t, user_id, nsec)) < 0) return -1;
-  state->runs[i].team = user_id;
-  state->runs[i].ip = ip;
+  state->runs[i].user_id = user_id;
+  state->runs[i].a.ip = ip;
   state->runs[i].status = RUN_VIRTUAL_STOP;
   pvt->stop_time = t;
   if (run_flush_entry(state, i) < 0) return -1;
@@ -1500,44 +1659,44 @@ run_clear_entry(runlog_state_t state, int run_id)
   case RUN_EMPTY:
     memset(&state->runs[run_id], 0, sizeof(state->runs[run_id]));
     state->runs[run_id].status = RUN_EMPTY;
-    state->runs[run_id].submission = run_id;
+    state->runs[run_id].run_id = run_id;
     break;
   case RUN_VIRTUAL_STOP:
     /* VSTOP events can safely be cleared */ 
-    ue = get_user_entry(state, state->runs[run_id].team);
+    ue = get_user_entry(state, state->runs[run_id].user_id);
     ASSERT(ue->status == V_VIRTUAL_USER);
     ASSERT(ue->start_time > 0);
     ue->stop_time = 0;
     memset(&state->runs[run_id], 0, sizeof(state->runs[run_id]));
     state->runs[run_id].status = RUN_EMPTY;
-    state->runs[run_id].submission = run_id;
+    state->runs[run_id].run_id = run_id;
     break;
   case RUN_VIRTUAL_START:
     /* VSTART event must be the only event of this team */
     for (i = 0; i < state->run_u; i++) {
       if (i == run_id) continue;
       if (state->runs[i].status == RUN_EMPTY) continue;
-      if (state->runs[i].team == state->runs[run_id].team) break;
+      if (state->runs[i].user_id == state->runs[run_id].user_id) break;
     }
     if (i < state->run_u) {
       err("run_clear_entry: VSTART must be the only record for a team");
       return -1;
     }
-    ue = get_user_entry(state, state->runs[run_id].team);
+    ue = get_user_entry(state, state->runs[run_id].user_id);
     ASSERT(ue->status == V_VIRTUAL_USER);
-    ASSERT(ue->start_time == state->runs[run_id].timestamp);
+    ASSERT(ue->start_time == state->runs[run_id].time);
     ASSERT(!ue->stop_time);
     ue->status = 0;
     ue->start_time = 0;
     memset(&state->runs[run_id], 0, sizeof(state->runs[run_id]));
     state->runs[run_id].status = RUN_EMPTY;
-    state->runs[run_id].submission = run_id;
+    state->runs[run_id].run_id = run_id;
     break;
   default:
     /* maybe update indices */
     memset(&state->runs[run_id], 0, sizeof(state->runs[run_id]));
     state->runs[run_id].status = RUN_EMPTY;
-    state->runs[run_id].submission = run_id;
+    state->runs[run_id].run_id = run_id;
     break;
   }
   return run_flush_entry(state, run_id);
@@ -1555,7 +1714,7 @@ run_squeeze_log(runlog_state_t state)
     if (i != j) {
       if (first_moved < 0) first_moved = j;
       memcpy(&state->runs[j], &state->runs[i], sizeof(state->runs[j]));
-      state->runs[j].submission = j;
+      state->runs[j].run_id = j;
     }
     j++;
   }
@@ -1746,20 +1905,20 @@ runlog_check(FILE *ferr,
     }
 
     if (e->status == RUN_EMPTY) {
-      if (i > 0 && !e->submission) {
+      if (i > 0 && !e->run_id) {
         check_msg(0,ferr, "Run %d submission for EMPTY is not set", i);
-        e->submission = i;
-      } else if (e->submission != i) {
+        e->run_id = i;
+      } else if (e->run_id != i) {
         check_msg(1,ferr, "Run %d submission %d does not match index",
-                  i, e->submission);
-        e->submission = i;
+                  i, e->run_id);
+        e->run_id = i;
         retcode = 1;
         //nerr++;
         //continue;
       }
       /* kinda paranoia */
       memcpy(&te, e, sizeof(te));
-      te.submission = 0;
+      te.run_id = 0;
       te.status = 0;
       pp = (unsigned char *) &te;
       for (j = 0; j < sizeof(te) && !pp[j]; j++);
@@ -1771,51 +1930,51 @@ runlog_check(FILE *ferr,
       continue;
     }
 
-    if (e->submission != i) {
+    if (e->run_id != i) {
       check_msg(1,ferr, "Run %d submission %d does not match index",
-                i, e->submission);
-      e->submission = i;
+                i, e->run_id);
+      e->run_id = i;
       retcode = 1;
       //nerr++;
       //continue;
     }
-    if (e->team <= 0) {
-      check_msg(1,ferr, "Run %d team %d is invalid", i, e->team);
+    if (e->user_id <= 0) {
+      check_msg(1,ferr, "Run %d team %d is invalid", i, e->user_id);
       nerr++;
       continue;
     }
-    if (e->timestamp < 0) {
-      check_msg(1, ferr, "Run %d timestamp %ld is negative", i, e->timestamp);
+    if (e->time < 0) {
+      check_msg(1, ferr, "Run %d timestamp %ld is negative", i, e->time);
       nerr++;
       continue;
     }
-    if (!e->timestamp) {
+    if (!e->time) {
       check_msg(1, ferr, "Run %d timestamp is not set", i);
       nerr++;
       continue;
     }
-    if (e->timestamp < prev_time) {
+    if (e->time < prev_time) {
       check_msg(1, ferr, "Run %d timestamp %ld is less than previous %ld",
-                i, e->timestamp, prev_time);
+                i, e->time, prev_time);
       nerr++;
       continue;
     }
-    if (e->timestamp == prev_time && e->nsec < prev_nsec) {
+    if (e->time == prev_time && e->nsec < prev_nsec) {
       check_msg(1, ferr, "Run %d nsec %d is less than previous %d",
                 i, e->nsec, prev_nsec);
     }
-    prev_time = e->timestamp;
+    prev_time = e->time;
     prev_nsec = e->nsec;
 
     if (e->status == RUN_VIRTUAL_START || e->status == RUN_VIRTUAL_STOP) {
       /* kinda paranoia */
       memcpy(&te, e, sizeof(te));
-      te.submission = 0;
+      te.run_id = 0;
       te.status = 0;
-      te.team = 0;
-      te.timestamp = 0;
+      te.user_id = 0;
+      te.time = 0;
       te.nsec = 0;
-      te.ip = 0;
+      te.a.ip = 0;
       pp = (unsigned char *) &te;
       for (j = 0; j < sizeof(te) && !pp[j]; j++);
       if (j < sizeof(te)) {
@@ -1832,19 +1991,19 @@ runlog_check(FILE *ferr,
       nerr++;
       continue;
     }
-    if (!e->ip) {
+    if (!e->a.ip) {
       check_msg(0, ferr, "Run %d IP is not set", i);
     }
     if (!e->sha1[0]&&!e->sha1[1]&&!e->sha1[2]&&!e->sha1[3]&&!e->sha1[4]) {
       //check_msg(0, ferr, "Run %d SHA1 is not set", i);
     }
-    if (e->problem <= 0) {
-      check_msg(1, ferr, "Run %d problem %d is invalid", i, e->problem);
+    if (e->prob_id <= 0) {
+      check_msg(1, ferr, "Run %d problem %d is invalid", i, e->prob_id);
       nerr++;
       continue;
     }
-    if (e->problem > RUNLOG_MAX_PROB_ID) {
-      check_msg(1, ferr, "Run %d problem %d is too large", i, e->problem);
+    if (e->prob_id > RUNLOG_MAX_PROB_ID) {
+      check_msg(1, ferr, "Run %d problem %d is too large", i, e->prob_id);
       nerr++;
       continue;
     }
@@ -1863,8 +2022,8 @@ runlog_check(FILE *ferr,
       nerr++;
       continue;
     }
-    if (e->language == 0 || e->language == 255) {
-      check_msg(1, ferr, "Run %d language %d is invalid", i, e->language);
+    if (e->lang_id == 0 || e->lang_id == 255) {
+      check_msg(1, ferr, "Run %d language %d is invalid", i, e->lang_id);
       nerr++;
       continue;
     }
@@ -1896,7 +2055,7 @@ runlog_check(FILE *ferr,
   max_team_id = -1;
   for (i = 0; i < nentries; i++) {
     if (pentries[i].status == RUN_EMPTY) continue;
-    if (pentries[i].team > max_team_id) max_team_id = pentries[i].team;
+    if (pentries[i].user_id > max_team_id) max_team_id = pentries[i].user_id;
   }
   if (max_team_id == -1) {
     check_msg(0,ferr, "The runlog contains only EMPTY records");
@@ -1917,8 +2076,8 @@ runlog_check(FILE *ferr,
     switch (e->status) {
     case RUN_EMPTY: break;
     case RUN_VIRTUAL_START:
-      ASSERT(e->team <= max_team_id);
-      v = &ventries[e->team];
+      ASSERT(e->user_id <= max_team_id);
+      v = &ventries[e->user_id];
       if (v->status == V_VIRTUAL_USER) {
         ASSERT(v->start_time > 0);
         check_msg(1, ferr, "Run %d: duplicated VSTART", i);
@@ -1933,12 +2092,12 @@ runlog_check(FILE *ferr,
       } else {
         ASSERT(!v->start_time);
         v->status = V_VIRTUAL_USER;
-        v->start_time = e->timestamp;
+        v->start_time = e->time;
       }
       break;
     case RUN_VIRTUAL_STOP:
-      ASSERT(e->team <= max_team_id);
-      v = &ventries[e->team];
+      ASSERT(e->user_id <= max_team_id);
+      v = &ventries[e->user_id];
       ASSERT(v->status >= 0 && v->status <= V_LAST);
       if (v->status == V_VIRTUAL_USER) {
         ASSERT(v->start_time > 0);
@@ -1949,12 +2108,12 @@ runlog_check(FILE *ferr,
           continue;
         }
         if (phead->duration
-            && e->timestamp > v->start_time + phead->duration) {
+            && e->time > v->start_time + phead->duration) {
           check_msg(1, ferr, "Run %d: VSTOP after expiration of contest", i);
           nerr++;
           continue;
         }
-        v->stop_time = e->timestamp;
+        v->stop_time = e->time;
       } else {
         ASSERT(!v->start_time);
         ASSERT(!v->stop_time);
@@ -1965,8 +2124,8 @@ runlog_check(FILE *ferr,
       }
       break;
     default:
-      ASSERT(e->team <= max_team_id);
-      v = &ventries[e->team];
+      ASSERT(e->user_id <= max_team_id);
+      v = &ventries[e->user_id];
       ASSERT(v->status >= 0 && v->status <= V_LAST);
       if (v->status == V_VIRTUAL_USER) {
         ASSERT(v->start_time > 0);
@@ -1974,17 +2133,17 @@ runlog_check(FILE *ferr,
         v_stop_time = v->stop_time;
         if (!v_stop_time && phead->duration)
           v_stop_time = v->start_time + phead->duration;
-        if (e->timestamp < v->start_time) {
+        if (e->time < v->start_time) {
           check_msg(1, ferr,
                     "Run %d timestamp %ld is less that virtual start %ld",
-                    i, e->timestamp, v->start_time);
+                    i, e->time, v->start_time);
           nerr++;
           continue;
         }
-        if (v_stop_time && e->timestamp > v_stop_time) {
+        if (v_stop_time && e->time > v_stop_time) {
           check_msg(1, ferr,
                     "Run %d timestamp %ld is greater than virtual stop %ld",
-                    i, e->timestamp, v_stop_time);
+                    i, e->time, v_stop_time);
           nerr++;
           continue;
         }
@@ -1992,17 +2151,17 @@ runlog_check(FILE *ferr,
         ASSERT(!v->start_time);
         ASSERT(!v->stop_time);
         ASSERT(v->status == 0 || v->status == V_REAL_USER);
-        if (e->timestamp < phead->start_time) {
+        if (e->time < phead->start_time) {
           check_msg(1,ferr,
                     "Run %d timestamp %ld is less than contest start %ld",
-                    i, e->timestamp, phead->start_time);
+                    i, e->time, phead->start_time);
           nerr++;
           continue;
         }
-        if (stop_time && e->timestamp > stop_time) {
+        if (stop_time && e->time > stop_time) {
           check_msg(1, ferr,
                     "Run %d timestamp %ld is greater than contest stop %ld",
-                    i, e->timestamp, stop_time);
+                    i, e->time, stop_time);
           nerr++;
           continue;
         }
@@ -2038,8 +2197,8 @@ build_indices(runlog_state_t state)
    */
   for (i = 0; i < state->run_u; i++) {
     if (state->runs[i].status == RUN_EMPTY) continue;
-    ASSERT(state->runs[i].team > 0);
-    if (state->runs[i].team > max_team_id) max_team_id = state->runs[i].team;
+    ASSERT(state->runs[i].user_id > 0);
+    if (state->runs[i].user_id > max_team_id) max_team_id = state->runs[i].user_id;
   }
   if (max_team_id <= 0) return;
 
@@ -2054,19 +2213,19 @@ build_indices(runlog_state_t state)
     case RUN_EMPTY:
       break;
     case RUN_VIRTUAL_START:
-      ue = get_user_entry(state, state->runs[i].team);
+      ue = get_user_entry(state, state->runs[i].user_id);
       ASSERT(!ue->status);
       ue->status = V_VIRTUAL_USER;
-      ue->start_time = state->runs[i].timestamp;
+      ue->start_time = state->runs[i].time;
       break;
     case RUN_VIRTUAL_STOP:
-      ue = get_user_entry(state, state->runs[i].team);
+      ue = get_user_entry(state, state->runs[i].user_id);
       ASSERT(ue->status == V_VIRTUAL_USER);
       ASSERT(ue->start_time > 0);
-      ue->stop_time = state->runs[i].timestamp;
+      ue->stop_time = state->runs[i].time;
       break;
     default:
-      ue = get_user_entry(state, state->runs[i].team);
+      ue = get_user_entry(state, state->runs[i].user_id);
       if (!ue->status) ue->status = V_REAL_USER;
       break;
     }
@@ -2099,7 +2258,7 @@ run_get_total_pages(runlog_state_t state, int user_id)
   for (i = 0; i < state->run_u; i++) {
     if (state->runs[i].status == RUN_VIRTUAL_START || state->runs[i].status == RUN_VIRTUAL_STOP
         || state->runs[i].status == RUN_EMPTY) continue;
-    if (state->runs[i].team != user_id) continue;
+    if (state->runs[i].user_id != user_id) continue;
     total += state->runs[i].pages;
   }
   return total;
@@ -2123,16 +2282,16 @@ run_find(runlog_state_t state, int first_run, int last_run,
 
   if (first_run <= last_run) {
     for (i = first_run; i <= last_run; i++) {
-      if (team_id && team_id != state->runs[i].team) continue;
-      if (prob_id && prob_id != state->runs[i].problem) continue;
-      if (lang_id && lang_id != state->runs[i].language) continue;
+      if (team_id && team_id != state->runs[i].user_id) continue;
+      if (prob_id && prob_id != state->runs[i].prob_id) continue;
+      if (lang_id && lang_id != state->runs[i].lang_id) continue;
       return i;
     }
   } else {
     for (i = first_run; i >= last_run; i--) {
-      if (team_id && team_id != state->runs[i].team) continue;
-      if (prob_id && prob_id != state->runs[i].problem) continue;
-      if (lang_id && lang_id != state->runs[i].language) continue;
+      if (team_id && team_id != state->runs[i].user_id) continue;
+      if (prob_id && prob_id != state->runs[i].prob_id) continue;
+      if (lang_id && lang_id != state->runs[i].lang_id) continue;
       return i;
     }
   }
