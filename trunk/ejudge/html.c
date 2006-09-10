@@ -74,8 +74,8 @@ sf_fopen(char const *path, char const *flags)
 int
 calc_kirov_score(unsigned char *outbuf,
                  size_t outsize,
-                 struct run_entry *pe,
-                 struct section_problem_data *pr,
+                 const struct run_entry *pe,
+                 const struct section_problem_data *pr,
                  int attempts,
                  int disq_attempts,
                  int prev_successes,
@@ -191,7 +191,8 @@ calc_kirov_score(unsigned char *outbuf,
 }
 
 void
-write_html_run_status(const serve_state_t state, FILE *f, struct run_entry *pe,
+write_html_run_status(const serve_state_t state, FILE *f,
+                      const struct run_entry *pe,
                       int priv_level, int attempts, int disq_attempts,
                       int prev_successes)
 {
@@ -1460,7 +1461,7 @@ do_write_kirov_standings(const serve_state_t state, FILE *f,
   char dur_str[1024];
   unsigned char *head_style;
   struct teamdb_export u_info;
-  struct run_entry *runs;
+  const struct run_entry *runs;
   int ttot_att, ttot_succ, perc, t;
   const struct team_extra *t_extra;
   const unsigned char *row_attr = 0;
@@ -1540,8 +1541,7 @@ do_write_kirov_standings(const serve_state_t state, FILE *f,
 
   /* download all runs in the whole */
   r_tot = run_get_total(state->runlog_state);
-  runs = alloca(r_tot * sizeof(runs[0]));
-  run_get_all_entries(state->runlog_state, runs);
+  runs = run_get_entries_ptr(state->runlog_state);
 
   /* prune participants, which did not send any solution */
   /* t_runs - 1, if the participant should remain */
@@ -1638,7 +1638,7 @@ do_write_kirov_standings(const serve_state_t state, FILE *f,
     int pind;
     int score, run_score, run_tests;
     struct section_problem_data *p;
-    struct run_entry *pe = &runs[k];
+    const struct run_entry *pe = &runs[k];
 
     if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP
         || pe->status == RUN_EMPTY) continue;
@@ -3303,7 +3303,7 @@ do_write_standings(const serve_state_t state, FILE *f,
   unsigned char *bgcolor_ptr;
   unsigned char *head_style;
   struct teamdb_export ttt;      
-  struct run_entry *runs, *pe;
+  const struct run_entry *runs, *pe;
   unsigned char *t_runs;
   int last_success_run = -1;
   time_t last_success_time = 0;
@@ -3375,8 +3375,7 @@ do_write_standings(const serve_state_t state, FILE *f,
   }
 
   r_tot = run_get_total(state->runlog_state);
-  runs = alloca(r_tot * sizeof(runs[0]));
-  run_get_all_entries(state->runlog_state, runs);
+  runs = run_get_entries_ptr(state->runlog_state);
 
   t_max = teamdb_get_max_team_id(state->teamdb_state) + 1;
   t_runs = alloca(t_max);
@@ -3881,13 +3880,12 @@ do_write_public_log(const serve_state_t state, FILE *f, char const *header_str,
   char durstr[64], statstr[64];
   char *str1 = 0, *str2 = 0;
 
-  struct run_entry *runs, *pe;
-  struct section_problem_data *cur_prob;
+  const struct run_entry *runs, *pe;
+  const struct section_problem_data *cur_prob;
 
   start = run_get_start_time(state->runlog_state);
   total = run_get_total(state->runlog_state);
-  runs = alloca(total * sizeof(runs[0]));
-  run_get_all_entries(state->runlog_state, runs);
+  runs = run_get_entries_ptr(state->runlog_state);
 
   switch (state->global->score_system_val) {
   case SCORE_ACM:

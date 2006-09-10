@@ -189,14 +189,15 @@ struct run_entry;
 struct section_problem_data;
 
 int calc_kirov_score(unsigned char *outbuf, size_t outsize,
-                     struct run_entry *pe,
-                     struct section_problem_data *pr,
+                     const struct run_entry *pe,
+                     const struct section_problem_data *pr,
                      int attempts,
                      int disq_attempts,
                      int prev_successes,
                      int *p_date_penalty,
                      int format);
-void write_html_run_status(const serve_state_t, FILE *f, struct run_entry *pe,
+void write_html_run_status(const serve_state_t, FILE *f,
+                           const struct run_entry *pe,
                            int priv_level, int attempts,
                            int disq_attempts, int prev_successes);
 

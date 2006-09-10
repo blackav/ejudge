@@ -19,6 +19,8 @@
 
 #include "settings.h"
 
+#include <time.h>
+
 struct generic_section_config;
 struct section_global_data;
 struct section_language_data;
@@ -31,6 +33,18 @@ struct team_extra_state;
 struct user_state_info;
 struct user_filter_info;
 
+struct compile_dir_item
+{
+  unsigned char *status_dir;
+  unsigned char *report_dir;
+};
+struct run_dir_item
+{
+  unsigned char *status_dir;
+  unsigned char *report_dir;
+  unsigned char *team_report_dir;
+  unsigned char *full_report_dir;
+};
 struct serve_state
 {
   /* serve.cfg parsed config */
@@ -69,6 +83,31 @@ struct serve_state
   struct section_tester_data   *abstr_testers[MAX_TESTER + 1];
   int max_abstr_prob;
   int max_abstr_tester;
+
+  time_t current_time;
+  time_t contest_start_time;
+  time_t contest_sched_time;
+  time_t contest_duration;
+  time_t contest_stop_time;
+  int clients_suspended;
+  int testing_suspended;
+  int printing_suspended;
+  int olympiad_judging_mode;
+
+  time_t stat_last_check_time;
+  time_t stat_reported_before;
+  time_t stat_report_time;
+
+  time_t last_update_public_log;
+  time_t last_update_external_xml_log;
+  time_t last_update_internal_xml_log;
+  time_t last_update_status_file;
+
+  struct compile_dir_item *compile_dirs;
+  int compile_dirs_u, compile_dirs_a;
+
+  struct run_dir_item *run_dirs;
+  int run_dirs_u, run_dirs_a;
 };
 typedef struct serve_state *serve_state_t;
 
