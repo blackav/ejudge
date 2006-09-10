@@ -150,13 +150,13 @@ enum
 /* structure size is 128 bytes */
 struct run_entry
 {
-  ruint32_t      run_id;        /* 4 */
+  rint32_t       run_id;        /* 4 */
   ej_size_t      size;          /* 4 */
   ej_time64_t    time;          /* 8 */
-  ruint32_t      nsec;          /* 4 */
-  ruint32_t      user_id;       /* 4 */
-  ruint32_t      prob_id;       /* 4 */
-  ruint32_t      lang_id;       /* 4 */
+  rint32_t       nsec;          /* 4 */
+  rint32_t       user_id;       /* 4 */
+  rint32_t       prob_id;       /* 4 */
+  rint32_t       lang_id;       /* 4 */
   union
   {
     ej_ip_t        ip;

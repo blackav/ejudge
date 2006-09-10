@@ -277,8 +277,8 @@ write_change_status_dialog(const serve_state_t state,
 static struct user_filter_info *allocate_user_info(serve_state_t, int user_id, ej_cookie_t session_id);
 
 static void
-print_raw_record(const serve_state_t state,
-                 FILE *f, int run_id, struct run_entry *pe, time_t start_time,
+print_raw_record(const serve_state_t state, FILE *f, int run_id,
+                 const struct run_entry *pe, time_t start_time,
                  int attempts, int disq_attempts, int prev_successes)
 {
   // indices
@@ -472,7 +472,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
   unsigned char durstr[64], statstr[64];
   int rid, attempts, disq_attempts, prev_successes;
   time_t run_time, start_time;
-  struct run_entry *pe;
+  const struct run_entry *pe;
   unsigned char *fe_html;
   int fe_html_len;
   unsigned char first_run_str[32] = { 0 }, last_run_str[32] = { 0 };
@@ -538,14 +538,13 @@ write_priv_all_runs(serve_state_t state, FILE *f,
     env.serve_state = state;
     env.mem = filter_tree_new();
     env.maxlang = state->max_lang;
-    env.langs = state->langs;
+    env.langs = (const struct section_language_data * const *) state->langs;
     env.maxprob = state->max_prob;
-    env.probs = state->probs;
+    env.probs = (const struct section_problem_data * const *) state->probs;
     env.rtotal = run_get_total(state->runlog_state);
     run_get_header(state->runlog_state, &env.rhead);
-    env.rentries = alloca(env.rtotal * sizeof(env.rentries[0]));
     env.cur_time = time(0);
-    run_get_all_entries(state->runlog_state, env.rentries);
+    env.rentries = run_get_entries_ptr(state->runlog_state);
 
     match_idx = alloca((env.rtotal + 1) * sizeof(match_idx[0]));
     memset(match_idx, 0, (env.rtotal + 1) * sizeof(match_idx[0]));

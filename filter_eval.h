@@ -30,14 +30,14 @@ struct filter_env
   serve_state_t serve_state;
   struct filter_tree_mem *mem;
   int maxlang;
-  struct section_language_data **langs;
+  const struct section_language_data * const *langs;
   int maxprob;
-  struct section_problem_data **probs;
+  const struct section_problem_data * const *probs;
   int rtotal;
   struct run_header rhead;
-  struct run_entry *rentries;
+  const struct run_entry *rentries;
   int rid;
-  struct run_entry *cur;
+  const struct run_entry *cur;
   time_t cur_time;
 };
 
