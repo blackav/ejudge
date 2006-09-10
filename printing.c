@@ -52,19 +52,19 @@ print_banner_page(const serve_state_t state,
       || info.status == RUN_EMPTY) {
     return -1;
   }
-  if (teamdb_export_team(state->teamdb_state, info.team, &teaminfo) < 0)
+  if (teamdb_export_team(state->teamdb_state, info.user_id, &teaminfo) < 0)
     return -1;
   start_time = run_get_start_time(state->runlog_state);
 
   if (!(f = fopen(banner_path, "w"))) goto cleanup;
   fprintf(f, "\n\n\n\n\n\n\n\n\n\n");
-  fprintf(f, "Run ID:           %d\n", info.submission);
+  fprintf(f, "Run ID:           %d\n", info.run_id);
   fprintf(f, "Submission time:  %s\n",
-          duration_str(1, info.timestamp, start_time, 0, 0));
+          duration_str(1, info.time, start_time, 0, 0));
   fprintf(f, "Contest time:     %s\n",
-          duration_str(0, info.timestamp, start_time, 0, 0));
+          duration_str(0, info.time, start_time, 0, 0));
   if (is_privileged) {
-    fprintf(f, "Originator IP:    %s\n", run_unparse_ip(info.ip));
+    fprintf(f, "Originator IP:    %s\n", run_unparse_ip(info.a.ip));
   }
   fprintf(f, "Size:             %u\n", info.size);
   if (is_privileged) {
@@ -73,21 +73,21 @@ print_banner_page(const serve_state_t state,
     for (i = 0; i < 20; i++) fprintf(f, "%02x", *s++);
     fprintf(f, "\n");
   }
-  fprintf(f, "User ID:          %d\n", info.team);
+  fprintf(f, "User ID:          %d\n", info.user_id);
   fprintf(f, "User login:       %s\n", teamdb_get_login(state->teamdb_state,
-                                                        info.team));
+                                                        info.user_id));
   fprintf(f, "User name:        %s\n", teamdb_get_name(state->teamdb_state,
-                                                       info.team));
-  fprintf(f, "Problem:          %s\n", state->probs[info.problem]->short_name);
-  if (state->probs[info.problem]->variant_num > 0) {
+                                                       info.user_id));
+  fprintf(f, "Problem:          %s\n", state->probs[info.prob_id]->short_name);
+  if (state->probs[info.prob_id]->variant_num > 0) {
     variant = info.variant;
     if (!variant) {
-      variant = find_variant(state, info.team, info.problem);
+      variant = find_variant(state, info.user_id, info.prob_id);
     }
     fprintf(f, "Variant:          %d\n", variant);
   }
   fprintf(f, "Language:         %s\n",
-          (state->langs[info.language])?((char*)state->langs[info.language]->short_name):"");
+          (state->langs[info.lang_id])?((char*)state->langs[info.lang_id]->short_name):"");
   if (teaminfo.user && teaminfo.user->i.location) {
     fprintf(f, "Location:         %s\n", teaminfo.user->i.location);
   }
@@ -133,7 +133,7 @@ do_print_run(const serve_state_t state, int run_id,
     goto cleanup;
   }
   if (!is_privileged) {
-    if (info.team != user_id) {
+    if (info.user_id != user_id) {
       errcode = -SRV_ERR_NO_PERMS;
       goto cleanup;
     }
@@ -148,7 +148,7 @@ do_print_run(const serve_state_t state, int run_id,
   }
 
   if (!is_privileged) {
-    if (teamdb_export_team(state->teamdb_state, info.team, &teaminfo) < 0)
+    if (teamdb_export_team(state->teamdb_state, info.user_id, &teaminfo) < 0)
       return -1;
     if (teaminfo.user && teaminfo.user->i.printer_name)
       printer_name = teaminfo.user->i.printer_name;
@@ -161,7 +161,7 @@ do_print_run(const serve_state_t state, int run_id,
     goto cleanup;
   }
 
-  if (state->langs[info.language]) sfx = state->langs[info.language]->src_sfx;
+  if (state->langs[info.lang_id]) sfx = state->langs[info.lang_id]->src_sfx;
   program_path = (unsigned char*) alloca(strlen(state->global->print_work_dir) + 64);
   sprintf(program_path, "%s/%06d%s", state->global->print_work_dir, run_id, sfx);
 
@@ -222,7 +222,7 @@ do_print_run(const serve_state_t state, int run_id,
   if (pages_num <= 0) goto cleanup;
 
   if (!is_privileged) {
-    if (pages_num + run_get_total_pages(state->runlog_state, info.team) > state->global->team_page_quota) {
+    if (pages_num + run_get_total_pages(state->runlog_state, info.user_id) > state->global->team_page_quota) {
       errcode = -SRV_ERR_PAGES_QUOTA;
       goto cleanup;
     }

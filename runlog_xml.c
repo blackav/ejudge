@@ -214,8 +214,8 @@ process_run_elements(struct xml_tree *xt)
     xr = (struct run_element*) xt;
 
     /* set default values */
-    xr->r.submission = -1;
-    xr->r.timestamp = (time_t) -1;
+    xr->r.run_id = -1;
+    xr->r.time = (time_t) -1;
     xr->r.status = 255;
     for (xa = xt->first; xa; xa = xa->next) {
       switch (xa->tag) {
@@ -225,14 +225,14 @@ process_run_elements(struct xml_tree *xt)
         if (sscanf(xa->text, "%d %n", &iv, &n) != 1 || xa->text[n])
           goto invalid_attr_value;
         if (iv < 0) goto invalid_attr_value;
-        xr->r.submission = iv;
+        xr->r.run_id = iv;
         break;
       case RUNLOG_A_TIME:
         if (!xa->text) goto empty_attr_value;
         n = 0;
         if (sscanf(xa->text, "%ld %n", &tv, &n) != 1 || xa->text[n])
           goto invalid_attr_value;
-        xr->r.timestamp = tv;
+        xr->r.time = tv;
         break;
       case RUNLOG_A_SIZE:
         if (!xa->text) goto empty_attr_value;
@@ -243,7 +243,7 @@ process_run_elements(struct xml_tree *xt)
         break;
       case RUNLOG_A_IP:
         if (xml_parse_ip("<string>", xa->line, xa->column,
-                         xa->text, &xr->r.ip) < 0) return -1;
+                         xa->text, &xr->r.a.ip) < 0) return -1;
         break;
       case RUNLOG_A_SHA1:
         if (!xa->text) goto empty_attr_value;
@@ -255,7 +255,7 @@ process_run_elements(struct xml_tree *xt)
         if (sscanf(xa->text, "%d %n", &iv, &n) != 1 || xa->text[n])
           goto invalid_attr_value;
         if (iv <= 0) goto invalid_attr_value;
-        xr->r.team = iv;
+        xr->r.user_id = iv;
         break;
       case RUNLOG_A_PROB_ID:
         if (!xa->text) goto empty_attr_value;
@@ -263,7 +263,7 @@ process_run_elements(struct xml_tree *xt)
         if (sscanf(xa->text, "%d %n", &iv, &n) != 1 || xa->text[n])
           goto invalid_attr_value;
         if (iv <= 0) goto invalid_attr_value;
-        xr->r.problem = iv;
+        xr->r.prob_id = iv;
         break;
       case RUNLOG_A_LANG_ID:
         if (!xa->text) goto empty_attr_value;
@@ -271,7 +271,7 @@ process_run_elements(struct xml_tree *xt)
         if (sscanf(xa->text, "%d %n", &iv, &n) != 1 || xa->text[n])
           goto invalid_attr_value;
         if (iv <= 0 || iv >= 255) goto invalid_attr_value;
-        xr->r.language = iv;
+        xr->r.lang_id = iv;
         break;
       case RUNLOG_A_VARIANT:
         if (!xa->text) goto empty_attr_value;
@@ -279,7 +279,7 @@ process_run_elements(struct xml_tree *xt)
         if (sscanf(xa->text, "%d %n", &iv, &n) != 1 || xa->text[n])
           goto invalid_attr_value;
         if (iv < 0 || iv > 255) goto invalid_attr_value;
-        xr->r.language = iv;
+        xr->r.lang_id = iv;
         break;
       case RUNLOG_A_LOCALE_ID:
         if (!xa->text) goto empty_attr_value;
@@ -338,15 +338,15 @@ process_run_elements(struct xml_tree *xt)
       }
     }
 
-    if (xr->r.submission < 0)
+    if (xr->r.run_id < 0)
       return xml_err_attr_undefined(xt, RUNLOG_A_RUN_ID);
-    if (xr->r.timestamp == (time_t) -1)
+    if (xr->r.time == (time_t) -1)
       return xml_err_attr_undefined(xt, RUNLOG_A_TIME);
-    if (!xr->r.team)
+    if (!xr->r.user_id)
       return xml_err_attr_undefined(xt, RUNLOG_A_USER_ID);
-    if (!xr->r.problem)
+    if (!xr->r.prob_id)
       return xml_err_attr_undefined(xt, RUNLOG_A_PROB_ID);
-    if (!xr->r.language)
+    if (!xr->r.lang_id)
       return xml_err_attr_undefined(xt, RUNLOG_A_LANG_ID);
     if (xr->r.status == 255)
       return xml_err_attr_undefined(xt, RUNLOG_A_STATUS);
@@ -405,7 +405,7 @@ collect_runlog(struct xml_tree *xt, size_t *psize,
   for (xx = xt; xx; xx = xx->right) {
     ASSERT(xx->tag == RUNLOG_T_RUN);
     xr = (struct run_element*) xx;
-    if (xr->r.submission > max_run_id) max_run_id = xr->r.submission;
+    if (xr->r.run_id > max_run_id) max_run_id = xr->r.run_id;
   }
   if (max_run_id == -1) {
     *psize = 0;
@@ -414,12 +414,12 @@ collect_runlog(struct xml_tree *xt, size_t *psize,
   }
   ee = (struct run_entry*) xcalloc(max_run_id + 1, sizeof(*ee));
   for (i = 0; i <= max_run_id; i++) {
-    ee[i].submission = i;
+    ee[i].run_id = i;
     ee[i].status = RUN_EMPTY;
   }
   for (xx = xt; xx; xx = xx->right) {
     xr = (struct run_element*) xx;
-    j = xr->r.submission;
+    j = xr->r.run_id;
     ASSERT(j >= 0 && j <= max_run_id);
     if (ee[j].status != RUN_EMPTY) {
       xml_err(xx, "duplicated run_id %d", j);
@@ -511,7 +511,7 @@ unparse_runlog_xml(serve_state_t state, FILE *f,
   fprintf(f, "<%s", elem_map[RUNLOG_T_RUNLOG]);
   fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_CONTEST_ID], state->cur_contest->id);
   if (phead->duration > 0) {
-    fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_DURATION], phead->duration);
+    fprintf(f, " %s=\"%lld\"", attr_map[RUNLOG_A_DURATION], phead->duration);
   }
   if (phead->start_time > 0) {
     fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_START_TIME],
@@ -618,20 +618,20 @@ unparse_runlog_xml(serve_state_t state, FILE *f,
     case RUN_REJUDGE:
       continue;
     }
-    flags = teamdb_get_flags(state->teamdb_state, pp->team);
+    flags = teamdb_get_flags(state->teamdb_state, pp->user_id);
     if (external_mode && (flags & (TEAM_BANNED | TEAM_INVISIBLE)))
       continue;
     fprintf(f, "    <%s", elem_map[RUNLOG_T_RUN]);
-    fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_RUN_ID], pp->submission);
-    ts = pp->timestamp;
+    fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_RUN_ID], pp->run_id);
+    ts = pp->time;
     ts -= phead->start_time;
     if (ts < 0) ts = 0;
     fprintf(f, " %s=\"%ld\"", attr_map[RUNLOG_A_TIME], ts);
     if (!external_mode && pp->size > 0) {
       fprintf(f, " %s=\"%u\"", attr_map[RUNLOG_A_SIZE], pp->size);
     }
-    if (!external_mode && pp->ip) {
-      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_IP], run_unparse_ip(pp->ip));
+    if (!external_mode && pp->a.ip) {
+      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_IP], run_unparse_ip(pp->a.ip));
     }
     if (!external_mode && is_non_empty_sha1(pp->sha1)) {
       fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_SHA1],
@@ -639,14 +639,14 @@ unparse_runlog_xml(serve_state_t state, FILE *f,
     }
     run_status_to_str_short(status_buf, sizeof(status_buf), pp->status);
     fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_STATUS], status_buf);
-    if (pp->team) {
-      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_USER_ID], pp->team);
+    if (pp->user_id) {
+      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_USER_ID], pp->user_id);
     }
-    if (pp->problem) {
-      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_PROB_ID], pp->problem);
+    if (pp->prob_id) {
+      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_PROB_ID], pp->prob_id);
     }
-    if (pp->language) {
-      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_LANG_ID], pp->language);
+    if (pp->lang_id) {
+      fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_LANG_ID], pp->lang_id);
     }
     if (pp->variant) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_VARIANT], pp->variant);

@@ -851,13 +851,13 @@ cmd_team_get_archive(struct client_state *p, int len,
   total_runs = run_get_total(serve_state.runlog_state);
   for (r = 0; r < total_runs; r++) {
     if (run_get_entry(serve_state.runlog_state, r, &re) < 0) continue;
-    if (re.team != pkt->user_id) continue;
+    if (re.user_id != pkt->user_id) continue;
     arch_flag = archive_make_read_path(&serve_state, origpath, sizeof(origpath),
                                        serve_state.global->run_archive_dir, r, 0, 0);
     if (arch_flag < 0) continue;
     snprintf(linkpath, sizeof(linkpath), "%s/%s_%06d%s%s",
-             fullpath, serve_state.probs[re.problem]->short_name, r,
-             serve_state.langs[re.language]->src_sfx,
+             fullpath, serve_state.probs[re.prob_id]->short_name, r,
+             serve_state.langs[re.lang_id]->src_sfx,
              ((arch_flag & GZIP))?".gz":"");
     if (link(origpath, linkpath) < 0) {
       err("link %s->%s failed: %s", linkpath, origpath, os_ErrorMsg());
@@ -1650,15 +1650,15 @@ cmd_view(struct client_state *p, int len,
         break;
       }
       if (run_get_entry(serve_state.runlog_state, pkt->item, &re) < 0
-          || re.team != p->user_id) {
+          || re.user_id != p->user_id) {
         err("%d: user %d tries to view another's runs", p->id, p->user_id);
         r = -SRV_ERR_NO_PERMS;
         break;
       }
       if (serve_state.global->score_system_val==SCORE_OLYMPIAD && !olympiad_judging_mode) {
-        if (re.problem <= 0 || re.problem > serve_state.max_prob
-            || !(prob = serve_state.probs[re.problem])) {
-          err("%d: invalid problem %d", p->id, re.problem);
+        if (re.prob_id <= 0 || re.prob_id > serve_state.max_prob
+            || !(prob = serve_state.probs[re.prob_id])) {
+          err("%d: invalid problem %d", p->id, re.prob_id);
           r = -SRV_ERR_BAD_PROB_ID;
           break;
         }
@@ -1692,7 +1692,7 @@ cmd_view(struct client_state *p, int len,
   case SRV_CMD_SHOW_REPORT:
     // this is unprivileged command
     if (run_get_entry(serve_state.runlog_state, pkt->item, &re) < 0
-        || re.team != p->user_id) {
+        || re.user_id != p->user_id) {
       err("%d: user %d tries to view another's runs", p->id, p->user_id);
       r = -SRV_ERR_NO_PERMS;
       break;
@@ -3794,11 +3794,11 @@ cmd_edit_run(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_BAD_USER_ID);
       return;
     }
-    run.team = pkt->user_id;
+    run.user_id = pkt->user_id;
     run_flags |= RUN_ENTRY_USER;
   }
   if ((pkt->mask & PROT_SERVE_RUN_LOGIN_SET)) {
-    if ((run.team = teamdb_lookup_login(serve_state.teamdb_state, user_login_ptr)) <= 0) {
+    if ((run.user_id = teamdb_lookup_login(serve_state.teamdb_state, user_login_ptr)) <= 0) {
       err("%d: invalid login <%s>", p->id, user_login_ptr);
       new_send_reply(p, -SRV_ERR_BAD_USER_ID);
       return;
@@ -3811,7 +3811,7 @@ cmd_edit_run(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_BAD_PROB_ID);
       return;
     }
-    run.problem = pkt->prob_id;
+    run.prob_id = pkt->prob_id;
     run_flags |= RUN_ENTRY_PROB;
   }
   if ((pkt->mask & PROT_SERVE_RUN_LANG_SET)) {
@@ -3820,7 +3820,7 @@ cmd_edit_run(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_BAD_LANG_ID);
       return;
     }
-    run.language = pkt->lang_id;
+    run.lang_id = pkt->lang_id;
     run_flags |= RUN_ENTRY_LANG;
   }
   if ((pkt->mask & PROT_SERVE_RUN_STATUS_SET)) {
@@ -3851,9 +3851,9 @@ cmd_edit_run(struct client_state *p, int len,
     run_flags |= RUN_ENTRY_HIDDEN;
   }
   if ((pkt->mask & PROT_SERVE_RUN_VARIANT_SET)) {
-    prob_id = cur_run.problem;
+    prob_id = cur_run.prob_id;
     if ((run_flags & RUN_ENTRY_PROB)) {
-      prob_id = run.problem;
+      prob_id = run.prob_id;
     }
     if (prob_id <= 0 || prob_id > serve_state.max_prob || !serve_state.probs[prob_id]) {
       err("%d: invalid problem id %d", p->id, prob_id);
@@ -4509,16 +4509,16 @@ read_compile_packet(const unsigned char *compile_status_dir,
   }
 
   /* check run parameters */
-  if (re.problem < 1 || re.problem > serve_state.max_prob || !(prob = serve_state.probs[re.problem])) {
-    snprintf(errmsg, sizeof(errmsg), "invalid problem %d\n", re.problem);
+  if (re.prob_id < 1 || re.prob_id > serve_state.max_prob || !(prob = serve_state.probs[re.prob_id])) {
+    snprintf(errmsg, sizeof(errmsg), "invalid problem %d\n", re.prob_id);
     goto report_check_failed;
   }
-  if (re.language < 1 || re.language > serve_state.max_lang || !(lang = serve_state.langs[re.language])) {
-    snprintf(errmsg, sizeof(errmsg), "invalid language %d\n", re.language);
+  if (re.lang_id < 1 || re.lang_id > serve_state.max_lang || !(lang = serve_state.langs[re.lang_id])) {
+    snprintf(errmsg, sizeof(errmsg), "invalid language %d\n", re.lang_id);
     goto report_check_failed;
   }
-  if (!(team_name = teamdb_get_name(serve_state.teamdb_state, re.team))) {
-    snprintf(errmsg, sizeof(errmsg), "invalid team %d\n", re.team);
+  if (!(team_name = teamdb_get_name(serve_state.teamdb_state, re.user_id))) {
+    snprintf(errmsg, sizeof(errmsg), "invalid team %d\n", re.user_id);
     goto report_check_failed;
   }
   if (prob->disable_testing && prob->enable_compilation > 0) {
@@ -4544,7 +4544,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
    */
 
   /* find appropriate checker */
-  cn = find_tester(&serve_state, re.problem, lang->arch);
+  cn = find_tester(&serve_state, re.prob_id, lang->arch);
   if (cn < 1 || cn > serve_state.max_tester || !serve_state.testers[cn]) {
     snprintf(errmsg, sizeof(errmsg), "no appropriate checker for <%s>, <%s>\n",
              prob->short_name, lang->arch);
@@ -4553,7 +4553,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
 
   if (prob->variant_num > 0) {
     variant = re.variant;
-    if (!variant) variant = find_variant(&serve_state, re.team, re.problem);
+    if (!variant) variant = find_variant(&serve_state, re.user_id, re.prob_id);
     if (!variant) {
       snprintf(errmsg, sizeof(errmsg), "no appropriate variant for <%s>, <%s>\n",
                team_name, prob->short_name);
@@ -4565,7 +4565,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
   prio = 0;
   prio += lang->priority_adjustment;
   prio += prob->priority_adjustment;
-  prio += find_user_priority_adjustment(&serve_state, re.team);
+  prio += find_user_priority_adjustment(&serve_state, re.user_id);
   prio += serve_state.testers[cn]->priority_adjustment;
   prio += comp_extra->priority_adjustment;
 
@@ -4596,7 +4596,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
   run_pkt->scoring_system = serve_state.global->score_system_val;
   run_pkt->variant = variant;
   run_pkt->accept_partial = prob->accept_partial;
-  run_pkt->user_id = re.team;
+  run_pkt->user_id = re.user_id;
   run_pkt->disable_sound = serve_state.global->disable_sound;
   run_pkt->full_archive = serve_state.global->enable_full_archive;
   run_pkt->memory_limit = serve_state.global->enable_memory_limit_error;
@@ -4633,7 +4633,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
   /* in new binary packet format we don't care about neither "special"
    * characters in spellings nor about spelling length
    */
-  teamdb_export_team(serve_state.teamdb_state, re.team, &te);
+  teamdb_export_team(serve_state.teamdb_state, re.user_id, &te);
   if (te.user && te.user->i.spelling && te.user->i.spelling[0]) {
     run_pkt->user_spelling = te.user->i.spelling;
   }
@@ -4786,32 +4786,32 @@ read_run_packet(const unsigned char *run_status_dir,
   if (!is_valid_status(reply_pkt->status, 2)) goto bad_packet_error;
 
   if (serve_state.global->score_system_val == SCORE_OLYMPIAD) {
-    if (re.problem < 1 || re.problem > serve_state.max_prob || !serve_state.probs[re.problem])
+    if (re.prob_id < 1 || re.prob_id > serve_state.max_prob || !serve_state.probs[re.prob_id])
       goto bad_packet_error;
   } else if (serve_state.global->score_system_val == SCORE_KIROV) {
     /*
     if (status != RUN_PARTIAL && status != RUN_OK
         && status != RUN_CHECK_FAILED) goto bad_packet_error;
     */
-    if (re.problem < 1 || re.problem > serve_state.max_prob || !serve_state.probs[re.problem])
+    if (re.prob_id < 1 || re.prob_id > serve_state.max_prob || !serve_state.probs[re.prob_id])
       goto bad_packet_error;
-    if (reply_pkt->score < 0 || reply_pkt->score>serve_state.probs[re.problem]->full_score)
+    if (reply_pkt->score < 0 || reply_pkt->score>serve_state.probs[re.prob_id]->full_score)
       goto bad_packet_error;
     /*
-    for (n = 0; n < serve_state.probs[re.problem]->dp_total; n++)
-      if (re.timestamp < serve_state.probs[re.problem]->dp_infos[n].deadline)
+    for (n = 0; n < serve_state.probs[re.prob_id]->dp_total; n++)
+      if (re.timestamp < serve_state.probs[re.prob_id]->dp_infos[n].deadline)
         break;
-    if (n < serve_state.probs[re.problem]->dp_total) {
-      score += serve_state.probs[re.problem]->dp_infos[n].penalty;
-      if (score > serve_state.probs[re.problem]->full_score)
-        score = serve_state.probs[re.problem]->full_score;
+    if (n < serve_state.probs[re.prob_id]->dp_total) {
+      score += serve_state.probs[re.prob_id]->dp_infos[n].penalty;
+      if (score > serve_state.probs[re.prob_id]->full_score)
+        score = serve_state.probs[re.prob_id]->full_score;
       if (score < 0) score = 0;
     }
     */
   } else if (serve_state.global->score_system_val == SCORE_MOSCOW) {
-    if (re.problem < 1 || re.problem > serve_state.max_prob || !serve_state.probs[re.problem])
+    if (re.prob_id < 1 || re.prob_id > serve_state.max_prob || !serve_state.probs[re.prob_id])
       goto bad_packet_error;
-    if (reply_pkt->score < 0 || reply_pkt->score>serve_state.probs[re.problem]->full_score)
+    if (reply_pkt->score < 0 || reply_pkt->score>serve_state.probs[re.prob_id]->full_score)
       goto bad_packet_error;
   } else {
     reply_pkt->score = -1;
@@ -5049,12 +5049,12 @@ rejudge_run(int run_id, struct client_state *p, int force_full_rejudge,
   if (run_get_entry(serve_state.runlog_state, run_id, &re) < 0) return;
   if (re.is_imported) return;
   if (re.is_readonly) return;
-  if (re.language <= 0 || re.language > serve_state.max_lang || !serve_state.langs[re.language]) {
-    err("rejudge_run: bad language: %d", re.language);
+  if (re.lang_id <= 0 || re.lang_id > serve_state.max_lang || !serve_state.langs[re.lang_id]) {
+    err("rejudge_run: bad language: %d", re.lang_id);
     return;
   }
-  if (re.problem <= 0 || re.problem > serve_state.max_prob || !serve_state.probs[re.problem]) {
-    err("rejudge_run: bad problem: %d", re.problem);
+  if (re.prob_id <= 0 || re.prob_id > serve_state.max_prob || !serve_state.probs[re.prob_id]) {
+    err("rejudge_run: bad problem: %d", re.prob_id);
     return;
   }
 
@@ -5064,10 +5064,10 @@ rejudge_run(int run_id, struct client_state *p, int force_full_rejudge,
   }
 
   queue_compile_request(0, -1, run_id,
-                        serve_state.langs[re.language]->compile_id, re.locale_id,
-                        serve_state.probs[re.problem]->output_only,
-                        serve_state.langs[re.language]->src_sfx,
-                        serve_state.langs[re.language]->compiler_env,
+                        serve_state.langs[re.lang_id]->compile_id, re.locale_id,
+                        serve_state.probs[re.prob_id]->output_only,
+                        serve_state.langs[re.lang_id]->src_sfx,
+                        serve_state.langs[re.lang_id]->compiler_env,
                         accepting_mode, priority_adjustment);
 
   append_audit_log(run_id, p, "Command: Rejudge");
@@ -5115,15 +5115,15 @@ do_rejudge_all(struct client_state *p)
       if (re.status != RUN_OK && re.status != RUN_PARTIAL
           && re.status != RUN_ACCEPTED) continue;
       if (re.is_imported) continue;
-      if (re.team <= 0 || re.team >= total_ids) continue;
-      if (re.problem <= 0 || re.problem >= total_probs) {
-        fprintf(stderr, "Invalid problem %d for run %d", re.problem, r);
+      if (re.user_id <= 0 || re.user_id >= total_ids) continue;
+      if (re.prob_id <= 0 || re.prob_id >= total_probs) {
+        fprintf(stderr, "Invalid problem %d for run %d", re.prob_id, r);
         continue;
       }
       if (re.is_readonly) continue;
-      if (!serve_state.probs[re.problem] || serve_state.probs[re.problem]->disable_testing) continue;
-      if (!serve_state.langs[re.language] || serve_state.langs[re.language]->disable_testing) continue;
-      idx = re.team * total_probs + re.problem;
+      if (!serve_state.probs[re.prob_id] || serve_state.probs[re.prob_id]->disable_testing) continue;
+      if (!serve_state.langs[re.lang_id] || serve_state.langs[re.lang_id]->disable_testing) continue;
+      idx = re.user_id * total_probs + re.prob_id;
       if (flag[idx]) continue;
       flag[idx] = 1;
       rejudge_run(r, p, 0, 0);
@@ -5136,10 +5136,10 @@ do_rejudge_all(struct client_state *p)
         && re.status <= RUN_MAX_STATUS
         && re.status != RUN_IGNORED
         && re.status != RUN_DISQUALIFIED
-        && re.problem >= 1 && re.problem <= serve_state.max_prob
-        && serve_state.probs[re.problem]
-        && !serve_state.probs[re.problem]->disable_testing
-        && !serve_state.langs[re.language]->disable_testing
+        && re.prob_id >= 1 && re.prob_id <= serve_state.max_prob
+        && serve_state.probs[re.prob_id]
+        && !serve_state.probs[re.prob_id]->disable_testing
+        && !serve_state.langs[re.lang_id]->disable_testing
         && !re.is_readonly
         && !re.is_imported) {
       rejudge_run(r, p, 0, 0);
@@ -5162,14 +5162,14 @@ do_judge_suspended(struct client_state *p)
     if (run_get_entry(serve_state.runlog_state, r, &re) >= 0
         && re.status == RUN_PENDING
         && !re.is_imported
-        && re.problem > 0
-        && re.problem <= serve_state.max_prob
-        && serve_state.probs[re.problem]
+        && re.prob_id > 0
+        && re.prob_id <= serve_state.max_prob
+        && serve_state.probs[re.prob_id]
         && !re.is_readonly
-        && !serve_state.probs[re.problem]->disable_testing
-        && !serve_state.probs[re.problem]->disable_auto_testing
-        && !serve_state.langs[re.language]->disable_testing
-        && !serve_state.langs[re.language]->disable_auto_testing) {
+        && !serve_state.probs[re.prob_id]->disable_testing
+        && !serve_state.probs[re.prob_id]->disable_auto_testing
+        && !serve_state.langs[re.lang_id]->disable_testing
+        && !serve_state.langs[re.lang_id]->disable_auto_testing) {
       rejudge_run(r, p, 0, 0);
     }
   }
@@ -5199,13 +5199,13 @@ do_rejudge_problem(int prob_id, struct client_state *p)
       if (run_get_entry(serve_state.runlog_state, r, &re) < 0) continue;
       if (re.status != RUN_OK && re.status != RUN_PARTIAL
           && re.status != RUN_ACCEPTED) continue;
-      if (re.problem != prob_id) continue;
+      if (re.prob_id != prob_id) continue;
       if (re.is_imported) continue;
       if (re.is_readonly) continue;
-      if (re.team <= 0 || re.team >= total_ids) continue;
-      if (flag[re.team]) continue;
-      if (!serve_state.langs[re.language] || serve_state.langs[re.language]->disable_testing) continue;
-      flag[re.team] = 1;
+      if (re.user_id <= 0 || re.user_id >= total_ids) continue;
+      if (flag[re.user_id]) continue;
+      if (!serve_state.langs[re.lang_id] || serve_state.langs[re.lang_id]->disable_testing) continue;
+      flag[re.user_id] = 1;
       rejudge_run(r, p, 0, 0);
     }
     return;
@@ -5213,7 +5213,7 @@ do_rejudge_problem(int prob_id, struct client_state *p)
 
   for (r = 0; r < total_runs; r++) {
     if (run_get_entry(serve_state.runlog_state, r, &re) >= 0
-        && re.problem == prob_id && re.status <= RUN_MAX_STATUS
+        && re.prob_id == prob_id && re.status <= RUN_MAX_STATUS
         && !re.is_readonly
         && re.status != RUN_IGNORED
         && re.status != RUN_DISQUALIFIED
@@ -5258,16 +5258,16 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask, struct client_state *p,
       if (re.status != RUN_OK && re.status != RUN_PARTIAL
           && re.status != RUN_ACCEPTED) continue;
       if (re.is_imported) continue;
-      if (re.team <= 0 || re.team >= total_ids) continue;
-      if (re.problem <= 0 || re.problem >= total_probs) {
-        fprintf(stderr, "Invalid problem %d for run %d", re.problem, r);
+      if (re.user_id <= 0 || re.user_id >= total_ids) continue;
+      if (re.prob_id <= 0 || re.prob_id >= total_probs) {
+        fprintf(stderr, "Invalid problem %d for run %d", re.prob_id, r);
         continue;
       }
       if (re.is_readonly) continue;
-      if (!serve_state.probs[re.problem] || serve_state.probs[re.problem]->disable_testing) continue;
-      if (!serve_state.langs[re.language]|| serve_state.langs[re.language]->disable_testing) continue;
+      if (!serve_state.probs[re.prob_id] || serve_state.probs[re.prob_id]->disable_testing) continue;
+      if (!serve_state.langs[re.lang_id]|| serve_state.langs[re.lang_id]->disable_testing) continue;
       if (!(mask[r / BITS_PER_LONG] & (1 << (r % BITS_PER_LONG)))) continue;
-      idx = re.team * total_probs + re.problem;
+      idx = re.user_id * total_probs + re.prob_id;
       if (flag[idx]) continue;
       flag[idx] = 1;
       rejudge_run(r, p, 0, 0);
@@ -5280,10 +5280,10 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask, struct client_state *p,
         && re.status <= RUN_MAX_STATUS
         && re.status != RUN_IGNORED
         && re.status != RUN_DISQUALIFIED
-        && re.problem >= 1 && re.problem <= serve_state.max_prob
-        && serve_state.probs[re.problem]
-        && !serve_state.probs[re.problem]->disable_testing
-        && !serve_state.langs[re.language]->disable_testing
+        && re.prob_id >= 1 && re.prob_id <= serve_state.max_prob
+        && serve_state.probs[re.prob_id]
+        && !serve_state.probs[re.prob_id]->disable_testing
+        && !serve_state.langs[re.lang_id]->disable_testing
         && !re.is_readonly
         && !re.is_imported
         && (mask[r / BITS_PER_LONG] & (1 << (r % BITS_PER_LONG)))) {

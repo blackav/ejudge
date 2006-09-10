@@ -110,14 +110,18 @@ ej_ip_t run_parse_ip(unsigned char const *buf);
 
 int run_check_duplicate(runlog_state_t, int run_id);
 
+/* structure size is 128 bytes */
 struct run_header
 {
-  int    version;
-  ej_time_t start_time;
-  ej_time_t sched_time;
-  ej_time_t duration;
-  ej_time_t stop_time;
-  unsigned char pad[44];
+  unsigned char version;        /* current version is 2 */
+  unsigned char _pad1[19];      /* skip fields of version 1 header */
+  unsigned char byte_order;     /* 0 - little-endian, the only supported yet */
+  unsigned char _pad2[11];      /* pad to the 32-byte boundary */
+  ej_time64_t start_time;
+  ej_time64_t sched_time;
+  ej_time64_t duration;
+  ej_time64_t stop_time;
+  unsigned char _pad3[64];
 };
 
 enum
@@ -143,28 +147,36 @@ enum
     RUN_ENTRY_ALL = 0x0003FFFF,
   };
 
+/* structure size is 128 bytes */
 struct run_entry
 {
-  rint32_t       submission;
-  ej_time_t      timestamp;
-  ej_size_t      size;
-  ej_ip_t        ip;
-  ruint32_t      sha1[5];
-  rint32_t       team;
-  rint32_t       problem;
-  rint32_t       score;
-  signed char    locale_id;
-  unsigned char  language;
-  unsigned char  status;
-  signed char    test;
-  unsigned char  is_imported;
-  unsigned char  variant;
-  unsigned char  is_hidden;
-  unsigned char  is_readonly;
-  unsigned char  pages;
-  signed char    score_adj;     /* manual score adjustment */
-  unsigned short judge_id;      /* judge required identifier */
-  rint32_t       nsec;          /* nanosecond component of timestamp */
+  ruint32_t      run_id;        /* 4 */
+  ej_size_t      size;          /* 4 */
+  ej_time64_t    time;          /* 8 */
+  ruint32_t      nsec;          /* 4 */
+  ruint32_t      user_id;       /* 4 */
+  ruint32_t      prob_id;       /* 4 */
+  ruint32_t      lang_id;       /* 4 */
+  union
+  {
+    ej_ip_t        ip;
+    unsigned char  ip6[16];
+  }              a;             /* 16 */
+  ruint32_t      sha1[5];       /* 20 */
+  rint32_t       score;         /* 4 */
+  rint32_t       test;          /* 4 */
+  rint32_t       score_adj;     /* 4 */
+  rint16_t       locale_id;     /* 2 */
+  ruint16_t      judge_id;      /* 2 */
+  unsigned char  status;        /* 1 */
+  unsigned char  is_imported;   /* 1 */
+  unsigned char  variant;       /* 1 */
+  unsigned char  is_hidden;     /* 1 */
+  unsigned char  is_readonly;   /* 1 */
+  unsigned char  pages;         /* 1 */
+  unsigned char  ipv6_flag;     /* 1 */
+  /* total is 91 bytes */
+  unsigned char  _pad[37];
 };
 
 void run_get_header(runlog_state_t, struct run_header *out);
