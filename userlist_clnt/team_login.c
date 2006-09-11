@@ -57,7 +57,7 @@ userlist_clnt_team_login(struct userlist_clnt *clnt,
   strcpy(login_ptr, login);
   strcpy(passwd_ptr, passwd);
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
-  if ((r = userlist_clnt_recv_packet(clnt, &in_size, &void_in)) < 0)
+  if ((r = userlist_clnt_read_and_notify(clnt, &in_size, &void_in)) < 0)
     return r;
   in = void_in;
   if (in->reply_id != ULS_LOGIN_OK && in->reply_id != ULS_LOGIN_COOKIE) {

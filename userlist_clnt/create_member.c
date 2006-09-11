@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,7 +35,7 @@ userlist_clnt_create_member(struct userlist_clnt *clnt, int user_id,
   out->contest_id = contest_id;
   out->serial = role;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
-  if ((r = userlist_clnt_recv_packet(clnt, &in_size, &void_in)) < 0)
+  if ((r = userlist_clnt_read_and_notify(clnt, &in_size, &void_in)) < 0)
     return r;
   in = (struct userlist_packet *) void_in;
   if (in_size < sizeof(*in)) {

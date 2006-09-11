@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ userlist_clnt_get_info(struct userlist_clnt *clnt,
   out_pkt.contest_id = contest_id;
   if ((r = userlist_clnt_send_packet(clnt, sizeof(out_pkt), &out_pkt)) < 0)
     return r;
-  if ((r = userlist_clnt_recv_packet(clnt, &in_size, (void*) &in_pkt)) < 0)
+  if ((r = userlist_clnt_read_and_notify(clnt, &in_size, (void*) &in_pkt)) < 0)
     return -r;
   if (!in_size || !in_pkt) return -1;
   if (in_pkt->reply_id != ULS_XML_DATA) {

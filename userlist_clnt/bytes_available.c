@@ -16,32 +16,22 @@
  */
 
 #include "userlist_clnt/private.h"
+#include "errlog.h"
+
+#include <sys/ioctl.h>
+#include <linux/sockios.h>
 
 int
-userlist_clnt_notify(struct userlist_clnt *clnt, int cmd, int contest_id)
+userlist_clnt_bytes_available(struct userlist_clnt *clnt)
 {
-  struct userlist_pk_map_contest *out = 0;
-  struct userlist_packet *in = 0;
-  int r;
-  size_t out_size, in_size = 0;
-  void *void_in = 0;
+  int sz = 0;
 
-  out_size = sizeof(*out);
-  out = alloca(out_size);
-  memset(out, 0, out_size);
-  out->request_id = cmd;
-  out->contest_id = contest_id;
-  if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
-  if ((r = userlist_clnt_read_and_notify(clnt, &in_size, &void_in)) < 0)
-    return r;
-  in = (struct userlist_packet*) void_in;
-  if (in_size != sizeof(*in)) {
-    r = -ULS_ERR_PROTOCOL;
+  if (ioctl(clnt->fd, SIOCINQ, &sz) < 0) {
+    err("userlist_clnt_has_data: ioctl failed: %s", os_ErrorMsg());
+    return -ULS_ERR_READ_ERROR;
   } else {
-    r = in->id;
+    return sz;
   }
-  xfree(in);
-  return r;
 }
 
 /*

@@ -17,31 +17,13 @@
 
 #include "userlist_clnt/private.h"
 
-int
-userlist_clnt_notify(struct userlist_clnt *clnt, int cmd, int contest_id)
+void
+userlist_clnt_set_notification_callback(struct userlist_clnt *clnt,
+                                        void (*callback)(void *, int),
+                                        void *user_data)
 {
-  struct userlist_pk_map_contest *out = 0;
-  struct userlist_packet *in = 0;
-  int r;
-  size_t out_size, in_size = 0;
-  void *void_in = 0;
-
-  out_size = sizeof(*out);
-  out = alloca(out_size);
-  memset(out, 0, out_size);
-  out->request_id = cmd;
-  out->contest_id = contest_id;
-  if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
-  if ((r = userlist_clnt_read_and_notify(clnt, &in_size, &void_in)) < 0)
-    return r;
-  in = (struct userlist_packet*) void_in;
-  if (in_size != sizeof(*in)) {
-    r = -ULS_ERR_PROTOCOL;
-  } else {
-    r = in->id;
-  }
-  xfree(in);
-  return r;
+  clnt->notification_callback = callback;
+  clnt->notification_user_data = user_data;
 }
 
 /*
