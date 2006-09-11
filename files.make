@@ -167,6 +167,7 @@ COMMON_CFILES=\
  run_packet_7.c\
  send_job_packet.c\
  server_framework.c\
+ serve_2.c\
  serve_state.c\
  sformat.c\
  super_html.c\

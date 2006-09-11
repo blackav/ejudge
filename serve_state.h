@@ -19,6 +19,7 @@
 
 #include "settings.h"
 #include "ej_types.h"
+#include "opcaps.h"
 
 #include <time.h>
 
@@ -135,5 +136,26 @@ typedef struct serve_state *serve_state_t;
 
 serve_state_t serve_state_init(void);
 serve_state_t serve_state_destroy(serve_state_t state);
+
+void serve_update_standings_file(serve_state_t state, int force_flag);
+void serve_update_public_log_file(serve_state_t state);
+void serve_update_external_xml_log(serve_state_t state);
+void serve_update_internal_xml_log(serve_state_t state);
+int  serve_update_status_file(serve_state_t state, int force_flag);
+void serve_load_status_file(serve_state_t state);
+
+int serve_check_user_quota(serve_state_t, int user_id, size_t size);
+int serve_check_clar_qouta(serve_state_t, int user_id, size_t size);
+
+int serve_check_cnts_caps(serve_state_t state, int user_id, int bit);
+int serve_get_cnts_caps(serve_state_t state, int user_id, opcap_t *out_caps);
+
+void serve_build_compile_dirs(serve_state_t state);
+void serve_build_run_dirs(serve_state_t state);
+
+int serve_create_symlinks(serve_state_t state);
+
+const unsigned char *serve_get_email_sender(const struct contest_desc *cnts);
+void serve_check_stat_generation(serve_state_t state, int force_flag);
 
 #endif /* __SERVE_STATE_H__ */
