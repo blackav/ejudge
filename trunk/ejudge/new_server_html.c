@@ -306,7 +306,8 @@ static int
 open_ul_connection(struct server_framework_state *state)
 {
   struct server_framework_watch w;
-  int r;
+  int r, contest_id;
+  struct contest_extra *e;
 
   if (ul_conn) return 0;
 
@@ -330,6 +331,17 @@ open_ul_connection(struct server_framework_state *state)
   }
 
   userlist_clnt_set_notification_callback(ul_conn, ul_notification_callback, 0);
+
+  // add notifications for all the active contests
+  for (contest_id = 1; contest_id < extra_a; contest_id++) {
+    if (!(e = extras[contest_id]) || !e->serve_state) continue;
+    if ((r = userlist_clnt_notify(ul_conn, ULS_ADD_NOTIFY, contest_id)) < 0) {
+      err("open_connection: cannot add notification: %s",
+          userlist_strerror(-r));
+      close_ul_connection(state);
+      return -1;
+    }
+  }
 
   info("running as %s (%d)", ul_login, ul_uid);
   return 0;
