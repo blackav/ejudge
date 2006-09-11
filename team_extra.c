@@ -61,12 +61,11 @@ b32_number(unsigned num, size_t size, unsigned char buf[])
 }
 
 team_extra_state_t
-team_extra_init(const unsigned char *team_extra_dir)
+team_extra_init(void)
 {
   team_extra_state_t p;
 
   XCALLOC(p, 1);
-  p->team_extra_dir = xstrdup(team_extra_dir);
   return p;
 }
 
@@ -93,6 +92,13 @@ team_extra_destroy(team_extra_state_t state)
   xfree(state->team_map);
   memset(state, 0, sizeof(*state));
   xfree(state);
+  return 0;
+}
+
+int
+team_extra_set_dir(team_extra_state_t state, const unsigned char *dir)
+{
+  state->team_extra_dir = xstrdup(dir);
   return 0;
 }
 

@@ -18,6 +18,7 @@
  */
 
 #include "settings.h"
+#include "ej_types.h"
 
 #include <time.h>
 
@@ -32,6 +33,27 @@ struct teamdb_state;
 struct team_extra_state;
 struct user_state_info;
 struct user_filter_info;
+
+struct user_filter_info
+{
+  struct user_filter_info *next;
+
+  ej_cookie_t session_id;
+  int prev_first_run;
+  int prev_last_run;
+  int prev_first_clar;
+  int prev_last_clar;
+  int prev_mode_clar;           /* 1 - view all, 2 - view unanswered */
+  unsigned char *prev_filter_expr;
+  struct filter_tree *prev_tree;
+  struct filter_tree_mem *tree_mem;
+  unsigned char *error_msgs;
+};
+
+struct user_state_info
+{
+  struct user_filter_info *first_filter;
+};
 
 struct compile_dir_item
 {
@@ -110,5 +132,8 @@ struct serve_state
   int run_dirs_u, run_dirs_a;
 };
 typedef struct serve_state *serve_state_t;
+
+serve_state_t serve_state_init(void);
+serve_state_t serve_state_destroy(serve_state_t state);
 
 #endif /* __SERVE_STATE_H__ */

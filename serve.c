@@ -6323,7 +6323,8 @@ main(int argc, char *argv[])
     return 1;
   }
   serve_state.teamdb_state = teamdb_init();
-  serve_state.team_extra_state = team_extra_init(serve_state.global->team_extra_dir);
+  serve_state.team_extra_state = team_extra_init();
+  team_extra_set_dir(serve_state.team_extra_state, serve_state.global->team_extra_dir);
   if (teamdb_open_client(serve_state.teamdb_state, serve_state.global->socket_path,
                          serve_state.global->contest_id) < 0)
     return 1;

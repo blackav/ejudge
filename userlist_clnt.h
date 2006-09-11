@@ -36,6 +36,8 @@ int userlist_clnt_recv_packet(struct userlist_clnt *clnt,
 int userlist_clnt_do_pass_fd(struct userlist_clnt *clnt,
                              int fds_num,
                              int *fds);
+int userlist_clnt_read_and_notify(struct userlist_clnt *clnt,
+                                  size_t *p_size, void **p_data);
 
 int
 userlist_clnt_register_new(struct userlist_clnt *clnt,
@@ -305,5 +307,10 @@ int userlist_clnt_clear_team_passwords(struct userlist_clnt *clnt,
 
 int userlist_clnt_notify(struct userlist_clnt *clnt, int cmd, int contest_id);
 int userlist_clnt_read_notification(struct userlist_clnt *clnt, int *p_contest_id);
+
+int userlist_clnt_bytes_available(struct userlist_clnt *clnt);
+void userlist_clnt_set_notification_callback(struct userlist_clnt *clnt,
+                                             void (*callback)(void *, int),
+                                             void *user_data);
 
 #endif /* __USERLIST_CLNT_H__ */

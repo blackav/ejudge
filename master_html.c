@@ -62,27 +62,6 @@
 #define _(x) x
 #endif
 
-struct user_filter_info
-{
-  struct user_filter_info *next;
-
-  ej_cookie_t session_id;
-  int prev_first_run;
-  int prev_last_run;
-  int prev_first_clar;
-  int prev_last_clar;
-  int prev_mode_clar;           /* 1 - view all, 2 - view unanswered */
-  unsigned char *prev_filter_expr;
-  struct filter_tree *prev_tree;
-  struct filter_tree_mem *tree_mem;
-  unsigned char *error_msgs;
-};
-
-struct user_state_info
-{
-  struct user_filter_info *first_filter;
-};
-
 static void
 print_nav_buttons(const serve_state_t state, FILE *f, int run_id,
                   ej_cookie_t sid,
