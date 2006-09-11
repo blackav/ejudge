@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@ userlist_clnt_create_user(struct userlist_clnt *clnt, int *p_user_id)
   memset(out, 0, out_size);
   out->request_id = ULS_CREATE_USER;
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
-  if ((r = userlist_clnt_recv_packet(clnt, &in_size, &void_in)) < 0)
+  if ((r = userlist_clnt_read_and_notify(clnt, &in_size, &void_in)) < 0)
     return r;
   in = (struct userlist_packet *) void_in;
   if (in_size < sizeof(*in)) {

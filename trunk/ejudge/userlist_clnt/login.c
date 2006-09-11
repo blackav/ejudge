@@ -52,7 +52,7 @@ userlist_clnt_login(struct userlist_clnt *clnt,
   strcpy(data->data,login);
   strcpy(data->data + data->login_length + 1,passwd);
   if ((r = userlist_clnt_send_packet(clnt,len,data)) < 0) return r;
-  if ((r = userlist_clnt_recv_packet(clnt,&anslen, &void_answer)) < 0)
+  if ((r = userlist_clnt_read_and_notify(clnt,&anslen, &void_answer)) < 0)
     return r;
   answer = void_answer;
   if ((answer->reply_id == ULS_LOGIN_OK)||

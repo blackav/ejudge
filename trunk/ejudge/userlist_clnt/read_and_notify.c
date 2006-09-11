@@ -18,30 +18,24 @@
 #include "userlist_clnt/private.h"
 
 int
-userlist_clnt_notify(struct userlist_clnt *clnt, int cmd, int contest_id)
+userlist_clnt_read_and_notify(struct userlist_clnt *clnt,
+                              size_t *p_size, void **p_data)
 {
-  struct userlist_pk_map_contest *out = 0;
-  struct userlist_packet *in = 0;
   int r;
-  size_t out_size, in_size = 0;
-  void *void_in = 0;
+  struct userlist_pk_notification *in;
 
-  out_size = sizeof(*out);
-  out = alloca(out_size);
-  memset(out, 0, out_size);
-  out->request_id = cmd;
-  out->contest_id = contest_id;
-  if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
-  if ((r = userlist_clnt_read_and_notify(clnt, &in_size, &void_in)) < 0)
-    return r;
-  in = (struct userlist_packet*) void_in;
-  if (in_size != sizeof(*in)) {
-    r = -ULS_ERR_PROTOCOL;
-  } else {
-    r = in->id;
+  while (1) {
+    if ((r = userlist_clnt_recv_packet(clnt, p_size, p_data)) < 0)
+      return r;
+    if (*p_size != sizeof(*in)) return 0;
+    in = (struct userlist_pk_notification*) *p_data;
+    if (in->reply_id != ULS_NOTIFICATION) return 0;
+    if (clnt->notification_callback)
+      clnt->notification_callback(clnt->notification_user_data, in->contest_id);
+    xfree(in);
+    *p_size = 0;
+    *p_data = 0;
   }
-  xfree(in);
-  return r;
 }
 
 /*

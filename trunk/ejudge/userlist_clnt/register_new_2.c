@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -49,7 +49,7 @@ userlist_clnt_register_new_2(struct userlist_clnt *clnt,
   strcpy(data->data,login);
   strcpy(data->data+data->login_length+1,email);
   if ((r = userlist_clnt_send_packet(clnt,len,data)) < 0) return r;
-  if ((r = userlist_clnt_recv_packet(clnt,&anslen,(void*) &v_ans)) < 0)
+  if ((r = userlist_clnt_read_and_notify(clnt,&anslen,(void*) &v_ans)) < 0)
     return r;
   if (anslen < sizeof(short)) goto protocol_error;
   s_ans = (short*) v_ans;

@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -50,7 +50,7 @@ userlist_clnt_team_set_passwd(struct userlist_clnt *clnt,
   strcpy(old_ptr, old_pwd);
   strcpy(new_ptr, new_pwd);
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
-  if ((r = userlist_clnt_recv_packet(clnt, &in_size, (void*) &in)) < 0)
+  if ((r = userlist_clnt_read_and_notify(clnt, &in_size, (void*) &in)) < 0)
     return r;
   if (in_size != sizeof(*in)) {
     xfree(in);
@@ -61,7 +61,7 @@ userlist_clnt_team_set_passwd(struct userlist_clnt *clnt,
   return r;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

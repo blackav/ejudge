@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -46,7 +46,7 @@ userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
   data->cookie = cookie;
   data->locale_id = -1;
   if ((r = userlist_clnt_send_packet(clnt,len,data)) < 0) return r;
-  if ((r = userlist_clnt_recv_packet(clnt,&anslen,&void_answer)) < 0)
+  if ((r = userlist_clnt_read_and_notify(clnt,&anslen,&void_answer)) < 0)
     return r;
   answer = void_answer;
   if (answer->reply_id == ULS_LOGIN_COOKIE) {
@@ -62,7 +62,7 @@ userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
   return res;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")

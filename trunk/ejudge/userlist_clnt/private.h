@@ -4,7 +4,7 @@
 #ifndef __USERLIST_CLNT_PRIVATE_H__
 #define __USERLIST_CLNT_PRIVATE_H__
 
-/* Copyright (C) 2002 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002,2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -34,6 +34,8 @@
 struct userlist_clnt
 {
   int fd;
+  void (*notification_callback)(void *, int);
+  void *notification_user_data;
 };
 
 #endif /* __USERLIST_CLNT_PRIVATE_H__ */
