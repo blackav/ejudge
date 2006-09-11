@@ -15,6 +15,7 @@
 
 USERLIST_CLNT_CFILES=\
  userlist_clnt/admin_process.c\
+ userlist_clnt/bytes_available.c\
  userlist_clnt/change_registration.c\
  userlist_clnt/clear_team_passwords.c\
  userlist_clnt/close.c\
@@ -47,6 +48,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/pass_fd.c\
  userlist_clnt/priv_cookie.c\
  userlist_clnt/priv_login.c\
+ userlist_clnt/read_and_notify.c\
  userlist_clnt/read_notification.c\
  userlist_clnt/recv_packet.c\
  userlist_clnt/register_contest.c\
@@ -54,6 +56,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/register_new_2.c\
  userlist_clnt/send_packet.c\
  userlist_clnt/set_info.c\
+ userlist_clnt/set_notification_callback.c\
  userlist_clnt/set_passwd.c\
  userlist_clnt/team_cookie.c\
  userlist_clnt/team_login.c\
@@ -164,6 +167,7 @@ COMMON_CFILES=\
  run_packet_7.c\
  send_job_packet.c\
  server_framework.c\
+ serve_state.c\
  sformat.c\
  super_html.c\
  super_html_2.c\

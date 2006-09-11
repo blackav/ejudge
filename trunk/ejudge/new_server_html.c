@@ -35,6 +35,8 @@
 #include "fileutl.h"
 #include "userlist.h"
 #include "mischtml.h"
+#include "serve_state.h"
+#include "teamdb.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -108,6 +110,7 @@ struct contest_extra
   const unsigned char *header_txt;
   const unsigned char *footer_txt;
   unsigned char *contest_arm;
+  serve_state_t serve_state;
 };
 static struct contest_extra **extras = 0;
 static size_t extra_a = 0;
@@ -139,6 +142,14 @@ get_contest_extra(int contest_id)
     extras[contest_id] = p;
   }
   return p;
+}
+
+static struct contest_extra *
+try_contest_extra(int contest_id)
+{
+  if (contest_id <= 0 || contest_id > MAX_CONTEST_ID) return 0;
+  if (contest_id >= extra_a) return 0;
+  return extras[contest_id];
 }
 
 static void
@@ -246,8 +257,49 @@ ul_conn_callback(struct server_framework_state *state,
                  struct server_framework_watch *pw,
                  int events)
 {
-  info("userlist-server fd ready: disconnect?");
-  close_ul_connection(state);
+  int r, contest_id = 0;
+  struct contest_extra *e;
+
+  info("userlist-server fd ready");
+  while (1) {
+    r = userlist_clnt_read_notification(ul_conn, &contest_id);
+    if (r == ULS_ERR_UNEXPECTED_EOF) {
+      info("userlist-server disconnect");
+      close_ul_connection(state);
+      break;
+    } else if (r < 0) {
+      err("userlist-server error: %s", userlist_strerror(-r));
+      close_ul_connection(state);
+      break;
+    } else {
+      e = try_contest_extra(contest_id);
+      if (!e) {
+        err("userlist-server notification: %d - no such contest", contest_id);
+        break;
+      } else {
+        info("userlist-server notification: %d", contest_id);
+        if (e->serve_state && e->serve_state->teamdb_state)
+          teamdb_set_update_flag(e->serve_state->teamdb_state);
+        if (userlist_clnt_bytes_available(ul_conn) <= 0) break;
+      }
+    }
+    info("userlist-server fd has more data");
+  }
+}
+
+static void
+ul_notification_callback(void *user_data, int contest_id)
+{
+  struct contest_extra *e;
+
+  e = try_contest_extra(contest_id);
+  if (!e) {
+    err("userlist-server notification: %d - no such contest", contest_id);
+  } else {
+    info("userlist-server notification: %d", contest_id);
+    if (e->serve_state && e->serve_state->teamdb_state)
+      teamdb_set_update_flag(e->serve_state->teamdb_state);
+  }
 }
 
 static int
@@ -276,6 +328,8 @@ open_ul_connection(struct server_framework_state *state)
     close_ul_connection(state);
     return -1;
   }
+
+  userlist_clnt_set_notification_callback(ul_conn, ul_notification_callback, 0);
 
   info("running as %s (%d)", ul_login, ul_uid);
   return 0;

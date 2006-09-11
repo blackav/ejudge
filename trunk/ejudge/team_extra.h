@@ -51,8 +51,9 @@ struct team_extra
 struct team_extra_state;
 typedef struct team_extra_state *team_extra_state_t;
 
-team_extra_state_t team_extra_init(const unsigned char *);
+team_extra_state_t team_extra_init(void);
 team_extra_state_t team_extra_destroy(team_extra_state_t);
+int team_extra_set_dir(team_extra_state_t, const unsigned char *);
 int team_extra_parse_xml(const unsigned char *path, struct team_extra **pte);
 int team_extra_unparse_xml(FILE *f, struct team_extra *te);
 
