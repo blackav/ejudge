@@ -34,6 +34,8 @@ struct teamdb_state;
 struct team_extra_state;
 struct user_state_info;
 struct user_filter_info;
+struct teamdb_db_callbacks;
+struct userlist_clnt;
 
 struct user_filter_info
 {
@@ -70,6 +72,8 @@ struct run_dir_item
 };
 struct serve_state
 {
+  unsigned char *config_path;
+
   /* serve.cfg parsed config */
   struct generic_section_config *config;
   struct section_global_data    *global;
@@ -137,6 +141,8 @@ typedef struct serve_state *serve_state_t;
 serve_state_t serve_state_init(void);
 serve_state_t serve_state_destroy(serve_state_t state);
 
+void serve_state_set_config_path(serve_state_t state, const unsigned char *);
+
 void serve_update_standings_file(serve_state_t state, int force_flag);
 void serve_update_public_log_file(serve_state_t state);
 void serve_update_external_xml_log(serve_state_t state);
@@ -157,5 +163,10 @@ int serve_create_symlinks(serve_state_t state);
 
 const unsigned char *serve_get_email_sender(const struct contest_desc *cnts);
 void serve_check_stat_generation(serve_state_t state, int force_flag);
+
+int serve_state_load_contest(int contest_id,
+                             struct userlist_clnt *ul_conn,
+                             struct teamdb_db_callbacks *teamdb_callbacks,
+                             serve_state_t *p_state);
 
 #endif /* __SERVE_STATE_H__ */

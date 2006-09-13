@@ -80,6 +80,7 @@ enum
     ULS_GET_COOKIE,
     ULS_ADD_NOTIFY,
     ULS_DEL_NOTIFY,
+    ULS_SET_COOKIE_LOCALE,
 
     ULS_LAST_CMD
   };

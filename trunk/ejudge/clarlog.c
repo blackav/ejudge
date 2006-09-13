@@ -324,6 +324,7 @@ clar_init(void)
 clarlog_state_t
 clar_destroy(clarlog_state_t state)
 {
+  if (!state) return 0;
   xfree(state->clars.v);
   if (state->clar_fd >= 0) close(state->clar_fd);
   memset(state, 0, sizeof(*state));

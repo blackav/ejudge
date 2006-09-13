@@ -55,6 +55,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/register_new.c\
  userlist_clnt/register_new_2.c\
  userlist_clnt/send_packet.c\
+ userlist_clnt/set_cookie.c\
  userlist_clnt/set_info.c\
  userlist_clnt/set_notification_callback.c\
  userlist_clnt/set_passwd.c\

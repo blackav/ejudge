@@ -37,6 +37,7 @@
 #include "mischtml.h"
 #include "serve_state.h"
 #include "teamdb.h"
+#include "prepare.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -88,6 +89,7 @@ enum
   NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR,
   NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN,
   NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID,
+  NEW_SRV_ACTION_CHANGE_LANGUAGE,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -110,7 +112,9 @@ struct contest_extra
   const unsigned char *header_txt;
   const unsigned char *footer_txt;
   unsigned char *contest_arm;
+
   serve_state_t serve_state;
+  time_t last_access_time;
 };
 static struct contest_extra **extras = 0;
 static size_t extra_a = 0;
@@ -344,6 +348,17 @@ open_ul_connection(struct server_framework_state *state)
   }
 
   info("running as %s (%d)", ul_login, ul_uid);
+  return 0;
+}
+
+static int
+list_all_users_callback(void *user_data, int contest_id, unsigned char **p_xml)
+{
+  struct server_framework_state *state = (struct server_framework_state *) user_data;
+  if (open_ul_connection(state) < 0) return -1;
+
+  if (userlist_clnt_list_all_users(ul_conn, ULS_LIST_STANDINGS_USERS,
+                                   contest_id, p_xml) < 0) return -1;
   return 0;
 }
 
@@ -726,6 +741,47 @@ html_err_service_not_available(struct server_framework_state *state,
                   _("Service not available"));
   fprintf(fout, "<p>%s</p>\n",
           _("Service that you requested is not available."));
+  html_put_footer(fout, footer, phr->locale_id);
+  l10n_setlocale(0);
+}
+
+static void
+html_err_contest_not_available(struct server_framework_state *state,
+                               struct client_state *p,
+                               FILE *fout,
+                               struct http_request_info *phr,
+                               const char *format, ...)
+{
+  const struct contest_desc *cnts = 0;
+  struct contest_extra *extra = 0;
+  const unsigned char *header = 0, *footer = 0;
+  time_t cur_time = time(0);
+  unsigned char buf[1024];
+  va_list args;
+
+  va_start(args, format);
+  vsnprintf(buf, sizeof(buf), format, args);
+  va_end(args);
+  err("%d: contest not available: %s", p->id, buf);
+
+  if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
+  if (cnts) extra = get_contest_extra(phr->contest_id);
+  if (extra) {
+    update_watched_file(&extra->header, cnts->team_header_file, cur_time);
+    update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
+    header = extra->header.text;
+    footer = extra->footer.text;
+  }
+
+  // try fancy headers
+  if (!header) header = fancy_header;
+  if (!footer) footer = fancy_footer;
+
+  l10n_setlocale(phr->locale_id);
+  html_put_header(fout, header, 0, 0, phr->locale_id,
+                  _("Contest not available"));
+  fprintf(fout, "<p>%s</p>\n",
+          _("The contest is temporarily not available. Please, retry the request a bit later."));
   html_put_footer(fout, footer, phr->locale_id);
   l10n_setlocale(0);
 }
@@ -2029,6 +2085,56 @@ unprivileged_page_login(struct server_framework_state *state,
 }
 
 static void
+unpriv_change_language(struct server_framework_state *state,
+                       struct client_state *p,
+                       FILE *fout,
+                       struct http_request_info *phr,
+                       const struct contest_desc *cnts,
+                       struct contest_extra *extra)
+{
+  const unsigned char *s;
+  int r, n;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  FILE *log_f = 0;
+  int new_locale_id;
+
+  if ((r = ns_cgi_param(phr, "locale_id", &s)) < 0)
+    return html_err_invalid_param(state, p, fout, phr, 0,
+                                  "cannot parse locale_id");
+  if (r > 0) {
+    if (sscanf(s, "%d%n", &new_locale_id, &n) != 1 || s[n] || new_locale_id < 0)
+      return html_err_invalid_param(state, p, fout, phr, 0,
+                                    "cannot parse locale_id");
+  }
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if (open_ul_connection(state) < 0) {
+    html_err_userlist_server_down(state, p, fout, phr, 0);
+    goto cleanup;
+  }
+  if ((r = userlist_clnt_set_cookie(ul_conn, ULS_SET_COOKIE_LOCALE,
+                                    phr->session_id,
+                                    new_locale_id)) < 0) {
+    fprintf(log_f, "set_cookie failed: %s", userlist_strerror(-r));
+  }
+
+  //done:
+  fclose(log_f); log_f = 0;
+  if (!log_txt || !*log_txt) {
+    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
+  } else {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+                           NEW_SRV_ACTION_MAIN_PAGE);
+  }
+
+ cleanup:
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+}
+
+static void
 user_main_page(struct server_framework_state *state,
                struct client_state *p,
                FILE *fout,
@@ -2036,16 +2142,102 @@ user_main_page(struct server_framework_state *state,
                const struct contest_desc *cnts,
                struct contest_extra *extra)
 {
+  serve_state_t cs = extra->serve_state;
+
   l10n_setlocale(phr->locale_id);
   html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
                   "%s [%s]: %s",
                   phr->name_arm, extra->contest_arm, _("Main page"));
+
+  fprintf(fout, "<h2>%s</h2>\n", _("Quick navigation"));
+  fprintf(fout, "<ul>\n");
+  fprintf(fout, "<li><a href=\"#status\">%s</a></li>\n", _("Contest status"));
+  /*
+  if (error_log)
+    printf("<li><a href=\"#lastcmd\">%s</a>\n",
+           _("The last command completion status"));
+  */
+  if (cs->contest_start_time && cs->clients_suspended) {
+    fprintf(fout, "<li><a href=\"#probstat\">%s</a>\n",
+            _("Problem status summary"));
+  }
+  if (cs->contest_start_time && !cs->contest_stop_time
+      && !cs->clients_suspended) {
+    fprintf(fout, "<li><a href=\"#submit\">%s</a>\n",
+            _("Send a submission"));
+  }
+  if (cs->contest_start_time && !cs->contest_stop_time) {
+    fprintf(fout, "<li><a href=\"#runstat\">%s</a>\n",
+            _("Submission log"));
+  }
+  if (!cs->global->disable_team_clars && !cs->global->disable_clars
+      && !cs->clients_suspended) {
+    fprintf(fout, "<li><a href=\"#clar\">%s</a>\n",
+            _("Send a message to judges"));
+  }
+  if (!cs->global->disable_clars) {
+    fprintf(fout, "<li><a href=\"#clarstat\">%s</a>\n",
+            _("Messages from judges"));
+  }
+  if (!cs->clients_suspended) {
+    fprintf(fout, "<li><a href=\"#chgpasswd\">%s</a>\n",
+            _("Change password"));
+  }
+#if CONF_HAS_LIBINTL - 0 == 1
+  if (cs->global->enable_l10n) {
+    fprintf(fout, "<li><a href=\"#chglanguage\">%s</a>\n",
+            _("Change language"));
+  }
+#endif /* CONF_HAS_LIBINTL */
+  if (cnts->standings_url && cs->contest_start_time) {
+    fprintf(fout, "<li><a href=\"%s\" target=_blank>%s</a>\n",
+            cnts->standings_url, _("Team standings"));
+  }
+  /*
+  if (server_always_show_problems ||
+      (!server_is_virtual && cur_contest->problems_url && server_start_time)) {
+    printf("<li><a href=\"%s\" target=_blank>%s</a>\n",
+           cur_contest->problems_url, _("Problems"));
+  }
+  */
+  fprintf(fout, "</ul>\n");
+
+
+#if CONF_HAS_LIBINTL - 0 == 1
+  if (cs->global->enable_l10n) {
+    fprintf(fout, "<hr><a name=\"chglanguage\"></a><%s>%s</%s>\n",
+            cnts->team_head_style, _("Change language"),
+            cnts->team_head_style);
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    fprintf(fout, "<table><tr><td>%s</td><td>", _("Change language"));
+    l10n_html_locale_select(fout, phr->locale_id);
+    fprintf(fout, "</td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr></table></form>\n",
+           NEW_SRV_ACTION_CHANGE_LANGUAGE, _("Change"));
+  }
+#endif /* CONF_HAS_LIBINTL */
+
+#if 0
+  if (global->show_generation_time) {
+    gettimeofday(&end_time, 0);
+    end_time.tv_sec -= begin_time.tv_sec;
+    if ((end_time.tv_usec -= begin_time.tv_usec) < 0) {
+      end_time.tv_usec += 1000000;
+      end_time.tv_sec--;
+    }
+    printf("<hr><p%s>%s: %ld %s\n", par_style,
+           _("Page generation time"),
+           end_time.tv_usec / 1000 + end_time.tv_sec * 1000,
+           _("msec"));
+  }
+#endif
+
   html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
 }
 
 static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 {
+  [NEW_SRV_ACTION_CHANGE_LANGUAGE] unpriv_change_language,
 };
 
 static void
@@ -2059,6 +2251,7 @@ unprivileged_page(struct server_framework_state *state,
   struct contest_extra *extra = 0;
   time_t cur_time = time(0);
   unsigned char hid_buf[1024];
+  struct teamdb_db_callbacks callbacks;
 
   if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return unprivileged_page_login(state, p, fout, phr);
@@ -2126,6 +2319,18 @@ unprivileged_page(struct server_framework_state *state,
            phr->session_id);
   phr->hidden_vars = hid_buf;
   phr->session_extra = new_server_get_session(phr->session_id, cur_time);
+
+  memset(&callbacks, 0, sizeof(callbacks));
+  callbacks.user_data = (void*) state;
+  callbacks.list_all_users = list_all_users_callback;
+
+  // invoke the contest
+  if (serve_state_load_contest(phr->contest_id,
+                               ul_conn,
+                               &callbacks,
+                               &extra->serve_state) < 0) {
+    return html_err_contest_not_available(state, p, fout, phr, "");
+  }
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && user_actions_table[phr->action]) {

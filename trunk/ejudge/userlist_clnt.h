@@ -113,6 +113,12 @@ userlist_clnt_get_cookie(struct userlist_clnt *clnt,
                          unsigned char **p_name);
 
 int
+userlist_clnt_set_cookie(struct userlist_clnt *clnt,
+                         int cmd,
+                         ej_cookie_t cookie,
+                         int value);
+
+int
 userlist_clnt_lookup_cookie(struct userlist_clnt *clnt,
                             ej_ip_t origin_ip,
                             int ssl,
