@@ -76,6 +76,7 @@ team_extra_destroy(team_extra_state_t state)
   struct team_extra *te;
   struct team_warning *tw;
 
+  if (!state) return 0;
   xfree(state->team_extra_dir);
   for (i = 0; i < state->team_map_size; i++) {
     if (!(te = state->team_map[i])) continue;

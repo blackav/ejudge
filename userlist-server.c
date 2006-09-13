@@ -6401,6 +6401,47 @@ cmd_get_cookie(struct client_state *p,
 }
 
 static void
+cmd_set_cookie(struct client_state *p,
+               int pkt_len,
+               struct userlist_pk_edit_field *data)
+{
+  unsigned char logbuf[1024];
+  const struct userlist_cookie *cookie;
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("bad packet length: %d", pkt_len);
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf),
+           "SET_COOKIE: %llx, %d, %d",
+           data->cookie, data->request_id, data->serial);
+
+  if (p->user_id < 0) {
+    err("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+  if (is_db_capable(p, OPCAP_LIST_ALL_USERS, logbuf)) return;
+
+  if (default_get_cookie(data->cookie, &cookie) < 0 || !cookie) {
+    err("%s -> no such cookie", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+  if (default_set_cookie_locale(cookie, data->serial) < 0) {
+    err("%s -> no such cookie", logbuf);
+    send_reply(p, -ULS_ERR_NO_COOKIE);
+    return;
+  }
+
+  info("%s -> OK", logbuf);
+  send_reply(p, ULS_OK);
+  return;
+}
+
+static void
 cmd_observer_cmd(struct client_state *p,
                  int pkt_len,
                  struct userlist_pk_map_contest *data)
@@ -6496,6 +6537,7 @@ static void (*cmd_table[])() =
   [ULS_GET_COOKIE]              cmd_get_cookie,
   [ULS_ADD_NOTIFY]              cmd_observer_cmd,
   [ULS_DEL_NOTIFY]              cmd_observer_cmd,
+  [ULS_SET_COOKIE_LOCALE]       cmd_set_cookie,
 
   [ULS_LAST_CMD] 0
 };

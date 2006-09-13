@@ -147,6 +147,7 @@ run_destroy(runlog_state_t state)
   int i;
   struct user_entry *ue;
 
+  if (!state) return 0;
   xfree(state->runs);
   if (state->run_fd >= 0) close(state->run_fd);
   for (i = 0; i < state->ut_size; i++) {
