@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -84,8 +84,6 @@ userlist_clnt_recv_packet(struct userlist_clnt *clnt,
   return 0;
  io_error:
   if (bb) xfree(bb);
-  close(clnt->fd);
-  clnt->fd = -1;
   return code;
 }
 
