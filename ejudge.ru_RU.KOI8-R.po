@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-13 10:25+0400\n"
-"PO-Revision-Date: 2006-09-13 23:23+0400\n"
+"POT-Creation-Date: 2006-09-14 09:34+0400\n"
+"PO-Revision-Date: 2006-09-14 09:35+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1340,6 +1340,9 @@ msgstr "Решения участников принимаются на проверку"
 msgid "Participants' solutions are being judged"
 msgstr "Решения участников проверяются"
 
+msgid "Participants' solutions are being judges"
+msgstr "Решения участников проверяются"
+
 msgid "Password"
 msgstr "Пароль"
 
@@ -1789,6 +1792,9 @@ msgstr "Положение команд"
 msgid "Standings freeze time"
 msgstr "Время заморозки таблицы результатов"
 
+msgid "Standings unfreeze time"
+msgstr "Время разморозки таблицы результатов"
+
 msgid "Start"
 msgstr "Начать"
 
@@ -1882,10 +1888,15 @@ msgstr "Турнир не начался"
 msgid "The contest is over"
 msgstr "Турнир закончился"
 
+msgid "The contest is over (standings are frozen)"
+msgstr "Турнир закончился (текущее положение команд не отображается)"
+
 msgid ""
 "The contest is temporarily not available. Please, retry the request a bit "
 "later."
-msgstr "В данный момент турнир временно недоступен. Попробуйте повторить запрос чуть позже."
+msgstr ""
+"В данный момент турнир временно недоступен. Попробуйте повторить запрос чуть "
+"позже."
 
 msgid "The following runs will be rejudged"
 msgstr "Следующие посылки будут пересужены"

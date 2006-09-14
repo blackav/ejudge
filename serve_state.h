@@ -120,6 +120,7 @@ struct serve_state
   int testing_suspended;
   int printing_suspended;
   int olympiad_judging_mode;
+  int standings_updated;
 
   time_t stat_last_check_time;
   time_t stat_reported_before;

@@ -227,6 +227,9 @@ cmd_http_request(struct server_framework_state *state,
   FILE *out_f = 0;
   struct http_request_info hr;
 
+  memset(&hr, 0, sizeof(hr));
+  gettimeofday(&hr.timestamp1, 0);
+
   if (pkt_size < sizeof(*pkt))
     return nsf_err_packet_too_small(state, p, pkt_size, sizeof(*pkt));
   pkt = (const struct new_server_prot_http_request *) pkt_gen;
@@ -303,7 +306,6 @@ cmd_http_request(struct server_framework_state *state,
     bptr += param_sizes[i] + 1;
   }
 
-  memset(&hr, 0, sizeof(hr));
   hr.arg_num = pkt->arg_num;
   hr.args = args;
   hr.env_num = pkt->env_num;
