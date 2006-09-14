@@ -39,6 +39,7 @@
 #include "teamdb.h"
 #include "prepare.h"
 #include "runlog.h"
+#include "html.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -91,6 +92,12 @@ enum
   NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN,
   NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID,
   NEW_SRV_ACTION_CHANGE_LANGUAGE,
+  NEW_SRV_ACTION_CHANGE_PASSWORD,
+  NEW_SRV_ACTION_VIEW_SOURCE,
+  NEW_SRV_ACTION_VIEW_REPORT,
+  NEW_SRV_ACTION_PRINT_RUN,
+  NEW_SRV_ACTION_VIEW_CLAR,
+  NEW_SRV_ACTION_SUBMIT_RUN,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -534,6 +541,14 @@ html_refresh_page(struct server_framework_state *state,
 
   html_url(url, sizeof(url), phr, new_action);
 
+  fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>%s</title></head><body><h1>%s</h1><p>If autorefresh does not work, follow <a href=\"%s\">this</a> link.</p></body></html>\n", EJUDGE_CHARSET, EJUDGE_CHARSET, 1, url, "Operation successful", "Operation successful", url);
+}
+
+static void
+html_refresh_page_2(struct server_framework_state *state,
+                    FILE *fout,
+                    const unsigned char *url)
+{
   fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>%s</title></head><body><h1>%s</h1><p>If autorefresh does not work, follow <a href=\"%s\">this</a> link.</p></body></html>\n", EJUDGE_CHARSET, EJUDGE_CHARSET, 1, url, "Operation successful", "Operation successful", url);
 }
 
@@ -2136,6 +2151,184 @@ unpriv_change_language(struct server_framework_state *state,
 }
 
 static void
+unpriv_change_password(struct server_framework_state *state,
+                       struct client_state *p,
+                       FILE *fout,
+                       struct http_request_info *phr,
+                       const struct contest_desc *cnts,
+                       struct contest_extra *extra)
+{
+  const unsigned char *p0 = 0, *p1 = 0, *p2 = 0;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  FILE *log_f = 0;
+  int cmd, r;
+  unsigned char url[1024];
+  unsigned char login_buf[256];
+
+  if (ns_cgi_param(phr, "oldpasswd", &p0) <= 0)
+    return html_err_invalid_param(state, p, fout, phr, 0,
+                                  "cannot parse oldpasswd");
+  if (ns_cgi_param(phr, "newpasswd1", &p1) <= 0)
+    return html_err_invalid_param(state, p, fout, phr, 0,
+                                  "cannot parse newpasswd1");
+  if (ns_cgi_param(phr, "newpasswd2", &p2) <= 0)
+    return html_err_invalid_param(state, p, fout, phr, 0,
+                                  "cannot parse newpasswd2");
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if (strlen(p0) >= 256) {
+    fprintf(log_f, _("Old password is too long"));
+    goto done;
+  }
+  if (strcmp(p1, p2)) {
+    fprintf(log_f, _("New passwords do not match"));
+    goto done;
+  }
+  if (strlen(p1) >= 256) {
+    fprintf(log_f, _("New password is too long"));
+    goto done;
+  }
+
+  cmd = ULS_PRIV_SET_TEAM_PASSWD;
+  if (cnts->disable_team_password) cmd = ULS_PRIV_SET_REG_PASSWD;
+
+  if (open_ul_connection(state) < 0) {
+    html_err_userlist_server_down(state, p, fout, phr, 0);
+    goto cleanup;
+  }
+  r = userlist_clnt_set_passwd(ul_conn, cmd, phr->user_id, phr->contest_id,
+                               p0, p1);
+  if (r < 0) {
+    fprintf(log_f, "set_passwd failed: %s", userlist_strerror(-r));
+    goto done;
+  }
+
+ done:;
+  fclose(log_f); log_f = 0;
+  if (!log_txt || !*log_txt) {
+    url_armor_string(login_buf, sizeof(login_buf), phr->login);
+    snprintf(url, sizeof(url),
+             "%s?contest_id=%d&login=%s&locale_id=%d&action=%d",
+             phr->self_url, phr->contest_id, login_buf, phr->locale_id,
+             NEW_SRV_ACTION_LOGIN_PAGE);
+    html_refresh_page_2(state, fout, url);
+  } else {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+                           NEW_SRV_ACTION_MAIN_PAGE);
+  }
+
+ cleanup:;
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+}
+
+static int
+is_problem_deadlined(serve_state_t cs,
+                     int problem_id,
+                     const unsigned char *user_login,
+                     time_t *p_deadline)
+{
+  time_t user_deadline = 0;
+  int pdi;
+  struct pers_dead_info *pdinfo;
+
+  if (problem_id <= 0 || problem_id > cs->max_prob) return 1;
+  if (!cs->probs[problem_id]) return 1;
+
+  user_deadline = 0;
+  for (pdi = 0, pdinfo = cs->probs[problem_id]->pd_infos;
+       pdi < cs->probs[problem_id]->pd_total;
+       pdi++, pdinfo++) {
+    if (!strcmp(user_login, pdinfo->login)) {
+      user_deadline = pdinfo->deadline;
+      break;
+    }
+  }
+  if (!user_deadline) user_deadline = cs->probs[problem_id]->t_deadline;
+  if (p_deadline) *p_deadline = user_deadline;
+
+  if (!user_deadline) return 0;
+  return (cs->current_time >= user_deadline);
+}
+
+static void
+html_problem_selection(serve_state_t cs,
+                       FILE *fout,
+                       struct http_request_info *phr,
+                       const unsigned char *accepted_flag,
+                       const unsigned char *var_name)
+{
+  int i, pdi, dpi;
+  time_t user_deadline = 0;
+  int user_penalty = 0, variant = 0;
+  struct pers_dead_info *pdinfo;
+  unsigned char deadline_str[64];
+  unsigned char penalty_str[64];
+  unsigned char problem_str[128];
+  const unsigned char *problem_ptr = 0;
+
+  if (!var_name) var_name = "prob_id";
+
+  fprintf(fout, "<select name=\"%s\"><option value=\"\"></option>\n", var_name);
+
+    for (i = 1; i <= cs->max_prob; i++) {
+      if (!cs->probs[i]) continue;
+      if (cs->global->disable_submit_after_ok > 0 && accepted_flag[i])
+        continue;
+      if (cs->probs[i]->t_start_date > 0
+          && cs->current_time < cs->probs[i]->t_start_date) continue;
+
+      // try to find personal rules
+      user_deadline = 0;
+      user_penalty = 0;
+      for (pdi = 0, pdinfo = cs->probs[i]->pd_infos;
+           pdi < cs->probs[i]->pd_total;
+           pdi++, pdinfo++) {
+        if (!strcmp(phr->login, pdinfo->login)) {
+          user_deadline = pdinfo->deadline;
+          break;
+        }
+      }
+      // if no user-specific deadline, try the problem deadline
+      if (!user_deadline) user_deadline = cs->probs[i]->t_deadline;
+      // if deadline is over, go to the next problem
+      if (user_deadline && cs->current_time >= user_deadline) continue;
+
+      // find date penalty
+      penalty_str[0] = 0;
+      for (dpi = 0; dpi < cs->probs[i]->dp_total; dpi++)
+        if (cs->current_time < cs->probs[i]->dp_infos[dpi].deadline)
+          break;
+      if (dpi < cs->probs[i]->dp_total)
+        user_penalty = cs->probs[i]->dp_infos[dpi].penalty;
+
+      deadline_str[0] = 0;
+      if (user_deadline > 0 && cs->global->show_deadline)
+        snprintf(deadline_str, sizeof(deadline_str),
+                 " (%s)", xml_unparse_date(user_deadline));
+      if (user_penalty && cs->global->show_deadline)
+        snprintf(penalty_str, sizeof(penalty_str), " [%d]", user_penalty);
+
+      if (cs->probs[i]->variant_num > 0) {
+        if ((variant = find_variant(cs, phr->user_id, i)) <= 0) continue;
+        snprintf(problem_str, sizeof(problem_str),
+                 "%s-%d", cs->probs[i]->short_name, variant);
+        problem_ptr = problem_str;
+      } else {
+        problem_ptr = cs->probs[i]->short_name;
+      }
+
+      fprintf(fout, "<option value=\"%d\">%s - %s%s%s</option>\n",
+              i, problem_ptr, cs->probs[i]->long_name, penalty_str,
+              deadline_str);
+    }
+
+    fprintf(fout, "</select>");
+}
+
+static void
 user_main_page(struct server_framework_state *state,
                struct client_state *p,
                FILE *fout,
@@ -2149,6 +2342,25 @@ user_main_page(struct server_framework_state *state,
   time_t start_time, stop_time, duration, sched_time, fog_start_time = 0, tmpt;
   const unsigned char *s;
   unsigned char duration_buf[128];
+  int unread_clars, all_runs = 0, all_clars = 0;
+  unsigned char *accepted_flag = 0;
+  int n, v, prob_id = 0, i;
+
+  if (ns_cgi_param(phr, "all_runs", &s) > 0
+      && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
+    phr->session_extra->user_view_all_runs = v;
+  }
+  all_runs = phr->session_extra->user_view_all_runs;
+  if (ns_cgi_param(phr, "all_clars", &s) > 0
+      && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
+    phr->session_extra->user_view_all_clars = v;
+  }
+  all_clars = phr->session_extra->user_view_all_clars;
+  if (ns_cgi_param(phr, "prob_id", &s) > 0
+      && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v > 0)
+    prob_id = v;
+
+  XALLOCAZ(accepted_flag, cs->max_prob + 1);
 
   if (global->virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
@@ -2168,7 +2380,8 @@ user_main_page(struct server_framework_state *state,
                   "%s [%s]: %s",
                   phr->name_arm, extra->contest_arm, _("Main page"));
 
-  fprintf(fout, "<h2>%s</h2>\n", _("Quick navigation"));
+  fprintf(fout, "<%s>%s</%s>\n", cnts->team_head_style,
+          _("Quick navigation"), cnts->team_head_style);
   fprintf(fout, "<ul>\n");
   fprintf(fout, "<li><a href=\"#status\">%s</a></li>\n", _("Contest status"));
   /*
@@ -2220,8 +2433,9 @@ user_main_page(struct server_framework_state *state,
   }
   fprintf(fout, "</ul>\n");
 
-  fprintf(fout, "<hr><a name=\"status\"></a><h2>%s</h2>\n",
-          _("Server status"));
+  fprintf(fout, "<hr><a name=\"status\"></a><%s>%s</%s>\n",
+          cnts->team_head_style, _("Server status"),
+          cnts->team_head_style);
   if (stop_time > 0) {
     if (duration > 0 && global->board_fog_time > 0
         && global->board_unfog_time > 0
@@ -2320,6 +2534,130 @@ user_main_page(struct server_framework_state *state,
     fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
             _("Remaining time"), duration_buf);
   }
+  fprintf(fout, "</table>\n");
+
+  if (!cs->global->disable_clars || !cs->global->disable_team_clars){
+    unread_clars = serve_count_unread_clars(cs, phr->user_id, start_time);
+    if (unread_clars > 0) {
+      fprintf(fout, _("<hr><big><b>You have %d unread message(s)!</b></big>\n"),
+              unread_clars);
+    }
+  }
+
+  if (start_time) {
+    fprintf(fout, "<hr><a name=\"probstat\"></a><%s>%s</%s>\n",
+            cnts->team_head_style,
+            _("Problem status summary"),
+            cnts->team_head_style);
+    html_write_user_problems_summary(cs, fout, phr->user_id, accepted_flag);
+  }
+
+  if (start_time) {
+    fprintf(fout, "<hr><a name=\"runstat\"></a><%s>%s (%s)</%s>\n",
+            cnts->team_head_style,
+            _("Sent submissions"),
+            all_runs?_("all"):_("last 15"),
+            cnts->team_head_style);
+    new_write_user_runs(cs, fout, phr->user_id, all_runs,
+                        NEW_SRV_ACTION_VIEW_SOURCE,
+                        NEW_SRV_ACTION_VIEW_REPORT,
+                        NEW_SRV_ACTION_PRINT_RUN,
+                        phr->session_id, phr->self_url,
+                        phr->hidden_vars, "");
+    if (all_runs) s = _("View last 15");
+    else s = _("View all");
+    fprintf(fout, "<p><a href=\"%s?SID=%016llx&all_runs=%d&action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_runs, NEW_SRV_ACTION_MAIN_PAGE, s);
+  }
+
+  if (prob_id > cs->max_prob) prob_id = 0;
+  if (prob_id > 0 && !cs->probs[prob_id]) prob_id = 0;
+  if (prob_id > 0 && is_problem_deadlined(cs, prob_id, phr->login, 0))
+    prob_id = 0;
+  if (prob_id > 0 && cs->probs[prob_id]->t_start_date > 0
+      && cs->current_time < cs->probs[prob_id]->t_start_date)
+    prob_id = 0;
+
+  if (start_time > 0 && stop_time <= 0 && !prob_id) {
+    fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s</%s>\n",
+            cnts->team_head_style, _("Send a submission"),
+            cnts->team_head_style);
+    html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
+    fprintf(fout, "<table>\n");
+    fprintf(fout, "<tr><td>%s:</td><td>", _("Problem"));
+
+    html_problem_selection(cs, fout, phr, accepted_flag, 0);
+
+    fprintf(fout, "</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr></table></form>\n", NEW_SRV_ACTION_MAIN_PAGE, _("Select problem"));
+  } else if (start_time > 0 && stop_time <= 0 && prob_id > 0) {
+    fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s %s-%s</%s>\n",
+            cnts->team_head_style, _("Submit a solution for"),
+            cs->probs[prob_id]->short_name,
+            cs->probs[prob_id]->long_name,
+            cnts->team_head_style);
+
+    html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+    fprintf(fout, "<input type=\"hidden\" name=\"prob_id\" value=\"%d\">\n",
+            prob_id);
+    fprintf(fout, "<table><tr><td>%s:</td><td>", _("Language"));
+    fprintf(fout, "<select name=\"lang_id\"><option value=\"\">\n");
+    for (i = 1; i <= cs->max_lang; i++) {
+      if (!cs->langs[i] || cs->langs[i]->disabled) continue;
+      // FIXME: check for problem-specific language disable
+      fprintf(fout, "<option value=\"%d\">%s - %s</option>\n",
+              i, cs->langs[i]->short_name, cs->langs[i]->long_name);
+    }
+    fprintf(fout, "</select></td></tr>\n");
+    fprintf(fout, "<tr><td>%s</td><td><input type=\"file\" name=\"file\"></td></tr>\n", _("File"));
+    fprintf(fout, "<tr><td>%s</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr></table></form>\n", _("Send!"),
+            NEW_SRV_ACTION_SUBMIT_RUN, _("Send!"));
+
+    fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s</%s>\n",
+            cnts->team_head_style, _("Select another problem"),
+            cnts->team_head_style);
+    html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
+    fprintf(fout, "<table>\n");
+    fprintf(fout, "<tr><td>%s:</td><td>", _("Problem"));
+
+    html_problem_selection(cs, fout, phr, accepted_flag, 0);
+
+    fprintf(fout, "</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr></table></form>\n", NEW_SRV_ACTION_MAIN_PAGE, _("Select problem"));
+  }
+
+  if (!global->disable_clars) {
+    fprintf(fout, "<hr><a name=\"clarstat\"></a><%s>%s (%s)</%s>\n",
+            cnts->team_head_style, _("Messages"),
+            all_clars?_("all"):_("last 15"), cnts->team_head_style);
+
+    new_write_user_clars(cs, fout, phr->user_id, all_clars,
+                         NEW_SRV_ACTION_VIEW_CLAR,
+                         phr->session_id,
+                         phr->self_url, phr->hidden_vars, "");
+
+    if (all_clars) s = _("View last 15");
+    else s = _("View all");
+    fprintf(fout, "<p><a href=\"%s?SID=%016llx&all_clars=%d&action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_clars, NEW_SRV_ACTION_MAIN_PAGE, s);
+  }
+
+  /* FIXME: more page generation */
+
+  /* change the password */
+  if (!cs->clients_suspended) {
+    fprintf(fout, "<hr><a name=\"chgpasswd\"></a>\n<%s>%s</%s>\n",
+            cnts->team_head_style,
+            _("Change password"),
+            cnts->team_head_style);
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+
+    fprintf(fout, "<table>\n"
+            "<tr><td>%s:</td><td><input type=\"password\" name=\"oldpasswd\" size=\"16\"></td></tr>\n"
+            "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd1\" size=\"16\"></td></tr>\n"
+            "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd2\" size=\"16\"></td></tr>\n"
+            "<tr><td colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n"
+            "</table></form>",
+            _("Old password"),
+            _("New password"), _("Retype new password"),
+            NEW_SRV_ACTION_CHANGE_PASSWORD, _("Change!"));
+  }
 
 #if CONF_HAS_LIBINTL - 0 == 1
   if (cs->global->enable_l10n) {
@@ -2352,6 +2690,7 @@ user_main_page(struct server_framework_state *state,
 static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] unpriv_change_language,
+  [NEW_SRV_ACTION_CHANGE_PASSWORD] unpriv_change_password,
 };
 
 static void
@@ -2447,6 +2786,10 @@ unprivileged_page(struct server_framework_state *state,
   }
 
   extra->serve_state->current_time = time(0);
+  extra->serve_state->accepting_mode = 0;
+  if (extra->serve_state->global->score_system_val == SCORE_OLYMPIAD
+      && !extra->serve_state->olympiad_judging_mode)
+    extra->serve_state->accepting_mode = 1;
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && user_actions_table[phr->action]) {

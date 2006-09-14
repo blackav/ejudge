@@ -1028,11 +1028,11 @@ action_change_password(void)
 
   open_userlist_server();
   if (cur_contest && cur_contest->disable_team_password) {
-    r = userlist_clnt_set_passwd(server_conn, client_team_id, p0, p1);
+    r = userlist_clnt_set_passwd(server_conn, ULS_SET_PASSWD,
+                                 client_team_id, 0, p0, p1);
   } else {
-    r = userlist_clnt_team_set_passwd(server_conn, client_team_id,
-                                      global->contest_id,
-                                      p0, p1);
+    r = userlist_clnt_set_passwd(server_conn, ULS_TEAM_SET_PASSWD,
+                                 client_team_id, global->contest_id, p0, p1);
   }
   if (r < 0) {
     operation_status_page(-1, gettext(userlist_strerror(-r)));

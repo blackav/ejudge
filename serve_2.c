@@ -283,7 +283,7 @@ serve_load_status_file(serve_state_t state)
   state->testing_suspended = status.testing_suspended;
   info("load_status_file: testing_suspended = %d", state->testing_suspended);
   state->olympiad_judging_mode = status.olympiad_judging_mode;
-  info("load_status_file: state->olympiad_judging_mode = %d", state->olympiad_judging_mode);
+  info("load_status_file: olympiad_judging_mode = %d", state->olympiad_judging_mode);
   state->printing_suspended = status.printing_suspended;
   info("load_status_file: printing_suspended = %d", state->printing_suspended);
   state->stat_reported_before = status.stat_reported_before;

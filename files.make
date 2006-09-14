@@ -60,8 +60,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/set_notification_callback.c\
  userlist_clnt/set_passwd.c\
  userlist_clnt/team_cookie.c\
- userlist_clnt/team_login.c\
- userlist_clnt/team_set_passwd.c
+ userlist_clnt/team_login.c
 
 SERVE_CLNT_CFILES=\
  serve_clnt/do_pass_fd.c\

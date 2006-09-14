@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-14 09:34+0400\n"
-"PO-Revision-Date: 2006-09-14 09:35+0400\n"
+"POT-Creation-Date: 2006-09-14 18:16+0400\n"
+"PO-Revision-Date: 2006-09-14 19:17+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1212,9 +1212,11 @@ msgstr "Новый пароль (2)"
 msgid "New password contain invalid characters."
 msgstr "Новый пароль содержит недопустимые символы"
 
+#, c-format
 msgid "New password is too long"
 msgstr "Новый пароль имеет слишком большую длину"
 
+#, c-format
 msgid "New passwords do not match"
 msgstr "Новые пароли не совпадают друг с другом"
 
@@ -1294,6 +1296,7 @@ msgstr "Старый пароль"
 msgid "Old password contain invalid characters"
 msgstr "Старый пароль содержит недопустимые символы"
 
+#, c-format
 msgid "Old password is too long"
 msgstr "Старый пароль имеет слишком большую длину"
 
@@ -1656,6 +1659,12 @@ msgstr "Получено баллов: %d (из %d).<br><br></big>\n"
 msgid "Security violation"
 msgstr "Нарушение правил безопасности"
 
+msgid "Select another problem"
+msgstr "Выбрать другую задачу"
+
+msgid "Select problem"
+msgstr "Выбрать задачу"
+
 msgid "Send"
 msgstr "Отослать"
 
@@ -1833,6 +1842,9 @@ msgstr "Посылки"
 
 msgid "Submit"
 msgstr "Отослать"
+
+msgid "Submit a solution for"
+msgstr "Сдать решение задачи"
 
 msgid "Submit solution"
 msgstr "Сдача решений"
@@ -2080,6 +2092,9 @@ msgstr "Просмотр"
 
 msgid "View all"
 msgstr "Посмотреть всё"
+
+msgid "View last 15"
+msgstr "Смотреть последние 15"
 
 msgid "View report"
 msgstr "Просмотреть протокол"

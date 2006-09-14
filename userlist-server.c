@@ -496,6 +496,8 @@ new_update_userlist_table(int cnts_id)
 static void
 update_userlist_table(int cnts_id)
 {
+  if (cnts_id <= 0) return;
+
   old_update_userlist_table(cnts_id);
   new_update_userlist_table(cnts_id);
 }
@@ -6479,6 +6481,145 @@ cmd_observer_cmd(struct client_state *p,
   return;
 }
 
+static void
+cmd_priv_set_passwd(struct client_state *p, int pkt_len,
+                    struct userlist_pk_set_password *data)
+{
+  size_t old_len, new_len, exp_len;
+  const unsigned char *old_pwd, *new_pwd;
+  unsigned char logbuf[1024];
+  struct passwd_internal oldint, newint;
+  const struct userlist_user *u = 0;
+  const struct contest_desc *cnts = 0;
+  const struct userlist_user_info *ui = 0;
+  const struct userlist_contest *c = 0;
+  int r, reply_code = ULS_OK, cloned_flag = 0;
+
+  if (pkt_len < sizeof(*data)) {
+    CONN_BAD("packet is too small: %d", pkt_len);
+    return;
+  }
+  old_pwd = data->data;
+  old_len = strlen(old_pwd);
+  if (old_len != data->old_len) {
+    CONN_BAD("old password length mismatch: %zu, %d", old_len, data->old_len);
+    return;
+  }
+  new_pwd = old_pwd + old_len + 1;
+  new_len = strlen(new_pwd);
+  if (new_len != data->new_len) {
+    CONN_BAD("new password length mismatch: %zu, %d", new_len, data->new_len);
+    return;
+  }
+  exp_len = sizeof(*data) + old_len + new_len;
+  if (pkt_len != exp_len) {
+    CONN_BAD("packet length mismatch: %zu, %d", exp_len, pkt_len);
+    return;
+  }
+
+  snprintf(logbuf, sizeof(logbuf), "PRIV_SET_PASSWD: %d, %d, %d",
+           data->request_id, data->user_id, data->contest_id);
+
+  if (p->user_id < 0) {
+    err("%s -> not authentificated", logbuf);
+    send_reply(p, -ULS_ERR_NO_PERMS);
+    return;
+  }
+  ASSERT(p->user_id > 0);
+  if (is_db_capable(p, OPCAP_CONTROL_CONTEST, logbuf)) return;
+
+  if (!old_len) {
+    err("%s -> old password is empty", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  if (passwd_convert_to_internal(old_pwd, &oldint) < 0) {
+    err("%s -> old password is invalid", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  if (!new_len) {
+    err("%s -> new password is empty", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+  if (passwd_convert_to_internal(new_pwd, &newint) < 0) {
+    err("%s -> new password is invalid", logbuf);
+    send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+    return;
+  }
+
+  switch (data->request_id) {
+  case ULS_PRIV_SET_REG_PASSWD:
+    if (default_get_user_info_1(data->user_id, &u) < 0) {
+      err("%s -> invalid user", logbuf);
+      send_reply(p, -ULS_ERR_BAD_UID);
+      return;
+    }
+    if (!u->passwd) {
+      err("%s -> old password is not set", logbuf);
+      send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+      return;
+    }
+    if (passwd_check(&oldint, u->passwd, u->passwd_method) < 0) {
+      err("%s -> passwords do not match", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
+    default_set_reg_passwd(u->id, USERLIST_PWD_SHA1,
+                           newint.pwds[USERLIST_PWD_SHA1], cur_time);
+    break;
+
+  case ULS_PRIV_SET_TEAM_PASSWD:
+    if ((r = contests_get(data->contest_id, &cnts)) < 0) {
+      err("%s -> invalid contest: %s", logbuf, contests_strerror(-r));
+      send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+      return;
+    }
+    if (cnts->disable_team_password) {
+      err("%s -> team password is disabled", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
+
+    if (default_get_user_info_3(data->user_id,data->contest_id,&u,&ui,&c) < 0) {
+      err("%s -> invalid user", logbuf);
+      send_reply(p, -ULS_ERR_BAD_UID);
+      return;
+    }
+    if (!c || c->status != USERLIST_REG_OK) {
+      err("%s -> not registered", logbuf);
+      send_reply(p, -ULS_ERR_NOT_REGISTERED);
+      return;
+    }
+
+    if (!ui->team_passwd) {
+      err("%s -> empty password", logbuf);
+      send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+      return;
+    }
+
+    if (passwd_check(&oldint, ui->team_passwd, ui->team_passwd_method) < 0) {
+      err("%s -> OLD registration password does not match", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
+
+    default_set_team_passwd(u->id, data->contest_id, USERLIST_PWD_SHA1,
+                            newint.pwds[USERLIST_PWD_SHA1], cur_time,
+                            &cloned_flag);
+    if (cloned_flag) reply_code = ULS_CLONED;
+    break;
+
+  default:
+    abort();
+  }
+
+  default_remove_user_cookies(u->id);
+  send_reply(p, reply_code);
+  info("%s -> OK, %d", logbuf, cloned_flag);
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW]            cmd_register_new,
@@ -6538,6 +6679,8 @@ static void (*cmd_table[])() =
   [ULS_ADD_NOTIFY]              cmd_observer_cmd,
   [ULS_DEL_NOTIFY]              cmd_observer_cmd,
   [ULS_SET_COOKIE_LOCALE]       cmd_set_cookie,
+  [ULS_PRIV_SET_REG_PASSWD]     cmd_priv_set_passwd,
+  [ULS_PRIV_SET_TEAM_PASSWD]    cmd_priv_set_passwd,
 
   [ULS_LAST_CMD] 0
 };

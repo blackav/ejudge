@@ -120,6 +120,7 @@ struct serve_state
   int testing_suspended;
   int printing_suspended;
   int olympiad_judging_mode;
+  int accepting_mode;
   int standings_updated;
 
   time_t stat_last_check_time;
@@ -169,5 +170,8 @@ int serve_state_load_contest(int contest_id,
                              struct userlist_clnt *ul_conn,
                              struct teamdb_db_callbacks *teamdb_callbacks,
                              serve_state_t *p_state);
+
+int serve_count_unread_clars(const serve_state_t state, int user_id,
+                             time_t start_time);
 
 #endif /* __SERVE_STATE_H__ */
