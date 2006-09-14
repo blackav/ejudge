@@ -355,10 +355,10 @@ write_text_run_status(const serve_state_t state, FILE *f, struct run_entry *pe,
   }
 }
 
-static void
-write_user_problems_summary(const serve_state_t state,
-                            FILE *f, int user_id, int accepting_mode,
-                            unsigned char *solved_flag)
+void
+html_write_user_problems_summary(const serve_state_t state,
+                                 FILE *f, int user_id,
+                                 unsigned char *solved_flag)
 {
   time_t start_time;
   int total_runs, run_id, cur_score, total_teams, prob_id, total_score = 0;
@@ -420,7 +420,8 @@ write_user_problems_summary(const serve_state_t state,
       continue;
     }
 
-    if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    if (state->global->score_system_val == SCORE_OLYMPIAD && 
+        state->accepting_mode) {
       // OLYMPIAD contest in accepting mode
       switch (re.status) {
       case RUN_OK:
@@ -683,9 +684,11 @@ write_user_problems_summary(const serve_state_t state,
           _("Short name"),
           _("Long name"),
           _("Status"));
-  if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+  if (state->global->score_system_val == SCORE_OLYMPIAD
+      && state->accepting_mode) {
     fprintf(f, "<th>%s</th>", _("Tests passed"));
-  } else if ((state->global->score_system_val == SCORE_OLYMPIAD && !accepting_mode)
+  } else if ((state->global->score_system_val == SCORE_OLYMPIAD
+              && !state->accepting_mode)
       || state->global->score_system_val == SCORE_KIROV) {
     fprintf(f, "<th>%s</th>", _("Tests passed"));
     fprintf(f, "<th>%s</th>", _("Score"));
@@ -722,7 +725,8 @@ write_user_problems_summary(const serve_state_t state,
     xfree(s);
     if (best_run[prob_id] < 0) {
       if (state->global->score_system_val == SCORE_KIROV
-          || (state->global->score_system_val == SCORE_OLYMPIAD && !accepting_mode)
+          || (state->global->score_system_val == SCORE_OLYMPIAD 
+              && !state->accepting_mode)
           || state->global->score_system_val == SCORE_MOSCOW) {
         fprintf(f, "<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n");
       } else {
@@ -733,14 +737,16 @@ write_user_problems_summary(const serve_state_t state,
 
     run_get_entry(state->runlog_state, best_run[prob_id], &re);
     act_status = re.status;
-    if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    if (state->global->score_system_val == SCORE_OLYMPIAD &&
+        state->accepting_mode) {
       if (act_status == RUN_OK || act_status == RUN_PARTIAL)
         act_status = RUN_ACCEPTED;
     }
     run_status_str(act_status, status_str, 0);
     fprintf(f, "<td>%s</td>", status_str);
 
-    if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    if (state->global->score_system_val == SCORE_OLYMPIAD &&
+        state->accepting_mode) {
       switch (act_status) {
       case RUN_RUN_TIME_ERR:
       case RUN_TIME_LIMIT_ERR:
@@ -825,7 +831,8 @@ write_user_problems_summary(const serve_state_t state,
 
   fprintf(f, "</table>\n");
 
-  if ((state->global->score_system_val == SCORE_OLYMPIAD && !accepting_mode)
+  if ((state->global->score_system_val == SCORE_OLYMPIAD
+       && !state->accepting_mode)
       || state->global->score_system_val == SCORE_KIROV
       || state->global->score_system_val == SCORE_MOSCOW) {
     fprintf(f, "<p><big>%s: %d</big></p>\n", _("Total score"), total_score);
@@ -834,8 +841,10 @@ write_user_problems_summary(const serve_state_t state,
 
 void
 new_write_user_runs(const serve_state_t state, FILE *f, int uid,
-                    int printing_suspended, int accepting_mode,
                     unsigned int show_flags,
+                    int action_view_source,
+                    int action_view_report,
+                    int action_print_run,
                     ej_cookie_t sid,
                     unsigned char const *self_url,
                     unsigned char const *hidden_vars,
@@ -883,7 +892,7 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
     fprintf(f, "<th>%s</th>", _("View source"));
   if (state->global->team_enable_rep_view || state->global->team_enable_ce_view)
     fprintf(f, "<th>%s</th>", _("View report"));
-  if (state->global->enable_printing && !printing_suspended)
+  if (state->global->enable_printing && !state->printing_suspended)
     fprintf(f, "<th>%s</th>", _("Print sources"));
 
   fprintf(f, "</tr>\n");
@@ -901,7 +910,8 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
     if (re.lang_id > 0 && re.lang_id <= state->max_lang && state->langs[re.lang_id])
       lang = state->langs[re.lang_id];
 
-    if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    if (state->global->score_system_val == SCORE_OLYMPIAD
+        && state->accepting_mode) {
       if (re.status == RUN_OK || re.status == RUN_PARTIAL)
         re.status = RUN_ACCEPTED;
     }
@@ -962,16 +972,23 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
 
     if (state->global->team_enable_src_view) {
       fprintf(f, "<td>");
-      if (lang && lang->binary) {
-        fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid,
-                                             self_url, extra_args,
-                                             "source_%d=1&binary=1", i),
-                _("View"));
+      if (action_view_source > 0) {
+        fprintf(f, "%s", html_hyperref(href, sizeof(href), sid,
+                                       self_url, extra_args,
+                                       "run_id=%d&action=%d", i,
+                                       action_view_source));
       } else {
-        fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid,
-                                             self_url, extra_args,
-                                             "source_%d=1", i), _("View"));
+        if (lang && lang->binary) {
+          fprintf(f, "%s", html_hyperref(href, sizeof(href), sid,
+                                         self_url, extra_args,
+                                         "source_%d=1&binary=1", i));
+        } else {
+          fprintf(f, "%s", html_hyperref(href, sizeof(href), sid,
+                                         self_url, extra_args,
+                                         "source_%d=1", i));
+        }
       }
+      fprintf(f, "%s</a>", _("View"));
       fprintf(f, "</td>");
     }
     if (state->global->team_enable_rep_view) {
@@ -980,7 +997,11 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
           || re.status == RUN_PENDING || re.status > RUN_MAX_STATUS) {
         fprintf(f, "N/A");
       } else {
-        fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid, self_url, extra_args, "report_%d=1", i), _("View"));
+        if (action_view_report > 0) {
+          fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid, self_url, extra_args, "run_id=%d&action=%d", i, action_view_report), _("View"));
+        } else {
+          fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid, self_url, extra_args, "report_%d=1", i), _("View"));
+        }
       }
       fprintf(f, "</td>");
     } else if (state->global->team_enable_ce_view) {
@@ -988,17 +1009,25 @@ new_write_user_runs(const serve_state_t state, FILE *f, int uid,
       if (re.status != RUN_COMPILE_ERR) {
         fprintf(f, "N/A");
       } else {
-        fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid, self_url, extra_args, "report_%d=1", i), _("View"));
+        if (action_view_report > 0) {
+          fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid, self_url, extra_args, "run_id=%d&action=%d", i, action_view_report), _("View"));
+        } else {
+          fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid, self_url, extra_args, "report_%d=1", i), _("View"));
+        }
       }
       fprintf(f, "</td>");
     }
 
-    if (state->global->enable_printing && !printing_suspended) {
+    if (state->global->enable_printing && !state->printing_suspended) {
       fprintf(f, "<td>");
       if (re.pages > 0) {
         fprintf(f, "N/A");
       } else {
-        fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid, self_url, extra_args, "print_%d=1", i), _("Print"));
+        if (action_print_run) {
+          fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid, self_url, extra_args, "run_id=%d&action=%d", i, action_print_run), _("Print"));
+        } else {
+          fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid, self_url, extra_args, "print_%d=1", i), _("Print"));
+        }
       }
       fprintf(f, "</td>\n");
     }
@@ -1021,13 +1050,15 @@ team_clar_flags(const serve_state_t state, int user_id, int clar_id, int flags,
   return clar_flags_html(state->clarlog_state, flags, from, to, 0, 0);
 }
 
-static int
-count_unread_clars(const serve_state_t state, int user_id, time_t start_time)
+int
+serve_count_unread_clars(const serve_state_t state, int user_id,
+                         time_t start_time)
 {
   int i, total = 0, from, to, hide_flag;
 
   for (i = clar_get_total(state->clarlog_state) - 1; i >= 0; i--) {
-    if (clar_get_record(state->clarlog_state, i, 0, 0, 0, &from, &to, 0, 0, &hide_flag, 0) < 0)
+    if (clar_get_record(state->clarlog_state, i, 0, 0, 0, &from, &to, 0, 0,
+                        &hide_flag, 0) < 0)
       continue;
     if (to > 0 && to != user_id) continue;
     if (!to && from > 0) continue;
@@ -1042,6 +1073,7 @@ count_unread_clars(const serve_state_t state, int user_id, time_t start_time)
 void
 new_write_user_clars(const serve_state_t state, FILE *f, int uid,
                      unsigned int show_flags,
+                     int action,
                      ej_cookie_t sid,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars,
@@ -1116,9 +1148,16 @@ new_write_user_clars(const serve_state_t state, FILE *f, int uid,
     }
     fprintf(f, "<td>%s</td>", asubj);
     fprintf(f, "<td>");
-    fprintf(f, "%s%s</a>", html_hyperref(href, sizeof(href), sid,
-                                         self_url, extra_args,
-                                         "clar_%d=1", i), _("View"));
+    if (action > 0) {
+      fprintf(f, "%s", html_hyperref(href, sizeof(href), sid,
+                                     self_url, extra_args,
+                                     "clar_id=%d&action=%d", i, action));
+    } else {
+      fprintf(f, "%s", html_hyperref(href, sizeof(href), sid,
+                                     self_url, extra_args,
+                                     "clar_%d=1", i));
+    }
+    fprintf(f, "%s</a>", _("View"));
     fprintf(f, "</td>");
     fprintf(f, "</tr>\n");
   }
@@ -4737,7 +4776,6 @@ time_to_str(unsigned char *buf, time_t time)
 
 void
 write_team_page(const serve_state_t state, FILE *f, int user_id,
-                int printing_suspended,
                 ej_cookie_t sid,
                 int all_runs, int all_clars,
                 unsigned char const *self_url,
@@ -4834,7 +4872,7 @@ write_team_page(const serve_state_t state, FILE *f, int user_id,
   }
 
   if (!state->global->disable_clars || !state->global->disable_team_clars){
-    unread_clars = count_unread_clars(state, user_id, server_start);
+    unread_clars = serve_count_unread_clars(state, user_id, server_start);
     if (unread_clars > 0) {
       fprintf(f, _("<hr><big><b>You have %d unread message(s)!</b></big>\n"),
               unread_clars);
@@ -4866,8 +4904,7 @@ write_team_page(const serve_state_t state, FILE *f, int user_id,
       fprintf(f, "<p><a href=\"%s\" target=\"_blank\">%s</a></p>\n",
               state->cur_contest->problems_url, _("All problems"));
     }
-    write_user_problems_summary(state, f, user_id,
-                                accepting_mode, accepted_flag);
+    html_write_user_problems_summary(state, f, user_id, accepted_flag);
   }
 
   if (server_start && !server_end) {
@@ -4959,8 +4996,7 @@ write_team_page(const serve_state_t state, FILE *f, int user_id,
             _("Sent submissions"),
             all_runs?_("all"):_("last 15"),
             state->cur_contest->team_head_style);
-    new_write_user_runs(state, f, user_id, printing_suspended, accepting_mode,
-                        all_runs,
+    new_write_user_runs(state, f, user_id, all_runs, 0, 0, 0,
                         sid, self_url, hidden_vars, extra_args);
 
     fprintf(f, "<p%s>%s%s</a></p>",
@@ -5056,7 +5092,7 @@ write_team_page(const serve_state_t state, FILE *f, int user_id,
             state->cur_contest->team_head_style, _("Messages"),
             all_clars?_("all"):_("last 15"), state->cur_contest->team_head_style);
 
-    new_write_user_clars(state, f, user_id, all_clars, sid,
+    new_write_user_clars(state, f, user_id, all_clars, 0, sid,
                          self_url, hidden_vars, extra_args);
 
     fprintf(f, "<p%s>%s%s</a></p>",
@@ -5093,4 +5129,3 @@ write_virtual_standings(const serve_state_t state, FILE *f, int user_id)
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
  * End:
  */
-

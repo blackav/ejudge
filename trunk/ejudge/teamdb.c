@@ -201,7 +201,7 @@ teamdb_refresh(teamdb_state_t state)
   struct userlist_contest *uc;
 
   if (state->callbacks) {
-    if (!state->need_update) return 0;
+    if (state->users && !state->need_update) return 0;
     r = state->callbacks->list_all_users(state->callbacks->user_data,
                                          state->contest_id, &xml_text);
     if (r < 0) {

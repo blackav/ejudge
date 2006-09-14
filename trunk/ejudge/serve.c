@@ -589,9 +589,11 @@ cmd_team_page(struct client_state *p, int len,
     return;
   }
   l10n_setlocale(pkt->locale_id);
-  if (serve_state.global->score_system_val == SCORE_OLYMPIAD && !serve_state.olympiad_judging_mode)
-    accepting_mode = 1;
-  write_team_page(&serve_state, f, p->user_id, serve_state.printing_suspended,
+  serve_state.accepting_mode = 0;
+  if (serve_state.global->score_system_val == SCORE_OLYMPIAD
+      && !serve_state.olympiad_judging_mode)
+    serve_state.accepting_mode = 1;
+  write_team_page(&serve_state, f, p->user_id,
                   p->cookie, (pkt->flags & 1), (pkt->flags & 2) >> 1,
                   self_url_ptr, hidden_vars_ptr, extra_args_ptr,
                   serve_state.contest_start_time, serve_state.contest_stop_time, accepting_mode);

@@ -30,8 +30,10 @@ void write_public_log(const serve_state_t, char const *, char const *,
                       char const *, char const *);
 
 void new_write_user_runs(const serve_state_t, FILE *f, int uid,
-                         int printing_suspended, int accepting_mode,
                          unsigned int show_flags,
+                         int action_view_source,
+                         int action_view_report,
+                         int action_print_run,
                          ej_cookie_t sid,
                          unsigned char const *self_url,
                          unsigned char const *hidden_vars,
@@ -39,7 +41,7 @@ void new_write_user_runs(const serve_state_t, FILE *f, int uid,
 
 void new_write_user_clars(const serve_state_t,
                           FILE *f, int uid, unsigned int show_flags,
-                          ej_cookie_t sid,
+                          int action, ej_cookie_t sid,
                           unsigned char const *self_url,
                           unsigned char const *hidden_vars,
                           unsigned char const *extra_args);
@@ -55,7 +57,6 @@ int new_write_user_report_view(const serve_state_t, FILE *f, int uid, int rid,
                                const unsigned char *extra_args);
 
 void write_team_page(const serve_state_t, FILE *f, int user_id,
-                     int printing_suspended,
                      ej_cookie_t sid,
                      int all_runs, int all_clars,
                      unsigned char const *self_url,
@@ -215,5 +216,10 @@ int write_audit_log(const serve_state_t, FILE *f, int run_id);
 
 void generate_daily_statistics(const serve_state_t, FILE *f,
                                time_t from_time, time_t to_time);
+
+void
+html_write_user_problems_summary(const serve_state_t state,
+                                 FILE *f, int user_id,
+                                 unsigned char *solved_flag);
 
 #endif /* __HTML_H__ */

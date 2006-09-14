@@ -2703,8 +2703,8 @@ action_change_password(void)
     error("%s", _("new password is too long"));
   }
   if (!error_log) {
-    errcode = userlist_clnt_set_passwd(server_conn,
-                                       user_id, old_pwd, new_pwd1);
+    errcode = userlist_clnt_set_passwd(server_conn, ULS_SET_PASSWD,
+                                       user_id, 0, old_pwd, new_pwd1);
     if (errcode < 0) {
       error("%s", gettext(userlist_strerror(-errcode)));
     }

@@ -33,6 +33,9 @@ struct session_info
   struct session_info *prev;
   ej_cookie_t session_id;
   time_t expire_time;
+
+  int user_view_all_runs;
+  int user_view_all_clars;
 };
 
 struct http_request_info
