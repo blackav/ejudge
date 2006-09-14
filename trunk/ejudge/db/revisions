@@ -266,7 +266,6 @@ userlist_clnt/set_info.c 2564 0 139166
 userlist_clnt/set_passwd.c 2560 0 172896
 userlist_clnt/team_cookie.c 2625 0 222339
 userlist_clnt/team_login.c 2624 0 256065
-userlist_clnt/team_set_passwd.c 2559 0 170465
 filter_expr.y 2907 0 2031999
 filter_scan.lex 2906 0 578485
 runlog_xml.c 3159 0 1676150
@@ -836,7 +835,6 @@ userlist_clnt/set_notification_callback.c 3345 0 87974
 userlist_clnt/set_passwd.c 3345 0 173249
 userlist_clnt/team_cookie.c 3345 0 222692
 userlist_clnt/team_login.c 3345 0 251529
-userlist_clnt/team_set_passwd.c 3345 0 170816
 serve_state.h 3346 0 318886
 team_extra.h 3346 0 214825
 userlist_clnt.h 3346 0 833426
@@ -864,3 +862,17 @@ new-server.h 3352 0 259539
 serve_state.h 3352 0 446784
 new-server.c 3352 0 1235077
 new_server_html.c 3352 0 7427428
+userlist_clnt/set_passwd.c 3354 0 178382
+html.h 3355 0 733615
+new-server.h 3355 0 264507
+serve_state.h 3355 0 458307
+userlist_clnt.h 3355 0 832422
+register.c 3355 0 7938409
+serve.c 3355 0 15014718
+team.c 3355 0 3919646
+userlist-server.c 3355 0 17978699
+html.c 3355 0 13785480
+new_server_html.c 3355 0 8475786
+serve_2.c 3355 0 1838905
+teamdb.c 3355 0 1343436
+new_server_html.c 3356 0 8475793
