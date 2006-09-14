@@ -2552,23 +2552,6 @@ user_main_page(struct server_framework_state *state,
     html_write_user_problems_summary(cs, fout, phr->user_id, accepted_flag);
   }
 
-  if (start_time) {
-    fprintf(fout, "<hr><a name=\"runstat\"></a><%s>%s (%s)</%s>\n",
-            cnts->team_head_style,
-            _("Sent submissions"),
-            all_runs?_("all"):_("last 15"),
-            cnts->team_head_style);
-    new_write_user_runs(cs, fout, phr->user_id, all_runs,
-                        NEW_SRV_ACTION_VIEW_SOURCE,
-                        NEW_SRV_ACTION_VIEW_REPORT,
-                        NEW_SRV_ACTION_PRINT_RUN,
-                        phr->session_id, phr->self_url,
-                        phr->hidden_vars, "");
-    if (all_runs) s = _("View last 15");
-    else s = _("View all");
-    fprintf(fout, "<p><a href=\"%s?SID=%016llx&all_runs=%d&action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_runs, NEW_SRV_ACTION_MAIN_PAGE, s);
-  }
-
   if (prob_id > cs->max_prob) prob_id = 0;
   if (prob_id > 0 && !cs->probs[prob_id]) prob_id = 0;
   if (prob_id > 0 && is_problem_deadlined(cs, prob_id, phr->login, 0))
@@ -2621,6 +2604,23 @@ user_main_page(struct server_framework_state *state,
     html_problem_selection(cs, fout, phr, accepted_flag, 0);
 
     fprintf(fout, "</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr></table></form>\n", NEW_SRV_ACTION_MAIN_PAGE, _("Select problem"));
+  }
+
+  if (start_time) {
+    fprintf(fout, "<hr><a name=\"runstat\"></a><%s>%s (%s)</%s>\n",
+            cnts->team_head_style,
+            _("Sent submissions"),
+            all_runs?_("all"):_("last 15"),
+            cnts->team_head_style);
+    new_write_user_runs(cs, fout, phr->user_id, all_runs,
+                        NEW_SRV_ACTION_VIEW_SOURCE,
+                        NEW_SRV_ACTION_VIEW_REPORT,
+                        NEW_SRV_ACTION_PRINT_RUN,
+                        phr->session_id, phr->self_url,
+                        phr->hidden_vars, "");
+    if (all_runs) s = _("View last 15");
+    else s = _("View all");
+    fprintf(fout, "<p><a href=\"%s?SID=%016llx&all_runs=%d&action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_runs, NEW_SRV_ACTION_MAIN_PAGE, s);
   }
 
   if (!global->disable_clars) {
