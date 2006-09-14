@@ -38,6 +38,7 @@
 #include "serve_state.h"
 #include "teamdb.h"
 #include "prepare.h"
+#include "runlog.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -2143,6 +2144,24 @@ user_main_page(struct server_framework_state *state,
                struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
+  struct section_global_data *global = cs->global;
+  long long tdiff;
+  time_t start_time, stop_time, duration, sched_time, fog_start_time = 0, tmpt;
+  const unsigned char *s;
+  unsigned char duration_buf[128];
+
+  if (global->virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                          cs->current_time);
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+  }
+  run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0);
+  if (duration > 0 && start_time && !stop_time && global->board_fog_time > 0)
+    fog_start_time = start_time + duration - global->board_fog_time;
+  if (fog_start_time < 0) fog_start_time = 0;
 
   l10n_setlocale(phr->locale_id);
   html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
@@ -2170,12 +2189,12 @@ user_main_page(struct server_framework_state *state,
     fprintf(fout, "<li><a href=\"#runstat\">%s</a>\n",
             _("Submission log"));
   }
-  if (!cs->global->disable_team_clars && !cs->global->disable_clars
+  if (!global->disable_team_clars && !global->disable_clars
       && !cs->clients_suspended) {
     fprintf(fout, "<li><a href=\"#clar\">%s</a>\n",
             _("Send a message to judges"));
   }
-  if (!cs->global->disable_clars) {
+  if (!global->disable_clars) {
     fprintf(fout, "<li><a href=\"#clarstat\">%s</a>\n",
             _("Messages from judges"));
   }
@@ -2184,24 +2203,123 @@ user_main_page(struct server_framework_state *state,
             _("Change password"));
   }
 #if CONF_HAS_LIBINTL - 0 == 1
-  if (cs->global->enable_l10n) {
+  if (global->enable_l10n) {
     fprintf(fout, "<li><a href=\"#chglanguage\">%s</a>\n",
             _("Change language"));
   }
 #endif /* CONF_HAS_LIBINTL */
   if (cnts->standings_url && cs->contest_start_time) {
-    fprintf(fout, "<li><a href=\"%s\" target=_blank>%s</a>\n",
+    fprintf(fout, "<li><a href=\"%s\" target=\"_blank\">%s</a>\n",
             cnts->standings_url, _("Team standings"));
   }
-  /*
-  if (server_always_show_problems ||
-      (!server_is_virtual && cur_contest->problems_url && server_start_time)) {
-    printf("<li><a href=\"%s\" target=_blank>%s</a>\n",
-           cur_contest->problems_url, _("Problems"));
+  if (cnts->problems_url) {
+    if (global->always_show_problems || start_time) {
+      fprintf(fout, "<li><a href=\"%s\" target=\"_blank\">%s</a>\n",
+              cnts->problems_url, _("Problems"));
+    }
   }
-  */
   fprintf(fout, "</ul>\n");
 
+  fprintf(fout, "<hr><a name=\"status\"></a><h2>%s</h2>\n",
+          _("Server status"));
+  if (stop_time > 0) {
+    if (duration > 0 && global->board_fog_time > 0
+        && global->board_unfog_time > 0
+        && cs->current_time < stop_time + global->board_unfog_time
+        && !cs->standings_updated) {
+      s = _("The contest is over (standings are frozen)");
+    } else {
+      s = _("The contest is over");
+    }
+  } else if (start_time > 0) {
+    if (fog_start_time > 0 && cs->current_time >= fog_start_time)
+      s = _("The contest is in progress (standings are frozen)");
+    else
+      s = _("The contest is in progress");
+  } else {
+    s = _("The contest is not started");
+  }
+  fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
+
+  if (start_time > 0) {
+    if (global->score_system_val == SCORE_OLYMPIAD) {
+      if (!cs->olympiad_judging_mode)
+        s = _("Participants' solutions are being accepted");
+      else
+        s = _("Participants' solutions are being judges");
+      fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
+    }
+  }
+
+  if (cs->clients_suspended) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Team requests are suspended"));
+  }
+
+  if (start_time > 0) {
+    if (cs->testing_suspended) {
+      fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+             _("Testing of team's submits is suspended"));
+    }
+    if (cs->printing_suspended) {
+      fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+             _("Print requests are suspended"));
+    }
+  }
+
+  fprintf(fout, "<table border=\"0\">");
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+          _("Server time"), ctime(&cs->current_time));
+  if (start_time > 0) {
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Contest start time"), ctime(&start_time));
+  }
+  if (!global->virtual && start_time <= 0 && sched_time > 0) {
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Planned start time"), ctime(&sched_time));
+  }
+  if (stop_time <= 0 && (duration > 0 || global->contest_finish_time_d <= 0)) {
+    if (duration > 0) {
+      duration_str(0, duration, 0, duration_buf, 0);
+    } else {
+      snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
+    }
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Duration"), duration_buf);
+  }
+  if (start_time > 0 && stop_time <= 0 && duration > 0) {
+    tmpt = start_time + duration;
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Scheduled end time"), ctime(&tmpt));
+  } else if (start_time > 0 && stop_time <= 0 && duration <= 0
+             && global->contest_finish_time_d > 0) {
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Scheduled end time"), ctime(&global->contest_finish_time_d));
+  } else if (stop_time) {
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("End time"), ctime(&stop_time));
+  }
+
+  if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Standings freeze time"), ctime(&fog_start_time));
+  } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
+             && global->board_unfog_time > 0 && !cs->standings_updated
+             && cs->current_time < stop_time + global->board_unfog_time) {
+    tmpt = stop_time + global->board_unfog_time;
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Standings unfreeze time"), ctime(&tmpt));
+  }
+
+  if (start_time > 0 && stop_time <= 0 && duration > 0) {
+    duration_str(0, cs->current_time, start_time, duration_buf, 0);
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Elapsed time"), duration_buf);
+    duration_str(0, start_time + duration - cs->current_time, 0,
+                 duration_buf, 0);
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Remaining time"), duration_buf);
+  }
 
 #if CONF_HAS_LIBINTL - 0 == 1
   if (cs->global->enable_l10n) {
@@ -2216,20 +2334,16 @@ user_main_page(struct server_framework_state *state,
   }
 #endif /* CONF_HAS_LIBINTL */
 
-#if 0
-  if (global->show_generation_time) {
-    gettimeofday(&end_time, 0);
-    end_time.tv_sec -= begin_time.tv_sec;
-    if ((end_time.tv_usec -= begin_time.tv_usec) < 0) {
-      end_time.tv_usec += 1000000;
-      end_time.tv_sec--;
-    }
-    printf("<hr><p%s>%s: %ld %s\n", par_style,
-           _("Page generation time"),
-           end_time.tv_usec / 1000 + end_time.tv_sec * 1000,
-           _("msec"));
+  if (1 /*cs->global->show_generation_time*/) {
+  gettimeofday(&phr->timestamp2, 0);
+  tdiff = ((long long) phr->timestamp2.tv_sec) * 1000000;
+  tdiff += phr->timestamp2.tv_usec;
+  tdiff -= ((long long) phr->timestamp1.tv_sec) * 1000000;
+  tdiff -= phr->timestamp1.tv_usec;
+  fprintf(fout, "<hr><p%s>%s: %lld %s\n", cnts->team_par_style,
+          _("Page generation time"), tdiff / 1000,
+          _("msec"));
   }
-#endif
 
   html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
@@ -2331,6 +2445,8 @@ unprivileged_page(struct server_framework_state *state,
                                &extra->serve_state) < 0) {
     return html_err_contest_not_available(state, p, fout, phr, "");
   }
+
+  extra->serve_state->current_time = time(0);
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && user_actions_table[phr->action]) {

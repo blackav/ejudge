@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <sys/time.h>
 
 // a structure to store some persistent information
 struct session_info
@@ -62,6 +63,9 @@ struct http_request_info
   unsigned char *name_arm;
   const unsigned char *hidden_vars;
   struct session_info *session_extra;
+
+  struct timeval timestamp1;
+  struct timeval timestamp2;
 };
 
 void
