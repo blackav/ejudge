@@ -19,7 +19,7 @@
 
 int
 userlist_clnt_set_passwd(struct userlist_clnt *clnt,
-                         int uid,
+                         int cmd, int user_id, int contest_id,
                          const unsigned char *old_pwd,
                          const unsigned char *new_pwd)
 {
@@ -42,8 +42,9 @@ userlist_clnt_set_passwd(struct userlist_clnt *clnt,
   out = (struct userlist_pk_set_password *) alloca(out_size);
   if (!out) return -ULS_ERR_OUT_OF_MEM;
   memset(out, 0, out_size);
-  out->request_id = ULS_SET_PASSWD;
-  out->user_id = uid;
+  out->request_id = cmd;
+  out->user_id = user_id;
+  out->contest_id = contest_id;
   out->old_len = old_len;
   out->new_len = new_len;
   pkt_old_ptr = out->data;
