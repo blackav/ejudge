@@ -1145,6 +1145,8 @@ prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
   do_xstr(f, &sbuf, "date_penalty", prob->date_penalty);
   //PROBLEM_PARAM(personal_deadline, "x"),
   do_xstr(f, &sbuf, "personal_deadline", prob->personal_deadline);
+  //PROBLEM_PARAM(alternative, "x"),
+  do_xstr(f, &sbuf, "alternative", prob->alternative);
 
   xfree(sbuf.s); sbuf.s = 0; sbuf.a = 0;
 }

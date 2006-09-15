@@ -2359,6 +2359,7 @@ user_main_page(struct server_framework_state *state,
   path_t variant_stmt_file;
   struct watched_file *pw = 0;
   const unsigned char *pw_path;
+  const struct section_problem_data *prob = 0;
 
   if (ns_cgi_param(phr, "all_runs", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
@@ -2596,13 +2597,13 @@ user_main_page(struct server_framework_state *state,
 
   if (viewed_section == USER_SECTION_PROBLEM) {
     if (prob_id > cs->max_prob) prob_id = 0;
-    if (prob_id > 0 && !cs->probs[prob_id]) prob_id = 0;
+    if (prob_id > 0 && !(prob = cs->probs[prob_id])) prob_id = 0;
     if (prob_id > 0 && is_problem_deadlined(cs, prob_id, phr->login, 0))
       prob_id = 0;
-    if (prob_id > 0 && cs->probs[prob_id]->t_start_date > 0
-        && cs->current_time < cs->probs[prob_id]->t_start_date)
+    if (prob_id > 0 && prob->t_start_date > 0
+        && cs->current_time < prob->t_start_date)
       prob_id = 0;
-    if (prob_id > 0 && cs->probs[prob_id]->variant_num > 0
+    if (prob_id > 0 && prob->variant_num > 0
         && (variant = find_variant(cs, phr->user_id, prob_id)) <= 0)
       prob_id = 0;
 
@@ -2619,31 +2620,29 @@ user_main_page(struct server_framework_state *state,
 
       fprintf(fout, "</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr></table></form>\n", NEW_SRV_ACTION_MAIN_PAGE, _("Select problem"));
     } else if (start_time > 0 && stop_time <= 0 && prob_id > 0) {
+      prob = cs->probs[prob_id];
+
       if (variant > 0) {
         fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s %s-%s (%s %d)</%s>\n",
                 cnts->team_head_style, _("Submit a solution for"),
-                cs->probs[prob_id]->short_name,
-                cs->probs[prob_id]->long_name,
-                _("Variant"), variant,
+                prob->short_name, prob->long_name, _("Variant"), variant,
                 cnts->team_head_style);
       } else {
         fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s %s-%s</%s>\n",
                 cnts->team_head_style, _("Submit a solution for"),
-                cs->probs[prob_id]->short_name,
-                cs->probs[prob_id]->long_name,
-                cnts->team_head_style);
+                prob->short_name, prob->long_name, cnts->team_head_style);
       }
 
       /* put problem statement */
-      if (cs->probs[prob_id]->statement_file[0]) {
+      if (prob->statement_file[0]) {
         if (variant > 0) {
           insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
-                             cs->probs[prob_id]->statement_file, variant);
+                             prob->statement_file, variant);
           pw = &cs->prob_extras[prob_id].v_stmts[variant];
           pw_path = variant_stmt_file;
         } else {
           pw = &cs->prob_extras[prob_id].stmt;
-          pw_path = cs->probs[prob_id]->statement_file;
+          pw_path = prob->statement_file;
         }
         watched_file_update(pw, pw_path, cs->current_time);
         if (!pw->text) {
@@ -2657,26 +2656,50 @@ user_main_page(struct server_framework_state *state,
       html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
       fprintf(fout, "<input type=\"hidden\" name=\"prob_id\" value=\"%d\">\n",
               prob_id);
-      fprintf(fout, "<table><tr><td>%s:</td><td>", _("Language"));
-      fprintf(fout, "<select name=\"lang_id\"><option value=\"\">\n");
-      for (i = 1; i <= cs->max_lang; i++) {
-        if (!cs->langs[i] || cs->langs[i]->disabled) continue;
-        if ((lang_list = cs->probs[prob_id]->enable_language)) {
-          for (j = 0; lang_list[j]; j++)
-            if (!strcmp(lang_list[j], cs->langs[i]->short_name))
-              break;
-          if (!lang_list[j]) continue;
-        } else if ((lang_list = cs->probs[prob_id]->disable_language)) {
-          for (j = 0; lang_list[j]; j++)
-            if (!strcmp(lang_list[j], cs->langs[i]->short_name))
-              break;
-          if (lang_list[j]) continue;
+      fprintf(fout, "<table>\n");
+      if (!prob->type_val) {
+        fprintf(fout, "<tr><td>%s:</td><td>", _("Language"));
+        fprintf(fout, "<select name=\"lang_id\"><option value=\"\">\n");
+        for (i = 1; i <= cs->max_lang; i++) {
+          if (!cs->langs[i] || cs->langs[i]->disabled) continue;
+          if ((lang_list = prob->enable_language)) {
+            for (j = 0; lang_list[j]; j++)
+              if (!strcmp(lang_list[j], cs->langs[i]->short_name))
+                break;
+            if (!lang_list[j]) continue;
+          } else if ((lang_list = prob->disable_language)) {
+            for (j = 0; lang_list[j]; j++)
+              if (!strcmp(lang_list[j], cs->langs[i]->short_name))
+                break;
+            if (lang_list[j]) continue;
+          }
+          fprintf(fout, "<option value=\"%d\">%s - %s</option>\n",
+                  i, cs->langs[i]->short_name, cs->langs[i]->long_name);
         }
-        fprintf(fout, "<option value=\"%d\">%s - %s</option>\n",
-                i, cs->langs[i]->short_name, cs->langs[i]->long_name);
+        fprintf(fout, "</select></td></tr>\n");
       }
-      fprintf(fout, "</select></td></tr>\n");
-      fprintf(fout, "<tr><td>%s</td><td><input type=\"file\" name=\"file\"></td></tr>\n", _("File"));
+      switch (prob->type_val) {
+      case PROB_TYPE_STANDARD:
+      case PROB_TYPE_OUTPUT_ONLY:
+        fprintf(fout, "<tr><td>%s</td><td><input type=\"file\" name=\"file\"></td></tr>\n", _("File"));
+        break;
+      case PROB_TYPE_SHORT_ANSWER:
+        fprintf(fout, "<tr><td>%s</td><td><input type=\"text\" name=\"file\"></td></tr>\n", _("Answer"));
+        break;
+      case PROB_TYPE_TEXT_ANSWER:
+        fprintf(fout, "<tr><td colspan=\"2\"><textarea name=\"file\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n");
+        break;
+      case PROB_TYPE_SELECT_ONE:
+        for (i = 0; prob->alternative[i]; i++) {
+          fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"answer\"></td><td>%s</td></tr>\n", i + 1, prob->alternative[i]);
+        }
+        break;
+      case PROB_TYPE_SELECT_MANY:
+        for (i = 0; prob->alternative[i]; i++) {
+          fprintf(fout, "<tr><td>%d</td><td><input type=\"checkbox\" name=\"ans_%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
+        }
+        break;
+      }
       fprintf(fout, "<tr><td>%s</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr></table></form>\n", _("Send!"),
               NEW_SRV_ACTION_SUBMIT_RUN, _("Send!"));
 
