@@ -52,7 +52,7 @@ serve_state_init(void)
 serve_state_t
 serve_state_destroy(serve_state_t state)
 {
-  int i;
+  int i, j;
   struct user_filter_info *ufp, *ufp2;
 
   if (!state) return 0;
@@ -62,8 +62,14 @@ serve_state_destroy(serve_state_t state)
   teamdb_destroy(state->teamdb_state);
   clar_destroy(state->clarlog_state);
 
-  for (i = 1; i <= state->max_prob; i++)
+  for (i = 1; i <= state->max_prob; i++) {
     watched_file_clear(&state->prob_extras[i].stmt);
+    if (state->probs[i] && state->probs[i]->variant_num > 0) {
+      for (j = 1; j <= state->probs[i]->variant_num; j++)
+        watched_file_clear(&state->prob_extras[i].v_stmts[j]);
+      xfree(state->prob_extras[i].v_stmts);
+    }
+  }
   xfree(state->prob_extras);
 
   prepare_free_config(state->config);
@@ -115,6 +121,7 @@ serve_state_load_contest(int contest_id,
   path_t config_path;
   const unsigned char *conf_dir;
   struct stat stbuf;
+  int i;
   
 
   if (*p_state) return 0;
@@ -184,6 +191,10 @@ serve_state_load_contest(int contest_id,
   serve_build_run_dirs(state);
 
   XCALLOC(state->prob_extras, state->max_prob + 1);
+  for (i = 1; i <= state->max_prob; i++) {
+    if (!state->probs[i] || state->probs[i]->variant_num <= 0) continue;
+    XCALLOC(state->prob_extras[i].v_stmts, state->probs[i]->variant_num + 1);
+  }
 
   *p_state = state;
   return 1;
