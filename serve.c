@@ -1956,7 +1956,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
   if (queue_compile_request(pkt->data, pkt->run_len, run_id,
                             serve_state.langs[pkt->lang_id]->compile_id,
                             pkt->locale_id,
-                            serve_state.probs[pkt->prob_id]->output_only,
+                            (serve_state.probs[pkt->prob_id]->type_val > 0),
                             serve_state.langs[pkt->lang_id]->src_sfx,
                             serve_state.langs[pkt->lang_id]->compiler_env, -1, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
@@ -2301,7 +2301,7 @@ do_submit_run(struct client_state *p,
 
   if (queue_compile_request(run_bytes, run_size, run_id,
                             cur_lang->compile_id, locale_id,
-                            cur_prob->output_only,
+                            (cur_prob->type_val > 0),
                             cur_lang->src_sfx,
                             cur_lang->compiler_env, -1, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
@@ -4726,7 +4726,7 @@ rejudge_run(int run_id, struct client_state *p, int force_full_rejudge,
 
   queue_compile_request(0, -1, run_id,
                         serve_state.langs[re.lang_id]->compile_id, re.locale_id,
-                        serve_state.probs[re.prob_id]->output_only,
+                        (serve_state.probs[re.prob_id]->type_val > 0),
                         serve_state.langs[re.lang_id]->src_sfx,
                         serve_state.langs[re.lang_id]->compiler_env,
                         accepting_mode, priority_adjustment);
