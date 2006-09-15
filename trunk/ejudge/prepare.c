@@ -328,6 +328,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(variant_num, "d"),
   PROBLEM_PARAM(date_penalty, "x"),
   PROBLEM_PARAM(disable_language, "x"),
+  PROBLEM_PARAM(enable_language, "x"),
   PROBLEM_PARAM(standard_checker, "s"),
   PROBLEM_PARAM(checker_env, "x"),
   PROBLEM_PARAM(lang_time_adj, "x"),
@@ -615,6 +616,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->test_sets);
   sarray_free(p->date_penalty);
   sarray_free(p->disable_language);
+  sarray_free(p->enable_language);
   sarray_free(p->checker_env);
   sarray_free(p->lang_time_adj);
   sarray_free(p->personal_deadline);
@@ -2277,6 +2279,9 @@ set_defaults(serve_state_t state, int mode)
 
       if (si != -1 && state->abstr_probs[si]->disable_language) {
         state->probs[i]->disable_language = sarray_merge_pf(state->abstr_probs[si]->disable_language, state->probs[i]->disable_language);
+      }
+      if (si != -1 && state->abstr_probs[si]->enable_language) {
+        state->probs[i]->enable_language = sarray_merge_pf(state->abstr_probs[si]->enable_language, state->probs[i]->enable_language);
       }
       if (si != -1 && state->abstr_probs[si]->checker_env) {
         state->probs[i]->checker_env = sarray_merge_pf(state->abstr_probs[si]->checker_env,
@@ -4030,6 +4035,7 @@ prepare_copy_problem(struct section_problem_data *out,
   out->dp_total = 0;
   out->dp_infos = 0;
   out->disable_language = 0;
+  out->enable_language = 0;
   out->checker_env = 0;
   out->lang_time_adj = 0;
   out->personal_deadline = 0;

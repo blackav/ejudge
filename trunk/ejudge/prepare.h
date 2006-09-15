@@ -432,6 +432,7 @@ struct section_problem_data
   struct penalty_info *dp_infos;
 
   char **disable_language;
+  char **enable_language;
   char **checker_env;           /* environment variables for checker */
   path_t check_cmd;
   char **lang_time_adj;         /* time limit adjustments depending on language */

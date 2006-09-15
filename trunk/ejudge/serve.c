@@ -2151,7 +2151,18 @@ do_submit_run(struct client_state *p,
   }
 
   /* check for disabled languages */
-  if (cur_prob->disable_language) {
+  if (cur_prob->enable_language) {
+    dis_lang = cur_prob->enable_language;
+    for (i = 0; dis_lang[i]; i++)
+      if (!strcmp(dis_lang[i], cur_lang->short_name))
+        break;
+    if (!dis_lang[i]) {
+      err("%d: the language %s is not enabled for problem %s", p->id,
+          cur_lang->short_name, cur_prob->short_name);
+      new_send_reply(p, -SRV_ERR_LANGUAGE_DISABLED);
+      return;
+    }
+  } else if (cur_prob->disable_language) {
     dis_lang = cur_prob->disable_language;
     for (i = 0; dis_lang[i]; i++)
       if (!strcmp(dis_lang[i], cur_lang->short_name))

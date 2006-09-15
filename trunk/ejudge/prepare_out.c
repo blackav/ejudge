@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2005,2006 Alexander Chernov <cher@unicorn.cmc.msu.ru> */
+/* Copyright (C) 2005,2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1041,6 +1041,7 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   do_xstr(f, &sbuf, "lang_time_adj", prob->lang_time_adj);
   do_xstr(f, &sbuf, "test_sets", prob->test_sets);
   do_xstr(f, &sbuf, "disable_language", prob->disable_language);
+  do_xstr(f, &sbuf, "enable_language", prob->enable_language);
 
   if (!prob->abstract && prob->variant_num > 0) {
     fprintf(f, "variant_num = %d\n", prob->variant_num);
@@ -1792,7 +1793,7 @@ prepare_unparse_variants(FILE *f, const struct variant_map *vmap,
   if (footer) fprintf(f, "%s", footer);
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
