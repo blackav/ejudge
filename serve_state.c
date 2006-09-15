@@ -62,6 +62,10 @@ serve_state_destroy(serve_state_t state)
   teamdb_destroy(state->teamdb_state);
   clar_destroy(state->clarlog_state);
 
+  for (i = 1; i <= state->max_prob; i++)
+    watched_file_clear(&state->prob_extras[i].stmt);
+  xfree(state->prob_extras);
+
   prepare_free_config(state->config);
 
   for (i = 0; i < state->users_a; i++) {
@@ -178,6 +182,8 @@ serve_state_load_contest(int contest_id,
   serve_load_status_file(state);
   serve_build_compile_dirs(state);
   serve_build_run_dirs(state);
+
+  XCALLOC(state->prob_extras, state->max_prob + 1);
 
   *p_state = state;
   return 1;

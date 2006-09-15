@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-14 18:16+0400\n"
-"PO-Revision-Date: 2006-09-14 19:17+0400\n"
+"POT-Creation-Date: 2006-09-15 13:18+0400\n"
+"PO-Revision-Date: 2006-09-15 13:38+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -452,6 +452,9 @@ msgstr "Город (Англ.)"
 
 msgid "Clar ID"
 msgstr "Номер сообщения"
+
+msgid "Clarifications"
+msgstr "Сообщения жюри"
 
 msgid "Clear BANNED"
 msgstr "Сбросить флаг BANNED"
@@ -1445,6 +1448,9 @@ msgstr "Привилегированный?"
 msgid "Problem"
 msgstr "Задача"
 
+msgid "Problem statistics"
+msgstr "Статистика сдач"
+
 msgid "Problem status summary"
 msgstr "Итог по задачам"
 
@@ -1752,6 +1758,9 @@ msgstr "Установить статус регистрации в PENDING, то есть отложить решение"
 msgid "Set the registration status of the selected users to REJECTED"
 msgstr "Установить статус регистрации в REJECTED, то есть отказать в участии"
 
+msgid "Settings"
+msgstr "Настройки"
+
 msgid "Short name"
 msgstr "ID Задачи"
 
@@ -1927,6 +1936,9 @@ msgstr "Сообщение не может быть послано. Турнир не начался."
 
 msgid "The message cannot be sent. The contest is over."
 msgstr "Сообщение не может быть послано. Турнир закончился."
+
+msgid "The problem statement is not available"
+msgstr "Условие задачи недоступно"
 
 msgid "The server is down. Try again later."
 msgstr "Сервер не работает. Пожалуйста, повторите операцию позднее."
