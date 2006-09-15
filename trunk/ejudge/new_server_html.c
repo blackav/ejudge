@@ -2320,6 +2320,23 @@ html_problem_selection(serve_state_t cs,
   fprintf(fout, "</select>");
 }
 
+static int
+insert_variant_num(unsigned char *buf, size_t size,
+                   const unsigned char *file, int variant)
+{
+  int flen, pos;
+
+  ASSERT(file);
+  flen = strlen(file);
+  ASSERT(flen > 0);
+  pos = flen - 1;
+  while (pos >= 0 && file[pos] != '/' && file[pos] != '.') pos--;
+  if (pos <= 0 || file[pos] == '/')
+    return snprintf(buf, size, "%s-%d", file, variant);
+  // pos > 0 && file[pos] == '.'
+  return snprintf(buf, size, "%.*s-%d.%s", pos - 1, file, variant, file + pos);
+}
+
 static void
 user_main_page(struct server_framework_state *state,
                struct client_state *p,
@@ -2337,8 +2354,11 @@ user_main_page(struct server_framework_state *state,
   int unread_clars, all_runs = 0, all_clars = 0, viewed_section = 0;
   unsigned char *solved_flag = 0;
   unsigned char *accepted_flag = 0;
-  int n, v, prob_id = 0, i, j;
+  int n, v, prob_id = 0, i, j, variant = 0;
   char **lang_list;
+  path_t variant_stmt_file;
+  struct watched_file *pw = 0;
+  const unsigned char *pw_path;
 
   if (ns_cgi_param(phr, "all_runs", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
@@ -2582,6 +2602,9 @@ user_main_page(struct server_framework_state *state,
     if (prob_id > 0 && cs->probs[prob_id]->t_start_date > 0
         && cs->current_time < cs->probs[prob_id]->t_start_date)
       prob_id = 0;
+    if (prob_id > 0 && cs->probs[prob_id]->variant_num > 0
+        && (variant = find_variant(cs, phr->user_id, prob_id)) <= 0)
+      prob_id = 0;
 
     if (start_time > 0 && stop_time <= 0 && !prob_id) {
       fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s</%s>\n",
@@ -2596,22 +2619,38 @@ user_main_page(struct server_framework_state *state,
 
       fprintf(fout, "</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr></table></form>\n", NEW_SRV_ACTION_MAIN_PAGE, _("Select problem"));
     } else if (start_time > 0 && stop_time <= 0 && prob_id > 0) {
-      fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s %s-%s</%s>\n",
-              cnts->team_head_style, _("Submit a solution for"),
-              cs->probs[prob_id]->short_name,
-              cs->probs[prob_id]->long_name,
-              cnts->team_head_style);
+      if (variant > 0) {
+        fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s %s-%s (%s %d)</%s>\n",
+                cnts->team_head_style, _("Submit a solution for"),
+                cs->probs[prob_id]->short_name,
+                cs->probs[prob_id]->long_name,
+                _("Variant"), variant,
+                cnts->team_head_style);
+      } else {
+        fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s %s-%s</%s>\n",
+                cnts->team_head_style, _("Submit a solution for"),
+                cs->probs[prob_id]->short_name,
+                cs->probs[prob_id]->long_name,
+                cnts->team_head_style);
+      }
 
       /* put problem statement */
       if (cs->probs[prob_id]->statement_file[0]) {
-        watched_file_update(&cs->prob_extras[prob_id].stmt,
-                            cs->probs[prob_id]->statement_file,
-                            cs->current_time);
-        if (!cs->prob_extras[prob_id].stmt.text) {
+        if (variant > 0) {
+          insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
+                             cs->probs[prob_id]->statement_file, variant);
+          pw = &cs->prob_extras[prob_id].v_stmts[variant];
+          pw_path = variant_stmt_file;
+        } else {
+          pw = &cs->prob_extras[prob_id].stmt;
+          pw_path = cs->probs[prob_id]->statement_file;
+        }
+        watched_file_update(pw, pw_path, cs->current_time);
+        if (!pw->text) {
           fprintf(fout, "<big><font color=\"red\"><p>%s</p></font></big>\n",
                   _("The problem statement is not available"));
         } else {
-          fprintf(fout, "%s", cs->prob_extras[prob_id].stmt.text);
+          fprintf(fout, "%s", pw->text);
         }
       }
 

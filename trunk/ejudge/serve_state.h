@@ -75,6 +75,7 @@ struct run_dir_item
 struct problem_extra_info
 {
   struct watched_file stmt;
+  struct watched_file *v_stmts;
 };
 
 struct serve_state
