@@ -267,6 +267,8 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
     fprintf(f, "tgz_dir = \"%s\"\n", c_armor(&sbuf, global->tgz_dir));
   if (global->checker_dir[0] && strcmp(global->checker_dir, DFLT_G_CHECKER_DIR))
     fprintf(f, "checker_dir = \"%s\"\n", c_armor(&sbuf, global->checker_dir));
+  if (global->statement_dir[0] && strcmp(global->statement_dir, DFLT_G_STATEMENT_DIR))
+    fprintf(f, "statement_dir = \"%s\"\n", c_armor(&sbuf, global->statement_dir));
   if (global->contest_start_cmd[0])
     fprintf(f, "contest_start_cmd = \"%s\"\n",
             c_armor(&sbuf, global->contest_start_cmd));

@@ -2762,6 +2762,8 @@ cmd_set_value(struct client_state *p, int len,
   case SSERV_CMD_GLOB_CLEAR_TGZ_DIR:
   case SSERV_CMD_GLOB_CHANGE_CHECKER_DIR:
   case SSERV_CMD_GLOB_CLEAR_CHECKER_DIR:
+  case SSERV_CMD_GLOB_CHANGE_STATEMENT_DIR:
+  case SSERV_CMD_GLOB_CLEAR_STATEMENT_DIR:
   case SSERV_CMD_GLOB_CHANGE_CONTEST_START_CMD:
   case SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD:
   case SSERV_CMD_GLOB_CHANGE_MAX_RUN_SIZE:
@@ -3284,6 +3286,8 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CLEAR_TGZ_DIR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_CHECKER_DIR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CLEAR_CHECKER_DIR] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CHANGE_STATEMENT_DIR] = { cmd_set_value },
+  [SSERV_CMD_GLOB_CLEAR_STATEMENT_DIR] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_CONTEST_START_CMD] = { cmd_set_value },
   [SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD] = { cmd_set_value },
   [SSERV_CMD_GLOB_EDIT_CONTEST_START_CMD] = { cmd_main_page },

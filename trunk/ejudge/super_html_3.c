@@ -351,6 +351,7 @@ Contest files and directories:
   GLOBAL_PARAM(info_dir, "s"),
   GLOBAL_PARAM(tgz_dir, "s"),
   GLOBAL_PARAM(checker_dir, "s"),
+  GLOBAL_PARAM(statement_dir, "s"),
   GLOBAL_PARAM(contest_start_cmd, "s"),
 
 Participant's quotas:
@@ -834,6 +835,17 @@ super_html_edit_global_parameters(FILE *f,
     print_string_editing_row(f, "Directory for checkers (relative to contest configuration dir):", global->checker_dir,
                              SUPER_ACTION_GLOB_CHANGE_CHECKER_DIR,
                              SUPER_ACTION_GLOB_CLEAR_CHECKER_DIR,
+                             0,
+                             session_id,
+                             form_row_attrs[row ^= 1],
+                             self_url,
+                             extra_args,
+                             hidden_vars);
+
+    //GLOBAL_PARAM(statement_dir, "s"),
+    print_string_editing_row(f, "Directory for problem statements (relative to contest configuration dir):", global->statement_dir,
+                             SUPER_ACTION_GLOB_CHANGE_STATEMENT_DIR,
+                             SUPER_ACTION_GLOB_CLEAR_STATEMENT_DIR,
                              0,
                              session_id,
                              form_row_attrs[row ^= 1],
@@ -2043,6 +2055,12 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CLEAR_CHECKER_DIR:
     GLOB_CLEAR_STRING(checker_dir);
+
+  case SSERV_CMD_GLOB_CHANGE_STATEMENT_DIR:
+    GLOB_SET_STRING(statement_dir);
+
+  case SSERV_CMD_GLOB_CLEAR_STATEMENT_DIR:
+    GLOB_CLEAR_STRING(statement_dir);
 
   case SSERV_CMD_GLOB_CHANGE_CONTEST_START_CMD:
     GLOB_SET_STRING(contest_start_cmd);
@@ -6685,6 +6703,8 @@ super_html_check_tests(FILE *f,
   mkpath(g_info_path, conf_path, global->info_dir, DFLT_G_INFO_DIR);
   mkpath(g_tgz_path, conf_path, global->tgz_dir, DFLT_G_TGZ_DIR);
   mkpath(g_checker_path, conf_path, global->checker_dir, DFLT_G_CHECKER_DIR);
+  mkpath(g_checker_path, conf_path, global->statement_dir,
+         DFLT_G_STATEMENT_DIR);
 
   for (i = 1; i < sstate->prob_a; i++) {
     if (!(prob = sstate->probs[i])) continue;

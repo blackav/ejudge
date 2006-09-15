@@ -3,7 +3,7 @@
 #ifndef __PREPARE_DFLT_H__
 #define __PREPARE_DFLT_H__
 
-/* Copyright (C) 2005,2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005,2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,13 +33,14 @@
 #define DFLT_G_CONF_DIR           "conf"
 #define DFLT_G_VAR_DIR            "var"
 #define DFLT_G_SCRIPT_DIR         "scripts"
-#define DFLT_G_TEST_DIR           "tests"
-#define DFLT_G_CORR_DIR           "correct"
-#define DFLT_G_INFO_DIR           "info"
+#define DFLT_G_TEST_DIR           "../tests"
+#define DFLT_G_CORR_DIR           "../tests"
+#define DFLT_G_INFO_DIR           "../tests"
 #define DFLT_G_INFO_SFX           ".inf"
-#define DFLT_G_TGZ_DIR            "tgz"
+#define DFLT_G_TGZ_DIR            "../tests"
 #define DFLT_G_TGZ_SFX            ".tgz"
-#define DFLT_G_CHECKER_DIR        "checkers"
+#define DFLT_G_CHECKER_DIR        "../checkers"
+#define DFLT_G_STATEMENT_DIR      "../statements"
 #define DFLT_G_RUN_LOG_FILE       "run.log"
 #define DFLT_G_CLAR_LOG_FILE      "clar.log"
 #define DFLT_G_ARCHIVE_DIR        "archive"

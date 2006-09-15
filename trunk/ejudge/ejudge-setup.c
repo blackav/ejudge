@@ -1,7 +1,7 @@
 /* -*- mode:c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2004-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2118,6 +2118,7 @@ generate_serve_cfg(FILE *f)
   fprintf(f,
           "test_dir = \"../tests\"\n"
           "checker_dir = \"../checkers\"\n"
+          "statement_dir = \"../statements\"\n"
           "corr_dir = \"../tests\"\n"
           "test_sfx = \".dat\"\n"
           "corr_sfx = \".ans\"\n"
