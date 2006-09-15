@@ -148,6 +148,7 @@ struct section_global_data
   path_t info_dir;              /* common prefix dir for test infos */
   path_t tgz_dir;               /* common prefix dir for directory tests */
   path_t checker_dir;           /* default location of checkers */
+  path_t statement_dir;         /* default location of inline prob. stat. */
   puc_t test_sfx[32];           /* default test files suffix */
   puc_t corr_sfx[32];           /* default correct files suffix */
   puc_t info_sfx[32];           /* default info files suffix */

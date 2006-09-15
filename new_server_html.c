@@ -98,6 +98,7 @@ enum
   NEW_SRV_ACTION_PRINT_RUN,
   NEW_SRV_ACTION_VIEW_CLAR,
   NEW_SRV_ACTION_SUBMIT_RUN,
+  NEW_SRV_ACTION_SUBMIT_CLAR,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -2257,10 +2258,13 @@ static void
 html_problem_selection(serve_state_t cs,
                        FILE *fout,
                        struct http_request_info *phr,
+                       const unsigned char *solved_flag,
                        const unsigned char *accepted_flag,
-                       const unsigned char *var_name)
+                       const unsigned char *var_name,
+                       int light_mode,
+                       time_t start_time)
 {
-  int i, pdi, dpi;
+  int i, pdi, dpi, j, k;
   time_t user_deadline = 0;
   int user_penalty = 0, variant = 0;
   struct pers_dead_info *pdinfo;
@@ -2268,23 +2272,28 @@ html_problem_selection(serve_state_t cs,
   unsigned char penalty_str[64];
   unsigned char problem_str[128];
   const unsigned char *problem_ptr = 0;
+  const struct section_problem_data *prob;
 
   if (!var_name) var_name = "prob_id";
 
   fprintf(fout, "<select name=\"%s\"><option value=\"\"></option>\n", var_name);
 
-    for (i = 1; i <= cs->max_prob; i++) {
-      if (!cs->probs[i]) continue;
-      if (cs->global->disable_submit_after_ok > 0 && accepted_flag[i])
-        continue;
-      if (cs->probs[i]->t_start_date > 0
-          && cs->current_time < cs->probs[i]->t_start_date) continue;
+  for (i = 1; i <= cs->max_prob; i++) {
+    if (!(prob = cs->probs[i])) continue;
+    if (!light_mode && cs->global->disable_submit_after_ok>0 && solved_flag[i])
+      continue;
+    if (prob->t_start_date > 0 && cs->current_time < prob->t_start_date)
+      continue;
+    if (start_time <= 0) continue;
 
+    penalty_str[0] = 0;
+    deadline_str[0] = 0;
+    if (!light_mode) {
       // try to find personal rules
       user_deadline = 0;
       user_penalty = 0;
-      for (pdi = 0, pdinfo = cs->probs[i]->pd_infos;
-           pdi < cs->probs[i]->pd_total;
+      for (pdi = 0, pdinfo = prob->pd_infos;
+           pdi < prob->pd_total;
            pdi++, pdinfo++) {
         if (!strcmp(phr->login, pdinfo->login)) {
           user_deadline = pdinfo->deadline;
@@ -2292,40 +2301,55 @@ html_problem_selection(serve_state_t cs,
         }
       }
       // if no user-specific deadline, try the problem deadline
-      if (!user_deadline) user_deadline = cs->probs[i]->t_deadline;
+      if (!user_deadline) user_deadline = prob->t_deadline;
       // if deadline is over, go to the next problem
       if (user_deadline && cs->current_time >= user_deadline) continue;
 
-      // find date penalty
-      penalty_str[0] = 0;
-      for (dpi = 0; dpi < cs->probs[i]->dp_total; dpi++)
-        if (cs->current_time < cs->probs[i]->dp_infos[dpi].deadline)
-          break;
-      if (dpi < cs->probs[i]->dp_total)
-        user_penalty = cs->probs[i]->dp_infos[dpi].penalty;
+      // check `require' variable
+      if (prob->require) {
+        for (j = 0; prob->require[j]; j++) {
+          for (k = 1; k <= cs->max_prob; k++) {
+            if (cs->probs[k]
+                && !strcmp(cs->probs[k]->short_name, prob->require[j]))
+              break;
+          }
+          // no such problem :(
+          if (k > cs->max_prob) break;
+          // this problem is not yet accepted or solved
+          if (!solved_flag[k] && !accepted_flag[k]) break;
+        }
+        if (prob->require[j]) continue;
+      }
 
-      deadline_str[0] = 0;
+      // find date penalty
+      for (dpi = 0; dpi < prob->dp_total; dpi++)
+        if (cs->current_time < prob->dp_infos[dpi].deadline)
+          break;
+      if (dpi < prob->dp_total)
+        user_penalty = prob->dp_infos[dpi].penalty;
+
       if (user_deadline > 0 && cs->global->show_deadline)
         snprintf(deadline_str, sizeof(deadline_str),
                  " (%s)", xml_unparse_date(user_deadline));
       if (user_penalty && cs->global->show_deadline)
         snprintf(penalty_str, sizeof(penalty_str), " [%d]", user_penalty);
-
-      if (cs->probs[i]->variant_num > 0) {
-        if ((variant = find_variant(cs, phr->user_id, i)) <= 0) continue;
-        snprintf(problem_str, sizeof(problem_str),
-                 "%s-%d", cs->probs[i]->short_name, variant);
-        problem_ptr = problem_str;
-      } else {
-        problem_ptr = cs->probs[i]->short_name;
-      }
-
-      fprintf(fout, "<option value=\"%d\">%s - %s%s%s</option>\n",
-              i, problem_ptr, cs->probs[i]->long_name, penalty_str,
-              deadline_str);
     }
 
-    fprintf(fout, "</select>");
+    if (prob->variant_num > 0) {
+      if ((variant = find_variant(cs, phr->user_id, i)) <= 0) continue;
+      snprintf(problem_str, sizeof(problem_str),
+               "%s-%d", prob->short_name, variant);
+      problem_ptr = problem_str;
+    } else {
+      problem_ptr = prob->short_name;
+    }
+
+    fprintf(fout, "<option value=\"%d\">%s - %s%s%s</option>\n",
+            i, problem_ptr, prob->long_name, penalty_str,
+            deadline_str);
+  }
+
+  fprintf(fout, "</select>");
 }
 
 static void
@@ -2343,8 +2367,10 @@ user_main_page(struct server_framework_state *state,
   const unsigned char *s;
   unsigned char duration_buf[128];
   int unread_clars, all_runs = 0, all_clars = 0;
+  unsigned char *solved_flag = 0;
   unsigned char *accepted_flag = 0;
-  int n, v, prob_id = 0, i;
+  int n, v, prob_id = 0, i, j;
+  char **lang_list;
 
   if (ns_cgi_param(phr, "all_runs", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
@@ -2360,6 +2386,7 @@ user_main_page(struct server_framework_state *state,
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v > 0)
     prob_id = v;
 
+  XALLOCAZ(solved_flag, cs->max_prob + 1);
   XALLOCAZ(accepted_flag, cs->max_prob + 1);
 
   if (global->virtual) {
@@ -2549,7 +2576,8 @@ user_main_page(struct server_framework_state *state,
             cnts->team_head_style,
             _("Problem status summary"),
             cnts->team_head_style);
-    html_write_user_problems_summary(cs, fout, phr->user_id, accepted_flag);
+    html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
+                                     accepted_flag);
   }
 
   if (prob_id > cs->max_prob) prob_id = 0;
@@ -2568,7 +2596,8 @@ user_main_page(struct server_framework_state *state,
     fprintf(fout, "<table>\n");
     fprintf(fout, "<tr><td>%s:</td><td>", _("Problem"));
 
-    html_problem_selection(cs, fout, phr, accepted_flag, 0);
+    html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 0,
+                           start_time);
 
     fprintf(fout, "</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr></table></form>\n", NEW_SRV_ACTION_MAIN_PAGE, _("Select problem"));
   } else if (start_time > 0 && stop_time <= 0 && prob_id > 0) {
@@ -2585,7 +2614,17 @@ user_main_page(struct server_framework_state *state,
     fprintf(fout, "<select name=\"lang_id\"><option value=\"\">\n");
     for (i = 1; i <= cs->max_lang; i++) {
       if (!cs->langs[i] || cs->langs[i]->disabled) continue;
-      // FIXME: check for problem-specific language disable
+      if ((lang_list = cs->probs[prob_id]->enable_language)) {
+        for (j = 0; lang_list[j]; j++)
+          if (!strcmp(lang_list[j], cs->langs[i]->short_name))
+            break;
+        if (!lang_list[j]) continue;
+      } else if ((lang_list = cs->probs[prob_id]->disable_language)) {
+        for (j = 0; lang_list[j]; j++)
+          if (!strcmp(lang_list[j], cs->langs[i]->short_name))
+            break;
+        if (lang_list[j]) continue;
+      }
       fprintf(fout, "<option value=\"%d\">%s - %s</option>\n",
               i, cs->langs[i]->short_name, cs->langs[i]->long_name);
     }
@@ -2601,7 +2640,8 @@ user_main_page(struct server_framework_state *state,
     fprintf(fout, "<table>\n");
     fprintf(fout, "<tr><td>%s:</td><td>", _("Problem"));
 
-    html_problem_selection(cs, fout, phr, accepted_flag, 0);
+    html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 0,
+                           start_time);
 
     fprintf(fout, "</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr></table></form>\n", NEW_SRV_ACTION_MAIN_PAGE, _("Select problem"));
   }
@@ -2623,6 +2663,22 @@ user_main_page(struct server_framework_state *state,
     fprintf(fout, "<p><a href=\"%s?SID=%016llx&all_runs=%d&action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_runs, NEW_SRV_ACTION_MAIN_PAGE, s);
   }
 
+  if (!global->disable_clars && !global->disable_team_clars) {
+    fprintf(fout, "<hr><a name=\"clar\"></a><%s>%s</%s>\n",
+            cnts->team_head_style, _("Send a message to judges"),
+            cnts->team_head_style);
+    html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+    fprintf(fout, "<table><tr><td>%s:</td><td>", _("Problem"));
+    html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 1,
+                           start_time);
+    fprintf(fout, "</td></tr>\n<tr><td>%s:</td>"
+            "<td><input type=\"text\" name=\"subject\"></td></tr>\n"
+            "<tr><td colspan=\"2\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
+            "<tr><td colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n"
+            "</table></form>\n",
+            _("Subject"), NEW_SRV_ACTION_SUBMIT_CLAR, _("Send!"));
+  }
+
   if (!global->disable_clars) {
     fprintf(fout, "<hr><a name=\"clarstat\"></a><%s>%s (%s)</%s>\n",
             cnts->team_head_style, _("Messages"),
@@ -2637,8 +2693,6 @@ user_main_page(struct server_framework_state *state,
     else s = _("View all");
     fprintf(fout, "<p><a href=\"%s?SID=%016llx&all_clars=%d&action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_clars, NEW_SRV_ACTION_MAIN_PAGE, s);
   }
-
-  /* FIXME: more page generation */
 
   /* change the password */
   if (!cs->clients_suspended) {
