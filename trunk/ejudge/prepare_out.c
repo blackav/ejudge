@@ -1535,8 +1535,6 @@ prepare_unparse_testers(FILE *f,
     prepare_copy_problem(&tmp_prob, probs[i]);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TYPE,
                            &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_OUTPUT_ONLY,
-                           &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER,
                            &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDIN,
@@ -1551,7 +1549,7 @@ prepare_unparse_testers(FILE *f,
                            &tmp_prob, abstr, global);
     vm_sizes[i] = tmp_prob.max_vm_size;
     stack_sizes[i] = tmp_prob.max_stack_size;
-    file_ios[i] = !tmp_prob.output_only && (!tmp_prob.use_stdin || !tmp_prob.use_stdout);
+    file_ios[i] = !tmp_prob.type_val && (!tmp_prob.use_stdin || !tmp_prob.use_stdout);
   }
 
   // collect memory and stack limits for the default tester

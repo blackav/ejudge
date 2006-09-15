@@ -4746,7 +4746,6 @@ super_html_prob_cmd(struct sid_state *sstate, int cmd,
     snprintf(prob->short_name, sizeof(prob->short_name), "%s", param2);
     prob->abstract = 1;
     prob->type_val = 0;
-    prob->output_only = 0;
     prob->scoring_checker = 0;
     prob->use_stdin = 1;
     prob->use_stdout = 1;
@@ -4916,10 +4915,6 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
       return -SSERV_ERR_INVALID_PARAMETER;
     prob->type_val = val;
     return 0;
-
-  case SSERV_CMD_PROB_CHANGE_OUTPUT_ONLY:
-    p_int = &prob->output_only;
-    goto handle_boolean_1;
 
   case SSERV_CMD_PROB_CHANGE_SCORING_CHECKER:
     p_int = &prob->scoring_checker;
@@ -6808,7 +6803,6 @@ super_html_check_tests(FILE *f,
 
     prepare_copy_problem(&tmp_prob, prob);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TYPE, &tmp_prob, abstr, global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_OUTPUT_ONLY, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_BINARY_INPUT, &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEST_DIR, &tmp_prob, abstr, 0);
@@ -6880,7 +6874,7 @@ super_html_check_tests(FILE *f,
         fprintf(flog, "Error: no tests defined for the problem\n");
         goto check_failed;
       }
-      if (tmp_prob.output_only && total_tests != 1) {
+      if (tmp_prob.type_val > 0 && total_tests != 1) {
         fprintf(flog, "Error: output-only problem must have only one test\n");
         goto check_failed;
       }
@@ -6957,7 +6951,7 @@ super_html_check_tests(FILE *f,
           fprintf(flog, "Error: no tests defined for the problem\n");
           goto check_failed;
         }
-        if (tmp_prob.output_only && total_tests != 1) {
+        if (tmp_prob.type_val > 0 && total_tests != 1) {
           fprintf(flog, "Error: output-only problem must have only one test\n");
           goto check_failed;
         }

@@ -587,7 +587,7 @@ run_tests(struct section_tester_data *tst,
   cur_test = 1;
 
   /* at this point the executable is copied into the working dir */
-  if (!prb->output_only && tst->prepare_cmd[0]) {
+  if (!prb->type_val > 0 && tst->prepare_cmd[0]) {
     info("starting: %s %s", tst->prepare_cmd, new_name);
     tsk = task_New();
     task_AddArg(tsk, tst->prepare_cmd);
@@ -722,7 +722,7 @@ run_tests(struct section_tester_data *tst,
     pathmake(check_out_path, serve_state.global->run_work_dir, "/", "checkout", 0);
     pathmake(score_out_path, serve_state.global->run_work_dir, "/", "scoreout", 0);
 
-    if (prb->output_only) {
+    if (prb->type_val > 0) {
       /* output-only problem */
       // copy exe_path -> output_path
       generic_copy_file(0, NULL, exe_path, "", 0, NULL, output_path, "");
@@ -1842,7 +1842,7 @@ check_config(void)
         err("'%s' does not contain any tests", prb->test_dir);
         return -1;
       }
-      if (prb->output_only && n1 != 1) {
+      if (prb->type_val > 0 && n1 != 1) {
         err("`%s' must have only one test (as output-only problem)",
             prb->short_name);
         return -1;
@@ -1912,7 +1912,7 @@ check_config(void)
           err("'%s' does not contain any tests", var_test_dir);
           return -1;
         }
-        if (prb->output_only && n1 != 1) {
+        if (prb->type_val > 0 && n1 != 1) {
           err("`%s', variant %d must have only one test (as output-only problem)",
               prb->short_name, j);
           return -1;

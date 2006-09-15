@@ -270,12 +270,12 @@ static const struct config_parse_info section_global_params[] =
 #define PROBLEM_OFFSET(x)   XOFFSET(struct section_problem_data, x)
 #define PROBLEM_SIZE(x)     XFSIZE(struct section_problem_data, x)
 #define PROBLEM_PARAM(x, t) { #x, t, PROBLEM_OFFSET(x), PROBLEM_SIZE(x) }
+#define PROBLEM_ALIAS(a, x, t) { #a, t, PROBLEM_OFFSET(x), PROBLEM_SIZE(x) }
 static const struct config_parse_info section_problem_params[] =
 {
   PROBLEM_PARAM(id, "d"),
   PROBLEM_PARAM(tester_id, "d"),
   PROBLEM_PARAM(abstract, "d"),
-  PROBLEM_PARAM(output_only, "d"),
   PROBLEM_PARAM(scoring_checker, "d"),  
   PROBLEM_PARAM(use_stdin, "d"),
   PROBLEM_PARAM(use_stdout, "d"),
@@ -307,6 +307,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(spelling, "s"),
   PROBLEM_PARAM(stand_hide_time, "d"),
   PROBLEM_PARAM(score_multiplier, "d"),
+  PROBLEM_ALIAS(output_only, type_val, "d"),
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
@@ -565,7 +566,6 @@ prepare_problem_init_func(struct generic_section_config *gp)
   struct section_problem_data *p = (struct section_problem_data*) gp;
 
   p->type_val = -1;
-  p->output_only = -1;
   p->scoring_checker = -1;
   p->use_stdin = -1;
   p->use_stdout = -1;
@@ -2252,8 +2252,6 @@ set_defaults(serve_state_t state, int mode)
 
     prepare_set_prob_value(PREPARE_FIELD_PROB_HIDDEN,
                            state->probs[i], aprob, state->global);
-    prepare_set_prob_value(PREPARE_FIELD_PROB_OUTPUT_ONLY,
-                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER,
                            state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_USE_STDIN,
@@ -3741,7 +3739,6 @@ prepare_set_problem_defaults(struct section_problem_data *prob,
   if (!prob->abstract) return;
 
   if (prob->type_val < 0) prob->type_val = 0;
-  if (prob->output_only < 0) prob->output_only = 0;
   if (prob->scoring_checker < 0) prob->scoring_checker = 0;
   if (prob->use_stdin < 0) prob->use_stdin = 0;
   if (prob->use_stdout < 0) prob->use_stdout = 0;
@@ -4130,11 +4127,6 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
   case PREPARE_FIELD_PROB_TYPE:
     if (out->type_val == -1 && abstr) out->type_val = abstr->type_val;
     if (out->type_val == -1) out->type_val = 0;
-    break;
-
-  case PREPARE_FIELD_PROB_OUTPUT_ONLY:
-    if (out->output_only == -1 && abstr) out->output_only = abstr->output_only;
-    if (out->output_only == -1) out->output_only = 0;
     break;
 
   case PREPARE_FIELD_PROB_SCORING_CHECKER:
