@@ -40,6 +40,7 @@
 #include "prepare.h"
 #include "runlog.h"
 #include "html.h"
+#include "watched_file.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -61,6 +62,18 @@
 #define _(x) x
 #endif
 #define __(x) x
+
+enum
+{
+  USER_SECTION_FIRST = 0,
+  USER_SECTION_GENERAL = USER_SECTION_FIRST,
+  USER_SECTION_PROBLEM_STATUS,
+  USER_SECTION_PROBLEM,
+  USER_SECTION_CLAR,
+  USER_SECTION_SETTINGS,
+
+  USER_SECTION_LAST,
+};
 
 enum
 {
@@ -103,14 +116,6 @@ enum
   NEW_SRV_ACTION_LAST,
 };
 
-struct watched_file
-{
-  unsigned char *path;
-  time_t last_check;
-  time_t last_mtime;
-  size_t size;
-  unsigned char *text;
-};
 struct contest_extra
 {
   struct watched_file header;
@@ -127,6 +132,15 @@ struct contest_extra
 };
 static struct contest_extra **extras = 0;
 static size_t extra_a = 0;
+
+static const unsigned char * const user_section_names[] =
+{
+  [USER_SECTION_GENERAL] = __("General information"),
+  [USER_SECTION_PROBLEM_STATUS] = __("Problem statistics"),
+  [USER_SECTION_PROBLEM] = __("Problems"),
+  [USER_SECTION_CLAR] = __("Clarifications"),
+  [USER_SECTION_SETTINGS] = __("Settings"),
+};
 
 static void unprivileged_page_login(struct server_framework_state *state,
                                     struct client_state *p,
@@ -163,52 +177,6 @@ try_contest_extra(int contest_id)
   if (contest_id <= 0 || contest_id > MAX_CONTEST_ID) return 0;
   if (contest_id >= extra_a) return 0;
   return extras[contest_id];
-}
-
-static void
-update_watched_file(struct watched_file *pw, const unsigned char *path,
-                    time_t cur_time)
-{
-  struct stat stb;
-  char *tmpc = 0;
-
-  if (!path) {
-    if (!pw->path) return;
-    xfree(pw->path);
-    xfree(pw->text);
-    memset(pw, 0, sizeof(*pw));
-    return;
-  }
-
-  if (!cur_time) cur_time = time(0);
-  if (pw->path && strcmp(path, pw->path) != 0) {
-    xfree(pw->path);
-    xfree(pw->text);
-    memset(pw, 0, sizeof(*pw));
-  }
-  if (!pw->path) {
-    pw->path = xstrdup(path);
-    pw->last_check = cur_time;
-    if (stat(pw->path, &stb) < 0) return;
-    pw->last_mtime = stb.st_mtime;
-    generic_read_file(&tmpc, 0, &pw->size, 0, 0, pw->path, "");
-    pw->text = tmpc;
-    return;
-  }
-  if (pw->last_check + 10 > cur_time) return;
-  if (stat(pw->path, &stb) < 0) {
-    xfree(pw->text); pw->text = 0;
-    pw->size = 0;
-    pw->last_check = cur_time;
-    return;
-  }
-  if (pw->last_mtime == stb.st_mtime) return;
-  pw->last_mtime = stb.st_mtime;
-  pw->last_check = cur_time;
-  xfree(pw->text); pw->text = 0;
-  pw->size = 0;
-  generic_read_file(&tmpc, 0, &pw->size, 0, 0, pw->path, "");
-  pw->text = tmpc;  
 }
 
 static const unsigned char*
@@ -628,13 +596,13 @@ html_err_permission_denied(struct server_framework_state *state,
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = get_contest_extra(phr->contest_id);
   if (extra && !priv_mode) {
-    update_watched_file(&extra->header, cnts->team_header_file, cur_time);
-    update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
+    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
+    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
     header = extra->header.text;
     footer = extra->footer.text;
   } else if (extra && priv_mode) {
-    update_watched_file(&extra->priv_header, cnts->priv_header_file, cur_time);
-    update_watched_file(&extra->priv_footer, cnts->priv_footer_file, cur_time);
+    watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
+    watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
     header = extra->priv_header.text;
     footer = extra->priv_footer.text;
   }
@@ -699,13 +667,13 @@ html_err_invalid_param(struct server_framework_state *state,
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = get_contest_extra(phr->contest_id);
   if (extra && !priv_mode) {
-    update_watched_file(&extra->header, cnts->team_header_file, cur_time);
-    update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
+    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
+    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
     header = extra->header.text;
     footer = extra->footer.text;
   } else if (extra && priv_mode) {
-    update_watched_file(&extra->priv_header, cnts->priv_header_file, cur_time);
-    update_watched_file(&extra->priv_footer, cnts->priv_footer_file, cur_time);
+    watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
+    watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
     header = extra->priv_header.text;
     footer = extra->priv_footer.text;
   }
@@ -743,8 +711,8 @@ html_err_service_not_available(struct server_framework_state *state,
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = get_contest_extra(phr->contest_id);
   if (extra) {
-    update_watched_file(&extra->header, cnts->team_header_file, cur_time);
-    update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
+    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
+    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
     header = extra->header.text;
     footer = extra->footer.text;
   }
@@ -784,8 +752,8 @@ html_err_contest_not_available(struct server_framework_state *state,
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = get_contest_extra(phr->contest_id);
   if (extra) {
-    update_watched_file(&extra->header, cnts->team_header_file, cur_time);
-    update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
+    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
+    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
     header = extra->header.text;
     footer = extra->footer.text;
   }
@@ -818,13 +786,13 @@ html_err_userlist_server_down(struct server_framework_state *state,
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = get_contest_extra(phr->contest_id);
   if (extra && !priv_mode) {
-    update_watched_file(&extra->header, cnts->team_header_file, cur_time);
-    update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
+    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
+    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
     header = extra->header.text;
     footer = extra->footer.text;
   } else if (extra && priv_mode) {
-    update_watched_file(&extra->priv_header, cnts->priv_header_file, cur_time);
-    update_watched_file(&extra->priv_footer, cnts->priv_footer_file, cur_time);
+    watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
+    watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
     header = extra->priv_header.text;
     footer = extra->priv_footer.text;
   }
@@ -863,13 +831,13 @@ new_server_html_err_internal_error(struct server_framework_state *state,
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = get_contest_extra(phr->contest_id);
   if (extra && !priv_mode) {
-    update_watched_file(&extra->header, cnts->team_header_file, cur_time);
-    update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
+    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
+    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
     header = extra->header.text;
     footer = extra->footer.text;
   } else if (extra && priv_mode) {
-    update_watched_file(&extra->priv_header, cnts->priv_header_file, cur_time);
-    update_watched_file(&extra->priv_footer, cnts->priv_footer_file, cur_time);
+    watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
+    watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
     header = extra->priv_header.text;
     footer = extra->priv_footer.text;
   }
@@ -908,13 +876,13 @@ html_err_invalid_session(struct server_framework_state *state,
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = get_contest_extra(phr->contest_id);
   if (extra && !priv_mode) {
-    update_watched_file(&extra->header, cnts->team_header_file, cur_time);
-    update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
+    watched_file_update(&extra->header, cnts->team_header_file, cur_time);
+    watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
     header = extra->header.text;
     footer = extra->footer.text;
   } else if (extra && priv_mode) {
-    update_watched_file(&extra->priv_header, cnts->priv_header_file, cur_time);
-    update_watched_file(&extra->priv_footer, cnts->priv_footer_file, cur_time);
+    watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
+    watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
     header = extra->priv_header.text;
     footer = extra->priv_footer.text;
   }
@@ -1928,8 +1896,8 @@ privileged_page(struct server_framework_state *state,
                                         "user %s has no permission to login as role %d for contest %d", phr->login, phr->role, phr->contest_id);
   }
 
-  update_watched_file(&extra->priv_header, cnts->priv_header_file, cur_time);
-  update_watched_file(&extra->priv_footer, cnts->priv_footer_file, cur_time);
+  watched_file_update(&extra->priv_header, cnts->priv_header_file, cur_time);
+  watched_file_update(&extra->priv_footer, cnts->priv_footer_file, cur_time);
   extra->header_txt = extra->priv_header.text;
   extra->footer_txt = extra->priv_footer.text;
 
@@ -1988,8 +1956,8 @@ unprivileged_page_login_page(struct server_framework_state *state,
   ASSERT(extra);
 
   cur_time = time(0);
-  update_watched_file(&extra->header, cnts->team_header_file, cur_time);
-  update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
+  watched_file_update(&extra->header, cnts->team_header_file, cur_time);
+  watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
   extra->header_txt = extra->header.text;
   extra->footer_txt = extra->footer.text;
   if (!extra->header_txt) extra->header_txt = fancy_header;
@@ -2366,7 +2334,7 @@ user_main_page(struct server_framework_state *state,
   time_t start_time, stop_time, duration, sched_time, fog_start_time = 0, tmpt;
   const unsigned char *s;
   unsigned char duration_buf[128];
-  int unread_clars, all_runs = 0, all_clars = 0;
+  int unread_clars, all_runs = 0, all_clars = 0, viewed_section = 0;
   unsigned char *solved_flag = 0;
   unsigned char *accepted_flag = 0;
   int n, v, prob_id = 0, i, j;
@@ -2382,9 +2350,16 @@ user_main_page(struct server_framework_state *state,
     phr->session_extra->user_view_all_clars = v;
   }
   all_clars = phr->session_extra->user_view_all_clars;
+  if (ns_cgi_param(phr, "section", &s) > 0
+      && sscanf(s, "%d%n", &v, &n) == 1 && !s[n]
+      && v >= USER_SECTION_FIRST && v < USER_SECTION_LAST) {
+    phr->session_extra->user_viewed_section = v;
+  }
+  viewed_section = phr->session_extra->user_viewed_section;
   if (ns_cgi_param(phr, "prob_id", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v > 0)
     prob_id = v;
+  
 
   XALLOCAZ(solved_flag, cs->max_prob + 1);
   XALLOCAZ(accepted_flag, cs->max_prob + 1);
@@ -2407,6 +2382,7 @@ user_main_page(struct server_framework_state *state,
                   "%s [%s]: %s",
                   phr->name_arm, extra->contest_arm, _("Main page"));
 
+#if 0
   fprintf(fout, "<%s>%s</%s>\n", cnts->team_head_style,
           _("Quick navigation"), cnts->team_head_style);
   fprintf(fout, "<ul>\n");
@@ -2459,6 +2435,21 @@ user_main_page(struct server_framework_state *state,
     }
   }
   fprintf(fout, "</ul>\n");
+#endif
+
+  // new navigation
+  fprintf(fout, "<table border=\"0\" width=\"100%%\" bgcolor=\"#eeeeee\"><tr>");
+  for (i = USER_SECTION_FIRST; i < USER_SECTION_LAST; i++) {
+    if (i == viewed_section) {
+      fprintf(fout, "<td bgcolor=\"#ffffff\">%s</td>",
+              gettext(user_section_names[i]));
+    } else {
+      fprintf(fout, "<td><a href=\"%s?SID=%016llx&section=%d\">%s</a></td>",
+              phr->self_url, phr->session_id, i,
+              gettext(user_section_names[i]));
+    }
+  }
+  fprintf(fout, "</tr></table>\n");
 
   fprintf(fout, "<hr><a name=\"status\"></a><%s>%s</%s>\n",
           cnts->team_head_style, _("Server status"),
@@ -2571,160 +2562,182 @@ user_main_page(struct server_framework_state *state,
     }
   }
 
-  if (start_time) {
+  if (start_time && viewed_section == USER_SECTION_PROBLEM_STATUS) {
     fprintf(fout, "<hr><a name=\"probstat\"></a><%s>%s</%s>\n",
             cnts->team_head_style,
             _("Problem status summary"),
             cnts->team_head_style);
     html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
-                                     accepted_flag);
+                                     accepted_flag, 0);
+  } else if (start_time && viewed_section == USER_SECTION_PROBLEM) {
+    html_write_user_problems_summary(cs, fout, phr->user_id, solved_flag,
+                                     accepted_flag, 1);
   }
 
-  if (prob_id > cs->max_prob) prob_id = 0;
-  if (prob_id > 0 && !cs->probs[prob_id]) prob_id = 0;
-  if (prob_id > 0 && is_problem_deadlined(cs, prob_id, phr->login, 0))
-    prob_id = 0;
-  if (prob_id > 0 && cs->probs[prob_id]->t_start_date > 0
-      && cs->current_time < cs->probs[prob_id]->t_start_date)
-    prob_id = 0;
+  if (viewed_section == USER_SECTION_PROBLEM) {
+    if (prob_id > cs->max_prob) prob_id = 0;
+    if (prob_id > 0 && !cs->probs[prob_id]) prob_id = 0;
+    if (prob_id > 0 && is_problem_deadlined(cs, prob_id, phr->login, 0))
+      prob_id = 0;
+    if (prob_id > 0 && cs->probs[prob_id]->t_start_date > 0
+        && cs->current_time < cs->probs[prob_id]->t_start_date)
+      prob_id = 0;
 
-  if (start_time > 0 && stop_time <= 0 && !prob_id) {
-    fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s</%s>\n",
-            cnts->team_head_style, _("Send a submission"),
-            cnts->team_head_style);
-    html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
-    fprintf(fout, "<table>\n");
-    fprintf(fout, "<tr><td>%s:</td><td>", _("Problem"));
+    if (start_time > 0 && stop_time <= 0 && !prob_id) {
+      fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s</%s>\n",
+              cnts->team_head_style, _("Send a submission"),
+              cnts->team_head_style);
+      html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
+      fprintf(fout, "<table>\n");
+      fprintf(fout, "<tr><td>%s:</td><td>", _("Problem"));
 
-    html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 0,
-                           start_time);
+      html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 0,
+                             start_time);
 
-    fprintf(fout, "</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr></table></form>\n", NEW_SRV_ACTION_MAIN_PAGE, _("Select problem"));
-  } else if (start_time > 0 && stop_time <= 0 && prob_id > 0) {
-    fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s %s-%s</%s>\n",
-            cnts->team_head_style, _("Submit a solution for"),
-            cs->probs[prob_id]->short_name,
-            cs->probs[prob_id]->long_name,
-            cnts->team_head_style);
+      fprintf(fout, "</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr></table></form>\n", NEW_SRV_ACTION_MAIN_PAGE, _("Select problem"));
+    } else if (start_time > 0 && stop_time <= 0 && prob_id > 0) {
+      fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s %s-%s</%s>\n",
+              cnts->team_head_style, _("Submit a solution for"),
+              cs->probs[prob_id]->short_name,
+              cs->probs[prob_id]->long_name,
+              cnts->team_head_style);
 
-    html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
-    fprintf(fout, "<input type=\"hidden\" name=\"prob_id\" value=\"%d\">\n",
-            prob_id);
-    fprintf(fout, "<table><tr><td>%s:</td><td>", _("Language"));
-    fprintf(fout, "<select name=\"lang_id\"><option value=\"\">\n");
-    for (i = 1; i <= cs->max_lang; i++) {
-      if (!cs->langs[i] || cs->langs[i]->disabled) continue;
-      if ((lang_list = cs->probs[prob_id]->enable_language)) {
-        for (j = 0; lang_list[j]; j++)
-          if (!strcmp(lang_list[j], cs->langs[i]->short_name))
-            break;
-        if (!lang_list[j]) continue;
-      } else if ((lang_list = cs->probs[prob_id]->disable_language)) {
-        for (j = 0; lang_list[j]; j++)
-          if (!strcmp(lang_list[j], cs->langs[i]->short_name))
-            break;
-        if (lang_list[j]) continue;
+      /* put problem statement */
+      if (cs->probs[prob_id]->statement_file[0]) {
+        watched_file_update(&cs->prob_extras[prob_id].stmt,
+                            cs->probs[prob_id]->statement_file,
+                            cs->current_time);
+        if (!cs->prob_extras[prob_id].stmt.text) {
+          fprintf(fout, "<big><font color=\"red\"><p>%s</p></font></big>\n",
+                  _("The problem statement is not available"));
+        } else {
+          fprintf(fout, "%s", cs->prob_extras[prob_id].stmt.text);
+        }
       }
-      fprintf(fout, "<option value=\"%d\">%s - %s</option>\n",
-              i, cs->langs[i]->short_name, cs->langs[i]->long_name);
+
+      html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+      fprintf(fout, "<input type=\"hidden\" name=\"prob_id\" value=\"%d\">\n",
+              prob_id);
+      fprintf(fout, "<table><tr><td>%s:</td><td>", _("Language"));
+      fprintf(fout, "<select name=\"lang_id\"><option value=\"\">\n");
+      for (i = 1; i <= cs->max_lang; i++) {
+        if (!cs->langs[i] || cs->langs[i]->disabled) continue;
+        if ((lang_list = cs->probs[prob_id]->enable_language)) {
+          for (j = 0; lang_list[j]; j++)
+            if (!strcmp(lang_list[j], cs->langs[i]->short_name))
+              break;
+          if (!lang_list[j]) continue;
+        } else if ((lang_list = cs->probs[prob_id]->disable_language)) {
+          for (j = 0; lang_list[j]; j++)
+            if (!strcmp(lang_list[j], cs->langs[i]->short_name))
+              break;
+          if (lang_list[j]) continue;
+        }
+        fprintf(fout, "<option value=\"%d\">%s - %s</option>\n",
+                i, cs->langs[i]->short_name, cs->langs[i]->long_name);
+      }
+      fprintf(fout, "</select></td></tr>\n");
+      fprintf(fout, "<tr><td>%s</td><td><input type=\"file\" name=\"file\"></td></tr>\n", _("File"));
+      fprintf(fout, "<tr><td>%s</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr></table></form>\n", _("Send!"),
+              NEW_SRV_ACTION_SUBMIT_RUN, _("Send!"));
+
+      fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s</%s>\n",
+              cnts->team_head_style, _("Select another problem"),
+              cnts->team_head_style);
+      html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
+      fprintf(fout, "<table>\n");
+      fprintf(fout, "<tr><td>%s:</td><td>", _("Problem"));
+
+      html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 0,
+                             start_time);
+
+      fprintf(fout, "</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr></table></form>\n", NEW_SRV_ACTION_MAIN_PAGE, _("Select problem"));
     }
-    fprintf(fout, "</select></td></tr>\n");
-    fprintf(fout, "<tr><td>%s</td><td><input type=\"file\" name=\"file\"></td></tr>\n", _("File"));
-    fprintf(fout, "<tr><td>%s</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr></table></form>\n", _("Send!"),
-            NEW_SRV_ACTION_SUBMIT_RUN, _("Send!"));
 
-    fprintf(fout, "<hr><a name=\"submit\"></a><%s>%s</%s>\n",
-            cnts->team_head_style, _("Select another problem"),
-            cnts->team_head_style);
-    html_start_form(fout, 0, phr->self_url, phr->hidden_vars);
-    fprintf(fout, "<table>\n");
-    fprintf(fout, "<tr><td>%s:</td><td>", _("Problem"));
-
-    html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 0,
-                           start_time);
-
-    fprintf(fout, "</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr></table></form>\n", NEW_SRV_ACTION_MAIN_PAGE, _("Select problem"));
+    if (start_time) {
+      fprintf(fout, "<hr><a name=\"runstat\"></a><%s>%s (%s)</%s>\n",
+              cnts->team_head_style,
+              _("Sent submissions"),
+              all_runs?_("all"):_("last 15"),
+              cnts->team_head_style);
+      new_write_user_runs(cs, fout, phr->user_id, all_runs,
+                          NEW_SRV_ACTION_VIEW_SOURCE,
+                          NEW_SRV_ACTION_VIEW_REPORT,
+                          NEW_SRV_ACTION_PRINT_RUN,
+                          phr->session_id, phr->self_url,
+                          phr->hidden_vars, "");
+      if (all_runs) s = _("View last 15");
+      else s = _("View all");
+      fprintf(fout, "<p><a href=\"%s?SID=%016llx&all_runs=%d&action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_runs, NEW_SRV_ACTION_MAIN_PAGE, s);
+    }
   }
 
-  if (start_time) {
-    fprintf(fout, "<hr><a name=\"runstat\"></a><%s>%s (%s)</%s>\n",
-            cnts->team_head_style,
-            _("Sent submissions"),
-            all_runs?_("all"):_("last 15"),
-            cnts->team_head_style);
-    new_write_user_runs(cs, fout, phr->user_id, all_runs,
-                        NEW_SRV_ACTION_VIEW_SOURCE,
-                        NEW_SRV_ACTION_VIEW_REPORT,
-                        NEW_SRV_ACTION_PRINT_RUN,
-                        phr->session_id, phr->self_url,
-                        phr->hidden_vars, "");
-    if (all_runs) s = _("View last 15");
-    else s = _("View all");
-    fprintf(fout, "<p><a href=\"%s?SID=%016llx&all_runs=%d&action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_runs, NEW_SRV_ACTION_MAIN_PAGE, s);
+  if (viewed_section == USER_SECTION_CLAR) {
+    if (!global->disable_clars && !global->disable_team_clars) {
+      fprintf(fout, "<hr><a name=\"clar\"></a><%s>%s</%s>\n",
+              cnts->team_head_style, _("Send a message to judges"),
+              cnts->team_head_style);
+      html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
+      fprintf(fout, "<table><tr><td>%s:</td><td>", _("Problem"));
+      html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 1,
+                             start_time);
+      fprintf(fout, "</td></tr>\n<tr><td>%s:</td>"
+              "<td><input type=\"text\" name=\"subject\"></td></tr>\n"
+              "<tr><td colspan=\"2\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
+              "<tr><td colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n"
+              "</table></form>\n",
+              _("Subject"), NEW_SRV_ACTION_SUBMIT_CLAR, _("Send!"));
+    }
+
+    if (!global->disable_clars) {
+      fprintf(fout, "<hr><a name=\"clarstat\"></a><%s>%s (%s)</%s>\n",
+              cnts->team_head_style, _("Messages"),
+              all_clars?_("all"):_("last 15"), cnts->team_head_style);
+
+      new_write_user_clars(cs, fout, phr->user_id, all_clars,
+                           NEW_SRV_ACTION_VIEW_CLAR,
+                           phr->session_id,
+                           phr->self_url, phr->hidden_vars, "");
+
+      if (all_clars) s = _("View last 15");
+      else s = _("View all");
+      fprintf(fout, "<p><a href=\"%s?SID=%016llx&all_clars=%d&action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_clars, NEW_SRV_ACTION_MAIN_PAGE, s);
+    }
   }
 
-  if (!global->disable_clars && !global->disable_team_clars) {
-    fprintf(fout, "<hr><a name=\"clar\"></a><%s>%s</%s>\n",
-            cnts->team_head_style, _("Send a message to judges"),
-            cnts->team_head_style);
-    html_start_form(fout, 2, phr->self_url, phr->hidden_vars);
-    fprintf(fout, "<table><tr><td>%s:</td><td>", _("Problem"));
-    html_problem_selection(cs, fout, phr, solved_flag, accepted_flag, 0, 1,
-                           start_time);
-    fprintf(fout, "</td></tr>\n<tr><td>%s:</td>"
-            "<td><input type=\"text\" name=\"subject\"></td></tr>\n"
-            "<tr><td colspan=\"2\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
-            "<tr><td colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n"
-            "</table></form>\n",
-            _("Subject"), NEW_SRV_ACTION_SUBMIT_CLAR, _("Send!"));
-  }
+  if (viewed_section == USER_SECTION_SETTINGS) {
+    /* change the password */
+    if (!cs->clients_suspended) {
+      fprintf(fout, "<hr><a name=\"chgpasswd\"></a>\n<%s>%s</%s>\n",
+              cnts->team_head_style,
+              _("Change password"),
+              cnts->team_head_style);
+      html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
 
-  if (!global->disable_clars) {
-    fprintf(fout, "<hr><a name=\"clarstat\"></a><%s>%s (%s)</%s>\n",
-            cnts->team_head_style, _("Messages"),
-            all_clars?_("all"):_("last 15"), cnts->team_head_style);
-
-    new_write_user_clars(cs, fout, phr->user_id, all_clars,
-                         NEW_SRV_ACTION_VIEW_CLAR,
-                         phr->session_id,
-                         phr->self_url, phr->hidden_vars, "");
-
-    if (all_clars) s = _("View last 15");
-    else s = _("View all");
-    fprintf(fout, "<p><a href=\"%s?SID=%016llx&all_clars=%d&action=%d\">%s</a></p>\n", phr->self_url, phr->session_id, !all_clars, NEW_SRV_ACTION_MAIN_PAGE, s);
-  }
-
-  /* change the password */
-  if (!cs->clients_suspended) {
-    fprintf(fout, "<hr><a name=\"chgpasswd\"></a>\n<%s>%s</%s>\n",
-            cnts->team_head_style,
-            _("Change password"),
-            cnts->team_head_style);
-    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-
-    fprintf(fout, "<table>\n"
-            "<tr><td>%s:</td><td><input type=\"password\" name=\"oldpasswd\" size=\"16\"></td></tr>\n"
-            "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd1\" size=\"16\"></td></tr>\n"
-            "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd2\" size=\"16\"></td></tr>\n"
-            "<tr><td colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n"
-            "</table></form>",
-            _("Old password"),
-            _("New password"), _("Retype new password"),
-            NEW_SRV_ACTION_CHANGE_PASSWORD, _("Change!"));
-  }
+      fprintf(fout, "<table>\n"
+              "<tr><td>%s:</td><td><input type=\"password\" name=\"oldpasswd\" size=\"16\"></td></tr>\n"
+              "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd1\" size=\"16\"></td></tr>\n"
+              "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd2\" size=\"16\"></td></tr>\n"
+              "<tr><td colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n"
+              "</table></form>",
+              _("Old password"),
+              _("New password"), _("Retype new password"),
+              NEW_SRV_ACTION_CHANGE_PASSWORD, _("Change!"));
+    }
 
 #if CONF_HAS_LIBINTL - 0 == 1
-  if (cs->global->enable_l10n) {
-    fprintf(fout, "<hr><a name=\"chglanguage\"></a><%s>%s</%s>\n",
-            cnts->team_head_style, _("Change language"),
-            cnts->team_head_style);
-    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
-    fprintf(fout, "<table><tr><td>%s</td><td>", _("Change language"));
-    l10n_html_locale_select(fout, phr->locale_id);
-    fprintf(fout, "</td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr></table></form>\n",
-           NEW_SRV_ACTION_CHANGE_LANGUAGE, _("Change"));
-  }
+    if (cs->global->enable_l10n) {
+      fprintf(fout, "<hr><a name=\"chglanguage\"></a><%s>%s</%s>\n",
+              cnts->team_head_style, _("Change language"),
+              cnts->team_head_style);
+      html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+      fprintf(fout, "<table><tr><td>%s</td><td>", _("Change language"));
+      l10n_html_locale_select(fout, phr->locale_id);
+      fprintf(fout, "</td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr></table></form>\n",
+              NEW_SRV_ACTION_CHANGE_LANGUAGE, _("Change"));
+    }
 #endif /* CONF_HAS_LIBINTL */
+  }
 
   if (1 /*cs->global->show_generation_time*/) {
   gettimeofday(&phr->timestamp2, 0);
@@ -2802,8 +2815,8 @@ unprivileged_page(struct server_framework_state *state,
     return html_err_service_not_available(state, p, fout, phr,
                                           "contest %d team is disabled");
 
-  update_watched_file(&extra->header, cnts->team_header_file, cur_time);
-  update_watched_file(&extra->footer, cnts->team_footer_file, cur_time);
+  watched_file_update(&extra->header, cnts->team_header_file, cur_time);
+  watched_file_update(&extra->footer, cnts->team_footer_file, cur_time);
   extra->header_txt = extra->header.text;
   extra->footer_txt = extra->footer.text;
   //if (!extra->header_txt) extra->header_txt = fancy_header;

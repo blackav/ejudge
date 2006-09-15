@@ -191,6 +191,7 @@ COMMON_CFILES=\
  userlist_xml.c\
  varsubst.c\
  vcs.c\
+ watched_file.c\
  xml_utils/attr_bool.c\
  xml_utils/attr_bool_byte.c\
  xml_utils/attr_date.c\
@@ -346,6 +347,7 @@ HFILES=\
  varsubst.h\
  vcs.h\
  version.h\
+ watched_file.h\
  unix/unix_fileutl.h\
  userlist_clnt/private.h\
  new_server_clnt.h\

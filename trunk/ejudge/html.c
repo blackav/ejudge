@@ -359,7 +359,8 @@ void
 html_write_user_problems_summary(const serve_state_t state,
                                  FILE *f, int user_id,
                                  unsigned char *solved_flag,
-                                 unsigned char *accepted_flag)
+                                 unsigned char *accepted_flag,
+                                 int no_output_flag)
 {
   time_t start_time;
   int total_runs, run_id, cur_score, total_teams, prob_id, total_score = 0;
@@ -678,6 +679,8 @@ html_write_user_problems_summary(const serve_state_t state,
       }
     }
   }
+
+  if (no_output_flag) return;
 
   fprintf(f, "<table border=\"1\"><tr>"
           "<th>%s</th>"
@@ -4906,7 +4909,7 @@ write_team_page(const serve_state_t state, FILE *f, int user_id,
       fprintf(f, "<p><a href=\"%s\" target=\"_blank\">%s</a></p>\n",
               state->cur_contest->problems_url, _("All problems"));
     }
-    html_write_user_problems_summary(state, f, user_id, accepted_flag, 0);
+    html_write_user_problems_summary(state, f, user_id, accepted_flag, 0, 0);
   }
 
   if (server_start && !server_end) {

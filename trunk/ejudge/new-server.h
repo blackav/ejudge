@@ -36,6 +36,7 @@ struct session_info
 
   int user_view_all_runs;
   int user_view_all_clars;
+  int user_viewed_section;
 };
 
 struct http_request_info

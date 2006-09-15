@@ -20,6 +20,7 @@
 #include "settings.h"
 #include "ej_types.h"
 #include "opcaps.h"
+#include "watched_file.h"
 
 #include <time.h>
 
@@ -70,6 +71,12 @@ struct run_dir_item
   unsigned char *team_report_dir;
   unsigned char *full_report_dir;
 };
+
+struct problem_extra_info
+{
+  struct watched_file stmt;
+};
+
 struct serve_state
 {
   unsigned char *config_path;
@@ -137,6 +144,8 @@ struct serve_state
 
   struct run_dir_item *run_dirs;
   int run_dirs_u, run_dirs_a;
+
+  struct problem_extra_info *prob_extras;
 };
 typedef struct serve_state *serve_state_t;
 

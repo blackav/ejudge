@@ -221,6 +221,7 @@ void
 html_write_user_problems_summary(const serve_state_t state,
                                  FILE *f, int user_id,
                                  unsigned char *solved_flag,
-                                 unsigned char *accepted_flag);
+                                 unsigned char *accepted_flag,
+                                 int no_output_flag);
 
 #endif /* __HTML_H__ */
