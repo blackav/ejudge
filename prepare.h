@@ -29,8 +29,18 @@
 enum { PREPARE_SERVE, PREPARE_COMPILE, PREPARE_RUN };
 enum { PREPARE_QUIET = 1 };
 
-/* second rounding mode */
+/* rounding mode for seconds->minutes transformation */
 enum { SEC_CEIL, SEC_FLOOR, SEC_ROUND };
+
+/* problem types */
+enum
+{
+  PROB_TYPE_DEFAULT = 0,        /* standard problem */
+  PROB_TYPE_OUTPUT_ONLY,        /* output-only problem */
+  PROB_TYPE_SHORT_ANSWER,       /* output-only with short answer */
+
+  PROB_TYPE_LAST,
+};
 
 struct testset_info
 {
@@ -361,6 +371,7 @@ struct section_problem_data
   int    tester_id;
   int    abstract;              /* is this abstract problem specification */
   int    output_only;           /* 1, if this problem is output only */
+  int    type_val;              /* the problem type */
   int    scoring_checker;       /* 1, if the checker calculates test score */
   int    use_stdin;             /* 1, if solution uses stdin for input */
   int    use_stdout;            /* 1, if solution uses stdout for output */
@@ -414,6 +425,7 @@ struct section_problem_data
   puc_t corr_pat[32];
   puc_t info_pat[32];
   puc_t tgz_pat[32];
+  puc_t type[64];               /* the problem type */
 
   int     ntests;               /* number of tests found */
   int    *tscores;              /* internal scores array  */
@@ -593,6 +605,7 @@ enum
   PREPARE_FIELD_ZERO,
 
   PREPARE_FIELD_PROB_OUTPUT_ONLY,
+  PREPARE_FIELD_PROB_TYPE,
   PREPARE_FIELD_PROB_SCORING_CHECKER,
   PREPARE_FIELD_PROB_USE_STDIN,
   PREPARE_FIELD_PROB_USE_STDOUT,
@@ -703,5 +716,6 @@ void prepare_unparse_variants(FILE *f, const struct variant_map *vmap,
                               const unsigned char *footer);
 
 int *prepare_parse_score_tests(const unsigned char *str, int score);
+const unsigned char *prepare_unparse_problem_type(int val);
 
 #endif /* __PREPARE_H__ */
