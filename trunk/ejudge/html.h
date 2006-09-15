@@ -220,6 +220,7 @@ void generate_daily_statistics(const serve_state_t, FILE *f,
 void
 html_write_user_problems_summary(const serve_state_t state,
                                  FILE *f, int user_id,
-                                 unsigned char *solved_flag);
+                                 unsigned char *solved_flag,
+                                 unsigned char *accepted_flag);
 
 #endif /* __HTML_H__ */
