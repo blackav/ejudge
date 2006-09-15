@@ -433,6 +433,7 @@ struct section_problem_data
 
   char **disable_language;
   char **enable_language;
+  char **require;
   char **checker_env;           /* environment variables for checker */
   path_t check_cmd;
   char **lang_time_adj;         /* time limit adjustments depending on language */

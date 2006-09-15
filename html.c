@@ -358,7 +358,8 @@ write_text_run_status(const serve_state_t state, FILE *f, struct run_entry *pe,
 void
 html_write_user_problems_summary(const serve_state_t state,
                                  FILE *f, int user_id,
-                                 unsigned char *solved_flag)
+                                 unsigned char *solved_flag,
+                                 unsigned char *accepted_flag)
 {
   time_t start_time;
   int total_runs, run_id, cur_score, total_teams, prob_id, total_score = 0;
@@ -368,7 +369,6 @@ html_write_user_problems_summary(const serve_state_t state,
   int *best_score = 0;
   int *prev_successes = 0;
   unsigned char *user_flag = 0;
-  unsigned char *accepted_flag = 0;
   unsigned char *pending_flag = 0;
   struct run_entry re;
   struct section_problem_data *cur_prob = 0;
@@ -388,7 +388,9 @@ html_write_user_problems_summary(const serve_state_t state,
 
   XALLOCA(best_run, state->max_prob + 1);
   memset(best_run, -1, sizeof(best_run[0]) * (state->max_prob + 1));
-  XALLOCAZ(accepted_flag, state->max_prob + 1);
+  if (!accepted_flag) {
+    XALLOCAZ(accepted_flag, state->max_prob + 1);
+  }
   XALLOCAZ(pending_flag, state->max_prob + 1);
   XALLOCAZ(attempts, state->max_prob + 1);
   XALLOCAZ(disqualified, state->max_prob + 1);
@@ -4904,7 +4906,7 @@ write_team_page(const serve_state_t state, FILE *f, int user_id,
       fprintf(f, "<p><a href=\"%s\" target=\"_blank\">%s</a></p>\n",
               state->cur_contest->problems_url, _("All problems"));
     }
-    html_write_user_problems_summary(state, f, user_id, accepted_flag);
+    html_write_user_problems_summary(state, f, user_id, accepted_flag, 0);
   }
 
   if (server_start && !server_end) {

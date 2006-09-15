@@ -1042,6 +1042,7 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
   do_xstr(f, &sbuf, "test_sets", prob->test_sets);
   do_xstr(f, &sbuf, "disable_language", prob->disable_language);
   do_xstr(f, &sbuf, "enable_language", prob->enable_language);
+  do_xstr(f, &sbuf, "require", prob->require);
 
   if (!prob->abstract && prob->variant_num > 0) {
     fprintf(f, "variant_num = %d\n", prob->variant_num);
