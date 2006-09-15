@@ -344,6 +344,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(score_bonus, "s"),
   PROBLEM_PARAM(statement_file, "s"),
   PROBLEM_PARAM(type, "s"),
+  PROBLEM_PARAM(alternative, "x"),
 
   { 0, 0, 0, 0 }
 };
@@ -1410,9 +1411,12 @@ parse_score_bonus(const unsigned char *str, int *p_total, int **p_values)
 
 const unsigned char * const problem_type_str[] =
 {
-  [PROB_TYPE_DEFAULT] = "regular",
+  [PROB_TYPE_STANDARD] = "standard",
   [PROB_TYPE_OUTPUT_ONLY] = "output-only",
   [PROB_TYPE_SHORT_ANSWER] = "short-answer",
+  [PROB_TYPE_TEXT_ANSWER] = "text-answer",
+  [PROB_TYPE_SELECT_ONE] = "select-one",
+  [PROB_TYPE_SELECT_MANY] = "select-many",
 
   [PROB_TYPE_LAST] = 0,
 };
@@ -1424,7 +1428,7 @@ parse_problem_type(const unsigned char *str)
 
   if (!str) return 0;
   for (i = 0; i < PROB_TYPE_LAST; i++)
-    if (problem_type_str[i] && !strcmp(str, problem_type_str[i]))
+    if (problem_type_str[i] && !strcasecmp(str, problem_type_str[i]))
       return i;
   return -1;
 }
@@ -3733,10 +3737,16 @@ prepare_set_global_defaults(struct section_global_data *g)
 }
 
 void
-prepare_set_problem_defaults(struct section_problem_data *prob,
-                             struct section_global_data *global)
+prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
+                                   struct section_global_data *global)
 {
   if (!prob->abstract) return;
+
+  if (prob->type[0]) {
+    prob->type_val = parse_problem_type(prob->type);
+    if (prob->type_val < 0 || prob->type_val >= PROB_TYPE_LAST)
+      prob->type_val = -1;
+  }
 
   if (prob->type_val < 0) prob->type_val = 0;
   if (prob->scoring_checker < 0) prob->scoring_checker = 0;
@@ -3810,6 +3820,19 @@ prepare_set_problem_defaults(struct section_problem_data *prob,
     if (global->tgz_pat[0]) {
       snprintf(prob->tgz_pat, sizeof(prob->tgz_pat), "%s", global->tgz_pat);
     }
+  }
+}
+
+void
+prepare_set_concr_problem_defaults(struct section_problem_data *prob,
+                                   struct section_global_data *global)
+{
+  if (prob->abstract) return;
+
+  if (prob->type[0]) {
+    prob->type_val = parse_problem_type(prob->type);
+    if (prob->type_val < 0 || prob->type_val >= PROB_TYPE_LAST)
+      prob->type_val = -1;
   }
 }
 

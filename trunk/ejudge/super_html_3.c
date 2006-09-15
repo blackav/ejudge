@@ -3448,7 +3448,7 @@ super_html_print_problem(FILE *f,
     if (prob->type_val < 0) prob->type_val = 0;
   }
   if (problem_type_flag < 0) problem_type_flag = 0;
-  html_start_form(f, 1, self_url, hidden_vars);
+  html_start_form(f, 1, self_url, prob_hidden_vars);
   fprintf(f, "<tr%s><td>%s</td><td>", form_row_attrs[row ^= 1],
           "Problem type:");
   fprintf(f, "<select name=\"param\">");
@@ -5834,7 +5834,7 @@ super_html_read_serve(FILE *flog,
       if (prepare_check_forbidden_prob(flog, prob) < 0)
         return -1;
 
-      prepare_set_problem_defaults(prob, global);
+      prepare_set_abstr_problem_defaults(prob, global);
 
       fuh = open_memstream(&fuh_text, &fuh_size);
       prepare_unparse_unhandled_prob(fuh, prob, global);
@@ -5894,6 +5894,8 @@ super_html_read_serve(FILE *flog,
       }
       if (prepare_check_forbidden_prob(flog, prob) < 0)
         return -1;
+
+      prepare_set_concr_problem_defaults(prob, global);
 
       fuh = open_memstream(&fuh_text, &fuh_size);
       prepare_unparse_unhandled_prob(fuh, prob, global);

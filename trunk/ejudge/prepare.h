@@ -35,9 +35,12 @@ enum { SEC_CEIL, SEC_FLOOR, SEC_ROUND };
 /* problem types */
 enum
 {
-  PROB_TYPE_DEFAULT = 0,        /* standard problem */
+  PROB_TYPE_STANDARD = 0,       /* standard problem */
   PROB_TYPE_OUTPUT_ONLY,        /* output-only problem */
   PROB_TYPE_SHORT_ANSWER,       /* output-only with short answer */
+  PROB_TYPE_TEXT_ANSWER,        /* output-only with textarea input */
+  PROB_TYPE_SELECT_ONE,         /* select one answer from the list */
+  PROB_TYPE_SELECT_MANY,        /* select many answers from the list */
 
   PROB_TYPE_LAST,
 };
@@ -451,6 +454,7 @@ struct section_problem_data
   path_t check_cmd;
   char **lang_time_adj;         /* time limit adjustments depending on language */
 
+  char **alternative;           /* alternatives for test-like problems */
   char **personal_deadline;     /* personal deadline extensions */
   int pd_total;
   struct pers_dead_info *pd_infos;
@@ -704,8 +708,10 @@ void prepare_further_instructions(FILE *f,
 int prepare_unparse_is_supported_arch(const unsigned char *arch);
 int prepare_unparse_is_supported_tester(const unsigned char *tester_name);
 
-void prepare_set_problem_defaults(struct section_problem_data *prob,
-                                  struct section_global_data *global);
+void prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
+                                        struct section_global_data *global);
+void prepare_set_concr_problem_defaults(struct section_problem_data *prob,
+                                        struct section_global_data *global);
 struct variant_map;
 void prepare_free_variant_map(struct variant_map *p);
 
