@@ -342,6 +342,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(personal_deadline, "x"),
   PROBLEM_PARAM(score_bonus, "s"),
   PROBLEM_PARAM(statement_file, "s"),
+  PROBLEM_PARAM(type, "s"),
 
   { 0, 0, 0, 0 }
 };
@@ -563,6 +564,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
 {
   struct section_problem_data *p = (struct section_problem_data*) gp;
 
+  p->type_val = -1;
   p->output_only = -1;
   p->scoring_checker = -1;
   p->use_stdin = -1;
@@ -1406,6 +1408,34 @@ parse_score_bonus(const unsigned char *str, int *p_total, int **p_values)
   return -1;
 }
 
+const unsigned char * const problem_type_str[] =
+{
+  [PROB_TYPE_DEFAULT] = "regular",
+  [PROB_TYPE_OUTPUT_ONLY] = "output-only",
+  [PROB_TYPE_SHORT_ANSWER] = "short-answer",
+
+  [PROB_TYPE_LAST] = 0,
+};
+
+static int
+parse_problem_type(const unsigned char *str)
+{
+  int i;
+
+  if (!str) return 0;
+  for (i = 0; i < PROB_TYPE_LAST; i++)
+    if (problem_type_str[i] && !strcmp(str, problem_type_str[i]))
+      return i;
+  return -1;
+}
+const unsigned char *
+prepare_unparse_problem_type(int val)
+{
+  ASSERT(val >= 0 && val < PROB_TYPE_LAST);
+  ASSERT(problem_type_str[val]);
+  return problem_type_str[val];
+}
+
 static void
 make_stand_file_name_2(serve_state_t state)
 {
@@ -2118,22 +2148,30 @@ set_defaults(serve_state_t state, int mode)
   }
 
   for (i = 0; i < state->max_abstr_prob && mode != PREPARE_COMPILE; i++) {
-    if (!state->abstr_probs[i]->short_name[0]) {
+    aprob = state->abstr_probs[i];
+    if (!aprob->short_name[0]) {
       err("abstract problem must define problem short name");
       return -1;
     }
-    ish = state->abstr_probs[i]->short_name;
-    if (state->abstr_probs[i]->id) {
+    ish = aprob->short_name;
+    if (aprob->id) {
       err("abstract problem %s must not define problem id", ish);
       return -1;
     }
-    if (state->abstr_probs[i]->long_name[0]) {
+    if (aprob->long_name[0]) {
       err("abstract problem %s must not define problem long name", ish);
       return -1;
     }
-    if (state->abstr_probs[i]->super[0]) {
+    if (aprob->super[0]) {
       err("abstract problem %s cannot have a superproblem", ish);
       return -1;
+    }
+    if (aprob->type[0]) {
+      aprob->type_val = parse_problem_type(aprob->type);
+      if (aprob->type_val < 0 || aprob->type_val >= PROB_TYPE_LAST) {
+        err("abstract problem %s has invalid type %s", ish, aprob->type);
+        return -1;
+      }
     }
   }
 
@@ -2168,6 +2206,16 @@ set_defaults(serve_state_t state, int mode)
       sprintf(state->probs[i]->long_name, "Problem %s", ish);
     }
 
+    if (state->probs[i]->type[0]) {
+      state->probs[i]->type_val = parse_problem_type(state->probs[i]->type);
+      if (state->probs[i]->type_val < 0 || state->probs[i]->type_val > PROB_TYPE_LAST) {
+        err("problem %s type %s is invalid", state->probs[i]->short_name, state->probs[i]->type);
+        return -1;
+      }
+    }
+
+    prepare_set_prob_value(PREPARE_FIELD_PROB_TYPE,
+                           state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEAM_ENABLE_REP_VIEW,
                            state->probs[i], aprob, state->global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_TEAM_ENABLE_CE_VIEW,
@@ -3692,6 +3740,7 @@ prepare_set_problem_defaults(struct section_problem_data *prob,
 {
   if (!prob->abstract) return;
 
+  if (prob->type_val < 0) prob->type_val = 0;
   if (prob->output_only < 0) prob->output_only = 0;
   if (prob->scoring_checker < 0) prob->scoring_checker = 0;
   if (prob->use_stdin < 0) prob->use_stdin = 0;
@@ -4078,6 +4127,11 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
                        const struct section_global_data *global)
 {
   switch (field) {
+  case PREPARE_FIELD_PROB_TYPE:
+    if (out->type_val == -1 && abstr) out->type_val = abstr->type_val;
+    if (out->type_val == -1) out->type_val = 0;
+    break;
+
   case PREPARE_FIELD_PROB_OUTPUT_ONLY:
     if (out->output_only == -1 && abstr) out->output_only = abstr->output_only;
     if (out->output_only == -1) out->output_only = 0;

@@ -869,9 +869,14 @@ prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
     fprintf(f, "long_name = \"%s\"\n", c_armor(&sbuf, prob->long_name));
   }
 
+  if ((prob->abstract && prob->type_val > 0)
+      || (!prob->abstract && prob->type_val >= 0))
+    fprintf(f, "type = \"%s\"\n", prepare_unparse_problem_type(prob->type_val));
+  /*
   if ((prob->abstract && prob->output_only == 1)
       || (!prob->abstract && prob->output_only >= 0))
     unparse_bool(f, "output_only", prob->output_only);
+  */
   if ((prob->abstract && prob->scoring_checker == 1)
       || (!prob->abstract && prob->scoring_checker >= 0))
     unparse_bool(f, "scoring_checker", prob->scoring_checker);
@@ -1528,6 +1533,8 @@ prepare_unparse_testers(FILE *f,
       abstr = aprobs[j];
     }
     prepare_copy_problem(&tmp_prob, probs[i]);
+    prepare_set_prob_value(PREPARE_FIELD_PROB_TYPE,
+                           &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_OUTPUT_ONLY,
                            &tmp_prob, abstr, global);
     prepare_set_prob_value(PREPARE_FIELD_PROB_SCORING_CHECKER,
