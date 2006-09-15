@@ -341,6 +341,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(tgz_pat, "s"),
   PROBLEM_PARAM(personal_deadline, "x"),
   PROBLEM_PARAM(score_bonus, "s"),
+  PROBLEM_PARAM(statement_file, "s"),
 
   { 0, 0, 0, 0 }
 };
@@ -2313,6 +2314,19 @@ set_defaults(serve_state_t state, int mode)
       if (state->probs[i]->score_bonus[0]) {
         if (parse_score_bonus(state->probs[i]->score_bonus, &state->probs[i]->score_bonus_total,
                               &state->probs[i]->score_bonus_val) < 0) return -1;
+      }
+    }
+
+    if (mode == PREPARE_SERVE) {
+      if (!state->probs[i]->statement_file[0] && si != -1
+          && state->abstr_probs[si]->statement_file[0]) {
+        sformat_message(state->probs[i]->statement_file, PATH_MAX,
+                        state->abstr_probs[si]->statement_file,
+                        NULL, state->probs[i], NULL, NULL, NULL, 0, 0, 0);
+      }
+      if (state->probs[i]->statement_file[0]) {
+        path_add_dir(state->probs[i]->statement_file,
+                     state->global->statement_dir);
       }
     }
 
@@ -4463,6 +4477,16 @@ prepare_set_prob_value(int field, struct section_problem_data *out,
       pathmake4(out->check_cmd, global->checker_dir, "/", out->check_cmd, 0);
     }
     */
+    break;
+
+  case PREPARE_FIELD_PROB_STATEMENT_FILE:
+    if (!out->statement_file[0] && abstr && abstr->statement_file[0]) {
+      sformat_message(out->statement_file, PATH_MAX, abstr->statement_file,
+                      NULL, out, NULL, NULL, NULL, 0, 0, 0);
+    }
+    if (global && out->statement_file[0]) {
+      path_add_dir(out->statement_file, global->statement_dir);
+    }
     break;
 
   default:

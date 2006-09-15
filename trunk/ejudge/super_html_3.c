@@ -3546,6 +3546,27 @@ super_html_print_problem(FILE *f,
                                self_url, extra_args, prob_hidden_vars);
   }
 
+  //PROBLEM_PARAM(statement_file, "s"),
+  extra_msg = 0;
+  if (prob->abstract && !prob->statement_file[0])extra_msg="<i>(Undefined)</i>";
+  if (!prob->abstract) {
+    prepare_set_prob_value(PREPARE_FIELD_PROB_STATEMENT_FILE,
+                           &tmp_prob, sup_prob, sstate->global);
+    s = html_armor_string_dup(tmp_prob.statement_file);
+    if (!prob->statement_file[0])
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(Default - \"%s\")</i>", s);
+    else
+      snprintf(msg_buf, sizeof(msg_buf), "<i>(\"%s\")</i>", s);
+    xfree(s);
+    extra_msg = msg_buf;
+  }
+  print_string_editing_row_2(f, "File with problem statement:",
+                             prob->statement_file,
+                             SUPER_ACTION_PROB_CHANGE_STATEMENT_FILE,
+                             SUPER_ACTION_PROB_CLEAR_STATEMENT_FILE,
+                             extra_msg,
+                             session_id, form_row_attrs[row ^= 1],
+                             self_url, extra_args, prob_hidden_vars);
 
   //PROBLEM_PARAM(test_dir, "s"),
   extra_msg = 0;
@@ -5238,6 +5259,14 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_PROB_CHANGE_VARIANT_NUM:
     p_int = &prob->variant_num;
     goto handle_int_1;
+
+  case SSERV_CMD_PROB_CHANGE_STATEMENT_FILE:
+    PROB_ASSIGN_STRING(statement_file);
+    return 0;
+
+  case SSERV_CMD_PROB_CLEAR_STATEMENT_FILE:
+    PROB_CLEAR_STRING(statement_file);
+    return 0;
 
   default:
     abort();
