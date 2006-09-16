@@ -81,7 +81,8 @@ int run_add_record(runlog_state_t state,
                    int            problem,
                    int            language,
                    int            variant,
-                   int            is_hidden);
+                   int            is_hidden,
+                   int            mime_type);
 int run_start_contest(runlog_state_t, time_t);
 time_t run_get_start_time(runlog_state_t);
 int run_change_status(runlog_state_t state, int runid, int newstatus,
@@ -175,8 +176,10 @@ struct run_entry
   unsigned char  is_readonly;   /* 1 */
   unsigned char  pages;         /* 1 */
   unsigned char  ipv6_flag;     /* 1 */
-  /* total is 91 bytes */
-  unsigned char  _pad[37];
+  unsigned char  _pad1[1];      /* 1 */
+  rint16_t       mime_type;     /* 2 */
+  /* total is 94 bytes */
+  unsigned char  _pad2[34];
 };
 
 void run_get_header(runlog_state_t, struct run_header *out);

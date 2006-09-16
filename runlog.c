@@ -552,6 +552,8 @@ read_runlog(runlog_state_t state, time_t init_duration)
     return 0;
   }
 
+  if (sizeof(struct run_entry) != 128) abort();
+
   // read header
   if (do_read(state->run_fd, &state->head, sizeof(state->head)) < 0) return -1;
   info("run log version %d", state->head.version);
@@ -773,7 +775,8 @@ run_add_record(runlog_state_t state,
                int            problem,
                int            language,
                int            variant,
-               int            is_hidden)
+               int            is_hidden,
+               int            mime_type)
 {
   int i;
   struct user_entry *ue;
@@ -822,6 +825,10 @@ run_add_record(runlog_state_t state,
     err("run_add_record: nsec field value %d is invalid", nsec);
     return -1;
   }
+  if (mime_type < 0 || mime_type > 32767) {
+    err("run_add_record: mime_type field value %d is invalid", mime_type);
+    return -1;
+  }
 
   if (!is_hidden) {
     ue = get_user_entry(state, team);
@@ -865,6 +872,7 @@ run_add_record(runlog_state_t state,
   state->runs[i].a.ip = ip;
   state->runs[i].variant = variant;
   state->runs[i].is_hidden = is_hidden;
+  state->runs[i].mime_type = mime_type;
   if (sha1) {
     memcpy(state->runs[i].sha1, sha1, sizeof(state->runs[i].sha1));
   }

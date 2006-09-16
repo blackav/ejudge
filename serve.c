@@ -1910,7 +1910,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
                                pkt->user_id,
                                pkt->prob_id,
                                pkt->lang_id,
-                               pkt->variant, 1)) < 0){
+                               pkt->variant, 1, 0)) < 0){
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -2246,7 +2246,7 @@ do_submit_run(struct client_state *p,
                                locale_id,
                                user_id,
                                cur_prob->id,
-                               cur_lang->id, 0, 0)) < 0){
+                               cur_lang->id, 0, 0, 0)) < 0){
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
@@ -3850,7 +3850,7 @@ cmd_new_run(struct client_state *p, int len,
                                pkt->user_id,
                                pkt->prob_id,
                                pkt->lang_id,
-                               pkt->variant, 1)) < 0){
+                               pkt->variant, 1, 0)) < 0){
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
