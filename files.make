@@ -140,6 +140,7 @@ COMMON_CFILES=\
  html_start_form.c\
  l10n.c\
  master_html.c\
+ mime_type.c\
  misctext.c\
  new_server_html.c\
  ncurses_utils.c\
@@ -306,6 +307,7 @@ HFILES=\
  iterators.h\
  job_packet.h\
  l10n.h\
+ mime_type.h\
  mischtml.h\
  misctext.h\
  ncurses_utils.h\
