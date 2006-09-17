@@ -715,12 +715,12 @@ print_printing_suspend_button(void)
 }
 
 static void
-print_judging_mode_button(int judging_mode)
+print_judging_mode_button(int accepting_mode)
 {
   int a = 0;
   unsigned char *str = 0;
 
-  if (!judging_mode) {
+  if (accepting_mode) {
     str = _("Set judging mode");
     a = ACTION_SET_JUDGING_MODE;
   } else {
@@ -3356,7 +3356,7 @@ main(int argc, char *argv[])
     }
     if (server_score_system == SCORE_OLYMPIAD) {
       printf("</td><td>");
-      print_judging_mode_button(server_olympiad_judging_mode);
+      print_judging_mode_button(server_accepting_mode);
     }
     printf("</td></tr></table>\n");
     printf("<table><tr><td>");

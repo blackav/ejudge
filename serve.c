@@ -589,10 +589,6 @@ cmd_team_page(struct client_state *p, int len,
     return;
   }
   l10n_setlocale(pkt->locale_id);
-  serve_state.accepting_mode = 0;
-  if (serve_state.global->score_system_val == SCORE_OLYMPIAD
-      && !serve_state.olympiad_judging_mode)
-    serve_state.accepting_mode = 1;
   write_team_page(&serve_state, f, p->user_id,
                   p->cookie, (pkt->flags & 1), (pkt->flags & 2) >> 1,
                   self_url_ptr, hidden_vars_ptr, extra_args_ptr,
@@ -708,12 +704,9 @@ cmd_master_page(struct client_state *p, int len,
   size_t html_len = 0;
   struct client_state *q;
   opcap_t caps;
-  int r, accepting_mode = 0;
+  int r;
 
   if (get_peer_local_user(p) < 0) return;
-
-  if (serve_state.global->score_system_val == SCORE_OLYMPIAD && !serve_state.olympiad_judging_mode)
-    accepting_mode = 1;
 
   if (len < sizeof(*pkt)) {
     new_bad_packet(p, "cmd_master_page: packet is too small: %d", len);
@@ -799,7 +792,7 @@ cmd_master_page(struct client_state *p, int len,
                       p->cookie,
                       pkt->first_run, pkt->last_run,
                       pkt->mode_clar, pkt->first_clar, pkt->last_clar,
-                      accepting_mode,
+                      serve_state.accepting_mode,
                       self_url_ptr, filter_expr_ptr, hidden_vars_ptr,
                       extra_args_ptr, &caps);
     /* l10n_setlocale(0); */
@@ -808,7 +801,7 @@ cmd_master_page(struct client_state *p, int len,
     r = write_priv_all_runs(&serve_state, f, p->user_id, 0, pkt->priv_level,
                             p->cookie,
                             pkt->first_run, pkt->last_run,
-                            accepting_mode,
+                            serve_state.accepting_mode,
                             0, filter_expr_ptr, 0, 0);
     if (r < 0) {
       fclose(f);
@@ -855,7 +848,6 @@ cmd_priv_standings(struct client_state *p, int len,
   char *html_ptr = 0;
   size_t html_len = 0;
   struct client_state *q;
-  int accepting_mode = 0;
 
   if (get_peer_local_user(p) < 0) return;
 
@@ -928,11 +920,9 @@ cmd_priv_standings(struct client_state *p, int len,
     return;
   }
   /* l10n_setlocale(pkt->locale_id); */
-  if (serve_state.global->score_system_val == SCORE_OLYMPIAD && !serve_state.olympiad_judging_mode)
-    accepting_mode = 1;
   write_priv_standings(&serve_state, f, p->cookie,
                        self_url_ptr, hidden_vars_ptr, extra_args_ptr,
-                       accepting_mode);
+                       serve_state.accepting_mode);
   /* l10n_setlocale(0); */
   fclose(f);
 
@@ -975,16 +965,13 @@ cmd_view(struct client_state *p, int len,
   char *html_ptr = 0;
   size_t html_len = 0;
   struct client_state *q;
-  int r = 0, accepting_mode = 0, need_priv_check = 1;
+  int r = 0, need_priv_check = 1;
   FILE *f;
   opcap_t caps;
   struct run_entry re;
   struct section_problem_data *prob;
 
   if (get_peer_local_user(p) < 0) return;
-
-  if (serve_state.global->score_system_val == SCORE_OLYMPIAD && !serve_state.olympiad_judging_mode)
-    accepting_mode = 1;
 
   if (len < sizeof(*pkt)) {
     new_bad_packet(p, "view: packet is too small: %d", len);
@@ -1049,8 +1036,8 @@ cmd_view(struct client_state *p, int len,
     }
 
     r = write_priv_source(&serve_state, f, p->user_id, p->priv_level, p->cookie,
-                          accepting_mode, self_url_ptr, hidden_vars_ptr,
-                          extra_args_ptr, pkt->item, &caps);
+                          serve_state.accepting_mode, self_url_ptr,
+                          hidden_vars_ptr, extra_args_ptr, pkt->item, &caps);
     break;
   case SRV_CMD_NEW_RUN_FORM:
     if (p->priv_level != PRIV_LEVEL_ADMIN) {
@@ -1316,7 +1303,7 @@ cmd_view(struct client_state *p, int len,
         r = -SRV_ERR_NO_PERMS;
         break;
       }
-      if (serve_state.global->score_system_val==SCORE_OLYMPIAD && !serve_state.olympiad_judging_mode) {
+      if (serve_state.global->score_system_val==SCORE_OLYMPIAD && serve_state.accepting_mode) {
         if (re.prob_id <= 0 || re.prob_id > serve_state.max_prob
             || !(prob = serve_state.probs[re.prob_id])) {
           err("%d: invalid problem %d", p->id, re.prob_id);
@@ -1360,7 +1347,7 @@ cmd_view(struct client_state *p, int len,
     }
     l10n_setlocale(pkt->item2);
     r = new_write_user_report_view(&serve_state, f, p->user_id, pkt->item,
-                                   accepting_mode, p->cookie,
+                                   serve_state.accepting_mode, p->cookie,
                                    self_url_ptr, hidden_vars_ptr, extra_args_ptr);
     l10n_setlocale(0);
 
@@ -1646,7 +1633,7 @@ cmd_team_show_item(struct client_state *p, int len,
   char *html_ptr = 0;
   size_t html_len = 0;
   struct client_state *q;
-  int r, accepting_mode;
+  int r;
 
   if (get_peer_local_user(p) < 0) return;
 
@@ -1666,10 +1653,6 @@ cmd_team_show_item(struct client_state *p, int len,
     return;
   }
   */
-
-  accepting_mode = 0;
-  if (serve_state.global->score_system_val == SCORE_OLYMPIAD && !serve_state.olympiad_judging_mode)
-    accepting_mode = 1;
 
   info("%d: team_show_item: %d, %d, %d, %d, %d", p->id, pkt->b.id,
        pkt->user_id, pkt->contest_id, pkt->locale_id, pkt->item_id);
@@ -1721,7 +1704,8 @@ cmd_team_show_item(struct client_state *p, int len,
     else r = write_virtual_standings(&serve_state, f, pkt->user_id);
     break;
   case SRV_CMD_RUN_STATUS:
-    r = write_user_run_status(&serve_state, f, pkt->user_id, pkt->item_id, accepting_mode, 1);
+    r = write_user_run_status(&serve_state, f, pkt->user_id, pkt->item_id,
+                              serve_state.accepting_mode, 1);
     break;
   default:
     abort();
@@ -2834,7 +2818,7 @@ cmd_rejudge_by_mask(struct client_state *p, int len,
   }
 
   if (serve_state.global->score_system_val == SCORE_OLYMPIAD &&
-      !serve_state.olympiad_judging_mode && pkt->b.id == SRV_CMD_FULL_REJUDGE_BY_MASK) {
+      serve_state.accepting_mode && pkt->b.id == SRV_CMD_FULL_REJUDGE_BY_MASK) {
     force_full = 1;
     priority_adjustment = 10;
   }
@@ -2983,7 +2967,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
     */
-    serve_state.olympiad_judging_mode = 1;
+    serve_state.accepting_mode = 0;
     serve_update_status_file(&serve_state, 1);
     new_send_reply(p, SRV_RPL_OK);
     return;
@@ -3005,7 +2989,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       return;
     }
     */
-    serve_state.olympiad_judging_mode = 0;
+    serve_state.accepting_mode = 1;
     serve_update_status_file(&serve_state, 1);
     new_send_reply(p, SRV_RPL_OK);
     return;
@@ -4635,12 +4619,7 @@ queue_compile_request(unsigned char const *str, int len,
   int arch_flags;
   path_t run_arch;
 
-  if (accepting_mode == -1) {
-    accepting_mode = 0;
-    if (serve_state.global->score_system_val == SCORE_OLYMPIAD && !serve_state.olympiad_judging_mode) {
-      accepting_mode = 1;
-    }
-  }
+  if (accepting_mode == -1) accepting_mode = serve_state.accepting_mode;
 
   memset(&cp, 0, sizeof(cp));
   cp.judge_id = compile_request_id++;
@@ -4720,7 +4699,7 @@ rejudge_run(int run_id, struct client_state *p, int force_full_rejudge,
   }
 
   if (force_full_rejudge && serve_state.global->score_system_val == SCORE_OLYMPIAD
-      && !serve_state.olympiad_judging_mode) {
+      && serve_state.accepting_mode) {
     accepting_mode = 0;
   }
 
@@ -4758,7 +4737,7 @@ do_rejudge_all(struct client_state *p)
   total_runs = run_get_total(serve_state.runlog_state);
 
   if (serve_state.global->score_system_val == SCORE_OLYMPIAD
-      && serve_state.olympiad_judging_mode) {
+      && !serve_state.accepting_mode) {
     // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
     // considering only the last run for the given problem and
     // the given participant
@@ -4816,7 +4795,8 @@ do_judge_suspended(struct client_state *p)
 
   total_runs = run_get_total(serve_state.runlog_state);
 
-  if (serve_state.global->score_system_val == SCORE_OLYMPIAD && serve_state.olympiad_judging_mode)
+  if (serve_state.global->score_system_val == SCORE_OLYMPIAD
+      && !serve_state.accepting_mode)
     return;
 
   for (r = 0; r < total_runs; r++) {
@@ -4847,7 +4827,7 @@ do_rejudge_problem(int prob_id, struct client_state *p)
   total_runs = run_get_total(serve_state.runlog_state);
 
   if (serve_state.global->score_system_val == SCORE_OLYMPIAD
-      && serve_state.olympiad_judging_mode) {
+      && !serve_state.accepting_mode) {
     // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
     // considering only the last run for the given participant
     int total_ids = teamdb_get_max_team_id(serve_state.teamdb_state) + 1;
@@ -4901,7 +4881,7 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask, struct client_state *p,
   }
 
   if (serve_state.global->score_system_val == SCORE_OLYMPIAD
-      && serve_state.olympiad_judging_mode) {
+      && !serve_state.accepting_mode) {
     // rejudge only "ACCEPTED", "OK", "PARTIAL SOLUTION" runs,
     // considering only the last run for the given problem and
     // the given participant

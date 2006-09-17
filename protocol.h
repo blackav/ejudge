@@ -4,7 +4,7 @@
 #ifndef __PROTOCOL_H__
 #define __PROTOCOL_H__
 
-/* Copyright (C) 2002-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -66,7 +66,7 @@ struct prot_serve_status_v2
   unsigned char clients_suspended;
   unsigned char testing_suspended;
   unsigned char is_virtual;
-  unsigned char olympiad_judging_mode;
+  unsigned char _olympiad_judging_mode; /* unused */
   unsigned char continuation_enabled;
   unsigned char printing_enabled;
   unsigned char printing_suspended;
@@ -74,7 +74,8 @@ struct prot_serve_status_v2
   ej_time_t finish_time;
   ej_time_t stat_reported_before;
   ej_time_t stat_report_time;
-  unsigned char _pad[64];
+  unsigned char accepting_mode;
+  unsigned char _pad[63];
 };
 
 #define PROT_SERVE_PACKET_MAGIC (0xe342)

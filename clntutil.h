@@ -3,7 +3,7 @@
 #ifndef __CLNTUTIL_H__
 #define __CLNTUTIL_H__
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,11 +39,11 @@ extern int    server_clients_suspended;
 extern int    server_testing_suspended;
 extern int    server_download_interval;
 extern int    server_is_virtual;
-extern int    server_olympiad_judging_mode;
 extern int    server_continuation_enabled;
 extern int    server_printing_enabled;
 extern int    server_printing_suspended;
 extern int    server_always_show_problems;
+extern int    server_accepting_mode;
 
 extern time_t client_cur_time;
 

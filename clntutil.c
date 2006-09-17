@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2000-2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -72,11 +72,11 @@ int    server_clients_suspended;
 int    server_testing_suspended;
 int    server_download_interval;
 int    server_is_virtual;
-int    server_olympiad_judging_mode;
 int    server_continuation_enabled;
 int    server_printing_enabled;
 int    server_printing_suspended;
 int    server_always_show_problems;
+int    server_accepting_mode;
 
 time_t client_cur_time;
 
@@ -339,7 +339,7 @@ client_check_server_status(char const *charset, char const *path, int lag,
   server_testing_suspended = status_v2.testing_suspended;
   server_download_interval = status_v2.download_interval;
   server_is_virtual = status_v2.is_virtual;
-  server_olympiad_judging_mode = status_v2.olympiad_judging_mode;
+  server_accepting_mode = status_v2.accepting_mode;
   server_continuation_enabled = status_v2.continuation_enabled;
   client_cur_time = time(0);
   server_freeze_time = status_v2.freeze_time;
@@ -403,7 +403,7 @@ client_print_server_status(int priv_level,
     } else if (server_start_time) {
       printf("<p><big><b>%s</b></big></p>", _("The contest is in progress"));
       if (server_score_system == SCORE_OLYMPIAD
-          && !server_olympiad_judging_mode) {
+          && server_accepting_mode) {
         printf("<p><big><b>%s</b></big></p>\n",
                _("Participants' solutions are being accepted"));
       }
@@ -427,7 +427,7 @@ client_print_server_status(int priv_level,
 
 
   if (server_score_system == SCORE_OLYMPIAD
-      && server_olympiad_judging_mode) {
+      && !server_accepting_mode) {
     printf("<p><big><b>%s</b></big></p>\n",
            _("Participants' solutions are being judged"));
   }
@@ -581,7 +581,7 @@ parse_client_ip(void)
   return client_ip;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make"
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
