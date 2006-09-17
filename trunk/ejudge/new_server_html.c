@@ -75,61 +75,6 @@ enum
   USER_SECTION_LAST,
 };
 
-enum
-{
-  NEW_SRV_ACTION_LOGIN_PAGE = 1,
-  NEW_SRV_ACTION_MAIN_PAGE,
-  NEW_SRV_ACTION_VIEW_USERS,
-  NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS,
-  NEW_SRV_ACTION_USERS_SET_PENDING,
-  NEW_SRV_ACTION_USERS_SET_OK,
-  NEW_SRV_ACTION_USERS_SET_REJECTED,
-  NEW_SRV_ACTION_USERS_SET_INVISIBLE,
-  NEW_SRV_ACTION_USERS_CLEAR_INVISIBLE,
-  NEW_SRV_ACTION_USERS_SET_BANNED,
-  NEW_SRV_ACTION_USERS_CLEAR_BANNED,
-  NEW_SRV_ACTION_USERS_SET_LOCKED,
-  NEW_SRV_ACTION_USERS_CLEAR_LOCKED,
-  NEW_SRV_ACTION_USERS_ADD_BY_LOGIN,
-  NEW_SRV_ACTION_USERS_ADD_BY_USER_ID,
-  NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  NEW_SRV_ACTION_PRIV_USERS_REMOVE,
-  NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER,
-  NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER,
-  NEW_SRV_ACTION_PRIV_USERS_ADD_JUDGE,
-  NEW_SRV_ACTION_PRIV_USERS_DEL_JUDGE,
-  NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_JUDGE,
-  NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_JUDGE,
-  NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR,
-  NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR,
-  NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN,
-  NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID,
-  NEW_SRV_ACTION_CHANGE_LANGUAGE,
-  NEW_SRV_ACTION_CHANGE_PASSWORD,
-  NEW_SRV_ACTION_VIEW_SOURCE,
-  NEW_SRV_ACTION_VIEW_REPORT,
-  NEW_SRV_ACTION_PRINT_RUN,
-  NEW_SRV_ACTION_VIEW_CLAR,
-  NEW_SRV_ACTION_SUBMIT_RUN,
-  NEW_SRV_ACTION_SUBMIT_CLAR,
-
-  NEW_SRV_ACTION_LAST,
-};
-
-struct contest_extra
-{
-  struct watched_file header;
-  struct watched_file footer;
-  struct watched_file priv_header;
-  struct watched_file priv_footer;
-
-  const unsigned char *header_txt;
-  const unsigned char *footer_txt;
-  unsigned char *contest_arm;
-
-  serve_state_t serve_state;
-  time_t last_access_time;
-};
 static struct contest_extra **extras = 0;
 static size_t extra_a = 0;
 
@@ -448,9 +393,10 @@ static const unsigned char *role_strs[] =
   {
     __("Contestant"),
     __("Observer"),
-    __("Judge"),
-    __("Chief judge"),
+    __("Examiner"),
+    __("Chief examiner"),
     __("Coordinator"),
+    __("Judge"),
     __("Administrator"),
     0,
   };
@@ -486,17 +432,74 @@ html_role_select(FILE *fout, int role, int allow_admin,
   fprintf(fout, "</select>\n");
 }
 
-static unsigned char *
-html_url(unsigned char *buf, size_t size,
-         struct http_request_info *phr,
-         int action)
+unsigned char *
+new_serve_url(unsigned char *buf, size_t size,
+              const struct http_request_info *phr,
+              int action, const char *format, ...)
 {
-  if (action > 0) {
-    snprintf(buf, size, "%s?SID=%016llx&action=%d", phr->self_url,
-             phr->session_id, action);
-  } else {
-    snprintf(buf, size, "%s?SID=%016llx", phr->self_url, phr->session_id);
+  unsigned char fbuf[1024];
+  unsigned char abuf[64];
+  const unsigned char *sep = "";
+  va_list args;
+
+  fbuf[0] = 0;
+  if (format && *format) {
+    va_start(args, format);
+    vsnprintf(fbuf, sizeof(fbuf), format, args);
+    va_end(args);
   }
+  if (fbuf[0]) sep = "&";
+
+  abuf[0] = 0;
+  if (action > 0) snprintf(abuf, sizeof(abuf), "&action=%d", action);
+
+  snprintf(buf, size, "%s?SID=%016llx%s%s%s", phr->self_url,
+           phr->session_id, abuf, sep, fbuf);
+  return buf;
+}
+
+static const unsigned char * const submit_button_labels[NEW_SRV_ACTION_LAST] =
+{
+  [NEW_SRV_ACTION_UPDATE_STANDINGS_1] = __("Update public standings"),
+  [NEW_SRV_ACTION_RESET_1] = __("Reset the contest!"),
+  [NEW_SRV_ACTION_SUSPEND] = __("Suspend clients"),
+  [NEW_SRV_ACTION_RESUME] = __("Resume clients"),
+  [NEW_SRV_ACTION_TEST_SUSPEND] = __("Suspend testing"),
+  [NEW_SRV_ACTION_TEST_RESUME] = __("Resume testing"),
+  [NEW_SRV_ACTION_PRINT_SUSPEND] = __("Suspend printing"),
+  [NEW_SRV_ACTION_PRINT_RESUME] = __("Resume printing"),
+  [NEW_SRV_ACTION_SET_JUDGING_MODE] = __("Set judging mode"),
+  [NEW_SRV_ACTION_SET_ACCEPTING_MODE] = __("Set accepting mode"),
+  [NEW_SRV_ACTION_GENERATE_PASSWORDS_1] = __("Regenerate contest passwords!"),
+  [NEW_SRV_ACTION_CLEAR_PASSWORDS_1] = __("Clear contest passwords!"),
+  [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1] = __("Regenerate registration passwords!"),
+  [NEW_SRV_ACTION_RELOAD_SERVER_1] = __("Reload config files"),
+  [NEW_SRV_ACTION_PRIV_SUBMIT_CLAR] = __("Send clarification"),
+  [NEW_SRV_ACTION_CHANGE_PASSWORD] = __("Change password"),
+  [NEW_SRV_ACTION_CHANGE_LANGUAGE] = __("Switch language"),
+  [NEW_SRV_ACTION_RESET_FILTER] = __("Reset filter"),
+  [NEW_SRV_ACTION_CLEAR_RUN] = __("Clear"),
+  [NEW_SRV_ACTION_CHANGE_STATUS] = __("Change"),
+  [NEW_SRV_ACTION_REJUDGE_ALL_1] = __("Rejudge all"),
+  [NEW_SRV_ACTION_REJUDGE_SUSPENDED_1] = __("Judge suspended runs"),
+  [NEW_SRV_ACTION_REJUDGE_DISPLAYED_1] = __("Rejudge displayed runs"),
+  [NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1] = __("Full rejudge displayed runs"),
+  [NEW_SRV_ACTION_SQUEEZE_RUNS] = __("Squeeze runs"),
+  [NEW_SRV_ACTION_RESET_CLAR_FILTER] = __("Reset filter"),
+};
+
+unsigned char *
+new_serve_submit_button(unsigned char *buf, size_t size,
+                        const unsigned char *var_name, int action,
+                        const unsigned char *label)
+{
+  if (!var_name) var_name = "action";
+  if (!label && action > 0 && action < NEW_SRV_ACTION_LAST)
+    label = gettext(submit_button_labels[action]);
+  if (!label) label = "Submit";
+  snprintf(buf, size,
+           "<button type=\"submit\" name=\"%s\" value=\"%d\">%s</button>",
+           var_name, action, label);
   return buf;
 }
 
@@ -508,7 +511,7 @@ html_refresh_page(struct server_framework_state *state,
 {
   unsigned char url[1024];
 
-  html_url(url, sizeof(url), phr, new_action);
+  new_serve_url(url, sizeof(url), phr, new_action, 0);
 
   fprintf(fout, "Content-Type: text/html; charset=%s\nCache-Control: no-cache\nPragma: no-cache\n\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"><meta http-equiv=\"Refresh\" content=\"%d; url=%s\"><title>%s</title></head><body><h1>%s</h1><p>If autorefresh does not work, follow <a href=\"%s\">this</a> link.</p></body></html>\n", EJUDGE_CHARSET, EJUDGE_CHARSET, 1, url, "Operation successful", "Operation successful", url);
 }
@@ -926,7 +929,7 @@ html_error_status_page(struct server_framework_state *state,
           s);
   xfree(s);
   fprintf(fout, "<hr><a href=\"%s\">Back</a>\n",
-          html_url(url, sizeof(url), phr, back_action));
+          new_serve_url(url, sizeof(url), phr, back_action, 0));
   html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
 }
@@ -1011,6 +1014,12 @@ privileged_page_login(struct server_framework_state *state,
         || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0)
       return html_err_permission_denied(state, p, fout, phr, 1,
                                         "user %s does not have MASTER_LOGIN bit for contest %d", phr->login, phr->contest_id);
+  } else if (phr->role == USER_ROLE_ADMIN) {
+    // as for the judge program
+    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
+        || opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0)
+      return html_err_permission_denied(state, p, fout, phr, 1,
+                                        "user %s does not have JUDGE_LOGIN bit for contest %d", phr->login, phr->contest_id);
   } else {
     // user privileges checked locally
     if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0)
@@ -1296,13 +1305,13 @@ priv_priv_user_operation(struct server_framework_state *state,
   case NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER:
     role = USER_ROLE_OBSERVER;
     break;
-  case NEW_SRV_ACTION_PRIV_USERS_ADD_JUDGE:
-  case NEW_SRV_ACTION_PRIV_USERS_DEL_JUDGE:
-    role = USER_ROLE_JUDGE;
+  case NEW_SRV_ACTION_PRIV_USERS_ADD_EXAMINER:
+  case NEW_SRV_ACTION_PRIV_USERS_DEL_EXAMINER:
+    role = USER_ROLE_EXAMINER;
     break;
-  case NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_JUDGE:
-  case NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_JUDGE:
-    role = USER_ROLE_CHIEF_JUDGE;
+  case NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_EXAMINER:
+  case NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_EXAMINER:
+    role = USER_ROLE_CHIEF_EXAMINER;
     break;
   case NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR:
   case NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR:
@@ -1319,8 +1328,8 @@ priv_priv_user_operation(struct server_framework_state *state,
       break;
 
     case NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER:
-    case NEW_SRV_ACTION_PRIV_USERS_ADD_JUDGE:
-    case NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_JUDGE:
+    case NEW_SRV_ACTION_PRIV_USERS_ADD_EXAMINER:
+    case NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_EXAMINER:
     case NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR:
       if (nsdb_add_role(uset.v[i], phr->contest_id, role) < 0) {
         fprintf(log_f, "add_role (%d,%d,%d) failed\n",
@@ -1329,8 +1338,8 @@ priv_priv_user_operation(struct server_framework_state *state,
       break;
 
     case NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER:
-    case NEW_SRV_ACTION_PRIV_USERS_DEL_JUDGE:
-    case NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_JUDGE:
+    case NEW_SRV_ACTION_PRIV_USERS_DEL_EXAMINER:
+    case NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_EXAMINER:
     case NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR:
       if (nsdb_del_role(uset.v[i], phr->contest_id, role) < 0) {
         fprintf(log_f, "del_role (%d,%d,%d) failed\n",
@@ -1558,7 +1567,7 @@ priv_view_users_page(struct server_framework_state *state,
   fprintf(fout, "<h2>Available actions</h2>\n");
 
   fprintf(fout, "<table>\n");
-  fprintf(fout, "<tr><td><a href=\"%s\">Back</a></td><td>Return to the main page</td></tr>\n", html_url(url, sizeof(url), phr, 0));
+  fprintf(fout, "<tr><td><a href=\"%s\">Back</a></td><td>Return to the main page</td></tr>\n", new_serve_url(url, sizeof(url), phr, 0, 0));
   fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS, _("Remove registrations"), _("Remove the selected users from the list"));
   fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_PENDING, _("Mark PENDING"), _("Set the registration status of the selected users to PENDING"));
   fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_OK, _("Mark OK"), _("Set the registration status of the selected users to OK"));
@@ -1635,10 +1644,17 @@ priv_view_priv_users_page(struct server_framework_state *state,
     goto cleanup;
   }
 
-  // collect all information about allowed MASTER logins
+  // collect all information about allowed MASTER and JUDGE logins
   for (op = cnts->capabilities.first; op;
        op = (struct opcap_list_item*) op->b.right) {
-    if (opcaps_check(op->caps, OPCAP_MASTER_LOGIN) < 0) continue;
+    role_mask = 0;
+    if (opcaps_check(op->caps, OPCAP_MASTER_LOGIN) >= 0) {
+      role_mask |= (1 << USER_ROLE_ADMIN);
+    }
+    if (opcaps_check(op->caps, OPCAP_JUDGE_LOGIN) >= 0) {
+      role_mask |= (1 << USER_ROLE_JUDGE);
+    }
+    if (!role_mask) continue;
     if (userlist_clnt_lookup_user(ul_conn, op->login, &user_id, &name) < 0)
       continue;
     for (i = 0; i < users.u; i++)
@@ -1654,7 +1670,7 @@ priv_view_priv_users_page(struct server_framework_state *state,
     pp->user_id = user_id;
     pp->login = xstrdup(op->login);
     pp->name = name;
-    pp->role_mask |= (1 << USER_ROLE_ADMIN);
+    pp->role_mask |= role_mask;
   }
 
   // collect information about other roles
@@ -1723,14 +1739,14 @@ priv_view_priv_users_page(struct server_framework_state *state,
   fprintf(fout, "<h2>Available actions</h2>\n");
 
   fprintf(fout, "<table>\n");
-  fprintf(fout, "<tr><td><a href=\"%s\">Back</a></td><td>Return to the main page</td></tr>\n", html_url(url, sizeof(url), phr, 0));
+  fprintf(fout, "<tr><td><a href=\"%s\">Back</a></td><td>Return to the main page</td></tr>\n", new_serve_url(url, sizeof(url), phr, 0, 0));
   fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_REMOVE, _("Remove"), _("Remove the selected users from the list (ADMINISTRATORs cannot be removed)"));
   fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER, _("Add OBSERVER"), _("Add the OBSERVER role to the selected users"));
   fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER, _("Del OBSERVER"), _("Remove the OBSERVER role from the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_JUDGE, _("Add JUDGE"), _("Add the JUDGE role to the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_JUDGE, _("Del JUDGE"), _("Remove the JUDGE role from the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_JUDGE, _("Add CHIEF JUDGE"), _("Add the CHIEF JUDGE role to the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_JUDGE, _("Del CHIEF JUDGE"), _("Remove the CHIEF JUDGE role from the selected users"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_EXAMINER, _("Add EXAMINER"), _("Add the EXAMINER role to the selected users"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_EXAMINER, _("Del EXAMINER"), _("Remove the EXAMINER role from the selected users"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_EXAMINER, _("Add CHIEF EXAMINER"), _("Add the CHIEF EXAMINER role to the selected users"));
+  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_EXAMINER, _("Del CHIEF EXAMINER"), _("Remove the CHIEF EXAMINER role from the selected users"));
   fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR, _("Add COORDINATOR"), _("Add the COORDINATOR role to the selected users"));
   fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR, _("Del COORDINATOR"), _("Remove the COORDINATOR role from the selected users"));
   fprintf(fout, "</table>\n");
@@ -1760,6 +1776,127 @@ priv_view_priv_users_page(struct server_framework_state *state,
   if (iter) iter->destroy(iter);
 }
 
+void
+unpriv_print_status(struct server_framework_state *state,
+                    struct client_state *p,
+                    FILE *fout,
+                    struct http_request_info *phr,
+                    const struct contest_desc *cnts,
+                    struct contest_extra *extra,
+                    time_t start_time, time_t stop_time, time_t duration,
+                    time_t sched_time,
+                    time_t fog_start_time)
+{
+  const serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const unsigned char *s = 0;
+  unsigned char duration_buf[128];
+  time_t tmpt;
+
+  fprintf(fout, "<hr><a name=\"status\"></a><%s>%s</%s>\n",
+          cnts->team_head_style, _("Server status"),
+          cnts->team_head_style);
+  if (stop_time > 0) {
+    if (duration > 0 && global->board_fog_time > 0
+        && global->board_unfog_time > 0
+        && cs->current_time < stop_time + global->board_unfog_time
+        && !cs->standings_updated) {
+      s = _("The contest is over (standings are frozen)");
+    } else {
+      s = _("The contest is over");
+    }
+  } else if (start_time > 0) {
+    if (fog_start_time > 0 && cs->current_time >= fog_start_time)
+      s = _("The contest is in progress (standings are frozen)");
+    else
+      s = _("The contest is in progress");
+  } else {
+    s = _("The contest is not started");
+  }
+  fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
+
+  if (start_time > 0) {
+    if (global->score_system_val == SCORE_OLYMPIAD) {
+      if (cs->accepting_mode)
+        s = _("Participants' solutions are being accepted");
+      else
+        s = _("Participants' solutions are being judges");
+      fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
+    }
+  }
+
+  if (cs->clients_suspended) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Team requests are suspended"));
+  }
+
+  if (start_time > 0) {
+    if (cs->testing_suspended) {
+      fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+             _("Testing of team's submits is suspended"));
+    }
+    if (cs->printing_suspended) {
+      fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+             _("Print requests are suspended"));
+    }
+  }
+
+  fprintf(fout, "<table border=\"0\">");
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+          _("Server time"), ctime(&cs->current_time));
+  if (start_time > 0) {
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Contest start time"), ctime(&start_time));
+  }
+  if (!global->virtual && start_time <= 0 && sched_time > 0) {
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Planned start time"), ctime(&sched_time));
+  }
+  if (stop_time <= 0 && (duration > 0 || global->contest_finish_time_d <= 0)) {
+    if (duration > 0) {
+      duration_str(0, duration, 0, duration_buf, 0);
+    } else {
+      snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
+    }
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Duration"), duration_buf);
+  }
+  if (start_time > 0 && stop_time <= 0 && duration > 0) {
+    tmpt = start_time + duration;
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Scheduled end time"), ctime(&tmpt));
+  } else if (start_time > 0 && stop_time <= 0 && duration <= 0
+             && global->contest_finish_time_d > 0) {
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Scheduled end time"), ctime(&global->contest_finish_time_d));
+  } else if (stop_time) {
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("End time"), ctime(&stop_time));
+  }
+
+  if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Standings freeze time"), ctime(&fog_start_time));
+  } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
+             && global->board_unfog_time > 0 && !cs->standings_updated
+             && cs->current_time < stop_time + global->board_unfog_time) {
+    tmpt = stop_time + global->board_unfog_time;
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Standings unfreeze time"), ctime(&tmpt));
+  }
+
+  if (start_time > 0 && stop_time <= 0 && duration > 0) {
+    duration_str(0, cs->current_time, start_time, duration_buf, 0);
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Elapsed time"), duration_buf);
+    duration_str(0, start_time + duration - cs->current_time, 0,
+                 duration_buf, 0);
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Remaining time"), duration_buf);
+  }
+  fprintf(fout, "</table>\n");
+}
+
 static void
 priv_main_page(struct server_framework_state *state,
                struct client_state *p,
@@ -1768,7 +1905,21 @@ priv_main_page(struct server_framework_state *state,
                const struct contest_desc *cnts,
                struct contest_extra *extra)
 {
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  time_t start_time, sched_time, duration, stop_time, fog_start_time = 0, tmpt;
   unsigned char hbuf[1024];
+  unsigned char duration_buf[128];
+  const unsigned char *s;
+  unsigned char bbuf[1024];
+  int action;
+  long long tdiff;
+
+  run_get_times(cs->runlog_state, &start_time, &sched_time, &duration,
+                &stop_time);
+  if (duration > 0 && start_time && !stop_time && global->board_fog_time > 0)
+    fog_start_time = start_time + duration - global->board_fog_time;
+  if (fog_start_time < 0) fog_start_time = 0;
 
   l10n_setlocale(phr->locale_id);
   html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
@@ -1776,10 +1927,264 @@ priv_main_page(struct server_framework_state *state,
                   phr->name_arm, extra->contest_arm, _("Main page"));
   fprintf(fout, "<ul>\n");
   fprintf(fout, "<li><a href=\"%s\">View regular users</a></li>\n",
-          html_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USERS));
+          new_serve_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_USERS, 0));
   fprintf(fout, "<li><a href=\"%s\">View privileged users</a></li>\n",
-          html_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_PRIV_USERS_VIEW));
+          new_serve_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_PRIV_USERS_VIEW, 0));
   fprintf(fout, "</ul>\n");
+
+  /* if role == ADMIN and capability CONTROL_CONTEST */
+
+  fprintf(fout, "<hr><a name=\"status\"></a><%s>%s</%s>\n",
+          /*cnts->priv_head_style*/ "h2", _("Server status"),
+          /*cnts->priv_head_style*/ "h2");
+  if (stop_time > 0) {
+    if (duration > 0 && global->board_fog_time > 0
+        && global->board_unfog_time > 0
+        && cs->current_time < stop_time + global->board_unfog_time
+        && !cs->standings_updated) {
+      s = _("The contest is over (standings are frozen)");
+    } else {
+      s = _("The contest is over");
+    }
+  } else if (start_time > 0) {
+    if (fog_start_time > 0 && cs->current_time >= fog_start_time)
+      s = _("The contest is in progress (standings are frozen)");
+    else
+      s = _("The contest is in progress");
+  } else {
+    s = _("The contest is not started");
+  }
+  fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
+
+  if (global->score_system_val == SCORE_OLYMPIAD) {
+    if (cs->accepting_mode)
+      s = _("Participants' solutions are being accepted");
+    else
+      s = _("Participants' solutions are being judges");
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
+  }
+
+  if (cs->clients_suspended) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Team requests are suspended"));
+  }
+
+  if (cs->testing_suspended) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Testing of team's submits is suspended"));
+  }
+  if (cs->printing_suspended) {
+    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
+            _("Print requests are suspended"));
+  }
+
+  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+  fprintf(fout, "<table border=\"0\">");
+
+  fprintf(fout,
+          "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td><td>&nbsp;</td></tr>\n",
+          _("Server time"), ctime(&cs->current_time));
+
+  if (start_time <= 0) {
+    fprintf(fout, "<tr><td colspan=\"2\"><b>%s</b></td><td>&nbsp;</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr>\n",
+            _("Contest is not started"), NEW_SRV_ACTION_START_CONTEST,
+            _("Start"));
+  } else {
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td><td>&nbsp;</td>",
+            _("Contest start time"), ctime(&start_time));
+    if (stop_time <= 0) {
+      fprintf(fout, "<td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr>\n", NEW_SRV_ACTION_STOP_CONTEST, _("Stop"));
+    } else if (global->enable_continue
+               && (!duration || stop_time < start_time + duration)) {
+      fprintf(fout, "<td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr>\n", NEW_SRV_ACTION_CONTINUE_CONTEST, _("Continue"));
+    }
+  }
+
+  if (!global->virtual && start_time <= 0) {
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td>"
+            "<td><input type=\"text\" name=\"sched_time\" size=\"16\"></td>"
+            "<td><button type=\"submit\" name=\"action\" value=\"%d\">%s"
+            "</button></td></tr>\n",
+            _("Planned start time"),
+            sched_time <= 0?_("Not set"):ctime(&sched_time),
+            NEW_SRV_ACTION_SCHEDULE, _("Reschedule"));
+  }
+
+  if (global->contest_finish_time_d <= 0) {
+    if (duration > 0) {
+      duration_str(0, duration, 0, duration_buf, 0);
+    } else {
+      snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
+    }
+
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td>",_("Duration"), duration_buf);
+    if (stop_time <= 0 || global->enable_continue) {
+      fprintf(fout, "<td><input type=\"text\" name=\"dur\" size=\"16\"></td>"
+              "<td><button type=\"submit\" name=\"action\" value=\"%d\">%s"
+              "</button></td></tr>\n",
+              NEW_SRV_ACTION_CHANGE_DURATION, _("Change duration"));
+    } else {
+      fprintf(fout, "<td>nbsp;</td><td>&nbsp;</td></tr>\n");
+    }
+  }
+
+  if (start_time > 0 && stop_time <= 0 && duration > 0) {
+    tmpt = start_time + duration;
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Scheduled end time"), ctime(&tmpt));
+  } else if (start_time > 0 && stop_time <= 0 && duration <= 0
+             && global->contest_finish_time_d > 0) {
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Scheduled end time"), ctime(&global->contest_finish_time_d));
+  } else if (stop_time) {
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("End time"), ctime(&stop_time));
+  }
+
+
+  if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Standings freeze time"), ctime(&fog_start_time));
+  } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
+             && global->board_unfog_time > 0 && !cs->standings_updated
+             && cs->current_time < stop_time + global->board_unfog_time) {
+    tmpt = stop_time + global->board_unfog_time;
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Standings unfreeze time"), ctime(&tmpt));
+  }
+
+  if (start_time > 0 && stop_time <= 0 && duration > 0) {
+    duration_str(0, cs->current_time, start_time, duration_buf, 0);
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Elapsed time"), duration_buf);
+    duration_str(0, start_time + duration - cs->current_time, 0,
+                 duration_buf, 0);
+    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
+            _("Remaining time"), duration_buf);
+  }
+  fprintf(fout, "</table></form>\n");
+
+  fprintf(fout, "<hr>\n");
+
+  // role == ADMIN && CONTROL_CONTEST
+  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+  fprintf(fout, "%s\n", 
+          new_serve_submit_button(bbuf, sizeof(bbuf), 0,
+                                  NEW_SRV_ACTION_UPDATE_STANDINGS_1, 0));
+  fprintf(fout, "%s\n",
+          new_serve_submit_button(bbuf, sizeof(bbuf), 0,
+                                  NEW_SRV_ACTION_RESET_1, 0));
+  action = NEW_SRV_ACTION_SUSPEND;
+  if (cs->clients_suspended) action = NEW_SRV_ACTION_RESUME;
+  fprintf(fout, "%s\n",
+          new_serve_submit_button(bbuf, sizeof(bbuf), 0, action, 0));
+  action = NEW_SRV_ACTION_TEST_SUSPEND;
+  if (cs->testing_suspended) action = NEW_SRV_ACTION_TEST_RESUME;
+  fprintf(fout, "%s\n",
+          new_serve_submit_button(bbuf, sizeof(bbuf), 0, action, 0));
+  if (global->enable_printing) {
+    action = NEW_SRV_ACTION_PRINT_SUSPEND;
+    if (cs->printing_suspended) action = NEW_SRV_ACTION_PRINT_RESUME;
+    fprintf(fout, "%s\n",
+            new_serve_submit_button(bbuf, sizeof(bbuf), 0, action, 0));
+  }
+  if (global->score_system_val == SCORE_OLYMPIAD) {
+    action = NEW_SRV_ACTION_SET_JUDGING_MODE;
+    if (!cs->accepting_mode) action = NEW_SRV_ACTION_SET_ACCEPTING_MODE;
+    fprintf(fout, "%s\n",
+            new_serve_submit_button(bbuf, sizeof(bbuf), 0, action, 0));
+  }
+  if (!cnts->disable_team_password) {
+    fprintf(fout, "%s\n",
+            new_serve_submit_button(bbuf, sizeof(bbuf), 0,
+                                    NEW_SRV_ACTION_GENERATE_PASSWORDS_1, 0));
+    fprintf(fout, "%s\n",
+            new_serve_submit_button(bbuf, sizeof(bbuf), 0,
+                                    NEW_SRV_ACTION_CLEAR_PASSWORDS_1, 0));
+  }
+  fprintf(fout, "%s\n",
+          new_serve_submit_button(bbuf, sizeof(bbuf), 0,
+                                  NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1, 0));
+  fprintf(fout, "%s\n",
+          new_serve_submit_button(bbuf, sizeof(bbuf), 0,
+                                  NEW_SRV_ACTION_RELOAD_SERVER_1, 0));
+
+  new_serve_write_priv_all_runs(fout, phr, cnts, extra, -1, -1, 0);
+
+  new_serve_write_all_clars(fout, phr, cnts, extra, 0, -1, -1);
+
+  fprintf(fout, "<hr><h2>%s</h2>", _("Compose a message to all participants"));
+  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+  fprintf(fout, "<table>\n"
+          "<tr>"
+          "<td>%s:</td>"
+          "<td><input type=\"text\" size=\"16\" name=\"msg_dest_id\"></td>"
+          "</tr>\n"
+          "<tr>"
+          "<td>%s:</td>"
+          "<td><input type=\"text\" size=\"32\" name=\"msg_dest_login\"></td>"
+          "</tr>\n"
+          "<tr>"
+          "<td>%s:</td>"
+          "<td><input type=\"text\" size=\"64\" name=\"msg_subj\"></td>"
+          "</tr>\n",
+          _("To user id"),
+          _("To user login"),
+          _("Subject"));
+  if (start_time <= 0) {
+    fprintf(fout, "<tr><td>%s</td><td><select name=\"msg_hide_flag\"><option value=\"0\">NO</option><option value=\"1\">YES</option></select></td></tr>\n",
+            _("Do not show before the contest starts?"));
+  }
+  fprintf(fout, "</table>\n"
+          "<p><textarea name=\"msg_text\" rows=\"20\" cols=\"60\">"
+          "</textarea></p>"
+          "<p>%s\n</form>\n",
+          new_serve_submit_button(bbuf, sizeof(bbuf), 0,
+                                  NEW_SRV_ACTION_PRIV_SUBMIT_CLAR, 0));
+
+  /* change the password */
+  fprintf(fout, "<hr><a name=\"chgpasswd\"></a>\n<%s>%s</%s>\n",
+          /*cnts->priv_head_style*/ "h2",
+          _("Change password"),
+          /*cnts->team_head_style*/ "h2");
+  html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+
+  fprintf(fout, "<table>\n"
+          "<tr><td>%s:</td><td><input type=\"password\" name=\"oldpasswd\" size=\"16\"></td></tr>\n"
+          "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd1\" size=\"16\"></td></tr>\n"
+          "<tr><td>%s:</td><td><input type=\"password\" name=\"newpasswd2\" size=\"16\"></td></tr>\n"
+          "<tr><td colspan=\"2\">%s</td></tr>\n"
+          "</table></form>",
+          _("Old password"),
+          _("New password"), _("Retype new password"),
+          new_serve_submit_button(bbuf, sizeof(bbuf), 0, 
+                                  NEW_SRV_ACTION_CHANGE_PASSWORD, 0));
+
+#if CONF_HAS_LIBINTL - 0 == 1
+  if (cs->global->enable_l10n) {
+    fprintf(fout, "<hr><a name=\"chglanguage\"></a><%s>%s</%s>\n",
+            cnts->team_head_style, _("Change language"),
+            cnts->team_head_style);
+    html_start_form(fout, 1, phr->self_url, phr->hidden_vars);
+    fprintf(fout, "<table><tr><td>%s</td><td>", _("Change language"));
+    l10n_html_locale_select(fout, phr->locale_id);
+    fprintf(fout, "</td><td>%s</td></tr></table></form>\n",
+            new_serve_submit_button(bbuf, sizeof(bbuf), 0,
+                                    NEW_SRV_ACTION_CHANGE_LANGUAGE, 0));
+  }
+#endif /* CONF_HAS_LIBINTL */
+
+  if (1 /*cs->global->show_generation_time*/) {
+  gettimeofday(&phr->timestamp2, 0);
+  tdiff = ((long long) phr->timestamp2.tv_sec) * 1000000;
+  tdiff += phr->timestamp2.tv_usec;
+  tdiff -= ((long long) phr->timestamp1.tv_sec) * 1000000;
+  tdiff -= phr->timestamp1.tv_usec;
+  fprintf(fout, "<hr><p%s>%s: %lld %s\n", cnts->team_par_style,
+          _("Page generation time"), tdiff / 1000,
+          _("msec"));
+  }
+
   html_put_footer(fout, extra->footer_txt, phr->locale_id);
   l10n_setlocale(0);
 }
@@ -1810,10 +2215,10 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_USERS_REMOVE] = priv_priv_user_operation,
   [NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER] = priv_priv_user_operation,
   [NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER] = priv_priv_user_operation,
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_JUDGE] = priv_priv_user_operation,
-  [NEW_SRV_ACTION_PRIV_USERS_DEL_JUDGE] = priv_priv_user_operation,
-  [NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_JUDGE] = priv_priv_user_operation,
-  [NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_JUDGE] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_EXAMINER] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_DEL_EXAMINER] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_EXAMINER] = priv_priv_user_operation,
+  [NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_EXAMINER] = priv_priv_user_operation,
   [NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR] = priv_priv_user_operation,
   [NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR] = priv_priv_user_operation,
   [NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN] = priv_add_priv_user_by_login,
@@ -1833,6 +2238,7 @@ privileged_page(struct server_framework_state *state,
   struct contest_extra *extra = 0;
   time_t cur_time = time(0);
   unsigned char hid_buf[1024];
+  struct teamdb_db_callbacks callbacks;
 
   if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return privileged_page_login(state, p, fout, phr);
@@ -1889,6 +2295,12 @@ privileged_page(struct server_framework_state *state,
         || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0)
       return html_err_permission_denied(state, p, fout, phr, 1,
                                         "user %s does not have MASTER_LOGIN bit for contest %d", phr->login, phr->contest_id);
+  } else if (phr->role == USER_ROLE_JUDGE) {
+    // as for the judge program
+    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
+        || opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0)
+      return html_err_permission_denied(state, p, fout, phr, 1,
+                                        "user %s does not have JUDGE_LOGIN bit for contest %d", phr->login, phr->contest_id);
   } else {
     // user privileges checked locally
     if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0)
@@ -1919,6 +2331,20 @@ privileged_page(struct server_framework_state *state,
   phr->hidden_vars = hid_buf;
   phr->session_extra = new_server_get_session(phr->session_id, cur_time);
 
+  memset(&callbacks, 0, sizeof(callbacks));
+  callbacks.user_data = (void*) state;
+  callbacks.list_all_users = list_all_users_callback;
+
+  // invoke the contest
+  if (serve_state_load_contest(phr->contest_id,
+                               ul_conn,
+                               &callbacks,
+                               &extra->serve_state) < 0) {
+    return html_err_contest_not_available(state, p, fout, phr, "");
+  }
+
+  extra->serve_state->current_time = time(0);
+  
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && actions_table[phr->action]) {
     actions_table[phr->action](state, p, fout, phr, cnts, extra);
@@ -2348,9 +2774,8 @@ user_main_page(struct server_framework_state *state,
   serve_state_t cs = extra->serve_state;
   struct section_global_data *global = cs->global;
   long long tdiff;
-  time_t start_time, stop_time, duration, sched_time, fog_start_time = 0, tmpt;
+  time_t start_time, stop_time, duration, sched_time, fog_start_time = 0;
   const unsigned char *s;
-  unsigned char duration_buf[128];
   int unread_clars, all_runs = 0, all_clars = 0, viewed_section = 0;
   unsigned char *solved_flag = 0;
   unsigned char *accepted_flag = 0;
@@ -2472,108 +2897,9 @@ user_main_page(struct server_framework_state *state,
   }
   fprintf(fout, "</tr></table>\n");
 
-  fprintf(fout, "<hr><a name=\"status\"></a><%s>%s</%s>\n",
-          cnts->team_head_style, _("Server status"),
-          cnts->team_head_style);
-  if (stop_time > 0) {
-    if (duration > 0 && global->board_fog_time > 0
-        && global->board_unfog_time > 0
-        && cs->current_time < stop_time + global->board_unfog_time
-        && !cs->standings_updated) {
-      s = _("The contest is over (standings are frozen)");
-    } else {
-      s = _("The contest is over");
-    }
-  } else if (start_time > 0) {
-    if (fog_start_time > 0 && cs->current_time >= fog_start_time)
-      s = _("The contest is in progress (standings are frozen)");
-    else
-      s = _("The contest is in progress");
-  } else {
-    s = _("The contest is not started");
-  }
-  fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
-
-  if (start_time > 0) {
-    if (global->score_system_val == SCORE_OLYMPIAD) {
-      if (!cs->olympiad_judging_mode)
-        s = _("Participants' solutions are being accepted");
-      else
-        s = _("Participants' solutions are being judges");
-      fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
-    }
-  }
-
-  if (cs->clients_suspended) {
-    fprintf(fout, "<p><big><b>%s</b></big></p>\n",
-            _("Team requests are suspended"));
-  }
-
-  if (start_time > 0) {
-    if (cs->testing_suspended) {
-      fprintf(fout, "<p><big><b>%s</b></big></p>\n",
-             _("Testing of team's submits is suspended"));
-    }
-    if (cs->printing_suspended) {
-      fprintf(fout, "<p><big><b>%s</b></big></p>\n",
-             _("Print requests are suspended"));
-    }
-  }
-
-  fprintf(fout, "<table border=\"0\">");
-  fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-          _("Server time"), ctime(&cs->current_time));
-  if (start_time > 0) {
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("Contest start time"), ctime(&start_time));
-  }
-  if (!global->virtual && start_time <= 0 && sched_time > 0) {
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("Planned start time"), ctime(&sched_time));
-  }
-  if (stop_time <= 0 && (duration > 0 || global->contest_finish_time_d <= 0)) {
-    if (duration > 0) {
-      duration_str(0, duration, 0, duration_buf, 0);
-    } else {
-      snprintf(duration_buf, sizeof(duration_buf), "%s", _("Unlimited"));
-    }
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("Duration"), duration_buf);
-  }
-  if (start_time > 0 && stop_time <= 0 && duration > 0) {
-    tmpt = start_time + duration;
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("Scheduled end time"), ctime(&tmpt));
-  } else if (start_time > 0 && stop_time <= 0 && duration <= 0
-             && global->contest_finish_time_d > 0) {
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("Scheduled end time"), ctime(&global->contest_finish_time_d));
-  } else if (stop_time) {
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("End time"), ctime(&stop_time));
-  }
-
-  if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("Standings freeze time"), ctime(&fog_start_time));
-  } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
-             && global->board_unfog_time > 0 && !cs->standings_updated
-             && cs->current_time < stop_time + global->board_unfog_time) {
-    tmpt = stop_time + global->board_unfog_time;
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("Standings unfreeze time"), ctime(&tmpt));
-  }
-
-  if (start_time > 0 && stop_time <= 0 && duration > 0) {
-    duration_str(0, cs->current_time, start_time, duration_buf, 0);
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("Elapsed time"), duration_buf);
-    duration_str(0, start_time + duration - cs->current_time, 0,
-                 duration_buf, 0);
-    fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n",
-            _("Remaining time"), duration_buf);
-  }
-  fprintf(fout, "</table>\n");
+  unpriv_print_status(state, p, fout, phr, cnts, extra,
+                      start_time, stop_time, duration, sched_time,
+                      fog_start_time);
 
   if (!cs->global->disable_clars || !cs->global->disable_team_clars){
     unread_clars = serve_count_unread_clars(cs, phr->user_id, start_time);
@@ -2915,10 +3241,6 @@ unprivileged_page(struct server_framework_state *state,
   }
 
   extra->serve_state->current_time = time(0);
-  extra->serve_state->accepting_mode = 0;
-  if (extra->serve_state->global->score_system_val == SCORE_OLYMPIAD
-      && !extra->serve_state->olympiad_judging_mode)
-    extra->serve_state->accepting_mode = 1;
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
       && user_actions_table[phr->action]) {

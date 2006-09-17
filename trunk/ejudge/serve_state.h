@@ -183,4 +183,8 @@ int serve_state_load_contest(int contest_id,
 int serve_count_unread_clars(const serve_state_t state, int user_id,
                              time_t start_time);
 
+struct user_filter_info *
+user_filter_info_allocate(serve_state_t state, int user_id,
+                          ej_cookie_t session_id);
+
 #endif /* __SERVE_STATE_H__ */
