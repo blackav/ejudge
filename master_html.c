@@ -216,7 +216,7 @@ static const int acm_status_list[] =
   -1,
 };
 
-static void
+void
 write_change_status_dialog(const serve_state_t state,
                            FILE *f, unsigned char const *var_name,
                            int disable_rejudge_flag)
@@ -253,8 +253,6 @@ write_change_status_dialog(const serve_state_t state,
 }
 
 #define BITS_PER_LONG (8*sizeof(unsigned long)) 
-
-static struct user_filter_info *allocate_user_info(serve_state_t, int user_id, ej_cookie_t session_id);
 
 static void
 print_raw_record(const serve_state_t state, FILE *f, int run_id,
@@ -463,7 +461,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
   int displayed_size = 0, raw_format = 0;
   unsigned char stat_select_name[32];
 
-  if (!u) u = allocate_user_info(state, user_id, sid);
+  if (!u) u = user_filter_info_allocate(state, user_id, sid);
 
   if (!self_url || !*self_url) raw_format = 1;
 
@@ -1172,47 +1170,6 @@ write_all_clars(const serve_state_t state, FILE *f, struct user_filter_info *u,
                     0, 0, 0, 0, 0, 0, 0);
 }
 
-static struct user_filter_info *
-allocate_user_info(serve_state_t state, int user_id, ej_cookie_t session_id)
-{
-  struct user_filter_info *p;
-
-  if (user_id == -1) user_id = 0;
-  ASSERT(user_id >= 0 && user_id < 32768);
-  ASSERT(session_id);
-
-  if (user_id >= state->users_a) {
-    int new_users_a = state->users_a;
-    struct user_state_info **new_users;
-
-    if (!new_users_a) new_users_a = 64;
-    while (new_users_a <= user_id) new_users_a *= 2;
-    new_users = xcalloc(new_users_a, sizeof(new_users[0]));
-    if (state->users_a > 0)
-      memcpy(new_users, state->users, state->users_a * sizeof(state->users[0]));
-    xfree(state->users);
-    state->users_a = new_users_a;
-    state->users = new_users;
-    info("allocate_user_info: new size %d", state->users_a);
-  }
-  if (!state->users[user_id]) {
-    state->users[user_id] = xcalloc(1, sizeof(*state->users[user_id]));
-  }
-
-  for (p = state->users[user_id]->first_filter; p; p = p->next) {
-    if (p->session_id == session_id) break;
-  }
-  if (!p) {
-    XCALLOC(p, 1);
-    p->next = state->users[user_id]->first_filter;
-    p->session_id = session_id;
-    state->users[user_id]->first_filter = p;
-  }
-
-  state->cur_user = p;
-  return p;
-}
-
 void
 write_master_page(serve_state_t state, FILE *f, int user_id, int priv_level,
                   ej_cookie_t sid,
@@ -1224,7 +1181,7 @@ write_master_page(serve_state_t state, FILE *f, int user_id, int priv_level,
                   unsigned char const *extra_args,
                   const opcap_t *pcaps)
 {
-  struct user_filter_info *u = allocate_user_info(state, user_id, sid);
+  struct user_filter_info *u = user_filter_info_allocate(state, user_id, sid);
 
   write_priv_all_runs(state, f, user_id, u, priv_level, sid, first_run,
                       last_run, self_url, filter_expr, hidden_vars, extra_args);
@@ -2786,7 +2743,7 @@ write_priv_user(const serve_state_t state, FILE *f, int user_id, int priv_level,
 void
 html_reset_filter(serve_state_t state, int user_id, ej_cookie_t session_id)
 {
-  struct user_filter_info *u = allocate_user_info(state, user_id, session_id);
+  struct user_filter_info *u = user_filter_info_allocate(state, user_id, session_id);
 
   u->prev_first_run = 0;
   u->prev_last_run = 0;
@@ -2802,7 +2759,7 @@ html_reset_filter(serve_state_t state, int user_id, ej_cookie_t session_id)
 void
 html_reset_clar_filter(serve_state_t state, int user_id, ej_cookie_t session_id)
 {
-  struct user_filter_info *u = allocate_user_info(state, user_id, session_id);
+  struct user_filter_info *u = user_filter_info_allocate(state, user_id, session_id);
 
   u->prev_mode_clar = 0;
   u->prev_first_clar = 0;

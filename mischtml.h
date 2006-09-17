@@ -35,4 +35,7 @@ void html_start_form(FILE *f, int mode,
 
 void html_date_select(FILE *f, time_t t);
 
+void html_hidden(FILE *fout, const unsigned char *var_name,
+                 const char *format, ...);
+
 #endif /* __MISCHTML_H__ */

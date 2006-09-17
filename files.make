@@ -136,6 +136,7 @@ COMMON_CFILES=\
  filter_tree.c\
  html.c\
  html_date_select.c\
+ html_hidden.c\
  html_hyperref.c\
  html_start_form.c\
  l10n.c\
@@ -143,6 +144,7 @@ COMMON_CFILES=\
  mime_type.c\
  misctext.c\
  new_server_html.c\
+ new_server_html_2.c\
  ncurses_utils.c\
  nsdb_plugin_files.c\
  opcaps.c\

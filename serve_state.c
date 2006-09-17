@@ -204,6 +204,46 @@ serve_state_load_contest(int contest_id,
   return -1;
 }
 
+struct user_filter_info *
+user_filter_info_allocate(serve_state_t state, int user_id,
+                          ej_cookie_t session_id)
+{
+  struct user_filter_info *p;
+
+  if (user_id == -1) user_id = 0;
+
+  if (user_id >= state->users_a) {
+    int new_users_a = state->users_a;
+    struct user_state_info **new_users;
+
+    if (!new_users_a) new_users_a = 64;
+    while (new_users_a <= user_id) new_users_a *= 2;
+    new_users = xcalloc(new_users_a, sizeof(new_users[0]));
+    if (state->users_a > 0)
+      memcpy(new_users, state->users, state->users_a * sizeof(state->users[0]));
+    xfree(state->users);
+    state->users_a = new_users_a;
+    state->users = new_users;
+    info("allocate_user_info: new size %d", state->users_a);
+  }
+  if (!state->users[user_id]) {
+    state->users[user_id] = xcalloc(1, sizeof(*state->users[user_id]));
+  }
+
+  for (p = state->users[user_id]->first_filter; p; p = p->next) {
+    if (p->session_id == session_id) break;
+  }
+  if (!p) {
+    XCALLOC(p, 1);
+    p->next = state->users[user_id]->first_filter;
+    p->session_id = session_id;
+    state->users[user_id]->first_filter = p;
+  }
+
+  state->cur_user = p;
+  return p;
+}
+
 /*
  * Local variables:
  *  compile-command: "make"

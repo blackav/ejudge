@@ -221,5 +221,9 @@ html_write_user_problems_summary(const serve_state_t state,
                                  unsigned char *solved_flag,
                                  unsigned char *accepted_flag,
                                  int no_output_flag);
+void
+write_change_status_dialog(const serve_state_t state,
+                           FILE *f, unsigned char const *var_name,
+                           int disable_rejudge_flag);
 
 #endif /* __HTML_H__ */
