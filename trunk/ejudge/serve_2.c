@@ -72,7 +72,7 @@ serve_update_standings_file(serve_state_t state, int force_flag)
   }
   l10n_setlocale(state->global->standings_locale_id);
   if (state->global->score_system_val == SCORE_OLYMPIAD
-      && !state->olympiad_judging_mode)
+      && state->accepting_mode)
     accepting_mode = 1;
   write_standings(state, state->global->status_dir,
                   state->global->standings_file_name,
@@ -223,11 +223,11 @@ serve_update_status_file(serve_state_t state, int force_flag)
   status.testing_suspended = state->testing_suspended;
   status.download_interval = state->global->team_download_time / 60;
   status.is_virtual = state->global->virtual;
-  status.olympiad_judging_mode = state->olympiad_judging_mode;
   status.continuation_enabled = state->global->enable_continue;
   status.printing_enabled = state->global->enable_printing;
   status.printing_suspended = state->printing_suspended;
   status.always_show_problems = state->global->always_show_problems;
+  status.accepting_mode = state->accepting_mode;
   if (status.start_time && status.duration && state->global->board_fog_time > 0
       && !status.is_virtual) {
     status.freeze_time = status.start_time + status.duration - state->global->board_fog_time;
@@ -264,17 +264,25 @@ serve_load_status_file(serve_state_t state)
   char *ptr = 0;
 
   if (generic_read_file(&ptr, 0, &stat_len, 0, state->global->status_dir,
-                        "dir/status", "") < 0) return;
+                        "dir/status", "") < 0) {
+    if (state->global->score_system_val == SCORE_OLYMPIAD)
+      state->accepting_mode = 1;
+    return;
+  }
   if (stat_len != sizeof(status)) {
     info("load_status_file: length %zu does not match %zu",
          stat_len, sizeof(status));
     xfree(ptr);
+    if (state->global->score_system_val == SCORE_OLYMPIAD)
+      state->accepting_mode = 1;
     return;
   }
   memcpy(&status, ptr, sizeof(status));
   xfree(ptr);
   if (status.magic != PROT_SERVE_STATUS_MAGIC_V2) {
     info("load_status_file: bad magic value");
+    if (state->global->score_system_val == SCORE_OLYMPIAD)
+      state->accepting_mode = 1;
     return;
   }
 
@@ -282,8 +290,8 @@ serve_load_status_file(serve_state_t state)
   info("load_status_file: clients_suspended = %d", state->clients_suspended);
   state->testing_suspended = status.testing_suspended;
   info("load_status_file: testing_suspended = %d", state->testing_suspended);
-  state->olympiad_judging_mode = status.olympiad_judging_mode;
-  info("load_status_file: olympiad_judging_mode = %d", state->olympiad_judging_mode);
+  state->accepting_mode = status.accepting_mode;
+  info("load_status_file: accepting_mode = %d", state->accepting_mode);
   state->printing_suspended = status.printing_suspended;
   info("load_status_file: printing_suspended = %d", state->printing_suspended);
   state->stat_reported_before = status.stat_reported_before;

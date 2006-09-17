@@ -127,7 +127,6 @@ struct serve_state
   int clients_suspended;
   int testing_suspended;
   int printing_suspended;
-  int olympiad_judging_mode;
   int accepting_mode;
   int standings_updated;
 
