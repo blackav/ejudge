@@ -792,7 +792,6 @@ cmd_master_page(struct client_state *p, int len,
                       p->cookie,
                       pkt->first_run, pkt->last_run,
                       pkt->mode_clar, pkt->first_clar, pkt->last_clar,
-                      serve_state.accepting_mode,
                       self_url_ptr, filter_expr_ptr, hidden_vars_ptr,
                       extra_args_ptr, &caps);
     /* l10n_setlocale(0); */
@@ -801,7 +800,6 @@ cmd_master_page(struct client_state *p, int len,
     r = write_priv_all_runs(&serve_state, f, p->user_id, 0, pkt->priv_level,
                             p->cookie,
                             pkt->first_run, pkt->last_run,
-                            serve_state.accepting_mode,
                             0, filter_expr_ptr, 0, 0);
     if (r < 0) {
       fclose(f);

@@ -219,7 +219,7 @@ static const int acm_status_list[] =
 static void
 write_change_status_dialog(const serve_state_t state,
                            FILE *f, unsigned char const *var_name,
-                           int disable_rejudge_flag, int accepting_mode)
+                           int disable_rejudge_flag)
 {
   const int * cur_status_list = 0;
   int i;
@@ -230,7 +230,8 @@ write_change_status_dialog(const serve_state_t state,
   if (state->global->score_system_val == SCORE_KIROV) {
     if (disable_rejudge_flag) cur_status_list = kirov_no_rejudge_status_list;
     else cur_status_list = kirov_status_list;
-  } else if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+  } else if (state->global->score_system_val == SCORE_OLYMPIAD
+             && state->accepting_mode) {
     // OLYMPIAD in accepting mode
     if (disable_rejudge_flag) cur_status_list = olymp_accepting_no_rejudge_status_list;
     else cur_status_list = olymp_accepting_status_list;
@@ -434,7 +435,6 @@ write_priv_all_runs(serve_state_t state, FILE *f,
                     int user_id, struct user_filter_info *u,
                     int priv_level, ej_cookie_t sid,
                     int first_run, int last_run,
-                    int accepting_mode,
                     unsigned char const *self_url,
                     unsigned char const *filter_expr,
                     unsigned char const *hidden_vars,
@@ -856,8 +856,7 @@ write_priv_all_runs(serve_state_t state, FILE *f,
                             prev_successes);
       if (priv_level == PRIV_LEVEL_ADMIN) {
         snprintf(stat_select_name, sizeof(stat_select_name), "stat_%d", rid);
-        write_change_status_dialog(state, f, stat_select_name, pe->is_imported,
-                                   accepting_mode);
+        write_change_status_dialog(state, f, stat_select_name, pe->is_imported);
         fprintf(f,
                 "<td><input type=\"submit\" name=\"change_%d\""
                 " value=\"%s\"></td>\n", rid, _("change"));
@@ -917,7 +916,8 @@ write_priv_all_runs(serve_state_t state, FILE *f,
             ACTION_REJUDGE_DISPLAYED_1, _("Rejudge displayed runs"));
     fprintf(f, "</form></td><td>\n");
 
-    if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
+    if (state->global->score_system_val == SCORE_OLYMPIAD
+        && state->accepting_mode) {
       html_start_form(f, 1, self_url, hidden_vars);
       fprintf(f,"<input type=\"hidden\" name=\"run_mask_size\" value=\"%d\">\n",
               displayed_size);
@@ -1218,7 +1218,6 @@ write_master_page(serve_state_t state, FILE *f, int user_id, int priv_level,
                   ej_cookie_t sid,
                   int first_run, int last_run,
                   int mode_clar, int first_clar, int last_clar,
-                  int accepting_mode,
                   unsigned char const *self_url,
                   unsigned char const *filter_expr,
                   unsigned char const *hidden_vars,
@@ -1228,8 +1227,7 @@ write_master_page(serve_state_t state, FILE *f, int user_id, int priv_level,
   struct user_filter_info *u = allocate_user_info(state, user_id, sid);
 
   write_priv_all_runs(state, f, user_id, u, priv_level, sid, first_run,
-                      last_run, accepting_mode, self_url, filter_expr,
-                      hidden_vars, extra_args);
+                      last_run, self_url, filter_expr, hidden_vars, extra_args);
   write_all_clars(state, f, u, priv_level, sid, mode_clar,
                   first_clar, last_clar,
                   self_url, hidden_vars, extra_args);
@@ -1522,7 +1520,7 @@ write_priv_source(const serve_state_t state, FILE *f,
   if (priv_level == PRIV_LEVEL_ADMIN && !info.is_readonly) {
     html_start_form(f, 1, self_url, hidden_vars);
     fprintf(f, "<input type=\"hidden\" name=\"run_id\" value=\"%d\">", run_id);
-    write_change_status_dialog(state, f, 0, info.is_imported, accepting_mode);
+    write_change_status_dialog(state, f, 0, info.is_imported);
     fprintf(f, "<td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></form>\n", ACTION_RUN_CHANGE_STATUS, _("Change"));
   } else {
     fprintf(f, "%s", nbsp);
@@ -1804,7 +1802,7 @@ write_new_run_form(const serve_state_t state, FILE *f,
   fprintf(f, "</tr>\n");
 
   fprintf(f, "<tr><td>%s:</td>", _("Status"));
-  write_change_status_dialog(state, f, 0, 0, 0);
+  write_change_status_dialog(state, f, 0, 0);
   fprintf(f, "</tr>\n");
 
   if (state->global->score_system_val == SCORE_KIROV
