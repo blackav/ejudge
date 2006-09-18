@@ -27,6 +27,7 @@
 #include "teamdb.h"
 #include "contests.h"
 #include "job_packet.h"
+#include "archive_paths.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -689,6 +690,42 @@ serve_check_stat_generation(serve_state_t state, int force_flag)
   }
   state->stat_reported_before = thisday;
   state->stat_report_time = nextday;
+}
+
+void
+serve_move_files_to_insert_run(serve_state_t state, int run_id)
+{
+  int total = run_get_total(state->runlog_state);
+  int i, s;
+  const struct section_global_data *global = state->global;
+
+  if (run_id >= total - 1) return;
+  for (i = total - 1; i >= run_id; i--) {
+    archive_remove(state, global->run_archive_dir, i + 1, 0);
+    archive_remove(state, global->xml_report_archive_dir, i + 1, 0);
+    archive_remove(state, global->report_archive_dir, i + 1, 0);
+    if (global->team_enable_rep_view) {
+      archive_remove(state, global->team_report_archive_dir, i + 1, 0);
+    }
+    if (global->enable_full_archive) {
+      archive_remove(state, global->full_archive_dir, i + 1, 0);
+    }
+    archive_remove(state, global->audit_log_dir, i + 1, 0);
+    s = run_get_status(state->runlog_state, i);
+    if (s >= RUN_PSEUDO_FIRST && s <= RUN_PSEUDO_LAST) continue;
+    archive_rename(state, global->run_archive_dir, 0, i, 0, i + 1, 0, 0);
+    archive_rename(state, global->xml_report_archive_dir, 0, i, 0, i + 1, 0, 0);
+    archive_rename(state, global->report_archive_dir, 0, i, 0, i + 1, 0, 0);
+    if (global->team_enable_rep_view) {
+      archive_rename(state, global->team_report_archive_dir, 0,i,0,i + 1,0,0);
+    }
+    if (global->enable_full_archive) {
+      archive_rename(state, global->full_archive_dir, 0, i, 0, i + 1, 0, 0);
+    }
+    archive_rename(state, global->audit_log_dir, 0, i, 0, i + 1, 0, 0);
+  }
+
+  /* FIXME: add audit information for all the renamed runs */
 }
 
 /*

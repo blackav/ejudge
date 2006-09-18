@@ -41,6 +41,9 @@
 #include "runlog.h"
 #include "html.h"
 #include "watched_file.h"
+#include "mime_type.h"
+#include "sha.h"
+#include "archive_paths.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -153,6 +156,24 @@ ns_cgi_param(const struct http_request_info *phr, const unsigned char *param,
   if (i >= phr->param_num) return 0;
   if (strlen(phr->params[i]) != phr->param_sizes[i]) return -1;
   *p_value = phr->params[i];
+  return 1;
+}
+
+static int
+ns_cgi_param_bin(const struct http_request_info *phr,
+                 const unsigned char *param,
+                 const unsigned char **p_value,
+                 size_t *p_size)
+{
+  int i;
+
+  if (!param) return -1;
+  for (i = 0; i < phr->param_num; i++)
+    if (!strcmp(phr->param_names[i], param))
+      break;
+  if (i >= phr->param_num) return 0;
+  *p_value = phr->params[i];
+  *p_size = phr->param_sizes[i];
   return 1;
 }
 
@@ -2619,6 +2640,332 @@ unpriv_change_password(struct server_framework_state *state,
   xfree(log_txt);
 }
 
+static void
+unpriv_submit_run(struct server_framework_state *state,
+                  struct client_state *p,
+                  FILE *fout,
+                  struct http_request_info *phr,
+                  const struct contest_desc *cnts,
+                  struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob;
+  const struct section_language_data *lang = 0;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  FILE *log_f = 0;
+  int prob_id, n, lang_id = 0, i, ans, max_ans, j;
+  const unsigned char *s, *run_text = 0;
+  size_t run_size = 0, ans_size;
+  unsigned char *ans_buf, *ans_map;
+  time_t start_time, stop_time, user_deadline = 0;
+  const unsigned char *login, *mime_type_str = 0;
+  char **lang_list;
+  int mime_type = 0;
+  ruint32_t shaval[5];
+  int variant = 0, run_id, arch_flags = 0;
+  unsigned char *acc_probs = 0;
+  struct timeval precise_time;
+  path_t run_path;
+
+  if (ns_cgi_param(phr, "prob_id", &s) <= 0)
+    return html_err_invalid_param(state, p, fout, phr, 0,
+                                  "prob_id is not set or binary");
+  if (sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n])
+    return html_err_invalid_param(state, p, fout, phr, 0,
+                                  "cannot parse prob_id");
+  if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id]))
+    return html_err_invalid_param(state, p, fout, phr, 0,
+                                  "prob_id is invalid");
+
+  // "STANDARD" problems need programming language identifier
+  if (prob->type_val == PROB_TYPE_STANDARD) {
+    if (ns_cgi_param(phr, "lang_id", &s) <= 0)
+      return html_err_invalid_param(state, p, fout, phr, 0,
+                                    "lang_id is not set or binary");
+    if (sscanf(s, "%d%n", &lang_id, &n) != 1 || s[n])
+      return html_err_invalid_param(state, p, fout, phr, 0,
+                                    "cannot parse lang_id");
+    if (lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id]))
+      return html_err_invalid_param(state, p, fout, phr, 0,
+                                    "lang_id is invalid");
+  }
+
+  switch (prob->type_val) {
+  case PROB_TYPE_STANDARD:      // "file"
+  case PROB_TYPE_OUTPUT_ONLY:
+  case PROB_TYPE_TEXT_ANSWER:
+  case PROB_TYPE_SHORT_ANSWER:
+  case PROB_TYPE_SELECT_ONE:
+    if (!ns_cgi_param_bin(phr, "file", &run_text, &run_size))
+      return html_err_invalid_param(state, p, fout, phr, 0,
+                                    "\"file\" parameter is not set");
+    break;
+  case PROB_TYPE_SELECT_MANY:   // "ans_*"
+    for (i = 0, max_ans = -1, ans_size = 0; i < phr->param_num; i++)
+      if (!strncmp(phr->param_names[i], "ans_", 4)) {
+        if (sscanf(phr->param_names[i] + 4, "%d%n", &ans, &n) != 1
+            || phr->param_names[i][4 + n])
+          return html_err_invalid_param(state, p, fout, phr, 0,
+                                        "\"ans_*\" parameter is invalid");
+        if (ans < 0 || ans > 65535)
+          return html_err_invalid_param(state, p, fout, phr, 0,
+                                        "\"ans_*\" parameter is out of range");
+        if (ans > max_ans) max_ans = ans;
+        ans_size += 7;
+      }
+    if (max_ans < 0) {
+      run_text = "";
+      run_size = 0;
+      break;
+    }
+    XALLOCAZ(ans_map, max_ans + 1);
+    for (i = 0; i < phr->param_num; i++)
+      if (!strncmp(phr->param_names[i], "ans_", 4)) {
+        sscanf(phr->param_names[i] + 4, "%d", &ans);
+        ans_map[ans] = 1;
+      }
+    XALLOCA(ans_buf, ans_size);
+    run_text = ans_buf;
+    for (i = 0, run_size = 0; i <= max_ans; i++)
+      if (ans_map[i]) {
+        if (run_size > 0) ans_buf[run_size++] = ' ';
+        run_size += sprintf(ans_buf + run_size, "%d", i);
+      }
+    ans_map[run_size] = 0;
+    break;
+  default:
+    abort();
+  }
+
+  switch (prob->type_val) {
+  case PROB_TYPE_STANDARD:
+    if (!lang->binary && strlen(run_text) != run_size) 
+      return html_err_invalid_param(state, p, fout, phr, 0,
+                                    "binary submission");
+    break;
+
+  case PROB_TYPE_OUTPUT_ONLY:
+    if (!prob->binary_input && strlen(run_text) != run_size) 
+      return html_err_invalid_param(state, p, fout, phr, 0,
+                                    "binary submission");
+    break;
+
+  case PROB_TYPE_TEXT_ANSWER:
+  case PROB_TYPE_SHORT_ANSWER:
+  case PROB_TYPE_SELECT_ONE:
+  case PROB_TYPE_SELECT_MANY:
+    if (strlen(run_text) != run_size) 
+      return html_err_invalid_param(state, p, fout, phr, 0,
+                                    "binary submission");
+    break;
+  }
+
+  if (global->virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                          cs->current_time);
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+  }
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if (cs->clients_suspended) {
+    fprintf(log_f, _("Client's requests are suspended.\nPlease wait until the contest administrator resumes the contest."));
+    goto done;
+  }
+  if (!start_time) {
+    fprintf(log_f, _("The contest is not started."));
+    goto done;
+  }
+  if (stop_time) {
+    fprintf(log_f, _("The contest is finished."));
+    goto done;
+  }
+  if (serve_check_user_quota(cs, phr->user_id, run_size) < 0) {
+    fprintf(log_f, _("User quota exceeded.\nThis submit is too large, you already have too many submits,\nor the total size of your submits is too big."));
+    goto done;
+  }
+  // problem submit start time
+  if (prob->t_start_date >= 0 && cs->current_time < prob->t_start_date) {
+    fprintf(log_f, _("This problem is not yet available."));
+    goto done;
+  }
+  // personal deadline
+  if (prob->pd_total > 0) {
+    login = teamdb_get_login(cs->teamdb_state, phr->user_id);
+    for (i = 0; i < prob->pd_total; i++) {
+      if (!strcmp(login, prob->pd_infos[i].login)) {
+        user_deadline = prob->pd_infos[i].deadline;
+        break;
+      }
+    }
+  }
+  // common problem deadline
+  if (user_deadline <= 0) user_deadline = prob->t_deadline;
+  if (user_deadline > 0 && cs->current_time >= user_deadline) {
+    fprintf(log_f, _("Deadline for this problem is expired."));
+    goto done;
+  }
+  /* check for disabled languages */
+  if (lang_id > 0) {
+    if (lang->disabled) {
+      fprintf(log_f, _("This language is disabled for use."));
+      goto done;
+    }
+
+    if (prob->enable_language) {
+      lang_list = prob->enable_language;
+      for (i = 0; lang_list[i]; i++)
+        if (!strcmp(lang_list[i], lang->short_name))
+          break;
+      if (!lang_list[i]) {
+        fprintf(log_f, _("The language %s is not available for this problem."),
+                lang->short_name);
+        goto done;
+      }
+    } else if (prob->disable_language) {
+      lang_list = prob->disable_language;
+      for (i = 0; lang_list[i]; i++)
+        if (!strcmp(lang_list[i], lang->short_name))
+          break;
+      if (lang_list[i]) {
+        fprintf(log_f, _("The language %s is disabled for this problem."),
+                lang->short_name);
+        goto done;
+      }
+    }
+  } else {
+    // guess the content-type and check it against the list
+    if ((mime_type = mime_type_guess(cs->global->diff_work_dir,
+                                     run_text, run_size)) < 0) {
+      fprintf(log_f, _("Cannot guess the content type."));
+      goto done;
+    }
+    mime_type_str = mime_type_get_type(mime_type);
+    if (prob->enable_language) {
+      lang_list = prob->enable_language;
+      for (i = 0; lang_list[i]; i++)
+        if (!strcmp(lang_list[i], mime_type_str))
+          break;
+      if (!lang_list[i]) {
+        fprintf(log_f,
+                _("The content type %s is not available for this problem."),
+                mime_type_str);
+        goto done;
+      }
+    } else if (prob->disable_language) {
+      lang_list = prob->disable_language;
+      for (i = 0; lang_list[i]; i++)
+        if (!strcmp(lang_list[i], mime_type_str))
+          break;
+      if (lang_list[i]) {
+        fprintf(log_f, _("The content type %s is disabled for this problem."),
+                mime_type_str);
+        goto done;
+      }
+    }
+  }
+
+  if (prob->variant_num > 0) {
+    if ((variant = find_variant(cs, phr->user_id, prob_id)) <= 0) {
+      fprintf(log_f, _("No assigned variant."));
+      goto done;
+    }
+  }
+
+  sha_buffer(run_text, run_size, shaval);
+  if ((run_id = run_find_duplicate(cs->runlog_state, phr->user_id, prob_id,
+                                   lang_id, variant, run_size, shaval)) >= 0) {
+    fprintf(log_f, _("This submit is duplicate of the run %d."), run_id);
+    goto done;
+  }
+
+  if (global->disable_submit_after_ok
+      && global->score_system_val != SCORE_OLYMPIAD && !cs->accepting_mode) {
+    XALLOCAZ(acc_probs, cs->max_prob + 1);
+    run_get_accepted_set(cs->runlog_state, phr->user_id,
+                         cs->accepting_mode, cs->max_prob, acc_probs);
+    if (acc_probs[prob_id]) {
+      fprintf(log_f, _("This problem is already solved."));
+      goto done;
+    }
+  }
+
+  if (prob->require) {
+    if (!acc_probs) {
+      XALLOCAZ(acc_probs, cs->max_prob + 1);
+      run_get_accepted_set(cs->runlog_state, phr->user_id,
+                           cs->accepting_mode, cs->max_prob, acc_probs);
+    }
+    for (i = 0; prob->require[i]; i++) {
+      for (j = 1; j <= cs->max_prob; j++)
+        if (cs->probs[j] && !strcmp(cs->probs[j]->short_name, prob->require[i]))
+          break;
+      if (j > cs->max_prob || !acc_probs[j]) break;
+    }
+    if (prob->require[i]) {
+      fprintf(log_f, _("Not all pre-required problems are solved."));
+      goto done;
+    }
+  }
+
+  // OK, so all checks are done, now we add this submit to the database
+  gettimeofday(&precise_time, 0);
+
+  run_id = run_add_record(cs->runlog_state, 
+                          precise_time.tv_sec, precise_time.tv_usec,
+                          run_size, shaval,
+                          phr->ip, phr->ssl_flag,
+                          phr->locale_id, phr->user_id,
+                          prob_id, lang_id, 0, 0, mime_type);
+  if (run_id < 0) {
+    fprintf(log_f, _("Cannot add the record to the database."));
+    goto done;
+  }
+  serve_move_files_to_insert_run(cs, run_id);
+                          
+  arch_flags = archive_make_write_path(cs, run_path, sizeof(run_path),
+                                       global->run_archive_dir, run_id,
+                                       run_size, 0);
+  if (arch_flags < 0) {
+    run_undo_add_record(cs->runlog_state, run_id);
+    fprintf(log_f, _("Cannot allocate disk space."));
+    goto done;
+  }
+  if (archive_dir_prepare(cs, global->run_archive_dir, run_id, 0, 0) < 0) {
+    run_undo_add_record(cs->runlog_state, run_id);
+    fprintf(log_f, _("Cannot allocate disk space."));
+    goto done;
+  }
+  if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
+    run_undo_add_record(cs->runlog_state, run_id);
+    fprintf(log_f, _("Cannot write to the disk."));
+    goto done;
+  }
+
+  if (prob->type == PROB_TYPE_STANDARD) {
+  } else {
+  }
+
+ done:;
+  fclose(log_f); log_f = 0;
+  if (!log_txt || !*log_txt) {
+    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
+  } else {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+                           NEW_SRV_ACTION_MAIN_PAGE);
+  }
+
+  //cleanup:;
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+
+}
+
 static int
 is_problem_deadlined(serve_state_t cs,
                      int problem_id,
@@ -3017,7 +3364,7 @@ user_main_page(struct server_framework_state *state,
         break;
       case PROB_TYPE_SELECT_ONE:
         for (i = 0; prob->alternative[i]; i++) {
-          fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"answer\"></td><td>%s</td></tr>\n", i + 1, prob->alternative[i]);
+          fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\"></td><td>%s</td></tr>\n", i + 1, prob->alternative[i]);
         }
         break;
       case PROB_TYPE_SELECT_MANY:
@@ -3144,8 +3491,9 @@ user_main_page(struct server_framework_state *state,
 
 static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 {
-  [NEW_SRV_ACTION_CHANGE_LANGUAGE] unpriv_change_language,
-  [NEW_SRV_ACTION_CHANGE_PASSWORD] unpriv_change_password,
+  [NEW_SRV_ACTION_CHANGE_LANGUAGE] = unpriv_change_language,
+  [NEW_SRV_ACTION_CHANGE_PASSWORD] = unpriv_change_password,
+  [NEW_SRV_ACTION_SUBMIT_RUN] = unpriv_submit_run,
 };
 
 static void

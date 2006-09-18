@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-17 21:10+0400\n"
-"PO-Revision-Date: 2006-09-18 00:33+0400\n"
+"POT-Creation-Date: 2006-09-18 09:19+0400\n"
+"PO-Revision-Date: 2006-09-18 09:23+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -396,6 +396,18 @@ msgstr "Не могу добавить нового члена команды"
 msgid "Cannot add a new member"
 msgstr "Невозможно добавить нового члена команды"
 
+#, c-format
+msgid "Cannot add the record to the database."
+msgstr "Ошибка добавления записи в базу данных."
+
+#, c-format
+msgid "Cannot allocate disk space."
+msgstr "Ошибка выделения места на диске."
+
+#, c-format
+msgid "Cannot guess the content type."
+msgstr "Невозможно определить тип содержимого."
+
 msgid "Cannot parse role/person."
 msgstr "Не могу считать роль/члена команды."
 
@@ -410,6 +422,10 @@ msgstr "Невозможно удалить члена команды по причинам, перечисленным ниже"
 
 msgid "Cannot remove team member"
 msgstr "Невозможно удалить участника"
+
+#, c-format
+msgid "Cannot write to the disk."
+msgstr "Ошибка записи на диск."
 
 msgid "Change"
 msgstr "Изменить"
@@ -491,6 +507,14 @@ msgstr "Очистить эту запись"
 
 msgid "Client time"
 msgstr "Время клиента"
+
+#, c-format
+msgid ""
+"Client's requests are suspended.\n"
+"Please wait until the contest administrator resumes the contest."
+msgstr ""
+"Запросы участников временно не обрабатываются.\n"
+"Пожалуйста, подождите, пока турнир не будет продолжен."
 
 msgid "Coach"
 msgstr "Тренер"
@@ -590,6 +614,10 @@ msgstr "Страна (Англ.)"
 
 msgid "Current virtual standings"
 msgstr "Виртуальное положение участников"
+
+#, c-format
+msgid "Deadline for this problem is expired."
+msgstr "Срок сдачи данной задачи истёк."
 
 msgid "Default language"
 msgstr "Язык по умолчанию"
@@ -1253,6 +1281,10 @@ msgstr "Дальше"
 msgid "No"
 msgstr "Нет"
 
+#, c-format
+msgid "No assigned variant."
+msgstr "Нет назначенного варианта."
+
 msgid "No comments.\n"
 msgstr "Без комментариев.\n"
 
@@ -1273,6 +1305,10 @@ msgstr "Число попыток"
 
 msgid "No. of warns"
 msgstr "Число предупреждений"
+
+#, c-format
+msgid "Not all pre-required problems are solved."
+msgstr "Решены не все требуемые задачи."
 
 msgid "Not registered"
 msgstr "Не зарегистрированы"
@@ -1927,8 +1963,20 @@ msgstr "Проверка решений участников приостановлена"
 msgid "Tests passed"
 msgstr "Пройдено тестов"
 
+#, c-format
+msgid "The content type %s is disabled for this problem."
+msgstr "Тип посылки %s запрещен для этой задачи."
+
+#, c-format
+msgid "The content type %s is not available for this problem."
+msgstr "Тип посылки %s недоступен для этой задачи."
+
 msgid "The contest is closed."
 msgstr "Турнир закрыт."
+
+#, c-format
+msgid "The contest is finished."
+msgstr "Турнир завершен."
 
 msgid "The contest is in progress"
 msgstr "Турнир идёт"
@@ -1938,6 +1986,10 @@ msgstr "Турнир идёт (текущее положение команд не отображается)"
 
 msgid "The contest is not started"
 msgstr "Турнир не начался"
+
+#, c-format
+msgid "The contest is not started."
+msgstr "Турнир не начался."
 
 msgid "The contest is over"
 msgstr "Турнир закончился"
@@ -1957,6 +2009,14 @@ msgstr "Следующие посылки будут пересужены"
 
 msgid "The form contains error(s)"
 msgstr "Анкета заполнена неправильно"
+
+#, c-format
+msgid "The language %s is disabled for this problem."
+msgstr "Язык %s запрещён для этой задачи."
+
+#, c-format
+msgid "The language %s is not available for this problem."
+msgstr "Язык %s не доступен для этой задачи."
 
 msgid "The last command completion status"
 msgstr "Статус выполнения последнего запроса"
@@ -2000,12 +2060,28 @@ msgstr ""
 "Сервер базы данных пользователей в настоящий момент недоступен. Попробуйте "
 "повторить запрос позднее."
 
+#, c-format
+msgid "This language is disabled for use."
+msgstr "Этот язык не может быть использован для этой задачи."
+
+#, c-format
+msgid "This problem is already solved."
+msgstr "Эта задача уже решена."
+
+#, c-format
+msgid "This problem is not yet available."
+msgstr "Эта задача еще не доступна."
+
 msgid ""
 "This program is configured incorrectly and cannot perform normal operation. "
 "Please contact the site (or contest) administrator."
 msgstr ""
 "Эта программа сконфигурирована неверно и не может работать. Пожалуйста, "
 "обратитесь к администратору сайта или турнира."
+
+#, c-format
+msgid "This submit is duplicate of the run %d."
+msgstr "Эта посылка является копией посылки %d."
 
 msgid "Time"
 msgstr "Время"
@@ -2119,6 +2195,16 @@ msgstr "Вход пользователя [%s]"
 
 msgid "User name"
 msgstr "Имя участника"
+
+#, c-format
+msgid ""
+"User quota exceeded.\n"
+"This submit is too large, you already have too many submits,\n"
+"or the total size of your submits is too big."
+msgstr ""
+"Превышена квота пользователя.\n"
+"Данная посылка имеет слишком большой размер, Вами сделано\n"
+"слишком много посылок, или суммарный размер Ваших посылок слишком велик."
 
 msgid "User registration is complete"
 msgstr "Регистрация пользователя завершена"

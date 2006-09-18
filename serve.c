@@ -1745,41 +1745,6 @@ static int queue_compile_request(unsigned char const *str, int len,
                                  int priority_adjustment);
 
 static void
-move_files_to_insert_run(int run_id)
-{
-  int total = run_get_total(serve_state.runlog_state);
-  int i, s;
-
-  if (run_id >= total - 1) return;
-  for (i = total - 1; i >= run_id; i--) {
-    archive_remove(&serve_state, serve_state.global->run_archive_dir, i + 1, 0);
-    archive_remove(&serve_state, serve_state.global->xml_report_archive_dir, i + 1, 0);
-    archive_remove(&serve_state, serve_state.global->report_archive_dir, i + 1, 0);
-    if (serve_state.global->team_enable_rep_view) {
-      archive_remove(&serve_state, serve_state.global->team_report_archive_dir, i + 1, 0);
-    }
-    if (serve_state.global->enable_full_archive) {
-      archive_remove(&serve_state, serve_state.global->full_archive_dir, i + 1, 0);
-    }
-    archive_remove(&serve_state, serve_state.global->audit_log_dir, i + 1, 0);
-    s = run_get_status(serve_state.runlog_state, i);
-    if (s >= RUN_PSEUDO_FIRST && s <= RUN_PSEUDO_LAST) continue;
-    archive_rename(&serve_state, serve_state.global->run_archive_dir, 0, i, 0, i + 1, 0, 0);
-    archive_rename(&serve_state, serve_state.global->xml_report_archive_dir, 0, i, 0, i + 1, 0, 0);
-    archive_rename(&serve_state, serve_state.global->report_archive_dir, 0, i, 0, i + 1, 0, 0);
-    if (serve_state.global->team_enable_rep_view) {
-      archive_rename(&serve_state, serve_state.global->team_report_archive_dir, 0, i, 0, i + 1, 0, 0);
-    }
-    if (serve_state.global->enable_full_archive) {
-      archive_rename(&serve_state, serve_state.global->full_archive_dir, 0, i, 0, i + 1, 0, 0);
-    }
-    archive_rename(&serve_state, serve_state.global->audit_log_dir, 0, i, 0, i + 1, 0, 0);
-  }
-
-  /* FIXME: add audit information for all the renamed runs */
-}
-
-static void
 cmd_priv_submit_run(struct client_state *p, int len, 
                     struct prot_serve_pkt_submit_run *pkt)
 {
@@ -1888,6 +1853,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
                                pkt->run_len,
                                shaval,
                                pkt->ip,
+                               pkt->ssl,
                                pkt->locale_id,
                                pkt->user_id,
                                pkt->prob_id,
@@ -1896,7 +1862,7 @@ cmd_priv_submit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  move_files_to_insert_run(run_id);
+  serve_move_files_to_insert_run(&serve_state, run_id);
 
   arch_flags = archive_make_write_path(&serve_state, run_arch, sizeof(run_arch),
                                        serve_state.global->run_archive_dir,
@@ -2224,7 +2190,7 @@ do_submit_run(struct client_state *p,
                                precise_time.tv_usec * 1000,
                                run_size,
                                shaval,
-                               ip,
+                               ip, ssl,
                                locale_id,
                                user_id,
                                cur_prob->id,
@@ -2232,7 +2198,7 @@ do_submit_run(struct client_state *p,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  move_files_to_insert_run(run_id);
+  serve_move_files_to_insert_run(&serve_state, run_id);
 
   arch_flags = archive_make_write_path(&serve_state, run_arch, sizeof(run_arch),
                                        serve_state.global->run_archive_dir, run_id,
@@ -2621,7 +2587,7 @@ cmd_command_0(struct client_state *p, int len,
     run_id = run_virtual_start(serve_state.runlog_state, p->user_id, precise_time.tv_sec,
                                p->ip, precise_time.tv_usec * 1000);
     if (run_id < 0) return;
-    move_files_to_insert_run(run_id);
+    serve_move_files_to_insert_run(&serve_state, run_id);
     info("%d: virtual contest started for %d", p->id, p->user_id);
     new_send_reply(p, SRV_RPL_OK);
     return;
@@ -2643,7 +2609,7 @@ cmd_command_0(struct client_state *p, int len,
     run_id = run_virtual_stop(serve_state.runlog_state, p->user_id, precise_time.tv_sec,
                               p->ip, precise_time.tv_usec * 1000);
     if (run_id < 0) return;
-    move_files_to_insert_run(run_id);
+    serve_move_files_to_insert_run(&serve_state, run_id);
     info("%d: virtual contest stopped for %d", p->id, p->user_id);
     new_send_reply(p, SRV_RPL_OK);
     return;
@@ -3827,7 +3793,7 @@ cmd_new_run(struct client_state *p, int len,
                                precise_time.tv_usec * 1000,
                                run_src_len,
                                shaval,
-                               pkt->ip,
+                               pkt->ip, pkt->ssl,
                                locale_id,
                                pkt->user_id,
                                pkt->prob_id,
@@ -3836,7 +3802,7 @@ cmd_new_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
-  move_files_to_insert_run(run_id);
+  serve_move_files_to_insert_run(&serve_state, run_id);
 
   arch_flags = archive_make_write_path(&serve_state, run_arch, sizeof(run_arch),
                                        serve_state.global->run_archive_dir,
