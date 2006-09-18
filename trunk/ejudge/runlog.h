@@ -76,6 +76,7 @@ int run_add_record(runlog_state_t state,
                    size_t         size,
                    ruint32_t      sha1[5],
                    ruint32_t      ip,
+                   int            ssl_flag,
                    int            locale_id,
                    int            team,
                    int            problem,
@@ -110,6 +111,15 @@ unsigned char *run_unparse_ip(ej_ip_t ip);
 ej_ip_t run_parse_ip(unsigned char const *buf);
 
 int run_check_duplicate(runlog_state_t, int run_id);
+int run_find_duplicate(runlog_state_t state,
+                       int user_id,
+                       int prob_id,
+                       int lang_id,
+                       int variant,
+                       size_t size,
+                       ruint32_t sha1[]);
+void run_get_accepted_set(runlog_state_t state, int user_id, int accepting_mode,
+                          int max_prob, unsigned char *acc_set);
 
 /* structure size is 128 bytes */
 struct run_header
@@ -176,7 +186,7 @@ struct run_entry
   unsigned char  is_readonly;   /* 1 */
   unsigned char  pages;         /* 1 */
   unsigned char  ipv6_flag;     /* 1 */
-  unsigned char  _pad1[1];      /* 1 */
+  unsigned char  ssl_flag;      /* 1 */
   rint16_t       mime_type;     /* 2 */
   /* total is 94 bytes */
   unsigned char  _pad2[34];

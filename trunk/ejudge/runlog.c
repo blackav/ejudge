@@ -770,6 +770,7 @@ run_add_record(runlog_state_t state,
                size_t         size,
                ruint32_t      sha1[5],
                ruint32_t      ip,
+               int            ssl_flag,
                int            locale_id,
                int            team,
                int            problem,
@@ -805,7 +806,7 @@ run_add_record(runlog_state_t state,
     err("run_add_record: team is out of range");
     return -1;
   }
-  if (language <= 0 || language >= 255) {
+  if (language < 0 || language >= 255) {
     err("run_add_record: language is out of range");
     return -1;
   }
@@ -827,6 +828,10 @@ run_add_record(runlog_state_t state,
   }
   if (mime_type < 0 || mime_type > 32767) {
     err("run_add_record: mime_type field value %d is invalid", mime_type);
+    return -1;
+  }
+  if (ssl_flag < 0 || ssl_flag > 1) {
+    err("run_add_record: ssl_flag field value is invalid");
     return -1;
   }
 
@@ -870,6 +875,7 @@ run_add_record(runlog_state_t state,
   state->runs[i].test = 0;
   state->runs[i].score = -1;
   state->runs[i].a.ip = ip;
+  state->runs[i].ssl_flag = ssl_flag;
   state->runs[i].variant = variant;
   state->runs[i].is_hidden = is_hidden;
   state->runs[i].mime_type = mime_type;
@@ -1269,6 +1275,65 @@ run_check_duplicate(runlog_state_t state, int run_id)
   p->status = RUN_IGNORED;
   if (run_flush_entry(state, run_id) < 0) return -1;
   return i + 1;
+}
+
+int
+run_find_duplicate(runlog_state_t state,
+                   int user_id,
+                   int prob_id,
+                   int lang_id,
+                   int variant,
+                   size_t size,
+                   ruint32_t sha1[])
+{
+  int i;
+  const struct run_entry *q;
+
+  for (i = state->run_u - 1; i >= 0; i--) {
+    q = &state->runs[i];
+    if (q->status == RUN_EMPTY || q->status == RUN_VIRTUAL_START
+        || q->status == RUN_VIRTUAL_STOP)
+      continue;
+    if (q->user_id == user_id
+        && q->prob_id == prob_id
+        && q->variant == variant) {
+      if (q->lang_id == lang_id
+          && q->size == size
+          && q->sha1[0] == sha1[0]
+          && q->sha1[1] == sha1[1]
+          && q->sha1[2] == sha1[2]
+          && q->sha1[3] == sha1[3]
+          && q->sha1[4] == sha1[4])
+        return i;
+      return -1;
+    }
+  }
+  return -1;
+}
+
+void
+run_get_accepted_set(runlog_state_t state, int user_id, int accepting_mode,
+                     int max_prob, unsigned char *acc_set)
+{
+  int i;
+  const struct run_entry *q;
+
+  if (accepting_mode) {
+    for (i = 0; i < state->run_u; i++) {
+      q = &state->runs[i];
+      if ((q->status == RUN_OK || q->status == RUN_ACCEPTED
+           || q->status == RUN_PARTIAL)
+          && q->user_id == user_id && q->prob_id > 0 && q->prob_id <= max_prob)
+        acc_set[q->prob_id] = 1;
+    }
+  } else {
+    for (i = 0; i < state->run_u; i++) {
+      q = &state->runs[i];
+      if (q->status == RUN_OK && q->user_id == user_id
+          && q->prob_id > 0 && q->prob_id <= max_prob)
+        acc_set[q->prob_id] = 1;
+    }
+  }
 }
 
 void

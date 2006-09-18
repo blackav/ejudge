@@ -17,6 +17,8 @@
  * GNU General Public License for more details.
  */
 
+#include <stdio.h>
+
 /* supported mime types for binary content */
 enum
 {
@@ -46,5 +48,13 @@ enum
 
   MIME_TYPE_LAST,
 };
+
+const unsigned char *mime_type_get_type(int mt);
+const unsigned char *mime_type_get_suffix(int mt);
+int mime_type_parse(const unsigned char *str);
+
+int mime_type_guess(const unsigned char *tmpdir,
+                    const unsigned char *bytes,
+                    size_t size);
 
 #endif /* __MIME_TYPE_H__ */

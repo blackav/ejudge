@@ -187,4 +187,6 @@ struct user_filter_info *
 user_filter_info_allocate(serve_state_t state, int user_id,
                           ej_cookie_t session_id);
 
+void serve_move_files_to_insert_run(serve_state_t state, int run_id);
+
 #endif /* __SERVE_STATE_H__ */
