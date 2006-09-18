@@ -2948,6 +2948,29 @@ unpriv_submit_run(struct server_framework_state *state,
   }
 
   if (prob->type == PROB_TYPE_STANDARD) {
+    if (prob->disable_auto_testing > 0
+        || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
+        || lang->disable_auto_testing || lang->disable_testing) {
+      run_change_status(cs->runlog_state, run_id, RUN_PENDING, 0, -1, 0);
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "Command: submit\n"
+                      "Status: pending\n"
+                      "Run-id: %d\n"
+                      "  Testing disabled for this problem or language\n",
+                      run_id);
+    } else {
+      if (serve_compile_request(cs, run_text, run_size, run_id,
+                                lang->compile_id, phr->locale_id, 0,
+                                lang->src_sfx,
+                                lang->compiler_env, -1, 0) < 0) {
+        fprintf(log_f, _("Cannot put the run to the compilation queue."));
+        goto done;
+      }
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "Command: submit\n"
+                      "Status: ok\n"
+                      "Run-id: %d\n", run_id);
+    }
   } else {
   }
 

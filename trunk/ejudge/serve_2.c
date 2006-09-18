@@ -28,6 +28,9 @@
 #include "contests.h"
 #include "job_packet.h"
 #include "archive_paths.h"
+#include "xml_utils.h"
+#include "compile_packet.h"
+#include "curtime.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -35,8 +38,10 @@
 
 #include <unistd.h>
 #include <errno.h>
+#include <ctype.h>
 #include <sys/types.h>
 #include <pwd.h>
+#include <sys/time.h>
 
 void
 serve_update_standings_file(serve_state_t state, int force_flag)
@@ -726,6 +731,174 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
   }
 
   /* FIXME: add audit information for all the renamed runs */
+}
+
+void
+serve_audit_log(serve_state_t state, int run_id, int user_id,
+                ej_ip_t ip, int ssl_flag, const char *format, ...)
+{
+  unsigned char buf[16384];
+  unsigned char tbuf[128];
+  va_list args;
+  struct tm *ltm;
+  path_t audit_path;
+  FILE *f;
+  unsigned char *login;
+  size_t buf_len;
+
+  va_start(args, format);
+  vsnprintf(buf, sizeof(buf), format, args);
+  va_end(args);
+  buf_len = strlen(buf);
+  while (buf_len > 0 && isspace(buf[buf_len - 1])) buf[--buf_len] = 0;
+
+  ltm = localtime(&state->current_time);
+  snprintf(tbuf, sizeof(tbuf), "%04d/%02d/%02d %02d:%02d:%02d",
+           ltm->tm_year + 1900, ltm->tm_mon + 1, ltm->tm_mday,
+           ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
+
+  archive_make_write_path(state, audit_path, sizeof(audit_path),
+                          state->global->audit_log_dir, run_id, 0, 0);
+  if (archive_dir_prepare(state, state->global->audit_log_dir,
+                          run_id, 0, 1) < 0) return;
+  if (!(f = fopen(audit_path, "a"))) return;
+
+  fprintf(f, "Date: %s\n", tbuf);
+  if (!user_id) {
+    fprintf(f, "From: SYSTEM\n");
+  } else if (user_id <= 0) {
+    fprintf(f, "From: unauthentificated user\n");
+  } else if (!(login = teamdb_get_login(state->teamdb_state, user_id))){
+    fprintf(f, "From: user %d (login unknown)\n", user_id);
+  } else {
+    fprintf(f, "From: %s (uid %d)\n", login, user_id);
+  }
+  if (ip) {
+    fprintf(f, "Ip: %s%s\n", xml_unparse_ip(ip), ssl_flag?"/SSL":"");
+  }
+  fprintf(f, "%s\n\n", buf);
+
+  fclose(f);
+}
+
+static const unsigned char b32_digits[]=
+"0123456789ABCDEFGHIJKLMNOPQRSTUV";
+static void
+b32_number(unsigned long long num, unsigned char buf[])
+{
+  int i;
+
+  memset(buf, '0', SERVE_PACKET_NAME_SIZE - 1);
+  buf[SERVE_PACKET_NAME_SIZE - 1] = 0;
+  i = SERVE_PACKET_NAME_SIZE - 2;
+  while (num > 0 && i >= 0) {
+    buf[i] = b32_digits[num & 0x1f];
+    i--;
+    num >>= 5;
+  }
+  ASSERT(!num);
+}
+
+void
+serve_packet_name(int run_id, int prio, unsigned char buf[])
+{
+  unsigned long long num = 0;
+  struct timeval ts;
+
+  // generate "random" number, that would include the
+  // pid of "serve", the current time (with microseconds)
+  // and some small random component.
+  // pid is 2 byte (15 bit)
+  // run_id is 2 byte
+  // time_t component - 4 byte
+  // nanosec component - 4 byte
+
+  num = (getpid() & 0x7fffLLU) << 25LLU;
+  num |= (run_id & 0x7fffLLU) << 40LLU;
+  gettimeofday(&ts, 0);
+  num |= (ts.tv_sec ^ ts.tv_usec) & 0x1ffffff;
+  b32_number(num, buf);
+  if (prio < -16) prio = -16;
+  if (prio > 15) prio = 15;
+  buf[0] = b32_digits[prio + 16];
+}
+
+int
+serve_compile_request(serve_state_t state,
+                      unsigned char const *str, int len,
+                      int run_id, int lang_id, int locale_id, int output_only,
+                      unsigned char const *sfx,
+                      char **compiler_env,
+                      int accepting_mode,
+                      int priority_adjustment)
+{
+  struct compile_run_extra rx;
+  struct compile_request_packet cp;
+  void *pkt_buf = 0;
+  size_t pkt_len = 0;
+  unsigned char pkt_name[SERVE_PACKET_NAME_SIZE];
+  int arch_flags;
+  path_t run_arch;
+  const struct section_global_data *global = state->global;
+
+  if (accepting_mode == -1) accepting_mode = state->accepting_mode;
+
+  memset(&cp, 0, sizeof(cp));
+  cp.judge_id = state->compile_request_id++;
+  cp.contest_id = global->contest_id;
+  cp.run_id = run_id;
+  cp.lang_id = lang_id;
+  cp.locale_id = locale_id;
+  cp.output_only = output_only;
+  get_current_time(&cp.ts1, &cp.ts1_us);
+  cp.run_block_len = sizeof(rx);
+  cp.run_block = &rx;
+  cp.env_num = -1;
+  cp.env_vars = (unsigned char**) compiler_env;
+
+  memset(&rx, 0, sizeof(rx));
+  rx.accepting_mode = accepting_mode;
+  rx.priority_adjustment = priority_adjustment;
+
+  if (compile_request_packet_write(&cp, &pkt_len, &pkt_buf) < 0) {
+    // FIXME: need reasonable recovery?
+    goto failed;
+  }
+
+  if (!sfx) sfx = "";
+  serve_packet_name(run_id, 0, pkt_name);
+
+  if (len == -1) {
+    // copy from archive
+    arch_flags = archive_make_read_path(state, run_arch, sizeof(run_arch),
+                                        global->run_archive_dir, run_id, 0,0);
+    if (arch_flags < 0) return -1;
+    if (generic_copy_file(arch_flags, 0, run_arch, "",
+                          0, global->compile_src_dir, pkt_name, sfx) < 0)
+      goto failed;
+  } else {
+    // write from memory
+    if (generic_write_file(str, len, 0,
+                           global->compile_src_dir, pkt_name, sfx) < 0)
+      goto failed;
+  }
+
+  if (generic_write_file(pkt_buf, pkt_len, SAFE,
+                         global->compile_queue_dir, pkt_name, "") < 0) {
+    goto failed;
+  }
+
+  if (run_change_status(state->runlog_state, run_id, RUN_COMPILING, 0, -1,
+                        cp.judge_id) < 0) {
+    goto failed;
+  }
+
+  xfree(pkt_buf);
+  return 0;
+
+ failed:
+  xfree(pkt_buf);
+  return -1;
 }
 
 /*

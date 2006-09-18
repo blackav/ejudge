@@ -146,8 +146,16 @@ struct serve_state
   int run_dirs_u, run_dirs_a;
 
   struct problem_extra_info *prob_extras;
+  unsigned short compile_request_id;
 };
 typedef struct serve_state *serve_state_t;
+
+/* extra data, which is passed through compilation phase */
+struct compile_run_extra
+{
+  int accepting_mode;
+  int priority_adjustment;
+};
 
 serve_state_t serve_state_init(void);
 serve_state_t serve_state_destroy(serve_state_t state);
@@ -188,5 +196,20 @@ user_filter_info_allocate(serve_state_t state, int user_id,
                           ej_cookie_t session_id);
 
 void serve_move_files_to_insert_run(serve_state_t state, int run_id);
+
+void serve_audit_log(serve_state_t, int, int,
+                     ej_ip_t, int, const char *, ...)
+  __attribute__((format(printf, 6, 7)));
+
+void serve_packet_name(int run_id, int prio, unsigned char buf[]);
+
+int serve_compile_request(serve_state_t state,
+                          unsigned char const *str, int len,
+                          int run_id, int lang_id, int locale_id,
+                          int output_only,
+                          unsigned char const *sfx,
+                          char **compiler_env,
+                          int accepting_mode,
+                          int priority_adjustment);
 
 #endif /* __SERVE_STATE_H__ */

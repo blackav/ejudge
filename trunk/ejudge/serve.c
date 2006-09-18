@@ -402,55 +402,6 @@ cmd_pass_descriptors(struct client_state *p, int len,
   p->state = STATE_READ_FDS;
 }
 
-static void append_audit_log(int, struct client_state *, const char *, ...)
-  __attribute__((format(printf, 3, 4)));
-static void
-append_audit_log(int run_id, struct client_state *p, const char *format, ...)
-{
-  unsigned char buf[16384];
-  unsigned char tbuf[128];
-  va_list args;
-  struct tm *ltm;
-  path_t audit_path;
-  FILE *f;
-  unsigned char *login;
-  size_t buf_len;
-
-  va_start(args, format);
-  vsnprintf(buf, sizeof(buf), format, args);
-  va_end(args);
-  buf_len = strlen(buf);
-  while (buf_len > 0 && isspace(buf[buf_len - 1])) buf[--buf_len] = 0;
-
-  ltm = localtime(&serve_state.current_time);
-  snprintf(tbuf, sizeof(tbuf), "%04d/%02d/%02d %02d:%02d:%02d",
-           ltm->tm_year + 1900, ltm->tm_mon + 1, ltm->tm_mday,
-           ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
-
-  archive_make_write_path(&serve_state, audit_path, sizeof(audit_path),
-                          serve_state.global->audit_log_dir, run_id, 0, 0);
-  if (archive_dir_prepare(&serve_state, serve_state.global->audit_log_dir,
-                          run_id, 0, 1) < 0) return;
-  if (!(f = fopen(audit_path, "a"))) return;
-
-  fprintf(f, "Date: %s\n", tbuf);
-  if (!p) {
-    fprintf(f, "From: SYSTEM\n");
-  } else if (p->user_id <= 0) {
-    fprintf(f, "From: unauthentificated user\n");
-  } else if (!(login = teamdb_get_login(serve_state.teamdb_state, p->user_id))){
-    fprintf(f, "From: user %d (login unknown)\n", p->user_id);
-  } else {
-    fprintf(f, "From: %s (uid %d)\n", login, p->user_id);
-  }
-  if (p) {
-    fprintf(f, "Ip: %s\n", xml_unparse_ip(p->ip));
-  }
-  fprintf(f, "%s\n\n", buf);
-
-  fclose(f);
-}
-
 static void
 cmd_team_get_archive(struct client_state *p, int len,
                      struct prot_serve_pkt_get_archive *pkt)
@@ -1730,20 +1681,6 @@ cmd_team_show_item(struct client_state *p, int len,
   new_send_reply(p, SRV_RPL_OK);
 }
 
-/* extra data, which is passed through compilation phase */
-struct compile_run_extra
-{
-  int accepting_mode;
-  int priority_adjustment;
-};
-
-static int queue_compile_request(unsigned char const *str, int len,
-                                 int run_id, int lang_id, int locale_id,
-                                 int output_only,
-                                 unsigned char const *sfx,
-                                 char **, int accepting_mode,
-                                 int priority_adjustment);
-
 static void
 cmd_priv_submit_run(struct client_state *p, int len, 
                     struct prot_serve_pkt_submit_run *pkt)
@@ -1884,7 +1821,12 @@ cmd_priv_submit_run(struct client_state *p, int len,
   if (serve_state.testing_suspended) {
     info("%d: testing is suspended", p->id);
     run_change_status(serve_state.runlog_state, run_id, RUN_PENDING, 0, -1, 0);
-    append_audit_log(run_id, p, "Command: priv_submit\nStatus: pending\nRun-id: %d\n  Testing is suspended by the contest administrator\n", run_id);
+    serve_audit_log(&serve_state, run_id, p->user_id, p->ip, p->ssl,
+                    "Command: priv_submit\n"
+                    "Status: pending\n"
+                    "Run-id: %d\n"
+                    "  Testing is suspended by the contest administrator\n",
+                    run_id);
     new_send_reply(p, SRV_RPL_OK);
     return;
   }
@@ -1896,23 +1838,33 @@ cmd_priv_submit_run(struct client_state *p, int len,
       || serve_state.langs[pkt->lang_id]->disable_testing) {
     info("%d: priv_submit_run: auto testing disabled", p->id);
     run_change_status(serve_state.runlog_state, run_id, RUN_PENDING, 0, -1, 0);
-    append_audit_log(run_id, p, "Command: priv_submit\nStatus: pending\nRun-id: %d\n  Testing is disabled for this language or problem\n", run_id);
+    serve_audit_log(&serve_state, run_id, p->user_id, p->ip, p->ssl,
+                    "Command: priv_submit\n"
+                    "Status: pending\n"
+                    "Run-id: %d\n"
+                    "  Testing is disabled for this language or problem\n",
+                    run_id);
     new_send_reply(p, SRV_RPL_OK);
     return;
   }
 
-  if (queue_compile_request(pkt->data, pkt->run_len, run_id,
+  if (serve_compile_request(&serve_state, pkt->data, pkt->run_len, run_id,
                             serve_state.langs[pkt->lang_id]->compile_id,
                             pkt->locale_id,
                             (serve_state.probs[pkt->prob_id]->type_val > 0),
                             serve_state.langs[pkt->lang_id]->src_sfx,
-                            serve_state.langs[pkt->lang_id]->compiler_env, -1, 0) < 0) {
+                            serve_state.langs[pkt->lang_id]->compiler_env,
+                            -1, 0) < 0) {
     new_send_reply(p, -SRV_ERR_SYSTEM_ERROR);
     return;
   }
 
   info("%d: priv_submit_run: ok", p->id);
-  append_audit_log(run_id, p, "Command: priv_submit\nStatus: ok\nRun-id: %d\n", run_id);
+  serve_audit_log(&serve_state, run_id, p->user_id, p->ip, p->ssl,
+                  "Command: priv_submit\n"
+                  "Status: ok\n"
+                  "Run-id: %d\n",
+                  run_id);
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -2011,7 +1963,10 @@ cmd_upload_report(struct client_state *p, int len,
   }
 
   info("%d: cmd_upload_report: ok", p->id);
-  append_audit_log(pkt->run_id, p, "Command: upload_report\nStatus: ok\n%s%s", t2, t2);
+  serve_audit_log(&serve_state, pkt->run_id, p->user_id, p->ip, p->ssl,
+                  "Command: upload_report\n"
+                  "Status: ok\n"
+                  "%s%s", t2, t2);
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -2041,7 +1996,10 @@ cmd_team_print(struct client_state *p, int len,
   }
 
   info("%d: team_print: ok, %d pages printed", p->id, res);
-  append_audit_log(pkt->v.i, p, "Command: print\nStatus: ok\n  %d pages printed\n", res);
+  serve_audit_log(&serve_state, pkt->v.i, p->user_id, p->ip, p->ssl,
+                  "Command: print\n"
+                  "Status: ok\n"
+                  "  %d pages printed\n", res);
   new_send_reply(p, SRV_RPL_OK);
 }
 
@@ -2234,7 +2192,12 @@ do_submit_run(struct client_state *p,
   if (serve_state.testing_suspended) {
     info("%d: testing is suspended", p->id);
     run_change_status(serve_state.runlog_state, run_id, RUN_PENDING, 0, -1, 0);
-    append_audit_log(run_id, p, "Command: submit\nStatus: pending\nRun-id: %d\n  Testing is suspended by the contest administrator\n", run_id);
+    serve_audit_log(&serve_state, run_id, p->user_id, p->ip, p->ssl,
+                    "Command: submit\n"
+                    "Status: pending\n"
+                    "Run-id: %d\n"
+                    "  Testing is suspended by the contest administrator\n",
+                    run_id);
     goto success;
   }
 
@@ -2243,11 +2206,16 @@ do_submit_run(struct client_state *p,
       || cur_lang->disable_auto_testing || cur_lang->disable_testing) {
     info("%d: %s: auto testing disabled", p->id, proc_name);
     run_change_status(serve_state.runlog_state, run_id, RUN_PENDING, 0, -1, 0);
-    append_audit_log(run_id, p, "Command: submit\nStatus: pending\nRun-id: %d\n  Testing disabled for this problem or language\n", run_id);
+    serve_audit_log(&serve_state, run_id, p->user_id, p->ip, p->ssl,
+                    "Command: submit\n"
+                    "Status: pending\n"
+                    "Run-id: %d\n"
+                    "  Testing disabled for this problem or language\n",
+                    run_id);
     goto success;
   }
 
-  if (queue_compile_request(run_bytes, run_size, run_id,
+  if (serve_compile_request(&serve_state, run_bytes, run_size, run_id,
                             cur_lang->compile_id, locale_id,
                             (cur_prob->type_val > 0),
                             cur_lang->src_sfx,
@@ -2257,7 +2225,10 @@ do_submit_run(struct client_state *p,
   }
 
   info("%d: %s: ok", p->id, proc_name);
-  append_audit_log(run_id, p, "Command: submit\nStatus: ok\nRun-id: %d\n", run_id);
+  serve_audit_log(&serve_state, run_id, p->user_id, p->ip, p->ssl,
+                  "Command: submit\n"
+                  "Status: ok\n"
+                  "Run-id: %d\n", run_id);
   /* fallthrough */
 
  success:
@@ -3973,10 +3944,6 @@ mail_check_failed(int run_id)
   xfree(ftxt); ftxt = 0;
 }
 
-
-static void generate_packet_name(int run_id, int prio,
-                                 unsigned char buf[PACKET_NAME_SIZE]);
-
 static int
 read_compile_packet(const unsigned char *compile_status_dir,
                     const unsigned char *compile_report_dir,
@@ -4179,7 +4146,7 @@ read_compile_packet(const unsigned char *compile_status_dir,
   prio += comp_extra->priority_adjustment;
 
   /* generate a packet name */
-  generate_packet_name(comp_pkt->run_id, prio, pkt_base);
+  serve_packet_name(comp_pkt->run_id, prio, pkt_base);
   snprintf(exe_in_name, sizeof(exe_in_name),
            "%06d%s", comp_pkt->run_id, lang->exe_sfx);
   snprintf(exe_out_name, sizeof(exe_out_name),
@@ -4511,7 +4478,7 @@ read_run_packet(const unsigned char *run_status_dir,
                      ts8, ts8_us));
   fprintf(f, "\n");
   fclose(f);
-  append_audit_log(reply_pkt->run_id, 0, "%s", audit_text);
+  serve_audit_log(&serve_state, reply_pkt->run_id, 0, 0, 0, "%s", audit_text);
 
   return 1;
 
@@ -4522,125 +4489,6 @@ read_run_packet(const unsigned char *run_status_dir,
   xfree(reply_buf);
   run_reply_packet_free(reply_pkt);
   return 0;
-}
-
-static const unsigned char b32_digits[]=
-"0123456789ABCDEFGHIJKLMNOPQRSTUV";
-static void
-b32_number(unsigned long long num, unsigned char buf[PACKET_NAME_SIZE])
-{
-  int i;
-
-  memset(buf, '0', PACKET_NAME_SIZE - 1);
-  buf[PACKET_NAME_SIZE - 1] = 0;
-  i = PACKET_NAME_SIZE - 2;
-  while (num > 0 && i >= 0) {
-    buf[i] = b32_digits[num & 0x1f];
-    i--;
-    num >>= 5;
-  }
-  ASSERT(!num);
-}
-
-static void
-generate_packet_name(int run_id, int prio, unsigned char buf[PACKET_NAME_SIZE])
-{
-  unsigned long long num = 0;
-  struct timeval ts;
-
-  // generate "random" number, that would include the
-  // pid of "serve", the current time (with microseconds)
-  // and some small random component.
-  // pid is 2 byte (15 bit)
-  // run_id is 2 byte
-  // time_t component - 4 byte
-  // nanosec component - 4 byte
-
-  num = (getpid() & 0x7fffLLU) << 25LLU;
-  num |= (run_id & 0x7fffLLU) << 40LLU;
-  gettimeofday(&ts, 0);
-  num |= (ts.tv_sec ^ ts.tv_usec) & 0x1ffffff;
-  b32_number(num, buf);
-  if (prio < -16) prio = -16;
-  if (prio > 15) prio = 15;
-  buf[0] = b32_digits[prio + 16];
-}
-
-static unsigned short compile_request_id;
-static int
-queue_compile_request(unsigned char const *str, int len,
-                      int run_id, int lang_id, int locale_id, int output_only,
-                      unsigned char const *sfx,
-                      char **compiler_env,
-                      int accepting_mode,
-                      int priority_adjustment)
-{
-  struct compile_run_extra rx;
-  struct compile_request_packet cp;
-  void *pkt_buf = 0;
-  size_t pkt_len = 0;
-  unsigned char pkt_name[PACKET_NAME_SIZE];
-  int arch_flags;
-  path_t run_arch;
-
-  if (accepting_mode == -1) accepting_mode = serve_state.accepting_mode;
-
-  memset(&cp, 0, sizeof(cp));
-  cp.judge_id = compile_request_id++;
-  cp.contest_id = serve_state.global->contest_id;
-  cp.run_id = run_id;
-  cp.lang_id = lang_id;
-  cp.locale_id = locale_id;
-  cp.output_only = output_only;
-  get_current_time(&cp.ts1, &cp.ts1_us);
-  cp.run_block_len = sizeof(rx);
-  cp.run_block = &rx;
-  cp.env_num = -1;
-  cp.env_vars = (unsigned char**) compiler_env;
-
-  memset(&rx, 0, sizeof(rx));
-  rx.accepting_mode = accepting_mode;
-  rx.priority_adjustment = priority_adjustment;
-
-  if (compile_request_packet_write(&cp, &pkt_len, &pkt_buf) < 0) {
-    // FIXME: need reasonable recovery?
-    goto failed;
-  }
-
-  if (!sfx) sfx = "";
-  generate_packet_name(run_id, 0, pkt_name);
-
-  if (len == -1) {
-    // copy from archive
-    arch_flags = archive_make_read_path(&serve_state, run_arch, sizeof(run_arch),
-                                        serve_state.global->run_archive_dir, run_id, 0,0);
-    if (arch_flags < 0) return -1;
-    if (generic_copy_file(arch_flags, 0, run_arch, "",
-                          0, serve_state.global->compile_src_dir, pkt_name, sfx) < 0)
-      goto failed;
-  } else {
-    // write from memory
-    if (generic_write_file(str, len, 0,
-                           serve_state.global->compile_src_dir, pkt_name, sfx) < 0)
-      goto failed;
-  }
-
-  if (generic_write_file(pkt_buf, pkt_len, SAFE,
-                         serve_state.global->compile_queue_dir, pkt_name, "") < 0) {
-    goto failed;
-  }
-
-  if (run_change_status(serve_state.runlog_state, run_id, RUN_COMPILING, 0, -1,
-                        cp.judge_id) < 0) {
-    goto failed;
-  }
-
-  xfree(pkt_buf);
-  return 0;
-
- failed:
-  xfree(pkt_buf);
-  return -1;
 }
 
 static void
@@ -4667,14 +4515,15 @@ rejudge_run(int run_id, struct client_state *p, int force_full_rejudge,
     accepting_mode = 0;
   }
 
-  queue_compile_request(0, -1, run_id,
+  serve_compile_request(&serve_state, 0, -1, run_id,
                         serve_state.langs[re.lang_id]->compile_id, re.locale_id,
                         (serve_state.probs[re.prob_id]->type_val > 0),
                         serve_state.langs[re.lang_id]->src_sfx,
                         serve_state.langs[re.lang_id]->compiler_env,
                         accepting_mode, priority_adjustment);
 
-  append_audit_log(run_id, p, "Command: Rejudge");
+  serve_audit_log(&serve_state, run_id, p->user_id, p->ip, p->ssl,
+                  "Command: Rejudge\n");
 }
 
 static int
