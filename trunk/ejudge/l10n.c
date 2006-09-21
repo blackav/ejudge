@@ -56,7 +56,7 @@ l10n_setlocale(int locale_id)
 {
 #if CONF_HAS_LIBINTL - 0 == 1
   unsigned char *e = 0;
-  unsigned char env_buf[512];
+  static unsigned char env_buf[512];
 
   if (locale_id < 0 || !l10n_flag) return;
 

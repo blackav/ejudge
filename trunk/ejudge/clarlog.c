@@ -55,32 +55,7 @@ struct clar_header_v1
   unsigned char _pad[110];
 };
 
-enum { CLAR_ENTRY_SUBJ_SIZE = 32 };
-
 /* new version of the clarification log */
-struct clar_entry_v1
-{
-  int id;                       /* 4 */
-  ej_size_t size;               /* 4 */
-  ej_time64_t time;             /* 8 */
-  int nsec;                     /* 4 */
-  int from;                     /* 4 */
-  int to;                       /* 4 */
-  int j_from;                   /* 4 */
-  unsigned int flags;           /* 4 */
-  unsigned char ip6_flag;       /* 1 */
-  unsigned char hide_flag;      /* 1 */
-  unsigned char ssl_flag;       /* 1 */
-  unsigned char _pad1[1];       /* 2 */
-  union
-  {
-    ej_ip_t ip;
-    unsigned char ip6[16];
-  } a;                          /* 16 */
-  unsigned char _pad2[40];
-  unsigned char subj[CLAR_ENTRY_SUBJ_SIZE];
-};                              /* 128 */
-
 struct clar_array
 {
   int                   a, u;
@@ -524,6 +499,18 @@ clar_get_record(clarlog_state_t state,
   if (pj_from) *pj_from = state->clars.v[id].j_from;
   if (p_hide_flag) *p_hide_flag = state->clars.v[id].hide_flag;
   if (subj)               base64_encode_str(state->clars.v[id].subj, subj);
+  return 0;
+}
+
+int
+clar_get_record_new(clarlog_state_t state,
+                    int clar_id,
+                    struct clar_entry_v1 *pclar)
+{
+  if (clar_id < 0 || clar_id >= state->clars.u) ERR_R("bad id: %d", clar_id);
+  if (state->clars.v[clar_id].id != clar_id)
+    ERR_R("id mismatch: %d, %d", clar_id, state->clars.v[clar_id].id);
+  memcpy(pclar, &state->clars.v[clar_id], sizeof(*pclar));
   return 0;
 }
 

@@ -199,6 +199,7 @@ teamdb_refresh(teamdb_state_t state)
   unsigned long prev_vintage;
   struct userlist_user *uu;
   struct userlist_contest *uc;
+  size_t xml_size = 0;
 
   if (state->callbacks) {
     if (state->users && !state->need_update) return 0;
@@ -208,10 +209,11 @@ teamdb_refresh(teamdb_state_t state)
       err("teamdb_refresh: cannot load userlist: %s", userlist_strerror(-r));
       return -1;
     }
+    xml_size = strlen(xml_text);
     new_users = userlist_parse_str(xml_text);
+    xfree(xml_text); xml_text = 0;
     if (!new_users) {
       err("teamdb_refresh: XML parse error");
-      xfree(xml_text);
       return -1;
     }
     state->need_update = 0;
@@ -246,7 +248,9 @@ teamdb_refresh(teamdb_state_t state)
       close_connection(&state->old);
       return -1;
     }
+    xml_size = strlen(xml_text);
     new_users = userlist_parse_str(xml_text);
+    xfree(xml_text); xml_text = 0;
     if (!new_users) {
       state->old.local_users.vintage = prev_vintage;
       err("teamdb_refresh: XML parse error");
@@ -302,8 +306,7 @@ teamdb_refresh(teamdb_state_t state)
   }
 
   info("teamdb_refresh: updated: %d users, %d max user, XML size = %zu",
-       state->total_participants, state->users->user_map_size - 1,
-       strlen(xml_text));
+       state->total_participants, state->users->user_map_size - 1, xml_size);
   state->extra_out_of_sync = 1;
   call_update_hooks(state);
   return 1;

@@ -32,6 +32,31 @@ enum
 struct clarlog_state;
 typedef struct clarlog_state *clarlog_state_t;
 
+enum { CLAR_ENTRY_SUBJ_SIZE = 32 };
+
+struct clar_entry_v1
+{
+  int id;                       /* 4 */
+  ej_size_t size;               /* 4 */
+  ej_time64_t time;             /* 8 */
+  int nsec;                     /* 4 */
+  int from;                     /* 4 */
+  int to;                       /* 4 */
+  int j_from;                   /* 4 */
+  unsigned int flags;           /* 4 */
+  unsigned char ip6_flag;       /* 1 */
+  unsigned char hide_flag;      /* 1 */
+  unsigned char ssl_flag;       /* 1 */
+  unsigned char _pad1[1];       /* 2 */
+  union
+  {
+    ej_ip_t ip;
+    unsigned char ip6[16];
+  } a;                          /* 16 */
+  unsigned char _pad2[40];
+  unsigned char subj[CLAR_ENTRY_SUBJ_SIZE];
+};                              /* 128 */
+
 clarlog_state_t clar_init(void);
 clarlog_state_t clar_destroy(clarlog_state_t state);
 int clar_open(clarlog_state_t state, char const *path, int flags);
@@ -70,6 +95,9 @@ int clar_get_record(clarlog_state_t state,
                     char          *subj);
 int clar_update_flags(clarlog_state_t state, int id, int flags);
 int clar_get_total(clarlog_state_t state);
+int clar_get_record_new(clarlog_state_t state,
+                        int clar_id,
+                        struct clar_entry_v1 *pclar);
 
 void clar_get_team_usage(clarlog_state_t, int, int *, size_t *);
 char *clar_flags_html(clarlog_state_t, int, int, int, char *, int);
