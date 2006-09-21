@@ -1014,7 +1014,7 @@ contests_set_unload_callback(void (*f)(const struct contest_desc *))
   unload_list = contests_set_callback(unload_list, f);
 }
 
-static unsigned char const *contests_dir;
+static unsigned char *contests_dir;
 static unsigned int contests_allocd;
 static struct contest_desc **contests_desc;
 
@@ -1046,6 +1046,7 @@ contests_set_directory(unsigned char const *dir)
   if (!dir) return -CONTEST_ERR_BAD_DIR;
   if (stat(dir, &bbb) < 0) return -CONTEST_ERR_BAD_DIR;
   if (!S_ISDIR(bbb.st_mode)) return -CONTEST_ERR_BAD_DIR;
+  xfree(contests_dir);
   contests_dir = xstrdup(dir);
   return 0;
 }

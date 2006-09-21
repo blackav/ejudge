@@ -627,6 +627,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->checker_env);
   sarray_free(p->lang_time_adj);
   sarray_free(p->personal_deadline);
+  sarray_free(p->alternative);
   xfree(p->score_bonus_val);
   free_testsets(p->ts_total, p->ts_infos);
   free_deadline_penalties(p->dp_total, p->dp_infos);

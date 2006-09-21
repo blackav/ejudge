@@ -3523,12 +3523,18 @@ unpriv_view_clar(struct server_framework_state *state,
                  struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
-  //const struct section_global_data *global = cs->global;
-  int n, clar_id;
+  const struct section_global_data *global = cs->global;
+  int n, clar_id, show_astr_time;
   const unsigned char *s;
   FILE *log_f = 0;
   char *log_txt = 0;
-  size_t log_len = 0;
+  size_t log_len = 0, clar_size = 0, html_subj_len, html_text_len;
+  struct clar_entry_v1 ce;
+  time_t start_time, clar_time;
+  unsigned char clar_file_name[128];
+  char *clar_text = 0;
+  unsigned char *html_subj, *html_text;
+  unsigned char dur_str[64];
 
   if ((n = ns_cgi_param(phr, "clar_id", &s)) <= 0)
     return html_err_invalid_param(state, p, fout, phr, 0,
@@ -3543,6 +3549,88 @@ unpriv_view_clar(struct server_framework_state *state,
     fprintf(log_f, _("Client's requests are suspended.\nPlease wait until the contest administrator resumes the contest."));
     goto done;
   }
+  if (global->disable_clars) {
+    fprintf(log_f, _("Clarifications are disabled."));
+    goto done;
+  }
+  if (clar_id < 0 || clar_id >= clar_get_total(cs->clarlog_state)
+      || clar_get_record_new(cs->clarlog_state, clar_id, &ce) < 0) {
+    fprintf(log_f, _("Invalid clar_id"));
+    goto done;
+  }
+
+  show_astr_time = global->show_astr_time;
+  if (global->virtual) show_astr_time = 1;
+  start_time = run_get_start_time(cs->runlog_state);
+  if (global->virtual)
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+
+  if ((ce.from > 0 && ce.from != phr->user_id)
+      || (ce.to > 0 && ce.to != phr->user_id)
+      || (start_time <= 0 && ce.hide_flag)) {
+    fprintf(log_f, _("You cannot view this clarification."));
+    goto done;
+  }
+
+  if (ce.from != phr->user_id) {
+    team_extra_set_clar_status(cs->team_extra_state, phr->user_id, clar_id);
+  }
+
+  sprintf(clar_file_name, "%06d", clar_id);
+  if (generic_read_file(&clar_text, 0, &clar_size, 0,
+                        global->clar_archive_dir, clar_file_name, "") < 0) {
+    fprintf(log_f, _("Cannot read the clarification text."));
+    goto done;
+  }
+
+  html_subj_len = html_armored_strlen(ce.subj);
+  html_subj = alloca(html_subj_len + 1);
+  html_armor_string(ce.subj, html_subj);
+  html_text_len = html_armored_strlen(clar_text);
+  html_text = alloca(html_text_len + 1);
+  html_armor_string(clar_text, html_text);
+
+  clar_time = ce.time;
+  if (start_time < 0) start_time = 0;
+  if (!start_time) clar_time = start_time;
+  if (clar_time < start_time) clar_time = start_time;
+  duration_str(show_astr_time, clar_time, start_time, dur_str, 0);
+
+  l10n_setlocale(phr->locale_id);
+  html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                  "%s [%s]: %s %d",
+                  phr->name_arm, extra->contest_arm, _("Clarification"),
+                  clar_id);
+
+  fprintf(fout, "<%s>%s #%d</%s>\n", cnts->team_head_style,
+          _("Message"), clar_id, cnts->team_head_style);
+  fprintf(fout, "<table border=\"0\">\n");
+  fprintf(fout, "<tr><td>%s:</td><td>%d</td></tr>\n", _("Number"), clar_id);
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>\n", _("Time"), dur_str);
+  fprintf(fout, "<tr><td>%s:</td><td>%zu</td></tr>\n", _("Size"), ce.size);
+  fprintf(fout, "<tr><td>%s:</td>", _("Sender"));
+  if (!ce.from) {
+    fprintf(fout, "<td><b>%s</b></td>", _("judges"));
+  } else {
+    fprintf(fout, "<td>%s</td>", teamdb_get_name(cs->teamdb_state, ce.from));
+  }
+  fprintf(fout, "</tr>\n<tr><td>%s:</td>", _("To"));
+  if (!ce.to && !ce.from) {
+    fprintf(fout, "<td><b>%s</b></td>", _("all"));
+  } else if (!ce.to) {
+    fprintf(fout, "<td><b>%s</b></td>", _("judges"));
+  } else {
+    fprintf(fout, "<td>%s</td>", teamdb_get_name(cs->teamdb_state, ce.to));
+  }
+  fprintf(fout, "</tr>\n");
+  fprintf(fout, "<tr><td>%s:</td><td>%s</td></tr>", _("Subject"), html_subj);
+  fprintf(fout, "</table>\n");
+  fprintf(fout, "<hr><pre>");
+  fprintf(fout, "%s", html_text);
+  fprintf(fout, "</pre>");
+
+  html_put_footer(fout, extra->footer_txt, phr->locale_id);
+  l10n_setlocale(0);
 
  done:;
   fclose(log_f); log_f = 0;
@@ -3553,6 +3641,7 @@ unpriv_view_clar(struct server_framework_state *state,
 
   if (log_f) fclose(log_f);
   xfree(log_txt);
+  xfree(clar_text);
 }
 
 
