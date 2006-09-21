@@ -2829,7 +2829,8 @@ unpriv_submit_run(struct server_framework_state *state,
         if (run_size > 0) ans_buf[run_size++] = ' ';
         run_size += sprintf(ans_buf + run_size, "%d", i);
       }
-    ans_map[run_size] = 0;
+    ans_buf[run_size++] = '\n';
+    ans_buf[run_size] = 0;
     break;
   default:
     abort();
@@ -3252,6 +3253,308 @@ unpriv_submit_clar(struct server_framework_state *state,
   if (log_f) fclose(log_f);
   xfree(log_txt);
 }
+
+static void
+unpriv_view_source(struct server_framework_state *state,
+                   struct client_state *p,
+                   FILE *fout,
+                   struct http_request_info *phr,
+                   const struct contest_desc *cnts,
+                   struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  int run_id, n, src_flags;
+  const unsigned char *s;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  FILE *log_f = 0;
+  struct run_entry re;
+  const struct section_language_data *lang = 0;
+  const struct section_problem_data *prob = 0;
+  char *run_text = 0;
+  size_t run_size = 0;
+  path_t src_path;
+
+  if ((n = ns_cgi_param(phr, "run_id", &s)) <= 0)
+    return html_err_invalid_param(state, p, fout, phr, 0,
+                                  "run_id is binary or not set");
+  if (sscanf(s, "%d%n", &run_id, &n) != 1 || s[n])
+    return html_err_invalid_param(state, p, fout, phr, 0,
+                                  "cannot parse run_id");
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if (cs->clients_suspended) {
+    fprintf(log_f, _("Client's requests are suspended.\nPlease wait until the contest administrator resumes the contest."));
+    goto done;
+  }
+  if (!global->team_enable_src_view) {
+    fprintf(log_f, _("Submit source viewing is disabled."));
+    goto done;
+  }
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
+    fprintf(log_f, _("Invalid run_id."));
+    goto done;
+  }
+  run_get_entry(cs->runlog_state, run_id, &re);
+  if (re.user_id != phr->user_id) {
+    fprintf(log_f, _("You cannot view source for this run."));
+    goto done;
+  }
+  if (re.prob_id <= 0 || re.prob_id > cs->max_prob ||
+      !(prob = cs->probs[re.prob_id])) {
+    fprintf(log_f, _("Invalid problem."));
+    goto done;
+  }
+  if (re.status > RUN_LAST
+      || (re.status > RUN_MAX_STATUS && re.status < RUN_TRANSIENT_FIRST)) {
+    fprintf(log_f, _("You cannot view source for this run."));
+    goto done;
+  }
+
+  if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
+                                          global->run_archive_dir,
+                                          run_id, 0, 1)) < 0) {
+    fprintf(log_f, _("Source file does not exist."));
+    goto done;
+  }
+  if (generic_read_file(&run_text, 0, &run_size, src_flags, 0, src_path, 0)<0) {
+    fprintf(log_f, _("Cannot read the source."));
+    goto done;
+  }
+
+  if (prob->type_val > 0) {
+    fprintf(fout, "Content-type: %s\n", mime_type_get_type(re.mime_type));
+    /*
+    fprintf(fout, "Content-Disposition: attachment; filename=\"%06d%s\"\n",
+            run_id, mime_type_get_suffix(re.mime_type));
+    */
+    putc_unlocked('\n', fout);
+  } else {
+    if(re.lang_id <= 0 || re.lang_id > cs->max_lang ||
+       !(lang = cs->langs[re.lang_id])) {
+      fprintf(log_f, _("Invalid language."));
+      goto done;
+    }
+
+    if (lang->content_type) {
+      fprintf(fout, "Content-type: %s\n", lang->content_type);
+    } else if (lang->binary) {
+      fprintf(fout, "Content-type: application/octet-stream\n\n");
+    } else {
+      fprintf(fout, "Content-type: text/plain\n");
+    }
+    fprintf(fout, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
+            run_id, lang->src_sfx);
+  }
+  fwrite(run_text, 1, run_size, fout);
+
+ done:;
+  fclose(log_f); log_f = 0;
+  if (log_txt && *log_txt) {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+                           NEW_SRV_ACTION_MAIN_PAGE);
+  }
+
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+  xfree(run_text);
+}
+
+static void
+unpriv_view_report(struct server_framework_state *state,
+                   struct client_state *p,
+                   FILE *fout,
+                   struct http_request_info *phr,
+                   const struct contest_desc *cnts,
+                   struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob;
+  int n, run_id, flags, content_type;
+  const unsigned char *s, *rep_start = 0, *arch_dir;
+  FILE *log_f = 0;
+  char *log_txt = 0, *rep_text = 0;
+  size_t log_len = 0, rep_size = 0, html_len;
+  struct run_entry re;
+  path_t rep_path;
+  unsigned char *html_report;
+
+  if ((n = ns_cgi_param(phr, "run_id", &s)) <= 0)
+    return html_err_invalid_param(state, p, fout, phr, 0,
+                                  "run_id is binary or not set");
+  if (sscanf(s, "%d%n", &run_id, &n) != 1 || s[n])
+    return html_err_invalid_param(state, p, fout, phr, 0,
+                                  "cannot parse run_id");
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if (cs->clients_suspended) {
+    fprintf(log_f, _("Client's requests are suspended.\nPlease wait until the contest administrator resumes the contest."));
+    goto done;
+  }
+
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
+    fprintf(log_f, _("Invalid run_id."));
+    goto done;
+  }
+  run_get_entry(cs->runlog_state, run_id, &re);
+  if (re.user_id != phr->user_id) {
+    fprintf(log_f, _("You cannot view report for this run."));
+    goto done;
+  }
+  if (re.prob_id <= 0 || re.prob_id > cs->max_prob ||
+      !(prob = cs->probs[re.prob_id])) {
+    fprintf(log_f, _("Invalid problem."));
+    goto done;
+  }
+  // check viewable statuses
+  switch (re.status) {
+  case RUN_OK:
+  case RUN_COMPILE_ERR:
+  case RUN_RUN_TIME_ERR:
+  case RUN_TIME_LIMIT_ERR:
+  case RUN_PRESENTATION_ERR:
+  case RUN_WRONG_ANSWER_ERR:
+  case RUN_PARTIAL:
+  case RUN_ACCEPTED:
+  case RUN_MEM_LIMIT_ERR:
+  case RUN_SECURITY_ERR:
+    // these statuses have viewable reports
+    break;
+  default:
+    fprintf(log_f, _("You cannot view report for this run."));
+    goto done;
+  }
+
+  if (!prob->team_enable_rep_view
+      && (!prob->team_enable_ce_view || re.status != RUN_COMPILE_ERR)) {
+    fprintf(log_f, _("Viewing report is disabled for this run."));
+    goto done;
+  }
+
+  flags = archive_make_read_path(cs, rep_path, sizeof(rep_path),
+                                 global->xml_report_archive_dir, run_id, 0, 1);
+  if (flags >= 0) {
+    if (generic_read_file(&rep_text, 0, &rep_size, flags, 0, rep_path, 0) < 0) {
+      fprintf(log_f, _("Cannot read the report text."));
+      goto done;
+    }
+    content_type = get_content_type(rep_text, &rep_start);
+    if (content_type != CONTENT_TYPE_XML && re.status != RUN_COMPILE_ERR) {
+      fprintf(log_f, _("You cannot view report for this run."));
+      goto done;
+    }
+  } else {
+    if (prob->team_enable_ce_view && re.status == RUN_COMPILE_ERR)
+      arch_dir = global->report_archive_dir;
+    else if (prob->team_show_judge_report)
+      arch_dir = global->report_archive_dir;
+    else
+      arch_dir = global->team_report_archive_dir;
+
+    if ((flags = archive_make_read_path(cs, rep_path, sizeof(rep_path),
+                                        arch_dir, run_id, 0, 1)) < 0) {
+      fprintf(log_f, _("Report file does not exist."));
+      goto done;
+    }
+    if (generic_read_file(&rep_text,0,&rep_size,flags,0,rep_path, 0) < 0) {
+      fprintf(log_f, _("Cannot read the report text."));
+      goto done;
+    }
+    content_type = get_content_type(rep_text, &rep_start);
+  }
+
+  l10n_setlocale(phr->locale_id);
+  html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                  "%s [%s]: %s %d",
+                  phr->name_arm, extra->contest_arm, _("Report for run"),
+                  run_id);
+
+  switch (content_type) {
+  case CONTENT_TYPE_TEXT:
+    html_len = html_armored_memlen(rep_text, rep_size);
+    html_report = alloca(html_len + 16);
+    html_armor_text(rep_text, rep_size, html_report);
+    html_report[html_len] = 0;
+    fprintf(fout, "<pre>%s</pre>", html_report);
+    break;
+  case CONTENT_TYPE_HTML:
+    fprintf(fout, "%s", rep_start);
+    break;
+  case CONTENT_TYPE_XML:
+    if (global->score_system_val == SCORE_OLYMPIAD && cs->accepting_mode) {
+      write_xml_team_accepting_report(fout, rep_start, run_id, &re, prob,
+                                      phr->session_id, phr->self_url, "");
+    } else if (prob->team_show_judge_report) {
+      write_xml_testing_report(fout, rep_start, phr->session_id,
+                               phr->self_url, "");
+    } else {
+      write_xml_team_testing_report(cs, fout, rep_start);
+    }
+    break;
+  default:
+    abort();
+  }
+
+  html_put_footer(fout, extra->footer_txt, phr->locale_id);
+  l10n_setlocale(0);
+
+ done:;
+  fclose(log_f); log_f = 0;
+  if (log_txt && *log_txt) {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+                           NEW_SRV_ACTION_MAIN_PAGE);
+  }
+
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+  xfree(rep_text);
+}
+
+static void
+unpriv_view_clar(struct server_framework_state *state,
+                 struct client_state *p,
+                 FILE *fout,
+                 struct http_request_info *phr,
+                 const struct contest_desc *cnts,
+                 struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  //const struct section_global_data *global = cs->global;
+  int n, clar_id;
+  const unsigned char *s;
+  FILE *log_f = 0;
+  char *log_txt = 0;
+  size_t log_len = 0;
+
+  if ((n = ns_cgi_param(phr, "clar_id", &s)) <= 0)
+    return html_err_invalid_param(state, p, fout, phr, 0,
+                                  "clar_id is binary or not set");
+  if (sscanf(s, "%d%n", &clar_id, &n) != 1 || s[n])
+    return html_err_invalid_param(state, p, fout, phr, 0,
+                                  "cannot parse clar_id");
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if (cs->clients_suspended) {
+    fprintf(log_f, _("Client's requests are suspended.\nPlease wait until the contest administrator resumes the contest."));
+    goto done;
+  }
+
+ done:;
+  fclose(log_f); log_f = 0;
+  if (log_txt && *log_txt) {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+                           NEW_SRV_ACTION_MAIN_PAGE);
+  }
+
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
+}
+
 
 static int
 is_problem_deadlined(serve_state_t cs,
@@ -3820,6 +4123,9 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SUBMIT_RUN] = unpriv_submit_run,
   [NEW_SRV_ACTION_SUBMIT_CLAR] = unpriv_submit_clar,
   [NEW_SRV_ACTION_LOGOUT] = unpriv_logout,
+  [NEW_SRV_ACTION_VIEW_SOURCE] = unpriv_view_source,
+  [NEW_SRV_ACTION_VIEW_REPORT] = unpriv_view_report,
+  [NEW_SRV_ACTION_VIEW_CLAR] = unpriv_view_clar,
 };
 
 static void

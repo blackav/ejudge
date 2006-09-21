@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-20 23:50+0400\n"
-"PO-Revision-Date: 2006-09-21 13:33+0400\n"
+"POT-Creation-Date: 2006-09-21 18:18+0400\n"
+"PO-Revision-Date: 2006-09-21 19:19+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -255,7 +255,8 @@ msgid ""
 "a>.\n"
 msgstr ""
 "<p>Ваша сессия завершена.\n"
-"<p>Если Вы хотите зайти в турнир повторно, проследуйте <a href=\"%s?contest_id=%d%s\">по этой ссылке</a>.\n"
+"<p>Если Вы хотите зайти в турнир повторно, проследуйте <a href=\"%s?"
+"contest_id=%d%s\">по этой ссылке</a>.\n"
 
 #, c-format
 msgid "<u>--- Checker output ---</u>\n"
@@ -433,6 +434,14 @@ msgstr "Ошибка добавления посылки в очередь компиляции данных."
 #, c-format
 msgid "Cannot put the run to the run queue."
 msgstr "Ошибка добавления посылки в очередь тестирования."
+
+#, c-format
+msgid "Cannot read the report text."
+msgstr "Ошибка чтения файла отчета."
+
+#, c-format
+msgid "Cannot read the source."
+msgstr "Ошибка чтения файла."
 
 msgid "Cannot remove a member due a reason given below"
 msgstr "Невозможно удалить члена команды по причинам, перечисленным ниже"
@@ -1075,6 +1084,10 @@ msgstr "Неверный идентификатор турнира."
 msgid "Invalid language specification"
 msgstr "Неверная спецификация языка программирования"
 
+#, c-format
+msgid "Invalid language."
+msgstr "Неверный идентификатор языка программирования."
+
 msgid "Invalid login"
 msgstr "Неверное регистрационное имя"
 
@@ -1090,10 +1103,18 @@ msgstr "Неверный участник."
 msgid "Invalid problem specification"
 msgstr "Неверная спецификация задачи"
 
+#, c-format
+msgid "Invalid problem."
+msgstr "Неверный задача."
+
 msgid "Invalid role parameter."
 msgstr "Неверная роль."
 
 msgid "Invalid run_id"
+msgstr "Неверный номер посылки"
+
+#, c-format
+msgid "Invalid run_id."
 msgstr "Неверный номер посылки"
 
 msgid "Invalid serial number."
@@ -1677,6 +1698,13 @@ msgstr ""
 "Удалить отмеченных пользователей из списка (АДМИНИСТРАТОРЫ не могут быть "
 "удалены)"
 
+#, c-format
+msgid "Report file does not exist."
+msgstr "Запрошенный файл не существует."
+
+msgid "Report for run"
+msgstr "Отчет по посылке"
+
 msgid "Report view"
 msgstr "Просмотр протокола"
 
@@ -1898,6 +1926,10 @@ msgstr "Решено"
 msgid "Solved<br>problems"
 msgstr "Решённые<br>задачи"
 
+#, c-format
+msgid "Source file does not exist."
+msgstr "Запрошенный файл не существует."
+
 msgid "Source view"
 msgstr "Просмотр исходного текста"
 
@@ -1961,6 +1993,10 @@ msgstr "Сдать решение задачи"
 
 msgid "Submit solution"
 msgstr "Сдача решений"
+
+#, c-format
+msgid "Submit source viewing is disabled."
+msgstr "Просмотр текстов программ отключён."
 
 msgid "Success"
 msgstr "Успешных"
@@ -2242,7 +2278,8 @@ msgid ""
 "or the total size of your clarification requests is too big."
 msgstr ""
 "Превышена квота пользователя на сообщения.\n"
-"Данное сообщение слишком велико, или Вы уже послали слишком много сообщений,\n"
+"Данное сообщение слишком велико, или Вы уже послали слишком много "
+"сообщений,\n"
 "или суммарный размер всех Ваших сообщений слишком велик."
 
 #, c-format
@@ -2287,6 +2324,10 @@ msgstr "Просмотреть пользовательский протокол"
 
 msgid "View teams"
 msgstr "Посмотреть команды"
+
+#, c-format
+msgid "Viewing report is disabled for this run."
+msgstr "Просмотр отчётов отключён."
 
 msgid "Virtual contest is finished"
 msgstr "Виртуальный турнир завершён"
@@ -2372,6 +2413,14 @@ msgid ""
 msgstr ""
 "Вы не можете участвовать в данном турнире. Ваша регистрация не подтверждена, "
 "либо Ваше участие заблокировано администратором."
+
+#, c-format
+msgid "You cannot view report for this run."
+msgstr "Вы не можете посмотреть отчет по данной посылке."
+
+#, c-format
+msgid "You cannot view source for this run."
+msgstr "Вы не можете посмотреть исходный текст данной посылки."
 
 msgid "You do not have permissions to use this service"
 msgstr "У Вас нет прав использовать данный сервис"
