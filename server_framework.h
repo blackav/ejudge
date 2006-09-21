@@ -66,6 +66,7 @@ struct server_framework_params
   unsigned char *program_name;
   unsigned char *socket_path;
   unsigned char *log_path;
+  int select_timeout;
 
   void *user_data;
 
@@ -78,6 +79,7 @@ struct server_framework_params
   void (*cleanup_client)(struct server_framework_state *,
                          struct client_state *);
   void (*free_memory)(struct server_framework_state *, void *);
+  void (*loop_start)(struct server_framework_state *);
 };
 
 struct server_framework_state *nsf_init(struct server_framework_params *params, void *data);

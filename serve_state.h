@@ -94,8 +94,6 @@ struct serve_state
   int max_prob;
   int max_tester;
 
-  const struct contest_desc *cur_contest;
-
   /* clarlog internal state */
   struct clarlog_state *clarlog_state;
 
@@ -162,18 +160,25 @@ serve_state_t serve_state_destroy(serve_state_t state);
 
 void serve_state_set_config_path(serve_state_t state, const unsigned char *);
 
-void serve_update_standings_file(serve_state_t state, int force_flag);
-void serve_update_public_log_file(serve_state_t state);
-void serve_update_external_xml_log(serve_state_t state);
-void serve_update_internal_xml_log(serve_state_t state);
+void serve_update_standings_file(serve_state_t state,
+                                 const struct contest_desc *cnts,
+                                 int force_flag);
+void serve_update_public_log_file(serve_state_t state,
+                                  const struct contest_desc *cnts);
+void serve_update_external_xml_log(serve_state_t state,
+                                   const struct contest_desc *cnts);
+void serve_update_internal_xml_log(serve_state_t state,
+                                   const struct contest_desc *cnts);
 int  serve_update_status_file(serve_state_t state, int force_flag);
 void serve_load_status_file(serve_state_t state);
 
 int serve_check_user_quota(serve_state_t, int user_id, size_t size);
-int serve_check_clar_qouta(serve_state_t, int user_id, size_t size);
+int serve_check_clar_quota(serve_state_t, int user_id, size_t size);
 
-int serve_check_cnts_caps(serve_state_t state, int user_id, int bit);
-int serve_get_cnts_caps(serve_state_t state, int user_id, opcap_t *out_caps);
+int serve_check_cnts_caps(serve_state_t state, const struct contest_desc *,
+                          int user_id, int bit);
+int serve_get_cnts_caps(serve_state_t state, const struct contest_desc *,
+                        int user_id, opcap_t *out_caps);
 
 void serve_build_compile_dirs(serve_state_t state);
 void serve_build_run_dirs(serve_state_t state);
@@ -181,12 +186,15 @@ void serve_build_run_dirs(serve_state_t state);
 int serve_create_symlinks(serve_state_t state);
 
 const unsigned char *serve_get_email_sender(const struct contest_desc *cnts);
-void serve_check_stat_generation(serve_state_t state, int force_flag);
+void serve_check_stat_generation(serve_state_t state,
+                                 const struct contest_desc *cnts,
+                                 int force_flag);
 
 int serve_state_load_contest(int contest_id,
                              struct userlist_clnt *ul_conn,
                              struct teamdb_db_callbacks *teamdb_callbacks,
-                             serve_state_t *p_state);
+                             serve_state_t *p_state,
+                             const struct contest_desc **p_cnts);
 
 int serve_count_unread_clars(const serve_state_t state, int user_id,
                              time_t start_time);
@@ -211,5 +219,53 @@ int serve_compile_request(serve_state_t state,
                           char **compiler_env,
                           int accepting_mode,
                           int priority_adjustment);
+
+struct compile_reply_packet;
+int
+serve_run_request(serve_state_t state,
+                  FILE *errf,
+                  const unsigned char *run_text,
+                  size_t run_size,
+                  int run_id,
+                  int user_id,
+                  int prob_id,
+                  int lang_id,
+                  int variant,
+                  int priority_adjustment,
+                  int judge_id,
+                  int accepting_mode,
+                  const unsigned char *compile_report_dir,
+                  const struct compile_reply_packet *comp_pkt);
+
+int serve_is_valid_status(serve_state_t state, int status, int mode);
+
+void serve_send_clar_notify_email(serve_state_t state,
+                                  const struct contest_desc *cnts,
+                                  int user_id, const unsigned char *user_name,
+                                  const unsigned char *subject,
+                                  const unsigned char *text);
+void
+serve_send_check_failed_email(const struct contest_desc *cnts, int run_id);
+
+void
+serve_rejudge_run(serve_state_t state,
+                  int run_id,
+                  int user_id, ej_ip_t ip, int ssl_flag,
+                  int force_full_rejudge,
+                  int priority_adjustment);
+
+int
+serve_read_compile_packet(serve_state_t state,
+                          const struct contest_desc *cnts,
+                          const unsigned char *compile_status_dir,
+                          const unsigned char *compile_report_dir,
+                          const unsigned char *pname);
+int
+serve_read_run_packet(serve_state_t state,
+                      const struct contest_desc *cnts,
+                      const unsigned char *run_status_dir,
+                      const unsigned char *run_report_dir,
+                      const unsigned char *run_full_archive_dir,
+                      const unsigned char *pname);
 
 #endif /* __SERVE_STATE_H__ */

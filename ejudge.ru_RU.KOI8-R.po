@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-18 19:13+0400\n"
-"PO-Revision-Date: 2006-09-18 19:40+0400\n"
+"POT-Creation-Date: 2006-09-20 23:50+0400\n"
+"PO-Revision-Date: 2006-09-21 13:33+0400\n"
 "Last-Translator: Alexander Chernov <cher@unicorn.cmc.msu.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -249,6 +249,15 @@ msgstr ""
 "соображениям безопасности.</p>"
 
 #, c-format
+msgid ""
+"<p>Your session has been removed.\n"
+"<p>If you want to relogin, follow <a href=\"%s?contest_id=%d%s\">this link</"
+"a>.\n"
+msgstr ""
+"<p>Ваша сессия завершена.\n"
+"<p>Если Вы хотите зайти в турнир повторно, проследуйте <a href=\"%s?contest_id=%d%s\">по этой ссылке</a>.\n"
+
+#, c-format
 msgid "<u>--- Checker output ---</u>\n"
 msgstr "<u>--- Вывод проверяющей программы ---</u>\n"
 
@@ -421,11 +430,23 @@ msgstr "Участие в турнире невозможно"
 msgid "Cannot put the run to the compilation queue."
 msgstr "Ошибка добавления посылки в очередь компиляции данных."
 
+#, c-format
+msgid "Cannot put the run to the run queue."
+msgstr "Ошибка добавления посылки в очередь тестирования."
+
 msgid "Cannot remove a member due a reason given below"
 msgstr "Невозможно удалить члена команды по причинам, перечисленным ниже"
 
 msgid "Cannot remove team member"
 msgstr "Невозможно удалить участника"
+
+#, c-format
+msgid "Cannot update the clarification database."
+msgstr "Ошибка обновления базы сообщений."
+
+#, c-format
+msgid "Cannot write the message to the disk."
+msgstr "Ошибка записи сообщения на диск."
 
 #, c-format
 msgid "Cannot write to the disk."
@@ -1220,6 +1241,14 @@ msgstr "Превышен лимит по памяти"
 msgid "Message"
 msgstr "Сообщение"
 
+#, c-format
+msgid "Message is empty"
+msgstr "Сообщение пусто"
+
+#, c-format
+msgid "Message length is too large"
+msgstr "Длина сообщения слишком велика"
+
 msgid "Message view"
 msgstr "Список сообщений"
 
@@ -1404,9 +1433,6 @@ msgstr "Решения участников принимаются на проверку"
 msgid "Participants' solutions are being judged"
 msgstr "Решения участников проверяются"
 
-msgid "Participants' solutions are being judges"
-msgstr "Решения участников проверяются"
-
 msgid "Password"
 msgstr "Пароль"
 
@@ -1467,6 +1493,10 @@ msgstr ""
 "Пожалуйста, заполните все поля в нижеприведённой анкете. Поля, отмеченные "
 "(*), обязательны к заполнению. Когда анкета готова, нажмите кнопку "
 "\"Зарегистрироваться\"."
+
+#, c-format
+msgid "Possibility to write clarification requests in disabled.\n"
+msgstr "Возможность посылать сообщения отключена.\n"
 
 msgid "Presentation error"
 msgstr "Неправильный формат вывода"
@@ -1907,6 +1937,10 @@ msgstr "Студент"
 msgid "Subject"
 msgstr "Тема"
 
+#, c-format
+msgid "Subject length is too large"
+msgstr "Поле \"Тема\" имеет слишком большую длину"
+
 msgid "Submission data is empty"
 msgstr "Посылка пуста"
 
@@ -2199,6 +2233,17 @@ msgstr "Вход пользователя [%s]"
 
 msgid "User name"
 msgstr "Имя участника"
+
+#, c-format
+msgid ""
+"User quota exceeded.\n"
+"This clarification request is too large, you already have too many "
+"clarification requests,\n"
+"or the total size of your clarification requests is too big."
+msgstr ""
+"Превышена квота пользователя на сообщения.\n"
+"Данное сообщение слишком велико, или Вы уже послали слишком много сообщений,\n"
+"или суммарный размер всех Ваших сообщений слишком велик."
 
 #, c-format
 msgid ""
@@ -2678,6 +2723,9 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
+
+#~ msgid "Participants' solutions are being judges"
+#~ msgstr "Решения участников проверяются"
 
 #~ msgid "Chief judge"
 #~ msgstr "Главный судья"

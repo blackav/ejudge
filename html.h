@@ -24,9 +24,13 @@
 #include <stdio.h>
 #include <time.h>
 
-void write_standings(const serve_state_t, char const *, char const *,
+void write_standings(const serve_state_t,
+                     const struct contest_desc *,
+                     char const *, char const *,
                      int, char const *, char const *, int);
-void write_public_log(const serve_state_t, char const *, char const *,
+void write_public_log(const serve_state_t,
+                      const struct contest_desc *,
+                      char const *, char const *,
                       char const *, char const *);
 
 void new_write_user_runs(const serve_state_t, FILE *f, int uid,
@@ -46,7 +50,8 @@ void new_write_user_clars(const serve_state_t,
                           unsigned char const *hidden_vars,
                           unsigned char const *extra_args);
 
-int new_write_user_clar(const serve_state_t, FILE *, int, int, int);
+int new_write_user_clar(const serve_state_t, const struct contest_desc *,
+                        FILE *, int, int, int);
 int new_write_user_source_view(const serve_state_t, FILE *, int, int, int);
 int write_user_run_status(const serve_state_t, FILE *, int, int, int, int);
 int new_write_user_report_view(const serve_state_t, FILE *f, int uid, int rid,
@@ -56,7 +61,9 @@ int new_write_user_report_view(const serve_state_t, FILE *f, int uid, int rid,
                                const unsigned char *hidden_vars,
                                const unsigned char *extra_args);
 
-void write_team_page(const serve_state_t, FILE *f, int user_id,
+void write_team_page(const serve_state_t,
+                     const struct contest_desc *cnts,
+                     FILE *f, int user_id,
                      ej_cookie_t sid,
                      int all_runs, int all_clars,
                      unsigned char const *self_url,
@@ -77,7 +84,9 @@ void write_master_page(serve_state_t, FILE *f,
                        unsigned char const *extra_args,
                        const opcap_t *pcaps);
 
-void write_priv_standings(const serve_state_t, FILE *f,
+void write_priv_standings(const serve_state_t,
+                          const struct contest_desc *cnts,
+                          FILE *f,
                           ej_cookie_t sid,
                           unsigned char const *self_url,
                           unsigned char const *hidden_vars,
@@ -94,13 +103,17 @@ int write_priv_all_runs(const serve_state_t, FILE *f,
                         unsigned char const *hidden_vars,
                         unsigned char const *extra_args);
 
-void write_standings_header(const serve_state_t state, FILE *f,
+void write_standings_header(const serve_state_t state,
+                            const struct contest_desc * cnts,
+                            FILE *f,
                             int client_flag,
                             int user_id,
                             unsigned char const * header_str,
                             unsigned char const * user_name);
 
-void do_write_kirov_standings(const serve_state_t, FILE *f,
+void do_write_kirov_standings(const serve_state_t,
+                              const struct contest_desc *cnts,
+                              FILE *f,
                               const unsigned char *stand_dir,
                               int client_flag,
                               const unsigned char *header_str,
@@ -108,7 +121,9 @@ void do_write_kirov_standings(const serve_state_t, FILE *f,
                               int raw_flag,
                               int accepting_mode);
 
-void do_write_standings(const serve_state_t, FILE *f,
+void do_write_standings(const serve_state_t,
+                        const struct contest_desc *cnts,
+                        FILE *f,
                         int client_flag,
                         int user_id,
                         const unsigned char *header_str,
@@ -116,7 +131,9 @@ void do_write_standings(const serve_state_t, FILE *f,
                         int raw_flag,
                         const unsigned char *user_name);
 
-void do_write_moscow_standings(const serve_state_t, FILE *f,
+void do_write_moscow_standings(const serve_state_t,
+                               const struct contest_desc *cnts,
+                               FILE *f,
                                const unsigned char *stand_dir,
                                int client_flag,
                                int user_id,
@@ -169,14 +186,18 @@ int write_priv_user(const serve_state_t, FILE *f, int user_id, int priv_level,
                     int view_user_id,
                     const opcap_t *);
 
-int write_virtual_standings(const serve_state_t, FILE *f, int user_id);
+int write_virtual_standings(const serve_state_t,
+                            const struct contest_desc *cnts,
+                            FILE *f, int user_id);
 
 void html_reset_filter(serve_state_t, int user_id, ej_cookie_t session_id);
 void html_reset_clar_filter(serve_state_t, int user_id, ej_cookie_t session_id);
 
 void write_runs_dump(const serve_state_t, FILE *f, const unsigned char *,
                      unsigned char const *charset);
-void write_raw_standings(const serve_state_t, FILE *f,
+void write_raw_standings(const serve_state_t,
+                         const struct contest_desc *cnts,
+                         FILE *f,
                          unsigned char const *charset);
 int write_raw_source(const serve_state_t, FILE *f,
                      const unsigned char *, int run_id);

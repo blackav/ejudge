@@ -3,7 +3,7 @@
 #ifndef __RUN_PACKET_H__
 #define __RUN_PACKET_H__
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005,2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify

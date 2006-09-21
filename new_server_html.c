@@ -44,6 +44,9 @@
 #include "mime_type.h"
 #include "sha.h"
 #include "archive_paths.h"
+#include "curtime.h"
+#include "clarlog.h"
+#include "team_extra.h"
 
 #include <reuse/osdeps.h>
 #include <reuse/xalloc.h>
@@ -78,6 +81,7 @@ enum
   USER_SECTION_LAST,
 };
 
+enum { CONTEST_EXPIRE_TIME = 300 };
 static struct contest_extra **extras = 0;
 static size_t extra_a = 0;
 
@@ -116,6 +120,7 @@ get_contest_extra(int contest_id)
     XCALLOC(p, 1);
     extras[contest_id] = p;
   }
+  p->last_access_time = time(0);
   return p;
 }
 
@@ -125,6 +130,95 @@ try_contest_extra(int contest_id)
   if (contest_id <= 0 || contest_id > MAX_CONTEST_ID) return 0;
   if (contest_id >= extra_a) return 0;
   return extras[contest_id];
+}
+
+void
+new_server_unload_contest(int contest_id)
+{
+  struct contest_extra *extra;
+
+  if (contest_id <= 0 || contest_id >= extra_a) return;
+  if (!(extra = extras[contest_id])) return;
+
+  if (extra->serve_state) {
+    //serve_check_stat_generation(&serve_state, cur_contest, 1);
+    serve_update_status_file(extra->serve_state, 1);
+    team_extra_flush(extra->serve_state->team_extra_state);
+    extra->serve_state = serve_state_destroy(extra->serve_state);
+  }
+
+  xfree(extra->contest_arm);
+  watched_file_clear(&extra->header);
+  watched_file_clear(&extra->footer);
+  watched_file_clear(&extra->priv_header);
+  watched_file_clear(&extra->priv_footer);
+
+  memset(extra, 0, sizeof(*extra));
+  xfree(extra);
+  extras[contest_id] = 0;
+
+  info("contest %d is unloaded", contest_id);
+}
+
+void
+new_server_unload_contests(void)
+{
+  int i;
+
+  for (i = 1; i < extra_a; i++)
+    if (extras[i])
+      new_server_unload_contest(i);
+}
+
+void
+new_server_unload_expired_contests(time_t cur_time)
+{
+  int i;
+
+  if (cur_time <= 0) cur_time = time(0);
+
+  for (i = 1; i < extra_a; i++)
+    if (extras[i]
+        && extras[i]->last_access_time + CONTEST_EXPIRE_TIME < cur_time)
+      new_server_unload_contest(i);
+}
+
+void
+new_server_loop_callback(struct server_framework_state *state)
+{
+  time_t cur_time = time(0);
+  struct contest_extra *e;
+  serve_state_t cs;
+  const struct contest_desc *cnts;
+  int contest_id, i, r;
+  path_t packetname;
+
+  for (contest_id = 1; contest_id < extra_a; contest_id++) {
+    if (contests_get(contest_id, &cnts) < 0 || !cnts) continue;
+    if (!(e = extras[contest_id])) continue;
+    if (!(cs = e->serve_state)) continue;
+
+    for (i = 0; i < cs->compile_dirs_u; i++) {
+      if ((r = scan_dir(cs->compile_dirs[i].status_dir, packetname)) <= 0)
+        continue;
+      serve_read_compile_packet(cs, cnts,
+                                cs->compile_dirs[i].status_dir,
+                                cs->compile_dirs[i].report_dir,
+                                packetname);
+    }
+
+    for (i = 0; i < cs->run_dirs_u; i++) {
+      if ((r = scan_dir(cs->run_dirs[i].status_dir, packetname)) <= 0)
+        continue;
+      serve_read_run_packet(cs, cnts,
+                            cs->run_dirs[i].status_dir,
+                            cs->run_dirs[i].report_dir,
+                            cs->run_dirs[i].full_report_dir,
+                            packetname);
+    }
+  }
+
+  new_server_unload_expired_contests(cur_time);
 }
 
 static const unsigned char*
@@ -590,7 +684,7 @@ privileged_page_login_page(struct server_framework_state *state,
   fprintf(fout, "<tr><td>%s:</td><td>", _("Language"));
   l10n_html_locale_select(fout, phr->locale_id);
   fprintf(fout, "</td></tr>\n");
-  fprintf(fout, "<tr><td>&nbsp;</td><td><input type=\"submit\" value=\"%s\"></td></tr>\n", _("Submit"));
+  fprintf(fout, "<tr><td>&nbsp;</td><td><button type=\"submit\" value=\"1\">%s</button></td></tr>\n", _("Submit"));
   fprintf(fout, "</table></form>\n");
   html_put_footer(fout, 0, phr->locale_id);
   l10n_setlocale(0);
@@ -806,6 +900,8 @@ html_err_userlist_server_down(struct server_framework_state *state,
   struct contest_extra *extra = 0;
   const unsigned char *header = 0, *footer = 0;
   time_t cur_time = time(0);
+
+  err("%d: userlist server is down", p->id);
 
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = get_contest_extra(phr->contest_id);
@@ -1589,22 +1685,22 @@ priv_view_users_page(struct server_framework_state *state,
 
   fprintf(fout, "<table>\n");
   fprintf(fout, "<tr><td><a href=\"%s\">Back</a></td><td>Return to the main page</td></tr>\n", new_serve_url(url, sizeof(url), phr, 0, 0));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS, _("Remove registrations"), _("Remove the selected users from the list"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_PENDING, _("Mark PENDING"), _("Set the registration status of the selected users to PENDING"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_OK, _("Mark OK"), _("Set the registration status of the selected users to OK"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_REJECTED, _("Mark REJECTED"), _("Set the registration status of the selected users to REJECTED"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_INVISIBLE, _("Mark INVISIBLE"), _("Set the INVISIBLE flag for the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_CLEAR_INVISIBLE, _("Clear INVISIBLE"), _("Clear the INVISIBLE flag for the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_BANNED, _("Mark BANNED"), _("Set the BANNED flag for the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_CLEAR_BANNED, _("Clear BANNED"), _("Clear the BANNED flag for the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_LOCKED, _("Mark LOCKED"), _("Set the LOCKED flag for the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_CLEAR_LOCKED, _("Clear LOCKED"), _("Clear the LOCKED flag for the selected users"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS, _("Remove registrations"), _("Remove the selected users from the list"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_PENDING, _("Mark PENDING"), _("Set the registration status of the selected users to PENDING"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_OK, _("Mark OK"), _("Set the registration status of the selected users to OK"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_REJECTED, _("Mark REJECTED"), _("Set the registration status of the selected users to REJECTED"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_INVISIBLE, _("Mark INVISIBLE"), _("Set the INVISIBLE flag for the selected users"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_CLEAR_INVISIBLE, _("Clear INVISIBLE"), _("Clear the INVISIBLE flag for the selected users"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_BANNED, _("Mark BANNED"), _("Set the BANNED flag for the selected users"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_CLEAR_BANNED, _("Clear BANNED"), _("Clear the BANNED flag for the selected users"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_SET_LOCKED, _("Mark LOCKED"), _("Set the LOCKED flag for the selected users"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_CLEAR_LOCKED, _("Clear LOCKED"), _("Clear the LOCKED flag for the selected users"));
   fprintf(fout, "</table>\n");
 
   fprintf(fout, "<h2>%s</h2>\n", _("Add new user"));
   fprintf(fout, "<table>\n");
-  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_login\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_ADD_BY_LOGIN, _("Add by login"), _("Add a new user specifying his/her login"));
-  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_user_id\"></td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_ADD_BY_USER_ID, _("Add by ID"), _("Add a new user specifying his/her User Id"));
+  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_login\"></td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_ADD_BY_LOGIN, _("Add by login"), _("Add a new user specifying his/her login"));
+  fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_user_id\"></td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_USERS_ADD_BY_USER_ID, _("Add by ID"), _("Add a new user specifying his/her User Id"));
   fprintf(fout, "</table>\n");
 
   fprintf(fout, "</form>\n");
@@ -1761,25 +1857,25 @@ priv_view_priv_users_page(struct server_framework_state *state,
 
   fprintf(fout, "<table>\n");
   fprintf(fout, "<tr><td><a href=\"%s\">Back</a></td><td>Return to the main page</td></tr>\n", new_serve_url(url, sizeof(url), phr, 0, 0));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_REMOVE, _("Remove"), _("Remove the selected users from the list (ADMINISTRATORs cannot be removed)"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER, _("Add OBSERVER"), _("Add the OBSERVER role to the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER, _("Del OBSERVER"), _("Remove the OBSERVER role from the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_EXAMINER, _("Add EXAMINER"), _("Add the EXAMINER role to the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_EXAMINER, _("Del EXAMINER"), _("Remove the EXAMINER role from the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_EXAMINER, _("Add CHIEF EXAMINER"), _("Add the CHIEF EXAMINER role to the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_EXAMINER, _("Del CHIEF EXAMINER"), _("Remove the CHIEF EXAMINER role from the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR, _("Add COORDINATOR"), _("Add the COORDINATOR role to the selected users"));
-  fprintf(fout, "<tr><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR, _("Del COORDINATOR"), _("Remove the COORDINATOR role from the selected users"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_REMOVE, _("Remove"), _("Remove the selected users from the list (ADMINISTRATORs cannot be removed)"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER, _("Add OBSERVER"), _("Add the OBSERVER role to the selected users"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER, _("Del OBSERVER"), _("Remove the OBSERVER role from the selected users"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_EXAMINER, _("Add EXAMINER"), _("Add the EXAMINER role to the selected users"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_EXAMINER, _("Del EXAMINER"), _("Remove the EXAMINER role from the selected users"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_EXAMINER, _("Add CHIEF EXAMINER"), _("Add the CHIEF EXAMINER role to the selected users"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_EXAMINER, _("Del CHIEF EXAMINER"), _("Remove the CHIEF EXAMINER role from the selected users"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR, _("Add COORDINATOR"), _("Add the COORDINATOR role to the selected users"));
+  fprintf(fout, "<tr><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR, _("Del COORDINATOR"), _("Remove the COORDINATOR role from the selected users"));
   fprintf(fout, "</table>\n");
 
   fprintf(fout, "<h2>%s</h2>\n", _("Add new user"));
   fprintf(fout, "<table>\n");
   fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_login\"></td><td>");
   html_role_select(fout, USER_ROLE_OBSERVER, 0, "add_role_1");
-  fprintf(fout, "</td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN, _("Add by login"), _("Add a new user specifying his/her login"));
+  fprintf(fout, "</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN, _("Add by login"), _("Add a new user specifying his/her login"));
   fprintf(fout, "<tr><td><input type=\"text\" size=\"32\" name=\"add_user_id\"></td><td>");
   html_role_select(fout, USER_ROLE_OBSERVER, 0, "add_role_2");
-  fprintf(fout, "</td><td><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID, _("Add by ID"), _("Add a new user specifying his/her User Id"));
+  fprintf(fout, "</td><td><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td><td>%s</td></tr>\n", NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID, _("Add by ID"), _("Add a new user specifying his/her User Id"));
   fprintf(fout, "</table>\n");
 
   html_put_footer(fout, extra->footer_txt, phr->locale_id);
@@ -1841,7 +1937,7 @@ unpriv_print_status(struct server_framework_state *state,
       if (cs->accepting_mode)
         s = _("Participants' solutions are being accepted");
       else
-        s = _("Participants' solutions are being judges");
+        s = _("Participants' solutions are being judged");
       fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
     }
   }
@@ -1981,7 +2077,7 @@ priv_main_page(struct server_framework_state *state,
     if (cs->accepting_mode)
       s = _("Participants' solutions are being accepted");
     else
-      s = _("Participants' solutions are being judges");
+      s = _("Participants' solutions are being judged");
     fprintf(fout, "<p><big><b>%s</b></big></p>\n", s);
   }
 
@@ -2360,7 +2456,7 @@ privileged_page(struct server_framework_state *state,
   if (serve_state_load_contest(phr->contest_id,
                                ul_conn,
                                &callbacks,
-                               &extra->serve_state) < 0) {
+                               &extra->serve_state, 0) < 0) {
     return html_err_contest_not_available(state, p, fout, phr, "");
   }
 
@@ -2444,7 +2540,7 @@ unprivileged_page_login_page(struct server_framework_state *state,
   fprintf(fout, "%s:&nbsp;", _("language"));
   l10n_html_locale_select(fout, phr->locale_id);
   fprintf(fout, "&nbsp;&nbsp;\n");
-  fprintf(fout, "<input type=\"submit\" value=\"%s\">\n", _("Submit"));
+  fprintf(fout, "<button type=\"submit\" value=\"1\">%s</button>\n", _("Submit"));
   fprintf(fout, "</form></div>\n");
   fprintf(fout, "<div class=\"search_actions\"><a href=\"\">%s</a>&nbsp;&nbsp;<a href=\"\">%s</a></div>", _("Registration"), _("Forgot the password?"));
   html_put_footer(fout, extra->footer_txt, phr->locale_id);
@@ -2972,6 +3068,28 @@ unpriv_submit_run(struct server_framework_state *state,
                       "Run-id: %d\n", run_id);
     }
   } else {
+    if (prob->disable_auto_testing > 0
+        || (prob->disable_testing > 0 && prob->enable_compilation <= 0)) {
+      run_change_status(cs->runlog_state, run_id, RUN_PENDING, 0, -1, 0);
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "Command: submit\n"
+                      "Status: pending\n"
+                      "Run-id: %d\n"
+                      "  Testing disabled for this problem\n",
+                      run_id);
+    } else {
+      if (serve_run_request(cs, log_f, run_text, run_size, run_id,
+                            phr->user_id, prob_id, 0, variant, 0, -1, -1,
+                            0, 0) < 0) {
+        fprintf(log_f, _("Cannot put the run to the run queue."));
+        goto done;
+      }
+
+      serve_audit_log(cs, run_id, phr->user_id, phr->ip, phr->ssl_flag,
+                      "Command: submit\n"
+                      "Status: ok\n"
+                      "Run-id: %d\n", run_id);
+    }
   }
 
  done:;
@@ -2986,7 +3104,153 @@ unpriv_submit_run(struct server_framework_state *state,
   //cleanup:;
   if (log_f) fclose(log_f);
   xfree(log_txt);
+}
 
+static void
+unpriv_submit_clar(struct server_framework_state *state,
+                   struct client_state *p,
+                   FILE *fout,
+                   struct http_request_info *phr,
+                   const struct contest_desc *cnts,
+                   struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const struct section_problem_data *prob = 0;
+  const unsigned char *s, *subject = 0, *text = 0;
+  int prob_id = 0, n;
+  time_t start_time, stop_time;
+  FILE *log_f = 0;
+  char *log_txt = 0;
+  size_t log_len = 0;
+  size_t subj_len, text_len, subj3_len, text3_len;
+  unsigned char *subj2, *text2, *subj3, *text3;
+  struct timeval precise_time;
+  int clar_id;
+  unsigned char clar_file[32];
+
+  // parameters: prob_id, subject, text,  
+
+  if ((n = ns_cgi_param(phr, "prob_id", &s)) < 0)
+    return html_err_invalid_param(state, p, fout, phr, 0, "prob_id is binary");
+  if (n > 0 && *s) {
+    if (sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n])
+      return html_err_invalid_param(state, p, fout, phr, 0,
+                                    "cannot parse prob_id");
+    if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id]))
+      return html_err_invalid_param(state, p, fout, phr, 0,
+                                    "prob_id is invalid");
+  }
+  if (ns_cgi_param(phr, "subject", &subject) < 0)
+    return html_err_invalid_param(state, p, fout, phr, 0, "subject is binary");
+  if (ns_cgi_param(phr, "text", &text) <= 0)
+    return html_err_invalid_param(state, p, fout, phr, 0,
+                                  "text is not set or binary");
+
+  if (global->virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                          cs->current_time);
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+  }
+
+  log_f = open_memstream(&log_txt, &log_len);
+
+  if (cs->clients_suspended) {
+    fprintf(log_f, _("Client's requests are suspended.\nPlease wait until the contest administrator resumes the contest."));
+    goto done;
+  }
+  if (global->disable_team_clars) {
+    fprintf(log_f, _("Possibility to write clarification requests in disabled.\n"));
+    goto done;
+  }
+  if (!start_time) {
+    fprintf(log_f, _("The contest is not started."));
+    goto done;
+  }
+  if (stop_time) {
+    fprintf(log_f, _("The contest is finished."));
+    goto done;
+  }
+
+  if (!subject) subject = "";
+  subj_len = strlen(subject);
+  if (subj_len > 128 * 1024 * 1024) {
+    fprintf(log_f, _("Subject length is too large"));
+    goto done;
+  }
+  subj2 = alloca(subj_len + 1);
+  strcpy(subj2, subject);
+  while (subj_len > 0 && isspace(subj2[subj_len - 1])) subj2[--subj_len] = 0;
+  if (!subj_len) {
+    subj2 = "(no subject)";
+    subj_len = strlen(subj2);
+  }
+
+  if (!text) text = "";
+  text_len = strlen(text);
+  if (text_len > 128 * 1024 * 1024) {
+    fprintf(log_f, _("Message length is too large"));
+    goto done;
+  }
+  text2 = alloca(text_len + 1);
+  strcpy(text2, text);
+  while (text_len > 0 && isspace(text2[text_len - 1])) text2[--text_len] = 0;
+  if (!text_len) {
+    fprintf(log_f, _("Message is empty"));
+    goto done;
+  }
+
+  if (prob) {
+    subj3 = alloca(strlen(prob->short_name) + subj_len + 10);
+    subj3_len = sprintf(subj3, "%s: %s", prob->short_name, subj2);
+  } else {
+    subj3 = subj2;
+    subj3_len = subj_len;
+  }
+
+  text3 = alloca(subj3_len + text_len + 32);
+  text3_len = sprintf(text3, "Subject: %s\n\n%s\n", subj3, text2);
+
+  if (serve_check_clar_quota(cs, phr->user_id, text3_len) < 0) {
+    fprintf(log_f, _("User quota exceeded.\nThis clarification request is too large, you already have too many clarification requests,\nor the total size of your clarification requests is too big."));
+    goto done;
+  }
+
+  gettimeofday(&precise_time, 0);
+  if ((clar_id = clar_add_record_new(cs->clarlog_state,
+                                     precise_time.tv_sec,
+                                     precise_time.tv_usec * 1000,
+                                     text3_len,
+                                     phr->ip, phr->ssl_flag,
+                                     phr->user_id, 0, 0, 0, 0, subj3)) < 0) {
+    fprintf(log_f, _("Cannot update the clarification database."));
+    goto done;
+  }
+
+  sprintf(clar_file, "%06d", clar_id);
+  if (generic_write_file(text3, text3_len, 0,
+                         global->clar_archive_dir, clar_file, "") < 0) {
+    fprintf(log_f, _("Cannot write the message to the disk."));
+    goto done;
+  }
+
+  serve_send_clar_notify_email(cs, cnts, phr->user_id, phr->name, subj3, text2);
+
+ done:;
+  fclose(log_f); log_f = 0;
+  if (!log_txt || !*log_txt) {
+    html_refresh_page(state, fout, phr, NEW_SRV_ACTION_MAIN_PAGE);
+  } else {
+    html_error_status_page(state, p, fout, phr, cnts, extra, log_txt,
+                           NEW_SRV_ACTION_MAIN_PAGE);
+  }
+
+  //cleanup:;
+  if (log_f) fclose(log_f);
+  xfree(log_txt);
 }
 
 static int
@@ -3155,6 +3419,7 @@ user_main_page(struct server_framework_state *state,
   struct watched_file *pw = 0;
   const unsigned char *pw_path;
   const struct section_problem_data *prob = 0;
+  unsigned char urlbuf[1024];
 
   if (ns_cgi_param(phr, "all_runs", &s) > 0
       && sscanf(s, "%d%n", &v, &n) == 1 && !s[n] && v >= 0 && v <= 1) {
@@ -3265,6 +3530,10 @@ user_main_page(struct server_framework_state *state,
               gettext(user_section_names[i]));
     }
   }
+  fprintf(fout, "<td><a href=\"%s\">%s</a></td>",
+          new_serve_url(urlbuf, sizeof(urlbuf), phr, NEW_SRV_ACTION_LOGOUT, 0),
+          _("Logout"));
+          
   fprintf(fout, "</tr></table>\n");
 
   unpriv_print_status(state, p, fout, phr, cnts, extra,
@@ -3387,7 +3656,7 @@ user_main_page(struct server_framework_state *state,
         break;
       case PROB_TYPE_SELECT_ONE:
         for (i = 0; prob->alternative[i]; i++) {
-          fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\"></td><td>%s</td></tr>\n", i + 1, prob->alternative[i]);
+          fprintf(fout, "<tr><td>%d</td><td><input type=\"radio\" name=\"file\" value=\"%d\"></td><td>%s</td></tr>\n", i + 1, i + 1, prob->alternative[i]);
         }
         break;
       case PROB_TYPE_SELECT_MANY:
@@ -3442,7 +3711,7 @@ user_main_page(struct server_framework_state *state,
       fprintf(fout, "</td></tr>\n<tr><td>%s:</td>"
               "<td><input type=\"text\" name=\"subject\"></td></tr>\n"
               "<tr><td colspan=\"2\"><textarea name=\"text\" rows=\"20\" cols=\"60\"></textarea></td></tr>\n"
-              "<tr><td colspan=\"2\"><input type=\"submit\" name=\"action_%d\" value=\"%s\"></td></tr>\n"
+              "<tr><td colspan=\"2\"><button type=\"submit\" name=\"action\" value=\"%d\">%s</button></td></tr>\n"
               "</table></form>\n",
               _("Subject"), NEW_SRV_ACTION_SUBMIT_CLAR, _("Send!"));
     }
@@ -3512,11 +3781,45 @@ user_main_page(struct server_framework_state *state,
   l10n_setlocale(0);
 }
 
+static void
+unpriv_logout(struct server_framework_state *state,
+              struct client_state *p,
+              FILE *fout,
+              struct http_request_info *phr,
+              const struct contest_desc *cnts,
+              struct contest_extra *extra)
+{
+  unsigned char locale_buf[64];
+
+  if (open_ul_connection(state) < 0)
+    return html_err_userlist_server_down(state, p, fout, phr, 0);
+  userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
+                              phr->session_id);
+  new_server_remove_session(phr->session_id);
+  l10n_setlocale(phr->locale_id);
+  html_put_header(fout, extra->header_txt, 0, 0, phr->locale_id,
+                  _("Good-bye!"));
+
+  locale_buf[0] = 0;
+  if (phr->locale_id > 0) {
+    snprintf(locale_buf, sizeof(locale_buf), "&locale_id=%d", phr->locale_id);
+  }
+
+  fprintf(fout, _("<p>Your session has been removed.\n"
+                  "<p>If you want to relogin, follow <a href=\"%s?contest_id=%d%s\">this link</a>.\n"),
+          phr->self_url, phr->contest_id, locale_buf);
+
+  html_put_footer(fout, extra->footer_txt, phr->locale_id);
+  l10n_setlocale(0);
+}
+
 static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = unpriv_change_language,
   [NEW_SRV_ACTION_CHANGE_PASSWORD] = unpriv_change_password,
   [NEW_SRV_ACTION_SUBMIT_RUN] = unpriv_submit_run,
+  [NEW_SRV_ACTION_SUBMIT_CLAR] = unpriv_submit_clar,
+  [NEW_SRV_ACTION_LOGOUT] = unpriv_logout,
 };
 
 static void
@@ -3607,7 +3910,7 @@ unprivileged_page(struct server_framework_state *state,
   if (serve_state_load_contest(phr->contest_id,
                                ul_conn,
                                &callbacks,
-                               &extra->serve_state) < 0) {
+                               &extra->serve_state, 0) < 0) {
     return html_err_contest_not_available(state, p, fout, phr, "");
   }
 

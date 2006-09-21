@@ -562,7 +562,7 @@ struct section_tester_data
 int prepare(serve_state_t, char const *, int flags, int mode, char const *opts,
             int managed_flag);
 int create_dirs(serve_state_t, int mode);
-int prepare_serve_defaults(serve_state_t);
+int prepare_serve_defaults(serve_state_t, const struct contest_desc **);
 
 int find_tester(const serve_state_t, int, char const *);
 int find_variant(const serve_state_t, int, int);

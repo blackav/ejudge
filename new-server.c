@@ -49,9 +49,11 @@ static struct server_framework_params params =
   .program_name = 0,
   .socket_path = "/tmp/new-server-socket",
   .log_path = "/tmp/new-server-log",
+  .select_timeout = 1,
   .user_data = 0,
   .startup_error = startup_error,
   .handle_packet = handle_packet_func,
+  .loop_start = new_server_loop_callback,
 };
 
 static struct server_framework_state *state = 0;
@@ -523,6 +525,7 @@ main(int argc, char *argv[])
   if (!(state = nsf_init(&params, 0))) return 1;
   if (nsf_prepare(state) < 0) return 1;
   nsf_main_loop(state);
+  new_server_unload_contests();
   nsf_cleanup(state);
   nsdb_default->iface->close(nsdb_default->data);
 

@@ -615,6 +615,9 @@ nsf_main_loop(struct server_framework_state *state)
   int mode;
 
   while (1) {
+    if (state->params->loop_start)
+      state->params->loop_start(state);
+
     fd_max = -1;
     FD_ZERO(&rset);
     FD_ZERO(&wset);
@@ -648,7 +651,8 @@ nsf_main_loop(struct server_framework_state *state)
       }
     }
 
-    timeout.tv_sec = 10;
+    timeout.tv_sec = state->params->select_timeout;
+    if (timeout.tv_sec <= 0) timeout.tv_sec = 10;
     timeout.tv_usec = 0;
 
     // here's a potential race condition :-(

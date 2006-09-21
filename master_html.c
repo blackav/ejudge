@@ -1191,23 +1191,25 @@ write_master_page(serve_state_t state, FILE *f, int user_id, int priv_level,
 }
 
 void
-write_priv_standings(const serve_state_t state, FILE *f, ej_cookie_t sid,
+write_priv_standings(const serve_state_t state,
+                     const struct contest_desc *cnts,
+                     FILE *f, ej_cookie_t sid,
                      unsigned char const *self_url,
                      unsigned char const *hidden_vars,
                      unsigned char const *extra_args, int accepting_mode)
 {
-  write_standings_header(state, f, 1, 0, 0, 0);
+  write_standings_header(state, cnts, f, 1, 0, 0, 0);
 
   print_nav_buttons(state, f, 0, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), _("Refresh"), 0, 0, 0, 0, 0);
 
   if (state->global->score_system_val == SCORE_KIROV
       || state->global->score_system_val == SCORE_OLYMPIAD)
-    do_write_kirov_standings(state, f, 0, 1, 0, 0, 0, 0 /*accepting_mode*/);
+    do_write_kirov_standings(state, cnts, f, 0, 1, 0, 0, 0, 0 /*accepting_mode*/);
   else if (state->global->score_system_val == SCORE_MOSCOW)
-    do_write_moscow_standings(state, f, 0, 1, 0, 0, 0, 0, 0);
+    do_write_moscow_standings(state, cnts, f, 0, 1, 0, 0, 0, 0, 0);
   else
-    do_write_standings(state, f, 1, 0, 0, 0, 0, 0);
+    do_write_standings(state, cnts, f, 1, 0, 0, 0, 0, 0);
 
   print_nav_buttons(state, f, 0, sid, self_url, hidden_vars, extra_args,
                     _("Main page"), _("Refresh"), 0, 0, 0, 0, 0);
@@ -2884,16 +2886,18 @@ write_runs_dump(const serve_state_t state, FILE *f, const unsigned char *url,
 }
 
 void
-write_raw_standings(const serve_state_t state, FILE *f,
+write_raw_standings(const serve_state_t state,
+                    const struct contest_desc *cnts,
+                    FILE *f,
                     unsigned char const *charset)
 {
   if (state->global->score_system_val == SCORE_KIROV
       || state->global->score_system_val == SCORE_OLYMPIAD)
-    do_write_kirov_standings(state, f, 0, 1, 0, 0, 1, 0);
+    do_write_kirov_standings(state, cnts, f, 0, 1, 0, 0, 1, 0);
   else if (state->global->score_system_val == SCORE_MOSCOW)
-    do_write_moscow_standings(state, f, 0, 1, 0, 0, 0, 1, 0);
+    do_write_moscow_standings(state, cnts, f, 0, 1, 0, 0, 0, 1, 0);
   else
-    do_write_standings(state, f, 1, 0, 0, 0, 1, 0);
+    do_write_standings(state, cnts, f, 1, 0, 0, 0, 1, 0);
 }
 
 int

@@ -105,7 +105,7 @@ find_user_priority_adjustment(const serve_state_t state, int user_id)
 }
 
 int
-prepare_serve_defaults(serve_state_t state)
+prepare_serve_defaults(serve_state_t state, const struct contest_desc **p_cnts)
 {
   int i;
 
@@ -124,12 +124,15 @@ prepare_serve_defaults(serve_state_t state)
         contests_strerror(-i));
     return -1;
   }
-  if ((i = contests_get(state->global->contest_id, &state->cur_contest)) < 0) {
-    err("cannot load contest information: %s",
-        contests_strerror(-i));
-    return -1;
+  if (p_cnts) {
+    if ((i = contests_get(state->global->contest_id, p_cnts)) < 0) {
+      err("cannot load contest information: %s",
+          contests_strerror(-i));
+      return -1;
+    }
+    snprintf(state->global->name, sizeof(state->global->name), "%s",
+             (*p_cnts)->name);
   }
-  snprintf(state->global->name, sizeof(state->global->name), "%s", state->cur_contest->name);
   return 0;
 }
 

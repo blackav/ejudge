@@ -166,6 +166,7 @@ enum
   NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1,
   NEW_SRV_ACTION_SQUEEZE_RUNS,
   NEW_SRV_ACTION_RESET_CLAR_FILTER,
+  NEW_SRV_ACTION_LOGOUT,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -202,6 +203,13 @@ new_server_html_err_internal_error(struct server_framework_state *state,
 
 struct session_info *
 new_server_get_session(ej_cookie_t session_id, time_t cur_time);
+
+void new_server_remove_session(ej_cookie_t session_id);
+
+void new_server_unload_contests(void);
+
+void
+new_server_loop_callback(struct server_framework_state *state);
 
 unsigned char *
 new_serve_submit_button(unsigned char *buf, size_t size,
