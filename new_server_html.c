@@ -3044,7 +3044,7 @@ unpriv_submit_run(struct server_framework_state *state,
     goto done;
   }
 
-  if (prob->type == PROB_TYPE_STANDARD) {
+  if (prob->type_val == PROB_TYPE_STANDARD) {
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
         || lang->disable_auto_testing || lang->disable_testing) {
