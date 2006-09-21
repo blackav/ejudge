@@ -247,4 +247,12 @@ write_change_status_dialog(const serve_state_t state,
                            FILE *f, unsigned char const *var_name,
                            int disable_rejudge_flag);
 
+int
+write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
+                                int rid, const struct run_entry *re,
+                                const struct section_problem_data *prob,
+                                ej_cookie_t sid,
+                                const unsigned char *self_url,
+                                const unsigned char *extra_args);
+
 #endif /* __HTML_H__ */

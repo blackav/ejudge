@@ -1648,7 +1648,10 @@ serve_rejudge_run(serve_state_t state,
                   int priority_adjustment)
 {
   struct run_entry re;
-  int accepting_mode = -1;
+  int accepting_mode = -1, arch_flags = 0;
+  path_t run_arch_path;
+  char *run_text = 0;
+  size_t run_size = 0;
 
   if (run_get_entry(state->runlog_state, run_id, &re) < 0) return;
   if (re.is_imported) return;
@@ -1664,7 +1667,21 @@ serve_rejudge_run(serve_state_t state,
         && state->global->score_system_val == SCORE_OLYMPIAD) {
       accepting_mode = 0;
     }
-    // FIXME: handle output-only problems
+
+    arch_flags = archive_make_read_path(state, run_arch_path,
+                                        sizeof(run_arch_path),
+                                        state->global->run_archive_dir, run_id,
+                                        0, 0);
+    if (arch_flags < 0) return;
+    if (generic_read_file(&run_text, 0, &run_size, arch_flags,
+                          0, run_arch_path, 0) < 0)
+      return;
+
+    serve_run_request(state, stderr, run_text, run_size, run_id,
+                      re.user_id, re.prob_id, 0, 0, priority_adjustment,
+                      -1, accepting_mode, 0, 0);
+    xfree(run_text);
+
     serve_audit_log(state, run_id, user_id, ip, ssl_flag, "Command: Rejudge\n");
     return;
   }
