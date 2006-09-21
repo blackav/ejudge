@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* $Id$ */
 
-/* Copyright (C) 2002-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2006 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -70,6 +70,7 @@ userlist_clnt_open(char const *socketpath)
   }
 
   memset(&msg, 0, sizeof(msg));
+  memset(msgbuf, 0, sizeof(msgbuf));
   msg.msg_control = msgbuf;
   msg.msg_controllen = sizeof(msgbuf);
   pmsg = CMSG_FIRSTHDR(&msg);
@@ -106,7 +107,7 @@ userlist_clnt_open(char const *socketpath)
   return 0;
 }
 
-/**
+/*
  * Local variables:
  *  compile-command: "make -C .."
  *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
