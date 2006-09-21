@@ -1853,7 +1853,10 @@ run_clear_variables(runlog_state_t state)
 }
 
 int
-run_write_xml(runlog_state_t state, FILE *f, int export_mode,
+run_write_xml(runlog_state_t state,
+              void *serve_state,
+              const struct contest_desc *cnts,
+              FILE *f, int export_mode,
               time_t current_time)
 {
   //int i;
@@ -1889,8 +1892,7 @@ run_write_xml(runlog_state_t state, FILE *f, int export_mode,
   }
   */
 
-  // !!!!!!!!!!!!!!
-  unparse_runlog_xml(0, f, &state->head, state->run_u,
+  unparse_runlog_xml(serve_state, cnts, f, &state->head, state->run_u,
                      state->runs, export_mode, current_time);
   return 0;
 }
@@ -2096,11 +2098,13 @@ runlog_check(FILE *ferr,
       nerr++;
       continue;
     }
+    /*
     if (e->lang_id == 0 || e->lang_id == 255) {
       check_msg(1, ferr, "Run %d language %d is invalid", i, e->lang_id);
       nerr++;
       continue;
     }
+    */
     if (e->test < -1) {
       check_msg(1, ferr, "Run %d test %d is invalid", i, e->test);
       nerr++;

@@ -62,12 +62,14 @@ serve_state_destroy(serve_state_t state)
   teamdb_destroy(state->teamdb_state);
   clar_destroy(state->clarlog_state);
 
-  for (i = 1; i <= state->max_prob; i++) {
-    watched_file_clear(&state->prob_extras[i].stmt);
-    if (state->probs[i] && state->probs[i]->variant_num > 0) {
-      for (j = 1; j <= state->probs[i]->variant_num; j++)
-        watched_file_clear(&state->prob_extras[i].v_stmts[j]);
-      xfree(state->prob_extras[i].v_stmts);
+  if (state->prob_extras) {
+    for (i = 1; i <= state->max_prob; i++) {
+      watched_file_clear(&state->prob_extras[i].stmt);
+      if (state->probs[i] && state->probs[i]->variant_num > 0) {
+        for (j = 1; j <= state->probs[i]->variant_num; j++)
+          watched_file_clear(&state->prob_extras[i].v_stmts[j]);
+        xfree(state->prob_extras[i].v_stmts);
+      }
     }
   }
   xfree(state->prob_extras);
@@ -114,7 +116,8 @@ int
 serve_state_load_contest(int contest_id,
                          struct userlist_clnt *ul_conn,
                          struct teamdb_db_callbacks *teamdb_callbacks,
-                         serve_state_t *p_state)
+                         serve_state_t *p_state,
+                         const struct contest_desc **p_cnts)
 {
   serve_state_t state = 0;
   const struct contest_desc *cnts = 0;
@@ -165,7 +168,7 @@ serve_state_load_contest(int contest_id,
 
   if (prepare(state, state->config_path, 0, PREPARE_SERVE, "", 1) < 0)
     goto failure;
-  if (prepare_serve_defaults(state) < 0) goto failure;
+  if (prepare_serve_defaults(state, p_cnts) < 0) goto failure;
   if (create_dirs(state, PREPARE_SERVE) < 0) goto failure;
 
   team_extra_set_dir(state->team_extra_state, state->global->team_extra_dir);

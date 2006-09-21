@@ -134,7 +134,9 @@ static int                  client_serial_id = 1;
 
 static int cmdline_socket_fd = -1;
 static time_t last_activity_time = 0;
+
 static struct serve_state serve_state;
+static const struct contest_desc *cur_contest = 0;
 
 static struct client_state *
 client_new_state(int fd)
@@ -239,73 +241,6 @@ interrupt_signal(int s)
 }
 
 /* mode == 1 - from master, mode == 2 - from run */
-static int
-is_valid_status(int status, int mode)
-{
-  if (serve_state.global->score_system_val == SCORE_OLYMPIAD) {
-    switch (status) {
-    case RUN_OK:
-    case RUN_PARTIAL:
-    case RUN_RUN_TIME_ERR:
-    case RUN_TIME_LIMIT_ERR:
-    case RUN_PRESENTATION_ERR:
-    case RUN_WRONG_ANSWER_ERR:
-    case RUN_ACCEPTED:
-    case RUN_CHECK_FAILED:
-    case RUN_MEM_LIMIT_ERR:
-    case RUN_SECURITY_ERR:
-      return 1;
-    case RUN_COMPILE_ERR:
-    case RUN_FULL_REJUDGE:
-    case RUN_REJUDGE:
-    case RUN_IGNORED:
-    case RUN_DISQUALIFIED:
-    case RUN_PENDING:
-      if (mode != 1) return 0;
-      return 1;
-    default:
-      return 0;
-    }
-  } else if (serve_state.global->score_system_val == SCORE_KIROV) {
-    switch (status) {
-    case RUN_OK:
-    case RUN_PARTIAL:
-    case RUN_CHECK_FAILED:
-      return 1;
-    case RUN_COMPILE_ERR:
-    case RUN_REJUDGE:
-    case RUN_IGNORED:
-    case RUN_DISQUALIFIED:
-    case RUN_PENDING:
-      if (mode != 1) return 0;
-      return 1;
-    default:
-      return 0;
-    }
-  } else {
-    switch (status) {
-    case RUN_OK:
-    case RUN_RUN_TIME_ERR:
-    case RUN_TIME_LIMIT_ERR:
-    case RUN_PRESENTATION_ERR:
-    case RUN_WRONG_ANSWER_ERR:
-    case RUN_CHECK_FAILED:
-    case RUN_MEM_LIMIT_ERR:
-    case RUN_SECURITY_ERR:
-      return 1;
-    case RUN_COMPILE_ERR:
-    case RUN_REJUDGE:
-    case RUN_IGNORED:
-    case RUN_DISQUALIFIED:
-    case RUN_PENDING:
-      if (mode != 1) return 0;
-      return 1;
-    default:
-      return 0;
-    }
-  }
-}
-
 static void
 new_enqueue_reply(struct client_state *p, int msg_length, void const *msg)
 {
@@ -540,10 +475,11 @@ cmd_team_page(struct client_state *p, int len,
     return;
   }
   l10n_setlocale(pkt->locale_id);
-  write_team_page(&serve_state, f, p->user_id,
+  write_team_page(&serve_state, cur_contest, f, p->user_id,
                   p->cookie, (pkt->flags & 1), (pkt->flags & 2) >> 1,
                   self_url_ptr, hidden_vars_ptr, extra_args_ptr,
-                  serve_state.contest_start_time, serve_state.contest_stop_time, accepting_mode);
+                  serve_state.contest_start_time,
+                  serve_state.contest_stop_time, accepting_mode);
   l10n_setlocale(0);
   fclose(f);
 
@@ -599,7 +535,8 @@ cmd_get_param(struct client_state *p, int len,
   }
   */
 
-  if (serve_get_cnts_caps(&serve_state, p->user_id, &caps) < 0) {
+  if (serve_get_cnts_caps(&serve_state, cur_contest,
+                          p->user_id, &caps) < 0) {
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     err("%d: cannot get capabilities", p->id);
     return;
@@ -725,7 +662,8 @@ cmd_master_page(struct client_state *p, int len,
     err("%d: priv_level does not match", p->id);
     return;
   }
-  if (serve_get_cnts_caps(&serve_state, p->user_id, &caps) < 0) {
+  if (serve_get_cnts_caps(&serve_state, cur_contest,
+                          p->user_id, &caps) < 0) {
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     err("%d: cannot get capabilities", p->id);
     return;
@@ -856,7 +794,8 @@ cmd_priv_standings(struct client_state *p, int len,
     err("%d: priv_level does not match", p->id);
     return;
   }
-  if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_VIEW_STANDINGS)) {
+  if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                             p->user_id, OPCAP_VIEW_STANDINGS)) {
     err("%d: user %d has no capability %d for the contest",
         p->id, p->user_id, OPCAP_VIEW_STANDINGS);
     new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -869,7 +808,7 @@ cmd_priv_standings(struct client_state *p, int len,
     return;
   }
   /* l10n_setlocale(pkt->locale_id); */
-  write_priv_standings(&serve_state, f, p->cookie,
+  write_priv_standings(&serve_state, cur_contest, f, p->cookie,
                        self_url_ptr, hidden_vars_ptr, extra_args_ptr,
                        serve_state.accepting_mode);
   /* l10n_setlocale(0); */
@@ -958,7 +897,8 @@ cmd_view(struct client_state *p, int len,
     need_priv_check = 0;
 
   if (need_priv_check
-      && serve_get_cnts_caps(&serve_state, p->user_id, &caps) < 0) {
+      && serve_get_cnts_caps(&serve_state, cur_contest,
+                             p->user_id, &caps) < 0) {
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     err("%d: cannot get capabilities", p->id);
     return;
@@ -1138,7 +1078,8 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_DUMP_RUNS)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_DUMP_RUNS)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_DUMP_RUNS);
       r = -SRV_ERR_NO_PERMS;
@@ -1155,7 +1096,8 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_DUMP_RUNS)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_DUMP_RUNS)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_DUMP_RUNS);
       r = -SRV_ERR_NO_PERMS;
@@ -1165,7 +1107,8 @@ cmd_view(struct client_state *p, int len,
     if (self_url_ptr && *self_url_ptr) {
       fprintf(f, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
     }
-    if (run_write_xml(serve_state.runlog_state, f, 0, serve_state.current_time) < 0)
+    if (run_write_xml(serve_state.runlog_state, &serve_state, cur_contest,
+                      f, 0, serve_state.current_time) < 0)
       r = -SRV_ERR_TRY_AGAIN;
     break;
 
@@ -1176,7 +1119,8 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_DUMP_RUNS)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_DUMP_RUNS)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_DUMP_RUNS);
       r = -SRV_ERR_NO_PERMS;
@@ -1196,7 +1140,8 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_DUMP_RUNS)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_DUMP_RUNS)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_DUMP_RUNS);
       r = -SRV_ERR_NO_PERMS;
@@ -1206,7 +1151,8 @@ cmd_view(struct client_state *p, int len,
     if (self_url_ptr && *self_url_ptr) {
       fprintf(f, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
     }
-    if (run_write_xml(serve_state.runlog_state, f, 1, serve_state.current_time) < 0)
+    if (run_write_xml(serve_state.runlog_state, &serve_state, cur_contest,
+                      f, 1, serve_state.current_time) < 0)
       r = -SRV_ERR_TRY_AGAIN;
     break;
 
@@ -1217,7 +1163,8 @@ cmd_view(struct client_state *p, int len,
       break;
     }
 
-    if (!serve_check_cnts_caps(&serve_state,p->user_id, OPCAP_DUMP_STANDINGS)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_DUMP_STANDINGS)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_DUMP_STANDINGS);
       r = -SRV_ERR_NO_PERMS;
@@ -1228,7 +1175,8 @@ cmd_view(struct client_state *p, int len,
       fprintf(f, "Content-type: text/plain; charset=%s\n\n", serve_state.global->charset);
     }
 
-    write_raw_standings(&serve_state, f, serve_state.global->charset);
+    write_raw_standings(&serve_state, cur_contest,
+                        f, serve_state.global->charset);
     break;
 
   case SRV_CMD_VIEW_TEST_INPUT:
@@ -1266,7 +1214,8 @@ cmd_view(struct client_state *p, int len,
         }
       }
     } else {
-      if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_VIEW_REPORT)) {
+      if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                                 p->user_id, OPCAP_VIEW_REPORT)) {
         err("%d: user %d has no capability %d for the contest",
             p->id, p->user_id, OPCAP_VIEW_REPORT);
         r = -SRV_ERR_NO_PERMS;
@@ -1277,7 +1226,8 @@ cmd_view(struct client_state *p, int len,
     break;
 
   case SRV_CMD_VIEW_AUDIT_LOG:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       r = -SRV_ERR_NO_PERMS;
@@ -1363,7 +1313,8 @@ cmd_import_xml_runs(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     return;
   }
-  if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_IMPORT_XML_RUNS)) {
+  if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                             p->user_id, OPCAP_IMPORT_XML_RUNS)) {
     err("%d: user %d has no capability %d for the contest",
         p->id, p->user_id, OPCAP_IMPORT_XML_RUNS);
     new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -1455,7 +1406,8 @@ cmd_message(struct client_state *p, int len,
       return;
     }
 
-    if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_NEW_MESSAGE)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_NEW_MESSAGE)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_NEW_MESSAGE);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -1516,7 +1468,8 @@ cmd_message(struct client_state *p, int len,
       return;
     }
 
-    if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_REPLY_MESSAGE)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_REPLY_MESSAGE)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_REPLY_MESSAGE);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -1634,10 +1587,12 @@ cmd_team_show_item(struct client_state *p, int len,
   l10n_setlocale(pkt->locale_id);
   switch (pkt->b.id) {
   case SRV_CMD_SHOW_CLAR:
-    r = new_write_user_clar(&serve_state, f, pkt->user_id, pkt->item_id, 0);
+    r = new_write_user_clar(&serve_state, cur_contest, 
+                            f, pkt->user_id, pkt->item_id, 0);
     break;
   case SRV_CMD_DUMP_CLAR:
-    r = new_write_user_clar(&serve_state, f, pkt->user_id, pkt->item_id, 1);
+    r = new_write_user_clar(&serve_state, cur_contest,
+                            f, pkt->user_id, pkt->item_id, 1);
     break;
   case SRV_CMD_SHOW_SOURCE:
     r = new_write_user_source_view(&serve_state, f, pkt->user_id, pkt->item_id, 0);
@@ -1650,7 +1605,8 @@ cmd_team_show_item(struct client_state *p, int len,
     break;
   case SRV_CMD_VIRTUAL_STANDINGS:
     if (!serve_state.global->virtual) r = -SRV_ERR_ONLY_VIRTUAL;
-    else r = write_virtual_standings(&serve_state, f, pkt->user_id);
+    else r = write_virtual_standings(&serve_state, cur_contest,
+                                     f, pkt->user_id);
     break;
   case SRV_CMD_RUN_STATUS:
     r = write_user_run_status(&serve_state, f, pkt->user_id, pkt->item_id,
@@ -1734,7 +1690,8 @@ cmd_priv_submit_run(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
   }
-  if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_SUBMIT_RUN)) {
+  if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                             p->user_id, OPCAP_SUBMIT_RUN)) {
     err("%d: user has no capability to submit runs", p->id);
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     return;
@@ -1916,7 +1873,8 @@ cmd_upload_report(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_BAD_USER_ID);
     return;
   }
-  if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_EDIT_RUN)) {
+  if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                             p->user_id, OPCAP_EDIT_RUN)) {
     err("%d: user has no capability to submit runs", p->id);
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     return;
@@ -2455,7 +2413,7 @@ cmd_team_submit_clar(struct client_state *p, int len,
   full_txt = alloca(subj_len + pkt->text_len + 64);
   full_len = sprintf(full_txt, "Subject: %s\n\n%s", subj_ptr, text_ptr);
 
-  if (serve_check_clar_qouta(&serve_state, pkt->user_id, full_len) < 0) {
+  if (serve_check_clar_quota(&serve_state, pkt->user_id, full_len) < 0) {
     err("%d: user quota exceeded", p->id);
     new_send_reply(p, -SRV_ERR_QUOTA_EXCEEDED);
     return;
@@ -2475,8 +2433,8 @@ cmd_team_submit_clar(struct client_state *p, int len,
   }
 
   // send an e-mail
-  if (contests_get(serve_state.global->contest_id, &cnts) >= 0
-      && cnts && cnts->clar_notify_email) {
+  cnts = cur_contest;
+  if (cnts->clar_notify_email) {
     unsigned char esubj[1024];
     FILE *fmsg = 0;
     char *ftxt = 0;
@@ -2745,7 +2703,8 @@ cmd_rejudge_by_mask(struct client_state *p, int len,
 
   info("%d: rejudge_by_mask: %d", p->id, pkt->mask_size);
 
-  if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_REJUDGE_RUN)) {
+  if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                             p->user_id, OPCAP_REJUDGE_RUN)) {
     err("%d: user %d has no capability %d for the contest",
         p->id, p->user_id, OPCAP_REJUDGE_RUN);
     new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -2813,7 +2772,8 @@ cmd_priv_command_0(struct client_state *p, int len,
   }
   switch (pkt->b.id) {
   case SRV_CMD_SUSPEND:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -2825,7 +2785,8 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_RESUME:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -2837,7 +2798,8 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_TEST_SUSPEND:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -2849,7 +2811,8 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_TEST_RESUME:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -2861,7 +2824,8 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_PRINT_SUSPEND:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -2873,7 +2837,8 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_PRINT_RESUME:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -2885,7 +2850,8 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_SET_JUDGING_MODE:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -2907,7 +2873,8 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_SET_ACCEPTING_MODE:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -2929,29 +2896,32 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_UPDATE_STAND:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
       return;
     }
 
-    serve_update_standings_file(&serve_state, 1);
+    serve_update_standings_file(&serve_state, cur_contest, 1);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_SOFT_UPDATE_STAND:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
       return;
     }
 
-    serve_update_standings_file(&serve_state, 0);
+    serve_update_standings_file(&serve_state, cur_contest, 0);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_RESET:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -2984,7 +2954,8 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_START:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -3009,7 +2980,8 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_STOP:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -3033,7 +3005,8 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_REJUDGE_ALL:
-    if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_EDIT_RUN)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_EDIT_RUN)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -3044,7 +3017,8 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_JUDGE_SUSPENDED:
-    if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_EDIT_RUN)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_EDIT_RUN)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -3055,7 +3029,8 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_REJUDGE_PROBLEM:
-    if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_EDIT_RUN)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_EDIT_RUN)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -3071,7 +3046,8 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_SCHEDULE:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -3091,12 +3067,13 @@ cmd_priv_command_0(struct client_state *p, int len,
     run_sched_contest(serve_state.runlog_state, pkt->v.t);
     serve_state.contest_sched_time = pkt->v.t;
     info("%d: contest scheduled: %lu", p->id, pkt->v.t);
-    serve_update_standings_file(&serve_state, 0);
+    serve_update_standings_file(&serve_state, cur_contest, 0);
     serve_update_status_file(&serve_state, 1);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_DURATION:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -3117,7 +3094,7 @@ cmd_priv_command_0(struct client_state *p, int len,
       serve_state.contest_duration = 0;
       run_set_duration(serve_state.runlog_state, serve_state.contest_duration);
       info("contest duration set to infinite time");
-      serve_update_standings_file(&serve_state, 0);
+      serve_update_standings_file(&serve_state, cur_contest, 0);
       serve_update_status_file(&serve_state, 1);
       new_send_reply(p, SRV_RPL_OK);
       return;
@@ -3144,12 +3121,13 @@ cmd_priv_command_0(struct client_state *p, int len,
     serve_state.contest_duration = pkt->v.t * 60;
     run_set_duration(serve_state.runlog_state, serve_state.contest_duration);
     info("contest duration reset to %ld", pkt->v.t);
-    serve_update_standings_file(&serve_state, 0);
+    serve_update_standings_file(&serve_state, cur_contest, 0);
     serve_update_status_file(&serve_state, 1);
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_SQUEEZE_RUNS:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -3161,7 +3139,8 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_CLEAR_RUN:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -3187,7 +3166,8 @@ cmd_priv_command_0(struct client_state *p, int len,
     return;
 
   case SRV_CMD_PRIV_PRINT_RUN:
-    if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_PRINT_RUN)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_PRINT_RUN)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_PRINT_RUN);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -3210,7 +3190,8 @@ cmd_priv_command_0(struct client_state *p, int len,
     return;
 
   case SRV_CMD_CONTINUE:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -3244,7 +3225,8 @@ cmd_priv_command_0(struct client_state *p, int len,
     return;
 
   case SRV_CMD_QUIT:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -3260,7 +3242,8 @@ cmd_priv_command_0(struct client_state *p, int len,
     new_send_reply(p, SRV_RPL_OK);
     return;
   case SRV_CMD_HAS_TRANSIENT_RUNS:
-    if (!serve_check_cnts_caps(&serve_state,p->user_id,OPCAP_CONTROL_CONTEST)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_CONTROL_CONTEST)) {
       err("%d: user %d has no capability %d for the contest",
           p->id, p->user_id, OPCAP_CONTROL_CONTEST);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
@@ -3302,9 +3285,6 @@ cmd_simple_command(struct client_state *p, int len,
     new_send_reply(p, -SRV_ERR_PROTOCOL);
   }
 }
-
-static void rejudge_run(int run_id, struct client_state *p,
-                        int force_full_rejudge, int priority_adjustment);
 
 static void
 cmd_edit_run(struct client_state *p, int len,
@@ -3403,7 +3383,7 @@ cmd_edit_run(struct client_state *p, int len,
     run_flags |= RUN_ENTRY_LANG;
   }
   if ((pkt->mask & PROT_SERVE_RUN_STATUS_SET)) {
-    if (!is_valid_status(pkt->status, 1)) {
+    if (!serve_is_valid_status(&serve_state, pkt->status, 1)) {
       err("%d: invalid status %d", p->id, pkt->status);
       new_send_reply(p, -SRV_ERR_BAD_STATUS);
       return;
@@ -3519,11 +3499,12 @@ cmd_edit_run(struct client_state *p, int len,
   }
 
   // check capabilities
-  if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_EDIT_RUN)
+  if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                             p->user_id, OPCAP_EDIT_RUN)
       && (run_flags != RUN_ENTRY_STATUS
           || (run.status != RUN_REJUDGE && run.status != RUN_FULL_REJUDGE)
-          || !serve_check_cnts_caps(&serve_state, p->user_id,
-                                    OPCAP_REJUDGE_RUN))) {
+          || !serve_check_cnts_caps(&serve_state, cur_contest,
+                                    p->user_id, OPCAP_REJUDGE_RUN))) {
     err("%d: user %d has no capability to edit run", p->id, p->user_id);
     new_send_reply(p, -SRV_ERR_NO_PERMS);
     return;
@@ -3546,7 +3527,9 @@ cmd_edit_run(struct client_state *p, int len,
 
   if ((run_flags & RUN_ENTRY_STATUS)
       && (run.status == RUN_REJUDGE || run.status == RUN_FULL_REJUDGE)) {
-    rejudge_run(pkt->run_id, p, (run.status == RUN_FULL_REJUDGE), 0);
+    serve_rejudge_run(&serve_state, pkt->run_id,
+                      p->user_id, p->ip, p->ssl,
+                      (run.status == RUN_FULL_REJUDGE), 0);
   }
   info("%d: edit_run: ok", p->id);
   new_send_reply(p, SRV_RPL_OK);
@@ -3598,8 +3581,10 @@ cmd_new_run(struct client_state *p, int len,
   memset(&new_run, 0, sizeof(new_run));
 
   if (p->priv_level != PRIV_LEVEL_ADMIN) goto permission_denied;
-  if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_EDIT_RUN)
-      || !serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_SUBMIT_RUN))
+  if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                             p->user_id, OPCAP_EDIT_RUN)
+      || !serve_check_cnts_caps(&serve_state, cur_contest,
+                                p->user_id, OPCAP_SUBMIT_RUN))
     goto permission_denied;
 
   // user_id or login, prob_id, lang_id, status must be specified
@@ -3658,7 +3643,7 @@ cmd_new_run(struct client_state *p, int len,
   }
 
   if ((pkt->mask & PROT_SERVE_RUN_STATUS_SET)) {
-    if (!is_valid_status(pkt->status, 1)) {
+    if (!serve_is_valid_status(&serve_state, pkt->status, 1)) {
       err("%d: new_run: invalid status %d", p->id, pkt->status);
       new_send_reply(p, -SRV_ERR_BAD_STATUS);
       return;
@@ -3861,7 +3846,8 @@ cmd_edit_user(struct client_state *p, int len,
       new_send_reply(p, -SRV_ERR_BAD_STATUS);
       return;
     }
-    if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_EDIT_REG)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_EDIT_REG)) {
       err("%d: user %d cannot set team status", p->id, p->user_id);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
       return;
@@ -3880,7 +3866,8 @@ cmd_edit_user(struct client_state *p, int len,
     team_extra_flush(serve_state.team_extra_state);
     break;
   case SRV_CMD_ISSUE_WARNING:
-    if (!serve_check_cnts_caps(&serve_state, p->user_id, OPCAP_EDIT_REG)) {
+    if (!serve_check_cnts_caps(&serve_state, cur_contest,
+                               p->user_id, OPCAP_EDIT_REG)) {
       err("%d: user %d cannot set team status", p->id, p->user_id);
       new_send_reply(p, -SRV_ERR_NO_PERMS);
       return;
@@ -3905,625 +3892,6 @@ cmd_edit_user(struct client_state *p, int len,
  protocol_error:
   new_send_reply(p, -SRV_ERR_PROTOCOL);
   return;
-}
-
-static void
-mail_check_failed(int run_id)
-{
-  const struct contest_desc *cnts = 0;
-  unsigned char esubj[1024];
-  const unsigned char *originator = 0;
-  FILE *fmsg = 0;
-  char *ftxt = 0;
-  size_t flen = 0;
-  const unsigned char *mail_args[7];
-
-  if (contests_get(serve_state.global->contest_id, &cnts) < 0 || !cnts
-      || !cnts->cf_notify_email) return;
-
-  snprintf(esubj, sizeof(esubj),
-           "Check failed in contest %d", serve_state.global->contest_id);
-  originator = serve_get_email_sender(cnts);
-
-  fmsg = open_memstream(&ftxt, &flen);
-  fprintf(fmsg, "Hello,\n\nRun evaluation got \"Check failed\"!\n"
-          "Contest: %d (%s)\n"
-          "Run Id: %d\n\n-\n"
-          "Regards,\n"
-          "the ejudge contest management system\n",
-          serve_state.global->contest_id, cnts->name, run_id);
-  fclose(fmsg); fmsg = 0;
-  mail_args[0] = "mail";
-  mail_args[1] = "";
-  mail_args[2] = esubj;
-  mail_args[3] = originator;
-  mail_args[4] = cnts->cf_notify_email;
-  mail_args[5] = ftxt;
-  mail_args[6] = 0;
-  send_job_packet(NULL, (unsigned char **) mail_args);
-  xfree(ftxt); ftxt = 0;
-}
-
-static int
-read_compile_packet(const unsigned char *compile_status_dir,
-                    const unsigned char *compile_report_dir,
-                    char *pname)
-{
-  unsigned char pkt_base[PACKET_NAME_SIZE];
-  unsigned char exe_in_name[128];
-  unsigned char exe_out_name[128];
-  unsigned char rep_path[PATH_MAX];
-  struct teamdb_export te;
-
-  int  r, cn, rep_flags = 0, prio, i;
-
-  int  variant = 0;
-  struct run_entry re;
-
-  char *comp_pkt_buf = 0;       /* need char* for generic_read_file */
-  size_t comp_pkt_size = 0;
-  struct compile_reply_packet *comp_pkt = 0;
-  long report_size = 0;
-  unsigned char errmsg[1024] = { 0 };
-  unsigned char *team_name = 0;
-  struct compile_run_extra *comp_extra = 0;
-  struct run_request_packet *run_pkt = 0;
-  size_t run_pkt_out_size = 0;
-  void *run_pkt_out = 0;
-  struct section_problem_data *prob = 0;
-  struct section_language_data *lang = 0;
-
-  r = generic_read_file(&comp_pkt_buf, 0, &comp_pkt_size, SAFE | REMOVE,
-                        compile_status_dir, pname, "");
-  if (r == 0) return 0;
-  if (r < 0) return -1;
-
-  if (compile_reply_packet_read(comp_pkt_size, comp_pkt_buf, &comp_pkt) < 0) {
-    /* failed to parse a compile packet */
-    /* we can't do any reasonable recovery, just drop the packet */
-    goto non_fatal_error;
-  }
-  if (comp_pkt->contest_id != serve_state.global->contest_id) {
-    err("read_compile_packet: mismatched contest_id %d", comp_pkt->contest_id);
-    goto non_fatal_error;
-  }
-  if (run_get_entry(serve_state.runlog_state, comp_pkt->run_id, &re) < 0) {
-    err("read_compile_packet: invalid run_id %d", comp_pkt->run_id);
-    goto non_fatal_error;
-  }
-  if (comp_pkt->judge_id != re.judge_id) {
-    err("read_compile_packet: judge_id mismatch: %d, %d", comp_pkt->judge_id,
-        re.judge_id);
-    goto non_fatal_error;
-  }
-  if (re.status != RUN_COMPILING) {
-    err("read_compile_packet: run %d is not compiling", comp_pkt->run_id);
-    goto non_fatal_error;
-  }
-
-  if (comp_pkt->status == RUN_CHECK_FAILED || comp_pkt->status == RUN_COMPILE_ERR) {
-    if ((report_size = generic_file_size(compile_report_dir, pname, "")) < 0) {
-      err("read_compile_packet: cannot get report file size");
-      snprintf(errmsg, sizeof(errmsg), "cannot get size of %s/%s\n",
-               compile_report_dir, pname);
-      goto report_check_failed;
-    }
-
-    rep_flags = archive_make_write_path(&serve_state, rep_path, sizeof(rep_path),
-                                        serve_state.global->xml_report_archive_dir,comp_pkt->run_id,
-                                        report_size, 0);
-    if (rep_flags < 0) {
-      snprintf(errmsg, sizeof(errmsg), "archive_make_write_path: %s, %d, %ld failed\n",
-               serve_state.global->xml_report_archive_dir, comp_pkt->run_id, report_size);
-      goto report_check_failed;
-    }
-  }
-  /*
-  if (comp_pkt->status == RUN_COMPILE_ERR && serve_state.global->team_enable_rep_view) {
-    team_flags = archive_make_write_path(team_path, sizeof(team_path),
-                                         serve_state.global->team_report_archive_dir,
-                                         comp_pkt->run_id, report_size, 0);
-    if (team_flags < 0) {
-      snprintf(errmsg, sizeof(errmsg),"archive_make_write_path: %s, %d, %ld failed\n",
-               serve_state.global->team_report_archive_dir, comp_pkt->run_id, report_size);
-      goto report_check_failed;
-    }
-  }
-  */
-
-  if (comp_pkt->status == RUN_CHECK_FAILED) {
-    /* if status change fails, we cannot do reasonable recovery */
-    if (run_change_status(serve_state.runlog_state, comp_pkt->run_id, RUN_CHECK_FAILED, 0,
-                          -1, 0) < 0)
-      goto non_fatal_error;
-    if (archive_dir_prepare(&serve_state, serve_state.global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0)
-      goto non_fatal_error;
-    if (generic_copy_file(REMOVE, compile_report_dir, pname, "",
-                          rep_flags, 0, rep_path, "") < 0) {
-      snprintf(errmsg, sizeof(errmsg), "generic_copy_file: %s, %s, %d, %s failed\n",
-               compile_report_dir, pname, rep_flags, rep_path);
-      goto report_check_failed;
-    }
-    mail_check_failed(comp_pkt->run_id);
-    goto success;
-  }
-
-  if (comp_pkt->status == RUN_COMPILE_ERR) {
-    /* if status change fails, we cannot do reasonable recovery */
-    if (run_change_status(serve_state.runlog_state, comp_pkt->run_id, RUN_COMPILE_ERR, 0,
-                          -1, 0) < 0)
-      goto non_fatal_error;
-
-    /*
-    if (serve_state.global->team_enable_rep_view) {
-      if (archive_dir_prepare(serve_state.global->team_report_archive_dir,comp_pkt->run_id,0,0)<0) {
-        snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
-                 serve_state.global->team_report_archive_dir, comp_pkt->run_id);
-        goto report_check_failed;
-      }
-      if (generic_copy_file(0, compile_report_dir, pname, "",
-                            team_flags, 0, team_path, "") < 0) {
-        snprintf(errmsg, sizeof(errmsg), "generic_copy_file: %s, %s, %d, %s failed\n",
-                 compile_report_dir, pname, team_flags, team_path);
-        goto report_check_failed;
-      }
-    }
-    */
-    if (archive_dir_prepare(&serve_state, serve_state.global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0) {
-      snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
-               serve_state.global->xml_report_archive_dir, comp_pkt->run_id);
-      goto report_check_failed;
-    }
-    if (generic_copy_file(REMOVE, compile_report_dir, pname, "",
-                          rep_flags, 0, rep_path, "") < 0) {
-      snprintf(errmsg, sizeof(errmsg), "generic_copy_file: %s, %s, %d, %s failed\n",
-               compile_report_dir, pname, rep_flags, rep_path);
-      goto report_check_failed;
-    }
-    serve_update_standings_file(&serve_state, 0);
-    goto success;
-  }
-
-  /* check run parameters */
-  if (re.prob_id < 1 || re.prob_id > serve_state.max_prob || !(prob = serve_state.probs[re.prob_id])) {
-    snprintf(errmsg, sizeof(errmsg), "invalid problem %d\n", re.prob_id);
-    goto report_check_failed;
-  }
-  if (re.lang_id < 1 || re.lang_id > serve_state.max_lang || !(lang = serve_state.langs[re.lang_id])) {
-    snprintf(errmsg, sizeof(errmsg), "invalid language %d\n", re.lang_id);
-    goto report_check_failed;
-  }
-  if (!(team_name = teamdb_get_name(serve_state.teamdb_state, re.user_id))) {
-    snprintf(errmsg, sizeof(errmsg), "invalid team %d\n", re.user_id);
-    goto report_check_failed;
-  }
-  if (prob->disable_testing && prob->enable_compilation > 0) {
-    if (run_change_status(serve_state.runlog_state, comp_pkt->run_id, RUN_ACCEPTED, 0, -1,
-                          comp_pkt->judge_id) < 0)
-      goto non_fatal_error;
-    goto success;
-  }
-
-  comp_extra = (typeof(comp_extra)) comp_pkt->run_block;
-  if (!comp_extra || comp_pkt->run_block_len != sizeof(*comp_extra)
-      || comp_extra->accepting_mode < 0 || comp_extra->accepting_mode > 1) {
-    snprintf(errmsg, sizeof(errmsg), "invalid run block\n");
-    goto report_check_failed;
-  }
-
-  if (run_change_status(serve_state.runlog_state, comp_pkt->run_id, RUN_COMPILED, 0, -1,
-                        comp_pkt->judge_id) < 0)
-    goto non_fatal_error;
-
-  /*
-   * so far compilation is successful, and now we prepare a run packet
-   */
-
-  /* find appropriate checker */
-  cn = find_tester(&serve_state, re.prob_id, lang->arch);
-  if (cn < 1 || cn > serve_state.max_tester || !serve_state.testers[cn]) {
-    snprintf(errmsg, sizeof(errmsg), "no appropriate checker for <%s>, <%s>\n",
-             prob->short_name, lang->arch);
-    goto report_check_failed;
-  }
-
-  if (prob->variant_num > 0) {
-    variant = re.variant;
-    if (!variant) variant = find_variant(&serve_state, re.user_id, re.prob_id);
-    if (!variant) {
-      snprintf(errmsg, sizeof(errmsg), "no appropriate variant for <%s>, <%s>\n",
-               team_name, prob->short_name);
-      goto report_check_failed;
-    }
-  }
-
-  /* calculate a priority */
-  prio = 0;
-  prio += lang->priority_adjustment;
-  prio += prob->priority_adjustment;
-  prio += find_user_priority_adjustment(&serve_state, re.user_id);
-  prio += serve_state.testers[cn]->priority_adjustment;
-  prio += comp_extra->priority_adjustment;
-
-  /* generate a packet name */
-  serve_packet_name(comp_pkt->run_id, prio, pkt_base);
-  snprintf(exe_in_name, sizeof(exe_in_name),
-           "%06d%s", comp_pkt->run_id, lang->exe_sfx);
-  snprintf(exe_out_name, sizeof(exe_out_name),
-           "%s%s", pkt_base, lang->exe_sfx);
-
-  /* copy the executable into the testers's queue */
-  if (generic_copy_file(REMOVE, compile_report_dir, exe_in_name, "",
-                        0, serve_state.global->run_exe_dir, exe_out_name, "") < 0) {
-    snprintf(errmsg, sizeof(errmsg), "generic_copy_file: %s, %s, %s, %s failed\n",
-             compile_report_dir, exe_in_name, serve_state.global->run_exe_dir,
-             exe_out_name);
-    goto report_check_failed;
-  }
-
-  /* create an internal representation of run packet */
-  XALLOCAZ(run_pkt, 1);
-
-  run_pkt->judge_id = comp_pkt->judge_id;
-  run_pkt->contest_id = serve_state.global->contest_id;
-  run_pkt->run_id = comp_pkt->run_id;
-  run_pkt->problem_id = prob->tester_id;
-  run_pkt->accepting_mode = comp_extra->accepting_mode;
-  run_pkt->scoring_system = serve_state.global->score_system_val;
-  run_pkt->variant = variant;
-  run_pkt->accept_partial = prob->accept_partial;
-  run_pkt->user_id = re.user_id;
-  run_pkt->disable_sound = serve_state.global->disable_sound;
-  run_pkt->full_archive = serve_state.global->enable_full_archive;
-  run_pkt->memory_limit = serve_state.global->enable_memory_limit_error;
-  run_pkt->ts1 = comp_pkt->ts1;
-  run_pkt->ts1_us = comp_pkt->ts1_us;
-  run_pkt->ts2 = comp_pkt->ts2;
-  run_pkt->ts2_us = comp_pkt->ts2_us;
-  run_pkt->ts3 = comp_pkt->ts3;
-  run_pkt->ts3_us = comp_pkt->ts3_us;
-  get_current_time(&run_pkt->ts4, &run_pkt->ts4_us);
-  run_pkt->exe_sfx = lang->exe_sfx;
-  run_pkt->arch = lang->arch;
-
-  // process language-specific time adjustments
-  if (prob->lang_time_adj) {
-    size_t lsn = strlen(lang->short_name);
-    size_t vl;
-    int adj, n;
-    unsigned char *sn;
-    for (i = 0; (sn = prob->lang_time_adj[i]); i++) {
-      vl = strlen(sn);
-      if (vl > lsn + 1
-          && !strncmp(sn, lang->short_name, lsn)
-          && sn[lsn] == '='
-          && sscanf(sn + lsn + 1, "%d%n", &adj, &n) == 1
-          && !sn[lsn + 1 + n]
-          && adj >= 0
-          && adj <= 100) {
-        run_pkt->time_limit_adj = adj;
-      }
-    }
-  }
-
-  /* in new binary packet format we don't care about neither "special"
-   * characters in spellings nor about spelling length
-   */
-  teamdb_export_team(serve_state.teamdb_state, re.user_id, &te);
-  if (te.user && te.user->i.spelling && te.user->i.spelling[0]) {
-    run_pkt->user_spelling = te.user->i.spelling;
-  }
-  if (!run_pkt->user_spelling && te.user && te.user->i.name && te.user->i.name[0]) {
-    run_pkt->user_spelling = te.user->i.name;
-  }
-  if (!run_pkt->user_spelling && te.login && te.user->login && te.user->login[0]) {
-    run_pkt->user_spelling = te.user->login;
-  }
-  /* run_pkt->user_spelling is allowed to be NULL */
-
-  if (prob->spelling[0]) {
-    run_pkt->prob_spelling = prob->spelling;
-  }
-  if (!run_pkt->prob_spelling) {
-    run_pkt->prob_spelling = prob->short_name;
-  }
-  /* run_pkt->prob_spelling is allowed to be NULL */
-
-  /* generate external representation of the packet */
-  if (run_request_packet_write(run_pkt, &run_pkt_out_size, &run_pkt_out) < 0) {
-    snprintf(errmsg, sizeof(errmsg), "run_request_packet_write failed\n");
-    goto report_check_failed;
-  }
-
-  if (generic_write_file(run_pkt_out, run_pkt_out_size, SAFE,
-                         serve_state.global->run_queue_dir, pkt_base, "") < 0) {
-    snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
-    goto report_check_failed;
-  }
-
-  /* update status */
-  if (run_change_status(serve_state.runlog_state, comp_pkt->run_id, RUN_RUNNING, 0, -1,
-                        comp_pkt->judge_id) < 0)
-    goto non_fatal_error;
-
- success:
-  xfree(comp_pkt_buf);
-  xfree(run_pkt_out);
-  compile_reply_packet_free(comp_pkt);
-  return 1;
-
- report_check_failed:
-  mail_check_failed(comp_pkt->run_id);
-
-  /* this is error recover, so if error happens again, we cannot do anything */
-  if (run_change_status(serve_state.runlog_state, comp_pkt->run_id, RUN_CHECK_FAILED, 0,
-                        -1, 0) < 0)
-    goto non_fatal_error;
-  report_size = strlen(errmsg);
-  rep_flags = archive_make_write_path(&serve_state, rep_path, sizeof(rep_path),
-                                      serve_state.global->xml_report_archive_dir, comp_pkt->run_id,
-                                      report_size, 0);
-  if (archive_dir_prepare(&serve_state, serve_state.global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0)
-    goto non_fatal_error;
-  /* error code is ignored */
-  generic_write_file(errmsg, report_size, rep_flags, 0, rep_path, 0);
-  /* goto non_fatal_error; */
-
- non_fatal_error:
-  xfree(comp_pkt_buf);
-  xfree(run_pkt_out);
-  compile_reply_packet_free(comp_pkt);
-  return 0;
-}
-
-static unsigned char *
-time_to_str(unsigned char *buf, size_t size, int secs, int usecs)
-{
-  struct tm *ltm;
-  time_t tt = secs;
-
-  if (secs <= 0) {
-    snprintf(buf, size, "N/A");
-    return buf;
-  }
-  ltm = localtime(&tt);
-  snprintf(buf, size, "%04d/%02d/%02d %02d:%02d:%02d.%06d",
-           ltm->tm_year + 1900, ltm->tm_mon + 1, ltm->tm_mday,
-           ltm->tm_hour, ltm->tm_min, ltm->tm_sec, usecs);
-  return buf;
-}
-static unsigned char *
-dur_to_str(unsigned char *buf, size_t size, int sec1, int usec1,
-           int sec2, int usec2)
-{
-  long long d;
-
-  if (sec1 <= 0 || sec2 <= 0) {
-    snprintf(buf, size, "N/A");
-    return buf;
-  }
-  if ((d = sec2 * 1000000 + usec2 - (sec1 * 1000000 + usec1)) < 0) {
-    snprintf(buf, size, "t1 > t2");
-    return buf;
-  }
-  d = (d + 500) / 1000;
-  snprintf(buf, size, "%lld.%03lld", d / 1000, d % 1000);
-  return buf;
-}
-
-static int
-read_run_packet(const unsigned char *run_status_dir,
-                const unsigned char *run_report_dir,
-                const unsigned char *run_team_report_dir,
-                const unsigned char *run_full_archive_dir,
-                char *pname)
-{
-  path_t rep_path, full_path;
-  int r, rep_flags, rep_size, full_flags;
-  struct run_entry re;
-  char *reply_buf = 0;          /* need char* for generic_read_file */
-  size_t reply_buf_size = 0;
-  struct run_reply_packet *reply_pkt = 0;
-  char *audit_text = 0;
-  size_t audit_text_size = 0;
-  FILE *f = 0;
-  int ts8, ts8_us;
-  unsigned char time_buf[64];
-
-  get_current_time(&ts8, &ts8_us);
-  r = generic_read_file(&reply_buf, 0, &reply_buf_size, SAFE | REMOVE,
-                        run_status_dir, pname, "");
-  if (r < 0) return -1;
-  if (r == 0) return 0;
-
-  if (run_reply_packet_read(reply_buf_size, reply_buf, &reply_pkt) < 0)
-    goto failed;
-  xfree(reply_buf), reply_buf = 0;
-
-  if (reply_pkt->contest_id != serve_state.global->contest_id) {
-    err("read_run_packet: contest_id mismatch: %d in packet",
-        reply_pkt->contest_id);
-    goto failed;
-  }
-  if (run_get_entry(serve_state.runlog_state, reply_pkt->run_id, &re) < 0) {
-    err("read_run_packet: invalid run_id: %d", reply_pkt->run_id);
-    goto failed;
-  }
-  if (re.status != RUN_RUNNING) {
-    err("read_run_packet: run %d status is not RUNNING", reply_pkt->run_id);
-    goto failed;
-  }
-  if (re.judge_id != reply_pkt->judge_id) {
-    err("read_run_packet: judge_id mismatch: packet: %d, db: %d",
-        reply_pkt->judge_id, re.judge_id);
-    goto failed;
-  }
-
-  if (!is_valid_status(reply_pkt->status, 2)) goto bad_packet_error;
-
-  if (serve_state.global->score_system_val == SCORE_OLYMPIAD) {
-    if (re.prob_id < 1 || re.prob_id > serve_state.max_prob || !serve_state.probs[re.prob_id])
-      goto bad_packet_error;
-  } else if (serve_state.global->score_system_val == SCORE_KIROV) {
-    /*
-    if (status != RUN_PARTIAL && status != RUN_OK
-        && status != RUN_CHECK_FAILED) goto bad_packet_error;
-    */
-    if (re.prob_id < 1 || re.prob_id > serve_state.max_prob || !serve_state.probs[re.prob_id])
-      goto bad_packet_error;
-    if (reply_pkt->score < 0 || reply_pkt->score>serve_state.probs[re.prob_id]->full_score)
-      goto bad_packet_error;
-    /*
-    for (n = 0; n < serve_state.probs[re.prob_id]->dp_total; n++)
-      if (re.timestamp < serve_state.probs[re.prob_id]->dp_infos[n].deadline)
-        break;
-    if (n < serve_state.probs[re.prob_id]->dp_total) {
-      score += serve_state.probs[re.prob_id]->dp_infos[n].penalty;
-      if (score > serve_state.probs[re.prob_id]->full_score)
-        score = serve_state.probs[re.prob_id]->full_score;
-      if (score < 0) score = 0;
-    }
-    */
-  } else if (serve_state.global->score_system_val == SCORE_MOSCOW) {
-    if (re.prob_id < 1 || re.prob_id > serve_state.max_prob || !serve_state.probs[re.prob_id])
-      goto bad_packet_error;
-    if (reply_pkt->score < 0 || reply_pkt->score>serve_state.probs[re.prob_id]->full_score)
-      goto bad_packet_error;
-  } else {
-    reply_pkt->score = -1;
-  }
-  if (reply_pkt->status == RUN_CHECK_FAILED)
-    mail_check_failed(reply_pkt->run_id);
-  if (run_change_status(serve_state.runlog_state, reply_pkt->run_id, reply_pkt->status,
-                        reply_pkt->failed_test,
-                        reply_pkt->score, 0) < 0) return -1;
-  serve_update_standings_file(&serve_state, 0);
-  rep_size = generic_file_size(run_report_dir, pname, "");
-  if (rep_size < 0) return -1;
-  rep_flags = archive_make_write_path(&serve_state, rep_path, sizeof(rep_path),
-                                      serve_state.global->xml_report_archive_dir,
-                                      reply_pkt->run_id,
-                                      rep_size, 0);
-  if (archive_dir_prepare(&serve_state, serve_state.global->xml_report_archive_dir, reply_pkt->run_id, 0, 0) < 0)
-    return -1;
-  if (generic_copy_file(REMOVE, run_report_dir, pname, "",
-                        rep_flags, 0, rep_path, "") < 0)
-    return -1;
-  /*
-  if (serve_state.global->team_enable_rep_view) {
-    team_size = generic_file_size(run_team_report_dir, pname, "");
-    team_flags = archive_make_write_path(team_path, sizeof(team_path),
-                                         serve_state.global->team_report_archive_dir,
-                                         reply_pkt->run_id, team_size, 0);
-    if (archive_dir_prepare(serve_state.global->team_report_archive_dir,
-                            reply_pkt->run_id, 0, 0) < 0)
-      return -1;
-    if (generic_copy_file(REMOVE, run_team_report_dir, pname, "",
-                          team_flags, 0, team_path, "") < 0)
-      return -1;
-  }
-  */
-  if (serve_state.global->enable_full_archive) {
-    full_flags = archive_make_write_path(&serve_state, full_path, sizeof(full_path),
-                                         serve_state.global->full_archive_dir,
-                                         reply_pkt->run_id, 0, 0);
-    if (archive_dir_prepare(&serve_state, serve_state.global->full_archive_dir, reply_pkt->run_id, 0, 0) < 0)
-      return -1;
-    if (generic_copy_file(REMOVE, run_full_archive_dir, pname, "",
-                          0, 0, full_path, "") < 0)
-      return -1;
-  }
-
-  /* add auditing information */
-  if (!(f = open_memstream(&audit_text, &audit_text_size))) return 1;
-  fprintf(f, "Status: Judging complete\n");
-  fprintf(f, "  Profiling information:\n");
-  fprintf(f, "  Request start time:                %s\n",
-          time_to_str(time_buf, sizeof(time_buf),
-                      reply_pkt->ts1, reply_pkt->ts1_us));
-  fprintf(f, "  Request completion time:           %s\n",
-          time_to_str(time_buf, sizeof(time_buf),
-                      ts8, ts8_us));
-  fprintf(f, "  Total testing duration:            %s\n",
-          dur_to_str(time_buf, sizeof(time_buf),
-                     reply_pkt->ts1, reply_pkt->ts1_us,
-                     ts8, ts8_us));
-  fprintf(f, "  Waiting in compile queue duration: %s\n",
-          dur_to_str(time_buf, sizeof(time_buf),
-                     reply_pkt->ts1, reply_pkt->ts1_us,
-                     reply_pkt->ts2, reply_pkt->ts2_us));
-  fprintf(f, "  Compilation duration:              %s\n",
-          dur_to_str(time_buf, sizeof(time_buf),
-                     reply_pkt->ts2, reply_pkt->ts2_us,
-                     reply_pkt->ts3, reply_pkt->ts3_us));
-  fprintf(f, "  Waiting in serve queue duration:   %s\n",
-          dur_to_str(time_buf, sizeof(time_buf),
-                     reply_pkt->ts3, reply_pkt->ts3_us,
-                     reply_pkt->ts4, reply_pkt->ts4_us));
-  fprintf(f, "  Waiting in run queue duration:     %s\n",
-          dur_to_str(time_buf, sizeof(time_buf),
-                     reply_pkt->ts4, reply_pkt->ts4_us,
-                     reply_pkt->ts5, reply_pkt->ts5_us));
-  fprintf(f, "  Testing duration:                  %s\n",
-          dur_to_str(time_buf, sizeof(time_buf),
-                     reply_pkt->ts5, reply_pkt->ts5_us,
-                     reply_pkt->ts6, reply_pkt->ts6_us));
-  fprintf(f, "  Post-processing duration:          %s\n",
-          dur_to_str(time_buf, sizeof(time_buf),
-                     reply_pkt->ts6, reply_pkt->ts6_us,
-                     reply_pkt->ts7, reply_pkt->ts7_us));
-  fprintf(f, "  Waiting in serve queue duration:   %s\n",
-          dur_to_str(time_buf, sizeof(time_buf),
-                     reply_pkt->ts7, reply_pkt->ts7_us,
-                     ts8, ts8_us));
-  fprintf(f, "\n");
-  fclose(f);
-  serve_audit_log(&serve_state, reply_pkt->run_id, 0, 0, 0, "%s", audit_text);
-
-  return 1;
-
- bad_packet_error:
-  err("bad_packet");
-
- failed:
-  xfree(reply_buf);
-  run_reply_packet_free(reply_pkt);
-  return 0;
-}
-
-static void
-rejudge_run(int run_id, struct client_state *p, int force_full_rejudge,
-            int priority_adjustment)
-{
-  struct run_entry re;
-  int accepting_mode = -1;
-
-  if (run_get_entry(serve_state.runlog_state, run_id, &re) < 0) return;
-  if (re.is_imported) return;
-  if (re.is_readonly) return;
-  if (re.lang_id <= 0 || re.lang_id > serve_state.max_lang || !serve_state.langs[re.lang_id]) {
-    err("rejudge_run: bad language: %d", re.lang_id);
-    return;
-  }
-  if (re.prob_id <= 0 || re.prob_id > serve_state.max_prob || !serve_state.probs[re.prob_id]) {
-    err("rejudge_run: bad problem: %d", re.prob_id);
-    return;
-  }
-
-  if (force_full_rejudge && serve_state.global->score_system_val == SCORE_OLYMPIAD
-      && serve_state.accepting_mode) {
-    accepting_mode = 0;
-  }
-
-  serve_compile_request(&serve_state, 0, -1, run_id,
-                        serve_state.langs[re.lang_id]->compile_id, re.locale_id,
-                        (serve_state.probs[re.prob_id]->type_val > 0),
-                        serve_state.langs[re.lang_id]->src_sfx,
-                        serve_state.langs[re.lang_id]->compiler_env,
-                        accepting_mode, priority_adjustment);
-
-  serve_audit_log(&serve_state, run_id, p->user_id, p->ip, p->ssl,
-                  "Command: Rejudge\n");
 }
 
 static int
@@ -4579,7 +3947,7 @@ do_rejudge_all(struct client_state *p)
       idx = re.user_id * total_probs + re.prob_id;
       if (flag[idx]) continue;
       flag[idx] = 1;
-      rejudge_run(r, p, 0, 0);
+      serve_rejudge_run(&serve_state, r, p->user_id, p->ip, p->ssl, 0, 0);
     }
     return;
   }
@@ -4595,7 +3963,7 @@ do_rejudge_all(struct client_state *p)
         && !serve_state.langs[re.lang_id]->disable_testing
         && !re.is_readonly
         && !re.is_imported) {
-      rejudge_run(r, p, 0, 0);
+      serve_rejudge_run(&serve_state, r, p->user_id, p->ip, p->ssl, 0, 0);
     }
   }
 }
@@ -4624,7 +3992,7 @@ do_judge_suspended(struct client_state *p)
         && !serve_state.probs[re.prob_id]->disable_auto_testing
         && !serve_state.langs[re.lang_id]->disable_testing
         && !serve_state.langs[re.lang_id]->disable_auto_testing) {
-      rejudge_run(r, p, 0, 0);
+      serve_rejudge_run(&serve_state, r, p->user_id, p->ip, p->ssl, 0, 0);
     }
   }
 }
@@ -4660,7 +4028,7 @@ do_rejudge_problem(int prob_id, struct client_state *p)
       if (flag[re.user_id]) continue;
       if (!serve_state.langs[re.lang_id] || serve_state.langs[re.lang_id]->disable_testing) continue;
       flag[re.user_id] = 1;
-      rejudge_run(r, p, 0, 0);
+      serve_rejudge_run(&serve_state, r, p->user_id, p->ip, p->ssl, 0, 0);
     }
     return;
   }
@@ -4672,7 +4040,7 @@ do_rejudge_problem(int prob_id, struct client_state *p)
         && re.status != RUN_IGNORED
         && re.status != RUN_DISQUALIFIED
         && !re.is_imported) {
-      rejudge_run(r, p, 0, 0);
+      serve_rejudge_run(&serve_state, r, p->user_id, p->ip, p->ssl, 0, 0);
     }
   }
 }
@@ -4724,7 +4092,7 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask, struct client_state *p,
       idx = re.user_id * total_probs + re.prob_id;
       if (flag[idx]) continue;
       flag[idx] = 1;
-      rejudge_run(r, p, 0, 0);
+      serve_rejudge_run(&serve_state, r, p->user_id, p->ip, p->ssl, 0, 0);
     }
     return;
   }
@@ -4741,7 +4109,8 @@ do_rejudge_by_mask(int mask_size, unsigned long *mask, struct client_state *p,
         && !re.is_readonly
         && !re.is_imported
         && (mask[r / BITS_PER_LONG] & (1 << (r % BITS_PER_LONG)))) {
-      rejudge_run(r, p, force_flag, priority_adjustment);
+      serve_rejudge_run(&serve_state, r, p->user_id, p->ip, p->ssl,
+                        force_flag, priority_adjustment);
     }
   }
 }
@@ -5318,7 +4687,7 @@ do_loop(void)
       serve_state.global->fog_standings_updated = 1;
     }
   }
-  serve_update_standings_file(&serve_state, 0);
+  serve_update_standings_file(&serve_state, cur_contest, 0);
 
   run_get_times(serve_state.runlog_state, &serve_state.contest_start_time, &serve_state.contest_sched_time,
                 &serve_state.contest_duration, &serve_state.contest_stop_time);
@@ -5348,7 +4717,7 @@ do_loop(void)
     check_remove_queue();
 
     /* check whether we should generate dayly statistics */
-    serve_check_stat_generation(&serve_state, 0);
+    serve_check_stat_generation(&serve_state, cur_contest, 0);
 
     /* check stop and start times */
     if (!serve_state.global->virtual) {
@@ -5387,20 +4756,20 @@ do_loop(void)
       p = run_get_fog_period(serve_state.runlog_state, time(0),
                              serve_state.global->board_fog_time, serve_state.global->board_unfog_time);
       if (p == 0 && !serve_state.global->start_standings_updated) {
-        serve_update_standings_file(&serve_state, 0);
+        serve_update_standings_file(&serve_state, cur_contest, 0);
       } else if (serve_state.global->autoupdate_standings
                  && p == 1 && !serve_state.global->fog_standings_updated) {
-        serve_update_standings_file(&serve_state, 1);
+        serve_update_standings_file(&serve_state, cur_contest, 1);
       } else if (serve_state.global->autoupdate_standings
                  && p == 2 && !serve_state.global->unfog_standings_updated) {
-        serve_update_standings_file(&serve_state, 0);
+        serve_update_standings_file(&serve_state, cur_contest, 0);
       }
     }
 
     /* update public log */
-    serve_update_public_log_file(&serve_state);
-    serve_update_external_xml_log(&serve_state);
-    serve_update_internal_xml_log(&serve_state);
+    serve_update_public_log_file(&serve_state, cur_contest);
+    serve_update_external_xml_log(&serve_state, cur_contest);
+    serve_update_internal_xml_log(&serve_state, cur_contest);
 
     if (initialize_mode) {
       interrupt_signaled = 1;
@@ -5413,9 +4782,10 @@ do_loop(void)
       r = scan_dir(serve_state.compile_dirs[i].status_dir, packetname);
       if (r < 0) return -1;
       if (r > 0) {
-        if (read_compile_packet(serve_state.compile_dirs[i].status_dir,
-                                serve_state.compile_dirs[i].report_dir,
-                                packetname) < 0) return -1;
+        if (serve_read_compile_packet(&serve_state, cur_contest,
+                                      serve_state.compile_dirs[i].status_dir,
+                                      serve_state.compile_dirs[i].report_dir,
+                                      packetname) < 0) return -1;
         may_wait_flag = 0;
       }
     }
@@ -5424,11 +4794,11 @@ do_loop(void)
       r = scan_dir(serve_state.run_dirs[i].status_dir, packetname);
       if (r < 0) return -1;
       if (!r) continue;
-      if (read_run_packet(serve_state.run_dirs[i].status_dir,
-                          serve_state.run_dirs[i].report_dir,
-                          serve_state.run_dirs[i].team_report_dir,
-                          serve_state.run_dirs[i].full_report_dir,
-                          packetname) < 0) return -1;
+      if (serve_read_run_packet(&serve_state, cur_contest,
+                                serve_state.run_dirs[i].status_dir,
+                                serve_state.run_dirs[i].report_dir,
+                                serve_state.run_dirs[i].full_report_dir,
+                                packetname) < 0) return -1;
       may_wait_flag = 0;
     }
   }
@@ -5482,7 +4852,7 @@ main(int argc, char *argv[])
 
   if (prepare(&serve_state, argv[i], p_flags, PREPARE_SERVE, cpp_opts,
               (cmdline_socket_fd >= 0)) < 0) return 1;
-  if (prepare_serve_defaults(&serve_state) < 0) return 1;
+  if (prepare_serve_defaults(&serve_state, &cur_contest) < 0) return 1;
 
   l10n_prepare(serve_state.global->enable_l10n, serve_state.global->l10n_dir);
 
@@ -5518,7 +4888,7 @@ main(int argc, char *argv[])
   serve_build_compile_dirs(&serve_state);
   serve_build_run_dirs(&serve_state);
   i = do_loop();
-  serve_check_stat_generation(&serve_state, 1);
+  serve_check_stat_generation(&serve_state, cur_contest, 1);
   serve_update_status_file(&serve_state, 1);
   team_extra_flush(serve_state.team_extra_state);
   if (i < 0) i = 1;

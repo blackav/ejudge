@@ -55,6 +55,8 @@ struct clar_header_v1
   unsigned char _pad[110];
 };
 
+enum { CLAR_ENTRY_SUBJ_SIZE = 32 };
+
 /* new version of the clarification log */
 struct clar_entry_v1
 {
@@ -68,14 +70,15 @@ struct clar_entry_v1
   unsigned int flags;           /* 4 */
   unsigned char ip6_flag;       /* 1 */
   unsigned char hide_flag;      /* 1 */
-  unsigned char _pad1[2];       /* 2 */
+  unsigned char ssl_flag;       /* 1 */
+  unsigned char _pad1[1];       /* 2 */
   union
   {
     ej_ip_t ip;
     unsigned char ip6[16];
   } a;                          /* 16 */
   unsigned char _pad2[40];
-  unsigned char subj[32];
+  unsigned char subj[CLAR_ENTRY_SUBJ_SIZE];
 };                              /* 128 */
 
 struct clar_array
@@ -434,6 +437,63 @@ clar_add_record(clarlog_state_t state,
   state->clars.v[i].hide_flag = hide_flag;
   state->clars.v[i].a.ip = r_ip;
   base64_decode_str(subj, state->clars.v[i].subj, 0);
+  if (clar_flush_entry(state, i) < 0) return -1;
+  return i;
+}
+
+int
+clar_add_record_new(clarlog_state_t state,
+                    time_t         time,
+                    int            nsec,
+                    size_t         size,
+                    ej_ip_t        ip,
+                    int            ssl_flag,
+                    int            from,
+                    int            to,
+                    int            flags,
+                    int            j_from,
+                    int            hide_flag,
+                    const unsigned char *subj)
+{
+  int i;
+  unsigned char subj2[CLAR_ENTRY_SUBJ_SIZE];
+  size_t subj_len;
+  struct clar_entry_v1 *pc;
+
+  if (state->clars.u >= state->clars.a) {
+    if (!(state->clars.a *= 2)) state->clars.a = 128;
+    state->clars.v = xrealloc(state->clars.v, state->clars.a * sizeof(state->clars.v[0]));
+    info("clar_add_record: array extended: %d", state->clars.a);
+  }
+  i = state->clars.u++;
+  pc = &state->clars.v[i];
+
+  memset(pc, 0, sizeof(*pc));
+  pc->id = i;
+  pc->time = time;
+  pc->nsec = nsec;
+  pc->size = size;
+  pc->from = from;
+  pc->to = to;
+  pc->flags = flags;
+  pc->j_from = j_from;
+  pc->hide_flag = hide_flag;
+  pc->a.ip = ip;
+  pc->ssl_flag = ssl_flag;
+
+  if (!subj) subj = "";
+  subj_len = strlen(subj);
+  if (subj_len >= CLAR_ENTRY_SUBJ_SIZE) {
+    memcpy(subj2, subj, CLAR_ENTRY_SUBJ_SIZE - 4);
+    subj2[CLAR_ENTRY_SUBJ_SIZE - 1] = 0;
+    subj2[CLAR_ENTRY_SUBJ_SIZE - 2] = '.';
+    subj2[CLAR_ENTRY_SUBJ_SIZE - 3] = '.';
+    subj2[CLAR_ENTRY_SUBJ_SIZE - 4] = '.';
+    memcpy(pc->subj, subj2, CLAR_ENTRY_SUBJ_SIZE);
+  } else {
+    strcpy(pc->subj, subj);
+  }
+
   if (clar_flush_entry(state, i) < 0) return -1;
   return i;
 }

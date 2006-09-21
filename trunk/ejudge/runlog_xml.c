@@ -488,7 +488,9 @@ unparse_sha1(const ruint32_t *psha1)
 }
 
 int
-unparse_runlog_xml(serve_state_t state, FILE *f,
+unparse_runlog_xml(serve_state_t state,
+                   const struct contest_desc *cnts,
+                   FILE *f,
                    const struct run_header *phead,
                    size_t nelems,
                    const struct run_entry *entries,
@@ -509,7 +511,7 @@ unparse_runlog_xml(serve_state_t state, FILE *f,
 
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n", EJUDGE_CHARSET);
   fprintf(f, "<%s", elem_map[RUNLOG_T_RUNLOG]);
-  fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_CONTEST_ID], state->cur_contest->id);
+  fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_CONTEST_ID], cnts->id);
   if (phead->duration > 0) {
     fprintf(f, " %s=\"%lld\"", attr_map[RUNLOG_A_DURATION], phead->duration);
   }
@@ -527,7 +529,7 @@ unparse_runlog_xml(serve_state_t state, FILE *f,
   }
   fprintf(f, ">\n");
   if (external_mode) {
-    val1 = state->cur_contest->name;
+    val1 = cnts->name;
     if (val1 && html_armor_needed(val1, &alen1)) {
       while (alen1 >= asize1) asize1 *= 2;
       astr1 = alloca(asize1);

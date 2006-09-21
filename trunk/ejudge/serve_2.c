@@ -30,7 +30,9 @@
 #include "archive_paths.h"
 #include "xml_utils.h"
 #include "compile_packet.h"
+#include "run_packet.h"
 #include "curtime.h"
+#include "userlist.h"
 
 #include <reuse/logger.h>
 #include <reuse/xalloc.h>
@@ -44,14 +46,14 @@
 #include <sys/time.h>
 
 void
-serve_update_standings_file(serve_state_t state, int force_flag)
+serve_update_standings_file(serve_state_t state,
+                            const struct contest_desc *cnts,
+                            int force_flag)
 {
   time_t start_time, stop_time, duration;
   int p = 0;
-  int accepting_mode = 0;
 
-  run_get_times(state->runlog_state, &start_time, 0, &duration,
-                &stop_time);
+  run_get_times(state->runlog_state, &start_time, 0, &duration, &stop_time);
 
   while (1) {
     if (state->global->virtual) break;
@@ -77,21 +79,18 @@ serve_update_standings_file(serve_state_t state, int force_flag)
                            state->global->board_unfog_time);
   }
   l10n_setlocale(state->global->standings_locale_id);
-  if (state->global->score_system_val == SCORE_OLYMPIAD
-      && state->accepting_mode)
-    accepting_mode = 1;
-  write_standings(state, state->global->status_dir,
+  write_standings(state, cnts, state->global->status_dir,
                   state->global->standings_file_name,
                   state->global->users_on_page,
                   state->global->stand_header_txt,
                   state->global->stand_footer_txt,
-                  accepting_mode);
+                  state->accepting_mode);
   if (state->global->stand2_file_name[0]) {
-    write_standings(state, state->global->status_dir,
+    write_standings(state, cnts, state->global->status_dir,
                     state->global->stand2_file_name, 0,
                     state->global->stand2_header_txt,
                     state->global->stand2_footer_txt,
-                    accepting_mode);
+                    state->accepting_mode);
   }
   l10n_setlocale(0);
   if (state->global->virtual) return;
@@ -109,7 +108,8 @@ serve_update_standings_file(serve_state_t state, int force_flag)
 }
 
 void
-serve_update_public_log_file(serve_state_t state)
+serve_update_public_log_file(serve_state_t state,
+                             const struct contest_desc *cnts)
 {
   time_t start_time, stop_time, duration;
   int p;
@@ -135,7 +135,7 @@ serve_update_public_log_file(serve_state_t state)
   }
 
   l10n_setlocale(state->global->standings_locale_id);
-  write_public_log(state, state->global->status_dir,
+  write_public_log(state, cnts, state->global->status_dir,
                    state->global->plog_file_name,
                    state->global->plog_header_txt,
                    state->global->plog_footer_txt);
@@ -144,7 +144,8 @@ serve_update_public_log_file(serve_state_t state)
 }
 
 static void
-do_update_xml_log(serve_state_t state, char const *name, int external_mode)
+do_update_xml_log(serve_state_t state, const struct contest_desc *cnts,
+                  char const *name, int external_mode)
 {
   struct run_header rhead;
   int rtotal;
@@ -164,7 +165,7 @@ do_update_xml_log(serve_state_t state, char const *name, int external_mode)
     err("update_xml_log: cannot open %s", path1);
     return;
   }
-  unparse_runlog_xml(state, fout, &rhead, rtotal, rentries,
+  unparse_runlog_xml(state, cnts, fout, &rhead, rtotal, rentries,
                      external_mode, state->current_time);
   if (ferror(fout)) {
     err("update_xml_log: write error");
@@ -185,21 +186,23 @@ do_update_xml_log(serve_state_t state, char const *name, int external_mode)
 }
 
 void
-serve_update_external_xml_log(serve_state_t state)
+serve_update_external_xml_log(serve_state_t state,
+                              const struct contest_desc *cnts)
 {
   if (!state->global->external_xml_update_time) return;
   if (state->current_time < state->last_update_external_xml_log + state->global->external_xml_update_time) return;
   state->last_update_external_xml_log = state->current_time;
-  do_update_xml_log(state, "external.xml", 1);
+  do_update_xml_log(state, cnts, "external.xml", 1);
 }
 
 void
-serve_update_internal_xml_log(serve_state_t state)
+serve_update_internal_xml_log(serve_state_t state,
+                              const struct contest_desc *cnts)
 {
   if (!state->global->internal_xml_update_time) return;
   if (state->current_time < state->last_update_internal_xml_log + state->global->internal_xml_update_time) return;
   state->last_update_internal_xml_log = state->current_time;
-  do_update_xml_log(state, "internal.xml", 0);
+  do_update_xml_log(state, cnts, "internal.xml", 0);
 }
 
 int
@@ -319,7 +322,7 @@ serve_check_user_quota(serve_state_t state, int user_id, size_t size)
 }
 
 int
-serve_check_clar_qouta(serve_state_t state, int user_id, size_t size)
+serve_check_clar_quota(serve_state_t state, int user_id, size_t size)
 {
   int num;
   size_t total;
@@ -333,18 +336,13 @@ serve_check_clar_qouta(serve_state_t state, int user_id, size_t size)
 }
 
 int
-serve_check_cnts_caps(serve_state_t state, int user_id, int bit)
+serve_check_cnts_caps(serve_state_t state,
+                      const struct contest_desc *cnts,
+                      int user_id, int bit)
 {
-  const struct contest_desc *cnts = 0;
   opcap_t caps;
-  int errcode = 0;
   unsigned char const *login = 0;
 
-  if ((errcode = contests_get(state->global->contest_id, &cnts)) < 0) {
-    err("contests_get(%d): %s", state->global->contest_id,
-        contests_strerror(-errcode));
-    return 0;
-  }
   login = teamdb_get_login(state->teamdb_state, user_id);
   if (!login || !*login) return 0;
 
@@ -354,18 +352,13 @@ serve_check_cnts_caps(serve_state_t state, int user_id, int bit)
 }
 
 int
-serve_get_cnts_caps(serve_state_t state, int user_id, opcap_t *out_caps)
+serve_get_cnts_caps(serve_state_t state,
+                    const struct contest_desc *cnts,
+                    int user_id, opcap_t *out_caps)
 {
-  const struct contest_desc *cnts = 0;
   opcap_t caps;
-  int errcode = 0;
   unsigned char const *login = 0;
 
-  if ((errcode = contests_get(state->global->contest_id, &cnts)) < 0) {
-    err("contests_get(%d): %s", state->global->contest_id,
-        contests_strerror(-errcode));
-    return -1;
-  }
   login = teamdb_get_login(state->teamdb_state, user_id);
   if (!login || !*login) return -1;
 
@@ -560,19 +553,17 @@ serve_get_email_sender(const struct contest_desc *cnts)
 }
 
 static void
-generate_statistics_email(serve_state_t state, time_t from_time, time_t to_time)
+generate_statistics_email(serve_state_t state, const struct contest_desc *cnts,
+                          time_t from_time, time_t to_time)
 {
   unsigned char esubj[1024];
   struct tm *ptm;
   char *etxt = 0, *ftxt = 0;
   size_t elen = 0, flen = 0;
   FILE *eout = 0, *fout = 0;
-  const struct contest_desc *cnts = 0;
   const unsigned char *mail_args[7];
   const unsigned char *originator;
   struct tm tm1;
-
-  if (contests_get(state->global->contest_id, &cnts) < 0 || !cnts) return;
 
   ptm = localtime(&from_time);
   snprintf(esubj, sizeof(esubj),
@@ -619,9 +610,10 @@ generate_statistics_email(serve_state_t state, time_t from_time, time_t to_time)
 }
 
 void
-serve_check_stat_generation(serve_state_t state, int force_flag)
+serve_check_stat_generation(serve_state_t state,
+                            const struct contest_desc *cnts,
+                            int force_flag)
 {
-  const struct contest_desc *cnts = 0;
   struct tm *ptm;
   time_t thisday, nextday;
 
@@ -629,7 +621,6 @@ serve_check_stat_generation(serve_state_t state, int force_flag)
       && state->stat_last_check_time + 600 > state->current_time)
     return;
   state->stat_last_check_time = state->current_time;
-  if (contests_get(state->global->contest_id, &cnts) < 0 || !cnts) return;
   if (!cnts->daily_stat_email) return;
 
   if (!state->stat_reported_before) {
@@ -677,7 +668,7 @@ serve_check_stat_generation(serve_state_t state, int force_flag)
       state->stat_report_time = 0;
       return;
     }
-    generate_statistics_email(state, thisday, nextday);
+    generate_statistics_email(state, cnts, thisday, nextday);
     thisday = nextday;
   }
 
@@ -899,6 +890,803 @@ serve_compile_request(serve_state_t state,
  failed:
   xfree(pkt_buf);
   return -1;
+}
+
+int
+serve_run_request(serve_state_t state,
+                  FILE *errf,
+                  const unsigned char *run_text,
+                  size_t run_size,
+                  int run_id,
+                  int user_id,
+                  int prob_id,
+                  int lang_id,
+                  int variant,
+                  int priority_adjustment,
+                  int judge_id,
+                  int accepting_mode,
+                  const unsigned char *compile_report_dir,
+                  const struct compile_reply_packet *comp_pkt)
+{
+  int cn;
+  struct section_problem_data *prob;
+  struct section_language_data *lang = 0;
+  unsigned char *arch = "", *exe_sfx = "";
+  const unsigned char *user_name;
+  int prio, i;
+  unsigned char pkt_base[SERVE_PACKET_NAME_SIZE];
+  unsigned char exe_out_name[256];
+  unsigned char exe_in_name[256];
+  struct run_request_packet *run_pkt = 0;
+  struct teamdb_export te;
+  void *run_pkt_out = 0;
+  size_t run_pkt_out_size = 0;
+
+  if (prob_id <= 0 || prob_id > state->max_prob 
+      || !(prob = state->probs[prob_id])) {
+    fprintf(errf, "invalid problem %d", prob_id);
+    return -1;
+  }
+  if (lang_id > 0) {
+    if (lang_id > state->max_lang || !(lang = state->langs[lang_id])) {
+      fprintf(errf, "invalid language %d", lang_id);
+      return -1;
+    }
+  }
+  if (!(user_name = teamdb_get_name(state->teamdb_state, user_id))) {
+    fprintf(errf, "invalid user %d", user_id);
+    return -1;
+  }
+  if (!*user_name) user_name = teamdb_get_login(state->teamdb_state, user_id);
+
+  if (lang) arch = lang->arch;
+  if (lang) exe_sfx = lang->exe_sfx;
+
+  cn = find_tester(state, prob_id, arch);
+  if (cn < 1 || cn > state->max_tester || !state->testers[cn]) {
+    fprintf(errf, "no appropriate checker for <%s>, <%s>\n",
+            prob->short_name, arch);
+    return -1;
+  }
+
+  if (prob->variant_num <= 0 && variant > 0) {
+    fprintf(errf, "variant is not allowed for this problem\n");
+    return -1;
+  }
+  if (prob->variant_num > 0) {
+    if (variant <= 0) variant = find_variant(state, user_id, prob_id);
+    if (variant <= 0) {
+      fprintf(errf, "no appropriate variant for <%s>, <%s>\n",
+              user_name, prob->short_name);
+      return -1;
+    }
+  }
+
+  /* calculate a priority */
+  prio = 0;
+  if (lang) prio += lang->priority_adjustment;
+  prio += prob->priority_adjustment;
+  prio += find_user_priority_adjustment(state, user_id);
+  prio += state->testers[cn]->priority_adjustment;
+  prio += priority_adjustment;
+  
+  if (judge_id < 0) judge_id = state->compile_request_id++;
+  if (accepting_mode < 0) accepting_mode = state->accepting_mode;
+
+  /* generate a packet name */
+  serve_packet_name(run_id, prio, pkt_base);
+  snprintf(exe_out_name, sizeof(exe_out_name), "%s%s", pkt_base, exe_sfx);
+
+  if (!run_text) {
+    snprintf(exe_in_name, sizeof(exe_in_name), "%06d%s", run_id, exe_sfx);
+    if (generic_copy_file(REMOVE, compile_report_dir, exe_in_name, "",
+                          0, state->global->run_exe_dir,exe_out_name, "") < 0) {
+      fprintf(errf, "copying failed");
+      return -1;
+    }
+  } else {
+    if (generic_write_file(run_text, run_size, 0,
+                           state->global->run_exe_dir, exe_out_name, "") < 0) {
+      fprintf(errf, "writing failed");
+      return -1;
+    }
+  }
+
+  /* create an internal representation of run packet */
+  XALLOCAZ(run_pkt, 1);
+
+  run_pkt->judge_id = judge_id;
+  run_pkt->contest_id = state->global->contest_id;
+  run_pkt->run_id = run_id;
+  run_pkt->problem_id = prob->tester_id;
+  run_pkt->accepting_mode = accepting_mode;
+  run_pkt->scoring_system = state->global->score_system_val;
+  run_pkt->variant = variant;
+  run_pkt->accept_partial = prob->accept_partial;
+  run_pkt->user_id = user_id;
+  run_pkt->disable_sound = state->global->disable_sound;
+  run_pkt->full_archive = state->global->enable_full_archive;
+  run_pkt->memory_limit = state->global->enable_memory_limit_error;
+  get_current_time(&run_pkt->ts4, &run_pkt->ts4_us);
+  if (comp_pkt) {
+    run_pkt->ts1 = comp_pkt->ts1;
+    run_pkt->ts1_us = comp_pkt->ts1_us;
+    run_pkt->ts2 = comp_pkt->ts2;
+    run_pkt->ts2_us = comp_pkt->ts2_us;
+    run_pkt->ts3 = comp_pkt->ts3;
+    run_pkt->ts3_us = comp_pkt->ts3_us;
+  } else {
+    run_pkt->ts3 = run_pkt->ts4;
+    run_pkt->ts3_us = run_pkt->ts4_us;
+    run_pkt->ts2 = run_pkt->ts4;
+    run_pkt->ts2_us = run_pkt->ts4_us;
+    run_pkt->ts1 = run_pkt->ts4;
+    run_pkt->ts1_us = run_pkt->ts4_us;
+  }
+  run_pkt->exe_sfx = exe_sfx;
+  run_pkt->arch = arch;
+
+  // process language-specific time adjustments
+  if (prob->lang_time_adj) {
+    size_t lsn = strlen(lang->short_name);
+    size_t vl;
+    int adj, n;
+    unsigned char *sn;
+    for (i = 0; (sn = prob->lang_time_adj[i]); i++) {
+      vl = strlen(sn);
+      if (vl > lsn + 1
+          && !strncmp(sn, lang->short_name, lsn)
+          && sn[lsn] == '='
+          && sscanf(sn + lsn + 1, "%d%n", &adj, &n) == 1
+          && !sn[lsn + 1 + n]
+          && adj >= 0
+          && adj <= 100) {
+        run_pkt->time_limit_adj = adj;
+      }
+    }
+  }
+
+  /* in new binary packet format we don't care about neither "special"
+   * characters in spellings nor about spelling length
+   */
+  teamdb_export_team(state->teamdb_state, user_id, &te);
+  if (te.user && te.user->i.spelling && te.user->i.spelling[0]) {
+    run_pkt->user_spelling = te.user->i.spelling;
+  }
+  if (!run_pkt->user_spelling && te.user && te.user->i.name
+      && te.user->i.name[0]) {
+    run_pkt->user_spelling = te.user->i.name;
+  }
+  if (!run_pkt->user_spelling && te.login && te.user->login
+      && te.user->login[0]) {
+    run_pkt->user_spelling = te.user->login;
+  }
+  /* run_pkt->user_spelling is allowed to be NULL */
+
+  if (prob->spelling[0]) {
+    run_pkt->prob_spelling = prob->spelling;
+  }
+  if (!run_pkt->prob_spelling) {
+    run_pkt->prob_spelling = prob->short_name;
+  }
+  /* run_pkt->prob_spelling is allowed to be NULL */
+
+  /* generate external representation of the packet */
+  if (run_request_packet_write(run_pkt, &run_pkt_out_size, &run_pkt_out) < 0) {
+    fprintf(errf, "run_request_packet_write failed\n");
+    return -1;
+  }
+
+  if (generic_write_file(run_pkt_out, run_pkt_out_size, SAFE,
+                         state->global->run_queue_dir, pkt_base, "") < 0) {
+    fprintf(errf, "failed to write run packet\n");
+    return -1;
+  }
+
+  /* update status */
+  if (run_change_status(state->runlog_state, run_id, RUN_RUNNING, 0, -1,
+                        judge_id) < 0) {
+    return -1;
+  }
+
+  return 0;
+}
+
+void
+serve_send_clar_notify_email(serve_state_t state,
+                             const struct contest_desc *cnts,
+                             int user_id, const unsigned char *user_name,
+                             const unsigned char *subject,
+                             const unsigned char *text)
+{
+  unsigned char esubj[1024];
+  FILE *fmsg = 0;
+  char *ftxt = 0;
+  size_t flen = 0;
+  const unsigned char *originator = 0;
+  const unsigned char *mail_args[7];
+
+  if (!state || !cnts || !cnts->clar_notify_email) return;
+
+  snprintf(esubj, sizeof(esubj), "New clar request in contest %d", cnts->id);
+  originator = serve_get_email_sender(cnts);
+  fmsg = open_memstream(&ftxt, &flen);
+  fprintf(fmsg, "Hello,\n\nNew clarification request is received\n"
+          "Contest: %d (%s)\n"
+          "User: %d (%s)\n"
+          "Subject: %s\n\n"
+          "%s\n\n-\n"
+          "Regards,\n"
+          "the ejudge contest management system\n",
+          cnts->id, cnts->name, user_id, user_name, subject, text);
+  fclose(fmsg); fmsg = 0;
+  mail_args[0] = "mail";
+  mail_args[1] = "";
+  mail_args[2] = esubj;
+  mail_args[3] = originator;
+  mail_args[4] = cnts->clar_notify_email;
+  mail_args[5] = ftxt;
+  mail_args[6] = 0;
+  send_job_packet(NULL, (unsigned char**) mail_args);
+  xfree(ftxt); ftxt = 0;
+}
+
+void
+serve_send_check_failed_email(const struct contest_desc *cnts, int run_id)
+{
+  unsigned char esubj[1024];
+  const unsigned char *originator = 0;
+  FILE *fmsg = 0;
+  char *ftxt = 0;
+  size_t flen = 0;
+  const unsigned char *mail_args[7];
+
+  if (!cnts->cf_notify_email) return;
+
+  snprintf(esubj, sizeof(esubj), "Check failed in contest %d", cnts->id);
+  originator = serve_get_email_sender(cnts);
+
+  fmsg = open_memstream(&ftxt, &flen);
+  fprintf(fmsg, "Hello,\n\nRun evaluation got \"Check failed\"!\n"
+          "Contest: %d (%s)\n"
+          "Run Id: %d\n\n-\n"
+          "Regards,\n"
+          "the ejudge contest management system\n",
+          cnts->id, cnts->name, run_id);
+  fclose(fmsg); fmsg = 0;
+  mail_args[0] = "mail";
+  mail_args[1] = "";
+  mail_args[2] = esubj;
+  mail_args[3] = originator;
+  mail_args[4] = cnts->cf_notify_email;
+  mail_args[5] = ftxt;
+  mail_args[6] = 0;
+  send_job_packet(NULL, (unsigned char **) mail_args);
+  xfree(ftxt); ftxt = 0;
+}
+
+int
+serve_read_compile_packet(serve_state_t state,
+                          const struct contest_desc *cnts,
+                          const unsigned char *compile_status_dir,
+                          const unsigned char *compile_report_dir,
+                          const unsigned char *pname)
+{
+  unsigned char rep_path[PATH_MAX];
+  int  r, rep_flags = 0;
+  struct run_entry re;
+
+  char *comp_pkt_buf = 0;       /* need char* for generic_read_file */
+  size_t comp_pkt_size = 0;
+  struct compile_reply_packet *comp_pkt = 0;
+  long report_size = 0;
+  unsigned char errmsg[1024] = { 0 };
+  unsigned char *team_name = 0;
+  struct compile_run_extra *comp_extra = 0;
+  struct section_problem_data *prob = 0;
+  struct section_language_data *lang = 0;
+
+  if ((r = generic_read_file(&comp_pkt_buf, 0, &comp_pkt_size, SAFE | REMOVE,
+                             compile_status_dir, pname, "")) <= 0)
+    return r;
+
+  if (compile_reply_packet_read(comp_pkt_size, comp_pkt_buf, &comp_pkt) < 0) {
+    /* failed to parse a compile packet */
+    /* we can't do any reasonable recovery, just drop the packet */
+    goto non_fatal_error;
+  }
+  if (comp_pkt->contest_id != cnts->id) {
+    err("read_compile_packet: mismatched contest_id %d", comp_pkt->contest_id);
+    goto non_fatal_error;
+  }
+  if (run_get_entry(state->runlog_state, comp_pkt->run_id, &re) < 0) {
+    err("read_compile_packet: invalid run_id %d", comp_pkt->run_id);
+    goto non_fatal_error;
+  }
+  if (comp_pkt->judge_id != re.judge_id) {
+    err("read_compile_packet: judge_id mismatch: %d, %d", comp_pkt->judge_id,
+        re.judge_id);
+    goto non_fatal_error;
+  }
+  if (re.status != RUN_COMPILING) {
+    err("read_compile_packet: run %d is not compiling", comp_pkt->run_id);
+    goto non_fatal_error;
+  }
+
+  if (comp_pkt->status == RUN_CHECK_FAILED
+      || comp_pkt->status == RUN_COMPILE_ERR) {
+    if ((report_size = generic_file_size(compile_report_dir, pname, "")) < 0) {
+      err("read_compile_packet: cannot get report file size");
+      snprintf(errmsg, sizeof(errmsg), "cannot get size of %s/%s\n",
+               compile_report_dir, pname);
+      goto report_check_failed;
+    }
+
+    rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
+                                        state->global->xml_report_archive_dir,
+                                        comp_pkt->run_id, report_size, 0);
+    if (rep_flags < 0) {
+      snprintf(errmsg, sizeof(errmsg),
+               "archive_make_write_path: %s, %d, %ld failed\n",
+               state->global->xml_report_archive_dir, comp_pkt->run_id,
+               report_size);
+      goto report_check_failed;
+    }
+  }
+
+  if (comp_pkt->status == RUN_CHECK_FAILED) {
+    /* if status change fails, we cannot do reasonable recovery */
+    if (run_change_status(state->runlog_state, comp_pkt->run_id,
+                          RUN_CHECK_FAILED, 0, -1, 0) < 0)
+      goto non_fatal_error;
+    if (archive_dir_prepare(state, state->global->xml_report_archive_dir,
+                            comp_pkt->run_id, 0, 0) < 0)
+      goto non_fatal_error;
+    if (generic_copy_file(REMOVE, compile_report_dir, pname, "",
+                          rep_flags, 0, rep_path, "") < 0) {
+      snprintf(errmsg, sizeof(errmsg),
+               "generic_copy_file: %s, %s, %d, %s failed\n",
+               compile_report_dir, pname, rep_flags, rep_path);
+      goto report_check_failed;
+    }
+    serve_send_check_failed_email(cnts, comp_pkt->run_id);
+    goto success;
+  }
+
+  if (comp_pkt->status == RUN_COMPILE_ERR) {
+    /* if status change fails, we cannot do reasonable recovery */
+    if (run_change_status(state->runlog_state, comp_pkt->run_id,
+                          RUN_COMPILE_ERR, 0, -1, 0) < 0)
+      goto non_fatal_error;
+
+    if (archive_dir_prepare(state, state->global->xml_report_archive_dir,
+                            comp_pkt->run_id, 0, 0) < 0) {
+      snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
+               state->global->xml_report_archive_dir, comp_pkt->run_id);
+      goto report_check_failed;
+    }
+    if (generic_copy_file(REMOVE, compile_report_dir, pname, "",
+                          rep_flags, 0, rep_path, "") < 0) {
+      snprintf(errmsg, sizeof(errmsg), "generic_copy_file: %s, %s, %d, %s failed\n",
+               compile_report_dir, pname, rep_flags, rep_path);
+      goto report_check_failed;
+    }
+    serve_update_standings_file(state, cnts, 0);
+    goto success;
+  }
+
+  /* check run parameters */
+  if (re.prob_id < 1 || re.prob_id > state->max_prob
+      || !(prob = state->probs[re.prob_id])) {
+    snprintf(errmsg, sizeof(errmsg), "invalid problem %d\n", re.prob_id);
+    goto report_check_failed;
+  }
+  if (re.lang_id < 1 || re.lang_id > state->max_lang
+      || !(lang = state->langs[re.lang_id])) {
+    snprintf(errmsg, sizeof(errmsg), "invalid language %d\n", re.lang_id);
+    goto report_check_failed;
+  }
+  if (!(team_name = teamdb_get_name(state->teamdb_state, re.user_id))) {
+    snprintf(errmsg, sizeof(errmsg), "invalid team %d\n", re.user_id);
+    goto report_check_failed;
+  }
+  if (prob->disable_testing && prob->enable_compilation > 0) {
+    if (run_change_status(state->runlog_state, comp_pkt->run_id, RUN_ACCEPTED,
+                          0, -1, comp_pkt->judge_id) < 0)
+      goto non_fatal_error;
+    goto success;
+  }
+
+  comp_extra = (typeof(comp_extra)) comp_pkt->run_block;
+  if (!comp_extra || comp_pkt->run_block_len != sizeof(*comp_extra)
+      || comp_extra->accepting_mode < 0 || comp_extra->accepting_mode > 1) {
+    snprintf(errmsg, sizeof(errmsg), "invalid run block\n");
+    goto report_check_failed;
+  }
+
+  if (run_change_status(state->runlog_state, comp_pkt->run_id, RUN_COMPILED,
+                        0, -1, comp_pkt->judge_id) < 0)
+    goto non_fatal_error;
+
+  /*
+   * so far compilation is successful, and now we prepare a run packet
+   */
+
+  if (serve_run_request(state, stderr, 0, 0, comp_pkt->run_id, re.user_id,
+                        re.prob_id, re.lang_id, 0,
+                        comp_extra->priority_adjustment,
+                        comp_pkt->judge_id, comp_extra->accepting_mode,
+                        compile_report_dir, comp_pkt) < 0) {
+    snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
+    goto report_check_failed;
+  }
+
+ success:
+  xfree(comp_pkt_buf);
+  compile_reply_packet_free(comp_pkt);
+  return 1;
+
+ report_check_failed:
+  serve_send_check_failed_email(cnts, comp_pkt->run_id);
+
+  /* this is error recover, so if error happens again, we cannot do anything */
+  if (run_change_status(state->runlog_state, comp_pkt->run_id,
+                        RUN_CHECK_FAILED, 0, -1, 0) < 0)
+    goto non_fatal_error;
+  report_size = strlen(errmsg);
+  rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
+                                      state->global->xml_report_archive_dir,
+                                      comp_pkt->run_id, report_size, 0);
+  if (archive_dir_prepare(state, state->global->xml_report_archive_dir,
+                          comp_pkt->run_id, 0, 0) < 0)
+    goto non_fatal_error;
+  /* error code is ignored */
+  generic_write_file(errmsg, report_size, rep_flags, 0, rep_path, 0);
+  /* goto non_fatal_error; */
+
+ non_fatal_error:
+  xfree(comp_pkt_buf);
+  compile_reply_packet_free(comp_pkt);
+  return 0;
+}
+
+int
+serve_is_valid_status(serve_state_t state, int status, int mode)
+{
+  if (state->global->score_system_val == SCORE_OLYMPIAD) {
+    switch (status) {
+    case RUN_OK:
+    case RUN_PARTIAL:
+    case RUN_RUN_TIME_ERR:
+    case RUN_TIME_LIMIT_ERR:
+    case RUN_PRESENTATION_ERR:
+    case RUN_WRONG_ANSWER_ERR:
+    case RUN_ACCEPTED:
+    case RUN_CHECK_FAILED:
+    case RUN_MEM_LIMIT_ERR:
+    case RUN_SECURITY_ERR:
+      return 1;
+    case RUN_COMPILE_ERR:
+    case RUN_FULL_REJUDGE:
+    case RUN_REJUDGE:
+    case RUN_IGNORED:
+    case RUN_DISQUALIFIED:
+    case RUN_PENDING:
+      if (mode != 1) return 0;
+      return 1;
+    default:
+      return 0;
+    }
+  } else if (state->global->score_system_val == SCORE_KIROV) {
+    switch (status) {
+    case RUN_OK:
+    case RUN_PARTIAL:
+    case RUN_CHECK_FAILED:
+      return 1;
+    case RUN_COMPILE_ERR:
+    case RUN_REJUDGE:
+    case RUN_IGNORED:
+    case RUN_DISQUALIFIED:
+    case RUN_PENDING:
+      if (mode != 1) return 0;
+      return 1;
+    default:
+      return 0;
+    }
+  } else {
+    switch (status) {
+    case RUN_OK:
+    case RUN_RUN_TIME_ERR:
+    case RUN_TIME_LIMIT_ERR:
+    case RUN_PRESENTATION_ERR:
+    case RUN_WRONG_ANSWER_ERR:
+    case RUN_CHECK_FAILED:
+    case RUN_MEM_LIMIT_ERR:
+    case RUN_SECURITY_ERR:
+      return 1;
+    case RUN_COMPILE_ERR:
+    case RUN_REJUDGE:
+    case RUN_IGNORED:
+    case RUN_DISQUALIFIED:
+    case RUN_PENDING:
+      if (mode != 1) return 0;
+      return 1;
+    default:
+      return 0;
+    }
+  }
+}
+
+static unsigned char *
+time_to_str(unsigned char *buf, size_t size, int secs, int usecs)
+{
+  struct tm *ltm;
+  time_t tt = secs;
+
+  if (secs <= 0) {
+    snprintf(buf, size, "N/A");
+    return buf;
+  }
+  ltm = localtime(&tt);
+  snprintf(buf, size, "%04d/%02d/%02d %02d:%02d:%02d.%06d",
+           ltm->tm_year + 1900, ltm->tm_mon + 1, ltm->tm_mday,
+           ltm->tm_hour, ltm->tm_min, ltm->tm_sec, usecs);
+  return buf;
+}
+
+static unsigned char *
+dur_to_str(unsigned char *buf, size_t size, int sec1, int usec1,
+           int sec2, int usec2)
+{
+  long long d;
+
+  if (sec1 <= 0 || sec2 <= 0) {
+    snprintf(buf, size, "N/A");
+    return buf;
+  }
+  if ((d = sec2 * 1000000 + usec2 - (sec1 * 1000000 + usec1)) < 0) {
+    snprintf(buf, size, "t1 > t2");
+    return buf;
+  }
+  d = (d + 500) / 1000;
+  snprintf(buf, size, "%lld.%03lld", d / 1000, d % 1000);
+  return buf;
+}
+
+int
+serve_read_run_packet(serve_state_t state,
+                      const struct contest_desc *cnts,
+                      const unsigned char *run_status_dir,
+                      const unsigned char *run_report_dir,
+                      const unsigned char *run_full_archive_dir,
+                      const unsigned char *pname)
+{
+  path_t rep_path, full_path;
+  int r, rep_flags, rep_size, full_flags;
+  struct run_entry re;
+  char *reply_buf = 0;          /* need char* for generic_read_file */
+  size_t reply_buf_size = 0;
+  struct run_reply_packet *reply_pkt = 0;
+  char *audit_text = 0;
+  size_t audit_text_size = 0;
+  FILE *f = 0;
+  int ts8, ts8_us;
+  unsigned char time_buf[64];
+
+  get_current_time(&ts8, &ts8_us);
+  if ((r = generic_read_file(&reply_buf, 0, &reply_buf_size, SAFE | REMOVE,
+                             run_status_dir, pname, "")) <= 0)
+    return r;
+
+  if (run_reply_packet_read(reply_buf_size, reply_buf, &reply_pkt) < 0)
+    goto failed;
+  xfree(reply_buf), reply_buf = 0;
+
+  if (reply_pkt->contest_id != cnts->id) {
+    err("read_run_packet: contest_id mismatch: %d in packet",
+        reply_pkt->contest_id);
+    goto failed;
+  }
+  if (run_get_entry(state->runlog_state, reply_pkt->run_id, &re) < 0) {
+    err("read_run_packet: invalid run_id: %d", reply_pkt->run_id);
+    goto failed;
+  }
+  if (re.status != RUN_RUNNING) {
+    err("read_run_packet: run %d status is not RUNNING", reply_pkt->run_id);
+    goto failed;
+  }
+  if (re.judge_id != reply_pkt->judge_id) {
+    err("read_run_packet: judge_id mismatch: packet: %d, db: %d",
+        reply_pkt->judge_id, re.judge_id);
+    goto failed;
+  }
+
+  if (!serve_is_valid_status(state, reply_pkt->status, 2))
+    goto bad_packet_error;
+
+  if (state->global->score_system_val == SCORE_OLYMPIAD) {
+    if (re.prob_id < 1 || re.prob_id > state->max_prob
+        || !state->probs[re.prob_id])
+      goto bad_packet_error;
+  } else if (state->global->score_system_val == SCORE_KIROV) {
+    /*
+    if (status != RUN_PARTIAL && status != RUN_OK
+        && status != RUN_CHECK_FAILED) goto bad_packet_error;
+    */
+    if (re.prob_id < 1 || re.prob_id > state->max_prob
+        || !state->probs[re.prob_id])
+      goto bad_packet_error;
+    if (reply_pkt->score < 0
+        || reply_pkt->score > state->probs[re.prob_id]->full_score)
+      goto bad_packet_error;
+    /*
+    for (n = 0; n < serve_state.probs[re.prob_id]->dp_total; n++)
+      if (re.timestamp < serve_state.probs[re.prob_id]->dp_infos[n].deadline)
+        break;
+    if (n < serve_state.probs[re.prob_id]->dp_total) {
+      score += serve_state.probs[re.prob_id]->dp_infos[n].penalty;
+      if (score > serve_state.probs[re.prob_id]->full_score)
+        score = serve_state.probs[re.prob_id]->full_score;
+      if (score < 0) score = 0;
+    }
+    */
+  } else if (state->global->score_system_val == SCORE_MOSCOW) {
+    if (re.prob_id < 1 || re.prob_id > state->max_prob
+        || !state->probs[re.prob_id])
+      goto bad_packet_error;
+    if (reply_pkt->score < 0
+        || reply_pkt->score > state->probs[re.prob_id]->full_score)
+      goto bad_packet_error;
+  } else {
+    reply_pkt->score = -1;
+  }
+  if (reply_pkt->status == RUN_CHECK_FAILED)
+    serve_send_check_failed_email(cnts, reply_pkt->run_id);
+  if (run_change_status(state->runlog_state, reply_pkt->run_id,
+                        reply_pkt->status, reply_pkt->failed_test,
+                        reply_pkt->score, 0) < 0) return -1;
+  serve_update_standings_file(state, cnts, 0);
+  rep_size = generic_file_size(run_report_dir, pname, "");
+  if (rep_size < 0) return -1;
+  rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
+                                      state->global->xml_report_archive_dir,
+                                      reply_pkt->run_id, rep_size, 0);
+  if (archive_dir_prepare(state, state->global->xml_report_archive_dir,
+                          reply_pkt->run_id, 0, 0) < 0)
+    return -1;
+  if (generic_copy_file(REMOVE, run_report_dir, pname, "",
+                        rep_flags, 0, rep_path, "") < 0)
+    return -1;
+  /*
+  if (serve_state.global->team_enable_rep_view) {
+    team_size = generic_file_size(run_team_report_dir, pname, "");
+    team_flags = archive_make_write_path(team_path, sizeof(team_path),
+                                         serve_state.global->team_report_archive_dir,
+                                         reply_pkt->run_id, team_size, 0);
+    if (archive_dir_prepare(serve_state.global->team_report_archive_dir,
+                            reply_pkt->run_id, 0, 0) < 0)
+      return -1;
+    if (generic_copy_file(REMOVE, run_team_report_dir, pname, "",
+                          team_flags, 0, team_path, "") < 0)
+      return -1;
+  }
+  */
+  if (state->global->enable_full_archive) {
+    full_flags = archive_make_write_path(state, full_path, sizeof(full_path),
+                                         state->global->full_archive_dir,
+                                         reply_pkt->run_id, 0, 0);
+    if (archive_dir_prepare(state, state->global->full_archive_dir,
+                            reply_pkt->run_id, 0, 0) < 0)
+      return -1;
+    if (generic_copy_file(REMOVE, run_full_archive_dir, pname, "",
+                          0, 0, full_path, "") < 0)
+      return -1;
+  }
+
+  /* add auditing information */
+  if (!(f = open_memstream(&audit_text, &audit_text_size))) return 1;
+  fprintf(f, "Status: Judging complete\n");
+  fprintf(f, "  Profiling information:\n");
+  fprintf(f, "  Request start time:                %s\n",
+          time_to_str(time_buf, sizeof(time_buf),
+                      reply_pkt->ts1, reply_pkt->ts1_us));
+  fprintf(f, "  Request completion time:           %s\n",
+          time_to_str(time_buf, sizeof(time_buf),
+                      ts8, ts8_us));
+  fprintf(f, "  Total testing duration:            %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts1, reply_pkt->ts1_us,
+                     ts8, ts8_us));
+  fprintf(f, "  Waiting in compile queue duration: %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts1, reply_pkt->ts1_us,
+                     reply_pkt->ts2, reply_pkt->ts2_us));
+  fprintf(f, "  Compilation duration:              %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts2, reply_pkt->ts2_us,
+                     reply_pkt->ts3, reply_pkt->ts3_us));
+  fprintf(f, "  Waiting in serve queue duration:   %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts3, reply_pkt->ts3_us,
+                     reply_pkt->ts4, reply_pkt->ts4_us));
+  fprintf(f, "  Waiting in run queue duration:     %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts4, reply_pkt->ts4_us,
+                     reply_pkt->ts5, reply_pkt->ts5_us));
+  fprintf(f, "  Testing duration:                  %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts5, reply_pkt->ts5_us,
+                     reply_pkt->ts6, reply_pkt->ts6_us));
+  fprintf(f, "  Post-processing duration:          %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts6, reply_pkt->ts6_us,
+                     reply_pkt->ts7, reply_pkt->ts7_us));
+  fprintf(f, "  Waiting in serve queue duration:   %s\n",
+          dur_to_str(time_buf, sizeof(time_buf),
+                     reply_pkt->ts7, reply_pkt->ts7_us,
+                     ts8, ts8_us));
+  fprintf(f, "\n");
+  fclose(f);
+  serve_audit_log(state, reply_pkt->run_id, 0, 0, 0, "%s", audit_text);
+
+  return 1;
+
+ bad_packet_error:
+  err("bad_packet");
+
+ failed:
+  xfree(reply_buf);
+  run_reply_packet_free(reply_pkt);
+  return 0;
+}
+
+void
+serve_rejudge_run(serve_state_t state,
+                  int run_id,
+                  int user_id, ej_ip_t ip, int ssl_flag,
+                  int force_full_rejudge,
+                  int priority_adjustment)
+{
+  struct run_entry re;
+  int accepting_mode = -1;
+
+  if (run_get_entry(state->runlog_state, run_id, &re) < 0) return;
+  if (re.is_imported) return;
+  if (re.is_readonly) return;
+ 
+  if (re.prob_id <= 0 || re.prob_id > state->max_prob
+      || !state->probs[re.prob_id]) {
+    err("rejudge_run: bad problem: %d", re.prob_id);
+    return;
+  }
+  if (state->probs[re.prob_id]->type_val > 0) {
+    if (force_full_rejudge
+        && state->global->score_system_val == SCORE_OLYMPIAD) {
+      accepting_mode = 0;
+    }
+    // FIXME: handle output-only problems
+    serve_audit_log(state, run_id, user_id, ip, ssl_flag, "Command: Rejudge\n");
+    return;
+  }
+
+  if (re.lang_id <= 0 || re.lang_id > state->max_lang
+      || !state->langs[re.lang_id]) {
+    err("rejudge_run: bad language: %d", re.lang_id);
+    return;
+  }
+
+  if (force_full_rejudge && state->global->score_system_val == SCORE_OLYMPIAD) {
+    accepting_mode = 0;
+  }
+
+  serve_compile_request(state, 0, -1, run_id,
+                        state->langs[re.lang_id]->compile_id, re.locale_id,
+                        (state->probs[re.prob_id]->type_val > 0),
+                        state->langs[re.lang_id]->src_sfx,
+                        state->langs[re.lang_id]->compiler_env,
+                        accepting_mode, priority_adjustment);
+
+  serve_audit_log(state, run_id, user_id, ip, ssl_flag, "Command: Rejudge\n");
 }
 
 /*
