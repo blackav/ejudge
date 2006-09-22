@@ -76,7 +76,8 @@ serve_state_destroy(serve_state_t state)
 
   prepare_free_config(state->config);
 
-  for (i = 0; i < state->users_a; i++) {
+  for (i = 1; i < state->users_a; i++) {
+    if (!state->users[i]) continue;
     for (ufp = state->users[i]->first_filter; ufp; ufp = ufp2) {
       ufp2 = ufp->next;
       xfree(ufp->prev_filter_expr);
