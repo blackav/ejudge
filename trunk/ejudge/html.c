@@ -4342,9 +4342,124 @@ write_xml_team_testing_report(const serve_state_t state, FILE *f,
 }
 
 int
+write_xml_team_output_only_acc_report(FILE *f, const unsigned char *txt,
+                                      int rid,
+                                      const struct run_entry *re,
+                                      const struct section_problem_data *prob,
+                                      const int *action_vec,
+                                      ej_cookie_t sid,
+                                      const unsigned char *self_url,
+                                      const unsigned char *extra_args)
+{
+  testing_report_xml_t r = 0;
+  struct testing_report_test *t;
+  unsigned char *font_color = 0, *s;
+  int i, act_status, tests_to_show;
+
+  if (!(r = testing_report_parse_xml(txt))) {
+    fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
+    return 0;
+  }
+
+  act_status = r->status;
+  if (act_status == RUN_OK || act_status == RUN_PARTIAL
+      || act_status == RUN_WRONG_ANSWER_ERR)
+    act_status = RUN_ACCEPTED;
+
+  if (act_status == RUN_ACCEPTED) {
+    font_color = "green";
+  } else {
+    font_color = "red";
+  }
+  fprintf(f, "<h2><font color=\"%s\">%s</font></h2>\n",
+          font_color, run_status_str(act_status, 0, 0));
+
+  /*
+  if (act_status != RUN_ACCEPTED) {
+    fprintf(f, _("<big>Failed test: %d.<br><br></big>\n"), r->failed_test);
+  }
+  */
+
+  tests_to_show = r->run_tests;
+  if (tests_to_show > 1) tests_to_show = 1;
+
+  fprintf(f,
+          "<table border=\"1\">"
+          "<tr><th>N</th><th>%s</th><th>%s</th>",
+          _("Result"), _("Extra info"));
+  fprintf(f, "<th>%s</th>", _("Link"));
+  fprintf(f, "</tr>\n");
+  for (i = 0; i < tests_to_show; i++) {
+    if (!(t = r->tests[i])) continue;
+    fprintf(f, "<tr>");
+    fprintf(f, "<td>%d</td>", t->num);
+    act_status = t->status;
+    if (act_status == RUN_OK || act_status == RUN_ACCEPTED
+        || act_status == RUN_WRONG_ANSWER_ERR) {
+      act_status = RUN_OK;
+      font_color = "green";
+    } else {
+      font_color = "red";
+    }
+    fprintf(f, "<td><font color=\"%s\">%s</font></td>\n",
+            font_color, run_status_str(act_status, 0, 0));
+    // extra information
+    fprintf(f, "<td>");
+    switch (t->status) {
+    case RUN_OK:
+    case RUN_ACCEPTED:
+    case RUN_WRONG_ANSWER_ERR:
+      fprintf(f, "&nbsp;");
+      break;
+
+    case RUN_RUN_TIME_ERR:
+      if (t->term_signal >= 0) {
+        fprintf(f, "%s %d (%s)", _("Signal"), t->term_signal,
+                os_GetSignalString(t->term_signal));
+      } else {
+        fprintf(f, "%s %d", _("Exit code"), t->exit_code);
+      }
+      break;
+
+    case RUN_TIME_LIMIT_ERR:
+      fprintf(f, "&nbsp;");
+      break;
+
+    case RUN_PRESENTATION_ERR:
+      if (t->checker_comment) {
+        s = html_armor_string_dup(t->checker_comment);
+        fprintf(f, "%s", s);
+        xfree(s);
+      } else {
+        fprintf(f, "&nbsp;");
+      }
+      break;
+
+    case RUN_CHECK_FAILED: /* what to print here? */
+      fprintf(f, "&nbsp;");
+      break;
+
+    case RUN_MEM_LIMIT_ERR:
+    case RUN_SECURITY_ERR:
+      fprintf(f, "&nbsp;");
+      break;
+
+    default:
+      fprintf(f, "&nbsp;");
+    }
+    fprintf(f, "</td>");
+    fprintf(f, "</tr>\n");
+  }
+  fprintf(f, "</table>\n");
+
+  return 0;
+}
+
+int
 write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
                                 int rid, const struct run_entry *re,
                                 const struct section_problem_data *prob,
+                                const int *action_vec,
                                 ej_cookie_t sid,
                                 const unsigned char *self_url,
                                 const unsigned char *extra_args)
@@ -4355,6 +4470,11 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
   int need_comment = 0, i, act_status, tests_to_show;
   unsigned char opening_a[512];
   unsigned char *closing_a = "";
+
+  if (prob->type_val > 0)
+    return write_xml_team_output_only_acc_report(f, txt, rid, re, prob,
+                                                 action_vec, sid, self_url,
+                                                 extra_args);
 
   if (!(r = testing_report_parse_xml(txt))) {
     fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
@@ -4658,6 +4778,7 @@ write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
 int
 new_write_user_report_view(const serve_state_t state, FILE *f, int uid, int rid,
                            int accepting_mode,
+                           const int *action_vec,
                            ej_cookie_t sid,
                            const unsigned char *self_url,
                            const unsigned char *hidden_vars,
@@ -4738,7 +4859,7 @@ new_write_user_report_view(const serve_state_t state, FILE *f, int uid, int rid,
     break;
   case CONTENT_TYPE_XML:
     if (state->global->score_system_val == SCORE_OLYMPIAD && accepting_mode) {
-      write_xml_team_accepting_report(f, start_ptr, rid, &re, prb,
+      write_xml_team_accepting_report(f, start_ptr, rid, &re, prb, action_vec,
                                       sid, self_url, extra_args);
     } else if (prb->team_show_judge_report) {
       write_xml_testing_report(f, start_ptr, sid, self_url, extra_args);

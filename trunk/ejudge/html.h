@@ -56,6 +56,7 @@ int new_write_user_source_view(const serve_state_t, FILE *, int, int, int);
 int write_user_run_status(const serve_state_t, FILE *, int, int, int, int);
 int new_write_user_report_view(const serve_state_t, FILE *f, int uid, int rid,
                                int accepting_mode,
+                               const int *action_vec,
                                ej_cookie_t sid,
                                const unsigned char *self_url,
                                const unsigned char *hidden_vars,
@@ -251,6 +252,7 @@ int
 write_xml_team_accepting_report(FILE *f, const unsigned char *txt,
                                 int rid, const struct run_entry *re,
                                 const struct section_problem_data *prob,
+                                const int *action_vec,
                                 ej_cookie_t sid,
                                 const unsigned char *self_url,
                                 const unsigned char *extra_args);
