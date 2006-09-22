@@ -69,7 +69,7 @@ struct old_db_state
 
 struct teamdb_state
 {
-  const struct teamdb_db_callbacks *callbacks;
+  struct teamdb_db_callbacks *callbacks;
   int need_update;
   int pseudo_vintage;
 
@@ -331,7 +331,9 @@ teamdb_set_callbacks(teamdb_state_t state,
                      const struct teamdb_db_callbacks *callbacks,
                      int contest_id)
 {
-  state->callbacks = callbacks;
+  xfree(state->callbacks);
+  XCALLOC(state->callbacks, 1);
+  memcpy(state->callbacks, callbacks, sizeof(*callbacks));
   state->contest_id = contest_id;
   return 0;
 }
@@ -610,6 +612,7 @@ teamdb_destroy(teamdb_state_t state)
     close_connection(&state->old);
     xfree(state->old.server_path);
   }
+  xfree(state->callbacks);
 
   if (state->users) userlist_free((struct xml_tree*) state->users);
   xfree(state->participants);
